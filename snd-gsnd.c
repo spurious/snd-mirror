@@ -32,12 +32,12 @@ GtkWidget *w_snd_name(snd_info *sp)                    {if ((sp) && (sp->sgx)) r
 GtkWidget *w_snd_combine(snd_info *sp)                 {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_combine]);                else return(NULL);}
 GtkWidget *w_snd_play(snd_info *sp)                    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_play]);                   else return(NULL);}
 GtkWidget *w_snd_filter_env(snd_info *sp)              {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_filter_env]);             else return(NULL);}
+GtkWidget *w_snd_minibuffer(snd_info *sp)              {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_info]);                   else return(NULL);}
 
 static GtkWidget *w_snd_expand(snd_info *sp)           {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_expand]);                 else return(NULL);}
 static GtkWidget *w_snd_contrast(snd_info *sp)         {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_contrast]);               else return(NULL);}
 static GtkWidget *w_snd_revscl(snd_info *sp)           {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_revscl]);                 else return(NULL);}
 static GtkWidget *w_snd_revlen(snd_info *sp)           {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_revlen]);                 else return(NULL);}
-static GtkWidget *w_snd_minibuffer(snd_info *sp)       {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_info]);                   else return(NULL);}
 static GtkWidget *w_snd_minibuffer_label(snd_info *sp) {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_info_label]);             else return(NULL);}
 static GtkWidget *w_snd_amp_number(snd_info *sp)       {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_amp_number]);             else return(NULL);}
 static GtkWidget *w_snd_srate_number(snd_info *sp)     {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_srate_number]);           else return(NULL);}

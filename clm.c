@@ -4107,7 +4107,8 @@ int mus_buffer_empty_p(mus_any *ptr) {return(((rblk *)ptr)->empty);}
 int mus_buffer_full_p(mus_any *ptr)
 {
   rblk *gen = (rblk *)ptr;
-  return((gen->fill_time >= (Float)(gen->size)) && (gen->loc == 0));
+  return((gen->fill_time >= (Float)(gen->size)) && 
+	 (gen->loc == 0));
 }
 
 mus_any *mus_frame2buffer(mus_any *rb, mus_any *fr)
@@ -5286,7 +5287,7 @@ mus_any *mus_make_locsig(Float degree, Float distance, Float reverb, int chans, 
 	    {
 	      gen->revn = (Float *)CALLOC(gen->rev_chans, sizeof(Float));
 	      for (i = 0; i < gen->rev_chans; i++) 
-		gen->revn[i] = reverb / sqrt(dist);
+		gen->revn[i] = reverb * sqrt(dist);
 	      gen->revf = mus_make_empty_frame(gen->rev_chans);
 	    }
 	}

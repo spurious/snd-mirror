@@ -267,9 +267,10 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+22-May:  widget-text (mainly for auto-testing).\n\
 21-May:  Gtk version can now use the mozilla embedded browser for the help dialog.\n\
          hankel-jn (default 0.0) for Bessel choice in Hankel transform.\n\
-         removed raw-srate, raw-chans, raw-format, and use-raw-defaults (use open-raw-sound-hook instead).\n\
+         removed raw-srate, raw-chans, raw-format, and use-raw-defaults (use open-raw-sound-hook instead), erase-rectangle.\n\
          mouse-enter|leave-text-hook now works in Gtk version as well as Motif.\n\
 20-May:  snd 4.14.\n\
 9-May:   support for GSL 0.7+\n\

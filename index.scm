@@ -231,7 +231,6 @@
     (list "eps-bottom-margin" "extsnd.html#epsbottommargin")
     (list "eps-file" "extsnd.html#epsfile")
     (list "eps-left-margin" "extsnd.html#epsleftmargin")
-    (list "erase-rectangle" "extsnd.html#eraserectangle")
     (list "eval-between-marks" "sndscm.html#exevalbetweenmarks")
     (list "eval-over-selection" "sndscm.html#exevaloverselection")
     (list "every-sample?" "sndscm.html#exeverysample")

@@ -2849,12 +2849,17 @@ static SCM g_buffer2sample(SCM obj)
 
 static SCM g_buffer2frame(SCM obj, SCM fr)
 {
-  #define H_buffer2frame "(" S_buffer2frame " gen) -> next frame of samples in buffer, removing them"
+  mus_frame *ufr;
+  #define H_buffer2frame "(" S_buffer2frame " gen &optional frame) -> next frame of samples in buffer, removing them"
   ASSERT_TYPE((MUS_SCM_P(obj)) && (mus_buffer_p(TO_CLM(obj))), obj, SCM_ARG1, S_buffer2frame, "a buffer gen");
-  ASSERT_TYPE((MUS_SCM_P(fr)) && (mus_frame_p(TO_CLM(fr))), fr, SCM_ARG2, S_buffer2frame, "a frame");
-  return(g_wrap_frame((mus_frame *)mus_buffer2frame(TO_CLM(obj),
-						    TO_CLM(fr)),
-		      DONT_FREE_FRAME));
+  if (BOUND_P(fr))
+    {
+      ASSERT_TYPE((MUS_SCM_P(fr)) && (mus_frame_p(TO_CLM(fr))), fr, SCM_ARG2, S_buffer2frame, "a frame");
+      ufr = (mus_frame *)(TO_CLM(fr));
+    }
+  else ufr = mus_make_empty_frame(1);
+  return(g_wrap_frame((mus_frame *)mus_buffer2frame((mus_any *)(TO_CLM(obj)), (mus_any *)ufr),
+		      ((BOUND_P(fr)) ? DONT_FREE_FRAME : FREE_FRAME)));
 }
 
 static SCM g_buffer_empty_p(SCM obj)
@@ -2897,7 +2902,7 @@ static void init_rblk(void)
   DEFINE_PROC(S_buffer_empty_p, g_buffer_empty_p, 1, 0, 0, H_buffer_empty_p);
   DEFINE_PROC(S_buffer_full_p,  g_buffer_full_p, 1, 0, 0,  H_buffer_full_p);
   DEFINE_PROC(S_buffer2sample,  g_buffer2sample, 1, 0, 0,  H_buffer2sample);
-  DEFINE_PROC(S_buffer2frame,   g_buffer2frame, 2, 0, 0,   H_buffer2frame);
+  DEFINE_PROC(S_buffer2frame,   g_buffer2frame, 1, 1, 0,   H_buffer2frame);
   DEFINE_PROC(S_sample2buffer,  g_sample2buffer, 2, 0, 0,  H_sample2buffer);
   DEFINE_PROC(S_frame2buffer,   g_frame2buffer, 2, 0, 0,   H_frame2buffer);
 }

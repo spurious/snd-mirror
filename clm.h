@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 1
-#define MUS_REVISION 48
-#define MUS_DATE "18-May-01"
+#define MUS_REVISION 49
+#define MUS_DATE "22-May-01"
 
 /* 
+ * 22-May:     locsig reverb distance calc was upside down.
  * 18-May:     mus_describe and mus_inspect returned string should not be freed any more.
                  (previous version was not usable in gdb and was unneeded due to mus_snprintf)
  * 7-May:      filled in some leftover equal_p methods.
@@ -19,6 +20,7 @@
  * 5-Jan:      clm2scm gens are applicable.
  * 4-Jan:      mus_bank.
  * 2-Jan-01:   mus_run method.
+ * --------
  * 28-Dec:     mus_clear_filter_state and other minor tweaks for Snd.
  * 28-Nov:     Dolph-Chebyshev window (under HAVE_GSL flag -- needs complex trig support).
  * 8-Nov:      mus_clear_sinc_tables.
@@ -44,6 +46,7 @@
  * 3-Jan-00:   format and type args added to make_sample2file, 
  *             mus_file_close. 
  *             removed make_file_input and make_file_output.
+ * --------
  * 29-Dec:     various bugfixes especially in envelope handlers.
  * 19-Nov:     mus_oscil_bank and mus_formant_bank.
  * 5-Nov:      mus_sin exported.

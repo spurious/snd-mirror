@@ -2662,7 +2662,8 @@ static SCM g_sound_widgets(SCM snd)
   return(CONS(SND_WRAP(w_snd_pane(sp)),
 	  CONS(SND_WRAP(w_snd_name(sp)),
            CONS(SND_WRAP(w_snd_ctrls(sp)),
-		SCM_EOL))));
+	     CONS(SND_WRAP(w_snd_minibuffer(sp)),
+	       SCM_EOL)))));
 }
 #endif
 

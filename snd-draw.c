@@ -98,22 +98,6 @@ static SCM g_fill_rectangle(SCM x0, SCM y0, SCM width, SCM height, SCM snd, SCM 
   return(SCM_BOOL_F);
 }
 
-static SCM g_erase_rectangle(SCM x0, SCM y0, SCM width, SCM height, SCM snd, SCM chn, SCM ax)
-{
-  SND_ASSERT_CHAN(S_erase_rectangle, snd, chn, 5);
-  ASSERT_TYPE(NUMBER_P(x0), x0, SCM_ARG1, S_erase_rectangle, "a number");
-  ASSERT_TYPE(NUMBER_P(y0), y0, SCM_ARG2, S_erase_rectangle, "a number");
-  ASSERT_TYPE(NUMBER_P(width), width, SCM_ARG3, S_erase_rectangle, "a number");
-  ASSERT_TYPE(NUMBER_P(height), height, SCM_ARG4, S_erase_rectangle, "a number");
-  erase_rectangle(get_cp(snd, chn, S_erase_rectangle),
-		  TO_C_AXIS_CONTEXT(snd, chn, ax, S_erase_rectangle),
-		  TO_C_INT(x0),
-		  TO_C_INT(y0),
-		  TO_C_INT(width),
-		  TO_C_INT(height));
-  return(SCM_BOOL_F);
-}
-
 static SCM g_draw_string(SCM text, SCM x0, SCM y0, SCM snd, SCM chn, SCM ax)
 {
   SND_ASSERT_CHAN(S_draw_string, snd, chn, 4);
@@ -671,6 +655,32 @@ static SCM g_set_widget_size(SCM wid, SCM wh)
   return(wid);
 }
 
+static SCM g_widget_text(SCM wid)
+{
+#if USE_MOTIF
+  char *text;
+  SCM res = SCM_BOOL_F;
+  ASSERT_TYPE(SND_WRAPPED(wid), wid, SCM_ARG1, S_widget_text, "a wrapped object");
+  text = XmTextGetString((GUI_WIDGET)(SND_UNWRAP(wid)));
+  res = TO_SCM_STRING(text);
+  XtFree(text);
+  return(res);
+#else
+  ASSERT_TYPE(SND_WRAPPED(wid), wid, SCM_ARG1, S_widget_text, "a wrapped object");
+  return(TO_SCM_STRING(gtk_entry_get_text(GTK_ENTRY((GUI_WIDGET)(SND_UNWRAP(wid))))));
+#endif
+}
+
+static SCM g_set_widget_text(SCM wid, SCM text)
+{
+#if USE_MOTIF
+  XmTextSetString((GUI_WIDGET)(SND_UNWRAP(wid)), TO_C_STRING(text));
+#else
+  gtk_entry_set_text(GTK_ENTRY((GUI_WIDGET)(SND_UNWRAP(wid))), TO_C_STRING(text));
+#endif
+  return(text);
+}
+
 static SCM g_recolor_widget(SCM wid, SCM color)
 {
   ASSERT_TYPE(SND_WRAPPED(wid), wid, SCM_ARG1, S_recolor_widget, "a wrapped object");  
@@ -755,7 +765,6 @@ void g_init_draw(SCM local_doc)
   DEFINE_PROC(S_draw_string,      g_draw_string, 3, 3, 0,     "(" S_draw_string " text x0 y0 snd chn ax)");
   DEFINE_PROC(S_fill_rectangle,   g_fill_rectangle, 4, 3, 0,  "(" S_fill_rectangle " x0 y0 width height snd chn ax)");
   DEFINE_PROC(S_fill_polygon,     g_fill_polygon, 1, 3, 0,    "(" S_fill_polygon " points snd chn ax)");
-  DEFINE_PROC(S_erase_rectangle,  g_erase_rectangle, 4, 3, 0, "(" S_erase_rectangle " x0 y0 width height snd chn ax)");
 
   define_procedure_with_reversed_setter(S_foreground_color, SCM_FNC g_foreground_color, "(" S_foreground_color " snd chn ax) -> current drawing color",
 					"set-" S_foreground_color, SCM_FNC g_set_foreground_color, SCM_FNC g_set_foreground_color_reversed,
@@ -775,6 +784,9 @@ void g_init_draw(SCM local_doc)
 
   define_procedure_with_setter(S_widget_position, SCM_FNC g_widget_position, "(" S_widget_position " wid) -> '(x y)",
 					"set-" S_widget_position, SCM_FNC g_set_widget_position, local_doc, 1, 0, 2, 0);
+
+  define_procedure_with_setter(S_widget_text, SCM_FNC g_widget_text, "(" S_widget_text " wid) -> text)",
+					"set-" S_widget_text, SCM_FNC g_set_widget_text, local_doc, 1, 0, 2, 0);
 
   DEFINE_PROC(S_recolor_widget,  g_recolor_widget, 2, 0, 0,  "(" S_recolor_widget " wid color)");
   DEFINE_PROC(S_hide_widget,     g_hide_widget, 1, 0, 0,     "(" S_hide_widget " widget)");

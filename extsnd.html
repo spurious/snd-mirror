@@ -25,7 +25,7 @@
 
 
 <!-- -------------------------------------------------------------------------------- -->
-<!-- an experiment: click button to post an example -- I'd like the buttons on the right to take less space somehow -->
+<!-- an experiment: click button to post an example; I'd like the buttons on the right to take less space somehow -->
 <!--    also, need some automatic way to update the location references etc -->
 <!-- func args: title example-code definition-loc related-stuff comments... -->
 <SCRIPT>
@@ -449,6 +449,7 @@ The font variables are:
 <tr><td valign=top><code><em class=def>widget-size</em> (widget)</code></td>
 <td>return a list giving the widget width and height.  The corresponding set! forms also take a list:<br>
 <code>(set! (widget-position (cadr (main-widgets))) (list 300 100))</code></td></tr>
+<tr><td><code><em class=def>widget-text</em> (widget)</code></td><td>return or set the contents of text widget</td></tr>
 <tr><td><code><em class=def><a name="recolorwidget">recolor-widget</a></em> (widget color)</code></td></tr>
 <tr><td><code><em class=def><a name="showwidget">show-widget</a></em> (widget)</code></td></tr>
 <tr><td><code><em class=def><a name="hidewidget">hide-widget</a></em> (widget)</code></td></tr>
@@ -467,7 +468,7 @@ The four "-widgets" procedure return lists of possibly useful widgets:
   main-widgets:    '(top-level-application top-level-shell main-pane main-sound-pane)
   menu-widgets:    '(top-level-menu-bar file-menu edit-menu view-menu options-menu 
                      help-menu)
-  sound-widgets:   '(main-pane name-label control-panel)
+  sound-widgets:   '(main-pane name-label control-panel minibuffer)
   channel-widgets: '(graph)
   dialog-widgets:  '(color_dialog orientation_dialog enved_dialog error_dialog 
                      yes_or_no_dialog transform_dialog file_open_dialog 
@@ -572,14 +573,6 @@ The lowest level procedures are:
 <!-- -->
 <!-- --><tr><td></td><td>
 <!-- -->draws a filled rectangle (in the current foreground color) from (x0 y0) of size (width height).</td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- erase-rectangle -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="eraserectangle">erase-rectangle</a></em> (x0 y0 width height snd chn context)</code></span></td></tr>
-<!-- -->
-<!-- --><tr><td></td><td>
-<!-- -->erases the specified rectangle (not sure this is actually useful -- I had the code lying around handy).</td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- fill-polygon -->
@@ -1492,11 +1485,11 @@ the hook.
 <!-- -->  (lambda (snd chn y0 y1)
 <!-- -->    "set the dot size depending on the number of samples being displayed"
 <!-- -->    (let ((dots (- (right-sample snd chn) (left-sample snd chn))))
-<!-- -->      (if (> dots 100) 
+<!-- -->      (if (&gt; dots 100) 
 <!-- -->	  (set! (dot-size snd chn) 1)
-<!-- -->	(if (> dots 50)
+<!-- -->	(if (&gt; dots 50)
 <!-- -->	    (set! (dot-size snd chn) 2)
-<!-- -->	  (if (> dots 25)
+<!-- -->	  (if (&gt; dots 25)
 <!-- -->	      (set! (dot-size snd chn) 3)
 <!-- -->	    (set! (dot-size snd chn) 5))))
 <!-- -->      #f)))
@@ -1565,7 +1558,7 @@ the hook.
 <!-- --><br>
 <!-- -->(add-hook! initial-graph-hook
 <!-- -->  (lambda (snd chn dur)
-<!-- -->    (if (< dur 100.0)
+<!-- -->    (if (&lt; dur 100.0)
 <!-- -->	(if (<em class=red>mus-sound-max-amp-exists?</em> (file-name snd))
 <!-- -->	    (let* ((amp-vals (<em class=red>mus-sound-max-amp</em> (file-name snd)))
 <!-- -->		   (max-val (vector-ref amp-vals (+ (* chn 2) 1))))
@@ -1925,6 +1918,7 @@ the hook.
 <!-- -->If there is more than one function on the hook list, functions after the first get the
 <!-- -->on-going list result (if any) as the <i>current-choices</i> argument (the empty list is the default).
 <!-- --><code>(add-hook! open-raw-sound-hook (lambda (file choices) (list 1 44100 mus-lshort)))</code>
+<!-- -->Return '() to accept all the current raw header defaults; return #f to fallback on the Raw File Dialog.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -7478,7 +7472,7 @@ variable %load-verbosely to #t.
 <!-- --><tr><td colspan=2 align=center>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
 <!-- -->(add-hook! after-open-hook 
-<!-- -->  (lambda (n) (if (> (channels n) 3) (normalize-view))))
+<!-- -->  (lambda (n) (if (&gt; (channels n) 3) (normalize-view))))
 <!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -7714,7 +7708,7 @@ argument the thing returned by <i>add-idler</i> (the identifier of that process)
 associated background process.
 </p>
 <pre>
-  (<em class=red>add-idler</em> (let ((ctr 0)) (lambda () (snd-print "hi") (set! ctr (1+ ctr)) (< ctr 3))))
+  (<em class=red>add-idler</em> (let ((ctr 0)) (lambda () (snd-print "hi") (set! ctr (1+ ctr)) (&lt; ctr 3))))
 </pre>
 <p>prints "hi" three times, then quits.
 <i>change-property</i> changes an X-window's property; there's an example in examp.scm. <i>listener-selection</i>
@@ -7722,7 +7716,7 @@ returns the currently selected text in the listener, or #f if there isn't any.  
 to the selection if "h" is typed in the graph:
 </p>
 <pre>
-  (bind-key (char->integer #\h) 0 
+  (bind-key (char-&gt;integer #\h) 0 
     (lambda ()
       (let ((subject (<em class=red>listener-selection</em>)))
 	(if subject

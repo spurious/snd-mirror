@@ -28,7 +28,7 @@
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs))
 
 (define tests 1)
-(define snd-test -1)
+(define snd-test 11)
 (define keep-going #f)
 (define full-test (< snd-test 0))
 (define total-tests 22)
@@ -293,10 +293,10 @@
 	'graph-style (graph-style) 0 
 	'graphing (without-errors (graphing)) 'no-such-sound
 	'graphs-horizontal (graphs-horizontal) #t
+	'hankel-jn (hankel-jn) 0.0
 	'just-sounds (just-sounds) #f
 	'line-size (line-size) 128 
 	'listener-prompt (listener-prompt) ">" 
-	'hankel-jn (hankel-jn) 0.0
 	'max-fft-peaks (max-fft-peaks) 100
 	'max-regions (max-regions) 16 
 	'min-dB (min-dB) -60.0 
@@ -2064,23 +2064,35 @@
 	      (v1 (samples->vct 12000 10 ind1 0)))
 	  (vct-set! v0 0 1.0)
 	  (array->file "fmv3.snd" v0 10 22050 1)
+	  (copy-file "oboe.snd" "fmv4.snd")
 	  (convolve-with "fmv3.snd" 1.0 ind1)
+	  (convolve-files "fmv4.snd" "fmv3.snd" 1.0 "fmv5.snd")
 	  (let ((v2 (samples->vct 12000 10 ind1 0)))
 	    (if (not (vfequal v1 v2))
-		(snd-display (format #f ";~A (orig: 0) ~A ~A" 'convolve-with v1 v2))))
-	  (delete-file "fmv3.snd"))
+		(snd-display (format #f ";~A (orig: 0) ~A ~A" 'convolve-with v1 v2)))
+	    (file->array "fmv5.snd" 0 12000 10 v2)
+	    (if (not (vfequal v1 v2))
+		(snd-display (format #f ";convolve-files: (orig: 0) ~A ~A" v1 v2))))
+	  (delete-file "fmv3.snd")
+	  (delete-file "fmv5.snd"))
 	(revert-sound ind1)
-	
+
 	(scale-to 1.0 ind1)
 	(let ((v0 (make-vct 10))
 	      (v1 (samples->vct 12000 10 ind1 0)))
 	  (vct-set! v0 5 1.0)
 	  (array->file "fmv3.snd" v0 10 22050 1)
 	  (convolve-with "fmv3.snd" 1.0 ind1)
+	  (convolve-files "fmv4.snd" "fmv3.snd" 1.0 "fmv5.snd")
 	  (let ((v2 (samples->vct 12005 10 ind1 0)))
 	    (if (not (vfequal v1 v2))
-		(snd-display (format #f ";~A (orig: 2) ~A ~A" 'convolve-with v1 v2))))
-	  (delete-file "fmv3.snd"))
+		(snd-display (format #f ";~A (orig: 2) ~A ~A" 'convolve-with v1 v2)))
+	    (file->array "fmv5.snd" 0 12005 10 v2)
+	    (if (not (vfequal v1 v2))
+		(snd-display (format #f ";convolve-files: (orig: 2) ~A ~A" v1 v2))))
+	  (delete-file "fmv3.snd")
+	  (delete-file "fmv4.snd")
+	  (delete-file "fmv5.snd"))
 	(close-sound ind1))
 
       (let ((ind1 (open-sound "2.snd")))
@@ -3155,6 +3167,39 @@
 	  (set! fr1 (buffer->frame gen fr1))
 	  (if (not (equal? fr0 fr1)) (snd-display (format #f ";frame->buffer: ~A ~A?" fr0 fr1)))))
 
+      (let ((gen (make-buffer 6))
+	    (fr1 (make-frame 2 .1 .2))
+	    (fr2 (make-frame 2 .3 .4))
+	    (fr3 (make-frame 2 .5 .6))
+	    (fr4 (make-frame 2 .7 .8)))
+	(frame->buffer gen fr1)
+	(print-and-check gen 
+			 "buffer"
+			 "buffer: length: 6, loc: 0, fill: 2.000"
+			 "rblk buf[6 (external)]: [0.100 0.200 0.000 0.000 0.000 0.000], loc: 0, fill_time: 2.000000, empty: 1")
+	(frame->buffer gen fr2)
+	(frame->buffer gen fr3)
+	(print-and-check gen 
+			 "buffer"
+			 "buffer: length: 6, loc: 0, fill: 6.000"
+			 "rblk buf[6 (external)]: [0.100 0.200 0.300 0.400 0.500 0.600], loc: 0, fill_time: 6.000000, empty: 1")
+	(buffer->frame gen fr2)
+	(if (not (equal? fr2 fr1)) (snd-display (format #f ";buffer->frame: ~A ~A?" fr1 fr2)))
+	(print-and-check gen 
+			 "buffer"
+			 "buffer: length: 6, loc: 2, fill: 6.000"
+			 "rblk buf[6 (external)]: [0.100 0.200 0.300 0.400 0.500 0.600], loc: 2, fill_time: 6.000000, empty: 1")
+	(let ((f (buffer->frame gen)))
+	  (if (not (= (mus-channels f) 1)) (snd-display (format #f ";buffer->frame default: ~A?" f)))
+	  (if (fneq (frame-ref f 0) .3) (snd-display (format #f ";buffer->frame: ~A?" f)))
+	  (buffer->frame gen fr1)
+	  (if (not (equal? fr1 (make-frame 2 .4 .5))) (snd-display (format #f ";buffer->frame offset: ~A?" fr1)))
+	  (frame->buffer gen fr4)
+	(print-and-check gen 
+			 "buffer"
+			 "buffer: length: 6, loc: 0, fill: 3.000"
+			 "rblk buf[6 (external)]: [0.600 0.700 0.800 0.000 0.000 0.000], loc: 0, fill_time: 3.000000, empty: 1")))
+
       (test-gen-equal (make-buffer 3) (make-buffer 3) (make-buffer 4))
       (let ((gen (make-buffer 3))
 	    (gen1 (make-buffer 3))
@@ -3558,6 +3603,46 @@
 	    (sample->frame mx2 1.0 frout)
 	    (if (not (equal? frout fr0)) (snd-display (format #f ";sample->frame via frout: ~A ~A?" frout fr0))))))
 
+      (let ((fr1 (make-frame 1 1))
+	    (fr2 (make-frame 2 1 2))
+	    (fr4 (make-frame 4 1 2 3 4)) 
+	    (fr8 (make-frame 8 1 2 3 4 5 6 7 8))
+	    (mx1 (make-mixer 1 5))
+	    (mx1id (make-mixer 1 1))
+	    (mx2 (make-mixer 2 1 2 3 4))
+	    (mx2id (make-mixer 2 1 0 0 1))
+	    (mx4 (make-mixer 4))
+	    (mx4id (make-mixer 4))
+	    (mx8 (make-mixer 8))
+	    (mx8id (make-mixer 8)))
+	(do ((i 0 (1+ i)))
+	    ((= i 4))
+	  (mixer-set! mx4id i i 1)
+	  (mixer-set! mx4 0 i 1))
+	(do ((i 0 (1+ i)))
+	    ((= i 8))
+	  (mixer-set! mx8id i i 1)
+	  (mixer-set! mx8 i 0 1))
+	(if (not (equal? (frame->frame mx1id fr1) (make-frame 1 1))) (snd-display (format #f ";frame->frame 1 id: ~A?"            (frame->frame mx1id fr1))))
+	(if (not (equal? (frame->frame mx1 fr1) (make-frame 1 5))) (snd-display (format #f ";frame->frame 1: ~A?"                 (frame->frame mx1 fr1))))  
+	(if (not (equal? (frame->frame mx2id fr1) (make-frame 2 1 0))) (snd-display (format #f ";frame->frame 2 1 id: ~A?"        (frame->frame mx2id fr1))))  
+	(if (not (equal? (frame->frame mx2 fr1) (make-frame 2 1 2))) (snd-display (format #f ";frame->frame 2 1: ~A?"             (frame->frame mx2 fr1))))  
+	(if (not (equal? (frame->frame mx4 fr1) (make-frame 4 1 1 1 1))) (snd-display (format #f ";frame->frame 4 1: ~A?"         (frame->frame mx4 fr1))))  
+	(if (not (equal? (frame->frame mx8 fr1) (make-frame 8 1 0 0 0 0 0 0 0))) (snd-display (format #f ";frame->frame 8 1: ~A?" (frame->frame mx8 fr1)))) 
+	(if (not (equal? (frame->frame mx1 fr2) (make-frame 1 5))) (snd-display (format #f ";frame->frame 1 2: ~A?"               (frame->frame mx1 fr2))))   
+	(if (not (equal? (frame->frame mx2id fr2) (make-frame 2 1 2))) (snd-display (format #f ";frame->frame 2id 2: ~A?"         (frame->frame mx2id fr2))))  
+	(if (not (equal? (frame->frame mx2 fr2) (make-frame 2 7 10))) (snd-display (format #f ";frame->frame 2 2: ~A?"            (frame->frame mx2 fr2))))  
+	(if (not (equal? (frame->frame mx4id fr2) (make-frame 4 1 2 0 0))) (snd-display (format #f ";frame->frame 4id 2: ~A?"     (frame->frame mx4id fr2))))  
+	(if (not (equal? (frame->frame mx8id fr2) (make-frame 8 1 2 0 0 0 0 0 0))) (snd-display (format #f ";frame->frame 8id 2: ~A?" (frame->frame mx8id fr2))))  
+	(if (not (equal? (frame->frame mx4 fr2) (make-frame 4 1 1 1 1))) (snd-display (format #f ";frame->frame 4 2: ~A?"         (frame->frame mx4 fr2))))  
+	(if (not (equal? (frame->frame mx8 fr2) (make-frame 8 3 0 0 0 0 0 0 0))) (snd-display (format #f ";frame->frame 8 2: ~A?" (frame->frame mx8 fr2)))) 
+	(if (not (equal? (frame->frame mx1 fr4) (make-frame 1 5))) (snd-display (format #f ";frame->frame 1 4: ~A?"               (frame->frame mx1 fr4)))) 
+	(if (not (equal? (frame->frame mx1 fr8) (make-frame 1 5))) (snd-display (format #f ";frame->frame 1 8: ~A?"               (frame->frame mx1 fr8)))) 
+	(if (not (equal? (frame->frame mx8id fr2) (make-frame 8 1 2 0 0 0 0 0 0))) (snd-display (format #f ";frame->frame 8id 2: ~A?" (frame->frame mx8id fr2))))
+	(if (not (equal? (frame->frame mx4id fr2) (make-frame 4 1 2 0 0))) (snd-display (format #f ";frame->frame 4id 2: ~A?"     (frame->frame mx4id fr2))))  
+	(if (not (equal? (frame->frame mx8 fr4) (make-frame 8 10 0 0 0 0 0 0 0))) (snd-display (format #f ";frame->frame 8 4: ~A?" (frame->frame mx8 fr4)))) 
+	(if (not (equal? (frame->frame mx4 fr4) (make-frame 4 1 1 1 1))) (snd-display (format #f ";frame->frame 4 4: ~A?"         (frame->frame mx4 fr4)))))
+
       (for-each 
        (lambda (chans)
 	 (let ((m1 (make-mixer chans)))
@@ -3918,6 +4003,37 @@
 	(if (or (fneq val6 .065) (fneq val7 .65)) (snd-display (format #f ";outab: ~A ~A?" val6 val7)))
 	(if (or (fneq val8 .075) (fneq val9 .75)) (snd-display (format #f ";out-any: ~A ~A?" val8 val9))))
 
+      (let ((gen (make-sample->file "fmv.snd" 4 mus-lshort mus-riff)))
+	(print-and-check gen 
+			 "sample2file"
+			 "sample2file: fmv.snd"
+			 "rdout chan: 0, loc: 0, file_name: fmv.snd, chans: 4, data_start: 0, data_end: 8191, out_end: 0")
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (outa i .1 gen)
+	  (outb i .2 gen)
+	  (outc i .3 gen)
+	  (outd i .4 gen))
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (outa i .01 gen)
+	  (outb i .02 gen)
+	  (outc i .03 gen)
+	  (outd i .04 gen))
+	(mus-close gen))
+      (let* ((gen (make-file->sample "fmv.snd")))
+	(print-and-check gen 
+			 "file2sample"
+			 "file2sample: fmv.snd"
+			 "rdin chan: 0, dir: 0, loc: 0, chans: 4, data_start: 0, data_end: -1, file_end: 10, file_name: fmv.snd")
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (if (or (fneq (ina i gen) .11)
+		  (fneq (inb i gen) .22)
+		  (fneq (in-any i 2 gen) .33)
+		  (fneq (in-any i 3 gen) .44))
+	      (snd-display (format #f ";4-chan out/in[~A]: ~A ~A ~A ~A?" i (ina i gen) (inb i gen) (in-any i 2 gen) (in-any i 3 gen))))))
+
       (let ((gen (make-frame->file "fmv1.snd" 2 mus-bshort mus-next)))
 	(print-and-check gen 
 			 "frame2file"
@@ -4082,6 +4198,47 @@
 	  (file->array "fmv4.reverb" 0 0 100 v2)
 	  (if (fneq (vct-ref v2 0) .1) (snd-display (format #f ";locsig reverb: ~A?" v2)))
 	  (if (fneq (* 2 (vct-ref v0 0)) (vct-ref v1 0)) (snd-display (format #f ";locsig direct: ~A?" (vct-ref v0 0) (vct-ref v1 0))))))
+
+      (let* ((gen (make-frame->file "fmv4.snd" 4 mus-bshort mus-next))
+	     (rev (make-frame->file "fmv4.reverb" 4 mus-bshort mus-next))
+	     (lc (make-locsig 60.0 :reverb .1 :channels 4 :distance 4.0 :output gen :revout rev)))
+	(print-and-check lc
+			 "locsig"
+			 "locsig: chans 4, outn: [0.083 0.167 0.000 0.000]"
+			 "locs outn[4]: [0.083 0.167 0.000 0.000], revn[4]: [0.050 0.050 0.050 0.050]")
+	(do ((i 0 (1+ i)))
+	    ((= i 100))
+	  (locsig lc i 1.0))
+	(do ((i 0 (1+ i)))
+	    ((= i 4))
+	  (if (fneq (locsig-reverb-ref lc i) .05)
+	      (snd-display (format #f ";locsig reverb ref[~A]: ~A?" i (locsig-reverb-ref lc i))))
+	  (locsig-reverb-set! lc i (* i .1))
+	  (if (fneq (locsig-reverb-ref lc i) (* i .1))
+	      (snd-display (format #f ";locsig reverb set![~A]: ~A?" i (locsig-reverb-ref lc i)))))
+	(print-and-check lc
+			 "locsig"
+			 "locsig: chans 4, outn: [0.083 0.167 0.000 0.000]"
+			 "locs outn[4]: [0.083 0.167 0.000 0.000], revn[4]: [0.000 0.100 0.200 0.300]")
+	(mus-close gen)
+	(mus-close rev))
+
+	(print-and-check (make-locsig 160 :channels 4)
+			 "locsig"
+			 "locsig: chans 4, outn: [0.000 0.222 0.778 0.000]"
+			 "locs outn[4]: [0.000 0.222 0.778 0.000], revn[0]: nil")
+	(print-and-check (make-locsig 160 :channels 4 :distance .5)
+			 "locsig"
+			 "locsig: chans 4, outn: [0.000 0.222 0.778 0.000]"
+			 "locs outn[4]: [0.000 0.222 0.778 0.000], revn[0]: nil")
+	(print-and-check (make-locsig 320 :channels 4)
+			 "locsig"
+			 "locsig: chans 4, outn: [0.556 0.000 0.000 0.444]"
+			 "locs outn[4]: [0.556 0.000 0.000 0.444], revn[0]: nil")
+	(print-and-check (make-locsig 320 :channels 2)
+			 "locsig"
+			 "locsig: chans 2, outn: [0.000 1.000]"
+			 "locs outn[2]: [0.000 1.000], revn[0]: nil")
 
       (let ((gen (make-src :srate 2.0))
 	    (v0 (make-vct 10))
@@ -4950,6 +5107,10 @@
 		 (help-dialog "Sndinfo" "sndlib.html#sndinfo")
 		 (help-dialog "Generators" "clm.html#generators")
 		 ))
+	   (if (not (= (length (menu-widgets)) 6)) (snd-display (format #f ";menu-widgets: ~A?" (menu-widgets))))
+	   (set-widget-foreground (cadr (menu-widgets)) (make-color 1 0 0))
+	   (if (not (equal? (widget-position (car (menu-widgets))) (list 0 0)))
+	       (snd-display (format #f ";position main menubar: ~A?" (widget-position (car (menu-widgets))))))
 	   (save-envelopes "hiho.env")
 	   (load "hiho.env")
 	   (if (not (equal? env1 (list 0.0 1.0 1.0 0.0))) (snd-display (format #f ";save-envelopes: ~A?" env1)))
@@ -4980,6 +5141,19 @@
 	   (str2 (snd-help "hamming-window")))
        (if (not (string=? str1 str2))
 	   (snd-display (format #f ";snd-help hamming-window: ~A ~A" str1 str2))))
+
+     (let ((ind (open-sound "oboe.snd")))
+       (if (< (length (sound-widgets ind)) 4)
+	   (snd-display (format #f ";sound-widgets: ~A?" (sound-widgets ind))))
+       (report-in-minibuffer "hi there" ind)
+       (let ((str (widget-text (list-ref (sound-widgets ind) 3))))
+	 (if (not (string=? str "hi there"))
+	     (snd-display (format #f ";report-in-minibuffer: ~A?" str)))
+	 (append-to-minibuffer "away!" ind)
+	 (set! str (widget-text (list-ref (sound-widgets ind) 3)))
+	 (if (not (string=? str "hi thereaway!"))
+	     (snd-display (format #f ";report-in-minibuffer 1: ~A?" str))))
+       (close-sound ind))
      ))
 
 (define map-silence
@@ -5552,6 +5726,50 @@
 		(not (= (srate ind) 22050))
 		(not (= (data-format ind) mus-bshort)))
 	    (snd-display (format #f ";open-raw: ~A ~A ~A" (chans ind) (srate ind) (data-format ind))))
+	(close-sound ind))
+
+      (let ((ind (open-sound "oboe.snd")))
+	(save-sound-as "test.snd" ind mus-raw)
+	(close-sound ind)
+	(reset-hook! open-raw-sound-hook)
+	(add-hook! open-raw-sound-hook 
+		   (lambda (file choice)
+		     (if (not (string=? (substring file (- (string-length file) 8)) "test.snd"))
+			 (snd-display (format #f ";open-raw-sound-hook file: ~A?" (substring file (- (string-length file) 8)))))
+		     (if (not (eq? choice #f))
+			 (snd-display (format #f ";open-raw-sound-hook choice: ~A?" choice)))
+		     (list 2 44100 mus-mulaw)))
+	(set! ind (open-sound "test.snd"))
+	(if (or (not (= (header-type ind) mus-raw))
+		(not (= (data-format ind) mus-mulaw))
+		(not (= (chans ind) 2))
+		(not (= (srate ind) 44100)))
+	    (snd-display (format #f ";open-raw-sound-hook 1: ~A ~A ~A ~A" (header-type ind) (data-format ind) (chans ind) (srate ind))))
+	(close-sound ind)
+	(add-hook! open-raw-sound-hook
+		   (lambda (file choice)
+		     ;; append to list
+		     (if (not (equal? choice (list 2 44100 mus-mulaw)))
+			 (snd-display (format #f ";open-raw-sound-hook 2: ~A" choice)))
+		     (list 1 22050 mus-bshort))
+		   #t)
+	(set! ind (open-sound "test.snd"))
+	(if (or (not (= (header-type ind) mus-raw))
+		(not (= (data-format ind) mus-bshort))
+		(not (= (chans ind) 1))
+		(not (= (srate ind) 22050)))
+	    (snd-display (format #f ";open-raw-sound-hook 3: ~A ~A ~A ~A" (header-type ind) (data-format ind) (chans ind) (srate ind))))
+	(close-sound ind)
+	(reset-hook! open-raw-sound-hook)
+	(add-hook! open-raw-sound-hook 
+		   (lambda (file choice)
+		     (list 2)))
+	(set! ind (open-sound "test.snd"))
+	(if (or (not (= (header-type ind) mus-raw))
+		(not (= (data-format ind) mus-bshort))
+		(not (= (chans ind) 2))
+		(not (= (srate ind) 22050)))
+	    (snd-display (format #f ";open-raw-sound-hook 4: ~A ~A ~A ~A" (header-type ind) (data-format ind) (chans ind) (srate ind))))
 	(close-sound ind))
 
       (let ((ind #f)
@@ -7374,7 +7592,6 @@
 	(draw-dots #(25 25 50 50 100 100) 10 ind 0)
 	(-> 100 50 10 ind 0)
 	(fill-rectangle 20 20 100 100 ind 0)
-	(erase-rectangle 30 30 20 20 ind 0)
 	(make-bezier 0 0 20 20 40 30 60 10 10)
 	(update-graph ind 0)
 	(reset-hook! after-graph-hook)
@@ -7530,7 +7747,7 @@ EDITS: 3
 	       delete-mark delete-marks delete-region delete-sample delete-samples delete-samples-with-origin delete-selection dialog-widgets
 	       dismiss-all-dialogs display-edits dot-size draw-dot draw-dots draw-line draw-lines draw-string edit-header-dialog edit-fragment edit-position
 	       edit-tree edits env-base env-selection env-sound enved-active-env enved-base enved-clipping enved-dBing enved-dialog enved-exping enved-power
-	       enved-selected-env enved-target enved-waveform-color enved-waving eps-file eps-left-margin eps-bottom-margin erase-rectangle expand
+	       enved-selected-env enved-target enved-waveform-color enved-waving eps-file eps-left-margin eps-bottom-margin expand
 	       expand-hop expand-length expand-ramp expanding fft fft-beta fft-log-frequency fft-log-magnitude fft-size fft-style fft-window ffting
 	       fht file-dialog file-name fill-polygon fill-rectangle filter-sound filter-dBing filter-env filter-env-order filter-env-in-hz filter-order
 	       filter-selection filter-waveform-color filtering find find-mark find-sound finish-progress-report fit-data-on-open foreground-color
@@ -9147,15 +9364,15 @@ EDITS: 3
 (if (= snd-test -1) (exit))
 
 
-;;;   convolve-files map-across-all-chans map-chans scan-across-chans map-sound-chans scan-sound-chans scan-chans
-;;;   forward-mix smooth-selection convolve-selection-with save-state locsig-reverb-set!
+;;;   map-across-all-chans map-chans scan-across-chans map-sound-chans scan-sound-chans scan-chans
+;;;   forward-mix smooth-selection convolve-selection-with save-state draw-string fill-rectangle
 ;;;   mus-sound-reopen-output mus-sound-seek mus-sound-seek-frame close-sound-file vct->sound-file
-;;;   save-marks save-region save-selection vcts-map! buffer->frame frame->buffer frame->frame restart-env 
-;;;   ina inb outc outd make-track-sample-reader free-track-sample-reader mix-sound-channel mix-sound-index
-;;;   backward-mix peaks cursor-position draw-string fill-rectangle
-;;;   append-to-minibuffer scan-across-sound-chans change-menu-label update-sound erase-rectangle load-font
-;;;   soundfont-info menu-widgets x->position y->position position->y listener-selection draw-line 
+;;;   save-marks save-region save-selection vcts-map! restart-env 
+;;;   make-track-sample-reader free-track-sample-reader mix-sound-channel mix-sound-index
+;;;   backward-mix peaks cursor-position x->position y->position position->y listener-selection draw-line 
+;;;   scan-across-sound-chans change-menu-label update-sound load-font
 ;;;   edpos in sound->temp graph-data
+;;;   open-raw-sound-hook (data-loc/len)
 
 ;;; need to know before calling this if libguile.so was loaded
 ;;; (system "cc gsl-ex.c -c")

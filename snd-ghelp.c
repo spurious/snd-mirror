@@ -118,7 +118,7 @@ GtkWidget *snd_help(snd_state *ss, char *subject, char *helpstr)
 
 static GtkWidget *help_mozilla = NULL;
 
-static void go_back (GtkButton *button, gpointer ignored) {gtk_moz_embed_go_back(GTK_MOZ_EMBED(help_mozilla));}
+static void go_back(GtkButton *button, gpointer ignored) {gtk_moz_embed_go_back(GTK_MOZ_EMBED(help_mozilla));}
 static void go_forward(GtkButton *button, gpointer ignored) {gtk_moz_embed_go_forward(GTK_MOZ_EMBED(help_mozilla));}
 
 static void create_help_monolog(snd_state *ss)

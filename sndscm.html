@@ -2609,7 +2609,7 @@ static void inner_main(int argc, char **argv)
     {
       /* (exit) to exit */
       fprintf(stdout, "&gt;");
-      getline(buffer, &size, stdin);
+      getline(buffer, &mp;size, stdin);
       result = scm_internal_stack_catch(SCM_BOOL_T, /* this is our "catch" */
 					gh_eval_str, 
 					(void *)(buffer[0]), 

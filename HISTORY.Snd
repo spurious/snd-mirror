@@ -1,8 +1,9 @@
 snd change log
 
+  22-May:    widget-text (mainly for auto-testing).
   21-May:    Gtk version can now use the mozilla embedded browser for the help dialog.
              hankel-jn (default 0.0) for Bessel choice in Hankel transform.
-             removed raw-srate, raw-chans, raw-format, and use-raw-defaults (use open-raw-sound-hook instead).
+             removed raw-srate, raw-chans, raw-format, and use-raw-defaults (use open-raw-sound-hook instead), erase-rectangle.
              mouse-enter|leave-text-hook now works in Gtk version as well as Motif.
   20-May:    snd 4.14.
   18-May:    Gtk+ version was forgetting to make the listener menu active! (thanks to Dave Phillips)

@@ -208,9 +208,7 @@ file_info *make_file_info(char *fullname, snd_state *ss)
 #endif
       if (type == MUS_RAW)
 	{
-	  /* TODO: remove raw-chans et al in favor of open-raw-sound-hook
-	   */
-	  SCM res = SCM_LIST0;
+	  SCM res = SCM_BOOL_F;
 	  SCM procs, arg1;
 	  int len, srate, chans, data_format, data_location, bytes;
 
@@ -235,29 +233,29 @@ file_info *make_file_info(char *fullname, snd_state *ss)
 		  res = CALL2(SCM_CAR(procs), arg1, res, S_open_raw_sound_hook);
 		  procs = SCM_CDR (procs);
 		}
-	      if ((LIST_P_WITH_LENGTH(res, len)) && 
-		  (len > 0))
-		{
-		  mus_header_raw_defaults(&srate, &chans, &data_format);
-		  chans = TO_C_INT(SCM_CAR(res));
-		  if (len > 1) srate = TO_C_INT(SCM_CADR(res));
-		  if (len > 2) data_format = TO_C_INT(LIST_REF(res, 2));
-		  if (len > 3) data_location = TO_C_INT(LIST_REF(res, 3)); else data_location = 0;
-		  if (len > 4) bytes = TO_C_INT(LIST_REF(res, 4)); else bytes = mus_sound_length(fullname);
-		  mus_header_set_raw_defaults(srate, chans, data_format);
-		  mus_sound_override_header(fullname, srate, chans, data_format, MUS_RAW, data_location,
-					    mus_bytes_to_samples(data_format, bytes - data_location));
-		  hdr = (file_info *)CALLOC(1, sizeof(file_info));
-		  hdr->name = copy_string(fullname);
-		  hdr->type = MUS_RAW;
-		  hdr->srate = mus_sound_srate(fullname);
-		  hdr->chans = mus_sound_chans(fullname);
-		  hdr->format = mus_sound_data_format(fullname);
-		  hdr->samples = mus_sound_samples(fullname); /* total samples, not per channel */
-		  hdr->data_location = mus_sound_data_location(fullname);
-		  hdr->comment = NULL;
-		  return(hdr);
-		}
+	    }
+	  if (LIST_P(res)) /* empty list ok here -> accept all current defaults */
+	    {
+	      len = LIST_LENGTH(res);
+	      mus_header_raw_defaults(&srate, &chans, &data_format);
+	      if (len > 0) chans = TO_C_INT(SCM_CAR(res));
+	      if (len > 1) srate = TO_C_INT(SCM_CADR(res));
+	      if (len > 2) data_format = TO_C_INT(LIST_REF(res, 2)); 
+	      if (len > 3) data_location = TO_C_INT(LIST_REF(res, 3)); else data_location = 0;
+	      if (len > 4) bytes = TO_C_INT(LIST_REF(res, 4)); else bytes = mus_sound_length(fullname);
+	      mus_header_set_raw_defaults(srate, chans, data_format);
+	      mus_sound_override_header(fullname, srate, chans, data_format, MUS_RAW, data_location,
+					mus_bytes_to_samples(data_format, bytes - data_location));
+	      hdr = (file_info *)CALLOC(1, sizeof(file_info));
+	      hdr->name = copy_string(fullname);
+	      hdr->type = MUS_RAW;
+	      hdr->srate = mus_sound_srate(fullname);
+	      hdr->chans = mus_sound_chans(fullname);
+	      hdr->format = mus_sound_data_format(fullname);
+	      hdr->samples = mus_sound_samples(fullname); /* total samples, not per channel */
+	      hdr->data_location = mus_sound_data_location(fullname);
+	      hdr->comment = NULL;
+	      return(hdr);
 	    }
 #if (!USE_NO_GUI)
 	  else 

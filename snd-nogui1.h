@@ -266,6 +266,7 @@ void change_channel_style(snd_info *sp, int new_style);
 int w_snd_name(snd_info *sp);
 int w_snd_play(snd_info *sp);
 int w_snd_filter_env(snd_info *sp);
+int w_snd_minibuffer(snd_info *sp);
 void make_minibuffer_label(snd_info *sp, char *str);
 void goto_minibuffer(snd_info *sp);
 void set_minibuffer_string(snd_info *sp, char *str);
