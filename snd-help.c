@@ -373,6 +373,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+19-Apr:  add-to-menu now returns the new menu label widget.\n\
 13-Apr:  removed forward|backward-graph|mix|mark -- see snd7.scm for Scheme versions.\n\
 12-Apr:  dither-channel.\n\
          goertzel in dsp.scm (faster version of find-sine)\n\
@@ -387,11 +388,6 @@ void about_snd_help(void)
          edit function in granulate generator.\n\
 15-Mar:  exported mus_optkey_* from sndlib and began incorporating optkey args into Snd.\n\
          region-position and optional channel arg to region-frames suggested by Matt Wright\n\
-10-Mar:  make-font-selector-dialog and make-color-selector-dialog in snd-gtk\n\
-         replaced snd-motif.rb with snd-xm.rb (thanks to Michael Scholz).\n\
-4-Mar:   tempo-control-bounds, and all other such variables' global defaults can be set\n\
-           including cursor-follows-play.\n\
-3-Mar:   read|write-speex for Speex files and read|write-flac for FLAC files (examp.scm)\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

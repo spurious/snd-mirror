@@ -32,12 +32,10 @@
 
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; check: check-for-unsaved-edits cross-synthesis dlocsig explode-sf2 extract-channel(s) fft-edit fft-squelch mark-explode
-;;;        mpg notch-out-rumble-and-hiss play-syncd-marks snap-mark-to-beat snap-mix-to-beat snd-break snd-debug
-;;;        snd-remember-paths snd-trace sound-interp window-samples zip-sound zipper anoi comb-filter osc-formants filtered-env
-;;;        zcomb notch-filter formant-filter remove-clicks squelch-vowels snd-out flash-selected-data
-;;;        files-popup-buffer open-next-file-in-directory flecho ring-mod read-ogg
-;;;        write-ogg read-speex write-speex read-flac write-flac window-rms
-;;;        make-sound-interp next-peak find-pitch make-fm-violin remove-local-hook! html ? prune-db stop-dac delete-all-tracks
+;;;        mpg notch-out-rumble-and-hiss play-syncd-marks snap-mark-to-beat snap-mix-to-beat
+;;;        zip-sound zipper anoi squelch-vowels snd-out
+;;;        files-popup-buffer open-next-file-in-directory read-ogg write-ogg read-speex write-speex read-flac write-flac
+;;;        next-peak find-pitch make-fm-violin remove-local-hook! html ? prune-db stop-dac delete-all-tracks
 ;;;        make-pvocoder pvocoder in-out xe-create-enved xe-envelope make-zipper
 ;;; need all html example code in autotests
 
@@ -1008,6 +1006,8 @@
 	'with-relative-panes (with-relative-panes) #t
 	'audio-output-device (audio-output-device) 0 
 	))
+      (if (not snd-remember-paths) (snd-display ";snd-remember-paths?"))
+      (if memo-sound (snd-display ";memo-sound: ~A" memo-sound))
       (run-hook after-test-hook 1)
       ))
 
@@ -10486,6 +10486,15 @@ EDITS: 5
 	      (if (or (< mx .00003) (> mx .0001))
 		  (snd-display ";dithering: ~A" mx)))
 	    (revert-sound ind)
+	    (map-channel (ring-mod 10 (list 0 0 1 (hz->radians 100))))
+	    (map-channel (osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3)))
+	    (map-channel (zecho .5 .75 6 10.0))
+	    (map-channel (flecho .5 .9))
+	    (filtered-env '(0 0 1 1 2 0))
+	    (map-channel (formant-filter .99 2400))
+	    (map-channel (comb-filter .8 32))
+	    (map-channel (zcomb .8 32 '(0 0 1 10)))
+	    (map-channel (notch-filter .8 32))
 	    (close-sound ind))
 
 	  (let ((ind (new-sound  "test.snd" mus-next mus-bfloat 22050 1 "special env tests" 100)))
@@ -22440,9 +22449,6 @@ EDITS: 5
 	(let ((id (make-region 100 200 obi 0)))
 	  (if (not (equal? (regions) (list id))) (snd-display ";make-region regions: ~A?" (regions))))
 	
-	;; need tests for mixes 
-	;; and all the tempsound -to- soundtemp calls
-	
 	(revert-sound obi)
 	(let ((oldlen (frames obi)))
 	  (env-sound-interp '(0 0 1 1 2 0) 2.0 obi 0)
@@ -22452,6 +22458,40 @@ EDITS: 5
 	
 	(close-sound obi)
 	)
+
+      (let ((ind (new-sound "test.snd" :size 20)))
+	(if (< (print-length) 20) (set! (print-length) 20))
+	(offset-channel 1.0)
+	(env-sound '(0 0 1 1))
+	(let ((osc (make-oscil :frequency 1000.0 :initial-phase (+ 3.14159 (/ 3.14159 2))))
+	      (reader (make-sound-interp 0 0 0)) 
+	      (len (1- (frames 0 0))))
+	  (map-channel (lambda (val) 
+			 (sound-interp reader (* len (+ 0.5 (* 0.5 (oscil osc)))))))
+	  (if (not (vequal (channel->vct) (vct 0.000 0.020 0.079 0.172 0.291 0.427 0.569 0.706 0.825 0.919 
+					       0.979 1.000 0.981 0.923 0.831 0.712 0.576 0.434 0.298 0.177)))
+	      (snd-display ";sound-interp: ~A ~A" (channel->vct))))
+	(undo)
+	(env-sound-interp '(0 0 1 1))
+	(if (not (vequal (channel->vct) (vct 0.000 0.053 0.105 0.158 0.211 0.263 0.316 0.368 0.421 0.474 
+					     0.526 0.579 0.632 0.684 0.737 0.789 0.842 0.895 0.947 1.000)))
+	    (snd-display ";env-sound-interp no change: ~A" (channel->vct)))
+	(undo)
+	(env-sound-interp '(0 0 1 .95 2 0) 2.0)
+	(if (not (vequal (channel->vct) (vct 0.000 0.050 0.100 0.150 0.200 0.250 0.300 0.350 0.400 0.450 
+					     0.500 0.550 0.600 0.650 0.700 0.750 0.800 0.850 0.900 0.950
+					     1.000 0.950 0.900 0.850 0.800 0.750 0.700 0.650 0.600 0.550 
+					     0.500 0.450 0.400 0.350 0.300 0.250 0.200 0.150 0.100 0.050)))
+	    (snd-display ";env-sound-interp twice len and back: ~A" (channel->vct)))
+	(revert-sound ind)
+	(set! (sample 10) .5)
+	(remove-clicks)
+	(if (fneq (sample 10) 0.0) (snd-display ";remove-clicks: ~A" (channel->vct)))
+	(undo)
+	(let ((vals (scan-channel (search-for-click))))
+	  (if (not (equal? vals (list -1 11)))
+	      (snd-display ";search-for-click: ~A" vals)))
+	(close-sound ind))
       
       (let* ((id (open-sound "oboe.snd"))
 	     (fr (frames id 0))
@@ -45497,6 +45537,9 @@ EDITS: 2
 
 ;;; ---------------- test 28: errors ----------------
 
+(load "debug.scm")
+(define (traced a) (+ 2 a))
+
 (gc)
 (if (defined? 'mem-report) (mem-report))
 (if (file-exists? "memlog")
@@ -47198,6 +47241,10 @@ EDITS: 2
 	    (mus-audio-reinitialize)
 	    (set! (window-y) 10)
 	    (dismiss-all-dialogs)
+
+	    (trace traced)
+	    (snd-trace (if #t (traced 12)))
+
 	    (run-hook after-test-hook 28)
 	    ))
       ))

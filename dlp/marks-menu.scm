@@ -74,6 +74,7 @@
 (define play-between-marks-m2 1)
 (define play-between-marks-label "Play between marks")
 (define play-between-marks-dialog #f)
+(define play-between-marks-menu-label #f)
 
 (define (cp-play-between-marks)
  (play-between-marks play-between-marks-m1 play-between-marks-m2))
@@ -111,13 +112,13 @@
 					     1))))))
 	(activate-dialog play-between-marks-dialog))
 
-      (add-to-menu marks-menu "Play between marks" (lambda () (post-play-between-marks-dialog))))
+      (set! play-between-marks-menu-label (add-to-menu marks-menu "Play between marks" (lambda () (post-play-between-marks-dialog)))))
 
-    (add-to-menu marks-menu play-between-marks-label cp-play-between-marks))
+    (set! play-between-marks-menu-label (add-to-menu marks-menu play-between-marks-label cp-play-between-marks)))
 
 (set! marks-list (cons (lambda ()
                            (let ((new-label (format #f "Play between marks (~1,2D ~1,2D)" play-between-marks-m1 play-between-marks-m2)))
-                             (change-menu-label marks-menu play-between-marks-label new-label)
+                             (if play-between-marks-menu-label (change-label play-between-marks-menu-label new-label))
                              (set! play-between-marks-label new-label)))
                          marks-list))
 
@@ -131,6 +132,7 @@
 (define loop-between-marks-label "Loop play between marks")
 (define loop-between-marks-dialog #f)
 (define loop-between-marks-default-buffer-widget #f)
+(define loop-between-marks-menu-label #f)
 
 (define use-combo-box-for-buffer-size #f) ; radio-buttons or combo-box choice
 
@@ -263,14 +265,14 @@
                     (XmStringFree s1)))))
         (activate-dialog loop-between-marks-dialog))
 
-      (add-to-menu marks-menu "Loop play between marks" (lambda () (post-loop-between-marks-dialog))))
+      (set! loop-between-marks-menu-label (add-to-menu marks-menu "Loop play between marks" (lambda () (post-loop-between-marks-dialog)))))
 
-    (add-to-menu marks-menu loop-between-marks-label cp-loop-between-marks))
+    (set! loop-between-marks-menu-label (add-to-menu marks-menu loop-between-marks-label cp-loop-between-marks)))
 
 (set! marks-list (cons (lambda ()
                            (let ((new-label (format #f "Loop play between marks (~1,2D ~1,2D ~1,2D)"
                                                 loop-between-marks-m1 loop-between-marks-m2 loop-between-marks-buffer-size)))
-                             (change-menu-label marks-menu loop-between-marks-label new-label)
+                             (if loop-between-marks-menu-label (change-label loop-between-marks-menu-label new-label))
                              (set! loop-between-marks-label new-label)))
                          marks-list))
 
@@ -345,6 +347,7 @@
 (define fit-to-mark-two 1)
 (define fit-to-mark-label "Fit selection to marks")
 (define fit-to-mark-dialog #f)
+(define fit-to-mark-menu-label #f)
 
 (define (cp-fit-to-marks)
  (fit-selection-between-marks fit-to-mark-one fit-to-mark-two))
@@ -384,13 +387,13 @@
 					     1))))))
 	(activate-dialog fit-to-mark-dialog))
 
-      (add-to-menu marks-menu "Fit selection to marks" (lambda () (post-fit-to-mark-dialog))))
+      (set! fit-to-mark-menu-label (add-to-menu marks-menu "Fit selection to marks" (lambda () (post-fit-to-mark-dialog)))))
 
-    (add-to-menu marks-menu fit-to-mark-label cp-fit-to-marks))
+    (set! fit-to-mark-menu-label (add-to-menu marks-menu fit-to-mark-label cp-fit-to-marks)))
 
 (set! marks-list (cons (lambda ()
                            (let ((new-label (format #f "Fit selection to marks (~1,2D ~1,2D)" fit-to-mark-one fit-to-mark-two)))
-                             (change-menu-label marks-menu fit-to-mark-label new-label)
+                             (if fit-to-mark-menu-label (change-label fit-to-mark-menu-label new-label))
                              (set! fit-to-mark-label new-label)))
                          marks-list))
 
@@ -401,6 +404,7 @@
 (define define-by-mark-two 1)
 (define define-by-mark-label "Define selection by marks")
 (define define-by-mark-dialog #f)
+(define define-by-mark-menu-label #f)
 
 (define (define-selection-via-marks m1 m2)
   (let ((m1sc (mark-home m1))
@@ -453,13 +457,13 @@
 					     1))))))
 	(activate-dialog define-by-mark-dialog))
 
-      (add-to-menu marks-menu "Define selection by marks" (lambda () (post-define-by-mark-dialog))))
+      (set! define-by-mark-menu-label (add-to-menu marks-menu "Define selection by marks" (lambda () (post-define-by-mark-dialog)))))
 
-    (add-to-menu marks-menu define-by-mark-label cp-define-by-marks))
+    (set! define-by-mark-menu-label (add-to-menu marks-menu define-by-mark-label cp-define-by-marks)))
 
 (set! marks-list (cons (lambda ()
                            (let ((new-label (format #f "Define selection by marks (~1,2D ~1,2D)" define-by-mark-one define-by-mark-two)))
-                             (change-menu-label marks-menu define-by-mark-label new-label)
+                             (if define-by-mark-menu-label (change-label define-by-mark-menu-label new-label))
                              (set! define-by-mark-label new-label)))
                          marks-list))
 
@@ -467,7 +471,7 @@
 
 ;;; ------- Start/stop mark sync
 ;;;
-
+(define mark-sync-menu-label #f)
 (define mark-sync-number 0)
 (define (start-sync) (set! mark-sync-number (+ (mark-sync-max) 1)))
 (define (stop-sync) (set! mark-sync-number 0))
@@ -480,21 +484,22 @@
 
 (define (msync!)
   (set! m-sync #t)
-  (change-menu-label marks-menu no-m-sync-label m-sync-label)
+  (if mark-sync-menu-label (change-label mark-sync-menu-label m-sync-label))
   (start-sync)
   (mark-sync-color "yellow"))
 
 
 (define (unmsync!)
   (set! m-sync #f)
-  (change-menu-label marks-menu m-sync-label no-m-sync-label)
+  (if mark-sync-menu-label (change-label mark-sync-menu-label no-m-sync-label))
   (stop-sync))
 
-(add-to-menu marks-menu no-m-sync-label
-  (lambda ()
-    (if m-sync
-        (unmsync!)
-        (msync!))))
+(set! mark-sync-menu-label 
+      (add-to-menu marks-menu no-m-sync-label
+		   (lambda ()
+		     (if m-sync
+			 (unmsync!)
+			 (msync!)))))
 
 ;(add-to-menu marks-menu "Start mark sync" start-sync)
 ;(add-to-menu marks-menu "Stop mark sync" stop-sync)
@@ -510,12 +515,6 @@
 
 ;;; Here is a first stab at the loop dialog (I guessed a lot as to what these buttons
 ;;; are supposed to do -- have never used these loop points).
-
-(define (change-label widget new-label)
-  (let ((str (XmStringCreateLocalized new-label)))
-    (XtSetValues widget (list XmNlabelString str))
-    (XmStringFree str)))
-
 
 (define loop-dialog #f)
 (define loop-data '(0 0 0 0 0 0 1 1))

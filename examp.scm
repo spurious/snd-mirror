@@ -1460,7 +1460,7 @@ selected sound: (map-chan (cross-synthesis 1 .5 128 6.0))"
     ;; use a sine wave to lookup the current sound
     (let ((osc (make-oscil :frequency freq :initial-phase (+ pi (/ pi 2))))
 	  (reader (make-sound-interp 0 0 0)) 
-	  (len (frames 0 0)))
+	  (len (1- (frames 0 0))))
       (map-chan (lambda (val) 
 		  (sound-interp reader (* len (+ 0.5 (* 0.5 (oscil osc))))))))))
 
@@ -1813,9 +1813,9 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
       (set! sctr (+ sctr 1))
       (if (>= sctr 10) (set! sctr 0))
       (let ((local-max (max .1 (vct-peak samps))))
-	(if (and (> (abs (- samp0 samp1)) local-max)
-		 (> (abs (- samp1 samp2)) local-max)
-		 (< (abs (- samp0 samp2)) (/ local-max 2)))
+	(if (and (>= (abs (- samp0 samp1)) local-max)
+		 (>= (abs (- samp1 samp2)) local-max)
+		 (<= (abs (- samp0 samp2)) (/ local-max 2)))
 	    -1
 	    #f)))))
 

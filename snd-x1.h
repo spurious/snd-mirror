@@ -171,7 +171,7 @@ void create_popup_menu(void);
 void post_popup(XButtonPressedEvent *event);
 void add_menu_drop(void);
 int g_add_to_main_menu(char *label, int slot);
-int g_add_to_menu(int which_menu, char *label, int callb, int position);
+Widget g_add_to_menu(int which_menu, char *label, int callb, int position);
 int g_remove_from_menu(int which_menu, char *label);
 void reflect_play_stop_in_popup_menu(void);
 void reflect_play_selection_stop(void);

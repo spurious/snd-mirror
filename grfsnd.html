@@ -323,7 +323,16 @@ horizontally rather than vertically;  if 2, you get a notebook
 widget holding the sounds.
 </p>
 <p>In Gtk, the various default colors and fonts can be found in Snd.gtkrc.
+If you want to change them, you can edit this file, then place it in the
+current directory.  Currently, the simplest way to change the menu label fonts
+is to change the "default" or "default_menu" styles in Snd.gtkrc:
 </p>
+<pre>
+style "default"
+{
+  font_name = "Sans Serif 11"
+  ....
+</pre>
 
 
 <p><A NAME="aboutcolors"></a>The Snd-specific color resources are:</p>

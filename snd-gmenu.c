@@ -1332,7 +1332,7 @@ GtkWidget *get_help_menu_widget(void)
   return(mw[h_cascade_menu]);
 }
 
-int g_add_to_menu(int which_menu, char *label, int callb, int position)
+GtkWidget *g_add_to_menu(int which_menu, char *label, int callb, int position)
 {
   GtkWidget *m, *menw;
    switch (which_menu)
@@ -1366,7 +1366,7 @@ int g_add_to_menu(int which_menu, char *label, int callb, int position)
 				      0);
        add_option(m, which_menu, label, callb);
      }
-  return(0);
+  return(m);
 }
 
 int g_remove_from_menu(int which_menu, char *label)

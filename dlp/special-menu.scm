@@ -31,6 +31,15 @@
 		 (all-chans))
 	  (map-chan (func) #f #f origin)))))
 
+
+;;; replacement for change-menu-label
+(define (change-label widget new-label)
+  (if (provided? 'xm)
+      (let ((str (XmStringCreateLocalized new-label)))
+	(XtSetValues widget (list XmNlabelString str))
+	(XmStringFree str))))
+
+
 ;;; -------- Insert/append file
 ;;;
 
@@ -71,6 +80,7 @@
 (define record-input-label "Record input channel")
 (define record-input-dialog #f)
 (define record-input-default-widget #f)
+(define record-input-menu-label #f)
 
 (define radio-buttons-yes #t) ; radio-buttons or combo-box choice
 
@@ -140,40 +150,41 @@
 		    (XmStringFree s1)))))
         (activate-dialog record-input-dialog))
 
-      (add-to-menu special-menu "Record input channel" (lambda () (post-record-input-dialog))))
+      (set! record-input-menu-label (add-to-menu special-menu "Record input channel" (lambda () (post-record-input-dialog)))))
 
-    (add-to-menu special-menu record-input-label cp-record-input))
+    (set! record-input-menu-label (add-to-menu special-menu record-input-label cp-record-input)))
 
 (set! special-list (cons (lambda ()
                            (let ((new-label (format #f "Record input channel (~1,2D)"
                                                 record-input-channel)))
-                             (change-menu-label special-menu record-input-label new-label)
+                             (if record-input-menu-label (change-label record-input-menu-label new-label))
                              (set! record-input-label new-label)))
                          special-list))
 
 (add-to-menu special-menu #f #f)
 
 
-
+(define env-file-menu-label #f)
 (define env-file #f)
 (define yes-env-label "Envelope new file (Off)")
 (define no-env-label "Envelope new file (On)")
 
 (define (yesenv!)
   (set! env-file #t)
-  (change-menu-label special-menu yes-env-label no-env-label)
+  (if env-file-menu-label (change-label env-file-menu-label no-env-label))
   (start-enveloping))
 
 (define (noenv!)
   (set! env-file #f)
-  (change-menu-label special-menu no-env-label yes-env-label)
+  (if env-file-menu-label (change-label env-file-menu-label yes-env-label))
   (stop-enveloping))
 
-(add-to-menu special-menu yes-env-label
-  (lambda ()
-    (if env-file
-        (noenv!)
-        (yesenv!))))
+(set! env-file-menu-label 
+      (add-to-menu special-menu yes-env-label
+		   (lambda ()
+		     (if env-file
+			 (noenv!)
+			 (yesenv!)))))
 
 ;(add-to-menu special-menu "Start enveloping" (lambda () (start-enveloping)))
 ;(add-to-menu special-menu "Stop enveloping" (lambda () (stop-enveloping)))
@@ -185,6 +196,7 @@
 (define play-panned-file 1)
 (define play-panned-label "Play panned")
 (define play-panned-dialog #f)
+(define play-panned-menu-label #f)
 
 (define (cp-play-panned)
   (play-panned play-panned-file))
@@ -214,13 +226,13 @@
                                              1))))))
         (activate-dialog play-panned-dialog))
 
-      (add-to-menu special-menu "Play panned" (lambda () (post-play-panned-dialog))))
+      (set! play-panned-menu-label (add-to-menu special-menu "Play panned" (lambda () (post-play-panned-dialog)))))
 
-    (add-to-menu special-menu play-panned-label cp-play-panned))
+    (set! play-panned-menu-label (add-to-menu special-menu play-panned-label cp-play-panned)))
 
 (set! special-list (cons (lambda ()
                            (let ((new-label (format #f "Play panned (~1,2D)"  play-panned-file)))
-                             (change-menu-label special-menu play-panned-label new-label)
+                             (if play-panned-menu-label (change-label play-panned-menu-label new-label))
                              (set! play-panned-label new-label)))
                          special-list))
 
@@ -233,6 +245,7 @@
 (define save-as-mp3-wav-file-number 0)
 (define save-as-mp3-label "Save as MP3")
 (define save-as-mp3-dialog #f)
+(define save-as-mp3-menu-label #f)
 
 (define (cp-save-as-mp3)
   (save-sound-as "tmp.wav" save-as-mp3-wav-file-number mus-riff)
@@ -263,13 +276,13 @@
                                              1))))))
         (activate-dialog save-as-mp3-dialog))
 
-      (add-to-menu special-menu "Save as MP3" (lambda () (post-save-as-mp3-dialog))))
+      (set! save-as-mp3-menu-label (add-to-menu special-menu "Save as MP3" (lambda () (post-save-as-mp3-dialog)))))
 
-    (add-to-menu special-menu save-as-mp3-label cp-save-as-mp3))
+    (set! save-as-mp3-menu-label (add-to-menu special-menu save-as-mp3-label cp-save-as-mp3)))
 
 (set! special-list (cons (lambda ()
                            (let ((new-label (format #f "Save as MP3 (~1,2D)"  save-as-mp3-wav-file-number)))
-                             (change-menu-label special-menu save-as-mp3-label new-label)
+                             (if save-as-mp3-menu-label (change-label save-as-mp3-menu-label new-label))
                              (set! save-as-mp3-label new-label)))
                          special-list))
 
@@ -281,6 +294,7 @@
 (define save-as-ogg-wav-file-number 0)
 (define save-as-ogg-label "Save as Ogg file")
 (define save-as-ogg-dialog #f)
+(define save-as-ogg-menu-label #f)
 
 (define (cp-save-as-ogg)
   (save-sound-as "tmp.wav" save-as-ogg-wav-file-number mus-riff)
@@ -311,13 +325,13 @@
                                              1))))))
         (activate-dialog save-as-ogg-dialog))
 
-      (add-to-menu special-menu "Save as Ogg file" (lambda () (post-save-as-ogg-dialog))))
+      (set! save-as-ogg-menu-label (add-to-menu special-menu "Save as Ogg file" (lambda () (post-save-as-ogg-dialog)))))
 
-    (add-to-menu special-menu save-as-ogg-label cp-save-as-ogg))
+    (set! save-as-ogg-menu-label (add-to-menu special-menu save-as-ogg-label cp-save-as-ogg)))
 
 (set! special-list (cons (lambda ()
                            (let ((new-label (format #f "Save as Ogg file (~1,2D)"  save-as-ogg-wav-file-number)))
-                             (change-menu-label special-menu save-as-ogg-label new-label)
+                             (if save-as-ogg-menu-label (change-label save-as-ogg-menu-label new-label))
                              (set! save-as-ogg-label new-label)))
                          special-list))
 

@@ -746,7 +746,6 @@ if test "$with_gl" = yes || test "$with_just_gl" = yes ; then
            GL_LIBS=$GL_LIBS" "`pkg-config gtkglext-1.0 --libs`
            GL_FLAGS=$GL_FLAGS" "`pkg-config gtkglext-1.0 --cflags`
         else
-# there's no gtkglext config program, as far as I can tell, so...
           OLD_CFLAGS="$CFLAGS"
 	  OLD_CPPFLAGS="$CPPFLAGS"
           CFLAGS="-I/usr/local/include/gtkglext-1.0 -I/usr/local/lib/gtkglext-1.0/include $GTK_CFLAGS $CFLAGS"

@@ -17,6 +17,7 @@
 (define fft-edit-high-frequency 1000)
 (define fft-edit-label "FFT notch filter")
 (define fft-edit-dialog #f)
+(define fft-edit-menu-label #f)
 
 (define (cp-fft-edit)
   (fft-edit fft-edit-low-frequency fft-edit-high-frequency))
@@ -54,13 +55,13 @@
                                              1))))))
         (activate-dialog fft-edit-dialog))
 
-      (add-to-menu fft-menu "FFT notch filter" (lambda () (post-fft-edit-dialog))))
+      (set! fft-edit-menu-label (add-to-menu fft-menu "FFT notch filter" (lambda () (post-fft-edit-dialog)))))
 
-    (add-to-menu fft-menu fft-edit-label cp-fft-edit))
+    (set! fft-edit-menu-label (add-to-menu fft-menu fft-edit-label cp-fft-edit)))
 
 (set! fft-list (cons (lambda ()
                            (let ((new-label (format #f "FFT notch filter (~1,2D ~1,2D)" fft-edit-low-frequency fft-edit-high-frequency)))
-                             (change-menu-label fft-menu fft-edit-label new-label)
+                             (if fft-edit-menu-label (change-label fft-edit-menu-label new-label))
                              (set! fft-edit-label new-label)))
                          fft-list))
 
@@ -72,6 +73,7 @@
 (define fft-squelch-amount 0.0)
 (define fft-squelch-label "FFT squelch")
 (define fft-squelch-dialog #f)
+(define fft-squelch-menu-label #f)
 
 (define (cp-fft-squelch)
  (fft-squelch fft-squelch-amount))
@@ -102,13 +104,13 @@
                                              100))))))
         (activate-dialog fft-squelch-dialog))
 
-      (add-to-menu fft-menu "FFT squelch" (lambda () (post-fft-squelch-dialog))))
+      (set! fft-squelch-menu-label (add-to-menu fft-menu "FFT squelch" (lambda () (post-fft-squelch-dialog)))))
 
-    (add-to-menu fft-menu fft-squelch-label cp-fft-squelch))
+    (set! fft-squelch-menu-label (add-to-menu fft-menu fft-squelch-label cp-fft-squelch)))
 
 (set! fft-list (cons (lambda ()
                            (let ((new-label (format #f "FFT squelch (~1,2F)" fft-squelch-amount)))
-                             (change-menu-label fft-menu fft-squelch-label new-label)
+                             (if fft-squelch-menu-label (change-label fft-squelch-menu-label new-label))
                              (set! fft-squelch-label new-label)))
                          fft-list))
 

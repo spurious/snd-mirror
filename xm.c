@@ -25620,6 +25620,10 @@ static void define_integers(void)
   DEFINE_INTEGER(XmSHADOW_ETCHED_OUT_DASH);
   DEFINE_INTEGER(XmINVALID_SEPARATOR_TYPE);
   DEFINE_INTEGER(XmPIXMAP);
+#if HAVE_XmPIXMAP_AND_STRING
+  /* TODO: configure check for XmPIXMAP_AND_STRING */
+  DEFINE_INTEGER(XmPIXMAP_AND_STRING);
+#endif
   DEFINE_INTEGER(XmSTRING);
   DEFINE_INTEGER(XmWINDOW);
   DEFINE_INTEGER(XmCURSOR);
@@ -26180,31 +26184,12 @@ static bool xm_already_inited = false;
 
 /* SOMEDAY: Motif 2.2.3: MultiList, DataField,  Hierarchy, Paned, TabBox, TabStack
 
-         resource names:
-	 XmNbadActionParameters
-	 XmNbadMotionParams
-	 XmNbadRowPixmap
-	 XmNbadXlfdFont
-	 XmNcellNotEmpty
-	 XmNcolorNameTooLong
-	 XmNcontextSaveFailed
-	 XmNconversionFailure
-	 XmNcouldNotFindFamilyData
-	 XmNforceGreaterThanZero
-	 XmNinsertBeforeNotSibling
-	 XmNnoComboShell
-	 XmNnoEmptyCells
-	 XmNnoGadgetSupport
-	 XmNpixEditBadImageCreate
-	 XmNsameAsImageOrPix
-	 XmNselfOrOutsideOfApplicationDrop
-	 XmNstaticResource
-	 XmNtextVerifyFailed
-	 XmNunexpectedEvent
-	 XmNunparsableColor
-	 XmNnodeParentIsSelf
-	 XmNstringGetFailed
-	 + many more that don't seem to be defined anywhere?!?
+	 2.2.4 XmStrDefs23.h:
+	 #define XmNdefaultEntryLabelRenderTable "defaultEntryLabelRenderTable"
+	 #define XmNentryLabelRenderTable "entryLabelRenderTable"
+	 #define XmNpixmapPlacement "pixmapPlacement"
+	 #define XmNpixmapTextPadding "pixmapTextPadding"
+
 
 	 macros/enums (ints):
 	 XmMULTILIST_FOUND

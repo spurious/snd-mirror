@@ -168,7 +168,7 @@ GtkWidget *popup_info_menu(void);
 bool popup_menu_exists(void);
 void set_menu_label(GtkWidget *w, const char *label);
 int g_add_to_main_menu(char *label, int slot);
-int g_add_to_menu(int which_menu, char *label, int callb, int position);
+GtkWidget *g_add_to_menu(int which_menu, char *label, int callb, int position);
 int g_remove_from_menu(int which_menu, char *label);
 GtkWidget *add_menu(void);
 void reflect_play_stop_in_popup_menu(void);

@@ -226,11 +226,11 @@ static char *alGetErrorString(int err)
     case AL_BAD_CONFIG:            return("tried to use an invalid configuration"); break;
     case AL_BAD_DEVICE:            return("tried to use an invalid device");        break;
     case AL_BAD_DEVICE_ACCESS:     return("unable to access the device");           break;
-    case AL_BAD_DIRECTION:         return("illegal direction given for port");      break;
+    case AL_BAD_DIRECTION:         return("invalid direction given for port");      break;
     case AL_BAD_OUT_OF_MEM:        return("operation has run out of memory");       break;
     case AL_BAD_NO_PORTS:          return("not able to allocate a port");           break;
     case AL_BAD_WIDTH:             return("invalid sample width given");            break;
-    case AL_BAD_ILLEGAL_STATE:     return("an illegal state has occurred");         break;
+    case AL_BAD_ILLEGAL_STATE:     return("an invalid state has occurred");         break;
     case AL_BAD_QSIZE:             return("attempt to set an invalid queue size");  break;
     case AL_BAD_FILLPOINT:         return("attempt to set an invalid fillpoint");   break;
     case AL_BAD_BUFFER_NULL:       return("null buffer pointer");                   break;

@@ -14,6 +14,8 @@
 (load-from-path "popup.scm")
 (load-from-path "rubber.scm")
 (load-from-path "zip.scm")
+(if (not (defined? 'make-effects-dialog)) (load-from-path "new-effects.scm"))
+(if (not (defined? 'forward-mix)) (load-from-path "snd7.scm"))
 (load-from-path "special-menu.scm") 
 (load-from-path "new-backgrounds.scm") 
 (load-from-path "marks-menu.scm") 

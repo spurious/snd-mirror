@@ -39,6 +39,7 @@
 (define delete-mix-number 0)
 (define delete-mix-label "Delete mix")
 (define delete-mix-dialog #f)
+(define delete-mix-menu-label #f)
 
 (define (cp-delete-mix)
   (catch 'no-such-mix
@@ -72,13 +73,13 @@
                                              1))))))
         (activate-dialog delete-mix-dialog))
 
-      (add-to-menu mix-menu "Delete mix" (lambda () (post-delete-mix-dialog))))
+      (set! delete-mix-menu-label (add-to-menu mix-menu "Delete mix" (lambda () (post-delete-mix-dialog)))))
 
-    (add-to-menu mix-menu delete-mix-label cp-delete-mix))
+    (set! delete-mix-menu-label (add-to-menu mix-menu delete-mix-label cp-delete-mix)))
 
 (set! mix-list (cons (lambda ()
                            (let ((new-label (format #f "Delete mix (~1,2D)" delete-mix-number)))
-                             (change-menu-label mix-menu delete-mix-label new-label)
+                             (if delete-mix-menu-label (change-label delete-mix-menu-label new-label))
                              (set! delete-mix-label new-label)))
                          mix-list))
 
@@ -89,25 +90,26 @@
 (define snapping #f)
 (define snap-label "Snap mix to beat (Off)")
 (define no-snap-label "Snap mix to beat (On)")
+(define snap-menu-label #f)
 
 (define (snap!)
   (set! snapping #t)
-  (change-menu-label mix-menu snap-label no-snap-label)
+  (if snap-menu-label (change-label snap-menu-label no-snap-label))
   (snap-mix-to-beat))
 
 (define (unsnap!)
   (set! snapping #f)
-  (change-menu-label mix-menu no-snap-label snap-label)
+  (if snap-menu-label (change-label snap-menu-label snap-label))
   (reset-hook! mix-release-hook))
 
-(add-to-menu mix-menu snap-label
-  (lambda ()
-    (if snapping
-        (unsnap!)
-        (snap!))))
+(set! snap-menu-label
+      (add-to-menu mix-menu snap-label
+		   (lambda ()
+		     (if snapping
+			 (unsnap!)
+			 (snap!)))))
 
 (add-to-menu mix-menu #f #f)
-
 
 
 (define (ensure-track new-num)
@@ -128,6 +130,7 @@
 (define renumber-tracks-number 0)
 (define renumber-tracks-label "Assign all tracks")
 (define renumber-tracks-dialog #f)
+(define renumber-tracks-menu-label #f)
 
 (define (set-all-tracks new-num)
   (ensure-track new-num)
@@ -167,13 +170,13 @@ The track number 0 is the 'untrack' so to speak."))
                                              1))))))
         (activate-dialog renumber-tracks-dialog))
 
-      (add-to-menu mix-menu "Assign all tracks" (lambda () (post-renumber-tracks-dialog))))
+      (set! renumber-tracks-menu-label (add-to-menu mix-menu "Assign all tracks" (lambda () (post-renumber-tracks-dialog)))))
 
-    (add-to-menu mix-menu renumber-tracks-label cp-renumber-tracks))
+    (set! renumber-tracks-menu-label (add-to-menu mix-menu renumber-tracks-label cp-renumber-tracks)))
 
 (set! mix-list (cons (lambda ()
                            (let ((new-label (format #f "Assign all tracks (~1,2D)" renumber-tracks-number)))
-                             (change-menu-label mix-menu renumber-tracks-label new-label)
+                             (if renumber-tracks-menu-label (change-label renumber-tracks-menu-label new-label))
                              (set! renumber-tracks-label new-label)))
                          mix-list))
 
@@ -186,6 +189,7 @@ The track number 0 is the 'untrack' so to speak."))
 (define delete-track-number 1)
 (define delete-track-label "Delete track")
 (define delete-track-dialog #f)
+(define delete-track-menu-label #f)
 
 (define (cp-delete-track)
   (catch 'no-such-track
@@ -220,13 +224,13 @@ The track number 0 is the 'untrack' so to speak."))
                                              1))))))
         (activate-dialog delete-track-dialog))
 
-      (add-to-menu mix-menu "Delete track" (lambda () (post-delete-track-dialog))))
+      (set! delete-track-menu-label (add-to-menu mix-menu "Delete track" (lambda () (post-delete-track-dialog)))))
 
-    (add-to-menu mix-menu delete-track-label cp-delete-track))
+    (set! delete-track-menu-label (add-to-menu mix-menu delete-track-label cp-delete-track)))
 
 (set! mix-list (cons (lambda ()
                            (let ((new-label (format #f "Delete track (~1,2D)" delete-track-number)))
-                             (change-menu-label mix-menu delete-track-label new-label)
+                             (if delete-track-menu-label (change-label delete-track-menu-label new-label))
                              (set! delete-track-label new-label)))
                          mix-list))
 
@@ -239,6 +243,7 @@ The track number 0 is the 'untrack' so to speak."))
 (define play-track-number 1)
 (define play-track-label "Play track")
 (define play-track-dialog #f)
+(define play-track-menu-label #f)
 
 (define (cp-play-track)
   (catch 'no-such-track
@@ -273,13 +278,13 @@ The track number 0 is the 'untrack' so to speak."))
                                              1))))))
         (activate-dialog play-track-dialog))
 
-      (add-to-menu mix-menu "Play track" (lambda () (post-play-track-dialog))))
+      (set! play-track-menu-label (add-to-menu mix-menu "Play track" (lambda () (post-play-track-dialog)))))
 
-    (add-to-menu mix-menu play-track-label cp-play-track))
+    (set! play-track-menu-label (add-to-menu mix-menu play-track-label cp-play-track)))
 
 (set! mix-list (cons (lambda ()
                            (let ((new-label (format #f "Play track (~1,2D)" play-track-number)))
-                             (change-menu-label mix-menu play-track-label new-label)
+                             (if play-track-menu-label (change-label play-track-menu-label new-label))
                              (set! play-track-label new-label)))
                          mix-list))
 
@@ -290,6 +295,7 @@ The track number 0 is the 'untrack' so to speak."))
 (define reverse-track-number 1)
 (define reverse-track-label "Reverse track")
 (define reverse-track-dialog #f)
+(define reverse-track-menu-label #f)
 
 (define (cp-reverse-track)
   (catch 'no-such-track
@@ -324,13 +330,13 @@ The track number 0 is the 'untrack' so to speak."))
                                              1))))))
         (activate-dialog reverse-track-dialog))
 
-      (add-to-menu mix-menu "Reverse track" (lambda () (post-reverse-track-dialog))))
+      (set! reverse-track-menu-label (add-to-menu mix-menu "Reverse track" (lambda () (post-reverse-track-dialog)))))
 
-    (add-to-menu mix-menu reverse-track-label cp-reverse-track))
+    (set! reverse-track-menu-label (add-to-menu mix-menu reverse-track-label cp-reverse-track)))
 
 (set! mix-list (cons (lambda ()
                            (let ((new-label (format #f "Reverse track (~1,2D)" reverse-track-number)))
-                             (change-menu-label mix-menu reverse-track-label new-label)
+                             (if reverse-track-menu-label (change-label reverse-track-menu-label new-label))
                              (set! reverse-track-label new-label)))
                          mix-list))
 
@@ -342,6 +348,7 @@ The track number 0 is the 'untrack' so to speak."))
 (define set-track-amp-scaler 1.0)
 (define set-track-amp-label "Set track amplitude")
 (define set-track-amp-dialog #f)
+(define set-track-amp-menu-label #f)
 
 (define (cp-set-track-amp)
   (ensure-track set-track-amp-tracknum)
@@ -380,13 +387,13 @@ The track number 0 is the 'untrack' so to speak."))
                                              100))))))
         (activate-dialog set-track-amp-dialog))
 
-      (add-to-menu mix-menu "Set track amplitude" (lambda () (post-set-track-amp-dialog))))
+      (set! set-track-amp-menu-label (add-to-menu mix-menu "Set track amplitude" (lambda () (post-set-track-amp-dialog)))))
 
-    (add-to-menu mix-menu set-track-amp-label cp-set-track-amp))
+    (set! set-track-amp-menu-label (add-to-menu mix-menu set-track-amp-label cp-set-track-amp)))
 
 (set! mix-list (cons (lambda ()
                            (let ((new-label (format #f "Set track amplitude (~1,2D ~1,2F)" set-track-amp-tracknum set-track-amp-scaler)))
-                             (change-menu-label mix-menu set-track-amp-label new-label)
+                             (if set-track-amp-menu-label (change-label set-track-amp-menu-label new-label))
                              (set! set-track-amp-label new-label)))
                          mix-list))
 
@@ -397,6 +404,7 @@ The track number 0 is the 'untrack' so to speak."))
 (define set-track-speed-scaler 1.0)
 (define set-track-speed-label "Set track speed")
 (define set-track-speed-dialog #f)
+(define set-track-speed-menu-label #f)
 
 (define (cp-set-track-speed)
   (ensure-track set-track-speed-tracknum)
@@ -435,13 +443,13 @@ The track number 0 is the 'untrack' so to speak."))
                                              100))))))
         (activate-dialog set-track-speed-dialog))
 
-      (add-to-menu mix-menu "Set track speed" (lambda () (post-set-track-speed-dialog))))
+      (set! set-track-speed-menu-label (add-to-menu mix-menu "Set track speed" (lambda () (post-set-track-speed-dialog)))))
 
-    (add-to-menu mix-menu set-track-speed-label cp-set-track-speed))
+    (set! set-track-speed-menu-label (add-to-menu mix-menu set-track-speed-label cp-set-track-speed)))
 
 (set! mix-list (cons (lambda ()
                            (let ((new-label (format #f "Set track speed (~1,2D ~1,2F)" set-track-speed-tracknum set-track-speed-scaler)))
-                             (change-menu-label mix-menu set-track-speed-label new-label)
+                             (if set-track-speed-menu-label (change-label set-track-speed-menu-label new-label))
                              (set! set-track-speed-label new-label)))
                          mix-list))
 
@@ -452,6 +460,7 @@ The track number 0 is the 'untrack' so to speak."))
 (define set-track-tempo-value 1.0)
 (define set-track-tempo-label "Set track tempo")
 (define set-track-tempo-dialog #f)
+(define set-track-tempo-menu-label #f)
 
 (define (cp-set-track-tempo)
   (catch 'no-such-track
@@ -493,11 +502,11 @@ The track number 0 is the 'untrack' so to speak."))
                                              100))))))
 
         (activate-dialog set-track-tempo-dialog))
-      (add-to-menu mix-menu "Set track tempo" (lambda () (post-set-track-tempo-dialog)))))
+      (set! set-track-tempo-menu-label (add-to-menu mix-menu "Set track tempo" (lambda () (post-set-track-tempo-dialog))))))
 
 (set! mix-list (cons (lambda ()
                            (let ((new-label (format #f "Set track tempo (~1,2D ~1,2F)" set-track-tempo-tracknum set-track-tempo-value)))
-                             (change-menu-label mix-menu set-track-tempo-label new-label)
+                             (if set-track-tempo-menu-label (change-label set-track-tempo-menu-label new-label))
                              (set! set-track-tempo-label new-label)))
                          mix-list))
 
@@ -510,6 +519,7 @@ The track number 0 is the 'untrack' so to speak."))
 (define transpose-track-semitones 0)
 (define transpose-track-label "Transpose track")
 (define transpose-track-dialog #f)
+(define transpose-track-menu-label #f)
 
 (define (cp-transpose-track)
   (ensure-track transpose-track-number)
@@ -548,11 +558,11 @@ The track number 0 is the 'untrack' so to speak."))
                                              1))))))
 
         (activate-dialog transpose-track-dialog))
-      (add-to-menu mix-menu "Transpose track" (lambda () (post-transpose-track-dialog)))))
+      (set! transpose-track-menu-label (add-to-menu mix-menu "Transpose track" (lambda () (post-transpose-track-dialog))))))
 
 (set! mix-list (cons (lambda ()
                            (let ((new-label (format #f "Transpose track (~1,2D ~1,2D)" transpose-track-number transpose-track-semitones)))
-                             (change-menu-label mix-menu transpose-track-label new-label)
+                             (if transpose-track-menu-label (change-label transpose-track-menu-label new-label))
                              (set! transpose-track-label new-label)))
                          mix-list))
 
@@ -564,6 +574,7 @@ The track number 0 is the 'untrack' so to speak."))
 (define save-track-number 1)
 (define save-track-label "Save track")
 (define save-track-dialog #f)
+(define save-track-menu-label #f)
 
 (define (cp-save-track)
   (catch #t
@@ -598,13 +609,13 @@ The track number 0 is the 'untrack' so to speak."))
                                              1))))))
         (activate-dialog save-track-dialog))
 
-      (add-to-menu mix-menu "Save track" (lambda () (post-save-track-dialog))))
+      (set! save-track-menu-label (add-to-menu mix-menu "Save track" (lambda () (post-save-track-dialog)))))
 
-    (add-to-menu mix-menu save-track-label cp-save-track))
+    (set! save-track-menu-label (add-to-menu mix-menu save-track-label cp-save-track)))
 
 (set! mix-list (cons (lambda ()
                            (let ((new-label (format #f "Save track (~1,2D)" save-track-number)))
-                             (change-menu-label mix-menu save-track-label new-label)
+                             (if save-track-menu-label (change-label save-track-menu-label new-label))
                              (set! save-track-label new-label)))
                          mix-list))
 

@@ -9037,7 +9037,8 @@ to add a new "Effects" menu to the top level menubar.
 <tr><td colspan=2><code><a class=def name="addtomenu">add-to-menu</a> (top-menu menu-label callback <i>position</i>)</code></td></tr>
 <tr><td></td><td>
 add menu <i>menu-label</i> to top-level menu whose index is 
-<i>top-menu</i> with the callback function <i>callback</i>.  The built-in
+<i>top-menu</i> with the callback function <i>callback</i>.  Return the new menu label widget.
+The built-in
 Snd menus are numbered from 0 ('File') to 5 ('Popup'); 'Help' is menu 4.  If the label and callback are #f, a separator is added to the menu.
 <i>position</i> sets the position of the new menu option; it defaults to the end of the menu.  See new-effects.scm for many examples.
 <br><br><pre>

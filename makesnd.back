@@ -52,5 +52,13 @@ install: snd
 uninstall:
 	rm -f $(bindir)/snd
 
+install-strip: snd
+	$(mkinstalldirs) $(DESTDIR)$(bindir)
+	$(mkinstalldirs) $(DESTDIR)$(mandir)
+	$(mkinstalldirs) $(DESTDIR)$(mandir)/man1
+	(cd po && $(MAKE) install)
+	$(INSTALL) -s snd $(bindir)/snd
+	$(INSTALL) $(srcdir)/snd.1 $(mandir)/man1
+
 check:
 	./snd -noinit -l snd-test.scm

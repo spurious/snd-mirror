@@ -813,7 +813,7 @@ int g_add_to_main_menu(char *label, int slot)
   return(new_menu);
 }
 
-int g_add_to_menu(int which_menu, char *label, int callb, int position)
+Widget g_add_to_menu(int which_menu, char *label, int callb, int position)
 {
   Widget m, menw;
   Arg args[12];
@@ -838,7 +838,7 @@ int g_add_to_menu(int which_menu, char *label, int callb, int position)
 	      if (position >= 0) XtVaSetValues(m, XmNpositionIndex, position, NULL);
 	      XtVaSetValues(m, XmNuserData, PACK_MENU_DATA(callb, which_menu), NULL);
 	      XtManageChild(m);
-	      return(0);
+	      return(m);
 	    }
 	}
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -851,9 +851,9 @@ int g_add_to_menu(int which_menu, char *label, int callb, int position)
     {
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       if (position >= 0) {XtSetArg(args[n], XmNpositionIndex, position); n++;}
-      XtCreateManagedWidget("sep", xmSeparatorWidgetClass, menw, args, n);
+      m = XtCreateManagedWidget("sep", xmSeparatorWidgetClass, menw, args, n);
     }
-  return(0);
+  return(m);
 }
 
 

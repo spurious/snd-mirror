@@ -627,11 +627,12 @@ static XEN gl_add_to_main_menu(XEN label, XEN callback)
 static XEN gl_add_to_menu(XEN menu, XEN label, XEN callback, XEN gpos)
 {
   #define H_add_to_menu "(" S_add_to_menu " menu label func (position #f): adds label to menu (a main menu index), invokes \
-func (a function of no args) when the new menu is activated."
+func (a function of no args) when the new menu is activated. Returns the new menu label widget."
 
-  int err = 0, slot = -1, m, position = -1;
+  int slot = -1, m, position = -1;
   char *errmsg = NULL;
   XEN errm;
+  widget_t result;
   XEN_ASSERT_TYPE(XEN_STRING_P(label) || XEN_FALSE_P(label), label, XEN_ARG_2, S_add_to_menu, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(menu), menu, XEN_ARG_1, S_add_to_menu, "an integer");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(callback) || XEN_FALSE_P(callback), callback, XEN_ARG_3, S_add_to_menu, "a procedure");
@@ -645,18 +646,15 @@ func (a function of no args) when the new menu is activated."
 	return(snd_no_such_menu_error(S_add_to_menu, menu));
       if (XEN_PROCEDURE_P(callback)) slot = make_callback_slot();
       if (XEN_INTEGER_P(gpos)) position = XEN_TO_C_INT(gpos);
-      err = g_add_to_menu(
-			  m,
+      result = g_add_to_menu(m,
 #if (SGI) && (!(HAVE_EXTENSION_LANGUAGE)) && (!(defined(__GNUC__)))
-			  /* SGI C-compiler thinks NULL:NULL can't be char*! */
-			  (XEN_FALSE_P(label)) ? "" : XEN_TO_C_STRING(label),
+			     /* SGI C-compiler thinks NULL:NULL can't be char*! */
+			     (XEN_FALSE_P(label)) ? "" : XEN_TO_C_STRING(label),
 #else
-			  (XEN_FALSE_P(label)) ? NULL : XEN_TO_C_STRING(label),
+			     (XEN_FALSE_P(label)) ? NULL : XEN_TO_C_STRING(label),
 #endif
-			  slot,
-			  position);
-      if (err == -1) 
-	return(snd_no_such_menu_error(S_add_to_menu, menu));
+			     slot,
+			     position);
       if (XEN_PROCEDURE_P(callback)) add_callback(slot, callback);
     }
   else 
@@ -665,7 +663,7 @@ func (a function of no args) when the new menu is activated."
       FREE(errmsg);
       return(snd_bad_arity_error(S_add_to_menu, errm, callback));
     }
-  return(label);
+  return(XEN_WRAP_WIDGET(result));
 }
 
 void g_snd_callback(int callb)
