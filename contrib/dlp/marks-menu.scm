@@ -488,7 +488,9 @@
 (define (msync!)
   (set! m-sync #t)
   (change-menu-label marks-menu no-m-sync-label m-sync-label)
-  (start-sync))
+  (start-sync)
+  (mark-sync-color "yellow"))
+
 
 (define (unmsync!)
   (set! m-sync #f)

@@ -79,7 +79,9 @@
                              (set! delete-mix-label new-label)))
                          mix-list))
 
-
+;;; -------- Snap mix to beat 
+;;;
+;;;
 
 (define snapping #f)
 (define snap-label "Snap mix to beat (Off)")
@@ -103,10 +105,66 @@
 
 (add-to-menu mix-menu #f #f)
 
-;;; -------- Delete track
+;;; -------- Assign all tracks
 ;;;
 ;;;
 
+(define renumber-tracks-number 0)
+(define renumber-tracks-label "Assign all tracks")
+(define renumber-tracks-dialog #f)
+
+(define (set-all-tracks new-num)
+  (tree-apply
+    (lambda (n)
+      (set! (mix-track n) new-num))
+    (mixes)))
+
+(define (cp-renumber-tracks)
+ (set-all-tracks renumber-tracks-number))
+
+(if (provided? 'xm) ; if xm module is loaded, popup a dialog here
+    (begin
+
+      (define (post-renumber-tracks-dialog)
+        (if (not (|Widget? renumber-tracks-dialog))
+            ;; if renumber-tracks-dialog doesn't exist, create it
+            (let ((initial-renumber-tracks-number 0)
+                  (sliders '()))
+              (set! renumber-tracks-dialog
+                    (make-effect-dialog renumber-tracks-label
+                                        (lambda (w context info)
+                                          (cp-renumber-tracks))
+                                        (lambda (w context info)
+                                          (|XtUnmanageChild renumber-tracks-dialog))
+                                        (lambda (w context info)
+                                          (help-dialog "Assign all tracks"
+                                                "Assign all tracks to number specified by the slider."))
+                                        (lambda (w c i)
+                                          (set! renumber-tracks-number initial-renumber-tracks-number)
+                                          (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* renumber-tracks-number 1)))))))
+              (set! sliders
+                    (add-sliders renumber-tracks-dialog
+                                 (list (list "new number" 0 initial-renumber-tracks-number 100
+                                             (lambda (w context info)
+                                               (set! renumber-tracks-number (/ (|value info) 1)))
+                                             1))))))
+        (activate-dialog renumber-tracks-dialog))
+
+      (add-to-menu mix-menu "Assign all tracks" (lambda () (post-renumber-tracks-dialog))))
+
+    (add-to-menu mix-menu renumber-tracks-label cp-renumber-tracks))
+
+(set! mix-list (cons (lambda ()
+                           (let ((new-label (format #f "Assign all tracks (~1,2D)" renumber-tracks-number)))
+                             (change-menu-label mix-menu renumber-tracks-label new-label)
+                             (set! renumber-tracks-label new-label)))
+                         mix-list))
+
+
+
+;;; -------- Delete track
+;;;
+;;;
 
 (define (delete-track track)
   (as-one-edit
@@ -210,61 +268,6 @@
                            (let ((new-label (format #f "Play track (~1,2D)" play-track-number)))
                              (change-menu-label mix-menu play-track-label new-label)
                              (set! play-track-label new-label)))
-                         mix-list))
-
-;;; -------- Renumber all tracks
-;;;
-;;;
-
-(define renumber-tracks-number 0)
-(define renumber-tracks-label "Renumber all tracks")
-(define renumber-tracks-dialog #f)
-
-(define (set-all-tracks new-num)
-  (tree-apply
-    (lambda (n)
-      (set! (mix-track n) new-num))
-    (mixes)))
-
-(define (cp-renumber-tracks)
- (set-all-tracks renumber-tracks-number))
-
-(if (provided? 'xm) ; if xm module is loaded, popup a dialog here
-    (begin
-
-      (define (post-renumber-tracks-dialog)
-        (if (not (|Widget? renumber-tracks-dialog))
-            ;; if renumber-tracks-dialog doesn't exist, create it
-            (let ((initial-renumber-tracks-number 0)
-                  (sliders '()))
-              (set! renumber-tracks-dialog
-                    (make-effect-dialog renumber-tracks-label
-                                        (lambda (w context info)
-                                          (cp-renumber-tracks))
-                                        (lambda (w context info)
-                                          (|XtUnmanageChild renumber-tracks-dialog))
-                                        (lambda (w context info)
-                                          (help-dialog "Renumber all tracks"
-                                                "Renumbers all tracks to number specified by the slider."))
-                                        (lambda (w c i)
-                                          (set! renumber-tracks-number initial-renumber-tracks-number)
-                                          (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* renumber-tracks-number 1)))))))
-              (set! sliders
-                    (add-sliders renumber-tracks-dialog
-                                 (list (list "new number" 0 initial-renumber-tracks-number 100
-                                             (lambda (w context info)
-                                               (set! renumber-tracks-number (/ (|value info) 1)))
-                                             1))))))
-        (activate-dialog renumber-tracks-dialog))
-
-      (add-to-menu mix-menu "Renumber all tracks" (lambda () (post-renumber-tracks-dialog))))
-
-    (add-to-menu mix-menu renumber-tracks-label cp-renumber-tracks))
-
-(set! mix-list (cons (lambda ()
-                           (let ((new-label (format #f "Renumber all tracks (~1,2D)" renumber-tracks-number)))
-                             (change-menu-label mix-menu renumber-tracks-label new-label)
-                             (set! renumber-tracks-label new-label)))
                          mix-list))
 
 ;;; -------- Reverse track
@@ -589,7 +592,7 @@
 
 (add-to-menu mix-menu #f #f)
 
-(add-to-menu mix-menu "Colorize tracks" (lambda () (load "track-colors.scm")))
+(add-to-menu mix-menu "Colorize tracks" (lambda () (load-from-path "track-colors.scm")))
 
 (define (delete-all-mixes)
   (as-one-edit
@@ -602,7 +605,5 @@
 (define (delete-all-tracks)
   (delete-all-mixes))
 
-
-;(add-to-menu mix-menu "Delete all mixes" (lambda () (delete-all-mixes)))
 (add-to-menu mix-menu "Delete all mixes & tracks" (lambda () (delete-all-tracks)))
 

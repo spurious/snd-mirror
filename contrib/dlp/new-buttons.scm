@@ -52,7 +52,7 @@
          (tools (|XtCreateManagedWidget "tools" |xmRowColumnWidgetClass toolscroll
                   (list |XmNbackground (black-pixel)
                         |XmNorientation |XmHORIZONTAL))))
-    (load "/home/dlphilp/my_scm/new-icons.scm")
+    (load-from-path "new-icons.scm")
     (let ((play-pixmap (make-pixmap tools full-go))
           (stop-pixmap (make-pixmap tools full-stop))
           (play-forward-pixmap (make-pixmap tools play-direction-forward))

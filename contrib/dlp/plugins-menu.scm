@@ -37,406 +37,6 @@
 
 ;;; create the submenu
 
-;;; AMPLITUDE EFFECTS
-;;;
-
-(define ladspa-amp-menu (|XmCreatePulldownMenu plug-menu "Amplitude Effects"
-                                        (list |XmNbackground (|Pixel (snd-pixel (basic-color))))))
-(define ladspa-amp-cascade (|XtCreateManagedWidget "Amplitude Effects" |xmCascadeButtonWidgetClass plug-menu
-                                            (list |XmNsubMenuId ladspa-amp-menu
-                                                  |XmNbackground (|Pixel (snd-pixel (basic-color))))))
-
-;;; Compressor (peak tracking)
-;;;
-
-(define compress-peak-threshold 0.0)
-(define compress-peak-ratio 1.0)
-(define compress-peak-envelope-attack 1.0)
-(define compress-peak-envelope-decay 1.0)
-(define compress-peak-dialog #f)
-(define compress-peak-label "Compressor (peak tracking)")
-
-(define (cp-compress-peak)
- (apply-ladspa (make-sample-reader (cursor))
-   (list "cmt" "compress_peak" compress-peak-threshold compress-peak-ratio compress-peak-envelope-attack compress-peak-envelope-decay)
-     (- (frames) (cursor))
-     "compressor (peak)"))
-
-(if (and (provided? 'snd-ladspa)
-         (provided? 'xm))
-  (begin
-
-      (define (post-compress-peak-dialog)
-       (if (not (|Widget? compress-peak-dialog))
-           (let ((sliders '()))
-             (set! compress-peak-dialog
-                   (make-effect-dialog "compressor (peak) ladspa plugin"
-                                       (lambda (w context info) (cp-compress-peak))
-                                       (lambda (w context info) (|XtUnmanageChild compress-peak-dialog))
-                                       (lambda (w context info)
-                                         (help-dialog "Compressor (peak tracking)"
-                                                      "Move the sliders to set the compressor parameters."))
-                                       (lambda (w c i)
-                                         (set! compress-peak-threshold 0.0)
-                                         (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* compress-peak-threshold 100))))
-                                         (set! compress-peak-ratio 1.0)
-                                         (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact (* compress-peak-ratio 100))))
-                                         (set! compress-peak-envelope-attack 1.0)
-                                         (|XtSetValues (list-ref sliders 2) (list |XmNvalue (inexact->exact (* compress-peak-envelope-attack 100))))
-                                         (set! compress-peak-envelope-decay 1.0)
-                                         (|XtSetValues (list-ref sliders 3) (list |XmNvalue (inexact->exact (* compress-peak-envelope-decay 100)))))))
-             (set! sliders
-                   (add-sliders compress-peak-dialog
-                                (list 
-                                      (list "threshold" 0.0 0.0 10.0
-                                            (lambda (w context info)
-                                              (set! compress-peak-threshold (/ (|value info) 100)))
-                                            100)
- 				      (list "compression ratio" 0.0 0.0 1.0
-                                            (lambda (w context info)
-                                              (set! compress-peak-ratio (/ (|value info) 100)))
-                                            100)
-				      (list "output envelope attack (s)" 0.0 1.0 10.0
-                                            (lambda (w context info)
-                                              (set! compress-peak-envelope-attack (/ (|value info) 100)))
-                                            100)
-                                      (list "output envelope decay (s)" 0.0 1.0 10.0
-                                            (lambda (w context info)
-                                              (set! compress-peak-envelope-decay (/ (|value info) 100)))
-                                            100))))))
-       (activate-dialog compress-peak-dialog))))
-
-      (let ((child (|XtCreateManagedWidget "Compressor (peak tracking)" |xmPushButtonWidgetClass ladspa-amp-menu
-                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
-        (|XtAddCallback child |XmNactivateCallback
-                        (lambda (w c i)
-                          (post-compress-peak-dialog))))
-
-
-;;; Compressor (rms tracking)
-;;;
-
-(define compress-rms-threshold 0.0)
-(define compress-rms-ratio 1.0)
-(define compress-rms-envelope-attack 1.0)
-(define compress-rms-envelope-decay 1.0)
-(define compress-rms-dialog #f)
-(define compress-rms-label "Compressor (rms tracking)")
-
-(define (cp-compress-rms)
- (apply-ladspa (make-sample-reader (cursor))
-   (list "cmt" "compress_rms" compress-rms-threshold compress-rms-ratio compress-rms-envelope-attack compress-rms-envelope-decay)
-     (- (frames) (cursor))
-     "compressor (rms)"))
-
-(if (and (provided? 'snd-ladspa)
-         (provided? 'xm))
-  (begin
-
-      (define (post-compress-rms-dialog)
-       (if (not (|Widget? compress-rms-dialog))
-           (let ((sliders '()))
-             (set! compress-rms-dialog
-                   (make-effect-dialog "compressor (rms) ladspa plugin"
-                                       (lambda (w context info) (cp-compress-rms))
-                                       (lambda (w context info) (|XtUnmanageChild compress-rms-dialog))
-                                       (lambda (w context info)
-                                         (help-dialog "Compressor (rms tracking)"
-                                                      "Move the sliders to set the compressor parameters."))
-                                       (lambda (w c i)
-                                         (set! compress-rms-threshold 0.0)
-                                         (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* compress-rms-threshold 100))))
-                                         (set! compress-rms-ratio 1.0)
-                                         (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact (* compress-rms-ratio 100))))
-                                         (set! compress-rms-envelope-attack 1.0)
-                                         (|XtSetValues (list-ref sliders 2) (list |XmNvalue (inexact->exact (* compress-rms-envelope-attack 100))))
-                                         (set! compress-rms-envelope-decay 1.0)
-                                         (|XtSetValues (list-ref sliders 3) (list |XmNvalue (inexact->exact (* compress-rms-envelope-decay 100)))))))
-             (set! sliders
-                   (add-sliders compress-rms-dialog
-                                (list 
-                                      (list "threshold" 0.0 0.0 10.0
-                                            (lambda (w context info)
-                                              (set! compress-rms-threshold (/ (|value info) 100)))
-                                            100)
- 				      (list "compression ratio" 0.0 0.0 1.0
-                                            (lambda (w context info)
-                                              (set! compress-rms-ratio (/ (|value info) 100)))
-                                            100)
-				      (list "output envelope attack (s)" 0.0 1.0 10.0
-                                            (lambda (w context info)
-                                              (set! compress-rms-envelope-attack (/ (|value info) 100)))
-                                            100)
-                                      (list "output envelope decay (s)" 0.0 1.0 10.0
-                                            (lambda (w context info)
-                                              (set! compress-rms-envelope-decay (/ (|value info) 100)))
-                                            100))))))
-       (activate-dialog compress-rms-dialog))))
-
-      (let ((child (|XtCreateManagedWidget "Compressor (rms tracking)" |xmPushButtonWidgetClass ladspa-amp-menu
-                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
-        (|XtAddCallback child |XmNactivateCallback
-                        (lambda (w c i)
-                          (post-compress-rms-dialog))))
-
-
-;;; Expander (peak tracking)
-;;;
-
-(define expand-peak-threshold 0.0)
-(define expand-peak-ratio 1.0)
-(define expand-peak-envelope-attack 1.0)
-(define expand-peak-envelope-decay 1.0)
-(define expand-peak-dialog #f)
-(define expand-peak-label "Expander (peak tracking)")
-
-(define (cp-expand-peak)
- (apply-ladspa (make-sample-reader (cursor))
-   (list "cmt" "expand_peak" expand-peak-threshold expand-peak-ratio expand-peak-envelope-attack expand-peak-envelope-decay)
-     (- (frames) (cursor))
-     "expander (peak)"))
-
-(if (and (provided? 'snd-ladspa)
-         (provided? 'xm))
-  (begin
-
-      (define (post-expand-peak-dialog)
-       (if (not (|Widget? expand-peak-dialog))
-           (let ((sliders '()))
-             (set! expand-peak-dialog
-                   (make-effect-dialog "expander (peak) ladspa plugin"
-                                       (lambda (w context info) (cp-expand-peak))
-                                       (lambda (w context info) (|XtUnmanageChild expand-peak-dialog))
-                                       (lambda (w context info)
-                                         (help-dialog "Expander (peak tracking)"
-                                                      "Move the sliders to set the expander parameters."))
-                                       (lambda (w c i)
-                                         (set! expand-peak-threshold 0.0)
-                                         (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* expand-peak-threshold 100))))
-                                         (set! expand-peak-ratio 1.0)
-                                         (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact (* expand-peak-ratio 100))))
-                                         (set! expand-peak-envelope-attack 1.0)
-                                         (|XtSetValues (list-ref sliders 2) (list |XmNvalue (inexact->exact (* expand-peak-envelope-attack 100))))
-                                         (set! expand-peak-envelope-decay 1.0)
-                                         (|XtSetValues (list-ref sliders 3) (list |XmNvalue (inexact->exact (* expand-peak-envelope-decay 100)))))))
-             (set! sliders
-                   (add-sliders expand-peak-dialog
-                                (list 
-                                      (list "threshold" 0.0 0.0 10.0
-                                            (lambda (w context info)
-                                              (set! expand-peak-threshold (/ (|value info) 100)))
-                                            100)
- 				      (list "expansion ratio" 0.0 0.0 1.0
-                                            (lambda (w context info)
-                                              (set! expand-peak-ratio (/ (|value info) 100)))
-                                            100)
-				      (list "output envelope attack (s)" 0.0 1.0 10.0
-                                            (lambda (w context info)
-                                              (set! expand-peak-envelope-attack (/ (|value info) 100)))
-                                            100)
-                                      (list "output envelope decay (s)" 0.0 1.0 10.0
-                                            (lambda (w context info)
-                                              (set! expand-peak-envelope-decay (/ (|value info) 100)))
-                                            100))))))
-       (activate-dialog expand-peak-dialog))))
-
-      (let ((child (|XtCreateManagedWidget "Expander (peak tracking)" |xmPushButtonWidgetClass ladspa-amp-menu
-                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
-        (|XtAddCallback child |XmNactivateCallback
-                        (lambda (w c i)
-                          (post-expand-peak-dialog))))
-
-
-;;; Expander (rms tracking)
-;;;
-
-(define expand-rms-threshold 0.0)
-(define expand-rms-ratio 1.0)
-(define expand-rms-envelope-attack 1.0)
-(define expand-rms-envelope-decay 1.0)
-(define expand-rms-dialog #f)
-(define expand-rms-label "Expander (rms tracking)")
-
-(define (cp-expand-rms)
- (apply-ladspa (make-sample-reader (cursor))
-   (list "cmt" "expand_rms" expand-rms-threshold expand-rms-ratio expand-rms-envelope-attack expand-rms-envelope-decay)
-     (- (frames) (cursor))
-     "expander (rms)"))
-
-(if (and (provided? 'snd-ladspa)
-         (provided? 'xm))
-  (begin
-
-      (define (post-expand-rms-dialog)
-       (if (not (|Widget? expand-rms-dialog))
-           (let ((sliders '()))
-             (set! expand-rms-dialog
-                   (make-effect-dialog "expander (rms) ladspa plugin"
-                                       (lambda (w context info) (cp-expand-rms))
-                                       (lambda (w context info) (|XtUnmanageChild expand-rms-dialog))
-                                       (lambda (w context info)
-                                         (help-dialog "Expander (rms tracking)"
-                                                      "Move the sliders to set the expander parameters."))
-                                       (lambda (w c i)
-                                         (set! expand-rms-threshold 0.0)
-                                         (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* expand-rms-threshold 100))))
-                                         (set! expand-rms-ratio 1.0)
-                                         (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact (* expand-rms-ratio 100))))
-                                         (set! expand-rms-envelope-attack 1.0)
-                                         (|XtSetValues (list-ref sliders 2) (list |XmNvalue (inexact->exact (* expand-rms-envelope-attack 100))))
-                                         (set! expand-rms-envelope-decay 1.0)
-                                         (|XtSetValues (list-ref sliders 3) (list |XmNvalue (inexact->exact (* expand-rms-envelope-decay 100)))))))
-             (set! sliders
-                   (add-sliders expand-rms-dialog
-                                (list 
-                                      (list "threshold" 0.0 0.0 10.0
-                                            (lambda (w context info)
-                                              (set! expand-rms-threshold (/ (|value info) 100)))
-                                            100)
- 				      (list "expansion ratio" 0.0 0.0 1.0
-                                            (lambda (w context info)
-                                              (set! expand-rms-ratio (/ (|value info) 100)))
-                                            100)
-				      (list "output envelope attack (s)" 0.0 1.0 10.0
-                                            (lambda (w context info)
-                                              (set! expand-rms-envelope-attack (/ (|value info) 100)))
-                                            100)
-                                      (list "output envelope decay (s)" 0.0 1.0 10.0
-                                            (lambda (w context info)
-                                              (set! expand-rms-envelope-decay (/ (|value info) 100)))
-                                            100))))))
-       (activate-dialog expand-rms-dialog))))
-
-      (let ((child (|XtCreateManagedWidget "Expander (rms tracking)" |xmPushButtonWidgetClass ladspa-amp-menu
-                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
-        (|XtAddCallback child |XmNactivateCallback
-                        (lambda (w c i)
-                          (post-expand-rms-dialog))))
-
-
-;;; Limiter (peak tracking)
-;;;
-
-(define limit-peak-threshold 0.0)
-(define limit-peak-envelope-attack 1.0)
-(define limit-peak-envelope-decay 1.0)
-(define limit-peak-dialog #f)
-(define limit-peak-label "Limiter (peak tracking)")
-
-(define (cp-limit-peak)
- (apply-ladspa (make-sample-reader (cursor))
-   (list "cmt" "limit_peak" limit-peak-threshold limit-peak-envelope-attack limit-peak-envelope-decay)
-     (- (frames) (cursor))
-     "limiter (peak)"))
-
-(if (and (provided? 'snd-ladspa)
-         (provided? 'xm))
-  (begin
-
-      (define (post-limit-peak-dialog)
-       (if (not (|Widget? limit-peak-dialog))
-           (let ((sliders '()))
-             (set! limit-peak-dialog
-                   (make-effect-dialog "limiter (peak) ladspa plugin"
-                                       (lambda (w context info) (cp-limit-peak))
-                                       (lambda (w context info) (|XtUnmanageChild limit-peak-dialog))
-                                       (lambda (w context info)
-                                         (help-dialog "Limiter (peak tracking)"
-                                                      "Move the sliders to set the limiter parameters."))
-                                       (lambda (w c i)
-                                         (set! limit-peak-threshold 0.0)
-                                         (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* limit-peak-threshold 100))))
-                                         (set! limit-peak-envelope-attack 1.0)
-                                         (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact (* limit-peak-envelope-attack 100))))
-                                         (set! limit-peak-envelope-decay 1.0)
-                                         (|XtSetValues (list-ref sliders 2) (list |XmNvalue (inexact->exact (* limit-peak-envelope-decay 100)))))))
-             (set! sliders
-                   (add-sliders limit-peak-dialog
-                                (list 
-                                      (list "threshold" 0.0 0.0 10.0
-                                            (lambda (w context info)
-                                              (set! limit-peak-threshold (/ (|value info) 100)))
-                                            100)
-				      (list "output envelope attack (s)" 0.0 1.0 10.0
-                                            (lambda (w context info)
-                                              (set! limit-peak-envelope-attack (/ (|value info) 100)))
-                                            100)
-                                      (list "output envelope decay (s)" 0.0 1.0 10.0
-                                            (lambda (w context info)
-                                              (set! limit-peak-envelope-decay (/ (|value info) 100)))
-                                            100))))))
-       (activate-dialog limit-peak-dialog))))
-
-      (let ((child (|XtCreateManagedWidget "Limiter (peak tracking)" |xmPushButtonWidgetClass ladspa-amp-menu
-                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
-        (|XtAddCallback child |XmNactivateCallback
-                        (lambda (w c i)
-                          (post-limit-peak-dialog))))
-
-
-;;; Limiter (rms tracking)
-;;;
-
-(define limit-rms-threshold 0.0)
-(define limit-rms-envelope-attack 1.0)
-(define limit-rms-envelope-decay 1.0)
-(define limit-rms-dialog #f)
-(define limit-rms-label "Limiter (rms tracking)")
-
-(define (cp-limit-rms)
- (apply-ladspa (make-sample-reader (cursor))
-   (list "cmt" "limit_rms" limit-rms-threshold limit-rms-envelope-attack limit-rms-envelope-decay)
-     (- (frames) (cursor))
-     "limiter (rms)"))
-
-(if (and (provided? 'snd-ladspa)
-         (provided? 'xm))
-  (begin
-
-      (define (post-limit-rms-dialog)
-       (if (not (|Widget? limit-rms-dialog))
-           (let ((sliders '()))
-             (set! limit-rms-dialog
-                   (make-effect-dialog "limiter (rms) ladspa plugin"
-                                       (lambda (w context info) (cp-limit-rms))
-                                       (lambda (w context info) (|XtUnmanageChild limit-rms-dialog))
-                                       (lambda (w context info)
-                                         (help-dialog "Limiter (rms tracking)"
-                                                      "Move the sliders to set the limiter parameters."))
-                                       (lambda (w c i)
-                                         (set! limit-rms-threshold 0.0)
-                                         (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* limit-rms-threshold 100))))
-                                         (set! limit-rms-envelope-attack 1.0)
-                                         (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact (* limit-rms-envelope-attack 100))))
-                                         (set! limit-rms-envelope-decay 1.0)
-                                         (|XtSetValues (list-ref sliders 2) (list |XmNvalue (inexact->exact (* limit-rms-envelope-decay 100)))))))
-             (set! sliders
-                   (add-sliders limit-rms-dialog
-                                (list 
-                                      (list "threshold" 0.0 0.0 10.0
-                                            (lambda (w context info)
-                                              (set! limit-rms-threshold (/ (|value info) 100)))
-                                            100)
-				      (list "output envelope attack (s)" 0.0 1.0 10.0
-                                            (lambda (w context info)
-                                              (set! limit-rms-envelope-attack (/ (|value info) 100)))
-                                            100)
-                                      (list "output envelope decay (s)" 0.0 1.0 10.0
-                                            (lambda (w context info)
-                                              (set! limit-rms-envelope-decay (/ (|value info) 100)))
-                                            100))))))
-       (activate-dialog limit-rms-dialog))))
-
-      (let ((child (|XtCreateManagedWidget "Limiter (rms tracking)" |xmPushButtonWidgetClass ladspa-amp-menu
-                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
-        (|XtAddCallback child |XmNactivateCallback
-                        (lambda (w c i)
-                          (post-limit-rms-dialog))))
-
-
-
-
-
 
 ;;; DELAY EFFECTS
 ;;;
@@ -486,7 +86,7 @@
                                        (lambda (w context info) (|XtUnmanageChild canyon-delay-dialog))
                                        (lambda (w context info)
                                          (help-dialog "Canyon delay"
-                                                      "This effect works only with stereo soundfiles.\s\ Move the sliders to set the delay parameters."))
+                                                      "A deep stereo cross-delay with built-in low pass filters. Note: This effect works only with stereo soundfiles !"))
                                        (lambda (w c i)
                                          (set! canyon-delay-left-to-right-time .10)
                                          (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* canyon-delay-left-to-right-time 100))))
@@ -646,6 +246,58 @@
                         (lambda (w c i)
                           (post-fbdelay5s-dialog))))
 
+;;; Fractionally addressed delay line
+;;;
+
+(define fractional-delay-time 1.0)
+(define fractional-delay-feedback 0)
+(define fractional-delay-dialog #f)
+(define fractional-delay-label "Fractionally addressed delay")
+
+(define (cp-fractional-delay)
+   (apply-ladspa (make-sample-reader (cursor))
+      (list "fad_delay_1192" "fadDelay" fractional-delay-time fractional-delay-feedback)
+         (- (frames) (cursor))
+         "fad delay"))
+
+(if (and (provided? 'snd-ladspa)
+         (provided? 'xm))
+  (begin
+
+    (define (post-fractional-delay-dialog)
+       (if (not (|Widget? fractional-delay-dialog))
+           (let ((sliders '()))
+             (set! fractional-delay-dialog
+                   (make-effect-dialog "fractionally addressed delay line ladspa plugin"
+                                       (lambda (w context info) (cp-fractional-delay))
+                                       (lambda (w context info) (|XtUnmanageChild fractional-delay-dialog))
+                                       (lambda (w context info)
+                                         (help-dialog "Fractionally addressed delay line"
+                                                      "A fixed ring buffer delay implementation. Has different dynamics than a normal delay, more suitable for certain things.\n\ Changes in delay length are generally more pleasing, but delays >2s long have reduced sound quality."))
+                                       (lambda (w c i)
+                                         (set! fractional-delay-time 1.0)
+                                         (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* fractional-delay-time 100))))
+                                         (set! fractional-delay-feedback 0)
+                                         (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact (* fractional-delay-feedback 1)))))))
+             (set! sliders
+                   (add-sliders fractional-delay-dialog
+                                (list (list "delay time (s)" 0.1 1.0 10.0
+                                            (lambda (w context info)
+                                              (set! fractional-delay-time (/ (|value info) 100)))
+                                            100)
+                                      (list "feedback (dB)" -70 0 0
+                                            (lambda (w context info)
+                                              (set! fractional-delay-feedback (/ (|value info) 1)))
+                                            1))))))
+       (activate-dialog fractional-delay-dialog))))
+
+      (let ((child (|XtCreateManagedWidget "Fractionally addressed delay" |xmPushButtonWidgetClass ladspa-delay-menu
+                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+        (|XtAddCallback child |XmNactivateCallback
+                        (lambda (w c i)
+                          (post-fractional-delay-dialog))))
+
+
 
 ;;; Granular scatter processor
 ;;;
@@ -676,7 +328,7 @@
                                        (lambda (w context info) (|XtUnmanageChild gs-dialog))
                                        (lambda (w context info)
                                          (help-dialog "Granular scatter processor"
-                                                      "Move the sliders to set the scatter parameters.\n\ Creates very bizarre delay effects."))
+                                                      "This plugin generates an output audio stream by scattering short `grains' of sound from an input stream. It is possible to control the length and envelope of these grains, how far away from their source time grains may be scattered and the density (grains/sec) of the texture produced."))
                                        (lambda (w c i)
                                          (set! gs-density 5)
                                          (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* gs-density 1))))
@@ -890,7 +542,7 @@
 ;;; Diode processor
 ;;;
 
-(define diode-mode 0)
+(define diode-mode 0.0)
 (define diode-dialog #f)
 (define diode-label "Diode processor")
 
@@ -915,15 +567,15 @@
                                          (help-dialog "Diode processor"
                                                       "Mangles the signal as if it had been passed through a diode rectifier network. You should probably follow this with a DC offset remover, unless you want the offset.\n\ Mode: 0 for none, 1 for half wave, 2 for full wave, 3 for silence. The mode parameter is continuously variable from thru to half-wave rectification to full-wave to silence."))
                                        (lambda (w c i)
-                                         (set! diode-mode 0)
-                                         (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* diode-mode 1)))))))
+                                         (set! diode-mode 0.0)
+                                         (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* diode-mode 100)))))))
              (set! sliders
                    (add-sliders diode-dialog
                                 (list
-                                      (list "mode" 0 0 3
+                                      (list "mode" 0.0 0.0 3.0
                                             (lambda (w context info)
-                                              (set! diode-mode (/ (|value info) 1)))
-                                            1))))))
+                                              (set! diode-mode (/ (|value info) 100)))
+                                            100))))))
        (activate-dialog diode-dialog))))
 
       (let ((child (|XtCreateManagedWidget "Diode processor" |xmPushButtonWidgetClass ladspa-distort-menu
@@ -932,6 +584,50 @@
                         (lambda (w c i)
                           (post-diode-dialog))))
 
+;;; Fast overdrive
+;;;
+
+(define foverdrive-level 0.0)
+(define foverdrive-dialog #f)
+(define foverdrive-label "Fast overdrive")
+
+(define (cp-foverdrive)
+   (apply-ladspa (make-sample-reader (cursor))
+      (list "foverdrive_1196" "overdrive" foverdrive-level)
+         (- (frames) (cursor))
+         "fast overdrive"))
+
+(if (and (provided? 'snd-ladspa)
+         (provided? 'xm))
+  (begin
+
+    (define (post-foverdrive-dialog)
+       (if (not (|Widget? foverdrive-dialog))
+           (let ((sliders '()))
+             (set! foverdrive-dialog
+                   (make-effect-dialog "fast overdrive ladspa plugin"
+                                       (lambda (w context info) (cp-foverdrive))
+                                       (lambda (w context info) (|XtUnmanageChild foverdrive-dialog))
+                                       (lambda (w context info)
+                                         (help-dialog "Fast overdrive" 
+						"A simple overdrive. Compresses the extreme peaks to make a sound similar to an overdriven amplifier.\n\ Drive level: Controls the point at which the signal starts to compress, and the degree of compression."))
+                                       (lambda (w c i)
+                                         (set! foverdrive-level 0.0)
+                                         (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* foverdrive-level 100)))))))
+             (set! sliders
+                   (add-sliders foverdrive-dialog
+                                (list 
+				      (list "drive level" 1.0 0.0 3.0
+                                            (lambda (w context info)
+                                              (set! foverdrive-level (/ (|value info) 100)))
+                                            100))))))
+       (activate-dialog foverdrive-dialog))))
+
+      (let ((child (|XtCreateManagedWidget "Fast overdrive" |xmPushButtonWidgetClass ladspa-distort-menu
+                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+        (|XtAddCallback child |XmNactivateCallback
+                        (lambda (w c i)
+                          (post-foverdrive-dialog))))
 
 
 ;;; Foldover distortion
@@ -1048,6 +744,73 @@
                         (lambda (w c i)
                           (post-gsm-simulator-dialog))))
 
+;;; Mono overdrive
+;;;
+
+(define overdrive-amp-limit 0)
+(define overdrive-level 0.0)
+(define overdrive-low-density-color 0)
+(define overdrive-high-density-color 0)
+(define overdrive-dialog #f)
+(define overdrive-label "Mono overdrive")
+
+(define (cp-overdrive)
+   (apply-ladspa (make-sample-reader (cursor))
+      (list "overdrive_1182" "overdrive" overdrive-amp-limit overdrive-level overdrive-low-density-color overdrive-high-density-color)
+         (- (frames) (cursor))
+         "mono overdrive"))
+
+(if (and (provided? 'snd-ladspa)
+         (provided? 'xm))
+  (begin
+
+    (define (post-overdrive-dialog)
+       (if (not (|Widget? overdrive-dialog))
+           (let ((sliders '()))
+             (set! overdrive-dialog
+                   (make-effect-dialog "mono overdrive ladspa plugin"
+                                       (lambda (w context info) (cp-overdrive))
+                                       (lambda (w context info) (|XtUnmanageChild overdrive-dialog))
+                                       (lambda (w context info)
+                                         (help-dialog "Mono overdrive" 
+						"A basic overdrive effect, with controls for the degree of compression and for the distortion.\n\ Amps limit (in dB relative to nominal 0): Mostly this parameter is used to artificially lower the headroom of the amp, but it can also be used to counteract the effects of hosts that ignore the audio input range hints. If the host is using 16-bit int WAV files then a good guess for limit is +80dB.\n\ Drive level: This controls the degree of amplifier compression. Values above 1.0 will work, but they produce unpredictable output levels. Lowering the limit is a better way of increasing the distortion.\n\ Low-density coloration: Controls the amplitude of some low (input space) frequency amplitude distortion.\n\ High-density coloration: Controls the amplitude of some high (input space) frequency amplitude distortion."))
+                                       (lambda (w c i)
+                                         (set! overdrive-amp-limit 0)
+                                         (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* overdrive-amp-limit 1))))
+                                         (set! overdrive-level 0.0)
+                                         (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact (* overdrive-level 100))))
+                                         (set! overdrive-low-density-color 0)
+                                         (|XtSetValues (list-ref sliders 2) (list |XmNvalue (inexact->exact (* overdrive-low-density-color 1))))
+                                         (set! overdrive-high-density-color 0)
+                                         (|XtSetValues (list-ref sliders 3) (list |XmNvalue (inexact->exact (* overdrive-high-density-color 1)))))))
+             (set! sliders
+                   (add-sliders overdrive-dialog
+                                (list 
+                                      (list "amp limit (dB relative to nominal 0)" -100 0 100
+                                            (lambda (w context info)
+                                              (set! overdrive-amp-limit (/ (|value info) 1)))
+                                            1)
+                                      (list "drive level" 0.0 0.0 1.0
+                                            (lambda (w context info)
+                                              (set! overdrive-level (/ (|value info) 100)))
+                                            100)
+                                      (list "low density coloration" 0 0 100
+                                            (lambda (w context info)
+                                              (set! overdrive-low-density-color (/ (|value info) 1)))
+                                            1)
+                                      (list "high density coloration" 0 0 100
+                                            (lambda (w context info)
+                                              (set! overdrive-high-density-color (/ (|value info) 1)))
+                                            1))))))
+       (activate-dialog overdrive-dialog))))
+
+      (let ((child (|XtCreateManagedWidget "Mono overdrive" |xmPushButtonWidgetClass ladspa-distort-menu
+                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+        (|XtAddCallback child |XmNactivateCallback
+                        (lambda (w c i)
+                          (post-overdrive-dialog))))
+
+
 ;;; Signal sifter
 ;;;
 
@@ -1092,6 +855,72 @@
                         (lambda (w c i)
                           (post-sifter-dialog))))
 
+
+;;; Stereo overdrive
+;;;
+
+(define overdrive_s-amp-limit 0)
+(define overdrive_s-level 0.0)
+(define overdrive_s-low-density-color 0)
+(define overdrive_s-high-density-color 0)
+(define overdrive_s-dialog #f)
+(define overdrive_s-label "Stereo overdrive")
+
+(define (cp-overdrive_s)
+   (apply-ladspa (make-sample-reader (cursor))
+      (list "overdrive_1183" "overdrive_s" overdrive_s-amp-limit overdrive_s-level overdrive_s-low-density-color overdrive_s-high-density-color)
+         (- (frames) (cursor))
+         "stereo overdrive"))
+
+(if (and (provided? 'snd-ladspa)
+         (provided? 'xm))
+  (begin
+
+    (define (post-overdrive_s-dialog)
+       (if (not (|Widget? overdrive_s-dialog))
+           (let ((sliders '()))
+             (set! overdrive_s-dialog
+                   (make-effect-dialog "stereo overdrive ladspa plugin"
+                                       (lambda (w context info) (cp-overdrive_s))
+                                       (lambda (w context info) (|XtUnmanageChild overdrive_s-dialog))
+                                       (lambda (w context info)
+                                         (help-dialog "Stereo overdrive" 
+						"A basic overdrive effect, with controls for the degree of compression and for the distortion.\n\ Amps limit (in dB relative to nominal 0): Mostly this parameter is used to artificially lower the headroom of the amp, but it can also be used to counteract the effects of hosts that ignore the audio input range hints. If the host is using 16-bit int WAV files then a good guess for limit is +80dB.\n\ Drive level: This controls the degree of amplifier compression. Values above 1.0 will work, but they produce unpredictable output levels. Lowering the limit is a better way of increasing the distortion.\n\ Low-density coloration: Controls the amplitude of some low (input space) frequency amplitude distortion.\n\ High-density coloration: Controls the amplitude of some high (input space) frequency amplitude distortion."))
+                                       (lambda (w c i)
+                                         (set! overdrive_s-amp-limit 0)
+                                         (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* overdrive_s-amp-limit 1))))
+                                         (set! overdrive_s-level 0.0)
+                                         (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact (* overdrive_s-level 100))))
+                                         (set! overdrive_s-low-density-color 0)
+                                         (|XtSetValues (list-ref sliders 2) (list |XmNvalue (inexact->exact (* overdrive_s-low-density-color 1))))
+                                         (set! overdrive_s-high-density-color 0)
+                                         (|XtSetValues (list-ref sliders 3) (list |XmNvalue (inexact->exact (* overdrive_s-high-density-color 1)))))))
+             (set! sliders
+                   (add-sliders overdrive_s-dialog
+                                (list 
+                                      (list "amp limit (dB relative to nominal 0)" -100 0 100
+                                            (lambda (w context info)
+                                              (set! overdrive_s-amp-limit (/ (|value info) 1)))
+                                            1)
+                                      (list "drive level" 0.0 0.0 1.0
+                                            (lambda (w context info)
+                                              (set! overdrive_s-level (/ (|value info) 100)))
+                                            100)
+                                      (list "low density coloration" 0 0 100
+                                            (lambda (w context info)
+                                              (set! overdrive_s-low-density-color (/ (|value info) 1)))
+                                            1)
+                                      (list "high density coloration" 0 0 100
+                                            (lambda (w context info)
+                                              (set! overdrive_s-high-density-color (/ (|value info) 1)))
+                                            1))))))
+       (activate-dialog overdrive_s-dialog))))
+
+      (let ((child (|XtCreateManagedWidget "Stereo overdrive" |xmPushButtonWidgetClass ladspa-distort-menu
+                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+        (|XtAddCallback child |XmNactivateCallback
+                        (lambda (w c i)
+                          (post-overdrive_s-dialog))))
 
 ;;; Transient mangler
 ;;;
@@ -1145,7 +974,6 @@
                         (lambda (w c i)
                           (post-transient-dialog))))
 
-
 ;;; Valve (tube) saturation
 ;;;
 
@@ -1197,12 +1025,59 @@
                         (lambda (w c i)
                           (post-valve-saturation-dialog))))
 
-;;; FILTERS
+;;; Wave shaper
 ;;;
 
-(define ladspa-filter-menu (|XmCreatePulldownMenu plug-menu "Filters"
+(define waveshaper-waveshape 0.0)
+(define waveshaper-dialog #f)
+(define waveshaper-label "Wave shaper")
+
+(define (cp-waveshaper)
+  (apply-ladspa (make-sample-reader (cursor))
+                (list "shaper_1187" "shaper" waveshaper-waveshape)
+                (- (frames) (cursor))
+                "wave shaper"))
+
+(if (and (provided? 'snd-ladspa)
+         (provided? 'xm))
+  (begin
+
+     (define (post-waveshaper-dialog)
+       (if (not (|Widget? waveshaper-dialog))
+           ;; if waveshaper-dialog doesn't exist, create it
+           (let ((sliders '()))
+             (set! waveshaper-dialog
+                   (make-effect-dialog "wave shaper ladspa plugin"
+                                       (lambda (w context info) (cp-waveshaper))
+                                       (lambda (w context info) (|XtUnmanageChild waveshaper-dialog))
+                                       (lambda (w context info)
+                                         (help-dialog "Wave shaper"
+                                                      "Reshapes the wave by an exponential function. Inspiration was taken from the Nord module of the same name.\n\ If you are getting rubbish out then it's probably because the host isn't using the input/output range hints, which are very important for this plugin.\n\ Waveshape: Positive values have an expanding effect, negative values have a compressing effect."))
+                                       (lambda (w c i)
+                                         (set! waveshaper-waveshape 0.0)
+                                         (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* waveshaper-waveshape 100)))))))
+             (set! sliders
+                   (add-sliders waveshaper-dialog
+                                (list (list "waveshape" -10.0 0.0 10.0
+                                            (lambda (w context info)
+                                              (set! waveshaper-waveshape (/ (|value info) 100)))
+                                            100))))))
+       (activate-dialog waveshaper-dialog))))
+
+      (let ((child (|XtCreateManagedWidget "Wave shaper" |xmPushButtonWidgetClass ladspa-distort-menu
+                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+        (|XtAddCallback child |XmNactivateCallback
+                        (lambda (w c i)
+                          (post-waveshaper-dialog))))
+
+
+
+;;; FILTERS AND EQUALIZERS
+;;;
+
+(define ladspa-filter-menu (|XmCreatePulldownMenu plug-menu "Filters/EQs"
                                         (list |XmNbackground (|Pixel (snd-pixel (basic-color))))))
-(define ladspa-filter-cascade (|XtCreateManagedWidget "Filters" |xmCascadeButtonWidgetClass plug-menu
+(define ladspa-filter-cascade (|XtCreateManagedWidget "Filters/EQs" |xmCascadeButtonWidgetClass plug-menu
                                             (list |XmNsubMenuId ladspa-filter-menu
                                                   |XmNbackground (|Pixel (snd-pixel (basic-color))))))
 
@@ -1258,6 +1133,73 @@
         (|XtAddCallback child |XmNactivateCallback
                         (lambda (w c i)
                           (post-comb-filter-dialog))))
+
+;;; State variable filter
+;;;
+
+(define svf-type 0)
+(define svf-frequency 100)
+(define svf-q 0.0)
+(define svf-resonance 0.0)
+(define svf-dialog #f)
+(define svf-label "State variable filter")
+
+(define (cp-svf)
+ (apply-ladspa (make-sample-reader (cursor))
+   (list "svf_1214" "svf" svf-type svf-frequency svf-q svf-resonance)
+     (- (frames) (cursor))
+     "state variable filter"))
+
+(if (and (provided? 'snd-ladspa)
+         (provided? 'xm))
+  (begin
+
+      (define (post-svf-dialog)
+       (if (not (|Widget? svf-dialog))
+           (let ((sliders '()))
+             (set! svf-dialog
+                   (make-effect-dialog "state variable filter ladspa plugin"
+                                       (lambda (w context info) (cp-svf))
+                                       (lambda (w context info) (|XtUnmanageChild svf-dialog))
+                                       (lambda (w context info)
+                                         (help-dialog "State variable filter"
+                                                      "An oversampled state variable filter with a few tweaks. Quite nice, tends to be unstable with high resonance and Q values, but good when kept under control.\n\ Filter type: (0=none, 1=LP, 2=HP, 3=BP, 4=BR, 5=AP) Select between no filtering, low-pass, high-pass, band-pass, band-reject and all-pass.\n\ Filter frequency: Cutoff frequency, beware of high values with low sample rates.\n\ Filter Q: The filter's cutoff slope.\n\ Filter resonance: The filter's resonance is sort of separate from Q but very related (implemented with feedback). Do not use with the bandpass mode."))
+                                       (lambda (w c i)
+                                         (set! svf-type 0)
+                                         (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* svf-type 1))))
+                                         (set! svf-frequency 100)
+                                         (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact (* svf-frequency 1))))
+                                         (set! svf-q 0.0)
+                                         (|XtSetValues (list-ref sliders 2) (list |XmNvalue (inexact->exact (* svf-q 100))))
+                                         (set! svf-resonance 0.0)
+                                         (|XtSetValues (list-ref sliders 3) (list |XmNvalue (inexact->exact (* svf-resonance 100)))))))
+             (set! sliders
+                   (add-sliders svf-dialog
+                                (list
+                                      (list "filter type" 0 0 5
+                                            (lambda (w context info)
+                                              (set! svf-type (/ (|value info) 1)))
+                                            1)
+                                      (list "filter frequency" 0 100 6000
+                                            (lambda (w context info)
+                                              (set! svf-frequency (/ (|value info) 1)))
+                                            1)
+                                      (list "filter Q" 0.0 0.0 1.0
+                                            (lambda (w context info)
+                                              (set! svf-q (/ (|value info) 100)))
+                                            100)
+                                      (list "filter resonance" 0.0 0.0 1.0
+                                            (lambda (w context info)
+                                              (set! svf-resonance (/ (|value info) 100)))
+                                            100))))))
+       (activate-dialog svf-dialog))))
+
+      (let ((child (|XtCreateManagedWidget "State variable filter" |xmPushButtonWidgetClass ladspa-filter-menu
+                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+        (|XtAddCallback child |XmNactivateCallback
+                        (lambda (w c i)
+                          (post-svf-dialog))))
+
 
 ;;; VCF303 filter
 ;;;
@@ -1336,7 +1278,553 @@
                         (lambda (w c i)
                           (post-vcf-303-dialog))))
 
-;;; Frequency effects
+;(add-to-menu ladspa-filter-menu #f #f)
+
+;;; Multiband equalizer 
+;;;
+
+(define multiband-eq-50hz-gain 0)
+(define multiband-eq-100hz-gain 0)
+(define multiband-eq-156hz-gain 0)
+(define multiband-eq-220hz-gain 0)
+(define multiband-eq-311hz-gain 0)
+(define multiband-eq-440hz-gain 0)
+(define multiband-eq-622hz-gain 0)
+(define multiband-eq-880hz-gain 0)
+(define multiband-eq-1250hz-gain 0)
+(define multiband-eq-1750hz-gain 0)
+(define multiband-eq-2500hz-gain 0)
+(define multiband-eq-3500hz-gain 0)
+(define multiband-eq-5000hz-gain 0)
+(define multiband-eq-10000hz-gain 0)
+(define multiband-eq-20000hz-gain 0)
+(define multiband-eq-dialog #f)
+(define multiband-eq-label "Multiband equalizer")
+
+(define (cp-mbeq)
+   (apply-ladspa (make-sample-reader (cursor))
+      (list "mbeq_1197" "mbeq" multiband-eq-50hz-gain multiband-eq-100hz-gain multiband-eq-156hz-gain multiband-eq-220hz-gain multiband-eq-311hz-gain multiband-eq-440hz-gain multiband-eq-622hz-gain multiband-eq-880hz-gain multiband-eq-1250hz-gain multiband-eq-1750hz-gain multiband-eq-2500hz-gain multiband-eq-3500hz-gain multiband-eq-5000hz-gain multiband-eq-10000hz-gain multiband-eq-20000hz-gain)
+         (- (frames) (cursor))
+         "multiband eq"))
+
+(if (and (provided? 'snd-ladspa)
+         (provided? 'xm))
+  (begin
+
+    (define (post-multiband-eq-dialog)
+       (if (not (|Widget? multiband-eq-dialog))
+           (let ((sliders '()))
+             (set! multiband-eq-dialog
+                   (make-effect-dialog "multiband eq ladspa plugin"
+                                       (lambda (w context info) (cp-mbeq))
+                                       (lambda (w context info) (|XtUnmanageChild multiband-eq-dialog))
+                                       (lambda (w context info)
+                                         (help-dialog "Multiband equalizer"
+                                                      "This is a fairly typical multiband graphic equalizer. It's implemented using a FFT, so it takes quite a lot of CPU power, but it should have less phase effect than an equivalent filter implementation. If the input signal is at too low a sample rate then the top bands will be ignored, i.e., the highest useful band will always be a high shelf."))
+                                       (lambda (w c i)
+                                         (set! multiband-eq-50hz-gain 0)
+                                         (|XtSetValues (list-ref sliders ) (list |XmNvalue (inexact->exact (* multiband-eq-50hz-gain 1))))
+                                         (set! multiband-eq-100hz-gain 0)
+                                         (|XtSetValues (list-ref sliders ) (list |XmNvalue (inexact->exact (* multiband-eq-100hz-gain 1))))
+                                         (set! multiband-eq-156hz-gain 0)
+                                         (|XtSetValues (list-ref sliders ) (list |XmNvalue (inexact->exact (* multiband-eq-156hz-gain 1))))
+                                         (set! multiband-eq-220hz-gain 0)
+                                         (|XtSetValues (list-ref sliders ) (list |XmNvalue (inexact->exact (* multiband-eq-220hz-gain 1))))
+                                         (set! multiband-eq-311hz-gain 0)
+                                         (|XtSetValues (list-ref sliders ) (list |XmNvalue (inexact->exact (* multiband-eq-311hz-gain 1))))
+                                         (set! multiband-eq-440hz-gain 0)
+                                         (|XtSetValues (list-ref sliders ) (list |XmNvalue (inexact->exact (* multiband-eq-440hz-gain 1))))
+                                         (set! multiband-eq-622hz-gain 0)
+                                         (|XtSetValues (list-ref sliders ) (list |XmNvalue (inexact->exact (* multiband-eq-622hz-gain 1))))
+                                         (set! multiband-eq-880hz-gain 0)
+                                         (|XtSetValues (list-ref sliders ) (list |XmNvalue (inexact->exact (* multiband-eq-880hz-gain 1))))
+                                         (set! multiband-eq-1250hz-gain 0)
+                                         (|XtSetValues (list-ref sliders ) (list |XmNvalue (inexact->exact (* multiband-eq-1250hz-gain 1))))
+                                         (set! multiband-eq-1750hz-gain 0)
+                                         (|XtSetValues (list-ref sliders ) (list |XmNvalue (inexact->exact (* multiband-eq-1750hz-gain 1))))
+                                         (set! multiband-eq-2500hz-gain 0)
+                                         (|XtSetValues (list-ref sliders ) (list |XmNvalue (inexact->exact (* multiband-eq-2500hz-gain 1))))
+                                         (set! multiband-eq-3500hz-gain 0)
+                                         (|XtSetValues (list-ref sliders ) (list |XmNvalue (inexact->exact (* multiband-eq-3500hz-gain 1))))
+                                         (set! multiband-eq-5000hz-gain 0)
+                                         (|XtSetValues (list-ref sliders ) (list |XmNvalue (inexact->exact (* multiband-eq-5000hz-gain 1))))
+                                         (set! multiband-eq-10000hz-gain 0)
+                                         (|XtSetValues (list-ref sliders ) (list |XmNvalue (inexact->exact (* multiband-eq-10000hz-gain 1))))
+                                         (set! multiband-eq-20000hz-gain 0)
+                                         (|XtSetValues (list-ref sliders ) (list |XmNvalue (inexact->exact (* multiband-eq-20000hz-gain 1)))))))
+             (set! sliders
+                   (add-sliders multiband-eq-dialog
+                                (list 
+				      (list "50 Hz gain" -70 0 30
+                                            (lambda (w context info)
+                                              (set! multiband-eq-50hz-gain (/ (|value info) 1)))
+                                            1)
+                                      (list "100 Hz gain" -70 0 30
+                                            (lambda (w context info)
+                                              (set! multiband-eq-100hz-gain (/ (|value info) 1)))
+                                            1)
+                                      (list "156 Hz gain" -70 0 30
+                                            (lambda (w context info)
+                                              (set! multiband-eq-156hz-gain (/ (|value info) 1)))
+                                            1)
+                                      (list "220 Hz gain" -70 0 30
+                                            (lambda (w context info)
+                                              (set! multiband-eq-220hz-gain (/ (|value info) 1)))
+                                            1)
+                                      (list "311 Hz gain" -70 0 30
+                                            (lambda (w context info)
+                                              (set! multiband-eq-311hz-gain (/ (|value info) 1)))
+                                            1)
+                                      (list "440 Hz gain" -70 0 30
+                                            (lambda (w context info)
+                                              (set! multiband-eq-440hz-gain (/ (|value info) 1)))
+                                            1)
+                                      (list "622 Hz gain" -70 0 30
+                                            (lambda (w context info)
+                                              (set! multiband-eq-622hz-gain (/ (|value info) 1)))
+                                            1)
+                                      (list "880 Hz gain" -70 0 30
+                                            (lambda (w context info)
+                                              (set! multiband-eq-880hz-gain (/ (|value info) 1)))
+                                            1)
+                                      (list "1250 Hz gain" -70 0 30
+                                            (lambda (w context info)
+                                              (set! multiband-eq-1250hz-gain (/ (|value info) 1)))
+                                            1)
+                                      (list "1750 Hz gain" -70 0 30
+                                            (lambda (w context info)
+                                              (set! multiband-eq-1750hz-gain (/ (|value info) 1)))
+                                            1)
+                                      (list "2500 Hz gain" -70 0 30
+                                            (lambda (w context info)
+                                              (set! multiband-eq-2500hz-gain (/ (|value info) 1)))
+                                            1)
+                                      (list "3500 Hz gain" -70 0 30
+                                            (lambda (w context info)
+                                              (set! multiband-eq-3500hz-gain (/ (|value info) 1)))
+                                            1)
+                                      (list "5000 Hz gain" -70 0 30
+                                            (lambda (w context info)
+                                              (set! multiband-eq-5000hz-gain (/ (|value info) 1)))
+                                            1)
+                                      (list "10000 Hz gain" -70 0 30
+                                            (lambda (w context info)
+                                              (set! multiband-eq-10000hz-gain (/ (|value info) 1)))
+                                            1)
+                                      (list "20000 Hz gain" -70 0 30
+                                            (lambda (w context info)
+                                              (set! multiband-eq-20000hz-gain (/ (|value info) 1)))
+                                            1))))))
+       (activate-dialog multiband-eq-dialog))))
+
+      (let ((child (|XtCreateManagedWidget "Multiband equalizer" |xmPushButtonWidgetClass ladspa-filter-menu
+                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+        (|XtAddCallback child |XmNactivateCallback
+                        (lambda (w c i)
+                          (post-multiband-eq-dialog))))
+
+
+;;; DYNAMICS PROCESSORS
+;;;
+
+(define ladspa-amp-menu (|XmCreatePulldownMenu plug-menu "Dynamics Processors"
+                                        (list |XmNbackground (|Pixel (snd-pixel (basic-color))))))
+(define ladspa-amp-cascade (|XtCreateManagedWidget "Dynamics Processors" |xmCascadeButtonWidgetClass plug-menu
+                                            (list |XmNsubMenuId ladspa-amp-menu
+                                                  |XmNbackground (|Pixel (snd-pixel (basic-color))))))
+
+;;; Compressor (peak tracking)
+;;;
+
+(define compress-peak-threshold 0.0)
+(define compress-peak-ratio 1.0)
+(define compress-peak-envelope-attack 1.0)
+(define compress-peak-envelope-decay 1.0)
+(define compress-peak-dialog #f)
+(define compress-peak-label "Compressor (peak tracking)")
+
+(define (cp-compress-peak)
+ (apply-ladspa (make-sample-reader (cursor))
+   (list "cmt" "compress_peak" compress-peak-threshold compress-peak-ratio compress-peak-envelope-attack compress-peak-envelope-decay)
+     (- (frames) (cursor))
+     "compressor (peak)"))
+
+(if (and (provided? 'snd-ladspa)
+         (provided? 'xm))
+  (begin
+
+      (define (post-compress-peak-dialog)
+       (if (not (|Widget? compress-peak-dialog))
+           (let ((sliders '()))
+             (set! compress-peak-dialog
+                   (make-effect-dialog "compressor (peak) ladspa plugin"
+                                       (lambda (w context info) (cp-compress-peak))
+                                       (lambda (w context info) (|XtUnmanageChild compress-peak-dialog))
+                                       (lambda (w context info)
+                                         (help-dialog "Compressor (peak tracking)"
+                                                      "Move the sliders to set the compressor parameters."))
+                                       (lambda (w c i)
+                                         (set! compress-peak-threshold 0.0)
+                                         (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* compress-peak-threshold 100))))
+                                         (set! compress-peak-ratio 1.0)
+                                         (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact (* compress-peak-ratio 100))))
+                                         (set! compress-peak-envelope-attack 1.0)
+                                         (|XtSetValues (list-ref sliders 2) (list |XmNvalue (inexact->exact (* compress-peak-envelope-attack 100))))
+                                         (set! compress-peak-envelope-decay 1.0)
+                                         (|XtSetValues (list-ref sliders 3) (list |XmNvalue (inexact->exact (* compress-peak-envelope-decay 100)))))))
+             (set! sliders
+                   (add-sliders compress-peak-dialog
+                                (list 
+                                      (list "threshold" 0.0 0.0 10.0
+                                            (lambda (w context info)
+                                              (set! compress-peak-threshold (/ (|value info) 100)))
+                                            100)
+ 				      (list "compression ratio" 0.0 1.0 1.0
+                                            (lambda (w context info)
+                                              (set! compress-peak-ratio (/ (|value info) 100)))
+                                            100)
+				      (list "output envelope attack (s)" 0.0 1.0 10.0
+                                            (lambda (w context info)
+                                              (set! compress-peak-envelope-attack (/ (|value info) 100)))
+                                            100)
+                                      (list "output envelope decay (s)" 0.0 1.0 10.0
+                                            (lambda (w context info)
+                                              (set! compress-peak-envelope-decay (/ (|value info) 100)))
+                                            100))))))
+       (activate-dialog compress-peak-dialog))))
+
+      (let ((child (|XtCreateManagedWidget "Compressor (peak tracking)" |xmPushButtonWidgetClass ladspa-amp-menu
+                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+        (|XtAddCallback child |XmNactivateCallback
+                        (lambda (w c i)
+                          (post-compress-peak-dialog))))
+
+
+;;; Compressor (rms tracking)
+;;;
+
+(define compress-rms-threshold 0.0)
+(define compress-rms-ratio 1.0)
+(define compress-rms-envelope-attack 1.0)
+(define compress-rms-envelope-decay 1.0)
+(define compress-rms-dialog #f)
+(define compress-rms-label "Compressor (rms tracking)")
+
+(define (cp-compress-rms)
+ (apply-ladspa (make-sample-reader (cursor))
+   (list "cmt" "compress_rms" compress-rms-threshold compress-rms-ratio compress-rms-envelope-attack compress-rms-envelope-decay)
+     (- (frames) (cursor))
+     "compressor (rms)"))
+
+(if (and (provided? 'snd-ladspa)
+         (provided? 'xm))
+  (begin
+
+      (define (post-compress-rms-dialog)
+       (if (not (|Widget? compress-rms-dialog))
+           (let ((sliders '()))
+             (set! compress-rms-dialog
+                   (make-effect-dialog "compressor (rms) ladspa plugin"
+                                       (lambda (w context info) (cp-compress-rms))
+                                       (lambda (w context info) (|XtUnmanageChild compress-rms-dialog))
+                                       (lambda (w context info)
+                                         (help-dialog "Compressor (rms tracking)"
+                                                      "Move the sliders to set the compressor parameters."))
+                                       (lambda (w c i)
+                                         (set! compress-rms-threshold 0.0)
+                                         (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* compress-rms-threshold 100))))
+                                         (set! compress-rms-ratio 1.0)
+                                         (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact (* compress-rms-ratio 100))))
+                                         (set! compress-rms-envelope-attack 1.0)
+                                         (|XtSetValues (list-ref sliders 2) (list |XmNvalue (inexact->exact (* compress-rms-envelope-attack 100))))
+                                         (set! compress-rms-envelope-decay 1.0)
+                                         (|XtSetValues (list-ref sliders 3) (list |XmNvalue (inexact->exact (* compress-rms-envelope-decay 100)))))))
+             (set! sliders
+                   (add-sliders compress-rms-dialog
+                                (list 
+                                      (list "threshold" 0.0 0.0 10.0
+                                            (lambda (w context info)
+                                              (set! compress-rms-threshold (/ (|value info) 100)))
+                                            100)
+ 				      (list "compression ratio" 0.0 1.0 1.0
+                                            (lambda (w context info)
+                                              (set! compress-rms-ratio (/ (|value info) 100)))
+                                            100)
+				      (list "output envelope attack (s)" 0.0 1.0 10.0
+                                            (lambda (w context info)
+                                              (set! compress-rms-envelope-attack (/ (|value info) 100)))
+                                            100)
+                                      (list "output envelope decay (s)" 0.0 1.0 10.0
+                                            (lambda (w context info)
+                                              (set! compress-rms-envelope-decay (/ (|value info) 100)))
+                                            100))))))
+       (activate-dialog compress-rms-dialog))))
+
+      (let ((child (|XtCreateManagedWidget "Compressor (rms tracking)" |xmPushButtonWidgetClass ladspa-amp-menu
+                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+        (|XtAddCallback child |XmNactivateCallback
+                        (lambda (w c i)
+                          (post-compress-rms-dialog))))
+
+
+;;; Expander (peak tracking)
+;;;
+
+(define expand-peak-threshold 0.0)
+(define expand-peak-ratio 1.0)
+(define expand-peak-envelope-attack 1.0)
+(define expand-peak-envelope-decay 1.0)
+(define expand-peak-dialog #f)
+(define expand-peak-label "Expander (peak tracking)")
+
+(define (cp-expand-peak)
+ (apply-ladspa (make-sample-reader (cursor))
+   (list "cmt" "expand_peak" expand-peak-threshold expand-peak-ratio expand-peak-envelope-attack expand-peak-envelope-decay)
+     (- (frames) (cursor))
+     "expander (peak)"))
+
+(if (and (provided? 'snd-ladspa)
+         (provided? 'xm))
+  (begin
+
+      (define (post-expand-peak-dialog)
+       (if (not (|Widget? expand-peak-dialog))
+           (let ((sliders '()))
+             (set! expand-peak-dialog
+                   (make-effect-dialog "expander (peak) ladspa plugin"
+                                       (lambda (w context info) (cp-expand-peak))
+                                       (lambda (w context info) (|XtUnmanageChild expand-peak-dialog))
+                                       (lambda (w context info)
+                                         (help-dialog "Expander (peak tracking)"
+                                                      "Move the sliders to set the expander parameters."))
+                                       (lambda (w c i)
+                                         (set! expand-peak-threshold 0.0)
+                                         (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* expand-peak-threshold 100))))
+                                         (set! expand-peak-ratio 1.0)
+                                         (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact (* expand-peak-ratio 100))))
+                                         (set! expand-peak-envelope-attack 1.0)
+                                         (|XtSetValues (list-ref sliders 2) (list |XmNvalue (inexact->exact (* expand-peak-envelope-attack 100))))
+                                         (set! expand-peak-envelope-decay 1.0)
+                                         (|XtSetValues (list-ref sliders 3) (list |XmNvalue (inexact->exact (* expand-peak-envelope-decay 100)))))))
+             (set! sliders
+                   (add-sliders expand-peak-dialog
+                                (list 
+                                      (list "threshold" 0.0 0.0 10.0
+                                            (lambda (w context info)
+                                              (set! expand-peak-threshold (/ (|value info) 100)))
+                                            100)
+ 				      (list "expansion ratio" 0.0 1.0 1.0
+                                            (lambda (w context info)
+                                              (set! expand-peak-ratio (/ (|value info) 100)))
+                                            100)
+				      (list "output envelope attack (s)" 0.0 1.0 10.0
+                                            (lambda (w context info)
+                                              (set! expand-peak-envelope-attack (/ (|value info) 100)))
+                                            100)
+                                      (list "output envelope decay (s)" 0.0 1.0 10.0
+                                            (lambda (w context info)
+                                              (set! expand-peak-envelope-decay (/ (|value info) 100)))
+                                            100))))))
+       (activate-dialog expand-peak-dialog))))
+
+      (let ((child (|XtCreateManagedWidget "Expander (peak tracking)" |xmPushButtonWidgetClass ladspa-amp-menu
+                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+        (|XtAddCallback child |XmNactivateCallback
+                        (lambda (w c i)
+                          (post-expand-peak-dialog))))
+
+
+;;; Expander (rms tracking)
+;;;
+
+(define expand-rms-threshold 0.0)
+(define expand-rms-ratio 1.0)
+(define expand-rms-envelope-attack 1.0)
+(define expand-rms-envelope-decay 1.0)
+(define expand-rms-dialog #f)
+(define expand-rms-label "Expander (rms tracking)")
+
+(define (cp-expand-rms)
+ (apply-ladspa (make-sample-reader (cursor))
+   (list "cmt" "expand_rms" expand-rms-threshold expand-rms-ratio expand-rms-envelope-attack expand-rms-envelope-decay)
+     (- (frames) (cursor))
+     "expander (rms)"))
+
+(if (and (provided? 'snd-ladspa)
+         (provided? 'xm))
+  (begin
+
+      (define (post-expand-rms-dialog)
+       (if (not (|Widget? expand-rms-dialog))
+           (let ((sliders '()))
+             (set! expand-rms-dialog
+                   (make-effect-dialog "expander (rms) ladspa plugin"
+                                       (lambda (w context info) (cp-expand-rms))
+                                       (lambda (w context info) (|XtUnmanageChild expand-rms-dialog))
+                                       (lambda (w context info)
+                                         (help-dialog "Expander (rms tracking)"
+                                                      "Move the sliders to set the expander parameters."))
+                                       (lambda (w c i)
+                                         (set! expand-rms-threshold 0.0)
+                                         (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* expand-rms-threshold 100))))
+                                         (set! expand-rms-ratio 1.0)
+                                         (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact (* expand-rms-ratio 100))))
+                                         (set! expand-rms-envelope-attack 1.0)
+                                         (|XtSetValues (list-ref sliders 2) (list |XmNvalue (inexact->exact (* expand-rms-envelope-attack 100))))
+                                         (set! expand-rms-envelope-decay 1.0)
+                                         (|XtSetValues (list-ref sliders 3) (list |XmNvalue (inexact->exact (* expand-rms-envelope-decay 100)))))))
+             (set! sliders
+                   (add-sliders expand-rms-dialog
+                                (list 
+                                      (list "threshold" 0.0 0.0 10.0
+                                            (lambda (w context info)
+                                              (set! expand-rms-threshold (/ (|value info) 100)))
+                                            100)
+ 				      (list "expansion ratio" 0.0 1.0 1.0
+                                            (lambda (w context info)
+                                              (set! expand-rms-ratio (/ (|value info) 100)))
+                                            100)
+				      (list "output envelope attack (s)" 0.0 1.0 10.0
+                                            (lambda (w context info)
+                                              (set! expand-rms-envelope-attack (/ (|value info) 100)))
+                                            100)
+                                      (list "output envelope decay (s)" 0.0 1.0 10.0
+                                            (lambda (w context info)
+                                              (set! expand-rms-envelope-decay (/ (|value info) 100)))
+                                            100))))))
+       (activate-dialog expand-rms-dialog))))
+
+      (let ((child (|XtCreateManagedWidget "Expander (rms tracking)" |xmPushButtonWidgetClass ladspa-amp-menu
+                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+        (|XtAddCallback child |XmNactivateCallback
+                        (lambda (w c i)
+                          (post-expand-rms-dialog))))
+
+
+;;; Limiter (peak tracking)
+;;;
+
+(define limit-peak-threshold 0.0)
+(define limit-peak-envelope-attack 1.0)
+(define limit-peak-envelope-decay 1.0)
+(define limit-peak-dialog #f)
+(define limit-peak-label "Limiter (peak tracking)")
+
+(define (cp-limit-peak)
+ (apply-ladspa (make-sample-reader (cursor))
+   (list "cmt" "limit_peak" limit-peak-threshold limit-peak-envelope-attack limit-peak-envelope-decay)
+     (- (frames) (cursor))
+     "limiter (peak)"))
+
+(if (and (provided? 'snd-ladspa)
+         (provided? 'xm))
+  (begin
+
+      (define (post-limit-peak-dialog)
+       (if (not (|Widget? limit-peak-dialog))
+           (let ((sliders '()))
+             (set! limit-peak-dialog
+                   (make-effect-dialog "limiter (peak) ladspa plugin"
+                                       (lambda (w context info) (cp-limit-peak))
+                                       (lambda (w context info) (|XtUnmanageChild limit-peak-dialog))
+                                       (lambda (w context info)
+                                         (help-dialog "Limiter (peak tracking)"
+                                                      "Move the sliders to set the limiter parameters."))
+                                       (lambda (w c i)
+                                         (set! limit-peak-threshold 0.0)
+                                         (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* limit-peak-threshold 100))))
+                                         (set! limit-peak-envelope-attack 1.0)
+                                         (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact (* limit-peak-envelope-attack 100))))
+                                         (set! limit-peak-envelope-decay 1.0)
+                                         (|XtSetValues (list-ref sliders 2) (list |XmNvalue (inexact->exact (* limit-peak-envelope-decay 100)))))))
+             (set! sliders
+                   (add-sliders limit-peak-dialog
+                                (list 
+                                      (list "threshold" 0.0 0.0 10.0
+                                            (lambda (w context info)
+                                              (set! limit-peak-threshold (/ (|value info) 100)))
+                                            100)
+				      (list "output envelope attack (s)" 0.0 1.0 10.0
+                                            (lambda (w context info)
+                                              (set! limit-peak-envelope-attack (/ (|value info) 100)))
+                                            100)
+                                      (list "output envelope decay (s)" 0.0 1.0 10.0
+                                            (lambda (w context info)
+                                              (set! limit-peak-envelope-decay (/ (|value info) 100)))
+                                            100))))))
+       (activate-dialog limit-peak-dialog))))
+
+      (let ((child (|XtCreateManagedWidget "Limiter (peak tracking)" |xmPushButtonWidgetClass ladspa-amp-menu
+                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+        (|XtAddCallback child |XmNactivateCallback
+                        (lambda (w c i)
+                          (post-limit-peak-dialog))))
+
+
+;;; Limiter (rms tracking)
+;;;
+
+(define limit-rms-threshold 0.0)
+(define limit-rms-envelope-attack 1.0)
+(define limit-rms-envelope-decay 1.0)
+(define limit-rms-dialog #f)
+(define limit-rms-label "Limiter (rms tracking)")
+
+(define (cp-limit-rms)
+ (apply-ladspa (make-sample-reader (cursor))
+   (list "cmt" "limit_rms" limit-rms-threshold limit-rms-envelope-attack limit-rms-envelope-decay)
+     (- (frames) (cursor))
+     "limiter (rms)"))
+
+(if (and (provided? 'snd-ladspa)
+         (provided? 'xm))
+  (begin
+
+      (define (post-limit-rms-dialog)
+       (if (not (|Widget? limit-rms-dialog))
+           (let ((sliders '()))
+             (set! limit-rms-dialog
+                   (make-effect-dialog "limiter (rms) ladspa plugin"
+                                       (lambda (w context info) (cp-limit-rms))
+                                       (lambda (w context info) (|XtUnmanageChild limit-rms-dialog))
+                                       (lambda (w context info)
+                                         (help-dialog "Limiter (rms tracking)"
+                                                      "Move the sliders to set the limiter parameters."))
+                                       (lambda (w c i)
+                                         (set! limit-rms-threshold 0.0)
+                                         (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* limit-rms-threshold 100))))
+                                         (set! limit-rms-envelope-attack 1.0)
+                                         (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact (* limit-rms-envelope-attack 100))))
+                                         (set! limit-rms-envelope-decay 1.0)
+                                         (|XtSetValues (list-ref sliders 2) (list |XmNvalue (inexact->exact (* limit-rms-envelope-decay 100)))))))
+             (set! sliders
+                   (add-sliders limit-rms-dialog
+                                (list 
+                                      (list "threshold" 0.0 0.0 10.0
+                                            (lambda (w context info)
+                                              (set! limit-rms-threshold (/ (|value info) 100)))
+                                            100)
+				      (list "output envelope attack (s)" 0.0 1.0 10.0
+                                            (lambda (w context info)
+                                              (set! limit-rms-envelope-attack (/ (|value info) 100)))
+                                            100)
+                                      (list "output envelope decay (s)" 0.0 1.0 10.0
+                                            (lambda (w context info)
+                                              (set! limit-rms-envelope-decay (/ (|value info) 100)))
+                                            100))))))
+       (activate-dialog limit-rms-dialog))))
+
+      (let ((child (|XtCreateManagedWidget "Limiter (rms tracking)" |xmPushButtonWidgetClass ladspa-amp-menu
+                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+        (|XtAddCallback child |XmNactivateCallback
+                        (lambda (w c i)
+                          (post-limit-rms-dialog))))
+
+
+
+
+
+;;; FREQUENCY EFFECTS
 ;;;
 
 (define ladspa-freq-menu (|XmCreatePulldownMenu plug-menu "Frequency Effects"
@@ -1344,6 +1832,114 @@
 (define ladspa-freq-cascade (|XtCreateManagedWidget "Frequency Effects" |xmCascadeButtonWidgetClass plug-menu
                                             (list |XmNsubMenuId ladspa-freq-menu
                                                   |XmNbackground (|Pixel (snd-pixel (basic-color))))))
+
+;;; Harmonic generator
+;;;
+
+(define hg-fundamental-magnitude 0.0)
+(define hg-harmonic-magnitude-2 0.0)
+(define hg-harmonic-magnitude-3 0.0)
+(define hg-harmonic-magnitude-4 0.0)
+(define hg-harmonic-magnitude-5 0.0)
+(define hg-harmonic-magnitude-6 0.0)
+(define hg-harmonic-magnitude-7 0.0)
+(define hg-harmonic-magnitude-8 0.0)
+(define hg-harmonic-magnitude-9 0.0)
+(define hg-harmonic-magnitude-10 0.0)
+(define hg-dialog #f)
+(define hg-label "Harmonic generator")
+
+(define (cp-hg)
+   (apply-ladspa (make-sample-reader (cursor))
+      (list "harmonic_gen_1220" "harmonicGen" hg-fundamental-magnitude hg-harmonic-magnitude-2 hg-harmonic-magnitude-3 hg-harmonic-magnitude-4 hg-harmonic-magnitude-5 hg-harmonic-magnitude-6 hg-harmonic-magnitude-7 hg-harmonic-magnitude-8 hg-harmonic-magnitude-9 hg-harmonic-magnitude-10)
+         (- (frames) (cursor))
+         "harmonic generator"))
+
+(if (and (provided? 'snd-ladspa)
+         (provided? 'xm))
+  (begin
+
+    (define (post-hg-dialog)
+       (if (not (|Widget? hg-dialog))
+           (let ((sliders '()))
+             (set! hg-dialog
+                   (make-effect-dialog "harmonic generator ladspa plugin"
+                                       (lambda (w context info) (cp-hg))
+                                       (lambda (w context info) (|XtUnmanageChild hg-dialog))
+                                       (lambda (w context info)
+                                         (help-dialog "Harmonic generator" 
+						"Allows you to add harmonics and remove the fundamental from any audio signal.\n\ Known bugs: There is no bandwidth limiting filter on the output, so it is easy to create excessive high-frequency harmonics that could cause aliasing problems. However, in practice this doesn't seem to be a serious problem.\n\ Examples: There are many interesting effects you can achieve with sine waves. One example is producing band-limited square waves from sine waves. To do this, set the parameters to 1, 0, -0.3333, 0, 0.2, 0, -0.14285, 0, 0.11111. To get a triangle-like signal use 1, 0, -0.3333, 0, -0.2, 0, -0.14285, 0, -0.11111.\n\ Fundamental magnitude: The amplitude of the fundamental of the signal. Reduce it to 0 to remove the base signal altogether, or -1 to phase-invert it.\n\ 2nd harmonic magnitude: The 2nd harmonic, its frequency is twice the frequency of the fundamental.\n\ 3rd harmonic magnitude: The 3rd harmonic, its frequency is three times the frequency of the fundamental.\n\ Even harmonics add a distorted feel to the sound. Valve (tube) amplifiers introduce distortions at all the harmonics, transistor amplifiers only introduce distortion into the odd harmonics."))
+                                       (lambda (w c i)
+                                         (set! hg-fundamental-magnitude 0.0)
+                                         (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* hg-fundamental-magnitude 100))))
+                                         (set! hg-harmonic-magnitude-2 0.0)
+                                         (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact (* hg-harmonic-magnitude-2 100))))
+                                         (set! hg-harmonic-magnitude-3 0.0)
+                                         (|XtSetValues (list-ref sliders 2) (list |XmNvalue (inexact->exact (* hg-harmonic-magnitude-3 100))))
+                                         (set! hg-harmonic-magnitude-4 0.0)
+                                         (|XtSetValues (list-ref sliders 3) (list |XmNvalue (inexact->exact (* hg-harmonic-magnitude-4 100))))
+                                         (set! hg-harmonic-magnitude-5 0.0)
+                                         (|XtSetValues (list-ref sliders 4) (list |XmNvalue (inexact->exact (* hg-harmonic-magnitude-5 100))))
+                                         (set! hg-harmonic-magnitude-6 0.0)
+                                         (|XtSetValues (list-ref sliders 5) (list |XmNvalue (inexact->exact (* hg-harmonic-magnitude-6 100))))
+                                         (set! hg-harmonic-magnitude-7 0.0)
+                                         (|XtSetValues (list-ref sliders 6) (list |XmNvalue (inexact->exact (* hg-harmonic-magnitude-7 100))))
+                                         (set! hg-harmonic-magnitude-8 0.0)
+                                         (|XtSetValues (list-ref sliders 7) (list |XmNvalue (inexact->exact (* hg-harmonic-magnitude-8 100))))
+                                         (set! hg-harmonic-magnitude-9 0.0)
+                                         (|XtSetValues (list-ref sliders 8) (list |XmNvalue (inexact->exact (* hg-harmonic-magnitude-9 100))))
+                                         (set! hg-harmonic-magnitude-10 0.0)
+                                         (|XtSetValues (list-ref sliders 9) (list |XmNvalue (inexact->exact (* hg-harmonic-magnitude-10 100)))))))
+             (set! sliders
+                   (add-sliders hg-dialog
+                                (list 
+				      (list "fundamental magnitude" -1.0 0.0 1.0
+                                            (lambda (w context info)
+                                              (set! hg-fundamental-magnitude (/ (|value info) 100)))
+                                            100)
+                                      (list "2nd harmonic magnitude" -1.0 0.0 1.0
+                                            (lambda (w context info)
+                                              (set! hg-harmonic-magnitude-2 (/ (|value info) 100)))
+                                            100)
+                                      (list "3rd harmonic magnitude" -1.0 0.0 1.0
+                                            (lambda (w context info)
+                                              (set! hg-harmonic-magnitude-3 (/ (|value info) 100)))
+                                            100)
+                                      (list "4th harmonic magnitude" -1.0 0.0 1.0
+                                            (lambda (w context info)
+                                              (set! hg-harmonic-magnitude-4 (/ (|value info) 100)))
+                                            100)
+                                      (list "5th harmonic magnitude" -1.0 0.0 1.0
+                                            (lambda (w context info)
+                                              (set! hg-harmonic-magnitude-5 (/ (|value info) 100)))
+                                            100)
+                                      (list "6th harmonic magnitude" -1.0 0.0 1.0
+                                            (lambda (w context info)
+                                              (set! hg-harmonic-magnitude-6 (/ (|value info) 100)))
+                                            100)
+                                      (list "7th harmonic magnitude" -1.0 0.0 1.0
+                                            (lambda (w context info)
+                                              (set! hg-harmonic-magnitude-7 (/ (|value info) 100)))
+                                            100)
+                                      (list "8th harmonic magnitude" -1.0 0.0 1.0
+                                            (lambda (w context info)
+                                              (set! hg-harmonic-magnitude-8 (/ (|value info) 100)))
+                                            100)
+                                      (list "9th harmonic magnitude" -1.0 0.0 1.0
+                                            (lambda (w context info)
+                                              (set! hg-harmonic-magnitude-9 (/ (|value info) 100)))
+                                            100)
+                                      (list "10th harmonic magnitude" -1.0 0.0 1.0
+                                            (lambda (w context info)
+                                              (set! hg-harmonic-magnitude-10 (/ (|value info) 100)))
+                                            100))))))
+       (activate-dialog hg-dialog))))
+
+      (let ((child (|XtCreateManagedWidget "Harmonic generator" |xmPushButtonWidgetClass ladspa-freq-menu
+                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+        (|XtAddCallback child |XmNactivateCallback
+                        (lambda (w c i)
+                          (post-hg-dialog))))
 
 
 ;;; Pitch scaler
@@ -1749,7 +2345,7 @@
                         (lambda (w c i)
                           (post-ringmod-dialog))))
 
-;;; Reverbs
+;;; REVERBS
 ;;;
 
 (define ladspa-reverb-menu (|XmCreatePulldownMenu plug-menu "Reverbs"
@@ -1848,4 +2444,93 @@
         (|XtAddCallback child |XmNactivateCallback
                         (lambda (w c i)
                           (post-freeverb3-dialog))))
+
+
+;;; Gverb
+;;; plugin by Juhana Sadeharju
+;;;
+
+(define gverb-roomsize 30)
+(define gverb-reverb-time 7.0)
+(define gverb-damping 0.5)
+(define gverb-bandwidth 0.5)
+(define gverb-dry-level 0)
+(define gverb-early-reflect-level 0)
+(define gverb-tail-level 0)
+(define gverb-dialog #f)
+(define gverb-label "Gverb")
+
+(define (cp-gverb)
+   (apply-ladspa (make-sample-reader (cursor))
+      (list "gverb_1216" "gverb" gverb-roomsize gverb-reverb-time gverb-damping gverb-bandwidth gverb-dry-level gverb-early-reflect-level gverb-tail-level)
+         (- (frames) (cursor))
+         "gverb"))
+
+(if (and (provided? 'snd-ladspa)
+         (provided? 'xm))
+  (begin
+
+    (define (post-gverb-dialog)
+       (if (not (|Widget? gverb-dialog))
+           (let ((sliders '()))
+             (set! gverb-dialog
+                   (make-effect-dialog "gverb ladspa plugin"
+                                       (lambda (w context info) (cp-gverb))
+                                       (lambda (w context info) (|XtUnmanageChild gverb-dialog))
+                                       (lambda (w context info)
+                                         (help-dialog "Gverb"
+                                                      "A mono in, stereo out reverb implementation by Juhana Sadeharju (kouhia at nic.funet.fi). Steve Harris ported it to LADSPA and did some testing. Please contact Juhana directly regarding any bugs you find.\n\ Roomsize (m): The size of the room, in meters. Excessivly large, and excessivly small values will make it sound a bit unrealistic. Values of around 30 sound good.\n\ Reverb time (s): Reverb decay time, in seconds. 7 is a good place to start.\n\ Damping: This controls the high-frequency damping (a lowpass filter). Values near 1 will make it sound very bright, values near 0 will make it sound very dark.\n\ Input bandwidth: This is like a damping control for the input. It has a similar effect to the damping control, but is subtly different.\n\ Dry signal level (dB): The amount of dry signal to be mixed with the reverbed signal.\n\ Early reflection level (dB): The quantity of early reflections (scatter reflections directly from the source). Think of Lexicon's ambience patches.\n\ Tail level (dB): The level of the classic reverb tail reflections."))
+                                       (lambda (w c i)
+                                         (set! gverb-roomsize 30)
+                                         (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* gverb-roomsize 1))))
+                                         (set! gverb-reverb-time 7.0)
+                                         (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact (* gverb-reverb-time 100))))
+                                         (set! gverb-damping 0.5)
+                                         (|XtSetValues (list-ref sliders 2) (list |XmNvalue (inexact->exact (* gverb-damping 100))))
+                                         (set! gverb-bandwidth 0.5)
+                                         (|XtSetValues (list-ref sliders 3) (list |XmNvalue (inexact->exact (* gverb-bandwidth 100))))
+                                         (set! gverb-dry-level 0)
+                                         (|XtSetValues (list-ref sliders 4) (list |XmNvalue (inexact->exact (* gverb-dry-level 1))))
+                                         (set! gverb-early-reflect-level 0)
+                                         (|XtSetValues (list-ref sliders 5) (list |XmNvalue (inexact->exact (* gverb-early-reflect-level 1))))
+                                         (set! gverb-tail-level 0)
+                                         (|XtSetValues (list-ref sliders 6) (list |XmNvalue (inexact->exact (* gverb-tail-level 1)))))))
+             (set! sliders
+                   (add-sliders gverb-dialog
+                                (list (list "room size (m)" 1 30 300
+                                            (lambda (w context info)
+                                              (set! gverb-roomsize (/ (|value info) 1)))
+                                            1)
+                                      (list "reverb time (s)" 0.1 7.0 360.0
+                                            (lambda (w context info)
+                                              (set! gverb-reverb-time (/ (|value info) 100)))
+                                            100)
+                                      (list "damping" 0.0 0.5 1.0
+                                            (lambda (w context info)
+                                              (set! gverb-damping (/ (|value info) 100)))
+                                            100)
+                                      (list "bandwidth" 0.0 0.5 1.0
+                                            (lambda (w context info)
+                                              (set! gverb-bandwidth (/ (|value info) 100)))
+                                            100)
+                                      (list "dry level (dB)" -70 0 0
+                                            (lambda (w context info)
+                                              (set! gverb-dry-level (/ (|value info) 1)))
+                                            1)
+                                      (list "early reflections level (dB)" -70 0 0
+                                            (lambda (w context info)
+                                              (set! gverb-early-reflect-level (/ (|value info) 1)))
+                                            1)
+                                      (list "tail level (dB)" -70 0 0
+                                            (lambda (w context info)
+                                              (set! gverb-tail-level (/ (|value info) 1)))
+                                            1))))))
+       (activate-dialog gverb-dialog))))
+
+      (let ((child (|XtCreateManagedWidget "Gverb" |xmPushButtonWidgetClass ladspa-reverb-menu
+                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+        (|XtAddCallback child |XmNactivateCallback
+                        (lambda (w c i)
+                          (post-gverb-dialog))))
+
 
