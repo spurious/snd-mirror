@@ -453,7 +453,7 @@ static XEN vct_do(XEN obj, XEN proc)
 
 static XEN vcts_map(XEN args)
 {
-  #define H_vcts_mapB "(" S_vcts_mapB " v1 v2 ... proc) sets each element of the vct objects from the list of values returned by (proc)"
+  #define H_vcts_mapB "(" S_vcts_mapB " v1 v2 ... proc) sets each element of the vct objects from the list of values returned by (proc vnum)"
   /* n vcts followed by proc, proc returns n values (list) on each call */
   int i, vi, vnum, vsize, argnum;
   vct **v;

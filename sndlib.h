@@ -69,12 +69,6 @@
   #define MUS_LITTLE_ENDIAN 1
 #endif
 
-#if MACOS
-  #define off_t long
-#else
-  #include <sys/types.h>
-#endif
-
 #if (!(defined(MACOS))) && (defined(MPW_C) || defined(macintosh) || defined(__MRC__))
   #define MACOS 1
   #include <MacMemory.h>
@@ -89,7 +83,7 @@
   #define FALSE 0
 #endif
 
-#if defined(__APPLE__)
+#if defined(macosx)
   #define MAC_OSX 1
 #endif
 
@@ -118,6 +112,12 @@
     #endif
   #endif
 #endif  
+
+#if MACOS
+  #define off_t long
+#else
+  #include <sys/types.h>
+#endif
 
 #ifndef MUS_LITTLE_ENDIAN
   #define MUS_LITTLE_ENDIAN 0

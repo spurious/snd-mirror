@@ -180,6 +180,7 @@ static const unsigned char I_MUS_[4] = {'C','L','M',' '};  /* I hereby claim thi
 static const unsigned char I_RIFF[4] = {'R','I','F','F'};  /* RIFF first word */
 static const unsigned char I_RIFX[4] = {'R','I','F','X'};  /* RIFX first word (big-endian RIFF file) */
 static const unsigned char I_WAVE[4] = {'W','A','V','E'};
+static const unsigned char I_wave[4] = {'w','a','v','e'};
 static const unsigned char I_fmt_[4] = {'f','m','t',' '};
 static const unsigned char I_data[4] = {'d','a','t','a'};
 static const unsigned char I_fact[4] = {'f','a','c','t'};  /* used by compressed RIFF files */
@@ -268,9 +269,9 @@ static const unsigned char I_SU7R[4] = {'S','U','7','R'};
 static const unsigned char I_PVF1[4] = {'P','V','F','1'};  /* portable voice format (mgetty) */
 static const unsigned char I_PVF2[4] = {'P','V','F','2'};
 static const unsigned char I_AUTH[4] = {'A','U','T','H'};
+static const unsigned char I_riff[4] = {'r','i','f','f'};  /* Sonic Foundry apparently */
 
 /* .glt and .shp -> Perry Cook's SPASM data files */
-/* GBF- for guile binary files */
 
 #define I_IRCAM_VAX  0x0001a364
 #define I_IRCAM_SUN  0x0002a364
@@ -4579,7 +4580,7 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
 		__FILE__, __LINE__, __FUNCTION__);
       return(MUS_ERROR); /* i.e. unknown FORM header */
     }
-  if ((match_four_chars((unsigned char *)hdrbuf, I_RIFF)) || 
+  if ((match_four_chars((unsigned char *)hdrbuf, I_RIFF)) ||
       (match_four_chars((unsigned char *)hdrbuf, I_RIFX)))
     {
       if (bytes < 12) 

@@ -1945,7 +1945,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++;
       XtSetArg(args[n], XmNdragCallback, n5 = make_callback_list(expand_drag_callback, (XtPointer)sp)); n++;
       XtSetArg(args[n], XmNvalueChangedCallback, n6 = make_callback_list(expand_valuechanged_callback, (XtPointer)sp)); n++;
-      sw[W_expand] = XtCreateManagedWidget("", xmScrollBarWidgetClass, sw[W_amp_form], args, n);
+      sw[W_expand] = XtCreateManagedWidget("expand-scroll", xmScrollBarWidgetClass, sw[W_amp_form], args, n);
       XtAddCallback(sw[W_expand], XmNhelpCallback, expand_help_callback, ss);
       XtAddEventHandler(sw[W_expand], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 
@@ -2026,7 +2026,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++;
       XtSetArg(args[n], XmNdragCallback, n7 = make_callback_list(contrast_drag_callback, (XtPointer)sp)); n++;
       XtSetArg(args[n], XmNvalueChangedCallback, n8 = make_callback_list(contrast_valuechanged_callback, (XtPointer)sp)); n++;
-      sw[W_contrast] = XtCreateManagedWidget("", xmScrollBarWidgetClass, sw[W_amp_form], args, n);
+      sw[W_contrast] = XtCreateManagedWidget("contrast-scroll", xmScrollBarWidgetClass, sw[W_amp_form], args, n);
       XtAddCallback(sw[W_contrast], XmNhelpCallback, contrast_help_callback, ss);
       XtAddEventHandler(sw[W_contrast], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 
@@ -2085,7 +2085,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++;
       XtSetArg(args[n], XmNdragCallback, n9 = make_callback_list(revscl_drag_callback, (XtPointer)sp)); n++;
       XtSetArg(args[n], XmNvalueChangedCallback, n10 = make_callback_list(revscl_valuechanged_callback, (XtPointer)sp)); n++;
-      sw[W_revscl] = XtCreateManagedWidget("", xmScrollBarWidgetClass, sw[W_amp_form], args, n);
+      sw[W_revscl] = XtCreateManagedWidget("revscl-scroll", xmScrollBarWidgetClass, sw[W_amp_form], args, n);
       XtAddCallback(sw[W_revscl], XmNhelpCallback, revscl_help_callback, ss);
       XtAddEventHandler(sw[W_revscl], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 
@@ -2169,7 +2169,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++;
       XtSetArg(args[n], XmNdragCallback, n11 = make_callback_list(revlen_drag_callback, (XtPointer)sp)); n++;
       XtSetArg(args[n], XmNvalueChangedCallback, n12 = make_callback_list(revlen_valuechanged_callback, (XtPointer)sp)); n++;
-      sw[W_revlen] = XtCreateManagedWidget("", xmScrollBarWidgetClass, sw[W_amp_form], args, n);
+      sw[W_revlen] = XtCreateManagedWidget("revlen-scroll", xmScrollBarWidgetClass, sw[W_amp_form], args, n);
       XtAddCallback(sw[W_revlen], XmNhelpCallback, revlen_help_callback, ss);
       XtAddEventHandler(sw[W_revlen], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 

@@ -1334,7 +1334,7 @@ static XEN g_test_menus(void)
 #ifndef SGI
   for (i = 0; i < NUM_MENU_WIDGETS; i++)
     if ((mw[i]) && (XmIsPushButton(mw[i])) && (XtIsSensitive(mw[i])) &&
-	(i != f_exit_menu) && (i != f_save_menu) && (i != f_close_menu) &&
+	(i != f_exit_menu) && (i != f_save_menu) && (i != f_close_menu) && (i != o_save_menu) &&
 	(i != f_new_menu) && (i != h_click_for_help_menu) && (i != v_mix_panel_menu))
       XtCallCallbacks(mw[i], XmNactivateCallback, (void *)ss);
 #endif
