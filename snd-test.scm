@@ -24398,6 +24398,15 @@ EDITS: 2
       (etst '(string-fill! #f #\c))
       (etst '(string-set! #f 1 #\c))
 
+      (stst '(format #f "hiho: ~D" 43) "hiho: 43")
+      (stst '(format #f "~,4F ~,3F" 3.14 (sqrt 3.0)) "3.1400 1.732")
+      (stst '(format #f "~A: ~A" "hiho" '(3 4)) "hiho: (3 4)")
+      (stst '(format #f "~A: ~C ~A" (> 2 3) #\c (make-vct 2 .1)) "#f: c #<vct[len=2]: 0.100 0.100>")
+      (stst '(format #f "~A: ~X" '(a . b) 23) "(a . b): 17")
+      (stst '(format #f "~,3E" 3.14159) "3.142E+0")
+      (stst '(format #f "hi~16Tho") "hi              ho")
+      (stst '(format #f "~{~D ~}" '(1 2 3)) "1 2 3 ")
+
       (btst '(sample-reader? "hi") #f)
       (btst '(sample-reader? #t) #f)
 
@@ -24547,14 +24556,13 @@ EDITS: 2
       (ststa '(lambda (y) (caddr list-var)) 0.0 "hiho")
       (btsta '(lambda (y) (cadddr list-var)) 0.0 #t)
 
-;;; TOOO: get quoted list/vector constants to work
-;      (itst '(car '(1 . 2)) 1)
-;      (itst '(cdr '(1 . 2)) 2)
-;      (itst '(cadr '(3 4)) 4)
-;      (btst '(null? '()) #t)
-;      (btst '(null? '(1)) #f)
-;      (itst '(vector-ref '#(0 1 2) 2) 2)
-;      (ftst '(vector-ref '#(0.1 1.1 2.1) 1) 1.1)
+      (itst '(car '(1 . 2)) 1)
+      (itst '(cdr '(1 . 2)) 2)
+      (itst '(cadr '(3 4)) 4)
+      (btst '(null? '()) #t)
+      (btst '(null? '(1)) #f)
+      (itst '(vector-ref '#(0 1 2) 2) 2)
+      (ftst '(vector-ref '#(0.1 1.1 2.1) 1) 1.1)
 
       (let ((val (run-eval '(lambda (v) (declare (v char)) (char->integer v)) #\b)))
 	(IF (not (= val 98)) (snd-display ";char as arg to run: ~A" val)))

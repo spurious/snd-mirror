@@ -21,6 +21,7 @@
 #define S_cauchy_window              "cauchy-window"
 #define S_clear_array                "clear-array"
 #define S_clear_sincs                "clear-sincs"
+#define S_clm_print                  "clm-print"
 #define S_comb                       "comb"
 #define S_comb_p                     "comb?"
 #define S_continue_sample2file       "continue-sample->file"

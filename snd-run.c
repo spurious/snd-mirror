@@ -56,7 +56,7 @@
  *   char-upcase char-downcase char->integer integer->char
  *   string? string string-length string-copy string-fill! string-ref string-set!
  *   make-string substring string-append string=? string<=? string>=? string<? string>? and string-ci*
- *   display number->string
+ *   display number->string format[as a callback into Guile]
  *   make-vector if 2nd arg exists and is float
  *   list|pair ops that reference constant lists and return something we can handle (like a number)
  *
@@ -156,6 +156,9 @@ static XEN optimization_hook = XEN_FALSE;
 #define CHR_PT  "i%d(#\\%c)"
 #define BOOL_PT "i%d(%s)"
 #define B2S(Arg) ((Arg) ? "#t" : "#f")
+
+#define UNLIMITED_ARGS -1
+static XEN walk_sym = XEN_FALSE;
 
 /* find and set (Guile) variable values */
 
@@ -262,11 +265,11 @@ static XEN symbol_set_value(XEN code, XEN sym, XEN new_val)
 
 enum {R_UNSPECIFIED, R_INT, R_FLOAT, R_BOOL, R_CHAR, R_STRING, R_LIST, R_PAIR, R_FUNCTION, R_GOTO, R_VCT, R_READER, R_CLM, 
       R_FLOAT_VECTOR, R_INT_VECTOR, R_VCT_VECTOR, R_CLM_VECTOR, 
-      R_NUMBER, R_CONS, R_VECTOR, R_ANY}; /* last 4 for walker arg checks */
+      R_NUMBER, R_CONS, R_VECTOR, R_XEN, R_ANY}; /* last 5 for walker arg checks */
 
-static char *type_names[21] = {"unspecified", "int", "float", "bool", "char", "string", "list", "pair", "function", "continuation", 
+static char *type_names[22] = {"unspecified", "int", "float", "bool", "char", "string", "list", "pair", "function", "continuation", 
 			       "vct", "reader", "clm", "float-vector", "int-vector", "vct-vector", "clm-vector",
-			       "number", "cons", "vector", "any"};
+			       "number", "cons", "vector", "xen", "any"};
 
 static char* type_name(int id) {if ((id >= R_INT) && (id <= R_ANY)) return(type_names[id]); return("unknown");}
 
@@ -743,7 +746,12 @@ static char *describe_xen_value(xen_value *v, int *ints, Float *dbls)
     case R_STRING:  buf = (char *)CALLOC(256, sizeof(char)); mus_snprintf(buf, 256, STR_PT , v->addr, (char *)(ints[v->addr]));            break;
     case R_FLOAT:   buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, FLT_PT , v->addr, dbls[v->addr]);                        break;
     case R_LIST:
-    case R_PAIR:    buf = (char *)CALLOC(512, sizeof(char)); mus_snprintf(buf, 512, "l%d%s", v->addr, XEN_AS_STRING((XEN)(ints[v->addr]))); break;
+    case R_PAIR:
+      buf = (char *)CALLOC(512, sizeof(char)); 
+      if (ints[v->addr] != 0)
+	mus_snprintf(buf, 512, "l%d%s", v->addr, XEN_AS_STRING((XEN)(ints[v->addr]))); 
+      else sprintf(buf, "non-constant cons");
+      break;
     case R_FLOAT_VECTOR:
     case R_VCT:     buf = vct_to_string((vct *)(ints[v->addr]));                                                                           break;
     case R_READER:  if (ints[v->addr]) buf = sf_to_string((snd_fd *)(ints[v->addr])); else buf = copy_string("null");                      break;
@@ -1055,7 +1063,13 @@ void *free_ptree(void *upt)
 			case R_INT_VECTOR:   free_int_vct((int_vct *)(pt->ints[v->addr]));      break;
 			case R_CLM_VECTOR:   free_clm_vct((clm_vct *)(pt->ints[v->addr]));      break;
 			case R_VCT_VECTOR:   free_vct_vct((vct_vct *)(pt->ints[v->addr]));      break;
-			default: fprintf(stderr," free %s?\n", type_name(v->type));             break;
+			case R_STRING:       
+			  if (pt->ints[v->addr]) 
+			    {
+			      FREE((char *)(pt->ints[v->addr]));
+			      pt->ints[v->addr] = 0;
+			    }
+			  break;
 			}
 		      pt->ints[v->addr] = 0;
 		    }
@@ -1255,11 +1269,9 @@ static xen_value *transfer_value(ptree *prog, xen_value *v)
     }
 }
 
-static void add_obj_to_gcs(ptree *pt, int type, int addr)
+static void add_xen_value_to_gcs(ptree *pt, xen_value *v)
 {
-  xen_value *v;
   int old_size, i;
-  v = make_xen_value(type, addr, R_VARIABLE);
   v->gc = TRUE;
   if (pt->gc_ctr >= pt->gcs_size)
     {
@@ -1274,6 +1286,11 @@ static void add_obj_to_gcs(ptree *pt, int type, int addr)
 	}
     }
   pt->gcs[pt->gc_ctr++] = v;
+}
+
+static void add_obj_to_gcs(ptree *pt, int type, int addr)
+{
+  add_xen_value_to_gcs(pt, make_xen_value(type, addr, R_VARIABLE));
 }
 
 static int_vct *read_int_vector(XEN vect)
@@ -7093,8 +7110,6 @@ static xen_value *unwrap_xen_object_1(ptree *prog, XEN form, const char *origin,
     case R_CHAR:   return(make_xen_value(R_CHAR, add_int_to_ptree(prog, (int)(XEN_TO_C_CHAR(form))), R_CONSTANT)); break;
     case R_STRING: return(make_xen_value(R_STRING, add_string_to_ptree(prog, copy_string(XEN_TO_C_STRING(form))), R_CONSTANT)); break;
     case R_VCT:    return(make_xen_value(R_VCT, add_int_to_ptree(prog, (int)(get_vct(form))), R_CONSTANT)); break;
-#if 0
-      /* see moving-formant -- arg passed then procedure-source parsed -> segfault */
     case R_PAIR:   if (constant) return(make_xen_value(R_PAIR, add_int_to_ptree(prog, (int)form), R_CONSTANT)); break;
     case R_LIST:   if (constant) return(make_xen_value(R_LIST, add_int_to_ptree(prog, (int)form), R_CONSTANT)); break;
     case R_INT_VECTOR: 
@@ -7119,7 +7134,6 @@ static xen_value *unwrap_xen_object_1(ptree *prog, XEN form, const char *origin,
 	  return(v);
 	}
       break;
-#endif
     }
   return(run_warn("%s: non-simple arg: %s", origin, XEN_AS_STRING(form)));
 }
@@ -7184,6 +7198,241 @@ static xen_value *lambda_preform(ptree *prog, XEN form, int need_result) {return
 static xen_value *quote_form(ptree *prog, XEN form, int need_result) 
 {
   return(unwrap_constant_xen_object(prog, XEN_CADR(form), "quote"));
+}
+
+/* clm-print and indirect args support */
+
+static int xenable(xen_value *v)
+{
+  switch (v->type)
+    {
+    case R_FLOAT: case R_INT: case R_CHAR: case R_STRING: case R_BOOL:
+    case R_LIST: case R_PAIR: case R_FLOAT_VECTOR: case R_VCT:
+      return(TRUE);
+      break;
+    }
+  return(FALSE);
+}
+
+static XEN xen_value_to_xen(ptree *pt, xen_value *v)
+{
+  vct *vc;
+  switch (v->type)
+    {
+    case R_FLOAT:   return(C_TO_XEN_DOUBLE(pt->dbls[v->addr])); break;
+    case R_INT:     return(C_TO_XEN_INT(pt->ints[v->addr])); break;
+    case R_CHAR:    return(C_TO_XEN_CHAR((char)(pt->ints[v->addr]))); break;
+    case R_STRING:  return(C_TO_XEN_STRING((char *)(pt->ints[v->addr]))); break;
+    case R_BOOL:    return(C_TO_XEN_BOOLEAN(pt->ints[v->addr])); break;
+    case R_LIST:    
+    case R_PAIR:    return((XEN)(pt->ints[v->addr])); break;
+    case R_FLOAT_VECTOR:
+    case R_VCT:
+      vc = (vct *)(pt->ints[v->addr]);
+      return(make_vct_wrapper(vc->length, vc->data));
+      break;
+    }
+  return(NULL);
+}
+
+static triple *make_indirect_triple(void (*function)(int *arg_addrs, int *ints, Float *dbls),
+				    char *(*descr)(int *arg_addrs, int *ints, Float *dbls), 
+				    xen_value **typed_args, int args)
+{
+  triple *trp;
+  int *addrs = NULL;
+  int i;
+  if (args > 0)
+    {
+      addrs = (int *)CALLOC(args, sizeof(int));
+      addrs[0] = typed_args[0]->addr; /* string result */
+      addrs[1] = typed_args[1]->addr; /* num args */
+      for (i = 2; i < args; i++) 
+	addrs[i] = (int)(typed_args[i]);
+    }
+  trp = (triple *)CALLOC(1, sizeof(triple));
+  trp->function = function;
+  trp->args = addrs;
+  trp->descr = descr;
+  return(trp);
+}
+
+static xen_value *package_n_indirect(ptree *prog,
+				     int type, 
+				     void (*function)(int *arg_addrs, int *ints, Float *dbls),
+				     char *(*descr)(int *arg_addrs, int *ints, Float *dbls),
+				     xen_value **args,
+				     int num_args)
+{
+  int i;
+  xen_value **new_args;
+  xen_value *rtn;
+  new_args = (xen_value **)CALLOC(num_args + 2, sizeof(xen_value *));
+  for (i = 1; i <= num_args; i++)
+    {
+      new_args[i + 1] = copy_xen_value(args[i]); /* copy so that w->walker can be used (and cleanup args) */
+      add_xen_value_to_gcs(prog, new_args[i + 1]);
+    }
+  new_args[1] = make_xen_value(R_INT, add_int_to_ptree(prog, num_args), R_CONSTANT);
+  new_args[0] = add_empty_var_to_ptree(prog, type);
+  add_triple_to_ptree(prog, make_indirect_triple(function, descr, new_args, num_args + 2));
+  rtn = new_args[0];
+  FREE(new_args[1]);
+  FREE(new_args);
+  return(rtn);
+}
+
+static XEN xen_values_to_list(ptree *pt, int num_args, int *args, int *ints)
+{
+  XEN lst = XEN_EMPTY_LIST;
+  int i;
+  for (i = num_args + 1; i >= 2; i--)
+    lst = XEN_CONS(xen_value_to_xen(pt, (xen_value *)(args[i])), lst);
+  return(lst);
+}
+
+static XEN format_func = XEN_FALSE;
+
+/*
+ TODO: descr_format_s descr_clm_print_s
+*/
+
+static void format_s(int *args, int *ints, Float *dbls) 
+{
+  if (STRING_RESULT) FREE(STRING_RESULT);
+  STRING_RESULT = copy_string(XEN_TO_C_STRING(XEN_APPLY(format_func, 
+							xen_values_to_list(PTREE, ints[args[1]], args, ints),
+							"format")));
+}
+
+static char *descr_format_s(int *args, int *ints, Float *dbls)
+{
+  return(copy_string("format"));
+}
+
+static xen_value *format_1(ptree *prog, xen_value **args, int num_args)
+{
+  return(package_n_indirect(prog, R_STRING, format_s, descr_format_s, args, num_args));
+}
+
+typedef struct {
+  xen_value *(*walker)(ptree *prog, xen_value **args, int num_args);
+  xen_value *(*special_walker)(ptree *prog, XEN form, int need_result);
+  void (*set_walker)(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v);
+  int required_args, max_args, result_type, need_int_result, num_arg_types;
+  int *arg_types;
+} walk_info;
+
+static XEN g_describe_walk_info(XEN obj)
+{
+  XEN walker;
+  walk_info *w = NULL;
+  walker = scm_object_property(obj, walk_sym);
+  if (XEN_ULONG_P(walker))
+    {
+      w = (walk_info *)(XEN_TO_C_ULONG(walker));
+      if (w)
+	{
+	  char *buf;
+	  int i;
+	  buf = (char *)CALLOC(1024, sizeof(char));
+	  sprintf(buf, "%p %p %p: req: %d, max: %d, result: %s, need_int: %d, num_arg_types: %d: ",
+		  w->walker, w->special_walker, w->set_walker, 
+		  w->required_args, w->max_args, type_name(w->result_type), w->need_int_result, w->num_arg_types);
+	  for (i = 0; i < w->num_arg_types; i++)
+	    {
+	      strcat(buf, type_name(w->arg_types[i]));
+	      strcat(buf, " ");
+	    }
+	  walker = C_TO_XEN_STRING(buf);
+	  FREE(buf);
+	  return(walker);
+	}
+    }
+  return(XEN_FALSE);
+}
+
+static walk_info *make_walker(xen_value *(*walker)(ptree *prog, xen_value **args, int num_args),
+			      xen_value *(*special_walker)(ptree *prog, XEN form, int need_result),
+			      void (*set_walker)(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v),
+			      int required_args, 
+			      int max_args, 
+			      int result_type, 
+			      int need_int_result,
+			      int num_arg_types,
+			      ...) /* arg type list, R_NUMBER=int or float, R_ANY=unchecked */
+{
+  walk_info *w;
+  va_list ap;
+  int i;
+  w = (walk_info *)malloc(sizeof(walk_info));
+  w->walker = walker;
+  w->special_walker = special_walker;
+  w->set_walker = set_walker;
+  w->required_args = required_args;
+  w->max_args = max_args;
+  w->result_type = result_type;
+  w->need_int_result = need_int_result;
+  w->num_arg_types = num_arg_types;
+  if (num_arg_types > 0)
+    {
+      va_start(ap, num_arg_types);
+      w->arg_types = (int *)calloc(num_arg_types, sizeof(int));
+      for (i = 0; i < num_arg_types; i++)
+	w->arg_types[i] = (int)(va_arg(ap, int));
+      va_end(ap);
+    }
+  return(w);
+}
+
+static void clm_print_s(int *args, int *ints, Float *dbls) 
+{
+  if (STRING_RESULT) FREE(STRING_RESULT);
+  STRING_RESULT = copy_string(XEN_TO_C_STRING(XEN_APPLY(format_func, 
+							xen_values_to_list(PTREE, ints[args[1]], args, ints),
+							"format")));
+  listener_append(STRING_RESULT);
+}
+
+static char *descr_clm_print_s(int *args, int *ints, Float *dbls)
+{
+  return(copy_string("clm-print"));
+}
+
+static xen_value *clm_print_1(ptree *prog, xen_value **args, int num_args)
+{
+  scm_set_object_property_x(XEN_VAR_NAME_TO_VAR("clm-print"),
+			    walk_sym,
+			    C_TO_XEN_ULONG(make_walker(clm_print_1, NULL, NULL, 1, UNLIMITED_ARGS, R_STRING, FALSE, 1, -R_XEN)));
+  return(package_n_indirect(prog, R_STRING, clm_print_s, descr_clm_print_s, args, num_args));
+}
+
+static xen_value *set_up_format(ptree *prog, xen_value **args, int num_args, int is_format)
+{
+  int i;
+  XEN format_var = XEN_FALSE;
+  format_var = XEN_VAR_NAME_TO_VAR("format");
+  if ((!(XEN_FALSE_P(format_var))) &&
+      (XEN_PROCEDURE_P(XEN_VARIABLE_REF(format_var))))
+    {
+      /* define a walker for format */
+      scm_set_object_property_x(format_var, 
+				walk_sym,
+				C_TO_XEN_ULONG(make_walker(format_1, NULL, NULL, 1, UNLIMITED_ARGS, R_STRING, FALSE, 1, -R_XEN)));
+      format_func = XEN_VARIABLE_REF(format_var);
+      /* any further formats will be checked in walk, but this one needs explicit check */
+      for (i = 1; i <= num_args; i++)
+	if (!(xenable(args[i])))
+	  return(run_warn("can't handle %s as arg (%d) to %s", 
+			  describe_xen_value(args[i + 1], prog->ints, prog->dbls),
+			  i,
+			  (is_format) ? "format" : "clm-print"));
+      /* no cleanup because it is handled in walk */
+      if (is_format) 
+	return(format_1(prog, args, num_args));
+      else return(clm_print_1(prog, args, num_args));
+    }
+  return(run_warn("format not defined"));
 }
 
 
@@ -7421,47 +7670,6 @@ static xen_value *arg_warn(ptree *prog, char *funcname, int arg_num, xen_value *
   return(NULL);
 }
 
-typedef struct {
-  xen_value *(*walker)(ptree *prog, xen_value **args, int num_args);
-  xen_value *(*special_walker)(ptree *prog, XEN form, int need_result);
-  void (*set_walker)(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v);
-  int required_args, max_args, result_type, need_int_result, num_arg_types;
-  int *arg_types;
-} walk_info;
-
-static XEN walk_sym = XEN_FALSE;
-
-static XEN g_describe_walk_info(XEN obj)
-{
-  XEN walker;
-  walk_info *w = NULL;
-  walker = scm_object_property(obj, walk_sym);
-  if (XEN_ULONG_P(walker))
-    {
-      w = (walk_info *)(XEN_TO_C_ULONG(walker));
-      if (w)
-	{
-	  char *buf;
-	  int i;
-	  buf = (char *)CALLOC(1024, sizeof(char));
-	  sprintf(buf, "%p %p %p: req: %d, max: %d, result: %s, need_int: %d, num_arg_types: %d: ",
-		  w->walker, w->special_walker, w->set_walker, 
-		  w->required_args, w->max_args, type_name(w->result_type), w->need_int_result, w->num_arg_types);
-	  for (i = 0; i < w->num_arg_types; i++)
-	    {
-	      strcat(buf, type_name(w->arg_types[i]));
-	      strcat(buf, " ");
-	    }
-	  walker = C_TO_XEN_STRING(buf);
-	  FREE(buf);
-	  return(walker);
-	}
-    }
-  return(XEN_FALSE);
-}
-
-#define UNLIMITED_ARGS -1
-
 static xen_value *walk(ptree *prog, XEN form, int need_result)
 {
   /* walk form, storing vars, making program entries for operators etc */
@@ -7502,9 +7710,13 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 		  ((w->need_int_result) ||
 		   ((i < w->num_arg_types) && (w->arg_types[i] == R_INT))))
 		arg_result = NEED_INT_RESULT;
-
 	      args[i + 1] = walk(prog, XEN_CAR(all_args), arg_result);
-	      if (args[i + 1] == NULL) return(clean_up(NULL, args, num_args));
+	      if ((args[i + 1] == NULL) ||
+		  /* need to trap non-constant lists */
+		  ((prog->ints[args[i + 1]->addr] == 0) &&
+		   ((args[i + 1]->type == R_LIST) || 
+		    (args[i + 1]->type == R_PAIR))))
+		return(clean_up(NULL, args, num_args));
 	      if (args[i + 1]->constant == R_CONSTANT) constants++;
 	      if (args[i + 1]->type == R_FLOAT) float_result = TRUE; /* for "*" et al */
 	    }
@@ -7585,9 +7797,11 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	      true_type = -(w->arg_types[0]);
 	      for (i = 0; i < num_args; i++)
 		if ((args[i + 1]->type != true_type) &&
-		    ((true_type != R_NUMBER) ||
-		     ((args[i + 1]->type != R_INT) && 
-		      (args[i + 1]->type != R_FLOAT))))
+		    (((true_type != R_NUMBER) ||
+		      ((args[i + 1]->type != R_INT) && 
+		       (args[i + 1]->type != R_FLOAT))) &&
+		     ((true_type != R_XEN) ||
+		      (!(xenable(args[i + 1]))))))
 		  return(clean_up(arg_warn(prog, funcname, i + 1, args, type_name(true_type)), args, num_args));
 	    }
 	  else
@@ -7620,13 +7834,21 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 				}
 			      else
 				{
-				  if (w->arg_types[i] == R_CONS)
+				  if (w->arg_types[i] == R_XEN)
 				    {
-				      if ((args[i + 1]->type != R_LIST) &&
-					  (args[i + 1]->type != R_PAIR))
-					return(clean_up(arg_warn(prog, funcname, i + 1, args, "cons"), args, num_args));
+				      if (!(xenable(args[i + 1])))
+					return(clean_up(arg_warn(prog, funcname, i + 1, args, "indirect"), args, num_args));
 				    }
-				  else return(clean_up(arg_warn(prog, funcname, i + 1, args, type_name(w->arg_types[i])), args, num_args));
+				  else
+				    {
+				      if (w->arg_types[i] == R_CONS)
+					{
+					  if ((args[i + 1]->type != R_LIST) &&
+					      (args[i + 1]->type != R_PAIR))
+					    return(clean_up(arg_warn(prog, funcname, i + 1, args, "cons"), args, num_args));
+					}
+				      else return(clean_up(arg_warn(prog, funcname, i + 1, args, type_name(w->arg_types[i])), args, num_args));
+				    }
 				}
 			    }
 			}
@@ -7653,6 +7875,11 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 					 add_int_to_ptree(prog, check_clm_type(XEN_CAR(get_lst(prog, args)), clm_types[k])), 
 					 R_CONSTANT), 
 			  args, num_args));
+
+      if (strcmp(funcname, "format") == 0)
+	return(clean_up(set_up_format(prog, args, num_args, TRUE), args, num_args));
+      if (strcmp(funcname, S_clm_print) == 0)
+	return(clean_up(set_up_format(prog, args, num_args, FALSE), args, num_args));
 
       /* check for function defined elsewhere, get source, splice in if possible */
       if ((v == NULL) && 
@@ -7683,6 +7910,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
       if ((need_result) || (XEN_LIST_P(form)))
 	/* need the list check as well because the called function might have side-effects */
 	return(clean_up(NULL, args, num_args));
+
       return(clean_up(make_xen_value(R_UNSPECIFIED, -1, R_CONSTANT), args, num_args));
     }
   switch (xen_to_run_type(form))
@@ -8105,9 +8333,9 @@ in multi-channel situations where you want the optimization that vct-map! provid
 	}
     }
 
+#if WITH_RUN
   if (optimization(get_global_state()) != DONT_OPTIMIZE)
     {
-#if WITH_RUN
       ptree *pt = NULL;
       pt = (ptree *)form_to_ptree(proc_and_code);
       if (pt)
@@ -8125,8 +8353,8 @@ in multi-channel situations where you want the optimization that vct-map! provid
 	}
       /* else fall through to guile */
       if (pt) free_ptree(pt);
-#endif
     }
+#endif
 
   for (i = 0; i < min_len; i++) 
     {
@@ -8192,39 +8420,6 @@ XEN_NARGIFY_2(g_vct_map_w, g_vct_map)
 #endif
 
 #if HAVE_GUILE && WITH_RUN
-static walk_info *make_walker(xen_value *(*walker)(ptree *prog, xen_value **args, int num_args),
-			      xen_value *(*special_walker)(ptree *prog, XEN form, int need_result),
-			      void (*set_walker)(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v),
-			      int required_args, 
-			      int max_args, 
-			      int result_type, 
-			      int need_int_result,
-			      int num_arg_types,
-			      ...) /* arg type list, R_NUMBER=int or float, R_ANY=unchecked */
-{
-  walk_info *w;
-  va_list ap;
-  int i;
-  w = (walk_info *)malloc(sizeof(walk_info));
-  w->walker = walker;
-  w->special_walker = special_walker;
-  w->set_walker = set_walker;
-  w->required_args = required_args;
-  w->max_args = max_args;
-  w->result_type = result_type;
-  w->need_int_result = need_int_result;
-  w->num_arg_types = num_arg_types;
-  if (num_arg_types > 0)
-    {
-      va_start(ap, num_arg_types);
-      w->arg_types = (int *)calloc(num_arg_types, sizeof(int));
-      for (i = 0; i < num_arg_types; i++)
-	w->arg_types[i] = (int)(va_arg(ap, int));
-      va_end(ap);
-    }
-  return(w);
-}
-
 #define INIT_WALKER(Name, Val) scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL(Name), walk_sym, C_TO_XEN_ULONG(Val))
 
 static void init_walkers(void)
@@ -8644,99 +8839,3 @@ You can often slightly rewrite the form to make run happy."
   init_walkers();
 #endif
 }
-
-
-#if 0
-/*
-format:
-XEN_VAR_NAME_TO_VAR("format") -> procedure presumably -> format
-args as array of xen_values + num_args
-make xen list with each xen_value -> XEN value
-XEN_APPLY(format, xargs, "format") -> string
-
-static XEN xen_value_to_xen(xen_value *c)
-{
-  switch (v->type)
-    {
-    case R_FLOAT:   return(C_TO_XEN_DOUBLE(pt->dbls[v->addr])); break;
-    case R_INT:     return(C_TO_XEN_INT(pt->ints[v->addr])); break;
-    case R_CHAR:    return(C_TO_XEN_CHAR((char)(pt->ints[v->addr]))); break;
-    case R_STRING:  return(C_TO_XEN_STRING((char *)(pt->ints[v->addr]))); break;
-    case R_BOOL:    return(C_TO_XEN_BOOLEAN(pt->ints[v->addr])); break;
-    case R_LIST:    
-    case R_PAIR:    return((XEN)(ints[v->addr])); break;
-    case R_FLOAT_VECTOR:
-    case R_VCT:
-{
-  vct *vc;
-  vc = (vct *)(ints[v->addr]);
-  return(make_vct_wrapper(vc->length, vc->data));
-}
- break;
- ;; no reader, clm, goto, function, vectors -- how to catch these? XENABLE arg type?
-    }
-}
-static XEN xen_values_to_list(int num_args, int *args, int *ints)
-{
-  XEN lst = XEN_EMPTY_LIST;
-  int i;
-  for (i = num_args + 1; i >= 2; i--)
-    lst = XEN_CONS(xen_value_to_xen((xen_value *)(args[i]), lst));
-  return(lst);
-}
-static XEN format_var = XEN_FALSE;
-static format_s(int *args, int *ints, Float *dbls) 
-{
-
-  STRING_RESULT = XEN_APPLY(format_var, xen_values_to_list(ints[args[1]], ...));
-  this needs the xen_values themselves (no cleanup), through which we indirect to get the values/types
-  tree walker should put num_args in arg[1], each v in arg[i+2]
-  but how do we cleanup in free_ptree? -- add_v_to_gcs as inner portion of current add_obj_to_gcs
-}
-static triple *make_indirect_triple(void (*function)(int *arg_addrs, int *ints, Float *dbls),
-			   char *(*descr)(int *arg_addrs, int *ints, Float *dbls), 
-			   xen_value **typed_args, int args)
-{
-  triple *trp;
-  int *addrs = NULL;
-  int i;
-  if (args > 0)
-    {
-      addrs = (int *)CALLOC(args, sizeof(int));
-      for (i = 0; i < args; i++) 
-	addrs[i] = (int)(typed_args[i]);
-    }
-  trp = (triple *)CALLOC(1, sizeof(triple));
-  trp->function = function;
-  trp->args = addrs;
-  trp->descr = descr;
-  return(trp);
-}
-
-static xen_value *package_n_indirect(ptree *prog,
-			    int type, 
-			    void (*function)(int *arg_addrs, int *ints, Float *dbls),
-			    char *(*descr)(int *arg_addrs, int *ints, Float *dbls),
-			    xen_value **args,
-			    int num_args)
-{
-  int i;
-  xen_value **new_args;
-  new_args = (xen_value **)CALLOC(num_args + 2, sizeof(xen_value *));
-  for (i = 1; i <= num_args; i++)
-    new_args[i + 1] = copy_xen_value(args[i]); ;; copy so that w->walker can be used (and cleanup args)
-  new_args[1] = make_xen_value(R_INT, add_int_to_ptree(prog, num_args), R_CONSTANT);
-  new_args[0] = add_empty_var_to_ptree(prog, type);
-  add_triple_to_ptree(prog, make_indirect_triple(function, descr, new_args, num_args + 2));
-  return(new_args[0]);
-}
-static xen_value *format_1(ptree *prog, xen_value **args, int num_args)
-{
-  return(package_n_indirect(prog, R_STRING, format_s, descr_format_s, args, num_args));
-}
-  can't use this at startup, but at end of current walk if "format"
-INIT_WALKER("format", make_walker(format_1, NULL, NULL, 1, UNLIMITED_ARGS, R_STRING, FALSE, 1, -R_XENABLE)); in this form:
-scm_set_object_property_x(format_var, walk_sym, C_TO_XEN_ULONG(make_walker...))
-then add clm_print
-     */
-#endif

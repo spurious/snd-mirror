@@ -3387,6 +3387,8 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
                           (define-envelope (symbol->string ', a) , b)))");
   /* this is trying to keep track of envelopes for the envelope editor */
 
+  XEN_EVAL_C_STRING("(define (clm-print . args) (snd-print (apply format #f args)))");
+
   XEN_EVAL_C_STRING("(define (" S_snd_apropos " val)\
                        (snd-print (with-output-to-string\
                                     (lambda ()\

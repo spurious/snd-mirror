@@ -306,7 +306,8 @@
 	     ))
 	 ;; and return to original srate
 	 (unsample-sound snd chn)
-	 (snd-print (format #f "~A -> ~A (~A)~%" (frames snd chn 0) (frames snd chn) (inexact->exact (* stretch (frames snd chn 0)))))
+	 (if show-details
+	     (snd-print (format #f "~A -> ~A (~A)~%" (frames snd chn 0) (frames snd chn) (inexact->exact (* stretch (frames snd chn 0))))))
 	 ) ; end of as-one-edit thunk
        (format #f "(rubber-sound ~{~A~^ ~})" args)
        ))))
