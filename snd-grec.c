@@ -241,9 +241,9 @@ static GdkFont *get_vu_font(snd_state *ss, Float size)
 	}
     }
   mus_snprintf(font_name, LABEL_BUFFER_SIZE, "-*-%s-%s-r-*-*-%d-*-*-*-*-*-*",
-	  vu_font_name,
-	  (font_size > 10) ? "bold" : "*",
-	  font_size);
+	       vu_font_name,
+	       (font_size > 10) ? "bold" : "*",
+	       font_size);
   
   label_font = gdk_font_load(font_name);
   if (!(label_font))
@@ -1938,9 +1938,9 @@ void finish_recording(snd_state *ss, recorder_info *rp)
   reflect_recorder_duration(duration);
   str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   mus_snprintf(str, PRINT_BUFFER_SIZE, "recorded %s:\n  duration: %.2f\n  srate: %d, chans: %d\n  type: %s, format: %s",
-	  rp->output_file, duration, rp->srate, rp->out_chans,
-	  mus_header_type_name(rp->output_header_type), 
-	  mus_data_format_name(rp->out_format));
+	       rp->output_file, duration, rp->srate, rp->out_chans,
+	       mus_header_type_name(rp->output_header_type), 
+	       mus_data_format_name(rp->out_format));
   record_report(messages, str, NULL);
   FREE(str);
   if (rp->autoload)
@@ -1998,8 +1998,8 @@ static void Record_Button_Callback(GtkWidget *w, gpointer context)
 	    {
 	      if (msgbuf == NULL) msgbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
 	      mus_snprintf(msgbuf, PRINT_BUFFER_SIZE,
-		      "chans field (%d) doesn't match file out panel (%d channels active)", 
-		      rp->out_chans, out_chans_active());
+			   "chans field (%d) doesn't match file out panel (%d channels active)", 
+			   rp->out_chans, out_chans_active());
 	      record_report(messages, msgbuf, NULL);
 	      wd = (Wdesc *)CALLOC(1, sizeof(Wdesc));
 	      wd->ss = ss;

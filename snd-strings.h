@@ -754,6 +754,7 @@
 #define S_snd_error_hook                "snd-error-hook"
 #define S_snd_gcs                       "snd-gcs"
 #define S_snd_help                      "snd-help"
+#define S_snd_pixel                     "snd-pixel"
 #define S_snd_print                     "snd-print"
 #define S_snd_spectrum                  "snd-spectrum"
 #define S_snd_tempnam                   "snd-tempnam"

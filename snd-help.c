@@ -252,6 +252,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+17-Aug:  GSL 0.9. Gtk+extra 0.99.16.\n\
 16-Aug:  removed load-colormap.\n\
 14-Aug:  added recorder-in-device for OSS.\n\
 13-Aug:  stop-dac-hook, file-save-as-dialog, stop-playing-selection-hook.\n\

@@ -1609,6 +1609,15 @@ match-sound-files from extensions.scm):
 </pre>
 <p>Now click the 'Filter' button to see only those files that fit the procedure in
 the dialog's files list.  See snd-motif.scm for more examples.
+There are a few special Snd functions to support this module:
+</p>
+<pre>
+  snd-pixel color -- returns pixel of that color
+  snd-gcs -- returns list of Snd graphics contexts
+  all the widget-list functions
+</pre>
+<p>and functions on the xm side to "cast" these to its way of viewing objects:
+|Pixel, |Widget, |GC. 
 </p>
 <br>
 

@@ -143,44 +143,152 @@ static fft_window_state *fft_windows[NUM_CACHED_FFT_WINDOWS];
 #if HAVE_GSL
 #include <gsl/gsl_dht.h>
 
-#if HAVE_GSL_DHT_NEW
-  #define gsl_dht_transform gsl_dht
-  #define gsl_dht_transform_new gsl_dht_new
-  #define gsl_dht_transform_free gsl_dht_free
-  #define gsl_dht_transform_apply gsl_dht_apply
-#endif
+/* this code taken from gsl-0.9/dht/dht.c -- we need to insert code into
+ *   its inner loop to keep it from bringing the whole system to a halt
+ */
+#include <gsl/gsl_errno.h>
+#include <gsl/gsl_math.h>
+#include <gsl/gsl_sf_bessel.h>
+
+static int
+dht_bessel_zeros_1(gsl_dht * t)
+{
+  unsigned int s;
+  gsl_sf_result z;
+  int stat_z = 0;
+  t->j[0] = 0.0;
+  for(s=1; s < t->size + 2; s++) {
+    stat_z += gsl_sf_bessel_zero_Jnu_e(t->nu, s, &z);
+    t->j[s] = z.val;
+  }
+  if(stat_z != 0) {
+    GSL_ERROR("could not compute bessel zeroes", GSL_EFAILED);
+  }
+  else {
+    return GSL_SUCCESS;
+  }
+}
+
+static int
+gsl_dht_init_1(gsl_dht * t, double nu, double xmax)
+{
+  if(xmax <= 0.0) {
+    GSL_ERROR ("xmax is not positive", GSL_EDOM);
+  } else if(nu < 0.0) {
+    GSL_ERROR ("nu is negative", GSL_EDOM);
+  }
+  else {
+    size_t n, m;
+    int stat_bz = GSL_SUCCESS;
+    int stat_J  = 0;
+    double jN;
+
+    if(nu != t->nu) {
+      /* Recalculate Bessel zeros if necessary. */
+      t->nu = nu;
+      stat_bz = dht_bessel_zeros_1(t);
+    }
+
+    jN = t->j[t->size+1];
+
+    t->xmax = xmax;
+    t->kmax = jN / xmax;
+
+    t->J2[0] = 0.0;
+    for(m=1; m<t->size+1; m++) {
+      gsl_sf_result J;
+      stat_J += gsl_sf_bessel_Jnu_e(nu + 1.0, t->j[m], &J);
+      t->J2[m] = J.val * J.val;
+    }
+
+    /* J_nu(j[n] j[m] / j[N]) = Jjj[n(n-1)/2 + m - 1], 1 <= n,m <= size
+     */
+
+    /* here are my changes -- add check for X event so user-interface remains responsive,
+     *   and add progress report (i.e. hourglass showing where we are in the computation)
+     */
+    {
+      int prog, reporting = 0;
+      snd_state *ss;
+      snd_info *sp;
+      ss = get_global_state();
+      sp = selected_sound(ss);
+      reporting = ((sp) && (t->size >= 1024));
+      if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
+
+      for(n=1, prog=0; n<t->size+1; n++,prog++) {
+	for(m=1; m<=n; m++) {
+	  double arg = t->j[n] * t->j[m] / jN;
+	  gsl_sf_result J;
+	  stat_J += gsl_sf_bessel_Jnu_e(nu, arg, &J);
+	  t->Jjj[n*(n-1)/2 + m - 1] = J.val;
+	}
+	if (prog > 100)
+	  {
+	    check_for_event(get_global_state());
+	    prog = 0;
+	    if (reporting) progress_report(sp, "Hankel", 1, 1, (Float)n / (Float)(t->size), NOT_FROM_ENVED);
+	  }
+      }
+      if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
+    }
+    /* end changes */
+
+    if(stat_J != 0) {
+      GSL_ERROR("error computing bessel function", GSL_EFAILED);
+    }
+    else {
+      return stat_bz;
+    }
+  }
+}
+
+static gsl_dht *
+gsl_dht_new_1 (size_t size, double nu, double xmax)
+{
+  int status;
+
+  gsl_dht * dht = gsl_dht_alloc (size);
+
+  if (dht == 0)
+    return 0;
+
+  status = gsl_dht_init_1(dht, nu, xmax);
+  
+  if (status)
+    return 0;
+
+  return dht;
+}
+
+static gsl_dht *dht_t = NULL;
+static int last_dht_size = 0;
 
 static void hankel_transform(int size, Float *input, Float *output, Float Jn)
 {
   /* args size, bessel limit, xmax */
-  gsl_dht_transform *t;
   double *in1, *out1;
   int i;
-  t = gsl_dht_transform_new(size / 2, Jn, (double)(size / 2));
+  if (size != last_dht_size)
+    {
+      if (dht_t) 
+	gsl_dht_free(dht_t);
+      dht_t = gsl_dht_new_1(size / 2, Jn, (double)(size / 2));
+      last_dht_size = size;
+    }
   if (sizeof(Float) == sizeof(double))
-    gsl_dht_transform_apply(t, (double *)input, (double *)output); /* the casts exist only to squelch dumb compiler complaints */
+    gsl_dht_apply(dht_t, (double *)input, (double *)output); /* the casts exist only to squelch dumb compiler complaints */
   else
     {
       in1 = (double *)MALLOC(size * sizeof(double));
       out1 = (double *)CALLOC(size, sizeof(double));
       for (i = 0; i < size; i++) in1[i] = (double)input[i];
-
-      /* TODO: if gsl dht, size=2048, move x-pos slider, system freezes until dht returns?
-       */
-      /*
-      if (size >= 2048) 
-	{
-	  XtUngrabPointer(MAIN_SHELL(get_global_state()), CurrentTime);
-	  XtUngrabKeyboard(MAIN_SHELL(get_global_state()), CurrentTime);
-	}
-      */
-
-      gsl_dht_transform_apply(t, in1, out1);
+      gsl_dht_apply(dht_t, in1, out1);
       for (i = 0; i < size; i++) output[i] = (Float)out1[i];
       FREE(in1);
       FREE(out1);
     }
-  gsl_dht_transform_free(t);
+  /* gsl_dht_free(t); */
 }
 
 #else

@@ -71,7 +71,7 @@
 	  (map-chan (func) #f #f origin)))))
 
 
-;;; -------- trim from and back (goes by first or last mark)
+;;; -------- trim front and back (goes by first or last mark)
 (define (trim-front)
   "trim-front finds the first mark in each of the syncd channels and removes all samples before it"
   (let ((snc (sync)))
@@ -212,8 +212,85 @@
 ;;; -------- gain (gain set by gain-amount)
 (define gain-amount 0.5)
 (define gain-label "Gain")
+(define gain-dialog #f)
 
-(add-to-menu effects-menu gain-label (lambda () (scale-by gain-amount)))
+(if (provided? 'xm) ; if xm module is loaded, popup a dialog here
+    (begin
+
+      (define (post-gain-dialog)
+	(if (not (|Widget? gain-dialog))
+	    ;; if gain-dialog doesn't exist, create it
+	    (let ((xdismiss (|XmStringCreate "Dismiss" |XmFONTLIST_DEFAULT_TAG))
+		  (xhelp (|XmStringCreate "Help" |XmFONTLIST_DEFAULT_TAG))
+		  (xok (|XmStringCreate "DoIt" |XmFONTLIST_DEFAULT_TAG))
+		  (titlestr (|XmStringCreate gain-label |XmFONTLIST_DEFAULT_TAG)))
+	      (set! gain-dialog 
+		    (|XmCreateTemplateDialog 
+		      (|Widget (cadr (main-widgets))) gain-label
+		      (list |XmNcancelLabelString   xdismiss
+			    |XmNhelpLabelString     xhelp
+			    |XmNokLabelString       xok
+			    |XmNautoUnmanage        #f
+			    |XmNdialogTitle         titlestr
+			    |XmNresizePolicy        |XmRESIZE_GROW
+			    |XmNnoResize            #f
+			    |XmNbackground          (|Pixel (snd-pixel (basic-color)))
+			    |XmNtransient           #f) ))
+
+	      (for-each
+	       (lambda (button)
+		 (|XtVaSetValues 
+		   (|XmMessageBoxGetChild gain-dialog button)
+		   (list |XmNarmColor   (|Pixel (snd-pixel (pushed-button-color)))
+			 |XmNbackground (|Pixel (snd-pixel (basic-color))))))
+	       (list |XmDIALOG_HELP_BUTTON |XmDIALOG_CANCEL_BUTTON |XmDIALOG_OK_BUTTON))
+
+	      (|XtAddCallback gain-dialog |XmNcancelCallback ; "Dismiss"
+			      (lambda (w context info) 
+				(|XtUnmanageChild gain-dialog)))
+	      (|XtAddCallback gain-dialog |XmNhelpCallback   ; "Help"
+			      (lambda (w context info)
+				(help-dialog "Gain Help"
+					     "move the slider to change the gain amount")))
+	      (|XtAddCallback gain-dialog |XmNokCallback     ; "DoIt"
+			      (lambda (w context info)
+				(scale-by gain-amount)))     ; this is where the data is actually scaled
+	      (|XmStringFree xhelp)
+	      (|XmStringFree xok)
+	      (|XmStringFree xdismiss)
+	      (|XmStringFree titlestr)
+
+	      (let* ((scale (|XtCreateManagedWidget 
+			      "" |xmScaleWidgetClass gain-dialog
+			      (list |XmNleftAttachment      |XmATTACH_FORM
+				    |XmNrightAttachment     |XmATTACH_FORM
+				    |XmNtopAttachment       |XmATTACH_FORM
+				    |XmNbottomAttachment    |XmATTACH_WIDGET
+				    |XmNbottomWidget        (|XmMessageBoxGetChild gain-dialog |XmDIALOG_SEPARATOR)
+				    |XmNbackground          (|Pixel (snd-pixel (basic-color)))
+				    |XmNorientation         |XmHORIZONTAL
+				    |XmNshowValue           #t
+				    |XmNvalue               (inexact->exact (* gain-amount 100))
+				    |XmNmaximum             500  ; i.e. displayed max gain is 5.0
+				    |XmNdecimalPoints       2))))
+		(|XtAddCallback scale ; don't need the drag callback since this isn't a real-time operation
+				|XmNvalueChangedCallback 
+				 (lambda (w context info)
+				   (set! gain-amount (/ (|value info) 100.0)))))))
+	(|XtManageChild gain-dialog))
+
+      (add-to-menu effects-menu 
+		   gain-label 
+		   (lambda () 
+		     ;; start dialog with slider for gain-amount
+		     (post-gain-dialog)))
+      ) ; end 'xm
+
+    (add-to-menu effects-menu
+		 gain-label 
+		 (lambda () 
+		   (scale-by gain-amount)))
+    )
 
 (set! effects-list (cons (lambda ()
 			   (let ((new-label (format #f "Gain (~1,2F)" gain-amount)))

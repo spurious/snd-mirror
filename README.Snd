@@ -21,6 +21,7 @@ The configure program has several Snd-related arguments:
    --with-gtk            use Gtk+	
    --with-gtk-extra      use the file selection widget from libgtkextra
    --with-alsa           use ALSA if possible
+     --with-static-alsa  use ALSA statically loaded (for RPM generation)
    --with-html           include the XmHTML or mozilla browser library
    --with-big-colormap   use big colormap (default = yes)
    --with-snd-conf       look for /etc/snd.conf at startup
@@ -31,10 +32,12 @@ The configure program has several Snd-related arguments:
    --with-sample-width=N use N bits of samples (default = 24)
                          N=32 or so is not recommended because it does not leave
                          you any "head room" during mixes.
-   --with-sndlib         use libsndlib.so if possible (under development)
    --with-esd            use the enlightened sound daemon, if possible
    --with-no-gui         make Snd without any graphics support
    --with-static-gsl     try to load GSL statically (for RPM)
+   --with-ccrma          /zap as temp dir and snd-conf
+   --with-ruby           try to use Ruby as the extension language
+   --with-ruby-prefix    set location of Ruby
 
 If the configure/make process fails, please send me
 (bil@ccrma.stanford.edu) the files config.h, config.log, and makefile,
@@ -281,7 +284,8 @@ If configure finds GSL, but Snd refuses to load with an error
 about missing gsl_complex_cos (or whatever), you need to get the
 GSL sources and build it again; apparently the version of libgsl.a
 that comes with Redhat 7.0 doesn't include any of the complex
-trig package?
+trig package?  I think Snd needs GSL 0.8 or later -- 0.7 might
+work (it needs gsl_dht_new, not gsl_dht_transform_new).
 
 
 RPM:

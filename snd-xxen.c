@@ -174,7 +174,9 @@ COLOR_TYPE color2pixel(XEN color)
 
 static XEN g_snd_pixel(XEN color)
 {
+  #define H_snd_pixel "(" S_snd_pixel " color) -> pixel of that color (use with |Pixel)"
   snd_color *v;
+  XEN_ASSERT_TYPE(COLOR_P(color), color, XEN_ONLY_ARG, S_snd_pixel, "a Snd color");
   v = TO_SND_COLOR(color); 
   if (v)
     return(C_TO_XEN_ULONG((unsigned long)(v->color)));
@@ -320,8 +322,7 @@ void g_initialize_xgh(snd_state *ss)
   XEN_DEFINE_PROCEDURE(S_make_color,    g_make_snd_color_w, 3, 0, 0, H_make_color);
   XEN_DEFINE_PROCEDURE(S_color_p,       g_color_p_w, 1, 0, 0,        H_color_p);
   XEN_DEFINE_PROCEDURE(S_color2list,    g_color2list_w, 1, 0, 0,     H_color2list);
-
-  XEN_DEFINE_PROCEDURE("snd-pixel", g_snd_pixel, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(S_snd_pixel,     g_snd_pixel, 1, 0, 0,        H_snd_pixel);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_graph_cursor, g_graph_cursor_w, H_graph_cursor,
 			       "set-" S_graph_cursor, g_set_graph_cursor_w,  0, 0, 1, 0);

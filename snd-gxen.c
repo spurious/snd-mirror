@@ -75,8 +75,8 @@ static XEN g_color2list(XEN obj)
   XEN_ASSERT_TYPE(COLOR_P(obj), obj, XEN_ONLY_ARG, S_color2list, "a color object"); 
   v = (snd_color *)XEN_OBJECT_REF(obj);
   return(xen_return_first(XEN_LIST_3(C_TO_XEN_DOUBLE((float)(v->color->red) / 65535.0),
-				    C_TO_XEN_DOUBLE((float)(v->color->green) / 65535.0),
-				    C_TO_XEN_DOUBLE((float)(v->color->blue) / 65535.0)),
+				     C_TO_XEN_DOUBLE((float)(v->color->green) / 65535.0),
+				     C_TO_XEN_DOUBLE((float)(v->color->blue) / 65535.0)),
 			  obj));
 }
 
@@ -110,8 +110,8 @@ static XEN g_make_snd_color(XEN r, XEN g, XEN b)
   rtn = gdk_color_alloc(gdk_colormap_get_system(), new_color->color);
   if (rtn == FALSE)
     XEN_ERROR(NO_SUCH_COLOR,
-	  XEN_LIST_2(C_TO_XEN_STRING(S_make_color),
-		    XEN_LIST_3(r, g, b)));
+	      XEN_LIST_2(C_TO_XEN_STRING(S_make_color),
+			 XEN_LIST_3(r, g, b)));
   XEN_MAKE_AND_RETURN_OBJECT(snd_color_tag, new_color, 0, free_snd_color);
 }
 
@@ -255,6 +255,6 @@ void g_initialize_xgh(snd_state *ss)
   XEN_DEFINE_PROCEDURE(S_color2list,    g_color2list_w, 1, 0, 0,     H_color2list);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_graph_cursor, g_graph_cursor_w, H_graph_cursor,
-			       "set-" S_graph_cursor, g_set_graph_cursor_w,  0, 0, 1, 0);
+				   "set-" S_graph_cursor, g_set_graph_cursor_w,  0, 0, 1, 0);
   
 }

@@ -352,7 +352,7 @@ static void graph_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
   if (XEN_HOOKED(mouse_enter_graph_hook))
     g_c_run_progn_hook(mouse_enter_graph_hook,
 		       XEN_LIST_2(C_TO_SMALL_XEN_INT(UNPACK_SOUND(pdata)),
-				 C_TO_SMALL_XEN_INT(UNPACK_CHANNEL(pdata))),
+				  C_TO_SMALL_XEN_INT(UNPACK_CHANNEL(pdata))),
 		       S_mouse_enter_graph_hook);
   gdk_window_set_cursor(w->window, (((snd_state *)data)->sgx)->graph_cursor);
 }
@@ -364,7 +364,7 @@ static void graph_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
   if (XEN_HOOKED(mouse_leave_graph_hook))
     g_c_run_progn_hook(mouse_leave_graph_hook,
 		       XEN_LIST_2(C_TO_SMALL_XEN_INT(UNPACK_SOUND(pdata)),
-				 C_TO_SMALL_XEN_INT(UNPACK_CHANNEL(pdata))),
+				  C_TO_SMALL_XEN_INT(UNPACK_CHANNEL(pdata))),
 		       S_mouse_leave_graph_hook);
   gdk_window_set_cursor(w->window, (((snd_state *)data)->sgx)->arrow_cursor);
 }
@@ -457,9 +457,9 @@ void reflect_save_as_in_edit_history(chan_info *cp, char *filename)
 	{
 	  new_line = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
 	  mus_snprintf(new_line, PRINT_BUFFER_SIZE,
-		  "%s: (save-sound-as \"%s\")", 
-		  edit_to_string(cp, cp->edit_ctr), 
-		  filename);
+		       "%s: (save-sound-as \"%s\")", 
+		       edit_to_string(cp, cp->edit_ctr), 
+		       filename);
 	  gtk_clist_set_text(GTK_CLIST(lst), cp->edit_ctr, 0, new_line);
 	  FREE(new_line);
 	}

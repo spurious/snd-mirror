@@ -18,6 +18,7 @@
 ;;; (make-channel-drop-site snd chn) -- add a drop site
 ;;; (select-file func &optional title dir filter help) starts a Snd-like File Selection Dialog running func if a file is selected
 ;;; (show-disk-space) adds a label to the minibuffer area showing the current free space 
+;;; (keep-file-dialog-open-upon-ok) changes File:Open so that clicking "ok" does not "unmanage" the dialog
 
 
 (use-modules (ice-9 common-list))
@@ -28,20 +29,13 @@
 	  (snd-error (format #f "snd-motif.scm needs the xm module: ~A" hxm))
 	  (dlinit hxm "init_xm"))))
 
-(define (white-pixel)
-  (|WhitePixelOfScreen 
-    (|DefaultScreenOfDisplay 
-      (|XtDisplay (|Widget (cadr (main-widgets)))))))
+(define (current-display)
+  (|DefaultScreenOfDisplay 
+    (|XtDisplay (|Widget (cadr (main-widgets))))))
 
-(define (black-pixel)
-  (|BlackPixelOfScreen 
-    (|DefaultScreenOfDisplay 
-      (|XtDisplay (|Widget (cadr (main-widgets)))))))
-
-(define (screen-depth)
-  (|DefaultDepthOfScreen 
-    (|DefaultScreenOfDisplay 
-      (|XtDisplay (|Widget (cadr (main-widgets)))))))
+(define (white-pixel)  (|WhitePixelOfScreen (current-display)))
+(define (black-pixel)  (|BlackPixelOfScreen (current-display)))
+(define (screen-depth) (|DefaultDepthOfScreen (current-display)))
 
 
 
@@ -165,6 +159,26 @@
       (|XmFileSelectionDoSearch dialog #f))))
     
 ;(install-searcher-with-colors (lambda (file) #t))
+
+
+;;; -------- keep-file-dialog-open-upon-ok
+;;;
+;;; change File:Open so that clicking "ok" does not "unmanage" the dialog
+
+(define keep-file-dialog-open-upon-ok
+  (let* ((dialog (let ((m (open-file-dialog #f)))
+		   (|Widget (list-ref (dialog-widgets) 6)))))
+    (lambda ()
+      (|XtRemoveAllCallbacks dialog |XmNokCallback) ; remove built-in version
+      (|XtAddCallback dialog |XmNokCallback
+		      (lambda (widget context info)
+			;; same as built-in "ok" callback, but does not "unmanage" the dialog
+			(let ((filename (cadr (|XmStringGetLtoR (|value info) |XmFONTLIST_DEFAULT_TAG))))
+			  (if (not (file-is-directory? filename))
+			      (let ((snd (open-sound filename)))
+				(select-channel 0))
+			      (snd-error (format #f "~S is a directory" filename))))))
+      'ok))) ; prettier in listener than printing out a callback procedure
 
 
 
@@ -1099,20 +1113,20 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		    (if stopping1
 			(begin
 			  (set! stopping1 #f)
-			  (change-label stop-widget1 "Play...")
+			  (change-label stop-widget1 "Loop play")
 			  (remove-hook! stop-playing-selection-hook play-selection)))
 		    (stop-playing)) ; stops all including possible looping play
 		  (begin
-		    (change-label w "Stop playing")
+		    (change-label w "Stop")
 		    (set! stop-widget w)
 		    (set! stopping #t)
 		    (play-selection)))))
-      (list "Play..."      |xmPushButtonWidgetClass every-menu ; play over and over
+      (list "Loop play"      |xmPushButtonWidgetClass every-menu ; play over and over
 	    (lambda (w c i) 
 	      (if stopping1
 		  (begin
 		    (set! stopping1 #f)
-		    (change-label w "Play...")
+		    (change-label w "Loop play")
 		    (remove-hook! stop-playing-selection-hook play-selection)
 		    (if stopping
 			(begin
@@ -1120,7 +1134,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 			  (change-label stop-widget "Play")))
 		    (stop-playing))
 		  (begin
-		    (change-label w "Stop playing!")
+		    (change-label w "Stop!")
 		    (set! stop-widget1 w) ; needs to be separate from Play case since we're stopping/restarting deliberately
 		    (set! stopping1 #t)
 		    (add-hook! stop-playing-selection-hook play-selection) ; when one rendition ends, we immediately start another
@@ -1205,7 +1219,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		    (change-label w "Play")
 		    (stop-playing))
 		  (begin
-		    (change-label w "Stop playing")
+		    (change-label w "Stop")
 		    (set! stop-widget w)
 		    (set! stopping #t)
 		    (play 0 graph-popup-snd)))))
@@ -1896,21 +1910,23 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	(list |XmNdropSiteOperations |XmDROP_COPY
 	      |XmNimportTargets      (list |XA_STRING) ; list of Atoms we can deal with -- in this case, just strings
 	      |XmNnumImportTargets   1
-	      |XmNdropProc (lambda (w c i)
-			     ;; i is the callback data (XmDropProcCallbackStruct), c is always #f
-			     (if (or (not (= (|dropAction i) |XmDROP))
-				     (not (= (|operation i) |XmDROP_COPY)))
-				 (set! (|dropSiteStatus i) |XmINVALID_DROP_SITE)
-				 (begin
-				   (set! (|operation i) |XmDROP_COPY) ; tell system drop has succeeded
-				   (|XmDropTransferStart 
-				     (|dragContext i)
-				     (list |XmNdropTransfers (list (list |XA_STRING w)) ; list of lists of Atoms/our-data
-					   |XmNnumDropTransfers 1
-					   |XmNtransferProc (lambda (w context selection type val len fmt)
-							      ;; the actual in-coming string (properly terminated in xm.c) is 'value'
-							      (snd-print (format #f "got: ~A ~A ~A ~A ~A ~A ~A~%"
-										 w context selection type val len fmt)))))))))))))
+	      |XmNdropProc 
+	       (lambda (w c i)
+		 ;; i is the callback data (XmDropProcCallbackStruct), c is always #f
+		 (if (or (not (= (|dropAction i) |XmDROP))
+			 (not (= (|operation i) |XmDROP_COPY)))
+		     (set! (|dropSiteStatus i) |XmINVALID_DROP_SITE)
+		     (begin
+		       (set! (|operation i) |XmDROP_COPY) ; tell system drop has succeeded
+		       (|XmDropTransferStart 
+			 (|dragContext i)
+			 (list |XmNdropTransfers (list (list |XA_STRING w)) ; list of lists of Atoms/our-data
+			       |XmNnumDropTransfers 1
+			       |XmNtransferProc 
+				(lambda (w context selection type val len fmt)
+				  ;; the actual in-coming string (properly terminated in xm.c) is 'value'
+				  (snd-print (format #f "got: ~A ~A ~A ~A ~A ~A ~A~%"
+						     w context selection type val len fmt)))))))))))))
 
 
 

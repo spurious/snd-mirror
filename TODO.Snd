@@ -2,11 +2,7 @@ A list of some things-to-do in Snd (these are some projects that strike
 me as straightforward, but not necessarily easy).
 
 
-Sawfish connection: it should be possible to send commands to sawfish,
-  (via sawfish-client?); also there's a switch in Snd, HAVE_THEMES,
-  that can draw widget backgrounds that grade between colors (as in
-  sawfish's title bars) -- it might be neat to have this use the
-  current theme.
+Sawfish connection: it should be possible to send commands to sawfish.
 
 A more direct connection to gmeteor (perhaps using the control-panel filter
   text widget).  use (filter-sound(make-filter ...)).
@@ -20,7 +16,8 @@ A better pitch tracker than spot-freq in examp.scm.
 
 Noise reduction.
 
-dB display in VU meters (in the record dialog).  A nicer VU meter background.
+dB display in VU meters (in the record dialog -- the dB value is ready
+to go, but the VU labels need different numbers).  A nicer VU meter background.
 
 loop syntax filled in (loop.scm).
 
@@ -48,15 +45,14 @@ Gettext support, if there's interest. How does gettext handle Scheme-style
   maybe they've solved this problem.
 
 
-Mac-OSX Snd port (since gtk and guile have been ported, Snd shouldn't be difficult).
-
 Translate the rest of env.lisp to env.scm.
 
-A "master volume" control in the recorder.  Also a running spectrogram display.
-
-A controller dialog for the scanned-synthesis procedures.
+A "master volume" control in the recorder.  Also a running spectrogram display --
+see snd-motif.scm for an ugly first pass.
 
 A data file mechanism for the phase vocoder (i.e. save/reuse analysis pass).
 
 A "sox-script" -- use Snd script as sox replacement.
 A sndinfo script?
+
+A Gtk module paralleling the Motif version in xm.c.

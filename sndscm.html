@@ -1940,6 +1940,7 @@ that were removed from or renamed in Snd-5.
   <em class=def><a name="showsmptelabel">show-smpte-label</a></em> on-or-off
   <em class=def><a name="makelevelmeter">make-level-meter</a></em> parent width height
   <em class=def><a name="showdiskspace">show-disk-space</a></em>
+  <em class=def><A NAME="keepfiledialogopenuponok">keep-file-dialog-open-upon-ok</a></em>
 </pre>
 
 <p>snd-motif.scm has procedures that rely on the Motif module (xm.c).
@@ -2000,6 +2001,7 @@ then adds a dac-hook function to display the current playback volume
 in the respective meter.  <b>show-disk-space</b> adds a label in the
 minibuffer area which shows the current amount of disk space available
 on the partition of the associated sound.
+<b>keep-file-dialog-open-upon-ok</b> changes File:Open so that clicking "ok" does not "unmanage" the dialog.
 </p>
 
 
