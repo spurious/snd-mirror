@@ -3881,18 +3881,6 @@ static XEN g_set_mix_tag_height(XEN val)
   return(C_TO_XEN_INT(mix_tag_height(ss)));
 }
 
-static XEN g_select_mix(XEN id)
-{
-  #define H_select_mix "(" S_select_mix " id) makes mix is the selected mix"
-  snd_state *ss;
-  ss = get_global_state();
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(id) || XEN_FALSE_P(id), id, XEN_ONLY_ARG, S_select_mix, "an integer or #f");
-  if (XEN_FALSE_P(id))
-    ss->selected_mix = INVALID_MIX_ID;
-  else select_mix(md_from_id(XEN_TO_C_INT(id)));
-  return(id);
-}
-
 static XEN g_selected_mix(void)
 {
   #define H_selected_mix "(" S_selected_mix ") -> the id of the currently selected mix"
@@ -3901,6 +3889,17 @@ static XEN g_selected_mix(void)
   if (ss->selected_mix != INVALID_MIX_ID)
     return(C_TO_SMALL_XEN_INT(ss->selected_mix));
   return(XEN_FALSE); /* changed 26-Mar-02 */
+}
+
+static XEN g_set_selected_mix(XEN id)
+{
+  snd_state *ss;
+  ss = get_global_state();
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(id) || XEN_FALSE_P(id), id, XEN_ONLY_ARG, S_setB S_selected_mix, "an integer or #f");
+  if (XEN_FALSE_P(id))
+    ss->selected_mix = INVALID_MIX_ID;
+  else select_mix(md_from_id(XEN_TO_C_INT(id)));
+  return(id);
 }
 
 static XEN g_forward_mix(XEN count, XEN snd, XEN chn) 
@@ -4471,9 +4470,9 @@ XEN_ARGIFY_1(g_mix_p_w, g_mix_p)
 XEN_ARGIFY_1(g_mix_home_w, g_mix_home)
 XEN_ARGIFY_2(g_mixes_w, g_mixes)
 XEN_NARGIFY_2(g_mix_sound_w, g_mix_sound)
-XEN_NARGIFY_1(g_select_mix_w, g_select_mix)
 XEN_ARGIFY_3(g_find_mix_w, g_find_mix)
 XEN_NARGIFY_0(g_selected_mix_w, g_selected_mix)
+XEN_NARGIFY_1(g_set_selected_mix_w, g_set_selected_mix)
 XEN_ARGIFY_3(g_forward_mix_w, g_forward_mix)
 XEN_ARGIFY_3(g_backward_mix_w, g_backward_mix)
 XEN_ARGIFY_6(g_mix_w, g_mix)
@@ -4529,9 +4528,9 @@ XEN_ARGIFY_1(g_set_with_mix_tags_w, g_set_with_mix_tags)
 #define g_mix_home_w g_mix_home
 #define g_mixes_w g_mixes
 #define g_mix_sound_w g_mix_sound
-#define g_select_mix_w g_select_mix
 #define g_find_mix_w g_find_mix
 #define g_selected_mix_w g_selected_mix
+#define g_set_selected_mix_w g_set_selected_mix
 #define g_forward_mix_w g_forward_mix
 #define g_backward_mix_w g_backward_mix
 #define g_mix_w g_mix
@@ -4617,10 +4616,9 @@ void g_init_mix(void)
   XEN_DEFINE_PROCEDURE(S_mix_home,     g_mix_home_w, 0, 1, 0,     H_mix_home);
   XEN_DEFINE_PROCEDURE(S_mixes,        g_mixes_w, 0, 2, 0,        H_mixes);
   XEN_DEFINE_PROCEDURE(S_mix_sound,    g_mix_sound_w, 2, 0, 0,    H_mix_sound);
-  XEN_DEFINE_PROCEDURE(S_select_mix,   g_select_mix_w, 1, 0, 0,   H_select_mix);
   XEN_DEFINE_PROCEDURE(S_find_mix,     g_find_mix_w, 0, 3, 0,     H_find_mix);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selected_mix, g_selected_mix_w, H_selected_mix, S_setB S_selected_mix, g_select_mix_w, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selected_mix, g_selected_mix_w, H_selected_mix, S_setB S_selected_mix, g_set_selected_mix_w, 0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE(S_forward_mix,  g_forward_mix_w, 0, 3, 0,  H_forward_mix);
   XEN_DEFINE_PROCEDURE(S_backward_mix, g_backward_mix_w, 0, 3, 0, H_backward_mix);

@@ -1637,25 +1637,6 @@ static char *dac_name(int sys, int offset)
   return(DAC_NAME);
 }
 
-void mus_audio_clear_soundcard_inputs(void)
-{
-  /* turn off inputs (they create an unbelievable amount of noise) and maximize outputs */
-  int fd, amp, devmask;
-  fd = open("/dev/dsp", O_WRONLY, 0);
-  if (fd == -1) return;
-  amp = 0;
-  ioctl(fd, SOUND_MIXER_READ_DEVMASK, &devmask);
-  if (SOUND_MASK_MIC & devmask) ioctl(fd, MIXER_WRITE(SOUND_MIXER_MIC), &amp);
-  if (SOUND_MASK_IGAIN & devmask) ioctl(fd, MIXER_WRITE(SOUND_MIXER_IGAIN), &amp);
-  if (SOUND_MASK_LINE & devmask) ioctl(fd, MIXER_WRITE(SOUND_MIXER_LINE), &amp);
-  amp = (99 << 8) + 99;
-  if (SOUND_MASK_VOLUME & devmask) ioctl(fd, MIXER_WRITE(SOUND_MIXER_VOLUME), &amp);
-  if (SOUND_MASK_OGAIN & devmask) ioctl(fd, MIXER_WRITE(SOUND_MIXER_OGAIN), &amp);
-  if (SOUND_MASK_PCM & devmask) ioctl(fd, MIXER_WRITE(SOUND_MIXER_PCM), &amp);
-  close(fd);
-}
-
-
 #define MIXER_SIZE SOUND_MIXER_NRDEVICES
 static int **mixer_state = NULL;
 static int *init_srate = NULL, *init_chans = NULL, *init_format = NULL;
@@ -8864,10 +8845,6 @@ void mus_audio_restore(void)
 void describe_audio_state_1(void)
 {
   pprint("Enlightened Sound Daemon via socket connexion to default host");
-}
-
-void mus_audio_clear_soundcard_inputs(void)
-{
 }
 
 #endif

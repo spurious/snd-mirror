@@ -1548,6 +1548,7 @@
 	frame)))
 
 (load "snd5.scm")
+(load "snd6.scm")
 
 (define (show-input-1 . arg)
   ;; from rtio.scm
@@ -1818,7 +1819,7 @@
       (IF (not (feql mal (list 12345 .5 54321 .2 0 .1 9999 .01)))
 	  (snd-display ";mus-sound-set-maxamp 4.aiff: ~A?" mal))
       (let ((var (catch #t (lambda () (mus-sound-set-maxamp "oboe.snd" (list 1234))) (lambda args args))))
-	(IF (not (eq? (car var) 'mus-error))
+	(IF (not (eq? (car var) 'wrong-type-arg))
 	    (snd-display ";mus-sound-set-maxamp bad arg: ~A" var)))
       (IF (and (not (= (mus-sound-type-specifier "oboe.snd") #x646e732e))  ;little endian reader
 	       (not (= (mus-sound-type-specifier "oboe.snd") #x2e736e64))) ;big endian reader
@@ -10251,8 +10252,14 @@ EDITS: 5
 	      (snd-display ";mus-xcoeffs: ~A ~A?" xs ys))))
 
       (let ((var (catch #t (lambda () (make-filter :order 2 :xcoeffs (vct 1.0 0.5) :ycoeffs (vct 2.0 1.0 0.5))) (lambda args args))))
-	(IF (not (eq? (car var) 'mus-error))
+	(IF (not (eq? (car var) 'wrong-type-arg))
 	    (snd-display ";make-filter bad coeffs: ~A" var)))
+      (let ((var (catch #t (lambda () (make-fir-filter :order 22 :xcoeffs (vct 1.0 0.5))) (lambda args args))))
+	(IF (not (eq? (car var) 'wrong-type-arg))
+	    (snd-display ";make-fir-filter bad coeffs: ~A" var)))
+      (let ((var (catch #t (lambda () (make-iir-filter :order 22 :ycoeffs (vct 1.0 0.5))) (lambda args args))))
+	(IF (not (eq? (car var) 'wrong-type-arg))
+	    (snd-display ";make-iir-filter bad coeffs: ~A" var)))
       (let ((var (catch #t (lambda () (make-fir-filter -1)) (lambda args args))))
 	(IF (not (eq? (car var) 'out-of-range))
 	    (snd-display ";make-fir-filter bad order: ~A" var)))
@@ -25895,6 +25902,9 @@ EDITS: 2
 	(IF (fneq (vct-ref v 0) .004) (snd-display ";run frame i/o: ~A" frout)))
       (delete-file "fmv.snd")
 
+      (let ((hi (make-power-env '(0 0 32.0 1 1 .0312 2 0 1) :duration 1.0)))
+	(itsta '(lambda (y) (declare (y penv)) (+ 1 2)) hi 3))
+
       (let ((ind (open-sound "oboe.snd")))
 	(let ((r (make-sample-reader 2000))
 	      (v (make-vct 2)))
@@ -33238,11 +33248,11 @@ EDITS: 2
 
 (define procs (list 
 	       add-mark add-player add-sound-file-extension add-to-main-menu add-to-menu add-transform amp-control
-	       append-to-minibuffer as-one-edit ask-before-overwrite audio-input-device audio-output-device
+	       as-one-edit ask-before-overwrite audio-input-device audio-output-device
 	       audio-state-file auto-resize auto-update autocorrelate axis-info axis-label-font axis-numbers-font
 	       backward-graph backward-mark backward-mix basic-color bind-key bold-button-font bomb
 	       button-font c-g?  apply-controls change-menu-label change-samples-with-origin channel-style
-	       channel-widgets channels chans clear-audio-inputs peaks-font bold-peaks-font
+	       channel-widgets channels chans peaks-font bold-peaks-font
 	       close-sound ;close-sound-file 
 	       color-cutoff color-dialog
 	       color-inverted color-scale color->list colormap color?  comment contrast-control contrast-control-amp
@@ -33290,7 +33300,7 @@ EDITS: 2
 	       samples->vct samples->sound-data sash-color save-controls ladspa-dir save-dir save-edit-history save-envelopes
 	       save-listener save-macros save-marks save-options save-region save-selection save-sound save-sound-as
 	       save-state save-state-file scale-by scale-selection-by scale-selection-to scale-to scale-sound-by
-	       scale-sound-to scan-chan search-procedure select-all select-channel select-mix select-sound
+	       scale-sound-to scan-chan search-procedure select-all select-channel select-sound
 	       selected-channel selected-data-color selected-graph-color selected-mix selected-mix-color selected-sound
 	       selection-position selection-color selection-creates-region selection-frames selection-member? selection?
 	       short-file-name show-axes show-backtrace show-controls show-transform-peaks show-indices show-listener

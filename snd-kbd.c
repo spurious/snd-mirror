@@ -1876,28 +1876,6 @@ static XEN g_report_in_minibuffer(XEN msg, XEN snd_n)
   return(msg);
 }
 
-static XEN g_append_to_minibuffer(XEN msg, XEN snd_n)
-{
-  #define H_append_to_minibuffer "(" S_append_to_minibuffer " msg &optional snd) appends msg to snd's minibuffer"
-  snd_info *sp;
-  char *str1 = NULL, *expr_str;
-  XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_1, S_append_to_minibuffer, "a string");
-  ASSERT_SOUND(S_append_to_minibuffer, snd_n, 2);
-  sp = get_sp(snd_n, NO_PLAYERS);
-  if (sp == NULL)
-    return(snd_no_such_sound_error(S_append_to_minibuffer, snd_n));
-  expr_str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-  mus_snprintf(expr_str, PRINT_BUFFER_SIZE, 
-	       "%s%s", 
-	       str1 = get_minibuffer_string(sp), 
-	       XEN_TO_C_STRING(msg));
-  set_minibuffer_string(sp, expr_str);
-  FREE(expr_str);
-  sp->minibuffer_on = MINI_USER;
-  if (str1) free(str1);
-  return(msg);
-}
-
 static XEN g_forward_graph(XEN count, XEN snd, XEN chn) 
 {
   #define H_forward_graph "(" S_forward_graph " &optional (count 1) snd chn) moves the 'selected' graph forward by count"
@@ -1946,7 +1924,6 @@ XEN_NARGIFY_0(g_save_macros_w, g_save_macros)
 XEN_NARGIFY_0(g_control_g_x_w, g_control_g_x)
 XEN_ARGIFY_2(g_report_in_minibuffer_w, g_report_in_minibuffer)
 XEN_ARGIFY_4(g_prompt_in_minibuffer_w, g_prompt_in_minibuffer)
-XEN_ARGIFY_2(g_append_to_minibuffer_w, g_append_to_minibuffer)
 #else
 #define g_forward_graph_w g_forward_graph
 #define g_backward_graph_w g_backward_graph
@@ -1958,7 +1935,6 @@ XEN_ARGIFY_2(g_append_to_minibuffer_w, g_append_to_minibuffer)
 #define g_control_g_x_w g_control_g_x
 #define g_report_in_minibuffer_w g_report_in_minibuffer
 #define g_prompt_in_minibuffer_w g_prompt_in_minibuffer
-#define g_append_to_minibuffer_w g_append_to_minibuffer
 #endif
 
 void g_init_kbd(void)
@@ -1975,5 +1951,4 @@ void g_init_kbd(void)
 
   XEN_DEFINE_PROCEDURE(S_report_in_minibuffer,    g_report_in_minibuffer_w, 1, 1, 0,    H_report_in_minibuffer);
   XEN_DEFINE_PROCEDURE(S_prompt_in_minibuffer,    g_prompt_in_minibuffer_w, 1, 3, 0,    H_prompt_in_minibuffer);
-  XEN_DEFINE_PROCEDURE(S_append_to_minibuffer,    g_append_to_minibuffer_w, 1, 1, 0,    H_append_to_minibuffer);
 }

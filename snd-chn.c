@@ -6251,7 +6251,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
 	    {
 	      if (XEN_VECTOR_P(data))
 		len = XEN_VECTOR_LENGTH(data);
-	      else mus_misc_error(S_graph, "data list element not vector or vct?", data);
+	      else XEN_WRONG_TYPE_ARG_ERROR(S_graph, 1, data, "data list element must be vector or vct?");
 	    }
 	  if (lg->len[graph] != len)
 	    {

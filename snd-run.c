@@ -309,6 +309,14 @@ static int add_new_type(char *new_type)
   type_names[last_type] = copy_string(new_type);
   return(last_type);
 }
+static int name_to_type(char *name)
+{
+  int i;
+  for (i = 0; i <= last_type; i++)
+    if (strcmp(name, type_names[i]) == 0)
+      return(i);
+  return(R_UNSPECIFIED);
+}
 
 #define POINTER_P(Type) ((Type) > R_GOTO)
 #define POINTER_OR_GOTO_P(Type) ((Type) > R_FUNCTION)
@@ -2096,24 +2104,11 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, int separ
 		  (XEN_SYMBOL_P(XEN_CADR(declaration))))
 		{
 		  type = XEN_SYMBOL_TO_C_STRING(XEN_CADR(declaration));
-		  if (strcmp(type, "integer") == 0) arg_type = R_INT; else
-		  if (strcmp(type, "string") == 0) arg_type = R_STRING; else
-		  if (strcmp(type, "real") == 0) arg_type = R_FLOAT; else
-		  if (strcmp(type, "number") == 0) arg_type = R_FLOAT; else
-		  if (strcmp(type, "vct") == 0) arg_type = R_VCT; else
-		  if (strcmp(type, "clm") == 0) arg_type = R_CLM; else
-		  if (strcmp(type, "function") == 0) arg_type = R_FUNCTION; else
-		  if (strcmp(type, "reader") == 0) arg_type = R_READER; else
-		  if (strcmp(type, "boolean") == 0) arg_type = R_BOOL; else
-		  if (strcmp(type, "char") == 0) arg_type = R_CHAR; else
-		  if (strcmp(type, "symbol") == 0) arg_type = R_SYMBOL; else
-		  if (strcmp(type, "keyword") == 0) arg_type = R_KEYWORD; else
-		  if (strcmp(type, "list") == 0) arg_type = R_LIST; 
-
-		  /* list arg type actually doesn't work -- segfault
-		   *   the problem here is that the walker needs read-time type info
-		   */
-		  /* TODO: some way to declare a def-clm-struct arg */
+		  arg_type = name_to_type(type);
+		  if (arg_type == R_UNSPECIFIED)
+		    if (strcmp(type, "integer") == 0) arg_type = R_INT; else
+		      if (strcmp(type, "real") == 0) arg_type = R_FLOAT; else
+			arg_type = default_arg_type;
 		}
 	    }
 	  else

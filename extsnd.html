@@ -3214,11 +3214,6 @@ mixed without creating any mix tags, and without returning a mix id.
 <tr><td></td><td>play track <i>track</i>. If snd is #t, play all associated chans.
 </td></tr>
 
-<!-- select-mix -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndselectmix">select-mix</a></em> (mix)</code></span></td></tr>
-<tr><td></td><td>set selected mix (#f = none).
-</td></tr>
-
 <!-- selected-mix -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndselectedmix">selected-mix</a></em> ()</code></span></td></tr>
 <tr><td></td><td>selected mix (#f if none) -- set to select mix.
@@ -3709,16 +3704,6 @@ the direction argument between the channel and edit-position:
 add <i>player</i> to the play-list (see <a href="#makeplayer">make-player</a>). 
 If <i>pos</i> is given, play at that edit position. See <i>play-with-envs</i> in enved.scm, <i>play-syncd-marks</i>
 in marks.scm, or <i>start-dac</i> in play.scm for examples.
-</td></tr>
-<tr><td colspan=2></td></tr>
-
-
-<!-- append-to-minibuffer -->
-<tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="sndappendtominibuffer">append-to-minibuffer</a></em> (msg <i>snd</i>)</code></span>
-</td></tr>
-<tr><td></td><td>
-append <i>msg</i> to whatever is in <i>snd</i>'s minibuffer.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -8479,13 +8464,6 @@ in the following manner (this assumes you're using Motif and have the xm module 
 <i>change-property</i> changes an X-window's property; there's an example in examp.scm. 
 </td></tr>
 
-<!-- clear-audio-inputs -->
-<tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="sndclearaudioinputs">clear-audio-inputs</a></em> ()</code></span></td></tr>
-<tr><td width=150></td><td>
-in Linux/OSS, try to reduce soundcard background racket.
-</td></tr>
-
 <!-- clear-listener -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="sndclearlistener">clear-listener</a></em> ()</code></span></td></tr>
@@ -9082,7 +9060,7 @@ If the requested font can't be loaded, the set! statement returns the old (uncha
 </table>
 
 <p>
-The four "-widgets" procedure return lists of possibly useful widgets:
+The four "-widgets" procedures return lists of possibly useful widgets:
 </p>
 <pre>
   main-widgets:    '(0:top-level-application 1:top-level-shell 2:main-pane 3:main-sound-pane 4:listener-pane 5:notebook-outer-pane)

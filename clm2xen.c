@@ -948,7 +948,7 @@ static XEN g_mus_bank(XEN gens, XEN amps, XEN inp, XEN inp2)
       {
 	if (scls) FREE(scls);
 	if (gs) FREE(gs);
-	mus_misc_error(S_mus_bank, "not a generator!", data[i]);
+	XEN_WRONG_TYPE_ARG_ERROR(S_mus_bank, i, data[i], "a clm generator");
       }
   invals = whatever_to_floats(inp, size, S_mus_bank); /* these two can be null */
   invals2 = whatever_to_floats(inp2, size, S_mus_bank);
@@ -2453,7 +2453,8 @@ giving | (a*.5 + b*.125) (a*.25 + b*1.0) |"
   XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(arglist, len), arglist, XEN_ARG_1, S_make_mixer, "a list");
   if (len == 0) mus_misc_error(S_make_mixer, "need at least 1 arg", arglist);
   cararg = XEN_CAR(arglist);
-  if (!(XEN_NUMBER_P(cararg))) mus_misc_error(S_make_mixer, "first arg is the number of chans", cararg);
+  if (!(XEN_NUMBER_P(cararg)))
+    XEN_WRONG_TYPE_ARG_ERROR(S_make_mixer, 1, cararg, "integer = number of chans");
   size = XEN_TO_C_INT_OR_ELSE(cararg, 0);
   if (size <= 0) XEN_OUT_OF_RANGE_ERROR(S_make_mixer, 1, cararg, "chans <= 0?");
   if (size > 256) XEN_OUT_OF_RANGE_ERROR(S_make_mixer, 1, cararg, "chans > 256?");
@@ -3043,12 +3044,20 @@ static XEN g_make_filter_1(int choice, XEN arg1, XEN arg2, XEN arg3, XEN arg4, X
     }
   else
     {
-      if (((x) && (order > x->length)) ||
-	  ((y) && (order > y->length)))
-	mus_misc_error(caller, "not enough coeffs?", keys[1]);
+      if ((x) && (order > x->length))
+	XEN_WRONG_TYPE_ARG_ERROR(caller, 2, XEN_LIST_2(keys[0], keys[1]), "xcoeffs must match order");
       else
-	if ((x) && (y) && (x->length != y->length))
-	  mus_misc_error(caller, "coeffs are not the same length?", XEN_LIST_2(keys[1], keys[2]));
+	{
+	  if ((y) && (order > y->length))
+	    {
+	      if (choice == G_IIR_FILTER)
+		XEN_WRONG_TYPE_ARG_ERROR(caller, 2, XEN_LIST_2(keys[0], keys[1]), "ycoeffs must match order");
+	      else XEN_WRONG_TYPE_ARG_ERROR(caller, 3, XEN_LIST_2(keys[0], keys[2]), "ycoeffs must match order");
+	    }
+	  else
+	    if ((x) && (y) && (x->length != y->length))
+	      XEN_WRONG_TYPE_ARG_ERROR(caller, 1, XEN_LIST_2(keys[1], keys[2]), "coeffs must be same length");
+	}
     }
   switch (choice)
     {

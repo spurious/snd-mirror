@@ -1,5 +1,6 @@
 Snd change log
 
+  12-Mar:    select-mix, clear-audio-inputs and append-to-minibuffer moved to snd6.scm.
   10-Mar:    Ruby-related bugfixes thanks to Michael Scholz.
   5-Mar:     contrib/popup.rb from Michael Scholz.
   4-Mar:     redo renamed redo_edit in Ruby version, and in -> call_in.

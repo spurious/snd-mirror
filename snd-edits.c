@@ -9545,4 +9545,7 @@ append the rest?
       ramp4, ramp5, ramp6 (these require rmp beg/end in fragment, cur/incr in snd_fd)
       same on ptree[zero]
       src? reverse? mix? filter?
+      filter if order < n(32?) and no feedback (no jumps rev etc)
+        would need init to get state set up (dir dependent?)
+	ed_fragment scl..offset2 = 13 coeffs, but need state, need backup = forward
 */

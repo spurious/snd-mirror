@@ -302,6 +302,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+12-Mar:  select-mix, clear-audio-inputs and append-to-minibuffer moved to snd6.scm.\n\
 10-Mar:  Ruby-related bugfixes thanks to Michael Scholz.\n\
 5-Mar:   contrib/popup.rb from Michael Scholz.\n\
 4-Mar:   redo renamed redo_edit in Ruby version, in -> call_in.\n\
@@ -1130,7 +1131,6 @@ all refer to the same thing.\n\
   " S_add_to_menu "       (top-menu menu-label callback)\n\
   " S_add_transform "     (name xlab lo hi transform)\n\
   " S_amp_control "       (snd)\n\
-  " S_append_to_minibuffer " (msg snd)\n\
   " S_as_one_edit "       (func snd chn)\n\
   " S_autocorrelate "     (data)\n\
   " S_axis_info "         (snd chn grf)\n\
@@ -1145,7 +1145,6 @@ all refer to the same thing.\n\
   " S_channel_style "     (snd)\n\
   " S_channels "          (snd)\n\
   " S_chans "             (snd)\n\
-  " S_clear_audio_inputs "()\n\
   " S_close_sound "       (snd)\n\
   " S_close_sound_file "  (fd bytes)\n\
   " S_color_dialog "      ()\n\

@@ -355,7 +355,7 @@ static XEN g_sound_set_maxamp(XEN file, XEN vals)
     {
       len = XEN_LIST_LENGTH(vals);
       if (len < (chans * 2))
-	mus_misc_error(S_mus_sound_set_maxamp, "max amp list wrong length", vals);
+	XEN_WRONG_TYPE_ARG_ERROR(S_mus_sound_set_maxamp, 2, vals, "max amp list length must = 2 * chans");
       if (len > chans * 2) len = chans * 2;
       mvals = (mus_sample_t *)CALLOC(chans, sizeof(mus_sample_t));
       times = (off_t *)CALLOC(chans, sizeof(off_t));
@@ -1057,7 +1057,7 @@ static XEN g_mus_audio_mixer_write(XEN dev, XEN field, XEN chan, XEN vals)
       fvals = (float *)CALLOC(len, sizeof(float));
       vdata = XEN_VECTOR_ELEMENTS(vals);
       for (i = 0; i < len; i++) 
-	fvals[i] = XEN_TO_C_DOUBLE(vdata[i]);
+	fvals[i] = XEN_TO_C_DOUBLE_OR_ELSE(vdata[i], 0.0);
     }
   res = mus_audio_mixer_write(XEN_TO_C_INT(dev),
 			      XEN_TO_C_INT(field),

@@ -956,7 +956,8 @@ static XEN g_reset_listener_cursor(void)
 
 void clear_listener(void)
 {
-  sg_text_delete(listener_text, 1, sg_cursor_position(listener_text));
+  if (listener_text)
+    sg_text_delete(listener_text, 1, sg_cursor_position(listener_text));
 }
 
 #ifdef XEN_ARGIFY_1

@@ -34,3 +34,30 @@
 	vc0)))
 
 ;;; 'impossible-bounds changed to 'out-of-range
+
+(define (clear-audio-inputs)
+  "OSS-specific: clears input lines, maximizes output gains; intent is to reduce noise"
+  (let ((vals (make-vector 32)))
+    (vector-set! vals 0 0.0)
+    (vector-set! vals 1 0.0)
+    (mus-audio-mixer-write mus-audio-mixer mus-audio-microphone 0 vals)
+    (mus-audio-mixer-write mus-audio-mixer mus-audio-igain 0 vals)
+    (mus-audio-mixer-write mus-audio-mixer mus-audio-line 0 vals)
+    (vector-set! vals 0 1.0)
+    (vector-set! vals 1 1.0)
+    (mus-audio-mixer-write mus-audio-default mus-audio-amp 2 vals)
+    (mus-audio-mixer-write mus-audio-mixer mus-audio-ogain 0 vals)
+    (mus-audio-mixer-write mus-audio-mixer mus-audio-pcm 2 vals)))
+
+(define* (append-to-minibuffer msg #:optional snd)
+  (if (and (sound? snd)
+	   (not (provided? 'snd-nogui)))
+      (let* ((minibuffer (and (sound-widgets snd) 
+			      (list-ref (sound-widgets snd) 3)))
+	     (text (and minibuffer 
+			(widget-text minibuffer))))
+	(if (string? text)
+	    (set! (widget-text minibuffer) (string-append text msg))
+	    (report-in-minibuffer msg snd)))))
+
+(define (select-mix id) (set! (selected-mix) id))

@@ -2241,7 +2241,15 @@ function to take stereo sounds:
 backwards compatibility within version 6.
 Currently, these are just some old (untypable) constant names,
 and some slightly inconsistent old function names.
+<b><a name="sndclearaudioinputs">clear-audio-inputs</a></b>
+in Linux/OSS, tries to reduce soundcard background racket.
+<b><a name="sndappendtominibuffer">append-to-minibuffer</a></b> (msg <i>snd</i>)
+appends <i>msg</i> to whatever is in <i>snd</i>'s minibuffer.
+<b><a name="sndselectmix">select-mix</a></b> sets the selected mix (#f = none).
+</td></tr>
+
 </p>
+
 
 
 <A NAME="sndgldoc"></a><span class=box><h2>snd-gl.scm</h2></span>
@@ -2256,7 +2264,7 @@ and some slightly inconsistent old function names.
 </pre>
 <p><b>gl-info</b> prints out information about the current GL system setup.  <b>start-waterfall</b> starts a
 waterfall spectrum display of the incoming audio data.  <b>stop-waterfall</b> turns it off.
-<b>gl-dump-state</b> prints as much of the current GL graphics state as it can get.
+<b>gl-dump-state</b> displays much of the current GL graphics state.
 </p>
 
 <A NAME="sndmotifdoc"></a><span class=box><h2>snd-motif.scm</h2></span>
@@ -2384,7 +2392,6 @@ snd -l snd-test
 </pre>
 <p>
 which will run all the tests, assuming you have the various sound files it is expecting to find.
-I assume that for most users snd-test.scm will provide more of a set of examples than anything directly useful.
 event.scm has some XEvent-related functions used by snd-test.scm.  The Ruby version (very incomplete) is
 snd_test.rb.
 </p>

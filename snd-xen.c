@@ -2155,15 +2155,6 @@ static XEN g_yes_or_no_p(XEN msg)
   return(C_TO_XEN_BOOLEAN(snd_yes_or_no_p(get_global_state(), XEN_TO_C_STRING(msg))));
 }
 
-static XEN g_clear_audio_inputs (void) 
-{
-  #define H_clear_audio_inputs "(" S_clear_audio_inputs ") tries to reduce soundcard noise in Linux/OSS"
-#if HAVE_OSS
-  mus_audio_clear_soundcard_inputs(); 
-#endif
-  return(XEN_FALSE);
-}
-
 /* this needs to be in Snd (rather than sndlib2xen.c) because it calls snd_help */
 #define S_mus_audio_describe            "mus-audio-describe"
 static XEN g_mus_audio_describe(void) 
@@ -2864,7 +2855,6 @@ XEN_NARGIFY_1(g_set_pushed_button_color_w, g_set_pushed_button_color)
 XEN_NARGIFY_1(g_color_p_w, g_color_p)
 #endif
 XEN_NARGIFY_0(g_snd_tempnam_w, g_snd_tempnam)
-XEN_NARGIFY_0(g_clear_audio_inputs_w, g_clear_audio_inputs)
 XEN_NARGIFY_0(g_color_dialog_w, g_color_dialog)
 XEN_NARGIFY_0(g_orientation_dialog_w, g_orientation_dialog)
 XEN_ARGIFY_1(g_transform_dialog_w, g_transform_dialog)
@@ -3034,7 +3024,6 @@ XEN_NARGIFY_0(g_snd_global_state_w, g_snd_global_state)
 #define g_color_p_w g_color_p
 #endif
 #define g_snd_tempnam_w g_snd_tempnam
-#define g_clear_audio_inputs_w g_clear_audio_inputs
 #define g_color_dialog_w g_color_dialog
 #define g_orientation_dialog_w g_orientation_dialog
 #define g_transform_dialog_w g_transform_dialog
@@ -3333,7 +3322,6 @@ void g_initialize_gh(void)
 
 
   XEN_DEFINE_PROCEDURE(S_snd_tempnam,         g_snd_tempnam_w, 0, 0, 0,         H_snd_tempnam);
-  XEN_DEFINE_PROCEDURE(S_clear_audio_inputs,  g_clear_audio_inputs_w, 0, 0, 0,  H_clear_audio_inputs);
   XEN_DEFINE_PROCEDURE(S_color_dialog,        g_color_dialog_w, 0, 0, 0,        H_color_dialog);
   XEN_DEFINE_PROCEDURE(S_orientation_dialog,  g_orientation_dialog_w, 0, 0, 0,  H_orientation_dialog);
   XEN_DEFINE_PROCEDURE(S_transform_dialog,    g_transform_dialog_w, 0, 1, 0,    H_transform_dialog);

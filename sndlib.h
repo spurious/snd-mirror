@@ -12,8 +12,8 @@
 #endif
 
 #define SNDLIB_VERSION 17
-#define SNDLIB_REVISION 7
-#define SNDLIB_DATE "11-Mar-03"
+#define SNDLIB_REVISION 8
+#define SNDLIB_DATE "12-Mar-03"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -472,9 +472,6 @@ int mus_audio_systems(void);
 char *mus_audio_system_name(int sys);
 char *mus_audio_moniker(void);
 
-#if HAVE_OSS
-  void mus_audio_clear_soundcard_inputs(void);
-#endif
 #if (HAVE_OSS || HAVE_ALSA)
   void mus_audio_set_oss_buffers(int num, int size);
   int mus_audio_api(void);
