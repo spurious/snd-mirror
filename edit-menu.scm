@@ -1,7 +1,9 @@
 ;;; add some useful options to the Edit menu
 ;;;
 ;;; these used to be in the effects menu
-;;; TODO: make option insensitive if no selection etc
+;;; TODO: make option insensitive if no selection etc (needs access to e_cascade_menu, not edit_menu)
+;;;           e_cascade_menu is the only child of top level menu (menu_menu) named "Edit"
+;;;           and (|XmCascadeButton? wid)  should return #t
 
 
 (use-modules (ice-9 format))

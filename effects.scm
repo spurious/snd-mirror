@@ -1,7 +1,7 @@
 (use-modules (ice-9 format))
 
 (define pi 3.141592653589793)
-(define effects-list '()) ; menu labels are updated to show current default settings
+(define effects-list '()) ; menu labels are updated to show current settings
 
 (define effects-menu (add-to-main-menu "Effects" (lambda ()
 						   (define (update-label effects)
@@ -25,7 +25,7 @@
   (lambda (func origin)
     (let ((snc (sync)))
       (if (> snc 0)
-	  (apply map
+	  (apply for-each
 		 (lambda (snd chn)
 		   (if (= (sync snd) snc)
 		       (map-chan (func) #f #f origin snd chn)))
@@ -100,7 +100,7 @@
 			|XmNminimum       (inexact->exact (* low scale))
 			|XmNmaximum       (inexact->exact (* high scale))
 			|XmNvalue         (inexact->exact (* initial scale))
-			|XmNdecimalPoints (if (= scale 100) 2 (if (= scale 10) 1 0))
+			|XmNdecimalPoints (if (= scale 1000) 3 (if (= scale 100) 2 (if (= scale 10) 1 0)))
 			|XmNtitleString   title
 			|XmNborderWidth   1
 			|XmNbackground    (|Pixel (snd-pixel (basic-color)))))))
@@ -359,7 +359,7 @@
 					       (set! gate-amount (/ (|value info) 100.0)))
 					     100))))
 	      ;; now add a toggle button setting omit-silence 
-	      ;;  (need to use XtParent here because the containing RowColumn widget it
+	      ;;  (need to use XtParent here because the containing RowColumn widget is
 	      ;;  hidden in add-sliders -- prehaps it should be returned in the slider list)
 	      
 	      (let* ((s1 (|XmStringCreateLocalized "Omit silence"))
@@ -566,19 +566,19 @@
 						       "move the sliders to change the tims/pitch scaling amounts"))
 					(lambda (w c i)
 					  (set! time-scale initial-time-scale)
-					  (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* time-scale 100))))
+					  (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* time-scale 1000))))
 					  (set! pitch-scale initial-pitch-scale)
-					  (|XtSetValues (cadr sliders) (list |XmNvalue (inexact->exact (* pitch-scale 100)))))))
+					  (|XtSetValues (cadr sliders) (list |XmNvalue (inexact->exact (* pitch-scale 1000)))))))
 	      (set! sliders
 		    (add-sliders expsrc-dialog
 				 (list (list "time scale" 0.0 initial-time-scale 5.0
 					     (lambda (w context info)
-					       (set! time-scale (/ (|value info) 100.0)))
-					     100)
+					       (set! time-scale (/ (|value info) 100.00)))
+					     1000)
 				       (list "pitch scale" 0.0 initial-pitch-scale 5.0
 					     (lambda (w context info)
-					       (set! pitch-scale (/ (|value info) 100.0)))
-					     100))))))
+					       (set! pitch-scale (/ (|value info) 100.00)))
+					     1000))))))
 	(activate-dialog expsrc-dialog))
 
       (add-to-menu effects-menu "Time/Pitch scaling" (lambda () (post-expsrc-dialog))))
@@ -863,11 +863,11 @@
 ;;   Sam Heisz, January 1998
 ;;   inspired by some unit generators written for Csound by Paris Smaragdis
 ;;   who based his work on formulas from 
-;;   Charles Doge, Computer music: synthesis, composition, and performance.
+;;   Charles Dodge, Computer music: synthesis, composition, and performance.
 
 (define root-2 (sqrt 2.0))
 
-(define (butter b sig) (filter b sig))
+(define butter filter)
 
 ;;; -------- Butterworth band-pass filter
 
@@ -1125,6 +1125,105 @@
 
 
 
+;;; -------- Comb filter chord
+;;;
+
+(define comb-chord-scaler 0.95)
+(define comb-chord-size 60)
+(define comb-chord-amp 0.3)
+(define comb-chord-interval-one 0.75)
+(define comb-chord-interval-two 1.20)
+(define comb-chord-label "Comb filter chord")
+(define comb-chord-dialog #f)
+
+(define comb-chord
+  (lambda (scaler size amp interval-one interval-two)
+    "Comb filter chord: create chords by using filters at harmonically related sizes."
+    (let ((c1 (make-comb scaler size))
+          (c2 (make-comb scaler (* size interval-one)))
+          (c3 (make-comb scaler (* size interval-two))))
+      (lambda (x)
+        (* amp (+ (comb c1 x) (comb c2 x) (comb c3 x)))))))
+
+(if (provided? 'xm) ; if xm module is loaded, popup a dialog here
+    (begin
+
+      (define (post-comb-chord-dialog)
+        (if (not (|Widget? comb-chord-dialog))
+            ;; if comb-chord-dialog doesn't exist, create it
+            (let ((initial-comb-chord-scaler 0.95)
+                  (initial-comb-chord-size 60)
+                  (initial-comb-chord-amp 0.3)
+                  (initial-comb-chord-interval-one 0.75)
+                  (initial-comb-chord-interval-two 1.20)
+                  (sliders '()))
+              (set! comb-chord-dialog
+                    (make-effect-dialog comb-chord-label
+                                        (lambda (w context info)
+					  (map-chan-with-sync 
+					   (lambda ()
+					     (comb-chord comb-chord-scaler comb-chord-size comb-chord-amp
+							 comb-chord-interval-one comb-chord-interval-two))
+					   "comb-chord"))
+                                        (lambda (w context info)
+                                          (|XtUnmanageChild comb-chord-dialog))
+                                        (lambda (w context info)
+                                          (help-dialog "Comb filter chord Help"
+                                                       "Move the sliders to set the comb-chord parameters."))
+                                        (lambda (w c i)
+                                          (set! comb-chord-scaler initial-comb-chord-scaler)
+                                          (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* comb-chord-scaler 100))))
+                                          (set! comb-chord-size initial-comb-chord-size)
+                                          (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* comb-chord-size 100))))
+                                          (set! comb-chord-amp initial-comb-chord-amp)
+                                          (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* comb-chord-amp 100))))
+                                          (set! comb-chord-interval-one initial-comb-chord-interval-one)
+                                          (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* comb-chord-interval-one 100))))
+                                          (set! comb-chord-interval-two initial-comb-chord-interval-two)
+                                          (|XtSetValues (cadr sliders) (list |XmNvalue (inexact->exact (* comb-chord-interval-two 100)))))))
+              (set! sliders
+                    (add-sliders comb-chord-dialog
+                                 (list (list "comb-chord scaler" 0.0 initial-comb-chord-scaler 1.0
+                                             (lambda (w context info)
+                                               (set! comb-chord-scaler (/ (|value info) 100.0)))
+                                             100)
+                                       (list "comb-chord size" 0.0 initial-comb-chord-size 100.0
+                                             (lambda (w context info)
+                                               (set! comb-chord-size (/ (|value info) 100.0)))
+                                             100)
+                                       (list "comb-chord amp" 0.0 initial-comb-chord-amp 1.0
+                                             (lambda (w context info)
+                                               (set! comb-chord-amp (/ (|value info) 100.0)))
+                                             100)
+                                       (list "comb-chord interval 1" 0.0 initial-comb-chord-interval-one 2.0
+                                             (lambda (w context info)
+                                               (set! comb-chord-interval-one (/ (|value info) 100.0)))
+                                             100)
+                                       (list "comb-chord interval 2" 0.0 initial-comb-chord-interval-two 2.0
+                                             (lambda (w context info)
+                                               (set! comb-chord-interval-two (/ (|value info) 100.0)))
+                                             100))))))
+        (activate-dialog comb-chord-dialog))
+
+      (add-to-menu effects-menu "Comb filter chord" (lambda () (post-comb-chord-dialog))))
+
+    (add-to-menu effects-menu comb-chord-label 
+		 (lambda ()
+		   (map-chan-with-sync 
+		    (lambda ()
+		      (comb-chord comb-chord-scaler comb-chord-size comb-chord-amp
+				  comb-chord-interval-one comb-chord-interval-two))
+		    "comb-chord"))))
+
+(set! effects-list (cons (lambda ()
+                           (let ((new-label (format #f "Comb filter chord (~1,2F ~1,2F ~1,2F ~1,2F ~1,2F)" 
+						comb-chord-scaler comb-chord-size
+ 						comb-chord-amp comb-chord-interval-one comb-chord-interval-two)))
+                             (change-menu-label effects-menu comb-chord-label new-label)
+                             (set! comb-chord-label new-label)))
+                         effects-list))
+
+#!
 ;;; -------- comb filter
 
 (define comb-scaler 0.1)
@@ -1189,7 +1288,7 @@
                              (change-menu-label effects-menu comb-label new-label)
                              (set! comb-label new-label)))
                          effects-list))
-
+!#
 
 
 

@@ -418,3 +418,20 @@
 	   (* .25 sum))
 	(set! sum (+ sum (flanger (vector-ref dlys i) inval)))))))
 
+
+;;; -------- chordalize (comb filters to make a chord using chordalize-amount and chordalize-base)
+(define chordalize-amount .95)
+(define chordalize-base 100)
+(define chordalize-chord '(1 3/4 5/4))
+
+(define (chordalize)
+  ;; chord is a list of members of chord such as '(1 5/4 3/2)
+  (let ((combs (map (lambda (interval)
+		      (make-comb chordalize-amount (* chordalize-base interval)))
+		    chordalize-chord))
+	(scaler (/ 0.5 (length chordalize-chord)))) ; just a guess -- maybe this should rescale to old maxamp
+    (lambda (x)
+      (* scaler (apply + (map (lambda (c) (comb c x)) combs))))))
+
+
+

@@ -444,7 +444,7 @@
     fft-popup))
 
 (define (add-selection-popup)
-  ;; TODO: add new popups to existing chans as well
+
   (let ((popups '()))
     (define (find-popup snd chn dats)
       (if (not (null? dats))
@@ -454,47 +454,53 @@
 		cur
 		(find-popup snd chn (cdr dats))))
 	  #f))
-    (add-hook! after-open-hook
-      (lambda (snd)
-	(do ((chn 0 (1+ chn)))
-	    ((= chn (chans snd)))
-	  (if (not (find-popup snd chn popups))
-	      (let ((chn-grf (|Widget (car (channel-widgets snd chn)))))
-		(set! popups (cons (list snd chn) popups))
-		(|XtAddCallback chn-grf |XmNpopupHandlerCallback 
-		  (lambda (w data info)
-		    (let* ((e (|event info))
-			   (xe (- (|x_root e) (car (|XtTranslateCoords w 0 0)))))
-		      ;; xe is where the mouse-click occurred in the graph window's (local) coordinates
-		      (set! graph-popup-snd snd)
-		      (set! graph-popup-chn chn)
 
-		      (let ((fax (if (graph-transform? snd chn) (axis-info snd chn transform-graph) #f))
-			    (lax (if (graph-lisp? snd chn) (axis-info snd chn lisp-graph) #f)))
-			(if (and fax
-				 (>= xe (list-ref fax 10))
-				 (<= xe (list-ref fax 12)))
-			    ;; in fft
-			    (set! (|menuToPost info) fft-popup-menu)
+    (define (add-popup snd)
+      (do ((chn 0 (1+ chn)))
+	  ((= chn (chans snd)))
+	(if (not (find-popup snd chn popups))
+	    (let ((chn-grf (|Widget (car (channel-widgets snd chn)))))
+	      (set! popups (cons (list snd chn) popups))
+	      (|XtAddCallback chn-grf |XmNpopupHandlerCallback 
+		 (lambda (w data info)
+		   (let* ((e (|event info))
+			  (xe (- (|x_root e) (car (|XtTranslateCoords w 0 0)))))
+		     ;; xe is where the mouse-click occurred in the graph window's (local) coordinates
+		     (set! graph-popup-snd snd)
+		     (set! graph-popup-chn chn)
+		     
+		     (let ((fax (if (graph-transform? snd chn) (axis-info snd chn transform-graph) #f))
+			   (lax (if (graph-lisp? snd chn) (axis-info snd chn lisp-graph) #f)))
+		       (if (and fax
+				(>= xe (list-ref fax 10))
+				(<= xe (list-ref fax 12)))
+			   ;; in fft
+			   (set! (|menuToPost info) fft-popup-menu)
+			   
+			   (if (and lax
+				    (>= xe (list-ref lax 10))
+				    (<= xe (list-ref lax 12)))
+			       ;; in lisp
+			       ;;   nothing special implemented yet
+			       ;; (set! (|menuToPost info) graph-popup-menu)
+			       #f ; just a place-holder
+			       
+			       (if (and (selection?)
+					(let* ((beg (/ (selection-position snd chn) (srate snd)))
+					       (end (/ (+ (selection-position snd chn) (selection-length snd chn)) (srate snd))))
+					  (and (>= xe (x->position beg snd chn))
+					       (<= xe (x->position end snd chn)))))
+				   (set! (|menuToPost info) selection-popup-menu)
 
-			    (if (and lax
-				     (>= xe (list-ref lax 10))
-				     (<= xe (list-ref lax 12)))
-				;; in lisp
-				;;   nothing special implemented yet
-				;; (set! (|menuToPost info) graph-popup-menu)
-				#f ; just a place-holder
+				   (begin
+				     (edit-graph-popup-menu snd chn)
+				     (set! (|menuToPost info) graph-popup-menu)))))))))))))
 
-				(if (and (selection?)
-					 (let* ((beg (/ (selection-position snd chn) (srate snd)))
-						(end (/ (+ (selection-position snd chn) (selection-length snd chn)) (srate snd))))
-					   (and (>= xe (x->position beg snd chn))
-						(<= xe (x->position end snd chn)))))
-				    (set! (|menuToPost info) selection-popup-menu)
-
-				    (begin
-				      (edit-graph-popup-menu snd chn)
-				      (set! (|menuToPost info) graph-popup-menu))))))))))))))))
+    (add-hook! after-open-hook add-popup)
+    (for-each 
+     (lambda (snd)
+       (add-popup snd))
+     (sounds))))
 
 (define (change-menu-color menu new-color)
   ;; new-color can be the color name, an xm Pixel, a snd color, or a list of rgb values (as in Snd's make-color)
