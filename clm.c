@@ -151,7 +151,11 @@ static void describe_bad_gen(void *ptr, char *desc, int desc_len, char *gen_name
     {
       if ((((mus_any *)ptr)->core)->type < mus_class_tag)
 	mus_snprintf(desc, desc_len, "arg to describe_%s appears to be %s %s", gen_name, an, mus_name((mus_any *)ptr));
+#if LONG_INT_P
+      else mus_snprintf(desc, desc_len, "arg to describe_%s is not %s %s", gen_name, an, gen_name);
+#else
       else mus_snprintf(desc, desc_len, "arg to describe_%s (%d) is not %s %s", gen_name, (int)ptr, an, gen_name);
+#endif
     }
 }
 
@@ -1306,9 +1310,15 @@ static char *inspect_table_lookup(void *ptr)
   tbl *gen = (tbl *)ptr;
   char *desc;
   desc = make_desc_buf(ptr, FALSE);
+#if LONG_INT_P
+  if (desc) mus_snprintf(desc, describe_buffer_size, "tbl freq: %f, phase: %f, length: %d, mag: %f, table: %s",
+		    gen->freq, gen->phase, gen->table_size, gen->internal_mag,
+		    (gen->table_allocated) ? "local" : "external");
+#else
   if (desc) mus_snprintf(desc, describe_buffer_size, "tbl freq: %f, phase: %f, length: %d, mag: %f, table: %d (%s)",
 		    gen->freq, gen->phase, gen->table_size, gen->internal_mag, (int)(gen->table),
 		    (gen->table_allocated) ? "local" : "external");
+#endif
   return(desc);
 }
 
@@ -6053,7 +6063,7 @@ Float *mus_make_fft_window_with_window(int type, int size, Float beta, Float *wi
     case MUS_RECTANGULAR_WINDOW:
       for (i = 0; i < size; i++) window[i] = 1.0;
       break; 
-    case MUS_HANNING_WINDOW: /* Hann would be more accurate */
+    case MUS_HANN_WINDOW:
       for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) window[j] = (window[i] = 0.5 - 0.5 * cos(angle));
       break; 
     case MUS_WELCH_WINDOW:

@@ -884,7 +884,7 @@ void set_spectro_z_scale(snd_state *ss, Float val)
   if (!(ss->graph_hook_active)) map_over_chans(ss, update_graph, NULL);
 }
 
-static int map_chans_spectro_hop(chan_info *cp, void *ptr) {cp->spectro_hop = (int)ptr; return(0);}
+static int map_chans_spectro_hop(chan_info *cp, void *ptr) {cp->spectro_hop = (*((int *)ptr)); return(0);}
 
 static void Hop_Orientation_Callback(GtkAdjustment *adj, gpointer context) 
 {
@@ -894,7 +894,7 @@ static void Hop_Orientation_Callback(GtkAdjustment *adj, gpointer context)
   ss = od->state;
   val = iclamp(1, (int)(adj->value), 20);
   in_set_spectro_hop(ss, val);
-  map_over_chans(ss, map_chans_spectro_hop, (void *)val);
+  map_over_chans(ss, map_chans_spectro_hop, (void *)(&val));
   map_over_chans(ss, update_graph, NULL);
 }
 
@@ -904,7 +904,7 @@ void set_spectro_hop(snd_state *ss, int val)
     {
       in_set_spectro_hop(ss, val);
       if (oid) gtk_adjustment_set_value(GTK_ADJUSTMENT(oid->hop_adj), val);
-      map_over_chans(ss, map_chans_spectro_hop, (void *)val);
+      map_over_chans(ss, map_chans_spectro_hop, (void *)(&val));
       if (!(ss->graph_hook_active)) map_over_chans(ss, update_graph, NULL);
     }
 }

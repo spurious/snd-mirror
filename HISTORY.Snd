@@ -1,5 +1,6 @@
 snd change log
 
+  1-May:     Alpha (64-bit) and FreeBSD (Old OSS) fixups.
   29-Apr:    describe-audio replaced by mus-audio-describe.
   28-Apr:    noguile play segfault caused by backwards NOT_BOUND_P macro (thanks to Bob Sturm).
   26-Apr:    in user-written makefiles, -DHAVE_GUILE=0 should be changed to -DHAVE_EXTENSION_LANGUAGE=0

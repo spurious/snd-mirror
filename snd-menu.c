@@ -340,7 +340,7 @@ void save_state_from_menu(snd_state *ss)
     }
 }
 
-static int map_chans_graph_style(chan_info *cp, void *ptr) {cp->graph_style = (int)ptr; update_graph(cp, NULL); return(0);}
+static int map_chans_graph_style(chan_info *cp, void *ptr) {cp->graph_style = (*((int *)ptr)); update_graph(cp, NULL); return(0);}
 
 void set_graph_style(snd_state *ss, int val)
 {
@@ -353,7 +353,7 @@ void set_graph_style(snd_state *ss, int val)
     case GRAPH_LOLLIPOPS:      set_sensitive(view_lollipops_menu(), TRUE);      break;
     }
   in_set_graph_style(ss, val);
-  map_over_chans(ss, map_chans_graph_style, (void *)val);
+  map_over_chans(ss, map_chans_graph_style, (void *)(&val));
   switch (val)
     {
     case GRAPH_LINES:          set_sensitive(view_lines_menu(), FALSE);          break;
@@ -366,7 +366,7 @@ void set_graph_style(snd_state *ss, int val)
 
 static int map_chans_marks(chan_info *cp, void *ptr)
 {
-  cp->show_marks = (int)ptr;
+  cp->show_marks = (*((int *)ptr));
   update_graph(cp, NULL);
   return(0);
 }
@@ -374,12 +374,12 @@ static int map_chans_marks(chan_info *cp, void *ptr)
 void set_show_marks(snd_state *ss, int val)
 {
   in_set_show_marks(ss, val);
-  map_over_chans(ss, map_chans_marks, (void *)val);
+  map_over_chans(ss, map_chans_marks, (void *)(&val));
 }
 
 static int map_chans_zero(chan_info *cp, void *ptr)
 {
-  cp->show_y_zero = (int)ptr;
+  cp->show_y_zero = (*((int *)ptr));
   update_graph(cp, NULL);
   return(0);
 }
@@ -391,18 +391,18 @@ void set_show_y_zero(snd_state *ss, int val)
     {
       set_menu_label(view_zero_menu(), 
 		     (val) ? STR_Hide_Y0 : STR_Show_Y0);
-      map_over_chans(ss, map_chans_zero, (void *)val);
+      map_over_chans(ss, map_chans_zero, (void *)(&val));
     }
 }
 
 static int clrmini(snd_info *sp, void *ignore) {clear_minibuffer(sp); return(0);}
-static int map_chans_verbose_cursor(chan_info *cp, void *ptr) {cp->verbose_cursor = (int)ptr; return(0);}
+static int map_chans_verbose_cursor(chan_info *cp, void *ptr) {cp->verbose_cursor = (*((int *)ptr)); return(0);}
 
 void set_verbose_cursor(snd_state *ss, int val)
 {
   in_set_verbose_cursor(ss, val);
   if (val == 0) map_over_sounds(ss, clrmini, NULL);
-  map_over_chans(ss, map_chans_verbose_cursor, (void *)val);
+  map_over_chans(ss, map_chans_verbose_cursor, (void *)(&val));
   if (view_cursor_menu())
     set_menu_label(view_cursor_menu(), 
 		   (val) ? STR_Silent_cursor : STR_Verbose_cursor);

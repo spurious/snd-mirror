@@ -25,7 +25,7 @@ static int fft_sizes[NUM_FFT_SIZES] = {16, 32, 64, 128, 256, 512, 1024, 2048, 40
 #endif
 
 static char *FFT_WINDOWS[NUM_FFT_WINDOWS] = 
-     {"Rectangular", "Hanning", "Welch", "Parzen", "Bartlett", "Hamming", "Blackman2", "Blackman3", "Blackman4",
+     {"Rectangular", "Hann", "Welch", "Parzen", "Bartlett", "Hamming", "Blackman2", "Blackman3", "Blackman4",
       "Exponential", "Riemann", "Kaiser", "Cauchy", "Poisson", "Gaussian", "Tukey", "Dolph-Chebyshev"};
 
 static char *WAVELETS[NUM_WAVELETS] = {
@@ -177,12 +177,14 @@ static void get_fft_window_data(snd_state *ss)
 static int map_chans_fft_size(chan_info *cp, void *ptr) 
 {
   fft_info *fp;
-  cp->fft_size = (int)ptr; 
+  int size;
+  size = (*((int *)ptr)); 
+  cp->fft_size = size;
   if (cp->fft) 
     {
       fp = cp->fft;
-      if (fp->size < (int)ptr) fp->ok = 0; /* "dirty" flag for fft data array = needs REALLOCation */
-      fp->size = (int)ptr;
+      if (fp->size < size) fp->ok = 0; /* "dirty" flag for fft data array = needs REALLOCation */
+      fp->size = size;
     }
   return(0);
 }
@@ -193,7 +195,7 @@ static void size_browse_Callback(GtkWidget *w, gint row, gint column, GdkEventBu
   int size;
   in_set_fft_size(ss, fft_sizes[row]);
   size = fft_size(ss);
-  map_over_chans(ss, map_chans_fft_size, (void *)size);
+  map_over_chans(ss, map_chans_fft_size, (void *)(&size));
   map_over_chans(ss, calculate_fft, NULL);
   if (graph_frame) 
     gtk_frame_set_label(GTK_FRAME(graph_frame), 
@@ -202,13 +204,13 @@ static void size_browse_Callback(GtkWidget *w, gint row, gint column, GdkEventBu
   graph_redisplay(ss);
 }
 
-static int map_chans_wavelet_type(chan_info *cp, void *ptr) {cp->wavelet_type = (int)ptr; return(0);}
+static int map_chans_wavelet_type(chan_info *cp, void *ptr) {cp->wavelet_type = (*((int *)ptr)); return(0);}
 
 static void wavelet_browse_Callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   in_set_wavelet_type(ss, row);
-  map_over_chans(ss, map_chans_wavelet_type, (void *)row);
+  map_over_chans(ss, map_chans_wavelet_type, (void *)(&row));
   if (transform_type(ss) == WAVELET)
     map_over_chans(ss, calculate_fft, NULL);
 }
@@ -231,14 +233,14 @@ static void window_browse_Callback(GtkWidget *w, gint row, gint column, GdkEvent
     }
 }
 
-static int map_chans_transform_type(chan_info *cp, void *ptr) {cp->transform_type = (int)ptr; return(0);}
+static int map_chans_transform_type(chan_info *cp, void *ptr) {cp->transform_type = (*((int *)ptr)); return(0);}
 
 static void transform_browse_Callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   map_over_chans(ss, force_fft_clear, NULL);
   in_set_transform_type(ss, row);
-  map_over_chans(ss, map_chans_transform_type, (void *)row);
+  map_over_chans(ss, map_chans_transform_type, (void *)(&row));
   map_over_chans(ss, calculate_fft, NULL);
 }
 
@@ -269,40 +271,40 @@ static void spectrogram_Callback(GtkWidget *w, gpointer context)
   map_over_chans(ss, calculate_fft, NULL);
 }
 
-static int map_show_fft_peaks(chan_info *cp, void *ptr) {cp->show_fft_peaks = (int)ptr; return(0);}
+static int map_show_fft_peaks(chan_info *cp, void *ptr) {cp->show_fft_peaks = (*((int *)ptr)); return(0);}
 
 static void peaks_Callback(GtkWidget *w, gpointer context)
 {
   int val = 0;
   snd_state *ss = (snd_state *)context;
   in_set_show_fft_peaks(ss, val = (GTK_TOGGLE_BUTTON(w)->active));
-  map_over_chans(ss, map_show_fft_peaks, (void *)val);
+  map_over_chans(ss, map_show_fft_peaks, (void *)(&val));
   map_over_chans(ss, calculate_fft, NULL);
 }
 
-static int map_chans_fft_log_magnitude(chan_info *cp, void *ptr) {cp->fft_log_magnitude = (int)ptr; return(0);}
+static int map_chans_fft_log_magnitude(chan_info *cp, void *ptr) {cp->fft_log_magnitude = (*((int *)ptr)); return(0);}
 
 static void db_Callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   int val;
   in_set_fft_log_magnitude(ss, val = (GTK_TOGGLE_BUTTON(w)->active));
-  map_over_chans(ss, map_chans_fft_log_magnitude, (void *)val);
+  map_over_chans(ss, map_chans_fft_log_magnitude, (void *)(&val));
   map_over_chans(ss, calculate_fft, NULL);
 }
 
-static int map_chans_fft_log_frequency(chan_info *cp, void *ptr) {cp->fft_log_frequency = (int)ptr; return(0);}
+static int map_chans_fft_log_frequency(chan_info *cp, void *ptr) {cp->fft_log_frequency = (*((int *)ptr)); return(0);}
 
 static void logfreq_Callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   int val;
   in_set_fft_log_frequency(ss, val = (GTK_TOGGLE_BUTTON(w)->active));
-  map_over_chans(ss, map_chans_fft_log_frequency, (void *)val);
+  map_over_chans(ss, map_chans_fft_log_frequency, (void *)(&val));
   map_over_chans(ss, calculate_fft, NULL);
 }
 
-static int map_chans_normalize_fft(chan_info *cp, void *ptr) {cp->normalize_fft = (int)ptr; return(0);}
+static int map_chans_normalize_fft(chan_info *cp, void *ptr) {cp->normalize_fft = (*((int *)ptr)); return(0);}
 
 static void normalize_Callback(GtkWidget *w, gpointer context)
 {
@@ -310,7 +312,7 @@ static void normalize_Callback(GtkWidget *w, gpointer context)
   snd_state *ss = (snd_state *)context;
   choice = GTK_TOGGLE_BUTTON(w)->active;
   in_set_normalize_fft(ss, choice);
-  map_over_chans(ss, map_chans_normalize_fft, (void *)choice);
+  map_over_chans(ss, map_chans_normalize_fft, (void *)(&choice));
   map_over_chans(ss, calculate_fft, NULL);
 }
 
@@ -701,7 +703,7 @@ void set_fft_size(snd_state *ss, int val)
 {
   int i;
   in_set_fft_size(ss, val);
-  map_over_chans(ss, map_chans_fft_size, (void *)val);
+  map_over_chans(ss, map_chans_fft_size, (void *)(&val));
   if (transform_dialog)
     {
       for (i = 0; i < NUM_FFT_SIZES; i++)
@@ -735,7 +737,7 @@ void set_transform_type(snd_state *ss, int val)
 {
   if (!(ss->graph_hook_active)) map_over_chans(ss, force_fft_clear, NULL);
   in_set_transform_type(ss, val);
-  map_over_chans(ss, map_chans_transform_type, (void *)val);
+  map_over_chans(ss, map_chans_transform_type, (void *)(&val));
   if (!(ss->graph_hook_active)) 
     map_over_chans(ss, calculate_fft, NULL);
   if (transform_dialog) 
@@ -750,7 +752,7 @@ void set_wavelet_type(snd_state *ss, int val)
       gtk_clist_moveto(GTK_CLIST(wavelet_list), val, 0, 0.5, 0.5);
     }
   in_set_wavelet_type(ss, val);
-  map_over_chans(ss, map_chans_wavelet_type, (void *)val);
+  map_over_chans(ss, map_chans_wavelet_type, (void *)(&val));
   if ((transform_type(ss) == WAVELET) && 
       (!(ss->graph_hook_active))) 
     map_over_chans(ss, calculate_fft, NULL);
@@ -760,7 +762,7 @@ void set_wavelet_type(snd_state *ss, int val)
 void set_show_fft_peaks(snd_state *ss, int val)
 {
   in_set_show_fft_peaks(ss, val);
-  map_over_chans(ss, map_show_fft_peaks, (void *)val);
+  map_over_chans(ss, map_show_fft_peaks, (void *)(&val));
   if (transform_dialog) 
     set_toggle_button(peaks_button, val, FALSE, (void *)ss);
   if (!(ss->graph_hook_active)) 
@@ -770,7 +772,7 @@ void set_show_fft_peaks(snd_state *ss, int val)
 void set_fft_log_frequency(snd_state *ss, int val)
 {
   in_set_fft_log_frequency(ss, val);
-  map_over_chans(ss, map_chans_fft_log_frequency, (void *)val);
+  map_over_chans(ss, map_chans_fft_log_frequency, (void *)(&val));
   if (transform_dialog)
     set_toggle_button(logfreq_button, val, FALSE, (void *)ss);
   if (!(ss->graph_hook_active)) 
@@ -780,7 +782,7 @@ void set_fft_log_frequency(snd_state *ss, int val)
 void set_fft_log_magnitude(snd_state *ss, int val)
 {
   in_set_fft_log_magnitude(ss, val);
-  map_over_chans(ss, map_chans_fft_log_magnitude, (void *)val);
+  map_over_chans(ss, map_chans_fft_log_magnitude, (void *)(&val));
   if (transform_dialog) 
     set_toggle_button(db_button, val, FALSE, (void *)ss);
   if (!(ss->graph_hook_active)) 
@@ -810,7 +812,7 @@ void set_fft_style(snd_state *ss, int val)
 void set_normalize_fft(snd_state *ss, int val)
 {
   in_set_normalize_fft(ss, val);
-  map_over_chans(ss, map_chans_normalize_fft, (void *)val);
+  map_over_chans(ss, map_chans_normalize_fft, (void *)(&val));
   if (transform_dialog) 
     set_toggle_button(normalize_button, val, FALSE, (void *)ss);
   if (!(ss->graph_hook_active)) 

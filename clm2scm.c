@@ -340,7 +340,7 @@ static SCM local_doc;
 #define S_exponential_window     "exponential-window"
 #define S_gaussian_window        "gaussian-window"
 #define S_hamming_window         "hamming-window"
-#define S_hanning_window         "hanning-window"
+#define S_hann_window            "hann-window"
 #define S_kaiser_window          "kaiser-window"
 #define S_parzen_window          "parzen-window"
 #define S_poisson_window         "poisson-window"
@@ -350,7 +350,7 @@ static SCM local_doc;
 #define S_welch_window           "welch-window"
 #define S_dolph_chebyshev_window "dolph-chebyshev-window"
 
-static char *FFT_WINDOW_CONSTANTS[17] = {S_rectangular_window, S_hanning_window, S_welch_window, S_parzen_window, S_bartlett_window,
+static char *FFT_WINDOW_CONSTANTS[17] = {S_rectangular_window, S_hann_window, S_welch_window, S_parzen_window, S_bartlett_window,
 					 S_hamming_window, S_blackman2_window, S_blackman3_window, S_blackman4_window,
 					 S_exponential_window, S_riemann_window, S_kaiser_window, S_cauchy_window,
 					 S_poisson_window, S_gaussian_window, S_tukey_window, S_dolph_chebyshev_window
@@ -701,7 +701,7 @@ static void init_simple_stuff(void)
   DEFINE_PROC(S_sum_of_sines,         g_sum_of_sines, 2, 0, 0,         H_sum_of_sines);
 
   #define H_rectangular_window     "The un-window, so to speak"
-  #define H_hanning_window         "A simple raised cosine window"
+  #define H_hann_window            "A simple raised cosine window"
   #define H_welch_window           "A triangular window squared"
   #define H_parzen_window          "A triangular window"
   #define H_bartlett_window        "A triangular window"
@@ -719,7 +719,8 @@ static void init_simple_stuff(void)
   #define H_dolph_chebychev_window "window from inverse fft"
 
   DEFINE_VAR(S_rectangular_window,     MUS_RECTANGULAR_WINDOW,     H_rectangular_window);
-  DEFINE_VAR(S_hanning_window,         MUS_HANNING_WINDOW,         H_hanning_window);
+  DEFINE_VAR(S_hann_window,            MUS_HANN_WINDOW,            H_hann_window);
+  DEFINE_VAR("hanning-window",         MUS_HANN_WINDOW,            H_hann_window); /* backwards compatibility */
   DEFINE_VAR(S_welch_window,           MUS_WELCH_WINDOW,           H_welch_window);
   DEFINE_VAR(S_parzen_window,          MUS_PARZEN_WINDOW,          H_parzen_window);
   DEFINE_VAR(S_bartlett_window,        MUS_BARTLETT_WINDOW,        H_bartlett_window);

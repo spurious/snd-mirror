@@ -737,9 +737,8 @@ int mus_file_seek_frame(int tfd, int frame)
       (io_fds[tfd] == NULL))
     {
       mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED,
-		"file descriptors not realloc'd? (tfd: %d, io_fd_size: %d, io_fd: %d)\n  [%s[%d] %s]",
+		"file descriptors not realloc'd? (tfd: %d, io_fd_size: %d)\n  [%s[%d] %s]",
 		tfd, io_fd_size,
-		(tfd < io_fd_size) ? ((int)(io_fds[tfd])) : 0,
 		__FILE__, __LINE__, __FUNCTION__);
       return(MUS_ERROR);
     }
@@ -950,28 +949,18 @@ static int checked_write(int tfd, char *buf, int chars)
 	    mus_error(MUS_FILE_CLOSED,
 		      "attempt to write closed file %s",
 		      fd->name);
-#if LONG_INT_P
 	  else
+#ifndef MACOS
 	    mus_error(MUS_WRITE_ERROR,
 		      "IO write error (%s %s): %d of %d bytes written for %d (%d %d %d)\n\n  [%s[%d] %s]",
 		      fd->name, strerror(errno),
 		      bytes, chars, tfd, fd->bytes_per_sample, fd->data_format, fd->data_location,
 		      __FILE__, __LINE__, __FUNCTION__);
 #else
-  #ifndef MACOS
-	  else
-	    mus_error(MUS_WRITE_ERROR,
-		      "IO write error (%s %s): %d of %d bytes written for %d (%d %d %d %d)\n\n  [%s[%d] %s]",
-		      fd->name, strerror(errno),
-		      bytes, chars, tfd, (int)buf, fd->bytes_per_sample, fd->data_format, fd->data_location,
-		      __FILE__, __LINE__, __FUNCTION__);
-  #else
-	  else
 	    mus_error(MUS_WRITE_ERROR,
 		      "IO write error (%s): %d of %d bytes written for %d (%d %d %d %d)\n\n  [%s[%d] %s]",
 		      fd->name, bytes, chars, tfd, (int)buf, fd->bytes_per_sample, fd->data_format, fd->data_location,
 		      __FILE__, __LINE__, __FUNCTION__);
-  #endif
 #endif
 	  return(MUS_ERROR);
 	}

@@ -323,7 +323,7 @@ static int get_callback_slot(void)
 
 static void handle_input(XtPointer context, int *fd, XtInputId *id)
 {
-  int input_index = (int)context;
+  int input_index = (int)context;  /* TODO: is this legal on the Alpha?  if not, can we use long here? */
   CALL1(added_input_callbacks[input_index],
 	TO_SCM_INT(*fd),
 	"input callback");

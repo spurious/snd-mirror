@@ -264,6 +264,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+1-May:   Alpha (64-bit) and FreeBSD (Old OSS) fixups.\n\
 25-Apr:  snd.1 (and mandir business in makefile.in)\n\
 24-Apr:  added mouse-enter|leave-text-hook.\n\
 23-Apr:  snd 4.13.\n\
@@ -279,9 +280,6 @@ void news_help(snd_state *ss)
          sndlib-scm calls that fail throw 'mus-error now, rather than returning -1.\n\
          files-popup-buffer in examp.scm (thanks to Anders Vinjar).\n\
          select-sound-hook, select-channel-hook.\n\
-21-Mar:  mus-expand-filename.\n\
-         open-raw-sound-hook (old raw-* variables are obsolete).\n\
-20-Mar:  mouse-enter-label hook function needs full filename (thanks to Anders Vinjar).\n\
 ",
 NULL);
   FREE(info);
@@ -870,7 +868,7 @@ Transform type:\n\
   " S_autocorrelation "    " S_walsh_transform "\n\
 \n\
 FFT Window type:\n\
-  rectangular-window  hanning-window      welch-window       parzen-window\n\
+  rectangular-window  hann(ing)-window    welch-window       parzen-window\n\
   bartlett-window     hamming-window      blackman2-window   blackman3-window\n\
   blackman4-window    exponential-window  riemann-window     kaiser-window\n\
   cauchy-window       poisson-window      gaussian-window    tukey-window\n\

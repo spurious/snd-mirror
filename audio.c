@@ -1433,7 +1433,7 @@ void mus_audio_restore (void)
 #endif
 
 #if ((SOUND_VERSION > 360) && (defined(OSS_SYSINFO)))
-  #define NEW_OSS
+  #define NEW_OSS 1
 #endif
 
 #define MAX_VOLUME 100
@@ -1480,6 +1480,7 @@ static int fragments_locked = 0;
  */
 
 static void oss_mus_audio_set_oss_buffers(int num, int size) {FRAGMENTS = num; FRAGMENT_SIZE = size; fragments_locked = 1;}
+/* TODO: these should be set per-card, not globally */
 
 #define MAX_SOUNDCARDS 8
 #define MAX_DSPS 8
@@ -1508,7 +1509,7 @@ static int oss_mus_audio_systems(void)
 static char *mixer_name(int sys)
 {
 #if HAVE_SAM_9407
-  if(sys < sound_cards && audio_type[sys] ==SAM9407_DSP)
+  if(sys < sound_cards && audio_type[sys] == SAM9407_DSP)
     {
       mus_snprintf(dev_name, DEV_NAME_SIZE, "/dev/sam%d_mixer", audio_mixer[sys]);
       return(dev_name);
@@ -1537,14 +1538,14 @@ static char *mixer_name(int sys)
 static char *oss_mus_audio_system_name(int system) 
 {
 #if HAVE_SAM_9407
-  if(system < sound_cards && audio_type[system] ==SAM9407_DSP)
+  if(system < sound_cards && audio_type[system] == SAM9407_DSP)
     {
       int fd;
       fd = open(mixer_name(system), O_RDONLY, 0);
       if(fd != -1) 
 	{
 	  static SamDriverInfo driverInfo;
-	  if(ioctl(fd, SAM_IOC_DRIVER_INFO, &driverInfo)>= 0) 
+	  if(ioctl(fd, SAM_IOC_DRIVER_INFO, &driverInfo) >= 0) 
 	    {
 	      close(fd);
 	      return(driverInfo.hardware);
@@ -1625,7 +1626,7 @@ void mus_audio_clear_soundcard_inputs(void)
   if (SOUND_MASK_MIC & devmask) ioctl(fd, MIXER_WRITE(SOUND_MIXER_MIC), &amp);
   if (SOUND_MASK_IGAIN & devmask) ioctl(fd, MIXER_WRITE(SOUND_MIXER_IGAIN), &amp);
   if (SOUND_MASK_LINE & devmask) ioctl(fd, MIXER_WRITE(SOUND_MIXER_LINE), &amp);
-  amp = (99<<8) + 99;
+  amp = (99 << 8) + 99;
   if (SOUND_MASK_VOLUME & devmask) ioctl(fd, MIXER_WRITE(SOUND_MIXER_VOLUME), &amp);
   if (SOUND_MASK_OGAIN & devmask) ioctl(fd, MIXER_WRITE(SOUND_MIXER_OGAIN), &amp);
   if (SOUND_MASK_PCM & devmask) ioctl(fd, MIXER_WRITE(SOUND_MIXER_PCM), &amp);
@@ -1819,7 +1820,7 @@ static int oss_mus_audio_initialize(void)
 		}
 	      else
 		{
-		  ndsp+=9;
+		  ndsp += 9;
 		  audio_mode[sound_cards] = 0;
 		}
 	      sound_cards++;
@@ -1847,7 +1848,7 @@ static int oss_mus_audio_initialize(void)
 	  err = ioctl(md, SOUND_MIXER_READ_DEVMASK, &devmask);
 	  responsive_field = SOUND_MIXER_VOLUME;
 	  for (i = 0; i < SOUND_MIXER_NRDEVICES; i++)
-	    if ((1<<i) & devmask)
+	    if ((1 << i) & devmask)
 	      {
 		responsive_field = i;
 		break;
@@ -2047,11 +2048,13 @@ static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int forma
 			  mus_format("can't open Sonorus output device %d (%s): %s",
 				     dev, 
 				     mus_audio_device_name(dev), strerror(errno)));
+#ifdef NEW_OSS
       if (ioctl(audio_out, SNDCTL_DSP_CHANNELS, &chans) == -1) 
 	RETURN_ERROR_EXIT(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_out,
 			  mus_format("can't get %d channels for Sonorus device %d (%s)",
 				     chans, dev, 
 				     mus_audio_device_name(dev)));
+#endif
       return(audio_out);
     }
 
@@ -2218,11 +2221,13 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int format
 				     dev_name, 
 				     mus_audio_device_name(dev), 
 				     strerror(errno)));
+#ifdef NEW_OSS
       if (ioctl(audio_fd, SNDCTL_DSP_CHANNELS, &chans) == -1) 
 	RETURN_ERROR_EXIT(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_fd,
 			  mus_format("can't get %d channels on %s (Sonorus device %s)",
 				     chans, dev_name, 
 				     mus_audio_device_name(dev)));
+#endif
       return(audio_fd);
     }
 
@@ -2285,8 +2290,10 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int format
 					    strerror(errno)));
         }
     }
+#ifdef SNDCTL_DSP_SETDUPLEX
   else 
     ioctl(audio_fd, SNDCTL_DSP_SETDUPLEX, &err); /* not always a no-op! */
+#endif
   if (audio_type[sys] == RME_HAMMERFALL) return(audio_fd);
   /* need to make sure the desired recording source is active -- does this actually have any effect? */
   switch (dev)
@@ -2898,7 +2905,11 @@ static char *synth_names[] =
 
 static char *synth_name(int i)
 {
+#ifdef SNDCARD_UART401
   if ((i > 0) && (i <= SNDCARD_UART401)) 
+#else
+  if ((i > 0) && (i <= 26))
+#endif
     return(synth_names[i]);
   return("unknown");
 }
@@ -3016,7 +3027,6 @@ static void oss_describe_audio_state_1(void)
     }
   else
     {
-      /* ioctl(fd, SNDCTL_DSP_SETDUPLEX, 0); */ /* try to enable "full duplex" mode -- appears to be a no-op */
       status = ioctl(fd, SNDCTL_SEQ_NRSYNTHS, &numdevs);
       if (status == -1) 
 	{

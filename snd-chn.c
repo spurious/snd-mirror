@@ -12,7 +12,7 @@ static SCM graph_hook, after_graph_hook;
 static void set_y_bounds(axis_info *ap);
 static int map_chans_wavo(chan_info *cp, void *ptr) 
 {
-  cp->wavo = (int)ptr; 
+  cp->wavo = (*((int *)ptr)); 
   if (cp->wavo == 0) 
     {
       set_y_bounds(cp->axis);
@@ -23,9 +23,9 @@ static int map_chans_wavo(chan_info *cp, void *ptr)
   update_graph(cp, NULL); 
   return(0);
 }
-static void set_wavo(snd_state *ss, int val) {in_set_wavo(ss, val); map_over_chans(ss, map_chans_wavo, (void *)val);}
+static void set_wavo(snd_state *ss, int val) {in_set_wavo(ss, val); map_over_chans(ss, map_chans_wavo, (void *)(&val));}
 
-static int map_chans_wavo_hop(chan_info *cp, void *ptr) {cp->wavo_hop = (int)ptr; update_graph(cp, NULL); return(0);}
+static int map_chans_wavo_hop(chan_info *cp, void *ptr) {cp->wavo_hop = (*((int *)ptr)); update_graph(cp, NULL); return(0);}
 static void set_wavo_hop(snd_state *ss, int uval) 
 {
   int val; 
@@ -33,10 +33,10 @@ static void set_wavo_hop(snd_state *ss, int uval)
     val = 1; 
   else val = uval; 
   in_set_wavo_hop(ss, val); 
-  map_over_chans(ss, map_chans_wavo_hop, (void *)val);
+  map_over_chans(ss, map_chans_wavo_hop, (void *)(&val));
 }
 
-static int map_chans_wavo_trace(chan_info *cp, void *ptr) {cp->wavo_trace = (int)ptr; update_graph(cp, NULL); return(0);}
+static int map_chans_wavo_trace(chan_info *cp, void *ptr) {cp->wavo_trace = (*((int *)ptr)); update_graph(cp, NULL); return(0);}
 void set_wavo_trace(snd_state *ss, int uval) 
 {
   int val; 
@@ -44,13 +44,13 @@ void set_wavo_trace(snd_state *ss, int uval)
     val = 1; 
   else val = uval; 
   in_set_wavo_trace(ss, val); 
-  map_over_chans(ss, map_chans_wavo_trace, (void *)val);
+  map_over_chans(ss, map_chans_wavo_trace, (void *)(&val));
 }
 
-static int map_chans_line_size(chan_info *cp, void *ptr) {cp->line_size = (int)ptr; return(0);}
-static void set_line_size(snd_state *ss, int val) {in_set_line_size(ss, val); map_over_chans(ss, map_chans_line_size, (void *)val);}
+static int map_chans_line_size(chan_info *cp, void *ptr) {cp->line_size = (*((int *)ptr)); return(0);}
+static void set_line_size(snd_state *ss, int val) {in_set_line_size(ss, val); map_over_chans(ss, map_chans_line_size, (void *)(&val));}
 
-static int map_chans_max_fft_peaks(chan_info *cp, void *ptr) {cp->max_fft_peaks = (int)ptr; return(0);}
+static int map_chans_max_fft_peaks(chan_info *cp, void *ptr) {cp->max_fft_peaks = (*((int *)ptr)); return(0);}
 static void set_max_fft_peaks(snd_state *ss, int uval) 
 {
   int val; 
@@ -58,10 +58,10 @@ static void set_max_fft_peaks(snd_state *ss, int uval)
     val = 0; 
   else val = uval; 
   in_set_max_fft_peaks(ss, val); 
-  map_over_chans(ss, map_chans_max_fft_peaks, (void *)val);
+  map_over_chans(ss, map_chans_max_fft_peaks, (void *)(&val));
 }
 
-static int map_chans_zero_pad(chan_info *cp, void *ptr) {cp->zero_pad = (int)ptr; return(0);}
+static int map_chans_zero_pad(chan_info *cp, void *ptr) {cp->zero_pad = (*((int *)ptr)); return(0);}
 static void set_zero_pad(snd_state *ss, int uval) 
 {
   int val; 
@@ -69,34 +69,34 @@ static void set_zero_pad(snd_state *ss, int uval)
     val = 0; 
   else val = uval; 
   in_set_zero_pad(ss, val); 
-  map_over_chans(ss, map_chans_zero_pad, (void *)val);
+  map_over_chans(ss, map_chans_zero_pad, (void *)(&val));
 }
 
-static int map_chans_fft_style(chan_info *cp, void *ptr) {cp->fft_style = (int)ptr; return(0);}
+static int map_chans_fft_style(chan_info *cp, void *ptr) {cp->fft_style = (*((int *)ptr)); return(0);}
 void in_set_fft_style(snd_state *ss, int uval) 
 {
   int val;
   val = iclamp(0, uval, MAX_FFT_STYLE);
   in_set_fft_style_1(ss, val); 
-  map_over_chans(ss, map_chans_fft_style, (void *)val);
+  map_over_chans(ss, map_chans_fft_style, (void *)(&val));
 }
 
-static int map_chans_show_mix_waveforms(chan_info *cp, void *ptr) {cp->show_mix_waveforms = (int)ptr; return(0);}
-static void set_show_mix_waveforms(snd_state *ss, int val) {in_set_show_mix_waveforms(ss, val); map_over_chans(ss, map_chans_show_mix_waveforms, (void *)val);}
+static int map_chans_show_mix_waveforms(chan_info *cp, void *ptr) {cp->show_mix_waveforms = (*((int *)ptr)); return(0);}
+static void set_show_mix_waveforms(snd_state *ss, int val) {in_set_show_mix_waveforms(ss, val); map_over_chans(ss, map_chans_show_mix_waveforms, (void *)(&val));}
 
-static int map_chans_show_axes(chan_info *cp, void *ptr) {cp->show_axes = (int)ptr; update_graph(cp, NULL); return(0);}
-static void set_show_axes(snd_state *ss, int val) {in_set_show_axes(ss, val); map_over_chans(ss, map_chans_show_axes, (void *)val);}
+static int map_chans_show_axes(chan_info *cp, void *ptr) {cp->show_axes = (*((int *)ptr)); update_graph(cp, NULL); return(0);}
+static void set_show_axes(snd_state *ss, int val) {in_set_show_axes(ss, val); map_over_chans(ss, map_chans_show_axes, (void *)(&val));}
 
-static int map_chans_graphs_horizontal(chan_info *cp, void *ptr) {cp->graphs_horizontal = (int)ptr; update_graph(cp, NULL); return(0);}
-static void set_graphs_horizontal(snd_state *ss, int val) {in_set_graphs_horizontal(ss, val); map_over_chans(ss, map_chans_graphs_horizontal, (void *)val);}
+static int map_chans_graphs_horizontal(chan_info *cp, void *ptr) {cp->graphs_horizontal = (*((int *)ptr)); update_graph(cp, NULL); return(0);}
+static void set_graphs_horizontal(snd_state *ss, int val) {in_set_graphs_horizontal(ss, val); map_over_chans(ss, map_chans_graphs_horizontal, (void *)(&val));}
 
 static int map_chans_fft_window(chan_info *cp, void *ptr) 
 {
-  cp->fft_window = (int)ptr; 
-  if (cp->fft) (cp->fft)->window = (int)ptr;
+  cp->fft_window = (*((int *)ptr)); 
+  if (cp->fft) (cp->fft)->window = (*((int *)ptr));
   return(0);
 }
-void in_set_fft_window(snd_state *ss, int val) {in_set_fft_window_1(ss, val); map_over_chans(ss, map_chans_fft_window, (void *)val);}
+void in_set_fft_window(snd_state *ss, int val) {in_set_fft_window_1(ss, val); map_over_chans(ss, map_chans_fft_window, (void *)(&val));}
 
 void map_chans_field(snd_state *ss, int field, Float val)
 {
@@ -199,7 +199,7 @@ static void set_spectro_start(snd_state *ss, Float val)
 
 static int map_chans_dot_size(chan_info *cp, void *ptr) 
 {
-  cp->dot_size = (int)ptr; 
+  cp->dot_size = (*((int *)ptr)); 
   if ((cp->graph_style != GRAPH_LINES) && (cp->graph_style != GRAPH_FILLED))
     update_graph(cp, NULL);
   return(0);
@@ -210,7 +210,7 @@ void set_dot_size(snd_state *ss, int val)
   if (val > 0)  /* -1 here can crash X! */
     {
       in_set_dot_size(ss, val);
-      map_over_chans(ss, map_chans_dot_size, (void *)val);
+      map_over_chans(ss, map_chans_dot_size, (void *)(&val));
     }
 }
 
@@ -3099,7 +3099,7 @@ static int cursor_round(double x)
 static int calculate_syncd_fft(chan_info *cp, void *ptr)
 {
   snd_info *sp;
-  int sync = (int)ptr;
+  int sync = (*((int *)ptr));
   if (cp)
     {
       sp = cp->sound;
@@ -3308,7 +3308,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 		      if (show_selection_transform(ss)) 
 			{
 			  if (sp->sync)
-			    map_over_chans(ss, calculate_syncd_fft, (void *)(sp->sync));
+			    map_over_chans(ss, calculate_syncd_fft, (void *)(&(sp->sync)));
 			  else calculate_fft(cp, NULL);
 			}
 		    }

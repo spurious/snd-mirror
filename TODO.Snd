@@ -2,10 +2,6 @@ A list of some things-to-do in Snd (these are some projects that strike
 me as straightforward -- they don't require intimate knowlege of Snd innards).
 
 
-Alpha port: I'm told there are lingering long int problems in this
-  port, but I don't have access to an Alpha -- all I need is the
-  gcc printout during compilation.
-
 add modules to tie sndlib into Python, Octave, etc (via SWIG?).
 fixup the sz.h, sl.h, sr.h files to implement mzscheme, librep, ruby support.
 

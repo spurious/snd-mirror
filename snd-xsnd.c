@@ -2679,7 +2679,7 @@ static int even_channels(snd_info *sp, void *ptr)
   chans = sp->nchans;
   if (chans > 1)
     {
-      height = (int)ptr;
+      height = (*((int *)ptr));
       val = height/chans - 16;
       if (val < 6) val = 6;
       for (i = 0; i < chans; i++)
@@ -2687,8 +2687,8 @@ static int even_channels(snd_info *sp, void *ptr)
 	  cp = sp->chans[i];
 	  XtUnmanageChild(channel_main_pane(cp));
 	  XtVaSetValues(channel_main_pane(cp),
-			XmNpaneMinimum, val-5,
-			XmNpaneMaximum, val+5,
+			XmNpaneMinimum, val - 5,
+			XmNpaneMaximum, val + 5,
 			NULL);
 	}
     }
@@ -2698,11 +2698,11 @@ static int even_channels(snd_info *sp, void *ptr)
 static int even_sounds(snd_info *sp, void *ptr)
 {
   int width;
-  width = (int)ptr;
+  width = (*((int *)ptr));
   XtUnmanageChild(w_snd_pane(sp));
   XtVaSetValues(w_snd_pane(sp),
-		XmNpaneMinimum, width-5,
-		XmNpaneMaximum, width+5,
+		XmNpaneMinimum, width - 5,
+		XmNpaneMaximum, width + 5,
 		NULL);
   return(0);
 }
@@ -2780,12 +2780,12 @@ void normalize_all_sounds(snd_state *ss)
 	    {
 	      width = widget_width(MAIN_PANE(ss));
 	      width /= sounds;
-	      map_over_sounds(ss, even_sounds, (void *)width);
+	      map_over_sounds(ss, even_sounds, (void *)(&width));
 	      map_over_sounds(ss, sound_open_pane, NULL);
 	      map_over_sounds(ss, sound_unlock_pane, NULL);
 	    }
 	  map_over_sounds(ss, sound_lock_ctrls, NULL);
-	  map_over_sounds(ss, even_channels, (void *)height);
+	  map_over_sounds(ss, even_channels, (void *)(&height));
 	  map_over_separate_chans(ss, channel_open_pane, NULL);   /* manage the channel widgets */
 	  map_over_separate_chans(ss, channel_unlock_pane, NULL); /* allow pane to be resized */
 	  map_over_sounds(ss, sound_unlock_ctrls, NULL);

@@ -1053,7 +1053,7 @@ static void SZ_Help_Callback(Widget w, XtPointer context, XtPointer info)
 	   "This slider causes the graph to expand or\ncontract along the z axis.\n");
 }
 
-static int map_chans_spectro_hop(chan_info *cp, void *ptr) {cp->spectro_hop = (int)ptr; return(0);}
+static int map_chans_spectro_hop(chan_info *cp, void *ptr) {cp->spectro_hop = (*((int *)ptr)); return(0);}
 
 static void Hop_Orientation_Callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -1064,7 +1064,7 @@ static void Hop_Orientation_Callback(Widget w, XtPointer context, XtPointer info
   ss = od->state;
   val = iclamp(1, cbs->value, 20);
   in_set_spectro_hop(ss, val);
-  map_over_chans(ss, map_chans_spectro_hop, (void *)val);
+  map_over_chans(ss, map_chans_spectro_hop, (void *)(&val));
   map_over_chans(ss, update_graph, NULL);
 }
 
@@ -1074,7 +1074,7 @@ void set_spectro_hop(snd_state *ss, int val)
     {
       in_set_spectro_hop(ss, val);
       if (oid) XmScaleSetValue(oid->hop, val);
-      map_over_chans(ss, map_chans_spectro_hop, (void *)val);
+      map_over_chans(ss, map_chans_spectro_hop, (void *)(&val));
       if (!(ss->graph_hook_active)) 
 	map_over_chans(ss, update_graph, NULL);
     }

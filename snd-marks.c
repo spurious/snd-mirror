@@ -103,7 +103,7 @@ static mark *free_mark (mark *mp)
 
 static mark *find_mark_id_1(chan_info *cp, mark *mp, void *uid)
 {
-  if (mark_id(mp) == (int)uid) return(mp); else return(NULL);
+  if (mark_id(mp) == (*((int *)uid))) return(mp); else return(NULL);
 }
 
 static mark *find_mark_from_id(snd_state *ss, int id, chan_info **cps, int pos)
@@ -121,7 +121,7 @@ static mark *find_mark_from_id(snd_state *ss, int id, chan_info **cps, int pos)
 	    old_pos = cp->edit_ctr;
 	    if (pos >= 0) cp->edit_ctr = pos;
 	    /* memoization would have to be done here where we know cp->edit_ctr */
-	    mp = map_over_marks(cp, find_mark_id_1, (void *)id, READ_FORWARD);
+	    mp = map_over_marks(cp, find_mark_id_1, (void *)(&id), READ_FORWARD);
 	    cp->edit_ctr = old_pos;
 	    if (mp) 
 	      {
@@ -152,22 +152,22 @@ static mark *find_named_mark(chan_info *cp, char *name)
 
 static mark *find_previous_mark_1(chan_info *cp, mark *mp, void *m)
 {
-  if (mp->samp < (int)m) return(mp); else return(NULL);
+  if (mp->samp < (*((int *)m))) return(mp); else return(NULL);
 }
 
 static mark *find_previous_mark (int current_sample, chan_info *cp)
 {
-  return(map_over_marks(cp, find_previous_mark_1, (void *)current_sample, READ_BACKWARD));
+  return(map_over_marks(cp, find_previous_mark_1, (void *)(&current_sample), READ_BACKWARD));
 }
 
 static mark *find_next_mark_1(chan_info *cp, mark *mp, void *m)
 {
-  if (mp->samp > (int)m) return(mp); else return(NULL);
+  if (mp->samp > (*((int *)m))) return(mp); else return(NULL);
 }
 
 static mark *find_next_mark (int current_sample, chan_info *cp)
 {
-  return(map_over_marks(cp, find_next_mark_1, (void *)current_sample, READ_FORWARD));
+  return(map_over_marks(cp, find_next_mark_1, (void *)(&current_sample), READ_FORWARD));
 }
 
 static mark* marks_off_1(chan_info *cp, mark *mp, void *m)
@@ -1278,13 +1278,13 @@ static void edit_dragged_mark(chan_info *cp, mark *m, int initial_sample)
   else 
     if (num < 0)
       {
-	new_m = map_over_marks(cp, find_mark_id_1, (void *)id, READ_FORWARD);
+	new_m = map_over_marks(cp, find_mark_id_1, (void *)(&id), READ_FORWARD);
 	new_m->samp = initial_sample;
 	delete_samples(mark_final_sample, -num, cp, "mark dragged");
       }
   if (num != 0) 
     {
-      new_m = map_over_marks(cp, find_mark_id_1, (void *)id, READ_FORWARD);
+      new_m = map_over_marks(cp, find_mark_id_1, (void *)(&id), READ_FORWARD);
       new_m->samp = mark_final_sample;
       update_graph(cp, NULL);
     }

@@ -10,7 +10,11 @@
  *   ways to get/set/load C vars/funcs, and so on)
  */
 
-#define SCM int
+#if LONG_INT_P
+  #define SCM long
+#else
+  #define SCM int
+#endif
 #define SCM_BOOL_F 0
 #define SCM_BOOL_T 1
 #define SCM_EOL 0
