@@ -327,6 +327,9 @@
 
 ;(define widvardpy (make-variable-display "do-loop" "i*2" 'graph))
 
+(define default-file-buffer-size 65536)
+(set! (mus-file-buffer-size) default-file-buffer-size)
+
 
 ;;; ---------------- test 0: constants ----------------
 
@@ -11771,13 +11774,13 @@ EDITS: 5
 	    (secs (samples->seconds 22050)))
 	(if (not (= samps 22050)) (snd-display ";seconds->samples: ~A" samps))
 	(if (fneq secs 1.0) (snd-display ";samples->seconds: ~A" secs)))
-      (if (not (= (mus-file-buffer-size) 8192)) (snd-display ";mus-file-buffer-size: ~D?" (mus-file-buffer-size)))
+      (if (not (= (mus-file-buffer-size) default-file-buffer-size)) (snd-display ";mus-file-buffer-size: ~D?" (mus-file-buffer-size)))
       (let ((var (catch #t (lambda () (set! (mus-file-buffer-size) #f)) (lambda args args))))
 	(if (not (eq? (car var) 'wrong-type-arg))
 	    (snd-display ";mus-file-buffer-size bad size: ~A" var)))
       (set! (mus-file-buffer-size) 128)
       (if (not (= (mus-file-buffer-size) 128)) (snd-display ";mus-file-buffer-size: ~D?" (mus-file-buffer-size)))
-      (set! (mus-file-buffer-size) 8192)
+      (set! (mus-file-buffer-size) default-file-buffer-size)
       
       (if (not (= (mus-array-print-length) 8)) (snd-display ";mus-array-print-length: ~D?" (mus-array-print-length)))
       (set! (mus-array-print-length) 32)
@@ -16713,21 +16716,21 @@ EDITS: 5
 	(map-chan (lambda (val)
  		    (phase-vocoder pv (lambda (dir) 
 					(next-sample reader)))))
-	(vct-set! (pv-amp-increments pv) 0 .1)
-	(if (fneq (vct-ref (pv-amp-increments pv) 0) .1)
-	    (snd-display ";set pv-amp-increments: ~A?" (vct-ref (pv-amp-increments pv) 0)))
-	(vct-set! (pv-amps pv) 0 .1)
-	(if (fneq (vct-ref (pv-amps pv) 0) .1)
-	    (snd-display ";set pv-amps: ~A?" (vct-ref (pv-amps pv) 0)))
-	(vct-set! (pv-phases pv) 0 .1)
-	(if (fneq (vct-ref (pv-phases pv) 0) .1)
-	    (snd-display ";set pv-phases: ~A?" (vct-ref (pv-phases pv) 0)))
-	(vct-set! (pv-phase-increments pv) 0 .1)
-	(if (fneq (vct-ref (pv-phase-increments pv) 0) .1)
-	    (snd-display ";set pv-phase-increments: ~A?" (vct-ref (pv-phase-increments pv) 0)))
-	(vct-set! (pv-freqs pv) 0 .1)
-	(if (fneq (vct-ref (pv-freqs pv) 0) .1)
-	    (snd-display ";set pv-freqs: ~A?" (vct-ref (pv-freqs pv) 0)))
+	(vct-set! (phase-vocoder-amp-increments pv) 0 .1)
+	(if (fneq (vct-ref (phase-vocoder-amp-increments pv) 0) .1)
+	    (snd-display ";set phase-vocoder-amp-increments: ~A?" (vct-ref (phase-vocoder-amp-increments pv) 0)))
+	(vct-set! (phase-vocoder-amps pv) 0 .1)
+	(if (fneq (vct-ref (phase-vocoder-amps pv) 0) .1)
+	    (snd-display ";set phase-vocoder-amps: ~A?" (vct-ref (phase-vocoder-amps pv) 0)))
+	(vct-set! (phase-vocoder-phases pv) 0 .1)
+	(if (fneq (vct-ref (phase-vocoder-phases pv) 0) .1)
+	    (snd-display ";set phase-vocoder-phases: ~A?" (vct-ref (phase-vocoder-phases pv) 0)))
+	(vct-set! (phase-vocoder-phase-increments pv) 0 .1)
+	(if (fneq (vct-ref (phase-vocoder-phase-increments pv) 0) .1)
+	    (snd-display ";set phase-vocoder-phase-increments: ~A?" (vct-ref (phase-vocoder-phase-increments pv) 0)))
+	(vct-set! (phase-vocoder-freqs pv) 0 .1)
+	(if (fneq (vct-ref (phase-vocoder-freqs pv) 0) .1)
+	    (snd-display ";set phase-vocoder-freqs: ~A?" (vct-ref (phase-vocoder-freqs pv) 0)))
 	(undo 1)
 	(free-sample-reader reader)
 	(let ((lastphases (make-vct 512)))
@@ -16738,7 +16741,7 @@ EDITS: 5
 					; new editing func changes pitch
 					 (let* ((N (mus-length v)) ;mus-increment => interp, mus-data => in-data
 						(D (mus-hop v))
-						(freqs (pv-freqs v)))
+						(freqs (phase-vocoder-freqs v)))
 					   (do ((k 0 (1+ k))
 						(pscl (/ 1.0 D))
 						(kscl (/ pi2 N)))
@@ -16800,7 +16803,7 @@ EDITS: 5
 	  (if (or (= incalls 0)
 		  (= outcalls 0))
 	      (snd-display ";phase-vocoder incalls: ~A, outcalls: ~A" incalls outcalls))
-	  (set! (pv-outctr pv) (pv-outctr pv))
+	  (set! (phase-vocoder-outctr pv) (phase-vocoder-outctr pv))
 	  (let ((tag (catch #t (lambda () (phase-vocoder pv (lambda (a b) a))) (lambda args (car args)))))
 	    (if (not (eq? tag 'bad-arity)) 
 		(snd-display ";phase-vocoder bad func: ~A" tag))))
@@ -48570,7 +48573,7 @@ EDITS: 2
 		     mus-describe mus-inspect mus-error-to-string mus-file-buffer-size mus-name mus-offset mus-out-format
 		     mus-rand-seed mus-width phase-vocoder?
 		     polar->rectangular previous-files-sort-procedure 
-		     pv-amp-increments pv-amps pv-freqs pv-outctr pv-phase-increments pv-phases 
+		     phase-vocoder-amp-increments phase-vocoder-amps phase-vocoder-freqs phase-vocoder-outctr phase-vocoder-phase-increments phase-vocoder-phases 
 		     read-sample reset-listener-cursor goto-listener-end sample-reader-home selection-chans selection-srate snd-gcs
 		     snd-warning sine-bank vct-map make-variable-graph channel-data x-axis-label
 		     snd-url snd-urls tempo-control-bounds
@@ -48653,7 +48656,8 @@ EDITS: 2
 			 mus-increment mus-length mus-location mus-phase mus-ramp mus-scaler vct-ref x-axis-label
 			 beats-per-minute filter-control-coeffs locsig-type mus-file-buffer-size 
 			 mus-rand-seed mus-width
-			 previous-files-sort-procedure pv-amp-increments pv-amps pv-freqs pv-outctr pv-phase-increments pv-phases 
+			 previous-files-sort-procedure phase-vocoder-amp-increments phase-vocoder-amps 
+			 phase-vocoder-freqs phase-vocoder-outctr phase-vocoder-phase-increments phase-vocoder-phases 
 			 quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
 			 track-amp track-position track-speed track-tempo track-amp-env track-color
 

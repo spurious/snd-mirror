@@ -3,13 +3,14 @@
 
 #define MUS_VERSION 3
 #define MUS_REVISION 0
-#define MUS_DATE "14-July-04"
+#define MUS_DATE "19-July-04"
 
 /*
- * 14-July:    clm 3.0!
+ * 19-July:    clm 3.0!
  *             deprecated mus_ina|b, mus-outa|b|c|d.
  *             mus_make_frame_to_file_with_comment, mus_mixer_scale, mus_make_frame|mixer_with_data.
  *             mus_make_scalar_mixer, mus_mixer_add, mus_continue_frame_to_file.
+ *             changed pv_* to phase_vocoder_*
  * 28-June:    ssb_am + added fm arg (ssb_am_1 is the previous form).
  * 21-June:    wrapper method.
  * 14-June:    ssb_am generator.

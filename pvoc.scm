@@ -214,8 +214,8 @@
 				    (let ((N (mus-length v)))
 				      (do ((i 0 (1+ i)))
 					  ((= i N))
-					(if (< (vct-ref (pv-amp-increments v) i) gate)
-					    (vct-set! (pv-amp-increments v) i 0.0)))
+					(if (< (vct-ref (phase-vocoder-amp-increments v) i) gate)
+					    (vct-set! (phase-vocoder-amp-increments v) i 0.0)))
 				      #t))
 				  #f ;no change to synthesis
 				  ))

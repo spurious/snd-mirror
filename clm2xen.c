@@ -4709,82 +4709,82 @@ is run.  'synthesize' is a function of 1 arg, the generator; it is called to get
   return(clm_mus_error(local_error_type, local_error_msg));
 }
 
-static XEN g_pv_amps(XEN pv) 
+static XEN g_phase_vocoder_amps(XEN pv) 
 {
-  #define H_pv_amps "(" S_pv_amps " gen): vct containing the current output sinusoid amplitudes"
+  #define H_phase_vocoder_amps "(" S_phase_vocoder_amps " gen): vct containing the current output sinusoid amplitudes"
   Float *amps; 
   int len;
   mus_xen *gn;
-  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(XEN_TO_MUS_ANY(pv))), pv, XEN_ONLY_ARG, S_pv_amps, "a phase-vocoder gen");
+  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(XEN_TO_MUS_ANY(pv))), pv, XEN_ONLY_ARG, S_phase_vocoder_amps, "a phase-vocoder gen");
   gn = XEN_TO_MUS_XEN(pv);
   amps = mus_phase_vocoder_amps(gn->gen); 
   len = (int)mus_length(gn->gen);
   return(make_vct_wrapper(len / 2, amps));
 }
   
-static XEN g_pv_freqs(XEN pv) 
+static XEN g_phase_vocoder_freqs(XEN pv) 
 {
-  #define H_pv_freqs "(" S_pv_freqs " gen): vct containing the current output sinusoid frequencies"
+  #define H_phase_vocoder_freqs "(" S_phase_vocoder_freqs " gen): vct containing the current output sinusoid frequencies"
   Float *amps; 
   int len;
   mus_xen *gn;
-  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(XEN_TO_MUS_ANY(pv))), pv, XEN_ONLY_ARG, S_pv_freqs, "a phase-vocoder gen");
+  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(XEN_TO_MUS_ANY(pv))), pv, XEN_ONLY_ARG, S_phase_vocoder_freqs, "a phase-vocoder gen");
   gn = XEN_TO_MUS_XEN(pv);
   amps = mus_phase_vocoder_freqs(gn->gen); 
   len = (int)mus_length(gn->gen);
   return(make_vct_wrapper(len, amps));
 }
   
-static XEN g_pv_phases(XEN pv) 
+static XEN g_phase_vocoder_phases(XEN pv) 
 {
-  #define H_pv_phases "(" S_pv_phases " gen): vct containing the current output sinusoid phases"
+  #define H_phase_vocoder_phases "(" S_phase_vocoder_phases " gen): vct containing the current output sinusoid phases"
   Float *amps; 
   int len;
   mus_xen *gn;
-  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(XEN_TO_MUS_ANY(pv))), pv, XEN_ONLY_ARG, S_pv_phases, "a phase-vocoder gen");
+  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(XEN_TO_MUS_ANY(pv))), pv, XEN_ONLY_ARG, S_phase_vocoder_phases, "a phase-vocoder gen");
   gn = XEN_TO_MUS_XEN(pv);
   amps = mus_phase_vocoder_phases(gn->gen); 
   len = (int)mus_length(gn->gen);
   return(make_vct_wrapper(len / 2, amps));
 }
   
-static XEN g_pv_amp_increments(XEN pv) 
+static XEN g_phase_vocoder_amp_increments(XEN pv) 
 {
-  #define H_pv_amp_increments "(" S_pv_amp_increments " gen): vct containing the current output sinusoid amplitude increments per sample"
+  #define H_phase_vocoder_amp_increments "(" S_phase_vocoder_amp_increments " gen): vct containing the current output sinusoid amplitude increments per sample"
   Float *amps; 
   int len;
   mus_xen *gn;
-  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(XEN_TO_MUS_ANY(pv))), pv, XEN_ONLY_ARG, S_pv_amp_increments, "a phase-vocoder gen");
+  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(XEN_TO_MUS_ANY(pv))), pv, XEN_ONLY_ARG, S_phase_vocoder_amp_increments, "a phase-vocoder gen");
   gn = XEN_TO_MUS_XEN(pv);
   amps = mus_phase_vocoder_amp_increments(gn->gen); 
   len = (int)mus_length(gn->gen);
   return(make_vct_wrapper(len, amps));
 }
   
-static XEN g_pv_phase_increments(XEN pv) 
+static XEN g_phase_vocoder_phase_increments(XEN pv) 
 {
-  #define H_pv_phase_increments "(" S_pv_phase_increments " gen): vct containing the current output sinusoid phase increments"
+  #define H_phase_vocoder_phase_increments "(" S_phase_vocoder_phase_increments " gen): vct containing the current output sinusoid phase increments"
   Float *amps; 
   int len;
   mus_xen *gn;
-  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(XEN_TO_MUS_ANY(pv))), pv, XEN_ONLY_ARG, S_pv_phase_increments, "a phase-vocoder gen");
+  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(XEN_TO_MUS_ANY(pv))), pv, XEN_ONLY_ARG, S_phase_vocoder_phase_increments, "a phase-vocoder gen");
   gn = XEN_TO_MUS_XEN(pv);
   amps = mus_phase_vocoder_phase_increments(gn->gen); 
   len = (int)mus_length(gn->gen);
   return(make_vct_wrapper(len / 2, amps));
 }
   
-static XEN g_pv_outctr(XEN obj)
+static XEN g_phase_vocoder_outctr(XEN obj)
 {
-  #define H_pv_outctr "(" S_pv_outctr " gen): gen's " S_pv_outctr " field"
-  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_phase_vocoder_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ONLY_ARG, S_pv_outctr, "a phase-vocoder generator");
+  #define H_phase_vocoder_outctr "(" S_phase_vocoder_outctr " gen): gen's " S_phase_vocoder_outctr " field"
+  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_phase_vocoder_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ONLY_ARG, S_phase_vocoder_outctr, "a phase-vocoder generator");
   return(C_TO_XEN_INT(mus_phase_vocoder_outctr(XEN_TO_MUS_ANY(obj))));
 }
 
-static XEN g_pv_set_outctr(XEN obj, XEN val)
+static XEN g_phase_vocoder_set_outctr(XEN obj, XEN val)
 {
-  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_phase_vocoder_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ONLY_ARG, "set! " S_pv_outctr, "a phase-vocoder generator");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, "set! " S_pv_outctr, "a number");
+  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_phase_vocoder_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ONLY_ARG, "set! " S_phase_vocoder_outctr, "a phase-vocoder generator");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, "set! " S_phase_vocoder_outctr, "a number");
   return(C_TO_XEN_INT(mus_phase_vocoder_set_outctr(XEN_TO_MUS_ANY(obj), XEN_TO_C_INT_OR_ELSE(val, 0))));
 }
 
@@ -5250,13 +5250,13 @@ XEN_ARGIFY_4(g_convolve_files_w, g_convolve_files)
 XEN_NARGIFY_1(g_phase_vocoder_p_w, g_phase_vocoder_p)
 XEN_ARGIFY_2(g_phase_vocoder_w, g_phase_vocoder)
 XEN_VARGIFY(g_make_phase_vocoder_w, g_make_phase_vocoder)
-XEN_NARGIFY_1(g_pv_outctr_w, g_pv_outctr)
-XEN_NARGIFY_2(g_pv_set_outctr_w, g_pv_set_outctr)
-XEN_NARGIFY_1(g_pv_amp_increments_w, g_pv_amp_increments)
-XEN_NARGIFY_1(g_pv_amps_w, g_pv_amps)
-XEN_NARGIFY_1(g_pv_freqs_w, g_pv_freqs)
-XEN_NARGIFY_1(g_pv_phases_w, g_pv_phases)
-XEN_NARGIFY_1(g_pv_phase_increments_w, g_pv_phase_increments)
+XEN_NARGIFY_1(g_phase_vocoder_outctr_w, g_phase_vocoder_outctr)
+XEN_NARGIFY_2(g_phase_vocoder_set_outctr_w, g_phase_vocoder_set_outctr)
+XEN_NARGIFY_1(g_phase_vocoder_amp_increments_w, g_phase_vocoder_amp_increments)
+XEN_NARGIFY_1(g_phase_vocoder_amps_w, g_phase_vocoder_amps)
+XEN_NARGIFY_1(g_phase_vocoder_freqs_w, g_phase_vocoder_freqs)
+XEN_NARGIFY_1(g_phase_vocoder_phases_w, g_phase_vocoder_phases)
+XEN_NARGIFY_1(g_phase_vocoder_phase_increments_w, g_phase_vocoder_phase_increments)
 XEN_NARGIFY_1(g_mus_hop_w, g_mus_hop)
 XEN_NARGIFY_2(g_mus_set_hop_w, g_mus_set_hop)
 XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
@@ -5511,13 +5511,13 @@ XEN_NARGIFY_1(g_ssb_am_p_w, g_ssb_am_p)
 #define g_phase_vocoder_p_w g_phase_vocoder_p
 #define g_phase_vocoder_w g_phase_vocoder
 #define g_make_phase_vocoder_w g_make_phase_vocoder
-#define g_pv_outctr_w g_pv_outctr
-#define g_pv_set_outctr_w g_pv_set_outctr
-#define g_pv_amp_increments_w g_pv_amp_increments
-#define g_pv_amps_w g_pv_amps
-#define g_pv_freqs_w g_pv_freqs
-#define g_pv_phases_w g_pv_phases
-#define g_pv_phase_increments_w g_pv_phase_increments
+#define g_phase_vocoder_outctr_w g_phase_vocoder_outctr
+#define g_phase_vocoder_set_outctr_w g_phase_vocoder_set_outctr
+#define g_phase_vocoder_amp_increments_w g_phase_vocoder_amp_increments
+#define g_phase_vocoder_amps_w g_phase_vocoder_amps
+#define g_phase_vocoder_freqs_w g_phase_vocoder_freqs
+#define g_phase_vocoder_phases_w g_phase_vocoder_phases
+#define g_phase_vocoder_phase_increments_w g_phase_vocoder_phase_increments
 #define g_mus_hop_w g_mus_hop
 #define g_mus_set_hop_w g_mus_set_hop
 #define g_mus_mix_w g_mus_mix
@@ -5947,15 +5947,16 @@ the closer the radius is to 1.0, the narrower the resonance."
   XEN_DEFINE_PROCEDURE(S_make_convolve,  g_make_convolve_w,  0, 0, 1, H_make_convolve);
   XEN_DEFINE_PROCEDURE(S_convolve_files, g_convolve_files_w, 2, 2, 0, H_convolve_files);
 
-  XEN_DEFINE_PROCEDURE(S_phase_vocoder_p,       g_phase_vocoder_p_w,     1, 0, 0, H_phase_vocoder_p);
-  XEN_DEFINE_PROCEDURE(S_phase_vocoder,         g_phase_vocoder_w,       1, 1, 0, H_phase_vocoder);
-  XEN_DEFINE_PROCEDURE(S_make_phase_vocoder,    g_make_phase_vocoder_w,  0, 0, 1, H_make_phase_vocoder);
-  XEN_DEFINE_PROCEDURE(S_pv_amp_increments,     g_pv_amp_increments_w,   1, 0, 0, H_pv_amp_increments);
-  XEN_DEFINE_PROCEDURE(S_pv_amps,               g_pv_amps_w,             1, 0, 0, H_pv_amps);
-  XEN_DEFINE_PROCEDURE(S_pv_freqs,              g_pv_freqs_w,            1, 0, 0, H_pv_freqs);
-  XEN_DEFINE_PROCEDURE(S_pv_phases,             g_pv_phases_w,           1, 0, 0, H_pv_phases);
-  XEN_DEFINE_PROCEDURE(S_pv_phase_increments,   g_pv_phase_increments_w, 1, 0, 0, H_pv_phase_increments);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_pv_outctr, g_pv_outctr_w, H_pv_outctr, S_setB S_pv_outctr, g_pv_set_outctr_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE(S_phase_vocoder_p,                  g_phase_vocoder_p_w,                1, 0, 0, H_phase_vocoder_p);
+  XEN_DEFINE_PROCEDURE(S_phase_vocoder,                    g_phase_vocoder_w,                  1, 1, 0, H_phase_vocoder);
+  XEN_DEFINE_PROCEDURE(S_make_phase_vocoder,               g_make_phase_vocoder_w,             0, 0, 1, H_make_phase_vocoder);
+  XEN_DEFINE_PROCEDURE(S_phase_vocoder_amp_increments,     g_phase_vocoder_amp_increments_w,   1, 0, 0, H_phase_vocoder_amp_increments);
+  XEN_DEFINE_PROCEDURE(S_phase_vocoder_amps,               g_phase_vocoder_amps_w,             1, 0, 0, H_phase_vocoder_amps);
+  XEN_DEFINE_PROCEDURE(S_phase_vocoder_freqs,              g_phase_vocoder_freqs_w,            1, 0, 0, H_phase_vocoder_freqs);
+  XEN_DEFINE_PROCEDURE(S_phase_vocoder_phases,             g_phase_vocoder_phases_w,           1, 0, 0, H_phase_vocoder_phases);
+  XEN_DEFINE_PROCEDURE(S_phase_vocoder_phase_increments,   g_phase_vocoder_phase_increments_w, 1, 0, 0, H_phase_vocoder_phase_increments);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_phase_vocoder_outctr, g_phase_vocoder_outctr_w, H_phase_vocoder_outctr, 
+				   S_setB S_phase_vocoder_outctr, g_phase_vocoder_set_outctr_w,  1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_hop, g_mus_hop_w, H_mus_hop, S_setB S_mus_hop, g_mus_set_hop_w,  1, 0, 2, 0);
 
@@ -6187,12 +6188,12 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_polynomial,
 	       S_pulse_train,
 	       S_pulse_train_p,
-	       S_pv_amp_increments,
-	       S_pv_amps,
-	       S_pv_freqs,
-	       S_pv_outctr,
-	       S_pv_phase_increments,
-	       S_pv_phases,
+	       S_phase_vocoder_amp_increments,
+	       S_phase_vocoder_amps,
+	       S_phase_vocoder_freqs,
+	       S_phase_vocoder_outctr,
+	       S_phase_vocoder_phase_increments,
+	       S_phase_vocoder_phases,
 	       S_radians_to_degrees,
 	       S_radians_to_hz,
 	       S_rand,

@@ -2125,12 +2125,6 @@ matrix multiply, and so on.
   <a class=def name="array-&gt;file">array-&gt;file</a> <i>file data srate channels</i>
   ;; these two read and write entire files to or from float arrays
 
-  <a class=def Name="mus-open-write">mus-open-write</a> <i>filename</i>       ;low-level open call (O_RDRW), returning file id
-  <a class=def Name="mus-reopen-write">mus-reopen-write</a> <i>filename</i>     ;low-level open call (O_RDRW), returning file id
-  <a class=def Name="mus-open-read">mus-open-read</a> <i>filename</i>        ;low-level open call (O_RDONLY), returning file id
-  <a class=def Name="mus-create">mus-create</a> <i>filename</i>           ;low-level creat call (make new file), returning file id
-  <a class=def name="mus-close">mus-close</a> <i>fd</i>                  ;low-level close call (CL: fd can be int or IO struct, Scheme: fd is output gen)
-
   <a class=def name="continue-sample-&gt;file">continue-sample-&gt;file</a> <i>file</i>    ;reopen <i>file</i> for more output (C/Scheme, not CL yet)
 </pre>
 <br>
@@ -2670,32 +2664,6 @@ of the spectrum, a distortion that can be effective with speech sounds.</p>
 <a href="ugex.ins">ugex.ins</a>, <a href="san.ins">san.ins</a>,
 and <a href="anoi.ins">anoi.ins</a>.
 </p>
-<pre><small>
-(<a class=quiet href="#definstrument">definstrument</a> spectr (infile outfile &amp;optional (fftsize 128))
-  (let* ((fdi (make-double-float-array fftsize))
-	 (fdr (make-double-float-array fftsize))
-	 (win (<em class=red>make-fft-window</em> blackman2-window fftsize))
-	 (in-file (open-input* infile))
-	 (out-file (<a class=quiet href="#mus-create">mus-create</a> outfile))
-	 (k 0)
-	 (freqsize (floor fftsize 2))
-	 (end (<a class=quiet href="#sound-frames">sound-frames</a> infile)))
-    (run 
-     (loop for i from 0 below end do
-       (let ((inval (<a class=quiet href="#ina">ina</a> i in-file)))
-	 (setf (aref fdr k) inval)
-	 (incf k)
-	 (when (&gt;= k fftsize)
-	   (setf k 0)
-	   (<em class=red>spectrum</em> fdr fdi win 1)
-	   (<a class=quiet href="#clm-print">clm-print</a> out-file "~%sample: ~D~%" i)
-	   (dotimes (ctr freqsize)
-	     (<a class=quiet href="#clm-print">clm-print</a> out-file "  (~,3F ~,3F)"
-			(/ (* ctr *srate*) fftsize)
-			(aref fdr ctr)))))))
-    (<a class=quiet href="#close-input">close-input</a> in-file)
-    (<a class=quiet href="#mus-close">mus-close</a> out-file)))
-</small></pre>
 <br>
 
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><a class=def name="def-clm-struct">def-clm-struct</a></h4></td></tr></table>
