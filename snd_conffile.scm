@@ -7,6 +7,10 @@
 
 
 
+(provide 'snd-snd_conffile.scm)
+
+
+
 ;;##############################################################
 ;; c-define is used instead of define when theres a variable the
 ;; user might want to define before loading this file.
@@ -30,7 +34,7 @@
     ;; This is the settings used at Notam/Oslo. May not suite your setup.
     (begin
       (set! (ladspa-dir) "/usr/lib/ladspa")
-      (set! %load-path (cons "/hom/kjetism/snd/snd-7" %load-path))
+      (set! %load-path (cons "/hom/kjetism/snd/snd-run" %load-path))
       (set! (temp-dir) "/lyd/local/tmp")
       (set! (save-dir) "/lyd/local/tmp")))
 
@@ -50,7 +54,7 @@
 ;; Load various files
 ;;##############################################################
 
-(if (not (defined? 'use-gtk))
+(if (not (provided? 'snd-gui.scm))
     (load-from-path "gui.scm"))
 (if (not (defined? 'green))
     (load-from-path "rgb.scm"))
@@ -118,7 +122,8 @@
 ;; Hopefully this will change.
 (define c-setting-cursor-color-cause-redraw #t)
 
-
+(define c-is-stop-hooks-here #f)
+;;(defined? 'stop-playing-hook))
 
 
 
@@ -175,16 +180,16 @@
 							 "      m"
 							 ""
 							 "Move cursor 2 seconds forward"
-							 "      <Cursor right>"
+							 "      <Arrow right>"
 							 ""
 							 "Move cursor 2 seconds backward"
-							 "      <Cursor left>"
+							 "      <Arrow left>"
 							 ""
 							 "Move cursor 10 seconds forward"
-							 "      <Cursor up>"
+							 "      <Arrow up>"
 							 ""
 							 "Move cursor 10 seconds backward"
-							 "      <Cursor down>"
+							 "      <Arrow down>"
 							 ""
 							 "Move cursor 30 seconds forward"
 							 "      <Page Up>"
@@ -218,6 +223,7 @@
 ;; Various more or less general functions
 ;;##############################################################
 
+
 (define (c-get-nameform snd)
   (if use-gtk
       (GTK_BOX (list-ref (sound-widgets snd) 10))
@@ -240,26 +246,7 @@
      #f)))
 
 
-(define (c-report text)
-  (if (defined? 'change-window-property)
-      (change-window-property "SND_VERSION" "WM_NAME"
-			      (if (string=? " " text)
-				  (string-append "snd: "
-						 (apply string-append (map (lambda (snd) (string-append (short-file-name snd) ", "))
-									   (reverse (cdr (sounds)))))
-						 (short-file-name (car (sounds))))
-				  text))
-      (set! (window-property "SND_VERSION" "WM_NAME")
-	    (if (string=? " " text)
-		(string-append "snd: "
-			       (apply string-append (map (lambda (snd) (string-append (short-file-name snd) ", "))
-							 (reverse (cdr (sounds)))))
-			       (short-file-name (car (sounds))))
-		text))))
-  
-
-
-;; Selection-position and selection-frames doesnt allways work properly.
+;; Selection-position and selection-frames doesn't allways work properly.
 (define (c-selection-position)
   (selection-position (selected-sound)))
 (define (c-selection-frames)
@@ -269,20 +256,10 @@
 (define (c-selection?)
   (selection-member? (selected-sound)))
 
-
 ;; Returns true if file is allready loaded. Necesarry to unscrew up open-hook handling.
 (define (c-isloaded? filename)
   (member filename (map (lambda (snd) (file-name snd))
 			(sounds))))
-
-
-;; Set color and cursor-style.
-(define c-set-sound-cursor
-  (lambda (snd shape)
-    (do ((j 0 (1+ j)))
-        ((= j (channels snd)) #f)
-      (set! (cursor-style snd j) shape))))
-
 
 ;; Like (set! (cursor) pos), but legalize pos and
 ;; calls c-show-times as well. Also works when playing.
@@ -295,7 +272,6 @@
     (set! (cursor) legalpos)
     (if isplaying
 	(c-play legalpos))))
-
 
 
 
@@ -377,7 +353,7 @@
 	
 	(add-hook! mouse-click-hook
 		   (lambda (snd chn button state x y axis)
-		     (define myplay play)
+		     (define myplay c-play)
 #!
 		     (define (myplay samp)
 		       (let ((chans (chans snd)))
@@ -400,7 +376,7 @@
 				 ((= button 5)
 				  (if (> dasspeed 0)
 				      (set! (speed-control) (* -1 dasspeed)))
-				  (play samp)))))
+				  (c-play samp)))))
 		     #f))
 	
 	(add-hook! mouse-click-hook
@@ -413,10 +389,10 @@
 				   (begin
 				     (stop-playing)
 				     (if (not (= button 5))
-					 (play samp))))
+					 (c-play samp))))
 			   (if (= button 4)
 			       (begin
-				 (play samp))))))
+				 (c-play samp))))))
 		     #f))))
 
 
@@ -440,9 +416,16 @@
   #f)
 
 (define (c-play-selection)
-  (if c-islooping
-      (add-hook! stop-playing-selection-hook c-play-selection2))
-  (play-selection))
+  (if c-is-stop-hooks-here
+      (begin
+	(if c-islooping
+	    (add-hook! stop-playing-selection-hook c-play-selection2))
+	(play-selection))
+      (play-selection #f #f
+		      (lambda x
+;			(c-display "c-play-selection lambda")
+			(if c-islooping
+			    (c-play-selection))))))
 
 (define (c-play2 snd)
   (if c-islooping
@@ -451,12 +434,16 @@
   #f)
 
 (define (c-play pos)
-  (if c-islooping
-      (add-hook! stop-playing-hook c-play2))
-  (play pos))
+  (if c-is-stop-hooks-here
+      (begin
+	(if c-islooping
+	    (add-hook! stop-playing-hook c-play2))
+	(play pos))
+      (play pos #f #f #f #f #f
+	    (lambda x
+	      (if c-islooping
+		  (c-play pos))))))
 
-(define (c-stop-playing)
-  (remove-hook! stop-playing-selection-hook c-play-selection2))
 
 
 ;; Replace the old space binding with one that starts playing from the current cursor position,
@@ -465,8 +452,10 @@
 	  (lambda ()
 	    (if (dac-is-running)
 		(begin
-		  (remove-hook! stop-playing-selection-hook c-play-selection2)
-		  (remove-hook! stop-playing-hook c-play2)
+		  (if c-is-stop-hooks-here
+		      (begin
+			(remove-hook! stop-playing-selection-hook c-play-selection2)
+			(remove-hook! stop-playing-hook c-play2)))
 		  (stop-playing))
 		(if (c-selection?)
 		    (c-play-selection)
@@ -487,7 +476,7 @@
 		      (set! (sync) 0)
 		      (set! (sync) syncnum))
 		    (update-time-graph))
-		  (play (cursor))))))
+		  (c-play (cursor))))))
 
 
 
@@ -524,7 +513,6 @@
 
 (define (c-zoom zoomfactor)
   (let* ((cursor (/ (cursor) (srate)))
-	 (all (/ (frames) (srate)))
 	 (x1 (car (x-bounds)))
 	 (x2 (cadr (x-bounds)))
 	 (length (- x2 x1))
@@ -702,8 +690,8 @@ Does not work.
 				  #t)))
 					      
 
-
-(load-from-path "marks.scm")
+(if (not (defined? 'mark-name->id))
+    (load-from-path "marks.scm"))
 
 
 ;; The following mark-related lines are copied from marks.scm. For some reason the functions was commented away.
@@ -771,13 +759,12 @@ Does not work.
 	       (samp (inexact->exact (* (srate snd) (position->x x snd chn)))))
 	  (if (< samp 0) (set! samp 0))
 	  (c-show-times (cursor) #t)
-	  (if (= state 4)
-	      (if (c-selection?)
-		  (begin
-		    (if (< samp (+ (/ (c-selection-frames) 2) (c-selection-position)))
-			(set! selection-starting-point (+ (c-selection-position) (c-selection-frames)))
-			(set! selection-starting-point (c-selection-position)))
-		    (mouse-motion-callback x state)))
+	  (if (and (= state 4) (c-selection?))
+	      (begin
+		(if (< samp (+ (/ (c-selection-frames) 2) (c-selection-position)))
+		    (set! selection-starting-point (+ (c-selection-position) (c-selection-frames)))
+		    (set! selection-starting-point (c-selection-position)))
+		(mouse-motion-callback x state))
 	      (if (and (= state 1) (c-selection?))
 		  (begin
 		    (color-samples-allchans (channels) green (c-selection-position) (c-selection-frames))
@@ -921,18 +908,36 @@ Does not work.
 	    (color-samples color start end (selected-sound) (- chans 1)))
 	(color-samples-allchans (- chans 1) color start end))))
 
+
+(define (c-clear-report-hook snd chn)
+  (remove-hook! after-graph-hook c-clear-report-hook)
+  (c-report " "))
+
+
+
+#!
+;;This one could have been very nice, but the graph-hook is called very often,
+;;and then the window bar changes title too often too, which is disturbing.
+(add-hook! graph-hook
+  (lambda (snd chn y0 y1)
+    (c-report "Please wait, updating time graph...")
+    (add-hook! after-graph-hook c-clear-report-hook)
+    #f))
+!#
+
+
 (define (c-make-region)
   (if (not (selection-creates-region))
       (if (> c-region-generation 0)
 	  (begin
 	    (set! c-region-generation 0)
 	    (c-report "Please wait, making region...")
-	    (make-region)
-	    (c-report " ")))))
-
+	    (add-hook! after-graph-hook c-clear-report-hook)
+	    (make-region)))))
 
 (bind-key (char->integer #\r) 0
 	  c-make-region)
+
 
 (define (c-paste)
   (if (c-selection?)
@@ -954,9 +959,8 @@ Does not work.
 	      (color-samples green curspos (region-frames)))
 	  (set! c-iscolorized #t)
 	  (c-report "Please wait, updating time graph...")
-	  (update-time-graph)
-	  (c-report " ")))))
-
+	  (add-hook! after-graph-hook c-clear-report-hook)
+	  (update-time-graph)))))
 
 (bind-key (char->integer #\y) 4
 	  c-paste)
@@ -969,14 +973,12 @@ Does not work.
 	(set! (cursor #t #t) curspos)
 	(c-make-region)
 	(c-report "Please wait, deleting selection...")
+	(add-hook! after-graph-hook c-clear-report-hook)
 	(delete-selection)
-	(set! c-iscolorized #f)
-	(c-report " "))))
+	(set! c-iscolorized #f))))
 
 (bind-key (char->integer #\w) 4
 	  c-cut)
-
-
 
 
 
@@ -1033,7 +1035,7 @@ Does not work.
   (let (
 	 
 	(c-dodasprint
-	 (let* ((lastpainted (<array-multidimensional> '(3 4)))
+	 (let* ((lastpainted (<array/multidimensional> '(3 4)))
 		(fontwidth 9)	
 		(fontheight 12)
 		(stringlen (* fontwidth 7))
@@ -1177,8 +1179,11 @@ Does not work.
 		     (c-show-times (cursor))))
 	       #f)))
 
+;(define te 0)
 (add-hook! after-graph-hook
 	   (lambda (snd chn)
+	     ;(set! te (1+ te))
+	     ;(c-display "after-graph-hook " te)
 	     (c-show-times (cursor) #t)
 	     #f))
 
@@ -1271,9 +1276,10 @@ Does not work.
 ;;##############################################################
 
 ;; Makes the buffer-menu a bit more pleasent to use. This is code
-;; copied from examp.scm and modified.
+;; copied from examp.scm and modified. (Something is wrong here.)
 
-(load-from-path "examp.scm")
+(if (not (defined? 'close-all-buffers))
+    (load-from-path "examp.scm"))
 
 
 ;;;;;;;;;;;;;;;;
@@ -1350,17 +1356,20 @@ Does not work.
 ;;##############################################################
 
 ;;"various generally useful Snd extensions". See source.
-(load-from-path "extensions.scm")
+(if (not (defined? 'check-from-unsaved-edits))
+    (load-from-path "extensions.scm"))
 
 ;; When exiting.
 (check-for-unsaved-edits #t)
 
 
-(load-from-path "edit-menu.scm")
+(if (not (defined? 'selection->new))
+    (load-from-path "edit-menu.scm"))
 
 
 ;;Show the little picture of the whole sound in the upper right corner.
-(load-from-path "draw.scm")
+(if (not (defined? 'make-current-window-display))
+    (load-from-path "draw.scm"))
 (make-current-window-display)
 
 
@@ -1380,19 +1389,21 @@ Does not work.
 
 
 ;; Adds a lot of things when pressing the right mouse button. Very nice.
-(load-from-path (if use-gtk
-		    "gtk-popup.scm"
-		    "popup.scm"))
+(if (not (defined? 'make-popup-menu))
+    (load-from-path (if use-gtk
+			"gtk-popup.scm"
+			"popup.scm")))
 
-
-(load-from-path  (if use-gtk
-		     "gtk-effects.scm"
-		     "new-effects.scm"))
+(if (not (defined? 'make-effect-dialog))
+    (load-from-path  (if use-gtk
+			 "gtk-effects.scm"
+			 "new-effects.scm")))
 
 
 
 (if (provided? 'snd-ladspa)
-    (load-from-path "ladspa.scm"))
+    (if (not (provided? 'snd-ladspa.scm))
+	(load-from-path "ladspa.scm")))
 
 
 ;; Stores the peak information for sounds in the ~/peaks/ directory. Seems to work correctly. I have tried
@@ -1400,13 +1411,15 @@ Does not work.
 ;; The point is to decrease the loading time.
 ; First make sure the peaks directory is present
 (system (string-append "mkdir " (getenv "HOME") "/peaks >/dev/null 2>/dev/null"))
-; Then load
-(load-from-path "peak-env.scm")
+(if (not (defined? 'save-peak-env-info))
+    ;; Then load
+    (load-from-path "peak-env.scm"))
 
 
-(load-from-path (if use-gtk
-		    "snd-gtk.scm"
-		    "snd-motif.scm"))
+(if (not (defined? 'for-each-child))
+    (load-from-path (if use-gtk
+			"snd-gtk.scm"
+			"snd-motif.scm")))
 
 ;; Shows diskspace for the partition the opened sound was placed on.
 ;(add-hook! after-open-hook show-disk-space)
@@ -1421,20 +1434,25 @@ Does not work.
 
 
 ;; Dave Phillips fft-menu.
-(load-from-path "dlp/fft-menu.scm")
+(if (not (defined? 'fft-list))
+    (load-from-path "dlp/fft-menu.scm"))
 
 ;; Dave Phillips panic-menu
-(load-from-path "dlp/panic.scm")
+(if (not (defined? 'panic-menu))
+    (load-from-path "dlp/panic.scm"))
 
 ;; Dave Phillips special-menu
-(load-from-path "dlp/special-menu.scm")
+(if (not (defined? 'special-menu))
+    (load-from-path "dlp/special-menu.scm"))
 
-;;(load-from-path "dlp/plugins-menu.scm")
+
+;; (load-from-path "dlp/plugins-menu.scm")
 
 
 ;; All of Dave Phillips nice things.
 ;; Uncomment to try. (Most of it is already present)
-;;(load-from-path "dlp/misc.scm")
+;;(if (not (defined? 'change-selection-popup-color))
+;;  (load-from-path "dlp/misc.scm"))
 
 
 

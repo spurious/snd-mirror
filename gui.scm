@@ -4,7 +4,7 @@
 ;;; -Kjetil S. Matheussen.
 
 
-
+(provide 'snd-gui.scm)
 
 (use-modules (ice-9 optargs)
 	     (ice-9 format)
@@ -15,10 +15,119 @@
 
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; OO  (Goops/cloos syntax is so ugly.)
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+
+;;##############################################################
+;; Various functions
+;;##############################################################
+
+(define use-gtk (if (provided? 'snd-gtk)
+		    #t
+		    #f))
+
+(if use-gtk
+    (if (not (provided? 'xg))
+	(let ((hxm (dlopen "xm.so")))
+	  (if (string? hxm)
+	      (snd-error (format #f "gui.scm needs the xg module: ~A" hxm))
+	      (dlinit hxm "init_xm"))))
+    (if (not (provided? 'xm))
+	(let ((hxm (dlopen "xm.so")))
+	  (if (string? hxm)
+	      (snd-error (format #f "gui.scm needs the xm module: ~A" hxm))
+	      (dlinit hxm "init_xm")))))
+    
+
+
+;; Taken from new-effects.scm
+(define yellow-pixel
+  (let ((pix #f))
+    (lambda ()
+      (if (not pix)
+	  (let* ((shell (cadr (main-widgets)))
+		 (dpy (XtDisplay shell))
+		 (scr (DefaultScreen dpy))
+		 (cmap (DefaultColormap dpy scr))
+		 (col (XColor)))
+	       (if (= (XAllocNamedColor dpy cmap "yellow" col col) 0)
+		   (snd-error "can't allocate yellow!")
+		   (set! pix (.pixel col)))))
+      pix)))
+
+
+(define (c-report text)
+  (if (defined? 'change-window-property)
+      (change-window-property "SND_VERSION" "WM_NAME"
+			      (if (string=? " " text)
+				  (string-append "snd: "
+						 (apply string-append (map (lambda (snd) (string-append (short-file-name snd) ", "))
+									   (reverse (cdr (sounds)))))
+						 (short-file-name (car (sounds))))
+				  text))
+      (set! (window-property "SND_VERSION" "WM_NAME")
+	    (if (string=? " " text)
+		(string-append "snd: "
+			       (apply string-append (map (lambda (snd) (string-append (short-file-name snd) ", "))
+							 (reverse (cdr (sounds)))))
+			       (short-file-name (car (sounds))))
+		text))))
+  
+
+;; Set cursor-style. Copied from the manual.
+(define (c-set-sound-cursor snd shape)
+  (do ((j 0 (1+ j)))
+      ((= j (channels snd)) #f)
+    (set! (cursor-style snd j) shape)))
+
+
+;; C-like for-iterator
+(define (c-for init pred least add proc)
+  (let ((n init))
+    (while (pred n least)
+	   (proc n)
+	   (set! n (+ add n)))))
+#!
+(c-for 2 < 7 1
+       (lambda (n) (display n)(newline)))
+!#
+
+
+;; Snd has its own filter function (a clm function) overriding the guile filter function.
+(define (filter-org pred list)
+  (remove (lambda (e) (not (pred e)))
+	  list))
+
+(define (insert! list pos element)
+  (call-with-values (lambda () (split-at! list pos))
+    (lambda (f s)
+      (append! f (cons element s)))))
+
+(define (sublist l start end)
+  (take (drop l start) (- end start)))
+
+;;(sublist '(0 1 2 3 4 5 6 7 8 9) 2 5)
+
+
+(define (c-display . args)
+  (for-each (lambda (arg) (display arg)(display " "))
+	    args)
+  (newline))
+
+
+;; define-toplevel is like define, but at the toplevel.
+(system "echo 'extern scm_c_define_gsubr(),scm_define();void init_dt(){scm_c_define_gsubr(\"define-toplevel\",2,0,0,scm_define);}' >/tmp/tmp.c")
+(system "gcc -shared -o /tmp/tmp.so /tmp/tmp.c")
+(dynamic-call "init_dt" (dynamic-link "/tmp/tmp.so"))
+(system "rm /tmp/tmp.so /tmp/tmp.c")
+
+
+
+
+
+
+;;##############################################################
+;; OO  (Goops/cloos syntax is so ugly.)
+;;##############################################################
 
 (define instance?-old #f)
 (define define-class-old #f)
@@ -32,67 +141,96 @@
     (set! define-method-old define-method))
 
 
-
-
 (define-macro (define-class def . body)
   (if (and #f (symbol? def))
       `(define-class-old ,def ,@body)
-      `(define* ,def
-	 (let* ((methods (make-hash-table 256))
-		(supers '())
-		(super #f)
-		(dispatch-preds '())
-		(dispatch-funcs '())
-		(add-dispatcher (lambda (pred func)
-				  (set! dispatch-preds (append dispatch-preds (list pred)))
-				  (set! dispatch-funcs (append dispatch-funcs (list func)))))
-		(add-method-do (lambda (name func)
-				 (hashq-set! methods name func))))
-	   (var class-name ',(car def))
-	   (define-method (dir)
-	     (append (cons this->class-name
-			   (hash-fold (lambda (key value s) (cons key s)) '() 
-				      methods))
-		     (map (lambda (super) (-> super dir))
-			  supers)))
-	   (define-method (get-method name)
-	     (or (hashq-ref methods name)
-		 (any (lambda (super) (-> super get-method name))
-		      supers)))
-	   (define-method (instance? class-name)
-	     (or (eq? class-name this->class-name)
-		 (any (lambda (super) (-> super instance? class-name))
-		      supers)))
-
-	   (define (this name . rest)
-	     (apply (or (hashq-ref methods name)
-			(any (lambda (super) (-> super get-method name))
-			     supers)
-			(lambda x (format #t "No such method: \"~A\" in class \"~A\".~%" name ',(car def))))
-		    rest))
-
-	   (define (this-with-custom-dispatchers m . rest)
-	     (call-with-current-continuation
-	      (lambda (return)
-		(for-each (lambda (pred func)
-			    (if (pred m rest)
-				(return (func m rest))))
-			  dispatch-preds
-			  dispatch-funcs)
-		(apply (or (hashq-ref methods m)
-			   (any (lambda (super) (-> super get-method m))
+      (begin
+	(for-each (lambda (a) (if (eq? (car a) 'define-constructor)
+				  (let* ((name (caadr a))
+					 (name2 (symbol-append 'constructor- name)))
+				    (define-toplevel (symbol-append (string->symbol (list->string (reverse (cdr (reverse (string->list (symbol->string (car def))))))))
+								    '/
+								    name
+								    '>)
+				      (let ((classfunc #f))
+					(lambda args
+					  (if (not classfunc) (set! classfunc (eval-string (symbol->string (car def)))))
+					  (apply ((classfunc) 'get-method name2) args)))))))
+		  body)
+	`(define* ,def
+	   (let* ((methods (make-hash-table 256))
+		  (supers '())
+		  (super #f)
+		  (dispatch-preds #f)
+		  (dispatch-funcs #f)
+		  (add-dispatcher (lambda (pred func)
+				    (cond ((not dispatch-preds)
+					   (set! dispatch-preds pred)
+					   (set! dispatch-funcs func))
+					  ((procedure? dispatch-preds)
+					   (set! dispatch-preds (list dispatch-preds pred))
+					   (set! dispatch-funcs (list dispatch-funcs func)))
+					  (else
+					   (set! dispatch-preds (append dispatch-preds (list pred)))
+					   (set! dispatch-funcs (append dispatch-funcs (list func)))))))
+		  (add-method-do (lambda (name func)
+				   (hashq-set! methods name func))))
+	     (var class-name ',(car def))
+	     (define-method (dir)
+	       (append (cons this->class-name
+			     (hash-fold (lambda (key value s) (cons key s)) '() 
+					methods))
+		       (map (lambda (super) (-> super dir))
+			    supers)))
+	     (define-method (get-method name)
+	       (or (hashq-ref methods name)
+		   (any (lambda (super) (-> super get-method name))
+			supers)))
+	     (define-method (instance? class-name)
+	       (or (eq? class-name this->class-name)
+		   (any (lambda (super) (-> super instance? class-name))
+			supers)))
+	     
+	     (define (this name . rest)
+	       (apply (or (hashq-ref methods name)
+			  (any (lambda (super) (-> super get-method name))
+			       supers)
+			  (lambda x (format #t "No such method: \"~A\" in class \"~A\".~%" name this->class-name)))
+		      rest))
+	     
+	     (define (this-with-custom-dispatchers m . rest)
+	       (call-with-current-continuation
+		(lambda (return)
+		  (for-each (lambda (pred func)
+			      (if (pred m rest)
+				  (return (func m rest))))
+			    dispatch-preds
+			    dispatch-funcs)
+		  (apply (or (hashq-ref methods m)
+			     (any (lambda (super) (-> super get-method m))
 				supers)
-			   (lambda x (format #t "No such method: \"~A\" in class \"~A\".~%" m ',(car def))))
-		       rest))))
-		
-	   ,@body
-
-	   (if (and this (not (null? dispatch-preds)))
-	       (set! this this-with-custom-dispatchers))
-
-	   this))))
-
-
+			     (lambda x (format #t "No such method: \"~A\" in class \"~A\".~%" m this->class-name)))
+			 rest))))
+	     
+	     (define (this-with-custom-dispatcher m . rest)
+	       (if (dispatch-preds m rest)
+		   (dispatch-funcs m rest)
+		   (apply (or (hashq-ref methods m)
+			      (any (lambda (super) (-> super get-method m))
+				   supers)
+			      (lambda x (format #t "No such method: \"~A\" in class \"~A\".~%" m this->class-name)))
+			  rest)))
+	     
+	     ,@body
+	     
+	     (if (and this dispatch-preds)
+		 (if (procedure? dispatch-preds)
+		     (set! this this-with-custom-dispatcher)
+		     (set! this this-with-custom-dispatchers)))
+	     
+	     this)))))
+  
+  
 (define-macro (add-method nameandvars . body)
   `(add-method-do ',(car nameandvars) (lambda ,(cdr nameandvars) ,@body)))
 
@@ -113,6 +251,12 @@
        (begin
 	 (add-method (,name . rest) (if (null? rest) ,thisname (set! ,thisname (car rest))))
 	 ,initial))))
+
+(define-macro (define-constructor nameandvars . body)
+  (let* ((name (car nameandvars))
+	(args (cdr nameandvars))
+	(name2 (symbol-append 'constructor- name)))
+    `(add-method* ,(cons name2 args) ,@body)))
 
 (define (object? o)
   (and (procedure? o)
@@ -189,9 +333,10 @@
 
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Array 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;##############################################################
+;; Array 
+;;##############################################################
 
 (define-class (<array> . rest)
   (define dasarray (list->vector rest))
@@ -240,7 +385,6 @@
 	    ((= 2 (length split)) (sublist (this->get-list) (intsplit 0) (intsplit 1)))
 	    (else split))))
 
-
   (add-dispatcher (lambda (n rest)
 		    (integer? n))
 		  (lambda (n rest)
@@ -251,27 +395,25 @@
   (add-dispatcher (lambda (s rest)
 		    (string? s))
 		  (lambda (s rest)
-		    (this->p s))))
+		    (this->p s)))
 
-  
+  (define-constructor (length len #:optional default)
+    (this->set-vector! (make-vector len default))
+    this)
+
+  (define-constructor (map len func)
+    (this->set-vector! (make-vector len #f))
+    (this->map! (lambda (n el) (func n)))
+    this)
+
+  (define-constructor (multidimensional dimensions #:optional default)
+    (if (null? dimensions)
+	default
+	(-> this constructor-map (car dimensions) (lambda (n)
+						    (<array/multidimensional> (cdr dimensions) default)))))
+  )
 
 
-;; Some additional constructors
-(define* (<array-length> len #:optional default)
-  (let ((array (<array>)))
-    (-> array set-vector! (make-vector len default))
-    array))
-
-(define (<array-map> len func)
-  (let ((array (<array-length> len)))
-    (-> array map! (lambda (n el) (func n)))
-    array))
-
-(define* (<array-multidimensional> dimensions #:optional default)
-  (if (null? dimensions)
-      default
-      (<array-map> (car dimensions) (lambda (n)
-				      (<array-multidimensional> (cdr dimensions) default)))))
 
 #!
 (define a (<array> 0 1 2 3 4 5 6 7 8))
@@ -290,8 +432,9 @@
 (-> a map list)
 (-> a reset!)
 (-> a get-list)
+(-> a dir)
 
-(define a (<array-multidimensional> '(5 4)))
+(define a (<array/multidimensional> '(5 4)))
 (-> a for-each (lambda (n1 el1) (-> el1 map! (lambda (n2 el2) (+ n1 (/ n2 10))))))
 (-> a map (lambda (n el) (-> el get-list)))
 ((a 0) 3)
@@ -302,83 +445,11 @@
 
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Various functions
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(define use-gtk (if (provided? 'snd-gtk)
-		    #t
-		    #f))
-
-(if use-gtk
-    (if (not (provided? 'xg))
-	(let ((hxm (dlopen "xm.so")))
-	  (if (string? hxm)
-	      (snd-error (format #f "gui.scm needs the xg module: ~A" hxm))
-	      (dlinit hxm "init_xm"))))
-    (if (not (provided? 'xm))
-	(let ((hxm (dlopen "xm.so")))
-	  (if (string? hxm)
-	      (snd-error (format #f "gui.scm needs the xm module: ~A" hxm))
-	      (dlinit hxm "init_xm")))))
-    
-
-
-;; Taken from new-effects.scm
-(define yellow-pixel
-  (let ((pix #f))
-    (lambda ()
-      (if (not pix)
-	  (let* ((shell (cadr (main-widgets)))
-		 (dpy (XtDisplay shell))
-		 (scr (DefaultScreen dpy))
-		 (cmap (DefaultColormap dpy scr))
-		 (col (XColor)))
-	       (if (= (XAllocNamedColor dpy cmap "yellow" col col) 0)
-		   (snd-error "can't allocate yellow!")
-		   (set! pix (.pixel col)))))
-      pix)))
-
-
-
-;; C-like for-iterator
-(define (c-for init pred least add proc)
-  (let ((n init))
-    (while (pred n least)
-	   (proc n)
-	   (set! n (+ add n)))))
-#!
-(c-for 2 < 7 1
-       (lambda (n) (display n)(newline)))
-!#
-
-
-;; Snd has its own filter function (a clm function) overriding the guile filter function.
-(define (filter-org pred list)
-  (remove (lambda (e) (not (pred e)))
-	  list))
-
-(define (insert! list pos element)
-  (call-with-values (lambda () (split-at! list pos))
-    (lambda (f s)
-      (append! f (cons element s)))))
-
-(define (sublist l start end)
-  (take (drop l start) (- end start)))
-
-;;(sublist '(0 1 2 3 4 5 6 7 8 9) 2 5)
-
-
-(define (c-display . args)
-  (for-each (lambda (arg) (display arg)(display " "))
-	    args)
-  (newline))
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Paint (not usable yet)
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;##############################################################
+;; Paint (not usable yet)
+;;##############################################################
 
 (define-class (<paint> parent width height)
 
@@ -441,10 +512,10 @@
 
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Menues
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;;##############################################################
+;; Menues
+;;##############################################################
 
 (define* (menu-sub-add menu menu-label #:optional callback)
   (let ((dasmenu (if (integer? menu) (main-menu menu) menu)))
@@ -523,10 +594,11 @@
 
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Checkbuttons
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+
+;;##############################################################
+;; Checkbuttons
+;;##############################################################
 
 (define-class (<checkbutton> parent name callback #:optional onoff (extraopts '()))
 
@@ -586,9 +658,10 @@
 
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Buttons
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;##############################################################
+;; Buttons
+;;##############################################################
 
 (define-class (<button> parent name callback)
 
@@ -613,9 +686,11 @@
 
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Sliders
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;;##############################################################
+;; Sliders
+;;##############################################################
 
 (define-class (<slider> parent
 			 title
@@ -691,10 +766,10 @@
 
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Dialogs
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;;##############################################################
+;; Dialogs
+;;##############################################################
 
 (define (isdialog? dialog)
   (and (object? dialog)
@@ -867,10 +942,10 @@
 
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; GUI test
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;;##############################################################
+;; GUI test
+;;##############################################################
 
 #!
 (define d (<dialog> "gakk"  #f

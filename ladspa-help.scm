@@ -2,6 +2,7 @@
 
 ;; Dave Phillips ladspa help.
 
+(provide 'snd-ladspa-help.scm)
 
 (define ladspa-help-texts (list
 

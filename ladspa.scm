@@ -50,6 +50,7 @@
 
 
 
+(provide 'snd-ladspa.scm)
 
 
 
@@ -62,13 +63,14 @@
 
 
 ;; This should take care of the functions we need.
-(if (not (defined? 'menu-sub-add))
+(if (not (provided? 'snd-gui.scm))
     (load-from-path "gui.scm"))
 
 
 
 ;; Organize help texts.
-(load-from-path "ladspa-help.scm")
+(if (not (provided? 'snd-ladspa-help.scm))
+    (load-from-path "ladspa-help.scm"))
 
 
 (define ladspa-help-assoclist '())
@@ -125,7 +127,7 @@
 					(make-vct ladspa-maxbuf))))
     (call-with-current-continuation
      (lambda (return)
-       (set! handles (<array-map> num_handles
+       (set! handles (<array/map> num_handles
 				  (lambda (n)
 				    (let ((handle (ladspa-instantiate this->descriptor (srate) )))
 				      (if (not handle)
@@ -389,7 +391,7 @@
 	      #t)))
       (if (= 0 min_num_audios)
 	  (begin
-	    (c-display "Ladspa plugin have no output audio ports.")
+	    (c-display "Ladspa plugin has no output audio ports.")
 	    #f)
 	  (if (not (string=? "vst" libname))
 	      (init-dac-hook-stuff)
