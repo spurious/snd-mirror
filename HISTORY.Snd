@@ -1,5 +1,7 @@
 snd change log
 
+  20-Jun:    ptree-channel (an experiment) -- any func as virtual edit.
+             env-channel can take envelope (list) arg.
   18-Jun:    snd colors now mimic xm/xg, snd-pixel is a no-op.
   12-Jun:    snd 5.11.
              moved forward|backward-sample to snd5.scm.

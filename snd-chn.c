@@ -4346,6 +4346,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
 	    }
 	  cp->cursor_style = g_mus_iclamp(CURSOR_CROSS, on, CURSOR_CROSS, CURSOR_LINE);
 	}
+      cp->just_zero = (cp->cursor_style == CURSOR_LINE); /* no point in displaying y value in this case */
       update_graph(cp); 
       return(C_TO_XEN_INT(cp->cursor_style));
       break;
@@ -4664,7 +4665,12 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_cursor_reversed, g_set_cursor)
 
 static XEN g_cursor_style(XEN snd_n, XEN chn_n) 
 {
-  #define H_cursor_style "(" S_cursor_style " &optional snd chn) -> current cursor style in snd's channel chn"
+  #define H_cursor_style "(" S_cursor_style " &optional snd chn) -> current cursor style in snd's channel chn. \
+Possible values are cursor-cross (default), cursor-line (a vertical line), or a procedure of three arguments, the \
+sound index, channel number, and graph (always time-graph).  The procedure \
+should draw the cursor at the current cursor position using the \
+cursor-context whenever it is called."
+
   return(channel_get(snd_n, chn_n, CP_CURSOR_STYLE, S_cursor_style));
 }
 

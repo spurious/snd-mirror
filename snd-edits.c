@@ -273,6 +273,7 @@ enum {ED_SIMPLE, ED_RAMP, ED_PTREE}; /* typ field choices */
 #define FRAGMENT_RAMP_END(Ed, Pos)         Ed->fragments[Pos]->rmp1
 #define FRAGMENT_TYPE(Ed, Pos)             Ed->fragments[Pos]->typ
 #define FRAGMENT_SOUND(Ed, Pos)            Ed->fragments[Pos]->snd
+#define FRAGMENT_PTREE(Ed, Pos)            Ed->fragments[Pos]->loc
 #define FRAGMENT_LENGTH(Ed, Pos)           (FRAGMENT_LOCAL_END(Ed, Pos) - FRAGMENT_LOCAL_POSITION(Ed, Pos) + 1)
 
 #define EDIT_LIST_END_MARK -2
@@ -284,20 +285,13 @@ enum {ED_SIMPLE, ED_RAMP, ED_PTREE}; /* typ field choices */
 /* ed->scl is the segment scaler */
 /* ed->rmp0 is first val of ramp, ed->rmp1 is end val */
 /* ed->typ has code for accessor choice */
+/* ed->loc is an index into the cp->ptrees array */
 /* EDIT_ALLOC_SIZE is the allocation amount (pointers) each time cp->sounds is (re)allocated */
 /*
  * other possible easy virtual ops: compand/contrast, sqr/abs, clm-op
  */
 
-#define INSERTION_EDIT 0
-#define DELETION_EDIT 1
-#define CHANGE_EDIT 2
-#define INITIALIZE_EDIT 3
-#define SCALED_EDIT 4
-#define ZERO_EDIT 5
-#define RAMP_EDIT 6
-#define PTREE_EDIT 7
-
+enum {INSERTION_EDIT, DELETION_EDIT, CHANGE_EDIT, INITIALIZE_EDIT, SCALED_EDIT, ZERO_EDIT, RAMP_EDIT, PTREE_EDIT};
 static char *edit_names[9] = {"insert", "delete", "set", "init", "scale", "zero", "env", "ptree", ""};
 
 static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed)
@@ -308,43 +302,52 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed)
   type = ed->edit_type;
   switch (type)
     {
-    case INSERTION_EDIT:  fprintf(outp, "\n (insert " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);         break;
-    case DELETION_EDIT:   fprintf(outp, "\n (delete " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);         break;
-    case CHANGE_EDIT:     fprintf(outp, "\n (set " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);            break;
-    case SCALED_EDIT:     fprintf(outp, "\n (scale " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);          break;
-    case ZERO_EDIT:       fprintf(outp, "\n (silence " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);        break;
-    case RAMP_EDIT:       fprintf(outp, "\n (ramp " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);           break;
-    case PTREE_EDIT:      fprintf(outp, "\n (<ptree> " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);        break; 
-      /* TODO: how to save ptree edit in reconstructible form (save-state)? */
-    case INITIALIZE_EDIT: fprintf(outp, "\n (begin) ");                                                  break;
+    case INSERTION_EDIT:  fprintf(outp, "\n (insert " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);   break;
+    case DELETION_EDIT:   fprintf(outp, "\n (delete " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);   break;
+    case CHANGE_EDIT:     fprintf(outp, "\n (set " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);      break;
+    case SCALED_EDIT:     fprintf(outp, "\n (scale " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);    break;
+    case ZERO_EDIT:       fprintf(outp, "\n (silence " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);  break;
+    case RAMP_EDIT:       fprintf(outp, "\n (ramp " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);     break;
+    case PTREE_EDIT:      fprintf(outp, "\n (ptree " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);    break; 
+    case INITIALIZE_EDIT: fprintf(outp, "\n (begin) ");                                            break;
     }
   if (ed->origin) fprintf(outp, "; %s ", ed->origin);
   fprintf(outp, "[%d:%d]:", i, len);
   for (j = 0; j < len; j++)
     {
-      fprintf(outp, "\n   (at " OFF_TD ", cp->sounds[%d][" OFF_TD ":" OFF_TD ", %f",
-	      FRAGMENT_GLOBAL_POSITION(ed, j),
-	      index = FRAGMENT_SOUND(ed, j),
-	      FRAGMENT_LOCAL_POSITION(ed, j),
-	      FRAGMENT_LOCAL_END(ed, j),
-	      FRAGMENT_SCALER(ed, j));
-      if (FRAGMENT_TYPE(ed, j) == ED_RAMP)
-	fprintf(outp, ", %f -> %f", 
-		FRAGMENT_RAMP_BEG(ed, j),
-		FRAGMENT_RAMP_END(ed, j));
-      fprintf(outp, "])");
-      if ((index != EDIT_LIST_END_MARK) && (index != EDIT_LIST_ZERO_MARK))
+      index = FRAGMENT_SOUND(ed, j);
+      if (index == EDIT_LIST_END_MARK)
+	fprintf(outp, "\n   (at " OFF_TD ", end_mark)", FRAGMENT_GLOBAL_POSITION(ed, j));
+      else
 	{
-	  sd = cp->sounds[index];
-	  if (sd == NULL) 
-	    fprintf(outp, " [nil!]");
-	  else 
-	    if (sd->type == SND_DATA_FILE)
-	      fprintf(outp, " [file: %s[%d]]", sd->filename, sd->chan);
-	    else 
-	      if (sd->type == SND_DATA_BUFFER)
-		fprintf(outp, " [buf: " OFF_TD "] ", sd->len / 4);
-	      else fprintf(outp, " [bogus!]");
+	  fprintf(outp, "\n   (at " OFF_TD ", cp->sounds[%d][" OFF_TD ":" OFF_TD ", %f",
+		  FRAGMENT_GLOBAL_POSITION(ed, j),
+		  index,
+		  FRAGMENT_LOCAL_POSITION(ed, j),
+		  FRAGMENT_LOCAL_END(ed, j),
+		  FRAGMENT_SCALER(ed, j));
+	  if (FRAGMENT_TYPE(ed, j) == ED_RAMP)
+	    fprintf(outp, ", %f -> %f", 
+		    FRAGMENT_RAMP_BEG(ed, j),
+		    FRAGMENT_RAMP_END(ed, j));
+	  if (FRAGMENT_TYPE(ed, j) == ED_PTREE)
+	    fprintf(outp, ", arg: %f",
+		    (float)(MUS_FLOAT_TO_FIX * FRAGMENT_RAMP_BEG(ed, j)));
+	  /* TODO: if ptree, describe it? */
+	  fprintf(outp, "])");
+	  if (index != EDIT_LIST_ZERO_MARK)
+	    {
+	      sd = cp->sounds[index];
+	      if (sd == NULL) 
+		fprintf(outp, " [nil!]");
+	      else 
+		if (sd->type == SND_DATA_FILE)
+		  fprintf(outp, " [file: %s[%d]]", sd->filename, sd->chan);
+		else 
+		  if (sd->type == SND_DATA_BUFFER)
+		    fprintf(outp, " [buf: " OFF_TD "] ", sd->len / 4);
+		  else fprintf(outp, " [bogus!]");
+	    }
 	}
     }
   fprintf(outp, "\n");
@@ -602,7 +605,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 		      cp->chan);
 	      break;
 	    case PTREE_EDIT:
-	      /* TODO: save history for ptree edit dependent on origin??? */
+	      /* TODO: collapse out tree and save direct -- could do this ahead of time as change edit */
 	      fprintf(fd, "      (%s sfile %d)\n",
 		      ed->origin,
 		      cp->chan);
@@ -1416,7 +1419,7 @@ void change_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, int
   after_edit(cp);
 }
 
-int ramped_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos)
+int ramp_or_ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos)
 {
   /* used only in snd-sig.c 1929 */
   ed_list *ed;
@@ -1430,10 +1433,10 @@ int ramped_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos)
       if ((loc > end) || (FRAGMENT_SOUND(ed, i) == EDIT_LIST_END_MARK))
 	return(FALSE);
       typ = FRAGMENT_TYPE(ed, i);
-      if ((typ == ED_RAMP) && (loc >= beg))                 /* loc not beyond end, but is beyond beg, so this ramp falls into our segment */
+      if ((typ != ED_SIMPLE) && (loc >= beg))                 /* loc not beyond end, but is beyond beg, so this ramp falls into our segment */
 	return(TRUE);
       loc = FRAGMENT_GLOBAL_POSITION(ed, i + 1);            /* i.e. next loc = current fragment end point */
-      if ((typ == ED_RAMP) && (loc >= beg) && (loc <= end)) /* current ramp fragment ends in segment */
+      if ((typ != ED_SIMPLE) && (loc >= beg) && (loc <= end)) /* current ramp fragment ends in segment */
 	return(TRUE);
     }
   return(FALSE);
@@ -1556,6 +1559,70 @@ void ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, i
   check_for_first_edit(cp);
   lock_affected_mixes(cp, beg, beg + num);
   if (cp->mix_md) reflect_mix_edit(cp, "ramp"); /* 30-Jan-02 */
+  reflect_edit_history_change(cp);
+  update_graph(cp);
+}
+
+void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos)
+{
+  off_t len;
+  int i, ptree_loc = 0;
+  ed_list *new_ed, *old_ed;
+  if ((beg < 0) || 
+      (num <= 0) ||
+      (beg > cp->samples[pos]) ||
+      (ptree == NULL))
+    return; 
+  len = cp->samples[pos];
+  old_ed = cp->edits[pos];
+  prepare_edit_list(cp, len);
+  ptree_loc = add_ptree(cp);
+  cp->ptrees[ptree_loc] = ptree;
+  if ((beg == 0) && 
+      (num >= cp->samples[pos]))
+    {
+      num = len;
+      new_ed = make_ed_list(cp->edits[pos]->size);
+      cp->edits[cp->edit_ctr] = new_ed;
+      for (i = 0; i < new_ed->size; i++) 
+	{
+	  copy_ed_fragment(new_ed->fragments[i], old_ed->fragments[i]);
+	  FRAGMENT_PTREE(new_ed, i) = ptree_loc;
+	  FRAGMENT_TYPE(new_ed, i) = ED_PTREE;
+	  FRAGMENT_RAMP_BEG(new_ed, i) = MUS_SAMPLE_TO_FLOAT(FRAGMENT_SCALER(new_ed, i));
+	  FRAGMENT_SCALER(new_ed, i) = 1.0;
+	}
+      /* TODO: amp env via ptree if ok'd */
+      /* amp_env_scale_by(cp, scl, pos); */
+    }
+  else 
+    {
+      new_ed = selected_ed_list(beg, beg + num - 1, old_ed);
+      cp->edits[cp->edit_ctr] = new_ed;
+      for (i = 0; i < new_ed->size; i++) 
+	{
+	  if (FRAGMENT_GLOBAL_POSITION(new_ed, i) > (beg + num - 1)) break; /* not >= (1 sample selections) */
+	  if (FRAGMENT_GLOBAL_POSITION(new_ed, i) >= beg)
+	    {
+	      FRAGMENT_PTREE(new_ed, i) = ptree_loc;
+	      FRAGMENT_TYPE(new_ed, i) = ED_PTREE;
+	      FRAGMENT_RAMP_BEG(new_ed, i) = MUS_SAMPLE_TO_FLOAT(FRAGMENT_SCALER(new_ed, i));
+	      FRAGMENT_SCALER(new_ed, i) = 1.0;
+	    }
+	}
+      /* amp_env_scale_selection_by(cp, scl, beg, num, pos); */
+    }
+  new_ed->edit_type = PTREE_EDIT;
+  new_ed->sound_location = 0;
+  new_ed->origin = mus_format("ptree %d " OFF_TD " " OFF_TD, ptree_loc, beg, num);
+  new_ed->beg = beg;
+  new_ed->len = num;
+  new_ed->selection_beg = old_ed->selection_beg;
+  new_ed->selection_end = old_ed->selection_end;
+  ripple_marks(cp, 0, 0); /* 0,0 -> copy marks */
+  check_for_first_edit(cp);
+  lock_affected_mixes(cp, beg, beg + num);
+  if (cp->mix_md) reflect_mix_edit(cp, "ptree");
   reflect_edit_history_change(cp);
   update_graph(cp);
 }
@@ -1774,6 +1841,41 @@ static Float previous_sample_to_float_unscaled(snd_fd *sf)
   else return(sf->data[sf->loc--]);
 }
 
+
+/* TODO: save-state of ptree should collapse it and save as direct data */
+static mus_sample_t next_sample_with_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound(sf));
+  else return(MUS_FLOAT_TO_SAMPLE(sf->cb->scl * evaluate_ptree_1f2f(sf->ptree, sf->cb->rmp0 * sf->data[sf->loc++])));
+  /* fscaler after ptree so that subsequent scaling of ptree-fragment actually scales it
+   *   (ptree might be nonlinear)
+   *   but this means we can use ptree only if we have direct (unramped) data access
+   */
+}
+
+static mus_sample_t previous_sample_with_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound(sf));
+  else return(MUS_FLOAT_TO_SAMPLE(sf->cb->scl * evaluate_ptree_1f2f(sf->ptree, sf->cb->rmp0 * sf->data[sf->loc--])));
+}
+
+static Float next_sample_to_float_with_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(MUS_SAMPLE_TO_FLOAT(next_sound(sf)));
+  else return(sf->cb->scl * evaluate_ptree_1f2f(sf->ptree, sf->cb->rmp0 * sf->data[sf->loc++]));
+}
+
+static Float previous_sample_to_float_with_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(MUS_SAMPLE_TO_FLOAT(previous_sound(sf)));
+  else return(sf->cb->scl * evaluate_ptree_1f2f(sf->ptree, sf->cb->rmp0 * sf->data[sf->loc--]));
+}
+
+
 void read_sample_change_direction(snd_fd *sf, int dir)
 {
   if (dir == READ_FORWARD)
@@ -1787,8 +1889,16 @@ void read_sample_change_direction(snd_fd *sf, int dir)
 	    }
 	  else
 	    {
-	      sf->run = next_sample;
-	      sf->runf = next_sample_to_float;
+	      if (sf->run == previous_sample_with_ptree)
+		{
+		  sf->run = next_sample_with_ptree;
+		  sf->runf = next_sample_to_float_with_ptree;
+		}
+	      else
+		{
+		  sf->run = next_sample;
+		  sf->runf = next_sample_to_float;
+		}
 	    }
 	}
       else
@@ -1808,8 +1918,16 @@ void read_sample_change_direction(snd_fd *sf, int dir)
 	    }
 	  else
 	    {
-	      sf->run = previous_sample;
-	      sf->runf = previous_sample_to_float;
+	      if (sf->run == next_sample_with_ptree)
+		{
+		  sf->run = previous_sample_with_ptree;
+		  sf->runf = previous_sample_to_float_with_ptree;
+		}
+	      else
+		{
+		  sf->run = previous_sample;
+		  sf->runf = previous_sample_to_float;
+		}
 	    }
 	}
       else
@@ -1860,6 +1978,7 @@ static snd_fd *cancel_reader(snd_fd *sf)
 
 static void choose_accessor(snd_fd *sf)
 {
+  Float rmp0, rmp1, scl;
   /* fragment-specific reader choice */
   if (sf->direction == READ_FORWARD)
     {
@@ -1870,9 +1989,9 @@ static void choose_accessor(snd_fd *sf)
 	}
       else
 	{
-	  if (sf->cb->typ == ED_RAMP)
+	  switch (sf->cb->typ)
 	    {
-	      Float rmp0, rmp1, scl;
+	    case ED_RAMP:
 	      scl = sf->cb->scl;
 	      rmp0 = scl * sf->cb->rmp0;
 	      rmp1 = scl * sf->cb->rmp1;
@@ -1880,9 +1999,13 @@ static void choose_accessor(snd_fd *sf)
 	      sf->curval = rmp0 + sf->incr * sf->frag_pos;
 	      sf->run = next_sample_with_ramp;
 	      sf->runf = next_sample_to_float_with_ramp;
-	    }
-	  else
-	    {
+	      break;
+	    case ED_PTREE:
+	      sf->run = next_sample_with_ptree;
+	      sf->runf = next_sample_to_float_with_ptree;
+	      sf->ptree = sf->cp->ptrees[sf->cb->loc];
+	      break;
+	    default:
 	      if (sf->cb->scl == 1.0)
 		{
 		  sf->run = next_sample_unscaled;
@@ -1894,7 +2017,6 @@ static void choose_accessor(snd_fd *sf)
 		{
 #if (!SNDLIB_USE_FLOATS)
 		  /* more concerned here with the int->float->int conversions than the multiply */
-		  Float scl;
 		  scl = sf->cb->scl;
 		  if (scl == floor(scl))
 		    {
@@ -1911,6 +2033,7 @@ static void choose_accessor(snd_fd *sf)
 		  sf->runf = next_sample_to_float;
 #endif
 		}
+	      break;
 	    }
 	}
     }
@@ -1923,20 +2046,23 @@ static void choose_accessor(snd_fd *sf)
 	}
       else
 	{
-	  if (sf->cb->typ == ED_RAMP)
+	  switch (sf->cb->typ)
 	    {
-	      Float rmp0, rmp1, scl;
+	    case ED_RAMP:
 	      scl = sf->cb->scl;
 	      rmp0 = scl * sf->cb->rmp0;
 	      rmp1 = scl * sf->cb->rmp1;
-
 	      sf->incr = (double)(rmp1 - rmp0) / (double)(sf->cb->end - sf->cb->beg);
 	      sf->curval = rmp0 + sf->incr * sf->frag_pos;
 	      sf->run = previous_sample_with_ramp;
 	      sf->runf = previous_sample_to_float_with_ramp;
-	    }
-	  else
-	    {
+	      break;
+	    case ED_PTREE:
+	      sf->run = previous_sample_with_ptree;
+	      sf->runf = previous_sample_to_float_with_ptree;
+	      sf->ptree = sf->cp->ptrees[sf->cb->loc];
+	      break;
+	    default:
 	      if (sf->cb->scl == 1.0)
 		{
 		  sf->run = previous_sample_unscaled;
@@ -1947,7 +2073,6 @@ static void choose_accessor(snd_fd *sf)
 	      else
 		{
 #if (!SNDLIB_USE_FLOATS)
-		  Float scl;
 		  scl = sf->cb->scl;
 		  if (scl == floor(scl))
 		    {
@@ -1964,12 +2089,13 @@ static void choose_accessor(snd_fd *sf)
 		  sf->runf = previous_sample_to_float;
 #endif
 		}
+	      break;
 	    }
 	}
     }
 }
 
-snd_fd *init_sample_read_any(off_t samp, chan_info *cp, int direction, int edit_position)
+static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, int direction, int edit_position, int bufsize)
 {
   snd_fd *sf;
   snd_info *sp;
@@ -2004,10 +2130,7 @@ snd_fd *init_sample_read_any(off_t samp, chan_info *cp, int direction, int edit_
 
   /*
    * TODO: fragment change func (with possibility of callback fragment-hook)
-   * TODO: other readers: run-ified ptree ops? (basic cases need (ideally) to be peak-amp-envable (i.e. linear monotonically increasing etc)
-   *       mix reader? (i.e. two readers running in parallel)
-   *       some way for user to decide when to use ptree
-   *       easy but maybe useless: add constant, set to constant
+   * TODO: mix reader (i.e. two readers running in parallel)
    */
 
   sf->current_state = ed;
@@ -2054,7 +2177,7 @@ snd_fd *init_sample_read_any(off_t samp, chan_info *cp, int direction, int edit_
 	       */
 	      if (first_snd->inuse)
 		{
-		  first_snd = copy_snd_data(first_snd, cp, MIX_FILE_BUFFER_SIZE);
+		  first_snd = copy_snd_data(first_snd, cp, bufsize);
 		  if (first_snd == NULL)
 		    return(cancel_reader(sf));
 		}
@@ -2081,9 +2204,14 @@ snd_fd *init_sample_read_any(off_t samp, chan_info *cp, int direction, int edit_
   return(NULL);
 }
 
+snd_fd *init_sample_read_any(off_t samp, chan_info *cp, int direction, int edit_position)
+{
+  return(init_sample_read_any_with_bufsize(samp, cp, direction, edit_position, MIX_FILE_BUFFER_SIZE));
+}
+
 snd_fd *init_sample_read(off_t samp, chan_info *cp, int direction)
 {
-  return(init_sample_read_any(samp, cp, direction, cp->edit_ctr));
+  return(init_sample_read_any_with_bufsize(samp, cp, direction, cp->edit_ctr, MIX_FILE_BUFFER_SIZE));
 }
 
 Float chn_sample(off_t samp, chan_info *cp, int pos)
@@ -2100,7 +2228,7 @@ Float chn_sample(off_t samp, chan_info *cp, int pos)
 	return(MUS_SAMPLE_TO_FLOAT(sd->buffered_data[samp - sd->io->beg]));
     }
   /* do it the hard way */
-  sf = init_sample_read(samp, cp, READ_FORWARD);
+  sf = init_sample_read_any_with_bufsize(samp, cp, READ_FORWARD, cp->edit_ctr, 2);
   if (sf)
     {
       val = read_sample_to_float(sf);

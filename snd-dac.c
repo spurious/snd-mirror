@@ -1119,6 +1119,8 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		  (dp->chn_fd->cb))
 		{
 		  off_t loc;
+		  int old_just_zero;
+		  old_just_zero = dp->cp->just_zero;
 		  dp->cp->just_zero = TRUE;
 		  loc = current_location(dp->chn_fd);
 #if HAVE_OSS
@@ -1127,7 +1129,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		  if (loc < 0) loc = 0;
 #endif
 		  cursor_moveto_without_verbosity(dp->cp, loc);
-		  dp->cp->just_zero = FALSE;
+		  dp->cp->just_zero = old_just_zero;
 		}
 
 	      /* add a buffer's worth from the current source into dp->audio_chan */

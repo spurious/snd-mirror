@@ -246,6 +246,8 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+20-Jun:  ptree-channel (an experiment) -- any func as virtual edit.\n\
+         env-channel can take envelope (list) arg.\n\
 18-Jun:  snd colors now mimic xm/xg, snd-pixel is a no-op.\n\
 12-Jun:  snd 5.11.\n\
          moved forward|backward-sample to snd5.scm.\n\
@@ -255,11 +257,6 @@ void news_help(snd_state *ss)
 4-Jun:   Gtk OpenGL support via the gtkglext library.\n\
 3-Jun:   removed \"colour\" spelling option (snd5.scm has backwards compatible definitions).\n\
 28-May:  Dave Phillips' Snd tutorial added in contrib/tutorial.\n\
-24-May:  with-gl to choose between GL/X graphics, snd-gl.scm.\n\
-23-May:  gl1.png (spectrogram uses GL now if mono and HAVE_GL).\n\
-20-May:  removed glfft.c and glfft.scm, added snd-gxl-context on -DHAVE_GL switch (configure --with-gl).\n\
-         added gl.c, makegl.scm, gldata.scm (GL example in grfsnd.html).\n\
-15-May:  update-hook.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

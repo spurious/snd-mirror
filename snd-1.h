@@ -703,11 +703,12 @@ mus_sample_t previous_sound (snd_fd *sf);
 mus_sample_t next_sound (snd_fd *sf);
 void scale_channel(chan_info *cp, Float scaler, off_t beg, off_t num, int pos);
 void ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, int pos);
+void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos);
 void move_to_next_sample(snd_fd *sf);
 snd_fd *init_sample_read(off_t samp, chan_info *cp, int direction);
 snd_fd *init_sample_read_any(off_t samp, chan_info *cp, int direction, int edit_position);
 void read_sample_change_direction(snd_fd *sf, int dir);
-int ramped_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos);
+int ramp_or_ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos);
 #define read_sample(Sf) (*Sf->run)(Sf)
 #define read_sample_to_float(Sf) (*Sf->runf)(Sf)
 Float protected_next_sample_to_float(snd_fd *sf);

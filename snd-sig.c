@@ -1926,10 +1926,10 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
 	  if (beg != si->begs[i])
 	    fprintf(stderr,"using ramp %lld for %lld\n", si->begs[i], beg);
 #endif
-	  if (ramped_fragments_in_use(si->cps[i], 
-				      si->begs[i],
-				      dur,
-				      to_c_edit_position(si->cps[i], edpos, origin, arg_pos)))
+	  if (ramp_or_ptree_fragments_in_use(si->cps[i], 
+					     si->begs[i],
+					     dur,
+					     to_c_edit_position(si->cps[i], edpos, origin, arg_pos)))
 	    {
 	      rampable = FALSE;
 	      break;
@@ -2397,6 +2397,35 @@ static char *run_channel(chan_info *cp, void *upt, off_t beg, off_t dur, int edp
   FREE(data[0]);
   FREE(data);
   return(NULL);
+}
+
+static XEN g_ptree_channel(XEN proc_and_list, XEN s_beg, XEN s_dur, XEN snd, XEN chn, XEN edpos)
+{
+  /* TODO: only virtual if no underlying ed ops */
+  /* TODO: collapse into "run-channel"? */
+  chan_info *cp;
+  off_t beg = 0, dur = 0;
+  int pos;
+  XEN proc = XEN_FALSE;
+  void *pt = NULL;
+  if (XEN_LIST_P(proc_and_list))
+    proc = XEN_CADR(proc_and_list);
+  XEN_ASSERT_TYPE((XEN_PROCEDURE_P(proc)), proc, XEN_ARG_1, "ptree-channel", "a procedure");
+  ASSERT_SAMPLE_TYPE("ptree-channel", s_beg, XEN_ARG_2);
+  ASSERT_SAMPLE_TYPE("ptree-channel", s_dur, XEN_ARG_3);
+  ASSERT_CHANNEL("ptree-channel", snd, chn, 4); 
+  cp = get_cp(snd, chn, "ptree-channel");
+  pos = to_c_edit_position(cp, edpos, "ptree-channel", 6);
+  beg = beg_to_sample(s_beg, "ptree-channel");
+  dur = dur_to_samples(s_dur, beg, cp, pos, 2, "ptree-channel");
+  if (beg > cp->samples[pos])
+    XEN_ERROR(NO_SUCH_SAMPLE,
+	      XEN_LIST_2(C_TO_XEN_STRING("ptree-channel"),
+			 s_beg));
+  pt = form_to_ptree_1f2f(proc_and_list);
+  if (pt)
+    ptree_channel(cp, pt, beg, dur, pos);
+  return(XEN_FALSE);
 }
 
 static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN chn, XEN edpos, XEN s_dur, char *fallback_caller) 
@@ -3192,19 +3221,17 @@ either to the end of the sound or for 'samps' samples, with segments interpolati
 
 static XEN g_env_channel(XEN gen, XEN samp_n, XEN samps, XEN snd_n, XEN chn_n, XEN edpos)
 {
-  #define H_env_channel "(" S_env_channel " clm-env-gen &optional beg dur snd chn edpos)\n\
-applies amplitude envelope 'clm-env-gen' to snd's channel chn starting at beg for dur samples."
+  #define H_env_channel "(" S_env_channel " clm-env-gen-or-envelope &optional beg dur snd chn edpos)\n\
+applies amplitude envelope 'clm-env-gen-or-envelope' to snd's channel chn starting at beg for dur samples."
 
-  /* TODO: env-channel should accept a list (envelope) */
   chan_info *cp;
   snd_info *sp;
   off_t beg = 0, dur;
   int old_sync = 0, pos;
-  mus_any *egen;
+  XEN val;
   ASSERT_SAMPLE_TYPE(S_env_channel, samp_n, XEN_ARG_2);
   ASSERT_SAMPLE_TYPE(S_env_channel, samps, XEN_ARG_3);
   ASSERT_CHANNEL(S_env_channel, snd_n, chn_n, 4);
-  XEN_ASSERT_TYPE((mus_xen_p(gen)) && (mus_env_p(egen = MUS_XEN_TO_CLM(gen))), gen, XEN_ARG_1, S_env_channel, "a CLM env generator");
   cp = get_cp(snd_n, chn_n, S_env_channel);
   beg = beg_to_sample(samp_n, S_env_channel);
   pos = to_c_edit_position(cp, edpos, S_env_channel, 6);
@@ -3214,9 +3241,9 @@ applies amplitude envelope 'clm-env-gen' to snd's channel chn starting at beg fo
   sp = cp->sound;
   old_sync = sp->sync;
   sp->sync = 0;
-  apply_env(cp, NULL, beg, dur, 1.0, FALSE, NOT_FROM_ENVED, S_env_channel, egen, edpos, 6, 1.0);
+  val = g_env_1(gen, beg, dur, C_TO_XEN_DOUBLE(1.0), cp, edpos, S_env_channel, FALSE);
   sp->sync = old_sync;
-  return(gen);
+  return(val);
 }
 
 static XEN g_fft_1(XEN reals, XEN imag, XEN sign, int use_fft)
@@ -3762,6 +3789,7 @@ void g_init_sig(void)
   XEN_DEFINE_PROCEDURE(S_count_matches "-1",      g_count_matches_w, 1, 4, 0,           H_count_matches);
   XEN_DEFINE_PROCEDURE(S_map_chan "-1",           g_map_chan_w, 1, 6, 0,                H_map_chan);
   XEN_DEFINE_PROCEDURE(S_map_channel "-1",        g_map_channel_w, 1, 6, 0,             H_map_channel);
+  XEN_DEFINE_PROCEDURE("ptree-channel-1",         g_ptree_channel, 1, 5, 0,             "no doc yet");
 
   XEN_EVAL_C_STRING("(defmacro* scan-channel (form #:rest args) `(apply scan-channel-1 (list (list ',form ,form) ,@args)))");
   scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL("scan-channel"), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(H_scan_channel));
@@ -3775,6 +3803,9 @@ void g_init_sig(void)
   scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL("map-channel"), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(H_map_channel));
   XEN_EVAL_C_STRING("(defmacro* map-chan (form #:rest args) `(apply map-chan-1 (list (list ',form ,form) ,@args)))");
   scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL("map-chan"), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(H_map_chan));
+
+  XEN_EVAL_C_STRING("(defmacro* ptree-channel (form #:rest args) `(apply ptree-channel-1 (list (list ',form ,form) ,@args)))");
+  scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL("ptree-channel"), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING("no doc yet"));
 #else
   XEN_DEFINE_PROCEDURE(S_scan_channel,            g_scan_channel_w, 1, 5, 0,            H_scan_channel);
   XEN_DEFINE_PROCEDURE(S_scan_chan,               g_scan_chan_w, 1, 5, 0,               H_scan_chan);

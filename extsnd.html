@@ -4590,9 +4590,7 @@ the direction argument between the channel and edit-position.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- --><b>env-channel</b> is the <a href="#regularizedargs">regularized</a> version of <a href="#sndenv">env-sound</a>.  <i>clm-env-gen</i>
-<!-- -->must be a CLM envelope generator.<br><code>(env-channel (make-env '(0 0 1 1 2 0) :end (1- (frames))))</code><br>
-<!-- -->You can speed up simple envelopes by splitting out the "steady state" (the portion that
-<!-- -->doesn't change), handling it as with scale-by (or nothing if the value is 1.0), then the rest as ramps.
+<!-- -->can be either a CLM envelope generator or an envelope (a list of breakpoints). <code>(env-channel '(0 0 1 1 2 0))</code><br>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6921,7 +6919,7 @@ The control panel procedures are:
 <span class=cbox><h3><A NAME="editlists">Edit Lists</a></h3></span>
 
 <p>An edit list describes the edit history of a channel.  When, for example, you type C-d, nothing actually
-happens to any data, despite the fact that the graph no longer shows that sample, it's gone when you play the
+happens to any data, despite the fact that the graph no longer shows that sample, it's omitted when you play the
 channel, and so on.  What actually happens is that a descriptor is appended to the edit history of that
 channel saying "sample n was deleted".  Undo and redo move around in this list (they simply move the
 pointer to the current edit history position); all the positions are accessible just like the current
@@ -7146,8 +7144,8 @@ in zeros, most non-exponential envelopes, and simple cases of channel swaps are 
 the edit list.  This means that ideally such operations are instantaneous
 and take no disk space no matter how large the sound being edited
 (in other cases we have to save at least the changed portion of the
-sound).  I'm toying with extending this part of Snd to more complex
-operations.
+sound).  ptree-channel (still in the experimental stages) extends this part of Snd to 
+arbitrary functions.
 </p>
 
 

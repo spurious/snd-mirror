@@ -3611,6 +3611,8 @@
 	(test-orig (lambda (snd) (env-sound '(0 1.0 1 2.0 2 1.0) ind1)) (lambda (snd) (env-sound '(0 1.0 1 0.5 2 1.0) ind1)) 'env-sound ind1)
 	(test-orig (lambda (snd) (env-channel (make-env :envelope '(0 1.0 1 2.0) :end (frames))))
 		   (lambda (snd) (env-channel (make-env :envelope '(0 1.0 1 0.5) :end (frames)))) 'env-channel ind1)
+	(test-orig (lambda (snd) (env-channel '(0 1.0 1 2.0)))
+		   (lambda (snd) (env-channel '(0 1.0 1 0.5))) 'env-channel ind1)
 	(test-orig (lambda (snd) (env-channel (make-env :envelope '(0 2 1 2 2 0.5 3 0.5) :base 0 :end (frames))))
 		   (lambda (snd) (env-channel (make-env :envelope '(0 0.5 1 0.5 2 2 3 2) :base 0 :end (frames)))) 'env-channel ind1)
 	(test-orig (lambda (snd) (map-channel (lambda (n) (* n 2)))) (lambda (snd) (map-channel (lambda (n) (* n 0.5)))) 'map-channel ind1)
@@ -4352,6 +4354,17 @@
 			   1.0)
 
 	(test-channel-func (lambda* (beg dur index chan #:optional edpos)
+			     (env-channel '(0 0 1 1) beg dur index chan edpos))
+			   (lambda (dur)
+			     (let ((e (make-env :envelope '(0 0 1 1) :end (1- dur)))
+				   (v (make-vct dur)))
+			       (do ((i 0 (1+ i)))
+				   ((= i dur))
+				 (vct-set! v i (env e)))
+			       v))
+			   1.0)
+
+	(test-channel-func (lambda* (beg dur index chan #:optional edpos)
 			     (let ((v (make-vct dur)))
 			       (vct-fill! v -1.0)
 			       (vct->channel v beg dur index chan)))
@@ -4414,7 +4427,7 @@
 				 (vct-set! v i (+ 0.5 (* 0.5 (cos (+ 3.14159 (/ (* 3.14159 i) dur)))))))
 			       v))
 			   1.0)
-	(IF (not (equal? (edits index) (list 255 0)))
+	(IF (not (equal? (edits index) (list 277 0)))
 	    (snd-display ";channel edits: ~A" (edits index)))
 	(let ((old-max (maxamp index #t))
 	      (regdata (map (lambda (n)
@@ -4436,7 +4449,7 @@
 	  (set! index (find-sound "fmv.snd"))
 	  (IF (not (equal? (maxamp index #t) old-max))
 	      (snd-display ";maxes: ~A ~A" (maxamp index #t) old-max))
-	  (IF (not (equal? (edits index) (list 255 0))) ; extend adds 2
+	  (IF (not (equal? (edits index) (list 277 0))) ; extend adds 2
 	      (snd-display ";saved channel edits: ~A" (edits index)))
 
 	  (do ((i 0 (1+ i)))
@@ -4605,6 +4618,42 @@
 				  (begin
 				    (set! pos (1+ pos))
 				    #f))))))
+	  (close-sound ind))
+	(let ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 1)))
+	  (insert-silence 0 150000)
+	  (map-channel (lambda (y) 1.0))
+	  (let ((edpos (edit-position)))
+	    (do ((i 0 (1+ i)))
+		((= i 7))
+	      (if (= i 5)
+		  (scale-channel 0.5 1000 12345))
+	      (env-sound '(0 0 1 1 2.5 0 3 1 4 0))
+	      (if (= i 1)
+		  (delete-samples 50 100)
+		  (if (= i 2)
+		      (insert-samples 300 100 (vct-fill! (make-vct 100) 0.5))
+		      (if (= i 3)
+			  (scale-channel 0.0 1000 1000)
+			  (if (= i 4)
+			      (vct->channel (vct-fill! (make-vct 100) .5) 500 100)
+			      (if (= i 6)
+				  (env-sound '(0 1 1 0) 10000 2000))))))
+	      (let ((reader (make-sample-reader (1- (frames)) ind 0 -1)))
+		(map-channel (lambda (y) (read-sample reader))))
+	      (let ((reader (make-sample-reader (1- (frames)) ind 0 -1)))
+		(map-channel (lambda (y) (read-sample reader))))
+	      (scan-channel (let ((old-reader (make-sample-reader 0 ind 0 1 (- (edit-position ind 0) 2)))
+				  (pos 0))
+			      (lambda (y)
+				(let ((val (read-sample old-reader)))
+				  (if (fneq y val)
+				      (begin
+					(snd-display ";trouble in reverse (~D) read at ~D ~A ~A" i pos val y)
+					#t)
+				      (begin
+					(set! pos (1+ pos))
+					#f))))))
+	      (set! (edit-position ind 0) edpos)))
 	  (close-sound ind))
 
         )))
@@ -13435,7 +13484,7 @@
 					  (/ (- (get-internal-real-time) start) 100)))
 				      (list (lambda () (scale-channel 2.0))
 					    (lambda () (reverse-channel))
-					    (lambda () (env-channel (make-env '(0 0 1 1) :end (1- (frames)))))
+					    (lambda () (env-channel '(0 0 1 1)))
 					    (lambda () (map-channel (lambda (y) (* y 2))))
 					    (lambda () (scan-channel (lambda (y) #f)))
 					    (lambda () (pad-channel 0 2000))
@@ -13754,20 +13803,20 @@ EDITS: 5
 
  (begin) [0:2]:
    (at 0, cp->sounds[0][0:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 50828, cp->sounds[-2][0:0, 0.000000])
+   (at 50828, end_mark)
 
  (set 1 1) ; set-sample [1:4]:
    (at 0, cp->sounds[0][0:0, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
    (at 1, cp->sounds[1][0:0, 1.000000]) [buf: 1] 
    (at 2, cp->sounds[0][2:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 50828, cp->sounds[-2][0:0, 0.000000])
+   (at 50828, end_mark)
 
  (delete 100 1) ; delete-sample [2:5]:
    (at 0, cp->sounds[0][0:0, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
    (at 1, cp->sounds[1][0:0, 1.000000]) [buf: 1] 
    (at 2, cp->sounds[0][2:99, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
    (at 100, cp->sounds[0][101:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 50827, cp->sounds[-2][0:0, 0.000000])
+   (at 50827, end_mark)
 
  (insert 10 1) ; insert-sample [3:7]:
    (at 0, cp->sounds[0][0:0, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
@@ -13776,7 +13825,7 @@ EDITS: 5
    (at 10, cp->sounds[2][0:0, 1.000000]) [buf: 1] 
    (at 11, cp->sounds[0][10:99, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
    (at 101, cp->sounds[0][101:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 50828, cp->sounds[-2][0:0, 0.000000])
+   (at 50828, end_mark)
 
  (scale 0 50828) ; scale-channel 2.0000 0 50828 [4:7]:
    (at 0, cp->sounds[0][0:0, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
@@ -13785,7 +13834,7 @@ EDITS: 5
    (at 10, cp->sounds[2][0:0, 2.000000]) [buf: 1] 
    (at 11, cp->sounds[0][10:99, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
    (at 101, cp->sounds[0][101:50827, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 50828, cp->sounds[-2][0:0, 0.000000])
+   (at 50828, end_mark)
 
  (silence 100 20) ; pad-channel [5:8]:
    (at 0, cp->sounds[0][0:0, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
@@ -13795,7 +13844,7 @@ EDITS: 5
    (at 11, cp->sounds[0][10:99, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
    (at 100, cp->sounds[-1][0:19, 0.000000])
    (at 121, cp->sounds[0][101:50827, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 50848, cp->sounds[-2][0:0, 0.000000])
+   (at 50848, end_mark)
 "))
 	    (snd-display ";display-edits: ~A?" str)))
       (save-edit-history "hiho.scm" nind 0)
