@@ -2018,7 +2018,7 @@ come in handy:
 </p>
 <pre>
 define gp
-call gdb_print($arg0)
+set gdb_print($arg0)
 print gdb_output
 end
 document gp
@@ -2028,7 +2028,7 @@ end
 define ge
 call gdb_read($arg0)
 call gdb_eval(gdb_result)
-call gdb_print(gdb_result)
+set gdb_print(gdb_result)
 print gdb_output
 end
 document ge
@@ -2037,7 +2037,7 @@ end
 
 define gh
 call g_help(scm_str2symbol($arg0), 20)
-call gdb_print($1)
+set gdb_print($1)
 print gdb_output
 end
 document gh

@@ -204,6 +204,12 @@
       (list "Play from cursor"   |xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
 	      (play (cursor graph-popup-snd graph-popup-chn) graph-popup-snd)))
+      (list "Play previous"      |xmPushButtonWidgetClass every-menu
+	    (lambda (w c i)
+	      (play 0 graph-popup-snd graph-popup-chn #f #f (1- (edit-position)))))  ; play version before most-recent edit
+      (list "Play original"      |xmPushButtonWidgetClass every-menu
+	    (lambda (w c i)
+	      (play 0 graph-popup-snd graph-popup-chn #f #f 0)))                     ; play unedited version
       (list "Undo"               |xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
 	      (undo 1 graph-popup-snd graph-popup-chn)))
@@ -277,7 +283,8 @@
 		 (change-label w (short-file-name snd)))
 	     (if (or (string=? name "Save")
 		     (string=? name "Undo")
-		     (string=? name "Revert"))
+		     (string=? name "Revert")
+		     (string=? name "Play previous"))
 		 ((if (> (car eds) 0) |XtManageChild |XtUnmanageChild) w)
 		 (if (string=? name "Play channel")
 		     ((if (> (chans snd) 1) |XtManageChild |XtUnmanageChild) w)
@@ -291,7 +298,9 @@
 				     (string=? name "Insert selection"))
 				 ((if (selection?) |XtManageChild |XtUnmanageChild) w)
 				 (if (string=? name "Play from cursor")
-				     ((if (> (cursor snd chn) 0) |XtManageChild |XtUnmanageChild) w)))))))))))))
+				     ((if (> (cursor snd chn) 0) |XtManageChild |XtUnmanageChild) w)
+				     (if (string=? name "Play original")
+					 ((if (> (car eds) 1) |XtManageChild |XtUnmanageChild) w))))))))))))))
 
 
 ;;; -------- fft popup (easier to access than Options:Transform)

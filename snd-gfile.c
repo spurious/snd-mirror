@@ -1471,9 +1471,8 @@ static void file_mix_ok_callback(GtkWidget *w, gpointer context)
 		    "File: mix", with_mix_tags(ss));
 }
 
-void File_Mix_Callback(GtkWidget *w, gpointer context)
-{
-  snd_state *ss = (snd_state *)context;
+void make_mix_file_dialog(snd_state *ss, int managed)
+  {
   if (!file_mix_dialog)
     {
       file_mix_dialog = snd_gtk_file_selection_new(ss, STR_mix_file_p,
@@ -1482,7 +1481,7 @@ void File_Mix_Callback(GtkWidget *w, gpointer context)
 						   (GtkSignalFunc)file_mix_cancel_callback);
       set_dialog_widget(ss, FILE_MIX_DIALOG, file_mix_dialog);
     }
-  gtk_widget_show(file_mix_dialog);
+  if (managed) gtk_widget_show(file_mix_dialog);
 }
 
 

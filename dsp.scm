@@ -435,7 +435,7 @@
 
 
 ;;; -------- zero-phase, rotate-phase
-;;; fft games (from the "phazor" package of Scott McNab 
+;;; fft games (from the "phazor" package of Scott McNab)
 
 (define (zero-phase)
   (let* ((len (frames))

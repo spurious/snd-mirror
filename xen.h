@@ -3,7 +3,7 @@
 
 /* macros for extended language support 
  *
- * Guile:     ok, covers 1.3.4 to present given the configuration macros in Snd's config.h.in.
+ * Guile:     ok, covers 1.3.4 to present (1.7.0) given the configuration macros in Snd's config.h.in.
  * Ruby:      ok, still a few gaps, tested in 1.6.3
  * None:      ok, covers all known versions of None
  *
@@ -37,12 +37,7 @@
 
 #define XEN_FILE_EXTENSION  "scm"
 #define XEN_COMMENT_STRING  ";"
-
-#if HAVE_SCM_LIST_N
-  #define XEN_EMPTY_LIST    SCM_LIST0
-#else
-  #define XEN_EMPTY_LIST    SCM_EOL
-#endif
+#define XEN_EMPTY_LIST      SCM_EOL
 
 #ifdef __cplusplus
   #define XEN_PROCEDURE_CAST (XEN (*)())
@@ -75,7 +70,11 @@
 #endif
 
 #if HAVE_SCM_REMEMBER_UPTO_HERE
-  #define XEN_OBJECT_TYPE              scm_bits_t
+  #if HAVE_SCM_T_CATCH_BODY
+    #define XEN_OBJECT_TYPE            scm_t_bits
+  #else
+    #define XEN_OBJECT_TYPE            scm_bits_t
+  #endif
   #define XEN_OBJECT_TYPE_P(Obj, Type) ((SCM_NIMP(Obj)) && (SCM_SMOB_PREDICATE(Type, Obj)))
 #else
   #define XEN_OBJECT_TYPE              long
@@ -925,7 +924,11 @@ XEN xen_rb_funcall_0(XEN func);
 /* end NO EXTENSION LANGUAGE */
 
 #if HAVE_GUILE
-  #define XEN_CATCH_BODY_TYPE scm_catch_body_t
+  #if HAVE_SCM_T_CATCH_BODY
+    #define XEN_CATCH_BODY_TYPE scm_t_catch_body
+  #else
+    #define XEN_CATCH_BODY_TYPE scm_catch_body_t
+  #endif
 #else
   typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #endif

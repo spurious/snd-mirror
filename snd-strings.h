@@ -550,6 +550,7 @@
 #define S_mix_anchor                    "mix-anchor"
 #define S_mix_chans                     "mix-chans"
 #define S_mix_color                     "mix-col" STR_OR
+#define S_mix_file_dialog               "mix-file-dialog"
 #define S_mix_home                      "mix-home"
 #define S_mix_length                    "mix-length"
 #define S_mix_locked                    "mix-locked"

@@ -1153,6 +1153,7 @@ constants and functions described above into Scheme.
   mus-audio-report ()                      return audio hardware state as a string
   mus-audio-set-oss-buffers (num size)     in Linux (OSS) sets the number and size of the OSS "fragments"
   mus-audio-sun-outputs (speaker headphones line-out) On the Sun, cause output to go to the chosen devices
+  mus-audio-reinitialize                   force re-check of available audio devices
 
   mus-sound-open-input (filename)          open filename (a sound file) returning an integer ("fd" below)
   mus-sound-open-output (filename srate chans data-format header-type comment)

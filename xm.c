@@ -22277,7 +22277,8 @@ static void define_structs(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "ncolors" XM_POSTFIX, gxm_ncolors, "", XM_PREFIX "set-ncolors" XM_POSTFIX, gxm_set_ncolors,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "cpp" XM_POSTFIX, gxm_cpp, "", XM_PREFIX "set-cpp" XM_POSTFIX, gxm_set_cpp,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmImage" XM_POSTFIX, gxm_XpmImage, 5, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "numsymbols" XM_POSTFIX, gxm_numsymbols, "", XM_PREFIX "set-numsymbols" XM_POSTFIX, gxm_set_numsymbols,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "numsymbols" XM_POSTFIX, gxm_numsymbols, "", 
+				   XM_PREFIX "set-numsymbols" XM_POSTFIX, gxm_set_numsymbols,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "colorsymbols" XM_POSTFIX, gxm_colorsymbols, "", 
 				   XM_PREFIX "set-colorsymbols" XM_POSTFIX, gxm_set_colorsymbols,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "npixels" XM_POSTFIX, gxm_npixels, "", XM_PREFIX "set-npixels" XM_POSTFIX, gxm_set_npixels,  1, 0, 2, 0);

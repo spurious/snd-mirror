@@ -2323,6 +2323,14 @@ static XEN g_open_file_dialog(XEN managed)
   return(managed);
 }
 
+static XEN g_mix_file_dialog(XEN managed)
+{
+  #define H_mix_file_dialog "(" S_mix_file_dialog " managed) creates the mix file dialog if needed and displays it if managed"
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_mix_file_dialog, "a boolean");
+  make_mix_file_dialog(get_global_state(), (XEN_BOUND_P(managed)) ? XEN_TO_C_BOOLEAN(managed) : TRUE);
+  return(managed);
+}
+
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_1(g_add_sound_file_extension_w, g_add_sound_file_extension)
 XEN_NARGIFY_1(g_file_write_date_w, g_file_write_date)
@@ -2336,6 +2344,7 @@ XEN_NARGIFY_0(g_previous_files_sort_procedure_w, g_previous_files_sort_procedure
 XEN_NARGIFY_1(g_set_previous_files_sort_procedure_w, g_set_previous_files_sort_procedure)
 XEN_NARGIFY_1(g_disk_kspace_w, g_disk_kspace)
 XEN_ARGIFY_1(g_open_file_dialog_w, g_open_file_dialog)
+XEN_ARGIFY_1(g_mix_file_dialog_w, g_mix_file_dialog)
 #else
 #define g_add_sound_file_extension_w g_add_sound_file_extension
 #define g_file_write_date_w g_file_write_date
@@ -2349,6 +2358,7 @@ XEN_ARGIFY_1(g_open_file_dialog_w, g_open_file_dialog)
 #define g_set_previous_files_sort_procedure_w g_set_previous_files_sort_procedure
 #define g_disk_kspace_w g_disk_kspace
 #define g_open_file_dialog_w g_open_file_dialog
+#define g_mix_file_dialog_w g_mix_file_dialog
 #endif
 
 void g_init_file(void)
@@ -2360,6 +2370,7 @@ void g_init_file(void)
   XEN_DEFINE_PROCEDURE(S_preload_file,                g_preload_file_w, 1, 0, 0,              H_preload_file);
   XEN_DEFINE_PROCEDURE(S_sound_files_in_directory,    g_sound_files_in_directory_w, 1, 0, 0,  H_sound_files_in_directory);
   XEN_DEFINE_PROCEDURE(S_open_file_dialog,            g_open_file_dialog_w, 0, 1, 0,          H_open_file_dialog);
+  XEN_DEFINE_PROCEDURE(S_mix_file_dialog, g_mix_file_dialog_w, 0, 1, 0, H_mix_file_dialog);
   XEN_DEFINE_PROCEDURE(S_disk_kspace,                 g_disk_kspace_w, 1, 0, 0,               H_disk_kspace);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sound_loop_info, g_sound_loop_info_w, H_sound_loop_info,
 			       "set-" S_sound_loop_info, g_set_sound_loop_info_w,  0, 1, 1, 1);

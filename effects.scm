@@ -1172,15 +1172,15 @@
                                                        "Move the sliders to set the comb-chord parameters."))
                                         (lambda (w c i)
                                           (set! comb-chord-scaler initial-comb-chord-scaler)
-                                          (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* comb-chord-scaler 100))))
+                                          (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* comb-chord-scaler 100))))
                                           (set! comb-chord-size initial-comb-chord-size)
-                                          (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* comb-chord-size 100))))
+                                          (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact (* comb-chord-size 100))))
                                           (set! comb-chord-amp initial-comb-chord-amp)
-                                          (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* comb-chord-amp 100))))
+                                          (|XtSetValues (list-ref sliders 2) (list |XmNvalue (inexact->exact (* comb-chord-amp 100))))
                                           (set! comb-chord-interval-one initial-comb-chord-interval-one)
-                                          (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* comb-chord-interval-one 100))))
+                                          (|XtSetValues (list-ref sliders 3) (list |XmNvalue (inexact->exact (* comb-chord-interval-one 100))))
                                           (set! comb-chord-interval-two initial-comb-chord-interval-two)
-                                          (|XtSetValues (cadr sliders) (list |XmNvalue (inexact->exact (* comb-chord-interval-two 100)))))))
+                                          (|XtSetValues (list-ref sliders 4) (list |XmNvalue (inexact->exact (* comb-chord-interval-two 100)))))))
               (set! sliders
                     (add-sliders comb-chord-dialog
                                  (list (list "comb-chord scaler" 0.0 initial-comb-chord-scaler 1.0

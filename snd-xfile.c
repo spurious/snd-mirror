@@ -156,8 +156,13 @@ static void color_file_selection_box(Widget w, snd_state *ss)
 /* -------- File Open/Mix Dialogs -------- */
 
 typedef struct {
-  int file_dialog_read_only;
+  int file_dialog_read_only, need_update, new_file_written;
   Widget dialog, play_selected_button, just_sounds_button, dialog_frame, dialog_info1, dialog_info2;
+  XmSearchProc default_search_proc;
+  char *save_dir,*last_dir;
+  dir *sound_files, *current_files;
+  char *last_pattern, *fullpathname;
+  snd_info *file_play_sp;
 } file_dialog_info;
 
 static void file_help_callback (Widget w, XtPointer context, XtPointer info) 
@@ -172,14 +177,10 @@ static void file_cancel_callback (Widget w, XtPointer context, XtPointer info)
   XtUnmanageChild (w);
 }
 
-static XmSearchProc default_search_proc;
-
 static int string_compare(const void *ss1, const void *ss2)
 {
   return(strcmp((*((char **)ss1)), (*((char **)ss2))));
 }
-
-static snd_info *file_play_sp = NULL;
 
 static void play_selected_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -192,16 +193,17 @@ static void play_selected_callback(Widget w, XtPointer context, XtPointer info)
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   if (cb->set)
     {
-      if ((file_play_sp) && (file_play_sp->playing)) 
-	stop_playing_sound(file_play_sp);
+      if ((fd->file_play_sp) && (fd->file_play_sp->playing)) 
+	stop_playing_sound(fd->file_play_sp);
       wtmp = XtNameToWidget(fd->dialog, "Text");
-      if (!wtmp) wtmp = XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_TEXT);
+      if (!wtmp) 
+	wtmp = XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_TEXT);
       filename = XmTextGetString(wtmp);
       if (filename)
 	{
-	  file_play_sp = make_sound_readable(ss, filename, FALSE);
-	  if (file_play_sp)
-	    play_sound(file_play_sp, 0, 
+	  fd->file_play_sp = make_sound_readable(ss, filename, FALSE);
+	  if (fd->file_play_sp)
+	    play_sound(fd->file_play_sp, 0, 
 		       NO_END_SPECIFIED, IN_BACKGROUND, 
 		       C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 
 		       "selected file play", 0);
@@ -209,10 +211,10 @@ static void play_selected_callback(Widget w, XtPointer context, XtPointer info)
     }
   else
     {
-      if ((file_play_sp) && (file_play_sp->playing)) 
+      if ((fd->file_play_sp) && (fd->file_play_sp->playing)) 
 	{
-	  stop_playing_sound(file_play_sp);
-	  file_play_sp = NULL;
+	  stop_playing_sound(fd->file_play_sp);
+	  fd->file_play_sp = NULL;
 	}
     }
 }
@@ -224,21 +226,8 @@ static void play_selected_help_callback(Widget w, XtPointer context, XtPointer i
 "If you click the 'play selected sound' button, the currently selected sound (if and) in the file selection box file list is played.");
 }
 
-static char *fullpathname = NULL;
-static int file_SB_list_needs_update = 0; /* browser list needs update (new 'filter' or whatever) */
-static int new_file_written = 0;          /* sound file list needs update because we wrote a new file */
-
-void alert_new_file(void) {new_file_written = 1;}
-
-static char *open_save_dir = NULL;
-static char *open_last_dir = NULL;
-static dir *open_sound_files, *open_current_files;
-static char *open_last_pattern = NULL;
-
-static char *mix_save_dir = NULL;
-static char *mix_last_dir = NULL;
-static dir *mix_sound_files, *mix_current_files;
-static char *mix_last_pattern = NULL;
+static file_dialog_info *open_dialog = NULL;
+static file_dialog_info *mix_dialog = NULL;
 
 static void sound_file_search(Widget FSB_w, XmFileSelectionBoxCallbackStruct *info)
 {
@@ -268,74 +257,72 @@ static void sound_file_search(Widget FSB_w, XmFileSelectionBoxCallbackStruct *in
    * it appears to be "*" until the filter is invoked.
    */
   char *pattern, *our_dir, *sp, *sn;
-  char *save_dir;
-  char *last_dir;
-  dir *sound_files, *current_files;
-  char *last_pattern;
   dir *cdp;
+  file_dialog_info *fd;
   XmFileSelectionBoxCallbackStruct *data = (XmFileSelectionBoxCallbackStruct *)info;
   XmString *names = NULL;
-  int i, filter_callback, need_update, which_dialog;
+  int i, filter_callback, which_dialog;
   XtVaGetValues(FSB_w, XmNuserData, &which_dialog, NULL);
 
   if (which_dialog == FILE_OPEN_DIALOG)
-    {
-      save_dir = open_save_dir;
-      last_dir = open_last_dir;
-      sound_files = open_sound_files;
-      current_files = open_current_files;
-      last_pattern = open_last_pattern;
-    }
-  else
-    {
-      save_dir = mix_save_dir;
-      last_dir = mix_last_dir;
-      sound_files = mix_sound_files;
-      current_files = mix_current_files;
-      last_pattern = mix_last_pattern;
-    }
+    fd = open_dialog;
+  else fd = mix_dialog;
 
   XmStringGetLtoR (data->pattern, XmFONTLIST_DEFAULT_TAG, &pattern);
   XmStringGetLtoR (data->dir, XmFONTLIST_DEFAULT_TAG, &our_dir);
 
-  if (!fullpathname) fullpathname = (char *)CALLOC(FILENAME_MAX, sizeof(char));
+  if (fd->fullpathname == NULL) 
+    fd->fullpathname = (char *)CALLOC(FILENAME_MAX, sizeof(char));
   filter_callback = (strcmp(pattern, "*") != 0);
-  need_update = file_SB_list_needs_update;
-  file_SB_list_needs_update = 0;
   if (!filter_callback)
     {
-      if ((!last_dir) || (strcmp(our_dir, last_dir) != 0) || (new_file_written))
+      if ((fd->last_dir == NULL) || 
+	  (strcmp(our_dir, fd->last_dir) != 0) || 
+	  (fd->new_file_written))
 	{
-	  if (current_files) current_files = free_dir(current_files);
-	  if (last_dir) {FREE(last_dir); last_dir = NULL;}
-	  last_dir = copy_string(our_dir);
-	  strcpy(fullpathname, our_dir);
-	  save_dir = (char *)(fullpathname + snd_strlen(our_dir));
-	  sound_files = find_sound_files_in_dir(our_dir);
-	  need_update = 1;
+	  if (fd->current_files) 
+	    fd->current_files = free_dir(fd->current_files);
+	  if (fd->last_dir) 
+	    {
+	      FREE(fd->last_dir); 
+	      fd->last_dir = NULL;
+	    }
+	  fd->last_dir = copy_string(our_dir);
+	  strcpy(fd->fullpathname, our_dir);
+	  fd->save_dir = (char *)(fd->fullpathname + snd_strlen(our_dir));
+	  fd->sound_files = find_sound_files_in_dir(our_dir);
+	  fd->need_update = 1;
 	}
-      if (last_pattern)
+      if (fd->last_pattern)
 	{
-	  FREE(last_pattern);
-	  last_pattern = NULL;
+	  FREE(fd->last_pattern);
+	  fd->last_pattern = NULL;
 	}
-      cdp = sound_files;
+      cdp = fd->sound_files;
     }
   else 
     {
-      if ((!last_pattern) || (strcmp(pattern, last_pattern) != 0) || (new_file_written))
+      if ((fd->last_pattern == NULL) || 
+	  (strcmp(pattern, fd->last_pattern) != 0) || 
+	  (fd->new_file_written))
 	  {
-	    if (last_pattern) {FREE(last_pattern); last_pattern = NULL;}
-	    last_pattern = copy_string(pattern);
-	    if (current_files)  current_files = free_dir(current_files);
-	    if ((sound_files) && (sound_files->len > 0)) 
-	      current_files = filter_sound_files(sound_files, pattern);
-	    need_update = 1;
+	    if (fd->last_pattern) 
+	      {
+		FREE(fd->last_pattern); 
+		fd->last_pattern = NULL;
+	      }
+	    fd->last_pattern = copy_string(pattern);
+	    if (fd->current_files)  
+	      fd->current_files = free_dir(fd->current_files);
+	    if ((fd->sound_files) && 
+		(fd->sound_files->len > 0)) 
+	      fd->current_files = filter_sound_files(fd->sound_files, pattern);
+	    fd->need_update = 1;
 	  }
-      cdp = current_files;
+      cdp = fd->current_files;
     }  
-  new_file_written = 0;
-  if (need_update)
+  fd->new_file_written = 0;
+  if (fd->need_update)
     {
       if ((cdp) && (cdp->len > 0))
 	{
@@ -344,7 +331,8 @@ static void sound_file_search(Widget FSB_w, XmFileSelectionBoxCallbackStruct *in
 
 #ifdef SGI
 	  /* this is true only if the SGI "enhanced FSB" is in use, I hope */
-	  if (!(XtNameToWidget(FSB_w, "Text"))) save_dir = fullpathname;
+	  if (!(XtNameToWidget(FSB_w, "Text"))) 
+	    save_dir = fullpathname;
 	  /* can't use SgDIALOG_FINDER here as suggested by SGI "Integration Guide" because
 	   * XmFileSelectionBoxGetChild(FSB_w, SgDIALOG_FINDER)) generates an error if
 	   * snd was loaded without -lSgm.
@@ -353,10 +341,10 @@ static void sound_file_search(Widget FSB_w, XmFileSelectionBoxCallbackStruct *in
 
 	  for (i = 0; i < cdp->len; i++) 
 	    {
-	      for (sp = save_dir, sn = cdp->files[i]; ((*sp) = (*sn)) != '\0'; sp++, sn++);
+	      for (sp = fd->save_dir, sn = cdp->files[i]; ((*sp) = (*sn)) != '\0'; sp++, sn++);
 	      /* save_dir is a pointer into fullpathname after the directory portion */
 	      /*   this is unreadable code! -- it's basically sprintf(fullpathname,"%s%s",our_dir,cdp->files[i]) I think */
-	      names[i] = XmStringCreate(fullpathname, XmFONTLIST_DEFAULT_TAG);
+	      names[i] = XmStringCreate(fd->fullpathname, XmFONTLIST_DEFAULT_TAG);
 	    }
 	}
       else names = NULL;
@@ -374,23 +362,7 @@ static void sound_file_search(Widget FSB_w, XmFileSelectionBoxCallbackStruct *in
 	  FREE(names);
 	}
     }
-
-  if (which_dialog == FILE_OPEN_DIALOG)
-    {
-      open_save_dir = save_dir;
-      open_last_dir = last_dir;
-      open_sound_files = sound_files;
-      open_current_files = current_files;
-      open_last_pattern = last_pattern;
-    }
-  else
-    {
-      mix_save_dir = save_dir;
-      mix_last_dir = last_dir;
-      mix_sound_files = sound_files;
-      mix_current_files = current_files;
-      mix_last_pattern = last_pattern;
-    }
+  fd->need_update = 0;
 }
 
 static void force_directory_reread(Widget dialog)
@@ -408,11 +380,11 @@ static void just_sounds_callback(Widget w, XtPointer context, XtPointer info)
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   if (cb->set)
     {
-      XtVaGetValues(fd->dialog, XmNfileSearchProc, &default_search_proc, NULL);
+      XtVaGetValues(fd->dialog, XmNfileSearchProc, &(fd->default_search_proc), NULL);
       XtVaSetValues(fd->dialog, XmNfileSearchProc, sound_file_search, NULL);
     }
-  else XtVaSetValues(fd->dialog, XmNfileSearchProc, default_search_proc, NULL);
-  file_SB_list_needs_update = 1;
+  else XtVaSetValues(fd->dialog, XmNfileSearchProc, fd->default_search_proc, NULL);
+  fd->need_update = 1;
   force_directory_reread(fd->dialog);
 }
 
@@ -464,12 +436,15 @@ static void file_dialog_select_callback(Widget w, XtPointer context, XtPointer i
       XtVaSetValues(fd->dialog_info2, XmNlabelString, label, NULL);
       XmStringFree(label);
       FREE(buf);
-      if (!(XtIsManaged(fd->dialog_frame))) XtManageChild(fd->dialog_frame);
+      if (!(XtIsManaged(fd->dialog_frame))) 
+	XtManageChild(fd->dialog_frame);
     }
   else
     {
-      if (XtIsManaged(fd->play_selected_button)) XtUnmanageChild(fd->play_selected_button);
-      if (XtIsManaged(fd->dialog_frame)) XtUnmanageChild(fd->dialog_frame);
+      if (XtIsManaged(fd->play_selected_button)) 
+	XtUnmanageChild(fd->play_selected_button);
+      if (XtIsManaged(fd->dialog_frame)) 
+	XtUnmanageChild(fd->dialog_frame);
     }
 }
 #endif
@@ -529,16 +504,22 @@ static file_dialog_info *make_file_dialog(snd_state *ss, int read_only, char *ti
   color_file_selection_box(fd->dialog, ss);
 
   wtmp = XtNameToWidget(fd->dialog, "Text");
-  if (!wtmp) wtmp = XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_TEXT);
-  if (wtmp) add_completer_to_textfield(ss, wtmp, add_completer_func(filename_completer));
+  if (!wtmp) 
+    wtmp = XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_TEXT);
+  if (wtmp) 
+    add_completer_to_textfield(ss, wtmp, add_completer_func(filename_completer));
       
   wtmp = XtNameToWidget(fd->dialog, "FilterText");
-  if (!wtmp) wtmp = XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_FILTER_TEXT);
-  if (wtmp) add_completer_to_textfield(ss, wtmp, add_completer_func(filename_completer));
+  if (!wtmp) 
+    wtmp = XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_FILTER_TEXT);
+  if (wtmp) 
+    add_completer_to_textfield(ss, wtmp, add_completer_func(filename_completer));
 
-  if (!(ss->using_schemes)) XtVaSetValues(fd->just_sounds_button, XmNselectColor, (ss->sgx)->pushed_button_color, NULL);
-  if (!(ss->using_schemes)) XtVaSetValues(fd->play_selected_button, XmNselectColor, (ss->sgx)->pushed_button_color, NULL);
-  XtVaGetValues(fd->dialog, XmNfileSearchProc, &default_search_proc, NULL);
+  if (!(ss->using_schemes)) 
+    XtVaSetValues(fd->just_sounds_button, XmNselectColor, (ss->sgx)->pushed_button_color, NULL);
+  if (!(ss->using_schemes)) 
+    XtVaSetValues(fd->play_selected_button, XmNselectColor, (ss->sgx)->pushed_button_color, NULL);
+  XtVaGetValues(fd->dialog, XmNfileSearchProc, &(fd->default_search_proc), NULL);
   XtAddCallback(fd->dialog, XmNokCallback, file_ok_proc, (XtPointer)fd);
   XtAddCallback(fd->dialog, XmNcancelCallback, file_cancel_callback, (XtPointer)fd);
   XtAddCallback(fd->dialog, XmNhelpCallback, file_help_callback, (XtPointer)ss);
@@ -555,8 +536,6 @@ static file_dialog_info *make_file_dialog(snd_state *ss, int read_only, char *ti
 
 
 /* -------- open file dialog -------- */
-
-static file_dialog_info *open_dialog = NULL;
 
 static void file_open_ok_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -581,10 +560,10 @@ void make_open_file_dialog(snd_state *ss, int read_only, int managed)
 {
   if (open_dialog == NULL)
     open_dialog = make_file_dialog(ss, read_only, STR_File, "open:", FILE_OPEN_DIALOG, file_open_ok_callback);
-  if (new_file_written) 
+  if (open_dialog->new_file_written) 
     {
       force_directory_reread(open_dialog->dialog);
-      new_file_written = 0;
+      open_dialog->new_file_written = 0;
     }
   if ((managed) && (!(XtIsManaged(open_dialog->dialog))))
     XtManageChild(open_dialog->dialog);
@@ -592,8 +571,6 @@ void make_open_file_dialog(snd_state *ss, int read_only, int managed)
 
 
 /* -------- mix file dialog -------- */
-
-static file_dialog_info *mix_dialog = NULL;
 
 static void file_mix_ok_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -614,14 +591,13 @@ static void file_mix_ok_callback(Widget w, XtPointer context, XtPointer info)
   else snd_error("%s is a directory", filename);
 }
 
-void File_Mix_Callback(Widget w, XtPointer context, XtPointer info)
+void make_mix_file_dialog(snd_state *ss, int managed)
 {
   /* called from the menu */
-  snd_state *ss;
-  ss = get_global_state();
   if (mix_dialog == NULL)
     mix_dialog = make_file_dialog(ss, TRUE, STR_mix_file_p, "mix in:", FILE_MIX_DIALOG, file_mix_ok_callback);
-  if (!XtIsManaged(mix_dialog->dialog)) XtManageChild(mix_dialog->dialog);
+  if ((managed) && (!XtIsManaged(mix_dialog->dialog)))
+    XtManageChild(mix_dialog->dialog);
 }
 
 void set_open_file_play_button(int val)
@@ -630,6 +606,14 @@ void set_open_file_play_button(int val)
     XmToggleButtonSetState(open_dialog->play_selected_button, val, FALSE);
   if ((mix_dialog) && (mix_dialog->play_selected_button))
     XmToggleButtonSetState(mix_dialog->play_selected_button, val, FALSE);
+}
+
+void alert_new_file(void) 
+{
+  if (open_dialog)
+    open_dialog->new_file_written = 1;
+  if (mix_dialog)
+    mix_dialog->new_file_written = 1;
 }
 
 
@@ -711,30 +695,23 @@ static void file_header_help_callback(Widget w, XtPointer context, XtPointer inf
 {
   snd_help_with_wrap((snd_state *)context,
 		     "File Header Type",
-"This list shows the output header types that \
-Snd is willing to write.");
+"This list shows the output header types that Snd is willing to write.");
 }
 
 static void file_data_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
 		     "File Data Format",
-"This list shows the data format choices \
-available with the currently selected header \
-choice.  'Short' means 16-bit two's complement \
-integer.  'Mulaw' and 'Alaw' are common 8-bit \
-compression schemes. 'Long' is 32-bit integer. \
-'Float' is 32-bit float.  In each case, the \
-decision as to byte order ('endianess') depends \
-on the header type.");
+"This list shows the data format choices available with the currently selected header choice.  'Short' means 16-bit two's complement \
+integer.  'Mulaw' and 'Alaw' are common 8-bit compression schemes. 'Long' is 32-bit integer. 'Float' is 32-bit float.  In each case, the \
+decision as to byte order ('endianess') depends on the header type.");
 }
 
 static void file_data_location_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
 		     "File Data Location",
-"If you know the data location (in bytes) \
-you can set it in this field.");
+"If you know the data location (in bytes) you can set it in this field.");
 }
 
 static void file_srate_help_callback(Widget w, XtPointer context, XtPointer info)
@@ -1533,31 +1510,28 @@ static void View_CurFiles_Play_Callback(Widget w, XtPointer context, XtPointer i
 static void curfile_unhighlight(snd_state *ss)
 {
   regrow *r;
-  if (file_dialog_is_active())
+  if ((file_dialog_is_active()) && 
+      (!(ss->using_schemes)) && 
+      (vf_selected_file != -1))
     {
-      if ((!(ss->using_schemes)) && (vf_selected_file != -1))
-	{
-	  r = cur_name_row[vf_selected_file];
-	  XtVaSetValues(r->rw, XmNbackground, (ss->sgx)->highlight_color, NULL);
-	  XtVaSetValues(r->nm, XmNbackground, (ss->sgx)->highlight_color, NULL);
-	  vf_selected_file = -1;
-	}
+      r = cur_name_row[vf_selected_file];
+      XtVaSetValues(r->rw, XmNbackground, (ss->sgx)->highlight_color, NULL);
+      XtVaSetValues(r->nm, XmNbackground, (ss->sgx)->highlight_color, NULL);
+      vf_selected_file = -1;
     }
 }
 
 void curfile_highlight(snd_state *ss, int i)
 {
   regrow *r;
-  if (file_dialog_is_active())
+  if ((file_dialog_is_active()) && 
+      (!(ss->using_schemes)))
     {
-      if (!(ss->using_schemes)) 
-	{
-	  if (vf_selected_file != -1) curfile_unhighlight(ss);
-	  r = cur_name_row[i];
-	  XtVaSetValues(r->rw, XmNbackground, (ss->sgx)->zoom_color, NULL);
-	  XtVaSetValues(r->nm, XmNbackground, (ss->sgx)->zoom_color, NULL);
-	  vf_selected_file = i;
-	}
+      if (vf_selected_file != -1) curfile_unhighlight(ss);
+      r = cur_name_row[i];
+      XtVaSetValues(r->rw, XmNbackground, (ss->sgx)->zoom_color, NULL);
+      XtVaSetValues(r->nm, XmNbackground, (ss->sgx)->zoom_color, NULL);
+      vf_selected_file = i;
     }
 }
 
@@ -1709,14 +1683,12 @@ void make_prevfiles_list (snd_state *ss)
     }
   lim = get_max_prevfile_end();
   for (i = get_prevfile_end() + 1; i <= lim; i++)
-    {
-      if ((r = prev_name_row[i]))
-	{
-	  if (XtIsManaged(r->rw)) XtUnmanageChild(r->rw);
-	}
-    }
+    if ((r = prev_name_row[i]))
+      if (XtIsManaged(r->rw)) 
+	XtUnmanageChild(r->rw);
   set_max_prevfile_end(get_prevfile_end());
-  if (!(XtIsManaged(vf_prevlst))) XtManageChild(vf_prevlst);
+  if (!(XtIsManaged(vf_prevlst))) 
+    XtManageChild(vf_prevlst);
 }
 
 static Widget byproc = NULL;
@@ -1834,7 +1806,8 @@ void View_Files_Callback(Widget w, XtPointer context, XtPointer info)
 			   PAD_TITLE_ON_RIGHT, WITHOUT_SORT_BUTTON, WITHOUT_PANED_WINDOW);
       vf_curww = wwl->ww;
       vf_curlst = wwl->list;
-      if (!(ss->using_schemes)) map_over_children(vf_curlst, set_main_color_of_widget, (void *)context);
+      if (!(ss->using_schemes)) 
+	map_over_children(vf_curlst, set_main_color_of_widget, (void *)context);
       FREE(wwl); 
       wwl = NULL;
       if (get_curfile_size() == 0) /* apparently we need at least one row to get Motif to allocate the outer widgets correctly */
@@ -1861,7 +1834,8 @@ void View_Files_Callback(Widget w, XtPointer context, XtPointer info)
 
       vf_prevww = wwl->ww;
       vf_prevlst = wwl->list;
-      if (!(ss->using_schemes)) map_over_children(vf_prevlst, set_main_color_of_widget, (void *)context);
+      if (!(ss->using_schemes)) 
+	map_over_children(vf_prevlst, set_main_color_of_widget, (void *)context);
       FREE(wwl); 
       wwl = NULL;
       if (get_prevfile_size() == 0)
@@ -1879,7 +1853,8 @@ void View_Files_Callback(Widget w, XtPointer context, XtPointer info)
   else raise_dialog(view_files_dialog);
   make_curfiles_list(ss);
   make_prevfiles_list(ss);
-  if (!XtIsManaged(view_files_dialog)) XtManageChild(view_files_dialog);
+  if (!XtIsManaged(view_files_dialog)) 
+    XtManageChild(view_files_dialog);
   highlight_selected_sound(ss);
 }
 
@@ -1951,8 +1926,9 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   xstr3 = XmStringCreate(STR_Ok, XmFONTLIST_DEFAULT_TAG);
   titlestr = XmStringCreate(STR_No_Header_on_File, XmFONTLIST_DEFAULT_TAG);
   str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-  mus_snprintf(str, PRINT_BUFFER_SIZE, "No header found for %s",
-	  filename_without_home_directory(filename));
+  mus_snprintf(str, PRINT_BUFFER_SIZE, 
+	       "No header found for %s",
+	       filename_without_home_directory(filename));
   xstr4 = XmStringCreate(str, XmFONTLIST_DEFAULT_TAG);
   FREE(str);
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -2068,7 +2044,9 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   for (i = 1; i < num_data_formats(); i++) 
     formats[i-1] = XmStringCreate(data_format_name(i), XmFONTLIST_DEFAULT_TAG);
   lst = XmCreateScrolledList(rform, "raw-data-format-list", args, n);
-  XtVaSetValues(lst, XmNitems, formats, XmNitemCount, num_data_formats() - 1, XmNvisibleItemCount, 6, NULL);
+  XtVaSetValues(lst, XmNitems, formats, 
+		     XmNitemCount, num_data_formats() - 1, 
+		     XmNvisibleItemCount, 6, NULL);
   XtManageChild(lst); 
   XmListSelectPos(lst, fr, FALSE);
   for (i = 1; i < num_data_formats(); i++) 
@@ -2096,14 +2074,17 @@ file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss, const cha
   char *str;
   int sr, oc, fr;
   file_info *hdr = NULL;
-  if (!raw_data_dialog) make_raw_data_dialog(filename, ss);
+  if (!raw_data_dialog) 
+    make_raw_data_dialog(filename, ss);
   xstr = XmStringCreate((char *)title, XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(raw_data_dialog, XmNmessageString, xstr, NULL);
   XmStringFree(xstr);
   raise_dialog(raw_data_dialog);
   reflect_raw_pending_in_menu();
-  if (!XtIsManaged(raw_data_dialog)) XtManageChild(raw_data_dialog);
-  while (XtIsManaged(raw_data_dialog)) check_for_event(ss);
+  if (!XtIsManaged(raw_data_dialog)) 
+    XtManageChild(raw_data_dialog);
+  while (XtIsManaged(raw_data_dialog)) 
+    check_for_event(ss);
   reflect_raw_open_in_menu();
   if (raw_cancelled) return(NULL);
   mus_header_raw_defaults(&sr, &oc, &fr);

@@ -186,7 +186,7 @@ static void File_Exit_Callback(GtkWidget *w, gpointer cD)
 
 static void File_Mix_Callback_1(GtkWidget *w, gpointer cD) 
 {
-  IF_MENU_HOOK(STR_File, STR_Mix) File_Mix_Callback(w, cD);
+  IF_MENU_HOOK(STR_File, STR_Mix) make_mix_file_dialog((snd_state *)cD, TRUE);
 }
 
 static void File_Print_Callback_1(GtkWidget *w, gpointer cD) 

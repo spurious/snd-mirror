@@ -17,6 +17,7 @@
 ;;; (select-file func &optional title dir filter help) starts a Snd-like File Selection Dialog running func if a file is selected
 ;;; (show-disk-space) adds a label to the minibuffer area showing the current free space 
 ;;; (keep-file-dialog-open-upon-ok) changes File:Open so that clicking "ok" does not "unmanage" the dialog
+;;;   also keep-mix-file-dialog-open-upon-ok
 ;;; (add-amp-controls) adds amp sliders to the control panel for multi-channel sounds
 ;;; (add-very-useful-icons) adds some very useful icons
 
@@ -196,7 +197,7 @@
 
 ;;; -------- keep-file-dialog-open-upon-ok
 ;;;
-;;; change File:Open so that clicking "ok" does not "unmanage" the dialog
+;;; change File:Open (or File:Mix) so that clicking "ok" does not "unmanage" the dialog
 
 (define keep-file-dialog-open-upon-ok
   (let* ((dialog (let ((m (open-file-dialog #f)))
@@ -212,6 +213,20 @@
 				(select-channel 0))
 			      (snd-error (format #f "~S is a directory" filename))))))
       'ok))) ; prettier in listener than printing out a callback procedure
+
+(define keep-mix-dialog-open-upon-ok
+  (let* ((dialog (let ((m (mix-file-dialog #f)))
+		   (|Widget (list-ref (dialog-widgets) 11)))))
+    (lambda ()
+      (|XtRemoveAllCallbacks dialog |XmNokCallback) ; remove built-in version
+      (|XtAddCallback dialog |XmNokCallback
+		      (lambda (widget context info)
+			;; same as built-in "ok" callback, but does not "unmanage" the dialog
+			(let ((filename (cadr (|XmStringGetLtoR (|value info) |XmFONTLIST_DEFAULT_TAG))))
+			  (if (not (file-is-directory? filename))
+			      (mix-sound filename (cursor))
+			      (snd-error (format #f "~S is a directory" filename))))))
+      'ok)))
 
 
 
@@ -1877,3 +1892,6 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ;;; save/restore -separate window details
 ;;; chan-grf, enved
 ;;; equivalent of zync (x too) across sounds
+
+;;; (create-sound-window (list-ref (main-widgets) 3) "pistol.snd")
+;;;   will probably want to disable close here, or use replace?

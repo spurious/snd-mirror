@@ -129,6 +129,7 @@
 #define S_mus_audio_read                "mus-audio-read"
 #define S_mus_audio_mixer_read          "mus-audio-mixer-read"
 #define S_mus_audio_mixer_write         "mus-audio-mixer-write"
+#define S_mus_audio_reinitialize        "mus-audio-reinitialize"
 
 #define S_mus_file_set_data_clipped     "mus-file-set-data-clipped"
 #define S_mus_file_prescaler            "mus-file-prescaler"

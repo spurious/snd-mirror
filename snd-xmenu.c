@@ -185,7 +185,7 @@ static void File_Exit_Callback(Widget w, XtPointer cD, XtPointer mD)
 
 static void File_Mix_Callback_1(Widget w, XtPointer cD, XtPointer mD) 
 {
-  IF_MENU_HOOK(STR_File, STR_Mix) File_Mix_Callback(w, cD, mD);
+  IF_MENU_HOOK(STR_File, STR_Mix) make_mix_file_dialog((snd_state *)cD, TRUE);
 }
 
 static void File_Print_Callback_1(Widget w, XtPointer cD, XtPointer mD) 

@@ -1,5 +1,6 @@
 snd change log
 
+  3-Sep:     mix-file-dialog.
   1-Sep:     zero-phase, rotate-phase in dsp.scm (Scott McNab).
              region-play-list in examp.scm.
   31-Aug:    snd 5.2.

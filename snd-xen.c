@@ -263,7 +263,11 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 static XEN snd_internal_stack_catch (XEN tag,
 				     XEN_CATCH_BODY_TYPE body,
 				     void *body_data,
+#if HAVE_SCM_T_CATCH_BODY
+				     scm_t_catch_handler handler,
+#else
 				     scm_catch_handler_t handler,
+#endif
 				     void *handler_data)
 { /* declaration from libguile/throw */
   XEN result;

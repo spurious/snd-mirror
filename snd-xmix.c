@@ -616,7 +616,6 @@ Widget make_mix_panel(snd_state *ss)
       XtAddCallback(w_env, XmNexposeCallback, Mix_Amp_Env_Resize, ss);
 
     }
-  /* TODO: what if need more/less amp chans? */
   else raise_dialog(mix_panel);
   if (!(XtIsManaged(mix_panel))) XtManageChild(mix_panel);
 
@@ -664,7 +663,7 @@ static void update_mix_panel(int mix_id)
       XmTextSetString(w_beg, lab);
 
       chans = mix_input_chans_from_id(mix_id);
-      if (chans > 8) chans = 8; /* TODO: fix this! */
+      if (chans > 8) chans = 8; 
 
       for (i = 0; i < chans; i++)
 	{

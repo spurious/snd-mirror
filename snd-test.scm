@@ -1136,10 +1136,12 @@
 
       (set! (show-controls) #t)
       (enved-dialog) 
+      (if (not (list-ref (dialog-widgets) 2)) (snd-display ";enved-dialog?"))
       (set! (enved-active-env) '(0.0 0.0 1.0 1.0 2.0 0.0))
       (if (not (equal? (enved-active-env) (list 0.0 0.0 1.0 1.0 2.0 0.0)))
 	  (snd-display ";set enved-active-env: ~A?" (enved-active-env)))
       (orientation-dialog) 
+      (if (not (list-ref (dialog-widgets) 1)) (snd-display ";orientation-dialog?"))
 
       (letrec ((test-vars
 		(lambda (lst)
@@ -5965,6 +5967,8 @@
 	     (fild (file-dialog))
 	     (regd (region-dialog))
 	     (ehd (without-errors (edit-header-dialog))))
+	 (open-file-dialog #f)
+	 (mix-file-dialog #f)
 	 (if (and (not (provided? 'snd-gtk))
 		  (not (provided? 'snd-guile-gtk)))
 	     (begin
@@ -6007,6 +6011,8 @@
 	   (delete-file "hiho.env")
 	   (dismiss-all-dialogs)
 	   (let ((wids (dialog-widgets)))
+	     (if (not (list-ref wids 6)) (snd-display ";open-file-dialog?"))
+	     (if (not (list-ref wids 11)) (snd-display ";mix-file-dialog?"))
 	     (if (not (= envd (list-ref wids 2))) (snd-display ";dialog-widgets 2: ~A ~A?" (list-ref wids 2) envd))
 	     (if (not (= cold (list-ref wids 0))) (snd-display ";dialog-widgets 0: ~A ~A?" (list-ref wids 0) cold))
 	     (if (not (= ord (list-ref wids 1))) (snd-display ";dialog-widgets 1: ~A ~A?" (list-ref wids 1) ord))

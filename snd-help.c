@@ -255,6 +255,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+3-Sep:   mix-file-dialog.\n\
 1-Sep:   zero-phase, rotate-phase in dsp.scm (Scott McNab).\n\
          region-play-list in examp.scm.\n\
 31-Aug:  Snd 5.2.\n\
@@ -278,11 +279,6 @@ void news_help(snd_state *ss)
          edit-save-as-dialog added (for selection popup menu in snd-motif.scm).\n\
 6-Aug:   drop file into channel graph mixes at cursor.\n\
          make-sound-box, select-file, snd-clock-icon in snd-motif.scm.\n\
-3-Aug:   moved listener widget to main-widgets list.\n\
-         add-selection-popup in snd-motif.scm.\n\
-2-Aug:   mark-hook and add-mark-pane in snd-motif.scm.\n\
-1-Aug:   region browser display bugfix (thanks to Dave Phillips).\n\
-         check-for-unsaved-edits in extensions.scm.\n\
 ",
 NULL);
   FREE(info);

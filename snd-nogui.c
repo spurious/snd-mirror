@@ -292,6 +292,7 @@ void unsensitize_control_buttons(void) {}
 void reflect_recorder_duration(Float new_dur) {}
 char *ps_rgb(snd_state *ss, int pchan) {return(NULL);}
 void make_open_file_dialog(snd_state *ss, int read_only, int managed) {}
+void make_mix_file_dialog(snd_state *ss, int managed) {}
 
 void g_init_gxenv(void) {}
 void g_initialize_xgh(snd_state *ss) {}
