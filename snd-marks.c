@@ -1026,8 +1026,6 @@ void mark_define_region(chan_info *cp, int count)
     }
 }
 
-/* TODO: cp mark size starts at 16 [MARKS_ALLOC_SIZE above]?  makes long empty lists in save-marks */
-
 void save_mark_list(FILE *fd, chan_info *cp)
 {
   /* assumes we're calling from the edit history list maker in snd-edits.c */
@@ -1036,12 +1034,15 @@ void save_mark_list(FILE *fd, chan_info *cp)
   /*   since the edits ripple the marks, we'll have to assume we're called later and hope */
   if (cp->marks)
     {
-      int i, j, marks;
+      int i, j, marks, true_marks_size = 0;
       mark **mps;
       mark *m;
-#if HAVE_GUILE
-      fprintf(fd, "      (%s %d sfile %d '(", S_restore_marks, cp->marks_size, cp->chan);
       for (i = 0; i < cp->marks_size; i++)
+	if (cp->marks[i])
+	  true_marks_size = i + 1;
+#if HAVE_GUILE
+      fprintf(fd, "      (%s %d sfile %d '(", S_restore_marks, true_marks_size, cp->chan);
+      for (i = 0; i < true_marks_size; i++)
 	{
 	  fprintf(fd, "\n        (%d %d (", cp->mark_size[i], cp->mark_ctr[i]);
 	  mps = cp->marks[i];
@@ -1067,8 +1068,8 @@ void save_mark_list(FILE *fd, chan_info *cp)
 #if HAVE_RUBY
       {
 	bool need_comma = false, need_cr = false;
-	fprintf(fd, "      %s(%d, sfile, %d, [\n      ", xen_scheme_procedure_to_ruby(S_restore_marks), cp->marks_size, cp->chan);
-	for (i = 0; i < cp->marks_size; i++)
+	fprintf(fd, "      %s(%d, sfile, %d, [\n      ", xen_scheme_procedure_to_ruby(S_restore_marks), true_marks_size, cp->chan);
+	for (i = 0; i < true_marks_size; i++)
 	  {
 	    if (need_cr) fprintf(fd, ",\n      ");
 	    fprintf(fd, "[%d, %d, [", cp->mark_size[i], cp->mark_ctr[i]);

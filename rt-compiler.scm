@@ -50,7 +50,7 @@ Two short examples
 	  (lambda ()
 	    (out (* 0.8
 		    (oscil osc))))))
-=> #:undefined
+=> #:<procedure
 [A sinus is/should be heard for three seconds.]
 
 
@@ -237,6 +237,10 @@ begin => Works as in scheme
 break => Used to break out of a while loop.
 
 
+call-with-current-continuation => I think it works as in scheme, but I'm surprised how
+                                  simple it was to implement...
+
+
 continue => Go to the top of a while loop.
 
 
@@ -259,7 +263,7 @@ lambda =>  Works as in scheme, except:
             difficult to guarantiue a function to be tail-recursive for single functions, but I think gcc already supports
 	    tail-recursive functions, so I hope its not necesarry to add it explicitly. But I might be wrong!
            *Rest argument is not supported: (lambda (a . rest) ...) (error) (there's no list type...)
-            (You can work around this to a certain degree by using macros)
+            (You can work around this to a certain degree by using macros with keywords or optional arguments)
            *The functions are usually compiled into c-functions that return a float.
             So if your function returns a string or something other than an int or a float,
             the c-function will instead always return 0: 
@@ -275,6 +279,9 @@ lambda =>  Works as in scheme, except:
             Other return-types are currently not supported.
            *This is possible: ((lambda () 5)) => 5
            *This is not possible: ((let ((a (lambda () 5))) a)) => (error)
+            A function can only return numbers.
+           *This is not possible: (((lambda () (lambda () 5)))) => (error)
+            (I don't know whether its necesarry to support this...)
 
 
 let => Works as in scheme
@@ -548,6 +555,10 @@ pthread_cond_broadcast(&cond)
 Wait
 pthread_cond_wait(&cond,&mutex);
 
+
+*******************
+In addition, theres a bounch of very internal functions and macros
+that used wrongly can hang your machine or destroy your harddisk.
 
 
 
@@ -1064,8 +1075,46 @@ Notes
 !#
 
 
-					   
-  
+					    
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; rt-expand-macros does that. First thing to do.
+;;
+;;
+(define (rt-expand-macros term)
+  (call-with-current-continuation
+   (lambda (return)
+
+     (define (check-failed . args)
+       (newline)
+       (apply c-display (cons "rt-compiler.scm/rt-expand-macros:" args))
+       (return #f))
+     
+     (define (expand term)
+       (cond ((null? term) term)
+	     ((not (list? term)) term)
+	     ((list? (car term))
+	      (map expand term))
+	     (else
+	      (if (not (symbol? (car term)))
+		  (check-failed "Illegal function call:" term ".")
+		  (begin
+		    (let* ((args (cdr term))
+			   (a (cons (symbol-append rt-macro-prefix (car term)) args))
+			   (b (macroexpand-1 a )))
+		      (if (not b)
+			  (return #f)
+			  (if (not (equal? a b))
+			      (expand b)
+			      (cons (car term)
+				    (map expand args))))))))))
+
+     (expand term))))
+
+
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; rt-fix-various does various things.
@@ -1088,8 +1137,6 @@ Notes
 ;;  (at the time of writing only vector-ref), and insert code to convert
 ;;  the SCM's to whats expected.
 ;;  (+ 2 (vector-ref vec 3)) -> (+ 2 rt-scm-to-float(vector-ref vec 3))
-;;
-;; + expand rt macros
 ;;
 ;; + more, check code.
 ;;
@@ -1148,6 +1195,7 @@ Notes
 	    args))
      
      (define* (fix varlist term #:optional isnamed)  ;; If isnamed is #t, don't letify lambdas.
+       ;;(c-display "fixing" term)
        (cond ((null? term) term)
 	     ((string? term) term)
 	     ((number? term) term)
@@ -1199,17 +1247,19 @@ Notes
 			      (cddr term))))
 		  (let ((funcname (string->symbol (eval-c-get-unique-name))))
 		    (fix varlist
-			 `(let ((,funcname ,term))
-			    ,funcname)))))
-
+			 `(rt-let/let* ((,funcname ,term))
+				       ,funcname)))))
+	     
 	     ;; ((lambda () 5)) -> (let ((u23 (lambda () 5))) (u23))
-	     ((and (list? (car term))
-		   (eq? 'lambda (car (car term))))
-	      (let ((funcname (string->symbol (eval-c-get-unique-name))))
-		(fix varlist
-		     `(let ((,funcname ,(car term)))
-			(,funcname ,@(cdr term))))))
-
+	     ((list? (car term))
+	      (if (and (not (eq? 'lambda (car (car term)))))
+		  ;;(not (list? (car (car term)))))
+		  (check-failed "Illegal term:" term)
+		  (let ((funcname (string->symbol (eval-c-get-unique-name))))
+		    (fix varlist
+			 `(rt-let/let* ((,funcname ,(car term)))
+				       (,funcname ,@(cdr term)))))))
+	      
 
 	     ((eq? 'rt-begin_p/begin_p (car term))
 	      `(rt-begin_p/begin_p ,@(map (lambda (t)
@@ -1297,11 +1347,11 @@ Notes
 									  (set! funclist (cons (list uname (cadr vardecl) (caddr vardecl))
 											       funclist))
 									  `(,uname ,(cadr vardecl) (rt-lambda-decl/lambda_decl ,(fix-lambda-args (cadr (caddr vardecl))))))
-									`(,uname ,(cadr vardecl) ,(fix varlist (caddr vardecl) #t)))))
+									`(,uname ,(cadr vardecl) ,(fix varlist (caddr vardecl))))))
 								
 								das-vardecls)))
 				   `(let* ,(append vardecls (map (lambda (funcdecl)
-								   `(,(car funcdecl) ,(cadr funcdecl) ,(fix newvarlist (caddr funcdecl))))
+								   `(,(car funcdecl) ,(cadr funcdecl) ,(fix newvarlist (caddr funcdecl) #t)))
 								 (reverse! funclist)))
 				      ,@(map (lambda (t)
 					       (fix newvarlist t))
@@ -1319,10 +1369,10 @@ Notes
 									  (set! funclist (cons (list uname (cadr vardecl) (caddr vardecl))
 											       funclist))
 									  `(,uname ,(cadr vardecl) (rt-lambda-decl/lambda_decl ,(fix-lambda-args (cadr (caddr vardecl))))))
-									`(,uname ,(cadr vardecl) ,(fix newvarlist (caddr vardecl) #t)))))
+									`(,uname ,(cadr vardecl) ,(fix newvarlist (caddr vardecl))))))
 								das-vardecls)))
 				   `(let* ,(append vardecls (map (lambda (funcdecl)
-								   `(,(car funcdecl) ,(cadr funcdecl) ,(fix newvarlist (caddr funcdecl))))
+								   `(,(car funcdecl) ,(cadr funcdecl) ,(fix newvarlist (caddr funcdecl) #t)))
 								 (reverse! funclist)))
 				      ,@(map (lambda (t)
 					       (fix newvarlist t))
@@ -1332,40 +1382,33 @@ Notes
 	     (else
 	      (if (not (symbol? (car term)))
 		  (check-failed "Illegal function call:" term ".")
-		  (begin
-		    (let* ((args (cdr term))
-			   (a (cons (symbol-append rt-macro-prefix (car term)) args))
-			   (b (macroexpand-1 a )))
-		      (if (not b)
-			  (return #f)
-			  (if (not (equal? a b))
-			      (fix varlist b)
-			      (let ((funcname (let ((var (assq (car term) varlist)))
-						(if var
-						    (cadr var)
-						    (car term))))
-				    (args (map (lambda (t)
-						 (fix varlist t))
-					       (cdr term))))
-				;; Check if some of the arguments for the function is a function returning SCM and needs to be converted.
-				(let ((newargs (map (lambda (t argtype)
-						      (if (not (list? t))
-							  t
-							  (let ((func (hashq-ref rt-funcs (car t))))
-							    (if (and func
-								     (not (eq? '<SCM> argtype))
-								     (eq? '<SCM> (-> func return-type)))
-								(begin
-								  (fix varlist `(,(-> (hashq-ref rt-types argtype) c-transformfunc) ,t)))
-								t))))
-						    args
-						    (let ((func (hashq-ref rt-funcs funcname)))
-						      (list-tabulate (length args)
-								     (lambda (i)
-								       (if func
-									   (-> func arg-type i)
-									   '<float>)))))))
-				  (cons funcname newargs)))))))))))
+		  (let* ((funcname (let ((var (assq (car term) varlist)))
+				     (if var
+					 (cadr var)
+					 (car term))))
+			 (args (map (lambda (t)
+				      (fix varlist t))
+				    (cdr term)))
+			 
+			 ;; Check if some of the arguments for the function is a function returning SCM and needs to be converted.
+			 (newargs (map (lambda (t argtype)
+					 (if (not (list? t))
+					     t
+					     (let ((func (hashq-ref rt-funcs (car t))))
+					       (if (and func
+							(not (eq? '<SCM> argtype))
+							(eq? '<SCM> (-> func return-type)))
+						   (begin
+						     (fix varlist `(,(-> (hashq-ref rt-types argtype) c-transformfunc) ,t)))
+						   t))))
+				       args
+				       (let ((func (hashq-ref rt-funcs funcname)))
+					 (list-tabulate (length args)
+							(lambda (i)
+							  (if func
+							      (-> func arg-type i)
+							      '<float>)))))))
+		    (cons funcname newargs))))))
        
      (let ((ret (fix '() term #t)))
        (c-display "renamed:" renamed-guile-vars)
@@ -1492,7 +1535,7 @@ Notes
 					     external-vars)))))))
    
      (define (get-returntype varlist term)
-       (c-display "get-returntype for " term)
+       ;;(c-display "get-returntype for " term)
        (cond ((symbol? term) (let ((avar (assq term varlist)))
 			       (if avar
 				   (if (and (= 3 (length avar))
@@ -1579,7 +1622,7 @@ Notes
      
      
      (define (check-calls varlist term)
-       (c-display "check-calls varlist/term" varlist term)
+       ;;(c-display "check-calls varlist/term" varlist term)
        (cond ((not (list? term)) #t)
 	     ((null? term) #t)
 
@@ -2361,6 +2404,20 @@ Notes
 
 !#
 
+(define-rt-macro (call-with-current-continuation func)
+  (let ((res (string->symbol (eval-c-get-unique-name)))
+	(thunk (string->symbol (eval-c-get-unique-name))))
+    `(let* ((_rt_breakcontsig 0)
+	    (,res 0)
+	    (,(caadr func) (lambda (retval)
+			     (set! ,res retval)
+			     (break)))
+	    (,thunk (lambda () ,@(cddr func))))
+       (if (= (rt-setjmp/setjmp) 0)
+	   (set! ,res (,thunk)))
+       ,res))
+
+	    
 (define-rt-macro (printf string . rest)
   `(rt-printf/fprintf ,string ,@rest))
 (define-c-macro (rt-printf/fprintf string . rest)
@@ -2448,8 +2505,10 @@ Notes
 
 
 (define (rt-4 term)
+  (set! term (rt-expand-macros term))
   (c-display "1")
-  (set! term (rt-replace-define-with-letrecs term))
+  (if term
+      (set! term (rt-replace-define-with-letrecs term)))
   (c-display "2")
   (if (not term)
       #f
@@ -3421,6 +3480,29 @@ return(xen_return_first(C_TO_XEN_DOUBLE(mus_polynomial(v->data, XEN_TO_C_DOUBLE(
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(cddr '(lambda (return) (+ 2 3)))
+
+(macroexpand-1 '(rt-macro-call-with-current-continuation
+		 (lambda (return)
+		   (return 2))))
+(let ((rt_breakcontsig 0)
+      (res 0)
+      (return (lambda (retval)
+		(set! res retval) (break)))
+      (thunk (lambda ()
+	       (return 2))))
+  (if (= (rt-setjmp/setjmp) 0)
+      (set! res (thunk)))
+  res)
+
+
+(define a (rt-2 '(lambda ()
+		   (call-with-current-continuation
+		    (lambda (return)
+		      (return 2)
+		      5)))))
+(rt-funcall a)
+
 (define a (rt-2 '(lambda ()
 		   2)))
 (define a (rt-2 '(lambda ()
@@ -3448,37 +3530,42 @@ return(xen_return_first(C_TO_XEN_DOUBLE(mus_polynomial(v->data, XEN_TO_C_DOUBLE(
 			    unique_name_407_u3)))
      (fib_u2 n_u1)))
 
-(rt-let*-lifter '(lambda (n)
-		   (let* ((a <float> 9)
-			  (fib <float> (lambda (n)
-					 (if (< n 2)
-					     n
-					     (+ (fib (- n 1))
-						(fib (- n 2)))))))
-		     (+ 2 n))))
-(lambda ((<float> n_u1))
-  (let* ((fib_u2 <float> (rt-lambda-decl/lambda_decl ((<float> n))))
-	 (fib_u2 <float> 0)
-	 (unique_name_406_u3 <float> (lambda ((<float> n_u4))
-				       (rt-if/?kolon (< n_u4 2)
-						     n_u4
-						     (+ (fib_u2 (rt--/- n_u4 1))
-							(fib_u2 (rt--/- n_u4 2)))))))
-    (rt-begin_p/begin_p
-     (set! fib_u2 (rt-begin_p/begin_p unique_name_406_u3))
-     (fib_u2 n_u1))))
+(rt-2 '(lambda ()
+	 (let* ((a (lambda ()
+		     9))
+		(b a))
+	   (b))))
+
+(rt-2 '(lambda ()
+	 (((lambda ()
+	     (lambda ()
+	       5))))))
+
+
+
+(rt-2 '(lambda ()
+	 (let ((a (let ((b (lambda ()
+			     9)))
+		    b)))
+	   (a))))
+
+(rt-fix-various '(lambda ()
+		   (letrec ((fib (lambda ()
+				   9)))
+		     2)))
+
+
+(lambda () (let* ((fib_u1 <float> (rt-lambda-decl/lambda_decl ())) (fib_u1 <float> (let* ((unique_name_263_u2 <float> (lambda () 9))) unique_name_263_u2))) 2)))
 
 (lambda ((<float> n_u1))
-  (let* ((fib_u2 <float> (rt-lambda-decl/lambda_decl ((<float> n))))
-	 (fib_u2 <float> 0)
-	 (unique_name_401_u3 <float> (lambda ((<float> n_u4))
-				       (rt-if/?kolon (< n_u4 2)
-						     n_u4
-						     (+ (fib_u2 (rt--/- n_u4 1))
-							(fib_u2 (rt--/- n_u4 2)))))))
-    (rt-begin_p/begin_p
-     (set! fib_u2 (rt-begin_p/begin_p unique_name_401_u3))
-     (fib_u2 n_u1))))
+  (let* ((a_u2 <float> 9)
+	 (fib_u3 <float> (rt-lambda-decl/lambda_decl ((<float> n))))
+	 (fib_u3 <float> (let* ((unique_name_245_u4 <float> (lambda ((<float> n_u5))
+							      (fib_u3 2))))
+			   unique_name_245_u4)))
+    (+ 2 n_u1))))
+
+
 
 (define-rt-macro (ai b (#:key1 9))
   `(+ 5 ,b ,key1)) ;; ,key1))

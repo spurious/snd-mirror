@@ -9,8 +9,6 @@
  *   got segfaults that were not easy to understand. 
  */
 
-/* TODO: check in map-chan that small changes use a buffer not a temp file even if unoptimized */
-
 /* collect syncd chans */
 typedef struct {
   sync_info *si;
@@ -2860,6 +2858,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 			    }
 			  else
 			    {
+			      if (data) {FREE(data); data = NULL;}
 			      if (sf) sf = free_snd_fd(sf);
 			      cp->edit_hook_checked = false;
 			      XEN_ERROR(BAD_TYPE,
@@ -2889,6 +2888,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 		  ripple_trailing_marks(cp, beg, num, data_pos);
 		}
 	    }
+	  if (data) {FREE(data); data = NULL;}
 	}
       update_graph(cp);
     }

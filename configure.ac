@@ -266,7 +266,7 @@ LIBS=$SAVELIBS
 
 # having <complex.h> + a cacos declaration is not enough: C++ dies with a complaint about a "deprecated header"
 #
-#  I'm also using cexp and in xen __real__, __imag__, and the "i" suffix in 1.0i to (dis)assemble complex numbers
+#  I'm also using cexp and in xen creal, cimag, and _Complex_I
 #  I'm currently using the data type "complex double" though the header seems to prefer "double complex" and
 #  the gcc documentation mentions _Complex double.
 #

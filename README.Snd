@@ -21,17 +21,22 @@ The configure program has several Snd-related arguments:
    --with-motif          use Motif (the default)
      --with-static-motif same, but load Motif statically (for RPM)
      --with-motif-prefix set Motif location (will append lib and include)
+
    --with-gtk            use Gtk+
      --with-builtin-gtkrc  include built-in gtkrc fallbacks (default=yes)
+
    --with-no-gui         make Snd without any graphics support
 
    --with-alsa           use ALSA if possible (default is OSS in Linux)
      --with-static-alsa  use ALSA statically loaded (for RPM generation)
+
    --with-esd            use the enlightened sound daemon, if possible
+
    --with-jack           use the Jack library (can be used in conjunction
                            with --with-alsa)
 
    --with-doubles        use doubles throughout (default is floats)
+
    --with-float-samples  represent samples internally as floats (default: ints)
    --with-sample-width=N use N bits of samples (default: 24). N = 32 or so is 
                            not recommended because it does not leave you any 
@@ -63,6 +68,7 @@ The configure program has several Snd-related arguments:
 
    --with-ruby           use Ruby as the extension language
      --with-ruby-prefix  set location of Ruby
+
    --with-guile          use Guile, not Ruby (the default); the path to guile-config
                            can be set via GUILE_CONFIG_path (see examples below).
 
@@ -154,7 +160,7 @@ Dave Phillips has written a tutorial: see the tutorial directory.
 The mailing list for Snd is the same as that for Common Music:
 cmdist@ccrma.stanford.edu.  To subscribe, visit
 
-http://ccrma-mail.stanford.edu/mailman/listinfo/cmdist
+  http://ccrma-mail.stanford.edu/mailman/listinfo/cmdist
 
 The mailing list has been auto-archived since Apr 2002;
 the previous posts (going back to late 1993) are in
@@ -170,8 +176,10 @@ legalese).  Send bug reports or suggestions to bil@ccrma.stanford.edu.
 
 Authors:
 Bill Schottstaedt
-Michael Scholz: the German translation, all of the Ruby code, inf-snd.el, sndins, the Forth version of sndlib, and various instruments.
-Kjetil S. Matheussen: snd_conffile.scm, ladspa.scm, gui.scm, snd-hobbit.scm, eval-c.scm, rt-compiler.scm, oo.scm, and the Jack audio support.
+Michael Scholz: the German translation, all of the Ruby code, inf-snd.el, 
+                sndins, the Forth version of sndlib, and various instruments.
+Kjetil S. Matheussen: snd_conffile.scm, ladspa.scm, gui.scm, snd-hobbit.scm, 
+                eval-c.scm, rt-compiler.scm, oo.scm, and the Jack audio support.
 Dave Phillips: the tutorial, new-effects.scm, and many other files.
 Fernando Lopez-Lezcano: the current ALSA support.
 Richard W.E. Furse: the original LADSPA support.
@@ -252,7 +260,9 @@ Linux, the bad settings come either from /etc/profile or from
 the lang.csh file in /etc/profile.d).
 
 
----- Compiling: ----
+---- Motif: ----
+
+Only Motif 2.n is supported.
 
 If you get the error:
 
@@ -338,7 +348,7 @@ you can find where it occurs by:
 
 ---- GSL: ----
 
-If configure finds GSL, but Snd refuses to load with an error
+If configure finds GSL, but Snd refuses to load, giving an error
 about missing gsl_complex_cos (or whatever), you need to get the
 GSL sources and build it again; apparently the version of libgsl.a
 that comes with Redhat 7.0 doesn't include any of the complex
@@ -661,7 +671,7 @@ So, here's the detailed step-by-step method, thanks to Cris Ewing:
 
 
 
----- Motif: ----
+---- Lesstif: ----
 
 If you installed OpenMotif, then upgraded to RedHat 7.2, Redhat
 probably overwrote Motif with Lesstif.  You need, among other
@@ -693,10 +703,10 @@ is no longer supported -- get Motif 2.
 
 So to sum up: 
   if Gtk, then Gtk+ 2.0.0 or later
-  Motif 2.n but not Lesstif
-  in Linux, ALSA 0.9beta8 or later (or any version of OSS)
-  Guile 1.3.4 or later but Snd's Scheme files need 1.5.0 or later
-  Ruby 1.6.4 or later
+  if Motif, then Motif 2.n but not Lesstif
+  in Linux, if ALSA, then ALSA 0.9beta8 or later (or any version of OSS)
+  if Guile, Guile 1.3.4 or later but Snd's Scheme files need 1.5.0 or later
+  if Ruby, Ruby 1.6.4 or later
   if GSL, version 0.8 or later
   if gtkglext, version 1.0 or later
 
