@@ -4893,15 +4893,7 @@ static void flush_buffers(rdout *gen)
       mus_sound_seek_frame(fd, gen->data_start);
       num = gen->out_end - gen->data_start;
       if (num >= clm_file_buffer_size) 
-	{
-#if DEBUGGING
-	  fprintf(stderr, "flush %d %d %d = %d >= %d! -> ",
-		  gen->data_start, gen->data_end, gen->out_end, gen->out_end - gen->data_start,
-		  clm_file_buffer_size);
-	  abort();
-#endif
-	  num = clm_file_buffer_size - 1;
-	}
+	num = clm_file_buffer_size - 1;
       mus_sound_read(fd, 0, num, gen->chans, addbufs);
       mus_sound_close_input(fd);
       fd = mus_sound_reopen_output(gen->file_name, gen->chans, hdrfrm, hdrtyp, hdrend);
@@ -4936,17 +4928,7 @@ static Float sample_file(void *ptr, int samp, int chan, Float val)
 	}
       gen->obufs[chan][samp - gen->data_start] += MUS_FLOAT_TO_SAMPLE(val);
       if (samp > gen->out_end) 
-	{
-#if DEBUGGING
-	  if (samp > gen->data_end) 
-	    {
-	      fprintf(stderr,"about to set out_end to %d > %d??", samp, gen->data_end);
-	      abort();
-	    }
-#endif
-	  gen->out_end = samp;
-	}
-
+	gen->out_end = samp;
     }
   return(val);
 }

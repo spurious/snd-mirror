@@ -790,7 +790,6 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 int selection_creation_in_progress(void);
 void cancel_selection_watch(void);
 void add_selection_or_region(snd_state *ss, int reg, chan_info *cp, const char *origin);
-void mix_selection_from_menu(snd_state *ss);
 void insert_selection_from_menu(snd_state *ss);
 void insert_selection_or_region(snd_state *ss, int reg, chan_info *cp, const char *origin);
 

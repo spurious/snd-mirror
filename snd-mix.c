@@ -2175,6 +2175,7 @@ static int hit_mix_1(mix_info *md, void *uvals)
   height = mix_tag_height(md->ss);
   mx = md->x - width;
   my = md->y - height / 2;
+  /* fprintf(stderr,"check hit at %d %d %d %d ",md->x, md->y, mx, my);  */
   if ((vals[0] + SLOPPY_MOUSE >= mx) && (vals[0] - SLOPPY_MOUSE <= (mx + width)) &&
       (vals[1] + SLOPPY_MOUSE >= my) && (vals[1] - SLOPPY_MOUSE <= (my + height)))
     return(md->id + 1);
@@ -3858,6 +3859,19 @@ static XEN g_set_mix_waveform_height(XEN val)
   return(C_TO_XEN_INT(mix_waveform_height(ss)));
 }
 
+#define S_mix_tag_position "mix-tag-position"
+static XEN g_mix_tag_position(XEN id)
+{
+  #define H_mix_tag_position "(" S_mix_tag_position " id) returns position of mix tag"
+  mix_info *md;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(id), id, XEN_ONLY_ARG, S_mix_tag_position, "an integer");
+  md = md_from_id(XEN_TO_C_INT(id));
+  if (md) 
+    return(XEN_LIST_2(C_TO_XEN_INT(md->x),
+		      C_TO_XEN_INT(md->y)));
+  return(snd_no_such_mix_error(S_mix_tag_position, id));
+}
+
 static XEN g_mix_tag_width(void) {snd_state *ss; ss = get_global_state(); return(C_TO_XEN_INT(mix_tag_width(ss)));}
 static XEN g_set_mix_tag_width(XEN val) 
 {
@@ -4374,6 +4388,7 @@ XEN_ARGIFY_1(g_mix_name_w, g_mix_name)
 XEN_NARGIFY_2(g_set_mix_name_w, g_set_mix_name)
 XEN_NARGIFY_0(g_mix_waveform_height_w, g_mix_waveform_height)
 XEN_NARGIFY_1(g_set_mix_waveform_height_w, g_set_mix_waveform_height)
+XEN_NARGIFY_1(g_mix_tag_position_w, g_mix_tag_position)
 XEN_NARGIFY_0(g_mix_tag_width_w, g_mix_tag_width)
 XEN_NARGIFY_1(g_set_mix_tag_width_w, g_set_mix_tag_width)
 XEN_NARGIFY_0(g_mix_tag_height_w, g_mix_tag_height)
@@ -4423,6 +4438,7 @@ XEN_ARGIFY_6(mix_vct_w, mix_vct)
 #define g_set_mix_name_w g_set_mix_name
 #define g_mix_waveform_height_w g_mix_waveform_height
 #define g_set_mix_waveform_height_w g_set_mix_waveform_height
+#define g_mix_tag_position_w g_mix_tag_position
 #define g_mix_tag_width_w g_mix_tag_width
 #define g_set_mix_tag_width_w g_set_mix_tag_width
 #define g_mix_tag_height_w g_mix_tag_height
@@ -4521,8 +4537,10 @@ void g_init_mix(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_amp_env, g_mix_amp_env_w, H_mix_amp_env,
 				   "set-" S_mix_amp_env, g_set_mix_amp_env_w, 0, 2, 3, 0);
 
+  XEN_DEFINE_PROCEDURE(S_mix_tag_position, g_mix_tag_position_w, 1, 0, 0, H_mix_tag_position);
+
   XEN_DEFINE_PROCEDURE(S_mix_chans,    g_mix_chans_w, 0, 1, 0,    H_mix_chans);
-  XEN_DEFINE_PROCEDURE(S_mix_p,        g_mix_p_w, 0, 1, 0,         H_mix_p);
+  XEN_DEFINE_PROCEDURE(S_mix_p,        g_mix_p_w, 0, 1, 0,        H_mix_p);
   XEN_DEFINE_PROCEDURE(S_mix_home,     g_mix_home_w, 0, 1, 0,     H_mix_home);
   XEN_DEFINE_PROCEDURE(S_mixes,        g_mixes_w, 0, 2, 0,        H_mixes);
   XEN_DEFINE_PROCEDURE(S_mix_sound,    g_mix_sound_w, 2, 0, 0,    H_mix_sound);

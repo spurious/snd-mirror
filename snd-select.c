@@ -313,11 +313,6 @@ void add_selection_or_region(snd_state *ss, int reg, chan_info *cp, const char *
     }
 }
 
-void mix_selection_from_menu(snd_state *ss)
-{
-  add_selection_or_region(ss, 0, selected_channel(ss), "Edit: mix");
-}
-
 static int insert_selection(snd_state *ss, chan_info *cp, int beg, const char *origin)
 {
   char *tempfile = NULL;

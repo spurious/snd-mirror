@@ -448,8 +448,6 @@ static void run_mark_hook(chan_info *cp, int id, int reason)
 		       S_mark_hook);
 }
 
-static int ignore_redundant_marks = 0;
-
 static void allocate_marks(chan_info *cp, int edit_ctr)
 {
   int i;
@@ -494,11 +492,6 @@ mark *add_mark(int samp, char *name, chan_info *cp)
       for (i = 0; i < med; i++) /* not <= because we pre-incremented above */
 	{
 	  mp = mps[i];
-	  if ((ignore_redundant_marks) && (samp == mp->samp))
-	    {
-	      cp->mark_ctr[ed]--;
-	      return(NULL);
-	    }
 	  if (samp < mp->samp)
 	    {
 	      if (mps[med]) free_mark(mps[med]);
@@ -740,6 +733,7 @@ mark *active_mark(chan_info *cp)
 
 int mark_beg(chan_info *cp)
 {
+  /* called only in snd-chn.c for active zoom */
   mark *mp;
   mp = active_mark(cp);
   if (mp) return(mp->samp);
@@ -1871,19 +1865,23 @@ finds the mark in snd's channel chn at samp (if a number) or with the given name
 static XEN g_add_mark(XEN samp_n, XEN snd_n, XEN chn_n) 
 {
   #define H_add_mark "(" S_add_mark ") samp &optional snd chn) adds a mark at sample samp returning the mark id."
-  mark *m;
+  mark *m = NULL;
   chan_info *cp;
+  int loc;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_add_mark, "an integer");
   ASSERT_CHANNEL(S_add_mark, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_add_mark);
-  m = add_mark(XEN_TO_C_INT_OR_ELSE(samp_n, 0), NULL, cp);
-  if (m)
+  loc = XEN_TO_C_INT_OR_ELSE(samp_n, 0);
+  if ((loc >= 0) && (loc < current_ed_samples(cp)))
     {
-      /* if it's a redundant mark, and we're ignoring them, return -1 */
-      update_graph(cp, NULL);
-      return(C_TO_XEN_INT(mark_id(m)));
+      m = add_mark(loc, NULL, cp);
+      if (m)
+	{
+	  update_graph(cp, NULL);
+	  return(C_TO_XEN_INT(mark_id(m)));
+	}
     }
-  else return(C_TO_XEN_INT(-1)); /* ?? XEN_FALSE? or 'redundant-mark? */
+  return(XEN_FALSE);
 }
 
 static XEN g_delete_mark(XEN id_n) 
@@ -1942,7 +1940,8 @@ static XEN g_syncd_marks(XEN sync)
   XEN res;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(sync), sync, XEN_ONLY_ARG, S_syncd_marks, "an integer");
   ids = syncd_marks(get_global_state(), XEN_TO_C_INT(sync));
-  if ((ids == NULL) || (ids[0] == 0)) return(XEN_EMPTY_LIST);
+  if (ids == NULL) return(XEN_EMPTY_LIST);
+  if (ids[0] == 0) {FREE(ids); return(XEN_EMPTY_LIST);}
   res = int_array_to_list(ids, 1, ids[0]);
   FREE(ids);
   return(res);

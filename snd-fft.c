@@ -2445,10 +2445,10 @@ and otherwise returns a list (total-size active-bins active-slices)"
   cp = get_cp(snd, chn, S_transform_samples_size);
   if (!(cp->graph_transform_p)) 
     return(XEN_ZERO);
-  if (transform_graph_type(cp->state) == GRAPH_TRANSFORM_ONCE) 
-    return(C_TO_SMALL_XEN_INT(transform_size(cp->state)));
+  if (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE)  /* was global here?? */
+    return(C_TO_SMALL_XEN_INT(cp->transform_size));
   si = (sono_info *)(cp->sonogram_data);
-  if (si) return(XEN_LIST_3(C_TO_XEN_DOUBLE(spectro_cutoff(cp->state)),
+  if (si) return(XEN_LIST_3(C_TO_XEN_DOUBLE(cp->spectro_cutoff),
 			    C_TO_SMALL_XEN_INT(si->active_slices),
 			    C_TO_SMALL_XEN_INT(si->target_bins)));
   return(XEN_ZERO);

@@ -133,6 +133,9 @@
     (|XtSetValues widget (list |XmNlabelString str))
     (|XmStringFree str)))
 
+
+;;; -------- log scaler widget
+
 (define log-scale-ticks 500) ; sets precision (to some extent) of slider 
 
 (define (scale-log->linear lo val hi)
@@ -175,7 +178,42 @@
 		      (change-label label (scale-log-label low (|value info) high))))
     scale))
 
+
+;;; -------- semitone scaler widget
+;;; 
+;;; set up like log scale (use 'semi in place of 'log),
+;;;   to get the ratio from the semitones, use (expt 2.0 (/ value 12.0)) -- semitones->ratio below					 
+
+(define semi-range 24) ; 2 octaves either way
+
+(define (semi-scale-label val)
+  (format #f "~D" (- val semi-range)))
+
+(define (semitones->ratio val)
+  (expt 2.0 (/ val 12.0)))
+	  
+(define (create-semi-scale-widget parent title initial callback scale)
+  (let* ((label (|XtCreateManagedWidget (format #f "~D" initial) |xmLabelWidgetClass parent
+	   (list |XmNbackground          (snd-pixel (basic-color)))))
+	 (scale (|XtCreateManagedWidget "scale" |xmScaleWidgetClass parent
+                  (list |XmNorientation   |XmHORIZONTAL
+			|XmNshowValue     #f
+			|XmNminimum       0
+			|XmNmaximum       (* 2 semi-range)
+			|XmNvalue         initial
+			|XmNdecimalPoints 0
+			|XmNtitleString   title
+			|XmNbackground    (snd-pixel (basic-color))))))
+    (|XtAddCallback scale |XmNvalueChangedCallback
+		    (lambda (widget context info)
+		      (change-label label (semi-scale-label (|value info)))))
+    (|XtAddCallback scale |XmNdragCallback
+		    (lambda (widget context info)
+		      (change-label label (semi-scale-label (|value info)))))
+    scale))
+
 					 
+
 (define (add-sliders dialog sliders)
   ;; sliders is a list of lists, each inner list being (title low initial high callback scale ['log])
   ;; returns list of widgets (for reset callbacks)
@@ -196,9 +234,10 @@
 	      (high (list-ref slider-data 3))
 	      (func (list-ref slider-data 4))
 	      (scale (list-ref slider-data 5))
-	      (new-slider (if (and (= (length slider-data) 7) 
-				   (eq? (list-ref slider-data 6) 'log))
-			      (create-log-scale-widget mainform title low initial high func scale)
+	      (new-slider (if (= (length slider-data) 7)
+			      (if (eq? (list-ref slider-data 6) 'log)
+				  (create-log-scale-widget mainform title low initial high func scale)
+				  (create-semi-scale-widget mainform title initial func scale))
 			      (|XtCreateManagedWidget (car slider-data) |xmScaleWidgetClass mainform
 			        (list |XmNorientation   |XmHORIZONTAL
 				      |XmNshowValue     #t

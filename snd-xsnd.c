@@ -1081,7 +1081,7 @@ static void play_button_callback(Widget w, XtPointer context, XtPointer info)
   if (cb->set) 
     {
       ss = sp->state;
-      XtVaSetValues(w,XmNselectColor, ((sp->cursor_follows_play != DONT_FOLLOW) ? ((ss->sgx)->green) : ((ss->sgx)->pushed_button_color)),NULL);
+      XtVaSetValues(w, XmNselectColor, ((sp->cursor_follows_play != DONT_FOLLOW) ? ((ss->sgx)->green) : ((ss->sgx)->pushed_button_color)), NULL);
       play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, 
 		 C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION),
 		 "play button", 0);
@@ -2830,7 +2830,6 @@ void reflect_amp_env_completion(snd_info *sp)
   chan_info *cp;
   env_info *ep;
   int i;
-  Widget info_sep;
   /* a channel completed an amp env, check to see if all are complete */
   for (i = 0; i < sp->nchans; i++)
     {
@@ -2840,16 +2839,17 @@ void reflect_amp_env_completion(snd_info *sp)
       if (!ep) return;
       if (!(ep->completed)) return;
     }
-  info_sep = MINIBUFFER_SEPARATOR(sp);
-  if (info_sep) XtVaSetValues(info_sep, XmNseparatorType, XmSHADOW_ETCHED_IN, NULL);
-  alert_enved_amp_env(sp);
+  if (sp->sgx)
+    {
+      XtVaSetValues(MINIBUFFER_SEPARATOR(sp), XmNseparatorType, XmSHADOW_ETCHED_IN, NULL);
+      alert_enved_amp_env(sp);
+    }
 }
 
 void reflect_amp_env_in_progress(snd_info *sp)
 {
-  Widget info_sep;
-  info_sep = MINIBUFFER_SEPARATOR(sp);
-  if (info_sep) XtVaSetValues(info_sep, XmNseparatorType, XmNO_LINE, NULL);
+  if (sp->sgx)
+    XtVaSetValues(MINIBUFFER_SEPARATOR(sp), XmNseparatorType, XmNO_LINE, NULL);
 }
 
 void equalize_all_panes(snd_state *ss)

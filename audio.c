@@ -50,11 +50,23 @@
   #include "config.h"
 #endif
 
+#if USE_SND && defined(MAC_OSX)
+  #define OLD_MOTIF USE_MOTIF
+  #undef USE_MOTIF
+  /* Xt's Boolean collides with MacTypes.h Boolean, but we want snd.h for other stuff,
+   *   so, if Motif is in use, don't load its headers at this time
+   */
+#endif
+
 #if USE_SND
   #include "snd.h"
 #else
   #define PRINT_BUFFER_SIZE 512
   #define LABEL_BUFFER_SIZE 64
+#endif
+
+#if USE_SND && defined(MAC_OSX)
+  #define USE_MOTIF OLD_MOTIF
 #endif
 
 #include <math.h>

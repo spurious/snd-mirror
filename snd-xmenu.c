@@ -194,7 +194,7 @@ static void file_print_callback_1(Widget w, XtPointer cD, XtPointer mD)
 
 static void edit_mix_callback(Widget w, XtPointer cD, XtPointer mD) 
 {
-  IF_MENU_HOOK(STR_Edit, STR_Mix_Selection) mix_selection_from_menu((snd_state *)cD);
+  IF_MENU_HOOK(STR_Edit, STR_Mix_Selection) add_selection_or_region((snd_state *)cD, 0, selected_channel(((snd_state *)cD)), "Edit: mix");
 }
 
 static void edit_envelope_callback(Widget w, XtPointer cD, XtPointer mD) 

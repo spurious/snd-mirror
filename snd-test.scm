@@ -22,8 +22,9 @@
 ;;; test 19: save and restore
 ;;; test 20: transforms
 ;;; test 21: goops
-;;; test 22: user-interface
-;;; test 23: errors
+;;; test 22: Snd user-interface
+;;; test 23: X/Xt/Xm
+;;; test 24: errors
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs))
 
@@ -33,7 +34,7 @@
 (define snd-test -1)
 (define keep-going #f)
 (define full-test (< snd-test 0))
-(define total-tests 23)
+(define total-tests 24)
 (define with-exit (< snd-test 0))
 (set! (with-background-processes) #f)
 (define all-args #f) ; huge arg testing
@@ -1060,6 +1061,7 @@
 	    (list "oboe.smp" 1 22050 2.305125 "snack SMP" "little endian short (16 bits)")
 	    (list "oboe.nsp" 1 22050 2.305125 "CSL" "little endian short (16 bits)")
 	    (list "oki.snd" 2 44100 0.0041950112208724 "raw (no header)" "big endian short (16 bits)")
+	    (list "oki.wav" 1 44100 0.016780 "RIFF" "unsupported")
 	    (list "orv-dvi-adpcm.wav" 1 44100 1.92725622653961 "RIFF" "unsupported")
 	    (list "riff-16.snd" 1 22050 1.88766443729401 "RIFF" "little endian short (16 bits)")
 	    (list "riff-8-u.snd" 1 11025 0.506848096847534 "RIFF" "unsigned byte (8 bits)")
@@ -1756,7 +1758,11 @@
 	      (snd-display ";saved-as int -> ~A?" (mus-data-format-name (mus-sound-data-format "test.snd"))))
 	  (if (fneq (sample 1000 ab) samp) (snd-display ";nist[1000] = ~A?" (sample 1000 ab)))
 	  (close-sound ab))
+	(add-hook! output-comment-hook
+		   (lambda (str) 
+		     (string-append "written " (strftime "%a %d-%b-%Y %H:%M %Z" (localtime (current-time))))))
 	(save-sound-as "test.snd" ob mus-riff mus-lfloat)
+	(reset-hook! output-comment-hook)
 	(let ((ab (open-sound "test.snd")))
 	  (if (not (= (header-type ab) mus-riff)) 
 	      (snd-display ";save-as riff -> ~A?" (mus-header-type-name (header-type ab))))
@@ -1770,8 +1776,8 @@
 	  (if (not (string=? (mus-sound-comment "test.snd") str))
 	      (snd-display ";output-comment 2: ~A ~A" (mus-sound-comment "test.snd") str))
 	  (if (or (not (string? (comment ab)))
-		  (not (string=? (comment ab) str)))
-	      (snd-display ";output-comment 2 (comment): ~A ~A" (comment ab) str))
+		  (not (string=? (comment ab) (string-append "written " (strftime "%a %d-%b-%Y %H:%M %Z" (localtime (current-time)))))))
+	      (snd-display ";output-comment-hook: ~A" (comment ab)))
 	  (close-sound ab))
 	(save-sound-as "test.snd" ob mus-aiff mus-b24int)
 	(let ((ab (open-sound "test.snd")))
@@ -1971,7 +1977,10 @@
 	  (if (fneq (sound-data-ref sdata 0 10) .1) (snd-display ";vct->sound-data: ~A?" (sound-data-ref sdata 0 10)))
 	  (let ((var (catch #t (lambda () (sound-data->vct sdata 2 v0)) (lambda args args))))
 	    (if (not (eq? (car var) 'mus-error))
-		(snd-display ";sound-data->vct bad chan: ~A" var))))
+		(snd-display ";sound-data->vct bad chan: ~A" var)))
+	  (let ((var (catch #t (lambda () (mus-audio-write 1 (make-sound-data 3 3) 123)) (lambda args args))))
+	    (if (not (eq? (car var) 'mus-error))
+		(snd-display ";mus-audio-write bad frames: ~A" tag))))
 
 	(let ((v0 (make-vct 10))
 	      (sdata2 (make-sound-data 2 10)))
@@ -2274,6 +2283,7 @@
 	(test-data (string-append sf-dir "ce-c3.w02") 1000 10 (vct 0.581 0.598 0.596 0.577 0.552 0.530 0.508 0.479 0.449 0.425))
 	(test-data (string-append sf-dir "nasahal.avi") 20000 10 (vct 0.464 0.189 -0.458 -0.150 0.593 0.439 -0.208 -0.130 0.460 0.429))
 	(test-data (string-append sf-dir "PCM_48_8bit_m.w64") 1000 10 (vct 0.062 0.070 0.070 0.086 0.086 0.102 0.102 0.109 0.109 0.117))
+	(test-data (string-append sf-dir "oki.wav") 100 10 (vct 0.396 0.564 0.677 0.779 0.761 0.540 0.209 -0.100 -0.301 -0.265))
 	)
       ))))
 
@@ -2403,6 +2413,13 @@
       (play-and-wait "oboe.snd" 12000 15000)
       (play-and-wait 0 #f #f #f #f (1- (edit-position)))
       (bomb index #t)
+      (let ((k (disk-kspace "oboe.snd")))
+	(if (or (not (number? k))
+		(<= k 0))
+	    (snd-display ";disk-kspace = ~A" (disk-kspace "oboe.snd")))
+	(set! k (disk-kspace "/baddy/hiho"))
+	(if (not (= k -1))
+	    (snd-display ";disk-kspace of bogus file = ~A" (disk-kspace "/baddy/hiho"))))
       (if (not (= (transform-samples-size) 0)) (snd-display ";transform-samples-size ~A?" (transform-samples-size)))
       (set! (graph-transform?) #t)
       (set! (graph-time?) #t)
@@ -2708,6 +2725,9 @@
 	    (snd-display ";cursor-size: ~A? " (cursor-size)))
 	(set! (cursor-style) cursor-cross)
 	(set! (cursor-size) 15)
+	(set! (cursor index 0) 30) 
+	(set! (cursor-style) cursor-line)
+	(set! (cursor index 0) 20) 
 	(if (not (provided? 'snd-nogui))
 	    (set! (cursor-style index 0)
 		  (lambda (snd chn ax)
@@ -2717,8 +2737,6 @@
 			   (size (inexact->exact (/ (cursor-size) 2))))
 		      (draw-line (- x size) (- y size) (+ x size) (+ y size) snd chn cursor-context)    
 		      (draw-line (- x size) (+ y size) (+ x size) (- y size) snd chn cursor-context)))))
-	(set! (cursor index 0) 20) 
-	(set! (cursor-style) cursor-line)
 	(set! (cursor index) 50)
 	(insert-sound "fyow.snd" (cursor) 0 index 0) 
 	(if (or (fneq (sample 40) s40) (not (fneq (sample 100) s100)) (fneq (sample 100) 0.001831))
@@ -6300,23 +6318,23 @@
       (let ((var (catch #t (lambda () (make-locsig :output 1)) (lambda args args))))
 	(if (not (eq? (car var) 'wrong-type-arg))
 	    (snd-display ";make-locsig bad output: ~A" var)))
+      (let ((var (catch #t (lambda () (locsig-ref (make-locsig) 1)) (lambda args args))))
+	(if (not (eq? (car var) 'mus-error))
+	    (snd-display ";locsig-ref bad chan: ~A" var)))
       (let ((var (catch #t (lambda () (make-locsig :revout 1)) (lambda args args))))
 	(if (not (eq? (car var) 'wrong-type-arg))
 	    (snd-display ";make-locsig bad revout: ~A" var)))
-      (let ((var (catch #t (lambda () (let ((locs (make-locsig :output 1))) (locsig-ref locs -1))) (lambda args args))))
-	(if (not (eq? (car var) 'wrong-type-arg))
+      (let ((var (catch #t (lambda () (let ((locs (make-locsig 200 :channels 2))) (locsig-ref locs -1))) (lambda args args))))
+	(if (not (eq? (car var) 'mus-error))
 	    (snd-display ";locsig-ref bad chan: ~A" var)))
-      (let ((var (catch #t (lambda () (let ((locs (make-locsig :output 1))) (locsig-ref locs 2))) (lambda args args))))
-	(if (not (eq? (car var) 'wrong-type-arg))
-	    (snd-display ";locsig-ref bad chan (2): ~A" var)))
-      (let ((var (catch #t (lambda () (let ((locs (make-locsig :output 1))) (set! (locsig-ref locs 2) .1))) (lambda args args))))
-	(if (not (eq? (car var) 'wrong-type-arg))
+      (let ((var (catch #t (lambda () (let ((locs (make-locsig))) (locsig-set! locs 2 .1))) (lambda args args))))
+	(if (not (eq? (car var) 'mus-error))
 	    (snd-display ";locsig-set! bad chan (2): ~A" var)))
-      (let ((var (catch #t (lambda () (let ((locs (make-locsig :output 1 :reverb .1))) (locsig-reverb-ref locs 2))) (lambda args args))))
-	(if (not (eq? (car var) 'wrong-type-arg))
+      (let ((var (catch #t (lambda () (let ((locs (make-locsig :reverb .1))) (locsig-reverb-ref locs 2))) (lambda args args))))
+	(if (not (eq? (car var) 'mus-error))
 	    (snd-display ";locsig-reverb-ref bad reverb chan (2): ~A" var)))
-      (let ((var (catch #t (lambda () (let ((locs (make-locsig :output 1 :reverb .1))) (set! (locsig-reverb-ref locs 2) .1))) (lambda args args))))
-	(if (not (eq? (car var) 'wrong-type-arg))
+      (let ((var (catch #t (lambda () (let ((locs (make-locsig :reverb .1))) (locsig-reverb-set! locs 2 .1))) (lambda args args))))
+	(if (not (eq? (car var) 'mus-error))
 	    (snd-display ";locsig-reverb-set! bad reverb chan (2): ~A" var)))
 
       (if (file-exists? "fmv4.snd") (delete-file "fmv4.snd"))
@@ -6395,6 +6413,10 @@
 	(if (not (src? gen)) (snd-display ";~A not scr?" gen))
 	(if (or (fneq (vct-ref v0 1) .001) (fneq (vct-ref v0 7) .021)) (snd-display ";src output: ~A" v0))
 	(if (fneq (mus-increment gen) 2.0) (snd-display ";src increment: ~F?" (mus-increment gen))))
+
+      (let ((var (catch #t (lambda () (make-src :width -1)) (lambda args args))))
+	(if (not (eq? (car var) 'mus-error))
+	    (snd-display ";make-src bad width: ~A" var)))
 
       (let ((gen (make-granulate :expansion 2.0))
 	    (v0 (make-vct 1000))
@@ -7588,6 +7610,27 @@
 	  (undo)
 	  (set! (graph-style ind1 0) graph-lollipops)
 	  (graph->ps "aaa.eps")
+	  (set! (graph-transform? ind1 0) #t)
+	  (set! (transform-graph-type ind1 0) graph-transform-as-sonogram)
+	  (update-transform)
+	  (let ((size (transform-samples-size ind1 0)))
+	    (if (or (number? size)
+		    (not (= (length size) 3)))
+		(snd-display ";transform-samples-size of sonogram: ~A" size)))
+	  (graph->ps "aaa.eps")
+
+	  (revert-sound ind0)
+	  (revert-sound ind1)
+	  (insert-samples 0 10 v0 ind0 0)
+	  (insert-samples 0 10 v0 ind0 1)
+	  (insert-samples 0 10 v0 ind1 0)
+	  (filter-sound (make-one-zero :a0 0.5 :a1 0.0) 0 ind0)
+	  (do ((i 0 (1+ i))) 
+	      ((= i 10)) 
+	    (if (fneq (sample i ind0 0) 0.5) (snd-display ";ind0:0 1 filter-sound[~D]: ~A?" i (sample i ind0 0)))
+	    (if (fneq (sample i ind0 1) 0.5) (snd-display ";ind0:1 1 filter-sound[~D]: ~A?" i (sample i ind0 1)))
+	    (if (fneq (sample i ind1 0) 0.5) (snd-display ";ind1:0 1 filter-sound[~D]: ~A?" i (sample i ind1 0))))
+
 	  (close-sound ind1))
 	(close-sound ind0)
 
@@ -7633,7 +7676,27 @@
 	    (if (fneq val 1.0) (snd-display ";scan-across-sound-chans: ~A?" val))))
 	(close-sound ind0)
 	(close-sound ind1)
-	
+
+	(set! ind0 (new-sound "fmv.snd" mus-aifc mus-bshort 22050 2 "this is a comment"))
+	(mix "oboe.snd")
+	(let ((m1 (add-mark 100)))
+	  (delete-sample 10)
+	  (let ((m2 (add-mark 200)))
+	    (delete-sample 10)
+	    (let ((m3 (add-mark 300)))
+	      (undo)
+	      (save-sound)
+	      (if (not (= (length (marks ind0 0)) 2))
+		  (snd-display ";marks after save: ~A" (marks ind0 0)))
+	      (if (or (not (mark? m1))
+		      (not (= (mark-sample m1) 99)))
+		  (snd-display ";save-sound mark1: ~A" (mark-sample m1)))
+	      (if (or (not (mark? m2))
+		      (not (= (mark-sample m2) 200)))
+		  (snd-display ";save-sound mark2: ~A" (mark-sample m2)))
+	      (if (mark? m3) (snd-display ";save-sound mark3: ~A" m3)))))
+	(close-sound ind0)
+
 	(let ((fd (open-sound "oboe.snd"))
 	      (m1 (add-mark 123))
 	      (sync-val (+ 1 (mark-sync-max))))
@@ -7688,9 +7751,13 @@
 		    (m4 (find-mark (mark-sample m2)))
 		    (m5 (find-mark "not-a-mark"))
 		    (m6 (find-mark 123456787))
-		    (m7 (mark-name->id "hiho!")))
+		    (m7 (mark-name->id "hiho!"))
+		    (m8 (add-mark -123))
+		    (m9 (add-mark (* 2 (frames)))))
 		(if (not (eq? m2 m3 m4 m7)) (snd-display ";find-mark: ~A ~A ~A ~A?" m2 m3 m4 m7))
 		(if (not (eq? m5 m6 #f)) (snd-display ";find-not-a-mark: ~A ~A?" m5 m6))
+		(if (not (eq? m8 #f)) (snd-display ";add-mark -123 -> ~A" m8))
+		(if (not (eq? m9 #f)) (snd-display ";add-mark ~A -> ~A" (* 2 (frames)) m9))
 		(set! (mark-sample m2) 2000)
 		(set! m1 (add-mark 1000))
 		(set! m3 (add-mark 3000))
@@ -8818,7 +8885,8 @@
 		   (lambda (filename)
 		     (if (not (string=? filename (mus-expand-filename "oboe.snd")))
 			 (snd-display ";open-hook: ~A?" filename))
-		     (set! op #t)))
+		     (set! op #t)
+		     #f))
 	(add-hook! after-open-hook 
 		   (lambda (snd)
 		     (set! aop snd)))
@@ -8847,6 +8915,14 @@
 	(reset-hook! during-open-hook)
 	(reset-hook! after-open-hook)
 	(reset-hook! initial-graph-hook)
+
+	(add-hook! open-hook (lambda (filename) #t))
+	(let ((pistol (open-sound "pistol.snd")))
+	  (if (not (eq? pistol #f))
+	      (begin
+		(snd-display ";open-hook #t, but open-sound -> ~A" pistol)
+		(if (sound? pistol) (close-sound pistol)))))
+	(reset-hook! open-hook)
 
 	(let ((gr #f)
 	      (agr #f))
@@ -11083,6 +11159,19 @@
 		(snd-display ";env-channel step 1: ~A" v1)))
 	  (close-sound ind))
 
+	(let* ((ind (open-sound "2.snd"))
+	       (fr (frames))
+	       (m0 (maxamp ind 0))
+	       (m1 (maxamp ind 1)))
+	  (set! (sync ind) 64)
+	  (insert-sound "2.snd")
+	  (insert-sound "2.snd")
+	  (if (not (= (frames) (* 3 fr))) (snd-display ";2.snd 3x = ~A ~A" fr (frames)))
+	  (if (not (= (frames ind 0) (frames ind 1))) (snd-display ";insert sync'd: ~A ~A" (frames 0 0) (frames 0 1)))
+	  (swap-channels)
+	  (if (or (fneq m0 (maxamp ind 1)) (fneq m1 (maxamp ind 0)))
+	      (snd-display "swapped: ~A ~A -> ~A ~A" m0 m1 (maxamp ind 0) (maxamp ind 1)))
+	  (close-sound ind))
 	)))
 
 
@@ -11220,6 +11309,7 @@
       (set! (sample 1) .5)
       (delete-sample 100)
       (insert-sample 10 .5)
+      (scale-channel 2.0)
       (save-edit-history "hiho.scm")
       (revert-sound nind)
       (set! sfile nind)
@@ -11227,9 +11317,10 @@
       (if (not (equal? (edit-fragment 1) '("set-sample" "set" 1 1))) (snd-display ";save-edit-history 1: ~A?" (edit-fragment 1)))
       (if (not (equal? (edit-fragment 2) '("delete-sample" "delete" 100 1))) (snd-display ";save-edit-history 2: ~A?" (edit-fragment 2)))
       (if (not (equal? (edit-fragment 3) '("insert-sample" "insert" 10 1))) (snd-display ";save-edit-history 3: ~A?" (edit-fragment 3)))
+      (if (not (equal? (edit-fragment 4) '("scale-channel 2.0000 0 50828" "lambda" 0 50828))) (snd-display ";save-edit-history 4: ~A?" (edit-fragment 4)))
       (let ((str (display-edits)))
 	(if (not (string=? str "
-EDITS: 3
+EDITS: 4
 
  (begin) [0:2]:
    (at 0, cp->sounds[0][0:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
@@ -11256,8 +11347,24 @@ EDITS: 3
    (at 11, cp->sounds[0][10:99, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
    (at 101, cp->sounds[0][101:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
    (at 50828, cp->sounds[-2][0:0, 0.000000])
+
+ (scale-channel 2.0000 0 50828 0 50828) ; scale-channel 2.0000 0 50828 [4:7]:
+   (at 0, cp->sounds[0][0:0, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 1, cp->sounds[1][0:0, 2.000000]) [buf: 1] 
+   (at 2, cp->sounds[0][2:9, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 10, cp->sounds[2][0:0, 2.000000]) [buf: 1] 
+   (at 11, cp->sounds[0][10:99, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 101, cp->sounds[0][101:50827, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 50828, cp->sounds[-2][0:0, 0.000000])
 "))
 	    (snd-display ";display-edits: ~A?" str)))
+      (save-edit-history "hiho.scm" nind 0)
+      (scale-sound-to 1.0 nind 0)
+      (let ((eds (edit-position nind 0))
+	    (val (insert-sound "zero.snd")))
+	(if (or (not (= 0 val))
+		(not (= eds (edit-position nind 0))))
+	    (snd-display ";insert-sound zero.snd was an edit? ~A ~A ~A" val eds (edit-position nind 0))))
       (revert-sound nind)
       (close-sound nind)
 
@@ -12636,7 +12743,44 @@ EDITS: 3
 			(key-event minibuffer snd-return-key 0) (force-event)
 			(if (fneq (sample (1+ pos)) (* 5 samp))
 			    (snd-display ";eval-over-selection: ~A ~A (~A)" samp (sample (1+ pos)) (edit-fragment)))))
+		  (key-event cwid (char->integer #\x) 4) (force-event)
+		  (key-event cwid (char->integer #\z) 0) (force-event)
+		  (let* ((md (mix "oboe.snd" 100))
+			 (eds (edit-position))
+			 (xy (mix-tag-position md))
+			 (x (+ (car xy) 1))
+			 (y (- (cadr xy) 2)))
+		    (drag-event cwid 1 0 x y (+ x 150) y) (force-event)
+		    (if (> (abs (- (car (mix-tag-position md)) (+ x 150))) 5)
+			(snd-display ";move mix: ~A ~A" (car xy) (car (mix-tag-position md))))
+		    (if (not (= (edit-position) (1+ eds)))
+			(snd-display ";move mix edits: ~A ~A" eds (edit-position)))
+		    (set! xy (mix-tag-position md))
+		    (click-event cwid 1 0 (+ (car xy) 1) (- (cadr xy) 2)) (force-event))
+		  (let* ((mrk (add-mark 100))
+			 (x (x->position (/ (mark-sample mrk) (srate))))
+			 (y 10))
+		    (click-event cwid 1 0 x y) (force-event)
+		    (drag-event cwid 1 0 x y (+ x 150) y) (force-event)
+		    (if (not (> (mark-sample mrk) 100))
+			(snd-display ";move mark: 100 -> ~A, ~A -> ~A" (mark-sample mrk) x (x->position (/ (mark-sample mrk) (srate)))))
+		    (let ((eds (edit-position))
+			  (len (frames)))
+		      (set! x (x->position (/ (mark-sample mrk) (srate))))
+		      (drag-event cwid 1 4 x y (- x 200) y) (force-event)
+		      (if (not (= (edit-position) (1+ eds)))
+			  (snd-display ";C-drag mark edits: ~A ~A" eds (edit-position)))
+		      (if (<= len (frames))
+			  (snd-display ";C-drag mark len: ~A -> ~A" len (frames)))))
 		  (revert-sound ind)
+		  (key-event cwid (char->integer #\<) 5) (force-event)
+		  (key-event cwid (char->integer #\u) 4) (force-event)
+		  (key-event cwid (char->integer #\1) 0) (force-event)
+		  (key-event cwid (char->integer #\.) 0) (force-event)
+		  (key-event cwid (char->integer #\0) 0) (force-event)
+		  (key-event cwid (char->integer #\f) 4) (force-event)
+		  (if (fneq (/ (cursor) (srate)) 1.0)
+		      (snd-display ";C-u 1.0 C-f: ~A?" (/ (cursor) (srate))))
 		  (let ((fr (frames)))
 		    (key-event cwid (char->integer #\x) 4) (force-event)
 		    (key-event cwid (char->integer #\i) 4) (force-event)
@@ -12655,7 +12799,7 @@ EDITS: 3
 		    (if (not (= (frames) (* 2 fr)))
 			(snd-display ";C-x C-q oboe: ~A ~A" (* 2 fr) (frames)))
 		    (if (fneq (* 2 (sample 4000)) (sample (+ (srate) 4000)))
-			(snd-display ";mixed file: ~A ~A" (* 2 (sample 4000) (sample (+ (srate) 4000)))))
+			(snd-display ";mixed file: ~A ~A" (* 2 (sample 4000)) (sample (+ (srate) 4000))))
 		    (if (not (equal? (edit-fragment 2) (list "C-x C-q" "set" (inexact->exact (srate)) fr)))
 			(snd-display ";C-x C-q edit: ~A" (edit-fragment 2))))
 		  (set! (cursor) 0)
@@ -12671,6 +12815,34 @@ EDITS: 3
 		  (if (fneq (/ (cursor) (srate)) (/ (* .5 (+ (left-sample) (right-sample))) (srate)))
 		      (snd-display ";C-l: ~A ~A?" (/ (cursor) (srate)) (/ (* .5 (+ (left-sample) (right-sample))) (srate))))
 		  )
+
+		;; named macro
+		(let ((fr (frames)))
+		  (key-event cwid (char->integer #\x) 4) (force-event)
+		  (key-event cwid (char->integer #\() 1) (force-event)
+		  (key-event cwid (char->integer #\d) 4) (force-event)
+		  (key-event cwid (char->integer #\d) 4) (force-event)
+		  (key-event cwid (char->integer #\d) 4) (force-event)
+		  (key-event cwid (char->integer #\x) 4) (force-event)
+		  (key-event cwid (char->integer #\)) 1) (force-event)
+
+		  (key-event cwid (char->integer #\x) 4) (force-event)
+		  (key-event cwid (char->integer #\e) 4) (force-event)
+		  (widget-string minibuffer "a-name")
+		  (key-event minibuffer snd-return-key 0) (force-event)
+		  (if (not (= (frames) (- fr 3))) (snd-display ";macro definition wasn't effective?: ~A ~A" fr (frames)))
+
+		  (key-event cwid (char->integer #\x) 8) (force-event)
+		  (widget-string minibuffer "a-name")
+		  (key-event minibuffer snd-return-key 0) (force-event)
+		  (if (not (= (frames) (- fr 6))) (snd-display ";macro call wasn't effective?: ~A ~A" fr (frames)))
+
+		  (key-event cwid (char->integer #\u) 4) (force-event)
+		  (key-event cwid (char->integer #\4) 0) (force-event)
+		  (key-event cwid (char->integer #\x) 8) (force-event)
+		  (widget-string minibuffer "a-name")
+		  (key-event minibuffer snd-return-key 0) (force-event)
+		  (if (not (= (frames) (- fr 6 12))) (snd-display ";4 x macro call wasn't effective?: ~A ~A" fr (frames))))
 
 		(revert-sound ind)
 
@@ -13335,6 +13507,19 @@ EDITS: 3
 		    (close-sound ind)
 		    (click-button (|XmFileSelectionBoxGetChild filed |XmDIALOG_CANCEL_BUTTON)) 
 		    (force-event)))
+		(open-file-dialog)
+                (let* ((filed (list-ref (dialog-widgets) 6))
+		       (pattern (|XmFileSelectionBoxGetChild filed |XmDIALOG_FILTER_TEXT))
+		       (sounds (find-child filed "sound files only")))
+		  (|XmToggleButtonSetState sounds #t #t)
+		  (|XmToggleButtonSetState sounds #f #t)
+		  (|XmTextSetString pattern "/home/bil/cl/*.snd")
+		  (|XmToggleButtonSetState sounds #t #t)
+		  (|XmToggleButtonSetState sounds #f #t)
+		  (|XmTextSetString pattern "/home/bil/cl/*.wav")
+		  (|XmToggleButtonSetState sounds #t #t)
+		  (click-button (|XmFileSelectionBoxGetChild filed |XmDIALOG_CANCEL_BUTTON)) (force-event))
+
 
                 ;; ---------------- file save-as dialog ----------------
 		(set! (default-output-chans) 1)
@@ -13733,284 +13918,826 @@ EDITS: 3
 		  (click-button (|XmMessageBoxGetChild regd |XmDIALOG_OK_BUTTON)) (force-event)		  
 		  (if (|XtIsManaged regd)
 		      (snd-display ";region dialog is still active?")))
-
-		;; ---------------- Xt tests ----------------
-		(let ((name (|XtGetApplicationNameAndClass (|XtDisplay (cadr (main-widgets))))))
-		  (if (not (equal? name (list "snd" "Snd")))
-		      (snd-display ";XtGetApplicationNameAndClass: ~A?" name)))
-		(let ((dpys (|XtGetDisplays (car (main-widgets)))))
-		  (if (not (|Display? (car dpys)))
-		      (snd-display ";XtGetDisplays: ~A?" dpys)))
-		(let ((time (|XtGetSelectionTimeout))
-		      (time1 (|XtAppGetSelectionTimeout (car (main-widgets)))))
-		  (if (or (not (number? time))
-			  (not (= time time1))
-			  (< time 1))
-		      (snd-display ";XtGetSelectionTimeout: ~A ~A?" time time1)))
-		(let ((app (|XtDisplayToApplicationContext (|XtDisplay (cadr (main-widgets)))))
-		      (orig (car (main-widgets)))
-		      (wid (|XtWidgetToApplicationContext (cadr (main-widgets)))))
-		  (if (not (equal? app orig))
-		      (snd-display ";XtDisplayToApplicationContext: ~A ~A?" app orig))
-		  (if (not (equal? app wid))
-		      (snd-display ";XtWidgetToApplicationContext: ~A ~A?" app wid)))
-		(if (not (string=? (|XtName (caddr (main-widgets))) "mainpane"))
-		    (snd-display ";XtName main pane: ~A" (|XtName (caddr (main-widgets)))))
-		(if (not (= (|XtGetMultiClickTime (|XtDisplay (cadr (main-widgets)))) 200))
-		    (snd-display ";XtGetMultiClickTime: ~A" (|XtGetMultiClickTime (|XtDisplay (cadr (main-widgets))))))
+		))))))
+    
 
 
-		;; ---------------- XM tests ----------------
-		(let ((version (list-ref (|XGetWindowProperty (|XtDisplay (cadr (main-widgets)) )
-							      (|XtWindow (cadr (main-widgets)) )
-							      (|XInternAtom (|XtDisplay (cadr (main-widgets)))
-									    "SND_VERSION"
-									    #f)
-							      0 32 #f |XA_STRING)
-					 5)))
-		  (if (not (string=? version (snd-version)))
-		      (snd-display ";SND_VERSION: ~A, ~A?" version (snd-version))))
+;;; -------------------- test 23: X/Xt/Xm --------------------
+(if (or full-test (= snd-test 23) (and keep-going (<= snd-test 23)))
+    (begin
+      (if (procedure? test-hook) (test-hook 23))
+      (if (provided? 'snd-motif)
+	  (begin
+	    ;; ---------------- X tests ----------------
+	    (let ((scr (current-screen)))
+	      (if (not (= (|height scr) 1200))
+		  (snd-display ";screen height: ~A" (|height scr)))
+	      (if (not (= (|width scr) 1600))
+		  (snd-display ";screen width: ~A" (|width scr)))
+	      (let ((ratio (/ (|mwidth scr) (|width scr))))
+		(if (> (abs (- (* ratio (|height scr)) (|mheight scr))) 2)
+		    (snd-display ";mheight/width: ~A ~A" (|mheight scr) (|mwidth scr))))
+	      (if (not (= (|ndepths scr) 7))
+		  (snd-display ";screen ndepths: ~A" (|ndepths scr)))
+	      (if (not (= (cadr (|white_pixel scr)) 16777215))
+		  (snd-display ";screen white_pixel: ~A" (|white_pixel scr)))
+	      (if (not (= (cadr (|black_pixel scr)) 0))
+		  (snd-display ";screen black_pixel: ~A" (|black_pixel scr)))
+	      (if (not (eq? (|backing_store scr) #f))
+		  (snd-display ";screen backing_store: ~A" (|backing_store scr)))
+	      (if (not (= (|min_maps scr) 1))
+		  (snd-display ";screen min_maps: ~A" (|min_maps scr)))
+	      (if (not (= (|max_maps scr) 1))
+		  (snd-display ";screen max_maps: ~A" (|max_maps scr)))
+	      (if (not (eq? (|save_unders scr) #f))
+		  (snd-display ";screen save_unders: ~A" (|save_unders scr)))
+	      (if (not (|GC? (|default_gc scr)))
+		  (snd-display ";screen default_gc: ~A" (|default_gc scr)))
+	      (if (not (|Window? (|root scr)))
+		  (snd-display ";screen root: ~A" (|root scr)))
+	      (if (not (|Colormap? (|cmap scr)))
+		  (snd-display ";screen colormap: ~A" (|cmap scr)))
+	      
+	      (if (not (equal? (|DisplayOfScreen scr) (|display scr))) 
+		  (snd-display ";DisplayOfScreen: ~A ~A" (|DisplayOfScreen scr) (|display scr)))
+	      (if (not (equal? (|RootWindowOfScreen scr) (|root scr))) 
+		  (snd-display ";RootWindowOfScreen: ~A ~A" (|RootWindowOfScreen scr) (|root scr)))
+	      (if (not (equal? (|BlackPixelOfScreen scr) (|black_pixel scr))) 
+		  (snd-display ";BlackPixelOfScreen: ~A ~A" (|BlackPixelOfScreen scr) (|black_pixel scr)))
+	      (if (not (equal? (|WhitePixelOfScreen scr) (|white_pixel scr))) 
+		  (snd-display ";WhitePixelOfScreen: ~A ~A" (|WhitePixelOfScreen scr) (|white_pixel scr)))
+	      (if (not (equal? (|DefaultColormapOfScreen scr) (|cmap scr))) 
+		  (snd-display ";DefaultColormapOfScreen: ~A ~A" (|DefaultColormapOfScreen scr) (|cmap scr)))
+	      (if (not (equal? (|DefaultDepthOfScreen scr) (|root_depth scr))) 
+		  (snd-display ";DefaultDepthOfScreen: ~A ~A" (|DefaultDepthOfScreen scr) (|root_depth scr)))
+	      (if (not (equal? (|DefaultGCOfScreen scr) (|default_gc scr))) 
+		  (snd-display ";DefaultGCOfScreen: ~A ~A" (|DefaultGCOfScreen scr) (|default_gc scr)))
+	      (if (not (equal? (|DefaultVisualOfScreen scr) (|root_visual scr))) 
+		  (snd-display ";DefaultVisualOfScreen: ~A ~A" (|DefaultVisualOfScreen scr) (|root_visual scr)))
+	      (if (not (equal? (|WidthOfScreen scr) (|width scr))) 
+		  (snd-display ";WidthOfScreen: ~A ~A" (|WidthOfScreen scr) (|width scr)))
+	      (if (not (equal? (|HeightOfScreen scr) (|height scr))) 
+		  (snd-display ";HeightOfScreen: ~A ~A" (|HeightOfScreen scr) (|height scr)))
+	      (if (not (equal? (|WidthMMOfScreen scr) (|mwidth scr))) 
+		  (snd-display ";WidthMMOfScreen: ~A ~A" (|WidthMMOfScreen scr) (|mwidth scr)))
+	      (if (not (equal? (|HeightMMOfScreen scr) (|mheight scr))) 
+		  (snd-display ";HeightMMOfScreen: ~A ~A" (|HeightMMOfScreen scr) (|mheight scr)))
+	      (if (not (equal? (|PlanesOfScreen scr) (|root_depth scr))) 
+		  (snd-display ";PlanesOfScreen: ~A ~A" (|PlanesOfScreen scr) (|root_depth scr)))
+	      (if (not (equal? (|MinCmapsOfScreen scr) (|min_maps scr))) 
+		  (snd-display ";MinCmapsOfScreen: ~A ~A" (|MinCmapsOfScreen scr) (|min_maps scr)))
+	      (if (not (equal? (|MaxCmapsOfScreen scr) (|max_maps scr))) 
+		  (snd-display ";MaxCmapsOfScreen: ~A ~A" (|MaxCmapsOfScreen scr) (|max_maps scr)))
+	      (if (not (equal? (|DoesSaveUnders scr) (|save_unders scr))) 
+		  (snd-display ";DoesSaveUnders: ~A ~A" (|DoesSaveUnders scr) (|save_unders scr)))
+	      (if (not (equal? (|DoesBackingStore scr) (|backing_store scr))) 
+		  (snd-display ";DoesBackingStore: ~A ~A" (|DoesBackingStore scr) (|backing_store scr)))
+	      (if (not (equal? (|EventMaskOfScreen scr) (|root_input_mask scr))) 
+		  (snd-display ";EventMaskOfScreen: ~A ~A" (|EventMaskOfScreen scr) (|root_input_mask scr)))
 
-		(let* ((tabs (let ((ctr 0))
-			       (map
-				(lambda (n)
-				  (set! ctr (+ ctr 1))
-				  (|XmTabCreate n |XmINCHES (if (= ctr 1) |XmABSOLUTE |XmRELATIVE) |XmALIGNMENT_BEGINNING "."))
-				(list 1.5 1.5 1.5 1.5))))
-		       (tablist (|XmTabListInsertTabs #f tabs (length tabs) 0)))
-		  (if (not (= (|XmTabListTabCount tablist) (length tabs))) 
-		      (snd-display ";tablist len: ~A ~A~%" (|XmTabListTabCount tablist) (length tabs)))
-		  (if (not (equal? (|XmTabGetValues (|XmTabListGetTab tablist 0)) (list 1.5 5 0 0 ".")))
-		      (snd-display ";XmTabs 0: ~A" (|XmTabGetValues (|XmTabListGetTab tablist 0))))
-		  (if (not (equal? (|XmTabGetValues (|XmTabListGetTab tablist 2)) (list 1.5 5 1 0 ".")))
-		      (snd-display ";XmTabs 2: ~A" (|XmTabGetValues (|XmTabListGetTab tablist 0))))
-		  (let* ((fonts (list "fixed"
-				      "-adobe-times-bold-r-*-*-14-*-*-*-*-*-*-*"
-				      "-adobe-*-medium-i-*-*-18-*-*-*-*-*-*-*"
-				      "-*-helvetica-)-*-*-*-18-*-*-*-*-*-*-*"))
-			 (tags (list "one" "two" "three" "four"))
-			 (colors (list "red" "green" "blue" "orange"))
-			 (pixels
-			  (let* ((dpy (|XtDisplay (cadr (main-widgets))))
-				 (scr (|DefaultScreen dpy))
-				 (cmap (|DefaultColormap dpy scr)))
-			    (map
-			     (lambda (color)
-			       (let ((col (|XColor)))
-				 (if (= (|XAllocNamedColor dpy cmap color col col) 0)
-				     (snd-error "can't allocate ~S" color)
-				     (|pixel col))))
-			     colors)))
-			 (rendertable (|XmRenderTableAddRenditions #f 
-					(let ((ctr 0))
-					  (map (lambda (r)
-						 (set! ctr (+ ctr 1))
-						 (|XmRenditionCreate (cadr (main-widgets))
-								     r
-								     (append
-								      (if (= ctr 1)
-									  (list |XmNtabList tablist)
-									  '())
-								      (list |XmNrenditionForeground (list-ref pixels (1- ctr))
-									    |XmNfontName (list-ref fonts (1- ctr))
-									    |XmNfontType |XmFONT_IS_FONT))))
-					       tags))
-					(length tags)
-					|XmMERGE_NEW)))
-		    (if (not (equal? (|XmRenderTableGetTags rendertable) (list "one" "two" "three" "four")))
-			(snd-display ";tags: ~A~%" (|XmRenderTableGetTags rendertable)))
-		    (let ((r (|XmRenditionRetrieve (|XmRenderTableGetRendition rendertable "one")
-						   (list |XmNrenditionForeground 0
-							 |XmNfontName 0
-							 |XmNfontType 0
-							 |XmNtag 0))))
-		      (if (or (not (string=? (list-ref r 7) "one"))
-			      (not (string=? (list-ref r 3) "fixed")))
-			  (snd-display ";rendertable: ~A" r)))
+	      (if (not (equal? (|XDisplayOfScreen scr) (|display scr))) 
+		  (snd-display ";XDisplayOfScreen: ~A ~A" (|XDisplayOfScreen scr) (|display scr)))
+	      (if (not (equal? (|XRootWindowOfScreen scr) (|root scr))) 
+		  (snd-display ";XRootWindowOfScreen: ~A ~A" (|XRootWindowOfScreen scr) (|root scr)))
+	      (if (not (equal? (|XBlackPixelOfScreen scr) (|black_pixel scr))) 
+		  (snd-display ";XBlackPixelOfScreen: ~A ~A" (|XBlackPixelOfScreen scr) (|black_pixel scr)))
+	      (if (not (equal? (|XWhitePixelOfScreen scr) (|white_pixel scr))) 
+		  (snd-display ";XWhitePixelOfScreen: ~A ~A" (|XWhitePixelOfScreen scr) (|white_pixel scr)))
+	      (if (not (equal? (|XDefaultColormapOfScreen scr) (|cmap scr))) 
+		  (snd-display ";XDefaultColormapOfScreen: ~A ~A" (|XDefaultColormapOfScreen scr) (|cmap scr)))
+	      (if (not (equal? (|XDefaultDepthOfScreen scr) (|root_depth scr))) 
+		  (snd-display ";XDefaultDepthOfScreen: ~A ~A" (|XDefaultDepthOfScreen scr) (|root_depth scr)))
+	      (if (not (equal? (|XDefaultGCOfScreen scr) (|default_gc scr)))
+		  (snd-display ";XDefaultGCOfScreen: ~A ~A" (|XDefaultGCOfScreen scr) (|default_gc scr)))
+	      (if (not (equal? (|XDefaultVisualOfScreen scr) (|root_visual scr)))
+		  (snd-display ";XDefaultVisualOfScreen: ~A ~A" (|XDefaultVisualOfScreen scr) (|root_visual scr)))
+	      (if (not (equal? (|XWidthOfScreen scr) (|width scr)))
+		  (snd-display ";XWidthOfScreen: ~A ~A" (|XWidthOfScreen scr) (|width scr)))
+	      (if (not (equal? (|XHeightOfScreen scr) (|height scr)))
+		  (snd-display ";XHeightOfScreen: ~A ~A" (|XHeightOfScreen scr) (|height scr)))
+	      (if (not (equal? (|XWidthMMOfScreen scr) (|mwidth scr))) 
+		  (snd-display ";XWidthMMOfScreen: ~A ~A" (|XWidthMMOfScreen scr) (|mwidth scr)))
+	      (if (not (equal? (|XHeightMMOfScreen scr) (|mheight scr))) 
+		  (snd-display ";XHeightMMOfScreen: ~A ~A" (|XHeightMMOfScreen scr) (|mheight scr)))
+	      (if (not (equal? (|XPlanesOfScreen scr) (|root_depth scr))) 
+		  (snd-display ";XPlanesOfScreen: ~A ~A" (|XPlanesOfScreen scr) (|root_depth scr)))
+	      (if (not (equal? (|XMinCmapsOfScreen scr) (|min_maps scr)))
+		  (snd-display ";XMinCmapsOfScreen: ~A ~A" (|XMinCmapsOfScreen scr) (|min_maps scr)))
+	      (if (not (equal? (|XMaxCmapsOfScreen scr) (|max_maps scr)))
+		  (snd-display ";XMaxCmapsOfScreen: ~A ~A" (|XMaxCmapsOfScreen scr) (|max_maps scr)))
+	      (if (not (equal? (|XDoesSaveUnders scr) (|save_unders scr)))
+		  (snd-display ";XDoesSaveUnders: ~A ~A" (|XDoesSaveUnders scr) (|save_unders scr)))
+	      (if (not (equal? (|XDoesBackingStore scr) (|backing_store scr))) 
+		  (snd-display ";XDoesBackingStore: ~A ~A" (|XDoesBackingStore scr) (|backing_store scr)))
+	      (if (not (equal? (|XEventMaskOfScreen scr) (|root_input_mask scr)))
+		  (snd-display ";XEventMaskOfScreen: ~A ~A" (|XEventMaskOfScreen scr) (|root_input_mask scr)))
+	      )
+	    
+	    (let* ((scr (current-screen))
+		   (scrn (|XScreenNumberOfScreen scr))
+		   (dpy (|XtDisplay (cadr (main-widgets))))
+		   (vis (|DefaultVisual dpy scrn)))
 
-		    (let ((tab (|XmStringComponentCreate |XmSTRING_COMPONENT_TAB 0 #f))
-			  (row #f)
-			  (table '())
-			  (our-tags tags))
-		      (for-each 
-		       (lambda (word)
-			 (let ((entry (|XmStringGenerate word
-							 #f
-							 |XmCHARSET_TEXT
-							 (car our-tags))))
-			   (if row
-			       (let ((tmp (|XmStringConcat row tab)))
-				 (|XmStringFree row)
-				 (set! row (|XmStringConcatAndFree tmp entry)))
-			       (set! row entry))
-			   (set! our-tags (cdr our-tags))
-			   (if (null? our-tags) 
-			       (begin
-				 (set! our-tags tags)
-				 (set! table (cons row table))
-				 (set! row #f)))))
-		       (list "this" "is" "a" "test" "of" "the" "renditions" "and" "rendertables" 
-			     "perhaps" "all" "will" "go" "well" "and" "then" "again" "perhaps" "not"))
+	      (if (not (equal? (|RootWindow dpy scrn) (|root scr)))
+		  (snd-display ";RootWindow: ~A ~A" (|RootWindow dpy scrn) (|root scr)))
+	      (if (not (equal? (|DefaultRootWindow dpy) (|root (|ScreenOfDisplay dpy (|DefaultScreen dpy)))))
+		  (snd-display ";DefaultRootWindow: ~A ~A" (|DefaultRootWindow dpy) (|root (|ScreenOfDisplay dpy (|DefaultScreen dpy)))))
+	      (if (not (equal? (|DefaultVisual dpy scrn) (|root_visual scr)))
+		  (snd-display ";DefaultVisual: ~A ~A" (|DefaultVisual dpy scrn) (|root_visual scr)))
+	      (if (not (equal? (|DefaultGC dpy scrn) (|default_gc scr)))
+		  (snd-display ";DefaultGC: ~A ~A" (|DefaultGC dpy scrn) (|default_gc scr)))
+	      (if (not (equal? (|BlackPixel dpy scrn) (|black_pixel scr)))
+		  (snd-display ";BlackPixel: ~A ~A" (|BlackPixel dpy scrn) (|black_pixel scr)))
+	      (if (not (equal? (|WhitePixel dpy scrn) (|white_pixel scr)))
+		  (snd-display ";WhitePixel ~A ~A" (|WhitePixel dpy scrn) (|white_pixel scr)))
+	      (if (not (equal? (|DisplayWidth dpy scrn) (|width scr)))
+		  (snd-display ";DisplayWidth: ~A ~A" (|DisplayWidth dpy scrn) (|width scr)))
+	      (if (not (equal? (|DisplayHeight dpy scrn) (|height scr)))
+		  (snd-display ";DisplayHeight: ~A ~A" (|DisplayHeight dpy scrn) (|height scr)))
+	      (if (not (equal? (|DisplayWidthMM dpy scrn) (|mwidth scr)))
+		  (snd-display ";DisplayWidthMM: ~A ~A" (|DisplayWidthMM dpy scrn) (|mwidth scr)))
+	      (if (not (equal? (|DisplayHeightMM dpy scrn) (|mheight scr)))
+		  (snd-display ";DisplayHeightMM: ~A ~A" (|DisplayHeightMM dpy scrn) (|mheight scr)))
+	      (if (not (equal? (|DisplayPlanes dpy scrn) (|root_depth scr)))
+		  (snd-display ";DisplayPlanes: ~A ~A" (|DisplayPlanes dpy scrn) (|root_depth scr)))
+	      (if (not (equal? (|DefaultDepth dpy scrn) (|root_depth scr)))
+		  (snd-display ";DefaultDepth: ~A ~A" (|DefaultDepth dpy scrn) (|root_depth scr)))
+	      (if (not (equal? (|DefaultColormap dpy scrn) (|cmap scr)))
+		  (snd-display ";DefaultColormap: ~A ~A" (|DefaultColormap dpy scrn) (|cmap scr)))
+	      
+	      (if (not (equal? (|XRootWindow dpy scrn) (|root scr)))
+		  (snd-display ";XRootWindow: ~A ~A" (|XRootWindow dpy scrn) (|root scr)))
+	      (if (not (equal? (|XDefaultRootWindow dpy) (|root (|ScreenOfDisplay dpy (|DefaultScreen dpy)))))
+		  (snd-display ";XDefaultRootWindow: ~A ~A" (|XDefaultRootWindow dpy) (|root (|ScreenOfDisplay dpy (|DefaultScreen dpy)))))
+	      (if (not (equal? (|XDefaultVisual dpy scrn) (|root_visual scr)))
+		  (snd-display ";XDefaultVisual: ~A ~A" (|XDefaultVisual dpy scrn) (|root_visual scr)))
+	      (if (not (equal? (|XDefaultGC dpy scrn) (|default_gc scr)))
+		  (snd-display ";XDefaultGC: ~A ~A" (|XDefaultGC dpy scrn) (|default_gc scr)))
+	      (if (not (equal? (|XBlackPixel dpy scrn) (|black_pixel scr)))
+		  (snd-display ";XBlackPixel: ~A ~A" (|XBlackPixel dpy scrn) (|black_pixel scr)))
+	      (if (not (equal? (|XWhitePixel dpy scrn) (|white_pixel scr)))
+		  (snd-display ";XWhitePixel ~A ~A" (|XWhitePixel dpy scrn) (|white_pixel scr)))
+	      (if (not (equal? (|XDisplayWidth dpy scrn) (|width scr)))
+		  (snd-display ";XDisplayWidth: ~A ~A" (|XDisplayWidth dpy scrn) (|width scr)))
+	      (if (not (equal? (|XDisplayHeight dpy scrn) (|height scr)))
+		  (snd-display ";XDisplayHeight: ~A ~A" (|XDisplayHeight dpy scrn) (|height scr)))
+	      (if (not (equal? (|XDisplayWidthMM dpy scrn) (|mwidth scr)))
+		  (snd-display ";XDisplayWidthMM: ~A ~A" (|XDisplayWidthMM dpy scrn) (|mwidth scr)))
+	      (if (not (equal? (|XDisplayHeightMM dpy scrn) (|mheight scr)))
+		  (snd-display ";XDisplayHeightMM: ~A ~A" (|XDisplayHeightMM dpy scrn) (|mheight scr)))
+	      (if (not (equal? (|XDisplayPlanes dpy scrn) (|root_depth scr)))
+		  (snd-display ";XDisplayPlanes: ~A ~A" (|XDisplayPlanes dpy scrn) (|root_depth scr)))
+	      (if (not (equal? (|XDefaultDepth dpy scrn) (|root_depth scr)))
+		  (snd-display ";XDefaultDepth: ~A ~A" (|XDefaultDepth dpy scrn) (|root_depth scr)))
+	      (if (not (equal? (|XDefaultColormap dpy scrn) (|cmap scr)))
+		  (snd-display ";XDefaultColormap: ~A ~A" (|XDefaultColormap dpy scrn) (|cmap scr)))
+	      
+	      (if (not (equal? (|XDefaultVisual dpy scrn) vis))
+		  (snd-display ";|XDefaultVisual: ~A ~A" (|XDefaultVisual dpy scrn) vis))
+	      (if (not (equal? (|DisplayCells dpy scrn) (|map_entries vis)))
+		  (snd-display ";DisplayCells: ~A ~A" (|DisplayCells dpy scrn) (|map_entries vis)))
+	      (if (not (equal? (|CellsOfScreen scr) (|map_entries (|DefaultVisualOfScreen scr))))
+		  (snd-display ";CellsOfScreen: ~A ~A" (|CellsOfScreen scr) (|map_entries (|DefaultVisualOfScreen scr))))
+	      (if (not (equal? (|XDisplayCells dpy scrn) (|map_entries vis)))
+		  (snd-display ";XDisplayCells: ~A ~A" (|XDisplayCells dpy scrn) (|map_entries vis)))
+	      (if (not (equal? (|XCellsOfScreen scr) (|map_entries (|DefaultVisualOfScreen scr))))
+		  (snd-display ";XCellsOfScreen: ~A ~A" (|XCellsOfScreen scr) (|map_entries (|DefaultVisualOfScreen scr))))
+	      
+	      (if (not (= (|bits_per_rgb vis) 8)) (snd-display ";bits_per_rgb: ~A" (|bits_per_rgb vis)))
+	      (if (not (= (|blue_mask vis) 255)) (snd-display ";blue_mask: ~X" (|blue_mask vis)))
+	      (if (not (= (|green_mask vis) 65280)) (snd-display ";green_mask: ~X" (|green_mask vis)))
+	      (if (not (= (|red_mask vis) 16711680)) (snd-display ";red_mask: ~X" (|red_mask vis)))
+	      (if (not (= |AllPlanes -1)) (snd-display ";AllPlanes: ~A" |AllPlanes))
+	      
+	      (if (< (|QLength dpy) 0) (snd-display ";QLength: ~A" (|QLength dpy)))
+	      (if (not (= (|ScreenCount dpy) 1)) (snd-display ";ScreenCount: ~A" (|ScreenCount dpy)))
+	      (if (not (string=? (|ServerVendor dpy) "The XFree86 Project, Inc")) (snd-display ";ServerVendor: ~A" (|ServerVendor dpy)))
+	      (if (not (= (|ProtocolRevision dpy) 0)) (snd-display ";ProtocolRevision: ~A" (|ProtocolRevision dpy)))
+	      (if (not (= (|ProtocolVersion dpy) 11)) (snd-display ";ProtocolVersion: ~A" (|ProtocolVersion dpy)))
+	      (if (not (number? (|VendorRelease dpy))) (snd-display ";VendorRelease: ~A" (|VendorRelease dpy)))
+	      (if (not (string=? (|DisplayString dpy) ":0.0")) (snd-display ";DisplayString: ~A" (|DisplayString dpy)))
+	      (if (not (= (|BitmapUnit dpy) 32)) (snd-display ";BitmapUnit: ~A" (|BitmapUnit dpy)))
+	      (if (not (= (|BitmapPad dpy) 32)) (snd-display ";BitmapPad: ~A" (|BitmapPad dpy)))
+	      (if (not (= (|BitmapBitOrder dpy) 0)) (snd-display ";BitmapBitOrder: ~A" (|BitmapBitOrder dpy)))
+	      (if (not (= (|ImageByteOrder dpy) 0)) (snd-display ";ImageByteOrder: ~A" (|ImageByteOrder dpy)))
+	      (if (not (= (|DefaultScreen dpy) 0)) (snd-display ";DefaultScreen: ~A" (|DefaultScreen dpy)))
+	      
+	      (if (< (|XQLength dpy) 0) (snd-display ";XQLength: ~A" (|XQLength dpy)))
+	      (if (not (= (|XScreenCount dpy) 1)) (snd-display ";XScreenCount: ~A" (|XScreenCount dpy)))
+	      (if (not (string=? (|XServerVendor dpy) "The XFree86 Project, Inc")) (snd-display ";XServerVendor: ~A" (|XServerVendor dpy)))
+	      (if (not (= (|XProtocolRevision dpy) 0)) (snd-display ";XProtocolRevision: ~A" (|XProtocolRevision dpy)))
+	      (if (not (= (|XProtocolVersion dpy) 11)) (snd-display ";XProtocolVersion: ~A" (|XProtocolVersion dpy)))
+	      (if (not (number? (|XVendorRelease dpy))) (snd-display ";XVendorRelease: ~A" (|XVendorRelease dpy)))
+	      (if (not (string=? (|XDisplayString dpy) ":0.0")) (snd-display ";XDisplayString: ~A" (|XDisplayString dpy)))
+	      (if (not (= (|XBitmapUnit dpy) 32)) (snd-display ";XBitmapUnit: ~A" (|XBitmapUnit dpy)))
+	      (if (not (= (|XBitmapPad dpy) 32)) (snd-display ";XBitmapPad: ~A" (|XBitmapPad dpy)))
+	      (if (not (= (|XBitmapBitOrder dpy) 0)) (snd-display ";XBitmapBitOrder: ~A" (|XBitmapBitOrder dpy)))
+	      (if (not (= (|XImageByteOrder dpy) 0)) (snd-display ";XImageByteOrder: ~A" (|XImageByteOrder dpy)))
+	      (if (not (= (|XDefaultScreen dpy) 0)) (snd-display ";XDefaultScreen: ~A" (|XDefaultScreen dpy)))
+	      )
 
-		      (let* ((n (car table))
-			     (c (|XmStringInitContext n))
-			     (ctr 0))
-			(call-with-current-continuation
-			 (lambda (done)
-			   (do ((i 0 (1+ i)))
-			       (#f)
-			     (let ((type (|XmStringGetNextTriple (cadr c))))
-			       (if (= (car type) |XmSTRING_COMPONENT_TEXT)
-				   (if (or (not (= (cadr type) (list-ref (list 0 0 2 0 0 0 4 0 0 0 3 0 0 0 4) i)))
-					   (not (string=? (caddr type) 
-							  (list-ref (list "o" "o" "go" "o" "o" "o" "well" "o" "o" "o" "and" "o" "o" "o" "then") i))))
-				       (snd-display ";component ~A -> ~A" i (cdr type)))
-				   (if (not (= (car type) |XmSTRING_COMPONENT_TAB))
-				       (if (= (car type) |XmSTRING_COMPONENT_END)
-					   (done #f))))))))
-			(|XmStringFreeContext (cadr c))))))
+	    (if (not (|IsKeypadKey (list 'KeySym |XK_KP_Space))) (snd-display ";IsKeypadKey kp-space"))
+	    (if (|IsKeypadKey (list 'KeySym |XK_A)) (snd-display ";IsKeypadKey A"))
+	    (if (|IsPrivateKeypadKey (list 'KeySym |XK_A)) (snd-display ";IsPrivateKeypadKey A"))
+	    (if (not (|IsCursorKey (list 'KeySym |XK_Home))) (snd-display ";IsCursorKey Home"))
+	    (if (|IsCursorKey (list 'KeySym |XK_S)) (snd-display ";IsCursorKey S"))
+	    (if (not (|IsPFKey (list 'KeySym |XK_KP_F1))) (snd-display ";IsPFKey F1"))
+	    (if (|IsPFKey (list 'KeySym |XK_S)) (snd-display ";IsPFKey S"))
+	    (if (not (|IsFunctionKey (list 'KeySym |XK_F1))) (snd-display ";IsFunctionKey F1"))
+	    (if (|IsFunctionKey (list 'KeySym |XK_S)) (snd-display ";IsFunctionKey S"))
+	    (if (not (|IsMiscFunctionKey (list 'KeySym |XK_Select))) (snd-display ";IsMiscFunctionKey Select"))
+	    (if (|IsMiscFunctionKey (list 'KeySym |XK_S)) (snd-display ";IsMiscFunctionKey S"))
+	    (if (not (|IsModifierKey (list 'KeySym |XK_Shift_L))) (snd-display ";IsModifierKey Shift"))
+	    (if (|IsModifierKey (list 'KeySym |XK_S)) (snd-display ";IsModifierKey S"))
 
-		(|XtAppAddActions (car (main-widgets))
-				  (list (list "try1" (lambda (w e strs)	
-						       (snd-display ";try1: ~A~%" strs)))
-					(list "try2" (lambda (w e strs)
-						       (snd-display ";try2: ~A~%" strs)))))
-		(let* ((tab (|XtParseTranslationTable 
-			      (format #f "Ctrl <Key>osfLeft:  try1()~%Ctrl <Key>osfRight: try2()~%Ctrl <Key>osfUp:  try1(hiho)~%Ctrl <Key>osfDown: try2(down, up)~%")))
-		       (pane (add-main-pane "hiho" |xmTextWidgetClass '())))
-		  (|XtOverrideTranslations pane tab))
+	    (let* ((scr (current-screen))
+		   (scrn (|XScreenNumberOfScreen scr))
+		   (dpy (|XtDisplay (cadr (main-widgets))))
+		   (val (|XGCValues))
+		   (wn (|XtWindow (cadr (main-widgets)))))
+	      (set! (|function val) |GXclear)
+	      (if (not (equal? (|function val) |GXclear))
+		  (snd-display ";function: ~A ~A" (|function val) |GXclear))
+	      (set! (|line_width val) 10)
+	      (if (not (equal? (|line_width val) 10)) 
+		  (snd-display ";line_width: ~A ~A" (|line_width val) 10))
+	      (set! (|line_style val) |LineSolid)
+	      (if (not (equal? (|line_style val) |LineSolid)) 
+		  (snd-display ";line_style: ~A ~A" (|line_style val) |LineSolid))
+	      (set! (|background val) (|WhitePixelOfScreen (current-screen)))
+	      (if (not (equal? (|background val) (|WhitePixelOfScreen (current-screen)))) 
+		  (snd-display ";background: ~A ~A" (|background val) (|WhitePixelOfScreen (current-screen))))
+	      (set! (|foreground val) (|BlackPixelOfScreen (current-screen)))
+	      (if (not (equal? (|foreground val) (|BlackPixelOfScreen (current-screen)))) 
+		  (snd-display ";foreground: ~A ~A" (|foreground val) (|BlackPixelOfScreen (current-screen))))
+	      ;; plane_mask?
+	      (set! (|cap_style val) |CapRound)
+	      (if (not (equal? (|cap_style val) |CapRound)) 
+		  (snd-display ";cap_style: ~A ~A" (|cap_style val) |CapRound))
+	      (set! (|join_style val) |JoinMiter)
+	      (if (not (equal? (|join_style val) |JoinMiter)) 
+		  (snd-display ";join_style: ~A ~A" (|join_style val) |JoinMiter))
+	      (set! (|fill_style val) |FillSolid)
+	      (if (not (equal? (|fill_style val) |FillSolid)) 
+		  (snd-display ";fill_style: ~A ~A" (|fill_style val) |FillSolid))
+	      (set! (|fill_rule val) |EvenOddRule)
+	      (if (not (equal? (|fill_rule val) |EvenOddRule)) 
+		  (snd-display ";fill_rule: ~A ~A" (|fill_rule val) |EvenOddRule))
+	      (set! (|arc_mode val) |ArcChord)
+	      (if (not (equal? (|arc_mode val) |ArcChord))
+		  (snd-display ";arc_mode: ~A ~A" (|arc_mode val) |ArcChord))
+	      ;; tile stipple clip_mask are Pixmaps
+	      (set! (|ts_x_origin val) 1)
+	      (if (not (equal? (|ts_x_origin val) 1)) 
+		  (snd-display ";ts_x_origin: ~A ~A" (|ts_x_origin val) 1))
+	      (set! (|ts_y_origin val) 1)
+	      (if (not (equal? (|ts_y_origin val) 1)) 
+		  (snd-display ";ts_y_origin: ~A ~A" (|ts_y_origin val) 1))
+	      ;; font is Font
+	      (set! (|subwindow_mode val) |ClipByChildren)
+	      (if (not (equal? (|subwindow_mode val) |ClipByChildren)) 
+		  (snd-display ";subwindow_mode: ~A ~A" (|subwindow_mode val) |ClipByChildren))
+	      (set! (|graphics_exposures val) #f)
+	      (if (not (equal? (|graphics_exposures val) #f)) 
+		  (snd-display ";graphics_exposures: ~A ~A" (|graphics_exposures val) #f))
+	      (set! (|clip_x_origin val) 0)
+	      (if (not (equal? (|clip_x_origin val) 0)) 
+		  (snd-display ";clip_x_origin: ~A ~A" (|clip_x_origin val) 0))
+	      (set! (|clip_y_origin val) 0)
+	      (if (not (equal? (|clip_y_origin val) 0)) 
+		  (snd-display ";clip_y_origin: ~A ~A" (|clip_y_origin val) 0))
+	      (set! (|dash_offset val) 1)
+	      (if (not (equal? (|dash_offset val) 1))
+		  (snd-display ";dash_offset: ~A ~A" (|dash_offset val) 1))
+	      
+	      (let ((gc (|XCreateGC dpy wn (+ |GCFunction |GCForeground |GCBackground |GCLineWidth |GCLineStyle 
+					      |GCCapStyle |GCJoinStyle |GCFillStyle |GCFillRule |GCTileStipXOrigin
+					      |GCTileStipYOrigin |GCSubwindowMode |GCGraphicsExposures |GCClipXOrigin
+					      |GCClipYOrigin |GCDashOffset |GCArcMode)
+				    val)))
+		
+		(if (not (|GC? gc)) (snd-display ";XCreateGC returned ~A" gc))
+		(|XSetArcMode dpy gc |ArcPieSlice)
+		(|XSetFunction dpy gc |GXcopy)
+		(|XSetLineAttributes dpy gc 3 |LineDoubleDash |CapButt |JoinMiter)
+		(|XSetClipOrigin dpy gc 1 1)
+		(|XSetTSOrigin dpy gc 0 0)
+		(|XSetFillRule dpy gc |WindingRule)
+		(|XSetFillStyle dpy gc |FillStippled)
+		(|XSetForeground dpy gc (|WhitePixelOfScreen (current-screen)))
+		(|XSetBackground dpy gc (|BlackPixelOfScreen (current-screen)))
+		(|XSetGraphicsExposures dpy gc #t)
+		(|XSetSubwindowMode dpy gc |IncludeInferiors)
+		
+		(let* ((vals (|XGetGCValues dpy gc (+ |GCFunction |GCForeground |GCBackground |GCLineWidth |GCLineStyle 
+						      |GCCapStyle |GCJoinStyle |GCFillStyle |GCFillRule |GCTileStipXOrigin
+						      |GCTileStipYOrigin |GCSubwindowMode |GCGraphicsExposures |GCClipXOrigin
+						      |GCClipYOrigin |GCDashOffset |GCArcMode)))
+		       (val1 (cadr vals)))
+		  (if (= (car vals) 0)
+		      (snd-display ";XGetGCValues failed"))
+		  
+		  (if (not (equal? (|function val1) |GXcopy))
+		      (snd-display ";function: ~A ~A" (|function val1) |GXcopy))
+		  (if (not (equal? (|line_width val1) 3)) 
+		      (snd-display ";line_width: ~A ~A" (|line_width val1) 3))
+		  (if (not (equal? (|line_style val1) |LineDoubleDash)) 
+		      (snd-display ";line_style: ~A ~A" (|line_style val1) |LineDoubleDash))
+		  (if (not (equal? (|background val1) (|BlackPixelOfScreen (current-screen)))) 
+		      (snd-display ";background: ~A ~A" (|background val1) (|BlackPixelOfScreen (current-screen))))
+		  (if (not (equal? (|foreground val1) (|WhitePixelOfScreen (current-screen)))) 
+		      (snd-display ";foreground: ~A ~A" (|foreground val1) (|WhitePixelOfScreen (current-screen))))
+		  (if (not (equal? (|cap_style val1) |CapButt)) 
+		      (snd-display ";cap_style: ~A ~A" (|cap_style val1) |CapButt))
+		  (if (not (equal? (|join_style val1) |JoinMiter)) 
+		      (snd-display ";join_style: ~A ~A" (|join_style val1) |JoinMiter))
+		  (if (not (equal? (|fill_style val1) |FillStippled)) 
+		      (snd-display ";fill_style: ~A ~A" (|fill_style val1) |FillStippled))
+		  (if (not (equal? (|fill_rule val1) |WindingRule)) 
+		      (snd-display ";fill_rule: ~A ~A" (|fill_rule val1) |WindingRule))
+		  (if (not (equal? (|arc_mode val1) |ArcPieSlice))
+		      (snd-display ";arc_mode: ~A ~A" (|arc_mode val1) |ArcPieSlice))
+		  (if (not (equal? (|ts_x_origin val1) 0)) 
+		      (snd-display ";ts_x_origin: ~A ~A" (|ts_x_origin val1) 0))
+		  (if (not (equal? (|ts_y_origin val1) 0)) 
+		      (snd-display ";ts_y_origin: ~A ~A" (|ts_y_origin val1) 0))
+		  (if (not (equal? (|subwindow_mode val1) |IncludeInferiors)) 
+		      (snd-display ";subwindow_mode: ~A ~A" (|subwindow_mode val1) |IncludeInferiors))
+		  (if (not (equal? (|graphics_exposures val1) #t)) 
+		      (snd-display ";graphics_exposures: ~A ~A" (|graphics_exposures val1) #t))
+		  (if (not (equal? (|clip_x_origin val1) 1)) 
+		      (snd-display ";clip_x_origin: ~A ~A" (|clip_x_origin val1) 1))
+		  (if (not (equal? (|clip_y_origin val1) 1)) 
+		      (snd-display ";clip_y_origin: ~A ~A" (|clip_y_origin val1) 1))
+		  (if (not (equal? (|dash_offset val1) 1))
+		      (snd-display ";dash_offset: ~A ~A" (|dash_offset val1) 1))
+		  )))
+	    
+	    (let ((atoms (list |XA_PRIMARY |XA_SECONDARY |XA_ARC |XA_ATOM |XA_BITMAP |XA_CARDINAL |XA_COLORMAP |XA_CURSOR |XA_CUT_BUFFER0
+			       |XA_CUT_BUFFER1 |XA_CUT_BUFFER2 |XA_CUT_BUFFER3 |XA_CUT_BUFFER4 |XA_CUT_BUFFER5 |XA_CUT_BUFFER6
+			       |XA_CUT_BUFFER7 |XA_DRAWABLE |XA_FONT |XA_INTEGER |XA_PIXMAP |XA_POINT |XA_RECTANGLE |XA_RESOURCE_MANAGER
+			       |XA_RGB_COLOR_MAP |XA_RGB_BEST_MAP |XA_RGB_BLUE_MAP |XA_RGB_DEFAULT_MAP |XA_RGB_GRAY_MAP |XA_RGB_GREEN_MAP
+			       |XA_RGB_RED_MAP |XA_STRING |XA_VISUALID |XA_WINDOW |XA_WM_COMMAND |XA_WM_HINTS |XA_WM_CLIENT_MACHINE
+			       |XA_WM_ICON_NAME |XA_WM_ICON_SIZE |XA_WM_NAME |XA_WM_NORMAL_HINTS |XA_WM_SIZE_HINTS |XA_WM_ZOOM_HINTS
+			       |XA_MIN_SPACE |XA_NORM_SPACE |XA_MAX_SPACE |XA_END_SPACE |XA_SUPERSCRIPT_X |XA_SUPERSCRIPT_Y
+			       |XA_SUBSCRIPT_X |XA_SUBSCRIPT_Y |XA_UNDERLINE_POSITION |XA_UNDERLINE_THICKNESS |XA_STRIKEOUT_ASCENT
+			       |XA_STRIKEOUT_DESCENT |XA_ITALIC_ANGLE |XA_X_HEIGHT |XA_QUAD_WIDTH |XA_WEIGHT |XA_POINT_SIZE
+			       |XA_RESOLUTION |XA_COPYRIGHT |XA_NOTICE |XA_FONT_NAME |XA_FAMILY_NAME |XA_FULL_NAME |XA_CAP_HEIGHT
+			       |XA_WM_CLASS |XA_WM_TRANSIENT_FOR))
+		  (atom-names (list '|XA_PRIMARY '|XA_SECONDARY '|XA_ARC '|XA_ATOM '|XA_BITMAP '|XA_CARDINAL '|XA_COLORMAP '|XA_CURSOR '|XA_CUT_BUFFER0
+				    '|XA_CUT_BUFFER1 '|XA_CUT_BUFFER2 '|XA_CUT_BUFFER3 '|XA_CUT_BUFFER4 '|XA_CUT_BUFFER5 '|XA_CUT_BUFFER6
+				    '|XA_CUT_BUFFER7 '|XA_DRAWABLE '|XA_FONT '|XA_INTEGER '|XA_PIXMAP '|XA_POINT '|XA_RECTANGLE '|XA_RESOURCE_MANAGER
+				    '|XA_RGB_COLOR_MAP '|XA_RGB_BEST_MAP '|XA_RGB_BLUE_MAP '|XA_RGB_DEFAULT_MAP '|XA_RGB_GRAY_MAP '|XA_RGB_GREEN_MAP
+				    '|XA_RGB_RED_MAP '|XA_STRING '|XA_VISUALID '|XA_WINDOW '|XA_WM_COMMAND '|XA_WM_HINTS '|XA_WM_CLIENT_MACHINE
+				    '|XA_WM_ICON_NAME '|XA_WM_ICON_SIZE '|XA_WM_NAME '|XA_WM_NORMAL_HINTS '|XA_WM_SIZE_HINTS '|XA_WM_ZOOM_HINTS
+				    '|XA_MIN_SPACE '|XA_NORM_SPACE '|XA_MAX_SPACE '|XA_END_SPACE '|XA_SUPERSCRIPT_X '|XA_SUPERSCRIPT_Y
+				    '|XA_SUBSCRIPT_X '|XA_SUBSCRIPT_Y '|XA_UNDERLINE_POSITION '|XA_UNDERLINE_THICKNESS '|XA_STRIKEOUT_ASCENT
+				    '|XA_STRIKEOUT_DESCENT '|XA_ITALIC_ANGLE '|XA_X_HEIGHT '|XA_QUAD_WIDTH '|XA_WEIGHT '|XA_POINT_SIZE
+				    '|XA_RESOLUTION '|XA_COPYRIGHT '|XA_NOTICE '|XA_FONT_NAME '|XA_FAMILY_NAME '|XA_FULL_NAME '|XA_CAP_HEIGHT
+				    '|XA_WM_CLASS '|XA_WM_TRANSIENT_FOR)))
+	      (for-each
+	       (lambda (n name)
+		 (if (not (|Atom? n))
+		     (snd-display ";Atom: ~A -> ~A" name (|Atom? n))))
+	       atoms
+	       atom-names))
 
-		(open-sound "cardinal.snd")
-		(let*  ((mouse_width 32)
-			(mouse_height 32)
-			(mouse_bits (list
-				     #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00
-				     #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00
-				     #x80 #xff #xff #x01 #x80 #x00 #x01 #x01 #x80 #x00 #x01 #x01
-				     #x80 #x00 #x01 #x01 #x80 #x00 #x01 #x01 #x80 #x00 #x01 #x01
-				     #x80 #x00 #x01 #x01 #x80 #xff #xff #x01 #x80 #x00 #x00 #x01
-				     #x80 #x00 #x00 #x01 #x80 #x00 #x00 #x01 #x80 #x00 #x00 #x01
-				     #x80 #x00 #x00 #x01 #x80 #x00 #x00 #x01 #x80 #x00 #x00 #x01
-				     #x80 #x00 #x00 #x01 #x00 #x01 #x80 #x00 #x00 #x01 #x80 #x00
-				     #x00 #x06 #x60 #x00 #x00 #xf8 #x1f #x00 #x00 #x00 #x00 #x00
-				     #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00
-				     #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00))
-			(rb (list
-			     #x00 #x04 #x10 #x08 #x00 #x10 #x04 #x20 #x00 #x40 #xa5 #xbf
-			     #x00 #x40 #x04 #x20 #x00 #x10 #x10 #x08 #x00 #x04 #x00 #x00))
-			(iconw (list-ref (sound-widgets) 8)))
-		  (|XCreateBitmapFromData (|XtDisplay iconw) (|XtWindow iconw) rb 16 12)
-		  (|XCreateBitmapFromData (|XtDisplay iconw) (|XtWindow iconw) mouse_bits mouse_width mouse_height))
-		(close-sound)
+	    (let ((r (|XRectangle 10 20 100 110)))
+	      (if (not (= (|width r) 100))
+		  (snd-display ";XRectangle width: ~A" (|width r)))
+	      (if (not (= (|height r) 110))
+		  (snd-display ";XRectangle height: ~A" (|height r)))
+	      (if (not (= (|x r) 10))
+		  (snd-display ";XRectangle x: ~A" (|x r)))
+	      (if (not (= (|y r) 20))
+		  (snd-display ";XRectangle y: ~A" (|y r)))
+	      (set! (|width r) 10)
+	      (if (not (= (|width r) 10))
+		  (snd-display ";set XRectangle width: ~A" (|width r)))
+	      (set! (|height r) 11)
+	      (if (not (= (|height r) 11))
+		  (snd-display ";set XRectangle height: ~A" (|height r)))
+	      (set! (|x r) 1)
+	      (if (not (= (|x r) 1))
+		  (snd-display ";set XRectangle x: ~A" (|x r)))
+	      (set! (|y r) 2)
+	      (if (not (= (|y r) 2))
+		  (snd-display ";XRectangle y: ~A" (|y r))))
+	    
+	    (let ((r (|XArc 10 20 100 110 0 235)))
+	      (if (not (= (|width r) 100))
+		  (snd-display ";XArc width: ~A" (|width r)))
+	      (if (not (= (|height r) 110))
+		  (snd-display ";XArc height: ~A" (|height r)))
+	      (if (not (= (|x r) 10))
+		  (snd-display ";XArc x: ~A" (|x r)))
+	      (if (not (= (|y r) 20))
+		  (snd-display ";XArc y: ~A" (|y r)))
+	      (if (not (= (|angle1 r) 0))
+		  (snd-display ";XArc angle1: ~A" (|angle1 r)))
+	      (if (not (= (|angle2 r) 235))
+		  (snd-display ";XArc angle2: ~A" (|angle2 r)))
+	      (set! (|width r) 10)
+	      (if (not (= (|width r) 10))
+		  (snd-display ";set XArc width: ~A" (|width r)))
+	      (set! (|height r) 11)
+	      (if (not (= (|height r) 11))
+		  (snd-display ";set XArc height: ~A" (|height r)))
+	      (set! (|x r) 1)
+	      (if (not (= (|x r) 1))
+		  (snd-display ";set XArc x: ~A" (|x r)))
+	      (set! (|y r) 2)
+	      (if (not (= (|y r) 2))
+		  (snd-display ";set XArc y: ~A" (|y r)))
+	      (set! (|angle1 r) 123)
+	      (if (not (= (|angle1 r) 123))
+		  (snd-display ";set XArc angle1: ~A" (|angle1 r)))
+	      (set! (|angle2 r) 321)
+	      (if (not (= (|angle2 r) 321))
+		  (snd-display ";set XArc angle2: ~A" (|angle2 r))))
+	    
+	    (let ((r (|XPoint 10 20)))
+	      (if (not (= (|x r) 10))
+		  (snd-display ";XPoint x: ~A" (|x r)))
+	      (if (not (= (|y r) 20))
+		  (snd-display ";XPoint y: ~A" (|y r)))
+	      (set! (|x r) 1)
+	      (if (not (= (|x r) 1))
+		  (snd-display ";set XPoint x: ~A" (|x r)))
+	      (set! (|y r) 2)
+	      (if (not (= (|y r) 2))
+		  (snd-display ";set XPoint y: ~A" (|y r))))
+	    
+	    (let ((r (|XSegment 10 20 100 110)))
+	      (if (not (= (|x1 r) 10))
+		  (snd-display ";XSegment x1: ~A" (|x1 r)))
+	      (if (not (= (|y1 r) 20))
+		  (snd-display ";XSegment y1: ~A" (|y1 r)))
+	      (if (not (= (|x2 r) 100))
+		  (snd-display ";XSegment x2: ~A" (|x2 r)))
+	      (if (not (= (|y2 r) 110))
+		  (snd-display ";XSegment y2: ~A" (|y2 r)))
+	      (set! (|x1 r) 1)
+	      (if (not (= (|x1 r) 1))
+		  (snd-display ";set XSegment x1: ~A" (|x1 r)))
+	      (set! (|y1 r) 2)
+	      (if (not (= (|y1 r) 2))
+		  (snd-display ";set XSegment y1: ~A" (|y1 r)))
+	      (set! (|x2 r) 10)
+	      (if (not (= (|x2 r) 10))
+		  (snd-display ";set XSegment x2: ~A" (|x2 r)))
+	      (set! (|y2 r) 11)
+	      (if (not (= (|y2 r) 11))
+		  (snd-display ";set XSegment y2: ~A" (|y2 r))))
 
-		(install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))
-		(zync)
-		(make-hidden-controls-dialog)
-		(make-pixmap (cadr (main-widgets)) arrow-strs)
-		(display-scanned-synthesis)
-		(add-mark-pane)
-		(open-sound "oboe.snd")
-		(add-mark 123)
-		(add-selection-popup)
-		(make-sound-box "sounds"
-				(list-ref (main-widgets) 3)
-				(lambda (file) 
-				  (mix file))
-				(lambda (file chn)
-				  (define (without-directories filename)
-				    (call-with-current-continuation
-				     (lambda (return)
-				       (do ((i (- (string-length filename) 1) (1- i)))
-					   ((= 0 i) filename)
-					 (if (char=? (string-ref filename i) #\/)
-					     (return (substring filename (+ i 1))))))))
-				  (format #f "~~/peaks/~A-peaks-~D" 
-					  (without-directories (mus-expand-filename file)) 
-					  chn))
-				(list "oboe.snd" "pistol.snd" "cardinal.snd" "storm.snd")
-				'())
-		(show-smpte-label)
-		(with-level-meters 4)
-		(play)
-		(close-sound)))
+	    (let ((c (|XColor)))
+	      (set! (|red c) 1)
+	      (if (not (= (|red c) 1)) (snd-display ";Xcolor red: ~A" (|red c)))
+	      (set! (|green c) 1)
+	      (if (not (= (|green c) 1)) (snd-display ";Xcolor green: ~A" (|green c)))
+	      (set! (|blue c) 1)
+	      (if (not (= (|blue c) 1)) (snd-display ";Xcolor blue: ~A" (|blue c))))
 
-	  (let* ((create-procs (list
-				|XmCreateMenuShell |XmCreateSimpleCheckBox |XmCreateSimpleRadioBox
-				|XmCreateSimpleOptionMenu |XmCreateSimplePulldownMenu |XmCreateSimplePopupMenu
-				|XmCreateSimpleMenuBar |XmCreateMainWindow |XmCreateScrolledList |XmCreateList
-				|XmCreateLabel |XmCreateLabelGadget |XmCreateToggleButton |XmCreateToggleButtonGadget
-				|XmCreateGrabShell |XmCreateFrame |XmCreateFormDialog |XmCreateForm |XmCreateText
-				|XmCreateScrolledText |XmCreateFileSelectionDialog |XmCreateFileSelectionBox
-				|XmCreateTextField |XmCreateSimpleSpinBox |XmCreateDrawnButton |XmCreateSpinBox
-				|XmCreateDrawingArea |XmCreateSeparator |XmCreateDragIcon |XmCreateSeparatorGadget
-				|XmCreatePromptDialog |XmCreateSelectionDialog |XmCreateSelectionBox
-				|XmCreateScrolledWindow |XmCreateDialogShell |XmCreateScrollBar |XmCreateScale
-				|XmCreateContainer |XmCreatePulldownMenu |XmCreatePopupMenu |XmCreateMenuBar
-				|XmCreateOptionMenu |XmCreateRadioBox |XmCreateWorkArea |XmCreateRowColumn
-				|XmCreateCommandDialog |XmCreateCommand |XmCreateDropDownList |XmCreateDropDownComboBox
-				|XmCreateComboBox |XmCreatePushButton |XmCreatePushButtonGadget |XmCreateCascadeButton
-				|XmCreateCascadeButtonGadget |XmCreateBulletinBoardDialog |XmCreateBulletinBoard
-				|XmCreatePanedWindow |XmCreateNotebook |XmCreateArrowButton |XmCreateArrowButtonGadget
-				|XmCreateTemplateDialog |XmCreateWorkingDialog |XmCreateWarningDialog
-				|XmCreateQuestionDialog |XmCreateInformationDialog |XmCreateErrorDialog
-				|XmCreateMessageDialog |XmCreateMessageBox))
-		 (parent (list-ref (main-widgets) 3))
-		 (str (|XmStringCreateLocalized "yow"))
-		 (args (list |XmNheight 100 |XmNwidth 100 |XmNlabelString str))
-		 (ques (list |XmMenuShell? #f #f #f #f
-			     #f #f |XmMainWindow? #f |XmList?
-			     |XmLabel? |XmLabelGadget? |XmToggleButton?
-			     |XmToggleButtonGadget? |XmGrabShell? |XmFrame? #f |XmForm?
-			     |XmText? #f #f |XmFileSelectionBox?
-			     |XmTextField? #f |XmDrawnButton? #f |XmDrawingArea?
-			     |XmSeparator? #f |XmSeparatorGadget? #f #f
-			     |XmSelectionBox? |XmScrolledWindow? |XmDialogShell? |XmScrollBar?
-			     |XmScale? |XmContainer? #f #f #f
-			     #f #f #f |XmRowColumn? #f
-			     |XmCommand? #f #f |XmComboBox? |XmPushButton?
-			     |XmPushButtonGadget? |XmCascadeButton? |XmCascadeButtonGadget? #f
-			     |XmBulletinBoard? |XmPanedWindow? |XmNotebook? |XmArrowButton? |XmArrowButtonGadget?
-			     #f #f #f #f #f #f #f #f))
-		 (is (list |XmIsMenuShell #f #f #f #f
-			   #f #f |XmIsMainWindow #f |XmIsList
-			   |XmIsLabel |XmIsLabelGadget |XmIsToggleButton
-			   |XmIsToggleButtonGadget |XmIsGrabShell |XmIsFrame #f |XmIsForm
-			   |XmIsText #f #f |XmIsFileSelectionBox
-			   |XmIsTextField #f |XmIsDrawnButton #f |XmIsDrawingArea
-			   |XmIsSeparator #f |XmIsSeparatorGadget #f #f
-			   |XmIsSelectionBox |XmIsScrolledWindow |XmIsDialogShell |XmIsScrollBar
-			   |XmIsScale |XmIsContainer #f #f #f
-			   #f #f #f |XmIsRowColumn #f
-			   |XmIsCommand #f #f |XmIsComboBox |XmIsPushButton
-			   |XmIsPushButtonGadget |XmIsCascadeButton |XmIsCascadeButtonGadget #f
-			   |XmIsBulletinBoard |XmIsPanedWindow |XmIsNotebook |XmIsArrowButton |XmIsArrowButtonGadget
-			   #f #f #f #f #f #f #f #f)))
-	    (for-each 
-	     (lambda (n q qq)
-	       (let ((wid (n parent "hiho" args)))
-		 (if (not (string=? (|XtName wid) "hiho"))
-		     (snd-display ";~A name: ~A" wid (|XtName wid)))
-		 (if (not (|Widget? wid))
-		     (snd-display ";~A not a widget?" wid))
-		 (if (and q (not (q wid)))
-		     (snd-display ";~A is not ~A?" wid q))
-		 (if (and qq (not (qq wid)))
-		     (snd-display ";~A is not ~A" wid qq))
-		 ))
-	     create-procs ques is))
+	    (let ((obj (|XTextItem "hiho" 4 3 (list 'Font 1))))
+	      (if (not (|XTextItem? obj)) (snd-display ";XTextItem -> ~A" obj))
+	      (if (not (equal? (|font obj) (list 'Font 1))) (snd-display ";font ~A" (|font obj)))
+	      (set! (|font obj) (list 'Font 2))
+	      (if (not (equal? (|font obj) (list 'Font 2))) (snd-display ";set font ~A" (|font obj)))
+	      (if (not (string=? (|chars obj) "hiho")) (snd-display ";chars: ~A" (|chars obj)))
+	      (if (not (= (|nchars obj) 4)) (snd-display ";chars: ~A" (|nchars obj)))
+	      (set! (|chars obj) "away!")
+	      (set! (|nchars obj) 5)
+	      (if (not (string=? (|chars obj) "away!")) (snd-display ";set chars: ~A" (|chars obj)))
+	      (if (not (= (|nchars obj) 5)) (snd-display ";set chars: ~A" (|nchars obj)))
+	      (if (not (= (|delta obj) 3)) (snd-display ";delta ~A" (|delta obj)))
+	      (set! (|delta obj) 4)
+	      (if (not (= (|delta obj) 4)) (snd-display ";set delta ~A" (|delta obj)))
+	      )
 
-	  (if (not (|XEvent? (|XEvent)))
-	      (snd-display ";xevent type trouble! ~A -> ~A" (|XEvent) (|XEvent? (|XEvent))))
-	  (if (not (|XGCValues? (|XGCValues)))
-	      (snd-display ";xgcvalues type trouble! ~A -> ~A" (|XGCValues) (|XGCValues? (|XGCValues))))
+	    ;; ---------------- Xt tests ----------------
+	    (let ((name (|XtGetApplicationNameAndClass (|XtDisplay (cadr (main-widgets))))))
+	      (if (not (equal? name (list "snd" "Snd")))
+		  (snd-display ";XtGetApplicationNameAndClass: ~A?" name)))
+	    (let ((dpys (|XtGetDisplays (car (main-widgets)))))
+	      (if (not (|Display? (car dpys)))
+		  (snd-display ";XtGetDisplays: ~A?" dpys)))
+	    (let ((time (|XtGetSelectionTimeout))
+		  (time1 (|XtAppGetSelectionTimeout (car (main-widgets)))))
+	      (if (or (not (number? time))
+		      (not (= time time1))
+		      (< time 1))
+		  (snd-display ";XtGetSelectionTimeout: ~A ~A?" time time1)))
+	    (let ((app (|XtDisplayToApplicationContext (|XtDisplay (cadr (main-widgets)))))
+		  (orig (car (main-widgets)))
+		  (wid (|XtWidgetToApplicationContext (cadr (main-widgets)))))
+	      (if (not (equal? app orig))
+		  (snd-display ";XtDisplayToApplicationContext: ~A ~A?" app orig))
+	      (if (not (equal? app wid))
+		  (snd-display ";XtWidgetToApplicationContext: ~A ~A?" app wid)))
+	    (if (not (string=? (|XtName (caddr (main-widgets))) "mainpane"))
+		(snd-display ";XtName main pane: ~A" (|XtName (caddr (main-widgets)))))
+	    (if (not (= (|XtGetMultiClickTime (|XtDisplay (cadr (main-widgets)))) 200))
+		(snd-display ";XtGetMultiClickTime: ~A" (|XtGetMultiClickTime (|XtDisplay (cadr (main-widgets))))))
+	    (|XtSetMultiClickTime (|XtDisplay (cadr (main-widgets))) 250)
+	    (if (not (= (|XtGetMultiClickTime (|XtDisplay (cadr (main-widgets)))) 250))
+		(snd-display ";XtSetMultiClickTime: ~A" (|XtGetMultiClickTime (|XtDisplay (cadr (main-widgets))))))
+	    
+	    (let ((wid (|XtCreateWidget "wid" |xmFormWidgetClass (cadr (main-widgets)) '()))
+		  (shell (cadr (main-widgets))))
+	      (if (|XtIsApplicationShell wid) (snd-display ";XtIsApplicationShell"))
+	      (if (not (|XtIsApplicationShell shell)) (snd-display ";XtIsApplicationShell of appshell"))
+	      (if (not (|XtIsComposite wid)) (snd-display ";XtIsComposite"))
+	      (if (not (|XtIsConstraint wid)) (snd-display ";XtIsConstraint"))
+	      (if (|XtIsManaged wid) (snd-display ";XtIsManaged"))
+	      (if (not (|XtIsObject wid)) (snd-display ";XtIsObject"))
+	      (if (|XtIsOverrideShell wid) (snd-display ";XtIsOverrideShell"))
+	      (if (|XtIsRealized wid) (snd-display ";XtIsRealized"))
+	      (if (not (|XtIsRealized shell)) (snd-display ";XtIsRealized main shell"))
+	      (if (not (|XtIsRectObj wid)) (snd-display ";XtIsRectObj"))
+	      (if (not (|XtIsSensitive wid)) (snd-display ";XtIsSensitive"))
+	      (if (not (|XtIsSensitive shell)) (snd-display ";XtIsSensitive of main shell"))
+	      (if (|XtIsSessionShell wid) (snd-display ";XtIsSessionShell"))
+	      (if (|XtIsShell wid) (snd-display ";XtIsShell"))
+	      (if (not (|XtIsShell shell)) (snd-display ";XtIsShell of main shell"))
+	      (if (|XtIsTopLevelShell wid) (snd-display ";XtIsTopLevelShell"))
+	      (if (not (|XtIsTopLevelShell shell)) (snd-display ";XtIsTopLevelShell of main shell"))
+	      (if (|XtIsTransientShell wid) (snd-display ";XtIsTransientShell"))
+	      (if (|XtIsVendorShell wid) (snd-display ";XtIsVendorShell"))
+	      (if (not (|XtIsVendorShell shell)) (snd-display ";XtIsVendorShell of main shell"))
+	      (if (|XtIsWMShell wid) (snd-display ";XtIsWMShell"))
+	      (if (not (|XtIsWidget wid)) (snd-display ";XtIsWidget")))
 
-	  (let* ((xm-procs 
-		 ;; these can't be called in this context:
-		 ;;   |XtProcessEvent |XtAppProcessEvent |XtMainLoop |XtAppMainLoop |XtAppAddActions |XtAddActions 
-		 ;;   |XtNextEvent |XtAppNextEvent |XtPeekEvent |XtAppPeekEvent |XtMalloc |XtCalloc |XtRealloc |XtFree |XFree 
-		 ;;   |freeXPoints |moveXPoints |vector->XPoints |XNextEvent |XPutBackEvent |XmParseMappingCreate |XmParseMappingSetValues 
-		 ;;   |XReadBitmapFile |XReadBitmapFileData |XmTransferStartRequest |XmTransferSendRequest |XmTransferDone 
-		 (list
+	    
+	    ;; ---------------- XM tests ----------------
+	    (let ((version (list-ref (|XGetWindowProperty (|XtDisplay (cadr (main-widgets)) )
+							  (|XtWindow (cadr (main-widgets)) )
+							  (|XInternAtom (|XtDisplay (cadr (main-widgets)))
+									"SND_VERSION"
+									#f)
+							  0 32 #f |XA_STRING)
+				     5)))
+	      (if (not (string=? version (snd-version)))
+		  (snd-display ";SND_VERSION: ~A, ~A?" version (snd-version))))
+	    
+	    (let* ((tabs (let ((ctr 0))
+			   (map
+			    (lambda (n)
+			      (set! ctr (+ ctr 1))
+			      (|XmTabCreate n |XmINCHES (if (= ctr 1) |XmABSOLUTE |XmRELATIVE) |XmALIGNMENT_BEGINNING "."))
+			    (list 1.5 1.5 1.5 1.5))))
+		   (tablist (|XmTabListInsertTabs #f tabs (length tabs) 0)))
+	      (if (not (= (|XmTabListTabCount tablist) (length tabs))) 
+		  (snd-display ";tablist len: ~A ~A~%" (|XmTabListTabCount tablist) (length tabs)))
+	      (if (not (equal? (|XmTabGetValues (|XmTabListGetTab tablist 0)) (list 1.5 5 0 0 ".")))
+		  (snd-display ";XmTabs 0: ~A" (|XmTabGetValues (|XmTabListGetTab tablist 0))))
+	      (if (not (equal? (|XmTabGetValues (|XmTabListGetTab tablist 2)) (list 1.5 5 1 0 ".")))
+		  (snd-display ";XmTabs 2: ~A" (|XmTabGetValues (|XmTabListGetTab tablist 0))))
+	      (let* ((fonts (list "fixed"
+				  "-adobe-times-bold-r-*-*-14-*-*-*-*-*-*-*"
+				  "-adobe-*-medium-i-*-*-18-*-*-*-*-*-*-*"
+				  "-*-helvetica-)-*-*-*-18-*-*-*-*-*-*-*"))
+		     (tags (list "one" "two" "three" "four"))
+		     (colors (list "red" "green" "blue" "orange"))
+		     (pixels
+		      (let* ((dpy (|XtDisplay (cadr (main-widgets))))
+			     (scr (|DefaultScreen dpy))
+			     (cmap (|DefaultColormap dpy scr)))
+			(map
+			 (lambda (color)
+			   (let ((col (|XColor)))
+			     (if (= (|XAllocNamedColor dpy cmap color col col) 0)
+				 (snd-error "can't allocate ~S" color)
+				 (|pixel col))))
+			 colors)))
+		     (rendertable (|XmRenderTableAddRenditions #f 
+							       (let ((ctr 0))
+								 (map (lambda (r)
+									(set! ctr (+ ctr 1))
+									(|XmRenditionCreate (cadr (main-widgets))
+											    r
+											    (append
+											     (if (= ctr 1)
+												 (list |XmNtabList tablist)
+												 '())
+											     (list |XmNrenditionForeground (list-ref pixels (1- ctr))
+												    |XmNfontName (list-ref fonts (1- ctr))
+												     |XmNfontType |XmFONT_IS_FONT))))
+								      tags))
+							       (length tags)
+							       |XmMERGE_NEW)))
+		(if (not (equal? (|XmRenderTableGetTags rendertable) (list "one" "two" "three" "four")))
+		    (snd-display ";tags: ~A~%" (|XmRenderTableGetTags rendertable)))
+		(let ((r (|XmRenditionRetrieve (|XmRenderTableGetRendition rendertable "one")
+					       (list |XmNrenditionForeground 0
+						     |XmNfontName 0
+						     |XmNfontType 0
+						     |XmNtag 0))))
+		  (if (or (not (string=? (list-ref r 7) "one"))
+			  (not (string=? (list-ref r 3) "fixed")))
+		      (snd-display ";rendertable: ~A" r)))
+		
+		(let ((tab (|XmStringComponentCreate |XmSTRING_COMPONENT_TAB 0 #f))
+		      (row #f)
+		      (table '())
+		      (our-tags tags))
+		  (for-each 
+		   (lambda (word)
+		     (let ((entry (|XmStringGenerate word
+						     #f
+						     |XmCHARSET_TEXT
+						      (car our-tags))))
+		       (if (|XmStringIsVoid entry) (snd-display ";~A is void?" entry))
+		       (if (|XmStringEmpty entry) (snd-display ";~A is empty?" entry))
+		       (if (<= (|XmStringLength entry) 0) (snd-display ";XmStringLength: ~A ~A" entry (|XmStringLength entry)))
+		       (let ((str1 (|XmStringCopy entry))
+			     (strn #f))
+			 (let ((val (|XmStringCompare entry str1)))
+			   (if (not val) (snd-display ";t XmStringCompare ~A ~A" entry str1)))
+			 (set! strn (|XmStringConcat str1 entry))
+			 (if (not (> (|XmStringLength strn) (|XmStringLength entry)))
+			     (snd-display ";concat xmstring: ~A ~A" (|XmStringLength strn) (|XmStringLength entry)))
+			 (let ((hgt (|XmStringHeight rendertable entry)))
+			   (if (or (< hgt 5) (> hgt 120)) (snd-display ";~A height: ~A" entry hgt)))
+			 (let ((hgt (|XmStringWidth rendertable entry)))
+			   (if (or (< hgt 3) (> hgt 120)) (snd-display ";~A width: ~A" entry hgt)))
+			 (let ((hgt (|XmStringBaseline rendertable entry)))
+			   (if (or (< hgt 6) (> hgt 120)) (snd-display ";~A baseline: ~A" entry hgt)))
+			 (|XmStringFree strn)
+			 (|XmStringFree str1))
+
+		       (if row
+			   (let ((tmp (|XmStringConcat row tab)))
+			     (|XmStringFree row)
+			     (set! row (|XmStringConcatAndFree tmp entry)))
+			   (set! row entry))
+		       (set! our-tags (cdr our-tags))
+		       (if (null? our-tags) 
+			   (begin
+			     (set! our-tags tags)
+			     (set! table (cons row table))
+			     (set! row #f)))))
+		   (list "this" "is" "a" "test" "of" "the" "renditions" "and" "rendertables" 
+			 "perhaps" "all" "will" "go" "well" "and" "then" "again" "perhaps" "not"))
+		  
+		  (let* ((n (car table))
+			 (c (|XmStringInitContext n))
+			 (ctr 0))
+		    (call-with-current-continuation
+		     (lambda (done)
+		       (do ((i 0 (1+ i)))
+			   (#f)
+			 (let ((type (|XmStringGetNextTriple (cadr c))))
+			   (if (= (car type) |XmSTRING_COMPONENT_TEXT)
+			       (if (or (not (= (cadr type) (list-ref (list 0 0 2 0 0 0 4 0 0 0 3 0 0 0 4) i)))
+				       (not (string=? (caddr type) 
+						      (list-ref (list "o" "o" "go" "o" "o" "o" "well" "o" "o" "o" "and" "o" "o" "o" "then") i))))
+				   (snd-display ";component ~A -> ~A" i (cdr type)))
+			       (if (not (= (car type) |XmSTRING_COMPONENT_TAB))
+				   (if (= (car type) |XmSTRING_COMPONENT_END)
+				       (done #f))))))))
+		    (|XmStringFreeContext (cadr c))))))
+	    
+	    (|XtAppAddActions (car (main-widgets))
+			      (list (list "try1" (lambda (w e strs)	
+						   (snd-display ";try1: ~A~%" strs)))
+				    (list "try2" (lambda (w e strs)
+						   (snd-display ";try2: ~A~%" strs)))))
+	    (let* ((tab (|XtParseTranslationTable 
+			  (format #f "Ctrl <Key>osfLeft:  try1()~%Ctrl <Key>osfRight: try2()~%Ctrl <Key>osfUp:  try1(hiho)~%Ctrl <Key>osfDown: try2(down, up)~%")))
+		   (pane (add-main-pane "hiho" |xmTextWidgetClass '())))
+	      (|XtOverrideTranslations pane tab))
+	    
+	    (open-sound "cardinal.snd")
+	    (let*  ((mouse_width 32)
+		    (mouse_height 32)
+		    (mouse_bits (list
+				 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00
+				 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00
+				 #x80 #xff #xff #x01 #x80 #x00 #x01 #x01 #x80 #x00 #x01 #x01
+				 #x80 #x00 #x01 #x01 #x80 #x00 #x01 #x01 #x80 #x00 #x01 #x01
+				 #x80 #x00 #x01 #x01 #x80 #xff #xff #x01 #x80 #x00 #x00 #x01
+				 #x80 #x00 #x00 #x01 #x80 #x00 #x00 #x01 #x80 #x00 #x00 #x01
+				 #x80 #x00 #x00 #x01 #x80 #x00 #x00 #x01 #x80 #x00 #x00 #x01
+				 #x80 #x00 #x00 #x01 #x00 #x01 #x80 #x00 #x00 #x01 #x80 #x00
+				 #x00 #x06 #x60 #x00 #x00 #xf8 #x1f #x00 #x00 #x00 #x00 #x00
+				 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00
+				 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00))
+		    (rb (list
+			 #x00 #x04 #x10 #x08 #x00 #x10 #x04 #x20 #x00 #x40 #xa5 #xbf
+			 #x00 #x40 #x04 #x20 #x00 #x10 #x10 #x08 #x00 #x04 #x00 #x00))
+		    (iconw (list-ref (sound-widgets) 8)))
+	      (|XCreateBitmapFromData (|XtDisplay iconw) (|XtWindow iconw) rb 16 12)
+	      (|XCreateBitmapFromData (|XtDisplay iconw) (|XtWindow iconw) mouse_bits mouse_width mouse_height))
+	    (close-sound)
+	    
+	    (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))
+	    (zync)
+	    (make-hidden-controls-dialog)
+	    (make-pixmap (cadr (main-widgets)) arrow-strs)
+	    (display-scanned-synthesis)
+	    (add-mark-pane)
+	    (open-sound "oboe.snd")
+	    (add-mark 123)
+	    (add-selection-popup)
+	    (make-sound-box "sounds"
+			    (list-ref (main-widgets) 3)
+			    (lambda (file) 
+			      (mix file))
+			    (lambda (file chn)
+			      (define (without-directories filename)
+				(call-with-current-continuation
+				 (lambda (return)
+				   (do ((i (- (string-length filename) 1) (1- i)))
+				       ((= 0 i) filename)
+				     (if (char=? (string-ref filename i) #\/)
+					 (return (substring filename (+ i 1))))))))
+			      (format #f "~~/peaks/~A-peaks-~D" 
+				      (without-directories (mus-expand-filename file)) 
+				      chn))
+			    (list "oboe.snd" "pistol.snd" "cardinal.snd" "storm.snd")
+			    '())
+	    (show-smpte-label)
+	    (with-level-meters 4)
+	    (play)
+	    (close-sound)))
+      
+      (let* ((create-procs (list
+			    |XmCreateMenuShell |XmCreateSimpleCheckBox |XmCreateSimpleRadioBox
+			    |XmCreateSimpleOptionMenu |XmCreateSimplePulldownMenu |XmCreateSimplePopupMenu
+			    |XmCreateSimpleMenuBar |XmCreateMainWindow |XmCreateScrolledList |XmCreateList
+			    |XmCreateLabel |XmCreateLabelGadget |XmCreateToggleButton |XmCreateToggleButtonGadget
+			    |XmCreateGrabShell |XmCreateFrame |XmCreateFormDialog |XmCreateForm |XmCreateText
+			    |XmCreateScrolledText |XmCreateFileSelectionDialog |XmCreateFileSelectionBox
+			    |XmCreateTextField |XmCreateSimpleSpinBox |XmCreateDrawnButton |XmCreateSpinBox
+			    |XmCreateDrawingArea |XmCreateSeparator |XmCreateDragIcon |XmCreateSeparatorGadget
+			    |XmCreatePromptDialog |XmCreateSelectionDialog |XmCreateSelectionBox
+			    |XmCreateScrolledWindow |XmCreateDialogShell |XmCreateScrollBar |XmCreateScale
+			    |XmCreateContainer |XmCreatePulldownMenu |XmCreatePopupMenu |XmCreateMenuBar
+			    |XmCreateOptionMenu |XmCreateRadioBox |XmCreateWorkArea |XmCreateRowColumn
+			    |XmCreateCommandDialog |XmCreateCommand |XmCreateDropDownList |XmCreateDropDownComboBox
+			    |XmCreateComboBox |XmCreatePushButton |XmCreatePushButtonGadget |XmCreateCascadeButton
+			    |XmCreateCascadeButtonGadget |XmCreateBulletinBoardDialog |XmCreateBulletinBoard
+			    |XmCreatePanedWindow |XmCreateNotebook |XmCreateArrowButton |XmCreateArrowButtonGadget
+			    |XmCreateTemplateDialog |XmCreateWorkingDialog |XmCreateWarningDialog
+			    |XmCreateQuestionDialog |XmCreateInformationDialog |XmCreateErrorDialog
+			    |XmCreateMessageDialog |XmCreateMessageBox))
+	     (parent (list-ref (main-widgets) 3))
+	     (str (|XmStringCreateLocalized "yow"))
+	     (args (list |XmNheight 100 |XmNwidth 100 |XmNlabelString str))
+	     (ques (list |XmMenuShell? #f #f #f #f
+			 #f #f |XmMainWindow? #f |XmList?
+			 |XmLabel? |XmLabelGadget? |XmToggleButton?
+			 |XmToggleButtonGadget? |XmGrabShell? |XmFrame? #f |XmForm?
+			 |XmText? #f #f |XmFileSelectionBox?
+			 |XmTextField? #f |XmDrawnButton? #f |XmDrawingArea?
+			 |XmSeparator? #f |XmSeparatorGadget? #f #f
+			 |XmSelectionBox? |XmScrolledWindow? |XmDialogShell? |XmScrollBar?
+			 |XmScale? |XmContainer? #f #f #f
+			 #f #f #f |XmRowColumn? #f
+			 |XmCommand? #f #f |XmComboBox? |XmPushButton?
+			 |XmPushButtonGadget? |XmCascadeButton? |XmCascadeButtonGadget? #f
+			 |XmBulletinBoard? |XmPanedWindow? |XmNotebook? |XmArrowButton? |XmArrowButtonGadget?
+			 #f #f #f #f #f #f #f #f))
+	     (is (list |XmIsMenuShell #f #f #f #f
+		       #f #f |XmIsMainWindow #f |XmIsList
+		       |XmIsLabel |XmIsLabelGadget |XmIsToggleButton
+		       |XmIsToggleButtonGadget |XmIsGrabShell |XmIsFrame #f |XmIsForm
+		       |XmIsText #f #f |XmIsFileSelectionBox
+		       |XmIsTextField #f |XmIsDrawnButton #f |XmIsDrawingArea
+		       |XmIsSeparator #f |XmIsSeparatorGadget #f #f
+		       |XmIsSelectionBox |XmIsScrolledWindow |XmIsDialogShell |XmIsScrollBar
+		       |XmIsScale |XmIsContainer #f #f #f
+		       #f #f #f |XmIsRowColumn #f
+		       |XmIsCommand #f #f |XmIsComboBox |XmIsPushButton
+		       |XmIsPushButtonGadget |XmIsCascadeButton |XmIsCascadeButtonGadget #f
+		       |XmIsBulletinBoard |XmIsPanedWindow |XmIsNotebook |XmIsArrowButton |XmIsArrowButtonGadget
+		       #f #f #f #f #f #f #f #f)))
+	(for-each 
+	 (lambda (n q qq)
+	   (let ((wid (n parent "hiho" args)))
+	     (if (not (string=? (|XtName wid) "hiho"))
+		 (snd-display ";~A name: ~A" wid (|XtName wid)))
+	     (if (not (|Widget? wid))
+		 (snd-display ";~A not a widget?" wid))
+	     (if (and q (not (q wid)))
+		 (snd-display ";~A is not ~A?" wid q))
+	     (if (and qq (not (qq wid)))
+		 (snd-display ";~A is not ~A" wid qq))
+	     ))
+	 create-procs ques is))
+      
+      (if (not (|XEvent? (|XEvent)))
+	  (snd-display ";xevent type trouble! ~A -> ~A" (|XEvent) (|XEvent? (|XEvent))))
+      (if (not (|XGCValues? (|XGCValues)))
+	  (snd-display ";xgcvalues type trouble! ~A -> ~A" (|XGCValues) (|XGCValues? (|XGCValues))))
+      
+      (let* ((xm-procs 
+	      ;; these can't be called in this context:
+	      ;;   |XtProcessEvent |XtAppProcessEvent |XtMainLoop |XtAppMainLoop |XtAppAddActions |XtAddActions 
+	      ;;   |XtNextEvent |XtAppNextEvent |XtPeekEvent |XtAppPeekEvent |XtMalloc |XtCalloc |XtRealloc |XtFree |XFree 
+	      ;;   |freeXPoints |moveXPoints |vector->XPoints |XNextEvent |XPutBackEvent |XmParseMappingCreate |XmParseMappingSetValues 
+	      ;;   |XReadBitmapFile |XReadBitmapFileData |XmTransferStartRequest |XmTransferSendRequest |XmTransferDone 
+	      (list
 		  |XpStartPage |XpEndPage |XpCancelPage |XpStartJob |XpEndJob |XpCancelJob |XpStartDoc |XpEndDoc
 		  |XpCancelDoc |XpRehashPrinterList |XpCreateContext |XpSetContext |XpGetContext |XpDestroyContext
 		  |XpGetLocaleNetString |XpNotifyPdm |XpSendAuth |XpGetImageResolution |XpGetAttributes |XpSetAttributes
@@ -14257,97 +14984,199 @@ EDITS: 3
 		  |XmCascadeButtonGadget?  |XmToggleButtonGadget?  |XmDrawnButton?  |XmPrimitive? |XmFontList?
 		  |XmFontContext?  |XmFontListEntry? |XmTextSource?  |XpmAttributes?  |XpmImage?  |XpmColorSymbol?
 		   ))
-		 (xm-procs0 (remove-if (lambda (n) (not (arity-ok n 0))) xm-procs))
-		 (xm-procs1 (remove-if (lambda (n) (not (arity-ok n 1))) xm-procs))
-		 (xm-procs2 (remove-if (lambda (n) (not (arity-ok n 2))) xm-procs))
-		 (xm-procs3 (remove-if (lambda (n) (not (arity-ok n 3))) xm-procs))
-		 (xm-procs4 (remove-if (lambda (n) (not (arity-ok n 4))) xm-procs))
-		   )
+	     (xm-procs0 (remove-if (lambda (n) (not (arity-ok n 0))) xm-procs))
+	     (xm-procs1 (remove-if (lambda (n) (not (arity-ok n 1))) xm-procs))
+	     (xm-procs2 (remove-if (lambda (n) (not (arity-ok n 2))) xm-procs))
+	     (xm-procs3 (remove-if (lambda (n) (not (arity-ok n 3))) xm-procs))
+	     (xm-procs4 (remove-if (lambda (n) (not (arity-ok n 4))) xm-procs))
+	     )
 
-	    ;; ---------------- 0 Args
-	    (for-each 
-	     (lambda (n)
-	       (catch #t
-		      (lambda () 
-			(n))
-		      (lambda args (car args))))
-	     xm-procs0)
+	;; ---------------- 0 Args
+	(for-each 
+	 (lambda (n)
+	   (catch #t
+		  (lambda () 
+		    (n))
+		  (lambda args (car args))))
+	 xm-procs0)
+	
+	;; ---------------- 1 Arg
+	(for-each 
+	 (lambda (arg)
+	   (for-each 
+	    (lambda (n)
+	      (catch #t
+		     (lambda () (n arg))
+		     (lambda args (car args))))
+	    xm-procs1))
+	 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  #(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
+	       (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t '() 12345678901234567890))
+	
+	;; ---------------- 2 Args
+	(for-each 
+	 (lambda (arg1)
+	   (for-each 
+	    (lambda (arg2)
+	      (for-each 
+	       (lambda (n)
+		 (catch #t
+			(lambda () (n arg1 arg2))
+			(lambda args (car args))))
+	       xm-procs2))
+	    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) #(0 1) 3/4 
+		  (sqrt -1.0) (make-delay 32) :feedback -1 0 #f #t '() 12345678901234567890)))
+	 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) #(0 1) 3/4 
+	       (sqrt -1.0) (make-delay 32) :frequency -1 0 #f #t '() 12345678901234567890))
+	
+	(if all-args
+	    (begin
+	      
+	      ;; ---------------- 3 Args
+	      (for-each 
+	       (lambda (arg1)
+		 (for-each 
+		  (lambda (arg2)
+		    (for-each 
+		     (lambda (arg3)
+		       (for-each 
+			(lambda (n)
+			  (catch #t
+				 (lambda () (n arg1 arg2 arg3))
+				 (lambda args (car args))))
+			xm-procs3))
+		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :start -1 0 #f #t '() 12345678901234567890)))
+		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :phase -1 0 #f #t '() 12345678901234567890)))
+	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890))
+	      
+	      ;; ---------------- 4 Args
+	      (for-each 
+	       (lambda (arg1)
+		 (for-each 
+		  (lambda (arg2)
+		    (for-each 
+		     (lambda (arg3)
+		       (for-each 
+			(lambda (arg4)
+			  (for-each 
+			   (lambda (n)
+			     (catch #t
+				    (lambda () (n arg1 arg2 arg3 arg4))
+				    (lambda args (car args))))
+			   xm-procs4))
+			(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :start -1 0 #f #t '() 12345678901234567890)))
+		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :phase -1 0 #f #t '() 12345678901234567890)))
+		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890)))
+	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890))
+	      ))
+	
+	(let ((struct-accessors (list  |pixel |red |green |blue |flags |pad |x |y |width |height |angle1 |angle2
+				|x1 |y1 |x2 |y2 |dashes |dash_offset |clip_mask |clip_y_origin |clip_x_origin |graphics_exposures
+				|subwindow_mode |font |ts_y_origin |ts_x_origin |stipple |tile |arc_mode |fill_rule |fill_style
+				|join_style |cap_style |line_style |line_width |background |foreground |plane_mask |function |delta
+				|nchars |chars |name |depth |visual |mwidth |mheight |ndepths |depths |root_depth |root_visual
+				|default_gc |cmap |white_pixel |black_pixel |max_maps |min_maps |backing_store |save_unders |root_input_mask
+				|lbearing |rbearing |ascent |descent |attributes |card32 |fid |properties |min_bounds |max_bounds |per_char
+				|input |initial_state |icon_pixmap |icon_window |icon_x |icon_y |icon_mask |window_group |visualid
+				|class  |red_mask |green_mask |blue_mask |bits_per_rgb |map_entries |nvisuals |visuals |bits_per_pixel
+				|background_pixmap |background_pixel |border_pixmap |border_pixel |bit_gravity |win_gravity |backing_planes
+				|backing_pixel |save_under |event_mask |do_not_propagate_mask |cursor |map_installed |map_state |all_event_masks
+				|your_event_mask |screen |xoffset |byte_order |bitmap_unit |bitmap_bit_order |bitmap_pad |bytes_per_line
+				|obdata |sibling |stack_mode |red_max |red_mult |green_max |green_mult |blue_max |blue_mult |base_pixel
+				|killid |family |address |data |min_height |max_height |min_width |max_width |height_inc |width_inc |page_number
+				|page_widget |status_area_widget |major_tab_widget |minor_tab_widget |source_data |location_data |parm
+				|parm_format |parm_length |parm_type |transfer_id |destination_data |remaining |item_or_text |auto_selection_type
+				|new_outline_state |prev_page_number |prev_page_widget |rendition |render_table |last_page |crossed_boundary
+				|client_data |status |font_name |tag |traversal_destination |dragProtocolStyle |direction |reason
+				|timeStamp |operation |operations |dropSiteStatus |dropAction |iccHandle |completionStatus |dragContext
+				|animate |topShadowColor |topShadowPixmap |bottomShadowColor |bottomShadowPixmap |shadowThickness |highlightColor
+				|highlightPixmap |highlightThickness |borderWidth |length |click_count |widget |item_position |callbackstruct
+				|set |item |item_length |selected_items |selected_item_count |selected_item_positions |selection_type
+				|mask |mask_length |dir |dir_length |pattern |pattern_length |position |currInsert |newInsert |startPos
+				|endPos |text |request_code |error_code |first_keycode |request |resourceid |format |message_type |new
+				|property |display |target |requestor |owner |selection |atom |place |value_mask |above |from_configure
+				|event |override_redirect |border_width |parent |minor_code |major_code |drawable |count |key_vector |focus
+				|detail |mode |is_hint |button |same_screen |keycode |state |y_root |x_root |root |time |subwindow |window
+				|send_event |serial |type |value |doit |colormap |menuToPost |postIt |valuemask |ncolors |cpp
+				|numsymbols |colorsymbols |npixels |y_hotspot |x_hotspot))
 
-	    ;; ---------------- 1 Arg
-	    (for-each 
-	     (lambda (arg)
-	       (for-each 
-		(lambda (n)
-		  (catch #t
-			 (lambda () (n arg))
-			 (lambda args (car args))))
-		xm-procs1))
-	     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  #(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
-		   (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t '() 12345678901234567890))
+	      (struct-accessor-names (list  '|pixel '|red '|green '|blue '|flags '|pad '|x '|y '|width '|height '|angle1 '|angle2
+				'|x1 '|y1 '|x2 '|y2 '|dashes '|dash_offset '|clip_mask '|clip_y_origin '|clip_x_origin '|graphics_exposures
+				'|subwindow_mode '|font '|ts_y_origin '|ts_x_origin '|stipple '|tile '|arc_mode '|fill_rule '|fill_style
+				'|join_style '|cap_style '|line_style '|line_width '|background '|foreground '|plane_mask '|function '|delta
+				'|nchars '|chars '|name '|depth '|visual '|mwidth '|mheight '|ndepths '|depths '|root_depth '|root_visual
+				'|default_gc '|cmap '|white_pixel '|black_pixel '|max_maps '|min_maps '|backing_store '|save_unders '|root_input_mask
+				'|lbearing '|rbearing '|ascent '|descent '|attributes '|card32 '|fid '|properties '|min_bounds '|max_bounds '|per_char
+				'|input '|initial_state '|icon_pixmap '|icon_window '|icon_x '|icon_y '|icon_mask '|window_group '|visualid
+				'|class  '|red_mask '|green_mask '|blue_mask '|bits_per_rgb '|map_entries '|nvisuals '|visuals '|bits_per_pixel
+				'|background_pixmap '|background_pixel '|border_pixmap '|border_pixel '|bit_gravity '|win_gravity '|backing_planes
+				'|backing_pixel '|save_under '|event_mask '|do_not_propagate_mask '|cursor '|map_installed '|map_state '|all_event_masks
+				'|your_event_mask '|screen '|xoffset '|byte_order '|bitmap_unit '|bitmap_bit_order '|bitmap_pad '|bytes_per_line
+				'|obdata '|sibling '|stack_mode '|red_max '|red_mult '|green_max '|green_mult '|blue_max '|blue_mult '|base_pixel
+				'|killid '|family '|address '|data '|min_height '|max_height '|min_width '|max_width '|height_inc '|width_inc '|page_number
+				'|page_widget '|status_area_widget '|major_tab_widget '|minor_tab_widget '|source_data '|location_data '|parm
+				'|parm_format '|parm_length '|parm_type '|transfer_id '|destination_data '|remaining '|item_or_text '|auto_selection_type
+				'|new_outline_state '|prev_page_number '|prev_page_widget '|rendition '|render_table '|last_page '|crossed_boundary
+				'|client_data '|status '|font_name '|tag '|traversal_destination '|dragProtocolStyle '|direction '|reason
+				'|timeStamp '|operation '|operations '|dropSiteStatus '|dropAction '|iccHandle '|completionStatus '|dragContext
+				'|animate '|topShadowColor '|topShadowPixmap '|bottomShadowColor '|bottomShadowPixmap '|shadowThickness '|highlightColor
+				'|highlightPixmap '|highlightThickness '|borderWidth '|length '|click_count '|widget '|item_position '|callbackstruct
+				'|set '|item '|item_length '|selected_items '|selected_item_count '|selected_item_positions '|selection_type
+				'|mask '|mask_length '|dir '|dir_length '|pattern '|pattern_length '|position '|currInsert '|newInsert '|startPos
+				'|endPos '|text '|request_code '|error_code '|first_keycode '|request '|resourceid '|format '|message_type '|new
+				'|property '|display '|target '|requestor '|owner '|selection '|atom '|place '|value_mask '|above '|from_configure
+				'|event '|override_redirect '|border_width '|parent '|minor_code '|major_code '|drawable '|count '|key_vector '|focus
+				'|detail '|mode '|is_hint '|button '|same_screen '|keycode '|state '|y_root '|x_root '|root '|time '|subwindow '|window
+				'|send_event '|serial '|type '|value '|doit '|colormap '|menuToPost '|postIt '|valuemask '|ncolors '|cpp
+				'|numsymbols '|colorsymbols '|npixels '|y_hotspot '|x_hotspot)))
 
-	    ;; ---------------- 2 Args
-	    (for-each 
-	     (lambda (arg1)
-	       (for-each 
-		(lambda (arg2)
-		  (for-each 
-		   (lambda (n)
-		     (catch #t
-			    (lambda () (n arg1 arg2))
-			    (lambda args (car args))))
-		   xm-procs2))
-		(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) #(0 1) 3/4 
-		      (sqrt -1.0) (make-delay 32) :feedback -1 0 #f #t '() 12345678901234567890)))
-	     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) #(0 1) 3/4 
-		   (sqrt -1.0) (make-delay 32) :frequency -1 0 #f #t '() 12345678901234567890))
+	  ;; ---------------- 0 Args
+	  (for-each 
+	   (lambda (n name)
+	     (let ((tag
+		    (catch #t
+			   (lambda () 
+			     (n))
+			   (lambda args (car args)))))
+	       (if (not (eq? tag 'wrong-number-of-args))
+		   (snd-display ";(~A) -> ~A" name tag)))
+	     (if (procedure-with-setter? n)
+		 (let ((tag
+			(catch #t
+			       (lambda () 
+				 (set! (n) 0))
+			       (lambda args (car args)))))
+		   (if (not (eq? tag 'wrong-number-of-args))
+		       (snd-display ";(~A) -> ~A" name tag)))))
+	   struct-accessors
+	   struct-accessor-names)
+	
+	  ;; ---------------- 1 Arg
+	  (for-each 
+	   (lambda (arg)
+	     (for-each 
+	      (lambda (n name)
+		(let ((tag 
+		       (catch #t
+			      (lambda () (n arg))
+			      (lambda args (car args)))))
+		  (if (not (eq? tag 'wrong-type-arg))
+		      (snd-display ";(~A ~A) -> ~A" name arg tag)))
+		(if (procedure-with-setter? n)
+		    (let ((tag 
+			   (catch #t
+				  (lambda () (set! (n arg) 0))
+				  (lambda args (car args)))))
+		      (if (not (eq? tag 'wrong-type-arg))
+			  (snd-display ";(~A ~A) -> ~A" name arg tag)))))
+	      struct-accessors
+	      struct-accessor-names))
+	   (list 1.5 "/hiho" (list 0 1) 1234 #f #t '())))
 
-	    (if all-args
-		(begin
+	(gc)
+	)))
+    
 
-		  ;; ---------------- 3 Args
-		  (for-each 
-		   (lambda (arg1)
-		     (for-each 
-		      (lambda (arg2)
-			(for-each 
-			 (lambda (arg3)
-			   (for-each 
-			    (lambda (n)
-			      (catch #t
-				     (lambda () (n arg1 arg2 arg3))
-				     (lambda args (car args))))
-			    xm-procs3))
-			 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :start -1 0 #f #t '() 12345678901234567890)))
-		      (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :phase -1 0 #f #t '() 12345678901234567890)))
-		   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890))
-		
-		  ;; ---------------- 4 Args
-		  (for-each 
-		   (lambda (arg1)
-		     (for-each 
-		      (lambda (arg2)
-			(for-each 
-			 (lambda (arg3)
-			   (for-each 
-			    (lambda (arg4)
-			      (for-each 
-			       (lambda (n)
-				 (catch #t
-					(lambda () (n arg1 arg2 arg3 arg4))
-					(lambda args (car args))))
-			       xm-procs4))
-			    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :start -1 0 #f #t '() 12345678901234567890)))
-			 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :phase -1 0 #f #t '() 12345678901234567890)))
-		      (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890)))
-		   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890))
-		  ))
-
-	    (gc)
-	    )
-	    ))))
-
-
-;;; ---------------- test 23: errors ----------------
+;;; ---------------- test 24: errors ----------------
 
 (mem-report)
 (if (file-exists? "memlog")
@@ -14385,7 +15214,7 @@ EDITS: 3
 	       env-sound enved-active-env enved-base enved-clip? enved-in-dB enved-dialog enved-exp? enved-power
 	       enved-selected-env enved-target enved-waveform-color enved-wave? eps-file eps-left-margin emacs-style-save-as
 	       eps-bottom-margin eps-size expand-control expand-control-hop expand-control-length expand-control-ramp
-	       expand-control? fft fft-window-beta fft-log-frequency fft-log-magnitude transform-size
+	       expand-control? fft fft-window-beta fft-log-frequency fft-log-magnitude transform-size disk-kspace
 	       transform-graph-type fft-window graph-transform?  fht file-dialog mix-file-dialog file-name fill-polygon
 	       fill-rectangle filter-sound filter-control-in-dB filter-control-env enved-filter-order enved-filter
 	       filter-env-in-hz filter-control-order filter-selection filter-waveform-color filter-control? find
@@ -14548,9 +15377,9 @@ EDITS: 3
 
 (reset-all-hooks)
 
-(if (or full-test (= snd-test 23) (and keep-going (<= snd-test 23)))
+(if (or full-test (= snd-test 24) (and keep-going (<= snd-test 24)))
     (begin
-      (if (procedure? test-hook)  (test-hook 23))
+      (if (procedure? test-hook)  (test-hook 24))
 
       (for-each (lambda (n)
 		  (let ((tag
@@ -15311,6 +16140,17 @@ EDITS: 3
 	(check-error-tag 'no-such-file (lambda () (make-sample-reader 0 "/bad/baddy.snd")))
 	(check-error-tag 'no-such-region (lambda () (make-region-sample-reader 0 1234567)))
 
+	(for-each
+	 (lambda (n name)
+	   (let ((tag (catch #t
+			     (lambda () (n (list 'Widget 0)))
+			     (lambda args (car args)))))
+	     (if (not (eq? tag 'no-such-widget))
+		 (snd-display ";~A of null widget -> ~A" name tag))))
+	 (list widget-position widget-size widget-text hide-widget show-widget focus-widget)
+	 (list 'widget-position 'widget-size 'widget-text 'hide-widget 'show-widget 'focus-widget))
+
+
 	;; now try everything! (all we care about here is that Snd keeps running)
 
 	;; ---------------- key args
@@ -15573,7 +16413,7 @@ EDITS: 3
 	))
 
 (set! (window-y) 10)
-(set! (basic-color) (make-color 0.96 0.96 0.86))
+;(set! (basic-color) (make-color 0.96 0.96 0.86))
 (dismiss-all-dialogs)
 
 

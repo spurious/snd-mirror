@@ -1923,7 +1923,7 @@ the hook.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called each time a file is opened (before the actual open).
-<!-- -->If it returns #t, the file is not opened (see the Buffer Menu code in examp.scm).
+<!-- -->If it returns #t, the file is not opened.
 <!-- -->If it returns a string, that file is opened instead of the original one.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
@@ -3168,7 +3168,7 @@ a globally unique id number (returned by <b>find-mark</b> or <b>add-mark</b>, fo
 <!-- add-mark -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sndaddmark">add-mark</a></em> (sample <i>snd chn</i>)</code></span></td>
-<!-- --><td>add mark at <i>sample</i>, returning mark id.
+<!-- --><td>add mark at <i>sample</i>, returning mark id.  If <i>sample</i> is out-of-range, <i>add-mark</i> returns #f.
 <!-- --></td></tr>
 <!-- -->
 <!-- backward-mark -->

@@ -105,7 +105,7 @@ void alert_enved_amp_env(snd_info *sp)
 {
   snd_state *ss;
   ss = sp->state;
-  if ((enved_dialog) && (active_channel) && (enved_wave_p(ss)))
+  if ((ss) && (enved_dialog) && (active_channel) && (enved_wave_p(ss)))
     if (active_channel->sound == sp) 
       env_redisplay(sp->state);
 }

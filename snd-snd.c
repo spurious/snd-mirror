@@ -2274,10 +2274,7 @@ opens filename (as if opened from File:Open menu option), and returns the new fi
   if (fname) FREE(fname);
   if (sp) 
     return(C_TO_XEN_INT(sp->index));
-  else
-    XEN_ERROR(MUS_MISC_ERROR,
-	      XEN_LIST_2(C_TO_XEN_STRING(S_open_sound),
-			 C_TO_XEN_STRING(ss->catch_message)));
+  /* sp NULL is not an error (open-hook func returned #t) */
   return(XEN_FALSE);
 }
 
@@ -2314,10 +2311,6 @@ opens filename assuming the data matches the attributes indicated unless the fil
   if (fname) FREE(fname);
   if (sp) 
     return(C_TO_XEN_INT(sp->index));
-  else
-    XEN_ERROR(MUS_MISC_ERROR,
-	      XEN_LIST_2(C_TO_XEN_STRING(S_open_raw_sound),
-			 C_TO_XEN_STRING(ss->catch_message)));
   return(XEN_FALSE);
 }
 
@@ -2341,10 +2334,6 @@ You can subsequently make it writable by (set! (read-only) #f)."
   FREE(fname);
   if (sp) 
     return(C_TO_XEN_INT(sp->index));
-  else 
-    XEN_ERROR(MUS_MISC_ERROR,
-	      XEN_LIST_2(C_TO_XEN_STRING(S_view_sound),
-			 C_TO_XEN_STRING(ss->catch_message)));
   return(XEN_FALSE);
 }
 
@@ -2398,7 +2387,7 @@ Any argument can be #f which causes its value to be taken from the sound being s
 	  err = save_channel_edits(cp, fname, edpos, S_save_sound_as, 7);
 	}
     }
-  else err = save_edits_without_display(sp, fname, ht, df, sr, hdr->comment, edpos, S_save_sound_as, 7);
+  else err = save_edits_without_display(sp, fname, ht, df, sr, output_comment(hdr), edpos, S_save_sound_as, 7);
   if (err != MUS_NO_ERROR)
     {
       ss = sp->state;

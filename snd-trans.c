@@ -960,7 +960,9 @@ static short oki_adpcm_decode(char code, struct oki_adpcm_status *stat)
   stat->step_index += oki_adjust[code & 0x07];
   if (stat->step_index < 0) stat->step_index = 0;
   if (stat->step_index > 48) stat->step_index = 48;
-  return(samp<<4);
+  if (samp == 2048)
+    return(32767);
+  return(samp << 4);
 }
 
 static int read_oki_adpcm(char *oldname, char *newname, char *hdr)
@@ -984,6 +986,7 @@ static int read_oki_adpcm(char *oldname, char *newname, char *hdr)
   STARTUP(oldname, newname, blksiz, unsigned char);
   buf1 = (short *)CALLOC(blksiz * 2, sizeof(short));
   samps = mus_sound_fact_samples(oldname);
+  if (samps == 0) samps = mus_sound_frames(oldname);
   srate = mus_sound_srate(oldname);
   mus_bint_to_char((unsigned char *)(hdr + 16), srate);
   mus_bint_to_char((unsigned char *)(hdr + 20), chans);
