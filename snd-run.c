@@ -2186,9 +2186,9 @@ static xen_value *case_form(ptree *prog, XEN form, int need_result)
   /* (case selector ((...) exp ...) ...) with possible 'else' */
   XEN selector, body, keys, key;
   int i, j, body_len, num_keys, cur_key;
-  xen_value *selval, *jump_to_selection, *v, *result = NULL, *keyval, *locval, *elseval = NULL;
-  int *locations;
-  xen_value **fixups;
+  xen_value *selval = NULL, *jump_to_selection = NULL, *v = NULL, *result = NULL, *keyval = NULL, *locval = NULL, *elseval = NULL;
+  int *locations = NULL;
+  xen_value **fixups = NULL;
   selector = XEN_CADR(form);
   selval = walk(prog, selector, TRUE);
   if (selval == NULL) return(run_warn("can't handle case selector: %s", XEN_AS_STRING(selector)));
@@ -2212,30 +2212,18 @@ static xen_value *case_form(ptree *prog, XEN form, int need_result)
 	    if (result->type != v->type)
 	      {
 		run_warn("case clause types differ: %s %s", type_name(v->type), type_name(result->type));
-		FREE(v);
-		v = NULL;
+		FREE(v); v = NULL;
 	      }
 	  if (v) set_var(prog, result, v);
 	}
-      if (v == NULL)
-	{
-	  FREE(selval);
-	  FREE(jump_to_selection);
-	  for (j = 0; j < i; j++) 
-	    if (fixups[j])
-	      FREE(fixups[j]);
-	  FREE(fixups);
-	  FREE(locations);
-	  if (result) FREE(result);
-	  return(NULL);
-	}
-      FREE(v);
+      if (v == NULL) goto CASE_ERROR;
+      FREE(v); v = NULL;
       fixups[i] = make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_VARIABLE);
       add_triple_to_ptree(prog, va_make_triple(jump_abs, descr_jump_abs, 1, fixups[i])); 
     }
   /* fixup jump from selector to table of keys (here) */
   prog->ints[jump_to_selection->addr] = prog->triple_ctr;
-  FREE(jump_to_selection);
+  FREE(jump_to_selection); jump_to_selection = NULL;
   /* now make the selection */
   body = XEN_CDDR(form);
   for (i = 0; i < body_len; i++, body = XEN_CDR(body))
@@ -2247,14 +2235,8 @@ static xen_value *case_form(ptree *prog, XEN form, int need_result)
 	    elseval = make_xen_value(R_INT, i, R_CONSTANT);
 	  else 
 	    {
-	      for (i = 0; i < body_len; i++)
-		if (fixups[i])
-		  FREE(fixups[i]);
-	      FREE(fixups);
-	      FREE(locations);
-	      FREE(selval);
-	      if (result) FREE(result);
-	      return(run_warn("bad case key: %s", XEN_AS_STRING(keys)));
+	      run_warn("bad case key: %s", XEN_AS_STRING(keys));
+	      goto CASE_ERROR;
 	    }
 	}
       else
@@ -2265,21 +2247,15 @@ static xen_value *case_form(ptree *prog, XEN form, int need_result)
 	      key = XEN_CAR(keys);
 	      if (!(XEN_INTEGER_P(key)))
 		{
-		  FREE(selval);
-		  for (j = 0; j < body_len; j++) 
-		    if (fixups[j])
-		      FREE(fixups[j]);
-		  FREE(fixups);
-		  FREE(locations);
-		  if (result) FREE(result);
-		  return(run_warn("case only accepts integer selectors: %s", XEN_AS_STRING(key)));
+		  run_warn("case only accepts integer selectors: %s", XEN_AS_STRING(key));
+		  goto CASE_ERROR;
 		}
 	      cur_key = XEN_TO_C_INT(key);
 	      keyval = make_xen_value(R_INT, add_int_to_ptree(prog, cur_key), R_CONSTANT);
 	      locval = make_xen_value(R_INT, add_int_to_ptree(prog, locations[i]), R_CONSTANT);
 	      add_triple_to_ptree(prog, va_make_triple(jump_if_equal, descr_jump_if_equal, 3, locval, selval, keyval));
-	      FREE(keyval);
-	      FREE(locval);
+	      FREE(keyval); keyval = NULL;
+	      FREE(locval); locval = NULL;
 	    }
 	}
     }
@@ -2292,17 +2268,35 @@ static xen_value *case_form(ptree *prog, XEN form, int need_result)
       FREE(elseval);
     }
   FREE(locations);
-  for (i = 0; i < body_len; i++)
-    if (fixups[i])
-      {
-	prog->ints[fixups[i]->addr] = prog->triple_ctr;
-	FREE(fixups[i]);
-      }
-  if (fixups) FREE(fixups);
+  if (fixups)
+    {
+      for (i = 0; i < body_len; i++)
+	if (fixups[i])
+	  {
+	    prog->ints[fixups[i]->addr] = prog->triple_ctr;
+	    FREE(fixups[i]);
+	  }
+      FREE(fixups);
+    }
   if (selval) FREE(selval);
   if (need_result)
     return(result);
   return(make_xen_value(R_UNSPECIFIED, -1, R_CONSTANT));
+
+ CASE_ERROR:
+  /* try to avoid endless repetition of cleanup code */
+  if (selval) FREE(selval);
+  if (fixups)
+    {
+      for (j = 0; j < body_len; j++) 
+	if (fixups[j])
+	  FREE(fixups[j]);
+      FREE(fixups);
+    }
+  if (locations) FREE(locations);
+  if (result) FREE(result);
+  if (jump_to_selection) FREE(jump_to_selection);
+  return(NULL);
 }
 
 static int list_member(XEN symb, XEN varlst)
@@ -6908,7 +6902,6 @@ static xen_value *clean_up_if_needed(xen_value *result, xen_value **args, int ar
 {
   if (need_result)
     return(clean_up(result, args, args_size));
-  /* ok to skip return because we walked the args, so any side effects there are handled */
   return(make_xen_value(R_UNSPECIFIED, -1, R_CONSTANT));
 }
 
@@ -6926,8 +6919,10 @@ static xen_value *unwrap_xen_object(ptree *prog, XEN form, const char *origin)
     return(make_xen_value(R_CHAR, add_int_to_ptree(prog, (int)(XEN_TO_C_CHAR(form))), R_CONSTANT));
   if (XEN_STRING_P(form)) 
     return(make_xen_value(R_STRING, add_string_to_ptree(prog, copy_string(XEN_TO_C_STRING(form))), R_CONSTANT));
+  if (VCT_P(form))
+    return(make_xen_value(R_VCT, add_int_to_ptree(prog, (int)(get_vct(form))), R_CONSTANT));
 
-  /* TODO: list here? (list-ref (car ...)) */
+  /* TODO: list here? (list-ref (car ...)) vector? gen/sf-reader? */
   return(run_warn("%s: non-simple arg: %s", origin, XEN_AS_STRING(form)));
 }
 
@@ -7140,23 +7135,15 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 		return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, XEN_NULL_P(lst)), R_CONSTANT), args, num_args));
 
 	      for (k = 0; k < clm_struct_top; k++)
-		{
-		  if (strcmp(funcname, clm_struct_names[k]) == 0)
-		    return(clean_up(unwrap_xen_object(prog, XEN_LIST_REF(lst, clm_struct_offsets[k]), funcname), args, num_args));
-		}
+		if (strcmp(funcname, clm_struct_names[k]) == 0)
+		  return(clean_up(unwrap_xen_object(prog, XEN_LIST_REF(lst, clm_struct_offsets[k]), funcname), args, num_args));
 	      for (k = 0; k < clm_types_top; k++)
-		{
-		  if (strcmp(funcname, clm_types[k]) == 0)
-		    return(clean_up(make_xen_value(R_BOOL, 
-						   add_int_to_ptree(prog, 
-								    check_clm_type(XEN_CAR(lst), clm_types[k])), 
-						   R_CONSTANT), 
-				    args, num_args));
-		}
+		if (strcmp(funcname, clm_types[k]) == 0)
+		  return(clean_up(make_xen_value(R_BOOL, 
+						 add_int_to_ptree(prog, check_clm_type(XEN_CAR(lst), clm_types[k])), 
+						 R_CONSTANT), 
+				  args, num_args));
 	    }
-	  /* TODO: add port ops?
-	   * TODO: list could be added if all args are constants (list included)
-	   */
 	}
 
       if ((pairs == 1) && (num_args == 1) && (args[1]->type == R_PAIR))
@@ -7627,6 +7614,13 @@ static xen_value *lookup_generalized_set(ptree *prog, char *accessor, xen_value 
       if (strcmp(accessor, "mus-length") == 0) v = mus_set_length_1(prog, in_v, v);
     }
   if (strcmp(accessor, "mus-srate") == 0) v = mus_set_srate_1(prog, in_v, v);
+  /* TODO: list-set! for def-clm-struct [needs to retain old type]
+	      for (k = 0; k < clm_struct_top; k++)
+		{
+		  if (strcmp(accessor, clm_struct_names[k]) == 0)
+		    return(clean_up(unwrap_xen_object(prog, XEN_LIST_SET(lst, clm_struct_offsets[k], in_v, v), accessor), args, num_args));
+		}
+   */
   if (v == NULL) run_warn("can't set! %s", accessor);
   if (in_v) FREE(in_v);
   if (accessor) FREE(accessor);

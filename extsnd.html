@@ -5032,7 +5032,7 @@ the direction argument between the channel and edit-position:
 <!-- -->fast (we just tack a new accessor choice onto the edit-history list), so the edit operation
 <!-- -->appears to be instantaneous and memory-less.  Lots of other operations
 <!-- -->are already being done this way in Snd (deletions, scaling, most
-<!-- -->envelopes, etc).  <b>ptree-channel</b> extends the idea to (nearly) arbitrary
+<!-- -->envelopes, some channel swaps, etc).  <b>ptree-channel</b> extends the idea to (nearly) arbitrary
 <!-- -->functions.  When you call <br><br><code>(ptree-channel (lambda (y) (* y 2)))</code><br><br>
 <!-- -->which has the same effect as <br><br><code>(map-channel (lambda (y) (* y 2)))</code><br><br> the
 <!-- -->optimizer makes the parse-tree that represents <code>(lambda (y) (* y 2))</code>, then the

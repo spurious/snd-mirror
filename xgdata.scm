@@ -52,7 +52,7 @@
 (CFNC "guint g_signal_handlers_unblock_matched gpointer instance GSignalMatchType mask guint signal_id GQuark detail GClosure* closure gpointer func gpointer data")
 (CFNC "guint g_signal_handlers_disconnect_matched gpointer instance GSignalMatchType mask guint signal_id GQuark detail GClosure* closure gpointer func gpointer data")
 (CFNC "void g_signal_handlers_destroy gpointer instance")
-(CFNC "void _g_signals_destroy GType itype")
+;(CFNC "void _g_signals_destroy GType itype")
 (CFNC "gpointer g_object_ref gpointer object")
 (CFNC "void g_object_unref gpointer object")
 (CCAST "GDK_COLORMAP(object)" "GdkColormap*")

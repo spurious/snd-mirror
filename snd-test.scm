@@ -17494,6 +17494,11 @@ EDITS: 5
 	(run (lambda () (set! bst3 (st3? svar))))
 	(if (not bst3) (snd-display ";st3? ~A" (st3? svar))))
 
+      (let ((lst (list 1 2 (vct-fill! (make-vct 4) 3.14) 3))
+	    (k 123.0))
+	(run (lambda () (set! k (vct-ref (list-ref lst 2) 1))))
+	(if (fneq k 3.14) (snd-display ";list-ref ->vct: ~A" k)))
+
       (itst '(mus-sound-samples "oboe.snd") 50828)
       (itst '(mus-sound-length "oboe.snd") 101684)
       (itst '(mus-sound-frames "oboe.snd") 50828)
@@ -24368,6 +24373,7 @@ EDITS: 5
 	       (provided? 'xg))
 	  (begin
 	    (IF (not (GTK_IS_WIDGET (cadr (main-widgets)))) (snd-display ";GTK_IS_WIDGET?"))
+	    ;; all gtk proc names are in gtk-procs.scm
 
 	    (let* ((win (car (main-widgets)))
 		   (vals (gdk_property_get win (gdk_atom_intern "SND_VERSION" #f) GDK_TARGET_STRING 0 1024 0))

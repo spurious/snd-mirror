@@ -4,13 +4,13 @@
  */
 
 /* SOMEDAY: finish selection-oriented Xt callbacks
- * SOMEDAY: XmVaCreateSimple* (need special arglist handlers)
  * SOMEDAY: callback struct print (and tie makers into Ruby)
  * SOMEDAY: finish the -> converters
  * SOMEDAY: get Xprt to work and test the Xp stuff
  */
 
 /* HISTORY: 
+ *   2-Aug:     some Lesstif-related compile-time switches.
  *   26-Jul:    removed wrappers Widget Pixel GC and XtAppContext.
  *   24-Jul:    removed "|" prefix, use "." as default struct field prefix.
  *   19-Jul:    XM_FIELD_PREFIX for change from using vertical-bar ("|" is reserved in R5RS).
@@ -69,11 +69,9 @@
 #include <X11/cursorfont.h>
 #include <stdio.h>
 
-/* compile-time flags are HAVE_XPM  HAVE_MOTIF  HAVE_XP  HAVE_GUILE|HAVE_RUBY  XM_DISABLE_DEPRECATED */
+/* compile-time flags are HAVE_XPM  HAVE_MOTIF  HAVE_XP  HAVE_GUILE|HAVE_RUBY  XM_DISABLE_DEPRECATED LESSTIF_VERSION */
 
 /* if the loader complains about XtIsSubClass, define NEED_XtIsSubClass */
-/* I haven't managed to get this to work with Lesstif -- probably just a matter of a million HAVE_<mumble> macros */
-  
 /* if you're using g++ and it complains about XmRemoveFromPostFromList, update Motif (you need 2.1.30) */
 
 #if USE_SND
@@ -216,8 +214,6 @@
 
 /* "smob" for locally created stuff (X graphics entities mainly) */
 
-static char *xm_obj_to_string(XEN obj); /* see structs (far) below */
-
 static XEN_OBJECT_TYPE xm_obj_tag;
 
 #if HAVE_GUILE
@@ -275,6 +271,16 @@ static void define_xm_obj(void)
   static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} \
   static XEN XEN_ ## Name ## _p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P(#Name, val)));}
 
+#define XM_TYPE_PTR_NO_p(Name, XType) \
+  static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);} \
+  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return((XType)NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
+  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}
+
+#define XM_TYPE_PTR_NO_C2X(Name, XType) \
+  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return((XType)NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
+  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} \
+  static XEN XEN_ ## Name ## _p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P(#Name, val)));}
+
 #define XM_TYPE_PTR_OBJ(Name, XType) \
   static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN_OBJ(#Name, val)); return(XEN_FALSE);} \
   static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
@@ -323,40 +329,40 @@ XM_TYPE_PTR(XFontProp, XFontProp *)
 XM_TYPE(XFontSet, XFontSet)
 XM_TYPE_PTR(XFontStruct, XFontStruct *)
 XM_TYPE_PTR(XGCValues, XGCValues *)
-XM_TYPE_PTR(XTextItem, XTextItem *)
+XM_TYPE_PTR_NO_C2X(XTextItem, XTextItem *)
 XM_TYPE_PTR(XModifierKeymap, XModifierKeymap *) /* opaque in this implementation */
 XM_TYPE_PTR(XImage, XImage *)
 static XAnyEvent *XEN_TO_C_XAnyEvent(XEN val) {return((XAnyEvent *)XEN_TO_C_ULONG(XEN_CADR(val)));}
-XM_TYPE_PTR(XButtonEvent, XButtonEvent *)
-XM_TYPE_PTR(XCirculateEvent, XCirculateEvent *)
-XM_TYPE_PTR(XCirculateRequestEvent, XCirculateRequestEvent *)
-XM_TYPE_PTR(XClientMessageEvent, XClientMessageEvent *)
-XM_TYPE_PTR(XColormapEvent, XColormapEvent *)
-XM_TYPE_PTR(XConfigureEvent, XConfigureEvent *)
-XM_TYPE_PTR(XConfigureRequestEvent, XConfigureRequestEvent *)
-XM_TYPE_PTR(XCreateWindowEvent, XCreateWindowEvent *)
-XM_TYPE_PTR(XCrossingEvent, XCrossingEvent *)
-XM_TYPE_PTR(XDestroyWindowEvent, XDestroyWindowEvent *)
-XM_TYPE_PTR(XErrorEvent, XErrorEvent *)
-XM_TYPE_PTR(XExposeEvent, XExposeEvent *)
-XM_TYPE_PTR(XFocusChangeEvent, XFocusChangeEvent *)
-XM_TYPE_PTR(XGraphicsExposeEvent, XGraphicsExposeEvent *)
-XM_TYPE_PTR(XGravityEvent, XGravityEvent *)
-XM_TYPE_PTR(XKeyEvent, XKeyEvent *)
-XM_TYPE_PTR(XKeymapEvent, XKeymapEvent *)
-XM_TYPE_PTR(XMapEvent, XMapEvent *)
-XM_TYPE_PTR(XMapRequestEvent, XMapRequestEvent *)
-XM_TYPE_PTR(XMappingEvent, XMappingEvent *)
-XM_TYPE_PTR(XMotionEvent, XMotionEvent *)
-XM_TYPE_PTR(XNoExposeEvent, XNoExposeEvent *)
-XM_TYPE_PTR(XPropertyEvent, XPropertyEvent *)
-XM_TYPE_PTR(XReparentEvent, XReparentEvent *)
-XM_TYPE_PTR(XResizeRequestEvent, XResizeRequestEvent *)
-XM_TYPE_PTR(XSelectionClearEvent, XSelectionClearEvent *)
-XM_TYPE_PTR(XSelectionEvent, XSelectionEvent *)
+XM_TYPE_PTR_NO_C2X(XButtonEvent, XButtonEvent *)
+XM_TYPE_PTR_NO_C2X(XCirculateEvent, XCirculateEvent *)
+XM_TYPE_PTR_NO_C2X(XCirculateRequestEvent, XCirculateRequestEvent *)
+XM_TYPE_PTR_NO_C2X(XClientMessageEvent, XClientMessageEvent *)
+XM_TYPE_PTR_NO_C2X(XColormapEvent, XColormapEvent *)
+XM_TYPE_PTR_NO_C2X(XConfigureEvent, XConfigureEvent *)
+XM_TYPE_PTR_NO_C2X(XConfigureRequestEvent, XConfigureRequestEvent *)
+XM_TYPE_PTR_NO_C2X(XCreateWindowEvent, XCreateWindowEvent *)
+XM_TYPE_PTR_NO_C2X(XCrossingEvent, XCrossingEvent *)
+XM_TYPE_PTR_NO_C2X(XDestroyWindowEvent, XDestroyWindowEvent *)
+XM_TYPE_PTR_NO_C2X(XErrorEvent, XErrorEvent *)
+XM_TYPE_PTR_NO_C2X(XExposeEvent, XExposeEvent *)
+XM_TYPE_PTR_NO_C2X(XFocusChangeEvent, XFocusChangeEvent *)
+XM_TYPE_PTR_NO_C2X(XGraphicsExposeEvent, XGraphicsExposeEvent *)
+XM_TYPE_PTR_NO_C2X(XGravityEvent, XGravityEvent *)
+XM_TYPE_PTR_NO_C2X(XKeyEvent, XKeyEvent *)
+XM_TYPE_PTR_NO_C2X(XKeymapEvent, XKeymapEvent *)
+XM_TYPE_PTR_NO_C2X(XMapEvent, XMapEvent *)
+XM_TYPE_PTR_NO_C2X(XMapRequestEvent, XMapRequestEvent *)
+XM_TYPE_PTR_NO_C2X(XMappingEvent, XMappingEvent *)
+XM_TYPE_PTR_NO_C2X(XMotionEvent, XMotionEvent *)
+XM_TYPE_PTR_NO_C2X(XNoExposeEvent, XNoExposeEvent *)
+XM_TYPE_PTR_NO_C2X(XPropertyEvent, XPropertyEvent *)
+XM_TYPE_PTR_NO_C2X(XReparentEvent, XReparentEvent *)
+XM_TYPE_PTR_NO_C2X(XResizeRequestEvent, XResizeRequestEvent *)
+XM_TYPE_PTR_NO_C2X(XSelectionClearEvent, XSelectionClearEvent *)
+XM_TYPE_PTR_NO_C2X(XSelectionEvent, XSelectionEvent *)
 XM_TYPE_PTR(XSelectionRequestEvent, XSelectionRequestEvent *)
-XM_TYPE_PTR(XUnmapEvent, XUnmapEvent *)
-XM_TYPE_PTR(XVisibilityEvent, XVisibilityEvent *)
+XM_TYPE_PTR_NO_C2X(XUnmapEvent, XUnmapEvent *)
+XM_TYPE_PTR_NO_C2X(XVisibilityEvent, XVisibilityEvent *)
 XM_TYPE_PTR_OBJ(XSetWindowAttributes, XSetWindowAttributes *)
 XM_TYPE_PTR(XVisualInfo, XVisualInfo *)
 XM_TYPE_PTR(XWMHints, XWMHints *)
@@ -383,56 +389,56 @@ XM_TYPE(XtIntervalId, XtIntervalId)
 XM_TYPE(XtActionHookId, XtActionHookId)
 XM_TYPE(XtTranslations, XtTranslations)
 XM_TYPE_PTR(XmString, XmString)
-XM_TYPE_PTR(XmAnyCallbackStruct, XmAnyCallbackStruct *)
-XM_TYPE_PTR(XmArrowButtonCallbackStruct, XmArrowButtonCallbackStruct *)
-XM_TYPE_PTR(XmCommandCallbackStruct, XmCommandCallbackStruct *)
-XM_TYPE_PTR(XmDragDropFinishCallbackStruct, XmDragDropFinishCallbackStruct *)
-XM_TYPE_PTR(XmDragMotionCallbackStruct, XmDragMotionCallbackStruct *)
-XM_TYPE_PTR(XmDragProcCallbackStruct, XmDragProcCallbackStruct *)
-XM_TYPE_PTR(XmDrawingAreaCallbackStruct, XmDrawingAreaCallbackStruct *)
-XM_TYPE_PTR(XmDrawnButtonCallbackStruct, XmDrawnButtonCallbackStruct *)
-XM_TYPE_PTR(XmDropFinishCallbackStruct, XmDropFinishCallbackStruct *)
-XM_TYPE_PTR(XmDropProcCallbackStruct, XmDropProcCallbackStruct *)
-XM_TYPE_PTR(XmDropSiteEnterCallbackStruct, XmDropSiteEnterCallbackStruct *)
-XM_TYPE_PTR(XmDropSiteLeaveCallbackStruct, XmDropSiteLeaveCallbackStruct *)
-XM_TYPE_PTR(XmDropStartCallbackStruct, XmDropStartCallbackStruct *)
-XM_TYPE_PTR(XmFileSelectionBoxCallbackStruct, XmFileSelectionBoxCallbackStruct *)
-XM_TYPE_PTR(XmListCallbackStruct, XmListCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmAnyCallbackStruct, XmAnyCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmArrowButtonCallbackStruct, XmArrowButtonCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmCommandCallbackStruct, XmCommandCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmDragDropFinishCallbackStruct, XmDragDropFinishCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmDragMotionCallbackStruct, XmDragMotionCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmDragProcCallbackStruct, XmDragProcCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmDrawingAreaCallbackStruct, XmDrawingAreaCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmDrawnButtonCallbackStruct, XmDrawnButtonCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmDropFinishCallbackStruct, XmDropFinishCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmDropProcCallbackStruct, XmDropProcCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmDropSiteEnterCallbackStruct, XmDropSiteEnterCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmDropSiteLeaveCallbackStruct, XmDropSiteLeaveCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmDropStartCallbackStruct, XmDropStartCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmFileSelectionBoxCallbackStruct, XmFileSelectionBoxCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmListCallbackStruct, XmListCallbackStruct *)
 #if MOTIF_2
 XM_TYPE(XmTab, XmTab) /*opaque */
-XM_TYPE_PTR(XmDragStartCallbackStruct, XmDragStartCallbackStruct *)
-XM_TYPE_PTR(XmDisplayCallbackStruct, XmDisplayCallbackStruct *)
-XM_TYPE_PTR(XmDestinationCallbackStruct, XmDestinationCallbackStruct *)
-XM_TYPE_PTR(XmConvertCallbackStruct, XmConvertCallbackStruct *)
-XM_TYPE_PTR(XmComboBoxCallbackStruct, XmComboBoxCallbackStruct *)
-XM_TYPE_PTR(XmContainerOutlineCallbackStruct, XmContainerOutlineCallbackStruct *)
-XM_TYPE_PTR(XmContainerSelectCallbackStruct, XmContainerSelectCallbackStruct *)
-XM_TYPE_PTR(XmNotebookCallbackStruct, XmNotebookCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmDragStartCallbackStruct, XmDragStartCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmDisplayCallbackStruct, XmDisplayCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmDestinationCallbackStruct, XmDestinationCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmConvertCallbackStruct, XmConvertCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmComboBoxCallbackStruct, XmComboBoxCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmContainerOutlineCallbackStruct, XmContainerOutlineCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmContainerSelectCallbackStruct, XmContainerSelectCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmNotebookCallbackStruct, XmNotebookCallbackStruct *)
 XM_TYPE_PTR_OBJ(XmNotebookPageInfo, XmNotebookPageInfo *)
 XM_TYPE_PTR(XmRenderTable, XmRenderTable)
 XM_TYPE_PTR(XmRendition, XmRendition)
-XM_TYPE_PTR(XmSpinBoxCallbackStruct, XmSpinBoxCallbackStruct *)
-XM_TYPE_PTR(XmTraverseObscuredCallbackStruct, XmTraverseObscuredCallbackStruct *)
-XM_TYPE_PTR(XmTopLevelLeaveCallbackStruct, XmTopLevelLeaveCallbackStruct *)
-XM_TYPE_PTR(XmTopLevelEnterCallbackStruct, XmTopLevelEnterCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmSpinBoxCallbackStruct, XmSpinBoxCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmTraverseObscuredCallbackStruct, XmTraverseObscuredCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmTopLevelLeaveCallbackStruct, XmTopLevelLeaveCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmTopLevelEnterCallbackStruct, XmTopLevelEnterCallbackStruct *)
 #if HAVE_XP
-XM_TYPE_PTR(XmPrintShellCallbackStruct, XmPrintShellCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmPrintShellCallbackStruct, XmPrintShellCallbackStruct *)
 #endif
-XM_TYPE_PTR(XmPopupHandlerCallbackStruct, XmPopupHandlerCallbackStruct *)
-XM_TYPE_PTR(XmSelectionCallbackStruct, XmSelectionCallbackStruct *)
-XM_TYPE_PTR(XmTransferDoneCallbackStruct, XmTransferDoneCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmPopupHandlerCallbackStruct, XmPopupHandlerCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmSelectionCallbackStruct, XmSelectionCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmTransferDoneCallbackStruct, XmTransferDoneCallbackStruct *)
 XM_TYPE_PTR(XmTabList, XmTabList) /* opaque */
 XM_TYPE(XmParseMapping, XmParseMapping)
 #endif
-XM_TYPE_PTR(XmOperationChangedCallbackStruct, XmOperationChangedCallbackStruct *)
-XM_TYPE_PTR(XmPushButtonCallbackStruct, XmPushButtonCallbackStruct *)
-XM_TYPE_PTR(XmRowColumnCallbackStruct, XmRowColumnCallbackStruct *)
-XM_TYPE_PTR(XmScaleCallbackStruct, XmScaleCallbackStruct *)
-XM_TYPE_PTR(XmScrollBarCallbackStruct, XmScrollBarCallbackStruct *)
-XM_TYPE_PTR(XmSelectionBoxCallbackStruct, XmSelectionBoxCallbackStruct *)
-XM_TYPE_PTR(XmTextVerifyCallbackStruct, XmTextVerifyCallbackStruct *)
-XM_TYPE_PTR(XmTextBlock, XmTextBlock)
-XM_TYPE_PTR(XmToggleButtonCallbackStruct, XmToggleButtonCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmOperationChangedCallbackStruct, XmOperationChangedCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmPushButtonCallbackStruct, XmPushButtonCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmRowColumnCallbackStruct, XmRowColumnCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmScaleCallbackStruct, XmScaleCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmScrollBarCallbackStruct, XmScrollBarCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmSelectionBoxCallbackStruct, XmSelectionBoxCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmTextVerifyCallbackStruct, XmTextVerifyCallbackStruct *)
+XM_TYPE_PTR_NO_C2X(XmTextBlock, XmTextBlock)
+XM_TYPE_PTR_NO_p(XmToggleButtonCallbackStruct, XmToggleButtonCallbackStruct *)
 #if (!XM_DISABLE_DEPRECATED)
   XM_TYPE(XmFontContext, XmFontContext) /* opaque */
   XM_TYPE(XmFontList, XmFontList) /* opaque, obsolete == XmRenderTable in motif 2 */
@@ -3484,6 +3490,7 @@ static XEN gxm_XmFontListFree(XEN arg1)
 }
 
 #if MOTIF_2
+#ifndef LESSTIF_VERSION
 static XEN gxm_XmFontListCreate_r(XEN arg1, XEN arg2, XEN arg3)
 {
   #define H_XmFontListCreate_r "XmFontList XmFontListCreate_r(XFontStruct *font, XmStringCharSet charset, Widget wid)"
@@ -3492,6 +3499,7 @@ static XEN gxm_XmFontListCreate_r(XEN arg1, XEN arg2, XEN arg3)
   XEN_ASSERT_TYPE(XEN_Widget_P(arg3), arg3, 3, "XmFontListCreate_r", "Widget");
   return(C_TO_XEN_XmFontList(XmFontListCreate_r(XEN_TO_C_XFontStruct(arg1), XEN_TO_C_STRING(arg2), XEN_TO_C_Widget(arg3))));
 }
+#endif
 #endif
 
 static XEN gxm_XmFontListCreate(XEN arg1, XEN arg2)
@@ -3581,6 +3589,7 @@ static XEN gxm_XmFontListEntryFree(XEN arg1)
 }
 
 #if MOTIF_2
+#ifndef LESSTIF_VERSION
 static XEN gxm_XmFontListEntryCreate_r(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   XmFontType type;
@@ -3599,6 +3608,7 @@ static XEN gxm_XmFontListEntryCreate_r(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 							  gad,
 							  XEN_TO_C_Widget(arg4))));
 }
+#endif
 #endif
 
 static XEN gxm_XmFontListEntryCreate(XEN arg1, XEN arg2, XEN arg3)
@@ -4902,11 +4912,13 @@ static XEN gxm_XmToolTipGetLabel(XEN arg1)
 #endif
 
 #if MOTIF_2
+#ifndef LESSTIF_VERSION
 static XEN gxm_XmCreateIconHeader(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateIconHeader "Widget XmCreateIconHeader(Widget parent, String name, ArgList arglist, Cardinal argcount)"
   return(gxm_new_widget("XmCreateIconHeader", XmCreateIconHeader, arg1, arg2, arg3, arg4));
 }
+#endif
 
 static XEN gxm_XmCreateIconGadget(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
@@ -4926,6 +4938,7 @@ The ToggleButton widget creation function"
 #define XEN_ToggleButtonWidget_P(Arg) (XEN_Widget_P(Arg) && (XmIsToggleButton(XEN_TO_C_Widget(Arg)) || XmIsToggleButtonGadget(XEN_TO_C_Widget(Arg))))
 
 #if MOTIF_2
+#ifndef LESSTIF_VERSION
 static XEN gxm_XmToggleButtonSetValue(XEN arg1, XEN arg2, XEN arg3)
 {
   #define H_XmToggleButtonSetValue "void XmToggleButtonSetValue(Widget widget, XmToggleButtonState state, Boolean notify) \
@@ -4935,6 +4948,7 @@ sets or changes the current state"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg3), arg3, 3, "XmToggleButtonSetValue", "boolean");
   return(C_TO_XEN_BOOLEAN(XmToggleButtonSetValue(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_BOOLEAN(arg3))));
 }
+#endif
 #endif
 
 static XEN gxm_XmToggleButtonSetState(XEN arg1, XEN arg2, XEN arg3)
@@ -4964,6 +4978,7 @@ The ToggleButtonGadget creation function"
 }
 
 #if MOTIF_2
+#ifndef LESSTIF_VERSION
 static XEN gxm_XmToggleButtonGadgetSetValue(XEN arg1, XEN arg2, XEN arg3)
 {
   #define H_XmToggleButtonGadgetSetValue "Boolean XmToggleButtonGadgetSetValue(Widget w, XmToggleButtonState newstate, Boolean notify)"
@@ -4972,6 +4987,7 @@ static XEN gxm_XmToggleButtonGadgetSetValue(XEN arg1, XEN arg2, XEN arg3)
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg3), arg3, 3, "XmToggleButtonGadgetSetValue", "boolean");
   return(C_TO_XEN_BOOLEAN(XmToggleButtonGadgetSetValue(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_BOOLEAN(arg3))));
 }
+#endif
 
 static XEN gxm_XmCreateGrabShell(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
@@ -5061,12 +5077,14 @@ static XEN gxm_XmTextDisableRedisplay(XEN arg1)
 }
 
 #if MOTIF_2
+#ifndef LESSTIF_VERSION
 static XEN gxm_XmTextGetCenterline(XEN arg1)
 {
   #define H_XmTextGetCenterline "int XmTextGetCenterline(Widget widget) Return the height (length) of a character string when the writing direction is vertical"
   XEN_ASSERT_TYPE(XEN_TextWidget_P(arg1), arg1, 1, "XmTextGetCenterline", "Text or TextField Widget");
   return(C_TO_XEN_INT(XmTextGetCenterline(XEN_TO_C_Widget(arg1))));
 }
+#endif
 #endif
 
 static XEN gxm_XmTextGetBaseline(XEN arg1)
@@ -5182,12 +5200,14 @@ static XEN gxm_XmTextGetSelection(XEN arg1)
 }
 
 #if MOTIF_2
+#ifndef LESSTIF_VERSION
 static XEN gxm_XmTextPasteLink(XEN arg1)
 {
   #define H_XmTextPasteLink "Boolean XmTextPasteLink(Widget widget) inserts a link to the clipboard selection"
   XEN_ASSERT_TYPE(XEN_TextWidget_P(arg1), arg1, 1, "XmTextPasteLink", "Text or TextField Widget");
   return(C_TO_XEN_BOOLEAN(XmTextPasteLink(XEN_TO_C_Widget(arg1))));
 }
+#endif
 #endif
 
 static XEN gxm_XmTextPaste(XEN arg1)
@@ -5316,12 +5336,14 @@ static XEN gxm_XmTextGetEditable(XEN arg1)
 }
 
 #if MOTIF_2
+#ifndef LESSTIF_VERSION
 static XEN gxm_XmTextGetAddMode(XEN arg1)
 {
   #define H_XmTextGetAddMode "Boolean XmTextGetAddMode(Widget w) presumably returns the widget's current add mode."
   XEN_ASSERT_TYPE(XEN_TextWidget_P(arg1), arg1, 1, "XmTextGetAddMode", "Text or TextField Widget");
   return(C_TO_XEN_BOOLEAN(XmTextGetAddMode(XEN_TO_C_Widget(arg1))));
 }
+#endif
 
 static XEN gxm_XmTextSetAddMode(XEN arg1, XEN arg2)
 {
@@ -5552,12 +5574,14 @@ static XEN gxm_XmTextFieldClearSelection(XEN arg1, XEN arg2)
 }
 
 #if MOTIF_2
+#ifndef LESSTIF_VERSION
 static XEN gxm_XmTextFieldPasteLink(XEN arg1)
 {
   #define H_XmTextFieldPasteLink "Boolean XmTextFieldPasteLink(Widget widget) inserts a link to the clipboard selection"
   XEN_ASSERT_TYPE(XEN_TextFieldWidget_P(arg1), arg1, 1, "XmTextFieldPasteLink", "TextField Widget");
   return(C_TO_XEN_BOOLEAN(XmTextFieldPasteLink(XEN_TO_C_Widget(arg1))));
 }
+#endif
 
 static XEN gxm_XmTextFieldCopyLink(XEN arg1, XEN arg2)
 {
@@ -5694,12 +5718,14 @@ static XEN gxm_XmTextFieldGetEditable(XEN arg1)
 }
 
 #if MOTIF_2
+#ifndef LESSTIF_VERSION
 static XEN gxm_XmTextFieldGetAddMode(XEN arg1)
 {
   #define H_XmTextFieldGetAddMode "Boolean XmTextFieldGetAddMode(Widget w) presumably returns the widget's current add mode."
   XEN_ASSERT_TYPE(XEN_TextFieldWidget_P(arg1), arg1, 1, "XmTextFieldGetAddMode", "TextField Widget");
   return(C_TO_XEN_BOOLEAN(XmTextFieldGetAddMode(XEN_TO_C_Widget(arg1))));
 }
+#endif
 
 static XEN gxm_XmTextFieldSetAddMode(XEN arg1, XEN arg2)
 {
@@ -6224,6 +6250,7 @@ The ScrollBar widget creation function"
 }
 
 #if MOTIF_2
+#ifndef LESSTIF_VERSION
 static XEN gxm_XmGetXmScreen(XEN arg1)
 {
   #define H_XmGetXmScreen "Widget XmGetXmScreen(Screen *screen) returns the XmScreen object ID for a specified screen"
@@ -6231,6 +6258,7 @@ static XEN gxm_XmGetXmScreen(XEN arg1)
   XEN_ASSERT_TYPE(XEN_Screen_P(arg1), arg1, 1, "XmGetXmScreen", "Screen*");
   return(C_TO_XEN_Widget(XmGetXmScreen(XEN_TO_C_Screen(arg1))));
 }
+#endif
 #endif
 
 static XEN gxm_XmClipboardRegisterFormat(XEN arg1, XEN arg2, XEN arg3)
@@ -6516,6 +6544,7 @@ static void gxm_XmVoidProc(Widget w, int *data, int *privater, int *reason)
 	     __FUNCTION__);
 }
 
+#ifndef LESSTIF_VERSION
 static XEN gxm_XmClipboardBeginCopy(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
   #define H_XmClipboardBeginCopy "int XmClipboardBeginCopy(display, window, XmString label, widget, callback)"
@@ -6537,10 +6566,12 @@ static XEN gxm_XmClipboardBeginCopy(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN 
   return(XEN_LIST_2(C_TO_XEN_INT(val),
 		    C_TO_XEN_INT(id)));
 }
+#endif
 
 #define XEN_ScaleWidget_P(Arg) (XEN_Widget_P(Arg) && XmIsScale(XEN_TO_C_Widget(Arg)))
 
 #if MOTIF_2
+#ifndef LESSTIF_VERSION
 static XEN gxm_XmScaleSetTicks(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
 {
   #define H_XmScaleSetTicks "void XmScaleSetTicks(Widget scale, int big_every, Cardinal num_medium, Cardinal num_small, Dimension size_big, \
@@ -6557,6 +6588,7 @@ Dimension size_medium, Dimension size_small) controls Scale tick marks"
 		  XEN_TO_C_Dimension(arg5), XEN_TO_C_Dimension(arg6), XEN_TO_C_Dimension(arg7));
   return(XEN_FALSE);
 }
+#endif
 #endif
 
 static XEN gxm_XmCreateScale(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
@@ -7471,11 +7503,13 @@ static XEN gxm_XmIsSeparatorGadget(XEN arg)
 }
 
 #if MOTIF_2
+#ifndef LESSTIF_VERSION
 static XEN gxm_XmIsDragIconObjectClass(XEN arg)
 {
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsDragIconObjectClass", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsDragIconObjectClass(XEN_TO_C_Widget(arg))));
 }
+#endif
 #endif
 
 static XEN gxm_XmIsSeparator(XEN arg)
@@ -7571,11 +7605,13 @@ static XEN gxm_XmIsIconGadget(XEN arg)
   return(C_TO_XEN_BOOLEAN(XmIsIconGadget(XEN_TO_C_Widget(arg))));
 }
 
+#ifndef LESSTIF_VERSION
 static XEN gxm_XmIsIconHeader(XEN arg)
 {
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsIconHeader", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsIconHeader(XEN_TO_C_Widget(arg))));
 }
+#endif
 #endif
 
 static XEN gxm_XmIsLabelGadget(XEN arg)
@@ -16750,8 +16786,8 @@ static XEN gxm_XpPutDocumentData(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg
 /* ---------------------------------------------------------------------------------------------------- */
 #if HAVE_XPM
 
-XM_TYPE_PTR(XpmImage, XpmImage *)
-XM_TYPE_PTR(XpmAttributes, XpmAttributes *) /* _OBJ?? */
+XM_TYPE_PTR_NO_C2X(XpmImage, XpmImage *)
+XM_TYPE_PTR_NO_C2X(XpmAttributes, XpmAttributes *) /* _OBJ?? */
 XM_TYPE(XpmColorSymbol, XpmColorSymbol *)
 
 #if HAVE_XPM_CREATE_XPM_IMAGE_FROM_PIXMAP
@@ -17759,18 +17795,22 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmSimpleSpinBoxSetItem, gxm_XmSimpleSpinBoxSetItem, 2, 0, 0, H_XmSimpleSpinBoxSetItem);
   XM_DEFINE_PROCEDURE(XmDropSiteRegistered, gxm_XmDropSiteRegistered, 1, 0, 0, H_XmDropSiteRegistered);
   XM_DEFINE_PROCEDURE(XmTextFieldCopyLink, gxm_XmTextFieldCopyLink, 2, 0, 0, H_XmTextFieldCopyLink);
+  XM_DEFINE_PROCEDURE(XmCreateIconGadget, gxm_XmCreateIconGadget, 3, 1, 0, H_XmCreateIconGadget);
+#ifndef LESSTIF_VERSION
   XM_DEFINE_PROCEDURE(XmTextFieldPasteLink, gxm_XmTextFieldPasteLink, 1, 0, 0, H_XmTextFieldPasteLink);
   XM_DEFINE_PROCEDURE(XmTextGetCenterline, gxm_XmTextGetCenterline, 1, 0, 0, H_XmTextGetCenterline);
   XM_DEFINE_PROCEDURE(XmToggleButtonGadgetSetValue, gxm_XmToggleButtonGadgetSetValue, 3, 0, 0, H_XmToggleButtonGadgetSetValue);
-  XM_DEFINE_PROCEDURE(XmCreateIconGadget, gxm_XmCreateIconGadget, 3, 1, 0, H_XmCreateIconGadget);
   XM_DEFINE_PROCEDURE(XmCreateIconHeader, gxm_XmCreateIconHeader, 3, 1, 0, H_XmCreateIconHeader);
+#endif
   XM_DEFINE_PROCEDURE(XmObjectAtPoint, gxm_XmObjectAtPoint, 3, 0, 0, H_XmObjectAtPoint);
   XM_DEFINE_PROCEDURE(XmConvertStringToUnits, gxm_XmConvertStringToUnits, 4, 0, 0, H_XmConvertStringToUnits);
   XM_DEFINE_PROCEDURE(XmCreateGrabShell, gxm_XmCreateGrabShell, 3, 1, 0, H_XmCreateGrabShell);
+#ifndef LESSTIF_VERSION
   XM_DEFINE_PROCEDURE(XmToggleButtonSetValue, gxm_XmToggleButtonSetValue, 3, 0, 0, H_XmToggleButtonSetValue);
   XM_DEFINE_PROCEDURE(XmTextPasteLink, gxm_XmTextPasteLink, 1, 0, 0, H_XmTextPasteLink);
-  XM_DEFINE_PROCEDURE(XmTextCopyLink, gxm_XmTextCopyLink, 2, 0, 0, H_XmTextCopyLink);
   XM_DEFINE_PROCEDURE(XmScaleSetTicks, gxm_XmScaleSetTicks, 7, 0, 0, H_XmScaleSetTicks);
+#endif
+  XM_DEFINE_PROCEDURE(XmTextCopyLink, gxm_XmTextCopyLink, 2, 0, 0, H_XmTextCopyLink);
 #endif
   XM_DEFINE_PROCEDURE(XmInternAtom, gxm_XmInternAtom, 3, 0, 0, H_XmInternAtom);
   XM_DEFINE_PROCEDURE(XmGetAtomName, gxm_XmGetAtomName, 2, 0, 0, H_XmGetAtomName);
@@ -17815,7 +17855,9 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmScaleSetValue, gxm_XmScaleSetValue, 2, 0, 0, H_XmScaleSetValue);
   XM_DEFINE_PROCEDURE(XmScaleGetValue, gxm_XmScaleGetValue, 1, 0, 0, H_XmScaleGetValue);
   XM_DEFINE_PROCEDURE(XmCreateScale, gxm_XmCreateScale, 3, 1, 0, H_XmCreateScale);
+#ifndef LESSTIF_VERSION
   XM_DEFINE_PROCEDURE(XmClipboardBeginCopy, gxm_XmClipboardBeginCopy, 5, 0, 0, H_XmClipboardBeginCopy);
+#endif
   XM_DEFINE_PROCEDURE(XmClipboardStartCopy, gxm_XmClipboardStartCopy, 6, 0, 0, H_XmClipboardStartCopy);
   XM_DEFINE_PROCEDURE(XmClipboardCopy, gxm_XmClipboardCopy, 7, 0, 0, H_XmClipboardCopy);
   XM_DEFINE_PROCEDURE(XmClipboardEndCopy, gxm_XmClipboardEndCopy, 3, 0, 0, H_XmClipboardEndCopy);
@@ -17834,7 +17876,9 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmClipboardInquirePendingItems, gxm_XmClipboardInquirePendingItems, 3, 0, 0, H_XmClipboardInquirePendingItems);
   XM_DEFINE_PROCEDURE(XmClipboardRegisterFormat, gxm_XmClipboardRegisterFormat, 3, 0, 0, H_XmClipboardRegisterFormat);
 #if MOTIF_2
+#ifndef LESSTIF_VERSION
   XM_DEFINE_PROCEDURE(XmGetXmScreen, gxm_XmGetXmScreen, 1, 0, 0, H_XmGetXmScreen);
+#endif
 #endif
   XM_DEFINE_PROCEDURE(XmCreateScrollBar, gxm_XmCreateScrollBar, 3, 1, 0, H_XmCreateScrollBar);
   XM_DEFINE_PROCEDURE(XmScrollBarGetValues, gxm_XmScrollBarGetValues, 1, 0, 0, H_XmScrollBarGetValues);
@@ -17874,7 +17918,9 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmTextFieldInsert, gxm_XmTextFieldInsert, 3, 0, 0, H_XmTextFieldInsert);
 #if MOTIF_2
   XM_DEFINE_PROCEDURE(XmTextFieldSetAddMode, gxm_XmTextFieldSetAddMode, 2, 0, 0, H_XmTextFieldSetAddMode);
+#ifndef LESSTIF_VERSION
   XM_DEFINE_PROCEDURE(XmTextFieldGetAddMode, gxm_XmTextFieldGetAddMode, 1, 0, 0, H_XmTextFieldGetAddMode);
+#endif
 #endif
   XM_DEFINE_PROCEDURE(XmTextFieldGetEditable, gxm_XmTextFieldGetEditable, 1, 0, 0, H_XmTextFieldGetEditable);
   XM_DEFINE_PROCEDURE(XmTextFieldSetEditable, gxm_XmTextFieldSetEditable, 2, 0, 0, H_XmTextFieldSetEditable);
@@ -17913,7 +17959,9 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmTextInsert, gxm_XmTextInsert, 3, 0, 0, H_XmTextInsert);
 #if MOTIF_2
   XM_DEFINE_PROCEDURE(XmTextSetAddMode, gxm_XmTextSetAddMode, 2, 0, 0, H_XmTextSetAddMode);
+#ifndef LESSTIF_VERSION
   XM_DEFINE_PROCEDURE(XmTextGetAddMode, gxm_XmTextGetAddMode, 1, 0, 0, H_XmTextGetAddMode);
+#endif
 #endif
   XM_DEFINE_PROCEDURE(XmTextGetEditable, gxm_XmTextGetEditable, 1, 0, 0, H_XmTextGetEditable);
   XM_DEFINE_PROCEDURE(XmTextSetEditable, gxm_XmTextSetEditable, 2, 0, 0, H_XmTextSetEditable);
@@ -18114,7 +18162,9 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmIsContainer, gxm_XmIsContainer, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmIsGrabShell, gxm_XmIsGrabShell, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmIsIconGadget, gxm_XmIsIconGadget, 1, 0, 0, NULL);
+#ifndef LESSTIF_VERSION
   XM_DEFINE_PROCEDURE(XmIsIconHeader, gxm_XmIsIconHeader, 1, 0, 0, NULL);
+#endif
 #endif
   XM_DEFINE_PROCEDURE(XmIsPanedWindow, gxm_XmIsPanedWindow, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmIsBulletinBoard, gxm_XmIsBulletinBoard, 1, 0, 0, NULL);
@@ -18137,7 +18187,9 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmIsDragContext, gxm_XmIsDragContext, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmIsSeparatorGadget, gxm_XmIsSeparatorGadget, 1, 0, 0, NULL);
 #if MOTIF_2
+#ifndef LESSTIF_VERSION
   XM_DEFINE_PROCEDURE(XmIsDragIconObjectClass, gxm_XmIsDragIconObjectClass, 1, 0, 0, NULL);
+#endif
 #endif
   XM_DEFINE_PROCEDURE(XmIsSeparator, gxm_XmIsSeparator, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmIsDrawingArea, gxm_XmIsDrawingArea, 1, 0, 0, NULL);
@@ -18186,7 +18238,9 @@ static void define_procedures(void)
 
   XM_DEFINE_PROCEDURE(XmFontListEntryCreate, gxm_XmFontListEntryCreate, 3, 0, 0, H_XmFontListEntryCreate);
 #if MOTIF_2
+#ifndef LESSTIF_VERSION
   XM_DEFINE_PROCEDURE(XmFontListEntryCreate_r, gxm_XmFontListEntryCreate_r, 4, 0, 0, NULL);
+#endif
 #endif
   XM_DEFINE_PROCEDURE(XmFontListEntryFree, gxm_XmFontListEntryFree, 1, 0, 0, H_XmFontListEntryFree);
   XM_DEFINE_PROCEDURE(XmFontListEntryGetFont, gxm_XmFontListEntryGetFont, 2, 0, 0, H_XmFontListEntryGetFont);
@@ -18204,7 +18258,9 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmFontListEntry?, XEN_XmFontListEntry_p, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmFontList?, XEN_XmFontList_p, 1, 0, 0, NULL);
 #if MOTIF_2
+#ifndef LESSTIF_VERSION
   XM_DEFINE_PROCEDURE(XmFontListCreate_r, gxm_XmFontListCreate_r, 3, 0, 0, H_XmFontListCreate_r);
+#endif
 #endif
   XM_DEFINE_PROCEDURE(XmFontListCreate, gxm_XmFontListCreate, 2, 0, 0, H_XmFontListCreate);
   XM_DEFINE_PROCEDURE(XmTrackingLocate, gxm_XmTrackingLocate, 3, 0, 0, H_XmTrackingLocate);
@@ -18346,7 +18402,9 @@ static void define_procedures(void)
 #endif
   XM_DEFINE_PROCEDURE(XmComboBox?, gxm_XmIsComboBox, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmContainer?, gxm_XmIsContainer, 1, 0, 0, NULL);
+#ifndef LESSTIF_VERSION
   XM_DEFINE_PROCEDURE(XmIconHeader?, gxm_XmIsIconHeader, 1, 0, 0, NULL);
+#endif
   XM_DEFINE_PROCEDURE(XmGrabShell?, gxm_XmIsGrabShell, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmRendition?, XEN_XmRendition_p, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmRenderTable?, XEN_XmRenderTable_p, 1, 0, 0, NULL);
@@ -18367,7 +18425,9 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmSelectionBox?, gxm_XmIsSelectionBox, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmDragContext?, gxm_XmIsDragContext, 1, 0, 0, NULL);
 #if MOTIF_2
+#ifndef LESSTIF_VERSION
   XM_DEFINE_PROCEDURE(XmDragIconObjectClass?, gxm_XmIsDragIconObjectClass, 1, 0, 0, NULL);
+#endif
 #endif
   XM_DEFINE_PROCEDURE(XmSeparator?, gxm_XmIsSeparator, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmDropSiteManager?, gxm_XmIsDropSiteManager, 1, 0, 0, NULL);
@@ -18440,8 +18500,6 @@ static void define_procedures(void)
 
 /* -------------------------------- struct handlers -------------------------------- */
 
-static char xm_print_buf[1024];
-
 /* XRectangle */
 
 static XEN gxm_XRectangle(XEN x, XEN y, XEN width, XEN height)
@@ -18460,6 +18518,9 @@ static XEN gxm_XRectangle(XEN x, XEN y, XEN width, XEN height)
   return(C_TO_XEN_XRectangle(r));
 }
 
+#if HAVE_RUBY
+static char xm_print_buf[1024];
+
 static char *XRectangle_to_string(XEN obj)
 {
   XRectangle *r;
@@ -18469,6 +18530,7 @@ static char *XRectangle_to_string(XEN obj)
 	  r->x, r->y, r->width, r->height);
   return(xm_print_buf);
 }
+#endif
 
 /* XSegment */
 
@@ -18487,6 +18549,7 @@ static XEN gxm_XSegment(XEN x1, XEN y1, XEN x2, XEN y2)
   return(C_TO_XEN_XSegment(r));
 }
 
+#if HAVE_RUBY
 static char *XSegment_to_string(XEN obj)
 {
   XSegment *r;
@@ -18496,6 +18559,7 @@ static char *XSegment_to_string(XEN obj)
 	  r->x1, r->y1, r->x2, r->y2);
   return(xm_print_buf);
 }
+#endif
 
 static XEN gxm_y2(XEN ptr)
 {
@@ -18566,6 +18630,7 @@ static XEN gxm_XPoint(XEN x, XEN y)
   return(C_TO_XEN_XPoint(r));
 }
 
+#if HAVE_RUBY
 static char *XPoint_to_string(XEN obj)
 {
   XPoint *r;
@@ -18575,6 +18640,7 @@ static char *XPoint_to_string(XEN obj)
 	  r->x, r->y);
   return(xm_print_buf);
 }
+#endif
 
 /* XArc */
 
@@ -18597,6 +18663,7 @@ static XEN gxm_XArc(XEN x, XEN y, XEN width, XEN height, XEN angle1, XEN angle2)
   return(C_TO_XEN_XArc(r));
 }
 
+#if HAVE_RUBY
 static char *XArc_to_string(XEN obj)
 {
   XArc *r;
@@ -18606,6 +18673,7 @@ static char *XArc_to_string(XEN obj)
 	  r->x, r->y, r->width, r->height, r->angle1, r->angle2);
   return(xm_print_buf);
 }
+#endif
 
 
 static XEN gxm_angle2(XEN ptr)
@@ -18657,6 +18725,7 @@ static XEN gxm_XColor(XEN pixel, XEN red, XEN green, XEN blue, XEN flags, XEN pa
   return(C_TO_XEN_XColor(r));
 }
 
+#if HAVE_RUBY
 static char *XColor_to_string(XEN obj)
 {
   XColor *r;
@@ -18666,16 +18735,7 @@ static char *XColor_to_string(XEN obj)
 	  (int)(r->pixel), r->red, r->green, r->blue, (int)(r->flags));
   return(xm_print_buf);
 }
-
-static char *xm_obj_to_string(XEN obj)
-{
-  if (XEN_XColor_P(obj)) return(XColor_to_string(obj));
-  if (XEN_XRectangle_P(obj)) return(XRectangle_to_string(obj));
-  if (XEN_XPoint_P(obj)) return(XPoint_to_string(obj));
-  if (XEN_XArc_P(obj)) return(XArc_to_string(obj));
-  if (XEN_XSegment_P(obj)) return(XSegment_to_string(obj));
-  return(NULL);
-}
+#endif
 
 static XEN gxm_pad(XEN ptr)
 {
@@ -22413,8 +22473,10 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNenableButtonTab, XM_BOOLEAN);
   DEFINE_RESOURCE(XmNenableDragIcon, XM_WIDGET);
   DEFINE_RESOURCE(XmNenableEtchedInMenu, XM_BOOLEAN);
+#ifndef LESSTIF_VERSION
   DEFINE_RESOURCE(XmNenableMultiKeyBindings, XM_BOOLEAN);
   DEFINE_RESOURCE(XmNenableThinThickness, XM_INT);
+#endif
   DEFINE_RESOURCE(XmNenableToggleColor, XM_PIXEL);
   DEFINE_RESOURCE(XmNenableToggleVisual, XM_BOOLEAN);
   DEFINE_RESOURCE(XmNenableUnselectableDrag, XM_BOOLEAN);
@@ -22480,10 +22542,12 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNposition, XM_INT);
   DEFINE_RESOURCE(XmNpositionMode, XM_INT);
   DEFINE_RESOURCE(XmNpositionType, XM_UCHAR);
+#ifndef LESSTIF_VERSION
   DEFINE_RESOURCE(XmNpreeditCaretCallback, XM_CALLBACK);
   DEFINE_RESOURCE(XmNpreeditDoneCallback, XM_CALLBACK);
   DEFINE_RESOURCE(XmNpreeditDrawCallback, XM_CALLBACK);
   DEFINE_RESOURCE(XmNpreeditStartCallback, XM_CALLBACK);
+#endif
   DEFINE_RESOURCE(XmNprimaryOwnership, XM_UCHAR);
   DEFINE_RESOURCE(XmNrenderTable, XM_RENDER_TABLE);
   DEFINE_RESOURCE(XmNrenditionBackground, XM_PIXEL);
@@ -22522,12 +22586,18 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNtotalLines, XM_INT);
   DEFINE_RESOURCE(XmNunderlineType, XM_UCHAR);
   DEFINE_RESOURCE(XmNunselectColor, XM_PIXEL);
+#ifndef LESSTIF_VERSION
   DEFINE_RESOURCE(XmNuseColorObj, XM_BOOLEAN);
+#endif
   DEFINE_RESOURCE(XmNvalues, XM_STRING_TABLE);
+#ifndef LESSTIF_VERSION
   DEFINE_RESOURCE(XmNverifyPreedit, XM_BOOLEAN);
+#endif
   DEFINE_RESOURCE(XmNviewType, XM_UCHAR);
   DEFINE_RESOURCE(XmNvisualEmphasis, XM_UCHAR);
+#ifndef LESSTIF_VERSION
   DEFINE_RESOURCE(XmNwrap, XM_BOOLEAN);
+#endif
 #endif
 #if HAVE_XP
   DEFINE_STRING(XP_PRINTNAME);
@@ -23459,6 +23529,7 @@ static void define_integers(void)
 #ifdef INVALID
   DEFINE_INTEGER(INVALID);
 #endif
+#ifndef LESSTIF_VERSION
   DEFINE_INTEGER(WINDOW_MINIMIZE_INFO);
   DEFINE_INTEGER(WINDOW_MAXIMIZE_INFO);
   DEFINE_INTEGER(WINDOW_MOVE_INFO);
@@ -23489,6 +23560,7 @@ static void define_integers(void)
   DEFINE_INTEGER(WM_SOUTHWEST);
   DEFINE_INTEGER(WM_SOUTH);
   DEFINE_INTEGER(WM_SOUTHEAST);
+#endif
 #ifdef MAX_MENU_ITEMS
   DEFINE_INTEGER(MAX_MENU_ITEMS);
   DEFINE_INTEGER(MAX_NAME_LEN);
@@ -23529,6 +23601,7 @@ static void define_integers(void)
   DEFINE_INTEGER(XmTRANSFER_FAILURE);
   DEFINE_INTEGER(XmTRANSFER_SUCCESS);
 #if MOTIF_2
+#ifndef LESSTIF_VERSION
   DEFINE_INTEGER(XmUNSPECIFIED_ICON_SIZE);
   DEFINE_INTEGER(XmLARGE_ICON_SIZE);
   DEFINE_INTEGER(XmMEDIUM_ICON_SIZE);
@@ -23536,6 +23609,7 @@ static void define_integers(void)
   DEFINE_INTEGER(XmTINY_ICON_SIZE);
   DEFINE_INTEGER(XmUNSPECIFIED_POSITION);
   DEFINE_INTEGER(XmINVALID_POSITION);
+#endif
   DEFINE_INTEGER(XmINDICATOR_3D_BOX);
   DEFINE_INTEGER(XmINDICATOR_FLAT_BOX);
   DEFINE_INTEGER(XmINDICATOR_CHECK_GLYPH);
@@ -23714,7 +23788,9 @@ static void define_integers(void)
   DEFINE_INTEGER(XmTERMINATE);
   DEFINE_INTEGER(XmINVOKE);
   DEFINE_INTEGER(XmSTYLE_STRING);
+#ifndef LESSTIF_VERSION
   DEFINE_INTEGER(XmSTYLE_COMPOUND_TEXT);
+#endif
   DEFINE_INTEGER(XmSTYLE_TEXT);
   DEFINE_INTEGER(XmSTYLE_STANDARD_ICC_TEXT);
   DEFINE_INTEGER(XmSTYLE_LOCALE);
@@ -23739,7 +23815,9 @@ static void define_integers(void)
   DEFINE_INTEGER(XmCHANGE_NONE);
   DEFINE_INTEGER(XmCHANGE_WIDTH);
   DEFINE_INTEGER(XmCHANGE_HEIGHT);
+#ifndef LESSTIF_VERSION
   DEFINE_INTEGER(XmDYNAMIC_DEFAULT_TAB_GROUP);
+#endif
 #endif
   DEFINE_INTEGER(XmPIXELS);
   DEFINE_INTEGER(Xm100TH_MILLIMETERS);
@@ -23793,11 +23871,15 @@ static void define_integers(void)
   DEFINE_INTEGER(XmDROP_DOWN_COMBO_BOX);
   DEFINE_INTEGER(XmDROP_DOWN_LIST);
   DEFINE_INTEGER(XmQUICK_NAVIGATE);
+#ifndef LESSTIF_VERSION
   DEFINE_INTEGER(XmINVALID_MATCH_BEHAVIOR);
+#endif
   DEFINE_INTEGER(XmZERO_BASED);
   DEFINE_INTEGER(XmONE_BASED);
+#ifndef LESSTIF_VERSION
   DEFINE_INTEGER(XmALIGNMENT_CHILD_TOP);
   DEFINE_INTEGER(XmALIGNMENT_CHILD_BOTTOM);
+#endif
   DEFINE_INTEGER(XmONE_OF_MANY_ROUND);
   DEFINE_INTEGER(XmONE_OF_MANY_DIAMOND);
 #endif
@@ -23910,6 +23992,7 @@ static void define_integers(void)
   DEFINE_INTEGER(XmROUND_MARK);
   DEFINE_INTEGER(XmNEAR_SLIDER);
   DEFINE_INTEGER(XmNEAR_BORDER);
+#ifndef LESSTIF_VERSION
   DEFINE_INTEGER(XmHOR_SCROLLBAR);
   DEFINE_INTEGER(XmVERT_SCROLLBAR);
   DEFINE_INTEGER(XmCOMMAND_WINDOW);
@@ -23926,13 +24009,16 @@ static void define_integers(void)
   DEFINE_INTEGER(XmOFF);
   DEFINE_INTEGER(XmBUTTON2_ADJUST);
   DEFINE_INTEGER(XmBUTTON2_TRANSFER);
+#endif
   DEFINE_INTEGER(XmAUTO_UNSET);
   DEFINE_INTEGER(XmAUTO_BEGIN);
   DEFINE_INTEGER(XmAUTO_MOTION);
   DEFINE_INTEGER(XmAUTO_CANCEL);
   DEFINE_INTEGER(XmAUTO_NO_CHANGE);
   DEFINE_INTEGER(XmAUTO_CHANGE);
+#ifndef LESSTIF_VERSION
   DEFINE_INTEGER(XmDRAG_WINDOW);
+#endif
   DEFINE_INTEGER(XmSLIDER);
   DEFINE_INTEGER(XmTHERMOMETER);
   DEFINE_INTEGER(XmETCHED_LINE);
@@ -24035,7 +24121,9 @@ static void define_integers(void)
   DEFINE_INTEGER(XmMINIMUM_VALUE);
   DEFINE_INTEGER(XmINCREMENT_VALUE);
   DEFINE_INTEGER(XmSELECT_OUT_LINE);
+#ifndef LESSTIF_VERSION
   DEFINE_INTEGER(XmSEE_DETAIL);
+#endif
 #endif
   DEFINE_INTEGER(XmVARIABLE);
   DEFINE_INTEGER(XmCONSTANT);
@@ -24115,15 +24203,19 @@ static void define_integers(void)
   DEFINE_INTEGER(XmDOUBLE_SEPARATOR);
   DEFINE_INTEGER(XmTITLE);
 #if MOTIF_2
+#ifndef LESSTIF_VERSION
   DEFINE_INTEGER(XmTRAVERSE_GLOBALLY_FORWARD);
   DEFINE_INTEGER(XmTRAVERSE_GLOBALLY_BACKWARD);
   DEFINE_INTEGER(XmMATCH_DEPTH);
   DEFINE_INTEGER(XmDYNAMIC_DEPTH);
+#endif
   DEFINE_INTEGER(XmPDM_NOTIFY_FAIL);
   DEFINE_INTEGER(XmPDM_NOTIFY_SUCCESS);
   DEFINE_INTEGER(XmINDICATOR_NONE);
   DEFINE_INTEGER(XmINDICATOR_FILL);
+#ifndef LESSTIF_VERSION
   DEFINE_INTEGER(XmINDICATOR_BOX);
+#endif
   DEFINE_INTEGER(XmINDICATOR_CHECK);
   DEFINE_INTEGER(XmINDICATOR_CHECK_BOX);
   DEFINE_INTEGER(XmINDICATOR_CROSS);
@@ -24133,11 +24225,13 @@ static void define_integers(void)
   DEFINE_INTEGER(XmINDETERMINATE);
   DEFINE_INTEGER(XmTOGGLE_BOOLEAN);
   DEFINE_INTEGER(XmTOGGLE_INDETERMINATE);
+#ifndef LESSTIF_VERSION
   DEFINE_INTEGER(EditDone);
   DEFINE_INTEGER(EditError);
   DEFINE_INTEGER(EditReject);
   DEFINE_INTEGER(XmEXTERNAL_HIGHLIGHT);
   DEFINE_INTEGER(XmINTERNAL_HIGHLIGHT);
+#endif
   DEFINE_INTEGER(XmPATH_MODE_FULL);
   DEFINE_INTEGER(XmPATH_MODE_RELATIVE);
   DEFINE_INTEGER(XmFILTER_NONE);
@@ -24283,7 +24377,9 @@ static void define_pointers(void)
   DEFINE_POINTER(xmPrintShellWidgetClass);
 #endif
   DEFINE_POINTER(xmSpinBoxWidgetClass);
+#ifndef LESSTIF_VERSION
   DEFINE_POINTER(xmSimpleSpinBoxWidgetClass);
+#endif
 #endif
 #endif
 }

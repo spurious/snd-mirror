@@ -33,7 +33,6 @@ XEN_NARGIFY_7(gxg_g_signal_handlers_block_matched_w, gxg_g_signal_handlers_block
 XEN_NARGIFY_7(gxg_g_signal_handlers_unblock_matched_w, gxg_g_signal_handlers_unblock_matched)
 XEN_NARGIFY_7(gxg_g_signal_handlers_disconnect_matched_w, gxg_g_signal_handlers_disconnect_matched)
 XEN_NARGIFY_1(gxg_g_signal_handlers_destroy_w, gxg_g_signal_handlers_destroy)
-XEN_NARGIFY_1(gxg__g_signals_destroy_w, gxg__g_signals_destroy)
 XEN_NARGIFY_1(gxg_g_object_ref_w, gxg_g_object_ref)
 XEN_NARGIFY_1(gxg_g_object_unref_w, gxg_g_object_unref)
 XEN_NARGIFY_0(gxg_gdk_colormap_get_type_w, gxg_gdk_colormap_get_type)
@@ -3284,7 +3283,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(g_signal_handlers_unblock_matched, gxg_g_signal_handlers_unblock_matched_w, 7, 0, 0, H_g_signal_handlers_unblock_matched);
   XG_DEFINE_PROCEDURE(g_signal_handlers_disconnect_matched, gxg_g_signal_handlers_disconnect_matched_w, 7, 0, 0, H_g_signal_handlers_disconnect_matched);
   XG_DEFINE_PROCEDURE(g_signal_handlers_destroy, gxg_g_signal_handlers_destroy_w, 1, 0, 0, H_g_signal_handlers_destroy);
-  XG_DEFINE_PROCEDURE(_g_signals_destroy, gxg__g_signals_destroy_w, 1, 0, 0, H__g_signals_destroy);
   XG_DEFINE_PROCEDURE(g_object_ref, gxg_g_object_ref_w, 1, 0, 0, H_g_object_ref);
   XG_DEFINE_PROCEDURE(g_object_unref, gxg_g_object_unref_w, 1, 0, 0, H_g_object_unref);
   XG_DEFINE_PROCEDURE(gdk_colormap_get_type, gxg_gdk_colormap_get_type_w, 0, 0, 0, H_gdk_colormap_get_type);

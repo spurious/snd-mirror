@@ -2162,10 +2162,8 @@ Reverb-feedback sets the scaler on the feedback.\n\
       (cdr (menu-widgets)))
      (throw 'no-such-menu (list "menu-option" name)))))
 
-;;; TODO: bess-translations
-;;; TODO: equivalent of zync across sounds (as well as across chans)
+;;; SOMEDAY: bess-translations
 ;;; SOMEDAY: radar scope style region cue list
-;;; TODO: mix-panning via enved (or as part of mix file dialog?)
 ;;; SOMEDAY: spatial envelope dialog
 ;;; SOMEDAY: spectral edit dialog
 

@@ -2,7 +2,7 @@ Snd change log
 
   1-Aug:     def-clm-struct (ws.scm).
   30-Jul:    list constant ops in optimizer.
-  23-Jul:    first steps toward snd 6.0.
+  23-Jul:    "|" removed from *.scm (r5rs restriction).
   19-Jul:    contrib/rmsgain.scm thanks to Fabio Furlanete.
 	     with-relative-panes.
   17-Jul:    mix-length -> mix-frames, region-length -> region-frames, selection-length -> selection-frames.
@@ -13,7 +13,7 @@ Snd change log
              added sample-reader-position.
   3-Jul:     added contrib/DotEmacs thanks to Fernando.
   27-Jun:    bad-header-hook.
-  20-Jun:    ptree-channel (an experiment) -- func as virtual edit.
+  20-Jun:    ptree-channel -- func as virtual edit.
              env-channel can take envelope (list) arg.
   18-Jun:    snd colors now mimic xm/xg, snd-pixel is a no-op.
   12-Jun:    snd 5.11.

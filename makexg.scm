@@ -599,9 +599,13 @@
 				 "NUMBER"
 				 (cdr typ)))))
 		  (begin
-		    (hey "#define XEN_~A_P(Arg) 1~%" (no-stars (car typ)))
-		    (hey "#define XEN_TO_C_~A(Arg) ((gpointer)Arg)~%" (no-stars (car typ)))))))
-
+		    (if (not (cdr typ)) ; void special case
+			(begin
+			  (hey "#define XEN_~A_P(Arg) 1~%" (no-stars (car typ)))
+			  (hey "#define XEN_TO_C_~A(Arg) ((gpointer)Arg)~%" (no-stars (car typ))))
+			(begin          ; xen special case
+			  (hey "#define XEN_~A_P(Arg) ((XEN_LIST_P(Arg)) && (XEN_LIST_LENGTH(Arg) > 2))~%" (no-stars (car typ)))
+			  (hey "#define XEN_TO_C_~A(Arg) ((gpointer)Arg)~%" (no-stars (car typ)))))))))
 	(if (and (not (string=? type "lambda"))
 		 (not (string=? type "lambda_data"))
 		 (not (find-callback 

@@ -586,7 +586,7 @@ XM_TYPE_PTR(int_, int*)
 XM_TYPE_PTR(char___, char***)
 XM_TYPE_PTR(PangoLanguage_, PangoLanguage*)
 XM_TYPE(GtkCallbackMarshal, GtkCallbackMarshal)
-#define XEN_xen_P(Arg) 1
+#define XEN_xen_P(Arg) ((XEN_LIST_P(Arg)) && (XEN_LIST_LENGTH(Arg) > 2))
 #define XEN_TO_C_xen(Arg) ((gpointer)Arg)
 XM_TYPE(GtkMenuDetachFunc, GtkMenuDetachFunc)
 XM_TYPE_PTR(GtkMenuItem_, GtkMenuItem*)
@@ -1637,13 +1637,6 @@ static XEN gxg_g_signal_handlers_destroy(XEN instance)
   #define H_g_signal_handlers_destroy "void g_signal_handlers_destroy(gpointer instance)"
   XEN_ASSERT_TYPE(XEN_gpointer_P(instance), instance, 1, "g_signal_handlers_destroy", "gpointer");
   g_signal_handlers_destroy(XEN_TO_C_gpointer(instance));
-  return(XEN_FALSE);
-}
-static XEN gxg__g_signals_destroy(XEN itype)
-{
-  #define H__g_signals_destroy "void _g_signals_destroy(GType itype)"
-  XEN_ASSERT_TYPE(XEN_GType_P(itype), itype, 1, "_g_signals_destroy", "GType");
-  _g_signals_destroy(XEN_TO_C_GType(itype));
   return(XEN_FALSE);
 }
 static XEN gxg_g_object_ref(XEN object)
@@ -20434,7 +20427,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(g_signal_handlers_unblock_matched, gxg_g_signal_handlers_unblock_matched, 7, 0, 0, H_g_signal_handlers_unblock_matched);
   XG_DEFINE_PROCEDURE(g_signal_handlers_disconnect_matched, gxg_g_signal_handlers_disconnect_matched, 7, 0, 0, H_g_signal_handlers_disconnect_matched);
   XG_DEFINE_PROCEDURE(g_signal_handlers_destroy, gxg_g_signal_handlers_destroy, 1, 0, 0, H_g_signal_handlers_destroy);
-  XG_DEFINE_PROCEDURE(_g_signals_destroy, gxg__g_signals_destroy, 1, 0, 0, H__g_signals_destroy);
   XG_DEFINE_PROCEDURE(g_object_ref, gxg_g_object_ref, 1, 0, 0, H_g_object_ref);
   XG_DEFINE_PROCEDURE(g_object_unref, gxg_g_object_unref, 1, 0, 0, H_g_object_unref);
   XG_DEFINE_PROCEDURE(gdk_colormap_get_type, gxg_gdk_colormap_get_type, 0, 0, 0, H_gdk_colormap_get_type);
@@ -29973,7 +29965,7 @@ static int xg_already_inited = 0;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"31-Jul-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"01-Aug-02\")");
 #endif
       xg_already_inited = 1;
     }
