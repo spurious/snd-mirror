@@ -16616,7 +16616,7 @@ a list maintained in the application context."
  *     struct _XtStateRec *current_state;  
  */
 
-static XEN xtactionprocs[8];
+static XEN xtactionprocs[9];
 static void gxm_XtActionProc0(Widget w, XEvent *e, char **args, Cardinal *argn) 
 {
   XEN_CALL_3(xtactionprocs[0], C_TO_XEN_Widget(w), C_TO_XEN_XEvent(e), C_TO_XEN_Strings(args, *argn), c__FUNCTION__);
@@ -16649,6 +16649,10 @@ static void gxm_XtActionProc7(Widget w, XEvent *e, char **args, Cardinal *argn)
 {
   XEN_CALL_3(xtactionprocs[7], C_TO_XEN_Widget(w), C_TO_XEN_XEvent(e), C_TO_XEN_Strings(args, *argn), c__FUNCTION__);
 }
+static void gxm_XtActionProc8(Widget w, XEvent *e, char **args, Cardinal *argn) 
+{
+  fprintf(stderr, "too many actions");
+}
 static int xm_action_ctr = 0;
 
 static XtActionsRec *make_action_rec(int len, XEN larg2)
@@ -16664,7 +16668,12 @@ static XtActionsRec *make_action_rec(int len, XEN larg2)
       pair = XEN_CAR(arg2);
       act[i].string = (String)strdup(XEN_TO_C_STRING(XEN_CAR(pair)));
       if (xm_action_ctr >= 8)
-	fprintf(stderr,"too many actions...");
+	{
+	  fprintf(stderr,"too many actions...");
+	  act[i].proc = (XtActionProc)gxm_XtActionProc8;
+	  xm_protect(XEN_CADR(pair));
+	  xtactionprocs[8] = XEN_CADR(pair);
+	}
       else
 	{
 	  switch (xm_action_ctr)

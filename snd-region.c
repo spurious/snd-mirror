@@ -1126,6 +1126,7 @@ insert region data into snd's channel chn starting at start-samp"
 
   chan_info *cp;
   int rg;
+  char *buf;
   off_t samp;
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_insert_region, "a number");
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(reg_n), reg_n, XEN_ARG_2, S_insert_region, "a region id");
@@ -1135,7 +1136,9 @@ insert region data into snd's channel chn starting at start-samp"
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_insert_region, reg_n));
   samp = beg_to_sample(samp_n, S_insert_region);
-  paste_region_1(rg, cp, false, samp, S_insert_region, 0);
+  buf = mus_format("%s %d at " OFF_TD, S_insert_region, rg, samp);
+  paste_region_1(rg, cp, false, samp, buf, 0);
+  FREE(buf);
   update_graph(cp);
   return(reg_n);
 }
@@ -1366,6 +1369,7 @@ mix region into snd's channel chn starting at chn-samp; return new mix id."
 
   chan_info *cp;
   off_t samp;
+  char *buf;
   int rg, id = -1, track_id = 0;
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(chn_samp_n), chn_samp_n, XEN_ARG_1, S_mix_region, "a number");
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(reg_n), reg_n, XEN_ARG_2, S_mix_region, "a region id");
@@ -1384,7 +1388,9 @@ mix region into snd's channel chn starting at chn-samp; return new mix id."
 	      XEN_LIST_2(C_TO_XEN_STRING(S_mix_region),
 			 C_TO_XEN_INT(tid)));
   ss->catch_message = NULL;
-  id = paste_region_1(rg, cp, true, samp, S_mix_region, track_id);
+  buf = mus_format("%s %d at " OFF_TD, S_mix_region, rg, samp);
+  id = paste_region_1(rg, cp, true, samp, buf, track_id);
+  FREE(buf);
   if (id == INVALID_MIX_ID)
     XEN_ERROR(MUS_MISC_ERROR,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_mix_region),

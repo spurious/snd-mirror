@@ -265,6 +265,8 @@ static const unsigned char I_IMPS[4] = {'I','M','P','S'};  /* Impulse Tracker */
 static const unsigned char I_SMP1[4] = {'S','M','P','1'};  /* Korg */
 static const unsigned char I_Maui[4] = {'M','a','u','i'};  /* Turtle Beach */
 static const unsigned char I_SDIF[4] = {'S','D','I','F'};  /* IRCAM sdif */
+static const unsigned char I_NVF_[4] = {'N','V','F',' '};  /* Nomad II Creative NVF */
+
 
 #define I_IRCAM_VAX  0x0001a364
 #define I_IRCAM_SUN  0x0002a364
@@ -448,6 +450,7 @@ const char *mus_header_type_name(int type)
     case MUS_SOUNDFORGE:       return("SoundForge");              break;
     case MUS_TWINVQ:           return("TwinVQ");                  break;
     case MUS_SDIF:             return("IRCAM sdif");              break;
+    case MUS_NVF:              return("Creative NVF");            break;
     default:                   return("unsupported");             break;
     }
 }
@@ -2757,6 +2760,39 @@ static int read_sdif_header(int chan)
   return(MUS_UNSUPPORTED);
 }
 
+static int read_nvf_header(int chan)
+{
+  /* info from nvftools by Tom Mander: */
+  /*
+    Numbers stored little-endian.
+
+    bytes 0-3:   "NVF "                 magic number
+    bytes 4-7:    0x00000001            NVF version number?
+    bytes 8-11:   0x00000020            size of rest of header
+    bytes 12-15:  "VFMT"                VFMT chunk h
+    bytes 16-19:  0x00000001            VFMT version number?
+    bytes 20-23:  0x00000014            size of reset of VFMT header
+    bytes 24-27:  0x00007D00            32000 bit/s bitrate
+    bytes 28-29:  0x0001                channels
+    bytes 30-31:  0x0000                unknown
+    bytes 32-35:  0x00001F40            8000kHz sample rate
+    bytes 36-39:  0x00003E80            16000
+    bytes 40-41:  0x0002                width in bytes of uncompressed data?
+    bytes 42-43:  0x0010                width in bits of compressed data?
+
+    The rest of the data is G.721 data nibble packing big-endian, 4bits per
+    sample (nibble) single channel at 32kbit. When the Nomad records an NVF
+    file it does it in 92 sample (46 byte) frames or 0.0115sec.
+  */
+  data_format = MUS_UNKNOWN; /* g721 --translate elsewhere */
+  chans = 1;
+  srate = 8000;
+  data_location = 44;
+  true_file_length = SEEK_FILE_LENGTH(chan);
+  data_size = (true_file_length - data_location) * 2; /* 4 bit samps? */
+  return(MUS_NO_ERROR);
+}
+
 
 /* ------------------------------------ ADC ------------------------------------ 
  * also known as OGI format
@@ -4855,6 +4891,11 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
       header_type = MUS_SDIF;
       return(read_sdif_header(chan));
     }
+  if (match_four_chars((unsigned char *)hdrbuf, I_NVF_))
+    {
+      header_type = MUS_NVF;
+      return(read_nvf_header(chan));
+    }
 
   header_type = MUS_RAW;
   return(read_no_header(chan));
@@ -5511,6 +5552,7 @@ bool mus_header_no_header(const char *filename)
 	  (match_four_chars((unsigned char *)hdrbuf, I_SMP1)) ||
 	  (match_four_chars((unsigned char *)hdrbuf, I_Maui)) ||
 	  (match_four_chars((unsigned char *)hdrbuf, I_SDIF)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_NVF_)) ||
 	  (match_four_chars((unsigned char *)hdrbuf, I_DSPL)));
   return(!ok);
 }

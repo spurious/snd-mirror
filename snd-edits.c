@@ -2936,6 +2936,11 @@ bool ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, bo
       (ptree == NULL))
     return(true); 
   len = cp->samples[pos];
+  if (pos > cp->edit_ctr)
+    {
+      /* prepare_edit_list will throw 'no-such-edit, but we need to clean up the ptree first */
+      ptree = free_ptree(ptree);
+    }
   if (!(prepare_edit_list(cp, len, pos, S_ptree_channel))) return(false);
   old_ed = cp->edits[pos];
   ptree_loc = add_ptree(cp);

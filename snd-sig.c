@@ -2663,6 +2663,17 @@ at run-time.  See extsnd.html for the gory details."
   ASSERT_CHANNEL(S_ptree_channel, snd, chn, 4); 
   cp = get_cp(snd, chn, S_ptree_channel);
   pos = to_c_edit_position(cp, edpos, S_ptree_channel, 6);
+  if (pos > cp->edit_ctr)
+    {
+      cp->edit_hook_checked = false;
+      XEN_ERROR(NO_SUCH_EDIT,
+		XEN_LIST_3(C_TO_XEN_STRING(S_ptree_channel),
+			   C_TO_XEN_STRING("edpos: ~A, ~A chan ~A has ~A edits"),
+			   XEN_LIST_4(edpos,
+				      C_TO_XEN_STRING(cp->sound->short_filename),
+				      chn,
+				      C_TO_XEN_INT(cp->edit_ctr))));
+    }
   beg = beg_to_sample(s_beg, S_ptree_channel);
   if (beg > cp->samples[pos])
     XEN_ERROR(NO_SUCH_SAMPLE,
@@ -3010,17 +3021,17 @@ static XEN g_smooth_sound(XEN beg, XEN num, XEN snd_n, XEN chn_n)
   #define H_smooth_sound "(" S_smooth_sound " (start-samp 0) (samps len) (snd #f) (chn #f)): smooth \
 data from start-samp for samps in snd's channel chn"
   chan_info *cp;
-  off_t start;
+  off_t start, samps;
+  char *buf;
   ASSERT_SAMPLE_TYPE(S_smooth_sound, beg, XEN_ARG_1);
   ASSERT_SAMPLE_TYPE(S_smooth_sound, num, XEN_ARG_2);
   ASSERT_CHANNEL(S_smooth_sound, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_smooth_sound);
   start = beg_to_sample(beg, S_smooth_sound);
-  cos_smooth(cp,
-	     start,
-	     dur_to_samples(num, start, cp, cp->edit_ctr, 2, S_smooth_sound),
-	     false,
-	     S_smooth_sound); 
+  samps = dur_to_samples(num, start, cp, cp->edit_ctr, 2, S_smooth_sound);
+  buf = mus_format("%s from " OFF_TD " for " OFF_TD, S_smooth_sound, start, samps);
+  cos_smooth(cp, start, samps, false, buf); 
+  FREE(buf);
   return(beg);
 }
 
@@ -3040,7 +3051,12 @@ smooth data from beg for dur in snd's channel chn"
   num = dur_to_samples(dur, start, cp, pos, 2, S_smooth_channel);
   if ((start < cp->samples[pos]) &&
       (num > 0))
-    smooth_channel(cp, start, num, pos, S_smooth_channel);
+    {
+      char *buf;
+      buf = mus_format("%s from " OFF_TD " for " OFF_TD, S_smooth_channel, start, num);
+      smooth_channel(cp, start, num, pos, buf);
+      FREE(buf);
+    }
   return(beg);
 }
 
@@ -3111,8 +3127,9 @@ static XEN g_reverse_channel(XEN s_beg, XEN s_dur, XEN snd_n, XEN chn_n, XEN edp
 static XEN g_insert_silence(XEN beg, XEN num, XEN snd, XEN chn)
 {
   #define H_insert_silence "(" S_insert_silence " beg num (snd #f) (chn #f)): insert num zeros at beg in snd's chn"
-  chan_info *cp;
+  chan_info *cp; /* follows sync */
   off_t start = 0, len = 0;
+  char *buf;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(beg), beg, XEN_ARG_1, S_insert_silence, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(num), num, XEN_ARG_2, S_insert_silence, "a number");
   ASSERT_CHANNEL(S_insert_silence, snd, chn, 3);
@@ -3123,10 +3140,9 @@ static XEN g_insert_silence(XEN beg, XEN num, XEN snd, XEN chn)
 				      beg));
   len = XEN_TO_C_OFF_T(num);
   if (len <= 0) return(XEN_FALSE);
-  cursor_insert(cp, /* follows sync */
-		start,
-		len,
-		S_insert_silence);
+  buf = mus_format("%s from " OFF_TD " for " OFF_TD, S_insert_silence, start, len);
+  cursor_insert(cp, start, len, buf);
+  FREE(buf);
   return(beg);
 }
 
@@ -3134,20 +3150,20 @@ static XEN g_pad_channel(XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
 {
   #define H_pad_channel "(" S_pad_channel " beg dur (snd #f) (chn #f) (edpos #f)): insert dur zeros at beg in snd's chn"
   chan_info *cp;
-  off_t bg;
+  off_t bg, len;
   int pos;
+  char *buf;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(beg), beg, XEN_ARG_1, S_pad_channel, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(num), num, XEN_ARG_2, S_pad_channel, "a number");
   ASSERT_CHANNEL(S_pad_channel, snd, chn, 3);
   cp = get_cp(snd, chn, S_pad_channel);
   bg = beg_to_sample(beg, S_pad_channel);
   pos = to_c_edit_position(cp, edpos, S_pad_channel, 5);
-  if (extend_with_zeros(cp, 
-			bg,
-			XEN_TO_C_OFF_T_OR_ELSE(num, cp->samples[pos] - bg),
-			S_pad_channel,
-			pos))
+  len = XEN_TO_C_OFF_T_OR_ELSE(num, cp->samples[pos] - bg);
+  buf = mus_format("%s from " OFF_TD " for " OFF_TD, S_pad_channel, bg, len);
+  if (extend_with_zeros(cp, bg,	len, buf, pos))
     update_graph(cp);
+  FREE(buf);
   return(beg);
 }
 

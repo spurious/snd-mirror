@@ -653,6 +653,9 @@ void reflect_edit_history_change(chan_info *cp)
   if ((cp->in_as_one_edit) || (cp->cgx == NULL)) return;
   sp = cp->sound;
   lst = EDIT_HISTORY_LIST(cp);
+  /*
+  fprintf(stderr,"%s[%d:%d]: %s\n", cp->sound->short_filename, cp->chan, cp->edit_ctr, cp->edits[cp->edit_ctr]->origin);
+  */
 #if WITH_RELATIVE_PANES && (XmVERSION > 1)
   if ((lst) && (widget_width(lst) > 1))
     remake_edit_history(lst, cp, true);

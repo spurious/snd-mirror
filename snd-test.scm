@@ -1195,6 +1195,7 @@
 	    (list "oboe.pf1" 1 22050 2.305125 "Ensoniq Paris" "little endian short (16 bits)")
 	    (list "oboe.smp" 1 22050 2.305125 "snack SMP" "little endian short (16 bits)")
 	    (list "oboe.nsp" 1 22050 2.305125 "CSL" "little endian short (16 bits)")
+	    (list "oboe.nvf" 1 8000 6.353500 "Creative NVF" "unknown")
 	    (list "oboe.wfp" 1 22050 2.305125 "Turtle Beach" "little endian short (16 bits)")
 	    (list "oki.snd" 2 44100 0.0041950112208724 "raw (no header)" "big endian short (16 bits)")
 	    (list "oki.wav" 1 44100 0.016780 "RIFF" "unknown")
@@ -3744,7 +3745,7 @@ EDITS: 5
 	(undo)
 	(pad-channel 4 1)
 	(if (not (string-=? (display-edits ind 0 3) "
- (silence 4 1) ; pad-channel [3:6]:
+ (silence 4 1) ; pad-channel from 4 for 1 [3:6]:
    (at 0, cp->sounds[1][0:1, 1.000000]) [buf: 10] 
    (at 2, cp->sounds[1][2:3, 1.000000, 0.200000 -> 0.280000]) [buf: 10] 
    (at 4, cp->sounds[-1][0:0, 0.000000])
@@ -3902,7 +3903,7 @@ EDITS: 5
 	  (undo)
 	  (pad-channel 4 2)
 	  (if (not (string-=? (display-edits ind 0 3) "
- (silence 4 2) ; pad-channel [3:4]:
+ (silence 4 2) ; pad-channel from 4 for 2 [3:4]:
    (at 0, cp->sounds[1][0:3, 1.000000, 0.000000 -> 1.155245, off: -0.032258, scl: 0.032258]) [buf: 10] 
    (at 4, cp->sounds[-1][0:1, 0.000000])
    (at 6, cp->sounds[1][4:9, 1.000000, 1.540327 -> 3.465736, off: -0.032258, scl: 0.032258]) [buf: 10] 
@@ -7367,7 +7368,7 @@ EDITS: 5
 		  (apply-controls obind)
 		  (let ((expamp (maxamp obind))
 			(expdur (frames obind)))
-		    (if (fneq expamp .152) (snd-display ";apply expand-control scale: ~A?" expamp))
+		    (if (> (abs (- expamp .152)) .01) (snd-display ";apply expand-control scale: ~A?" expamp))
 		    (if (not (> expdur (* 1.25 50828))) (snd-display ";apply expand-control length: ~A?" expdur))
 		    (undo 1 obind)
 		    (set! (filter-control? obind) #t)
@@ -9715,6 +9716,8 @@ EDITS: 5
 (clear-sincs)
 
 ;;; ---------------- test 8: clm ----------------
+
+(load "moog.scm")
 
 (define (jc-reverb decay-dur low-pass volume amp-env)
   "(jc-reverb decay-dur low-pass volume amp-env) is the old Chowning reverberator: (jc-reverb 2.0 #f .1 #f)"
@@ -14025,7 +14028,6 @@ EDITS: 5
 	      (if (not (equal? genx genxx)) (snd-display ";phase-vocoder equal: ~A ~A" genxx genx)))))
 	(close-sound ind))
       
-      (load "moog.scm")
       (let ((ind (open-sound "oboe.snd")))
 	(let ((gen (make-moog-filter 500.0 .1)))
 	  (if (fneq 500.0 (car gen)) (snd-display ";moog freq: ~A" (car gen)))
@@ -20491,9 +20493,7 @@ EDITS: 5
 
 (if (and with-gui
 	 (or full-test (= snd-test 15) (and keep-going (<= snd-test 15))))
-    (let ((obi (open-sound (car (match-sound-files (lambda (file) 
-						     (and (not (= (mus-sound-header-type file) mus-raw))
-							  (= (mus-sound-chans file) 1))))))))
+    (begin
       
       (define (test-selection ind beg len scaler)
 	(set! (selection-member? ind 0) #t)
@@ -20558,6 +20558,13 @@ EDITS: 5
 	    (start-playing chans (srate sound) #f))))
       
       (run-hook before-test-hook 15)
+      (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests)) 
+	(log-mem clmtest)
+
+    (let ((obi (open-sound (car (match-sound-files (lambda (file) 
+						     (and (not (= (mus-sound-header-type file) mus-raw))
+							  (= (mus-sound-chans file) 1))))))))
+
       (if (not (equal? (all-chans) (list (list obi) (list 0)))) (snd-display ";all-chans: ~A?" (all-chans)))
       (let ((s2i (open-sound (car (match-sound-files (lambda (file) (= (mus-sound-chans file) 2)))))))
 	(if (and (not (equal? (all-chans) (list (list obi s2i s2i) (list 0 0 1))))
@@ -21658,6 +21665,7 @@ EDITS: 5
 	(set! (transform-normalization) old-norm)
 	(set! (transform-graph-type) old-grf)
 	(close-sound ind))
+      ))
       (run-hook after-test-hook 15)
       ))
 
@@ -22552,9 +22560,9 @@ EDITS: 5
 	   (list (lambda (n) (scale-channel .5 0 #f n 0 2))
 		 (lambda (n) (env-channel '(0 0 1 1 2 0) 0 #f n 0 2))
 		 (if (> (optimization) 0)
-		     (lambda (n) (ptree-channel (lambda (y) y) 0 #f n 0 2 #f))
+		     (lambda (n) (ptree-channel (lambda (y1) y1) 0 #f n 0 2 #f))
 		     (lambda (n) (pad-channel 0 100 n 0 2)))
-		 ;;(lambda (n) (map-channel (lambda (y) y) 0 #f n 0 2)) ; actually will work
+		 ;;(lambda (n) (map-channel (lambda (y2) y2) 0 #f n 0 2)) ; actually will work
 		 (lambda (n) (pad-channel 100 100 n 0 2))
 		 (lambda (n) (delete-sample 100 n 0 2))
 		 (lambda (n) (set! (sample 100 n 0 2) .5))
@@ -22771,9 +22779,9 @@ EDITS: 5
 	      (ptree-channel (lambda (y) 1.0) 0 #f ind 0 #f #f))
 	    (lambda (ind) 
 	      (scale-by 0.5 ind 0) 
-	      (ptree-channel (lambda (y) y) 0 #f ind 0 #f #f))
+	      (ptree-channel (lambda (y3) y3) 0 #f ind 0 #f #f))
 	    (lambda (ind)
-	      (ptree-channel (lambda (y) y) 0 #f ind 0 #f #f)
+	      (ptree-channel (lambda (y4) y4) 0 #f ind 0 #f #f)
 	      (scale-by 0.5 ind 0))
 	    (lambda (ind)
 	      (ptree-channel (lambda (y) (* y 0.5)) 0 #f ind 0 #f #f)
@@ -22791,9 +22799,9 @@ EDITS: 5
 	      (ptree-channel (lambda (y) 1.0) 2 #f ind 0 #f #f))
 	    (lambda (ind) 
 	      (scale-by 0.5 ind 0) 
-	      (ptree-channel (lambda (y) y) 2 #f ind 0 #f #f))
+	      (ptree-channel (lambda (y5) y5) 2 #f ind 0 #f #f))
 	    (lambda (ind)
-	      (ptree-channel (lambda (y) y) 2 #f ind 0 #f #f)
+	      (ptree-channel (lambda (y6) y6) 2 #f ind 0 #f #f)
 	      (scale-by 0.5 ind 0))
 	    (lambda (ind)
 	      (ptree-channel (lambda (y) (* y 0.5)) 2 #f ind 0 #f #f)
@@ -22816,7 +22824,7 @@ EDITS: 5
 	    
 	    (lambda (ind)
 	      (scale-by 0.0)
-	      (ptree-channel (lambda (y) y) 0 #f ind 0 2 #f)
+	      (ptree-channel (lambda (y7) y7) 0 #f ind 0 2 #f)
 	      (scale-by 0.5 ind 0))
 	    
 	    )
@@ -22944,9 +22952,9 @@ EDITS: 5
 	      (map-channel (lambda (y) 1.0) 0 #f ind 0))
 	    (lambda (ind)
 	      (scale-by 0.5 ind 0)
-	      (map-channel (lambda (y) y) 0 #f ind 0))
+	      (map-channel (lambda (y8) y8) 0 #f ind 0))
 	    (lambda (ind)
-	      (map-channel (lambda (y) y) 0 #f ind 0)
+	      (map-channel (lambda (y9) y9) 0 #f ind 0)
 	      (scale-by 0.5 ind 0))
 	    (lambda (ind)
 	      (map-channel (lambda (y) (* y 0.5)) 0 #f ind 0)
@@ -22964,9 +22972,9 @@ EDITS: 5
 	      (map-channel (lambda (y) 1.0) 2 #f ind 0))
 	    (lambda (ind)
 	      (scale-by 0.5 ind 0)
-	      (map-channel (lambda (y) y) 2 #f ind 0))
+	      (map-channel (lambda (y10) y10) 2 #f ind 0))
 	    (lambda (ind)
-	      (map-channel (lambda (y) y) 2 #f ind 0)
+	      (map-channel (lambda (y11) y11) 2 #f ind 0)
 	      (scale-by 0.5 ind 0))
 	    (lambda (ind)
 	      (map-channel (lambda (y) (* y 0.5)) 2 #f ind 0)
@@ -22988,7 +22996,7 @@ EDITS: 5
 	      (map-channel (let ((sym (list 1))) (lambda (y) (if (eq? (car sym) 1) (* y 0.5) y))) 0 #f ind 0))
 	    (lambda (ind)
 	      (scale-by 0.0)
-	      (map-channel (lambda (y) y) 0 #f ind 0 2)
+	      (map-channel (lambda (y12) y12) 0 #f ind 0 2)
 	      (scale-by 0.5 ind 0))
 	    
 	    )
@@ -23602,7 +23610,7 @@ EDITS: 6
    (at 0, cp->sounds[0][0:0, 1.000000]) [file: " home-dir "/cl/test.snd[0]]
    (at 1, end_mark)
 
- (silence 0 100) ; insert-silence [1:3]:
+ (silence 0 100) ; insert-silence from 0 for 100 [1:3]:
    (at 0, cp->sounds[-1][0:99, 0.000000])
    (at 100, cp->sounds[0][0:0, 1.000000]) [file: " home-dir "/cl/test.snd[0]]
    (at 101, end_mark)
@@ -23627,7 +23635,7 @@ EDITS: 6
    (at 21, cp->sounds[1][22:100, 1.000000, loc: 0, pos: 22, scl: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
    (at 100, end_mark)
 
- (silence 30 1) ; insert-silence [6:7]:
+ (silence 30 1) ; insert-silence from 30 for 1 [6:7]:
    (at 0, cp->sounds[1][0:9, 1.000000, loc: 0, pos: 0, scl: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
    (at 10, cp->sounds[1][11:20, 1.000000, loc: 0, pos: 11, scl: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
    (at 20, cp->sounds[2][0:0, 1.000000]) [buf: 1] 
@@ -26257,7 +26265,7 @@ EDITS: 5
    (at 101, cp->sounds[0][101:50827, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
- (silence 100 20) ; pad-channel [5:9]:
+ (silence 100 20) ; pad-channel from 100 for 20 [5:9]:
    (at 0, cp->sounds[0][0:0, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 1, cp->sounds[1][0:0, 2.000000]) [buf: 1] 
    (at 2, cp->sounds[0][2:9, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
@@ -31845,7 +31853,13 @@ EDITS: 2
 
 (if (or full-test (= snd-test 23) (and keep-going (<= snd-test 23)))
     (begin
+      (def-clm-struct st1 one two)
+      (def-clm-struct st2 (one 11) (two 22))
       (run-hook before-test-hook 23)
+
+      (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests)) 
+	(log-mem clmtest)
+
       (set! (mus-srate) 22050)
       (set! (default-output-srate) 22050)
       
@@ -31946,7 +31960,6 @@ EDITS: 2
 	    (delete-file "test.snd")
 	    (delete-file "test.rev")))
       
-      (def-clm-struct st1 one two)
       (let ((var (make-st1 :one 1 :two 2)))
 	(if (not (= (st1-one var) 1)) (snd-display ";st1-one: ~A" (st1-one var)))
 	(if (not (= (st1-two var) 2)) (snd-display ";st1-two: ~A" (st1-two var)))
@@ -31961,7 +31974,7 @@ EDITS: 2
 	(set! var (make-st1 :two 3))
 	(if (not (eq? (st1-one var) #f)) (snd-display ";st1-one #f (def): ~A" (st1-one var)))  
 	(if (not (= (st1-two var) 3)) (snd-display ";st1-two (3): ~A" (st1-two var))))
-      (def-clm-struct st2 (one 11) (two 22))
+
       (let ((var (make-st2 :one 1 :two 2)))
 	(if (not (= (st2-one var) 1)) (snd-display ";st2-one: ~A" (st2-one var)))
 	(if (not (= (st2-two var) 2)) (snd-display ";st2-two: ~A" (st2-two var)))
@@ -32362,7 +32375,7 @@ EDITS: 2
 	(revert-sound ind)
 	(close-sound ind)
 	(if (file-exists? "test5.snd") (snd-display ";auto-delete mix (with-tag)?")))
-        
+      )        
       (if (and (provided? 'snd-motif)
 	       (defined? 'variable-display))
 	  (let ((wid1 (make-variable-display "do-loop" "i*1" 'text))
@@ -32373,6 +32386,7 @@ EDITS: 2
 		((= i 1000))
 	      (variable-display (variable-display (* (variable-display (sin (* (variable-display i wid1) .1)) wid3) .5) wid2) wid4))
 	    (XtUnmanageChild variables-dialog)))
+
       (run-hook after-test-hook 23)
       ))
 (set! (optimization) old-opt-23)
@@ -35602,6 +35616,10 @@ EDITS: 2
       (run-hook before-test-hook 25)
       (if (and (provided? 'snd-motif) (provided? 'xm) (not (provided? 'gl)))
 	  (begin
+
+      (do ((clmtest 0 (1+ clmtest))) ((= clmtest (min 2 tests)))
+	(log-mem clmtest)
+
 	    ;; check some resource stuff first
 	    (let ((hgt (cadr (XtVaGetValues (cadr (main-widgets)) (list XmNheight 0))))
 		  (wid (cadr (XtVaGetValues (cadr (main-widgets)) (list XmNwidth 0)))))
@@ -39705,7 +39723,7 @@ EDITS: 2
 	    (if (XShapeOffsetShape dpy win 0 0 0) (snd-display ";XShapeOffsetShape?"))
 	    ;; TODO: XShapeCombine Region|Shape|Mask|Rectangles
 	    ))
-
+)
       (run-hook after-test-hook 25)
       ))
 

@@ -1496,6 +1496,7 @@ int snd_translate(const char *oldname, const char *newname, int type)
     case MUS_HCOM: err = read_hcom(oldname, newname, hdr); break;
     case MUS_YAMAHA_TX16W: err = read_12bit(oldname, newname, hdr); break;
     case MUS_AVI: err = read_avi(oldname, newname, hdr); break;
+    case MUS_NVF: err = read_g72x_adpcm(oldname, newname, hdr, 0); break;
     case MUS_RIFF:
       switch (mus_sound_original_format(oldname))
 	{

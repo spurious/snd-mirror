@@ -747,11 +747,14 @@ static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
   int err = MUS_NO_ERROR;
   if (selection_is_active())
     {
+      char *buf;
       ASSERT_CHANNEL(S_insert_selection, snd, chn, 2);
       XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_1, S_insert_selection, "a number");
       cp = get_cp(snd, chn, S_insert_selection);
       samp = beg_to_sample(beg, S_insert_selection);
-      err = insert_selection(cp, samp, S_insert_selection);
+      buf = mus_format("%s at " OFF_TD, S_insert_selection, samp);
+      err = insert_selection(cp, samp, buf);
+      FREE(buf);
       return(C_TO_XEN_BOOLEAN((err == MUS_NO_ERROR)));
     }
   return(snd_no_active_selection_error(S_insert_selection));
@@ -762,9 +765,11 @@ static XEN g_mix_selection(XEN beg, XEN snd, XEN chn, XEN id)
   #define H_mix_selection "(" S_mix_selection " (beg 0) (snd #f) (chn #f) (track 0)): mix the currently selected portion starting at beg"
   chan_info *cp;
   off_t obeg;
-  int track_id;
+  int track_id = 0;
   if (selection_is_active())
     {
+      XEN res;
+      char *buf;
       ASSERT_CHANNEL(S_mix_selection, snd, chn, 2);
       XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_1, S_mix_selection, "a number");
       XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(id), id, XEN_ARG_4, S_mix_selection, "an integer");
@@ -775,7 +780,12 @@ static XEN g_mix_selection(XEN beg, XEN snd, XEN chn, XEN id)
 	XEN_ERROR(NO_SUCH_TRACK,
 		  XEN_LIST_2(C_TO_XEN_STRING(S_mix_selection),
 			     C_TO_XEN_INT(id)));
-      return(C_TO_XEN_INT(mix_selection(cp, obeg, S_mix_selection, track_id)));
+      if (track_id == 0)
+	buf = mus_format("%s at " OFF_TD, S_mix_selection, obeg);
+      else buf = mus_format("%s at " OFF_TD " in track %d", S_mix_selection, obeg, track_id);
+      res = C_TO_XEN_INT(mix_selection(cp, obeg, S_mix_selection, track_id));
+      FREE(buf);
+      return(res);
     }
   return(snd_no_active_selection_error(S_mix_selection));
 }
