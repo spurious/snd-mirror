@@ -2354,7 +2354,6 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
     }
   mus_sound_set_full_loop_info(sp->filename, hdr->loops);
   mus_header_set_full_aiff_loop_info(hdr->loops);
-  /* TODO: if no edits, and loop info already present (we're just changing it), just edit the header directly */
   type = hdr->type;
   if ((type != MUS_AIFF) && 
       (type != MUS_AIFC))

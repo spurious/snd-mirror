@@ -3549,7 +3549,7 @@ opening the result of the with-sound call, so to open the new sound
 and make sure the control panel is open:
 </p>
 <pre>
-(defmacro to-snd-with-controls ((&rest args) &body body)
+(defmacro to-snd-with-controls ((&amp;rest args) &amp;body body)
   `(send-snd (format nil 
 	             "(let ((snd (open-sound ~S))) 
                         (set! (show-controls snd) #t))" 

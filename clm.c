@@ -6436,6 +6436,7 @@ void mus_convolve_files(const char *file1, const char *file2, Float maxamp, cons
   int i, j, k;
   file1_len = mus_sound_frames(file1);
   file2_len = mus_sound_frames(file2);
+  if ((file1_len <= 0) || (file2_len <= 0)) return;
   file1_chans = mus_sound_chans(file1);
   file2_chans = mus_sound_chans(file2);
   output_chans = file1_chans; 

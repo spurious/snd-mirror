@@ -310,7 +310,7 @@ typedef struct {
  *    CList -> TreeView?
  *    gtk_pixmap -> gdk_pixmap?
  *    gdkfont -> pango? 
- *    gdk_color_alloc?
+ *    gdk_color_alloc|free?
  *    gdk_input_add? gdk_color_white|black?
  *    gdk_gc_set_font?
  *

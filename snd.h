@@ -60,7 +60,8 @@
  *   HAVE_HTML     define if using Gtk+ and the mozilla browser library is available 
  *                 (used by help functions).  (The configure script assumes you have
  *                 /usr/lib/mozilla and /usr/include/mozilla).
- *                 Currently the XmHTML widget segfaults on nearly every Snd html file.
+ *                 To use this with Motif and the XmHTML widget, see README.Snd for 
+ *                 a change needed in the XmHTML sources.
  *
  *   Float         This can be defined to double in CFLAGS if you want Snd to use 
  *                 doubles throughout (i.e. -DFloat=double).
@@ -158,7 +159,7 @@
 
 #include "snd-strings.h"
 
-#define SND_VERSION "4-Jan-02"
+#define SND_VERSION "7-Jan-02"
 #define SND_RPM_VERSION "5.6"
 #define SND_MAJOR_VERSION 5
 #define SND_MINOR_VERSION 6

@@ -1,6 +1,6 @@
 #include "snd.h"
 
-/* TODO  make completions list mouse sensitive as in Motif version
+/* TODO  make completions list mouse sensitive as in Motif version (requires dialog etc)
  *        -> use click(select) callback!
  */
 

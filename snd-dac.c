@@ -1,8 +1,4 @@
-/* TODO  make revlen follow slider in "real-time":
- *         set up line_size in mus_make_comb to 5.0*srate/25641, then
- *         then as running, at each block reset to initial - new scaled
- *         (negative pm = longer delay)
- */
+#include "snd.h"
 
 /* this was sound-oriented; changed to be channel-oriented 31-Aug-00 */
 /* removed reverb-control-procedures (with freeverb and fcomb) and contrast-control-procedure 13-Dec-01 */
@@ -12,8 +8,6 @@
  *   all active dac_info structs are held in a play_list
  *   channels can come and go as a play is in progress
  */
-
-#include "snd.h"
 
 #ifndef DEFAULT_NEVER_SPED
   #define DEFAULT_NEVER_SPED 1
@@ -172,7 +166,15 @@ static Float expand(dac_info *dp, Float sr, Float ex)
   return(mus_granulate(spd->gen, &expand_input_as_needed));
 }
 
-/* reverb */
+
+/* -------- reverb -------- */
+
+/* to implement run-time reverb-length, we would need to save the individual delay lens, both nominal
+   and actual (given srate); set up the combs/allpasses to make room for 5.0 as reverb_control_length,
+   then at each call, check current reverb len (how?), and if not original, recalculate how many
+   samples each delay needs to be expanded by and so on -- more complexity than it's worth!
+*/
+
 static int prime (int num)
 {
   int lim, i;

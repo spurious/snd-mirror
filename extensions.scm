@@ -13,6 +13,7 @@
 ;;; snd-trace
 ;;; check-for-unsaved-edits
 ;;; remember-sound-state
+;;; mix-channel, insert-channel
 
 (use-modules (ice-9 common-list) (ice-9 optargs) (ice-9 format))
 
@@ -523,3 +524,42 @@
 							 (list-ref (cadddr state) chn))
 					       (set! (squelch-update snd chn) #f))))))))
     'remembering!))
+
+
+;;; -------- mix-channel, insert-channel
+
+(define* (mix-channel file-data #:optional beg dur snd chn edpos)
+  ;; file-data can be the file name or a list (file-name [beg [channel]])
+  (let* ((file-name (if (string? file-data) file-data (car file-data)))
+	 (file-beg (if (or (string? file-data) 
+			   (< (length file-data) 2)) 
+		       0 
+		       (cadr file-data)))
+	 (file-channel (if (or (string? file-data) 
+			       (< (length file-data) 3))
+			   0 
+			   (caddr file-data)))
+	 (reader (make-sample-reader file-beg file-name file-channel))
+	 (len (or dur (- (mus-sound-frames file-name) file-beg))))
+    (map-channel (lambda (val)
+		   (+ val (next-sample reader)))
+		 beg len snd chn edpos "mix-channel")))
+
+(define* (insert-channel file-data #:optional beg dur snd chn edpos)
+  ;; file-data can be the file name or a list (file-name [beg [channel]])
+  (let* ((file-name (if (string? file-data) file-data (car file-data)))
+	 (file-beg (if (or (string? file-data) 
+			   (< (length file-data) 2)) 
+		       0 
+		       (cadr file-data)))
+	 (file-channel (if (or (string? file-data) 
+			       (< (length file-data) 3))
+			   0 
+			   (caddr file-data)))
+	 (reader (make-sample-reader file-beg file-name file-channel))
+	 (len (or dur (- (mus-sound-frames file-name) file-beg)))
+	 (data (make-vct len)))
+    (do ((i 0 (1+ i)))
+	((= i len))
+      (vct-set! data i (next-sample reader)))
+    (insert-samples beg len data snd chn edpos)))

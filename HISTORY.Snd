@@ -1,6 +1,7 @@
 snd change log
 
 
+  7-Jan:     mix-channel, insert-channel in extensions.scm.
   4-Jan:     removed loop.scm.
 
 2002 ----------------------------------------------------------------

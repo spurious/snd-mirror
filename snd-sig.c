@@ -1031,8 +1031,8 @@ static int fht_last_length = 0, fht_length = 0;
 
 static void make_sines(int length)
 {
-  int i;
-  Float freq, incr;
+  int i, j;
+  double freq, incr;
   if (length != fht_last_length)
     {
       if (fht_length < length)
@@ -1044,11 +1044,13 @@ static void make_sines(int length)
 	  fht_length = length;
 	}
       fht_last_length = length;
-      incr = TWO_PI / (Float)length;
+      incr = TWO_PI / (double)length;
       for (i = 0, freq = 0.0; i < length; i++, freq += incr) 
+	fht_cosines[i] = cos(freq);
+      for (i = 0, j = length / 4; i < length; i++)
 	{
-	  fht_sines[i] = sin(freq);
-	  fht_cosines[i] = cos(freq);
+	  fht_sines[j++] = fht_cosines[i];
+	  if (j == length) j = 0;
         }
     }
 }
@@ -1584,13 +1586,30 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, int beg, int dur, XEN ed
     }
   else temp_file = 0;
   if ((beg == 0) && (dur == current_ed_samples(cp)))
-    ep = amp_env_copy(cp, TRUE, edpos);
+    ep = amp_env_copy(cp, TRUE, edpos); /* TRUE -> reversed */
   else 
     {
-#if 0
-      /* TODO: reversed section amp env: this needs to reverse the section but return a full envelope */
-#endif
-      section = 1;
+      int sbin, ebin, i, j;
+      Float min1, max1;
+      ep = amp_env_copy(cp, FALSE, edpos);
+      if (ep) 
+	{
+	  /* now reverse the selection */
+	  sbin = (int)ceil(beg / ep->samps_per_bin);
+	  ebin = (int)floor((beg + dur) / ep->samps_per_bin);
+	  for (i = sbin, j = ebin - 1; i < j; i++, j--)
+	    {
+	      min1 = ep->data_min[i];
+	      max1 = ep->data_max[i];
+	      ep->data_min[i] = ep->data_min[j];
+	      ep->data_max[i] = ep->data_max[j];
+	      ep->data_min[j] = min1;
+	      ep->data_max[j] = max1;
+	    }
+	  if (sbin > 0) pick_one_bin(ep, sbin - 1, ep->samps_per_bin * (sbin - 1), cp, edpos);
+	  pick_one_bin(ep, ebin, ep->samps_per_bin * ebin, cp, edpos);
+	}
+      section = 1; /* only for reverse_marks below */
     }
   data = (MUS_SAMPLE_TYPE **)MALLOC(sizeof(MUS_SAMPLE_TYPE *));
   data[0] = (MUS_SAMPLE_TYPE *)CALLOC(MAX_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE)); 

@@ -352,7 +352,7 @@ void gc_set_foreground_xor(GdkGC *gc, GdkColor *col1, GdkColor *col2)
   newcol.red = XOR(col1->red, col2->red);
   newcol.green = XOR(col1->green, col2->green);
   newcol.blue = XOR(col1->blue, col2->blue);
-  gdk_gc_set_foreground(gc, gdk_color_copy(&newcol));
+  gdk_gc_set_foreground(gc, gdk_color_copy(&newcol)); /* memleak? */
 }
 
 

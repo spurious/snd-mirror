@@ -1055,6 +1055,7 @@ void amp_env_scale_by(chan_info *cp, Float scl, int pos);
 void amp_env_scale_selection_by(chan_info *cp, Float scl, int beg, int num, int pos);
 env_info *amp_env_copy(chan_info *cp, int reversed, int edpos);
 env_info *amp_env_section(chan_info *cp, int beg, int num, int edpos);
+void pick_one_bin(env_info *ep, int bin, int cursamp, chan_info *cp, int edpos);
 void remember_mini_string(snd_info *sp, char *str);
 void restore_mini_string(snd_info *s, int back);
 void clear_mini_strings(snd_info *sp);

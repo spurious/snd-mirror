@@ -2494,8 +2494,8 @@ functions:</p>
 <!-- --><td>create vct struct of size <i>len</i>.</td></tr>
 <!-- -->
 <!-- sound-date->vct -->
-<!-- --><tr><td><span class=defbox><code><em class=def>sound-data-&gt;vct</em> (sdobj chan vobj)</code></span></td>
-<!-- --><td>place sound-data channel data in vct, returning vobj</td></tr>
+<!-- --><tr><td colspan=2><span class=defbox><code><em class=def>sound-data-&gt;vct</em> (sdobj chan vobj)</code></span></td>
+<!-- --></tr><tr><td></td><td>place sound-data channel data in vct, returning vobj</td></tr>
 <!-- -->
 <!-- vct? -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="vctp">vct?</a></em> (vobj)</code></span></td>
@@ -2558,8 +2558,8 @@ functions:</p>
 <!-- --><td><code>vobj1[i] -= vobj2[i]</code>, returns vobj1.</td></tr>
 <!-- -->
 <!-- vct->channel -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="vct2channel">vct-&gt;channel</a></em> (v <i>beg dur snd chn edpos</i>)</code></span></td>
-<!-- --><td>The <a href="#regularizedargs">regularized</a> version of <a href="#vct2samples">vct-&gt;samples</a>.</td></tr>
+<!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="vct2channel">vct-&gt;channel</a></em> (v <i>beg dur snd chn edpos</i>)</code></span></td>
+<!-- --></tr><tr><td></td><td>The <a href="#regularizedargs">regularized</a> version of <a href="#vct2samples">vct-&gt;samples</a>.</td></tr>
 <!-- -->
 <!-- vct->list -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="vct2list">vct-&gt;list</a></em> (v1)</code></span></td>
@@ -3600,7 +3600,7 @@ To mix data in such a way as to create an associated mix object:</p>
 <!-- -->
 <!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixsound">mix-sound</a></em> (file start)</code></span></td>
 <!-- --><tr><td></td><td>
-<!-- -->mix <i>file</i> into selected sound at <i>start</i> [<em class=error>no-such-file</em>].
+<!-- -->mix <i>file</i> (all chans) into selected sound at <i>start</i> [<em class=error>no-such-file</em>].
 <!-- --></td></tr>
 <!-- -->
 <!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixvct">mix-vct</a></em> (vct <i>beg snd chn with-mix-tags</i> origin)</code></span></td></tr>
@@ -4025,9 +4025,12 @@ The following substitutions can be made:
 <a href="#sndconvolvewith">convolve-with</a> file amp s c e                    <a href="#clmchannel">clm-channel</a> convolve-gen beg dur s c e
 <a href="#loopsamples">loop-samples</a> reader c-func dur origin ptr       <a href="#cchannel">c-channel</a> c-func beg dur s c e ptr
 <a href="grfsnd.html#applyladspa">apply-ladspa</a> reader dat dur origin              <a href="grfsnd.html#ladspachannel">ladspa-channel</a> dat beg dur s c e
+<a href="#sndmix">mix</a> file beg filechn s c with-tags              <a href="sndscm.html#mixchannel">mix-channel</a> filedat beg dur s c e
+<a href="#sndmixsound">mix-sound</a> file beg                              <a href="sndscm.html#mixchannel">mix-channel</a> filedat beg dur s c e
+<a href="#sndinsertsound">insert-sound</a> file beg filechn s c e             <a href="sndscm.html#insertchannel">insert-channel</a> filedat beg dur s c e
 </pre>
 </small>
-<p><small>An equivalent Scheme wrapper might be:</small></p>
+<p><small>A scheme equivalent to map-channel might be:</small></p>
 <pre>
 <small>
  (define* (map-channel func #:optional (beg 0) dur snd chn edpos (edname "map-channel"))

@@ -520,6 +520,24 @@ void amp_env_scale_by(chan_info *cp, Float scl, int pos)
     }
 }
 
+void pick_one_bin(env_info *ep, int bin, int cursamp, chan_info *cp, int edpos)
+{
+  snd_fd *sf;
+  int n;
+  MUS_SAMPLE_TYPE val, ymin = MUS_SAMPLE_0, ymax = MUS_SAMPLE_0;
+  /* here we have to read the current bin using the current fragments */
+  sf = init_sample_read_any(cursamp, cp, READ_FORWARD, edpos);
+  if (sf == NULL) return;
+  for (n = 0; n < ep->samps_per_bin; n++)
+    {
+      val = next_sample(sf); 
+      if (ymin > val) ymin = val; else if (ymax < val) ymax = val;
+    }
+  ep->data_max[bin] = ymax;
+  ep->data_min[bin] = ymin;
+  free_snd_fd(sf);
+}
+
 void amp_env_scale_selection_by(chan_info *cp, Float scl, int beg, int num, int pos)
 {
   env_info *old_ep, *new_ep;
@@ -565,25 +583,7 @@ void amp_env_scale_selection_by(chan_info *cp, Float scl, int beg, int num, int 
 		      new_ep->data_min[i] = (MUS_SAMPLE_TYPE)(old_ep->data_max[i] * scl);
 		    }
 		}
-	      else
-		{
-		  snd_fd *sf;
-		  int n;
-		  MUS_SAMPLE_TYPE val, ymin, ymax;
-		  /* here we have to read the current bin using the current fragments */
-		  sf = init_sample_read(cursamp, cp, READ_FORWARD);
-		  if (sf == NULL) return;
-		  ymin = MUS_SAMPLE_0;
-		  ymax = MUS_SAMPLE_0;
-		  for (n = 0; n < new_ep->samps_per_bin; n++)
-		    {
-		      val = next_sample(sf); /* not scaled again! (sample reader sees scaled version) */
-		      if (ymin > val) ymin = val; else if (ymax < val) ymax = val;
-		    }
-		  new_ep->data_max[i] = ymax;
-		  new_ep->data_min[i] = ymin;
-		  free_snd_fd(sf);
-		}
+	      else pick_one_bin(new_ep, i, cursamp, cp, cp->edit_ctr);
 	    }
 	  if (fmin > new_ep->data_min[i]) fmin = new_ep->data_min[i];
 	  if (fmax < new_ep->data_max[i]) fmax = new_ep->data_max[i];
@@ -622,25 +622,7 @@ env_info *amp_env_section(chan_info *cp, int beg, int num, int edpos)
 	      new_ep->data_max[j] = old_ep->data_max[i];
 	      new_ep->data_min[j] = old_ep->data_min[i];
 	    }
-	  else
-	    {
-	      snd_fd *sf;
-	      int n;
-	      MUS_SAMPLE_TYPE val, ymin, ymax;
-	      /* here we have to read the current bin using the current fragments */
-	      sf = init_sample_read_any(cursamp, cp, READ_FORWARD, edpos);
-	      if (sf == NULL) break;
-	      ymin = MUS_SAMPLE_0;
-	      ymax = MUS_SAMPLE_0;
-	      for (n = 0; n < new_ep->samps_per_bin; n++)
-		{
-		  val = next_sample(sf);
-		  if (ymin > val) ymin = val; else if (ymax < val) ymax = val;
-		}
-	      new_ep->data_max[j] = ymax;
-	      new_ep->data_min[j] = ymin;
-	      free_snd_fd(sf);
-	    }
+	  else pick_one_bin(new_ep, j, cursamp, cp, edpos);
 	  if (fmin > new_ep->data_min[j]) fmin = new_ep->data_min[j];
 	  if (fmax < new_ep->data_max[j]) fmax = new_ep->data_max[j];
 	  j++;

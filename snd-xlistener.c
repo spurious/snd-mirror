@@ -23,7 +23,7 @@ static void completion_help_browse_callback(Widget w, XtPointer context, XtPoint
   old_text = XmTextGetString(listener_text);
   old_len = snd_strlen(old_text);
   new_len = snd_strlen(text);
-  for (i = old_len-1, j = new_len-1; j >= 0; j--)
+  for (i = old_len - 1, j = new_len - 1; j >= 0; j--)
     {
       if (old_text[i] != text[j])
 	i = old_len - 1;

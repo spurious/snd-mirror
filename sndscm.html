@@ -1195,6 +1195,9 @@ convenient if they were in one file.
 
   <em class=def><a name="exunsavededits">check-for-unsaved-edits</a></em> on
   <em class=def><a name="exremembersoundstate">remember-sound-state</a></em>
+
+  <em class=def><a name="mixchannel">mix-channel</a></em> filedat beg dur snd chn edpos
+  <em class=def><a name="insertchannel">insert-channel</a></em> filedat beg dur snd chn edpos
 </pre>
 
 <p>The graph-style functions provide accessors for the channel-specific
@@ -1332,6 +1335,19 @@ those hooks.
 and if that same sound is subsquently re-opened, restores the previous state.
 </p>
 
+<p><i>mix-channel</i> is a "regularized" version of the file mixing functions (mix and mix-sound).
+It's first argument can be either a filename (a string) or a list containing the filename, the
+start point in the file, and (optionally) the channel of the file to mix.  For example:
+</p>
+<pre>
+  (mix-channel "pistol.snd")
+  (mix-channel "pistol.snd" 10000)       ; mixing starts at sample 10000 in current sound
+  (mix-channel (list "pistol.snd" 1000)) ; mixed data starts at sample 1000 in pistol.snd
+  (mix-channel (list "2.snd" 0 1))       ; mixed data reads channel 1 in 2.snd
+</pre>
+<p><i>insert-channel</i> is the same as mix-channel, but inserts the specified data.
+</p>
+<br><br>
 
 
 <A NAME="fmvdoc"></a><span class=box><h2>fmv.scm</h2></span>
@@ -2951,7 +2967,7 @@ static void inner_main(void *closure, int argc, char **argv)
     {
       /* (exit) to exit */
       fprintf(stdout, "&gt;");
-      getline(buffer, &mp;size, stdin);
+      getline(buffer, &amp;size, stdin);
       result = scm_internal_stack_catch(SCM_BOOL_T, /* this is our "catch" */
 					scm_eval_str0, 
 					(void *)(buffer[0]), 

@@ -190,25 +190,24 @@ static GtkWidget *snd_gtk_file_selection_new(snd_state *ss, char *title, GtkSign
 
 typedef struct {
   int file_dialog_read_only, need_update, new_file_written;
-  GtkWidget *dialog, *play_selected_button, *dialog_frame, *dialog_info1, *dialog_info2, *dialog_vbox;
+  GtkWidget *dialog, *play_selected_button, *dialog_frame, *dialog_info1, *dialog_info2, *dialog_vbox, *playb;
   snd_info *file_play_sp;
 } file_dialog_info;
 
 void alert_new_file(void) {}
 
-void set_open_file_play_button(int val) {}
-/* TODO: add the file:open dialog play button */
-
-#if (!HAVE_GTKEXTRA)
-
-static void dialog_select_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
+#if HAVE_GTKEXTRA
+  static gboolean dialog_select_callback(GtkIconList *iconlist, GtkIconListItem *icon, GdkEvent *event, gpointer context)
+#else
+  static void dialog_select_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
+#endif
 {
   char *filename;
   char *buf;
   char timestr[64];
   time_t date;
   file_dialog_info *fd = (file_dialog_info *)context;
-  filename = (char *)gtk_file_selection_get_filename(GTK_FILE_SELECTION(fd->dialog));
+  filename = snd_gtk_get_filename(fd->dialog);
   if ((filename) && (is_sound_file(filename)))
     {
       buf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
@@ -235,6 +234,7 @@ static void dialog_select_callback(GtkWidget *w, gint row, gint column, GdkEvent
       gtk_widget_show(fd->dialog_vbox);
       gtk_widget_show(fd->dialog_info1);
       gtk_widget_show(fd->dialog_info2);
+      gtk_widget_show(fd->playb);
     }
   else
     {
@@ -242,10 +242,39 @@ static void dialog_select_callback(GtkWidget *w, gint row, gint column, GdkEvent
       gtk_widget_hide(fd->dialog_vbox);
       gtk_widget_hide(fd->dialog_info1);
       gtk_widget_hide(fd->dialog_info2);
+      gtk_widget_hide(fd->playb);
     }
+#if HAVE_GTKEXTRA
+  return(TRUE); /* ??? */
+#endif
 }
 
-#endif
+static void play_selected_callback(GtkWidget *w, gpointer data)
+{
+  file_dialog_info *fd = (file_dialog_info *)data;
+  char *filename;
+  if (GTK_TOGGLE_BUTTON(w)->active)
+    {
+      if ((fd->file_play_sp) && (fd->file_play_sp->playing)) 
+	stop_playing_sound(fd->file_play_sp);
+      filename = snd_gtk_get_filename(fd->dialog);
+      fd->file_play_sp = make_sound_readable(get_global_state(), filename, FALSE);
+      fd->file_play_sp->delete_me = 1;
+      if (fd->file_play_sp)
+	play_sound(fd->file_play_sp, 0, 
+		   NO_END_SPECIFIED, IN_BACKGROUND, 
+		   C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 
+		   "selected file play", 0);
+    }
+  else
+    {
+      if ((fd->file_play_sp) && (fd->file_play_sp->playing)) 
+	{
+	  stop_playing_sound(fd->file_play_sp);
+	  fd->file_play_sp = NULL;
+	}
+    }
+}
 
 static file_dialog_info *make_file_dialog(snd_state *ss, int read_only, char *title, int which_dialog, 
 					  GtkSignalFunc file_ok_proc,
@@ -259,11 +288,12 @@ static file_dialog_info *make_file_dialog(snd_state *ss, int read_only, char *ti
 					  file_delete_proc,
 					  file_ok_proc,
 					  file_dismiss_proc);
-#if (!HAVE_GTKEXTRA)
-  /* play selected button needs to be outside the frame that holds the labels */
-
   fd->dialog_frame = gtk_frame_new(NULL);
+#if HAVE_GTKEXTRA
+  gtk_box_pack_start(GTK_BOX(GTK_WIDGET(GTK_ICON_FILESEL(fd->dialog)->action_area)->parent), fd->dialog_frame, TRUE, TRUE, 0);
+#else
   gtk_box_pack_start(GTK_BOX(GTK_FILE_SELECTION(fd->dialog)->main_vbox), fd->dialog_frame, TRUE, TRUE, 0);
+#endif
   /* gtk+extra/gtkiconfilesel.h says action_area as gtk table here? */
   gtk_frame_set_shadow_type(GTK_FRAME(fd->dialog_frame), GTK_SHADOW_ETCHED_IN);
   
@@ -275,18 +305,37 @@ static file_dialog_info *make_file_dialog(snd_state *ss, int read_only, char *ti
 	
   fd->dialog_info2 = gtk_label_new(NULL);
   gtk_box_pack_start(GTK_BOX(fd->dialog_vbox), fd->dialog_info2, TRUE, TRUE, 2);
-
+#if HAVE_GTKEXTRA
+  gtk_signal_connect(GTK_OBJECT(GTK_ICON_FILESEL(fd->dialog)->file_list), 
+		     "select_icon",
+		     GTK_SIGNAL_FUNC(dialog_select_callback), 
+		     (gpointer)fd);
+#else
   gtk_signal_connect(GTK_OBJECT(GTK_FILE_SELECTION(fd->dialog)->file_list), 
 		     "select_row",
 		     GTK_SIGNAL_FUNC(dialog_select_callback), 
 		     (gpointer)fd);
 #endif
+
+  fd->playb = gtk_check_button_new_with_label("play selected sound");
+  gtk_box_pack_start(GTK_BOX(fd->dialog_vbox), fd->playb, TRUE, TRUE, 2);
+  set_pushed_button_colors(fd->playb, ss);
+  gtk_signal_connect(GTK_OBJECT(fd->playb), "toggled", GTK_SIGNAL_FUNC(play_selected_callback), (gpointer)fd);
+
   set_dialog_widget(ss, which_dialog, fd->dialog);
   return(fd);
 }
 
 static file_dialog_info *open_dialog = NULL;
 static file_dialog_info *mix_dialog = NULL;
+
+void set_open_file_play_button(int val) 
+{
+  if ((open_dialog) && (open_dialog->playb))
+    set_toggle_button(open_dialog->playb, val, FALSE, (gpointer)open_dialog);
+  if ((mix_dialog) && (mix_dialog->playb))
+    set_toggle_button(mix_dialog->playb, val, FALSE, (gpointer)mix_dialog);
+}
 
 static void file_open_dialog_ok(GtkWidget *w, gpointer data)
 {

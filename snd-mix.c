@@ -3789,7 +3789,7 @@ static XEN g_mix_sound(XEN file, XEN start_samp)
   char *filename;
   snd_state *ss;
   snd_info *sp;
-  int beg, err = 0;
+  int beg, err = 0, len = 0;
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_mix_sound, "a string");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(start_samp), start_samp, XEN_ARG_2, S_mix_sound, "a number");
   ss = get_global_state();
@@ -3799,11 +3799,13 @@ static XEN g_mix_sound(XEN file, XEN start_samp)
   beg = XEN_TO_C_INT_OR_ELSE(start_samp, 0);
   ss->catch_message = NULL;
   if (mus_file_probe(filename))
-    err = mix(beg, 
-	      mus_sound_frames(filename), 
-	      sp->nchans, 
-	      sp->chans,
-	      filename, DONT_DELETE_ME, S_mix_sound, with_mix_tags(ss)); 
+    {
+      len = mus_sound_frames(filename);
+      if (len > 0)
+	err = mix(beg, len,
+		  sp->nchans, sp->chans,
+		  filename, DONT_DELETE_ME, S_mix_sound, with_mix_tags(ss)); 
+    }
   else err = -1;
   if (filename) FREE(filename);
   if (err == -1) 

@@ -1837,7 +1837,6 @@ static void rotate_matrix(Float xangle, Float yangle, Float zangle, Float xscl, 
   Float sinx, siny, sinz, cosx, cosy, cosz, deg;
   Float x, y, z;
   deg = TWO_PI / 360.0;
-  /* might be nice to use sincosf here, but it segfaults in GnuC */
   sinx = sin(x = (xangle * deg));
   siny = sin(y = (yangle * deg));
   sinz = sin(z = (zangle * deg));

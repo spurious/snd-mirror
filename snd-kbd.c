@@ -739,13 +739,18 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	      if (nc != -1)
 		{
 		  len = mus_sound_frames(str1);
-		  if (!active_chan) active_chan = sp->chans[0];
-		  for (i = active_chan->chan, j = 0; (j < nc) && (i < sp->nchans); i++, j++)
+		  if (len == 0)
+		    report_in_minibuffer(sp, "%s has no data", str);
+		  else
 		    {
-		      file_insert_samples(active_chan->cursor, len, str1, sp->chans[i], j, DONT_DELETE_ME, "C-x C-i", sp->chans[i]->edit_ctr);
-		      update_graph(sp->chans[i], NULL);
+		      if (!active_chan) active_chan = sp->chans[0];
+		      for (i = active_chan->chan, j = 0; (j < nc) && (i < sp->nchans); i++, j++)
+			{
+			  file_insert_samples(active_chan->cursor, len, str1, sp->chans[i], j, DONT_DELETE_ME, "C-x C-i", sp->chans[i]->edit_ctr);
+			  update_graph(sp->chans[i], NULL);
+			}
+		      clear_minibuffer(sp);
 		    }
-		  clear_minibuffer(sp);
 		}
 	      else report_in_minibuffer_and_save(sp, "can't read %s's header", str);
 	      FREE(str1);

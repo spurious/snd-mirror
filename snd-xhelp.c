@@ -14,7 +14,7 @@ static char help_window_label[LABEL_BUFFER_SIZE];
 
 #include <XmHTML/XmHTML.h>
 /* CFLAGS = -g -Wall -DLINUX -DUSR_LIB_OSS=1 -DHAVE_GUILE -DHAVE_HTML=1 -I/home/bil/test/XmHTML-1.1.4/include */
-/* LIBS = /home/bil/test/XmHTML-1.1.4/src/libXmHTML.a -L/usr/X11R6/lib -lMrm -lXp -lXm -lXpm -lXmu -lXt -lXext -lX11 /usr/local/lib/libguile.a -lm -ldl */
+/* LIBS = /home/bil/test/XmHTML-1.1.4/src/libXmHTML.a -lpng -ljpeg -L/usr/X11R6/lib -lMrm -lXp -lXm -lXpm -lXmu -lXt -lXext -lX11 /usr/local/lib/libguile.a -lm -ldl */
 
 static char *file_to_string(char *filename)
 { /* from XmHTML/examples/example_1.c */
@@ -63,12 +63,14 @@ static void add_anchor(int html, char *anchor)
       current_anchor++;
       if (anchors[current_anchor]) 
 	for (i = current_anchor; i < MAX_HTML_HISTORY; i++) 
-	  if (anchors[i])
-	    {
-	      FREE(anchors[i]);
-	      anchors[i] = NULL;
-	    }
-	  else break;
+	  {
+	    if (anchors[i])
+	      {
+		FREE(anchors[i]);
+		anchors[i] = NULL;
+	      }
+	    else break;
+	  }
     }
   anchors[current_anchor] = copy_string(anchor);
   html_files[current_anchor] = html;
