@@ -1187,11 +1187,15 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 	    case snd_K_V: case snd_K_v:
 	      cp->cursor_on = 1;
+	      /* in emacs this is move ahead one window, but for some reason in Snd it's center cursor?? */
+	      redisplay = cursor_moveto(cp, (int)((ap->losamp + ap->hisamp) / 2));
+#if 0
 	      if (count > 0)
 		redisplay = cursor_moveto(cp, (int)(ap->x1 * SND_SRATE(sp) + 1 + 
-						    (count-1) * SND_SRATE(sp) * (ap->x1 - ap->x0)));
+						    (count - 1) * SND_SRATE(sp) * (ap->x1 - ap->x0)));
 	      else redisplay = cursor_moveto(cp, (int)(ap->x0 * SND_SRATE(sp) - 1 + 
 						       (count + 1) * SND_SRATE(sp) * (ap->x1 - ap->x0)));
+#endif
 	      break;
 	    case snd_K_W: case snd_K_w: 
 	      delete_selection("C-w", UPDATE_DISPLAY); 

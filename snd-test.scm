@@ -6255,6 +6255,7 @@
 
   (add-hook! graph-hook arg4) (carg4 graph-hook)
   (add-hook! key-press-hook arg4) (carg4 key-press-hook)
+  (add-hook! mark-hook arg4) (carg4 mark-hook)
 
   (add-hook! mouse-drag-hook arg6) (carg6 mouse-drag-hook)
   (add-hook! mouse-press-hook arg6) (carg6 mouse-press-hook)
@@ -9512,6 +9513,8 @@ EDITS: 3
 		    (key-event cwin (char->integer #\v) 4) (force-event)
 		    (if (> (abs (- (cursor) (inexact->exact (* .5 (+ (left-sample) (right-sample)))))) 1)
 			(snd-display ";C-v loc: ~A ~A?" (cursor) (inexact->exact (* .5 (+ (left-sample) (right-sample))))))
+		    (if (= (sample (cursor)) 0.0)
+			(set! (cursor) (1+ (cursor))))
 		    (key-event cwin (char->integer #\z) 4) (force-event)
 		    (if (not (equal? (edits) '(4 0)))
 			(snd-display ";C-z (edits) -> ~A?" (edits)))
@@ -10901,6 +10904,7 @@ EDITS: 3
 			(list close-hook 'close-hook)
 			(list just-sounds-hook 'just-sounds-hook)
 			(list mark-click-hook 'mark-click-hook)
+			(list mark-hook 'mark-hook)
 			(list mark-drag-hook 'mark-drag-hook)
 			(list mix-amp-changed-hook 'mix-amp-changed-hook)
 			(list mix-speed-changed-hook 'mix-speed-changed-hook)

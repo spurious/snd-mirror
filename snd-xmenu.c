@@ -319,7 +319,8 @@ static void View_Lollipops_Callback(Widget w, XtPointer cD, XtPointer mD)
 
 static void View_Listener_Callback(Widget w, XtPointer cD, XtPointer mD) 
 {
-  IF_MENU_HOOK(STR_View, STR_Show_listener) handle_listener((snd_state *)cD, TRUE);
+  snd_state *ss = (snd_state *)cD;
+  IF_MENU_HOOK(STR_View, STR_Show_listener) handle_listener((snd_state *)cD, (!(ss->listening)));
 }
 
 static void View_Mix_Panel_Callback(Widget w, XtPointer cD, XtPointer mD) 
@@ -1006,10 +1007,6 @@ static void add_option(Widget w, int which_menu, char *label, int callb)
 static int remove_option(int which_menu, char *label)
 {
   int i;
-  /* TODO if label NULL, remove which_menu itself and all its children
-   *         (this requires that the cascade widget also be saved, at least -- 
-   *          simply unmanaging added_menus[which_menu] doesn't work).
-   */
   for (i = 0; i < added_options_pos; i++)
     if ((added_options_menus[i] == which_menu) && 
 	(added_options_names[i]) &&

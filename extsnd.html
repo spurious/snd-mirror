@@ -1612,6 +1612,15 @@ the hook.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
+<!-- mark-hook -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="markhook">mark-hook</a></em> (id snd chn reason)</code></span><td align=right><b>progn</b></td>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td colspan=2>
+<!-- -->called when a mark is added, deleted, or moved (but not while moving). 'id' can be -1 (i.e. no specific mark).
+<!-- -->'Reason' can be 0: add, 1: delete, 2: move, 3: delete all marks.  See add-mark-pane in snd-motif.scm.
+<!-- --></td></tr>
+<!-- -->
 <!-- mark-click-hook -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="markclickhook">mark-click-hook</a></em> (id)</code></span><td align=right><b>progn</b></td>
@@ -7064,7 +7073,7 @@ And an example that lets us see the result of filtering the waveform:
 <!-- yes-or-no? -->
 <!-- -->
 <!-- --><tr><td valign=top><span class=defbox><code><em class=def><a name="sndyesornop">yes-or-no?</a></em> (ques)</code></span></td>
-<!-- --><td>modal error dialog, #t if user clicks "ok", otherwise #f. 
+<!-- --><td>modal error dialog, #t if user clicks "yes", otherwise #f. 
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2>
 <!-- -->In normal use, this is a very annoying thing to call because
@@ -7374,7 +7383,7 @@ variable %load-verbosely to #t.
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="addsoundfileextension">add-sound-file-extension</a></em> (ext)</code></span></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->add <i>ext</i> to the list of sound file extensions.
+<!-- -->add <i>ext</i> to the list of (case sensitive) sound file extensions.
 <!-- -->The initial list is ("snd" "aiff" "aif" "wav" "au" "aifc" "voc" "wve")
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
@@ -7464,7 +7473,7 @@ variable %load-verbosely to #t.
 <!-- -->
 <!-- --><tr><td></td><td>
 <!-- -->The emacs-style line-oriented commands C-p, C-n, and C-k aren't very useful in Snd,
-<!-- -->since there's no reason 128 samples would consititute the audio analog of a line or text.
+<!-- -->since there's no reason 128 samples would consititute the audio analog of a line of text.
 <!-- -->In the next example, we'll rebind them to treat same-sense zero-crossings as line markers:
 <!-- --></td></tr>
 <!-- -->

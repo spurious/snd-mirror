@@ -8,6 +8,7 @@
 ;;; (make-pixmap strs) turns xpm-style description into pixmap
 ;;; (display-scanned-synthesis) opens a scanned-synthesis viewer
 ;;; (disable-control-panel) does away with the control panel
+;;; (add-mark-pane) adds a pane of mark locations to each channel that has marks
 
 
 (if (not (provided? 'xm))
@@ -158,6 +159,14 @@
 	 (for-each-child n func))
        (cadr (|XtGetValues w (list |XmNchildren 0) 1)))))
 
+(define (set-main-color-of-widget w)
+  (for-each-child 
+   w
+   (lambda (n)
+     (if (|XtIsWidget n)
+	 (if (|XmIsScrollBar n)
+	     (|XmChangeColor n (|Pixel (snd-pixel (position-color))))
+	     (|XmChangeColor n (|Pixel (snd-pixel (basic-color)))))))))
 
 
 ;;; -------- disable control panel --------
@@ -768,6 +777,150 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 
 
+
+;;; -------- add-mark-pane --------
+;;;
+;;; adds a pane to each channel giving the current mark locations (sample values)
+;;;   these can be edited to move the mark, or deleted to delete the mark
+
+(define (add-mark-pane)
+
+  (define (find-mark-list snd chn dats)
+    (if (not (null? dats))
+	(let ((cur (car dats)))
+	  (if (and (= (car cur) snd)
+		   (= (cadr cur) chn))
+	      (caddr cur)
+	      (find-mark-list snd chn (cdr dats))))
+	#f))
+
+  (define mark-list-length
+    (let ((mark-list-lengths '()))
+      (define (remove-mark-list snd chn)
+	(set! mark-list-lengths (remove-if 
+				 (lambda (n) 
+				   (and (= (car n) snd) 
+					(= (cadr n) chn))) 
+				 mark-list-lengths)))
+      (make-procedure-with-setter
+       (lambda (snd chn)
+	 (or (find-mark-list snd chn mark-list-lengths)
+	     0))
+       (lambda (snd chn len)
+	 (remove-mark-list snd chn)
+	 (set! mark-list-lengths (cons (list snd chn len) mark-list-lengths))))))
+
+  (define mark-list
+    (let ((mark-lists '()))
+      (make-procedure-with-setter
+       (lambda (snd chn)
+	 (let ((dat (find-mark-list snd chn mark-lists)))
+	   (and dat
+		(caddr dat))))
+       (lambda (snd chn wid)
+	 (set! mark-lists (cons (list snd chn wid) mark-lists))))))
+
+  (define (deactivate-channel snd chn)
+    (let ((current-mark-list-length (mark-list-length snd chn)))
+      (if (and (> current-mark-list-length 0)
+	       (|Widget? (mark-list snd chn)))
+	  (for-each
+	   (lambda (n)
+	     (|XtUnmanageChild n))
+	   (cadr (|XtGetValues (mark-list snd chn) (list |XmNchildren 0) 1))))))
+  
+  (define (make-mark-list snd chn)
+    (let ((current-mark-list-length (mark-list-length snd chn)))
+      (deactivate-channel snd chn)
+      (if (not (|Widget? (mark-list snd chn)))
+	  (let* ((mark-box (add-channel-pane snd chn "mark-box" |xmFormWidgetClass
+					     (list |XmNbackground       (|Pixel (snd-pixel (basic-color)))
+						   |XmNorientation      |XmVERTICAL
+						   |XmNpaneMinimum      100
+						   |XmNbottomAttachment |XmATTACH_FORM)))
+		 (mark-label (|XtCreateManagedWidget "Marks" |xmLabelWidgetClass mark-box
+						    (list |XmNbackground      (|Pixel (snd-pixel (highlight-color)))
+							  |XmNleftAttachment  |XmATTACH_FORM
+							  |XmNrightAttachment |XmATTACH_FORM
+							  |XmNalignment       |XmALIGNMENT_CENTER
+							  |XmNtopAttachment   |XmATTACH_FORM)))
+		 (mark-scroller (|XtCreateManagedWidget "mark-scroller" |xmScrolledWindowWidgetClass mark-box
+							(list |XmNbackground             (|Pixel (snd-pixel (basic-color)))
+							      |XmNscrollingPolicy        |XmAUTOMATIC
+							      |XmNscrollBarDisplayPolicy |XmSTATIC
+							      |XmNleftAttachment         |XmATTACH_FORM
+							      |XmNrightAttachment        |XmATTACH_FORM
+							      |XmNtopAttachment          |XmATTACH_WIDGET
+							      |XmNtopWidget              mark-label
+							      |XmNbottomAttachment       |XmATTACH_FORM)))
+		 (mlist (|XtCreateManagedWidget "mark-list" |xmRowColumnWidgetClass mark-scroller
+						(list |XmNorientation      |XmVERTICAL
+						      |XmNtopAttachment    |XmATTACH_FORM
+						      |XmNbottomAttachment |XmATTACH_FORM
+						      |XmNspacing          0))))
+	    (set-main-color-of-widget mark-scroller)
+	    (|XtSetValues mark-box (list |XmNpaneMinimum 1))
+	    (set! (mark-list snd chn) (list snd chn mlist))))
+      (let ((new-marks (marks snd chn)))
+	(if (> (length new-marks) current-mark-list-length)
+	    (let* ((lst (mark-list snd chn)))
+	      (do ((i current-mark-list-length (1+ i)))
+		  ((= i (length new-marks)))
+		(let ((tf (|XtCreateWidget "field" |xmTextFieldWidgetClass lst
+					   (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+		  (|XtAddCallback tf |XmNfocusCallback
+				  (lambda (w c i)
+				    (|XtSetValues w (list |XmNbackground (|WhitePixelOfScreen 
+									   (|DefaultScreenOfDisplay 
+									     (|XtDisplay w)))))))
+		  (|XtAddCallback tf |XmNlosingFocusCallback
+				  (lambda (w c i)
+				    (|XtSetValues w (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+		  (|XtAddCallback tf |XmNactivateCallback
+				  (lambda (w c i)
+				    (let* ((id (cadr (|XtGetValues w (list |XmNuserData 0))))
+					   (txt (cadr (|XtGetValues w (list |XmNvalue 0))))
+					   (samp (if (and (string? txt) 
+							  (> (string-length txt) 0))
+						     (string->number txt)
+						     #f)))
+				      (if samp
+					  (set! (mark-sample id) samp)
+					  (delete-mark id))
+				      (|XtSetValues w (list |XmNbackground (|Pixel (snd-pixel (basic-color))))))))))))
+	(set! (mark-list-length snd chn) (length new-marks))
+	(let* ((lst (mark-list snd chn)))
+	  (call-with-current-continuation
+	   (lambda (quit)
+	     (for-each
+	      (lambda (n)
+		(if (null? new-marks) (quit #f))
+		(if (|XmIsTextField n)
+		    (begin
+		      (|XtSetValues n (list |XmNvalue (number->string (mark-sample (car new-marks)))
+					    |XmNuserData (car new-marks)))
+		      (|XtManageChild n)
+		      (set! new-marks (cdr new-marks)))))
+	      (cadr (|XtGetValues lst (list |XmNchildren 0) 1)))))))
+      #f))
+
+  (define (remark id snd chn reason)
+    (make-mark-list snd chn))
+
+  (define (unremark snd)
+    (do ((i 0 (1+ i)))
+	((= i (chans snd)))
+      (deactivate-channel snd i)))
+
+  (define (open-remarks snd)
+    (do ((i 0 (1+ i)))
+	((= i (chans snd)))
+      (add-hook! (edit-hook snd i) (lambda () make-mark-list snd i))
+      (add-hook! (undo-hook snd i) (lambda () make-mark-list snd i))))
+
+  (add-hook! mark-hook remark)
+  (add-hook! close-hook unremark)
+  (add-hook! after-open-hook open-remarks))
 
 
 

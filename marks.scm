@@ -8,7 +8,7 @@
 ;;;     syncronize sounds at a given mark
 ;;;     fit selection between marks, expanding via granulate (this needs some tweaking...)
 ;;;     pad-marks inserts silence before each in a list of marks
-;;;     play-syncd-marks
+;;;     play-syncd-marks and play-between-marks
 ;;;     report-mark-names causes mark names to be posted in the minibuffer as a sound is played
 ;;;     eval-between-marks evaluates func between two marks
 
@@ -166,6 +166,13 @@
 	 (syncd-marks sync))
     (start-playing chans rate)))
 
+(define (play-between-marks m1 m2)
+  (play (mark-sample m1) 
+	(car (mark-home m1)) 
+	(cadr (mark-home m1)) 
+	#f 
+	(mark-sample m2)))
+
 
 ;;; -------- report-mark-names causes mark names to be posted in the minibuffer as a sound is played
 
@@ -221,4 +228,14 @@
 			  (vct-set! new-data k (func (vct-ref old-data k)))))))))))))
 
 ;(bind-key (char->integer #\m) 0 (lambda () (prompt-in-minibuffer "mark eval:" eval-between-marks)))
+
+
+(define (snap-marks)
+  (for-each 
+   (lambda (select)
+     (let ((pos  (apply selection-position select))
+	   (len  (apply selection-length select)))
+       (apply add-mark pos select)
+       (apply add-mark (+ pos len) select)))
+   (selection-members)))
 

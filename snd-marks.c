@@ -24,6 +24,8 @@
 typedef mark *mark_map_func(chan_info *cp, mark *mp, void *m);
 
 static XEN mark_drag_hook;
+static XEN mark_hook; /* add, delete, move */
+#define S_mark_hook "mark-hook"
 
 #define MARK_ID_MASK   0x0fffffff
 #define MARK_VISIBLE   0x10000000
@@ -424,7 +426,18 @@ void finish_moving_play_mark(chan_info *cp)
   sp->speed_control = 1.0;
 }
 
-
+enum {MARK_ADD, MARK_DELETE, MARK_MOVE, MARKS_DELETE};
+static void run_mark_hook(chan_info *cp, int id, int reason)
+{
+  /* called after the mark list has been made consistent */
+  if (XEN_HOOKED(mark_hook))
+    g_c_run_progn_hook(mark_hook,
+		       XEN_LIST_4(C_TO_SMALL_XEN_INT(id),
+				  C_TO_SMALL_XEN_INT(cp->sound->index),
+				  C_TO_SMALL_XEN_INT(cp->chan),
+				  C_TO_SMALL_XEN_INT(reason)),
+		       S_mark_hook);
+}
 
 static int ignore_redundant_marks = 0;
 
@@ -464,6 +477,7 @@ mark *add_mark(int samp, char *name, chan_info *cp)
     {
       if (mps[0]) free_mark(mps[0]);
       mps[0] = make_mark(samp, name);
+      run_mark_hook(cp, mark_id(mps[0]), MARK_ADD);
       return(mps[0]);
     }
   else
@@ -482,19 +496,21 @@ mark *add_mark(int samp, char *name, chan_info *cp)
 	      for (j = med; j > i; j--)
 		mps[j] = mps[j - 1];
 	      mps[i] = make_mark(samp, name);
+	      run_mark_hook(cp, mark_id(mps[i]), MARK_ADD);
 	      return(mps[i]);
 	    }
 	}
       /* insert at end */
       if (mps[med]) free_mark(mps[med]);
       mps[med] = make_mark(samp, name);
+      run_mark_hook(cp, mark_id(mps[med]), MARK_ADD);
       return(mps[med]);
     }
 }
 
 void delete_mark_samp(int samp, chan_info *cp)
 {
-  int i, j, ed, edm;
+  int i, j, ed, edm, id = -1;
   mark *mp;
   mark **mps;
   axis_info *ap;
@@ -512,6 +528,7 @@ void delete_mark_samp(int samp, chan_info *cp)
 		{
 		  ap = cp->axis;
 		  if ((mp->samp >= ap->losamp) && (mp->samp <= ap->hisamp)) erase_mark(cp, ap, mp); 
+		  id = mark_id(mp);
 		  free_mark(mp);
 		  mps[i] = NULL;
 		  if (i < edm)
@@ -520,6 +537,7 @@ void delete_mark_samp(int samp, chan_info *cp)
 		      mps[edm] = NULL;
 		    }
 		  cp->mark_ctr[ed]--;
+		  run_mark_hook(cp, id, MARK_DELETE);
 		  return;
 		}
 	    }
@@ -556,6 +574,7 @@ static void delete_mark_id(int id, chan_info *cp)
 		      mps[edm] = NULL;
 		    }
 		  cp->mark_ctr[ed]--;
+		  run_mark_hook(cp, id, MARK_DELETE);
 		  return;
 		}
 	    }
@@ -566,7 +585,7 @@ static void delete_mark_id(int id, chan_info *cp)
 
 static void delete_marks (chan_info *cp)
 {
-  int i, ed;
+  int i, ed, id = -1;
   mark *mp;
   mark **mps;
   axis_info *ap;
@@ -583,11 +602,13 @@ static void delete_marks (chan_info *cp)
 		{
 		  ap = cp->axis;
 		  if ((mp->samp >= ap->losamp) && (mp->samp <= ap->hisamp)) erase_mark(cp, ap, mp); 
+		  id = mark_id(mp);
 		  free_mark(mp);
 		  mps[i] = NULL;
 		}
 	    }
 	  cp->mark_ctr[ed] = -1;
+	  run_mark_hook(cp, -1, MARKS_DELETE);
 	  /* if (!(ss->graph_hook_active)) update_graph(cp, NULL); */
 	}
     }
@@ -1331,6 +1352,7 @@ void finish_moving_mark(chan_info *cp, mark *m) /* button release called from sn
       sort_marks(cp);
     }
   if (mark_sd) mark_sd = free_syncdata(mark_sd);
+  run_mark_hook(cp, mark_id(m), MARK_MOVE);
 }
 
 void play_syncd_mark(chan_info *cp, mark *m)
@@ -1584,6 +1606,7 @@ static XEN iwrite_mark(XEN mark_n, XEN val, int fld, char *caller)
 			   XEN_TO_C_INT_OR_ELSE_WITH_CALLER(val, 0, caller),
 			   current_ed_samples(cp[0]));
       sort_marks(cp[0]); /* update and re-sort current mark list */
+      run_mark_hook(cp[0], mark_id(m), MARK_MOVE);
       update_graph(cp[0], NULL);
       break;
     case MARK_SYNC: 
@@ -2009,8 +2032,11 @@ XEN_NARGIFY_1(g_mark_p_w, g_mark_p)
 void g_init_marks(void)
 {
   #define H_mark_drag_hook S_mark_drag_hook " (id) is called when a mark is dragged"
+  #define H_mark_hook S_mark_hook " (id snd chn reason) is called when a mark added, deleted, or moved. \
+'Reason' can be 0: add, 1: delete, 2: move, 3: delete all marks"
 
   XEN_DEFINE_HOOK(mark_drag_hook, S_mark_drag_hook, 1, H_mark_drag_hook); /* arg = id */
+  XEN_DEFINE_HOOK(mark_hook, S_mark_hook, 4, H_mark_hook);                /* args = id snd chn reason */
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mark_sample, g_mark_sample_w, H_mark_sample,
 			       "set-" S_mark_sample, g_set_mark_sample_w,

@@ -327,7 +327,8 @@ static void View_Ctrls_Callback(GtkWidget *w, gpointer cD)
 
 static void View_Listener_Callback(GtkWidget *w, gpointer cD) 
 {
-  IF_MENU_HOOK(STR_View, STR_Show_listener) handle_listener((snd_state *)cD, TRUE);
+  snd_state *ss = (snd_state *)cD;
+  IF_MENU_HOOK(STR_View, STR_Show_listener) handle_listener((snd_state *)cD, (!(ss->listening)));
 }
 
 static void View_Mix_Panel_Callback(GtkWidget *w, gpointer cD) 

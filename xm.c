@@ -445,7 +445,7 @@ static void define_xm_obj(void)
              make_xm_obj(Value))
 
 #define UNWRAP_FOR_C(Value)       XEN_TO_C_ULONG(XEN_CADR(Value))
-#define WRAP_P(Name, Value)       (XEN_LIST_P(Value) && (XEN_EQ_P(C_STRING_TO_XEN_SYMBOL(Name), XEN_CAR(Value))))
+#define WRAP_P(Name, Value)       (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_EQ_P(C_STRING_TO_XEN_SYMBOL(Name), XEN_CAR(Value))))
 
 #define XM_TYPE(Name, XType) \
   static XEN C_TO_XEN_ ## Name (XType val) {return(WRAP_FOR_XEN(#Name, val));} \
