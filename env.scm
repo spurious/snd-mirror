@@ -112,18 +112,24 @@
 ; (multiply-envelopes '(0 0 2 .5) '(0 0 1 2 2 1)) -> '(0 0 0.5 0.5 1.0 0.5)
 
 (define max-envelope
-  (lambda (e mx)
-    "(max-envelope env 0.0) -> max y value in env)"
-    (if (null? e)
-	mx
-      (max-envelope (cddr e) (max mx (abs (cadr e)))))))
+  (lambda (env)
+    "(max-envelope env) -> max y value in env)"
+    (define max-envelope-1
+      (lambda (e mx)
+      (if (null? e)
+	  mx
+          (max-envelope-1 (cddr e) (max mx (abs (cadr e)))))))
+    (max-envelope-1 env 0.0)))
 
 (define integrate-envelope
-  (lambda (e sum)
-    "(integrate-envelope env 0.0) -> area under env"
-    (if (or (null? e) (null? (cddr e)))
-	sum
-      (integrate-envelope (cddr e) (+ sum (* (+ (cadr e) (cadddr e)) .5 (- (caddr e) (car e))))))))
+  (lambda (env)
+    "(integrate-envelope env) -> area under env"
+    (define integrate-envelope-1
+      (lambda (e sum)
+	(if (or (null? e) (null? (cddr e)))
+	    sum
+	    (integrate-envelope-1 (cddr e) (+ sum (* (+ (cadr e) (cadddr e)) .5 (- (caddr e) (car e))))))))
+    (integrate-envelope-1 env 0.0)))
 
 (define max-x
   (lambda (e)

@@ -1883,12 +1883,12 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
   snd_info *sp = NULL;
   Widget name_label,form;
   new_file_cancelled = 0;
+  title = (char *)CALLOC(snd_strlen(newname) + 32,sizeof(char));
+  sprintf(title,"create new sound: %s",newname);
+  titlestr = XmStringCreate(title,XmFONTLIST_DEFAULT_TAG);
+  FREE(title);
   if (!new_dialog)
     {
-      title = (char *)CALLOC(snd_strlen(newname) + 32,sizeof(char));
-      sprintf(title,"create new sound: %s",newname);
-      titlestr = XmStringCreate(title,XmFONTLIST_DEFAULT_TAG);
-      FREE(title);
       xhelp = XmStringCreate(STR_Help,XmFONTLIST_DEFAULT_TAG);
       xcancel = XmStringCreate(STR_Cancel,XmFONTLIST_DEFAULT_TAG);
       xok = XmStringCreate(STR_Ok,XmFONTLIST_DEFAULT_TAG);
@@ -1964,6 +1964,12 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
 	  XtVaSetValues(XmMessageBoxGetChild(new_dialog,XmDIALOG_CANCEL_BUTTON),XmNarmColor,(ss->sgx)->pushed_button_color,NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(new_dialog,XmDIALOG_HELP_BUTTON),XmNarmColor,(ss->sgx)->pushed_button_color,NULL);
 	}
+    }
+  else 
+    {
+      XtVaSetValues(new_dialog,XmNdialogTitle,titlestr,NULL);
+      XmStringFree(titlestr);
+      XmTextSetString(new_file_name,newname);
     }
 
   load_header_and_data_lists(new_dialog_data,header_type,data_format,srate,chans,-1,comment);

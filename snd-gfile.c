@@ -1277,11 +1277,10 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
   GtkWidget *name_label,*hform;
   GtkWidget *help_button,*cancel_button,*ok_button;
   new_file_cancelled = 0;
+  title = (char *)CALLOC(snd_strlen(newname) + 32,sizeof(char));
+  sprintf(title,"create new sound: %s",newname);
   if (!new_dialog)
     {
-      title = (char *)CALLOC(snd_strlen(newname) + 32,sizeof(char));
-      sprintf(title,"create new sound: %s",newname);
-
       new_dialog = gtk_dialog_new();
       gtk_signal_connect(GTK_OBJECT(new_dialog),"delete_event",GTK_SIGNAL_FUNC(NewFileDeleteCallback),(gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(new_dialog),title);
@@ -1324,6 +1323,11 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
       gtk_widget_show(new_file_name);
 
       new_dialog_data = sndCreateFileDataForm(ss,GTK_DIALOG(new_dialog)->vbox,"data-form",TRUE,default_output_type(ss),default_output_format(ss),FALSE,FALSE);
+    }
+  else
+    {
+      gtk_window_set_title(GTK_WINDOW(new_dialog),title);
+      gtk_entry_set_text(GTK_ENTRY(new_file_name),newname);
     }
   load_header_and_data_lists(new_dialog_data,header_type,data_format,srate,chans,-1,comment);
   new_file_done = 0;

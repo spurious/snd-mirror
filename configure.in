@@ -49,17 +49,12 @@ MAKE_TARGET="snd"
 #   --with-esd            use Enlightened Sound Daemon
 #--------------------------------------------------------------------------------
 
-AC_ARG_WITH(esd,[  --with-esd		  use ESD], ,)
-
-AC_ARG_WITH(alsa,[  --with-alsa		  use ALSA], ,)
-
-AC_ARG_WITH(static-alsa,[  --with-static-alsa	  use ALSA statically loaded], ,)
-
-AC_ARG_WITH(gtk,[  --with-gtk		  use Gtk+ to build Snd], ,)
-
-AC_ARG_WITH(no-gui,[  --with-no-gui	  	make Snd without any graphics support], ,)
-
-AC_ARG_WITH(doubles,[  --with-doubles	  use doubles throughout], ,)
+AC_ARG_WITH(esd,[  --with-esd		  use ESD])
+AC_ARG_WITH(alsa,[  --with-alsa		  use ALSA])
+AC_ARG_WITH(static-alsa,[  --with-static-alsa	  use ALSA statically loaded])
+AC_ARG_WITH(gtk,[  --with-gtk		  use Gtk+ to build Snd])
+AC_ARG_WITH(no-gui,[  --with-no-gui	  	make Snd without any graphics support])
+AC_ARG_WITH(doubles,[  --with-doubles	  use doubles throughout])
 
 if test "$with_doubles" = yes; then
   AC_DEFINE(Float,double)
@@ -513,16 +508,7 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
 	    ALSA)
 	    	AC_DEFINE(HAVE_ALSA)
 		if test "$with_static_alsa" = yes ; then
-dnl need to find true location of libasound.a
-dnl is there an alsa-config program we could call?
-dnl or perhaps with-static-alsa=/usr/lib..
-dnl or perhaps alsa-prefix?
-        	  AC_PATH_PROGS(LOCATE_PROG,locate,no-locate)
-	          if test "$LOCATE_PROG" != no-locate; then
-	    	    AUDIO_LIB="`locate libasound.a -n 1`"
-                  else
-                    AUDIO_LIB="/usr/lib/libasound.a"
-                  fi
+                  AUDIO_LIB="/usr/lib/libasound.a"
 		else
 	    	  AUDIO_LIB="-lasound"
 		fi
@@ -675,8 +661,8 @@ dnl look for sigsetjmp for segfault trap
 trap_segfault=no
 AC_MSG_CHECKING([for sigsetjmp])
 AC_TRY_LINK([#include <setjmp.h>],
-[sigjmp_buf hi; sigsetjmp(hi,1)],
-trap_segfault=yes)
+            [sigjmp_buf hi; sigsetjmp(hi,1)],
+            trap_segfault=yes)
 if test $trap_segfault = yes; then
   AC_DEFINE(TRAP_SEGFAULT,1)
 fi

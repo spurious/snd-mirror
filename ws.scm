@@ -59,7 +59,8 @@
 	       (if scaled-to
 		   (scale-to scaled-to ind)
 		   (if scaled-by
-		       (scale-by scaled-by ind)))))))
+		       (scale-by scaled-by ind)))
+	       output))))
 
      (lambda () 
        (set! (with-mix-tags) old-tags)

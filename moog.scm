@@ -9,7 +9,7 @@
 ;;;   Fernando Lopez-Lezcano, nando@ccrma.stanford.edu
 ;;;   http://www-ccrma.stanford.edu/~nando/clm/moog
 ;;;
-;;; translated to Snd scheme function by Bill S
+;;; translated to Snd scheme function by Bill
 
 (load "env.scm") ;for envelope-interp
 

@@ -20,8 +20,7 @@
   (lambda (ramp-env frame-size frame-env)
     (let ((max-size (+ 1 (ceiling (* (srate) frame-size)))))
       (list
-       (/ 20.0 (srate))  ;low-start
-       (- 1.0 (/ 20.0 (srate))) ;high-start
+       20          ;min section len in samples
        0           ;frame-loc
        0           ;cursamples
        (make-vct max-size)      ;frame
@@ -33,29 +32,29 @@
        ))))
 
 (define zip-low-start (lambda (zp) (list-ref zp 0)))
-(define zip-high-start (lambda (zp) (list-ref zp 1)))
-(define zip-frame-loc (lambda (zp) (list-ref zp 2)))
-(define set-zip-frame-loc (lambda (zp val) (list-set! zp 2 val)))
-(define zip-cursamples (lambda (zp) (list-ref zp 3)))
-(define set-zip-cursamples (lambda (zp val) (list-set! zp 3 val)))
-(define zip-frame (lambda (zp) (list-ref zp 4)))
-(define zip-frame1 (lambda (zp) (list-ref zp 5)))
-(define zip-frame2 (lambda (zp) (list-ref zp 6)))
-(define zip-fe (lambda (zp) (list-ref zp 7)))
-(define zip-rampe (lambda (zp) (list-ref zp 8)))
+(define zip-frame-loc (lambda (zp) (list-ref zp 1)))
+(define set-zip-frame-loc (lambda (zp val) (list-set! zp 1 val)))
+(define zip-cursamples (lambda (zp) (list-ref zp 2)))
+(define set-zip-cursamples (lambda (zp val) (list-set! zp 2 val)))
+(define zip-frame (lambda (zp) (list-ref zp 3)))
+(define zip-frame1 (lambda (zp) (list-ref zp 4)))
+(define zip-frame2 (lambda (zp) (list-ref zp 5)))
+(define zip-fe (lambda (zp) (list-ref zp 6)))
+(define zip-rampe (lambda (zp) (list-ref zp 7)))
 
 (define zipper 
   (lambda (zp input1 input2)
     (let* ((ramp-loc ((zip-rampe zp)))
 	   (frame-samples (ifloor ((zip-fe zp))))
 	   (frame1 (zip-frame1 zp))
-	   (frame2 (zip-frame2 zp)))
-      (if (<= ramp-loc (zip-low-start zp))
+	   (frame2 (zip-frame2 zp))
+	   (chunk-len (inexact->exact (* frame-samples ramp-loc))))
+      (if (<= chunk-len (zip-low-start zp))
 	  (begin
 	    (set-zip-frame-loc zp 0)
 	    (input1))
 
-	  (if (>= ramp-loc (zip-high-start zp))
+	  (if (>= chunk-len (- frame-samples (zip-low-start zp)))
 	      (begin
 		(set-zip-frame-loc zp 0)
 		(input2))
@@ -68,7 +67,7 @@
 		    (begin
 		      (set-zip-frame-loc zp 0)
 		      (set-zip-cursamples zp frame-samples)
-		      (let* ((changept (ifloor (* frame-samples ramp-loc)))
+		      (let* ((changept chunk-len)
 			     (samp1 (/ 1.0 (- 1.0 ramp-loc)))
 			     (samp2 (/ 1.0 ramp-loc)))
 			(do ((k 0 (1+ k)))
@@ -77,7 +76,8 @@
 			  (vct-set! frame2 k (input2)))
 			;; now resample each dependent on location in ramp (samp1 and samp2 are increments)
 			(vct-fill! (zip-frame zp) 0.0)
-			(let ((start-ctr 0.0))
+			(let ((start-ctr 0.0)
+			      (samp2 (/ frame-samples chunk-len)))
 			  (do ((k 0 (1+ k)))
 			      ((= k changept))
 			    (let* ((ictr (ifloor start-ctr))
@@ -86,15 +86,14 @@
 			      (vct-set! (zip-frame zp) k (+ y0 (* (- y1 y0) (- start-ctr ictr))))
 			      (set! start-ctr (+ start-ctr samp2)))))
 			(let ((start-ctr 0.0)
-			      (m changept))
-			  (do ((k 0 (1+ k)))
-			      ((= k (- frame-samples changept)))
+			      (samp1 (/ frame-samples (- frame-samples chunk-len))))
+			  (do ((k changept (1+ k)))
+			      ((= k frame-samples))
 			    (let* ((ictr (ifloor start-ctr))
 				   (y0 (vct-ref frame1 ictr))
 				   (y1 (vct-ref frame1 (+ ictr 1))))
-			      (vct-set! (zip-frame zp) m (+ y0 (* (- y1 y0) (- start-ctr ictr))))
-			      (set! start-ctr (+ start-ctr samp1))
-			      (set! m (+ m 1))))))))
+			      (vct-set! (zip-frame zp) k (+ y0 (* (- y1 y0) (- start-ctr ictr))))
+			      (set! start-ctr (+ start-ctr samp1))))))))
 
 		(let ((result (vct-ref (zip-frame zp) (zip-frame-loc zp))))
 		  (set-zip-frame-loc zp (+ (zip-frame-loc zp) 1))
@@ -125,3 +124,13 @@
 ;;; old form
 ; (zipper 0 1 "fyow.snd" "now.snd" '(0 0 1 1) .05)
 ; (zipper 0 3 "mb.snd" "fyow.snd" '(0 0 1.0 0 1.5 1.0 3.0 1.0) .025)
+
+(define (ramp-test)
+  (let ((data (make-vct 10000)))
+    (new-sound "new-0.snd")
+    (do ((i 0 (1+ i))) ((= i 10000)) (vct-set! data i (* i .0001)))
+    (vct->samples 0 10000 data 0)
+    (new-sound "new-1.snd")
+    (do ((i 0 (1+ i))) ((= i 10000)) (vct-set! data i (- 1.0 (* i .0001))))
+    (vct->samples 0 10000 data 1)
+    (test-zip)))

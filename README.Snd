@@ -396,6 +396,17 @@ could delete or rename /usr/bin/guile-config or change the
 relevant environment variable.  To see what configure sees,
 in a shell try guile-config link or guile-config --version.
 
+Fernando Lopez-Lezcano mentioned this possibility:
+
+  If you want to force a different guile do (if you're using bash):
+
+    PATH=/usr/marco/nicepath/bin/:$PATH ./configure --with-alsa --with-gtk
+
+  where /usr/marco/nicepath/bin is the path where the guile-config you want
+  is located. Do the same thing when you make:
+
+    PATH=/usr/marco/nicepath/bin:$PATH make
+
 
 ----------------------------------------------------------------
 If you hit a bug, don't just sit there weeping -- send me
@@ -448,6 +459,7 @@ Snd:
   http://www-ccrma.stanford.edu/software/snd/
   http://snd.sourceforge.net
 
+  http://www.saunalahti.fi/~mjkoskin/
   http://www.cosy.sbg.ac.at/~gwesp/mma-sound.html (Mathematica)
   http://www.linuxpower.com/display_item.phtml?id=139 (Movies)
 

@@ -102,8 +102,8 @@
 
 (set! effects-list (cons (lambda ()
 			   (let ((new-label (format #f "gain (~1,2F)" gain-amount)))
-			   (change-menu-label effects-menu gain-label new-label)
-			   (set! gain-label new-label)))
+			     (change-menu-label effects-menu gain-label new-label)
+			     (set! gain-label new-label)))
 			 effects-list))
 
 
@@ -156,8 +156,8 @@
 
 (set! effects-list (cons (lambda ()
 			   (let ((new-label (format #f "reverb (~1,2F)" reverb-amount)))
-			   (change-menu-label effects-menu reverb-label new-label)
-			   (set! reverb-label new-label)))
+			     (change-menu-label effects-menu reverb-label new-label)
+			     (set! reverb-label new-label)))
 			 effects-list))
 
 
@@ -180,8 +180,8 @@
 
 (set! effects-list (cons (lambda ()
 			   (let ((new-label (format #f "intensify (~1,2F)" contrast-amount)))
-			   (change-menu-label effects-menu contrast-label new-label)
-			   (set! contrast-label new-label)))
+			     (change-menu-label effects-menu contrast-label new-label)
+			     (set! contrast-label new-label)))
 			 effects-list))
 
 
@@ -202,8 +202,8 @@
 
 (set! effects-list (cons (lambda ()
 			   (let ((new-label (format #f "echo (~1,2F, ~1,2F)" echo-length echo-amount)))
-			   (change-menu-label effects-menu echo-label new-label)
-			   (set! echo-label new-label)))
+			     (change-menu-label effects-menu echo-label new-label)
+			     (set! echo-label new-label)))
 			 effects-list))
 
 
@@ -385,8 +385,8 @@
 
 (set! effects-list (cons (lambda ()
 			   (let ((new-label (format #f "squelch (~1,2F)" squelch-amount)))
-			   (change-menu-label effects-menu squelch-label new-label)
-			   (set! squelch-label new-label)))
+			     (change-menu-label effects-menu squelch-label new-label)
+			     (set! squelch-label new-label)))
 			 effects-list))
 
 
@@ -425,8 +425,8 @@
 
 (set! effects-list (cons (lambda ()
 			   (let ((new-label (format #f "add-silence (~1,2F)" silence-amount)))
-			   (change-menu-label effects-menu silence-label new-label)
-			   (set! silence-label new-label)))
+			     (change-menu-label effects-menu silence-label new-label)
+			     (set! silence-label new-label)))
 			 effects-list))
 
 
