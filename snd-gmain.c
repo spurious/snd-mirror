@@ -38,7 +38,6 @@
 #define CHANNEL_SASH_INDENT -10
 #define CHANNEL_SASH_SIZE 10
 #define ENVED_POINT_SIZE 10
-#define NOTEBOOK_BINDING_WIDTH 20
 
 #define DEFAULT_TINY_FONT "Monospace 8"
 #define DEFAULT_PEAKS_FONT "Serif 10"
@@ -288,11 +287,9 @@ static Cessate startup_funcs(gpointer context)
 				     g_cclosure_new(GTK_SIGNAL_FUNC(window_close), NULL, 0),
 				     0);
 #endif
-
       (ss->sgx)->graph_cursor = gdk_cursor_new((GdkCursorType)in_graph_cursor(ss));
       (ss->sgx)->wait_cursor = gdk_cursor_new(GDK_WATCH);
       (ss->sgx)->arrow_cursor = gdk_cursor_new(GDK_LEFT_PTR);
-
       break;
     case 1: 
 #if HAVE_EXTENSION_LANGUAGE
@@ -388,6 +385,29 @@ static GdkColor *get_color(char *defined_color, char *fallback_color, char *seco
   return(new_color);
 }
 
+static void notebook_switch_page(GtkNotebook *w, GtkNotebookPage *page_widget, gint page_num)
+{
+  /* as far as I can tell there's nothing that a user can do with the idiotic page_widget argument --
+   *   the GtkNotebookPage structure is hidden, and not one public function gives any access to it.
+   */
+  int index = 0;
+  snd_info *sp;
+  GtkWidget *pw;
+  pw = gtk_notebook_get_nth_page(w, page_num);
+  if (pw)
+    {
+      index = get_user_int_data(G_OBJECT(pw));
+      if ((index < ss->max_sounds) && 
+	  (snd_ok(ss->sounds[index])))
+	{
+	  sp = ss->sounds[index];
+	  if (sp->selected_channel == NO_SELECTION)
+	    select_channel(ss->sounds[index], 0);
+	  else select_channel(ss->sounds[index], sp->selected_channel);
+	}
+    }
+}
+
 #if HAVE_PWD_H
   #include <pwd.h>
 #endif
@@ -426,7 +446,6 @@ void snd_doit(int argc, char **argv)
   auto_open_files = argc-1;
   if (argc > 1) auto_open_file_names = (char **)(argv + 1);
   ss->startup_title = copy_string("snd");
-
   set_sound_style(SOUNDS_VERTICAL);
   for (i = 1; i < argc; i++)
     if ((strcmp(argv[i], "-h") == 0) || 
@@ -455,7 +474,6 @@ void snd_doit(int argc, char **argv)
 		  if ((strcmp(argv[i], "-b") == 0) || 
 		      (strcmp(argv[i], "-batch") == 0))
 		    batch = true;
-
   ss->batch_mode = batch;
   set_auto_resize(AUTO_RESIZE_DEFAULT);
   ss->zoom_slider_width = ZOOM_SLIDER_WIDTH;
@@ -466,7 +484,6 @@ void snd_doit(int argc, char **argv)
   ss->sash_indent = SASH_INDENT;
   ss->toggle_size = TOGGLE_SIZE;
   ss->enved_point_size = ENVED_POINT_SIZE;
-
   ss->sgx = (state_context *)CALLOC(1, sizeof(state_context));
   sx = ss->sgx;
   sx->graph_is_active = false;
@@ -691,7 +708,12 @@ widget \"*.reset_button\" style \"reset\"\n\
       if (sound_style(ss) == SOUNDS_IN_NOTEBOOK)
 	{
 	  SOUND_PANE_BOX(ss) = gtk_notebook_new();
-	  gtk_notebook_set_tab_pos(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), GTK_POS_RIGHT);
+	  gtk_notebook_set_tab_pos(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), GTK_POS_TOP);
+          g_signal_connect_closure_by_id(GTK_OBJECT(SOUND_PANE_BOX(ss)),
+				         g_signal_lookup("switch_page", G_OBJECT_TYPE(GTK_OBJECT(SOUND_PANE_BOX(ss)))),
+				         0,
+				         g_cclosure_new(GTK_SIGNAL_FUNC(notebook_switch_page), NULL, 0),
+				         0);
 	}
       else 
 	{

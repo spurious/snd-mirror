@@ -755,10 +755,26 @@ dnl test for ALSA courtesy of Paul Barton-Davis
 dnl test for ESD courtesy of Nick Bailey
 dnl test for BSD courtesy of Steven Schultz
 
+if test "$with_esd" = yes ; then
+  AC_CHECK_LIB(esd,main,[
+    AC_CHECK_HEADER(esd.h,
+      [
+	AC_DEFINE(ESD)
+	esd_version="`esd-config --version`"
+        AC_DEFINE_UNQUOTED(ESD_VERSION,"${esd_version}")
+        audiofile_version="`audiofile-config --version`"
+        AC_DEFINE_UNQUOTED(AUDIOFILE_VERSION,"${audiofile_version}")
+        AUDIO_LIB="`esd-config --libs`"
+#       ESD_CFLAGS="`esd-config --cflags`"
+	AC_SUBST(AUDIO_LIB)
+        audio_system=ESD
+      ],
+      [AC_MSG_WARN(can't find the ESD header files)])],
+    [AC_MSG_WARN(can't find the ESD library)])
+fi
+
 if test "$audio_system" != unknown ; then
-
   AC_MSG_RESULT(Using the $audio_system audio system)
-
 else
 
 case "$host" in
@@ -770,7 +786,6 @@ dnl     This ^ used to be "" but in redhat 7 the -lm needs to be explicit for ma
 dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
 
         audio_system=OSS
-
 	if test "$with_alsa" = yes || test "$with_static_alsa" = yes ; then 
           AC_CHECK_LIB(asound,main,[ 
 	    AC_CHECK_HEADER(sys/asoundlib.h,
@@ -779,14 +794,6 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
                     [audio_system=ALSA],
    	            [AC_MSG_WARN(can't find the ALSA header files)])])],
           [AC_MSG_WARN(can't find the ALSA library)])
-        fi
-
-        if test "$with_esd" = yes ; then
-	  AC_CHECK_LIB(esd,main,[
-	    AC_CHECK_HEADER(esd.h,
-		 [audio_system=ESD],
-		 [AC_MSG_WARN(can't find the ESD header files)])],
-            [AC_MSG_WARN(can't find the ESD library)])
         fi
 
 	case $audio_system in
@@ -828,21 +835,10 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
 		    AC_DEFINE(HAVE_OSS)
 		fi
 		;;
-	    ESD)
-		AC_DEFINE(ESD)
-	        esd_version="`esd-config --version`"
-                AC_DEFINE_UNQUOTED(ESD_VERSION,"${esd_version}")
-                audiofile_version="`audiofile-config --version`"
-                AC_DEFINE_UNQUOTED(AUDIOFILE_VERSION,"${audiofile_version}")
-                AUDIO_LIB="`esd-config --libs`"
-#               ESD_CFLAGS="`esd-config --cflags`"
-		AC_SUBST(AUDIO_LIB)
-		;;
 	    OSS)
 		AC_DEFINE(HAVE_OSS)
 		;;
 	esac
-
 	;;
     *-*-sunos4*) 
         AC_DEFINE(SUN)

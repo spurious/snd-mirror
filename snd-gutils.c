@@ -690,13 +690,6 @@ GtkWidget *snd_gtk_label_new(const char *label, GdkColor *color)
 {
   GtkWidget *rlw;
   /* -------------------------------- fUn WiTh DuMb SoFtWaRe!!  -------------------------------- */
-#if 0
-  /* this is what any reasonable gui widget set would let us do */
-  rlw = gtk_label_new(main_str);
-  gtk_box_pack_start(GTK_BOX(formw), rlw, false, false, 0);
-  gtk_widget_show(rlw);
-#endif
-
   /* this is what goddamn gtk forces us to use -- all I want is a label with a background color! */
   rlw = gtk_entry_new();
   gtk_entry_set_has_frame(GTK_ENTRY(rlw), false);

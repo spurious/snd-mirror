@@ -188,6 +188,7 @@ static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, bool show)
   int len, top, cx, y0, y1;
   axis_context *ax;
   XEN res = XEN_FALSE;
+  if (!(cp->graph_time_p)) return;
   ax = mark_context(cp);
   if (XEN_HOOKED(draw_mark_hook))
     {

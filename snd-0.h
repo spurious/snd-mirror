@@ -277,8 +277,6 @@ typedef enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_U
 #define DEFAULT_SPEED_CONTROL 1.0
 
 #define DEFAULT_SYNC 0
-#define DEFAULT_CURSOR_SIZE 15
-
 #define DEFAULT_INIT_WINDOW_X -1
 #define DEFAULT_INIT_WINDOW_Y -1
 #define DEFAULT_INIT_WINDOW_WIDTH 0
@@ -666,6 +664,14 @@ typedef enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_U
 #define fft_log_frequency(ss) ss->Fft_Log_Frequency
 #define in_set_fft_log_frequency(a) ss->Fft_Log_Frequency = a
 #define DEFAULT_FFT_LOG_FREQUENCY false
+
+#define cursor_style(ss) ss->Cursor_Style
+#define in_set_cursor_style(a) ss->Cursor_Style = a
+#define DEFAULT_CURSOR_STYLE CURSOR_CROSS
+
+#define cursor_size(ss) ss->Cursor_Size
+#define in_set_cursor_size(a) ss->Cursor_Size = a
+#define DEFAULT_CURSOR_SIZE 15
 
 #define channel_style(ss) ss->Channel_Style
 #define in_set_channel_style(a) ss->Channel_Style = a

@@ -50,8 +50,8 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
   cp->cursor_on = false;
   cp->cursor_visible = false;
   cp->selection_visible = false;
-  cp->cursor_style = CURSOR_CROSS;
-  cp->cursor_size = DEFAULT_CURSOR_SIZE;
+  cp->cursor_style = cursor_style(ss);
+  cp->cursor_size = cursor_size(ss);
   cp->cursor_proc = XEN_UNDEFINED;
   cp->squelch_update = false;
   cp->show_y_zero = show_y_zero(ss);
@@ -151,8 +151,6 @@ static chan_info *free_chan_info(chan_info *cp)
   cp->cursor_on = false;
   cp->cursor_visible = false;
   cp->selection_visible = false;
-  cp->cursor_style = CURSOR_CROSS;
-  cp->cursor_size = DEFAULT_CURSOR_SIZE;
   if (cp->amp_control)
     {
       /* not sure this is the right thing */
@@ -691,7 +689,24 @@ static void select_sound(snd_info *sp)
 	      XmChangeColor(w_snd_name(sp), (ss->sgx)->white);
 #if (XmVERSION > 1)
 	      if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
-		XmChangeColor((sp->sgx)->tab, (ss->sgx)->selected_graph_color);
+		{
+		  int page, current_page;
+		  XmNotebookPageStatus status;
+		  XmNotebookPageInfo info;
+		  XmChangeColor((sp->sgx)->tab, (ss->sgx)->selected_graph_color);
+		  XtVaGetValues(SOUND_PANE(ss), XmNcurrentPageNumber, &current_page, NULL);
+		  XtVaGetValues(sp->sgx->tab, XmNpageNumber, &page, NULL);
+		  if (page != current_page)
+		    {
+		      status = XmNotebookGetPageInfo(SOUND_PANE(ss), page, &info);
+		      if (status == XmPAGE_FOUND)
+			{
+			  XtVaSetValues(SOUND_PANE(ss), XmNcurrentPageNumber, page, NULL);
+			  if (sp->nchans > 1)
+			    equalize_sound_panes(sp, sp->chans[0], false);
+			}
+		    }
+		}
 #endif
 	    }
 	}
@@ -704,6 +719,17 @@ static void select_sound(snd_info *sp)
 	  gtk_widget_modify_fg(w_snd_name(osp), GTK_STATE_NORMAL, ss->sgx->black);
 	if (sp->selected_channel != NO_SELECTION) 
 	  gtk_widget_modify_fg(w_snd_name(sp), GTK_STATE_NORMAL, ss->sgx->red);
+	if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
+	  {
+	    int page, current_page;
+	    current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)));
+	    page = sp->sgx->page;
+	    if ((page != current_page) && (current_page >= 0))
+	      {
+		ss->selected_sound = sp->index; /* break infinite recursion here */
+		gtk_notebook_set_current_page(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), page);
+	      }
+	  }
       }
 #endif
       ss->selected_sound = sp->index;

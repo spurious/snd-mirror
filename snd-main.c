@@ -63,6 +63,16 @@ static bool fneq(Float a, Float b)
   return(fabs(a - b) > .00001);
 }
 
+static char *cursor_style_name(cursor_style_t style)
+{
+  switch (style)
+    {
+    case CURSOR_CROSS: return(TO_VAR_NAME(S_cursor_cross)); break;
+    case CURSOR_LINE:  return(TO_VAR_NAME(S_cursor_line));  break;
+    default: /* proc?? */ return(TO_VAR_NAME(S_cursor_cross)); break;
+    }
+}
+
 static char *show_axes2string(show_axes_t ax)
 {
   switch (ax)
@@ -276,6 +286,8 @@ static void save_snd_state_options (FILE *fd)
   if (spectro_hop(ss) != DEFAULT_SPECTRO_HOP) pss_sd(fd, S_spectro_hop, spectro_hop(ss));
   if (color_map(ss) != DEFAULT_COLOR_MAP) pss_sd(fd, S_colormap, color_map(ss));
   if (wavelet_type(ss) != DEFAULT_WAVELET_TYPE) pss_sd(fd, S_wavelet_type, wavelet_type(ss));
+  if (cursor_style(ss) != DEFAULT_CURSOR_STYLE) pss_ss(fd, S_cursor_style, cursor_style_name(cursor_style(ss)));
+  if (cursor_size(ss) != DEFAULT_CURSOR_SIZE) pss_sd(fd, S_cursor_size, cursor_size(ss));
   if (dot_size(ss) != DEFAULT_DOT_SIZE) pss_sd(fd, S_dot_size, dot_size(ss));
   if (dac_size(ss) != DEFAULT_DAC_SIZE) pss_sd(fd, S_dac_size, dac_size(ss));
   if (selection_creates_region(ss) != DEFAULT_SELECTION_CREATES_REGION) pss_ss(fd, S_selection_creates_region, b2s(selection_creates_region(ss)));
@@ -538,7 +550,7 @@ static void save_sound_state (snd_info *sp, void *ptr)
       if ((ap->y0 != -1.0) || (ap->y1 != 1.0)) pcp_sl(fd, S_y_bounds, ap->y0, ap->y1, chan);
       if (CURSOR(cp) != 0) pcp_sod(fd, S_cursor, CURSOR(cp), chan);
       if (cp->cursor_size != DEFAULT_CURSOR_SIZE) pcp_sd(fd, S_cursor_size, cp->cursor_size, chan);
-      if (cp->cursor_style != CURSOR_CROSS) pcp_sd(fd, S_cursor_style, (int)(cp->cursor_style), chan);
+      if (cp->cursor_style != DEFAULT_CURSOR_STYLE) pcp_ss(fd, S_cursor_style, cursor_style_name(cp->cursor_style), chan);
       if (cp->show_marks != show_marks(ss)) pcp_ss(fd, S_show_marks, b2s(cp->show_marks), chan);
       if (cp->show_y_zero != show_y_zero(ss)) pcp_ss(fd, S_show_y_zero, b2s(cp->show_y_zero), chan);
       if (cp->wavo_hop != wavo_hop(ss)) pcp_sd(fd, S_wavo_hop, cp->wavo_hop, chan);

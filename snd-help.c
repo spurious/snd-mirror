@@ -373,6 +373,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+6-Oct:   cursor-style and cursor-size can be set globally.\n\
 24-Sep:  snd 6.12.\n\
 22-Sep:  env.rb, spectr.rb, and spectr.scm thanks to Michael Scholz.\n\
 19-Sep:  clm-ins.rb thanks to Michael Scholz.\n\
@@ -384,10 +385,6 @@ void about_snd_help(void)
          doit-button-color, doit-again-button-color.\n\
 8-Sep:   added show-all-axes-unlabelled and show-x-axis-unlabelled.\n\
          removed parse-rc-file, added support for Snd.gtkrc.\n\
-2-Sep:   removed bold-button-font and boldbuttonFont resource.\n\
-29-Aug:  gcc complex trig replaces GSL if it's available.\n\
-21-Aug:  added snd->sample and xen->sample (Snd-specific) generators to redirect\n\
-           ina and friends automatically to Snd data.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

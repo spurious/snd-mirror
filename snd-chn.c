@@ -287,6 +287,41 @@ void set_dot_size(int val)
     }
 }
 
+static void chans_cursor_size(chan_info *cp, void *ptr) 
+{
+  cp->cursor_size = (*((int *)ptr)); 
+  update_graph(cp);
+}
+
+static void set_cursor_size(int val)
+{
+  if (val > 0)
+    {
+      in_set_cursor_size(val);
+      for_each_chan_1(chans_cursor_size, (void *)(&val));
+    }
+}
+
+static void chans_cursor_style(chan_info *cp, void *ptr) 
+{
+  cursor_style_t style;
+  style = (*((cursor_style_t *)ptr));
+  if ((cp->cursor_style == CURSOR_PROC) && (XEN_PROCEDURE_P(cp->cursor_proc)))
+    {
+      snd_unprotect(cp->cursor_proc);
+      cp->cursor_proc = XEN_UNDEFINED;
+    }
+  cp->cursor_style = style;
+  cp->just_zero = (style == CURSOR_LINE); /* no point in displaying y value in this case */
+  update_graph(cp);
+}
+
+static void set_cursor_style(cursor_style_t val)
+{
+  in_set_cursor_style(val);
+  for_each_chan_1(chans_cursor_style, (void *)(&val));
+}
+
 chan_info *virtual_selected_channel(chan_info *cp)
 {
   snd_info *sp;
@@ -3235,6 +3270,7 @@ static void draw_cursor(chan_info *cp)
 {
   axis_info *ap;
   axis_context *ax;
+  if (!(cp->graph_time_p)) return;
   ap = cp->axis;
   ax = cursor_context(cp);
   switch (cp->cursor_style)
@@ -3247,7 +3283,7 @@ static void draw_cursor(chan_info *cp)
       draw_line(ax, cp->cx, ap->y_axis_y0, cp->cx, ap->y_axis_y1);
       break;
     case CURSOR_PROC:
-      XEN_CALL_3(cp->cursor_proc,
+      XEN_CALL_3((XEN_PROCEDURE_P(cp->cursor_proc)) ? (cp->cursor_proc) : (ss->cursor_proc),
 		 C_TO_XEN_INT(cp->sound->index),
 		 C_TO_XEN_INT(cp->chan),
 		 C_TO_XEN_INT((int)TIME_AXIS_INFO),
@@ -4325,7 +4361,13 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, char *caller)
 	    case CP_AP_HISAMP:               if (cp->axis) return(C_TO_XEN_OFF_T((cp->axis)->hisamp));         break;
 	    case CP_SQUELCH_UPDATE:          return(C_TO_XEN_BOOLEAN(cp->squelch_update));                     break;
 	    case CP_CURSOR_SIZE:             return(C_TO_XEN_INT(cp->cursor_size));                            break;
-	    case CP_CURSOR_STYLE:            return(C_TO_XEN_INT((int)(cp->cursor_style)));                    break;
+	    case CP_CURSOR_STYLE:
+	      if (cp->cursor_style != CURSOR_PROC)
+		return(C_TO_XEN_INT((int)(cp->cursor_style)));
+	      if (XEN_PROCEDURE_P(cp->cursor_proc))
+		return(cp->cursor_proc);
+	      return(ss->cursor_proc);
+	      break;
 	    case CP_EDIT_HOOK:               return(cp->edit_hook);                                            break;
 	    case CP_AFTER_EDIT_HOOK:         return(cp->after_edit_hook);                                      break;
 	    case CP_UNDO_HOOK:               return(cp->undo_hook);                                            break;
@@ -4555,6 +4597,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *calle
 	      snd_protect(on);
 	      cp->cursor_proc = on;
 	      cp->cursor_style = CURSOR_PROC;
+	      return(on);
 	    }
 	  else 
 	    {
@@ -4948,18 +4991,22 @@ static XEN g_set_cursor_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 
 static XEN g_cursor_style(XEN snd_n, XEN chn_n) 
 {
-  #define H_cursor_style "(" S_cursor_style " (snd #f) (chn #f)): current cursor style in snd's channel chn. \
+  #define H_cursor_style "(" S_cursor_style " (snd #t) (chn #t)): current cursor style in snd's channel chn. \
 Possible values are " S_cursor_cross " (default), " S_cursor_line " (a vertical line), or a procedure of three arguments, the \
 sound index, channel number, and graph (always " S_time_graph ").  The procedure \
 should draw the cursor at the current cursor position using the \
 cursor-context whenever it is called."
 
-  return(channel_get(snd_n, chn_n, CP_CURSOR_STYLE, S_cursor_style));
+  if (XEN_BOUND_P(snd_n))
+    return(channel_get(snd_n, chn_n, CP_CURSOR_STYLE, S_cursor_style));
+  if (cursor_style(ss) == CURSOR_PROC)
+    return(ss->cursor_proc);
+  return(C_TO_XEN_INT((int)(cursor_style(ss))));
 }
 
 static XEN g_set_cursor_style(XEN on, XEN snd_n, XEN chn_n) 
 {
-  cursor_style_t val;
+  cursor_style_t val = CURSOR_PROC;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(on) || XEN_PROCEDURE_P(on), on, XEN_ARG_1, S_setB S_cursor_style, "an integer");
   if (XEN_INTEGER_P(on))
     {
@@ -4967,21 +5014,55 @@ static XEN g_set_cursor_style(XEN on, XEN snd_n, XEN chn_n)
       if ((val < CURSOR_CROSS) || (val > CURSOR_LINE))
 	XEN_OUT_OF_RANGE_ERROR(S_setB S_cursor_style, 1, on, "~A, but must be " S_cursor_cross " or " S_cursor_line ", or a procedure");
     }
-  return(channel_set(snd_n, chn_n, on, CP_CURSOR_STYLE, S_setB S_cursor_style));
+  if (XEN_BOUND_P(snd_n))
+    return(channel_set(snd_n, chn_n, on, CP_CURSOR_STYLE, S_setB S_cursor_style));
+  else
+    {
+      if (XEN_PROCEDURE_P(on))
+	{
+	  char *error;
+	  XEN errstr;
+	  error = procedure_ok(on, 3, S_setB S_cursor_style, "", 1);
+	  if (error == NULL)
+	    {	  
+	      if ((cursor_style(ss) == CURSOR_PROC) && (XEN_PROCEDURE_P(ss->cursor_proc)))
+		snd_unprotect(ss->cursor_proc);
+	      snd_protect(on);
+	      ss->cursor_proc = on;
+	      in_set_cursor_style(CURSOR_PROC);
+	    }
+	  else 
+	    {
+	      errstr = C_TO_XEN_STRING(error);
+	      FREE(error);
+	      return(snd_bad_arity_error(S_setB S_cursor_style, errstr, on));
+	    }
+	}
+      set_cursor_style(val);
+      return(on);
+    }
 }
 
 WITH_REVERSED_CHANNEL_ARGS(g_set_cursor_style_reversed, g_set_cursor_style)
 
 static XEN g_cursor_size(XEN snd_n, XEN chn_n) 
 {
-  #define H_cursor_size "(" S_cursor_size " (snd #f) (chn #f)): current cursor size in snd's channel chn"
-  return(channel_get(snd_n, chn_n, CP_CURSOR_SIZE, S_cursor_size));
+  #define H_cursor_size "(" S_cursor_size " (snd #t) (chn #t)): current cursor size in snd's channel chn"
+  if (XEN_BOUND_P(snd_n))
+    return(channel_get(snd_n, chn_n, CP_CURSOR_SIZE, S_cursor_size));
+  return(C_TO_XEN_INT(cursor_size(ss)));
 }
 
 static XEN g_set_cursor_size(XEN on, XEN snd_n, XEN chn_n) 
 {
   XEN_ASSERT_TYPE(XEN_INTEGER_P(on), on, XEN_ARG_1, S_setB S_cursor_size, "an integer");
-  return(channel_set(snd_n, chn_n, on, CP_CURSOR_SIZE, S_setB S_cursor_size));
+  if (XEN_BOUND_P(snd_n))
+    return(channel_set(snd_n, chn_n, on, CP_CURSOR_SIZE, S_setB S_cursor_size));
+  else
+    {
+      set_cursor_size(XEN_TO_C_INT_OR_ELSE(on, DEFAULT_CURSOR_SIZE));
+      return(C_TO_XEN_INT(cursor_size(ss)));
+    }
 }
 
 WITH_REVERSED_CHANNEL_ARGS(g_set_cursor_size_reversed, g_set_cursor_size)
@@ -5012,7 +5093,7 @@ static XEN g_frames(XEN snd_n, XEN chn_n, XEN edpos)
 
 static XEN g_set_frames(XEN on, XEN snd_n, XEN chn_n) 
 {
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(on), on, XEN_ARG_1, S_setB S_cursor_size, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(on), on, XEN_ARG_1, S_setB S_frames, "a number");
   return(channel_set(snd_n, chn_n, on, CP_FRAMES, S_setB S_frames));
 }
 
@@ -5964,7 +6045,7 @@ static XEN g_set_dot_size(XEN size, XEN snd, XEN chn)
     return(channel_set(snd, chn, size, CP_DOT_SIZE, S_setB S_dot_size));
   else
     {
-      set_dot_size(XEN_TO_C_INT_OR_ELSE(size, 0));
+      set_dot_size(XEN_TO_C_INT_OR_ELSE(size, DEFAULT_DOT_SIZE));
       return(C_TO_XEN_INT(dot_size(ss)));
     }
 }

@@ -72,7 +72,6 @@ typedef struct {
   Cessator apply_in_progress;
   GtkWidget **snd_widgets;
   GtkObject **snd_adjs;
-  GtkWidget *tab;
   void *flt;
   GtkWidget *dialog;
   bool controls_fixed;

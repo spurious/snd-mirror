@@ -32,7 +32,7 @@ static void delete_help_dialog(GtkWidget *w, GdkEvent *event, gpointer context) 
 static GtkWidget *help_text = NULL, *related_items = NULL;
 static char *original_help_text = NULL;
 
-static void add_help_text (GtkWidget *text, const char *message)
+static void add_help_text(GtkWidget *text, const char *message)
 {
   sg_text_insert(text, (char *)message);
 }

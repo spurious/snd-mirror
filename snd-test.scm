@@ -48,13 +48,13 @@
 (define tests 1)
 (if (not (defined? 'snd-test)) (define snd-test -1))
 (if (defined? 'disable-play) (disable-play))
-(define keep-going #f)
+(define keep-going #t)
 (define full-test (< snd-test 0))
 (define total-tests 28)
 (if (not (defined? 'with-exit)) (define with-exit (< snd-test 0)))
 (set! (with-background-processes) #f)
 (define all-args #f) ; huge arg testing
-(define with-big-file #t)
+(define with-big-file #f)
 (define debugging-device-channels 8)
 
 (define pi 3.141592653589793)
@@ -544,6 +544,12 @@
       (set! (dot-size) (dot-size))
       (if (not (equal? (dot-size)  1 )) 
 	  (snd-display ";dot-size set def: ~A" (dot-size)))
+      (set! (cursor-size) (cursor-size))
+      (if (not (equal? (cursor-size)  15 )) 
+	  (snd-display ";cursor-size set def: ~A" (cursor-size)))
+      (set! (cursor-style) (cursor-style))
+      (if (not (equal? (cursor-style)  cursor-cross )) 
+	  (snd-display ";cursor-style set def: ~A" (cursor-style)))
       (set! (emacs-style-save-as) (emacs-style-save-as))
       (if (not (equal? (emacs-style-save-as)  #f)) 
 	  (snd-display ";emacs-style-save-as set def: ~A" (emacs-style-save-as)))
@@ -863,6 +869,8 @@
 	'contrast-control? (without-errors (contrast-control?)) 'no-such-sound
 	'auto-update-interval (auto-update-interval) 60.0 
 	'cursor-follows-play (without-errors (cursor-follows-play)) 'no-such-sound
+	'cursor-size (cursor-size) 15
+	'cursor-style (cursor-style) cursor-cross
 	'dac-combines-channels (dac-combines-channels) #t
 	'emacs-style-save-as (emacs-style-save-as) #f
 	'dac-size (dac-size) 256 
@@ -1400,6 +1408,8 @@
 	  (list 'contrast-control? contrast-control? #f #t)
 	  (list 'auto-update-interval auto-update-interval 60.0 120.0)
 	  (list 'cursor-follows-play cursor-follows-play #f #t)
+	  (list 'cursor-size cursor-size 15 30)
+	  (list 'cursor-style cursor-style cursor-cross cursor-line)
 	  (list 'dac-combines-channels dac-combines-channels #t #f)
 	  (list 'dac-size dac-size 256 512)
 	  (list 'minibuffer-history-length minibuffer-history-length 8 16)
@@ -1532,6 +1542,7 @@
 	  (list 'color-cutoff color-cutoff 0.003 '(-1.0 123.123))
 	  (list 'color-scale color-scale 1.0 '(-32.0 2000.0))
 	  (list 'contrast-control contrast-control 0.0 '(-123.123 123.123))
+	  (list 'cursor-size cursor-size 15 '(1.123 -2.5))
 	  (list 'dac-size dac-size 256 '(-1 0 -123))
 	  (list 'dot-size dot-size 1 '(0 -1 -123))
 	  (list 'enved-target enved-target 0 '(123 -321))
@@ -18759,6 +18770,8 @@ EDITS: 5
 		(list 'contrast-control? contrast-control? #t #f #t)
 		(list 'auto-update-interval auto-update-interval #f 60.0 120.0)
 		(list 'cursor-follows-play cursor-follows-play #f #f #t)
+		(list 'cursor-size cursor-size #f 15 25)
+		(list 'cursor-style cursor-style #f cursor-cross cursor-line)
 		(list 'data-clipped data-clipped #f #f #t)
 		(list 'default-output-chans default-output-chans #f 1 8)
 					;(list 'default-output-format default-output-format #f 1 12)
@@ -18888,18 +18901,21 @@ EDITS: 5
 		    transform-normalization show-mix-waveforms graph-style dot-size show-axes show-y-zero show-marks
 		    spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale
 		    spectro-hop spectro-cutoff spectro-start graphs-horizontal x-axis-style beats-per-minute
+		    cursor-size cursor-style
 		    ))
 (define func-names (list 'time-graph-type 'wavo-hop 'wavo-trace 'max-transform-peaks 'show-transform-peaks 'zero-pad 'transform-graph-type 'fft-window
 			 'verbose-cursor 'fft-log-frequency 'fft-log-magnitude 'min-dB 'wavelet-type 'transform-size 'fft-window-beta 'transform-type
 			 'transform-normalization 'show-mix-waveforms 'graph-style 'dot-size 'show-axes 'show-y-zero 'show-marks
 			 'spectro-x-angle 'spectro-x-scale 'spectro-y-angle 'spectro-y-scale 'spectro-z-angle 'spectro-z-scale
 			 'spectro-hop 'spectro-cutoff 'spectro-start 'graphs-horizontal 'x-axis-style 'beats-per-minute
+			 'cursor-size 'cursor-style
 			 ))
 (define new-values (list graph-as-wavogram 12 512 3 #t 32 graph-as-sonogram cauchy-window
 			 #t #t #t -120.0 3 32 .5 autocorrelation
 			 0 #t graph-lollipops 8 show-no-axes #t #f
 			 32.0 .5 32.0 .5 32.0 .5
 			 14 .3 .1 #f x-axis-in-samples 120.0
+			 15 cursor-cross
 			 ))
 
 (define (test-history-channel func name new-value snd1 snd2 snd3)
@@ -24719,17 +24735,19 @@ EDITS: 2
       (let* ((ind (open-sound "oboe.snd"))
 	     (funcs (list transform-graph-type time-graph-type show-axes transform-normalization
 			  graph-style x-axis-style spectro-x-scale transform-size fft-window
-			  dot-size max-transform-peaks verbose-cursor zero-pad min-dB spectro-hop spectro-cutoff))
+			  dot-size max-transform-peaks verbose-cursor zero-pad min-dB spectro-hop spectro-cutoff
+			  cursor-size cursor-style))
 	     (func-names (list 'transform-graph-type 'time-graph-type 'show-axes 'transform-normalization
 			       'graph-style 'x-axis-style 'spectro-x-scale 'transform-size 'fft-window
-			       'dot-size 'max-transform-peaks 'verbose-cursor 'zero-pad 'min-dB 'spectro-hop 'spectro-cutoff))
+			       'dot-size 'max-transform-peaks 'verbose-cursor 'zero-pad 'min-dB 'spectro-hop 'spectro-cutoff
+			       'cursor-size 'cursor-style))
 	     (old-globals (map (lambda (func) (func)) funcs))
 	     (new-globals (list graph-as-sonogram graph-as-wavogram show-all-axes normalize-by-sound
 				graph-dots x-axis-in-samples 0.1 32 bartlett-window
-				4 10 #t 1 -90 12 .1))
+				4 10 #t 1 -90 12 .1 15 cursor-cross))
 	     (new-locals (list graph-once graph-once show-x-axis normalize-by-channel
 			       graph-lines x-axis-in-seconds 1.0 256 blackman2-window
-			       1 100 #f 0 -60 4 1.0)))
+			       1 100 #f 0 -60 4 1.0 25 cursor-line)))
 	(for-each (lambda (func func-name global local)
 		    (set! (func) global)
 		    (set! (func ind 0) local))
@@ -37461,12 +37479,7 @@ EDITS: 2
 	    
 	    (let* ((win (car (main-widgets)))
 		   (vals (gdk_property_get win (gdk_atom_intern "SND_VERSION" #f) GDK_TARGET_STRING 0 1024 0))
-		   (lst (and vals (list-ref vals 4) (c-array->list (list-ref vals 4) (list-ref vals 3))))
-		   (str (and lst (make-string (1- (length lst))))))
-	      (if str
-		  (do ((i 0 (1+ i)))
-		      ((= i (1- (length lst))))
-		    (string-set! str i (integer->char (list-ref lst i)))))
+		   (str (list-ref vals 4)))
 	      (if (or (not str) 
 		      (not (string=? (snd-version) str)))
 		  (snd-display ";SND_VERSION: ~A ~A" str (snd-version))))

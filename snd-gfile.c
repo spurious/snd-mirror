@@ -432,10 +432,18 @@ static void file_open_dialog_delete(GtkWidget *w, GdkEvent *event, gpointer cont
 void make_open_file_dialog(bool read_only, bool managed)
 {
   if (!open_dialog)
-    open_dialog = make_file_dialog(read_only, _("File"), FILE_OPEN_DIALOG,
+    open_dialog = make_file_dialog(read_only, (read_only) ? _("View") : _("Open"), FILE_OPEN_DIALOG,
 				   (GtkSignalFunc)file_open_dialog_ok,				     
 				   (GtkSignalFunc)file_open_dialog_delete,
 				   (GtkSignalFunc)file_open_dialog_dismiss);
+  else
+    {
+      if (read_only != open_dialog->file_dialog_read_only)
+	{
+	  gtk_window_set_title(GTK_WINDOW(open_dialog->dialog), (read_only) ? _("View") : _("Open"));
+	  open_dialog->file_dialog_read_only = read_only;
+	}
+    }
   if (managed) gtk_widget_show(open_dialog->dialog);
 }
 
@@ -466,7 +474,7 @@ static void file_mix_ok_callback(GtkWidget *w, gpointer context)
 void make_mix_file_dialog(bool managed)
 {
   if (mix_dialog == NULL)
-    mix_dialog = make_file_dialog(false, _("mix file:"), FILE_MIX_DIALOG,
+    mix_dialog = make_file_dialog(true, _("mix file:"), FILE_MIX_DIALOG,
 				  (GtkSignalFunc)file_mix_ok_callback,
 				  (GtkSignalFunc)file_mix_delete_callback,
 				  (GtkSignalFunc)file_mix_cancel_callback);

@@ -4168,17 +4168,17 @@ These graph-relative values can be turned into axis-relative values with
 
 <!-- cursor-size -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="cursorsize">cursor-size</a></em> (<em class=targ>snd chn</em>)</code></span>
+<span class=defbox><code><em class=def><a name="cursorsize">cursor-size</a></em> (<em class=narg>snd chn</em>)</code></span>
 </td></tr>
 <tr><td></td><td>
-cursor size (pixels); defaults to 15.
+cursor size (pixels); defaults to 15. <code>(set! (cursor-size) 30)</code> makes it twice as big as usual.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
 
 <!-- cursor-style -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="cursorstyle">cursor-style</a></em> (<em class=targ>snd chn</em>)</code></span>
+<span class=defbox><code><em class=def><a name="cursorstyle">cursor-style</a></em> (<em class=narg>snd chn</em>)</code></span>
 </td></tr>
 <tr><td></td><td>
 cursor style (<i>cursor-cross</i> or <i>cursor-line</i>)
@@ -4843,7 +4843,7 @@ To get the data currently displayed in the time domain window:
 
 <!-- lisp-graph? -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="sndgraphing">lisp-graph?</a></em> (<i>snd chn</i>)</code></span>
+<span class=defbox><code><em class=def><a name="sndgraphing">lisp-graph?</a></em> (<em class=targ>snd chn</em>)</code></span>
 </td></tr>
 <tr><td></td><td>
 #t if lisp-generated graph is currently displayed.  This graph section is also active if there's an active function

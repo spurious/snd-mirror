@@ -899,6 +899,7 @@ Widget make_text_widget(char *name, Widget parent, Arg *args, int n)
   if (n1) {FREE(n1); n1 = NULL;}
   XtSetArg(args[n], XmNactivateCallback, n1 = make_callback_list(remember_event, NULL)); n++;
   XtSetArg(args[n], XmNeditMode, XmMULTI_LINE_EDIT); n++;
+  /* XmNblinkRate 0 turns off the cursor blink */
   XtSetArg(args[n], XmNcursorPositionVisible, false); n++;
   df = XmCreateScrolledText(parent, name, args, n);
   XtManageChild(df);

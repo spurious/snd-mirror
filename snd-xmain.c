@@ -519,6 +519,33 @@ static void muffle_warning(char *name, char *type, char *klass, char *defaultp, 
 }
 #endif
 
+#if (XmVERSION > 1)
+static void notebook_page_changed_callback(Widget w, XtPointer context, XtPointer info)
+{
+  /* if page chosen via major tab click, select that sound */
+  XmNotebookCallbackStruct *nb = (XmNotebookCallbackStruct *)info;
+  Widget page;
+  if ((nb->reason == XmCR_MAJOR_TAB) && (nb->page_widget))
+    {
+      int index = 0;
+      snd_info *sp;
+      page = nb->page_widget;
+      if (page)
+	{
+	  XtVaGetValues(page, XmNuserData, &index, NULL);
+	  if ((index < ss->max_sounds) && 
+	      (snd_ok(ss->sounds[index])))
+	    {
+	      sp = ss->sounds[index];
+	      if (sp->selected_channel == NO_SELECTION)
+		select_channel(ss->sounds[index], 0);
+	      else select_channel(ss->sounds[index], sp->selected_channel);
+	    }
+	}
+    }
+}
+#endif
+
 static Pixel get_color(Widget shell,
 		       char *rs_color, char *defined_color, char *fallback_color, char *second_fallback_color,
 		       bool use_white)
@@ -838,8 +865,22 @@ void snd_doit(int argc, char **argv)
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNframeBackground, sx->zoom_color); n++;
-      XtSetArg(args[n], XmNbindingWidth, NOTEBOOK_BINDING_WIDTH); n++;
-      sx->soundpane = XtCreateManagedWidget("nb", xmNotebookWidgetClass, sx->soundpanebox, args, n);
+      /* XtSetArg(args[n], XmNbindingWidth, NOTEBOOK_BINDING_WIDTH); n++; */
+      XtSetArg(args[n], XmNbindingType, XmNONE); n++;
+      XtSetArg(args[n], XmNbackPagePlacement, XmTOP_RIGHT); n++;
+      XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
+      sx->soundpane = XtCreateWidget("nb", xmNotebookWidgetClass, sx->soundpanebox, args, n);
+
+      {
+	/* get rid of the useless spinbox */
+	Widget scroll;
+	n = 0;
+	XtSetArg(args[n], XmNnotebookChildType, XmPAGE_SCROLLER); n++;
+	scroll = XtCreateWidget("scroller", xmScrollBarWidgetClass, sx->soundpane, NULL, 0);
+      }
+      XtManageChild(sx->soundpane);
+
+      XtAddCallback(sx->soundpane, XmNpageChangedCallback, notebook_page_changed_callback, NULL);
       map_over_children(sx->soundpane, set_main_color_of_widget, NULL); /* appears to be a no-op */
       break;
 #endif

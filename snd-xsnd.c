@@ -106,8 +106,11 @@ void sound_unlock_control_panel(snd_info *sp, void *ptr)
 
 void sound_lock_control_panel(snd_info *sp, void *ptr)
 {
+  Dimension height;
+  XtVaGetValues(CONTROL_PANEL(sp), XmNpaneMaximum, &height, NULL);  
   XtUnmanageChild(CONTROL_PANEL(sp));
-  XtVaSetValues(CONTROL_PANEL(sp), XmNpaneMinimum, ss->ctrls_height, NULL);
+  if (height > ss->ctrls_height) height = ss->ctrls_height;
+  XtVaSetValues(CONTROL_PANEL(sp), XmNpaneMinimum, height, NULL);
 }
 
 static void name_click_callback(Widget w, XtPointer context, XtPointer info) 
@@ -1661,6 +1664,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
 	{
 	  XtSetArg(args[n], XmNpositionIndex, snd_slot); n++;
 	}
+      XtSetArg(args[n], XmNuserData, sp->index); n++;
 
       if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
 	sw[W_pane] = XtCreateManagedWidget("snd-pane", xmPanedWindowWidgetClass, sx->dialog, args, n);
@@ -2528,6 +2532,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
 	  n = 0;
 	  if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->graph_color); n++;}
 	  XtSetArg(args[n], XmNnotebookChildType, XmMAJOR_TAB); n++;
+	  XtSetArg(args[n], XmNuserData, sp->index); n++;
 	  sx->tab = XtCreateManagedWidget(name, xmPushButtonWidgetClass, SOUND_PANE(ss), args, n);
 	  FREE(name);
 	}
@@ -2563,6 +2568,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
       for (k = 0; k < nchans; k++) 
 	add_channel_window(sp, k, chan_min_y, 0, NULL, WITH_FW_BUTTONS, true);
       set_button_label(sw[W_name], shortname_indexed(sp));
+      XtVaSetValues(sw[W_pane], XmNuserData, sp->index, NULL);
       if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
 	XtVaSetValues(sw[W_control_panel],
 		      XmNpaneMinimum, 1,

@@ -404,6 +404,9 @@ typedef struct snd_state {
   int Graph_Cursor, Mix_Tag_Width, Mix_Tag_Height, Minibuffer_History_Length;
   enved_target_t Enved_Target;
   bool Data_Clipped, Show_Indices;
+  int Cursor_Size;
+  cursor_style_t Cursor_Style;
+  XEN cursor_proc;
   Float min_dB, lin_dB;
   char *HTML_Dir, *HTML_Program;
   bool error_lock;

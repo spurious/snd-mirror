@@ -95,6 +95,7 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
   fdat->current_type = type;
   fdat->current_format = format;
   fl = set_header_and_data_positions(fdat, type, format); 
+  if (fl == NULL) return;
   XmListSelectPos(fdat->header_list, fdat->header_pos + 1, false);
   strs = (XmString *)MALLOC(fdat->formats * sizeof(XmString)); 
   for (i = 0; i < fdat->formats; i++) 
@@ -496,8 +497,7 @@ static void file_dialog_select_callback(Widget w, XtPointer context, XtPointer i
 }
 #endif
 
-static file_dialog_info *make_file_dialog(bool read_only, char *title, 
-					  char *select_title, snd_dialog_t which_dialog, XtCallbackProc file_ok_proc)
+static file_dialog_info *make_file_dialog(bool read_only, char *title, char *select_title, snd_dialog_t which_dialog, XtCallbackProc file_ok_proc)
 {
   Widget w;
   file_dialog_info *fd;
@@ -601,14 +601,38 @@ static void file_open_ok_callback(Widget w, XtPointer context, XtPointer info)
 
 void make_open_file_dialog(bool read_only, bool managed)
 {
+  char *title, *select_title;
+  if (read_only)
+    {
+      title = _("View");
+      select_title = _("open read-only:");
+    }
+  else
+    {
+      title = _("Open");
+      select_title = _("open:");
+    }
   if (open_dialog == NULL)
     {
-      open_dialog = make_file_dialog(read_only, _("Open"), _("open:"), FILE_OPEN_DIALOG, file_open_ok_callback);
+      open_dialog = make_file_dialog(read_only, title, select_title, FILE_OPEN_DIALOG, file_open_ok_callback);
       if (ss->just_sounds_state) 
 	{
 	  XtVaSetValues(open_dialog->dialog, XmNfileSearchProc, sound_file_search, NULL);
 	  open_dialog->need_update = true;
 	  force_directory_reread(open_dialog->dialog);
+	}
+    }
+  else
+    {
+      if (open_dialog->file_dialog_read_only != read_only)
+	{
+	  XmString s1, s2;
+	  s1 = XmStringCreate(select_title, XmFONTLIST_DEFAULT_TAG);
+	  s2 = XmStringCreate(title, XmFONTLIST_DEFAULT_TAG);
+	  XtVaSetValues(open_dialog->dialog, XmNselectionLabelString, s1, XmNdialogTitle, s2, NULL);
+	  XmStringFree(s1);
+	  XmStringFree(s2);
+	  open_dialog->file_dialog_read_only = read_only;
 	}
     }
   if (open_dialog->new_file_written) 
