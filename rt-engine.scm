@@ -22,17 +22,17 @@ Simple example:
 
 (letrec* ((osc (make-oscil #:frequency 440))
 	  (vol 0.4)
-	  (instrument (rt-rt (rt (lambda ()
-				   (out (* vol (oscil osc)))))))
+	  (instrument (rt-rt (lambda ()
+			       (out (* vol (oscil osc))))))
 	  (exit (lambda ()
 		  (-> instrument stop)
 		  (-> d hide)))
 	  (d (<dialog> "Hard Realtime Common Lisp Music!"  exit
 		       "Close" exit
-		       "Stop" (lambda () (-> instrument stop))
-		       "Start" (lambda () (-> instrument play)))))
-  (<slider> d "Frequency" 50 440 12000 (lambda (val) 
-					(set! (mus-frequency osc) val))
+		       "Stop" (<- instrument stop)
+		       "Start" (<- instrument play))))
+  (<slider> d "Frequency" 50 440 20000 (lambda (val) 
+					 (set! (mus-frequency osc) val))
 	    1)
   (<slider> d "Amplitude" 0 vol 2.0 (lambda (val) 
 				      (set! (-> instrument vol) val))
@@ -49,27 +49,27 @@ A more advanced example: (Code taken from the oscil clm documentation)
 (c-for 500 < 1000 100
        (lambda (i)
 	 (letrec* ((freq i)
-		   (amp 1)
+		   (amp 0.1)
 		   (mc-ratio 0.1)
-		   (index 4)
+		   (index 4.0)
 		   
 		   (fm (make-oscil (* freq mc-ratio) :initial-phase (/ 3.14159 2.0)))
 		   (carrier (make-oscil freq))
 		   (fm_index (* (hz->radians freq) mc-ratio index))
 		   
-		   (instrument (rt-rt (rt (lambda ()
-					    (out (* amp
-						    (oscil carrier (* fm_index
-								      (oscil fm)))))))))
+		   (instrument (rt-rt (lambda ()
+					(out (* amp
+						(oscil carrier (* fm_index
+								  (oscil fm))))))))
 		   (exit (lambda ()
 			   (-> instrument stop)
 			   (-> d hide)))
 		   
 		   (d (<dialog> "Hard Realtime Common Lisp Music!"  exit
 				"Close" exit
-				"Stop" (lambda () (-> instrument stop))
-				"Start" (lambda () (-> instrument play)))))
-	   
+				"Stop" (<- instrument stop)
+				"Start" (<- instrument play))))
+	   (c-display "amp/fm_index" amp fm_index)
 	   (<slider> d "Fm Frequency" 2 (mus-frequency fm) 1200 (lambda (val) 
 								 (set! (mus-frequency fm) (* mc-ratio val)))
 		     10)
@@ -118,6 +118,12 @@ For now, reset engine by doing:
       (-> rt-engine is_running)))
       
 (-> rt-engine dir)
+
+(let* ((a 5)
+       (b (rt (lambda ()
+		(set! a 9)
+		a))))
+  (list a (rt-funcall b)))
 
 (<rt-engine> dir add-event get-method class-name add-method instance?
 	     (<jack-rt-driver> dir get-method destructor class-name add-method instance? pause start num-inputs stop num-outputs

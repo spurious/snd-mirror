@@ -899,6 +899,7 @@ In Guile <b>frame?</b> is part of the debugger; it is renamed <b>%frame?</b> her
 <tr><td><a href="clm.html#make-one-zero">make-one-zero</a></td><td colspan=2>(a0 a1)</td></tr>
 <tr><td><a href="clm.html#make-oscil">make-oscil</a></td><td colspan=2>(frequency initial-phase)</td></tr>
 <tr><td><a href="clm.html#make-phase-vocoder">make-phase-vocoder</a></td><td colspan=2>(fftsize overlap interp pitch analyze edit synthesize)</td></tr>
+<tr><td><a href="clm.html#make-polyshape">make-polyshape</a></td><td colspan=2>(frequency initial-phase coeffs partials kind)</td></tr>
 <tr><td><a href="clm.html#make-ppolar">make-ppolar</a></td><td colspan=2>(radius frequency)</td></tr>
 <tr><td><a href="clm.html#make-pulse-train">make-pulse-train</a></td><td colspan=2>(frequency amplitude initial-phase)</td></tr>
 <tr><td><a href="clm.html#make-rand">make-rand</a></td><td colspan=2>(frequency amplitude envelope distribution)</td></tr>
@@ -991,6 +992,8 @@ it in conjunction with <i>mixer</i>to scale/envelope all the various ins and out
 <tr><td><a href="clm.html#phase-vocoder?">phase-vocoder?</a></td><td>(pv)</td><td>#t if pv is phase vocoder generator</td></tr>
 <tr><td><a href="clm.html#polar-&gt;rectangular">polar-&gt;rectangular</a></td><td>(rl im)</td><td>translate from polar to rectangular coordinates</td></tr>
 <tr><td><a href="clm.html#polynomial">polynomial</a></td><td>(coeffs x)</td><td>evaluate polynomial at x</td></tr>
+<tr><td><a href="clm.html#polyshape">polyshape</a></td><td>(gen <i>index fm</i>)</td><td>waveshaping generator</td></tr>
+<tr><td><a href="clm.html#polyshape?">polyshape?</a></td><td>(gen)</td><td>#t if gen is waveshape generator</td></tr>
 <tr><td><a href="clm.html#pulse-train">pulse-train</a></td><td>(gen <i>fm</i>)</td><td>pulse-train generator</td></tr>
 <tr><td><a href="clm.html#pulse-train?">pulse-train?</a></td><td>(gen)</td><td>#t if gen is pulse-train generator</td></tr>
 <tr><td><a href="clm.html#radians-&gt;degrees">radians-&gt;degrees</a></td><td>(rads)</td><td>convert radians to degrees</td></tr>

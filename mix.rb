@@ -2,44 +2,59 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Feb 22 13:40:33 CET 2005
-# Last: Sun Feb 27 13:40:21 CET 2005
+# Last: Mon Mar 14 19:16:06 CET 2005
 
 # Commentary:
 #
 # various mix and track related utilities
 #
-# module Mix
-# mix_sound(file, start)
-# delete_all_mixes
-# find_mix(sample, snd, chn)
-# pan_mix(name, beg, envelope, snd, chn, auto_delete)
-# pan_mix_selection(beg, envelope, snd, chn)
-# pan_mix_region(reg, beg, envelope, snd, chn)
-# pan_mix_vct(v, beg, envelope, snd, chn)
-# mix2vct(id)
-# save_mix(id, filename)
-# mix_maxamp(id)
-# snap_mix_to_beat(at_tag_position)
-# mix_properties(id)
-# set_mix_properties(id, new_val)
-# mix_property(key, id)
-# set_mix_property(key, val, id)
-# mix_name(id)
-# set_mix_name(id, name)
-# mix_name2id(name)
-# mix_click_sets_amp
-# delete_all_tracks
-# track2vct(trk, chn)
-# save_track(trk, filename, chn)
-# track_maxamp(id, chn)
-# transpose_track(trk, semitones)
-# retempo_track(trk, tempo)
-# filter_track(trk, fir_filter_coeffs)
-# track_properties(id)
-# set_track_properties(id, new_val)
-# track_property(key, id)
-# set_track_property(key, val, id)
-# mix_click_info(id)
+# module Mix (see mix.scm)
+#  mix_sound(file, start)
+#  delete_all_mixes
+#  find_mix(sample, snd, chn)
+#  pan_mix(name, beg, envelope, snd, chn, auto_delete)
+#  pan_mix_selection(beg, envelope, snd, chn)
+#  pan_mix_region(reg, beg, envelope, snd, chn)
+#  pan_mix_vct(v, beg, envelope, snd, chn)
+#  mix2vct(id)
+#  save_mix(id, filename)
+#  mix_maxamp(id)
+#  snap_mix_to_beat(at_tag_position)
+#  mix_properties(id)
+#  set_mix_properties(id, new_val)
+#  mix_property(key, id)
+#  set_mix_property(key, val, id)
+#  mix_name(id)
+#  set_mix_name(id, name)
+#  mix_name2id(name)
+#  mix_click_sets_amp
+#  delete_all_tracks
+#  track2vct(trk, chn)
+#  save_track(trk, filename, chn)
+#  track_maxamp(id, chn)
+#  transpose_track(trk, semitones)
+#  retempo_track(trk, tempo)
+#  filter_track(trk, fir_filter_coeffs)
+#  track_properties(id)
+#  set_track_properties(id, new_val)
+#  track_property(key, id)
+#  set_track_property(key, val, id)
+#  mix_click_info(id)
+#
+# module Mixer_matrix (see mixer.scm)
+#  mixer2matrix(mx)
+#  matrix2mixer(mat)
+#  mixer_equal?(mx1, mx2)
+#  mixer_diagonal?(mx)
+#  mixer_symmetric?(mx)
+#  mixer_determinant(mx)
+#  mixer_transpose(mx)
+#  mixer_inverse(mx)
+#  mixer_poly(mx, *coeffs)
+#  mixer_normal?(mx)
+#  mixer_orthogonal?(mx)
+#  mixer_trace(mx)
+#  
 
 # Code:
 
@@ -48,16 +63,22 @@ require "examp"
 module Mix
   # 
   # === MIX ===
-  # 
+  #
+  add_help(:mix_sound,
+           "mix(sound(file, start) \
+mixes file (all chans) at start in the currently selected sound.")
   def mix_sound(file, start)
     mix(file, start, true)
   end
-  
+
+  add_help(:delete_all_mixes, "delete_all_mixes() removes all mixes (sets all amps to 0)")
   def delete_all_mixes
     as_one_edit(lambda do (mixes or []).flatten.each do |id| delete_mix(id) end end)
   end
-  
-  # returns nil or mixer id
+
+  add_help(:find_mix,
+           "find_mix(sample, [snd=false, [chn=false]]) \
+returns the id of the mix at the given sample, or nil")
   def find_mix(sample, snd = false, chn = false)
     (mixes(snd_snd(snd), snd_chn(chn)) or []).detect do |n| mix_position(n) == sample end
   end
@@ -65,6 +86,14 @@ module Mix
   # 
   # === PAN-MIX ===
   # 
+  add_help(:pan_mix,
+           "pan_mix(file, [start=0, [envelope=1.0, [snd=false, [chn=0, auto_delete=false]]]]) \
+mixes 'file' into the sound 'snd' starting at start (in samples) \
+using 'envelope' to pan (0: all chan 0, 1: all chan 1).
+So, pan_mix(\"oboe.snd\", 0.1, [0, 0, 1, 1]) goes from all chan 0 to all chan 1.  \
+If 'envelope' is a scaler, it is turned into an evelope at that value.  \
+'auto_delete' determines whether the in-coming file should be treated as a temporary file \
+and deleted when the mix is no longer accessible.")
   def pan_mix(name, beg = 0, envelope = 1.0, snd = false, chn = 0, auto_delete = false)
     index = snd_snd(snd)
     old_with_mix_tags = with_mix_tags
@@ -155,16 +184,28 @@ module Mix
     new_mix
   end
 
+  add_help(:pan_mix_selection,
+           "pan_mix_selection([beg=0, [envelope=1.0, [snd=false, [chn=0]]]]) \
+mixes the current selection  into the sound 'snd' starting at 'start' (in samples) \
+using 'envelope' to pan (0: all chan 0, 1: all chan 1).")
   def pan_mix_selection(beg = 0, envelope = 1.0, snd = false, chn = 0)
     snd_throw(:no_active_selection) unless selection?
     pan_mix(save_selection(snd_tempnam), beg, envelope, snd, chn, true)
   end
 
+  add_help(:pan_mix_region,
+           "pan_mix_region(reg, [beg=0, [envelope=1.0, [snd=false, [chn=0]]]]) \
+mixes the given region into the sound 'snd' starting at 'start' (in samples) \
+using 'envelope' to pan (0: all chan 0, 1: all chan 1).")
   def pan_mix_region(reg, beg = 0, envelope = 1.0, snd = false, chn = 0)
     snd_throw(:no_such_region, reg) unless region?(reg)
     pan_mix(save_region(reg, snd_tempnam), beg, envelope, snd, chn, true)
   end
 
+  add_help(:pan_mix_vct,
+           "pan_mix_vct(v, [beg=0, [envelope=1.0, [snd=false, [chn=0]]]]) \
+mixes the vct data into the sound 'snd' starting at 'start' (in samples) \
+using 'envelope' to pan (0: all chan 0, 1: all chan 1).")
   def pan_mix_vct(v, beg = 0, envelope = 1.0, snd = false, chn = 0)
     temp_file = snd_tempnam
     fd = open_sound_file(temp_file, 1, srate(snd), "")
@@ -173,6 +214,7 @@ module Mix
     pan_mix(temp_file, beg, envelope, snd, chn, true)
   end
 
+  add_help(:mix2vct, "mix2vct(id) returns mix's data in vct")
   def mix2vct(id)
     snd_throw(:no_such_mix, id) unless mix?(id)
     len = mix_frames(id)
@@ -183,6 +225,7 @@ module Mix
     v
   end
 
+  add_help(:save_mix, "save_mix(id, filename) saves mix data (as floats) in file filename")
   def save_mix(id, filename)
     snd_throw(:no_such_mix, id) unless mix?(id)
     v = mix2vct(id)
@@ -191,6 +234,7 @@ module Mix
     close_sound_file(fd, 4 * v.length)
   end
 
+  add_help(:mix_maxamp, "mix_maxamp(id) returns the max amp in the given mix")
   def mix_maxamp(id)
     snd_throw(:no_such_mix, id) unless mix?(id)
     len = mix_frames(id)
@@ -201,6 +245,10 @@ module Mix
     peak
   end
 
+  add_help(:snap_mix_to_beat,
+           "snap_mix_to_beat() \
+forces a dragged mix to end up on a beat (see beats-per-minute).  \
+reset $mix_release_hook to cancel")
   def snap_mix_to_beat(at_tag_position = false)
     $mix_release_hook.add_hook!(get_func_name) do |id, samps_moved|
       offset = at_tag_position ? mix_tag_position(id) : 0
@@ -223,7 +271,7 @@ module Mix
 
   #
   # === Mix Properties ===
-  # 
+  #
   $all_mix_properties = Array.new
 
   def mix_properties(id)
@@ -231,13 +279,16 @@ module Mix
   end
 
   def set_mix_properties(id, new_val)
-    if (h = $all_mix_properties[id]).kind_of?(Hash)
+    if $all_mix_properties[id].kind_of?(Hash)
       $all_mix_properties[id].update(new_val)
     else
       $all_mix_properties[id] = new_val
     end
   end
 
+  add_help(:mix_property,
+           "mix_property(key, id) \
+returns the value associated with 'key' in the given mix's property list, or nil")
   def mix_property(key, id)
     snd_throw(:no_such_mix, id) unless mix?(id)
     if (h = mix_properties(id)).kind_of?(Hash)
@@ -247,6 +298,9 @@ module Mix
     end
   end
 
+  add_help(:set_mix_property,
+           "set_mix_property(key, val, id) \
+sets the value 'val' to 'key' in the given mix's property list")
   def set_mix_property(key, val, id)
     snd_throw(:no_such_mix, id) unless mix?(id)
     if (h = mix_properties(id)).kind_of?(Hash)
@@ -289,12 +343,40 @@ module Mix
   # 
   # === Track ===
   # 
+  add_help(:delete_all_tracks,
+           "delete_all_tracks() \
+removes all mixes that have an associated track (sets all amps to 0)")
   def delete_all_tracks
     as_one_edit(lambda do
                   (mixes or []).flatten.each do |id| delete_mix(id) unless mix_track(id).zero? end
                 end)
   end
 
+  add_help(:reverse_track,
+           "reverse_track(trk) \
+reverses the order of its mixes (it changes various mix begin times)")
+  def reverse_track(trk)
+    if track(trk).detect do |t| mix?(t) end
+      ids_in_order = track(trk).sort do |a, b|
+        if mix_position(a) > mix_position(b)
+          1
+        elsif mix_position(a) < mix_position(b)
+          -1
+        else
+          0
+        end
+      end
+      as_one_edit_rb() do
+        ids_in_order.map do |id| mix_position(id) end.reverse.zip(ids_in_order).each do |id, pos|
+          set_mix_position(id, pos)
+        end
+      end
+    else
+      snd_raise(:no_such_track, trk)
+    end
+  end
+
+  add_help(:track2vct, "track2vct(track, [chan=0]) places track data in vct") 
   def track2vct(trk, chn = 0)
     snd_throw(:no_such_track, trk) unless track?(trk)
     snd_throw(:no_such_channel, chn) unless chn >= track_chans(trk)
@@ -306,6 +388,8 @@ module Mix
     v
   end
 
+  add_help(:save_track,
+           "save_track(track, filename, [chan=true]) saves track data (as floats) in file filename")
   def save_track(trk, filename, chn = true)
     snd_throw(:no_such_track, trk) unless track?(trk)
     chans = track_chans(trk)
@@ -335,6 +419,7 @@ module Mix
     end
   end
 
+  add_help(:track_maxamp, "track_maxamp(id, chan) returns the max amp in the given track")
   def track_maxamp(id, chn)
     snd_throw(:no_such_track, id) unless track?(id)
     len = track_frames(id)
@@ -345,14 +430,22 @@ module Mix
     peak
   end
 
+  add_help(:transpose_track,
+           "transpose_track(track, semitones) transposes each mix in track by semitones")
   def transpose_track(trk, semitones)
     set_track_speed(trk, track_speed(trk) * 2 ** (semitones / 12.0))
   end
 
+  add_help(:retempo_track,
+           "retempo_track(track, tempo) \
+changes the inter-mix begin times of mixes in track by tempo (> 1.0 is faster)")
   def retempo_track(trk, tempo)
     set_track_tempo(trk, track_tempo(trk) * tempo)
   end
 
+  add_help(:filter_track,
+           "filter_track(track, coeffs) \
+filters track data using FIR filter coeffs: filter_track(track-id, [0.1, 0.2, 0.3, 0.3, 0.2, 0.1])")
   def filter_track(trk, fir_filter_coeffs)
     snd_throw(:no_such_track, trk) unless track?(trk)
     order = fir_filter_coeffs.length
@@ -379,13 +472,16 @@ module Mix
   end
 
   def set_track_properties(id, new_val)
-    if (h = $all_track_properties[id]).kind_of?(Hash)
+    if $all_track_properties[id].kind_of?(Hash)
       $all_track_properties[id].update(new_val)
     else
       $all_track_properties[id] = new_val
     end
   end
 
+  add_help(:track_property,
+           "track_property(key, id) \
+returns the value associated with 'key' in the given track's property list, or nil")
   def track_property(key, id)
     snd_throw(:no_such_track, id) unless track?(id)
     if (h = track_properties(id)).kind_of?(Hash)
@@ -395,6 +491,9 @@ module Mix
     end
   end
 
+  add_help(:set_track_property,
+           "set_track_property(key, val, id) \
+sets the 'val' to 'key' in the given track's property list")
   def set_track_property(key, val, id)
     snd_throw(:no_such_track, id) unless track?(id)
     if (h = track_properties(id)).kind_of?(Hash)
@@ -410,6 +509,9 @@ module Mix
   # 
   # === Mix Click Info ===
   # 
+  add_help(:mix_click_info,
+           "mix_click_info(n) \
+is a $mix_click_hook function that describes a mix and its properties")
   def mix_click_info(id)
     snd_throw(:no_such_mix, id) unless mix?(id)
     info_dialog("Mix info", format("\
@@ -451,8 +553,8 @@ end
 include Mix
 
 =begin
-$close_hook.add_hook!("mix.rb") do |snd|
-  $all_mix_properties.delete_if do |h| (not mix?(h[:mixid])) end
+$close_hook.add_hook!("remove-mix-properties") do |snd|
+  $all_mix_properties and $all_mix_properties.delete_if do |k, v| (not mix?(k)) end
   false
 end
 
@@ -460,5 +562,121 @@ $mix_click_hook.add_hook!("mix-click-info") do |id|
   mix_click_info(id)
 end
 =end
+
+# 
+# === MIXER.SCM ===
+# 
+require "matrix"
+class Matrix
+  with_silence do
+    def Matrix.diagonal(*values)
+      size = values.size
+      rs = (0...size).collect do |j|
+        row = Array.new(size).fill(0, 0, size)
+        row[j] = values[j]
+        row
+      end
+      rows(rs, false)
+    end
+  end
+end
+
+module Mixer_matrix
+  def mixer2matrix(mx)
+    a = make_array(mx.channels) do |i|
+      make_array(mx.channels) do |j|
+        mixer_ref(mx, i, j)
+      end
+    end
+    Matrix.columns(a)
+  end
+
+  def matrix2mixer(mat)
+    mx = make_mixer(mat.row_size)
+    mat.to_a.each_with_index do |row, i|
+      row.each_with_index do |val, j|
+        mixer_set!(mx, j, i, val)
+      end
+    end
+    mx
+  end
+
+  def mixer_equal?(mx1, mx2)
+    a = if mixer?(mx1)
+          mixer2matrix(mx1)
+        else
+          mx1
+        end
+    b = if mixer?(mx2)
+          mixer2matrix(mx2)
+        else
+          mx2
+        end
+    a == b or callcc do |flag|
+      a.to_a.zip(b.to_a) do |a1, b1|
+        flag.call(false) unless vequal(a1, b1)
+      end
+      true
+    end
+  end
+
+  def mixer_diagonal?(mx)
+    if mx.length == 1
+      true
+    else
+      callcc do |flag|
+        mx.channels.times do |i|
+          mx.channels.times do |j|
+            flag.call(false) if i != j and mixer_ref(mx, i, j).nonzero?
+          end
+        end
+        true
+      end
+    end
+  end
+
+  def mixer_symmetric?(mx)
+    mixer_equal?(mx, mixer_transpose(mx))
+  end
+  alias mixer_hermitian? mixer_symmetric?
+
+  def mixer_determinant(mx)
+    mixer2matrix(mx).determinant
+  end
+
+  def mixer_transpose(mx)
+    mixer2matrix(mx).transpose
+  end
+
+  def mixer_inverse(mx)
+    mixer2matrix(mx).inverse
+  end
+
+  def mixer_poly(mx, *coeffs)
+    n = coeffs.length
+    nmx = make_scalar_mixer(mx.length, coeffs[-1])
+    x = mixer_scale(mx, 1.0)
+    (n - 2).downto(0) do |i|
+      nmx = mixer_add(nmx, mixer_scale(x, coeffs[i]))
+      x = mixer_multiply(mx, x)
+    end
+    nmx
+  end
+
+  def mixer_normal?(mx)
+    mixer_equal?(mixer_multiply(mx, mixer_transpose(mx)),
+                 mixer_multiply(mixer_transpose(mx), mx))
+  end
+
+  def mixer_orthogonal?(mx)
+    mixer_equal?(mixer_transpose(mx),
+                 mixer_inverse(mx))
+  end
+  alias mixer_unitary? mixer_orthogonal?
+
+  def mixer_trace(mx)
+    mixer2matrix(mx).trace
+  end
+end
 
 # mix.rb ends here

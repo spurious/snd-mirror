@@ -7672,20 +7672,50 @@ GEN2(two_pole)
 GEN2(formant)
 GEN3(waveshape)
   /* this is ok, but looks wrong -- the index arg precedes the fm arg, so the 2 arg case is index here */
-GEN3(polyshape)
 GEN2(filter)
 GEN2(fir_filter)
 GEN2(iir_filter)
 GEN1(readin)
-
-  /* TODO: need polyshape + opt for index=1.0 case (i.e. mus_polyshape_2) */
-
 GEN2_OPT(wave_train)
 GEN2_OPT(table_lookup)
 
-static char *descr_tap_0f(int *args, ptree *pt) {return(descr_gen(args, pt, "tap", 0));}
+static char *descr_polyshape_no_args(int *args, ptree *pt) {return(descr_gen(args, pt, S_polyshape, 0));}
+static void polyshape_no_index_no_fm(int *args, ptree *pt) {FLOAT_RESULT = mus_polyshape_0(CLM_ARG_1);}
+static char *descr_polyshape_one_arg(int *args, ptree *pt) {return(descr_gen(args, pt, S_polyshape, 1));}
+static void polyshape_index_no_fm(int *args, ptree *pt) {FLOAT_RESULT = mus_polyshape_1(CLM_ARG_1, FLOAT_ARG_2);}
+static char *descr_polyshape_two_args(int *args, ptree *pt) {return(descr_gen(args, pt, S_polyshape, 2));}
+static void polyshape_index_fm(int *args, ptree *pt) {FLOAT_RESULT = mus_polyshape(CLM_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);}
+static void polyshape_no_index_fm(int *args, ptree *pt) {FLOAT_RESULT = mus_polyshape_2(CLM_ARG_1, FLOAT_ARG_3);}
+GEN_P(polyshape)
+static xen_value *polyshape_1(ptree *prog, xen_value **args, int num_args)
+{
+  if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, polyshape_check, descr_polyshape_check, args, num_args);
+  if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2);
+  if ((num_args > 2) && (args[3]->type == R_INT)) single_to_float(prog, args, 3);
+  if (num_args == 1) 
+    return(package(prog, R_FLOAT, polyshape_no_index_no_fm, descr_polyshape_no_args, args, 1));
+  if (num_args == 2) 
+    {
+      if ((prog->constants == 1) &&
+	  (prog->dbls[args[2]->addr] == 1.0))
+	return(package(prog, R_FLOAT, polyshape_no_index_no_fm, descr_polyshape_no_args, args, 1));
+      return(package(prog, R_FLOAT, polyshape_index_no_fm, descr_polyshape_one_arg, args, 2));
+    }
+  if ((prog->constants >= 1) &&
+      (prog->dbls[args[2]->addr] == 1.0))
+    {
+      if ((prog->constants > 1) &&
+	  (prog->dbls[args[3]->addr] == 0.0))
+	return(package(prog, R_FLOAT, polyshape_no_index_no_fm, descr_polyshape_no_args, args, 1));
+      return(package(prog, R_FLOAT, polyshape_no_index_fm, descr_polyshape_two_args, args, 3));
+    }
+  return(package(prog, R_FLOAT, polyshape_index_fm, descr_polyshape_two_args, args, 3));
+}
+
+
+static char *descr_tap_0f(int *args, ptree *pt) {return(descr_gen(args, pt, S_tap, 0));}
 static void tap_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_tap_1(CLM_ARG_1);}  
-static char *descr_tap_1f(int *args, ptree *pt) {return(descr_gen(args, pt, "tap", 1));}
+static char *descr_tap_1f(int *args, ptree *pt) {return(descr_gen(args, pt, S_tap, 1));}
 static void tap_1f(int *args, ptree *pt) {FLOAT_RESULT = mus_tap(CLM_ARG_1, FLOAT_ARG_2);}
 
 static xen_value *tap_1(ptree *prog, xen_value **args, int num_args)

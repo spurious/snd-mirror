@@ -235,7 +235,7 @@ static XEN kw_frequency, kw_initial_phase, kw_wave, kw_cosines, kw_amplitude,
   kw_expansion, kw_length, kw_hop, kw_ramp, kw_jitter,
   kw_type, kw_channels, kw_filter, kw_revout, kw_width,
   kw_edit, kw_synthesize, kw_analyze, kw_interp, kw_overlap, kw_pitch, kw_dur, kw_sines,
-  kw_distribution, kw_coeffs;
+  kw_distribution, kw_coeffs, kw_kind;
 
 static void init_keywords(void)
 {
@@ -303,6 +303,7 @@ static void init_keywords(void)
   kw_sines = XEN_MAKE_KEYWORD("sines");
   kw_distribution = XEN_MAKE_KEYWORD("distribution");
   kw_coeffs = XEN_MAKE_KEYWORD("coeffs");
+  kw_kind = XEN_MAKE_KEYWORD("kind");
 }
 
 
@@ -3106,10 +3107,9 @@ is the same in effect as make-oscil"
 	{
 	  /* clm.html says '(1 1) is the default */
 	  Float data[2];
-	  data[0] = 1.0; /* was 0.0?? */
-	  /* TODO: add test for no wave in make-waveshape */
-	  data[1] = 1.0;
-	  wave = mus_partials_to_waveshape(1, data, wsize, (Float *)CALLOC(wsize, sizeof(Float)));
+	  data[0] = 0.0; /* this is partial 0 */
+	  data[1] = 1.0; /* partial 1 */
+	  wave = mus_partials_to_waveshape(2, data, wsize, (Float *)CALLOC(wsize, sizeof(Float)));
 	}
       else wave = mus_partials_to_waveshape(npartials, partials, wsize, (Float *)CALLOC(wsize, sizeof(Float)));
     }
@@ -3168,20 +3168,26 @@ returns partial 2 twice as loud as 3."
 
 static XEN g_partials_to_polynomial(XEN amps, XEN ukind)
 {
-  #define H_partials_to_polynomial "(" S_partials_to_polynomial " partials (kind 1)): \
+  #define H_partials_to_polynomial "(" S_partials_to_polynomial " partials (kind " S_mus_chebyshev_first_kind ")): \
 produce a Chebyshev polynomial suitable for use with the " S_polynomial " generator \
 to create (via waveshaping) the harmonic spectrum described by the partials argument:\n\
    (let ((v0 (" S_partials_to_polynomial " '(1 1 2 1)))\n\
          (os (" S_make_oscil ")))\n\
      (" S_polynomial " v0 (" S_oscil " os)))"
 
-  int npartials, kind, len = 0;
+  int npartials, len = 0;
+  mus_chebyshev_t kind = MUS_CHEBYSHEV_FIRST_KIND;
   Float *partials, *wave;
   XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(amps, len), amps, XEN_ARG_1, S_partials_to_polynomial, "a list");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ukind), ukind, XEN_ARG_2, S_partials_to_polynomial, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ukind), ukind, XEN_ARG_2, S_partials_to_polynomial, "either " S_mus_chebyshev_first_kind " or " S_mus_chebyshev_second_kind);
   if (XEN_INTEGER_P(ukind))
-    kind = XEN_TO_C_INT(ukind);
-  else kind = 1;
+    {
+      int ck;
+      ck = XEN_TO_C_INT(ukind);
+      if ((ck >= MUS_CHEBYSHEV_OBSOLETE_KIND) && (ck <= MUS_CHEBYSHEV_SECOND_KIND))
+	kind = (mus_chebyshev_t)ck;
+      else XEN_OUT_OF_RANGE_ERROR(S_partials_to_polynomial, 2, ukind, "~A: unknown Chebyshev polynomial kind");
+    }
   if (len == 0)
     XEN_ERROR(NO_DATA, 
 	      XEN_LIST_3(C_TO_XEN_STRING(S_partials_to_polynomial), 
@@ -3213,33 +3219,47 @@ static XEN g_polyshape_p(XEN obj)
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_polyshape_p(XEN_TO_MUS_ANY(obj)))));
 }
 
-static XEN g_make_polyshape(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
+static XEN g_make_polyshape(XEN arglist)
 {
-  #define H_make_polyshape "(" S_make_polyshape " (:frequency 440.0) (:initial-phase 0.0) (:coeffs #f) (:partials '(1 1))): \
+  #define H_make_polyshape "(" S_make_polyshape " (:frequency 440.0) (:initial-phase 0.0) (:coeffs #f) (:partials '(1 1)) (:kind " S_mus_chebyshev_first_kind ")): \
 return a new polynomial-based waveshaping generator ('polyshaper...')\n\
    (make-polyshape :coeffs (partials->polynomial '(1 1.0)))\n\
 is the same in effect as make-oscil"
 
   mus_any *ge;
-  XEN args[8]; 
-  XEN keys[4];
-  int orig_arg[4] = {0, 0, 0, 0};
-  int vals, csize = 0, npartials = 0;
+  XEN args[MAX_ARGLIST_LEN]; 
+  int arglist_len;
+  XEN keys[5];
+  int orig_arg[5] = {0, 0, 0, 0, 0};
+  int i, ck, vals, csize = 0, npartials = 0;
   vct *v = NULL;
   Float freq = 440.0, phase = 0.0;
   Float *coeffs = NULL, *partials = NULL;
+  mus_chebyshev_t kind = MUS_CHEBYSHEV_FIRST_KIND;
   keys[0] = kw_frequency;
   keys[1] = kw_initial_phase;
   keys[2] = kw_coeffs;
   keys[3] = kw_partials;
-  args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6; args[6] = arg7; args[7] = arg8;
-  vals = mus_optkey_unscramble(S_make_polyshape, 4, keys, args, orig_arg);
+  keys[4] = kw_kind;
+  arglist_len = XEN_LIST_LENGTH(arglist);
+  if (arglist_len > MAX_ARGLIST_LEN)
+    XEN_ERROR(MUS_MISC_ERROR,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_make_polyshape), 
+			 C_TO_XEN_STRING("too many args!"),
+			 arglist));
+  for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
+  for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = XEN_UNDEFINED;
+  vals = mus_optkey_unscramble(S_make_polyshape, 5, keys, args, orig_arg);
   if (vals > 0)
     {
       freq = mus_optkey_to_float(keys[0], S_make_polyshape, orig_arg[0], freq);
       if (freq > (0.5 * mus_srate()))
 	XEN_OUT_OF_RANGE_ERROR(S_make_polyshape, orig_arg[0], keys[0], "freq ~A > srate/2?");
       phase = mus_optkey_to_float(keys[1], S_make_polyshape, orig_arg[2], phase);
+      ck = mus_optkey_to_int(keys[4], S_make_polyshape, orig_arg[4], (int)kind);
+      if ((ck >= MUS_CHEBYSHEV_OBSOLETE_KIND) && (ck <= MUS_CHEBYSHEV_SECOND_KIND))
+	kind = (mus_chebyshev_t)ck;
+      else XEN_OUT_OF_RANGE_ERROR(S_make_polyshape, orig_arg[4], keys[4], "~A: unknown Chebyshev polynomial kind");
       v = mus_optkey_to_vct(keys[2], S_make_polyshape, orig_arg[2], NULL);
       if (v)
         {
@@ -3257,9 +3277,8 @@ is the same in effect as make-oscil"
 			  XEN_LIST_3(C_TO_XEN_STRING(S_make_polyshape), 
 				     C_TO_XEN_STRING("coeffs and partials list empty?"), 
 				     keys[3]));
-	      coeffs = mus_partials_to_polynomial(npartials, partials, 0);
+	      coeffs = mus_partials_to_polynomial(npartials, partials, kind);
 	      csize = npartials;
-	      /* TODO: poly c size probably off by one here and below */
 	      /* coeffs = partials here, so don't delete */ 
 	    }
 	  if (!partials)
@@ -3267,10 +3286,10 @@ is the same in effect as make-oscil"
 	      /* clm.html says '(1 1) is the default */
 	      Float *data;
 	      data = (Float *)CALLOC(2, sizeof(Float));
-	      data[0] = 1.0;
+	      data[0] = 0.0;
 	      data[1] = 1.0;
-	      coeffs = mus_partials_to_polynomial(1, data, 0);
-	      csize = 1;
+	      coeffs = mus_partials_to_polynomial(2, data, kind);
+	      csize = 2;
 	    }
 	}
     }
@@ -5301,7 +5320,7 @@ XEN_NARGIFY_1(g_wave_train_p_w, g_wave_train_p)
 XEN_ARGIFY_8(g_make_waveshape_w, g_make_waveshape)
 XEN_ARGIFY_3(g_waveshape_w, g_waveshape)
 XEN_NARGIFY_1(g_waveshape_p_w, g_waveshape_p)
-XEN_ARGIFY_8(g_make_polyshape_w, g_make_polyshape)
+XEN_VARGIFY(g_make_polyshape_w, g_make_polyshape)
 XEN_ARGIFY_3(g_polyshape_w, g_polyshape)
 XEN_NARGIFY_1(g_polyshape_p_w, g_polyshape_p)
 XEN_ARGIFY_2(g_partials_to_waveshape_w, g_partials_to_waveshape)
@@ -5823,6 +5842,9 @@ void mus_xen_init(void)
   XEN_DEFINE_CONSTANT(S_mus_interp_none,        MUS_INTERP_NONE,            "no interpolation -- step func");
   XEN_DEFINE_CONSTANT(S_mus_interp_bezier,      MUS_INTERP_BEZIER,          "bezier interpolation");
 
+  XEN_DEFINE_CONSTANT(S_mus_chebyshev_first_kind,  MUS_CHEBYSHEV_FIRST_KIND,  "Chebyshev polynomial of first kind, for " S_partials_to_polynomial);
+  XEN_DEFINE_CONSTANT(S_mus_chebyshev_second_kind, MUS_CHEBYSHEV_SECOND_KIND, "Chebyshev polynomial of second kind, for " S_partials_to_polynomial);
+
   XEN_DEFINE_PROCEDURE(S_mus_describe,  g_mus_describe_w,  1, 0, 0,  H_mus_describe);
   XEN_DEFINE_PROCEDURE(S_mus_name,      g_mus_name_w,      1, 0, 0,  H_mus_name);
   XEN_DEFINE_PROCEDURE(S_mus_run,       g_mus_run_w,       1, 2, 0,  H_mus_run);
@@ -5992,7 +6014,7 @@ the closer the radius is to 1.0, the narrower the resonance."
   XEN_DEFINE_PROCEDURE(S_make_waveshape,         g_make_waveshape_w,         0, 8, 0, H_make_waveshape);
   XEN_DEFINE_PROCEDURE(S_waveshape,              g_waveshape_w,              1, 2, 0, H_waveshape);
   XEN_DEFINE_PROCEDURE(S_waveshape_p,            g_waveshape_p_w,            1, 0, 0, H_waveshape_p);
-  XEN_DEFINE_PROCEDURE(S_make_polyshape,         g_make_polyshape_w,         0, 8, 0, H_make_polyshape);
+  XEN_DEFINE_PROCEDURE(S_make_polyshape,         g_make_polyshape_w,         0, 0, 1, H_make_polyshape);
   XEN_DEFINE_PROCEDURE(S_polyshape,              g_polyshape_w,              1, 2, 0, H_polyshape);
   XEN_DEFINE_PROCEDURE(S_polyshape_p,            g_polyshape_p_w,            1, 0, 0, H_polyshape_p);
   XEN_DEFINE_PROCEDURE(S_partials_to_waveshape,  g_partials_to_waveshape_w,  1, 1, 0, H_partials_to_waveshape);

@@ -2,11 +2,13 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 11
-#define MUS_DATE "15-Mar-05"
+#define MUS_REVISION 12
+#define MUS_DATE "16-Mar-05"
 
 /*
- * 15-Mar:     polyshape generator (waveshaper as polynomial + oscil)
+ * 16-Mar:     polyshape generator (waveshaper as polynomial + oscil)
+ *             mus_chebyshev_first|second_kind.
+ *             mus_partials_to_waveshape no longer normalizes the partials.
  * 18-Feb:     mus_interpolate.
  * 14-Feb:     deprecated mus_restart_env and mus_clear_filter_state.
  * 7-Feb-05:   mus_reset method, replaces mus_restart_env and mus_clear_filter_state.
@@ -228,6 +230,8 @@ typedef enum {MUS_RECTANGULAR_WINDOW, MUS_HANN_WINDOW, MUS_WELCH_WINDOW, MUS_PAR
 	      MUS_EXPONENTIAL_WINDOW, MUS_RIEMANN_WINDOW, MUS_KAISER_WINDOW, MUS_CAUCHY_WINDOW, MUS_POISSON_WINDOW,
 	      MUS_GAUSSIAN_WINDOW, MUS_TUKEY_WINDOW, MUS_DOLPH_CHEBYSHEV_WINDOW, MUS_HANN_POISSON_WINDOW, MUS_CONNES_WINDOW
 } mus_fft_window_t;
+
+typedef enum {MUS_CHEBYSHEV_OBSOLETE_KIND, MUS_CHEBYSHEV_FIRST_KIND, MUS_CHEBYSHEV_SECOND_KIND} mus_chebyshev_t;
 
 #define MUS_INTERP_TYPE_OK(Interp) ((Interp) <= MUS_INTERP_HERMITE)
 #define MUS_FFT_WINDOW_OK(Window) ((Window) <= MUS_CONNES_WINDOW)
@@ -460,7 +464,7 @@ Float mus_waveshape_1(mus_any *ptr, Float index);
 Float mus_waveshape_0(mus_any *ptr);
 bool mus_waveshape_p(mus_any *ptr);
 Float *mus_partials_to_waveshape(int npartials, Float *partials, int size, Float *table);
-Float *mus_partials_to_polynomial(int npartials, Float *partials, int kind);
+Float *mus_partials_to_polynomial(int npartials, Float *partials, mus_chebyshev_t kind);
 mus_any *mus_make_polyshape(Float frequency, Float phase, Float *coeffs, int size);
 Float mus_polyshape(mus_any *ptr, Float index, Float fm);
 Float mus_polyshape_2(mus_any *ptr, Float fm);

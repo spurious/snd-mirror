@@ -25,14 +25,15 @@ Some reasons to use eval-c:
 * Easy integration of c-code from within lisp.
   Mix C and Lisp in the same source without making it look strange. (hopefully)
 * Use lisp-macros to generate c-code. (There is a special macro function
-  called "define-c-macro" that works with eval-c)
+  called "define-c-macro" that works with eval-c). I must also add that eval-c macros
+  can be a magnitude more powerful than normal lisp macros. See various examples.
 * Generate/compile/link/run c-code on the fly.
 * Some people think prefix notation is nice.
 * Speed. C is faster than guile.
 * Hides guile-semantic to access C-code from guile. Less need to read the guile manual.
 * Global functions does not need to be defined at the top-level. (that is a good thing,
   right?)
-
+* Special support for many strange things, for examples shared structures and classes.
 
 
 Examples.
@@ -609,7 +610,11 @@ Usually just "", but can be "-lsnd" or something if needed.
 
 	      ;; (<type> ....)
 	      (let* ((type (if (= 0 eval-c-level)
-			       (eval-c-ctype->etype (<-> "static " (eval-c-etype->ctype type)))
+			       (eval-c-ctype->etype (let* ((ctype (eval-c-etype->ctype type))
+							   (minlength (min (string-length "nonstatic ") (string-length ctype))))
+						      (if (string= "nonstatic " ctype 0 minlength 0 minlength)
+							  (string-drop ctype (string-length "nonstatic "))
+							  (<-> "static " ctype))))
 			       type))
 		     (varname (cadr term))
 		     (isvarname? (or (string? varname) (symbol? varname))))
@@ -1662,7 +1667,7 @@ int fgetc (FILE
     "#define MAKE_FLOAT(a) scm_make_real((double)a)"
     "#define GET_SCM(a) (a)"
     "#define MAKE_SCM(a) (a)"
-    "#define POINTER_P(a) (scm_is_false(a) || ((SCM_BOOL_T == scm_list_p(a)) && (XEN_STRING_P(SCM_CAR(a))||scm_symbol_p(SCM_CAR(a))) && SCM_NULLP(SCM_CDR(SCM_CDR(a))) && (SCM_BOOL_T ==scm_number_p(SCM_CAR(SCM_CDR(a))))))"
+    "#define POINTER_P(a) (scm_is_false(a) || ((SCM_BOOL_T == scm_list_p(a)) && XEN_STRING_P(SCM_CAR(a)) && SCM_NULLP(SCM_CDR(SCM_CDR(a))) && (SCM_BOOL_T ==scm_number_p(SCM_CAR(SCM_CDR(a))))))"
     "#if HAVE_SCM_C_MAKE_RECTANGULAR"
     "#define XEN_STRING_P(Arg)           scm_is_string(Arg)"
     "#else"
@@ -1699,15 +1704,11 @@ int fgetc (FILE
 ;	   (public (,(car def) ,(cadr def) (lambda ,(cdr def)
 ;					   ,@body)))))
 
-;(define-macro (define-c ret-type def . body)
-;  `(eval-c ""
-;	   (public (,ret-type ,(car def) (lambda ,(cdr def)
-;					   ,@body)))))
-
-(define-macro (define-c ret-type body)
+(define-macro (define-c ret-type def . body)
   `(eval-c ""
-	   (public (,ret-type ,(car body) (lambda ,(cadr body)
-					    ,@(cddr body))))))
+	   (public (,ret-type ,(car def) (lambda ,(cdr def)
+					   ,@body)))))
+
 
 (eval-c ""
 	(<void-*> a_pointer)

@@ -8076,7 +8076,7 @@ void g_init_track(void)
   tf_tag = XEN_MAKE_OBJECT_TYPE("TrackSampleReader", sizeof(track_fd));
 #if HAVE_RUBY
   rb_define_method(tf_tag, "to_s", XEN_PROCEDURE_CAST print_tf, 0);
-  rb_define_method(mf_tag, "call", XEN_PROCEDURE_CAST g_read_track_sample, 0);
+  rb_define_method(tf_tag, "call", XEN_PROCEDURE_CAST g_read_track_sample, 0);
 #endif
 #if HAVE_GUILE
   scm_set_smob_print(tf_tag, print_tf);

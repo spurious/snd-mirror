@@ -4105,6 +4105,7 @@ like:
 <pre>
   (set! transform-size 16)
 </pre>
+<p>
 The problem is that <i>set!</i> in Guile does not inform Snd's
 C code that a set! has occurred.
 We need to see that set! as soon as it happens to make the user interface
@@ -4114,7 +4115,7 @@ It would be tedious to define
 several hundred functions with the prefix "set-" (or whatever), simply to
 be able to set the variables.  Instead we use the 
 "generalized set!" to package up both the accessor functions under the (nominal) variable name.
-<p>
+</p>
 
 <br>
 

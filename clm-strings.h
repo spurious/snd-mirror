@@ -152,6 +152,8 @@
 #define S_mus_array_print_length     "mus-array-print-length"
 #define S_mus_channel                "mus-channel"
 #define S_mus_channels               "mus-channels"
+#define S_mus_chebyshev_first_kind   "mus-chebyshev-first-kind"
+#define S_mus_chebyshev_second_kind  "mus-chebyshev-second-kind"
 #define S_mus_close                  "mus-close"
 #define S_mus_cosines                "mus-cosines"
 #define S_mus_data                   "mus-data"

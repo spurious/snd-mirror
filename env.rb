@@ -1,11 +1,11 @@
 # env.rb -- snd-7/env.scm
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Fri Feb 04 20:11:18 CET 2005
+# Last: Sun Mar 13 14:36:18 CET 2005
 
 # Commentary:
 #
-# Module Env (see env.scm)
+# module Env (see env.scm)
 #  envelope_interp(x, en, base)
 #  window_envelope(beg, dur, en)
 #  map_envelopes(en1, en2, &func)
@@ -17,15 +17,27 @@
 #  envelope_last_x(en)
 #  stretch_envelope(fn, old_att, new_att, old_dec, new_dec)
 #  scale_envelope(en, scale, offset)
-#  reverse_envelope(en) -- envelope_reverse
-#  concatenate_envelopes(*envs) -- envelope_concatenate
-#  repeat_envelope(ur_env, repeats, reflect, x_normalized) -- envelope_repeat
-#  make_power_env(*args)
+#  reverse_envelope(en)              alias envelope_reverse
+#  concatenate_envelopes(*envs)      alias envelope_concatenate
+#  repeat_envelope(ur_env, repeats, reflect, x_normalized)   alias envelope_repeat
+#
+#  class Power_env
+#   initialize(*rest)
+#   power_env
+#   power_env_channel(beg, dur, snd, chn, edpos, edname)
+#   
+#  make_power_env(*rest)
 #  power_env(pe)
-#  power_env_channel(pe, *args)
+#  power_env_channel(pe, beg, dur, snd, chn, edpos) 
+#  powenv_channel(envelope, beg, dur, snd, chn, edpos)
+#  
+#  envelope_exp(en, power, xgrid)
+#  rms_envelope(file, *rest)
+#  
 #  envelope_length(en)
 #  normalize_envelope(en, new_max)
 #  x_norm(en, xmax)
+#
 #  exp_envelope(env, *args) [by Fernando Lopez-Lezcano (nando@ccrma.stanford.edu)]
 #    db_envelope(env, cutoff, error)
 #    make_db_env(env, *args)
@@ -39,11 +51,11 @@
 require "examp"
 
 module Env
-  def envelope_interp(x, en = [], base = 1.0)
-    doc("envelope_interp(*args)
-envelope_interp(x, env, base = 1.0) -> value of env at x;
-base controls connecting segment type:
-envelope_interp(0.3, [0, 0, 0.5, 1, 1, 0]) -> 0.6\n") if x == :help
+  add_help(:envelope_interp,
+           "envelope_interp(*args)
+envelope_interp(x, env, base = 1.0) -> value of env at x; \
+base controls connecting segment type: envelope_interp(0.3, [0, 0, 0.5, 1, 1, 0]) -> 0.6")
+  def envelope_interp(x, en, base = 1.0)
     en.map! do |y| y.to_f end unless en.empty?
     if en.empty?
       0.0
@@ -72,10 +84,11 @@ envelope_interp(0.3, [0, 0, 0.5, 1, 1, 0]) -> 0.6\n") if x == :help
     end
   end
 
-  def window_envelope(beg, dur = 0.0, en = [])
-    doc("window_envelope(beg, dur, env)
-portion of env lying between x axis values beg and end:
-window_envelope(1.0, 3.0, [0.0, 0.0, 5.0, 1.0]) -> [1.0, 0.2, 3.0, 0.6]\n") if beg == :help
+  add_help(:window_envelope,
+           "window_envelope(beg, dur, env) \
+portion of env lying between x axis values beg and end: \
+window_envelope(1.0, 3.0, [0.0, 0.0, 5.0, 1.0]) -> [1.0, 0.2, 3.0, 0.6]")
+  def window_envelope(beg, dur, en)
     en.map! do |x| x.to_f end unless en.empty?
     nenv = []
     lasty = en.empty? ? 0.0 : en[1]
@@ -108,10 +121,10 @@ window_envelope(1.0, 3.0, [0.0, 0.0, 5.0, 1.0]) -> [1.0, 0.2, 3.0, 0.6]\n") if b
     nenv.push(dur, lasty)
   end
 
-  def map_envelopes(en1, en2 = [], &func)
-    doc("map_envelopes(env1, env2) { |x, y| ... }
-maps { ... } function over the breakpoints in env1 and env2 returning
-a new envelope\n") if en1 == :help
+  add_help(:map_envelopes,
+           "map_envelopes(env1, env2, &func)  \
+maps func over the breakpoints in env1 and env2 returning a new envelope")
+  def map_envelopes(en1, en2, &func)
     en1.map! do |x| x.to_f end unless en1.empty?
     en2.map! do |x| x.to_f end if en2.kind_of?(Array) and (not en2.empty?)
     xs = []
@@ -142,72 +155,71 @@ a new envelope\n") if en1 == :help
     end
   end
 
-  def multiply_envelopes(en1, en2 = [])
-    doc("multiply_envelopes(env1, env2)
-multiplies break-points of env1 and env2 returning a new envelope:
-multiply_envelopes([0, 0, 2, 0.5], [0, 0, 1, 2, 2, 1]) -> [0.0, 0.0, 0.5, 0.5, 1.0, 0.5]
-") if en1 == :help
+  add_help(:multiply_envelopes,
+           "multiply_envelopes(env1, env2)  \
+multiplies break-points of env1 and env2 returning a new envelope: \
+multiply_envelopes([0, 0, 2, 0.5], [0, 0, 1, 2, 2, 1]) -> [0.0, 0.0, 0.5, 0.5, 1.0, 0.5]")
+  def multiply_envelopes(en1, en2)
     map_envelopes(en1, en2) do |x, y| x * y end
   end
 
+  add_help(:add_envelopes,
+           "add_envelopes(env1, env2) adds break-points of env1 and env2 returning a new envelope")
   def add_envelopes(en1, en2)
-    doc("add_envelopes(env1, env2)
-adds break-points of env1 and env2 returning a new envelope\n") if en1 == :help
     map_envelopes(en1, en2) do |x, y| x + y end
   end
 
+  add_help(:max_envelope, "max_envelope(env) -> max y value in env")
   def max_envelope(en)
-    doc("max_envelope(env) -> max y value in env\n") if en == :help
     mx = en[1].to_f
     1.step(en.length - 1, 2) do |i| mx = [mx, en[i]].max.to_f end
     mx
   end
   
+  add_help(:min_envelope, "min_envelope(env) -> min y value in env")
   def min_envelope(en)
-    doc("min_envelope(env) -> min y value in env\n") if en == :help
     mn = en[1].to_f
     1.step(en.length - 1, 2) do |i| mn = [mn, en[i]].min.to_f end
     mn
   end
 
+  add_help(:integrate_envelope, "integrate_envelope(env) -> area under env")
   def integrate_envelope(en)
-    doc("integrate_envelope(env) -> area under env\n") if en == :help
     sum = 0.0
     0.step(en.length - 3, 2) do |i| sum += (en[i + 1] + en[i + 3]) * (en[i + 2] - en[i]) * 0.5 end
     sum
   end
 
+  add_help(:envelope_last_x, "envelope_last_x(env) -> max x axis break point position")
   def envelope_last_x(en)
-    doc("envelope_last_x(env) -> max x axis break point position\n") if en == :help
     en.empty? ? 0.0 : en[-2]
   end
   
-  def stretch_envelope(fn, old_att = 0.0, new_att = 0.0, old_dec = false, new_dec = false)
-    doc("stretch_envelope(fn, old_att, new_att, old_dec, new_dec)
-Takes FN and returns a new envelope based on it but with the attack
-and optionally decay portions stretched or squeezed; OLD_ATT is the
-original x axis attack end point, NEW_ATT is where that section should
-end in the new envelope.  Similarly for OLD_DEC and NEW_DEC.  This
-mimics divseg in early versions of CLM and its antecedents in Sambox
-and Mus10 (linen).
-stretch_envelope([0, 0, 1, 1], 0.1, 0.2)
-                 -> [0, 0, 0.2, 0.1, 1.0, 1]
+  add_help(:stretch_envelope,
+           "stretch_envelope(fn, old_att, new_att, old_dec, new_dec)  \
+takes FN and returns a new envelope based on it but with the attack \
+and optionally decay portions stretched or squeezed; \
+OLD_ATT is the original x axis attack end point, \
+NEW_ATT is where that section should end in the new envelope.  \
+Similarly for OLD_DEC and NEW_DEC.  \
+This mimics divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).
+stretch_envelope([0, 0, 1, 1], 0.1, 0.2) -> [0, 0, 0.2, 0.1, 1.0, 1]
 stretch_envelope([0, 0, 1, 1, 2, 0], 0.1, 0.2, 1.5, 1.6)
-                 -> [0, 0, 0.2, 0.1, 1.1, 1, 1.6, 0.5, 2.0, 0]\n") if fn == :help
+                 -> [0, 0, 0.2, 0.1, 1.1, 1, 1.6, 0.5, 2.0, 0]")
+  def stretch_envelope(fn, old_att = false, new_att = false, old_dec = false, new_dec = false)
     unless fn.kind_of?(Array)
       error("%s: need an envelope, %s", get_func_name, fn.inspect)
     end
     fn.map! do |x| x.to_f end unless fn.empty?
-    if old_att.kind_of?(Numeric) and !new_att.kind_of?(Numeric)
-      error("%s: wrong number of arguments, old_att %s, new_att %s",
-            get_func_name, old_att.inspect, new_att.inspect)
+    if old_att and (not new_att)
+      snd_raise(:wrong_number_of_args, old_att.inspect, "old_att but no new_att?")
     else
-      if !new_att
+      if (not new_att)
         fn
       else
-        if old_dec.kind_of?(Numeric) and !new_dec.kind_of?(Numeric)
-          error("%s: wrong number of arguments, old_dec %s, new_dec %s",
-                get_func_name, old_dec.inspect, new_dec.inspect)
+        if old_dec and (not new_dec)
+          snd_raise(:wrong_number_of_args,
+                    format("%s %s %s", old_att, new_att, old_dec), "old_dec but no new_dec?")
         else
           new_x = x0 = fn[0]
           last_x = fn[-2]
@@ -254,15 +266,16 @@ stretch_envelope([0, 0, 1, 1, 2, 0], 0.1, 0.2, 1.5, 1.6)
     end
   end
 
-  def scale_envelope(en, scale = 1.0, offset = 0.0)
-    doc("scale_envelope(env, scale, offset = 0.0)
-scales y axis values by SCALER and optionally adds OFFSET\n") if en == :help
+  add_help(:scale_envelope,
+           "scale_envelope(env, scale, offset = 0.0) \
+scales y axis values by SCALER and optionally adds OFFSET")
+  def scale_envelope(en, scale, offset = 0.0)
     1.step(en.length - 1, 2) do |i| en[i] = en[i] * scale + offset end
     en
   end
 
+  add_help(:reverse_envelope, "reverse_envelope(env) reverses the breakpoints in ENV")
   def reverse_envelope(en1)
-    doc("reverse_envelope(env) reverses the breakpoints in ENV\n") if en1 == :help
     len = en1.length
     if len.zero? or len == 2
       en1
@@ -277,9 +290,9 @@ scales y axis values by SCALER and optionally adds OFFSET\n") if en == :help
   end
   alias envelope_reverse reverse_envelope
 
+  add_help(:concatenate_envelopes,
+           "concatenate_envelopes(*envs) concatenates its arguments into a new envelope")
   def concatenate_envelopes(*envs)
-    doc("concatenate_envelopes(*envs)
-concatenates its arguments into a new envelope\n") if envs.first == :help
     if envs.length == 1
       envs.first
     else
@@ -298,14 +311,15 @@ concatenates its arguments into a new envelope\n") if envs.first == :help
   end
   alias envelope_concatenate concatenate_envelopes
 
-  def repeat_envelope(ur_env, repeats = 1, reflected = false, x_normalized = false)
-    doc("repeat_envelope(ur_env, repeats, reflected = false, x_normalized = false)
+  add_help(:repeat_envelope,
+           "repeat_envelope(ur_env, repeats, reflected = false, x_normalized = false) \
 repeats ENV REPEATS times.
 repeat_envelope([0, 0, 100, 1] 2) -> [0, 0, 100, 1, 101, 0, 201, 1]
-If the final y value is different from the first y value, a quick ramp
-is inserted between repeats. X_NORMALIZED causes the new envelope's x
-axis to have the same extent as the original's. REFLECTED causes every
-other repetition to be in reverse.\n") if ur_env == :help
+If the final y value is different from the first y value, \
+a quick ramp is inserted between repeats. \
+X_NORMALIZED causes the new envelope's x axis to have the same extent as the original's. \
+REFLECTED causes every other repetition to be in reverse.")
+  def repeat_envelope(ur_env, repeats, reflected = false, x_normalized = false)
     tms = (reflected ? (repeats / 2) : repeats)
     en = if reflected
            lastx = ur_env[-2].to_f
@@ -346,75 +360,103 @@ other repetition to be in reverse.\n") if ur_env == :help
   end
   alias envelope_repeat repeat_envelope
 
-  # Power envelope
-  Power_env = Struct.new("Power_env", :envs, :total_envs, :current_env, :current_pass)
-
-  def make_power_env(*args)
-    envelope = get_args(args, :envelope, [0, 0, 100, 1]).map do |x| x.to_f end
-    scaler   = get_args(args, :scaler, 1.0)
-    offset   = get_args(args, :offset, 0.0)
-    dur      = get_args(args, :duration, 0.0)
-    len = envelope.length / 3 - 1
-    pe = Power_env.new(Array.new(len), len, 0, 0)
-    xext = envelope[-3] - envelope.first
-    j = 0
-    len.times do |i|
-      x0 = envelope[j]
-      x1 = envelope[j + 3]
-      y0 = envelope[j + 1]
-      y1 = envelope[j + 4]
-      base = envelope[j + 2]
-      pe.envs[i] = make_env(:envelope, [0.0, y0, 1.0, y1],
-                            :base, base,
-                            :scaler, scaler,
-                            :offset, offset,
-                            :duration, dur * ((x1 - x0) / xext))
-      j += 3
+  class Power_env
+    def initialize(*rest)
+      envelope = get_args(rest, :envelope, [0, 0, 1, 100, 1, 1]).map do |x| x.to_f end
+      scaler   = get_args(rest, :scaler, 1.0)
+      offset   = get_args(rest, :offset, 0.0)
+      dur      = get_args(rest, :duration, 0.0)
+      xext = envelope[-3] - envelope.first
+      j = 0
+      @envs = make_array(envelope.length / 3 - 1) do |i|
+        x0 = envelope[j]
+        x1 = envelope[j + 3]
+        y0 = envelope[j + 1]
+        y1 = envelope[j + 4]
+        base = envelope[j + 2]
+        j += 3
+        make_env(:envelope, [0.0, y0, 1.0, y1],
+                 :base, base,
+                 :scaler, scaler,
+                 :offset, offset,
+                 :duration, dur * ((x1 - x0) / xext))
+      end
+      @current_pass = mus_length(@envs.first)
+      @current_env = 0
     end
-    pe.current_pass = mus_length(pe.envs[0])
-    pe
+
+    def power_env
+      val = env(@envs[@current_env])
+      @current_pass -= 1
+      if @current_pass.zero? and @current_env < (@envs.length - 1)
+        @current_env += 1
+        @current_pass = mus_length(@envs[@current_env])
+      end
+      val
+    end
+
+    def power_env_channel(beg, dur, snd, chn, edpos, edname)
+      curbeg = beg
+      as_one_edit_rb(edname) do
+        @envs.each do |en|
+          len = mus_length(en) + 1
+          env_channel(en, curbeg, len, snd, chn, edpos)
+          curbeg += len
+        end
+      end
+    end
+  end
+  
+  # Power envelope
+  def make_power_env(*rest)
+    Power_env.new(*rest)
   end
 
   def power_env(pe)
-    val = env(pe.envs[pe.current_env])
-    pe.current_pass -= 1
-    if pe.current_pass.zero? and pe.current_env < (pe.total_envs - 1)
-      pe.current_env += 1
-      pe.current_pass = mus_length(pe.envs[pe.current_env])
-    end
-    val
+    pe.power_env
   end
 
-  def power_env_channel(pe, *args)
-    beg    = get_args(args, :beg, 0)
-    dur    = get_args(args, :dur, false)
-    snd    = get_args(args, :snd, false)
-    chn    = get_args(args, :chn, false)
-    edpos  = get_args(args, :edpos, false)
-    edname = get_args(args, :edname, "power_env_channel")
-    curbeg = beg
-    as_one_edit(lambda do | |
-                  pe.envs.each do |en|
-                    len = mus_length(en) + 1
-                    env_channel(en, curbeg, len, snd, chn, edpos)
-                    curbeg += len
-                  end
-                end)
-    edname
+  def power_env_channel(pe, beg = 0, dur = false, snd = false, chn = false, edpos = false)
+    pe.power_env_channel(beg, dur, snd, chn, edpos, get_func_name)
   end
+
+  def powenv_channel(envelope, beg = 0, dur = false, snd = false, chn = false, edpos = false)
+    curbeg = beg
+    fulldur = (dur or frames(snd, chn, edpos))
+    len = envelope.length
+    x1 = envelope[0]
+    xrange = envelope[len - 3] - x1
+    y1 = envelope[1]
+    base = envelope[2]
+    x0 = y0 = 0.0
+    if len == 3
+      scale_channel(y1, beg, dur, snd, chn, edpos)
+    else
+      as_one_edit_rb(get_func_name) do
+        3.step(len - 1, 3) do |i|
+          x0, x1 = x1, envelope[i]
+          y0, y1 = y1, envelope[i + 1]
+          curdur = (fulldur * ((x1 - x0) / xrange)).round
+          xramp_channel(y0, y1, base, curbeg, curdur, snd, chn, edpos)
+          curbeg += curdur
+          base = envelope[i + 2]
+        end
+      end
+    end
+  end
+  
+  # by Anders Vinjar:
+  # 
+  # envelope-exp can be used to create exponential segments to include in
+  # envelopes.  Given 2 or more breakpoints, it approximates the
+  # curve between them using 'xgrid linesegments and 'power as the
+  # exponent. 
+  # 
+  # env is a list of x-y-breakpoint-pairs,
+  # power applies to whole envelope,
+  # xgrid is how fine a solution to sample our new envelope with.
 
   def envelope_exp(en, power = 1.0, xgrid = 100)
-    doc("envelope_exp(env, power = 1.0, xgrid = 100)
-
-by Anders Vinjar:
-
-envelope_exp can be used to create exponential segments to include in
-envelopes.  Given 2 or more breakpoints, it approximates the curve
-between them using 'xgrid linesegments and 'power as the exponent.
-
-ENV is a list of x-y-breakpoint-pairs,
-POWER applies to whole envelope,
-XGRID is how fine a solution to sample our new envelope with.\n") if en == :help
     en.map! do |x| x.to_f end unless en.empty?
     mn = min_envelope(en)
     largest_diff = max_envelope(en) - mn
@@ -431,6 +473,39 @@ XGRID is how fine a solution to sample our new envelope with.\n") if en == :help
     new_en
   end
 
+  def rms_envelope(file, *rest)
+    beg   = get_args(rest, :beg, 0.0)
+    dur   = get_args(rest, :dur, false)
+    rfreq = get_args(rest, :rfreg, 30.0)
+    db    = get_args(rest, :db, false)
+    e = []
+    incr = 1.0 / rfreq
+    fsr = mus_sound_srate(file)
+    incrsamps = (incr * sfr).round
+    start = (beg * fsr).round
+    reader = make_sample_reader(start, file)
+    fin = dur ? [start + (fsr * dur).round, mus_sound_frames(file)].min : mus_sound_frames(file)
+    rms = make_average(incrsamps)
+    0.step(fin, incrsamps) do |i|
+      rms_val = 0.0
+      incrsamps.times do |j|
+        val = reader.call
+        rms_val = average(rms, val * val)
+      end
+      e.push(i.to_f / fsr)
+      rms_val = sqrt(rms_val)
+      if db
+        if rms_val < 0.00001
+          e.push(-100.0)
+        else
+          e.push(20.0 * (log(rms_val) / log(10.0)))
+        end
+      else
+        e.push(rms_val)
+      end
+    end
+  end
+  
   def envelope_length(en)
     en.length / 2
   end
@@ -573,14 +648,16 @@ XGRID is how fine a solution to sample our new envelope with.\n") if en == :help
   end
 end
 
+include Env
+
 =begin
-# power envelope test (clm-2/env.lisp)
+# power envelope test (clm-3/env.lisp)
 
 def test_power_env(start, dur, en)
   os = make_oscil()
   pe = make_power_env(:envelope, en, :duration, dur, :scaler, 0.5)
   beg, len = times2samples(start, dur)
-  (beg..len).each do |i| outa(i, power_env(pe) * oscil(os), $rbm_output) end
+  (beg...len).each do |i| outa(i, power_env(pe) * oscil(os), $rbm_output) end
 end
 
 with_sound(:channels, 1, :play, 1) do

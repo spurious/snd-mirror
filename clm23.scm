@@ -262,6 +262,15 @@
        (do ((i start (1+ i))) ((= i end))
 	 (out-any i (* amp (waveshape w1 1.0)) 0 *output*))))))
 
+(define (simple-poly beg dur freq amp)
+  (let* ((w1 (make-polyshape :frequency freq :partials '(1 1 2 1 3 1)))
+	 (start (inexact->exact (floor (* beg (mus-srate)))))
+	 (end (+ start (inexact->exact (floor (* dur (mus-srate)))))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i))) ((= i end))
+	 (out-any i (* amp (polyshape w1 1.0)) 0 *output*))))))
+
 (define (simple-dly beg dur freq amp)
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))

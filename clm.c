@@ -1769,16 +1769,9 @@ Float *mus_partials_to_waveshape(int npartials, Float *partials, int size, Float
   /* partials incoming is a list of partials amps indexed by partial number */
   /* #<0.0, 1.0, 0.0> = 2nd partial 1.0, rest 0. */
   int i;
-  Float maxI2, x, sum = 0.0;
+  Float maxI2, x;
   Float *data;
   if (partials == NULL) return(NULL);
-  for (i = 0; i < npartials; i++) sum += partials[i];
-  if (sum != 0.0) for (i = 0; i < npartials; i++) partials[i] /= sum;
-  for (i = 2; i < npartials; i += 4)
-    {
-      partials[i] = (-partials[i]);
-      if (npartials > (i + 1)) partials[i + 1] = (-partials[i + 1]);
-    }
   if (table == NULL)
     data = (Float *)clm_calloc(size, sizeof(Float), "waveshape table");
   else data = table;
@@ -1786,7 +1779,7 @@ Float *mus_partials_to_waveshape(int npartials, Float *partials, int size, Float
   maxI2 = 2.0 / (Float)(size - 1); /* was size, but mus.lisp was correct?!? */
   for (i = 0, x = -1.0; i < size; i++, x += maxI2)
     {
-      Float temp, Tn, Tn1;
+      Float temp, Tn, Tn1, sum;
       int hnum;
       sum = 0.0;
       temp = 0.0;
@@ -1804,7 +1797,7 @@ Float *mus_partials_to_waveshape(int npartials, Float *partials, int size, Float
   return(array_normalize(data, size));
 }
 
-Float *mus_partials_to_polynomial(int npartials, Float *partials, int kind)
+Float *mus_partials_to_polynomial(int npartials, Float *partials, mus_chebyshev_t kind)
 {
   /* coeffs returned in partials */
   int i;
@@ -1815,7 +1808,15 @@ Float *mus_partials_to_polynomial(int npartials, Float *partials, int kind)
   Tn = (int *)clm_calloc(npartials + 1, sizeof(int), "partials_to_polynomial tn");
   Cc1 = (Float *)clm_calloc(npartials + 1, sizeof(Float), "partials_to_polynomial cc1");
   if (!Cc1) return(NULL);
-  T0[0] = kind;
+  switch (kind)
+    {
+    case MUS_CHEBYSHEV_FIRST_KIND: T0[0] = 1; break;
+    case MUS_CHEBYSHEV_SECOND_KIND: T0[0] = 0; break;
+    case MUS_CHEBYSHEV_OBSOLETE_KIND: 
+      /* fprintf(stderr,"0 is obsolete as 'kind' arg to partials-to-polynomial; use mus-chebyshev-second-kind"); */
+      T0[0] = 0; 
+      break;
+    }
   T1[1] = 1;
   for (i = 1; i < npartials; i++)
     {
@@ -1824,7 +1825,7 @@ Float *mus_partials_to_polynomial(int npartials, Float *partials, int kind)
       amp = partials[i];
       if (amp != 0.0)
 	{
-	  if (kind == 1)
+	  if (kind == MUS_CHEBYSHEV_FIRST_KIND)
 	    for (k = 0; k <= i; k++) 
 	      Cc1[k] += (amp * T1[k]);
 	  else
@@ -1849,45 +1850,36 @@ Float *mus_partials_to_polynomial(int npartials, Float *partials, int kind)
   return(partials);
 }
 
-/* PERHAPS: make-ssb-polyshape partials, ssb-polyshape gen ind fm
+/* PERHAPS: make-ssb-polyshape partials, ssb-polyshape gen driver fm
 
-   in v.ins
-    (polynomial coeffs (oscil fmosc1 vib))
-   becomes
-    (polyshape poly 1.0 vib) -- some way to unexpose index?
-   with earlier
-     (poly (make-polyshape :coeffs (partials->polynomial (list fm1-rat index1 (floor fm2-rat fm1-rat) index2 (floor fm3-rat fm1-rat) index3))))
-   or 
-     (poly (make-polyshape :partials (list fm1-rat index1 (floor fm2-rat fm1-rat) index2 (floor fm3-rat fm1-rat) index3)))
-
-   ssb version
-     pqw-vox is actually saving computation by re-using the polyshape outputs
+	 (sin-coeffs (partials->polynomial normalized-partials mus-chebyshev-second-kind))
+	 (cos-coeffs (partials->polynomial normalized-partials mus-chebyshev-first-kind))
+		(ax (* (min 1.0 (env ind-env)) (oscil spacing-cos vib)))
+		;; fax/yfax/carrier-sin/cos/spacing-sin packaged, vib=fm, ax=driver, "r"?
+		(fax (polynomial cos-coeffs ax))
+		(yfax (* (oscil spacing-sin vib) (polynomial sin-coeffs ax))))
+	   (locsig loc i (* (env amp-env)
+			    (- (* (oscil carrier-sin (* vib r)) yfax) 
+			       (* (oscil carrier-cos (* vib r)) fax))))))))))
 
    [def here]
    [clm2xen.c]
    [clm-strings.h/clm.h]
-   snd-run.c
-   clm.html
-   grfsnd.html
-   snd-test.scm
-   mus.lisp
-   export.lisp
-   initmus.lisp (constant) -- cmus.h
-   run.lisp
-   libclm.def?
-   test ins (ug1 clm-23 etc)
-   sndlib.html mention
-   snd-xref/index
-
-   v.ins etc
-   v.scm etc
-
+   [grfsnd.html]
+   [snd-test.scm]
+   [mus.lisp]
+   [export.lisp]
+   [initmus.lisp (constant) -- cmus.h]
+   [libclm.def?]
+   [sndlib.html mention]
+   [run.lisp]
+   [test ins (ug1 clm-23)]
+   [all ins]
+   [snd-xref/indices]
+   [clm.html]
+   [snd-run.c]
+   
    coeffs retro-fit to filters?
-
-;test 22
-;(let ((gen (make-waveshape))) (waveshape gen)) -> 1.0 (0.0)
-;(let ((gen (make-waveshape))) (gen)) -> 1.0 (0.0)
-
  */
 
 
@@ -1968,7 +1960,6 @@ static mus_any_class POLYSHAPE_CLASS = {
   &_mus_wrap_one_vct_wrapped,
   &poly_reset
 };
-
 
 mus_any *mus_make_polyshape(Float frequency, Float phase, Float *coeffs, int size)
 {

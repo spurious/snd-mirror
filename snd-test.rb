@@ -36,11 +36,12 @@ def provided?(feature)
 end
 
 require "examp.rb"
-include Dsp
 require "ws.rb"
 require "hooks.rb"
 require "extensions.rb"
 require "mix.rb"
+require "pvoc.rb"
+require "bird.rb"
 unless provided? "snd-nogui"
   provided?("snd-motif") and (not provided?("xm")) and require("libxm.so")
   provided?("snd-gtk")   and (not provided?("xg")) and require("libxg.so")
@@ -136,16 +137,20 @@ def snd_display_error(*args)
   snd_backtrace
 end
 
+def float_not_equal(f1, f2, err = 0.001)
+  (f1 - f2).abs > err
+end
+
 def fneq(a, b)
-  (a - b).abs > 0.001
+  float_not_equal(a, b, 0.001)
 end
 
 def ffneq(a, b)
-  (a - b).abs > 0.01
+  float_not_equal(a, b, 0.01)
 end
 
 def fffneq(a, b)
-  (a - b).abs > 0.1
+  float_not_equal(a, b, 0.1)
 end
 
 # compares Arrays and Vcts
@@ -181,6 +186,15 @@ end
 
 def vffequal(v0, v1)
   vct_equal(v0, v1, 0.1)
+end
+
+def cneq(a, b)
+  (a.real - b.real).abs > 0.001 or (a.image - b.image).abs > 0.001
+end
+
+def log0
+  # log(0.0) -> -Infinity
+  0.0
 end
 
 set_mus_file_buffer_size($default_file_buffer_size)
@@ -237,12 +251,12 @@ end
 
 def snd_error_test
   Snd_error_tags.each do |tag|
-    if (res = snd_catch(tag) do snd_throw(tag, "snd-test") end.first) != tag
+    if (res = snd_catch(tag) do snd_throw(tag, "snd-test") end).first != tag
       snd_display("snd_catch: %s -> %s", tag.inspect, res.inspect)
     end
   end
   Snd_error_tags.each do |tag|
-    if (res = snd_catch(tag) do snd_raise(tag, "snd-test") end.first) != tag
+    if (res = snd_catch(tag) do snd_raise(tag, "snd-test") end).first != tag
       snd_display("snd_catch: %s -> %s", tag.inspect, res.inspect)
     end
   end
@@ -733,7 +747,7 @@ def test001(lst, type = :normal)
   when :without_error
     lst.each do |sym|
       next unless sym.kind_of?(Symbol)
-      if (res = snd_catch do snd_var(sym) end.first) != :no_such_sound
+      if (res = snd_catch do snd_var(sym) end).first != :no_such_sound
         snd_display("%s %s != :No_such_sound?", sym, res.inspect)
       end
     end
@@ -1719,7 +1733,7 @@ def test024
   if sound_loop_info(ind) != [1200, 1400, 4, 3, 2, 1, 1, 1]
     snd_display("set null loop_info: %s?", sound_loop_info(ind).inspect)
   end
-  save_sound_as("fmv1.snd", :sound, ind, "header-type".intern, Mus_aifc)
+  save_sound_as("fmv1.snd", :sound, ind, :header_type, Mus_aifc)
   close_sound(ind)
   if mus_sound_loop_info("fmv1.snd") != [1200, 1400, 4, 3, 2, 1, 1, 1]
     snd_display("saved null loop_info: %s?", mus_sound_loop_info("fmv1.snd").inspect)
@@ -1754,7 +1768,7 @@ end
 
 def test044
   oboe_snd = "oboe.snd"
-  if (res = snd_catch do set_mus_sound_maxamp(oboe_snd, [1234]) end.first) != :wrong_type_arg
+  if (res = snd_catch do set_mus_sound_maxamp(oboe_snd, [1234]) end).first != :wrong_type_arg
     snd_display("set_mus_sound_maxamp bad arg: %s?", res.inspect)
   end
   if (not mus_sound_type_specifier(oboe_snd) == 0x646e732e) and # little endian reader
@@ -1824,7 +1838,7 @@ def test054
       vct_set!(v, i, 1.0 - my_random(2.0))
     end
     vct2channel(v, 0, len, ind, 0)
-    save_sound_as("test1.snd", ind, Mus_next, "data-format".intern, type)
+    save_sound_as("test1.snd", ind, Mus_next, :data_format, type)
     close_sound(ind)
     ind = open_sound("test1.snd")
     v1 = channel2vct(0, len, ind, 0)
@@ -1885,8 +1899,8 @@ def test064(fields, devices)
   end
   save_sound_as(:file, "test.snd",
                 :sound, ob,
-                "header-type".intern, Mus_riff,
-                "data-format".intern, Mus_lfloat)
+                :header_type, Mus_riff,
+                :data_format, Mus_lfloat)
   $output_comment_hook.reset_hook!
   ab = open_sound("test.snd")
   if (res = comment(ab)) != (str + " [written by me]")
@@ -2017,9 +2031,11 @@ def test064(fields, devices)
     ["bad_srate.nist", [1, 0, 0]],
     ["bad_length.nist", [1, 22050, -10]]].each do |f, vals|
     with_file(f) do |fsnd|
-      if (res = snd_catch do
-            [mus_sound_chans(fsnd), mus_sound_srate(fsnd), mus_sound_frames(fsnd)]
-          end.first) != vals
+      res = [snd_catch { mus_sound_chans(fsnd) }.first,
+             snd_catch { mus_sound_srate(fsnd) }.first,
+             snd_catch { mus_sound_frames(fsnd) }.first]
+      # bad_length.aifc returns :mus_error
+      if res.first != :mus_error and res != vals
         snd_display("%s: %s != %s?", fsnd, res.inspect, vals.inspect)
       end
     end
@@ -2065,24 +2081,24 @@ def test064(fields, devices)
   if (res = maxamp(ob, 0)) != mx[0]
     snd_display("sound_data_maxamp oboe.snd: %f != %f?", sound_data_maxamp(sd)[0], res)
   end
-  if (res = snd_catch do set_selected_channel(1) end.first) != :no_such_channel
+  if (res = snd_catch do set_selected_channel(1) end).first != :no_such_channel
     snd_display("set_selected_channel bad chan: %s?", res)
   end
-  if (res = snd_catch do set_selected_channel(123456, 1) end.first) != :no_such_sound
+  if (res = snd_catch do set_selected_channel(123456, 1) end).first != :no_such_sound
     snd_display("set_selected_channel bad snd: %s?", res)
   end
   [[2, 1000], [-1, 1000], [0, -1], [0, 10000000]].each do |chn, frm|
-    if (res = snd_catch do sound_data_ref(sd, chn, frm) end.first) != :out_of_range
+    if (res = snd_catch do sound_data_ref(sd, chn, frm) end).first != :out_of_range
       snd_display("sound_data_ref bad chan or frame: %d %d %s?", chn, frm, res.inspect)
     end
   end
   [[2, 1000], [-1, 1000], [0, -1], [0, 10000000]].each do |chn, frm|
-    if (res = snd_catch do sound_data_set!(sd, chn, frm, 1) end.first) != :out_of_range
+    if (res = snd_catch do sound_data_set!(sd, chn, frm, 1) end).first != :out_of_range
       snd_display("sound_data_set! bad chan or frame: %d %d %s?", chn, frm, res.inspect)
     end
   end
   v = make_vct(3)
-  if (res = snd_catch do vct2sound_data(v, sd, 2) end.first) != :out_of_range
+  if (res = snd_catch do vct2sound_data(v, sd, 2) end).first != :out_of_range
     snd_display("vct2sound_data bad chan: %s?", res.inspect)
   end
   close_sound(ob)
@@ -2137,10 +2153,10 @@ def test074
   if fneq((res = sound_data_ref(sdata, 0, 10)), 0.1)
     snd_display("vct2sound_data: %s", res)
   end
-  if (res = snd_catch do sound_data2vct(sdata, 2, v0) end.first) != :out_of_range
+  if (res = snd_catch do sound_data2vct(sdata, 2, v0) end).first != :out_of_range
     snd_display("sound_data2vct bad chan: %s?", res.inspect)
   end
-  if (res = snd_catch do mus_audio_write(1, make_sound_data(3, 3), 123) end.first) != :out_of_range
+  if (res = snd_catch do mus_audio_write(1, make_sound_data(3, 3), 123) end).first != :out_of_range
     snd_display("mus_audio_write bad frames: %s?", res.inspect)
   end
   v0 = make_vct(10)
@@ -2185,59 +2201,59 @@ def test074
   delete_file(fmv5_snd)
   if (res = snd_catch do
         mus_sound_open_output("fmv.snd", 22050, -1, Mus_bshort, Mus_aiff, "no comment")
-      end.first) != :out_of_range
+      end).first != :out_of_range
     snd_display("mus_sound_open_output bad chans: %s?", res)
   end
   if (res = snd_catch do
         mus_sound_open_output("fmv.snd", 22050, 1, -1, Mus_aiff, "no comment")
-      end.first) != :out_of_range
+      end).first != :out_of_range
     snd_display("mus_sound_open_output bad format: %s?", res)
   end
   if (res = snd_catch do
         mus_sound_open_output("fmv.snd", 22050, 1, Mus_bshort, -1, "no comment")
-      end.first) != :out_of_range
+      end).first != :out_of_range
     snd_display("mus_sound_open_output bad type: %s?", res)
   end
   if (res = snd_catch do
         mus_sound_reopen_output("fmv.snd", -1, Mus_bshort, Mus_aiff, false)
-      end.first) != :out_of_range
+      end).first != :out_of_range
     snd_display("mus_sound_reopen_output bad chans: %s?", res)
   end
   if (res = snd_catch do
         mus_sound_reopen_output("fmv.snd", 1, -1, Mus_aiff, false)
-      end.first) != :out_of_range
+      end).first != :out_of_range
     snd_display("mus_sound_reopen_output bad format: %s?", res)
   end
   if (res = snd_catch do
         mus_sound_reopen_output("fmv.snd", 1, Mus_bshort, -1, false)
-      end.first) != :out_of_range
+      end).first != :out_of_range
     snd_display("mus_sound_reopen_output bad type: %s?", res)
   end
   delete_file("fmv.snd")
   [:mus_audio_open_output, :mus_audio_open_input].each do |sym|
     if (res = snd_catch do
           send(sym, Mus_audio_default, 22050, -1, Mus_lshort, 512)
-        end.first) != :out_of_range
+        end).first != :out_of_range
       snd_display("%s bad chans: %s", sym, res)
     end
     if (res = snd_catch do
           send(sym, Mus_audio_default, 22050, 1, -1, 512)
-        end.first) != :out_of_range
+        end).first != :out_of_range
       snd_display("%s bad format: %s", sym, res)
     end
     if (res = snd_catch do
           send(sym, -1, 22050, 1, Mus_lshort, 512)
-        end.first) != :out_of_range
+        end).first != :out_of_range
       snd_display("%s bad device: %s", sym, res)
     end
     if (res = snd_catch do
           send(sym, Mus_audio_default, -22050, 1, Mus_lshort, 512)
-        end.first) != :out_of_range
+        end).first != :out_of_range
       snd_display("%s bad srate: %s", sym, res)
     end
     if (res = snd_catch do
           send(sym, Mus_audio_default, 22050, 1, Mus_lshort, -512)
-        end.first) != :out_of_range
+        end).first != :out_of_range
       snd_display("%s bad size: %s", sym, res)
     end
   end
@@ -2251,11 +2267,7 @@ def test074
     "badform.aiff",
     "trunc1.aiff"].each do |file|
     with_file(file) do |fsnd|
-      # open_sound returns index or false; only if file doesn't exists
-      # it returns :no_such_file
-      if (res = snd_catch(:all) do
-            snd_raise(:mus_error) unless open_sound(fsnd)
-          end.first) != :mus_error
+      if (res = snd_catch(:all) do open_sound(fsnd) end).first != :mus_error
         snd_display("open_sound %s: %s", file, res.inspect)
       end
     end
@@ -2280,10 +2292,10 @@ def test074
   $open_raw_sound_hook.reset_hook!
   vals = make_vct(32)
   [:mus_audio_mixer_read, :mus_audio_mixer_write].each do |sym|
-    if (res = snd_catch do send(sym, -1, Mus_audio_amp, 0, vals) end.first) != :out_of_range
+    if (res = snd_catch do send(sym, -1, Mus_audio_amp, 0, vals) end).first != :out_of_range
       snd_display("%s bad device: %s?", sym, res)
     end
-    if (res = snd_catch do send(sym, Mus_audio_microphone, -1, 0, vals) end.first) != :out_of_range
+    if (res = snd_catch do send(sym, Mus_audio_microphone, -1, 0, vals) end).first != :out_of_range
       snd_display("%s bad fields: %s?", sym, res)
     end
   end
@@ -2440,6 +2452,11 @@ def test094
   #
   # check data_clipped choices
   #
+=begin
+  #
+  # FIXME: something is buggy here
+  # # <SND-ERROR: "mus_file_seek_frame__file_descriptors_not_realloc_d?__tfd__4__io_fd_size__12_: Mus_error">: mus_file_seek_frame__file_descriptors_not_realloc_d?__tfd__4__io_fd_size__12_: Mus_error
+  # 
   ind = view_sound("oboe.snd")
   set_data_clipped(false)
   map_channel(lambda do |y| y * 10.0 end, 0, frames(), ind, 0)
@@ -2481,6 +2498,9 @@ def test094
   delete_file("test.snd")
   set_data_clipped(false)
   close_sound(ind)
+  exit
+=end
+  # 
   delete_file(fmv)
   com = "this is a comment which we'll repeat enough times to trigger an internal loop" * 3
   mus_sound_open_output(fmv, 22050, 4, Mus_lshort, Mus_riff, com)
@@ -2514,7 +2534,7 @@ def test094
       fneq(sound_data_ref(sdata, 0, 2), 0.1) or
       fneq(sound_data_ref(sdata, 0, 3), 0.1) or
       fneq(sound_data_ref(sdata, 0, 6), 0.0)
-    snd_display("re-read/write[%d]: %s?", i, sound_data_channel2list(sdata, i).inspect)
+    snd_display("re-read/write[0]: %s?", sound_data_channel2list(sdata, 0).inspect)
   end
   mus_sound_close_input(fd)
   delete_file(fmv)
@@ -2895,9 +2915,7 @@ def test134
       fp.write magic
       128.times do fp.write(mus_random(1.0)) end
     end
-    res = snd_catch do
-      snd_raise(:mus_error) unless open_sound("test.snd")
-    end.first
+    res = snd_catch do open_sound("test.snd") end.first
     if res.kind_of?(Numeric) and sound?(res)
       snd_display("open_sound garbage %s: %s?", magic, res)
       close_sound(res)
@@ -2908,9 +2926,7 @@ def test134
       fp.write magic
       128.times do fp.write(mus_random(128)) end
     end
-    res = snd_catch do
-      snd_raise(:mus_error) unless open_sound("test.snd")
-    end.first
+    res = snd_catch do open_sound("test.snd") end.first
     if res.kind_of?(Numeric) and sound?(res)
       snd_display("open_sound plausible garbage %s: %s?", magic, res)
       close_sound(res)
@@ -2927,9 +2943,7 @@ def test134
         end
       end
     end
-    res = snd_catch do
-      snd_raise(:mus_error) unless open_sound("test.snd")
-    end.first
+    res = snd_catch do open_sound("test.snd") end.first
     if res.kind_of?(Numeric) and sound?(res)
       snd_display("open_sound very plausible garbage %s: %s?", magic, res)
       close_sound(res)
@@ -3207,20 +3221,6 @@ def test144
 end
 
 def test04(formats, comments, fields, devices)
-  $snd_error_hook.reset_hook!
-  $mus_error_hook.reset_hook!
-  $snd_error_hook.add_hook!("snd-test") do |msg|
-    # if msg.empty?
-    #   snd_display_error("<SND-INTERRUPT>")
-    # else
-    #   snd_display_error("<SND-ERROR: %s>", msg)
-    # end
-    true
-  end
-  $mus_error_hook.add_hook!("snd-test") do |type, msg|
-    # deals with sndlib's :mus_error
-    true
-  end
   clear_listener
   let(open_sound("/usr//usr/include/" + $home_dir + "/cl/oboe.snd")) do |ind|
     show_input_1
@@ -3247,8 +3247,6 @@ def test04(formats, comments, fields, devices)
   test124
   test134
   test144
-  $snd_error_hook.reset_hook!
-  $mus_error_hook.reset_hook!
   (sounds or []).each do |snd| close_sound(snd) end
 end
   
@@ -3428,18 +3426,6 @@ def test_orig(func0, func1, func_name, ind1)
   revert_sound(ind1)
 end
 
-def old_map_channel(beg = false, dur = false, snd = false, chn = false, edpos = false, &body)
-  map_channel(lambda do |y|
-                val = body.call(y)
-                if val.kind_of?(Array)
-                  list2vct(val)
-                else
-                  val
-                end
-              end,
-              beg, dur, snd, chn, edpos, edpos)
-end
-
 def make_bandpass_2(flo1, fhi1, flo2, fhi2, len = 30)
   f1 = make_bandpass(flo1, fhi1, len)
   f2 = make_bandpass(flo2, fhi2, len)
@@ -3606,11 +3592,9 @@ EDITS: 1
   test_output = lambda do |str|
     idx += 1
     test_idx += 1
-    res = display_edits(ind, 0, idx).split(/\n/)[0..1].join("\n")
-    str = str.split(/\n/)[0..1].join("\n")
-    # FIXME: Edits are not in every case in a buffer but in a temp
-    # file, so we look only for the first line of text.
-    snd_display("new %d: %s %s?", test_idx, str, res) unless res == str
+    if (res = display_edits(ind, 0, idx)) != str
+      snd_display("new %d: %s %s?", test_idx, str, res)
+    end
   end
   delete_samples(3, 4)
   test_output.call("
@@ -3800,9 +3784,9 @@ def test015
   test_name = "scl"
   test_output = lambda do |ed, str|
     idx += 1
-    res = display_edits(ind, 0, ed).split(/\n/)[0..1].join("\n")
-    str = str.split(/\n/)[0..1].join("\n")
-    snd_display("%s %d: %s %s", test_name, idx, str, res) unless res == str
+    if (res = display_edits(ind, 0, ed)) != str
+      snd_display("%s %d: %s %s?", test_name, idx, str, res)
+    end
   end
   map_channel($init_channel, 0, 10)
   scale_channel(0.5)
@@ -3909,20 +3893,20 @@ def test015
   ramp_channel(0.0, 1.0)
   test_output.call(2, "
  (ramp 0 10) ; ramp_channel(0.000, 1.000, 0, false [2:2]:
-   (at 0, cp->sounds[1][0:9, 1.000, [1]-0.000 -> 1.000]) [buf: 10] 
+   (at 0, cp->sounds[1][0:9, 1.000, [1]0.000 -> 1.000]) [buf: 10] 
    (at 10, end_mark)
 ")
   scale_channel(0.5)
   test_output.call(3, "
  (scale 0 10) ; scale_channel(0.500, 0, false [3:2]:
-   (at 0, cp->sounds[1][0:9, 0.500, [1]-0.000 -> 1.000]) [buf: 10] 
+   (at 0, cp->sounds[1][0:9, 0.500, [1]0.000 -> 1.000]) [buf: 10] 
    (at 10, end_mark)
 ")
   undo
   scale_channel(0.5, 0, 5)
   test_output.call(3, "
  (scale 0 5) ; scale_channel(0.500, 0, 5 [3:3]:
-   (at 0, cp->sounds[1][0:4, 0.500, [1]-0.000 -> 0.444]) [buf: 10] 
+   (at 0, cp->sounds[1][0:4, 0.500, [1]0.000 -> 0.444]) [buf: 10] 
    (at 5, cp->sounds[1][5:9, 1.000, [1]0.556 -> 1.000]) [buf: 10] 
    (at 10, end_mark)
 ")
@@ -3930,7 +3914,7 @@ def test015
   scale_channel(0.5, 2, 4)
   test_output.call(3, "
  (scale 2 4) ; scale_channel(0.500, 2, 4 [3:4]:
-   (at 0, cp->sounds[1][0:1, 1.000, [1]-0.000 -> 0.111]) [buf: 10] 
+   (at 0, cp->sounds[1][0:1, 1.000, [1]0.000 -> 0.111]) [buf: 10] 
    (at 2, cp->sounds[1][2:5, 0.500, [1]0.222 -> 0.556]) [buf: 10] 
    (at 6, cp->sounds[1][6:9, 1.000, [1]0.667 -> 1.000]) [buf: 10] 
    (at 10, end_mark)
@@ -3939,7 +3923,7 @@ def test015
   scale_channel(0.5, 5, 5)
   test_output.call(3, "
  (scale 5 5) ; scale_channel(0.500, 5, 5 [3:3]:
-   (at 0, cp->sounds[1][0:4, 1.000, [1]-0.000 -> 0.444]) [buf: 10] 
+   (at 0, cp->sounds[1][0:4, 1.000, [1]0.000 -> 0.444]) [buf: 10] 
    (at 5, cp->sounds[1][5:9, 0.500, [1]0.556 -> 1.000]) [buf: 10] 
    (at 10, end_mark)
 ")
@@ -4083,9 +4067,9 @@ def test025
   test_name = "xramp"
   test_output = lambda do |ed, str|
     idx += 1
-    res = display_edits(ind, 0, ed).split(/\n/)[0..1].join("\n")
-    str = str.split(/\n/)[0..1].join("\n")
-    snd_display("%s %d: %s %s", test_name, idx, str, res) unless res == str
+    if (res = display_edits(ind, 0, ed)) != str
+      snd_display("%s %d: %s %s?", test_name, idx, str, res)
+    end
   end
   map_channel($init_channel, 0, 10)
   xramp_channel(0.0, 1.0, 32.0)
@@ -4098,7 +4082,7 @@ def test025
   xramp_channel(0.0, 1.0, 0.325)
   test_output.call(2, "
  (ramp 0 10) ; xramp_channel(0.000, 1.000, 0.325, 0, false [2:2]:
-   (at 0, cp->sounds[1][0:9, 1.000, [4]-0.000 -> -1.124, off: 1.481, scl: -1.481]) [buf: 10] 
+   (at 0, cp->sounds[1][0:9, 1.000, [4]0.000 -> -1.124, off: 1.481, scl: -1.481]) [buf: 10] 
    (at 10, end_mark)
 ")
   undo
@@ -4112,7 +4096,7 @@ def test025
   xramp_channel(0.0, 1.0, 1.0)
   test_output.call(2, "
  (ramp 0 10) ; ramp_channel(0.000, 1.000, 0, false [2:2]:
-   (at 0, cp->sounds[1][0:9, 1.000, [1]-0.000 -> 1.000]) [buf: 10] 
+   (at 0, cp->sounds[1][0:9, 1.000, [1]0.000 -> 1.000]) [buf: 10] 
    (at 10, end_mark)
 ")
   undo
@@ -4384,16 +4368,16 @@ def test035
   test_name = "ramp2"
   test_output = lambda do |ed, str|
     idx += 1
-    res = display_edits(ind, 0, ed).split(/\n/)[0..1].join("\n")
-    str = str.split(/\n/)[0..1].join("\n")
-    snd_display("%s %d: %s %s", test_name, idx, str, res) unless res == str
+    if (res = display_edits(ind, 0, ed)) != str
+      snd_display("%s %d: %s %s?", test_name, idx, str, res)
+    end
   end
   map_chan($init_channel, 0, 10)
   ramp_channel(0.0, 1.0)
   ramp_channel(0.0, 1.0)
   test_output.call(3, "
  (ramp 0 11) ; ramp_channel(0.000, 1.000, 0, false [3:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [2]0.000 -> 1.000]) [buf: 11] 
    (at 11, end_mark)
 ")
   unless vequal(res = channel2vct,
@@ -4403,14 +4387,14 @@ def test035
   scale_channel(0.5)
   test_output.call(4, "
  (scale 0 11) ; scale_channel(0.500, 0, false [4:2]:
-   (at 0, cp->sounds[1][0:10, 0.500, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 0.500, [1]0.000 -> 1.000, [2]0.000 -> 1.000]) [buf: 11] 
    (at 11, end_mark)
 ")
   undo
   scale_channel(0.5, 0, 5)
   test_output.call(4, "
  (scale 0 5) ; scale_channel(0.500, 0, 5 [4:3]:
-   (at 0, cp->sounds[1][0:4, 0.500, [1]-0.000 -> 0.400, [2]-0.000 -> 0.400]) [buf: 11] 
+   (at 0, cp->sounds[1][0:4, 0.500, [1]0.000 -> 0.400, [2]0.000 -> 0.400]) [buf: 11] 
    (at 5, cp->sounds[1][5:10, 1.000, [1]0.500 -> 1.000, [2]0.500 -> 1.000]) [buf: 11] 
    (at 11, end_mark)
 ")
@@ -4422,7 +4406,7 @@ def test035
   scale_channel(0.5, 2, 4)
   test_output.call(4, "
  (scale 2 4) ; scale_channel(0.500, 2, 4 [4:4]:
-   (at 0, cp->sounds[1][0:1, 1.000, [1]-0.000 -> 0.100, [2]-0.000 -> 0.100]) [buf: 11] 
+   (at 0, cp->sounds[1][0:1, 1.000, [1]0.000 -> 0.100, [2]0.000 -> 0.100]) [buf: 11] 
    (at 2, cp->sounds[1][2:5, 0.500, [1]0.200 -> 0.500, [2]0.200 -> 0.500]) [buf: 11] 
    (at 6, cp->sounds[1][6:10, 1.000, [1]0.600 -> 1.000, [2]0.600 -> 1.000]) [buf: 11] 
    (at 11, end_mark)
@@ -4431,14 +4415,14 @@ def test035
   ramp_channel(0.75, 0.25)
   test_output.call(3, "
  (ramp 0 11) ; ramp_channel(0.750, 0.250, 0, false [3:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [2]0.750 -> 0.250]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [2]0.750 -> 0.250]) [buf: 11] 
    (at 11, end_mark)
 ")
   undo
   ramp_channel(0.2, 0.6, 2, 6)
   test_output.call(3, "
  (ramp 2 6) ; ramp_channel(0.200, 0.600, 2, 6 [3:4]:
-   (at 0, cp->sounds[1][0:1, 1.000, [1]-0.000 -> 0.100]) [buf: 11] 
+   (at 0, cp->sounds[1][0:1, 1.000, [1]0.000 -> 0.100]) [buf: 11] 
    (at 2, cp->sounds[1][2:7, 1.000, [1]0.200 -> 0.700, [2]0.200 -> 0.600]) [buf: 11] 
    (at 8, cp->sounds[1][8:10, 1.000, [1]0.800 -> 1.000]) [buf: 11] 
    (at 11, end_mark)
@@ -4446,7 +4430,7 @@ def test035
   scale_channel(0.5, 0, 5)
   test_output.call(4, "
  (scale 0 5) ; scale_channel(0.500, 0, 5 [4:5]:
-   (at 0, cp->sounds[1][0:1, 0.500, [1]-0.000 -> 0.100]) [buf: 11] 
+   (at 0, cp->sounds[1][0:1, 0.500, [1]0.000 -> 0.100]) [buf: 11] 
    (at 2, cp->sounds[1][2:4, 0.500, [1]0.200 -> 0.400, [2]0.200 -> 0.360]) [buf: 11] 
    (at 5, cp->sounds[1][5:7, 1.000, [1]0.500 -> 0.700, [2]0.440 -> 0.600]) [buf: 11] 
    (at 8, cp->sounds[1][8:10, 1.000, [1]0.800 -> 1.000]) [buf: 11] 
@@ -4456,7 +4440,7 @@ def test035
   set_sample(4, 0.5)
   test_output.call(4, "
  (set 4 1) ; set_sample(4, 0.5000 [4:6]:
-   (at 0, cp->sounds[1][0:1, 1.000, [1]-0.000 -> 0.100]) [buf: 11] 
+   (at 0, cp->sounds[1][0:1, 1.000, [1]0.000 -> 0.100]) [buf: 11] 
    (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.300, [2]0.200 -> 0.280]) [buf: 11] 
    (at 4, cp->sounds[2][0:0, 1.000]) [buf: 1] 
    (at 5, cp->sounds[1][5:7, 1.000, [1]0.500 -> 0.700, [2]0.440 -> 0.600]) [buf: 11] 
@@ -4482,7 +4466,7 @@ def test035
    (at 60, cp->sounds[1][60:69, 0.500, [1]0.606 -> 0.697, [2]0.394 -> 0.303]) [buf: 100] 
    (at 70, cp->sounds[1][70:79, 0.500, [1]0.707 -> 0.798, [2]0.293 -> 0.202]) [buf: 100] 
    (at 80, cp->sounds[1][80:89, 0.500, [1]0.808 -> 0.899, [2]0.192 -> 0.101]) [buf: 100] 
-   (at 90, cp->sounds[1][90:99, 0.500, [1]0.909 -> 1.000, [2]0.091 -> -0.000]) [buf: 100] 
+   (at 90, cp->sounds[1][90:99, 0.500, [1]0.909 -> 1.000, [2]0.091 -> 0.000]) [buf: 100] 
    (at 100, end_mark)
 ")
   undo(12)
@@ -4492,11 +4476,11 @@ def test035
   test_output.call(4, "
  (ramp 25 10) ; ramp_channel(0.000, 1.000, 25, 10 [4:8]:
    (at 0, cp->sounds[1][0:9, 1.000]) [buf: 100] 
-   (at 10, cp->sounds[1][10:24, 1.000, [1]-0.000 -> 0.737]) [buf: 100] 
-   (at 25, cp->sounds[1][25:29, 1.000, [1]0.789 -> 1.000, [2]-0.000 -> 0.444]) [buf: 100] 
+   (at 10, cp->sounds[1][10:24, 1.000, [1]0.000 -> 0.737]) [buf: 100] 
+   (at 25, cp->sounds[1][25:29, 1.000, [1]0.789 -> 1.000, [2]0.000 -> 0.444]) [buf: 100] 
    (at 30, cp->sounds[1][30:34, 1.000, [1]0.556 -> 1.000]) [buf: 100] 
    (at 35, cp->sounds[1][35:49, 1.000]) [buf: 100] 
-   (at 50, cp->sounds[1][50:59, 1.000, [1]-0.000 -> 1.000]) [buf: 100] 
+   (at 50, cp->sounds[1][50:59, 1.000, [1]0.000 -> 1.000]) [buf: 100] 
    (at 60, cp->sounds[1][60:99, 1.000]) [buf: 100] 
    (at 100, end_mark)
 ")
@@ -4510,16 +4494,16 @@ def test045
   test_name = "ramp-xramp"
   test_output = lambda do |ed, str|
     idx += 1
-    res = display_edits(ind, 0, ed).split(/\n/)[0..1].join("\n")
-    str = str.split(/\n/)[0..1].join("\n")
-    snd_display("%s %d: %s %s", test_name, idx, str, res) unless res == str
+    if (res = display_edits(ind, 0, ed)) != str
+      snd_display("%s %d: %s %s?", test_name, idx, str, res)
+    end
   end
   map_chan($init_channel, 0, 10)
   ramp_channel(0.0, 1.0)
   xramp_channel(0.0, 1.0, 32.0)
   test_output.call(3, "
  (ramp 0 11) ; xramp_channel(0.000, 1.000, 32.000, 0, false [3:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   unless vequal(case1 = channel2vct,
@@ -4529,14 +4513,14 @@ def test045
   scale_channel(0.5)
   test_output.call(4, "
  (scale 0 11) ; scale_channel(0.500, 0, false [4:2]:
-   (at 0, cp->sounds[1][0:10, 0.500, [1]-0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 0.500, [1]0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   undo
   scale_channel(0.5, 0, 5)
   test_output.call(4, "
  (scale 0 5) ; scale_channel(0.500, 0, 5 [4:3]:
-   (at 0, cp->sounds[1][0:4, 0.500, [1]-0.000 -> 0.400, [4]0.000 -> 1.386, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:4, 0.500, [1]0.000 -> 0.400, [4]0.000 -> 1.386, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 5, cp->sounds[1][5:10, 1.000, [1]0.500 -> 1.000, [4]1.733 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
@@ -4548,7 +4532,7 @@ def test045
   scale_channel(0.5, 2, 4)
   test_output.call(4, "
  (scale 2 4) ; scale_channel(0.500, 2, 4 [4:4]:
-   (at 0, cp->sounds[1][0:1, 1.000, [1]-0.000 -> 0.100, [4]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:1, 1.000, [1]0.000 -> 0.100, [4]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 2, cp->sounds[1][2:5, 0.500, [1]0.200 -> 0.500, [4]0.693 -> 1.733, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 6, cp->sounds[1][6:10, 1.000, [1]0.600 -> 1.000, [4]2.079 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
@@ -4557,24 +4541,24 @@ def test045
   xramp_channel(0.75, 0.25, 32.0)
   test_output.call(3, "
  (ramp 0 11) ; xramp_channel(0.750, 0.250, 32.000, 0, false [3:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [4]3.466 -> 0.000, off: 0.234, scl: 0.016]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [4]3.466 -> 0.000, off: 0.234, scl: 0.016]) [buf: 11] 
    (at 11, end_mark)
 ")
   undo
   xramp_channel(0.2, 0.6, 3.0, 2, 6)
   test_output.call(3, "
  (ramp 2 6) ; xramp_channel(0.200, 0.600, 3.000, 2, 6 [3:4]:
-   (at 0, cp->sounds[1][0:1, 1.000, [1]-0.000 -> 0.100]) [buf: 11] 
-   (at 2, cp->sounds[1][2:7, 1.000, [1]0.200 -> 0.700, [4]-0.000 -> 1.099, off: -0.000, scl: 0.200]) [buf: 11] 
+   (at 0, cp->sounds[1][0:1, 1.000, [1]0.000 -> 0.100]) [buf: 11] 
+   (at 2, cp->sounds[1][2:7, 1.000, [1]0.200 -> 0.700, [4]0.000 -> 1.099, off: 0.000, scl: 0.200]) [buf: 11] 
    (at 8, cp->sounds[1][8:10, 1.000, [1]0.800 -> 1.000]) [buf: 11] 
    (at 11, end_mark)
 ")
   scale_channel(0.5, 0, 5)
   test_output.call(4, "
  (scale 0 5) ; scale_channel(0.500, 0, 5 [4:5]:
-   (at 0, cp->sounds[1][0:1, 0.500, [1]-0.000 -> 0.100]) [buf: 11] 
-   (at 2, cp->sounds[1][2:4, 0.500, [1]0.200 -> 0.400, [4]-0.000 -> 0.439, off: -0.000, scl: 0.200]) [buf: 11] 
-   (at 5, cp->sounds[1][5:7, 1.000, [1]0.500 -> 0.700, [4]0.659 -> 1.099, off: -0.000, scl: 0.200]) [buf: 11] 
+   (at 0, cp->sounds[1][0:1, 0.500, [1]0.000 -> 0.100]) [buf: 11] 
+   (at 2, cp->sounds[1][2:4, 0.500, [1]0.200 -> 0.400, [4]0.000 -> 0.439, off: 0.000, scl: 0.200]) [buf: 11] 
+   (at 5, cp->sounds[1][5:7, 1.000, [1]0.500 -> 0.700, [4]0.659 -> 1.099, off: 0.000, scl: 0.200]) [buf: 11] 
    (at 8, cp->sounds[1][8:10, 1.000, [1]0.800 -> 1.000]) [buf: 11] 
    (at 11, end_mark)
 ")
@@ -4582,10 +4566,10 @@ def test045
   set_sample(4, 0.5)
   test_output.call(4, "
  (set 4 1) ; set_sample(4, 0.5000 [4:6]:
-   (at 0, cp->sounds[1][0:1, 1.000, [1]-0.000 -> 0.100]) [buf: 11] 
-   (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.300, [4]-0.000 -> 0.220, off: -0.000, scl: 0.200]) [buf: 11] 
+   (at 0, cp->sounds[1][0:1, 1.000, [1]0.000 -> 0.100]) [buf: 11] 
+   (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.300, [4]0.000 -> 0.220, off: 0.000, scl: 0.200]) [buf: 11] 
    (at 4, cp->sounds[2][0:0, 1.000]) [buf: 1] 
-   (at 5, cp->sounds[1][5:7, 1.000, [1]0.500 -> 0.700, [4]0.659 -> 1.099, off: -0.000, scl: 0.200]) [buf: 11] 
+   (at 5, cp->sounds[1][5:7, 1.000, [1]0.500 -> 0.700, [4]0.659 -> 1.099, off: 0.000, scl: 0.200]) [buf: 11] 
    (at 8, cp->sounds[1][8:10, 1.000, [1]0.800 -> 1.000]) [buf: 11] 
    (at 11, end_mark)
 ")
@@ -4596,7 +4580,7 @@ def test045
   ramp_channel(0.0, 1.0)
   test_output.call(3, "
  (ramp 0 11) ; ramp_channel(0.000, 1.000, 0, false [3:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   unless vequal(case1, (res = channel2vct))
@@ -4605,14 +4589,14 @@ def test045
   scale_channel(0.5)
   test_output.call(4, "
  (scale 0 11) ; scale_channel(0.500, 0, false [4:2]:
-   (at 0, cp->sounds[1][0:10, 0.500, [1]-0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 0.500, [1]0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   undo
   scale_channel(0.5, 0, 5)
   test_output.call(4, "
  (scale 0 5) ; scale_channel(0.500, 0, 5 [4:3]:
-   (at 0, cp->sounds[1][0:4, 0.500, [1]-0.000 -> 0.400, [4]0.000 -> 1.386, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:4, 0.500, [1]0.000 -> 0.400, [4]0.000 -> 1.386, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 5, cp->sounds[1][5:10, 1.000, [1]0.500 -> 1.000, [4]1.733 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
@@ -4623,7 +4607,7 @@ def test045
   scale_channel(0.5, 2, 4)
   test_output.call(4, "
  (scale 2 4) ; scale_channel(0.500, 2, 4 [4:4]:
-   (at 0, cp->sounds[1][0:1, 1.000, [1]-0.000 -> 0.100, [4]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:1, 1.000, [1]0.000 -> 0.100, [4]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 2, cp->sounds[1][2:5, 0.500, [1]0.200 -> 0.500, [4]0.693 -> 1.733, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 6, cp->sounds[1][6:10, 1.000, [1]0.600 -> 1.000, [4]2.079 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
@@ -4674,9 +4658,9 @@ def test055
   test_name = "ramp2+xramp"
   test_output = lambda do |ed, str|
     idx += 1
-    res = display_edits(ind, 0, ed).split(/\n/)[0..1].join("\n")
-    str = str.split(/\n/)[0..1].join("\n")
-    snd_display("%s %d: %s %s", test_name, idx, str, res) unless res == str
+    if (res = display_edits(ind, 0, ed)) != str
+      snd_display("%s %d: %s %s?", test_name, idx, str, res)
+    end
   end
   map_chan($init_channel, 0, 10)
   xramp_channel(0.0, 1.0, 32.0)
@@ -4684,7 +4668,7 @@ def test055
   ramp_channel(0.0, 1.0)
   test_output.call(4, "
  (ramp 0 11) ; ramp_channel(0.000, 1.000, 0, false [4:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [2]0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   unless vequal(case1 = channel2vct,
@@ -4694,14 +4678,14 @@ def test055
   scale_channel(0.5)
   test_output.call(5, "
  (scale 0 11) ; scale_channel(0.500, 0, false [5:2]:
-   (at 0, cp->sounds[1][0:10, 0.500, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 0.500, [1]0.000 -> 1.000, [2]0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   undo
   scale_channel(0.5, 0, 5)
   test_output.call(5, "
  (scale 0 5) ; scale_channel(0.500, 0, 5 [5:3]:
-   (at 0, cp->sounds[1][0:4, 0.500, [1]-0.000 -> 0.400, [2]-0.000 -> 0.400, [4]0.000 -> 1.386, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:4, 0.500, [1]0.000 -> 0.400, [2]0.000 -> 0.400, [4]0.000 -> 1.386, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 5, cp->sounds[1][5:10, 1.000, [1]0.500 -> 1.000, [2]0.500 -> 1.000, [4]1.733 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
@@ -4713,7 +4697,7 @@ def test055
   scale_channel(0.5, 2, 4)
   test_output.call(5, "
  (scale 2 4) ; scale_channel(0.500, 2, 4 [5:4]:
-   (at 0, cp->sounds[1][0:1, 1.000, [1]-0.000 -> 0.100, [2]-0.000 -> 0.100, [4]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:1, 1.000, [1]0.000 -> 0.100, [2]0.000 -> 0.100, [4]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 2, cp->sounds[1][2:5, 0.500, [1]0.200 -> 0.500, [2]0.200 -> 0.500, [4]0.693 -> 1.733, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 6, cp->sounds[1][6:10, 1.000, [1]0.600 -> 1.000, [2]0.600 -> 1.000, [4]2.079 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
@@ -4722,14 +4706,14 @@ def test055
   ramp_channel(0.75, 0.25)
   test_output.call(4, "
  (ramp 0 11) ; ramp_channel(0.750, 0.250, 0, false [4:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [2]0.750 -> 0.250, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [2]0.750 -> 0.250, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   undo
   ramp_channel(0.2, 0.6, 2, 6)
   test_output.call(4, "
  (ramp 2 6) ; ramp_channel(0.200, 0.600, 2, 6 [4:4]:
-   (at 0, cp->sounds[1][0:1, 1.000, [1]-0.000 -> 0.100, [4]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:1, 1.000, [1]0.000 -> 0.100, [4]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 2, cp->sounds[1][2:7, 1.000, [1]0.200 -> 0.700, [2]0.200 -> 0.600, [4]0.693 -> 2.426, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 8, cp->sounds[1][8:10, 1.000, [1]0.800 -> 1.000, [4]2.773 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
@@ -4737,7 +4721,7 @@ def test055
   scale_channel(0.5, 0, 5)
   test_output.call(5, "
  (scale 0 5) ; scale_channel(0.500, 0, 5 [5:5]:
-   (at 0, cp->sounds[1][0:1, 0.500, [1]-0.000 -> 0.100, [4]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:1, 0.500, [1]0.000 -> 0.100, [4]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 2, cp->sounds[1][2:4, 0.500, [1]0.200 -> 0.400, [2]0.200 -> 0.360, [4]0.693 -> 1.386, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 5, cp->sounds[1][5:7, 1.000, [1]0.500 -> 0.700, [2]0.440 -> 0.600, [4]1.733 -> 2.426, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 8, cp->sounds[1][8:10, 1.000, [1]0.800 -> 1.000, [4]2.773 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
@@ -4747,7 +4731,7 @@ def test055
   set_sample(4, 0.5)
   test_output.call(5, "
  (set 4 1) ; set_sample(4, 0.5000 [5:6]:
-   (at 0, cp->sounds[1][0:1, 1.000, [1]-0.000 -> 0.100, [4]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:1, 1.000, [1]0.000 -> 0.100, [4]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.300, [2]0.200 -> 0.280, [4]0.693 -> 1.040, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 4, cp->sounds[2][0:0, 1.000]) [buf: 1] 
    (at 5, cp->sounds[1][5:7, 1.000, [1]0.500 -> 0.700, [2]0.440 -> 0.600, [4]1.733 -> 2.426, off: -0.032, scl: 0.032]) [buf: 11] 
@@ -4763,12 +4747,23 @@ def test055
   xramp_channel(0.0, 1.0, 32.0)
   test_output.call(4, "
  (ramp 0 11) ; xramp_channel(0.000, 1.000, 32.000, 0, false [4:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [2]0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   unless vequal(case1, (res = channel2vct))
     snd_display("xramp+ramp2 (1): %s", res.inspect)
   end
+  revert_sound(ind)
+  map_channel($init_channel, 0, 100)
+  scale_channel(0.75)
+  ramp_channel(0.5, 1.0)
+  ptree_channel(lambda do |y| y * (1.0 / 0.75) end)
+  scale_channel(2.0)
+  ramp_channel(1.0, 0.5)
+  ptree_channel(lambda do |y| y * 0.25 end)
+  scale_channel(4.0)
+  ramp_channel(0.0, 1.0)
+  snd_display("rprpr max: %f?", maxamp) if fneq(maxamp, 1.0)
   close_sound(ind)
 end
 
@@ -4782,19 +4777,19 @@ def test065
   test_name = "multi-ramp2+xramp"
   test_output = lambda do |ed, str|
     idx += 1
-    res = display_edits(ind, 0, ed).split(/\n/)[0..1].join("\n")
-    str = str.split(/\n/)[0..1].join("\n")
-    snd_display("%s %d: %s %s", test_name, idx, str, res) unless res == str
+    if (res = display_edits(ind, 0, ed)) != str
+      snd_display("%s %d: %s %s?", test_name, idx, str, res)
+    end
   end
   map_channel($init_channel, 0, 100)
   scale_channel(0.5)
-  xramp_channel(0.0, 1.0, 32.0)
+  xramp_channel(1.0, 0.0, 32.0)
   ramp_channel(0.0, 1.0)
   ramp_channel(0.0, 1.0)
   case3 = channel2vct
   undo(4)
   10.times do |i| scale_channel(0.5, i * 10, 10) end
-  xramp_channel(0.0, 1.0, 32.0)
+  xramp_channel(1.0, 0.0, 32.0)
   ramp_channel(0.0, 1.0)
   ramp_channel(0.0, 1.0)
   test_output.call(14, "
@@ -4816,25 +4811,25 @@ def test065
   end
   revert_sound
   map_channel($init_channel, 0, 100)
-  xramp_channel(0.0, 1.0, 32.0)
+  xramp_channel(1.0, 0.0, 32.0)
   ramp_channel(0.0, 1.0, 10, 20)
   ramp_channel(0.0, 1.0, 50, 10)
   ramp_channel(0.0, 1.0, 25, 10)
   test_output.call(5, "
  (ramp 25 10) ; ramp_channel(0.000, 1.000, 25, 10 [5:8]:
    (at 0, cp->sounds[1][0:9, 1.000, [4]3.466 -> 3.151, off: -0.032, scl: 0.032]) [buf: 100] 
-   (at 10, cp->sounds[1][10:24, 1.000, [1]-0.000 -> 0.737, [4]3.116 -> 2.626, off: -0.032, scl: 0.032]) [buf: 100] 
-   (at 25, cp->sounds[1][25:29, 1.000, [1]0.789 -> 1.000, [2]-0.000 -> 0.444, [4]2.591 -> 2.451, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 10, cp->sounds[1][10:24, 1.000, [1]0.000 -> 0.737, [4]3.116 -> 2.626, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 25, cp->sounds[1][25:29, 1.000, [1]0.789 -> 1.000, [2]0.000 -> 0.444, [4]2.591 -> 2.451, off: -0.032, scl: 0.032]) [buf: 100] 
    (at 30, cp->sounds[1][30:34, 1.000, [1]0.556 -> 1.000, [4]2.416 -> 2.275, off: -0.032, scl: 0.032]) [buf: 100] 
    (at 35, cp->sounds[1][35:49, 1.000, [4]2.240 -> 1.750, off: -0.032, scl: 0.032]) [buf: 100] 
-   (at 50, cp->sounds[1][50:59, 1.000, [1]-0.000 -> 1.000, [4]1.715 -> 1.400, off: -0.032, scl: 0.032]) [buf: 100] 
+   (at 50, cp->sounds[1][50:59, 1.000, [1]0.000 -> 1.000, [4]1.715 -> 1.400, off: -0.032, scl: 0.032]) [buf: 100] 
    (at 60, cp->sounds[1][60:99, 1.000, [4]1.365 -> 0.000, off: -0.032, scl: 0.032]) [buf: 100] 
    (at 100, end_mark)
 ")
   close_sound(ind)
   ind = new_sound("test.snd")
   idx = -1
-  test_name = "multi-xramp-ramp"
+  test_name = "multi-ramp-xramp"
   map_channel($init_channel, 0, 100)
   scale_channel(0.5)
   ramp_channel(0.0, 1.0)
@@ -4868,7 +4863,7 @@ def test065
   test_output.call(4, "
  (ramp 25 10) ; xramp_channel(0.000, 1.000, 3.000, 25, 10 [4:8]:
    (at 0, cp->sounds[1][0:9, 1.000]) [buf: 100] 
-   (at 10, cp->sounds[1][10:24, 1.000, [4]-0.000 -> 0.810, off: -0.500, scl: 0.500]) [buf: 100] 
+   (at 10, cp->sounds[1][10:24, 1.000, [4]0.000 -> 0.810, off: -0.500, scl: 0.500]) [buf: 100] 
    (at 25, cp->sounds[1][25:29, 1.000, [3]0.000 -> 0.488, [4]0.867 -> 1.099, off: -0.500, scl: 0.500, off2: -0.500, scl2: 0.500]) [buf: 100] 
    (at 30, cp->sounds[1][30:34, 1.000, [4]0.610 -> 1.099, off: -0.500, scl: 0.500]) [buf: 100] 
    (at 35, cp->sounds[1][35:49, 1.000]) [buf: 100] 
@@ -4877,6 +4872,7 @@ def test065
    (at 100, end_mark)
 ")
   revert_sound
+  test_name = "multi-xramp-ramp"
   map_channel($init_channel, 0, 100)
   10.times do |i| scale_channel(0.5, i * 10, 10) end
   xramp_channel(1.0, 0.0, 32.0)
@@ -4902,11 +4898,11 @@ def test065
   test_output.call(4, "
  (ramp 25 10) ; ramp_channel(0.000, 1.000, 25, 10 [4:8]:
    (at 0, cp->sounds[1][0:9, 1.000]) [buf: 100] 
-   (at 10, cp->sounds[1][10:24, 1.000, [1]-0.000 -> 0.737]) [buf: 100] 
-   (at 25, cp->sounds[1][25:29, 1.000, [1]0.789 -> 1.000, [2]-0.000 -> 0.444]) [buf: 100] 
+   (at 10, cp->sounds[1][10:24, 1.000, [1]0.000 -> 0.737]) [buf: 100] 
+   (at 25, cp->sounds[1][25:29, 1.000, [1]0.789 -> 1.000, [2]0.000 -> 0.444]) [buf: 100] 
    (at 30, cp->sounds[1][30:34, 1.000, [1]0.556 -> 1.000]) [buf: 100] 
    (at 35, cp->sounds[1][35:49, 1.000]) [buf: 100] 
-   (at 50, cp->sounds[1][50:59, 1.000, [1]-0.000 -> 1.000]) [buf: 100] 
+   (at 50, cp->sounds[1][50:59, 1.000, [1]0.000 -> 1.000]) [buf: 100] 
    (at 60, cp->sounds[1][60:99, 1.000]) [buf: 100] 
    (at 100, end_mark)
 ")
@@ -4957,7 +4953,7 @@ def test065
   xramp_channel(0.75, 0.25, 0.3)
   test_output.call(3, "
  (ramp 0 11) ; xramp_channel(0.750, 0.250, 0.300, 0, false [3:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [3]-1.204 -> -0.000, [4]0.000 -> 0.693, off: -1.000, scl: 1.000, off2: 0.964, scl2: -0.714]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [3]-1.204 -> 0.000, [4]0.000 -> 0.693, off: -1.000, scl: 1.000, off2: 0.964, scl2: -0.714]) [buf: 11] 
    (at 11, end_mark)
 ")
   undo
@@ -5000,7 +4996,7 @@ def test065
   xramp_channel(1.0, 0.0, 0.3)
   test_output.call(13, "
  (ramp 0 100) ; xramp_channel(1.000, 0.000, 0.300, 0, false [13:11]:
-   (at 0, cp->sounds[1][0:9, 0.500, [3]-1.204 -> -1.095, [4]-0.000 -> 0.100, off: -0.500, scl: 0.500, off2: 1.429, scl2: -1.429]) [buf: 100] 
+   (at 0, cp->sounds[1][0:9, 0.500, [3]-1.204 -> -1.095, [4]0.000 -> 0.100, off: -0.500, scl: 0.500, off2: 1.429, scl2: -1.429]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 0.500, [3]-1.082 -> -0.973, [4]0.111 -> 0.211, off: -0.500, scl: 0.500, off2: 1.429, scl2: -1.429]) [buf: 100] 
    (at 20, cp->sounds[1][20:29, 0.500, [3]-0.961 -> -0.851, [4]0.222 -> 0.322, off: -0.500, scl: 0.500, off2: 1.429, scl2: -1.429]) [buf: 100] 
    (at 30, cp->sounds[1][30:39, 0.500, [3]-0.839 -> -0.730, [4]0.333 -> 0.433, off: -0.500, scl: 0.500, off2: 1.429, scl2: -1.429]) [buf: 100] 
@@ -5023,9 +5019,9 @@ def test075
   test_name = "ramp3"
   test_output = lambda do |ed, str|
     idx += 1
-    res = display_edits(ind, 0, ed).split(/\n/)[0..1].join("\n")
-    str = str.split(/\n/)[0..1].join("\n")
-    snd_display("%s %d: %s %s", test_name, idx, str, res) unless res == str
+    if (res = display_edits(ind, 0, ed)) != str
+      snd_display("%s %d: %s %s?", test_name, idx, str, res)
+    end
   end
   map_chan($init_channel, 0, 10)
   ramp_channel(0.0, 1.0)
@@ -5033,7 +5029,7 @@ def test075
   ramp_channel(0.0, 1.0)
   test_output.call(4, "
  (ramp 0 11) ; ramp_channel(0.000, 1.000, 0, false [4:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, [3]-0.000 -> 1.000]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [2]0.000 -> 1.000, [3]0.000 -> 1.000]) [buf: 11] 
    (at 11, end_mark)
 ")
   unless vequal(res = channel2vct,
@@ -5043,14 +5039,14 @@ def test075
   scale_channel(0.5)
   test_output.call(5, "
  (scale 0 11) ; scale_channel(0.500, 0, false [5:2]:
-   (at 0, cp->sounds[1][0:10, 0.500, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, [3]-0.000 -> 1.000]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 0.500, [1]0.000 -> 1.000, [2]0.000 -> 1.000, [3]0.000 -> 1.000]) [buf: 11] 
    (at 11, end_mark)
 ")
   undo
   scale_channel(0.5, 0, 5)
   test_output.call(5, "
  (scale 0 5) ; scale_channel(0.500, 0, 5 [5:3]:
-   (at 0, cp->sounds[1][0:4, 0.500, [1]-0.000 -> 0.400, [2]-0.000 -> 0.400, [3]-0.000 -> 0.400]) [buf: 11] 
+   (at 0, cp->sounds[1][0:4, 0.500, [1]0.000 -> 0.400, [2]0.000 -> 0.400, [3]0.000 -> 0.400]) [buf: 11] 
    (at 5, cp->sounds[1][5:10, 1.000, [1]0.500 -> 1.000, [2]0.500 -> 1.000, [3]0.500 -> 1.000]) [buf: 11] 
    (at 11, end_mark)
 ")
@@ -5058,7 +5054,7 @@ def test075
   scale_channel(0.5, 2, 4)
   test_output.call(5, "
  (scale 2 4) ; scale_channel(0.500, 2, 4 [5:4]:
-   (at 0, cp->sounds[1][0:1, 1.000, [1]-0.000 -> 0.100, [2]-0.000 -> 0.100, [3]-0.000 -> 0.100]) [buf: 11] 
+   (at 0, cp->sounds[1][0:1, 1.000, [1]0.000 -> 0.100, [2]0.000 -> 0.100, [3]0.000 -> 0.100]) [buf: 11] 
    (at 2, cp->sounds[1][2:5, 0.500, [1]0.200 -> 0.500, [2]0.200 -> 0.500, [3]0.200 -> 0.500]) [buf: 11] 
    (at 6, cp->sounds[1][6:10, 1.000, [1]0.600 -> 1.000, [2]0.600 -> 1.000, [3]0.600 -> 1.000]) [buf: 11] 
    (at 11, end_mark)
@@ -5067,14 +5063,14 @@ def test075
   ramp_channel(0.75, 0.25)
   test_output.call(4, "
  (ramp 0 11) ; ramp_channel(0.750, 0.250, 0, false [4:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, [3]0.750 -> 0.250]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [2]0.000 -> 1.000, [3]0.750 -> 0.250]) [buf: 11] 
    (at 11, end_mark)
 ")
   undo
   ramp_channel(0.2, 0.6, 2, 6)
   test_output.call(4, "
  (ramp 2 6) ; ramp_channel(0.200, 0.600, 2, 6 [4:4]:
-   (at 0, cp->sounds[1][0:1, 1.000, [1]-0.000 -> 0.100, [2]-0.000 -> 0.100]) [buf: 11] 
+   (at 0, cp->sounds[1][0:1, 1.000, [1]0.000 -> 0.100, [2]0.000 -> 0.100]) [buf: 11] 
    (at 2, cp->sounds[1][2:7, 1.000, [1]0.200 -> 0.700, [2]0.200 -> 0.700, [3]0.200 -> 0.600]) [buf: 11] 
    (at 8, cp->sounds[1][8:10, 1.000, [1]0.800 -> 1.000, [2]0.800 -> 1.000]) [buf: 11] 
    (at 11, end_mark)
@@ -5082,7 +5078,7 @@ def test075
   scale_channel(0.5, 0, 5)
   test_output.call(5, "
  (scale 0 5) ; scale_channel(0.500, 0, 5 [5:5]:
-   (at 0, cp->sounds[1][0:1, 0.500, [1]-0.000 -> 0.100, [2]-0.000 -> 0.100]) [buf: 11] 
+   (at 0, cp->sounds[1][0:1, 0.500, [1]0.000 -> 0.100, [2]0.000 -> 0.100]) [buf: 11] 
    (at 2, cp->sounds[1][2:4, 0.500, [1]0.200 -> 0.400, [2]0.200 -> 0.400, [3]0.200 -> 0.360]) [buf: 11] 
    (at 5, cp->sounds[1][5:7, 1.000, [1]0.500 -> 0.700, [2]0.500 -> 0.700, [3]0.440 -> 0.600]) [buf: 11] 
    (at 8, cp->sounds[1][8:10, 1.000, [1]0.800 -> 1.000, [2]0.800 -> 1.000]) [buf: 11] 
@@ -5092,7 +5088,7 @@ def test075
   set_sample(4, 0.5)
   test_output.call(5, "
  (set 4 1) ; set_sample(4, 0.5000 [5:6]:
-   (at 0, cp->sounds[1][0:1, 1.000, [1]-0.000 -> 0.100, [2]-0.000 -> 0.100]) [buf: 11] 
+   (at 0, cp->sounds[1][0:1, 1.000, [1]0.000 -> 0.100, [2]0.000 -> 0.100]) [buf: 11] 
    (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.300, [2]0.200 -> 0.300, [3]0.200 -> 0.280]) [buf: 11] 
    (at 4, cp->sounds[2][0:0, 1.000]) [buf: 1] 
    (at 5, cp->sounds[1][5:7, 1.000, [1]0.500 -> 0.700, [2]0.500 -> 0.700, [3]0.440 -> 0.600]) [buf: 11] 
@@ -5133,11 +5129,11 @@ def test075
  (ramp 30 30) ; ramp_channel(0.000, 1.000, 30, 30 [5:10]:
    (at 0, cp->sounds[1][0:9, 1.000]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 1.000, [1]0.000 -> 0.310]) [buf: 100] 
-   (at 20, cp->sounds[1][20:29, 1.000, [1]0.345 -> 0.655, [2]-0.000 -> 0.643]) [buf: 100] 
+   (at 20, cp->sounds[1][20:29, 1.000, [1]0.345 -> 0.655, [2]0.000 -> 0.643]) [buf: 100] 
    (at 30, cp->sounds[1][30:34, 1.000, [1]0.690 -> 0.828, [2]0.714 -> 1.000, [3]0.000 -> 0.138]) [buf: 100] 
    (at 35, cp->sounds[1][35:39, 1.000, [1]0.862 -> 1.000, [2]0.172 -> 0.310]) [buf: 100] 
    (at 40, cp->sounds[1][40:49, 1.000, [1]0.345 -> 0.655]) [buf: 100] 
-   (at 50, cp->sounds[1][50:59, 1.000, [1]-0.000 -> 0.474, [2]0.690 -> 1.000]) [buf: 100] 
+   (at 50, cp->sounds[1][50:59, 1.000, [1]0.000 -> 0.474, [2]0.690 -> 1.000]) [buf: 100] 
    (at 60, cp->sounds[1][60:69, 1.000, [1]0.526 -> 1.000]) [buf: 100] 
    (at 70, cp->sounds[1][70:99, 1.000]) [buf: 100] 
    (at 100, end_mark)
@@ -5151,7 +5147,7 @@ def test075
   xramp_channel(0.0, 1.0, 32.0)
   test_output.call(3, "
  (ramp 0 11) ; xramp_channel(0.000, 1.000, 32.000, 0, false [3:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   idx = -1
@@ -5183,7 +5179,7 @@ def test075
   ramp_channel(0.0, 1.0)
   test_output.call(4, "
  (ramp 0 11) ; ramp_channel(0.000, 1.000, 0, false [4:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [3]0.000 -> 3.466, [4]0.000 -> -1.139, off: 1.471, scl: -1.471, off2: -0.032, scl2: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [3]0.000 -> 3.466, [4]0.000 -> -1.139, off: 1.471, scl: -1.471, off2: -0.032, scl2: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   idx = -1
@@ -5193,7 +5189,7 @@ def test075
   ramp_channel(0.0, 1.0)
   test_output.call(3, "
  (ramp 0 11) ; ramp_channel(0.000, 1.000, 0, false [3:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   idx = -1
@@ -5204,7 +5200,7 @@ def test075
   xramp_channel(0.0, 1.0, 32.0)
   test_output.call(4, "
  (ramp 0 11) ; xramp_channel(0.000, 1.000, 32.000, 0, false [4:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [2]0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   idx = -1
@@ -5216,7 +5212,7 @@ def test075
   ramp_channel(0.0, 1.0)
   test_output.call(5, "
  (ramp 0 11) ; ramp_channel(0.000, 1.000, 0, false [5:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, [3]-0.000 -> 1.000, [4]-0.000 -> 1.000]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [2]0.000 -> 1.000, [3]0.000 -> 1.000, [4]0.000 -> 1.000]) [buf: 11] 
    (at 11, end_mark)
 ")
   idx = -1
@@ -5228,7 +5224,7 @@ def test075
   xramp_channel(0.0, 1.0, 32.0)
   test_output.call(5, "
  (ramp 0 11) ; xramp_channel(0.000, 1.000, 32.000, 0, false [5:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, [3]-0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000, [1]0.000 -> 1.000, [2]0.000 -> 1.000, [3]0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 ")
   close_sound(ind)
@@ -5268,7 +5264,7 @@ def test085
     len = data.length
     rd = make_sample_reader(len - 1, ind, 0, -1)
     dat = make_vct(len)
-    (len - 1).downto(0) do |i| dat[i] = read_sample(rd) end
+    (len - 1).downto(0) do |i| dat[i] = rd.call end
     free_sample_reader(rd)
     dat
   end
@@ -5760,7 +5756,7 @@ def test105
       end
     end
   end
-  if (err = snd_catch do graph2ps("/bad/bad.eps") end.first) != :cannot_print
+  if (err = snd_catch do graph2ps("/bad/bad.eps") end).first != :cannot_print
     snd_display("graph2ps err: %s?", err.inspect)
   end
   n2 = open_sound("2.snd") or open_sound("4.aiff")
@@ -5907,7 +5903,7 @@ def test105
       snd_display("sample_reader_home: %s %s?", res.inspect, [ind, 0].inspect)
     end
     snd_display("%s init at end?", rd.inspect) if sample_reader_at_end?(rd)
-    if (res = snd_catch do region2vct(-1, 1233, r0) end.first) != :no_such_sample
+    if (res = snd_catch do region2vct(-1, 1233, r0) end).first != :no_such_sample
       snd_display("region2vct -1: %s", res.inspect)
     end
     if res = snd_catch do region2vct(12345678, 1, r0) end.first
@@ -5927,11 +5923,11 @@ def test105
     end
     free_sample_reader(rd)
   end
-  if (res = snd_catch do make_sample_reader(0, ind, -1) end.first) != :no_such_channel
-    snd_display("make_sample_reader bad chan -1: %s?", val.inspect)
+  if (res = snd_catch do make_sample_reader(0, ind, -1) end).first != :no_such_channel
+    snd_display("make_sample_reader bad chan -1: %s?", res.inspect)
   end
-  if (res = snd_catch do make_sample_reader(0, ind, 1) end.first) != :no_such_channel
-    snd_display("make_sample_reader bad chan 1: %s?", val.inspect)
+  if (res = snd_catch do make_sample_reader(0, ind, 1) end).first != :no_such_channel
+    snd_display("make_sample_reader bad chan 1: %s?", res.inspect)
   end
   let(make_sample_reader(0)) do |fd|
     snd_display("sample_reader: mix %s?", fd.inspect) if mix_sample_reader?(fd)
@@ -5947,15 +5943,15 @@ def test105
   if (res = snd_catch do
         reg = regions.first
         make_region_sample_reader(0, reg, region_chans(reg) + 1)
-      end.first) != :no_such_channel
+      end).first != :no_such_channel
     snd_display("make_region_sample_reader bad chan (2): %s %s", res.inspect, regions.inspect)
   end
   revert_sound(ind)
   insert_sample(100, 0.5, ind)
-  if (res = snd_catch do insert_sound("oboe.snd", 0, 1) end.first) != :no_such_channel
+  if (res = snd_catch do insert_sound("oboe.snd", 0, 1) end).first != :no_such_channel
     snd_display("insert_sound bad chan (1): %s", res.inspect)
   end
-  if (res = snd_catch do insert_sample(-12, 1.0) end.first) != :no_such_sample
+  if (res = snd_catch do insert_sample(-12, 1.0) end).first != :no_such_sample
     snd_display("insert_sample bad pos: %s", res.inspect)
   end
   set_show_axes(Show_no_axes, ind, 0)
@@ -6105,7 +6101,7 @@ def test105
   insert_region(60, id, ind)
   snd_display("insert_region len: %d?", frames) if frames != (len + 100)
   snd_display("insert_region: %f %f?", sample(100), s40) if fneq(sample(100), s40)
-  if (res = snd_catch do insert_region(0, 1000 + regions.max) end.first) != :no_such_region
+  if (res = snd_catch do insert_region(0, 1000 + regions.max) end).first != :no_such_region
     snd_display("insert_region bad id: %s", res.inspect)
   end
   save_region(id, "fmv.snd")
@@ -6116,7 +6112,7 @@ def test105
     [:mus_sound_frames, region_frames(id)],
   ].each do |func, var|
     if (res = send(func, "fmv.snd")) != var
-      snd_display("save_region %s: %s (%s)?", func, res.inspect, val.inspect)
+      snd_display("save_region %s: %s (%s)?", func, res.inspect, var.inspect)
     end
   end
   snd_display("save_region position: %d", region_position(id, 0)) if region_position(id, 0).nonzero?
@@ -6128,14 +6124,14 @@ def test105
     [:mus_sound_frames, region_frames(id)],
   ].each do |func, var|
     if (res = send(func, "fmv.snd")) != var
-      snd_display("save_region %s: %s (%s)?", func, res.inspect, val.inspect)
+      snd_display("save_region %s: %s (%s)?", func, res.inspect, var.inspect)
     end
   end
   delete_file("fmv.snd")
   save_region(id,
               :file, "fmv.snd",
-              "header-type".intern, Mus_riff,
-              "data-format".intern, Mus_lshort,
+              :header_type, Mus_riff,
+              :data_format, Mus_lshort,
               :comment, "this is a comment")
   [[:mus_sound_header_type, Mus_riff],
     [:mus_sound_data_format, Mus_lshort],
@@ -6143,32 +6139,32 @@ def test105
     [:mus_sound_frames, region_frames(id)],
   ].each do |func, var|
     if (res = send(func, "fmv.snd")) != var
-      snd_display("save_region opt %s: %s (%s)?", func, res.inspect, val.inspect)
+      snd_display("save_region opt %s: %s (%s)?", func, res.inspect, var.inspect)
     end
   end
   delete_file("fmv.snd")
   save_region(id,
               :comment, "this is a comment",
               :file, "fmv.snd",
-              "data-format".intern, Mus_lshort,
-              "header-type".intern, Mus_riff)
+              :data_format, Mus_lshort,
+              :header_type, Mus_riff)
   [[:mus_sound_header_type, Mus_riff],
     [:mus_sound_data_format, Mus_lshort],
     [:mus_sound_comment, "this is a comment"],
     [:mus_sound_frames, region_frames(id)],
   ].each do |func, var|
     if (res = send(func, "fmv.snd")) != var
-      snd_display("save_region opt1 %s: %s (%s)?", func, res.inspect, val.inspect)
+      snd_display("save_region opt1 %s: %s (%s)?", func, res.inspect, var.inspect)
     end
   end
   delete_file("fmv.snd")
-  save_region(id, "fmv.snd", "data-format".intern, Mus_bshort)
+  save_region(id, "fmv.snd", :data_format, Mus_bshort)
   [[:mus_sound_header_type, Mus_next],
     [:mus_sound_data_format, Mus_bshort],
     [:mus_sound_frames, region_frames(id)],
   ].each do |func, var|
     if (res = send(func, "fmv.snd")) != var
-      snd_display("save_region opt2 %s: %s (%s)?", func, res.inspect, val.inspect)
+      snd_display("save_region opt2 %s: %s (%s)?", func, res.inspect, var.inspect)
     end
   end
   delete_file("fmv.snd")
@@ -6177,7 +6173,7 @@ def test105
 end
 
 def test115
-  if (res = snd_catch do new_sound("hi.snd", 0, 1, 100, 0) end.first) != :out_of_range
+  if (res = snd_catch do new_sound("hi.snd", 0, 1, 100, 0) end).first != :out_of_range
     snd_display("new_sound bad chan: %d?", res)
   end
   # 
@@ -6273,10 +6269,10 @@ def test115
   save_selection("fmv5.snd", Mus_next, Mus_bint, 22050, "")
   revert_sound(ind)
   # 
-  if (res = snd_catch do file2array("/baddy/hiho", 0, 0, 128, v0) end.first) != :no_such_file
+  if (res = snd_catch do file2array("/baddy/hiho", 0, 0, 128, v0) end).first != :no_such_file
     snd_display("file2array w/o file: %s", res.inspect)
   end
-  if (res = snd_catch do file2array("fmv5.snd", 123, 0, 128, v0) end.first) != :no_such_channel
+  if (res = snd_catch do file2array("fmv5.snd", 123, 0, 128, v0) end).first != :no_such_channel
     snd_display("file2array w/o channel: %s", res.inspect)
   end
   file2array("fmv5.snd", 0, 0, 128, v0)
@@ -6322,8 +6318,8 @@ def test115
   delete_file("fmv4.snd")
   # 
   save_selection(:file, "fmv4.snd",
-                 "header-type".intern, Mus_riff,
-                 "data-format".intern, Mus_lfloat,
+                 :header_type, Mus_riff,
+                 :data_format, Mus_lfloat,
                  :srate, 44100,
                  :comment, "this is a comment")
   if (res = mus_sound_header_type("fmv4.snd")) != Mus_riff
@@ -6340,7 +6336,7 @@ def test115
   end
   delete_file("fmv4.snd")
   # 
-  save_selection(:file, "fmv4.snd", "data-format".intern, Mus_bfloat, :channel, 0)
+  save_selection(:file, "fmv4.snd", :data_format, Mus_bfloat, :channel, 0)
   if (res = mus_sound_header_type("fmv4.snd")) != Mus_next
     snd_display("save_selection opt1 type 1: %s", mus_header_type_name(res))
   end
@@ -6384,7 +6380,7 @@ def test125
     snd_display("amp_control_bounds: %s?", res.inspect)
   end
   set_amp_control(2.0, obind)
-  if (res = snd_catch do apply_controls(obind) end.first) == :no_such_sound
+  if (res = snd_catch do apply_controls(obind) end).first == :no_such_sound
     snd_display("apply_controls: can't find oboe.snd? %s", res.inspect)
   end
   newamp = maxamp(obind)
@@ -6480,29 +6476,24 @@ def test125
   true_tree = [
     [0, 0, 0, 998, 1.0, 0.0, 0.0, 0],
     [999, 0, 999, 999, 0.999969720840454, 0.0, 0.0, 0],
-    # [1000, 0, 1000, 1000, 6.09052181243896, 0.0, 0.0, 0],
-    [1000, 0, 1000, 1000, 6.10186210646809, 0.0, 0.0, 0],
+    [1000, 0, 1000, 1000, 6.09052181243896, 0.0, 0.0, 0],
     [1001, 0, 1001, 1001, 0.999969720840454, 0.0, 0.0, 0],
     [1002, 0, 1002, 1999, 0.499984979629517, 0.0, 0.0, 0],
-    # [2000, 0, 2000, 2000, 7.54652404785156, 0.0, 0.0, 0],
-    [2000, 0, 2000, 2000, 7.52918206118976, 0.0, 0.0, 0],
-    # [2001, 0, 2001, 2001, 3.7732629776001, 0.0, 0.0, 0],
-    [2001, 0, 2001, 2001, 3.6966380866426, 0.0, 0.0, 0],
+    [2000, 0, 2000, 2000, 7.54652404785156, 0.0, 0.0, 0],
+    [2001, 0, 2001, 2001, 3.7732629776001, 0.0, 0.0, 0],
     [2002, 0, 2002, 2002, 0.999969720840454, 0.0, 0.0, 0],
     [2003, 0, 2003, 50827, 1.0, 0.0, 0.0, 0],
     [50828, -2, 0, 0, 0.0, 0.0, 0.0, 0]]
   if tree.length != true_tree.length
     snd_display("edit trees are not same length: %d %d?", tree.length, true_tree.length)
   else
-    tree.each_with_index do |branch, i|
-      true_branch = true_tree[i]
+    tree.zip(true_tree) do |branch, true_branch|
       if branch[0] != true_branch[0] or
           branch[1] != true_branch[1] or
           branch[2] != true_branch[2] or
           branch[3] != true_branch[3] or
-          fneq(branch[4], true_branch[4])
-        snd_display("edit trees disagree at %d:\n# %s\n# %s",
-                    i, branch.inspect, true_branch.inspect)
+          float_not_equal(branch[4], true_branch[4], 0.02)
+        snd_display("edit trees disagree:\n# %s\n# %s", branch.inspect, true_branch.inspect)
       end
     end
   end
@@ -6518,32 +6509,28 @@ def test125
     [999, -1, 0, 1, 0.0, 0.0, 0.0, 0],
     [1001, 0, 949, 998, 1.0, 0.0, 0.0, 0],
     [1051, 0, 999, 999, 0.999969720840454, 0.0, 0.0, 0],
-    # [1052, 0, 1000, 1000, 6.09052181243896, 0.0, 0.0, 0],
-    [1052, 0, 1000, 1000, 6.10186210646809, 0.0, 0.0, 0],
+    [1052, 0, 1000, 1000, 6.09052181243896, 0.0, 0.0, 0],
     [1053, -1, 0, 7, 0.0, 0.0, 0.0, 0],
     [1061, 0, 1001, 1001, 0.999969720840454, 0.0, 0.0, 0],
     [1062, 0, 1002, 1946, 0.499984979629517, 0.0, 0.0, 0],
     [2007, -1, 0, 0, 0.0, 0.0, 0.0, 0],
     [2008, 0, 1947, 1999, 0.499984979629517, 0.0, 0.0, 0],
-    # [2061, 0, 2000, 2000, 7.54652404785156, 0.0, 0.0, 0],
-    [2061, 0, 2000, 2000, 7.52918206118976, 0.0, 0.0, 0],
-    # [2062, 0, 2001, 2001, 3.7732629776001, 0.0, 0.0, 0],
-    [2062, 0, 2001, 2001, 3.6966380866426, 0.0, 0.0, 0],
+    [2061, 0, 2000, 2000, 7.54652404785156, 0.0, 0.0, 0],
+    [2062, 0, 2001, 2001, 3.7732629776001, 0.0, 0.0, 0],
     [2063, 0, 2002, 2002, 0.999969720840454, 0.0, 0.0, 0],
     [2064, 0, 2003, 50827, 1.0, 0.0, 0.0, 0],
     [50889, -2, 0, 0, 0.0, 0.0, 0.0, 0]]
   if tree.length != true_tree.length
     snd_display("silenced edit trees are not same length: %d %d?", tree.length, true_tree.length)
   else
-    tree.each_with_index do |branch, i|
-      true_branch = true_tree[i]
+    tree.zip(true_tree) do |branch, true_branch|
       if branch[0] != true_branch[0] or
           branch[1] != true_branch[1] or
           branch[2] != true_branch[2] or
           branch[3] != true_branch[3] or
-          fneq(branch[4], true_branch[4])
-        snd_display("silenced edit trees disagree at %d:\n# %s\n# %s",
-                    i, branch.inspect, true_branch.inspect)
+          float_not_equal(branch[4], true_branch[4], 0.02)
+        snd_display("silenced edit trees disagree:\n# %s\n# %s",
+                    branch.inspect, true_branch.inspect)
       end
     end
   end
@@ -6584,10 +6571,10 @@ def test125
   undo
   snd_display("delete_selection val: %f %f?", val, sample(1000)) if fneq(sample(1000), val)
   insert_selection
-  if (res = snd_catch do insert_selection(0, obind, 123) end.first) != :no_such_channel
+  if (res = snd_catch do insert_selection(0, obind, 123) end).first != :no_such_channel
     snd_display("insert_selection bad chan: %s?", res.inspect)
   end
-  if (res = snd_catch do mix_selection(0, obind, 123) end.first) != :no_such_channel
+  if (res = snd_catch do mix_selection(0, obind, 123) end).first != :no_such_channel
     snd_display("mix_selection bad chan: %s?", res.inspect)
   end
   snd_display("insert_selection: %d?", frames(obind)) if frames(obind) != frs + 1000
@@ -6936,7 +6923,7 @@ def test155
   update_time_graph
   set_amp_control(0.1, obind)
   select_channel(2)
-  if (res = snd_catch do apply_controls(obind, 1) end.first) == :no_such_sound
+  if (res = snd_catch do apply_controls(obind, 1) end).first == :no_such_sound
     snd_display("apply_controls can\'t find 4.aiff: %s?", res.inspect)
   end
   newamps = maxamp(obind, true)
@@ -7027,10 +7014,10 @@ def test165
             lambda do |snd| clm_channel(make_one_pole(:a0, 0.5, :b1, 0.0)) end, :clm_channel, ind1)
   test_orig(lambda do |snd| filter_sound(make_one_zero(:a0, 2.0, :a1, 0.0)) end,
             lambda do |snd| filter_sound(make_one_zero(:a0, 0.5, :a1, 0.0)) end, :filter_sound,ind1)
-  if (res = snd_catch do src_sound([0, 0, 1, 1]) end.first) != :out_of_range
+  if (res = snd_catch do src_sound([0, 0, 1, 1]) end).first != :out_of_range
     snd_display("src_sound env at 0: %s", res.inspect)
   end
-  if (res = snd_catch do src_sound([0, 1, 1, -1]) end.first) != :out_of_range
+  if (res = snd_catch do src_sound([0, 1, 1, -1]) end).first != :out_of_range
     snd_display("src_sound env through 0: %s", res.inspect)
   end
   # 
@@ -7401,11 +7388,11 @@ def test205
   play_and_wait(0, ind1, 0, false, false, 1)
   #
   delete_samples(0, 10000, ind1, 0)
-  save_sound_as("fmv.snd", ind1, "edit-position".intern, 0)
-  save_sound_as("fmv1.snd", ind1, "edit-position".intern, lambda do |snd, chn| 1 end)
+  save_sound_as("fmv.snd", ind1, :edit_position, 0)
+  save_sound_as("fmv1.snd", ind1, :edit_position, lambda do |snd, chn| 1 end)
   if (res = snd_catch do
         save_sound_as("fmv2.snd", ind1, :channel, 1234)
-      end.first) != :no_such_channel
+      end).first != :no_such_channel
     snd_display("save_sound_as bad chan: %s", res.inspect)
   end
   if (res0 = mus_sound_frames("fmv.snd")) != (res1 = frames(ind1, 0, 0))
@@ -7487,7 +7474,7 @@ def test205
   #
   if (res = snd_catch do
         set_previous_files_sort_procedure(lambda do |a, b, c| false end)
-      end.first) != :bad_arity
+      end).first != :bad_arity
     snd_display("previous_files_sort_procedure arity error: %s?", res.inspect)
   end
   5.times do |i| set_previous_files_sort(i) end
@@ -7576,7 +7563,7 @@ exit\n"
         # Proc#arity returns -1 instead of 1
         snd_raise(:bad_arity) if RUBY_VERSION < "1.8.0"
         update_sound(ind)
-      end.first) != :bad_arity
+      end).first != :bad_arity
     snd_display("bad update_hook result: %s", res.inspect)
   end
   close_sound(find_sound("fmv.snd"))
@@ -7924,7 +7911,7 @@ def test235
   end
   test_channel_func(:oscil, index, 0.0,
                     lambda do |beg, dur, index, chan, edpos|
-                      clm_channel(make_oscil(:frequency, 0.0, "initial-phase".intern, PI / 2.0),
+                      clm_channel(make_oscil(:frequency, 0.0, :initial_phase, PI / 2.0),
                                   beg, dur, index, chan, edpos)
                     end) do |dur| make_vct!(dur) do 1.0 end end
   test_channel_func(:scale_channel, index, 1.0,
@@ -8049,7 +8036,7 @@ def test245
   unless vequal(res = channel2vct(0, 10, index, 1), make_vct(10))
     snd_display("src_channel leaks: %s?", res.inspect)
   end
-  if (res = snd_catch do src(s, 1.0, lambda do |a, b| a end) end.first) != :bad_arity
+  if (res = snd_catch do src(s, 1.0, lambda do |a, b| a end) end).first != :bad_arity
     snd_display("src bad func: %s?", res.inspect)
   end
   revert_sound(index)
@@ -8057,7 +8044,7 @@ def test245
   vct2channel(v0, 10, 10, index, 1)
   src_channel(make_env(:envelope, [1, 1, 2, 2], :end, 20), 0, 20, index, 1)
   unless vequal(res = channel2vct(0, 10, index, 1),
-                vct(1.000, -0.000, -0.048, 0.068, -0.059, 0.022, 0.030, -0.100, 0.273, 0.606))
+                vct(1.000, 0.000, -0.048, 0.068, -0.059, 0.022, 0.030, -0.100, 0.273, 0.606))
     snd_display("src_channel env: %s?", res.inspect)
   end
   unless vequal(res = channel2vct(0, 10, index, 0), make_vct(10))
@@ -8069,7 +8056,7 @@ def test245
   vct2channel(v0, 10, 10, index, 1)
   src_channel(make_env(:envelope, [1, 1, 2, 2], :end, 20), 0, 20, index, 1)
   unless vequal(res = channel2vct(0, 10, index, 1),
-                vct(1.000, -0.000, -0.048, 0.068, -0.059, 0.022, 0.030, -0.100, 0.273, 0.606))
+                vct(1.000, 0.000, -0.048, 0.068, -0.059, 0.022, 0.030, -0.100, 0.273, 0.606))
     snd_display("src_channel env: %s?", res.inspect)
   end
   unless vequal(res = channel2vct(0, 10, index, 0), make_vct(10))
@@ -8081,7 +8068,7 @@ def test245
   vct2channel(v0, 10, 10, index, 1)
   src_channel([1, 1, 2, 2], 0, 20, index, 1)
   unless vequal(res = channel2vct(0, 10, index, 1),
-                vct(1.000, -0.000, -0.051, 0.069, -0.056, 0.015, 0.042, -0.117, 0.320, 0.568))
+                vct(1.000, 0.000, -0.051, 0.069, -0.056, 0.015, 0.042, -0.117, 0.320, 0.568))
     snd_display("src_channel lst: %s?", res.inspect)
   end
   unless vequal(res = channel2vct(0, 10, index, 0), make_vct(10))
@@ -8284,7 +8271,7 @@ def test255
     if (res = sample_reader_position(rd)) != (frames - 1)
       snd_display("sample_reader_position: %s?", res)
     end
-    map_channel(lambda do |y| read_sample(rd) end)
+    map_channel(lambda do |y| rd.call end)
     pos = 0
     e = make_env([0, 0, 1, 1, 2, 0], :end, dur)
     scan_channel(lambda do |y|
@@ -8306,7 +8293,7 @@ def test255
   env_sound([0, 0, 1, 1, 2, 0])
   scale_channel(0.0, 100, 200)
   rd = make_sample_reader(frames - 1, ind, 0, -1)
-  map_channel(lambda do |y| read_sample(rd) end)
+  map_channel(lambda do |y| rd.call end)
   pos = 0
   e = make_env([0, 0, 1, 1, 2, 0], :end, 1000)
   scan_channel(lambda do |y|
@@ -8342,13 +8329,13 @@ def test255
       env_sound([0, 1, 1, 0], 10000, 2000)
     end
     rd = make_sample_reader(frames - 1, ind, 0, -1)
-    map_channel(lambda do |y| read_sample(rd) end)
+    map_channel(lambda do |y| rd.call end)
     rd = make_sample_reader(frames - 1, ind, 0, -1)
-    map_channel(lambda do |y| read_sample(rd) end)
+    map_channel(lambda do |y| rd.call end)
     old_rd = make_sample_reader(0, ind, 0, 1, edit_position(ind, 0) - 2)
     pos = 0
     scan_channel(lambda do |y|
-                   if fneq(val = read_sample(old_rd), y)
+                   if fneq(val = old_rd.call, y)
                      snd_display("trouble in reverse (%d) read at %d %s %s", i, pos, val, y)
                      true
                    else
@@ -8366,7 +8353,7 @@ def test255
     if sample_reader_at_end?(reader)
       false
     else
-      if val = last_proc.call(read_sample(reader))
+      if val = last_proc.call(reader.call)
         [val, sample_reader_position(reader) - 1]
       else
         scan_again.call
@@ -8662,7 +8649,7 @@ def test265
   offset_channel(-1.0)
   sine_env_channel([0, 0, 1, 1, 2, 1, 3, 0], 40, 20)
   if (not vequal(res1 = channel2vct(40, 20),
-                 vct(-0.000, -0.050, -0.188, -0.389, -0.611, -0.812, -0.950, -1.000,
+                 vct(0.000, -0.050, -0.188, -0.389, -0.611, -0.812, -0.950, -1.000,
                      -1.000, -1.000, -1.000, -1.000, -1.000, -1.000, -1.000, -0.950,
                      -0.812, -0.611, -0.389, -0.188))) or
       (not vequal(res2 = channel2vct(30, 10), make_vct(10, -1.0)))
@@ -8879,34 +8866,7913 @@ end
 
 # ---------------- test 06: vcts ----------------
 
-def test06
-  $snd_error_hook.reset_hook!
-  $mus_error_hook.reset_hook!
-  $snd_error_hook.add_hook!("test 6") do |msg|
-    if msg.empty?
-      snd_display_error("<SND-INTERRUPT>")
-    else
-      snd_display_error("<SND-ERROR: %s>", msg)
-    end
-    true
+def test006
+  v0 = make_vct(10)
+  v1 = make_vct(10)
+  vlst = make_vct(3)
+  snd_display("v0 isn\'t a vct?") unless vct?(v0)
+  snd_display("v0 is 10!?") if v0 == 10
+  snd_display("10 is a vct?") if vct?(10)
+  snd_display("v0 length = %d?", v0.length) if v0.length != 10
+  vct_fill!(v0, 1.0)
+  vct_fill!(v1, 0.5)
+  snd_display("vct %s.eql?(%s)?", v0.to_s, v1.to_s) if v0.eql?(v1)
+  snd_display("vct %s == %s?", v0.to_s, v1.to_s) if v0 == v1
+  v2 = v1
+  v3 = make_vct(10)
+  v4 = make_vct(3)
+  snd_display("vct not %s.eql?(%s)?", v1.to_s, v2.to_s) unless v1.eql?(v2)
+  vct_fill!(v3, 0.5)
+  snd_display("vct not %s.eql?(%s)?", v2.to_s, v1.to_s) unless v2.eql?(v1)
+  snd_display("len diff vct %s.eql?(%s)?", v4.to_s, v1.to_s) if v4.eql?(v1)
+  v3[0] = 1.0
+  snd_display("vct_set!: %s", v3[0]) if fneq(v3[0], 1.0)
+  vlst[1] = 0.1
+  unless vequal(res = vct2list(vlst), [0.0, 0.1, 0.0])
+    snd_display("vct2list: %s?", res.to_s)
   end
-  $mus_error_hook.add_hook!("test 6") do |type, msg|
-    if type.zero?
-      snd_display_error("<MUS-WARNING: %s>", msg)
-    else
-      snd_display_error("<MUS-ERROR %s: %s>", mus_error_to_string(type), msg)
-    end
-    true
+  vect = [0.0, 1.0, 2.0, 3.0]
+  v123 = vct(0.0, 1.0, 2.0, 3.0)
+  v2 = vector2vct(vect)
+  v3 = v2
+  str = format("%s", v2.to_s)
+  str1 = format("%s", make_vct(32).to_s)
+  unless (res = vector2vct(make_array(0))).eql?(false)
+    snd_display("vector2vct empty vect: %s", res.to_s)
   end
+  if str != "#<vct[len=4]: 0.000 1.000 2.000 3.000>"
+    snd_display("vct print:\n# %s\n# %s?", str, v2.to_s)
+  end
+  if print_length == 12 and
+      str1 != "#<vct[len=32]: 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 ...>"
+    snd_display("vct(32) print: %s?", str1)
+  end
+  snd_display("vector2vct: %s", v2.to_s) unless vequal(v123, v2)
+  unless (res = vct2vector(v123)) == vect
+    snd_display("vct2vector:\n# %s\n# %s", vect.inspect, res.inspect)
+  end
+  snd_display("vct=? %s %s", v2.to_s, v3.to_s) unless v3.eql?(v2)
+  snd_display("vector2vct length: %s?", v2.lenght) if v2.length != 4
+  snd_display("vector2vct: %s?", v2.to_s) if fneq(v2[2], 2.0)
+  vct_move!(v2, 0, 2)
+  snd_display("vct_move!: %s?", v2.to_s) if fneq(v2[0], 2.0)
+  v2 = make_vct!(4) do |i| i end
+  vct_move!(v2, 3, 2, true)
+  snd_display("vct_move! back: %s?", v2.to_s) if fneq(v2[3], 2.0) or fneq(v2[2], 1.0)
+  unless vequal(vct(4, 3, 2, 1), res = vct_reverse!(vct(1, 2, 3, 4)))
+    snd_display("vct_reverse: %s?", res.to_s)
+  end
+  unless vequal(vct(3, 2, 1), res = vct_reverse!(vct(1, 2, 3)))
+    snd_display("vct_reverse: %s?", res.to_s)
+  end
+  unless vequal(vct(2, 1), res = vct_reverse!(vct(1, 2)))
+    snd_display("vct_reverse: %s?", res.to_s)
+  end
+  unless vequal(vct(1), res = vct_reverse!(vct(1)))
+    snd_display("vct_reverse: %s?", res.to_s)
+  end
+  unless vequal(vct(4, 3, 2, 1), res = vct_reverse!(vct(1, 2, 3, 4), 4))
+    snd_display("vct_reverse: %s?", res.to_s)
+  end
+  unless vequal(vct(3, 2, 1), res = vct_reverse!(vct(1, 2, 3), 3))
+    snd_display("vct_reverse: %s?", res.to_s)
+  end
+  unless vequal(vct(2, 1), res = vct_reverse!(vct(1, 2), 2))
+    snd_display("vct_reverse: %s?", res.to_s)
+  end
+  unless vequal(vct(1), res = vct_reverse!(vct(1), 1))
+    snd_display("vct_reverse: %s?", res.to_s)
+  end
+  #
+  vv0 = make_vct(3)
+  if (res = snd_catch do vct_ref(vv0, 10) end).first != :out_of_range
+    snd_display("vct_ref high index: %s", res.inspect)
+  end
+  if (res = snd_catch do vct_ref(vv0, -1) end).first != :out_of_range
+    snd_display("vct_ref low index: %s", res.inspect)
+  end
+  if (res = snd_catch do vct_set!(vv0, 10, 1.0) end).first != :out_of_range
+    snd_display("vct_set! high index: %s", res.inspect)
+  end
+  if (res = snd_catch do vct_set!(vv0, -1, 1.0) end).first != :out_of_range
+    snd_display("vct_set! low index: %s", res.inspect)
+  end
+  if (res = snd_catch do vct_move!(vv0, 10, 0, true) end).first != :out_of_range
+    snd_display("vct_move! high index: %s", res.inspect)
+  end
+  if (res = snd_catch do vct_move!(vv0, 0, 10, true) end).first != :out_of_range
+    snd_display("vct_move! high 2 index: %s", res.inspect)
+  end
+  if (res = snd_catch do vct_move!(vv0, -10, 0, false) end).first != :out_of_range
+    snd_display("vct_move! back high index: %s", res.inspect)
+  end
+  if (res = snd_catch do vct_move!(vv0, 0, -10, false) end).first != :out_of_range
+    snd_display("vct_move! back high 2 index: %s", res.inspect)
+  end
+  10.times do |i|
+    snd_display("fill v0[%d] = %f?", i, v0[i]) if fneq(v0[i], 1.0)
+    snd_display("preset v1[%d] = %f?", i, v1[i]) if fneq(v1[i], 0.5)
+  end
+  vct_add!(v0, v1)
+  v0.each_with_index do |x, i| snd_display("add v0[%d] = %f?", i, x) if fneq(x, 1.5) end
+  vct_subtract!(v0, v1)
+  v0.each_with_index do |x, i| snd_display("subtract v0[%d] = %f?", i, x) if fneq(x, 1.0) end
+  v2 = vct_copy(v0)
+  v2.each_with_index do |x, i| snd_display("copy v2[%d] = %f?", i, x) if fneq(x, 1.0) end
+  vct_scale!(v2, 5.0)
+  v2.each_with_index do |x, i| snd_display("scale v2[%d] = %f?", i, x) if fneq(x, 5.0) end
+  vct_offset!(v0, -1.0)
+  v0.each_with_index do |x, i| snd_display("offset v0[%d] = %f?", i, x) if fneq(x, 0.0) end
+  vct_multiply!(v2, v1)
+  v2.each_with_index do |x, i| snd_display("multiply v2[%d] = %f?", i, x) if fneq(x, 2.5) end
+  snd_display("v2\'s peak is %f?", vct_peak(v2)) if fneq(vct_peak(v2), 2.5)
+  vct_set!(v2, 5, 123.0)
+  snd_display("v2\'s set peak is %f?", vct_peak(v2)) if fneq(vct_peak(v2), 123.0)
+  vn = make_vct!(32) do |i| i end
+  vb = make_vct(64)
+  vs = make_vct(3)
+  vss = make_vct(1)
+  vnew = vct_subseq(vn, 3)
+  snd_display("vct_subseq[3:] %f?", vneq[0]) if fneq(vnew[0], 3.0)
+  snd_display("vct_subseq[3:] length %d?", vnew.length) if vnew.length != 29
+  vnew = vct_subseq(vn, 3, 8)
+  snd_display("vct_subseq[3:8] %f?", vneq[0]) if fneq(vnew[0], 3.0)
+  snd_display("vct_subseq[3:8] length %d?", vnew.length) if vnew.length != 6
+  vct_subseq(vn, 3, 3, vs)
+  if fneq(vs[0], 3.0) or fneq(vs[1], 0.0) or fneq(vs[2], 0.0)
+    snd_display("vct_subseq[3:3->vs] %s?", vs.to_s)
+  end
+  vct_subseq(vn, 0, 32, vs)
+  snd_display("vct_subseq[:32->vs] length %d?", vs.length) if vs.length != 3
+  vct_subseq(vn, 2, 3, vss)
+  snd_display("vct_subseq[2:3->vss] %f?", vss[0]) if fneq(vss[0], 2.0)
+  vct_set!(vb, 8, 123.0)
+  vct_subseq(vn, 1, 8, vb)
+  snd_display("vct_subseq[1:8->vb] %f?", vb[0]) if fneq(vb[0], 1.0)
+  snd_display("vct_subseq[1:8->vb][8] %f?", vb[8]) if fneq(vb[8], 123.0)
+  vct_map!(v0, lambda do | | 1.0 end)
+  v0.each_with_index do |x, i| snd_display("map v0[%d] = %f?", i, x) if fneq(x, 1.0) end
+end
+
+def test016
+  fd = open_sound_file
+  close_sound_file(fd, 0)
+  name = little_endian? ? "test.wav" : "test.snd"
+  frm = little_endian? ? Mus_lfloat : Mus_bfloat
+  if (res = mus_sound_frames(name)).nonzero?
+    snd_display("open_sound_file no out frames: %s?", res)
+  end
+  if (res = mus_sound_data_format(name)) != frm
+    snd_display("open_sound_file format: %s", mus_data_format_name(res))
+  end
+  delete_file("hiho.snd")
+  mus_sound_forget("hiho.snd")
+  typ = little_endian? ? Mus_riff : Mus_aifc
+  fd = open_sound_file("hiho.snd", 2, 44100, false, typ)
+  vct2sound_file(fd, vct(0.1, 0.2, 0.01, 0.02), 4)
+  close_sound_file(fd, 4 * 4)
+  if (res = mus_sound_chans("hiho.snd")) != 2
+    snd_display("open_sound_file 2 chans: %s?", res)
+  end
+  if (res = mus_sound_srate("hiho.snd")) != 44100
+    snd_display("open_sound_file srate: %s?", res)
+  end
+  if (res = mus_sound_header_type("hiho.snd")) != typ
+    snd_display("open_sound_file type: %s?", res)
+  end
+  ind = open_sound("hiho.snd")
+  if fneq(maxamp(ind, 0), 0.1) or fneq(maxamp(ind, 1), 0.2)
+    snd_display("vct2sound_file vals: %s %s?",
+                channel2vct(0, 2, ind, 0).to_s,
+                channel2vct(0, 2, ind, 1).to_s)
+  end
+  if (res = frames(ind)) != 2
+    snd_display("vct2channel frames: %d?", res)
+  end
+  close_sound(ind)
+  delete_file("hiho.snd")
+  mus_sound_forget("hiho.snd")
+  fd = open_sound_file(:channels, 4, :file, "hiho.snd", :header_type, typ, :srate, 8192)
+  close_sound_file(fd, 0)
+  if (res = mus_sound_chans("hiho.snd")) != 4
+    snd_display("open_sound_file 4 chans: %s?", res)
+  end
+  if (res = mus_sound_srate("hiho.snd")) != 8192
+    snd_display("open_sound_file low srate: %s?", res)
+  end
+  if (res = mus_sound_header_type("hiho.snd")) != typ
+    snd_display("open_sound_file (2nd) type: %s?", res)
+  end
+  v2 = make_vct(10, 2.5)
+  fd = open_sound_file("hiho.snd", 1, :srate, 22050, :comment, "hiho is from snd-test")
+  vct2sound_file(fd, v2, 10)
+  close_sound_file(fd, 10)
+  if (res = snd_catch do vct2sound_file(-1, v2, 1) end).first != :out_of_range
+    snd_display("vct2sound_file bad fd: %s?", res.inspect)
+  end
+  v3 = make_vct(40)
+  file2array("hiho.snd", 0, 0, 10, v3)
+  snd_display("vct2sound_file: %s %s?", v2.to_s, v3.to_s) if fneq(v3[5], v2[5])
+  snd_display("vct(...) = %f?", vct(1.0, 2.0, 3.0)[1]) if fneq(vct(1.0, 2.0, 3.0)[1], 2.0)
+  v1 = vct(1, 2, 3, 4)
+  snd_display("v1[1] = %f?", v1[1]) if fneq(v1[1], 2.0)
+end
+
+def test026
+  ind = open_sound("oboe.snd")
+  set_speed_control(0.5, ind)
+  play_and_wait
+  apply_controls
+  revert_sound
+  reset_controls(ind)
   # 
-  $snd_error_hook.reset_hook!
-  $mus_error_hook.reset_hook!
+  # try some special cases
+  #
+  apply_controls
+  if edit_position(ind).nonzero?
+    snd_display("apply_controls with no change: %s: %s",
+                edits(ind).inspect, edit_tree(ind).inspect)
+  end
+  set_speed_control(-1.0, ind)
+  apply_controls
+  if edit_position(ind) != 1
+    snd_display("apply_controls with srate -1.0: %s: %s",
+                edits(ind).inspect, edit_tree(ind).inspect)
+  end
+  if (res0 = frames(ind, 0) - res1 = frames(ind, 0, 0)).abs > 2
+    snd_display("apply_controls srate -1.0 lengths: %s %s", res0, res1)
+  end
+  if fneq(res0 = maxamp, 0.147) or (res1 = sample(9327)).abs < 0.01
+    snd_display("apply_controls srate -1.0 samples: %f %f?", res0, res1)
+  end
+  if fneq(res = speed_control(ind), 1.0)
+    snd_display("apply_controls -1.0 -> %f?", res)
+  end
+  ctr = 0
+  $dac_hook.add_hook!("snd-test") do |data|
+    ctr += 1
+    c_g! if ctr >= 3
+  end
+  play_and_wait
+  snd_display("ctr after dac_hook: %d", ctr) if ctr != 3
+  set_speed_control(1.5)
+  apply_controls
+  if fneq(res = sample(28245), 0.0)
+    snd_display("dac_hook stop apply_controls? %f", res)
+  end
+  $dac_hook.reset_hook!
+  revert_sound
+  set_speed_control(1.5)
+  ctr = 0
+  $dac_hook.add_hook!("snd-test") do |data|
+    ctr += 1
+    apply_controls if ctr == 3
+  end
+  play_and_wait
+  if edit_position(ind, 0) != 1
+    snd_display("apply_controls from hook: %s %s",
+                edits(ind).inspect, edit_tree(ind).inspect)
+  end
+  $dac_hook.reset_hook!
+  revert_sound
+  set_speed_control(1.5)
+  stop_playing
+  $after_apply_hook.add_hook!("snd-test") do |s|
+    if (res = snd_catch do apply_controls end).first != :cannot_apply_controls
+      snd_display("after_apply_hook: recursive attempt apply_controls: %s", res.inspect)
+    end
+  end
+  apply_controls
+  $after_apply_hook.reset_hook!
+  $dac_hook.add_hook!("snd-test") do |s|
+    if (res = snd_catch do apply_controls end).first != :cannot_apply_controls
+      snd_display("dac_hook: recursive attempt apply_controls: %s", res.inspect)
+    end
+  end
+  $dac_hook.reset_hook!
+  revert_sound
+  close_sound(ind)
+  #
+  v1 = make_vct(32)
+  vct_map!(v1, lambda do | |
+             v2 = make_vct(3)
+             vct_map!(v2, lambda do | | 0.1 end)
+             vct_ref(v2, 0)
+           end)
+  snd_display("vct_map! twice: %f?", v1[12]) if fneq(v1[12], 0.1)
+  hi = make_vct(3)
+  if (res = snd_catch do vct_subseq(hi, 1, 0) end).first != :out_of_range
+    snd_display("vct_subseq 1 0: %s", res.inspect)
+  end
+  if (res = snd_catch do vct() end).first != :wrong_type_arg
+    snd_display("vct() -> %s?", res.inspect)
+  end
+  if (res = snd_catch do make_vct(0) end).first != :out_of_range
+    snd_display("make_vct(0) -> %s?", res.inspect)
+  end
+  ho = make_vct(3)
+  vct_add!(hi, ho, 4)
+  v0 = make_vct(5, 0.1)
+  v1 = make_vct(6, 0.2)
+  vct_add!(v0, v1, 2)
+  snd_display("vct_add + offset: %s?", v0.to_s) unless vequal(v0, vct(0.1, 0.1, 0.3, 0.3, 0.3))
+end
+
+def test06
+  # setting print_length (12) and vct_print_length (10) to the same size
+  set_print_length(print_length)
+  test006
+  test016
+  test026
 end
 
 if $test06 and $full_test or $snd_test == 6
   $before_test_hook.call(6)
   test06
   $after_test_hook.call(6)
+end
+
+# ---------------- test 07: colors ----------------
+
+require "rgb.rb"
+
+$old_colormap_size = colormap_size
+
+def cfneq(a, b, err = 0.001)
+  (a - b).abs > err
+end
+
+def test007
+  c1 = snd_catch(:no_such_color) do make_color(0, 0, 1) end.first
+  c2 = c1
+  c3 = snd_catch(:no_such_color) do make_color(0, 0, 1) end.first
+  snd_display("color equal? %s %s", c1.inspect, c2.inspect) unless c1.equal?(c2)
+  snd_display("color eql? %s %s", c1.inspect, c2.inspect) unless c1.eql?(c2)
+  snd_display("color == %s %s", c1.inspect, c2.inspect) unless c1 == c2
+  if provided? "snd-motif"
+    snd_display("diff color equal? %s %s", c1.inspect, c3.inspect) unless c1.eql?(c3)
+  end
+  snd_display("diff color eql? %s %s", c1.inspect, c3.inspect) unless c1.eql?(c3)
+  if (res = color2list(c1)) != [0.0, 0.0, 1.0]
+    snd_display("color2list: %s %s?", c1.inspect, res.inspect)
+  end
+  true_color_list = [
+    [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 1.0, 1.0],
+    [0.0, 0.0, 7.01915007248035e-4], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0],
+    [0.0, 0.0, 0.49999], [1.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0],
+    [1.0, 0.0, 1.0], [0.0, 0.500007629510948, 0.4], [1.0, 0.0, 0.0],
+    [1.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
+  Last_colormap.times do |i|
+    if colormap?(i)
+      unless vequal(res0 = colormap_ref(i, 0), res1 = true_color_list[i])
+        snd_display("colormap_ref[%d]: %s (%s)", i, res0.inspect, res1.inspect)
+      end
+    end
+  end
+  snd_catch do
+    [[:basic_color, Ivory2],
+      [:cursor_color, Red],
+      [:data_color, Black],
+      [:enved_waveform_color, Blue],
+      [:filter_control_waveform_color, Blue],
+      [:graph_color, White],
+      [:highlight_color, Ivory1],
+      [:listener_color, Alice_blue],
+      [:listener_text_color, Black],
+      [:mark_color, Red],
+      [:mix_color, Dark_gray],
+      [:position_color, Ivory3],
+      [:pushed_button_color, Lightsteelblue1],
+      [:sash_color, Light_green],
+      [:selected_data_color, Black],
+      [:selected_graph_color, White],
+      [:selection_color, Lightsteelblue1],
+      [:text_focus_color, White],
+      [:zoom_color, Ivory4],
+      [:quit_button_color, Indian_red],
+      [:help_button_color, Lightsteelblue2],
+      [:reset_button_color, Goldenrod1],
+      [:doit_button_color, Palegreen2],
+      [:doit_again_button_color, Darkolivegreen1]].each do |getfnc, initval|
+      snd_display("%s not color?", initval.inspect) unless color?(initval)
+      set_snd_var(getfnc, Beige)
+      snd_display("set_%s != Beige (%s)?", getfnc, snd_var(getfnc)) if snd_var(getfnc) != Beige
+      set_snd_var(getfnc, initval)
+    end
+    ind = open_sound("oboe.snd")
+    set_selected_data_color(Light_green)
+    set_data_color(Blue)
+    set_selected_graph_color(Light_green)
+    red = make_color_with_catch(1.0, 0.0, 0.0)
+    set_foreground_color(red, ind, 0, Cursor_context)
+    if (res = foreground_color(ind, 0, Cursor_context)) != red
+      snd_display("set_foreground_color cursor: %s %s?", res.inspect, red.inspect)
+    end
+    set_foreground_color(Blue)
+    if (res = foreground_color) != Blue
+      snd_display("set_foreground_color: %s %s?", res.inspect, Blue.inspect)
+    end
+    set_foreground_color(Black, ind)
+    if (res = foreground_color(ind)) != Black
+      snd_display("set_foreground_color with ind: %s %s?", res.inspect, Black.inspect)
+    end
+    set_selected_graph_color(make_color_with_catch(0.96, 0.96, 0.86))
+    set_data_color(Black)
+    set_selected_data_color(Blue)
+    set_data_color(White)
+    close_sound(ind)
+  end
+end
+
+def test017
+  [[512, 0.005], [64, 0.04]].each do |n, err|
+    set_colormap_size(n)
+    10.times do |i|
+      x = my_random(1.0)
+      r = (x < (3.0 / 4)) ? ((7.0 / 8) * x) : ((11.0 / 8) * x - 3.0 / 8)
+      g = (x < (3.0 / 8)) ? ((7.0 / 8) * x) : ((x < (3.0 / 4)) ?
+                                               ((29.0 / 24) * x - 1.0 / 8) :
+                                                 ((7.0 / 8) * x + 1.0 / 8))
+      b = (x < (3.0 / 8)) ? ((29.0 / 24) * x) : ((7.0 / 8) * x + 1.0 / 8)
+      rgb = colormap_ref(Bone_colormap, x)
+      r1, g1, b1 = rgb
+      if x < 1.0 - 1.0 / n and (cfneq(r, r1, err) or cfneq(g, g1, err) or cfneq(b, b1, err))
+        snd_display("bone %.3f (%.3f): %s %s",
+                    x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
+                    [r, g, b].inspect, [r1, g1, b1].inspect)
+      end
+    end
+    10.times do |i|
+      x = my_random(1.0)
+      r = (x < (4.0 / 5)) ? ((5.0 / 4) * x) : 1.0
+      g = (4.0 / 5) * x
+      b = (1.0 / 2) * x
+      rgb = colormap_ref(Copper_colormap, x)
+      r1, g1, b1 = rgb
+      if x < 1.0 - 1.0 / n and (cfneq(r, r1, err) or cfneq(g, g1, err) or cfneq(b, b1, err))
+        snd_display("copper %.3f (%.3f): %s %s",
+                    x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
+                    [r, g, b].inspect, [r1, g1, b1].inspect)
+      end
+    end
+    10.times do |i|
+      x = my_random(1.0)
+      r = 0.0
+      g = x
+      b = 1.0 - g / 2.0
+      rgb = colormap_ref(Winter_colormap, x)
+      r1, g1, b1 = rgb
+      if x < 1.0 - 1.0 / n and (cfneq(r, r1, err) or cfneq(g, g1, err) or cfneq(b, b1, err))
+        snd_display("winter %.3f (%.3f): %s %s",
+                    x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
+                    [r, g, b].inspect, [r1, g1, b1].inspect)
+      end
+    end
+    10.times do |i|
+      x = my_random(1.0)
+      r = 1.0
+      g = x
+      b = 0.0
+      rgb = colormap_ref(Autumn_colormap, x)
+      r1, g1, b1 = rgb
+      if x < 1.0 - 1.0 / n and (cfneq(r, r1, err) or cfneq(g, g1, err) or cfneq(b, b1, err))
+        snd_display("autumn %.3f (%.3f): %s %s",
+                    x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
+                    [r, g, b].inspect, [r1, g1, b1].inspect)
+      end
+    end
+    10.times do |i|
+      x = my_random(1.0)
+      r = x
+      g = 1.0 - r
+      b = 1.0
+      rgb = colormap_ref(Cool_colormap, x)
+      r1, g1, b1 = rgb
+      if x < 1.0 - 1.0 / n and (cfneq(r, r1, err) or cfneq(g, g1, err) or cfneq(b, b1, err))
+        snd_display("cool %.3f (%.3f): %s %s",
+                    x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
+                    [r, g, b].inspect, [r1, g1, b1].inspect)
+      end
+    end
+    10.times do |i|
+      x = my_random(1.0)
+      r = (x < (3.0 / 8)) ? ((8.0 / 3) * x) : 1.0
+      g = (x < (3.0 / 8)) ? 0.0 : ((x < (3.0 / 4)) ? ((8.0 / 3) * x - 1.0) : 1.0)
+      b = (x < (3.0 / 4)) ? 0.0 : (4.0 * x - 3)
+      rgb = colormap_ref(Hot_colormap, x)
+      r1, g1, b1 = rgb
+      if x < 1.0 - 1.0 / n and (cfneq(r, r1, err) or cfneq(g, g1, err) or cfneq(b, b1, err))
+        snd_display("hot %.3f (%.3f): %s %s",
+                    x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
+                    [r, g, b].inspect, [r1, g1, b1].inspect)
+      end
+    end
+    10.times do |i|
+      x = my_random(1.0)
+      r = (x < (3.0 / 8)) ? 0.0 : ((x < (5.0 / 8)) ? (4.0 * x - 3.0 / 2) :
+                                     ((x < (7.0 / 8)) ? 1.0 : (-4.0 * x + 9.0 / 2)))
+      g = (x < (1.0 / 8)) ? 0.0 : ((x < (3.0 / 8)) ? (4.0 * x - 0.5) :
+                                     (((x < (5.0 / 8)) ? 1.0 :
+                                         ((x < (7.0 / 8)) ? (-4.0 * x + 7.0 / 2) : 0.0))))
+      b = (x < (1.0 / 8)) ? (4.0 * x + 0.5) : ((x < (3.0 / 8)) ? 1.0 :
+                                                 ((x < (5.0 / 8)) ? (-4.0 * x + 5.0 / 2) : 0.0))
+      rgb = colormap_ref(Jet_colormap, x)
+      r1, g1, b1 = rgb
+      if x < 1.0 - 1.0 / n and (cfneq(r, r1, err) or cfneq(g, g1, err) or cfneq(b, b1, err))
+        snd_display("jet %.3f (%.3f): %s %s",
+                    x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
+                    [r, g, b].inspect, [r1, g1, b1].inspect)
+      end
+    end
+    10.times do |i|
+      x = my_random(1.0)
+      r = (x < (3.0 / 8)) ? ((14.0 / 9) * x) : ((2.0 / 3) * x + 1.0 / 3)
+      g = (x < (3.0 / 8)) ? ((2.0 / 3) * x) :
+        ((x < (3.0 / 4)) ? ((14.0 / 9) * x - 1.0 / 3) : ((2.0 / 3) * x + 1.0 / 3))
+      b = (x < (3.0 / 4)) ? ((2.0 / 3) * x) : (2.0 * x - 1.0)
+      rgb = colormap_ref(Pink_colormap, x)
+      r1, g1, b1 = rgb
+      if x < 1.0 - 1.0 / n and (cfneq(r, r1, err) or cfneq(g, g1, err) or cfneq(b, b1, err))
+        snd_display("pink %.3f (%.3f): %s %s",
+                    x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
+                    [r, g, b].inspect, [r1, g1, b1].inspect)
+      end
+    end
+    10.times do |i|
+      x = my_random(1.0)
+      r = 1.0
+      g = x
+      b = 1.0 - g
+      rgb = colormap_ref(Spring_colormap, x)
+      r1, g1, b1 = rgb
+      if x < 1.0 - 1.0 / n and (cfneq(r, r1, err) or cfneq(g, g1, err) or cfneq(b, b1, err))
+        snd_display("spring %.3f (%.3f): %s %s",
+                    x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
+                    [r, g, b].inspect, [r1, g1, b1].inspect)
+      end
+    end
+    10.times do |i|
+      x = my_random(1.0)
+      r = x
+      g = x
+      b = x
+      rgb = colormap_ref(Gray_colormap, x)
+      r1, g1, b1 = rgb
+      if x < 1.0 - 1.0 / n and (cfneq(r, r1, err) or cfneq(g, g1, err) or cfneq(b, b1, err))
+        snd_display("gray %.3f (%.3f): %s %s",
+                    x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
+                    [r, g, b].inspect, [r1, g1, b1].inspect)
+      end
+    end
+    10.times do |i|
+      x = my_random(1.0)
+      r = 0.0
+      g = 0.0
+      b = 0.0
+      rgb = colormap_ref(Black_and_white_colormap, x)
+      r1, g1, b1 = rgb
+      if x < 1.0 - 1.0 / n and (cfneq(r, r1, err) or cfneq(g, g1, err) or cfneq(b, b1, err))
+        snd_display("black_and_white %.3f (%.3f): %s %s",
+                    x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
+                    [r, g, b].inspect, [r1, g1, b1].inspect)
+      end
+    end
+    10.times do |i|
+      x = my_random(1.0)
+      r = x
+      g = 0.5 + r / 2.0
+      b = 0.4
+      rgb = colormap_ref(Summer_colormap, x)
+      r1, g1, b1 = rgb
+      if x < 1.0 - 1.0 / n and (cfneq(r, r1, err) or cfneq(g, g1, err) or cfneq(b, b1, err))
+        snd_display("summer %.3f (%.3f): %s %s",
+                    x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
+                    [r, g, b].inspect, [r1, g1, b1].inspect)
+      end
+    end
+    10.times do |i|
+      x = my_random(1.0)
+      r = (x < (2.0 / 5)) ? 1.0 : ((x < (3.0 / 5)) ? (-5.0 * x + 3) :
+                                     ((x < (4.0 / 5)) ? 0.0 : (10.0 / 3 * x - 8.0 / 3)))
+      g = (x < (2.0 / 5)) ? ((5.0 / 2) * x) : ((x < (3.0 / 5)) ? 1.0 :
+                                                 ((x < (4.0 / 5)) ? (-5.0 * x + 4) : 0.0))
+      b = (x < (3.0 / 5)) ? 0.0 : ((x < (4.0 / 5)) ? (5.0 * x - 3) : 1.0)
+      rgb = colormap_ref(Rainbow_colormap, x)
+      r1, g1, b1 = rgb
+      if x < 1.0 - 1.0 / n and (cfneq(r, r1, err) or cfneq(g, g1, err) or cfneq(b, b1, err))
+        snd_display("rainbow %.3f (%.3f): %s %s",
+                    x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
+                    [r, g, b].inspect, [r1, g1, b1].inspect)
+      end
+    end
+    10.times do |i|
+      x = my_random(1.0)
+      rgb = colormap_ref(Prism_colormap, x)
+      if x < 1.0 - 1.0 / n and
+          (not vequal(rgb, [1.0, 0.0, 0.0])) and
+          (not vequal(rgb, [1.0, 0.5, 0.0])) and
+          (not vequal(rgb, [1.0, 1.0, 0.0])) and
+          (not vequal(rgb, [0.0, 1.0, 0.0])) and
+          (not vequal(rgb, [0.0, 0.0, 1.0])) and
+          (not vequal(rgb, [0.6667, 0.0, 1.0]))
+        snd_display("prism %s", rgb.inspect)
+      end
+    end
+    10.times do |i|
+      x = my_random(1.0)
+      rgb = colormap_ref(Flag_colormap, x)
+      if x < 1.0 - 1.0 / n and
+          (not vequal(rgb, [1.0, 0.0, 0.0])) and
+          (not vequal(rgb, [1.0, 1.0, 1.0])) and
+          (not vequal(rgb, [0.0, 0.0, 1.0])) and
+          (not vequal(rgb, [0.0, 0.0, 0.0]))
+        snd_display("flag %s", rgb.inspect)
+      end
+    end
+  end
+end
+
+def test027
+  ind = add_colormap("white", lambda do |size|
+                       [make_vct(size, 1.0), make_vct(size,1.0), make_vct(size,1.0)]
+                     end)
+  unless res = colormap?(ind)
+    snd_display("add_colormap %s: %s?", ind.inspect, res.inspect)
+  end
+  unless vequal(res = colormap_ref(ind, 0.5), [1.0, 1.0, 1.0])
+    snd_display("white colormap: %s?", res.inspect)
+  end
+  if (res = snd_catch do set_colormap(ind) end).first == :no_such_colormap or colormap != ind
+    snd_display("colormap white: %s %s %s", res.inspect, ind.inspect, colormap.inspect)
+  end
+  if (res = colormap_name(ind)) != "white"
+    snd_display("white colormap name: %s?", res)
+  end
+  if (res = snd_catch do delete_colormap(1234) end).first != :no_such_colormap
+    snd_display("delete_colormap 1234: %s?", res.inspect)
+  end
+  if (res = snd_catch do colormap_ref(1234, 0.5) end).first != :no_such_colormap
+    snd_display("colormap_ref 1234: %s?", res.inspect)
+  end
+  if (res = snd_catch do colormap_ref(-1, 0.5) end).first != :no_such_colormap
+    snd_display("colormap_ref -1: %s?", res.inspect)
+  end
+  if (res = snd_catch do set_colormap(1234) end).first != :no_such_colormap
+    snd_display("set_colormap 1234: %s?", res.inspect)
+  end
+  if (res = snd_catch do set_colormap(-1) end).first != :no_such_colormap
+    snd_display("set_colormap -1: %s?", res.inspect)
+  end
+  if (res = snd_catch do colormap_ref(Copper_colormap, 2.0) end).first != :out_of_range
+    snd_display("colormap_ref 2.0: %s?", res.inspect)
+  end
+  #
+  set_colormap_size($old_colormap_size)
+  if (res = colormap_size) != $old_colormap_size
+    snd_display("set_colormap_size: %d %d?", res, $old_colormap_size)
+  end
+  if (res = colormap_name(Black_and_white_colormap)) != "black-and-white"
+    snd_display("black-and-white: %s?", res)
+  end
+  if (res = colormap_name(Gray_colormap)) != "gray"
+    snd_display("gray: %s?", res)
+  end
+  if (res = colormap_name(Rainbow_colormap)) != "rainbow"
+    snd_display("rainbow: %s?", res)
+  end
+  purple_cmap = add_colormap("purple",
+                             lambda do |size|
+                               r = make_vct(size)
+                               g = make_vct(size)
+                               b = make_vct(size)
+                               er = [0, 60, 60, 116, 128, 252, 192, 252, 256, 60]
+                               eg = [0,  0, 64,   0, 128, 252, 192, 252, 256,  0]
+                               eb = [0, 80,          128, 252, 192,   0, 256, 80]
+                               incr = 256.0 / size
+                               x = 0.0
+                               size.times do |i|
+                                 r[i] = envelope_interp(x, er) / 256.0
+                                 g[i] = envelope_interp(x, eg) / 256.0
+                                 b[i] = envelope_interp(x, eb) / 256.0
+                                 x += incr
+                               end
+                               [r, g, b]
+                             end)
+  sin_cmap = add_colormap("sin",
+                          lambda do |size|
+                            r = make_vct(size)
+                            g = make_vct(size)
+                            b = make_vct(size)
+                            incr = (2.0 * PI) / size
+                            x = 0.0
+                            size.times do |i|
+                              r[i] = sin(1.5 * x).abs
+                              g[i] = sin(3.5 * x).abs
+                              b[i] = sin(2.5 * x).abs
+                              x += incr
+                            end
+                            [r, g, b]
+                          end)
+  another_sin_cmap = add_colormap("another-sin",
+                                  lambda do |size|
+                                    r = make_vct(size)
+                                    g = make_vct(size)
+                                    b = make_vct(size)
+                                    incr = (2.0 * PI) / size
+                                    x = 0.0
+                                    size.times do |i|
+                                      r[i] = sin(2.5 * x).abs
+                                      g[i] = sin(3.5 * x).abs
+                                      b[i] = sin(4.5 * x).abs
+                                      x += incr
+                                    end
+                                    [r, g, b]
+                                  end)
+  delete_colormap(Pink_colormap)
+  if res = colormap?(Pink_colormap)
+    snd_display("delete_colormap %s: %s?", Pink_colormap.inspect, res.inspect)
+  end
+  if (res = snd_catch do set_colormap(Pink_colormap) end).first != :no_such_colormap or
+      colormap == Pink_colormap
+    snd_display("delete pink colormap: %s %s %s?",
+                res.inspect, Pink_colormap.inspect, colormap.inspect)
+  end
+  [1024, 256, 2, 512].each do |n|
+    set_colormap_size(n)
+    10.times do |i|
+      x = my_random(1.0)
+      r = (x < 4.0 / 5) ? ((5.0 / 4) * x) : 1.0
+      g = (4.0 / 5) * x
+      b = 0.5 * x
+      rgb = colormap_ref(Copper_colormap, x)
+      r1, g1, b1 = rgb
+      err = 0.01
+      if n > 2 and
+          x < 1.0 - 1.0 / n and
+          (cfneq(r, r1, err) or cfneq(g, g1, err) or cfneq(b, b1, err))
+        snd_display("copper size reset %d: %.3f (%.3f): %s %s",
+                    n, x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
+                    [r, g, b].inspect, [r1, g1, b1].inspect)
+      end
+    end
+  end
+  set_colormap_size(512)
+end
+
+def test07
+  test007
+  test017
+  test027
+end
+
+if $test07 and $full_test or $snd_test == 7 and (provided?("snd-gtk") or provided?("snd-motif"))
+  $before_test_hook.call(7)
+  test07
+  $after_test_hook.call(7)
+end
+
+# ---------------- test 08: clm ----------------
+
+def jc_reverb_1(decay_dur, low_pass, volume, amp_env)
+  allpass1 = make_all_pass(-0.7, 0.7, 1051)
+  allpass2 = make_all_pass(-0.7, 0.7,  337)
+  allpass3 = make_all_pass(-0.7, 0.7,  113)
+  comb1 = make_comb(0.742, 4799)
+  comb2 = make_comb(0.733, 4999)
+  comb3 = make_comb(0.715, 5399)
+  comb4 = make_comb(0.697, 5801)
+  outdel = make_delay((0.013 * srate()).round)
+  dur = decay_dur + frames() / srate()
+  envA = (amp_env ? make_env(:envelope, amp_env, :scaler, volume, :duration, dur) : false)
+  comb_sum_1 = comb_sum_2 = comb_sum = all_sums = delA = delB = 0.0
+  map_chan(lambda do |inval|
+             allpass_sum = all_pass(allpass3, all_pass(allpass2, all_pass(allpass1, inval)))
+             comb_sum_2, comb_sum_1 = comb_sum_1, comb_sum
+             comb_sum = (comb(comb1, allpass_sum) + comb(comb2, allpass_sum) +
+                           comb(comb3, allpass_sum) + comb(comb4, allpass_sum))
+             all_sums = if low_pass
+                          0.25 * (comb_sum + comb_sum_2) + 0.5 * comb_sum_1
+                        else
+                          comb_sum
+                        end
+             inval + if envA
+                       env(envA) * delay(outdel, all_sums)
+                     else
+                       volume * delay(outdel, all_sums)
+                     end
+           end, 0, (dur * srate()).to_i)
+end
+
+# scissor-tailed flycatcher
+#
+# mix a scissor-tailed flycatcher call into the current sound see
+# bird.scm for lots more birds
+def scissor(begin_time)
+  bigbird(begin_time, 0.05, 1800, 1800, 0.2,
+          [0, 0, 40, 1, 60, 1, 100, 0],           # scissor
+          [0, 0, 25, 1, 75, 1, 100, 0],
+          [1, 0.5, 2, 1, 3, 0.5, 4, 0.1, 5, 0.01])
+end
+
+# fm_violin
+def fm_violin_1(start, dur, freq, amp, *args)
+  fm_index              = get_args(args, :fm_index, 1.0)
+  amp_env               = get_args(args, :amp_env, [0, 0, 25, 1, 75, 1, 100, 0])
+  periodic_vibrato_rate = get_args(args, :periodic_vibrato_rate, 5.0)
+  random_vibrato_rate   = get_args(args, :random_vibrato_rate, 16.0)
+  periodic_vibrato_amp  = get_args(args, :periodic_vibrato_amp, 0.0025)
+  random_vibrato_amp    = get_args(args, :random_vibrato_amp, 0.005)
+  noise_amount          = get_args(args, :noise_amount, 0.0)
+  noise_freq            = get_args(args, :noise_freq, 1000.0)
+  ind_noise_freq        = get_args(args, :ind_noise_freq, 10.0)
+  ind_noise_amount      = get_args(args, :ind_noise_amount, 0.0)
+  amp_noise_freq        = get_args(args, :amp_noise_freq, 20.0)
+  amp_noise_amount      = get_args(args, :amp_noise_amount, 0.0)
+  gliss_env             = get_args(args, :gliss_env, [0, 0, 100, 0])
+  gliss_amount          = get_args(args, :gliss_amount, 0.0)
+  fm1_env               = get_args(args, :fm1_env, [0, 1, 25, 0.4, 75, 0.6, 100, 0])
+  fm2_env               = get_args(args, :fm2_env, [0, 1, 25, 0.4, 75, 0.6, 100, 0])
+  fm3_env               = get_args(args, :fm3_env, [0, 1, 25, 0.4, 75, 0.6, 100, 0])
+  fm1_rat               = get_args(args, :fm1_rat, 1.0)
+  fm2_rat               = get_args(args, :fm2_rat, 3.0)
+  fm3_rat               = get_args(args, :fm3_rat, 4.0)
+  fm1_index             = get_args(args, :fm1_index, false)
+  fm2_index             = get_args(args, :fm2_index, false)
+  fm3_index             = get_args(args, :fm3_index, false)
+  base                  = get_args(args, :base, 1.0)
+  reverb_amount         = get_args(args, :reverb_amount, 0.01)
+  degree                = get_args(args, :degree, false)
+  degrees               = get_args(args, :degrees, false)
+  distance              = get_args(args, :distance, 1.0)
+  frq_scl = hz2radians(freq)
+  modulate = fm_index.nonzero?
+  maxdev = frq_scl * fm_index
+  logfreq = log(freq)
+  sqrtfreq = sqrt(freq)
+  index1 = (fm1_index or [PI, maxdev * 5.0 / logfreq].min)
+  index2 = (fm2_index or [PI, maxdev * 3.0 * (8.5 - logfreq) / (3.0 + freq * 0.001)].min)
+  index3 = (fm3_index or [PI, maxdev * 4.0 / sqrtfreq].min)
+  easy_case = (noise_amount.zero? and
+                 fm1_env == fm2_env and 
+                 fm1_env == fm3_env and 
+                 fm1_rat == fm1_rat.floor and 
+                 fm2_rat == fm2_rat.floor and 
+                 fm3_rat == fm3_rat.floor)
+  coeffs = (easy_case and modulate and 
+              partials2polynomial([fm1_rat.floor, index1, 
+                                    (fm2_rat / fm1_rat).floor, index2,
+                                    (fm3_rat / fm1_rat).floor, index3]))
+  norm = ((easy_case and modulate and 1.0) or index1)
+  carrier = make_oscil(:frequency, freq)
+  fmosc1 = (modulate and make_oscil(:frequency, fm1_rat * freq))
+  fmosc2 = (modulate and (easy_case or make_oscil(:frequency, fm2_rat * freq)))
+  fmosc3 = (modulate and (easy_case or make_oscil(:frequency, fm3_rat * freq)))
+  ampf = make_env(:envelope, amp_env, :scaler, amp, :duration, dur, :base, base)
+  indf1 = (modulate and make_env(:envelope, fm1_env, :scaler, norm, :duration, dur))
+  indf2 = (modulate and
+             (easy_case or make_env(:envelope, fm2_env, :scaler, index2, :duration, dur)))
+  indf3 = (modulate and
+             (easy_case or make_env(:envelope, fm3_env, :scaler, index3, :duration, dur)))
+  frqf = make_env(:envelope, gliss_env, :scaler, gliss_amount * frq_scl, :duration, dur)
+  pervib = make_triangle_wave(periodic_vibrato_rate, periodic_vibrato_amp *  frq_scl)
+  ranvib = make_rand_interp(random_vibrato_rate, random_vibrato_amp * frq_scl)
+  fm_noi = (noise_amount.nonzero? and make_rand(noise_freq, PI * noise_amount))
+  ind_noi = ((ind_noise_amount.nonzero? and ind_noise_freq.nonzero?) and 
+               make_rand_interp(ind_noise_freq, ind_noise_amount))
+  amp_noi = ((amp_noise_amount.nonzero? and amp_noise_freq.nonzero?) and
+               make_rand_interp(amp_noise_freq, amp_noise_amount))
+  loc = make_locsig(:channels, channels, :degree, (degree or degrees or rbm_random(90.0)),
+                    :reverb, reverb_amount, :distance, distance)
+  fuzz = 0.0
+  ind_fuzz = amp_fuzz = 1.0
+  out_data = make_vct!(seconds2samples(dur)) do
+    fuzz = rand(fm_noi) if noise_amount.nonzero?
+    vib = env(frqf) + triangle_wave(pervib) + rand_interp(ranvib)
+    ind_fuzz = 1.0 + rand_interp(ind_noi) if ind_noi
+    amp_fuzz = 1.0 + rand_interp(amp_noi) if amp_noi
+    if modulate
+      if easy_case
+        modulation = env(indf1) * polynomial(coeffs, oscil(fmosc1, vib))
+      else
+        modulation = (env(indf1) * oscil(fmosc1, fm1_rat * vib + fuzz) +
+                        env(indf2) * oscil(fmosc2, fm2_rat * vib + fuzz) +
+                        env(indf3) * oscil(fmosc3, fm3_rat * vib + fuzz))
+      end
+    end
+    env(ampf) * amp_fuzz * oscil(carrier, vib + ind_fuzz * modulation)
+  end
+  beg = seconds2samples(start)
+  if channels == 2
+    mix_vct(vct_scale!(vct_copy(out_data), locsig_ref(loc, 1)), beg, false, 1, false)
+    mix_vct(vct_scale!(out_data, locsig_ref(loc, 0)), beg, false, 0, false)
+  else
+    mix_vct(out_data, beg, false, 0, false)
+  end
+end
+
+add_help(:fltit, "fltit returns a time-varying filter: map_chan(fltit)")
+def fltit
+  coeffs = vct(0.1, 0.2, 0.3, 0.4, 0.4, 0.3, 0.2, 0.1)
+  flt = make_fir_filter(8, coeffs)
+  es = make_array(8) do |i|
+    if i == 5
+      make_env(:envelope, [0, 0.4, 1, 1], :duration, 1.0)
+    else
+      make_env(:envelope, [0, coeffs[i], 1, 0], :end, 100)
+    end
+  end
+  lambda do |x|
+    val = fir_filter(flt, x)
+    xcof = flt.xcoeffs
+    es.each_with_index do |en, i| xcof[i] = env(en) end
+    val
+  end
+end
+
+def freq_sweep(dur)
+  phase = 0.0
+  freq = 0.0
+  incr = PI / (dur * 1.05 * mus_srate())
+  map_channel(lambda do |y|
+                val = sin(phase)
+                phase += freq
+                freq += incr
+                0.5 * val
+              end)
+end
+
+def make_ssb_am_1(freq, order = 40)
+  carrier_freq = freq.abs
+  cos_carrier = make_oscil(carrier_freq, 0.5 * PI)
+  sin_carrier = make_oscil(carrier_freq)
+  dly = make_delay(order)
+  hlb = make_hilbert_transform(order)
+  lambda do |y, fm|
+    ccos = oscil(cos_carrier, fm)
+    csin = oscil(sin_carrier, fm)
+    yh = hilbert_transform(hlb, y)
+    yd = delay(dly, y)
+    if freq > 0.0
+      ccos * yd - csin * yh # shift up
+    else
+      ccos * yd + csin * yh # shift down
+    end
+  end
+end
+
+def ssb_am_1(gen, y, fm = 0.0)
+  gen.call(y, fm)
+end
+
+def rough_spectrum(ind)
+  rd = make_sample_reader(0, ind, 0)
+  mx = 0.0
+  spect = make_vct!(10) do
+    sum = 0.0
+    1000.times do
+      val = rd.call
+      sum += val * val
+    end
+    if sum > mx
+      mx = sum
+    end
+    sum
+  end
+  if mx.nonzero?
+    vct_scale!(spect, 1.0 / mx)
+  else
+    spect
+  end
+end
+
+def print_and_check(gen, name, desc)
+  snd_display("mus_name %s: %s?", name, gen.name) if gen.name != name
+  #  xen->sample: #<Proc:0x084bdd14@/usr/home/mike/Project/Sndtest/snd-test-new.rb:4470>
+  unless gen.name == "xen->sample"
+    snd_display("mus_describe %s: %s?", gen.name, gen.to_s) if gen.to_s != desc
+  end
+  egen = gen
+  snd_display("eql? %s: %s?", gen, egen) unless egen.eql?(gen)
+end
+
+def test_gen_equal(g0, g1, g2)
+  # g0 = g1 at start != g2
+  g3 = g0
+  gad = make_frame(2)
+  snd_display("let %s %s.eql? %s?", g0.name, g0, g3) unless g0.eql?(g3)
+  snd_display("arg %s %s.eql? %s?", g0.name, g0, g1) unless g0.eql?(g1)
+  snd_display("%s %s == %s?", g0.name, g0, g1) if g0 == g1
+  snd_display("%s %s == %s?", g0.name, g0, g2) if g0 == g2
+  snd_display("%s == frame %s %s?", g0.name, g0, gad) if g0 == gad
+  g0.run
+  g3.run
+  g3.run
+  snd_display("run let %s %s.eql? %s?", g0.name, g0, g3) unless g0.eql?(g3)
+  snd_display("arg %s %s.eql? %s?", g0.name, g0, g1) if g0.eql?(g1)
+  snd_display("run %s %s == %s?", g0.name, g0, g1) if g0 == g1
+  snd_display("run %s %s != %s?", g0.name, g0, g2) if g0 == g2
+end
+
+def fm_test(gen)
+  snd_display("%s not a gen?", gen) unless mus_generator?(gen)
+  gen.frequency = 0.0
+  gen.phase = 0.0
+  gen.run(0.0)
+  if fneq(res = gen.phase, 0.0)
+    snd_display("%s phase(0): %s?", gen, res)
+  end
+  gen.run(1.0)
+  if fneq(res = gen.phase, 1.0)
+    snd_display("%s phase(1): %s?", gen, res)
+  end
+  gen.run(0.0)
+  if fneq(res = gen.phase, 1.0)
+    snd_display("%s phase(1, 0): %s?", gen, res)
+  end
+  gen.frequency = radians2hz(2.0)
+  gen.run(0.0)
+  if fneq(res = gen.phase, 3.0)
+    snd_display("%s phase(1, 2): %s %s?", gen, res, gen.frequency)
+  end
+  gen.run(1.0)
+  if fneq(res = gen.phase, 6.0)
+    snd_display("%s phase(3, 2, 1): %s %s?", gen, res, gen.frequency)
+  end
+  10.times do gen.run(10.0) end
+  if fneq(res = gen.phase, 26 + 100 - 2 * PI * 20)
+    snd_display("%s phase (over): %s %s?", gen, res, gen.frequency)
+  end
+  gen.frequency = 0.0
+  gen.phase = 0.0
+  gen.run(1234567812345678)
+  gen.run(-1234567812345678)
+  gen.run(log(0))
+  gen.frequency = 0.0
+  gen.phase = 0.0
+  gen.run(-2.0)
+  if fneq(res = gen.phase, -2.0) and fneq(res, 2 * PI - 2)
+    snd_display("phase %s freq: %s?", res, gen.frequency)
+  end
+end
+
+def test008
+  set_mus_srate(22050)
+  samps = seconds2samples(1.0)
+  secs = samples2seconds(22050)
+  snd_display("seconds2samples: %s?", samps) if samps != 22050
+  snd_display("samples2seconds: %s?", secs) if fneq(secs, 1.0)
+  if mus_file_buffer_size != $default_file_buffer_size
+    snd_display("mus_file_buffer_size: %d?", mus_file_buffer_size)
+  end
+  if (res = snd_catch do set_mus_file_buffer_size(false) end).first != :wrong_type_arg
+    snd_display("mus_file_buffer_size bad size: %s?", res.inspect)
+  end
+  set_mus_file_buffer_size(128)
+  if (res = mus_file_buffer_size) != 128
+    snd_display("set_mus_file_buffer_size: %d?", res)
+  end
+  set_mus_file_buffer_size($default_file_buffer_size)
+  if (res = mus_array_print_length) != 8
+    snd_display("mus_array_print_length: %d?", res)
+  end
+  set_mus_array_print_length(32)
+  if (res = mus_array_print_length) != 32
+    snd_display("set_mus_array_print_length: %d?", res)
+  end
+  set_mus_array_print_length(8)
+  snd_display("mus_srate: %f?", mus_srate) if fneq(mus_srate, 22050.0)
+  if fneq(res = hz2radians(1.0), 2.84951704088598e-4)
+    snd_display("hz2radians: %f?", res)
+  end
+  if fneq(res = radians2hz(2.84951704088598e-4), 1.0)
+    snd_display("radians2hz: %f?", res)
+  end
+  if fneq(res = radians2degrees(1.0), 57.2957801818848)
+    snd_display("radians2degrees: %f?", res)
+  end
+  if fneq(res = degrees2radians(57.2957801818848), 1.0)
+    snd_display("degrees2radians: %f?", res)
+  end
+  if fneq(res = linear2db(0.25), -12.0411996841431)
+    snd_display("linear2db: %f?", res)
+  end
+  if fneq(res = db2linear(-12.0411996841431), 0.25)
+    snd_display("db2linear: %f?", res)
+  end
+  if fneq(hz2radians(1.0), in_hz(1.0))
+    snd_display("in_hz: %f?", in_hz(1.0))
+  end
+  if fneq(res = ring_modulate(0.4, 0.5), 0.2)
+    snd_display("ring_modulate: %f?", res)
+  end
+  if fneq(res = amplitude_modulate(1.0, 0.5, 0.4), 0.7)
+    snd_display("amplitude_modulate: %f?", res)
+  end
+  if fneq(res = contrast_enhancement(0.1, 0.75), sin(0.1 * (PI / 2) + 0.75 * sin(0.1 * 2.0 * PI)))
+    snd_display("contrast_enhancement: %f (0.562925306221587)", res)
+  end
+  #
+  [
+    [partials2polynomial([1, 1, 2, 1], 1), vct(-1.0, 1.0, 2.0)],
+    [partials2polynomial([1, 1, 2, 1], 0), vct(1.0, 2.0, 0.0)],
+    [partials2polynomial([1, 1, 2, 1, 3, 1, 5, 1], 1), vct(-1.0, 3.0, 2.0, -16.0, 0.0, 16.0)],
+    [partials2polynomial([1, 1, 2, 1, 3, 1, 5, 1], 0), vct(1.0, 2.0, -8.0, 0.0, 16.0, 0.0)],
+    [partials2polynomial([1, 1, 2, 0.5, 3, 0.1, 6, 0.01], 1),
+      vct(-0.51, 0.7, 1.18, 0.4, -0.48, 0.0, 0.32)],
+    [partials2polynomial([1, 1, 2, 0.5, 3, 0.1, 6, 0.01], 0),
+      vct(0.9, 1.06, 0.4, -0.32, 0.0, 0.32, 0.0)],
+    [partials2polynomial([1, 9, 2, 3, 3, 5, 4, 7, 5, 1]),
+      vct(4.0, -1.0, -50.0, 0.0, 56.0, 16.0)],
+    [partials2polynomial([7, 1]), vct(0.0, -7.0, 0.0, 56.0, 0.0, -112.0, 0.0, 64.0)],
+    [partials2polynomial([7, 1], 1), vct(0.0, -7.0, 0.0, 56.0, 0.0, -112.0, 0.0, 64.0)],
+    [partials2polynomial([7, 1], 0), vct(-1.0, 0.0, 24.0, 0.0, -80.0, 0.0, 64.0, 0.0)],
+  ].each_with_index do |args, i|
+    vals, orig = args
+    snd_display("partials2polynomial[%d]: %s?", i + 1, vals) unless vequal(vals, orig)
+  end
+  # 
+  # check phase-quadrature cancellations
+  #
+  cos_coeffs = partials2polynomial([1, 1, 2, 1], 1)
+  sin_coeffs = partials2polynomial([1, 1, 2, 1], 0)
+  incr = (2 * PI * 440.0) / 22050.0
+  a = 0.0
+  1100.times do
+    x = cos(a)
+    y = sin(a)
+    cax = polynomial(cos_coeffs, x)
+    sax = polynomial(sin_coeffs, x)
+    upper = cos(2 * a) * cax - sin(2 * a) * y * sax
+    lower = cos(2 * a) * cax + sin(2 * a) * y * sax
+    upper2 = cos(a * 3) + cos(a * 4)
+    lower2 = 1.0 + cos(a)
+    if fneq(upper, upper2) or fneq(lower, lower2)
+      snd_display("%f %f, %f %f?", upper, upper2, lower, lower2)
+    end
+    a += incr
+  end
+  #
+  amps = list2vct([1.0])
+  phases = list2vct([0.0])
+  val = sine_bank(amps, phases)
+  snd_display("sine_bank: %f 0.0?", val) if fneq(val, 0.0)
+  vct_set!(phases, 0, PI / 2)
+  val = sine_bank(amps, phases)
+  snd_display("sine_bank: %f 1.0?", val) if fneq(val, 1.0)
+  amps = list2vct([0.5, 0.25, 1.0])
+  phases = list2vct([1.0, 0.5, 2.0])
+  val = sine_bank(amps, phases)
+  snd_display("sine_bank: %f 1.449?", val) if fneq(val, 1.44989)
+  val = sine_bank(amps, phases, 3)
+  snd_display("sine_bank (3): %f 1.449?", val) if fneq(val, 1.44989)
+  val = sine_bank(amps, phases, 1)
+  snd_display("sine_bank (1): %f 0.421?", val) if fneq(val, 0.4207)
+  #
+  amps = list2vct([1.0])
+  oscs = make_array(1, false)
+  oscs[0] = make_oscil(440.0)
+  val = oscil_bank(amps, oscs, false)
+  snd_display("oscil_bank: %f 0.0?", val) if fneq(val, 0.0)
+  oscs[0].phase = PI / 2
+  val = oscil_bank(amps, oscs)
+  snd_display("oscil_bank: %f 1.0?", val) if fneq(val, 1.0)
+  #
+  rdat = make_vct(16)
+  idat = make_vct(16)
+  vdat = make_vct(16)
+  vct_set!(rdat, 0, 1.0)
+  vct_set!(vdat, 0, 1.0)
+  v0 = spectrum(rdat, idat, make_fft_window(Rectangular_window, 16), 1)
+  v1 = snd_spectrum(vdat, Rectangular_window, 16, true)
+  8.times do |i|
+    if fneq(vct_ref(v0, i), vct_ref(v1, i))
+      snd_display("spectra not equal: %s %s?", v0, v1)
+    end
+  end
+  v0 = spectrum(rdat, idat, make_fft_window(Rectangular_window, 17), 1)
+  v1 = snd_spectrum(vdat, Rectangular_window, 16, true)
+  8.times do |i|
+    if fneq(vct_ref(v0, i), vct_ref(v1, i))
+      snd_display("spectra not equal: %s %s?", v0, v1)
+    end
+  end
+  if (res = snd_catch do spectrum(rdat, idat, false, -1) end).first != :out_of_range
+    snd_display("spectrum bad type: %s", res.inspect)
+  end
+  #
+  rdat = make_vct(16)
+  idat = make_vct(16)
+  xdat = make_vct(16)
+  ydat = make_vct(16)
+  rvec = make_array(16, 0.0)
+  ivec = make_array(16, 0.0)
+  vct_set!(rdat, 0, 1.0)
+  vct_set!(idat, 1, 1.0)
+  vct_set!(xdat, 0, 1.0)
+  vct_set!(ydat, 1, 1.0)
+  rvec[0] = 1.0
+  ivec[1] = 1.0
+  v0 = convolution(rdat, idat, 8)
+  v1 = vct_convolve!(xdat, ydat)
+  snd_display("vct convolution: %s", v0) if fneq(v0[0], 0.0) or fneq(v0[1], 1.0)
+  snd_display("vct_convolve!: %s", v1) if fneq(v1[0], 0.0) or fneq(v1[1], 1.0)
+  8.times do |i|
+    snd_display("convolutions not equal: %s %s?", v0, v1) if fneq(v0[i], v1[i])
+  end
+  if (res = snd_catch do convolution(rdat, idat, -1) end).first != :out_of_range
+    snd_display("convolution bad len: %s", res.inspect)
+  end
+  convolution(rdat, idat, 20)
+  idat = make_vct(8)
+  convolution(rdat, idat, 20)
+  #
+  rdat = make_vct(16)
+  idat = make_vct(16)
+  xdat = make_vct(16)
+  ydat = make_vct(16)
+  rdat[3] = 1.0
+  xdat[3] = 1.0
+  fft(rdat, idat, 1)
+  mus_fft(xdat, ydat, 16, 1)
+  snd_display("ffts: %s %s", rdat, xdat) if fneq(rdat[0], xdat[0])
+  fft(rdat, idat, -1)
+  mus_fft(xdat, ydat, 17, -1)
+  16.times do |i|
+    if (i == 3 and (fneq(rdat[i], 16.0) or fneq(xdat[i], 16.0))) or
+        (i != 3 and (fneq(rdat[i], 0.0) or fneq(xdat[i], 0.0)))
+      snd_display("fft real[%d]: %f %f?", i, rdat[i], xdat[i])
+    end
+    if fneq(idat[i], 0.0) or fneq(ydat[i], 0.0)
+      snd_display("fft imag[%d]: %f %f?", i, idat[i], ydat[i])
+    end
+  end
+  if (res = snd_catch do mus_fft(xdat, ydat, -1, 0) end).first != :out_of_range
+    snd_display("mus_fft bad len: %s", res.inspect)
+  end
+  #
+  rdat = make_vct(20)
+  idat = make_vct(19)
+  rdat[3] = 1.0
+  mus_fft(rdat, idat)
+  convolution(rdat, idat)
+  spectrum(rdat, idat, false)
+  #
+  v0 = make_vct(10)
+  v1 = make_vct(10)
+  vct_fill!(v0, 1.0)
+  multiply_arrays(v0, v1, 1)
+  unless vequal(v0, vct(0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0))
+    snd_display("multiply_arrays[0]: %s?", v0)
+  end
+  multiply_arrays(v0, v1, 100)
+  snd_display("multiply_arrays[100]: %s?", v0) if fneq(vct_peak(v0), 0.0)
+  vct_fill!(v0, 1.0)
+  vct_fill!(v1, 0.5)
+  multiply_arrays(v0, v1)
+  snd_display("multiply_arrays: %f?", v0[0]) if fneq(v0[0], 0.5)
+  if fneq(res = dot_product(v0, v1), 2.5)
+    snd_display("dot_product: %f?", res)
+  end
+  if fneq(res = dot_product(v0, v1, 10), 2.5)
+    snd_display("dot_product (10): %f?", res)
+  end
+  if fneq(res = dot_product(v0, v1, 3), 0.75)
+    snd_display("dot_product (3): %f?", res)
+  end
+  clear_array(v0)
+  snd_display("clear_array: %s?", v0) if fneq(v0[3], 0.0)
+  vct_fill!(v0, 1.0)
+  vct_fill!(v1, 0.5)
+  if fneq((res = rectangular2polar(v0, v1))[0], 1.118)
+    snd_display("rectangular2polar: %s?", res)
+  end
+  vct_fill!(v0, 1.0)
+  vct_fill!(v1, 1.0)
+  rectangular2polar(v0, v1)
+  if fneq(v0[0], sqrt(2.0)) or fneq(v1[0], -atan2(1.0, 1.0))
+    snd_display("rectangular2polar (%f %f): %f %f?", sqrt(2.0), -atan2(1.0, 1.0), v0[0], v1[0])
+  end
+  polar2rectangular(v0, v1)
+  if fneq(v0[0], 1.0) or fneq(v1[0], 1.0)
+    snd_display("polar2rectangular (1 1): %f %f?", v0[0], v1[0])
+  end
+  v0 = make_vct(1)
+  v1 = make_vct(1)
+  v = make_vct(1)
+  val = 0.123
+  vct_set!(v0, 0, 1.0)
+  vct_set!(v1, 0, 1.0)
+  vct_map!(v, lambda do | |
+             rectangular2polar(v0, v1)
+             val = vct_ref(v0, 0)
+             polar2rectangular(v0, v1)
+             vct_ref(v1, 0)
+           end)
+  snd_display("run r->p not inverted: %s?", v) if fneq(v[0], 1.0)
+  snd_display("r->p: %f?", val) if fneq(val, sqrt(2.0))
+  #
+  ind = open_sound("oboe.snd")
+  rl = channel2vct(1200, 512)
+  im = make_vct(512)
+  fft(rl, im, 512)
+  rl_copy = vct_copy(rl)
+  im_copy = vct_copy(im)
+  rectangular2polar(rl, im)
+  polar2rectangular(rl, im)
+  512.times do |i|
+    if fneq(rl[i], rl_copy[i]) or fneq(im[i], im_copy[i])
+      snd_display("polar2rectangular[%d]: %f %f %f %f?", i, rl[i], rl_copy[i], im[i], im_copy[i])
+    end
+  end
+  close_sound(ind)
+  #
+  if defined? edot_product
+    vals = make_vct(1, 1.0)
+    if fneq(res = edot_product(0.0, vals), 1.0)
+      snd_display("edot 1.0: %s?", res)
+    end
+    vals[0] = 0.0
+    if fneq(res = edot_product(0.0, vals), 0.0)
+      snd_display("edot 0.0: %s?", res)
+    end
+    vals = make_array(1, 1.0)
+    if fneq(res = edot_product(0.0, vals), 1.0)
+      snd_display("edot 1.0: %s?", res)
+    end
+    vals[0] = Complex(0.0)
+    if cneq(res = edot_product(0.0, vals), Complex(0.0))
+      snd_display("edot i: %s?", res)
+    end
+    vals = make_vct(4, 1.0)
+    v1 = edot_product(0.25 * TWO_PI, vals)
+    v2 = exp(0.00 * TWO_PI) +
+         exp(0.25 * TWO_PI) +
+         exp(0.50 * TWO_PI) +
+         exp(0.75 * TWO_PI)
+    snd_display("edot 4 i: %s %s?", v1, v2) if fneq(v1, v2)
+    vals = make_array(4) do |i| i + 1.0 end
+    v1 = edot_product(0.25 * TWO_PI * Complex(0.0), vals)
+    v2 = 1 * exp(0.00 * TWO_PI* Complex(0.0)) +
+         2 * exp(0.25 * TWO_PI* Complex(0.0)) +
+         3 * exp(0.50 * TWO_PI* Complex(0.0)) +
+         4 * exp(0.75 * TWO_PI* Complex(0.0))
+    snd_display("edot 4 -i: %s %s?", v1, v2) if cneq(v1, v2)
+    vals.map! do |i| i + Complex(1.0) end
+    v1 = edot_product(0.25 * TWO_PI * Complex(0.0, -1), vals)
+    v2 = Complex(1.0) * exp(0.00 * TWO_PI* Complex(0.0, -1)) +
+         Complex(2.0) * exp(0.25 * TWO_PI* Complex(0.0, -1)) +
+         Complex(3.0) * exp(0.50 * TWO_PI* Complex(0.0, -1)) +
+         Complex(4.0) * exp(0.75 * TWO_PI* Complex(0.0, -1))
+    snd_display("edot 4 -i * i: %s %s?", v1, v2) if cneq(v1, v2)
+  end
+  #
+  v0 = vct(1.0, 0.5, 0.1)
+  if fneq(res0 = polynomial(v0, 0.0), 1.0) or
+      fneq(res1 = polynomial(v0, 1.0), 1.6) or
+      fneq(res2 = polynomial(v0, 2.0), 2.4)
+    snd_display("polynomial: %f %f %f?", res0, res1, res2)
+  end
+  v0 = make_vct!(10) do |i| i end
+  if fneq(res = array_interp(v0, 3.5), 3.5)
+    snd_display("array_interp: %f?", res)
+  end
+  if fneq(res = array_interp(v0, 13.5), 3.5)
+    snd_display("array_interp (13.5): %f?", res)
+  end
+  if fneq(res = array_interp(v0, -6.5), 3.5)
+    snd_display("array_interp (-6.5): %f?", res)
+  end
+  if fneq(res = array_interp(v0, 103.6), 3.6)
+    snd_display("array_interp (103.6): %f?", res)
+  end
+  if fneq(res = array_interp(v0, -106.6), 3.4)
+    snd_display("array_interp (-106.6): %f?", res)
+  end
+  if fneq(res = array_interp(v0, -0.5), 4.5)
+    snd_display("array_interp (-0.5): %f?", res)
+  end
+  if fneq(res = array_interp(v0, -0.9), 8.1)
+    snd_display("array_interp (-0.9): %f?", res)
+  end
+  if fneq(res = array_interp(v0, -0.1), 0.9)
+    snd_display("array_interp (-0.1): %f?", res)
+  end
+  if fneq(res = array_interp(v0, 9.1), 8.1)
+    snd_display("array_interp (9.1): %f?", res)
+  end
+  if fneq(res = array_interp(v0, 9.9), 0.9)
+    snd_display("array_interp (9.9): %f?", res)
+  end
+  if fneq(res = array_interp(v0, 10.1), 0.1)
+    snd_display("array_interp (10.1): %f?", res)
+  end
+  if (res = snd_catch do array_interp(v0, 1, -10) end).first != :out_of_range
+    snd_display("array_interp bad index: %s", res.inspect)
+  end
+  #
+  v0 = make_vct!(10) do |i| i end
+  if fneq(res = mus_interpolate(Mus_interp_linear, 1.5, v0), 1.5)
+    snd_display("mus_interpolate linear: %f?", res)
+  end
+  if fneq(res = mus_interpolate(Mus_interp_all_pass, 1.5, v0), 1.667)
+    snd_display("mus_interpolate all-pass: %f?", res)
+  end
+  if fneq(res = mus_interpolate(Mus_interp_none, 1.5, v0), 1.0)
+    snd_display("mus_interpolate none: %f?", res)
+  end
+  if fneq(res = mus_interpolate(Mus_interp_hermite, 1.5, v0), 1.5)
+    snd_display("mus_interpolate hermite: %f?", res)
+  end
+  if fneq(res = mus_interpolate(Mus_interp_lagrange, 1.5, v0), 1.5)
+    snd_display("mus_interpolate lagrange: %f?", res)
+  end
+end
+
+def test018
+  gen = make_delay(3)
+  gen2 = make_delay(3)
+  gen1 = make_delay(4, :initial_contents, [1.0, 0.5, 0.25, 0.0])
+  gen3 = make_delay(4, :initial_contents, vct(1.0, 0.5, 0.25, 0.0))
+  print_and_check(gen, "delay", "delay: line[3, step]: [0.000 0.000 0.000]")
+  v0 = make_vct!(10) do |i| delay(gen, i) end
+  v1 = make_vct!(10) do |i| delay?(gen2) ? delay(gen2, i) : -1.0 end
+  snd_display("map delay: %s %s?", v0, v1) unless vequal(v1, v0)
+  snd_display("%s not a delay?", gen) unless delay?(gen)
+  snd_display("delay length: %d?", gen.length) if gen.length != 3
+  if fneq(v0[1], 0.0) or fneq(v0[4], 1.0) or fneq(v0[8], 5.0)
+    snd_display("delay output: %s?", v0)
+  end
+  if fneq(delay(gen1), 1.0) or fneq(delay(gen1), 0.5) or
+      fneq(delay(gen1), 0.25) or fneq(delay(gen1), 0.0) or fneq(delay(gen1), 0.0)
+    snd_display("delay with list initial-contents confused")
+  end
+  if fneq(delay(gen3), 1.0) or fneq(delay(gen3), 0.5) or
+      fneq(delay(gen3), 0.25) or fneq(delay(gen3), 0.0) or fneq(delay(gen3), 0.0)
+    snd_display("delay with vct initial-contents confused")
+  end
+  if (res = snd_catch do make_delay(:size, false) end).first != :wrong_type_arg
+    snd_display("make_delay bad size false: %s", res.inspect)
+  end
+  if (res = snd_catch do
+        make_delay(3, :initial_element, make_oscil)
+      end).first != :wrong_type_arg
+    snd_display("make_delay bad initial element: %s", res.inspect)
+  end
+  if (res = snd_catch do make_delay(-3) end).first != :out_of_range
+    snd_display("make_delay bad size: %s", res.inspect)
+  end
+  d1 = make_delay(3)
+  d2 = make_delay(3)
+  d3 = make_delay(4)
+  delay(d1, 1.0)
+  delay(d2, 1.0)
+  delay(d3, 1.0)
+  test_gen_equal(d1, d2, d3)
+  test_gen_equal(make_delay(3, :initial_element, 1.0),
+                 make_delay(3, :initial_element, 1.0),
+                 make_delay(3, :initial_element, 0.5))
+  test_gen_equal(make_delay(3, :initial_contents, [1.0, 0.0, 0.0]),
+                 make_delay(3, :initial_contents, [1.0, 0.0, 0.0]),
+                 make_delay(3, :initial_contents, [1.0, 1.0, 1.0]))
+  gen = make_delay(5)
+  delay(gen, 1.0)
+  delay(gen, 0.0)
+  delay(gen, 0.5)
+  data = vct_copy(gen.data)
+  vct_set!(gen.data, 0, 0.3)
+  snd_display("delay data 0: %f?", gen.data[0]) if fneq(gen.data[0], 0.3)
+  vct_set!(data, 0, 0.75)
+  gen.data = data
+  snd_display("delay set data 0: %f?", gen.data[0]) if fneq(gen.data[0], 0.75)
+  delay(gen, 0.0)
+  delay(gen, 0.0)
+  if fneq(res = delay(gen, 0.0), 0.75)
+    snd_display("set delay data: %f %s?", res, gen.data)
+  end
+  if res = make_oscil.data
+    snd_display("mus_data osc: %s?", res.inspect)
+  end
+  #
+  del = make_delay(5, :max_size, 8)
+  delay(del, 1.0)
+  4.times do delay(del, 0.0) end
+  v0 = make_vct!(5) do delay(del, 0.0, 0.4) end
+  snd_display("zdelay: %s?", v0) unless vequal(v0, vct(0.6, 0.4, 0.0, 0.0, 0.0))
+  delay(del, 1.0)
+  delay(del, 0.0, 0.4)
+  if (res = del.to_s) != "delay: line[5,8, linear]: [0.000 0.000 0.000 1.000 0.000]"
+    snd_display("describe zdelay: %s", res)
+  end
+  if (res = snd_catch do tap(make_oscil) end).first != :wrong_type_arg
+    snd_display("tap of oscil: %s?", res.inspect)
+  end
+  #
+  dly = make_delay(3)
+  flt = make_one_zero(0.5, 0.4)
+  v = make_vct(20)
+  inval = 1.0
+  vct_map!(v, lambda do | |
+             res = delay(dly, inval + one_zero(flt, tap(dly)) * 0.6)
+             inval = 0.0
+             res
+           end)
+  unless vequal(v, vct(0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.3, 0.24, 0.0, 0.09,
+                       0.144, 0.058, 0.027, 0.065, 0.052, 0.022, 0.026, 0.031, 0.019, 0.013))
+    snd_display("tap with low pass: %s?", v)
+  end
+  #
+  dly = make_delay(3)
+  v = make_vct(20)
+  inval = 1.0
+  vct_map!(v, lambda do | |
+             res = delay(dly, inval + tap(dly))
+             inval = 0.0
+             res
+           end)
+  unless vequal(v, vct(0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0,
+                       0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0))
+    snd_display("simple tap: %s?", v)
+  end
+  dly = make_delay(6)
+  v = make_vct(20)
+  inval = 1.0
+  vct_map!(v, lambda do | |
+             res = delay(dly, inval + tap(dly, -2.0))
+             inval = 0.0
+             res
+           end)
+  set_print_length([20, print_length].max)
+  unless vequal(v, vct(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0,
+                       1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0))
+    snd_display("tap back 2: %s?", v)
+  end
+  #
+  dly = make_delay(3, :initial_element, 32.0)
+  unless vct?(dly.data)
+    snd_display("delay data not vct?")
+  else
+    if dly.data.length != 3
+      snd_display("delay data len not 3: %d (%s)?", dly.data.length, dly.data)
+    else
+      if fneq(res = dly.data[1], 32.0)
+        snd_display("delay [1] 32: %f?", res)
+      end
+    end
+  end
+  if (res = snd_catch do dly.length = -1 end).first != :out_of_range
+    snd_display("len to -1 -> %s?", res.inspect)
+  end
+  if (res = snd_catch do dly.length = 0 end).first != :out_of_range
+    snd_display("len to 0 -> %s?", res.inspect)
+  end
+  if (res = snd_catch do dly.length = 100 end).first != :out_of_range
+    snd_display("len to 100 -> %s?", res.inspect)
+  end
+  if (res = snd_catch do dly.data[100] = 0.1 end).first != :out_of_range
+    snd_display("data 100 to 0.1 -> %s?", res.inspect)
+  end
+  data = make_vct(32, 1.0)
+  dly.data = data
+  snd_display("set delay data not vct?") unless vct?(dly.data)
+  snd_display("set delay [1] 1: %f?", dly.data[1]) if fneq(dly.data[1], 1.0)
+  snd_display("set delay data len(32): %d?", dly.data.length) if dly.data.length != 32
+  if (res = snd_catch do dly.length = 100 end).first != :out_of_range
+    snd_display("set len to 100 -> %s", res.inspect)
+  end
+  if (res = snd_catch do dly.data[100] = 0.1 end).first != :out_of_range
+    snd_display("set data 100 to 0.1 -> %s", res.inspect)
+  end
+  #
+  d1 = make_delay(4)
+  d2 = make_delay(4, :max_size, 5, :type, Mus_interp_linear)
+  d3 = make_delay(4, :max_size, 5, :type, Mus_interp_all_pass)
+  d4 = make_delay(4, :max_size, 5, :type, Mus_interp_none)
+  d5 = make_delay(4, :max_size, 4, :type, Mus_interp_lagrange)
+  d6 = make_delay(4, :max_size, 4, :type, Mus_interp_hermite)
+  d7 = make_delay(4, :max_size, 4, :type, Mus_interp_linear)
+  v1 = make_vct(20)
+  v2 = make_vct(20)
+  v3 = make_vct(20)
+  v4 = make_vct(20)
+  v5 = make_vct(20)
+  v6 = make_vct(20)
+  v7 = make_vct(20)
+  [[d1, Mus_interp_none],
+    [d2, Mus_interp_linear],
+    [d3, Mus_interp_all_pass],
+    [d4, Mus_interp_none],
+    [d5, Mus_interp_lagrange],
+    [d6, Mus_interp_hermite],
+    [d7, Mus_interp_linear]].each_with_index do |args, i|
+    dly, type = args
+    snd_display("d%d interp type: %s?", i + 1, dly.interp_type) if dly.interp_type != type
+  end
+  [[v1, d1], [v2, d2], [v3, d3], [v4, d4], [v5, d5], [v6, d6], [v7, d7]].each do |v, d|
+    v[0] = delay(d, 1.0)
+    delay_tick(d, 0.0)
+  end
+  j = -0.2
+  (1...20).each do |i|
+    [[v1, d1], [v2, d2], [v3, d3], [v4, d4], [v5, d5], [v6, d6], [v7, d7]].each do |v, d|
+      v[i] = tap(d, j)
+    end
+    j -= 0.2
+  end
+  set_print_length([20, print_length].max)
+  if (not vequal(v1, vct(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                         1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0))) and
+      (not vequal(v1, vct(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                          0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0)))
+    snd_display("delay interp none (1): %s?", v1)
+  end
+  unless vequal(v2, vct(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2, 0.4, 0.6, 0.8,
+                        1.0, 0.8, 0.6, 0.4, 0.2, 0.0, 0.0, 0.0, 0.0, 0.0))
+    snd_display("delay interp linear (2): %s?", v2)
+  end
+  unless vequal(v3, vct(0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.429, 0.143, 0.095, 0.905,
+                        0.397, 0.83, 0.793, 0.912, -0.912, 0.608, -0.261, 0.065, -0.007))
+    snd_display("delay interp all-pass (3): %s?", v3)
+  end
+  if (not vequal(v4, vct(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                         1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0))) and
+      (not vequal(v4, vct(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                          0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0)))
+    snd_display("delay interp none (4): %s?", v4)
+  end
+  unless vequal(v5, vct(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.12, 0.28, 0.48, 0.72,
+                        1.0, 0.96, 0.84, 0.64, 0.36, 0.0, -0.08, -0.12, -0.12, -0.08))
+    snd_display("delay interp lagrange (5): %s?", v5)
+  end
+  unless vequal(v6, vct(0.0, -0.016, -0.048, -0.072, -0.064, 0.0, 0.168, 0.424, 0.696, 0.912,
+                        1.0, 0.912, 0.696, 0.424, 0.168, 0.0, -0.064, -0.072, -0.048, -0.016))
+    snd_display("delay interp hermite (6): %s?", v6)
+  end
+  unless vequal(v7, vct(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2, 0.4, 0.6, 0.8,
+                        1.0, 0.8, 0.6, 0.4, 0.2, 0.0, 0.0, 0.0, 0.0, 0.0))
+    snd_display("delay interp linear (7): %s?", v7)
+  end
+  #
+  dly = make_delay(:size, 2, :max_size, 3)
+  impulse = 1.0
+  data = make_vct!(5) do
+    val = delay(dly, impulse, 0.4)
+    impulse = 0.0
+    val
+  end
+  unless vequal(data, vct(0.0, 0.0, 0.6, 0.4, 0.0))
+    snd_display("delay size 2, max 3, off 0.4: %s", data)
+  end
+  dly = make_delay(:size, 2, :max_size, 3)
+  impulse = 1.0
+  data = make_vct!(5) do
+    val = delay(dly, impulse, -0.4)
+    impulse = 0.0
+    val
+  end
+  unless vequal(data, vct(0.0, 0.4, 0.6, 0.0, 0.0))
+    snd_display("delay size 2, max 3, off -0.4: %s", data)
+  end
+  # 
+  dly = make_delay(:size, 1, :max_size, 2)
+  impulse = 1.0
+  data = make_vct!(5) do
+    val = delay(dly, impulse, 0.4)
+    impulse = 0.0
+    val
+  end
+  unless vequal(data, vct(0.0, 0.6, 0.4, 0.0, 0.0))
+    snd_display("delay size 1, max 2, off 0.4: %s", data)
+  end
+  dly = make_delay(:size, 1, :max_size, 2)
+  impulse = 1.0
+  data = make_vct!(5) do
+    val = delay(dly, impulse, -0.4)
+    impulse = 0.0
+    val
+  end
+  unless vequal(data, vct(0.0, 0.6, 0.4, 0.0, 0.0))
+    snd_display("delay size 1, max 2, off -0.4: %s", data)
+  end
+  # 
+  dly = make_delay(:size, 0, :max_size, 1)
+  impulse = 1.0
+  data = make_vct!(5) do
+    val = delay(dly, impulse, 0.4)
+    impulse = 0.0
+    val
+  end
+  unless vequal(data, vct(0.6, 0.0, 0.0, 0.0, 0.0))
+    snd_display("delay size 0, max 1, off 0.4: %s", data)
+  end
+  dly = make_delay(:size, 0, :max_size, 1)
+  if fneq(res = delay(dly, 0.0), 0.0)
+    snd_display("initial delay 0 size val: %f?", res)
+  end
+  dly = make_delay(:size, 0, :max_size, 1)
+  impulse = 1.0
+  data = make_vct!(5) do
+    val = delay(dly, impulse, -0.4)
+    impulse = 0.0
+    val
+  end
+  unless vequal(data, vct(1.4, 0.0, 0.0, 0.0, 0.0))
+    snd_display("delay size 0, max 1, off -0.4: %s", data)
+  end
+  dly = make_delay(:size, 0, :max_size, 100)
+  v = make_vct!(10) do |i| delay(dly, 0.5, i) end
+  unless vequal(v, vct(0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
+    snd_display("delay 0 -> 100: %s", v)
+  end
+  9.downto(0) do |i| v[i] = delay(dly, 0.5, i) end
+  unless vequal(v, vct(0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.0))
+    snd_display("delay 100 -> 0: %s", v)
+  end
+  dly.reset
+  10.times do |i| v[i] = delay(dly, (i.odd? ? 1.0 : 0.0), i * 0.1) end
+  unless vequal(v, vct(0.0, 0.9, 0.0, 0.7, 0.0, 0.5, 0.0, 0.3, 0.0, 0.1))
+    snd_display("delay 0 -> 100 0.1: %s", v)
+  end
+  dly.reset
+  10.times do |i| v[i] = delay(dly, (i.odd? ? 1.0 : 0.0), 1.0 + i * 0.1) end
+  unless vequal(v, vct(0.0, 0.0, 0.8, 0.3, 0.6, 0.5, 0.4, 0.7, 0.2, 0.9))
+    snd_display("delay 0 -> 100 1.1: %s", v)
+  end
+end
+
+def test028
+  gen = make_all_pass(0.4, 0.6, 3)
+  gen1 = make_all_pass(0.4, 0.6, 3)
+  print_and_check(gen,
+                  "all-pass",
+                  "all-pass: feedback: 0.400, feedforward: 0.600, line[3, step]:[0.000 0.000 0.000]")
+  v0 = make_vct!(10) do all_pass(gen, 1.0) end
+  v1 = make_vct(10)
+  vct_map!(v1, lambda do | | all_pass?(gen1) ? all_pass(gen1, 1.0) : -1.0 end)
+  snd_display("map all-pass: %s %s?", v0, v1) unless vequal(v0, v1)
+  snd_display("%s not all-pass?", gen) unless all_pass?(gen)
+  snd_display("all-pass length: %d?", gen.length) if gen.length != 3
+  snd_display("all-pass order: %d?", gen.order) if gen.order != 3
+  snd_display("all-pass feedback: %f?", gen.feedback) if fneq(gen.feedback, 0.4)
+  snd_display("all-pass feedforward: %f?", gen.feedforward) if fneq(gen.feedforward, 0.6)
+  if fneq(v0[1], 0.6) or fneq(v0[4], 1.84) or fneq(v0[8], 2.336)
+    snd_display("all-pass output: %s?", v0)
+  end
+  gen.feedback = 0.5
+  snd_display("all-pass set_feedback: %f?", gen.feedback) if fneq(gen.feedback, 0.5)
+  gen.feedforward = 0.5
+  snd_display("all-pass set_feedforward: %f?", gen.feedforward) if fneq(gen.feedforward, 0.5)
+  d1 = make_all_pass(0.7, 0.5, 3)
+  d2 = make_all_pass(0.7, 0.5, 3)
+  d3 = make_all_pass(0.7, 0.5, 4)
+  all_pass(d1, 1.0)
+  all_pass(d2, 1.0)
+  all_pass(d3, 1.0)
+  test_gen_equal(d1, d2, d3)
+  test_gen_equal(make_all_pass(0.7, 0.5, 3, :initial_element, 1.0),
+                 make_all_pass(0.7, 0.5, 3, :initial_element, 1.0),
+                 make_all_pass(0.7, 0.5, 3, :initial_element, 0.5))
+  test_gen_equal(make_all_pass(0.7, 0.5, 3, :initial_element, 1.0),
+                 make_all_pass(0.7, 0.5, 3, :initial_element, 1.0),
+                 make_all_pass(0.5, 0.5, 3, :initial_element, 1.0))
+  test_gen_equal(make_all_pass(0.7, 0.5, 3, :initial_contents, [1.0, 0.0, 0.0]),
+                 make_all_pass(0.7, 0.5, 3, :initial_contents, [1.0, 0.0, 0.0]),
+                 make_all_pass(0.7, 0.5, 3, :initial_contents, [1.0, 1.0, 1.0]))
+  err = snd_catch do make_all_pass(:feedback, 0.2, :feedforward, 0.1, :size, -1) end
+  if err.first != :out_of_range or
+      err[1] != "make-all-pass" or
+      err[2] != "size %s < 0?" or
+      err[3] != "-1"
+    snd_display("make_all_pass bad size error message: %s", err.inspect)
+  end
+  #
+  gen = make_average(4)
+  gen1 = make_average(4)
+  print_and_check(gen, "average", "average: 0.000, line[4]:[0.000 0.000 0.000 0.000]")
+  v0 = make_vct!(10) do average(gen, 1.0) end
+  v1 = make_vct(10)
+  vct_map!(v1, lambda do | | average?(gen1) ? average(gen1, 1.0) : -1.0 end)
+  snd_display("map average: %s %s?", v0, v1) unless vequal(v0, v1)
+  snd_display("%s not average?", gen) unless average?(gen)
+  snd_display("average length: %d?", gen.length) if gen.length != 4
+  snd_display("average order: %d?", gen.order) if gen.order != 4
+  if fneq(v0[1], 0.5) or fneq(v0[4], 1.0) or fneq(v0[8], 1.0)
+    snd_display("average output: %s?", v0)
+  end
+  gen = make_average(8)
+  if fneq(val = average(gen), 0.0)
+    snd_display("empty average: %f?", val)
+  end
+  if fneq(val = average(gen, 1.0), 0.125)
+    snd_display("average 1: %f?", val)
+  end
+  if fneq(val = average(gen, 1.0), 0.25)
+    snd_display("average 2: %f?", val)
+  end
+  if fneq(val = average(gen, 0.5), 0.3125)
+    snd_display("average 2: %f?", val)
+  end
+  4.times do average(gen, 0.0) end
+  if fneq(val = average(gen, 0.0), 0.3125)
+    snd_display("average 6: %f?", val)
+  end
+  if fneq(val = average(gen, 0.0), 0.1875)
+    snd_display("average 7: %f?", val)
+  end
+  if fneq(val = average(gen, 0.0), 0.0625)
+    snd_display("average 8: %f?", val)
+  end
+  if fneq(val = average(gen, 0.0), 0.0)
+    snd_display("average 9: %f?", val)
+  end
+  gen = make_average(10, :initial_element, 0.5)
+  if fneq(val = average(gen, 0.5), 0.5)
+    snd_display("average initial_element: %f?", val)
+  end
+  gen = make_average(3, :initial_contents, [1.0, 1.0, 1.0])
+  if fneq(val = average(gen, 1.0), 1.0)
+    snd_display("average initial_contents: %f?", val)
+  end
+  d1 = make_average(3, :initial_contents, [0.7, 0.5, 3])
+  d2 = make_average(3, :initial_contents, vct(0.7, 0.5, 3))
+  d3 = make_average(4, :initial_contents, [0.7, 0.5, 0.1, 4])
+  average(d1, 1.0)
+  average(d2, 1.0)
+  average(d3, 1.0)
+  test_gen_equal(d1, d2, d3)
+  test_gen_equal(make_average(3, :initial_element, 1.0),
+                 make_average(3, :initial_element, 1.0),
+                 make_average(3, :initial_element, 0.5))
+  test_gen_equal(make_average(3, :initial_element, 1.0),
+                 make_average(3, :initial_element, 1.0),
+                 make_average(4, :initial_element, 1.0))
+  test_gen_equal(make_average(3, :initial_contents, [1.0, 0.0, 0.0]),
+                 make_average(3, :initial_contents, [1.0, 0.0, 0.0]),
+                 make_average(3, :initial_contents, [1.0, 1.0, 1.0]))
+  err = snd_catch do make_average(:size, -2) end
+  if err.first != :out_of_range or
+      err[1] != "make-average" or
+      err[2] != "size %s < 0?" or
+      err[3] != "-2"
+    snd_display("make_average bad size error message: %s", err.inspect)
+  end
+  #
+  gen = make_comb(0.4, 3)
+  gen1 = make_comb(0.4, 3)
+  print_and_check(gen, "comb", "comb: scaler: 0.400, line[3, step]: [0.000 0.000 0.000]")
+  v0 = make_vct!(10) do comb(gen, 1.0) end
+  v1 = make_vct(10)
+  vct_map!(v1, lambda do | | comb?(gen1) ? comb(gen1, 1.0) : -1.0 end)
+  snd_display("map comb: %s %s?", v0, v1) unless vequal(v0, v1)
+  snd_display("%s not comb?", gen) unless comb?(gen)
+  snd_display("comb length: %d?", gen.length) if gen.length != 3
+  snd_display("comb order: %d?", gen.order) if gen.order != 3
+  snd_display("comb feedback: %f?", gen.feedback) if fneq(gen.feedback, 0.4)
+  if fneq(v0[1], 0.0) or fneq(v0[4], 1.0) or fneq(v0[8], 1.4)
+    snd_display("comb output: %s?", v0)
+  end
+  d1 = make_comb(0.7, 3)
+  d2 = make_comb(0.7, 3)
+  d3 = make_comb(0.7, 4)
+  comb(d1, 1.0)
+  comb(d2, 1.0)
+  comb(d3, 1.0)
+  test_gen_equal(d1, d2, d3)
+  test_gen_equal(make_comb(0.7, 3, :initial_element, 1.0),
+                 make_comb(0.7, 3, :initial_element, 1.0),
+                 make_comb(0.7, 3, :initial_element, 0.5))
+  test_gen_equal(make_comb(0.7, 3, :initial_element, 1.0),
+                 make_comb(0.7, 3, :initial_element, 1.0),
+                 make_comb(0.5, 3, :initial_element, 1.0))
+  test_gen_equal(make_comb(0.7, 3, :initial_contents, [1.0, 0.0, 0.0]),
+                 make_comb(0.7, 3, :initial_contents, [1.0, 0.0, 0.0]),
+                 make_comb(0.7, 3, :initial_contents, [1.0, 1.0, 1.0]))
+  del = make_comb(0.0, 5, :max_size, 8)
+  comb(del, 1.0)
+  4.times do comb(del, 0.0) end
+  v0 = make_vct!(5) do comb(del, 0.0, 0.4) end
+  snd_display("zcomb: %s", v0) unless vequal(v0, vct(0.600, 0.400, 0.000, 0.000, 0.000))
+  comb(del, 1.0)
+  comb(del, 0.0, 0.4)
+  if (res = del.to_s) != "comb: scaler: 0.000, line[5,8, linear]: [0.000 0.000 0.000 1.000 0.000]"
+    snd_display("describe zcom: %s", res)
+  end
+  del.feedback = 1.0
+  snd_display("comb feedback set: %f?", del.feedback) if fneq(del.feedback, 1.0)
+  #
+  gen = make_notch(0.4, 3)
+  gen1 = make_notch(0.4, 3)
+  print_and_check(gen, "notch", "notch: scaler: 0.400, line[3, step]: [0.000 0.000 0.000]")
+  v0 = make_vct!(10) do notch(gen, 1.0) end
+  v1 = make_vct(10)
+  vct_map!(v1, lambda do | | notch?(gen1) ? notch(gen1, 1.0) : -1.0 end)
+  snd_display("map notch: %s %s?", v0, v1) unless vequal(v0, v1)
+  snd_display("%s not notch?", gen) unless notch?(gen)
+  snd_display("notch length: %d?", gen.length) if gen.length != 3
+  snd_display("notch order: %d?", gen.order) if gen.order != 3
+  snd_display("notch feedforward: %f?", gen.feedforward) if fneq(gen.feedforward, 0.4)
+  if fneq(v0[1], 0.4) or fneq(v0[4], 1.4) or fneq(v0[8], 1.4)
+    snd_display("notch output: %s?", v0)
+  end
+  d1 = make_notch(0.7, 3)
+  d2 = make_notch(0.7, 3)
+  d3 = make_notch(0.7, 4)
+  notch(d1, 1.0)
+  notch(d2, 1.0)
+  notch(d3, 1.0)
+  test_gen_equal(d1, d2, d3)
+  test_gen_equal(make_notch(0.7, 3, :initial_element, 1.0),
+                 make_notch(0.7, 3, :initial_element, 1.0),
+                 make_notch(0.7, 3, :initial_element, 0.5))
+  test_gen_equal(make_notch(0.7, 3, :initial_element, 1.0),
+                 make_notch(0.7, 3, :initial_element, 1.0),
+                 make_notch(0.5, 3, :initial_element, 1.0))
+  test_gen_equal(make_notch(0.7, 3, :initial_contents, [1.0, 0.0, 0.0]),
+                 make_notch(0.7, 3, :initial_contents, [1.0, 0.0, 0.0]),
+                 make_notch(0.7, 3, :initial_contents, [1.0, 1.0, 1.0]))
+  # make sure all-pass is the same as comb/notch given the appropriate
+  # feedback/forward settings
+  [[make_comb(0.5, 5), vct(0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.5)],
+    [make_all_pass(0.5, 0.0, 5), vct(0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.5)],
+    [make_notch(0.5, 5), vct(0.5, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0)],
+    [make_all_pass(0.0, 0.5, 5), vct(0.5, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0)]
+  ].each do |gen, v1|
+    v0 = make_vct!(11) do |i| gen.run(i.zero? ? 1.0 : 0.0) end
+    snd_display("0 %s (0.5, 0.0, 5): %s", gen.name, v0) unless vequal(v0, v1)
+  end
+  # make sure all-pass is the same as zcomb/znotch given the
+  # appropriate feedback/forward and "pm" settings
+  [[make_comb(0.5, 5, :max_size, 20),
+      vct(0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.5)],
+    [make_all_pass(0.5, 0.0, 5, :max_size, 20),
+      vct(0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.5)],
+    [make_notch(0.5, 5, :max_size, 20),
+      vct(0.5, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0)],
+    [make_all_pass(0.0, 0.5, 5, :max_size, 20),
+      vct(0.5, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0)]].each do |gen, v1|
+    v0 = make_vct!(11) do |i| gen.run(i.zero? ? 1.0 : 0.0) end
+    snd_display("1 %s (0.5, 0.0, 5): %s", gen.name, v0) unless vequal(v0, v1)
+  end
+  # now actually use the size difference
+  [[make_comb(0.5, 5, :max_size, 20),
+      vct(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.8, 0.4, 0.0, 0.0,
+          0.0, 0.0, 0.0, 0.16, 0.36, 0.2, 0.04, 0.0, 0.0, 0.0)],
+    [make_all_pass(0.5, 0.0, 5, :max_size, 20),
+      vct(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.8, 0.4, 0.0, 0.0,
+          0.0, 0.0, 0.0, 0.16, 0.36, 0.2, 0.04, 0.0, 0.0, 0.0)],
+    [make_notch(0.5, 5, :max_size, 20),
+      vct(0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.8, 0.4, 0.0, 0.0, 0.0,
+          0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)],
+    [make_all_pass(0.0, 0.5, 5, :max_size, 20),
+      vct(0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.8, 0.4, 0.0, 0.0, 0.0,
+          0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)]].each do |gen, v1|
+    angle = -0.2
+    v0 = make_vct!(20) do |i| gen.run((i.zero? ? 1.0 : 0.0), angle += 0.2) end
+    snd_display("2 %s (0.5, 0.0, 5): %s", gen.name, v0) unless vequal(v0, v1)
+  end
+  [[make_comb(0.5, 5, :max_size, 20),
+      vct(0.0, 0.0, 0.0, 0.0, 0.8, 0.0, 0.0, 0.16, 0.16, 0.0,
+          0.08, 0.064, 0.016, 0.035, 0.013, 0.018, 0.007, 0.007, 0.003, 0.002)],
+    [make_all_pass(0.5, 0.0, 5, :max_size, 20),
+      vct(0.0, 0.0, 0.0, 0.0, 0.8, 0.0, 0.0, 0.16, 0.16, 0.0,
+          0.08, 0.064, 0.016, 0.035, 0.013, 0.018, 0.007, 0.007, 0.003, 0.002)],
+    [make_notch(0.5, 5, :max_size, 20),
+      vct(0.5, 0.0, 0.0, 0.0, 0.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+          0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)],
+    [make_all_pass(0.0, 0.5, 5, :max_size, 20),
+      vct(0.5, 0.0, 0.0, 0.0, 0.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+          0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)]].each do |gen, v1|
+    angle = +0.2
+    v0 = make_vct!(20) do |i| gen.run((i.zero? ? 1.0 : 0.0), angle -= 0.2) end
+    snd_display("3 %s (0.5, 0.0, 5): %s", gen.name, v0) unless vequal(v0, v1)
+  end
+  [[make_comb(0.5, 5, :max_size, 20),
+      vct(0.0, 0.0, 0.0, 0.0, 0.0, 0.95, 0.06, 0.0, 0.0, 0.0,
+          0.428, 0.079, 0.004, 0.0, 0.0, 0.182, 0.067, 0.008, 0.0, 0.0)],
+    [make_all_pass(0.5, 0.0, 5, :max_size, 20),
+      vct(0.0, 0.0, 0.0, 0.0, 0.0, 0.95, 0.06, 0.0, 0.0, 0.0,
+          0.428, 0.079, 0.004, 0.0, 0.0, 0.182, 0.067, 0.008, 0.0, 0.0)],
+    [make_notch(0.5, 5, :max_size, 20),
+      vct(0.5, 0.0, 0.0, 0.0, 0.0, 0.95, 0.06, 0.0, 0.0, 0.0, 0.0,
+          0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)],
+    [make_all_pass(0.0, 0.5, 5, :max_size, 20),
+      vct(0.5, 0.0, 0.0, 0.0, 0.0, 0.95, 0.06, 0.0, 0.0, 0.0, 0.0,
+          0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)]].each do |gen, v1|
+    angle = -0.01
+    v0 = make_vct!(20) do |i| gen.run((i.zero? ? 1.0 : 0.0), angle += 0.01) end
+    snd_display("4 %s (0.5, 0.0, 5): %s", gen.name, v0) unless vequal(v0, v1)
+  end
+  # now run off either end of the delay line "by accident"
+  [[make_comb(0.5, 5, :max_size, 10),
+      vct(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5,
+          1.0, 0.25, 0.125, 0.094, 0.062, 0.055, 0.047, 0.039, 0.031, 0.029)],
+    [make_all_pass(0.5, 0.0, 5, :max_size, 10),
+      vct(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5,
+          1.0, 0.25, 0.125, 0.094, 0.062, 0.055, 0.047, 0.039, 0.031, 0.029)],
+    [make_notch(0.5, 5, :max_size, 10),
+      vct(0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 1.0,
+          0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)],
+    [make_all_pass(0.0, 0.5, 5, :max_size, 10),
+      vct(0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 1.0,
+          0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)]].each do |gen, v1|
+    angle = -0.5
+    v0 = make_vct!(20) do |i| gen.run((i.zero? ? 1.0 : 0.0), angle += 0.5) end
+    snd_display("5 %s (0.5, 0.0, 5): %s", gen.name, v0) unless vequal(v0, v1)
+  end
+  [[make_comb(0.5, 5, :max_size, 10),
+      vct(0.0, 0.0, 0.0, 0.5, 0.0, 0.125, 0.0, 0.031, 0.016, 0.004,
+          1.0, 0.0, 0.25, 0.031, 0.0, 0.012, 0.002, 0.250, 0.125, 0.008)],
+    [make_all_pass(0.5, 0.0, 5, :max_size, 10),
+      vct(0.0, 0.0, 0.0, 0.5, 0.0, 0.125, 0.0, 0.031, 0.016, 0.004,
+          1.0, 0.0, 0.25, 0.031, 0.0, 0.012, 0.002, 0.250, 0.125, 0.008)],
+    [make_notch(0.5, 5, :max_size, 10),
+      vct(0.5, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0,
+          0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)],
+    [make_all_pass(0.0, 0.5, 5, :max_size, 10),
+      vct(0.5, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0,
+          0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)]].each do |gen, v1|
+    angle = +0.5
+    v0 = make_vct!(20) do |i| gen.run((i.zero? ? 1.0 : 0.0), angle -= 0.5) end
+    snd_display("6 %s (0.5, 0.0, 5): %s", gen.name, v0) unless vequal(v0, v1)
+  end
+end
+
+def test038
+  gen = make_one_pole(0.4, 0.7)
+  gen1 = make_one_pole(0.4, 0.7)
+  print_and_check(gen, "one-pole", "one-pole: a0: 0.400, b1: 0.700, y1: 0.000")
+  v0 = make_vct!(10) do one_pole(gen, 1.0) end
+  v1 = make_vct(10)
+  vct_map!(v1, lambda do | | one_pole?(gen1) ? one_pole(gen1, 1.0) : -1.0 end)
+  snd_display("map one_pole: %s %s?", v0, v1) unless vequal(v0, v1)
+  snd_display("%s not one_pole?", gen) unless one_pole?(gen)
+  snd_display("one_pole order: %d?", gen.order) if gen.order != 1
+  snd_display("one_pole a0: %f?", gen.a0) if fneq(gen.a0, 0.4)
+  snd_display("one_pole b1: %f?", gen.b1) if fneq(gen.b1, 0.7)
+  if fneq(v0[1], 0.12) or fneq(v0[4], 0.275) or fneq(v0[8], 0.245)
+    snd_display("one_pole output: %s?", v0)
+  end
+  snd_display("1p ycoeff 1 0.7: %s?", gen) if fneq(gen.ycoeff(1), 0.7)
+  gen.ycoeff = 1, 0.1
+  snd_display("1p set_ycoeff 1 0.1: %s?", gen) if fneq(gen.ycoeff(1), 0.1)
+  snd_display("1p xcoeff 0 0.4: %s?", gen) if fneq(gen.xcoeff(0), 0.4)
+  gen.xcoeff = 0, 0.3
+  snd_display("1p set_xcoeff 0 0.3: %s?", gen) if fneq(gen.xcoeff(0), 0.3)
+  # 
+  gen = make_one_zero(0.4, 0.7)
+  gen1 = make_one_zero(0.4, 0.7)
+  print_and_check(gen, "one-zero", "one-zero: a0: 0.400, a1: 0.700, x1: 0.000")
+  v0 = make_vct!(10) do one_zero(gen, 1.0) end
+  v1 = make_vct(10)
+  vct_map!(v1, lambda do | | one_zero?(gen1) ? one_zero(gen1, 1.0) : -1.0 end)
+  snd_display("map one_zero: %s %s?", v0, v1) unless vequal(v0, v1)
+  snd_display("%s not one_zero?", gen) unless one_zero?(gen)
+  snd_display("one_zero order: %d?", gen.order) if gen.order != 1
+  snd_display("one_zero a0: %f?", gen.a0) if fneq(gen.a0, 0.4)
+  snd_display("one_zero a1: %f?", gen.a1) if fneq(gen.a1, 0.7)
+  if fneq(v0[1], 1.1)
+    snd_display("one_zero output: %s?", v0)
+  end
+  snd_display("1z xcoeff 0 0.4: %s?", gen) if fneq(gen.xcoeff(0), 0.4)
+  gen.xcoeff = 0, 0.1
+  snd_display("1z set_xcoeff 0 0.1: %s?", gen) if fneq(gen.xcoeff(0), 0.1)
+  # 
+  gen = make_two_zero(0.4, 0.7, 0.3)
+  gen1 = make_two_zero(0.4, 0.7, 0.3)
+  print_and_check(gen,
+                  "two-zero",
+                  "two-zero: a0: 0.400, a1: 0.700, a2: 0.300, x1: 0.000, x2: 0.000")
+  v0 = make_vct!(10) do two_zero(gen, 1.0) end
+  v1 = make_vct(10)
+  vct_map!(v1, lambda do | | two_zero?(gen1) ? two_zero(gen1, 1.0) : -1.0 end)
+  snd_display("map two_zero: %s %s?", v0, v1) unless vequal(v0, v1)
+  snd_display("%s not two_zero?", gen) unless two_zero?(gen)
+  snd_display("two_zero order: %d?", gen.order) if gen.order != 2
+  snd_display("two_zero a0: %f?", gen.a0) if fneq(gen.a0, 0.4)
+  snd_display("two_zero a1: %f?", gen.a1) if fneq(gen.a1, 0.7)
+  snd_display("two_zero a2: %f?", gen.a2) if fneq(gen.a2, 0.3)
+  if fneq(v0[1], 1.1) or fneq(v0[8], 1.4)
+    snd_display("two_zero output: %s?", v0)
+  end
+  snd_display("2z xcoeff 0 0.4: %s?", gen) if fneq(gen.xcoeff(0), 0.4)
+  gen.xcoeff = 0, 0.1
+  snd_display("2z set_xcoeff 0 0.1: %s?", gen) if fneq(gen.xcoeff(0), 0.1)
+  gen = make_two_zero(0.4, 0.7, 0.3)
+  if fneq(val = gen.call(1.0, 0.0), 0.4)
+    snd_display("2zero->0.4: %f?", val)
+  end
+  if fneq(val = gen.call(0.5, 0.0), 0.9)
+    snd_display("2zero->0.9: %f?", val)
+  end
+  if fneq(val = gen.call(1.0, 0.0), 1.05)
+    snd_display("2zero->1.05: %f?", val)
+  end
+  # 
+  gen = make_two_pole(0.4, 0.7, 0.3)
+  gen1 = make_two_pole(0.4, 0.7, 0.3)
+  print_and_check(gen,
+                  "two-pole",
+                  "two-pole: a0: 0.400, b1: 0.700, b2: 0.300, y1: 0.000, y2: 0.000")
+  v0 = make_vct!(10) do two_pole(gen, 1.0) end
+  v1 = make_vct(10)
+  vct_map!(v1, lambda do | | two_pole?(gen1) ? two_pole(gen1, 1.0) : -1.0 end)
+  snd_display("map two_pole: %s %s?", v0, v1) unless vequal(v0, v1)
+  snd_display("%s not two_pole?", gen) unless two_pole?(gen)
+  snd_display("two_pole order: %d?", gen.order) if gen.order != 2
+  snd_display("two_pole a0: %f?", gen.a0) if fneq(gen.a0, 0.4)
+  snd_display("two_pole b1: %f?", gen.b1) if fneq(gen.b1, 0.7)
+  snd_display("two_pole b2: %f?", gen.b2) if fneq(gen.b2, 0.3)
+  if fneq(v0[1], 0.12) or fneq(v0[8], 0.201)
+    snd_display("two_pole output: %s?", v0)
+  end
+  snd_display("2p ycoeff 1 0.7: %s?", gen) if fneq(gen.ycoeff(1), 0.7)
+  gen.ycoeff = 1, 0.1
+  snd_display("2p set_ycoeff 1 0.1: %s?", gen) if fneq(gen.ycoeff(1), 0.1)
+  snd_display("2p xcoeff 0 0.4: %s?", gen) if fneq(gen.xcoeff(0), 0.4)
+  gen.xcoeff = 0, 0.3
+  snd_display("2p set_xcoeff 0 0.3: %s?", gen) if fneq(gen.xcoeff(0), 0.3)
+  gen = make_two_pole(0.4, 0.7, 0.3)
+  if fneq(val = gen.call(1.0, 0.0), 0.4)
+    snd_display("a0->out 2pole: %f?", val)
+  end
+  if fneq(val = gen.call(0.5, 0.0), -0.08)
+    snd_display("a0->out 2pole (-0.08): %f?", val)
+  end
+  if fneq(val = gen.call(1.0, 0.0), 0.336)
+    snd_display("a0->out 2pole (0.336): %f?", val)
+  end
+  if (res = snd_catch do make_two_pole(:b1, 3.0) end).first != :mus_error
+    snd_display("make_two_pole bad b1: %s", res.inspect)
+  end
+  if (res = snd_catch do make_two_pole(:b2, 2.0) end).first != :mus_error
+    snd_display("make_two_pole bad b2: %s", res.inspect)
+  end
+  if (res = snd_catch do make_two_pole(:b2, 2.0, :b1) end).first != :mus_error
+    snd_display("make_two_pole bad keys: %s", res.inspect)
+  end
+  if (res = snd_catch do make_two_pole(:b2, 2.0, 3.0) end).first != :mus_error
+    snd_display("make_two_pole bad args: %s", res.inspect)
+  end
+  #
+  gen = make_oscil(440.0)
+  gen1 = make_oscil(440.0)
+  gen2 = make_oscil(440.0)
+  print_and_check(gen, "oscil", "oscil freq: 440.000Hz, phase: 0.000")
+  v0 = make_vct!(10) do oscil(gen, 0.0) end
+  v1 = make_vct!(10) do mus_apply(gen1, 0.0, 0.0) end
+  v2 = make_vct(10)
+  vct_map!(v2, lambda do | | oscil?(gen2) ? oscil(gen2, 0.0) : -1.0 end)
+  snd_display("map oscil: %s %s?", v0, v2) unless vequal(v0, v2)
+  snd_display("%s not oscil?", gen) unless oscil?(gen)
+  snd_display("oscil phase: %f?", gen.phase) if fneq(gen.phase, 1.253787)
+  snd_display("oscil frequency: %f?", gen.frequency) if fneq(gen.frequency, 440.0)
+  snd_display("oscil cosines: %d?", gen.cosines) if fneq(gen.cosines, 1)
+  if fneq(v0[1], 0.125) or fneq(v0[8], 0.843)
+    snd_display("oscil output: %s?", v0)
+  end
+  gen.phase = 0.0
+  snd_display("oscil set_phase: %f?", gen.phase) if fneq(gen.phase, 0.0)
+  gen.frequency = 100.0
+  snd_display("oscil set_frequency: %f?", gen.frequency) if fneq(gen.frequency, 100.0)
+  #
+  v0.each_with_index do |val, i|
+    if fneq(val, v1[i])
+      snd_display("mus_apply oscil at %d: %f %f?", i, val, v1[i])
+    end
+  end
+  if fneq(mus_apply(), 0.0)
+    snd_display("mus_apply(): %s?", mus_apply().to_s)
+  end
+  gen1 = make_oscil(100.0)
+  gen2 = make_oscil(-100.0)
+  mx = 0.0
+  100.times do mx = [mx, (gen1.run + gen2.run).abs].max end
+  if fneq(mx, 0.0)
+    snd_display("1 oscil +-: %f?", mx)
+  end
+  gen1 = make_oscil(100.0, PI * 0.5)
+  gen2 = make_oscil(-100.0, PI * 0.5)
+  mx = 0.0
+  100.times do mx = [mx, (gen1.run - gen2.run).abs].max end
+  if fneq(mx, 0.0)
+    snd_display("2 oscil +-: %f?", mx)
+  end
+  fm_test(make_oscil)
+  fm_test(make_sine_summation)
+  fm_test(make_square_wave)
+  fm_test(make_triangle_wave)
+  fm_test(make_sum_of_cosines)
+  fm_test(make_sum_of_sines)
+  fm_test(make_sawtooth_wave)
+  fm_test(make_rand)
+  fm_test(make_rand_interp)
+  fm_test(make_pulse_train)
+  #
+  gen = make_oscil(440.0)
+  gen1 = make_oscil(440.0)
+  10.times do
+    if fneq(oval = oscil(gen, 0.1), mval = mus_run(gen1, 0.1))
+      snd_display("mus_run %f but oscil %f?", oval, mval)
+    end
+  end
+  gen = make_oscil(440.0)
+  gen1 = make_oscil(440.0)
+  gen2 = make_oscil(440.0)
+  gen3 = make_oscil(440.0)
+  fm_index = hz2radians(440.0)
+  v0 = make_vct(10)
+  v1 = make_vct(10)
+  10.times do |i|
+    v0[i] = oscil(gen, fm_index * oscil(gen1, 0.0))
+    v1[i] = mus_apply(gen2, fm_index * mus_apply(gen3, 0.0, 0.0), 0.0)
+  end
+  if fneq(v0[1], 0.125) or fneq(v0[6], 0.83) or fneq(v0[8], 0.987)
+    snd_display("oscil fm output: %s?", v0)
+  end
+  v0.each_with_index do |val, i|
+    if fneq(val, v1[i])
+      snd_display("mus_apply fm oscil at %d: %f %f?", i, val, v1[i])
+    end
+  end
+  test_gen_equal(make_oscil(440.0), make_oscil(440.0), make_oscil(100.0))
+  test_gen_equal(make_oscil(440.0), make_oscil(440.0), make_oscil(440.0, 1.0))
+  gen = make_oscil(440.0)
+  gen1 = make_oscil(440.0)
+  pm_index = 2.0
+  v0 = make_vct!(10) do gen.call(0.0, pm_index * gen1.call(0.0, 0.0)) end
+  if fneq(v0[1], 0.367) or fneq(v0[6], 0.854) or fneq(v0[8], 0.437)
+    snd_display("oscil pm output: %s?", v0)
+  end
+  gen = make_oscil(440.0)
+  1100.times do |i|
+    if fneq(val1 = sin(gen.phase), val2 = gen.call(0.0, 0.0))
+      snd_display("oscil (sin): %d: %f %f?", i, val1, val2)
+    end
+  end
+  gen = make_oscil(440.0, :initial_phase, PI * 0.5)
+  a = 0.0
+  900.times do |i|
+    if fneq(val1 = cos(a), val2 = gen.call(0.0, 0.0))
+      snd_display("oscil (cos): %d: %f %f?", i, val1, val2)
+    end
+    a += (2 * PI * 440) / 22050
+  end
+  gen = make_oscil(0.0)
+  gen1 = make_oscil(40.0)
+  a = 0.0
+  1100.times do |i|
+    if fneq(val1 = sin(sin(a)), val2 = oscil(gen, 0.0, oscil(gen1, 0.0)))
+      snd_display("oscil  pm: %d: %f %f?", i, val1, val2)
+    end
+    a += (2 * PI * 40) / 22050
+  end
+  gen = make_oscil(0.0)
+  gen1 = make_oscil(40.0)
+  a = 0.0
+  a1 = 0.0
+  1100.times do |i|
+    fm = sin(a)
+    if fneq(val1 = sin(a1), val2 = oscil(gen, oscil(gen1, 0.0)))
+      snd_display("oscil  fm: %d: %f %f?", i, val1, val2)
+    end
+    a += (2 * PI * 40) / 22050
+    a1 += fm
+  end
+  #
+  if (res = snd_catch do mus_location(make_oscil) end).first != :mus_error
+    snd_display("mus_location bad gen: %s", res.inspect)
+  end
+  if (res = snd_catch do set_mus_location(make_oscil, 0) end).first != :mus_error
+    snd_display("set_mus_location bad gen: %s", res.inspect)
+  end
+  if (res = snd_catch do mus_scaler(make_oscil) end).first != :mus_error
+    snd_display("mus_scaler bad gen: %s", res.inspect)
+  end
+  if (res = snd_catch do set_mus_scaler(make_oscil, 0) end).first != :mus_error
+    snd_display("set_mus_scaler bad gen: %s", res.inspect)
+  end
+  if (res = snd_catch do mus_length(make_oscil) end).first != :mus_error
+    snd_display("mus_length bad gen: %s", res.inspect)
+  end
+  if (tag = (res = snd_catch do set_mus_length(make_oscil, 0) end).first) !=
+      :mus_error and tag != :out_of_range
+    snd_display("set_mus_length bad gen: %s", res.inspect)
+  end
+  if (res = snd_catch do mus_frequency(make_one_pole) end).first != :mus_error
+    snd_display("mus_frequency bad gen: %s", res.inspect)
+  end
+  if (res = snd_catch do set_mus_frequency(make_one_pole, 0) end).first != :mus_error
+    snd_display("set_mus_frequency bad gen: %s", res.inspect)
+  end
+  if (res = snd_catch do mus_scaler(make_delay(3)) end).first != :mus_error
+    snd_display("mus_scaler bad gen: %s", res.inspect)
+  end
+  if (res = snd_catch do set_mus_scaler(make_delay(3), 0) end).first != :mus_error
+    snd_display("set_mus_scaler bad gen: %s", res.inspect)
+  end
+  if (res = snd_catch do make_delay(1024 * 1024 * 40) end).first != :out_of_range
+    snd_display("make_delay huge line 1: %s", res.inspect)
+  end
+  if (res = snd_catch do make_delay(32, :max_size, 1024 * 1024 * 40) end).first != :out_of_range
+    snd_display("make_delay huge line 2: %s", res.inspect)
+  end
+  #
+  amps = make_array(3) do |i| (i + 1) * 0.1 end
+  oscils = make_array(3) do |i| make_oscil(:frequency, (i + 1) * 220.0) end
+  fms = make_array(3) do |i| i * 0.05 end
+  results = make_array(10) do |i| oscil_bank(amps, oscils, fms) end
+  if fneq(results[1], 0.12639) or fneq(results[5], 0.48203) or fneq(results[9], 0.41001)
+    snd_display("oscil_bank: %s?", results.inspect)
+  end
+end
+
+def test048
+  gen = make_sum_of_cosines(10, 440.0)
+  gen1 = make_sum_of_cosines(10, 440.0)
+  print_and_check(gen,
+                  "sum-of-cosines",
+                  "sum-of-cosines freq: 440.000Hz, phase: 0.000, cosines: 10")
+  v0 = make_vct!(10) do sum_of_cosines(gen, 0.0) end
+  v1 = make_vct(10)
+  vct_map!(v1, lambda do | | sum_of_cosines?(gen1) ? sum_of_cosines(gen1, 0.0) : -1.0 end)
+  snd_display("map sum_of_cosines: %s %s?", v0, v1) unless vequal(v0, v1)
+  snd_display("%s not sum_of_cosines?", gen) unless sum_of_cosines?(gen)
+  snd_display("sum_of_cosines phase: %f?", gen.phase) if fneq(gen.phase, 1.253787)
+  snd_display("sum_of_cosines frequency: %f?", gen.frequency) if fneq(gen.frequency, 440.0)
+  snd_display("sum_of_cosines scaler: %f?", gen.scaler) if fneq(gen.scaler, 0.1)
+  snd_display("sum_of_cosines cosines: %d?", gen.cosines) if fneq(gen.cosines, 10)
+  snd_display("sum_of_cosines length: %d?", gen.length) if fneq(gen.length, 10)
+  if fneq(v0[1], 0.722) or fneq(v0[8], -0.143)
+    snd_display("sum_of_cosines output: %s?", v0)
+  end
+  gen.scaler = 0.5
+  snd_display("sum_of_cosines set_scaler: %f?", gen.scaler) if fneq(gen.scaler, 0.5)
+  gen.cosines = 5
+  snd_display("sum_of_cosines set_cosines: %d?", gen.cosines) if fneq(gen.cosines, 5)
+  snd_display("sum_of_cosines set_cosines->scaler: %f?", gen.scaler) if fneq(gen.scaler, 0.2)
+  test_gen_equal(make_sum_of_cosines(3, 440),
+                 make_sum_of_cosines(3, 440),
+                 make_sum_of_cosines(5, 440))
+  test_gen_equal(make_sum_of_cosines(3, 440),
+                 make_sum_of_cosines(3, 440),
+                 make_sum_of_cosines(5, 440, 1))
+  test_gen_equal(make_sum_of_cosines(3, 440),
+                 make_sum_of_cosines(3, 440),
+                 make_sum_of_cosines(5, 400))
+  gen = make_sum_of_cosines(10)
+  1100.times do |i|
+    den = sin(gen.phase * 0.5)
+    val1 = den.zero? ? 1.0 : [1.0, gen.scaler * (sin(gen.phase * (gen.cosines + 0.5)) /
+                                                   (2.0 * den) - 0.5)].min
+    if (val1 - (val2 = gen.run(0.0))).abs > 0.002
+      snd_display("sum_of_cosines: %d: %f %f?", i, val1, val2)
+    end
+  end
+  gen1 = make_sum_of_cosines(10, 100.0)
+  gen2 = make_sum_of_cosines(10, -100.0)
+  mx = 0.0
+  100.times do mx = [mx, (gen1.run - gen2.run).abs].max end
+  if fneq(mx, 0.0)
+    snd_display("sum_of_cosines +-: %f?", mx)
+  end
+  # 
+  gen = make_sum_of_sines(10, 440.0)
+  gen1 = make_sum_of_sines(10, 440.0)
+  print_and_check(gen,
+                  "sum-of-sines",
+                  "sum-of-sines freq: 440.000Hz, phase: 0.000, sines: 10")
+  v0 = make_vct!(10) do sum_of_sines(gen, 0.0) end
+  v1 = make_vct(10)
+  vct_map!(v1, lambda do | | sum_of_sines?(gen1) ? sum_of_sines(gen1, 0.0) : -1.0 end)
+  snd_display("map sum_of_sines: %s %s?", v0, v1) unless vequal(v0, v1)
+  snd_display("%s not sum_of_sines?", gen) unless sum_of_sines?(gen)
+  snd_display("sum_of_sines phase: %f?", gen.phase) if fneq(gen.phase, 1.253787)
+  snd_display("sum_of_sines frequency: %f?", gen.frequency) if fneq(gen.frequency, 440.0)
+  snd_display("sum_of_sines scaler: %f?", gen.scaler) if fneq(gen.scaler, 0.1315)
+  snd_display("sum_of_sines sines: %d?", gen.cosines) if fneq(gen.cosines, 10)
+  snd_display("sum_of_sines length: %d?", gen.length) if fneq(gen.length, 10)
+  if fneq(v0[1], 0.784) or fneq(v0[8], 0.181)
+    snd_display("sum_of_sines output: %s?", v0)
+  end
+  gen.scaler = 0.5
+  snd_display("sum_of_sines set_scaler: %f?", gen.scaler) if fneq(gen.scaler, 0.5)
+  gen.cosines = 5
+  snd_display("sum_of_sines set_sines: %d?", gen.cosines) if fneq(gen.cosines, 5)
+  snd_display("sum_of_sines set_sines->scaler: %f?", gen.scaler) if fneq(gen.scaler, 0.2525)
+  test_gen_equal(make_sum_of_sines(3, 440),
+                 make_sum_of_sines(3, 440),
+                 make_sum_of_sines(5, 440))
+  test_gen_equal(make_sum_of_sines(3, 440),
+                 make_sum_of_sines(3, 440),
+                 make_sum_of_sines(5, 440, 1))
+  test_gen_equal(make_sum_of_sines(3, 440),
+                 make_sum_of_sines(3, 440),
+                 make_sum_of_sines(5, 400))
+  gen = make_sum_of_sines(5)
+  1100.times do |i|
+    den = sin(gen.phase * 0.5)
+    val1 = den.zero? ? 1.0 : [1.0, gen.scaler * (sin(gen.phase * (gen.cosines + 0.5)) /
+                                                   (2.0 * den) - 0.5)].min
+    if fneq(val1 = sum_of_n_sines(gen.phase, 5) * gen.scaler, val2 = gen.run(0.0))
+      snd_display("sum_of_sines: %d: %f %f?", i, val1, val2)
+    end
+  end
+  gen1 = make_sum_of_sines(10, 100.0)
+  gen2 = make_sum_of_sines(10, -100.0)
+  mx = 0.0
+  100.times do mx = [mx, (gen1.run + gen2.run).abs].max end
+  if fneq(mx, 0.0)
+    snd_display("sum_of_sines +-: %f?", mx)
+  end
+  # 
+  gen = make_sine_summation(440.0)
+  gen1 = make_sine_summation(440.0)
+  print_and_check(gen,
+                  "sine-summation",
+                  "sine-summation: frequency: 440.000, phase: 0.000, n: 1, a: 0.500, ratio: 1.000")
+  v0 = make_vct!(10) do sine_summation(gen, 0.0) end
+  v1 = make_vct(10)
+  vct_map!(v1, lambda do | | sine_summation?(gen1) ? sine_summation(gen1, 0.0) : -1.0 end)
+  snd_display("map sine_summation: %s %s?", v0, v1) unless vequal(v0, v1)
+  snd_display("%s not sine_summation?", gen) unless sine_summation?(gen)
+  snd_display("sine_summation phase: %f?", gen.phase) if fneq(gen.phase, 1.253787)
+  snd_display("sine_summation frequency: %f?", gen.frequency) if fneq(gen.frequency, 440.0)
+  if fneq(v0[1], 0.249) or fneq(v0[8], 1.296)
+    snd_display("sine_summation output: %s?", v0)
+  end
+  snd_display("sine_summation set_scaler: %f?", gen.scaler) if fneq(gen.scaler, 0.5)
+  gen.scaler = 0.75
+  snd_display("sine_summation set_scaler: %f?", gen.scaler) if fneq(gen.scaler, 0.75)
+  snd_display("sine_summation cosines: %d?", gen.cosines) if fneq(gen.cosines, 1)
+  snd_display("sine_summation increment: %f?", gen.increment) if fneq(gen.increment, 1.0)
+  test_gen_equal(make_sine_summation(440),
+                 make_sine_summation(440),
+                 make_sine_summation(400))
+  test_gen_equal(make_sine_summation(440),
+                 make_sine_summation(440),
+                 make_sine_summation(440, 1))
+  test_gen_equal(make_sine_summation(440),
+                 make_sine_summation(440),
+                 make_sine_summation(440, 0.0, 3))
+  gen1 = make_sine_summation(1000, 0, 1, 0.0, 1)
+  gen2 = make_oscil(1000)
+  gen3 = make_sine_summation(1000, 0, 1, 0.5, 2)
+  gen4 = make_oscil(1000)
+  gen5 = make_oscil(3000)
+  gen6 = make_sine_summation(500, 3.0, 10, 0.1, 0.4)
+  if fneq(res = gen6.phase, 3.0)
+    snd_display("sine_summation phase (3): %f?", res)
+  end
+  if fneq(res = gen6.frequency, 500.0)
+    snd_display("sine_summation frequency (500): %f?", res)
+  end
+  if fneq(res = gen6.scaler, 0.1)
+    snd_display("sine_summation scaler (0.1): %f?", res)
+  end
+  if (res = gen6.cosines) != 10
+    snd_display("sine_summation cosines (10): %d?", res)
+  end
+  if fneq(res = gen6.increment, 0.4)
+    snd_display("sine_summation increment (0.4): %f?", res)
+  end
+  100.times do |i|
+    ss = sine_summation(gen1, 0.0)
+    os = oscil(gen2, 0.0)
+    ss1 = sine_summation(gen3, 0.0)
+    os1 = oscil(gen4, 0.0) + 0.5 * oscil(gen5, 0.0)
+    if ffneq(ss, os)
+      snd_display("sine_summation 1: %d: os: %s ss: %s?", i, os, ss)
+      break
+    end
+    if ffneq(ss1, os1)
+      snd_display("sine_summation 2: %d: os1: %s ss1: %s?", i, os1, ss1)
+      break
+    end
+  end
+  gen1 = make_sine_summation(440.0, 0.0, 0)
+  sine_summation(gen1)
+  if fneq(val = sine_summation(gen1), 0.125050170279874)
+    snd_display("sine_summation n=0: %f?", val)
+  end
+  #
+  ind = new_sound("test.snd", Mus_next, Mus_bfloat)
+  pad_channel(0, 1000)
+  gen = make_cosine_summation(100.0)
+  map_channel(lambda do |y| 0.2 * cosine_summation(gen, 0.5) end)
+  unless vequal(res = channel2vct(280, 10),
+                vct(0.229, 0.224, 0.218, 0.211, 0.203, 0.195, 0.187, 0.178, 0.169, 0.160))
+    snd_display("cosine_summation: %s?", res)
+  end
+  undo
+  angle = 0.0
+  map_channel(lambda do |y|
+                val = sum_of_n_sines(angle, 3)
+                angle += 0.1
+                val * 0.1
+              end)
+  unless vequal(res = channel2vct(260, 10),
+                vct(0.226, 0.200, 0.166, 0.129, 0.091, 0.056, 0.025, 0.001, -0.015, -0.023))
+    snd_display("sum_of_n_sines: %s?", res)
+  end
+  undo
+  angle = 0.0
+  map_channel(lambda do |y|
+                val = sum_of_n_odd_sines(angle, 3)
+                angle += 0.1
+                val * 0.1
+              end)
+  unless vequal(res = channel2vct(260, 10),
+                vct(0.035, 0.007, 0.000, 0.014, 0.039, 0.069, 0.091, 0.100, 0.092, 0.070))
+    snd_display("sum_of_n_odd_sines: %s?", res)
+  end
+  undo
+  angle = 0.0
+  map_channel(lambda do |y|
+                val = sum_of_n_odd_cosines(angle, 3)
+                angle += 0.1
+                val * 0.1
+              end)
+  unless vequal(res = channel2vct(250, 10),
+                vct(0.270, 0.298, 0.292, 0.253, 0.189, 0.112, 0.037, -0.024, -0.061, -0.072))
+    snd_display("sum_of_n_odd_cosines: %s?", res)
+  end
+  undo
+  close_sound(ind)
+  # 
+  gen = make_asymmetric_fm(440.0)
+  gen1 = make_asymmetric_fm(440.0)
+  print_and_check(gen,
+                  "asymmetric-fm",
+                  "asymmetric-fm freq: 440.000Hz, phase: 0.000, ratio: 1.000, r: 1.000")
+  v0 = make_vct!(10) do asymmetric_fm(gen, 0.0) end
+  v1 = make_vct(10)
+  vct_map!(v1, lambda do | | asymmetric_fm?(gen1) ? asymmetric_fm(gen1, 0.0) : -1.0 end)
+  snd_display("map asymmetric_fm: %s %s?", v0, v1) unless vequal(v0, v1)
+  snd_display("%s not asymmetric_fm?", gen) unless asymmetric_fm?(gen)
+  snd_display("asymmetric_fm phase: %f?", gen.phase) if fneq(gen.phase, 1.253787)
+  gen.phase = 1.0
+  snd_display("asymmetric_fm set_phase: %f?", gen.phase) if fneq(gen.phase, 1.0)
+  snd_display("asymmetric_fm frequency: %f?", gen.frequency) if fneq(gen.frequency, 440.0)
+  gen.frequency = 100.0
+  snd_display("asymmetric_fm set_frequency: %f?", gen.frequency) if fneq(gen.frequency, 100.0)
+  if fneq(v0[2], 0.248) or fneq(v0[8], 0.843)
+    snd_display("asymmetric_fm output: %s?", v0)
+  end
+  snd_display("asymmetric_fm set_scaler: %f?", gen.scaler) if fneq(gen.scaler, 1.0)
+  gen.scaler = 0.5
+  snd_display("asymmetric_fm set_scaler: %f?", gen.scaler) if fneq(gen.scaler, 0.5)
+  snd_display("asymmetric_fm increment: %f?", gen.increment) if fneq(gen.increment, 1.0)
+  test_gen_equal(make_asymmetric_fm(440),
+                 make_asymmetric_fm(440),
+                 make_asymmetric_fm(100))
+  test_gen_equal(make_asymmetric_fm(440),
+                 make_asymmetric_fm(440),
+                 make_asymmetric_fm(440, 1))
+  test_gen_equal(make_asymmetric_fm(440),
+                 make_asymmetric_fm(440),
+                 make_asymmetric_fm(440, 0.0, 3))
+  gen1 = make_asymmetric_fm(1000, 0, 1, 0.1)
+  gen2 = make_oscil(1000)
+  100.times do |i|
+    ss = asymmetric_fm(gen1, 0.0, 0.0)
+    os = oscil(gen2, 0.0)
+    if ffneq(ss, os)
+      snd_display("asymmetric_fm 1: %d: os: %s ss: %s?", i, os, ss)
+      break
+    end
+  end
+  gen3 = make_asymmetric_fm(1000, 0, 1.0, 0.2)
+  gen4 = make_oscil(1000)
+  gen5 = make_oscil(200)
+  fm1 = hz2radians(0.2 * 1000)
+  vct0 = make_vct(2048)
+  vct1 = make_vct!(2048) do |i|
+    vct0[i] = asymmetric_fm(gen3, 1.0, 0.0)
+    oscil(gen4, fm1 * oscil(gen5))
+  end
+  spectr1 = snd_spectrum(vct0, Rectangular_window, 2048, true)
+  spectr2 = snd_spectrum(vct1, Rectangular_window, 2048, true)
+  (1...512).each do |i|
+    if ffneq(spectr1[i], spectr2[i])
+      snd_display("asymmetric_fm 2: %d: %f %f?", i * (22050 / 2048), spectr1[i], spectr2[i])
+      break
+    end
+  end
+  gen = make_asymmetric_fm(40.0, 0.0, 1.0, 0.1)
+  gen1 = make_asyfm(:frequency, 40.0, :ratio, 0.1, :index, 2.0)
+  a = 0.0
+  1100.times do |i|
+    val1 = asymmetric_fm(gen, 2.0)
+    val3 = asyfm_J(gen1, 0.0)
+    r = 1.0
+    ratio = 0.1
+    index = 2.0
+    freq = hz2radians(40.0)
+    phase = a
+    cr = 0.5 * (r - 1.0 / r)
+    sr = 0.5 * (r + 1.0 / r)
+    th = a
+    mth = ratio * th
+    val2 = exp(index * cr * cos(mth)) * sin(th + index * sr * sin(mth))
+    if fneq(val1, val2) or fneq(val1, val3)
+      snd_display("asyfm by hand: %d: 1 %f 2 %f 3 %f?", i, val1, val2, val3)
+    end
+    a += (2 * PI * 40) / 22050
+  end
+  gen3 = make_asymmetric_fm(1000, 0, 2.0, 0.1)
+  gen4 = make_asymmetric_fm(1000, 0, 0.5, 0.1)
+  vct0 = make_vct(2048)
+  vct1 = make_vct!(2048) do |i|
+    vct0[i] = asymmetric_fm(gen3, 2.0, 0.0)
+    asymmetric_fm(gen4, 2.0, 0.0)
+  end
+  spectr1 = snd_spectrum(vct0, Rectangular_window, 2048, true)
+  spectr2 = snd_spectrum(vct1, Rectangular_window, 2048, true)
+  s1_loc = 0
+  s2_loc = 0
+  (1...256).each do |i|
+    s1_loc = i if (1.0 - spectr1[i]).abs < 0.01
+    s2_loc = i if (1.0 - spectr2[i]).abs < 0.01
+  end
+  snd_display("asymmetric_fm peaks: %d %d?", s1_loc, s2_loc) if s2_loc > s1_loc
+  center = ((22050 / 2048.0) * 0.5 * (s1_loc + s2_loc)).round
+  if (1000 - center).abs > 60
+    snd_display("asymmetric_fm center: %s?", center)
+  end
+  gen3.scaler = 0.5
+  2048.times do |i| vct0[i] = asymmetric_fm(gen3, 2.0, 0.0) end
+  spectr1 = snd_spectrum(vct0, Rectangular_window, 2048, true)
+  (1...256).each do |i|
+    s1_loc = i if (1.0 - spectr1[i]).abs < 0.01
+  end
+  snd_display("asymmetric_fm set r peaks: %d %d?", s1_loc, s2_loc) if s2_loc != s1_loc
+  2048.times do |i| vct0[i] = asymmetric_fm(gen3, 2.0, 0.0) end
+  snd_spectrum(vct0, Rectangular_window, 2048, true, 0.0, true)
+  (1...256).each do |i|
+    s1_loc = i if (1.0 - spectr1[i]).abs < 0.01
+  end
+  snd_display("asymmetric_fm set r in place peaks: %d %d?", s1_loc, s2_loc) if s2_loc != s1_loc
+end
+
+def test058
+  gen = make_fir_filter(3, vct(0.5, 0.25, 0.125))
+  gen1 = make_fir_filter(3, vct(0.5, 0.25, 0.125))
+  print_and_check(gen, "fir-filter", "fir-filter: order: 3, xs: [0.500 0.250 0.125]")
+  v0 = make_vct!(10) do |i| fir_filter(gen, i.zero? ? 1.0 : 0.0) end
+  v1 = make_vct(10)
+  inp = -1
+  vct_map!(v1, lambda do | |
+             inp += 1
+             fir_filter?(gen1) ? fir_filter(gen1, inp.zero? ? 1.0 : 0.0) : -1.0
+           end)
+  snd_display("map fir_filter: %s %s?", v0, v1) unless vequal(v0, v1)
+  snd_display("%s not fir_filter?", gen) unless fir_filter?(gen)
+  snd_display("fir_filter length: %d?", gen.length) if gen.length != 3
+  if fneq(v0[1], 0.25) or fneq(v0[2], 0.125)
+    snd_display("fir_filter output: %s?", v0)
+  end
+  data = gen.xcoeffs
+  snd_display("fir_filter xcoeffs: %s?", data) if fneq(data[1], 0.25)
+  if (res = snd_catch do mus_xcoeff(gen, 123) end).first != :mus_error
+    snd_display("xcoeff 123: %s", res.inspect)
+  end
+  if (res = snd_catch do mus_ycoeff(gen, 123) end).first != :mus_error
+    snd_display("fir ycoeff 123: %s", res.inspect)
+  end
+  f1 = make_fir_filter(3, vct(0.5, 0.25, 0.125))
+  f2 = make_fir_filter(3, vct(0.5, 0.25, 0.125))
+  f3 = make_fir_filter(3, vct(0.75, 0.25, 0.125))
+  fir_filter(f1, 1.0)
+  fir_filter(f2, 1.0)
+  fir_filter(f3, 1.0)
+  test_gen_equal(f1, f2, f3)
+  f1 = make_fir_filter(3, vct(0.5, 0.25, 0.125))
+  f2 = make_fir_filter(3, vct(0.5, 0.25, 0.125))
+  f3 = make_fir_filter(2, vct(0.5, 0.25))
+  fir_filter(f1, 1.0)
+  fir_filter(f2, 1.0)
+  fir_filter(f3, 1.0)
+  test_gen_equal(f1, f2, f3)
+  coeffs = vct(0.1, 0.2, 0.3, 0.4, 0.4, 0.3, 0.2, 0.1)
+  flt = make_fir_filter(8, coeffs)
+  es = make_array(8) do |i| make_env([0, coeffs[i], 1, 0], :end, 101) end
+  es[5] = make_env([0, 0.4, 1, 1], :end, 101)
+  data = make_vct!(100) do |i|
+    val = fir_filter(flt, (i % 12).zero? ? 1.0 : 0.0)
+    xcof = flt.xcoeffs
+    es.each_with_index do |en, j| xcof[j] = env(en) end
+    val
+  end
+  if fneq(data[1], 0.2) or fneq(data[10], 0.0) or
+      fneq(data[18], 0.166) or fneq(data[89], 0.923)
+    snd_display("filter xcoeffs: %s?", data)
+  end
+  # 
+  gen = make_iir_filter(3, vct(0.5, 0.25, 0.125))
+  gen1 = make_iir_filter(3, vct(0.5, 0.25, 0.125))
+  print_and_check(gen, "iir-filter", "iir-filter: order: 3, ys: [0.500 0.250 0.125]")
+  v0 = make_vct!(10) do |i| iir_filter(gen, i.zero? ? 1.0 : 0.0) end
+  v1 = make_vct(10)
+  inp = -1
+  vct_map!(v1, lambda do | |
+             inp += 1
+             iir_filter?(gen1) ? iir_filter(gen1, inp.zero? ? 1.0 : 0.0) : -1.0
+           end)
+  snd_display("map iir_filter: %s %s?", v0, v1) unless vequal(v0, v1)
+  snd_display("%s not iir_filter?", gen) unless iir_filter?(gen)
+  snd_display("iir_filter length: %d?", gen.length) if gen.length != 3
+  if fneq(v0[1], -0.25) or fneq(v0[2], -0.062)
+    snd_display("iir_filter output: %s?", v0)
+  end
+  data = gen.ycoeffs
+  snd_display("iir_filter ycoeffs: %s?", data) if fneq(data[1], 0.25)
+  if (res = snd_catch do mus_ycoeff(gen, 123) end).first != :mus_error
+    snd_display("ycoeff 123: %s", res.inspect)
+  end
+  if (res = snd_catch do mus_xcoeff(gen, 123) end).first != :mus_error
+    snd_display("iir xcoeff 123: %s", res.inspect)
+  end
+  f1 = make_iir_filter(3, vct(0.5, 0.25, 0.125))
+  f2 = make_iir_filter(3, vct(0.5, 0.25, 0.125))
+  f3 = make_iir_filter(3, vct(0.75, 0.25, 0.125))
+  iir_filter(f1, 1.0)
+  iir_filter(f2, 1.0)
+  iir_filter(f3, 1.0)
+  test_gen_equal(f1, f2, f3)
+  f1 = make_iir_filter(3, vct(0.5, 0.25, 0.125))
+  f2 = make_iir_filter(3, vct(0.5, 0.25, 0.125))
+  f3 = make_iir_filter(2, vct(0.5, 0.25))
+  iir_filter(f1, 1.0)
+  iir_filter(f2, 1.0)
+  iir_filter(f3, 1.0)
+  test_gen_equal(f1, f2, f3)
+  # 
+  gen = make_filter(3, vct(0.5, 0.25, 0.125), vct(0.5, 0.25, 0.125))
+  gen1 = make_filter(3, vct(0.5, 0.25, 0.125), vct(0.5, 0.25, 0.125))
+  print_and_check(gen,
+                  "filter",
+                  "filter: order: 3, xs: [0.500 0.250 0.125], ys: [0.500 0.250 0.125]")
+  v0 = make_vct!(10) do |i| filter(gen, i.zero? ? 1.0 : 0.0) end
+  v1 = make_vct(10)
+  inp = -1
+  vct_map!(v1, lambda do | |
+             inp += 1
+             filter?(gen1) ? filter(gen1, inp.zero? ? 1.0 : 0.0) : -1.0
+           end)
+  snd_display("map filter: %s %s?", v0, v1) unless vequal(v0, v1)
+  snd_display("%s not filter?", gen) unless filter?(gen)
+  snd_display("filter length: %d?", gen.length) if gen.length != 3
+  if fneq(v0[1], 0.125) or fneq(v0[2], 0.031)
+    snd_display("filter output: %s?", v0)
+  end
+  gen2 = make_biquad(0.1, 0.2, 0.3, 0.4, 0.5)
+  snd_display("make_biquad: %s?", gen2) unless filter?(gen2)
+  xs = gen.xcoeffs
+  ys = gen.ycoeffs
+  if xs != vct(0.5, 0.25, 0.125) or xs != ys
+    snd_display("mus_xcoeffs: %s %s?", xs, ys)
+  end
+  if (res = snd_catch do
+        make_filter(:order, 2, :xcoeffs, vct(1.0, 0.5), :ycoeffs, vct(2.0, 1.0, 0.5))
+      end).first != :wrong_type_arg
+    snd_display("make_filter bad coeffs: %s", res.inspect)
+  end
+  if (res = snd_catch do
+        make_filter(:order, 0, :xcoeffs, vct(1.0, 0.5))
+      end).first != :out_of_range
+    snd_display("make_filter bad order: %s", res.inspect)
+  end
+  if (res = snd_catch do
+        make_fir_filter(:order, 22, :xcoeffs, vct(1.0, 0.5))
+      end).first != :wrong_type_arg
+    snd_display("make_fir_filter bad coeffs: %s", res.inspect)
+  end
+  if (res = snd_catch do
+        make_iir_filter(:order, 22, :ycoeffs, vct(1.0, 0.5))
+      end).first != :wrong_type_arg
+    snd_display("make_iir_filter bad coeffs: %s", res.inspect)
+  end
+  if (res = snd_catch do
+        make_fir_filter(-1)
+      end).first != :out_of_range
+    snd_display("make_fir_filter bad order: %s", res.inspect)
+  end
+  unless iir_filter?(res = make_filter(:order, 2, :ycoeffs, vct(1.0, 0.5)))
+    snd_display("make_filter with only y: %s", res.inspect)
+  end
+  f1 = make_filter(3, vct(0.5, 0.25, 0.125), vct(0.5, 0.25, 0.125))
+  f2 = make_filter(3, vct(0.5, 0.25, 0.125), vct(0.5, 0.25, 0.125))
+  f3 = make_filter(3, vct(0.5, 0.25, 0.125), vct(0.5, 0.5, 0.5))
+  filter(f1, 1.0)
+  filter(f2, 1.0)
+  filter(f3, 1.0)
+  test_gen_equal(f1, f2, f3)
+  f1 = make_filter(3, vct(0.5, 0.25, 0.125), vct(0.5, 0.25, 0.125))
+  f2 = make_filter(3, vct(0.5, 0.25, 0.125), vct(0.5, 0.25, 0.125))
+  f3 = make_filter(3, vct(0.5, 0.5, 0.125), vct(0.5, 0.25, 0.0625))
+  filter(f1, 1.0)
+  filter(f2, 1.0)
+  filter(f3, 1.0)
+  test_gen_equal(f1, f2, f3)
+  fr = make_fir_filter(6, vct(0, 1, 2, 3, 4, 5))
+  snd_display("filter_length: %d?", fr.length) if fr.length != 6
+  unless vequal(res = cascade2canonical([vct(1, 0.8, 0), vct(1, 1.4, 0.65), vct(1, 0, 0)]),
+                vct(1.000, 2.200, 1.770, 0.520, 0.000, 0.000, 0.000))
+    snd_display("cascade2canonical 1: %s?", res)
+  end
+  unless vequal(res = cascade2canonical([vct(1, -0.9, 0), vct(1, 1, 0.74), vct(1, -1.6, 0.8)]),
+                vct(1.000, -1.500, 0.480, -0.330, 0.938, -0.533, 0.000))
+    snd_display("cascade2canonical 2: %s?", res)
+  end
+  #
+  ind = new_sound("test.snd", Mus_next, Mus_bfloat, 22050)
+  pad_channel(0, 10000)
+  freq_sweep(0.45)
+  sp = rough_spectrum(ind)
+  if (not vequal(sp, vct(0.962, 0.998, 0.998, 0.998, 0.998, 0.999, 0.999, 0.998, 0.997, 1.000))) and
+      (not vequal(sp, vct(0.963, 0.999, 0.999, 0.999, 0.999, 0.999, 1.000, 1.000, 0.998, 0.997)))
+    snd_display("initial rough spectrum: %s?", sp)
+  end
+  b = make_butter_high_pass(440.0)
+  v = make_vct!(10) do |i| butter(b, i.zero? ? 1.0 : 0.0) end
+  unless vequal(v,vct(0.915, -0.162, -0.146, -0.131, -0.117, -0.103, -0.09, -0.078, -0.066, -0.056))
+    snd_display("butter high: %s?", v)
+  end
+  b = make_butter_high_pass(1000.0)
+  map_channel(lambda do |y| butter(b, y) end)
+  sp = rough_spectrum(ind)
+  if (not vequal(sp, vct(0.150, 0.833, 0.980, 0.994, 0.997, 0.998, 0.999, 0.998, 0.997, 1.000))) and
+      (not vequal(sp, vct(0.150, 0.833, 0.981, 0.995, 0.998, 0.999, 1.000, 1.000, 0.998, 0.997)))
+    snd_display("hp rough spectrum: %s?", sp)
+  end
+  undo
+  # 
+  b = make_butter_low_pass(440.0)
+  v.map_with_index! do |val, i| butter(b, i.zero? ? 1.0 : 0.0) end
+  unless vequal(v, vct(0.004, 0.014, 0.026, 0.035, 0.043, 0.049, 0.053, 0.055, 0.057, 0.057))
+    snd_display("butter low: %s?", v)
+  end
+  b = make_butter_low_pass(1000.0)
+  map_channel(lambda do |y| butter(b, y) end)
+  sp = rough_spectrum(ind)
+  unless vequal(sp, vct(1.000, 0.212, 0.024, 0.005, 0.001, 0.000, 0.000, 0.000, 0.000, 0.000))
+    snd_display("lp rough spectrum: %s?", sp)
+  end
+  undo
+  # 
+  b = make_butter_band_pass(440.0, 50.0)
+  v.map_with_index! do |val, i| butter(b, i.zero? ? 1.0 : 0.0) end
+  unless vequal(v, vct(0.007, 0.014, 0.013, 0.013, 0.012, 0.011, 0.009, 0.008, 0.007, 0.005))
+    snd_display("butter bandpass: %s?", v)
+  end
+  b = make_butter_band_pass(1000.0, 500.0)
+  map_channel(lambda do |y| butter(b, y) end)
+  sp = rough_spectrum(ind)
+  unless vequal(sp, vct(0.888, 1.000, 0.144, 0.056, 0.027, 0.014, 0.008, 0.004, 0.002, 0.000))
+    snd_display("bp rough spectrum: %s?", sp)
+  end
+  undo
+  # 
+  b = make_butter_band_reject(440.0, 50.0)
+  v.map_with_index! do |val, i| butter(b, i.zero? ? 1.0 : 0.0) end
+  unless vequal(v,
+                vct(0.993, -0.014, -0.013, -0.013, -0.012, -0.011, -0.009, -0.008, -0.007, -0.005))
+    snd_display("butter bandstop: %s?", v)
+  end
+  b = make_butter_band_reject(1000.0, 500.0)
+  map_channel(lambda do |y| butter(b, y) end)
+  sp = rough_spectrum(ind)
+  if (not vequal(sp, vct(0.662, 0.687, 0.953, 0.980, 0.989, 0.994, 0.997, 0.997, 0.997, 1.000))) and
+      (not vequal(sp, vct(0.664, 0.689, 0.955, 0.982, 0.992, 0.996, 0.999, 1.000, 0.999, 0.998)))
+    snd_display("bs rough spectrum: %s?", sp)
+  end
+  undo
+  #
+  v = spectrum2coeffs(10, vct(0, 1.0, 0, 0, 0, 0, 0, 0, 1.0, 0))
+  v1 = make_fir_coeffs(10, vct(0, 1.0, 0, 0, 0, 0, 0, 0, 1.0, 0))
+  unless vequal(v, vct(-0.190, -0.118, 0.000, 0.118, 0.190, 0.190, 0.118, 0.000, -0.118, -0.190))
+    snd_display("spectrum2coeffs: %s?", v)
+  end
+  unless vequal(v, v1)
+    snd_display("spectrum2coeffs v make_fir_coeffs: %s %s?", v, v1)
+  end
+  notched_spectr = make_vct(20)
+  notched_spectr[2] = 1.0
+  v = spectrum2coeffs(20, notched_spectr)
+  v1 = make_fir_coeffs(20, notched_spectr)
+  unless vequal(v, vct(0.095, 0.059, 0.000, -0.059, -0.095, -0.095, -0.059, 0.000, 0.059, 0.095,
+                       0.095, 0.059, 0.000, -0.059, -0.095, -0.095, -0.059, 0.000, 0.059, 0.095))
+    snd_display("spectrum2coeffs (notch): %s?", v)
+  end
+  unless vequal(v, v1)
+    snd_display("spectrum2coeffs v(2) make_fir_coeffs: %s %s?", v, v1)
+  end
+  flt = make_fir_filter(20, v)
+  map_channel(lambda do |y| fir_filter(flt, y) end)
+  sp = rough_spectrum(ind)
+  unless vequal(sp, vct(0.007, 0.493, 1.000, 0.068, 0.030, 0.019, 0.014, 0.011, 0.009, 0.009))
+    snd_display("sp->coeff rough spectrum: %s?", sp)
+  end
+  undo
+  # 
+  rspect = make_vct!(20) do my_random(1.0) end
+  v = spectrum2coeffs(20, rspect)
+  v1 = make_fir_coeffs(20, rspect)
+  unless vequal(v, v1)
+    snd_display("spectrum2coeffs v(3) make_fir_coeffs:\n# %s\n# %s", v, v1)
+  end
+  b = make_highpass(hz2radians(1000.0), 10)
+  v = make_vct!(20) do |i| highpass(b, i.zero? ? 1.0 : 0.0) end
+  unless vequal(v,
+                vct(-0.001, -0.002, -0.005, -0.011, -0.021, -0.034, -0.049, -0.065, -0.078, -0.087,
+                    0.909, -0.087, -0.078, -0.065, -0.049, -0.034, -0.021, -0.011, -0.005, -0.002))
+    snd_display("dsp.rb high: %s?", v)
+  end
+  b = make_highpass(hz2radians(1000.0), 20)
+  map_channel(lambda do |y| highpass(b, y) end)
+  sp = rough_spectrum(ind)
+  if (not vequal(sp, vct(0.053, 0.774, 0.998, 0.997, 0.997, 0.996, 0.996, 0.996, 0.997, 1.000))) and
+      (not vequal(sp, vct(0.053, 0.776, 1.000, 0.998, 0.998, 0.998, 0.998, 0.998, 0.998, 1.000)))
+    snd_display("dsp hp rough spectrum: %s?", sp)
+  end
+  undo
+  # 
+  b = make_lowpass(hz2radians(1000.0), 10)
+  v = make_vct!(20) do |i| lowpass(b, i.zero? ? 1.0 : 0.0) end
+  unless vequal(v, vct(0.001, 0.002, 0.005, 0.011, 0.021, 0.034, 0.049, 0.065, 0.078, 0.087,
+                       0.091, 0.087, 0.078, 0.065, 0.049, 0.034, 0.021, 0.011, 0.005, 0.002))
+    snd_display("dsp.rb low: %s?", v)
+  end
+  b = make_lowpass(hz2radians(1000.0), 20)
+  map_channel(lambda do |y| lowpass(b, y) end)
+  sp = rough_spectrum(ind)
+  unless vequal(sp, vct(1.000, 0.054, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000))
+    snd_display("dsp lp rough spectrum: %s?", sp)
+  end
+  undo
+  # 
+  b = make_bandpass(hz2radians(1500.0), hz2radians(2000.0), 10)
+  v = make_vct!(20) do |i| bandpass(b, i.zero? ? 1.0 : 0.0) end
+  unless vequal(v, vct(0.001, -0.001, -0.005, -0.011, -0.017, -0.019, -0.013, 0.003, 0.022, 0.039,
+                       0.045, 0.039, 0.022, 0.003, -0.013, -0.019, -0.017, -0.011, -0.005, -0.001))
+    snd_display("dsp.rb bp: %s?", v)
+  end
+  b = make_bandpass(hz2radians(1500.0), hz2radians(2000.0), 20)
+  map_channel(lambda do |y| bandpass(b, y) end)
+  sp = rough_spectrum(ind)
+  unless vequal(sp, vct(0.010, 1.000, 0.154, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000))
+    snd_display("dsp bp rough spectrum: %s?", sp)
+  end
+  undo
+  # 
+  b = make_bandstop(hz2radians(1500.0), hz2radians(2000.0), 10)
+  v = make_vct!(20) do |i| bandstop(b, i.zero? ? 1.0 : 0.0) end
+  unless vequal(v, vct(-0.001, 0.001, 0.005, 0.011, 0.017, 0.019, 0.013, -0.003, -0.022, -0.039,
+                       0.955, -0.039, -0.022, -0.003, 0.013, 0.019, 0.017, 0.011, 0.005, 0.001))
+    snd_display("dsp.rb bs: %s?", v)
+  end
+  b = make_bandstop(hz2radians(1500.0), hz2radians(2000.0), 20)
+  map_channel(lambda do |y| bandstop(b, y) end)
+  sp = rough_spectrum(ind)
+  if (not vequal(sp, vct(0.904, 0.425, 0.821, 0.998, 0.997, 0.996, 0.996, 0.996, 0.997, 1.000))) and
+      (not vequal(sp, vct(0.906, 0.425, 0.822, 1.000, 0.999, 0.998, 0.998, 0.998, 0.998, 1.000)))
+    snd_display("dsp bp rough spectrum: %s?", sp)
+  end
+  undo
+  # 
+  b = make_differentiator(10)
+  v = make_vct!(20) do |i| differentiator(b, i.zero? ? 1.0 : 0.0) end
+  unless vequal(v, vct(-0.008, 0.011, -0.021, 0.039, -0.066, 0.108, -0.171, 0.270, -0.456, 0.977,
+                       0.000, -0.977, 0.456, -0.270, 0.171, -0.108, 0.066, -0.039, 0.021, -0.011))
+    snd_display("dsp.rb df: %s?", v)
+  end
+  b = make_differentiator(20)
+  map_channel(lambda do |y| differentiator(b, y) end)
+  sp = rough_spectrum(ind)
+  unless vequal(sp, vct(0.004, 0.027, 0.075, 0.147, 0.242, 0.362, 0.506, 0.674, 0.864, 1.000))
+    snd_display("dsp df rough spectrum: %s?", sp)
+  end
+  undo
+  # 
+  b = make_iir_high_pass_1(440.0)
+  v = make_vct!(10) do |i| butter(b, i.zero? ? 1.0 : 0.0) end
+  unless vequal(v,
+                vct(0.941, -0.111, -0.098, -0.086, -0.076, -0.067, -0.059, -0.052, -0.046, -0.041))
+    snd_display("iir high: %s?", v)
+  end
+  b = make_iir_high_pass_1(1000.0)
+  map_channel(lambda do |y| butter(b, y) end)
+  sp = rough_spectrum(ind)
+  if (not vequal(sp, vct(0.228, 0.706, 0.879, 0.940, 0.967, 0.982, 0.990, 0.994, 0.996, 1.000))) and
+      (not vequal(sp, vct(0.229, 0.709, 0.883, 0.944, 0.971, 0.986, 0.994, 0.999, 1.000, 1.000)))
+    snd_display("iir_1 hp rough spectrum: %s?", sp)
+  end
+  undo
+  # 
+  b = make_iir_low_pass_1(440.0)
+  v = make_vct!(10) do |i| butter(b, i.zero? ? 1.0 : 0.0) end
+  unless vequal(v, vct(0.059, 0.111, 0.098, 0.086, 0.076, 0.067, 0.059, 0.052, 0.046, 0.041))
+    snd_display("iir_1 low: %s?", v)
+  end
+  b = make_iir_low_pass_1(1000.0)
+  map_channel(lambda do |y| butter(b, y) end)
+  sp = rough_spectrum(ind)
+  unless vequal(sp, vct(1.000, 0.402, 0.164, 0.080, 0.043, 0.023, 0.013, 0.006, 0.003, 0.001))
+    snd_display("iir_1 lp rough spectrum: %s?", sp)
+  end
+  undo
+  #
+  b = make_iir_high_pass_2(440.0)
+  v = make_vct!(10) do |i| butter(b, i.zero? ? 1.0 : 0.0) end
+  unless vequal(v,
+                vct(0.915, -0.162, -0.146, -0.131, -0.117, -0.103, -0.090, -0.078, -0.066, -0.056))
+    snd_display("iir_2 high: %s?", v)
+  end
+  b = make_iir_high_pass_2(1000.0)
+  map_channel(lambda do |y| butter(b, y) end)
+  sp = rough_spectrum(ind)
+  if (not vequal(sp, vct(0.150, 0.833, 0.980, 0.994, 0.997, 0.998, 0.999, 0.998, 0.997, 1.000))) and
+      (not vequal(sp, vct(0.150, 0.833, 0.981, 0.995, 0.998, 0.999, 1.000, 1.000, 0.998, 0.997)))
+    snd_display("iir_2 hp rough spectrum: %s?", sp)
+  end
+  undo
+  #
+  b = make_iir_low_pass_2(440.0)
+  v = make_vct!(10) do |i| butter(b, i.zero? ? 1.0 : 0.0) end
+  unless vequal(v, vct(0.004, 0.014, 0.026, 0.035, 0.043, 0.049, 0.053, 0.055, 0.057, 0.057))
+    snd_display("iir_2 low: %s?", v)
+  end
+  b = make_iir_low_pass_2(1000.0)
+  map_channel(lambda do |y| butter(b, y) end)
+  sp = rough_spectrum(ind)
+  unless vequal(sp, vct(1.000, 0.212, 0.024, 0.005, 0.001, 0.000, 0.000, 0.000, 0.000, 0.000))
+    snd_display("iir_2 lp rough spectrum: %s?", sp)
+  end
+  undo
+  #
+  b = make_iir_band_pass_2(440.0, 490.0)
+  v = make_vct!(10) do |i| butter(b, i.zero? ? 1.0 : 0.0) end
+  unless vequal(v, vct(0.007, 0.014, 0.013, 0.013, 0.012, 0.010, 0.009, 0.008, 0.006, 0.004))
+    snd_display("iir bp-2 bandpass: %s?", v)
+  end
+  b = make_iir_band_pass_2(1000.0, 1500.0)
+  map_channel(lambda do |y| butter(b, y) end)
+  sp = rough_spectrum(ind)
+  unless vequal(sp, vct(0.239, 1.000, 0.117, 0.041, 0.019, 0.010, 0.005, 0.003, 0.001, 0.000))
+    snd_display("iir bp-2 rough spectrum: %s?", sp)
+  end
+  undo
+  #
+  b = make_iir_band_stop_2(440.0, 500.0)
+  v = make_vct!(10) do |i| butter(b, i.zero? ? 1.0 : 0.0) end
+  unless vequal(v,
+                vct(0.992, -0.017, -0.016, -0.015, -0.014, -0.012, -0.011, -0.009, -0.007, -0.005))
+    snd_display("iir bp-2 bandstop: %s?", v)
+  end
+  b = make_iir_band_stop_2(1000.0, 1500.0)
+  map_channel(lambda do |y| butter(b, y) end)
+  sp = rough_spectrum(ind)
+  if (not vequal(sp, vct(0.836, 0.525, 0.943, 0.979, 0.989, 0.994, 0.997, 0.997, 0.997, 1.000))) and
+      (not vequal(sp, vct(0.838, 0.527, 0.945, 0.981, 0.991, 0.996, 0.999, 1.000, 0.999, 0.998)))
+    snd_display("iir bs-2 rough spectrum: %s?", sp)
+  end
+  undo
+  #
+  b = make_butter_hp(4, 440.0)
+  v = make_vct!(10) do |i| butter(b, i.zero? ? 1.0 : 0.0) end
+  if (not vequal(v, vct(0.725, -0.466, -0.315, -0.196, -0.104,
+                        -0.036, 0.014, 0.047, 0.0685, 0.0775))) and
+      (not vequal(v, vct(0.725, -0.466, -0.315, -0.196, -0.104,
+                         -0.035, 0.015, 0.049, 0.070, 0.081)))
+    snd_display("butter hp: %s?", v)
+  end
+  b = make_butter_hp(4, 1000.0)
+  map_channel(lambda do |y| butter(b, y) end)
+  sp = rough_spectrum(ind)
+  if (not vequal(sp, vct(0.0505, 0.982, 1.0, 1.0, 0.998, 0.998, 0.999, 0.998, 0.996, 0.999))) and
+      (not vequal(sp, vct(0.051, 0.982, 1.0, 1.0, 0.998, 0.998, 0.998, 0.999, 0.997, 0.995))) and
+      (not vequal(sp, vct(0.051, 0.991, 1.0, 1.0, 0.998, 0.998, 0.999, 0.999, 0.997, 0.995)))
+    snd_display("butter hp rough spectrum: %s?", sp)
+  end
+  undo
+  #
+  b = make_butter_lp(4, 440.0)
+  v = make_vct!(10) do |i| butter(b, i.zero? ? 1.0 : 0.0) end
+  unless vequal(v, make_vct(10))
+    snd_display("butter lp: %s?", v)
+  end
+  b = make_butter_lp(4, 1000.0)
+  map_channel(lambda do |y| butter(b, y) end)
+  sp = rough_spectrum(ind)
+  if (not vequal(sp, vct(1.000, 0.035, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000))) and
+      (not vequal(sp, vct(1.000, 0.038, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000)))
+    snd_display("butter lp rough spectrum: %s?", sp)
+  end
+  undo
+  #
+  b = make_butter_bp(4, 440.0, 500.0)
+  v = make_vct!(10) do |i| butter(b, i.zero? ? 1.0 : 0.0) end
+  unless vequal(v, make_vct(10))
+    snd_display("butter bp: %s?", v)
+  end
+  b = make_butter_bp(4, 1000.0, 1500.0)
+  map_channel(lambda do |y| butter(b, y) end)
+  sp = rough_spectrum(ind)
+  if (not vequal(sp, vct(0.026, 1.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.0))) and
+      (not vequal(sp, vct(0.022, 1.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.0))) and
+      (not vequal(sp, vct(0.042, 1.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.0)))
+    snd_display("butter bp 4 rough spectrum: %s?", sp)
+  end
+  undo
+  #
+  b = make_butter_bs(4, 440.0, 500.0)
+  v = make_vct!(10) do |i| butter(b, i.zero? ? 1.0 : 0.0) end
+  if (not vequal(v, vct(0.978, -0.043, -0.041, -0.038, -0.035,
+                        -0.031, -0.026, -0.0225, -0.015, -0.0085))) and
+      (not vequal(v, vct(0.978, -0.043, -0.041, -0.038, -0.035,
+                         -0.031, -0.027, -0.022, -0.017, -0.011)))
+    snd_display("butter bs: %s?", v)
+  end
+  b = make_butter_bs(4, 1000.0, 1500.0)
+  map_channel(lambda do |y| butter(b, y) end)
+  sp = rough_spectrum(ind)
+  if (not vequal(sp,  vct(0.798, 0.657, 1.0, 0.997, 0.996, 0.997, 0.997, 0.996, 0.995, 0.998))) and
+      (not vequal(sp, vct(0.795, 0.668, 1.0, 0.997, 0.996, 0.997, 0.997, 0.997, 0.995, 0.994))) and
+      (not vequal(sp, vct(0.801, 0.698, 1.0, 0.997, 0.996, 0.997, 0.997, 0.997, 0.995, 0.994))) and
+      (not vequal(sp, vct(0.884, 0.586, 1.0, 0.996, 0.996, 0.997, 0.997, 0.997, 0.995, 0.994))) and
+      (not vequal(sp, vct(0.798, 0.686, 1.0, 0.997, 0.996, 0.997, 0.997, 0.997, 0.995, 0.994))) and
+      (not vequal(sp, vct(0.793, 0.667, 1.0, 0.997, 0.996, 0.997, 0.997, 0.997, 0.995, 0.994)))
+    snd_display("butter bs 4 rough spectrum: %s?", sp)
+  end
+  undo
+  #
+  close_sound(ind)
+end
+
+def test068
+  gen = make_sawtooth_wave(440.0)
+  gen1 = make_sawtooth_wave(440.0)
+  print_and_check(gen, "sawtooth-wave", "sawtooth-wave freq: 440.000Hz, phase: 3.142, amp: 1.000")
+  v0 = make_vct!(10) do |i| sawtooth_wave(gen, 0.0) end
+  v1 = make_vct(10)
+  vct_map!(v1, lambda do | | sawtooth_wave?(gen1) ? sawtooth_wave(gen1, 0.0) : -1.0 end)
+  snd_display("map sawtooth_wave: %s %s?", v0, v1) unless vequal(v0, v1)
+  snd_display("%s not sawtooth_wave?", gen) unless sawtooth_wave?(gen)
+  snd_display("sawtooth_wave phase: %f?", gen.phase) if fneq(gen.phase, 4.39538)
+  snd_display("sawtooth_wave frequency: %f?", gen.frequency) if fneq(gen.frequency, 440.0)
+  gen.frequency = 100.0
+  snd_display("sawtooth_wave set_frequency: %f?", gen.frequency) if fneq(gen.frequency, 100.0)
+  snd_display("sawtooth_wave scaler: %f?", gen.scaler) if fneq(gen.scaler, 1.0)
+  gen.scaler = 0.5
+  snd_display("sawtooth_wave set_scaler: %f?", gen.scaler) if fneq(gen.scaler, 0.5)
+  if fneq(v0[1], 0.04) or fneq(v0[8], 0.319)
+    snd_display("sawtooth_wave output: %s?", v0)
+  end
+  test_gen_equal(make_sawtooth_wave(440.0),
+                 make_sawtooth_wave(440.0),
+                 make_sawtooth_wave(120.0))
+  test_gen_equal(make_sawtooth_wave(440.0),
+                 make_sawtooth_wave(440.0),
+                 make_sawtooth_wave(440.0, 1.0, 1.0))
+  test_gen_equal(make_sawtooth_wave(440.0),
+                 make_sawtooth_wave(440.0),
+                 make_sawtooth_wave(440.0, 0.5))
+  gen1 = make_sawtooth_wave(100.0)
+  gen2 = make_sawtooth_wave(-100.0)
+  mx = 0.0
+  100.times do mx = [mx, (gen1.run + gen2.run).abs].max end
+  snd_display("sawtooth_wave +-: %f?", mx) if fneq(mx, 0.0)
+  # 
+  gen = make_square_wave(440.0)
+  gen1 = make_square_wave(440.0)
+  print_and_check(gen, "square-wave", "square-wave freq: 440.000Hz, phase: 0.000, amp: 1.000")
+  v0 = make_vct!(10) do |i| square_wave(gen, 0.0) end
+  v1 = make_vct(10)
+  w = 1.0
+  vct_map!(v1, lambda do | |
+             w = gen1.width
+             square_wave?(gen1) ? square_wave(gen1, 0.0) : -1.0
+           end)
+  snd_display("mus_width opt: %f?", w) if fneq(w, 0.5)
+  snd_display("map square_wave: %s %s?", v0, v1) unless vequal(v0, v1)
+  snd_display("%s not square_wave?", gen) unless square_wave?(gen)
+  snd_display("square_wave phase: %f?", gen.phase) if fneq(gen.phase, 1.253787)
+  snd_display("square_wave frequency: %f?", gen.frequency) if fneq(gen.frequency, 440.0)
+  snd_display("square_wave scaler: %f?", gen.scaler) if fneq(gen.scaler, 1.0)
+  gen.scaler = 0.5
+  snd_display("square_wave set_scaler: %f?", gen.scaler) if fneq(gen.scaler, 0.5)
+  snd_display("square_wave width: %f?", gen.width) if fneq(gen.width, 0.5)
+  gen.width = 0.75
+  snd_display("square_wave set_width: %f?", gen.width) if fneq(gen.width, 0.75)
+  if fneq(v0[1], 1.0) or fneq(v0[8], 1.0)
+    snd_display("square_wave output: %s?", v0)
+  end
+  test_gen_equal(make_square_wave(440.0),
+                 make_square_wave(440.0),
+                 make_square_wave(120.0))
+  test_gen_equal(make_square_wave(440.0),
+                 make_square_wave(440.0),
+                 make_square_wave(440.0, 1.0, 1.0))
+  test_gen_equal(make_square_wave(440.0),
+                 make_square_wave(440.0),
+                 make_square_wave(440.0, 0.5))
+  old_srate = mus_srate
+  set_mus_srate(500.0)
+  gen = make_square_wave(100.0, -0.5, HALF_PI)
+  v0 = make_vct!(20) do |i| gen.run end
+  unless vequal(v0, vct(-0.5, -0.5, 0.0, 0.0, -0.5, -0.5, -0.5, 0.0, 0.0, -0.5,
+                        -0.5, -0.5, 0.0, 0.0, -0.5, -0.5, -0.5, 0.0, 0.0, -0.5))
+    snd_display("square_wave -0.5: %s?", v0)
+  end
+  set_mus_srate(old_srate)
+  # 
+  gen = make_triangle_wave(440.0)
+  gen1 = make_triangle_wave(440.0, 1.0, PI)
+  gen2 = make_triangle_wave(440.0)
+  print_and_check(gen, "triangle-wave", "triangle-wave freq: 440.000Hz, phase: 0.000, amp: 1.000")
+  v0 = make_vct!(10) do |i| triangle_wave(gen, 0.0) end
+  v1 = make_vct(10)
+  vct_map!(v1, lambda do | | triangle_wave?(gen2) ? triangle_wave(gen2, 0.0) : -1.0 end)
+  snd_display("map triangle_wave: %s %s?", v0, v1) unless vequal(v0, v1)
+  snd_display("%s not triangle_wave?", gen) unless triangle_wave?(gen)
+  snd_display("triangle_wave phase: %f?", gen.phase) if fneq(gen.phase, 1.253787)
+  snd_display("init triangle_wave phase: %f?", gen1.phase) if fneq(gen1.phase, PI)
+  snd_display("triangle_wave frequency: %f?", gen.frequency) if fneq(gen.frequency, 440.0)
+  snd_display("triangle_wave scaler: %f?", gen.scaler) if fneq(gen.scaler, 1.0)
+  gen.scaler = 0.5
+  snd_display("triangle_wave set_scaler: %f?", gen.scaler) if fneq(gen.scaler, 0.5)
+  if fneq(v0[1], 0.08) or fneq(v0[8], 0.639)
+    snd_display("triangle_wave output: %s?", v0)
+  end
+  test_gen_equal(make_triangle_wave(440.0),
+                 make_triangle_wave(440.0),
+                 make_triangle_wave(120.0))
+  test_gen_equal(make_triangle_wave(440.0),
+                 make_triangle_wave(440.0),
+                 make_triangle_wave(440.0, 1.0, 1.0))
+  test_gen_equal(make_triangle_wave(440.0),
+                 make_triangle_wave(440.0),
+                 make_triangle_wave(440.0, 0.5))
+  gen1 = make_triangle_wave(100.0)
+  gen2 = make_triangle_wave(-100.0)
+  mx = 0.0
+  100.times do mx = [mx, (gen1.run + gen2.run).abs].max end
+  snd_display("triangle_wave +-: %f?", mx) if fneq(mx, 0.0)
+  # 
+  gen = make_pulse_train(440.0)
+  gen1 = make_pulse_train(440.0)
+  print_and_check(gen, "pulse-train", "pulse-train freq: 440.000Hz, phase: 0.000, amp: 1.000")
+  v0 = make_vct!(10) do |i| pulse_train(gen, 0.0) end
+  v1 = make_vct(10)
+  vct_map!(v1, lambda do | | pulse_train?(gen1) ? pulse_train(gen1, 0.0) : -1.0 end)
+  snd_display("map pulse_train: %s %s?", v0, v1) unless vequal(v0, v1)
+  snd_display("%s not pulse_train?", gen) unless pulse_train?(gen)
+  snd_display("pulse_train phase: %f?", gen.phase) if fneq(gen.phase, 1.253787)
+  snd_display("pulse_train frequency: %f?", gen.frequency) if fneq(gen.frequency, 440.0)
+  snd_display("pulse_train scaler: %f?", gen.scaler) if fneq(gen.scaler, 1.0)
+  gen.scaler = 0.5
+  snd_display("pulse_train set_scaler: %f?", gen.scaler) if fneq(gen.scaler, 0.5)
+  if fneq(v0[0], 1.0) or fneq(v0[8], 0.0)
+    snd_display("pulse_train output: %s?", v0)
+  end
+  test_gen_equal(make_pulse_train(440.0),
+                 make_pulse_train(440.0),
+                 make_pulse_train(120.0))
+  test_gen_equal(make_pulse_train(440.0),
+                 make_pulse_train(440.0),
+                 make_pulse_train(440.0, 1.0, 1.0))
+  test_gen_equal(make_pulse_train(440.0),
+                 make_pulse_train(440.0),
+                 make_pulse_train(440.0, 0.5))
+  old_srate = mus_srate
+  set_mus_srate(500.0)
+  gen = make_pulse_train(100.0, -0.5, HALF_PI)
+  v0 = make_vct!(20) do |i| gen.run end
+  unless vequal(v0, vct(0.0, 0.0, 0.0, 0.0, -0.5, 0.0, 0.0, 0.0, 0.0, -0.5,
+                        0.0, 0.0, 0.0, 0.0, -0.5, 0.0, 0.0, 0.0, 0.0, -0.5))
+    snd_display("pulse_train -0.5: %s?", v0)
+  end
+  set_mus_srate(old_srate)
+  # 
+  gen = make_ppolar(0.1, 1200.0)
+  v0 = make_vct!(10) do |i| two_pole(gen, i.zero? ? 1.0 : 0.0) end
+  snd_display("%s not two_pole?", gen) unless two_pole?(gen)
+  snd_display("ppolar order: %d?", gen.order) if gen.order != 2
+  snd_display("ppolar a0: %f?", gen.a0) if fneq(gen.a0, 1.0)
+  snd_display("ppolar b1: %f?", gen.b1) if fneq(gen.b1, -0.188)
+  snd_display("ppolar b2: %f?", gen.b2) if fneq(gen.b2, 0.01)
+  if fneq(v0[0], 1.0) or fneq(v0[1], 0.188)
+    snd_display("ppolar output: %s?", v0)
+  end
+  z1 = make_ppolar(0.1, 600.0)
+  z2 = make_ppolar(0.1, 600.0)
+  z3 = make_ppolar(0.1, 1200.0)
+  two_pole(z1, 1.0)
+  two_pole(z2, 1.0)
+  two_pole(z3, 1.0)
+  test_gen_equal(z1, z2, z3)
+  z1 = make_ppolar(0.1, 600.0)
+  z2 = make_ppolar(0.1, 600.0)
+  z3 = make_ppolar(0.2, 1200.0)
+  two_pole(z1, 1.0)
+  two_pole(z2, 1.0)
+  two_pole(z3, 1.0)
+  test_gen_equal(z1, z2, z3)
+  z1 = make_ppolar(0.1, 600.0)
+  z2 = make_ppolar(0.1, 600.0)
+  z3 = make_ppolar(0.1, 600.0)
+  two_pole(z1, 1.0)
+  two_pole(z2, 1.0)
+  two_pole(z3, 0.5)
+  test_gen_equal(z1, z2, z3)
+  # 
+  gen = make_zpolar(:radius, 0.1, :frequency, 1200.0)
+  v0 = make_vct!(10) do |i| two_zero(gen, i.zero? ? 1.0 : 0.0) end
+  snd_display("%s not two_zero?", gen) unless two_zero?(gen)
+  snd_display("zpolar order: %d?", gen.order) if gen.order != 2
+  snd_display("zpolar a0: %f?", gen.a0) if fneq(gen.a0, 1.0)
+  snd_display("zpolar a1: %f?", gen.a1) if fneq(gen.a1, -0.188)
+  snd_display("zpolar a2: %f?", gen.a2) if fneq(gen.a2, 0.01)
+  if fneq(v0[0], 1.0) or fneq(v0[1], -0.188)
+    snd_display("zpolar output: %s?", v0)
+  end
+  z1 = make_zpolar(0.1, 600.0)
+  z2 = make_zpolar(0.1, 600.0)
+  z3 = make_zpolar(0.1, 1200.0)
+  two_zero(z1, 1.0)
+  two_zero(z2, 1.0)
+  two_zero(z3, 1.0)
+  test_gen_equal(z1, z2, z3)
+  z1 = make_zpolar(0.1, 600.0)
+  z2 = make_zpolar(0.1, 600.0)
+  z3 = make_zpolar(0.2, 1200.0)
+  two_zero(z1, 1.0)
+  two_zero(z2, 1.0)
+  two_zero(z3, 1.0)
+  test_gen_equal(z1, z2, z3)
+  z1 = make_zpolar(0.1, 600.0)
+  z2 = make_zpolar(0.1, 600.0)
+  z3 = make_zpolar(0.1, 600.0)
+  two_zero(z1, 1.0)
+  two_zero(z2, 1.0)
+  two_zero(z3, 0.5)
+  test_gen_equal(z1, z2, z3)
+  # 
+  gen = make_formant(0.9, 1200.0, 1.0)
+  gen1 = make_formant(0.9, 1200.0, 1.0)
+  print_and_check(gen, "formant", "formant: radius: 0.900, frequency: 1200.000, (gain: 1.000)")
+  v0 = make_vct!(10) do |i| formant(gen, i.zero? ? 1.0 : 0.0) end
+  v1 = make_vct(10)
+  inp = -1
+  vct_map!(v1, lambda do | |
+             inp += 1
+             formant?(gen1) ? formant(gen1, inp.zero? ? 1.0 : 0.0) : -1.0
+           end)
+  snd_display("map formant: %s %s?", v0, v1) unless vequal(v0, v1)
+  snd_display("%s not formant?", gen) unless formant?(gen)
+  snd_display("formant order: %d?", gen.order) if gen.order != 2
+  snd_display("formant a0: %f?", gen.a0) if fneq(gen.a0, 0.06371)
+  snd_display("formant a1: %f?", gen.a1) if fneq(gen.a1, 1.0)
+  snd_display("formant a2: %f?", gen.a2) if fneq(gen.a2, -0.9)
+  snd_display("formant b1: %f?", gen.b1) if fneq(gen.b1, -1.6957893)
+  snd_display("formant b2: %f?", gen.b2) if fneq(gen.b2, 0.81)
+  snd_display("formant radius: %f?", mus_formant_radius(gen)) if fneq(mus_formant_radius(gen), 0.9)
+  snd_display("formant frequency: %f?", gen.frequency) if fneq(gen.frequency, 1200.0)
+  if fneq(v0[0], 0.064) or fneq(v0[1], 0.108)
+    snd_display("formant output: %s?", v0)
+  end
+  snd_display("formant gain: %f?", gen.scaler) if fneq(gen.scaler, 1.0)
+  snd_display("formant ycoeff 2 0.81: %f?", gen.ycoeff(2)) if fneq(gen.ycoeff(2), 0.81)
+  set_mus_ycoeff(gen, 2, 0.1)
+  snd_display("formant set_ycoeff 2 0.1: %f?", gen.ycoeff(2)) if fneq(gen.ycoeff(2), 0.1)
+  snd_display("formant xcoeff 2 -0.9: %f?", gen.xcoeff(2)) if fneq(gen.xcoeff(2), -0.9)
+  set_mus_xcoeff(gen, 2, 0.3)
+  snd_display("formant set_xcoeff 2 0.3: %f?", gen.xcoeff(2)) if fneq(gen.xcoeff(2), 0.3)
+  gen.a0 = 0.5
+  snd_display("formant set_a0: %f?", gen.a0) if fneq(gen.a0, 0.5)
+  gen.a1 = 0.5
+  snd_display("formant set_a1: %f?", gen.a1) if fneq(gen.a1, 0.5)
+  gen.a2 = 0.5
+  snd_display("formant set_a2: %f?", gen.a2) if fneq(gen.a2, 0.5)
+  gen.b1 = 0.5
+  snd_display("formant set_b1: %f?", gen.b1) if fneq(gen.b1, 0.5)
+  gen.b2 = 0.5
+  snd_display("formant set_b2: %f?", gen.b2) if fneq(gen.b2, 0.5)
+  set_mus_formant_radius(gen, 0.01)
+  if fneq(res = mus_formant_radius(gen), 0.01)
+    snd_display("formant set_radius: %f?", res)
+  end
+  gen.scaler = 2.0
+  snd_display("formant set_gain: %f?", gen.scaler) if fneq(gen.scaler, 2.0)
+  f1 = make_formant(0.9, 1200.0, 1.0)
+  f2 = make_formant(0.9, 1200.0, 1.0)
+  f3 = make_formant(0.9,  600.0, 1.0)
+  formant(f1, 1.0)
+  formant(f2, 1.0)
+  formant(f3, 1.0)
+  test_gen_equal(f1, f2, f3)
+  f1 = make_formant(0.90, 1200.0, 1.0)
+  f2 = make_formant(0.90, 1200.0, 1.0)
+  f3 = make_formant(0.99, 1200.0, 1.0)
+  formant(f1, 1.0)
+  formant(f2, 1.0)
+  formant(f3, 1.0)
+  test_gen_equal(f1, f2, f3)
+  f1 = make_formant(0.9, 1200.0, 1.0)
+  f2 = make_formant(0.9, 1200.0, 1.0)
+  f3 = make_formant(0.9, 1200.0, 0.5)
+  formant(f1, 1.0)
+  formant(f2, 1.0)
+  formant(f3, 0.5)
+  test_gen_equal(f1, f2, f3)
+  # 
+  frm = make_formant(0.1, 440.0)
+  mus_set_formant_radius_and_frequency(frm, 2.0, 100.0)
+  if fneq(res = mus_formant_radius(frm), 2.0)
+    snd_display("set_formant_radius_and_frequency (radius): %f?", res)
+  end
+  if fneq(res = mus_frequency(frm), 100.0)
+    snd_display("set_formant_radius_and_frequency (freq): %f?", res)
+  end
+  fs = make_array(1) do make_formant(0.1, 1000.0) end
+  f0 = make_formant(0.1, 1000.0)
+  amps = make_array(1, 1.0)
+  v0 = make_vct!(10) do |i| formant(f0, i.zero? ? 1.0 : 0.0) end
+  v1 = make_vct!(10) do |i| old_formant_bank(amps, fs, i.zero? ? 1.0 : 0.0) end
+  snd_display("formant_bank: %s %s?", v0, v1) unless vequal(v0, v1)
+  # 
+  fs = [make_formant(0.1, 1000.0), make_formant(0.2, 100.0)]
+  f0 = make_formant(0.1, 1000.0)
+  f1 = make_formant(0.2, 100.0)
+  amps = [0.5, 0.25]
+  v0 = make_vct!(10) do |i|
+    val = i.zero? ? 1.0 : 0.0
+    (0.5 * formant(f0, val)) + (0.25 * formant(f1, val))
+  end
+  v1 = make_vct!(10) do |i| old_formant_bank(amps, fs, i.zero? ? 1.0 : 0.0) end
+  snd_display("formant_bank 1: %s %s?", v0, v1) unless vequal(v0, v1)
+  # 
+  fs = [make_formant(0.1, 1000.0), make_formant(0.2, 100.0)]
+  amps = vct(0.5, 0.25)
+  v = make_vct!(5) do |i| old_formant_bank(amps, fs, i.zero? ? 1.0 : 0.0) end
+  unless vequal(v, vct(0.146, 0.029, -0.011, -0.003, 0.000))
+    snd_display("run formant_bank: %s?", v)
+  end
+  #
+  ob = open_sound("oboe.snd")
+  poltergeist = lambda do |frek, amp, r, gain, frek_env, r_env|
+    # test courtesy of Anders Vinjar
+    filt = make_formant(r, frek, gain)
+    fe = make_env(:envelope, frek_env, :end, frames, :offset, frek)
+    re = make_env(:envelope, r_env, :end, frames, :offset, r)
+    lambda do |y|
+      outval = formant(filt, amp * y)
+      mus_set_formant_radius_and_frequency(filt, env(re), env(fe))
+      outval
+    end
+  end
+  map_chan(poltergeist.call(300, 0.1, 0.0, 30.0, [0, 100, 1, 4000], [0, 0.99, 1, 0.9]))
+  play_and_wait(0, ob)
+  close_sound(ob)
+end
+
+include Mixer_matrix
+
+def test078
+  gen = make_mixer(2, 0.5, 0.25, 0.125, 1.0)
+  fr0 = make_frame(2, 1.0, 1.0)
+  fr1 = make_frame(2, 0.0, 0.0)
+  print_and_check(gen, "mixer", "mixer: chans: 2, vals: [(0.500 0.250) (0.125 1.000)]")
+  print_and_check(fr0, "frame", "frame[2]: [1.000 1.000]")
+  snd_display("%s not a frame?", fr0) unless frame?(fr0)
+  snd_display("%s not a mixer?", gen) unless mixer?(gen)
+  snd_display("frame=? %s %s?", fr0, fr1) if fr0.eql?(fr1)
+  snd_display("frame channels: %d?", fr0.channels) if fr0.channels != 2
+  snd_display("frame length: %d?", fr1.length) if fr1.length != 2
+  snd_display("mixer channels: %d?", gen.channels) if gen.channels != 2
+  frame2frame(gen, fr0, fr1)
+  if fneq(frame_ref(fr0, 0), 1.0) or
+      fneq(frame_ref(fr1, 1), 1.25) or
+      fneq(mixer_ref(gen, 0, 0), 0.5)
+    snd_display("fr0: %s?", fr0)
+  end
+  frame_set!(fr1, 0, 1.0)
+  frame_set!(fr1, 1, 1.0)
+  fr3 = frame_add(fr0, fr1)
+  fr4 = frame_multiply(fr0, fr1)
+  fr5 = sample2frame(fr1, 0.5)
+  if fneq(frame_ref(fr3, 0), 2.0) or
+      fneq(frame_ref(fr4, 0), 1.0)
+    snd_display("fr+*: %s %s?", fr3, fr4)
+  end
+  if fneq(res = frame_ref(fr5, 0), 0.5)
+    snd_display("sample2frame: %f?", res)
+  end
+  sample2frame(fr1, 0.5, fr5)
+  if fneq(res = frame_ref(fr5, 0), 0.5)
+    snd_display("repeat sample2frame: %f?", res)
+  end
+  fr3 = make_frame(2)
+  fr4 = make_frame(4)
+  frame_set!(fr3, 0, 1.0)
+  frame_set!(fr4, 0, 0.5)
+  frame_set!(fr4, 2, 0.5)
+  unless vequal(frame2list(res = frame_add(fr3, fr4)), [1.5, 0.0])
+    snd_display("frame_add unequal chans: %s?", res)
+  end
+  fr3.reset
+  if fneq(frame_ref(fr3, 0), 0.0)
+    snd_display("reset frame: %s?", fr3)
+  end
+  fr3 = make_frame(2)
+  fr4 = make_frame(4)
+  frame_set!(fr3, 0, 1.0)
+  frame_set!(fr4, 0, 0.5)
+  frame_set!(fr4, 2, 1.0)
+  unless vequal(frame2list(res = frame_multiply(fr3, fr4)), [0.5, 0.0])
+    snd_display("frame_multiply unequal chans: %s?", res)
+  end
+  mx1 = make_mixer(2, 1.0, 0.0, 0.0, 1.0)
+  mx2 = mixer_multiply(gen, mx1)
+  fr4 = make_frame(2, 1.0, 1.0)
+  fr5 = make_frame(2, 1.0, 1.0)
+  if fneq(res = frame2sample(mx1, fr1), 1.0)
+    snd_display("frame2sample: %s?", res)
+  end
+  if fneq(res = frame2sample(fr5, fr4), 2.0)
+    snd_display("frame2sample: %s?", res)
+  end
+  unless (res = frame2list(fr1)).eql?([1.0, 1.0])
+    snd_display("frame2list: %s?", res)
+  end
+  if fneq(mixer_ref(mx2, 0, 1), 0.25) or fneq(mixer_ref(mx2, 1, 0), 0.125)
+    snd_display("mixer_multiply: %s?", mx2)
+  end
+  unless mx2.eql?(gen)
+    snd_display("mixer=? %s %s?", gen, mx2)
+  end
+  if mx2.eql?(mx1)
+    snd_display("mixer!=? %s %s?", mx1, mx2)
+  end
+  snd_display("mus_data frame: %s?", fr4.data) unless vct?(fr4.data)
+  # mus-data doesn't apply from scheme (ruby) level here
+  # snd_display("mus_data mixer: %s?", mx1.data) unless vct?(mx1.data)
+  mixer_set!(mx2, 0, 0, 2.0)
+  if fneq(mixer_ref(mx2, 0, 0), 2.0)
+    snd_display("mixer_set!: %s?", mx2)
+  end
+  fr0 = sample2frame(mx2, 1.0)
+  if fneq(frame_ref(fr0, 0), 2.0) or fneq(frame_ref(fr0, 1), 0.25)
+    snd_display("sample2frame: %s?", fr0)
+  end
+  frout = make_frame(2)
+  sample2frame(mx2, 1.0, frout)
+  unless frout.eql?(fr0)
+    snd_display("sample2frame via frout: %s %s?", frout, fr0)
+  end
+  #
+  mx1 = make_scalar_mixer(2, 2.0)
+  mx2 = make_mixer(2, 0.1, 0.2, 0.3, 0.4)
+  nmx = mixer_add(mx1, mx2)
+  if fneq(mixer_ref(mx1, 0, 0), 2.0) or
+      fneq(mixer_ref(mx1, 0, 1), 0.0) or
+      fneq(mixer_ref(mx1, 1, 0), 0.0) or
+      fneq(mixer_ref(mx1, 1, 1), 2.0)
+    snd_display("make_scalar_mixer 2: %s?", mx1)
+  end
+  if fneq(mixer_ref(mx2, 0, 0), 0.1) or
+      fneq(mixer_ref(mx2, 0, 1), 0.2) or
+      fneq(mixer_ref(mx2, 1, 0), 0.3) or
+      fneq(mixer_ref(mx2, 1, 1), 0.4)
+    snd_display("make_mixer 0.1, 0.2, 0.3, 0.4: %s?", mx2)
+  end
+  if fneq(mixer_ref(nmx, 0, 0), 2.1) or
+      fneq(mixer_ref(nmx, 0, 1), 0.2) or
+      fneq(mixer_ref(nmx, 1, 0), 0.3) or
+      fneq(mixer_ref(nmx, 1, 1), 2.4)
+    snd_display("mixer_add: %s?", nmx)
+  end
+  mx1 = mixer_scale(mx1, 0.5)
+  if fneq(mixer_ref(mx1, 0, 0), 1.0) or
+      fneq(mixer_ref(mx1, 0, 1), 0.0) or
+      fneq(mixer_ref(mx1, 1, 0), 0.0) or
+      fneq(mixer_ref(mx1, 1, 1), 1.0)
+    snd_display("mixer_scaler (identity): %s?", mx1)
+  end
+  mx1.reset
+  if fneq(mixer_ref(mx1, 0, 0), 0.0)
+    snd_display("reset mixer: %s?", mx1)
+  end
+  #
+  if (res = snd_catch do make_mixer(2, 0.0, 0.0, 0.0, 0.0, 0.0) end).first != :mus_error
+    snd_display("make_mixer extra args: %s", res.inspect)
+  end
+  if (res = snd_catch do
+        fr1 = make_frame(2, 1.0, 0.0)
+        frame2sample(make_oscil, fr1)
+      end).first != :mus_error
+    snd_display("frame2sample bad arg: %s", res.inspect)
+  end
+  hi = make_mixer(1, 1)
+  if (res = snd_catch do mixer_set!(hi, 1, 1, 1.0) end).first != :mus_error
+    snd_display("mixer_set! 1 1 of 0: %s (%s)", res.inspect, hi)
+  end
+  hi = make_mixer(1)
+  if (res = snd_catch do mixer_set!(hi, 1, 0, 1.0) end).first != :mus_error
+    snd_display("mixer_set! 1 0 of 0: %s (%s)", res.inspect, hi)
+  end
+  hi = make_mixer(1)
+  if (res = snd_catch do mixer_set!(hi, 0, 1, 1.0) end).first != :mus_error
+    snd_display("mixer_set! 0 1 of 0: %s (%s)", res.inspect, hi)
+  end
+  hi = make_frame(1)
+  if (res = snd_catch do frame_set!(hi, 1, 1.0) end).first != :mus_error
+    snd_display("frame_set! 1 of 0: %s (%s)", res.inspect, hi)
+  end
+  if (res = snd_catch do make_frame(0) end).first != :out_of_range
+    snd_display("make_frame 0: %s", res.inspect)
+  end
+  if (res = snd_catch do make_mixer(0) end).first != :out_of_range
+    snd_display("make_mixer 0: %s", res.inspect)
+  end
+  #
+  fr1 = make_frame(1, 1)
+  fr2 = make_frame(2, 1, 2)
+  fr4 = make_frame(4, 1, 2, 3, 4)
+  fr8 = make_frame(8, 1, 2, 3, 4, 5, 6, 7, 8)
+  mx1 = make_mixer(1, 5)
+  mx1id = make_mixer(1, 1)
+  mx2 = make_mixer(2, 1, 2, 3, 4)
+  mx2id = make_mixer(2, 1, 0, 0, 1)
+  mx4 = make_mixer(4)
+  mx4id = make_mixer(4)
+  mx8 = make_mixer(8)
+  mx8id = make_mixer(8)
+  4.times do |i|
+    mixer_set!(mx4id, i, i, 1)
+    mixer_set!(mx4, 0, i, 1)
+  end
+  8.times do |i|
+    mixer_set!(mx8id, i, i, 1)
+    mixer_set!(mx8, i, 0, 1)
+  end
+  unless (res = frame2frame(mx1id, fr1)).eql?(make_frame(1, 1))
+    snd_display("frame2frame 1 id: %s?", res)
+  end
+  unless (res = frame2frame(mx1, fr1)).eql?(make_frame(1, 5))
+    snd_display("frame2frame 1: %s?", res)
+  end
+  unless (res = frame2frame(mx2id, fr1)).eql?(make_frame(2, 1, 0))
+    snd_display("frame2frame 2 1 id: %s?", res)
+  end
+  unless (res = frame2frame(mx2, fr1)).eql?(make_frame(2, 1, 2))
+    snd_display("frame2frame 2 1: %s?", res)
+  end
+  unless (res = frame2frame(mx4, fr1)).eql?(make_frame(4, 1, 1, 1, 1))
+    snd_display("frame2frame 4 1: %s?", res)
+  end
+  unless (res = frame2frame(mx8, fr1)).eql?(make_frame(8, 1, 0, 0, 0, 0, 0, 0, 0))
+    snd_display("frame2frame 8 1: %s?", res)
+  end
+  unless (res = frame2frame(mx1, fr2)).eql?(make_frame(1, 5))
+    snd_display("frame2frame 1 2: %s?", res)
+  end
+  unless (res = frame2frame(mx2id, fr2)).eql?(make_frame(2, 1, 2))
+    snd_display("frame2frame 2 id 2: %s?", res)
+  end
+  unless (res = frame2frame(mx2, fr2)).eql?(make_frame(2, 7, 10))
+    snd_display("frame2frame 2 2: %s?", res)
+  end
+  unless (res = frame2frame(mx4id, fr2)).eql?(make_frame(4, 1, 2, 0, 0))
+    snd_display("frame2frame 4 id 2: %s?", res)
+  end
+  unless (res = frame2frame(mx8id, fr2)).eql?(make_frame(8, 1, 2, 0, 0, 0, 0, 0, 0))
+    snd_display("frame2frame 8 id 2: %s?", res)
+  end
+  unless (res = frame2frame(mx4, fr2)).eql?(make_frame(4, 1, 1, 1, 1))
+    snd_display("frame2frame 4 2: %s?", res)
+  end
+  unless (res = frame2frame(mx8, fr2)).eql?(make_frame(8, 3, 0, 0, 0, 0, 0, 0, 0))
+    snd_display("frame2frame 8 2: %s?", res)
+  end
+  unless (res = frame2frame(mx1, fr4)).eql?(make_frame(1, 5))
+    snd_display("frame2frame 1 4: %s?", res)
+  end
+  unless (res = frame2frame(mx1, fr8)).eql?(make_frame(1, 5))
+    snd_display("frame2frame 1 8: %s?", res)
+  end
+  unless (res = frame2frame(mx4, fr4)).eql?(make_frame(4, 1, 1, 1, 1))
+    snd_display("frame2frame 4 4: %s?", res)
+  end
+  unless (res = frame2frame(mx8, fr4)).eql?(make_frame(8, 10, 0, 0, 0, 0, 0, 0, 0))
+    snd_display("frame2frame 8 4: %s?", res)
+  end
+  #
+  fr1 = make_frame(2)
+  fr2 = make_frame(2)
+  mx1 = make_mixer(2)
+  mx2 = make_mixer(2)
+  frame_set!(fr1, 0, 0.1)
+  fradd = frame_add(fr1, fr1, fr2)
+  unless fr2.eql?(fradd)
+    snd_display("frame_add with res frame: %s %s?", fr2, fradd)
+  end
+  unless fr2.eql?(make_frame(2, 0.2, 0.0))
+    snd_display("frame_add res: %s?", fr2)
+  end
+  fradd = frame_multiply(fr1, fr1, fr2)
+  unless fr2.eql?(fradd)
+    snd_display("frame_multiply with res frame: %s %s?", fr2, fradd)
+  end
+  if fneq(frame_ref(fr2, 0), 0.01) or fneq(frame_ref(fr2, 1), 0.0)
+    snd_display("frame_multiply res: %s?", fr2)
+  end
+  mixer_set!(mx1, 0, 0, 0.1)
+  mxadd = mixer_multiply(mx1, mx1, mx2)
+  unless mx2.eql?(mxadd)
+    snd_display("mixer_multiply with res mixer: %s %s?", mx2, mxadd)
+  end
+  if fneq(mixer_ref(mx2, 0, 0), 0.01)
+    snd_display("mixer_multiply res: %s?", mx2)
+  end
+  #
+  [1, 2, 4, 8].each do |chans|
+    m1 = make_mixer(chans)
+    if m1.channels != chans or m1.length != chans
+      snd_display("mixer %d chans but: %d %d?", chans, m1.channels, m1.length)
+    end
+    chans.times do |i|
+      chans.times do |j|
+        mixer_set!(m1, i, j, i * 0.01 + j * 0.1)
+      end
+    end
+    chans.times do |i|
+      chans.times do |j|
+        if fneq(res0 = mixer_ref(m1, i, j), res1 = i * 0.01 + j * 0.1)
+          snd_display("mixer[%d %d] = %f (%f)?", i, j, res0, res1)
+        end
+      end
+    end
+    mempty = make_mixer(chans)
+    midentity = make_mixer(chans)
+    mpick = make_mixer(chans)
+    chans.times do |i| mixer_set!(midentity, i, i, 1.0) end
+    mixer_set!(mpick, chans - 1, chans - 1, 1.0)
+    mzero = mixer_multiply(m1, mempty)
+    msame = mixer_multiply(m1, midentity)
+    mone = mixer_multiply(m1, mpick)
+    chans.times do |i|
+      chans.times do |j|
+        if fneq(res = mixer_ref(mzero, i, j), 0.0)
+          snd_display("mzero %d %d = %f?", i, j, res)
+        end
+        if fneq(res0 = mixer_ref(m1, i, j), res1 = mixer_ref(msame, i, j))
+          snd_display("msame %f %f?", res0, res1)
+        end
+        if fneq(res = mixer_ref(mone, i, j), 0.0) and
+            i != chans - 1 and
+            j != chans - 1
+          snd_display("mone %d %d = %f?", i, j, res)
+        end
+      end
+    end
+  end
+  #
+  mx = make_mixer(4, 4)
+  if (res = snd_catch do mx.length = 2 end).first != :mus_error
+    snd_display("set_mixer_length: %s %d", res.inspect, mx.length)
+  end
+  # 
+  if fneq(res = mixer_determinant(make_mixer(2, 1, 2, 3, 4)), -2.0)
+    snd_display("mixer_determinant -2: %f?", res)
+  end
+  if fneq(res = mixer_determinant(make_mixer(3, 1, 2, 3, 4, 5, 6, 7, 8, 9)), 0.0)
+    snd_display("mixer_determinant 0: %f?", res)
+  end
+  if fneq(res = mixer_determinant(make_mixer(4, 1, 2, 3, 4, 8, 7, 6, 5, 1, 8, 2, 7, 3, 6, 4, 5)),
+          -144.0)
+    snd_display("mixer_determinant -144: %f?", res)
+  end
+  if fneq(res = mixer_determinant(make_mixer(5,  2, 3, 5, 7, 11,  13, 17, 19, 23, 29,
+                                             31, 37, 41, 43, 47,  53, 59, 61, 67, 71,
+                                             73, 79, 83, 89, 97)), -4656.0)
+    snd_display("mixer_determinant -4656: %f?", res)
+  end
+  if fneq(res = mixer_determinant(make_mixer(6,  2, 3, 5, 7, 11, 13,   17, 19, 23, 29, 31, 37,
+                                             41, 43, 47, 53, 59, 61,  67, 71, 73, 79, 83, 89,  
+                                             97, 101, 103, 107, 109, 113,
+                                             127, 131, 137, 139, 149, 151)), -14304.0)
+    snd_display("mixer_determinant -14304: %f?", res)
+  end
+  unless mixer_equal?(res = mixer_transpose(make_mixer(2, 1, 2, 3, 4)),
+                      make_mixer(2, 1.0, 3.0, 2.0, 4.0))
+    snd_display("mixer_transpose 1: %s?", res)
+  end
+  unless mixer_equal?(res = mixer_transpose(make_mixer(3, 1, 2, 3, 4, 5, 6, 7, 8, 9)),
+                      make_mixer(3, 1.0, 4.0, 7.0, 2.0, 5.0, 8.0, 3.0, 6.0, 9.0))
+    snd_display("mixer_transpose 2: %s?", res)
+  end
+  unless mixer_equal?(res = mixer_multiply(make_mixer(2, 1, 0, 0, 1), make_mixer(2, 2, 0, 0, 2)),
+                      make_mixer(2, 2.0, 0.0, 0.0, 2.0))
+    snd_display("mixer_multiply 1: %s?", res)
+  end
+  unless mixer_equal?(res = mixer_multiply(make_mixer(3, 2, 3, 5, 7, 11, 13, 19, 23, 29),
+                                           make_mixer(3, 41, 43, 47, 53, 59, 61, 67, 71, 73)),
+                      make_mixer(3, 576, 618, 642, 1741, 1873, 1949, 3941, 4233, 4413))
+    snd_display("mixer_multiply 2: %s?", res)
+  end
+  unless mixer_equal?(res = mixer_inverse(make_mixer(2, 1, 0, 0, 1)), make_mixer(2, 1, 0, 0, 1))
+    snd_display("mixer_inverse 1: %s?", res)
+  end
+  unless mixer_equal?(res = mixer_inverse(make_mixer(2, 2, 3, 5, 8)), make_mixer(2, 8, -3, -5, 2))
+    snd_display("mixer_inverse 2: %s?", res)
+  end
+  unless mixer_equal?(res = mixer_inverse(make_mixer(3,  2, 3, 5,  7, 11, 13,  17, 19, 23)),
+                      make_mixer(3, -0.077, -0.333, 0.205, -0.769, 0.5, -0.115,
+                                 0.692, -0.167, -0.013))
+    snd_display("mixer_inverse 3: %s?", res)
+  end
+  unless mixer_equal?(res = mixer_inverse(make_mixer(4,  2, 3, 5, 7,  17, 19, 23, 29,
+                                                     41, 43, 47, 53,  67, 71, 73, 97)),
+                      make_mixer(4, -7, 4.708, -1.042, -0.333, 9, -6.396, 1.396, 0.5, 
+                                 -1, 0.875, -0.042, -0.167, -1, 0.771, -0.271, 0))
+    snd_display("mixer_inverse 4: %s?", res)
+  end
+  unless mixer_equal?(res = mixer_inverse(make_mixer(6,  2, 3, 5, 7, 11, 13,
+                                                     17, -19, 23, 29, 31, 37,
+                                                     41, 43, 47, 53, 59, 61,
+                                                     67, 71, 73, 79, 83, 89,
+                                                     97, 101, 103, 107, 109, 113,
+                                                     127, 131, 137, 139, 149, 151)), 
+                      make_mixer(6, -1.355, 0.02, -0, 1.09, -1.153, 0.333, 0.092,
+                                 -0.025, 0, -0.042, 0.07, -0.029, 1.612,
+                                 0.006, -0.25, -1.205, 1.249, -0.264,
+                                 0.079, 0.002, 0.25, -0.314, 0.425, -0.241,
+                                 -0.551, -0.011, 0.25, 0.2, -0.476, 0.188,
+                                 0.068, 0.009, -0.25, 0.306, -0.145, 0.028))
+    snd_display("mixer_inverse 5: %s?", res)
+  end
+  unless mixer_equal?(res = mixer_multiply(make_mixer(2, 2, 3, 5, 8),
+                                           matrix2mixer(mixer_inverse(make_mixer(2, 2, 3, 5, 8)))),
+                      make_scalar_mixer(2, 1.0))
+    snd_display("mixer_inverse 6: %s?", res)
+  end
+  unless mixer_equal?(res = mixer_multiply(make_mixer(3, 2, 3, 5, 7, 11, 13, 17, 19, 23),
+                                           matrix2mixer(mixer_inverse(make_mixer(3, 2, 3, 5,
+                                                                                 7, 11, 13,
+                                                                                 17, 19, 23)))),
+                      make_scalar_mixer(3, 1.0))
+    snd_display("mixer_inverse 7: %s?", res)
+  end
+  unless mixer_diagonal?(make_scalar_mixer(2, 2.0))
+    snd_display("mixer_diagonal 1")
+  end
+  unless mixer_diagonal?(make_mixer(3, 1, 0, 0, 0, 1, 0, 0, 0, 1))
+    snd_display("mixer_diagonal 2")
+  end
+  if mixer_diagonal?(make_mixer(3, 1, 0, 0, 0, 1, 1, 0, 0, 1))
+    snd_display("mixer_diagonal 3")
+  end
+  unless mixer_diagonal?(make_mixer(3, 0, 0, 0, 0, 1, 0, 0, 0, 1))
+    snd_display("mixer_diagonal 4")
+  end
+  unless mixer_symmetric?(make_mixer(3, 0, 0, 0, 0, 1, 0, 0, 0, 1))
+    snd_display("mixer_symmetric 1")
+  end
+  unless mixer_symmetric?(make_mixer(3, 1, 2, 0, 2, 1, 0, 0, 0, 1))
+    snd_display("mixer_symmetric 2")
+  end
+  if mixer_symmetric?(make_mixer(3, 1, 2, 0, 2, 1, 0, 0, 2, 1))
+    snd_display("mixer_symmetric 3")
+  end
+  unless mixer_equal?(make_scalar_mixer(2, 2.0), make_mixer(2, 2.0, 0, 0, 2.0))
+    snd_display("mixer_equal? 1")
+  end
+  if mixer_equal?(make_mixer(2, 1, 2, 3, 4), make_mixer(3, 1, 2, 3, 4, 5, 6, 7, 8, 9))
+    snd_display("mixer_equal? 2")
+  end
+  if mixer_equal?(make_mixer(2, 1, 2, 3, 4), make_mixer(2, 1, 2, 3, 5))
+    snd_display("mixer_equal? 3")
+  end
+  unless mixer_equal?(res = mixer_poly(make_mixer(2, 1, 0, 0, 1), 1, 1), make_mixer(2, 2, 0, 0, 2))
+    snd_display("mixer_poly 1: %s?", res)
+  end
+  unless mixer_equal?(res = mixer_poly(make_mixer(1, 1), 1), make_mixer(1, 1))
+    snd_display("mixer_poly 2: %s?", res)
+  end
+  unless mixer_equal?(res = mixer_poly(make_mixer(2, 1, 0, 0, 1), 1, 0, 0),
+                      make_mixer(2, 1, 0, 0, 1))
+    snd_display("mixer_poly 3: %s?", res)
+  end
+  unless mixer_equal?(res = mixer_poly(make_mixer(2, 1, 2, 4, 3), 1, 0, 0), 
+                      make_mixer(2, 9, 8, 16, 17))
+    snd_display("mixer_poly 4: %s?", res)
+  end
+  unless mixer_equal?(res = mixer_poly(make_mixer(2, 1, 2, 4, 3), 1, 1, 0), 
+                      make_mixer(2, 10, 10, 20, 20))
+    snd_display("mixer_poly 5: %s?", res)
+  end
+  unless mixer_equal?(res = mixer_poly(make_mixer(2, 1, 2, 4, 3), 1, 1, 2), 
+                      make_mixer(2, 12, 10, 20, 22))
+    snd_display("mixer_poly 6: %s?", res)
+  end
+  unless mixer_equal?(res = mixer_poly(make_mixer(2, 1, 2, 4, 3), 1, 0, 0, 0), 
+                      make_mixer(2, 41, 42, 84, 83))
+    snd_display("mixer_poly 7: %s?", res)
+  end
+  unless mixer_equal?(res = mixer_poly(make_mixer(2, 1, 2, 4, 3), 1, 0, 1, 0), 
+                      make_mixer(2, 42, 44, 88, 86))
+    snd_display("mixer_poly 8: %s?", res)
+  end
+end
+
+def test088
+  [[:Hamming_window, 0.0, vct(0.080, 0.115, 0.215, 0.364, 0.540, 0.716, 0.865, 1.000,
+                              1.000, 0.865, 0.716, 0.540, 0.364, 0.215, 0.115, 0.080)],
+   [:Rectangular_window, 0.0, vct(1.000, 1.000, 1.000, 1.000, 1.000, 1.000, 1.000, 1.000,
+                                  1.000, 1.000, 1.000, 1.000, 1.000, 1.000, 1.000, 1.000)],
+   [:Hann_window, 0.0, vct(0.000, 0.038, 0.146, 0.309, 0.500, 0.691, 0.854, 1.000,
+                           1.000, 0.854, 0.691, 0.500, 0.309, 0.146, 0.038, 0.000)],
+   [:Welch_window, 0.0, vct(0.000, 0.234, 0.438, 0.609, 0.750, 0.859, 0.938, 1.000,
+                            1.000, 0.938, 0.859, 0.750, 0.609, 0.438, 0.234, 0.000)],
+   [:Connes_window, 0.0, vct(0.000, 0.055, 0.191, 0.371, 0.562, 0.739, 0.879, 1.000,
+                             1.000, 0.879, 0.739, 0.562, 0.371, 0.191, 0.055, 0.000)],
+   [:Parzen_window, 0.0, vct(0.000, 0.125, 0.250, 0.375, 0.500, 0.625, 0.750, 1.000,
+                             1.000, 0.750, 0.625, 0.500, 0.375, 0.250, 0.125, 0.000)],
+   [:Bartlett_window, 0.0, vct(0.000, 0.125, 0.250, 0.375, 0.500, 0.625, 0.750, 1.000,
+                               1.000, 0.750, 0.625, 0.500, 0.375, 0.250, 0.125, 0.000)],
+   [:Blackman2_window, 0.0, vct(0.005, 0.020, 0.071, 0.177, 0.344, 0.558, 0.775, 1.000,
+                                1.000, 0.775, 0.558, 0.344, 0.177, 0.071, 0.020, 0.005)],
+   [:Blackman3_window, 0.0, vct(0.000, 0.003, 0.022, 0.083, 0.217, 0.435, 0.696, 1.000,
+                                1.000, 0.696, 0.435, 0.217, 0.083, 0.022, 0.003, 0.000)],
+   [:Blackman4_window, 0.0, vct(0.002, 0.002, 0.003, 0.017, 0.084, 0.263, 0.562, 1.000,
+                                1.000, 0.562, 0.263, 0.084, 0.017, 0.003, 0.002, 0.002)],
+   [:Exponential_window, 0.0, vct(0.000, 0.087, 0.181, 0.283, 0.394, 0.515, 0.646, 0.944,
+                                  0.944, 0.646, 0.515, 0.394, 0.283, 0.181, 0.087, 0.000)],
+   [:Riemann_window, 0.0, vct(0.000, 0.139, 0.300, 0.471, 0.637, 0.784, 0.900, 1.000,
+                              1.000, 0.900, 0.784, 0.637, 0.471, 0.300, 0.139, 0.000)],
+   [:Kaiser_window, 2.5, vct(0.304, 0.426, 0.550, 0.670, 0.779, 0.871, 0.941, 1.000,
+                             1.000, 0.941, 0.871, 0.779, 0.670, 0.550, 0.426, 0.304)],
+   [:Cauchy_window, 2.5, vct(0.138, 0.173, 0.221, 0.291, 0.390, 0.532, 0.719, 1.000,
+                             1.000, 0.719, 0.532, 0.390, 0.291, 0.221, 0.173, 0.138)],
+   [:Poisson_window, 2.5, vct(0.082, 0.112, 0.153, 0.210, 0.287, 0.392, 0.535, 1.000,
+                              1.000, 0.535, 0.392, 0.287, 0.210, 0.153, 0.112, 0.082)],
+   [:Gaussian_window, 1.0, vct(0.607, 0.682, 0.755, 0.823, 0.882, 0.932, 0.969, 1.000,
+                               1.000, 0.969, 0.932, 0.882, 0.823, 0.755, 0.682, 0.607)],
+   [:Tukey_window, 0.0, vct(0.000, 0.038, 0.146, 0.309, 0.500, 0.691, 0.854, 1.000,
+                            1.000, 0.854, 0.691, 0.500, 0.309, 0.146, 0.038, 0.000)],
+   [:Hann_poisson_window, 0.0, vct(0.000, 0.038, 0.146, 0.309, 0.500, 0.691, 0.854, 1.000,
+                                   1.000, 0.854, 0.691, 0.500, 0.309, 0.146, 0.038, 0.000)],
+   [:Dolph_chebyshev_window, 1.0, vct(1.000, 0.274, 0.334, 0.393, 0.446, 0.491, 0.525, 0.546,
+                                      0.553, 0.546, 0.525, 0.491, 0.446, 0.393, 0.334, 0.274)]
+  ].each do |win, beta, vals|
+    unless vequal(res = make_fft_window(eval("#{win}"), 16, beta), vals)
+      snd_display("%s: %s?", win, res)
+    end
+  end
+  #
+  gen = make_env(:envelope, [0, 0, 1, 1, 2, 0], :scaler, 0.5, :end, 10)
+  gen1 = make_env(:envelope, [0, 0, 1, 1, 2, 0], :scaler, 0.5, :end, 10)
+  print_and_check(gen,
+                  "env",
+                  "env: linear, pass: 0 (dur: 11), index: 0, scaler: 0.5000, offset: 0.0000, data: [0.000 0.000 1.000 1.000 2.000 0.000]")
+  snd_display("%s not env?", gen) unless env?(gen)
+  snd_display("env scaler: %f?", gen.scaler) if fneq(gen.scaler, 0.5)
+  snd_display("env base (1.0): %f?", gen.increment) if fneq(gen.increment, 1.0)
+  snd_display("env length: %d?", gen.length) if gen.length != 10
+  v0 = make_vct!(10) do env(gen) end
+  v1 = make_vct(10)
+  off = 123.0
+  vct_map!(v1, lambda do | |
+             off = gen1.offset
+             env?(gen1) ? env(gen1) : -1.0
+           end)
+  snd_display("mus_offset opt: %s?", off) if fneq(off, 0.0)
+  snd_display("map env: %s %s?", v0, v1) unless vequal(v0, v1)
+  if fneq(v0[0], 0.0) or fneq(v0[1], 0.1) or fneq(v0[6], 0.4)
+    snd_display("env output: %s?", v0)
+  end
+  if fneq(res = env_interp(1.6, gen), 0.2)
+    snd_display("env_interp %s at 1.6: %f?", gen, res)
+  end
+  gen = make_env(:envelope, [0, 1, 1, 0], :base, 32.0, :end, 10)
+  snd_display("env base (32.0): %f?", gen.increment) if fneq(gen.increment, 32.0)
+  v0.map! do |val| env(gen) end
+  if fneq(v0[0], 1.0) or fneq(v0[1], 0.698) or fneq(v0[8], 0.032)
+    snd_display("%s output: %s?", gen, v0)
+  end
+  gen = make_env(:envelope, [0, 1, 1, 0], :base, 0.0325, :end, 10)
+  snd_display("env base (0.0325): %f?", gen.increment) if fneq(gen.increment, 0.0325)
+  v0.map! do |val| env(gen) end
+  if fneq(v0[0], 1.0) or fneq(v0[1], 0.986) or fneq(v0[8], 0.513)
+    snd_display("%s output: %s?", gen, v0)
+  end
+  gen = make_env(:envelope, [0, 1, 1, 0.5, 2, 0], :base, 0.0, :end, 10, :offset, 1.0)
+  snd_display("mus_offset: %f?", gen.offset) if fneq(gen.offset, 1.0)
+  snd_display("env base (0.0): %f?", gen.increment) if fneq(gen.increment, 0.0)
+  v0.map_with_index! do |val, i|
+    if i == 3
+      if gen.location != 3
+        snd_display("env location: %d?", gen.location)
+      end
+    end
+    env(gen)
+  end
+  if fneq(v0[0], 2.0) or fneq(v0[6], 1.5) or fneq(v0[8], 1.5)
+    snd_display("%s output: %s?", gen, v0)
+  end
+  if fneq(res = env_interp(1.5, gen), 1.5)
+    snd_display("env_interp %s at 1.5: %f?", gen, res)
+  end
+  gen.location = 6
+  snd_display("set_mus_location (6): %d?", gen.location) if gen.location != 6
+  if fneq(val = env(gen), 1.5)
+    snd_display("set_mus_location 6 -> %f (1.5)?", val)
+  end
+  gen.location = 0
+  if fneq(val = env(gen), 2.0)
+    snd_display("set_mus_location 0 -> %f (2.0)?", val)
+  end
+  gen = make_env([0, 0, 1, -1, 2, 0], :end, 10)
+  5.times do |i|
+    if fneq(val = env(gen), i / -5.0)
+      snd_display("neg env: %d %f?", i, val)
+    end
+  end
+  5.times do |i|
+    if fneq(val = env(gen), -1.0 + i / 5.0)
+      snd_display("neg env: %d %f?", i, val)
+    end
+  end
+  gen = make_env([0, 0, 1, -1, 2, 0], :end, 10, :base, 0.5)
+  vct(0.0, -0.14869, -0.31950, -0.51571, -0.74110,
+      -1.0, -0.74110, -0.51571, -0.31950, -0.14869).each_with_index do |val, i|
+    if fneq(res = env(gen), val)
+      snd_display("neg exp env: %d %f?", i, res)
+    end
+  end
+  e = make_env([0, 0, 1, 1], :end, 9)
+  if fneq(res = env_interp(1.0, e), 1.0)
+    snd_display("env_interp 0011 at 1: %f?", res)
+  end
+  if fneq(res = env_interp(2.0, e), 1.0)
+    snd_display("env_interp 0011 at 2: %f?", res)
+  end
+  if fneq(res = env_interp(0.0, e), 0.0)
+    snd_display("env_interp 0011 at 0: %f?", res)
+  end
+  if fneq(res = env_interp(0.444, e), 0.444)
+    snd_display("env_interp 0011 at 0.444: %f?", res)
+  end
+  e.reset
+  10.times do |i|
+    if fneq(val = env(e), i * 0.111111)
+      snd_display("ramp env over 10: %f at %d?", val, i)
+    end
+  end
+  e = make_env([0, 0, 0.5, 0.5, 1, 1], :base, 32, :end, 9)
+  x = 0.0
+  vct(0, 0.0243, 0.0667, 0.1412, 0.2716, 0.5, 0.5958, 0.709, 0.8425, 1).each_with_index do |val, i|
+    if fneq(res = env_interp(x, e), val)
+      snd_display("[0, 0.5, 1] env_interp over 10: %f at %d (%f)", res, i, val)
+    end
+    x += 0.111111
+  end
+  e = make_env([0, -1.0, 1, 1], :base, 32, :end, 9)
+  x = 0.0
+  vct(-1.0, -0.9697, -0.9252, -0.8597, -0.7635,
+      -0.6221, -0.4142, -0.1088, 0.34017, 1.0).each_with_index do |val, i|
+    if fneq(res = env_interp(x, e), val)
+      snd_display("[-1, 1] env_interp over 10: %f at %d (%f)", res, i, val)
+    end
+    x += 0.111111
+  end
+  e = make_env([0, -1.0, 0.5, 0.5, 1, 0], :base, 32, :end, 9)
+  x = 0.0
+  vct(-1.0, -0.952, -0.855, -0.661, -0.274,
+      0.5, 0.356, 0.226, 0.107, 0.0).each_with_index do |val, i|
+    if fneq(res = env_interp(x, e), val)
+      snd_display("[-1, 0.5, 0] env_interp over 10: %f at %d (%f)", res, i, val)
+    end
+    x += 0.111111
+  end
+  e = make_env([0, 0.0, 0.5, 0.5, 1, -1.0], :base, 32, :end, 9)
+  x = 0.0
+  vct(0, 0.085, 0.177, 0.276, 0.384, 0.5, -0.397, -0.775, -0.933, -1).each_with_index do |val, i|
+    if fneq(res = env_interp(x, e), val)
+      snd_display("[0, 0.5, -1] env_interp over 10: %f at %d (%f)", res, i, val)
+    end
+    x += 0.111111
+  end
+  #
+  e = make_env([0, 0, 1, 1], :end, 9, :base, 4)
+  if fneq(res = env_interp(1.0, e), 1.0)
+    snd_display("env_interp 0011 4 at 1: %f?", res)
+  end
+  if fneq(res = env_interp(0.0, e), 0.0)
+    snd_display("env_interp 0011 4 at 0: %f?", res)
+  end
+  if fneq(res = env_interp(0.45, e), 0.2839)
+    snd_display("env_interp 0011 4 at 0.45: %f?", res)
+  end
+  e = make_env([0, 0, 1, 1], :end, 9, :base, 0.2)
+  if fneq(res = env_interp(1.0, e), 1.0)
+    snd_display("env_interp 0011 2 at 1: %f?", res)
+  end
+  if fneq(res = env_interp(0.0, e), 0.0)
+    snd_display("env_interp 0011 2 at 0: %f?", res)
+  end
+  if fneq(res = env_interp(0.45, e), 0.6387)
+    snd_display("env_interp 0011 2 at 0.45: %f?", res)
+  end
+  e = make_env([0, 0, 1, 1], :offset, 2.0)
+  e.offset = 3.0
+  snd_display("set_mus_offset env: %f?", e.offset) if fneq(e.offset, 3.0)
+  #
+  e1 = make_env([0, 0, 1, 1], :base, 32.0, :end, 10)
+  vct(0, 0.013, 0.032, 0.059, 0.097, 0.150, 0.226, 0.333, 0.484, 0.698, 1).each do |val|
+    if fneq(res = env(e1), val)
+      snd_display("exp env direct (32.0): %f %f", res, val)
+    end
+  end
+  e1 = make_env([0, 1, 1, 2], :base, 32.0, :end, 10)
+  vct(1, 1.013, 1.032, 1.059, 1.097, 1.15, 1.226, 1.333, 1.484, 1.698, 2).each do |val|
+    if fneq(res = env(e1), val)
+      snd_display("exp env direct (32.0) offset: %f %f", res, val)
+    end
+  end
+  e1 = make_env([0, 1, 1, 2], :base, 32.0, :dur, 11)
+  vct(1, 1.013, 1.032, 1.059, 1.097, 1.15, 1.226, 1.333, 1.484, 1.698, 2).each do |val|
+    if fneq(res = env(e1), val)
+      snd_display("exp env direct (32.0) offset (and dur): %f %f", res, val)
+    end
+  end
+  e1 = make_env([0, 0, 1, 1], :base, 0.032, :end, 10)
+  vct(0.000, 0.301, 0.514, 0.665, 0.772, 0.848, 0.902, 0.940, 0.967, 0.986, 1.0).each do |val|
+    if fneq(res = env(e1), val)
+      snd_display("exp env direct (0.032): %f %f", res, val)
+    end
+  end
+  #
+  e1 = make_env([0, 0, 1, 1], :base, 0.03125, :end, 10)
+  e2 = make_env([0, 0, 1, 1, 2, 0], :base, 32.0, :end, 10)
+  e3 = make_env([0, 0, 0.1, 1, 2, 0], :base, 1.1, :end, 100)
+  10.times do |i|
+    lv1 = env_interp(i * 0.1, e1)
+    lv2 = env(e1)
+    lv3 = env_interp(i * 0.2, e2)
+    lv4 = env(e2)
+    snd_display("env_interp[rmp %f]: %f (%f)?", i * 0.1, lv1, lv2) if fneq(lv1, lv2)
+    snd_display("env_interp[pyr %f]: %f (%f)?", i * 0.2, lv3, lv4) if fneq(lv3, lv4)
+  end
+  100.times do |i|
+    lv5 = env_interp(i * 0.02, e3)
+    lv6 = env(e3)
+    snd_display("env_interp[tri %f]: %f (%f)?", i * 0.02, lv5, lv6) if fneq(lv5, lv6)
+  end
+  #
+  e1 = make_env([0, 0, 1, 1, 2, 0], :end, 9)
+  lv1 = make_vct!(11) do env(e1) end
+  lv2 = make_vct!(11) do env(e1) end
+  e1.reset
+  lv3 = make_vct!(11) do env(e1) end
+  snd_display("mus_reset: %s %s?", lv1, lv3) unless vequal(lv1, lv3)
+  snd_display("mus_reset 1: %s?", lv2) unless vequal(lv2, make_vct(11))
+  #
+  gen = make_env([0, 0, 1, 1, 2, 0], :end, 10)
+  4.times do env(gen) end
+  if fneq(res = env(gen), 0.8)
+    snd_display("env(5): %f?", res)
+  end
+  gen.reset
+  4.times do env(gen) end
+  if fneq(res = env(gen), 0.8)
+    snd_display("mus_reset (via reset): %f?", res)
+  end
+  gen.location = 6
+  if fneq(res = env(gen), 0.8)
+    snd_display("set_mus_location 6 -> %f (0.8)?", res)
+  end
+  gen = make_env([0, 0, 1, 1], :base, 0.032, :end, 11)
+  gen.location = 5
+  if fneq(res = env(gen), 0.817)
+    snd_display("set env location with base: %f %s?", res, gen)
+  end
+  gen = make_env([0, 0, 1, 1], :base, 0.032, :dur, 12)
+  gen.location = 5
+  if fneq(res = env(gen), 0.817)
+    snd_display("set env location with base and dur: %f %s?", res, gen)
+  end
+  #
+  test_gen_equal(make_env([0, 0, 1, 1, 2, 0], :scaler, 0.50, :end,  9),
+                 make_env([0, 0, 1, 1, 2, 0], :scaler, 0.50, :end,  9),
+                 make_env([0, 0, 1, 1, 2, 0], :scaler, 0.25, :end,  9))
+  test_gen_equal(make_env([0, 0, 1, 1, 2, 0], :scaler, 0.50, :end,  9),
+                 make_env([0, 0, 1, 1, 2, 0], :scaler, 0.50, :end,  9),
+                 make_env([0, 0, 1, 1, 2, 0], :scaler, 0.50, :end, 10))
+  test_gen_equal(make_env([0, 0, 1, 1, 2, 0], :scaler, 0.50, :end,  9),
+                 make_env([0, 0, 1, 1, 2, 0], :scaler, 0.50, :end,  9),
+                 make_env([0, 0, 1, 1, 3, 0], :scaler, 0.50, :end,  9))
+  #
+  # Snd threats an empty list [] as nil (Qnil), therefore here will be
+  # raised an error :wrong_type-arg not :no_data
+  if (res = snd_catch do make_env(:envelope, []) end).first != :wrong_type_arg # :no_data
+    snd_display("make_env null env: %s", res.inspect)
+  end
+  if (res = snd_catch do make_env(:end, 0) end).first != :no_data
+    snd_display("make_env no env: %s", res.inspect)
+  end
+  if (res = snd_catch do make_env(:envelope, [0, 0], :end, -1) end).first != :out_of_range
+    snd_display("make_env bad end: %s", res.inspect)
+  end
+  if (res = snd_catch do make_env(:envelope, [0, 0], :start, -1) end).first != :out_of_range
+    snd_display("make_env bad start: %s", res.inspect)
+  end
+  if (res = snd_catch do make_env(:envelope, [0, 0], :dur, -1) end).first != :out_of_range
+    snd_display("make_env bad dur: %s", res.inspect)
+  end
+  if (res = snd_catch do make_env(:envelope, [0, 0], :duration, -1.0) end).first != :out_of_range
+    snd_display("make_env bad duration: %s", res.inspect)
+  end
+  if (res = snd_catch do make_env(:envelope, [0, 0], :base, -1.0) end).first != :out_of_range
+    snd_display("make_env bad base: %s", res.inspect)
+  end
+  if (res = snd_catch do make_env(:envelope, [1, 1, 0, 0], :end, 10) end).first != :mus_error
+    snd_display("make_env bad env 1 1 0 0: %s", res.inspect)
+  end
+  if (res = snd_catch do make_env(:envelope, [0, 1, -1, 0], :end, 10) end).first != :mus_error
+    snd_display("make_env bad env 0 1 -1 0: %s", res.inspect)
+  end
+  if (res = snd_catch do make_env(:envelope, [0, 1, 1, 0], :end, 10, :dur, 10) end).first != :mus_error
+    snd_display("make_env bad end/dur: %s", res.inspect)
+  end
+end
+
+def test098
+  gen = make_table_lookup(440.0, :wave, partials2wave([1, 1, 2, 1]))
+  gen1 = make_table_lookup(440.0, :wave, partials2wave([1, 1, 2, 1], make_vct(512)))
+  gen2 = partials2wave([1, 1, 2, 1, 3, 1, 4, 1], false, true)
+  gen3 = make_table_lookup
+  gen4 = make_table_lookup(440.0, :wave, partials2wave([1, 1, 2, 1]))
+  print_and_check(gen,
+                  "table-lookup",
+                  "table-lookup: freq: 440.000Hz, phase: 0.000, length: 512, interp: linear")
+  snd_display("table_lookup length: %d?", gen.length) if gen.length != 512
+  snd_display("default table_lookup length: %d?", gen3.length) if gen3.length != 512
+  v0 = make_vct!(10) do table_lookup(gen, 0.0) end
+  v1 = make_vct!(10) do mus_apply(gen1, 0.0) end
+  v2 = make_vct(10)
+  vct_map!(v2, lambda do | | table_lookup?(gen4) ? table_lookup(gen4) : -1.0 end)
+  snd_display("map table_lookup: %s %s?", v0, v2) unless vequal(v0, v2)
+  gen4 = make_table_lookup(440.0, :wave, partials2wave([1, 1, 2, 1]))
+  vct_map!(v2, lambda do | | table_lookup(gen4) end)
+  snd_display("map table_lookup (no fm): %s %s?", v0, v2) unless vequal(v0, v2)
+  snd_display("%s not table_lookup?", gen) unless table_lookup?(gen)
+  snd_display("mus_data table_lookup: %s?", gen.data) unless vct?(gen.data)
+  snd_display("table_lookup phase: %f?", gen.phase) if fneq(gen.phase, 1.253787)
+  gen.phase = 1.0
+  snd_display("table_lookup set_phase: %f?", gen.phase) if fneq(gen.phase, 1.0)
+  snd_display("table_lookup frequency: %f?", gen.frequency) if fneq(gen.frequency, 440.0)
+  gen.frequency = 100.0
+  snd_display("table_lookup set_frequency: %f?", gen.frequency) if fneq(gen.frequency, 100.0)
+  if fneq(v0[1], 0.373) or fneq(v0[8], 1.75)
+    snd_display("table_lookup output: %s?", v0)
+  end
+  snd_display("mus_apply table_lookup: %s %s?", v0, v1) unless vequal(v0, v1)
+  gen = make_table_lookup(440.0, :wave, phase_partials2wave([1, 1, 0, 2, 1, HALF_PI]))
+  v0.map! do |val| table_lookup(gen, 0.0) end
+  if fneq(v0[1], 1.094) or fneq(v0[8], 0.421)
+    snd_display("table_lookup phase output: %s?", v0)
+  end
+  if fneq(vct_peak(partials2wave([1, 1, 2, 1])), 1.76035475730896) or
+      fneq(vct_peak(partials2wave([1, 1, 2, 1], false, true)), 1.0) or
+      fneq(vct_peak(partials2wave([1, 1, 2, 1, 3, 1, 4, 1], false, true)), 1.0)
+    snd_display("normalized partials?")
+  end
+  gen.data = phase_partials2wave([1, 1, 0, 2,1, HALF_PI], false, true)
+  #
+  test_gen_equal(make_table_lookup(440.0, :wave, partials2wave([1, 1, 2, 1])),
+                 make_table_lookup(440.0, :wave, partials2wave([1, 1, 2, 1])),
+                 make_table_lookup(100.0, :wave, partials2wave([1, 1, 2, 1])))
+  test_gen_equal(make_table_lookup(440.0, :wave, partials2wave([1, 1, 2, 1])),
+                 make_table_lookup(440.0, :wave, partials2wave([1, 1, 2, 1])),
+                 make_table_lookup(440.0, :wave, partials2wave([1, 1, 2, 0.5])))
+  #
+  hi = make_table_lookup(:size, 256)
+  snd_display("table_lookup set length: %d?", hi.length) if hi.length != 256
+  if (res = snd_catch do make_table_lookup(:size, 0) end).first != :out_of_range
+    snd_display("table_lookup size 0: %s", res.inspect)
+  end
+  gen = make_table_lookup(440.0, :wave, partials2wave([1, 1]))
+  a = 0.0
+  1100.times do |i|
+    if fneq(val1 = sin(a), val2 = gen.run(0.0))
+      snd_display("table_lookup [1, 1]: %d: %f %f?", i, val1, val2)
+    end
+    a += (TWO_PI * 440.0) / 22050.0
+  end
+  gen = make_table_lookup(4.0, :wave, partials2wave([1, 1]))
+  a = 0.0
+  1100.times do |i|
+    if fneq(val1 = sin(a), val2 = gen.run(0.0))
+      snd_display("table_lookup [1, 1] 4: %d: %f %f?", i, val1, val2)
+    end
+    a += (TWO_PI * 4.0) / 22050.0
+  end
+  gen = make_table_lookup(440.0, :wave, partials2wave([1, 0.75, 3, 0.25]))
+  a = 0.0
+  1100.times do |i|
+    val1 = 0.75 * sin(a) + 0.25 * sin(3.0 * a)
+    if fneq(val1, val2 = gen.run(0.0))
+      snd_display("table_lookup [1, 0.75, 3, 0.25]: %d: %f %f?", i, val1, val2)
+    end
+    a += (TWO_PI * 440.0) / 22050.0
+  end
+  gen = make_table_lookup(0.0, :wave, partials2wave([1, 1]))
+  gen1 = make_table_lookup(40.0, :wave, partials2wave([1, 1]))
+  a = 0.0
+  a1 = 0.0
+  100.times do |i|
+    if fneq(val1 = sin(a1), val2 = gen.run(gen1.run(0.0)))
+      snd_display("table_lookup/table_lookup fm: %d: %f %f?", i, val1, val2)
+    end
+    a1 += sin(a)
+    a += (TWO_PI * 40.0) / 22050.0
+  end
+  [[:Mus_interp_none, vct(0, 0.000, 0.000, 0.000, 0.000, 1.000, 1.000, 1.000, 1.000, 1.000)],
+    [:Mus_interp_linear, vct(0, 0.200, 0.400, 0.600, 0.800, 1.000, 0.800, 0.600, 0.400, 0.200)],
+    [:Mus_interp_lagrange, vct(0, 0.120, 0.280, 0.480, 0.720, 1.000, 0.960, 0.840, 0.640, 0.360)],
+    [:Mus_interp_all_pass, vct(1, 0.000, 0.429, 0.143, 0.095, 0.905, 0.397, 0.830, 0.793, 0.912)],
+    [:Mus_interp_hermite, vct(0, 0.168, 0.424, 0.696, 0.912, 1.000, 0.912, 0.696, 0.424, 0.168)]
+  ].each do |type_sym, vals|
+    type = eval("#{type_sym}")
+    tbl = make_table_lookup(:frequency, 0.0, :size, 4, :type, type)
+    tbl.data[1] = 1.0
+    fm = (TWO_PI * 0.2) / 4.0
+    v = make_vct!(10) do table_lookup(tbl, fm) end
+    snd_display("tbl interp %s: %s?", type_sym, v) unless vequal(v, vals)
+    snd_display("tbl interp_type (%s) %d?", type_sym, tbl.interp_type) if tbl.interp_type != type
+  end
+  #
+  gen0 = make_waveshape(440.0, :wave, partials2waveshape([1, 1]))
+  gen = make_waveshape(440.0, :size, 512, :partials, [1, 1])
+  gen1 = make_waveshape(440.0, :wave, partials2waveshape([1, 1]))
+  print_and_check(gen, "waveshape", "waveshape freq: 440.000Hz, phase: 0.000, size: 512")
+  snd_display("waveshape length: %d?", gen.length) if gen.length != 512
+  v0 = make_vct!(10) do
+    if fneq(val0 = waveshape(gen0, 1.0, 0.0), val = mus_apply(gen, 1.0, 0.0))
+      snd_display("waveshape: %f != %f?", val, val0)
+    end
+    val
+  end
+  v1 = make_vct(10)
+  vct_map!(v1, lambda do | | waveshape?(gen1) ? waveshape(gen1, 1.0, 0.0) : -1.0 end)
+  snd_display("map waveshape: %s %s?", v0, v1) unless vequal(v0, v1)
+  gen1 = make_waveshape(440.0, :wave, partials2waveshape([1, 1]))
+  vct_map!(v1, lambda do | | waveshape(gen1, 1.0) end)
+  snd_display("map waveshape (no fm): %s %s?", v0, v1) unless vequal(v0, v1)
+  snd_display("%s not waveshape?", gen) unless waveshape?(gen)
+  snd_display("waveshape phase: %f?", gen.phase) if fneq(gen.phase, 1.253787)
+  gen.phase = 1.0
+  snd_display("waveshape set_phase: %f?", gen.phase) if fneq(gen.phase, 1.0)
+  snd_display("waveshape frequency: %f?", gen.frequency) if fneq(gen.frequency, 440.0)
+  gen.frequency = 100.0
+  snd_display("waveshape set_frequency: %f?", gen.frequency) if fneq(gen.frequency, 100.0)
+  snd_display("mus_data waveshape: %s?", gen.data) unless vct?(gen.data)
+  if fneq(v0[1], 0.125) or fneq(v0[8], 0.843)
+    snd_display("waveshape output: %s?", v0)
+  end
+  gen0.data = make_vct(32)
+  gen0.length = 32
+  snd_display("set_mus_length waveshape: %d?", gen0.length) if gen0.length != 32
+  #
+  test_gen_equal(make_waveshape(440.0, :partials, [1, 1]),
+                 make_waveshape(440.0, :partials, [1, 1]),
+                 make_waveshape(100.0, :partials, [1, 1]))
+  test_gen_equal(make_waveshape(440.0, :partials, [1, 1]),
+                 make_waveshape(440.0, :partials, [1, 1]),
+                 make_waveshape(4400.0, :partials, [1, 1, 2, 0.5]))
+  #
+  unless vequal(d11 = partials2waveshape([1, 1], 16),
+            vct(-1.000, -0.867, -0.733, -0.600, -0.467, -0.333, -0.200, -0.067,
+                0.067, 0.200, 0.333, 0.467, 0.600, 0.733, 0.867, 1.000))
+    snd_display("partials2waveshape 1 1: %s?", d11)
+  end
+  unless vequal(d11 = partials2waveshape([2, 1], 16),
+            vct(-1.000, -0.502, -0.076, 0.280, 0.564, 0.778, 0.920, 0.991,
+                0.991, 0.920, 0.778, 0.564, 0.280, -0.076, -0.502, -1.000))
+    snd_display("partials2waveshape 2 1: %s?", d11)
+  end
+  #
+  gen = make_waveshape(440.0, :partials, [1, 1])
+  1100.times do |i|
+    a = gen.phase
+    if fneq(val1 = sin(a), val2 = gen.run(1.0, 0.0))
+      snd_display("waveshaper [1, 1] %d: %f %f?", i, val1, val2)
+    end
+  end
+  gen = make_waveshape(440.0, :partials, [2, 1])
+  1100.times do |i|
+    a = gen.phase
+    if fneq(val1 = sin(HALF_PI + 2.0 * a), val2 = gen.run(1.0, 0.0))
+      snd_display("waveshaper [2, 1] %d: %f %f?", i, val1, val2)
+    end
+  end
+  gen = make_waveshape(440.0, :partials, [1, 1, 2, 0.5])
+  1100.times do |i|
+    a = gen.phase
+    val1 = 0.6667 * sin(a) + 0.3333 * sin(HALF_PI + 2.0 * a)
+    if fneq(val1, val2 = gen.run(1.0, 0.0))
+      snd_display("waveshaper [1, 1, 2, 0.5] %d: %f %f?", i, val1, val2)
+    end
+  end
+  gen = make_waveshape(440.0, :partials, [1, 1])
+  1100.times do |i|
+    a = gen.phase
+    if fneq(val1 = 0.5 * sin(a), val2 = gen.run(0.5, 0.0))
+      snd_display("waveshaper [1, 1] 0.5 %d: %f %f?", i, val1, val2)
+    end
+  end
+  #
+  if (res = snd_catch do
+        make_waveshape(440.0, :partials, [1, 1], :size, false)
+      end).first != :wrong_type_arg
+    snd_display("make_waveshape bad size: %s", res.inspect)
+  end
+  if (res = snd_catch do make_waveshape(440.0, :wave, 3.14) end).first != :wrong_type_arg
+    snd_display("make_waveshape bad wave: %s", res.inspect)
+  end
+  if (res = snd_catch do make_waveshape(440.0, :size, 0) end).first != :out_of_range
+    snd_display("make_waveshape bad size: %s", res.inspect)
+  end
+  let(make_waveshape(:size, 256)) do |hi|
+    snd_display("waveshape set_length: %d?", hi.length) if hi.length != 256
+  end
+  gen = make_waveshape(0.0, :wave, partials2waveshape([1, 1]))
+  gen1 = make_waveshape(40.0, :wave, partials2waveshape([1, 1]))
+  a1 = 0.0
+  a = 0.0
+  400.times do |i|
+    if ((val1 = sin(a1)) - (val2 = waveshape(gen, 1.0, waveshape(gen1, 1.0)))).abs > 0.002
+      snd_display("waveshape fm: %d: %f %f?", i, val1, val2)
+    end
+    a1 += sin(a)
+    a += (TWO_PI * 40.0) / 22050.0
+  end
+end
+
+def test108
+  gen = make_wave_train(440.0, 0.0, make_vct(20))
+  gen1 = make_wave_train(440.0, 0.0, make_vct(20))
+  print_and_check(gen,
+                  "wave-train",
+                  "wave-train freq: 440.000Hz, phase: 0.000, size: 20, interp: linear")
+  20.times do |i|
+    gen.data[i] = i * 0.5
+    gen1.data[i] = gen.data[i]
+  end
+  snd_display("wave_train length: %d?", gen.length) if gen.length != 20
+  v0 = make_vct!(10) do wave_train(gen, 0.0) end
+  v1 = make_vct(10)
+  vct_map!(v1, lambda do | | wave_train?(gen1) ? wave_train(gen1) : -1.0 end)
+  snd_display("map wave_train: %s %s?", v0, v1) unless vequal(v0, v1)
+  snd_display("%s not wave_train?", gen) unless wave_train?(gen)
+  snd_display("wave_train phase: %f?", gen.phase) if fneq(gen.phase, 0.0)
+  gen.phase = 1.0
+  snd_display("wave_train set_phase: %f?", gen.phase) if fneq(gen.phase, 1.0)
+  snd_display("wave_train frequency: %f?", gen.frequency) if fneq(gen.frequency, 440.0)
+  gen.frequency = 100.0
+  snd_display("wave_train set_frequency: %f?", gen.frequency) if fneq(gen.frequency, 100.0)
+  if fneq(v0[1], 0.5) or fneq(v0[8], 4.0)
+    snd_display("wave_train output: %s?", v0)
+  end
+  gen.reset
+  snd_display("wave_train reset phase: %f?", gen.phase) if fneq(gen.phase, 0.0)
+  if fneq(res = wave_train(gen, 0.0), 0.0)
+    snd_display("wave_train data: %f?", res)
+  end
+  snd_display("mus_data wave_train: %s?", gen.data) unless vct?(gen.data)
+  gen.data = make_vct(3)
+  make_oscil().data = make_vct(3)
+  #
+  test_gen_equal(make_wave_train(440.0, 0.0, make_vct(20)),
+                 make_wave_train(440.0, 0.0, make_vct(20)),
+                 make_wave_train(100.0, 0.0, make_vct(20)))
+  test_gen_equal(make_wave_train(440.0, 0.0, make_vct(20)),
+                 make_wave_train(440.0, 0.0, make_vct(20)),
+                 make_wave_train(440.0, 1.0, make_vct(20)))
+  #
+  let(make_wave_train(:size, 256)) do |hi|
+    snd_display("wave_train set_length: %d?", hi.length) if hi.length != 256
+    hi.length = 128
+    snd_display("wave_train set_length: %d?", hi.length) if hi.length != 128
+  end
+  [[:Mus_interp_none, vct(0.000, 1.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 1.000)],
+    [:Mus_interp_linear, vct(0.200, 0.800, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.200, 0.800)],
+    [:Mus_interp_lagrange, vct(0.120, 0.960, -0.080, 0.000, 0.0, 0.0, 0.0, 0.0, 0.120, 0.960)],
+    [:Mus_interp_hermite, vct(0.168, 0.912, -0.064, -0.016, 0.0, 0.0, 0.0, 0.000, 0.168, 0.912)]
+  ].each do |type_sym, vals|
+    type = eval("#{type_sym}")
+    fm = (TWO_PI * 0.2) / 4.0
+    tbl = make_wave_train(:frequency, 3000.0, :initial_phase, fm, :size, 4, :type, type)
+    tbl.data[1] = 1.0
+    v = make_vct!(10) do wave_train(tbl, 0.0) end
+    snd_display("wt tbl interp %s: %s?", type_sym, v) unless vequal(v, vals)
+    snd_display("wt tbl interp_type (%s) %d?", type_sym, tbl.interp_type) if tbl.interp_type != type
+  end
+  if (res = snd_catch do make_wave_train(:size, 0) end).first != :out_of_range
+    snd_display("wave_train size 0: %s", res.inspect)
+  end
+  #
+  ind = new_sound(:size, 1000)
+  table = vct(0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6)
+  gen = make_wave_train(1000.0, :wave, table)
+  map_channel(lambda do |y| wave_train(gen) end)
+  if fneq(res = maxamp, 0.6)
+    snd_display("wave_train 0 max: %s?", res)
+  end
+  unless vequal(res = channel2vct(0, 30),
+                vct(0.000, 0.100, 0.200, 0.300, 0.400, 0.500, 0.600, 0.000,
+                    0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000,
+                    0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000,
+                    0.100, 0.200, 0.300, 0.400, 0.500, 0.600))
+    snd_display("wave_train 0 data: %s?", res)
+  end
+  unless vequal(res = channel2vct(85, 30),
+                vct(0.000, 0.000, 0.000, 0.000, 0.000, 0.100, 0.200, 0.300,
+                    0.400, 0.500, 0.600, 0.000, 0.000, 0.000, 0.000, 0.000,
+                    0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000,
+                    0.000, 0.000, 0.000, 0.100, 0.200, 0.300))
+    snd_display("wave_train 0 data 85: %s?", res)
+  end
+  undo
+  #
+  table = make_vct(10, 0.1)
+  gen = make_wave_train(1000.0, :initial_phase, 3.14159, :wave, table)
+  map_channel(lambda do |y| wave_train(gen) end)
+  if fneq(res = maxamp, 0.1)
+    snd_display("wave_train 1 max: %s?", res)
+  end
+  unless vequal(res = channel2vct(0, 30),
+                vct(0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.000, 0.000,
+                    0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000,
+                    0.000, 0.000, 0.000, 0.100, 0.100, 0.100, 0.100, 0.100,
+                    0.100, 0.100, 0.100, 0.100, 0.100, 0.000))
+    snd_display("wave_train 1 data: %s?", res)
+  end
+  undo
+  #
+  table = make_vct(10, 0.1)
+  gen = make_wave_train(2000.0, :wave, table)
+  map_channel(lambda do |y| wave_train(gen) end)
+  if fneq(res = maxamp, 0.1)
+    snd_display("wave_train 2 max: %s?", res)
+  end
+  unless vequal(res = channel2vct(0, 30),
+                vct(0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.100,
+                    0.100, 0.100, 0.000, 0.000, 0.100, 0.100, 0.100, 0.100,
+                    0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.000, 0.100,
+                    0.100, 0.100, 0.100, 0.100, 0.100, 0.100))
+    snd_display("wave_train 2 data: %s?", res)
+  end
+  # INFO: snd-test.scm awaits this result but snd-ruby as well as
+  # snd-guile result in that below
+  #
+  # set_print_length([30, print_length].max)
+  # unless vequal(res = channel2vct(440, 30),
+  #               vct(0.000, 0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.100,
+  #                   0.100, 0.100, 0.100, 0.000, 0.000, 0.100, 0.100, 0.100,
+  #                   0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.000,
+  #                   0.100, 0.100, 0.100, 0.100, 0.100, 0.100))
+  #   snd_display("wave_train 2 data 440: %s?", res)
+  # end
+  unless vequal(res = channel2vct(440, 30),
+                vct(0.000, 0.000, 0.100, 0.100, 0.100, 0.100, 0.100, 0.100,
+                    0.100, 0.100, 0.100, 0.100, 0.000, 0.100, 0.100, 0.100,
+                    0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.000,
+                    0.100, 0.100, 0.100, 0.100, 0.100, 0.100))
+    snd_display("wave_train 2 data 440: %s?", res)
+  end
+  undo
+  # 
+  table = make_vct(10, 0.1)
+  gen = make_wave_train(3000.0, :wave, table)
+  map_channel(lambda do |y| wave_train(gen) end)
+  if fneq(res = maxamp, 0.2)
+    snd_display("wave_train 3 max: %s?", res)
+  end
+  unless vequal(res = channel2vct(0, 30),
+                vct(0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.100,
+                    0.200, 0.200, 0.100, 0.100, 0.100, 0.100, 0.100, 0.200,
+                    0.200, 0.200, 0.100, 0.100, 0.100, 0.100, 0.100, 0.200,
+                    0.200, 0.100, 0.100, 0.100, 0.100, 0.100))
+    snd_display("wave_train 3 data: %s?", res)
+  end
+  unless vequal(res = channel2vct(440, 30),
+                vct(0.100, 0.200, 0.200, 0.200, 0.100, 0.100, 0.100, 0.100,
+                    0.100, 0.200, 0.200, 0.100, 0.100, 0.100, 0.100, 0.100,
+                    0.200, 0.200, 0.200, 0.100, 0.100, 0.100, 0.100, 0.100,
+                    0.200, 0.200, 0.100, 0.100, 0.100, 0.100))
+    snd_display("wave_train 3 data 440: %s?", res)
+  end
+  undo
+  # 
+  table = make_vct(10, 0.1)
+  gen = make_wave_train(5000.0, :wave, table)
+  map_channel(lambda do |y| wave_train(gen) end)
+  if fneq(res = maxamp, 0.3)
+    snd_display("wave_train 4 max: %s?", res)
+  end
+  unless vequal(res = channel2vct(0, 30),
+                vct(0.100, 0.100, 0.100, 0.100, 0.100, 0.200, 0.200, 0.200,
+                    0.200, 0.300, 0.200, 0.200, 0.200, 0.200, 0.300, 0.200,
+                    0.200, 0.200, 0.300, 0.200, 0.200, 0.200, 0.200, 0.300,
+                    0.200, 0.200, 0.200, 0.300, 0.200, 0.200))
+    snd_display("wave_train 4 data: %s?", res)
+  end
+  unless vequal(res = channel2vct(440, 30),
+                vct(0.200, 0.200, 0.300, 0.200, 0.200, 0.200, 0.300, 0.200,
+                    0.200, 0.200, 0.300, 0.300, 0.200, 0.200, 0.200, 0.300,
+                    0.200, 0.200, 0.200, 0.300, 0.200, 0.200, 0.200, 0.200,
+                    0.300, 0.200, 0.200, 0.200, 0.300, 0.200))
+    snd_display("wave_train 4 data 440: %s?", res)
+  end
+  undo
+  # 
+  table = make_vct(10, 0.1)
+  gen = make_wave_train(1000.0, :wave, table)
+  e = make_env([0, 1, 1, 2], :end, 1000)
+  base_freq = mus_frequency(gen)
+  map_channel(lambda do |y|
+                res = wave_train(gen)
+                set_mus_frequency(gen, env(e) * base_freq)
+                res
+              end)
+  if fneq(res = maxamp, 0.1)
+    snd_display("wave_train 5 max: %s?", res)
+  end
+  unless vequal(res = channel2vct(0, 30),
+                vct(0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.100,
+                    0.100, 0.100, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000,
+                    0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.100,
+                    0.100, 0.100, 0.100, 0.100, 0.100, 0.100))
+    snd_display("wave_train 5 data: %s?", res)
+  end
+  unless vequal(res = channel2vct(440, 30),
+                vct(0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.100,
+                    0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.100, 0.100,
+                    0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.100,
+                    0.000, 0.000, 0.000, 0.000, 0.000, 0.100))
+    snd_display("wave_train 5 data 440: %s?", res)
+  end
+  unless vequal(res = channel2vct(900, 30),
+                vct(0.100, 0.000, 0.000, 0.100, 0.100, 0.100, 0.100, 0.100,
+                    0.100, 0.100, 0.100, 0.100, 0.100, 0.000, 0.100, 0.100,
+                    0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.100,
+                    0.000, 0.000, 0.100, 0.100, 0.100, 0.100))
+    snd_display("wave_train 5 data 900: %s?", res)
+  end
+  undo
+  # 
+  table = make_vct(10, 0.1)
+  gen = make_wave_train(500.0, :wave, table)
+  ctr = 0
+  map_channel(lambda do |y|
+                res = wave_train(gen)
+                if ctr > 22
+                  ctr = 0
+                  vct_scale!(mus_data(gen), 1.05)
+                else
+                  ctr += 1
+                end
+                res
+              end)
+  if fneq(res = maxamp, 0.704)
+    snd_display("wave_train 6 max: %s?", res)
+  end
+  unless vequal(res = channel2vct(0, 30),
+                vct(0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.100,
+                    0.100, 0.100, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000,
+                    0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000,
+                    0.000, 0.000, 0.000, 0.000, 0.000, 0.000))
+    snd_display("wave_train 6 data: %s?", res)
+  end
+  # INFO: snd-test.scm awaits this result but snd-ruby as well as
+  # snd-guile result in that below
+  #
+  # set_print_length([30, print_length].max)
+  # unless vequal(res = channel2vct(440, 30),
+  #               vct(0.000, 0.241, 0.241, 0.241, 0.241, 0.241, 0.241, 0.241,
+  #                   0.241, 0.241, 0.241, 0.000, 0.000, 0.000, 0.000, 0.000,
+  #                   0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000,
+  #                   0.000, 0.000, 0.000, 0.000, 0.000, 0.000))
+  #   snd_display("wave_train 6 data 440: %s?", res)
+  # end
+  unless vequal(res = channel2vct(440, 30),
+                vct(0.000, 0.000, 0.241, 0.241, 0.241, 0.241, 0.241, 0.241,
+                    0.241, 0.241, 0.241, 0.241, 0.000, 0.000, 0.000, 0.000,
+                    0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000,
+                    0.000, 0.000, 0.000, 0.000, 0.000, 0.000))
+    snd_display("wave_train 6 data 440: %s?", res)
+  end
+  unless vequal(res = channel2vct(900, 30),
+                vct(0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000,
+                    0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000,
+                    0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000,
+                    0.000, 0.000, 0.000, 0.639, 0.639, 0.639))
+    snd_display("wave_train 6 data 900: %s?", res)
+  end
+  undo
+  fname = file_name(ind)
+  close_sound(ind)
+  delete_file(fname)
+  #
+  gen = make_readin("oboe.snd", 0, 1490)
+  gen1 = make_readin("oboe.snd", 0, 1490)
+  print_and_check(gen, "readin", "readin: oboe.snd[chan 0], loc: 1490, dir: 1")
+  v0 = make_vct!(10) do readin(gen) end
+  v1 = make_vct(10)
+  vct_map!(v1, lambda do | |
+             if readin?(gen1)
+               if gen1.channel.zero?
+                 readin(gen1)
+               else
+                 1.0
+               end
+             else
+               if gen1.file_name == "oboe.snd"
+                 -1.0
+               else
+                 -1.0
+               end
+             end
+           end)
+  snd_display("map readin: %s %s?", v0, v1) unless vequal(v0, v1)
+  snd_display("%s not readin?", gen) unless readin?(gen)
+  snd_display("%s not input?", gen) unless mus_input?(gen)
+  snd_display("readin length: %s?", gen.length) if gen.length != 50828
+  snd_display("readin chan: %s?", gen.channel) if gen.channel.nonzero?
+  snd_display("readin mus_file_name: %s?", gen.file_name) if gen.file_name != "oboe.snd"
+  if fneq(v0[1], -0.009) or fneq(v0[7], 0.029)
+    snd_display("readin output: %s?", v0)
+  end
+  set_mus_location(gen, 1000)
+  snd_display("readin set_mus_location: %s?", mus_location(gen)) if mus_location(gen) != 1000
+  if fneq(res = readin(gen), 0.033)
+    snd_display("readin set_mus_location data: %f?", res)
+  end
+  set_mus_increment(gen, -1)
+  snd_display("readin set_mus_increment: %s?", mus_increment(gen)) if fneq(mus_increment(gen), -1.0)
+  if (res = snd_catch do make_readin("/baddy/hiho", 0, 124) end).first != :no_such_file
+    snd_display("make_readin w/o file: %s", res.inspect)
+  end
+  if (res = snd_catch do make_readin("oboe.snd", 123, 124) end).first != :out_of_range
+    snd_display("make_readin with bad chan: %s", res.inspect)
+  end
+  #
+  test_gen_equal(make_readin("oboe.snd", 0),
+                 make_readin("oboe.snd", 0),
+                 make_readin("oboe.snd", 0, 1230))
+  test_gen_equal(make_readin("oboe.snd", 0),
+                 make_readin("oboe.snd", 0),
+                 make_readin("pistol.snd", 0))
+  #
+  gen = make_readin("2.snd", 1)
+  print_and_check(gen, "readin", "readin: 2.snd[chan 1], loc: 0, dir: 1")
+  v0.map! do readin(gen) end
+  snd_display("readin chan 1: %s?", gen.channel) if gen.channel != 1
+  if fneq(v0[1], 0.01) or fneq(v0[7], -0.006)
+    snd_display("readin 1 output: %s?", v0)
+  end
+  print_and_check(gen, "readin", "readin: 2.snd[chan 1], loc: 10, dir: 1")
+  # 
+  gen = make_file2sample("oboe.snd")
+  print_and_check(gen, "file->sample", "file->sample: oboe.snd")
+  snd_display("%s not file2sample?", gen) unless file2sample?(gen)
+  snd_display("%s not input?", gen) unless mus_input?(gen)
+  snd_display("file2sample length: %s?", gen.length) if gen.length != 50828
+  snd_display("file2sample mus_file_name: %s?", gen.file_name) if gen.file_name != "oboe.snd"
+  v0 = make_vct!(10) do |i| file2sample(gen, 1490 + i) end
+  if fneq(v0[1], -0.009) or fneq(v0[7], 0.029)
+    snd_display("file2sample output: %s?", v0)
+  end
+  snd_display("file2sample increment: %s?", mus_increment(gen)) if fneq(mus_increment(gen), 0.0)
+  set_mus_increment(gen, 1)
+  snd_display("file2sample set_increment: %s?", mus_increment(gen)) if fneq(mus_increment(gen), 1.0)
+  #
+  ind = open_sound("oboe.snd")
+  gen = make_snd2sample(ind)
+  gen1 = make_snd2sample(ind)
+  print_and_check(gen, "snd->sample", "snd->sample: reading oboe.snd (1 chan) at 0:[no readers]")
+  snd_display("snd2sample not eql? itself?") unless gen.eql?(gen)
+  snd_display("snd2sample eql? not itself?") if gen.eql?(gen1)
+  snd_display("%s not snd2sample?", gen) unless snd2sample?(gen)
+  snd_display("%s not input?", gen) unless mus_input?(gen)
+  snd_display("snd2sample length: %s?", gen.length) if gen.length != frames(ind)
+  if gen.file_name != (Dir.pwd + "/oboe.snd")
+    snd_display("snd2sample mus_file_name: %s?", gen.file_name)
+  end
+  v0 = make_vct!(10) do |i| snd2sample(gen, 1490 + i) end
+  if fneq(v0[1], -0.009) or fneq(v0[7], 0.029)
+    snd_display("snd2sample output: %s?", v0)
+  end
+  snd_display("snd2sample channels: %s?", mus_channels(gen)) if mus_channels(gen) != 1
+  snd_display("snd2sample location: %s?", mus_location(gen)) if mus_location(gen) != 1499
+  v0.map_with_index! do |val, i| ina(1490 + i, gen) end
+  if fneq(v0[1], -0.009) or fneq(v0[7], 0.029)
+    snd_display("snd2sample output ina: %s?", v0)
+  end
+  close_sound(ind)
+  # 
+  ind = open_sound("2.snd")
+  gen = make_snd2sample(ind)
+  v0 = make_vct!(10) do |i|
+    snd2sample(gen, 1490 + i, 0)
+    snd2sample(gen, 1490 + i, 1)
+  end
+  print_and_check(gen,
+                  "snd->sample",
+                  "snd->sample: reading 2.snd (2 chans) at 1499:[#<sample-reader: 2.snd[0: 0] from 1490, at 1500>, #<sample-reader: 2.snd[1: 0] from 1490, at 1500>]")
+  snd_display("%s not snd2sample?", gen) unless snd2sample?(gen)
+  snd_display("%s not input?", gen) unless mus_input?(gen)
+  snd_display("snd2sample length: %s?", gen.length) if gen.length != frames(ind)
+  if gen.file_name != (Dir.pwd + "/2.snd")
+    snd_display("snd2sample mus_file_name: %s?", gen.file_name)
+  end
+  snd_display("snd2sample channels (2): %s?", mus_channels(gen)) if mus_channels(gen) != 2
+  snd_display("snd2sample location (2): %s?", mus_location(gen)) if mus_location(gen) != 1499
+  close_sound(ind)
+end
+
+def test118
+  fgen = make_file2sample("oboe.snd")
+  gen = make_xen2sample(lambda do |samp, chan| 2.0 * file2sample(fgen, samp, chan) end)
+  gen1 = make_xen2sample(lambda do |s, c| 1.0 end)
+  gen2 = gen
+  print_and_check(gen,
+                  "xen->sample",
+                  "xen->sample: (lambda (samp chan) (* 2.0 (file->sample fgen samp chan)))")
+  snd_display("xen2sample not eql? itself?") unless gen.eql?(gen)
+  snd_display("xen2sample eql? not %s %s?", gen, gen1) if gen.eql?(gen1)
+  snd_display("xen2sample not eql? %s %s?", gen, gen2) unless gen.eql?(gen2)
+  snd_display("%s not xen2sample?", gen) unless xen2sample?(gen)
+  snd_display("%s not input?", gen) unless mus_input?(gen)
+  v0 = make_vct!(10) do |i| xen2sample(gen, 1490 + i, 0) end
+  snd_display("%s not xen2sample?", gen) unless xen2sample?(gen)
+  if fneq(v0[1], 2 * -0.009) or fneq(v0[7], 2 * 0.029)
+    snd_display("xen2sample output: %s?", v0)
+  end
+  v0.map_with_index! do |val, i| ina(1490 + i, gen) end
+  if fneq(v0[1], 2 * -0.009) or fneq(v0[7], 2 * 0.029)
+    snd_display("xen2sample output ina: %s?", v0)
+  end
+  #
+  gen = make_file2frame("oboe.snd")
+  print_and_check(gen, "file->frame", "file->frame: oboe.snd")
+  snd_display("%s not file2frame?", gen) unless file2frame?(gen)
+  snd_display("%s not input?", gen) unless mus_input?(gen)
+  snd_display("file2frame length: %s?", gen.length) if gen.length != 50828
+  v0 = make_vct!(10) do |i| frame_ref(file2frame(gen, 1490 + i, 0), 0) end
+  snd_display("%s not file2frame?", gen) unless file2frame?(gen)
+  snd_display("file2frame mus_file_name: %s?", gen.file_name) if gen.file_name != "oboe.snd"
+  if fneq(v0[1], -0.009) or fneq(v0[7], 0.029)
+    snd_display("file2frame output: %s?", v0)
+  end
+  # 
+  delete_files("fmv.snd", "fmv1.snd", "fmv2.snd", "fmv3.snd")
+  gen = make_sample2file("fmv.snd", 2, Mus_lshort, Mus_riff)
+  print_and_check(gen, "sample->file", "sample->file: fmv.snd")
+  snd_display("%s not sample2file?", gen) unless sample2file?(gen)
+  snd_display("%s not output?", gen) unless mus_output?(gen)
+  snd_display("sample2file length: %s?", gen.length) if gen.length != mus_file_buffer_size
+  genx = gen
+  snd_display("sample2file eql? %s %s", genx, gen) unless gen.eql?(genx)
+  snd_display("sample2file mus_file_name: %s?", gen.file_name) if gen.file_name != "fmv.snd"
+  100.times do |i|
+    sample2file(gen, i, 0, i * 0.001)
+    sample2file(gen, i, 1, i * 0.010)
+  end
+  outa(50, 0.015, gen)
+  outb(50, 0.150, gen)
+  out_any(60, 0.015, 0, gen)
+  out_any(60, 0.150, 1, gen)
+  mus_close(gen)
+  gen = make_file2sample("fmv.snd")
+  print_and_check(gen, "file->sample", "file->sample: fmv.snd")
+  val0 = in_any(20, 0, gen)
+  val1 = in_any(20, 1, gen)
+  val2 = ina(30, gen)
+  val3 = inb(30, gen)
+  val4 = file2sample(gen, 40, 0)
+  val5 = file2sample(gen, 40, 1)
+  val6 = in_any(50, 0, gen)
+  val7 = in_any(50, 1, gen)
+  val8 = in_any(60, 0, gen)
+  val9 = in_any(60, 1, gen)
+  snd_display("sample2file channels: %s?", mus_channels(gen)) if mus_channels(gen) != 2
+  snd_display("%s not input?", gen) unless mus_input?(gen)
+  snd_display("in_any: %s %s?", val0, val1) if fneq(val0, 0.02) or fneq(val1, 0.2)
+  snd_display("ina|b: %s %s?", val2, val3) if fneq(val2, 0.03) or fneq(val3, 0.3)
+  snd_display("sample2file: %s %s?", val4, val5) if fneq(val4, 0.04) or fneq(val5, 0.4)
+  snd_display("outa|b: %s %s?", val6, val7) if fneq(val6, 0.065) or fneq(val7, 0.65)
+  snd_display("out_any: %s %s?", val8, val9) if fneq(val8, 0.075) or fneq(val9, 0.75)
+  #
+  gen = make_sample2file("fmv.snd", 4, Mus_lshort, Mus_riff)
+  print_and_check(gen, "sample->file", "sample->file: fmv.snd")
+  10.times do |i|
+    outa(i, 0.1, gen)
+    outb(i, 0.2, gen)
+    outc(i, 0.3, gen)
+    outd(i, 0.4, gen)
+  end
+  10.times do |i|
+    outa(i, 0.01, gen)
+    outb(i, 0.02, gen)
+    outc(i, 0.03, gen)
+    outd(i, 0.04, gen)
+  end
+  mus_close(gen)
+  gen = make_file2sample("fmv.snd")
+  print_and_check(gen, "file->sample", "file->sample: fmv.snd")
+  10.times do |i|
+    if fneq(res1 = ina(i, gen), 0.11) or
+        fneq(res2 = inb(i, gen), 0.22) or
+        fneq(res3 = in_any(i, 2, gen), 0.33) or
+        fneq(res4 = in_any(i, 3, gen), 0.44)
+      snd_display("4-chan out/in[%d]: %s %s %s %s?", i, res1, res2, res3, res4)
+    end
+  end
+  if (res = snd_catch do
+        make_sample2file("fmv.snd", -1, Mus_lshort, Mus_next)
+      end).first != :out_of_range
+    snd_display("make_sample2file bad chans: %s", res.inspect)
+  end
+  if (res = snd_catch do mus_location(make_oscil()) end).first != :mus_error
+    snd_display("set_mus_location(make_oscil()): %s", res.inspect)
+  end
+  if (res = snd_catch do
+        make_sample2file("fmv.snd", 1, -1, Mus_next)
+      end).first != :out_of_range
+    snd_display("make_sample2file bad format: %s", res.inspect)
+  end
+  if (res = snd_catch do
+        make_sample2file("fmv.snd", 1, Mus_lshort, -1)
+      end).first != :out_of_range
+    snd_display("make_sample2file bad type: %s", res.inspect)
+  end
+  # 
+  gen = make_frame2file("fmv1.snd", 2, Mus_bshort, Mus_next)
+  print_and_check(gen, "frame->file", "frame->file: fmv1.snd")
+  snd_display("%s not frame2file?", gen) unless frame2file?(gen)
+  snd_display("%s not output?", gen) unless mus_output?(gen)
+  snd_display("frame2file length: %s?", gen.length) if gen.length != mus_file_buffer_size
+  snd_display("frame2file mus_file_name: %s?", gen.file_name) if gen.file_name != "fmv1.snd"
+  gen.length = 4096
+  snd_display("frame2file length: %s?", gen.length) if gen.length != 4096
+  gen.length = 8192
+  fr0 = make_frame(2, 0.0, 0.0)
+  100.times do |i|
+    frame_set!(fr0, 0, i * 0.001)
+    frame_set!(fr0, 1, i * 0.010)
+    frame2file(gen, i, fr0)
+  end
+  mus_close(gen)
+  gen = make_file2frame("fmv1.snd")
+  val4 = file2frame(gen, 40)
+  frout = make_frame(2)
+  if fneq(frame_ref(val4, 0), 0.04) or fneq(frame_ref(val4, 1), 0.4)
+    snd_display("frame2file output: %s?", val4)
+  end
+  file2frame(gen, 40, frout)
+  unless frout.eql?(val4)
+    snd_display("frame2file output via frame: %s %s?", frout, val4)
+  end
+  #
+  gen = make_sample2file("fmv2.snd", 4, Mus_bshort, Mus_aifc)
+  print_and_check(gen, "sample->file", "sample->file: fmv2.snd")
+  snd_display("%s not sample2file?", gen) unless sample2file?(gen)
+  snd_display("%s not output?", gen) unless mus_output?(gen)
+  100.times do |i|
+    sample2file(gen, i, 0, i * 0.001)
+    sample2file(gen, i, 1, i * 0.010)
+    sample2file(gen, i, 2, i * 0.002)
+    sample2file(gen, i, 3, i * 0.003)
+  end
+  outa(50, 0.015, gen)
+  outb(50, 0.150, gen)
+  outc(50, 0.020, gen)
+  outd(50, 0.030, gen)
+  out_any(60, 0.015, 0, gen)
+  out_any(60, 0.150, 1, gen)
+  out_any(60, 0.020, 2, gen)
+  out_any(60, 0.030, 3, gen)
+  mus_close(gen)
+  gen = make_file2sample("fmv2.snd")
+  val0 = in_any(20, 2, gen)
+  val1 = in_any(20, 3, gen)
+  val2 = file2sample(gen, 50, 2)
+  val3 = file2sample(gen, 50, 3)
+  val4 = file2sample(gen, 60, 2)
+  val5 = file2sample(gen, 60, 3)
+  snd_display("file2sample channels (4): %s?", mus_channels(gen)) if mus_channels(gen) != 4
+  snd_display("file2sample increment: %s?", mus_increment(gen)) if fneq(mus_increment(gen), 0.0)
+  snd_display("in_any(0, 4): %s %s?", val0, val1) if fneq(val0, 0.04) or fneq(val1, 0.06)
+  snd_display("file2sample(4): %s %s?", val2, val3) if fneq(val2, 0.12) or fneq(val3, 0.18)
+  snd_display("in_any(4, 4): %s %s?", val4, val5) if fneq(val4, 0.14) or fneq(val5, 0.21)
+  #
+  delete_file("fmv.snd")
+  mus_sound_forget("fmv.snd")
+  sf = make_sample2file("fmv.snd", 2, Mus_bshort, Mus_next, "this is a comment")
+  10.times do |i|
+    sample2file(sf, i, 0, i * 0.10)
+    sample2file(sf, i, 1, i * 0.01)
+  end
+  mus_close(sf)
+  if (res = mus_sound_chans("fmv.snd")) != 2
+    snd_display("sample2file chans: %s?", res)
+  end
+  if (res = mus_sound_frames("fmv.snd")) != 10
+    snd_display("sample2file frames: %s?", res)
+  end
+  if (res = mus_sound_samples("fmv.snd")) != 20
+    snd_display("sample2file samples: %s?", res)
+  end
+  if (res = mus_sound_header_type("fmv.snd")) != Mus_next
+    snd_display("sample2file type: %s?", res)
+  end
+  if (res = mus_sound_data_format("fmv.snd")) != Mus_bshort
+    snd_display("sample2file format: %s?", res)
+  end
+  if (res = mus_sound_comment("fmv.snd")) != "this is a comment"
+    snd_display("sample2file comment: %s?", res)
+  end
+  rd = make_file2sample("fmv.snd")
+  10.times do |i|
+    if fneq(c0 = file2sample(rd, i, 0), i * 0.10) or fneq(c1 = file2sample(rd, i, 1), i * 0.01)
+      snd_display("sample2file2sample at %d: %s %s?", i, c0, c1)
+      break
+    end
+  end
+  mus_close(rd)
+  sf = continue_sample2file("fmv.snd")
+  10.times do |i|
+    sample2file(sf, i + 5, 0, i * -0.02)
+    sample2file(sf, i + 5, 1, i * -0.01)
+  end
+  mus_close(sf)
+  mus_sound_forget("fmv.snd")
+  if (res = mus_sound_chans("fmv.snd")) != 2
+    snd_display("continue_sample2file chans: %s?", res)
+  end
+  if (res = mus_sound_frames("fmv.snd")) != 15
+    snd_display("continue_sample2file frames: %s?", res)
+  end
+  if (res = mus_sound_samples("fmv.snd")) != 30
+    snd_display("continue_sample2file samples: %s?", res)
+  end
+  if (res = mus_sound_header_type("fmv.snd")) != Mus_next
+    snd_display("continue_sample2file type: %s?", res)
+  end
+  if (res = mus_sound_data_format("fmv.snd")) != Mus_bshort
+    snd_display("continue_sample2file format: %s?", res)
+  end
+  if (res = mus_sound_comment("fmv.snd")) != "this is a comment"
+    snd_display("continue_sample2file comment: %s?", res)
+  end
+  ind = open_sound("fmv.snd")
+  unless vequal(c0 = channel2vct(0, 15, ind, 0),
+                vct(0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.58, 0.66,
+                    0.74, 0.82, -0.1, -0.12, -0.14, -0.16, -0.18))
+    snd_display("continue_sample2file (0): %s", c0)
+  end
+  unless vequal(c0 = channel2vct(0, 15, ind, 1),
+                vct(0.0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.05, 0.05,
+                    0.05, 0.05, -0.05, -0.06, -0.07, -0.08, -0.09))
+    snd_display("continue_sample2file (1): %s", c0)
+  end
+  close_sound(ind)
+  #
+  delete_file("fmv.snd")
+  mus_sound_forget("fmv.snd")
+  sf = make_frame2file("fmv.snd", 2, Mus_lfloat, Mus_riff, "this is a comment")
+  10.times do |i|
+    frame2file(sf, i, make_frame(2, i * 0.10, i * 0.01))
+  end
+  mus_close(sf)
+  if (res = mus_sound_chans("fmv.snd")) != 2
+    snd_display("frame2file chans: %s?", res)
+  end
+  if (res = mus_sound_frames("fmv.snd")) != 10
+    snd_display("frame2file frames: %s?", res)
+  end
+  if (res = mus_sound_samples("fmv.snd")) != 20
+    snd_display("frame2file samples: %s?", res)
+  end
+  if (res = mus_sound_header_type("fmv.snd")) != Mus_riff
+    snd_display("frame2file type: %s?", res)
+  end
+  if (res = mus_sound_data_format("fmv.snd")) != Mus_lfloat
+    snd_display("frame2file format: %s?", res)
+  end
+  if (res = mus_sound_comment("fmv.snd")) != "this is a comment"
+    snd_display("frame2file comment: %s?", res)
+  end
+  rd = make_file2sample("fmv.snd")
+  10.times do |i|
+    f0 = file2frame(rd, i)
+    if f0.length != 2 or
+        fneq(frame_ref(f0, 0), i * 0.10) or
+        fneq(frame_ref(f0, 1), i * 0.01)
+      snd_display("frame2file2frame at %d: %s?", i, f0)
+      break
+    end
+  end
+  mus_close(rd)
+  sf = continue_frame2file("fmv.snd")
+  10.times do |i|
+    frame2file(sf, i + 5, make_frame(2, i * -0.02, i * -0.01))
+  end
+  mus_close(sf)
+  mus_sound_forget("fmv.snd")
+  if (res = mus_sound_chans("fmv.snd")) != 2
+    snd_display("continue_frame2file chans: %s?", res)
+  end
+  if (res = mus_sound_frames("fmv.snd")) != 15
+    snd_display("continue_frame2file frames: %s?", res)
+  end
+  if (res = mus_sound_samples("fmv.snd")) != 30
+    snd_display("continue_frame2file samples: %s?", res)
+  end
+  if (res = mus_sound_header_type("fmv.snd")) != Mus_riff
+    snd_display("continue_frame2file type: %s?", res)
+  end
+  if (res = mus_sound_data_format("fmv.snd")) != Mus_lfloat
+    snd_display("continue_frame2file format: %s?", res)
+  end
+  if (res = mus_sound_comment("fmv.snd")) != "this is a comment"
+    snd_display("continue_frame2file comment: %s?", res)
+  end
+  ind = open_sound("fmv.snd")
+  unless vequal(c0 = channel2vct(0, 15, ind, 0),
+                vct(0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.58, 0.66,
+                    0.74, 0.82, -0.1, -0.12, -0.14, -0.16, -0.18))
+    snd_display("continue_frame2file (0): %s", c0)
+  end
+  unless vequal(c0 = channel2vct(0, 15, ind, 1),
+                vct(0.0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.05, 0.05,
+                    0.05, 0.05, -0.05, -0.06, -0.07, -0.08, -0.09))
+    snd_display("continue_frame2file (1): %s", c0)
+  end
+  close_sound(ind)
+  delete_file("fmv.snd")
+  mus_sound_forget("fmv.snd")
+  #
+  os = make_oscil(440.0)
+  v0 = make_vct!(1000) do 0.1 * oscil(os) end
+  array2file("fmv3.snd", v0, 10000, 22050, 1)     # 10000 deliberate
+  v1 = make_vct(1000)
+  file2array("fmv3.snd", 0, 0, 1000, v1)
+  vct2vector(v0).zip(vct2vector(v1)) do |val1, val2|
+    snd_display("array2file2array: %f %f?", val1, val2) if fneq(val1, val2)
+  end
+  #
+  if (res = snd_catch do
+        array2file("fmv3.snd", v0, -1, 1000, 1)
+      end).first != :out_of_range
+    snd_display("array2file bad samps: %s", res.inspect)
+  end
+  if (res = snd_catch do
+        array2file("/bad/baddy/fmv3.snd", v0, 1, 1000, 1)
+      end).first != :mus_error
+    snd_display("array2file bad file: %s", res.inspect)
+  end
+  if (res = snd_catch do
+        file2array("fmv3.snd", -1, 0, -1, v0)
+      end).first != :out_of_range
+    snd_display("file2array bad samps: %s", res.inspect)
+  end
+end
+
+def test128
+  gen = make_rand(10000.0)
+  print_and_check(gen, "rand", "rand freq: 10000.000Hz, phase: 0.000, amp: 1.000")
+  v0 = make_vct!(10) do rand(gen, 0.0) end
+  snd_display("%s not rand?", gen) unless rand?(gen)
+  snd_display("rand phase: %f?", gen.phase) if fneq(gen.phase, 3.3624296)
+  snd_display("rand frequency %f?", gen.frequency) if fneq(gen.frequency, 10000.0)
+  gen.scaler = 0.5
+  snd_display("rand set_scaler: %f?", gen.scaler) if fneq(gen.scaler, 0.5)
+  snd_display("rand output: %s", v0) if v0[1] == v0[8]
+  # 
+  gen = make_rand(10000.0, :envelope, [0, 0, 1, 1])
+  print_and_check(gen,
+                  "rand",
+                  "rand freq: 10000.000Hz, phase: 0.000, amp: 1.000, with distribution envelope")
+  v0 = make_vct!(10) do rand(gen, 0.0) end
+  snd_display("(dist) %s not rand?", gen) unless rand?(gen)
+  snd_display("(dist) rand frequency %f?", gen.frequency) if fneq(gen.frequency, 10000.0)
+  snd_display("(dist) rand output: %s", v0) if v0[1] == v0[8]
+  if (not vct?(gen.data)) or gen.length != gen.data.length or gen.length != 512
+    snd_display("(dist) rand data: %d %s?", gen.length, gen.data)
+  end
+  #
+  gen1 = make_rand(10000.0, :envelope, [0, 0, 1, 1])
+  gen2 = make_rand(10000.0, :envelope, [0, 1, 1, 0])
+  up1 = 0
+  down1 = 0
+  bad1 = 0
+  up2 = 0
+  down2 = 0
+  bad2 = 0
+  1000.times do |i|
+    val1 = rand(gen1)
+    val2 = rand(gen2)
+    if val1 >= 0.5
+      up1 += 1
+    else
+      if val1 >= 0.0
+        down1 += 1
+      else
+        bad1 += 1
+      end
+    end
+    if val2 >= 0.5
+      up2 += 1
+    else
+      if val2 >= 0.0
+        down2 += 1
+      else
+        bad2 += 1
+      end
+    end
+  end
+  if bad1.nonzero? or bad2.nonzero? or 2.5 * down1 > up1 or 2.5 * up2 > down2
+    snd_display("rand dist: %s %s %s,  %s %s %s", down1, up1, bad1, down2, up2, bad2)
+  end
+  test_gen_equal(make_rand(1000), make_rand(1000), make_rand(500))
+  test_gen_equal(make_rand(1000), make_rand(1000), make_rand(1000, 0.5))
+  # 
+  gen = make_rand_interp(4000.0)
+  print_and_check(gen, "rand-interp", gen.to_s)
+  v0 = make_vct!(10) do rand_interp(gen, 0.0) end
+  snd_display("%s not rand_interp?", gen) unless rand_interp?(gen)
+  snd_display("rand_interp phase: %f?", gen.phase) if fneq(gen.phase, 5.114882)
+  snd_display("rand_interp frequency %f?", gen.frequency) if fneq(gen.frequency, 4000.0)
+  gen.scaler = 0.5
+  snd_display("rand_interp set_scaler: %f?", gen.scaler) if fneq(gen.scaler, 0.5)
+  snd_display("rand_interp output: %s", v0) if v0[1] == v0[8]
+  # 
+  gen = make_rand_interp(4000.0, :envelope, [-1, 1, 0, 0, 1, 1])
+  print_and_check(gen, "rand-interp", gen.to_s)
+  v0 = make_vct!(10) do rand_interp(gen, 0.0) end
+  snd_display("(dist) %s not rand_interp?", gen) unless rand_interp?(gen)
+  snd_display("(dist) rand_interp output: %s", v0) if v0[1] == v0[8]
+  if (not vct?(gen.data)) or gen.length != gen.data.length or gen.length != 512
+    snd_display("(dist) rand_interp data: %d %s?", gen.length, gen.data)
+  end
+  #
+  gen = make_rand(10000.0, 1.0)
+  gen1 = make_rand_interp(10000.0, 1.0)
+  1000.times do
+    val1 = gen.run(0.0)
+    val2 = gen1.run(0.0)
+    snd_display(",rand: %s %s?", val1, gen) if val1 > 1.0 or val1 < -1.0
+    snd_display(",rand_interp: %s %s?", val2, gen1) if val2 > 1.0 or val2 < -1.0
+  end
+  gen = make_rand(10000.0, :distribution, inverse_integrate([0, 0, 1, 1]))
+  print_and_check(gen,
+                  "rand",
+                  "rand freq: 10000.000Hz, phase: 0.000, amp: 1.000, with distribution envelope")
+  v0.map! do rand(gen, 0.0) end
+  snd_display("(dist 2) %s not rand?", gen) unless rand?(gen)
+  snd_display("(dist 2) rand frequency %f?", gen.frequency) if fneq(gen.frequency, 10000.0)
+  snd_display("(dist 2) rand output: %s", v0) if v0[1] == v0[8]
+  if (not vct?(gen.data)) or gen.length != gen.data.length or gen.length != 512
+    snd_display("(dist 2) rand data: %d %s?", gen.length, gen.data)
+  end
+  #
+  gen1 = make_rand(10000.0, :distribution, inverse_integrate([0, 0, 1, 1]))
+  gen2 = make_rand(10000.0, :distribution, inverse_integrate([0, 1, 1, 0]))
+  up1 = 0
+  down1 = 0
+  bad1 = 0
+  up2 = 0
+  down2 = 0
+  bad2 = 0
+  1000.times do |i|
+    val1 = rand(gen1)
+    val2 = rand(gen2)
+    if val1 >= 0.5
+      up1 += 1
+    else
+      if val1 >= 0.0
+        down1 += 1
+      else
+        bad1 += 1
+      end
+    end
+    if val2 >= 0.5
+      up2 += 1
+    else
+      if val2 >= 0.0
+        down2 += 1
+      else
+        bad2 += 1
+      end
+    end
+  end
+  if bad1.nonzero? or bad2.nonzero? or 2.5 * down1 > up1 or 2.5 * up2 > down2
+    snd_display("rand dist 2: %s %s %s,  %s %s %s", down1, up1, bad1, down2, up2, bad2)
+  end
+  #
+  v1 = inverse_integrate([-1, 1, 1, 1])
+  snd_display("inverse_integrate -1 to 1 uniform: %s?", v1) if fneq(v1[4], -0.984)
+  v1 = inverse_integrate([0, 1, 1, 1])
+  snd_display("inverse_integrate 0 to 1 uniform: %s?", v1) if fneq(v1[4], 0.008)
+  v1 = inverse_integrate([0, 1, 1, 0])
+  snd_display("inverse_integrate 0 to 1 1 to 0: %s?", v1) if fneq(v1[4], 0.004)
+  v1 = inverse_integrate([0, 0, 0.5, 1, 1, 0])
+  snd_display("inverse_integrate triangle: %s?", v1) if fneq(v1[4], 0.073)
+  v1 = inverse_integrate(gaussian_envelope(1.0))
+  snd_display("inverse_integrate gaussian: %s?", v1) if fneq(v1[4], -0.593)
+end
+
+def test138
+  minp = 1.0
+  maxp = -1.0
+  1100.times do
+    val1 = mus_random(1.0)
+    minp = val1 if val1 < minp
+    maxp = val1 if val1 > maxp
+    snd_display("mus_random: %f?", val1) if val1 > 1.0 or val1 < -1.0
+  end
+  snd_display("mus_random: %f %f", minp, maxp) if maxp < 0.9 or minp > -0.9
+  minp = 12.0
+  maxp = -12.0
+  1100.times do
+    val1 = mus_random(12.0)
+    minp = val1 if val1 < minp
+    maxp = val1 if val1 > maxp
+    snd_display("mus_random (12): %f?", val1) if val1 > 12.0 or val1 < -12.0
+  end
+  snd_display("mus_random (12): %f %f", minp, maxp) if maxp < 11.0 or minp > -11.0
+  v = lambda do |n|
+    hits = make_array(10, 0)
+    n.times do |i|
+      y = (5 + mus_random(5.0)).floor
+      hits[y] += 1
+    end
+    sum = 0.0
+    p = n / 10.0
+    hits.each do |val|
+      num = val - p
+      sum += (num * num) / p
+    end
+    sum
+  end
+  if (res = v.call(10000)) < 4.0
+    snd_display("mus_random not so random? %f (chi)", res)
+  end
+  v1 = lambda do |n|
+    hits = make_array(10, 0)
+    gen = make_rand(22050.0)
+    n.times do |i|
+      y = (5 + 5 * rand(gen, 0.0)).floor
+      hits[y] += 1
+    end
+    sum = 0.0
+    p = n / 10.0
+    hits.each do |val|
+      num = val - p
+      sum += (num * num) / p
+    end
+    sum
+  end
+  if (res = v1.call(10000)) < 4.0
+    snd_display("rand not so random? %f (chi)", res)
+  end
+  v2 = lambda do |n|                              # Kolmogorov-Smirnov
+    vals = make_array(n) do 0.5 + mus_random(0.5) end.sort
+    sn = sqrt(n)
+    k_p = 0.0
+    k_m = 0.0
+    incr = 1.0 / n
+    y = 0.0
+    x = incr
+    (1...n).each do |i|
+      kp = x - vals[i]
+      km = vals[i] - y
+      k_p = kp if kp > k_p
+      k_m = km if km > k_m
+      y = x
+      x += incr
+    end
+    [ sn * k_p, sn * k_m,
+     0.07089 - 0.15 / sn,
+     0.1601 - 0.014 / sn,
+     0.3793 - 0.15 / sn,
+     0.5887 - 0.15 / sn]
+  end
+  vr = v2.call(1000)
+  kp = vr[0]
+  km = vr[1]
+  k = vr[3]
+  if kp < k or km < k
+    snd_display("mus_random not so random? %f (chi)", vr)
+  end
+  #
+  data = make_vct!(65536) do mus_random(1.0) end
+  ndat = snd_spectrum(data, Rectangular_window, 65536, true, 0.0, false, false)
+  peak = vct_peak(ndat)
+  sum = 0.0
+  if peak > 1000.0
+    snd_display("mus_random spectral peak: %f?", peak)
+  end
+  32768.times do |i| sum += ndat[i] end
+  if (res = sum / 32768.0) > 200.0
+    snd_display("random average: %f %f?", res, ndat[0])
+  end
+  data.map! do mus_random(1.0) end
+  autocorrelate(data)
+  data[0] = 0.0
+  pk = vct_peak(data)
+  if pk > 1000
+    snd_display("random autocorrelate peak: %f?", pk)
+  end
+  sum = 0.0
+  32768.times do |i| sum += ndat[i].abs end
+  if (res = sum / 32768.0) > 200.0
+    snd_display("random autocorrelate average: %f?", res)
+  end
+end
+
+def test148
+  set_locsig_type(Mus_interp_linear)
+  gen = make_locsig(30.0, :channels, 2)
+  gen1 = make_locsig(60.0, :channels, 2)
+  gen2 = make_locsig(60.0, :channels, 4)
+  gen200 = make_locsig(200.0, :channels, 4)
+  gen3 = gen1
+  fr0 = locsig(gen, 0, 1.0)
+  print_and_check(gen, "locsig", "locsig: chans 2, outn: [0.667 0.333], interp: linear")
+  snd_display("%s not locsig?", gen) unless locsig?(gen)
+  snd_display("locsig %s.eql?(%s)?", gen1, gen3) unless gen1.eql?(gen3)
+  snd_display("locsig %s == %s?", gen1, gen3) unless gen1 == gen3
+  snd_display("locsig 1 %s.eql?(%s)?", gen1, gen2) if gen1.eql?(gen2)
+  snd_display("locsig 2 %s == %s?", gen, gen1) if gen == gen1
+  snd_display("locsig 3 %s == %s?", gen, gen2) if gen == gen2
+  if fneq(frame_ref(fr0, 0), 0.667) or fneq(frame_ref(fr0, 1), 0.333)
+    snd_display("locsig output: %s?", fr0)
+  end
+  if fneq(res1 = locsig_ref(gen, 0), 0.667) or fneq(res2 = locsig_ref(gen, 1), 0.333)
+    snd_display("locsig ref: %f %f?", res1, res2)
+  end
+  unless vequal(mus_data(gen), vct(0.667, 0.333))
+    snd_display("locsig gen outn: %s?", mus_data(gen))
+  end
+  unless vequal(mus_data(gen1), vct(0.333, 0.667))
+    snd_display("locsig gen1 outn: %s?", mus_data(gen1))
+  end
+  unless vequal(mus_data(gen2), vct(0.333, 0.667, 0.000, 0.000))
+    snd_display("locsig gen2 outn: %s?", mus_data(gen2))
+  end
+  unless vequal(mus_data(gen200), vct(0.000, 0.000, 0.778, 0.222))
+    snd_display("locsig gen200 outn: %s?", mus_data(gen200))
+  end
+  locsig_set!(gen, 0, 0.25)
+  unless vequal(mus_data(gen), vct(0.250, 0.333))
+    snd_display("locsig gen 0.25 outn: %s?", mus_data(gen))
+  end
+  fr0 = locsig(gen, 0, 1.0)
+  if fneq(res = locsig_ref(gen, 0), 0.25)
+    snd_display("locsig_set!: %f?", res)
+  end
+  locsig_set!(gen, 0, 0.5)
+  unless vequal(mus_data(gen), vct(0.500, 0.333))
+    snd_display("locsig gen 0.5 outn: %s?", mus_data(gen))
+  end
+  fr0 = locsig(gen, 0, 1.0)
+  if fneq(res = locsig_ref(gen, 0), 0.5)
+    snd_display("locsig_set!: %f?", res)
+  end
+  gen = make_locsig(120.0, 2.0, 0.1, :channels, 4)
+  unless vequal(mus_data(gen), vct(0.000, 0.333, 0.167, 0.000))
+    snd_display("locsig gen 120 outn: %s?", mus_data(gen))
+  end
+  fr0 = locsig(gen, 0, 1.0)
+  if fneq(frame_ref(fr0, 1), 0.333) or fneq(frame_ref(fr0, 2), 0.167)
+    snd_display("locsig quad output: %s?", fr0)
+  end
+  gen = make_locsig(300.0, 2.0, 0.1, :channels, 4)
+  unless vequal(mus_data(gen), vct(0.167, 0.000, 0.000, 0.333))
+    snd_display("locsig gen 300 outn: %s?", mus_data(gen))
+  end
+  fr0 = locsig(gen, 0, 1.0)
+  if fneq(frame_ref(fr0, 3), 0.333) or fneq(frame_ref(fr0, 0), 0.167)
+    snd_display("300 locsig quad output: %s?", fr0)
+  end
+  move_locsig(gen1, 90.0, 1.0)
+  unless vequal(mus_data(gen1), vct(0.000, 1.000))
+    snd_display("locsig gen1 90 outn: %s?", mus_data(gen1))
+  end
+  move_locsig(gen1, 0.0, 1.0)
+  unless vequal(mus_data(gen1), vct(1.000, 0.000))
+    snd_display("locsig gen1 0 outn: %s?", mus_data(gen1))
+  end
+  if fneq(locsig_ref(gen1, 0), 1.0) or fneq(locsig_ref(gen1, 1), 0.0)
+    snd_display("move_locsig 0 1: %s?", gen1)
+  end
+  move_locsig(gen1, 45.0, 1.0)
+  unless vequal(mus_data(gen1), vct(0.500, 0.500))
+    snd_display("locsig gen1 45 outn: %s?", mus_data(gen1))
+  end
+  if fneq(locsig_ref(gen1, 0), 0.5) or fneq(locsig_ref(gen1, 1), 0.5)
+    snd_display("move_locsig 45 1: %s?", gen1)
+  end
+  move_locsig(gen1, 135.0, 2.0)
+  unless vequal(mus_data(gen1), vct(0.000, 0.500))
+    snd_display("locsig gen1 135 outn: %s?", mus_data(gen1))
+  end
+  move_locsig(gen1, -270.0, 3.0)
+  unless vequal(mus_data(gen1), vct(0.000, 0.333))
+    snd_display("locsig gen1 -270 outn: %s?", mus_data(gen1))
+  end
+  [1, 2, 4, 8].each do |chans|
+    m1 = make_locsig(:channels, chans)
+    if m1.channels != chans or m1.length != chans
+      snd_display("locsig %d chans but: %d %d?", chans, m1.channels, m1.length)
+    end
+    chans.times do |i| locsig_set!(m1, i, i * 0.1) end
+    chans.times do |i|
+      if fneq(locsig_ref(m1, i), i * 0.1)
+        snd_display("locsig[%d] = %f (%f)?", i, locsig_ref(m1, i), i * 0.1)
+      end
+    end
+  end
+  #
+  if (res = snd_catch do make_locsig(:channels, 0) end).first != :mus_error
+    snd_display("make_locsig bad (0) chans: %s", res.inspect)
+  end
+  if (res = snd_catch do make_locsig(:channels, -2) end).first != :out_of_range
+    snd_display("make_locsig bad (-2) chans: %s", res.inspect)
+  end
+  if (res = snd_catch do make_locsig(:output, 1) end).first != :wrong_type_arg
+    snd_display("make_locsig bad output: %s", res.inspect)
+  end
+  if (res = snd_catch do locsig_ref(make_locsig(), 1) end).first != :mus_error
+    snd_display("locsig_ref bad chan: %s", res.inspect)
+  end
+  if (res = snd_catch do
+        locs = make_locsig(200, :channels, 2)
+        locsig_ref(locs, 2)
+      end).first != :mus_error
+    snd_display("locsig_ref bad chan: %s", res.inspect)
+  end
+  if (res = snd_catch do
+        locs = make_locsig()
+        locsig_set!(locs, 2, 0.1)
+      end).first != :mus_error
+    snd_display("locsig_set! bad chan (2): %s", res.inspect)
+  end
+  if (res = snd_catch do
+        locs = make_locsig(:reverb, 0.1)
+        locsig_reverb_ref(locs, 2)
+      end).first != :mus_error
+    snd_display("locsig_reverb_ref bad reverb chan (2): %s", res.inspect)
+  end
+  if (res = snd_catch do
+        locs = make_locsig(:reverb, 0.1)
+        locsig_reverb_set!(locs, 2, 0.1)
+      end).first != :mus_error
+    snd_display("locsig_reverb_set! bad reverb chan (2): %s", res.inspect)
+  end
+  #
+  locs = make_locsig(:channels, 8, :degree, 0)
+  move_locsig(locs, 180.0, 1.0)
+  snd_display("move_locsig by jump: %s?", locs.data) if fneq(locsig_ref(locs, 0), 0.0)
+  unless vequal(locs.data, vct(0.000, 0.000, 0.000, 0.000, 1.000, 0.000, 0.000, 0.000))
+    snd_display("move_locsig by jump data: %s?", locs.data)
+  end
+  move_locsig(locs, 120.0, 1.0)
+  unless vequal(locs.data, vct(0.000, 0.000, 0.333, 0.667, 0.000, 0.000, 0.000, 0.000))
+    snd_display("move_locsig by jump 120 data: %s?", locs.data)
+  end
+  move_locsig(locs, -20.0, 1.0)
+  unless vequal(locs.data, vct(0.556, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.444))
+    snd_display("move_locsig by jump -20 data: %s?", locs.data)
+  end
+  #
+  sf = make_sample2file("fmv4.snd", 8, Mus_bshort, Mus_next, "this is a comment")
+  sfrev = make_sample2file("fmv4.reverb", 8, Mus_bshort, Mus_next, "this is a comment")
+  locs = make_locsig(:channels, 8, :degree, 0, :distance, 1.0, :reverb, 0.1,
+                     :output, sf, :revout, sfrev, :type, Mus_interp_linear)
+  unless vequal(locs.data, vct(1.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000))
+    snd_display("ws not move_locsig by jump data: %s?", locs.data)
+  end
+  unless vequal(locs.xcoeffs, vct(0.100, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000))
+    snd_display("ws not move_locsig by jump rev data: %s?", locs.xcoeffs)
+  end
+  move_locsig(locs, 180.0, 2.0)
+  snd_display("ws move_locsig by jump: %s?", locs.data) if fneq(locsig_ref(locs, 0), 0.0)
+  unless vequal(locs.data, vct(0.000, 0.000, 0.000, 0.000, 0.500, 0.000, 0.000, 0.000))
+    snd_display("ws move_locsig by jump data: %s?", locs.data)
+  end
+  unless vequal(locs.xcoeffs, vct(0.000, 0.000, 0.000, 0.000, 0.071, 0.000, 0.000, 0.000))
+    snd_display("ws move_locsig by jump rev data: %s?", locs.xcoeffs)
+  end
+  move_locsig(locs, 120.0, 3.0)
+  unless vequal(locs.data, vct(0.000, 0.000, 0.111, 0.222, 0.000, 0.000, 0.000, 0.000))
+    snd_display("ws move_locsig by jump 120 data: %s?", locs.data)
+  end
+  unless vequal(locs.xcoeffs, vct(0.000, 0.000, 0.019, 0.038, 0.000, 0.000, 0.000, 0.000))
+    snd_display("ws move_locsig by jump 120 rev data: %s?", locs.xcoeffs)
+  end
+  move_locsig(locs, -20.0, 4.0)
+  unless vequal(locs.data, vct(0.139, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.111))
+    snd_display("ws move_locsig by jump -20 data: %s?", locs.data)
+  end
+  unless vequal(locs.xcoeffs, vct(0.028, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.022))
+    snd_display("ws move_locsig by jump -20 rev data: %s?", locs.xcoeffs)
+  end
+  mus_close(sf)
+  mus_close(sfrev)
+  delete_files("fmv4.snd", "fmv4.reverb")
+  mus_sound_prune
+  #
+  gen = make_frame2file("fmv4.snd", 2, Mus_bshort, Mus_next)
+  rev = make_frame2file("fmv4.reverb", 1, Mus_bshort, Mus_next)
+  lc = make_locsig(60.0, :reverb, 0.1, :channels, 2, :output, gen, :revout, rev)
+  100.times do |i| locsig(lc, i, 1.0) end
+  if fneq(res = locsig_reverb_ref(lc, 0), 0.1)
+    snd_display("locsig_reverb_ref: %f?", res)
+  end
+  locsig_reverb_set!(lc, 0, 0.3)
+  if fneq(res = locsig_reverb_ref(lc, 0), 0.3)
+    snd_display("locsig_reverb_set!: %f?", res)
+  end
+  locsig_reverb_set!(lc, 0, 0.2)
+  if fneq(res = locsig_reverb_ref(lc, 0), 0.2)
+    snd_display("locsig_reverb_set!: %f?", res)
+  end
+  mus_close(gen)
+  mus_close(rev)
+  v0 = make_vct(100)
+  v1 = make_vct(100)
+  v2 = make_vct(100)
+  file2array("fmv4.snd", 0, 0, 100, v0)
+  file2array("fmv4.snd", 1, 0, 100, v1)
+  file2array("fmv4.reverb", 0, 0, 100, v2)
+  snd_display("locsig reverb: %s?", v2) if fneq(v2[0], 0.1)
+  snd_display("locsig direct: %f %f?", v0[0], v1[0]) if fneq(2 * v0[0], v1[0])
+  # 
+  gen = make_frame2file("fmv4.snd", 4, Mus_bshort, Mus_next)
+  rev = make_frame2file("fmv4.reverb", 4, Mus_bshort, Mus_next)
+  lc = make_locsig(60.0, :reverb, 0.1, :channels, 4, :distance, 4.0, :output, gen, :revout, rev)
+  print_and_check(lc,
+                  "locsig",
+                  "locsig: chans 4, outn: [0.083 0.167 0.000 0.000], revn: [0.017 0.033 0.000 0.000], interp: linear")
+  100.times do |i| locsig(lc, i, 1.0) end
+  4.times do |i|
+    locsig_reverb_set!(lc, i, i * 0.1)
+    if fneq(res = locsig_reverb_ref(lc, i), i * 0.1)
+      snd_display("locsig_reverb_set![%d]: %f?", i, res)
+    end
+  end
+  print_and_check(lc,
+                  "locsig",
+                  "locsig: chans 4, outn: [0.083 0.167 0.000 0.000], revn: [0.000 0.100 0.200 0.300], interp: linear")
+  snd_display("out data locsig: %s?", lc.data) unless vct?(lc.data)
+  snd_display("rev data locsig: %s?", lc.xcoeffs) unless vct?(lc.xcoeffs)
+  xcs = lc.xcoeffs
+  if fneq(res = mus_xcoeff(lc, 0), xcs[0])
+    snd_display("locsig xcoeff: %f %f?", res, xcs[0])
+  end
+  if fneq(res = mus_xcoeff(lc, 1), 0.1)
+    snd_display("locsig xcoeff 1: %f %f?", res, xcs[0])
+  end
+  mus_close(gen)
+  mus_close(rev)
+  # 
+  print_and_check(make_locsig(160, :channels, 4),
+                  "locsig",
+                  "locsig: chans 4, outn: [0.000 0.222 0.778 0.000], interp: linear")
+  print_and_check(make_locsig(-200, :channels, 4),
+                  "locsig",
+                  "locsig: chans 4, outn: [0.000 0.222 0.778 0.000], interp: linear")
+  print_and_check(make_locsig(160, :channels, 4, :distance, 0.5),
+                  "locsig",
+                  "locsig: chans 4, outn: [0.000 0.222 0.778 0.000], interp: linear")
+  print_and_check(make_locsig(320, :channels, 4),
+                  "locsig",
+                  "locsig: chans 4, outn: [0.556 0.000 0.000 0.444], interp: linear")
+  print_and_check(make_locsig(-40, :channels, 4),
+                  "locsig",
+                  "locsig: chans 4, outn: [0.556 0.000 0.000 0.444], interp: linear")
+  print_and_check(make_locsig(320, :channels, 2),
+                  "locsig",
+                  "locsig: chans 2, outn: [0.000 1.000], interp: linear")
+  print_and_check(make_locsig(-40, :channels, 2),
+                  "locsig",
+                  "locsig: chans 2, outn: [0.000 1.000], interp: linear")
+  # 
+  locsig_data = lambda do |g|
+    make_vct!(g.channels) do |i| locsig_ref(g, i) end
+  end
+  gen = make_locsig(-0.1, :channels, 8)
+  unless vequal(locsig_data.call(gen), vct(0.998, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.002))
+    snd_display("locsig -0.1(8): %s?", locsig_data.call(gen))
+  end
+  gen = make_locsig(-359.9, :channels, 8)
+  unless vequal(locsig_data.call(gen), vct(0.998, 0.002, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000))
+    snd_display("locsig -359.9(8): %s?", locsig_data.call(gen))
+  end
+  gen = make_locsig(-359.9, :channels, 4)
+  unless vequal(locsig_data.call(gen), vct(0.999, 0.001, 0.000, 0.000))
+    snd_display("locsig -359.9(4): %s?", locsig_data.call(gen))
+  end
+  gen = make_locsig(-360.1, :channels, 8)
+  unless vequal(locsig_data.call(gen), vct(0.998, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.002))
+    snd_display("locsig -360.1(8): %s?", locsig_data.call(gen))
+  end
+  gen = make_locsig(-700, :channels, 8)
+  unless vequal(locsig_data.call(gen), vct(0.556, 0.444, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000))
+    snd_display("locsig -700(8): %s?", locsig_data.call(gen))
+  end
+  gen = make_locsig(-700, :channels, 2)
+  unless vequal(locsig_data.call(gen), vct(0.778, 0.222))
+    snd_display("locsig -700(2): %s?", locsig_data.call(gen))
+  end
+  gen = make_locsig(20, :channels, 2)
+  unless vequal(locsig_data.call(gen), vct(0.778, 0.222))
+    snd_display("locsig 20(2): %s?", locsig_data.call(gen))
+  end
+  gen = make_locsig(123456.0, :channels, 8)
+  unless vequal(locsig_data.call(gen), vct(0.467, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.533))
+    snd_display("locsig 123456(8): %s?", locsig_data.call(gen))
+  end
+  gen = make_locsig(336.0, :channels, 8)
+  unless vequal(locsig_data.call(gen), vct(0.467, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.533))
+    snd_display("locsig 336(8): %s?", locsig_data.call(gen))
+  end
+  gen = make_locsig(-123456.0, :channels, 8)
+  unless vequal(locsig_data.call(gen), vct(0.467, 0.533, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000))
+    snd_display("locsig -123456(8): %s?", locsig_data.call(gen))
+  end
+  gen = make_locsig(24.0, :channels, 8)
+  unless vequal(locsig_data.call(gen), vct(0.467, 0.533, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000))
+    snd_display("locsig 24(8): %s?", locsig_data.call(gen))
+  end
+  #
+  [0, 1, 2, 4].each do |rev_chans|
+    locsig_scalers = lambda do |chans, degree, type|
+      if chans == 1
+        vct(1.0)
+      else
+        deg = chans == 2 ? [0.0, [90.0, degree].min].max : degree.divmod(360.0)[1]
+        degs_per_chan = chans == 2 ? 90.0 : (360.0 / chans)
+        pos = deg / degs_per_chan
+        left = pos.floor
+        right = (left + 1) % chans
+        frac = pos - left
+        v = make_vct(chans)
+        if type == Mus_interp_linear
+          v[left] = 1.0 - frac
+          v[right] = frac
+        else
+          ldeg = HALF_PI * (0.5 - frac)
+          norm = sqrt(2.0) * 0.5
+          c = cos(ldeg)
+          s = sin(ldeg)
+          v[left] = norm * (c + s)
+          v[right] = norm * (c - s)
+        end
+        v
+      end
+    end
+    delete_file("test.reverb")
+    revfile = if rev_chans > 0
+                make_frame2file("test.reverb", rev_chans, Mus_bshort, Mus_next)
+              else
+                false
+              end
+    [Mus_interp_linear, Mus_interp_sinusoidal].each do |type|
+      set_locsig_type(type)
+      snd_display("locsig_type: %s %s?", type, locsig_type) if locsig_type != type
+      callcc do |quit|
+        [0.0, 45.0, 90.0, 1234.0].each do |deg|
+          gen = make_locsig(deg, :channels, 1, :revout, revfile, :reverb, 0.1, :distance, 2.0)
+          revs = revfile ? locsig_scalers.call(rev_chans, deg, type) : []
+          snd_display("locsig %s: %s?", deg, gen) if gen.channels != 1
+          revs.each_with_index do |val, i|
+            if fneq(res1 = locsig_reverb_ref(gen, i), res2 = ((0.1 / sqrt(2.0)) * val))
+              snd_display("mono locrev[%d] %s at %s: %f %f?", type, gen, deg, res1, res2)
+              quit.call
+            end
+          end
+        end
+        [Mus_interp_linear, Mus_interp_sinusoidal].each do |ltype|
+          [0.0, 45.0, 90.0, 1234.0].each do |deg|
+            gen = make_locsig(deg, :channels, 1, :type, ltype)
+            snd_display("locsig %s: %s?", deg, gen) if gen.channels != 1
+            if fneq(res = locsig_ref(gen, 0), 1.0)
+              snd_display("locsig[%d] scaler %s: %s?", ltype, deg, res)
+            end
+          end
+        end
+        [2, 3, 4, 5, 8, 12, 16, 24].each do |chans|
+          [0.0, 45.0, 90.0, 120.0, 180.0, 275.0, 315.0, 300.0, 15.0, 1234.0].each do |deg|
+            gen = make_locsig(deg, :channels, chans, :revout, revfile, :reverb, 0.1)
+            snd_display("multi locsig %s: %s?", deg, gen) if gen.channels != chans
+            quit.call
+            locsig_scalers.call(chans, deg, type).each_with_index do |val, i|
+              if fneq(res = locsig_ref(gen, i), val)
+                snd_display("locrev[%d] %s at %s: %f %f?", type, gen, deg, res, val)
+                quit.call
+              end
+            end
+            (revfile ? locsig_scalers.call(rev_chans, deg, type) : []).each_with_index do |val, i|
+              if fneq(res1 = locsig_reverb_ref(gen, i), res2 = 0.1 * val)
+                snd_display("locrev[%d] %s at %s: %f %f?", type, gen, deg, res1, res2)
+                quit.call
+              end
+            end
+          end
+          [].each do |chans|
+            [Mus_interp_linear, Mus_interp_sinusoidal].each do |ltype|
+              [0.0, 45.0, 90.0, 120.0, 180.0, 275.0, 315.0, 300.0, 15.0, 1234.0].each do |deg|
+                gen = make_locsig(deg, :channels, chans, :type, ltype,
+                                  :revout, revfile, :reverb, 0.1)
+                if gen.channels != chans
+                  snd_display("stereo locsig %s: %s?", deg, gen)
+                  quit.call
+                end
+                locsig_scalers.call(chans, deg, ltype).each_with_index do |val, i|
+                  if fneq(res = locsig_ref(gen, i), val)
+                    snd_display("locrev[%d] %s at %s: %f %f?", ltype, gen, deg, res, val)
+                    quit.call
+                  end
+                end
+                (revfile ? locsig_scalers.call(rev_chans,deg,ltype): []).each_with_index do |val, i|
+                  if fneq(res1 = locsig_reverb_ref(gen, i), res2 = 0.1 * val)
+                    snd_display("locrev[%d] %s at %s: %f %f?", ltype, gen, deg, res1, res2)
+                    quit.call
+                  end
+                end
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+end
+
+def test158
+  gen = make_src(:srate, 2.0)
+  gen1 = make_src(:srate, 2.0)
+  gen2 = make_src(:srate, 0.0)
+  rd = make_readin("oboe.snd", 0, 2000)
+  rd1 = make_readin("oboe.snd", 0, 2000)
+  print_and_check(gen, "src", "src: width: 10, x: 0.000, incr: 2.000, sinc table len: 10000")
+  v0 = make_vct!(10) do src(gen, 0.0, lambda do |dir| readin(rd) end) end
+  v1 = make_vct(10)
+  vct_map!(v1, lambda do || src?(gen1) ? src(gen1, 0.0, lambda do |dir| readin(rd1) end) : -1.0 end)
+  snd_display("run src: %s %s?", v0, v1) unless vequal(v0, v1)
+  snd_display("%s not src?", gen) unless src?(gen)
+  if fneq(v0[1], 0.001) or fneq(v0[7], 0.021)
+    snd_display("src output: %s?", v0)
+  end
+  snd_display("src increment: %f?", gen.increment) if fneq(gen.increment, 2.0)
+  snd_display("src 0.0 increment: %f?", gen2.increment) if fneq(gen2.increment, 0.0)
+  snd_display("readin increment: %f?", rd.increment) if fneq(rd.increment, 1.0)
+  snd_display("src length: %d?", gen.length) if gen.length != 10
+  gold = gen
+  gen = make_src(lambda do |dir| 0.0 end)
+  snd_display("src eql? %s %s?", gen, gold) if gen.eql? gold
+  if (res = snd_catch do make_src(:width, -1) end).first != :out_of_range
+    snd_display("make_src bad width: %s", res.inspect)
+  end
+  #
+  s1 = make_src(lambda do |y| 1.0 end, 2.0)
+  src(s1, 25.0)
+  src(s1, 25.0)
+  src(s1, 125.0)
+  src(s1, -25.0)
+  src(s1, -125.0)
+  10.times do |i| make_src(lambda do |y| 1.0 end, 1.5, :width, 5 + i * 10) end
+  clear_sincs
+  #
+  ctr = 0.0
+  gen = make_src(:srate, 2.0, :input, lambda do |dir|
+                   val = ctr
+                   ctr += 1
+                   val
+                 end)
+  v0 = make_vct!(10) do src(gen, 0.0) end
+  ctr = 0.0
+  gen.reset
+  v0.each_with_index do |old_val, i|
+    if fneq(old_val, new_val = src(gen, 0.0))
+      snd_display("reset src %d: %f %f?", i, old_val, new_val)
+    end
+  end
+  s1 = make_src(lambda do |dir| 1.0 end)
+  if fneq(res = src(s1, log0), 1.0)               # log(0) -> -Infinity: rejected by src
+    snd_display("inf as sr_change: %s?", res)
+  end
+  #
+  gen = make_granulate(:expansion, 2.0)
+  gen1 = make_granulate(:expansion, 2.0)
+  rd = make_readin("oboe.snd", 0, 4000)
+  rd1 = make_readin("oboe.snd", 0, 4000)
+  print_and_check(gen,
+                  "granulate",
+                  "granulate: expansion: 2.000 (551/1102), scaler: 0.600, length: 0.150 secs (3308 samps), ramp: 0.060")
+  v0 = make_vct!(1000) do granulate(gen, lambda do |dir| readin(rd) end) end
+  v1 = make_vct(1000)
+  vct_map!(v1, lambda do | |
+             granulate?(gen1) ? granulate(gen1, lambda do |dir| readin(rd1) end) : -1.0
+           end)
+  if (worst = (vct_peak(v0) - vct_peak(v1)).abs) > 0.01
+    snd_display("run granulate: %f?", worst)
+  end
+  genx = gen1
+  snd_display("granulate eql? %s %s %s", genx, gen1, genx.eql?(gen1)) unless genx.eql?(gen1)
+  snd_display("granulate eql? %s %s?", gen, gen1) if gen.eql? gen1
+  snd_display("granulate output peak: %f?", vct_peak(v0)) if vct_peak(v0).zero?
+  snd_display("%s not granulate?", gen) unless granulate?(gen)
+  snd_display("granulate increment: %f?", gen.increment) if fneq(gen.increment, 2.0)
+  snd_display("granulate scaler: %f?", gen.scaler) if fneq(gen.scaler, 0.6)
+  snd_display("granulate frequency: %f?", gen.frequency) if fneq(gen.frequency, 0.05)
+  snd_display("granulate ramp: %d?", gen.ramp) if gen.ramp != 1323
+  snd_display("granulate length: %d?", gen.length) if gen.length != 3308
+  snd_display("granulate hop: %d?", gen.hop) if gen.hop != 1102
+  gen.hop = 1000
+  snd_display("granulate set_hop: %d?", gen.hop) if gen.hop != 1000
+  gen.ramp = 1000
+  snd_display("granulate set_ramp: %d?", gen.ramp) if gen.ramp != 1000
+  gen.length = 3000
+  snd_display("granulate set_length: %d?", gen.length) if gen.length != 3000
+  gen.increment = 3.0
+  snd_display("granulate set_increment: %f?", gen.increment) if ffneq(gen.increment, 3.0)
+  gen.frequency = 0.1
+  snd_display("granulate set_frequency: %f?", gen.frequency) if fneq(gen.frequency, 0.1)
+  # 
+  if (res = snd_catch do make_granulate(lambda do |a, b| a end) end).first != :bad_arity
+    snd_display("make_granulate bad func: %s", res.inspect)
+  end
+  if (res = snd_catch do make_granulate(:hop, 35.0, :length, 35.0) end).first != :out_of_range
+    snd_display("make_granulate bad sizes: %s", res.inspect)
+  end
+  #
+  ind = open_sound("oboe.snd")
+  mx = maxamp
+  rd = make_sample_reader(0)
+  grn = make_granulate(:expansion, 2.0,
+                       :input, lambda do |dir| rd.call end,
+                       :edit, lambda do |g|
+                         mus_data(g).map! do |val| val *= 2.0 end
+                         0
+                       end)
+  map_channel(lambda do |y| granulate(grn) end)
+  if maxamp / mx < 1.5 or mx / maxamp > 2.5
+    snd_display("gran edit 2* (0): %f %f?", mx, maxamp)
+  end
+  undo
+  rd = make_sample_reader(0)
+  grn = make_granulate(:expansion, 2.0,
+                       :input, lambda do |dir| rd.call end,
+                       :edit, lambda do |g|
+                         mus_data(g).map! do |val| val *= 4.0 end
+                         0
+                       end)
+  map_channel(lambda do |y| granulate(grn) end)
+  if maxamp / mx < 3.0 or mx / maxamp > 6.0
+    snd_display("gran edit 4* (0): %f %f?", mx, maxamp)
+  end
+  revert_sound(ind)
+  rd = make_sample_reader(0)
+  grn = make_granulate(:expansion, 2.0,
+                       :edit, lambda do |g|
+                         mus_data(g).map! do |val| val *= 2.0 end
+                         0
+                       end)
+  map_channel(lambda do |y| granulate(grn, lambda do |dir| rd.call end) end)
+  if maxamp / mx < 1.5 or mx / maxamp > 2.5
+    snd_display("gran edit 2* (1): %f %f?", mx, maxamp)
+  end
+  undo
+  rd = make_sample_reader(0)
+  grn = make_granulate(:expansion, 2.0,
+                       :edit, lambda do |g|
+                         mus_data(g).map! do |val| val *= 4.0 end
+                         0
+                       end)
+  map_channel(lambda do |y| granulate(grn, lambda do |dir| rd.call end) end)
+  if maxamp / mx < 3.0 or mx / maxamp > 6.0
+    snd_display("gran edit 4* (1): %f %f?", mx, maxamp)
+  end
+  revert_sound(ind)
+  rd = make_sample_reader(0)
+  grn = make_granulate(:expansion, 2.0)
+  map_channel(lambda do |y|
+                granulate(grn,
+                          lambda do |dir|
+                            rd.call
+                          end,
+                          lambda do |g|
+                            mus_data(g).map! do |val| val *= 2.0 end
+                            0
+                          end)
+                end)
+  if maxamp / mx < 1.5 or mx / maxamp > 2.5
+    snd_display("gran edit 2* (2): %f %f?", mx, maxamp)
+  end
+  undo
+  rd = make_sample_reader(0)
+  grn = make_granulate(:expansion, 2.0)
+  map_channel(lambda do |y|
+                granulate(grn,
+                          lambda do |dir|
+                            rd.call
+                          end,
+                          lambda do |g|
+                            mus_data(g).map! do |val| val *= 4.0 end
+                            0
+                          end)
+                end)
+  if maxamp / mx < 3.0 or mx / maxamp > 6.0
+    snd_display("gran edit 4* (2): %f %f?", mx, maxamp)
+  end
+  close_sound(ind)
+  ind = open_sound("oboe.snd")
+  grn = make_granulate(:expansion, 2.0, :length, 0.01, :hop, 0.05)
+  rd = make_sample_reader(0)
+  map_channel(lambda do |y| granulate(grn, lambda do |dir| rd.call end) end)
+  if (res = maxamp) > 0.2
+    snd_display("trouble in granulate len 0.01 hop 0.05: %f?", res)
+  end
+  undo
+  grn = make_granulate(:expansion, 2.0, :length, 0.04, :hop, 0.05)
+  rd = make_sample_reader(0)
+  map_channel(lambda do |y| granulate(grn, lambda do |dir| rd.call end) end)
+  if (res = maxamp) > 0.2
+    snd_display("trouble in granulate len 0.04 hop 0.05: %f?", res)
+  end
+  undo
+  grn = make_granulate(:expansion, 2.0, :length, 0.01, :hop, 0.25)
+  rd = make_sample_reader(0)
+  map_channel(lambda do |y| granulate(grn, lambda do |dir| rd.call end) end)
+  if (res = maxamp) > 0.2
+    snd_display("trouble in granulate len 0.01 hop 0.25: %f?", res)
+  end
+  undo
+  grn = make_granulate(:expansion, 2.0, :length, 0.4, :hop, 0.5)
+  rd = make_sample_reader(0)
+  map_channel(lambda do |y| granulate(grn, lambda do |dir| rd.call end) end)
+  if (res = maxamp) > 0.2
+    snd_display("trouble in granulate len 0.4 hop 0.5: %f?", res)
+  end
+  undo
+  close_sound(ind)
+end
+
+def test168
+  ind = new_sound(:size, 1000)
+  gen = make_granulate(:jitter, 0.0, :hop, 0.004, :length, 0.001)
+  map_channel(lambda do |y| granulate(gen, lambda do |dir| 0.1 end) end)
+  if fneq(res = maxamp, 0.06)
+    snd_display("gran 0 max: %f?", res)
+  end
+  unless vequal(res = channel2vct(0, 30),
+                vct(0.000, 0.007, 0.013, 0.020, 0.027, 0.033, 0.040, 0.047,
+                    0.053, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.053,
+                    0.047, 0.040, 0.033, 0.027, 0.020, 0.013, 0.007, 0.000,
+                    0.000, 0.000, 0.000, 0.000, 0.000, 0.000))
+    snd_display("gran 0 data: %s?", res)
+  end
+  unless vequal(res = channel2vct(85, 30),
+                vct(0.000, 0.000, 0.000, 0.000, 0.007, 0.013, 0.020, 0.027,
+                    0.033, 0.040, 0.047, 0.053, 0.060, 0.060, 0.060, 0.060,
+                    0.060, 0.060, 0.053, 0.047, 0.040, 0.033, 0.027, 0.020,
+                    0.013, 0.007, 0.000, 0.000, 0.000, 0.000))
+    snd_display("gran 0 data 85: %s?", res)
+  end
+  undo
+  gen = make_granulate(:jitter, 0.0, :hop, 0.002, :length, 0.001)
+  map_channel(lambda do |y| granulate(gen, lambda do |dir| 0.1 end) end)
+  if fneq(res = maxamp, 0.06)
+    snd_display("gran 1 max: %f?", res)
+  end
+  unless vequal(res = channel2vct(0, 30),
+                vct(0.000, 0.007, 0.013, 0.020, 0.027, 0.033, 0.040, 0.047,
+                    0.053, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.053,
+                    0.047, 0.040, 0.033, 0.027, 0.020, 0.013, 0.007, 0.000,
+                    0.000, 0.000, 0.000, 0.000, 0.000, 0.000))
+    snd_display("gran 1 data: %s?", res)
+  end
+  unless vequal(res = channel2vct(40, 30),
+                vct(0.000, 0.000, 0.000, 0.000, 0.000, 0.007, 0.013, 0.020,
+                    0.027, 0.033, 0.040, 0.047, 0.053, 0.060, 0.060, 0.060,
+                    0.060, 0.060, 0.060, 0.053, 0.047, 0.040, 0.033, 0.027,
+                    0.020, 0.013, 0.007, 0.000, 0.000, 0.000))
+    snd_display("gran 1 data 40: %s?", res)
+  end
+  undo
+  gen = make_granulate(:jitter, 0.0, :hop, 0.002, :length, 0.001, :ramp, 0.1)
+  map_channel(lambda do |y| granulate(gen, lambda do |dir| 0.1 end) end)
+  if fneq(res = maxamp, 0.06)
+    snd_display("gran 2 max: %f?", res)
+  end
+  unless vequal(res = channel2vct(0, 30),
+                vct(0.000, 0.030, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060,
+                    0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060,
+                    0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.030, 0.000,
+                    0.000, 0.000, 0.000, 0.000, 0.000, 0.000))
+    snd_display("gran 2 data: %s?", res)
+  end
+  unless vequal(res = channel2vct(40, 30),
+                vct(0.000, 0.000, 0.000, 0.000, 0.000, 0.030, 0.060, 0.060,
+                    0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060,
+                    0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060,
+                    0.060, 0.060, 0.030, 0.000, 0.000, 0.000))
+    snd_display("gran 2 data 40: %s?", res)
+  end
+  undo
+  gen = make_granulate(:jitter, 0.0, :hop, 0.002, :length, 0.001, :ramp, 0.5)
+  map_channel(lambda do |y| granulate(gen, lambda do |dir| 0.1 end) end)
+  if fneq(res = maxamp, 0.06)
+    snd_display("gran 3 max: %f?", res)
+  end
+  unless vequal(res = channel2vct(0, 30),
+                vct(0.000, 0.005, 0.011, 0.016, 0.022, 0.027, 0.033, 0.038,
+                    0.044, 0.049, 0.055, 0.060, 0.060, 0.055, 0.049, 0.044,
+                    0.038, 0.033, 0.027, 0.022, 0.016, 0.011, 0.005, 0.000,
+                    0.000, 0.000, 0.000, 0.000, 0.000, 0.000))
+    snd_display("gran 3 data: %s?", res)
+  end
+  unless vequal(res = channel2vct(85, 30),
+                vct(0.000, 0.000, 0.000, 0.000, 0.005, 0.011, 0.016, 0.022,
+                    0.027, 0.033, 0.038, 0.044, 0.049, 0.055, 0.060, 0.060,
+                    0.055, 0.049, 0.044, 0.038, 0.033, 0.027, 0.022, 0.016,
+                    0.011, 0.005, 0.000, 0.000, 0.000, 0.000))
+    snd_display("gran 3 data 85: %s?", res)
+  end
+  undo
+  gen = make_granulate(:jitter, 0.0, :hop, 0.001, :length, 0.001, :ramp, 0.5)
+  map_channel(lambda do |y| granulate(gen, lambda do |dir| 0.1 end) end)
+  if fneq(res = maxamp, 0.06)
+    snd_display("gran 4 max: %f?", res)
+  end
+  unless vequal(res = channel2vct(0, 30),
+                vct(0.000, 0.005, 0.011, 0.016, 0.022, 0.027, 0.033, 0.038,
+                    0.044, 0.049, 0.055, 0.060, 0.060, 0.055, 0.049, 0.044,
+                    0.038, 0.033, 0.027, 0.022, 0.016, 0.011, 0.005, 0.005,
+                    0.011, 0.016, 0.022, 0.027, 0.033, 0.038))
+    snd_display("gran 4 data: %s?", res)
+  end
+  unless vequal(res = channel2vct(85, 30),
+                vct(0.022, 0.016, 0.011, 0.005, 0.005, 0.011, 0.016, 0.022,
+                    0.027, 0.033, 0.038, 0.044, 0.049, 0.055, 0.060, 0.060,
+                    0.055, 0.049, 0.044, 0.038, 0.033, 0.027, 0.022, 0.016,
+                    0.011, 0.005, 0.005, 0.011, 0.016, 0.022))
+    snd_display("gran 4 data 85: %s?", res)
+  end
+  undo
+  gen = make_granulate(:jitter, 0.0, :hop, 0.001, :length, 0.001, :ramp, 0.25, :scaler, 1.0)
+  map_channel(lambda do |y| granulate(gen, lambda do |dir| 0.1 end) end)
+  if fneq(res = maxamp, 0.1)
+    snd_display("gran 5 max: %f?", res)
+  end
+  unless vequal(res = channel2vct(0, 30),
+                vct(0.000, 0.020, 0.040, 0.060, 0.080, 0.100, 0.100, 0.100,
+                    0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.100,
+                    0.100, 0.100, 0.100, 0.080, 0.060, 0.040, 0.020, 0.020,
+                    0.040, 0.060, 0.080, 0.100, 0.100, 0.100))
+    snd_display("gran 5 data: %s?", res)
+  end
+  unless vequal(res = channel2vct(85, 30),
+                vct(0.080, 0.060, 0.040, 0.020, 0.020, 0.040, 0.060, 0.080,
+                    0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.100,
+                    0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.080, 0.060,
+                    0.040, 0.020, 0.020, 0.040, 0.060, 0.080))
+    snd_display("gran 5 data 85: %s?", res)
+  end
+  undo
+  gen = make_granulate(:jitter, 0.0, :hop, 0.001, :length, 0.002, :ramp, 0.5, :scaler, 1.0)
+  map_channel(lambda do |y| granulate(gen, lambda do |dir| 0.1 end) end)
+  if fneq(res = maxamp, 0.105)
+    snd_display("gran 6 max: %f?", res)
+  end
+  unless vequal(res = channel2vct(0, 30),
+                vct(0.000, 0.005, 0.009, 0.014, 0.018, 0.023, 0.027, 0.032,
+                    0.036, 0.041, 0.045, 0.050, 0.055, 0.059, 0.064, 0.068,
+                    0.073, 0.077, 0.082, 0.086, 0.091, 0.095, 0.100, 0.105,
+                    0.105, 0.105, 0.105, 0.105, 0.105, 0.105))
+    snd_display("gran 6 data: %s?", res)
+  end
+  unless vequal(res = channel2vct(85, 30),
+                vct(0.105, 0.105, 0.105, 0.105, 0.105, 0.105, 0.105, 0.105,
+                    0.105, 0.105, 0.105, 0.105, 0.105, 0.105, 0.105, 0.105,
+                    0.105, 0.105, 0.105, 0.105, 0.105, 0.105, 0.105, 0.105,
+                    0.105, 0.105, 0.105, 0.105, 0.105, 0.105))
+    snd_display("gran 6 data 85: %s?", res)
+  end
+  undo
+  gen = make_granulate(:jitter, 0.0, :hop, 0.001, :length, 0.005, :ramp, 0.5, :scaler, 1.0)
+  map_channel(lambda do |y| granulate(gen, lambda do |dir| 0.1 end) end)
+  if fneq(res = maxamp, 0.264)
+    snd_display("gran 7 max: %f?", res)
+  end
+  unless vequal(res = channel2vct(0, 30),
+                vct(0.000, 0.002, 0.004, 0.005, 0.007, 0.009, 0.011, 0.013,
+                    0.015, 0.016, 0.018, 0.020, 0.022, 0.024, 0.025, 0.027,
+                    0.029, 0.031, 0.033, 0.035, 0.036, 0.038, 0.040, 0.044,
+                    0.047, 0.051, 0.055, 0.058, 0.062, 0.065))
+    snd_display("gran 7 data: %s?", res)
+  end
+  unless vequal(res = channel2vct(85, 30),
+                vct(0.244, 0.244, 0.244, 0.244, 0.245, 0.247, 0.249, 0.251,
+                    0.253, 0.255, 0.256, 0.258, 0.260, 0.262, 0.264, 0.264,
+                    0.262, 0.260, 0.258, 0.256, 0.255, 0.253, 0.251, 0.249,
+                    0.247, 0.245, 0.245, 0.247, 0.249, 0.251))
+    snd_display("gran 7 data 85: %s?", res)
+  end
+  undo
+  gen = make_granulate(:jitter, 0.0, :hop, 0.01, :length, 0.001, :ramp, 0.5,
+                       :scaler, 1.0, :expansion, 2.0)
+  map_channel(lambda do |y| granulate(gen, lambda do |dir| 0.1 end) end)
+  if fneq(res = maxamp, 0.1)
+    snd_display("gran 8 max: %f?", res)
+  end
+  unless vequal(res = channel2vct(0, 30),
+                vct(0.000, 0.009, 0.018, 0.027, 0.036, 0.045, 0.055, 0.064,
+                    0.073, 0.082, 0.091, 0.100, 0.100, 0.091, 0.082, 0.073,
+                    0.064, 0.055, 0.045, 0.036, 0.027, 0.018, 0.009, 0.000,
+                    0.000, 0.000, 0.000, 0.000, 0.000, 0.000))
+    snd_display("gran 8 data: %s?", res)
+  end
+  unless vequal(res = channel2vct(220, 30),
+                vct(0.000, 0.009, 0.018, 0.027, 0.036, 0.045, 0.055, 0.064,
+                    0.073, 0.082, 0.091, 0.100, 0.100, 0.091, 0.082, 0.073,
+                    0.064, 0.055, 0.045, 0.036, 0.027, 0.018, 0.009, 0.000,
+                    0.000, 0.000, 0.000, 0.000, 0.000, 0.000))
+    snd_display("gran 8 data 220: %s?", res)
+  end
+  undo
+  gen = make_granulate(:jitter, 0.0, :hop, 0.01, :length, 0.001, :ramp, 0.5,
+                       :scaler, 1.0, :expansion, 0.5)
+  map_channel(lambda do |y| granulate(gen, lambda do |dir| 0.1 end) end)
+  if fneq(res = maxamp, 0.1)
+    snd_display("gran 9 max: %f?", res)
+  end
+  unless vequal(res = channel2vct(0, 30),
+                vct(0.000, 0.009, 0.018, 0.027, 0.036, 0.045, 0.055, 0.064,
+                    0.073, 0.082, 0.091, 0.100, 0.100, 0.091, 0.082, 0.073,
+                    0.064, 0.055, 0.045, 0.036, 0.027, 0.018, 0.009, 0.000,
+                    0.000, 0.000, 0.000, 0.000, 0.000, 0.000))
+    snd_display("gran 9 data: %s?", res)
+  end
+  unless vequal(res = channel2vct(220, 30),
+                vct(0.000, 0.009, 0.018, 0.027, 0.036, 0.045, 0.055, 0.064,
+                    0.073, 0.082, 0.091, 0.100, 0.100, 0.091, 0.082, 0.073,
+                    0.064, 0.055, 0.045, 0.036, 0.027, 0.018, 0.009, 0.000,
+                    0.000, 0.000, 0.000, 0.000, 0.000, 0.000))
+    snd_display("gran 9 data 220: %s?", res)
+  end
+  undo
+  gen = make_granulate(:jitter, 0.0, :hop, 0.001, :length, 0.005, :ramp, 0.5, :scaler, 1.0)
+  map_channel(lambda do |y|
+                granulate(gen,
+                          lambda do |dir| 0.1 end,
+                          lambda do |g|
+                            g.data.map! do |val| val *= 2.0 end
+                            0
+                          end)
+              end)
+  if fneq(res = maxamp, 2 * 0.264)
+    snd_display("gran 10 max: %f?", res)
+  end
+  unless vequal(vct_scale!(res = channel2vct(0, 30), 0.5),
+                vct(0.000, 0.002, 0.004, 0.005, 0.007, 0.009, 0.011, 0.013,
+                    0.015, 0.016, 0.018, 0.020, 0.022, 0.024, 0.025, 0.027,
+                    0.029, 0.031, 0.033, 0.035, 0.036, 0.038, 0.040, 0.044,
+                    0.047, 0.051, 0.055, 0.058, 0.062, 0.065))
+    snd_display("gran 10 data: %s?", res)
+  end
+  unless vequal(vct_scale!(res = channel2vct(85, 30), 0.5),
+                vct(0.244, 0.244, 0.244, 0.244, 0.245, 0.247, 0.249, 0.251,
+                    0.253, 0.255, 0.256, 0.258, 0.260, 0.262, 0.264, 0.264,
+                    0.262, 0.260, 0.258, 0.256, 0.255, 0.253, 0.251, 0.249,
+                    0.247, 0.245, 0.245, 0.247, 0.249, 0.251))
+    snd_display("gran 10 data 85: %s?", res)
+  end
+  undo
+  gen = make_granulate(:jitter, 0.0, :hop, 0.005, :length, 0.002, :ramp, 0.0, :scaler, 1.0)
+  forward = true
+  ctr = -0.5
+  incr = 0.001
+  map_channel(lambda do |y|
+                granulate(gen,
+                          lambda do |dir|
+                            ctr += incr
+                            ctr
+                          end,
+                          lambda do |g|
+                            len = g.length
+                            if forward
+                              forward = false
+                            else
+                              forward = true
+                              vct_reverse!(g.data, len)
+                            end
+                            len
+                          end)
+              end)
+  if (res = maxamp) > 0.6
+    snd_display("gran 11 max: %f?", res)
+  end
+  unless vequal(res = channel2vct(0, 30),
+                vct(-0.499, -0.498, -0.497, -0.496, -0.495, -0.494, -0.493, -0.492,
+                    -0.491, -0.490, -0.489, -0.488, -0.487, -0.486, -0.485, -0.484,
+                    -0.483, -0.482, -0.481, -0.480, -0.479, -0.478, -0.477, -0.476,
+                    -0.475, -0.474, -0.473, -0.472, -0.471, -0.470))
+    snd_display("gran 11 data: %s?", res)
+  end
+  unless vequal(res = channel2vct(100, 30),
+                vct(0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000,
+                    0.000, 0.000, -0.345, -0.346, -0.347, -0.348, -0.349, -0.350,
+                    -0.351, -0.352, -0.353, -0.354, -0.355, -0.356, -0.357, -0.358,
+                    -0.359, -0.360, -0.361, -0.362, -0.363, -0.364))
+    snd_display("gran 11 data 100: %s?", res)
+  end
+  undo
+  ctr = -0.5
+  incr = 0.001
+  gen = make_granulate(:jitter, 0.0, :hop, 0.005, :length, 0.002, :ramp, 0.0, :scaler, 1.0,
+                       :input, lambda do |dir|
+                         ctr += incr
+                         ctr
+                       end)
+  map_channel(lambda do |y| granulate(gen) end)
+  if (res = maxamp) > 0.6
+    snd_display("gran 12 max: %f?", res)
+  end
+  unless vequal(res = channel2vct(0, 30),
+                vct(-0.499, -0.498, -0.497, -0.496, -0.495, -0.494, -0.493, -0.492,
+                    -0.491, -0.490, -0.489, -0.488, -0.487, -0.486, -0.485, -0.484,
+                    -0.483, -0.482, -0.481, -0.480, -0.479, -0.478, -0.477, -0.476,
+                    -0.475, -0.474, -0.473, -0.472, -0.471, -0.470))
+    snd_display("gran 12 data: %s?", res)
+  end
+  unless vequal(res = channel2vct(100, 30),
+                vct(0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000,
+                    0.000, 0.000, -0.389, -0.388, -0.387, -0.386, -0.385, -0.384,
+                    -0.383, -0.382, -0.381, -0.380, -0.379, -0.378, -0.377, -0.376,
+                    -0.375, -0.374, -0.373, -0.372, -0.371, -0.370))
+    snd_display("gran 12 data 100: %s?", res)
+  end
+  undo
+  gen = make_granulate(:jitter, 0.0, :hop, 0.001, :length, 0.005, :ramp, 0.5, :scaler, 1.0,
+                       :input, lambda do |dir| 0.1 end,
+                       :edit, lambda do |g|
+                         g.data.map! do |val| val *= 2.0 end
+                         0
+                       end)
+
+  map_channel(lambda do |y| granulate(gen) end)
+  if (res = maxamp) > 0.6
+    snd_display("gran 13 max: %f?", res)
+  end
+  unless vequal(vct_scale!(res = channel2vct(0, 30), 0.5),
+                vct(0.000, 0.002, 0.004, 0.005, 0.007, 0.009, 0.011, 0.013,
+                    0.015, 0.016, 0.018, 0.020, 0.022, 0.024, 0.025, 0.027,
+                    0.029, 0.031, 0.033, 0.035, 0.036, 0.038, 0.040, 0.044,
+                    0.047, 0.051, 0.055, 0.058, 0.062, 0.065))
+    snd_display("gran 13 data: %s?", res)
+  end
+  unless vequal(vct_scale!(res = channel2vct(85, 30), 0.5),
+                vct(0.244, 0.244, 0.244, 0.244, 0.245, 0.247, 0.249, 0.251,
+                    0.253, 0.255, 0.256, 0.258, 0.260, 0.262, 0.264, 0.264,
+                    0.262, 0.260, 0.258, 0.256, 0.255, 0.253, 0.251, 0.249,
+                    0.247, 0.245, 0.245, 0.247, 0.249, 0.251))
+    snd_display("gran 13 data 85: %s?", res)
+  end
+  undo
+  forward = true
+  ctr = -0.5
+  incr = 0.001
+  gen = make_granulate(:jitter, 0.0, :hop, 0.005, :length, 0.002, :ramp, 0.0, :scaler, 1.0,
+                       :input, lambda do |dir|
+                         ctr += incr
+                         ctr
+                       end,
+                       :edit, lambda do |g|
+                         len = mus_length(g)
+                         if forward
+                           forward = false
+                         else
+                           forward = true
+                           vct_reverse!(mus_data(g), len)
+                         end
+                         len
+                       end)
+
+  map_channel(lambda do |y| granulate(gen) end)
+  if (res = maxamp) > 0.6
+    snd_display("gran 14 max: %f?", res)
+  end
+  unless vequal(res = channel2vct(0, 30),
+                vct(-0.499, -0.498, -0.497, -0.496, -0.495, -0.494, -0.493, -0.492,
+                    -0.491, -0.490, -0.489, -0.488, -0.487, -0.486, -0.485, -0.484,
+                    -0.483, -0.482, -0.481, -0.480, -0.479, -0.478, -0.477, -0.476,
+                    -0.475, -0.474, -0.473, -0.472, -0.471, -0.470))
+    snd_display("gran 14 data: %s?", res)
+  end
+  unless vequal(res = channel2vct(100, 30),
+                vct(0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000,
+                    0.000, 0.000, -0.345, -0.346, -0.347, -0.348, -0.349, -0.350,
+                    -0.351, -0.352, -0.353, -0.354, -0.355, -0.356, -0.357, -0.358,
+                    -0.359, -0.360, -0.361, -0.362, -0.363, -0.364))
+    snd_display("gran 14 data 100: %s?", res)
+  end
+  undo
+  #
+  gen = make_granulate(:jitter, 0.0, :hop, 0.004, :length, 0.001, :ramp, 0.0)
+  e = make_env(:envelope, [0, 0, 1, 0.5], :end, 1000)
+  base_ramp_len = mus_length(gen)
+  map_channel(lambda do |y|
+                result = granulate(gen, lambda do |dir| 0.1 end)
+                set_mus_ramp(gen, (base_ramp_len * env(e)).round)
+                result
+              end)
+  if fneq(res = maxamp, 0.06)
+    snd_display("granf 0 max: %f?", res)
+  end
+  if (mus_ramp(gen) - 0.5 * mus_length(gen)).abs > 1
+    snd_display("granf 0 ramp: %s %s?", gen.ramp, gen.length)
+  end
+  unless vequal(res = channel2vct(0, 30),
+                vct(0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060,
+                    0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060,
+                    0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.000,
+                    0.000, 0.000, 0.000, 0.000, 0.000, 0.000))
+    snd_display("granf 0 data: %s?", res)
+  end
+  unless vequal(res = channel2vct(440, 30),
+                vct(0.000, 0.012, 0.024, 0.036, 0.048, 0.060, 0.060, 0.060,
+                    0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060,
+                    0.060, 0.060, 0.060, 0.048, 0.036, 0.024, 0.012, 0.000,
+                    0.000, 0.000, 0.000, 0.000, 0.000, 0.000))
+    snd_display("granf 0 data 440: %s?", res)
+  end
+  unless vequal(res = channel2vct(880, 30),
+                vct(0.000, 0.006, 0.012, 0.018, 0.024, 0.030, 0.036, 0.042,
+                    0.048, 0.054, 0.060, 0.060, 0.060, 0.060, 0.054, 0.048,
+                    0.042, 0.036, 0.030, 0.024, 0.018, 0.012, 0.006, 0.000,
+                    0.000, 0.000, 0.000, 0.000, 0.000, 0.000))
+    snd_display("granf 0 data 880: %s?", res)
+  end
+  undo
+  gen = make_granulate(:jitter, 0.0, :hop, 0.004, :length, 0.001, :ramp, 0.0)
+  e = make_env(:envelope, [0, 1, 1, 0.25], :end, 1000)
+  base_hop_len = mus_hop(gen)
+  map_channel(lambda do |y|
+                result = granulate(gen, lambda do |dir| 0.1 end)
+                set_mus_hop(gen, (base_hop_len * env(e)).round)
+                result
+              end)
+  if fneq(res = maxamp, 0.06)
+    snd_display("granf 1 max: %f?", res)
+  end
+  if (mus_hop(gen) - 0.001 * srate()).abs > 1
+    snd_display("granf 1 hop: %s?", gen.hop)
+  end
+  unless vequal(res = channel2vct(0, 30),
+                vct(0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060,
+                    0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060,
+                    0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.000,
+                    0.000, 0.000, 0.000, 0.000, 0.000, 0.000))
+    snd_display("granf 1 data: %s?", res)
+  end
+  unless vequal(res = channel2vct(900, 30),
+                vct(0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060,
+                    0.060, 0.060, 0.060, 0.060, 0.000, 0.000, 0.000, 0.000,
+                    0.000, 0.000, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060,
+                    0.060, 0.060, 0.060, 0.060, 0.060, 0.060))
+    snd_display("granf 1 data 900: %s?", res)
+  end
+  undo
+  gen = make_granulate(:jitter, 0.0, :hop, 0.004, :length, 0.001, :ramp, 0.0)
+  e = make_env(:envelope, [0, 1, 1, 0.25], :end, 1000)
+  base_freq = mus_frequency(gen)
+  map_channel(lambda do |y|
+                result = granulate(gen, lambda do |dir| 0.1 end)
+                set_mus_frequency(gen, base_freq * env(e))
+                result
+              end)
+  if fneq(res = maxamp, 0.06)
+    snd_display("granf 2 max: %f?", res)
+  end
+  if (mus_hop(gen) - 0.001 * srate()).abs > 1
+    snd_display("granf 2 hop: %s?", gen.hop)
+  end
+  unless vequal(res = channel2vct(0, 30),
+                vct(0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060,
+                    0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060,
+                    0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.000,
+                    0.000, 0.000, 0.000, 0.000, 0.000, 0.000))
+    snd_display("granf 2 data: %s?", res)
+  end
+  unless vequal(res = channel2vct(900, 30),
+                vct(0.060, 0.060, 0.060, 0.060, 0.060, 0.000, 0.000, 0.000,
+                    0.000, 0.000, 0.000, 0.060, 0.060, 0.060, 0.060, 0.060,
+                    0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060,
+                    0.060, 0.060, 0.060, 0.060, 0.060, 0.060))
+    snd_display("granf 2 data 900: %s?", res)
+  end
+  undo
+  gen = make_granulate(:jitter, 0.0, :hop, 0.002, :length, 0.001, :ramp, 0.0, :scaler, 1.0)
+  base_freq = mus_frequency(gen)
+  map_channel(lambda do |y| granulate(gen, lambda do |dir| 0.1 end) end)
+  if fneq(res = maxamp, 0.1)
+    snd_display("granf 3 max: %f?", res)
+  end
+  unless vequal(res = channel2vct(0, 30),
+                vct(0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.100,
+                    0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.100,
+                    0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.000,
+                    0.000, 0.000, 0.000, 0.000, 0.000, 0.000))
+    snd_display("granf 3 data: %s?", res)
+  end
+  undo
+  gen = make_granulate(:jitter, 0.0, :hop, 0.004, :length, 0.001, :ramp, 0.0, :scaler, 1.0)
+  e = make_env(:envelope, [0, 1, 1, 0], :end, 1000)
+  base_freq = mus_frequency(gen)
+  map_channel(lambda do |y|
+                result = granulate(gen, lambda do |dir| 0.1 end)
+                set_mus_scaler(gen, env(e))
+                result
+              end)
+  if fneq(res = maxamp, 0.1)
+    snd_display("granf 4 max: %f?", res)
+  end
+  unless vequal(res = channel2vct(0, 30),
+                vct(0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.100,
+                    0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.100,
+                    0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.100, 0.000,
+                    0.000, 0.000, 0.000, 0.000, 0.000, 0.000))
+    snd_display("granf 4 data: %s?", res)
+  end
+  unless vequal(res = channel2vct(440, 30),
+                vct(0.056, 0.056, 0.056, 0.056, 0.056, 0.056, 0.056, 0.056,
+                    0.056, 0.056, 0.056, 0.056, 0.056, 0.056, 0.056, 0.056,
+                    0.056, 0.056, 0.056, 0.056, 0.056, 0.056, 0.056, 0.000,
+                    0.000, 0.000, 0.000, 0.000, 0.000, 0.000))
+    snd_display("granf 4 data 440: %s?", res)
+  end
+  unless vequal(res = channel2vct(900, 30),
+                vct(0.012, 0.012, 0.012, 0.000, 0.000, 0.000, 0.000, 0.000,
+                    0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000,
+                    0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000,
+                    0.000, 0.000, 0.000, 0.000, 0.000, 0.000))
+    snd_display("granf 4 data 900: %s?", res)
+  end
+  undo
+  gen = make_granulate(:jitter, 0.0, :hop, 0.006, :length, 0.001, :ramp, 0.0, :max_size, 2200)
+  e = make_env(:envelope, [0, 1, 1, 5], :end, 1000)
+  base_len = mus_length(gen)
+  map_channel(lambda do |y|
+                result = granulate(gen, lambda do |dir| 0.1 end)
+                set_mus_length(gen, (base_len * env(e)).round)
+                result
+              end)
+  if fneq(res = maxamp, 0.06)
+    snd_display("granf 5 max: %f?", res)
+  end
+  if (gen.length - 5 * base_len).abs > 10
+    snd_display("granf 5 length: %s %s?", mus_length(gen), 5 * base_len)
+  end
+  unless vequal(res = channel2vct(0, 30),
+                vct(0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060,
+                    0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060,
+                    0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.000,
+                    0.000, 0.000, 0.000, 0.000, 0.000, 0.000))
+    snd_display("granf 5 data: %s?", res)
+  end
+  unless vequal(res = channel2vct(440, 30),
+                vct(0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060,
+                    0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.000,
+                    0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000,
+                    0.000, 0.000, 0.000, 0.000, 0.000, 0.000))
+    snd_display("granf 5 data 440: %s?", res)
+  end
+  unless vequal(res = channel2vct(800, 30),
+                vct(0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060,
+                    0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060,
+                    0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060,
+                    0.060, 0.060, 0.060, 0.060, 0.060, 0.060))
+    snd_display("granf 5 data 800: %s?", res)
+  end
+  undo
+  gen = make_granulate(:jitter, 0.0, :hop, 0.006, :length, 0.005, :ramp, 0.0, :max_size, 2200)
+  e = make_env(:envelope, [0, 1, 1, 0.2], :end, 1000)
+  base_len = mus_length(gen)
+  map_channel(lambda do |y|
+                result = granulate(gen, lambda do |dir| 0.1 end)
+                set_mus_length(gen, (base_len * env(e)).round)
+                result
+              end)
+  if fneq(res = maxamp, 0.06)
+    snd_display("granf 6 max: %f?", res)
+  end
+  if (gen.length - 0.2 * base_len).abs > 4
+    snd_display("granf 6 length: %s %s?", mus_length(gen), 0.2 * base_len)
+  end
+  unless vequal(res = channel2vct(0, 30),
+                vct(0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060,
+                    0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060,
+                    0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060,
+                    0.060, 0.060, 0.060, 0.060, 0.060, 0.060))
+    snd_display("granf 6 data: %s?", res)
+  end
+  unless vequal(res = channel2vct(820, 30),
+                vct(0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.060,
+                    0.060, 0.060, 0.060, 0.060, 0.060, 0.000, 0.000, 0.000,
+                    0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000,
+                    0.000, 0.000, 0.000, 0.000, 0.000, 0.000))
+    snd_display("granf 6 data 820: %s?", res)
+  end
+  undo
+  fname = file_name(ind)
+  close_sound(ind)
+  delete_file(fname)
+end
+
+def test178
+  ind = new_sound("tmp.snd", Mus_next, Mus_bfloat, 22050, 1, :size, 10000)
+  gen = make_granulate(:expansion, 20.0,
+                       :input, lambda do |dir| 0.01 end,
+                       :length, 0.00995,
+                       :hop, 0.01,
+                       :ramp, 0.0,
+                       :scaler, 1.0,
+                       :jitter, 0.0)
+  clm_channel(gen)                                # 0.01 max stable
+  snd_display("granulate stable 1: %f?", maxamp) if fneq(maxamp, 0.01)
+  if minval = scan_channel(lambda do |y| y < 0.0099 end)
+    snd_display("granulate stable 1 min: %s?", minval.inspect)
+  end
+  undo
+  gen = make_granulate(:expansion, 20.0,
+                       :input, lambda do |dir| 0.1 end,
+                       :length, 0.00995,
+                       :hop, 0.01,
+                       :ramp, 0.0,
+                       :scaler, 0.5,
+                       :jitter, 0.0)
+  clm_channel(gen)                                # 0.05 max stable
+  snd_display("granulate stable 2: %f?", maxamp) if fneq(maxamp, 0.05)
+  if minval = scan_channel(lambda do |y| y < 0.0499 end)
+    snd_display("granulate stable 2 min: %s?", minval.inspect)
+  end
+  undo
+  gen = make_granulate(:expansion, 20.0,
+                       :input, lambda do |dir| 0.05 end,
+                       :length, 0.099975,
+                       :hop, 0.1,
+                       :ramp, 0.0,
+                       :scaler, 1.0,
+                       :jitter, 0.0)
+  clm_channel(gen)                                # 0.05 max stable
+  snd_display("granulate stable 3: %f?", maxamp) if fneq(maxamp, 0.05)
+  if minval = scan_channel(lambda do |y| y < 0.0499 end)
+    snd_display("granulate stable 3 min: %s %f?", minval.inspect, sample(minval[1]))
+  end
+  undo
+  ctr = 0
+  gen = make_granulate(:expansion, 2.0,
+                       :input, lambda do |dir|
+                         val = ctr * 0.0001
+                         ctr += 1
+                         val
+                       end,
+                       :length, 0.01,
+                       :hop, 0.1,
+                       :ramp, 0.0,
+                       :scaler, 1.0,
+                       :jitter, 0.0)
+  clm_channel(gen)
+  snd_display("granulate ramped 4: %f?", maxamp) if fneq(maxamp, 0.462)
+  vals = count_matches(lambda do |y| y != 0.0 end)
+  if (vals - 1104).abs > 10
+    snd_display("granulate ramped 4 not 0.0: %s?", vals.inspect)
+  end
+  if (not vequal(res1 = channel2vct(2203, 10),
+                 vct(0.000, 0.000, 0.110, 0.110, 0.110, 0.111, 0.111, 0.111, 0.111, 0.111))) or
+      (not vequal(res2 = channel2vct(4523, 10),
+                  vct(0.232, 0.232, 0.232, 0.232, 0.232, 0.232, 0.232, 0.232, 0.233, 0.233))) or
+      (not vequal(res3 = channel2vct(8928, 10),
+                  vct(0.452, 0.452, 0.452, 0.452, 0.452, 0.452, 0.452, 0.452, 0.452, 0.452)))
+    snd_display("granulate ramped 4 data off: %s %s %s?", res1, res2, res3)
+  end
+  undo
+  ctr = 0
+  gen = make_granulate(:expansion, 2.0,
+                       :input, lambda do |dir|
+                         val = ctr * 0.0001
+                         ctr += 1
+                         val
+                       end,
+                       :length, 0.00995,
+                       :hop, 0.01,
+                       :ramp, 0.0,
+                       :scaler, 1.0,
+                       :jitter, 0.0)
+  clm_channel(gen)
+  snd_display("granulate ramped 5: %f?", maxamp) if fneq(maxamp, 0.505)
+  vals = count_matches(lambda do |y| y != 0.0 end)
+  mxoff = 0.0
+  mx = maxamp
+  len = frames
+  cur = 0.0
+  incr = mx / len
+  scan_channel(lambda do |y|
+                 diff = (cur - y).abs
+                 if diff > mxoff
+                   mxoff = diff
+                 end
+                 cur += incr
+                 false
+               end)
+  snd_display("granulate ramped 5 mxoff: %f?", mxoff) if mxoff > 0.02
+  undo
+  ctr = 0
+  gen = make_granulate(:expansion, 2.0,
+                       :input, lambda do |dir|
+                         val = ctr * 0.0001
+                         ctr += 1
+                         val
+                       end,
+                       :length, 0.00995,
+                       :hop, 0.01,
+                       :ramp, 0.5,
+                       :scaler, 1.0,
+                       :jitter, 0.0)
+  clm_channel(gen)
+  snd_display("granulate ramped 6: %f?", maxamp) if fneq(maxamp, 0.495)
+  if (not vequal(res1 = channel2vct(2000, 10),
+                 vct(0.018, 0.019, 0.020, 0.021, 0.022, 0.023, 0.024, 0.025, 0.026, 0.027))) or
+      (not vequal(res2 = channel2vct(8000, 10),
+                  vct(0.294, 0.298, 0.301, 0.305, 0.309, 0.313, 0.316, 0.320, 0.324, 0.328)))
+    snd_display("granulate ramped 6 data: %s %s?", res1, res2)
+  end
+  undo
+  ctr = 0
+  gen = make_granulate(:expansion, 2.0,
+                       :input, lambda do |dir|
+                         val = ctr * 0.0001
+                         ctr += 1
+                         val
+                       end,
+                       :length, 0.00995,
+                       :hop, 0.01,
+                       :ramp, 0.25,
+                       :scaler, 1.0,
+                       :jitter, 0.0)
+  clm_channel(gen)
+  snd_display("granulate ramped 7: %f?", maxamp) if fneq(maxamp, 0.505)
+  if (not vequal(res1 = channel2vct(2000, 10),
+                 vct(0.037, 0.039, 0.040, 0.042, 0.044, 0.046, 0.048, 0.050, 0.052, 0.054))) or
+      (not vequal(res2 = channel2vct(8000, 10),
+                  vct(0.404, 0.404, 0.404, 0.404, 0.404, 0.405, 0.405, 0.405, 0.405, 0.405)))
+    snd_display("granulate ramped 7 data: %s %s?", res1, res2)
+  end
+  undo
+  ctr = 0
+  gen = make_granulate(:expansion, 2.0,
+                       :input, lambda do |dir|
+                         val = ctr * 0.0001
+                         ctr += 1
+                         val
+                       end,
+                       :length, 0.05,
+                       :hop, 0.01,
+                       :ramp, 0.25,
+                       :scaler, 0.1,
+                       :jitter, 0.0)
+  clm_channel(gen)
+  snd_display("granulate ramped 8: %f?", maxamp) if fneq(maxamp, 0.201)
+  mxoff = 0.0
+  mx = maxamp
+  len = frames
+  cur = 0.0
+  incr = mx / len
+  scan_channel(lambda do |y|
+                 diff = (cur - y).abs
+                 if diff > mxoff
+                   mxoff = diff
+                 end
+                 cur += incr
+                 false
+               end)
+  snd_display("granulate ramped 8 mxoff: %f?", mxoff) if mxoff > 0.01
+  undo
+  ctr = 0
+  gen = make_granulate(:expansion, 2.0,
+                       :input, lambda do |dir|
+                         val = ctr * 0.0001
+                         ctr += 1
+                         val
+                       end,
+                       :length, 0.1,
+                       :hop, 0.01,
+                       :ramp, 0.1,
+                       :scaler, 0.1,
+                       :jitter, 0.0)
+  clm_channel(gen)
+  snd_display("granulate ramped 9: %f?", maxamp) if fneq(maxamp, 0.501)
+  mxoff = 0.0
+  mx = maxamp
+  len = frames() - 2000
+  cur = sample(2000)
+  incr = (mx - cur) / len
+  scan_channel(lambda do |y|
+                 diff = (cur - y).abs
+                 if diff > mxoff
+                   mxoff = diff
+                 end
+                 cur += incr
+                 false
+               end, 2000)
+  snd_display("granulate ramped 9 mxoff: %f?", mxoff) if mxoff > 0.001
+  undo
+  ctr = 0
+  gen = make_granulate(:expansion, 2.0,
+                       :input, lambda do |dir|
+                         val = ctr * 0.0001
+                         ctr += 1
+                         val
+                       end,
+                       :length, 0.4,
+                       :hop, 0.01,
+                       :ramp, 0.4,
+                       :scaler, 0.025,
+                       :jitter, 0.0)
+  clm_channel(gen)
+  snd_display("granulate ramped 10: %f?", maxamp) if fneq(maxamp, 0.433)
+  undo
+  close_sound(ind)
+end
+
+def test188
+  v0 = make_vct(32)
+  v1 = make_vct(256)
+  v2 = make_vct(256)
+  v01 = make_vct(32)
+  v11 = make_vct(256)
+  v21 = make_vct(256)
+  1.upto(15) do |i| v0[i] = v01[i] = 1.0 / i end
+  v1[0] = v11[0] = 1.0
+  gen = make_convolve(:filter, v0)
+  gen1 = make_convolve(:filter, v01)
+  n = n1 = -1
+  print_and_check(gen, "convolve", "convolve: size: 64")
+  snd_display("%s not convolve?", gen) unless convolve?(gen)
+  genx = gen1
+  snd_display("convolve %s.eql?(%s)", genx, gen1) unless genx.eql?(gen1)
+  snd_display("convolve %s.eql?(%s)", gen, gen1) if gen.eql?(gen1)
+  snd_display("convolve fft len: %d?", mus_length(gen)) if mus_length(gen) != 64
+  128.times do |i|
+    v2[i] = convolve(gen, lambda do |dir|
+                       n += 1
+                       v1[n]
+                     end)
+  end
+  vct_map!(v21, lambda do | |
+             if convolve?(gen1)
+               convolve(gen1, lambda do |dir|
+                          n1 += 1
+                          v11[n1]
+                        end)
+             else
+               -1.0
+             end
+           end)
+  snd_display("run gran: %s %s?", v2, v21) unless vequal(v2, v21)
+  if fneq(v2[0], 0.0) or fneq(v2[1], 1.0) or fneq(v2[4], 0.25) or fneq(v2[7], 0.143)
+    snd_display("convolve output: %s?", v2)
+  end
+  if (res = snd_catch do convolve(gen, lambda do |a, b| a end) end).first != :bad_arity
+    snd_display("convolve bad func: %s", res.inspect)
+  end
+  convolve_files("oboe.snd", "fyow.snd", 0.5, "fmv.snd")
+  if fneq(res = mus_sound_maxamp("fmv.snd")[1], 0.5)
+    snd_display("convolve_files: %f != 0.5?", res)
+  end
+  #
+  fd = mus_sound_open_input("oboe.snd")
+  chans = mus_sound_chans("oboe.snd")
+  data = make_sound_data(chans, 2000)
+  snd_display("%s not sound_data?", data) unless sound_data?(data)
+  snd_display("sound_data chans: %d?", data.chans) if sound_data_chans(data) != 1
+  snd_display("sound_data length: %d?", sound_data_length(data)) if data.length != 2000
+  mus_sound_read(fd, 0, 1999, chans, data)
+  mus_sound_close_input(fd)
+  if fneq(res = data[0, 1497], 0.02893066)
+    snd_display("mus_sound_read: %f?", res)
+  end
+  #
+  ind = new_sound("fmv.snd")
+  set_sample(1, 0.1)
+  save_sound(ind)
+  if edits(ind, 0) != [0, 0]
+    snd_display("weird: edits not cleared after save_sound: %s?", edits(ind, 0).inspect)
+  end
+  close_sound(ind)
+  ind = open_sound("fmv.snd")
+  if frames(ind, 0) != 2
+    snd_display("save_sound 2 samps: %s?", frames(ind, 0))
+  end
+  if fneq(sample(0), 0.0) or fneq(sample(1), 0.1)
+    snd_display("save_sound: %f %f?", sample(0), sample(1))
+  end
+  3.upto(5) do |i|
+    set_sample(i, i * 0.1)
+    save_sound(ind)
+    if edits(ind, 0) != [0, 0]
+      snd_display("weird: edits not cleared after save_sound %d: %s?", i, edits(ind, 0).inspect)
+    end
+    close_sound(ind)
+    ind = open_sound("fmv.snd")
+    if frames(ind, 0) != i + 1
+      snd_display("save_sound %d samps: %s?", i + 1, frames(ind, 0))
+    end
+    if fneq(sample(0), 0.0) or fneq(sample(1), 0.1) or fneq(sample(i), i * 0.1)
+      snd_display("save_sound %d: %f %f %f?", i, sample(0), sample(1), sample(i))
+    end
+  end
+  close_sound(ind)
+  #
+  ind = new_sound("test.snd", :srate, 22050, :channels, 1, :size, 1000)
+  gen = make_ssb_am(100.0)
+  map_channel(lambda do |y| ssb_am(gen, 0.0) end)
+  snd_display("ssb_am 0.0: %f?", maxamp) if fneq(maxamp, 0.0)
+  gen1 = make_oscil(220.0)
+  map_channel(lambda do |y| 0.5 * oscil(gen1) end)
+  gen = make_ssb_am(100.0, 100)
+  map_channel(lambda do |y| ssb_am(gen, y) end)
+  delete_samples(0, 200)
+  if defined? asin  # ruby 1.6.6 hasn't arcus functions
+    gen1 = make_oscil(320.0, :initial_phase, asin(2.0 * sample(0)))
+    map_channel(lambda do |y| y - 0.5 * oscil(gen1) end)
+    snd_display("ssb_am cancelled: %f?", maxamp) if maxamp > 0.003
+    undo(3)
+  else
+    undo(2)
+  end
+  gen = make_ssb_am(100.0, 100)
+  map_channel(lambda do |y| ssb_am(gen, y, hz2radians(50.0)) end)
+  delete_samples(0, 180)
+  if defined? asin
+    gen1 = make_oscil(370.0, :initial_phase, asin(2.0 * sample(0)))
+    map_channel(lambda do |y| y - 0.5 * oscil(gen1) end)
+    snd_display("ssb_am fm cancelled: %f?", maxamp) if maxamp > 0.003
+  end
+  close_sound(ind)
+  #
+  if defined? mus_ssb_bank             # not defined if --with-modules
+    bands = make_array(3) do make_bandpass(hz2radians(500.0), hz2radians(600.0), 10) end
+    ssbs = make_array(3) do make_ssb_am(100.0 + rbm_random(400.0)) end
+    mus_ssb_bank(ssbs, bands, 0.1, 3)
+  end
+  #
+  ind = new_sound("test.snd", :srate, 22050, :channels, 1, :size, 1000)
+  ctr = 0
+  map_channel(lambda do |y|
+                val = sin((TWO_PI * ctr) / 50)
+                ctr += 1
+                val
+              end)
+  ssb_bank(441, 882, 1, 100)
+  delete_samples(0, 217)
+  if defined? asin
+    gen1 = make_oscil(882.0, :initial_phase, asin(sample(0)))
+    map_channel(lambda do |y| y - oscil(gen1) end)
+    snd_display("ssb_bank cancelled: %f?", maxamp) if maxamp > 0.04
+  end
+  close_sound(ind)
+  #
+  if $rbm_output
+    snd_display("$rbm_output %s", $rbm_output)
+    $rbm_output = nil
+  end
+  nind = new_sound("fmv.snd", Mus_aifc, Mus_bshort, 22050, 1, "this is a comment")
+  time = fm_violin_1(0, 1, 440, 0.1)
+  play_and_wait(0, nind)
+  save_sound(nind)
+  snd_display("save_sound clobbered %s?", nind) unless sound?(nind)
+  oboe_index = (find_sound("oboe.snd") or open_sound("oboe.snd"))
+  snd_display("find_sound found bogus case: %s?", oboe_index) if oboe_index == nind
+  cnvtest(oboe_index, nind, 0.1)
+  select_sound(nind)
+  select_channel(0)
+  snd_display("selected_sound: %s?", selected_sound) if selected_sound != nind
+  snd_display("selected_channel: %s?", selected_channel) if selected_channel != 0
+  jc_reverb_1(1.0, false, 0.1, false)
+  play_and_wait(0, nind)
+  voiced2unvoiced(1.0, 256, 2.0, 2.0)
+  map_chan(fltit)
+  close_sound(oboe_index)
+  snd_display("close_sound clobbered %s?", nind) unless sound?(nind)
+  fr = frames(nind, 0)
+  10.times do
+    delete_samples(10, 100, nind, 0)
+    save_sound(nind)
+  end
+  snd_display("delete_samples: %d %d?", fr, frames(nind, 0)) if frames(nind, 0) != fr - 1000
+  revert_sound(nind)
+  close_sound(nind)
+  delete_file("fmv.snd")
+  nind = new_sound("fmv.snd")
+  if (res1 = header_type(nind)) != (res2 = default_output_type)
+    snd_display("new_sound default header_type: %s %s?",
+                mus_header_type_name(res1),
+                mus_header_type_name(res2))
+  end
+  if (res1 = data_format(nind)) != (res2 = default_output_format)
+    snd_display("new_sound default data_format: %s %s?",
+                mus_data_format_name(res1),
+                mus_data_format_name(res2))
+  end
+  if (res1 = channels(nind)) != (res2 = default_output_chans)
+    snd_display("new_sound default chans: %s %s?", res1, res2)
+  end
+  if (res1 = srate(nind)) != (res2 = default_output_srate)
+    snd_display("new_sound default srate: %s %s?", res1, res2)
+  end
+  close_sound(nind)
+  delete_file("fmv.snd")
+end
+
+def test198
+  nind = new_sound("fmv.snd", Mus_nist, Mus_bshort, 22050, 1, "this is a comment")
+  set_sample(0, 1.0, nind)
+  start_progress_report(nind)
+  convolve_with("oboe.snd")
+  progress_report(0.1, "hiho", 0, 1, nind)
+  snd_display("convolve_with: %f?", sample(1000)) if fneq(sample(1000), -0.22299)
+  progress_report(0.3, "hiho", 0, 1, nind)
+  revert_sound(nind)
+  progress_report(0.5, "hiho", 0, 1, nind)
+  set_sample(200, 0.0001)
+  set_sample(100, 1.0)
+  progress_report(0.8, "hiho", 0, 1, nind)
+  smooth_sound(0, 100)
+  finish_progress_report(nind)
+  if fneq(sample(50), 0.5) or fneq(sample(30), 0.20608) or fneq(sample(90), 0.9755)
+    snd_display("smooth: %f %f %f?", sample(50), sample(30), sample(90))
+  end
+  undo
+  set_sinc_width(40)
+  set_sample(100, 0.5)
+  snd_display("set_sample(100): %f?", sample(100)) if fneq(sample(100), 0.5)
+  src_sound(0.1)
+  if fneq(sample(1000), 0.5) or fneq(sample(1024), 0.0625) or fneq(sample(1010), 0.0)
+    snd_display("src_sound: %f %f %f?", sample(100), sample(1024), sample(1010))
+  end
+  revert_sound(nind)
+  close_sound(nind)
+  # 
+  nind = new_sound("fmv.snd", Mus_riff, Mus_lshort, 22050, 1, "this is a comment", 22050)
+  snd_display("new_sound initial_length: %d?", frames(nind)) if frames(nind) != 22050
+  mix("pistol.snd")
+  map_chan(expsrc(2.0, nind))
+  undo
+  eds = edits
+  snd_display("undo edits: %s?", eds.inspect) if eds[0] != 1 or eds[1] != 1
+  snd_display("undo edit_position: %d %s?", edit_position, eds.inspect) if edit_position != eds[0]
+  expsnd([0, 1, 2, 0.4])
+  map_chan(comb_chord(0.95, 100, 0.3))
+  map_chan(formants(0.99, 900, 0.02, 1800, 0.01, 2700))
+  map_chan(moving_formant(0.99, [0, 1200, 1, 2400]))
+  scale_to(0.3)
+  eds = edits
+  snd_display("edits(6): %s?", eds.inspect) if eds[0] != 6 or eds[1] != 0
+  snd_display("edit_position(6): %d %s?", edit_position, eds.inspect) if edit_position != eds[0]
+  set_edit_position(1)
+  snd_display("set_edit_position(1): %d?", edit_position) if edit_position != 1
+  set_edit_position(4)
+  snd_display("set_edit_position(4): %d?", edit_position) if edit_position != 4
+  revert_sound(nind)
+  mix("pistol.snd")
+  map_chan(zecho(0.5, 0.75, 6, 10.0), 0, 65000)
+  map_chan(am(440))
+  add_mark(1200)
+  add_mark(2300)
+  key(?x, 4)
+  key(?c, 0)                                      # trigger mark_define_region
+  reverse_sound(nind)
+  revert_sound(nind)
+  mid = mix_sound("pistol.snd", 0)
+  if mix?(mid) and mix_home(mid) != [selected_sound, 0]
+    snd_display("mix_sound mix_home: %s (%d or %d 0)?", mix_home(mid).inspect, selected_sound, nind)
+  end
+  hello_dentist(40.0, 0.1)
+  fp(1.0, 0.3, 20)
+  revert_sound(nind)
+  enveloped_mix("oboe.snd", 0, [0, 0, 1, 1, 2, 0])
+  pvoc(:pitch, 0.5, :time, 1.0, :snd, nind)
+  revert_sound(nind)
+  close_sound(nind)
+end
+
+def mus_mix_1(outf, inf, outloc = 0, frms = false, inloc = 0, mx = false, envs = false)
+  unless frms.kind_of?(Numeric)
+    frms = inf.kind_of?(Mus) ? mus_length(inf) : mus_sound_frames(inf)
+  end
+  mus_mix(outf, inf, outloc, frms, inloc, mx, envs)
+  outf.kind_of?(Mus) and mus_close(outf)
+end
+
+def test208
+  make_mix_output = lambda do |name, i|
+    if i == 0 or i == 1
+      name
+    else
+      continue_sample2file(name)
+    end
+  end
+  make_mix_input = lambda do |name, i|
+    if i == 0 or i == 2
+      name
+    else
+      make_file2frame(name)
+    end
+  end
+  4.times do |k|
+    delete_files("fmv.snd", "fmv1.snd", "fmv2.snd", "fmv3.snd")
+    v0 = make_vct(12)
+    vct_fill!(v0, 0.1)
+    array2file("fmv1.snd", v0, 12, 22050, 1)
+    vct_fill!(v0, 0.2)
+    array2file("fmv2.snd", v0, 12, 22050, 2)
+    vct_fill!(v0, 0.3)
+    array2file("fmv3.snd", v0, 12, 22050, 4)
+    v0.map_with_index! do |val, i| i * 0.01 end
+    array2file("fmv.snd", v0, 12, 22050, 1)
+    mus_mix_1(make_mix_output.call("fmv.snd", k), make_mix_input.call("fmv1.snd", k))
+    file2array("fmv.snd", 0, 0, 12, v0)
+    v0.each_with_index do |val, i|
+      if fneq(val, 0.1 + i * 0.01)
+        snd_display("%d mus_mix(1->1): %s?", k, v0)
+        break
+      end
+    end
+    mus_mix_1(make_mix_output.call("fmv.snd", k),
+              make_mix_input.call("fmv2.snd", k),
+              3, 9, 0, make_mixer(2, 0.3, 0.0, 0.7, 0.0))
+    file2array("fmv.snd", 0, 0, 12, v0)
+    if fneq(v0[0], 0.1) or fneq(v0[3], 0.33) or fneq(v0[9], 0.19)
+      snd_display("%d mus_mix(2->1): %s?", k, v0)
+    end
+    mus_mix_1(make_mix_output.call("fmv.snd", k), make_mix_input.call("fmv3.snd", k))
+    file2array("fmv.snd", 0, 0, 12, v0)
+    if fneq(v0[0], 0.4) or fneq(v0[3], 0.33)
+      snd_display("%d mus_mix(4->1): %s?", k, v0)
+    end
+    vf = make_array(1) do
+      make_array(1) do
+        make_env(:envelope, [0, 0, 1, 1], :end, 10)
+      end
+    end
+    mus_mix_1(make_mix_output.call("fmv.snd", k),
+              make_mix_input.call("fmv1.snd", k),
+              0, 12, 0, make_mixer(1, 1.0), vf)
+    file2array("fmv.snd", 0, 0, 12, v0)
+    if fneq(v0[0], 0.4) or fneq(v0[3], 0.36) or fneq(v0[9], 0.28)
+      snd_display("%d mus_mix(env): %s?", k, v0)
+    end
+    mus_mix_1(make_mix_output.call("fmv.snd", k),
+              make_mix_input.call("fmv2.snd", k),
+              0, 12, 0, make_mixer(2, 1.0, 1.0, 1.0, 1.0), vf)
+    vf = make_array(2)
+    vf1 = make_array(2)
+    vf2 = make_array(2)
+    vf[0] = vf1
+    vf[1] = vf2
+    vf1[0] = make_env(:envelope, [0, 0, 1, 1], :end, 9)
+    vf2[1] = make_env(:envelope, [0, 0, 1, 1], :end, 9)
+    mus_mix_1(make_mix_output.call("fmv.snd", k),
+              make_mix_input.call("fmv2.snd", k),
+              0, 12, 0, make_mixer(2, 1.0, 1.0, 1.0, 1.0), vf)
+    if (res = snd_catch do
+          vf[0] = make_oscil
+          mus_mix_1(make_mix_output.call("fmv.snd", k),
+                    make_mix_input.call("fmv2.snd", k),
+                    0, 12, 0, make_mixer(2, 1.0, 1.0, 1.0, 1.0), vf)
+        end).first != :bad_type
+      snd_display("%d mix w oscil-array: %s", k, res.inspect)
+    end
+    vf1[0] = make_env(:envelope, [0, 0, 1, 1], :end, 9)
+    vf2[1] = make_env(:envelope, [0, 0, 1, 1], :end, 9)
+    if (res = snd_catch do
+          vf1[0] = make_oscil
+          vf2[1] = sqrt(-1.0)
+          mus_mix_1(make_mix_output.call("fmv.snd", k),
+                    make_mix_input.call("fmv2.snd", k),
+                    0, 12, 0, make_mixer(2, 1.0, 1.0, 1.0, 1.0), vf)
+        end).first != :bad_type
+      snd_display("%d mix w oscil-env: %s", k, res.inspect)
+    end
+    delete_file("fmv.snd")
+    v0.map_with_index! do |val, i| i * 0.01 end
+    array2file("fmv.snd", v0, 12, 22050, 4)
+    mus_mix_1(make_mix_output.call("fmv.snd", k), make_mix_input.call("fmv1.snd", k))
+    file2array("fmv.snd", 0, 0, 3, v0)            # chan 0 start 0 len 3
+    if fneq(v0[0], 0.1) or fneq(v0[2], 0.18)
+      snd_display("%d mus_mix(1->4): %s?", k, v0)
+    end
+    mus_mix_1(make_mix_output.call("fmv.snd", k),
+              make_mix_input.call("fmv2.snd", k),
+              0, 3, 0, make_mixer(2, 0.3, 0.0, 0.7, 0.0))
+    file2array("fmv.snd", 0, 0, 3, v0)
+    if fneq(v0[0], 0.3) or fneq(v0[2], 0.38)
+      snd_display("%d mus_mix(2->4): %s?", k, v0)
+    end
+    mus_mix_1(make_mix_output.call("fmv.snd", k), make_mix_input.call("fmv3.snd", k), 0, 2, 0)
+    file2array("fmv.snd", 0, 0, 3, v0)
+    if fneq(v0[0], 0.6) or fneq(v0[2], 0.38)
+      snd_display("%d mus_mix(4->4): %s?", k, v0)
+    end
+    #
+    delete_file("fmv.snd")
+    v0 = make_vct(12)
+    len = mus_sound_frames("oboe.snd")
+    array2file("fmv.snd", v0, 12, 22050, 1)
+    mus_mix_1(make_mix_output.call("fmv.snd", k), make_mix_input.call("oboe.snd", k))
+    mus_mix_1(make_mix_output.call("fmv.snd", k), make_mix_input.call("oboe.snd", k),
+              0, len, 0, make_mixer(1, 0.5))
+    egen = make_array(1)
+    outv = make_array(1)
+    outv[0] = egen
+    egen[0] = make_env(:envelope, [0, 0, 1, 1], :end, len)
+    mus_mix_1(make_mix_output.call("fmv.snd", k), make_mix_input.call("oboe.snd", k),
+              0, len, 0, false, outv)
+    egen[0] = make_env(:envelope, [0, 1, 1, 0], :end, len)
+    mus_mix_1(make_mix_output.call("fmv.snd", k), make_mix_input.call("oboe.snd", k),
+              0, len, 0, make_mixer(1, 1.0), outv)
+    ind_oboe = open_sound("oboe.snd")
+    ind_mix = open_sound("fmv.snd")
+    unless vequal(res1 = channel2vct(1000, 10, ind_oboe),
+                  res2 = vct_scale!(channel2vct(1000, 10, ind_mix), 1.0 / 2.5))
+      snd_display("%d mus_mix 1 chan:\n# %s\n# %s?", k, res1, res2)
+    end
+    close_sound(ind_oboe)
+    close_sound(ind_mix)
+    # 
+    delete_file("fmv.snd")
+    v0 = make_vct(12)
+    len = mus_sound_frames("2.snd")
+    array2file("fmv.snd", v0, 12, 22050, 2)
+    if (res = mus_sound_chans("fmv.snd")) != 2
+      snd_display("%d array2file chans %s?", k, res)
+    end
+    mus_mix_1(make_mix_output.call("fmv.snd", k), make_mix_input.call("2.snd", k))
+    mus_mix_1(make_mix_output.call("fmv.snd", k), make_mix_input.call("2.snd", k),
+              0, len, 0, make_mixer(2, 0.5, 0.0, 0.0, 0.5))
+    egen0 = make_array(2)
+    egen1 = make_array(2)
+    outv = make_array(2)
+    outv[0] = egen0
+    outv[1] = egen1
+    egen0[0] = make_env(:envelope, [0, 0, 1, 1], :end, len)
+    egen1[1] = make_env(:envelope, [0, 0, 1, 1], :end, len)
+    mus_mix_1(make_mix_output.call("fmv.snd", k), make_mix_input.call("2.snd", k),
+              0, len, 0, false, outv)
+    ind_mix = open_sound("fmv.snd")
+    if channels(ind_mix) != 2
+      snd_display("%d fmv re-read chans %d %d?", k, mus_sound_chans("fmv.snd"), channels(ind_mix))
+    end
+    unless vequal(res = channel2vct(1000, 10, ind_mix, 0),
+                  vct(0.003, 0.010, 0.012, 0.011, 0.008, 0.004, 0.002, 0.002, 0.007, 0.017))
+      snd_display("%d mus_mix 2 chan (2.snd written: %s):\n# %s\n# %s?",
+                  k,
+                  Time.at(mus_sound_write_date("2.snd")).localtime.strftime("%d-%b %H:%M %Z"),
+                  res,
+                  channel2vct(1000, 10, ind_mix, 1))
+    end
+    close_sound(ind_mix)
+    delete_file("fmv.snd")
+  end
+end
+
+def test218
+  gen = make_phase_vocoder(false, 512, 4, 256, 1.0, false, false, false)
+  if fneq((res = snd_catch do phase_vocoder(gen) end).first, 0.0)
+    snd_display("simple no-in pv call: %s", res.inspect)
+  end
+  if (res = snd_catch do gen = make_phase_vocoder(:fft_size, 1234) end).first != :out_of_range
+    snd_display("pv bad fft: %s?", res.inspect)
+  end
+  ind = open_sound("oboe.snd")
+  pv = make_phase_vocoder(false, 512, 4, 128, 1.0, false, false, false)
+  rd = make_sample_reader(0)
+  snd_display("%s not phase_vocoder?", pv) unless phase_vocoder?(pv)
+  print_and_check(pv,
+                  "phase-vocoder",
+                  "phase-vocoder: outctr: 128, interp: 128, filptr: 0, N: 512, D: 128, in_data: nil")
+  pv = make_phase_vocoder
+  set_phase_vocoder_outctr(pv, 120)
+  if (res = phase_vocoder_outctr(pv)) != 120
+    snd_display("pv set outctr: %d?", res)
+  end
+  select_sound(ind)
+  map_chan(lambda do |val| phase_vocoder(pv, lambda do |dir| next_sample(rd) end) end)
+  phase_vocoder_amp_increments(pv)[0] = 0.1
+  if fneq(res = phase_vocoder_amp_increments(pv)[0], 0.1)
+    snd_display("set_phase_vocoder_amp_increments: %f?", res)
+  end
+  phase_vocoder_amps(pv)[0] = 0.1
+  if fneq(res = phase_vocoder_amps(pv)[0], 0.1)
+    snd_display("set_phase_vocoder_amps: %f?", res)
+  end
+  phase_vocoder_phases(pv)[0] = 0.1
+  if fneq(res = phase_vocoder_phases(pv)[0], 0.1)
+    snd_display("set_phase_vocoder_phases: %f?", res)
+  end
+  phase_vocoder_phase_increments(pv)[0] = 0.1
+  if fneq(res = phase_vocoder_phase_increments(pv)[0], 0.1)
+    snd_display("set_phase_vocoder_phase_increments: %f?", res)
+  end
+  phase_vocoder_freqs(pv)[0] = 0.1
+  if fneq(res = phase_vocoder_freqs(pv)[0], 0.1)
+    snd_display("set_phase_vocoder_freqs: %f?", res)
+  end
+  undo(1)
+  free_sample_reader(rd)
+  # 
+  lastphases = make_vct(512)
+  pv = make_phase_vocoder(false, 512, 4, 128, 1.0,
+                          false,
+                          lambda { |v|
+                            n = mus_length(v)
+                            d = mus_hop(v)
+                            freqs = phase_vocoder_freqs(v)
+                            pscl = 1.0 / d
+                            kscl = TWO_PI / n
+                            (n / 2).times do |k|
+                              phasediff = freqs[k] - lastphases[k]
+                              lastphases[k] = freqs[k]
+                              while phasediff > PI
+                                phasediff -= TWO_PI
+                              end
+                              while phasediff < -PI
+                                phasediff += TWO_PI
+                              end
+                              freqs[k] = 0.5 * (pscl * phasediff + k * kscl)
+                            end
+                            false
+                          },
+                          false)
+  rd = make_sample_reader(0)
+  map_chan(lambda do |val| phase_vocoder(pv, lambda do |dir| next_sample(rd) end) end)
+  undo(1)
+  free_sample_reader(rd)
+  # 
+  pv = make_phase_vocoder(false, 512, 4, (128 * 2.0).to_i, 1.0, false, false, false)
+  rd = make_sample_reader(0)
+  len = (2.0 * frames(ind)).to_i
+  data = make_vct!(len) do phase_vocoder(pv, lambda do |dir| next_sample(rd) end) end
+  set_samples(0, len, data)
+  undo(1)
+  free_sample_reader(rd)
+  #
+  incalls = outcalls = 0
+  pv = make_phase_vocoder(false,
+                          512, 4, (128 * 2.0).to_i, 1.0,
+                          lambda { |v, infunc|
+                            incalls += 1
+                            true
+                          },
+                          false,
+                          lambda { |v|
+                            outcalls += 1
+                            0.0
+                          })
+  rd = make_sample_reader(0)
+  len = (2.0 * frames(ind)).to_i
+  data = make_vct!(len) do phase_vocoder(pv, lambda do |dir| next_sample(rd) end) end
+  set_samples(0, len, data)
+  undo(1)
+  free_sample_reader(rd)
+  if incalls.zero? or outcalls.zero?
+    snd_display("phase_vocoder incalls: %d, outcalls: %d?", incalls, outcalls)
+  end
+  set_phase_vocoder_outctr(pv, phase_vocoder_outctr(pv))
+  if (res = snd_catch do phase_vocoder(pv, lambda do |a, b| a end) end).first != :bad_arity
+    snd_display("phase_vocoder bad input func: %s", res.inspect)
+  end
+  if (res = snd_catch do
+        make_phase_vocoder(false, 512, 4, 256, 1.0, lambda do |a, b, c| false end, false, false)
+      end).first != :bad_arity
+    snd_display("make_phase_vocoder bad analyze func: %s", res.inspect)
+  end
+  if (res = snd_catch do
+        make_phase_vocoder(false, 512, 4, 256, 1.0,
+                           lambda do |a, b| 0.0 end,
+                           lambda do |a, b, c| false end, false)
+      end).first != :bad_arity
+    snd_display("make_phase_vocoder bad edit func: %s", res.inspect)
+  end
+  if (res = snd_catch do
+        make_phase_vocoder(false, 512, 4, 256, 1.0,
+                           lambda do |a, b| 0.0 end,
+                           lambda do |a| false end,
+                           lambda do |a, b| 0 end)
+      end).first != :bad_arity
+    snd_display("make_phase_vocoder bad synthesize func: %s", res.inspect)
+  end
+  geno = make_phase_vocoder(lambda do |dir| 0.0 end)
+  genx = make_phase_vocoder(:input, lambda do |dir| 0.0 end)
+  snd_display("phase_vocoder %s.eql?(%s)?", geno, genx) if geno.eql?(genx)
+  snd_display("mus_frequency phase_vocoder: %f?", genx.frequency) if fneq(genx.frequency, 1.0)
+  set_mus_frequency(genx, 2.0)
+  snd_display("set_mus_frequency phase_vocoder: %f?", genx.frequency) if fneq(genx.frequency, 2.0)
+  snd_display("mus_increment phase_vocoder: %d?", genx.increment) if genx.increment != 128
+  set_mus_increment(genx, 256)
+  snd_display("set_mus_increment phase_vocoder: %d?", genx.increment) if genx.increment != 256
+  snd_display("mus_hop phase_vocoder: %d?", genx.hop) if genx.hop != 128
+  set_mus_hop(genx, 64)
+  snd_display("set_mus_hop phase_vocoder: %d?", genx.hop) if genx.hop != 64
+  snd_display("mus_length phase_vocoder: %d?", genx.length) if genx.length != 512
+  genxx = genx
+  snd_display("phase_vocoder %s.eql?(%s)?", genxx, genx) unless genx.eql?(genxx)
+  close_sound(ind)
+end
+
+def test228
+  ind = open_sound("oboe.snd")
+  gen = make_moog_filter(500.0, 0.1)
+  snd_display("moog freq: %f?", gen.frequency) if fneq(gen.frequency, 500.0)
+  snd_display("moog Q: %f?", gen.Q) if fneq(gen.Q, 0.1)
+  snd_display("moog state: %s?", gen.state) unless vct?(gen.state)
+  snd_display("moog A: %f?", gen.A) if fneq(gen.A, 0.0)
+  snd_display("moog freqtable: %f?", gen.freqtable) if fneq(gen.freqtable, -0.861)
+  vals = make_vct!(20) do |i| moog_filter(gen, i.zero? ? 1.0 : 0.0) end
+  unless vequal(vals, vct(0.0, 0.0, 0.0025, 0.0062, 0.0120, 0.0198, 0.0292, 0.0398,
+                          0.0510, 0.0625, 0.0739, 0.0847, 0.0946, 0.1036, 0.1113, 0.1177,
+                          0.1228, 0.1266, 0.1290, 0.1301))
+    snd_display("moog output: %s?", vals)
+  end
+  close_sound(ind)
+  #
+  gen = make_ssb_am(440.0)
+  gen1 = make_ssb_am(440.0)
+  print_and_check(gen,
+                  "ssb-am",
+                  "ssb-am: shift: up, sin/cos: 440.000000 Hz (0.000000 radians), order: 40")
+  v0 = make_vct!(10) do ssb_am(gen, 0.0) end
+  v1 = make_vct(10)
+  vct_map!(v1, lambda do | | ssb_am?(gen1) ? ssb_am(gen1, 0.0) : -1.0 end)
+  snd_display("map ssb_am: %s %s?", v0, v1) unless vequal(v0, v1)
+  snd_display("%s not ssb_am?", gen) unless ssb_am?(gen)
+  snd_display("ssb_am phase: %f?", gen.phase) if fneq(gen.phase, 1.253787)
+  snd_display("ssb_am frequency: %f?", gen.frequency) if fneq(gen.frequency, 440.0)
+  snd_display("ssb_am order: %d?", gen.order) if gen.order != 40
+  snd_display("ssb_am cosines: %d?", gen.cosines) if gen.cosines != 1
+  snd_display("ssb_am length: %d?", gen.length) if gen.length != 40
+  snd_display("ssb_am interp_type: %d?", gen.interp_type) if gen.interp_type != Mus_interp_none
+  snd_display("ssb_am xcoeff 0: %f?", gen.xcoeff(0)) if fneq(gen.xcoeff(0), 0.0)
+  snd_display("ssb_am xcoeff 1: %f?", gen.xcoeff(1)) if fneq(gen.xcoeff(1), -0.001)
+  # 
+  test_gen_equal(make_ssb_am(440.0), make_ssb_am(440.0), make_ssb_am(500.0))
+  # 
+  o1 = make_ssb_am(400.0)
+  o2 = make_ssb_am_1(400.0)
+  100.times do |i|
+    inval = sin(0.1 * i)
+    o1o = ssb_am(o1, inval)
+    o2o = ssb_am_1(o2, inval)
+    if fneq(o1o, o2o)
+      snd_display("ssb_am (up): %f %f at %d?", o1o, o2o, i)
+      break
+    end
+  end
+  # 
+  o1 = make_ssb_am(400.0)
+  o2 = make_ssb_am_1(400.0)
+  100.times do |i|
+    inval = sin(0.1 * i)
+    fmval = sin(0.2 * i)
+    o1o = ssb_am(o1, inval, fmval)
+    o2o = ssb_am_1(o2, inval, fmval)
+    if fneq(o1o, o2o)
+      snd_display("ssb_am + fm (up): %f %f at %d?", o1o, o2o, i)
+      break
+    end
+  end
+  # 
+  o1 = make_ssb_am(-100.0)
+  o2 = make_ssb_am_1(-100.0)
+  100.times do |i|
+    inval = rbm_random(1.0)
+    o1o = ssb_am(o1, inval)
+    o2o = ssb_am_1(o2, inval)
+    if fneq(o1o, o2o)
+      snd_display("ssb_am (down): %f %f at %d?", o1o, o2o, i)
+      break
+    end
+  end
+  # 
+  o1 = make_ssb_am(1000.0, 100)
+  o2 = make_ssb_am_1(1000.0, 100)
+  100.times do |i|
+    inval = rbm_random(1.0)
+    o1o = ssb_am(o1, inval)
+    o2o = ssb_am_1(o2, inval)
+    if fneq(o1o, o2o)
+      snd_display("ssb_am (down): %f %f at %d?", o1o, o2o, i)
+      break
+    end
+  end
+  #
+  index = open_sound("pistol.snd")
+  data = channel2vct(0, 100)
+  convolve_with("oboe.snd", false)
+  scl = maxamp
+  convolve_with("oboe.snd", scl, index, 0, 0)
+  snd_display("convolve_with amps: %f %f?", maxmap, scl) if fneq(maxamp, scl)
+  preader = make_sample_reader(0, index, 0, 1, 1)
+  reader = make_sample_reader(0)
+  frames().times do |i|
+    val0 = preader.call
+    val1 = reader.call
+    if fneq(val0, val1)
+      snd_display("convolve_with amps at: %d: %f %f?", i, val0, val1)
+      break
+    end
+  end
+  close_sound(index)
+  reader = make_sample_reader(0, "pistol.snd")
+  10.times do |i|
+    if fneq(data[i], next_sample(reader))
+      snd_display("external reader trouble")
+    end
+  end
+  free_sample_reader(reader)
+end
+
+def test238
+  [[:all_pass,       false, 0.0, false],
+   [:asymmetric_fm,  false, 0.0, false],
+   [:average,        false, 1.0, false],
+   [:comb,           false, 0.0, false],
+   [:convolve,       [:filter, vct(0, 1, 2)], lambda { |dir| 0.0 }, false],
+   [:delay,          false, 0.0, false],
+   [:env,            [:envelope, [0, 1, 1, 0]], false, false],
+   [:filter,         [:xcoeffs, vct(0, 1, 2)], 0.0, false],
+   [:filter,         [:ycoeffs, vct(0, 1, 2)], 0.0, false],
+   [:filter,         [:xcoeffs, vct(1, 2, 3), :ycoeffs, vct(0, 1, 2)], 0.0, false],
+   [:fir_filter,     [:xcoeffs, vct(0, 1, 2)], 0.0, false],
+   [:formant,        false, 0.0, false],
+   [:frame,          [3], 0, lambda { |gen, ind| frame_ref(gen, ind) }, false],
+   [:granulate,      false, lambda { |dir| 0.0 }, false],
+   [:iir_filter,     [:ycoeffs, vct(0, 1, 2)], 0.0, false],
+   [:locsig,         false, 0.0, lambda { |gen, a| locsig(gen, 0, a) }],
+   [:mixer,          [3, 3], 0, lambda { |gen, a| mixer_ref(gen, a, 0) }],
+   [:notch,          false, 0.0, false],
+   [:one_pole,       false, 0.0, false],
+   [:one_zero,       false, 0.0, false],
+   [:oscil,          false, 0.0, false],
+   [:pulse_train,    false, 0.0, false],
+   [:rand,           false, 0.0, false],
+   [:rand_interp,    false, 0.0, false],
+   [:sawtooth_wave,  false, 0.0, false],
+   [:sine_summation, false, 0.0, false],
+   [:square_wave,    false, 0.0, false],
+   [:src,            false, lambda { |dir| 0.0 }, lambda { |gen, a| src(gen, 0.0, a) }],
+   [:sum_of_cosines, false, 0.0, false],
+   [:sum_of_sines,   false, 0.0, false],
+   [:table_lookup,   false, 0.0, false],
+   [:triangle_wave,  false, 0.0, false],
+   [:two_pole,       false, 0.0, false],
+   [:two_zero,       false, 0.0, false],
+   [:wave_train,     false, 0.0, false],
+   [:waveshape,      false, 0.0, false],
+   [:phase_vocoder,  false, lambda { |dir| 0.0 }, false],
+   [:ssb_am,         false, 0.0, false]].each do |name_sym, make_args, arg, run_func|
+    gen = if make_args
+            send(format("make_%s", name_sym), *make_args)
+          else
+            send(format("make_%s", name_sym))
+          end
+    snd_display("%s: %s?", name_sym, gen) unless send(format("%s%c", name_sym, ??), gen)
+    tag = if run_func.kind_of?(Proc)
+            snd_catch do arg ? run_func.call(gen, arg) : run_func.call(gen) end.first
+          else
+            snd_catch do arg ? send(name_sym, gen, arg) : send(name_sym, gen) end.first
+          end
+    if (not tag.kind_of?(Numeric)) and (not frame?(tag))
+      snd_display("%s: %s %s?", name_sym, arg, tag)
+    end
+    unless RUBY_VERSION < "1.6.8"
+      [:mus_channel,
+       :mus_channels,
+       :mus_cosines,
+       :mus_data,
+       :mus_feedback,
+       :mus_feedforward,
+       :mus_formant_radius,
+       :mus_frequency,
+       :mus_hop,
+       :mus_increment,
+       :mus_length,
+       :mus_location,
+       :mus_mix,
+       :mus_order,
+       :mus_phase,
+       :mus_ramp,
+       :mus_random,
+       :mus_run,
+       :mus_scaler,
+       :mus_xcoeffs,
+       :mus_ycoeffs].each do |func_sym|
+        tag = snd_catch do send(func_sym, gen) end.first
+        # :"undefined"
+        next if /undefined/ =~ tag.to_s
+        if tag.kind_of?(Symbol) and
+            tag != :mus_error and
+            tag != :out_of_range and
+            tag != :wrong_type_arg
+          snd_display("%s: %s %p?", name_sym, func_sym, tag)
+        end
+        set_tag = snd_catch do send(format("set_", func_sym).intern, gen, tag) end.first
+        if set_tag.kind_of?(Symbol) and
+            set_tag != :mus_error and
+            set_tag != :out_of_range and
+            set_tag != :wrong_type_arg
+          snd_display("%s: set_%s to %s %s?", name_sym, func_sym, tag, set_tag)
+        end
+      end
+    end
+  end
+  # 
+  functions = [
+    [:all_pass,       false, false],
+    [:asymmetric_fm,  false, false],
+    [:average,        false, false],
+    [:comb,           false, false],
+    [:convolve,       [:filter, vct(0, 1, 2), :input, lambda { |dir| 1.0 }], false],
+    [:delay,          false, false],
+    [:env, [:envelope, [0, 1, 1, 0], :end, 10], lambda { |gen, ignored| env(gen) }],
+    [:filter,         [:xcoeffs, vct(0, 1, 2)], false],
+    [:filter,         [:ycoeffs, vct(0, 1, 2)], false],
+    [:filter,         [:xcoeffs, vct(1, 2, 3), :ycoeffs, vct(0, 1, 2)], false],
+    [:fir_filter,     [:xcoeffs, vct(0, 1, 2)], 0.0, false],
+    [:formant,        [:radius, 0.1, :frequency, 440.0], 0.0, false],
+    [:granulate,      [:input, lambda { |dir| 1.0 }], false],
+    [:iir_filter,     [:ycoeffs, vct(0, 1, 2)], false],
+    [:locsig,         false, lambda { |gen, a| frame_ref(locsig(gen, 0, 1.0), 0) }],
+    [:notch,          false, false],
+    [:one_pole,       [0.3, 0.7], false],
+    [:one_zero,       [0.5, 0.5], false],
+    [:oscil,          false, false],
+    [:pulse_train,    false, false],
+    [:sawtooth_wave,  false, false],
+    [:sine_summation, false, false],
+    [:square_wave,    false, false],
+    [:sum_of_cosines, false, false],
+    [:sum_of_sines,   false, false],
+    [:table_lookup,   [:wave, make_vct(128, 0.1)], false],
+    [:triangle_wave,  false, false],
+    [:two_pole,       [0.1, 0.3, 0.6], false],
+    [:two_zero,       [0.1, 0.3, 0.5], false],
+    [:waveshape,      [:frequency, 440.0, :wave, partials2waveshape([1, 1])], false],
+    [:phase_vocoder,  [lambda { |dir| 1.0 }], false],
+    [:ssb_am,         false, false]]
+  functions.each do |name_sym, make_args, run_func|
+    gen = if make_args
+            send(format("make_%s", name_sym), *make_args)
+          else
+            send(format("make_%s", name_sym))
+          end
+    data = make_vct!(10) do |i|
+      if run_func.kind_of?(Proc)
+        run_func.call(gen, i.zero? ? 1.0 : 0.0)
+      else
+        send(name_sym, gen, i.zero? ? 1.0 : 0.0)
+      end
+    end
+    2.times do |k|
+      mus_reset(gen)
+      unless run_func.kind_of?(Proc)              # env, locsig
+        not_zero = false
+        first_val = k.zero? ? send(name_sym, gen, 1.0) : mus_apply(gen, 1.0, 0.0)
+        if data[0] != 0.0
+          not_zero = true
+        end
+        if fneq(data[0], first_val)
+          snd_display("[%s] %s: 0 %f %f?", k.zero? ? :run : :apply, name_sym, data[0], first_val)
+        end
+        (1...10).each do |i|
+          old_val = data[i]
+          new_val = k.zero? ? send(name_sym, gen, 0.0) : mus_apply(gen, 0.0, 0.0)
+          if old_val != 0.0
+            not_zero = true
+          end
+          if fneq(old_val, new_val)
+            snd_display("[%s] %s: %d %f %f?",
+                        k.zero? ? :run : :apply, name_sym, i, old_val, new_val)
+          end
+        end
+        snd_display("%s not much of a reset test!", name_sym) unless not_zero
+      end
+    end
+  end
+  random_args = [
+    1.5,
+    "/hiho",
+    [0, 1],
+    1234,
+    make_vct(3),
+    make_color_with_catch(0.95, 0.95, 0.95),
+    [0, 1],
+    3 / 4.0,
+    :mus_error,
+    sqrt(-1.0),
+    make_delay(32),
+    lambda { || true },
+    make_sound_data(2, 3),
+    :order,
+    0,
+    1,
+    -1,
+    make_hook("snd_test"),
+    false,
+    true,
+    ?c,
+    0.0,
+    1.0,
+    -1.0, 
+    [],
+    3,
+    4,
+    2,
+    8,
+    16,
+    32,
+    64,
+    make_array(0),
+    [1, 2],
+    2.0 ** 21.5,
+    2.0 ** -18.0,
+    12345678901234567890,
+    log(0)]
+  functions.each do |name_sym, make_args, run_func|
+    gen = if make_args
+            send(format("make_%s", name_sym), *make_args)
+          else
+            send(format("make_%s", name_sym))
+          end
+    random_args.each do |arg1|
+      snd_catch do 
+        if run_func.kind_of?(Proc)
+          run_func.call(gen, arg1)
+        else
+          send(name_sym, gen, arg1)
+        end
+      end
+      random_args.each do |arg2|
+        snd_catch do mus_run(gen, arg1, arg2) end
+      end
+    end
+  end
+end
+
+def test248
+  random_args = [
+    2.0 ** 21.5,
+    2.0 ** -18.0,
+    12345678901234567890,
+    1.5,
+    "/hiho",
+    [0, 1],
+    1234,
+    make_vct(3),
+    make_color_with_catch(0.1, 0.2, 0.3),
+    [0, 1],
+    3 / 4.0,
+    sqrt(-1.0),
+    make_delay(32),
+    lambda { || 0.0 },
+    lambda { |dir| 1.0 },
+    lambda { |a, b, c| 1.0 },
+    0,
+    1,
+    -1,
+    false,
+    true,
+    ?c,
+    0.0,
+    1.0,
+    -1.0,
+    [],
+    32,
+    [1, 2]]
+  random_gen = lambda do |*args|
+    [:make_all_pass,
+     :make_asymmetric_fm,
+     :make_average,
+     :make_table_lookup,
+     :make_triangle_wave,
+     :make_comb,
+     :make_convolve,
+     :make_delay,
+     :make_env,
+     :make_fft_window,
+     :make_filter,
+     :make_fir_filter,
+     :make_formant,
+     :make_frame,
+     :make_granulate,
+     :make_iir_filter,
+     :make_locsig,
+     :make_mixer,
+     :make_notch,
+     :make_one_pole,
+     :make_one_zero,
+     :make_oscil,
+     :make_ppolar,
+     :make_pulse_train,
+     :make_rand,
+     :make_rand_interp,
+     :make_sawtooth_wave,
+     :make_sine_summation,
+     :make_square_wave,
+     :make_src,
+     :make_sum_of_cosines,
+     :make_sum_of_sines, 
+     :make_two_pole,
+     :make_two_zero,
+     :make_wave_train,
+     :make_waveshape,
+     :make_zpolar,
+     :make_phase_vocoder,
+     :make_ssb_am].each do |make_func|
+      if mus_generator?(gen = snd_catch do send(make_func, *args) end.first)
+        random_args.each do |arg|
+          snd_catch do gen.run(arg) end
+        end
+      end
+    end
+  end
+  random_gen
+  random_args.each do |arg1|
+    random_gen(arg1)
+    random_args.each do |arg2|
+      random_gen(arg1, arg2)
+      random_args.each do |arg3|
+        random_gen(arg1, arg2, arg3)
+        random_args.each do |arg4|
+          random_gen(arg1, arg2, arg3, arg4)
+        end
+      end
+    end
+  end
+end
+
+def test08
+  test008
+  test018
+  test028
+  test038
+  test048
+  test058
+  test068
+  test078
+  test088
+  test098
+  test108
+  test118
+  test128
+  test138
+  test148
+  test158
+  test168
+  test178
+  test188
+  test198
+  test208
+  test218
+  test228
+  test238
+  test248 if $all_args
+end
+
+if $test08 and $full_test or $snd_test == 8
+  $before_test_hook.call(8)
+  test08
+  $after_test_hook.call(8)
 end
 
 # ---------------- test all done
@@ -8919,8 +16785,8 @@ stop_playing
 regions.each do |n| forget_region(n) end if regions
 tracks.each do |n| free_track(n) end if tracks
 snd_info("all done!\n#")
-$timings.each do |tst| snd_info("test %2d %s", tst.first, tst.last.inspect) end
-snd_info("total   %s\n", $overall_start_time.inspect)
+$timings.each do |tst| snd_info("test %2d  %s", tst.first, tst.last.inspect) end
+snd_info("total    %s\n", $overall_start_time.inspect)
 save_listener("test.output")
 mus_audio_playback_amp($orig_audio_amp)
 

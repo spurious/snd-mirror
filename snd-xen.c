@@ -2618,26 +2618,18 @@ static XEN g_snd_stdin_test(XEN str)
 
 static XEN g_gc_off(void) 
 {
-  #define H_gc_off "(" S_gc_off ") turns off garbage collection"
-#if HAVE_GUILE
-  ++scm_block_gc; 
-#else
+  #define H_gc_off "(" S_gc_off ") turns off garbage collection (Ruby only)"
 #if HAVE_RUBY && HAVE_RB_GC_DISABLE
   rb_gc_disable();
-#endif
 #endif
   return(XEN_FALSE);
 }
 
 static XEN g_gc_on(void) 
 {
-  #define H_gc_on "(" S_gc_on ") turns on garbage collection"
-#if HAVE_GUILE
-  --scm_block_gc; 
-#else
+  #define H_gc_on "(" S_gc_on ") turns on garbage collection (Ruby only)"
 #if HAVE_RUBY && HAVE_RB_GC_DISABLE
   rb_gc_enable();
-#endif
 #endif
   return(XEN_FALSE);
 }

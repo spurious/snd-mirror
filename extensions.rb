@@ -2,104 +2,109 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sat Jan 03 17:30:23 CET 2004
-# Last: Sat Mar 05 03:26:02 CET 2005
+# Last: Tue Mar 15 03:10:31 CET 2005
 
 # Commentary:
-#
+# 
 # module Compatibility
-# 
-# scan_sound_chans(beg, end, snd, edpos) do |y| ... end
-# map_sound_chans(beg, end, edname, snd, edpos) do |y| ... end
-# scan_all_chans(beg, end, edpos) do |y| ... end
-# map_all_chans(beg, end, edname, edpos) do |y| ... end
-# scan_chans(beg, end, edpos) do |y| ... end
-# map_chans(beg, end, edname, edpos) do |y| ... end
-# scan_across_all_chans(beg, end, snd, edpos) do |data, chns| ... end
-# map_across_all_chans(beg, end, edname, snd, edpos) do |data, chns| ... end
-# 
-# forward_sample(count, snd, chn)
-# backward_sample(count, snd, chn)
-# 
-# dismiss_all_dialogs
-# 
-# back_or_forth_graph(count)
-# forward_graph(count)
-# backward_graph(count)
-# back_or_forth_mix(count)
-# forward_mix(count)
-# backward_mix(count)
-# back_or_forth_mark(count)
-# forward_mark(count)
-# backward_mark(count)
-# sound_data_channel2list(sd, chan)
-# sound_data2list(sd)
-# vct_convolve!(r1, r2)
-# mus_bank(gens, amps, in1, in2)
-# oscil_bank(amps, gens, in1, in2)
-# vct2samples(samp, samps, data, snd, chn)
-# samples2vct(samp, samps, snd, chn, nv, epos)
-# scale_sound_by(scl, beg, dur, snd, chn, edpos)
-# scale_sound_to(norm, beg, dur, snd, chn)
+#  scan_sound_chans(beg, end, snd, edpos) do |y| ... end
+#  map_sound_chans(beg, end, edname, snd, edpos) do |y| ... end
+#  scan_all_chans(beg, end, edpos) do |y| ... end
+#  map_all_chans(beg, end, edname, edpos) do |y| ... end
+#  scan_chans(beg, end, edpos) do |y| ... end
+#  map_chans(beg, end, edname, edpos) do |y| ... end
+#  scan_across_all_chans(beg, end, snd, edpos) do |data, chns| ... end
+#  map_across_all_chans(beg, end, edname, snd, edpos) do |data, chns| ... end
+#  
+#  forward_sample(count, snd, chn)
+#  backward_sample(count, snd, chn)
+#  
+#  dismiss_all_dialogs
+#  
+#  back_or_forth_graph(count)
+#  forward_graph(count)
+#  backward_graph(count)
+#  back_or_forth_mix(count)
+#  forward_mix(count)
+#  backward_mix(count)
+#  back_or_forth_mark(count)
+#  forward_mark(count)
+#  backward_mark(count)
+#  sound_data_channel2list(sd, chan)
+#  sound_data2list(sd)
+#  vct_convolve!(r1, r2)
+#  old_map_channel(beg, dur, snd, chn, edpos, edname, &func)
+#  mus_bank(gens, amps, in1, in2)
+#  oscil_bank(amps, gens, in1, in2)
+#  old_formant_bank(amps, gens, in1)
+#  vct2samples(samp, samps, data, snd, chn)
+#  samples2vct(samp, samps, snd, chn, nv, epos)
+#  scale_sound_by(scl, beg, dur, snd, chn, edpos)
+#  scale_sound_to(norm, beg, dur, snd, chn)
 #
 # module Extensions
-#
-# channel_property(key, snd, chn)  set_channel_property(key, val, snd, chn)
-# sound_property(key, snd)         set_sound_property(key, val, snd)
-# channel_sync(snd, chn)           set_channel_sync(val, snd, chn)
-# show_sound_properties(snd)
-# show_channel_properties(snd, chn)
-#
-# remember_all_sound_properties(database, tmp_snd_p)
-# class Remember_sound_properties
-#   initialize(database)
-#   inspect
-#   with_db do |db| ... end
-#   load(snd)
-#   save(snd)
-#   each do |k, v| ... end
-#   delete_if do |k, v| ... end
-#   contents
-#   reorganize
-#   help
-#
-# add_comment(comm, samp, snd, chn)
-# remove_comment(comm, snd, chn)
-# show_comment(snd, chn)
-#
-# marks?(more_than_one)
-# all_chans
-# normalized_mix(fname, beg, in_chan, snd, chn)
-# enveloped_mix(fname, beg, env, del_tmp)
-#
-# map_sound_files(*args) do |f| ... end
-# for_each_sound_file(*args) do |f| ... end
-# match_sound_files(*args) do |f| ... end
-#
-# selection_members
-# make_selection(beg, len, snd, chn)
-# delete_selection_and_smooth()
-# eval_over_selection(func)
-#
-# check_for_unsaved_edits(check)
-# remember_sound_state
-#
-# mix_channel(fdata, beg, dur, snd, chn, edpos)
-# insert_channel(fdata, beg, dur, snd, chn, edpos)
-# redo_channel(edits, snd, chn)
-# undo_channel(edits, snd, chn)
-#
-# any_env_channel(env, beg, dur, snd, chn, edpos) do |r0, r1, b, d, s, c, e| ... end
-# sine_ramp(rmp0, rmp1, beg, dur, snd, chn, edpos)
-# sine_env_channel(env, beg, dur, snd, chn, edpos)
-# blackman4_ramp(rmp0, rmp1, beg, dur, snd, chn, edpos)
-# blackman4_env_channel(env, beg, dur, snd, chn, edpos)
-# ramp_squared(rmp0, rmp1, symmetric, beg, dur, snd, chn, edpos)
-# env_squared_channel(env, symmetric, beg, dur, snd, chn, edpos)
-# ramp_expt(rmp0, rmp1, exponent, symmetric, beg, dur, snd, chn, edpos)
-# env_expt_channel(env, exponent, symmetric, beg, dur, snd, chn, edpos)
-# offset_channel(amount, beg, dur, snd, chn, edpos)
-# dither_channel(amnt, beg, dur, snd, chn, edpos)
-# contrast_channel(index, beg, dur, snd, chn, edpos)
+#  channel_property(key, snd, chn)  set_channel_property(key, val, snd, chn)
+#  sound_property(key, snd)         set_sound_property(key, val, snd)
+#  channel_sync(snd, chn)           set_channel_sync(val, snd, chn)
+#  show_sound_properties(snd)
+#  show_channel_properties(snd, chn)
+#  
+#  remember_all_sound_properties(database, tmp_snd_p)
+#  class Remember_sound_properties
+#    initialize(database)
+#    inspect
+#    with_db do |db| ... end
+#    load(snd)
+#    save(snd)
+#    each do |k, v| ... end
+#    delete_if do |k, v| ... end
+#    contents
+#    reorganize
+#    help
+#  
+#  add_comment(comm, samp, snd, chn)
+#  remove_comment(comm, snd, chn)
+#  show_comments(snd, chn)
+#  
+#  marks?(more_than_one)
+#  all_chans
+#  normalized_mix(fname, beg, in_chan, snd, chn)
+#  enveloped_mix(fname, beg, env, del_tmp)
+#  
+#  map_sound_files(*args) do |f| ... end
+#  for_each_sound_file(*args) do |f| ... end
+#  match_sound_files(*args) do |f| ... end
+#  
+#  selection_members
+#  make_selection(beg, len, snd, chn)
+#  delete_selection_and_smooth()
+#  eval_over_selection(func)
+#  
+#  check_for_unsaved_edits(check)
+#  remember_sound_state
+#  
+#  mix_channel(fdata, beg, dur, snd, chn, edpos)
+#  insert_channel(fdata, beg, dur, snd, chn, edpos)
+#  redo_channel(edits, snd, chn)
+#  undo_channel(edits, snd, chn)
+#  
+#  any_env_channel(env, beg, dur, snd, chn, edpos) do |r0, r1, b, d, s, c, e| ... end
+#  sine_ramp(rmp0, rmp1, beg, dur, snd, chn, edpos)
+#  sine_env_channel(env, beg, dur, snd, chn, edpos)
+#  blackman4_ramp(rmp0, rmp1, beg, dur, snd, chn, edpos)
+#  blackman4_env_channel(env, beg, dur, snd, chn, edpos)
+#  ramp_squared(rmp0, rmp1, symmetric, beg, dur, snd, chn, edpos)
+#  env_squared_channel(env, symmetric, beg, dur, snd, chn, edpos)
+#  ramp_expt(rmp0, rmp1, exponent, symmetric, beg, dur, snd, chn, edpos)
+#  env_expt_channel(env, exponent, symmetric, beg, dur, snd, chn, edpos)
+#  offset_channel(amount, beg, dur, snd, chn, edpos)
+#  dither_channel(amnt, beg, dur, snd, chn, edpos)
+#  contrast_channel(index, beg, dur, snd, chn, edpos)
+#  channels_eql?(snd1, chn1, snd2, chn2, allowable_difference)
+#  channels_equal?(snd1, chn1, snd2, chn2, allowable_difference)
+#  mono2stereo(new_name, snd1, chn1, snd2, chn2)
+#  mono_files2stereo(new_name, chan1_name, chan2_name)
+#  stereo2mono(orig_snd, chan1_name, chan2_name)
 
 # Comments are mostly taken from extensions.scm.
 
@@ -109,14 +114,13 @@ require "examp"
 require "hooks"
 include Math
 
-def sounds2array
-  (sounds or []).reverse
-end
-
 module Compatibility
   # 
   # Snd-4 compatibility stuff
   # 
+  add_help(:scan_sound_chans,
+           "scan_sound_chans([beg=0, [end=flase, [snd=false, [edpos=false]]]], &proc) \
+applies scan_chan with proc to each channel in a sound")
   def scan_sound_chans(beg = 0, fin = false, snd = false, edpos = false, &body)
     # Proc#arity returns -1 instead of 1 on older versions
     if body and body.arity.abs == 1
@@ -131,6 +135,9 @@ module Compatibility
     end
   end
 
+  add_help(:map_sound_chans,
+           "map_sound_chans([beg=0, [end=flase, [snd=false, [edpos=false]]]], &proc) \
+applies map_chan with proc to each channel in a sound")
   def map_sound_chans(beg = 0, fin = false, edname = false, snd = false, edpos = false, &body)
     if body and body.arity.abs == 1
       channels(snd).times do |chn| map_chan(body, beg, fin, edname, snd, chn, edpos) end
@@ -139,6 +146,9 @@ module Compatibility
     end
   end
 
+  add_help(:scan_all_chans,
+           "scan_all_chans([beg=0, [end=flase, [edpos=false]]], &proc) \
+applies scan_chan with proc to all channels (all sounds)")
   def scan_all_chans(beg = 0, fin = false, edpos = false, &body)
     if body and body.arity.abs == 1
       catch(:done) do
@@ -156,6 +166,9 @@ module Compatibility
     end
   end
 
+  add_help(:map_all_chans,
+           "map_all_chans([beg=0, [end=flase, [edpos=false]]], &proc) \
+applies map_chan with proc to all channels (all sounds)")
   def map_all_chans(beg = 0, fin = false, edname = false, edpos = false, &body)
     if body and body.arity.abs == 1
       sounds2array.each do |snd|
@@ -168,6 +181,9 @@ module Compatibility
     end
   end
 
+  add_help(:scan_chan,
+           "scan_chans([beg=0, [end=flase, [edpos=false]]], &proc) \
+applies scan_chan with proc to all channels sharing current sound's sync" )
   def scan_chans(beg = 0, fin = false, edpos = false, &body)
     if body and body.arity.abs == 1
       current_sync = sync(selected_sound)
@@ -188,6 +204,9 @@ module Compatibility
     end
   end
 
+  add_help(:map_chan,
+           "map_chans([beg=0, [end=flase, [edpos=false]]], &proc) \
+applies map_chan with proc to all channels sharing current sound's sync" )
   def map_chans(beg = 0, fin = false, edname = false, edpos = false, &body)
     if body and body.arity.abs == 1
       current_sync = sync(selected_sound)
@@ -203,6 +222,9 @@ module Compatibility
     end
   end
 
+  add_help(:scan_across_all_chans,
+           "scan_across_all_chans([beg=0, [end=flase, [snd=false, [edpos=false]]]], &proc) \
+applies map_chan with proc to all channels in parallel" )
   # body.call(data, chan_num)
   def scan_across_all_chans(beg = 0, fin = false, snd = false, edpos = false, &body)
     chans = all_chans
@@ -228,6 +250,10 @@ module Compatibility
     end
   end
   
+  add_help(:map_across_all_chans,
+           "map_across_all_chans([beg=0, [end=flase, [edname=false, \
+[snd=false, [edpos=false]]]]], &proc) \
+applies map_chan with proc to all channels in parallel" )
   def map_across_all_chans(beg = 0, fin = false, edname = false, snd = false, edpos = false, &body)
     snds, chans = all_chans
     chan_num = snds.length
@@ -354,7 +380,7 @@ module Compatibility
             end
           end
         end
-        curpos = (curpos + count) % len
+        curpos = (curpos + count) % mx.length
         set_cursor(mix_position(sorted_mx[curpos]), snd, chn)
         sorted_mx[curpos]
       end
@@ -364,11 +390,11 @@ module Compatibility
   end
   
   def forward_mix(count = 1, snd = false, chn = false)
-    back_and_forth_mix(count, snd_snd(snd), chn_chn(chn))
+    back_or_forth_mix(count, snd_snd(snd), snd_chn(chn))
   end
 
   def backward_mix(count = 1, snd = false, chn = false)
-    back_and_forth_mix(-count, snd_snd(snd), chn_chn(chn))
+    back_or_forth_mix(-count, snd_snd(snd), snd_chn(chn))
   end
 
   def back_or_forth_mark(count, snd, chn)
@@ -419,7 +445,10 @@ module Compatibility
     sound_data2vct(sd, chan, v)
     vct2list(v)
   end
-  
+
+  add_help(:sound_data2list,
+           "sound_data2list(sd) \
+turns a sound-data object's data into a list of lists (one for each channel)")
   def sound_data2list(sd)
     make_array(sound_data_chans(sd)) do |chn|
       sound_data_channel2list(sd, chn)
@@ -428,6 +457,17 @@ module Compatibility
 
   def vct_convolve!(r1, r2)
     convolution(r1, r2, r1.length)
+  end
+
+  def old_map_channel(beg = 0, dur = false,
+                      snd = false, chn = false, edpos = false, edname = false, &func)
+    map_channel(lambda { |y|
+                  if (val = func.call(y)).kind_of?(Array)
+                    vector2vct(val)
+                  else
+                    val
+                  end
+                }, beg, dur, snd, chn, edpos, edname)
   end
   
   def mus_bank(gens, amps, in1 = false, in2 = false)
@@ -456,6 +496,10 @@ module Compatibility
     sum
   end
 
+  def old_formant_bank(amps, gens, in1 = 0.0)
+    formant_bank(amps.kind_of?(Array) ? vector2vct(amps) : amps, gens, in1)
+  end
+  
   def vct2samples(samp, samps, data, snd = false, chn = false)
     vct2channel(data, samp, samps, snd, chn)
   end
@@ -494,8 +538,9 @@ end
 include Compatibility
 
 module Extensions
-  # Returns the value associated with KEY in the given CHN's
-  # property list, or nil.
+  add_help(:channel_property,
+           "channel_property(key, snd, chn) \
+returns the value associated with 'key' in the given channel's property list, or nil")
   def channel_property(key, snd = false, chn = false)
     if (h = channel_properties(snd, chn)).kind_of?(Hash)
       h[key]
@@ -504,7 +549,9 @@ module Extensions
     end
   end
   
-  # Sets KEY to VAL in the given CHN's property list and returns VAL.
+  add_help(:set_channel_property,
+           "set_channel_property(key, val, snd, chn) \
+sets 'key' to val in the given channel's property list and returns 'val'")
   def set_channel_property(key, val, snd = false, chn = false)
     if (h = channel_properties(snd, chn)).kind_of?(Hash)
       h[key] = val
@@ -515,8 +562,9 @@ module Extensions
     val
   end
 
-  # Returns the value associated with KEY in the given SND's property
-  # list, or nil.
+  add_help(:sound_property,
+           "sound_property(key, snd) \
+returns the value associated with 'key' in the given sound's property list, or nil")
   def sound_property(key, snd = false)
     if (h = sound_properties(snd)).kind_of?(Hash)
       h[key]
@@ -525,7 +573,10 @@ module Extensions
     end
   end
   
-  # Sets KEY to VAL in the given SND's property list and returns VAL.
+  add_help(:set_sound_property,
+           "set_sound_property(key, val, snd) \
+sets 'key' to 'val' in the given sound's property list and returns 'val'.")
+           
   def set_sound_property(key, val, snd = false)
     if (h = sound_properties(snd)).kind_of?(Hash)
       h[key] = val
@@ -605,6 +656,52 @@ module Extensions
   end
 
   class Remember_sound_properties
+    add_help(:remember_sound_properties, "\
+# class Remember_sound_properties
+#   initialize(database)
+#
+# getter:
+#   database
+#
+# methods:
+#   inspect
+#   with_db do ... end
+#   load(snd)
+#   save(snd)
+#   each do |file, value| ... end
+#   delete_if do |file, value| ... end
+#   contents
+#   reorganize
+#   help           (alias info and description)
+#
+# Usage:
+#
+# rsp = Remember_sound_properties.new(database)
+# unless $after_open_hook.member?(\"save-property-hook\")
+#   $after_open_hook.add_hook!(\"save-property-hook\") do |snd|
+#     rsp.load(snd)
+#   end
+#   $close_hook.add_hook!(\"save-property-hook\") do |snd|
+#     # discarding `.*0000_00.snd' and `.*.rev.*' filenames
+#     if tmp_snd_p or (not file_name(snd) =~ /(.+\\d+_\\d+\\.snd$)|(.*\\.rev.*$)/)
+#       rsp.save(snd)
+#     end
+#     false
+#   end
+# end
+#
+# rsp.delete_if do |file, value|
+#   file =~ /rb\\-test/
+# end                        # deletes all files containing the string \"rb-test\"
+# rsp.contents               # prints all filenames in database
+# rsp.reorganize             # reorganizes the GDBM database
+# rsp.each do |file, value|
+#   message(file)
+# end                        # the same as rsp.contents
+# rsp.with_db do |db|
+#   db.reorganize
+# end                        # the same as rsp.reorganize")
+
     include Enumerable
     include Info
     with_silence do
@@ -746,51 +843,7 @@ module Extensions
   
     private
     def set_help
-      self.description = "\
-# class Remember_sound_properties
-#   initialize(database)
-#
-# getter:
-#   database
-#
-# methods:
-#   inspect
-#   with_db do ... end
-#   load(snd)
-#   save(snd)
-#   each do |file, value| ... end
-#   delete_if do |file, value| ... end
-#   contents
-#   reorganize
-#   help           (alias info and description)
-#
-# Usage:
-#
-# rsp = Remember_sound_properties.new(database)
-# unless $after_open_hook.member?(\"save-property-hook\")
-#   $after_open_hook.add_hook!(\"save-property-hook\") do |snd|
-#     rsp.load(snd)
-#   end
-#   $close_hook.add_hook!(\"save-property-hook\") do |snd|
-#     # discarding `.*0000_00.snd' and `.*.rev.*' filenames
-#     if tmp_snd_p or (not file_name(snd) =~ /(.+\\d+_\\d+\\.snd$)|(.*\\.rev.*$)/)
-#       rsp.save(snd)
-#     end
-#     false
-#   end
-# end
-#
-# rsp.delete_if do |file, value|
-#   file =~ /rb\\-test/
-# end                        # deletes all files containing the string \"rb-test\"
-# rsp.contents               # prints all filenames in database
-# rsp.reorganize             # reorganizes the GDBM database
-# rsp.each do |file, value|
-#   message(file)
-# end                        # the same as rsp.contents
-# rsp.with_db do |db|
-#   db.reorganize
-# end                        # the same as rsp.reorganize"
+      self.description = get_help(:remember_sound_properties)
     end
   end
 
@@ -834,9 +887,11 @@ module Extensions
     end
   end
   
-  # Returns two parallel arrays, the first snd indices, the second
-  # channel numbers.  E.g. snd one (0) has one channel, snd two (1) has
-  # two channels --> [[0, 1, 1], [0, 0, 1]].
+  add_help(:all_chans,
+           "all_chans() \
+-> two parallel lists, the first snd indices, the second channel numbers.  \
+If we have two sounds open (indices 0 and 1 for example), and the second has two channels, \
+all_chans returns [[0, 1, 1], [0, 0, 1]]")
   def all_chans
     sndlist = []
     chnlist = []
@@ -849,7 +904,9 @@ module Extensions
     [sndlist, chnlist]
   end
   
-  # Like mix but the mix result has same peak amp as unmixed snd/chn.
+  add_help(:normalized_mix,
+           "normalized_mix(filename, beg, in_chan, snd, chn) \
+is like mix but the mix result has same peak amp as unmixed snd/chn (returns scaler)")
   def normalized_mix(fname, beg = 0, in_chan = 0, snd = false, chn = false)
     orig_maxamp = maxamp(snd, chn)
     mix(fname, beg, in_chan, snd, chn)
@@ -865,8 +922,11 @@ module Extensions
       scl
     end
   end
-  
-  # Mixes FNAME starting at BEG with amplitude envelope ENV.
+
+  add_help(:enveloped_mix,
+           "enveloped_mix(filename, beg, env) \
+mixes filename starting at beg with amplitude envelope env. \
+enveloped_mix(\"pistol.snd\", 0, [0, 0, 1, 1, 2, 0])")
   def enveloped_mix(fname, beg, env, del_tmp = true)
     len = mus_sound_frames(fname)
     if (tmp_name = temp_dir()).kind_of?(String) and tmp_name.length > 0
@@ -882,7 +942,10 @@ module Extensions
     File.unlink(tmp_name) if del_tmp
   end
   # enveloped_mix("pistol.snd", 0, [0, 0, 1, 1, 2, 0])
-  
+
+  add_help(:map_sound_files,
+           "map_sound_files(*dir_array) do |file| ... end \
+applies body to each sound file in dir")
   def map_sound_files(*args, &func)
     args << "." if args.empty?
     args.map do |dir|
@@ -891,6 +954,9 @@ module Extensions
   end
   # map_sound_files(".", "/usr/gnu/sound/SFiles") do |f| play_and_wait(f) end
   
+  add_help(:for_each_sound_file,
+           "for_each_sound_file(*dir_args) do |file| ... end \
+applies body to each sound file in dir")
   def for_each_sound_file(*args, &func)
     args << "." if args.empty?
     args.each do |dir|
@@ -898,7 +964,11 @@ module Extensions
     end
   end
   # for_each_sound_file(".", "/usr/gnu/sound/SFiles") do |f| play_and_wait(f) end
-  
+
+  add_help(:match_sound_files,
+           "match_sound_files(*dir_args) do |file| ... end \
+applies func to each sound file in dir and returns a list of files \
+for which body does not return false")
   def match_sound_files(*args, &func)
     res = []
     args << "." if args.empty?
@@ -911,8 +981,9 @@ module Extensions
   end
   # match_sound_files() do |f| f =~ /\.(wav|snd)$/ end
   
-  # Returns an array of arrays of [snd, chn] indicating the channels
-  # participating in the current selection.
+  add_help(:selection_members,
+           "selection_members() \
+-> list of lists of [snd, chn] indicating the channels participating in the current selection.")
   def selection_members
     sndlist = []
     if selection?
@@ -925,9 +996,12 @@ module Extensions
     sndlist
   end
   
-  # Makes a selection like make_region but without creating a region.
-  # make_selection follows SND's sync field, and applies to all SND's
-  # channels if CHN is not specified.
+  add_help(:make_selection,
+           "make_selection([beg=0, [end=false, [snd=false, [chn=false]]]]) \
+makes a selection like make-region but without creating a region.
+make_selection follows snd's sync field, and applies to all snd's channels if chn is not \
+specified. end defaults to end of channel, beg defaults to 0, \
+snd defaults to the currently selected sound.")
   def make_selection(beg = 0, len = false, snd = false, chn = false)
     add_chan_to_selection = lambda do |s0, s1, s, c|
       set_selection_member?(true, s, c)
@@ -967,7 +1041,8 @@ module Extensions
     end
   end
   
-  # Deletes the current selection and smooths the splice.
+  add_help(:delete_selection_and_smooth,
+           "delete_selection_and_smooth() deletes the current selection and smooths the splice")
   def delete_selection_and_smooth
     ret = nil
     if selection?
@@ -984,9 +1059,9 @@ module Extensions
     end
     ret
   end
-  
-  # Evaluates FUNC of one argument on each sample in the current
-  # selection.
+
+  add_help(:eval_over_selection,
+          "eval_over_selection(func) evaluates func on each sample in the current selection")
   def eval_over_selection(func)
     if func.kind_of?(Proc) and selection?
       beg = selection_position()
@@ -1019,11 +1094,10 @@ module Extensions
 =end
 
   # check_for_unsaved_edits(check)
-  #
-  # If CHECK is true, add a function to the close_hook and exit_hook
-  # that asks the user for confirmation before closing a sound if there
-  # are unsaved edits on that sound.  If CHECK is false, remove those
-  # hooks.
+  add_help(:check_for_unsaved_edits,
+           "check_for_unsaved_edits([check=true]) \
+-> sets up hooks to check for and ask about unsaved edits when a sound is closed.
+If 'check' is false, the hooks are removed.")
   def check_for_unsaved_edits(check = true)
     unsaved_edits_at_close = lambda do |snd|
       callcc do |c|
@@ -1058,8 +1132,10 @@ module Extensions
     end
   end
   
-  # Remembers the state of a sound when it is closed, and if it is
-  # subsequently re-opened, restores the state.
+  add_help(:remember_sound_state,
+           "remember_sound_state() \
+remembers the state of a sound when it is closed, \
+and if it is subsquently re-opened, restores that state")
   def remember_sound_state
     # states = {file_name => [date, sound_funcs, channel_funcs], ...}
     states = {}
@@ -1111,8 +1187,9 @@ module Extensions
     end
   end
   
-  # Mixes in file.  File can be the file name or an array
-  # [fname, beg = 0, chn = 0].
+  add_help(:mix_channel,
+           "mix_channel(file, [beg=0, [dur=false, [snd=false, [chn=false, [edpos=false]]]]]) \
+mixes in file. file can be the file name or a list [file_name, beg = 0, chn = 0]")
   def mix_channel(fdata, beg = 0, dur = false, snd = false, chn = false, edpos = false)
     fname = if fdata.kind_of?(String)
               fdata
@@ -1142,8 +1219,9 @@ FDATA should be a file name or an array [fname, beg = 0, chn = 0] (%s)", fdata.i
     end
   end
   
-  # Inserts the file.  File can be the file name or an array
-  # [fname, beg = 0, chn = 0].
+  add_help(:insert_channel,
+           "insert_channel(file, [beg=0, [dur=false, [snd=false, [chn=false, [edpos=false]]]]]) \
+inserts the file. file can be the file name or a list [file_name, beg = 0, chn = 0]" )
   def insert_channel(fdata, beg = 0, dur = false, snd = false, chn = false, edpos = false)
     fname = if fdata.kind_of?(String)
               fdata
@@ -1173,7 +1251,8 @@ FDATA should be a file name or an array [fname, beg = 0, chn = 0] (%s)", fdata.i
     end
   end
   
-  # The regularized version of redo_edit.
+  add_help(:redo_channel,
+           "redo_channel([edits=1, [snd=false, [chn=false]]]) is the regularized version of redo")
   def redo_channel(edits = 1, snd = false, chn = false)
     if snd and sync(snd).nonzero? and chn
       set_edit_position(edit_position(snd, chn) + edits, snd, chn)
@@ -1182,7 +1261,8 @@ FDATA should be a file name or an array [fname, beg = 0, chn = 0] (%s)", fdata.i
     end
   end
   
-  # The regularized version of undo_edit.
+  add_help(:undo_channel,
+          "undo_channel([edits=1, [snd=false, [chn=false]]]) is the regularized version of undo" )
   def undo_channel(edits = 1, snd = false, chn = false)
     if snd and sync(snd).nonzero? and chn
       set_edit_position([edit_position(snd, chn) - edits, 0].max, snd, chn)
@@ -1221,6 +1301,9 @@ FDATA should be a file name or an array [fname, beg = 0, chn = 0] (%s)", fdata.i
   end
   
   # vct: angle, incr, off, scl
+  add_help(:sine_ramp,
+           "sine_ramp(rmp0, rmp1, [beg=0, [dur=false, [snd=false, [chn=false, [edpos=false]]]]]) \
+produces a sinsusoidal connection from rmp0 to rmp1")
   def sine_ramp(rmp0, rmp1, beg = 0, dur = false, snd = false, chn = false, edpos = false)
     ptree_channel(lambda do |y, data, forward|
                     angle = data[0]
@@ -1236,7 +1319,10 @@ FDATA should be a file name or an array [fname, beg = 0, chn = 0] (%s)", fdata.i
                     vct(-PI + frag_beg * incr, incr, rmp0, rmp1 - rmp0)
                   end)
   end
-  
+
+  add_help(:sine_env_channel,
+           "sine_env_channel(env, [beg=0, [dur=false, [snd=false, [chn=false, [edpos=false]]]]]) \
+connects env's dots with sinusoids")
   def sine_env_channel(env, beg = 0, dur = false, snd = false, chn = false, edpos = false)
     any_env_channel(env, beg, dur, snd, chn, edpos) do |r0, r1, b, d, s, c, e|
       sine_ramp(r0, r1, b, d, s, c, e)
@@ -1283,6 +1369,9 @@ FDATA should be a file name or an array [fname, beg = 0, chn = 0] (%s)", fdata.i
   # array_interp.
   
   # vct: start, incr, off, scl
+  add_help(:ramp_squared,
+           "ramp_squared(rmp0, rmp1, [symmetric=true, [beg=0, [dur=false, [snd=false, [chn=false, [edpos=false]]]]]]) \
+connects rmp0 and rmp1 with an x^2 curve")
   def ramp_squared(rmp0, rmp1, symmetric = true,
                    beg = 0, dur = false, snd = false, chn = false, edpos = false)
     ptree_channel(lambda do |y, data, forward|
@@ -1303,7 +1392,10 @@ FDATA should be a file name or an array [fname, beg = 0, chn = 0] (%s)", fdata.i
                     end
                   end)
   end
-  
+
+  add_help(:env_squared_channel,
+           "(env-squared-channel(env, [symmetric=true, [beg=0, [dur=false, [snd=false, [chn=false, [edpos=false]]]]]]) \
+connects env's dots with x^2 curves")
   def env_squared_channel(env, symmetric = true,
                           beg = 0, dur = false, snd = false, chn = false, edpos = false)
     any_env_channel(env, beg, dur, snd, chn, edpos) do |r0, r1, b, d, s, c, e|
@@ -1313,6 +1405,8 @@ FDATA should be a file name or an array [fname, beg = 0, chn = 0] (%s)", fdata.i
   # env_squared_channel([0, 0, 1, 1, 2, -0.5, 3, 1])
   
   # vct: start, incr, off, scl, exponent
+  add_help(:ramp_expt,
+           "ramp_expt(rmp0, rmp1, exponent, [symmetric=true, [beg=0, [dur=false, [snd=false, [chn=false, [edpos=false]]]]]]) connects rmp0 and rmp1 with an x^exponent curve")
   def ramp_expt(rmp0, rmp1, exponent, symmetric = true,
                 beg = 0, dur = false, snd = false, chn = false, edpos = false)
     rmp0 = rmp0.to_f
@@ -1338,7 +1432,9 @@ FDATA should be a file name or an array [fname, beg = 0, chn = 0] (%s)", fdata.i
                     end
                   end)
   end
-  
+
+  add_help(:env_expt_channel,
+           "env_expt_channel(env, exponent, [symmetric=true, [beg=0, [dur=false, [snd=false, [chn=false, [edpos=false]]]]]]) connects env'e dots with x^exponent curves")
   def env_expt_channel(env, exponent, symmetric = true,
                        beg = 0, dur = false, snd = false, chn = false, edpos = false)
     if exponent == 1.0
@@ -1350,22 +1446,109 @@ FDATA should be a file name or an array [fname, beg = 0, chn = 0] (%s)", fdata.i
     end
   end
   
+  add_help(:offset_channel,
+           "offset_channel(amount, [beg=0, [dur=false, [snd=false, [chn=false, [edpos=false]]]]]) \
+adds amount to each sample")
   def offset_channel(amount, beg = 0, dur = false, snd = false, chn = false, edpos = false)
     ptree_channel(lambda do |y| y + amount end, beg, dur, snd, chn, edpos, true)
   end
 
+  add_help(:dither_channel,
+           "dither_channel([amount, 0.00006, [beg=0, [dur=false, [snd=false, [chn=false, [edpos=false]]]]]]) adds amount dither to each sample")
   def dither_channel(amnt = 0.00006, beg = 0, dur = false, snd = false, chn = false, edpos = false)
     dither = 0.5 * amnt
     ptree_channel(lambda do |y| mus_random(dither) + mus_random(dither) + y end,
                   beg, dur, snd, chn, edpos, true, false,
                   format("dither_channel %1.8f %s %s", amnt, beg, dur))
   end
-  
+
+  add_help(:contrast_channel,
+           "contrast_channel(index, [beg=0, [dur=false, [snd=false, [chn=false, [edpos=false]]]]]) \
+applies contrast enhancement to the sound" )
   def contrast_channel(index, beg = 0, dur = false, snd = false, chn = false, edpos = false)
     ptree_channel(lambda do |y|
                     sin(y * HALF_PI + index * sin(y * TWO_PI))
                   end, beg, dur, snd, chn, edpos, false)
   end
+
+  # channels-equal
+  add_help(:channels_eql?,
+           "channels_eql?(s1, c1, s2, c2, [diff, 0.0]) \
+-> true if the two channels are the same (within diff) modulo trailing 0's")
+  def channels_eql?(snd1, chn1, snd2, chn2, allowable_difference = 0.0)
+    if snd1 == snd2 and chn1 == chn2
+      true
+    else
+      mx1 = maxamp(snd1, chn1)
+      mx2 = maxamp(snd2, chn2)
+      if (mx1 - mx2).abs > allowable_difference
+        false
+      else
+        len1 = frames(snd1, chn1)
+        len2 = frames(snd2, chn2)
+        first_longer = (len1 >= len2)
+        len = first_longer ? len1 : len2
+        s1 = first_longer ? snd1 : snd2
+        s2 = first_longer ? snd2 : snd1
+        c1 = first_longer ? chn1 : chn2
+        c2 = first_longer ? chn2 : chn1
+        read2 = make_sample_reader(0, s2, c2)
+        (not scan_channel(lambda do |y|
+                            val = read_sample(read2)
+                            (val - y).abs > allowable_difference
+                          end, 0, len, s1, c1))
+      end
+    end
+  end
+
+  add_help(:channels_equal?,
+           "channels_equal?(s1, c1, s2, c2, [diff=0.0]) \
+-> true if the two channels are the same (within diff)")
+  def channels_equal?(snd1, chn1, snd2, chn2, allowable_difference = 0.0)
+    len1 = frames(snd1, chn1)
+    len2 = frames(snd2, chn2)
+    if len1 == len2
+      channles_eql?(snd1, chn1, snd2, chn2, allowable_difference)
+    else
+      false
+    end
+  end
+
+  # mono->stereo, mono-files->stereo
+  def mono2stereo(new_name, snd1, chn1, snd2, chn2)
+    old_ed1 = edit_position(snd1, chn1)
+    old_ed2 = edit_position(snd2, chn2)
+    ind = new_sound(new_name, :channels, 2, :srate, srate(snd1))
+    swap_channels(ind, 0, snd1, chn1)
+    swap_channels(ind, 1, snd2, chn2)
+    set_edit_position(old_ed1, snd1, chn1)
+    set_edit_position(old_ed2, snd2, chn2)
+    ind
+  end
+  # mono2stereo("test.snd", 0, 0, 1, 0)
+
+  def mono_files2stereo(new_name, chan1_name, chan2_name)
+    ind1 = open_sound(chan1_name)
+    ind2 = open_sound(chan2_name)
+    ind3 = mono2stereo(new_name, ins1, 0, ind2, 0)
+    close_sound(ind1)
+    close_sound(ind2)
+    ind3
+  end
+  # mono_files2stereo("test.snd", "oboe.snd", "pistol.snd")
+
+  def stereo2mono(orig_snd, chan1_name, chan2_name)
+    old_ed0 = edit_position(orig_snd, 0)
+    old_ed1 = edit_position(orig_snd, 1)
+    chan1 = new_sound(chan1_name, :srate, srate(orig_snd))
+    chan2 = new_sound(chan2_name, :srate, srate(orig_snd))
+    swap_channels(orig_snd, 0, chan1, 0)
+    swap_channels(orig_snd, 1, chan2, 0)
+    set_edit_position(old_ed0, orig_snd, 0)
+    set_edit_position(old_ed1, orig_snd, 1)
+    [chan1, chan2]
+  end
+  # stereo2mono(0, "hi1.snd", "hi2.snd")
 end
 
 include Extensions

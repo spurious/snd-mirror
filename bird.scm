@@ -25,8 +25,7 @@
     (scale-partials lst (/ 1.0 (sum-partials lst 0.0)) '()))
     
   (let* ((gls-env (make-env freq-envelope (hz->radians freqskew) dur))
-	 (os (make-oscil :frequency frequency))
-	 (coeffs (partials->polynomial (normalize-partials partials)))
+	 (os (make-polyshape frequency :coeffs (partials->polynomial (normalize-partials partials))))
 	 (amp-env (make-env amp-envelope amplitude dur))
 	 (beg (inexact->exact (round (* (mus-srate) start))))
 	 (len (inexact->exact (round (* (mus-srate) dur))))
@@ -37,8 +36,7 @@
        (do ((i beg (1+ i)))
 	   ((= i end))
 	 (outa i (* (env amp-env)
-		    (polynomial coeffs
-				(oscil os (env gls-env))))
+		    (polyshape os 1.0 (env gls-env)))
 	       *output*))))))
 
 (definstrument (bird start dur frequency freqskew amplitude freq-envelope amp-envelope)
