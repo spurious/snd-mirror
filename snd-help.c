@@ -267,6 +267,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+9-Dec:   added init-func arg to ptree-channel.\n\
 1-Dec:   removed Chebyshev transform.\n\
          def-clm-struct support in run completed.\n\
          new-sound-hook, sound-let (ws.scm).\n\

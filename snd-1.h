@@ -70,7 +70,8 @@ typedef struct {
 typedef struct {
   off_t out, beg, end;
   Float scl, rmp0, rmp1;
-  int snd, typ, loc;
+  int snd, typ, ptree_loc;
+  off_t ptree_pos;
 } ed_fragment;
 
 typedef struct {
@@ -101,6 +102,7 @@ typedef struct snd__fd {
   off_t frag_pos;
   double incr, curval;
   void *ptree;
+  XEN closure;
   mus_sample_t (*rev_run)(struct snd__fd *sf);
   Float (*rev_runf)(struct snd__fd *sf);
 } snd_fd;
@@ -214,6 +216,7 @@ typedef struct chan__info {
   int ptree_size;          /* ditto for ptrees */
   int ptree_ctr;
   void **ptrees;
+  XEN *ptree_inits;
   fft_info *fft;           /* possibly null fft data */
   struct snd__info *sound; /* containing sound */
   struct snd__state *state;
@@ -708,7 +711,7 @@ mus_sample_t previous_sound (snd_fd *sf);
 mus_sample_t next_sound (snd_fd *sf);
 void scale_channel(chan_info *cp, Float scaler, off_t beg, off_t num, int pos, int in_as_one_edit);
 void ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, int pos, int in_as_one_edit);
-void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, void *env_pt);
+void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, void *env_pt, XEN init_func);
 void move_to_next_sample(snd_fd *sf);
 snd_fd *init_sample_read(off_t samp, chan_info *cp, int direction);
 snd_fd *init_sample_read_any(off_t samp, chan_info *cp, int direction, int edit_position);
@@ -1360,6 +1363,8 @@ int evaluate_ptree_1f2b(void *upt, Float arg);
 void *free_ptree(void *upt);
 void g_init_run(void);
 XEN ptree_code(void *p);
+Float evaluate_ptree_1f1v1b2f(void *upt, Float arg, vct *v, int dir);
+void *form_to_ptree_1f1v1b2f(XEN code);
 
 
 /* -------- snd-draw.c -------- */

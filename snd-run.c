@@ -1894,6 +1894,7 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, int separ
 		  if (strcmp(type, "reader") == 0) arg_type = R_READER; else
 		  if (strcmp(type, "boolean") == 0) arg_type = R_BOOL; else
 		  if (strcmp(type, "char") == 0) arg_type = R_CHAR;
+		  /* TODO: add list here for clm-struct and test it */
 		}
 	    }
 	  add_var_to_ptree(prog, 
@@ -8116,6 +8117,19 @@ void *form_to_ptree_1f2f(XEN code)
   return(NULL);
 }
 
+void *form_to_ptree_1f1v1b2f(XEN code)
+{
+  ptree *pt;
+  pt = (ptree *)form_to_ptree(code);
+  if (pt)
+    {
+      if ((pt->result->type == R_FLOAT) && (pt->arity == 3))
+	return(pt);
+      free_ptree(pt);
+    }
+  return(NULL);
+}
+
 void *form_to_ptree_0f2f(XEN code)
 {
   ptree *pt;
@@ -8162,6 +8176,16 @@ Float evaluate_ptree_1f2f(void *upt, Float arg)
 {
   ptree *pt = (ptree *)upt;
   pt->dbls[pt->args[0]] = arg;
+  eval_ptree(pt);
+  return(pt->dbls[pt->result->addr]);
+}
+
+Float evaluate_ptree_1f1v1b2f(void *upt, Float arg, vct *v, int dir)
+{
+  ptree *pt = (ptree *)upt;
+  pt->dbls[pt->args[0]] = arg;
+  pt->ints[pt->args[1]] = (int)v;
+  pt->ints[pt->args[2]] = dir;
   eval_ptree(pt);
   return(pt->dbls[pt->result->addr]);
 }
@@ -8227,8 +8251,10 @@ static XEN g_run_eval(XEN code, XEN arg)
 }
 #else
 void *form_to_ptree_1f2b(XEN code) {return(NULL);}
+void *form_to_ptree_1f1v1b2f(XEN code) {return(NULL);}
 void *form_to_ptree_1f2b_without_env(XEN code) {return(NULL);}
 void *form_to_ptree_1f2f(XEN code) {return(NULL);}
+Float evaluate_ptree_1f1v1b2f(void *upt, Float arg, vct *v, int dir) {return(0.0);}
 Float evaluate_ptree_0f2f(void *upt) {return(0.0);}
 void *form_to_ptree_0f2f(XEN code) {return(NULL);}
 Float evaluate_ptree_1f2f(void *upt, Float arg) {return(0.0);}

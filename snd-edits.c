@@ -1,5 +1,15 @@
 #include "snd.h"
 
+/* TODO: doc -watch switch to gv */
+/* TODO: find a way to warn about lesstif */
+/* TODO: sndlib.so in configure */
+/* TODO: ladspa overlap bug and get rid of truncate switch */
+/* TODO: clean up the fragment copy mess! (and find better field names for ed_fragments) */
+/* TODO: does save-state work at all with ptree edits? */
+/* TODO: test the reverse read choices */
+/* TODO: exp-env as ptree-channel */
+/* TODO: check scale-ptree-scale case (and air read), also selection-oriented ops */
+
 static int dont_edit(chan_info *cp) 
 {
   XEN res = XEN_FALSE;
@@ -108,15 +118,20 @@ void free_ptree_list(chan_info *cp)
   if (cp->ptrees)
     {
       for (i = 0; i < cp->ptree_size; i++)
-	if (cp->ptrees[i]) 
-	  cp->ptrees[i] = free_ptree(cp->ptrees[i]);
+ 	{
+	  if (cp->ptrees[i]) 
+	    cp->ptrees[i] = free_ptree(cp->ptrees[i]);
+	  if (XEN_PROCEDURE_P(cp->ptree_inits[i]))
+	    snd_unprotect(cp->ptree_inits[i]);
+	}
       FREE(cp->ptrees);
       cp->ptrees = NULL;
+      FREE(cp->ptree_inits);
+      cp->ptree_inits = NULL;
     }
   cp->ptree_ctr = -1;
   cp->ptree_size = 0;
 }
-
 
 static int add_ptree(chan_info *cp)
 {
@@ -129,8 +144,15 @@ static int add_ptree(chan_info *cp)
 	{
 	  cp->ptrees = (void **)REALLOC(cp->ptrees, cp->ptree_size * sizeof(void *));
 	  for (i = cp->ptree_ctr; i < cp->ptree_size; i++) cp->ptrees[i] = NULL;
+ 	  cp->ptree_inits = (XEN *)REALLOC(cp->ptree_inits, cp->ptree_size * sizeof(XEN));
+ 	  for (i = cp->ptree_ctr; i < cp->ptree_size; i++) cp->ptree_inits[i] = XEN_FALSE;
+ 	}
+       else 
+ 	{
+ 	  cp->ptrees = (void **)CALLOC(cp->ptree_size, sizeof(void *));
+ 	  cp->ptree_inits = (XEN *)CALLOC(cp->ptree_size, sizeof(XEN));
+ 	  for (i = 0; i < cp->ptree_size; i++) cp->ptree_inits[i] = XEN_FALSE;
 	}
-      else cp->ptrees = (void **)CALLOC(cp->ptree_size, sizeof(void *));
     }
   return(cp->ptree_ctr);
 }
@@ -263,7 +285,8 @@ enum {ED_SIMPLE, ED_RAMP, ED_PTREE}; /* typ field choices */
 #define FRAGMENT_RAMP_END(Ed, Pos)         Ed->fragments[Pos]->rmp1
 #define FRAGMENT_TYPE(Ed, Pos)             Ed->fragments[Pos]->typ
 #define FRAGMENT_SOUND(Ed, Pos)            Ed->fragments[Pos]->snd
-#define FRAGMENT_PTREE(Ed, Pos)            Ed->fragments[Pos]->loc
+#define FRAGMENT_PTREE_INDEX(Ed, Pos)      Ed->fragments[Pos]->ptree_loc
+#define FRAGMENT_PTREE_POSITION(Ed, Pos)   Ed->fragments[Pos]->ptree_pos
 #define FRAGMENT_LENGTH(Ed, Pos)           (FRAGMENT_LOCAL_END(Ed, Pos) - FRAGMENT_LOCAL_POSITION(Ed, Pos) + 1)
 
 #define EDIT_LIST_END_MARK -2
@@ -275,7 +298,8 @@ enum {ED_SIMPLE, ED_RAMP, ED_PTREE}; /* typ field choices */
 /* ed->scl is the segment scaler */
 /* ed->rmp0 is first val of ramp, ed->rmp1 is end val */
 /* ed->typ has code for accessor choice */
-/* ed->loc is an index into the cp->ptrees array */
+/* ed->ptree_loc is an index into the cp->ptrees array */
+/* ed->ptree_pos is segment position within original at time of ptree edit */
 /* EDIT_ALLOC_SIZE is the allocation amount (pointers) each time cp->sounds is (re)allocated */
 
 enum {INSERTION_EDIT, DELETION_EDIT, CHANGE_EDIT, INITIALIZE_EDIT, SCALED_EDIT, ZERO_EDIT, RAMP_EDIT, PTREE_EDIT};
@@ -320,9 +344,11 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed)
 	  if (FRAGMENT_TYPE(ed, j) == ED_PTREE)
 	    {
 	      XEN code;
-	      fprintf(outp, ", arg: %f",
+	      fprintf(outp, ", loc: %d, pos: " OFF_TD ", arg: %f",
+		      FRAGMENT_PTREE_INDEX(ed, j),
+		      FRAGMENT_PTREE_POSITION(ed, j),
 		      (float)(MUS_FLOAT_TO_FIX * FRAGMENT_RAMP_BEG(ed, j)));
-	      code = ptree_code(cp->ptrees[FRAGMENT_PTREE(ed, j)]);
+	      code = ptree_code(cp->ptrees[FRAGMENT_PTREE_INDEX(ed, j)]);
 	      if (XEN_LIST_P(code))
 		fprintf(outp, ", code: %s", XEN_AS_STRING(code));
 	    }
@@ -787,6 +813,7 @@ static ed_list *initial_ed_list(off_t beg, off_t end)
   FRAGMENT_LOCAL_END(ed, 0) = end;
   FRAGMENT_SOUND(ed, 0) = 0;
   FRAGMENT_GLOBAL_POSITION(ed, 0) = 0;
+  FRAGMENT_PTREE_POSITION(ed, 0) = 0;
   FRAGMENT_SCALER(ed, 0) = 1.0;
   FRAGMENT_RAMP_BEG(ed, 0) = 0.0;
   FRAGMENT_RAMP_END(ed, 0) = 0.0;
@@ -796,6 +823,7 @@ static ed_list *initial_ed_list(off_t beg, off_t end)
   FRAGMENT_LOCAL_END(ed, 1) = 0;
   FRAGMENT_SOUND(ed, 1) = EDIT_LIST_END_MARK;
   FRAGMENT_GLOBAL_POSITION(ed, 1) = end + 1;
+  FRAGMENT_PTREE_POSITION(ed, 1) = 0;
   return(ed);
 }
 
@@ -908,7 +936,7 @@ static void new_trailing_ramp(ed_fragment *new_back, ed_fragment *old_back, off_
   new_back->rmp1 = old_back->rmp1;
 }
 
-static void new_trailing_fragment(ed_fragment *new_back, ed_fragment *old_back, off_t new_loc, off_t new_beg)
+static void new_trailing_fragment(ed_fragment *new_back, ed_fragment *old_back, off_t new_loc, off_t new_beg, off_t new_pos)
 {
   new_back->out = new_loc;
   new_back->snd = old_back->snd;
@@ -916,8 +944,22 @@ static void new_trailing_fragment(ed_fragment *new_back, ed_fragment *old_back, 
   new_back->end = old_back->end;
   new_back->scl = old_back->scl;
   new_back->typ = old_back->typ; /* yow... added 20-Oct-02 */
-  if (old_back->typ == ED_RAMP)
-    new_trailing_ramp(new_back, old_back, new_beg);
+
+  if (old_back->typ == ED_PTREE)
+    {
+      new_back->ptree_loc = old_back->ptree_loc;
+      new_back->rmp0 = old_back->rmp0;
+      new_back->ptree_pos = old_back->ptree_pos + new_pos;
+      /*
+	fprintf(stderr,"set trailer to " OFF_TD " = " OFF_TD " + " OFF_TD " ; " OFF_TD "(" OFF_TD ")\n",
+	new_back->ptree_pos, old_back->ptree_pos, new_pos, old_back->out, new_loc);
+      */
+    }
+  else
+    {
+      if (old_back->typ == ED_RAMP)
+	new_trailing_ramp(new_back, old_back, new_beg);
+    }
 }
 
 static void new_leading_fragment(ed_fragment *new_front, ed_fragment *old_front, off_t beg)
@@ -928,8 +970,18 @@ static void new_leading_fragment(ed_fragment *new_front, ed_fragment *old_front,
   new_front->end = old_front->beg + beg - old_front->out - 1;
   new_front->scl = old_front->scl;
   new_front->typ = old_front->typ; /* yow... added 20-Oct-02 */
-  if (old_front->typ == ED_RAMP)
-    new_leading_ramp(new_front, old_front, beg);
+
+  if (old_front->typ == ED_PTREE)
+    {
+      new_front->rmp0 = old_front->rmp0;
+      new_front->ptree_loc = old_front->ptree_loc;
+      new_front->ptree_pos = old_front->ptree_pos;
+    }
+  else
+    {
+      if (old_front->typ == ED_RAMP)
+	new_leading_ramp(new_front, old_front, beg);
+    }
 }
 
 static ed_list *insert_samples_1 (off_t samp, off_t num, ed_list *current_state, chan_info *cp, ed_fragment **cb_rtn, const char *origin, Float scaler)
@@ -971,17 +1023,32 @@ static ed_list *insert_samples_1 (off_t samp, off_t num, ed_list *current_state,
 	  cb_new_0 = new_state->fragments[k - 1];
 	  cb_new_0->end = new_beg_1 - 1;
 	  cb_new_1 = new_state->fragments[k + 1];
+
 	  cb_new_1->snd = cb_old_0->snd;
 	  cb_new_1->out = samp;
 	  cb_new_1->beg = new_beg_1;
 	  cb_new_1->end = cb_old_0->end;
 	  cb_new_1->scl = cb_old_0->scl;
-	  cb_new_1->typ = cb_old_0->typ; /* 20-Oct-02 */
-	  if (cb_old_0->typ == ED_RAMP)
+	  cb_new_1->typ = cb_old_0->typ; 
+	  if (cb_old_0->typ == ED_PTREE)
 	    {
-	      new_leading_ramp(cb_new_0, cb_old_0, samp);
-	      new_trailing_ramp(cb_new_1, cb_old_0, samp);
+	      cb_new_1->rmp0 = cb_old_0->rmp0;
+	      cb_new_1->ptree_loc = cb_old_0->ptree_loc;
+	      cb_new_1->ptree_pos = cb_old_0->ptree_pos + samp - cb_old_0->out;
+	      /*
+	      fprintf(stderr,"set trailer to " OFF_TD " = " OFF_TD " + " OFF_TD " - " OFF_TD "\n",
+		      cb_new_1->ptree_pos,cb_old_0->ptree_pos, samp, cb_old_0->out);
+	      */
 	    }
+	  else
+	    {
+	      if (cb_old_0->typ == ED_RAMP)
+		{
+		  new_leading_ramp(cb_new_0, cb_old_0, samp);
+		  new_trailing_ramp(cb_new_1, cb_old_0, samp);
+		}
+	    }
+
 	  len += 2;
 	}
       cb_new = new_state->fragments[k];
@@ -999,6 +1066,7 @@ static ed_list *insert_samples_1 (off_t samp, off_t num, ed_list *current_state,
   ripple_marks(cp, samp, num);
   ripple_mixes(cp, samp, num);
   ripple_selection(new_state, samp, num);
+  if (cp->cursor > samp) cp->cursor += num;
   reflect_sample_change_in_axis(cp);
   check_for_first_edit(cp);
   fixup_edlist_endmark(new_state);
@@ -1152,7 +1220,8 @@ static ed_list *delete_samples_1(off_t beg, off_t num, ed_list *current_state, c
       new_trailing_fragment(new_state->fragments[start_del],
 			    cb_old_1, 
 			    beg, 
-			    cb_old_1->end + 1 + need_to_delete);
+			    cb_old_1->end + 1 + need_to_delete,
+			    cb_old_1->end - cb_old_1->beg + 1 + need_to_delete);
       start_del++;
       len_fixup++;
     }
@@ -1167,6 +1236,12 @@ static ed_list *delete_samples_1(off_t beg, off_t num, ed_list *current_state, c
   ripple_marks(cp, beg, -num);
   ripple_mixes(cp, beg, -num);
   ripple_selection(new_state, beg, -num);
+  if (cp->cursor > beg)
+    {
+      /* this added 6-Dec-02 */
+      cp->cursor -= num;
+      if (cp->cursor < beg) cp->cursor = beg;
+    }
   reflect_sample_change_in_axis(cp);
   check_for_first_edit(cp);
   new_state->size = len + len_fixup; /* don't propagate useless trailing blocks */
@@ -1262,7 +1337,8 @@ static ed_list *change_samples_1(off_t beg, off_t num, ed_list *current_state, c
       new_trailing_fragment(new_state->fragments[start_del],
 			    cb_old_1, 
 			    beg + num, 
-			    cb_old_1->end + 1 + need_to_delete);
+			    cb_old_1->end + 1 + need_to_delete,
+			    cb_old_1->end - cb_old_1->beg + 1 + need_to_delete);
       start_del++;
       len_fixup++;
     }
@@ -1628,26 +1704,16 @@ void ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, i
   update_graph(cp);
 }
 
-/* The ptree can be called moving in either direction, starting anywhere, without 
- *   any way to tell position, sound, chan, edpos etc. We could set up an initialization
- *   call, but even if all the rest were passed in, dir could change without warning.
- *   Also currently assumes sample->sample mapping (as opposed to src etc)
- *   and randomness is out -- need to be able to start anywhere with same result etc.
- *
- * Next steps in virtual ops:
+/* Next steps in virtual ops:
  *
  *  to embed exp env calc, we need room for the base/scaler (power is the ramp)
  *  ramp + ptree, ptree + ramp could be chained if we had room for a subsequent scaling (i.e. need one more seg value)
  *  ptree + ptree if had list of ptrees (function composition-style)
  *  ramp + ramp is out unless we add more segment info since end points do not uniquely set the intervening values:
  *    '(0 1 1 .5) * '(0 0 1 1) has the same endpoints as '(0 0 1 .707) * '(0 0 1 .707)
- *
- * any position-sensitive ptree (i.e. passing frag_pos etc) can't work because subsequent
- *   sectional scaling (or whatever) splits the fragments, copying the tree locs, but
- *   there's no straightforward way to carry around the current offset from the original
- *   fragment begin time.  Realizing this cost 4 hours of hacking...
  */
-void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, void *env_pt)
+
+void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, void *env_pt, XEN init_func)
 {
   /* env_pt is usually either NULL (env_too: #f) or the same ptree as ptree */
   off_t len;
@@ -1663,6 +1729,14 @@ void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, vo
   prepare_edit_list(cp, len);
   ptree_loc = add_ptree(cp);
   cp->ptrees[ptree_loc] = ptree;
+
+  if (XEN_PROCEDURE_P(init_func))
+    {
+      cp->ptree_inits[ptree_loc] = init_func;
+      snd_protect(init_func);
+    }
+  else cp->ptree_inits[ptree_loc] = XEN_FALSE;
+
   if ((beg == 0) && 
       (num >= cp->samples[pos]))
     {
@@ -1672,7 +1746,7 @@ void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, vo
       for (i = 0; i < new_ed->size; i++) 
 	{
 	  copy_ed_fragment(new_ed->fragments[i], old_ed->fragments[i]);
-	  FRAGMENT_PTREE(new_ed, i) = ptree_loc;
+	  FRAGMENT_PTREE_INDEX(new_ed, i) = ptree_loc;
 	  FRAGMENT_TYPE(new_ed, i) = ED_PTREE;
 	  FRAGMENT_RAMP_BEG(new_ed, i) = MUS_SAMPLE_TO_FLOAT(FRAGMENT_SCALER(new_ed, i));
 	  FRAGMENT_SCALER(new_ed, i) = 1.0;
@@ -1689,7 +1763,7 @@ void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, vo
 	  if (FRAGMENT_GLOBAL_POSITION(new_ed, i) > (beg + num - 1)) break; /* not >= (1 sample selections) */
 	  if (FRAGMENT_GLOBAL_POSITION(new_ed, i) >= beg)
 	    {
-	      FRAGMENT_PTREE(new_ed, i) = ptree_loc;
+	      FRAGMENT_PTREE_INDEX(new_ed, i) = ptree_loc;
 	      FRAGMENT_TYPE(new_ed, i) = ED_PTREE;
 	      FRAGMENT_RAMP_BEG(new_ed, i) = MUS_SAMPLE_TO_FLOAT(FRAGMENT_SCALER(new_ed, i));
 	      FRAGMENT_SCALER(new_ed, i) = 1.0;
@@ -1720,6 +1794,11 @@ snd_fd *free_snd_fd_almost(snd_fd *sf)
   snd_data *sd;
   if (sf) 
     {
+      if ((sf->closure) && (XEN_BOUND_P(sf->closure)))
+ 	{
+ 	  snd_unprotect(sf->closure);
+ 	  sf->closure = XEN_UNDEFINED;
+ 	}
       reader_out_of_data(sf);
       sd = sf->current_sound;
       if ((sd) && 
@@ -2004,6 +2083,110 @@ static Float previous_sample_to_float_with_ptree_on_air(snd_fd *sf)
     }
 }
 
+/* ---------------- ptrees with closure ----------------*/
+static mus_sample_t next_sample_with_ptree_and_closure(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound(sf));
+  else return(MUS_FLOAT_TO_SAMPLE(sf->cb->scl * 
+				  evaluate_ptree_1f1v1b2f(sf->ptree, 
+							  sf->cb->rmp0 * sf->data[sf->loc++], 
+							  (vct *)XEN_OBJECT_REF(sf->closure),
+							  TRUE)));
+}
+
+static mus_sample_t previous_sample_with_ptree_and_closure(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound(sf));
+  else return(MUS_FLOAT_TO_SAMPLE(sf->cb->scl * 
+				  evaluate_ptree_1f1v1b2f(sf->ptree, 
+							  sf->cb->rmp0 * sf->data[sf->loc--],
+							  (vct *)XEN_OBJECT_REF(sf->closure),
+							  FALSE)));
+}
+
+static Float next_sample_to_float_with_ptree_and_closure(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(MUS_SAMPLE_TO_FLOAT(next_sound(sf)));
+  else return(sf->cb->scl * 
+	      evaluate_ptree_1f1v1b2f(sf->ptree, 
+				      sf->cb->rmp0 * sf->data[sf->loc++],
+				      (vct *)XEN_OBJECT_REF(sf->closure),
+				      TRUE));
+}
+
+static Float previous_sample_to_float_with_ptree_and_closure(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(MUS_SAMPLE_TO_FLOAT(previous_sound(sf)));
+  else return(sf->cb->scl * 
+	      evaluate_ptree_1f1v1b2f(sf->ptree, 
+				      sf->cb->rmp0 * sf->data[sf->loc--],
+				      (vct *)XEN_OBJECT_REF(sf->closure),
+				      FALSE));
+}
+
+static mus_sample_t next_sample_with_ptree_and_closure_on_air(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound(sf));
+  else 
+    {
+      sf->loc++;
+      return(MUS_FLOAT_TO_SAMPLE(sf->cb->scl *
+				 evaluate_ptree_1f1v1b2f(sf->ptree, 
+							 0.0,
+							 (vct *)XEN_OBJECT_REF(sf->closure),
+							 TRUE)));
+    }
+}
+
+static mus_sample_t previous_sample_with_ptree_and_closure_on_air(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound(sf));
+  else 
+    {
+      sf->loc--;
+      return(MUS_FLOAT_TO_SAMPLE(sf->cb->scl * 
+				 evaluate_ptree_1f1v1b2f(sf->ptree, 
+							 0.0,
+							 (vct *)XEN_OBJECT_REF(sf->closure),
+							 FALSE)));
+    }
+}
+
+static Float next_sample_to_float_with_ptree_and_closure_on_air(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(MUS_SAMPLE_TO_FLOAT(next_sound(sf)));
+  else 
+    {
+      sf->loc++;
+      return(sf->cb->scl * 
+	     evaluate_ptree_1f1v1b2f(sf->ptree, 
+				     0.0,
+				     (vct *)XEN_OBJECT_REF(sf->closure),
+				     TRUE));
+    }
+}
+
+static Float previous_sample_to_float_with_ptree_and_closure_on_air(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(MUS_SAMPLE_TO_FLOAT(previous_sound(sf)));
+  else 
+    {
+      sf->loc--;
+      return(sf->cb->scl * 
+	     evaluate_ptree_1f1v1b2f(sf->ptree, 
+				     0.0,
+				     (vct *)XEN_OBJECT_REF(sf->closure),
+				     FALSE));
+    }
+}
 
 void read_sample_change_direction(snd_fd *sf, int dir)
 {
@@ -2045,7 +2228,6 @@ static mus_sample_t reader_out_of_data(snd_fd *sf)
   sf->at_eof = TRUE;
   sf->run = end_sample;
   sf->runf = end_sample_to_float;
-  /* TODO: check this */
   sf->rev_run = end_sample;
   sf->rev_runf = end_sample_to_float;
   return(MUS_SAMPLE_0);
@@ -2057,6 +2239,30 @@ static snd_fd *cancel_reader(snd_fd *sf)
   sf->cbi = 0;
   reader_out_of_data(sf);
   return(sf);
+}
+
+static void get_sf_closure(snd_fd *sf)
+{
+  XEN proc;
+  proc = sf->cp->ptree_inits[sf->cb->ptree_loc];
+  if ((sf->closure) && (XEN_BOUND_P(sf->closure)))
+    {
+      snd_unprotect(sf->closure);
+      sf->closure = XEN_UNDEFINED;
+    }
+  if ((proc) && (XEN_PROCEDURE_P(proc)))
+    {
+      sf->closure = XEN_CALL_1(proc,
+			       C_TO_XEN_OFF_T(sf->frag_pos + sf->cb->ptree_pos),
+			       "ptree-channel init func");
+      /*
+      fprintf(stderr,"call init proc (%d): (pos:" OFF_TD " = " OFF_TD " + " OFF_TD ", len: " OFF_TD ") -> %s\n", 
+	      sf->cb->ptree_loc,
+	      sf->frag_pos + sf->cb->ptree_pos, sf->frag_pos, sf->cb->ptree_pos, 
+	      sf->cb->end - sf->cb->beg,
+	      XEN_AS_STRING(sf->closure));
+      */
+    }
 }
 
 static void choose_accessor(snd_fd *sf)
@@ -2108,7 +2314,29 @@ static void choose_accessor(snd_fd *sf)
 		  sf->rev_run = previous_sample_with_ptree;
 		  sf->rev_runf = previous_sample_to_float_with_ptree;
 		}
-	      sf->ptree = sf->cp->ptrees[sf->cb->loc];
+	      sf->ptree = sf->cp->ptrees[sf->cb->ptree_loc];
+
+	      get_sf_closure(sf);
+	      if ((sf->closure) && (XEN_BOUND_P(sf->closure)))
+		{
+		  snd_protect(sf->closure);
+		  if ((sf->cb->rmp0 == 0.0) || (sf->cb->snd == EDIT_LIST_ZERO_MARK))
+		    {
+		      sf->run = next_sample_with_ptree_and_closure_on_air;
+		      sf->runf = next_sample_to_float_with_ptree_and_closure_on_air;
+		      sf->rev_run = previous_sample_with_ptree_and_closure_on_air;
+		      sf->rev_runf = previous_sample_to_float_with_ptree_and_closure_on_air;
+		    }
+		  else
+		    {
+		      sf->run = next_sample_with_ptree_and_closure;
+		      sf->runf = next_sample_to_float_with_ptree_and_closure;
+		      sf->rev_run = previous_sample_with_ptree_and_closure;
+		      sf->rev_runf = previous_sample_to_float_with_ptree_and_closure;
+		    }
+		}
+	      else sf->closure = XEN_UNDEFINED;
+
 	      break;
 	    default:
 	      if (sf->cb->scl == 1.0)
@@ -2196,7 +2424,29 @@ static void choose_accessor(snd_fd *sf)
 		  sf->rev_run = next_sample_with_ptree;
 		  sf->rev_runf = next_sample_to_float_with_ptree;
 		}
-	      sf->ptree = sf->cp->ptrees[sf->cb->loc];
+	      sf->ptree = sf->cp->ptrees[sf->cb->ptree_loc];
+
+	      get_sf_closure(sf);
+	      if ((sf->closure) && (XEN_BOUND_P(sf->closure)))
+		{
+		  snd_protect(sf->closure);
+		  if ((sf->cb->rmp0 == 0.0) || (sf->cb->snd == EDIT_LIST_ZERO_MARK))
+		    {
+		      sf->run = previous_sample_with_ptree_and_closure_on_air;
+		      sf->runf = previous_sample_to_float_with_ptree_and_closure_on_air;
+		      sf->rev_run = next_sample_with_ptree_and_closure_on_air;
+		      sf->rev_runf = next_sample_to_float_with_ptree_and_closure_on_air;
+		    }
+		  else
+		    {
+		      sf->run = previous_sample_with_ptree_and_closure;
+		      sf->runf = previous_sample_to_float_with_ptree_and_closure;
+		      sf->rev_run = next_sample_with_ptree_and_closure;
+		      sf->rev_runf = next_sample_to_float_with_ptree_and_closure;
+		    }
+		}
+	      else sf->closure = XEN_UNDEFINED;
+
 	      break;
 	    default:
 	      if (sf->cb->scl == 1.0)

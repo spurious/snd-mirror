@@ -2575,15 +2575,19 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
   return(res);
 }
 
-static XEN g_ptree_channel(XEN proc_and_list, XEN s_beg, XEN s_dur, XEN snd, XEN chn, XEN edpos, XEN env_too)
+static XEN g_ptree_channel(XEN proc_and_list, XEN s_beg, XEN s_dur, XEN snd, XEN chn, XEN edpos, XEN env_too, XEN init_func)
 {
-  #define H_ptree_channel "(" S_ptree_channel " proc &optional beg dur snd chn edpos peak-env-also) \
+  #define H_ptree_channel "(" S_ptree_channel " proc &optional beg dur snd chn edpos peak-env-also init-func) \
 applies 'proc' as a 'virtual edit'; that is, the effect of 'proc' (a function of one argument, the \
 current sample), comes about as an implicit change in the way the data is read.  This is similar to \
 scaling and some envelope operations in that no data actually changes.  If 'peak-env-also' is #t, \
 the same function is applied to the peak env values to get the new version.  If the underlying data \
 has any envelope ramps of previous ptree operations, map-channel is called instead and the new \
-data is saved in the normal manner."
+data is saved in the normal manner. The optional 'init-func' arg can be used in cases where the \
+edit operation needs state and an indication of where it is in a given edit.  See extsnd.html \
+for the gory details."
+
+  /* TODO: clm struct as closure? -- how to declare it? */
 
   chan_info *cp;
   off_t beg = 0, dur = 0;
@@ -2592,7 +2596,10 @@ data is saved in the normal manner."
   void *pt = NULL;
   if (XEN_LIST_P(proc_and_list))
     proc = XEN_CADR(proc_and_list);
-  XEN_ASSERT_TYPE((XEN_PROCEDURE_P(proc)) && (XEN_REQUIRED_ARGS(proc) == 1), proc, XEN_ARG_1, S_ptree_channel, "a procedure of one arg");
+  XEN_ASSERT_TYPE((XEN_PROCEDURE_P(proc)) && 
+		  (((XEN_REQUIRED_ARGS(proc) == 1) && (!(XEN_PROCEDURE_P(init_func)))) ||
+		   ((XEN_REQUIRED_ARGS(proc) == 3) && (XEN_PROCEDURE_P(init_func)))),
+		  proc, XEN_ARG_1, S_ptree_channel, "a procedure of one or three args");
   ASSERT_SAMPLE_TYPE(S_ptree_channel, s_beg, XEN_ARG_2);
   ASSERT_SAMPLE_TYPE(S_ptree_channel, s_dur, XEN_ARG_3);
   ASSERT_CHANNEL(S_ptree_channel, snd, chn, 4); 
@@ -2605,6 +2612,27 @@ data is saved in the normal manner."
 			 s_beg));
   dur = dur_to_samples(s_dur, beg, cp, pos, 3, S_ptree_channel);
   clear_minibuffer(cp->sound);
+
+  if (XEN_PROCEDURE_P(init_func))
+    {
+      if (XEN_REQUIRED_ARGS(init_func) != 1)
+	XEN_ERROR(BAD_ARITY,
+		  XEN_LIST_2(C_TO_XEN_STRING(S_ptree_channel),
+			     C_TO_XEN_STRING("init-func must take 1 arg")));
+      /* if not optimizable, give up for now (needs to call init-func and pass val to proc) */
+      pt = form_to_ptree_1f1v1b2f(proc_and_list);
+      if ((pt != NULL) && (!(ramp_or_ptree_fragments_in_use(cp, beg, dur, pos))))
+	{
+	  ptree_channel(cp, pt, beg, dur, pos, (XEN_TRUE_P(env_too)) ? pt : NULL, init_func);
+	}
+      else
+	{
+	  /* TODO: call map-channel */
+	}
+      /* TODO: if env-too, set it up as well */
+      return(proc_and_list);
+    }
+
   pt = form_to_ptree_1f2f(proc_and_list);
   if (pt)
     {
@@ -2614,7 +2642,7 @@ data is saved in the normal manner."
 	  run_channel(cp, pt, beg, dur, pos);
 	  free_ptree(pt);
 	}
-      else ptree_channel(cp, pt, beg, dur, pos, (XEN_TRUE_P(env_too)) ? pt : NULL);
+      else ptree_channel(cp, pt, beg, dur, pos, (XEN_TRUE_P(env_too)) ? pt : NULL, init_func);
     }
   else
     {
@@ -3964,7 +3992,7 @@ void g_init_sig(void)
   XEN_DEFINE_PROCEDURE(S_count_matches "-1",      g_count_matches_w, 1, 4, 0,           H_count_matches);
   XEN_DEFINE_PROCEDURE(S_map_chan "-1",           g_map_chan_w, 1, 6, 0,                H_map_chan);
   XEN_DEFINE_PROCEDURE(S_map_channel "-1",        g_map_channel_w, 1, 6, 0,             H_map_channel);
-  XEN_DEFINE_PROCEDURE(S_ptree_channel "-1",      g_ptree_channel, 1, 6, 0,             H_ptree_channel);
+  XEN_DEFINE_PROCEDURE(S_ptree_channel "-1",      g_ptree_channel, 1, 7, 0,             H_ptree_channel);
 
   XEN_EVAL_C_STRING("(defmacro* scan-channel (form #:rest args) `(apply scan-channel-1 (list (list ',form ,form) ,@args)))");
   XEN_SET_DOCUMENTATION(S_scan_channel, H_scan_channel);
@@ -3987,7 +4015,7 @@ void g_init_sig(void)
   XEN_DEFINE_PROCEDURE(S_count_matches,           g_count_matches_w, 1, 4, 0,           H_count_matches);
   XEN_DEFINE_PROCEDURE(S_map_chan,                g_map_chan_w, 1, 6, 0,                H_map_chan);
   XEN_DEFINE_PROCEDURE(S_map_channel,             g_map_channel_w, 1, 6, 0,             H_map_channel);
-  XEN_DEFINE_PROCEDURE(S_ptree_channel,           g_ptree_channel, 1, 6, 0,             H_ptree_channel);
+  XEN_DEFINE_PROCEDURE(S_ptree_channel,           g_ptree_channel, 1, 7, 0,             H_ptree_channel);
 #endif
 
   XEN_DEFINE_PROCEDURE(S_smooth_sound,            g_smooth_sound_w, 0, 4, 0,            H_smooth_sound);

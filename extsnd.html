@@ -5059,7 +5059,7 @@ the direction argument between the channel and edit-position:
 <!-- -->
 <!-- ptree-channel -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="ptreechannel">ptree-channel</a></em> (proc <i>beg dur snd chn edpos env-too</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="ptreechannel">ptree-channel</a></em> (proc <i>beg dur snd chn edpos env-too init-func</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- --><b>ptree-channel</b>
@@ -5095,18 +5095,58 @@ the direction argument between the channel and edit-position:
 <!-- -->'proc' must be compatible with (and run through) the optimizer;
 <!-- -->this means the <a href="#optimization">optimization</a> variable must be greater than 0. 
 <!-- --><br><br>
-<!-- -->The editing procedure ('proc') should not assume anything about
-<!-- -->the context in which it is called.  Since there's no way for 'proc' to know where it starts, or when it is being restarted,
-<!-- -->or which direction it is running, there's no way it can make any use of closures (or randomness!).
+<!-- -->If no 'init-func' is specified, the editing procedure ('proc') should not assume anything about
+<!-- -->the context in which it is called;  in this case, there's no way for 'proc' to know where it starts, or when it is being restarted,
+<!-- -->or which direction it is running, so there's no way it can make any use of closures.
 <!-- -->For example, the following call:
 <!-- --><br><br><pre>
    (let ((ctr 0)) 
-     (ptree-channel (lambda (y) 
+     (<em class=red>ptree-channel</em> (lambda (y) 
                       (set! ctr (1+ ctr)) 
                       (* ctr .0001))))
 <!-- --></pre><br><br>
 <!-- -->will never reset ctr to 0!  So every time the segment is read by Snd, the samples will be
-<!-- -->higher -- this is probably not what you want.
+<!-- -->higher -- this is probably not what you want.  'init-func' provides a way around this
+<!-- -->limitation.  The following example is a ptree-channel version of cosine-channel given under
+<!-- --><a href="#mapchannel">map-channel</a>:
+<!-- --></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(define* (cosine-channel-via-ptree #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+  ;; vct: angle (we can use the global version of incr because it is not set anywhere)
+  (let* ((samps (or dur (frames snd chn)))
+	 (incr (/ pi samps)))
+    (<em class=red>ptree-channel</em>
+     (lambda (y data forward)
+       (declare (y real) (data vct) (forward boolean))
+       (let* ((angle (vct-ref data 0))
+	      (val (* y (cos angle))))
+	 (if forward
+	     (vct-set! data 0 (+ angle incr))
+	     (vct-set! data 0 (- angle incr)))
+	 val))
+     beg dur snd chn edpos #f
+     (lambda (frag-beg)
+       (vct (+ (* -0.5 pi) (* frag-beg incr)))))))
+<!-- --></pre></td></tr></table></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- -->Several things to note; since the ptree-channel function (the first one, 'proc') is optimized
+<!-- -->via the run macro, all normal closure references are packaged up into the parse tree and never
+<!-- -->seen again (in this context anyway), so we need a way to pass in the initial value of 'angle'
+<!-- -->each time ptree-channel is run over the segment that owns this operation.  So, the 'init-func'
+<!-- -->returns a vct that is then passed to 'proc' on each call. Since a read operation can start
+<!-- -->anywhere in a given fragment, and change read direction unpredictably, the 'init-func' is
+<!-- -->passed the fragment-relative begin time, and the main 'proc' takes the current (sample-wise)
+<!-- -->read direction as well as the vct returned by 'init-func'.  The sequence of operations is:
+<!-- -->a read is requested, 'init-func' is called with the read start point (relative to the
+<!-- -->original segment start -- this is actually complicated to implement since a single
+<!-- -->ptree fragment can itself become arbitrarily fragmented), it returns any state it needs
+<!-- -->to refer to in a vct object, then each time a sample is needed from the current sample
+<!-- -->reader, 'proc' is called passing it the current underlying sample, the vct of 'init-func',
+<!-- -->and the read direction.
+<!-- --><br><br>
 <!-- -->The name refers to "parse tree" -- see <a href="#editexpl">Edit Lists</a> and snd-run.c for more details. (ptree-channel does not work in Ruby).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
