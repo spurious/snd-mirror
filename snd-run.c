@@ -92,6 +92,13 @@ static XEN optimization_hook;
 
 #if HAVE_GUILE && WITH_RUN && HAVE_STRINGIZE
 
+enum {RUN_WILD, RUN_WITH_HELMET, RUN_WITH_HELMET_AND_KNEE_PADS};
+static int run_safety = RUN_WILD;
+
+/* TODO: *clm-safety* equivalent -- if 1: add gen/array existence checks -- should these be built-into clm.c?
+ * TODO: vox seems very slow (and why is it unrolled?)
+ */
+
 
 #define Int off_t
 #define INT_PT  "i%d(%lld)"
@@ -7540,7 +7547,7 @@ static void oscil_1f_1(int *args, ptree *pt) {FLOAT_RESULT = mus_oscil_1(CLM_ARG
 static char *descr_oscil_2f(int *args, ptree *pt) {return(descr_gen(args, pt, "oscil", 2));}
 static void oscil_2f(int *args, ptree *pt) {FLOAT_RESULT = mus_oscil(CLM_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);}
 GEN_P(oscil)
-static xen_value * oscil_1(ptree *prog, xen_value **args, int num_args)
+static xen_value *oscil_1(ptree *prog, xen_value **args, int num_args)
 {
   if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2);
   if ((num_args > 2) && (args[3]->type == R_INT)) single_to_float(prog, args, 3);
@@ -9488,14 +9495,13 @@ static XEN xen_value_to_xen(ptree *pt, xen_value *v)
       add_loc_to_protected_list(pt, snd_protect(val));
       return(val);
     }
-  /* TODO: add other types here (sound data for example -- would need to remove it from the gcs list somehow) */
   return(XEN_FALSE);
 }
 
 static triple *make_xen_arg_triple(ptree *pt,
-				    void (*function)(int *arg_addrs, ptree *pt),
-				    char *(*descr)(int *arg_addrs, ptree *pt), 
-				    xen_value **typed_args, int args)
+				   void (*function)(int *arg_addrs, ptree *pt),
+				   char *(*descr)(int *arg_addrs, ptree *pt), 
+				   xen_value **typed_args, int args)
 {
   triple *trp;
   int *addrs = NULL;

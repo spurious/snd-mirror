@@ -3,7 +3,6 @@
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 
 ;;; this version of the fm-violin assumes it is running within with-sound (where *output* and *reverb* are defined)
-;;; see fmv.scm for a version that runs more easily in Snd
 
 (definstrument (fm-violin startime dur frequency amplitude #:key
 	    (fm-index 1.0)
@@ -102,7 +101,7 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 	   (ind-fuzz 1.0)
 	   (amp-fuzz 1.0))
       (ws-interrupt?)
-      (if (or (not easy-case) ind-noi amp-noi (> noise-amount 0.0))
+      (if (or (not easy-case) ind-noi amp-noi (> noise-amount 0.0) (not modulate))
 	  (run
 	   (lambda ()
 	     (do ((i beg (1+ i)))

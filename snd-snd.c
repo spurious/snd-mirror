@@ -3,6 +3,7 @@
 #include "clm2xen.h"
 
 /* SOMEDAY: draggable (focusable) freq axis in filter control */
+/* TODO: update should leave control panel and view choices unchanged */
 
 snd_info *snd_new_file(char *newname, int header_type, int data_format, int srate, int chans, char *new_comment, off_t samples)
 {

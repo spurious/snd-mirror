@@ -3,7 +3,7 @@ Snd change log
   2-Aug:     players: returns list of active players
   27-Jul:    --with-hobbit and --with-builtin-gtkrc configure switches
              clm23.scm
-  14-Jul:    added new file: NEWS
+  14-Jul:    new file: NEWS
   30-Jun:    snd-hobbit.scm thanks to Kjetil
              snd 7.5.
   23-Jun:    new configure variables GUILE_CONFIG_name and GUILE_name (for OSX/fink)
@@ -12,7 +12,7 @@ Snd change log
   10-Jun:    gtk support in fft-menu.scm thanks to Kjetil
              ssb-bank in dsp.scm.
   9-Jun:     new CLM generator ssb-am.
-  4-Jun:     added add-colormap, delete-colormap, colormap-size, colormap-name, changed colormap-ref
+  4-Jun:     add-colormap, delete-colormap, colormap-size, colormap-name, changed colormap-ref
              removed 2 previously built-in colormaps, added rainbow colormap, default colormap is 0.
   1-Jun:     read-ascii in examp.scm.
   27-May:    cursor-update-interval.
