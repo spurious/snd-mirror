@@ -418,8 +418,6 @@ static void display_edits(chan_info *cp, FILE *outp)
 }
 
 static XEN save_state_hook = XEN_FALSE;
-static int save_state_ctr = 0;
-void increment_save_state_ctr(void) {save_state_ctr++;}
 
 char *run_save_state_hook(char *filename)
 {
@@ -430,8 +428,7 @@ char *run_save_state_hook(char *filename)
       XEN procs = XEN_HOOK_PROCEDURES(save_state_hook);
       while (XEN_NOT_NULL_P(procs))
 	{
-	  result = XEN_CALL_2(XEN_CAR(procs),
-			      C_TO_XEN_INT(save_state_ctr),
+	  result = XEN_CALL_1(XEN_CAR(procs),
 			      C_TO_XEN_STRING(filename),
 			      "save state hook");
 	  if (XEN_STRING_P(result))
@@ -442,8 +439,7 @@ char *run_save_state_hook(char *filename)
 	  procs = XEN_CDR (procs);
 	}
 #else
-      result = XEN_CALL_2(save_state_hook,
-			  C_TO_XEN_INT(save_state_ctr),
+      result = XEN_CALL_1(save_state_hook,
 			  C_TO_XEN_STRING(filename),
 			  "save state hook");
       if (XEN_STRING_P(result))
@@ -3344,7 +3340,6 @@ static XEN g_save_edit_history(XEN filename, XEN snd, XEN chn)
   if (mcf) FREE(mcf);
   if (fd)
     {
-      increment_save_state_ctr();
       if ((XEN_INTEGER_P(chn)) && (XEN_INTEGER_P(snd)))
 	{
 	  cp = get_cp(snd, chn, S_save_edit_history);
@@ -4615,13 +4610,13 @@ If it returns #t, the file is not saved.  'name' is #f unless the file is being 
 
   XEN_DEFINE_HOOK(save_hook, S_save_hook, 2, H_save_hook);      /* arg = sound index, possible new name */
 
-  #define H_save_state_hook S_save_state_hook " (save-id temp-filename) is called each time the save-state \
-mechanism is about to create a new temporary file to save some edit history sample values.  The save-id \
-is a unique integer that identifies all the files in a given saved state; temp-filename is the current file. \
+  #define H_save_state_hook S_save_state_hook " (temp-filename) is called each time the save-state \
+mechanism is about to create a new temporary file to save some edit history sample values. \
+temp-filename is the current file. \
 If the hook returns a string, it is treated as the new temp filename.  This hook provides a way to \
 keep track of which files are in a given saved state batch, and a way to rename or redirect those files."
 
-  XEN_DEFINE_HOOK(save_state_hook, S_save_state_hook, 2, H_save_state_hook);      /* args = saved-state index, temp-filename */
+  XEN_DEFINE_HOOK(save_state_hook, S_save_state_hook, 1, H_save_state_hook);      /* arg = temp-filename */
 
 #if DEBUGGING && HAVE_GUILE
   XEN_DEFINE_PROCEDURE("get-test-a2", g_get_test_a2, 0, 0, 0, "internal test function");

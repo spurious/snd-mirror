@@ -1609,12 +1609,12 @@ the hook.
 <!-- -->
 <!-- save-state-hook -->
 <!-- --><tr><td colspan=3>
-<!-- --><span class=defbox><code><em class=def><a name="savestatehook">save-state-hook</a></em> (save-id temp-filename)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="savestatehook">save-state-hook</a></em> (temp-filename)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called each time the save-state
-<!-- -->mechanism is about to create a new temporary file to save some edit history sample values.  The <i>save-id</i>
-<!-- -->is a unique integer that identifies all the files in a given saved state; <i>temp-filename</i> is the current file.
+<!-- -->mechanism is about to create a new temporary file to save some edit history sample values.
+<!-- --><i>temp-filename</i> is the current temporary file name.
 <!-- -->If the hook returns a string, it is treated as the new temp filename.  This hook provides a way to
 <!-- -->keep track of which files are in a given saved state batch, and a way to rename or redirect those files.
 <!-- -->The default naming scheme simply increments a counter and places everything in the <a href="#savedir">save-dir</a>;

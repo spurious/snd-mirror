@@ -4500,7 +4500,7 @@
 	      (old-reglen (map region-frames (regions)))
 	      (s61-files '()))
 	  (add-hook! save-state-hook
-		     (lambda (id file)
+		     (lambda (file)
 		       (set! s61-files (cons file s61-files))
 		       #f))
 	  (save-state "s61.scm")
@@ -9772,7 +9772,6 @@
   (add-hook! mix-position-changed-hook arg2) (carg2 mix-position-changed-hook)
   (add-hook! stop-playing-channel-hook arg2) (carg2 stop-playing-channel-hook)
   (add-hook! save-hook arg2) (carg2 save-hook)
-  (add-hook! save-state-hook arg2) (carg2 save-state-hook)
   (add-hook! mus-error-hook arg2) (carg2 mus-error-hook)
   (add-hook! mouse-enter-graph-hook arg2) (carg2 mouse-enter-graph-hook)
   (add-hook! mouse-leave-graph-hook arg2) (carg2 mouse-leave-graph-hook)
@@ -9780,6 +9779,7 @@
   (add-hook! select-channel-hook arg2) (carg2 select-channel-hook)
   (add-hook! help-hook arg2) (carg2 help-hook)
 
+  (add-hook! save-state-hook arg1) (carg1 save-state-hook)
   (add-hook! after-open-hook arg1) (carg1 after-open-hook)
   (add-hook! update-hook arg1) (carg1 update-hook)
   (add-hook! close-hook arg1) (carg1 close-hook)

@@ -542,7 +542,6 @@ static char *save_state_or_error (snd_state *ss, char *save_state_name)
       locale = copy_string(setlocale(LC_NUMERIC, "C")); /* must use decimal point in floats since Scheme assumes that format */
 #endif
       save_prevlist(save_fd);                                 /* list of previous files (View: Files option) */
-      increment_save_state_ctr();                             /* new saved state id for save-state-hook */
       for_each_sound(ss, save_sound_state, (void *)save_fd);  /* current sound state -- will traverse chans */
       save_macro_state(save_fd);                              /* current unsaved keyboard macros (snd-chn.c) */
       save_envelope_editor_state(save_fd);                    /* current envelope editor window state */
