@@ -259,6 +259,7 @@ static BACKGROUND_TYPE startup_funcs(gpointer context)
 {
   startup_state *tm = (startup_state *)context;
   snd_state *ss;
+  snd_info *sp;
   static int auto_open_ctr = 0;
   ss = tm->ss;
   switch (tm->slice)
@@ -338,8 +339,15 @@ static BACKGROUND_TYPE startup_funcs(gpointer context)
 #if TRAP_SEGFAULT
       if (trap_segfault(ss)) signal(SIGSEGV, segv);
 #endif
-      if ((ss->sounds) && (ss->sounds[0]) && ((ss->sounds[0])->inuse))
-	select_channel(ss->sounds[0], 0);
+      if ((ss->sounds) &&
+	  (ss->selected_sound == NO_SELECTION))
+	{
+	  sp = ss->sounds[0];
+	  if ((sp) && 
+	      (sp->inuse) &&
+	      (sp->selected_channel == NO_SELECTION)) /* don't clobber possible select-channel in loaded startup files */
+	    select_channel(sp, 0);
+	}
       FREE(tm);
       return(BACKGROUND_QUIT); 
       break;

@@ -2310,14 +2310,13 @@ static int save_edits_and_update_display(snd_info *sp)
   char *ofile = NULL;
   int err = MUS_NO_ERROR, saved_errno = 0;
   snd_state *ss;
-  int i, samples;
+  int i, samples = 0;
   chan_info *cp;
   snd_fd **sf;
   axes_data *sa;
   file_info *sphdr = NULL;
   ss = sp->state;
   if (dont_save(sp, NULL)) return(MUS_NO_ERROR);
-  samples = current_ed_samples(sp->chans[0]);
   err = MUS_NO_ERROR;
   ofile = snd_tempnam(ss); 
   /* this will use user's TMPDIR if temp_dir(ss) is not set, else stdio.h's P_tmpdir else /tmp */
@@ -2327,6 +2326,8 @@ static int save_edits_and_update_display(snd_info *sp)
     {
       sf[i] = init_sample_read(0, sp->chans[i], READ_FORWARD);
       if (sf[i] == NULL) err = MUS_ERROR;
+      if (samples < current_ed_samples(sp->chans[i]))
+	samples = current_ed_samples(sp->chans[i]);
     }
   if (err == MUS_NO_ERROR)
     {

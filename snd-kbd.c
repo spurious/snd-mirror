@@ -569,7 +569,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
   snd_state *ss;
   snd_info *nsp;
   int s_or_r = 0;
-  int nc, i, len;
+  int nc, i, j, len;
   chan_info *active_chan;
   char *str = NULL, *mcf = NULL;
   char *tok, *newdir, *str1;
@@ -736,12 +736,11 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	      nc = mus_sound_chans(str1);
 	      if (nc != -1)
 		{
-		  len = mus_sound_samples(str1)/nc;
-		  if (nc > sp->nchans) nc = sp->nchans;
+		  len = mus_sound_frames(str1);
 		  if (!active_chan) active_chan = sp->chans[0];
-		  for (i = 0; i < nc; i++)
+		  for (i = active_chan->chan, j = 0; (j < nc) && (i < sp->nchans); i++, j++)
 		    {
-		      file_insert_samples(active_chan->cursor, len, str1, sp->chans[i], i, DONT_DELETE_ME, "C-x C-i");
+		      file_insert_samples(active_chan->cursor, len, str1, sp->chans[i], j, DONT_DELETE_ME, "C-x C-i");
 		      update_graph(sp->chans[i], NULL);
 		    }
 		  clear_minibuffer(sp);

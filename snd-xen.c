@@ -1728,6 +1728,11 @@ reading edit version edit-position (defaulting to the current version)"
   pos = to_c_edit_position(cp, edpos, S_samples2vct, 6);
   beg = XEN_TO_C_INT_OR_ELSE(samp_0, 0);
   len = XEN_TO_C_INT_OR_ELSE(samps, cp->samples[pos] - beg);
+  if (len <= 0) 
+    XEN_ERROR(IMPOSSIBLE_BOUNDS,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_samples2vct),
+			 C_TO_XEN_INT(beg),
+			 C_TO_XEN_INT(len)));
   if (v1)
     {
       fvals = v1->data;

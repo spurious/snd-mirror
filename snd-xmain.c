@@ -378,6 +378,7 @@ static BACKGROUND_TYPE startup_funcs(XtPointer context)
   startup_state *tm = (startup_state *)context;
   Atom wm_delete_window;
   snd_state *ss;
+  snd_info *sp;
   static int auto_open_ctr = 0;
   ss = tm->ss;
   switch (tm->slice)
@@ -444,13 +445,18 @@ static BACKGROUND_TYPE startup_funcs(XtPointer context)
 #if TRAP_SEGFAULT
       if (trap_segfault(ss)) signal(SIGSEGV, segv);
 #endif
-      if ((ss->sounds) && (ss->sounds[0]) && ((ss->sounds[0])->inuse)) 
+      if ((ss->sounds) &&
+	  (ss->selected_sound == NO_SELECTION))
 	{
-	  select_channel(ss->sounds[0], 0);
-	  if ((ss->active_sounds > 1) &&
-	      ((sound_style(ss) == SOUNDS_VERTICAL) || (sound_style(ss) == SOUNDS_HORIZONTAL)))
-	    equalize_all_panes(ss);
+	  sp = ss->sounds[0];
+	  if ((sp) && 
+	      (sp->inuse) &&
+	      (sp->selected_channel == NO_SELECTION)) /* don't clobber possible select-channel in loaded startup files */
+	    select_channel(sp, 0);
 	}
+      if ((ss->active_sounds > 1) &&
+	  ((sound_style(ss) == SOUNDS_VERTICAL) || (sound_style(ss) == SOUNDS_HORIZONTAL)))
+	equalize_all_panes(ss);
       FREE(tm);
       return(BACKGROUND_QUIT); 
       break;
