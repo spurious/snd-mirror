@@ -1145,7 +1145,6 @@ GtkWidget *add_menu(snd_state *ss)
   return(mw[menu_menu]);
 }
 
-#define MAX_MAIN_MENUS 64
 static GtkWidget *added_menus[MAX_MAIN_MENUS];
 static int new_menu = 5;
 static GtkWidget **added_options = NULL;
@@ -1189,6 +1188,21 @@ static void SND_callback(GtkWidget *w, gpointer cD)
   opt = callb2option(callb);
   IF_MENU_HOOK(main_menu_name(opt), added_options_names[(opt < 0) ? 0 : opt])
     g_snd_callback(callb);
+}
+
+GtkWidget *menu_widget(int which_menu)
+{
+  switch (which_menu)
+    {
+    case FILE_MENU:    return(mw[file_menu]); break;
+    case EDIT_MENU:    return(mw[edit_menu]); break;
+    case VIEW_MENU:    return(mw[view_menu]); break;
+    case OPTIONS_MENU: return(mw[option_menu]); break;
+    case HELP_MENU:    return(mw[help_menu]); break;
+    case POPUP_MENU:   return(popup_menu); break;
+    default:           return(added_menus[which_menu]); break;
+    }
+  return(NULL);
 }
 
 static void add_option(GtkWidget *w, int which_menu, char *label, int callb)

@@ -204,7 +204,7 @@ void *xen_malloc(int size)
 
 void xen_gc_mark(XEN val)
 {
-  rb_gc_mark((void *)val);
+  rb_gc_mark(val);
 }
 
 XEN xen_rb_cdr(XEN val)

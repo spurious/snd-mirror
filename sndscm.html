@@ -444,16 +444,19 @@ envelope functions that are often useful:
 </p>
 <pre>
   <em class=def><A NAME="envelopeinterp">envelope-interp</a></em> x env <i>base</i>
-  <em class=def><A NAME="windowenvelope">window-envelope</a></em> beg end env
+  <em class=def><a name="windowenvelope">window-envelope</a></em> beg end env
   <em class=def><a name="mapenvelopes">map-envelopes</a></em> func env1 env2
   <em class=def><A NAME="multiplyenvelopes">multiply-envelopes</a></em> env1 env2
+  <em class=def><A NAME="addenvelopes">add-envelopes</a></em> env1 env2
   <em class=def><a name="maxenvelope">max-envelope</a></em> env
   <em class=def><a name="integrateenvelope">integrate-envelope</a></em> env
-  <em class=def><A NAME="stretchenvelope">stretch-envelope</a></em> env old-attack new-attack <i>old-decay new-decay</i>
+  <em class=def><a name="stretchenvelope">stretch-envelope</a></em> env old-attack new-attack <i>old-decay new-decay</i>
   <em class=def><A NAME="maxx">max-x</a></em> env
+  <em class=def><a name="scaleenvelope">scale-envelope</a></em> env scl <i>(offset 0.0)</i>
+  <em class=def><a name="reverseenvelope">reverse-envelope</a></em> env
+  <em class=def><a name="concatenateenvelopes">concatenate-envelopes</a></em> #:rest envs
 </pre>
-<p>These are translated from CLM's env.lisp which has many more useful
-functions; someday they also should be translated.
+<p>These are translated from CLM's env.lisp.
 <code>(envelope-interp x env base)</code> returns value of env at x.
 If base is 0, env is treated as a step function; if base is 1.0 (the
 default), its breakpoints are connected by a straight line, and
@@ -525,8 +528,11 @@ to an envelope, much like divseg in clm-1.</p>
 :<em class=typing>(stretch-envelope '(0 0 1 1 2 0) .1 .2 1.5 1.6)</em>
 <em class=listener>(0 0 0.2 0.1 1.1 1 1.6 0.5 2.0 0)</em>
 </pre>
-<p>More of env.lisp will be translated eventually.
+<p><i>scale-envelope</i> scales the y values of an envelope by <i>scl</i>,
+<i>add-envelope</i> adds two envelopes together, <i>reverse-envelope</i>
+reverses an envelope.
 </p>
+
 
 <A NAME="enveddoc"></a><span class=box><h2>enved.scm</h2></span>
 <img src="envs.png" alt="channel enveds" align=right hspace=10 vspace=20>

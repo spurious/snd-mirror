@@ -109,6 +109,11 @@
     "(multiply-envelopes env1 env2) multiplies break-points of env1 and env2 returning a new envelope"
     (map-envelopes * e1 e2)))
 
+(define add-envelopes
+  (lambda (e1 e2)
+    "(multiply-envelopes env1 env2) multiplies break-points of env1 and env2 returning a new envelope"
+    (map-envelopes + e1 e2)))
+
 ; (multiply-envelopes '(0 0 2 .5) '(0 0 1 2 2 1)) -> '(0 0 0.5 0.5 1.0 0.5)
 
 (define max-envelope
@@ -205,3 +210,48 @@
 		  (reverse (stretch-envelope-1 new-fn (cddr fn)))))))))
 
     
+(define* (scale-envelope e scl #:optional (offset 0))
+  (if (null? e)
+      '()
+      (append (list (car e) (+ offset (* scl (cadr e))))
+	      (scale-envelope (cddr e) scl offset))))
+
+(define (reverse-envelope e)
+  (define (reverse-env-1 e newe xd)
+    (if (null? e)
+	newe
+	(reverse-env-1 (cddr e)
+		       (cons (- xd (car e))
+			     (cons (cadr e)
+				   newe))
+		       xd)))
+  (let ((len (length e)))
+    (if (or (= len 0) (= len 2))
+	e
+	(let ((xmax (list-ref e (- len 2))))
+	  (reverse-env-1 e '() xmax)))))
+
+(define* (concatenate-envelopes #:rest envs)
+  (define (cat-1 e newe xoff x0)
+    (if (null? e)
+	newe
+	(cat-1 (cddr e)
+	       (cons (cadr e)
+		     (cons (+ (- (car e) x0) xoff)
+			   newe))
+	       xoff
+	       x0)))
+  (let ((ne '())
+	(xoff 0.0))
+    (for-each 
+     (lambda (e)
+       (if (and (not (null? ne))
+		(= (car ne) (cadr e)))
+	   (begin
+	     (set! xoff (- xoff .01))
+	     (set! ne (cat-1 (cddr e) ne xoff (car e))))
+	   (set! ne (cat-1 e ne xoff (car e))))
+       (set! xoff (+ xoff .01 (cadr ne))))
+     envs)
+    (reverse ne)))
+

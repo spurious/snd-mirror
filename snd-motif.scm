@@ -2082,17 +2082,6 @@ Reverb-feedback sets the scaler on the feedback.\n\
       8)))
 
 
-;;; TODO: bess-translations
-;;; TODO: midi trigger
-;;; TODO: equivalent of zync (x too) across sounds
-;;; TODO: radar scope style region cue list
-;;; (create-sound-window (list-ref (main-widgets) 3) "pistol.snd")
-;;;   will probably want to disable close here, or use replace?
-;;; TODO: DAP-style loop point dialog
-;;; TODO: ladspa+enved example
-;;; TODO: mix-panning via enved
-;;; TODO: spatial envelope dialog
-
 (define (change-label widget new-label)
   (let ((str (|XmStringCreateLocalized new-label)))
     (|XtSetValues widget (list |XmNlabelString str))
@@ -2137,3 +2126,13 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		       (|XSetForeground dpy mark-gc original-mark-color)
 		       (|XSetForeground dpy selected-mark-gc original-selected-mark-color)))
 		 #f))))
+
+;;; TODO: bess-translations
+;;; TODO: midi trigger
+;;; TODO: equivalent of zync (x too) across sounds
+;;; TODO: radar scope style region cue list
+;;; (create-sound-window (list-ref (main-widgets) 3) "pistol.snd")
+;;;   will probably want to disable close here, or use replace?
+;;; TODO: mix-panning via enved
+;;; TODO: spatial envelope dialog
+

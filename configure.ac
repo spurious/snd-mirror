@@ -436,8 +436,17 @@ else
 
     SAVELIBS=$LIBS
     SAVEFLAGS=$CFLAGS
+
+    # search for libXm will fail with Xp complaints in Linux, so we need to search for -lXp first
+    AC_CHECK_LIB(Xp, XpGetDocumentData, [
+	         AC_DEFINE(HAVE_XP)
+	         XLIBS="$XLIBS -lXp"
+	         TEST_LIBS="$TEST_LIBS -lXp"
+	         ], , $TEST_LIBS)
+
     LIBS=$XLIBS
     CFLAGS=$XFLAGS
+
     AC_CHECK_LIB(Xm, XmCreateForm, 
 	[
 	  with_motif=yes
@@ -449,12 +458,6 @@ else
  	  GTKHTML_LIB=""
  	  GTKHTML_FLAGS=""
 	
-	  AC_CHECK_LIB(Xp, XpGetDocumentData, [
-	    AC_DEFINE(HAVE_XP)
-	    XLIBS="$XLIBS -lXp"
-	    TEST_LIBS="$TEST_LIBS -lXp"
-	    ], , $TEST_LIBS)
-
  	  AC_CHECK_LIB(Xpm, XpmReadFileToPixmap,
             [
   	     XLIBS="$XLIBS -lXpm"
@@ -673,6 +676,19 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
 	    	  AUDIO_LIB="-lasound"
 		fi
 	    	AC_SUBST(AUDIO_LIB)
+# snd_config_get_id argnum changed in Nov-01
+                snd_config_get_id_args=1
+                AC_MSG_CHECKING([snd_config_get_id args])
+                AC_TRY_COMPILE(
+                 [#include <sys/asoundlib.h>],
+# or alsa?? -- fix this so it parallels the change
+	         [snd_config_t *c;
+  	          const char *id;
+	          snd_config_get_id(c, &id)
+		 ],
+	        snd_config_get_id_args=2)
+                AC_MSG_RESULT($snd_config_get_id_args)
+                AC_DEFINE_UNQUOTED(SND_CONFIG_GET_ID_ARGS,$snd_config_get_id_args)
 		;;
 	    ESD)
 		AC_DEFINE(ESD)

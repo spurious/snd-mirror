@@ -179,7 +179,7 @@ GtkWidget *get_menubar(void);
 void reflect_play_stop_in_popup_menu(void);
 void reflect_play_selection_stop(void);
 void g_init_gxmenu(void);
-
+GtkWidget *menu_widget(int which_menu);
 
 
 /* -------- snd-gfft.c -------- */

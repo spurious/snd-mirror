@@ -174,7 +174,7 @@ int g_menu_is_sensitive(int which_menu, char *old_label);
 void reflect_play_stop_in_popup_menu(void);
 void reflect_play_selection_stop(void);
 void g_init_gxmenu(void);
-
+Widget menu_widget(int which_menu);
 
 
 /* -------- snd-xmain.c -------- */

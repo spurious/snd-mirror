@@ -962,7 +962,6 @@ Widget add_menu(snd_state *ss)
   return(mw[menu_menu]);
 }
 
-#define MAX_MAIN_MENUS 64
 static Widget added_menus[MAX_MAIN_MENUS];
 static int new_menu = 5;
 static Widget *added_options = NULL;
@@ -1046,6 +1045,24 @@ static void add_option(Widget w, int which_menu, char *label, int callb)
   added_options_pos++;
 }
 
+Widget menu_widget(int which_menu)
+{
+  switch (which_menu)
+    {
+    case FILE_MENU:    return(mw[file_menu]); break;
+    case EDIT_MENU:    return(mw[edit_menu]); break;
+    case VIEW_MENU:    return(mw[view_menu]); break;
+    case OPTIONS_MENU: return(mw[option_menu]); break;
+    case HELP_MENU:    return(mw[help_menu]); break;
+    case POPUP_MENU:   return(popup_menu); break;
+    default: 
+      if (which_menu < MAX_MAIN_MENUS)
+	return(added_menus[which_menu]); 
+      break;
+    }
+  return(NULL);
+}
+
 static void clobber_menu(Widget w, void *lab)
 {
   char *name, *wname;
@@ -1058,21 +1075,13 @@ static void clobber_menu(Widget w, void *lab)
 int g_remove_from_menu(int which_menu, char *label)
 {
   Widget top_menu;
-  switch (which_menu)
+  top_menu = menu_widget(which_menu);
+  if (top_menu)
     {
-    case FILE_MENU: top_menu = mw[file_menu]; break;
-    case EDIT_MENU: top_menu = mw[edit_menu]; break;
-    case VIEW_MENU: top_menu = mw[view_menu]; break;
-    case OPTIONS_MENU: top_menu = mw[option_menu]; break;
-    case HELP_MENU: top_menu = mw[help_menu]; break;
-    case POPUP_MENU: top_menu = mw[help_menu]; break;
-    default: 
-      if (which_menu < MAX_MAIN_MENUS)
-	top_menu = added_menus[which_menu]; 
-      else return(INVALID_MENU);
+      map_over_children(top_menu, clobber_menu, (void *)label);
+      return(0);
     }
-  map_over_children(top_menu, clobber_menu, (void *)label);
-  return(0);
+  return(INVALID_MENU);
 }
 
 int g_change_menu_label(int which_menu, char *old_label, char *new_label)
@@ -1155,20 +1164,8 @@ int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb, int pos
   Widget m, menw;
   static Arg args[12];
   int n;
-  switch (which_menu)
-    {
-    case FILE_MENU:    menw = mw[file_menu]; break;
-    case EDIT_MENU:    menw = mw[edit_menu]; break;
-    case VIEW_MENU:    menw = mw[view_menu]; break;
-    case OPTIONS_MENU: menw = mw[option_menu]; break;
-    case HELP_MENU:    menw = mw[help_menu]; break;
-    case POPUP_MENU:   menw = popup_menu; break;
-    default: 
-      if (which_menu < MAX_MAIN_MENUS)
-	menw = added_menus[which_menu]; 
-      else return(INVALID_MENU);
-      break;
-    }
+  menw = menu_widget(which_menu);
+  if (menw == NULL) return(INVALID_MENU);
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   if (position >= 0) {XtSetArg(args[n], XmNpositionIndex, position); n++;}
@@ -1326,30 +1323,6 @@ static XEN g_menu_widgets(void)
 	       XEN_EMPTY_LIST)))))));
 }
 
-#define S_main_menu "main-menu"
-static XEN g_main_menu(XEN which)
-{
-  int which_menu;
-  Widget menw;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(which), which, XEN_ONLY_ARG, S_main_menu, "an integer");
-  which_menu = XEN_TO_C_INT(which);
-  if ((which_menu < 0) || (which_menu > new_menu))
-    XEN_ERROR(NO_SUCH_MENU,
-	      XEN_LIST_2(C_TO_XEN_STRING(S_main_menu),
-			 which));
-  switch (which_menu)
-    {
-    case FILE_MENU:    menw = mw[file_menu]; break;
-    case EDIT_MENU:    menw = mw[edit_menu]; break;
-    case VIEW_MENU:    menw = mw[view_menu]; break;
-    case OPTIONS_MENU: menw = mw[option_menu]; break;
-    case HELP_MENU:    menw = mw[help_menu]; break;
-    case POPUP_MENU:   menw = popup_menu; break;
-    default:           menw = added_menus[which_menu]; break;
-    }
-  return(C_TO_XEN_ULONG((unsigned long)menw));
-}
-
 static XEN g_test_menus(void) 
 {
   int i;
@@ -1392,6 +1365,4 @@ wants to override the default menu action:\n\
   XEN_DEFINE_HOOK(menu_hook, S_menu_hook, 2, H_menu_hook);
   XEN_DEFINE_PROCEDURE("test-menus", g_test_menus_w, 0, 0, 0, "");
   XEN_DEFINE_PROCEDURE(S_menu_widgets, g_menu_widgets_w, 0, 0, 0, H_menu_widgets);
-
-  XEN_DEFINE_PROCEDURE(S_main_menu, g_main_menu, 1, 0, 0, "main menu widget");
 }

@@ -137,8 +137,8 @@ file_info *copy_header(char *fullname, file_info *ohdr)
       hdr->type = ohdr->type;
       if (ohdr->loops)
 	{
-	  hdr->loops = (int *)CALLOC(6, sizeof(int));
-	  for (i = 0; i < 6; i++) 
+	  hdr->loops = (int *)CALLOC(MUS_LOOP_INFO_SIZE, sizeof(int));
+	  for (i = 0; i < MUS_LOOP_INFO_SIZE; i++) 
 	    hdr->loops[i] = ohdr->loops[i];
 	}
     }
@@ -2262,7 +2262,7 @@ static XEN g_add_sound_file_extension(XEN ext)
 static XEN g_file_write_date(XEN file)
 {
   #define S_file_write_date "file-write-date"
-  #define H_file_write_date "(" S_file_write_date " file) -> write date in the same format as 
+  #define H_file_write_date "(" S_file_write_date " file) -> write date in the same format as \
 current-time:\n\(strftime \"%a %d-%b-%Y %H:%M %Z\" (localtime (file-write-date \"oboe.snd\")))\n\
 Equivalent to Guile (stat:mtime (stat file))"
 
@@ -2274,7 +2274,7 @@ Equivalent to Guile (stat:mtime (stat file))"
 
 static XEN g_sound_loop_info(XEN snd)
 {
-  #define H_sound_loop_info "(" S_sound_loop_info " snd) returns the sound's loop points as a 
+  #define H_sound_loop_info "(" S_sound_loop_info " snd) returns the sound's loop points as a \
 list: (sustain-start sustain-end release-start release-end baseNote detune)"
   int *res;
   XEN sres = XEN_EMPTY_LIST;
@@ -2345,7 +2345,7 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
 				mode1 = XEN_LIST_REF(vals, 7);
 			    }}}}}}}
   if (hdr->loops == NULL)
-    hdr->loops = (int *)CALLOC(8, sizeof(int));
+    hdr->loops = (int *)CALLOC(MUS_LOOP_INFO_SIZE, sizeof(int));
   hdr->loops[0] = XEN_TO_C_INT_OR_ELSE(start0, 0);
   hdr->loops[1] = XEN_TO_C_INT_OR_ELSE(end0, 0);
   hdr->loops[2] = XEN_TO_C_INT_OR_ELSE(start1, 0);

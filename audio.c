@@ -4854,12 +4854,23 @@ int alsa_probe_device_name(char *name)
     }
     snd_config_for_each(pos, next, conf) {
 	snd_config_t *c = snd_config_iterator_entry(pos);
+#if (SND_CONFIG_GET_ID_ARGS == 2)
+	const char *id;
+	int err = snd_config_get_id(c, &id);
+	if (err == 0) {
+	    int result = strncmp(name, id, strlen(id));
+	    if (result == 0 &&
+		(name[strlen(id)] == '\0' || name[strlen(id)] == ':')) {
+		return(MUS_NO_ERROR);
+	    }}
+#else
 	const char *id = snd_config_get_id(c);
 	int result = strncmp(name, id, strlen(id));
 	if (result == 0 &&
 	    (name[strlen(id)] == '\0' || name[strlen(id)] == ':')) {
 	    return(MUS_NO_ERROR);
 	}
+#endif
     }
     return(MUS_ERROR);
 }

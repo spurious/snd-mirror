@@ -1598,6 +1598,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 
 	      /* add a buffer's worth from the current source into dp->audio_chan */
 	      buf = dac_buffers[dp->audio_chan];
+	      if (buf == NULL) return(-1);
 	      revin = rev_ins[dp->audio_chan];
 	      switch (choose_dac_op(dp, sp))
 		{

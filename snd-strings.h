@@ -526,6 +526,7 @@
 #define S_listener_text_color           "listener-text-col" STR_OR
 #define S_load_font                     "load-font"
 #define S_loop_samples                  "loop-samples"
+#define S_main_menu                     "main-menu"
 #define S_main_widgets                  "main-widgets"
 #define S_make_color                    "make-col" STR_OR
 #define S_make_graph_data               "make-graph-data"

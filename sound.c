@@ -623,7 +623,7 @@ int *mus_sound_loop_info(const char *arg)
   sf = getsf(arg); 
   if ((sf) && (sf->loop_modes))
     {
-      info = (int *)CALLOC(8, sizeof(int));
+      info = (int *)CALLOC(MUS_LOOP_INFO_SIZE, sizeof(int));
       if (sf->loop_modes[0] != 0)
 	{
 	  info[0] = sf->loop_starts[0];
@@ -675,7 +675,7 @@ void mus_sound_set_full_loop_info(const char *arg, int *loop)
 void mus_sound_set_loop_info(const char *arg, int *loop)
 {
   /* backwards compatibility */
-  int bloop[8];
+  int bloop[MUS_LOOP_INFO_SIZE];
   int i;
   if (loop)
     {
@@ -777,12 +777,12 @@ int mus_sound_open_output (const char *arg, int srate, int chans, int data_forma
       fd = mus_file_open_write(arg);
       if (fd != -1)
 	mus_file_open_descriptors(fd,
-				 arg,
-				 data_format,
-				 mus_data_format_to_bytes_per_sample(data_format),
-				 mus_header_data_location(),
-				 chans,
-				 header_type);
+				  arg,
+				  data_format,
+				  mus_data_format_to_bytes_per_sample(data_format),
+				  mus_header_data_location(),
+				  chans,
+				  header_type);
     }
   return(fd);
 }
@@ -794,12 +794,12 @@ int mus_sound_reopen_output(const char *arg, int chans, int format, int type, in
   fd = mus_file_reopen_write(arg);
   if (fd != -1)
     mus_file_open_descriptors(fd,
-			     arg,
-			     format,
-			     mus_data_format_to_bytes_per_sample(format),
-			     data_loc,
-			     chans,
-			     type);
+			      arg,
+			      format,
+			      mus_data_format_to_bytes_per_sample(format),
+			      data_loc,
+			      chans,
+			      type);
   return(fd);
 }
 
@@ -1031,9 +1031,9 @@ char *mus_array_to_file_with_error(const char *filename, MUS_SAMPLE_TYPE *ddata,
   if (fd == -1) 
     return("mus_array_to_file can't create output file");
   err = mus_file_open_descriptors(fd, filename,
-				 MUS_OUT_FORMAT,
-				 mus_data_format_to_bytes_per_sample(MUS_OUT_FORMAT),
-				 28, channels, MUS_NEXT);
+				  MUS_OUT_FORMAT,
+				  mus_data_format_to_bytes_per_sample(MUS_OUT_FORMAT),
+				  28, channels, MUS_NEXT);
   if (err != MUS_ERROR)
     {
       err = mus_header_write_next_header(fd, srate, channels, 28, len * sizeof(MUS_SAMPLE_TYPE), MUS_OUT_FORMAT, NULL, 0);

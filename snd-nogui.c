@@ -298,6 +298,7 @@ void g_init_gxenv(void) {}
 void g_initialize_xgh(snd_state *ss) {}
 void g_init_gxutils(void) {}
 void g_init_gxmenu(void) {}
+int menu_widget(int which_menu) {return(0);}
 
 void update_stats(snd_state *ss) {}
 void update_stats_display(snd_state *ss, int all) {}

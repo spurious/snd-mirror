@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 14
-#define SNDLIB_REVISION 11
-#define SNDLIB_DATE "23-Nov-01"
+#define SNDLIB_REVISION 12
+#define SNDLIB_DATE "26-Nov-01"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -341,6 +341,7 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
 #endif 
 
 #define MUS_MAX_FILE_NAME 256
+#define MUS_LOOP_INFO_SIZE 8
 
 #ifndef Float
   #define Float float

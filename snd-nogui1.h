@@ -154,7 +154,7 @@ void reflect_play_selection_stop(void);
 void g_initialize_xgh(snd_state *ss);
 void g_init_gxutils(void);
 void g_init_gxmenu(void);
-
+int menu_widget(int which_menu);
 
 
 /* -------- snd-xmain.c -------- */
