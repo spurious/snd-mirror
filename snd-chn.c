@@ -329,6 +329,13 @@ void add_channel_data(char *filename, chan_info *cp, file_info *hdr, snd_state *
   sp = cp->sound;
   add_channel_data_1(cp,sp,ss,1);
   cp->edits[0] = initial_ed_list(0,(hdr->samples/hdr->chans) - 1);
+
+  /* if FILE_PER_CHAN
+     check for special case here (can be in hdr or sp),
+     set up individual header (sp->hdr[cp->chan] = chdr for filename = sp->filenames[cp->chan])
+     open that as cp->sounds[0]
+  */
+     
   chdr = copy_header(filename,sp->hdr); /* need one separate from snd_info case */
   if (chdr)
     {
@@ -5522,6 +5529,10 @@ int keyboard_command (chan_info *cp, int keysym, int state)
   if (defining_macro) continue_macro(keysym,state);
   if (!m) count = 1; else m=0;
   if (u_count == 0) set_prefix_arg(ss,0);
+  
+  /* should we check snd_keypad_Decimal as well as snd_K_period? -- is this assuming USA float syntax? */
+  /*   (similarly snd_keypad_0...9) */
+
   if ((counting) && (((keysym < snd_K_0) || (keysym > snd_K_9)) && (keysym != snd_K_minus) && (keysym != snd_K_period) && (keysym != snd_K_plus)))
     {
       m = ((u_count) && ((keysym == snd_K_M) || (keysym == snd_K_m)));

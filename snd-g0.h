@@ -184,7 +184,6 @@ typedef struct {
 #define snd_K_openparen GDK_parenleft 
 #define snd_K_closeparen GDK_parenright 
 #define snd_K_plus GDK_plus 
-#define snd_K_comma GDK_comma 
 #define snd_K_minus GDK_minus 
 #define snd_K_period GDK_period 
 #define snd_K_slash GDK_slash 

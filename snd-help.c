@@ -1,11 +1,6 @@
 /* TODO: snd-help should call netscape if help-with-html flag is #t
 */
 
-/* help menu strings, 
- * dialog help button strings, 
- * click-for-help strings
- */
-
 #include "snd.h"
 #include "sndlib-strings.h"
 #include "vct.h"
@@ -1601,7 +1596,7 @@ char *version_info(void)
 	  "\n    Gtk+ ",itoa[9]=snd_itoa(GTK_MAJOR_VERSION),".",itoa[10]=snd_itoa(GTK_MINOR_VERSION),".",itoa[11]=snd_itoa(GTK_MICRO_VERSION),", Glib ",itoa[12]=snd_itoa(GLIB_MAJOR_VERSION),".",itoa[13]=snd_itoa(GLIB_MINOR_VERSION),".",itoa[14]=snd_itoa(GLIB_MICRO_VERSION),
 #endif
 #if HAVE_GUILE_GTK
-	  ", with guile-gtk loaded",
+	  ", with guile-gtk",
 #endif
 #if (!(defined(USE_MOTIF))) && (!(defined(USE_GTK)))
 	  "\n    without any graphics system?",
@@ -1661,7 +1656,7 @@ void news_help(snd_state *ss)
 5-Jun:   snd 4.3.\n\
 30-May:  transform-size for glfft, glfft.scm, glfft.c.\n\
 29-May:  mix-sound to help with CLM/Snd explode support.\n\
-25-May:  removed snd-clm.c, snd-xclm.c, snd-gclm.c -- these are obsolete.\n\
+25-May:  removed snd-clm.c, snd-xclm.c, snd-gclm.c.\n\
 24-May:  sndctrl.c and related X properties in Snd.\n\
 23-May:  snd-ladspa.c (LADSPA support thanks to Richard W.E. Furse).\n\
          added 'sync' arg to play and play-and-wait.\n\

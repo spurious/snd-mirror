@@ -118,6 +118,9 @@ static chan_info *free_chan_info(chan_info *cp)
     }
   cp->lisp_graphing = 0;
   cp->selection_transform_size = 0;
+
+  /* if FILE_PER_CHAN, check filename, hdr, close sound[0]? -- make sure it's not deleted! */
+
   return(cp);  /* pointer is left for possible future re-use */
 }
 
@@ -223,7 +226,7 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
     {
       sp->fit_data_amps = (Float *)CALLOC(sp->nchans,sizeof(Float));
       file_maxamps(state,sp->fullname,sp->fit_data_amps,hdr->chans,hdr->format);
-      /* can't use snd-clm.c get_maxamp here because the file edit tree is not yet set up */
+      /* can't use snd-chn.c get_maxamp here because the file edit tree is not yet set up */
       /* can't use mus_sound_chans etc here because this might be a raw header file */
     }
   return(sp);
@@ -295,6 +298,9 @@ snd_info *free_snd_info(snd_info *sp)
     }
   if (sp->hdr) sp->hdr = free_file_info(sp->hdr);
   if (sp->edited_region) clear_region_backpointer(sp);
+
+  /* if FILE_PER_CHAN reset chan_type */
+
   return(sp);  /* pointer is left for possible future re-use */
 }
 

@@ -1,7 +1,7 @@
 /* TODO: other outer choice here ... (separate windows)
  *       also key_press event to graph_key_press
  *       sash color (currently basically invisible)
- *       port X property support from snd-xmain (SND_COMMAND) -- what is the property_change_event name?
+ *       debug X property support -- appears to be missing property notify events?
  */
 
 /* DIFF: no .Xdefaults -- use ~/.sndrc 
@@ -174,23 +174,23 @@ static gint iconify_window(GtkWidget *w,GdkEvent *event,gpointer clientData)
 }
 #endif
 
-#if 0
 static GdkAtom snd_v,snd_c;
 
 static void who_called(GtkWidget *w,GdkEvent *event, gpointer clientData) 
 {
   /* watch for communication from some other program via the SND_COMMAND property */
+
+  /* this is broken */
+
   GdkEventProperty *ev = (GdkEventProperty *)event;
   snd_state *ss = (snd_state *)clientData;
   GdkAtom type;
-  int format;
-  gint nitems,bytesafter;
+  gint format,nitems;
   guchar *version[1];
   if (ev->atom == snd_c)
     {
-      if (((gdk_property_get(MAIN_WINDOW(ss),snd_c,XA_STRING,0L,(long)BUFSIZ,False,
-			       &type,&format,&nitems,&bytesafter,(guchar **)version)) == Success) && 
-	  (type != None))
+      if (gdk_property_get(MAIN_WINDOW(ss),snd_c,GDK_TARGET_STRING,0L,(long)BUFSIZ,FALSE,
+			       &type,&format,&nitems,(guchar **)version))
 	{
 	  if (version[0])
 	    {
@@ -200,7 +200,6 @@ static void who_called(GtkWidget *w,GdkEvent *event, gpointer clientData)
 	}
     }
 }
-#endif
 
 #if TRAP_SEGFAULT
 #include <setjmp.h>
@@ -271,14 +270,13 @@ static BACKGROUND_TYPE startup_funcs(gpointer clientData)
 #endif
 #ifndef SND_AS_WIDGET
 #ifndef NEXT
-#if 0
+
       /* add X property level communication path (see sndctrl.c for the other side) */
       snd_v = gdk_atom_intern("SND_VERSION",FALSE);
       snd_c = gdk_atom_intern("SND_COMMAND",FALSE);
       gdk_property_change(MAIN_WINDOW(ss),snd_v,GDK_TARGET_STRING,8,GDK_PROP_MODE_REPLACE,SND_VERSION,strlen(SND_VERSION)+1);
-      gtk_signal_connect(GTK_OBJECT(tm->shell),"property_change_event",GTK_SIGNAL_FUNC(who_called),(gpointer)ss);
-      /* is this considered a "property_notify_event" ?? */
-#endif
+      gtk_signal_connect(GTK_OBJECT(tm->shell),"property_notify_event",GTK_SIGNAL_FUNC(who_called),(gpointer)ss);
+      /* does gtk actually handle this event correctly?? */
 
       /* trap outer-level Close for cleanup check */
       gtk_signal_connect(GTK_OBJECT(tm->shell),"delete_event",GTK_SIGNAL_FUNC(Window_Close),(gpointer)ss);
@@ -457,22 +455,6 @@ static GdkColor *get_color(char *defined_color, char *fallback_color, char *seco
   gdk_color_alloc(gdk_colormap_get_system(),new_color);
   return(new_color);
 }
-
-#if 0
-static gint shell_key_press(GtkWidget *w, GdkEventKey *ev, gpointer data)
-{
-  chan_info *cp;
-  snd_state *ss = (snd_state *)data;
-  if ((ss->sgx)->graph_is_active) 
-    {
-      cp = current_channel(ss);
-      graph_key_press(channel_graph(cp),ev,(gpointer)cp); 
-      gtk_signal_emit_stop_by_name(GTK_OBJECT(w),"key_press_event");
-      return(TRUE);
-    }
-fprintf(stderr,"main ");
-}
-#endif
 
 #ifdef SND_AS_WIDGET
 GtkWidget *snd_as_widget(int argc, char **argv, GdkWindow *wn)

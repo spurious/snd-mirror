@@ -1636,18 +1636,17 @@ be accessed by a normal sample-reader.
 
 Vcts
 
-Many of the Snd and CLM functions handle vectors (arrays) of data; in Guile
-vector-ref and friends are slow, do loops are slow, floating point
-operations are slow, and so on. By defining a new vector type, named vct,
-and providing a package of old-style array-processing calls upon that type,
-we can speed up many operations by a factor of 30. This is enough of a
-difference to warrant the added complexity, I think. A vct object can be
-viewed as a vector; to make one, call make-vct. It will be freed by the
-Guile garbage collector when it can't be referenced any further. To get an
-element of a vct, use vct-ref; similarly vct-set! sets an element (the "!"
-appended to the setter functions is standard in Scheme; another is the use
-of "?" where Common Lisp is more likely to use "-p"). Once created, a vct
-object can be passed to a variety of built-in functions:
+Many of the Snd and CLM functions handle vectors (arrays) of data; by
+defining a new vector type, named vct, and providing a package of old-style
+array-processing calls upon that type, we can speed up many operations by a
+factor of 30. This is enough of a difference to warrant the added
+complexity, I think. A vct object can be viewed as a vector; to make one,
+call make-vct. It will be freed by the Guile garbage collector when it can't
+be referenced any further. To get an element of a vct, use vct-ref;
+similarly vct-set! sets an element (the "!" appended to the setter functions
+is standard in Scheme; another is the use of "?" where Common Lisp is more
+likely to use "-p"). Once created, a vct object can be passed to a variety
+of built-in functions:
 
   (define hi (make-vct 100))
   (vct-fill! hi 3.14)
@@ -1787,11 +1786,8 @@ time domain energy:
 
 As the time domain window is moved, the lisp window automatically updates
 itself. The same thing can show the spectral energy (via transform-samples).
-Unfortunately, vector access and floating-point multiplies are slow in
-Guile, so in a case like this, it will speed up redisplay by at least an
-order of magnitude to use the 'vct' functions. The functions graph, fft,
-insert-samples, and set-samples know about the vct structure also, so we can
-rewrite display-energy:
+The functions graph, fft, insert-samples, and set-samples know about vcts,
+so we can rewrite display-energy:
 
 (define display-energy
   (lambda (snd chn y0 y1)

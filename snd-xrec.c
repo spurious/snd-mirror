@@ -1,3 +1,9 @@
+/* TODO: split out stuff that is not widget-dependent into snd-rec.c
+ *         (there's a trap here -- record_report has different args in g/x)
+ *       check merge with snd-grec.c
+ *       merge in Fernando's OSS+ALSA run-time changes
+ */
+
 #include "snd.h"
 
 #if HAVE_XPM

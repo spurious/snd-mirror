@@ -3,7 +3,7 @@ snd change log
   5-Jun:     snd 4.3.
   30-May:    transform-size for glfft, glfft.scm, glfft.c.
   29-May:    mix-sound to help with CLM/Snd explode support.
-  25-May:    removed snd-clm.c, snd-xclm.c, snd-gclm.c -- these are obsolete.
+  25-May:    removed snd-clm.c, snd-xclm.c, snd-gclm.c.
   24-May:    sndctrl.c and related X properties in Snd.
   23-May:    snd-ladspa.c (LADSPA support thanks to Richard W.E. Furse).
              added 'sync' arg to play and play-and-wait.

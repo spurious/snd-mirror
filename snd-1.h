@@ -28,6 +28,9 @@ typedef struct {
   int type;               /* header type (AIFF etc) */
   char *comment;          /* output case, not input */
   int *loops;
+#if FILE_PER_CHAN
+  int chan_type;
+#endif
 } file_info;
 
 typedef struct {

@@ -20,7 +20,6 @@ enum {W_pane,
       W_play,W_sync,W_combine,
       W_ctrls
 };
-/* order matters here -- W_ctrls should be last */
 
 #define NUM_SND_WIDGETS 48
 
@@ -1329,6 +1328,8 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
       ss->pending_change = NULL;
     }
   nchans = hdr->chans;
+
+  /* if FILE_PER_CHAN check hdr for chan_type = file case */
 
   XtVaGetValues(MAIN_SHELL(ss),XmNy,&app_y,XmNheight,&app_dy,NULL);
   screen_y = DisplayHeight(MAIN_DISPLAY(ss),DefaultScreen(MAIN_DISPLAY(ss)));

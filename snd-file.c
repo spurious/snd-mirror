@@ -78,6 +78,9 @@ file_info *make_file_info_1(char *fullname, snd_state *ss)
 {
   int fd;
   file_info *hdr;
+  
+  /* if FILE_PER_CHAN we need to return some indication here that subsequent channel reads can find, and set up a overall header */
+
   fd = open(fullname,O_RDONLY,0);
   if (fd == -1)
     {

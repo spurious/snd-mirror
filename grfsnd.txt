@@ -102,6 +102,15 @@ and tiles the graph backgrounds with the contents of text.xpm. To get the
 
   snd oboe.snd -geometry 800x200 -xrm '*autoResize: 0'
 
+These resources can be set in your .Xdefaults file:
+
+snd*buttonFont:         -adobe-times-medium-r-*-*-14-*-*-*-*-*-*-*
+snd*boldbuttonFont:     -adobe-times-bold-r-*-*-14-*-*-*-*-*-*-*
+snd*axisLabelFont:      -adobe-times-medium-r-normal-*-18-*-*-*-*-*-*-*
+snd*axisNumbersFont:    9x15
+snd*fontList:           9x15
+snd*helpTextFont:       9x15
+
 The autoResize resource determines how Snd acts when files are added or
 removed from its overall display. The default (1) causes Snd to expand or
 contract the main window's size to accomodate the sounds (many people find
