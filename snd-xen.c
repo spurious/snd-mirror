@@ -5,10 +5,6 @@
 
 static snd_state *state = NULL;
 
-/* TODO Ruby: backtrace upon error, find from the minibuffer, and many cute methods.
- *      sndlib configuration throughout
- */
-
 
 /* -------- protect XEN vars from GC -------- */
 
@@ -3218,9 +3214,19 @@ XEN_NARGIFY_0(g_gc_on_w, g_gc_on)
 #endif
 #endif
 
+#if HAVE_GXM
+  XEN init_xm(void);
+#endif
+
 void g_initialize_gh(snd_state *ss)
 {
   state = ss;
+
+#if HAVE_GXM
+  XEN_NEW_PROCEDURE("init-xm", init_xm, 0, 0, 0);
+#endif
+
+  XEN_DEFINE_PROCEDURE("show-stack", show_stack, 0 ,0, 0, "show stack trace");
 
 #if WITH_MCHECK
   XEN_NEW_PROCEDURE("mcheck-all", g_mcheck_check_all_w, 0, 0, 0);

@@ -512,7 +512,10 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 
 #if TRAP_SEGFAULT
   if (sigsetjmp(envHandleEventsLoop, 1))
-    snd_error("Caught seg fault; trying to continue...");
+    {
+      snd_error("Caught seg fault (will try to continue):\n");
+      show_stack();
+    }
 #endif
 
   xen_repl(1, argv);

@@ -1894,9 +1894,9 @@ static XEN g_save_macros(void)
   if (fd) save_macro_state(fd);
   if ((!fd) || (fclose(fd) != 0))
     XEN_ERROR(CANNOT_SAVE,
-	  XEN_LIST_3(C_TO_XEN_STRING(S_save_macros),
-		    C_TO_XEN_STRING(ss->init_file),
-		    C_TO_XEN_STRING(strerror(errno))));
+	      XEN_LIST_3(C_TO_XEN_STRING(S_save_macros),
+			 C_TO_XEN_STRING(ss->init_file),
+			 C_TO_XEN_STRING(strerror(errno))));
   return(C_TO_XEN_STRING(ss->init_file));
 }
 
@@ -1982,7 +1982,7 @@ static XEN g_forward_graph(XEN count, XEN snd, XEN chn)
   val = XEN_TO_C_INT_OR_ELSE(count, 1);
   cp = goto_next_graph(cp, val);
   return(XEN_LIST_2(C_TO_SMALL_XEN_INT(cp->sound->index),
-		   C_TO_SMALL_XEN_INT(cp->chan)));
+		    C_TO_SMALL_XEN_INT(cp->chan)));
 }
 
 static XEN g_backward_graph(XEN count, XEN snd, XEN chn) 
@@ -1996,7 +1996,7 @@ static XEN g_backward_graph(XEN count, XEN snd, XEN chn)
   val = -(XEN_TO_C_INT_OR_ELSE(count, 1));
   cp = goto_previous_graph(cp, val);
   return(XEN_LIST_2(C_TO_SMALL_XEN_INT(cp->sound->index),
-		   C_TO_SMALL_XEN_INT(cp->chan)));
+		    C_TO_SMALL_XEN_INT(cp->chan)));
 }
 
 static XEN g_c_g_x(void)

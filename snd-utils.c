@@ -245,24 +245,12 @@ char *kmg (int num)
   return(str);
 }
 
-#ifdef DEBUG_MEMORY
-
-/* mtrace-style malloc hooks are not very useful here since I don't care
- * about X allocations (of which there are millions), and I need readable
- * backtrace info for leaks.  Doing it by hand makes it easy to sort
- * output and whatnot. All of Sndlib and Snd use the macros CALLOC,
- * MALLOC, REALLOC, and FREE.
- */
-
-static int mem_size = 0;
-
-#if 0
-/* from glibc/debug/backtrace-tst.c -- doesn't decode local (Snd) function names) */
-/*   so, to get this to work, we need to build Snd as a shared object, then load it */
+#if HAVE_EXECINFO_H
+/* from glibc/debug/backtrace-tst.c, need to build Snd with -rdynamic */
+    
 #include <execinfo.h>
 #include <inttypes.h>
-void show_stack(void);
-void show_stack(void)
+XEN show_stack(void)
 {
   void *ba[20];
   int n = backtrace (ba, sizeof (ba) / sizeof (ba[0]));
@@ -278,9 +266,22 @@ void show_stack(void)
 	  free (names);
 	}
     }
+  return(XEN_FALSE);
 }
+#else
+XEN show_stack(void) {return(XEN_FALSE);}
 #endif
 
+#ifdef DEBUG_MEMORY
+
+/* mtrace-style malloc hooks are not very useful here since I don't care
+ * about X allocations (of which there are millions), and I need readable
+ * backtrace info for leaks.  Doing it by hand makes it easy to sort
+ * output and whatnot. All of Sndlib and Snd use the macros CALLOC,
+ * MALLOC, REALLOC, and FREE.
+ */
+
+static int mem_size = 0;
 static const char *encloser = NULL;
 void set_encloser(const char *name) 
 {

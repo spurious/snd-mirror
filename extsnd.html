@@ -7169,7 +7169,7 @@ to do!
 which is normally "caught" by the default error handler (this is a kind of "goto" 
 but without the embarrassment); it prints out some message,
 and in some cases appends a stack trace.  So, as a simple example, selection-position
-throws 'no-active-selection is there isn't a selection. In the default case, you
+throws 'no-active-selection if there isn't a selection. In the default case, you
 get behavior like this:
 </p>
 <pre>
@@ -7222,8 +7222,7 @@ throws the error 'no-such-file:</p>
 <p>There are a variety of debugging aids supplied by Guile, including
 a good backtrace facility.  You can have a backtrace displayed automatically
 in the error handler by setting <a href="#showbacktrace">show-backtrace</a>
-to #t; it defaults to #f because it has been plagued in the past
-with segfaults.
+to #t.
 To see what files are being loaded, set the
 variable %load-verbosely to #t.
 </p>

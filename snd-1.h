@@ -1191,6 +1191,7 @@ char *kmg (int num);
   void g_init_timing(void);
   int new_time(char *name);
 #endif
+XEN show_stack(void);
 
 
 

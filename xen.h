@@ -95,7 +95,7 @@
   }
 
 #define XEN_MAKE_OBJECT_FREE_PROCEDURE(Type, Wrapped_Free, Original_Free) \
-  static scm_sizet Wrapped_Free(XEN obj) \
+  static size_t Wrapped_Free(XEN obj) \
   { \
     Original_Free((Type *)XEN_OBJECT_REF(obj)); \
     return(sizeof(Type)); \
@@ -297,6 +297,7 @@
 #define XEN_VECTOR_P(Arg)             (SCM_VECTORP(Arg))
 #define XEN_LIST_P(Arg)               (scm_ilength(Arg) >= 0)
 #define XEN_LIST_P_WITH_LENGTH(Arg, Len) ((Len = ((int)scm_ilength(Arg))) >= 0)
+#define XEN_UNSIGNED_LONG_P(Arg)      (scm_number_p(Arg))
 
 #define XEN_LIST_LENGTH(Arg)          ((int)(scm_ilength(Arg)))
 #define XEN_LIST_REF(Lst, Num)        scm_list_ref(Lst, C_TO_SMALL_XEN_INT(Num))
@@ -410,10 +411,6 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #include <ruby.h>
 
 #define XEN_OK 1
-
-/* this basically is working but:
- *   broken: name as str to val (i.e. XEN_NAME_AS_C_STRING_TO_VALUE) (should this use XEN_EVAL_C_STRING?)
- */
 
 #define XEN                  VALUE
 #define XEN_FALSE            Qfalse
