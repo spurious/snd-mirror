@@ -1471,11 +1471,11 @@ static void start_view_files_dialog(bool managed)
       vf_prevlst = wwl->list;
       FREE(wwl); 
       wwl = NULL;
+      make_curfiles_list();
+      make_prevfiles_list();
       set_dialog_widget(VIEW_FILES_DIALOG, view_files_dialog);
     }
   if (managed) gtk_widget_show(view_files_dialog);
-  make_curfiles_list();
-  make_prevfiles_list();
   highlight_selected_sound();
 }
 

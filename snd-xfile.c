@@ -1859,6 +1859,8 @@ static void start_view_files_dialog(bool managed)
 	  r->parent = PREVIOUS_FILE_VIEWER;
 	}
       set_dialog_widget(VIEW_FILES_DIALOG, view_files_dialog);
+      make_curfiles_list();
+      make_prevfiles_list();
       if (managed) XtManageChild(view_files_dialog);
     }
   else 
@@ -1870,8 +1872,6 @@ static void start_view_files_dialog(bool managed)
 	  raise_dialog(view_files_dialog);
 	}
     }
-  make_curfiles_list();
-  make_prevfiles_list();
   highlight_selected_sound();
 }
 
