@@ -732,7 +732,7 @@ static XEN g_axis_info(XEN snd, XEN chn, XEN ap_id)
 		        XEN_EMPTY_LIST))))))))))))))));
 }
 
-#if HAVE_MOTIF
+#if USE_MOTIF
 /* this is intended for use with the xm package */
 
 static XEN g_draw_axes(XEN args)
@@ -754,7 +754,7 @@ x0 0.0, x1 1.0, y0 -1.0, y1 1.0, style x-axis-in-seconds, axes #t."
   len = XEN_LIST_LENGTH(args);
   XEN_ASSERT_TYPE((len >= 3) && (len < 10), args, XEN_ONLY_ARG, S_draw_axes, "3 required and 6 optional args");
   w = (Widget)(XEN_UNWRAP_WIDGET(XEN_LIST_REF(args, 0)));
-  gc = (GC)(XEN_TO_C_ULONG(XEN_CADR(XEN_LIST_REF(args, 1))));
+  gc = (GC)(XEN_UNWRAP_GC(XEN_LIST_REF(args, 1)));
   xlabel = XEN_TO_C_STRING(XEN_LIST_REF(args, 2));
   if (len > 3) x0 = XEN_TO_C_DOUBLE(XEN_LIST_REF(args, 3));
   if (len > 4) x1 = XEN_TO_C_DOUBLE(XEN_LIST_REF(args, 4));
@@ -821,7 +821,7 @@ void g_init_axis(void)
 
   XEN_DEFINE_PROCEDURE(S_axis_info,  g_axis_info_w, 0, 3, 0, H_axis_info);
 
-#if HAVE_MOTIF
+#if USE_MOTIF
   XEN_DEFINE_PROCEDURE(S_draw_axes,  g_draw_axes, 0, 0, 1,   H_draw_axes);
 #endif
 }

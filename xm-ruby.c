@@ -138,6 +138,7 @@
   XEN_NARGIFY_3(gxm_XtRemoveCallbacks_w, gxm_XtRemoveCallbacks)
   XEN_NARGIFY_2(gxm_XtRemoveAllCallbacks_w, gxm_XtRemoveAllCallbacks)
   XEN_NARGIFY_3(gxm_XtCallCallbacks_w, gxm_XtCallCallbacks)
+  XEN_NARGIFY_3(gxm_XtCallCallbacks_raw_w, gxm_XtCallCallbacks_raw)
   XEN_NARGIFY_3(gxm_XtCallCallbackList_w, gxm_XtCallCallbackList)
   XEN_NARGIFY_2(gxm_XtHasCallbacks_w, gxm_XtHasCallbacks)
   XEN_ARGIFY_5(gxm_XtCreatePopupShell_w, gxm_XtCreatePopupShell)
@@ -1427,6 +1428,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRemoveCallbacks" XM_POSTFIX, gxm_XtRemoveCallbacks_w, 3, 0, 0, H_XtRemoveCallbacks);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRemoveAllCallbacks" XM_POSTFIX, gxm_XtRemoveAllCallbacks_w, 2, 0, 0, H_XtRemoveAllCallbacks);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCallCallbacks" XM_POSTFIX, gxm_XtCallCallbacks_w, 3, 0, 0, H_XtCallCallbacks);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCallCallbacks_raw" XM_POSTFIX, gxm_XtCallCallbacks_raw_w, 3, 0, 0, H_XtCallCallbacks_raw);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCallCallbackList" XM_POSTFIX, gxm_XtCallCallbackList_w, 3, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtHasCallbacks" XM_POSTFIX, gxm_XtHasCallbacks_w, 2, 0, 0, H_XtHasCallbacks);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCreatePopupShell" XM_POSTFIX, gxm_XtCreatePopupShell_w, 4, 1, 0, H_XtCreatePopupShell);
@@ -2851,6 +2853,60 @@ static void define_procedures(void)
   XEN_NARGIFY_1(gxm_family_w, gxm_family)
   XEN_NARGIFY_1(gxm_address_w, gxm_address)
   XEN_NARGIFY_1(gxm_data_w, gxm_data)
+
+  XEN_NARGIFY_2(gxm_set_request_code_w, gxm_set_request_code)
+  XEN_NARGIFY_2(gxm_set_error_code_w, gxm_set_error_code)
+  XEN_NARGIFY_2(gxm_set_first_keycode_w, gxm_set_first_keycode)
+  XEN_NARGIFY_2(gxm_set_request_w, gxm_set_request)
+  XEN_NARGIFY_2(gxm_set_resourceid_w, gxm_set_resourceid)
+  XEN_NARGIFY_2(gxm_set_format_w, gxm_set_format)
+  XEN_NARGIFY_2(gxm_set_message_type_w, gxm_set_message_type)
+  XEN_NARGIFY_2(gxm_set_new_w, gxm_set_new)
+  XEN_NARGIFY_2(gxm_set_property_w, gxm_set_property)
+  XEN_NARGIFY_2(gxm_set_display_w, gxm_set_display)
+  XEN_NARGIFY_2(gxm_set_target_w, gxm_set_target)
+  XEN_NARGIFY_2(gxm_set_requestor_w, gxm_set_requestor)
+  XEN_NARGIFY_2(gxm_set_owner_w, gxm_set_owner)
+  XEN_NARGIFY_2(gxm_set_selection_w, gxm_set_selection)
+  XEN_NARGIFY_2(gxm_set_atom_w, gxm_set_atom)
+  XEN_NARGIFY_2(gxm_set_place_w, gxm_set_place)
+  XEN_NARGIFY_2(gxm_set_value_mask_w, gxm_set_value_mask)
+  XEN_NARGIFY_2(gxm_set_above_w, gxm_set_above)
+  XEN_NARGIFY_2(gxm_set_from_configure_w, gxm_set_from_configure)
+  XEN_NARGIFY_2(gxm_set_event_w, gxm_set_event)
+  XEN_NARGIFY_2(gxm_set_override_redirect_w, gxm_set_override_redirect)
+  XEN_NARGIFY_2(gxm_set_border_width_w, gxm_set_border_width)
+  XEN_NARGIFY_2(gxm_set_parent_w, gxm_set_parent)
+  XEN_NARGIFY_2(gxm_set_minor_code_w, gxm_set_minor_code)
+  XEN_NARGIFY_2(gxm_set_major_code_w, gxm_set_major_code)
+  XEN_NARGIFY_2(gxm_set_drawable_w, gxm_set_drawable)
+  XEN_NARGIFY_2(gxm_set_count_w, gxm_set_count)
+  XEN_NARGIFY_2(gxm_set_key_vector_w, gxm_set_key_vector)
+  XEN_NARGIFY_2(gxm_set_focus_w, gxm_set_focus)
+  XEN_NARGIFY_2(gxm_set_detail_w, gxm_set_detail)
+  XEN_NARGIFY_2(gxm_set_mode_w, gxm_set_mode)
+  XEN_NARGIFY_2(gxm_set_is_hint_w, gxm_set_is_hint)
+  XEN_NARGIFY_2(gxm_set_button_w, gxm_set_button)
+  XEN_NARGIFY_2(gxm_set_same_screen_w, gxm_set_same_screen)
+  XEN_NARGIFY_2(gxm_set_keycode_w, gxm_set_keycode)
+  XEN_NARGIFY_2(gxm_set_state_w, gxm_set_state)
+  XEN_NARGIFY_2(gxm_set_y_root_w, gxm_set_y_root)
+  XEN_NARGIFY_2(gxm_set_x_root_w, gxm_set_x_root)
+  XEN_NARGIFY_2(gxm_set_root_w, gxm_set_root)
+  XEN_NARGIFY_2(gxm_set_time_w, gxm_set_time)
+  XEN_NARGIFY_2(gxm_set_subwindow_w, gxm_set_subwindow)
+  XEN_NARGIFY_2(gxm_set_window_w, gxm_set_window)
+  XEN_NARGIFY_2(gxm_set_send_event_w, gxm_set_send_event)
+  XEN_NARGIFY_2(gxm_set_serial_w, gxm_set_serial)
+  XEN_NARGIFY_2(gxm_set_type_w, gxm_set_type)
+
+  XEN_NARGIFY_1(gxm_min_height_w, gxm_min_height)
+  XEN_NARGIFY_1(gxm_max_height_w, gxm_max_height)
+  XEN_NARGIFY_1(gxm_min_width_w, gxm_min_width)
+  XEN_NARGIFY_1(gxm_max_width_w, gxm_max_width)
+  XEN_NARGIFY_1(gxm_height_inc_w, gxm_height_inc)
+  XEN_NARGIFY_1(gxm_width_inc_w, gxm_width_inc)
+
 #if HAVE_MOTIF
 #if MOTIF_2
   XEN_NARGIFY_1(gxm_page_number_w, gxm_page_number)
@@ -2972,68 +3028,104 @@ static void define_procedures(void)
 
 static void define_structs(void)
 {
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "pixel" XM_POSTFIX, gxm_pixel_w, "", XM_PREFIX "set-pixel" XM_POSTFIX, gxm_set_pixel_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "red" XM_POSTFIX, gxm_red_w, "", XM_PREFIX "set-red" XM_POSTFIX, gxm_set_red_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "green" XM_POSTFIX, gxm_green_w, "", XM_PREFIX "set-green" XM_POSTFIX, gxm_set_green_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "blue" XM_POSTFIX, gxm_blue_w, "", XM_PREFIX "set-blue" XM_POSTFIX, gxm_set_blue_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "flags" XM_POSTFIX, gxm_flags_w, "", XM_PREFIX "set-flags" XM_POSTFIX, gxm_set_flags_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "pad" XM_POSTFIX, gxm_pad_w, "", XM_PREFIX "set-pad" XM_POSTFIX, gxm_set_pad_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "pixel" XM_POSTFIX, gxm_pixel_w, "", 
+				   XM_PREFIX "set_pixel" XM_POSTFIX, gxm_set_pixel_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "red" XM_POSTFIX, gxm_red_w, "", 
+				   XM_PREFIX "set_red" XM_POSTFIX, gxm_set_red_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "green" XM_POSTFIX, gxm_green_w, "", 
+				   XM_PREFIX "set_green" XM_POSTFIX, gxm_set_green_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "blue" XM_POSTFIX, gxm_blue_w, "", 
+				   XM_PREFIX "set_blue" XM_POSTFIX, gxm_set_blue_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "flags" XM_POSTFIX, gxm_flags_w, "", 
+				   XM_PREFIX "set_flags" XM_POSTFIX, gxm_set_flags_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "pad" XM_POSTFIX, gxm_pad_w, "", 
+				   XM_PREFIX "set_pad" XM_POSTFIX, gxm_set_pad_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XColor" XM_POSTFIX, gxm_XColor_w, 0, 6, 0, NULL);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "x" XM_POSTFIX, gxm_x_w, "", XM_PREFIX "set-x" XM_POSTFIX, gxm_set_x_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "y" XM_POSTFIX, gxm_y_w, "", XM_PREFIX "set-y" XM_POSTFIX, gxm_set_y_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "width" XM_POSTFIX, gxm_width_w, "", XM_PREFIX "set-width" XM_POSTFIX, gxm_set_width_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "height" XM_POSTFIX, gxm_height_w, "", XM_PREFIX "set-height" XM_POSTFIX, gxm_set_height_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "angle1" XM_POSTFIX, gxm_angle1_w, "", XM_PREFIX "set-angle1" XM_POSTFIX, gxm_set_angle1_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "angle2" XM_POSTFIX, gxm_angle2_w, "", XM_PREFIX "set-angle2" XM_POSTFIX, gxm_set_angle2_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "x" XM_POSTFIX, gxm_x_w, "", 
+				   XM_PREFIX "set_x" XM_POSTFIX, gxm_set_x_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "y" XM_POSTFIX, gxm_y_w, "", 
+				   XM_PREFIX "set_y" XM_POSTFIX, gxm_set_y_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "width" XM_POSTFIX, gxm_width_w, "", 
+				   XM_PREFIX "set_width" XM_POSTFIX, gxm_set_width_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "height" XM_POSTFIX, gxm_height_w, "", 
+				   XM_PREFIX "set_height" XM_POSTFIX, gxm_set_height_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "angle1" XM_POSTFIX, gxm_angle1_w, "", 
+				   XM_PREFIX "set_angle1" XM_POSTFIX, gxm_set_angle1_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "angle2" XM_POSTFIX, gxm_angle2_w, "", 
+				   XM_PREFIX "set_angle2" XM_POSTFIX, gxm_set_angle2_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XArc" XM_POSTFIX, gxm_XArc_w, 6, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "x" XM_POSTFIX, gxm_x_w, "", XM_PREFIX "set-x" XM_POSTFIX, gxm_set_x_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "y" XM_POSTFIX, gxm_y_w, "", XM_PREFIX "set-y" XM_POSTFIX, gxm_set_y_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XPoint" XM_POSTFIX, gxm_XPoint_w, 2, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "x1" XM_POSTFIX, gxm_x1_w, "", XM_PREFIX "set-x1" XM_POSTFIX, gxm_set_x1_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "y1" XM_POSTFIX, gxm_y1_w, "", XM_PREFIX "set-y1" XM_POSTFIX, gxm_set_y1_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "x2" XM_POSTFIX, gxm_x2_w, "", XM_PREFIX "set-x2" XM_POSTFIX, gxm_set_x2_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "y2" XM_POSTFIX, gxm_y2_w, "", XM_PREFIX "set-y2" XM_POSTFIX, gxm_set_y2_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "x1" XM_POSTFIX, gxm_x1_w, "", 
+				   XM_PREFIX "set_x1" XM_POSTFIX, gxm_set_x1_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "y1" XM_POSTFIX, gxm_y1_w, "", 
+				   XM_PREFIX "set_y1" XM_POSTFIX, gxm_set_y1_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "x2" XM_POSTFIX, gxm_x2_w, "", 
+				   XM_PREFIX "set_x2" XM_POSTFIX, gxm_set_x2_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "y2" XM_POSTFIX, gxm_y2_w, "", 
+				   XM_PREFIX "set_y2" XM_POSTFIX, gxm_set_y2_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSegment" XM_POSTFIX, gxm_XSegment_w, 4, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XRectangle" XM_POSTFIX, gxm_XRectangle_w, 4, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "->string" XM_POSTFIX, gxm_to_s_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "dashes" XM_POSTFIX, gxm_dashes_w, "",  XM_PREFIX "set-dashes" XM_POSTFIX, gxm_set_dashes_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "dash_offset" XM_POSTFIX, gxm_dash_offset_w, "", XM_PREFIX "set-dash_offset" XM_POSTFIX, gxm_set_dash_offset_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "clip_mask" XM_POSTFIX, gxm_clip_mask_w, "", XM_PREFIX "set-clip_mask" XM_POSTFIX, gxm_set_clip_mask_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "dashes" XM_POSTFIX, gxm_dashes_w, "",  
+				   XM_PREFIX "set_dashes" XM_POSTFIX, gxm_set_dashes_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "dash_offset" XM_POSTFIX, gxm_dash_offset_w, "", 
+				   XM_PREFIX "set_dash_offset" XM_POSTFIX, gxm_set_dash_offset_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "clip_mask" XM_POSTFIX, gxm_clip_mask_w, "", 
+				   XM_PREFIX "set_clip_mask" XM_POSTFIX, gxm_set_clip_mask_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "clip_y_origin" XM_POSTFIX, gxm_clip_y_origin_w, "", 
-				   XM_PREFIX "set-clip_y_origin" XM_POSTFIX, gxm_set_clip_y_origin_w,  1, 0, 2, 0);
+				   XM_PREFIX "set_clip_y_origin" XM_POSTFIX, gxm_set_clip_y_origin_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "clip_x_origin" XM_POSTFIX, gxm_clip_x_origin_w, "", 
-				   XM_PREFIX "set-clip_x_origin" XM_POSTFIX, gxm_set_clip_x_origin_w,  1, 0, 2, 0);
+				   XM_PREFIX "set_clip_x_origin" XM_POSTFIX, gxm_set_clip_x_origin_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "graphics_exposures" XM_POSTFIX, gxm_graphics_exposures_w, "", 
-				   XM_PREFIX "set-graphics_exposures" XM_POSTFIX, gxm_set_graphics_exposures_w,  1, 0, 2, 0);
+				   XM_PREFIX "set_graphics_exposures" XM_POSTFIX, gxm_set_graphics_exposures_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "subwindow_mode" XM_POSTFIX, gxm_subwindow_mode_w, "", 
-				   XM_PREFIX "set-subwindow_mode" XM_POSTFIX, gxm_set_subwindow_mode_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "font" XM_POSTFIX, gxm_font_w, "",  XM_PREFIX "set-font" XM_POSTFIX, gxm_set_font_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "ts_y_origin" XM_POSTFIX, gxm_ts_y_origin_w, "", XM_PREFIX "set-ts_y_origin" XM_POSTFIX, gxm_set_ts_y_origin_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "ts_x_origin" XM_POSTFIX, gxm_ts_x_origin_w, "", XM_PREFIX "set-ts_x_origin" XM_POSTFIX, gxm_set_ts_x_origin_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "stipple" XM_POSTFIX, gxm_stipple_w, "", XM_PREFIX "set-stipple" XM_POSTFIX, gxm_set_stipple_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "tile" XM_POSTFIX, gxm_tile_w, "", XM_PREFIX "set-tile" XM_POSTFIX, gxm_set_tile_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "arc_mode" XM_POSTFIX, gxm_arc_mode_w, "", XM_PREFIX "set-arc_mode" XM_POSTFIX, gxm_set_arc_mode_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "fill_rule" XM_POSTFIX, gxm_fill_rule_w, "", XM_PREFIX "set-fill_rule" XM_POSTFIX, gxm_set_fill_rule_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "fill_style" XM_POSTFIX, gxm_fill_style_w, "", XM_PREFIX "set-fill_style" XM_POSTFIX, gxm_set_fill_style_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "join_style" XM_POSTFIX, gxm_join_style_w, "", XM_PREFIX "set-join_style" XM_POSTFIX, gxm_set_join_style_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "cap_style" XM_POSTFIX, gxm_cap_style_w, "", XM_PREFIX "set-cap_style" XM_POSTFIX, gxm_set_cap_style_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "line_style" XM_POSTFIX, gxm_line_style_w, "", XM_PREFIX "set-line_style" XM_POSTFIX, gxm_set_line_style_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "line_width" XM_POSTFIX, gxm_line_width_w, "", XM_PREFIX "set-line_width" XM_POSTFIX, gxm_set_line_width_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "background" XM_POSTFIX, gxm_background_w, "", XM_PREFIX "set-background" XM_POSTFIX, gxm_set_background_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "foreground" XM_POSTFIX, gxm_foreground_w, "", XM_PREFIX "set-foreground" XM_POSTFIX, gxm_set_foreground_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "plane_mask" XM_POSTFIX, gxm_plane_mask_w, "", XM_PREFIX "set-plane_mask" XM_POSTFIX, gxm_set_plane_mask_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "function" XM_POSTFIX, gxm_function_w, "", XM_PREFIX "set-function" XM_POSTFIX, gxm_set_function_w,  1, 0, 2, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "delta" XM_POSTFIX, gxm_delta_w, "", XM_PREFIX "set-delta" XM_POSTFIX, gxm_set_delta_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "nchars" XM_POSTFIX, gxm_nchars_w, "", XM_PREFIX "set-nchars" XM_POSTFIX, gxm_set_nchars_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "chars" XM_POSTFIX, gxm_chars_w, "", XM_PREFIX "set-chars" XM_POSTFIX, gxm_set_chars_w,  1, 0, 2, 0);
+				   XM_PREFIX "set_subwindow_mode" XM_POSTFIX, gxm_set_subwindow_mode_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "font" XM_POSTFIX, gxm_font_w, "",  
+				   XM_PREFIX "set_font" XM_POSTFIX, gxm_set_font_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "ts_y_origin" XM_POSTFIX, gxm_ts_y_origin_w, "", 
+				   XM_PREFIX "set_ts_y_origin" XM_POSTFIX, gxm_set_ts_y_origin_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "ts_x_origin" XM_POSTFIX, gxm_ts_x_origin_w, "", 
+				   XM_PREFIX "set_ts_x_origin" XM_POSTFIX, gxm_set_ts_x_origin_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "stipple" XM_POSTFIX, gxm_stipple_w, "", 
+				   XM_PREFIX "set_stipple" XM_POSTFIX, gxm_set_stipple_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "tile" XM_POSTFIX, gxm_tile_w, "", 
+				   XM_PREFIX "set_tile" XM_POSTFIX, gxm_set_tile_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "arc_mode" XM_POSTFIX, gxm_arc_mode_w, "", 
+				   XM_PREFIX "set_arc_mode" XM_POSTFIX, gxm_set_arc_mode_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "fill_rule" XM_POSTFIX, gxm_fill_rule_w, "", 
+				   XM_PREFIX "set_fill_rule" XM_POSTFIX, gxm_set_fill_rule_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "fill_style" XM_POSTFIX, gxm_fill_style_w, "", 
+				   XM_PREFIX "set_fill_style" XM_POSTFIX, gxm_set_fill_style_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "join_style" XM_POSTFIX, gxm_join_style_w, "", 
+				   XM_PREFIX "set_join_style" XM_POSTFIX, gxm_set_join_style_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "cap_style" XM_POSTFIX, gxm_cap_style_w, "", 
+				   XM_PREFIX "set_cap_style" XM_POSTFIX, gxm_set_cap_style_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "line_style" XM_POSTFIX, gxm_line_style_w, "", 
+				   XM_PREFIX "set_line_style" XM_POSTFIX, gxm_set_line_style_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "line_width" XM_POSTFIX, gxm_line_width_w, "", 
+				   XM_PREFIX "set_line_width" XM_POSTFIX, gxm_set_line_width_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "background" XM_POSTFIX, gxm_background_w, "", 
+				   XM_PREFIX "set_background" XM_POSTFIX, gxm_set_background_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "foreground" XM_POSTFIX, gxm_foreground_w, "", 
+				   XM_PREFIX "set_foreground" XM_POSTFIX, gxm_set_foreground_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "plane_mask" XM_POSTFIX, gxm_plane_mask_w, "", 
+				   XM_PREFIX "set_plane_mask" XM_POSTFIX, gxm_set_plane_mask_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "function" XM_POSTFIX, gxm_function_w, "", 
+				   XM_PREFIX "set_function" XM_POSTFIX, gxm_set_function_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "delta" XM_POSTFIX, gxm_delta_w, "", 
+				   XM_PREFIX "set_delta" XM_POSTFIX, gxm_set_delta_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "nchars" XM_POSTFIX, gxm_nchars_w, "", 
+				   XM_PREFIX "set_nchars" XM_POSTFIX, gxm_set_nchars_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "chars" XM_POSTFIX, gxm_chars_w, "", 
+				   XM_PREFIX "set_chars" XM_POSTFIX, gxm_set_chars_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XTextItem" XM_POSTFIX, gxm_XTextItem_w, 4, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "name" XM_POSTFIX, gxm_name_w, "", XM_PREFIX "set-name" XM_POSTFIX, gxm_set_name_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "depth" XM_POSTFIX, gxm_depth_w, "", XM_PREFIX "set-depth" XM_POSTFIX, gxm_set_depth_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "visual" XM_POSTFIX, gxm_visual_w, "", XM_PREFIX "set-visual" XM_POSTFIX, gxm_set_visual_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "name" XM_POSTFIX, gxm_name_w, "", 
+				   XM_PREFIX "set_name" XM_POSTFIX, gxm_set_name_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "depth" XM_POSTFIX, gxm_depth_w, "", 
+				   XM_PREFIX "set_depth" XM_POSTFIX, gxm_set_depth_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "visual" XM_POSTFIX, gxm_visual_w, "", 
+				   XM_PREFIX "set_visual" XM_POSTFIX, gxm_set_visual_w,  1, 0, 2, 0);
 
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "display" XM_POSTFIX, gxm_display_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "root" XM_POSTFIX, gxm_root_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "mwidth" XM_POSTFIX, gxm_mwidth_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "mheight" XM_POSTFIX, gxm_mheight_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "ndepths" XM_POSTFIX, gxm_ndepths_w, 1, 0, 0, NULL);
@@ -3049,49 +3141,6 @@ static void define_structs(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "backing_store" XM_POSTFIX, gxm_backing_store_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "save_unders" XM_POSTFIX, gxm_save_unders_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "root_input_mask" XM_POSTFIX, gxm_root_input_mask_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "type" XM_POSTFIX, gxm_type_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "serial" XM_POSTFIX, gxm_serial_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "send_event" XM_POSTFIX, gxm_send_event_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "window" XM_POSTFIX, gxm_window_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "subwindow" XM_POSTFIX, gxm_subwindow_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "time" XM_POSTFIX, gxm_time_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "x_root" XM_POSTFIX, gxm_x_root_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "y_root" XM_POSTFIX, gxm_y_root_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "state" XM_POSTFIX, gxm_state_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "keycode" XM_POSTFIX, gxm_keycode_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "same_screen" XM_POSTFIX, gxm_same_screen_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "button" XM_POSTFIX, gxm_button_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "is_hint" XM_POSTFIX, gxm_is_hint_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "mode" XM_POSTFIX, gxm_mode_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "detail" XM_POSTFIX, gxm_detail_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "focus" XM_POSTFIX, gxm_focus_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "key_vector" XM_POSTFIX, gxm_key_vector_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "count" XM_POSTFIX, gxm_count_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "drawable" XM_POSTFIX, gxm_drawable_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "major_code" XM_POSTFIX, gxm_major_code_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "minor_code" XM_POSTFIX, gxm_minor_code_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "parent" XM_POSTFIX, gxm_parent_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "border_width" XM_POSTFIX, gxm_border_width_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "override_redirect" XM_POSTFIX, gxm_override_redirect_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "event" XM_POSTFIX, gxm_event_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "from_configure" XM_POSTFIX, gxm_from_configure_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "above" XM_POSTFIX, gxm_above_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "value_mask" XM_POSTFIX, gxm_value_mask_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "place" XM_POSTFIX, gxm_place_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "atom" XM_POSTFIX, gxm_atom_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "selection" XM_POSTFIX, gxm_selection_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "owner" XM_POSTFIX, gxm_owner_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "requestor" XM_POSTFIX, gxm_requestor_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "target" XM_POSTFIX, gxm_target_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "property" XM_POSTFIX, gxm_property_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "new" XM_POSTFIX, gxm_new_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "message_type" XM_POSTFIX, gxm_message_type_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "format" XM_POSTFIX, gxm_format_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "request" XM_POSTFIX, gxm_request_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "first_keycode" XM_POSTFIX, gxm_first_keycode_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "resourceid" XM_POSTFIX, gxm_resourceid_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "error_code" XM_POSTFIX, gxm_error_code_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "request_code" XM_POSTFIX, gxm_request_code_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "lbearing" XM_POSTFIX, gxm_lbearing_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "rbearing" XM_POSTFIX, gxm_rbearing_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "ascent" XM_POSTFIX, gxm_ascent_w, 1, 0, 0, NULL);
@@ -3159,6 +3208,14 @@ static void define_structs(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "family" XM_POSTFIX, gxm_family_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "address" XM_POSTFIX, gxm_address_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "data" XM_POSTFIX, gxm_data_w, 1, 0, 0, NULL);
+
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "min_height" XM_POSTFIX, gxm_min_height_w, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "max_height" XM_POSTFIX, gxm_max_height_w, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "min_width" XM_POSTFIX, gxm_min_width_w, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "max_width" XM_POSTFIX, gxm_max_width_w, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "height_inc" XM_POSTFIX, gxm_height_inc_w, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "width_inc" XM_POSTFIX, gxm_width_inc_w, 1, 0, 0, NULL);
+
 #if HAVE_MOTIF
 #if MOTIF_2
   XEN_DEFINE_PROCEDURE(XM_PREFIX "page_number" XM_POSTFIX, gxm_page_number_w, 1, 0, 0, NULL);
@@ -3195,10 +3252,10 @@ static void define_structs(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "reason" XM_POSTFIX, gxm_reason_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "timeStamp" XM_POSTFIX, gxm_timeStamp_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "operation" XM_POSTFIX, gxm_operation_w, "", 
-				   XM_PREFIX "set-operation" XM_POSTFIX, gxm_set_operation_w, 1, 0, 2, 0);
+				   XM_PREFIX "set_operation" XM_POSTFIX, gxm_set_operation_w, 1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "operations" XM_POSTFIX, gxm_operations_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "dropSiteStatus" XM_POSTFIX, gxm_dropSiteStatus_w, "",
-				   XM_PREFIX "set-dropSiteStatus" XM_POSTFIX, gxm_set_dropSiteStatus_w, 1, 0, 2, 0);
+				   XM_PREFIX "set_dropSiteStatus" XM_POSTFIX, gxm_set_dropSiteStatus_w, 1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "dropAction" XM_POSTFIX, gxm_dropAction_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "iccHandle" XM_POSTFIX, gxm_iccHandle_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "completionStatus" XM_POSTFIX, gxm_completionStatus_w, 1, 0, 0, NULL);
@@ -3240,26 +3297,129 @@ static void define_structs(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "endPos" XM_POSTFIX, gxm_endPos_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "text" XM_POSTFIX, gxm_text_w, 1, 0, 0, NULL);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "value" XM_POSTFIX, gxm_value_w, "", XM_PREFIX "set-value" XM_POSTFIX, gxm_set_value_w,  1, 0, 2, 0); 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "doit" XM_POSTFIX, gxm_doit_w, "", XM_PREFIX "set-doit" XM_POSTFIX, gxm_set_doit_w,  1, 0, 2, 0); 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "colormap" XM_POSTFIX, gxm_colormap_w, "", XM_PREFIX "set-colormap" XM_POSTFIX, gxm_set_colormap_w, 1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "request_code" XM_POSTFIX, gxm_request_code_w, "", 
+				   XM_PREFIX "set_request_code" XM_POSTFIX, gxm_set_request_code_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "error_code" XM_POSTFIX, gxm_error_code_w, "", 
+				   XM_PREFIX "set_error_code" XM_POSTFIX, gxm_set_error_code_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "first_keycode" XM_POSTFIX, gxm_first_keycode_w, "", 
+				   XM_PREFIX "set_first_keycode" XM_POSTFIX, gxm_set_first_keycode_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "request" XM_POSTFIX, gxm_request_w, "", 
+				   XM_PREFIX "set_request" XM_POSTFIX, gxm_set_request_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "resourceid" XM_POSTFIX, gxm_resourceid_w, "", 
+				   XM_PREFIX "set_resourceid" XM_POSTFIX, gxm_set_resourceid_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "format" XM_POSTFIX, gxm_format_w, "", 
+				   XM_PREFIX "set_format" XM_POSTFIX, gxm_set_format_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "message_type" XM_POSTFIX, gxm_message_type_w, "", 
+				   XM_PREFIX "set_message_type" XM_POSTFIX, gxm_set_message_type_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "new" XM_POSTFIX, gxm_new_w, "", 
+				   XM_PREFIX "set_new" XM_POSTFIX, gxm_set_new_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "property" XM_POSTFIX, gxm_property_w, "", 
+				   XM_PREFIX "set_property" XM_POSTFIX, gxm_set_property_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "display" XM_POSTFIX, gxm_display_w, "", 
+				   XM_PREFIX "set_display" XM_POSTFIX, gxm_set_display_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "target" XM_POSTFIX, gxm_target_w, "", 
+				   XM_PREFIX "set_target" XM_POSTFIX, gxm_set_target_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "requestor" XM_POSTFIX, gxm_requestor_w, "", 
+				   XM_PREFIX "set_requestor" XM_POSTFIX, gxm_set_requestor_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "owner" XM_POSTFIX, gxm_owner_w, "", 
+				   XM_PREFIX "set_owner" XM_POSTFIX, gxm_set_owner_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "selection" XM_POSTFIX, gxm_selection_w, "", 
+				   XM_PREFIX "set_selection" XM_POSTFIX, gxm_set_selection_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "atom" XM_POSTFIX, gxm_atom_w, "", 
+				   XM_PREFIX "set_atom" XM_POSTFIX, gxm_set_atom_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "place" XM_POSTFIX, gxm_place_w, "", 
+				   XM_PREFIX "set_place" XM_POSTFIX, gxm_set_place_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "value_mask" XM_POSTFIX, gxm_value_mask_w, "", 
+				   XM_PREFIX "set_value_mask" XM_POSTFIX, gxm_set_value_mask_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "above" XM_POSTFIX, gxm_above_w, "", 
+				   XM_PREFIX "set_above" XM_POSTFIX, gxm_set_above_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "from_configure" XM_POSTFIX, gxm_from_configure_w, "", 
+				   XM_PREFIX "set_from_configure" XM_POSTFIX, gxm_set_from_configure_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "event" XM_POSTFIX, gxm_event_w, "", 
+				   XM_PREFIX "set_event" XM_POSTFIX, gxm_set_event_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "override_redirect" XM_POSTFIX, gxm_override_redirect_w, "", 
+				   XM_PREFIX "set_override_redirect" XM_POSTFIX, gxm_set_override_redirect_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "border_width" XM_POSTFIX, gxm_border_width_w, "", 
+				   XM_PREFIX "set_border_width" XM_POSTFIX, gxm_set_border_width_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "parent" XM_POSTFIX, gxm_parent_w, "", 
+				   XM_PREFIX "set_parent" XM_POSTFIX, gxm_set_parent_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "minor_code" XM_POSTFIX, gxm_minor_code_w, "", 
+				   XM_PREFIX "set_minor_code" XM_POSTFIX, gxm_set_minor_code_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "major_code" XM_POSTFIX, gxm_major_code_w, "", 
+				   XM_PREFIX "set_major_code" XM_POSTFIX, gxm_set_major_code_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "drawable" XM_POSTFIX, gxm_drawable_w, "", 
+				   XM_PREFIX "set_drawable" XM_POSTFIX, gxm_set_drawable_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "count" XM_POSTFIX, gxm_count_w, "", 
+				   XM_PREFIX "set_count" XM_POSTFIX, gxm_set_count_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "key_vector" XM_POSTFIX, gxm_key_vector_w, "", 
+				   XM_PREFIX "set_key_vector" XM_POSTFIX, gxm_set_key_vector_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "focus" XM_POSTFIX, gxm_focus_w, "", 
+				   XM_PREFIX "set_focus" XM_POSTFIX, gxm_set_focus_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "detail" XM_POSTFIX, gxm_detail_w, "", 
+				   XM_PREFIX "set_detail" XM_POSTFIX, gxm_set_detail_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "mode" XM_POSTFIX, gxm_mode_w, "", 
+				   XM_PREFIX "set_mode" XM_POSTFIX, gxm_set_mode_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "is_hint" XM_POSTFIX, gxm_is_hint_w, "", 
+				   XM_PREFIX "set_is_hint" XM_POSTFIX, gxm_set_is_hint_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "button" XM_POSTFIX, gxm_button_w, "", 
+				   XM_PREFIX "set_button" XM_POSTFIX, gxm_set_button_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "same_screen" XM_POSTFIX, gxm_same_screen_w, "", 
+				   XM_PREFIX "set_same_screen" XM_POSTFIX, gxm_set_same_screen_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "keycode" XM_POSTFIX, gxm_keycode_w, "", 
+				   XM_PREFIX "set_keycode" XM_POSTFIX, gxm_set_keycode_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "state" XM_POSTFIX, gxm_state_w, "", 
+				   XM_PREFIX "set_state" XM_POSTFIX, gxm_set_state_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "y_root" XM_POSTFIX, gxm_y_root_w, "", 
+				   XM_PREFIX "set_y_root" XM_POSTFIX, gxm_set_y_root_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "x_root" XM_POSTFIX, gxm_x_root_w, "", 
+				   XM_PREFIX "set_x_root" XM_POSTFIX, gxm_set_x_root_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "root" XM_POSTFIX, gxm_root_w, "", 
+				   XM_PREFIX "set_root" XM_POSTFIX, gxm_set_root_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "time" XM_POSTFIX, gxm_time_w, "", 
+				   XM_PREFIX "set_time" XM_POSTFIX, gxm_set_time_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "subwindow" XM_POSTFIX, gxm_subwindow_w, "", 
+				   XM_PREFIX "set_subwindow" XM_POSTFIX, gxm_set_subwindow_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "window" XM_POSTFIX, gxm_window_w, "", 
+				   XM_PREFIX "set_window" XM_POSTFIX, gxm_set_window_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "send_event" XM_POSTFIX, gxm_send_event_w, "", 
+				   XM_PREFIX "set_send_event" XM_POSTFIX, gxm_set_send_event_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "serial" XM_POSTFIX, gxm_serial_w, "", 
+				   XM_PREFIX "set_serial" XM_POSTFIX, gxm_set_serial_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "type" XM_POSTFIX, gxm_type_w, "", 
+				   XM_PREFIX "set_type" XM_POSTFIX, gxm_set_type_w,  1, 0, 2, 0); 
+
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "value" XM_POSTFIX, gxm_value_w, "", 
+				   XM_PREFIX "set_value" XM_POSTFIX, gxm_set_value_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "doit" XM_POSTFIX, gxm_doit_w, "", 
+				   XM_PREFIX "set_doit" XM_POSTFIX, gxm_set_doit_w,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "colormap" XM_POSTFIX, gxm_colormap_w, "", 
+				   XM_PREFIX "set_colormap" XM_POSTFIX, gxm_set_colormap_w, 1, 0, 2, 0);
 #if MOTIF_2
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "menuToPost" XM_POSTFIX, gxm_menuToPost_w, "", XM_PREFIX "set-menuToPost", gxm_set_menuToPost_w, 1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "postIt" XM_POSTFIX, gxm_postIt_w, "", XM_PREFIX "set-postIt" XM_POSTFIX, gxm_set_postIt_w, 1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "menuToPost" XM_POSTFIX, gxm_menuToPost_w, "", 
+				   XM_PREFIX "set_menuToPost", gxm_set_menuToPost_w, 1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "postIt" XM_POSTFIX, gxm_postIt_w, "", 
+				   XM_PREFIX "set_postIt" XM_POSTFIX, gxm_set_postIt_w, 1, 0, 2, 0);
 #endif
 
 #if HAVE_XPM
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "valuemask" XM_POSTFIX, gxm_valuemask_w, "", XM_PREFIX "set-valuemask" XM_POSTFIX, gxm_set_valuemask_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "ncolors" XM_POSTFIX, gxm_ncolors_w, "", XM_PREFIX "set-ncolors" XM_POSTFIX, gxm_set_ncolors_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "cpp" XM_POSTFIX, gxm_cpp_w, "", XM_PREFIX "set-cpp" XM_POSTFIX, gxm_set_cpp_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "valuemask" XM_POSTFIX, gxm_valuemask_w, "", 
+				   XM_PREFIX "set_valuemask" XM_POSTFIX, gxm_set_valuemask_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "ncolors" XM_POSTFIX, gxm_ncolors_w, "", 
+				   XM_PREFIX "set_ncolors" XM_POSTFIX, gxm_set_ncolors_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "cpp" XM_POSTFIX, gxm_cpp_w, "", 
+				   XM_PREFIX "set_cpp" XM_POSTFIX, gxm_set_cpp_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmImage" XM_POSTFIX, gxm_XpmImage_w, 5, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "numsymbols" XM_POSTFIX, gxm_numsymbols_w, "", 
-				   XM_PREFIX "set-numsymbols" XM_POSTFIX, gxm_set_numsymbols_w,  1, 0, 2, 0);
+				   XM_PREFIX "set_numsymbols" XM_POSTFIX, gxm_set_numsymbols_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "colorsymbols" XM_POSTFIX, gxm_colorsymbols_w, "", 
-				   XM_PREFIX "set-colorsymbols" XM_POSTFIX, gxm_set_colorsymbols_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "npixels" XM_POSTFIX, gxm_npixels_w, "", XM_PREFIX "set-npixels" XM_POSTFIX, gxm_set_npixels_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "y_hotspot" XM_POSTFIX, gxm_y_hotspot_w, "", XM_PREFIX "set-y_hotspot" XM_POSTFIX, gxm_set_y_hotspot_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "x_hotspot" XM_POSTFIX, gxm_x_hotspot_w, "", XM_PREFIX "set-x_hotspot" XM_POSTFIX, gxm_set_x_hotspot_w,  1, 0, 2, 0);
+				   XM_PREFIX "set_colorsymbols" XM_POSTFIX, gxm_set_colorsymbols_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "npixels" XM_POSTFIX, gxm_npixels_w, "", 
+				   XM_PREFIX "set_npixels" XM_POSTFIX, gxm_set_npixels_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "y_hotspot" XM_POSTFIX, gxm_y_hotspot_w, "", 
+				   XM_PREFIX "set_y_hotspot" XM_POSTFIX, gxm_set_y_hotspot_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "x_hotspot" XM_POSTFIX, gxm_x_hotspot_w, "", 
+				   XM_PREFIX "set_x_hotspot" XM_POSTFIX, gxm_set_x_hotspot_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmColorSymbol" XM_POSTFIX, gxm_XpmColorSymbol_w, 3, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmAttributes" XM_POSTFIX, gxm_XpmAttributes_w, 0, 0, 0, NULL);
 #endif

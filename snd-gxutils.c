@@ -126,7 +126,7 @@ static XEN g_change_property(XEN winat, XEN name, XEN command)
 }
 
 #if DEBUGGING
-/* this is intended for auto-testing the user-interface via scheme-generated X events */
+/* this is intended for auto-testing the user-interface */
 
 static XEN g_move_scale(XEN scale, XEN val)
 {

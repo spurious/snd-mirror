@@ -85,7 +85,6 @@
 #undef ALPHA
 #undef HPUX
 #undef SUN
-#undef SOLARIS
 #undef SCO5
 #undef OPENBSD
 #undef WINDOZE

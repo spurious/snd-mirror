@@ -270,6 +270,8 @@ void news_help(snd_state *ss)
 \n\
 7-Jan:   mix-channel, insert-channel in extensions.scm.\n\
          event.scm.\n\
+         the Snd widget lists now return objects compatible with the xm module,\n\
+           so the various \"cast\" functions such as |Widget are now no-ops.\n\
 4-Jan:   removed loop.scm.\n\
 26-Dec:  explode-sf2 in examp.scm.\n\
 14-Dec:  removed icons.scm and backgrounds.scm (replaced by contrib/dlp code).\n\
@@ -277,7 +279,6 @@ void news_help(snd_state *ss)
 10-Dec:  midi.c.\n\
 6-Dec:   play.scm.\n\
 3-Dec:   snd-5.5.\n\
-28-Nov:  add-tooltip in snd-motif.scm.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'",

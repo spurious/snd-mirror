@@ -1,10 +1,3 @@
-/* TODO  drag via mark could still use amp-env opts
- */
-
-/* if mark is handled as an smob, rather than a bare integer, we get better
- *   type-checking, but (for example) searching for a given mark becomes messy
- */
-
 #include "snd.h"
 
 /* to handle undo/redo cleanly, we keep the mark list as an array (indexed to edit_ctr)
@@ -16,6 +9,10 @@
  */
 
 /* added sync field and related operations 16-June-00 */
+
+/* if mark is handled as an smob, rather than a bare integer, we get better
+ *   type-checking, but (for example) searching for a given mark becomes messy
+ */
 
 typedef mark *mark_map_func(chan_info *cp, mark *mp, void *m);
 
@@ -1475,6 +1472,21 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int
     }
   else
     {
+#if 0
+      /* TODO  drag via mark could still use amp-env opts */
+      if (amp_env_usable(cp, samples_per_pixel, ap->hisamp, FALSE, cp->edit_ctr)) 
+	j = amp_env_graph(cp, ap, samples_per_pixel, (sp) ? ((int)SND_SRATE(sp)) : 1);
+      /* pad with 0 at end if needed, or at insertion pt */
+      /* mark is at current_sample, was originally at initial_sample */
+      /* mark_movers[which] is the mix_context with the points arrays */
+      /* in amp env, go to losamp, copy to (min current-sample initial-sample)
+       *   if (> init cur) jump to cur in amp env
+       *   if (< init cur) add 0's to cur, leaving amp env loc unchanged
+       *   copy to hisamp moving in amp env (hisamp is cur-relative)
+       *   if (> init cur) pad with 0's at end
+       * i.e. treat amp env read just like sample-read above (jumping by ep->samps_per_bin)
+       */
+#endif
       sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
       if (sf == NULL) return;
       j = 0;      /* graph point counter */

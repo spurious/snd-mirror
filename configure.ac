@@ -460,8 +460,8 @@ else
     AC_CHECK_LIB(Xm, XmCreateForm, 
 	[
 	  with_motif=yes
- 	  AC_DEFINE(USE_MOTIF)
-	  AC_DEFINE(HAVE_MOTIF)
+ 	  AC_DEFINE(USE_MOTIF)  # for Snd
+	  AC_DEFINE(HAVE_MOTIF) # for xm
 	  AC_SUBST(XLIBS)
 	  AC_SUBST(XFLAGS)
  	  AC_SUBST(XMHTML_LIB)
@@ -758,7 +758,6 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
 	audio_system=Sun
         ;;
     *-*-solaris*) 
-        AC_DEFINE(SOLARIS)
 	AC_DEFINE(SUN)
 	LIBS="-lm -ldl"
 	audio_system=Sun
