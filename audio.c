@@ -9681,7 +9681,11 @@ static char our_name[128];
 char *mus_audio_moniker(void) 
 {
 #ifdef ESD_VERSION
-  sprintf(our_name,"%s: %s",esd_name,ESD_VERSION);
+  #ifdef AUDIOFILE_VERSION
+    sprintf(our_name,"%s: %s (Audiofile %s)",esd_name,ESD_VERSION,AUDIOFILE_VERSION);
+  #else
+    sprintf(our_name,"%s: %s",esd_name,ESD_VERSION);
+  #endif
   return(our_name);
 #else
   return(esd_name);

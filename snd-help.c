@@ -256,6 +256,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+24-Nov:  fht (Hartley transform).\n\
 21-Nov:  abort? -> C-g?.  edit-tree and display-edits documented.\n\
 17-Nov:  esd support thanks to Nick Bailey.\n\
 14-Nov:  un-normalized fft display bugfix.\n\
@@ -1163,6 +1164,7 @@ all refer to the same thing.\n\
   " S_expanding "         (snd)\n\
   " S_fft "               (rl im sgn)\n\
   " S_ffting "            (snd chn)\n\
+  " S_fht "               (rl)\n\
   " S_file_dialog "       ()\n\
   " S_file_name "         (snd)\n\
   " S_filter_env "        (snd)\n\

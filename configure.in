@@ -134,6 +134,8 @@ SNDLIB_FILES="headers.o audio.o io.o sound.o clm.o vct.o sndlib2scm.o clm2scm.o"
 AC_ARG_WITH(sndlib,
 	[  --with-sndlib		  use libsndlib.so if possible],
   	if test "$with_sndlib" = y || test "$with_sndlib" = yes; then
+# find sndlib.so, check for scm files
+#   if not found, make it (or have makefile do it)
             SNDLIB_LIB="-lsndlib"
 	    SNDLIB_FILES=""
 	fi)
@@ -514,7 +516,6 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
 
 	if test $audio_system = ESD_OR_OSS ; then
 	    AC_CHECK_LIB(esd,main,[
-# we should also check for audiofile.h and libaudiofile here, I think
 #   The version of esd.h that comes with Redhat is broken and fails to be accepted by configure
 		if test "$use_esd" = yes ; then
 		    audio_system=ESD
@@ -546,6 +547,8 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
 		AC_DEFINE(ESD)
 	        esd_version="`esd-config --version`"
                 AC_DEFINE_UNQUOTED(ESD_VERSION,"${esd_version}")
+                audiofile_version="`audiofile-config --version`"
+                AC_DEFINE_UNQUOTED(AUDIOFILE_VERSION,"${audiofile_version}")
                 AUDIO_LIB="`esd-config --libs`"
 #               ESD_CFLAGS="`esd-config --cflags`"
 		AC_SUBST(AUDIO_LIB)

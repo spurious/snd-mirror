@@ -1287,7 +1287,7 @@ static int apply_fft_window(fft_state *fs)
     {
     case FOURIER:
       window = (Float *)((fft_window_state *)(fs->wp))->window;
-      for (i=0;i<data_len;i++) 
+      for (i=1;i<data_len;i++)  /* 22-Nov-00 was starting at 0, but I think XJS's version of the fft is 1-based */
 	fft_data[i] = window[i] * next_sample_to_float(sf);
       /* my timing tests indicate this change to float (i.e. scaling) costs nothing in the larger scheme of things */
       if (data_len < fs->size) for (i=data_len;i<fs->size;i++) fft_data[i] = 0.0;

@@ -5393,21 +5393,6 @@ Float mus_granulate(mus_any *ptr, Float (*input)(void *arg, int direction))
 /* fft and convolution of real data in zero-based arrays
  */
 
-#if HAVE_FFTW
-/* some simple timing tests indicate that this version is about 3 times as fast as the one below */
-#include <rfftw.h>
-void mus_fft (Float *rl, Float *im, int n, int is)
-{
-  /* our Float may not be the same as fftw_real -- the latter defaults to double */
-  rfftw_plan plan;
-  plan = rfftw_create_plan(n,
-			   (n == -1) ? FFTW_BACKWARD : FFTW_FORWARD, 
-			   FFTW_IN_PLACE | FFTW_ESTIMATE | FFTW_USE_WISDOM);
-  rfftw_one(plan,rl,NULL);
-  /* how to do the inverse fft? */
-  rfftw_destroy_plan(plan);
-}
-#else
 static void mus_scramble (Float* rl, Float* im, int n)
 {
   /* bit reversal */
@@ -5484,7 +5469,6 @@ void mus_fft (Float *rl, Float *im, int n, int is)
       m <<= 1;
     }
 }
-#endif
 
 #if HAVE_GSL
 #include <gsl/gsl_sf_bessel.h>

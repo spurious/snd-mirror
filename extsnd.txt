@@ -1154,6 +1154,12 @@ way as to create an associated mix object:
                       If with-mix-tags is #f (default is #t), the data is simply
                       mixed without creating any mix tags.
 
+In the functions that refer to a given sound, the form (list mix-id) refers
+to the underlying mix's sound. So, for example, (src-sound 2.0 1.0 (list 0)
+0) performs sampling-rate conversion on mix 0's sound's channel 0;
+(display-edits (list 0) 0) shows the edit list of that sound, and (set!
+(edit-position (list 0) 0) 0) reverts it to its original state.
+
 Regions
 
 A region is a saved portion of sound data. There is a dialog to browse
@@ -2092,7 +2098,7 @@ The edit list functions are:
 
                                      (as-one-edit (lambda () (set! (sample 100) .1) (set! (sample 200) .2)))
 
-  display-edits ()           print out the current edit list contents.
+  display-edits (snd chn)     print out the current edit list contents.
 
   edit-fragment (num snd chn) return a list similar to that displayed in the edit history window giving
                               the origin of the specified edit, its type (delete, insert, etc), its
@@ -2129,7 +2135,7 @@ The edit list functions are:
                                                       (x1pos (sg-sample->x (min rs nxtpos))))
                                                  (gdk-draw-rectangle win gc #t x0pos 2 (- x1pos x0pos) 5)))))
                                          (if (and (cdr tree)              ; go to next fragment
-                                             (not (= (cadr (car tree)) -2)))
+                                                  (not (= (cadr (car tree)) -2)))
                                            (check-fragment (cdr tree) ls rs))))
                                      (check-fragment (edit-tree snd chn)
                                                      (left-sample snd chn)
@@ -2774,6 +2780,27 @@ These functions don't seem to fit anywhere else:
 
   fft               (rl im sgn)   perform an FFT on rl and im (the real and imaginary parts of the
                                   input data. sgn is 1 for an FFT, -1 for an inverse FFT; (default 1).
+
+  fht               (vobj)        perform Hartley transform on vct vobj whose length must be a power of 4.
+                                  This is a fast version of the FFT (it's about 4 to 6 times faster than the fft,
+                                  but can be applied only to real data; it is its own inverse).  The following
+                                  function reads data from the left window edge, calls the Hartley transform
+                                  (using a "rectangular window"), turns that into a power spectrum, and graphs
+                                  the result (which is the same as an fft-generated power spectrum before any
+                                  normalization etc).
+
+                                     (define (hgrf snd chn y0 y1)
+                                       (let* ((size (fft-size snd chn))
+                                              (hv0 (samples->vct (left-sample snd chn) size))
+                                              (hv1 (make-vct (/ size 2))))
+                                         (fht hv0)
+                                         (do ((i 1 (1+ i)))
+                                             ((= i (/ size 2)))
+                                           (vct-set! hv1 i (* (sqrt (+ (* (vct-ref hv0 i) (vct-ref hv0 i))
+                                                                       (* (vct-ref hv0 (- size i)) (vct-ref hv0 (- size i)))))
+                                                              (/ (sqrt 2.0) size))))
+                                         (graph hv1)))
+                                     (add-hook! graph-hook hgrf)
 
   find              (expr sample snd chn)
                                   find the sample that satisfies the Scheme function expr. sample

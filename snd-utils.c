@@ -370,7 +370,7 @@ char *kmg (int num)
  * REALLOC, and FREE (never MALLOC though it's defined).
  */
 
-#define MEM_SIZE 65536
+static int mem_size = 0;
 
 #if 0
 /* from glibc/debug/backtrace-tst.c -- doesn't decode local (Snd) function names) */
@@ -404,10 +404,9 @@ void set_encloser(char *name)
   encloser = name;
 } /* for exposing call chains */
 
-static int pointers[MEM_SIZE],sizes[MEM_SIZE],locations[MEM_SIZE];
-static char **functions,**files;
-static int *lines;
-static int forgetting = 0;
+static int *pointers=NULL,*sizes=NULL,*locations=NULL;
+static char **functions=NULL,**files=NULL;
+static int *lines=NULL;
 static int mem_location = -1;
 static int mem_locations = 0;
 
@@ -461,23 +460,31 @@ static int find_mem_location(const char *ur_func, const char *file, int line)
   return(mem_location);
 }
 
+void mem_report(void);
 static void forget_pointer(void *ptr, const char *func, const char *file, int line)
 {
   int i;
-  if (ptr == NULL) {fprintf(stderr,"attempt to free NULL"); abort();}
-  for (i=0;i<MEM_SIZE;i++)
+  if (ptr == NULL) {fprintf(stderr,"attempt to free NULL"); mem_report(); abort();}
+  for (i=0;i<mem_size;i++)
     if (pointers[i] == (int)ptr)
       {
 	pointers[i] = 0;
 	return;
       }
-  if (forgetting == 0) {fprintf(stderr,"forget %p ",ptr); abort();}
+  fprintf(stderr,"forget %p ",ptr); mem_report(); abort();
 }
 
 static void remember_pointer(void *ptr, size_t len, const char *func, const char *file, int line)
 {
   int i,least=10000,least_loc=-1;
-  for (i=0;i<MEM_SIZE;i++)
+  if (mem_size == 0)
+    {
+      mem_size = 4096;
+      pointers = (int *)calloc(mem_size,sizeof(int));
+      sizes = (int *)calloc(mem_size,sizeof(int));
+      locations = (int *)calloc(mem_size,sizeof(int));
+    }
+  for (i=0;i<mem_size;i++)
     {
       if (pointers[i] == 0) 
 	{
@@ -490,7 +497,20 @@ static void remember_pointer(void *ptr, size_t len, const char *func, const char
 	  least_loc = i;
 	}
     }
-  if (pointers[least_loc] != 0) {forgetting = 1; fprintf(stderr,"mem overflow!"); abort();}
+  if (pointers[least_loc] != 0)
+    {
+      least_loc = mem_size;
+      mem_size += 4096;
+      pointers = (int *)realloc(pointers,mem_size * sizeof(int));
+      sizes = (int *)realloc(sizes,mem_size * sizeof(int));
+      locations = (int *)realloc(locations,mem_size * sizeof(int));
+      for (i=least_loc;i<mem_size;i++)
+	{
+	  pointers[i] = 0;
+	  sizes[i] = 0;
+	  locations[i] = 0;
+	}
+    }
   pointers[least_loc] = (int)ptr;
   sizes[least_loc] = (int)len;
   locations[least_loc] = find_mem_location(func,file,line);
@@ -505,7 +525,7 @@ void *mem_calloc(size_t len, size_t size, const char *func, const char *file, in
   if ((len <= 0) || (len > MAX_MALLOC))
     {
       fprintf(stderr,"%s:%s[%d] attempt to calloc %d bytes",func,file,line,len*size);
-      abort();
+      mem_report(); abort();
     }
 #endif
   ptr = calloc(len,size);
@@ -520,7 +540,7 @@ void *mem_malloc(size_t len, const char *func, const char *file, int line)
   if ((len <= 0) || (len > MAX_MALLOC))
     {
       fprintf(stderr,"%s:%s[%d] attempt to malloc %d bytes",func,file,line,len);
-      abort();
+      mem_report(); abort();
     }
 #endif
   ptr = malloc(len);
@@ -541,7 +561,7 @@ void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, in
   if ((size <= 0) || (size > MAX_MALLOC))
     {
       fprintf(stderr,"%s:%s[%d] attempt to realloc %d bytes",func,file,line,size);
-      abort();
+      mem_report(); abort();
     }
 #endif
   forget_pointer(ptr,func,file,line);
@@ -556,7 +576,7 @@ char *mem_stats(snd_state *ss, int ub)
   int i,ptrs=0,sum=0,snds=0,chns=0;
   snd_info *sp;
   char *result,*ksum=NULL,*kptrs=NULL,*kpers=NULL;
-  for (i=0;i<MEM_SIZE;i++)
+  for (i=0;i<mem_size;i++)
     if (pointers[i])
       {
 	ptrs++;
@@ -571,9 +591,9 @@ char *mem_stats(snd_state *ss, int ub)
 	  chns += sp->allocated_chans;
 	}
     }
-  sprintf(result,"snd mem: %s (%s%s ptrs), %d sounds, %d chans (%s)\n",
+  sprintf(result,"snd mem: %s (%s ptrs), %d sounds, %d chans (%s)\n",
 	  ksum=kmg(sum),
-	  kptrs=kmg(ptrs),(forgetting) ? "+" : "",
+	  kptrs=kmg(ptrs),
 	  snds,chns,
 	  (chns>0) ? (kpers=kmg(ub / chns)) : "");
   if (ksum) free(ksum);
@@ -582,7 +602,7 @@ char *mem_stats(snd_state *ss, int ub)
   return(result);
 }
 
-void mem_report(void);
+/* void mem_report(void); */
 void mem_report(void)
 {
   int loc,i,sum,ptr=0;
@@ -597,7 +617,7 @@ void mem_report(void)
     {
       sum=0;
       ptr=0;
-      for (i=0;i<MEM_SIZE;i++)
+      for (i=0;i<mem_size;i++)
 	{
 	  if ((pointers[i]) && (locations[i] == loc))
 	    {

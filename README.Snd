@@ -190,6 +190,11 @@ If you're using the Sonorus Studio card and getting interruptions,
 try (set-oss-buffers 64 16).  I think the RME Digi96 card's defaults
 are 32 and 12 (just a guess). 
 
+If you're running esd, you need to build Snd with the configuration
+switch --with-esd.  Otherwise, it's likely you'll get an error
+from the 'play' button complaining about data formats, probably
+that it can't play big-endian shorts.
+
 
 Windoze audio:
 In Windoze using Cygwin, I think the audio support is limited to
@@ -277,7 +282,7 @@ look for something like ftp://erin.netpedia.net/download/guile-gtk-0.19pre.tar.g
 
 If you get an error like:
 
-  Gtk-WARNING **: invalid cast from `GtkDrawingArea' to `GtkSnd_Fixed'
+  Gtk-WARNING **: <much useless mumbling>
 
 you can find where it occurs by:
 

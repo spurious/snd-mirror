@@ -1333,7 +1333,7 @@ Perry Cook's default value is 40, and I've seen cases where it needs to be 100.
 The greater the width, the slower the src generator runs.
 The <i>sr-change</i>
 argument is the amount to add to the current <i>srate</i> on a sample by sample
-basis.  Here's
+basis (if it's 0.0, you get a constant output because the generator is not moving at all).  Here's
 an instrument that provides time-varying sampling rate conversion (see also the
 <a href="#srctst">srctst</a> instrument below):</p>
 <pre><small>
@@ -1729,6 +1729,7 @@ of the input file's length, then applied by watching mus-location:</p>
                (env-val 0.0)
                (pass 0)
                (senv (make-env :envelope srcenv :duration dur)))
+	  (setf env-val (env senv))           ;get initial src value
           (run
            (loop for i from st do
              (let ((pos (<em class=red>mus-location</em> srcA)))
@@ -1737,6 +1738,7 @@ of the input file's length, then applied by watching mus-location:</p>
                    (setf pass pos)
                    (dotimes (k passes) (setf env-val (env senv)))))
                (outa i (src srcA env-val))
+               ;; perhaps this should protect against an env-val of 0.0
                (if (&gt;= pass samples) (loop-finish))))))
       (close-input f))))
 

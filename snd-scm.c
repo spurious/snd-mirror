@@ -3167,6 +3167,188 @@ static SCM g_progress_report(SCM pct, SCM name, SCM cur_chan, SCM chans, SCM snd
   return(SCM_BOOL_T);
 }
 
+
+/* Hartley Transfrom */
+
+static Float *fht_sines=NULL,*fht_cosines=NULL;
+static int fht_last_length = 0,fht_length = 0;
+
+static void make_sines(int length)
+{
+  int i;
+  Float freq,temp;
+  if (length != fht_last_length)
+    {
+      if (fht_length < length)
+	{
+	  if (fht_sines) FREE(fht_sines);
+	  if (fht_cosines) FREE(fht_cosines);
+	  fht_sines = (Float *)CALLOC(length,sizeof(Float));
+	  fht_cosines = (Float *)CALLOC(length,sizeof(Float));
+	  fht_length = length;
+	}
+      fht_last_length = length;
+      freq = TWO_PI / (Float)length;
+      for (i=0;i<length;i++) 
+	{
+	  temp = freq * i;
+	  fht_sines[i] = sin(temp);
+	  fht_cosines[i] = cos(temp);
+        }
+    }
+}
+
+static void fht (int powerOfFour, Float *array)
+{
+  /*  In place Fast Hartley Transform of floating point data in array.
+      Size of data array must be power of four. Lots of sets of four 
+      inline code statements, so it is verbose and repetitive, but fast. 
+      The Fast Hartley Transform algorithm is patented, and is documented
+      in the book "The Hartley Transform", by Ronald N. Bracewell.
+      This routine was converted to C from a BASIC routine in the above book,
+      that routine Copyright 1985, The Board of Trustees of Stanford University 	
+   */
+  /* fht is its own inverse, so to speak -- run it again to return to original data */
+
+  register int j=0,i=0,k=0,L=0;
+  int n=0,n4=0,d1=0,d2=0,d3=0,d4=0,d5=1,d6=0,d7=0,d8=0,d9=0;
+  int L1=0,L2=0,L3=0,L4=0,L5=0,L6=0,L7=0,L8=0;
+  int n_over_d3;
+  Float r=0.0;
+  int a1=0,a2=0,a3=0;
+  Float t=0.0,t1=0.0,t2 =0.0,t3=0.0,t4=0.0,t5=0.0,t6=0.0,t7=0.0,t8=0.0;
+  Float t9=0.0,t0=0.0;
+  n = (int)(pow(4.0 ,(double)powerOfFour));
+  make_sines(n);
+  n4 = n / 4;
+  r = 1.414213562;
+  j = 1;
+  i = 0;
+  while (i<n-1)	
+    {
+      i++;
+      if (i<j)	
+	{
+	  t = array[j-1];
+	  array[j-1] = array[i-1];
+	  array[i-1] = t;
+    	}
+      k = n4;
+      while ((3*k)<j)	
+	{
+	  j -= 3 * k;
+	  k /= 4;
+    	}
+      j += k;
+    }
+  for (i=0;i<n;i += 4) 
+    {
+      t5 = array[i];
+      t6 = array[i+1];
+      t7 = array[i+2];
+      t8 = array[i+3];
+      t1 = t5 + t6;
+      t2 = t5 - t6;
+      t3 = t7 + t8;
+      t4 = t7 - t8;
+      array[i] = t1 + t3;
+      array[i+1] = t1 - t3;
+      array[i+2] = t2 + t4;
+      array[i+3] = t2 - t4;
+    }
+  for (L=2;L<=powerOfFour;L++)  
+    {
+      d1 = (int)(pow(2.0 , L+L-3.0));
+      d2=d1+d1;
+      d3=d2+d2;
+      n_over_d3 = n / 2 / d3;
+      d4=d2+d3;
+      d5=d3+d3;
+      for (j=0;j<n;j += d5)	  
+	{
+	  t5 = array[j];
+	  t6 = array[j+d2];
+	  t7 = array[j+d3];
+	  t8 = array[j+d4];
+	  t1 = t5+t6;
+	  t2 = t5-t6;
+	  t3 = t7+t8;
+	  t4 = t7-t8;
+	  array[j] = t1 + t3;
+	  array[j+d2] = t1 - t3;
+	  array[j+d3] = t2 + t4;
+	  array[j+d4] = t2 - t4;
+	  d6 = j+d1;
+	  d7 = j+d1+d2;
+	  d8 = j+d1+d3;
+	  d9 = j+d1+d4;
+	  t1 = array[d6];
+	  t2 = array[d7] * r;
+	  t3 = array[d8];
+	  t4 = array[d9] * r;
+	  array[d6] = t1 + t2 + t3;
+	  array[d7] = t1 - t3 + t4;
+	  array[d8] = t1 - t2 + t3;
+	  array[d9] = t1 - t3 - t4;
+	  for (k=1;k<d1;k++)	
+	    {
+	      L1 = j + k;
+	      L2 = L1 + d2;
+	      L3 = L1 + d3;
+	      L4 = L1 + d4;
+	      L5 = j + d2 - k;
+	      L6 = L5 + d2;
+	      L7 = L5 + d3;
+	      L8 = L5 + d4;
+	      a1 = (int) (k * n_over_d3) % n;
+	      a2 = (a1 + a1) % n;
+	      a3 = (a1 + a2) % n;
+	      t5 = array[L2] * fht_cosines[a1] + array[L6] * fht_sines[a1];
+	      t6 = array[L3] * fht_cosines[a2] + array[L7] * fht_sines[a2];
+	      t7 = array[L4] * fht_cosines[a3] + array[L8] * fht_sines[a3];
+	      t8 = array[L6] * fht_cosines[a1] - array[L2] * fht_sines[a1];
+	      t9 = array[L7] * fht_cosines[a2] - array[L3] * fht_sines[a2];
+	      t0 = array[L8] * fht_cosines[a3] - array[L4] * fht_sines[a3];
+	      t1 = array[L5] - t9;
+	      t2 = array[L5] + t9;
+	      t3 = - t8 - t0;
+	      t4 = t5 - t7;
+	      array[L5] = t1 + t4;
+	      array[L6] = t2 + t3;
+	      array[L7] = t1 - t4;
+	      array[L8] = t2 - t3;
+	      t1 = array[L1] + t6;
+	      t2 = array[L1] - t6;
+	      t3 = t8 - t0;
+	      t4 = t5 + t7;
+	      array[L1] = t1 + t4;
+	      array[L2] = t2 + t3;
+	      array[L3] = t1 - t4;
+	      array[L4] = t2 - t3;
+	    }
+	}
+    }		  
+}
+
+static SCM g_fht(SCM data)
+{
+  #define H_fht "(fht vct-obj) returns the Hartley transform of the data in the vct object whose size must be a power of 4"
+  vct *v;
+  int pow4;
+  SCM_ASSERT(vct_p(data),data,SCM_ARG1,S_fht);
+  v = get_vct(data);
+  pow4 = (int)(round(log(v->length) / (log(4))));
+  if (((int)(pow(4.0,pow4))) != v->length) 
+    scm_misc_error(S_fht,
+		   "fht data length must be a power of 4: ~S: ~S (~S)",
+		   SCM_LIST3(gh_int2scm(v->length),
+			     gh_double2scm((log(v->length) / (log(4)))),
+			     gh_int2scm((int)(pow(4.0,pow4)))));
+  fht(pow4,v->data);
+  return(data);
+}
+
+
 void init_mus2scm_module(void);
 
 static SCM during_open_hook,exit_hook,start_hook,after_open_hook;
@@ -3288,8 +3470,6 @@ void g_initialize_gh(snd_state *ss)
   gh_define(S_normalize_by_channel,gh_int2scm(NORMALIZE_BY_CHANNEL));
   gh_define(S_normalize_by_sound,gh_int2scm(NORMALIZE_BY_SOUND));
   gh_define(S_normalize_globally,gh_int2scm(NORMALIZE_GLOBALLY));
-
-
 
   /* ---------------- VARIABLES ---------------- */
   define_procedure_with_setter(S_ask_before_overwrite,SCM_FNC g_ask_before_overwrite,H_ask_before_overwrite,
@@ -3517,6 +3697,8 @@ void g_initialize_gh(snd_state *ss)
 
 
   /* ---------------- FUNCTIONS ---------------- */
+
+  DEFINE_PROC(gh_new_procedure(S_fht,SCM_FNC g_fht,1,0,0),H_fht);
 
   DEFINE_PROC(gh_new_procedure(S_snd_tempnam,SCM_FNC g_snd_tempnam,0,0,0),H_snd_tempnam);
   DEFINE_PROC(gh_new_procedure("set-" S_oss_buffers,SCM_FNC g_set_oss_buffers,2,0,0),H_set_oss_buffers);

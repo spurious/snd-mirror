@@ -82,7 +82,6 @@ READ_BUFFER:
 
 static char noscm_white_space[4]={' ','\t','\n',')'};
 static char noscm_null_string[1] = {'\0'};
-static int no_guile_errors = 0;
 
 #define RES_SIZE 512
 static char res_buf[RES_SIZE];
@@ -545,12 +544,9 @@ int snd_eval_str(snd_state *ss, char *buf, int count)
   char *tmp;
   char *tok[10];
   snd_info *sp;
-  chan_info *cp;
   if (buf == NULL) return(0);
   if (ss->result_printout == PLAIN_MESSAGE) snd_append_command(ss,buf);
-  cp = NULL;
   sp = any_selected_sound(ss);
-  if (sp) cp = any_selected_channel(sp);
   for (i=0;i<10;i++) tok[i] = NULL;
   tmp = buf;
   if (tmp[0] == '(') tmp++;
@@ -1200,7 +1196,6 @@ void snd_load_init_file(snd_state *ss, int nog, int noi)
   /* look for ".snd" on the home directory, and load it using the lisp-like CLM syntax given above */
   int fd;
   char *str;
-  no_guile_errors = 1;
 #ifdef SND_CONF
   if (nog == 0)
     {
@@ -1226,17 +1221,15 @@ void snd_load_init_file(snd_state *ss, int nog, int noi)
       while (eval_forever(ss,fd));
       close(fd);
     }
-  no_guile_errors = 0;
 }
 
 void snd_load_file(char *filename)
 {
   int fd;
-  char *str,*saved_buf;
+  char *str;
   snd_state *ss;
   str=filename;
   ss = get_global_state();
-  saved_buf = NULL;
   if ((*str) == '~')
     {
       strcpy(init_file_buffer,getenv("HOME"));

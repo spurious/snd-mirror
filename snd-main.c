@@ -485,7 +485,7 @@ static int save_sound_state (snd_info *sp, void *ptr)
       if (cp->dot_size != DEFAULT_DOT_SIZE) pcp_sd(fd,S_dot_size,cp->dot_size,chan);
       if (cp->show_axes != DEFAULT_SHOW_AXES) pcp_sd(fd,S_show_axes,cp->show_axes,chan);
       if (cp->graphs_horizontal != DEFAULT_GRAPHS_HORIZONTAL) pcp_ss(fd,S_graphs_horizontal,b2s(cp->graphs_horizontal),chan);
-      if (cp->edit_ctr > 0) edit_history_to_file(fd,cp);
+      edit_history_to_file(fd,cp);
     }
   fprintf(fd,"      )))\n");
   return(0);

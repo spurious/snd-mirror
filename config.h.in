@@ -114,6 +114,7 @@
 #undef GTKEXTRA_VERSION
 #undef HAVE_GTKEXTRA
 #undef ESD_VERSION
+#undef AUDIOFILE_VERSION
 
 #define USE_SND 1
 #endif

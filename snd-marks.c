@@ -5,6 +5,7 @@
  * TODO  control panel apply from mark?
  * TODO  syncd play when syncd triangle dragged?
  * TODO  reverse (or any fixup) if syncd mark, but unsyncd chans -- should other marks move or break sync chain?
+ * TODO  fft from mark? (moving mark handled like selection fft)
  */
 
 #include "snd.h"
@@ -62,26 +63,6 @@ static mark *map_over_marks(chan_info *cp, mark_map_func *func, void *m, int dir
 	}
     }
   return(NULL);
-}
-
-static int *channel_marks(chan_info *cp, int pos)
-{
-  int *ids = NULL;
-  int i,marks;
-  mark **mps;
-  if (cp->marks)
-    {
-      mps = cp->marks[pos];
-      marks = cp->mark_ctr[pos];
-      if (mps)
-	{
-	  ids = (int *)CALLOC(marks+2,sizeof(int)); /* 1 for size, 1 because mark_ctr is current count */
-	  ids[0] = marks+1;
-	  for (i=0;i<=marks;i++) 
-	    ids[i+1] = mark_id(mps[i]);
-	}
-    }
-  return(ids);
 }
 
 static mark *make_mark_1(int samp, char *name, int id, unsigned int sc)
@@ -902,46 +883,6 @@ void mark_define_region(chan_info *cp,int count)
     }
 }
 
-static char *mark_file_name(snd_info *sp)
-{
-  char *newname;
-  int len,i;
-  len = strlen(sp->fullname);
-  newname = (char *)CALLOC(len+7,sizeof(char));
-  strcpy(newname,sp->fullname);
-  for (i=len-1;i>0;i--) if (newname[i] == '.') break;
-  if (i>0) len=i;
-  newname[len]='.'; newname[len+1]='m'; newname[len+2]='a'; newname[len+3]='r'; newname[len+4]='k'; newname[len+5]='s'; newname[len+6]='\0';
-  return(newname);
-}
-
-static int find_any_marks (chan_info *cp, void *ptr)
-{
-  if (cp->marks) return(cp->mark_ctr[cp->edit_ctr]+1); /* initialized to -1 -- 0 is first mark */
-  return(0);
-}
-
-static char *save_marks(snd_info *sp)
-{
-  char *newname = NULL;
-  int i;
-  FILE *fd;
-  if ((sp) && (map_over_sound_chans(sp,find_any_marks,NULL)))
-    {
-      newname = mark_file_name(sp);
-      fd = fopen(newname,"w");
-      if (fd)
-	{
-	  for (i=0;i<sp->nchans;i++)
-	    save_mark_list(fd,sp->chans[i]);
-	  fclose(fd);
-	}
-      else 
-	report_in_minibuffer_and_save(sp,"%s %s ",newname,strerror(errno));
-    }
-  return(newname);
-}
-
 void save_mark_list(FILE *fd, chan_info *cp)
 {
   /* assumes we're calling from the edit history list maker in snd-edits.c */
@@ -967,7 +908,7 @@ void save_mark_list(FILE *fd, chan_info *cp)
 		  if (m)
 		    {
 		      if (m->name)
-			fprintf(fd,"(%s %d %d %d) ",m->name,m->samp,mark_id(m),mark_sync(m));
+			fprintf(fd,"(\"%s\" %d %d %d) ",m->name,m->samp,mark_id(m),mark_sync(m));
 		      else fprintf(fd,"(#f %d %d %d) ",m->samp,mark_id(m),mark_sync(m));
 		    }
 		  else fprintf(fd,"(#f #f #f #f) ");
@@ -1552,7 +1493,7 @@ static SCM g_restore_marks(SCM size, SCM snd, SCM chn, SCM marklist)
 		      else sync = 0;
 		      cp->marks[i][j] = make_mark_1(gh_scm2int(sm),str,id,sync);
 		      if (id > mark_id_counter) mark_id_counter = id;
-		      if (str) {FREE(str); str=NULL;}
+		      if (str) {free(str); str=NULL;}
 		    }
 		}
 	    }
@@ -1790,6 +1731,26 @@ static SCM g_syncd_marks(SCM sync)
   return(res);
 }
 
+static int *channel_marks(chan_info *cp, int pos)
+{
+  int *ids = NULL;
+  int i,marks;
+  mark **mps;
+  if (cp->marks)
+    {
+      mps = cp->marks[pos];
+      marks = cp->mark_ctr[pos];
+      if (mps)
+	{
+	  ids = (int *)CALLOC(marks+2,sizeof(int)); /* 1 for size, 1 because mark_ctr is current count */
+	  ids[0] = marks+1;
+	  for (i=0;i<=marks;i++) 
+	    ids[i+1] = mark_id(mps[i]);
+	}
+    }
+  return(ids);
+}
+
 static SCM g_marks(SCM snd_n, SCM chn_n, SCM pos_n) 
 {
   #define H_marks "(" S_marks " &optional snd chn pos) -> list of marks (ids) in snd/chn at edit history position pos"
@@ -1876,6 +1837,49 @@ static void call_mark_drag_hook(int id)
     g_c_run_progn_hook(mark_drag_hook,SCM_LIST1(gh_int2scm(id)));
 }
 #endif
+
+static char *mark_file_name(snd_info *sp)
+{
+  char *newname;
+  int len,i;
+  len = strlen(sp->fullname);
+  newname = (char *)CALLOC(len+7,sizeof(char));
+  strcpy(newname,sp->fullname);
+  for (i=len-1;i>0;i--) if (newname[i] == '.') break;
+  if (i>0) len=i;
+  newname[len] = '\0';
+  strcat(newname,".marks");
+  return(newname);
+}
+
+static int find_any_marks (chan_info *cp, void *ptr)
+{
+  if (cp->marks) return(cp->mark_ctr[cp->edit_ctr]+1); /* initialized to -1 -- 0 is first mark */
+  return(0);
+}
+
+static char *save_marks(snd_info *sp)
+{
+  char *newname = NULL;
+  int i;
+  FILE *fd;
+  if ((sp) && (map_over_sound_chans(sp,find_any_marks,NULL)))
+    {
+      newname = mark_file_name(sp);
+      fd = fopen(newname,"w");
+      if (fd)
+	{
+	  fprintf(fd,"(let ((sfile (find-sound \"%s\")))\n",sp->shortname);
+	  for (i=0;i<sp->nchans;i++)
+	    save_mark_list(fd,sp->chans[i]);
+	  fprintf(fd,")");
+	  fclose(fd);
+	}
+      else 
+	report_in_minibuffer_and_save(sp,"%s %s ",newname,strerror(errno));
+    }
+  return(newname);
+}
 
 static SCM g_save_marks(SCM snd_n)
 {

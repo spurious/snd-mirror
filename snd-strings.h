@@ -404,6 +404,7 @@
 #define S_fft_style                     "fft-style"
 #define S_fft_window                    "fft-window"
 #define S_ffting                        "ffting"
+#define S_fht                           "fht"
 #define S_file_dialog                   "file-dialog"
 #define S_file_name                     "file-name"
 #define S_filter_sound                  "filter-sound"

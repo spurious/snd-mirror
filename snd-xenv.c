@@ -3,7 +3,6 @@
 /* TODO  make this editor viewable as the "lisp" graph section of each channel
  * TODO  or make it overlayable on the channel wave/fft/lisp data => edit
  * TODO  add self-test sequence (need this for most dialogs)
- * TODO  why does src selection clear selection button afterwards?
  */
 
 /* envelope editor and viewer */
@@ -128,6 +127,8 @@ static void Help_Enved_Callback(Widget w,XtPointer clientData,XtPointer callData
   envelope_editor_dialog_help((snd_state *)clientData);
 }
 
+static int within_selection_src = 0;
+
 static void apply_enved(snd_state *ss)
 {
   int mix_id=0,i,j,chan;
@@ -172,7 +173,9 @@ static void apply_enved(snd_state *ss)
 	      max_env = copy_env(active_env);
 	      for (i=0,j=1;i<max_env->pts;i++,j+=2)
 		if (max_env->data[j] < .01) max_env->data[j] = .01;
+	      within_selection_src = 1;
 	      src_env_or_num(ss,active_channel,max_env,0.0,FALSE,FROM_ENVED,"Enved: src",apply_to_selection);
+	      within_selection_src = 0;
 	      max_env = free_env(max_env);
 	      if (enved_waving(ss)) env_redisplay(ss);
 	      break;
@@ -1676,7 +1679,7 @@ void set_filter_env_order(snd_state *ss, int order)
 void enved_reflect_selection(int on)
 {
   snd_state *ss;
-  if (enved_dialog)
+  if ((enved_dialog) && (within_selection_src == 0))
     {
       ss = get_global_state();
       set_sensitive(selectionB,on);
