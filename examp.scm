@@ -59,6 +59,7 @@
 ;;; compute-uniform-circular-string (and scanned-synthesis)
 ;;; add date and time to title bar
 ;;; selection-members
+;;; with-sound for Snd
 
 
 
@@ -67,7 +68,7 @@
 ;;;       ins: singer piano flute prc-toolkit fade pluck mlbvoi
 ;;;       data-file rw case for pvoc.scm
 ;;;       shorten (via autocorrelation, vowel detection), remove-vib, change-pitch (vowel oriented)
-
+;;;       with-sound needs all the bells and whistles
 
 
 (use-modules (ice-9 debug))
@@ -313,6 +314,7 @@
 
 ;;; -------- Buffers Menu --------
 ;;; patterned after the XEmacs Buffers menu
+;;; see effects.scm for a much fancier example
 
 ;(define buffer-menu (add-to-main-menu "Buffers"))
 
@@ -2548,3 +2550,32 @@
 		       (set! sndlist (cons (list snd i) sndlist)))))
 	       (sounds)))
       sndlist)))
+
+
+;;; -------- with-sound for Snd!
+;;;
+;;; this is just a bare beginning, but it's the basic idea...
+;;;
+;;; in Common Lisp this is essentially
+;;;    (defmacro with-sound ((&key (srate 22050) ...) &body body) (let (...) ,.body))
+;;; so that a call looks like 
+;;;    (with-sound (:srate 44100) (fm-violin 0 1 440 .1))
+
+(defmacro with-sound (args . body) 
+  `((lambda* (#:key (srate 22050)
+		    (explode #f))
+      (let ((old-srate (mus-srate)))
+	(dynamic-wind
+	 (lambda ()
+	   (set! (mus-srate) srate))
+	 (lambda () 
+	   ,@body)
+	 (lambda ()
+	   (set! (mus-srate) old-srate)))))
+    ,@args))
+
+;;; now instrument calls (outa etc) need to write to the currently selected sounds,
+;;;   or to a newly opened sound -- output and continue-old-file?
+;;; if explode, each call makes a new mix
+;;; should old-srate be *clm-srate* (i.e. nested calls carry down the outer setting?)
+

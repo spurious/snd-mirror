@@ -308,6 +308,7 @@ when you save a sound via the "save" dialog.</p>
 <pre>
   <a name="askbeforeoverwrite">ask-before-overwrite</a>  #f      (Save-as): ask before <a href="snd.html#overwrite">overwriting</a> an existing file
   <a name="autoupdate">auto-update</a>           #f      should Snd <a href="snd.html#updatefile">update</a> a file automatically.
+  <a name="audioinputdevice">audio-input-device</a>    <i>sndlib-default-device</i> Audio input device (for the recorder)
   <a name="audiooutputdevice">audio-output-device</a>   <i>sndlib-default-device</i> Audio output device (for the play button)
   <a name="audiostatefile">audio-state-file</a>      ".snd-mixer"  Name of file in which current audio hardware settings are saved.
   <a name="autoresize">auto-resize</a>           #t      should Snd window resize upon open/close (see <a href="grfsnd.html#xautoresize">AutoResize</a>)
@@ -1069,8 +1070,7 @@ a particular mix object:</p>
   <a name="sndmixok">mix?</a>              (<i>mix</i>)         #t if <i>mix</i> is active.
   <a name="sndplaymix">play-mix</a>          (<i>mix</i>)         play mix <i>mix</i>.
   <a name="sndplaytrack">play-track</a>        (<i>track snd chn</i>) play track <i>track</i>. If snd is #t, play all associated chans.
-  <a name="sndselectmix">select-mix</a>        (<i>id</i>)          select mix <i>id</i>.
-  <a name="sndselectedmix">selected-mix</a>      ()            selected mix (-1 = none) -- set! here is equivalent to select-mix.
+  <a name="sndselectedmix">selected-mix</a>      ()            selected mix (-1 = none) -- set to select mix.
   <a href="#showmixconsoles">show-mix-consoles</a>
   <a href="#showmixwaveforms">show-mix-waveforms</a>
 </pre>
@@ -1573,10 +1573,8 @@ sets its value to val.
                                   apply func to currently syncd channels
   <a name="scansoundchan">scan-sound-chans</a>  (func <i>start end snd</i>) 
                                   apply func to current sound's channels
-  <a name="sndselectchannel">select-channel</a>    (<i>chn</i>)         select channel <i>chn</i>.
-  <a name="sndselectsound">select-sound</a>      (<i>snd</i>)         select sound <i>snd</i>.
-  <a name="sndselectedchannel">selected-channel</a>  (<i>snd</i>)         selected channel in <i>snd</i> (set! = select-channel).
-  <a name="sndselectedsound">selected-sound</a>    ()            selected sound (index) (set! = select-sound).
+  <a name="sndselectedchannel">selected-channel</a>  (<i>snd</i>)         selected channel in <i>snd</i> (set to select channel).
+  <a name="sndselectedsound">selected-sound</a>    ()            selected sound (index) (set to select sound).
   <a name="contrastfunc">set-contrast-func</a> (func)        set contrast function to <i>func</i>, a function of two arguments, 
                                   the current sample and the current 'contrast' slider setting, 
                                   returning a new sample, the result of the control panel contrast 
@@ -2037,7 +2035,8 @@ Here's a slightly more involved example;
 we define a function that finds silences and replaces them with
 something:<p>
 <pre>
-(define map-silence 
+(define map-silence
+  ;; see squelch in effects.scm for a better version
   (lambda (silence replacement)
     (let ((sum-of-squares 0.0)
 	  (buffer (make-vector 128 0.0))
@@ -2687,7 +2686,7 @@ found (this code obviously has to be in the init file):</p>
 	<!-- I(fft log freq):L(fft-log-frequency)(fftlogfrequency) -->
 	<!-- I(axis fits data):L(fit-data-on-open)(fitdataonopen) --><!-- I(axis fits data):O(y-bounds)(sndybounds) -->
         <!-- I(axis fits data):A(fitdataonopen) -->
-	<!-- I(select sound):L(select-sound)(sndselectsound) -->
+	<!-- I(select sound):L(selected-sound)(sndselectedsound) -->
 	<!-- I(multichannel ops):L(syncing)(sndsyncing) -->
         <!-- I(save control panel):L(control-panel-save)(sndcontrolpanelsave) -->
 	<!-- I(amp env):L(env-sound)(sndenv) -->

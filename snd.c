@@ -169,6 +169,7 @@ static void mus_print2snd(char *msg)
   ss->Fft_Log_Frequency = DEFAULT_FFT_LOG_FREQUENCY;
   ss->Channel_Style = DEFAULT_CHANNEL_STYLE;
   ss->Sound_Style = DEFAULT_SOUND_STYLE;
+  ss->Audio_Input_Device = DEFAULT_AUDIO_INPUT_DEVICE;
   ss->Audio_Output_Device = DEFAULT_AUDIO_OUTPUT_DEVICE;
 #if DEBUGGING
   ss->Trap_Segfault = 0;

@@ -250,6 +250,7 @@ The main variables affecting Snd's overall behavior are:
 
   ask-before-overwrite  #f      (Save-as): ask before overwriting an existing file
   auto-update           #f      should Snd update a file automatically.
+  audio-input-device    sndlib-default-device Audio input device (for the recorder)
   audio-output-device   sndlib-default-device Audio output device (for the play button)
   audio-state-file      ".snd-mixer"  Name of file in which current audio hardware settings are saved.
   auto-resize           #t      should Snd window resize upon open/close (see AutoResize)
@@ -985,8 +986,7 @@ access a particular mix object:
   mix?              (mix)         #t if mix is active.
   play-mix          (mix)         play mix mix.
   play-track        (track snd chn) play track track. If snd is #t, play all associated chans.
-  select-mix        (id)          select mix id.
-  selected-mix      ()            selected mix (-1 = none) -- set! here is equivalent to select-mix.
+  selected-mix      ()            selected mix (-1 = none) -- set to select mix.
   show-mix-consoles
   show-mix-waveforms
 
@@ -1481,10 +1481,8 @@ value to val.
                                   apply func to currently syncd channels
   scan-sound-chans  (func start end snd)
                                   apply func to current sound's channels
-  select-channel    (chn)         select channel chn.
-  select-sound      (snd)         select sound snd.
-  selected-channel  (snd)         selected channel in snd (set! = select-channel).
-  selected-sound    ()            selected sound (index) (set! = select-sound).
+  selected-channel  (snd)         selected channel in snd (set to select channel).
+  selected-sound    ()            selected sound (index) (set to select sound).
   set-contrast-func (func)        set contrast function to func, a function of two arguments,
                                   the current sample and the current 'contrast' slider setting,
                                   returning a new sample, the result of the control panel contrast
@@ -1744,7 +1742,7 @@ The edit list functions are:
                                 begin sample (given the current edit tree), and the number of samples
                                 affected.  If num is omitted, return the last (currently active)
                                 edit [no-such-edit].
-  edit-position (snd chn)     return a current position in edit history list.
+  edit-position (snd chn)     current position in edit history list (can be set).
   edits         (snd chn)     return a list with number of undo-able edits and redo-able edits.
   revert-sound  (snd)         revert snd to saved state (undo all edits).
   save-edit-history (filename snd chn)

@@ -1,5 +1,6 @@
 snd change log
 
+  2-Oct:     added audio-input-device.
   27-Sep:    showing-controls -> show-controls. data-format and header-type now return just the sndlib int.
   22-Sep:    removed override-data-format|header-type|data-location and replaced with
                generalized set! of header fields.

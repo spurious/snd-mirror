@@ -1,7 +1,6 @@
 #include "snd.h"
 
 /* TODO:   dolph-chebychev window  
- *         there's still a memory leak somewhere involving make_fft_state
  */
 
 /* handling of "beta" changed drastically 28-June-98 

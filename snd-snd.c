@@ -1456,6 +1456,27 @@ static SCM g_selected_channel(SCM snd_n)
   return(sp_iread(snd_n,SELECTEDCHANNELF,S_selected_channel));
 }
 
+static SCM g_set_selected_channel(SCM snd_n, SCM chn_n) 
+{
+  snd_info *sp;
+  int chan;
+  if (SCM_UNBNDP(chn_n))
+    return(g_select_channel(snd_n));
+  else
+    {
+      ERRSPT("set-" S_selected_channel,snd_n,1); 
+      sp = get_sp(snd_n);
+      if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST3(gh_str02scm("set-" S_selected_channel),snd_n,chn_n)));
+      chan = g_scm2intdef(chn_n,0);
+      if ((sp) && (chan < sp->nchans)) 
+	{
+	  select_channel(sp,chan);
+	  return(chn_n);
+	}
+      return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST3(gh_str02scm("set-" S_selected_channel),snd_n,chn_n)));
+    }
+}
+
 static SCM g_file_name(SCM snd_n) 
 {
   #define H_file_name "(" S_file_name " &optional snd) -> snd's full filename"
@@ -2252,15 +2273,11 @@ void g_init_snd(SCM local_doc)
   DEFINE_PROC(gh_new_procedure0_1(S_restore_control_panel,SCM_FNC g_restore_control_panel),H_restore_control_panel);
   DEFINE_PROC(gh_new_procedure0_1(S_reset_control_panel,SCM_FNC g_reset_control_panel),H_reset_control_panel);
 
-  /* DEFINE_PROC(gh_new_procedure0_1(S_selected_channel,SCM_FNC g_selected_channel),H_selected_channel);
-   * DEFINE_PROC(gh_new_procedure0_0(S_selected_sound,SCM_FNC g_selected_sound),H_selected_sound);
-   */
-
   define_procedure_with_setter(S_selected_sound,SCM_FNC g_selected_sound,H_selected_sound,
 			       "set-" S_selected_sound,SCM_FNC g_select_sound,local_doc,0,0,0,1);
 
   define_procedure_with_setter(S_selected_channel,SCM_FNC g_selected_channel,H_selected_channel,
-			       "set-" S_selected_channel,SCM_FNC g_select_channel,local_doc,0,1,0,2);
+			       "set-" S_selected_channel,SCM_FNC g_set_selected_channel,local_doc,0,1,0,2);
 
   DEFINE_PROC(gh_new_procedure0_1(S_select_sound,SCM_FNC g_select_sound),H_select_sound);
   DEFINE_PROC(gh_new_procedure0_1(S_select_channel,SCM_FNC g_select_channel),H_select_channel);

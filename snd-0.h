@@ -627,6 +627,10 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 #define set_audio_output_device(ss,a) ss->Audio_Output_Device = a
 #define DEFAULT_AUDIO_OUTPUT_DEVICE MUS_AUDIO_DEFAULT
 
+#define audio_input_device(ss) ss->Audio_Input_Device
+#define set_audio_input_device(ss,a) ss->Audio_Input_Device = a
+#define DEFAULT_AUDIO_INPUT_DEVICE MUS_AUDIO_DEFAULT
+
 #define in_graph_cursor(ss) ss->Graph_Cursor
 
 #define data_clipped(ss) ss->Data_Clipped

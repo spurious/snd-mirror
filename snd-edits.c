@@ -49,6 +49,8 @@
 /* edit history decoding info */
 
 /* color could be added at this level ED_COLOR 4, ED_SIZE 5, then sf->cb[ED_COLOR] during edit tree read */
+/* another possibility is to add scalers at this level, so that scaling becomes simply setting ed-list scalers */
+/*   then the 3 or so places where we access sf->data would need to multiply by the current scaler */
 
 static char *edit_names[4] = {"insert","delete","set",""};
 

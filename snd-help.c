@@ -253,6 +253,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+2-Oct:   added audio-input-device.\n\
 27-Sep:  showing-controls -> show-controls. \n\
          data-format and header-type now return just the sndlib int.\n\
 22-Sep:  removed override-data-format|header-type|data-location and replaced with\n\
@@ -268,8 +269,6 @@ void news_help(snd_state *ss)
            (and make-amp-controls example in snd-gtk.scm).\n\
          changed setf.scm to use Guile 1.4's generalized set! (rather than setf).\n\
 6-Sep:   gtk menu accelerators, stop-playing-channel-hook, just-sounds-hook.\n\
-5-Sep:   changed Apply button handling -- control-click now for selection.\n\
-         HAVE_GTKEXTRA to support libgtkextra's icon-oriented file selector.\n\
 ",
 NULL);
   FREE(info);
@@ -905,6 +904,7 @@ accessed via (" S_auto_resize "), and set to a\n\
 new value via (set! (" S_auto_resize ") #t). \n\
 \n\
   " S_ask_before_overwrite "  #f\n\
+  " S_audio_input_device "    " S_mus_audio_default "\n\
   " S_audio_output_device "   " S_mus_audio_default "\n\
   " S_audio_state_file "      \"" AUDIO_STATE_FILE "\"\n\
   " S_auto_resize "           #t\n\
@@ -1277,10 +1277,7 @@ all refer to the same thing.\n\
   " S_scale_selection_by "(scalers)\n\
   " S_scale_selection_to "(scalers)\n\
   " S_scale_to "          (scalers snd chn)\n\
-  " S_select_channel "    (chn)\n\
-  " S_select_mix "        (id)\n\
   " S_select_region "     (reg)\n\
-  " S_select_sound "      (snd)\n\
   " S_selected_channel "  (snd)\n\
   " S_selected_mix "      ()\n\
   " S_selected_sound "    ()\n\

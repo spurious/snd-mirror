@@ -415,18 +415,23 @@ static void *make_reverb(snd_info *sp, Float sampling_rate, int chans)
   reverb_factor = sp->revfb;
   lp_coeff = sp->revlp;
   srscale = reverb_length*sampling_rate/25641.0;
-  for (i=0;i<BASE_DLY_LEN;i++) dly_len[i] = get_prime((int)(srscale*base_dly_len[i]));
+  for (i=0;i<BASE_DLY_LEN;i++) 
+    dly_len[i] = get_prime((int)(srscale*base_dly_len[i]));
   r=(rev_info *)CALLOC(1,sizeof(rev_info));
   r->num_combs = 6;
   r->combs = (mus_any **)CALLOC(r->num_combs,sizeof(mus_any *));
   r->num_allpasses = 4+chans;
   r->allpasses = (mus_any **)CALLOC(r->num_allpasses,sizeof(mus_any *));
-  for (i=0;i<r->num_combs;i++) r->combs[i] = mus_make_comb(comb_factors[i]*reverb_factor,dly_len[i],NULL,dly_len[i]);
+  for (i=0;i<r->num_combs;i++) 
+    r->combs[i] = mus_make_comb(comb_factors[i]*reverb_factor,dly_len[i],NULL,dly_len[i]);
   r->onep = mus_make_one_pole(lp_coeff,lp_coeff-1.0);
-  for (i=0,j=r->num_combs;i<4;i++,j++) r->allpasses[i] = mus_make_all_pass(-0.700,0.700,dly_len[j],NULL,dly_len[j]);
+  for (i=0,j=r->num_combs;i<4;i++,j++) 
+    r->allpasses[i] = mus_make_all_pass(-0.700,0.700,dly_len[j],NULL,dly_len[j]);
   for (i=0,j=10;i<chans;i++)
     {
-      if (j<BASE_DLY_LEN) len = dly_len[j]; else len = get_prime((int)(40 + mus_random(20.0)));
+      if (j<BASE_DLY_LEN) 
+	len = dly_len[j]; 
+      else len = get_prime((int)(40 + mus_random(20.0)));
       r->allpasses[i+4] = mus_make_all_pass(-0.700,0.700,len,NULL,len);
     }
   return((void *)r);
@@ -463,7 +468,8 @@ static void reverb(void *ur, Float rin, MUS_SAMPLE_TYPE **outs, int ind, int cha
   if (use_g_reverb)
     {
       outputs = g_call3(g_reverb,(SCM)ur,gh_double2scm(rin),gh_int2scm(chans));
-      for (i=0;i<chans;i++) outs[i][ind] += MUS_FLOAT_TO_SAMPLE(((Float)(gh_scm2double(gh_vector_ref(outputs,gh_int2scm(i))))));
+      for (i=0;i<chans;i++) 
+	outs[i][ind] += MUS_FLOAT_TO_SAMPLE(((Float)(gh_scm2double(gh_vector_ref(outputs,gh_int2scm(i))))));
     }
   else
 #endif

@@ -20,7 +20,7 @@
 ;;; test 17: guile-gtk dialogs
 
 
-;;; TODO: tests of set! srate et al (including selected-sound/channel/mix)
+;;; TODO: test of set! selected-mix
 ;;;       add to test-spectral-difference set (reading o2 etc)
 ;;;       test active selection mix/insert as opposed to region mix/paste
 
@@ -4511,6 +4511,37 @@
 				 (selection-length))))
 	  (undo 3))
 	(close-sound ind))
+
+      (let* ((oboe (open-sound "oboe.snd"))
+	     (a4 (open-sound "4.aiff"))
+	     (sr (srate oboe))
+	     (fr (frames oboe 0))
+	     (typ (header-type oboe))
+	     (frm (data-format oboe))
+	     (loc (data-location oboe))
+	     (com (comment oboe)))
+	(save-sound-as "test.aif" oboe mus-aifc)
+	(let ((oboe-aif (open-sound "test.aif")))
+	  (if (not (= (header-type oboe-aif) mus-aifc)) (snd-print (format #f "oboe-aif header: ~A?" (mus-header-type-name (header-type oboe-aif)))))
+	  (set! (srate oboe-aif) (* sr 2.0))
+	  (if (fneq (* sr 2.0) (srate oboe-aif)) (snd-print (format #f "set! srate: ~A ~A" (* sr 2.0) (srate oboe-aif))))
+	  (set! (header-type oboe-aif) mus-next)
+	  (if (not (= (header-type oboe-aif) mus-next)) (snd-print (format #f "set! header: ~A?" (mus-header-type-name (header-type oboe-aif)))))
+	  (set! (data-location oboe-aif) 28)
+	  (if (not (= (data-location oboe-aif) 28)) (snd-print (format #f "set! data-location: ~A?" (data-location oboe-aif))))
+	  (set! (data-format oboe-aif) mus-mulaw)
+	  (if (not (= (data-format oboe-aif) mus-mulaw)) (snd-print (format #f "set! format: ~A?" (mus-data-format-name (data-format oboe-aif)))))
+	  (close-sound oboe-aif)
+	  (delete-file "test.aif")
+	  (set! (selected-sound) a4)
+	  (if (not (= (selected-sound) a4)) (snd-print (format #f "set! selected-sound: ~A ~A?" (selected-sound) a4)))
+	  (set! (selected-channel) 2)
+	  (if (not (= (selected-channel a4) 2)) (snd-print (format #f "set! selected-channel: ~A?" (selected-channel a4))))
+	  (set! (selected-channel a4) 3)
+	  (if (not (= (selected-channel a4) 3)) (snd-print (format #f "set! selected-channel a4: ~A?" (selected-channel a4))))
+	  (close-sound a4)
+	  (close-sound oboe)))
+
       ))
 
 

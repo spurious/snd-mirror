@@ -203,30 +203,30 @@ static char *alGetErrorString(int err)
 {
   switch (err)
     {
-    case AL_BAD_NOT_IMPLEMENTED:   return("not implemented yet"); break;
-    case AL_BAD_PORT:              return("tried to use an invalid port"); break;
+    case AL_BAD_NOT_IMPLEMENTED:   return("not implemented yet");                   break;
+    case AL_BAD_PORT:              return("tried to use an invalid port");          break;
     case AL_BAD_CONFIG:            return("tried to use an invalid configuration"); break;
-    case AL_BAD_DEVICE:            return("tried to use an invalid device"); break;
-    case AL_BAD_DEVICE_ACCESS:     return("unable to access the device"); break;
-    case AL_BAD_DIRECTION:         return("illegal direction given for port"); break;
-    case AL_BAD_OUT_OF_MEM:        return("operation has run out of memory"); break;
-    case AL_BAD_NO_PORTS:          return("not able to allocate a port"); break;
-    case AL_BAD_WIDTH:             return("invalid sample width given"); break;
-    case AL_BAD_ILLEGAL_STATE:     return("an illegal state has occurred"); break;
-    case AL_BAD_QSIZE:             return("attempt to set an invalid queue size"); break;
-    case AL_BAD_FILLPOINT:         return("attempt to set an invalid fillpoint"); break;
-    case AL_BAD_BUFFER_NULL:       return("null buffer pointer"); break;
-    case AL_BAD_COUNT_NEG:         return("negative count"); break;
-    case AL_BAD_PVBUFFER:          return("param/val buffer doesn't make sense"); break;
-    case AL_BAD_BUFFERLENGTH_NEG:  return("negative buffer length"); break;
-    case AL_BAD_BUFFERLENGTH_ODD:  return("odd length parameter/value buffer"); break;
-    case AL_BAD_CHANNELS:          return("invalid channel specifier"); break;
-    case AL_BAD_PARAM:             return("invalid parameter"); break;
-    case AL_BAD_SAMPFMT:           return("attempt to set invalid sample format"); break;
-    case AL_BAD_RATE:              return("invalid sample rate token"); break;
-    case AL_BAD_TRANSFER_SIZE:     return("invalid size for sample read/write"); break;
-    case AL_BAD_FLOATMAX:          return("invalid size for floatmax"); break;
-    case AL_BAD_PORTSTYLE:         return("invalid port style"); break;
+    case AL_BAD_DEVICE:            return("tried to use an invalid device");        break;
+    case AL_BAD_DEVICE_ACCESS:     return("unable to access the device");           break;
+    case AL_BAD_DIRECTION:         return("illegal direction given for port");      break;
+    case AL_BAD_OUT_OF_MEM:        return("operation has run out of memory");       break;
+    case AL_BAD_NO_PORTS:          return("not able to allocate a port");           break;
+    case AL_BAD_WIDTH:             return("invalid sample width given");            break;
+    case AL_BAD_ILLEGAL_STATE:     return("an illegal state has occurred");         break;
+    case AL_BAD_QSIZE:             return("attempt to set an invalid queue size");  break;
+    case AL_BAD_FILLPOINT:         return("attempt to set an invalid fillpoint");   break;
+    case AL_BAD_BUFFER_NULL:       return("null buffer pointer");                   break;
+    case AL_BAD_COUNT_NEG:         return("negative count");                        break;
+    case AL_BAD_PVBUFFER:          return("param/val buffer doesn't make sense");   break;
+    case AL_BAD_BUFFERLENGTH_NEG:  return("negative buffer length");                break;
+    case AL_BAD_BUFFERLENGTH_ODD:  return("odd length parameter/value buffer");     break;
+    case AL_BAD_CHANNELS:          return("invalid channel specifier");             break;
+    case AL_BAD_PARAM:             return("invalid parameter");                     break;
+    case AL_BAD_SAMPFMT:           return("attempt to set invalid sample format");  break;
+    case AL_BAD_RATE:              return("invalid sample rate token");             break;
+    case AL_BAD_TRANSFER_SIZE:     return("invalid size for sample read/write");    break;
+    case AL_BAD_FLOATMAX:          return("invalid size for floatmax");             break;
+    case AL_BAD_PORTSTYLE:         return("invalid port style");                    break;
     default:                       return("");
     }
 }
@@ -5406,12 +5406,12 @@ static int output_chans = 0;
 static snddriver_handlers_t replyHandlers;
 static msg_header_t *reply_msg;
 
-
-/* TODO: fix all these (and the rest of this file) to use mus_format */
-
-#define OLD_RETURN_ERROR_EXIT(type,msg) \
-  do { \
-    MUS_STANDARD_ERROR(type,(msg) ? msg : mus_error_to_string(type)); \
+#define RETURN_ERROR_EXIT(Error_Type,Audio_Line,Ur_Error_Message) \
+  do { char *Error_Message; Error_Message = Ur_Error_Message; \
+    if (Audio_Line != -1) mus_audio_close(Audio_Line); \
+    if (Error_Message) \
+      {MUS_STANDARD_ERROR(Error_Type,Error_Message); FREE(Error_Message);} \
+    else MUS_STANDARD_ERROR(Error_Type,mus_error_to_string(Error_Type)); \
     end_next_print(); \
     return(MUS_ERROR); \
   } while (0)
@@ -5422,7 +5422,11 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
   int protocol = 0;
   start_next_print();
   dev = MUS_AUDIO_DEVICE(ur_dev);
-  if (format != MUS_COMPATIBLE_FORMAT) OLD_RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE,NULL);
+  if (format != MUS_COMPATIBLE_FORMAT)
+    RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE,-1,
+		      mus_format("can't open output %d (%s) with data format %d (%s)",
+				 dev,mus_audio_device_name(dev),
+				 format,mus_data_format_name(format)));
   if (size == 0) size = 1024;
   /* large buffers (4096) can cause bus errors! */
   if (rtbuf == NULL) 
@@ -5443,7 +5447,9 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
   nxt_err = SNDAcquire(SND_ACCESS_OUT,0,0,0,NULL_NEGOTIATION_FUN,0,&dev_port,&owner_port); 
   if (nxt_err == 0)
     {
-      if (srate > 30000) sr = SNDDRIVER_STREAM_TO_SNDOUT_44; else sr = SNDDRIVER_STREAM_TO_SNDOUT_22;
+      if (srate > 30000) 
+	sr = SNDDRIVER_STREAM_TO_SNDOUT_44; 
+      else sr = SNDDRIVER_STREAM_TO_SNDOUT_22;
       nxt_err = snddriver_stream_setup(dev_port,owner_port,sr,size,BYTES_PER_SAMPLE,low_water,high_water,&protocol,&write_port);
       output_chans = chans;
       waiting = 0;
@@ -5451,19 +5457,28 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
         {
           reply_msg = (msg_header_t *)malloc(MSG_SIZE_MAX);
           nxt_err = port_allocate(task_self(),&reply_port); 
-          if (nxt_err) OLD_RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN,NULL);
+          if (nxt_err) 
+	    RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN,-1,
+			      mus_format("can't allocated output port for %d (%s)",
+					 dev,mus_audio_device_name(dev)));
           reply_msg->msg_size = MSG_SIZE_MAX;
           reply_msg->msg_local_port = reply_port;
           replyHandlers.completed = write_completed;
           for (sr=0;sr<4;sr++)
             {
               nxt_err = snddriver_stream_start_writing(write_port,rtbuf,size,WRITE_TAG,0,0,0,WRITE_COMPLETED_MSG,0,0,0,0,reply_port);
-              if (nxt_err) OLD_RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE,NULL);
+              if (nxt_err) 
+		RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE,-1,
+				  mus_format("can't start writing to %d (%s)?",
+					     dev,mus_audio_device_name(dev)));
               waiting++;
             }
         }
     }
-  if (nxt_err) OLD_RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN,NULL);
+  if (nxt_err) 
+    RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN,-1,
+		      mus_format("can't acquire output device %d (%s)",
+				 dev,mus_audio_device_name(dev)));
   end_next_print();
   return(OUTPUT_LINE);
 }
@@ -5476,7 +5491,10 @@ int mus_audio_write(int line, char *buf, int bytes)
 #endif
   short *sbuf;
   start_next_print();
-  if (line != OUTPUT_LINE) OLD_RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE,NULL);
+  if (line != OUTPUT_LINE) 
+    RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE,-1,
+		      mus_format("can't write to %s line %d",
+				 (line == INPUT_LINE) ? "input" : "unrecognized",line));
   sbuf = (short *)buf;
   samps = (bytes>>1);
 #ifdef MUS_LITTLE_ENDIAN
@@ -5493,11 +5511,15 @@ int mus_audio_write(int line, char *buf, int bytes)
   if (output_chans == 2)
     {
       nxt_err = snddriver_stream_start_writing(write_port,sbuf,samps,WRITE_TAG,0,0,0,WRITE_COMPLETED_MSG,0,0,0,0,reply_port); 
-      if (nxt_err) OLD_RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE,NULL);
+      if (nxt_err) 
+	RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE,-1,
+			  mus_format("write error"));
       waiting++;
       nxt_err = msg_receive(reply_msg,RCV_TIMEOUT,0);
       if (nxt_err == RCV_SUCCESS) nxt_err = snddriver_reply_handler(reply_msg,&replyHandlers);
-      if (nxt_err) OLD_RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE,NULL);
+      if (nxt_err) 
+	RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE,-1,
+			  mus_format("error during write (awaiting driver reply)"));
     }
   else
     {
@@ -5511,21 +5533,29 @@ int mus_audio_write(int line, char *buf, int bytes)
             {
               j = 0;
               nxt_err = snddriver_stream_start_writing(write_port,rtbuf,rtbuf_size,WRITE_TAG,0,0,0,WRITE_COMPLETED_MSG,0,0,0,0,reply_port); 
-              if (nxt_err) OLD_RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE,NULL);
+              if (nxt_err) 
+		RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE,-1,
+				  mus_format("write error"));
               waiting++;
               nxt_err = msg_receive(reply_msg,RCV_TIMEOUT,0);
               if (nxt_err == RCV_SUCCESS) nxt_err = snddriver_reply_handler(reply_msg,&replyHandlers);
-              if (nxt_err) OLD_RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE,NULL);
+              if (nxt_err) 
+		RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE,-1,
+			  mus_format("error during write (awaiting driver reply)"));
             }
         }
       if (j > 0)
         {
           nxt_err = snddriver_stream_start_writing(write_port,rtbuf,j,WRITE_TAG,0,0,0,WRITE_COMPLETED_MSG,0,0,0,0,reply_port); 
-          if (nxt_err) OLD_RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE,NULL);
+          if (nxt_err) 
+	    RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE,-1,
+			      mus_format("write error"));
           waiting++;
           nxt_err = msg_receive(reply_msg,RCV_TIMEOUT,0);
           if (nxt_err == RCV_SUCCESS) nxt_err = snddriver_reply_handler(reply_msg,&replyHandlers);
-          if (nxt_err) OLD_RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE,NULL);
+          if (nxt_err) 
+	    RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE,-1,
+			      mus_format("error during write (awaiting driver reply)"));
         }
     }
   end_next_print();
@@ -5547,14 +5577,18 @@ int mus_audio_close(int line)
                 if (nxt_err == RCV_SUCCESS) 
                   nxt_err = snddriver_reply_handler(reply_msg,&replyHandlers);
                 else if (nxt_err == RCV_TIMEOUT) break;
-                if (nxt_err) OLD_RETURN_ERROR_EXIT(MUS_AUDIO_CANT_CLOSE,NULL);
+                if (nxt_err) 
+		  RETURN_ERROR_EXIT(MUS_AUDIO_CANT_CLOSE,-1,
+				    mus_format("can't close output"));
                 if (oldwait == waiting) ctr++; else ctr=0;
                 /* messages seem to be dropped at random on the Next, so we need a fail-safe way to break out of this loop */
                 if (ctr > 1000) break;
               }
             if (reply_msg) FREE(reply_msg);
             nxt_err = SNDRelease(SND_ACCESS_OUT,dev_port,owner_port);
-            if (nxt_err) OLD_RETURN_ERROR_EXIT(MUS_AUDIO_CANT_CLOSE,NULL);
+            if (nxt_err) 
+	      RETURN_ERROR_EXIT(MUS_AUDIO_CANT_CLOSE,-1,
+				mus_format("can't release output device?"));
             port_deallocate(task_self(),reply_port);
           }
       else
@@ -5563,13 +5597,15 @@ int mus_audio_close(int line)
             {
               if (reply_msg) FREE(reply_msg);
               nxt_err = SNDRelease(SND_ACCESS_IN,dev_port,owner_port);
-              if (nxt_err) OLD_RETURN_ERROR_EXIT(MUS_AUDIO_CANT_CLOSE,NULL);
+              if (nxt_err) 
+		RETURN_ERROR_EXIT(MUS_AUDIO_CANT_CLOSE,-1,
+				  mus_format("can't release input device?"));
               port_deallocate(task_self(),reply_port);
             }
-          else OLD_RETURN_ERROR_EXIT(MUS_AUDIO_CANT_CLOSE,NULL);
+          else RETURN_ERROR_EXIT(MUS_AUDIO_CANT_CLOSE,-1,
+				 mus_format("can't close unreconized line: %d",line));
         }
     }
-  if (nxt_err) OLD_RETURN_ERROR_EXIT(MUS_AUDIO_CANT_CLOSE,NULL);
   end_next_print();
   return(MUS_NO_ERROR);
 }
@@ -5582,9 +5618,8 @@ static void read_completed(void *arg, int tag, void *inp, int bytes)
 {
   int i;
   if (tag == READ_TAG)
-    {
-      for (i=0;i<bytes;i++) readbuf[i] = ((char *)inp)[i];
-    }
+    for (i=0;i<bytes;i++) 
+      readbuf[i] = ((char *)inp)[i];
 }
 
 /* as far as I can tell, you only get one read from the NeXT, so it better be a monster...*/
@@ -5594,8 +5629,14 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
   int protocol,dev;
   start_next_print();
   dev = MUS_AUDIO_DEVICE(ur_dev);
-  if (format != MUS_MULAW) OLD_RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE,NULL);
-  if ((srate != 8000) && (srate != 8012)) OLD_RETURN_ERROR_EXIT(MUS_AUDIO_SRATE_NOT_AVAILABLE,NULL);
+  if (format != MUS_MULAW) 
+    RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE,-1,
+		      mus_format("can't input format %d (%s) -- only mulaw is available",
+				 format,mus_data_format_name(format)));
+  if ((srate != 8000) && (srate != 8012)) 
+    RETURN_ERROR_EXIT(MUS_AUDIO_SRATE_NOT_AVAILABLE,-1,
+		      mus_format("can't input at srate %d -- only 8012 is available",
+				 srate));
   if (size == 0) size = 1024;
   nxt_err = SNDAcquire(SND_ACCESS_IN,0,0,0,NULL_NEGOTIATION_FUN,0,&dev_port,&owner_port); 
   if (nxt_err == 0)
@@ -5606,13 +5647,19 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
           reply_msg = (msg_header_t *)malloc(MSG_SIZE_MAX);
           reply_msg->msg_size = MSG_SIZE_MAX;
           nxt_err = port_allocate(task_self(),&reply_port); 
-          if (nxt_err) OLD_RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN,NULL);
+          if (nxt_err) 
+	    RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN,-1,
+			      mus_format("can't open input device %d (%s)",
+					 dev,mus_audio_device_name(dev)));
           reply_msg->msg_local_port = reply_port;
           replyHandlers.recorded_data = read_completed;
           nxt_err = snddriver_stream_start_reading(read_port,0,size,READ_TAG,0,0,0,0,0,0,reply_port);
         }
     }
-  if (nxt_err) OLD_RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN,NULL);
+  if (nxt_err) 
+    RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN,-1,
+		      mus_format("can't open input %d (%s)",
+				 dev,mus_audio_device_name(dev)));
   end_next_print();
   return(INPUT_LINE);
 }
@@ -5620,7 +5667,10 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
 int mus_audio_read(int line, char *buf, int bytes) 
 {
   start_next_print();
-  if (line != INPUT_LINE) OLD_RETURN_ERROR_EXIT(MUS_AUDIO_CANT_READ,NULL);
+  if (line != INPUT_LINE) 
+    RETURN_ERROR_EXIT(MUS_AUDIO_CANT_READ,-1,
+		      mus_format("can't read from %s line %d",
+				 (line == OUTPUT_LINE) ? "output" : "unrecognized",line));
   reply_msg->msg_size = MSG_SIZE_MAX;
   reply_msg->msg_local_port = reply_port;
   nxt_err = msg_receive(reply_msg,MSG_OPTION_NONE,0);
@@ -5629,7 +5679,9 @@ int mus_audio_read(int line, char *buf, int bytes)
       readbuf = buf;
       nxt_err = snddriver_reply_handler(reply_msg,&replyHandlers);
     }
-  if (nxt_err) OLD_RETURN_ERROR_EXIT(MUS_AUDIO_CANT_READ,NULL);
+  if (nxt_err) 
+    RETURN_ERROR_EXIT(MUS_AUDIO_CANT_READ,-1,
+		      mus_format("read error"));
   end_next_print();
   return(MUS_NO_ERROR);
 }
@@ -5671,9 +5723,17 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
                     val[0] = (float)left/(float)MAX_VOLUME;
                   else val[0] = (float)right/(float)MAX_VOLUME;
                 }
-              else OLD_RETURN_ERROR_EXIT(MUS_AUDIO_DEVICE_NOT_AVAILABLE,NULL);
+              else RETURN_ERROR_EXIT(MUS_AUDIO_DEVICE_NOT_AVAILABLE,-1,
+				     mus_format("can't read %s field %s",
+						mus_audio_device_name(dev),
+						mus_audio_device_name(field)));
               break;
-            default: OLD_RETURN_ERROR_EXIT(MUS_AUDIO_CANT_READ,NULL); break;
+            default: 
+	      OLD_RETURN_ERROR_EXIT(MUS_AUDIO_CANT_READ,-1,
+				    mus_format("can't read %s field %s",
+					       mus_audio_device_name(dev),
+					       mus_audio_device_name(field)));
+	      break;
             }
         }
     }
@@ -5699,7 +5759,10 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
       else
         {
           if (field != MUS_AUDIO_AMP)
-            OLD_RETURN_ERROR_EXIT(MUS_AUDIO_WRITE_ERROR,NULL);
+            RETURN_ERROR_EXIT(MUS_AUDIO_WRITE_ERROR,-1,
+			      mus_format("can't set %s field %s",
+					 mus_audio_device_name(dev),
+					 mus_audio_device_name(field)));
           else
             {
               if ((dev == MUS_AUDIO_DAC_OUT) || (dev == MUS_AUDIO_DEFAULT))
@@ -5710,7 +5773,10 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
                   else right = (int)(val[0] * MAX_VOLUME);
                   SNDSetVolume(left,right);
                 }
-              else OLD_RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE,NULL);
+              else RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE,-1,
+				     mus_format("can't set %s field %s",
+						mus_audio_device_name(dev),
+						mus_audio_device_name(field)));
             }
         }
     }

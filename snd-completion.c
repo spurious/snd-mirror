@@ -19,13 +19,15 @@
 #endif
       
 
-#define NUM_COMMANDS 550
+#define NUM_COMMANDS 548
 
 static char *snd_commands[NUM_COMMANDS]={
   S_abort,S_abortQ,S_activate_listener,S_add_mark,S_add_player,S_add_sound_file_extension,S_add_to_main_menu,S_add_to_menu,S_add_transform,
   S_after_graph_hook,S_after_open_hook,
   S_amp,S_amplitude_env,S_append_to_minibuffer,S_as_one_edit,S_ask_before_overwrite,
-  S_audio_output_device,S_audio_state_file,S_auto_resize,S_auto_update,S_autocorrelate,S_autocorrelation,S_axis_label_font,S_axis_numbers_font,
+  S_audio_input_device,S_audio_output_device,S_audio_state_file,
+  S_auto_resize,S_auto_update,S_autocorrelate,S_autocorrelation,
+  S_axis_label_font,S_axis_numbers_font,
 
   S_backward_graph,S_backward_mark,S_backward_mix,S_backward_sample,S_basic_color,S_bind_key,
   S_bold_button_font,S_bomb,S_button_font,
@@ -115,7 +117,7 @@ static char *snd_commands[NUM_COMMANDS]={
   S_save_region,S_save_selection,S_save_sound,S_save_sound_as,S_save_state,S_save_state_file,
   S_save_state_on_exit,S_scale_by,S_scale_selection_by, S_scale_selection_to,S_scale_to,
   S_scan_across_all_chans,S_scan_across_chans,S_scan_across_sound_chans,S_scan_all_chans,S_scan_chan,S_scan_chans,S_scan_sound_chans,
-  S_select_all,S_select_channel,S_select_mix,S_select_region,S_select_sound,
+  S_select_all,S_select_region,
   S_selected_channel,S_selected_data_color,S_selected_graph_color,S_selected_mix,S_selected_sound,
   S_selection_color,S_selection_length,S_selection_member,S_selection_position,S_selection_to_temp,S_selection_to_temps,S_selectionQ,
 

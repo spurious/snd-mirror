@@ -622,6 +622,15 @@ static SCM g_set_audio_output_device(SCM val)
   RTNINT(audio_output_device(state));
 }
 
+static SCM g_audio_input_device(void) {RTNINT(audio_input_device(state));}
+static SCM g_set_audio_input_device(SCM val) 
+{
+  #define H_audio_input_device "(" S_audio_input_device ") is the current sndlib default input device (mus-audio-default)"
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_audio_input_device); 
+  set_audio_input_device(state,g_scm2int(val)); 
+  RTNINT(audio_input_device(state));
+}
+
 static SCM g_dac_size(void) {RTNINT(dac_size(state));}
 static SCM g_set_dac_size(SCM val) 
 {
@@ -3194,6 +3203,9 @@ void g_initialize_gh(snd_state *ss)
 
   define_procedure_with_setter(S_audio_output_device,SCM_FNC g_audio_output_device,H_audio_output_device,
 			       "set-" S_audio_output_device,SCM_FNC g_set_audio_output_device,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_audio_input_device,SCM_FNC g_audio_input_device,H_audio_input_device,
+			       "set-" S_audio_input_device,SCM_FNC g_set_audio_input_device,local_doc,0,0,0,1);
 
   define_procedure_with_setter(S_dac_size,SCM_FNC g_dac_size,H_dac_size,
 			       "set-" S_dac_size,SCM_FNC g_set_dac_size,local_doc,0,0,0,1);

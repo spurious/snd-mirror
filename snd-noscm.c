@@ -327,6 +327,7 @@ static int handle_set(snd_state *ss, char *tok, char **str)
   int ival;
   MUS_SAMPLE_TYPE samp_vals[2];
   if (strcmp(tok,"set-" S_ask_before_overwrite) == 0) {set_ask_before_overwrite(ss,istr(str[1])); isym(ss,0); return(0);}
+  if (strcmp(tok,"set-" S_audio_input_device) == 0) {set_audio_input_device(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,"set-" S_audio_output_device) == 0) {set_audio_output_device(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,"set-" S_audio_state_file) == 0) {set_audio_state_file(ss,sstr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,"set-" S_auto_resize) == 0) {set_auto_resize(ss,istr(str[1])); reflect_resize(ss); isym(ss,0); return(0);}
@@ -597,6 +598,7 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,S_add_mark) == 0) {cp = get_cp(ss,str[2],str[3]); if (cp) isym(ss,mark_id(add_mark(istr(str[1]),NULL,cp))); return(0);}
       if (strcmp(tok,S_amp) == 0) {sp = get_sp(ss,str[1]); if (sp) fsym(ss,sp->amp); else isym(ss,0); return(0);}
       if (strcmp(tok,S_ask_before_overwrite) == 0) {isym(ss,ask_before_overwrite(ss)); return(0);}
+      if (strcmp(tok,S_audio_input_device) == 0) {isym(ss,audio_input_device(ss)); return(0);}
       if (strcmp(tok,S_audio_output_device) == 0) {isym(ss,audio_output_device(ss)); return(0);}
       if (strcmp(tok,S_audio_state_file) == 0) {ssym(ss,audio_state_file(ss)); return(0);}
       if (strcmp(tok,S_auto_resize) == 0) {isym(ss,auto_resize(ss)); return(0);}
