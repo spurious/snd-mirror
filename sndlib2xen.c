@@ -4,9 +4,6 @@
   #include <config.h>
 #endif
 
-/* TODO: mus_set_file_* should use generalized set (etc -- maxamp)
- */
-
 #if USE_SND
   #include "snd.h"
 #else
@@ -351,21 +348,20 @@ static XEN g_sound_maxamp(XEN file)
 
 static XEN g_sound_set_maxamp(XEN file, XEN vals)
 {
-  #define H_mus_sound_set_maxamp "(" S_mus_sound_set_maxamp " filename vals): set max amps for sound (vals is a list of amps and locations)"
   int i, j, chans, len;
   mus_sample_t *mvals;
   off_t *times;
   char *filename;
   XEN lst;
-  XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_mus_sound_set_maxamp, "a string");
-  XEN_ASSERT_TYPE(XEN_LIST_P(vals), vals, XEN_ARG_2, S_mus_sound_set_maxamp, "a list");
+  XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_setB S_mus_sound_maxamp, "a string");
+  XEN_ASSERT_TYPE(XEN_LIST_P(vals), vals, XEN_ARG_2, S_setB S_mus_sound_maxamp, "a list");
   filename = local_mus_expand_filename(XEN_TO_C_STRING(file));
   chans = mus_sound_chans(filename);
   if (chans > 0)
     {
       len = XEN_LIST_LENGTH(vals);
       if (len < (chans * 2))
-	XEN_WRONG_TYPE_ARG_ERROR(S_mus_sound_set_maxamp, 2, vals, "max amp list length must = 2 * chans");
+	XEN_WRONG_TYPE_ARG_ERROR(S_setB S_mus_sound_maxamp, 2, vals, "max amp list length must = 2 * chans");
       if (len > chans * 2) len = chans * 2;
       mvals = (mus_sample_t *)CALLOC(chans, sizeof(mus_sample_t));
       times = (off_t *)CALLOC(chans, sizeof(off_t));
@@ -379,7 +375,7 @@ static XEN g_sound_set_maxamp(XEN file, XEN vals)
       FREE(times);
     }
   else XEN_ERROR(BAD_HEADER,
-		 XEN_LIST_2(C_TO_XEN_STRING(S_mus_sound_set_maxamp),
+		 XEN_LIST_2(C_TO_XEN_STRING(S_setB S_mus_sound_maxamp),
 			    C_TO_XEN_STRING("chans <= 0")));
   return(vals);
 }
@@ -1555,8 +1551,6 @@ void mus_sndlib2xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_mus_sound_write_date,     g_sound_write_date_w, 1, 0, 0,      H_mus_sound_write_date);
   XEN_DEFINE_PROCEDURE(S_mus_data_format_bytes_per_sample, g_sound_bytes_per_sample_w, 1, 0, 0, H_mus_data_format_bytes_per_sample);
   XEN_DEFINE_PROCEDURE(S_mus_sound_loop_info,      g_sound_loop_info_w, 1, 0, 0,       H_mus_sound_loop_info);
-  XEN_DEFINE_PROCEDURE(S_mus_sound_maxamp,         g_sound_maxamp_w, 1, 0, 0,          H_mus_sound_maxamp);
-  XEN_DEFINE_PROCEDURE(S_mus_sound_set_maxamp,     g_sound_set_maxamp_w, 2, 0, 0,      H_mus_sound_set_maxamp);
   XEN_DEFINE_PROCEDURE(S_mus_sound_maxamp_exists,  g_sound_maxamp_exists_w, 1, 0, 0,   H_mus_sound_maxamp_exists);
   XEN_DEFINE_PROCEDURE(S_mus_sound_forget,         g_sound_forget_w, 1, 0, 0,          H_mus_sound_forget);
   XEN_DEFINE_PROCEDURE(S_mus_sound_prune,          g_sound_prune_w, 0, 0, 0,           H_mus_sound_prune);
@@ -1595,6 +1589,9 @@ void mus_sndlib2xen_initialize(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sound_data_ref, sound_data_ref_w, H_sound_data_ref,
 				   S_setB S_sound_data_ref, sound_data_set_w,  3, 0, 4, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_sound_maxamp, g_sound_maxamp_w, H_mus_sound_maxamp,
+				   S_setB S_mus_sound_maxamp, g_sound_set_maxamp_w, 1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE(S_sound_data_setB,          sound_data_set_w, 4, 0, 0,          H_sound_data_setB);
 
@@ -1730,7 +1727,6 @@ void mus_sndlib2xen_initialize(void)
 	       S_mus_sound_samples,
 	       S_mus_sound_seek,
 	       S_mus_sound_seek_frame,
-	       S_mus_sound_set_maxamp,
 	       S_mus_sound_srate,
 	       S_mus_sound_type_specifier,
 	       S_mus_sound_write,

@@ -3,7 +3,7 @@
 (if (not (provided? 'xm))
     (let ((hxm (dlopen "xm.so")))
       (if (string? hxm)
-	  (snd-error (format #f "snd-motif.scm needs the xm module: ~A" hxm))
+	  (snd-error (format #f "event.scm needs the xm module: ~A" hxm))
 	  (dlinit hxm "init_xm"))))
 
 

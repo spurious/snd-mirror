@@ -475,7 +475,7 @@ void set_line_source(snd_state *ss, int in_digital)
 			      MUS_AUDIO_PORT, 
 			      ((in_digital) ? MUS_AUDIO_DIGITAL_IN : MUS_AUDIO_MICROPHONE), 
 			      NULL);
-  if (err == -1) 
+  if (err == MUS_ERROR) 
     recorder_error(_("set input source: "));
   rp->input_channel_active[0] = (!in_digital); 
   rp->input_channel_active[1] = (!in_digital);
@@ -614,17 +614,17 @@ void fire_up_recorder(snd_state *ss)
 	  sys = rp->ordered_systems[i];
 	  dev = rp->ordered_devices[i];
 	  sysdev = MUS_AUDIO_PACK_SYSTEM(sys)|dev;
-	  if ((err = mus_audio_mixer_read(sysdev, MUS_AUDIO_DIRECTION, 0, &direction)) == 0) 
+	  if ((err = mus_audio_mixer_read(sysdev, MUS_AUDIO_DIRECTION, 0, &direction)) == MUS_NO_ERROR) 
 	    {
 	      if (rp->input_channels[sys] == 0 && (int)direction == 1)
 		{
-		  if ((err = mus_audio_mixer_read(sysdev, MUS_AUDIO_CHANNEL, 2, val)) == 0) 
+		  if ((err = mus_audio_mixer_read(sysdev, MUS_AUDIO_CHANNEL, 2, val)) == MUS_NO_ERROR) 
 		    {
 		      rp->input_channels[sys] = (int)val[0];
 		      if (rp->input_channels[sys] > MAX_IN_CHANS)
 			rp->input_channels[sys] = MAX_IN_CHANS;
 		    }
-		  if ((err = mus_audio_mixer_read(sysdev, MUS_AUDIO_SRATE, 2, val)) == 0)
+		  if ((err = mus_audio_mixer_read(sysdev, MUS_AUDIO_SRATE, 2, val)) == MUS_NO_ERROR)
 		    {
 		      rp->input_srates[sys] = (int)val[0];
 		      if (i == 0) 
@@ -633,7 +633,7 @@ void fire_up_recorder(snd_state *ss)
 		  rp->input_formats[sys] = mus_audio_compatible_format(sysdev);
 		  if (i == 0) 
 		    rp->in_format = rp->input_formats[sys];
-		  if ((err = mus_audio_mixer_read(sysdev, MUS_AUDIO_SAMPLES_PER_CHANNEL, 0, val)) == 0)
+		  if ((err = mus_audio_mixer_read(sysdev, MUS_AUDIO_SAMPLES_PER_CHANNEL, 0, val)) == MUS_NO_ERROR)
 		    {
 		      rp->input_buffer_sizes[sys] = (int)(val[0]);
 		      if (i == 0) 
@@ -661,7 +661,7 @@ void fire_up_recorder(snd_state *ss)
 	  sys = rp->ordered_systems[i];
 	  dev = rp->ordered_devices[i];
 	  sysdev = MUS_AUDIO_PACK_SYSTEM(sys)|dev;
-	  if ((err = mus_audio_mixer_read(sysdev, MUS_AUDIO_DIRECTION, 0, &direction)) == 0) 
+	  if ((err = mus_audio_mixer_read(sysdev, MUS_AUDIO_DIRECTION, 0, &direction)) == MUS_NO_ERROR) 
 	    {
 	      if ((int)direction == 1)
 		{
@@ -697,12 +697,12 @@ void fire_up_recorder(snd_state *ss)
 	  sys = rp->ordered_systems[i];
 	  dev = rp->ordered_devices[i];
 	  sysdev = MUS_AUDIO_PACK_SYSTEM(sys)|dev;
-	  if ((err = mus_audio_mixer_read(sysdev, MUS_AUDIO_DIRECTION, 0, &direction)) == 0) 
+	  if ((err = mus_audio_mixer_read(sysdev, MUS_AUDIO_DIRECTION, 0, &direction)) == MUS_NO_ERROR) 
 	    {
 	      if ((int)direction == 0)
 		{
 		  /* found the first pane that has an output device (must be the only one) */
-		  if ((err = mus_audio_mixer_read(sysdev, MUS_AUDIO_CHANNEL, 2, val)) == 0) 
+		  if ((err = mus_audio_mixer_read(sysdev, MUS_AUDIO_CHANNEL, 2, val)) == MUS_NO_ERROR) 
 		    {
 		      rp->monitor_chans = (int)(val[0]);
 		      /* FIXME: what would be the proper value for this? 
@@ -860,7 +860,7 @@ void fire_up_recorder(snd_state *ss)
   #if NEW_SGI_AL
     err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_MICROPHONE, MUS_AUDIO_SRATE, 0, val);
     new_srate = (int)val[0];
-    if (!err) 
+    if (err == MUS_NO_ERROR) 
       if ((new_srate > 0) && (rp->srate != new_srate)) 
 	set_recorder_srate(rp, new_srate);
     rp->monitor_chans = 2;
@@ -879,7 +879,7 @@ void fire_up_recorder(snd_state *ss)
 #endif
   #else
     err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | rp->in_device, MUS_AUDIO_SRATE, 0, val);
-    if (!err) 
+    if (err == MUS_NO_ERROR) 
       {
 	new_srate = (int)val[0];
 	if ((new_srate > 0) && (rp->srate != new_srate)) 
@@ -1023,7 +1023,7 @@ void recorder_characterize_devices(int devs, int output_devices)
 	  device = (int)audval[i + 1];
 	  /* FIXME: have not looked to see if oss sndlib supports MUS_AUDIO_DIRECTION */
 	  if ((mus_audio_api() == ALSA_API && 
-	       ((err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(system)|device, MUS_AUDIO_DIRECTION, 0, &direction)) == 0) &&
+	       ((err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(system)|device, MUS_AUDIO_DIRECTION, 0, &direction)) == MUS_NO_ERROR) &&
 	       (int)direction == 1) 
 	      ||
 	      (mus_audio_api() == OSS_API &&
@@ -1058,7 +1058,7 @@ void recorder_characterize_devices(int devs, int output_devices)
 	    {
 	      direction = 0.0;
 	      device = (int)audval[i + 1];
-	      if ((err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(system)|device, MUS_AUDIO_DIRECTION, 0, &direction)) == 0) 
+	      if ((err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(system)|device, MUS_AUDIO_DIRECTION, 0, &direction)) == MUS_NO_ERROR) 
 		{
 		  if ((int)direction == 0)
 		    {
@@ -1390,7 +1390,7 @@ int recorder_get_devices(recorder_info *rp, int *outs)
 				 MUS_AUDIO_PORT, 
 				 AUDVAL_SIZE, 
 				 audval);
-      if (err != 0) 
+      if (err != MUS_NO_ERROR) 
 	{
 	  snd_error("%s[%d] %s", 
 		    __FILE__, __LINE__, __FUNCTION__);

@@ -71,4 +71,4 @@
 (define (mus-set-rand-seed val) (set! (mus-rand-seed) val))
 (define (mus-file-set-prescaler fd val) (set! (mus-file-prescaler fd) val))
 (define (mus-file-set-data-clipped fd val) (set! (mus-file-data-clipped fd) val))
-
+(define (mus-sound-set-maxamp file vals) (set! (mus-sound-maxamp file) vals))

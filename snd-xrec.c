@@ -1319,7 +1319,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtAddCallback(recdat->srate_text, XmNactivateCallback, srate_changed_callback, (void *)ss); /* this is a no-op -- textfield widget is not activatable */
 #if SGI
   err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_MICROPHONE, MUS_AUDIO_SRATE, 0, val);
-  if (!err) rp->srate = val[0];
+  if (err == MUS_NO_ERROR) rp->srate = val[0];
 #endif
   mus_snprintf(timbuf, TIME_STR_SIZE, "%d", rp->srate);
   XmTextSetString(recdat->srate_text, timbuf);

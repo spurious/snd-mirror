@@ -1631,7 +1631,7 @@ static int start_audio_output_1 (dac_state *dacp)
       /* read the number of samples per channel the device wants buffered */
       if ((err = mus_audio_mixer_read(alsa_devices[out_dev[0]], 
 				      MUS_AUDIO_SAMPLES_PER_CHANNEL, 
-				      2, val)) != -1) 
+				      2, val)) != MUS_ERROR) 
 	{
 	  samples_per_channel = (int)(val[0]);
 	}
@@ -1692,7 +1692,7 @@ static int start_audio_output_1 (dac_state *dacp)
       if (dacp->channels > 2)
 	{
 	  err = mus_audio_mixer_read(audio_output_device(ss), MUS_AUDIO_CHANNEL, 0, val);
-	  if (err != -1) oss_available_chans = (int)(val[0]);
+	  if (err != MUS_ERROR) oss_available_chans = (int)(val[0]);
 	}
       for (i = 0; i < MAX_DEVICES; i++) dev_fd[i] = -1;
       /* see if we can play 16 bit output */

@@ -114,7 +114,6 @@
 #define S_mus_sound_samples             "mus-sound-samples"
 #define S_mus_sound_seek                "mus-sound-seek"
 #define S_mus_sound_seek_frame          "mus-sound-seek-frame"
-#define S_mus_sound_set_maxamp          "mus-sound-set-maxamp"
 #define S_mus_sound_srate               "mus-sound-srate"
 #define S_mus_sound_type_specifier      "mus-sound-type-specifier"
 #define S_mus_sound_write               "mus-sound-write"

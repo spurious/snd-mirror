@@ -8080,7 +8080,7 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
  *   and to a much lesser extent, coreaudio.pdf and the HAL/Daisy examples.
  */
 
-/* TODO: mac osx: read/write/mixer support for > 2 chans etc
+/* TODO: get emagic 2|6 6-chan output to work
 */
 
 #ifdef MAC_OSX
@@ -8290,9 +8290,7 @@ static void describe_audio_state_1(void)
   if (devices) FREE(devices);
 }
 
-/* TODO: smaller buf size checked and fewer (for controls) */
-#define AUDIO_BUF_SIZE 4096
-#define MAX_BUFS 12
+#define MAX_BUFS 4
 static char **bufs = NULL;
 static int in_buf = 0, out_buf = 0;
 
@@ -8332,10 +8330,7 @@ static OSStatus reader(AudioDeviceID inDevice,
 
 
 static AudioDeviceID device = kAudioDeviceUnknown;
-static unsigned int bufsize;
 static int writing = FALSE, open_for_input = FALSE;
-static int fill_point = 0;
-static int incoming_out_chans = 1, incoming_out_srate = 44100;
 
 int mus_audio_close(int line) 
 {
@@ -8386,14 +8381,29 @@ int mus_audio_close(int line)
   return(MUS_ERROR);
 }
 
+enum {CONVERT_NOT, CONVERT_COPY, CONVERT_SKIP, CONVERT_COPY_AND_SKIP, CONVERT_SKIP_N, CONVERT_COPY_AND_SKIP_N};
+static int conversion_choice = CONVERT_NOT;
+static int conversion_multiplier = 1;
+static int dac_out_chans, dac_out_srate;
+static int incoming_out_chans = 1, incoming_out_srate = 44100;
+static int fill_point = 0;
+static unsigned int bufsize;
+
+/* I'm getting bogus buffer sizes from the audio conversion stuff from Apple,
+ *   and I think AudioConvert doesn't handle cases like 4->6 chans correctly
+ *   so, I'll just do the conversions myself -- there is little need here
+ *   for non-integer srate conversion anyway, and the rest is trivial.
+ */
 
 int mus_audio_open_output(int dev, int srate, int chans, int format, int size) 
 {
   OSStatus err = noErr;
   UInt32 sizeof_device, sizeof_format, sizeof_bufsize;
+  AudioStreamBasicDescription device_desc;
   sizeof_device = sizeof(AudioDeviceID);
   sizeof_bufsize = sizeof(unsigned int);
   err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultOutputDevice, &sizeof_device, (void *)(&device));
+  bufsize = 4096;
   if (err == noErr) 
     err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyBufferSize, &sizeof_bufsize, &bufsize);
   if (err != noErr) 
@@ -8401,70 +8411,186 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
       fprintf(stderr,"open audio output err: %d %s\n", err, osx_error(err));
       return(MUS_ERROR);
     }
+  /* now check for srate/chan mismatches and so on */
+  sizeof_format = sizeof(AudioStreamBasicDescription);
+  err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormat, &sizeof_format, &device_desc);
+  if (err != noErr)
+    {
+      fprintf(stderr,"open audio output (get device format) err: %d %s\n", err, osx_error(err));
+      return(MUS_ERROR);
+    }
+  /* current DAC state: device_desc.mChannelsPerFrame, (int)(device_desc.mSampleRate) */
+  if ((device_desc.mChannelsPerFrame != chans) || 
+      ((int)(device_desc.mSampleRate) != srate))
+    {
+      /* try to match DAC settings to current sound */
+      device_desc.mChannelsPerFrame = chans;
+      device_desc.mSampleRate = srate;
+      device_desc.mBytesPerPacket = chans * 4; /* assume 1 frame/packet and float32 data */
+      device_desc.mBytesPerFrame = chans * 4;
+      sizeof_format = sizeof(AudioStreamBasicDescription);
+      err = AudioDeviceSetProperty(device, 0, 0, false, kAudioDevicePropertyStreamFormat, sizeof_format, &device_desc);
+      if (err != noErr)
+	{
+	  /* it must have failed for some reason -- look for closest match available */
+	  sizeof_format = sizeof(AudioStreamBasicDescription);
+	  err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormatMatch, &sizeof_format, &device_desc);
+	  if (err == noErr)
+	    {
+	      /* match suggests: device_desc.mChannelsPerFrame, (int)(device_desc.mSampleRate) */
+	      /* try to set DAC to reflect that match */
+	      /* a bug here in emagic 2|6 -- we can get 6 channel match, but then can't set it?? */
+	      sizeof_format = sizeof(AudioStreamBasicDescription);
+	      err = AudioDeviceSetProperty(device, 0, 0, false, kAudioDevicePropertyStreamFormat, sizeof_format, &device_desc);
+	      if (err != noErr) 
+		{
+		  /* no luck -- get current DAC settings at least */
+		  sizeof_format = sizeof(AudioStreamBasicDescription);
+		  err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormat, &sizeof_format, &device_desc);
+		  if (err != noErr)
+		    {
+		      fprintf(stderr,"can't get?: %s ", osx_error(err));
+		      return(MUS_ERROR);
+		    }
+		}
+	    }
+	  else 
+	    {
+	      /* nothing matches? -- get current DAC settings */
+	      sizeof_format = sizeof(AudioStreamBasicDescription);
+	      err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormat, &sizeof_format, &device_desc);
+	    }
+	}
+    }
+  /* now DAC claims it is ready for device_desc.mChannelsPerFrame, (int)(device_desc.mSampleRate) */
+  dac_out_chans = device_desc.mChannelsPerFrame; /* use better variable names */
+  dac_out_srate = (int)(device_desc.mSampleRate);
   open_for_input = FALSE;
   if (bufs == NULL)
     {
       int i;
       bufs = (char **)CALLOC(MAX_BUFS, sizeof(char *));
       for (i = 0; i < MAX_BUFS; i++)
-	bufs[i] = (char *)CALLOC(AUDIO_BUF_SIZE, sizeof(char));
+	bufs[i] = (char *)CALLOC(bufsize, sizeof(char));
     }
   in_buf = 0;
   out_buf = 0;
   fill_point = 0;
   incoming_out_srate = srate;
   incoming_out_chans = chans;
+  if (incoming_out_chans == dac_out_chans)
+    {
+      if (incoming_out_srate == dac_out_srate)
+	{
+	  conversion_choice = CONVERT_NOT;
+	  conversion_multiplier = 1;
+	}
+      else 
+	{
+	  /* here we don't get very fancy -- assume 44.1DAC, 22.05 data */
+	  conversion_choice = CONVERT_COPY;
+	  conversion_multiplier = 2;
+	}
+    }
+  else
+    {
+      if (incoming_out_srate == dac_out_srate)
+	{
+	  if ((dac_out_chans == 2) &&(incoming_out_chans == 1)) /* the usual case */
+	    {
+	      conversion_choice = CONVERT_SKIP;
+	      conversion_multiplier = 2;
+	    }
+	  else
+	    {
+	      conversion_choice = CONVERT_SKIP_N;
+	      conversion_multiplier = (dac_out_chans - incoming_out_chans - 1);
+	    }
+	}
+      else 
+	{
+	  if ((dac_out_chans == 2) &&(incoming_out_chans == 1)) /* the usual case */
+	    {
+	      conversion_choice = CONVERT_COPY_AND_SKIP;
+	      conversion_multiplier = 4;
+	    }
+	  else
+	    {
+	      conversion_choice = CONVERT_COPY_AND_SKIP_N;
+	      conversion_multiplier = (dac_out_chans - incoming_out_chans - 1) * 2;
+	    }
+	}
+    }
   return(MUS_NO_ERROR);
 }
 
 static void convert_incoming(char *to_buf, int fill_point, int lim, char *buf)
 {
-  int i, j, k;
-  if (incoming_out_chans == 2)
+  int i, j, k, jc, kc, ic;
+  switch (conversion_choice)
     {
-      if (incoming_out_srate == 44100)
+    case CONVERT_NOT:
+      /* no conversion needed */
+      for (i = 0; i < lim; i++)
+	to_buf[i + fill_point] = buf[i];
+      break;
+    case CONVERT_COPY:
+      /* copy sample to mimic lower srate */
+      for (i = 0, j = fill_point; i < lim; i += 8, j += 16)
+	for (k = 0; k < 8; k++)
+	  {
+	    to_buf[j + k] = buf[i + k];
+	    to_buf[j + k + 8] = buf[i + k];
+	  }
+      break;
+    case CONVERT_SKIP:
+      /* skip sample for empty chan */
+      for (i = 0, j = fill_point; i < lim; i += 4, j += 8)
+	for (k = 0; k < 4; k++)
+	  {
+	    to_buf[j + k] = buf[i + k];
+	    to_buf[j + k + 4] = 0;
+	  }
+      break;
+    case CONVERT_SKIP_N:
+      /* copy incoming_out_chans then skip up to dac_out_chans */
+      jc = dac_out_chans * 4;
+      ic = incoming_out_chans * 4;
+      for (i = 0, j = fill_point; i < lim; i += ic, j += jc)
 	{
-	  for (i = 0; i < lim; i++)
-	    to_buf[i + fill_point] = buf[i];
+	  for (k = 0; k < ic; k++) to_buf[j + k] = buf[i + k];
+	  for (k = ic; k < jc; k++) to_buf[j + k] = 0;
 	}
-      else
+      break;
+    case CONVERT_COPY_AND_SKIP:
+      for (i = 0, j = fill_point; i < lim; i += 4, j += 16)
+	for (k = 0; k < 4; k++)
+	  {
+	    to_buf[j + k] = buf[i + k];
+	    to_buf[j + k + 4] = 0;
+	    to_buf[j + k + 8] = buf[i + k];
+	    to_buf[j + k + 12] = 0;
+	  }
+      break;
+    case CONVERT_COPY_AND_SKIP_N:
+      /* copy for each active chan, skip rest */
+      jc = dac_out_chans * 8;
+      ic = incoming_out_chans * 4;
+      kc = dac_out_chans * 4;
+      for (i = 0, j = fill_point; i < lim; i += ic, j += jc)
 	{
-	  for (i = 0, j = fill_point; i < lim; i += 8, j += 16)
+	  for (k = 0; k < ic; k++) 
 	    {
-	      for (k = 0; k < 8; k++)
-		{
-		  to_buf[j + k] = buf[i + k];
-		  to_buf[j + k + 8] = buf[i + k];
-		}
+	      to_buf[j + k] = buf[i + k];
+	      to_buf[j + k + kc] = buf[i + k];	      
+	    }
+	  for (k = ic; k < kc; k++) 
+	    {
+	      to_buf[j + k] = 0;
+	      to_buf[j + k + kc] = 0;
 	    }
 	}
-    }
-  else
-    {
-      if (incoming_out_srate == 44100)
-	{
-	  for (i = 0, j = fill_point; i < lim; i += 4, j += 8)
-	    {
-	      for (k = 0; k < 4; k++)
-		{
-		  to_buf[j + k] = buf[i + k];
-		  to_buf[j + k + 4] = 0;
-		}
-	    }
-	}
-      else
-	{
-	  for (i = 0, j = fill_point; i < lim; i += 4, j += 16)
-	    {
-	      for (k = 0; k < 4; k++)
-		{
-		  to_buf[j + k] = buf[i + k];
-		  to_buf[j + k + 4] = 0;
-		  to_buf[j + k + 8] = buf[i + k];
-		  to_buf[j + k + 12] = 0;
-		}
-	    }
-	}
+      break;
     }
 }
 
@@ -8476,32 +8602,10 @@ int mus_audio_write(int line, char *buf, int bytes)
   UInt32 running;
   char *to_buf;
   to_buf = bufs[in_buf];
-  if (incoming_out_chans == 2)
-    {
-      if (incoming_out_srate == 44100)
-	out_bytes = bytes;
-      else out_bytes = 2 * bytes;
-    }
-  else
-    {
-      if (incoming_out_srate == 44100)
-	out_bytes = 2 * bytes;
-      else out_bytes = 4 * bytes;
-    }
+  out_bytes = bytes * conversion_multiplier;
   if ((fill_point + out_bytes) > bufsize)
     out_bytes = bufsize - fill_point;
-  if (incoming_out_chans == 2)
-    {
-      if (incoming_out_srate == 44100)
-	lim = out_bytes;
-      else lim = out_bytes / 2;
-    }
-  else
-    {
-      if (incoming_out_srate == 44100)
-	lim = out_bytes / 2;
-      else lim = out_bytes /4;
-    }
+  lim = out_bytes / conversion_multiplier;
   if (writing == FALSE)
     {
       convert_incoming(to_buf, fill_point, lim, buf);
@@ -8538,7 +8642,7 @@ int mus_audio_write(int line, char *buf, int bytes)
 	}
     }
   to_buf = bufs[in_buf];
-  if (fill_point == 0) memset((void *)to_buf, 0, AUDIO_BUF_SIZE);
+  if (fill_point == 0) memset((void *)to_buf, 0, bufsize);
   convert_incoming(to_buf, fill_point, lim, buf);
   fill_point += out_bytes;
   if (fill_point >= bufsize)
@@ -8558,6 +8662,7 @@ int mus_audio_open_input(int dev, int srate, int chans, int format, int size)
   sizeof_device = sizeof(AudioDeviceID);
   sizeof_bufsize = sizeof(unsigned int);
   err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultInputDevice, &sizeof_device, (void *)(&device));
+  bufsize = 4096;
   if (err == noErr) 
     err = AudioDeviceGetProperty(device, 0, true, kAudioDevicePropertyBufferSize, &sizeof_bufsize, &bufsize);
   if (err != noErr) 
@@ -8566,12 +8671,13 @@ int mus_audio_open_input(int dev, int srate, int chans, int format, int size)
       return(MUS_ERROR);
     }
   open_for_input = TRUE;
+  /* assume for now that recorder (higher level) will enforce match */
   if (bufs == NULL)
     {
       int i;
       bufs = (char **)CALLOC(MAX_BUFS, sizeof(char *));
       for (i = 0; i < MAX_BUFS; i++)
-	bufs[i] = (char *)CALLOC(AUDIO_BUF_SIZE, sizeof(char));
+	bufs[i] = (char *)CALLOC(bufsize, sizeof(char));
     }
   in_buf = 0;
   out_buf = 0;
@@ -8608,12 +8714,41 @@ int mus_audio_read(int line, char *buf, int bytes)
 	}
     }
   to_buf = bufs[in_buf];
-  if (bytes <= AUDIO_BUF_SIZE)
+  if (bytes <= bufsize)
     memmove((void *)buf, (void *)to_buf, bytes);
-  else memmove((void *)buf, (void *)to_buf, AUDIO_BUF_SIZE);
+  else memmove((void *)buf, (void *)to_buf, bufsize);
   in_buf++;
   if (in_buf >= MAX_BUFS) in_buf = 0;
   return(MUS_ERROR);
+}
+
+static int max_chans(AudioDeviceID device, int input)
+{
+  int maxc = 0, formats, k;
+  UInt32 size;
+  OSStatus err;
+  AudioStreamBasicDescription desc;
+  AudioStreamBasicDescription *descs;
+  size = sizeof(AudioStreamBasicDescription);
+  err = AudioDeviceGetProperty(device, 0, input, kAudioDevicePropertyStreamFormat, &size, &desc);
+  if (err == noErr) 
+    {
+      maxc = (int)(desc.mChannelsPerFrame);
+      size = 0;
+      err = AudioDeviceGetPropertyInfo(device, 0, input, kAudioDevicePropertyStreamFormats, &size, NULL);
+      formats = size / sizeof(AudioStreamBasicDescription);
+      if (formats > 1)
+	{
+	  descs = (AudioStreamBasicDescription *)CALLOC(formats, sizeof(AudioStreamBasicDescription));
+	  size = formats * sizeof(AudioStreamBasicDescription);
+	  err = AudioDeviceGetProperty(device, 0, input, kAudioDevicePropertyStreamFormats, &size, descs);
+	  if (err == noErr) 
+	    for (k = 0; k < formats; k++)
+	      if ((int)(descs[k].mChannelsPerFrame) > maxc) maxc = (int)(descs[k].mChannelsPerFrame);
+	  FREE(descs);
+	}
+    }
+  return(maxc);
 }
 
 int mus_audio_mixer_read(int dev1, int field, int chan, float *val)
@@ -8622,7 +8757,7 @@ int mus_audio_mixer_read(int dev1, int field, int chan, float *val)
   OSStatus err = noErr;
   UInt32 size;
   Float32 amp;
-  int i;
+  int i, curdev;
   switch (field) 
     {
     case MUS_AUDIO_AMP:   
@@ -8635,12 +8770,16 @@ int mus_audio_mixer_read(int dev1, int field, int chan, float *val)
       else val[0] = 0.0;
       break;
     case MUS_AUDIO_CHANNEL: 
-      val[0] = 2.0; 
+      curdev = MUS_AUDIO_DEVICE(dev1);
+      size = sizeof(AudioDeviceID);
+      err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultOutputDevice, &size, (void *)(&dev));
+      val[0] = max_chans(dev, ((curdev == MUS_AUDIO_MICROPHONE) || (curdev == MUS_AUDIO_LINE_IN)) ? true : false);
       break;
     case MUS_AUDIO_SRATE: 
       val[0] = 44100;
       break;
     case MUS_AUDIO_FORMAT:
+      /* never actually used except perhaps play.scm */
       val[0] = 1.0;
       val[1] = MUS_BFLOAT;
       break;
@@ -8894,12 +9033,12 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
   /* int card = MUS_AUDIO_SYSTEM(ur_dev); */
     int device = MUS_AUDIO_DEVICE(ur_dev);
 
-    if (device==MUS_AUDIO_MIXER) {
+    if (device == MUS_AUDIO_MIXER) {
 	val[0] = 0.0;
 	return MUS_NO_ERROR;
     }
 
-    if (field==MUS_AUDIO_PORT) {
+    if (field == MUS_AUDIO_PORT) {
 	val[0] = 1.0;
 	return MUS_NO_ERROR;
     }
@@ -8930,7 +9069,7 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
       break;
     case MUS_AUDIO_FORMAT:
       /* supported formats (ugly...) */
-      val[0] = 2.0;
+      val[0] = 3.0;
       val[1] = MUS_UBYTE;
       val[2] = MUS_LSHORT;
       val[3] = MUS_BSHORT;

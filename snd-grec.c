@@ -893,7 +893,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
 
 #if SGI
   err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_MICROPHONE, MUS_AUDIO_SRATE, 0, val);
-  if (!err) rp->srate = val[0];
+  if (err == MUS_NO_ERROR) rp->srate = val[0];
 #endif
   mus_snprintf(timbuf, TIME_STR_SIZE, "%d", rp->srate);
   gtk_entry_set_text(GTK_ENTRY(recdat->srate_text), copy_string(timbuf));
