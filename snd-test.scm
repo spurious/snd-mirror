@@ -49261,4 +49261,13 @@ EDITS: 2
 
 ))
 
+(if (file-exists? "../peaks/_home_bil_cl_storm.snd-peaks-0")
+    (begin
+      (system (string-append "rm ../peaks/_home_bil_snd-7*"))
+      (system (string-append "rm ../peaks/_home_bil_cl_fmv*"))
+      (system (string-append "rm ../peaks/_home_bil_cl_test*"))
+      (system (string-append "rm ../peaks/_home_bil_cl_tmp*"))
+      (system (string-append "rm ../peaks/_home_bil_cl_hiho*"))
+      (system (string-append "rm ../peaks/_home_bil_cl_new*"))))
+
 (if with-exit (exit))

@@ -7398,7 +7398,7 @@ static int mix_type(int out_chans, int in_chans, mus_any *umx, mus_any ***envs)
 
 void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, off_t out_start, off_t out_frames, off_t in_start, mus_any *umx, mus_any ***envs)
 {
-  int j = 0, k, in_chans, out_chans, mix_chans, min_chans, mixtype;
+  int j = 0, k, in_chans, out_chans, mix_chans, mixtype;
   mus_mixer *mx = (mus_mixer *)umx;
   off_t inc, outc, offi;
   mus_frame *frin, *frthru = NULL;
@@ -7407,7 +7407,6 @@ void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, off_t out_start
   in_chans = mus_channels(inf);
   if (in_chans <= 0) mus_error(MUS_NO_CHANNELS, "%s chans: %d", mus_describe(inf), in_chans);
   if (out_chans > in_chans) mix_chans = out_chans; else mix_chans = in_chans;
-  if (out_chans > in_chans) min_chans = in_chans; else min_chans = out_chans;
   mixtype = mix_type(out_chans, in_chans, umx, envs);
   frin = (mus_frame *)mus_make_empty_frame(mix_chans);
   frthru = (mus_frame *)mus_make_empty_frame(mix_chans);
@@ -7455,7 +7454,7 @@ void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, off_t out_start
 
 void mus_mix(const char *outfile, const char *infile, off_t out_start, off_t out_frames, off_t in_start, mus_any *umx, mus_any ***envs)
 {
-  int i, j = 0, m, ofd, ifd, in_chans, out_chans, mix_chans, min_chans, mixtype;
+  int i, j = 0, m, ofd, ifd, in_chans, out_chans, min_chans, mixtype;
   mus_sample_t **obufs, **ibufs;
   mus_mixer *mx = (mus_mixer *)umx;
   off_t offk, curoutframes;
@@ -7466,7 +7465,6 @@ void mus_mix(const char *outfile, const char *infile, off_t out_start, off_t out
   if (out_chans <= 0) mus_error(MUS_NO_CHANNELS, "%s chans: %d", outfile, out_chans);
   in_chans = mus_sound_chans(infile);
   if (in_chans <= 0) mus_error(MUS_NO_CHANNELS, "%s chans: %d", infile, in_chans);
-  if (out_chans > in_chans) mix_chans = out_chans; else mix_chans = in_chans;
   if (out_chans > in_chans) min_chans = in_chans; else min_chans = out_chans;
   mixtype = mix_type(out_chans, in_chans, umx, envs);
   if (mixtype == ALL_MIX)

@@ -245,12 +245,10 @@ typedef struct {
 #define snd_keypad_PageDown GDK_KP_Page_Down
 #define snd_keypad_Insert GDK_KP_Insert
 #define snd_keypad_Delete GDK_KP_Delete
-#if !defined(UW2)
 #define snd_keypad_Left GDK_KP_Left
 #define snd_keypad_Up GDK_KP_Up
 #define snd_keypad_Right GDK_KP_Right
 #define snd_keypad_Down GDK_KP_Down
-#endif
 #define snd_keypad_Multiply GDK_KP_Multiply
 #define snd_keypad_Add GDK_KP_Add
 #define snd_keypad_Subtract GDK_KP_Subtract

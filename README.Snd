@@ -173,7 +173,6 @@ Dave Phillips: the tutorial, new-effects.scm, and many other files.
 Kjetil S. Matheussen: snd_conffile.scm, ladspa.scm, gui.scm, and the Jack audio support.
 Richard W.E. Furse: the original LADSPA support.
 Nick Bailey: the ESD support.
-Larry Plona: the OpenServer and UnixWare ports.
 Volker Kuhlmann and Seppo Ingalsuo: the Solaris port.
 Seppo Ingalsuo: the HPUX port.
 Juan Reyes: the DEC Alpha port.

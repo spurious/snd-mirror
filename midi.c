@@ -454,7 +454,7 @@ char *mus_midi_describe(void)
       #if (VAR_LIB_OSS)
         #include "/var/lib/oss/include/sys/soundcard.h"
       #else
-        #if defined(HAVE_SYS_SOUNDCARD_H) || defined(LINUX) || defined(UW2)
+        #if defined(HAVE_SYS_SOUNDCARD_H) || defined(LINUX)
           #include <sys/soundcard.h>
         #else
           #if defined(HAVE_MACHINE_SOUNDCARD_H)

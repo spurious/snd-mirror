@@ -2866,10 +2866,8 @@ static void reset_record_callback(Widget w, XtPointer context, XtPointer info)
 
 static void dismiss_record_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  state_context *sgx;
   recorder_info *rp;
   rp = get_recorder_info();
-  sgx = ss->sgx;
   if (XmGetFocusWidget(recorder) == XmMessageBoxGetChild(recorder, XmDIALOG_OK_BUTTON))
     {
       if (rp->recording) reset_record_callback(w, context, info);

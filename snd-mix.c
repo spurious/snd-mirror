@@ -490,8 +490,6 @@ static bool mix_input_amp_env_usable(mix_info *md, Float samples_per_pixel)
   chan_info *cp;
   snd_info *sp;
   int samps_per_bin = 0;
-  mix_state *cs;
-  cs = md->active_mix_state;
   sp = make_mix_readable(md);
   if (sp)
     {
@@ -1009,7 +1007,7 @@ static char *save_as_temp_file(mus_sample_t **raw_data, int chans, int len, int 
 #define OFFSET_FROM_TOP 0
 /* axis top border width is 10 (snd-axis.c) */
 
-static mix_track_state *gather_as_built(mix_info *md, mix_state *cs)
+static void gather_as_built(mix_info *md, mix_state *cs)
 {
   mix_track_state *ms;
   Float trk_amp = 1.0;
@@ -1053,7 +1051,6 @@ static mix_track_state *gather_as_built(mix_info *md, mix_state *cs)
   else ms->amp_envs = NULL;
   if (cs->as_built) free_mix_track_state(cs->as_built);
   cs->as_built = ms;
-  return(ms);
 }
 
 static mix_info *add_mix(chan_info *cp, int chan, off_t beg, off_t num, char *full_original_file, int input_chans, file_delete_t auto_delete)
@@ -1465,11 +1462,10 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
   off_t old_beg, old_end, new_beg, new_end, true_old_beg, true_old_end, true_new_beg, true_new_end;
   int err = 0;
   mix_state *cs;
-  mix_track_state *ms;
   if (!(editable_p(md->cp))) return;
   release_pending_mix_states(md);
   cs = md->active_mix_state;
-  ms = gather_as_built(md, cs);
+  gather_as_built(md, cs);
   cp = md->cp;
   ap = cp->axis;
   old_beg = cs->orig;
@@ -6456,9 +6452,7 @@ static void temporary_track_tempo(mix_info *md, void *ptr)
 {
   track_tempo_t *tt = (track_tempo_t *)ptr;
   mix_state *cs;
-  mix_track_state *ms;
   cs = md->active_mix_state;
-  ms = cs->as_built;
   /* use orig to get original position (we're using the original tempo as well) */
   if (cs->orig != tt->beg)
     {
@@ -7646,15 +7640,15 @@ static XEN g_play_track(XEN id, XEN chn, XEN beg)
 {
   #define H_play_track "(" S_play_track " track (chn #f) (beg 0)): play track. If 'chn' is #t, \
 play all the mixes in the track, even if in different channels.  'beg' is where to start playing within the track."
-  int err, track_id;
+  int track_id;
   off_t samp;
   track_id = xen_to_c_track(id, S_play_track);
   /* in this case if chn=#t, play all associated mixes in all chans */
   ASSERT_SAMPLE_TYPE(S_play_track, beg, XEN_ARG_3);
   samp = beg_to_sample(beg, S_play_track);
   if (!(XEN_INTEGER_P(chn)))
-    err = play_track(track_id, -1, samp, false);
-  else err = play_track(track_id, XEN_TO_C_INT(chn), samp, false);
+    play_track(track_id, -1, samp, false);
+  else play_track(track_id, XEN_TO_C_INT(chn), samp, false);
   return(id);
 }
 

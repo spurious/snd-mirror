@@ -497,8 +497,8 @@ void set_mixer_gain(int system, int device, int chan, int gain, int field, Float
 
 void recorder_set_audio_srate(int device, int srate, int system, bool aud)
 {
-  float g[1];
 #if (!NEW_SGI_AL)
+  float g[1];
   if (aud) close_recorder_audio();
   g[0] = (Float)srate;
   mus_audio_mixer_write(MUS_AUDIO_PACK_SYSTEM(system) | device, MUS_AUDIO_SRATE, 0, g);

@@ -2278,10 +2278,6 @@ static void eval_ptree(ptree *pt)
    *   assumes args already passed in addrs given by prog->addrs
    */
   triple *curfunc;
-  Int *ints;
-  Double *dbls;
-  ints = pt->ints;
-  dbls = pt->dbls;
   ALL_DONE = (Int)false;
   /* evaluate the parse tree */
   while (!ALL_DONE)

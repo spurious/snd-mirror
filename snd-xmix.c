@@ -1114,7 +1114,6 @@ static void track_speed_valuechanged_callback(Widget w, XtPointer context, XtPoi
 
 /* -------- tempo -------- */
 static Widget w_track_tempo_number, w_track_tempo_label, w_track_tempo;
-static Float current_track_tempo = 1.0;
 
 static int tempo_to_scroll(Float minval, Float val, Float maxval)
 {
@@ -2102,7 +2101,6 @@ static void update_track_dialog(int track_id)
 	  XtVaSetValues(w_track_tempo, XmNvalue, tempo_to_scroll(tempo_control_min(ss), val, tempo_control_max(ss)), NULL);
 	  mus_snprintf(lab, 5, "%.2f", val);
 	  set_label(w_track_tempo_number, lab);
-	  current_track_tempo = val;
 	  val = track_dialog_track_amp(track_dialog_id);
 	  XtVaSetValues(w_track_amp, XmNvalue, track_amp_to_scroll(val), NULL);
 	  current_track_amp = val;

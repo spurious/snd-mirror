@@ -626,7 +626,7 @@ void snd_doit(int argc, char **argv)
   ss->channel_min_height = CHANNEL_MIN_HEIGHT;
   ss->Graph_Cursor = XC_crosshair;
 #ifndef SND_AS_WIDGET
-#if UW2 || ALPHA
+#if ALPHA
   XtSetArg(args[0], XtNwidth, 640);
   XtSetArg(args[1], XtNheight, 256);
   shell = XtAppInitialize(&app, "Snd", NULL, 0, &argc, argv, fallbacks, args, 2);
@@ -832,9 +832,6 @@ void snd_doit(int argc, char **argv)
 #ifndef SND_AS_WIDGET
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-#ifdef UW2
-  XtSetArg(args[n], XmNforeground, sx->black); n++;
-#endif
   n = attach_all_sides(args, n);
   XtSetArg(args[n], XmNallowResize, true); n++;
   sx->mainpane = XtCreateManagedWidget("mainpane", xmFormWidgetClass, shell, args, n);

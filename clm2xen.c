@@ -213,7 +213,7 @@ static XEN kw_frequency, kw_initial_phase, kw_wave, kw_cosines, kw_amplitude,
   kw_order, kw_x_coeffs, kw_y_coeffs, kw_envelope, kw_base, kw_duration, kw_offset, kw_end,
   kw_direction, kw_degree, kw_distance, kw_reverb, kw_output, kw_fft_size,
   kw_expansion, kw_length, kw_hop, kw_ramp, kw_jitter,
-  kw_type, kw_format, kw_comment, kw_channels, kw_filter, kw_revout, kw_width,
+  kw_type, kw_channels, kw_filter, kw_revout, kw_width,
   kw_edit, kw_synthesize, kw_analyze, kw_interp, kw_overlap, kw_pitch, kw_dur, kw_sines,
   kw_distribution;
 
@@ -270,8 +270,6 @@ static void init_keywords(void)
   kw_ramp = XEN_MAKE_KEYWORD("ramp");
   kw_jitter = XEN_MAKE_KEYWORD("jitter");
   kw_type = XEN_MAKE_KEYWORD("type");
-  kw_format = XEN_MAKE_KEYWORD("format");
-  kw_comment = XEN_MAKE_KEYWORD("comment");
   kw_channels = XEN_MAKE_KEYWORD("channels");
   kw_filter = XEN_MAKE_KEYWORD("filter");
   kw_revout = XEN_MAKE_KEYWORD("revout");
@@ -4210,7 +4208,6 @@ static XEN g_make_locsig(XEN arglist)
   #define H_make_locsig "(" S_make_locsig " (:degree 0.0) (:distance 1.0) (:reverb 0.0) :output :revout (:channels 1) (:type " S_mus_interp_linear ")): \
 return a new generator for signal placement in n channels.  Channel 0 corresponds to 0 degrees."
 
-  XEN out_obj = XEN_UNDEFINED, rev_obj = XEN_UNDEFINED;
   mus_xen *gn;
   mus_any *ge;
   mus_any *outp = NULL, *revp = NULL;
@@ -4246,7 +4243,6 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
 	{
 	  if ((MUS_XEN_P(keys[3])) && (mus_output_p(XEN_TO_MUS_ANY(keys[3]))))
 	    {
-	      out_obj = keys[3];
 	      outp = (mus_any *)XEN_TO_MUS_ANY(keys[3]);
 	      out_chans = mus_channels((mus_any *)outp);
 	    }
@@ -4260,7 +4256,6 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
 	{
 	  if ((MUS_XEN_P(keys[4])) && (mus_output_p(XEN_TO_MUS_ANY(keys[4]))))
 	    {
-	      rev_obj = keys[4];
 	      vlen++;
 	      revp = (mus_any *)XEN_TO_MUS_ANY(keys[4]);
 	    }

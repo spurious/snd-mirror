@@ -2137,7 +2137,6 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool back, bool syncd, XEN
   /* all chans if chn_n omitted, arbitrary file if snd_n is name */
   snd_info *sp;
   chan_info *cp;
-  dac_info *dp = NULL;
   sync_info *si = NULL;
   char *name = NULL;
   int i;
@@ -2185,7 +2184,7 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool back, bool syncd, XEN
       sp->filename = NULL;
       sp->delete_me = (void *)1;
       if (XEN_OFF_T_P(chn_n)) end = XEN_TO_C_OFF_T(chn_n);
-      dp = play_sound_1(sp, samp, end, background, C_TO_SMALL_XEN_INT(0), caller, arg_pos, stop_proc);
+      play_sound_1(sp, samp, end, background, C_TO_SMALL_XEN_INT(0), caller, arg_pos, stop_proc);
       if (name) FREE(name);
     }
   else
@@ -2208,18 +2207,18 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool back, bool syncd, XEN
 	      for (i = 0; i < si->chans; i++) ends[i] = end;
 	    }
 	  for (i = 0; i < si->chans; i++) si->begs[i] = samp;
-	  dp = play_channels_1(si->cps, si->chans, si->begs, ends, background, edpos, caller, arg_pos, false, stop_proc);
+	  play_channels_1(si->cps, si->chans, si->begs, ends, background, edpos, caller, arg_pos, false, stop_proc);
 	  si = free_sync_info(si);
 	  if (ends) FREE(ends);
 	}
       else
 	{
 	  if (!(XEN_INTEGER_P(chn_n)))
-	    dp = play_sound_1(sp, samp, end, background, edpos, caller, arg_pos, stop_proc);
+	    play_sound_1(sp, samp, end, background, edpos, caller, arg_pos, stop_proc);
 	  else 
 	    {
 	      cp = get_cp(snd_n, chn_n, caller);
-	      if (cp) dp = play_channel_1(cp, samp, end, background, edpos, caller, arg_pos, stop_proc);
+	      if (cp) play_channel_1(cp, samp, end, background, edpos, caller, arg_pos, stop_proc);
 	    }
 	}
     }
@@ -2259,7 +2258,6 @@ static XEN g_play_selection(XEN wait, XEN edpos, XEN stop_proc)
 to the edit position, 'wait', if #t, causes " S_play_selection " to wait until the playing is finished \
 before returning."
   bool back;
-  dac_info *dp = NULL;
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(wait), wait, XEN_ARG_1, S_play_selection, "a boolean");
   XEN_ASSERT_TYPE(((XEN_PROCEDURE_P(stop_proc)) && (procedure_arity_ok(stop_proc, 1))) ||
 		  (XEN_NOT_BOUND_P(stop_proc)) || 
@@ -2268,7 +2266,7 @@ before returning."
   back = (!(TO_C_BOOLEAN_OR_FALSE(wait)));
   if (selection_is_active())
     {
-      dp = play_selection_1((back) ? IN_BACKGROUND : NOT_IN_BACKGROUND, edpos, S_play_selection, 2, stop_proc);
+      play_selection_1((back) ? IN_BACKGROUND : NOT_IN_BACKGROUND, edpos, S_play_selection, 2, stop_proc);
       return(XEN_FALSE);
     }
   return(snd_no_active_selection_error(S_play_selection));

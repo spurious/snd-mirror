@@ -413,7 +413,7 @@ v. (" S_vct_mapB " v (lambda () 3.0)) is the same as (" S_vct_fillB " v 3.0)"
   vct *v;
   XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ARG_1, S_vct_mapB, "a vct");
   v = TO_VCT(obj);
-#if WITH_RUN
+#if WITH_RUN && USE_SND
   {
     void *pt = NULL;
     if ((optimization(ss)) > 0)
@@ -708,7 +708,7 @@ void vct_init(void)
   XEN_DEFINE_PROCEDURE(S_vct_moveB,     vct_move_w,     3, 1, 0, H_vct_moveB);
   XEN_DEFINE_PROCEDURE(S_vct_subseq,    vct_subseq_w,   2, 2, 0, H_vct_subseq);
   XEN_DEFINE_PROCEDURE(S_vct,           g_vct_w,        0, 0, 1, H_vct);
-#if WITH_RUN
+#if WITH_RUN && USE_SND
   XEN_DEFINE_PROCEDURE("vct-map-1",     vct_mapB_w,     2, 0, 0, H_vct_mapB);
   XEN_EVAL_C_STRING("(defmacro vct-map! (v form) `(vct-map-1 ,v (list ',form ,form)))");
   XEN_SET_DOCUMENTATION(S_vct_mapB, H_vct_mapB);
@@ -745,7 +745,7 @@ void vct_init(void)
 	       S_vct_mapB,
 	       S_vct_ref,
 	       S_vct_setB,
-#if WITH_RUN
+#if WITH_RUN && USE_SND
 	       "vct-map-1",
 #endif
 	       NULL);
