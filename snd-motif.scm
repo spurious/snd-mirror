@@ -1826,7 +1826,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 ;;; -------- add amp sliders in control panel for multi-channel sounds
 ;;;
-;;; It would be nice to have some way to synchronize sliders, but apparently mouse+control(etc) is ignored by the scrollbars?
+;;; use control-button to move all at once
 
 (define (add-amp-controls)
 
@@ -1861,18 +1861,30 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	    (* val scroll-mult) ; linear section
 	    (exp (/ (- val scroll-mid) (* .2 scroll-max))))))
   
-  (define (amp-callback w c i)
+  (define (amp-callback w c info)
     ;; c is (list number-widget snd chan)
-    (let* ((amp (amp-scroller->amp (.value i)))
+    (let* ((amp (amp-scroller->amp (.value info)))
 	   (ampstr (XmStringCreateLocalized (format #f "~,2F" amp)))
 	   (snd (cadr c))
 	   (top-chn (- (chans snd) 1))
-	   (chn (- top-chn (caddr c))))
+	   (chn (- top-chn (caddr c)))
+	   (ctrl (and (.event info) (not (= (logand (.state (.event info)) ControlMask) 0)))))
       (XtSetValues (car c) (list XmNlabelString ampstr))
       (XmStringFree ampstr)
-      (if (> (caddr c) 0)
+      (if ctrl
+	  (let* ((wids (sound-widgets snd))
+		 (ctrls (list-ref wids 2))
+		 (snd-amp (find-child ctrls "snd-amp"))
+		 (chns (chans snd)))
+	    (snd-print (format #f "~A caddr: ~A~%" chn (caddr c)))
+	    (do ((i 0 (1+ i)))
+		((= i chns))
+	      (let* ((ampscr (find-child snd-amp (scroller-name i)))
+		     (ampvals (XmScrollBarGetValues ampscr)))
+		(XmScrollBarSetValues ampscr (.value info) (cadr ampvals) (caddr ampvals) (cadddr ampvals) #t)
+		(set! (amp-control snd i) amp))))
 	  (set! (amp-control snd chn) amp))))
-  
+
   (define (reset-to-one scroller number)
     (XtSetValues scroller (list XmNvalue scroll-mid))
     (let ((ampstr (XmStringCreateLocalized "1.00")))
@@ -1922,6 +1934,11 @@ Reverb-feedback sets the scaler on the feedback.\n\
 						 XmNvalue            scroll-mid
 						 XmNdragCallback     (list amp-callback (list number snd chan))
 						 XmNvalueChangedCallback (list amp-callback (list number snd chan))))))
+      (XtOverrideTranslations scroll
+			      (XtParseTranslationTable "c<Btn1Down>: Select()\n\
+                                                        c<Btn1Motion>: Moved()\n\
+						        c<Btn1Up>:   Release()\n"))
+
       (XtAddCallback label XmNactivateCallback (lambda (w c i)
 						 (reset-to-one scroll number)))
       (XmStringFree s1)
@@ -1940,6 +1957,22 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		(panemax (cadr (XtGetValues ctrls (list XmNpaneMaximum 0)))))
 	    (scrollbar-max)
 	    (XtUnmanageChild ctrls)
+
+	    (if (not (sound-property 'amp-controls snd))
+		(let ((orig-amp (find-child snd-amp "amp")))
+		  (XtOverrideTranslations orig-amp
+					  (XtParseTranslationTable "c<Btn1Down>: Select()\n\
+                                                                    c<Btn1Motion>: Moved()\n\
+						                    c<Btn1Up>:   Release()\n"))
+		  (XtAddCallback orig-amp XmNdragCallback
+				 (lambda (w c info)
+				   (let ((amp (amp-scroller->amp (.value info))))
+				     (if (and (.event info) (not (= (logand (.state (.event info)) ControlMask) 0)))
+					 (do ((i 1 (1+ i)))
+					     ((= i chns))
+					   (let* ((ampscr (find-child snd-amp (scroller-name i)))
+						  (ampvals (XmScrollBarGetValues ampscr)))
+					     (XmScrollBarSetValues ampscr (.value info) (cadr ampvals) (caddr ampvals) (cadddr ampvals) #t)))))))))
 	    (let ((existing-controls (or (sound-property 'amp-controls snd) 1)))
 	      (if (< existing-controls chns)
 		  (begin

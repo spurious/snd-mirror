@@ -576,6 +576,7 @@ static XEN type_to_event_symbol(int utype)
 
 static XEN C_TO_XEN_XEvent_1(XEvent *e, int need_free)
 {
+  if (e == NULL) return(XEN_FALSE); /* synthetic callback may have no event */
   if (need_free)
     return(XEN_LIST_4(type_to_event_symbol(e->type),
 		      C_TO_XEN_ULONG((unsigned long)e),

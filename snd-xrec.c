@@ -1,6 +1,6 @@
 /* 
  * SOMEDAY:  dB in VUs (code below -- needs labels and a switch somewhere)
- * SOMEDAY:  syncd sliders ("master" volume control basically)
+ * SOMEDAY:  syncd sliders -- use control-drag as in snd-motif amp-controls 
  */
 
 #include "snd.h"

@@ -4157,6 +4157,47 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time, Temp
     }
 }
 
+void channel_resize(chan_info *cp)
+{
+  snd_info *sp;
+  if ((cp == NULL) || (!(cp->active)) || (cp->sound == NULL)) return;
+  sp = cp->sound;
+  if (sp->channel_style != CHANNELS_SEPARATE)
+    {
+      if (cp->chan == 0)
+	for_each_sound_chan(sp, update_graph);
+    }
+  else update_graph(cp);
+}
+
+void edit_history_select(chan_info *cp, int row)
+{
+#if WITH_RELATIVE_PANES || USE_GTK
+  if (cp->sound->channel_style != CHANNELS_SEPARATE)
+    {
+      int k;
+      snd_info *sp;
+      chan_info *ncp = NULL;
+      sp = cp->sound;
+      for (k = 1; k < sp->nchans; k++)
+	if (sp->chans[k]->edhist_base > row)
+	  {
+	    ncp = sp->chans[k - 1];
+	    break;
+	  }
+      if (ncp == NULL) ncp = sp->chans[sp->nchans - 1];
+      undo_edit_with_sync(ncp, ncp->edit_ctr - row + ncp->edhist_base);
+      goto_graph(ncp);
+    }
+  else 
+#endif
+    {
+      undo_edit_with_sync(cp, cp->edit_ctr - row);
+      goto_graph(cp);
+    }
+}
+
+
 
 axis_context *set_context(chan_info *cp, chan_gc_t gc)
 {

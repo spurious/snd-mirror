@@ -1056,6 +1056,8 @@ bool key_press_callback(chan_info *ur_cp, int x, int y, int key_state, int keysy
 void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int button, Tempus time);
 void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, int button);
 void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time, Tempus click_time);
+void channel_resize(chan_info *cp);
+void edit_history_select(chan_info *cp, int row);
 int make_graph(chan_info *cp);
 int make_background_graph(chan_info *cp);
 void reset_spectro(void);

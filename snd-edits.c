@@ -7997,12 +7997,12 @@ void redo_edit(chan_info *cp, int count)
 {
   if ((cp) && (count != 0))
     {
-      cp->edit_ctr += count; 
-      while ((cp->edit_ctr >= cp->edit_size) || 
-	     (!(cp->edits[cp->edit_ctr]))) 
+      cp->edit_ctr += count;
+      if (cp->edit_ctr >= cp->edit_size) cp->edit_ctr = cp->edit_size - 1;
+      while (!(cp->edits[cp->edit_ctr]))
 	cp->edit_ctr--;
       if (((cp->edit_ctr + 1) == cp->edit_size) || 
-	  (!(cp->edits[cp->edit_ctr + 1]))) 
+	  (!(cp->edits[cp->edit_ctr + 1])))
 	reflect_no_more_redo_in_menu();
       if (cp->edit_ctr != 0) /* possibly a sync'd redo to chan that has no edits */
 	{

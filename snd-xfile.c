@@ -1,5 +1,8 @@
 #include "snd.h"
 
+/* TODO: the view:files menu might be better as a container widget.  Not sure the "current files" list is useful.
+ */
+
 #define NUM_VISIBLE_HEADERS 4
 
 char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples)

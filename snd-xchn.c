@@ -1,21 +1,10 @@
 #include "snd.h"
 
-enum {
-    W_top, W_form,
-    W_main_window,
-    W_edhist,
-    W_wf_buttons,
-      W_f, W_w,
-    W_left_scrollers,
-      W_zy, W_sy,
-    W_bottom_scrollers,
-      W_sx, W_zx,
-    W_graph,
-      W_gzy, W_gsy
+enum {W_top, W_form, W_main_window, W_edhist, W_wf_buttons, W_f, W_w, W_left_scrollers, W_zy, W_sy,
+      W_bottom_scrollers, W_sx, W_zx, W_graph, W_gzy, W_gsy
 };
 #define NUM_CHAN_WIDGETS 16
 #define DEFAULT_EDIT_HISTORY_WIDTH 1
-
 #define START_JUST_TIME(cp) ss->just_time = true
 #define END_JUST_TIME(cp) ss->just_time = false
 
@@ -463,16 +452,7 @@ static void channel_expose_callback(Widget w, XtPointer context, XtPointer info)
 
 static void channel_resize_callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_info *sp;
-  chan_info *cp = (chan_info *)context;
-  if ((cp == NULL) || (!(cp->active)) || (cp->sound == NULL)) return;
-  sp = cp->sound;
-  if (sp->channel_style != CHANNELS_SEPARATE)
-    {
-      if (cp->chan == 0)
-	for_each_sound_chan(sp, update_graph);
-    }
-  else update_graph(cp);
+  channel_resize((chan_info *)context);
 }
 
 static XEN mouse_enter_graph_hook;
@@ -565,33 +545,8 @@ static void history_select_callback(Widget w, XtPointer context, XtPointer info)
 {
   /* undo/redo to reach selected position */
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
-  chan_info *cp = (chan_info *)context;
   ASSERT_WIDGET_TYPE(XmIsList(w), w);
-#if WITH_RELATIVE_PANES
-  if (cp->sound->channel_style != CHANNELS_SEPARATE)
-    {
-      int row, k;
-      snd_info *sp;
-      chan_info *ncp = NULL;
-      sp = cp->sound;
-      row = cbs->item_position - 1;
-      for (k = 1; k < sp->nchans; k++)
-	if (sp->chans[k]->edhist_base > row)
-	  {
-	    ncp = sp->chans[k - 1];
-	    break;
-	  }
-      if (ncp == NULL) ncp = sp->chans[sp->nchans - 1];
-      undo_edit_with_sync(ncp, ncp->edit_ctr - row + ncp->edhist_base);
-      goto_graph(ncp);
-      /* TODO: in superimposed case, edhist select goto goes to chan 0? */
-    }
-  else 
-#endif
-    {
-      undo_edit_with_sync(cp, cp->edit_ctr - cbs->item_position + 1);
-      goto_graph(cp);
-    }
+  edit_history_select((chan_info *)context, cbs->item_position - 1);
 }
 
 #if WITH_RELATIVE_PANES
@@ -606,7 +561,6 @@ static void remake_edit_history(Widget lst, chan_info *cp, int from_graph)
   XmString *edits;
   XmListDeleteAllItems(lst);
   sp = cp->sound;
-  /* TODO: combined edhists in gtk */
   if (sp->channel_style != CHANNELS_SEPARATE)
     {
       int k, all_eds = 0, ed, filelen;
@@ -644,7 +598,6 @@ static void remake_edit_history(Widget lst, chan_info *cp, int from_graph)
 	XmStringFree(edits[i]);
       FREE(edits);
       XmListSelectPos(lst, cp->edhist_base + cp->edit_ctr + 1, false);
-      XtVaGetValues(lst, XmNvisibleItemCount, &items, NULL);
       if (from_graph) goto_graph(cp);
     }
   else
@@ -695,72 +648,67 @@ void reflect_edit_history_change(chan_info *cp)
 {
   /* new edit so it is added, and any trailing lines removed */
 #if (XmVERSION > 1)
-  chan_context *cx;
   snd_info *sp;
   Widget lst;
-  if (cp->in_as_one_edit) return;
-  cx = cp->cgx;
-  if (cx)
-    {
-      sp = cp->sound;
-      lst = EDIT_HISTORY_LIST(cp);
+  if ((cp->in_as_one_edit) || (cp->cgx == NULL)) return;
+  sp = cp->sound;
+  lst = EDIT_HISTORY_LIST(cp);
 #if WITH_RELATIVE_PANES
-      if ((lst) && (widget_width(lst) > 1))
-	remake_edit_history(lst, cp, true);
-      else
+  if ((lst) && (widget_width(lst) > 1))
+    remake_edit_history(lst, cp, true);
+  else
+    {
+      if ((cp->chan > 0) && (sp->channel_style != CHANNELS_SEPARATE))
 	{
-	  if ((cp->chan > 0) && (sp->channel_style != CHANNELS_SEPARATE))
-	    {
-	      lst = EDIT_HISTORY_LIST(sp->chans[0]);
-	      if ((lst) && (widget_width(lst) > 1))
-		remake_edit_history(lst, sp->chans[0], true);
-	    }
+	  lst = EDIT_HISTORY_LIST(sp->chans[0]);
+	  if ((lst) && (widget_width(lst) > 1))
+	    remake_edit_history(lst, sp->chans[0], true);
 	}
-#else
-      /* old form */
-      if (lst)
-	{
-	  int i, eds, items = 0;
-	  XmString *edits;
-	  eds = cp->edit_ctr;
-	  while ((eds < (cp->edit_size - 1)) && (cp->edits[eds + 1])) eds++;
-	  if (eds >= 0)
-	    {
-	      if ((eds == cp->edit_ctr) && (eds > 1)) /* need to force 0 (1) case to start list with sound file name */
-		{
-		  XmString edit;
-		  /* special common case -- we're appending a new edit description */
-		  XtVaGetValues(lst, XmNitemCount, &items, NULL);
-		  if (items > eds )
-		    XmListDeleteItemsPos(lst, cp->edit_size, eds + 1); 
-		  /* cp->edit_size is too large, but the manual says this is the way to delete to the end */
-		  edit = XmStringCreate(edit_to_string(cp, eds), XmFONTLIST_DEFAULT_TAG);
-		  XmListAddItemUnselected(lst, edit, eds + 1);
-		  XmStringFree(edit);
-		}
-	      else
-		{
-		  edits = (XmString *)CALLOC(eds + 1, sizeof(XmString));
-		  edits[0] = XmStringCreate(sp->filename, XmFONTLIST_DEFAULT_TAG);
-		  for (i = 1; i <= eds; i++) 
-		    edits[i] = XmStringCreate(edit_to_string(cp, i), XmFONTLIST_DEFAULT_TAG);
-		  XtVaSetValues(lst, 
-				XmNitems, edits, 
-				XmNitemCount, eds + 1, 
-				NULL);
-		  for (i = 0; i <= eds; i++) 
-		    XmStringFree(edits[i]);
-		  FREE(edits);
-		}
-	      XmListSelectPos(lst, cp->edit_ctr + 1, false);
-	      XtVaGetValues(lst, XmNvisibleItemCount, &items, NULL);
-	      if (items <= eds)
-		XtVaSetValues(lst, XmNtopItemPosition, eds - items + 2, NULL);
-	      goto_graph(cp);
-	    }
-	}
-#endif
     }
+#else
+  /* old form */
+  if (lst)
+    {
+      int i, eds, items = 0;
+      XmString *edits;
+      eds = cp->edit_ctr;
+      while ((eds < (cp->edit_size - 1)) && (cp->edits[eds + 1])) eds++;
+      if (eds >= 0)
+	{
+	  if ((eds == cp->edit_ctr) && (eds > 1)) /* need to force 0 (1) case to start list with sound file name */
+	    {
+	      XmString edit;
+	      /* special common case -- we're appending a new edit description */
+	      XtVaGetValues(lst, XmNitemCount, &items, NULL);
+	      if (items > eds )
+		XmListDeleteItemsPos(lst, cp->edit_size, eds + 1); 
+	      /* cp->edit_size is too large, but the manual says this is the way to delete to the end */
+	      edit = XmStringCreate(edit_to_string(cp, eds), XmFONTLIST_DEFAULT_TAG);
+	      XmListAddItemUnselected(lst, edit, eds + 1);
+	      XmStringFree(edit);
+	    }
+	  else
+	    {
+	      edits = (XmString *)CALLOC(eds + 1, sizeof(XmString));
+	      edits[0] = XmStringCreate(sp->filename, XmFONTLIST_DEFAULT_TAG);
+	      for (i = 1; i <= eds; i++) 
+		edits[i] = XmStringCreate(edit_to_string(cp, i), XmFONTLIST_DEFAULT_TAG);
+	      XtVaSetValues(lst, 
+			    XmNitems, edits, 
+			    XmNitemCount, eds + 1, 
+			    NULL);
+	      for (i = 0; i <= eds; i++) 
+		XmStringFree(edits[i]);
+	      FREE(edits);
+	    }
+	  XmListSelectPos(lst, cp->edit_ctr + 1, false);
+	  XtVaGetValues(lst, XmNvisibleItemCount, &items, NULL);
+	  if (items <= eds)
+	    XtVaSetValues(lst, XmNtopItemPosition, eds - items + 2, NULL);
+	  goto_graph(cp);
+	}
+    }
+#endif
 #endif
 }
 
@@ -768,41 +716,37 @@ void reflect_edit_counter_change(chan_info *cp)
 {
   /* undo/redo/revert -- change which line is highlighted */
 #if (XmVERSION > 1)
-  chan_context *cx;
   Widget lst;
   int len, top;
-  cx = cp->cgx;
-  if (cx)
+  if (cp->cgx == NULL) return;
+  lst = EDIT_HISTORY_LIST(cp);
+  if ((lst) && (widget_width(lst) > 1))
     {
-      lst = EDIT_HISTORY_LIST(cp);
-      if ((lst) && (widget_width(lst) > 1))
-	{
-	  XmListSelectPos(lst, cp->edit_ctr + 1, false);
-	  XtVaGetValues(lst, 
-			XmNvisibleItemCount, &len, 
-			XmNtopItemPosition, &top, 
-			NULL);
-	  if ((cp->edit_ctr + 1) < top) 
-	    XtVaSetValues(lst, XmNtopItemPosition, cp->edit_ctr + 1, NULL);
-	  else
-	    if ((cp->edit_ctr + 1) >= (top + len))
-	      XtVaSetValues(lst, XmNtopItemPosition, cp->edit_ctr, NULL);
-	  goto_graph(cp);
-	}
-#if WITH_RELATIVE_PANES
+      XmListSelectPos(lst, cp->edit_ctr + 1, false);
+      XtVaGetValues(lst, 
+		    XmNvisibleItemCount, &len, 
+		    XmNtopItemPosition, &top, 
+		    NULL);
+      if ((cp->edit_ctr + 1) < top) 
+	XtVaSetValues(lst, XmNtopItemPosition, cp->edit_ctr + 1, NULL);
       else
-	{
-	  snd_info *sp;
-	  sp = cp->sound;
-	  if ((cp->chan > 0) && (sp->channel_style != CHANNELS_SEPARATE))
-	    {
-	      lst = EDIT_HISTORY_LIST(sp->chans[0]);
-	      if ((lst) && (widget_width(lst) > 1))
-		XmListSelectPos(lst, cp->edit_ctr + 1 + cp->edhist_base, false);
-	    }
-	}
-#endif
+	if ((cp->edit_ctr + 1) >= (top + len))
+	  XtVaSetValues(lst, XmNtopItemPosition, cp->edit_ctr, NULL);
+      goto_graph(cp);
     }
+#if WITH_RELATIVE_PANES
+  else
+    {
+      snd_info *sp;
+      sp = cp->sound;
+      if ((cp->chan > 0) && (sp->channel_style != CHANNELS_SEPARATE))
+	{
+	  lst = EDIT_HISTORY_LIST(sp->chans[0]);
+	  if ((lst) && (widget_width(lst) > 1))
+	    XmListSelectPos(lst, cp->edit_ctr + 1 + cp->edhist_base, false);
+	}
+    }
+#endif
 #endif
 }
 

@@ -334,15 +334,7 @@ static gboolean channel_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpoint
 
 static gboolean channel_resize_callback(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
 {
-  snd_info *sp;
-  chan_info *cp;
-  cp = (chan_info *)data;
-  if ((cp == NULL) || (!(cp->active)) || (cp->sound == NULL)) return(false);
-  sp = cp->sound;
-  if (sp == NULL) return(false);
-  if (sp->channel_style != CHANNELS_SEPARATE)
-    for_each_sound_chan(sp, update_graph);
-  else update_graph(cp);
+  channel_resize((chan_info *)data);
   return(false);
 }
 
@@ -376,21 +368,6 @@ static gboolean graph_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpointer d
   return(false);
 }
 
-static void history_select_callback(GtkTreeSelection *selection, gpointer *gp)
-{
-  GtkTreeIter iter;
-  GtkTreeModel *model;
-  GtkTreePath *path;
-  gint *indices;
-  chan_info *cp = (chan_info *)gp;
-  if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
-  path = gtk_tree_model_get_path(model, &iter);
-  indices = gtk_tree_path_get_indices(path);
-  undo_edit_with_sync(cp, cp->edit_ctr - indices[0]);
-  goto_graph(cp);
-  gtk_tree_path_free(path);
-}
-
 static void hide_gz_scrollbars(snd_info *sp)
 {
   chan_info *cp;
@@ -416,61 +393,127 @@ static void show_gz_scrollbars(snd_info *sp)
 
 /* edit history support */
 
+static bool flush_select = false;
+
+static void history_select_callback(GtkTreeSelection *selection, gpointer *gp)
+{
+  GtkTreeIter iter;
+  GtkTreeModel *model;
+  GtkTreePath *path;
+  gint *indices;
+  if (flush_select) return;
+  if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
+  path = gtk_tree_model_get_path(model, &iter);
+  indices = gtk_tree_path_get_indices(path);
+  flush_select = true;
+  edit_history_select((chan_info *)gp, indices[0]);
+  flush_select = false;
+  gtk_tree_path_free(path);
+}
+
+static void remake_edit_history(GtkWidget *lst, chan_info *cp)
+{
+  snd_info *sp;
+  chan_info *ncp;
+  int i, eds;
+  char *str;
+  gtk_list_store_clear(GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(lst))));
+  sp = cp->sound;
+  if (sp->channel_style != CHANNELS_SEPARATE)
+    {
+      int k, all_eds = 0, ed, filelen;
+      char *title;
+      for (k = 0; k < sp->nchans; k++)
+	{
+	  ncp = sp->chans[k];
+	  eds = ncp->edit_ctr;
+	  while ((eds < (ncp->edit_size - 1)) && (ncp->edits[eds + 1])) eds++;
+	  all_eds += eds;
+	}
+      all_eds += 3 * sp->nchans;
+      filelen = 16 + strlen(sp->filename);
+      title = (char *)CALLOC(filelen, sizeof(char));
+      for (k = 0, ed = 0; k < sp->nchans; k++)
+	{
+	  ncp = sp->chans[k];
+	  ncp->edhist_base = ed++;
+	  sprintf(title, "chan %d: %s", k + 1, sp->filename);
+	  sg_list_append(lst, title);
+	  eds = ncp->edit_ctr;
+	  while ((eds < (ncp->edit_size - 1)) && (ncp->edits[eds + 1])) eds++;
+	  for (i = 1; i <= eds; i++, ed++) 
+	    {
+	      str = edit_to_string(ncp, i);
+	      sg_list_append(lst, str);
+	    }
+	  if (k < sp->nchans - 1)
+	    {
+	      sg_list_append(lst, "______________________________"); 
+	      ed++; 
+	    } 
+	}
+      FREE(title);
+    }
+  else
+    {
+      eds = cp->edit_ctr;
+      while ((eds < (cp->edit_size - 1)) && (cp->edits[eds + 1])) eds++;
+      if (eds >= 0)
+	{
+	  str = sp->filename;
+	  sg_list_append(lst, str);
+	  for (i = 1; i <= eds; i++) 
+	    {
+	      str = edit_to_string(cp, i);
+	      sg_list_append(lst, str);
+	    }
+	}
+    }
+  goto_graph(cp);
+}
+
 void reflect_edit_history_change(chan_info *cp)
 {
   /* new edit so it is added, and any trailing lines removed */
-  chan_context *cx;
   GtkWidget *lst;
   snd_info *sp;
-  int i, eds;
-  char *str;
-  if (cp->in_as_one_edit) return;
-  cx = cp->cgx;
-  if (cx)
+  if ((cp->in_as_one_edit) || (cp->cgx == NULL)) return;
+  chan_info *ncp;
+  sp = cp->sound;
+  if ((cp->chan > 0) && (sp->channel_style != CHANNELS_SEPARATE))
+    {
+      ncp = sp->chans[0];
+      lst = EDIT_HISTORY_LIST(ncp);
+      if (lst) remake_edit_history(lst, ncp);
+    }
+  else
     {
       lst = EDIT_HISTORY_LIST(cp);
-      if (lst)
-	{
-	  eds = cp->edit_ctr;
-	  while ((eds < (cp->edit_size - 1)) && (cp->edits[eds + 1])) eds++;
-	  if (eds >= 0)
-	    {
-	      gtk_list_store_clear(GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(lst))));
-	      sp = cp->sound;
-	      str = sp->filename;
-	      sg_list_append(lst, str);
-	      for (i = 1; i <= eds; i++) 
-		{
-		  str = edit_to_string(cp, i);
-		  sg_list_append(lst, str);
-		}
-	      g_signal_handlers_block_matched(GTK_OBJECT(lst), G_SIGNAL_MATCH_DATA, 0, 0, NULL, 0, (gpointer)cp);
-	      sg_list_select(lst, cp->edit_ctr);
-	      sg_list_moveto(lst, cp->edit_ctr);
-	      g_signal_handlers_unblock_matched(GTK_OBJECT(lst), G_SIGNAL_MATCH_DATA, 0, 0, NULL, 0, (gpointer)cp);
-	      goto_graph(cp);
-	    }
-	}
+      if (lst) remake_edit_history(lst, cp);
     }
 }
 
 void reflect_edit_counter_change(chan_info *cp)
 {
   /* undo/redo/revert -- change which line is highlighted */
-  chan_context *cx;
-  GtkWidget *lst;
-  cx = cp->cgx;
-  if (cx)
+  snd_info *sp;
+  chan_info *ncp;
+  if (cp->cgx == NULL) return;
+  sp = cp->sound;
+  if ((cp->chan > 0) && (sp->channel_style != CHANNELS_SEPARATE))
     {
-      lst = EDIT_HISTORY_LIST(cp);
-      if (lst)
-	{
-	  g_signal_handlers_block_matched(GTK_OBJECT(lst), G_SIGNAL_MATCH_DATA, 0, 0, NULL, 0, (gpointer)cp);
-	  sg_list_select(lst, cp->edit_ctr);
-	  sg_list_moveto(lst, cp->edit_ctr);
-	  g_signal_handlers_unblock_matched(GTK_OBJECT(lst), G_SIGNAL_MATCH_DATA, 0, 0, NULL, 0, (gpointer)cp);
-	  goto_graph(cp);
-	}
+      ncp = sp->chans[0];
+      flush_select = true;
+      sg_list_select(EDIT_HISTORY_LIST(ncp), cp->edit_ctr + cp->edhist_base);
+      flush_select = false;
+    }
+  else
+    {
+      flush_select = true;
+      sg_list_select(EDIT_HISTORY_LIST(cp), cp->edit_ctr);
+      sg_list_moveto(EDIT_HISTORY_LIST(cp), cp->edit_ctr);
+      goto_graph(cp);
+      flush_select = false;
     }
 }
 
@@ -943,6 +986,15 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
       if (new_style != old_style)
 	{
 	  sp->channel_style = new_style;
+
+	  if ((new_style == CHANNELS_SEPARATE) || (old_style == CHANNELS_SEPARATE))
+	    {
+	      GtkWidget* lst;
+	      lst = EDIT_HISTORY_LIST(sp->chans[0]);
+	      if (lst)
+		remake_edit_history(lst, sp->chans[0]);
+	    }
+
 	  if (old_style == CHANNELS_COMBINED)
 	    {
 	      hide_gz_scrollbars(sp);
