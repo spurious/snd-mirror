@@ -1120,6 +1120,10 @@ user-interface manipulations.\n\
   " S_play_hook " (samps)\n\
   " S_property_changed_hook " (command)\n\
   " S_save_hook " (snd name)\n\
+  " S_select_channel_hook " (snd chn)\n\
+  " S_select_mix_hook " (id)\n\
+  " S_select_region_hook " (reg)\n\
+  " S_select_sound_hook " (snd)\n\
   " S_snd_error_hook " (msg)\n\
   " S_snd_warning_hook " (msg)\n\
   " S_start_hook " (filename)\n\

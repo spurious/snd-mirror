@@ -185,15 +185,21 @@ static char *print_array(Float *arr, int len, int loc)
     }
   if ((array_print_length * 12) > size) size = array_print_length * 12;
   base = (char *)CALLOC(size, sizeof(char));
-  str = (char *)CALLOC(32, sizeof(char));
+  str = (char *)CALLOC(64, sizeof(char));
   sprintf(base, "[");
   lim = len;
   if (lim > array_print_length) lim = array_print_length;
   k = loc;
-  for (i = 0; i < lim-1; i++)
+  for (i = 0; i < lim - 1; i++)
     {
       sprintf(str, "%.3f ", arr[k]);
       strcat(base, str);
+      if ((strlen(base) + 32) > size)
+	{
+	  base = (char *)REALLOC(base, size * 2 * sizeof(char));
+	  base[size] = 0;
+	  size *= 2;
+	}
       k++;
       if (k >= len) k = 0;
     }
@@ -215,7 +221,7 @@ static char *print_double_array(double *arr, int len, int loc)
     }
   if ((array_print_length * 16) > size) size = array_print_length * 16;
   base = (char *)CALLOC(size, sizeof(char));
-  str = (char *)CALLOC(32, sizeof(char));
+  str = (char *)CALLOC(128, sizeof(char));
   sprintf(base, "[");
   lim = len;
   if (lim > array_print_length) lim = array_print_length;
@@ -224,6 +230,12 @@ static char *print_double_array(double *arr, int len, int loc)
     {
       sprintf(str, "%.3f ", arr[k]);
       strcat(base, str);
+      if ((strlen(base) + 32) > size)
+	{
+	  base = (char *)REALLOC(base, size * 2 * sizeof(char));
+	  base[size] = 0;
+	  size *= 2;
+	}
       k++;
       if (k >= len) k = 0;
     }
@@ -254,6 +266,12 @@ static char *print_int_array(int *arr, int len, int loc)
     {
       sprintf(str, "%d ", arr[k]);
       strcat(base, str);
+      if ((strlen(base) + 32) > size)
+	{
+	  base = (char *)REALLOC(base, size * 2 * sizeof(char));
+	  base[size] = 0;
+	  size *= 2;
+	}
       k++;
       if (k >= len) k = 0;
     }
@@ -849,7 +867,7 @@ static char *describe_delay(void *ptr)
 {
   char *desc, *str = NULL;
   dly *gen = (dly *)ptr;
-  desc = make_desc_buf(ptr, TRUE);
+  desc = make_big_desc_buf(ptr, TRUE);
   if (desc)
     {
       if (mus_delay_p((mus_any *)ptr))
@@ -3609,8 +3627,8 @@ static char *describe_mixer(void *ptr)
 {
   mus_mixer *gen;
   char *desc, *str;
-  int i, j;
-  desc = make_desc_buf(ptr, TRUE);
+  int i, j, lim = 8;
+  desc = make_big_desc_buf(ptr, TRUE);
   if (desc)
     {
       if (mus_mixer_p((mus_any *)ptr))
@@ -3618,9 +3636,10 @@ static char *describe_mixer(void *ptr)
 	  gen = (mus_mixer *)ptr;
 	  sprintf(desc, "mixer: chans: %d, vals: [", gen->chans);
 	  str = (char *)CALLOC(16, sizeof(char));
-	  for (i = 0; i < gen->chans; i++)
+	  if (gen->chans < 8) lim = gen->chans;
+	  for (i = 0; i < lim; i++)
 	    {
-	      for (j = 0; j < gen->chans; j++)
+	      for (j = 0; j < lim; j++)
 		{
 		  sprintf(str, "%s%.3f%s%s",
 			  (j == 0) ? "(" : "",
@@ -5010,21 +5029,23 @@ static int locsig_equalp(void *p1, void *p2)
 static char *describe_locsig(void *ptr)
 {
   char *desc, *str;
-  int i;
+  int i, lim = 16;
   locs *gen = (locs *)ptr;
-  desc = make_desc_buf(ptr, TRUE);
+  desc = make_big_desc_buf(ptr, TRUE);
   if (desc)
     {
       if (mus_locsig_p((mus_any *)ptr))
 	{
 	  sprintf(desc, "locsig: chans %d, outn: [", gen->chans);
 	  str = (char *)CALLOC(32, sizeof(char));
-	  for (i = 0; i < gen->chans-1; i++)
+	  if (gen->chans - 1 < lim) lim = gen->chans - 1;
+	  for (i = 0; i < lim; i++)
 	    {
 	      sprintf(str, "%.3f ", gen->outn[i]);
 	      strcat(desc, str);
 	    }
-	  sprintf(str, "%.3f]", gen->outn[gen->chans-1]);
+	  if (gen->chans - 1 > lim) strcat(desc, "...");
+	  sprintf(str, "%.3f]", gen->outn[gen->chans - 1]);
 	  strcat(desc, str);
 	  FREE(str);
 	}

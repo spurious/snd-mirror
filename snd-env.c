@@ -1192,7 +1192,7 @@ env *scm2env(SCM res)
 	  for (i = 0, lst = res; i < len; i++, lst = SCM_CDR(lst))
 	    {
 	      el = SCM_CAR(lst);
-	      if (gh_number_p(el))
+	      if (NUMBER_P(el))
 		data[i] = TO_C_DOUBLE(el);
 	      else data[i] = 0.0;
 	    }
@@ -1280,7 +1280,7 @@ static SCM g_set_env_base(SCM name, SCM val)
   int i;
   char *urn = NULL;
   SCM_ASSERT(gh_symbol_p(name) || gh_string_p(name), name, SCM_ARG1, "set-" S_env_base);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG2, "set-" S_env_base);
+  SCM_ASSERT(NUMBER_P(val), val, SCM_ARG2, "set-" S_env_base);
   if (gh_string_p(name))
     urn = TO_NEW_C_STRING(name);
   else urn = TO_NEW_C_STRING(scm_symbol_to_string(name));
@@ -1364,7 +1364,7 @@ env *get_env(SCM e, SCM base, char *origin) /* list or vector in e */
       }
     else return(NULL);
   newenv = make_envelope(buf, len);
-  if (gh_number_p(base)) 
+  if (NUMBER_P(base)) 
     newenv->base = TO_C_DOUBLE(base); 
   else newenv->base = 1.0;
   if (buf) FREE(buf);

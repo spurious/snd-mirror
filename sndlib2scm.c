@@ -32,7 +32,7 @@ static int to_c_int_or_else(SCM obj, int fallback, char *origin)
   if (SCM_INUMP(obj))
     return(SCM_INUM(obj));
   else
-    if (gh_number_p(obj))
+    if (scm_number_p(obj))
       return((int)TO_C_DOUBLE_WITH_ORIGIN(obj, origin));
   return(fallback);
 }
@@ -194,22 +194,22 @@ static SCM g_sound_write_date(SCM filename)
 static SCM g_sound_type_name(SCM type) 
 {
   #define H_mus_header_type_name "(" S_mus_header_type_name " type) -> header type (e.g. mus-aiff) as a string"
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(type)), type, SCM_ARG1, S_mus_header_type_name); 
-  return(TO_SCM_STRING(mus_header_type_name(TO_C_INT_OR_ELSE(type, 0))));
+  SCM_ASSERT(INTEGER_P(type), type, SCM_ARG1, S_mus_header_type_name); 
+  return(TO_SCM_STRING(mus_header_type_name(TO_C_INT(type))));
 }
 
 static SCM g_sound_format_name(SCM format) 
 {
   #define H_mus_data_format_name "(" S_mus_data_format_name " format) -> data format (e.g. mus-bshort) as a string"
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(format)), format, SCM_ARG1, S_mus_data_format_name); 
-  return(TO_SCM_STRING(mus_data_format_name(TO_C_INT_OR_ELSE(format, 0))));
+  SCM_ASSERT(INTEGER_P(format), format, SCM_ARG1, S_mus_data_format_name); 
+  return(TO_SCM_STRING(mus_data_format_name(TO_C_INT(format))));
 }
 
 static SCM g_sound_bytes_per_sample(SCM format) 
 {
   #define H_mus_data_format_bytes_per_sample "(" S_mus_data_format_bytes_per_sample " format) -> number of bytes per sample in format (e.g. mus-short = 2)"
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(format)), format, SCM_ARG1, S_mus_data_format_bytes_per_sample); 
-  return(TO_SCM_INT(mus_data_format_to_bytes_per_sample(TO_C_INT_OR_ELSE(format, 0))));
+  SCM_ASSERT(INTEGER_P(format), format, SCM_ARG1, S_mus_data_format_bytes_per_sample); 
+  return(TO_SCM_INT(mus_data_format_to_bytes_per_sample(TO_C_INT(format))));
 }
 
 static SCM g_report_audio_state(void) 
@@ -234,12 +234,12 @@ static SCM g_audio_outputs(SCM speakers, SCM headphones, SCM line_out)
 {
   #define H_mus_audio_sun_outputs "(" S_mus_audio_sun_outputs " speaker headphones line-out) sets the current Sun audio outputs"
 #ifdef SUN
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(speakers)), speakers, SCM_ARG1, S_mus_audio_sun_outputs);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(headphones)), headphones, SCM_ARG2, S_mus_audio_sun_outputs);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(line_out)), line_out, SCM_ARG3, S_mus_audio_sun_outputs);
-  mus_audio_sun_outputs(TO_C_INT_OR_ELSE(speakers, 0),
-			TO_C_INT_OR_ELSE(headphones, 0),
-			TO_C_INT_OR_ELSE(line_out, 0));
+  SCM_ASSERT(INTEGER_P(speakers), speakers, SCM_ARG1, S_mus_audio_sun_outputs);
+  SCM_ASSERT(INTEGER_P(headphones), headphones, SCM_ARG2, S_mus_audio_sun_outputs);
+  SCM_ASSERT(INTEGER_P(line_out), line_out, SCM_ARG3, S_mus_audio_sun_outputs);
+  mus_audio_sun_outputs(TO_C_INT(speakers),
+			TO_C_INT(headphones),
+			TO_C_INT(line_out));
 #endif
   return(SCM_BOOL_F);
 }
@@ -367,7 +367,9 @@ static SCM equalp_sound_data(SCM obj1, SCM obj2)
 static SCM sound_data_length(SCM obj)
 {
   #define H_sound_data_length "(" S_sound_data_length " sd) -> length (samples) of each channel of sound-data object sd"
-  sound_data *v = (sound_data *)SND_VALUE_OF(obj);
+  sound_data *v;
+  SCM_ASSERT(sound_data_p(obj), obj, SCM_ARG1, S_sound_data_length);
+  v = (sound_data *)SND_VALUE_OF(obj);
   if (v == NULL) return(0);
   return(TO_SCM_INT(v->length));
 }
@@ -375,7 +377,9 @@ static SCM sound_data_length(SCM obj)
 static SCM sound_data_chans(SCM obj)
 {
   #define H_sound_data_chans "(" S_sound_data_chans " sd) -> number of channels in sound-data object sd"
-  sound_data *v = (sound_data *)SND_VALUE_OF(obj);
+  sound_data *v;
+  SCM_ASSERT(sound_data_p(obj), obj, SCM_ARG1, S_sound_data_chans);
+  v = (sound_data *)SND_VALUE_OF(obj);
   if (v == NULL) return(0);
   return(TO_SMALL_SCM_INT(v->chans));
 }
@@ -396,26 +400,27 @@ SCM make_sound_data(int chans, int frames)
 
 static SCM g_make_sound_data(SCM chans, SCM frames)
 {
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(chans)), chans, SCM_ARG1, S_make_sound_data);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(frames)), frames, SCM_ARG1, S_make_sound_data);
-  return(make_sound_data(TO_C_INT_OR_ELSE(chans, 0),
-			 TO_C_INT_OR_ELSE(frames, 0)));
+  SCM_ASSERT(INTEGER_P(chans), chans, SCM_ARG1, S_make_sound_data);
+  SCM_ASSERT(INTEGER_P(frames), frames, SCM_ARG1, S_make_sound_data);
+  return(make_sound_data(TO_C_INT(chans),
+			 TO_C_INT(frames)));
 }
 
 static SCM sound_data_ref(SCM obj, SCM chan, SCM frame)
 {
   #define H_sound_data_ref "(" S_sound_data_ref " sd chan i) -> sample in channel chan at location i of sound-data object sd: sd[chan][i]"
-  sound_data *v = (sound_data *)SND_VALUE_OF(obj);
+  sound_data *v;
   int loc, chn;
   SCM_ASSERT(sound_data_p(obj), obj, SCM_ARG1, S_sound_data_ref);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(chan)), chan, SCM_ARG2, S_sound_data_ref);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(frame)), frame, SCM_ARG3, S_sound_data_ref);
+  SCM_ASSERT(INTEGER_P(chan), chan, SCM_ARG2, S_sound_data_ref);
+  SCM_ASSERT(INTEGER_P(frame), frame, SCM_ARG3, S_sound_data_ref);
+  v = (sound_data *)SND_VALUE_OF(obj);
   if (v)
     {
-      chn = TO_C_INT_OR_ELSE(chan, 0);
+      chn = TO_C_INT(chan);
       if ((chn >= 0) && (chn < v->chans))
 	{
-	  loc = TO_C_INT_OR_ELSE(frame, 0);
+	  loc = TO_C_INT(frame);
 	  if ((loc >= 0) && (loc < v->length))
 	    return(TO_SCM_DOUBLE(MUS_SAMPLE_TO_DOUBLE(v->data[chn][loc])));
 	  else scm_misc_error(S_sound_data_ref, "invalid frame: ~S: ~S", SCM_LIST2(obj, frame));
@@ -436,14 +441,19 @@ static SCM sound_data_apply(SCM obj, SCM chan, SCM i)
 static SCM sound_data_set(SCM obj, SCM chan, SCM frame, SCM val)
 {
   #define H_sound_data_setB "(" S_sound_data_setB " sd chan i val): set sound-data object sd's i-th element in channel chan to val: sd[chan][i] = val"
-  sound_data *v = (sound_data *)SND_VALUE_OF(obj);
+  sound_data *v;
   int loc, chn;
+  SCM_ASSERT(sound_data_p(obj), obj, SCM_ARG1, S_sound_data_setB);
+  SCM_ASSERT(INTEGER_P(chan), chan, SCM_ARG2, S_sound_data_setB);
+  SCM_ASSERT(INTEGER_P(frame), frame, SCM_ARG3, S_sound_data_setB);
+  SCM_ASSERT(NUMBER_P(val), val, SCM_ARG4, S_sound_data_setB);
+  v = (sound_data *)SND_VALUE_OF(obj);
   if (v)
     {
-      chn = TO_C_INT_OR_ELSE(chan, 0);
+      chn = TO_C_INT(chan);
       if ((chn >= 0) && (chn < v->chans))
 	{
-	  loc = TO_C_INT_OR_ELSE(frame, 0);
+	  loc = TO_C_INT(frame);
 	  if ((loc >= 0) && 
 	      (loc < v->length))
 	    v->data[chn][loc] = MUS_DOUBLE_TO_SAMPLE(TO_C_DOUBLE(val));
@@ -466,11 +476,11 @@ static SCM sound_data2vct(SCM sdobj, SCM chan, SCM vobj)
   sound_data *sd;
   int len, i, chn;
   SCM_ASSERT(sound_data_p(sdobj), sdobj, SCM_ARG1, S_sound_data2vct);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(chan)), chan, SCM_ARG2, S_sound_data2vct);
+  SCM_ASSERT(INTEGER_P(chan), chan, SCM_ARG2, S_sound_data2vct);
   SCM_ASSERT(vct_p(vobj), vobj, SCM_ARG3, S_sound_data2vct);
   v = (vct *)get_vct(vobj);
   sd = (sound_data *)SND_VALUE_OF(sdobj);
-  chn = TO_C_INT_OR_ELSE(chan, 0);
+  chn = TO_C_INT(chan);
   if (chn < sd->chans)
     {
       if (sd->length < v->length) 
@@ -493,10 +503,10 @@ static SCM vct2sound_data(SCM vobj, SCM sdobj, SCM chan)
   int len, i, chn;
   SCM_ASSERT(vct_p(vobj), vobj, SCM_ARG1, S_vct2sound_data);
   SCM_ASSERT(sound_data_p(sdobj), sdobj, SCM_ARG2, S_vct2sound_data);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(chan)), chan, SCM_ARG3, S_vct2sound_data);
+  SCM_ASSERT(INTEGER_P(chan), chan, SCM_ARG3, S_vct2sound_data);
   v = (vct *)get_vct(vobj);
   sd = (sound_data *)SND_VALUE_OF(sdobj);
-  chn = TO_C_INT_OR_ELSE(chan, 0);
+  chn = TO_C_INT(chan);
   if (chn < sd->chans)
     {
       if (sd->length < v->length) 
@@ -536,9 +546,10 @@ header-type is a sndlib type indicator such as mus-aiff, sndlib currently only w
   char *com = NULL;
   char *tmpstr = NULL;
   SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_mus_sound_open_output);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(srate)), srate, SCM_ARG2, S_mus_sound_open_output);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(chans)), chans, SCM_ARG3, S_mus_sound_open_output);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(header_type)), header_type, SCM_ARG5, S_mus_sound_open_output);
+  SCM_ASSERT(NUMBER_OR_BOOLEAN_P(srate), srate, SCM_ARG2, S_mus_sound_open_output);
+  SCM_ASSERT(INTEGER_OR_BOOLEAN_P(chans), chans, SCM_ARG3, S_mus_sound_open_output);
+  SCM_ASSERT(INTEGER_OR_BOOLEAN_P(data_format), data_format, SCM_ARG4, S_mus_sound_open_output);
+  SCM_ASSERT(INTEGER_OR_BOOLEAN_P(header_type), header_type, SCM_ARG5, S_mus_sound_open_output);
   SCM_ASSERT((gh_string_p(comment) || (SCM_UNBNDP(comment))), comment, SCM_ARG6, S_mus_sound_open_output);
   if (gh_string_p(comment)) com = TO_NEW_C_STRING(comment);
   fd = mus_sound_open_output(tmpstr = mus_expand_filename(TO_C_STRING(file)),
@@ -562,9 +573,10 @@ data-location should be retrieved from a previous call to mus-sound-data-locatio
   int fd;
   char *tmpstr = NULL;
   SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_mus_sound_reopen_output);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(chans)), chans, SCM_ARG2, S_mus_sound_reopen_output);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(header_type)), header_type, SCM_ARG4, S_mus_sound_reopen_output);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(data_loc)), data_loc, SCM_ARG5, S_mus_sound_reopen_output);
+  SCM_ASSERT(INTEGER_OR_BOOLEAN_P(chans), chans, SCM_ARG2, S_mus_sound_reopen_output);
+  SCM_ASSERT(INTEGER_OR_BOOLEAN_P(data_format), data_format, SCM_ARG3, S_mus_sound_reopen_output);
+  SCM_ASSERT(INTEGER_OR_BOOLEAN_P(header_type), header_type, SCM_ARG4, S_mus_sound_reopen_output);
+  SCM_ASSERT(INTEGER_OR_BOOLEAN_P(data_loc), data_loc, SCM_ARG5, S_mus_sound_reopen_output);
   fd = mus_sound_reopen_output(tmpstr = mus_expand_filename(TO_C_STRING(file)),
 			       TO_C_INT_OR_ELSE(chans, 0),
 			       TO_C_INT_OR_ELSE(data_format, MUS_OUT_FORMAT),
@@ -577,8 +589,8 @@ data-location should be retrieved from a previous call to mus-sound-data-locatio
 static SCM g_close_sound_input(SCM fd)
 {
   #define H_mus_sound_close_input "(" S_mus_sound_close_input " fd) closes file number fd"
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(fd)), fd, SCM_ARG1, S_mus_sound_close_input);
-  return(TO_SCM_INT(mus_sound_close_input(TO_C_INT_OR_ELSE(fd, 0))));
+  SCM_ASSERT(INTEGER_P(fd), fd, SCM_ARG1, S_mus_sound_close_input);
+  return(TO_SCM_INT(mus_sound_close_input(TO_C_INT(fd))));
 }
 
 static SCM g_close_sound_output(SCM fd, SCM bytes)
@@ -586,9 +598,9 @@ static SCM g_close_sound_output(SCM fd, SCM bytes)
   #define H_mus_sound_close_output "(" S_mus_sound_close_output " fd bytes) closes file number fd \
 after updating its header (if any) to reflect bytes, the new file data size"
 
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(fd)), fd, SCM_ARG1, S_mus_sound_close_output);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(bytes)), bytes, SCM_ARG2, S_mus_sound_close_output);
-  return(TO_SCM_INT(mus_sound_close_output(TO_C_INT_OR_ELSE(fd, 0),
+  SCM_ASSERT(INTEGER_P(fd), fd, SCM_ARG1, S_mus_sound_close_output);
+  SCM_ASSERT(NUMBER_P(bytes), bytes, SCM_ARG2, S_mus_sound_close_output);
+  return(TO_SCM_INT(mus_sound_close_output(TO_C_INT(fd),
 					   TO_C_INT_OR_ELSE(bytes, 0))));
 }
 
@@ -597,15 +609,15 @@ static SCM g_read_sound(SCM fd, SCM beg, SCM end, SCM chans, SCM sv)
   #define H_mus_sound_read "(" S_mus_sound_read " fd beg end chans sdata) reads sound data from file number fd, \
 filling the sound-data object sdata's buffers starting at (buffer location) beg, going to end"
 
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(fd)), fd, SCM_ARG1, S_mus_sound_read);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(beg)), beg, SCM_ARG2, S_mus_sound_read);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(end)), end, SCM_ARG3, S_mus_sound_read);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(chans)), chans, SCM_ARG4, S_mus_sound_read);
+  SCM_ASSERT(INTEGER_P(fd), fd, SCM_ARG1, S_mus_sound_read);
+  SCM_ASSERT(NUMBER_P(beg), beg, SCM_ARG2, S_mus_sound_read);
+  SCM_ASSERT(NUMBER_P(end), end, SCM_ARG3, S_mus_sound_read);
+  SCM_ASSERT(INTEGER_P(chans), chans, SCM_ARG4, S_mus_sound_read);
   SCM_ASSERT(sound_data_p(sv), sv, SCM_ARG5, S_mus_sound_read);
-  return(TO_SCM_INT(mus_sound_read(TO_C_INT_OR_ELSE(fd, 0),
+  return(TO_SCM_INT(mus_sound_read(TO_C_INT(fd),
 				   TO_C_INT_OR_ELSE(beg, 0),
 				   TO_C_INT_OR_ELSE(end, 0),
-				   TO_C_INT_OR_ELSE(chans, 0),
+				   TO_C_INT(chans),
 				   get_sound_data(sv))));
 }
 
@@ -614,15 +626,15 @@ static SCM g_write_sound(SCM fd, SCM beg, SCM end, SCM chans, SCM sv)
   #define H_mus_sound_write "(" S_mus_sound_write " fd beg end chans sdata) writes sound-data object sdata's data \
 starting at (buffer location) beg, going to end, writing to file number fd"
 
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(fd)), fd, SCM_ARG1, S_mus_sound_write);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(beg)), beg, SCM_ARG2, S_mus_sound_write);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(end)), end, SCM_ARG3, S_mus_sound_write);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(chans)), chans, SCM_ARG4, S_mus_sound_write);
+  SCM_ASSERT(INTEGER_P(fd), fd, SCM_ARG1, S_mus_sound_write);
+  SCM_ASSERT(NUMBER_P(beg), beg, SCM_ARG2, S_mus_sound_write);
+  SCM_ASSERT(NUMBER_P(end), end, SCM_ARG3, S_mus_sound_write);
+  SCM_ASSERT(INTEGER_P(chans), chans, SCM_ARG4, S_mus_sound_write);
   SCM_ASSERT(sound_data_p(sv), sv, SCM_ARG5, S_mus_sound_write);
-  return(TO_SCM_INT(mus_sound_write(TO_C_INT_OR_ELSE(fd, 0),
+  return(TO_SCM_INT(mus_sound_write(TO_C_INT(fd),
 				    TO_C_INT_OR_ELSE(beg, 0),
 				    TO_C_INT_OR_ELSE(end, 0),
-				    TO_C_INT_OR_ELSE(chans, 0),
+				    TO_C_INT(chans),
 				    get_sound_data(sv))));
 }
 
@@ -631,12 +643,12 @@ static SCM g_seek_sound(SCM fd, SCM offset, SCM origin)
   #define H_mus_sound_seek "(" S_mus_sound_seek " fd offset origin) moves the current read/write location in file number fd \
 to the short-wise sample offset given origin (both treated as in lseek)"
 
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(fd)), fd, SCM_ARG1, S_mus_sound_seek);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(offset)), offset, SCM_ARG2, S_mus_sound_seek);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(origin)), origin, SCM_ARG3, S_mus_sound_seek);
-  return(TO_SCM_INT(mus_sound_seek(TO_C_INT_OR_ELSE(fd, 0),
-				   TO_C_INT_OR_ELSE(offset, 0),
-				   TO_C_INT_OR_ELSE(origin, 0))));
+  SCM_ASSERT(INTEGER_P(fd), fd, SCM_ARG1, S_mus_sound_seek);
+  SCM_ASSERT(INTEGER_P(offset), offset, SCM_ARG2, S_mus_sound_seek);
+  SCM_ASSERT(INTEGER_P(origin), origin, SCM_ARG3, S_mus_sound_seek);
+  return(TO_SCM_INT(mus_sound_seek(TO_C_INT(fd),
+				   TO_C_INT(offset),
+				   TO_C_INT(origin))));
 }
 
 static SCM g_seek_sound_frame(SCM fd, SCM offset)
@@ -644,10 +656,10 @@ static SCM g_seek_sound_frame(SCM fd, SCM offset)
   #define H_mus_sound_seek_frame "(" S_mus_sound_seek_frame " fd frame) moves the current read/write location in file number fd \
 to the indicated frame"
 
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(fd)), fd, SCM_ARG1, S_mus_sound_seek_frame);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(offset)), offset, SCM_ARG2, S_mus_sound_seek_frame);
-  return(TO_SCM_INT(mus_sound_seek_frame(TO_C_INT_OR_ELSE(fd, 0),
-					 TO_C_INT_OR_ELSE(offset, 0))));
+  SCM_ASSERT(INTEGER_P(fd), fd, SCM_ARG1, S_mus_sound_seek_frame);
+  SCM_ASSERT(INTEGER_P(offset), offset, SCM_ARG2, S_mus_sound_seek_frame);
+  return(TO_SCM_INT(mus_sound_seek_frame(TO_C_INT(fd),
+					 TO_C_INT(offset))));
 }
 
 static SCM g_open_audio_output(SCM dev, SCM srate, SCM chans, SCM format, SCM size)
@@ -657,15 +669,15 @@ opens the audio device ready for output at the given srate and so on. \
 returns the audio line number:\n\
   (set! line (mus-audio-open-output mus-audio-default 22050 1 mus-lshort 256)"
 
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(dev)), dev, SCM_ARG1, S_mus_audio_open_output);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(srate)), srate, SCM_ARG2, S_mus_audio_open_output);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(chans)), chans, SCM_ARG3, S_mus_audio_open_output);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(format)), format, SCM_ARG4, S_mus_audio_open_output);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(size)), size, SCM_ARG5, S_mus_audio_open_output);
-  return(TO_SCM_INT(mus_audio_open_output(TO_C_INT_OR_ELSE(dev, 0),
+  SCM_ASSERT(INTEGER_P(dev), dev, SCM_ARG1, S_mus_audio_open_output);
+  SCM_ASSERT(NUMBER_P(srate), srate, SCM_ARG2, S_mus_audio_open_output);
+  SCM_ASSERT(INTEGER_P(chans), chans, SCM_ARG3, S_mus_audio_open_output);
+  SCM_ASSERT(INTEGER_P(format), format, SCM_ARG4, S_mus_audio_open_output);
+  SCM_ASSERT(NUMBER_P(size), size, SCM_ARG5, S_mus_audio_open_output);
+  return(TO_SCM_INT(mus_audio_open_output(TO_C_INT(dev),
 					  TO_C_INT_OR_ELSE(srate, 0),
-					  TO_C_INT_OR_ELSE(chans, 0),
-					  TO_C_INT_OR_ELSE(format, 0),
+					  TO_C_INT(chans),
+					  TO_C_INT(format),
 					  TO_C_INT_OR_ELSE(size, 0))));
 }
 
@@ -674,23 +686,23 @@ static SCM g_open_audio_input(SCM dev, SCM srate, SCM chans, SCM format, SCM siz
   #define H_mus_audio_open_input "(" S_mus_audio_open_input " (device srate chans format bufsize)\n\
 opens the audio device ready for input with the indicated attributes, returns the audio line number"
 
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(dev)), dev, SCM_ARG1, S_mus_audio_open_input);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(srate)), srate, SCM_ARG2, S_mus_audio_open_input);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(chans)), chans, SCM_ARG3, S_mus_audio_open_input);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(format)), format, SCM_ARG4, S_mus_audio_open_input);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(size)), size, SCM_ARG5, S_mus_audio_open_input);
-  return(TO_SCM_INT(mus_audio_open_input(TO_C_INT_OR_ELSE(dev, 0),
+  SCM_ASSERT(INTEGER_P(dev), dev, SCM_ARG1, S_mus_audio_open_input);
+  SCM_ASSERT(NUMBER_P(srate), srate, SCM_ARG2, S_mus_audio_open_input);
+  SCM_ASSERT(INTEGER_P(chans), chans, SCM_ARG3, S_mus_audio_open_input);
+  SCM_ASSERT(INTEGER_P(format), format, SCM_ARG4, S_mus_audio_open_input);
+  SCM_ASSERT(NUMBER_P(size), size, SCM_ARG5, S_mus_audio_open_input);
+  return(TO_SCM_INT(mus_audio_open_input(TO_C_INT(dev),
 					 TO_C_INT_OR_ELSE(srate, 0),
-					 TO_C_INT_OR_ELSE(chans, 0),
-					 TO_C_INT_OR_ELSE(format, 0),
+					 TO_C_INT(chans),
+					 TO_C_INT(format),
 					 TO_C_INT_OR_ELSE(size, 0))));
 }
 
 static SCM g_close_audio(SCM line)
 {
   #define H_mus_audio_close "(" S_mus_audio_close " line) closes the audio hardware port line"
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(line)), line, SCM_ARG1, S_mus_audio_close);
-  return(TO_SCM_INT(mus_audio_close(TO_C_INT_OR_ELSE(line, 0))));
+  SCM_ASSERT(INTEGER_P(line), line, SCM_ARG1, S_mus_audio_close);
+  return(TO_SCM_INT(mus_audio_close(TO_C_INT(line))));
 }
 
 static SCM g_save_audio_state (void) 
@@ -727,12 +739,12 @@ to the audio line from the sound-data object sdata."
   MUS_SAMPLE_TYPE **bufs;
   sound_data *sd;
   int i, j, k, outbytes, val, frms;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(line)), line, SCM_ARG1, S_mus_audio_write);
+  SCM_ASSERT(INTEGER_P(line), line, SCM_ARG1, S_mus_audio_write);
   SCM_ASSERT(sound_data_p(sdata), sdata, SCM_ARG2, S_mus_audio_write);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(frames)), frames, SCM_ARG3, S_mus_audio_write);
+  SCM_ASSERT(INTEGER_P(frames), frames, SCM_ARG3, S_mus_audio_write);
   sd = (sound_data *)SND_VALUE_OF(sdata);
   bufs = sd->data;
-  frms = TO_C_INT_OR_ELSE(frames, 0);
+  frms = TO_C_INT(frames);
   outbytes = frms * sd->chans * 2;
   obuf = (short *)CALLOC(frms * sd->chans, sizeof(short));
   if (sd->chans == 1)
@@ -746,7 +758,7 @@ to the audio line from the sound-data object sdata."
 	for (i = 0; i < sd->chans; i++) 
 	  obuf[j+i] = MUS_SAMPLE_TO_SHORT(bufs[i][k]);
     }
-  val = mus_audio_write(TO_C_INT_OR_ELSE(line, 0), (char *)obuf, outbytes);
+  val = mus_audio_write(TO_C_INT(line), (char *)obuf, outbytes);
   FREE(obuf);
   return(scm_return_first(TO_SCM_INT(val), sdata));
 }
@@ -760,15 +772,15 @@ from the audio line into the sound-data object sdata."
   sound_data *sd;
   int val, inbytes, i, j, k, frms;
   MUS_SAMPLE_TYPE **bufs;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(line)), line, SCM_ARG1, S_mus_audio_read);
+  SCM_ASSERT(INTEGER_P(line), line, SCM_ARG1, S_mus_audio_read);
   SCM_ASSERT(sound_data_p(sdata), sdata, SCM_ARG2, S_mus_audio_read);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(frames)), frames, SCM_ARG3, S_mus_audio_read);
+  SCM_ASSERT(INTEGER_P(frames), frames, SCM_ARG3, S_mus_audio_read);
   sd = (sound_data *)SND_VALUE_OF(sdata);
   bufs = sd->data;
-  frms = TO_C_INT_OR_ELSE(frames, 0);
+  frms = TO_C_INT(frames);
   inbytes = frms * sd->chans * 2;
   inbuf = (short *)CALLOC(frms * sd->chans, sizeof(short));
-  val = mus_audio_read(TO_C_INT_OR_ELSE(line, 0), (char *)inbuf, inbytes);
+  val = mus_audio_read(TO_C_INT(line), (char *)inbuf, inbytes);
   if (sd->chans == 1)
     {
       for (k = 0; k < frms; k++) 
@@ -790,17 +802,17 @@ static SCM g_read_audio_state(SCM dev, SCM field, SCM chan, SCM vals)
   int val, i, len;
   float *fvals;
   SCM *vdata;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(dev)), dev, SCM_ARG1, S_mus_audio_mixer_read);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(field)), field, SCM_ARG2, S_mus_audio_mixer_read);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(chan)), chan, SCM_ARG3, S_mus_audio_mixer_read);
+  SCM_ASSERT(INTEGER_P(dev), dev, SCM_ARG1, S_mus_audio_mixer_read);
+  SCM_ASSERT(INTEGER_P(field), field, SCM_ARG2, S_mus_audio_mixer_read);
+  SCM_ASSERT(INTEGER_P(chan), chan, SCM_ARG3, S_mus_audio_mixer_read);
   SCM_ASSERT(gh_vector_p(vals), vals, SCM_ARG4, S_mus_audio_mixer_read);
   len = gh_vector_length(vals);
   if (len == 0)
     fvals = (float *)CALLOC(1, sizeof(float));
   else fvals = (float *)CALLOC(len, sizeof(float));
-  val = mus_audio_mixer_read(TO_C_INT_OR_ELSE(dev, 0),
-			     TO_C_INT_OR_ELSE(field, 0),
-			     TO_C_INT_OR_ELSE(chan, 0),
+  val = mus_audio_mixer_read(TO_C_INT(dev),
+			     TO_C_INT(field),
+			     TO_C_INT(chan),
 			     fvals);
   vdata = SCM_VELTS(vals);
   for (i = 0; i < len; i++) 
@@ -815,9 +827,9 @@ static SCM g_write_audio_state(SCM dev, SCM field, SCM chan, SCM vals)
   int i, len, res;
   float *fvals;
   SCM *vdata;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(dev)), dev, SCM_ARG1, S_mus_audio_mixer_write);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(field)), field, SCM_ARG2, S_mus_audio_mixer_write);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(chan)), chan, SCM_ARG3, S_mus_audio_mixer_write);
+  SCM_ASSERT(INTEGER_P(dev), dev, SCM_ARG1, S_mus_audio_mixer_write);
+  SCM_ASSERT(INTEGER_P(field), field, SCM_ARG2, S_mus_audio_mixer_write);
+  SCM_ASSERT(INTEGER_P(chan), chan, SCM_ARG3, S_mus_audio_mixer_write);
   SCM_ASSERT(gh_vector_p(vals), vals, SCM_ARG4, S_mus_audio_mixer_write);
   len = gh_vector_length(vals);
   if (len == 0)
@@ -829,9 +841,9 @@ static SCM g_write_audio_state(SCM dev, SCM field, SCM chan, SCM vals)
       for (i = 0; i < len; i++) 
 	fvals[i] = TO_C_DOUBLE(vdata[i]);
     }
-  res = mus_audio_mixer_write(TO_C_INT_OR_ELSE(dev, 0),
-			      TO_C_INT_OR_ELSE(field, 0),
-			      TO_C_INT_OR_ELSE(chan, 0),
+  res = mus_audio_mixer_write(TO_C_INT(dev),
+			      TO_C_INT(field),
+			      TO_C_INT(chan),
 			      fvals);
   FREE(fvals);
   return(TO_SCM_INT(res));
@@ -840,25 +852,25 @@ static SCM g_write_audio_state(SCM dev, SCM field, SCM chan, SCM vals)
 static SCM g_mus_set_data_clipped(SCM fd, SCM clipped)
 {
   #define H_mus_file_set_data_clipped "(" S_mus_file_set_data_clipped " fd val) sets whether data associated with file fd is clipped or wraps around"
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(fd)), fd, SCM_ARG1, S_mus_file_set_data_clipped);
-  SCM_ASSERT(gh_boolean_p(clipped), fd, SCM_ARG1, S_mus_file_set_data_clipped);
-  return(TO_SCM_INT(mus_file_set_data_clipped(TO_C_INT_OR_ELSE(fd, 0),
+  SCM_ASSERT(INTEGER_P(fd), fd, SCM_ARG1, S_mus_file_set_data_clipped);
+  SCM_ASSERT(BOOLEAN_P(clipped), fd, SCM_ARG1, S_mus_file_set_data_clipped);
+  return(TO_SCM_INT(mus_file_set_data_clipped(TO_C_INT(fd),
 					      (SCM_FALSEP(clipped)) ? 0 : 1)));
 }
 
 static SCM g_mus_prescaler(SCM fd)
 {
   #define H_mus_file_prescaler "(" S_mus_file_prescaler " fd) -> current prescaler (normally 1.0) associated with fd"
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(fd)), fd, SCM_ARG1, S_mus_file_set_prescaler);
-  return(TO_SCM_DOUBLE(mus_file_prescaler(TO_C_INT_OR_ELSE(fd, 0))));
+  SCM_ASSERT(INTEGER_P(fd), fd, SCM_ARG1, S_mus_file_set_prescaler);
+  return(TO_SCM_DOUBLE(mus_file_prescaler(TO_C_INT(fd))));
 }
 
 static SCM g_mus_set_prescaler(SCM fd, SCM val)
 {
   #define H_mus_file_set_prescaler "(" S_mus_file_set_prescaler " fd val) sets the current prescaler associated with fd"
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(fd)), fd, SCM_ARG1, S_mus_file_set_prescaler);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG2, S_mus_file_set_prescaler);
-  return(TO_SCM_DOUBLE(mus_file_set_prescaler(TO_C_INT_OR_ELSE(fd, 0),
+  SCM_ASSERT(INTEGER_P(fd), fd, SCM_ARG1, S_mus_file_set_prescaler);
+  SCM_ASSERT(NUMBER_P(val), val, SCM_ARG2, S_mus_file_set_prescaler);
+  return(TO_SCM_DOUBLE(mus_file_set_prescaler(TO_C_INT(fd),
 					      TO_C_DOUBLE(val))));
 }
 

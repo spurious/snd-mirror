@@ -3850,7 +3850,7 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
       if (SCM_INUMP(on))
 	cp->normalize_fft = TO_SMALL_C_INT(on);
       else
-	if (gh_number_p(on))
+	if (NUMBER_P(on))
 	  cp->normalize_fft = ((int)TO_C_DOUBLE_WITH_ORIGIN(on, caller));
 	else
 	  if (SCM_FALSEP(on))
@@ -4086,7 +4086,7 @@ static SCM g_edit_position(SCM snd_n, SCM chn_n)
 
 static SCM g_set_edit_position(SCM on, SCM snd_n, SCM chn_n) 
 {
-  SCM_ASSERT(gh_number_p(on), on, SCM_ARG1, "set-" S_edit_position);
+  SCM_ASSERT(INTEGER_P(on), on, SCM_ARG1, "set-" S_edit_position);
   return(cp_iwrite(snd_n, chn_n, on, CP_EDIT_CTR, "set-" S_edit_position));
 }
 
@@ -4100,7 +4100,7 @@ static SCM g_ffting(SCM snd_n, SCM chn_n)
 
 static SCM g_set_ffting(SCM on, SCM snd_n, SCM chn_n) 
 {
-  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_ffting);
+  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_ffting);
   return(cp_iwrite(snd_n, chn_n, on, CP_FFTING, "set-" S_ffting));
 }
 
@@ -4114,7 +4114,7 @@ static SCM g_waving(SCM snd_n, SCM chn_n)
 
 static SCM g_set_waving(SCM on, SCM snd_n, SCM chn_n) 
 {
-  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_waving);
+  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_waving);
   return(cp_iwrite(snd_n, chn_n, on, CP_WAVING, "set-" S_waving));
 }
 
@@ -4128,7 +4128,7 @@ static SCM g_graphing(SCM snd_n, SCM chn_n)
 
 static SCM g_set_graphing(SCM on, SCM snd_n, SCM chn_n) 
 {
-  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_graphing);
+  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_graphing);
   return(cp_iwrite(snd_n, chn_n, on, CP_LISP_GRAPHING, "set-" S_graphing));
 }
 
@@ -4142,7 +4142,7 @@ static SCM g_cursor(SCM snd_n, SCM chn_n)
 
 static SCM g_set_cursor(SCM on, SCM snd_n, SCM chn_n) 
 {
-  SCM_ASSERT(INT_OR_ARG_P(on), on, SCM_ARG1, "set-" S_cursor);
+  SCM_ASSERT(INTEGER_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_cursor);
   return(cp_iwrite(snd_n, chn_n, on, CP_CURSOR, "set-" S_cursor));
 }
 
@@ -4156,7 +4156,7 @@ static SCM g_cursor_style(SCM snd_n, SCM chn_n)
 
 static SCM g_set_cursor_style(SCM on, SCM snd_n, SCM chn_n) 
 {
-  SCM_ASSERT(gh_number_p(on) || gh_procedure_p(on), on, SCM_ARG1, "set-" S_cursor_style);
+  SCM_ASSERT(INTEGER_P(on) || gh_procedure_p(on), on, SCM_ARG1, "set-" S_cursor_style);
   return(cp_iwrite(snd_n, chn_n, on, CP_CURSOR_STYLE, "set-" S_cursor_style));
 }
 
@@ -4170,7 +4170,7 @@ static SCM g_cursor_size(SCM snd_n, SCM chn_n)
 
 static SCM g_set_cursor_size(SCM on, SCM snd_n, SCM chn_n) 
 {
-  SCM_ASSERT(gh_number_p(on), on, SCM_ARG1, "set-" S_cursor_size);
+  SCM_ASSERT(INTEGER_P(on), on, SCM_ARG1, "set-" S_cursor_size);
   return(cp_iwrite(snd_n, chn_n, on, CP_CURSOR_SIZE, "set-" S_cursor_size));
 }
 
@@ -4190,7 +4190,7 @@ static SCM g_frames(SCM snd_n, SCM chn_n)
 
 static SCM g_set_frames(SCM on, SCM snd_n, SCM chn_n) 
 {
-  SCM_ASSERT(gh_number_p(on), on, SCM_ARG1, "set-" S_cursor_size);
+  SCM_ASSERT(NUMBER_P(on), on, SCM_ARG1, "set-" S_cursor_size);
   return(cp_iwrite(snd_n, chn_n, on, CP_FRAMES, "set-" S_frames));
 }
 
@@ -4204,7 +4204,7 @@ static SCM g_maxamp(SCM snd_n, SCM chn_n)
 
 static SCM g_set_maxamp(SCM on, SCM snd_n, SCM chn_n) 
 {
-  SCM_ASSERT(gh_number_p(on), on, SCM_ARG1, "set-" S_maxamp);
+  SCM_ASSERT(NUMBER_P(on), on, SCM_ARG1, "set-" S_maxamp);
   return(cp_fwrite(snd_n, chn_n, on, CP_MAXAMP, "set-" S_maxamp));
 }
 
@@ -4218,7 +4218,7 @@ static SCM g_squelch_update(SCM snd_n, SCM chn_n)
 
 static SCM g_set_squelch_update(SCM on, SCM snd_n, SCM chn_n) 
 {
-  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_squelch_update);
+  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_squelch_update);
   return(cp_iwrite(snd_n, chn_n, on, CP_SQUELCH_UPDATE, "set-" S_squelch_update));
 }
 
@@ -4232,7 +4232,7 @@ static SCM g_ap_sx(SCM snd_n, SCM chn_n)
 
 static SCM g_set_ap_sx(SCM on, SCM snd_n, SCM chn_n) 
 {
-  SCM_ASSERT(gh_number_p(on), on, SCM_ARG1, "set-" S_x_position_slider);
+  SCM_ASSERT(NUMBER_P(on), on, SCM_ARG1, "set-" S_x_position_slider);
   return(cp_fwrite(snd_n, chn_n, on, CP_AP_SX, "set-" S_x_position_slider));
 }
 
@@ -4246,7 +4246,7 @@ static SCM g_ap_sy(SCM snd_n, SCM chn_n)
 
 static SCM g_set_ap_sy(SCM on, SCM snd_n, SCM chn_n) 
 {
-  SCM_ASSERT(gh_number_p(on), on, SCM_ARG1, "set-" S_y_position_slider);
+  SCM_ASSERT(NUMBER_P(on), on, SCM_ARG1, "set-" S_y_position_slider);
   return(cp_fwrite(snd_n, chn_n, on, CP_AP_SY, "set-" S_y_position_slider));
 }
 
@@ -4260,7 +4260,7 @@ static SCM g_ap_zx(SCM snd_n, SCM chn_n)
 
 static SCM g_set_ap_zx(SCM on, SCM snd_n, SCM chn_n) 
 {
-  SCM_ASSERT(gh_number_p(on), on, SCM_ARG1, "set-" S_x_zoom_slider);
+  SCM_ASSERT(NUMBER_P(on), on, SCM_ARG1, "set-" S_x_zoom_slider);
   return(cp_fwrite(snd_n, chn_n, on, CP_AP_ZX, "set-" S_x_zoom_slider));
 }
 
@@ -4275,7 +4275,7 @@ static SCM g_ap_zy(SCM snd_n, SCM chn_n)
 
 static SCM g_set_ap_zy(SCM on, SCM snd_n, SCM chn_n) 
 {
-  SCM_ASSERT(gh_number_p(on), on, SCM_ARG1, "set-" S_y_zoom_slider);
+  SCM_ASSERT(NUMBER_P(on), on, SCM_ARG1, "set-" S_y_zoom_slider);
   return(cp_fwrite(snd_n, chn_n, on, CP_AP_ZY, "set-" S_y_zoom_slider));
 }
 
@@ -4296,21 +4296,19 @@ static SCM g_undo_hook(SCM snd_n, SCM chn_n)
 static SCM g_show_y_zero(SCM snd, SCM chn)
 {
   #define H_show_y_zero "(" S_show_y_zero " (snd #t) (chn #t)) -> #t if Snd should include a line at y = 0.0"
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_iread(snd, chn, CP_SHOW_Y_ZERO, S_show_y_zero));
-  SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_show_y_zero);
   return(TO_SCM_BOOLEAN(show_y_zero(get_global_state())));
 }
 
 static SCM g_set_show_y_zero(SCM on, SCM snd, SCM chn) 
 {
   snd_state *ss;
-  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_show_y_zero);
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_show_y_zero);
+  if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, on, CP_SHOW_Y_ZERO, "set-" S_show_y_zero));
   else
     {
-      SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_show_y_zero);
       ss = get_global_state();
       set_show_y_zero(ss, TO_C_BOOLEAN_OR_T(on));
       return(TO_SCM_BOOLEAN(show_y_zero(ss)));
@@ -4323,9 +4321,8 @@ static SCM g_min_dB(SCM snd, SCM chn)
 {
   #define H_min_dB "(" S_min_dB " (snd #t) (chn #t)) -> min dB value displayed in fft graphs using dB scales"
   snd_state *ss;
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_fread(snd, chn, CP_MIN_DB, S_min_dB));
-  SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_min_dB);
   ss = get_global_state();
   return(TO_SCM_DOUBLE(ss->min_dB));
 }
@@ -4334,12 +4331,11 @@ static SCM g_set_min_dB(SCM val, SCM snd, SCM chn)
 {
   Float db;
   snd_state *ss;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG1, "set-" S_min_dB); 
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  SCM_ASSERT(NUMBER_P(val), val, SCM_ARG1, "set-" S_min_dB); 
+  if (BOUND_P(snd))
     return(cp_fwrite(snd, chn, val, CP_MIN_DB, "set-" S_min_dB));
   else
     {
-      SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_min_dB);
       db = TO_C_DOUBLE(val);
       ss = get_global_state();
       ss->min_dB = db;
@@ -4354,21 +4350,19 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_min_dB_reversed, g_set_min_dB)
 static SCM g_fft_beta(SCM snd, SCM chn) 
 {
   #define H_fft_beta "(" S_fft_beta " *optional (snd #t) (chn #t)) -> 'beta' fft data window parameter value (0.0)"
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_fread(snd, chn, CP_FFT_BETA, S_fft_beta));
-  SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_fft_beta);
   return(TO_SCM_DOUBLE(fft_beta(get_global_state())));
 }
 
 static SCM g_set_fft_beta(SCM val, SCM snd, SCM chn) 
 {
   snd_state *ss;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG1, "set-" S_fft_beta); 
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  SCM_ASSERT(NUMBER_P(val), val, SCM_ARG1, "set-" S_fft_beta); 
+  if (BOUND_P(snd))
     return(cp_fwrite(snd, chn, val, CP_FFT_BETA, "set-" S_fft_beta));
   else
     {
-      SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_fft_beta);
       ss = get_global_state();
       set_fft_beta(ss, fclamp(0.0, TO_C_DOUBLE(val), 1.0));
       return(TO_SCM_DOUBLE(fft_beta(ss)));
@@ -4380,21 +4374,19 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_fft_beta_reversed, g_set_fft_beta)
 static SCM g_spectro_cutoff(SCM snd, SCM chn) 
 {
   #define H_spectro_cutoff "(" S_spectro_cutoff " *optional (snd #t) (chn #t)) -> amount of frequency shown in spectra (1.0)"
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_fread(snd, chn, CP_SPECTRO_CUTOFF, S_spectro_cutoff));
-  SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_spectro_cutoff);
   return(TO_SCM_DOUBLE(spectro_cutoff(get_global_state())));
 }
 
 static SCM g_set_spectro_cutoff(SCM val, SCM snd, SCM chn) 
 {
   snd_state *ss;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG1, "set-" S_spectro_cutoff); 
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  SCM_ASSERT(NUMBER_P(val), val, SCM_ARG1, "set-" S_spectro_cutoff); 
+  if (BOUND_P(snd))
     return(cp_fwrite(snd, chn, val, CP_SPECTRO_CUTOFF, "set-" S_spectro_cutoff));
   else
     {
-      SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_spectro_cutoff);
       ss = get_global_state();
       set_spectro_cutoff(ss, fclamp(0.0, TO_C_DOUBLE(val), 1.0));
       return(TO_SCM_DOUBLE(spectro_cutoff(ss)));
@@ -4406,21 +4398,19 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_spectro_cutoff_reversed, g_set_spectro_
 static SCM g_spectro_start(SCM snd, SCM chn) 
 {
   #define H_spectro_start "(" S_spectro_start " *optional (snd #t) (chn #t)) -> lower bound of frequency in spectral displays (0.0)"
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_fread(snd, chn, CP_SPECTRO_START, S_spectro_start));
-  SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_spectro_start);
   return(TO_SCM_DOUBLE(spectro_start(get_global_state())));
 }
 
 static SCM g_set_spectro_start(SCM val, SCM snd, SCM chn) 
 {
   snd_state *ss;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG1, "set-" S_spectro_start); 
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  SCM_ASSERT(NUMBER_P(val), val, SCM_ARG1, "set-" S_spectro_start); 
+  if (BOUND_P(snd))
     return(cp_fwrite(snd, chn, val, CP_SPECTRO_START, "set-" S_spectro_start));
   else
     {
-      SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_spectro_start);
       ss = get_global_state();
       set_spectro_start(ss, fclamp(0.0, TO_C_DOUBLE(val), 1.0));
       return(TO_SCM_DOUBLE(spectro_start(ss)));
@@ -4432,21 +4422,19 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_spectro_start_reversed, g_set_spectro_s
 static SCM g_spectro_x_angle(SCM snd, SCM chn) 
 {
   #define H_spectro_x_angle "(" S_spectro_x_angle " *optional (snd #t) (chn #t)) -> spectrogram x-axis viewing angle (90.0)"
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_fread(snd, chn, CP_SPECTRO_X_ANGLE, S_spectro_x_angle));
-  SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_spectro_x_angle);
   return(TO_SCM_DOUBLE(spectro_x_angle(get_global_state())));
 }
 
 static SCM g_set_spectro_x_angle(SCM val, SCM snd, SCM chn) 
 {
   snd_state *ss;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG1, "set-" S_spectro_x_angle); 
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  SCM_ASSERT(NUMBER_P(val), val, SCM_ARG1, "set-" S_spectro_x_angle); 
+  if (BOUND_P(snd))
     return(cp_fwrite(snd, chn, val, CP_SPECTRO_X_ANGLE, "set-" S_spectro_x_angle));
   else
     {
-      SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_spectro_x_angle);
       ss = get_global_state();
       set_spectro_x_angle(ss, TO_C_DOUBLE(val));
       return(TO_SCM_DOUBLE(spectro_x_angle(ss)));
@@ -4458,21 +4446,19 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_spectro_x_angle_reversed, g_set_spectro
 static SCM g_spectro_x_scale(SCM snd, SCM chn) 
 {
   #define H_spectro_x_scale "(" S_spectro_x_scale " *optional (snd #t) (chn #t)) -> scaler (stretch) along the spectrogram x axis (1.0)"
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_fread(snd, chn, CP_SPECTRO_X_SCALE, S_spectro_x_scale));
-  SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_spectro_x_scale);
   return(TO_SCM_DOUBLE(spectro_x_scale(get_global_state())));
 }
 
 static SCM g_set_spectro_x_scale(SCM val, SCM snd, SCM chn) 
 {
   snd_state *ss;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG1, "set-" S_spectro_x_scale); 
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  SCM_ASSERT(NUMBER_P(val), val, SCM_ARG1, "set-" S_spectro_x_scale); 
+  if (BOUND_P(snd))
     return(cp_fwrite(snd, chn, val, CP_SPECTRO_X_SCALE, "set-" S_spectro_x_scale));
   else
     {
-      SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_spectro_x_scale);
       ss = get_global_state();
       set_spectro_x_scale(ss, TO_C_DOUBLE(val));
       return(TO_SCM_DOUBLE(spectro_x_scale(ss)));
@@ -4484,21 +4470,19 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_spectro_x_scale_reversed, g_set_spectro
 static SCM g_spectro_y_angle(SCM snd, SCM chn) 
 {
   #define H_spectro_y_angle "(" S_spectro_y_angle " *optional (snd #t) (chn #t)) -> spectrogram y-axis viewing angle (0.0)"
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_fread(snd, chn, CP_SPECTRO_Y_ANGLE, S_spectro_y_angle));
-  SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_spectro_y_angle);
   return(TO_SCM_DOUBLE(spectro_y_angle(get_global_state())));
 }
 
 static SCM g_set_spectro_y_angle(SCM val, SCM snd, SCM chn) 
 {
   snd_state *ss;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG1, "set-" S_spectro_y_angle); 
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  SCM_ASSERT(NUMBER_P(val), val, SCM_ARG1, "set-" S_spectro_y_angle); 
+  if (BOUND_P(snd))
     return(cp_fwrite(snd, chn, val, CP_SPECTRO_Y_ANGLE, "set-" S_spectro_y_angle));
   else
     {
-      SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_spectro_y_angle);
       ss = get_global_state();
       set_spectro_y_angle(ss, TO_C_DOUBLE(val));
       return(TO_SCM_DOUBLE(spectro_y_angle(ss)));
@@ -4510,21 +4494,19 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_spectro_y_angle_reversed, g_set_spectro
 static SCM g_spectro_y_scale(SCM snd, SCM chn) 
 {
   #define H_spectro_y_scale "(" S_spectro_y_scale " *optional (snd #t) (chn #t)) -> scaler (stretch) along the spectrogram y axis (1.0)"
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_fread(snd, chn, CP_SPECTRO_Y_SCALE, S_spectro_y_scale));
-  SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_spectro_y_scale);
   return(TO_SCM_DOUBLE(spectro_y_scale(get_global_state())));
 }
 
 static SCM g_set_spectro_y_scale(SCM val, SCM snd, SCM chn) 
 {
   snd_state *ss;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG1, "set-" S_spectro_y_scale); 
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  SCM_ASSERT(NUMBER_P(val), val, SCM_ARG1, "set-" S_spectro_y_scale); 
+  if (BOUND_P(snd))
     return(cp_fwrite(snd, chn, val, CP_SPECTRO_Y_SCALE, "set-" S_spectro_y_scale));
   else
     {
-      SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_spectro_y_scale);
       ss = get_global_state();
       set_spectro_y_scale(ss, TO_C_DOUBLE(val));
       return(TO_SCM_DOUBLE(spectro_y_scale(ss)));
@@ -4536,21 +4518,19 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_spectro_y_scale_reversed, g_set_spectro
 static SCM g_spectro_z_angle(SCM snd, SCM chn) 
 {
   #define H_spectro_z_angle "(" S_spectro_z_angle " *optional (snd #t) (chn #t)) -> spectrogram z-axis viewing angle (-2.0)"
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_fread(snd, chn, CP_SPECTRO_Z_ANGLE, S_spectro_z_angle));
-  SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_spectro_z_angle);
   return(TO_SCM_DOUBLE(spectro_z_angle(get_global_state())));
 }
 
 static SCM g_set_spectro_z_angle(SCM val, SCM snd, SCM chn) 
 {
   snd_state *ss;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG1, "set-" S_spectro_z_angle); 
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  SCM_ASSERT(NUMBER_P(val), val, SCM_ARG1, "set-" S_spectro_z_angle); 
+  if (BOUND_P(snd))
     return(cp_fwrite(snd, chn, val, CP_SPECTRO_Z_ANGLE, "set-" S_spectro_z_angle));
   else
     {
-      SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_spectro_z_angle);
       ss = get_global_state();
       set_spectro_z_angle(ss, TO_C_DOUBLE(val));
       return(TO_SCM_DOUBLE(spectro_z_angle(ss)));
@@ -4562,21 +4542,19 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_spectro_z_angle_reversed, g_set_spectro
 static SCM g_spectro_z_scale(SCM snd, SCM chn) 
 {
   #define H_spectro_z_scale "(" S_spectro_z_scale " *optional (snd #t) (chn #t)) -> scaler (stretch) along the spectrogram z axis (0.1)"
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_fread(snd, chn, CP_SPECTRO_Z_SCALE, S_spectro_z_scale));
-  SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_spectro_z_scale);
   return(TO_SCM_DOUBLE(spectro_z_scale(get_global_state())));
 }
 
 static SCM g_set_spectro_z_scale(SCM val, SCM snd, SCM chn) 
 {
   snd_state *ss;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG1, "set-" S_spectro_z_scale); 
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  SCM_ASSERT(NUMBER_P(val), val, SCM_ARG1, "set-" S_spectro_z_scale); 
+  if (BOUND_P(snd))
     return(cp_fwrite(snd, chn, val, CP_SPECTRO_Z_SCALE, "set-" S_spectro_z_scale));
   else
     {
-      SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_spectro_z_scale);
       ss = get_global_state();
       set_spectro_z_scale(ss, TO_C_DOUBLE(val));
       return(TO_SCM_DOUBLE(spectro_z_scale(ss)));
@@ -4588,21 +4566,19 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_spectro_z_scale_reversed, g_set_spectro
 static SCM g_spectro_hop(SCM snd, SCM chn)
 {
   #define H_spectro_hop "(" S_spectro_hop " (snd #t) (chn #t)) -> hop amount (pixels) in spectral displays"
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_iread(snd, chn, CP_SPECTRO_HOP, S_spectro_hop));
-  SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_spectro_hop);
   return(TO_SCM_INT(spectro_hop(get_global_state())));
 }
 
 static SCM g_set_spectro_hop(SCM val, SCM snd, SCM chn)
 {
   snd_state *ss;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG1, "set-" S_spectro_hop); 
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  SCM_ASSERT(NUMBER_P(val), val, SCM_ARG1, "set-" S_spectro_hop); 
+  if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, val, CP_SPECTRO_HOP, "set-" S_spectro_hop));
   else
     {
-      SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_spectro_hop);
       ss = get_global_state();
       set_spectro_hop(ss, TO_C_INT_OR_ELSE(val, 0));
       return(TO_SCM_INT(spectro_hop(ss)));
@@ -4615,21 +4591,19 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_spectro_hop_reversed, g_set_spectro_hop
 static SCM g_show_marks(SCM snd, SCM chn)
 {
   #define H_show_marks "(" S_show_marks " (snd #t) (chn #t)) -> #t if Snd should show marks"
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_iread(snd, chn, CP_SHOW_MARKS, S_show_marks));
-  SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_show_marks);
   return(TO_SCM_BOOLEAN(show_marks(get_global_state())));
 }
 
 static SCM g_set_show_marks(SCM on, SCM snd, SCM chn)
 {
   snd_state *ss;
-  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_show_marks);
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_show_marks);
+  if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, on, CP_SHOW_MARKS, "set-" S_show_marks));
   else
     {
-      SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_show_marks);
       ss = get_global_state();
       set_show_marks(ss, TO_C_BOOLEAN_OR_T(on));
       return(TO_SCM_BOOLEAN(show_marks(ss)));
@@ -4641,21 +4615,19 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_show_marks_reversed, g_set_show_marks)
 static SCM g_show_fft_peaks(SCM snd, SCM chn)
 {
   #define H_show_fft_peaks "(" S_show_fft_peaks " (snd #t) (chn #t)) -> #t if fft display should include peak list"
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_iread(snd, chn, CP_SHOW_FFT_PEAKS, S_show_fft_peaks));
-  SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_show_fft_peaks);
   return(TO_SCM_BOOLEAN(show_fft_peaks(get_global_state())));
 }
 
 static SCM g_set_show_fft_peaks(SCM val, SCM snd, SCM chn)
 {
   snd_state *ss;
-  SCM_ASSERT(BOOL_OR_ARG_P(val), val, SCM_ARG1, "set-" S_show_fft_peaks);
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(val), val, SCM_ARG1, "set-" S_show_fft_peaks);
+  if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, val, CP_SHOW_FFT_PEAKS, "set-" S_show_fft_peaks));
   else
     {
-      SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_show_fft_peaks);
       ss = get_global_state();
       set_show_fft_peaks(ss, TO_C_BOOLEAN_OR_T(val));
       return(TO_SCM_BOOLEAN(show_fft_peaks(ss)));
@@ -4667,21 +4639,19 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_show_fft_peaks_reversed, g_set_show_fft
 static SCM g_zero_pad(SCM snd, SCM chn)
 {
   #define H_zero_pad "(" S_zero_pad " (snd #t) (chn #t)) -> zero padding used in fft as a multiple of fft size (0)"
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_iread(snd, chn, CP_ZERO_PAD, S_zero_pad));
-  SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_zero_pad);
   return(TO_SCM_INT(zero_pad(get_global_state())));
 }
 
 static SCM g_set_zero_pad(SCM val, SCM snd, SCM chn)
 {
   snd_state *ss;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG1, "set-" S_zero_pad); 
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  SCM_ASSERT(NUMBER_P(val), val, SCM_ARG1, "set-" S_zero_pad); 
+  if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, val, CP_ZERO_PAD, "set-" S_zero_pad));
   else
     {
-      SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_zero_pad);
       ss = get_global_state();
       set_zero_pad(ss, g_imin(0, val, DEFAULT_ZERO_PAD));
       return(TO_SCM_INT(zero_pad(ss)));
@@ -4693,21 +4663,19 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_zero_pad_reversed, g_set_zero_pad)
 static SCM g_wavelet_type(SCM snd, SCM chn)
 {
   #define H_wavelet_type "(" S_wavelet_type " (snd #t) (chn #t)) -> wavelet used in wavelet-transform (0)"
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_iread(snd, chn, CP_WAVELET_TYPE, S_wavelet_type));
-  SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_wavelet_type);
   return(TO_SCM_INT(wavelet_type(get_global_state())));
 }
 
 static SCM g_set_wavelet_type(SCM val, SCM snd, SCM chn)
 {
   snd_state *ss;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG1, "set-" S_wavelet_type); 
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  SCM_ASSERT(INTEGER_P(val), val, SCM_ARG1, "set-" S_wavelet_type); 
+  if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, val, CP_WAVELET_TYPE, "set-" S_wavelet_type));
   else
     {
-      SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_wavelet_type);
       ss = get_global_state();
       set_wavelet_type(ss, iclamp(0, TO_C_INT_OR_ELSE(val, 0), NUM_WAVELETS-1));
       return(TO_SCM_INT(wavelet_type(ss)));
@@ -4719,21 +4687,19 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_wavelet_type_reversed, g_set_wavelet_ty
 static SCM g_fft_log_frequency(SCM snd, SCM chn)
 {
   #define H_fft_log_frequency "(" S_fft_log_frequency " (snd #t) (chn #t)) -> #t if fft displays use log on the frequency axis (#f)"
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_iread(snd, chn, CP_FFT_LOG_FREQUENCY, S_fft_log_frequency));
-  SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_fft_log_frequency);
   return(TO_SCM_BOOLEAN(fft_log_frequency(get_global_state())));
 }
 
 static SCM g_set_fft_log_frequency(SCM on, SCM snd, SCM chn)
 {
   snd_state *ss;
-  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_fft_log_frequency);
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_fft_log_frequency);
+  if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, on, CP_FFT_LOG_FREQUENCY, "set-" S_fft_log_frequency));
   else
     {
-      SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_fft_log_frequency);
       ss = get_global_state();
       set_fft_log_frequency(ss, TO_C_BOOLEAN_OR_T(on)); 
       return(TO_SCM_BOOLEAN(fft_log_frequency(ss)));
@@ -4745,21 +4711,19 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_fft_log_frequency_reversed, g_set_fft_l
 static SCM g_fft_log_magnitude(SCM snd, SCM chn)
 {
   #define H_fft_log_magnitude "(" S_fft_log_magnitude " (snd #t) (chn #t)) -> #t if fft displays use dB (#f)"
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_iread(snd, chn, CP_FFT_LOG_MAGNITUDE, S_fft_log_magnitude));
-  SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_fft_log_magnitude);
   return(TO_SCM_BOOLEAN(fft_log_magnitude(get_global_state())));
 }
 
 static SCM g_set_fft_log_magnitude(SCM on, SCM snd, SCM chn)
 {
   snd_state *ss;
-  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_fft_log_magnitude);
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_fft_log_magnitude);
+  if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, on, CP_FFT_LOG_MAGNITUDE, "set-" S_fft_log_magnitude));
   else
     {
-      SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_fft_log_magnitude);
       ss = get_global_state();
       set_fft_log_magnitude(ss, TO_C_BOOLEAN_OR_T(on)); 
       return(TO_SCM_BOOLEAN(fft_log_magnitude(ss)));
@@ -4771,21 +4735,19 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_fft_log_magnitude_reversed, g_set_fft_l
 static SCM g_show_mix_waveforms(SCM snd, SCM chn)
 {
   #define H_show_mix_waveforms "(" S_show_mix_waveforms " (snd #t) (chn #t)) -> #t if Snd should display mix waveforms"
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_iread(snd, chn, CP_SHOW_MIX_WAVEFORMS, S_show_mix_waveforms));
-  SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_show_mix_waveforms);
   return(TO_SCM_BOOLEAN(show_mix_waveforms(get_global_state())));
 }
 
 static SCM g_set_show_mix_waveforms(SCM on, SCM snd, SCM chn)
 {
   snd_state *ss;
-  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_show_mix_waveforms);
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_show_mix_waveforms);
+  if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, on, CP_SHOW_MIX_WAVEFORMS, "set-" S_show_mix_waveforms));
   else
     {
-      SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_show_mix_waveforms);
       ss = get_global_state();
       set_show_mix_waveforms(ss, TO_C_BOOLEAN_OR_T(on));
       return(TO_SCM_BOOLEAN(show_mix_waveforms(ss)));
@@ -4797,21 +4759,19 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_show_mix_waveforms_reversed, g_set_show
 static SCM g_verbose_cursor(SCM snd, SCM chn)
 {
   #define H_verbose_cursor "(" S_verbose_cursor " (snd #t) (chn #t)) -> #t if the cursor's position and so on is displayed in the minibuffer"
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_iread(snd, chn, CP_VERBOSE_CURSOR, S_verbose_cursor));
-  SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_verbose_cursor);
   return(TO_SCM_BOOLEAN(verbose_cursor(get_global_state())));
 }
 
 static SCM g_set_verbose_cursor(SCM on, SCM snd, SCM chn)
 {
   snd_state *ss;
-  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_verbose_cursor);
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_verbose_cursor);
+  if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, on, CP_VERBOSE_CURSOR, "set-" S_verbose_cursor));
   else
     {
-      SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_verbose_cursor);
       ss = get_global_state();
       set_verbose_cursor(ss, TO_C_BOOLEAN_OR_T(on));
       return(TO_SCM_BOOLEAN(verbose_cursor(ss)));
@@ -4824,9 +4784,8 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_verbose_cursor_reversed, g_set_verbose_
 static SCM g_wavo(SCM snd, SCM chn)
 {
   #define H_wavo "(" S_wavo " (snd #t) (chn #t)) -> #t if Snd's time domain display is a 'wavogram'"
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_iread(snd, chn, CP_WAVO, S_wavo));
-  SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_wavo);
   return(TO_SCM_BOOLEAN(wavo(get_global_state())));
 }
 
@@ -4834,12 +4793,11 @@ static SCM g_set_wavo(SCM val, SCM snd, SCM chn)
 {
   int on;
   snd_state *ss;
-  SCM_ASSERT(BOOL_OR_ARG_P(val), val, SCM_ARG1, "set-" S_wavo);
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(val), val, SCM_ARG1, "set-" S_wavo);
+  if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, val, CP_WAVO, "set-" S_wavo));
   else
     {
-      SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_wavo);
       ss = get_global_state();
       on = TO_C_BOOLEAN_OR_T(val);
       set_wavo(ss, on);
@@ -4852,21 +4810,19 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_wavo_reversed, g_set_wavo)
 static SCM g_wavo_hop(SCM snd, SCM chn)
 {
   #define H_wavo_hop "(" S_wavo_hop " (snd #t) (chn #t)) -> wavogram spacing between successive traces"
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_iread(snd, chn, CP_WAVO_HOP, S_wavo_hop));
-  SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_wavo_hop);
   return(TO_SCM_INT(wavo_hop(get_global_state())));
 }
 
 static SCM g_set_wavo_hop(SCM val, SCM snd, SCM chn) 
 {
   snd_state *ss;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG1, "set-" S_wavo_hop); 
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  SCM_ASSERT(NUMBER_P(val), val, SCM_ARG1, "set-" S_wavo_hop); 
+  if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, val, CP_WAVO_HOP, "set-" S_wavo_hop));
   else
     {
-      SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_wavo_hop);
       ss = get_global_state();
       set_wavo_hop(ss, TO_C_INT_OR_ELSE(val, 0));
       return(TO_SCM_INT(wavo_hop(ss)));
@@ -4878,21 +4834,19 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_wavo_hop_reversed, g_set_wavo_hop)
 static SCM g_wavo_trace(SCM snd, SCM chn)
 {
   #define H_wavo_trace "(" S_wavo_trace " (snd #t) (chn #t)) -> length (samples) of each trace in the wavogram (64)"
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_iread(snd, chn, CP_WAVO_TRACE, S_wavo_trace));
-  SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_wavo_trace);
   return(TO_SCM_INT(wavo_trace(get_global_state())));
 }
 
 static SCM g_set_wavo_trace(SCM val, SCM snd, SCM chn)
 {
   snd_state *ss;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG1, "set-" S_wavo_trace); 
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  SCM_ASSERT(NUMBER_P(val), val, SCM_ARG1, "set-" S_wavo_trace); 
+  if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, val, CP_WAVO_TRACE, "set-" S_wavo_trace));
   else
     {
-      SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_wavo_trace);
       ss = get_global_state();
       set_wavo_trace(ss, TO_C_INT_OR_ELSE(val, 0));
       return(TO_SCM_INT(wavo_trace(ss)));
@@ -4904,21 +4858,19 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_wavo_trace_reversed, g_set_wavo_trace)
 static SCM g_line_size(SCM snd, SCM chn)
 {
   #define H_line_size "(" S_line_size " (snd #t) (chn #t)) -> number of samples in a 'line' (C-n and C-p) (128)"
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_iread(snd, chn, CP_LINE_SIZE, S_line_size));
-  SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_line_size);
   return(TO_SCM_INT(line_size(get_global_state())));
 }
 
 static SCM g_set_line_size(SCM val, SCM snd, SCM chn)
 {
   snd_state *ss;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG1, "set-" S_line_size); 
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  SCM_ASSERT(INTEGER_P(val), val, SCM_ARG1, "set-" S_line_size); 
+  if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, val, CP_LINE_SIZE, "set-" S_line_size));
   else
     {
-      SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_line_size);
       ss = get_global_state();
       set_line_size(ss, TO_C_INT_OR_ELSE(val, 0));
       return(TO_SCM_INT(line_size(ss)));
@@ -4930,9 +4882,8 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_line_size_reversed, g_set_line_size)
 static SCM g_fft_size(SCM snd, SCM chn)
 {
   #define H_fft_size "(" S_fft_size " (snd #t) (chn #t)) -> current fft size (256)"
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_iread(snd, chn, CP_FFT_SIZE, S_fft_size));
-  SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_fft_size);
   return(TO_SCM_INT(fft_size(get_global_state())));
 }
 
@@ -4940,14 +4891,13 @@ static SCM g_set_fft_size(SCM val, SCM snd, SCM chn)
 {
   snd_state *ss;
   int len;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG1, "set-" S_fft_size); 
+  SCM_ASSERT(INTEGER_P(val), val, SCM_ARG1, "set-" S_fft_size); 
   len = TO_C_INT_OR_ELSE(val, 0);
   if (len <= 0) return(SCM_BOOL_F);
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, val, CP_FFT_SIZE, "set-" S_fft_size));
   else
     {
-      SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_fft_size);
       ss = get_global_state();
       set_fft_size(ss, (int)pow(2, (ceil(log((double)(len))/log(2.0)))));
       return(TO_SCM_INT(fft_size(ss)));
@@ -4959,9 +4909,8 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_fft_size_reversed, g_set_fft_size)
 static SCM g_fft_style(SCM snd, SCM chn)
 {
   #define H_fft_style "(" S_fft_style " (snd #t) (chn #t)) -> normal-fft, sonogram, or spectrogram"
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_iread(snd, chn, CP_FFT_STYLE, S_fft_style));
-  SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_fft_style);
   return(TO_SCM_INT(fft_style(get_global_state())));
 }
 
@@ -4969,13 +4918,12 @@ static SCM g_set_fft_style(SCM val, SCM snd, SCM chn)
 {
   snd_state *ss;
   int style;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG1, "set-" S_fft_style); 
+  SCM_ASSERT(INTEGER_P(val), val, SCM_ARG1, "set-" S_fft_style); 
   style = iclamp(NORMAL_FFT, TO_C_INT_OR_ELSE(val, 0), SPECTROGRAM);
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, TO_SMALL_SCM_INT(style), CP_FFT_STYLE, "set-" S_fft_style));
   else
     {
-      SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_fft_style);
       ss = get_global_state();
       set_fft_style(ss, style);
       return(TO_SCM_INT(fft_style(ss)));
@@ -4987,9 +4935,8 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_fft_style_reversed, g_set_fft_style)
 static SCM g_fft_window(SCM snd, SCM chn)
 {
   #define H_fft_window "(" S_fft_window " (snd #t) (chn #t)) -> current fft data window choice (e.g. blackman2-window)"
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_iread(snd, chn, CP_FFT_WINDOW, S_fft_window));
-  SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_fft_window);
   return(TO_SCM_INT(fft_window(get_global_state())));
 }
 
@@ -4997,13 +4944,12 @@ static SCM g_set_fft_window(SCM val, SCM snd, SCM chn)
 {
   snd_state *ss;
   int win;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG1, "set-" S_fft_window); 
+  SCM_ASSERT(INTEGER_P(val), val, SCM_ARG1, "set-" S_fft_window); 
   win = iclamp(0, TO_C_INT_OR_ELSE(val, 0), NUM_FFT_WINDOWS - 1);
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, TO_SMALL_SCM_INT(win), CP_FFT_WINDOW, "set-" S_fft_window));
   else
     {
-      SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_fft_window);
       ss = get_global_state();
       set_fft_window(ss, win);
       return(TO_SCM_INT(fft_window(ss)));
@@ -5015,9 +4961,8 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_fft_window_reversed, g_set_fft_window)
 static SCM g_transform_type(SCM snd, SCM chn)
 {
   #define H_transform_type "(" S_transform_type " (snd #t) (chn #t)) -> transform type, e.g. fourier-transform"
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_iread(snd, chn, CP_TRANSFORM_TYPE, S_transform_type));
-  SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_transform_type);
   return(TO_SCM_INT(transform_type(get_global_state())));
 }
 
@@ -5025,13 +4970,12 @@ static SCM g_set_transform_type(SCM val, SCM snd, SCM chn)
 {
   int type;
   snd_state *ss;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG1, "set-" S_transform_type); 
+  SCM_ASSERT(INTEGER_P(val), val, SCM_ARG1, "set-" S_transform_type); 
   type = iclamp(0, TO_C_INT_OR_ELSE(val, 0), max_transform_type());
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, TO_SMALL_SCM_INT(type), CP_TRANSFORM_TYPE, "set-" S_transform_type));
   else
     {
-      SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_transform_type);
       ss = get_global_state();
       set_transform_type(ss, type);
       return(TO_SCM_INT(transform_type(ss)));
@@ -5045,21 +4989,19 @@ static SCM g_normalize_fft(SCM snd, SCM chn)
   #define H_normalize_fft "(" S_normalize_fft " (snd #t) (chn #t)) -> one of '(" S_dont_normalize " " S_normalize_by_channel " " S_normalize_by_sound " " S_normalize_globally ") \
 decides whether spectral data is normalized before display (default: " S_normalize_by_channel ")"
 
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_iread(snd, chn, CP_NORMALIZE_FFT, S_normalize_fft));
-  SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_normalize_fft);
   return(TO_SCM_INT(normalize_fft(get_global_state())));
 }
 
 static SCM g_set_normalize_fft(SCM val, SCM snd, SCM chn)
 {
   snd_state *ss;
-  SCM_ASSERT(BOOL_OR_ARG_P(val), val, SCM_ARG1, "set-" S_normalize_fft);
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(val), val, SCM_ARG1, "set-" S_normalize_fft);
+  if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, val, CP_NORMALIZE_FFT, "set-" S_normalize_fft));
   else
     {
-      SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_normalize_fft);
       ss = get_global_state();
       set_normalize_fft(ss, TO_C_BOOLEAN_OR_T(val));
       return(TO_SCM_INT(normalize_fft(ss)));
@@ -5071,9 +5013,8 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_normalize_fft_reversed, g_set_normalize
 static SCM g_max_fft_peaks(SCM snd, SCM chn)
 {
   #define H_max_fft_peaks "(" S_max_fft_peaks " (snd #t) (chn #t)) -> max number of fft peaks reported in fft display"
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_iread(snd, chn, CP_MAX_FFT_PEAKS, S_max_fft_peaks));
-  SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_max_fft_peaks);
   return(TO_SCM_INT(max_fft_peaks(get_global_state())));
 }
 
@@ -5081,12 +5022,11 @@ static SCM g_set_max_fft_peaks(SCM n, SCM snd, SCM chn)
 {
   int lim;
   snd_state *ss;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(n)), n, SCM_ARG1, "set-" S_max_fft_peaks); 
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  SCM_ASSERT(INTEGER_P(n), n, SCM_ARG1, "set-" S_max_fft_peaks); 
+  if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, n, CP_MAX_FFT_PEAKS, "set-" S_max_fft_peaks));
   else
     {
-      SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_max_fft_peaks);
       lim = TO_C_INT_OR_ELSE(n, 0);
       ss = get_global_state();
       if (lim >= 0)
@@ -5102,21 +5042,19 @@ static SCM g_graph_style(SCM snd, SCM chn)
   #define H_graph_style "(" S_graph_style " (snd #t) (chn #t)) -> one of '(" S_graph_lines " " S_graph_dots " " S_graph_dots_and_lines " " S_graph_lollipops " " S_graph_filled ") \
 determines how graphs are drawn (default: " S_graph_lines ")"
 
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_iread(snd, chn, CP_GRAPH_STYLE, S_graph_style));
-  SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_graph_style);
   return(TO_SCM_INT(graph_style(get_global_state())));
 }
 
 static SCM g_set_graph_style(SCM style, SCM snd, SCM chn)
 {
   snd_state *ss;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(style)), style, SCM_ARG1, "set-" S_graph_style); 
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  SCM_ASSERT(INTEGER_P(style), style, SCM_ARG1, "set-" S_graph_style); 
+  if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, style, CP_GRAPH_STYLE, "set-" S_graph_style));
   else
     {
-      SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_graph_style);
       ss = get_global_state();
       set_graph_style(ss, TO_C_INT_OR_ELSE(style, 0));
       return(TO_SCM_INT(graph_style(ss)));
@@ -5128,21 +5066,19 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_graph_style_reversed, g_set_graph_style
 static SCM g_dot_size(SCM snd, SCM chn)
 {
   #define H_dot_size "(" S_dot_size " (snd #t) (chn #t)) -> size in pixels of dots when graphing with dots (1)"
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_iread(snd, chn, CP_DOT_SIZE, S_dot_size));
-  SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_dot_size);
   return(TO_SCM_INT(dot_size(get_global_state())));
 }
 
 static SCM g_set_dot_size(SCM size, SCM snd, SCM chn)
 {
   snd_state *ss;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(size)), size, SCM_ARG1, "set-" S_dot_size); 
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  SCM_ASSERT(NUMBER_P(size), size, SCM_ARG1, "set-" S_dot_size); 
+  if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, size, CP_DOT_SIZE, "set-" S_dot_size));
   else
     {
-      SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_dot_size);
       ss = get_global_state();
       set_dot_size(ss, TO_C_INT_OR_ELSE(size, 0));
       return(TO_SCM_INT(dot_size(ss)));
@@ -5154,21 +5090,19 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_dot_size_reversed, g_set_dot_size)
 static SCM g_show_axes(SCM snd, SCM chn)
 {
   #define H_show_axes "(" S_show_axes "(snd #t) (chn #t)) -> show-all-axes if Snd should display axes"
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_iread(snd, chn, CP_SHOW_AXES, S_show_axes));
-  SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_show_axes);
   return(TO_SCM_INT(show_axes(get_global_state())));
 }
 
 static SCM g_set_show_axes(SCM on, SCM snd, SCM chn)
 {
   snd_state *ss;
-  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_show_axes);
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_show_axes);
+  if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, on, CP_SHOW_AXES, "set-" S_show_axes));
   else
     {
-      SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_show_axes);
       ss = get_global_state();
       set_show_axes(ss, iclamp(SHOW_NO_AXES, TO_C_INT_OR_ELSE(on, SHOW_ALL_AXES), SHOW_X_AXIS));
       return(TO_SCM_INT(show_axes(ss)));
@@ -5180,21 +5114,19 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_show_axes_reversed, g_set_show_axes)
 static SCM g_graphs_horizontal(SCM snd, SCM chn)
 {
   #define H_graphs_horizontal "(" S_graphs_horizontal " (snd #t) (chn #t)) -> #t if the time domain, fft, and lisp graphs are layed out horizontally (#t)"
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(cp_iread(snd, chn, CP_GRAPHS_HORIZONTAL, S_graphs_horizontal));
-  SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_graphs_horizontal);
   return(TO_SCM_BOOLEAN(graphs_horizontal(get_global_state())));
 }
 
 static SCM g_set_graphs_horizontal(SCM val, SCM snd, SCM chn)
 {
   snd_state *ss;
-  SCM_ASSERT(BOOL_OR_ARG_P(val), val, SCM_ARG1, "set-" S_graphs_horizontal);
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(val), val, SCM_ARG1, "set-" S_graphs_horizontal);
+  if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, val, CP_GRAPHS_HORIZONTAL, "set-" S_graphs_horizontal));
   else
     {
-      SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_graphs_horizontal);
       ss = get_global_state();
       set_graphs_horizontal(ss, TO_C_BOOLEAN_OR_T(val)); 
       return(TO_SCM_BOOLEAN(graphs_horizontal(ss)));
@@ -5233,7 +5165,7 @@ static SCM g_left_sample(SCM snd_n, SCM chn_n)
 
 static SCM g_set_left_sample(SCM on, SCM snd_n, SCM chn_n) 
 {
-  SCM_ASSERT(INT_OR_ARG_P(on), on, SCM_ARG1, "set-" S_left_sample);
+  SCM_ASSERT(INTEGER_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_left_sample);
   return(cp_iwrite(snd_n, chn_n, on, CP_AP_LOSAMP, "set-" S_left_sample));
 }
 
@@ -5247,7 +5179,7 @@ static SCM g_right_sample(SCM snd_n, SCM chn_n)
 
 static SCM g_set_right_sample(SCM on, SCM snd_n, SCM chn_n) 
 {
-  SCM_ASSERT(INT_OR_ARG_P(on), on, SCM_ARG1, "set-" S_right_sample);
+  SCM_ASSERT(INTEGER_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_right_sample);
   return(cp_iwrite(snd_n, chn_n, on, CP_AP_HISAMP, "set-" S_right_sample));
 }
 
@@ -5261,7 +5193,7 @@ static SCM g_channel_sync(SCM snd_n, SCM chn_n)
 
 static SCM g_set_channel_sync(SCM on, SCM snd_n, SCM chn_n) 
 {
-  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_channel_sync);
+  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_channel_sync);
   return(cp_iwrite(snd_n, chn_n, on, CP_SYNC, "set-" S_channel_sync));
 }
 
@@ -5312,10 +5244,10 @@ static SCM g_set_y_bounds(SCM bounds, SCM snd_n, SCM chn_n)
       if (gh_length(bounds) > 1)
 	y1 = gh_cadr(bounds);
     }
-  if (gh_number_p(y0))
+  if (NUMBER_P(y0))
     {
       low = TO_C_DOUBLE(y0);
-      if (gh_number_p(y1))
+      if (NUMBER_P(y1))
 	hi = TO_C_DOUBLE(y1);
       else
 	{
@@ -5374,7 +5306,7 @@ static SCM g_forward_sample(SCM count, SCM snd, SCM chn)
 {
   #define H_forward_sample "(" S_forward_sample " &optional (count 1) snd chn) moves the cursor forward count samples"
   chan_info *cp;
-  SCM_ASSERT(INT_OR_ARG_P(count), count, SCM_ARG1, S_forward_sample);
+  SCM_ASSERT(INTEGER_IF_BOUND_P(count), count, SCM_ARG1, S_forward_sample);
   SND_ASSERT_CHAN(S_forward_sample, snd, chn, 2);
   cp = get_cp(snd, chn, S_forward_sample);
   handle_cursor(cp, cursor_move(cp, TO_C_INT_OR_ELSE(count, 1))); 
@@ -5385,7 +5317,7 @@ static SCM g_backward_sample(SCM count, SCM snd, SCM chn)
 {
   #define H_backward_sample "(" S_backward_sample " &optional (count 1) snd chn) moves the cursor back count samples"
   chan_info *cp;
-  SCM_ASSERT(INT_OR_ARG_P(count), count, SCM_ARG1, S_backward_sample);
+  SCM_ASSERT(INTEGER_IF_BOUND_P(count), count, SCM_ARG1, S_backward_sample);
   SND_ASSERT_CHAN(S_backward_sample, snd, chn, 2);
   cp = get_cp(snd, chn, S_backward_sample);
   handle_cursor(cp, cursor_move(cp, -(TO_C_INT_OR_ELSE(count, 1)))); 

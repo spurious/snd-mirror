@@ -474,6 +474,8 @@ between these examples, other .scm files, and discussions in other documents.
     <li>accessors for graph-style fields
     <li>auto-save
     <li>lisp graph with draggable x axis
+    <li>pointer-focus
+    <li>files-popup-buffer
   </ul>
 </small>
 <li><a href="#ssmarks">marks</a>
@@ -542,10 +544,12 @@ between these examples, other .scm files, and discussions in other documents.
     <li>map-sound-files, match-sound-files
     <li>sound-interp, env-sound-interp
     <li>describe-hook
+    <li>local-hook
   </ul>
 </small>
 </ul>
 
+<!-- -------------------------------- PLAY -------------------------------- -->
 <span class=bbox><h3><A NAME="ssplay">play</a></h3></span>
 
 <p>These examples relate to playing sounds. To set up the keyboard
@@ -589,6 +593,7 @@ If you want the DAC to be held open in the background,
 </pre>
 
 
+<!-- -------------------------------- FILTERS -------------------------------- -->
 <span class=bbox><h3><A NAME="ssfilters">filters</a></h3></span>
 
 <pre>
@@ -664,7 +669,7 @@ It returns the FIR filter coefficients given the filter order and desired spectr
 (map-chan (fltit-1 10 (list->vct '(0 1.0 0 0 0 0 0 0 1.0 0))))
 </pre>
 
-
+<!-- -------------------------------- FFTS -------------------------------- -->
 <span class=bbox><h3><A NAME="ssffts">ffts</a></h3></span>
 <pre>
   <em class=def><A NAME="excorrelate">correlate</a></em> snd chn y0 y1
@@ -733,7 +738,7 @@ of the autocorrelation peak.  The <i>cor-peak</i> business is making sure the
 log10 arguments fall between 0.0 and 1.0.
 </p>
 
-
+<!-- -------------------------------- USER-INTERFACE -------------------------------- -->
 <span class=bbox><h3><A NAME="ssuserinterface">user-interface</a></h3></span>
 
 <pre>
@@ -865,7 +870,17 @@ in rxvt:
 <pre>
 echo '\e[41m This is red! \e[0m'
 </pre>
+<br>
+<pre>
+  <em class=def><A NAME="filespopupbuffer">files-popup-buffer</a></em>
+</pre>
+<p>This is a mouse-enter-label-hook function for the View:Files dialog;
+it hides all sounds but the one the mouse is pointing to in the current files list.
+The "pointer-focus" style of interaction uses similar hooks.
+</p>
 
+
+<!-- -------------------------------- MARKS -------------------------------- -->
 <span class=bbox><h3><A NAME="ssmarks">marks</a></h3></span>
 
 <p><a href="#marksdoc">marks.scm</a> has most of the mark-related extensions.
@@ -893,6 +908,7 @@ a sound as a key is held down). <i>eval-between-marks</i> evaluates <i>func</i>
 between the leftmost marks in <i>snd</i>.
 </p>
 
+<!-- -------------------------------- SELECTIONS -------------------------------- -->
 <span class=bbox><h3><A NAME="ssselections">selections</a></h3></span>
 
 <pre>
@@ -936,6 +952,7 @@ the user eventually replies with a function, applies that function
 to each sample in the selection.
 </p>
 
+<!-- -------------------------------- MIXES -------------------------------- -->
 <span class=bbox><h3><A NAME="ssmixes">mixes</a></h3></span>
 
 <p><a href="#mixdoc">mix.scm</a> has mix and track related functions.
@@ -963,6 +980,7 @@ function along the same lines is <i>pan-mono-mix-to-stereo</i> which
 replaces the <i>degree</i> argument with an envelope.
 </p>
 
+<!-- -------------------------------- SOUND EFFECTS -------------------------------- -->
 <span class=bbox><h3><A NAME="sssoundeffects">sound effects</a></h3></span>
 
 <p>Most of these sound effects are based on CLM generators.
@@ -1026,6 +1044,7 @@ The "fancier locsig", to quote Michael Edwards "avoids the 'hole in the middle' 
 trying to centre a signal in the middle of two speakers"; it is based on CLM's panning.lsp.
 </p>
 
+<!-- -------------------------------- SYNTHESIS -------------------------------- -->
 <span class=bbox><h3><A NAME="sssynthesis">synthesis</a></h3></span>
 
 <p>The synthesis examples are taken primarily from CLM:</p>
@@ -1057,7 +1076,7 @@ the time domain display (to give our graph all the window)
 then <code>(testunif 1.0 0.1 0.0)</code> or whatever.
 </p>
 
-
+<!-- -------------------------------- MISCELLANEOUS EXTENSIONS -------------------------------- -->
 <span class=bbox><h3><A NAME="ssmiscellaneousextensions">miscellaneous extensions</a></h3></span>
 
 <pre>
@@ -1079,6 +1098,7 @@ format sound file to a headerless ("raw") file containing 16-bit samples.
 Presumably a similar function could be written to call TiMidity to translate
 MIDI files to something Snd can read, but I'm not having any luck getting it
 to work.  <i>describe-hook</i> tries to decipher the functions on the hook list.
+<i>with-local-hook</i> is a kind of "let" for hooks.
 </p>
 <p>
 Several of the functions in this section are slight robustifications of the

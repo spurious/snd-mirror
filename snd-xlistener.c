@@ -2,6 +2,7 @@
 
 /* TODO:   add minihistory support in listener
  * TODO    bubble args help if tab at end of name? (or click name?)
+ * TODO:   opening the listener should not cause Snd to change or at least reduce its size
  */
 
 static Widget listener_text = NULL;
@@ -802,7 +803,7 @@ void snd_append_command(snd_state *ss, char *msg)
       cmd_eot = XmTextGetLastPosition(listener_text);
       last_prompt = cmd_eot - 1;
       XmTextShowPosition(listener_text, cmd_eot - 1);
-      XmUpdateDisplay(listener_text);
+      /*      XmUpdateDisplay(listener_text); */ /* causes segfaults in libefence!! */
     }
 }
 

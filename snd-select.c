@@ -689,6 +689,8 @@ static SCM g_insert_selection(SCM beg, SCM snd, SCM chn)
   int err = MUS_NO_ERROR;
   if (selection_is_active())
     {
+      SND_ASSERT_CHAN(S_insert_selection, snd, chn, 2);
+      SCM_ASSERT(NUMBER_IF_BOUND_P(beg), beg, SCM_ARG1, S_insert_selection);
       ss = get_global_state();
       cp = get_cp(snd, chn, S_insert_selection);
       if (cp == NULL) 
@@ -714,6 +716,8 @@ static SCM g_mix_selection(SCM beg, SCM snd, SCM chn)
   snd_state *ss;
   if (selection_is_active())
     {
+      SND_ASSERT_CHAN(S_mix_selection, snd, chn, 2);
+      SCM_ASSERT(NUMBER_IF_BOUND_P(beg), beg, SCM_ARG1, S_mix_selection);
       ss = get_global_state();
       cp = get_cp(snd, chn, S_mix_selection);
       if (cp == NULL) 
@@ -747,6 +751,7 @@ static SCM g_selection_position(SCM snd, SCM chn)
 	return(TO_SCM_INT(selection_beg(NULL)));
       else
 	{
+	  SND_ASSERT_CHAN(S_selection_position, snd, chn, 1);
 	  cp = get_cp(snd, chn, S_selection_position);
 	  return(TO_SCM_INT(selection_beg(cp)));
 	}
@@ -761,6 +766,8 @@ static SCM g_set_selection_position(SCM pos, SCM snd, SCM chn)
   chan_info *cp;
   sync_info *si = NULL;
   int i, beg;
+  SND_ASSERT_CHAN("set-" S_selection_position, snd, chn, 2);
+  SCM_ASSERT(NUMBER_IF_BOUND_P(pos), pos, SCM_ARG1, S_selection_position);
   beg = TO_C_INT_OR_ELSE(pos, 0);
   if (SCM_UNBNDP(snd))
     {
@@ -799,6 +806,7 @@ static SCM g_selection_length(SCM snd, SCM chn)
 	return(TO_SCM_INT(selection_len()));
       else
 	{
+	  SND_ASSERT_CHAN(S_selection_length, snd, chn, 1);
 	  cp = get_cp(snd, chn, S_selection_length);
 	  return(TO_SCM_INT(cp_selection_len(cp, NULL)));
 	}
@@ -813,6 +821,7 @@ static SCM g_set_selection_length(SCM samps, SCM snd, SCM chn)
   chan_info *cp;
   sync_info *si = NULL;
   int i, len;
+  SCM_ASSERT(NUMBER_IF_BOUND_P(samps), samps, SCM_ARG1, "set-" S_selection_length);
   len = TO_C_INT_OR_ELSE(samps, 0);
   if (SCM_UNBNDP(snd))
     {
@@ -832,6 +841,7 @@ static SCM g_set_selection_length(SCM samps, SCM snd, SCM chn)
     }
   else 
     {
+      SND_ASSERT_CHAN("set-" S_selection_length, snd, chn, 2);
       cp = get_cp(snd, chn, "set-" S_selection_length);
       cp_set_selection_len(cp, len);
     }
@@ -854,6 +864,7 @@ static SCM g_set_selection_member(SCM on, SCM snd, SCM chn)
 {
   chan_info *cp;
   SND_ASSERT_CHAN("set-" S_selection_member, snd, chn, 2);
+  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_selection_member);
   cp = get_cp(snd, chn, "set-" S_selection_member);
   if (TO_C_INT_OR_ELSE(on, 1))
     {
@@ -902,11 +913,14 @@ saves the current selection in filename using the indicated file attributes"
   int type, format, sr, err;
   char *com = NULL, *fname = NULL;
   SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_save_selection);
+  SCM_ASSERT(INTEGER_IF_BOUND_P(header_type), header_type, SCM_ARG2, S_save_selection);
+  SCM_ASSERT(INTEGER_IF_BOUND_P(data_format), data_format, SCM_ARG3, S_save_selection);
+  SCM_ASSERT(NUMBER_IF_BOUND_P(srate), srate, SCM_ARG4, S_save_selection);
   if (selection_is_active() == 0)
     scm_throw(NO_ACTIVE_SELECTION,
 	      SCM_LIST1(TO_SCM_STRING(S_save_selection)));
   ss = get_global_state();
-  if (gh_number_p(header_type)) 
+  if (INTEGER_P(header_type)) 
     type = TO_C_INT_OR_ELSE(header_type, 0); 
 #if MUS_LITTLE_ENDIAN
   else type = MUS_RIFF;

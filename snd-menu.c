@@ -657,10 +657,10 @@ menu is the index returned by add-to-main-menu, func should be a function of no 
 
   int err = 0, slot;
   SCM_ASSERT(gh_string_p(label), label, SCM_ARG2, S_add_to_menu);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(menu)), menu, SCM_ARG1, S_add_to_menu);
+  SCM_ASSERT(INTEGER_P(menu), menu, SCM_ARG1, S_add_to_menu);
   slot = make_callback_slot();
   err = gh_add_to_menu(get_global_state(), 
-		       TO_C_INT_OR_ELSE(menu, 0),
+		       TO_C_INT(menu),
 		       TO_C_STRING(label),
 		       slot);
   if (err == -1) 
@@ -682,8 +682,8 @@ static SCM g_remove_from_menu(SCM menu, SCM label)
   #define H_remove_from_menu "(" S_remove_from_menu " menu label) removes menu item label from menu"
   int val;
   SCM_ASSERT(gh_string_p(label), label, SCM_ARG2, S_remove_from_menu);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(menu)), menu, SCM_ARG1, S_remove_from_menu);
-  val = gh_remove_from_menu(TO_C_INT_OR_ELSE(menu, 0), 
+  SCM_ASSERT(INTEGER_P(menu), menu, SCM_ARG1, S_remove_from_menu);
+  val = gh_remove_from_menu(TO_C_INT(menu), 
 			    TO_C_STRING(label));
   return(TO_SCM_INT(val));
 }
@@ -694,8 +694,8 @@ static SCM g_change_menu_label(SCM menu, SCM old_label, SCM new_label)
   int val;
   SCM_ASSERT(gh_string_p(old_label), old_label, SCM_ARG2, S_change_menu_label);
   SCM_ASSERT(gh_string_p(new_label), new_label, SCM_ARG3, S_change_menu_label);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(menu)), menu, SCM_ARG1, S_change_menu_label);
-  val = gh_change_menu_label(TO_C_INT_OR_ELSE(menu, 0), 
+  SCM_ASSERT(INTEGER_P(menu), menu, SCM_ARG1, S_change_menu_label);
+  val = gh_change_menu_label(TO_C_INT(menu), 
 			     TO_C_STRING(old_label), 
 			     TO_C_STRING(new_label));
   return(TO_SCM_INT(val));
@@ -705,9 +705,9 @@ static SCM g_menu_sensitive(SCM menu, SCM label)
 {
   #define H_menu_sensitive "(" S_menu_sensitive " menu label) reflects whether item label in menu is sensitive"
   int val;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(menu)), menu, SCM_ARG1, "set-" S_menu_sensitive);
+  SCM_ASSERT(INTEGER_P(menu), menu, SCM_ARG1, "set-" S_menu_sensitive);
   SCM_ASSERT(gh_string_p(label), label, SCM_ARG2, "set-" S_menu_sensitive);
-  val = gh_menu_is_sensitive(TO_C_INT_OR_ELSE(menu, 0), 
+  val = gh_menu_is_sensitive(TO_C_INT(menu), 
 			     TO_C_STRING(label));
   return(TO_SCM_BOOLEAN(val));
 }
@@ -715,10 +715,10 @@ static SCM g_menu_sensitive(SCM menu, SCM label)
 static SCM g_set_menu_sensitive(SCM menu, SCM label, SCM on)
 {
   int val;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(menu)), menu, SCM_ARG1, "set-" S_menu_sensitive);
+  SCM_ASSERT(INTEGER_P(menu), menu, SCM_ARG1, "set-" S_menu_sensitive);
   SCM_ASSERT(gh_string_p(label), label, SCM_ARG2, "set-" S_menu_sensitive);
-  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG3, "set-" S_menu_sensitive);
-  val = gh_set_menu_sensitive(TO_C_INT_OR_ELSE(menu, 0), 
+  SCM_ASSERT(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG3, "set-" S_menu_sensitive);
+  val = gh_set_menu_sensitive(TO_C_INT(menu), 
 			      TO_C_STRING(label), 
 			      TO_C_BOOLEAN_OR_T(on));
   return(TO_SCM_BOOLEAN(val));

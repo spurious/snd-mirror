@@ -228,9 +228,6 @@ static SCM g_set_reverb_funcs(SCM rev, SCM make_rev, SCM free_rev)
   #define H_set_reverb_funcs "(" "set-" S_reverb_funcs " reverb make-reverb free-reverb) sets the current reverb functions"
 
   char *errmsg;
-  if (gh_procedure_p(g_reverb)) snd_unprotect(g_reverb);
-  if (gh_procedure_p(g_make_reverb)) snd_unprotect(g_make_reverb);
-  if (gh_procedure_p(g_free_reverb)) snd_unprotect(g_free_reverb);
 
   errmsg = procedure_ok(rev, 3, 0, "set-" S_reverb_funcs, "reverb", 1);
   if (errmsg)
@@ -250,6 +247,11 @@ static SCM g_set_reverb_funcs(SCM rev, SCM make_rev, SCM free_rev)
 	      SCM_LIST3(TO_SCM_STRING(S_reverb_funcs),
 			free_rev,
 			TO_SCM_STRING(errmsg)));
+
+  if (gh_procedure_p(g_reverb)) snd_unprotect(g_reverb);
+  if (gh_procedure_p(g_make_reverb)) snd_unprotect(g_make_reverb);
+  if (gh_procedure_p(g_free_reverb)) snd_unprotect(g_free_reverb);
+
   if (SCM_NFALSEP(rev))
     {
       g_reverb = rev;
@@ -293,13 +295,15 @@ static SCM g_set_contrast_func(SCM func)
   #define H_set_contrast_func "(" "set-" S_contrast_func " func) sets the current contrast function"
 
   char *errmsg;
-  if (gh_procedure_p(g_contrast)) snd_unprotect(g_contrast);
+
   errmsg = procedure_ok(func, 2, 0, "set-" S_contrast_func, "contrast", 1);
   if (errmsg)
     scm_throw(BAD_ARITY,
 	      SCM_LIST3(TO_SCM_STRING(S_contrast_func),
 			func,
 			TO_SCM_STRING(errmsg)));
+
+  if (gh_procedure_p(g_contrast)) snd_unprotect(g_contrast);
   if (SCM_NFALSEP(func))
     {
       g_contrast = func;
@@ -2557,7 +2561,7 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
     }
   else
     {
-      SCM_ASSERT(INT_OR_ARG_P(samp_n), samp_n, SCM_ARG1, S_play);
+      SCM_ASSERT(NUMBER_IF_BOUND_P(samp_n), samp_n, SCM_ARG1, S_play);
       SND_ASSERT_CHAN(S_play, snd_n, chn_n, 2);
       sp = get_sp(snd_n);
       if (sp == NULL) 
@@ -2579,7 +2583,7 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
 	}
       else
 	{
-	  if (!(gh_number_p(chn_n)))
+	  if (!(INTEGER_P(chn_n)))
 	    play_sound(sp, samp, end, background);
 	  else 
 	    {
@@ -2609,6 +2613,7 @@ if 'end' is not given, it plays to the end of the sound."
 static SCM g_play_selection(SCM wait) 
 {
   #define H_play_selection "(" S_play_selection " &optional (wait #f)) plays the current selection"
+  SCM_ASSERT(BOOLEAN_IF_BOUND_P(wait), wait, SCM_ARG1, S_play_selection);
   if (selection_is_active())
     {
       play_selection(!(TO_C_BOOLEAN_OR_F(wait)));
@@ -2631,7 +2636,8 @@ static SCM g_stop_playing(SCM snd_n)
 {
   #define H_stop_playing "(" S_stop_playing " &optional snd) stops play in progress"
   snd_info *sp = NULL;
-  if (gh_number_p(snd_n)) sp = get_sp(snd_n);
+  SCM_ASSERT(INTEGER_IF_BOUND_P(snd_n), snd_n, SCM_ARG1, S_stop_playing);
+  if (INTEGER_P(snd_n)) sp = get_sp(snd_n);
   if (sp) 
     stop_playing_sound(sp); 
   else stop_playing_all_sounds();
@@ -2732,7 +2738,9 @@ static SCM g_add_player(SCM snd_chn, SCM start, SCM end)
   snd_info *sp = NULL;
   chan_info *cp;
   int index;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(snd_chn)), snd_chn, SCM_ARG1, S_add_player);
+  SCM_ASSERT(INTEGER_P(snd_chn), snd_chn, SCM_ARG1, S_add_player);
+  SCM_ASSERT(NUMBER_IF_BOUND_P(start), start, SCM_ARG2, S_add_player);
+  SCM_ASSERT(NUMBER_IF_BOUND_P(end), end, SCM_ARG3, S_add_player);
   index = -TO_SMALL_C_INT(snd_chn);
   if ((index > 0) && (index < players_size)) sp = players[index];
   if (sp)
@@ -2752,6 +2760,9 @@ static SCM g_add_player(SCM snd_chn, SCM start, SCM end)
 static SCM g_start_playing(SCM chans, SCM srate, SCM in_background)
 {
   #define H_start_playing "(" S_start_playing " &optional chans srate in-background)"
+  SCM_ASSERT(INTEGER_IF_BOUND_P(chans), chans, SCM_ARG1, S_start_playing);
+  SCM_ASSERT(NUMBER_IF_BOUND_P(srate), srate, SCM_ARG2, S_start_playing);
+  SCM_ASSERT(BOOLEAN_IF_BOUND_P(in_background), in_background, SCM_ARG3, S_start_playing);
   start_dac(get_global_state(),
 	    TO_C_INT_OR_ELSE(srate, 44100),
 	    TO_C_INT_OR_ELSE(chans, 1),
@@ -2764,6 +2775,7 @@ static SCM g_stop_player(SCM snd_chn)
   #define H_stop_player "(" S_stop_player " player) stops player"
   int index;
   snd_info *sp = NULL;
+  SCM_ASSERT(INTEGER_P(snd_chn), snd_chn, SCM_ARG1, S_stop_player);
   index = -TO_SMALL_C_INT(snd_chn);
   if ((index > 0) && (index < players_size)) sp = players[index];
   if (sp) 
@@ -2780,7 +2792,7 @@ static SCM g_player_p(SCM snd_chn)
 {
   #define H_playerQ "(" S_playerQ " obj) -> is obj an active player"
   int index;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(snd_chn)), snd_chn, SCM_ARG1, S_playerQ);
+  SCM_ASSERT(INTEGER_P(snd_chn), snd_chn, SCM_ARG1, S_playerQ);
   index = -TO_SMALL_C_INT(snd_chn);
   return(TO_SCM_BOOLEAN((index > 0) && 
 			(index < players_size) && 

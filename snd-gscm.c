@@ -1,6 +1,7 @@
 #include "snd.h"
 
 #if HAVE_GUILE
+/* TODO: combine this and xscm where the code is the same */
 
 static snd_state *state;
 
@@ -36,7 +37,7 @@ static gint timed_eval(gpointer in_code)
 static SCM g_in(SCM ms, SCM code)
 {
   #define H_in "(" S_in " msecs thunk) invokes thunk in msecs milliseconds"
-  SCM_ASSERT(gh_number_p(ms), ms, SCM_ARG1, S_in);
+  SCM_ASSERT(NUMBER_P(ms), ms, SCM_ARG1, S_in);
   SCM_ASSERT(gh_procedure_p(code), code, SCM_ARG2, S_in);
   gtk_timeout_add((guint32)TO_C_UNSIGNED_LONG(ms), timed_eval, (gpointer)code);
   return(ms);
@@ -122,10 +123,10 @@ static SCM g_make_snd_color(SCM r, SCM g, SCM b)
   #define H_make_color "(" S_make_color " r g b) -> a col" STR_OR " object with the indicated rgb values"
   snd_color *new_color;
   GdkColor gcolor;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(r)), r, SCM_ARG1, S_make_color);
+  SCM_ASSERT(NUMBER_P(r), r, SCM_ARG1, S_make_color);
   /* someday accept a list as r */
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(g)), g, SCM_ARG2, S_make_color);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(b)), b, SCM_ARG3, S_make_color);
+  SCM_ASSERT(NUMBER_P(g), g, SCM_ARG2, S_make_color);
+  SCM_ASSERT(NUMBER_P(b), b, SCM_ARG3, S_make_color);
   new_color = (snd_color *)CALLOC(1, sizeof(snd_color));
   gcolor.red = (unsigned short)(65535 * TO_C_DOUBLE(r));
   gcolor.green = (unsigned short)(65535 * TO_C_DOUBLE(g));
@@ -593,7 +594,7 @@ static SCM g_load_colormap(SCM colors)
   int i, len;
   GdkColor **xcs;
   snd_color *v;
-  SCM_ASSERT((gh_vector_p(colors)), colors, SCM_ARG1, S_load_colormap);
+  SCM_ASSERT(gh_vector_p(colors), colors, SCM_ARG1, S_load_colormap);
   len = gh_vector_length(colors);
   xcs = (GdkColor **)CALLOC(len, sizeof(GdkColor *));
   for (i = 0; i < len; i++)
@@ -614,7 +615,7 @@ static SCM g_graph_cursor(void)
 
 static SCM g_set_graph_cursor(SCM curs)
 {
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(curs)), curs, SCM_ARG1, "set-" S_graph_cursor);
+  SCM_ASSERT(NUMBER_P(curs), curs, SCM_ARG1, "set-" S_graph_cursor);
   state->Graph_Cursor = TO_C_INT(curs);
   (state->sgx)->graph_cursor = gdk_cursor_new((GdkCursorType)in_graph_cursor(state));
   return(curs);

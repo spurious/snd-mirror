@@ -3014,8 +3014,8 @@ static SCM g_sp_scan(SCM proc, int chan_choice, SCM s_beg, SCM s_end, int series
   int beg, end;
   SCM result;
   SCM_ASSERT((gh_procedure_p(proc)), proc, SCM_ARG1, caller);
-  SCM_ASSERT((gh_number_p(s_beg)) || (gh_boolean_p(s_beg)) || (SCM_UNBNDP(s_beg)), s_beg, SCM_ARG2, caller);
-  SCM_ASSERT((gh_number_p(s_end)) || (gh_boolean_p(s_end)) || (SCM_UNBNDP(s_end)), s_end, SCM_ARG3, caller);
+  SCM_ASSERT(NUMBER_OR_BOOLEAN_IF_BOUND_P(s_beg), s_beg, SCM_ARG2, caller);
+  SCM_ASSERT(NUMBER_OR_BOOLEAN_IF_BOUND_P(s_end), s_end, SCM_ARG3, caller);
   ss = get_global_state();
   cp = get_cp(snd, chn, caller);
   beg = TO_C_INT_OR_ELSE(s_beg, 0);
@@ -3190,7 +3190,7 @@ the current sample, to each sample in snd's channel chn, starting at 'start-samp
 
   /* no free here -- it's handled as ss->search_expr in snd-find.c */
   SCM_ASSERT(gh_procedure_p(expr), expr, SCM_ARG1, S_find);
-  SCM_ASSERT(INT_OR_ARG_P(sample), sample, SCM_ARG2, S_find);
+  SCM_ASSERT(NUMBER_IF_BOUND_P(sample), sample, SCM_ARG2, S_find);
   SND_ASSERT_CHAN(S_find, snd_n, chn_n, 3);
   return(g_sp_scan(expr, SCAN_CURRENT_CHAN, sample, SCM_BOOL_F, TRUE, TRUE, snd_n, chn_n, S_find, "func", 1));
 }
@@ -3204,7 +3204,7 @@ samples satisfy func (a function of one argument, the current sample, returning 
   int samp = 0, matches, lim;
   SCM match, cursamp;
   SCM_ASSERT(gh_procedure_p(expr), expr, SCM_ARG1, S_count_matches);
-  SCM_ASSERT(INT_OR_ARG_P(sample), sample, SCM_ARG2, S_count_matches);
+  SCM_ASSERT(NUMBER_IF_BOUND_P(sample), sample, SCM_ARG2, S_count_matches);
   SND_ASSERT_CHAN(S_count_matches, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_count_matches);
   samp = TO_C_INT_OR_ELSE(sample, 0);
@@ -3229,8 +3229,8 @@ static SCM g_smooth(SCM beg, SCM num, SCM snd_n, SCM chn_n)
 {
   #define H_smooth "(" S_smooth " start-samp samps &optional snd chn) smooths data from start-samp for samps in snd's channel chn"
   chan_info *cp;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(beg)), beg, SCM_ARG1, S_smooth);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(num)), num, SCM_ARG2, S_smooth);
+  SCM_ASSERT(NUMBER_P(beg), beg, SCM_ARG1, S_smooth);
+  SCM_ASSERT(NUMBER_P(num), num, SCM_ARG2, S_smooth);
   SND_ASSERT_CHAN(S_smooth, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_smooth);
   cos_smooth(cp,
@@ -3279,8 +3279,8 @@ static SCM g_insert_silence(SCM beg, SCM num, SCM snd, SCM chn)
 {
   #define H_insert_silence "(" S_insert_silence " beg num snd chn) inserts num zeros at beg in snd's chn"
   chan_info *cp;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(beg)), beg, SCM_ARG1, S_insert_silence);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(num)), num, SCM_ARG2, S_insert_silence);
+  SCM_ASSERT(NUMBER_P(beg), beg, SCM_ARG1, S_insert_silence);
+  SCM_ASSERT(NUMBER_P(num), num, SCM_ARG2, S_insert_silence);
   SND_ASSERT_CHAN(S_insert_silence, snd, chn, 3);
   cp = get_cp(snd, chn, S_insert_silence);
   cursor_insert(cp,
@@ -3535,8 +3535,8 @@ either to the end of the sound or for 'samps' samples, with segments interpolati
   env *e;
   int beg = 0, dur;
   mus_any *egen;
-  SCM_ASSERT(INT_OR_ARG_P(samp_n), samp_n, SCM_ARG2, S_env_sound);
-  SCM_ASSERT(INT_OR_ARG_P(samps), samps, SCM_ARG3, S_env_sound);
+  SCM_ASSERT(NUMBER_IF_BOUND_P(samp_n), samp_n, SCM_ARG2, S_env_sound);
+  SCM_ASSERT(NUMBER_IF_BOUND_P(samps), samps, SCM_ARG3, S_env_sound);
   SND_ASSERT_CHAN(S_env_sound, snd_n, chn_n, 5);
   cp = get_cp(snd_n, chn_n, S_env_sound);
   beg = TO_C_INT_OR_ELSE(samp_n, 0);
@@ -3727,17 +3727,17 @@ return magnitude spectrum of data (vct) in data using fft-window win and fft len
   Float *idat, *rdat, *window;
   vct *v;
   SCM_ASSERT((vct_p(data)), data, SCM_ARG1, S_snd_spectrum);
-  SCM_ASSERT((gh_number_p(win)), win, SCM_ARG2, S_snd_spectrum);
-  SCM_ASSERT((gh_number_p(len)), len, SCM_ARG3, S_snd_spectrum);
-  SCM_ASSERT(BOOL_OR_ARG_P(linear_or_dB), linear_or_dB, SCM_ARG1, S_snd_spectrum);
+  SCM_ASSERT(INTEGER_P(win), win, SCM_ARG2, S_snd_spectrum);
+  SCM_ASSERT(INTEGER_P(len), len, SCM_ARG3, S_snd_spectrum);
+  SCM_ASSERT(BOOLEAN_IF_BOUND_P(linear_or_dB), linear_or_dB, SCM_ARG1, S_snd_spectrum);
   v = get_vct(data);
   rdat = v->data;
-  n = TO_C_INT_OR_ELSE(len, 0);
+  n = TO_C_INT(len);
   if (n > v->length) n = v->length;
   if (SCM_TRUE_P(linear_or_dB)) linear = 1; else linear = 0;
   idat = (Float *)CALLOC(n, sizeof(Float));
   window = (Float *)CALLOC(n, sizeof(Float));
-  make_fft_window_1(window, n, TO_C_INT_OR_ELSE(win, 0), 0.0);
+  make_fft_window_1(window, n, TO_C_INT(win), 0.0);
   for (i = 0; i < n; i++) rdat[i] *= window[i];
   FREE(window);
   mus_fft(rdat, idat, n, 1);

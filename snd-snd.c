@@ -1559,7 +1559,7 @@ static SCM g_channels(SCM snd_n)
 
 static SCM check_number(SCM val, char *caller)
 {
-  SCM_ASSERT(gh_number_p(val), val, SCM_ARG1, caller);
+  SCM_ASSERT(NUMBER_P(val), val, SCM_ARG1, caller);
   return(val);
 }
 
@@ -1664,7 +1664,7 @@ static SCM g_syncing(SCM snd_n)
 
 static SCM g_set_syncing(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_sync);
+  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_sync);
   return(sp_iwrite(snd_n, on, SP_SYNC, "set-" S_sync));
 }
 
@@ -1678,7 +1678,7 @@ static SCM g_uniting(SCM snd_n)
 
 static SCM g_set_uniting(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_uniting);
+  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_uniting);
   return(sp_iwrite(snd_n, on, SP_UNITE, "set-" S_uniting));
 }
 
@@ -1692,7 +1692,7 @@ static SCM g_read_only(SCM snd_n)
 
 static SCM g_set_read_only(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_read_only);
+  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_read_only);
   return(sp_iwrite(snd_n, on, SP_READ_ONLY, "set-" S_read_only));
 }
 
@@ -1706,7 +1706,7 @@ static SCM g_contrasting(SCM snd_n)
 
 static SCM g_set_contrasting(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_contrasting);
+  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_contrasting);
   return(sp_iwrite(snd_n, on, SP_CONTRASTING, "set-" S_contrasting));
 }
 
@@ -1720,7 +1720,7 @@ static SCM g_expanding(SCM snd_n)
 
 static SCM g_set_expanding(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_expanding);
+  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_expanding);
   return(sp_iwrite(snd_n, on, SP_EXPANDING, "set-" S_expanding));
 }
 
@@ -1734,7 +1734,7 @@ static SCM g_reverbing(SCM snd_n)
 
 static SCM g_set_reverbing(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_reverbing);
+  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_reverbing);
   return(sp_iwrite(snd_n, on, SP_REVERBING, "set-" S_reverbing));
 }
 
@@ -1748,7 +1748,7 @@ static SCM g_filtering(SCM snd_n)
 
 static SCM g_set_filtering(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_filtering);
+  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_filtering);
   return(sp_iwrite(snd_n, on, SP_FILTERING, "set-" S_filtering));
 }
 
@@ -1762,7 +1762,7 @@ static SCM g_filter_dBing(SCM snd_n)
 
 static SCM g_set_filter_dBing(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_filter_dBing);
+  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_filter_dBing);
   return(sp_iwrite(snd_n, on, SP_FILTER_DBING, "set-" S_filter_dBing));
 }
 
@@ -1776,7 +1776,7 @@ static SCM g_filter_order(SCM snd_n)
 
 static SCM g_set_filter_order(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)), on, SCM_ARG1, "set-" S_filter_order); 
+  SCM_ASSERT(INTEGER_P(on), on, SCM_ARG1, "set-" S_filter_order); 
   return(sp_iwrite(snd_n, on, SP_FILTER_ORDER, "set-" S_filter_order));
 }
 
@@ -1790,7 +1790,7 @@ static SCM g_cursor_follows_play(SCM snd_n)
 
 static SCM g_set_cursor_follows_play(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_cursor_follows_play);
+  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_cursor_follows_play);
   return(sp_iwrite(snd_n, on, SP_CURSOR_FOLLOWS_PLAY, "set-" S_cursor_follows_play));
 }
 
@@ -1804,7 +1804,7 @@ static SCM g_show_controls(SCM snd_n)
 
 static SCM g_set_show_controls(SCM on, SCM snd_n)
 {
-  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_show_controls);
+  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_show_controls);
   return(sp_iwrite(snd_n, on, SP_SHOW_CONTROLS, "set-" S_show_controls));
 }
 
@@ -1960,9 +1960,9 @@ opens filename assuming the data matches the attributes indicated unless the fil
   snd_info *sp;
   int os, oc, ofr, ou, ofit;
   SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_open_raw_sound);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(srate)), srate, SCM_ARG2, S_open_raw_sound);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(chans)), chans, SCM_ARG3, S_open_raw_sound);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(format)), format, SCM_ARG4, S_open_raw_sound);
+  SCM_ASSERT(NUMBER_P(srate), srate, SCM_ARG2, S_open_raw_sound);
+  SCM_ASSERT(INTEGER_P(chans), chans, SCM_ARG3, S_open_raw_sound);
+  SCM_ASSERT(INTEGER_P(format), format, SCM_ARG4, S_open_raw_sound);
   ss = get_global_state();
   ou = use_raw_defaults(ss);
   os = raw_srate(ss);
@@ -1975,8 +1975,8 @@ opens filename assuming the data matches the attributes indicated unless the fil
   set_use_raw_defaults(ss, 1);
   set_fit_data_on_open(ss, 1);
   mus_header_set_raw_defaults(TO_C_INT_OR_ELSE(srate, 0),
-			      TO_C_INT_OR_ELSE(chans, 0),
-			      TO_C_INT_OR_ELSE(format, 0));
+			      TO_C_INT(chans),
+			      TO_C_INT(format));
   fname = mus_expand_filename(TO_C_STRING(filename));
   if (!(mus_file_probe(fname)))
     scm_throw(NO_SUCH_FILE,
@@ -2074,9 +2074,9 @@ saves snd in filename using the indicated attributes.  If channel is specified, 
   hdr = sp->hdr;
   ht = TO_C_INT_OR_ELSE(type, hdr->type);
   sr = TO_C_INT_OR_ELSE(srate, hdr->srate);
-  if (gh_number_p(format)) 
-    df = TO_C_INT_OR_ELSE(format, 0);
-  else
+  if (INTEGER_P(format)) 
+    df = TO_C_INT(format);
+  else    
     {
       if (mus_header_writable(ht, hdr->format))
 	df = hdr->format;
@@ -2088,10 +2088,11 @@ saves snd in filename using the indicated attributes.  If channel is specified, 
    * there's little hope of passing a flag around to say "throw a scheme error"
    * where the default throughout the path is to call snd_error
    */
-  if (gh_number_p(channel))
+  if (INTEGER_P(channel))
     {
-      chan = TO_C_INT_OR_ELSE(channel, 0);
-      if ((chan >= sp->nchans) || (chan < 0))
+      chan = TO_C_INT(channel);
+      if ((chan >= sp->nchans) || 
+	  (chan < 0))
 	{
 	  if (fname) FREE(fname);
 	  scm_throw(NO_SUCH_CHANNEL,
@@ -2165,24 +2166,22 @@ creates a new sound file with the indicated attributes; if any are omitted, the 
 static SCM g_speed_style(SCM snd)
 {
   #define H_speed_style "(" S_speed_style " (snd #t)) -> speed control panel interpretation choice (speed-as-float)"
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(sp_iread(snd, SP_SPEED_STYLE, S_speed_style));
-  SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_speed_style);
   return(TO_SCM_INT(speed_style(get_global_state())));
 }
 
 static SCM g_set_speed_style(SCM speed, SCM snd) 
 {
   snd_state *ss;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(speed)), speed, SCM_ARG1, "set-" S_speed_style); 
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  SCM_ASSERT(INTEGER_P(speed), speed, SCM_ARG1, "set-" S_speed_style); 
+  if (BOUND_P(snd))
     return(sp_iwrite(snd, speed, SP_SPEED_STYLE, "set-" S_speed_style));
   else
     {
-      SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_speed_style);
       ss = get_global_state();
       activate_speed_in_menu(ss, iclamp(SPEED_AS_FLOAT,
-				       TO_C_INT_OR_ELSE(speed, 0),
+				       TO_C_INT(speed),
 				       SPEED_AS_SEMITONE));
       return(TO_SCM_INT(speed_style(ss)));
     }
@@ -2193,21 +2192,19 @@ WITH_REVERSED_ARGS(g_set_speed_style_reversed, g_set_speed_style)
 static SCM g_speed_tones(SCM snd)
 {
   #define H_speed_tones "(" S_speed_tones " (snd #t)) -> if speed-style is speed-as-semitone, this chooses the octave divisions (12)"
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(sp_iread(snd, SP_SPEED_TONES, S_speed_tones));
-  SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_speed_tones);
   return(TO_SCM_INT(speed_tones(get_global_state())));
 }
 
 static SCM g_set_speed_tones(SCM val, SCM snd)
 {
   snd_state *ss;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG1, "set-" S_speed_tones); 
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  SCM_ASSERT(NUMBER_P(val), val, SCM_ARG1, "set-" S_speed_tones); 
+  if (BOUND_P(snd))
     return(sp_iwrite(snd, val, SP_SPEED_TONES, "set-" S_speed_tones));
   else
     {
-      SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_speed_tones);
       ss = get_global_state();
       set_speed_tones(ss, TO_C_INT_OR_ELSE(val, 0));
       return(TO_SCM_INT(speed_tones(ss)));
@@ -2361,7 +2358,7 @@ static SCM g_amp(SCM snd_n)
 
 static SCM g_set_amp(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)), on, SCM_ARG1, "set-" S_amp); 
+  SCM_ASSERT(NUMBER_P(on), on, SCM_ARG1, "set-" S_amp); 
   return(sp_fwrite(snd_n, on, SP_AMP, "set-" S_amp));
 }
 
@@ -2375,7 +2372,7 @@ static SCM g_contrast(SCM snd_n)
 
 static SCM g_set_contrast(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)), on, SCM_ARG1, "set-" S_contrast); 
+  SCM_ASSERT(NUMBER_P(on), on, SCM_ARG1, "set-" S_contrast); 
   return(sp_fwrite(snd_n, on, SP_CONTRAST, "set-" S_contrast));
 }
 
@@ -2391,7 +2388,7 @@ static SCM g_contrast_amp(SCM snd_n)
 
 static SCM g_set_contrast_amp(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)), on, SCM_ARG1, "set-" S_contrast_amp);
+  SCM_ASSERT(NUMBER_P(on), on, SCM_ARG1, "set-" S_contrast_amp);
   return(sp_fwrite(snd_n, on, SP_CONTRAST_AMP, "set-" S_contrast_amp));
 }
 
@@ -2405,7 +2402,7 @@ static SCM g_expand(SCM snd_n)
 
 static SCM g_set_expand(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)), on, SCM_ARG1, "set-" S_expand); 
+  SCM_ASSERT(NUMBER_P(on), on, SCM_ARG1, "set-" S_expand); 
   return(sp_fwrite(snd_n, on, SP_EXPAND, "set-" S_expand));
 }
 
@@ -2419,7 +2416,7 @@ static SCM g_expand_length(SCM snd_n)
 
 static SCM g_set_expand_length(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)), on, SCM_ARG1, "set-" S_expand_length); 
+  SCM_ASSERT(NUMBER_P(on), on, SCM_ARG1, "set-" S_expand_length); 
   return(sp_fwrite(snd_n, on, SP_EXPAND_LENGTH, "set-" S_expand_length));
 }
 
@@ -2433,7 +2430,7 @@ static SCM g_expand_ramp(SCM snd_n)
 
 static SCM g_set_expand_ramp(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)), on, SCM_ARG1, "set-" S_expand_ramp);
+  SCM_ASSERT(NUMBER_P(on), on, SCM_ARG1, "set-" S_expand_ramp);
   return(sp_fwrite(snd_n, on, SP_EXPAND_RAMP, "set-" S_expand_ramp));
 }
 
@@ -2447,7 +2444,7 @@ static SCM g_expand_hop(SCM snd_n)
 
 static SCM g_set_expand_hop(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)), on, SCM_ARG1, "set-" S_expand_hop); 
+  SCM_ASSERT(NUMBER_P(on), on, SCM_ARG1, "set-" S_expand_hop); 
   return(sp_fwrite(snd_n, on, SP_EXPAND_HOP, "set-" S_expand_hop));
 }
 
@@ -2461,7 +2458,7 @@ static SCM g_speed(SCM snd_n)
 
 static SCM g_set_speed(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)), on, SCM_ARG1, "set-" S_speed); 
+  SCM_ASSERT(NUMBER_P(on), on, SCM_ARG1, "set-" S_speed); 
   return(sp_fwrite(snd_n, on, SP_SPEED, "set-" S_speed));
 }
 
@@ -2475,7 +2472,7 @@ static SCM g_reverb_length(SCM snd_n)
 
 static SCM g_set_reverb_length(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)), on, SCM_ARG1, "set-" S_reverb_length); 
+  SCM_ASSERT(NUMBER_P(on), on, SCM_ARG1, "set-" S_reverb_length); 
   return(sp_fwrite(snd_n, on, SP_REVERB_LENGTH, "set-" S_reverb_length));
 }
 
@@ -2489,7 +2486,7 @@ static SCM g_reverb_feedback(SCM snd_n)
 
 static SCM g_set_reverb_feedback(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)), on, SCM_ARG1, "set-" S_reverb_feedback); 
+  SCM_ASSERT(NUMBER_P(on), on, SCM_ARG1, "set-" S_reverb_feedback); 
   return(sp_fwrite(snd_n, on, SP_REVERB_FEEDBACK, "set-" S_reverb_feedback));
 }
 
@@ -2503,7 +2500,7 @@ static SCM g_reverb_scale(SCM snd_n)
 
 static SCM g_set_reverb_scale(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)), on, SCM_ARG1, "set-" S_reverb_scale); 
+  SCM_ASSERT(NUMBER_P(on), on, SCM_ARG1, "set-" S_reverb_scale); 
   return(sp_fwrite(snd_n, on, SP_REVERB_SCALE, "set-" S_reverb_scale));
 }
 
@@ -2517,7 +2514,7 @@ static SCM g_reverb_lowpass(SCM snd_n)
 
 static SCM g_set_reverb_lowpass(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)), on, SCM_ARG1, "set-" S_reverb_lowpass); 
+  SCM_ASSERT(NUMBER_P(on), on, SCM_ARG1, "set-" S_reverb_lowpass); 
   return(sp_fwrite(snd_n, on, SP_REVERB_LOW_PASS, "set-" S_reverb_lowpass));
 }
 
@@ -2526,23 +2523,21 @@ WITH_REVERSED_ARGS(g_set_reverb_lowpass_reversed, g_set_reverb_lowpass)
 static SCM g_reverb_decay(SCM snd)
 {
   #define H_reverb_decay "(" S_reverb_decay " &optional (snd #t)) -> 'Apply' button reverb decay time (1.0 seconds)"
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  if (BOUND_P(snd))
     return(sp_fread(snd, SP_REVERB_DECAY, S_reverb_decay));
-  SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_reverb_decay);
   return(TO_SCM_DOUBLE(reverb_decay(get_global_state())));
 }
 
 static SCM g_set_reverb_decay(SCM val, SCM snd)
 {
   snd_state *ss;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG1, "set-" S_reverb_decay); 
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+  SCM_ASSERT(NUMBER_P(val), val, SCM_ARG1, "set-" S_reverb_decay); 
+  if (BOUND_P(snd))
     return(sp_fwrite(snd, val, SP_REVERB_DECAY, "set-" S_reverb_decay));
   else
     {
-      SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_reverb_decay);
       ss = get_global_state();
-      set_reverb_decay(ss, gh_scm2double(val));
+      set_reverb_decay(ss, TO_C_DOUBLE(val));
       return(TO_SCM_DOUBLE(reverb_decay(ss)));
     }
 }
@@ -2585,6 +2580,7 @@ static SCM g_call_apply(SCM snd, SCM choice)
   snd_info *sp;
   snd_state *ss;
   SND_ASSERT_SND(S_call_apply, snd, 1);
+  SCM_ASSERT(INTEGER_IF_BOUND_P(choice), choice, SCM_ARG2, S_call_apply);
   sp = get_sp(snd);
   if (sp) 
     {
@@ -2632,6 +2628,7 @@ static SCM g_peak_env_info(SCM snd, SCM chn, SCM pos)
   env_info *ep;
   chan_context *cgx;
   SND_ASSERT_CHAN(S_peak_env_info, snd, chn, 1);
+  SCM_ASSERT(INTEGER_IF_BOUND_P(pos), pos, SCM_ARG3, S_peak_env_info);
   cp = get_cp(snd, chn, S_peak_env_info);
   cgx = cp->cgx;
   if ((!cgx) || (!(cp->amp_envs))) 

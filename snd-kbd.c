@@ -205,8 +205,8 @@ static SCM g_key_binding(SCM key, SCM state)
 {
   #define H_key_binding "(" S_key_binding " key state) -> function bound to this key"
   int i;
-  SCM_ASSERT(gh_number_p(key), key, SCM_ARG1, S_key_binding);
-  SCM_ASSERT(gh_number_p(state), state, SCM_ARG2, S_key_binding);
+  SCM_ASSERT(INTEGER_P(key), key, SCM_ARG1, S_key_binding);
+  SCM_ASSERT(INTEGER_P(state), state, SCM_ARG2, S_key_binding);
   i = in_user_keymap(TO_SMALL_C_INT(key),
 		     TO_SMALL_C_INT(state));
   if (i >= 0) 
@@ -1892,18 +1892,18 @@ The function should return one of the cursor choices (e.g. cursor-no-action)."
 
   int ip;
   char *errmsg;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(key)), key, SCM_ARG1, S_bind_key);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(state)), state, SCM_ARG2, S_bind_key);
+  SCM_ASSERT(INTEGER_P(key), key, SCM_ARG1, S_bind_key);
+  SCM_ASSERT(INTEGER_P(state), state, SCM_ARG2, S_bind_key);
   SCM_ASSERT((SCM_FALSEP(code) || gh_procedure_p(code)), code, SCM_ARG3, S_bind_key);
   if ((SCM_FALSEP(ignore_prefix)) || 
       (SCM_UNBNDP(ignore_prefix)) ||  
-      ((gh_number_p(ignore_prefix)) && 
+      ((NUMBER_P(ignore_prefix)) && 
        (TO_C_INT_OR_ELSE(ignore_prefix, 0) == 0)))
     ip = 0;
   else ip = 1;
   if (SCM_FALSEP(code))
-    set_keymap_entry(TO_C_INT_OR_ELSE(key, 0), 
-		     TO_C_INT_OR_ELSE(state, 0), 
+    set_keymap_entry(TO_C_INT(key), 
+		     TO_C_INT(state), 
 		     ip, SCM_UNDEFINED);
   else 
     {
@@ -1924,12 +1924,13 @@ static SCM g_key(SCM kbd, SCM buckybits, SCM snd, SCM chn)
 {
   #define H_key "(" S_key " key modifiers &optional snd chn) simulates typing 'key' with 'modifiers' in snd's channel chn"
   chan_info *cp;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(kbd)), kbd, SCM_ARG1, S_key);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(buckybits)), buckybits, SCM_ARG2, S_key);
+  SCM_ASSERT(INTEGER_P(kbd), kbd, SCM_ARG1, S_key);
+  SCM_ASSERT(INTEGER_P(buckybits), buckybits, SCM_ARG2, S_key);
+  SND_ASSERT_CHAN(S_key, snd, chn, 3);
   cp = get_cp(snd, chn, S_key);
   return(TO_SCM_INT(keyboard_command(cp, 
-				     TO_C_INT_OR_ELSE(kbd, 0), 
-				     TO_C_INT_OR_ELSE(buckybits, 0))));
+				     TO_C_INT(kbd), 
+				     TO_C_INT(buckybits))));
 }
 
 static SCM g_save_macros(void) 
@@ -2018,7 +2019,7 @@ static SCM g_forward_graph(SCM count, SCM snd, SCM chn)
   #define H_forward_graph "(" S_forward_graph " &optional (count 1) snd chn) moves the 'selected' graph forward by count"
   int val;
   chan_info *cp;
-  SCM_ASSERT(INT_OR_ARG_P(count), count, SCM_ARG1, S_forward_graph);
+  SCM_ASSERT(INTEGER_IF_BOUND_P(count), count, SCM_ARG1, S_forward_graph);
   SND_ASSERT_CHAN(S_forward_graph, snd, chn, 2);
   cp = get_cp(snd, chn, S_forward_graph);
   val = TO_C_INT_OR_ELSE(count, 1);
@@ -2031,7 +2032,7 @@ static SCM g_backward_graph(SCM count, SCM snd, SCM chn)
   #define H_backward_graph "(" S_backward_graph " &optional (count 1) snd chn) moves the 'selected' graph back by count"
   int val;
   chan_info *cp;
-  SCM_ASSERT(INT_OR_ARG_P(count), count, SCM_ARG1, S_backward_graph);
+  SCM_ASSERT(INTEGER_IF_BOUND_P(count), count, SCM_ARG1, S_backward_graph);
   SND_ASSERT_CHAN(S_backward_graph, snd, chn, 2);
   cp = get_cp(snd, chn, S_backward_graph);
   val = -(TO_C_INT_OR_ELSE(count, 1));

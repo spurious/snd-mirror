@@ -186,7 +186,7 @@ static SCM g_make_vct(SCM len)
 {
   #define H_make_vct "(" S_make_vct " len) -> a new vct object of length len"
   int size;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(len)), len, SCM_ARG1, S_make_vct);
+  SCM_ASSERT(INTEGER_P(len), len, SCM_ARG1, S_make_vct);
   size = TO_C_INT(len);
   if (size <= 0) 
     {
@@ -223,8 +223,9 @@ static SCM vct_move(SCM obj, SCM newi, SCM oldi, SCM backwards)
   vct *v;
   int i, j, ni, nj;
   SCM_ASSERT(vct_p(obj), obj, SCM_ARG1, S_vct_moveB);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(newi)), newi, SCM_ARG2, S_vct_moveB);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(oldi)), oldi, SCM_ARG3, S_vct_moveB);
+  SCM_ASSERT(INTEGER_P(newi), newi, SCM_ARG2, S_vct_moveB);
+  SCM_ASSERT(INTEGER_P(oldi), oldi, SCM_ARG3, S_vct_moveB);
+  SCM_ASSERT(BOOLEAN_IF_BOUND_P(backwards), backwards, SCM_ARG4, S_vct_moveB);
   v = get_vct(obj);
   ni = SCM_INUM(newi);
   nj = SCM_INUM(oldi);
@@ -279,7 +280,7 @@ static SCM vct_ref(SCM obj, SCM pos)
   vct *v = get_vct(obj);
   int loc;
   SCM_ASSERT(vct_p(obj), obj, SCM_ARG1, S_vct_ref);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(pos)), pos, SCM_ARG2, S_vct_ref);
+  SCM_ASSERT(INTEGER_P(pos), pos, SCM_ARG2, S_vct_ref);
   if (v)
     {
       loc = TO_C_INT(pos);
@@ -305,8 +306,8 @@ static SCM vct_set(SCM obj, SCM pos, SCM val)
   vct *v = get_vct(obj);
   int loc;
   SCM_ASSERT(vct_p(obj), obj, SCM_ARG1, S_vct_setB);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(pos)), pos, SCM_ARG2, S_vct_setB);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG3, S_vct_setB);
+  SCM_ASSERT(INTEGER_P(pos), pos, SCM_ARG2, S_vct_setB);
+  SCM_ASSERT(NUMBER_P(val), val, SCM_ARG3, S_vct_setB);
   if (v)
     {
       loc = TO_C_INT(pos);
@@ -389,7 +390,7 @@ static SCM vct_scale(SCM obj1, SCM obj2)
   vct *v1;
   Float scl;
   SCM_ASSERT(vct_p(obj1), obj1, SCM_ARG1, S_vct_scaleB);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(obj2)), obj2, SCM_ARG2, S_vct_scaleB);
+  SCM_ASSERT(NUMBER_P(obj2), obj2, SCM_ARG2, S_vct_scaleB);
   v1 = get_vct(obj1);
   scl = TO_C_DOUBLE(obj2);
   if (v1)
@@ -404,7 +405,7 @@ static SCM vct_offset(SCM obj1, SCM obj2)
   vct *v1;
   Float scl;
   SCM_ASSERT(vct_p(obj1), obj1, SCM_ARG1, S_vct_offsetB);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(obj2)), obj2, SCM_ARG2, S_vct_offsetB);
+  SCM_ASSERT(NUMBER_P(obj2), obj2, SCM_ARG2, S_vct_offsetB);
   v1 = get_vct(obj1);
   scl = TO_C_DOUBLE(obj2);
   if (v1)
@@ -419,7 +420,7 @@ static SCM vct_fill(SCM obj1, SCM obj2)
   vct *v1;
   Float scl;
   SCM_ASSERT(vct_p(obj1), obj1, SCM_ARG1, S_vct_fillB);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(obj2)), obj2, SCM_ARG2, S_vct_fillB);
+  SCM_ASSERT(NUMBER_P(obj2), obj2, SCM_ARG2, S_vct_fillB);
   v1 = get_vct(obj1);
   scl = TO_C_DOUBLE(obj2);
   if (v1)
@@ -662,7 +663,8 @@ static SCM vct_subseq(SCM vobj, SCM start, SCM end, SCM newv)
   SCM res;
   int i, old_len, new_len, j;
   SCM_ASSERT(vct_p(vobj), vobj, SCM_ARG1, S_vct_subseq);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(start)), start, SCM_ARG2, S_vct_subseq);
+  SCM_ASSERT(INTEGER_P(start), start, SCM_ARG2, S_vct_subseq);
+  SCM_ASSERT(INTEGER_IF_BOUND_P(end), end, SCM_ARG3, S_vct_subseq);
   vold = get_vct(vobj);
   old_len = vold->length;
   if (SCM_INUMP(end))

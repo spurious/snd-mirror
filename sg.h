@@ -5,6 +5,7 @@
 #define MAKE_HOOK(Name, Args, Help) snd_set_object_property(scm_create_hook(Name, Args), local_doc, TO_SCM_STRING(Help))
 #define SND_RETURN_NEWSMOB(Tag, Val) SCM_RETURN_NEWSMOB(Tag, (SCM)Val)
 #define SND_VALUE_OF(a) SCM_SMOB_DATA(a)
+/* remember to check the smob type agreement before calling SND_VALUE_OF! */
 #define SND_SET_VALUE_OF(a, b) SCM_SET_SMOB_DATA(a, b)
 #define SND_LOOKUP(a) scm_symbol_value0(a)
 
@@ -125,20 +126,27 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 #define BAD_ARITY            TO_SCM_SYMBOL("bad-arity")
 
 #define SND_ASSERT_SND(Origin, Snd, Offset) \
-  if (!((gh_number_p(Snd)) || (SCM_FALSEP(Snd)) || (SCM_UNBNDP(Snd)) || (gh_list_p(Snd)))) \
+  if (!((SCM_NFALSEP(scm_integer_p(Snd))) || (SCM_FALSEP(Snd)) || (SCM_UNBNDP(Snd)) || (gh_list_p(Snd)))) \
     scm_wrong_type_arg(Origin, Offset, Snd);
 
 #define SND_ASSERT_CHAN(Origin, Snd, Chn, Offset) \
-  if (!((gh_number_p(Snd)) || (SCM_FALSEP(Snd)) || (SCM_UNBNDP(Snd)) || (gh_list_p(Snd)))) \
+  if (!((SCM_NFALSEP(scm_integer_p(Snd))) || (SCM_FALSEP(Snd)) || (SCM_UNBNDP(Snd)) || (gh_list_p(Snd)))) \
     scm_wrong_type_arg(Origin, Offset, Snd); \
   else \
-    if (!((gh_number_p(Chn)) || (SCM_FALSEP(Chn)) || (SCM_UNBNDP(Chn)))) \
+    if (!((SCM_NFALSEP(scm_integer_p(Chn))) || (SCM_FALSEP(Chn)) || (SCM_UNBNDP(Chn)))) \
       scm_wrong_type_arg(Origin, Offset + 1, Chn);
 
-#define BOOL_OR_ARG_P(Arg) \
-  ((gh_number_p(Arg)) || (gh_boolean_p(Arg)) || (SCM_UNBNDP(Arg)))
+#define BOOLEAN_IF_BOUND_P(Arg) ((SCM_NFALSEP(scm_boolean_p(Arg))) || (SCM_UNBNDP(Arg)))
+#define INTEGER_IF_BOUND_P(Arg) ((SCM_NFALSEP(scm_integer_p(Arg))) || (SCM_UNBNDP(Arg)))
+#define NUMBER_IF_BOUND_P(Arg) ((SCM_NFALSEP(scm_real_p(Arg))) || (SCM_UNBNDP(Arg)))
+#define INTEGER_OR_BOOLEAN_IF_BOUND_P(Arg) ((SCM_NFALSEP(scm_integer_p(Arg))) || (SCM_NFALSEP(scm_boolean_p(Arg))) || (SCM_UNBNDP(Arg)))
+#define NUMBER_OR_BOOLEAN_IF_BOUND_P(Arg) ((SCM_NFALSEP(scm_real_p(Arg))) || (SCM_NFALSEP(scm_boolean_p(Arg))) || (SCM_UNBNDP(Arg)))
 
-#define INT_OR_ARG_P(Arg) \
-  ((gh_number_p(Arg)) || (SCM_UNBNDP(Arg)))
+#define NUMBER_OR_BOOLEAN_P(Arg) ((SCM_NFALSEP(scm_real_p(Arg))) || (SCM_NFALSEP(scm_boolean_p(Arg))))
+#define INTEGER_OR_BOOLEAN_P(Arg) ((SCM_NFALSEP(scm_integer_p(Arg))) || (SCM_NFALSEP(scm_boolean_p(Arg))))
+#define NUMBER_P(Arg) (SCM_NFALSEP(scm_real_p(Arg)))
+#define INTEGER_P(Arg) (SCM_NFALSEP(scm_integer_p(Arg)))
+#define BOOLEAN_P(Arg) (SCM_NFALSEP(scm_boolean_p(Arg)))
+#define BOUND_P(Arg) (!(SCM_UNBNDP(Arg)))
 
 #endif

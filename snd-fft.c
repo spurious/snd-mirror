@@ -1296,7 +1296,7 @@ static int apply_fft_window(fft_state *fs)
 				   SCM_LIST2(TO_SMALL_SCM_INT(cp->sound->index), 
 					     TO_SMALL_SCM_INT(cp->chan)),
 				   S_before_fft_hook);
-	  if (gh_number_p(res))
+	  if (NUMBER_P(res))
 	    ind0 = TO_C_INT_OR_ELSE(res, 0) + fs->beg;
 	  else ind0 = (cp->axis)->losamp + fs->beg;
 	}
@@ -2212,8 +2212,8 @@ to be displayed goes from low to high (normally 0.0 to 1.0)"
 			TO_SCM_STRING(errmsg)));
   SCM_ASSERT(gh_string_p(name), name, SCM_ARG1, S_add_transform);
   SCM_ASSERT(gh_string_p(xlabel), xlabel, SCM_ARG2, S_add_transform);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(lo)), lo, SCM_ARG3, S_add_transform);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(hi)), hi, SCM_ARG4, S_add_transform);
+  SCM_ASSERT(NUMBER_P(lo), lo, SCM_ARG3, S_add_transform);
+  SCM_ASSERT(NUMBER_P(hi), hi, SCM_ARG4, S_add_transform);
   SCM_ASSERT(gh_procedure_p(proc), proc, SCM_ARG5, S_add_transform);
   return(TO_SMALL_SCM_INT(add_transform(TO_C_STRING(name),
 					TO_C_STRING(xlabel),
@@ -2252,8 +2252,8 @@ returns the current transform sample at bin and slice in snd channel chn (assumi
   fft_info *fp;
   sono_info *si;
   int fbin, fslice;
-  SCM_ASSERT(INT_OR_ARG_P(bin), bin, SCM_ARG1, S_transform_sample);
-  SCM_ASSERT(INT_OR_ARG_P(slice), slice, SCM_ARG2, S_transform_sample);
+  SCM_ASSERT(INTEGER_IF_BOUND_P(bin), bin, SCM_ARG1, S_transform_sample);
+  SCM_ASSERT(INTEGER_IF_BOUND_P(slice), slice, SCM_ARG2, S_transform_sample);
   SND_ASSERT_CHAN(S_transform_sample, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_transform_sample);
   if (cp->ffting)

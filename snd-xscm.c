@@ -41,7 +41,7 @@ static void timed_eval(XtPointer in_code, XtIntervalId *id)
 static SCM g_in(SCM ms, SCM code)
 {
   #define H_in "(" S_in " msecs thunk) invokes thunk in msecs milliseconds"
-  SCM_ASSERT(gh_number_p(ms), ms, SCM_ARG1, S_in);
+  SCM_ASSERT(NUMBER_P(ms), ms, SCM_ARG1, S_in);
   SCM_ASSERT(gh_procedure_p(code), code, SCM_ARG2, S_in);
   XtAppAddTimeOut(MAIN_APP(state), 
 		  TO_C_UNSIGNED_LONG(ms), 
@@ -151,10 +151,10 @@ static SCM g_make_snd_color(SCM r, SCM g, SCM b)
   XColor tmp_color;
   Display *dpy;
   snd_color *new_color;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(r)), r, SCM_ARG1, S_make_color);
+  SCM_ASSERT(NUMBER_P(r), r, SCM_ARG1, S_make_color);
   /* someday accept a list as r */
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(g)), g, SCM_ARG2, S_make_color);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(b)), b, SCM_ARG3, S_make_color);
+  SCM_ASSERT(NUMBER_P(g), g, SCM_ARG2, S_make_color);
+  SCM_ASSERT(NUMBER_P(b), b, SCM_ARG3, S_make_color);
   new_color = (snd_color *)CALLOC(1, sizeof(snd_color));
   dpy = XtDisplay(MAIN_SHELL(state));
   cmap = DefaultColormap(dpy, DefaultScreen(dpy));
@@ -656,13 +656,18 @@ static SCM g_load_colormap(SCM colors)
   Pixel *xcs;
   snd_color *v;
   SCM *vdata;
-  SCM_ASSERT((gh_vector_p(colors)), colors, SCM_ARG1, S_load_colormap);
+  SCM_ASSERT(gh_vector_p(colors), colors, SCM_ARG1, S_load_colormap);
   len = gh_vector_length(colors);
   xcs = (Pixel *)CALLOC(len, sizeof(Pixel));
   vdata = SCM_VELTS(colors);
   for (i = 0; i < len; i++)
     {
-      v = get_snd_color(vdata[i]);
+      if (snd_color_p(vdata[i]))
+	v = get_snd_color(vdata[i]);
+      else scm_throw(MUS_MISC_ERROR,
+		     SCM_LIST3(TO_SCM_STRING(S_load_colormap),
+			       TO_SCM_STRING("invalid color:"),
+			       vdata[i]));
       xcs[i] = v->color;
     }
   x_load_colormap(xcs);
@@ -678,7 +683,7 @@ static SCM g_graph_cursor(void)
 
 static SCM g_set_graph_cursor(SCM curs)
 {
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(curs)), curs, SCM_ARG1, "set-" S_graph_cursor);
+  SCM_ASSERT(NUMBER_P(curs), curs, SCM_ARG1, "set-" S_graph_cursor);
   state->Graph_Cursor = TO_C_INT(curs);
   (state->sgx)->graph_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(state)), in_graph_cursor(state));
   return(curs);
@@ -692,7 +697,7 @@ static SCM g_set_sounds_horizontal(SCM val)
 {
   int horizontal = 0;
   snd_state *ss;
-  SCM_ASSERT(gh_boolean_p(val), val, SCM_ARG1, "set-" S_sounds_horizontal);
+  SCM_ASSERT(BOOLEAN_P(val), val, SCM_ARG1, "set-" S_sounds_horizontal);
   horizontal = (SCM_NFALSEP(val));
   ss = get_global_state();
   XtVaSetValues(SOUND_PANE(ss), XmNorientation, (horizontal) ? XmHORIZONTAL : XmVERTICAL, NULL);
