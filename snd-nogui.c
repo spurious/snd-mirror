@@ -54,6 +54,13 @@ void set_spectro_cutoff(Float val) {}
 bool color_dialog_is_active(void) {return(false);}
 bool orientation_dialog_is_active(void) {return(false);}
 void reflect_spectro(void) {}
+void reflect_peaks_in_transform_dialog(void) {}
+void reflect_log_freq_base_in_transform_dialog(void) {}
+void reflect_min_db_in_transform_dialog(void) {}
+void widget_int_to_text(Widget_t w, int val) {}
+void widget_float_to_text(Widget_t w, Float val) {}
+void widget_bool_to_text(Widget_t w, bool val) {}
+void widget_off_t_to_text(Widget_t w, off_t val) {}
 void listener_append_and_prompt(char *msg) {fprintf(stderr, "%s", msg);}
 void goto_listener(void) {}
 void save_listener_text(FILE *fp) {}

@@ -90,7 +90,6 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
 {
   int i;
   char **fl = NULL;
-  char *str;
   XmString *strs;
   fdat->current_type = type;
   fdat->current_format = format;
@@ -110,38 +109,18 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
   XmListSelectPos(fdat->format_list, fdat->format_pos + 1, false);
   if ((srate > 0) && 
       (fdat->srate_text))
-    {
-      str = (char *)CALLOC(32, sizeof(char));
-      sprintf(str, "%d", srate);
-      XmTextSetString(fdat->srate_text, str);
-      FREE(str);
-    }
+    widget_int_to_text(fdat->srate_text, srate);
   if ((chans > 0) && 
       (fdat->chans_text))
-    {
-      str = (char *)CALLOC(8, sizeof(char));
-      sprintf(str, "%d", chans);
-      XmTextSetString(fdat->chans_text, str);
-      FREE(str);
-    }
+    widget_int_to_text(fdat->chans_text, chans);
   if (fdat->comment_text) 
     XmTextSetString(fdat->comment_text, comment);
   if ((location >= 0) && 
       (fdat->location_text))
-    {
-      str = (char *)CALLOC(32, sizeof(char));
-      sprintf(str, OFF_TD, location);
-      XmTextSetString(fdat->location_text, str);
-      FREE(str);
-    }
+    widget_off_t_to_text(fdat->location_text, location);
   if ((samples >= 0) && 
       (fdat->samples_text))
-    {
-      str = (char *)CALLOC(32, sizeof(char));
-      sprintf(str, OFF_TD, samples);
-      XmTextSetString(fdat->samples_text, str);
-      FREE(str);
-    }
+    widget_off_t_to_text(fdat->samples_text, samples);
 }
 
 static void color_file_selection_box(Widget w)
@@ -1927,9 +1906,6 @@ static void raw_data_help_callback(Widget w, XtPointer context, XtPointer info)
   raw_data_dialog_help();
 }
 
-static char dfs_str[LABEL_BUFFER_SIZE];
-static char dfc_str[LABEL_BUFFER_SIZE];
-
 static void make_raw_data_dialog(const char *filename)
 {
   XmString *formats;
@@ -1997,10 +1973,7 @@ static void make_raw_data_dialog(const char *filename)
   XtSetArg(args[n], XmNcolumns, 6); n++;
   XtSetArg(args[n], XmNresizeWidth, false); n++;
   raw_srate_text = make_textfield_widget("text", rform, args, n, NOT_ACTIVATABLE, add_completer_func(srate_completer));
-  if (sr < 100000) 
-    mus_snprintf(dfs_str, LABEL_BUFFER_SIZE, " %d", sr);
-  else mus_snprintf(dfs_str, LABEL_BUFFER_SIZE, "%d", sr);
-  XmTextSetString(raw_srate_text, dfs_str);
+  widget_int_to_text(raw_srate_text, sr);
 
   n = 0;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
@@ -2021,10 +1994,7 @@ static void make_raw_data_dialog(const char *filename)
   XtSetArg(args[n], XmNcolumns, 3); n++;
   XtSetArg(args[n], XmNresizeWidth, false); n++;
   raw_chans_text = make_textfield_widget("text", rform, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
-  if (oc < 10) 
-    mus_snprintf(dfc_str, LABEL_BUFFER_SIZE, "  %d", oc);
-  else mus_snprintf(dfc_str, LABEL_BUFFER_SIZE, " %d", oc);
-  XmTextSetString(raw_chans_text, dfc_str);
+  widget_int_to_text(raw_chans_text, oc);
   
   n = 0;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;

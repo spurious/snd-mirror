@@ -285,10 +285,8 @@ static void track_activated(void)
 	mix_dialog_set_mix_track(mix_dialog_id, trk);
       else
 	{
-	  char lab[16];
 	  XmTextSetString(w_beg, _("track must be >= 0"));
-	  mus_snprintf(lab, 16, "%d", mix_dialog_mix_track(mix_dialog_id));
-	  XmTextSetString(w_track, lab);
+	  widget_int_to_text(w_track, mix_dialog_mix_track(mix_dialog_id));
 	}
       XtFree(val);
     }
@@ -990,10 +988,8 @@ static void update_mix_dialog(int mix_id)
 	  XtVaSetValues(w_speed, XmNvalue, speed_to_scroll(speed_control_min(ss), val, speed_control_max(ss)), NULL);
 	  speed_changed(val, lab, speed_control_style(ss), speed_control_tones(ss), 6);
 	  set_label(w_speed_number, lab);
-	  mus_snprintf(lab, LABEL_BUFFER_SIZE, "%d", mix_dialog_mix_track(mix_dialog_id));
-	  XmTextSetString(w_track, lab);
-	  mus_snprintf(lab, LABEL_BUFFER_SIZE, "%d", mix_dialog_id);
-	  XmTextSetString(w_id, lab);
+	  widget_int_to_text(w_track, mix_dialog_mix_track(mix_dialog_id));
+	  widget_int_to_text(w_id, mix_dialog_id);
 	  beg = mix_dialog_mix_position(mix_dialog_id);
 	  len = mix_frames(mix_dialog_id);
 	  mus_snprintf(lab, LABEL_BUFFER_SIZE, "%.3f : %.3f",
@@ -1339,19 +1335,15 @@ static void track_track_activated(void)
 	  if ((id == track_dialog_id) ||
 	      (!(set_track_track(track_dialog_id, id))))
 	    {
-	      char lab[16];
 	      set_label(w_track_text, _("circular track chain"));
-	      mus_snprintf(lab, 16, "%d", track_dialog_track_track(track_dialog_id));
-	      XmTextSetString(w_track_track, lab);
+	      widget_int_to_text(w_track_track, track_dialog_track_track(track_dialog_id));
 	    }
 	  else update_track_dialog(id);
 	}
       else
 	{
-	  char lab[16];
 	  set_label(w_track_text, _("track must be >= 0"));
-	  mus_snprintf(lab, 16, "%d", track_dialog_track_track(track_dialog_id));
-	  XmTextSetString(w_track_track, lab);
+	  widget_int_to_text(w_track_track, track_dialog_track_track(track_dialog_id));
 	}
       XtFree(val);
     }
@@ -2093,10 +2085,8 @@ static void update_track_dialog(int track_id)
 	  XtVaSetValues(w_track_speed, XmNvalue, speed_to_scroll(speed_control_min(ss), val, speed_control_max(ss)), NULL);
 	  speed_changed(val, lab, speed_control_style(ss), speed_control_tones(ss), 6);
 	  set_label(w_track_speed_number, lab);
-	  mus_snprintf(lab, LABEL_BUFFER_SIZE, "%d", track_dialog_track_track(track_dialog_id));
-	  XmTextSetString(w_track_track, lab);
-	  mus_snprintf(lab, LABEL_BUFFER_SIZE, "%d", track_dialog_id);
-	  XmTextSetString(w_track_id, lab);
+	  widget_int_to_text(w_track_track, track_dialog_track_track(track_dialog_id));
+	  widget_int_to_text(w_track_id, track_dialog_id);
 	  val = track_dialog_track_tempo(track_dialog_id);
 	  XtVaSetValues(w_track_tempo, XmNvalue, tempo_to_scroll(tempo_control_min(ss), val, tempo_control_max(ss)), NULL);
 	  mus_snprintf(lab, 5, "%.2f", val);

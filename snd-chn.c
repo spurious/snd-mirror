@@ -9,6 +9,11 @@
 /*    and what about the xor effect over unknown bg colors? -- perhaps white here? */
 /*    for sonogram, can use local_grf_x[y not needed?] here, just as in time case, I think */
 
+/* TODO: if log-freq+sonogram click in fft returns silly results */
+/* TODO: click in spectrogram returns "?" (log-freq ignored here, also normalize) */
+/* TODO: click single + lf, then sono refuses to be clicked?? */
+
+
 typedef enum {CLICK_NOGRAPH, CLICK_WAVE, CLICK_FFT_AXIS, CLICK_LISP, CLICK_FFT_MAIN} click_loc_t;    /* for marks, regions, mouse click detection */
 
 static XEN lisp_graph_hook;
@@ -5343,6 +5348,33 @@ static XEN g_min_dB(XEN snd, XEN chn)
   return(C_TO_XEN_DOUBLE(ss->min_dB));
 }
 
+
+static void update_db_graph(chan_info *cp, void *db)
+{
+  Float new_db;
+  new_db = ((Float *)db)[0];
+  cp->min_dB = new_db;
+  cp->lin_dB = pow(db_base(ss), cp->min_dB * 0.05); 
+  if ((!(cp->active)) ||
+      (cp->cgx == NULL) || 
+      (cp->sounds == NULL) || 
+      (cp->sounds[cp->sound_ctr] == NULL) ||
+      (!(cp->graph_transform_p)) ||
+      (!(cp->fft_log_magnitude)) ||
+      (chan_fft_in_progress(cp)))
+    return;
+  calculate_fft(cp);
+}
+
+void set_min_db(Float db)
+{
+  Float new_db[1];
+  ss->min_dB = db;
+  ss->lin_dB = pow(db_base(ss), db * 0.05);
+  new_db[0] = db;
+  for_each_chan_1(update_db_graph, (void *)new_db);
+}
+
 static XEN g_set_min_dB(XEN val, XEN snd, XEN chn) 
 {
   Float db;
@@ -5354,9 +5386,8 @@ static XEN g_set_min_dB(XEN val, XEN snd, XEN chn)
       db = XEN_TO_C_DOUBLE(val);
       if (db < 0.0)
 	{
-	  ss->min_dB = db;
-	  ss->lin_dB = pow(db_base(ss), db * 0.05);
-	  channel_set(XEN_TRUE, XEN_TRUE, val, CP_MIN_DB, S_setB S_min_dB);
+	  set_min_db(db);
+	  reflect_min_db_in_transform_dialog();
 	}
       else XEN_OUT_OF_RANGE_ERROR(S_setB S_min_dB, 1, val, S_min_dB " (~A) must be < 0.0");
       return(C_TO_XEN_DOUBLE(ss->min_dB));
@@ -6013,7 +6044,10 @@ static XEN g_set_max_transform_peaks(XEN n, XEN snd, XEN chn)
     {
       lim = XEN_TO_C_INT(n);
       if (lim >= 1)
-	set_max_transform_peaks(lim);
+	{
+	  set_max_transform_peaks(lim);
+	  reflect_peaks_in_transform_dialog();
+	}
       return(C_TO_XEN_INT(max_transform_peaks(ss)));
     }
 }

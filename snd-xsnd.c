@@ -765,16 +765,12 @@ void set_filter_in_hz(snd_info *sp, bool val)
 
 void set_filter_order(snd_info *sp, int order)
 {
-  char *fltorder;
   if (order & 1) order++;
   if (order <= 0) order = 2;
   sp->filter_control_order = order;
   if (!(IS_PLAYER(sp)))
     {
-      fltorder = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(fltorder, LABEL_BUFFER_SIZE, "%d", order);
-      XmTextSetString(FILTER_ORDER_TEXT(sp), fltorder);
-      FREE(fltorder);
+      widget_int_to_text(FILTER_ORDER_TEXT(sp), order);
       display_filter_env(sp);
     }
   sp->filter_control_changed = true;

@@ -561,3 +561,41 @@ int attach_all_sides(Arg *args, int n)
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
   return(n);
 }
+
+
+void widget_int_to_text(Widget w, int val)
+{
+  char *str;
+  str = (char *)CALLOC(8, sizeof(char));
+  mus_snprintf(str, 8, "%d", val);
+  XmTextFieldSetString(w, str);
+  FREE(str);
+}
+
+void widget_float_to_text(Widget w, Float val)
+{
+  char *str;
+  str = (char *)CALLOC(16, sizeof(char));
+  mus_snprintf(str, 16, "%.2f", val);
+  XmTextFieldSetString(w, str);
+  FREE(str);
+}
+
+void widget_bool_to_text(Widget w, bool val)
+{
+#if HAVE_GUILE
+  XmTextSetString(w, (val) ? "#t" : "#f");
+#else
+  XmTextSetString(w, (val) ? "true" : "false");
+#endif  
+}
+
+void widget_off_t_to_text(Widget w, off_t val)
+{
+  char *str;
+  str = (char *)CALLOC(32, sizeof(char));
+  mus_snprintf(str, 32, OFF_TD, val);
+  XmTextFieldSetString(w, str);
+  FREE(str);
+}
+

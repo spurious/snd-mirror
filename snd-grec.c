@@ -849,10 +849,8 @@ static void make_file_info_pane(recorder_info *rp, GtkWidget *file_pane, int nde
   err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_MICROPHONE, MUS_AUDIO_SRATE, 0, val);
   if (err == MUS_NO_ERROR) rp->srate = val[0];
 #endif
-  mus_snprintf(timbuf, TIME_STR_SIZE, "%d", rp->srate);
-  gtk_entry_set_text(GTK_ENTRY(recdat->srate_text), copy_string(timbuf));
-  mus_snprintf(timbuf, TIME_STR_SIZE, "%d", rp->out_chans);
-  gtk_entry_set_text(GTK_ENTRY(recdat->chans_text), copy_string(timbuf));
+  widget_int_to_text(recdat->srate_text, rp->srate);
+  widget_int_to_text(recdat->chans_text, rp->out_chans);
 
   durbox = gtk_hbox_new(false, 0);
   gtk_box_pack_start(GTK_BOX(right_form), durbox, false, false, 0);
@@ -872,8 +870,7 @@ static void make_file_info_pane(recorder_info *rp, GtkWidget *file_pane, int nde
 
   rec_size_text = snd_entry_new(durbox, true);
   SG_SIGNAL_CONNECT(rec_size_text,  "activate", rec_size_changed_callback, NULL);
-  mus_snprintf(timbuf, TIME_STR_SIZE, "%d", rp->buffer_size);
-  gtk_entry_set_text(GTK_ENTRY(rec_size_text), timbuf);
+  widget_int_to_text(rec_size_text, rp->buffer_size);
 
   ff_sep2 = gtk_hseparator_new();
   gtk_box_pack_start(GTK_BOX(right_form), ff_sep2, false, false, 0);
@@ -1013,8 +1010,7 @@ static void meter_button_callback(GtkWidget *w, gpointer context)
 	  val++;
       if ((val > 0) && (val != n))
 	{
-	  mus_snprintf(timbuf, TIME_STR_SIZE, "%d", val);
-	  gtk_entry_set_text(GTK_ENTRY(recdat->chans_text), timbuf);
+	  widget_int_to_text(recdat->chans_text, val);
 #ifdef HAVE_ALSA
 	  /* FIXME: this apparently is not necessary, we cannot
 	   * change the number of recorded channels on the fly
@@ -2100,11 +2096,8 @@ static void initialize_recorder(recorder_info *rp)
 
 void reflect_record_size(int size)
 {
-  if ((recorder) && (rec_size_text)) 
-    {
-      mus_snprintf(timbuf, TIME_STR_SIZE, "%d", size);
-      gtk_entry_set_text(GTK_ENTRY(rec_size_text), timbuf);
-    }
+  if ((recorder) && (rec_size_text))
+    widget_int_to_text(rec_size_text, size);
 }
 
 bool record_dialog_is_active(void)
@@ -2133,10 +2126,7 @@ void set_recorder_srate(recorder_info *rp, int val)
       /* SGI AES In sometimes claims its srate is 0 */
       rp->srate = val;
       if (recorder) 
-	{
-	  mus_snprintf(sbuf, LABEL_BUFFER_SIZE, "%d", rp->srate);
-	  gtk_entry_set_text(GTK_ENTRY(recdat->srate_text), sbuf);
-	}
+	widget_int_to_text(recdat->srate_text, rp->srate);
     }
 }
 

@@ -203,6 +203,9 @@ void set_fft_log_frequency(bool val);
 void set_transform_normalization(fft_normalize_t val);
 void set_show_selection_transform(bool show);
 void set_transform_graph_type(graph_type_t val);
+void reflect_peaks_in_transform_dialog(void);
+void reflect_log_freq_base_in_transform_dialog(void);
+void reflect_min_db_in_transform_dialog(void);
 
 
 
@@ -390,6 +393,10 @@ void sg_make_resizable(GtkWidget *w);
 Cessator add_work_proc(GtkFunction func, gpointer data);
 GtkWidget *snd_gtk_dialog_new(void);
 GtkWidget *snd_gtk_label_new(const char *label, GdkColor *color);
+void widget_int_to_text(GtkWidget *w, int val);
+void widget_float_to_text(GtkWidget *w, Float val);
+void widget_bool_to_text(GtkWidget *w, bool val);
+void widget_off_t_to_text(GtkWidget *w, off_t val);
 
 
 /* -------- snd-gsnd.c -------- */

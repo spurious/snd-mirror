@@ -103,19 +103,9 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
   sg_list_select(fdat->format_list, fdat->format_pos);
   g_signal_handlers_unblock_matched(GTK_OBJECT(fdat->format_list), G_SIGNAL_MATCH_DATA, 0, 0, NULL, 0, (gpointer)fdat);
   if ((srate > 0) && (fdat->srate_text))
-    {
-      str = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(str, LABEL_BUFFER_SIZE, "%d", srate);
-      gtk_entry_set_text(GTK_ENTRY(fdat->srate_text), str);
-      FREE(str);
-    }
+    widget_int_to_text(fdat->srate_text, srate);
   if ((chans > 0) && (fdat->chans_text))
-    {
-      str = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(str, LABEL_BUFFER_SIZE, "%d", chans);
-      gtk_entry_set_text(GTK_ENTRY(fdat->chans_text), str);
-      FREE(str);
-    }
+    widget_int_to_text(fdat->chans_text, chans);
   if (fdat->comment_text) 
     {
       if (GTK_IS_TEXT_VIEW(fdat->comment_text))
@@ -126,19 +116,9 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
       else gtk_entry_set_text(GTK_ENTRY(fdat->comment_text), comment);
     }
   if ((location >= 0) && (fdat->location_text))
-    {
-      str = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(str, LABEL_BUFFER_SIZE, OFF_TD, location);
-      gtk_entry_set_text(GTK_ENTRY(fdat->location_text), str);
-      FREE(str);
-    }
+    widget_off_t_to_text(fdat->location_text, location);
   if ((samples >= 0) && (fdat->samples_text))
-    {
-      str = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(str, LABEL_BUFFER_SIZE, OFF_TD, samples);
-      gtk_entry_set_text(GTK_ENTRY(fdat->samples_text), str);
-      FREE(str);
-    }
+    widget_off_t_to_text(fdat->samples_text, samples);
 }
 
 #if HAVE_GFCDN
@@ -1513,7 +1493,6 @@ static void raw_data_help_callback(GtkWidget *w, gpointer context)
 
 static void make_raw_data_dialog(void)
 {
-  char dfs_str[LABEL_BUFFER_SIZE];
   int sr, oc, fr;
   GtkWidget *lst, *dls, *dloclab, *chnlab;
   GtkWidget *defaultB, *helpB, *cancelB, *okB, *sratehbox, *lochbox;
@@ -1560,16 +1539,14 @@ static void make_raw_data_dialog(void)
   gtk_widget_show(dls);
 
   raw_srate_text = snd_entry_new(sratehbox, true);
-  mus_snprintf(dfs_str, LABEL_BUFFER_SIZE, "%d", sr);
-  gtk_entry_set_text(GTK_ENTRY(raw_srate_text), dfs_str);
+  widget_int_to_text(raw_srate_text, sr);
 
   chnlab = gtk_label_new(_("chans:"));
   gtk_box_pack_start(GTK_BOX(sratehbox), chnlab, false, false, 4);
   gtk_widget_show(chnlab);
 
   raw_chans_text = snd_entry_new(sratehbox, true);
-  mus_snprintf(dfs_str, LABEL_BUFFER_SIZE, "%d", oc);
-  gtk_entry_set_text(GTK_ENTRY(raw_chans_text), dfs_str);
+  widget_int_to_text(raw_chans_text, oc);
 
   lochbox = gtk_hbox_new(false, 2);
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(raw_data_dialog)->vbox), lochbox, false, false, 6);

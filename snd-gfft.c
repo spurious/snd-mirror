@@ -794,3 +794,6 @@ int add_transform_to_list(char *name)
   return(num_transform_types++);
 }
 
+void reflect_peaks_in_transform_dialog(void) {}
+void reflect_log_freq_base_in_transform_dialog(void) {}
+void reflect_min_db_in_transform_dialog(void) {}

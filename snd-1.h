@@ -903,6 +903,7 @@ void clear_stdin(void);
 #if HAVE_RUBY
   void snd_rb_raise(XEN type, XEN info);
 #endif
+void set_log_freq_base(Float base);
 
 
 /* -------- snd-select.c -------- */
@@ -1132,6 +1133,7 @@ axis_context *selection_context (chan_info *cp);
 axis_context *mark_context (chan_info *cp);
 axis_context *mix_waveform_context (chan_info *cp);
 void calculate_fft(chan_info *cp);
+void set_min_db(Float db);
 
 
 /* -------- snd-axis.c -------- */

@@ -1338,10 +1338,8 @@ static void make_file_info_pane(recorder_info *rp, Widget file_pane, int ndevs)
   err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_MICROPHONE, MUS_AUDIO_SRATE, 0, val);
   if (err == MUS_NO_ERROR) rp->srate = val[0];
 #endif
-  mus_snprintf(timbuf, TIME_STR_SIZE, "%d", rp->srate);
-  XmTextSetString(recdat->srate_text, timbuf);
-  mus_snprintf(timbuf, TIME_STR_SIZE, "%d", rp->out_chans);
-  XmTextSetString(recdat->chans_text, timbuf);
+  widget_int_to_text(recdat->srate_text, rp->srate);
+  widget_int_to_text(recdat->chans_text, rp->out_chans);
   if (!(ss->using_schemes))
     {
       map_over_children(ff_form, set_main_color_of_widget, NULL);
@@ -1603,8 +1601,7 @@ static void meter_button_callback(Widget w, XtPointer context, XtPointer info)
 	  val++;
       if ((val > 0) && (val != n))
 	{
-	  mus_snprintf(timbuf, TIME_STR_SIZE, "%d", val);
-	  XmTextSetString(recdat->chans_text, timbuf);
+	  widget_int_to_text(recdat->chans_text, val);
 #if (HAVE_ALSA || HAVE_OSS)
 	  /* FIXME: this apparently is not necessary, we cannot
 	   * change the number of recorded channels on the fly
@@ -3361,10 +3358,7 @@ static void initialize_recorder(recorder_info *rp)
 void reflect_record_size(int size)
 {
   if ((recorder) && (rec_size_text)) 
-    {
-      mus_snprintf(timbuf, TIME_STR_SIZE, "%d", size);
-      XmTextSetString(rec_size_text, timbuf);
-    }
+    widget_int_to_text(rec_size_text, size);
 }
 
 bool record_dialog_is_active(void)
@@ -3385,17 +3379,13 @@ void set_recorder_trigger(recorder_info *rp, Float val)
 
 void set_recorder_srate(recorder_info *rp, int val)
 {
-  char sbuf[LABEL_BUFFER_SIZE];
   /* this just reflects the setting in the text field -- it doesn't actually set anything in the audio system */
   if (val > 0)
     {
       /* SGI AES In sometimes claims its srate is 0 */
       rp->srate = val;
       if (recorder) 
-	{
-	  mus_snprintf(sbuf, LABEL_BUFFER_SIZE, "%d", rp->srate);
-	  XmTextSetString(recdat->srate_text, sbuf);
-	}
+	widget_int_to_text(recdat->srate_text, rp->srate);
     }
 }
 

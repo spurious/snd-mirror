@@ -381,10 +381,8 @@ static void mix_track_activated(GtkWidget *w, gpointer context)
 	mix_dialog_set_mix_track(mix_dialog_id, trk);
       else
 	{
-	  char lab[16];
 	  gtk_entry_set_text(GTK_ENTRY(w_beg), "track must be >= 0");
-	  mus_snprintf(lab, 16, "%d", mix_dialog_mix_track(mix_dialog_id));
-	  gtk_entry_set_text(GTK_ENTRY(w_track), lab);
+	  widget_int_to_text(w_track, mix_dialog_mix_track(mix_dialog_id));
 	}
     }
 }
@@ -865,10 +863,8 @@ static void update_mix_dialog(int mix_id)
 	  cp = mix_dialog_mix_channel(mix_dialog_id);
 	  val = mix_dialog_mix_speed(mix_dialog_id);
 	  reflect_mix_speed(val);
-	  mus_snprintf(lab, LABEL_BUFFER_SIZE, "%d", mix_dialog_mix_track(mix_dialog_id));
-	  gtk_entry_set_text(GTK_ENTRY(w_track), lab);
-	  mus_snprintf(lab, LABEL_BUFFER_SIZE, "%d", mix_dialog_id);
-	  gtk_entry_set_text(GTK_ENTRY(w_id), lab);
+	  widget_int_to_text(w_track, mix_dialog_mix_track(mix_dialog_id));
+	  widget_int_to_text(w_id, mix_dialog_id);
 	  beg = mix_dialog_mix_position(mix_dialog_id);
 	  len = mix_frames(mix_dialog_id);
 	  mus_snprintf(lab, LABEL_BUFFER_SIZE, "%.3f : %.3f",
@@ -1334,19 +1330,15 @@ static void track_track_activated(GtkWidget *w, gpointer context)
 	  if ((id == track_dialog_id) ||
 	      (!(set_track_track(track_dialog_id, id))))
 	    {
-	      char lab[16];
 	      set_label(w_track_text, _("circular track chain"));
-	      mus_snprintf(lab, 16, "%d", track_dialog_track_track(track_dialog_id));
-	      gtk_entry_set_text(GTK_ENTRY(w_track_track), lab);
+	      widget_int_to_text(w_track_track, track_dialog_track_track(track_dialog_id));
 	    }
 	  else update_track_dialog(id);
 	}
       else
 	{
-	  char lab[16];
 	  set_label(w_track_text, _("track must be >= 0"));
-	  mus_snprintf(lab, 16, "%d", track_dialog_track_track(track_dialog_id));
-	  gtk_entry_set_text(GTK_ENTRY(w_track_track), lab);
+	  widget_int_to_text(w_track_track, track_dialog_track_track(track_dialog_id));
 	}
     }
 }
@@ -1754,10 +1746,8 @@ static void update_track_dialog(int track_id)
 	  cp = track_channel(track_id, 0);
 	  val = track_dialog_track_speed(track_id);
 	  reflect_track_speed(val);
-	  mus_snprintf(lab, LABEL_BUFFER_SIZE, "%d", track_dialog_track_track(track_id));
-	  gtk_entry_set_text(GTK_ENTRY(w_track_track), lab);
-	  mus_snprintf(lab, LABEL_BUFFER_SIZE, "%d", track_id);
-	  gtk_entry_set_text(GTK_ENTRY(w_track_id), lab);
+	  widget_int_to_text(w_track_track, track_dialog_track_track(track_id));
+	  widget_int_to_text(w_track_id, track_id);
 	  if (cp)
 	    {
 	      beg = track_position(track_id, -1);

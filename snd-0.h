@@ -458,7 +458,7 @@ typedef enum {PLAY_COMPLETE, PLAY_CLOSE, PLAY_BUTTON_UNSET, PLAY_STOP_CALLED, PL
 #define DEFAULT_DB_BASE 10.0
 
 #define log_freq_base(ss) ss->Log_Freq_Base
-#define set_log_freq_base(a) ss->Log_Freq_Base = a
+#define in_set_log_freq_base(a) ss->Log_Freq_Base = a
 #define DEFAULT_LOG_FREQ_BASE 25.0
 
 #define optimization(ss) ss->Optimization

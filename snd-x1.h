@@ -216,6 +216,9 @@ void set_fft_log_frequency(bool val);
 void set_transform_normalization(fft_normalize_t val);
 void set_show_selection_transform(bool show);
 void set_transform_graph_type(graph_type_t val);
+void reflect_peaks_in_transform_dialog(void);
+void reflect_log_freq_base_in_transform_dialog(void);
+void reflect_min_db_in_transform_dialog(void);
 
 
 /* -------- snd-xdrop.c -------- */
@@ -330,6 +333,12 @@ void fixup_axis_context(axis_context *ax, Widget w, GC gc);
 Pixmap make_pixmap(unsigned char *bits, int width, int height, int depth, GC gc);
 Cessator add_work_proc(XtWorkProc func, XtPointer data);
 int attach_all_sides(Arg *args, int n);
+void widget_int_to_text(Widget w, int val);
+void widget_float_to_text(Widget w, Float val);
+void widget_bool_to_text(Widget w, bool val);
+void widget_off_t_to_text(Widget w, off_t val);
+
+/* TODO: *_to_text in gtk/nogui, use throughout */
 
 
 /* -------- snd-xchn.c -------- */

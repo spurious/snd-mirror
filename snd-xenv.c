@@ -1475,7 +1475,6 @@ bool enved_dialog_is_active(void)
 
 void set_enved_filter_order(int order)
 {
-  char str[LABEL_BUFFER_SIZE];
   if ((order > 0) && (order < 2000))
     {
       if (order & 1) 
@@ -1483,8 +1482,7 @@ void set_enved_filter_order(int order)
       else in_set_enved_filter_order(order);
       if (enved_dialog)
 	{
-	  mus_snprintf(str, LABEL_BUFFER_SIZE, "%d", enved_filter_order(ss));
-	  XmTextFieldSetString(orderL, str);
+	  widget_int_to_text(orderL, enved_filter_order(ss));
 	  if ((enved_dialog) && 
 	      (enved_target(ss) == ENVED_SPECTRUM) && 
 	      (enved_wave_p(ss)) && (!showing_all_envs)) 

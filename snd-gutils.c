@@ -723,3 +723,40 @@ GtkWidget *snd_gtk_label_new(const char *label, GdkColor *color)
   gtk_widget_modify_base(rlw, GTK_STATE_ACTIVE, color);
   return(rlw);
 }
+
+
+void widget_int_to_text(GtkWidget *w, int val)
+{
+  char *str;
+  str = (char *)CALLOC(8, sizeof(char));
+  mus_snprintf(str, 8, "%d", val);
+  gtk_entry_set_text(GTK_ENTRY(w), str);
+  FREE(str);
+}
+
+void widget_float_to_text(GtkWidget *w, Float val)
+{
+  char *str;
+  str = (char *)CALLOC(8, sizeof(char));
+  mus_snprintf(str, 8, "%.2f", val);
+  gtk_entry_set_text(GTK_ENTRY(w), str);
+  FREE(str);
+}
+
+void widget_bool_to_text(GtkWidget *w, bool val)
+{
+#if HAVE_GUILE
+  gtk_entry_set_text(GTK_ENTRY(w), (val) ? "#t" : "#f");
+#else
+  gtk_entry_set_text(GTK_ENTRY(w), (val) ? "true" : "false");
+#endif  
+}
+
+void widget_off_t_to_text(GtkWidget *w, off_t val)
+{
+  char *str;
+  str = (char *)CALLOC(8, sizeof(char));
+  mus_snprintf(str, 8, OFF_TD, val);
+  gtk_entry_set_text(GTK_ENTRY(w), str);
+  FREE(str);
+}

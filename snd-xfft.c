@@ -3,9 +3,11 @@
 #include "snd.h"
 
 static Widget transform_dialog = NULL; /* main dialog shell */
-static Widget type_list, size_list, wavelet_list, window_list, window_beta_scale,
-              db_button, peaks_button, logfreq_button, sono_button, spectro_button, normo_button, normalize_button, selection_button,
-              graph_label, graph_drawer;
+static Widget type_list, size_list, wavelet_list, window_list, window_beta_scale;
+static Widget db_button, peaks_button, logfreq_button, sono_button, spectro_button, normo_button, normalize_button, selection_button;
+static Widget graph_label, graph_drawer;
+static Widget peak_txt, db_txt, freq_base_txt;
+
 static GC gc, fgc;
 
 #define GRAPH_SIZE 128
@@ -414,13 +416,10 @@ static void white_mouse_enter_text_callback(Widget w, XtPointer context, XEvent 
   XtVaSetValues(w, XmNcursorPositionVisible, true, NULL);
 }
 
-static void widget_itoa(Widget w, int val)
+void reflect_peaks_in_transform_dialog(void)
 {
-  char *str;
-  str = (char *)CALLOC(8, sizeof(char));
-  mus_snprintf(str, 8, "%d", max_transform_peaks(ss));
-  XmTextFieldSetString(w, str);
-  FREE(str);
+  if (transform_dialog)
+    widget_int_to_text(peak_txt, max_transform_peaks(ss));
 }
 
 static void peaks_activate_callback(Widget w, XtPointer context, XtPointer info)
@@ -432,8 +431,51 @@ static void peaks_activate_callback(Widget w, XtPointer context, XtPointer info)
     {
       new_peaks = string_to_int(str);
       if (new_peaks >= 1)
-	set_max_transform_peaks(new_peaks);
-      else widget_itoa(w, max_transform_peaks(ss));
+	{
+	  set_max_transform_peaks(new_peaks);
+	  for_each_chan(calculate_fft);
+	}
+      else widget_int_to_text(w, max_transform_peaks(ss));
+    }
+}
+
+void reflect_log_freq_base_in_transform_dialog(void)
+{
+  if (transform_dialog)
+    widget_float_to_text(freq_base_txt, log_freq_base(ss));
+}
+
+static void log_freq_base_activate_callback(Widget w, XtPointer context, XtPointer info)
+{
+  char *str;
+  Float new_lfb;
+  str = XmTextFieldGetString(w);
+  if ((str) && (*str))
+    {
+      new_lfb = string_to_Float(str);
+      if (new_lfb > 0.0)
+	set_log_freq_base(new_lfb);
+      else widget_float_to_text(w, log_freq_base(ss));
+    }
+}
+
+void reflect_min_db_in_transform_dialog(void)
+{
+  if (transform_dialog)
+    widget_float_to_text(db_txt, ss->min_dB);
+}
+
+static void min_db_activate_callback(Widget w, XtPointer context, XtPointer info)
+{
+  char *str;
+  Float new_db;
+  str = XmTextFieldGetString(w);
+  if ((str) && (*str))
+    {
+      new_db = string_to_Float(str);
+      if (new_db < 0.0)
+	set_min_db(new_db);
+      else widget_float_to_text(w, ss->min_dB);
     }
 }
 
@@ -452,7 +494,6 @@ Widget fire_up_transform_dialog(bool managed)
   int n, i;
   Widget mainform, type_frame, type_form, type_label, size_frame, size_form, size_label, display_frame, display_form, display_label;
   Widget window_frame, window_form, window_label, wavelet_frame, wavelet_form, wavelet_label, graph_frame, graph_form, color_button;
-  Widget peak_txt, db_txt, db_base_txt, freq_base_txt;
     
   if (!transform_dialog)
     {
@@ -733,7 +774,7 @@ Widget fire_up_transform_dialog(bool managed)
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->lighter_blue); n++;}
       XtSetArg(args[n], XmNresizeWidth, false); n++;
-      XtSetArg(args[n], XmNcolumns, 4); n++;
+      XtSetArg(args[n], XmNcolumns, 6); n++;
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
       XtSetArg(args[n], XmNmarginHeight, 1); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
@@ -743,14 +784,15 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNtopWidget, peaks_button); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
       XtSetArg(args[n], XmNbottomWidget, peaks_button); n++;
+      XtSetArg(args[n], XmNborderWidth, 0); n++;
+      XtSetArg(args[n], XmNshadowThickness, 0); n++;
       peak_txt = make_textfield_widget("max-peaks", display_form, args, n, ACTIVATABLE, NO_COMPLETER);
       XtRemoveCallback(peak_txt, XmNlosingFocusCallback, textfield_unfocus_callback, NULL);
       XtAddCallback(peak_txt, XmNlosingFocusCallback, blue_textfield_unfocus_callback, NULL);
-      XtAddEventHandler(peak_txt, LeaveWindowMask, false, blue_mouse_leave_text_callback, NULL); /* TODO: check this -no-init */
+      XtAddEventHandler(peak_txt, LeaveWindowMask, false, blue_mouse_leave_text_callback, NULL);
       XtAddEventHandler(peak_txt, EnterWindowMask, false, white_mouse_enter_text_callback, NULL);
-      widget_itoa(peak_txt, max_transform_peaks(ss));
+      widget_int_to_text(peak_txt, max_transform_peaks(ss));
       XtAddCallback(peak_txt, XmNactivateCallback, peaks_activate_callback, NULL);
-      /* TODO: need reflection, both update_db_fft and from set db-base etc */
 
       n = 0;
       if (!(ss->using_schemes)) 
@@ -760,7 +802,8 @@ Widget fire_up_transform_dialog(bool managed)
 	}
       bstr = XmStringCreate(_("dB"), XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
+      XtSetArg(args[n], XmNrightPosition, 67); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, peaks_button); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -771,6 +814,29 @@ Widget fire_up_transform_dialog(bool managed)
       XmStringFree(bstr);
 
       n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->lighter_blue); n++;}
+      XtSetArg(args[n], XmNresizeWidth, false); n++;
+      XtSetArg(args[n], XmNcolumns, 6); n++;
+      XtSetArg(args[n], XmNrecomputeSize, false); n++;
+      XtSetArg(args[n], XmNmarginHeight, 1); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNleftWidget, db_button); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, db_button); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
+      XtSetArg(args[n], XmNbottomWidget, db_button); n++;
+      XtSetArg(args[n], XmNborderWidth, 0); n++;
+      XtSetArg(args[n], XmNshadowThickness, 0); n++;
+      db_txt = make_textfield_widget("db", display_form, args, n, ACTIVATABLE, NO_COMPLETER);
+      XtRemoveCallback(db_txt, XmNlosingFocusCallback, textfield_unfocus_callback, NULL);
+      XtAddCallback(db_txt, XmNlosingFocusCallback, blue_textfield_unfocus_callback, NULL);
+      XtAddEventHandler(db_txt, LeaveWindowMask, false, blue_mouse_leave_text_callback, NULL);
+      XtAddEventHandler(db_txt, EnterWindowMask, false, white_mouse_enter_text_callback, NULL);
+      widget_float_to_text(db_txt, ss->min_dB);
+      XtAddCallback(db_txt, XmNactivateCallback, min_db_activate_callback, NULL);
+
+      n = 0;
       if (!(ss->using_schemes)) 
 	{
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->lighter_blue); n++;
@@ -778,7 +844,8 @@ Widget fire_up_transform_dialog(bool managed)
 	}
       bstr = XmStringCreate(_("log freq"), XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
+      XtSetArg(args[n], XmNrightPosition, 67); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, db_button); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -787,6 +854,29 @@ Widget fire_up_transform_dialog(bool managed)
       logfreq_button = make_togglebutton_widget("logfreq-button", display_form, args, n);
       XtAddCallback(logfreq_button, XmNvalueChangedCallback, logfreq_callback, NULL);
       XmStringFree(bstr);
+
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->lighter_blue); n++;}
+      XtSetArg(args[n], XmNresizeWidth, false); n++;
+      XtSetArg(args[n], XmNcolumns, 6); n++;
+      XtSetArg(args[n], XmNrecomputeSize, false); n++;
+      XtSetArg(args[n], XmNmarginHeight, 1); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNleftWidget, logfreq_button); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, logfreq_button); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
+      XtSetArg(args[n], XmNbottomWidget, logfreq_button); n++;
+      XtSetArg(args[n], XmNborderWidth, 0); n++;
+      XtSetArg(args[n], XmNshadowThickness, 0); n++;
+      freq_base_txt = make_textfield_widget("lfb", display_form, args, n, ACTIVATABLE, NO_COMPLETER);
+      XtRemoveCallback(freq_base_txt, XmNlosingFocusCallback, textfield_unfocus_callback, NULL);
+      XtAddCallback(freq_base_txt, XmNlosingFocusCallback, blue_textfield_unfocus_callback, NULL);
+      XtAddEventHandler(freq_base_txt, LeaveWindowMask, false, blue_mouse_leave_text_callback, NULL);
+      XtAddEventHandler(freq_base_txt, EnterWindowMask, false, white_mouse_enter_text_callback, NULL);
+      widget_float_to_text(freq_base_txt, log_freq_base(ss));
+      XtAddCallback(freq_base_txt, XmNactivateCallback, log_freq_base_activate_callback, NULL);
 
       n = 0;
       if (!(ss->using_schemes)) 

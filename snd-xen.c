@@ -1530,6 +1530,13 @@ static void update_log_freq_fft_graph(chan_info *cp)
   calculate_fft(cp);
 }
 
+void set_log_freq_base(Float base)
+{
+  in_set_log_freq_base(base);
+  ss->lfb = 1.0 / log(base);
+  for_each_chan(update_log_freq_fft_graph);
+}
+
 static XEN g_log_freq_base(void) {return(C_TO_XEN_DOUBLE(log_freq_base(ss)));}
 static XEN g_set_log_freq_base(XEN val) 
 {
@@ -1540,8 +1547,7 @@ static XEN g_set_log_freq_base(XEN val)
   if (base <= 0.0)
     XEN_OUT_OF_RANGE_ERROR(S_log_freq_base, XEN_ONLY_ARG, val, "a number > 0.0");
   set_log_freq_base(base);
-  ss->lfb = 1.0 / log(base);
-  for_each_chan(update_log_freq_fft_graph);
+  reflect_log_freq_base_in_transform_dialog();
   return(C_TO_XEN_DOUBLE(log_freq_base(ss)));
 }
 
