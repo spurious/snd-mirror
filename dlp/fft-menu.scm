@@ -1,5 +1,7 @@
 (use-modules (ice-9 format))
 
+;;; TODO: add gtk support here and in other dlp additions
+
 (define fft-list '()) ; menu labels are updated to show current default settings
 
 (define fft-menu (add-to-main-menu "FFT Edits" (lambda ()
@@ -37,7 +39,7 @@
                                           (cp-fft-edit))
                                         (lambda (w context info)
                                           (help-dialog "FFT notch filter"
-                                                       "A simple example of FFT-based editing. It takes an FFT of the entire sound, removes all energy below the low frequency\n\ and above the high frequency, then computes the inverse FFT."))
+                                                       "A simple example of FFT-based editing. It takes an FFT of the entire sound, removes all energy below the low frequency and above the high frequency, then computes the inverse FFT."))
                                         (lambda (w c i)
                                           (set! fft-edit-low-frequency initial-fft-edit-low-frequency)
                                           (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* fft-edit-low-frequency 1))))
@@ -92,7 +94,7 @@
                                           (cp-fft-squelch))
                                         (lambda (w context info)
                                           (help-dialog "FFT squelch"
-                                                "Removes all energy below the squelch amount.\n\ This is sometimes useful for noise-reduction."))
+                                                "Removes all energy below the squelch amount. This is sometimes useful for noise-reduction."))
                                         (lambda (w c i)
                                           (set! fft-squelch-amount initial-fft-squelch-amount)
                                           (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (round (* fft-squelch-amount 100))))))))

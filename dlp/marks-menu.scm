@@ -94,7 +94,7 @@
 					  (cp-play-between-marks))
 					(lambda (w context info)
 					  (help-dialog "Define selection by marks Help"
-						"Plays area between specified marks.\n\ Use the sliders to select the boundary marks.\n\ Negative play not supported yet: coming soon !"))
+						"Plays area between specified marks. Use the sliders to select the boundary marks. Negative play not supported yet: coming soon !"))
 					(lambda (w c i)
 					  (set! play-between-marks-m1 initial-play-between-marks-m1)
 					  (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (round (* play-between-marks-m1 1)))))
@@ -367,8 +367,8 @@
 					  (cp-fit-to-marks))
 					(lambda (w context info)
 					  (help-dialog "Fit selection to marks Help"
-"Fit-selection-between-marks tries to squeeze the current selection between two marks,\n\
- using the granulate generator to fix up the selection duration (this still is not perfect).\n\
+"Fit-selection-between-marks tries to squeeze the current selection between two marks,
+ using the granulate generator to fix up the selection duration (this still is not perfect).
  Move the sliders to set the mark numbers."))
 					(lambda (w c i)
 					  (set! fit-to-mark-one initial-fit-to-mark-one)
@@ -439,7 +439,7 @@
 					  (cp-define-by-marks))
 					(lambda (w context info)
 					  (help-dialog "Define selection by marks Help"
-						"Selects and highlights area between marks.\n\ Use the sliders to choose the boundary marks."))
+						"Selects and highlights area between marks. Use the sliders to choose the boundary marks."))
 					(lambda (w c i)
 					  (set! define-by-mark-one initial-define-by-mark-one)
 					  (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* define-by-mark-one 1))))

@@ -68,7 +68,7 @@
 ;        (shell (format #f "timidity -Ow -c /home/dlphilp/timidity-sf2.cfg -EFchorus=0 ~a" filename)))
 ;      "Select MIDI file" "/home/dlphilp/midfiles/" "*.mid" "Converts MIDI file to WAV using TiMidity. Output will be named after the original MIDI file.")))
         (shell (format #f "timidity -Ow ~a" filename)))
-      "Select MIDI file" "." "*.mid" "Converts MIDI file to WAV using TiMidity. Output will be named after the original MIDI file, i.e., foo.mid converts to foo.wav.\n\ You must have TiMidity and a patch set installed for this function to work. See the TiMidity home page at http://www.onicos.com/staff/iz/timidity/ for more details.")))
+      "Select MIDI file" "." "*.mid" "Converts MIDI file to WAV using TiMidity. Output will be named after the original MIDI file, i.e., foo.mid converts to foo.wav. You must have TiMidity and a patch set installed for this function to work. See the TiMidity home page at http://www.onicos.com/staff/iz/timidity/ for more details.")))
 
 (add-to-menu special-menu #f #f)
 
@@ -264,7 +264,7 @@
                                         (lambda (w context info) (cp-save-as-mp3))
                                         (lambda (w context info)
                                           (help-dialog "Save as MP3"
-                                                       "Move the slider to select the file to save as an MP3.\n\ The new MP3 will be named tmp-N.mp3 by default.\n\ Bladeenc is currently the only supported encoder. Please see the Web page at bladeenc.mp3.no for details regarding Bladeenc."))
+                                                       "Move the slider to select the file to save as an MP3. The new MP3 will be named tmp-N.mp3 by default.  Bladeenc is currently the only supported encoder. Please see the Web page at bladeenc.mp3.no for details regarding Bladeenc."))
                                         (lambda (w c i)
                                           (set! save-as-mp3-wav-file-number initial-save-as-mp3-wav-file-number)
                                           (XtSetValues (car sliders) (list XmNvalue (inexact->exact (* save-as-mp3-wav-file-number 1)))))))
@@ -313,7 +313,7 @@
                                         (lambda (w context info) (cp-save-as-ogg))
                                         (lambda (w context info)
                                           (help-dialog "Save as Ogg file"
-                                                       "Move the slider to select the file to save as an Ogg file. The new file will be named tmp-N.ogg by default.\n\ Oggenc is currently the only supported Ogg encoder. Please see the Web page at www.xiphophorus.org for details regarding the Ogg/Vorbis project."))
+                                                       "Move the slider to select the file to save as an Ogg file. The new file will be named tmp-N.ogg by default. Oggenc is currently the only supported Ogg encoder. Please see the Web page at www.xiphophorus.org for details regarding the Ogg/Vorbis project."))
                                         (lambda (w c i)
                                           (set! save-as-ogg-wav-file-number initial-save-as-ogg-wav-file-number)
                                           (XtSetValues (car sliders) (list XmNvalue (inexact->exact (* save-as-ogg-wav-file-number 1)))))))
