@@ -132,7 +132,7 @@ static const char *mus_initial_error_names[] = {
   "no such fft window", "unsupported data format", "header read failed",
   "unsupported header type", "file descriptors not initialized", "not a sound file", "file closed", "write error",
   "bogus free", "buffer overflow", "buffer underflow", "file overflow", "exponent overflow",
-  "header write failed", "can't open temp file", "interrupted",
+  "header write failed", "can't open temp file", "interrupted", "bad envelope",
 
   "audio channels not available", "audio srate not available", "audio format not available",
   "no audio input available", "audio configuration not available", 

@@ -364,6 +364,7 @@ static char **auto_open_file_names = NULL;
 static int auto_open_files = 0;
 static int noglob = 0, noinit = 0;
 
+#if HAVE_SETJMP_H
 #if TRAP_SEGFAULT
 #include <setjmp.h>
 /* stolen from scwm.c */
@@ -373,6 +374,10 @@ static RETSIGTYPE segv(int ignored)
 {
   siglongjmp(envHandleEventsLoop, 1);
 }
+#endif
+
+RETSIGTYPE top_level_catch(int ignore);
+RETSIGTYPE top_level_catch(int ignore) {}
 #endif
 
 #define FALLBACK_FONT "9x15"

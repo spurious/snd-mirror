@@ -328,8 +328,10 @@ static void who_called(Widget w, XtPointer context, XEvent *event, Boolean *cont
 }
 #endif
 
-#if TRAP_SEGFAULT
+#if HAVE_SETJMP_H
 #include <setjmp.h>
+
+#if TRAP_SEGFAULT
 /* stolen from scwm.c */
 static sigjmp_buf envHandleEventsLoop;
 
@@ -338,6 +340,15 @@ static RETSIGTYPE segv(int ignored)
   siglongjmp(envHandleEventsLoop, 1);
 }
 #endif
+
+static jmp_buf top_level_jump;
+RETSIGTYPE top_level_catch(int ignore);
+RETSIGTYPE top_level_catch(int ignore)
+{
+  longjmp(top_level_jump, 1);
+}
+#endif
+
 
 static char **auto_open_file_names = NULL;
 static int auto_open_files = 0;
@@ -978,10 +989,16 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 
   BACKGROUND_ADD(ss, startup_funcs, make_startup_state(ss, shell, dpy));
 
+#if HAVE_SETJMP_H
 #if TRAP_SEGFAULT
   if (sigsetjmp(envHandleEventsLoop, 1))
     {
       snd_error("Caught seg fault (will try to continue):\n");
+    }
+#endif
+  if (setjmp(top_level_jump))
+    {
+      snd_error("Caught top level error (this must be a Snd bug; will try to continue):\n");
     }
 #endif
 

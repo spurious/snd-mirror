@@ -4,6 +4,7 @@
  */
 
 /* HISTORY: 
+ *   23-Sep:    X ScreenSaver constants omitted earlier.
  *   18-Sep:    properties XFontStruct field now returns list of all properties.
  *              removed XmFontListCreate_r, XmFontListEntryCreate_r
  *   9-Sep:     added Motif WMProtocol convenience macros.
@@ -69,9 +70,8 @@
 #include <X11/cursorfont.h>
 #include <stdio.h>
 
-/* compile-time flags are HAVE_XPM  HAVE_MOTIF  HAVE_XP  HAVE_GUILE|HAVE_RUBY  XM_DISABLE_DEPRECATED  LESSTIF_VERSION */
+/* compile-time flags are HAVE_XPM  HAVE_MOTIF  HAVE_XM_XP  HAVE_GUILE|HAVE_RUBY  XM_DISABLE_DEPRECATED  LESSTIF_VERSION */
 
-/* if the loader complains about XtIsSubClass, define NEED_XtIsSubClass */
 /* if you're using g++ and it complains about XmRemoveFromPostFromList, update Motif (you need 2.1.30) */
 
 #if USE_SND
@@ -109,6 +109,9 @@
     #define MOTIF_2_2 1
   #endif
 #endif
+
+#define XtIsSubClass XtIsSubclass
+/* kludge around a bug in some Motif versions */
 
 /* layout of file:
  *    preliminaries
@@ -378,7 +381,7 @@ XM_TYPE(XContext, XContext)
 XM_TYPE(Substitution, Substitution)
 XM_TYPE_PTR(XIconSize, XIconSize *)
 
-#if HAVE_XP
+#if HAVE_XM_XP
 XM_TYPE(XPContext, XPContext)
 #endif
 
@@ -425,7 +428,7 @@ XM_TYPE_PTR_NO_p(XmSpinBoxCallbackStruct, XmSpinBoxCallbackStruct *)
 XM_TYPE_PTR_NO_p(XmTraverseObscuredCallbackStruct, XmTraverseObscuredCallbackStruct *)
 XM_TYPE_PTR_NO_p(XmTopLevelLeaveCallbackStruct, XmTopLevelLeaveCallbackStruct *)
 XM_TYPE_PTR_NO_p(XmTopLevelEnterCallbackStruct, XmTopLevelEnterCallbackStruct *)
-#if HAVE_XP
+#if HAVE_XM_XP
 XM_TYPE_PTR_NO_p(XmPrintShellCallbackStruct, XmPrintShellCallbackStruct *)
 #endif
 XM_TYPE_PTR_NO_p(XmPopupHandlerCallbackStruct, XmPopupHandlerCallbackStruct *)
@@ -2166,10 +2169,6 @@ static XEN xm_gc_elements(void)
 
 /* Motif */
 #if HAVE_MOTIF
-
-#if NEED_XtIsSubClass
-static int XtIsSubClass(Widget w, WidgetClass wc) {return(0);}
-#endif
 
 /* weird order of procedures here and throughout caused by the C-header scripts --
  *   basically I forgot to reverse the main lists before pouring out the code,
@@ -7116,7 +7115,7 @@ The CascadeButtonGadget creation function"
   return(gxm_new_widget("XmCreateCascadeButtonGadget", XmCreateCascadeButtonGadget, arg1, arg2, arg3, arg4));
 }
 
-#if MOTIF_2 && HAVE_XP
+#if MOTIF_2 && HAVE_XM_XP
 static XEN gxm_XmRedisplayWidget(XEN arg1)
 {
   #define H_XmRedisplayWidget "voidXmRedisplayWidget(Widgetwidget) Synchronously activates the expose method of a widget to draw its content"
@@ -7360,7 +7359,7 @@ static XEN gxm_XmIsPrimitive(XEN arg)
   return(C_TO_XEN_BOOLEAN(XmIsPrimitive(XEN_TO_C_Widget(arg))));
 }
 
-#if MOTIF_2 && HAVE_XP
+#if MOTIF_2 && HAVE_XM_XP
 static XEN gxm_XmIsPrintShell(XEN arg)
 {
   #define H_XmIsPrintShell "Boolean XmIsPrintShell(Widget)"
@@ -8064,7 +8063,7 @@ static XEN gxm_XAllocIconSize(void)
 
 static XEN gxm_XFilterEvent(XEN arg1, XEN arg2)
 {
-  #define H_XFilterEvent "Bool XFilterEvent(event, w)"
+  #define H_XFilterEvent "Bool XFilterEvent(event, w) passes the event to any filters registered for it in the given window"
   XEN_ASSERT_TYPE(XEN_XEvent_P(arg1), arg1, 1, "XFilterEvent", "XEvent*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XFilterEvent", "Window");
   return(C_TO_XEN_BOOLEAN(XFilterEvent(XEN_TO_C_XEvent(arg1), XEN_TO_C_Window(arg2))));
@@ -8860,8 +8859,10 @@ static XEN gxm_XSetClipMask(XEN arg1, XEN arg2, XEN arg3)
   #define H_XSetClipMask "XSetClipMask(display, gc, pixmap) sets the clip-mask in the specified GC to the specified pixmap."
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XSetClipMask", "Display*");
   XEN_ASSERT_TYPE(XEN_GC_P(arg2), arg2, 2, "XSetClipMask", "GC");
-  XEN_ASSERT_TYPE(XEN_Pixmap_P(arg3), arg3, 3, "XSetClipMask", "Pixmap");
-  return(C_TO_XEN_INT(XSetClipMask(XEN_TO_C_Display(arg1), XEN_TO_C_GC(arg2), XEN_TO_C_Pixmap(arg3))));
+  XEN_ASSERT_TYPE(XEN_Pixmap_P(arg3) || XEN_INTEGER_P(arg3), arg3, 3, "XSetClipMask", "Pixmap or None");
+  return(C_TO_XEN_INT(XSetClipMask(XEN_TO_C_Display(arg1), 
+				   XEN_TO_C_GC(arg2),
+				   (XEN_Pixmap_P(arg3)) ? XEN_TO_C_Pixmap(arg3) : None)));
 }
 
 static XEN gxm_XSetBackground(XEN arg1, XEN arg2, XEN arg3)
@@ -14875,7 +14876,7 @@ static XEN wrap_callback_struct(int type, XtPointer info)
     case GXM_Notebook: return(C_TO_XEN_XmNotebookCallbackStruct((XmNotebookCallbackStruct *)info));
     case GXM_Operation: return(C_TO_XEN_XmOperationChangedCallbackStruct((XmOperationChangedCallbackStruct *)info));
     case GXM_SpinBox: return(C_TO_XEN_XmSpinBoxCallbackStruct((XmSpinBoxCallbackStruct *)info));
-#if HAVE_XP
+#if HAVE_XM_XP
     case GXM_Print: return(C_TO_XEN_XmPrintShellCallbackStruct((XmPrintShellCallbackStruct *)info));
 #endif
     case GXM_TopLevel_Enter: return(C_TO_XEN_XmTopLevelEnterCallbackStruct((XmTopLevelEnterCallbackStruct *)info));
@@ -14929,7 +14930,7 @@ static int callback_struct_type(Widget w, char *name)
       return(GXM_Destination); 
     }
   /* how to recognize a SpinBox? */
-#if HAVE_XP
+#if HAVE_XM_XP
   if (XmIsPrintShell(w)) return(GXM_Print);
 #endif
 #endif
@@ -16427,7 +16428,7 @@ static XEN gxm_XtSetArg(XEN arg1, XEN arg2, XEN arg3)
 
 
 /* ---------------------------------------------------------------------------------------------------- */
-#if HAVE_XP
+#if HAVE_XM_XP
 static XEN gxm_XpCancelPage(XEN arg1, XEN arg2)
 {
   #define H_XpCancelPage "void XpCancelPage(Display *display,Bool discard)"
@@ -17200,7 +17201,7 @@ static void define_procedures(void)
   xm_protected = XEN_MAKE_VECTOR(xm_protected_size, XEN_FALSE);
   XEN_VECTOR_SET(xm_gc_table, 0, xm_protected);
 
-#if HAVE_XP
+#if HAVE_XM_XP
   XM_DEFINE_PROCEDURE(XpStartPage, gxm_XpStartPage, 2, 0, 0, H_XpStartPage);
   XM_DEFINE_PROCEDURE(XpEndPage, gxm_XpEndPage, 1, 0, 0, H_XpEndPage);
   XM_DEFINE_PROCEDURE(XpCancelPage, gxm_XpCancelPage, 2, 0, 0, H_XpCancelPage);
@@ -17857,7 +17858,7 @@ static void define_procedures(void)
 #if MOTIF_2
   XM_DEFINE_PROCEDURE(XmCreateNotebook, gxm_XmCreateNotebook, 3, 1, 0, H_XmCreateNotebook);
   XM_DEFINE_PROCEDURE(XmNotebookGetPageInfo, gxm_XmNotebookGetPageInfo, 2, 0, 0, H_XmNotebookGetPageInfo);
-#if HAVE_XP
+#if HAVE_XM_XP
   XM_DEFINE_PROCEDURE(XmPrintSetup, gxm_XmPrintSetup, 4, 1, 0, H_XmPrintSetup);
   XM_DEFINE_PROCEDURE(XmPrintToFile, gxm_XmPrintToFile, 4, 0, 0, H_XmPrintToFile);
   XM_DEFINE_PROCEDURE(XmPrintPopupPDM, gxm_XmPrintPopupPDM, 2, 0, 0, H_XmPrintPopupPDM);
@@ -18253,7 +18254,7 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmIsArrowButton, gxm_XmIsArrowButton, 1, 0, 0, NULL);
 #if MOTIF_2
   XM_DEFINE_PROCEDURE(XmIsNotebook, gxm_XmIsNotebook, 1, 0, 0, NULL);
-#if HAVE_XP
+#if HAVE_XM_XP
   XM_DEFINE_PROCEDURE(XmIsPrintShell, gxm_XmIsPrintShell, 1, 0, 0, NULL);
 #endif
   XM_DEFINE_PROCEDURE(XmIsComboBox, gxm_XmIsComboBox, 1, 0, 0, NULL);
@@ -18460,7 +18461,7 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XStandardColormap?, XEN_XStandardColormap_p, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(Substitution?, XEN_Substitution_p, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(Cursor?, XEN_Cursor_p, 1, 0, 0, NULL);
-#if HAVE_XP
+#if HAVE_XM_XP
   XM_DEFINE_PROCEDURE(XPContext?, XEN_XPContext_p, 1, 0, 0, NULL);
 #endif
 #if HAVE_MOTIF
@@ -18485,7 +18486,7 @@ static void define_procedures(void)
 #if MOTIF_2
   XM_DEFINE_PROCEDURE(XmTab?, XEN_XmTab_p, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmNotebook?, gxm_XmIsNotebook, 1, 0, 0, NULL);
-#if HAVE_XP
+#if HAVE_XM_XP
   XM_DEFINE_PROCEDURE(XmPrintShell?, gxm_XmIsPrintShell, 1, 0, 0, NULL);
 #endif
   XM_DEFINE_PROCEDURE(XmComboBox?, gxm_XmIsComboBox, 1, 0, 0, NULL);
@@ -19960,7 +19961,7 @@ static XEN gxm_set_focus(XEN ptr, XEN val)
 
 static XEN gxm_detail(XEN ptr)
 {
-#if MOTIF_2 && HAVE_XP
+#if MOTIF_2 && HAVE_XM_XP
   if (XEN_XmPrintShellCallbackStruct_P(ptr)) return(C_TO_XEN_ULONG((XtPointer)((XEN_TO_C_XmPrintShellCallbackStruct(ptr))->detail)));
 #endif
   if (XEN_XConfigureRequestEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XConfigureRequestEvent(ptr))->detail)));
@@ -21075,7 +21076,7 @@ static XEN gxm_position(XEN ptr)
   return(C_TO_XEN_INT((int)((XEN_TO_C_XmSpinBoxCallbackStruct(ptr))->position)));
 }
 
-#if HAVE_XP
+#if HAVE_XM_XP
 static XEN gxm_last_page(XEN ptr)
 {
   XEN_ASSERT_TYPE(XEN_XmPrintShellCallbackStruct_P(ptr), ptr, XEN_ONLY_ARG, "last_page", "XmPrintShellCallbackStruct");
@@ -21858,7 +21859,7 @@ static void define_structs(void)
   XM_DEFINE_READER(prev_page_widget, gxm_prev_page_widget, 1, 0, 0, NULL);
   XM_DEFINE_READER(rendition, gxm_rendition, 1, 0, 0, NULL);
   XM_DEFINE_READER(render_table, gxm_render_table, 1, 0, 0, NULL);
-#if HAVE_XP
+#if HAVE_XM_XP
   XM_DEFINE_READER(last_page, gxm_last_page, 1, 0, 0, NULL);
 #endif
   XM_DEFINE_READER(crossed_boundary, gxm_crossed_boundary, 1, 0, 0, NULL);
@@ -22707,7 +22708,7 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNwrap, XM_BOOLEAN);
 #endif
 #endif
-#if HAVE_XP
+#if HAVE_XM_XP
   DEFINE_STRING(XP_PRINTNAME);
 #endif
 #if (!XM_DISABLE_DEPRECATED)
@@ -23192,6 +23193,18 @@ static void define_integers(void)
   DEFINE_INTEGER(MappingModifier);
   DEFINE_INTEGER(MappingKeyboard);
   DEFINE_INTEGER(MappingPointer);
+
+  DEFINE_INTEGER(DontPreferBlanking);
+  DEFINE_INTEGER(PreferBlanking);
+  DEFINE_INTEGER(DefaultBlanking);
+  DEFINE_INTEGER(DisableScreenSaver);
+  DEFINE_INTEGER(DisableScreenInterval);
+  DEFINE_INTEGER(DontAllowExposures);
+  DEFINE_INTEGER(AllowExposures);
+  DEFINE_INTEGER(DefaultExposures);
+  DEFINE_INTEGER(ScreenSaverReset);
+  DEFINE_INTEGER(ScreenSaverActive);
+
   DEFINE_INTEGER(StaticGray);
   DEFINE_INTEGER(GrayScale);
   DEFINE_INTEGER(StaticColor);
@@ -24388,7 +24401,7 @@ static void define_integers(void)
   DEFINE_INTEGER(XmFILTER_HIDDEN_FILES);
 #endif
 #endif
-#if HAVE_XP
+#if HAVE_XM_XP
   DEFINE_INTEGER(XP_DONT_CHECK);
   DEFINE_INTEGER(XP_INITIAL_RELEASE);
   DEFINE_INTEGER(XP_PROTO_MAJOR);
@@ -24523,7 +24536,7 @@ static void define_pointers(void)
   DEFINE_POINTER(xmGrabShellWidgetClass);
   DEFINE_POINTER(xmNotebookWidgetClass);
   DEFINE_POINTER(xmIconGadgetClass);
-#if HAVE_XP
+#if HAVE_XM_XP
   DEFINE_POINTER(xmPrintShellWidgetClass);
 #endif
   DEFINE_POINTER(xmSpinBoxWidgetClass);

@@ -55,6 +55,17 @@
 #include "clm2xen.h"
 
 
+static int local_error_type = MUS_NO_ERROR;
+static char *local_error_msg = NULL;
+static mus_error_handler_t *old_error_handler;
+
+static void local_mus_error(int type, char *msg)
+{
+  local_error_type = type;
+  local_error_msg = msg;
+}
+
+
 /* ---------------- keywords ---------------- */
 
 #define SC_frequency        "frequency"
@@ -973,6 +984,7 @@ static XEN g_make_oscil(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_make_oscil "(" S_make_oscil " &opt-key (frequency 440.0) (phase 0.0)) -> a new " S_oscil " (sinewave) generator"
   mus_xen *gn;
+  mus_any *ge;
   int vals;
   XEN args[4]; XEN keys[2];
   int orig_arg[2] = {0, 0};
@@ -986,10 +998,15 @@ static XEN g_make_oscil(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
       freq = fkeyarg(keys[0], S_make_oscil, orig_arg[0] + 1, freq);
       phase = fkeyarg(keys[1], S_make_oscil, orig_arg[1] + 1, phase);
     }
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  gn->gen = mus_make_oscil(freq, phase);
-  gn->nvcts = 0;
-  return(mus_xen_to_object(gn));
+  ge = mus_make_oscil(freq, phase);
+  if (ge)
+    {
+      gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+      gn->gen = ge;
+      gn->nvcts = 0;
+      return(mus_xen_to_object(gn));
+    }
+  return(XEN_FALSE);
 }
 
 static XEN g_oscil(XEN os, XEN fm, XEN pm)
@@ -1062,10 +1079,11 @@ enum {G_DELAY, G_COMB, G_NOTCH, G_ALL_PASS};
 static XEN g_make_delay_1(int choice, XEN arglist)
 {
   mus_xen *gn;
+  mus_any *ge = NULL;
   char *caller = NULL;
   XEN args[14]; XEN keys[7];
   int orig_arg[7] = {0, 0, 0, 0, 0, 0, 0};
-  int vals, i, argn = 0, len, arglist_len, keyn, max_size = -1;
+  int vals, i, argn = 0, len, arglist_len, keyn, max_size = -1, need_free = FALSE;
   int size = 1, size_key = 0;
   Float *line = NULL;
   Float scaler = 0.0, feedback = 0.0, feedforward = 0.0;
@@ -1167,21 +1185,31 @@ static XEN g_make_delay_1(int choice, XEN arglist)
   if (line == NULL)
     {
       line = (Float *)CALLOC(max_size, sizeof(Float));
+      need_free = TRUE;
       if (initial_element != 0.0) 
 	for (i = 0; i < max_size; i++) 
 	  line[i] = initial_element;
     }
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  gn->vcts = make_vcts(1);
-  gn->nvcts = 1;
+  old_error_handler = mus_error_set_handler(local_mus_error);
   switch (choice)
     {
-    case G_DELAY: gn->gen = mus_make_delay(size, line, max_size); break;
-    case G_COMB: gn->gen = mus_make_comb(scaler, size, line, max_size); break;
-    case G_NOTCH: gn->gen = mus_make_notch(scaler, size, line, max_size); break;
-    case G_ALL_PASS: gn->gen = mus_make_all_pass(feedback, feedforward, size, line, max_size); break;
+    case G_DELAY: ge = mus_make_delay(size, line, max_size); break;
+    case G_COMB: ge = mus_make_comb(scaler, size, line, max_size); break;
+    case G_NOTCH: ge = mus_make_notch(scaler, size, line, max_size); break;
+    case G_ALL_PASS: ge = mus_make_all_pass(feedback, feedforward, size, line, max_size); break;
     }
-  return(mus_xen_to_object_with_vct(gn, make_vct(max_size, line)));
+  mus_error_set_handler(old_error_handler);
+  if (ge)
+    {
+      gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+      gn->vcts = make_vcts(1);
+      gn->gen = ge;
+      gn->nvcts = 1;
+      return(mus_xen_to_object_with_vct(gn, make_vct(max_size, line)));
+    }
+  if (need_free) FREE(line);
+  mus_error(local_error_type, local_error_msg);
+  return(XEN_FALSE);
 }
 
 static XEN g_make_delay(XEN args) 
@@ -1324,6 +1352,7 @@ static XEN g_make_sum_of_cosines(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg
 returns a new " S_sum_of_cosines " generator, producing a band-limited pulse train."
 
   mus_xen *gn;
+  mus_any *ge;
   XEN args[6]; XEN keys[3];
   int orig_arg[3] = {0, 0, 0};
   int vals;
@@ -1343,10 +1372,15 @@ returns a new " S_sum_of_cosines " generator, producing a band-limited pulse tra
     }
   if (cosines <= 0)
     mus_misc_error(S_make_sum_of_cosines, "cosines <= 0?", keys[0]);
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  gn->gen = mus_make_sum_of_cosines(cosines, freq, phase);
-  gn->nvcts = 0;
-  return(mus_xen_to_object(gn));
+  ge = mus_make_sum_of_cosines(cosines, freq, phase);
+  if (ge)
+    {
+      gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+      gn->gen = ge;
+      gn->nvcts = 0;
+      return(mus_xen_to_object(gn));
+    }
+  return(XEN_FALSE);
 }
 
 static XEN g_sum_of_cosines(XEN obj, XEN fm)
@@ -1377,6 +1411,7 @@ gets the next sample of the band-limited pulse-train produced by gen"
 static XEN g_make_noi(int rand_case, XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   mus_xen *gn;
+  mus_any *ge = NULL;
   XEN args[4]; XEN keys[2];
   int orig_arg[2] = {0, 0};
   int vals;
@@ -1391,11 +1426,16 @@ static XEN g_make_noi(int rand_case, XEN arg1, XEN arg2, XEN arg3, XEN arg4)
       freq = fkeyarg(keys[0], S_make_rand, orig_arg[0] + 1, freq);
       base = fkeyarg(keys[1], S_make_rand, orig_arg[1] + 1, base);
     }
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
   if (rand_case)
-    gn->gen = mus_make_rand(freq, base);
-  else gn->gen = mus_make_rand_interp(freq, base);
-  return(mus_xen_to_object(gn));
+    ge = mus_make_rand(freq, base);
+  else ge = mus_make_rand_interp(freq, base);
+  if (ge)
+    {
+      gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+      gn->gen = ge;
+      return(mus_xen_to_object(gn));
+    }
+  return(XEN_FALSE);
 }
 
 static XEN g_make_rand_interp(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
@@ -1562,7 +1602,8 @@ The default table size is 512; to use some other size, pass your own vct object 
 is the same in effect as " S_make_oscil "."
 
   mus_xen *gn;
-  int vals, table_size = DEFAULT_TABLE_SIZE;
+  mus_any *ge;
+  int vals, table_size = DEFAULT_TABLE_SIZE, need_free = FALSE;
   XEN args[6]; XEN keys[3];
   int orig_arg[3] = {0, 0, 0};
   Float freq = 440.0, phase = 0.0;
@@ -1585,12 +1626,25 @@ is the same in effect as " S_make_oscil "."
 	  table_size = v->length;
 	}
     }
-  if (table == NULL) table = (Float *)CALLOC(table_size, sizeof(Float));
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  gn->vcts = make_vcts(1);
-  gn->nvcts = 1;
-  gn->gen = mus_make_table_lookup(freq, phase, table, table_size);
-  return(mus_xen_to_object_with_vct(gn, make_vct(table_size, table)));
+  if (table == NULL) 
+    {
+      table = (Float *)CALLOC(table_size, sizeof(Float));
+      need_free = TRUE;
+    }
+  old_error_handler = mus_error_set_handler(local_mus_error);
+  ge = mus_make_table_lookup(freq, phase, table, table_size);
+  mus_error_set_handler(old_error_handler);
+  if (ge)
+    {
+      gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+      gn->vcts = make_vcts(1);
+      gn->nvcts = 1;
+      gn->gen = ge;
+      return(mus_xen_to_object_with_vct(gn, make_vct(table_size, table)));
+    }
+  if (need_free) FREE(table);
+  mus_error(local_error_type, local_error_msg);
+  return(XEN_FALSE);
 }
 
 static XEN g_table_lookup (XEN obj, XEN fm) 
@@ -1625,6 +1679,7 @@ enum {G_SAWTOOTH_WAVE, G_SQUARE_WAVE, G_TRIANGLE_WAVE, G_PULSE_TRAIN};
 static XEN g_make_sw(int type, Float def_phase, XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
 {
   mus_xen *gn;
+  mus_any *ge = NULL;
   char *caller = NULL;
   XEN args[6]; XEN keys[3];
   int orig_arg[3] = {0, 0, 0};
@@ -1651,15 +1706,20 @@ static XEN g_make_sw(int type, Float def_phase, XEN arg1, XEN arg2, XEN arg3, XE
       base = fkeyarg(keys[1], caller, orig_arg[1] + 1, base);
       phase = fkeyarg(keys[2], caller, orig_arg[2] + 1, phase);
     }
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
   switch (type)
     {
-    case G_SAWTOOTH_WAVE: gn->gen = mus_make_sawtooth_wave(freq, base, phase); break;
-    case G_SQUARE_WAVE: gn->gen = mus_make_square_wave(freq, base, phase); break;
-    case G_TRIANGLE_WAVE: gn->gen = mus_make_triangle_wave(freq, base, phase); break;
-    case G_PULSE_TRAIN: gn->gen = mus_make_pulse_train(freq, base, phase); break;
+    case G_SAWTOOTH_WAVE: ge = mus_make_sawtooth_wave(freq, base, phase); break;
+    case G_SQUARE_WAVE: ge = mus_make_square_wave(freq, base, phase); break;
+    case G_TRIANGLE_WAVE: ge = mus_make_triangle_wave(freq, base, phase); break;
+    case G_PULSE_TRAIN: ge = mus_make_pulse_train(freq, base, phase); break;
     }
-  return(mus_xen_to_object(gn));
+  if (ge)
+    {
+      gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+      gn->gen = ge;
+      return(mus_xen_to_object(gn));
+    }
+  return(XEN_FALSE);
 }
 
 static XEN g_make_sawtooth_wave(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6) 
@@ -1768,6 +1828,7 @@ static XEN g_make_asymmetric_fm(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5
 returns a new " S_asymmetric_fm " generator."
 
   mus_xen *gn;
+  mus_any *ge;
   XEN args[8]; XEN keys[4];
   int orig_arg[4] = {0, 0, 0, 0};
   int vals;
@@ -1788,9 +1849,14 @@ returns a new " S_asymmetric_fm " generator."
       r = fkeyarg(keys[2], S_make_asymmetric_fm, orig_arg[2] + 1, r);
       ratio = fkeyarg(keys[3], S_make_asymmetric_fm, orig_arg[3] + 1, ratio);
     }
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  gn->gen = mus_make_asymmetric_fm(freq, phase, r, ratio);
-  return(mus_xen_to_object(gn));
+  ge = mus_make_asymmetric_fm(freq, phase, r, ratio);
+  if (ge)
+    {
+      gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+      gn->gen = ge;
+      return(mus_xen_to_object(gn));
+    }
+  return(XEN_FALSE);
 }
 
 static XEN g_asymmetric_fm(XEN obj, XEN index, XEN fm)
@@ -1870,9 +1936,13 @@ static XEN g_make_smpflt_1(int choice, XEN arg1, XEN arg2, XEN arg3, XEN arg4)
     case G_ZPOLAR: gen = mus_make_zpolar(a0, a1); break;
     case G_PPOLAR: gen = mus_make_ppolar(a0, a1); break;
     }
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  gn->gen = gen; /* delayed to here in case mus_error in mus_make_<whatever> above */
-  return(mus_xen_to_object(gn));
+  if (gen)
+    {
+      gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+      gn->gen = gen; /* delayed to here in case mus_error in mus_make_<whatever> above */
+      return(mus_xen_to_object(gn));
+    }
+  return(XEN_FALSE);
 }
 
 static XEN g_make_one_zero(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
@@ -1938,9 +2008,13 @@ static XEN g_make_smpflt_2(int choice, XEN arg1, XEN arg2, XEN arg3, XEN arg4, X
   if (choice == G_TWO_ZERO)
     gen = mus_make_two_zero(a0, a1, a2);
   else gen = mus_make_two_pole(a0, a1, a2);
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  gn->gen = gen;  /* delayed in case of mus_error in make_two_pole */
-  return(mus_xen_to_object(gn));
+  if (gen)
+    {
+      gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+      gn->gen = gen;  /* delayed in case of mus_error in make_two_pole */
+      return(mus_xen_to_object(gn));
+    }
+  return(XEN_FALSE);
 }
 
 static XEN g_make_two_zero(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6) 
@@ -2081,6 +2155,7 @@ frequency sets the resonance center frequency (Hz).  gain is an overall amplitud
 control."
 
   mus_xen *gn;
+  mus_any *ge;
   int vals;
   XEN args[6]; XEN keys[3];
   int orig_arg[3] = {0, 0, 0};
@@ -2096,10 +2171,15 @@ control."
       freq = fkeyarg(keys[1], S_make_formant, orig_arg[1] + 1, freq);
       gain = fkeyarg(keys[2], S_make_formant, orig_arg[2] + 1, gain);
     }
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  gn->gen = mus_make_formant(radius, freq, gain);
-  gn->nvcts = 0;
-  return(mus_xen_to_object(gn));
+  ge = mus_make_formant(radius, freq, gain);
+  if (ge)
+    {
+      gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+      gn->gen = ge;
+      gn->nvcts = 0;
+      return(mus_xen_to_object(gn));
+    }
+  return(XEN_FALSE);
 }
 
 static XEN g_formant(XEN gen, XEN input)
@@ -2156,6 +2236,7 @@ with chans samples, each sample set from the trailing arguments (defaulting to 0
 
   /* make_empty_frame from first of arglist, then if more args, load vals */
   mus_xen *gn;
+  mus_any *ge;
   mus_frame *fr;
   XEN cararg; XEN lst;
   int size = 0, i, len;
@@ -2167,22 +2248,27 @@ with chans samples, each sample set from the trailing arguments (defaulting to 0
     mus_misc_error(S_make_frame, "extra trailing args?", arglist);
   if (size <= 0)
     mus_misc_error(S_make_frame, "size: ", C_TO_XEN_INT(size));
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  gn->gen = (mus_any *)mus_make_empty_frame(size);
-  if (len > 1)
+  ge = (mus_any *)mus_make_empty_frame(size);
+  if (ge)
     {
-      fr = (mus_frame *)(gn->gen);
-      for (i = 1, lst = XEN_CDR(XEN_COPY_ARG(arglist)); i < len; i++, lst = XEN_CDR(lst))
-	if (XEN_NUMBER_P(XEN_CAR(lst)))
-	  fr->vals[i - 1] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
-	else
-	  {
-	    mus_free(gn->gen);
-	    FREE(gn);
-	    mus_misc_error(S_make_frame, "invalid arg:", XEN_CAR(lst));
-	  }
+      gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+      gn->gen = ge;
+      if (len > 1)
+	{
+	  fr = (mus_frame *)(gn->gen);
+	  for (i = 1, lst = XEN_CDR(XEN_COPY_ARG(arglist)); i < len; i++, lst = XEN_CDR(lst))
+	    if (XEN_NUMBER_P(XEN_CAR(lst)))
+	      fr->vals[i - 1] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
+	    else
+	      {
+		mus_free(gn->gen);
+		FREE(gn);
+		mus_misc_error(S_make_frame, "invalid arg:", XEN_CAR(lst));
+	      }
+	}
+      return(mus_xen_to_object(gn));
     }
-  return(mus_xen_to_object(gn));
+  return(XEN_FALSE);
 }
 
 static XEN g_frame_p(XEN obj) 
@@ -2396,6 +2482,7 @@ giving | (a*.5 + b*.125) (a*.25 + b*1.0) |"
 
   /* make_empty_mixer from first of arglist, then if more args, load vals */
   mus_xen *gn;
+  mus_any *ge;
   mus_mixer *fr;
   XEN cararg; XEN lst;
   int size = 0, i, j, k, len;
@@ -2408,33 +2495,38 @@ giving | (a*.5 + b*.125) (a*.25 + b*1.0) |"
   if (size > 256) mus_misc_error(S_make_mixer, "chans > 256?", cararg);
   if (len > (size * size + 1)) 
     mus_misc_error(S_make_mixer, "extra trailing args?", arglist);
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  gn->gen = (mus_any *)mus_make_empty_mixer(size);
-  if (len > 1)
+  ge = (mus_any *)mus_make_empty_mixer(size);
+  if (ge)
     {
-      fr = (mus_mixer *)(gn->gen);
-      j = 0;
-      k = 0;
-      for (i = 1, lst = XEN_CDR(XEN_COPY_ARG(arglist)); (i < len) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
+      gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+      gn->gen = ge;
+      if (len > 1)
 	{
-	  if (XEN_NUMBER_P(XEN_CAR(lst)))
-	    fr->vals[j][k] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
-	  else
+	  fr = (mus_mixer *)(gn->gen);
+	  j = 0;
+	  k = 0;
+	  for (i = 1, lst = XEN_CDR(XEN_COPY_ARG(arglist)); (i < len) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
 	    {
-	      mus_free(gn->gen);
-	      FREE(gn);
-	      mus_misc_error(S_make_mixer, "invalid arg (not a number):", XEN_CAR(lst));
-	    }
-	  k++;
-	  if (k == size)
-	    {
-	      k = 0;
-	      j++;
-	      if (j >= size) break;
+	      if (XEN_NUMBER_P(XEN_CAR(lst)))
+		fr->vals[j][k] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
+	      else
+		{
+		  mus_free(gn->gen);
+		  FREE(gn);
+		  mus_misc_error(S_make_mixer, "invalid arg (not a number):", XEN_CAR(lst));
+		}
+	      k++;
+	      if (k == size)
+		{
+		  k = 0;
+		  j++;
+		  if (j >= size) break;
+		}
 	    }
 	}
+      return(mus_xen_to_object(gn));
     }
-  return(mus_xen_to_object(gn));
+  return(XEN_FALSE);
 }
 
 
@@ -2465,6 +2557,7 @@ and fill-time sets the time to the next request for more samples.  The intended 
 processing normally involving overlap-adds."
 
   mus_xen *gn;
+  mus_any *ge;
   XEN args[4]; XEN keys[2];
   int orig_arg[2] = {0, 0};
   int vals;
@@ -2482,11 +2575,20 @@ processing normally involving overlap-adds."
     }
   if (siz <= 0) return(XEN_FALSE);
   buf = (Float *)CALLOC(siz, sizeof(Float));
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  gn->vcts = make_vcts(1);
-  gn->nvcts = 1;
-  gn->gen = mus_make_buffer(buf, siz, filltime);
-  return(mus_xen_to_object_with_vct(gn, make_vct(siz, buf)));
+  old_error_handler = mus_error_set_handler(local_mus_error);
+  ge = mus_make_buffer(buf, siz, filltime);
+  mus_error_set_handler(old_error_handler);
+  if (ge)
+    {
+      gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+      gn->vcts = make_vcts(1);
+      gn->nvcts = 1;
+      gn->gen = ge;
+      return(mus_xen_to_object_with_vct(gn, make_vct(siz, buf)));
+    }
+  FREE(buf);
+  mus_error(local_error_type, local_error_msg);
+  return(XEN_FALSE);
 }
 
 static XEN g_buffer2sample(XEN obj)
@@ -2557,9 +2659,10 @@ returns a new wave-train generator (an extension of pulse-train).   Frequency is
 the repetition rate of the wave found in wave. Successive waves can overlap."
 
   mus_xen *gn;
+  mus_any *ge;
   XEN args[6]; XEN keys[3];
   int orig_arg[3] = {0, 0, 0};
-  int vals, wsize;
+  int vals, wsize, need_free = FALSE;
   vct *v;
   Float freq = 440.0;
   Float phase = 0.0;
@@ -2582,12 +2685,25 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
 	  wsize = v->length;
         }
     }
-  if (wave == NULL) wave = (Float *)CALLOC(wsize, sizeof(Float));
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  gn->vcts = make_vcts(1);
-  gn->nvcts = 1;
-  gn->gen = mus_make_wave_train(freq, phase, wave, wsize);
-  return(mus_xen_to_object_with_vct(gn, make_vct(wsize, wave)));
+  if (wave == NULL) 
+    {
+      wave = (Float *)CALLOC(wsize, sizeof(Float));
+      need_free = TRUE;
+    }
+  old_error_handler = mus_error_set_handler(local_mus_error);
+  ge = mus_make_wave_train(freq, phase, wave, wsize);
+  mus_error_set_handler(old_error_handler);
+  if (ge)
+    {
+      gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+      gn->vcts = make_vcts(1);
+      gn->nvcts = 1;
+      gn->gen = ge;
+      return(mus_xen_to_object_with_vct(gn, make_vct(wsize, wave)));
+    }
+  if (need_free) FREE(wave);
+  mus_error(local_error_type, local_error_msg);
+  return(XEN_FALSE);
 }
 
 static XEN g_wave_train(XEN obj, XEN fm)
@@ -2648,6 +2764,7 @@ returns a new waveshaping generator (essentially table-lookup driven by a sinewa
 is basically the same as make-oscil"
 
   mus_xen *gn;
+  mus_any *ge;
   XEN args[8]; XEN keys[4];
   int orig_arg[4] = {0, 0, 0, 0};
   int vals, wsize = 0, npartials = 0, partials_allocated = 0;
@@ -2708,11 +2825,16 @@ is basically the same as make-oscil"
       wave = mus_partials2waveshape(npartials, partials, wsize, (Float *)CALLOC(wsize, sizeof(Float)));
     }
   if (partials_allocated) {FREE(partials); partials = NULL;}
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  gn->vcts = make_vcts(1);
-  gn->nvcts = 1;
-  gn->gen = mus_make_waveshape(freq, 0.0, wave, wsize);
-  return(mus_xen_to_object_with_vct(gn, make_vct(wsize, wave)));
+  ge = mus_make_waveshape(freq, 0.0, wave, wsize);
+  if (ge)
+    {
+      gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+      gn->vcts = make_vcts(1);
+      gn->nvcts = 1;
+      gn->gen = ge;
+      return(mus_xen_to_object_with_vct(gn, make_vct(wsize, wave)));
+    }
+  return(XEN_FALSE);
 }
 
 static XEN g_waveshape(XEN obj, XEN index, XEN fm)
@@ -2808,6 +2930,7 @@ static XEN g_make_sine_summation(XEN arglist)
 returns a new sine summation synthesis generator."
 
   mus_xen *gn;
+  mus_any *ge;
   XEN args[10]; XEN keys[5];
   int orig_arg[5] = {0, 0, 0, 0, 0};
   int vals, i, arglist_len;
@@ -2830,9 +2953,14 @@ returns a new sine summation synthesis generator."
       a = fkeyarg(keys[3], S_make_sine_summation, orig_arg[3] + 1, a);
       ratio = fkeyarg(keys[4], S_make_sine_summation, orig_arg[4] + 1, ratio);
     }
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  gn->gen = mus_make_sine_summation(freq, phase, n, a, ratio);
-  return(mus_xen_to_object(gn));
+  ge = mus_make_sine_summation(freq, phase, n, a, ratio);
+  if (ge)
+    {
+      gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+      gn->gen = ge;
+      return(mus_xen_to_object(gn));
+    }
+  return(XEN_FALSE);
 }
 
 
@@ -2962,13 +3090,17 @@ static XEN g_make_filter_1(int choice, XEN arg1, XEN arg2, XEN arg3, XEN arg4, X
     case G_FIR_FILTER: fgen = mus_make_fir_filter(order, x->data, NULL); break;
     case G_IIR_FILTER: fgen = mus_make_iir_filter(order, x->data, NULL); break;
     }
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  gn->gen = fgen;                                    /* delay gn allocation since make_filter can throw an error */
-  gn->vcts = make_vcts(nkeys - 1);
-  gn->nvcts = nkeys - 1;
-  gn->vcts[0] = xwave;
-  if (nkeys > 2) gn->vcts[1] = ywave;
-  return(mus_xen_to_object(gn));
+  if (fgen)
+    {
+      gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+      gn->gen = fgen;                                    /* delay gn allocation since make_filter can throw an error */
+      gn->vcts = make_vcts(nkeys - 1);
+      gn->nvcts = nkeys - 1;
+      gn->vcts[0] = xwave;
+      if (nkeys > 2) gn->vcts[1] = ywave;
+      return(mus_xen_to_object(gn));
+    }
+  return(XEN_FALSE);
 }
 
 static XEN g_make_filter(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
@@ -3060,6 +3192,7 @@ either 'duration' (seconds) or 'start' and 'end' (samples).  If 'base' is 1.0, t
 are linear, if 0.0 you get a step function, and anything else produces an exponential connecting segment."
 
   mus_xen *gn;
+  mus_any *ge;
   XEN args[14]; XEN keys[7];
   int orig_arg[7] = {0, 0, 0, 0, 0, 0, 0};
   int vals, i, len = 0, arglist_len;
@@ -3115,14 +3248,21 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
       if (start < 0) mus_misc_error(S_make_env, "start < 0?", keys[6]);
     }
   /* odata = vct->data in this context [vcts[0]] */
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  gn->vcts = make_vcts(1);
-  gn->nvcts = 1;
-  gn->gen = mus_make_env(brkpts, npts, scaler, offset, base, duration, start, end, odata);
+  old_error_handler = mus_error_set_handler(local_mus_error);
+  ge = mus_make_env(brkpts, npts, scaler, offset, base, duration, start, end, odata);
+  mus_error_set_handler(old_error_handler);
   FREE(brkpts);
-  if (gn->gen == NULL)
-    mus_misc_error(S_make_env, "internal clm bug -- prechecked mus_make_env returned null!", arglist);
-  return(mus_xen_to_object_with_vct(gn, make_vct(len, odata)));
+  if (ge)
+    {
+      gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+      gn->vcts = make_vcts(1);
+      gn->nvcts = 1;
+      gn->gen = ge;
+      return(mus_xen_to_object_with_vct(gn, make_vct(len, odata)));
+    }
+  FREE(odata);
+  mus_error(local_error_type, local_error_msg);
+  return(XEN_FALSE);
 }
 
 static XEN g_env_interp(XEN x, XEN env1) /* "env" causes trouble in Objective-C!! */
@@ -3280,16 +3420,22 @@ static XEN g_make_file2sample(XEN name)
 {
   #define H_make_file2sample "(" S_make_file2sample " filename) returns an input generator reading 'filename' (a sound file)"
   mus_xen *gn;
+  mus_any *ge;
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, S_make_file2sample, "a string");
   if (!(mus_file_probe(XEN_TO_C_STRING(name))))
     XEN_ERROR(NO_SUCH_FILE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_make_file2sample),
 			 name,
 			 C_TO_XEN_STRING(strerror(errno))));
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  gn->gen = mus_make_file2sample(XEN_TO_C_STRING(name));
-  gn->nvcts = 0;
-  return(xen_return_first(mus_xen_to_object(gn), name));
+  ge = mus_make_file2sample(XEN_TO_C_STRING(name));
+  if (ge)
+    {
+      gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+      gn->gen = ge;
+      gn->nvcts = 0;
+      return(xen_return_first(mus_xen_to_object(gn), name));
+    }
+  return(XEN_FALSE);
 }
 
 static XEN g_file2sample(XEN obj, XEN samp, XEN chan)
@@ -3337,17 +3483,20 @@ should be sndlib identifiers:\n\
 						       df,
 						       ht,
 						       (XEN_STRING_P(comment)) ? XEN_TO_C_STRING(comment) : NULL);
-	      gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-	      gn->gen = rgen;
-	      gn->nvcts = 0;
-	      return(xen_return_first(mus_xen_to_object(gn), name));
+	      if (rgen)
+		{
+		  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+		  gn->gen = rgen;
+		  gn->nvcts = 0;
+		  return(xen_return_first(mus_xen_to_object(gn), name));
+		}
 	    }
 	  else mus_misc_error(S_make_sample2file, "invalid chans", chans);
 	}
       else mus_misc_error(S_make_sample2file, "invalid header type", out_type);
     }
   else mus_misc_error(S_make_sample2file, "invalid data format", out_format);
-  return(XEN_FALSE); /* make compiler happy */
+  return(XEN_FALSE);
 }
 
 static XEN g_continue_sample2file(XEN name)
@@ -3388,16 +3537,22 @@ static XEN g_make_file2frame(XEN name)
 {
   #define H_make_file2frame "(" S_make_file2frame " filename) returns an input generator reading 'filename' (a sound file)"
   mus_xen *gn;
+  mus_any *ge;
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, S_make_file2frame, "a string");
   if (!(mus_file_probe(XEN_TO_C_STRING(name))))
     XEN_ERROR(NO_SUCH_FILE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_make_file2frame),
 			 name,
 			 C_TO_XEN_STRING(strerror(errno))));
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  gn->gen = mus_make_file2frame(XEN_TO_C_STRING(name));
-  gn->nvcts = 0;
-  return(xen_return_first(mus_xen_to_object(gn), name));
+  ge = mus_make_file2frame(XEN_TO_C_STRING(name));
+  if (ge)
+    {
+      gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+      gn->gen = ge;
+      gn->nvcts = 0;
+      return(xen_return_first(mus_xen_to_object(gn), name));
+    }
+  return(XEN_FALSE);
 }
 
 static XEN g_file2frame(XEN obj, XEN samp, XEN outfr)
@@ -3433,10 +3588,14 @@ should be sndlib identifiers:\n\
 			     XEN_TO_C_INT(chans),
 			     XEN_TO_C_INT(out_format),
 			     XEN_TO_C_INT(out_type));
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  gn->gen = fgen;
-  gn->nvcts = 0;
-  return(xen_return_first(mus_xen_to_object(gn), name));
+  if (fgen)
+    {
+      gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+      gn->gen = fgen;
+      gn->nvcts = 0;
+      return(xen_return_first(mus_xen_to_object(gn), name));
+    }
+  return(XEN_FALSE);
 }
 
 static XEN g_frame2file(XEN obj, XEN samp, XEN val)
@@ -3567,6 +3726,7 @@ returns a new readin (file input) generator reading the sound file 'file' starti
 
   /* optkey file channel start direction */
   mus_xen *gn;
+  mus_any *ge;
   char *file = NULL;
   XEN args[8]; XEN keys[4];
   int orig_arg[4] = {0, 0, 0, 0};
@@ -3599,9 +3759,14 @@ returns a new readin (file input) generator reading the sound file 'file' starti
 			 C_TO_XEN_STRING(strerror(errno))));
   if (channel >= mus_sound_chans(file))
     mus_misc_error(S_make_readin, "channel > available chans?", keys[1]);
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  gn->gen = mus_make_readin(file, channel, start, direction);
-  return(mus_xen_to_object(gn));
+  ge = mus_make_readin(file, channel, start, direction);
+  if (ge)
+    {
+      gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+      gn->gen = ge;
+      return(mus_xen_to_object(gn));
+    }
+  return(XEN_FALSE);
 }
 
 static XEN g_increment(XEN obj)
@@ -3738,6 +3903,7 @@ returns a new generator for signal placement in n channels.  Channel 0 correspon
 
   XEN out_obj = XEN_UNDEFINED; XEN rev_obj = XEN_UNDEFINED;
   mus_xen *gn;
+  mus_any *ge;
   mus_output *outp = NULL, *revp = NULL;
   XEN args[14]; XEN keys[7];
   int orig_arg[7] = {0, 0, 0, 0, 0, 0, 0};
@@ -3794,17 +3960,22 @@ returns a new generator for signal placement in n channels.  Channel 0 correspon
       XEN_ASSERT_TYPE(out_chans > 0, keys[5], orig_arg[5] + 1, S_make_locsig, "int > 0");
       XEN_ASSERT_TYPE((type == MUS_LINEAR) || (type == MUS_SINUSOIDAL), keys[6], orig_arg[6] + 1, S_make_locsig, "mus-linear or mus-sinusoidal");
     }
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  if (vlen > 0)
+  ge = mus_make_locsig(degree, distance, reverb, out_chans, outp, revp, type);
+  if (ge)
     {
-      gn->vcts = make_vcts(vlen);
-      i = 0;
-      if (XEN_BOUND_P(out_obj)) gn->vcts[i++] = out_obj;
-      if (XEN_BOUND_P(rev_obj)) gn->vcts[i] = rev_obj;
-      gn->nvcts = vlen;
+      gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+      if (vlen > 0)
+	{
+	  gn->vcts = make_vcts(vlen);
+	  i = 0;
+	  if (XEN_BOUND_P(out_obj)) gn->vcts[i++] = out_obj;
+	  if (XEN_BOUND_P(rev_obj)) gn->vcts[i] = rev_obj;
+	  gn->nvcts = vlen;
+	}
+      gn->gen = ge;
+      return(mus_xen_to_object(gn));
     }
-  gn->gen = mus_make_locsig(degree, distance, reverb, out_chans, outp, revp, type);
-  return(mus_xen_to_object(gn));
+  return(XEN_FALSE);
 }
 
 static XEN g_channels(XEN obj)
@@ -3902,6 +4073,7 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
 
   XEN in_obj = XEN_UNDEFINED;
   mus_xen *gn;
+  mus_any *ge;
   int vals, wid = 0; /* 0 here picks up the current default width in clm.c */
   XEN args[6]; XEN keys[3];
   int orig_arg[3] = {0, 0, 0};
@@ -3924,11 +4096,22 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
   if (srate <= 0) mus_misc_error(S_make_src, "srate <= 0.0?", keys[1]);
   if (wid < 0) mus_misc_error(S_make_src, "width < 0?", keys[2]);
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+  /* mus_make_src assumes it can invoke the input function! */
   gn->vcts = make_vcts(1);
   gn->vcts[INPUT_FUNCTION] = in_obj;
   gn->nvcts = 1;
-  gn->gen = mus_make_src(funcall1, srate, wid, gn);
-  return(mus_xen_to_object(gn));
+  old_error_handler = mus_error_set_handler(local_mus_error);
+  ge = mus_make_src(funcall1, srate, wid, gn);
+  mus_error_set_handler(old_error_handler);
+  if (ge)
+    {
+      gn->gen = ge;
+      return(mus_xen_to_object(gn));
+    }
+  FREE(gn->vcts);
+  FREE(gn);
+  mus_error(local_error_type, local_error_msg);
+  return(XEN_FALSE);
 }
 
 
@@ -3990,6 +4173,7 @@ jitter controls the randomness in that spacing, input can be a file pointer."
 
   XEN in_obj = XEN_UNDEFINED;
   mus_xen *gn;
+  mus_any *ge;
   XEN args[16]; XEN keys[8];
   int orig_arg[8] = {0, 0, 0, 0, 0, 0, 0, 0};
   int vals, i, arglist_len, maxsize = 0;
@@ -4030,11 +4214,20 @@ jitter controls the randomness in that spacing, input can be a file pointer."
   if ((segment_length + output_hop) > 60.0) /* multiplied by srate in mus_make_granulate in array allocation */
     mus_misc_error(S_make_granulate, "segment_length + output_hop too large!", XEN_LIST_2(keys[2], keys[4]));
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  gn->vcts = make_vcts(1);
-  gn->vcts[INPUT_FUNCTION] = in_obj;
-  gn->nvcts = 1;
-  gn->gen = mus_make_granulate(funcall1, expansion, segment_length, segment_scaler, output_hop, ramp_time, jitter, maxsize, gn);
-  return(mus_xen_to_object(gn));
+  old_error_handler = mus_error_set_handler(local_mus_error);
+  ge = mus_make_granulate(funcall1, expansion, segment_length, segment_scaler, output_hop, ramp_time, jitter, maxsize, gn);
+  mus_error_set_handler(old_error_handler);
+  if (ge)
+    {
+      gn->vcts = make_vcts(1);
+      gn->vcts[INPUT_FUNCTION] = in_obj;
+      gn->nvcts = 1;
+      gn->gen = ge;
+      return(mus_xen_to_object(gn));
+    }
+  FREE(gn);
+  mus_error(local_error_type, local_error_msg);
+  return(XEN_FALSE);
 }
 
 
@@ -4076,6 +4269,7 @@ static XEN g_make_convolve(XEN arglist)
 returns a new convolution generator which convolves its input with the impulse response 'filter'."
 
   mus_xen *gn;
+  mus_any *ge;
   XEN args[6]; XEN keys[3];
   int orig_arg[3] = {0, 0, 0};
   int vals, i, arglist_len, fftlen;
@@ -4111,12 +4305,21 @@ returns a new convolution generator which convolves its input with the impulse r
   else fftlen = (int)pow(2.0, 1 + (int)(log((Float)(filter->length + 1)) / log(2.0)));
   if (fft_size < fftlen) fft_size = fftlen;
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  gn->nvcts = 2;
-  gn->vcts = make_vcts(2);
-  gn->vcts[INPUT_FUNCTION] = in_obj;
-  gn->vcts[1] = filt;
-  gn->gen = mus_make_convolve(funcall1, filter->data, fft_size, filter->length, gn);
-  return(mus_xen_to_object(gn));
+  old_error_handler = mus_error_set_handler(local_mus_error);
+  ge = mus_make_convolve(funcall1, filter->data, fft_size, filter->length, gn);
+  mus_error_set_handler(old_error_handler);
+  if (ge)
+    {
+      gn->nvcts = 2;
+      gn->vcts = make_vcts(2);
+      gn->vcts[INPUT_FUNCTION] = in_obj;
+      gn->vcts[1] = filt;
+      gn->gen = ge;
+      return(mus_xen_to_object(gn));
+    }
+  FREE(gn);
+  mus_error(local_error_type, local_error_msg);
+  return(XEN_FALSE);
 }
 
 static XEN g_convolve_files(XEN file1, XEN file2, XEN maxamp, XEN outfile)
@@ -4228,16 +4431,14 @@ and interp set the fftsize, the amount of overlap between ffts, and the time bet
 'analyze', if given, takes 2 args, the generator and the input function; if it returns #t, the default analysis \
 code is also called.  'edit', if given, takes 1 arg, the generator; if it returns #t, the default edit code \
 is run.  'synthesize' is a function of 1 arg, the generator; it is called to get the current vocoder output. \
-\n\
-(make-phase-vocoder #f 512 4 256 1.0 #f #f #f) \n\
-\n\
-(make-phase-vocoder #f 512 4 256 1.0 \n\
+\n(make-phase-vocoder #f 512 4 256 1.0 #f #f #f) \n\n(make-phase-vocoder #f 512 4 256 1.0 \n\
   (lambda (v infunc) (set! incalls (+ incalls 1)) #t) \n\
   (lambda (v) (set! editcalls (+ editcalls 1)) #t) \n\
   (lambda (v) (set! outcalls (+ outcalls 1)) 0.0))) \n"
 
   XEN in_obj = XEN_UNDEFINED; XEN edit_obj = XEN_UNDEFINED; XEN synthesize_obj = XEN_UNDEFINED; XEN analyze_obj = XEN_UNDEFINED;
   mus_xen *gn;
+  mus_any *ge;
   XEN args[16]; XEN keys[8];
   XEN pv_obj;
   int orig_arg[8] = {0, 0, 0, 0, 0, 0, 0, 0};
@@ -4288,22 +4489,31 @@ is run.  'synthesize' is a function of 1 arg, the generator; it is called to get
 	}
     }
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  gn->nvcts = 5;
-  gn->vcts = make_vcts(gn->nvcts);
-  gn->vcts[INPUT_FUNCTION] = in_obj;
-  gn->vcts[EDIT_FUNCTION] = edit_obj;
-  gn->vcts[ANALYZE_FUNCTION] = analyze_obj;
-  gn->vcts[SYNTHESIZE_FUNCTION] = synthesize_obj;
-  gn->gen = mus_make_phase_vocoder(funcall1,
-				   fft_size, overlap, interp, pitch,
-				   (XEN_NOT_BOUND_P(analyze_obj) ? NULL : pvanalyze),
-				   (XEN_NOT_BOUND_P(edit_obj) ? NULL : pvedit),
-				   (XEN_NOT_BOUND_P(synthesize_obj) ? NULL : pvsynthesize),
-				   (void *)gn);
-  pv_obj = mus_xen_to_object(gn);
-  /* need scheme-relative backpointer for possible function calls */
-  gn->vcts[SELF_WRAPPER] = pv_obj;
-  return(pv_obj);
+  old_error_handler = mus_error_set_handler(local_mus_error);
+  ge = mus_make_phase_vocoder(funcall1,
+			      fft_size, overlap, interp, pitch,
+			      (XEN_NOT_BOUND_P(analyze_obj) ? NULL : pvanalyze),
+			      (XEN_NOT_BOUND_P(edit_obj) ? NULL : pvedit),
+			      (XEN_NOT_BOUND_P(synthesize_obj) ? NULL : pvsynthesize),
+			      (void *)gn);
+  mus_error_set_handler(old_error_handler);
+  if (ge)
+    {
+      gn->nvcts = 5;
+      gn->vcts = make_vcts(gn->nvcts);
+      gn->vcts[INPUT_FUNCTION] = in_obj;
+      gn->vcts[EDIT_FUNCTION] = edit_obj;
+      gn->vcts[ANALYZE_FUNCTION] = analyze_obj;
+      gn->vcts[SYNTHESIZE_FUNCTION] = synthesize_obj;
+      gn->gen = ge;
+      pv_obj = mus_xen_to_object(gn);
+      /* need scheme-relative backpointer for possible function calls */
+      gn->vcts[SELF_WRAPPER] = pv_obj;
+      return(pv_obj);
+    }
+  FREE(gn);
+  mus_error(local_error_type, local_error_msg);
+  return(XEN_FALSE);
 }
 
 static XEN g_pv_amps(XEN pv) 

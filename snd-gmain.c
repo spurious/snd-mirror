@@ -122,14 +122,24 @@ static void who_called(GtkWidget *w, GdkEvent *event, gpointer context)
 }
 #endif
 
-#if TRAP_SEGFAULT
+#if HAVE_SETJMP_H
 #include <setjmp.h>
+
+#if TRAP_SEGFAULT
 /* stolen from scwm.c */
 static sigjmp_buf envHandleEventsLoop;
 
 static RETSIGTYPE segv(int ignored)
 {
   siglongjmp(envHandleEventsLoop, 1);
+}
+#endif
+
+static jmp_buf top_level_jump;
+RETSIGTYPE top_level_catch(int ignore);
+RETSIGTYPE top_level_catch(int ignore)
+{
+  longjmp(top_level_jump, 1);
 }
 #endif
 
@@ -623,10 +633,16 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 
   BACKGROUND_ADD(ss, startup_funcs, tm);
 
+#if HAVE_SETJMP_H
 #if TRAP_SEGFAULT
   if (sigsetjmp(envHandleEventsLoop, 1))
     {
       snd_error("Caught seg fault (will try to continue):\n");
+    }
+#endif
+  if (setjmp(top_level_jump))
+    {
+      snd_error("Caught top level error (this must be a Snd bug; will try to continue):\n");
     }
 #endif
 

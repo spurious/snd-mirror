@@ -82,7 +82,6 @@ char *env_to_string(env *e)
   return(news);
 }
 
-/* mus_make_envelope? */
 env *make_envelope(Float *env_buffer, int len)
 {
   env *e;
@@ -101,6 +100,19 @@ env *make_envelope(Float *env_buffer, int len)
   return(e);
 }
 
+#if DEBUGGING
+static void check_env(Float *brkpts, int npts)
+{
+  int i;
+  for (i = 2; i < npts * 2; i += 2)
+    if (brkpts[i - 2] > brkpts[i])
+      {
+	fprintf(stderr, "\nenv at %d: %f > %f\n", i / 2, brkpts[i - 2], brkpts[i]);
+	abort();
+      }
+}
+#endif
+
 static void add_point (env *e, int pos, Float x, Float y)
 {
   int i, j;
@@ -117,12 +129,18 @@ static void add_point (env *e, int pos, Float x, Float y)
   e->data[pos * 2] = x;
   e->data[pos * 2 + 1] = y;
   e->pts++;
+#if DEBUGGING
+  check_env(e->data, e->pts);
+#endif
 }
 
-void move_point (env *e, int pos, Float x, Float y)
+void move_point(env *e, int pos, Float x, Float y)
 {
   e->data[pos * 2] = x;
   e->data[pos * 2 + 1] = y;
+#if DEBUGGING
+  check_env(e->data, e->pts);
+#endif
 }
 
 void delete_point(env *e, int pos)
@@ -134,6 +152,9 @@ void delete_point(env *e, int pos)
       e->data[j + 1] = e->data[j + 3];
     }
   e->pts--;
+#if DEBUGGING
+  check_env(e->data, e->pts);
+#endif
 }
 
 static int place_point(int *cxs, int points, int x)
@@ -149,10 +170,11 @@ static int hit_point(snd_state *ss, int *cxs, int *cys, int points, int x, int y
 {
   int i;
   for (i = 0; i < points; i++)
-    if (((x > (cxs[i] - ss->enved_point_size)) && 
-	 (x < (cxs[i] + ss->enved_point_size))) &&
-	((y > (cys[i] - ss->enved_point_size)) && 
-	 (y < (cys[i] + ss->enved_point_size))))
+    if ((x == cxs[i]) ||
+	(((x > (cxs[i] - ss->enved_point_size)) && 
+	  (x < (cxs[i] + ss->enved_point_size))) &&
+	 ((y > (cys[i] - ss->enved_point_size)) && 
+	  (y < (cys[i] + ss->enved_point_size)))))
       return(i);
   return(-1);
 }
@@ -661,7 +683,12 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax,
 	    }
 	  else
 	    {
+	      if (dots)
+		for (j = 1, i = 2; i < e->pts * 2; i += 2, j++)
+		  set_current_point(j, grf_x(e->data[i], ap), grf_y(e->data[i + 1], ap));
+
 	      ce = mus_make_env(e->data, e->pts, 1.0, 0.0, base, 0.0, 0, width / EXP_SEGLEN - 1, NULL);
+	      if (ce == NULL) return;
 	      /* exponential case */
 	      dur = width / EXP_SEGLEN;
 	      if (dur < e->pts) dur = e->pts;
@@ -681,7 +708,6 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax,
 		  if (printing) ps_draw_line(ap, ix0, iy0, ix1, iy1);
 		  if ((dots) && (index != mus_position(ce)))
 		    {
-		      set_current_point(j++, ix1, iy1);
 		      draw_arc(ax, ix1, iy1, size);
 		      index = mus_position(ce);
 		    }
@@ -696,10 +722,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax,
 		  if (printing) ps_draw_line(ap, ix0, iy0, ix1, iy1);
 		}
 	      if (dots)
-		{
-		  set_current_point(j++, ix1, iy1);
-		  draw_arc(ax, ix1, iy1, size);
-		}
+		draw_arc(ax, ix1, iy1, size);
 	      mus_free(ce);
 	    }
 	}

@@ -505,12 +505,10 @@ This can kill the X server!
 
 ---- Sun ----
 
-If the make process complains about lt_dlclose and friends,
-add -lltdl to the GUILE_LIBS list in makefile.  Also, if you're
-loading xm.o, #define NEED_XtIsSubClass 1 in xm.c.  (The --with-gl
-and --with-just-gl switches are not recommended on the Sun,
-though they work; the colormap of the entire system is hijacked
-while Snd is running).
+If the make process complains about lt_dlclose and friends, add -lltdl
+to the GUILE_LIBS list in makefile.  The --with-gl and --with-just-gl
+switches are not recommended on the Sun, though they work; the
+colormap of the entire system is hijacked while Snd is running.
 
 
 ---- Mac OS-X: ---- 

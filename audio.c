@@ -3354,22 +3354,25 @@ static void oss_mus_audio_save (void)
 	mus_error(MUS_AUDIO_CANT_OPEN, "mus_audio_save: %s: %s",
 		  mixer_name(system), 
 		  strerror(errno));
-      ioctl(afd, SOUND_MIXER_READ_DEVMASK, &devmask);
-      for (i = 0; i < SOUND_MIXER_NRDEVICES; i++)
+      else
 	{
-	  mixer_state[system][i] = 0;
-	  if ((1 << i) & devmask)
+	  ioctl(afd, SOUND_MIXER_READ_DEVMASK, &devmask);
+	  for (i = 0; i < SOUND_MIXER_NRDEVICES; i++)
 	    {
-	      err = ioctl(afd, MIXER_READ(i), &level);
-	      if (err != -1) 
-		mixer_state[system][i] = level;
+	      mixer_state[system][i] = 0;
+	      if ((1 << i) & devmask)
+		{
+		  err = ioctl(afd, MIXER_READ(i), &level);
+		  if (err != -1) 
+		    mixer_state[system][i] = level;
+		}
 	    }
+	  ioctl(afd, SOUND_PCM_READ_RATE, &(init_srate[system]));
+	  ioctl(afd, SOUND_PCM_READ_CHANNELS, &(init_chans[system]));
+	  init_format[system] = AFMT_QUERY;
+	  ioctl(afd, SOUND_PCM_SETFMT, &(init_format[system]));
+	  linux_audio_close(afd);
 	}
-      ioctl(afd, SOUND_PCM_READ_RATE, &(init_srate[system]));
-      ioctl(afd, SOUND_PCM_READ_CHANNELS, &(init_chans[system]));
-      init_format[system] = AFMT_QUERY;
-      ioctl(afd, SOUND_PCM_SETFMT, &(init_format[system]));
-      linux_audio_close(afd);
     }
 }
 
@@ -3384,17 +3387,20 @@ static void oss_mus_audio_restore (void)
 	mus_error(MUS_AUDIO_CANT_OPEN, "mus_audio_restore: %s: %s",
 		  mixer_name(system), 
 		  strerror(errno));
-      ioctl(afd, SOUND_PCM_WRITE_CHANNELS, &(init_chans[system]));
-      ioctl(afd, SOUND_PCM_WRITE_RATE, &(init_srate[system]));
-      ioctl(afd, SOUND_PCM_SETFMT, &(init_format[system]));
-      ioctl(afd, SOUND_MIXER_READ_DEVMASK, &devmask);
-      for (i = 0; i < SOUND_MIXER_NRDEVICES; i++) 
-	if ((1 << i) & devmask)
-	  {
-	    level = mixer_state[system][i];
-	    ioctl(afd, MIXER_WRITE(i), &level);
-	  }
-      linux_audio_close(afd);
+      else
+	{
+	  ioctl(afd, SOUND_PCM_WRITE_CHANNELS, &(init_chans[system]));
+	  ioctl(afd, SOUND_PCM_WRITE_RATE, &(init_srate[system]));
+	  ioctl(afd, SOUND_PCM_SETFMT, &(init_format[system]));
+	  ioctl(afd, SOUND_MIXER_READ_DEVMASK, &devmask);
+	  for (i = 0; i < SOUND_MIXER_NRDEVICES; i++) 
+	    if ((1 << i) & devmask)
+	      {
+		level = mixer_state[system][i];
+		ioctl(afd, MIXER_WRITE(i), &level);
+	      }
+	  linux_audio_close(afd);
+	}
     }
 }
 
@@ -4911,6 +4917,9 @@ static void alsa_describe_audio_state_1(void)
 #else
   #include <sys/audioio.h>
 #endif
+#if HAVE_SYS_MIXER_H
+  #include <sys/mixer.h>
+#endif
 
 int mus_audio_initialize(void) {return(MUS_NO_ERROR);}
 int mus_audio_systems(void) {return(1);}
@@ -4968,9 +4977,20 @@ char *mus_audio_moniker(void)
       return("sun?");
     }
   mus_audio_close(audio_fd);
+#if HAVE_SYS_MIXER_H
+  if (version_name == NULL) version_name = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+#else
   if (version_name == NULL) version_name = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
+#endif
 #ifndef AUDIO_DEV_AMD
-  mus_snprintf(version_name, LABEL_BUFFER_SIZE, "audio: %s (%s)", ad.name, ad.version);
+  #if HAVE_SYS_MIXER_H
+    mus_snprintf(version_name, PRINT_BUFFER_SIZE, 
+		 "audio: %s (%s), %s %s %s", 
+		 ad.name, ad.version,
+		 MIXER_NAME, MIXER_VERSION, MIXER_CONFIGURATION);
+  #else
+    mus_snprintf(version_name, LABEL_BUFFER_SIZE, "audio: %s (%s)", ad.name, ad.version);
+  #endif
 #else
   switch (ad)
     {
@@ -5715,13 +5735,8 @@ static void describe_audio_state_1(void)
   if (err == -1) return;
   err = ioctl(audio_fd, AUDIO_GETDEV, &ad); 
   if (err == -1) return;
-  mus_audio_close(audio_fd);
-#ifndef AUDIO_DEV_AMD
-  mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "%s (version %s, configuration: %s)\n", ad.name, ad.version, ad.config);
-#else
-  mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "type: %d\n", ad);
-#endif
-  pprint(audio_strbuf);
+  pprint(mus_audio_moniker());
+  pprint("\n");
   mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "output: %s\n    srate: %d, vol: %s, chans: %d, format %d-bit %s\n",
 	  sun_out_device_name(info.play.port),
 	  info.play.sample_rate,
@@ -5743,6 +5758,47 @@ static void describe_audio_state_1(void)
   if (info.play.pause) {mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "Playback is paused\n"); pprint(audio_strbuf);}
   if (info.record.pause) {mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "Recording is paused\n"); pprint(audio_strbuf);}
   if (info.output_muted) {mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "Output is muted\n"); pprint(audio_strbuf);}
+#if HAVE_SYS_MIXER_H
+  {
+    int i, num = 0, choice;
+    #define LARGE_NUMBER 100
+    am_sample_rates_t *sr;
+    for (choice = 0; choice < 2; choice++)
+      {
+	for (num = 4; num < LARGE_NUMBER; num += 2) 
+	  {
+	    sr = (am_sample_rates_t *)
+	      malloc(AUDIO_MIXER_SAMP_RATES_STRUCT_SIZE(num));
+	    sr->num_samp_rates = num;
+	    sr->type = (choice == 0) ? AUDIO_PLAY : AUDIO_RECORD;
+	    err = ioctl(audio_fd, AUDIO_MIXER_GET_SAMPLE_RATES, sr);
+	    if (sr->num_samp_rates <= num)
+	      {
+		free(sr);
+		break;
+	      }
+	    free(sr);
+	  }
+	mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "%s srates:", (choice == 0) ? "play" : "record"); 
+	pprint(audio_strbuf);
+	if (sr->type == MIXER_SR_LIMITS)
+	  {
+	    mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, " %d to %d", sr->samp_rates[0], sr->samp_rates[sr->num_samp_rates - 1]);
+	    pprint(audio_strbuf);
+	  }
+	else
+	  {
+	    for (i = 0; i < sr->num_samp_rates; i++)
+	      {
+		mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, " %d", sr->samp_rates[i]);
+		pprint(audio_strbuf);
+	      }
+	  }
+	pprint("\n");
+      }
+  }
+#endif
+  mus_audio_close(audio_fd);
 }
 
 static struct audio_info saved_info;

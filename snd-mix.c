@@ -2867,7 +2867,7 @@ static void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num
   #if HAVE_ALSA
     mus_sample_t **buf;
     char *outbuf;
-    Float val[4];
+    float val[4]; /* not Float */
   #else
     short *buf;
   #endif
@@ -3014,7 +3014,7 @@ static void play_mix(snd_state *ss, mix_info *md)
   #if HAVE_ALSA
     mus_sample_t **buf;
     char *outbuf;
-    Float val[4];
+    float val[4];
   #else
     short *buf;
   #endif

@@ -199,13 +199,13 @@ static XEN g_sound_type_specifier(XEN filename)
 
 static XEN g_sound_forget(XEN filename) 
 {
-  #define H_mus_sound_forget "(" S_mus_sound_forget " filename) remove 'filename' from sound cache"
+  #define H_mus_sound_forget "(" S_mus_sound_forget " filename) removes 'filename' from sound cache"
   return(gmus_sound(S_mus_sound_forget, mus_sound_forget, filename));
 }
 
 static XEN g_sound_prune(void) 
 {
-  #define H_mus_sound_prune "(" S_mus_sound_prune ") remove all defunct entries from sound cache"
+  #define H_mus_sound_prune "(" S_mus_sound_prune ") removes all defunct entries from sound cache"
   return(C_TO_XEN_INT(mus_sound_prune()));
 }
 

@@ -3683,7 +3683,8 @@ done
 
 
 
-for ac_header in fcntl.h limits.h unistd.h string.h sys/soundcard.h soundcard.h machine/soundcard.h gsl/gsl_version.h
+
+for ac_header in fcntl.h limits.h unistd.h string.h sys/soundcard.h soundcard.h machine/soundcard.h gsl/gsl_version.h sys/mixer.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 if eval "test \"\${$as_ac_Header+set}\" = set"; then
@@ -10811,10 +10812,6 @@ echo "$as_me:$LINENO: result: $ac_cv_lib_Xp_XpGetDocumentData" >&5
 echo "${ECHO_T}$ac_cv_lib_Xp_XpGetDocumentData" >&6
 if test $ac_cv_lib_Xp_XpGetDocumentData = yes; then
 
-	         cat >>confdefs.h <<\_ACEOF
-#define HAVE_XP 1
-_ACEOF
-
 	         XLIBS="$XLIBS -lXp"
 	         TEST_LIBS="$TEST_LIBS -lXp"
 
@@ -11130,6 +11127,56 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
 
 			  cat >>confdefs.h <<\_ACEOF
 #define WITH_RELATIVE_PANES 1
+_ACEOF
+
+			  echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+	  echo "$as_me:$LINENO: checking XmPrint support" >&5
+echo $ECHO_N "checking XmPrint support... $ECHO_C" >&6
+	  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+#include <Xm/Print.h>
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+ Widget w;
+                           XmPrintShellCallbackStruct xmp;
+			   XtIsSubclass(w, xmPrintShellWidgetClass);
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+
+			  cat >>confdefs.h <<\_ACEOF
+#define HAVE_XM_XP 1
 _ACEOF
 
 			  echo "$as_me:$LINENO: result: yes" >&5
@@ -11549,10 +11596,51 @@ fi
 
 
     if test "$have_gl" = yes ; then
-      cat >>confdefs.h <<\_ACEOF
+      cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+#include <GL/gl.h>
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+int i; i = GL_TEXTURE_BINDING_3D;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  cat >>confdefs.h <<\_ACEOF
 #define HAVE_GL 1
 _ACEOF
 
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+cat >>confdefs.h <<\_ACEOF
+#define JUST_GL 1
+_ACEOF
+
+		      with_just_gl=yes
+		      have_gl=no
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
       if test "$with_just_gl" = yes ; then
         cat >>confdefs.h <<\_ACEOF
 #define JUST_GL 1

@@ -2073,7 +2073,22 @@
 		(clear-audio-inputs)
 		(mus-audio-restore)
 		(mus-audio-mixer-read mus-audio-microphone mus-audio-amp 0 vals)
-		(IF (fneq (vector-ref vals 0) old-val) (snd-display ";mus-audio-restore: ~A ~A?" old-val (vector-ref vals 0)))))))
+		(IF (fneq (vector-ref vals 0) old-val) (snd-display ";mus-audio-restore: ~A ~A?" old-val (vector-ref vals 0))))))
+	(for-each 
+	 (lambda (field)
+	   (for-each
+	    (lambda (device)
+	      (if (not (= (mus-audio-mixer-read device field 0 vals) -1))
+		  (mus-audio-mixer-write device field 0 vals)))
+	    (list mus-audio-default mus-audio-duplex-default mus-audio-line-out mus-audio-line-in mus-audio-microphone
+		  mus-audio-speakers mus-audio-dac-out mus-audio-adat-in mus-audio-aes-in mus-audio-digital-in
+		  mus-audio-digital-out mus-audio-adat-out mus-audio-aes-out mus-audio-dac-filter mus-audio-mixer
+		  mus-audio-line1 mus-audio-line2 mus-audio-line3 mus-audio-aux-input mus-audio-cd mus-audio-aux-output
+		  mus-audio-spdif-in mus-audio-spdif-out)))
+	 (list mus-audio-amp mus-audio-srate mus-audio-channel mus-audio-format mus-audio-port mus-audio-imix
+	       mus-audio-igain mus-audio-reclev mus-audio-pcm mus-audio-pcm2 mus-audio-ogain mus-audio-line
+	       mus-audio-synth mus-audio-bass mus-audio-treble mus-audio-direction mus-audio-samples-per-channel))
+	)
 
       (if (file-exists? (string-append (or sf-dir "") "a.sf2"))
 	  (let ((fil (open-sound (string-append (or sf-dir "") "a.sf2"))))
@@ -2487,7 +2502,7 @@
 			"no such fft window" "unsupported data format" "header read failed"
 			"unsupported header type" "file descriptors not initialized" "not a sound file" "file closed" "write error"
 			"bogus free" "buffer overflow" "buffer underflow" "file overflow" "exponent overflow"
-			"header write failed" "can't open temp file" "interrupted"
+			"header write failed" "can't open temp file" "interrupted" "bad envelope"
 			"audio channels not available" "audio srate not available" "audio format not available"
 			"no audio input available" "audio configuration not available" 
 			"no audio lines available" "audio write error" "audio size not available" "audio device not available"
@@ -6999,6 +7014,12 @@
       (let ((var (catch #t (lambda () (make-env :envelope '(0 0) :base -1.0)) (lambda args args))))
 	(IF (not (eq? (car var) 'mus-error))
 	    (snd-display ";make-env bad base: ~A" var)))
+      (let ((var (catch #t (lambda () (make-env :envelope '(1 1 0 0) :end 10)) (lambda args args))))
+	(IF (not (eq? (car var) 'mus-error))
+	    (snd-display ";make-env bad env 1 1 0 0: ~A" var)))
+      (let ((var (catch #t (lambda () (make-env :envelope '(0 1 -1 0) :end 10)) (lambda args args))))
+	(IF (not (eq? (car var) 'mus-error))
+	    (snd-display ";make-env bad env 0 1 -1 0: ~A" var)))
 
       (let ((gen (make-table-lookup 440.0 :wave (partials->wave '(1 1 2 1))))
 	    (gen1 (make-table-lookup 440.0 :wave (partials->wave '(1 1 2 1))))
@@ -20291,6 +20312,7 @@ EDITS: 5
 		      (let ((active-env (enved-active-env)))
 			(IF (not (ffeql active-env (list 0.0 0.0 1.0 0.0)))
 			    (snd-display ";enved mid-click to delete: ~A?" active-env)))
+
 		      (do ((i 0 (1+ i)))
 			  ((= i 50))
 			(click-event ewid 1 0 (enved-x (random 0.999)) (enved-y (random 1.0))) (force-event)
@@ -20299,8 +20321,8 @@ EDITS: 5
 			       (len (length e)))
 			  (if (> len 4)
 			      (let* ((pos (+ 2 (random (- len 4))))
-				     (rx (list-ref e (IF (odd? pos) (- pos 1) pos)))
-				     (ry (list-ref e (IF (odd? pos) pos (+ pos 1)))))
+				     (rx (list-ref e (if (odd? pos) (- pos 1) pos)))
+				     (ry (list-ref e (if (odd? pos) pos (+ pos 1)))))
 				(click-event ewid 1 0 (enved-x rx) (enved-y ry)) (force-event)
 				(if (>= (length (enved-active-env)) (length e))
 				    (snd-display "; enved loop missed a hit ~A ~A ~A ~A" (enved-axis-info) axis e (enved-active-env)))))))
@@ -20339,7 +20361,6 @@ EDITS: 5
 				     (ry (list-ref e (if (odd? pos) pos (+ pos 1)))))
 				(click-event ewid 1 0 (enved-x rx) (enved-y ry))
 				(force-event)))))
-		      
 		      (click-button revert-button) (force-event)
 		      (let ((active-env (enved-active-env)))
 			(IF (not (ffeql active-env (list 0.0 0.0 1.0 0.0)))
@@ -21403,7 +21424,6 @@ EDITS: 5
 		  (IF (XtIsManaged regd)
 		      (snd-display ";region dialog is still active?")))
 		(c-g!)
-
 		))))))
     
 
@@ -21429,7 +21449,7 @@ EDITS: 5
 		    (snd-display ";mheight/width: ~A ~A" (.mheight scr) (.mwidth scr))))
 	      (IF (not (= (.ndepths scr) 7))
 		  (snd-display ";screen ndepths: ~A" (.ndepths scr)))
-	      (IF (not (= (cadr (.white_pixel scr)) 16777215))
+	      (IF (not (= (cadr (.white_pixel scr)) 65535))
 		  (snd-display ";screen white_pixel: ~A" (.white_pixel scr)))
 	      (IF (not (= (cadr (.black_pixel scr)) 0))
 		  (snd-display ";screen black_pixel: ~A" (.black_pixel scr)))
@@ -21626,9 +21646,9 @@ EDITS: 5
 		  (snd-display ";XGetAtomName: ~A" (XGetAtomName dpy (list 'Atom 40))))
 
 	      (IF (not (= (.bits_per_rgb vis) 8)) (snd-display ";bits_per_rgb: ~A" (.bits_per_rgb vis)))
-	      (IF (not (= (.blue_mask vis) 255)) (snd-display ";blue_mask: ~X" (.blue_mask vis)))
-	      (IF (not (= (.green_mask vis) 65280)) (snd-display ";green_mask: ~X" (.green_mask vis)))
-	      (IF (not (= (.red_mask vis) 16711680)) (snd-display ";red_mask: ~X" (.red_mask vis)))
+	      (IF (not (= (.blue_mask vis) 31)) (snd-display ";blue_mask: ~A" (.blue_mask vis)))
+	      (IF (not (= (.green_mask vis) 2016)) (snd-display ";green_mask: ~A" (.green_mask vis)))
+	      (IF (not (= (.red_mask vis) 63488)) (snd-display ";red_mask: ~A" (.red_mask vis)))
 	      (IF (not (= AllPlanes 4294967295)) (snd-display ";AllPlanes: ~A" AllPlanes))
 	      
 	      (IF (< (QLength dpy) 0) (snd-display ";QLength: ~A" (QLength dpy)))
@@ -21716,7 +21736,7 @@ EDITS: 5
 		(IF (> (abs (- (.width attr) 500)) 20) (snd-display ";XMoveWindow width etc: ~A" (.width attr)))
 		(IF (> (abs (- (.height attr) 500)) 20) (snd-display ";XMoveWindow height etc: ~A" (.height attr)))
 		(IF (not (= (.border_width attr) 0)) (snd-display ";XGetWindowAttributes border_width: ~A" (.border_width attr)))
-		(IF (not (= (.depth attr) 24)) (snd-display ";XGetWindowAttributes depth: ~A" (.depth attr)))
+		(IF (not (= (.depth attr) 16)) (snd-display ";XGetWindowAttributes depth: ~A" (.depth attr)))
 		(IF (not (= (.bit_gravity attr) 0)) (snd-display ";XGetWindowAttributes bit_gravity: ~A" (.bit_gravity attr)))
 		(IF (not (= (.win_gravity attr) 1)) (snd-display ";XGetWindowAttributes win_gravity: ~A" (.win_gravity attr)))
 		(IF (.backing_store attr) (snd-display ";XGetWindowAttributes backing_store: ~A" (.backing_store attr)))
@@ -21794,7 +21814,7 @@ EDITS: 5
 			  (snd-display ";XContextDependentDrawing: ~A" (XContextDependentDrawing fs)))
 		      (IF (XDirectionalDependentDrawing fs)
 			  (snd-display ";XDirectionalDependentDrawing: ~A" (XDirectionalDependentDrawing fs)))
-		      (IF (not (string=? (XLocaleOfFontSet fs) "en_US"))
+		      (IF (not (string=? (XLocaleOfFontSet fs) "en_US.iso885915"))
 			  (snd-display ";XLocaleOfFontSet: ~A" (XLocaleOfFontSet fs)))
 		      (IF (not (string=? (XBaseFontNameListOfFontSet fs) "*-*-*-*-Normal-*-180-100-100-*-*"))
 			  (snd-display ";XBaseFontNameListOfFontSet: ~A" (XBaseFontNameListOfFontSet fs)))
@@ -22087,14 +22107,14 @@ EDITS: 5
 	      (let ((wmp (map (lambda (w) (XGetAtomName dpy w)) (XGetWMProtocols dpy win))))
 		(IF (not (equal? wmp (list "_MOTIF_WM_MESSAGES" "WM_DELETE_WINDOW")))
 		    (snd-display ";XGetWMProtocols: ~A" wmp)))
-	      (IF (not (equal? (XListDepths dpy 0) (list 24 1 4 8 15 16 32)))
+	      (IF (not (equal? (XListDepths dpy 0) (list 16 1 4 8 15 24 32)))
 		  (snd-display ";XListDepths: ~A" (XListDepths dpy 0)))
 	      (IF (not (equal? (XListPixmapFormats dpy) '((1 1 32) (4 8 32) (8 8 32) (15 16 32) (16 16 32) (24 32 32) (32 32 32))))
 		  (snd-display ";XListPixmapFormats: ~A" (XListPixmapFormats dpy)))
 	      
 	      (XWarpPointer dpy (list 'Window None) (list 'Window None) 0 0 10 10 100 100)
 	      (let ((cs (XQueryBestCursor dpy win 10 10)))
-		(IF (not (equal? cs (list 1 32 32))) (snd-display ";XQueryBestCursor: ~A" cs)))
+		(IF (not (equal? cs (list 1 10 10))) (snd-display ";XQueryBestCursor: ~A" cs)))
 	      (let ((pt (XQueryPointer dpy win)))
 		(IF (not (Window? (cadr pt))) (snd-display ";XQueryPointer: ~A" pt)))
 	      (XRaiseWindow dpy win)
@@ -22226,12 +22246,37 @@ EDITS: 5
 		  (IF (or (not vis)
 			  (not (XVisualInfo? (car vis))))
 		      (snd-display ";XGetVisualInfo: ~A" vis))
-		  (IF (not (= (.depth (car vis)) 24)) (snd-display ";depth vis: ~A" (.depth (car vis))))
+		  (IF (not (= (.depth (car vis)) 16)) (snd-display ";depth vis: ~A" (.depth (car vis))))
 		  (IF (not (= (.screen (car vis)) 0)) (snd-display ";screen vis: ~A" (.screen (car vis))))
 		  (IF (not (= (.class (car vis)) TrueColor)) (snd-display ";class vis: ~A (~A)" (.class (car vis)) TrueColor))
-		  (IF (not (= (.colormap_size (car vis)) 256)) (snd-display ";colormap_size vis: ~A" (.colormap_size (car vis))))
-		  (IF (not (XVisualInfo? (XMatchVisualInfo dpy 0 24 TrueColor)))
+		  (IF (not (= (.colormap_size (car vis)) 64)) (snd-display ";colormap_size vis: ~A" (.colormap_size (car vis))))
+		  (IF (and (not (XVisualInfo? (XMatchVisualInfo dpy 0 24 TrueColor)))
+			   (not (XVisualInfo? (XMatchVisualInfo dpy 0 16 TrueColor))))
 		      (snd-display ";XMatchVisualInfo: ~A" (XMatchVisualInfo dpy 0 24 TrueColor))))
+		(let ((e (XEvent KeyPress))
+		      (cast-current-time (list 'Time CurrentTime)))
+		  (set! (.type e) KeyPress)
+		  (set! (.window e) wn)
+		  (set! (.display e) dpy)
+		  (set! (.root e) (RootWindow dpy (DefaultScreen dpy)))
+		  (set! (.x e) 0)
+		  (set! (.y e) 0)
+		  (set! (.x_root e) 0)
+		  (set! (.y_root e) 0)
+		  (set! (.keycode e) (XKeysymToKeycode dpy (list 'KeySym 60)))
+		  (set! (.state e) 0)
+		  (set! (.time e) cast-current-time)
+		  (set! (.same_screen e) #t)
+		  (set! (.subwindow e) (list 'Window None))
+		  (let ((val (XLookupString e)))
+		    (if (not (equal? val (list 1 "<" (list 'KeySym 60))))
+			(snd-display ";XLookupString: ~A" val)))
+		  (let ((val (XFilterEvent e wn)))
+		    (if val (snd-display ";XFilterEvent: ~A" val)))
+		  (let ((val (XLookupKeysym e 0)))
+		    (if (not (equal? val (list 'KeySym 60)))
+			(snd-display ";XLookupKeysym: ~A" val))))
+		(XCheckMaskEvent dpy KeyPressMask)
 
 		(let ((cursor (XCreateFontCursor dpy XC_circle)))
 		  (IF (not (Cursor? cursor)) 
@@ -22327,7 +22372,8 @@ EDITS: 5
 			(snd-display ";make-pixmap?")
 			(begin
 			  (XSetTile dpy gc pix)
-			  ;(XSetStipple dpy gc pix) -- needs depth 1 I think
+			  (XSetStipple dpy gc (XCreateBitmapFromData dpy wn right-arrow 16 12))
+			  (XSetClipMask dpy gc None)
 			  (XSetState dpy gc (basic-color) (mark-color) GXcopy 0)
 			  (XSetPlaneMask dpy gc 0)
 			  (XSetDashes dpy gc 0 '(3 4 3 1))
@@ -22373,6 +22419,7 @@ EDITS: 5
 		    (let ((fid (load-font "-*-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*")))
 		      (if (not (Font? fid)) (snd-display ";load-font -> ~A" fid)))
 		    )
+		  (XFreeGC (XtDisplay (cadr (main-widgets))) gc)
 		  )))
 	    
 	    (let ((atoms (list XA_PRIMARY XA_SECONDARY XA_ARC XA_ATOM XA_BITMAP XA_CARDINAL XA_COLORMAP XA_CURSOR XA_CUT_BUFFER0
@@ -22804,6 +22851,7 @@ EDITS: 5
 									  #f)
 							    0 32 #f XA_STRING)
 				       5)))
+		(XDeleteProperty dpy win (XInternAtom dpy "AN_ATOM" #f))
 		(IF (not (string=? version (snd-version)))
 		    (snd-display ";SND_VERSION: ~A, ~A?" version (snd-version))))
 	      (change-prop "SND_VERSION" "WM_NAME" "hiho")
@@ -23580,7 +23628,8 @@ EDITS: 5
 		    (XmListSetBottomPos lst 0)
 		    (XmListSetBottomItem lst item5)
 		    (XmListSetAddMode lst #f)
-		    (XmListSetItem lst item6)))
+		    (XmListSetItem lst item6)
+		    (XmListDeleteItemsPos lst 1 3)))
 		(XtUnmanageChild frm)))
 
 	    (let* ((frm (add-main-pane "hi" xmFormWidgetClass (list XmNpaneMinimum 120)))
@@ -24059,16 +24108,24 @@ EDITS: 5
 		  (XmSetColorCalculation color-proc)
 		  (IF (not (equal? (XmGetColorCalculation) color-proc))
 		      (snd-display ";XmSetColorcalulcation ~A" (XmGetColorCalculation)))))
+	      (let ((str (XmStringSegmentCreate "hi" XmFONTLIST_DEFAULT_TAG XmSTRING_DIRECTION_L_TO_R #f)))
+		(if (not (XmString? str))
+		    (snd-display ";XmStringSegmentCreate: ~A" str)))
 	      (XmSetFontUnits dpy 8 10)
 	      (IF (or (not (= (cadr (XtVaGetValues scr (list XmNhorizontalFontUnit 0))) 8))
 		      (not (= (cadr (XtVaGetValues scr (list XmNverticalFontUnit 0))) 10)))
 		  (snd-display ";XmSetFontUnits: ~A" (XtVaGetValues scr (list XmNhorizontalFontUnit 0 XmNverticalFontUnit 0))))
+	      (XmSetFontUnit dpy 8)
+	      (IF (or (not (= (cadr (XtVaGetValues scr (list XmNhorizontalFontUnit 0))) 8))
+		      (not (= (cadr (XtVaGetValues scr (list XmNverticalFontUnit 0))) 8)))
+		  (snd-display ";XmSetFontUnit: ~A" (XtVaGetValues scr (list XmNhorizontalFontUnit 0 XmNverticalFontUnit 0))))
 	      (let ((vals (XtVaGetValues scr 
 					  (list XmNbitmapConversionModel 0 XmNdarkThreshold 0 XmNfont 0 XmNunpostBehavior 0))))
 		(IF (not (= (list-ref vals 1) XmMATCH_DEPTH)) (snd-display ";XmNbitmapConversionModel: ~A" (list-ref vals 1)))
 		(IF (not (= (list-ref vals 3) 0)) (snd-display ";XmNdarkThreshold: ~A" (list-ref vals 3)))
 		(IF (not (XFontStruct? (list-ref vals 5))) (snd-display ";XmNfont: ~A" (list-ref vals 5)))
 		(IF (not (= (list-ref vals 7) XmUNPOST_AND_REPLAY)) (snd-display ";XmNunpostBehavior: ~A" (list-ref vals 7)))
+		(XSetScreenSaver dpy -1 5 DefaultBlanking DefaultExposures)
 		))
 	    (let ((dpy (XtDisplay (cadr (main-widgets)))))
 	      (let* ((dp (XmGetXmDisplay dpy))

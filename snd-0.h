@@ -35,6 +35,9 @@
   #if defined(LINUX) && (!(defined(HAVE_SCHED_H)))
     #define HAVE_SCHED_H 1
   #endif
+  #if defined(LINUX) && (!(defined(HAVE_SETJMP_H)))
+    #define HAVE_SETJMP_H 1
+  #endif
   #ifdef SGI
     #define HAVE_SYS_FPU_H 1
   #endif

@@ -52,6 +52,7 @@
 #undef HAVE_SOUNDCARD_H
 #undef HAVE_SYS_SOUNDCARD_H
 #undef HAVE_MACHINE_SOUNDCARD_H
+#undef HAVE_SYS_MIXER_H
 #undef USR_LIB_OSS
 #undef USR_LOCAL_LIB_OSS
 #undef OPT_OSS
@@ -100,7 +101,7 @@
 #undef HAVE_RUBY
 #undef HAVE_EXTENSION_LANGUAGE
 #undef HAVE_XPM
-#undef HAVE_XP
+#undef HAVE_XM_XP
 #undef HAVE_GL
 #undef JUST_GL
 #undef DEFAULT_TEMP_DIR

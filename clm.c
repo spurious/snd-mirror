@@ -3379,6 +3379,12 @@ mus_any *mus_make_env(Float *brkpts, int npts, Float scaler, Float offset, Float
   off_t dur_in_samples;
   Float *edata;
   seg *e = NULL;
+  for (i = 2; i < npts * 2; i += 2)
+    if (brkpts[i - 2] > brkpts[i])
+      {
+	mus_error(MUS_BAD_ENVELOPE, "env at %d: %f > %f", i / 2, brkpts[i - 2], brkpts[i]);
+	return(NULL);
+      }
   e = (seg *)clm_calloc(1, sizeof(seg), "env");
   e->core = &ENV_CLASS;
   if (duration != 0.0)
@@ -4435,9 +4441,12 @@ static Float file_sample(void *ptr, off_t samp, int chan)
       gen->data_end = newloc + clm_file_buffer_size - 1;
       fd = mus_sound_open_input(gen->file_name);
       if (fd == -1)
-	mus_error(MUS_CANT_OPEN_FILE, 
-		  "open(%s) -> %s", 
-		  gen->file_name, strerror(errno));
+	{
+	  mus_error(MUS_CANT_OPEN_FILE, 
+		    "open(%s) -> %s", 
+		    gen->file_name, strerror(errno));
+	  return(0.0);
+	}
       else
 	{ 
 	  if (gen->ibufs == NULL) 
@@ -5347,7 +5356,10 @@ mus_any *mus_make_locsig(Float degree, Float distance, Float reverb, int chans, 
   locs *gen;
   Float dist;
   if (chans <= 0)
-    mus_error(MUS_ARG_OUT_OF_RANGE, "chans: %d", chans);
+    {
+      mus_error(MUS_ARG_OUT_OF_RANGE, "chans: %d", chans);
+      return(NULL);
+    }
   gen = (locs *)clm_calloc(1, sizeof(locs), "locsig");
   gen->core = &LOCSIG_CLASS;
   gen->outf = mus_make_empty_frame(chans);
@@ -5841,6 +5853,13 @@ mus_any *mus_make_granulate(Float (*input)(void *arg, int direction),
 {
   grn_info *spd;
   int outlen;
+  outlen = (int)(sampling_rate * (hop + length));
+  if (max_size > outlen) outlen = max_size;
+  if (outlen <= 0) 
+    {
+      mus_error(MUS_NO_LENGTH, "mus_make_granulate size is %d (hop: %f, segment-length: %f)?", outlen, hop, length);
+      return(NULL);
+    }
   spd = (grn_info *)clm_calloc(1, sizeof(grn_info), "granulate");
   spd->core = &GRANULATE_CLASS;
   spd->cur_out = 0;
@@ -5853,9 +5872,6 @@ mus_any *mus_make_granulate(Float (*input)(void *arg, int direction),
   spd->s20 = (int)(jitter * sampling_rate / 20);
   spd->s50 = (int)(jitter * sampling_rate / 50);
   spd->ctr = 0;
-  outlen = (int)(sampling_rate * (hop + length));
-  if (max_size > outlen) outlen = max_size;
-  if (outlen <= 0) mus_error(MUS_NO_LENGTH, "mus_make_granulate size is %d (hop: %f, segment-length: %f)?", outlen, hop, length);
   spd->block_len = outlen;
   spd->data = (Float *)clm_calloc(outlen, sizeof(Float), "granulate out data");
   spd->in_data_len = outlen + spd->s20 + 1;

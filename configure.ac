@@ -264,7 +264,7 @@ AC_CHECK_LIB(dl,main)
 LIBS=""
 
 AC_HEADER_DIRENT
-AC_CHECK_HEADERS(fcntl.h limits.h unistd.h string.h sys/soundcard.h soundcard.h machine/soundcard.h gsl/gsl_version.h)
+AC_CHECK_HEADERS(fcntl.h limits.h unistd.h string.h sys/soundcard.h soundcard.h machine/soundcard.h gsl/gsl_version.h sys/mixer.h)
 AC_CHECK_HEADERS(libc.h sys/vfs.h sys/statfs.h sys/mount.h setjmp.h sched.h pwd.h ladspa.h locale.h sys/fpu.h dlfcn.h sys/param.h)
 AC_CHECK_HEADER(/usr/local/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LOCAL_LIB_OSS)])
 AC_CHECK_HEADER(/usr/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LIB_OSS)])
@@ -403,7 +403,6 @@ else
 
     # search for libXm will fail with Xp complaints in Linux, so we need to search for -lXp first
     AC_CHECK_LIB(Xp, XpGetDocumentData, [
-	         AC_DEFINE(HAVE_XP)
 	         XLIBS="$XLIBS -lXp"
 	         TEST_LIBS="$TEST_LIBS -lXp"
 	         ], , $TEST_LIBS)
@@ -441,6 +440,17 @@ else
 			 ],
 			 [
 			  AC_DEFINE(WITH_RELATIVE_PANES)
+			  AC_MSG_RESULT(yes)
+			 ],
+			 [AC_MSG_RESULT(no)])
+	  AC_MSG_CHECKING([XmPrint support])
+	  AC_TRY_COMPILE([#include <Xm/Print.h>],
+			 [ Widget w; 
+                           XmPrintShellCallbackStruct xmp;
+			   XtIsSubclass(w, xmPrintShellWidgetClass);
+			 ],
+			 [
+			  AC_DEFINE(HAVE_XM_XP)
 			  AC_MSG_RESULT(yes)
 			 ],
 			 [AC_MSG_RESULT(no)])
@@ -526,7 +536,12 @@ if test "$with_gl" = yes || test "$with_just_gl" = yes ; then
 		  ],
 		  [AC_MSG_WARN(can't find GL headers)])])
     if test "$have_gl" = yes ; then
-      AC_DEFINE(HAVE_GL)
+      AC_TRY_COMPILE([#include <GL/gl.h>], 
+	 	     [int i; i = GL_TEXTURE_BINDING_3D;],
+		     [AC_DEFINE(HAVE_GL)], 
+		     [AC_DEFINE(JUST_GL)
+		      with_just_gl=yes
+		      have_gl=no])
       if test "$with_just_gl" = yes ; then
         AC_DEFINE(JUST_GL)
       else

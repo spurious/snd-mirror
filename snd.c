@@ -23,15 +23,34 @@ static int ignore_mus_error(int type, char *msg)
   return(XEN_NOT_FALSE_P(result));
 }
 
+#if HAVE_SETJMP_H
+  RETSIGTYPE top_level_catch(int ignore);
+#endif
+
 static void mus_error2snd(int type, char *msg)
 {
+  /* it's possible to get here outside any catch, and in Guile a throw in that case
+   *   kills the main program!
+   */
+  snd_state *ss;
   if (!(ignore_mus_error(type, msg)))
     {
-      if (msg == NULL)
-	XEN_ERROR(MUS_MISC_ERROR,
-		  XEN_LIST_1(C_TO_XEN_STRING((char *)mus_error_to_string(type))));
-      else XEN_ERROR(MUS_MISC_ERROR,
-		     XEN_LIST_1(C_TO_XEN_STRING(msg)));
+      ss = get_global_state();
+      if (ss->catch_exists)
+	{
+	  if (msg == NULL)
+	    XEN_ERROR(MUS_MISC_ERROR,
+		      XEN_LIST_1(C_TO_XEN_STRING((char *)mus_error_to_string(type))));
+	  else XEN_ERROR(MUS_MISC_ERROR,
+			 XEN_LIST_1(C_TO_XEN_STRING(msg)));
+	}
+      else
+	{
+	  snd_error("%s: %s", mus_error_to_string(type), msg);
+#if HAVE_SETJMP_H
+	  top_level_catch(1); /* sigh -- try to keep going */
+#endif
+	}
     }
 }
 
