@@ -391,7 +391,6 @@
 			      "func2"
 			      (parse-args "GtkWidget* w lambda_data func_data" 'callback)
 			      'temporary)
-;typedef gboolean (*GSourceFunc)       (gpointer data);
 			(list 'GSourceFunc
 			      "gboolean"
 			      "timer_func"

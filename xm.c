@@ -5,10 +5,11 @@
 
 #include <config.h>
 
-#define XM_DATE "22-Sep-04"
+#define XM_DATE "23-Nov-04"
 
 /* HISTORY: 
  *
+ *   23-Nov:    resource type lookup indexing bugfix.
  *   22-Sep:    various minor cleanups.
  *   23-Aug:    more changes for new Guile.
  *   12-Aug:    some changes to accommodate new Guile names.
@@ -24134,7 +24135,8 @@ static int alphabet_compare(const void *a, const void *b)
 
 static hdata **xm_hash = NULL;
 static int hd_ctr = 0;
-static int hd_links[27];
+#define LINKS_SIZE 27
+static int hd_links[LINKS_SIZE];
 
 static void hash_resource(char *name, xm_resource_t type)
 {
@@ -24147,8 +24149,18 @@ static void hash_resource(char *name, xm_resource_t type)
 static xm_resource_t resource_type(char *name)
 {
   int i, start, end, ind;
-  ind = (int)(name[0]) - 97;
-  if (ind < 0) return(XM_ULONG); /* oops... */
+  ind = (int)(name[0]) - 97; 
+  /* all the resource names are supposed to start with a lower case alphabetic char */
+  /* (char->integer #\a) -> 97 */
+  /* unfortunately, we have names like 100DPIString in the newer Motif widgets... */
+  if ((ind < 0) || (ind >= LINKS_SIZE))
+    {
+#if DEBUGGING
+      fprintf(stderr, "link %d for %s?\n", ind, name);
+      abort();
+#endif
+      return(XM_ULONG);
+    }
   start = hd_links[ind];
   if (start < 0)
     return(XM_ULONG);
@@ -24858,8 +24870,10 @@ static void define_strings(void)
 #if HAVE_XmCreateFontSelector
   /* presumably in a "correct" setup these would be defined in Xm/XmStrDefs.h */
   #ifndef XmNcurrentFont
+  /* see comment under resource definition above
     #define XmN100DPIstring "100DPIstring"
     #define XmN75DPIstring "75DPIstring"
+  */
     #define XmNanyLowerString "anyLowerString"
     #define XmNanyString "anyString"
     #define XmNboldString "boldString"
@@ -24883,8 +24897,10 @@ static void define_strings(void)
     #define XmNuseScaling "useScaling"
     #define XmNxlfdString "xlfdString"
   #endif
+  /*
   DEFINE_RESOURCE(XmN100DPIstring, XM_XMSTRING);
   DEFINE_RESOURCE(XmN75DPIstring, XM_XMSTRING);
+  */
   DEFINE_RESOURCE(XmNanyLowerString, XM_XMSTRING);
   DEFINE_RESOURCE(XmNanyString, XM_XMSTRING);
   DEFINE_RESOURCE(XmNboldString, XM_XMSTRING);
@@ -25091,11 +25107,17 @@ static void define_strings(void)
   qsort((void *)xm_hash, hd_ctr, sizeof(hdata *), alphabet_compare);
   {
     int i, n;
-    for (i = 0; i < 26; i++) hd_links[i] = hd_ctr;
-    hd_links[26] = hd_ctr;
+    for (i = 0; i < LINKS_SIZE; i++) hd_links[i] = hd_ctr;
     for (i = 0; i < hd_ctr; i++)
       {
 	n = (int)(xm_hash[i]->name[0]) - 97; /* (char->integer #\a) */
+#if DEBUGGING
+	if ((n < 0) || (n >= LINKS_SIZE)) 
+	  {
+	    fprintf(stderr, "index %s at %d\n", xm_hash[i]->name, n);
+	    abort();
+	  }
+#endif
 	if (hd_links[n] > i)
 	  hd_links[n] = i;
       }

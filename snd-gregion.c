@@ -313,8 +313,8 @@ static void make_region_dialog(void)
   gtk_widget_set_name(delete_button, "doit_button");
 
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(region_dialog)->action_area), dismiss_button, true, true, 4);
-  gtk_box_pack_end(GTK_BOX(GTK_DIALOG(region_dialog)->action_area), help_button, true, true, 4);
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(region_dialog)->action_area), delete_button, true, true, 4);
+  gtk_box_pack_end(GTK_BOX(GTK_DIALOG(region_dialog)->action_area), help_button, true, true, 4);
 
   SG_SIGNAL_CONNECT(delete_button, "clicked", region_delete_callback, NULL);
   SG_SIGNAL_CONNECT(help_button, "clicked", region_help_callback, NULL);

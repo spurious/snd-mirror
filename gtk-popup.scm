@@ -591,8 +591,10 @@
 
 (define edhist-funcs '())
 (define edhist-widgets '())
+(define edhist-channel-widgets '())
 (define edhist-snd #f)
 (define edhist-chn #f)
+(define edhist-time 0)
 
 (define (edhist-clear-edits)
   (set! edhist-funcs '())
@@ -612,12 +614,12 @@
   (let* ((old-val (assoc (cons edhist-snd edhist-chn) edhist-funcs)))
     (if old-val	((cdr old-val) edhist-snd edhist-chn))))
 
-(define (edhist-apply-edits w)
+(define (edhist-apply-edits)
   ;; the current popdown widgets are in edhist-widgets, current funcs are in edhist-funcs
   ;; edhist-apply (for new widgets) is car of edhist-widgets
 
   (define (edhist-apply w d)
-    (let ((index (g_object_get_data (G_OBJECT w) "popup-index")))
+    (let ((index (cadr (g_object_get_data (G_OBJECT w) "popup-index"))))
       (if (and (> index 0)
 	       (<= index (length edhist-funcs)))
 	  ((cdr (list-ref edhist-funcs (1- index))) edhist-snd edhist-chn))))
@@ -642,7 +644,7 @@
 	     (if (pair? label)
 		 (change-label button (format #f "~A[~A]" (short-file-name (car label)) (cdr label)))
 		 (change-label button label))
-	     (g_object_set_data (G_OBJECT button) "popup-index" index)
+	     (g_object_set_data (G_OBJECT button) "popup-index" (GPOINTER (list #f index)))
 	     (gtk_widget_show button)
 	     (set! index (1+ index))))
 	 edhist-funcs))
@@ -650,8 +652,9 @@
 	(for-each
 	 (lambda (w)
 	   (gtk_widget_hide w)))
-	 wids))
-  #f)
+	 wids)
+    (gtk_menu_popup (GTK_MENU parent) #f #f #f #f 3 edhist-time)
+    #f))
 
 (define (edhist-help-edits)
   (help-dialog "Edit History Functions"
@@ -664,6 +667,11 @@ all saved edit lists."
 	       (list "extsnd.html#editlists" "extsnd.html#editlist_to_function")
 	       ))
 
+(define edhist-save-menu #f)
+(define edhist-apply-menu #f)
+(define edhist-reapply-menu #f)
+(define edhist-clear-menu #f)
+
 (define edit-history-menu
   (let ((every-menu (lambda (w) #f)))
     (make-popup-menu 
@@ -671,20 +679,33 @@ all saved edit lists."
      (list
       (list "Edits"    #f (lambda x #f) (lambda x #f))
       (list #f #f #f)
-      (list "Save"     #f (lambda (w d) (edhist-save-edits)))
-      (list "Reapply"  #f (lambda (w d) (edhist-reapply-edits)))
-      (list "Apply"    #f (lambda (w d) (edhist-apply-edits)))
-      (list "Clear"    #f (lambda (w d) (edhist-clear-edits)))
-      (list "Help"     #f (lambda (w d) (edhist-help-edits)))))))
+      (list "Save"
+	    (lambda (w) (set! edhist-save-menu w))
+	    (lambda (w d) (edhist-save-edits)))
+      (list "Reapply"
+	    (lambda (w) (set! edhist-reapply-menu w))
+	    (lambda (w d) (edhist-reapply-edits)))
+      (list "Apply"
+	    (lambda (w)
+	      (set! edhist-apply-menu w)
+	      (let* ((top-cascade (gtk_menu_new)))
+		(gtk_menu_item_set_submenu (GTK_MENU_ITEM w) top-cascade)
+		(set! edhist-widgets (list top-cascade))))
+	    (lambda (w d) (edhist-apply-edits)))
+      (list "Clear"
+	    (lambda (w) (set! edhist-clear-menu w))
+	    (lambda (w d) (edhist-clear-edits)))
+      (list "Help"     #f 
+	    (lambda (w d) (edhist-help-edits)))))))
 
 (define (add-edhist-popup snd)
   (let ((chns (chans snd)))
     (do ((i 0 (1+ i)))
 	((= i chns))
       (let ((edhist (list-ref (channel-widgets snd i) 7)))
-	(if (not (member edhist edhist-widgets))
+	(if (not (member edhist edhist-channel-widgets))
 	    (begin
-	      (set! edhist-widgets (cons edhist edhist-widgets))
+	      (set! edhist-channel-widgets (cons edhist edhist-channel-widgets))
 	      (g_signal_connect edhist "button_press_event" 
 		(lambda (w e d) 
 		  (let ((button (.button (GDK_EVENT_BUTTON e))))
@@ -692,7 +713,12 @@ all saved edit lists."
 			(begin
 			  (set! edhist-snd snd)
 			  (set! edhist-chn i)
+			  (gtk_widget_set_sensitive edhist-clear-menu (not (null? edhist-funcs)))
+			  (gtk_widget_set_sensitive edhist-save-menu (> (apply + (edits snd i)) 0))
+			  (gtk_widget_set_sensitive edhist-apply-menu (not (null? edhist-funcs)))
+			  (gtk_widget_set_sensitive edhist-reapply-menu (not (eq? #f (assoc (cons snd i) edhist-funcs))))
 			  (gtk_widget_show edit-history-menu)
+			  (set! edhist-time (.time (GDK_EVENT_BUTTON e)))
 			  (gtk_menu_popup (GTK_MENU edit-history-menu) #f #f #f #f (.button (GDK_EVENT_BUTTON e)) (.time (GDK_EVENT_BUTTON e)))
 			  #t) ; don't select anything in the list (i.e. don't pass event to widget)
 			#f)))

@@ -31544,10 +31544,10 @@ static bool xg_already_inited = false;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"14-Nov-04\")");
+      XEN_EVAL_C_STRING("(define xm-version \"22-Nov-04\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("14-Nov-04"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("22-Nov-04"));
 #endif
       xg_already_inited = true;
 #if WITH_GTK_AND_X11
