@@ -45,7 +45,7 @@
  *     win32-specific functions
  *
  * HISTORY:
- *     27-Aug:    gtk 2.5.2 changes.
+ *     27-Aug:    gtk 2.5.2 changes. removed the PANGO_ENGINE and PANGO_BACKEND stuff.
  *     5-Aug:     gtk 2.5.1 changes.
  *     21-Jul:    gtk 2.5.0 changes.
  *     2-Jun:     gdk_atom_name needs to free return value
@@ -31095,10 +31095,10 @@ static bool xg_already_inited = false;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"26-Aug-04\")");
+      XEN_EVAL_C_STRING("(define xm-version \"30-Aug-04\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("26-Aug-04"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("30-Aug-04"));
 #endif
       xg_already_inited = true;
 #if WITH_GTK_AND_X11

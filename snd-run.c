@@ -269,19 +269,18 @@ static XEN symbol_set_value(XEN code, XEN sym, XEN new_val)
 enum {R_UNSPECIFIED, R_INT, R_FLOAT, R_BOOL, R_CHAR, R_STRING, R_LIST, R_PAIR, 
       R_SYMBOL, R_KEYWORD, R_FUNCTION, R_GOTO, R_VCT, 
       R_READER, R_MIX_READER, R_TRACK_READER, R_SOUND_DATA,
-      R_CLM, R_XCLM,
-      R_FLOAT_VECTOR, R_INT_VECTOR, R_VCT_VECTOR, R_CLM_VECTOR, 
+      R_CLM, R_FLOAT_VECTOR, R_INT_VECTOR, R_VCT_VECTOR, R_CLM_VECTOR, 
       R_NUMBER, R_CONS, R_VECTOR, R_XEN, R_ANY}; /* last 5 for walker arg checks */
 
 
-#define BUILT_IN_TYPES 28
+#define BUILT_IN_TYPES 27
 static int last_type = R_ANY;
 static int type_names_size = BUILT_IN_TYPES;
 static char **type_names = NULL;
 static char *basic_type_names[BUILT_IN_TYPES] = {"unspecified", "int", "float", "boolean", "char", "string", "list", "pair", 
 						 "symbol", "keyword", "function", "continuation", "vct", 
 						 "sample-reader", "mix-sample-reader", "track-sample-reader",
-						 "sound-data", "clm", "x-clm", 
+						 "sound-data", "clm", 
 						 "float-vector", "int-vector", "vct-vector", "clm-vector", 
 						 "number", "cons", "vector", "xen", "any"};
 static void init_type_names(void)
@@ -319,7 +318,7 @@ static int name_to_type(const char *name)
 #define VECTOR_P(Type) (((Type) >= R_FLOAT_VECTOR) && ((Type) <= R_CLM_VECTOR))
 
 typedef enum {R_VARIABLE, R_CONSTANT} xen_value_constant_t;
-typedef enum {DONT_NEED_RESULT, NEED_ANY_RESULT, NEED_INT_RESULT, NEED_XCLM_RESULT} walk_result_t;
+typedef enum {DONT_NEED_RESULT, NEED_ANY_RESULT, NEED_INT_RESULT} walk_result_t;
 
 static int current_optimization = DONT_OPTIMIZE;
 static bool run_warned = false;
@@ -917,11 +916,6 @@ static char *describe_xen_value_1(int type, int addr, ptree *pt)
       if ((pt->clms) && (pt->clms[addr]))
 	return(mus_format("c%d(%s)", addr, mus_describe(pt->clms[addr])));  
       else return(mus_format("c%d(null)", addr));
-      break;
-    case R_XCLM:
-      if ((pt->xens) && (XEN_BOUND_P(pt->xens[addr])))
-	return(mus_format("c%d(%s)", addr, mus_describe(XEN_TO_MUS_ANY(pt->xens[addr]))));
-      else return(copy_string("null"));
       break;
     case R_FUNCTION: 
       if ((pt->fncs) && (pt->fncs[addr]))
@@ -2174,25 +2168,21 @@ static xen_value *add_global_var_to_ptree(ptree *prog, XEN form, XEN *rtn)
   /* fprintf(stderr, "add global %s %s %s\n",varname, type_name(type), XEN_AS_STRING(val)); */
   switch (type)
     {
-    case R_INT:    v = make_xen_value(R_INT, add_int_to_ptree(prog, R_XEN_TO_C_INT(val)), R_VARIABLE);                     break;
-    case R_FLOAT:  v = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, XEN_TO_C_DOUBLE(val)), R_VARIABLE);                  break;
-    case R_BOOL:   v = make_xen_value(R_BOOL, add_int_to_ptree(prog, (Int)XEN_TO_C_BOOLEAN(val)), R_VARIABLE);             break;
-    case R_VCT:    v = make_xen_value(R_VCT, add_vct_to_ptree(prog, get_vct(val)), R_VARIABLE);                            break;
-    case R_SOUND_DATA: v = make_xen_value(R_SOUND_DATA, add_sound_data_to_ptree(prog, (sound_data *)XEN_OBJECT_REF(val)), R_VARIABLE);   break;
-    case R_READER: v = make_xen_value(R_READER, add_reader_to_ptree(prog, get_sf(val)), R_VARIABLE);                       break;
+    case R_INT:        v = make_xen_value(R_INT, add_int_to_ptree(prog, R_XEN_TO_C_INT(val)), R_VARIABLE);                 break;
+    case R_FLOAT:      v = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, XEN_TO_C_DOUBLE(val)), R_VARIABLE);              break;
+    case R_BOOL:       v = make_xen_value(R_BOOL, add_int_to_ptree(prog, (Int)XEN_TO_C_BOOLEAN(val)), R_VARIABLE);         break;
+    case R_VCT:        v = make_xen_value(R_VCT, add_vct_to_ptree(prog, get_vct(val)), R_VARIABLE);                        break;
+    case R_SOUND_DATA: v = make_xen_value(R_SOUND_DATA, add_sound_data_to_ptree(prog, (sound_data *)XEN_OBJECT_REF(val)), R_VARIABLE); break;
+    case R_READER:     v = make_xen_value(R_READER, add_reader_to_ptree(prog, get_sf(val)), R_VARIABLE);                   break;
     case R_MIX_READER: v = make_xen_value(R_MIX_READER, add_mix_reader_to_ptree(prog, get_mf(val)), R_VARIABLE);           break;
     case R_TRACK_READER: v = make_xen_value(R_TRACK_READER, add_track_reader_to_ptree(prog, get_tf(val)), R_VARIABLE);     break;
-    case R_CHAR:   v = make_xen_value(R_CHAR, add_int_to_ptree(prog, (Int)(XEN_TO_C_CHAR(val))), R_VARIABLE);              break;
-    case R_STRING: v = make_xen_value(R_STRING, add_string_to_ptree(prog, copy_string(XEN_TO_C_STRING(val))), R_VARIABLE); break;
-    case R_LIST:   v = make_xen_value(R_LIST, add_xen_to_ptree(prog, val), R_VARIABLE);                                    break;
-    case R_PAIR:   v = make_xen_value(R_PAIR, add_xen_to_ptree(prog, val), R_VARIABLE);                                    break;
-    case R_SYMBOL: v = make_xen_value(R_SYMBOL, add_xen_to_ptree(prog, val), R_VARIABLE);                                  break;
-    case R_KEYWORD: v = make_xen_value(R_KEYWORD, add_xen_to_ptree(prog, val), R_VARIABLE);                                break;
-    case R_CLM:
-      if (prog->walk_result == NEED_XCLM_RESULT)
-	v = make_xen_value(R_XCLM, add_xen_to_ptree(prog, val), R_VARIABLE);
-      else v = make_xen_value(R_CLM, add_clm_to_ptree(prog, XEN_TO_MUS_ANY(val)), R_VARIABLE);
-      break;
+    case R_CHAR:       v = make_xen_value(R_CHAR, add_int_to_ptree(prog, (Int)(XEN_TO_C_CHAR(val))), R_VARIABLE);          break;
+    case R_STRING:     v = make_xen_value(R_STRING, add_string_to_ptree(prog, copy_string(XEN_TO_C_STRING(val))), R_VARIABLE); break;
+    case R_LIST:       v = make_xen_value(R_LIST, add_xen_to_ptree(prog, val), R_VARIABLE);                                break;
+    case R_PAIR:       v = make_xen_value(R_PAIR, add_xen_to_ptree(prog, val), R_VARIABLE);                                break;
+    case R_SYMBOL:     v = make_xen_value(R_SYMBOL, add_xen_to_ptree(prog, val), R_VARIABLE);                              break;
+    case R_KEYWORD:    v = make_xen_value(R_KEYWORD, add_xen_to_ptree(prog, val), R_VARIABLE);                             break;
+    case R_CLM:        v = make_xen_value(R_CLM, add_clm_to_ptree(prog, XEN_TO_MUS_ANY(val)), R_VARIABLE);                 break;
     case R_FLOAT_VECTOR:
       {
 	vct *vc;
@@ -2634,7 +2624,7 @@ static triple *set_var(ptree *pt, xen_value *var, xen_value *init_val)
     case R_CHAR:
       return(add_triple_to_ptree(pt, va_make_triple(store_c, descr_store_c, 2, var, init_val)));
       break;
-    case R_LIST: case R_PAIR: case R_SYMBOL: case R_KEYWORD: case R_XCLM:
+    case R_LIST: case R_PAIR: case R_SYMBOL: case R_KEYWORD:
       return(add_triple_to_ptree(pt, va_make_triple(store_x, descr_store_x, 2, var, init_val)));
       break;
 #if 0
@@ -4795,7 +4785,6 @@ static xen_value *eq_p(ptree *prog, xen_value **args, int num_args)
     case R_KEYWORD:
     case R_LIST:
     case R_PAIR:
-    case R_XCLM:
     case R_SYMBOL: return(package(prog, R_BOOL, xen_eq_b, descr_xen_eq_b, args, 2));
       /* R_FLOAT and R_FUNCTION -> false above */
     }
@@ -4856,7 +4845,6 @@ static xen_value *eqv_p(ptree *prog, xen_value **args, int num_args)
     case R_KEYWORD:
     case R_LIST:
     case R_PAIR:
-    case R_XCLM:
     case R_SYMBOL: return(package(prog, R_BOOL, xen_eqv_b, descr_xen_eqv_b, args, 2));
     }
   return(package(prog, R_BOOL, eq_b, descr_eq_b, args, 2));
@@ -4875,7 +4863,6 @@ static xen_value *equal_p(ptree *prog, xen_value **args, int num_args)
       case R_KEYWORD:
       case R_LIST:
       case R_PAIR:
-      case R_XCLM:
       case R_SYMBOL: return(package(prog, R_BOOL, xen_equal_b, descr_xen_equal_b, args, 2));
       }
   return(eqv_p(prog, args, num_args));
@@ -9112,22 +9099,6 @@ static xen_value *phase_vocoder_1(ptree *prog, xen_value **args, int num_args)
 }
 
 #define PV_VCT_1(Name) \
-static char *descr_pv_ ## Name ## _0(int *args, ptree *pt) \
-{ \
-  return(mus_format( VCT_PT " = phase-vocoder-" #Name "(" LST_PT ")", args[0], DESC_VCT_RESULT, args[1], DESC_RXEN_ARG_1)); \
-} \
-static void pv_ ## Name ## _0(int *args, ptree *pt) \
-{ \
-  mus_xen *gn; \
-  gn = XEN_TO_MUS_XEN(RXEN_ARG_1); \
-  if (!VCT_RESULT) \
-    { \
-      VCT_RESULT = (vct *)malloc(sizeof(vct)); \
-      VCT_RESULT->length = mus_length(gn->gen); \
-      VCT_RESULT->data = mus_phase_vocoder_ ## Name (gn->gen); \
-      VCT_RESULT->dont_free = true; \
-    } \
-} \
 static char *descr_pv_ ## Name ## _1(int *args, ptree *pt) \
 { \
   return(mus_format( VCT_PT " = phase-vocoder-" #Name "(" LST_PT ")", args[0], DESC_VCT_RESULT, args[1], DESC_CLM_ARG_1)); \
@@ -9145,8 +9116,6 @@ static void pv_ ## Name ## _1(int *args, ptree *pt) \
 static xen_value *phase_vocoder_ ## Name ## _1(ptree *prog, xen_value **args, int num_args) \
 { \
   if (run_safety == RUN_SAFE) package(prog, R_BOOL, phase_vocoder_check, descr_phase_vocoder_check, args, 1); \
-  if (args[1]->type == R_XCLM) \
-    return(package(prog, R_VCT, pv_ ## Name ## _0, descr_pv_ ## Name ## _0, args, 1)); \
   if (args[1]->type == R_CLM) \
     return(package(prog, R_VCT, pv_ ## Name ## _1, descr_pv_ ## Name ## _1, args, 1)); \
   return(run_warn("wrong type arg (%s) to mus_phase_vocoder_ " #Name , type_name(args[1]->type))); \
@@ -9334,17 +9303,6 @@ static void mus_set_srate_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_
 /* ---------------- mus-data, xcoeffs, ycoeffs ---------------- */
 
 #define MUS_VCT_1(Name, Position) \
-static char *descr_ ## Name ## _0(int *args, ptree *pt) \
-{ \
-  return(mus_format( VCT_PT " = mus-" #Name "(" LST_PT ")", args[0], DESC_VCT_RESULT, args[1], DESC_RXEN_ARG_1)); \
-} \
-static void Name ## _0(int *args, ptree *pt) \
-{ \
-  mus_xen *gn; \
-  gn = XEN_TO_MUS_XEN(RXEN_ARG_1); \
-  if ((gn) && (gn->vcts)) \
-    VCT_RESULT = (vct *)(XEN_OBJECT_REF(gn->vcts[Position])); \
-} \
 static char *descr_ ## Name ## _1(int *args, ptree *pt) \
 { \
   return(mus_format( VCT_PT " = mus-" #Name "(" LST_PT ")", args[0], DESC_VCT_RESULT, args[1], DESC_CLM_ARG_1)); \
@@ -9361,8 +9319,6 @@ static void Name ## _1(int *args, ptree *pt) \
 } \
 static xen_value *mus_ ## Name ## _1(ptree *prog, xen_value **args, int num_args) \
 { \
-  if (args[1]->type == R_XCLM) \
-    return(package(prog, R_VCT, Name ## _0, descr_ ## Name ## _0, args, 1)); \
   if (args[1]->type == R_CLM) \
     return(package(prog, R_VCT, Name ## _1, descr_ ## Name ## _1, args, 1)); \
   return(run_warn("wrong type arg (%s) to mus_ " #Name , type_name(args[1]->type))); \
@@ -9623,7 +9579,7 @@ static bool xenable(xen_value *v)
     {
     case R_FLOAT: case R_INT: case R_CHAR: case R_STRING: case R_BOOL:
     case R_LIST: case R_PAIR: case R_FLOAT_VECTOR: case R_VCT: case R_SOUND_DATA: case R_KEYWORD: case R_SYMBOL:
-    case R_XCLM: case R_CLM:
+    case R_CLM:
       return(true);
       break;
     default:
@@ -9646,7 +9602,6 @@ static XEN xen_value_to_xen(ptree *pt, xen_value *v)
     case R_CHAR:    val = C_TO_XEN_CHAR((char)(pt->ints[v->addr])); break;
     case R_STRING:  val = C_TO_XEN_STRING(pt->strs[v->addr]); break;
     case R_BOOL:    return(C_TO_XEN_BOOLEAN(pt->ints[v->addr])); break;
-    case R_XCLM:
     case R_SYMBOL:
     case R_KEYWORD:
     case R_LIST:    
@@ -10476,11 +10431,6 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 		  if ((w->need_int_result) ||
 		      ((i < w->num_arg_types) && (w->arg_types[i] == R_INT)))
 		    arg_result = NEED_INT_RESULT;
-		  else
-		    {
-		      if ((i == 0) && (w->num_arg_types == 1) && (w->arg_types[0] == R_XCLM))
-			arg_result = NEED_XCLM_RESULT;
-		    }
 		}
 	      args[i + 1] = walk(prog, XEN_CAR(all_args), arg_result);
 	      if ((args[i + 1] == NULL) ||
@@ -10598,83 +10548,28 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 			}
 		      else
 			{
-			  if ((w->arg_types[i] == R_CLM) || (w->arg_types[i] == R_XCLM))
+			  if (w->arg_types[i] == R_VECTOR)
 			    {
-			      /*
-				fprintf(stderr,"%s found %s\n", funcname, describe_xen_value(args[i+1],prog));
-			      */
-			      if (args[i + 1]->type == R_XCLM)
-				{
-				  /* get mus_any from mus_xen */
-				  xen_value *old_v, *new_v; /* goddamn C++! */
-				  old_v = args[i + 1];
-				  new_v = make_xen_value(R_CLM, 
-							 add_clm_to_ptree(prog, XEN_TO_MUS_ANY(prog->xens[old_v->addr])), 
-							 R_VARIABLE);
-				  FREE(old_v);
-				  args[i + 1] = new_v;
-				}
-			      else 
-				{
-				  if (args[i + 1]->type == R_CLM)
-				    {
-				      xen_var *var;
-				      var = find_var_in_ptree_via_addr(prog, args[i + 1]->type, args[i + 1]->addr);
-				      if (var)
-					{
-					  xen_value *old_v, *new_v;
-					  /*
-					  fprintf(stderr, "\nclm: %s, clms: %p, clms[addr]: %p\n", 
-						  describe_xen_var(var, prog), prog->clms, prog->clms[var->v->addr]);
-					  */
-					  old_v = args[i + 1];
-					  if ((prog->clms) &&
-					      (prog->clms[var->v->addr]))
-					    new_v = make_xen_value(R_XCLM, 
-								   add_xen_to_ptree(prog, mus_wrap_generator(prog->clms[var->v->addr])),
-								   R_VARIABLE);
-					  else 
-					    {
-					      /* one case here is local function arg: gen not expected to be set up yet */
-					      /*   I think we can assume the funcaller will set up the arg in time */
-					      new_v = make_xen_value(R_CLM, var->v->addr, R_VARIABLE);
-					      /*
-					      return(clean_up(run_warn("can't handle this local generator"), args, num_args));
-					      */
-					    }
-					  FREE(old_v);
-					  args[i + 1] = new_v;
-					}
-				      else return(clean_up(run_warn("local clm gen use unoptimizable"), args, num_args));
-				    }
-				  else return(clean_up(arg_warn(prog, funcname, i + 1, args, "clm generator"), args, num_args));
-				}
+			      if (!(VECTOR_P(args[i + 1]->type)))
+				return(clean_up(arg_warn(prog, funcname, i + 1, args, "vector"), args, num_args));
 			    }
-			  else 
+			  else
 			    {
-			      if (w->arg_types[i] == R_VECTOR)
+			      if (w->arg_types[i] == R_XEN)
 				{
-				  if (!(VECTOR_P(args[i + 1]->type)))
-				    return(clean_up(arg_warn(prog, funcname, i + 1, args, "vector"), args, num_args));
+				  if (!(xenable(args[i + 1])))
+				    return(clean_up(arg_warn(prog, funcname, i + 1, args, "indirect"), args, num_args));
 				}
 			      else
 				{
-				  if (w->arg_types[i] == R_XEN)
+				  if (w->arg_types[i] == R_CONS)
 				    {
-				      if (!(xenable(args[i + 1])))
-					return(clean_up(arg_warn(prog, funcname, i + 1, args, "indirect"), args, num_args));
+				      if ((args[i + 1]->type != R_LIST) &&
+					  (args[i + 1]->type != R_PAIR))
+					return(clean_up(arg_warn(prog, funcname, i + 1, args, "cons"), args, num_args));
 				    }
-				  else
-				    {
-				      if (w->arg_types[i] == R_CONS)
-					{
-					  if ((args[i + 1]->type != R_LIST) &&
-					      (args[i + 1]->type != R_PAIR))
-					    return(clean_up(arg_warn(prog, funcname, i + 1, args, "cons"), args, num_args));
-					}
-				      else 
-					return(clean_up(arg_warn(prog, funcname, i + 1, args, type_name(w->arg_types[i])), args, num_args));
-				    }
+				  else 
+				    return(clean_up(arg_warn(prog, funcname, i + 1, args, type_name(w->arg_types[i])), args, num_args));
 				}
 			    }
 			}
@@ -11041,7 +10936,6 @@ static XEN eval_ptree_to_xen(ptree *pt)
     case R_CHAR:    result = C_TO_XEN_CHAR((char)(pt->ints[pt->result->addr])); break;
     case R_STRING:  result = C_TO_XEN_STRING(pt->strs[pt->result->addr]);       break;
     case R_BOOL:    result = C_TO_XEN_BOOLEAN(pt->ints[pt->result->addr]);      break;
-    case R_XCLM:
     case R_LIST:
     case R_PAIR:
     case R_SYMBOL:
@@ -11543,9 +11437,9 @@ static void init_walkers(void)
   INIT_WALKER(S_mus_scaler, make_walker(mus_scaler_0, NULL, mus_set_scaler_1, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_mus_offset, make_walker(mus_offset_0, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_mus_formant_radius, make_walker(mus_formant_radius_0, NULL, mus_set_formant_radius_1, 1, 1, R_FLOAT, false, 1, R_CLM));
-  INIT_WALKER(S_mus_data, make_walker(mus_data_1, NULL, NULL, 1, 1, R_VCT, false, 0)); /* 1, R_XCLM)); */
-  INIT_WALKER(S_mus_xcoeffs, make_walker(mus_xcoeffs_1, NULL, NULL, 1, 1, R_VCT, false, 0)); /* 1, R_XCLM)); */
-  INIT_WALKER(S_mus_ycoeffs, make_walker(mus_ycoeffs_1, NULL, NULL, 1, 1, R_VCT, false, 0)); /* 1, R_XCLM)); */
+  INIT_WALKER(S_mus_data, make_walker(mus_data_1, NULL, NULL, 1, 1, R_VCT, false, 0));
+  INIT_WALKER(S_mus_xcoeffs, make_walker(mus_xcoeffs_1, NULL, NULL, 1, 1, R_VCT, false, 0));
+  INIT_WALKER(S_mus_ycoeffs, make_walker(mus_ycoeffs_1, NULL, NULL, 1, 1, R_VCT, false, 0));
   INIT_WALKER(S_mus_xcoeff, make_walker(mus_xcoeff_1, NULL, mus_set_xcoeff_1, 2, 2, R_FLOAT, false, 2, R_CLM, R_INT));
   INIT_WALKER(S_mus_ycoeff, make_walker(mus_ycoeff_1, NULL, mus_set_ycoeff_1, 2, 2, R_FLOAT, false, 2, R_CLM, R_INT));
   INIT_WALKER(S_mus_feedforward, make_walker(mus_feedforward_0, NULL, mus_set_feedforward_1, 1, 1, R_FLOAT, false, 1, R_CLM));

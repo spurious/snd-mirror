@@ -1,35 +1,35 @@
 ;;; Snd tests
 ;;;
 ;;;  test 0: constants                          [355]
-;;;  test 1: defaults                           [896]
-;;;  test 2: headers                            [1066]
-;;;  test 3: variables                          [1365]
-;;;  test 4: sndlib                             [1749]
-;;;  test 5: simple overall checks              [3540]
-;;;  test 6: vcts                               [10769]
-;;;  test 7: colors                             [11007]
-;;;  test 8: clm                                [11503]
-;;;  test 9: mix                                [17361]
-;;;  test 10: marks                             [20357]
-;;;  test 11: dialogs                           [21055]
-;;;  test 12: extensions                        [21365]
-;;;  test 13: menus, edit lists, hooks, etc     [21779]
-;;;  test 14: all together now                  [23048]
-;;;  test 15: chan-local vars                   [24096]
-;;;  test 16: regularized funcs                 [25356]
-;;;  test 17: dialogs and graphics              [29730]
-;;;  test 18: enved                             [29804]
-;;;  test 19: save and restore                  [29824]
-;;;  test 20: transforms                        [30420]
-;;;  test 21: new stuff                         [31476]
-;;;  test 22: run                               [32222]
-;;;  test 23: with-sound                        [37347]
-;;;  test 24: user-interface                    [38304]
-;;;  test 25: X/Xt/Xm                           [41476]
-;;;  test 26: Gtk                               [45995]
-;;;  test 27: GL                                [49086]
-;;;  test 28: errors                            [49190]
-;;;  test all done                              [51097]
+;;;  test 1: defaults                           [895]
+;;;  test 2: headers                            [1065]
+;;;  test 3: variables                          [1364]
+;;;  test 4: sndlib                             [1748]
+;;;  test 5: simple overall checks              [3539]
+;;;  test 6: vcts                               [10768]
+;;;  test 7: colors                             [11006]
+;;;  test 8: clm                                [11502]
+;;;  test 9: mix                                [17290]
+;;;  test 10: marks                             [20286]
+;;;  test 11: dialogs                           [20984]
+;;;  test 12: extensions                        [21294]
+;;;  test 13: menus, edit lists, hooks, etc     [21708]
+;;;  test 14: all together now                  [22977]
+;;;  test 15: chan-local vars                   [24025]
+;;;  test 16: regularized funcs                 [25285]
+;;;  test 17: dialogs and graphics              [29667]
+;;;  test 18: enved                             [29741]
+;;;  test 19: save and restore                  [29761]
+;;;  test 20: transforms                        [30357]
+;;;  test 21: new stuff                         [31388]
+;;;  test 22: run                               [32139]
+;;;  test 23: with-sound                        [37263]
+;;;  test 24: user-interface                    [38248]
+;;;  test 25: X/Xt/Xm                           [41422]
+;;;  test 26: Gtk                               [45941]
+;;;  test 27: GL                                [49032]
+;;;  test 28: errors                            [49136]
+;;;  test all done                              [51069]
 
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -31955,9 +31955,11 @@ EDITS: 2
 	    ;; monkeys pound on keyboard...
 	    (copy-file (string-append (getcwd) "/2a.snd") (string-append (getcwd) "/test.snd"))
 	    (let ((ind (open-sound "test.snd"))
+		  (last-time (+ (real-time) 30))
 		  (tests 250000))
 	      (do ((i 0 (1+ i)))
-		  ((= i tests))
+		  ((or (> (real-time) last-time)
+		       (= i tests)))
 		(let ((k (+ 1 (my-random 200)))
 		      (s (let ((v (my-random 5)))
 			   (if (= v 1) 4
@@ -49202,7 +49204,26 @@ EDITS: 2
 	 (insert-region (frames ind chan) reg)))
       (forget-region reg))))
 
-
+#!
+(define (randomize-list lst)
+  (let* ((len (length lst))
+	 (vals (make-vector len #f))
+	 (nlst '()))
+    (do ((i 0 (1+ i)))
+	((= i len))
+      (let ((loc (random len)))
+	(if (vector-ref vals loc)
+	    (do ((j 0 (1+ j)))
+		((or (= j len) 
+		     (not (vector-ref vals j)))
+		 (vector-set! vals j (car lst))))
+	    (vector-set! vals loc (car lst)))
+	(set! lst (cdr lst))))
+    (do ((i 0 (1+ i)))
+	((= i len))
+      (set! nlst (cons (vector-ref vals i) nlst)))
+    nlst))
+!#
 
 (gc)
 (if (defined? 'mem-report) (mem-report))
@@ -49427,7 +49448,7 @@ EDITS: 2
 			 mus-b1 mus-b2 mus-cosines mus-data mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop
 			 mus-increment mus-length mus-location mus-phase mus-ramp mus-scaler vct-ref x-axis-label
 			 beats-per-minute filter-control-coeffs locsig-type mus-file-buffer-size 
-			 mus-rand-seed mus-width clm-table-size run-safety
+			 mus-rand-seed mus-width clm-table-size run-safety mus-offset
 			 previous-files-sort-procedure phase-vocoder-amp-increments phase-vocoder-amps 
 			 phase-vocoder-freqs phase-vocoder-outctr phase-vocoder-phase-increments phase-vocoder-phases 
 			 quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
@@ -49473,7 +49494,7 @@ EDITS: 2
       (define procs6 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 6)))) procs))
       (define procs8 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 8)))) procs))
       (define procs10 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 10)))) procs))
-      
+
       (define already-warned '("mus-length" "mus-data" "hz->radians" "in-hz" "mus-order" "mus-xcoeffs" "mus-ycoeffs"
 			       "list->vct" "vct" "mus-bank" "formant-bank" "oscil-bank"
 			       ))

@@ -9,6 +9,9 @@
 /*    and what about the xor effect over unknown bg colors? -- perhaps white here? */
 /*    for sonogram, can use local_grf_x[y not needed?] here, just as in time case, I think */
 
+/* TODO: filled graph unfills at some random point?
+ */
+
 typedef enum {CLICK_NOGRAPH, CLICK_WAVE, CLICK_FFT_AXIS, CLICK_LISP, CLICK_FFT_MAIN} click_loc_t;    /* for marks, regions, mouse click detection */
 
 static XEN lisp_graph_hook;
@@ -1166,7 +1169,8 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
       if (cp->printing) ps_fg(ap, ax);
     }
   if ((samples_per_pixel < 1.0) ||
-      ((samples_per_pixel < 5.0) && (samps < POINT_BUFFER_SIZE)))
+      ((samples_per_pixel < 5.0) && (samps < POINT_BUFFER_SIZE)) ||
+      ((cp->time_graph_style == GRAPH_FILLED) && (samples_per_pixel < 25.0) && (samps < POINT_BUFFER_SIZE)))
     {
       /* i.e. individual samples are widely spaced, so we have to be careful about placement
        *   mouse uses grf_x so in this case we have to also (to make the cursor hit the dots etc) 

@@ -1962,8 +1962,8 @@ static XEN g_bomb(XEN snd, XEN on)
   #define H_bomb "(" S_bomb " (snd #f) (on #t)): display (or erase if on=#f) the bomb icon"
   snd_info *sp;
   ASSERT_SOUND(S_bomb, snd, 1);
-  sp = get_sp(snd, NO_PLAYERS);
-  if (sp == NULL)
+  sp = get_sp(snd, NO_PLAYERS); /* could also be a variable display handler here */
+  if ((sp == NULL) || (sp->sgx == NULL))
     return(snd_no_such_sound_error(S_bomb, snd));
   x_bomb(sp, XEN_TO_C_BOOLEAN(on));
   return(on);

@@ -806,6 +806,9 @@ AC_SUBST(GX_HEADERS)
 
 
 # -------- OpenGL --------
+#
+# TODO: this can be confused if user requests gl + gtk, but doesn't have gtkglext -- need some sort of warning at least
+
 GL_LIBS=""
 GL_FILES=""
 GL_FLAGS=""
