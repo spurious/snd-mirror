@@ -12,7 +12,7 @@ enum {menu_menu,
         help_menu, h_cascade_menu,
           h_about_snd_menu, h_fft_menu, h_find_menu, h_undo_menu, h_sync_menu, h_speed_menu,
           h_expand_menu, h_contrast_menu, h_reverb_menu, h_env_menu, h_marks_menu, h_sound_files_menu, h_init_file_menu,
-          h_mix_menu, h_recording_menu, h_clm_menu, h_news_menu,
+          h_mix_menu, h_recording_menu, h_news_menu,
         option_menu, o_cascade_menu,
           o_transform_menu,
           o_focus_style_menu, o_focus_cascade_menu,
@@ -36,7 +36,7 @@ enum {menu_menu,
           v_sep2_menu
 };
 
-#define NUM_MENU_WIDGETS 98
+#define NUM_MENU_WIDGETS 97
 static Widget mw[NUM_MENU_WIDGETS];
 
 enum {W_pop_menu, W_pop_sep, W_pop_play, W_pop_undo, W_pop_redo, W_pop_save, W_pop_equalize_panes, W_pop_info};
@@ -482,7 +482,6 @@ static void help_mix_callback (Widget w, XtPointer cD, XtPointer mD) {if (call_m
 static void help_sound_files_callback (Widget w, XtPointer cD, XtPointer mD) {if (call_menu_hook(w)) sound_files_help((snd_state *)cD);}
 static void help_init_file_callback (Widget w, XtPointer cD, XtPointer mD) {if (call_menu_hook(w)) init_file_help((snd_state *)cD);}
 static void help_recording_callback (Widget w, XtPointer cD, XtPointer mD) {if (call_menu_hook(w)) recording_help((snd_state *)cD);}
-static void help_clm_callback (Widget w, XtPointer cD, XtPointer mD) {if (call_menu_hook(w)) clm_help((snd_state *)cD);}
 static void help_news_callback (Widget w, XtPointer cD, XtPointer mD) {if (call_menu_hook(w)) news_help((snd_state *)cD);}
 
 void check_menu_labels(int key, int state, int extended)
@@ -904,9 +903,6 @@ Widget add_menu(snd_state *ss)
 
   mw[h_recording_menu] = XtCreateManagedWidget(_("Recording"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
   XtAddCallback(mw[h_recording_menu], XmNactivateCallback, help_recording_callback, ss);
-
-  mw[h_clm_menu] = XtCreateManagedWidget(_("CLM"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
-  XtAddCallback(mw[h_clm_menu], XmNactivateCallback, help_clm_callback, ss);
 
   mw[h_news_menu] = XtCreateManagedWidget(_("News"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
   XtAddCallback(mw[h_news_menu], XmNactivateCallback, help_news_callback, ss);

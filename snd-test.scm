@@ -33,30 +33,16 @@
 ;;; TODO: drag-mark-hook ex with amps/pitches, also set-0 under dragging mark
 ;;; TODO: mouse-drag in time/fft graph hook?
 ;;; TODO: thumbnail sketch in file dialog info section?
-;;; TODO: hook forward proc cases? open-hook->after-open-hook, apply-hook for before/after, before transform
-;;; TODO: ->composition via optarg?           close-hook, mix-click-hook
 ;;; TODO: find/"fix" clipping
 ;;; TODO: pan env field in mix dialog if stereo in/out
 ;;; TODO: doc ex of key-press-hook (cx cs=save as in xe-enved?), mix-amp-changed-hook, select-*-hook [click=>post info in box]
-;;; TODO: crossref tables for selection in extsnd.html
 ;;; TODO: does multi-chan mix try to delete temp file twice?
 ;;; TODO: xemacs style top list of sounds, current takes whole screen
-;;; TODO: equalize-panes at start? (mvm 2chan)
-;;; TODO: save mix??|mark-properties, other globals in scm -- need after-save-hook:
-;;;           remember-sound-state (extensions.scm) -- state lists
-;;;           make-current-window-display (draw.scm) -- inset sizes
-;;;           autosave? new|gtk-effects?
-;;;           ws.scm clm-style globals
 ;;; TODO: mix-drag ex showing current max amp, or setting amp to some norm or global env (quieter as later etc -- or as property (not hook))
-;;; TODO: mark on mix? (mark-home?) -- perhaps remove this option
 ;;; TODO: mark-prop ex: comment displayed in minibuf, or all properties (similarly for mix)
-;;; TODO: the header changers in headers.c need testing -- are all fields consistent (format->size)
 ;;; TODO: test ruby case of sound property save-state
-;;; TODO: selection/fft popup info menu
-;;; TODO: nth order butterworths in dsp.scm
 ;;; TOOD: extend the mix-as-list syntax to list-of-ids (tracks) (are these all rationalized now?)
 ;;;       do we need make-track|mix-sample-reader? should they accept all the standard args?
-;;; TODO: biquad+simple IIR stuff in dsp.scm
 
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 
@@ -246,7 +232,9 @@
 	    (car args))))
 ;(defmacro without-errors (func) `(begin ,func))
 (load "hooks.scm")
-;(reset-all-hooks)
+
+(define (reset-almost-all-hooks)
+  (with-local-hook optimization-hook '() reset-all-hooks))
 
 (define (list-p val)
   (and (list? val)
@@ -14628,7 +14616,7 @@ EDITS: 5
   (define (arg4 a b c d) (+ a b c d 32))
   (define (arg5 a b c d e) (list 0 0 1 1))
   (define (arg6 a b c d e f) (+ a b c d e f 32))
-  (reset-all-hooks)
+  (reset-almost-all-hooks)
 
   (add-hook! after-graph-hook arg2) (carg2 after-graph-hook)
   (add-hook! lisp-graph-hook arg2) (carg2 lisp-graph-hook)
@@ -14654,6 +14642,7 @@ EDITS: 5
   (add-hook! mark-click-hook arg1) (carg1 mark-click-hook)
   (add-hook! listener-click-hook arg1) (carg1 listener-click-hook)
   (add-hook! mix-click-hook arg1) (carg1 mix-click-hook)
+  (add-hook! after-save-state-hook arg1) (carg1 after-save-state-hook)
   (add-hook! mark-drag-hook arg1) (carg1 mark-drag-hook)
   (add-hook! mix-amp-changed-hook arg1) (carg1 mix-amp-changed-hook)
   (add-hook! mix-speed-changed-hook arg1) (carg1 mix-speed-changed-hook)
@@ -14704,9 +14693,12 @@ EDITS: 5
   (add-hook! mouse-release-hook arg6) (carg6 mouse-release-hook)
 
   (add-hook! enved-hook arg5) (carg5 enved-hook)
-  (reset-all-hooks)
+  (reset-almost-all-hooks)
   (for-each 
-   (lambda (n) (if (not (hook-empty? n)) (snd-display ";~A not empty?" n)))
+   (lambda (n) 
+     (if (and (not (hook-empty? n))
+	      (not (eq? n optimization-hook)))
+	 (snd-display ";~A not empty?" n)))
    (snd-hooks))
   )
   
@@ -14731,7 +14723,7 @@ EDITS: 5
 		  (XtCallCallbacks menu XmNactivateCallback (snd-global-state)))))))))
   (dismiss-all-dialogs))
 
-(reset-all-hooks)
+(reset-almost-all-hooks)
 
 (if (or full-test (= snd-test 13) (and keep-going (<= snd-test 13)))
     (let ((fd (view-sound "oboe.snd"))
@@ -21960,6 +21952,7 @@ EDITS: 1
 ;;; ---------------- test 19: save and restore ----------------
 
 (define sfile 0)
+(define after-save-state-hook-var 0)
 
 (define (local-eq? a b)
   (if (number? a)
@@ -21983,6 +21976,12 @@ EDITS: 1
 	(set! (sound-property :hi nind) "hi")
 	(set! (sound-property 'ho nind) 1234)
 	(set! (channel-property :ha nind 0) 3.14)
+	(reset-hook! after-save-state-hook)
+	(add-hook! after-save-state-hook
+		   (lambda (filename)
+		     (let ((fd (open filename (logior O_RDWR O_APPEND))))
+		       (format fd "~%~%(set! after-save-state-hook-var 1234)~%")
+		       (close fd))))
 	(save-state (save-state-file))
 	(save-options "test.temp")
 	(close-sound nind)
@@ -22010,6 +22009,9 @@ EDITS: 1
 	  (if (fneq (channel-property :ha ind 0) 3.14)
 	      (snd-display ";channel-property saved: 3.14 -> ~A" (channel-property :ha ind 0)))
 	  (close-sound ind)
+	  (if (not (= after-save-state-hook-var 1234))
+	      (snd-display ";after-save-state-hook: ~A" after-save-state-hook-var))
+	  (reset-hook! after-save-state-hook)
 
 	  (let ((err (catch 'cannot-save
 		   (lambda () 
@@ -23165,19 +23167,6 @@ EDITS: 2
 	  (graph->ps "aaa.eps")
 	  (set! (show-listener) #t)
 	  (close-sound ind))
-
-      (if (file-exists? "/home/bil/test/gmeteor-0.92/examples/example-1.scm")
-	  (let ((our-make-filter make-filter))
-	    (load "gm.scm")
-	    (load "/home/bil/test/gmeteor-0.92/examples/example-1.scm")
-	    (let ((v1 (vector->vct *coefficients*))
-		  (v2 (vct 0.0197 -0.0406 -0.0739 0.1340 0.4479 0.4479 0.13403 -0.0739 -0.0406 0.0197)))
-	      (if (not (vfequal v1 v2))
-		  (snd-display ";gm ~A ~A?" v1 v2)))
-	    (set! make-filter our-make-filter)
-	    (let ((var (catch #t (lambda () (make-filter :order 2 :xcoeffs (vct 1.0 0.5) :ycoeffs (vct 2.0 1.0 0.5))) (lambda args args))))
-	      (if (not (eq? (car var) 'mus-error))
-		  (snd-display ";gmeteor screwed up make-filter")))))
 
       ))
       ))
@@ -27108,7 +27097,7 @@ EDITS: 2
 	    ;;   these functions send either Xevents or directly invoke the Motif button callbacks
 	    ;; resize-pane pane size 
 
-	    (reset-all-hooks)
+	    (reset-almost-all-hooks)
 	    (add-hook! bad-header-hook (lambda (n) #t))
 	    (for-each all-help (cdr (main-widgets)))
 	    (set! (time-graph-type) graph-once)
@@ -28936,7 +28925,7 @@ EDITS: 2
 			       (if (> (abs (- (car newvals) (car oldvals) val)) 1)
 				   (snd-display ";move ~A ~A: ~A" (XtName w) val (car newvals)))))
 			   (snd-display ";move-scroll ~A?" w)))))
-		(reset-all-hooks)
+		(reset-almost-all-hooks)
 		(add-hook! bad-header-hook (lambda (n) #t))
 		(let* ((ind (open-sound "pistol.snd"))
 		       (swids (sound-widgets ind))
@@ -34400,7 +34389,7 @@ EDITS: 2
 (define procs8 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 8)))) procs))
 (define procs10 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 10)))) procs))
 
-(reset-all-hooks)
+(reset-almost-all-hooks)
 
 (if (or full-test (= snd-test 28) (and keep-going (<= snd-test 28)))
     (begin
@@ -35047,6 +35036,7 @@ EDITS: 2
 			(list mark-click-hook 'mark-click-hook)
 			(list listener-click-hook 'listener-click-hook)
 			(list mix-click-hook 'mix-click-hook)
+			(list after-save-state-hook 'after-save-state-hook)
 			(list mark-hook 'mark-hook)
 			(list mark-drag-hook 'mark-drag-hook)
 			(list mix-amp-changed-hook 'mix-amp-changed-hook)
@@ -35762,7 +35752,7 @@ EDITS: 2
 (if (file-exists? "saved-snd.scm") (delete-file "saved-snd.scm"))
 (gc)
 (clear-sincs)
-(reset-all-hooks)
+(reset-almost-all-hooks)
 
 (save-listener "test.output")
 (set! (listener-prompt) original-prompt)

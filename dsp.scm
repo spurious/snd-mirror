@@ -70,7 +70,7 @@
 
 
 
-;;; -------- Butterworth filters
+;;; -------- Butterworth filters (see also further below -- make-butter-lp et al)
 ;;;
 ;; translated from CLM butterworth.cl:
 ;;
@@ -661,6 +661,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 		   (* mx (sin (* y brt)))))))
 
 
+;;; -------- FIR filters
+
 ;;; -------- Hilbert transform
 
 (define* (make-hilbert-transform #:optional (len 30))
@@ -833,3 +835,258 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
     (map-channel (lambda (y)
 		   (differentiator hp y))))
 !#
+
+
+;;; -------- IIR filters
+
+;;; from "DSP Filter Cookbook" by Lane et all, Prompt Pubs, 2001
+;;; 
+;;; use with the filter generator
+;;;   (define gen (make-iir-high-pass-2 1000))
+;;;   (filter gen 1.0)
+;;;   etc
+
+(define (make-biquad a0 a1 a2 b1 b2)
+  (make-filter 3 
+	       (vct a0 a1 a2) 
+	       (vct 0.0 b1 b2)))
+
+(define (make-iir-low-pass-1 fc)
+  (let* ((theta (/ (* 2 pi fc) (mus-srate)))
+	 (gamma (/ (cos theta) (+ 1.0 (sin theta))))
+	 (xc (/ (- 1.0 gamma) 2.0)))
+    (make-filter 2 
+		 (vct xc xc) 
+		 (vct 0.0 (- gamma)))))
+
+(define (make-iir-high-pass-1 fc)
+  (let* ((theta (/ (* 2 pi fc) (mus-srate)))
+	 (gamma (/ (cos theta) (+ 1.0 (sin theta))))
+	 (xc (/ (+ 1.0 gamma) 2.0)))
+    (make-filter 2 
+		 (vct xc (- xc)) 
+		 (vct 0.0 (- gamma)))))
+
+(define* (make-iir-low-pass-2 fc #:optional din) ; din=(sqrt 2.0) for example (suggested range 0.2.. 10)
+  (let* ((theta (/ (* 2 pi fc) (mus-srate)))
+	 (d (or din (sqrt 2.0)))
+	 (beta (* 0.5 (/ (- 1.0 (* (/ d 2) (sin theta)))
+			 (+ 1.0 (* (/ d 2) (sin theta))))))
+	 (gamma (* (+ 0.5 beta) (cos theta)))
+	 (alpha (* 0.5 (+ 0.5 beta (- gamma)))))
+    (make-filter 3 
+		 (vct alpha (* 2.0 alpha) alpha)
+		 (vct 0.0 (* -2.0 gamma) (* 2.0 beta)))))
+
+(define* (make-iir-high-pass-2 fc #:optional din)
+  (let* ((theta (/ (* 2 pi fc) (mus-srate)))
+	 (d (or din (sqrt 2.0)))
+	 (beta (* 0.5 (/ (- 1.0 (* (/ d 2) (sin theta)))
+			 (+ 1.0 (* (/ d 2) (sin theta))))))
+	 (gamma (* (+ 0.5 beta) (cos theta)))
+	 (alpha (* 0.5 (+ 0.5 beta gamma))))
+    (make-filter 3
+		 (vct alpha (* -2.0 alpha) alpha)
+		 (vct 0.0 (* -2.0 gamma) (* 2.0 beta)))))
+
+(define (make-iir-band-pass-2 f1 f2)
+  (let* ((theta (/ (* 2 pi (sqrt (* f1 f2))) (mus-srate)))
+	 (Q (/ (sqrt (* f1 f2)) (- f2 f1)))
+	 (t2 (tan (/ theta (* 2 Q))))
+	 (beta (* 0.5 (/ (- 1.0 t2)
+			 (+ 1.0 t2))))
+	 (gamma (* (+ 0.5 beta) (cos theta)))
+	 (alpha (- 0.5 beta)))
+    (make-filter 3
+		 (vct alpha 0.0 (- alpha))
+		 (vct 0.0 (* -2.0 gamma) (* 2.0 beta)))))
+
+(define (make-iir-band-stop-2 f1 f2)
+  (let* ((theta (/ (* 2 pi (sqrt (* f1 f2))) (mus-srate)))
+	 (Q (/ (sqrt (* f1 f2)) (- f2 f1)))
+	 (t2 (tan (/ theta (* 2 Q))))
+	 (beta (* 0.5 (/ (- 1.0 t2)
+			 (+ 1.0 t2))))
+	 (gamma (* (+ 0.5 beta) (cos theta)))
+	 (alpha (+ 0.5 beta)))
+    (make-filter 3
+		 (vct alpha (* -2.0 gamma) alpha)
+		 (vct 0.0 (* -2.0 gamma) (* 2.0 beta)))))
+
+(define* (make-eliminate-hum #:optional (hum-freq 60.0) (hum-harmonics 5) (bandwidth 10))
+  (let ((gen (make-vector hum-harmonics)))
+    (do ((i 0 (1+ i)))
+	((= i hum-harmonics))
+      (let ((center (* (+ i 1.0) hum-freq))
+	    (b2 (* 0.5 bandwidth)))
+	(vector-set! gen i (make-iir-band-stop-2 (- center b2) (+ center b2)))))
+    gen))
+
+(define (eliminate-hum gen x0)
+  (let ((val x0))
+    (do ((i 0 (1+ i)))
+	((= i (vector-length gen)))
+      (set! val (filter (vector-ref gen i) val)))
+    val))
+
+;;; (let ((hummer (make-eliminate-hum))) (map-channel (lambda (x) (eliminate-hum hummer x))))
+
+(define (make-peaking-2 f1 f2 m)
+  ;; bandpass, m is gain at center of peak
+  ;; use map-channel with this one (not clm-channel or filter)
+  (let* ((theta (/ (* 2 pi (sqrt (* f1 f2))) (mus-srate)))
+	 (Q (/ (sqrt (* f1 f2)) (- f2 f1)))
+	 (t2 (* (/ 4.0 (+ m 1)) (tan (/ theta (* 2 Q)))))
+	 (beta (* 0.5 (/ (- 1.0 t2)
+			 (+ 1.0 t2))))
+	 (gamma (* (+ 0.5 beta) (cos theta)))
+	 (alpha (- 0.5 beta))
+	 (flt (make-filter 3
+			   (vct alpha 0.0 (- alpha))
+			   (vct 0.0 (* -2.0 gamma) (* 2.0 beta)))))
+    (lambda (x) (+ x (* (- m 1.0) (filter flt x))))))
+
+
+(define (cascade->canonical A)
+  ;; convert cascade coeffs to canonical form
+  ;; from Orfanidis "Introduction to Signal Processing"
+
+  (define (conv M h L x y)
+    ;; x * h -> y
+    (do ((n 0 (1+ n)))
+	((= n (+ L M)))
+      (vct-set! y n 0.0)
+      (do ((m (max 0 (- (+ n 1 L))) (1+ m)))
+	  ((> m (min n M)))
+	(vct-set! y n (+ (vct-ref y n) (* (vct-ref h m) (vct-ref x (- n m))))))))
+
+  (let* ((K (length A))
+	 (d (make-vct (1+ (* 2 K))))
+	 (a1 (make-vct (1+ (* 2 K)))))
+    (vct-set! a1 0 1.0)
+    (do ((i 0 (1+ i)))
+	((= i K))
+      (conv 2 (list-ref A i) (1+ (* 2 i)) a1 d)
+      (do ((j 0 (1+ j)))
+	  ((= j (+ 3 (* 2 i))))
+	(vct-set! a1 j (vct-ref d j))))
+    a1))
+
+(define (make-butter-lp M fc)
+  ;; order is M*2, fc is cutoff freq (Hz)
+  (let* ((xcoeffs '())
+	 (ycoeffs '())
+	 (theta (/ (* 2 pi fc) (mus-srate)))
+	 (st (sin theta))
+	 (ct (cos theta)))
+    (do ((k 1 (1+ k)))
+	((> k M))
+      (let* ((d (* 2 (sin (/ (* pi (- (* 2 k) 1)) (* 4 M)))))
+	     (beta (* 0.5 (/ (- 1.0 (* 0.5 d st))
+			     (+ 1.0 (* 0.5 d st)))))
+	     (gamma (* ct (+ 0.5 beta)))
+	     (alpha (* 0.25 (+ 0.5 beta (- gamma)))))
+	(set! xcoeffs (cons (vct (* 2 alpha) (* 4 alpha) (* 2 alpha)) xcoeffs))
+	(set! ycoeffs (cons (vct 1.0 (* -2.0 gamma) (* 2.0 beta)) ycoeffs))))
+    (make-filter (1+ (* 2 M))
+		 (cascade->canonical (reverse xcoeffs))
+		 (cascade->canonical (reverse ycoeffs)))))
+	 
+(define (make-butter-hp M fc)
+  ;; order is M*2, fc is cutoff freq (Hz)
+  (let* ((xcoeffs '())
+	 (ycoeffs '())
+	 (theta (/ (* 2 pi fc) (mus-srate)))
+	 (st (sin theta))
+	 (ct (cos theta)))
+    (do ((k 1 (1+ k)))
+	((> k M))
+      (let* ((d (* 2 (sin (/ (* pi (- (* 2 k) 1)) (* 4 M)))))
+	     (beta (* 0.5 (/ (- 1.0 (* 0.5 d st))
+			     (+ 1.0 (* 0.5 d st)))))
+	     (gamma (* ct (+ 0.5 beta)))
+	     (alpha (* 0.25 (+ 0.5 beta gamma))))
+	(set! xcoeffs (cons (vct (* 2 alpha) (* -4 alpha) (* 2 alpha)) xcoeffs))
+	(set! ycoeffs (cons (vct 1.0 (* -2.0 gamma) (* 2.0 beta)) ycoeffs))))
+    (make-filter (1+ (* 2 M))
+		 (cascade->canonical (reverse xcoeffs))
+		 (cascade->canonical (reverse ycoeffs)))))
+	 
+(define (make-butter-bp M f1 f2)
+  ;; order is M*2, f1 and f2 are band edge freqs (Hz)
+  (let* ((xcoeffs '())
+	 (ycoeffs '())
+	 (f0 (sqrt (* f1 f2)))
+	 (Q (/ f0 (- f2 f1)))
+	 (theta0 (/ (* 2 pi f0) (mus-srate)))
+	 (de (/ (* 2 (tan (/ theta0 (* 2 Q)))) (sin theta0)))
+	 (de2 (/ de 2))
+	 (tn0 (tan (* theta0 0.5))))
+    (do ((i 1 (1+ i))
+	 (k 1)
+	 (j 1))
+	((> i M))
+      (let* ((Dk (* 2 (sin (/ (* pi (- (* 2 k) 1)) (* 2 M)))))
+	     (Ak (/ (+ 1 (* de2 de2)) (* Dk de2)))
+	     (dk1 (sqrt (/ (* de Dk)
+			   (+ Ak (sqrt (- (* Ak Ak) 1))))))
+	     (Bk (* de2 (/ Dk dk1)))
+	     (Wk (real-part (+ Bk (sqrt (- (* Bk Bk) 1.0))))) ; fp inaccuracies causing tiny (presumably bogus) imaginary part here
+	     (thetajk (if (= j 1)
+			  (* 2 (atan (/ tn0 Wk)))
+			  (* 2 (atan (* tn0 Wk)))))
+	     (betajk (* 0.5 (/ (- 1.0 (* 0.5 dk1 (sin thetajk)))
+			       (+ 1.0 (* 0.5 dk1 (sin thetajk))))))
+	     (gammajk (* (+ 0.5 betajk) (cos thetajk)))
+	     (wk2 (/ (- Wk (/ 1.0 Wk)) dk1))
+	     (alphajk (* 0.5 (- 0.5 betajk) (sqrt (+ 1.0 (* wk2 wk2))))))
+	(set! xcoeffs (cons (vct (* 2 alphajk) 0.0 (* -2 alphajk)) xcoeffs))
+	(set! ycoeffs (cons (vct 1.0 (* -2.0 gammajk) (* 2.0 betajk)) ycoeffs))
+	(if (= j 1)
+	    (set! j 2)
+	    (begin
+	      (set! k (1+ k))
+	      (set! j 1)))))
+    (make-filter (1+ (* 2 M))
+		 (cascade->canonical (reverse xcoeffs))
+		 (cascade->canonical (reverse ycoeffs)))))
+	 
+(define (make-butter-bs M f1 f2)
+  ;; order is M*2, f1 and f2 are band edge freqs (Hz)
+  (let* ((xcoeffs '())
+	 (ycoeffs '())
+	 (f0 (sqrt (* f1 f2)))
+	 (Q (/ f0 (- f2 f1)))
+	 (theta0 (/ (* 2 pi f0) (mus-srate)))
+	 (de (/ (* 2 (tan (/ theta0 (* 2 Q)))) (sin theta0)))
+	 (de2 (/ de 2))
+	 (ct (cos theta0))
+	 (tn0 (tan (* theta0 0.5))))
+    (do ((i 1 (1+ i))
+	 (k 1)
+	 (j 1))
+	((> i M))
+      (let* ((Dk (* 2 (sin (/ (* pi (- (* 2 k) 1)) (* 2 M)))))
+	     (Ak (/ (+ 1 (* de2 de2)) (* Dk de2)))
+	     (dk1 (sqrt (/ (* de Dk)
+			   (+ Ak (sqrt (- (* Ak Ak) 1))))))
+	     (Bk (* de2 (/ Dk dk1)))
+	     (Wk (real-part (+ Bk (sqrt (- (* Bk Bk) 1.0)))))
+	     (thetajk (if (= j 1)
+			  (* 2 (atan (/ tn0 Wk)))
+			  (* 2 (atan (* tn0 Wk)))))
+	     (betajk (* 0.5 (/ (- 1.0 (* 0.5 dk1 (sin thetajk)))
+			       (+ 1.0 (* 0.5 dk1 (sin thetajk))))))
+	     (gammajk (* (+ 0.5 betajk) (cos thetajk)))
+	     (alphajk (* 0.5 (+ 0.5 betajk) (/ (- 1.0 (cos thetajk)) (- 1.0 ct)))))
+	(set! xcoeffs (cons (vct (* 2 alphajk) (* -4 ct alphajk) (* 2 alphajk)) xcoeffs))
+	(set! ycoeffs (cons (vct 1.0 (* -2.0 gammajk) (* 2.0 betajk)) ycoeffs))
+	(if (= j 1)
+	    (set! j 2)
+	    (begin
+	      (set! k (1+ k))
+	      (set! j 1)))))
+    (make-filter (1+ (* 2 M))
+		 (cascade->canonical (reverse xcoeffs))
+		 (cascade->canonical (reverse ycoeffs)))))
+	 

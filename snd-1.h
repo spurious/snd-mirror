@@ -441,7 +441,6 @@ void mix_help(snd_state *ss);
 void sound_files_help(snd_state *ss);
 void init_file_help(snd_state *ss);
 void recording_help(snd_state *ss);
-void clm_help(snd_state *ss);
 char *version_info(void);
 void news_help(snd_state *ss);
 void help_dialog_help(snd_state *ss);

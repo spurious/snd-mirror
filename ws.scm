@@ -285,3 +285,63 @@
 
 
 ;;; TODO: with-mix?
+
+
+(define (mus-data-format->string df)
+  (cond ((= df mus-bshort) "mus-bshort")
+	((= df mus-mulaw) "mus-mulaw")
+	((= df mus-byte) "mus-byte")
+	((= df mus-bfloat) "mus-bfloat")
+	((= df mus-bfloat-unscaled) "mus-bfloat-unscaled")
+	((= df mus-bint) "mus-bint")
+	((= df mus-alaw) "mus-alaw")
+	((= df mus-ubyte) "mus-ubyte")
+	((= df mus-b24int) "mus-b24int")
+	((= df mus-bdouble) "mus-bdouble")
+	((= df mus-bdouble-unscaled) "mus-bdouble-unscaled")
+	((= df mus-lshort) "mus-lshort")
+	((= df mus-lint) "mus-lint")
+	((= df mus-lfloat-unscaled) "mus-lfloat-unscaled")
+	((= df mus-ldouble-unscaled) "mus-ldouble-unscaled")
+	((= df mus-lfloat) "mus-lfloat")
+	((= df mus-ldouble) "mus-ldouble")
+	((= df mus-ubshort) "mus-ubshort")
+	((= df mus-ulshort) "mus-ulshort")
+	((= df mus-l24int) "mus-l24int")
+	((= df mus-bintn) "mus-bintn")
+	((= df mus-lintn) "mus-lintn")
+	(#t df)))
+
+(define (mus-header-type->string ht)
+  ;; these are the writable headers
+  (cond ((= ht mus-next) "mus-next")
+	((= ht mus-aifc) "mus-aifc")
+	((= ht mus-riff) "mus-riff")
+	((= ht mus-aiff) "mus-aiff")
+	((= ht mus-nist) "mus-nist")
+	((= ht mus-raw)  "mus-raw")
+	((= ht mus-ircam) "mus-ircam")
+	((= ht mus-bicsf) "mus-bicsf")
+	(#t ht)))
+
+(define (ws-save-state filename)
+  (let ((fd (open filename (logior O_RDWR O_APPEND))))
+    ;; open in Guile throws 'system-error (I think) if anything goes wrong
+    ;; fd is a Scheme port at this point (not an integer), so we can use format etc
+    ;; should the save-state file load this file if it hasn't been loaded?
+    (format fd "~%~%;;; from ws.scm~%")
+    (format fd "(if (defined? '*clm-srate*)~%")
+    (format fd "    (begin~%")
+    (format fd "      (set! *clm-srate* ~A)~%" *clm-srate*)
+    (format fd "      (set! *clm-file-name* ~S)~%" *clm-file-name*)
+    (format fd "      (set! *clm-channels* ~A)~%" *clm-channels*)
+    (format fd "      (set! *clm-data-format* ~A)~%" (mus-data-format->string *clm-data-format*))
+    (format fd "      (set! *clm-header-type* ~A)))~%" (mus-header-type->string *clm-header-type*))
+    (close fd)))
+
+(add-hook! after-save-state-hook ws-save-state)
+
+
+
+
+

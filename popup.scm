@@ -170,6 +170,25 @@
 		   (apply add-mark pos select)
 		   (apply add-mark (+ pos len) select)))
 	       (selection-members))))
+      (list "Info"      xmPushButtonWidgetClass every-menu 
+	    (lambda (w c i)
+	      (let ((beg (selection-position))
+		    (len (selection-frames)))
+		(help-dialog 
+		 "Selection info"
+		 (format #f "start ~A, ~,3F~%end: ~A, ~,3F~%duration: ~A, ~,3F~%chans: ~D~%maxamp: ~,3F, rms: ~,3F"
+			 beg (/ beg (srate))
+			 (+ beg len) (/ (+ beg len) (srate))
+			 len (/ len (srate))
+			 (selection-chans)
+			 (selection-maxamp)
+			 (let* ((reader (make-sample-reader beg))
+				(sum 0.0))
+			   (do ((i 0 (1+ i))) 
+			       ((= i len) 
+				(sqrt (/ sum len)))
+			     (let ((val (next-sample reader)))
+			       (set! sum (+ sum (* val val)))))))))))
       (list "Unselect"  xmPushButtonWidgetClass every-menu (lambda (w c i) (set! (selection-member? #t) #f)))
       (list "Reverse"   xmPushButtonWidgetClass every-menu (lambda (w c i) (reverse-selection)))
       (list "Mix"       xmPushButtonWidgetClass every-menu (lambda (w c i) (mix-selection (cursor))))

@@ -12,6 +12,7 @@
 #define S_after_edit_hook               "after-edit-hook"
 #define S_after_graph_hook              "after-graph-hook"
 #define S_after_open_hook               "after-open-hook"
+#define S_after_save_state_hook         "after-save-state-hook"
 #define S_amp_control                   "amp-control"
 #define S_apply_controls                "apply-controls"
 #define S_as_one_edit                   "as-one-edit"

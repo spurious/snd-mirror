@@ -542,6 +542,8 @@ static void save_sound_state (snd_info *sp, void *ptr)
 #endif
 }
 
+static XEN after_save_state_hook;
+
 static char *save_state_or_error (snd_state *ss, char *save_state_name)
 {
 #if HAVE_RUBY
@@ -590,7 +592,6 @@ static char *save_state_or_error (snd_state *ss, char *save_state_name)
        *   and hooks might be viewed as temporary to begin with. If the function source is long,
        *   some sort of pretty-printer is really needed, but I couldn't get slib's to work.
        */
-
       if (locale)
 	{
 #if HAVE_SETLOCALE
@@ -599,6 +600,11 @@ static char *save_state_or_error (snd_state *ss, char *save_state_name)
 	  FREE(locale);
 	}
       snd_fclose(save_fd, save_state_name);
+
+      if (XEN_HOOKED(after_save_state_hook))
+	run_hook(after_save_state_hook, 
+		 XEN_LIST_1(C_TO_XEN_STRING(save_state_name)),
+		 S_after_save_state_hook);
     }
   return(NULL);
 }
@@ -869,6 +875,10 @@ void g_init_main(void)
 If it returns #t, Snd does not exit.  This can be used to check for unsaved edits, or to perform cleanup activities."
 
   XEN_DEFINE_HOOK(exit_hook, S_exit_hook, 0, H_exit_hook);
+
+  #define H_after_save_state_hook S_after_save_state_hook " (filename): called after Snd state has been saved; \
+filename is the save state file."
+  XEN_DEFINE_HOOK(after_save_state_hook, S_after_save_state_hook, 1, H_after_save_state_hook);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_script_arg, g_script_arg_w, H_script_arg, S_setB S_script_arg, g_set_script_arg_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE(S_script_args, g_script_args_w, 0, 0, 0, H_script_args);

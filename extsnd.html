@@ -54,9 +54,9 @@
     <li><a href="#editlists">Edit Lists</a>
     <li><a href="#sndtransforms">Transforms</a>
     <li><a href="#snddialogs">Dialogs and Menus</a>
-    <li><a href="#snderrors">Errors and Debugging</a>
-    <li><a href="#sndconstants">Constants</a>
     <li><a href="#sndmisc">Miscellaneous functions</a>
+    <li><a href="#sndconstants">Constants</a>
+    <li><a href="#snderrors">Errors and Debugging</a>
     </ul>
   <li><a href="#appearance">Customizing Snd's appearance</a>
     <ul>
@@ -691,7 +691,6 @@ sync'd channels (that is, each sound's channels are sync'd
 together but are independent of any other sound), united channels, 
 and filled graphs:
 </td></tr>
-
 <tr><td></td><td colspan=2>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (add-hook! <em class=red>after-open-hook</em>
@@ -705,6 +704,16 @@ and filled graphs:
 <br>
 See also <i>C-x b support</i> in examp.scm, <i>remember-sound-state</i> in extensions.scm, enved.scm, and various
 examples in snd-motif.scm.
+</td></tr>
+<tr><td colspan=3></td></tr>
+
+<!-- after-save-state-hook -->
+<tr><td colspan=2>
+<span class=defbox><code><em class=def><a name="aftersavestatehook">after-save-state-hook</a></em> (filename)</code></span></td><td>
+</td></tr>
+<tr><td></td><td colspan=2>
+called after Snd has saved its state (<a href="#sndsavestate">save-state</a>).  'filename' is the (otherwise complete) saved state
+program.  See ws-save-state in ws.scm or remember-sound-state in extensions.scm.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -1670,7 +1679,7 @@ the file is being saved under a new name (as in <a href="#sndsaveas">save-sound-
 <span class=defbox><code><em class=def><a name="savestatehook">save-state-hook</a></em> (temp-filename)</code></span>
 </td></tr>
 <tr><td></td><td colspan=2>
-called each time the save-state
+called each time the <a href="#sndsavestate">save-state</a>
 mechanism is about to create a new temporary file to save some edit history sample values.
 <i>temp-filename</i> is the current temporary file name.
 If the hook returns a string, it is treated as the new temp filename.  This hook provides a way to
@@ -1779,7 +1788,7 @@ If it returns #t, Snd does not play (see <i>report-mark-names</i> in marks.scm).
 
 <!-- stop-dac-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="stopdachook">stop-dac-hook</a></em>()</code></span></td><td>
+<span class=defbox><code><em class=def><a name="stopdachook">stop-dac-hook</a></em> ()</code></span></td><td>
 </td></tr>
 
 <tr><td></td><td colspan=2>
@@ -3609,8 +3618,31 @@ the end points.</td></tr>
 apply sampling rate conversion to the selection;
 this is the same as <i>src-sound</i> but applied to selection.
 </td></tr>
-
 </table>
+
+<pre><small><blockquote>
+See also:
+<a href="#selectioncolor">selection-color</a>: color of selected portion
+<a href="#selectioncreatesregion">selection-creates-region</a>: if #f, creating a selection does not create a region
+<a href="#lshowselectiontransform">show-selection-transform</a>: if #t, fft graph refers to the selection
+<a href="#stopplayingselectionhook">stop-playing-selection-hook</a>: hook called when selection stops playing
+<a href="sndscm.html#exswapselectionchannels">swap-selection-channels</a>: swap chans in selected portion
+<a href="sndscm.html#exreplacewithselection">replace-with-selection</a>: replace portion with selection
+<a href="sndscm.html#exmakeselection">make-selection</a>: select portion via function
+<a href="sndscm.html#exevaloverselection">eval-over-selection</a>: evaluate thunk on each sample of selection
+<a href="sndscm.html#exselectionmembers">selection-members</a>: list of lists of sound index and channel if selection is active there
+<a href="sndscm.html#exselectionrms">selection-rms</a>: rms of selection data
+<a href="sndscm.html#exdeleteselectionandsmooth">delete-selection-and-smooth</a>: delete selection and smooth the splice
+<a href="sndscm.html#exdefineselectionviamarks">define-selection-via-marks</a>: select portion between two marks
+<a href="sndscm.html#exsnapmarks">snap-marks</a>: place marks at selection start and end
+<a href="sndscm.html#fitselectionbetweenmarks">fit-selection-between-marks</a>: squeeze selection between marks
+<a href="sndscm.html#addselectionpopup">add-selection-popup</a>: add context-sensitive popup menu specific to selection
+<a href="sndscm.html#editmenudoc">cut-selection-&gt;new</a>: delete selection and write it to a file
+<a href="sndscm.html#editmenudoc">append-selection</a>: append selection
+<a href="sndscm.html#editmenudoc">selection-&gt;new</a>: write selection to a file
+<a href="sndscm.html#dlpdoc">deselect-all</a>: undo select-all.
+</blockquote></small></pre>
+<br>
 
 <p>The selected portion can be chosen, independent of any region, by setting selection-position and selection-frames.
 It's easy to extend the notion of a selection to an arbitrary list of sound portions:
@@ -4390,10 +4422,11 @@ if you don't want all the directory junk).  See examp.scm for many examples.
 <span class=defbox><code><em class=def><a name="sndfilter">filter-sound</a></em> (env <i>order snd chn edpos</i>)</code></span>
 </td></tr>
 <tr><td></td><td>
-apply an FIR filter of order <i>order</i> and frequency response <i>env</i>
+apply an FIR filter of order <i>order</i> (actually one more than the nominal order)
+and frequency response <i>env</i>
 to <i>snd</i>'s channel <i>chn</i>.  <i>env</i> can be the filter coefficients
-themselves, in a vct with at least order elements 
-(see <a href="grfsnd.html#gmeteor">gmeteor</a>).  It can also be any CLM filtering generator 
+themselves, in a vct with at least order elements.
+It can also be any CLM filtering generator 
 (e.g. comb, formant, one-pole, iir-filter, etc). The generator 
 is called in C, not Scheme, so this is the fastest way to apply 
 CLM filtering to a sound. (The regularized version of this is <a href="#clmchannel">clm-channel</a>).
@@ -4407,17 +4440,30 @@ CLM filtering to a sound. (The regularized version of this is <a href="#clmchann
 (filter-sound (make-delay 120))                      ;CLM delay (same as insert-silence)
 (filter-sound (make-formant .99 1200))               ;CLM formant
 </pre></td></tr></table>
-<br><blockquote><small>
+<p>
+If you want to use the cascade filter structure, rather than the canonical
+form of CLM's filter generator:
+</p>
+<pre>
+(define (make-biquad a0 a1 a2 b1 b2)
+  (make-filter 3 (vct a0 a1 a2) (vct 0.0 b1 b2)))
+</pre>
+<p>If you have coefficients for the cascade form, but have no scruples about using 
+some other form, see <b>cascade-&gt;canonical</b> in dsp.scm, and the examples that follow.
+<p>
+<blockquote><small>
 <spacer type=horizontal size=40><A NAME="filtersinsnd">Filters</a> in Snd:<br>
 CLM filter generators: <a href="clm.html#filters">filter, one-pole, formant, comb, notch, all-pass, etc</a>, many examples in examp.scm, new-effects.scm<br>
 lowpass filter: make-lowpass in dsp.scm<br>
 highpass filter: make-highpass in dsp.scm<br>
 bandpass filter: make-bandpass in dsp.scm<br>
 bandstop filter: make-bandstop in dsp.scm<br>
-Butterworth filters: make-butter-high-pass et al in dsp.scm, used in new-effects.scm<br>
+Butterworth filters: make-butter-high-pass, make-butter-low etc in dsp.scm, used in new-effects.scm<br>
+IIR filters of various orders/kinds: dsp.scm<br>
 Hilbert transform: make-hilbert-transform in dsp.scm<br>
 differentiator: make-differentiator in dsp.scm<br>
 block DC: see dc-block in prc95.scm, also flute.scm.<br>
+hum elimination: see eliminate-hum in dsp.scm
 arbitrary spectrum via FIR filter: spectrum-&gt;coeffs in dsp.scm<br>
 filtered echo sound effect: flecho in examp.scm<br>
 time varying filter: fltit in examp.scm<br>
@@ -8055,329 +8101,6 @@ to do!
 </p>
 
 <br>
-<span class=bbox><h3><A NAME="snderrors">Errors and Debugging</a></h3></span>
-
-<p> When something goes awry, the various functions can throw an error (a symbol)
-which is normally caught by the default error handler (this is a kind of goto 
-but without the embarrassment).  It prints out some message,
-and sometimes appends a stack trace.  So, as a simple example, selection-position
-throws 'no-active-selection if there isn't a selection:
-</p>
-<pre>
-&gt;<em class=typing>(selection-position)</em>
-<em class=listener>selection-position: no-active-selection</em>
-&gt;<em class=typing>asdf</em>
-<em class=listener>Unbound variable: asdf</em>
-</pre>
-<p>But there are cases where you'd rather handle an error (or all errors) specially.
-In the case of 'no-active-selection, we set up our own handler for that as follows:</p>
-<pre>
-&gt;<em class=typing>(catch 'no-active-selection 
-       (lambda () 
-         (+ 1 (selection-position))) 
-       (lambda (tag val) 0))</em>
-<em class=listener>0</em>
-</pre>
-<p>Here we've caught 'no-active-selection (if it occurs within the
-first thunk's body), and return 0 if it occurs; otherwise we return
-<code>(+ 1 (selection-position))</code>.  Scheme (Guile) has a number
-of errors such as 'out-of-range, 'wrong-type-arg, 'numerical-overflow,
-etc.  The Snd-specific errors are:</p>
-<pre>
-'no-such-channel 'no-such-sound  'no-such-mark       'no-such-mix
-'no-such-menu    'no-such-file   'no-such-region     'no-such-sample
-'no-such-edit    'cannot-save    'no-such-envelope   'no-active-selection
-'no-such-widget  'mus-error      'no-such-track      'bad-arity
-'cannot-print    'no-such-axis   'no-such-player     'no-such-graphics-context
-'no-such-color   'no-such-widget 'no-such-plugin     'no-data
-'gsl-error       'no-such-key    'no-such-direction  'cannot-parse
-</pre>
-<p><i>bad-arity</i> is jargon indicating that a procedure has been passed the
-wrong number of arguments.  <i>gsl-error</i> indicates that the GSL
-library is the source of the error.
-The symbol #t stands for all errors in this case, so we can 
-run rough-shod over any error with:</p>
-<pre>
-(defmacro without-errors (func)
-  `(catch #t 
-	  (lambda ()
-	    ,func)
-	  (lambda args (car args))))
-</pre>
-<p>You can use these errors in your code, if you like, or add your own.  The following
-throws the error 'no-such-file:</p>
-<pre>
-(define look-for-file
-  (lambda (file)
-    (or (file-exists? file)
-	(throw 'no-such-file (list "look-for-file" file)))))
-</pre>
-<p>The mix.scm track functions can return 'no-such-track if a
-given track has no mixes.
-</p>
-
-<hr>
-<p>There are a variety of debugging aids supplied by Guile, including
-a backtrace facility.  To be sure all Guile's debugging support
-code is loaded,
-</p>
-<pre>
-  (use-modules (ice-9 debug) (ice-9 session) (ice-9 debugger))
-</pre>
-<p>If I remember right, the "session" module refers to the help facility.
-So, if the error you hit is a complaint about "wrong number of args",
-you can ask about the function via either "help" (the Guile help function --
-it will print its info to stdout which may be invisible), or 
-<a href="#sndhelp">snd-help</a> which tries to send the help string
-to Snd's listener.  I've tried to include help strings for every Snd,
-Clm, and Xm function. 
-To turn on the debugger (i.e. make it possible to call the debug function if something
-goes wrong), 
-</p>
-<pre>
-(debug-enable 'debug 'backtrace)
-(read-enable 'positions)
-</pre>
-<p>
-Now when an error occurs, you can call either (debug) or (snd-debug) 
-and fall into the debugger.  snd-debug makes sure the debugger input and
-output goes through Snd's listener, rather than stdin and stdout (similarly
-snd-trace replaces trace).
-Once in the debugger, you'll get a prompt:
-</p>
-<pre>
-  debug&gt; 
-</pre>
-<p>Type <i>bt</i> for a backtrace, <i>help</i> for a brief overview
-of debugger commands, and so on.
-Here's a real-life example, edited for brevity.  I hit a numerical
-overflow error (actually divide by zero...) in snd-test.scm, a huge
-(33000 line) pile of tests, got a slightly truncated backtrace from
-Snd's default backtrace displayer (not sure why it is truncated, but first things first), so
-</p>
-<pre>
-&gt; <em class=typing>(debug)</em>
-This is the Guile debugger; type "help" for help.
-There are 16 frames on the stack.
-
-Frame 15:   [/ 0.0 0.0]
-</pre>
-<p>Obviously a divide-by-zero error, but where am I?  To find out,
-I ask for a backtrace:
-</p>
-<pre>
-debug&gt; <em class=typing>bt</em>
-In /home/bil/cl/snd-test.scm:
-9479:  0* (if (or full-test (= snd-test 15) ...) (let (#) (letrec # # ...)))
-9480:  1  (let ((obi #)) (letrec (# # #) (if # #) (# #t) ...))
-In unknown file:
-   ?:  2  (letrec (# # #) (if # #) (# #t) ...)
-In /home/bil/cl/snd-test.scm:
-10165:  3* (if (file-exists? "1a.snd") (let (#) (let # # #) (close-sound ind1)))
-10166:  4  (let ((ind1 #)) (let (#) (rubber-sound #) (let # #)) (close-sound ind1))
-10167:  5* (let ((start (get-internal-real-time))) (rubber-sound 1.25) ...)
-10167:  6* [rubber-sound 1.25]
-In /home/bil/cl/rubber.scm:
- 150:  7  (let* ((stretch #) (snd #) (chn #)) (derumble-sound snd chn) ...)
- 159:  8  (let* (# # # # ...) (let* # # #) (# snd chn #t) ...)
- 196:  9* (do ((i 0 (1+ i))) ((or (c-g?) (= i #))) ...)
- 198: 10* (let* ((start #) (autolen #)) (let* (# # #) (do # # #) (let* # # #)))
- 201: 11  (let* ((next-start #) (min-i #) (min-samps #)) (do (#) (#) ...) ...)
- 213: 12  (let* (# #) (set! min-samps #) (let # # #))
- 214: 13* [amp-weight 21956 27740 0 #f #f]
-  53: 14  (let* ((s0 #) (s1 #) (len #) ...) (do (#) (#) ...) ...)
-  70: 15  [/ 0.0 0.0]
-</pre>
-<p>So I'm at line 10167 of snd-test.scm where there is a call on
-rubber-sound from rubber.scm.  And in rubber.scm I'm at line 70,
-which is actually all I need to know, but just out of curiosity:
-</p>
-<pre>
-debug&gt; <em class=typing>help</em>
-Type "help" followed by a command name for full documentation.
-Available commands are:
-  backtrace
-  down
-  evaluate
-  frame
-  help
-  info
-  position
-  quit
-  up
-debug&gt; <em class=typing>help info</em>
-The "info" command requires a subcommand.
-Available subcommands are:
-  info args
-  info frame
-debug&gt; <em class=typing>info frame</em>
-Stack frame: 15
-This frame is an application.
-The corresponding expression is:
-/home/bil/cl/rubber.scm:70:7:
-  (/ diffsum ampsum)
-The procedure being applied is: /
-The procedure's arguments are: (0.0 0.0)
-</pre>
-<p>Finally, useful information!  Both the variables <i>diffsum</i> and <i>ampsum</i> are
-zero for some reason.  I'll add a check for that.
-</p>
-<pre>
-debug&gt; <em class=typing>quit</em>
-<em class=listener>#&lt;unspecified&gt;</em>
-&gt;
-</pre>
-<p>You have to "quit" the debugger to get back to the normal Snd listener prompt.
-Unfortunately, this debugger doesn't have anything like gdb's "info locals",
-so you sometimes have to insert snd-prints where the problem is occurring.
-To trace a procedure (in this example I'm using <a href="#everysample">every-sample?</a> given above):
-</p>
-<pre>
-&gt; <em class=typing>(trace scan-chan)</em>
-<em class=listener>(scan-chan)</em>
-&gt; <em class=typing>(snd-trace (every-sample? (lambda (y) (&gt; y .5))))</em>
-<em class=listener>
-[scan-chan #&lt;procedure #f ((y) (not #))&gt;]
-(#t 0)
-#f
-</em>
-&gt;
-</pre>
-<p>If you're getting a stack overflow, and you're sure it's not a case
-of infinite recursion,
-</p>
-<pre>
-(debug-set! stack 0)
-</pre>
-<p>turns off the (very conservative) stack overflow check.
-</p>
-<hr>
-<p>If you hit a bug in Snd's C code, you'll need to use gdb (or dbx on the SGI)
-to track it down, or mail me the gory details;
-if the error is a segfault, there is probably a file named "core" or "core.nnnn"
-on the current directory:
-</p>
-<pre>
-gdb snd core
-where
-</pre>
-<p>The "where" command displays the stack at the point of the error.
-"up", and "down" move around in the stack, and "info locals" prints out
-the current frame's variables.  If it's not a segfault, you can
-</p>
-<pre>
-gdb snd
-run
-</pre>
-<p>Then get the error to happen, at which point you should fall into gdb
-where you can type "where" and so on.  If the problem involves X, you
-may need to run -sync.  If Gtk, run --g-fatal-errors.  If Snd gets hung
-and you need to type C-C to get out, 
-</p>
-<pre>
-gdb snd
-break exit
-run
-</pre>
-
-<br>
-<span class=bbox><h3><A NAME="sndconstants">Constants</a></h3></span>
-
-<p><b>Sndlib</b> (see <a href="sndlib.html#sndlibguile">sndlib.html</a> for a complete list):</p>
-<pre>
-  <a name="nextsoundfile">mus-next</a> mus-aifc mus-riff mus-nist mus-raw mus-ircam mus-aiff
-  mus-bicsf mus-soundfont mus-voc mus-svx
-
-  mus-bshort  mus-lshort mus-mulaw  mus-alaw   mus-byte   mus-ubyte   mus-bfloat
-  mus-lfloat  mus-bint   mus-lint   mus-b24int mus-l24int mus-bdouble mus-ldouble
-  mus-ubshort mus-ulshort
-
-  <a name="musoutformat">mus-out-format</a>
-</pre>
-<br>
-<p><b>Time domain graph type</b> (<a href="#wavo">time-graph-type</a>):</p>
-<pre>
-  graph-once  graph-as-wavogram
-</pre>
-<br>
-<p><b>Transform graph type</b> (the Transform Options Display choice, <a href="#lfftstyle">transform-graph-type</a>):</p>
-<pre>
-  graph-once  graph-as-sonogram  graph-as-spectrogram
-</pre>
-<br>
-<p><b>Transform type</b> (<a href="#ltransformtype">transform-type</a>):</p>
-<pre>
-  <a name="fouriertransform">fourier-transform</a>  wavelet-transform   cepstrum   haar-transform
-  autocorrelation    walsh-transform     hadamard-transform  
-</pre><br>
-
-<p><b>Transform normalization</b> (<a href="#normalizefft">transform-normalization</a>):</p>
-<pre>
-  dont-normalize     normalize-by-channel    normalize-by-sound    normalize-globally
-</pre><br>
-
-<p><b>FFT Window</b> type (<a href="#lfftwindow">fft-window</a>):</p>
-<pre>
-  rectangular-window    hann(ing)-window      welch-window         parzen-window
-  bartlett-window       hamming-window        blackman2-window     blackman3-window
-  blackman4-window      exponential-window    riemann-window       kaiser-window
-  cauchy-window         poisson-window        gaussian-window      tukey-window
-  dolph-chebyshev-window (if GSL is loaded)
-</pre><br>
-
-<p><b>Zoom Focus</b> style (<a href="#zoomfocusstyle">zoom-focus-style</a>):</p>
-<pre>
-  zoom-focus-left    zoom-focus-right   zoom-focus-active zoom-focus-middle
-</pre><br>
-
-<p><b>X-axis Label</b> (<a href="#xaxisstyle">x-axis-style</a>):</p>
-<pre>
-  x-axis-in-seconds  x-axis-in-samples  x-axis-as-percentage  x-axis-in-beats
-</pre><br>
-
-<p><b>Speed Control</b> style (<a href="#lspeedstyle">speed-control-style</a>):</p>
-<pre>
-  speed-control-as-float     speed-control-as-ratio     speed-control-as-semitone
-</pre><br>
-
-<p><b>Channel Combination</b> style (<a href="#channelstyle">channel-style</a>):</p>
-<pre>
-  <a name="channelstyleconstants">channels-separate</a>  channels-combined  channels-superimposed
-</pre><br>
-
-<p><b>Envelope Editor</b> target (<a href="#envedtarget">enved-target</a>):</p>
-<pre>
-  enved-amplitude      enved-spectrum       enved-srate
-</pre><br>
-
-<p><b>Graph Line</b> style (<a href="#graphstyle">graph-style</a>):</p>
-<pre>
-  <a name="graphlines">graph-lines</a>        graph-dots         graph-filled      graph-lollipops
-  graph-dots-and-lines 
-</pre><br>
-
-<p><b>Key binding</b> cursor action (<a href="#sndbindkey">bind-key</a>):</p>
-<pre>
-  <a name="cursorchoices">cursor-in-view</a>     cursor-on-left     cursor-on-right   cursor-in-middle  keyboard-no-action
-</pre><br>
-
-<p><b>Cursor</b> style (<a href="#cursorstyle">cursor-style</a>):</p>
-<pre>
-  cursor-cross   cursor-line
-</pre><br>
-
-<p><b>Axis placement</b> choice (<a href="#showaxes">show-axes</a>):</p>
-<pre>
-  show-all-axes  show-no-axes  show-x-axis
-</pre><br>
-
-<p><b>Graph</b> id (for <a href="#y2position">y-&gt;position</a> etc):</p>
-<pre>
-  time-graph     transform-graph     lisp-graph
-</pre>
-
-
-<br>
 <span class=bbox><h3><A NAME="sndmisc">Miscellaneous functions</a></h3></span>
 
 <p>These functions don't seem to fit anywhere else:</p>
@@ -8817,6 +8540,8 @@ see also <a href="#ptreechannel">ptree-channel</a> in this regard.
 If you call save-state with active regions, and have the region browser running all the time, and subsequently
 want to back up the the saved state, it's safer to delete all the regions first (via <a href="forgetregion">forget-region</a>), 
 then load the saved-state file (see snd-test.scm).
+<a href="#savestatehook">save-state-hook</a> is called during the saving process (once on each temp file), and
+and <a href="#aftersavestatehook">after-save-state-hook</a> is called afterwards.
 </td></tr>
 
 <!-- script-arg -->
@@ -8978,6 +8703,330 @@ return a list giving the widget width and height (pixels).  Can be set. See nb.s
 </td></tr>
 
 </table>
+<br>
+
+<span class=bbox><h3><A NAME="sndconstants">Constants</a></h3></span>
+
+<p><b>Sndlib</b> (see <a href="sndlib.html#sndlibguile">sndlib.html</a> for a complete list):</p>
+<pre>
+  <a name="nextsoundfile">mus-next</a> mus-aifc mus-riff mus-nist mus-raw mus-ircam mus-aiff
+  mus-bicsf mus-soundfont mus-voc mus-svx
+
+  mus-bshort  mus-lshort mus-mulaw  mus-alaw   mus-byte   mus-ubyte   mus-bfloat
+  mus-lfloat  mus-bint   mus-lint   mus-b24int mus-l24int mus-bdouble mus-ldouble
+  mus-ubshort mus-ulshort
+
+  <a name="musoutformat">mus-out-format</a>
+</pre>
+<br>
+<p><b>Time domain graph type</b> (<a href="#wavo">time-graph-type</a>):</p>
+<pre>
+  graph-once  graph-as-wavogram
+</pre>
+<br>
+<p><b>Transform graph type</b> (the Transform Options Display choice, <a href="#lfftstyle">transform-graph-type</a>):</p>
+<pre>
+  graph-once  graph-as-sonogram  graph-as-spectrogram
+</pre>
+<br>
+<p><b>Transform type</b> (<a href="#ltransformtype">transform-type</a>):</p>
+<pre>
+  <a name="fouriertransform">fourier-transform</a>  wavelet-transform   cepstrum   haar-transform
+  autocorrelation    walsh-transform     hadamard-transform  
+</pre><br>
+
+<p><b>Transform normalization</b> (<a href="#normalizefft">transform-normalization</a>):</p>
+<pre>
+  dont-normalize     normalize-by-channel    normalize-by-sound    normalize-globally
+</pre><br>
+
+<p><b>FFT Window</b> type (<a href="#lfftwindow">fft-window</a>):</p>
+<pre>
+  rectangular-window    hann(ing)-window      welch-window         parzen-window
+  bartlett-window       hamming-window        blackman2-window     blackman3-window
+  blackman4-window      exponential-window    riemann-window       kaiser-window
+  cauchy-window         poisson-window        gaussian-window      tukey-window
+  dolph-chebyshev-window (if GSL is loaded)
+</pre><br>
+
+<p><b>Zoom Focus</b> style (<a href="#zoomfocusstyle">zoom-focus-style</a>):</p>
+<pre>
+  zoom-focus-left    zoom-focus-right   zoom-focus-active zoom-focus-middle
+</pre><br>
+
+<p><b>X-axis Label</b> (<a href="#xaxisstyle">x-axis-style</a>):</p>
+<pre>
+  x-axis-in-seconds  x-axis-in-samples  x-axis-as-percentage  x-axis-in-beats
+</pre><br>
+
+<p><b>Speed Control</b> style (<a href="#lspeedstyle">speed-control-style</a>):</p>
+<pre>
+  speed-control-as-float     speed-control-as-ratio     speed-control-as-semitone
+</pre><br>
+
+<p><b>Channel Combination</b> style (<a href="#channelstyle">channel-style</a>):</p>
+<pre>
+  <a name="channelstyleconstants">channels-separate</a>  channels-combined  channels-superimposed
+</pre><br>
+
+<p><b>Envelope Editor</b> target (<a href="#envedtarget">enved-target</a>):</p>
+<pre>
+  enved-amplitude      enved-spectrum       enved-srate
+</pre><br>
+
+<p><b>Graph Line</b> style (<a href="#graphstyle">graph-style</a>):</p>
+<pre>
+  <a name="graphlines">graph-lines</a>        graph-dots         graph-filled      graph-lollipops
+  graph-dots-and-lines 
+</pre><br>
+
+<p><b>Key binding</b> cursor action (<a href="#sndbindkey">bind-key</a>):</p>
+<pre>
+  <a name="cursorchoices">cursor-in-view</a>     cursor-on-left     cursor-on-right   cursor-in-middle  keyboard-no-action
+</pre><br>
+
+<p><b>Cursor</b> style (<a href="#cursorstyle">cursor-style</a>):</p>
+<pre>
+  cursor-cross   cursor-line
+</pre><br>
+
+<p><b>Axis placement</b> choice (<a href="#showaxes">show-axes</a>):</p>
+<pre>
+  show-all-axes  show-no-axes  show-x-axis
+</pre><br>
+
+<p><b>Graph</b> id (for <a href="#y2position">y-&gt;position</a> etc):</p>
+<pre>
+  time-graph     transform-graph     lisp-graph
+</pre>
+
+
+<br>
+<span class=bbox><h3><A NAME="snderrors">Errors and Debugging</a></h3></span>
+
+<p> When something goes awry, the various functions can throw an error (a symbol)
+which is normally caught by the default error handler (this is a kind of goto 
+but without the embarrassment).  It prints out some message,
+and sometimes appends a stack trace.  So, as a simple example, selection-position
+throws 'no-active-selection if there isn't a selection:
+</p>
+<pre>
+&gt;<em class=typing>(selection-position)</em>
+<em class=listener>selection-position: no-active-selection</em>
+&gt;<em class=typing>asdf</em>
+<em class=listener>Unbound variable: asdf</em>
+</pre>
+<p>But there are cases where you'd rather handle an error (or all errors) specially.
+In the case of 'no-active-selection, we set up our own handler for that as follows:</p>
+<pre>
+&gt;<em class=typing>(catch 'no-active-selection 
+       (lambda () 
+         (+ 1 (selection-position))) 
+       (lambda (tag val) 0))</em>
+<em class=listener>0</em>
+</pre>
+<p>Here we've caught 'no-active-selection (if it occurs within the
+first thunk's body), and return 0 if it occurs; otherwise we return
+<code>(+ 1 (selection-position))</code>.  Scheme (Guile) has a number
+of errors such as 'out-of-range, 'wrong-type-arg, 'numerical-overflow,
+etc.  The Snd-specific errors are:</p>
+<pre>
+'no-such-channel 'no-such-sound  'no-such-mark       'no-such-mix
+'no-such-menu    'no-such-file   'no-such-region     'no-such-sample
+'no-such-edit    'cannot-save    'no-such-envelope   'no-active-selection
+'no-such-widget  'mus-error      'no-such-track      'bad-arity
+'cannot-print    'no-such-axis   'no-such-player     'no-such-graphics-context
+'no-such-color   'no-such-widget 'no-such-plugin     'no-data
+'gsl-error       'no-such-key    'no-such-direction  'cannot-parse
+</pre>
+<p><i>bad-arity</i> is jargon indicating that a procedure has been passed the
+wrong number of arguments.  <i>gsl-error</i> indicates that the GSL
+library is the source of the error.
+The symbol #t stands for all errors in this case, so we can 
+run rough-shod over any error with:</p>
+<pre>
+(defmacro without-errors (func)
+  `(catch #t 
+	  (lambda ()
+	    ,func)
+	  (lambda args (car args))))
+</pre>
+<p>You can use these errors in your code, if you like, or add your own.  The following
+throws the error 'no-such-file:</p>
+<pre>
+(define look-for-file
+  (lambda (file)
+    (or (file-exists? file)
+	(throw 'no-such-file (list "look-for-file" file)))))
+</pre>
+<p>The mix.scm track functions can return 'no-such-track if a
+given track has no mixes.
+</p>
+
+<hr>
+<p>There are a variety of debugging aids supplied by Guile, including
+a backtrace facility.  To be sure all Guile's debugging support
+code is loaded,
+</p>
+<pre>
+  (use-modules (ice-9 debug) (ice-9 session) (ice-9 debugger))
+</pre>
+<p>If I remember right, the "session" module refers to the help facility.
+So, if the error you hit is a complaint about "wrong number of args",
+you can ask about the function via either "help" (the Guile help function --
+it will print its info to stdout which may be invisible), or 
+<a href="#sndhelp">snd-help</a> which tries to send the help string
+to Snd's listener.  I've tried to include help strings for every Snd,
+Clm, and Xm function. 
+To turn on the debugger (i.e. make it possible to call the debug function if something
+goes wrong), 
+</p>
+<pre>
+(debug-enable 'debug 'backtrace)
+(read-enable 'positions)
+</pre>
+<p>
+Now when an error occurs, you can call either (debug) or (snd-debug) 
+and fall into the debugger.  snd-debug makes sure the debugger input and
+output goes through Snd's listener, rather than stdin and stdout (similarly
+snd-trace replaces trace).
+Once in the debugger, you'll get a prompt:
+</p>
+<pre>
+  debug&gt; 
+</pre>
+<p>Type <i>bt</i> for a backtrace, <i>help</i> for a brief overview
+of debugger commands, and so on.
+Here's a real-life example, edited for brevity.  I hit a numerical
+overflow error (actually divide by zero...) in snd-test.scm, a huge
+(33000 line) pile of tests, got a slightly truncated backtrace from
+Snd's default backtrace displayer (not sure why it is truncated, but first things first), so
+</p>
+<pre>
+&gt; <em class=typing>(debug)</em>
+This is the Guile debugger; type "help" for help.
+There are 16 frames on the stack.
+
+Frame 15:   [/ 0.0 0.0]
+</pre>
+<p>Obviously a divide-by-zero error, but where am I?  To find out,
+I ask for a backtrace:
+</p>
+<pre>
+debug&gt; <em class=typing>bt</em>
+In /home/bil/cl/snd-test.scm:
+9479:  0* (if (or full-test (= snd-test 15) ...) (let (#) (letrec # # ...)))
+9480:  1  (let ((obi #)) (letrec (# # #) (if # #) (# #t) ...))
+In unknown file:
+   ?:  2  (letrec (# # #) (if # #) (# #t) ...)
+In /home/bil/cl/snd-test.scm:
+10165:  3* (if (file-exists? "1a.snd") (let (#) (let # # #) (close-sound ind1)))
+10166:  4  (let ((ind1 #)) (let (#) (rubber-sound #) (let # #)) (close-sound ind1))
+10167:  5* (let ((start (get-internal-real-time))) (rubber-sound 1.25) ...)
+10167:  6* [rubber-sound 1.25]
+In /home/bil/cl/rubber.scm:
+ 150:  7  (let* ((stretch #) (snd #) (chn #)) (derumble-sound snd chn) ...)
+ 159:  8  (let* (# # # # ...) (let* # # #) (# snd chn #t) ...)
+ 196:  9* (do ((i 0 (1+ i))) ((or (c-g?) (= i #))) ...)
+ 198: 10* (let* ((start #) (autolen #)) (let* (# # #) (do # # #) (let* # # #)))
+ 201: 11  (let* ((next-start #) (min-i #) (min-samps #)) (do (#) (#) ...) ...)
+ 213: 12  (let* (# #) (set! min-samps #) (let # # #))
+ 214: 13* [amp-weight 21956 27740 0 #f #f]
+  53: 14  (let* ((s0 #) (s1 #) (len #) ...) (do (#) (#) ...) ...)
+  70: 15  [/ 0.0 0.0]
+</pre>
+<p>So I'm at line 10167 of snd-test.scm where there is a call on
+rubber-sound from rubber.scm.  And in rubber.scm I'm at line 70,
+which is actually all I need to know, but just out of curiosity:
+</p>
+<pre>
+debug&gt; <em class=typing>help</em>
+Type "help" followed by a command name for full documentation.
+Available commands are:
+  backtrace
+  down
+  evaluate
+  frame
+  help
+  info
+  position
+  quit
+  up
+debug&gt; <em class=typing>help info</em>
+The "info" command requires a subcommand.
+Available subcommands are:
+  info args
+  info frame
+debug&gt; <em class=typing>info frame</em>
+Stack frame: 15
+This frame is an application.
+The corresponding expression is:
+/home/bil/cl/rubber.scm:70:7:
+  (/ diffsum ampsum)
+The procedure being applied is: /
+The procedure's arguments are: (0.0 0.0)
+</pre>
+<p>Finally, useful information!  Both the variables <i>diffsum</i> and <i>ampsum</i> are
+zero for some reason.  I'll add a check for that.
+</p>
+<pre>
+debug&gt; <em class=typing>quit</em>
+<em class=listener>#&lt;unspecified&gt;</em>
+&gt;
+</pre>
+<p>You have to "quit" the debugger to get back to the normal Snd listener prompt.
+Unfortunately, this debugger doesn't have anything like gdb's "info locals",
+so you sometimes have to insert snd-prints where the problem is occurring.
+To trace a procedure (in this example I'm using <a href="#everysample">every-sample?</a> given above):
+</p>
+<pre>
+&gt; <em class=typing>(trace scan-chan)</em>
+<em class=listener>(scan-chan)</em>
+&gt; <em class=typing>(snd-trace (every-sample? (lambda (y) (&gt; y .5))))</em>
+<em class=listener>
+[scan-chan #&lt;procedure #f ((y) (not #))&gt;]
+(#t 0)
+#f
+</em>
+&gt;
+</pre>
+<p>If you're getting a stack overflow, and you're sure it's not a case
+of infinite recursion,
+</p>
+<pre>
+(debug-set! stack 0)
+</pre>
+<p>turns off the (very conservative) stack overflow check.
+</p>
+<hr>
+<p>If you hit a bug in Snd's C code, you'll need to use gdb (or dbx on the SGI)
+to track it down, or mail me the gory details;
+if the error is a segfault, there is probably a file named "core" or "core.nnnn"
+on the current directory:
+</p>
+<pre>
+gdb snd core
+where
+</pre>
+<p>The "where" command displays the stack at the point of the error.
+"up", and "down" move around in the stack, and "info locals" prints out
+the current frame's variables.  If it's not a segfault, you can
+</p>
+<pre>
+gdb snd
+run
+</pre>
+<p>Then get the error to happen, at which point you should fall into gdb
+where you can type "where" and so on.  If the problem involves X, you
+may need to run -sync.  If Gtk, run --g-fatal-errors.  If Snd gets hung
+and you need to type C-C to get out, 
+</p>
+<pre>
+gdb snd
+break exit
+run
+</pre>
+
 <br>
 
 

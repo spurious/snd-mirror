@@ -2646,7 +2646,7 @@ static XEN g_set_selected_channel(XEN snd_n, XEN chn_n)
     return(g_select_channel(snd_n));
   else
     {
-      ASSERT_SOUND(S_setB S_selected_channel, snd_n, 1); 
+      ASSERT_JUST_SOUND(S_setB S_selected_channel, snd_n, 1); 
       sp = get_sp(snd_n, NO_PLAYERS);
       if (sp == NULL) 
 	return(snd_no_such_sound_error(S_setB S_selected_channel, snd_n));
@@ -3044,7 +3044,7 @@ static XEN g_amp_control(XEN snd_n, XEN chn_n)
   chan_info *cp;
   if (XEN_BOUND_P(chn_n))
     {
-      ASSERT_CHANNEL(S_amp_control, snd_n, chn_n, 1);
+      ASSERT_JUST_CHANNEL(S_amp_control, snd_n, chn_n, 1);
       cp = get_cp(snd_n, chn_n, S_amp_control);
       if (cp->amp_control)
 	return(C_TO_XEN_DOUBLE(cp->amp_control[0]));
@@ -3058,7 +3058,7 @@ static XEN g_set_amp_control(XEN on, XEN snd_n, XEN chn_n)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(on), on, XEN_ARG_1, S_setB S_amp_control, "a number"); 
   if (XEN_BOUND_P(chn_n))
     {
-      ASSERT_CHANNEL(S_amp_control, snd_n, chn_n, 2);
+      ASSERT_JUST_CHANNEL(S_amp_control, snd_n, chn_n, 2);
       cp = get_cp(snd_n, chn_n, S_amp_control);
       if (cp->amp_control == NULL)
 	cp->amp_control = (Float *)CALLOC(1, sizeof(Float));
@@ -3255,7 +3255,7 @@ static XEN g_set_filter_control_env(XEN edata, XEN snd_n)
   snd_info *sp;
   env *e;
   int i;
-  ASSERT_SOUND(S_setB S_filter_control_env, snd_n, 2);
+  ASSERT_JUST_SOUND(S_setB S_filter_control_env, snd_n, 2);
   sp = get_sp(snd_n, PLAYERS_OK);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_setB S_filter_control_env, snd_n));
@@ -3280,7 +3280,7 @@ static XEN g_filter_control_env(XEN snd_n)
 {
   #define H_filter_control_env "(" S_filter_control_env " (snd #f)): snd's filter envelope (in the control panel)"
   snd_info *sp = NULL;
-  ASSERT_SOUND(S_filter_control_env, snd_n, 1);
+  ASSERT_JUST_SOUND(S_filter_control_env, snd_n, 1);
   sp = get_sp(snd_n, PLAYERS_OK);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_filter_control_env, snd_n));
@@ -3299,7 +3299,7 @@ The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to sele
   snd_state *ss;
   apply_state *ap;
   int cur_choice;
-  ASSERT_SOUND(S_apply_controls, snd, 1);
+  ASSERT_JUST_SOUND(S_apply_controls, snd, 1);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(choice), choice, XEN_ARG_2, S_apply_controls, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(beg), beg, XEN_ARG_3, S_apply_controls, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(dur), dur, XEN_ARG_4, S_apply_controls, "an integer");

@@ -7,9 +7,6 @@ marked with "SOMEDAY".
 More translations! (See po/snd.pot for the list of translatable
 strings, and po/de.po for an example).
 
-A more direct connection to gmeteor (perhaps using the control-panel filter
-  text widget).  use (filter-sound(make-filter ...)).
-
 A graphic-EQ effect (effects.scm) -- this could use the CLM formant generator. 
 
 A better pitch tracker than spot-freq in examp.scm.

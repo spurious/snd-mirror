@@ -492,8 +492,8 @@ const char *mus_short_data_format_name(int format)
     case MUS_BFLOAT_UNSCALED:  return("mus-bfloat-unscaled");   break;
     case MUS_BINT:             return("mus-bint");              break;
     case MUS_ALAW:             return("mus-alaw");              break;
-    case MUS_UBYTE:            return("mus-char");              break;
-    case MUS_B24INT:           return("mus-bint24");            break;
+    case MUS_UBYTE:            return("mus-ubyte");             break;
+    case MUS_B24INT:           return("mus-b24int");            break;
     case MUS_BDOUBLE:          return("mus-bdouble");           break;
     case MUS_BDOUBLE_UNSCALED: return("mus-bdouble-unscaled");  break;
     case MUS_LSHORT:           return("mus-lshort");            break;
@@ -504,7 +504,7 @@ const char *mus_short_data_format_name(int format)
     case MUS_LDOUBLE:          return("mus-ldouble");           break;
     case MUS_UBSHORT:          return("mus-ubshort");           break;
     case MUS_ULSHORT:          return("mus-ulshort");           break;
-    case MUS_L24INT:           return("mus-lint24");            break;
+    case MUS_L24INT:           return("mus-l24int");            break;
     case MUS_BINTN:            return("mus-bintn");             break;
     case MUS_LINTN:            return("mus-lintn");             break;
     default:                   return("unknown format");        break;

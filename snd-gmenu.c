@@ -12,7 +12,7 @@ enum {menu_menu,
         help_menu, h_cascade_menu,
           h_about_snd_menu, h_fft_menu, h_find_menu, h_undo_menu, h_sync_menu, h_speed_menu,
           h_expand_menu, h_contrast_menu, h_reverb_menu, h_env_menu, h_marks_menu, h_sound_files_menu, h_init_file_menu,
-          h_mix_menu, h_recording_menu, h_clm_menu, h_news_menu,
+          h_mix_menu, h_recording_menu, h_news_menu,
         option_menu, o_cascade_menu,
           o_transform_menu,
           o_focus_style_menu, o_focus_cascade_menu,
@@ -38,7 +38,7 @@ enum {menu_menu,
           v_sep2_menu
 };
 
-#define NUM_MENU_WIDGETS 97
+#define NUM_MENU_WIDGETS 96
 static GtkWidget *mw[NUM_MENU_WIDGETS];
 static const char *ml[NUM_MENU_WIDGETS];
 
@@ -479,9 +479,6 @@ static void help_mix_callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK("Help", 
 static void help_sound_files_callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK("Help", "Formats") sound_files_help((snd_state *)cD);}
 static void help_init_file_callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK("Help", "Customization") init_file_help((snd_state *)cD);}
 static void help_recording_callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK("Help", "Recording") recording_help((snd_state *)cD);}
-
-static void help_clm_callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK("Help", "CLM") clm_help((snd_state *)cD);}
-
 static void help_news_callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK("Help", "News") news_help((snd_state *)cD);}
 
 
@@ -1380,16 +1377,6 @@ GtkWidget *add_menu(snd_state *ss)
 				 g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(mw[h_recording_menu]))),
 				 0,
 				 g_cclosure_new(GTK_SIGNAL_FUNC(help_recording_callback), (gpointer)ss, 0),
-				 0);
-
-  mw[h_clm_menu] = gtk_menu_item_new_with_label(_("CLM"));
-  ml[h_clm_menu] = _("CLM");
-  gtk_menu_shell_append(GTK_MENU_SHELL(mw[h_cascade_menu]), mw[h_clm_menu]);
-  gtk_widget_show(mw[h_clm_menu]);
-  g_signal_connect_closure_by_id(GTK_OBJECT(mw[h_clm_menu]),
-				 g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(mw[h_clm_menu]))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(help_clm_callback), (gpointer)ss, 0),
 				 0);
 
   mw[h_news_menu] = gtk_menu_item_new_with_label(_("News"));

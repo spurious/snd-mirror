@@ -49,7 +49,6 @@
   <li><a href="#fadedoc">fade.scm: frequency-domain cross-fades</a>
   <li><a href="#fmvdoc">fmv.scm: a controller for the fm-violin</a>
   <li><a href="#freeverbdoc">freeverb.scm, freeverb.rb: a reverb</a>
-  <li><a href="#gmdoc">gm.scm: gmeteor support</a>
   <li><a href="#goopsnddoc">goopsnd.scm: look at Goops</a>
   <li><a href="#hooksdoc">hooks.scm: functions related to hooks</a>
   <li><a href="#indexdoc">index.scm, index.rb: snd-help extension</a>
@@ -1123,7 +1122,7 @@ a sound as a key is held down).
   <em class=def>selection-rms-1</em>
   <em class=def><a name="exselectionrms">selection-rms</a></em>
   <em class=def><a name="exregionrms">region-rms</a></em> <i>region</i>
-  <em class=def>replace-with-selection</em>
+  <em class=def><A NAME="exreplacewithselection">replace-with-selection</a></em>
   <em class=def><a name="exexplodesf2">explode-sf2</a></em>
 </pre>
 <p>
@@ -1582,12 +1581,6 @@ for the interested reader.
 <A NAME="freeverbdoc"></a><span class=box><h2>freeverb.scm, freeverb.rb</h2></span>
 
 <p>These are translations by Michael Scholz of CLM's freeverb.ins.
-</p>
-
-<A NAME="gmdoc"></a><span class=box><h2>gm.scm</h2></span>
-
-<p>gm.scm provides a simple way to get gmeteor to run in Snd.  See <a href="grfsnd.html#sndwithgmeteor">Snd with gmeteor</a>
-for details.
 </p>
 
 <A NAME="goopsnddoc"></a><span class=box><h2>goopsnd.scm</h2></span>
@@ -3232,7 +3225,10 @@ split with-sound into two pieces, primarily for Common Music's benefit.
 (with-sound (:scaled-to .5)
   (fm-violin 0 1 440 .1))
 </pre>
-<p>Also defined in ws.scm are the CLM functions <b>seconds-&gt;samples</b> and <b>time-&gt;samples</b>.
+<p>Also defined in ws.scm are the CLM functions <b>seconds-&gt;samples</b> and <b>time-&gt;samples</b>,
+and the saved-state-prettification functions <b>mus-data-format-&gt;string</b> and
+<b>mus-header-type-&gt;string</b>.  The *clm-* variables are saved in the save-state
+file by <b>ws-save-state</b>, which may not be a good idea -- feedback welcome!
 </p>
 <br>
 

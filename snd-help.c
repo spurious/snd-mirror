@@ -1,6 +1,4 @@
 #include "snd.h"
-#include "sndlib-strings.h"
-#include "clm-strings.h"
 
 /* ---------------- help 'news' menu item ---------------- */
 
@@ -309,6 +307,9 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+5-May:   after-save-state-hook.\n\
+         removed gm.scm.\n\
+         more IIR filters in dsp.scm, including arbitrary (even) order Butterworths, hum eliminator.\n\
 2-May:   data-size, samples field in edit-header dialog.\n\
 1-May:   mark-property in marks.scm.\n\
 30-Apr:  mix-property in mix.scm.\n\
@@ -323,12 +324,6 @@ void news_help(snd_state *ss)
 11-Apr:  moved dismiss-all-dialogs to snd6.scm.\n\
          change-property -> change-window-property (old form in snd6.scm)\n\
 9-Apr:   nb.rb, ws.rb, dlocsig.rb from Michael Scholz.\n\
-3-Apr:   noise.scm and noise.rb from Michael Scholz.\n\
-2-Apr:   init-with-sound and finish-with-sound in ws.scm.\n\
-31-Mar:  removed audio-state-file.\n\
-         mus_set_srate -> set_mus_srate in Ruby, mus-set-srate removed from Guile.\n\
-           similarly for mus_sound_set_maxamp, mus_set_rand_seed, \n\
-           mus_file_data_clipped, and mus_file_set_prescaler.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
@@ -476,12 +471,7 @@ static char options_menu_help_string[] =
 ";
 
 static char help_menu_help_string[] =   
-"  Click for Help: if you choose this, the\n\
-      mouse cursor becomes a '?'; position\n\
-      the cursor over the portion of the Snd\n\
-      window that interests you, and click\n\
-      the button.\n\
-  Overview: this text.\n\
+"  Overview: this text.\n\
   FFT: a discussion of Snd's FFT options.\n\
   Find: how to perform searches.\n\
   Undo/Redo: how to back up while editing.\n\
@@ -496,7 +486,6 @@ static char help_menu_help_string[] =
   Formats: Snd-supported formats and headers.\n\
   Customization: how to customize Snd.\n\
   Recording: how to use the recorder.\n\
-  CLM: brief info about CLM functions.\n\
   News: description of this version of Snd.\n\
 ";
 
@@ -723,10 +712,6 @@ data (the y-axis in this case changes to reflect the\n\
 data values, to some extent), set the variable\n\
 " S_transform_normalization " to " S_dont_normalize ".\n\
 \n\
-The harmonic analysis function is normally the\n\
-Fourier Transform, but others are available,\n\
-including about 20 wavelet choices.\n\
-\n\
 ";
 
 
@@ -843,7 +828,7 @@ loudest point in the file becomes .5). ");
 
 static char sound_files_help_string[] = 
 "Snd can read and write any of the sound\n\
-file data and header formats that CLM can\n\
+file data and header formats that Snd can\n\
 handle:\n\
 \n\
 read/write (many data formats):\n\
@@ -919,558 +904,14 @@ static char init_file_help_string[] =
 "Nearly everything in Snd can be set in an initialization file, loaded at any\n\
 time from a saved-state (Guile) file, specified via inter-process communciation from any\n\
 other program, invoked via M-x in the minibuffer, imbedded in a keyboard\n\
-macro, or dealt with from the lisp listener panel. The syntax used is lisp; \n\
-if the Guile library is loaded, the underlying language is actually Scheme,\n\
-these entities are fully incorporated into lisp, and all of them can be used\n\
-in arbitrarily complicated functions. I've tried to bring out to lisp nearly\n\
+macro, or dealt with from the lisp listener panel. I've tried to bring out to lisp nearly\n\
 every portion of Snd, both the signal-processing functions, and much of the\n\
 user interface. You can, for example, add your own menu choices, editing\n\
 operations, or graphing alternatives. These extensions can be loaded at any\n\
-time.\n\
+time.  See extsnd.html and grfsnd.html for details.\n\
 \n\
 ";
 
-static char variables_help_string[] =
-"These variables are accessed as though each were a function\n\
-of no arguments, and set using a function with \"set!\".\n\
-For example, " S_auto_resize "'s current value can be\n\
-accessed via (" S_auto_resize "), and set to a\n\
-new value via (set! (" S_auto_resize ") #t). \n\
-\n\
-  " S_ask_before_overwrite "  #f\n\
-  " S_audio_input_device "    " S_mus_audio_default "\n\
-  " S_audio_output_device "   " S_mus_audio_default "\n\
-  " S_auto_resize "           #t\n\
-  " S_auto_update "           #f\n\
-  " S_axis_label_font "       varies\n\
-  " S_axis_numbers_font "     varies\n\
-  " S_basic_color "           ivory2\n\
-  " S_beats_per_minute "      60\n\
-  " S_bold_button_font "      varies\n\
-  " S_button_font "           varies\n\
-  " S_bold_peaks_font "       varies\n\
-  " S_peaks_font "            varies\n\
-  " S_color_cutoff "          0.003\n\
-  " S_color_inverted "        #t\n\
-  " S_color_scale "           0.5\n\
-  " S_colormap "             -1\n\
-  " S_cursor_color "          red\n\
-  " S_dac_combines_channels " #t\n\
-  " S_dac_size "              256\n\
-  " S_data_color "            black\n\
-  " S_dot_size "              1 snd chn\n\
-  " S_emacs_style_save_as "   #f\n\
-  " S_enved_active_env "      '()\n\
-  " S_enved_base "            1.0\n\
-  " S_enved_clip_p "           #f\n\
-  " S_enved_in_dB "           #f\n\
-  " S_enved_exp_p "            #f\n\
-  " S_enved_filter "          #t\n\
-  " S_enved_filter_order "    40\n\
-  " S_enved_power "           3.0\n\
-  " S_enved_selected_env "    '()\n\
-  " S_enved_target "          " S_enved_amplitude "\n\
-  " S_enved_waveform_color "  blue\n\
-  " S_enved_wave_p "           #f\n\
-  " S_eps_bottom_margin "     0\n\
-  " S_eps_file "              \"snd.eps\"\n\
-  " S_eps_left_margin "       0\n\
-  " S_eps_size "              1\n\
-  " S_fft_window_beta "       0.0 snd chn\n\
-  " S_fft_log_frequency "     #f snd chn\n\
-  " S_fft_log_magnitude "     #f snd chn\n\
-  " S_fft_window "            " S_blackman2_window " snd chn\n\
-  " S_filter_env_in_hz "      #f\n\
-  " S_filter_waveform_color " blue\n\
-  " S_graph_color "           white\n\
-  " S_graph_cursor "          XC_crosshair (34)\n\
-  " S_graph_style "           " S_graph_lines " snd chn\n\
-  " S_graphs_horizontal "     #t snd chn\n\
-  " S_help_text_font "        varies\n\
-  " S_highlight_color "       ivory1\n\
-  " S_just_sounds "           #f\n\
-  " S_ladspa_dir "            nil\n\
-  " S_listener_color "        aliceblue\n\
-  " S_listener_font "         varies\n\
-  " S_listener_prompt "       \">\"\n\
-  " S_listener_text_color "   black\n\
-  " S_mark_color "            red\n\
-  " S_max_transform_peaks "   100 snd chn\n\
-  " S_min_dB "               -60.0 snd chn\n\
-  " S_minibuffer_history_length " 8\n\
-  " S_mix_color "             lightgreen\n\
-  " S_mix_tag_width "         6\n\
-  " S_mix_tag_height "        14\n\
-  " S_mix_tag_y "             0\n\
-  " S_mix_waveform_height "   20\n\
-  " S_transform_normalization " " S_normalize_by_channel " snd chn\n\
-  " S_position_color "        ivory3\n\
-  " S_print_length "          12\n\
-  " S_pushed_button_color "   lightsteelblue1\n\
-  " S_recorder_autoload "     #f\n\
-  " S_recorder_buffer_size "  4096\n\
-  " S_recorder_file "         nil\n\
-  " S_recorder_in_format "    " S_mus_bshort "\n\
-  " S_recorder_max_duration " 1000000.0\n\
-  " S_recorder_out_chans "    2\n\
-  " S_recorder_out_format "   same as above\n\
-  " S_recorder_srate "        22050\n\
-  " S_recorder_trigger "      0.0\n\
-  " S_reverb_control_decay "  1.0 (snd #t)\n\
-  " S_sash_color "            lightgreen\n\
-  " S_save_dir "              nil\n\
-  " S_save_state_file "       nil\n\
-  " S_selected_data_color "   black\n\
-  " S_selected_graph_color "  white\n\
-  " S_selected_mix_color "    green2\n\
-  " S_selection_color "       lightsteelblue1\n\
-  " S_selection_creates_region " #t\n\
-  " S_show_axes "             show-all-axes snd chn\n\
-  " S_show_backtrace "        #f\n\
-  " S_show_indices "          #f\n\
-  " S_show_marks "            #t snd chn\n\
-  " S_show_mix_waveforms "    #f snd chn\n\
-  " S_show_selection_transform " #f\n\
-  " S_show_transform_peaks "  #f snd chn\n\
-  " S_show_y_zero "           #f snd chn\n\
-  " S_sinc_width "            10\n\
-  " S_spectro_cutoff "        1.0 snd chn\n\
-  " S_spectro_hop "           4 snd chn\n\
-  " S_spectro_start "         0.0 snd chn\n\
-  " S_spectro_x_angle "       90.0 snd chn\n\
-  " S_spectro_x_scale "       1.0 snd chn\n\
-  " S_spectro_y_angle "       0.0 snd chn\n\
-  " S_spectro_y_scale "       1.0 snd chn\n\
-  " S_spectro_z_angle "      -2.0 snd chn\n\
-  " S_spectro_z_scale "       0.1 snd chn\n\
-  " S_speed_control_style "   " S_speed_control_as_float " (snd #t)\n\
-  " S_speed_control_tones "   12 (snd #t)\n\
-  " S_temp_dir "              nil\n\
-  " S_text_focus_color "      white\n\
-  " S_transform_size "        256 snd chn\n\
-  " S_transform_graph_type "  " S_graph_once " snd chn\n\
-  " S_transform_type "        " S_fourier_transform " snd chn\n\
-  " S_trap_segfault "         #t\n\
-  " S_verbose_cursor "        #f snd chn\n\
-  " S_vu_font "               nil\n\
-  " S_vu_font_size "          1.0\n\
-  " S_vu_size "               1.0\n\
-  " S_wavelet_type "          0 snd chn\n\
-  " S_wavo_hop "              3 snd chn\n\
-  " S_wavo_trace "            64 snd chn\n\
-  " S_window_height "         0\n\
-  " S_window_width "          0\n\
-  " S_window_x "             -1\n\
-  " S_window_y "             -1\n\
-  " S_with_gl "               #t (if --with-gl)\n\
-  " S_with_mix_tags "         #t\n\
-  " S_with_relative_panes "   #t\n\
-  " S_x_axis_style "          " S_x_axis_in_seconds "\n\
-  " S_zero_pad "              0 snd chn\n\
-  " S_zoom_color "            ivory4\n\
-  " S_zoom_focus_style "      " S_zoom_focus_active "\n\
-\n\
-";
-
-static char hooks_help_string[] =
-"The hooks provide a way to customize various situations that arise through\n\
-user-interface manipulations.\n\
-\n\
-  " S_after_edit_hook " ()\n\
-  " S_after_graph_hook " (snd chn)\n\
-  " S_after_open_hook " (snd)\n\
-  " S_before_transform_hook " (snd chn)\n\
-  " S_close_hook " (snd)\n\
-  " S_drop_hook " (filename\n\
-  " S_during_open_hook " (fd name reason)\n\
-  " S_edit_hook " ()\n\
-  " S_enved_hook " (env pt new-x new-y)\n\
-  " S_exit_hook "\n\
-  " S_transform_hook " (snd chn scaler)\n\
-  " S_graph_hook " (snd chn y0 y1)\n\
-  " S_initial_graph_hook " (snd chn dur)\n\
-  " S_just_sounds_hook " (filename)\n\
-  " S_listener_click_hook " (text-position)\n\
-  " S_lisp_graph_hook "(snd chn)\n\
-  " S_mark_click_hook " (id)\n\
-  " S_mark_drag_hook " (id)\n\
-  " S_menu_hook " (name option)\n\
-  " S_mix_amp_changed_hook " (id)\n\
-  " S_mix_click_hook " (id)\n\
-  " S_mix_position_changed_hook " (id samps)\n\
-  " S_mix_speed_changed_hook " (id)\n\
-  " S_mouse_drag_hook " (snd chn button state x y)\n\
-  " S_mouse_enter_graph_hook " (snd chn)\n\
-  " S_mouse_enter_label_hook " (type position name)\n\
-  " S_mouse_enter_listener_hook " (widget)\n\
-  " S_mouse_enter_text_hook " (widget)\n\
-  " S_mouse_leave_graph_hook " (snd chn)\n\
-  " S_mouse_leave_label_hook " (type position name)\n\
-  " S_mouse_leave_listener_hook " (widget)\n\
-  " S_mouse_leave_text_hook " (widget)\n\
-  " S_mouse_press_hook " (snd chn button state x y)\n\
-  " S_mouse_release_hook " (snd chn button state x y)\n\
-  " S_multichannel_mix_hook " (ids)\n\
-  " S_mus_error_hook " (type msg)\n\
-  " S_name_click_hook " (snd)\n\
-  " S_new_sound_hook " (filename)\n\
-  " S_open_hook " (filename)\n\
-  " S_output_comment_hook " (str)\n\
-  " S_output_name_hook "()\n\
-  " S_play_hook " (samps)\n\
-  " S_window_property_changed_hook " (command)\n\
-  " S_save_hook " (snd name)\n\
-  " S_select_channel_hook " (snd chn)\n\
-  " S_select_mix_hook " (id)\n\
-  " S_select_sound_hook " (snd)\n\
-  " S_snd_error_hook " (msg)\n\
-  " S_snd_warning_hook " (msg)\n\
-  " S_start_hook " (filename)\n\
-  " S_start_playing_hook " (snd)\n\
-  " S_stop_playing_channel_hook " (snd chn)\n\
-  " S_stop_playing_hook " (snd)\n\
-  " S_stop_playing_region_hook " (reg)\n\
-  " S_undo_hook " ()\n\
-  " S_update_hook " (snd)\n\
-\n\
-";
-
-static char functions_help_string[] =
-"In the argument lists below, snd as an\n\
-argument refers to the sound's index, and defaults to the currently selected\n\
-sound. Similarly, chn is the channel number, starting from 0, and defaults\n\
-to the currently selected channel. So if there's only one sound active, and\n\
-it has only one channel, (" S_cursor ") (" S_cursor " 0), and (" S_cursor " 0 0)\n\
-all refer to the same thing.\n\
-\n\
-  " S_abort "             ()\n\
-  " S_add_mark "          (sample snd chn)\n\
-  " S_add_player "        (player start end)\n\
-  " S_add_to_main_menu "  (menu-label)\n\
-  " S_add_to_menu "       (top-menu menu-label callback)\n\
-  " S_add_transform "     (name xlab lo hi transform)\n\
-  " S_amp_control "       (snd)\n\
-  " S_as_one_edit "       (func snd chn)\n\
-  " S_autocorrelate "     (data)\n\
-  " S_axis_info "         (snd chn grf)\n\
-  " S_backward_graph "    (count)\n\
-  " S_backward_mark "     (count)\n\
-  " S_backward_mix "      (count)\n\
-  " S_bind_key "          (key state code extended origin)\n\
-  " S_c_g "               ()\n\
-  " S_c_g_x "              ()\n\
-  " S_change_menu_label " (top-menu old-label new-label)\n\
-  " S_channel_properties "(snd chn)\n\
-  " S_channel_style "     (snd)\n\
-  " S_channels "          (snd)\n\
-  " S_chans "             (snd)\n\
-  " S_close_sound "       (snd)\n\
-  " S_close_sound_file "  (fd bytes)\n\
-  " S_color_dialog "      ()\n\
-  " S_color_p "            (obj)\n\
-  " S_comment "           (snd)\n\
-  " S_contrast_control "  (snd)\n\
-  " S_contrast_control_amp " (snd)\n\
-  " S_contrast_control_p " (snd)\n\
-  " S_convolve_selection_with " (file amp)\n\
-  " S_convolve_with "     (file amp snd chn)\n\
-  " S_count_matches "     (c-expr start snd chn)\n\
-  " S_cursor "            (snd chn)\n\
-  " S_cursor_follows_play "(snd)\n\
-  " S_cursor_position "   (snd chn)\n\
-  " S_cursor_size "       (val snd chn)\n\
-  " S_cursor_style "      (val snd chn)\n\
-  " S_data_format "       (snd)\n\
-  " S_data_location "     (snd)\n\
-  " S_data_size "         (snd)\n\
-  " S_delete_mark "       (id snd chn)\n\
-  " S_delete_marks "      (snd chn)\n\
-  " S_delete_sample "     (samp snd chn edpos)\n\
-  " S_delete_samples "    (samp samps snd chn edpos)\n\
-  " S_delete_selection "  ()\n\
-  " S_edit_fragment "     (num snd chn)\n\
-  " S_edit_header_dialog "()\n\
-  " S_edits "             (snd chn)\n\
-  " S_env_selection "     (envelope env-base snd chn)\n\
-  " S_env_sound "         (envelope samp samps env-base snd chn)\n\
-  " S_enved_dialog "      ()\n\
-  " S_equalize_panes "    (snd)\n\
-  " S_exit "              ()\n\
-  " S_expand_control "    (snd)\n\
-  " S_expand_control_hop " (snd)\n\
-  " S_expand_control_length " (snd)\n\
-  " S_expand_control_ramp " (snd)\n\
-  " S_expand_control_p "   (snd)\n\
-  " S_fft "               (rl im sgn)\n\
-  " S_file_dialog "       ()\n\
-  " S_file_name "         (snd)\n\
-  " S_filter_control_coeffs "(snd)\n\
-  " S_filter_control_env " (snd)\n\
-  " S_filter_control_order " (snd)\n\
-  " S_filter_control_p "   (snd)\n\
-  " S_filter_selection "  (env order)\n\
-  " S_filter_sound "      (env order snd chn)\n\
-  " S_find "              (c-expr start snd chn)\n\
-  " S_find_mark "         (samp snd chn edpos)\n\
-  " S_find_sound "        (filename)\n\
-  " S_forget_region "     (reg)\n\
-  " S_forward_graph "     (count)\n\
-  " S_forward_mark "      (count)\n\
-  " S_forward_mix "       (count)\n\
-  " S_free_sample_reader "(rd)\n\
-  " S_graph "             (data xlabel x0 x1 snd chn)\n\
-  " S_graph2ps "         ()\n\
-  " S_header_type "       (snd)\n\
-  " S_help_dialog "       (subject help)\n\
-  " S_in "                (ms code)\n\
-  " S_insert_region "     (beg reg snd chn)\n\
-  " S_insert_sample "     (samp value snd chn edpos)\n\
-  " S_insert_samples "    (samp data snd chn edpos)\n\
-  " S_insert_selection "  (beg snd chn)\n\
-  " S_insert_silence "    (beg num snd chn)\n\
-  " S_insert_sound "      (file beg in_chan snd chn edpos)\n\
-  " S_key "               (key state)\n\
-  " S_key_binding "       (key state)\n\
-  " S_left_sample "       (snd chn)\n\
-  " S_listener_selection "()\n\
-  " S_lisp_graph_p "       (snd chn)\n\
-  " S_list2vct "         (lst)\n\
-  " S_make_color "        (r g b)\n\
-  " S_make_player "       (snd chn)\n\
-  " S_make_region "       (beg end snd chn)\n\
-  " S_make_region_sample_reader "(start snd chn dir)\n\
-  " S_make_sample_reader "(start snd chn dir)\n\
-  " S_make_vct "          (len)\n\
-  " S_mark_home "         (mark)\n\
-  " S_mark_name "         (mark)\n\
-  " S_mark_sample "       (mark)\n\
-  " S_mark_sync "         (mark)\n\
-  " S_mark_sync_max "     ()\n\
-  " S_marks "             (snd chn pos)\n\
-  " S_mark_p "             (id)\n\
-  " S_maxamp "            (snd chn)\n\
-  " S_mix "               (file samp in_chan snd chn)\n\
-  " S_mix_panel "         ()\n\
-  " S_mix_sound "         (file samp scaler)\n\
-  " S_mixes "             ()\n\
-  " S_mix_amp "           (mix chan)\n\
-  " S_mix_amp_env "       (mix chan)\n\
-  " S_mix_anchor "        (mix)\n\
-  " S_mix_chans "         (mix)\n\
-  " S_mix_home "          (mix)\n\
-  " S_mix_frames "        (mix)\n\
-  " S_mix_locked "        (mix)\n\
-  " S_mix_name "          (mix)\n\
-  " S_mix_position "      (mix)\n\
-  " S_mix_region "        (samp reg snd chn)\n\
-  " S_mix_selection "     (samp snd chn)\n\
-  " S_mix_speed "         (mix)\n\
-  " S_mix_track "         (mix)\n\
-  " S_mix_vct "           (vct beg chans snd chn)\n\
-  " S_mix_p "              (id)\n\
-  " S_mus_sound_length "  (snd chn)\n\
-  " S_next_sample "       (rd)\n\
-  " S_new_sound "         (name type format srate chans)\n\
-  " S_open_raw_sound "    (name chans srate format)\n\
-  " S_open_sound "        (name)\n\
-  " S_open_sound_file "   (name chans srate comment)\n\
-  " S_orientation_dialog "()\n\
-  " S_peaks "             (file snd chn)\n\
-  " S_play "              (samp snd chn sync end)\n\
-  " S_play_and_wait "     (samp snd chn sync end)\n\
-  " S_play_region "       (reg to-end)\n\
-  " S_play_selection "    ()\n\
-  " S_player_home "       (obj)\n\
-  " S_player_p "           (obj)\n\
-  " S_position2x "       (xpos snd chn ap)\n\
-  " S_position2y "       (ypos snd chn ap)\n\
-  " S_preload_directory " (dir)\n\
-  " S_preload_file "      (file)\n\
-  " S_previous_sample "   (rd)\n\
-  " S_prompt_in_minibuffer "(prompt callback snd)\n\
-  " S_protect_region "    (reg protect)\n\
-  " S_ramp_channel "      (rmp0 rmp1 beg dur snd chn pos)\n\
-  " S_read_mix_sample "   (rd)\n\
-  " S_read_only "         (snd)\n\
-  " S_read_sample "       (rd)\n\
-  " S_read_track_sample " (rd)\n\
-  " S_recorder_dialog "   ()\n\
-  " S_recorder_gain "     (gain)\n\
-  " S_recorder_in_amp "   (in out)\n\
-  " S_recorder_out_amp "  (out)\n\
-  " S_redo "              (edits snd chn)\n\
-  " S_region_chans "      (reg)\n\
-  " S_region_dialog "     ()\n\
-  " S_region_frames "     (reg)\n\
-  " S_region_maxamp "     (reg)\n\
-  " S_region_sample "     (samp reg chn)\n\
-  " S_region_samples2vct "(samp samps reg chn)\n\
-  " S_region_srate "      (reg)\n\
-  " S_regions "           ()\n\
-  " S_region_p "           (id)\n\
-  " S_report_in_minibuffer "(msg snd)\n\
-  " S_reset_controls "    (snd)\n\
-  " S_restore_controls "  (snd)\n\
-  " S_reverb_control_feedback " (snd)\n\
-  " S_reverb_control_length " (snd)\n\
-  " S_reverb_control_lowpass " (snd)\n\
-  " S_reverb_control_scale " (snd)\n\
-  " S_reverb_control_p "   (snd)\n\
-  " S_reverse_selection " ()\n\
-  " S_reverse_sound "     (snd chn)\n\
-  " S_revert_sound "      (snd)\n\
-  " S_right_sample "      (snd chn)\n\
-  " S_sample "            (samp snd chn)\n\
-  " S_sample_reader_at_end_p "(rd)\n\
-  " S_sample_reader_home "(rd)\n\
-  " S_sample_reader_p "    (rd)\n\
-  " S_samples "           (samp samps snd chn)\n\
-  " S_samples2vct "      (samp samps snd chn)\n\
-  " S_save_controls "     (snd)\n\
-  " S_save_edit_history " (file snd chn)\n\
-  " S_save_listener "     (filename)\n\
-  " S_save_macros "       (filename)\n\
-  " S_save_marks "        (snd)\n\
-  " S_save_region "       (reg filename format)\n\
-  " S_save_selection "    (file header-type data-format srate comment chan)\n\
-  " S_save_sound "        (snd)\n\
-  " S_save_sound_as "     (filename snd type format srate)\n\
-  " S_save_state "        (filename)\n\
-  " S_scale_by "          (scalers snd chn)\n\
-  " S_scale_channel "     (scl beg dur snd chn pos)\n\
-  " S_scale_selection_by "(scalers)\n\
-  " S_scale_selection_to "(scalers)\n\
-  " S_scale_sound_by "    (scaler beg num snd chn)\n\
-  " S_scale_sound_to "    (norm beg num snd chn)\n\
-  " S_scale_to "          (scalers snd chn)\n\
-  " S_search_procedure "  (snd)\n\
-  " S_selected_channel "  (snd)\n\
-  " S_selected_mix "      ()\n\
-  " S_selected_sound "    ()\n\
-  " S_selection_chans "   ()\n\
-  " S_selection_frames "  ()\n\
-  " S_selection_member "  (snd chn)\n\
-  " S_selection_position "()\n\
-  " S_selection_srate "   ()\n\
-  " S_selection_p "        ()\n\
-  " S_short_file_name "   (snd)\n\
-  " S_show_controls "     (snd)\n\
-  " S_show_listener "     ()\n\
-  " S_smooth_selection "  ()\n\
-  " S_smooth_sound "      (beg num snd chn)\n\
-  " S_sound_files_in_directory "(dir)\n\
-  " S_sound_p "            (snd)\n\
-  " S_sound_properties "  (snd)\n\
-  " S_sounds "            ()\n\
-  " S_snd_apropos "       (name)\n\
-  " S_snd_error "         (str)\n\
-  " S_snd_help "          (name formatted)\n\
-  " S_snd_print "         (str)\n\
-  " S_snd_spectrum "      (data window length linear)\n\
-  " S_snd_tempnam "       ()\n\
-  " S_snd_version "       ()\n\
-  " S_snd_warning "       (str)\n\
-  " S_speed_control "     (snd)\n\
-  " S_speed_control_tones " (snd)\n\
-  " S_squelch_update "    (snd chn)\n\
-  " S_srate "             (snd)\n\
-  " S_src_selection "     (num-or-env base)\n\
-  " S_src_sound "         (num-or-env base)\n\
-  " S_start_playing "     (chans srate background)\n\
-  " S_stop_player "       (player)\n\
-  " S_stop_playing "      (snd)\n\
-  " S_swap_channels "     (snd1 chn1 snd2 chn2 beg dur)\n\
-  " S_syncd_marks "       (sync)\n\
-  " S_sync "              (snd)\n\
-  " S_time_graph_p "       (snd chn)\n\
-  " S_transform_dialog "  ()\n\
-  " S_transform_graph_p "  (snd chn)\n\
-  " S_transform_sample "  (bin slice snd chn)\n\
-  " S_transform_samples2vct " (snd chn)\n\
-  " S_transform_samples_size " (snd chn)\n\
-  " S_unbind_key "        (key state extended)\n\
-  " S_undo "              (edits snd chn)\n\
-  " S_update_lisp_graph " (snd chn)\n\
-  " S_update_sound "      ()\n\
-  " S_update_time_graph " (snd chn)\n\
-  " S_update_transform_graph " (snd chn)\n\
-  " S_widget_position "   (wid)\n\
-  " S_widget_size "       (wid)\n\
-  " S_vct_p "              (vobj)\n\
-  " S_vct_addB "          (vobj1 vobj2)\n\
-  " S_vct_convolve "      (v1 v2)\n\
-  " S_vct_copy "          (obj)\n\
-  " S_vct_fillB "         (vobj val)\n\
-  " S_vct_length "        (vobj)\n\
-  " S_vct_mapB "          (obj proc)\n\
-  " S_vct_moveB "         (obj new old back)\n\
-  " S_vct_subseq "        (obj start end v)\n\
-  " S_vct_multiplyB "     (vobj1 vobj2)\n\
-  " S_vct_offsetB "       (vobj val)\n\
-  " S_vct_ref "           (vobj pos)\n\
-  " S_vct_scaleB "        (vobj scl)\n\
-  " S_vct_setB "          (vobj pos val)\n\
-  " S_vct2samples "      (samp samps data snd chn)\n\
-  " S_vct2sound_file "   (fd vobj vals)\n\
-  " S_vector2vct "       (vect)\n\
-  " S_view_sound "        (filename)\n\
-  " S_window_height "     ()\n\
-  " S_window_width "      ()\n\
-  " S_x_bounds "          (snd chn)\n\
-  " S_x2position "       (x snd chn ap)\n\
-  " S_y_bounds "          (snd chn)\n\
-  " S_y2position "       (y snd chn ap)\n\
-  " S_yes_or_no_p "        (ques)\n\
-\n\
-";
-
-static char resource_help_string[] =
-"Snd-specific resources are:\n\
-\n\
-initFile            \"~/.snd\"\n\
-epsFile             \"snd.eps\"\n\
-overwriteCheck      0\n\
-autoResize          1\n\
-horizontalPanes     0\n\
-defaultOutputType   NeXT_sound_file\n\
-\n\
-buttonFont          -*-times-medium-r-*-*-14-*-*-*-*-*-iso8859-1\n\
-boldbuttonFont      -*-times-bold-r-*-*-14-*-*-*-*-*-iso8859-1\n\
-axisLabelFont       -*-times-medium-r-normal-*-20-*-*-*-*-*-iso8859-1\n\
-axisNumbersFont     -*-courier-medium-r-normal-*-14-*-*-*-*-*-iso8859-1\n\
-helpTextFont        9x15\n\
-listenerFont        9x15\n\
-\n\
-useSchemes          none\n\
-highlightcolor      ivory1\n\
-basiccolor          ivory2\n\
-positioncolor       ivory3\n\
-zoomcolor           ivory4\n\
-cursorcolor         red\n\
-selectioncolor      lightsteelblue1\n\
-mixcolor            lightgreen\n\
-mixfocuscolor       green2\n\
-listenercolor       aliceblue\n\
-envedwaveformcolor  blue\n\
-filterwaveformcolor blue\n\
-mixwaveformcolor    darkgray\n\
-graphcolor          white\n\
-selectedgraphcolor  white\n\
-datacolor           black\n\
-selecteddatacolor   black\n\
-markcolor           red\n\
-pushedbuttoncolor   lightsteelblue1\n\
-sashcolor           green\n\
-\n\
-zoomSliderWidth     10\n\
-positionSliderWidth 13\n\
-toggleSize           0\n\
-envedPointSize      10\n\
-channelSashIndent  -10\n\
-channelSashSize      0\n\
-sashSize            14\n\
-sashIndent          -6\n\
-\n";
 
 #ifndef _MSC_VER
 static char mix_help_string[] = 
@@ -1626,89 +1067,6 @@ mark_help_string,
 "\n\
 ",
 init_file_help_string,
-"Sndlib (selected header and data format types, " S_data_format " and " S_header_type "):\n\
-  " S_mus_next "    " S_mus_aifc "     " S_mus_riff "\n\
-  " S_mus_nist "    " S_mus_raw "      " S_mus_ircam "\n\
-  " S_mus_bshort "  " S_mus_mulaw "    " S_mus_byte "    " S_mus_lshort "\n\
-  " S_mus_bint "    " S_mus_alaw "     " S_mus_ubyte "   " S_mus_lfloat "\n\
-  " S_mus_bdouble " " S_mus_b24int "   " S_mus_bfloat "  " S_mus_lint "\n\
-\n\
-Time domain graph type (" S_time_graph_type "):\n\
-  " S_graph_once "    " S_graph_as_wavogram "\n\
-\n\
-Transform Graph style (the Transform Options Display choice, " S_transform_graph_type "):\n\
-  " S_graph_once "   " S_graph_as_sonogram "  " S_graph_as_spectrogram "\n\
-\n\
-Transform type (" S_transform_type "):\n\
-  " S_fourier_transform "  " S_wavelet_transform "   " S_cepstrum "\n\
-  " S_autocorrelation "    " S_walsh_transform "  " S_hadamard_transform " " S_haar_transform "\n\
-\n\
-FFT Window type (" S_fft_window "):\n\
-  " S_rectangular_window " " S_hann_window " " S_welch_window " "  S_parzen_window "\n\
-  " S_bartlett_window " " S_hamming_window " " S_blackman2_window " "  S_blackman3_window "\n\
-  " S_blackman4_window " " S_exponential_window " " S_riemann_window " " S_kaiser_window "\n\
-  " S_cauchy_window " " S_poisson_window " " S_gaussian_window " " S_tukey_window "\n\
-  " S_dolph_chebyshev_window "\n\
-\n\
-Transform normalization choice (" S_transform_normalization "):\n\
-  " S_dont_normalize " " S_normalize_by_channel " " S_normalize_by_sound " " S_normalize_globally "\n\
-\n\
-Zoom Focus style (" S_zoom_focus_style "):\n\
-  " S_zoom_focus_left "    " S_zoom_focus_right "   " S_zoom_focus_active " " S_zoom_focus_middle "\n\
-\n\
-X-axis style (" S_x_axis_style "):\n\
-  " S_x_axis_in_seconds "  " S_x_axis_in_samples "  " S_x_axis_as_percentage "\n\
-\n\
-Speed Control style (" S_speed_control_style "):\n\
-  " S_speed_control_as_float "     " S_speed_control_as_ratio "     " S_speed_control_as_semitone "\n\
-\n\
-Channel Combination style (" S_channel_style "):\n\
-  " S_channels_separate "  " S_channels_combined "  " S_channels_superimposed "\n\
-\n\
-Envelope Editor target (" S_enved_target "):\n\
-  " S_enved_amplitude "      " S_enved_spectrum "       " S_enved_srate "\n\
-\n\
-Graph Line style (" S_graph_style "):\n\
-  " S_graph_lines "        " S_graph_dots "         " S_graph_filled "    " S_graph_lollipops "\n\
-  " S_graph_dots_and_lines "\n\
-\n\
-Keyboard action choices (" S_bind_key "):\n\
-  " S_cursor_in_view "     " S_cursor_on_left "     " S_cursor_on_right "   " S_cursor_in_middle "\n\
-  " S_keyboard_no_action "\n\
-\n\
-Cursor style (" S_cursor_style "):\n\
-  " S_cursor_cross "    " S_cursor_line "\n\
-\n\
-Axis choice (" S_show_axes "):\n\
-  " S_show_no_axes "    " S_show_all_axes "         " S_show_x_axis "\n\
-\n\
-Graph (for " S_draw_line " etc):\n\
-  " S_time_graph "      " S_transform_graph "       " S_lisp_graph "\n\n\
-",
-variables_help_string,
-hooks_help_string,
-functions_help_string,
-"Some of the underlying sound library (Sndlib functions are available in lisp\n\
-(and more could be made available, if they're needed).\n\
-\n\
-  " S_mus_sound_samples " (filename)\n\
-  " S_mus_sound_duration " (filename)\n\
-  " S_mus_sound_frames " (filename)\n\
-  " S_mus_sound_datum_size " (filename)\n\
-  " S_mus_sound_data_location " (filename)\n\
-  " S_mus_sound_chans " (filename)\n\
-  " S_mus_sound_srate " (filename)\n\
-  " S_mus_sound_header_type " (filename)\n\
-  " S_mus_sound_data_format " (filename)\n\
-  " S_mus_sound_length " (filename)\n\
-  " S_mus_sound_type_specifier " (filename)\n\
-  " S_mus_header_type_name " (type)\n\
-  " S_mus_data_format_name " (format)\n\
-  " S_mus_sound_comment " (filename)\n\
-  " S_mus_data_format_bytes_per_sample " (format)\n\
-\n\
-",
-resource_help_string,
 NULL);
 }
 
@@ -1731,7 +1089,7 @@ void marks_help(snd_state *ss) {snd_help_with_url(ss, "Marks", "#marks", mark_he
 void mix_help(snd_state *ss) {snd_help_with_url_and_wrap(ss, "Mixing", "#mixingfiles", mix_help_string);}
 void sound_files_help(snd_state *ss) {snd_help_with_url(ss, "Format", "#formats", sound_files_help_string);}
 void recording_help(snd_state *ss) {snd_help_with_url_and_wrap(ss, "Recording", "#recordfile", recording_help_string);}
-void init_file_help(snd_state *ss) {ssnd_help_with_url(ss, "Customization", "grfsnd.html", init_file_help_string, "\n", resource_help_string, NULL);}
+void init_file_help(snd_state *ss) {ssnd_help_with_url(ss, "Customization", "extsnd.html", init_file_help_string, NULL);}
 
 
 /* -------- dialog help button -------- */
@@ -1740,8 +1098,8 @@ void help_dialog_help(snd_state *ss)
 {
   snd_help_with_wrap(ss,
 		     "Help",
-"You can get help within Snd either from the Help Menu items, or by clicking on \
-some portion of the Snd display while the cursor is '?'.  See Click for Help in the Help Menu.");
+"You can get help within Snd either from the Help Menu items or from the " S_snd_help " function. \
+Or read the %#$*@! documentation.");
 }
 
 void transform_dialog_help(snd_state *ss)
@@ -1873,226 +1231,6 @@ number of samples in the sound, and 'entry' sorts by the order the sound appears
 absence of explicit sorting.  The variable " S_previous_files_sort " (default 0: \
 unsorted) refers to this menu.");	   
 }
-
-#ifndef _MSC_VER
-static char CLM_help_string[] = 
-S_all_pass "            (gen input pm)       all-pass filter\n\
-" S_all_pass_p "           (gen)                #t if gen is all-pass filter\n\
-" S_amplitude_modulate "  (carrier in1 in2)    amplitude modulation\n\
-" S_array_interp "        (arr x)              interpolated array lookup\n\
-" S_array2file "         (filename vct len srate channels)\n\
-" S_asymmetric_fm "       (gen index fm)       asymmetric-fm generator\n\
-" S_asymmetric_fm_p "      (gen)                #t if gen is asymmetric-fm generator\n\
-" S_buffer2frame "       (gen frame           buffer generator returning frame\n\
-" S_buffer2sample "      (gen)                buffer generator returning sample\n\
-" S_buffer_empty_p "       (gen)                #t if buffer has no data\n\
-" S_buffer_p "             (gen)                #t if gen is buffer generator\n\
-" S_clear_array "         (arr)                set all elements of arr to 0.0\n\
-" S_comb "                (gen input pm)       comb filter\n\
-" S_comb_p "               (gen)                #t if gen is comb filter\n\
-" S_contrast_enhancement "(input index 1.0))   a kind of phase modulation\n\
-" S_convolution "         (sig1 sig2 n)        convolve sig1 with sig2 (size n), returning new sig1\n\
-" S_convolve "            (gen input_function) convolve generator\n\
-" S_convolve_p "           (gen)                #t if gen is convolve generator\n\
-" S_convolve_files "      (f1 f2 maxamp outf)  convolve f1 with f2, normalize to maxamp, write outf\n\
-" S_db_linear "          (db)                 translate dB value to linear\n\
-" S_degrees_radians "    (deg)                translate degrees to radians\n\
-" S_delay "               (gen input pm)       delay line\n\
-" S_delay_p "              (gen)                #t if gen is delay line\n\
-" S_dot_product "         (sig1 sig2)          return dot-product of sig1 with sig2\n\
-" S_env "                 (gen)                envelope generator\n\
-" S_env_interp "          (x env (base 1.0))   return value of env at x\n\
-" S_env_p "                (gen)                #t if gen is env (from make_env)\n\
-" S_mus_fft "             (rl im n sign)       fft of rl and im (sign = -1 for ifft), result in rl\n\
-" S_file2array "         (filename chan start len vct)\n\
-" S_file2frame "         (gen loc frame)      return frame from file at loc\n\
-" S_file2frame_p "        (gen)                #t if gen is file->frame generator\n\
-" S_file2sample "        (gen loc chan)       return sample from file at loc\n\
-" S_file2sample_p "       (gen)                #t if gen is file->sample generator\n\
-" S_filter "              (gen input)          filter\n\
-" S_filter_p "             (gen)                #t if gen is filter\n\
-" S_fir_filter "          (gen input)          FIR filter\n\
-" S_fir_filter_p "         (gen)                #t if gen is fir filter\n\
-" S_formant "             (gen input)          formant generator\n\
-" S_formant_bank "        (scls gens inval)    bank for formants\n\
-" S_formant_p "            (gen)                #t if gen is formant generator\n\
-" S_frame_multiply "              (fr1 fr2 outfr)      element_wise multiply\n\
-" S_frame_add "              (fr1 fr2 outfr)      element_wise add\n\
-" S_frame2buffer "       (buf frame)          add frame to buffer\n\
-" S_frame2file "         (gen loc frame)      write (add) frame to file at loc\n\
-" S_frame2file_p "        (gen)                #t if gen is frame->file generator\n\
-" S_frame2frame "        (mixer frame outfr)  pass frame through mixer\n\
-" S_frame2list "         (frame)              return list of  frame's contents\n\
-" S_frame_ref "           (frame chan)         return frame[chan]\n\
-" S_frame2sample "       (frmix frame)        pass frame through frame or mixer to produce sample\n\
-" S_frame_set "          (frame chan val)     frame[chan] = val\n\
-" S_frame_p "              (gen)                #t if gen is frame object\n\
-" S_granulate "           (gen input_function) granular synthesis generator\n\
-" S_granulate_p "          (gen)                #t if gen is granulate generator\n\
-" S_hz_radians "         (freq)               translate freq to radians/sample\n\
-" S_iir_filter "          (gen input)          IIR filter\n\
-" S_iir_filter_p "         (gen)                #t if gen is iir-filter\n\
-" S_in_any "              (loc chan stream)    return sample in stream at loc and chan\n\
-" S_in_hz "               (freq)               translate freq to radians/sample\n\
-" S_ina "                 (loc stream)         return sample in stream at loc, chan 0\n\
-" S_inb "                 (loc stream)         return sample in stream at loc, chan 1\n\
-" S_linear_db "          (val)                translate linear val to dB\n\
-" S_locsig "              (gen loc input)      place input in output channels at loc\n\
-" S_locsig_ref "          (gen chan)           locsig-scaler[chan]\n\
-" S_locsig_reverb_ref "   (gen chan)           locsig-reverb-scaler[chan]\n\
-" S_locsig_set "         (gen chan val)       locsig-scaler[chan] = val\n\
-" S_locsig_reverb_set "  (gen chan val)       locsig-reverb-scaler[chan] = val\n\
-" S_locsig_p "             (gen)                #t if gen is locsig generator\n\
-" S_make_all_pass "       (feedback feedforward size max-size initial-contents initial-element)\n\
-" S_make_asymmetric_fm "  (frequency initial-phase r ratio)\n\
-" S_make_buffer "         (size fill-time)\n\
-" S_make_comb "           (scaler size max-size initial-contents initial-element)\n\
-" S_make_convolve "       (input filter fft-size)\n\
-" S_make_delay "          (size initial-contents initial-element max-size)\n\
-" S_make_env "            (envelope scaler duration offset base end start)\n\
-" S_make_fft_window "     (type size)\n\
-" S_make_file2frame "    (name)\n\
-" S_make_file2sample "   (name)\n\
-" S_make_filter "         (order xcoeffs ycoeffs)\n\
-" S_make_fir_filter "     (order xcoeffs)\n\
-" S_make_formant "        (radius frequency gain)\n\
-" S_make_frame "          (chans vals...)\n\
-" S_make_frame2file "    (name chans format type)\n\
-" S_make_granulate "      (input expansion length scaler hop ramp jitter max-size)\n\
-" S_make_iir_filter "     (order ycoeffs)\n\
-" S_make_locsig "         (degree distance reverb output revout channels)\n\
-" S_make_mixer "          (chans vals...)\n\
-" S_make_notch "          (scaler size max-size initial-contents initial-element)\n\
-" S_make_one_pole "       (a0 b1)\n\
-" S_make_one_zero "       (a0 a1)\n\
-" S_make_oscil "          (frequency initial-phase)\n\
-" S_make_phase_vocoder "  (input fftsize overlap interp pitch analyze edit synthesize)\n\
-" S_make_ppolar "         (radius frequency)\n\
-" S_make_pulse_train "    (frequency amplitude initial-phase)\n\
-" S_make_rand "           (frequency amplitude)\n\
-" S_make_rand_interp "    (frequency amplitude)\n\
-" S_make_readin "         (file channel start)\n\
-" S_make_sample2file "   (name chans format type)\n\
-" S_make_sawtooth_wave "  (frequency amplitude initial-phase)\n\
-" S_make_sine_summation " (frequency initial-phase n a ratio)\n\
-" S_make_square_wave "    (frequency amplitude initial-phase)\n\
-" S_make_src "            (input srate width)\n\
-" S_make_sum_of_cosines " (frequency initial-phase cosines)\n\
-" S_make_table_lookup "   (frequency initial-phase wave)\n\
-" S_make_triangle_wave "  (frequency amplitude initial-phase)\n\
-" S_make_two_pole "       (a0 b1 b2)\n\
-" S_make_two_zero "       (a0 a1 a2)\n\
-" S_make_wave_train "     (frequency initial-phase wave)\n\
-" S_make_waveshape "      (frequency partials)\n\
-" S_make_zpolar "         (radius frequency)\n\
-" S_mixer_multiply "              (mix1 mix2 outmx)    matrix multiply of mix1 and mix2\n\
-" S_mixer_ref "           (mix in out)         mix-scaler[in, out]\n\
-" S_mixer_set "          (mix in out val)     mix-scaler[in, out] = val\n\
-" S_mixer_p "              (gen)                #t if gen is mixer object\n\
-" S_move_locsig "         (gen degree distance) move locsig placement\n\
-" S_multiply_arrays "     (arr1 arr2)          arr1[i] *= arr2[i]\n\
-" S_mus_a0 "              (gen)                a0 field (simple filters)\n\
-" S_mus_a1 "              (gen)                a1 field (simple filters)\n\
-" S_mus_a2 "              (gen)                a2 field (simple filters)\n\
-" S_mus_array_print_length "()                 how many array elements to print in mus_describe\n\
-" S_mus_b1 "              (gen)                b1 field (simple filters)\n\
-" S_mus_b2 "              (gen)                b2 field (simple filters)\n\
-" S_mus_bank "            (gens amps args1 args2)\n\
-" S_mus_channel "         (gen)                channel of gen\n\
-" S_mus_channels "        (gen)                channels of gen\n\
-" S_mus_cosines "         (gen)                cosines of sum-of-cosines gen\n\
-" S_mus_data "            (gen)                data array of gen\n\
-" S_mus_feedback "        (gen)                feedback term of gen (simple filters)\n\
-" S_mus_feedforward "     (gen)                feedforward term of gen (all-pass)\n\
-" S_mus_formant_radius "  (gen)                formant radius\n\
-" S_mus_frequency "       (gen)                frequency of gen (Hz)\n\
-" S_mus_hop "             (gen)                hop amount of gen (granulate)\n\
-" S_mus_increment "       (gen)                increment of gen (src, readin, granulate)\n\
-" S_mus_input_p "          (gen)                #t if gen is input source\n\
-" S_mus_length "          (gen)                length of gen\n\
-" S_mus_location "        (gen)                location (read point) of gen\n\
-" S_mus_mix "             (outfile infile outloc frames inloc mixer envs)\n\
-" S_mus_order "           (gen)                order of gen (filters)\n\
-" S_mus_output_p "         (gen)                #t if gen is output generator\n\
-" S_mus_phase "           (gen)                phase of gen (radians)\n\
-" S_mus_ramp "            (gen)                ramp time of gen (granulate)\n\
-" S_mus_random "          (val)                random numbers bewteen -val and val\n\
-" S_mus_run "             (gen arg1 arg2)      apply gen to args\n\
-" S_mus_scaler "          (gen)                scaler of gen\n\
-" S_mus_srate "           ()                   current sampling rate\n\
-" S_mus_xcoeffs "         (gen)                feedforward (FIR) coeffs of filter\n\
-" S_mus_ycoeffs "         (gen)                feedback (IIR) coeefs of filter\n\
-" S_notch "               (gen input pm)       notch filter\n\
-" S_notch_p "              (gen)                #t if gen is notch filter\n\
-" S_one_pole "            (gen input)          one-pole filter\n\
-" S_one_pole_p "           (gen)                #t if gen is one-pole filter\n\
-" S_one_zero "            (gen input)          one-zero filter\n\
-" S_one_zero_p "           (gen)                #t if gen is one-zero filter\n\
-" S_oscil "               (gen fm pm)          sine wave generator\n\
-" S_oscil_bank "          (scls gens invals)   bank for oscils\n\
-" S_oscil_p "              (gen)                #t if gen is oscil generator\n\
-" S_out_any "             (loc samp chan stream) write (add) samp to stream at loc in channel chan\n\
-" S_outa "                (loc samp stream)    write (add) samp to stream at loc in chan 0\n\
-" S_outb "                (loc samp stream)    write (add) samp to stream at loc in chan 1\n\
-" S_outc "                (loc samp stream)    write (add) samp to stream at loc in chan 2\n\
-" S_outd "                (loc samp stream)    write (add) samp to stream at loc in chan 3\n\
-" S_partials2polynomial"(partials ind)       create waveshaping polynomial from partials\n\
-" S_partials2wave "      (synth-data table norm) load table from synth-data\n\
-" S_partials2waveshape " (partials norm size) create waveshaping table from partials\n\
-" S_phasepartials2wave "(synth-data table norm) load table from synth-data\n\
-" S_phase_vocoder "       (gen input)          phase vocoder generator\n\
-" S_phase_vocoder_p "      (gen)                #t if gen is a phase-vocoder generator\n\
-" S_polynomial "          (coeffs x)           evaluate polynomial at x\n\
-" S_pulse_train "         (gen fm)             pulse-train generator\n\
-" S_pulse_train_p "        (gen)                #t if gen is pulse-train generator\n\
-" S_radians_degrees "    (rads)               convert radians to degrees\n\
-" S_radians_hz "         (rads)               convert radians/sample to Hz\n\
-" S_rand "                (gen fm)             random number generator\n\
-" S_rand_interp "         (gen fm)             interpolating random number generator\n\
-" S_rand_interp_p "        (gen)                #t if gen is interpolating random number generator\n\
-" S_rand_p "               (gen)                #t if gen is random number generator\n\
-" S_readin "              (gen)                read one value from associated input stream\n\
-" S_readin_p "             (gen)                #t if gen is readin generator\n\
-" S_rectangular2polar "  (rl im)              translate from rectangular to polar coordinates\n\
-" S_restart_env "         (env)                return to start of env\n\
-" S_ring_modulate "       (sig1 sig2)          sig1 * sig2 (element-wise)\n\
-" S_sample2buffer "      (buf samp)           store samp in buffer\n\
-" S_sample2file "        (gen loc chan val)   store val in file at loc in channel chan\n\
-" S_sample2file_p "       (gen)                #t if gen is sample->file generator\n\
-" S_sample2frame "       (frmix samp outfr)   convert samp to frame\n\
-" S_sawtooth_wave "       (gen fm)             sawtooth-wave generator\n\
-" S_sawtooth_wave_p "      (gen)                #t if gen is sawtooth-wave generator\n\
-" S_sine_summation "      (gen fm)             sine-summation generator\n\
-" S_sine_summation_p "     (gen)                #t if gen is sine-summation generator\n\
-" S_spectrum "            (rl im win type)     produce spectrum of data in rl\n\
-" S_square_wave "         (gen fm)             square-wave generator\n\
-" S_square_wave_p "        (gen)                #t if gen is square-wave generator\n\
-" S_src "                 (gen fm input_function) sample rate converter\n\
-" S_src_p "                (gen)                #t if gen is sample-rate converter\n\
-" S_sum_of_cosines "      (gen fm)             sum-of-cosines (pulse-train) generator\n\
-" S_sum_of_cosines_p "     (gen)                #t if gen is sum-of-cosines generator\n\
-" S_sum_of_sines "        (amps phases)        additive synthesis\n\
-" S_table_lookup "        (gen fm)             table-lookup generator\n\
-" S_table_lookup_p "       (gen)                #t if gen is table-lookup generator\n\
-" S_tap "                 (gen pm)             delay line tap\n\
-" S_triangle_wave "       (gen fm)             triangle-wave generator\n\
-" S_triangle_wave_p "      (gen)                #t if gen is triangle-wave generator\n\
-" S_two_pole "            (gen input)          two-pole filter\n\
-" S_two_pole_p "           (gen)                #t if gen is two-pole filter\n\
-" S_two_zero "            (gen input)          two-zero filter\n\
-" S_two_zero_p "           (gen)                #t if gen is two-zero filter\n\
-" S_wave_train "          (gen fm)             wave-train generator\n\
-" S_wave_train_p "         (gen)                #t if gen is wave-train generator\n\
-" S_waveshape "           (gen index fm)       waveshaping generator\n\
-" S_waveshape_p "          (gen)                #t if gen is waveshape generator\n\
-";
-#else
-static char CLM_help_string[] = "";
-#endif
-
-static char *CLM_help(void) {return(CLM_help_string);}
-void clm_help(snd_state *ss) {snd_help_with_url(ss, "CLM", "grfsnd.html#sndwithclm", CLM_help());}
-
 
 #define GLYPH_WIDTH 11
 

@@ -55,7 +55,6 @@
   <li><a href="#sndwithgtk">Snd and Gtk</a>
   <li><a href="#sndwithnogui">Snd with no GUI and as script engine</a>
   <li><a href="#sndandruby">Snd with Ruby</a>
-  <li><a href="#sndwithgmeteor">Snd and gmeteor</a>
   <li><a href="#sndandladspa">Snd and LADSPA</a>
   <li><a href="#sndandx">Driving Snd remotely</a>
   <li><a href="#sndandgl">Snd and OpenGL</a>
@@ -1922,42 +1921,6 @@ Ruby version of bird.scm. My very informal timing tests indicate that
 Guile and Ruby run at the same speed.
 Michael Scholz has translated bess.scm to Ruby: bess.rb,
 and much of examp.scm: examp.rb.
-</p>
-<br>
-
-<span class=bbox><h3><A NAME="sndwithgmeteor">Snd and gmeteor</a></h3></span>
-
-<p><A NAME="gmeteor">gmeteor</A> is a Guile-based filter design package
-written by Matteo Frigo, based on the Meteor system of Steiglitz, Parks,
-and Kaiser.  It is freely available <a href="ftp://ftp.prosa.it/pub/gmeteor/gmeteor-0.9.tar.gz">here</a>.
-Once installed, you can load it into Snd and use it to define filters:
-(here I'm typing in Snd's listener and editing the numbers for legibility; the file
-gm.scm is taken nearly verbatim from the gmeteor script):</p>
-<pre>
-&gt;<em class=typing>(load "gm.scm")</em>
-<em class=listener>#&lt;unspecified&gt;</em>
-&gt;<em class=typing>(load "../test/gmeteor-0.9/examples/example-1.scm")</em>
-<em class=listener>#&lt;unspecified&gt;</em>
-&gt;<em class=typing>*coefficients*</em>
-<em class=listener>#(0.0197 -0.0406 -0.0739 0.1340 0.4479 0.4479 0.13403 -0.0739 -0.0406 0.0197)</em>
-&gt;<em class=typing>(filter-sound (vector-&gt;vct *coefficients*) (vector-length *coefficients*))</em>
-</pre>
-
-<!--
-<p>Since every Snd text widget is actually a little lisp listener in disguise,
-we can use gmeteor directly in the Control Panel
-filter text field (where the list of breakpoints is specified).
-I don't currently have a version of gmeteor compatible with my
-version of Snd, but the basic idea is to have a function
-that sets the filter-control-order based on the length of the *coefficients*
-vector, then returns that vector as a list.
-</p>
--->
-
-<p>There is one small problem: both Snd (CLM) and gmeteor define a function
-named make-filter.  Someday I'll learn enough about the Guile module system to
-know how to keep gmeteor's make-filter from clobbering CLM's.  (There may
-be others as well -- this is the one I happened to notice).
 </p>
 <br>
 

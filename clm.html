@@ -1196,8 +1196,10 @@ See also the noi-attempt, filter-white-noise, and testR instruments in <a href="
    <a name="envelope-&gt;coeffs"><em class=def>envelope-&gt;coeffs</em></a> &amp;key <i>order envelope dc</i>
 </pre>
 <p>These are the general FIR/IIR filters of arbitrary order.
-See <a href="fltdes.lisp">fltdes.lisp</a> for functions compatible with these filters that provide the
-coefficients for various FIR and IIR filters.</p>
+See <a href="fltdes.lisp">fltdes.lisp</a> and dsp.scm for functions compatible with these filters that provide the
+coefficients for various FIR and IIR filters.  The <i>order</i> argument is one greater than the nominal filter
+order (it is the size of the arrays).
+</p>
 
 <table border align=left hspace=20>
 <tr><td colspan=2><center>general filter methods</center></td></tr>

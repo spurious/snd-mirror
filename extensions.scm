@@ -542,6 +542,17 @@ If 'check' is #f, the hooks are removed."
 							 channel-funcs
 							 (list-ref (cadddr state) chn))
 					       (set! (squelch-update snd chn) #f))))))))
+    ;; next hooks save the current states info in the saved state file
+    (add-hook! open-hook (lambda (filename)
+			   (if (and (null? states)
+				    (defined? '-saved-remember-sound-states-states-))
+			       (set! states -saved-remember-sound-states-states-))
+			   #f))
+    (add-hook! after-save-state-hook (lambda (filename)
+				       (let ((fd (open filename (logior O_RDWR O_APPEND))))
+					 (format fd "~%~%;;; from remember-sound-state in extensions.scm~%")
+					 (format fd "(define -saved-remember-sound-states-states- '~A)~%" states)
+					 (close fd))))
     'remembering!))
 
 

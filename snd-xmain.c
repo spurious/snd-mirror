@@ -268,6 +268,10 @@ static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boo
    * of property changed event is identical etc), so I'll do what I can...
    * This problem may be a side-effect of using non-transient dialogs:
    * perhaps XSetTransientFor would handle this more cleanly?
+   *
+   * Also, ideally we'd equalize/relative-panes upon maxify, but ICCC thinks maxify
+   *   is the same as map (i.e. from iconified state), and the only difference
+   *   I can see in the mwm code is the window size.
    */
   if (ev->type == UnmapNotify) 
     {
