@@ -222,7 +222,7 @@ file_info *make_file_info(char *fullname, snd_state *ss)
 #endif
       if (type == MUS_RAW)
 	{
-	  SCM res = SCM_BOOL_F;
+	  SCM res = FALSE_VALUE;
 	  SCM procs, arg1;
 	  int len, srate, chans, data_format, data_location, bytes;
 
@@ -244,7 +244,7 @@ file_info *make_file_info(char *fullname, snd_state *ss)
 	      arg1 = TO_SCM_STRING(fullname);
 	      while (NOT_NULL_P(procs))
 		{
-		  res = CALL2(CAR(procs), arg1, res, S_open_raw_sound_hook);
+		  res = CALL_2(CAR(procs), arg1, res, S_open_raw_sound_hook);
 		  procs = CDR (procs);
 		}
 	    }
@@ -568,7 +568,7 @@ static SCM memo_sound, open_hook, close_hook, just_sounds_hook;
 static int dont_open(char *file)
 {
   char *mcf = NULL;
-  SCM res = SCM_BOOL_F, fstr;
+  SCM res = FALSE_VALUE, fstr;
   if (HOOKED(open_hook))
     {
       mcf = mus_expand_filename(file);
@@ -583,7 +583,7 @@ static int dont_open(char *file)
 
 static int dont_close(snd_info *sp)
 {
-  SCM res = SCM_BOOL_F;
+  SCM res = FALSE_VALUE;
   if (HOOKED(close_hook))
     res = g_c_run_or_hook(close_hook,
 			  LIST_1(TO_SMALL_SCM_INT(sp->index)),
@@ -593,7 +593,7 @@ static int dont_close(snd_info *sp)
 
 static int just_sounds_happy(char *filename)
 {
-  SCM res = SCM_BOOL_T;
+  SCM res = TRUE_VALUE;
   if (HOOKED(just_sounds_hook))
     res = g_c_run_or_hook(just_sounds_hook,
 			  LIST_1(TO_SCM_STRING(filename)),
@@ -616,7 +616,7 @@ static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select, int
   if (mcf) FREE(mcf);
   if (sp)
     {
-      SET_SCM_VALUE(memo_sound, TO_SMALL_SCM_INT(sp->index));
+      SET_OBJECT_REF(memo_sound, TO_SMALL_SCM_INT(sp->index));
       sp->write_date = file_write_date(sp->filename);
       sp->need_update = 0;
       ss->active_sounds++;
@@ -785,8 +785,8 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
   sp->reverb_control_p = 0;
   sp->reverb_control_scale = 0.0;
   sp->filter_control_p = 0;
-  sp->search_proc = SCM_UNDEFINED;
-  sp->prompt_callback = SCM_UNDEFINED;
+  sp->search_proc = UNDEFINED_VALUE;
+  sp->prompt_callback = UNDEFINED_VALUE;
   sp->index = TEMP_SOUND_INDEX;
   sp->sgx = NULL;
   len = (hdr->samples) / (hdr->chans);
@@ -1457,10 +1457,10 @@ void make_prevfiles_list_1(snd_state *ss)
 	      SCM file_list;
 	      int j;
 	      char *name;
-	      file_list = SCM_EOL;
+	      file_list = EMPTY_LIST;
 	      for (i = prevfile_end; i >= 0; i--) 
 		file_list = CONS(TO_SCM_STRING(prevfullnames[i]), file_list);
-	      file_list = CALL1(ss->file_sort_proc, file_list, "previous files sort");
+	      file_list = CALL_1(ss->file_sort_proc, file_list, "previous files sort");
 	      if (LIST_P(file_list))
 		{
 		  for (i = 0; (i < len) && (NOT_NULL_P(file_list)); i++, file_list = CDR(file_list))
@@ -1508,7 +1508,7 @@ static SCM g_set_previous_files_sort_procedure(SCM proc)
   ss = get_global_state();
   if (PROCEDURE_P(ss->file_sort_proc))
     snd_unprotect(ss->file_sort_proc);
-  ss->file_sort_proc = SCM_UNDEFINED;
+  ss->file_sort_proc = UNDEFINED_VALUE;
   error = procedure_ok(proc, 1, "file sort", "sort", 1);
   if (error == NULL)
     {
@@ -2112,9 +2112,9 @@ Equivalent to Guile (stat:mtime (stat file))"
 static SCM g_sound_loop_info(SCM snd)
 {
   int *res;
-  SCM sres = SCM_EOL;
+  SCM sres = EMPTY_LIST;
   snd_info *sp;
-  SND_ASSERT_SND(S_sound_loop_info, snd, 1);
+  ASSERT_SOUND(S_sound_loop_info, snd, 1);
   sp = get_sp(snd);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_sound_loop_info, snd));
@@ -2135,13 +2135,13 @@ static SCM g_set_sound_loop_info(SCM snd, SCM vals)
   char *tmp_file;
   file_info *hdr;
   int type, len = 0;
-  SCM start0 = SCM_UNDEFINED, end0 = SCM_UNDEFINED, start1 = SCM_UNDEFINED, end1 = SCM_UNDEFINED;
-  SND_ASSERT_SND("set-" S_sound_loop_info, snd, 1);
+  SCM start0 = UNDEFINED_VALUE, end0 = UNDEFINED_VALUE, start1 = UNDEFINED_VALUE, end1 = UNDEFINED_VALUE;
+  ASSERT_SOUND("set-" S_sound_loop_info, snd, 1);
   ASSERT_TYPE(NOT_BOUND_P(vals) || LIST_P_WITH_LENGTH(vals, len), vals, ARG2, "set-" S_sound_loop_info, "a list");
   if (NOT_BOUND_P(vals))
     {
       vals = snd;
-      sp = get_sp(SCM_UNDEFINED);
+      sp = get_sp(UNDEFINED_VALUE);
     }
   else sp = get_sp(snd);
   if (sp == NULL) 
@@ -2177,7 +2177,7 @@ static SCM g_set_sound_loop_info(SCM snd, SCM vals)
   move_file(tmp_file, sp->filename);
   FREE(tmp_file);
   snd_update(sp->state, sp);
-  return(SCM_BOOL_T);
+  return(TRUE_VALUE);
 }
 
 static SCM g_soundfont_info(SCM snd)
@@ -2186,10 +2186,10 @@ static SCM g_soundfont_info(SCM snd)
   #define H_soundfont_info "(" S_soundfont_info " &optional snd) -> list of lists describing snd as a soundfont. \
 each inner list has the form: (name start loopstart loopend)"
 
-  SCM inlist = SCM_EOL, outlist = SCM_EOL;
+  SCM inlist = EMPTY_LIST, outlist = EMPTY_LIST;
   int i, lim;
   snd_info *sp;
-  SND_ASSERT_SND(S_soundfont_info, snd, 1);
+  ASSERT_SOUND(S_soundfont_info, snd, 1);
   sp = get_sp(snd);
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_soundfont_info, snd));
@@ -2238,7 +2238,7 @@ static SCM g_sound_files_in_directory(SCM dirname)
   dir *dp = NULL;
   char *name = NULL;
   int i;
-  SCM res = SCM_EOL;
+  SCM res = EMPTY_LIST;
   ASSERT_TYPE(STRING_P(dirname), dirname, ARGn, S_sound_files_in_directory, "a string");
   name = TO_C_STRING(dirname);
   if (name)
@@ -2263,13 +2263,13 @@ void g_init_file(SCM local_doc)
   DEFINE_PROC(S_preload_file,                g_preload_file, 1, 0, 0,                 H_preload_file);
   DEFINE_PROC(S_sound_files_in_directory,    g_sound_files_in_directory, 1, 0, 0,     H_sound_files_in_directory);
 
-  define_procedure_with_setter(S_sound_loop_info, SCM_FNC g_sound_loop_info, H_sound_loop_info,
-			       "set-" S_sound_loop_info, SCM_FNC g_set_sound_loop_info, local_doc, 0, 1, 1, 1);
+  define_procedure_with_setter(S_sound_loop_info, PROCEDURE g_sound_loop_info, H_sound_loop_info,
+			       "set-" S_sound_loop_info, PROCEDURE g_set_sound_loop_info, local_doc, 0, 1, 1, 1);
 #if HAVE_GUILE
 #if HAVE_SCM_C_DEFINE
-  memo_sound = scm_permanent_object(scm_c_define(S_memo_sound, SCM_BOOL_F));
+  memo_sound = scm_permanent_object(scm_c_define(S_memo_sound, FALSE_VALUE));
 #else
-  memo_sound = gh_define(S_memo_sound, SCM_BOOL_F);
+  memo_sound = gh_define(S_memo_sound, FALSE_VALUE);
 #endif
 #endif
 
@@ -2294,6 +2294,6 @@ be omitted (location defaults to 0, and length defaults to the file length in by
 
   open_raw_sound_hook = MAKE_HOOK(S_open_raw_sound_hook, 2, H_open_raw_sound_hook);    /* args = filename current-result */
 
-  define_procedure_with_setter(S_previous_files_sort_procedure, SCM_FNC g_previous_files_sort_procedure, H_previous_files_sort_procedure,
-			       "set-" S_previous_files_sort_procedure, SCM_FNC g_set_previous_files_sort_procedure, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_previous_files_sort_procedure, PROCEDURE g_previous_files_sort_procedure, H_previous_files_sort_procedure,
+			       "set-" S_previous_files_sort_procedure, PROCEDURE g_set_previous_files_sort_procedure, local_doc, 0, 0, 1, 0);
 }

@@ -131,7 +131,7 @@ static SCM added_transform_proc(int type)
   for (i = 0; i < added_transforms_top; i++)
     if (added_transforms[i]->type == type)
       return(added_transforms[i]->proc);
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM before_transform_hook;
@@ -1444,7 +1444,7 @@ static int apply_fft_window(fft_state *fs)
 	int len, i;
 	sfd = g_c_make_sample_reader(sf);
 	snd_protect(sfd);
-	res = CALL2(added_transform_proc(cp->transform_type), 
+	res = CALL_2(added_transform_proc(cp->transform_type), 
 		    TO_SCM_INT(data_len), 
 		    sfd,
 		    "added transform func");
@@ -2231,7 +2231,7 @@ static SCM g_autocorrelate(SCM reals)
   ASSERT_TYPE(((VCT_P(reals)) || (VECTOR_P(reals))), reals, ARGn, S_autocorrelate, "a vct or vector");
   if (VCT_P(reals))
     {
-      v1 = (vct *)SND_VALUE_OF(reals);
+      v1 = (vct *)OBJECT_REF(reals);
       rl = v1->data;
       n = v1->length;
     }
@@ -2290,7 +2290,7 @@ and otherwise returns a list (total-size active-bins active-slices)"
 
   chan_info *cp;
   sono_info *si;
-  SND_ASSERT_CHAN(S_transform_samples_size, snd, chn, 1);
+  ASSERT_CHANNEL(S_transform_samples_size, snd, chn, 1);
   cp = get_cp(snd, chn, S_transform_samples_size);
   if (!(cp->graph_transform_p)) 
     return(INTEGER_ZERO);
@@ -2314,7 +2314,7 @@ returns the current transform sample at bin and slice in snd channel chn (assumi
   int fbin, fslice;
   ASSERT_TYPE(INTEGER_IF_BOUND_P(bin), bin, ARG1, S_transform_sample, "an integer");
   ASSERT_TYPE(INTEGER_IF_BOUND_P(slice), slice, ARG2, S_transform_sample, "an integer");
-  SND_ASSERT_CHAN(S_transform_sample, snd_n, chn_n, 3);
+  ASSERT_CHANNEL(S_transform_sample, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_transform_sample);
   if (cp->graph_transform_p)
     {
@@ -2341,7 +2341,7 @@ returns the current transform sample at bin and slice in snd channel chn (assumi
 	    }
 	}
     }
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }  
 
 static SCM g_transform_samples(SCM snd_n, SCM chn_n)
@@ -2353,7 +2353,7 @@ static SCM g_transform_samples(SCM snd_n, SCM chn_n)
   int bins, slices, i, j, len;
   SCM new_vect, tmp_vect;
   SCM *vdata, *tdata;
-  SND_ASSERT_CHAN(S_transform_samples, snd_n, chn_n, 1);
+  ASSERT_CHANNEL(S_transform_samples, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_transform_samples);
   if (cp->graph_transform_p)
     {
@@ -2393,7 +2393,7 @@ static SCM g_transform_samples(SCM snd_n, SCM chn_n)
 	    }
 	}
     }
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }  
 
 static SCM transform_samples2vct(SCM snd_n, SCM chn_n, SCM v)
@@ -2407,7 +2407,7 @@ returns a vct object (vct-obj if passed), with the current transform data from s
   int i, j, k, len, bins, slices;
   Float *fvals;
   vct *v1 = get_vct(v);
-  SND_ASSERT_CHAN(S_transform_samples2vct, snd_n, chn_n, 1);
+  ASSERT_CHANNEL(S_transform_samples2vct, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_transform_samples2vct);
   if ((cp->graph_transform_p) && (cp->fft))
     {
@@ -2444,7 +2444,7 @@ returns a vct object (vct-obj if passed), with the current transform data from s
 	    }
 	}
     }
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }  
 
 static SCM g_snd_transform(SCM type, SCM data, SCM hint)

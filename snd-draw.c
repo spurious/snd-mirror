@@ -54,7 +54,7 @@ axis_info *get_ap(chan_info *cp, int ap_id, const char *caller)
 
 static SCM g_draw_line(SCM x0, SCM y0, SCM x1, SCM y1, SCM snd, SCM chn, SCM ax)
 {
-  SND_ASSERT_CHAN(S_draw_line, snd, chn, 5);
+  ASSERT_CHANNEL(S_draw_line, snd, chn, 5);
   ASSERT_TYPE(NUMBER_P(x0), x0, ARG1, S_draw_line, "a number");
   ASSERT_TYPE(NUMBER_P(y0), y0, ARG2, S_draw_line, "a number");
   ASSERT_TYPE(NUMBER_P(x1), x1, ARG3, S_draw_line, "a number");
@@ -64,12 +64,12 @@ static SCM g_draw_line(SCM x0, SCM y0, SCM x1, SCM y1, SCM snd, SCM chn, SCM ax)
 	    TO_C_INT(y0),
 	    TO_C_INT(x1),
 	    TO_C_INT(y1));
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_draw_dot(SCM x0, SCM y0, SCM size, SCM snd, SCM chn, SCM ax)
 {
-  SND_ASSERT_CHAN(S_draw_dot, snd, chn, 4);
+  ASSERT_CHANNEL(S_draw_dot, snd, chn, 4);
   ASSERT_TYPE(NUMBER_P(x0), x0, ARG1, S_draw_dot, "a number");
   ASSERT_TYPE(NUMBER_P(y0), y0, ARG2, S_draw_dot, "a number");
   ASSERT_TYPE(NUMBER_P(size), size, ARG3, S_draw_dot, "a number");
@@ -77,12 +77,12 @@ static SCM g_draw_dot(SCM x0, SCM y0, SCM size, SCM snd, SCM chn, SCM ax)
 	   TO_C_INT(x0),
 	   TO_C_INT(y0),
 	   TO_C_INT_OR_ELSE(size, 1));
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_fill_rectangle(SCM x0, SCM y0, SCM width, SCM height, SCM snd, SCM chn, SCM ax)
 {
-  SND_ASSERT_CHAN(S_fill_rectangle, snd, chn, 5);
+  ASSERT_CHANNEL(S_fill_rectangle, snd, chn, 5);
   ASSERT_TYPE(NUMBER_P(x0), x0, ARG1, S_fill_rectangle, "a number");
   ASSERT_TYPE(NUMBER_P(y0), y0, ARG2, S_fill_rectangle, "a number");
   ASSERT_TYPE(NUMBER_P(width), width, ARG3, S_fill_rectangle, "a number");
@@ -92,12 +92,12 @@ static SCM g_fill_rectangle(SCM x0, SCM y0, SCM width, SCM height, SCM snd, SCM 
 		 TO_C_INT(y0),
 		 TO_C_INT(width),
 		 TO_C_INT(height));
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_draw_string(SCM text, SCM x0, SCM y0, SCM snd, SCM chn, SCM ax)
 {
-  SND_ASSERT_CHAN(S_draw_string, snd, chn, 4);
+  ASSERT_CHANNEL(S_draw_string, snd, chn, 4);
   ASSERT_TYPE(STRING_P(text), text, ARG1, S_draw_string, "a string");
   ASSERT_TYPE(NUMBER_P(x0), x0, ARG2, S_draw_string, "a number");
   ASSERT_TYPE(NUMBER_P(y0), y0, ARG3, S_draw_string, "a number");
@@ -106,7 +106,7 @@ static SCM g_draw_string(SCM text, SCM x0, SCM y0, SCM snd, SCM chn, SCM ax)
 	      TO_C_INT(y0),
 	      TO_C_STRING(text),
 	      snd_strlen(TO_C_STRING(text)));
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 #if USE_MOTIF
@@ -138,7 +138,7 @@ static SCM g_draw_lines(SCM pts, SCM snd, SCM chn, SCM ax)
   /* pts should be a vector of integers as (x y) pairs */
   POINT *pack_pts;
   axis_context *ax1;
-  SND_ASSERT_CHAN(S_draw_lines, snd, chn, 2);
+  ASSERT_CHANNEL(S_draw_lines, snd, chn, 2);
   ASSERT_TYPE(VECTOR_P(pts), pts, ARG1, S_draw_lines, "a vector");
   ax1 = TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_lines);
   pack_pts = TO_C_POINTS(pts, S_draw_lines);
@@ -154,7 +154,7 @@ static SCM g_draw_dots(SCM pts, SCM size, SCM snd, SCM chn, SCM ax)
   /* pts should be a vector of integers as (x y) pairs */
   POINT *pack_pts;
   axis_context *ax1;
-  SND_ASSERT_CHAN(S_draw_dots, snd, chn, 3);
+  ASSERT_CHANNEL(S_draw_dots, snd, chn, 3);
   ASSERT_TYPE(VECTOR_P(pts), pts, ARG1, S_draw_dots, "a vector");
   ax1 = TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_dots);
   pack_pts = TO_C_POINTS(pts, S_draw_dots);
@@ -170,7 +170,7 @@ static SCM g_fill_polygon(SCM pts, SCM snd, SCM chn, SCM ax_id)
 { 
   POINT *pack_pts;
   axis_context *ax;
-  SND_ASSERT_CHAN(S_fill_polygon, snd, chn, 2);
+  ASSERT_CHANNEL(S_fill_polygon, snd, chn, 2);
   ASSERT_TYPE(VECTOR_P(pts), pts, ARG1, S_fill_polygon, "a vector");
   ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, S_fill_polygon);
   pack_pts = TO_C_POINTS(pts, S_fill_polygon);
@@ -225,7 +225,7 @@ static SCM g_make_bezier(SCM args)
 static SCM g_foreground_color(SCM snd, SCM chn, SCM ax)
 {
   chan_info *cp;
-  SND_ASSERT_CHAN(S_foreground_color, snd, chn, 1);
+  ASSERT_CHANNEL(S_foreground_color, snd, chn, 1);
   ASSERT_TYPE(INTEGER_IF_BOUND_P(ax), ax, ARG3, S_foreground_color, "an integer");
   cp = get_cp(snd, chn, S_foreground_color);
   return(pixel2color(get_foreground_color(cp,
@@ -237,7 +237,7 @@ static SCM g_foreground_color(SCM snd, SCM chn, SCM ax)
 static SCM g_set_foreground_color(SCM color, SCM snd, SCM chn, SCM ax)
 {
   chan_info *cp;
-  SND_ASSERT_CHAN("set-" S_foreground_color, snd, chn, 2);
+  ASSERT_CHANNEL("set-" S_foreground_color, snd, chn, 2);
   ASSERT_TYPE(COLOR_P(color), color, ARG1, "set-" S_foreground_color, "a color object");
   ASSERT_TYPE(INTEGER_IF_BOUND_P(ax), ax, ARG4, "set-" S_foreground_color, "an integer");
   cp = get_cp(snd, chn, "set-" S_foreground_color);
@@ -252,15 +252,15 @@ static SCM g_set_foreground_color(SCM color, SCM snd, SCM chn, SCM ax)
 static SCM g_set_foreground_color_reversed(SCM arg1, SCM arg2, SCM arg3, SCM arg4)
 {
   if (NOT_BOUND_P(arg2))
-    return(g_set_foreground_color(arg1, SCM_UNDEFINED, SCM_UNDEFINED, SCM_UNDEFINED));
+    return(g_set_foreground_color(arg1, UNDEFINED_VALUE, UNDEFINED_VALUE, UNDEFINED_VALUE));
   else
     {
       if (NOT_BOUND_P(arg3))
-	return(g_set_foreground_color(arg2, arg1, SCM_UNDEFINED, SCM_UNDEFINED));
+	return(g_set_foreground_color(arg2, arg1, UNDEFINED_VALUE, UNDEFINED_VALUE));
       else
 	{
 	  if (NOT_BOUND_P(arg4))
-	    return(g_set_foreground_color(arg3, arg1, arg2, SCM_UNDEFINED));
+	    return(g_set_foreground_color(arg3, arg1, arg2, UNDEFINED_VALUE));
 	  else return(g_set_foreground_color(arg4, arg1, arg2, arg3));
 	}
     }
@@ -285,7 +285,7 @@ static int get_callback_slot(void)
       num_inputs = 4;
       added_input_callbacks = (SCM *)CALLOC(num_inputs, sizeof(SCM));
       added_inputs = (INPUT_TYPE *)CALLOC(num_inputs, sizeof(INPUT_TYPE));
-      for (i = 0; i < num_inputs; i++) added_input_callbacks[i] = SCM_UNDEFINED;
+      for (i = 0; i < num_inputs; i++) added_input_callbacks[i] = UNDEFINED_VALUE;
       return(0);
     }
   for (i = 0; i < num_inputs; i++)
@@ -296,7 +296,7 @@ static int get_callback_slot(void)
   added_input_callbacks = (SCM *)REALLOC(added_input_callbacks, num_inputs * sizeof(SCM));
   added_inputs = (INPUT_TYPE *)REALLOC(added_inputs, num_inputs * sizeof(INPUT_TYPE));
   for (i = old_len; i < num_inputs; i++)
-    added_input_callbacks[i] = SCM_UNDEFINED;
+    added_input_callbacks[i] = UNDEFINED_VALUE;
   return(old_len);
 }
 
@@ -310,7 +310,7 @@ static int get_callback_slot(void)
 static void handle_input(XtPointer context, int *fd, XtInputId *id)
 {
   int input_index = (int)context;  /* TODO: is this legal on the Alpha?  if not, can we use long here? */
-  CALL1(added_input_callbacks[input_index],
+  CALL_1(added_input_callbacks[input_index],
 	TO_SCM_INT(*fd),
 	"input callback");
 }
@@ -324,13 +324,13 @@ static SCM g_load_font(SCM font)
   fs = XLoadQueryFont(MAIN_DISPLAY(ss), 
 		      TO_C_STRING(font));
   if (fs) return(TO_SCM_INT(fs->fid));
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_set_current_font(SCM id, SCM snd, SCM chn, SCM ax_id)
 {
   axis_context *ax;
-  SND_ASSERT_CHAN("set-" S_current_font, snd, chn, 2);
+  ASSERT_CHANNEL("set-" S_current_font, snd, chn, 2);
   ASSERT_TYPE(INTEGER_IF_BOUND_P(ax_id), ax_id, ARG4, "set-" S_current_font, "an integer");
   ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, S_current_font);
   ax->current_font = (Font)TO_C_INT(id);
@@ -342,7 +342,7 @@ static SCM g_current_font(SCM snd, SCM chn, SCM ax_id)
 {
   axis_context *ax;
   chan_info *cp;
-  SND_ASSERT_CHAN(S_current_font, snd, chn, 1);
+  ASSERT_CHANNEL(S_current_font, snd, chn, 1);
   ASSERT_TYPE(INTEGER_IF_BOUND_P(ax_id), ax_id, ARG3, S_current_font, "an integer");
   cp = get_cp(snd, chn, S_current_font);
   ax = get_ax(cp,
@@ -364,7 +364,7 @@ static SCM g_current_font(SCM snd, SCM chn, SCM ax_id)
 static void handle_input(gpointer context, gint fd, GdkInputCondition condition)
 {
   int input_index = (int)context;
-  CALL1(added_input_callbacks[input_index],
+  CALL_1(added_input_callbacks[input_index],
 	TO_SCM_INT(fd),
 	"input callback");
 }
@@ -375,13 +375,13 @@ static SCM g_load_font(SCM font)
   ASSERT_TYPE(STRING_P(font), font, ARGn, S_load_font, "a string");
   fs = gdk_font_load(TO_C_STRING(font));
   if (fs) return(SND_WRAP(fs));
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_set_current_font(SCM id, SCM snd, SCM chn, SCM ax_id)
 {
   axis_context *ax;
-  SND_ASSERT_CHAN("set-" S_current_font, snd, chn, 2);
+  ASSERT_CHANNEL("set-" S_current_font, snd, chn, 2);
   ASSERT_TYPE(INTEGER_IF_BOUND_P(ax_id), ax_id, ARG4, "set-" S_current_font, "an integer");
   ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, "set-" S_current_font);
   ASSERT_TYPE(SND_WRAPPED(id), id, ARG1, "set-" S_current_font, "a wrapped object");
@@ -393,7 +393,7 @@ static SCM g_set_current_font(SCM id, SCM snd, SCM chn, SCM ax_id)
 static SCM g_current_font(SCM snd, SCM chn, SCM ax_id)
 {
   axis_context *ax;
-  SND_ASSERT_CHAN(S_current_font, snd, chn, 1);
+  ASSERT_CHANNEL(S_current_font, snd, chn, 1);
   ASSERT_TYPE(INTEGER_IF_BOUND_P(ax_id), ax_id, ARG3, S_current_font, "an integer");
   ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, S_current_font);
   return(SND_WRAP(ax->current_font));
@@ -404,15 +404,15 @@ static SCM g_current_font(SCM snd, SCM chn, SCM ax_id)
 static SCM g_set_current_font_reversed(SCM arg1, SCM arg2, SCM arg3, SCM arg4)
 {
   if (NOT_BOUND_P(arg2))
-    return(g_set_current_font(arg1, SCM_UNDEFINED, SCM_UNDEFINED, SCM_UNDEFINED));
+    return(g_set_current_font(arg1, UNDEFINED_VALUE, UNDEFINED_VALUE, UNDEFINED_VALUE));
   else
     {
       if (NOT_BOUND_P(arg3))
-	return(g_set_current_font(arg2, arg1, SCM_UNDEFINED, SCM_UNDEFINED));
+	return(g_set_current_font(arg2, arg1, UNDEFINED_VALUE, UNDEFINED_VALUE));
       else
 	{
 	  if (NOT_BOUND_P(arg4))
-	    return(g_set_current_font(arg3, arg1, arg2, SCM_UNDEFINED));
+	    return(g_set_current_font(arg3, arg1, arg2, UNDEFINED_VALUE));
 	  else return(g_set_current_font(arg4, arg1, arg2, arg3));
 	}
     }
@@ -440,7 +440,7 @@ static SCM g_remove_input(SCM id)
   index = TO_C_INT(id);
   REMOVE_INPUT(added_inputs[index]);
   snd_unprotect(added_input_callbacks[index]);
-  added_input_callbacks[index] = SCM_UNDEFINED;
+  added_input_callbacks[index] = UNDEFINED_VALUE;
   return(id);
 }
 
@@ -454,7 +454,7 @@ static BACKGROUND_FUNCTION_TYPE remember_idler(SCM code, BACKGROUND_FUNCTION_TYP
     {
       idlers = 4;
       idler_code = (SCM *)MALLOC(idlers * sizeof(SCM));
-      for (i = 0; i< idlers; i++) idler_code[i] = SCM_UNDEFINED;
+      for (i = 0; i< idlers; i++) idler_code[i] = UNDEFINED_VALUE;
       idler_id = (BACKGROUND_FUNCTION_TYPE *)CALLOC(idlers, sizeof(BACKGROUND_FUNCTION_TYPE));
       loc = 0;
     }
@@ -475,7 +475,7 @@ static BACKGROUND_FUNCTION_TYPE remember_idler(SCM code, BACKGROUND_FUNCTION_TYP
 	  for (i = loc; i < idlers; i++) 
 	    {
 	      idler_id[i] = 0;
-	      idler_code[i] = SCM_UNDEFINED;
+	      idler_code[i] = UNDEFINED_VALUE;
 	    }
 	}
     }
@@ -503,7 +503,7 @@ static BACKGROUND_FUNCTION_TYPE forget_idler(SCM code, BACKGROUND_FUNCTION_TYPE 
 static BACKGROUND_TYPE call_idler(GUI_POINTER code)
 {
 #if (SCM_DEBUG_TYPING_STRICTNESS != 2)
-  if (TRUE_P(CALL0((SCM)code, "idler callback")))
+  if (TRUE_P(CALL_0((SCM)code, "idler callback")))
     return(BACKGROUND_CONTINUE);
   forget_idler((SCM)code, (BACKGROUND_FUNCTION_TYPE)0);
 #endif
@@ -525,7 +525,7 @@ static SCM g_remove_idler(SCM id)
 {
 #if (SCM_DEBUG_TYPING_STRICTNESS != 2)
   ASSERT_TYPE(SND_WRAPPED(id), id, ARGn, S_remove_idler, "a wrapped object");
-  BACKGROUND_REMOVE(forget_idler(SCM_UNDEFINED, (BACKGROUND_FUNCTION_TYPE)(SND_UNWRAP(id))));
+  BACKGROUND_REMOVE(forget_idler(UNDEFINED_VALUE, (BACKGROUND_FUNCTION_TYPE)(SND_UNWRAP(id))));
 #endif
   return(id);
 }
@@ -542,7 +542,7 @@ list of two vcts (the two sides of the envelope graph). \
 (graph-data (make-graph-data)) reimplements the time domain graph."
 
   chan_info *cp;
-  SND_ASSERT_CHAN(S_make_graph_data, snd, chn, 1);
+  ASSERT_CHANNEL(S_make_graph_data, snd, chn, 1);
   cp = get_cp(snd, chn, S_make_graph_data);
   ASSERT_TYPE(NUMBER_IF_BOUND_P(lo), lo, ARG4, S_make_graph_data, "a number");
   ASSERT_TYPE(NUMBER_IF_BOUND_P(hi), hi, ARG5, S_make_graph_data, "a number");
@@ -562,7 +562,7 @@ in the drawing mode graphic-style."
 
   chan_info *cp;
   vct *v0, *v1 = NULL;
-  SND_ASSERT_CHAN(S_graph_data, snd, chn, 2);
+  ASSERT_CHANNEL(S_graph_data, snd, chn, 2);
   cp = get_cp(snd, chn, S_graph_data);
   ASSERT_TYPE((LIST_P(data) && 
               (LIST_LENGTH(data) == 2) &&
@@ -589,7 +589,7 @@ in the drawing mode graphic-style."
 		  get_ax(cp, TO_C_INT_OR_ELSE(ax, CHAN_GC), S_graph_data),
 		  TO_C_INT_OR_ELSE(style, TIME_GRAPH_STYLE(cp)));
 
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_main_widgets(void)
@@ -606,7 +606,7 @@ static SCM g_main_widgets(void)
 	   CONS(SND_WRAP(MAIN_SHELL(ss)),
              CONS(SND_WRAP(MAIN_PANE(ss)),
                CONS(SND_WRAP(SOUND_PANE(ss)),
-		 SCM_EOL)))));
+		 EMPTY_LIST)))));
 }
 
 #define NUM_DIALOGS 22
@@ -615,14 +615,14 @@ static SCM dialog_widgets;
 static SCM g_dialog_widgets(void)
 {
   if (!(VECTOR_P(dialog_widgets)))
-    dialog_widgets = MAKE_PERMANENT(MAKE_VECTOR(NUM_DIALOGS, SCM_BOOL_F));
+    dialog_widgets = MAKE_PERMANENT(MAKE_VECTOR(NUM_DIALOGS, FALSE_VALUE));
   return(VECTOR_TO_LIST(dialog_widgets));
 }
 
 void set_dialog_widget(int which, GUI_WIDGET wid)
 {
   if (!(VECTOR_P(dialog_widgets)))
-    dialog_widgets = MAKE_PERMANENT(MAKE_VECTOR(NUM_DIALOGS, SCM_BOOL_F));
+    dialog_widgets = MAKE_PERMANENT(MAKE_VECTOR(NUM_DIALOGS, FALSE_VALUE));
   VECTOR_SET(dialog_widgets, 
 	     which, 
 	     SND_WRAP(wid));
@@ -639,7 +639,7 @@ static SCM g_widget_position(SCM wid)
   ERROR(NO_SUCH_WIDGET,
 	LIST_2(TO_SCM_STRING(S_widget_position),
 		  wid));
-  return(SCM_EOL);
+  return(EMPTY_LIST);
 }
 
 static SCM g_set_widget_position(SCM wid, SCM xy)
@@ -670,7 +670,7 @@ static SCM g_widget_size(SCM wid)
   ERROR(NO_SUCH_WIDGET,
 	LIST_2(TO_SCM_STRING(S_widget_size),
 		  wid));
-  return(SCM_EOL);
+  return(EMPTY_LIST);
 }
 
 static SCM g_set_widget_size(SCM wid, SCM wh)
@@ -694,7 +694,7 @@ static SCM g_widget_text(SCM wid)
 {
   GUI_WIDGET w;
   char *text = NULL;
-  SCM res = SCM_BOOL_F;
+  SCM res = FALSE_VALUE;
   ASSERT_TYPE(SND_WRAPPED(wid), wid, ARG1, S_widget_text, "a wrapped object");
   w = (GUI_WIDGET)(SND_UNWRAP(wid));
   if (w)
@@ -949,7 +949,7 @@ static SCM g_colormap_ref(SCM map, SCM pos)
 
 void g_init_draw(SCM local_doc)
 {
-  dialog_widgets = SCM_UNDEFINED;
+  dialog_widgets = UNDEFINED_VALUE;
 
   DEFINE_VAR(S_copy_context,         CHAN_GC,        "graphics context to draw a line");
   DEFINE_VAR(S_cursor_context,       CHAN_CGC,       "graphics context for the cursor");
@@ -963,27 +963,27 @@ void g_init_draw(SCM local_doc)
   DEFINE_PROC(S_fill_rectangle,   g_fill_rectangle, 4, 3, 0,  "(" S_fill_rectangle " x0 y0 width height snd chn ax)");
   DEFINE_PROC(S_fill_polygon,     g_fill_polygon, 1, 3, 0,    "(" S_fill_polygon " points snd chn ax)");
 
-  define_procedure_with_reversed_setter(S_foreground_color, SCM_FNC g_foreground_color, "(" S_foreground_color " snd chn ax) -> current drawing color",
-					"set-" S_foreground_color, SCM_FNC g_set_foreground_color, SCM_FNC g_set_foreground_color_reversed,
+  define_procedure_with_reversed_setter(S_foreground_color, PROCEDURE g_foreground_color, "(" S_foreground_color " snd chn ax) -> current drawing color",
+					"set-" S_foreground_color, PROCEDURE g_set_foreground_color, PROCEDURE g_set_foreground_color_reversed,
 					local_doc, 0, 3, 1, 3);
 
   DEFINE_PROC(S_load_font,        g_load_font, 1, 0, 0,        "(" S_load_font " <name>) -> font-id");
 
-  define_procedure_with_reversed_setter(S_current_font, SCM_FNC g_current_font, "(" S_current_font " snd chn ax) -> current font id",
-					"set-" S_current_font, SCM_FNC g_set_current_font, SCM_FNC g_set_current_font_reversed,
+  define_procedure_with_reversed_setter(S_current_font, PROCEDURE g_current_font, "(" S_current_font " snd chn ax) -> current font id",
+					"set-" S_current_font, PROCEDURE g_set_current_font, PROCEDURE g_set_current_font_reversed,
 					local_doc, 0, 3, 1, 3);
 
   DEFINE_PROC(S_main_widgets,     g_main_widgets, 0, 0, 0,    "returns top level widgets");
   DEFINE_PROC(S_dialog_widgets,   g_dialog_widgets, 0, 0, 0,  "returns a list of dialog widgets");
 
-  define_procedure_with_setter(S_widget_size, SCM_FNC g_widget_size, "(" S_widget_size " wid) -> '(width height)",
-					"set-" S_widget_size, SCM_FNC g_set_widget_size, local_doc, 1, 0, 2, 0);
+  define_procedure_with_setter(S_widget_size, PROCEDURE g_widget_size, "(" S_widget_size " wid) -> '(width height)",
+					"set-" S_widget_size, PROCEDURE g_set_widget_size, local_doc, 1, 0, 2, 0);
 
-  define_procedure_with_setter(S_widget_position, SCM_FNC g_widget_position, "(" S_widget_position " wid) -> '(x y)",
-					"set-" S_widget_position, SCM_FNC g_set_widget_position, local_doc, 1, 0, 2, 0);
+  define_procedure_with_setter(S_widget_position, PROCEDURE g_widget_position, "(" S_widget_position " wid) -> '(x y)",
+					"set-" S_widget_position, PROCEDURE g_set_widget_position, local_doc, 1, 0, 2, 0);
 
-  define_procedure_with_setter(S_widget_text, SCM_FNC g_widget_text, "(" S_widget_text " wid) -> text)",
-					"set-" S_widget_text, SCM_FNC g_set_widget_text, local_doc, 1, 0, 2, 0);
+  define_procedure_with_setter(S_widget_text, PROCEDURE g_widget_text, "(" S_widget_text " wid) -> text)",
+					"set-" S_widget_text, PROCEDURE g_set_widget_text, local_doc, 1, 0, 2, 0);
 
   DEFINE_PROC(S_recolor_widget,  g_recolor_widget, 2, 0, 0,  "(" S_recolor_widget " wid color)");
   DEFINE_PROC(S_hide_widget,     g_hide_widget, 1, 0, 0,     "(" S_hide_widget " widget)");

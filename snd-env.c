@@ -1259,7 +1259,7 @@ static SCM g_define_envelope(SCM a, SCM b)
     alert_envelope_editor(get_global_state(), 
 			  TO_C_STRING(a), 
 			  scm2env(b));
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM array_to_list(Float *arr, int i, int len)
@@ -1268,14 +1268,14 @@ static SCM array_to_list(Float *arr, int i, int len)
     return(CONS(TO_SCM_DOUBLE(arr[i]), 
 		   array_to_list(arr, i + 1, len)));
   else return(CONS(TO_SCM_DOUBLE(arr[i]), 
-		      SCM_EOL));
+		      EMPTY_LIST));
 }
 
 SCM env2scm (env *e)
 {
   if (e) 
     return(array_to_list(e->data, 0, e->pts * 2));
-  return(SCM_EOL);
+  return(EMPTY_LIST);
 }
 
 void add_or_edit_symbol(char *name, env *val)
@@ -1352,7 +1352,7 @@ static SCM enved_hook;
 
 int check_enved_hook(env *e, int pos, Float x, Float y, int reason)
 {
-  SCM result = SCM_BOOL_F;
+  SCM result = FALSE_VALUE;
   SCM procs, env_list;
   int env_changed = 0, len = 0;
   if (HOOKED(enved_hook))
@@ -1497,29 +1497,29 @@ void g_init_env(SCM local_doc)
   DEFINE_VAR(S_enved_spectrum,        ENVED_SPECTRUM,  H_enved_spectrum);
   DEFINE_VAR(S_enved_srate,           ENVED_SRATE,     H_enved_srate);
 
-  define_procedure_with_setter(S_enved_base, SCM_FNC g_enved_base, H_enved_base,
-			       "set-" S_enved_base, SCM_FNC g_set_enved_base, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_enved_base, PROCEDURE g_enved_base, H_enved_base,
+			       "set-" S_enved_base, PROCEDURE g_set_enved_base, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_enved_power, SCM_FNC g_enved_power, H_enved_power,
-			       "set-" S_enved_power, SCM_FNC g_set_enved_power, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_enved_power, PROCEDURE g_enved_power, H_enved_power,
+			       "set-" S_enved_power, PROCEDURE g_set_enved_power, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_enved_clip_p, SCM_FNC g_enved_clip_p, H_enved_clip_p,
-			       "set-" S_enved_clip_p, SCM_FNC g_set_enved_clip_p, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_enved_clip_p, PROCEDURE g_enved_clip_p, H_enved_clip_p,
+			       "set-" S_enved_clip_p, PROCEDURE g_set_enved_clip_p, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_enved_exp_p, SCM_FNC g_enved_exp_p, H_enved_exp_p,
-			       "set-" S_enved_exp_p, SCM_FNC g_set_enved_exp_p, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_enved_exp_p, PROCEDURE g_enved_exp_p, H_enved_exp_p,
+			       "set-" S_enved_exp_p, PROCEDURE g_set_enved_exp_p, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_enved_target, SCM_FNC g_enved_target, H_enved_target,
-			       "set-" S_enved_target, SCM_FNC g_set_enved_target, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_enved_target, PROCEDURE g_enved_target, H_enved_target,
+			       "set-" S_enved_target, PROCEDURE g_set_enved_target, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_enved_wave_p, SCM_FNC g_enved_wave_p, H_enved_wave_p,
-			       "set-" S_enved_wave_p, SCM_FNC g_set_enved_wave_p, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_enved_wave_p, PROCEDURE g_enved_wave_p, H_enved_wave_p,
+			       "set-" S_enved_wave_p, PROCEDURE g_set_enved_wave_p, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_enved_in_dB, SCM_FNC g_enved_in_dB, H_enved_in_dB,
-			       "set-" S_enved_in_dB, SCM_FNC g_set_enved_in_dB, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_enved_in_dB, PROCEDURE g_enved_in_dB, H_enved_in_dB,
+			       "set-" S_enved_in_dB, PROCEDURE g_set_enved_in_dB, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_enved_filter_order, SCM_FNC g_enved_filter_order, H_enved_filter_order,
-			       "set-" S_enved_filter_order, SCM_FNC g_set_enved_filter_order, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_enved_filter_order, PROCEDURE g_enved_filter_order, H_enved_filter_order,
+			       "set-" S_enved_filter_order, PROCEDURE g_set_enved_filter_order, local_doc, 0, 0, 0, 1);
 
   DEFINE_PROC(S_enved_dialog,    g_enved_dialog, 0, 0, 0,     H_enved_dialog);
   DEFINE_PROC(S_save_envelopes,  g_save_envelopes, 0, 1, 0,   H_save_envelopes);

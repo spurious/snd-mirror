@@ -1,5 +1,7 @@
 snd change log
 
+  1-Jul:     gtk+extra 0.99.15.
+             snd-trace in extensions.scm.
   28-Jun:    find enhancements (see snd.html and examp.scm); find-pitch.
              colormap-ref.
   26-Jun:    sound-files-in-directory returns a list, not a vector (to be consistent with CLM).
@@ -10,7 +12,7 @@ snd change log
              mus-sound-max-amp now returns (and takes) a list, not a vector.
   21-Jun:    dsp.scm, autosave.scm, extensions.scm.
              find-mix.
-  20-Jun:    read-hook. hooks.scm. snd-debug in examp.scm.
+  20-Jun:    read-hook. hooks.scm. snd-debug in extensions.scm.
   19-Jun:    removed snd-main-shell -- use (cadr (main-widgets)) instead.
              make-pixmap and set-pixmap.
              moved Snd-4 stuff from examp.scm to snd4.scm.

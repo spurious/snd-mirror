@@ -1717,9 +1717,9 @@ static int oss_mus_audio_initialize(void)
       num_mixers = MAX_MIXERS;
       num_dsps = MAX_DSPS;
 #ifdef NEW_OSS
-      fd = open(DAC_NAME, O_WRONLY, 0);
-      if (fd == -1) fd = open(SYNTH_NAME, O_RDONLY, 0);
-      if (fd == -1) fd = open(MIXER_NAME, O_RDONLY, 0);
+      fd = open(DAC_NAME, O_WRONLY | O_NONBLOCK, 0);
+      if (fd == -1) fd = open(SYNTH_NAME, O_RDONLY | O_NONBLOCK, 0);
+      if (fd == -1) fd = open(MIXER_NAME, O_RDONLY | O_NONBLOCK, 0);
       if (fd != -1)
 	{
 	  status = ioctl(fd, OSS_GETVERSION, &ignored);
@@ -1781,9 +1781,9 @@ static int oss_mus_audio_initialize(void)
 	      else break;
 	    }
 	  mus_snprintf(dname, LABEL_BUFFER_SIZE, "%s%d", DAC_NAME, ndsp);
-	  fd = open(dname, O_RDWR, 0);
-	  if (fd == -1) fd = open(dname, O_RDONLY, 0);
-	  if (fd == -1) fd = open(dname, O_WRONLY, 0); /* some output devices need this */
+	  fd = open(dname, O_RDWR | O_NONBLOCK, 0);
+	  if (fd == -1) fd = open(dname, O_RDONLY | O_NONBLOCK, 0);
+	  if (fd == -1) fd = open(dname, O_WRONLY | O_NONBLOCK, 0); /* some output devices need this */
 	  if (fd == -1)
 	    {
 	      close(md); 
@@ -1916,7 +1916,7 @@ static int oss_mus_audio_initialize(void)
 	}
       if (sound_cards == 0)
 	{
-	  fd = open(DAC_NAME, O_WRONLY, 0);
+	  fd = open(DAC_NAME, O_WRONLY | O_NONBLOCK, 0);
 	  if (fd != -1)
 	    {
 	      sound_cards = 1;
@@ -1924,7 +1924,7 @@ static int oss_mus_audio_initialize(void)
 	      audio_type[0] = NORMAL_CARD;
 	      audio_mixer[0] = -2; /* hmmm -- need a way to see /dev/dsp as lonely outpost */
 	      close(fd);
-	      fd = open(MIXER_NAME, O_RDONLY, 0);
+	      fd = open(MIXER_NAME, O_RDONLY | O_NONBLOCK, 0);
 	      if (fd == -1)
 		audio_mixer[0] = -3;
 	      else close(fd);

@@ -1473,7 +1473,7 @@ static SCM snd_no_such_mark_error(const char *caller, SCM id)
   ERROR(NO_SUCH_MARK,
 	LIST_2(TO_SCM_STRING(caller),
 		  id));
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_restore_marks(SCM size, SCM snd, SCM chn, SCM marklist)
@@ -1484,7 +1484,7 @@ static SCM g_restore_marks(SCM size, SCM snd, SCM chn, SCM marklist)
   char *str;
   snd_state *ss;
   int i, j, list_size, in_size, id, sync;
-  SND_ASSERT_CHAN(S_restore_marks, snd, chn, 2);
+  ASSERT_CHANNEL(S_restore_marks, snd, chn, 2);
   ss = get_global_state();
   sp = get_sp(snd);
   cp = get_cp(snd, chn, S_restore_marks);
@@ -1529,13 +1529,13 @@ static SCM g_restore_marks(SCM size, SCM snd, SCM chn, SCM marklist)
 		}
 	    }
 	}
-      return(SCM_BOOL_T);
+      return(TRUE_VALUE);
     }
   else 
     if (cp->marks) 
       snd_error("%s[%d] %s: there are marks here already!",
 		__FILE__, __LINE__, __FUNCTION__);
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 enum {MARK_SAMPLE, MARK_NAME, MARK_SYNC, MARK_HOME};
@@ -1567,7 +1567,7 @@ static SCM iread_mark(SCM n, int fld, SCM pos_n, char *caller)
 		       TO_SMALL_SCM_INT(ncp[0]->chan))); 
       break;
     }
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM iwrite_mark(SCM mark_n, SCM val, int fld, char *caller)
@@ -1604,7 +1604,7 @@ static SCM g_mark_p(SCM id_n)
   chan_info *ncp[1];
   if (INTEGER_P(id_n))
     return(TO_SCM_BOOLEAN(find_mark_id(ncp, TO_C_INT(id_n), -1)));
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_mark_sample(SCM mark_n, SCM pos_n) 
@@ -1626,7 +1626,7 @@ static SCM g_mark_sync(SCM mark_n)
 {
   #define H_mark_sync "(" S_mark_sync " id) returns the mark's sync value"
   ASSERT_TYPE(INTEGER_IF_BOUND_P(mark_n), mark_n, ARGn, S_mark_sync, "an integer");
-  return(iread_mark(mark_n, MARK_SYNC, SCM_UNDEFINED, S_mark_sync));
+  return(iread_mark(mark_n, MARK_SYNC, UNDEFINED_VALUE, S_mark_sync));
 }
 
 static SCM g_set_mark_sync(SCM mark_n, SCM sync_n) 
@@ -1640,7 +1640,7 @@ static SCM g_mark_name(SCM mark_n)
 {
   #define H_mark_name "(" S_mark_name " id &optional snd chn) returns the mark's name"
   ASSERT_TYPE(INTEGER_IF_BOUND_P(mark_n), mark_n, ARGn, S_mark_name, "an integer");
-  return(iread_mark(mark_n, MARK_NAME, SCM_UNDEFINED, S_mark_name));
+  return(iread_mark(mark_n, MARK_NAME, UNDEFINED_VALUE, S_mark_name));
 }
 
 static SCM g_set_mark_name(SCM mark_n, SCM name) 
@@ -1660,7 +1660,7 @@ static SCM g_mark_home(SCM mark_n)
 {
   #define H_mark_home "(" S_mark_home " id) returns the sound (index) and channel that hold mark id"
   ASSERT_TYPE(INTEGER_IF_BOUND_P(mark_n), mark_n, ARGn, S_mark_home, "an integer");
-  return(iread_mark(mark_n, MARK_HOME, SCM_UNDEFINED, S_mark_home));
+  return(iread_mark(mark_n, MARK_HOME, UNDEFINED_VALUE, S_mark_home));
 }
 
 static SCM g_find_mark(SCM samp_n, SCM snd_n, SCM chn_n) 
@@ -1673,10 +1673,10 @@ finds the mark in snd's channel chn at samp (if a number) or with the given name
   char *name = NULL;
   chan_info *cp = NULL;
   ASSERT_TYPE((NUMBER_P(samp_n) || STRING_P(samp_n) || (NOT_BOUND_P(samp_n)) || (FALSE_P(samp_n))), samp_n, ARG1, S_find_mark, "a number or string or #f");
-  SND_ASSERT_CHAN(S_find_mark, snd_n, chn_n, 2); 
+  ASSERT_CHANNEL(S_find_mark, snd_n, chn_n, 2); 
   cp = get_cp(snd_n, chn_n, S_find_mark);
   if (cp->marks == NULL) 
-    return(SCM_BOOL_F);
+    return(FALSE_VALUE);
   mps = cp->marks[cp->edit_ctr];
   if (mps)
     {
@@ -1699,7 +1699,7 @@ finds the mark in snd's channel chn at samp (if a number) or with the given name
 	      return(TO_SCM_INT(mark_id(mps[i])));
 	}
     }
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_add_mark(SCM samp_n, SCM snd_n, SCM chn_n) 
@@ -1708,7 +1708,7 @@ static SCM g_add_mark(SCM samp_n, SCM snd_n, SCM chn_n)
   mark *m;
   chan_info *cp;
   ASSERT_TYPE(INTEGER_IF_BOUND_P(samp_n), samp_n, ARG1, S_add_mark, "an integer");
-  SND_ASSERT_CHAN(S_add_mark, snd_n, chn_n, 2);
+  ASSERT_CHANNEL(S_add_mark, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_add_mark);
   m = add_mark(TO_C_INT_OR_ELSE(samp_n, 0), NULL, cp);
   if (m)
@@ -1717,7 +1717,7 @@ static SCM g_add_mark(SCM samp_n, SCM snd_n, SCM chn_n)
       update_graph(cp, NULL);
       return(TO_SCM_INT(mark_id(m)));
     }
-  else return(TO_SCM_INT(-1)); /* ?? SCM_BOOL_F? or 'redundant-mark? */
+  else return(TO_SCM_INT(-1)); /* ?? FALSE_VALUE? or 'redundant-mark? */
 }
 
 static SCM g_delete_mark(SCM id_n) 
@@ -1739,10 +1739,10 @@ static SCM g_delete_marks(SCM snd_n, SCM chn_n)
 {
   #define H_delete_marks "(" S_delete_marks " &optional snd chn) delete all marks in snd's channel chn"
   chan_info *cp;
-  SND_ASSERT_CHAN(S_delete_marks, snd_n, chn_n, 1);
+  ASSERT_CHANNEL(S_delete_marks, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_delete_marks);
   delete_marks(cp);
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM int_array_to_list(int *arr, int i, int len)
@@ -1751,7 +1751,7 @@ static SCM int_array_to_list(int *arr, int i, int len)
     return(CONS(TO_SCM_INT(arr[i]), 
 		int_array_to_list(arr, i + 1, len)));
   else return(CONS(TO_SCM_INT(arr[i]), 
-		   SCM_EOL));
+		   EMPTY_LIST));
 }
 
 static int *syncd_marks(snd_state *ss, int sync)
@@ -1775,7 +1775,7 @@ static SCM g_syncd_marks(SCM sync)
   SCM res;
   ASSERT_TYPE(INTEGER_P(sync), sync, ARGn, S_syncd_marks, "an integer");
   ids = syncd_marks(get_global_state(), TO_C_INT(sync));
-  if ((ids == NULL) || (ids[0] == 0)) return(SCM_EOL);
+  if ((ids == NULL) || (ids[0] == 0)) return(EMPTY_LIST);
   res = int_array_to_list(ids, 1, ids[0]);
   FREE(ids);
   return(res);
@@ -1808,7 +1808,7 @@ static SCM g_marks(SCM snd_n, SCM chn_n, SCM pos_n)
   chan_info *cp;
   snd_info *sp;
   snd_state *ss;
-  SCM res, res1 = SCM_EOL;
+  SCM res, res1 = EMPTY_LIST;
   int *ids;
   int i, pos, j;
   if (INTEGER_P(snd_n))
@@ -1820,11 +1820,11 @@ static SCM g_marks(SCM snd_n, SCM chn_n, SCM pos_n)
 	      pos = TO_C_INT(pos_n); 
 	    else pos = cp->edit_ctr;
 	    ids = channel_marks(cp, pos);
-	    if (ids == NULL) return(SCM_EOL);
+	    if (ids == NULL) return(EMPTY_LIST);
 	    if (ids[0] == 0) 
 	      {
 		FREE(ids); 
-		return(SCM_EOL);
+		return(EMPTY_LIST);
 	      }
 	    res = int_array_to_list(ids, 1, ids[0]);
 	    FREE(ids);
@@ -1840,7 +1840,7 @@ static SCM g_marks(SCM snd_n, SCM chn_n, SCM pos_n)
 		cp = sp->chans[i];
 		ids = channel_marks(cp, cp->edit_ctr);
 		if ((ids == NULL) || (ids[0] == 0))
-		  res1 = CONS(SCM_EOL, res1);
+		  res1 = CONS(EMPTY_LIST, res1);
 		else res1 = CONS(int_array_to_list(ids, 1, ids[0]), 
 				    res1);
 		if (ids) FREE(ids);
@@ -1855,7 +1855,7 @@ static SCM g_marks(SCM snd_n, SCM chn_n, SCM pos_n)
 	{
 	  sp = ss->sounds[j];
 	  if ((sp) && (sp->inuse))
-	    res1 = CONS(g_marks(TO_SMALL_SCM_INT(j), SCM_UNDEFINED, SCM_UNDEFINED), 
+	    res1 = CONS(g_marks(TO_SMALL_SCM_INT(j), UNDEFINED_VALUE, UNDEFINED_VALUE), 
 			   res1);
 	}
     }
@@ -1869,7 +1869,7 @@ static SCM g_forward_mark(SCM count, SCM snd, SCM chn)
   chan_info *cp;
   mark *mp = NULL;
   ASSERT_TYPE(INTEGER_IF_BOUND_P(count), count, ARG1, S_forward_mark, "an integer");
-  SND_ASSERT_CHAN(S_forward_mark, snd, chn, 2);
+  ASSERT_CHANNEL(S_forward_mark, snd, chn, 2);
   cp = get_cp(snd, chn, S_forward_mark);
   val = TO_C_INT_OR_ELSE(count, 1); 
   if (cp->marks) mp = find_nth_mark(cp, val);
@@ -1878,7 +1878,7 @@ static SCM g_forward_mark(SCM count, SCM snd, SCM chn)
       handle_cursor(cp, cursor_moveto(cp, mp->samp));
       return(TO_SCM_INT(mark_id(mp)));
     }
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_backward_mark(SCM count, SCM snd, SCM chn) 
@@ -1888,7 +1888,7 @@ static SCM g_backward_mark(SCM count, SCM snd, SCM chn)
   chan_info *cp;
   mark *mp = NULL;
   ASSERT_TYPE(INTEGER_IF_BOUND_P(count), count, ARG1, S_backward_mark, "an integer");
-  SND_ASSERT_CHAN(S_backward_mark, snd, chn, 2);
+  ASSERT_CHANNEL(S_backward_mark, snd, chn, 2);
   cp = get_cp(snd, chn, S_backward_mark);
   val = -(TO_C_INT_OR_ELSE(count, 1)); 
   if (cp->marks) mp = find_nth_mark(cp, val);
@@ -1897,7 +1897,7 @@ static SCM g_backward_mark(SCM count, SCM snd, SCM chn)
       handle_cursor(cp, cursor_moveto(cp, mp->samp));
       return(TO_SCM_INT(mark_id(mp)));
     }
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static char *mark_file_name(snd_info *sp)
@@ -1950,8 +1950,8 @@ static SCM g_save_marks(SCM snd_n)
   #define H_save_marks "(" S_save_marks " &optional snd) saves snd's marks in <snd's file-name>.marks"
   snd_info *sp;
   char *str;
-  SCM res = SCM_BOOL_F;
-  SND_ASSERT_SND(S_save_marks, snd_n, 1);
+  SCM res = FALSE_VALUE;
+  ASSERT_SOUND(S_save_marks, snd_n, 1);
   sp = get_sp(snd_n);
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_save_marks, snd_n));
@@ -1970,16 +1970,16 @@ void g_init_marks(SCM local_doc)
 
   mark_drag_hook = MAKE_HOOK(S_mark_drag_hook, 1, H_mark_drag_hook); /* arg = id */
 
-  define_procedure_with_setter(S_mark_sample, SCM_FNC g_mark_sample, H_mark_sample,
-			       "set-" S_mark_sample, SCM_FNC g_set_mark_sample,
+  define_procedure_with_setter(S_mark_sample, PROCEDURE g_mark_sample, H_mark_sample,
+			       "set-" S_mark_sample, PROCEDURE g_set_mark_sample,
 			       local_doc, 0, 2, 1, 1);
 
-  define_procedure_with_setter(S_mark_sync, SCM_FNC g_mark_sync, H_mark_sync,
-			       "set-" S_mark_sync, SCM_FNC g_set_mark_sync,
+  define_procedure_with_setter(S_mark_sync, PROCEDURE g_mark_sync, H_mark_sync,
+			       "set-" S_mark_sync, PROCEDURE g_set_mark_sync,
 			       local_doc, 0, 1, 1, 1);
 
-  define_procedure_with_setter(S_mark_name, SCM_FNC g_mark_name, H_mark_name,
-			       "set-" S_mark_name, SCM_FNC g_set_mark_name,
+  define_procedure_with_setter(S_mark_name, PROCEDURE g_mark_name, H_mark_name,
+			       "set-" S_mark_name, PROCEDURE g_set_mark_name,
 			       local_doc, 0, 1, 1, 1);
 
   DEFINE_PROC(S_restore_marks, g_restore_marks, 4, 0, 0, "internal func");

@@ -67,7 +67,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
   cp->cursor = 0;
   cp->cursor_style = CURSOR_CROSS;
   cp->cursor_size = DEFAULT_CURSOR_SIZE;
-  cp->cursor_proc = SCM_UNDEFINED;
+  cp->cursor_proc = UNDEFINED_VALUE;
   cp->squelch_update = 0;
   cp->show_y_zero = show_y_zero(ss);
   cp->show_marks = show_marks(ss);
@@ -169,7 +169,7 @@ static chan_info *free_chan_info(chan_info *cp)
   if (PROCEDURE_P(cp->cursor_proc))
     {
       snd_unprotect(cp->cursor_proc);
-      cp->cursor_proc = SCM_UNDEFINED;
+      cp->cursor_proc = UNDEFINED_VALUE;
     }
   cp->waiting_to_make_graph = 0;
   if (cp->sonogram_data) free_sono_info(cp);
@@ -295,8 +295,8 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
   sp->contrast_control_amp = DEFAULT_CONTRAST_CONTROL_AMP;
   sp->search_expr = NULL;
   sp->lacp = NULL;
-  sp->search_proc = SCM_UNDEFINED;
-  sp->prompt_callback = SCM_UNDEFINED;
+  sp->search_proc = UNDEFINED_VALUE;
+  sp->prompt_callback = UNDEFINED_VALUE;
   sp->filter_control_env = default_env(sp->filter_control_env_xmax, 1.0);
   sp->delete_me = 0;
   sp->active = 1;
@@ -348,10 +348,10 @@ void free_snd_info(snd_info *sp)
     }
   if (PROCEDURE_P(sp->search_proc))
     snd_unprotect(sp->search_proc);
-  sp->search_proc = SCM_UNDEFINED;
+  sp->search_proc = UNDEFINED_VALUE;
   if (PROCEDURE_P(sp->prompt_callback))
     snd_unprotect(sp->prompt_callback);
-  sp->prompt_callback = SCM_UNDEFINED;
+  sp->prompt_callback = UNDEFINED_VALUE;
   sp->selected_channel = NO_SELECTION;
   sp->short_filename = NULL;                      /* was a pointer into filename */
   if (sp->filename) FREE(sp->filename);

@@ -37,7 +37,7 @@
  * 22-June:    made mus_bessi0 local again.
  * 1-June:     bugfixes for linuxppc 2000.
  * 19-May:     mus_apply.
- * 8-May:      added "const" and SCM_FNC (for c++), made mus_bessi0 global.
+ * 8-May:      added "const" and PROCEDURE (for c++), made mus_bessi0 global.
  * 24-Apr:     changed formant radius to match lisp version (it's now 1-old_radius)
  * 20-Apr:     mus_convolve_files
  * 7-Apr:      src width bug fixed

@@ -8,10 +8,10 @@ typedef struct {
 } mus_scm;
 
 /* next two macros are "deprecated" */
-#define mus_get_any(arg) (((mus_scm *)SND_VALUE_OF(arg))->gen)
-#define mus_get_scm(arg) ((mus_scm *)SND_VALUE_OF(arg))
+#define mus_get_any(arg) (((mus_scm *)OBJECT_REF(arg))->gen)
+#define mus_get_scm(arg) ((mus_scm *)OBJECT_REF(arg))
 
-#define TO_MUS_SCM(arg) ((mus_scm *)SND_VALUE_OF(arg))
+#define TO_MUS_SCM(arg) ((mus_scm *)OBJECT_REF(arg))
 #define TO_CLM(obj) ((mus_any *)((TO_MUS_SCM(obj))->gen))
 
 int mus_scm_p(SCM obj);

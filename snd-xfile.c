@@ -2258,14 +2258,14 @@ static SCM file_data_dialog_widgets(Widget main_widget, file_data *fd)
 	     CONS(SND_WRAP(XmMessageBoxGetChild(main_widget, XmDIALOG_OK_BUTTON)),
 	       CONS(SND_WRAP(XmMessageBoxGetChild(main_widget, XmDIALOG_CANCEL_BUTTON)),
 		 CONS(SND_WRAP(XmMessageBoxGetChild(main_widget, XmDIALOG_HELP_BUTTON)),
-		   CONS((fd->header_list) ? SND_WRAP(fd->header_list) : SCM_BOOL_F,
-		     CONS((fd->format_list) ? SND_WRAP(fd->format_list) : SCM_BOOL_F,
-		       CONS((fd->srate_text) ? SND_WRAP(fd->srate_text) : SCM_BOOL_F,
-			 CONS((fd->chans_text) ? SND_WRAP(fd->chans_text) : SCM_BOOL_F,
-			   CONS((fd->comment_text) ? SND_WRAP(fd->comment_text) : SCM_BOOL_F,
-			     CONS((fd->location_text) ? SND_WRAP(fd->location_text) : SCM_BOOL_F,
-                               SCM_EOL)))))))))));
-return(SCM_EOL);
+		   CONS((fd->header_list) ? SND_WRAP(fd->header_list) : FALSE_VALUE,
+		     CONS((fd->format_list) ? SND_WRAP(fd->format_list) : FALSE_VALUE,
+		       CONS((fd->srate_text) ? SND_WRAP(fd->srate_text) : FALSE_VALUE,
+			 CONS((fd->chans_text) ? SND_WRAP(fd->chans_text) : FALSE_VALUE,
+			   CONS((fd->comment_text) ? SND_WRAP(fd->comment_text) : FALSE_VALUE,
+			     CONS((fd->location_text) ? SND_WRAP(fd->location_text) : FALSE_VALUE,
+                               EMPTY_LIST)))))))))));
+return(EMPTY_LIST);
 }
 
 static SCM g_new_file_dialog_widgets(void)
@@ -2273,14 +2273,14 @@ static SCM g_new_file_dialog_widgets(void)
   if (new_dialog)
     return(scm_append(LIST_2(file_data_dialog_widgets(new_dialog, new_dialog_data),
 				LIST_1(SND_WRAP(new_file_name)))));
-  return(SCM_EOL);
+  return(EMPTY_LIST);
 }
 
 static SCM g_edit_header_dialog_widgets(void)
 {
   if (edit_header_dialog)
     return(file_data_dialog_widgets(edit_header_dialog, edit_header_data));
-  return(SCM_EOL);
+  return(EMPTY_LIST);
 }
 
 static SCM g_save_as_dialog_widgets(void)
@@ -2288,7 +2288,7 @@ static SCM g_save_as_dialog_widgets(void)
   if (save_as_dialog)
     return(scm_append(LIST_2(file_data_dialog_widgets(save_as_dialog, save_as_file_data),
 				LIST_1(SND_WRAP(file_save_as_file_name)))));
-  return(SCM_EOL);
+  return(EMPTY_LIST);
 }
 
 static SCM g_new_file_dialog(void) 
@@ -2301,8 +2301,8 @@ static SCM g_new_file_dialog(void)
 
 void g_initialize_xgfile(SCM local_doc)
 {
-  define_procedure_with_setter(S_just_sounds, SCM_FNC g_just_sounds, H_just_sounds,
-			       "set-" S_just_sounds, SCM_FNC g_set_just_sounds, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_just_sounds, PROCEDURE g_just_sounds, H_just_sounds,
+			       "set-" S_just_sounds, PROCEDURE g_set_just_sounds, local_doc, 0, 0, 0, 1);
 
   #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label) is called when a file viewer or region label \
 is entered by the mouse. The 'type' is 0 for the current files list, 1 for previous files, and 2 for regions. The 'position' \

@@ -151,7 +151,7 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
 #else
   port = scm_mkstrport(INTEGER_ZERO, 
 		       scm_make_string(TO_SCM_INT(MAX_ERROR_STRING_LENGTH), 
-				       SCM_UNDEFINED),
+				       UNDEFINED_VALUE),
 		       SCM_OPN | SCM_WRTNG,
 		       __FUNCTION__);
 #endif
@@ -224,17 +224,17 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
 			oldport = scm_current_output_port();
 			scm_set_current_output_port(
 			  scm_mkstrport(SCM_INUM0,
-					scm_make_string(SCM_INUM0, SCM_UNDEFINED),
+					scm_make_string(SCM_INUM0, UNDEFINED_VALUE),
 					SCM_OPN | SCM_WRTNG,
 					__FUNCTION__));
 #endif			
 #if HAVE_SCM_C_DEFINE
-		      stack = scm_fluid_ref(SCM_VARIABLE_REF(scm_the_last_stack_fluid_var));
+		      stack = scm_fluid_ref(VARIABLE_REF(scm_the_last_stack_fluid_var));
 #else
 		      stack = scm_fluid_ref(CDR(scm_the_last_stack_fluid));
 #endif
 		      if (NOT_FALSE_P(stack)) 
-			scm_display_backtrace(stack, port, SCM_UNDEFINED, SCM_UNDEFINED);
+			scm_display_backtrace(stack, port, UNDEFINED_VALUE, UNDEFINED_VALUE);
 #if 0
 		      str = scm_strport_to_string(scm_current_output_port());
 		      scm_set_current_output_port(oldport);
@@ -325,7 +325,7 @@ static SCM snd_internal_stack_catch (SCM tag,
 
 SCM snd_catch_any(scm_catch_body_t body, void *body_data, const char *caller)
 {
-  return(snd_internal_stack_catch(SCM_BOOL_T, body, body_data, snd_catch_scm_error, (void *)caller));
+  return(snd_internal_stack_catch(TRUE_VALUE, body, body_data, snd_catch_scm_error, (void *)caller));
 }
 
 char *procedure_ok(SCM proc, int args, const char *caller, const char *arg_name, int argn)
@@ -378,7 +378,7 @@ SCM snd_no_such_file_error(const char *caller, SCM filename)
 	LIST_3(TO_SCM_STRING(caller),
 	       filename,
 	       TO_SCM_STRING(strerror(errno))));
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 SCM snd_no_such_channel_error(const char *caller, SCM snd, SCM chn)
@@ -387,14 +387,14 @@ SCM snd_no_such_channel_error(const char *caller, SCM snd, SCM chn)
 	LIST_3(TO_SCM_STRING(caller),
 	       snd,
 	       chn));
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 SCM snd_no_active_selection_error(const char *caller)
 {
   ERROR(NO_ACTIVE_SELECTION,
 	LIST_1(TO_SCM_STRING(caller)));
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 SCM snd_bad_arity_error(const char *caller, SCM errstr, SCM proc)
@@ -403,7 +403,7 @@ SCM snd_bad_arity_error(const char *caller, SCM errstr, SCM proc)
 	LIST_3(TO_SCM_STRING(caller),
 	       errstr,
 	       proc));
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 
@@ -418,7 +418,7 @@ SCM eval_str_wrapper(void *data)
 SCM eval_form_wrapper(void *data)
 {
 #if (SCM_DEBUG_TYPING_STRICTNESS == 2)
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 #else
   return(EVAL_FORM(data));
 #endif
@@ -436,16 +436,16 @@ static SCM eval_file_wrapper(void *data)
 static SCM g_call0_1(void *arg)
 {
 #if (SCM_DEBUG_TYPING_STRICTNESS == 2)
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 #else
-  return(scm_apply((SCM)arg, SCM_EOL, SCM_EOL));
+  return(scm_apply((SCM)arg, EMPTY_LIST, EMPTY_LIST));
 #endif
 }
 
 SCM g_call0(SCM proc, const char *caller) /* replacement for gh_call0 -- protect ourselves from premature exit(!$#%@$) */
 {
 #if (SCM_DEBUG_TYPING_STRICTNESS == 2)
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 #else
   return(snd_catch_any(g_call0_1, (void *)proc, caller));
 #endif
@@ -470,7 +470,7 @@ static SCM g_call_any_1(void *arg)
 {
   return(scm_apply(((SCM *)arg)[0], 
 		   ((SCM *)arg)[1], 
-		   SCM_EOL));
+		   EMPTY_LIST));
 }
 
 SCM g_call_any(SCM proc, SCM arglist, const char *caller)
@@ -521,7 +521,7 @@ char *g_print_1(SCM obj, const char *caller)
   char *str1 = NULL;
 #if HAVE_GUILE
 #if HAVE_SCM_OBJECT_TO_STRING
-  return(TO_NEW_C_STRING(scm_object_to_string(obj, SCM_UNDEFINED))); /* does the GC handle the scm_close_port? */
+  return(TO_NEW_C_STRING(scm_object_to_string(obj, UNDEFINED_VALUE))); /* does the GC handle the scm_close_port? */
 #else
   SCM str, val;
   SCM port;
@@ -594,7 +594,7 @@ SCM snd_report_result(snd_state *ss, SCM result, char *buf)
 {
   snd_info *sp = NULL;
   char *str = NULL;
-  SCM res = SCM_BOOL_F;
+  SCM res = FALSE_VALUE;
   str = gl_print(result, "eval-str");
   if (ss->mx_sp)
     {
@@ -619,7 +619,7 @@ SCM snd_report_result(snd_state *ss, SCM result, char *buf)
 SCM snd_report_listener_result(snd_state *ss, SCM form)
 {
   char *str = NULL;
-  SCM res = SCM_BOOL_F, result;
+  SCM res = FALSE_VALUE, result;
   listener_append(ss, "\n");
   result = snd_catch_any(eval_form_wrapper, (void *)form, NULL);
   str = gl_print(result, "eval");
@@ -876,8 +876,8 @@ static SCM g_set_color_cutoff(SCM val)
   #define H_color_cutoff "(" S_color_cutoff ") -> col" STR_OR " map cutoff point (default .003)"
   ASSERT_TYPE(NUMBER_P(val), val, ARGn, "set-" S_color_cutoff, "a number");
   set_color_cutoff(state, mus_fclamp(0.0,
-				TO_C_DOUBLE(val),
-				0.25)); 
+				     TO_C_DOUBLE(val),
+				     0.25)); 
   return(TO_SCM_DOUBLE(color_cutoff(state)));
 }
 
@@ -896,8 +896,8 @@ static SCM g_set_color_scale(SCM val)
   #define H_color_scale "(" S_color_scale ") -> essentially a darkness setting for col" STR_OR "maps (0.5)"
   ASSERT_TYPE(NUMBER_P(val), val, ARGn, "set-" S_color_scale, "a number"); 
   set_color_scale(state, mus_fclamp(0.0,
-			       TO_C_DOUBLE(val),
-			       1.0)); 
+				    TO_C_DOUBLE(val),
+				    1.0)); 
   return(TO_SCM_DOUBLE(color_scale(state)));
 }
 
@@ -1096,7 +1096,7 @@ static SCM g_update_usage_stats(void)
 {
   #define H_update_usage_stats "(" S_update_usage_stats ") causes the stats display to be made current"
   update_stats(state); 
-  return(SCM_BOOL_T);
+  return(TRUE_VALUE);
 }
 
 static SCM g_sinc_width(void) {return(TO_SCM_INT(sinc_width(state)));}
@@ -1134,8 +1134,8 @@ spring, summer, colorcube, flag, and lines.  -1 means black and white."
 
   ASSERT_TYPE(INTEGER_P(val), val, ARGn, "set-" S_colormap, "an integer"); 
   set_color_map(state, mus_iclamp(0,
-			     TO_C_INT(val),
-			     NUM_COLORMAPS-1));
+				  TO_C_INT(val),
+				  NUM_COLORMAPS-1));
   return(TO_SCM_INT(color_map(state)));
 }
 
@@ -1309,7 +1309,7 @@ static SCM g_sounds(void)
   snd_info *sp;
   SCM result;
   ss = get_global_state();
-  result = SCM_EOL;
+  result = EMPTY_LIST;
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ((snd_info *)(ss->sounds[i]));
@@ -1335,7 +1335,7 @@ static SCM g_equalize_panes(SCM snd)
 			     sp->chans[0],
 			     TRUE);
     }
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_show_listener(void) 
@@ -1483,14 +1483,14 @@ static SCM g_abort(void)
 {
   #define H_abort "(" S_abort ") exits Snd via \"abort\", presumably to land in the debugger"
   abort();
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_dismiss_all_dialogs(void)
 {
   #define H_dismiss_all_dialogs "(" S_dismiss_all_dialogs ") closes all active dialogs"
   dismiss_all_dialogs(state);
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_abortq(void)
@@ -1500,9 +1500,9 @@ static SCM g_abortq(void)
   if (state->stopped_explicitly)
     {
       state->stopped_explicitly = 0;
-      return(SCM_BOOL_T);
+      return(TRUE_VALUE);
     }
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 snd_info *get_sp(SCM scm_snd_n)
@@ -1707,7 +1707,7 @@ reading edit version edit-position (defaulting to the current version)"
   vct *v1 = get_vct(v);
   ASSERT_TYPE(NUMBER_IF_BOUND_P(samp_0), samp_0, ARG1, S_samples2vct, "a number");
   ASSERT_TYPE(NUMBER_IF_BOUND_P(samps), samps, ARG2, S_samples2vct, "a number");
-  SND_ASSERT_CHAN(S_samples2vct, snd_n, chn_n, 3);
+  ASSERT_CHANNEL(S_samples2vct, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_samples2vct);
   pos = to_c_edit_position(cp, edpos, S_samples2vct, 6);
   beg = TO_C_INT_OR_ELSE(samp_0, 0);
@@ -1747,11 +1747,11 @@ reading edit version edit-position (defaulting to the current version)"
   chan_info *cp;
   snd_fd *sf;
   sound_data *sd;
-  SCM newsd = SCM_BOOL_F;
+  SCM newsd = FALSE_VALUE;
   int i, len, beg, chn = 0, pos;
   ASSERT_TYPE(NUMBER_IF_BOUND_P(samp_0), samp_0, ARG1, S_samples2sound_data, "a number");
   ASSERT_TYPE(NUMBER_IF_BOUND_P(samps), samps, ARG2, S_samples2sound_data, "a number");
-  SND_ASSERT_CHAN(S_samples2sound_data, snd_n, chn_n, 3);
+  ASSERT_CHANNEL(S_samples2sound_data, snd_n, chn_n, 3);
   ASSERT_TYPE(INTEGER_IF_BOUND_P(sdchan), sdchan, ARG7, S_samples2sound_data, "an integer");
   cp = get_cp(snd_n, chn_n, S_samples2sound_data);
   pos = to_c_edit_position(cp, edpos, S_samples2sound_data, 6);
@@ -1761,11 +1761,11 @@ reading edit version edit-position (defaulting to the current version)"
     {
       chn = TO_C_INT_OR_ELSE(sdchan, 0);
       if (sound_data_p(sdobj))
-	sd = (sound_data *)SND_VALUE_OF(sdobj);
+	sd = (sound_data *)OBJECT_REF(sdobj);
       else
 	{
 	  newsd = make_sound_data(chn + 1, len);
-	  sd = (sound_data *)SND_VALUE_OF(newsd);
+	  sd = (sound_data *)OBJECT_REF(newsd);
 	}
       if (chn < sd->chans)
 	{
@@ -1853,10 +1853,10 @@ static SCM g_update_time_graph(SCM snd, SCM chn)
 {
   #define H_update_time_graph "(" S_update_time_graph " &optional snd chn) redraws snd channel chn's graphs"
   chan_info *cp;
-  SND_ASSERT_CHAN(S_update_time_graph, snd, chn, 1); 
+  ASSERT_CHANNEL(S_update_time_graph, snd, chn, 1); 
   cp = get_cp(snd, chn, S_update_time_graph);
   update_graph(cp, NULL);
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_update_transform(SCM snd, SCM chn) 
@@ -1864,7 +1864,7 @@ static SCM g_update_transform(SCM snd, SCM chn)
   #define H_update_transform "(" S_update_transform " &optional snd chn) recalculates snd channel chn's fft (and forces it to completion)"
   chan_info *cp;
   void *val;
-  SND_ASSERT_CHAN(S_update_transform, snd, chn, 1); 
+  ASSERT_CHANNEL(S_update_transform, snd, chn, 1); 
   cp = get_cp(snd, chn, S_update_transform);
   if (cp->graph_transform_p)
     {
@@ -1884,17 +1884,17 @@ static SCM g_update_transform(SCM snd, SCM chn)
 	}
       (cp->state)->checking_explicitly = 0;
     }
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_update_lisp_graph(SCM snd, SCM chn) 
 {
   #define H_update_lisp_graph "(" S_update_lisp_graph " &optional snd chn) redraws snd channel chn's lisp graph"
   chan_info *cp;
-  SND_ASSERT_CHAN(S_update_lisp_graph, snd, chn, 1); 
+  ASSERT_CHANNEL(S_update_lisp_graph, snd, chn, 1); 
   cp = get_cp(snd, chn, S_update_lisp_graph);
   display_channel_lisp_data(cp, cp->sound, cp->state);
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_help_dialog(SCM subject, SCM msg)
@@ -1960,7 +1960,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
 
   chan_info *cp;
   lisp_grf *lg;
-  SCM data = SCM_UNDEFINED, lst;
+  SCM data = UNDEFINED_VALUE, lst;
   char *label = NULL;
   vct *v = NULL;
   SCM *vdata;
@@ -1972,7 +1972,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
   axis_info *uap = NULL;
   /* ldata can be a vct object, a vector, or a list of either */
   ASSERT_TYPE(((VCT_P(ldata)) || (VECTOR_P(ldata)) || (LIST_P(ldata))), ldata, ARG1, S_graph, "a vct, vector, or list");
-  SND_ASSERT_CHAN(S_graph, snd_n, chn_n, 7);
+  ASSERT_CHANNEL(S_graph, snd_n, chn_n, 7);
   cp = get_cp(snd_n, chn_n, S_graph);
   ymin = 32768.0;
   ymax = -32768.0;
@@ -1980,7 +1980,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
       (cp->sounds == NULL) || 
       (cp->sounds[cp->sound_ctr] == NULL) ||
       (cp->axis == NULL))
-    return(SCM_BOOL_F);
+    return(FALSE_VALUE);
   if (STRING_P(xlabel)) label = TO_C_STRING(xlabel); 
   if (NUMBER_P(x0)) nominal_x0 = TO_C_DOUBLE(x0); else nominal_x0 = 0.0;
   if (NUMBER_P(x1)) nominal_x1 = TO_C_DOUBLE(x1); else nominal_x1 = 1.0;
@@ -1990,7 +1990,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
       (NUMBER_P(CAR(ldata))))
     graphs = 1; 
   else graphs = LIST_LENGTH(ldata);
-  if (graphs == 0) return(SCM_BOOL_F);
+  if (graphs == 0) return(FALSE_VALUE);
   lg = cp->lisp_info;
   if ((lg) && (graphs != lg->graphs)) 
     {
@@ -2049,7 +2049,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
 	  else data = ldata;
 	  if (VCT_P(data))
 	    {
-	      v = (vct *)SND_VALUE_OF(data);
+	      v = (vct *)OBJECT_REF(data);
 	      len = v->length;
 	    }
 	  else len = VECTOR_LENGTH(data);
@@ -2090,14 +2090,14 @@ If 'data' is a list of numbers, it is treated as an envelope."
       uap->graph_x0 = gx0;
     }
   cp->graph_lisp_p = 1;
-  if ((EQ_P(force_display, SCM_UNDEFINED)) || 
+  if ((EQ_P(force_display, UNDEFINED_VALUE)) || 
       (NOT_FALSE_P(force_display)))
     {
       if (need_update)
 	update_graph(cp, NULL);
       else display_channel_lisp_data(cp, cp->sound, cp->state);
     }
-  return(scm_return_first(SCM_BOOL_F, data));
+  return(scm_return_first(FALSE_VALUE, data));
 }
 
 
@@ -2107,7 +2107,7 @@ static SCM g_clear_audio_inputs (void)
 #if HAVE_OSS
   mus_audio_clear_soundcard_inputs(); 
 #endif
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_set_oss_buffers(SCM num, SCM size)
@@ -2119,7 +2119,7 @@ static SCM g_set_oss_buffers(SCM num, SCM size)
   mus_audio_set_oss_buffers(TO_C_INT(num),
 			    TO_C_INT(size));
 #endif
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 #define S_mus_audio_describe            "mus-audio-describe"
@@ -2127,7 +2127,7 @@ static SCM g_mus_audio_describe(void)
 {
   #define H_mus_audio_describe "("  S_mus_audio_describe ") posts a description of the audio hardware state in the Help dialog"
   snd_help(state, "Audio State", mus_audio_report()); 
-  return(SCM_BOOL_T);
+  return(TRUE_VALUE);
 }
 
 
@@ -2135,7 +2135,7 @@ static SCM g_start_progress_report(SCM snd)
 {
   #define H_start_progress_report "(" S_start_progress_report " &optional snd) posts the hour-glass icon"
   snd_info *sp;
-  SND_ASSERT_SND(S_start_progress_report, snd, 1);
+  ASSERT_SOUND(S_start_progress_report, snd, 1);
   sp = get_sp(snd);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_start_progress_report, snd));
@@ -2147,7 +2147,7 @@ static SCM g_finish_progress_report(SCM snd)
 {
   #define H_finish_progress_report "(" S_finish_progress_report " &optional snd) removes the hour-glass icon"
   snd_info *sp;
-  SND_ASSERT_SND(S_finish_progress_report, snd, 1);
+  ASSERT_SOUND(S_finish_progress_report, snd, 1);
   sp = get_sp(snd);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_finish_progress_report, snd));
@@ -2162,7 +2162,7 @@ updates an on-going 'progress report' (e. g. an animated hour-glass icon) in snd
 
   snd_info *sp;
   ASSERT_TYPE(NUMBER_P(pct), pct, ARG1, S_progress_report, "a number");
-  SND_ASSERT_SND(S_progress_report, snd, 5);
+  ASSERT_SOUND(S_progress_report, snd, 5);
   ASSERT_TYPE(STRING_IF_BOUND_P(name), name, ARG2, S_progress_report, "a string");
   ASSERT_TYPE(INTEGER_IF_BOUND_P(cur_chan), cur_chan, ARG3, S_progress_report, "an integer");
   ASSERT_TYPE(INTEGER_IF_BOUND_P(chans), chans, ARG4, S_progress_report, "an integer");
@@ -2384,7 +2384,7 @@ static SCM g_selection_color(void)
 static SCM g_set_mix_color (SCM arg1, SCM arg2)
 {
   snd_color *v;
-  SCM color, mix_id = SCM_UNDEFINED;
+  SCM color, mix_id = UNDEFINED_VALUE;
   if (NOT_BOUND_P(arg2))
     color = arg1;
   else
@@ -2601,13 +2601,13 @@ static SCM during_open_hook, after_open_hook, output_comment_hook;
 SCM g_c_run_progn_hook (SCM hook, SCM args, const char *caller)
 {
   /* Guile built-in scm_c_run_hook doesn't return the value of the hook procedure(s) and exits on error */
-  SCM result = SCM_BOOL_F;
+  SCM result = FALSE_VALUE;
   SCM procs = HOOK_PROCEDURES (hook);
   while (NOT_NULL_P (procs))
     {
       if (!(EQ_P(args, LIST_0)))
 	result = APPLY(CAR(procs), args, caller);
-      else result = CALL0(CAR(procs), caller);
+      else result = CALL_0(CAR(procs), caller);
       procs = CDR (procs);
     }
   return(scm_return_first(result, args));
@@ -2616,13 +2616,13 @@ SCM g_c_run_progn_hook (SCM hook, SCM args, const char *caller)
 SCM g_c_run_or_hook (SCM hook, SCM args, const char *caller)
 {
   /* Guile built-in scm_c_run_hook doesn't return the value of the hook procedure(s) and calls everything on the list */
-  SCM result = SCM_BOOL_F; /* (or) -> #f */
+  SCM result = FALSE_VALUE; /* (or) -> #f */
   SCM procs = HOOK_PROCEDURES (hook);
   while (NOT_NULL_P (procs))
     {
       if (!(EQ_P(args, LIST_0)))
 	result = APPLY(CAR(procs), args, caller);
-      else result = CALL0(CAR(procs), caller);
+      else result = CALL_0(CAR(procs), caller);
       if (NOT_FALSE_P(result)) return(result);
       procs = CDR (procs);
     }
@@ -2631,13 +2631,13 @@ SCM g_c_run_or_hook (SCM hook, SCM args, const char *caller)
 
 SCM g_c_run_and_hook (SCM hook, SCM args, const char *caller)
 {
-  SCM result = SCM_BOOL_T; /* (and) -> #t */
+  SCM result = TRUE_VALUE; /* (and) -> #t */
   SCM procs = HOOK_PROCEDURES (hook);
   while (NOT_NULL_P (procs))
     {
       if (!(EQ_P(args, LIST_0)))
 	result = APPLY(CAR(procs), args, caller);
-      else result = CALL0(CAR(procs), caller);
+      else result = CALL_0(CAR(procs), caller);
       if (FALSE_P(result)) return(result);
       procs = CDR (procs);
     }
@@ -2675,7 +2675,7 @@ char *output_comment(file_info *hdr)
       char *new_comment = NULL, *tmpstr = NULL;
       while (NOT_NULL_P (procs))
 	{
-	  result = CALL1(CAR(procs),
+	  result = CALL_1(CAR(procs),
 			 TO_SCM_STRING(com),
 			 S_output_comment_hook);
 	  tmpstr = TO_NEW_C_STRING(result);
@@ -2712,8 +2712,8 @@ void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char *get_h
   scm_permanent_object(
     scm_c_define(get_name,
       scm_make_procedure_with_setter(
-        SND_NEW_PROCEDURE("", SCM_FNC get_func, get_req, get_opt, 0),
-	SND_NEW_PROCEDURE(set_name, SCM_FNC set_func, set_req, set_opt, 0))));
+        NEW_PROCEDURE("", PROCEDURE get_func, get_req, get_opt, 0),
+	NEW_PROCEDURE(set_name, PROCEDURE set_func, set_req, set_opt, 0))));
   scm_set_object_property_x(TO_SCM_SYMBOL(get_name), local_doc, str);
   scm_set_procedure_property_x(SND_LOOKUP(get_name), local_doc, str);
 #else
@@ -2721,8 +2721,8 @@ void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char *get_h
     CDR(
       gh_define(get_name,
 	scm_make_procedure_with_setter(
-          SND_NEW_PROCEDURE("", SCM_FNC get_func, get_req, get_opt, 0),
-	  SND_NEW_PROCEDURE(set_name, SCM_FNC set_func, set_req, set_opt, 0)
+          NEW_PROCEDURE("", PROCEDURE get_func, get_req, get_opt, 0),
+	  NEW_PROCEDURE(set_name, PROCEDURE set_func, set_req, set_opt, 0)
 	  ))),
     local_doc,
     TO_SCM_STRING(get_help));
@@ -2747,9 +2747,9 @@ void define_procedure_with_reversed_setter(char *get_name, SCM (*get_func)(), ch
   scm_permanent_object(
     scm_c_define(get_name,
       scm_make_procedure_with_setter(
-        SND_NEW_PROCEDURE("", SCM_FNC get_func, get_req, get_opt, 0),
-	SND_NEW_PROCEDURE("", SCM_FNC reversed_set_func, set_req, set_opt, 0))));
-  SND_NEW_PROCEDURE(set_name, SCM_FNC set_func, set_req, set_opt, 0);
+        NEW_PROCEDURE("", PROCEDURE get_func, get_req, get_opt, 0),
+	NEW_PROCEDURE("", PROCEDURE reversed_set_func, set_req, set_opt, 0))));
+  NEW_PROCEDURE(set_name, PROCEDURE set_func, set_req, set_opt, 0);
   scm_set_object_property_x(TO_SCM_SYMBOL(get_name), local_doc, str);
   scm_set_procedure_property_x(SND_LOOKUP(get_name), local_doc, str);
 #else
@@ -2757,13 +2757,13 @@ void define_procedure_with_reversed_setter(char *get_name, SCM (*get_func)(), ch
     CDR(
       gh_define(get_name,
 	scm_make_procedure_with_setter(
-          SND_NEW_PROCEDURE("", SCM_FNC get_func, get_req, get_opt, 0),
-	  SND_NEW_PROCEDURE("", SCM_FNC reversed_set_func, set_req, set_opt, 0)
+          NEW_PROCEDURE("", PROCEDURE get_func, get_req, get_opt, 0),
+	  NEW_PROCEDURE("", PROCEDURE reversed_set_func, set_req, set_opt, 0)
 	  ))),
     local_doc,
     TO_SCM_STRING(get_help));
   /* still need to trap help output and send it to the listener */
-  SND_NEW_PROCEDURE(set_name, SCM_FNC set_func, set_req, set_opt, 0);
+  NEW_PROCEDURE(set_name, PROCEDURE set_func, set_req, set_opt, 0);
 #endif
 #endif
 #if HAVE_LIBREP
@@ -2805,15 +2805,15 @@ static SCM g_dlinit(SCM handle, SCM func)
   proc = dlsym((void *)(SND_UNWRAP(handle)), TO_C_STRING(func));
   if (proc == NULL) return(TO_SCM_STRING(dlerror()));
   ((snd_dl_func)proc)();
-  return(SCM_BOOL_T);
+  return(TRUE_VALUE);
 }
 
 static void g_init_dl(SCM local_doc)
 {
-  DEFINE_PROC("dlopen", SCM_FNC g_dlopen, 1, 0 ,0, "");
-  DEFINE_PROC("dlclose", SCM_FNC g_dlclose, 1, 0 ,0, "");
-  DEFINE_PROC("dlerror", SCM_FNC g_dlerror, 0, 0 ,0, "");
-  DEFINE_PROC("dlinit", SCM_FNC g_dlinit, 2, 0 ,0, "");
+  DEFINE_PROC("dlopen", PROCEDURE g_dlopen, 1, 0 ,0, "");
+  DEFINE_PROC("dlclose", PROCEDURE g_dlclose, 1, 0 ,0, "");
+  DEFINE_PROC("dlerror", PROCEDURE g_dlerror, 0, 0 ,0, "");
+  DEFINE_PROC("dlinit", PROCEDURE g_dlinit, 2, 0 ,0, "");
   
 }
 #endif
@@ -2821,9 +2821,9 @@ static void g_init_dl(SCM local_doc)
 static SCM g_little_endian(void)
 {
 #if MUS_LITTLE_ENDIAN
-  return(SCM_BOOL_T);
+  return(TRUE_VALUE);
 #else
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 #endif
 }
 
@@ -2842,7 +2842,7 @@ static SCM g_gc_on(void) {--scm_block_gc; return(TO_SCM_INT(scm_block_gc));}
 /* need someplace findable in gdb (without knowing much about Guile) to get the last call+args upon segfault */
 static SCM g_gc_hook(void)
 {
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 static char *this_proc = NULL, *these_args = NULL;
 static SCM g_set_last_proc(SCM proc, SCM args)
@@ -2850,12 +2850,20 @@ static SCM g_set_last_proc(SCM proc, SCM args)
 #if HAVE_SCM_OBJECT_TO_STRING
   /*
   if (this_proc) free(this_proc);
-  this_proc = TO_NEW_C_STRING(scm_object_to_string(proc, SCM_UNDEFINED));
+  this_proc = TO_NEW_C_STRING(scm_object_to_string(proc, UNDEFINED_VALUE));
   if (these_args) free(these_args);
-  these_args = TO_NEW_C_STRING(scm_object_to_string(args, SCM_UNDEFINED));
+  these_args = TO_NEW_C_STRING(scm_object_to_string(args, UNDEFINED_VALUE));
   */
 #endif
-  return(scm_return_first(SCM_BOOL_F, proc, args));
+  return(scm_return_first(FALSE_VALUE, proc, args));
+}
+#endif
+#if WITH_MCHECK
+#include <mcheck.h>
+static SCM g_mcheck_check_all(void)
+{
+  mcheck_check_all();
+  return(FALSE_VALUE);
 }
 #endif
 
@@ -2866,12 +2874,15 @@ void g_initialize_gh(snd_state *ss)
   local_doc = MAKE_PERMANENT(DOCUMENTATION);
 
 #if GCING
-  SND_NEW_PROCEDURE("set-last-proc", SCM_FNC g_set_last_proc, 2, 0, 0);
-  SND_NEW_PROCEDURE("g-gc-hook", SCM_FNC g_gc_hook, 0, 0, 0);
+  NEW_PROCEDURE("set-last-proc", PROCEDURE g_set_last_proc, 2, 0, 0);
+  NEW_PROCEDURE("g-gc-hook", PROCEDURE g_gc_hook, 0, 0, 0);
   DEFINE_VAR("g-gc-step", 10, "");
   DEFINE_VAR("g-gc-ctr", 0, "");
   scm_eval_0str("(define (gc-1) (g-gc-hook) (if (> g-gc-step 0) (begin (if (> g-gc-ctr g-gc-step) (begin (set! g-gc-ctr 0) (gc)) (set! g-gc-ctr (1+ g-gc-ctr))))))");
   YES_WE_HAVE("gcing");
+#endif
+#if WITH_MCHECK
+  NEW_PROCEDURE("mcheck-all", PROCEDURE g_mcheck_check_all, 0, 0, 0);
 #endif
 
 #if TIMING
@@ -2913,238 +2924,238 @@ void g_initialize_gh(snd_state *ss)
 
 
   /* ---------------- VARIABLES ---------------- */
-  define_procedure_with_setter(S_ask_before_overwrite, SCM_FNC g_ask_before_overwrite, H_ask_before_overwrite,
-			       "set-" S_ask_before_overwrite, SCM_FNC g_set_ask_before_overwrite, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_ask_before_overwrite, PROCEDURE g_ask_before_overwrite, H_ask_before_overwrite,
+			       "set-" S_ask_before_overwrite, PROCEDURE g_set_ask_before_overwrite, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_audio_output_device, SCM_FNC g_audio_output_device, H_audio_output_device,
-			       "set-" S_audio_output_device, SCM_FNC g_set_audio_output_device, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_audio_output_device, PROCEDURE g_audio_output_device, H_audio_output_device,
+			       "set-" S_audio_output_device, PROCEDURE g_set_audio_output_device, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_audio_input_device, SCM_FNC g_audio_input_device, H_audio_input_device,
-			       "set-" S_audio_input_device, SCM_FNC g_set_audio_input_device, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_audio_input_device, PROCEDURE g_audio_input_device, H_audio_input_device,
+			       "set-" S_audio_input_device, PROCEDURE g_set_audio_input_device, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_minibuffer_history_length, SCM_FNC g_minibuffer_history_length, H_minibuffer_history_length,
-			       "set-" S_minibuffer_history_length, SCM_FNC g_set_minibuffer_history_length, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_minibuffer_history_length, PROCEDURE g_minibuffer_history_length, H_minibuffer_history_length,
+			       "set-" S_minibuffer_history_length, PROCEDURE g_set_minibuffer_history_length, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_dac_size, SCM_FNC g_dac_size, H_dac_size,
-			       "set-" S_dac_size, SCM_FNC g_set_dac_size, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_dac_size, PROCEDURE g_dac_size, H_dac_size,
+			       "set-" S_dac_size, PROCEDURE g_set_dac_size, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_dac_combines_channels, SCM_FNC g_dac_combines_channels, H_dac_combines_channels,
-			       "set-" S_dac_combines_channels, SCM_FNC g_set_dac_combines_channels, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_dac_combines_channels, PROCEDURE g_dac_combines_channels, H_dac_combines_channels,
+			       "set-" S_dac_combines_channels, PROCEDURE g_set_dac_combines_channels, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_auto_resize, SCM_FNC g_auto_resize, H_auto_resize,
-			       "set-" S_auto_resize, SCM_FNC g_set_auto_resize, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_auto_resize, PROCEDURE g_auto_resize, H_auto_resize,
+			       "set-" S_auto_resize, PROCEDURE g_set_auto_resize, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_auto_update, SCM_FNC g_auto_update, H_auto_update,
-			       "set-" S_auto_update, SCM_FNC g_set_auto_update, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_auto_update, PROCEDURE g_auto_update, H_auto_update,
+			       "set-" S_auto_update, PROCEDURE g_set_auto_update, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_filter_env_in_hz, SCM_FNC g_filter_env_in_hz, H_filter_env_in_hz,
-			       "set-" S_filter_env_in_hz, SCM_FNC g_set_filter_env_in_hz, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_filter_env_in_hz, PROCEDURE g_filter_env_in_hz, H_filter_env_in_hz,
+			       "set-" S_filter_env_in_hz, PROCEDURE g_set_filter_env_in_hz, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_color_cutoff, SCM_FNC g_color_cutoff, H_color_cutoff,
-			       "set-" S_color_cutoff, SCM_FNC g_set_color_cutoff, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_color_cutoff, PROCEDURE g_color_cutoff, H_color_cutoff,
+			       "set-" S_color_cutoff, PROCEDURE g_set_color_cutoff, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_color_inverted, SCM_FNC g_color_inverted, H_color_inverted,
-			       "set-" S_color_inverted, SCM_FNC g_set_color_inverted, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_color_inverted, PROCEDURE g_color_inverted, H_color_inverted,
+			       "set-" S_color_inverted, PROCEDURE g_set_color_inverted, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_color_scale, SCM_FNC g_color_scale, H_color_scale,
-			       "set-" S_color_scale, SCM_FNC g_set_color_scale, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_color_scale, PROCEDURE g_color_scale, H_color_scale,
+			       "set-" S_color_scale, PROCEDURE g_set_color_scale, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_auto_update_interval, SCM_FNC g_auto_update_interval, H_auto_update_interval,
-			       "set-" S_auto_update_interval, SCM_FNC g_set_auto_update_interval, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_auto_update_interval, PROCEDURE g_auto_update_interval, H_auto_update_interval,
+			       "set-" S_auto_update_interval, PROCEDURE g_set_auto_update_interval, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_default_output_chans, SCM_FNC g_default_output_chans, H_default_output_chans,
-			       "set-" S_default_output_chans, SCM_FNC g_set_default_output_chans, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_default_output_chans, PROCEDURE g_default_output_chans, H_default_output_chans,
+			       "set-" S_default_output_chans, PROCEDURE g_set_default_output_chans, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_default_output_srate, SCM_FNC g_default_output_srate, H_default_output_srate,
-			       "set-" S_default_output_srate, SCM_FNC g_set_default_output_srate, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_default_output_srate, PROCEDURE g_default_output_srate, H_default_output_srate,
+			       "set-" S_default_output_srate, PROCEDURE g_set_default_output_srate, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_default_output_type, SCM_FNC g_default_output_type, H_default_output_type,
-			       "set-" S_default_output_type, SCM_FNC g_set_default_output_type, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_default_output_type, PROCEDURE g_default_output_type, H_default_output_type,
+			       "set-" S_default_output_type, PROCEDURE g_set_default_output_type, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_default_output_format, SCM_FNC g_default_output_format, H_default_output_format,
-			       "set-" S_default_output_format, SCM_FNC g_set_default_output_format, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_default_output_format, PROCEDURE g_default_output_format, H_default_output_format,
+			       "set-" S_default_output_format, PROCEDURE g_set_default_output_format, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_eps_file, SCM_FNC g_eps_file, H_eps_file,
-			       "set-" S_eps_file, SCM_FNC g_set_eps_file, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_eps_file, PROCEDURE g_eps_file, H_eps_file,
+			       "set-" S_eps_file, PROCEDURE g_set_eps_file, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_eps_left_margin, SCM_FNC g_eps_left_margin, H_eps_left_margin,
-			       "set-" S_eps_left_margin, SCM_FNC g_set_eps_left_margin, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_eps_left_margin, PROCEDURE g_eps_left_margin, H_eps_left_margin,
+			       "set-" S_eps_left_margin, PROCEDURE g_set_eps_left_margin, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_eps_bottom_margin, SCM_FNC g_eps_bottom_margin, H_eps_bottom_margin,
-			       "set-" S_eps_bottom_margin, SCM_FNC g_set_eps_bottom_margin, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_eps_bottom_margin, PROCEDURE g_eps_bottom_margin, H_eps_bottom_margin,
+			       "set-" S_eps_bottom_margin, PROCEDURE g_set_eps_bottom_margin, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_listener_prompt, SCM_FNC g_listener_prompt, H_listener_prompt,
-			       "set-" S_listener_prompt, SCM_FNC g_set_listener_prompt, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_listener_prompt, PROCEDURE g_listener_prompt, H_listener_prompt,
+			       "set-" S_listener_prompt, PROCEDURE g_set_listener_prompt, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_audio_state_file, SCM_FNC g_audio_state_file, H_audio_state_file,
-			       "set-" S_audio_state_file, SCM_FNC g_set_audio_state_file, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_audio_state_file, PROCEDURE g_audio_state_file, H_audio_state_file,
+			       "set-" S_audio_state_file, PROCEDURE g_set_audio_state_file, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_movies, SCM_FNC g_movies, H_movies,
-			       "set-" S_movies, SCM_FNC g_set_movies, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_movies, PROCEDURE g_movies, H_movies,
+			       "set-" S_movies, PROCEDURE g_set_movies, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_selection_creates_region, SCM_FNC g_selection_creates_region, H_selection_creates_region,
-			       "set-" S_selection_creates_region, SCM_FNC g_set_selection_creates_region, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_selection_creates_region, PROCEDURE g_selection_creates_region, H_selection_creates_region,
+			       "set-" S_selection_creates_region, PROCEDURE g_set_selection_creates_region, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_print_length, SCM_FNC g_print_length, H_print_length,
-			       "set-" S_print_length, SCM_FNC g_set_print_length, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_print_length, PROCEDURE g_print_length, H_print_length,
+			       "set-" S_print_length, PROCEDURE g_set_print_length, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_previous_files_sort, SCM_FNC g_previous_files_sort, H_previous_files_sort,
-			       "set-" S_previous_files_sort, SCM_FNC g_set_previous_files_sort, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_previous_files_sort, PROCEDURE g_previous_files_sort, H_previous_files_sort,
+			       "set-" S_previous_files_sort, PROCEDURE g_set_previous_files_sort, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_show_listener, SCM_FNC g_show_listener, H_show_listener,
-			       "set-" S_show_listener, SCM_FNC g_set_show_listener, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_show_listener, PROCEDURE g_show_listener, H_show_listener,
+			       "set-" S_show_listener, PROCEDURE g_set_show_listener, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_show_indices, SCM_FNC g_show_indices, H_show_indices,
-			       "set-" S_show_indices, SCM_FNC g_set_show_indices, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_show_indices, PROCEDURE g_show_indices, H_show_indices,
+			       "set-" S_show_indices, PROCEDURE g_set_show_indices, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_show_backtrace, SCM_FNC g_show_backtrace, H_show_backtrace,
-			       "set-" S_show_backtrace, SCM_FNC g_set_show_backtrace, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_show_backtrace, PROCEDURE g_show_backtrace, H_show_backtrace,
+			       "set-" S_show_backtrace, PROCEDURE g_set_show_backtrace, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_show_usage_stats, SCM_FNC g_show_usage_stats, H_show_usage_stats,
-			       "set-" S_show_usage_stats, SCM_FNC g_set_show_usage_stats, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_show_usage_stats, PROCEDURE g_show_usage_stats, H_show_usage_stats,
+			       "set-" S_show_usage_stats, PROCEDURE g_set_show_usage_stats, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_sinc_width, SCM_FNC g_sinc_width, H_sinc_width,
-			       "set-" S_sinc_width, SCM_FNC g_set_sinc_width, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_sinc_width, PROCEDURE g_sinc_width, H_sinc_width,
+			       "set-" S_sinc_width, PROCEDURE g_set_sinc_width, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_hankel_jn, SCM_FNC g_hankel_jn, H_hankel_jn,
-			       "set-" S_hankel_jn, SCM_FNC g_set_hankel_jn, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_hankel_jn, PROCEDURE g_hankel_jn, H_hankel_jn,
+			       "set-" S_hankel_jn, PROCEDURE g_set_hankel_jn, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_colormap, SCM_FNC g_color_map, H_colormap,
-			       "set-" S_colormap, SCM_FNC g_set_color_map, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_colormap, PROCEDURE g_color_map, H_colormap,
+			       "set-" S_colormap, PROCEDURE g_set_color_map, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_temp_dir, SCM_FNC g_temp_dir, H_temp_dir,
-			       "set-" S_temp_dir, SCM_FNC g_set_temp_dir, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_temp_dir, PROCEDURE g_temp_dir, H_temp_dir,
+			       "set-" S_temp_dir, PROCEDURE g_set_temp_dir, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_save_dir, SCM_FNC g_save_dir, H_save_dir,
-			       "set-" S_save_dir, SCM_FNC g_set_save_dir, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_save_dir, PROCEDURE g_save_dir, H_save_dir,
+			       "set-" S_save_dir, PROCEDURE g_set_save_dir, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_trap_segfault, SCM_FNC g_trap_segfault, H_trap_segfault,
-			       "set-" S_trap_segfault, SCM_FNC g_set_trap_segfault, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_trap_segfault, PROCEDURE g_trap_segfault, H_trap_segfault,
+			       "set-" S_trap_segfault, PROCEDURE g_set_trap_segfault, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_show_selection_transform, SCM_FNC g_show_selection_transform, H_show_selection_transform,
-			       "set-" S_show_selection_transform, SCM_FNC g_set_show_selection_transform, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_show_selection_transform, PROCEDURE g_show_selection_transform, H_show_selection_transform,
+			       "set-" S_show_selection_transform, PROCEDURE g_set_show_selection_transform, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_with_mix_tags, SCM_FNC g_with_mix_tags, H_with_mix_tags,
-			       "set-" S_with_mix_tags, SCM_FNC g_set_with_mix_tags, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_with_mix_tags, PROCEDURE g_with_mix_tags, H_with_mix_tags,
+			       "set-" S_with_mix_tags, PROCEDURE g_set_with_mix_tags, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_use_sinc_interp, SCM_FNC g_use_sinc_interp, H_use_sinc_interp,
-			       "set-" S_use_sinc_interp, SCM_FNC g_set_use_sinc_interp, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_use_sinc_interp, PROCEDURE g_use_sinc_interp, H_use_sinc_interp,
+			       "set-" S_use_sinc_interp, PROCEDURE g_set_use_sinc_interp, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_data_clipped, SCM_FNC g_data_clipped, H_data_clipped,
-			       "set-" S_data_clipped, SCM_FNC g_set_data_clipped, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_data_clipped, PROCEDURE g_data_clipped, H_data_clipped,
+			       "set-" S_data_clipped, PROCEDURE g_set_data_clipped, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_vu_font, SCM_FNC g_vu_font, H_vu_font,
-			       "set-" S_vu_font, SCM_FNC g_set_vu_font, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_vu_font, PROCEDURE g_vu_font, H_vu_font,
+			       "set-" S_vu_font, PROCEDURE g_set_vu_font, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_vu_font_size, SCM_FNC g_vu_font_size, H_vu_font_size,
-			       "set-" S_vu_font_size, SCM_FNC g_set_vu_font_size, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_vu_font_size, PROCEDURE g_vu_font_size, H_vu_font_size,
+			       "set-" S_vu_font_size, PROCEDURE g_set_vu_font_size, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_vu_size, SCM_FNC g_vu_size, H_vu_size,
-			       "set-" S_vu_size, SCM_FNC g_set_vu_size, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_vu_size, PROCEDURE g_vu_size, H_vu_size,
+			       "set-" S_vu_size, PROCEDURE g_set_vu_size, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_window_x, SCM_FNC g_window_x, H_window_x,
-			       "set-" S_window_x, SCM_FNC g_set_window_x, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_window_x, PROCEDURE g_window_x, H_window_x,
+			       "set-" S_window_x, PROCEDURE g_set_window_x, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_window_y, SCM_FNC g_window_y, H_window_y,
-			       "set-" S_window_y, SCM_FNC g_set_window_y, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_window_y, PROCEDURE g_window_y, H_window_y,
+			       "set-" S_window_y, PROCEDURE g_set_window_y, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_zoom_focus_style, SCM_FNC g_zoom_focus_style, H_zoom_focus_style,
-			       "set-" S_zoom_focus_style, SCM_FNC g_set_zoom_focus_style, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_zoom_focus_style, PROCEDURE g_zoom_focus_style, H_zoom_focus_style,
+			       "set-" S_zoom_focus_style, PROCEDURE g_set_zoom_focus_style, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_help_text_font, SCM_FNC g_help_text_font, H_help_text_font,
-			       "set-" S_help_text_font, SCM_FNC g_set_help_text_font, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_help_text_font, PROCEDURE g_help_text_font, H_help_text_font,
+			       "set-" S_help_text_font, PROCEDURE g_set_help_text_font, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_tiny_font, SCM_FNC g_tiny_font, H_tiny_font,
-			       "set-" S_tiny_font, SCM_FNC g_set_tiny_font, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_tiny_font, PROCEDURE g_tiny_font, H_tiny_font,
+			       "set-" S_tiny_font, PROCEDURE g_set_tiny_font, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_button_font, SCM_FNC g_button_font, H_button_font,
-			       "set-" S_button_font, SCM_FNC g_set_button_font, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_button_font, PROCEDURE g_button_font, H_button_font,
+			       "set-" S_button_font, PROCEDURE g_set_button_font, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_bold_button_font, SCM_FNC g_bold_button_font, H_bold_button_font,
-			       "set-" S_bold_button_font, SCM_FNC g_set_bold_button_font, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_bold_button_font, PROCEDURE g_bold_button_font, H_bold_button_font,
+			       "set-" S_bold_button_font, PROCEDURE g_set_bold_button_font, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_axis_label_font, SCM_FNC g_axis_label_font, H_axis_label_font,
-			       "set-" S_axis_label_font, SCM_FNC g_set_axis_label_font, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_axis_label_font, PROCEDURE g_axis_label_font, H_axis_label_font,
+			       "set-" S_axis_label_font, PROCEDURE g_set_axis_label_font, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_axis_numbers_font, SCM_FNC g_axis_numbers_font, H_axis_numbers_font,
-			       "set-" S_axis_numbers_font, SCM_FNC g_set_axis_numbers_font, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_axis_numbers_font, PROCEDURE g_axis_numbers_font, H_axis_numbers_font,
+			       "set-" S_axis_numbers_font, PROCEDURE g_set_axis_numbers_font, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_listener_font, SCM_FNC g_listener_font, H_listener_font,
-			       "set-" S_listener_font, SCM_FNC g_set_listener_font, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_listener_font, PROCEDURE g_listener_font, H_listener_font,
+			       "set-" S_listener_font, PROCEDURE g_set_listener_font, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_window_width, SCM_FNC g_window_width, H_window_width,
-			       "set-" S_window_width, SCM_FNC g_set_window_width, local_doc, 0, 0, 0, 1);  
+  define_procedure_with_setter(S_window_width, PROCEDURE g_window_width, H_window_width,
+			       "set-" S_window_width, PROCEDURE g_set_window_width, local_doc, 0, 0, 0, 1);  
 
-  define_procedure_with_setter(S_window_height, SCM_FNC g_window_height, H_window_height,
-			       "set-" S_window_height, SCM_FNC g_set_window_height, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_window_height, PROCEDURE g_window_height, H_window_height,
+			       "set-" S_window_height, PROCEDURE g_set_window_height, local_doc, 0, 0, 0, 1);
 
 
 #if (!USE_NO_GUI)
   #if HAVE_HTML
   YES_WE_HAVE("snd-html");
-  define_procedure_with_setter(S_html_dir, SCM_FNC g_html_dir, H_html_dir,
-			       "set-" S_html_dir, SCM_FNC g_set_html_dir, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_html_dir, PROCEDURE g_html_dir, H_html_dir,
+			       "set-" S_html_dir, PROCEDURE g_set_html_dir, local_doc, 0, 0, 1, 0);
   #endif
 
-  define_procedure_with_setter(S_selection_color, SCM_FNC g_selection_color, H_selection_color,
-			       "set-" S_selection_color, SCM_FNC g_set_selection_color, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_selection_color, PROCEDURE g_selection_color, H_selection_color,
+			       "set-" S_selection_color, PROCEDURE g_set_selection_color, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_zoom_color, SCM_FNC g_zoom_color, H_zoom_color,
-			       "set-" S_zoom_color, SCM_FNC g_set_zoom_color, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_zoom_color, PROCEDURE g_zoom_color, H_zoom_color,
+			       "set-" S_zoom_color, PROCEDURE g_set_zoom_color, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_position_color, SCM_FNC g_position_color, H_position_color,
-			       "set-" S_position_color, SCM_FNC g_set_position_color, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_position_color, PROCEDURE g_position_color, H_position_color,
+			       "set-" S_position_color, PROCEDURE g_set_position_color, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_mark_color, SCM_FNC g_mark_color, H_mark_color,
-			       "set-" S_mark_color, SCM_FNC g_set_mark_color, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_mark_color, PROCEDURE g_mark_color, H_mark_color,
+			       "set-" S_mark_color, PROCEDURE g_set_mark_color, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_listener_color, SCM_FNC g_listener_color, H_listener_color,
-			       "set-" S_listener_color, SCM_FNC g_set_listener_color, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_listener_color, PROCEDURE g_listener_color, H_listener_color,
+			       "set-" S_listener_color, PROCEDURE g_set_listener_color, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_listener_text_color, SCM_FNC g_listener_text_color, H_listener_text_color,
-			       "set-" S_listener_text_color, SCM_FNC g_set_listener_text_color, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_listener_text_color, PROCEDURE g_listener_text_color, H_listener_text_color,
+			       "set-" S_listener_text_color, PROCEDURE g_set_listener_text_color, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_enved_waveform_color, SCM_FNC g_enved_waveform_color, H_enved_waveform_color,
-			       "set-" S_enved_waveform_color, SCM_FNC g_set_enved_waveform_color, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_enved_waveform_color, PROCEDURE g_enved_waveform_color, H_enved_waveform_color,
+			       "set-" S_enved_waveform_color, PROCEDURE g_set_enved_waveform_color, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_filter_waveform_color, SCM_FNC g_filter_waveform_color, H_filter_waveform_color,
-			       "set-" S_filter_waveform_color, SCM_FNC g_set_filter_waveform_color, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_filter_waveform_color, PROCEDURE g_filter_waveform_color, H_filter_waveform_color,
+			       "set-" S_filter_waveform_color, PROCEDURE g_set_filter_waveform_color, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_highlight_color, SCM_FNC g_highlight_color, H_highlight_color,
-			       "set-" S_highlight_color, SCM_FNC g_set_highlight_color, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_highlight_color, PROCEDURE g_highlight_color, H_highlight_color,
+			       "set-" S_highlight_color, PROCEDURE g_set_highlight_color, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_cursor_color, SCM_FNC g_cursor_color, H_cursor_color,
-			       "set-" S_cursor_color, SCM_FNC g_set_cursor_color, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_cursor_color, PROCEDURE g_cursor_color, H_cursor_color,
+			       "set-" S_cursor_color, PROCEDURE g_set_cursor_color, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_mix_color, SCM_FNC g_mix_color, H_mix_color,
-			       "set-" S_mix_color, SCM_FNC g_set_mix_color, local_doc, 0, 1, 1, 1);
+  define_procedure_with_setter(S_mix_color, PROCEDURE g_mix_color, H_mix_color,
+			       "set-" S_mix_color, PROCEDURE g_set_mix_color, local_doc, 0, 1, 1, 1);
 
-  define_procedure_with_setter(S_selected_mix_color, SCM_FNC g_selected_mix_color, H_selected_mix_color,
-			       "set-" S_selected_mix_color, SCM_FNC g_set_selected_mix_color, local_doc, 0, 1, 1, 1);
+  define_procedure_with_setter(S_selected_mix_color, PROCEDURE g_selected_mix_color, H_selected_mix_color,
+			       "set-" S_selected_mix_color, PROCEDURE g_set_selected_mix_color, local_doc, 0, 1, 1, 1);
 
-  define_procedure_with_setter(S_text_focus_color, SCM_FNC g_text_focus_color, H_text_focus_color,
-			       "set-" S_text_focus_color, SCM_FNC g_set_text_focus_color, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_text_focus_color, PROCEDURE g_text_focus_color, H_text_focus_color,
+			       "set-" S_text_focus_color, PROCEDURE g_set_text_focus_color, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_sash_color, SCM_FNC g_sash_color, H_sash_color,
-			       "set-" S_sash_color, SCM_FNC g_set_sash_color, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_sash_color, PROCEDURE g_sash_color, H_sash_color,
+			       "set-" S_sash_color, PROCEDURE g_set_sash_color, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_data_color, SCM_FNC g_data_color, H_data_color,
-			       "set-" S_data_color, SCM_FNC g_set_data_color, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_data_color, PROCEDURE g_data_color, H_data_color,
+			       "set-" S_data_color, PROCEDURE g_set_data_color, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_graph_color, SCM_FNC g_graph_color, H_graph_color,
-			       "set-" S_graph_color, SCM_FNC g_set_graph_color, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_graph_color, PROCEDURE g_graph_color, H_graph_color,
+			       "set-" S_graph_color, PROCEDURE g_set_graph_color, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_selected_graph_color, SCM_FNC g_selected_graph_color, H_selected_graph_color,
-			       "set-" S_selected_graph_color, SCM_FNC g_set_selected_graph_color, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_selected_graph_color, PROCEDURE g_selected_graph_color, H_selected_graph_color,
+			       "set-" S_selected_graph_color, PROCEDURE g_set_selected_graph_color, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_selected_data_color, SCM_FNC g_selected_data_color, H_selected_data_color,
-			       "set-" S_selected_data_color, SCM_FNC g_set_selected_data_color, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_selected_data_color, PROCEDURE g_selected_data_color, H_selected_data_color,
+			       "set-" S_selected_data_color, PROCEDURE g_set_selected_data_color, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_basic_color, SCM_FNC g_basic_color, H_basic_color,
-			       "set-" S_basic_color, SCM_FNC g_set_basic_color, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_basic_color, PROCEDURE g_basic_color, H_basic_color,
+			       "set-" S_basic_color, PROCEDURE g_set_basic_color, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_pushed_button_color, SCM_FNC g_pushed_button_color, H_pushed_button_color,
-			       "set-" S_pushed_button_color, SCM_FNC g_set_pushed_button_color, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_pushed_button_color, PROCEDURE g_pushed_button_color, H_pushed_button_color,
+			       "set-" S_pushed_button_color, PROCEDURE g_set_pushed_button_color, local_doc, 0, 0, 1, 0);
 #endif
 
 
@@ -3517,7 +3528,7 @@ SCM librep_eval_string(char *data)
 
 static Scheme_Object *snd_inner(void *closure_data, int argc, Scheme_Object **argv)
 {
-  SCM_FNC func = (SCM_FNC *)closure_data;
+  PROCEDURE func = (PROCEDURE *)closure_data;
   switch (argc)
     {
     case 0: return((*func)()); break;

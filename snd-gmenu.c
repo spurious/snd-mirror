@@ -116,7 +116,7 @@ void set_menu_label(GtkWidget *w, const char *label) {if (w) set_button_label(w,
 static SCM menu_hook;
 static int call_menu_hook(char *name, char *option)
 {
-  SCM res = SCM_BOOL_T;
+  SCM res = TRUE_VALUE;
   if ((name) && (HOOKED(menu_hook)))
     res = g_c_run_and_hook(menu_hook, 
 			   LIST_2(TO_SCM_STRING(name), 
@@ -1515,7 +1515,7 @@ static SCM g_menu_widgets(void)
             CONS(SND_WRAP(mw[v_cascade_menu]),
              CONS(SND_WRAP(mw[o_cascade_menu]),
               CONS(SND_WRAP(mw[h_cascade_menu]),
-		   SCM_EOL)))))));
+		   EMPTY_LIST)))))));
 }
 
 static SCM g_test_menus(void)
@@ -1539,7 +1539,7 @@ static SCM g_test_menus(void)
 	  gtk_signal_emit_by_name(GTK_OBJECT(added_options[i]), "activate");
       }
   dismiss_all_dialogs(get_global_state());
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 void g_init_gxmenu(SCM local_doc)
@@ -1558,7 +1558,7 @@ wants to override the default menu action:\n\
         #t))) ; #t to make sure other menu items remain active"
 
   menu_hook = MAKE_HOOK(S_menu_hook, 2, H_menu_hook);
-  DEFINE_PROC("test-menus", SCM_FNC g_test_menus, 0, 0, 0, "");
+  DEFINE_PROC("test-menus", PROCEDURE g_test_menus, 0, 0, 0, "");
   DEFINE_PROC(S_menu_widgets, g_menu_widgets, 0, 0, 0, "returns top level menu widgets");
 }
 

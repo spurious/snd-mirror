@@ -276,8 +276,8 @@ static void make_region_readable(region *r, snd_state *ss)
   regsp->allocated_chans = r->chans; /* needed for complete GC */
   regsp->chans = (chan_info **)CALLOC(r->chans, sizeof(chan_info *));
   regsp->hdr = (file_info *)CALLOC(1, sizeof(file_info));
-  regsp->search_proc = SCM_UNDEFINED;
-  regsp->prompt_callback = SCM_UNDEFINED;
+  regsp->search_proc = UNDEFINED_VALUE;
+  regsp->prompt_callback = UNDEFINED_VALUE;
   hdr = regsp->hdr;
   hdr->samples = r->frames * r->chans;
   hdr->srate = r->srate;
@@ -976,7 +976,7 @@ static SCM snd_no_such_region_error(const char *caller, SCM n)
   ERROR(NO_SUCH_REGION,
 	LIST_2(TO_SCM_STRING(caller),
 	       n));
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_restore_region(SCM pos, SCM chans, SCM len, SCM srate, SCM maxamp, SCM name, SCM start, SCM end, SCM data)
@@ -1038,7 +1038,7 @@ inserts region data into snd's channel chn starting at 'start-samp'"
   int rg, samp;
   ASSERT_TYPE(NUMBER_IF_BOUND_P(samp_n), samp_n, ARG1, S_insert_region, "a number");
   ASSERT_TYPE(INTEGER_IF_BOUND_P(reg_n), reg_n, ARG2, S_insert_region, "an integer");
-  SND_ASSERT_CHAN(S_insert_region, snd_n, chn_n, 3);
+  ASSERT_CHANNEL(S_insert_region, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_insert_region);
   rg = TO_C_INT_OR_ELSE(reg_n, stack_position_to_id(0));
   if (!(region_ok(rg)))
@@ -1094,7 +1094,7 @@ static SCM g_region_p(SCM n)
   #define H_region_p "(" S_region_p " reg) -> #t if region is active"
   if (INTEGER_P(n))
     return(TO_SCM_BOOLEAN(region_ok(TO_C_INT(n))));
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_region_length (SCM n) 
@@ -1166,7 +1166,7 @@ static SCM g_regions(void)
   #define H_regions "(" S_regions ") -> current stack of regions (by id)"
   int i;
   SCM result;
-  result = SCM_EOL;
+  result = EMPTY_LIST;
   for (i = (regions_size - 1); i >= 0; i--)
     if (regions[i])
       result = CONS(TO_SCM_INT(regions[i]->id), result);
@@ -1256,7 +1256,7 @@ mixes region into snd's channel chn starting at chn-samp; returns new mix id."
   int rg, id = -1;
   ASSERT_TYPE(NUMBER_IF_BOUND_P(chn_samp_n), chn_samp_n, ARG1, S_mix_region, "a number");
   ASSERT_TYPE(INTEGER_IF_BOUND_P(reg_n), reg_n, ARG2, S_mix_region, "an integer");
-  SND_ASSERT_CHAN(S_mix_region, snd_n, chn_n, 3);
+  ASSERT_CHANNEL(S_mix_region, snd_n, chn_n, 3);
   rg = TO_C_INT_OR_ELSE(reg_n, stack_position_to_id(0));
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_mix_region, reg_n));
@@ -1314,7 +1314,7 @@ returns a vector with region's samples starting at samp for samps from channel c
 	{
 	  beg = TO_C_INT_OR_ELSE(beg_n, 0);
 	  if ((beg < 0) || (beg >= region_len(reg))) 
-	    return(SCM_BOOL_F);
+	    return(FALSE_VALUE);
 	  new_vect = MAKE_VECTOR(len, TO_SCM_DOUBLE(0.0));
 	  vdata = VECTOR_ELEMENTS(new_vect);
 	  data = (Float *)CALLOC(len, sizeof(Float));
@@ -1326,7 +1326,7 @@ returns a vector with region's samples starting at samp for samps from channel c
 	}
     }
   else snd_no_such_channel_error(S_region_samples, LIST_1(reg_n), chn_n);
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 #include "vct.h"
@@ -1355,7 +1355,7 @@ writes region's samples starting at beg for samps in channel chan to vct obj, re
     {
       beg = TO_C_INT_OR_ELSE(beg_n, 0);
       if ((beg < 0) || (beg >= region_len(reg))) 
-	return(SCM_BOOL_F);
+	return(FALSE_VALUE);
       if (v1)
 	data = v1->data;
       else data = (Float *)CALLOC(len, sizeof(Float));
@@ -1364,7 +1364,7 @@ writes region's samples starting at beg for samps in channel chan to vct obj, re
 	return(v);
       else return(make_vct(len, data));
     }
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 
@@ -1388,8 +1388,8 @@ void g_init_regions(SCM local_doc)
   DEFINE_PROC(S_region_samples2vct, g_region_samples2vct, 0, 5, 0, H_region_samples2vct);
   DEFINE_PROC(S_region_p,           g_region_p, 1, 0, 0,           H_region_p);
 
-  define_procedure_with_setter(S_max_regions, SCM_FNC g_max_regions, H_max_regions,
-			       "set-" S_max_regions, SCM_FNC g_set_max_regions,
+  define_procedure_with_setter(S_max_regions, PROCEDURE g_max_regions, H_max_regions,
+			       "set-" S_max_regions, PROCEDURE g_set_max_regions,
 			       local_doc, 0, 0, 1, 0);
 }
 

@@ -272,6 +272,8 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+1-Jul:   gtk+extra 0.99.15.\n\
+         snd-trace in extensions.scm.\n\
 28-Jun:  find enhancements (see snd.html and examp.scm); find-pitch.\n\
          colormap-ref.\n\
 26-Jun:  sound-files-in-directory returns a list, not a vector (to be consistent with CLM).\n\
@@ -282,7 +284,7 @@ void news_help(snd_state *ss)
          mus-sound-max-amp now returns (and takes) a list, not a vector.\n\
 21-Jun:  dsp.scm, autosave.scm, extensions.scm.\n\
          find-mix.\n\
-20-Jun:  read-hook. hooks.scm\n\
+20-Jun:  read-hook. hooks.scm. snd-debug in extensions.scm.\n\
 19-Jun:  removed snd-main-shell -- use (cadr (main-widgets)) instead.\n\
          make-pixmap and set-pixmap.\n\
          moved Snd-4 stuff from examp.scm to snd4.scm.\n\
@@ -291,41 +293,6 @@ void news_help(snd_state *ss)
          display-current-window-location in draw.scm.\n\
          example of Snd as script engine in grfsnd.html, with added script-arg and script-args.\n\
 16-Jun:  snd 5.0.\n\
-         corruption-time -> auto-update-interval.\n\
-13-Jun:  previous-files-sort-procedure (for View:Files dialog).\n\
-12-Jun:  x-axis-style can be channel-local.\n\
-7-June:  added Reset button to envelope editor (to return to initial state).\n\
-         yes-or-no-p -> yes-or-no?\n\
-5-June:  replaced wavo by time-graph-type, graph-time-one, graph-time-as-wavogram (analogous to transform-graph-type).\n\
-4-June:  configure.ac for autoconf 2.50.\n\
-         prepended \"zoom-\" to the zoom-focus-style choices (e.g. zoom-focus-left)\n\
-         added \"axis-\" to x-axis-style choices (e.g. x-axis-in-samples),  x-to-one -> x-axis-as-percentage.\n\
-         added print-hook.\n\
-         graphing -> graph-lisp?, ffting -> graph-transform?, waving -> graph-time?,\n\
-         fft-graph -> transform-graph, fft-beta -> fft-window-beta, fft-hook -> transform-hook,\n\
-         transform-size -> transform-samples-size, fft-size -> transform-size, fft-style -> transform-graph-type,\n\
-         before-fft-hook -> before-transform-hook, max-fft-peaks -> max-transform-peaks,\n\
-         show-fft-peaks -> show-transform-peaks, normal-fft -> graph-transform-once,\n\
-         sonogram -> graph-transform-as-sonogram, spectrogram -> graph-transform-as-spectrogram,\n\
-         normalize-by-channel -> normalize-transform-by-channel, normalize-by-sound -> normalize-transform-by-sound,\n\
-         normalize-globally -> normalize-transform-globally, normalize-transform -> transform-normalization,\n\
-         update-fft -> update-transform, update-graph -> update-time-graph, dont-normalize -> dont-normalize-transform.\n\
-1-June:  add-to-menu and remove-from-menu can affect the popup menu.\n\
-         region handling changed to use the region \"id\", not its current stack position.\n\
-           many related changes: \n\
-             region-* procedures take the id as the region number argument.\n\
-             removed: select-region, select-region-hook, id-region, region-id\n\
-             renamed: delete-region -> forget-region.\n\
-         added selection-chans, selection-srate (since regions may be disassociated from the selection).\n\
-         with-big-colormap is now the default.\n\
-         removed all the map and scan functions except map-chan and scan-chan\n\
-           (the rest can be easily re-implemented using loops, sample-readers, set-samples, and sync -- see examp.scm).\n\
-         removed all the temp-to-sound|selection (and vice versa) functions, and temp-filenames\n\
-           (these were redundant since set-samples can take a filename -- see examp.scm for re-implementation)\n\
-         Snd version 5.0 due to these changes\n\
-         added channel arg to save-selection and set-samples (for multi-file selection saves)\n\
-         added make-selection (examp.scm).\n\
-         removed env-base.\n\
 ",
 NULL);
   FREE(info);
@@ -2688,10 +2655,10 @@ In the help descriptions, '&optional' marks optional arguments, and \
 '&opt-key' marks CLM-style optional keyword arguments.  If you load index.scm \
 the functions html and ? can be used in place of help to go to the HTML description."
 
-  SCM help_text = SCM_BOOL_F, value, local_doc;
+  SCM help_text = FALSE_VALUE, value, local_doc;
   char *str = NULL;
 
-  if (EQ_P(text,SCM_UNDEFINED))                              /* if no arg, describe snd-help */
+  if (EQ_P(text, UNDEFINED_VALUE))                              /* if no arg, describe snd-help */
     help_text = TO_SCM_STRING(H_snd_help);
   else
     {

@@ -292,7 +292,7 @@ it can be useful when the plugins on the system have changed."
 
   loadLADSPA();
 
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 /*****************************************************************************/
@@ -312,13 +312,13 @@ list containing the plugin-file and plugin-label is included."
   if (!g_bLADSPAInitialised)
     loadLADSPA();
 
-  scmList = SCM_EOL;
+  scmList = EMPTY_LIST;
 
   for (lIndex = g_lLADSPARepositoryCount - 1; lIndex >= 0; lIndex--) {
     psInfo = g_psLADSPARepository[lIndex];
     scmPluginList = CONS(TO_SCM_STRING(psInfo->m_pcPackedFilename),
 			    CONS(TO_SCM_STRING((char *)psInfo->m_pcLabel),
-				    SCM_EOL));
+				    EMPTY_LIST));
     scmList = CONS(scmPluginList, scmList);
   }
 
@@ -371,17 +371,17 @@ LADSPA plugins are supported by Snd at this time."
 
   if (!psDescriptor) {
     snd_error("Plugin unknown.\n"); /* or we could return UNKNOWN_PLUGIN */
-    return(SCM_BOOL_F);
+    return(FALSE_VALUE);
   }
 
-  scmList = SCM_EOL;
+  scmList = EMPTY_LIST;
   for (lIndex = psDescriptor->PortCount - 1; lIndex >= 0; lIndex--)
     if (LADSPA_IS_PORT_CONTROL(psDescriptor->PortDescriptors[lIndex])
 	&& LADSPA_IS_PORT_INPUT(psDescriptor->PortDescriptors[lIndex])) {
 
       iHint = psDescriptor->PortRangeHints[lIndex].HintDescriptor;
 
-      scmPortData = SCM_EOL;
+      scmPortData = EMPTY_LIST;
       if (LADSPA_IS_HINT_TOGGLED(iHint))
 	scmPortData = CONS(TO_SCM_STRING("toggle"), scmPortData);
       if (LADSPA_IS_HINT_LOGARITHMIC(iHint))
@@ -407,7 +407,7 @@ LADSPA plugins are supported by Snd at this time."
   scmList = CONS(TO_SCM_STRING((char *)psDescriptor->Name),
 		    CONS(TO_SCM_STRING((char *)psDescriptor->Maker),
 			    CONS(TO_SCM_STRING((char *)psDescriptor->Copyright),
-				    CONS(scmList, SCM_EOL))));
+				    CONS(scmList, EMPTY_LIST))));
   return scmList;
 }
 
@@ -525,7 +525,7 @@ by any arguments. (Information about about parameters can be acquired using anal
   if (!psDescriptor) {
     snd_error("Plugin unknown.\n");
     //FIXME: How to report?
-    return(SCM_BOOL_F);
+    return(FALSE_VALUE);
   }
 
   //FIXME: uninformative errors.
@@ -563,7 +563,7 @@ by any arguments. (Information about about parameters can be acquired using anal
   if (!psHandle) {
     snd_error("Plugin did not instantiate.\n");
     //FIXME: How to report?
-    return(SCM_BOOL_F);
+    return(FALSE_VALUE);
   }
 
   /* Allocate buffer to work with (data[0] is an audio buffer). */
@@ -685,7 +685,7 @@ by any arguments. (Information about about parameters can be acquired using anal
   FREE(data[0]);
   FREE(data);
 
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 /*****************************************************************************/

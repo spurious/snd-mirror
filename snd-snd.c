@@ -83,7 +83,7 @@ void free_env_state(chan_info *cp)
 env_state *make_env_state(chan_info *cp, int samples)
 {
   int val, pos, i, j, start, start_bin, end, end_bin, old_end_bin, old_samples, happy = 0;
-  env_info *ep, *old_ep;
+  env_info *ep, *old_ep = NULL;
   env_state *es;
   stop_amp_env(cp);
   pos = cp->edit_ctr;
@@ -100,58 +100,60 @@ env_state *make_env_state(chan_info *cp, int samples)
     {
       es->ep = (env_info *)CALLOC(1, sizeof(env_info));
       ep = es->ep;
-      old_ep = cp->amp_envs[cp->edit_ctr - 1];
-      if ((cp->edit_ctr > 0) && 
-	  (old_ep) && 
-	  (old_ep->completed))
+      if (cp->edit_ctr > 0)
 	{
-	  /* here in many cases, the preceding edit's amp env has most of the data we need.
-	   * cp->edits[cp->edit_ctr] describes the current edit, with beg and end, so in the
-	   * simplest case, we can just copy to the bin representing beg, and from the bin
-	   * representing end (setting ep->top_bin and ep->bin); if the file's length has
-	   * changed dramatically, we need to do it all.  fmin/fmax need to be set as we copy.
-	   * as-one-edit can mess this up...
-	   */
-	  old_samples = cp->samples[cp->edit_ctr - 1];
-	  if (abs(samples - old_samples) < (samples / 2))
+	  old_ep = cp->amp_envs[cp->edit_ctr - 1];
+	  if ((old_ep) && 
+	      (old_ep->completed))
 	    {
-	      start = edit_changes_begin_at(cp);
-	      end = edit_changes_end_at(cp);
-	      if (abs(end - start) < (samples / 2))
+	      /* here in many cases, the preceding edit's amp env has most of the data we need.
+	       * cp->edits[cp->edit_ctr] describes the current edit, with beg and end, so in the
+	       * simplest case, we can just copy to the bin representing beg, and from the bin
+	       * representing end (setting ep->top_bin and ep->bin); if the file's length has
+	       * changed dramatically, we need to do it all.  fmin/fmax need to be set as we copy.
+	       * as-one-edit can mess this up...
+	       */
+	      old_samples = cp->samples[cp->edit_ctr - 1];
+	      if (abs(samples - old_samples) < (samples / 2))
 		{
-		  /* here we'll try to take advantage of an existing envelope */
-		  old_ep = cp->amp_envs[cp->edit_ctr - 1];
-		  ep->samps_per_bin = old_ep->samps_per_bin;
-		  ep->amp_env_size = (int)(ceil((Float)(es->samples) / (Float)(ep->samps_per_bin)));
-		  ep->data_max = (MUS_SAMPLE_TYPE *)CALLOC(ep->amp_env_size, sizeof(MUS_SAMPLE_TYPE));
-		  ep->data_min = (MUS_SAMPLE_TYPE *)CALLOC(ep->amp_env_size, sizeof(MUS_SAMPLE_TYPE));
-		  start_bin = (int)(start / ep->samps_per_bin);
-		  ep->fmin = MUS_SAMPLE_0;
-		  ep->fmax = MUS_SAMPLE_0;
-		  for (i = 0; i < start_bin; i++) 
+		  start = edit_changes_begin_at(cp);
+		  end = edit_changes_end_at(cp);
+		  if (abs(end - start) < (samples / 2))
 		    {
-		      ep->data_min[i] = old_ep->data_min[i];
-		      ep->data_max[i] = old_ep->data_max[i];
-		      if (ep->data_min[i] < ep->fmin) ep->fmin = ep->data_min[i];
-		      if (ep->data_max[i] > ep->fmax) ep->fmax = ep->data_max[i];
-		    }
-		  ep->bin = start_bin;
-		  if (end != 0)
-		    {
-		      old_end_bin = (int)(end / old_ep->samps_per_bin);
-		      end += (samples - old_samples);
-		      end_bin = (int)(end / ep->samps_per_bin);
-		      for (i = end_bin, j = old_end_bin; (i < ep->amp_env_size) && (j < old_ep->amp_env_size); i++, j++)
+		      /* here we'll try to take advantage of an existing envelope */
+		      old_ep = cp->amp_envs[cp->edit_ctr - 1];
+		      ep->samps_per_bin = old_ep->samps_per_bin;
+		      ep->amp_env_size = (int)(ceil((Float)(es->samples) / (Float)(ep->samps_per_bin)));
+		      ep->data_max = (MUS_SAMPLE_TYPE *)CALLOC(ep->amp_env_size, sizeof(MUS_SAMPLE_TYPE));
+		      ep->data_min = (MUS_SAMPLE_TYPE *)CALLOC(ep->amp_env_size, sizeof(MUS_SAMPLE_TYPE));
+		      start_bin = (int)(start / ep->samps_per_bin);
+		      ep->fmin = MUS_SAMPLE_0;
+		      ep->fmax = MUS_SAMPLE_0;
+		      for (i = 0; i < start_bin; i++) 
 			{
-			  ep->data_min[i] = old_ep->data_min[j];
-			  ep->data_max[i] = old_ep->data_max[j];
+			  ep->data_min[i] = old_ep->data_min[i];
+			  ep->data_max[i] = old_ep->data_max[i];
 			  if (ep->data_min[i] < ep->fmin) ep->fmin = ep->data_min[i];
 			  if (ep->data_max[i] > ep->fmax) ep->fmax = ep->data_max[i];
 			}
-		      ep->top_bin = end_bin;
+		      ep->bin = start_bin;
+		      if (end != 0)
+			{
+			  old_end_bin = (int)(end / old_ep->samps_per_bin);
+			  end += (samples - old_samples);
+			  end_bin = (int)(end / ep->samps_per_bin);
+			  for (i = end_bin, j = old_end_bin; (i < ep->amp_env_size) && (j < old_ep->amp_env_size); i++, j++)
+			    {
+			      ep->data_min[i] = old_ep->data_min[j];
+			      ep->data_max[i] = old_ep->data_max[j];
+			      if (ep->data_min[i] < ep->fmin) ep->fmin = ep->data_min[i];
+			      if (ep->data_max[i] > ep->fmax) ep->fmax = ep->data_max[i];
+			    }
+			  ep->top_bin = end_bin;
+			}
+		      else ep->top_bin = 0;
+		      happy = 1;
 		    }
-		  else ep->top_bin = 0;
-		  happy = 1;
 		}
 	    }
 	}
@@ -1346,7 +1348,7 @@ SCM snd_no_such_sound_error(const char *caller, SCM n)
   ERROR(NO_SUCH_SOUND,
 	LIST_2(TO_SCM_STRING(caller),
 		  n));
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_sound_p(SCM snd_n)
@@ -1364,7 +1366,7 @@ static SCM g_select_sound(SCM snd_n)
   snd_state *ss;
   snd_info *sp;
   ss = get_global_state();
-  SND_ASSERT_SND(S_select_sound, snd_n, 1);
+  ASSERT_SOUND(S_select_sound, snd_n, 1);
   val = TO_C_INT_OR_ELSE(snd_n, 0);
   if ((val >= 0) && 
       (val < ss->max_sounds))
@@ -1388,7 +1390,7 @@ static SCM g_select_channel(SCM chn_n)
   snd_state *ss;
   int chan;
   ss = get_global_state();
-  SND_ASSERT_SND(S_select_channel, chn_n, 1);
+  ASSERT_SOUND(S_select_channel, chn_n, 1);
   chan = TO_C_INT_OR_ELSE(chn_n, 0);
   sp = any_selected_sound(ss);
   if ((sp) && 
@@ -1410,7 +1412,7 @@ static SCM g_find_sound(SCM filename)
   ss = get_global_state();
   sp = find_sound(ss, TO_C_STRING(filename));
   if (sp) return(TO_SCM_INT(sp->index));
-  return(scm_return_first(SCM_BOOL_F, filename));
+  return(scm_return_first(FALSE_VALUE, filename));
 }
 
 
@@ -1418,7 +1420,7 @@ static SCM g_bomb(SCM snd, SCM on)
 {
   #define H_bomb "(" S_bomb " &optional snd (on #t)) displays (or erases if on=#f) the bomb icon"
   snd_info *sp;
-  SND_ASSERT_SND(S_bomb, snd, 1);
+  ASSERT_SOUND(S_bomb, snd, 1);
   sp = get_sp(snd);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_bomb, snd));
@@ -1438,8 +1440,8 @@ static SCM sp_iread(SCM snd_n, int fld, char *caller)
   snd_state *ss;
   char *str;
   int i;
-  SCM res = SCM_EOL;
-  if (EQ_P(snd_n, SCM_BOOL_T))
+  SCM res = EMPTY_LIST;
+  if (TRUE_P(snd_n))
     {
       ss = get_global_state();
       for (i = 0; i < ss->max_sounds; i++)
@@ -1450,7 +1452,7 @@ static SCM sp_iread(SCM snd_n, int fld, char *caller)
 	}
       return(REVERSE_LIST(res));
     }
-  SND_ASSERT_SND(caller, snd_n, 1);
+  ASSERT_SOUND(caller, snd_n, 1);
   sp = get_sp(snd_n);
   if (sp == NULL) 
     return(snd_no_such_sound_error(caller, snd_n));
@@ -1489,7 +1491,7 @@ static SCM sp_iread(SCM snd_n, int fld, char *caller)
       return(res);
       break;
     }
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM sp_iwrite(SCM snd_n, SCM val, int fld, char *caller)
@@ -1498,7 +1500,7 @@ static SCM sp_iwrite(SCM snd_n, SCM val, int fld, char *caller)
   snd_state *ss;
   char *com;
   int i, ival;
-  if (EQ_P(snd_n, SCM_BOOL_T))
+  if (TRUE_P(snd_n))
     {
       ss = get_global_state();
       for (i = 0; i < ss->max_sounds; i++)
@@ -1509,7 +1511,7 @@ static SCM sp_iwrite(SCM snd_n, SCM val, int fld, char *caller)
 	}
       return(val);
     }
-  SND_ASSERT_SND(caller, snd_n, 2); /* 2 from caller's point of view */
+  ASSERT_SOUND(caller, snd_n, 2); /* 2 from caller's point of view */
   sp = get_sp(snd_n);
   if (sp == NULL) 
     return(snd_no_such_sound_error(caller, snd_n));
@@ -1615,7 +1617,7 @@ static SCM check_number(SCM val, char *caller)
 static SCM g_set_channels(SCM snd_n, SCM val)
 {
   if (NOT_BOUND_P(val))
-    return(sp_iwrite(SCM_UNDEFINED, check_number(snd_n, "set-" S_channels), SP_NCHANS, "set-" S_channels));
+    return(sp_iwrite(UNDEFINED_VALUE, check_number(snd_n, "set-" S_channels), SP_NCHANS, "set-" S_channels));
   else return(sp_iwrite(snd_n, check_number(val, "set-" S_channels), SP_NCHANS, "set-" S_channels));
 }
 
@@ -1628,7 +1630,7 @@ static SCM g_srate(SCM snd_n)
 static SCM g_set_srate(SCM snd_n, SCM val) 
 {
   if (NOT_BOUND_P(val))
-    return(sp_iwrite(SCM_UNDEFINED, check_number(snd_n, "set-" S_srate), SP_SRATE, "set-" S_srate));
+    return(sp_iwrite(UNDEFINED_VALUE, check_number(snd_n, "set-" S_srate), SP_SRATE, "set-" S_srate));
   else return(sp_iwrite(snd_n, check_number(val, "set-" S_srate), SP_SRATE, "set-" S_srate));
 }
 
@@ -1641,7 +1643,7 @@ static SCM g_data_location(SCM snd_n)
 static SCM g_set_data_location(SCM snd_n, SCM val) 
 {
   if (NOT_BOUND_P(val))
-    return(sp_iwrite(SCM_UNDEFINED, check_number(snd_n, "set-" S_data_location), SP_DATA_LOCATION, "set-" S_data_location));
+    return(sp_iwrite(UNDEFINED_VALUE, check_number(snd_n, "set-" S_data_location), SP_DATA_LOCATION, "set-" S_data_location));
   else return(sp_iwrite(snd_n, check_number(val, "set-" S_data_location), SP_DATA_LOCATION, "set-" S_data_location));
 }
 
@@ -1654,7 +1656,7 @@ static SCM g_data_format(SCM snd_n)
 static SCM g_set_data_format(SCM snd_n, SCM val) 
 {
   if (NOT_BOUND_P(val))
-    return(sp_iwrite(SCM_UNDEFINED, check_number(snd_n, "set-" S_data_format), SP_DATA_FORMAT, "set-" S_data_format));
+    return(sp_iwrite(UNDEFINED_VALUE, check_number(snd_n, "set-" S_data_format), SP_DATA_FORMAT, "set-" S_data_format));
   else return(sp_iwrite(snd_n, check_number(val, "set-" S_data_format), SP_DATA_FORMAT, "set-" S_data_format));
 }
 
@@ -1667,7 +1669,7 @@ static SCM g_header_type(SCM snd_n)
 static SCM g_set_header_type(SCM snd_n, SCM val) 
 {
   if (NOT_BOUND_P(val))
-    return(sp_iwrite(SCM_UNDEFINED, check_number(snd_n, "set-" S_header_type), SP_HEADER_TYPE, "set-" S_header_type));
+    return(sp_iwrite(UNDEFINED_VALUE, check_number(snd_n, "set-" S_header_type), SP_HEADER_TYPE, "set-" S_header_type));
   else return(sp_iwrite(snd_n, check_number(val, "set-" S_header_type), SP_HEADER_TYPE, "set-" S_header_type));
 }
 
@@ -1680,7 +1682,7 @@ static SCM g_comment(SCM snd_n)
 static SCM g_set_comment(SCM snd_n, SCM val) 
 {
   if (NOT_BOUND_P(val))
-    return(sp_iwrite(SCM_UNDEFINED, snd_n, SP_COMMENT, "set-" S_comment));
+    return(sp_iwrite(UNDEFINED_VALUE, snd_n, SP_COMMENT, "set-" S_comment));
   else return(sp_iwrite(snd_n, val, SP_COMMENT, "set-" S_comment));
 }
 
@@ -1689,10 +1691,10 @@ static SCM g_set_comment(SCM snd_n, SCM val)
 static SCM name_reversed(SCM arg1, SCM arg2) \
 { \
   if (NOT_BOUND_P(arg1)) \
-    return(name(SCM_BOOL_T, SCM_UNDEFINED)); \
+    return(name(TRUE_VALUE, UNDEFINED_VALUE)); \
   else \
     if (NOT_BOUND_P(arg2)) \
-      return(name(arg1, SCM_UNDEFINED)); \
+      return(name(arg1, UNDEFINED_VALUE)); \
     else return(name(arg2, arg1)); \
 }
 
@@ -1700,7 +1702,7 @@ static SCM name_reversed(SCM arg1, SCM arg2) \
 static SCM name_reversed(SCM arg1, SCM arg2) \
 { \
   if (NOT_BOUND_P(arg2)) \
-    return(name(arg1, SCM_UNDEFINED)); \
+    return(name(arg1, UNDEFINED_VALUE)); \
   else return(name(arg2, arg1)); \
 }
 
@@ -1724,7 +1726,7 @@ static SCM g_channel_style(SCM snd)
   snd_info *sp;
   if (NOT_BOUND_P(snd))
     return(TO_SCM_INT(channel_style(get_global_state())));
-  SND_ASSERT_SND(S_channel_style, snd, 1);
+  ASSERT_SOUND(S_channel_style, snd, 1);
   sp = get_sp(snd);
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_channel_style, snd));
@@ -1752,7 +1754,7 @@ As a global (if the 'snd' arg is omitted), it is the default setting for each so
       set_channel_style(ss, new_style);
       return(TO_SCM_INT(channel_style(ss)));
     }
-  SND_ASSERT_SND("set-" S_channel_style, snd, 2);
+  ASSERT_SOUND("set-" S_channel_style, snd, 2);
   sp = get_sp(snd);
   if (sp == NULL) 
     return(snd_no_such_sound_error("set-" S_channel_style, snd));
@@ -1920,7 +1922,7 @@ static SCM g_set_selected_channel(SCM snd_n, SCM chn_n)
     return(g_select_channel(snd_n));
   else
     {
-      SND_ASSERT_SND("set-" S_selected_channel, snd_n, 1); 
+      ASSERT_SOUND("set-" S_selected_channel, snd_n, 1); 
       sp = get_sp(snd_n);
       if (sp == NULL) 
 	return(snd_no_such_sound_error("set-" S_selected_channel, snd_n));
@@ -1971,7 +1973,7 @@ static SCM g_revert_sound(SCM index)
   #define H_revert_sound "("  S_revert_sound " &optional snd) reverts snd to its unedited state (undo all)"
   snd_info *sp;
   int i;
-  SND_ASSERT_SND(S_revert_sound, index, 1);
+  ASSERT_SOUND(S_revert_sound, index, 1);
   sp = get_sp(index);
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_revert_sound, index));
@@ -1982,7 +1984,7 @@ static SCM g_revert_sound(SCM index)
     }
   reflect_file_revert_in_label(sp);
   reflect_file_revert_in_menu(sp->state);
-  return(SCM_BOOL_T);
+  return(TRUE_VALUE);
 }
 
 static SCM g_selected_sound(void)
@@ -2020,7 +2022,7 @@ opens filename (as if opened from File:Open menu option), and returns the new fi
     ERROR(MUS_MISC_ERROR,
 	  LIST_2(TO_SCM_STRING(S_open_sound),
 		    TO_SCM_STRING(ss->catch_message)));
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_open_raw_sound(SCM filename, SCM chans, SCM srate, SCM format)
@@ -2060,7 +2062,7 @@ opens filename assuming the data matches the attributes indicated unless the fil
     ERROR(MUS_MISC_ERROR,
 	  LIST_2(TO_SCM_STRING(S_open_raw_sound),
 		    TO_SCM_STRING(ss->catch_message)));
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_view_sound(SCM filename)
@@ -2087,7 +2089,7 @@ You can subsequently make it writable by (set! (read-only) #f)."
     ERROR(MUS_MISC_ERROR,
 	  LIST_2(TO_SCM_STRING(S_view_sound),
 		    TO_SCM_STRING(ss->catch_message)));
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_save_sound_as(SCM newfile, SCM index, SCM type, SCM format, SCM srate, SCM channel, SCM edpos)
@@ -2103,7 +2105,7 @@ Any argument can be #f which causes its value to be taken from the sound being s
   int ht, df, sr, chan, err;
   char *fname = NULL;
   ASSERT_TYPE(STRING_P(newfile), newfile, ARG1, S_save_sound_as, "a string");
-  SND_ASSERT_SND(S_save_sound_as, index, 2);
+  ASSERT_SOUND(S_save_sound_as, index, 2);
   sp = get_sp(index);
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_save_sound_as, index));
@@ -2227,7 +2229,7 @@ creates a new sound file with the indicated attributes; if any are omitted, the 
     }
   if (str) FREE(str);
   if (sp) return(TO_SCM_INT(sp->index));
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_speed_control_style(SCM snd)
@@ -2290,8 +2292,8 @@ static SCM sp_fread(SCM snd_n, int fld, char *caller)
   snd_info *sp;
   snd_state *ss;
   int i;
-  SCM res = SCM_EOL;
-  if (EQ_P(snd_n, SCM_BOOL_T))
+  SCM res = EMPTY_LIST;
+  if (TRUE_P(snd_n))
     {
       ss = get_global_state();
       for (i = 0; i < ss->max_sounds; i++)
@@ -2302,7 +2304,7 @@ static SCM sp_fread(SCM snd_n, int fld, char *caller)
 	}
       return(REVERSE_LIST(res));
     }
-  SND_ASSERT_SND(caller, snd_n, 1);
+  ASSERT_SOUND(caller, snd_n, 1);
   sp = get_sp(snd_n);
   if (sp == NULL) 
     return(snd_no_such_sound_error(caller, snd_n));
@@ -2326,7 +2328,7 @@ static SCM sp_fread(SCM snd_n, int fld, char *caller)
     case SP_REVERB_LOW_PASS: return(TO_SCM_DOUBLE(sp->reverb_control_lowpass));  break;
     case SP_REVERB_DECAY:    return(TO_SCM_DOUBLE(sp->reverb_control_decay));    break;
     }
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM sp_fwrite(SCM snd_n, SCM val, int fld, char *caller)
@@ -2335,7 +2337,7 @@ static SCM sp_fwrite(SCM snd_n, SCM val, int fld, char *caller)
   Float fval;
   int direction, i;
   snd_state *ss;
-  if (EQ_P(snd_n, SCM_BOOL_T))
+  if (TRUE_P(snd_n))
     {
       ss = get_global_state();
       for (i = 0; i < ss->max_sounds; i++)
@@ -2347,7 +2349,7 @@ static SCM sp_fwrite(SCM snd_n, SCM val, int fld, char *caller)
     }
   else
     {
-      SND_ASSERT_SND(caller, snd_n, 2);
+      ASSERT_SOUND(caller, snd_n, 2);
       sp = get_sp(snd_n);
       if (sp == NULL) 
 	return(snd_no_such_sound_error(caller, snd_n));
@@ -2614,7 +2616,7 @@ WITH_REVERSED_ARGS(g_set_reverb_control_decay_reversed, g_set_reverb_control_dec
 static SCM g_set_filter_control_env(SCM edata, SCM snd_n)
 {
   snd_info *sp;
-  SND_ASSERT_SND("set-" S_filter_control_env, snd_n, 2);
+  ASSERT_SOUND("set-" S_filter_control_env, snd_n, 2);
   sp = get_sp(snd_n);
   if (sp == NULL)
     return(snd_no_such_sound_error("set-" S_filter_control_env, snd_n));
@@ -2628,7 +2630,7 @@ static SCM g_filter_control_env(SCM snd_n)
 {
   #define H_filter_control_env "(" S_filter_control_env " &optional snd) -> snd's filter envelope (in the control panel)"
   snd_info *sp = NULL;
-  SND_ASSERT_SND(S_filter_control_env, snd_n, 1);
+  ASSERT_SOUND(S_filter_control_env, snd_n, 1);
   sp = get_sp(snd_n);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_filter_control_env, snd_n));
@@ -2645,7 +2647,7 @@ The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to sele
   snd_info *sp;
   snd_state *ss;
   apply_state *ap;
-  SND_ASSERT_SND(S_apply_controls, snd, 1);
+  ASSERT_SOUND(S_apply_controls, snd, 1);
   ASSERT_TYPE(INTEGER_IF_BOUND_P(choice), choice, ARG2, S_apply_controls, "an integer");
   ASSERT_TYPE(INTEGER_IF_BOUND_P(beg), beg, ARG3, S_apply_controls, "an integer");
   ASSERT_TYPE(INTEGER_IF_BOUND_P(dur), dur, ARG4, S_apply_controls, "an integer");
@@ -2669,7 +2671,7 @@ static SCM name_click_hook;
 static int dont_babble_info(snd_info *sp)
 {
   /* call name-click-hook (if any) return #t = don't print info in minibuffer */
-  SCM res = SCM_BOOL_F, ind;
+  SCM res = FALSE_VALUE, ind;
   ind = TO_SMALL_SCM_INT(sp->index);
   if (HOOKED(name_click_hook))
     res = g_c_run_or_hook(name_click_hook, 
@@ -2683,7 +2685,7 @@ static SCM g_sound_widgets(SCM snd)
 {
   /* perhaps this belongs in snd-xsnd where we can grab every widget */
   snd_info *sp;
-  SND_ASSERT_SND("sound_widgets", snd, 1);
+  ASSERT_SOUND("sound_widgets", snd, 1);
   sp = get_sp(snd);
   return(CONS(SND_WRAP(w_snd_pane(sp)),
 	  CONS(SND_WRAP(w_snd_name(sp)),
@@ -2694,7 +2696,7 @@ static SCM g_sound_widgets(SCM snd)
 	       CONS(SND_WRAP(w_snd_combine(sp)),
 		 CONS(SND_WRAP(w_snd_minibuffer_label(sp)),
 		   CONS(SND_WRAP(w_snd_name_icon(sp)),
-	             SCM_EOL))))))))));
+	             EMPTY_LIST))))))))));
 }
 #endif
 
@@ -2704,7 +2706,7 @@ static SCM g_peak_env_info(SCM snd, SCM chn, SCM pos)
   chan_info *cp;
   env_info *ep;
   chan_context *cgx;
-  SND_ASSERT_CHAN(S_peak_env_info, snd, chn, 1);
+  ASSERT_CHANNEL(S_peak_env_info, snd, chn, 1);
   ASSERT_TYPE(INTEGER_IF_BOUND_P(pos), pos, ARG3, S_peak_env_info, "an integer");
   cp = get_cp(snd, chn, S_peak_env_info);
   cgx = cp->cgx;
@@ -2728,7 +2730,7 @@ static SCM g_write_peak_env_info_file(SCM snd, SCM chn, SCM name)
   SCM errstr;
   int ibuf[5];
   MUS_SAMPLE_TYPE mbuf[2];
-  SND_ASSERT_CHAN(S_write_peak_env_info_file, snd, chn, 1);
+  ASSERT_CHANNEL(S_write_peak_env_info_file, snd, chn, 1);
   cp = get_cp(snd, chn, S_write_peak_env_info_file);
   ASSERT_TYPE(STRING_P(name), name, ARG2, S_write_peak_env_info_file, "a string");
   if ((cp->amp_envs) && (cp->amp_envs[0]))
@@ -2776,7 +2778,7 @@ static SCM g_read_peak_env_info_file(SCM snd, SCM chn, SCM name)
   int fd;
   int ibuf[5];
   MUS_SAMPLE_TYPE mbuf[2];
-  SND_ASSERT_CHAN(S_read_peak_env_info_file, snd, chn, 1);
+  ASSERT_CHANNEL(S_read_peak_env_info_file, snd, chn, 1);
   cp = get_cp(snd, chn, S_read_peak_env_info_file);
   fullname = mus_expand_filename(TO_C_STRING(name));
   fd = mus_file_open_read(fullname);
@@ -2826,26 +2828,26 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
   DEFINE_PROC(S_bomb, g_bomb, 0, 2, 0, H_bomb);
   DEFINE_PROC(S_find_sound, g_find_sound, 1, 0, 0, H_find_sound);
 
-  define_procedure_with_setter(S_channels, SCM_FNC g_channels, H_channels,
-			       "set-" S_channels, SCM_FNC g_set_channels, local_doc, 0, 1, 0, 2);
+  define_procedure_with_setter(S_channels, PROCEDURE g_channels, H_channels,
+			       "set-" S_channels, PROCEDURE g_set_channels, local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_setter(S_chans, SCM_FNC g_channels, H_channels,
-			       "set-" S_chans, SCM_FNC g_set_channels, local_doc, 0, 1, 0, 2);
+  define_procedure_with_setter(S_chans, PROCEDURE g_channels, H_channels,
+			       "set-" S_chans, PROCEDURE g_set_channels, local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_setter(S_srate, SCM_FNC g_srate, H_srate,
-			       "set-" S_srate, SCM_FNC g_set_srate, local_doc, 0, 1, 0, 2);
+  define_procedure_with_setter(S_srate, PROCEDURE g_srate, H_srate,
+			       "set-" S_srate, PROCEDURE g_set_srate, local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_setter(S_data_location, SCM_FNC g_data_location, H_data_location,
-			       "set-" S_data_location, SCM_FNC g_set_data_location, local_doc, 0, 1, 0, 2);
+  define_procedure_with_setter(S_data_location, PROCEDURE g_data_location, H_data_location,
+			       "set-" S_data_location, PROCEDURE g_set_data_location, local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_setter(S_data_format, SCM_FNC g_data_format, H_data_format,
-			       "set-" S_data_format, SCM_FNC g_set_data_format, local_doc, 0, 1, 0, 2);
+  define_procedure_with_setter(S_data_format, PROCEDURE g_data_format, H_data_format,
+			       "set-" S_data_format, PROCEDURE g_set_data_format, local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_setter(S_header_type, SCM_FNC g_header_type, H_header_type,
-			       "set-" S_header_type, SCM_FNC g_set_header_type, local_doc, 0, 1, 0, 2);
+  define_procedure_with_setter(S_header_type, PROCEDURE g_header_type, H_header_type,
+			       "set-" S_header_type, PROCEDURE g_set_header_type, local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_setter(S_comment, SCM_FNC g_comment, H_comment,
-			       "set-" S_comment, SCM_FNC g_set_comment, local_doc, 0, 1, 0, 2);
+  define_procedure_with_setter(S_comment, PROCEDURE g_comment, H_comment,
+			       "set-" S_comment, PROCEDURE g_set_comment, local_doc, 0, 1, 0, 2);
 
   DEFINE_PROC(S_file_name,             g_file_name, 0, 1, 0,             H_file_name);
   DEFINE_PROC(S_short_file_name,       g_short_file_name, 0, 1, 0,       H_short_file_name);
@@ -2853,11 +2855,11 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
   DEFINE_PROC(S_restore_controls,      g_restore_controls, 0, 1, 0,      H_restore_controls);
   DEFINE_PROC(S_reset_controls,        g_reset_controls, 0, 1, 0,        H_reset_controls);
 
-  define_procedure_with_setter(S_selected_sound, SCM_FNC g_selected_sound, H_selected_sound,
-			       "set-" S_selected_sound, SCM_FNC g_select_sound, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_selected_sound, PROCEDURE g_selected_sound, H_selected_sound,
+			       "set-" S_selected_sound, PROCEDURE g_select_sound, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_selected_channel, SCM_FNC g_selected_channel, H_selected_channel,
-			       "set-" S_selected_channel, SCM_FNC g_set_selected_channel, local_doc, 0, 1, 0, 2);
+  define_procedure_with_setter(S_selected_channel, PROCEDURE g_selected_channel, H_selected_channel,
+			       "set-" S_selected_channel, PROCEDURE g_set_selected_channel, local_doc, 0, 1, 0, 2);
 
   DEFINE_PROC(S_select_sound, g_select_sound, 0, 1, 0, H_select_sound);
   DEFINE_PROC(S_select_channel, g_select_channel, 0, 1, 0, H_select_channel);
@@ -2874,104 +2876,104 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
   DEFINE_PROC(S_apply_controls,       g_apply_controls, 0, 4, 0,       H_apply_controls);
 
 
-  define_procedure_with_reversed_setter(S_filter_control_env, SCM_FNC g_filter_control_env, H_filter_control_env,
-					"set-" S_filter_control_env, SCM_FNC g_set_filter_control_env, SCM_FNC g_set_filter_control_env_reversed,
+  define_procedure_with_reversed_setter(S_filter_control_env, PROCEDURE g_filter_control_env, H_filter_control_env,
+					"set-" S_filter_control_env, PROCEDURE g_set_filter_control_env, PROCEDURE g_set_filter_control_env_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_cursor_follows_play, SCM_FNC g_cursor_follows_play, H_cursor_follows_play,
-					"set-" S_cursor_follows_play, SCM_FNC g_set_cursor_follows_play, SCM_FNC g_set_cursor_follows_play_reversed,
+  define_procedure_with_reversed_setter(S_cursor_follows_play, PROCEDURE g_cursor_follows_play, H_cursor_follows_play,
+					"set-" S_cursor_follows_play, PROCEDURE g_set_cursor_follows_play, PROCEDURE g_set_cursor_follows_play_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_show_controls, SCM_FNC g_show_controls, H_show_controls,
-					"set-" S_show_controls, SCM_FNC g_set_show_controls, SCM_FNC g_set_show_controls_reversed,
+  define_procedure_with_reversed_setter(S_show_controls, PROCEDURE g_show_controls, H_show_controls,
+					"set-" S_show_controls, PROCEDURE g_set_show_controls, PROCEDURE g_set_show_controls_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_sync, SCM_FNC g_sync, H_sync,
-					"set-" S_sync, SCM_FNC g_set_sync, SCM_FNC g_set_sync_reversed,
+  define_procedure_with_reversed_setter(S_sync, PROCEDURE g_sync, H_sync,
+					"set-" S_sync, PROCEDURE g_set_sync, PROCEDURE g_set_sync_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_channel_style, SCM_FNC g_channel_style, H_channel_style,
-					"set-" S_channel_style, SCM_FNC g_set_channel_style, SCM_FNC g_set_channel_style_reversed,
+  define_procedure_with_reversed_setter(S_channel_style, PROCEDURE g_channel_style, H_channel_style,
+					"set-" S_channel_style, PROCEDURE g_set_channel_style, PROCEDURE g_set_channel_style_reversed,
 					local_doc, 0, 1, 1, 1);
 
-  define_procedure_with_reversed_setter(S_read_only, SCM_FNC g_read_only, H_read_only,
-					"set-" S_read_only, SCM_FNC g_set_read_only, SCM_FNC g_set_read_only_reversed,
+  define_procedure_with_reversed_setter(S_read_only, PROCEDURE g_read_only, H_read_only,
+					"set-" S_read_only, PROCEDURE g_set_read_only, PROCEDURE g_set_read_only_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_expand_control_p, SCM_FNC g_expand_control_p, H_expand_control_p,
-					"set-" S_expand_control_p, SCM_FNC g_set_expand_control_p, SCM_FNC g_set_expand_control_p_reversed,
+  define_procedure_with_reversed_setter(S_expand_control_p, PROCEDURE g_expand_control_p, H_expand_control_p,
+					"set-" S_expand_control_p, PROCEDURE g_set_expand_control_p, PROCEDURE g_set_expand_control_p_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_contrast_control_p, SCM_FNC g_contrast_control_p, H_contrast_control_p,
-					"set-" S_contrast_control_p, SCM_FNC g_set_contrast_control_p, SCM_FNC g_set_contrast_control_p_reversed,
+  define_procedure_with_reversed_setter(S_contrast_control_p, PROCEDURE g_contrast_control_p, H_contrast_control_p,
+					"set-" S_contrast_control_p, PROCEDURE g_set_contrast_control_p, PROCEDURE g_set_contrast_control_p_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_reverb_control_p, SCM_FNC g_reverb_control_p, H_reverb_control_p,
-					"set-" S_reverb_control_p, SCM_FNC g_set_reverb_control_p, SCM_FNC g_set_reverb_control_p_reversed,
+  define_procedure_with_reversed_setter(S_reverb_control_p, PROCEDURE g_reverb_control_p, H_reverb_control_p,
+					"set-" S_reverb_control_p, PROCEDURE g_set_reverb_control_p, PROCEDURE g_set_reverb_control_p_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_filter_control_p, SCM_FNC g_filter_control_p, H_filter_control_p,
-					"set-" S_filter_control_p, SCM_FNC g_set_filter_control_p, SCM_FNC g_set_filter_control_p_reversed,
+  define_procedure_with_reversed_setter(S_filter_control_p, PROCEDURE g_filter_control_p, H_filter_control_p,
+					"set-" S_filter_control_p, PROCEDURE g_set_filter_control_p, PROCEDURE g_set_filter_control_p_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_filter_control_in_dB, SCM_FNC g_filter_control_in_dB, H_filter_control_in_dB,
-					"set-" S_filter_control_in_dB, SCM_FNC g_set_filter_control_in_dB, SCM_FNC g_set_filter_control_in_dB_reversed,
+  define_procedure_with_reversed_setter(S_filter_control_in_dB, PROCEDURE g_filter_control_in_dB, H_filter_control_in_dB,
+					"set-" S_filter_control_in_dB, PROCEDURE g_set_filter_control_in_dB, PROCEDURE g_set_filter_control_in_dB_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_filter_control_order, SCM_FNC g_filter_control_order, H_filter_control_order,
-					"set-" S_filter_control_order, SCM_FNC g_set_filter_control_order, SCM_FNC g_set_filter_control_order_reversed,
+  define_procedure_with_reversed_setter(S_filter_control_order, PROCEDURE g_filter_control_order, H_filter_control_order,
+					"set-" S_filter_control_order, PROCEDURE g_set_filter_control_order, PROCEDURE g_set_filter_control_order_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_contrast_control, SCM_FNC g_contrast_control, H_contrast_control,
-					"set-" S_contrast_control, SCM_FNC g_set_contrast_control, SCM_FNC g_set_contrast_control_reversed,
+  define_procedure_with_reversed_setter(S_contrast_control, PROCEDURE g_contrast_control, H_contrast_control,
+					"set-" S_contrast_control, PROCEDURE g_set_contrast_control, PROCEDURE g_set_contrast_control_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_contrast_control_amp, SCM_FNC g_contrast_control_amp, H_contrast_control_amp,
-					"set-" S_contrast_control_amp, SCM_FNC g_set_contrast_control_amp, SCM_FNC g_set_contrast_control_amp_reversed,
+  define_procedure_with_reversed_setter(S_contrast_control_amp, PROCEDURE g_contrast_control_amp, H_contrast_control_amp,
+					"set-" S_contrast_control_amp, PROCEDURE g_set_contrast_control_amp, PROCEDURE g_set_contrast_control_amp_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_expand_control, SCM_FNC g_expand_control, H_expand_control,
-					"set-" S_expand_control, SCM_FNC g_set_expand_control, SCM_FNC g_set_expand_control_reversed,
+  define_procedure_with_reversed_setter(S_expand_control, PROCEDURE g_expand_control, H_expand_control,
+					"set-" S_expand_control, PROCEDURE g_set_expand_control, PROCEDURE g_set_expand_control_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_expand_control_length, SCM_FNC g_expand_control_length, H_expand_control_length,
-					"set-" S_expand_control_length, SCM_FNC g_set_expand_control_length, SCM_FNC g_set_expand_control_length_reversed,
+  define_procedure_with_reversed_setter(S_expand_control_length, PROCEDURE g_expand_control_length, H_expand_control_length,
+					"set-" S_expand_control_length, PROCEDURE g_set_expand_control_length, PROCEDURE g_set_expand_control_length_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_expand_control_ramp, SCM_FNC g_expand_control_ramp, H_expand_control_ramp,
-					"set-" S_expand_control_ramp, SCM_FNC g_set_expand_control_ramp, SCM_FNC g_set_expand_control_ramp_reversed,
+  define_procedure_with_reversed_setter(S_expand_control_ramp, PROCEDURE g_expand_control_ramp, H_expand_control_ramp,
+					"set-" S_expand_control_ramp, PROCEDURE g_set_expand_control_ramp, PROCEDURE g_set_expand_control_ramp_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_expand_control_hop, SCM_FNC g_expand_control_hop, H_expand_control_hop,
-					"set-" S_expand_control_hop, SCM_FNC g_set_expand_control_hop, SCM_FNC g_set_expand_control_hop_reversed,
+  define_procedure_with_reversed_setter(S_expand_control_hop, PROCEDURE g_expand_control_hop, H_expand_control_hop,
+					"set-" S_expand_control_hop, PROCEDURE g_set_expand_control_hop, PROCEDURE g_set_expand_control_hop_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_speed_control, SCM_FNC g_speed_control, H_speed_control,
-					"set-" S_speed_control, SCM_FNC g_set_speed_control, SCM_FNC g_set_speed_control_reversed,
+  define_procedure_with_reversed_setter(S_speed_control, PROCEDURE g_speed_control, H_speed_control,
+					"set-" S_speed_control, PROCEDURE g_set_speed_control, PROCEDURE g_set_speed_control_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_reverb_control_length, SCM_FNC g_reverb_control_length, H_reverb_control_length,
-					"set-" S_reverb_control_length, SCM_FNC g_set_reverb_control_length, SCM_FNC g_set_reverb_control_length_reversed,
+  define_procedure_with_reversed_setter(S_reverb_control_length, PROCEDURE g_reverb_control_length, H_reverb_control_length,
+					"set-" S_reverb_control_length, PROCEDURE g_set_reverb_control_length, PROCEDURE g_set_reverb_control_length_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_reverb_control_scale, SCM_FNC g_reverb_control_scale, H_reverb_control_scale,
-					"set-" S_reverb_control_scale, SCM_FNC g_set_reverb_control_scale, SCM_FNC g_set_reverb_control_scale_reversed,
+  define_procedure_with_reversed_setter(S_reverb_control_scale, PROCEDURE g_reverb_control_scale, H_reverb_control_scale,
+					"set-" S_reverb_control_scale, PROCEDURE g_set_reverb_control_scale, PROCEDURE g_set_reverb_control_scale_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_reverb_control_feedback, SCM_FNC g_reverb_control_feedback, H_reverb_control_feedback,
-					"set-" S_reverb_control_feedback, SCM_FNC g_set_reverb_control_feedback, SCM_FNC g_set_reverb_control_feedback_reversed,
+  define_procedure_with_reversed_setter(S_reverb_control_feedback, PROCEDURE g_reverb_control_feedback, H_reverb_control_feedback,
+					"set-" S_reverb_control_feedback, PROCEDURE g_set_reverb_control_feedback, PROCEDURE g_set_reverb_control_feedback_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_reverb_control_lowpass, SCM_FNC g_reverb_control_lowpass, H_reverb_control_lowpass,
-					"set-" S_reverb_control_lowpass, SCM_FNC g_set_reverb_control_lowpass, SCM_FNC g_set_reverb_control_lowpass_reversed,
+  define_procedure_with_reversed_setter(S_reverb_control_lowpass, PROCEDURE g_reverb_control_lowpass, H_reverb_control_lowpass,
+					"set-" S_reverb_control_lowpass, PROCEDURE g_set_reverb_control_lowpass, PROCEDURE g_set_reverb_control_lowpass_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_amp_control, SCM_FNC g_amp_control, H_amp_control,
-					"set-" S_amp_control, SCM_FNC g_set_amp_control, SCM_FNC g_set_amp_control_reversed,
+  define_procedure_with_reversed_setter(S_amp_control, PROCEDURE g_amp_control, H_amp_control,
+					"set-" S_amp_control, PROCEDURE g_set_amp_control, PROCEDURE g_set_amp_control_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_reverb_control_decay, SCM_FNC g_reverb_control_decay, H_reverb_control_decay,
-					"set-" S_reverb_control_decay, SCM_FNC g_set_reverb_control_decay, SCM_FNC g_set_reverb_control_decay_reversed,
+  define_procedure_with_reversed_setter(S_reverb_control_decay, PROCEDURE g_reverb_control_decay, H_reverb_control_decay,
+					"set-" S_reverb_control_decay, PROCEDURE g_set_reverb_control_decay, PROCEDURE g_set_reverb_control_decay_reversed,
 					local_doc, 0, 1, 0, 2);
 
   #define H_speed_control_as_float "The value for " S_speed_control_style " that interprets the speed slider as a float"
@@ -2982,12 +2984,12 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
   DEFINE_VAR(S_speed_control_as_ratio,        SPEED_CONTROL_AS_RATIO,    H_speed_control_as_ratio);
   DEFINE_VAR(S_speed_control_as_semitone,     SPEED_CONTROL_AS_SEMITONE, H_speed_control_as_semitone);
 
-  define_procedure_with_reversed_setter(S_speed_control_style, SCM_FNC g_speed_control_style, H_speed_control_style,
-					"set-" S_speed_control_style, SCM_FNC g_set_speed_control_style, SCM_FNC g_set_speed_control_style_reversed,
+  define_procedure_with_reversed_setter(S_speed_control_style, PROCEDURE g_speed_control_style, H_speed_control_style,
+					"set-" S_speed_control_style, PROCEDURE g_set_speed_control_style, PROCEDURE g_set_speed_control_style_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_speed_control_tones, SCM_FNC g_speed_control_tones, H_speed_control_tones,
-					"set-" S_speed_control_tones, SCM_FNC g_set_speed_control_tones, SCM_FNC g_set_speed_control_tones_reversed,
+  define_procedure_with_reversed_setter(S_speed_control_tones, PROCEDURE g_speed_control_tones, H_speed_control_tones,
+					"set-" S_speed_control_tones, PROCEDURE g_set_speed_control_tones, PROCEDURE g_set_speed_control_tones_reversed,
 					local_doc, 0, 1, 0, 2);
 
   DEFINE_PROC(S_peak_env_info, g_peak_env_info, 0, 3, 0, H_peak_env_info);

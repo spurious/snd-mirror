@@ -199,7 +199,7 @@ static void Yank(Widget w, XEvent *ev, char **str, Cardinal *num)
     }
 }
 
-static int last_prompt = 0;
+static int printout_end = 0;
 
 static void Begin_of_line(Widget w, XEvent *ev, char **ustr, Cardinal *num) 
 {
@@ -464,7 +464,7 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
   Window wn;
   snd_state *ss;
   ss = get_global_state();
-  beg = last_prompt + 1;
+  beg = printout_end + 1;
   end = XmTextGetLastPosition(w);
   if (end <= beg) return;
   len = end - beg + 1;
@@ -794,7 +794,10 @@ static Widget lisp_window = NULL;
 void listener_append(snd_state *ss, char *msg)
 {
   if (listener_text)
-    XmTextInsert(listener_text, XmTextGetLastPosition(listener_text), msg);
+    {
+      XmTextInsert(listener_text, XmTextGetLastPosition(listener_text), msg);
+      printout_end = XmTextGetLastPosition(listener_text) - 1;
+    }
 }
  
 static Widget listener_pane = NULL; 
@@ -809,14 +812,14 @@ void listener_append_and_prompt(snd_state *ss, char *msg)
       cmd_eot = XmTextGetLastPosition(listener_text);
       XmTextInsert(listener_text, cmd_eot, listener_prompt_with_cr(ss));
       cmd_eot = XmTextGetLastPosition(listener_text);
-      last_prompt = cmd_eot - 1;
+      printout_end = cmd_eot - 1;
       XmTextShowPosition(listener_text, cmd_eot - 1);
     }
 }
 
 static void Command_Return_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  command_return(w, (snd_state *)context, last_prompt);
+  command_return(w, (snd_state *)context, printout_end);
 }
 
 static int last_highlight_position = -1;
@@ -961,7 +964,7 @@ static void sndCreateCommandWidget(snd_state *ss, int height)
       if (!transTable4) 
 	transTable4 = XtParseTranslationTable(TextTrans4);
       XtOverrideTranslations(listener_text, transTable4);
-      last_prompt = 0;
+      printout_end = 0;
       XtAddCallback(listener_text, XmNactivateCallback, Command_Return_Callback, ss);
       XtAddCallback(listener_text, XmNmodifyVerifyCallback, Command_Modify_Callback, ss);
       XtAddCallback(listener_text, XmNmotionVerifyCallback, Command_Motion_Callback, ss);
@@ -1113,7 +1116,7 @@ Widget sndCreatePanedWindowWidget(char *name, Widget parent, Arg *args, int n)
 static SCM g_listener_selected_text(void)
 {
   char *txt;
-  SCM res = SCM_BOOL_F;
+  SCM res = FALSE_VALUE;
   if (listener_text)
     {
       txt = XmTextGetSelection(listener_text);
@@ -1131,7 +1134,7 @@ static SCM g_reset_listener_cursor(void)
   if (listener_text)
     XUndefineCursor(XtDisplay(listener_text), 
 		    XtWindow(listener_text)); 
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 void g_init_gxlistener(SCM local_doc)

@@ -213,6 +213,7 @@ AC_ARG_WITH(gtk-extra,
             GTKEXTRA_FLAGS="`$GTKEXTRA_CONFIG --cflags`"
             gtkextra_version="`$GTKEXTRA_CONFIG --version`"
             AC_DEFINE_UNQUOTED(GTKEXTRA_VERSION,"${gtkextra_version}")
+            AC_CHECK_LIB(gtkextra, gtk_icon_file_selection_show_tree, [AC_DEFINE(HAVE_GTK_ICON_FILE_SELECTION_SHOW_TREE)], , $GTKEXTRA_LIBS)
           else
 	    AC_MSG_WARN([can't find libgtkextra!])
 	  fi
@@ -543,6 +544,7 @@ if test $GUILE_CONFIG_works = yes; then
     AC_CHECK_LIB(guile, scm_c_make_vector,      [AC_DEFINE(HAVE_SCM_C_MAKE_VECTOR)])
     AC_CHECK_LIB(guile, scm_c_define,           [AC_DEFINE(HAVE_SCM_C_DEFINE)])
     AC_CHECK_LIB(guile, scm_c_define_gsubr,     [AC_DEFINE(HAVE_SCM_C_DEFINE_GSUBR)])
+    AC_CHECK_LIB(guile, scm_c_eval_string,      [AC_DEFINE(HAVE_SCM_C_EVAL_STRING)])
     AC_CHECK_LIB(guile, scm_list_n,             [AC_DEFINE(HAVE_SCM_LIST_N)])
     LIBS="$OLD_LIBS"
 

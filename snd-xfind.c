@@ -29,7 +29,7 @@ static void edit_find_ok_callback(int direction, Widget w, XtPointer context, Xt
       if (ss->search_expr) XtFree(ss->search_expr);
       ss->search_expr = str;
       if (PROCEDURE_P(ss->search_proc)) snd_unprotect(ss->search_proc);
-      ss->search_proc = SCM_UNDEFINED;
+      ss->search_proc = UNDEFINED_VALUE;
       proc = snd_catch_any(eval_str_wrapper, str, str);
       if (procedure_ok_with_error(proc, 1, "find", "find", 1))
 	{
@@ -171,14 +171,14 @@ static SCM g_find_dialog_widgets(void)
   	       CONS(SND_WRAP(findnextB),
 		 CONS(SND_WRAP(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_CANCEL_BUTTON)), /* find previous */
 		   CONS(SND_WRAP(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_OK_BUTTON)),   /* cancel */
-			SCM_EOL))))));
-  return(SCM_EOL);
+			EMPTY_LIST))))));
+  return(EMPTY_LIST);
 }
 
 static SCM g_edit_find_dialog(void)
 {
   Edit_Find_Callback(NULL, (XtPointer *)(get_global_state()), NULL);
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 void g_init_gxfind(SCM local_doc)

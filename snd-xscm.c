@@ -12,7 +12,7 @@ static snd_state *state;
 static void timed_eval(XtPointer in_code, XtIntervalId *id)
 {
 #if (SCM_DEBUG_TYPING_STRICTNESS != 2)
-  CALL0((SCM)in_code, "timed callback func");
+  CALL_0((SCM)in_code, "timed callback func");
   snd_unprotect((SCM)in_code);
 #endif
 }
@@ -37,11 +37,11 @@ static SCM g_in(SCM ms, SCM code)
 
 /* color support */
 
-static SND_TAG_TYPE snd_color_tag = 0;
+static TAG_TYPE snd_color_tag = 0;
 
 int snd_color_p(SCM obj)
 {
-  return(SMOB_TYPE_P(obj, snd_color_tag));
+  return(OBJECT_TYPE_P(obj, snd_color_tag));
 }
 
 static SCM g_color_p(SCM obj) 
@@ -53,7 +53,7 @@ static SCM g_color_p(SCM obj)
 snd_color *get_snd_color(SCM arg)
 {
   if (COLOR_P(arg))
-    return((snd_color *)SND_VALUE_OF(arg));
+    return((snd_color *)OBJECT_REF(arg));
   return(NULL);
 }
 
@@ -61,7 +61,7 @@ static scm_sizet free_snd_color(SCM obj)
 {
   Colormap cmap;
   Display *dpy;
-  snd_color *v = (snd_color *)SND_VALUE_OF(obj);
+  snd_color *v = (snd_color *)OBJECT_REF(obj);
   dpy = XtDisplay(MAIN_SHELL(state));
   cmap = DefaultColormap(dpy, DefaultScreen(dpy));
   XFreeColors(dpy, cmap, &(v->color), 1, 0);
@@ -72,7 +72,7 @@ static scm_sizet free_snd_color(SCM obj)
 static int print_snd_color(SCM obj, SCM port, scm_print_state *pstate)
 {
   char *buf = NULL;
-  snd_color *v = (snd_color *)SND_VALUE_OF(obj);
+  snd_color *v = (snd_color *)OBJECT_REF(obj);
   Colormap cmap;
   XColor tmp_color;
   Display *dpy;
@@ -102,7 +102,7 @@ static SCM g_color2list(SCM obj)
   XColor tmp_color;
   Display *dpy;
   ASSERT_TYPE(COLOR_P(obj), obj, ARGn, S_color2list, "a color object"); 
-  v = (snd_color *)SND_VALUE_OF(obj);
+  v = (snd_color *)OBJECT_REF(obj);
   dpy = XtDisplay(MAIN_SHELL(state));
   cmap = DefaultColormap(dpy, DefaultScreen(dpy));
   tmp_color.flags = DoRed | DoGreen | DoBlue;
@@ -117,8 +117,8 @@ static SCM g_color2list(SCM obj)
 static SCM equalp_snd_color(SCM obj1, SCM obj2)
 {
   snd_color *v1, *v2;
-  v1 = (snd_color *)SND_VALUE_OF(obj1);
-  v2 = (snd_color *)SND_VALUE_OF(obj2);
+  v1 = (snd_color *)OBJECT_REF(obj1);
+  v2 = (snd_color *)OBJECT_REF(obj2);
   return(TO_SCM_BOOLEAN(v1->color == v2->color));
 }
 
@@ -149,7 +149,7 @@ static SCM g_make_snd_color(SCM r, SCM g, SCM b)
 	  LIST_2(TO_SCM_STRING(S_make_color),
 		    LIST_3(r, g, b)));
   new_color->color = tmp_color.pixel;
-  SND_RETURN_NEWSMOB(snd_color_tag, new_color);
+  RETURN_NEW_OBJECT(snd_color_tag, new_color);
 }
 
 SCM pixel2color(COLOR_TYPE pix)
@@ -329,7 +329,7 @@ void make_bg(snd_state *ss, unsigned int width, unsigned int height);
 static SCM g_make_bg(SCM wid, SCM hgt)
 {
   make_bg(get_global_state(), TO_C_INT(wid), TO_C_INT(hgt));
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 #endif
@@ -343,7 +343,7 @@ void g_initialize_xgh(snd_state *ss, SCM local_doc)
   scm_set_smob_free(snd_color_tag, free_snd_color);
   scm_set_smob_equalp(snd_color_tag, equalp_snd_color);
 #if HAVE_APPLICABLE_SMOB
-  scm_set_smob_apply(snd_color_tag, SCM_FNC g_color2list, 0, 0, 0);
+  scm_set_smob_apply(snd_color_tag, PROCEDURE g_color2list, 0, 0, 0);
 #endif
 #endif
 
@@ -353,8 +353,8 @@ void g_initialize_xgh(snd_state *ss, SCM local_doc)
   DEFINE_PROC(S_color2list,    g_color2list, 1, 0, 0,     H_color2list);
   DEFINE_PROC(S_load_colormap, g_load_colormap, 1, 0, 0,  H_load_colormap);
 
-  define_procedure_with_setter(S_graph_cursor, SCM_FNC g_graph_cursor, H_graph_cursor,
-			       "set-" S_graph_cursor, SCM_FNC g_set_graph_cursor, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_graph_cursor, PROCEDURE g_graph_cursor, H_graph_cursor,
+			       "set-" S_graph_cursor, PROCEDURE g_set_graph_cursor, local_doc, 0, 0, 1, 0);
 
 #if HAVE_THEMES
   DEFINE_PROC("make-bg", g_make_bg, 2, 0, 0, "make background pixmap");

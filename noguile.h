@@ -15,17 +15,17 @@
 #else
   #define SCM int
 #endif
-#define SCM_BOOL_F 0
-#define SCM_BOOL_T 1
-#define SCM_EOL 0
-#define SCM_UNDEFINED 0
+#define FALSE_VALUE 0
+#define TRUE_VALUE 1
+#define EMPTY_LIST 0
+#define UNDEFINED_VALUE 0
 
 #ifdef __cplusplus
-  #define SCM_FNC (SCM (*)())
+  #define PROCEDURE (SCM (*)())
   typedef SCM (*scm_catch_body_t) (void *data);
   typedef SCM (*scm_catch_handler_t) (void *data, SCM tag, SCM throw_args);
 #else
-  #define SCM_FNC
+  #define PROCEDURE
   #define scm_catch_body_t void *
   #define scm_catch_handler_t void *
 #endif
@@ -54,19 +54,18 @@ SCM scm_return_first(SCM a, ...);
 #define CDR(a) 0
 #define CDDR(a) 0
 #define VECTOR_ELEMENTS(a) ((SCM *)a)
-#define SCM_NEWSMOB(a, b, c)
+#define NEW_OBJECT(a, b, c)
 #define HOOK_PROCEDURES(a) 0
-#define SET_SCM_VALUE(a, b)
-#define SCM_VARIABLE_REF(a) 0
+#define SET_OBJECT_REF(a, b)
+#define VARIABLE_REF(a) 0
 
 /* this is the sg.h replacement */
 
-#define SND_RETURN_NEWSMOB(Tag, Val) return(0)
-#define SND_VALUE_OF(a) 0
+#define RETURN_NEW_OBJECT(Tag, Val) return(0)
+#define OBJECT_REF(a) 0
 #define SND_LOOKUP(a) 0
-#define SND_TAG_TYPE int
-#define SND_SMOB_TYPE(TAG, OBJ) 0
-#define SMOB_TYPE_P(OBJ, TAG) 0
+#define TAG_TYPE int
+#define OBJECT_TYPE_P(OBJ, TAG) 0
 #define TRUE_P(a) 0
 #define FALSE_P(a) 0
 #define NULL_P(a) 0
@@ -133,12 +132,12 @@ SCM scm_return_first(SCM a, ...);
 #define CLEAR_HOOK(Arg)
 #define CHAR_P(Arg) 0
 #define TO_C_CHAR(Arg) 0
-#define SND_ASSERT_SND(Origin, Snd, Offset)
-#define SND_ASSERT_CHAN(Origin, Snd, Chn, Offset)
-#define CALL0(Func, Caller) 0
-#define CALL1(Func, Arg1, Caller) 0
-#define CALL2(Func, Arg1, Arg2, Caller) 0
-#define CALL3(Func, Arg1, Arg2, Arg3, Caller) 0
+#define ASSERT_SOUND(Origin, Snd, Offset)
+#define ASSERT_CHANNEL(Origin, Snd, Chn, Offset)
+#define CALL_0(Func, Caller) 0
+#define CALL_1(Func, Arg1, Caller) 0
+#define CALL_2(Func, Arg1, Arg2, Caller) 0
+#define CALL_3(Func, Arg1, Arg2, Arg3, Caller) 0
 #define APPLY(Func, Args, Caller) 0
 #define APPLY_EOL 0
 #define ARITY(Func) 0

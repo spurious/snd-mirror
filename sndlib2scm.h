@@ -1,6 +1,28 @@
 #ifndef SNDLIB2SCM_H
 #define SNDLIB2SCM_H
 
+#if (!USE_SND)
+#if HAVE_GUILE
+  #include <guile/gh.h>
+  #include "sg.h"
+#endif
+#if HAVE_LIBREP 
+  #include <rep.h>
+  #include "sl.h"
+#endif
+#if HAVE_MZSCHEME
+  #include <scheme.h>
+  #include "sz.h"
+#endif
+#if HAVE_RUBY
+  #include <ruby.h>
+  #include "sr.h"
+#endif
+#if (!HAVE_EXTENSION_LANGUAGE)
+  #include "noguile.h"
+#endif
+#endif
+
 /* error indications */
 
 #define NO_SUCH_CHANNEL      TO_SCM_SYMBOL("no-such-channel")

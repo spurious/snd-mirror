@@ -569,6 +569,7 @@ I'm slowly dividing out related groups of procedures to separate files.
     <li>play samples created on-the-fly
     <li>play while looping continuously between two movable marks
     <li>hold DAC open and play sounds via keyboard
+    <li>"vector synthesis"
   </ul>
 </small>
 <li><a href="#ssfilters">filters</a>
@@ -604,7 +605,7 @@ I'm slowly dividing out related groups of procedures to separate files.
     <li>pointer-focus
     <li>files-popup-buffer
     <li>Emacs-like C-x b handling
-    <li>redirect stdin/stdout: snd-debug
+    <li>redirect stdin/stdout: snd-debug, read-listener-line, snd-trace
   </ul>
 </small>
 <li><a href="#ssmarks">marks</a>
@@ -664,6 +665,7 @@ I'm slowly dividing out related groups of procedures to separate files.
     <li>mapping extensions (map arbitrary single-channel function over various channel collections)
     <li>sound-interp, env-sound-interp
     <li>searching procedures (find-pitch, zero+, next-peak)
+    <li>sound-data->list
   </ul>
 </small>
 </ul>
@@ -710,6 +712,13 @@ If you want the DAC to be held open in the background,
   <em class=def><A NAME="exstartdac">start-dac</a></em>
   <em class=def><A NAME="exstopdac">stop-dac</a></em>
 </pre>
+<p>The "vector-synthesis" 
+idea (and weird name) came from a linux-audio-development mailing list.
+Apparently some commercial synths (or software?) provide this.
+It reads any number of sound files, using a function to
+decide which one to send to the DAC.
+</p>
+
 
 
 <!-- -------------------------------- FILTERS -------------------------------- -->
@@ -1157,6 +1166,12 @@ positive-going zero crossing (if searching forwards), <i>next-peak</i> finds
 the next max or min in the waveform, and <i>find-pitch</i> finds the next
 place where the given pitch is predominate.
 </p>
+<pre>
+  <em class=def><A NAME="exsounddata2list">sound-data-&gt;list</a></em> sdata
+</pre>
+<p>This converts a sound-data object into a list of lists, each inner list
+holding the samples of one channel.
+</p>
 <br>
 
 <A NAME="extensionsdoc"></a><span class=box><h2>extensions.scm</h2></span>
@@ -1172,6 +1187,7 @@ convenient if they were in one file.
 
   <em class=def><a name="exsnddebug">snd-debug</a></em>
   <em class=def><a name="readlistenerline">read-listener-line</a></em> prompt
+  <em class=def><a name="exsndtrace">snd-trace</a></em>
 
   <em class=def><a name="exmakeselection">make-selection</a></em> &amp;optional beg end snd chn
   <em class=def><a name="exdeleteselectionandsmooth">delete-selection-and-smooth</a></em>
@@ -1226,7 +1242,8 @@ To return to this mode after setting a specific field, set that field to -1.
 redirecting the Guile debugger's stdin and stdout IO via a read-write soft-port
 and Snd's read-hook.  If you hit an error, call (snd-debug) rather than (debug).
 <i>read-listener-line</i> is somewhat like read-line
-but gets its input from the listener.
+but gets its input from the listener.  <i>snd-trace</i> activates any tracing
+that you may have requested and redirects its output to the Snd listener.
 </p>
 
 <p><i>selection-members</i> returns a list of lists of (snd chn) indicating the channels participating in the current selection.
@@ -1264,11 +1281,46 @@ a region).
 <p>We can use Guile's regexp support here to search for all .snd and .wav files:
 </p>
 <pre>
-(let ((reg (make-regexp ".wav|.snd$")))
+(let ((reg (make-regexp "\\.(wav|.snd)$")))
   (match-sound-files (lambda (file) (regexp-exec reg file))))
 </pre>
-<p>The argument to make-regexp is looking for *.wav and *.snd.
+<p>In fact, we could replace the built-in procedures add-sound-file-extension and
+sound-files in directory.  We're using some procedures written by Dirk Herrman here.
 </p>
+<pre>
+(define (filter-list pred? objects)
+  (let loop ((objs objects)
+	     (result '()))
+    (cond ((null? objs) (reverse! result))
+	  ((pred? (car objs)) (loop (cdr objs) (cons (car objs) result)))
+	  (else (loop (cdr objs) result)))))
+
+(define (grep rx strings)
+  (let ((r (make-regexp rx)))
+    (filter-list (lambda (x) (regexp-exec r x)) strings)))
+
+(define (directory->list dir)
+  (let ((dport (opendir dir)))
+    (let loop ((entry (readdir dport))
+	       (files '()))
+      (if (not (eof-object? entry))
+	  (loop (readdir dport) (cons entry files))
+	  (begin
+	    (closedir dport)
+	    (reverse! files))))))
+
+;;; and now the Snd replacements
+(define sound-file-extensions (list "snd" "aiff" "aif" "wav" "au" "aifc" "voc" "wve"))
+
+(define (add-sound-file-extension-1 ext) 
+  (set! sound-file-extensions (cons ext sound-file-extensions)))
+
+(define* (sound-files-in-directory-1 #:optional (dir "."))
+  (sort (grep
+	 (format #f "\\.(~{~A~^|~})$" sound-file-extensions)
+	 (directory->list dir))
+	string<?))
+</pre>
 
 <p><i>normalized-mix</i> is like <a href="extsnd.html#sndmix">mix</a> but the mixed result has same peak amplitude as the 
 original data. <i>enveloped-mix</i> is like <a href="extsnd.html#sndmixsound">mix-sound</a>, but includes an

@@ -8,10 +8,10 @@
 
 /* these are the left-over scm/gh entities */
 #define SCM repv
-#define SCM_BOOL_F     rep_FALSE
-#define SCM_BOOL_T     rep_TRUE
-#define SCM_EOL        rep_NULL
-#define SCM_UNDEFINED  rep_NULL
+#define FALSE_VALUE     rep_FALSE
+#define TRUE_VALUE     rep_TRUE
+#define EMPTY_LIST        rep_NULL
+#define UNDEFINED_VALUE  rep_NULL
 
 #define scm_catch_body_t void *
 #define scm_catch_handler_t void *
@@ -39,24 +39,23 @@ SCM scm_return_first(SCM a, ...);
 #define CADDR(Arg)                           rep_CADDR(Arg)
 #define CADDDR(Arg)                          rep_CADDDR(Arg)
 #define VECTOR_ELEMENTS(a)                   (repv *)(rep_VECT(a)->array)
-#define SCM_NEWSMOB(a, b, c) Qnil
+#define NEW_OBJECT(a, b, c) Qnil
 #define HOOK_PROCEDURES(a) Qnil
-#define SET_SCM_VALUE(a, b)
+#define SET_OBJECT_REF(a, b)
 
 #ifdef __cplusplus
-  #define SCM_FNC (repv(*)())
+  #define PROCEDURE (repv(*)())
 #else
-  #define SCM_FNC
+  #define PROCEDURE
 #endif
 
 #define MAKE_HOOK(Name, Args, Help)  Qnil
 #define MAKE_HELPLESS_HOOK(a)        Qnil
-#define SND_RETURN_NEWSMOB(Tag, Val) Qnil
-#define SND_VALUE_OF(a)              Qnil
+#define RETURN_NEW_OBJECT(Tag, Val) Qnil
+#define OBJECT_REF(a)              Qnil
 #define SND_LOOKUP(a)                Qnil
-#define SND_TAG_TYPE                 int
-#define SND_SMOB_TYPE(TAG, OBJ)      Qnil
-#define SMOB_TYPE_P(OBJ, TAG)        Qnil
+#define TAG_TYPE                 int
+#define OBJECT_TYPE_P(OBJ, TAG)        Qnil
 #define TRUE_P(a)                    ((a) == Qt)
 #define FALSE_P(a)                   ((a) == Qnil)
 #define NULL_P(a)                    (((a) == Qnil) || (LIST_LENGTH(a) == 0))
@@ -130,12 +129,12 @@ SCM scm_return_first(SCM a, ...);
 #define VECTOR_TO_LIST(a)         Qnil
 #define CHAR_P(Arg)               ((Arg) && (STRING_P(Arg)))
 #define TO_C_CHAR(Arg)            (TO_C_STRING(Arg))[0]
-#define SND_ASSERT_SND(Origin, Snd, Offset)
-#define SND_ASSERT_CHAN(Origin, Snd, Chn, Offset)
-#define CALL0(Func, Caller)       rep_call_lisp0(Func)
-#define CALL1(Func, Arg1, Caller) rep_call_lisp1(Func, Arg1)
-#define CALL2(Func, Arg1, Arg2, Caller) rep_call_lisp2(Func, Arg1, Arg2)
-#define CALL3(Func, Arg1, Arg2, Arg3, Caller) rep_call_lisp3(Func, Arg1, Arg2, Arg3)
+#define ASSERT_SOUND(Origin, Snd, Offset)
+#define ASSERT_CHANNEL(Origin, Snd, Chn, Offset)
+#define CALL_0(Func, Caller)       rep_call_lisp0(Func)
+#define CALL_1(Func, Arg1, Caller) rep_call_lisp1(Func, Arg1)
+#define CALL_2(Func, Arg1, Arg2, Caller) rep_call_lisp2(Func, Arg1, Arg2)
+#define CALL_3(Func, Arg1, Arg2, Arg3, Caller) rep_call_lisp3(Func, Arg1, Arg2, Arg3)
 #define APPLY(Func, Args, Caller) rep_apply(Func, Args)
 #define APPLY_EOL                 Qnil
 #define ARITY(Func)               Qnil

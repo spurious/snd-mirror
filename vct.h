@@ -43,7 +43,7 @@ vct *get_vct(SCM arg);
 void set_vct_print_length(int len);
 int procedure_fits(SCM proc, int args);
 
-#define TO_VCT(arg) ((vct *)SND_VALUE_OF(arg))
+#define TO_VCT(arg) ((vct *)OBJECT_REF(arg))
 #define VCT_P(arg) vct_p(arg)
 
 #endif

@@ -36,7 +36,7 @@ int to_c_edit_position(chan_info *cp, SCM edpos, const char *caller, int arg_pos
 	  snd_bad_arity_error(caller, errstr, edpos);
 	  return(0); /* never called, presumably */
 	}
-      pos = TO_C_INT_OR_ELSE_WITH_ORIGIN(CALL2(edpos, 
+      pos = TO_C_INT_OR_ELSE_WITH_ORIGIN(CALL_2(edpos, 
 					       TO_SMALL_SCM_INT(cp->sound->index), 
 					       TO_SMALL_SCM_INT(cp->chan),
 					       caller),
@@ -1925,7 +1925,7 @@ apply func to samples in current channel, edname is the edit history name for th
   snd_fd *sf = NULL;
   SCM errstr;
   int kp, len, num, reporting = 0, rpt = 0, rpt4, i, j, cured;
-  SCM res = SCM_BOOL_F;
+  SCM res = FALSE_VALUE;
   char *errmsg;
   char *filename;
   mus_any *outgen = NULL;
@@ -1938,7 +1938,7 @@ apply func to samples in current channel, edname is the edit history name for th
   ASSERT_TYPE((PROCEDURE_P(proc)), proc, ARG1, caller, "a procedure");
   ASSERT_TYPE(NUMBER_OR_BOOLEAN_IF_BOUND_P(s_beg), s_beg, ARG2, caller, "a number");
   ASSERT_TYPE(NUMBER_OR_BOOLEAN_IF_BOUND_P(s_end), s_end, ARG3, caller, "a number");
-  SND_ASSERT_CHAN(S_map_chan, snd, chn, 5); 
+  ASSERT_CHANNEL(S_map_chan, snd, chn, 5); 
   ss = get_global_state();
   cp = get_cp(snd, chn, caller);
   beg = TO_C_INT_OR_ELSE_WITH_ORIGIN(s_beg, 0, caller);
@@ -1958,14 +1958,14 @@ apply func to samples in current channel, edname is the edit history name for th
       reporting = (num > MAX_BUFFER_SIZE);
       if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
       sf = init_sample_read_any(beg, cp, READ_FORWARD, to_c_edit_position(cp, edpos, caller, 7));
-      if (sf == NULL) return(SCM_BOOL_T);
+      if (sf == NULL) return(TRUE_VALUE);
       rpt4 = MAX_BUFFER_SIZE / 4;
       filename = snd_tempnam(ss);
       outgen = mus_make_sample2file(filename, 1, MUS_OUT_FORMAT, MUS_NEXT);
       j = 0;
       for (kp = 0; kp < num; kp++)
 	{
-	  res = CALL1(proc, 
+	  res = CALL_1(proc, 
 		      TO_SCM_DOUBLE((double)next_sample_to_float(sf)),
 		      caller);
 	  if (NUMBER_P(res))                         /* one number -> replace current sample */
@@ -2062,7 +2062,7 @@ static SCM g_sp_scan(SCM proc, SCM s_beg, SCM s_end, SCM snd, SCM chn,
   ASSERT_TYPE((PROCEDURE_P(proc)), proc, ARG1, caller, "a procedure");
   ASSERT_TYPE(NUMBER_OR_BOOLEAN_IF_BOUND_P(s_beg), s_beg, ARG2, caller, "a number");
   ASSERT_TYPE(NUMBER_OR_BOOLEAN_IF_BOUND_P(s_end), s_end, ARG3, caller, "a number");
-  SND_ASSERT_CHAN(caller, snd, chn, 4);
+  ASSERT_CHANNEL(caller, snd, chn, 4);
   cp = get_cp(snd, chn, caller);
   beg = TO_C_INT_OR_ELSE_WITH_ORIGIN(s_beg, 0, caller);
   end = TO_C_INT_OR_ELSE_WITH_ORIGIN(s_end, 0, caller);
@@ -2077,7 +2077,7 @@ static SCM g_sp_scan(SCM proc, SCM s_beg, SCM s_end, SCM snd, SCM chn,
   ss = get_global_state();
   sp = cp->sound;
   sf = init_sample_read_any(beg, cp, READ_FORWARD, to_c_edit_position(cp, edpos, caller, arg_pos));
-  if (sf == NULL) return(SCM_BOOL_T);
+  if (sf == NULL) return(TRUE_VALUE);
   rpt4 = MAX_BUFFER_SIZE / 4;
   len = to_c_edit_samples(cp, edpos, caller, arg_pos);
   if (end >= len) end = len - 1;
@@ -2089,7 +2089,7 @@ static SCM g_sp_scan(SCM proc, SCM s_beg, SCM s_end, SCM snd, SCM chn,
       if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
       for (kp = 0; kp < num; kp++)
 	{
-	  res = CALL1(proc,
+	  res = CALL_1(proc,
 		      TO_SCM_DOUBLE((double)next_sample_to_float(sf)),
 		      caller);
 	  if (NOT_FALSE_P(res))
@@ -2124,7 +2124,7 @@ static SCM g_sp_scan(SCM proc, SCM s_beg, SCM s_end, SCM snd, SCM chn,
 	      sf = free_snd_fd(sf);
 	      if (counting)
 		return(TO_SCM_INT(counts));
-	      return(SCM_BOOL_F);
+	      return(FALSE_VALUE);
 	    }
 	}
       if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
@@ -2132,7 +2132,7 @@ static SCM g_sp_scan(SCM proc, SCM s_beg, SCM s_end, SCM snd, SCM chn,
   if (sf) sf = free_snd_fd(sf);
   if (counting)
     return(TO_SCM_INT(counts));
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_scan_chan(SCM proc, SCM beg, SCM end, SCM snd, SCM chn, SCM edpos) 
@@ -2143,7 +2143,7 @@ func is a function of one argument, the current sample. \
 if func returns non-#f, the scan stops, and the value is returned to the caller with the sample number. \n\
   (scan-chan (lambda (x) (> x .1)))"
 
-  SND_ASSERT_CHAN(S_scan_chan, snd, chn, 4); 
+  ASSERT_CHANNEL(S_scan_chan, snd, chn, 4); 
   return(g_sp_scan(proc, beg, end, snd, chn, S_scan_chan, FALSE, edpos, 6));
 }
 
@@ -2153,8 +2153,8 @@ static SCM g_find(SCM expr, SCM sample, SCM snd_n, SCM chn_n, SCM edpos)
 the current sample, to each sample in snd's channel chn, starting at 'start-samp' until func returns #t"
 
   /* no free here -- it's handled as ss->search_expr in snd-find.c */
-  SND_ASSERT_CHAN(S_find, snd_n, chn_n, 3);
-  return(g_sp_scan(expr, sample, SCM_BOOL_F, snd_n, chn_n, S_find, FALSE, edpos, 5));
+  ASSERT_CHANNEL(S_find, snd_n, chn_n, 3);
+  return(g_sp_scan(expr, sample, FALSE_VALUE, snd_n, chn_n, S_find, FALSE, edpos, 5));
 }
 
 static SCM g_count_matches(SCM expr, SCM sample, SCM snd_n, SCM chn_n, SCM edpos)
@@ -2162,8 +2162,8 @@ static SCM g_count_matches(SCM expr, SCM sample, SCM snd_n, SCM chn_n, SCM edpos
   #define H_count_matches "(" S_count_matches " func &optional (start-samp 0) snd chn edpos) returns how many \
 samples satisfy func (a function of one argument, the current sample, returning #t upon match)"
 
-  SND_ASSERT_CHAN(S_count_matches, snd_n, chn_n, 3);
-  return(g_sp_scan(expr, sample, SCM_BOOL_F, snd_n, chn_n, S_count_matches, TRUE, edpos, 5));
+  ASSERT_CHANNEL(S_count_matches, snd_n, chn_n, 3);
+  return(g_sp_scan(expr, sample, FALSE_VALUE, snd_n, chn_n, S_count_matches, TRUE, edpos, 5));
 }
 
 static SCM g_smooth_sound(SCM beg, SCM num, SCM snd_n, SCM chn_n)
@@ -2172,14 +2172,14 @@ static SCM g_smooth_sound(SCM beg, SCM num, SCM snd_n, SCM chn_n)
   chan_info *cp;
   ASSERT_TYPE(NUMBER_P(beg), beg, ARG1, S_smooth_sound, "a number");
   ASSERT_TYPE(NUMBER_P(num), num, ARG2, S_smooth_sound, "a number");
-  SND_ASSERT_CHAN(S_smooth_sound, snd_n, chn_n, 3);
+  ASSERT_CHANNEL(S_smooth_sound, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_smooth_sound);
   cos_smooth(cp,
 	     TO_C_INT_OR_ELSE(beg, 0),
 	     TO_C_INT_OR_ELSE(num, 0),
 	     FALSE,
 	     S_smooth_sound); 
-  return(SCM_BOOL_T);
+  return(TRUE_VALUE);
 }
 
 static SCM g_smooth_selection(void)
@@ -2188,19 +2188,19 @@ static SCM g_smooth_selection(void)
   chan_info *cp;
   if (selection_is_active() == 0) 
     return(snd_no_active_selection_error(S_smooth_selection));
-  cp = get_cp(SCM_BOOL_F, SCM_BOOL_F, S_smooth_selection);
+  cp = get_cp(FALSE_VALUE, FALSE_VALUE, S_smooth_selection);
   cos_smooth(cp, 0, 0, TRUE, S_smooth_selection);
-  return(SCM_BOOL_T);
+  return(TRUE_VALUE);
 }
 
 static SCM g_reverse_sound(SCM snd_n, SCM chn_n, SCM edpos)
 {
   #define H_reverse_sound "(" S_reverse_sound " &optional snd chn edpos) reverses snd's channel chn"
   chan_info *cp;
-  SND_ASSERT_CHAN(S_reverse_sound, snd_n, chn_n, 1);
+  ASSERT_CHANNEL(S_reverse_sound, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_reverse_sound);
   reverse_sound(cp, FALSE, edpos, 3);
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_reverse_selection(void)
@@ -2209,9 +2209,9 @@ static SCM g_reverse_selection(void)
   chan_info *cp;
   if (selection_is_active() == 0) 
     return(snd_no_active_selection_error(S_reverse_selection));
-  cp = get_cp(SCM_BOOL_F, SCM_BOOL_F, S_reverse_selection);
+  cp = get_cp(FALSE_VALUE, FALSE_VALUE, S_reverse_selection);
   reverse_sound(cp, TRUE, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0);
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_insert_silence(SCM beg, SCM num, SCM snd, SCM chn)
@@ -2220,7 +2220,7 @@ static SCM g_insert_silence(SCM beg, SCM num, SCM snd, SCM chn)
   chan_info *cp;
   ASSERT_TYPE(NUMBER_P(beg), beg, ARG1, S_insert_silence, "a number");
   ASSERT_TYPE(NUMBER_P(num), num, ARG2, S_insert_silence, "a number");
-  SND_ASSERT_CHAN(S_insert_silence, snd, chn, 3);
+  ASSERT_CHANNEL(S_insert_silence, snd, chn, 3);
   cp = get_cp(snd, chn, S_insert_silence);
   cursor_insert(cp,
 		TO_C_INT_OR_ELSE(beg, 0),
@@ -2237,11 +2237,11 @@ static SCM g_swap_channels(SCM snd0, SCM chn0, SCM snd1, SCM chn1, SCM beg, SCM 
   int dur0 = 0, dur1 = 0, beg0 = 0, num, old_squelch0, old_squelch1;
   snd_info *sp = NULL;
   env_info *e0, *e1;
-  SND_ASSERT_CHAN(S_swap_channels, snd0, chn0, 1);
+  ASSERT_CHANNEL(S_swap_channels, snd0, chn0, 1);
   cp0 = get_cp(snd0, chn0, S_swap_channels);
   if (INTEGER_P(snd1) && INTEGER_P(chn1)) 
     {
-      SND_ASSERT_CHAN(S_swap_channels, snd1, chn1, 3);
+      ASSERT_CHANNEL(S_swap_channels, snd1, chn1, 3);
       cp1 = get_cp(snd1, chn1, S_swap_channels);
     }
   else
@@ -2301,7 +2301,7 @@ static SCM g_swap_channels(SCM snd0, SCM chn0, SCM snd1, SCM chn1, SCM beg, SCM 
 	  free_snd_fd(c1);
 	}
     }
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_fht(SCM data)
@@ -2365,7 +2365,7 @@ normalizes snd to norms (following sync) norms can be a float or a vector of flo
   chan_info *cp;
   int len[1];
   Float *scls;
-  SND_ASSERT_CHAN(S_scale_to, snd_n, chn_n, 2);
+  ASSERT_CHANNEL(S_scale_to, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_scale_to);
   scls = load_Floats(scalers, len);
   scale_to(cp->state, cp->sound, cp, scls, len[0], FALSE); /* last arg for selection */
@@ -2382,7 +2382,7 @@ scales snd by scalers (following sync) scalers can be a float or a vector of flo
   chan_info *cp;
   int len[1];
   Float *scls;
-  SND_ASSERT_CHAN(S_scale_by, snd_n, chn_n, 2);
+  ASSERT_CHANNEL(S_scale_by, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_scale_by);
   scls = load_Floats(scalers, len);
   scale_by(cp, scls, len[0], FALSE);
@@ -2430,7 +2430,7 @@ applies envelope 'env' to the currently selected portion of snd's channel chn us
   chan_info *cp;
   env *e;
   mus_any *egen;
-  SND_ASSERT_CHAN(S_env_selection, snd_n, chn_n, 3);
+  ASSERT_CHANNEL(S_env_selection, snd_n, chn_n, 3);
   if (selection_is_active() == 0) 
     return(snd_no_active_selection_error(S_env_selection));
   cp = get_cp(snd_n, chn_n, S_env_selection);
@@ -2452,7 +2452,7 @@ applies envelope 'env' to the currently selected portion of snd's channel chn us
       apply_env(cp, NULL, 0, 0, 1.0, TRUE, NOT_FROM_ENVED, S_env_selection, egen, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0, 1.0);
       return(edata);
     }
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_env_sound(SCM edata, SCM samp_n, SCM samps, SCM base, SCM snd_n, SCM chn_n, SCM edpos)
@@ -2467,7 +2467,7 @@ either to the end of the sound or for 'samps' samples, with segments interpolati
   mus_any *egen;
   ASSERT_TYPE(NUMBER_IF_BOUND_P(samp_n), samp_n, ARG2, S_env_sound, "a number");
   ASSERT_TYPE(NUMBER_IF_BOUND_P(samps), samps, ARG3, S_env_sound, "a number");
-  SND_ASSERT_CHAN(S_env_sound, snd_n, chn_n, 5);
+  ASSERT_CHANNEL(S_env_sound, snd_n, chn_n, 5);
   cp = get_cp(snd_n, chn_n, S_env_sound);
   beg = TO_C_INT_OR_ELSE(samp_n, 0);
   dur = TO_C_INT_OR_ELSE(samps, 0);
@@ -2488,7 +2488,7 @@ either to the end of the sound or for 'samps' samples, with segments interpolati
       apply_env(cp, NULL, beg, dur, 1.0, FALSE, NOT_FROM_ENVED, S_env_sound, egen, edpos, 7, 1.0);
       return(edata);
     }
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_fft_1(SCM reals, SCM imag, SCM sign, int use_fft)
@@ -2501,8 +2501,8 @@ static SCM g_fft_1(SCM reals, SCM imag, SCM sign, int use_fft)
   ASSERT_TYPE(((VCT_P(imag)) || (VECTOR_P(imag))), imag, ARG2, ((use_fft) ? S_fft : S_convolve_arrays), "a vector or a vct");
   if ((VCT_P(reals)) && (VCT_P(imag)))
     {
-      v1 = (vct *)SND_VALUE_OF(reals);
-      v2 = (vct *)SND_VALUE_OF(imag);
+      v1 = (vct *)OBJECT_REF(reals);
+      v2 = (vct *)OBJECT_REF(imag);
       n = v1->length;
     }
   else
@@ -2618,7 +2618,7 @@ convolves file with snd's channel chn (or the currently sync'd channels), amp is
   SCM errstr;
   char *fname = NULL, *error = NULL;
   ASSERT_TYPE(STRING_P(file), file, ARG1, S_convolve_with, "a string");
-  SND_ASSERT_CHAN(S_convolve_with, snd_n, chn_n, 3);
+  ASSERT_CHANNEL(S_convolve_with, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_convolve_with);
   if (NUMBER_P(new_amp)) 
     amp = TO_C_DOUBLE(new_amp);
@@ -2781,7 +2781,7 @@ static SCM g_convolve(SCM reals, SCM imag)
   #define H_convolve "(" S_convolve_arrays " rl1 rl2) convolves vectors or vcts rl1 and rl2, result in rl1 (which needs to be big enough)"
   /* if reals is a string = filename and imag is a Float (or nada), assume user missppelledd convolve-with */
   if (STRING_P(reals))
-    return(g_convolve_with(reals, imag, SCM_BOOL_F, SCM_BOOL_F, TO_SCM_INT(AT_CURRENT_EDIT_POSITION)));
+    return(g_convolve_with(reals, imag, FALSE_VALUE, FALSE_VALUE, TO_SCM_INT(AT_CURRENT_EDIT_POSITION)));
   /* result in reals (which needs to be big enough and zero padded) */
   else return(g_fft_1(reals, imag, TO_SMALL_SCM_INT(1), FALSE));
 }
@@ -2824,7 +2824,7 @@ sampling-rate converts snd's channel chn by ratio, or following an envelope. Neg
   env *e = NULL;
   mus_any *egen;
   Float e_ratio = 1.0;
-  SND_ASSERT_CHAN(S_src_sound, snd_n, chn_n, 3);
+  ASSERT_CHANNEL(S_src_sound, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_src_sound);
   if (NUMBER_P(ratio_or_env))
     src_env_or_num(cp->state, cp, NULL, TO_C_DOUBLE(ratio_or_env), 
@@ -2866,7 +2866,7 @@ sampling-rate converts the currently selected data by ratio (which can be an env
   chan_info *cp;
   if (selection_is_active() == 0) 
     return(snd_no_active_selection_error(S_src_selection));
-  cp = get_cp(SCM_BOOL_F, SCM_BOOL_F, S_src_selection);
+  cp = get_cp(FALSE_VALUE, FALSE_VALUE, S_src_selection);
   if (NUMBER_P(ratio_or_env))
     src_env_or_num(cp->state, cp, 
 		   NULL, 
@@ -2911,7 +2911,7 @@ applies FIR filter to snd's channel chn. 'filter' is either the frequency respon
   SCM errstr;
   env *ne = NULL;
   char *error;
-  SND_ASSERT_CHAN(S_filter_sound, snd_n, chn_n, 3);
+  ASSERT_CHANNEL(S_filter_sound, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_filter_sound);
   ASSERT_TYPE(INTEGER_IF_BOUND_P(order), order, ARG2, S_filter_sound, "an integer");
   if (mus_scm_p(e))
@@ -2945,7 +2945,7 @@ applies FIR filter to snd's channel chn. 'filter' is either the frequency respon
 	  if (ne) free_env(ne); 
 	}
     }
-  return(scm_return_first(SCM_BOOL_T, e));
+  return(scm_return_first(TRUE_VALUE, e));
 }
 
 static SCM g_filter_selection(SCM e, SCM order)
@@ -2959,7 +2959,7 @@ static SCM g_filter_selection(SCM e, SCM order)
   env *ne = NULL;
   if (selection_is_active() == 0) 
     return(snd_no_active_selection_error(S_filter_selection));
-  cp = get_cp(SCM_BOOL_F, SCM_BOOL_F, S_filter_selection);
+  cp = get_cp(FALSE_VALUE, FALSE_VALUE, S_filter_selection);
   ASSERT_TYPE(INTEGER_IF_BOUND_P(order), order, ARG2, S_filter_selection, "an integer");
   if (mus_scm_p(e))
     {
@@ -2996,7 +2996,7 @@ static SCM g_filter_selection(SCM e, SCM order)
 	  if (ne) free_env(ne);
 	}
     }
-  return(scm_return_first(SCM_BOOL_T, e));
+  return(scm_return_first(TRUE_VALUE, e));
 }
 
 

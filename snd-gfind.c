@@ -40,7 +40,7 @@ static void edit_find_find(int direction, GtkWidget *w, gpointer context)
     {
       ss->search_expr = str;
       if (PROCEDURE_P(ss->search_proc)) snd_unprotect(ss->search_proc);
-      ss->search_proc = SCM_UNDEFINED;
+      ss->search_proc = UNDEFINED_VALUE;
       proc = snd_catch_any(eval_str_wrapper, str, str);
       if (procedure_ok_with_error(proc, 1, "find", "find", 1))
 	{
@@ -132,14 +132,14 @@ static SCM g_find_dialog_widgets(void)
   	       CONS(SND_WRAP(next_button),
 		 CONS(SND_WRAP(previous_button),
 		   CONS(SND_WRAP(cancelB),
-			SCM_EOL))))));
-  return(SCM_EOL);
+			EMPTY_LIST))))));
+  return(EMPTY_LIST);
 }
 
 static SCM g_edit_find_dialog(void)
 {
   Edit_Find_Callback(NULL, (gpointer)(get_global_state()));
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 void g_init_gxfind(SCM local_doc)

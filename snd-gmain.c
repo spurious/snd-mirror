@@ -640,7 +640,7 @@ static SCM g_parse_rc_file(SCM name)
   ss = get_global_state();
   ss->using_schemes = TRUE;
   /* TODO: it seems we should check this flag throughout, as in Motif */
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 void g_init_gxmain(SCM local_doc)

@@ -531,7 +531,7 @@ static SCM snd_no_such_menu_error(const char *caller, SCM id)
   ERROR(NO_SUCH_MENU,
 	LIST_2(TO_SCM_STRING(caller),
 		  id));
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM output_name_hook;
@@ -544,7 +544,7 @@ static char *output_name(void)
       SCM procs = HOOK_PROCEDURES (output_name_hook);
       while (NOT_NULL_P(procs))
 	{
-	  result = CALL0(CAR(procs), S_output_name_hook);
+	  result = CALL_0(CAR(procs), S_output_name_hook);
 	  if (STRING_P(result)) return(TO_NEW_C_STRING(result));
 	  procs = CDR (procs);
 	}
@@ -590,12 +590,12 @@ static int make_callback_slot(void)
       if (callb == 0)
 	{
 	  menu_functions = (SCM *)CALLOC(callbacks_size, sizeof(SCM));
-	  for (i = 0; i < callbacks_size; i++) menu_functions[i] = SCM_UNDEFINED;
+	  for (i = 0; i < callbacks_size; i++) menu_functions[i] = UNDEFINED_VALUE;
 	}
       else 
 	{
 	  menu_functions = (SCM *)REALLOC(menu_functions, callbacks_size * sizeof(SCM));
-	  for (i = callbacks_size - CALLBACK_INCR; i < callbacks_size; i++) menu_functions[i] = SCM_UNDEFINED;
+	  for (i = callbacks_size - CALLBACK_INCR; i < callbacks_size; i++) menu_functions[i] = UNDEFINED_VALUE;
 	}
     }
   old_callb = callb;
@@ -676,7 +676,7 @@ menu is the index returned by add-to-main-menu, func should be a function of no 
 void g_snd_callback(int callb)
 {
   if ((callb >= 0) && (BOUND_P(menu_functions[callb])))
-    CALL0(menu_functions[callb], "menu callback func");
+    CALL_0(menu_functions[callb], "menu callback func");
 }
 
 static SCM gl_remove_from_menu(SCM menu, SCM label)
@@ -743,12 +743,12 @@ void g_init_menu(SCM local_doc)
   #define H_output_name_hook S_output_name_hook " () is called from the File:New dialog"
   output_name_hook = MAKE_HOOK(S_output_name_hook, 0, H_output_name_hook);
 
-  define_procedure_with_setter(S_save_state_file, SCM_FNC g_save_state_file, H_save_state_file,
-			       "set-" S_save_state_file, SCM_FNC g_set_save_state_file,
+  define_procedure_with_setter(S_save_state_file, PROCEDURE g_save_state_file, H_save_state_file,
+			       "set-" S_save_state_file, PROCEDURE g_set_save_state_file,
 			       local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_menu_sensitive, SCM_FNC gl_menu_sensitive, H_menu_sensitive,
-			       "set-" S_menu_sensitive, SCM_FNC gl_set_menu_sensitive,
+  define_procedure_with_setter(S_menu_sensitive, PROCEDURE gl_menu_sensitive, H_menu_sensitive,
+			       "set-" S_menu_sensitive, PROCEDURE gl_set_menu_sensitive,
 			       local_doc, 2, 0, 3, 0);
 
   DEFINE_PROC(S_add_to_main_menu,  gl_add_to_main_menu, 1, 1, 0,  H_add_to_main_menu);

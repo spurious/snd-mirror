@@ -15,6 +15,9 @@
 /* it's important to check for mus_scm_p before de-referencing a gen arg */
 
 /* TODO:   add vct-wrappers for other internal arrays?
+ *     
+ *  we have mus-sound-srate in sndlib, mus-srate in clm.c, sound-srate and *clm-srate* in clm, mus-sound-srate and srate in snd
+ *    perhaps a mus module, giving mus:sound-srate in scm, mus:sound-srate in clm, mus_sound_srate in C?
  */
 
 #if defined(HAVE_CONFIG_H)
@@ -48,27 +51,8 @@
 
 #include "sndlib.h"
 #include "clm.h"
-
-#if (!USE_SND)
-#if HAVE_GUILE
-  #include <guile/gh.h>
-  #include "sg.h"
-#endif
-#if HAVE_LIBREP 
-  #include <rep.h>
-  #include "sl.h"
-#endif
-#if HAVE_MZSCHEME
-  #include <scheme.h>
-  #include "sz.h"
-#endif
-#if (!HAVE_EXTENSION_LANGUAGE)
-  #include "noguile.h"
-#endif
-#endif
-
-#include "vct.h"
 #include "sndlib2scm.h"
+#include "vct.h"
 #include "clm2scm.h"
 
 
@@ -439,7 +423,7 @@ static SCM g_rectangular2polar(SCM val1, SCM val2)
   #define H_rectangular2polar "(" S_rectangular2polar " rl im) converts real/imaginary \
 data in (vcts) rl and im from rectangular form (fft output) to polar form (a spectrum)"
 
-  return(g_fft_window_1(S_rectangular2polar, FALSE, val1, val2, SCM_UNDEFINED));
+  return(g_fft_window_1(S_rectangular2polar, FALSE, val1, val2, UNDEFINED_VALUE));
 }
 
 static SCM g_mus_fft(SCM url, SCM uim, SCM len, SCM usign)
@@ -493,7 +477,7 @@ beta is the window parameter, if any:\n\
   if (MUS_FFT_WINDOW_OK(t))
     return(make_vct(n, mus_make_fft_window(t, n, beta)));
   mus_misc_error(S_make_fft_window, "unknown fft window", type);
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_spectrum(SCM url, SCM uim, SCM uwin, SCM un, SCM utype)
@@ -611,11 +595,11 @@ taking into account wrap-around (size = size of data), with linear interpolation
 
 static void init_simple_stuff(SCM local_doc)
 {
-  define_procedure_with_setter(S_mus_srate, SCM_FNC g_srate, H_mus_srate,
-			       S_mus_set_srate, SCM_FNC g_set_srate, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_mus_srate, PROCEDURE g_srate, H_mus_srate,
+			       S_mus_set_srate, PROCEDURE g_set_srate, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_mus_array_print_length, SCM_FNC g_array_print_length, H_mus_array_print_length,
-			       S_mus_set_array_print_length, SCM_FNC g_set_array_print_length, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_mus_array_print_length, PROCEDURE g_array_print_length, H_mus_array_print_length,
+			       S_mus_set_array_print_length, PROCEDURE g_set_array_print_length, local_doc, 0, 0, 0, 1);
 
   DEFINE_PROC(S_radians_hz,           g_radians2hz, 1, 0, 0,           H_radians_hz);
   DEFINE_PROC(S_hz_radians,           g_hz2radians, 1, 0, 0,           H_hz_radians);
@@ -680,9 +664,9 @@ static void init_simple_stuff(SCM local_doc)
 
 /* ---------------- mus-scm struct ---------------- */
 
-static SND_TAG_TYPE mus_scm_tag = 0;
+static TAG_TYPE mus_scm_tag = 0;
 
-#define MUS_SCM_P(obj) (SMOB_TYPE_P(obj, mus_scm_tag))
+#define MUS_SCM_P(obj) (OBJECT_TYPE_P(obj, mus_scm_tag))
 int mus_scm_p(SCM obj) {return(MUS_SCM_P(obj));}
 mus_any *mus_scm_to_clm(SCM obj) {return(TO_CLM(obj));}
 
@@ -692,7 +676,7 @@ static SCM *make_vcts(int size)
   SCM *vcts;
   vcts = (SCM *)MALLOC(size * sizeof(SCM));
   for (i = 0; i < size; i++)
-    vcts[i] = SCM_UNDEFINED;
+    vcts[i] = UNDEFINED_VALUE;
   return(vcts);
 }
 
@@ -709,7 +693,7 @@ static SCM mark_mus_scm(SCM obj)
 	  scm_gc_mark(ms->vcts[i]);
     }
 #endif
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 #define DONT_FREE_FRAME -1
@@ -757,7 +741,7 @@ static void init_mus_scm(void)
   scm_set_smob_free(mus_scm_tag, free_mus_scm);
   scm_set_smob_equalp(mus_scm_tag, equalp_mus_scm);
 #if HAVE_APPLICABLE_SMOB
-  scm_set_smob_apply(mus_scm_tag, SCM_FNC mus_scm_apply, 0, 2, 0);
+  scm_set_smob_apply(mus_scm_tag, PROCEDURE mus_scm_apply, 0, 2, 0);
 #endif
 #endif
 }
@@ -765,7 +749,7 @@ static void init_mus_scm(void)
 SCM mus_scm_to_smob(mus_scm *gn)
 {
   scm_done_malloc(sizeof(mus_scm));
-  SND_RETURN_NEWSMOB(mus_scm_tag, gn);
+  RETURN_NEW_OBJECT(mus_scm_tag, gn);
 }
 
 #define MUS_DATA_POSITION 0
@@ -773,7 +757,7 @@ SCM mus_scm_to_smob(mus_scm *gn)
 SCM mus_scm_to_smob_with_vct(mus_scm *gn, SCM v)
 {
   SCM new_dly;
-  SCM_NEWSMOB(new_dly, mus_scm_tag, gn);
+  NEW_OBJECT(new_dly, mus_scm_tag, gn);
   gn->vcts[MUS_DATA_POSITION] = v;
   return(new_dly);
 }
@@ -893,7 +877,7 @@ static SCM g_data(SCM gen)
   ms = TO_MUS_SCM(gen);
   if (ms->vcts)
     return(ms->vcts[MUS_DATA_POSITION]); 
-  else return(SCM_BOOL_F);
+  else return(FALSE_VALUE);
 }
 
 static SCM g_set_data(SCM gen, SCM val) 
@@ -906,13 +890,13 @@ static SCM g_set_data(SCM gen, SCM val)
   ms = TO_MUS_SCM(gen);
   if (ms->vcts)
     {
-      v = (vct *)SND_VALUE_OF(val);
+      v = (vct *)OBJECT_REF(val);
       ma = ms->gen;
       mus_set_data(ma, v->data);  /* TO REMEMBER: if allocated, should have freed, and set to not allocated */
       ms->vcts[MUS_DATA_POSITION] = val;
       return(val);
     }
-  return(scm_return_first(SCM_BOOL_F, gen, val));
+  return(scm_return_first(FALSE_VALUE, gen, val));
 }
 
 static Float *copy_vct_data(vct *v)
@@ -963,7 +947,7 @@ static Float *whatever_to_floats(SCM inp, int size, const char *caller)
 		{
 		  invals = (Float *)MALLOC(size * sizeof(Float));
 		  for (i = 0; i < size; i++) 
-		    invals[i] = TO_C_DOUBLE(CALL1(inp, TO_SCM_INT(i), caller));
+		    invals[i] = TO_C_DOUBLE(CALL_1(inp, TO_SCM_INT(i), caller));
 		}
 	    }
 	}
@@ -1015,20 +999,20 @@ static void init_generic_funcs(SCM local_doc)
   DEFINE_PROC(S_mus_run,      g_run, 1, 2, 0,      H_mus_run);
   DEFINE_PROC(S_mus_bank,     g_mus_bank, 2, 2, 0, H_mus_bank);
 
-  define_procedure_with_setter(S_mus_phase, SCM_FNC g_phase, H_mus_phase,
-			       S_mus_set_phase, SCM_FNC g_set_phase, local_doc, 1, 0, 2, 0);
+  define_procedure_with_setter(S_mus_phase, PROCEDURE g_phase, H_mus_phase,
+			       S_mus_set_phase, PROCEDURE g_set_phase, local_doc, 1, 0, 2, 0);
 
-  define_procedure_with_setter(S_mus_scaler, SCM_FNC g_scaler, H_mus_scaler,
-			       S_mus_set_scaler, SCM_FNC g_set_scaler, local_doc, 1, 0, 2, 0);
+  define_procedure_with_setter(S_mus_scaler, PROCEDURE g_scaler, H_mus_scaler,
+			       S_mus_set_scaler, PROCEDURE g_set_scaler, local_doc, 1, 0, 2, 0);
 
-  define_procedure_with_setter(S_mus_frequency, SCM_FNC g_frequency, H_mus_frequency,
-			       S_mus_set_frequency, SCM_FNC g_set_frequency, local_doc, 1, 0, 2, 0);
+  define_procedure_with_setter(S_mus_frequency, PROCEDURE g_frequency, H_mus_frequency,
+			       S_mus_set_frequency, PROCEDURE g_set_frequency, local_doc, 1, 0, 2, 0);
 
-  define_procedure_with_setter(S_mus_length, SCM_FNC g_length, H_mus_length,
-			       S_mus_set_length, SCM_FNC g_set_length, local_doc, 1, 0, 2, 0);
+  define_procedure_with_setter(S_mus_length, PROCEDURE g_length, H_mus_length,
+			       S_mus_set_length, PROCEDURE g_set_length, local_doc, 1, 0, 2, 0);
 
-  define_procedure_with_setter(S_mus_data, SCM_FNC g_data, H_mus_data,
-			       S_mus_set_data, SCM_FNC g_set_data, local_doc, 1, 0, 2, 0);
+  define_procedure_with_setter(S_mus_data, PROCEDURE g_data, H_mus_data,
+			       S_mus_set_data, PROCEDURE g_set_data, local_doc, 1, 0, 2, 0);
 }
 
 
@@ -1079,7 +1063,7 @@ static SCM g_oscil_bank(SCM amps, SCM gens, SCM inp, SCM size)
   /* size currently ignored */
   #define H_oscil_bank "(" S_oscil_bank " scls gens fms) -> sum a bank of " S_oscil "s: scls[i]*" S_oscil "(gens[i], fms[i])"
   ASSERT_TYPE(VECTOR_P(gens), gens, ARG2, S_oscil_bank, "a vector of oscils");
-  return(g_mus_bank(gens, amps, inp, SCM_UNDEFINED));
+  return(g_mus_bank(gens, amps, inp, UNDEFINED_VALUE));
 }
 
 static SCM g_oscil_p(SCM os) 
@@ -1150,7 +1134,7 @@ static SCM g_make_delay_1(int choice, SCM arglist)
   int size = 1, size_key = 0;
   Float *line = NULL;
   Float scaler = 0.0, feedback = 0.0, feedforward = 0.0;
-  SCM initial_contents = SCM_UNDEFINED, lst;
+  SCM initial_contents = UNDEFINED_VALUE, lst;
   Float initial_element = 0.0;
   
   switch (choice)
@@ -1164,7 +1148,7 @@ static SCM g_make_delay_1(int choice, SCM arglist)
   keys[argn++] = all_keys[C_initial_contents];
   keys[argn++] = all_keys[C_initial_element];
   keys[argn++] = all_keys[C_max_size];
-  for (i = 0; i < 14; i++) args[i] = SCM_UNDEFINED;
+  for (i = 0; i < 14; i++) args[i] = UNDEFINED_VALUE;
   arglist_len = LIST_LENGTH(arglist);
   for (i = 0; i < arglist_len; i++) args[i] = LIST_REF(arglist, i);
   vals = decode_keywords(caller, argn, keys, argn*2, args, orig_arg);
@@ -1431,11 +1415,11 @@ static void init_dly(SCM local_doc)
   DEFINE_PROC(S_comb_p,        g_comb_p, 1, 0, 0,        H_comb_p);
   DEFINE_PROC(S_all_pass_p,    g_all_pass_p, 1, 0, 0,    H_all_pass_p);
 
-  define_procedure_with_setter(S_mus_feedback, SCM_FNC g_feedback, H_mus_feedback,
-			       S_mus_set_feedback, SCM_FNC g_set_feedback, local_doc, 1, 0, 2, 0);
+  define_procedure_with_setter(S_mus_feedback, PROCEDURE g_feedback, H_mus_feedback,
+			       S_mus_set_feedback, PROCEDURE g_set_feedback, local_doc, 1, 0, 2, 0);
 
-  define_procedure_with_setter(S_mus_feedforward, SCM_FNC g_feedforward, H_mus_feedforward,
-			       S_mus_set_feedforward, SCM_FNC g_set_feedforward, local_doc, 1, 0, 2, 0);
+  define_procedure_with_setter(S_mus_feedforward, PROCEDURE g_feedforward, H_mus_feedforward,
+			       S_mus_set_feedforward, PROCEDURE g_set_feedforward, local_doc, 1, 0, 2, 0);
 }
 
 
@@ -1629,8 +1613,8 @@ static void init_noi(SCM local_doc)
   DEFINE_PROC(S_rand_interp_p,    g_rand_interp_p, 1, 0, 0,    H_rand_interp_p);
   DEFINE_PROC(S_mus_random,       g_mus_random, 1, 0, 0,       H_mus_random);
 
-  define_procedure_with_setter(S_mus_rand_seed, SCM_FNC g_rand_seed, H_mus_set_rand_seed,
-			       S_mus_set_rand_seed, SCM_FNC g_set_rand_seed, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_mus_rand_seed, PROCEDURE g_rand_seed, H_mus_set_rand_seed,
+			       S_mus_set_rand_seed, PROCEDURE g_set_rand_seed, local_doc, 0, 0, 0, 1);
 }
 
 
@@ -2300,20 +2284,20 @@ static void init_smpflt(SCM local_doc)
   DEFINE_PROC(S_make_zpolar,   g_make_zpolar, 0, 4, 0,   H_make_zpolar);
   DEFINE_PROC(S_make_ppolar,   g_make_ppolar, 0, 4, 0,   H_make_ppolar);
 
-  define_procedure_with_setter(S_mus_a0, SCM_FNC g_a0, H_mus_a0,
-			       S_mus_set_a0, SCM_FNC g_set_a0, local_doc, 1, 0, 2, 0);
+  define_procedure_with_setter(S_mus_a0, PROCEDURE g_a0, H_mus_a0,
+			       S_mus_set_a0, PROCEDURE g_set_a0, local_doc, 1, 0, 2, 0);
 
-  define_procedure_with_setter(S_mus_a1, SCM_FNC g_a1, H_mus_a1,
-			       S_mus_set_a1, SCM_FNC g_set_a1, local_doc, 1, 0, 2, 0);
+  define_procedure_with_setter(S_mus_a1, PROCEDURE g_a1, H_mus_a1,
+			       S_mus_set_a1, PROCEDURE g_set_a1, local_doc, 1, 0, 2, 0);
 
-  define_procedure_with_setter(S_mus_b1, SCM_FNC g_b1, H_mus_b1,
-			       S_mus_set_b1, SCM_FNC g_set_b1, local_doc, 1, 0, 2, 0);
+  define_procedure_with_setter(S_mus_b1, PROCEDURE g_b1, H_mus_b1,
+			       S_mus_set_b1, PROCEDURE g_set_b1, local_doc, 1, 0, 2, 0);
 
-  define_procedure_with_setter(S_mus_b2, SCM_FNC g_b2, H_mus_b2,
-			       S_mus_set_b2, SCM_FNC g_set_b2, local_doc, 1, 0, 2, 0);
+  define_procedure_with_setter(S_mus_b2, PROCEDURE g_b2, H_mus_b2,
+			       S_mus_set_b2, PROCEDURE g_set_b2, local_doc, 1, 0, 2, 0);
 
-  define_procedure_with_setter(S_mus_a2, SCM_FNC g_a2, H_mus_a2,
-			       S_mus_set_a2, SCM_FNC g_set_a2, local_doc, 1, 0, 2, 0);
+  define_procedure_with_setter(S_mus_a2, PROCEDURE g_a2, H_mus_a2,
+			       S_mus_set_a2, PROCEDURE g_set_a2, local_doc, 1, 0, 2, 0);
 }
 
 
@@ -2370,7 +2354,7 @@ static SCM g_formant_bank(SCM amps, SCM gens, SCM inp)
 {
   #define H_formant_bank "(" S_formant_bank " scls gens inval) -> sum a bank of " S_formant "s: scls[i]*" S_formant "(gens[i], inval)"
   ASSERT_TYPE(VECTOR_P(gens), gens, ARG2, S_formant_bank, "a vector of formants");
-  return(g_mus_bank(gens, amps, inp, SCM_UNDEFINED));
+  return(g_mus_bank(gens, amps, inp, UNDEFINED_VALUE));
 }
 
 static SCM g_formant_p(SCM os) 
@@ -2415,8 +2399,8 @@ static void init_formant(SCM local_doc)
   DEFINE_PROC(S_make_formant, g_make_formant, 0, 6, 0, H_make_formant);
   DEFINE_PROC(S_formant,      g_formant, 1, 1, 0,      H_formant);
 
-  define_procedure_with_setter(S_mus_formant_radius, SCM_FNC g_formant_radius, H_mus_formant_radius,
-			       S_mus_set_formant_radius, SCM_FNC g_set_formant_radius, local_doc, 1, 0, 2, 0);
+  define_procedure_with_setter(S_mus_formant_radius, PROCEDURE g_formant_radius, H_mus_formant_radius,
+			       S_mus_set_formant_radius, PROCEDURE g_set_formant_radius, local_doc, 1, 0, 2, 0);
 
   DEFINE_PROC(S_mus_set_formant_radius_and_frequency, g_set_formant_radius_and_frequency, 3, 0, 0, H_mus_set_formant_radius_and_frequency);
 }
@@ -2643,7 +2627,7 @@ static SCM g_frame2list(SCM fr)
   #define H_frame2list "(" S_frame2list " f) -> contents of frame f as a list"
   mus_frame *val;
   int i;
-  SCM res = SCM_EOL;
+  SCM res = EMPTY_LIST;
   ASSERT_TYPE((MUS_SCM_P(fr)) && (mus_frame_p(TO_CLM(fr))), fr, ARGn, S_frame2list, "a frame");
   val = (mus_frame *)TO_CLM(fr);
   for (i = (val->chans) - 1; i >= 0; i--) 
@@ -2787,7 +2771,7 @@ processing normally involving overlap-adds."
       siz = ikeyarg(keys[0], S_make_buffer, orig_arg[0] + 1, siz);
       filltime = fkeyarg(keys[1], S_make_buffer, orig_arg[1] + 1, 0.0);
     }
-  if (siz <= 0) return(SCM_BOOL_F);
+  if (siz <= 0) return(FALSE_VALUE);
   buf = (Float *)CALLOC(siz, sizeof(Float));
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   gn->vcts = make_vcts(1);
@@ -3030,7 +3014,7 @@ is basically the same as make-oscil"
     }
   if (wave == NULL) 
     {
-      if (partials == NULL) return(SCM_BOOL_F);
+      if (partials == NULL) return(FALSE_VALUE);
       wave = mus_partials2waveshape(npartials, partials, wsize, (Float *)CALLOC(wsize, sizeof(Float)));
     }
   if (partials_allocated) {FREE(partials); partials = NULL;}
@@ -3152,7 +3136,7 @@ returns a new sine summation synthesis generator."
   keys[2] = all_keys[C_n];
   keys[3] = all_keys[C_a];
   keys[4] = all_keys[C_ratio];
-  for (i = 0; i < 10; i++) args[i] = SCM_UNDEFINED;
+  for (i = 0; i < 10; i++) args[i] = UNDEFINED_VALUE;
   arglist_len = LIST_LENGTH(arglist);
   for (i = 0; i < arglist_len; i++) args[i] = LIST_REF(arglist, i);
   vals = decode_keywords(S_make_sine_summation, 5, keys, 10, args, orig_arg);
@@ -3239,7 +3223,7 @@ enum {G_FILTER, G_FIR_FILTER, G_IIR_FILTER};
 
 static SCM g_make_filter_1(int choice, SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6)
 {
-  SCM xwave = SCM_UNDEFINED, ywave = SCM_UNDEFINED;
+  SCM xwave = UNDEFINED_VALUE, ywave = UNDEFINED_VALUE;
   mus_any *fgen = NULL;
   mus_scm *gn = NULL;
   SCM args[6], keys[3];
@@ -3278,7 +3262,7 @@ static SCM g_make_filter_1(int choice, SCM arg1, SCM arg2, SCM arg3, SCM arg4, S
 	  }
     }
   if (x == NULL)
-    mus_misc_error(caller, "no coeffs?", SCM_BOOL_F);
+    mus_misc_error(caller, "no coeffs?", FALSE_VALUE);
   if (order < 0)
     mus_misc_error(caller, "order < 0?", keys[0]);
   if ((choice == G_FILTER) && (y == NULL))
@@ -3320,13 +3304,13 @@ static SCM g_make_filter(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM a
 static SCM g_make_fir_filter(SCM arg1, SCM arg2, SCM arg3, SCM arg4)
 {
   #define H_make_fir_filter "(" S_make_fir_filter " &opt-key order xcoeffs) returns a new FIR filter"
-  return(g_make_filter_1(G_FIR_FILTER, arg1, arg2, arg3, arg4, SCM_UNDEFINED, SCM_UNDEFINED));
+  return(g_make_filter_1(G_FIR_FILTER, arg1, arg2, arg3, arg4, UNDEFINED_VALUE, UNDEFINED_VALUE));
 }
 
 static SCM g_make_iir_filter(SCM arg1, SCM arg2, SCM arg3, SCM arg4)
 {
   #define H_make_iir_filter "(" S_make_iir_filter " &opt-key order ycoeffs) returns a new IIR filter"
-  return(g_make_filter_1(G_IIR_FILTER, arg1, arg2, arg3, arg4, SCM_UNDEFINED, SCM_UNDEFINED));
+  return(g_make_filter_1(G_IIR_FILTER, arg1, arg2, arg3, arg4, UNDEFINED_VALUE, UNDEFINED_VALUE));
 }
 
 static SCM g_mus_order(SCM obj)
@@ -3344,7 +3328,7 @@ static SCM g_mus_xcoeffs(SCM gen)
   ms = TO_MUS_SCM(gen);
   if (ms->vcts)
     return(ms->vcts[0]); 
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_mus_ycoeffs(SCM gen) 
@@ -3363,7 +3347,7 @@ static SCM g_mus_ycoeffs(SCM gen)
 	    return(ms->vcts[1]); 
 	}
     }
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static void init_flt(SCM local_doc)
@@ -3436,7 +3420,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
   keys[4] = all_keys[C_base];
   keys[5] = all_keys[C_end];
   keys[6] = all_keys[C_start];
-  for (i = 0; i < 14; i++) args[i] = SCM_UNDEFINED;
+  for (i = 0; i < 14; i++) args[i] = UNDEFINED_VALUE;
   arglist_len = LIST_LENGTH(arglist);
   for (i = 0; i < arglist_len; i++) args[i] = LIST_REF(arglist, i);
   vals = decode_keywords(S_make_env, 7, keys, 14, args, orig_arg);
@@ -3465,7 +3449,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
         }
     }
   if (brkpts == NULL) 
-    mus_misc_error(S_make_env, "no envelope?", SCM_EOL);
+    mus_misc_error(S_make_env, "no envelope?", EMPTY_LIST);
   if ((end < 0) || (base < 0.0) || (duration < 0.0) || (start < 0))
     {
       if (brkpts) FREE(brkpts);
@@ -3486,7 +3470,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
       FREE(gn->vcts);
       FREE(gn);
       if (odata) FREE(odata);
-      return(SCM_BOOL_F);
+      return(FALSE_VALUE);
     }
   return(mus_scm_to_smob_with_vct(gn, make_vct(len, odata)));
 }
@@ -3720,7 +3704,7 @@ should be sndlib identifiers:\n\
       else mus_misc_error(S_make_sample2file, "invalid header type", out_type);
     }
   else mus_misc_error(S_make_sample2file, "invalid data format", out_format);
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_sample2file(SCM obj, SCM samp, SCM chan, SCM val)
@@ -3915,8 +3899,8 @@ static void init_io(SCM local_doc)
   DEFINE_PROC(S_file2array,       g_file2array, 5, 0, 0,       H_file2array);
   DEFINE_PROC(S_mus_close,        g_mus_close, 1, 0, 0,        H_mus_close);
 
-  define_procedure_with_setter(S_mus_file_buffer_size, SCM_FNC g_mus_file_buffer_size, H_mus_file_buffer_size,
-			       "set-" S_mus_file_buffer_size, SCM_FNC g_mus_set_file_buffer_size, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_mus_file_buffer_size, PROCEDURE g_mus_file_buffer_size, H_mus_file_buffer_size,
+			       "set-" S_mus_file_buffer_size, PROCEDURE g_mus_set_file_buffer_size, local_doc, 0, 0, 1, 0);
 }
 
 
@@ -4030,11 +4014,11 @@ static void init_rdin(SCM local_doc)
   DEFINE_PROC(S_make_readin, g_make_readin, 0, 8, 0, H_make_readin);
   DEFINE_PROC(S_mus_channel, g_channel, 1, 0, 0,     H_mus_channel);
 
-  define_procedure_with_setter(S_mus_location, SCM_FNC g_location, H_mus_location,
-			       S_mus_set_location, SCM_FNC g_set_location, local_doc, 1, 0, 2, 0);
+  define_procedure_with_setter(S_mus_location, PROCEDURE g_location, H_mus_location,
+			       S_mus_set_location, PROCEDURE g_set_location, local_doc, 1, 0, 2, 0);
 
-  define_procedure_with_setter(S_mus_increment, SCM_FNC g_increment, H_mus_increment,
-			       S_mus_set_increment, SCM_FNC g_set_increment, local_doc, 1, 0, 2, 0);
+  define_procedure_with_setter(S_mus_increment, PROCEDURE g_increment, H_mus_increment,
+			       S_mus_set_increment, PROCEDURE g_set_increment, local_doc, 1, 0, 2, 0);
 }
 
 
@@ -4110,7 +4094,7 @@ static SCM g_make_locsig(SCM arglist)
   #define H_make_locsig "(" S_make_locsig " &opt-key (degree 0.0) (distance 1.0) (reverb 0.0) output revout (channels 1))\n\
 returns a new generator for signal placement in up to 4 channels.  Channel 0 corresponds to 0 degrees."
 
-  SCM out_obj = SCM_UNDEFINED, rev_obj = SCM_UNDEFINED;
+  SCM out_obj = UNDEFINED_VALUE, rev_obj = UNDEFINED_VALUE;
   mus_scm *gn;
   mus_output *outp = NULL, *revp = NULL;
   SCM args[12], keys[6];
@@ -4123,7 +4107,7 @@ returns a new generator for signal placement in up to 4 channels.  Channel 0 cor
   keys[3] = all_keys[C_output];  
   keys[4] = all_keys[C_revout];
   keys[5] = all_keys[C_channels];
-  for (i = 0; i < 12; i++) args[i] = SCM_UNDEFINED;
+  for (i = 0; i < 12; i++) args[i] = UNDEFINED_VALUE;
   arglist_len = LIST_LENGTH(arglist);
   for (i = 0; i < arglist_len; i++) args[i] = LIST_REF(arglist, i);
   vals = decode_keywords(S_make_locsig, 6, keys, 12, args, orig_arg);
@@ -4144,7 +4128,7 @@ returns a new generator for signal placement in up to 4 channels.  Channel 0 cor
 	  else 
 	    {
 	      ASSERT_TYPE((NOT_BOUND_P(keys[3])) || (BOOLEAN_P(keys[3])), keys[3], orig_arg[3] + 1, S_make_locsig, "a frame");
-	      keys[3] = SCM_UNDEFINED;
+	      keys[3] = UNDEFINED_VALUE;
 	    }
 	}
       if (!(KEYWORD_P(keys[4]))) 
@@ -4158,7 +4142,7 @@ returns a new generator for signal placement in up to 4 channels.  Channel 0 cor
 	  else 
 	    {
 	      ASSERT_TYPE((NOT_BOUND_P(keys[4])) || (BOOLEAN_P(keys[4])), keys[4], orig_arg[4] + 1, S_make_locsig, "a frame");
-	      keys[4] = SCM_UNDEFINED;
+	      keys[4] = UNDEFINED_VALUE;
 	    }
 	}
       out_chans = ikeyarg(keys[5], S_make_locsig, orig_arg[5] + 1, out_chans);
@@ -4209,7 +4193,7 @@ static Float funcall1 (void *ptr, int direction) /* intended for "as-needed" inp
    * funcall1 is input-func for clm.c make args, or the 2nd arg to the gen (mus_src(gen, input))
    *    it is called in C (*input)(environ, dir)
    *    environ in mus_scm *gn
-   *      its gn->vcts array [INPUT_FUNCTION] = scm procedure object (if any) else SCM_EOL
+   *      its gn->vcts array [INPUT_FUNCTION] = scm procedure object (if any) else EMPTY_LIST
    *      this is set in the gen call if it's passed there, else in the make-gen call
    * so we get here via *funcall1(gn, dir)
    *   and make sure gn->vcts[INPUT_FUNCTION] is a procedure, call it with dir as its arg,
@@ -4218,7 +4202,7 @@ static Float funcall1 (void *ptr, int direction) /* intended for "as-needed" inp
   mus_scm *gn = (mus_scm *)ptr;
   if ((gn) && (gn->vcts) && (BOUND_P(gn->vcts[INPUT_FUNCTION])) && (PROCEDURE_P(gn->vcts[INPUT_FUNCTION])))
     /* the gh_procedure_p call can be confused by 0 -> segfault! */
-    return(TO_C_DOUBLE(CALL1(gn->vcts[INPUT_FUNCTION], TO_SMALL_SCM_INT(direction), "as-needed-input")));
+    return(TO_C_DOUBLE(CALL_1(gn->vcts[INPUT_FUNCTION], TO_SMALL_SCM_INT(direction), "as-needed-input")));
   else return(0.0);
 }
 
@@ -4230,7 +4214,7 @@ static Float funcall1 (void *ptr, int direction) /* intended for "as-needed" inp
 static SCM g_clear_sincs(void)
 {
   mus_clear_sinc_tables();
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_src_p(SCM obj) 
@@ -4264,7 +4248,7 @@ returns a new sampling-rate conversion generator (using 'warped sinc interpolati
 width (effectively the steepness of the low-pass filter), normally between 10 and 100. \
 'input' if given is an open file stream."
 
-  SCM in_obj = SCM_UNDEFINED;
+  SCM in_obj = UNDEFINED_VALUE;
   mus_scm *gn;
   int vals, wid = 0; /* 0 here picks up the current default width in clm.c */
   SCM args[6], keys[3];
@@ -4354,7 +4338,7 @@ between the new and old (expansion > 1.0 slows things down), 'scaler' scales the
 to avoid overflows, 'hop' is the spacing (seconds) between successive grains upon output \
 jitter controls the randomness in that spacing, input can be a file pointer."
 
-  SCM in_obj = SCM_UNDEFINED;
+  SCM in_obj = UNDEFINED_VALUE;
   mus_scm *gn;
   SCM args[16], keys[8];
   int orig_arg[8] = {0, 0, 0, 0, 0, 0, 0, 0};
@@ -4369,7 +4353,7 @@ jitter controls the randomness in that spacing, input can be a file pointer."
   keys[5] = all_keys[C_ramp];
   keys[6] = all_keys[C_jitter];
   keys[7] = all_keys[C_max_size];
-  for (i = 0; i < 16; i++) args[i] = SCM_UNDEFINED;
+  for (i = 0; i < 16; i++) args[i] = UNDEFINED_VALUE;
   arglist_len = LIST_LENGTH(arglist);
   for (i = 0; i < arglist_len; i++) args[i] = LIST_REF(arglist, i);
   vals = decode_keywords(S_make_granulate, 8, keys, 16, args, orig_arg);
@@ -4408,8 +4392,8 @@ static void init_spd(SCM local_doc)
   DEFINE_PROC(S_granulate,      g_granulate, 1, 1, 0,      H_granulate);
   DEFINE_PROC(S_make_granulate, g_make_granulate, 0, 0, 1, H_make_granulate);
 
-  define_procedure_with_setter(S_mus_ramp, SCM_FNC g_ramp, H_mus_ramp,
-			       S_mus_set_ramp, SCM_FNC g_set_ramp, local_doc, 1, 0, 2, 0);
+  define_procedure_with_setter(S_mus_ramp, PROCEDURE g_ramp, H_mus_ramp,
+			       S_mus_set_ramp, PROCEDURE g_set_ramp, local_doc, 1, 0, 2, 0);
 }
 
 
@@ -4449,12 +4433,12 @@ returns a new convolution generator which convolves its input with the impulse r
   int orig_arg[3] = {0, 0, 0};
   int vals, i, arglist_len, fftlen;
   vct *filter = NULL;
-  SCM filt = SCM_UNDEFINED, in_obj = SCM_UNDEFINED;
+  SCM filt = UNDEFINED_VALUE, in_obj = UNDEFINED_VALUE;
   int fft_size = 0;
   keys[0] = all_keys[C_input];
   keys[1] = all_keys[C_filter];
   keys[2] = all_keys[C_fft_size];
-  for (i = 0; i < 6; i++) args[i] = SCM_UNDEFINED;
+  for (i = 0; i < 6; i++) args[i] = UNDEFINED_VALUE;
   arglist_len = LIST_LENGTH(arglist);
   for (i = 0; i < arglist_len; i++) args[i] = LIST_REF(arglist, i);
   vals = decode_keywords(S_make_convolve, 3, keys, 6, args, orig_arg);
@@ -4474,7 +4458,7 @@ returns a new convolution generator which convolves its input with the impulse r
       fft_size = ikeyarg(keys[2], S_make_convolve, orig_arg[2] + 1, fft_size);
     }
   if (filter == NULL)
-    mus_misc_error(S_make_convolve, "no impulse (filter)?", SCM_BOOL_F);
+    mus_misc_error(S_make_convolve, "no impulse (filter)?", FALSE_VALUE);
   fftlen = (int)pow(2.0, 1 + (int)ceil(log((Float)(filter->length)) / log(2.0)));
   if (fft_size < fftlen) fft_size = fftlen;
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
@@ -4502,7 +4486,7 @@ file1 and file2 writing outfile after scaling the convolution result to maxamp."
   if (STRING_P(outfile)) f3 = TO_C_STRING(outfile); else f3 = "tmp.snd";
   if (NUMBER_P(maxamp)) maxval = TO_C_DOUBLE(maxamp);
   mus_convolve_files(f1, f2, maxval, f3);
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static void init_conv(SCM local_doc)
@@ -4540,7 +4524,7 @@ static int pvedit (void *ptr)
 {
   mus_scm *gn = (mus_scm *)ptr;
   if ((gn) && (gn->vcts) && (BOUND_P(gn->vcts[EDIT_FUNCTION])) && (PROCEDURE_P(gn->vcts[EDIT_FUNCTION])))
-    return(TO_C_BOOLEAN(CALL1(gn->vcts[EDIT_FUNCTION], gn->vcts[SELF_WRAPPER], __FUNCTION__)));
+    return(TO_C_BOOLEAN(CALL_1(gn->vcts[EDIT_FUNCTION], gn->vcts[SELF_WRAPPER], __FUNCTION__)));
   return(0);
 }
 
@@ -4548,7 +4532,7 @@ static Float pvsynthesize (void *ptr)
 {
   mus_scm *gn = (mus_scm *)ptr;
   if ((gn) && (gn->vcts) && (BOUND_P(gn->vcts[SYNTHESIZE_FUNCTION])) && (PROCEDURE_P(gn->vcts[SYNTHESIZE_FUNCTION])))
-    return(TO_C_DOUBLE(CALL1(gn->vcts[SYNTHESIZE_FUNCTION], gn->vcts[SELF_WRAPPER], __FUNCTION__)));
+    return(TO_C_DOUBLE(CALL_1(gn->vcts[SYNTHESIZE_FUNCTION], gn->vcts[SELF_WRAPPER], __FUNCTION__)));
   return(0.0);
 }
 
@@ -4557,7 +4541,7 @@ static int pvanalyze (void *ptr, Float (*input)(void *arg1, int direction))
   mus_scm *gn = (mus_scm *)ptr;
   if ((gn) && (gn->vcts) && (BOUND_P(gn->vcts[SYNTHESIZE_FUNCTION])) && (PROCEDURE_P(gn->vcts[SYNTHESIZE_FUNCTION])))
     /* we can only get input func if it's already set up by the outer gen call, so (?) we can use that function here */
-    return(TO_C_BOOLEAN(CALL2(gn->vcts[SYNTHESIZE_FUNCTION], gn->vcts[SELF_WRAPPER], gn->vcts[INPUT_FUNCTION], __FUNCTION__)));
+    return(TO_C_BOOLEAN(CALL_2(gn->vcts[SYNTHESIZE_FUNCTION], gn->vcts[SELF_WRAPPER], gn->vcts[INPUT_FUNCTION], __FUNCTION__)));
   return(0);
 }
 
@@ -4588,7 +4572,7 @@ returns a new phase-vocoder generator; input is the input function (if can be se
 and synthesize are either #f or functions that replace the default innards of the generator, fft-size, overlap \
 and interp set the fftsize, the amount of overlap between ffts, and the time between new analysis calls."
 
-  SCM in_obj = SCM_UNDEFINED, edit_obj = SCM_UNDEFINED, synthesize_obj = SCM_UNDEFINED, analyze_obj = SCM_UNDEFINED;
+  SCM in_obj = UNDEFINED_VALUE, edit_obj = UNDEFINED_VALUE, synthesize_obj = UNDEFINED_VALUE, analyze_obj = UNDEFINED_VALUE;
   mus_scm *gn;
   SCM args[16], keys[8];
   SCM pv_obj;
@@ -4604,7 +4588,7 @@ and interp set the fftsize, the amount of overlap between ffts, and the time bet
   keys[5] = all_keys[C_analyze];
   keys[6] = all_keys[C_edit];
   keys[7] = all_keys[C_synthesize];
-  for (i = 0; i < 16; i++) args[i] = SCM_UNDEFINED;
+  for (i = 0; i < 16; i++) args[i] = UNDEFINED_VALUE;
   arglist_len = LIST_LENGTH(arglist);
   for (i = 0; i < arglist_len; i++) args[i] = LIST_REF(arglist, i);
   vals = decode_keywords(S_make_phase_vocoder, 8, keys, 16, args, orig_arg);
@@ -4897,8 +4881,8 @@ static void init_pv(SCM local_doc)
   DEFINE_PROC("pv-lastphase-1", g_pv_lastphase_1, 1, 0, 0, "");
   DEFINE_PROC("set-pv-lastphase", g_set_pv_lastphase, 3, 0, 0, "");
 
-  define_procedure_with_setter(S_mus_hop, SCM_FNC g_hop, H_mus_hop,
-			       S_mus_set_hop, SCM_FNC g_set_hop, local_doc, 1, 0, 2, 0);
+  define_procedure_with_setter(S_mus_hop, PROCEDURE g_hop, H_mus_hop,
+			       S_mus_set_hop, PROCEDURE g_set_hop, local_doc, 1, 0, 2, 0);
 }
 
 
@@ -4953,7 +4937,7 @@ it in conjunction with mixer to scale/envelope all the various ins and outs."
       for (i = 0; i < in_len; i++) if (envs1[i]) FREE(envs1[i]);
       FREE(envs1);
     }
-  return(SCM_BOOL_T);
+  return(TRUE_VALUE);
 }
 
 static SCM local_doc;

@@ -1655,46 +1655,46 @@ static SCM g_recorder_dialog(void)
 {
   #define H_recorder_dialog "(" S_recorder_dialog ") fires up the Recorder"
   snd_record_file(get_global_state()); 
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 void g_init_recorder(SCM local_doc)
 {
-  define_procedure_with_setter(S_recorder_autoload, SCM_FNC g_recorder_autoload, H_recorder_autoload,
-			       "set-" S_recorder_autoload, SCM_FNC g_set_recorder_autoload, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_recorder_autoload, PROCEDURE g_recorder_autoload, H_recorder_autoload,
+			       "set-" S_recorder_autoload, PROCEDURE g_set_recorder_autoload, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_recorder_buffer_size, SCM_FNC g_recorder_buffer_size, H_recorder_buffer_size,
-			       "set-" S_recorder_buffer_size, SCM_FNC g_set_recorder_buffer_size, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_recorder_buffer_size, PROCEDURE g_recorder_buffer_size, H_recorder_buffer_size,
+			       "set-" S_recorder_buffer_size, PROCEDURE g_set_recorder_buffer_size, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_recorder_file, SCM_FNC g_recorder_file, H_recorder_file,
-			       "set-" S_recorder_file, SCM_FNC g_set_recorder_file, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_recorder_file, PROCEDURE g_recorder_file, H_recorder_file,
+			       "set-" S_recorder_file, PROCEDURE g_set_recorder_file, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_recorder_in_format, SCM_FNC g_recorder_in_format, H_recorder_in_format,
-			       "set-" S_recorder_in_format, SCM_FNC g_set_recorder_in_format, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_recorder_in_format, PROCEDURE g_recorder_in_format, H_recorder_in_format,
+			       "set-" S_recorder_in_format, PROCEDURE g_set_recorder_in_format, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_recorder_out_chans, SCM_FNC g_recorder_out_chans, H_recorder_out_chans,
-			       "set-" S_recorder_out_chans, SCM_FNC g_set_recorder_out_chans, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_recorder_out_chans, PROCEDURE g_recorder_out_chans, H_recorder_out_chans,
+			       "set-" S_recorder_out_chans, PROCEDURE g_set_recorder_out_chans, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_recorder_out_format, SCM_FNC g_recorder_out_format, H_recorder_out_format,
-			       "set-" S_recorder_out_format, SCM_FNC g_set_recorder_out_format, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_recorder_out_format, PROCEDURE g_recorder_out_format, H_recorder_out_format,
+			       "set-" S_recorder_out_format, PROCEDURE g_set_recorder_out_format, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_recorder_srate, SCM_FNC g_recorder_srate, H_recorder_srate,
-			       "set-" S_recorder_srate, SCM_FNC g_set_recorder_srate, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_recorder_srate, PROCEDURE g_recorder_srate, H_recorder_srate,
+			       "set-" S_recorder_srate, PROCEDURE g_set_recorder_srate, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_recorder_trigger, SCM_FNC g_recorder_trigger, H_recorder_trigger,
-			       "set-" S_recorder_trigger, SCM_FNC g_set_recorder_trigger, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_recorder_trigger, PROCEDURE g_recorder_trigger, H_recorder_trigger,
+			       "set-" S_recorder_trigger, PROCEDURE g_set_recorder_trigger, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_recorder_max_duration, SCM_FNC g_recorder_max_duration, H_recorder_max_duration,
-			       "set-" S_recorder_max_duration, SCM_FNC g_set_recorder_max_duration, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_recorder_max_duration, PROCEDURE g_recorder_max_duration, H_recorder_max_duration,
+			       "set-" S_recorder_max_duration, PROCEDURE g_set_recorder_max_duration, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_recorder_gain, SCM_FNC g_recorder_gain, H_recorder_gain,
-			       "set-" S_recorder_gain, SCM_FNC g_set_recorder_gain, local_doc, 0, 1, 2, 0);
+  define_procedure_with_setter(S_recorder_gain, PROCEDURE g_recorder_gain, H_recorder_gain,
+			       "set-" S_recorder_gain, PROCEDURE g_set_recorder_gain, local_doc, 0, 1, 2, 0);
 
-  define_procedure_with_setter(S_recorder_in_amp, SCM_FNC g_recorder_in_amp, H_recorder_in_amp,
-			       "set-" S_recorder_in_amp, SCM_FNC g_set_recorder_in_amp, local_doc, 2, 0, 3, 0);
+  define_procedure_with_setter(S_recorder_in_amp, PROCEDURE g_recorder_in_amp, H_recorder_in_amp,
+			       "set-" S_recorder_in_amp, PROCEDURE g_set_recorder_in_amp, local_doc, 2, 0, 3, 0);
 
-  define_procedure_with_setter(S_recorder_out_amp, SCM_FNC g_recorder_out_amp, H_recorder_out_amp,
-			       "set-" S_recorder_out_amp, SCM_FNC g_set_recorder_out_amp, local_doc, 1, 0, 2, 0);
+  define_procedure_with_setter(S_recorder_out_amp, PROCEDURE g_recorder_out_amp, H_recorder_out_amp,
+			       "set-" S_recorder_out_amp, PROCEDURE g_set_recorder_out_amp, local_doc, 1, 0, 2, 0);
 
   DEFINE_PROC(S_recorder_dialog, g_recorder_dialog, 0, 0, 0, H_recorder_dialog);
 }

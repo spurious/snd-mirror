@@ -32,7 +32,7 @@ static int run_global_search (snd_state *ss, gfd *g)
 	      if (g->direction == READ_FORWARD)
 		samp = next_sample_to_float(sf);
 	      else samp = previous_sample_to_float(sf);
-	      res = CALL1(ss->search_proc, TO_SCM_DOUBLE((double)(samp)), "global search func");
+	      res = CALL_1(ss->search_proc, TO_SCM_DOUBLE((double)(samp)), "global search func");
 	      if (TRUE_P(res))
 		{
 		  g->n = i;
@@ -177,7 +177,7 @@ static int cursor_find_forward(snd_info *sp, chan_info *cp, int count)
   int i = 0, end, passes = 0;
   snd_fd *sf = NULL;
   snd_state *ss;
-  SCM res = SCM_BOOL_F;
+  SCM res = FALSE_VALUE;
   ss = sp->state;
   if (ss->search_in_progress) 
     {
@@ -195,7 +195,7 @@ static int cursor_find_forward(snd_info *sp, chan_info *cp, int count)
   end = current_ed_samples(cp);
   for (i = cp->cursor + 1, passes = 0; i < end; i++, passes++)
     {
-      res = CALL1(sp->search_proc, 
+      res = CALL_1(sp->search_proc, 
 		  TO_SCM_DOUBLE((double)(next_sample_to_float(sf))), 
 		  "local search func");
       if (NOT_FALSE_P(res)) 
@@ -226,7 +226,7 @@ static int cursor_find_backward(snd_info *sp, chan_info *cp, int count)
   int i = 0, passes = 0;
   snd_fd *sf = NULL;
   snd_state *ss;
-  SCM res = SCM_BOOL_F;
+  SCM res = FALSE_VALUE;
   ss = sp->state;
   if (ss->search_in_progress) 
     {
@@ -243,7 +243,7 @@ static int cursor_find_backward(snd_info *sp, chan_info *cp, int count)
   sf->direction = READ_BACKWARD;
   for (i = cp->cursor - 1, passes = 0; i >= 0; i--, passes++)
     {
-      res = CALL1(sp->search_proc, 
+      res = CALL_1(sp->search_proc, 
 		  TO_SCM_DOUBLE((double)(previous_sample_to_float(sf))), 
 		  "local search func");
       if (NOT_FALSE_P(res)) 
@@ -341,11 +341,11 @@ static SCM g_search_procedure(SCM snd)
   snd_info *sp;
   if (BOUND_P(snd))
     {
-      SND_ASSERT_SND(S_search_procedure, snd, 1);
+      ASSERT_SOUND(S_search_procedure, snd, 1);
       sp = get_sp(snd);
       if (sp)
 	return(sp->search_proc);
-      else return(SCM_BOOL_F);
+      else return(FALSE_VALUE);
     }
   ss = get_global_state();
   return(ss->search_proc);
@@ -359,13 +359,13 @@ static SCM g_set_search_procedure(SCM snd, SCM proc)
   SCM errstr;
   if (INTEGER_P(snd)) /* could be the proc arg if no snd */
     {
-      SND_ASSERT_SND("set-" S_search_procedure, snd, 1);
+      ASSERT_SOUND("set-" S_search_procedure, snd, 1);
       sp = get_sp(snd);
       if (sp)
 	{
 	  if (PROCEDURE_P(sp->search_proc))
 	    snd_unprotect(sp->search_proc);
-	  sp->search_proc = SCM_UNDEFINED;
+	  sp->search_proc = UNDEFINED_VALUE;
 	  if (STRING_P(proc))
 	    {
 	      expr = TO_NEW_C_STRING(proc);
@@ -395,7 +395,7 @@ static SCM g_set_search_procedure(SCM snd, SCM proc)
       ss = get_global_state();
       if (PROCEDURE_P(ss->search_proc))
 	snd_unprotect(ss->search_proc);
-      ss->search_proc = SCM_UNDEFINED;
+      ss->search_proc = UNDEFINED_VALUE;
       if (STRING_P(snd))
 	{
 	  expr = TO_NEW_C_STRING(snd);
@@ -421,6 +421,6 @@ static SCM g_set_search_procedure(SCM snd, SCM proc)
 
 void g_init_find(SCM local_doc)
 {
-  define_procedure_with_setter(S_search_procedure, SCM_FNC g_search_procedure, H_search_procedure,
-			       "set-" S_search_procedure, SCM_FNC g_set_search_procedure, local_doc, 0, 1, 1, 1);
+  define_procedure_with_setter(S_search_procedure, PROCEDURE g_search_procedure, H_search_procedure,
+			       "set-" S_search_procedure, PROCEDURE g_set_search_procedure, local_doc, 0, 1, 1, 1);
 }

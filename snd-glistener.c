@@ -6,7 +6,7 @@
 
 static GtkWidget *listener_text = NULL;
 static GtkWidget *listener_pane = NULL; 
-static int last_prompt;
+static int printout_end;
 
 void save_listener_text(FILE *fp)
 {
@@ -52,7 +52,7 @@ static void listener_completion(snd_state *ss)
   char *old_text, *new_text = NULL, *file_text = NULL;
   gint xoff, yoff; 
   int try_completion = 1;
-  beg = last_prompt + 1;
+  beg = printout_end + 1;
   end = gtk_text_get_length(GTK_TEXT(listener_text));
   if (end <= beg) return;
   old_text = gtk_editable_get_chars(GTK_EDITABLE(listener_text), beg, end);
@@ -133,6 +133,7 @@ void listener_append(snd_state *ss, char *msg)
       if ((ss->sgx)->graph_is_active)
 	(ss->sgx)->graph_is_active = FALSE;
       append_listener_text(0, msg);
+      printout_end = gtk_text_get_length(GTK_TEXT(listener_text)) - 1;
     }
 }
 
@@ -145,13 +146,13 @@ void listener_append_and_prompt(snd_state *ss, char *msg)
 	append_listener_text(0, msg);
       append_listener_text(0, listener_prompt_with_cr(ss));
       cmd_eot = gtk_text_get_length(GTK_TEXT(listener_text));
-      last_prompt = cmd_eot - 1;
+      printout_end = cmd_eot - 1;
     }
 }
 
 static void command_return_callback(snd_state *ss)
 {
-  command_return(listener_text, ss, last_prompt);
+  command_return(listener_text, ss, printout_end);
 }
 
 static char *C_k_str = NULL;
@@ -273,7 +274,7 @@ static gint listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 				  if (current_position > 1)
 				    {
 				      fstr = gtk_editable_get_chars(GTK_EDITABLE(listener_text), current_position - 2, current_position);
-				      if ((current_position != (last_prompt - 2)) && 
+				      if ((current_position != (printout_end - 2)) && 
 					  (strcmp(fstr, listener_prompt_with_cr(ss)) != 0))
 					{
 					  g_free(fstr);
@@ -524,7 +525,7 @@ int listener_width(void) {if (listener_text) return(widget_width(listener_text))
 static SCM g_listener_selected_text(void)
 {
   char *txt;
-  SCM res = SCM_BOOL_F;
+  SCM res = FALSE_VALUE;
   if (listener_text)
     {
       if (GTK_EDITABLE(listener_text)->has_selection)
@@ -550,7 +551,7 @@ static SCM g_reset_listener_cursor(void)
       ss = get_global_state();
       gdk_window_set_cursor(listener_text->window, (ss->sgx)->arrow_cursor);
     }
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 

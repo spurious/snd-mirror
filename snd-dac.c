@@ -210,7 +210,7 @@ char *reverb_name(void)
 }
 
 /* user hooks into reverb */
-static SCM g_make_reverb, g_reverb, g_free_reverb;
+static SCM g_make_reverb = FALSE_VALUE, g_reverb = FALSE_VALUE, g_free_reverb = FALSE_VALUE;
 
 static SCM g_reverb_procedures(void) 
 {
@@ -223,7 +223,7 @@ static SCM g_set_reverb_procedures(SCM rev, SCM make_rev, SCM free_rev)
   #define H_set_reverb_control_procedures "(" "set-" S_reverb_control_procedures " reverb make-reverb free-reverb) sets the current reverb procedures"
 
   char *errmsg;
-  SCM errstr, bad_func = SCM_BOOL_F;
+  SCM errstr, bad_func = FALSE_VALUE;
 
   errmsg = procedure_ok(rev, 3, "set-" S_reverb_control_procedures, "reverb", 1);
   if (errmsg == NULL) 
@@ -276,7 +276,7 @@ static SCM g_set_reverb_procedures(SCM rev, SCM make_rev, SCM free_rev)
 }
 
 /* user hook into contrast */
-static SCM g_contrast;
+static SCM g_contrast = FALSE_VALUE;
 static int use_g_contrast = 0;
 
 static SCM g_contrast_procedure(void) 
@@ -437,47 +437,6 @@ static mus_any *mus_make_fcomb (Float scaler, int size, Float a0, Float a1)
   return((mus_any *)gen);
 }
 
-#if 0
-        /* this code not needed */
-        #define S_fcomb "fcomb"
-        #define S_make_fcomb "make-fcomb"
-        #define S_fcomb_p "fcomb?"
-        
-        static SCM g_fcomb(SCM obj, SCM input)
-        {
-          #define H_fcomb "(" S_fcomb " gen &optional (val 0.0)) comb filters val with low pass on feeback."
-          Float in1 = 0.0;
-          ASSERT_TYPE(((mus_scm_p(obj)) && (mus_fcomb_p(TO_CLM(obj)))), obj, ARG1, S_fcomb, "a comb filter");
-          if (NUMBER_P(input)) in1 = TO_C_DOUBLE(input); else ASSERT_TYPE(NOT_BOUND_P(input), input, ARG2, S_fcomb, "a number");
-          return(TO_SCM_DOUBLE(mus_fcomb(TO_CLM(obj), in1, 0.0)));
-        }
-        
-        static SCM g_fcomb_p(SCM obj)
-        {
-          #define H_fcomb_p "(" S_fcomb_p " gen) -> #t if gen is an fcomb filter, else #f"
-          return(TO_SCM_BOOLEAN((mus_scm_p(obj)) && (mus_fcomb_p(TO_CLM(obj)))));
-        }
-        
-        static SCM g_make_fcomb(SCM scaler, SCM size, SCM a0, SCM a1)
-        {
-          #define H_make_fcomb "(" S_make_fcomb " scaler size a0 a1) -> a new " S_fcomb " (filtered comb) generator"
-          mus_scm *gn;
-          gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
-          gn->gen = mus_make_fcomb(TO_C_DOUBLE(scaler), TO_SMALL_C_INT(size), TO_C_DOUBLE(a0), TO_C_DOUBLE(a1));
-          gn->nvcts = 0;
-          return(mus_scm_to_smob(gn));
-        }
-        
-        static void init_fcomb(void)
-        {
-          SCM local_doc;
-          local_doc = MAKE_PERMANENT(DOCUMENTATION);
-          DEFINE_PROC(S_fcomb_p, g_fcomb_p, 1, 0, 0, H_fcomb_p);
-          DEFINE_PROC(S_make_fcomb, g_make_fcomb, 4, 0, 0, H_make_fcomb);
-          DEFINE_PROC(S_fcomb, g_fcomb, 2, 0, 0, H_fcomb);
-        }
-#endif
-
 
 /* ---------------- reverbs ---------------- */
 /*
@@ -558,7 +517,7 @@ static SCM g_freeverb(SCM ptr, SCM invals, SCM outvals)
   return(outvals);
 }
 
-static SCM v_ins, v_outs;
+static SCM v_ins = FALSE_VALUE, v_outs = FALSE_VALUE;
 
 static Float *r_ins, *r_outs;
 static void free_reverb(void *ur);
@@ -586,9 +545,9 @@ static void reverb(void *ur, Float **rins, MUS_SAMPLE_TYPE **outs, int ind)
 	SCM res;
 	if (!ur) return;
 #if (SCM_DEBUG_TYPING_STRICTNESS == 2)
-	res = CALL3(g_reverb, SCM_BOOL_F, v_ins, v_outs, __FUNCTION__);
+	res = CALL_3(g_reverb, FALSE_VALUE, v_ins, v_outs, __FUNCTION__);
 #else
-	res = CALL3(g_reverb, (SCM)ur, v_ins, v_outs, __FUNCTION__);
+	res = CALL_3(g_reverb, (SCM)ur, v_ins, v_outs, __FUNCTION__);
 #endif
 	if (!(VCT_P(res)))
 	  {
@@ -640,7 +599,7 @@ static void free_rev(void)
 static SCM g_free_rev(SCM ptr) 
 {
   free_rev();
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static void free_reverb(void *ur)
@@ -653,9 +612,9 @@ static void free_reverb(void *ur)
       break;
     case USERVERB:
 #if (SCM_DEBUG_TYPING_STRICTNESS == 2)
-      CALL1(g_free_reverb, SCM_BOOL_F, "free-reverb");
+      CALL_1(g_free_reverb, FALSE_VALUE, "free-reverb");
 #else
-      CALL1(g_free_reverb, (SCM)ur, "free-reverb");
+      CALL_1(g_free_reverb, (SCM)ur, "free-reverb");
 #endif
       break;
     }
@@ -796,7 +755,7 @@ static void *make_reverb(snd_info *sp, int chans)
       break;
     case USERVERB:
 #if (SCM_DEBUG_TYPING_STRICTNESS != 2)
-      global_rev = (void *)CALL2(g_make_reverb,
+      global_rev = (void *)CALL_2(g_make_reverb,
 				 TO_SMALL_SCM_INT(sp->index),
 				 TO_SMALL_SCM_INT(chans),
 				 __FUNCTION__);
@@ -817,7 +776,7 @@ static void *make_reverb(snd_info *sp, int chans)
 static Float contrast (dac_info *dp, Float amp, Float index, Float inval)
 {
   if (use_g_contrast)
-    return(amp * TO_C_DOUBLE(CALL2(g_contrast,
+    return(amp * TO_C_DOUBLE(CALL_2(g_contrast,
 				   TO_SCM_DOUBLE(dp->contrast_amp * inval),
 				   TO_SCM_DOUBLE(index),
 				   __FUNCTION__)));
@@ -835,12 +794,12 @@ static SCM g_mus_contrast(SCM inval, SCM index)
 
 static void init_rev_funcs(SCM local_doc)
 {
-  g_make_reverb = SCM_BOOL_F;
-  g_reverb = SCM_BOOL_F;
-  g_free_reverb = SCM_BOOL_F;
-  g_contrast = SCM_BOOL_F;
-  v_ins = SCM_BOOL_F;
-  v_outs = SCM_BOOL_F;
+  g_make_reverb = FALSE_VALUE;
+  g_reverb = FALSE_VALUE;
+  g_free_reverb = FALSE_VALUE;
+  g_contrast = FALSE_VALUE;
+  v_ins = FALSE_VALUE;
+  v_outs = FALSE_VALUE;
   DEFINE_PROC("make-snd-nrev",     g_make_nrev, 2, 0, 0,     "make-snd-nrev is the default reverb make function");
   DEFINE_PROC("snd-nrev",          g_nrev, 3, 0, 0,          "snd-nrev is the default reverb");
   DEFINE_PROC("free-snd-nrev",     g_free_rev, 1, 0, 0,      "free-snd-nrev is the default reverb free function");
@@ -1920,8 +1879,10 @@ static void make_dac_buffers(dac_state *dacp)
 	  vct *v;
 	  v = TO_VCT(v_ins);
 	  v->data = r_ins;
+	  v->length = dacp->channels;
 	  v = TO_VCT(v_outs);
 	  v->data = r_outs;
+	  v->length = dacp->channels;
 	}
     }
   bytes = dacp->channels * dac_buffer_size * mus_data_format_to_bytes_per_sample(dacp->out_format);
@@ -2527,7 +2488,7 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
   background = 0;
 #endif
 
-  /* if even samp_n is SCM_UNDEFINED, start_dac? */
+  /* if even samp_n is UNDEFINED_VALUE, start_dac? */
 
   if (STRING_P(samp_n))
     {
@@ -2565,7 +2526,7 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
   else
     {
       ASSERT_TYPE(NUMBER_IF_BOUND_P(samp_n), samp_n, ARG1, caller, "a number");
-      SND_ASSERT_CHAN(caller, snd_n, chn_n, 2);
+      ASSERT_CHANNEL(caller, snd_n, chn_n, 2);
       sp = get_sp(snd_n);
       if (sp == NULL) 
 	return(snd_no_such_sound_error(caller, snd_n));
@@ -2595,7 +2556,7 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
 	    }
 	}
     }
-  return(SCM_BOOL_T);
+  return(TRUE_VALUE);
 }
 
 #define TO_C_BOOLEAN_OR_F(a) ((TRUE_P(a) || ((INTEGER_P(a)) && (TO_SMALL_C_INT(a) == 1))) ? 1 : 0)
@@ -2619,7 +2580,7 @@ static SCM g_play_selection(SCM wait, SCM edpos)
   if (selection_is_active())
     {
       play_selection(!(TO_C_BOOLEAN_OR_F(wait)), edpos, S_play_selection, 2);
-      return(SCM_BOOL_T);
+      return(TRUE_VALUE);
     }
   snd_no_active_selection_error(S_play_selection);
   return(wait);
@@ -2644,7 +2605,7 @@ static SCM g_stop_playing(SCM snd_n)
   if (sp) 
     stop_playing_sound(sp); 
   else stop_playing_all_sounds();
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 
@@ -2732,7 +2693,7 @@ static SCM snd_no_such_player_error(const char *caller, SCM index)
   ERROR(NO_SUCH_PLAYER,
 	LIST_2(TO_SCM_STRING(caller),
 	       index));
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_make_player(SCM snd, SCM chn)
@@ -2740,7 +2701,7 @@ static SCM g_make_player(SCM snd, SCM chn)
   #define H_make_player "(" S_make_player " &optional snd chn) prepares snd's channel chn for " S_add_player
   snd_info *true_sp, *new_sp;
   chan_info *cp;
-  SND_ASSERT_CHAN(S_make_player, snd, chn, 1);
+  ASSERT_CHANNEL(S_make_player, snd, chn, 1);
   true_sp = get_sp(snd);
   if (true_sp == NULL) 
     return(snd_no_such_sound_error(S_make_player, snd));
@@ -2821,7 +2782,7 @@ static SCM g_start_playing(SCM Chans, SCM Srate, SCM In_Background)
   if (srate <= 0)
     mus_misc_error(S_start_playing, "invalid srate arg", Srate);
   start_dac(get_global_state(), srate, chans, TO_C_BOOLEAN_OR_T(In_Background));
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_stop_player(SCM snd_chn)
@@ -2857,8 +2818,8 @@ void g_init_dac(SCM local_doc)
   DEFINE_PROC("set-" S_reverb_control_procedures, g_set_reverb_procedures, 3, 0, 0, H_set_reverb_control_procedures);
   /* can't use generalized set here because it's confused by the 3 args -- perhaps a list would be ok */
 
-  define_procedure_with_setter(S_contrast_control_procedure, SCM_FNC g_contrast_procedure, H_contrast_control_procedure,
-			       "set-" S_contrast_control_procedure, SCM_FNC g_set_contrast_procedure, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_contrast_control_procedure, PROCEDURE g_contrast_procedure, H_contrast_control_procedure,
+			       "set-" S_contrast_control_procedure, PROCEDURE g_set_contrast_procedure, local_doc, 0, 0, 1, 0);
 
   DEFINE_PROC(S_play,           g_play, 0, 6, 0,           H_play);
   DEFINE_PROC(S_play_selection, g_play_selection, 0, 2, 0, H_play_selection);

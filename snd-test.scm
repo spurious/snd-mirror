@@ -27,12 +27,13 @@
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs))
 
-(define tests 1)
-(define snd-test -1)
+(define tests 100)
+(define snd-test 14)
 (define keep-going #f)
 (define full-test (< snd-test 0))
 (define total-tests 23)
 (define with-exit (< snd-test 0))
+(define lotsa-memory #t)
 
 (if (provided? 'gcing) (set! g-gc-step 100))
 
@@ -7206,12 +7207,14 @@
 	       (revert-sound cfd)
 	       (if (not (null? (cdr open-files))) (revert-sound (cadr open-files)))))
 	  
-	    (if (> (frames) 1) 
+	    (if lotsa-memory
 		(begin
-		  (make-region 0 (frames))
-		  (convolve-selection-with "fyow.snd" .5)
-		  (play-and-wait)))
-	    (convolve-with "fyow.snd" .25)
+		  (if (> (frames) 1) 
+		      (begin
+			(make-region 0 (frames))
+			(convolve-selection-with "fyow.snd" .5)
+			(play-and-wait)))
+		  (convolve-with "fyow.snd" .25)))
 	    (insert-sound "oboe.snd")
 	    (reset-hook! graph-hook)
 	    (reset-hook! transform-hook)
@@ -7271,7 +7274,7 @@
 	      (if (rs 0.5) (if (> (frames cfd) 0) (src-sound (make-env '(0 .5 1 1.5) :end (1- (frames cfd))) 1.0 cfd)))
 	      (if (rs 0.5) (revert-sound cfd))
 	      (if (rs 0.5) (filter-sound '(0 1 .2 0 .5 1 1 0) 20 cfd))      ; FIR direct form
-	      (if (rs 0.5) (filter-sound '(0 0 .1 0 .11 1 .12 0 1 0) 2048 cfd)) ; convolution
+	      (if lotsa-memory (if (rs 0.5) (filter-sound '(0 0 .1 0 .11 1 .12 0 1 0) 2048 cfd))) ; convolution
 	      (if (rs 0.5) (env-sound '(0 0 .5 1 1 0) 0 (frames cfd) 1.0 cfd))
 	      (if (rs 0.5)
 		  (begin
@@ -11233,13 +11236,6 @@ EDITS: 3
     (snd-display "~%~A(~D)" test14-file (mus-sound-samples test14-file)))
 
 (if with-exit (exit))
-
-;;; these need further testing
-;;; TODO:  apply from mark
-;;; TODO:  run overall (14 etc) with various hooks set (current-window-location etc)
-
-;; we have mus-sound-srate in sndlib, mus-srate in clm.c, sound-srate and *clm-srate* in clm, mus-sound-srate and srate in snd
-;;    perhaps a mus module, giving mus:sound-srate in scm, mus:sound-srate in clm, mus_sound_srate in C?
 
 ;;; need to know before calling this if libguile.so was loaded
 ;;; (system "cc gsl-ex.c -c")

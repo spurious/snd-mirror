@@ -80,11 +80,11 @@ static SCM send_netscape(SCM cmd)
         {
 	  mus_snprintf(command, PRINT_BUFFER_SIZE, "netscape file:%s", tmp);
 	  if (execl("/bin/sh", "/bin/sh", "-c", command, NULL) == -1)
-	    return(SCM_BOOL_F);
+	    return(FALSE_VALUE);
 	}
     }
   FREE(command);
-  return(SCM_BOOL_T);
+  return(TRUE_VALUE);
 }
 
 static void change_property(snd_state *ss, char *winat, char *name, char *command)
@@ -127,7 +127,7 @@ static SCM g_change_property(SCM winat, SCM name, SCM command)
 		  TO_C_STRING(winat), 
 		  TO_C_STRING(name), c);
   if (c) free(c);
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 #if DEBUGGING
@@ -350,7 +350,7 @@ static SCM g_widget_window(SCM wid)
   return(TO_SCM_UNSIGNED_LONG((unsigned long)(((GtkWidget *)(SND_UNWRAP(wid)))->window)));
   /* this can't be used directly: Gdk-ERROR **: BadWindow (invalid Window parameter) */
 #endif
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_x_synchronize(SCM on)

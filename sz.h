@@ -6,17 +6,17 @@
  */
 
 #define SCM                 Scheme_Object *
-#define SCM_BOOL_F          scheme_false
-#define SCM_BOOL_T          scheme_true
-#define SCM_EOL             scheme_null
-#define SCM_UNDEFINED       scheme_undefined
+#define FALSE_VALUE          scheme_false
+#define TRUE_VALUE          scheme_true
+#define EMPTY_LIST             scheme_null
+#define UNDEFINED_VALUE       scheme_undefined
 
 #ifdef __cplusplus
-  #define SCM_FNC (SCM (*)())
+  #define PROCEDURE (SCM (*)())
   typedef SCM (*scm_catch_body_t) (void *data);
   typedef SCM (*scm_catch_handler_t) (void *data, SCM tag, SCM throw_args);
 #else
-  #define SCM_FNC
+  #define PROCEDURE
   #define scm_catch_body_t void *
   #define scm_catch_handler_t void *
 #endif
@@ -45,22 +45,21 @@ SCM scm_return_first(SCM a, ...);
 #define CDR(a)                       SCHEME_CDR(a)
 #define CDDR(a)                      SCHEME_CDDR(a)
 #define VECTOR_ELEMENTS(a)           SCHEME_VEC_ELS(a)
-#define SCM_NEWSMOB(a, b, c)
+#define NEW_OBJECT(a, b, c)
 #define HOOK_PROCEDURES(a)
-#define SET_SCM_VALUE(a, b)
+#define SET_OBJECT_REF(a, b)
 
-#define SND_RETURN_NEWSMOB(Tag, Val) 0
-#define SND_VALUE_OF(a) 0
+#define RETURN_NEW_OBJECT(Tag, Val) 0
+#define OBJECT_REF(a) 0
 #define SND_LOOKUP(a) 0
-#define SND_TAG_TYPE int
-#define SND_SMOB_TYPE(TAG, OBJ) 0
-#define SMOB_TYPE_P(OBJ, TAG) 0
+#define TAG_TYPE int
+#define OBJECT_TYPE_P(OBJ, TAG) 0
 
-#define TRUE_P(a)                       scheme_eq(a, SCM_BOOL_T)
+#define TRUE_P(a)                       scheme_eq(a, TRUE_VALUE)
 #define FALSE_P(a)                      SCHEME_FALSEP(a)
 #define NULL_P(a)                       SCHEME_NULLP(a)
-#define BOUND_P(Arg)                    (!(SCM_EQ_P(Arg, SCM_UNDEFINED)))
-#define NOT_BOUND_P(Arg)                (SCM_EQ_P(Arg, SCM_UNDEFINED)))
+#define BOUND_P(Arg)                    (!(SCM_EQ_P(Arg, UNDEFINED_VALUE)))
+#define NOT_BOUND_P(Arg)                (SCM_EQ_P(Arg, UNDEFINED_VALUE)))
 #define INTEGER_ZERO                    scheme_make_integer_value(0)
 
 #ifndef __GNUC__
@@ -73,15 +72,15 @@ SCM scm_return_first(SCM a, ...);
 #define TO_C_DOUBLE_OR_ELSE(a, b)            SCHEME_DBL_VAL(a)
 #define TO_C_DOUBLE_WITH_ORIGIN(a, b)        SCHEME_DBL_VAL(a)
 #define TO_C_INT(a)                          SCHEME_INT_VAL(a)
-#define TO_C_INT_OR_ELSE(a, b)               0
-#define TO_C_INT_OR_ELSE_WITH_ORIGIN(a, b, c) 0
+#define TO_C_INT_OR_ELSE(a, b)               (SCHEME_INTP(a) ? SCHEME_INT_VAL(a) : (b))
+#define TO_C_INT_OR_ELSE_WITH_ORIGIN(a, b, c) (SCHEME_INTP(a) ? SCHEME_INT_VAL(a) : (b))
 #define TO_C_STRING(STR)                     SCHEME_STR_VAL(a)
 #define TO_SCM_DOUBLE(a)                     scheme_make_double(a)
 #define TO_SCM_INT(a)                        scheme_make_integer_value((long)a)
 #define TO_SMALL_SCM_INT(a)                  scheme_make_integer((long)a)
 #define TO_SMALL_C_INT(a)                    SCHEME_INT_VAL(a)
 #define TO_C_UNSIGNED_LONG(a)                scheme_get_int_val(a)
-#define TO_SCM_UNSIGNED_LONG(a)              SCM_BOOL_F
+#define TO_SCM_UNSIGNED_LONG(a)              FALSE_VALUE
 #define TO_SCM_STRING(a)                     scheme_make_string(a)
 #define TO_NEW_C_STRING(a)                   strdup(SCHEME_STR_VAL(a))
 #define TO_SCM_BOOLEAN(a)                    ((a) ? scheme_true : scheme_false)
@@ -89,8 +88,8 @@ SCM scm_return_first(SCM a, ...);
 #define TO_C_BOOLEAN_OR_T(a)                 (BOOLEAN_P(a) ? (TRUE_P(a)) : 1)
 #define TO_C_BOOLEAN(a)                      ((FALSE_P(a)) ? 0 : 1)
 
-#define TO_SCM_FORM(Str)                     SCM_BOOL_F
-#define EVAL_FORM(Form)                      SCM_BOOL_F
+#define TO_SCM_FORM(Str)                     FALSE_VALUE
+#define EVAL_FORM(Form)                      FALSE_VALUE
 
 #define SYMBOL_TO_C_STRING(a)                SCHEME_SYM_VAL(a)
 #define SND_WRAP(a)                          scheme_make_integer_value_from_unsigned((unsigned long)a)
@@ -125,12 +124,12 @@ SCM scm_return_first(SCM a, ...);
 #define CLEAR_HOOK(Arg)
 #define CHAR_P(Arg)                     SCHEME_CHARP(Arg)
 #define TO_C_CHAR(Arg)                  SCHEME_CHAR_VAL(Arg)
-#define SND_ASSERT_SND(Origin, Snd, Offset)
-#define SND_ASSERT_CHAN(Origin, Snd, Chn, Offset)
-#define CALL0(Func, Caller) 0
-#define CALL1(Func, Arg1, Caller) 0
-#define CALL2(Func, Arg1, Arg2, Caller) 0
-#define CALL3(Func, Arg1, Arg2, Arg3, Caller) 0
+#define ASSERT_SOUND(Origin, Snd, Offset)
+#define ASSERT_CHANNEL(Origin, Snd, Chn, Offset)
+#define CALL_0(Func, Caller) 0
+#define CALL_1(Func, Arg1, Caller) 0
+#define CALL_2(Func, Arg1, Arg2, Caller) 0
+#define CALL_3(Func, Arg1, Arg2, Arg3, Caller) 0
 #define APPLY(Func, Args, Caller) 0
 #define APPLY_EOL scheme_null
 #define ARITY(Func) 0

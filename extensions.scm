@@ -5,11 +5,12 @@
 ;;; eval over selection
 ;;; mix with result at original peak amp
 ;;; mix with envelope
-;;; map-sound-files, for-each-sound-file, match-sound-files
+;;; map-sound-files, for-each-sound-file, match-sound-files, directory->list
 ;;; selection-members
 ;;; make-selection
 ;;; snd-debug
 ;;; read-listener-line
+;;; snd-trace
 
 
 ;;; -------- accessors for graph-style fields
@@ -159,12 +160,10 @@
   
 ;;; we can use Guile's regexp support here to search for all .snd and .wav files:
 #!
-(let ((reg (make-regexp ".wav|.snd$")))
+(let ((reg (make-regexp "\\.(wav|snd)$")))
   (match-sound-files (lambda (file) (regexp-exec reg file))))
 !#
 ;;; this argument to make-regexp is looking for *.wav and *.snd
-;;; in fact, we could use regexp's in place of Snd's sound-files-in-directory.
-
 ;;; a prettier version might use a function written by Dirk Herrmann:
 
 (define (filter-list pred? objects)
@@ -182,6 +181,38 @@
       (if (null? (cdr args)) 
 	  "." 
 	  (cadr args))))))
+
+;;; in fact, we could use regexp's in place of Snd's sound-files-in-directory,
+;;; using two more of Dirk Herrman's procedures:
+
+(define (grep rx strings)
+  (let ((r (make-regexp rx)))
+    (filter-list (lambda (x) (regexp-exec r x)) strings)))
+
+(define (directory->list dir)
+  (let ((dport (opendir dir)))
+    (let loop ((entry (readdir dport))
+	       (files '()))
+      (if (not (eof-object? entry))
+	  (loop (readdir dport) (cons entry files))
+	  (begin
+	    (closedir dport)
+	    (reverse! files))))))
+
+;(sort (grep "^[^.]" (directory->list ".")) string<?)
+
+
+(define sound-file-extensions (list "snd" "aiff" "aif" "wav" "au" "aifc" "voc" "wve"))
+
+(define (add-sound-file-extension-1 ext) 
+  (set! sound-file-extensions (cons ext sound-file-extensions)))
+
+(define* (sound-files-in-directory-1 #:optional (dir "."))
+  (sort (grep
+	 (format #f "\\.(~{~A~^|~})$" sound-file-extensions)
+	 (directory->list dir))
+	string<?))
+
 
     
 ;;; -------- selection-members
@@ -336,8 +367,6 @@
        (set-current-output-port stdout)
        (set-current-input-port stdin)))))
 
-;;; TODO: check step/trace -- trace output seems to be lost somewhere?
-		 
 
 ;;; -------- read-listener-line
 
@@ -351,3 +380,31 @@
     (do () ((or (c-g?) res)))
     (remove-hook! read-hook reader)
     res))
+
+
+;;; -------- with-trace 
+;;; 
+;;; this activates tracing and redirects its output to the Snd listener
+
+(defmacro snd-trace (body)
+  `(let* ((stderr (current-error-port))
+	  (snd-err (make-soft-port
+		    (vector
+		     (lambda (c) (snd-print c))
+		     (lambda (s) (snd-print s))
+		     (lambda () #f)
+		     #f
+		     (lambda () #f))
+		    "w")))
+     (dynamic-wind
+      (lambda ()
+	(snd-print "\n")
+	(set-current-error-port snd-err))
+      (lambda ()
+	(with-traps 
+	 (lambda ()
+	   (start-stack 'repl-stack ,body))))
+      (lambda ()
+	(set-current-error-port stderr)))))
+
+       

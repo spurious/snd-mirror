@@ -1100,7 +1100,7 @@ SCM make_graph_data(chan_info *cp, int edit_pos, int losamp, int hisamp)
   x_start = ap->x_axis_x0;
   x_end = ap->x_axis_x1;
   samps = hisamp - losamp + 1;
-  if ((x_start == x_end) && (samps > 10)) return(SCM_BOOL_F);
+  if ((x_start == x_end) && (samps > 10)) return(FALSE_VALUE);
   pixels = x_end - x_start;
   if (pixels >= POINT_BUFFER_SIZE) pixels = POINT_BUFFER_SIZE - 1;
   if ((x_start == x_end) || (samps <= 1))
@@ -1112,7 +1112,7 @@ SCM make_graph_data(chan_info *cp, int edit_pos, int losamp, int hisamp)
     {
       data_size = samps;
       sf = init_sample_read_any(losamp, cp, READ_FORWARD, edit_pos);
-      if (sf == NULL) return(SCM_BOOL_F); /* should this throw an error? (CHANNEL_BEING_DEALLOCATED) */
+      if (sf == NULL) return(FALSE_VALUE); /* should this throw an error? (CHANNEL_BEING_DEALLOCATED) */
       data = (Float *)MALLOC(data_size * sizeof(Float));
       for (i = 0; i < data_size; i++)
 	data[i] = next_sample_to_float(sf);
@@ -1163,7 +1163,7 @@ SCM make_graph_data(chan_info *cp, int edit_pos, int losamp, int hisamp)
 	{
 	  data_size = pixels + 1;
 	  sf = init_sample_read_any(losamp, cp, READ_FORWARD, edit_pos);
-	  if (sf == NULL) return(SCM_BOOL_F);
+	  if (sf == NULL) return(FALSE_VALUE);
 	  data = (Float *)CALLOC(data_size, sizeof(Float));
 	  data1 = (Float *)CALLOC(data_size, sizeof(Float));
 	  j = 0;      /* graph point counter */
@@ -2260,7 +2260,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
   axis_info *uap = NULL;
   fft_info *fp = NULL;
   lisp_grf *up = NULL;
-  SCM res = SCM_BOOL_F;
+  SCM res = FALSE_VALUE;
   if ((cp->hookable) && 
       (!(ss->graph_hook_active)) &&
       (HOOKED(graph_hook)))
@@ -2580,7 +2580,7 @@ static void draw_graph_cursor(chan_info *cp)
 	  draw_line(ax, cp->cx, ap->y_axis_y0, cp->cx, ap->y_axis_y1);
 	  break;
 	case CURSOR_PROC:
-	  CALL3(cp->cursor_proc,
+	  CALL_3(cp->cursor_proc,
 		TO_SCM_INT(cp->sound->index),
 		TO_SCM_INT(cp->chan),
 		TO_SCM_INT(TIME_AXIS_INFO),
@@ -2600,7 +2600,7 @@ static void draw_graph_cursor(chan_info *cp)
       draw_line(ax, cp->cx, ap->y_axis_y0, cp->cx, ap->y_axis_y1);
       break;
     case CURSOR_PROC:
-      CALL3(cp->cursor_proc,
+      CALL_3(cp->cursor_proc,
 	    TO_SCM_INT(cp->sound->index),
 	    TO_SCM_INT(cp->chan),
 	    TO_SCM_INT(TIME_AXIS_INFO),
@@ -3045,7 +3045,7 @@ int key_press_callback(chan_info *ncp, int x, int y, int key_state, int keysym)
       (HOOKED(key_press_hook)))
     {
       /* return TRUE to keep this key press from being passed to keyboard_command */
-      SCM res = SCM_BOOL_F;
+      SCM res = FALSE_VALUE;
       res = g_c_run_or_hook(key_press_hook,
 			    LIST_4(TO_SMALL_SCM_INT(sp->index),
 				   TO_SMALL_SCM_INT(cp->chan),
@@ -3242,7 +3242,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 							    (double)SND_SRATE(sp))));
 		      if (mouse_mark)
 			{
-			  SCM res = SCM_BOOL_F;
+			  SCM res = FALSE_VALUE;
 			  if (HOOKED(mark_click_hook))
 			    res = g_c_run_progn_hook(mark_click_hook,
 						     LIST_1(TO_SMALL_SCM_INT(mark_id(mouse_mark))),
@@ -3528,7 +3528,7 @@ static SCM cp_iread(SCM snd_n, SCM chn_n, int fld, char *caller)
   snd_info *sp = NULL;
   snd_state *ss;
   int i;
-  SCM res = SCM_EOL;
+  SCM res = EMPTY_LIST;
   if (TRUE_P(snd_n))
     {
       ss = get_global_state();
@@ -3553,7 +3553,7 @@ static SCM cp_iread(SCM snd_n, SCM chn_n, int fld, char *caller)
 	}
       else
 	{
-	  SND_ASSERT_CHAN(caller, snd_n, chn_n, 1);
+	  ASSERT_CHANNEL(caller, snd_n, chn_n, 1);
 	  cp = get_cp(snd_n, chn_n, caller);
 	  switch(fld)
 	    {
@@ -3600,7 +3600,7 @@ static SCM cp_iread(SCM snd_n, SCM chn_n, int fld, char *caller)
 	    }
 	}
     }
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static int g_mus_iclamp(int mn, SCM val, int def, int mx)
@@ -3624,8 +3624,8 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
   snd_state *ss;
   int i, curlen, newlen;
   char *error = NULL;
-  SCM res = SCM_EOL, errstr;
-  if (EQ_P(snd_n, SCM_BOOL_T))
+  SCM res = EMPTY_LIST, errstr;
+  if (TRUE_P(snd_n))
     {
       ss = get_global_state();
       for (i = 0; i < ss->max_sounds; i++)
@@ -3636,7 +3636,7 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
 	}
       return(REVERSE_LIST(res));
     }
-  if (EQ_P(chn_n, SCM_BOOL_T))
+  if (TRUE_P(chn_n))
     {
       sp = get_sp(snd_n);
       if (sp == NULL) 
@@ -3645,7 +3645,7 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
 	res = CONS(cp_iwrite(snd_n, TO_SMALL_SCM_INT(i), on, fld, caller), res);
       return(REVERSE_LIST(res));
     }
-  SND_ASSERT_CHAN(caller, snd_n, chn_n, 2);
+  ASSERT_CHANNEL(caller, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, caller);
   switch (fld)
     {
@@ -3715,7 +3715,7 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
 	      (PROCEDURE_P(cp->cursor_proc)))
 	    {
 	      snd_unprotect(cp->cursor_proc);
-	      cp->cursor_proc = SCM_UNDEFINED;
+	      cp->cursor_proc = UNDEFINED_VALUE;
 	    }
 	  cp->cursor_style = g_mus_iclamp(CURSOR_CROSS, on, CURSOR_CROSS, CURSOR_LINE);
 	}
@@ -3895,8 +3895,8 @@ static SCM cp_fread(SCM snd_n, SCM chn_n, int fld, char *caller)
   snd_info *sp;
   snd_state *ss;
   int i;
-  SCM res = SCM_EOL;
-  if (EQ_P(snd_n, SCM_BOOL_T))
+  SCM res = EMPTY_LIST;
+  if (TRUE_P(snd_n))
     {
       ss = get_global_state();
       for (i = 0; i < ss->max_sounds; i++)
@@ -3907,7 +3907,7 @@ static SCM cp_fread(SCM snd_n, SCM chn_n, int fld, char *caller)
 	}
       return(REVERSE_LIST(res));
     }
-  if (EQ_P(chn_n, SCM_BOOL_T))
+  if (TRUE_P(chn_n))
     {
       sp = get_sp(snd_n);
       if (sp == NULL) 
@@ -3916,7 +3916,7 @@ static SCM cp_fread(SCM snd_n, SCM chn_n, int fld, char *caller)
 	res = CONS(cp_fread(snd_n, TO_SMALL_SCM_INT(i), fld, caller), res);
       return(REVERSE_LIST(res));
     }
-  SND_ASSERT_CHAN(caller, snd_n, chn_n, 1);
+  ASSERT_CHANNEL(caller, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, caller);
   switch(fld)
     {
@@ -3937,7 +3937,7 @@ static SCM cp_fread(SCM snd_n, SCM chn_n, int fld, char *caller)
     case CP_MAXAMP:          return(TO_SCM_DOUBLE(get_maxamp(cp->sound, cp, AT_CURRENT_EDIT_POSITION)));        break;
     case CP_EDPOS_MAXAMP:    return(TO_SCM_DOUBLE(get_maxamp(cp->sound, cp, to_c_edit_position(cp, cp_edpos, S_maxamp, 3)))); break;
     }
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM cp_fwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
@@ -3948,8 +3948,8 @@ static SCM cp_fwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
   int i;
   Float curamp;
   Float newamp[1];
-  SCM res = SCM_EOL;
-  if (EQ_P(snd_n, SCM_BOOL_T))
+  SCM res = EMPTY_LIST;
+  if (TRUE_P(snd_n))
     {
       ss = get_global_state();
       for (i = 0; i < ss->max_sounds; i++)
@@ -3960,7 +3960,7 @@ static SCM cp_fwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
 	}
       return(REVERSE_LIST(res));
     }
-  if (EQ_P(chn_n, SCM_BOOL_T))
+  if (TRUE_P(chn_n))
     {
       sp = get_sp(snd_n);
       if (sp == NULL) 
@@ -3969,7 +3969,7 @@ static SCM cp_fwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
 	res = CONS(cp_fwrite(snd_n, TO_SMALL_SCM_INT(i), on, fld, caller), res);
       return(REVERSE_LIST(res));
     }
-  SND_ASSERT_CHAN(caller, snd_n, chn_n, 2);
+  ASSERT_CHANNEL(caller, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, caller);
   switch (fld)
     {
@@ -4029,13 +4029,13 @@ static SCM cp_fwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
 static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 { \
   if (NOT_BOUND_P(arg1)) \
-    return(name(SCM_BOOL_T, SCM_UNDEFINED, SCM_UNDEFINED)); \
+    return(name(TRUE_VALUE, UNDEFINED_VALUE, UNDEFINED_VALUE)); \
   else { \
     if (NOT_BOUND_P(arg2)) \
-      return(name(arg1, SCM_UNDEFINED, SCM_UNDEFINED)); \
+      return(name(arg1, UNDEFINED_VALUE, UNDEFINED_VALUE)); \
     else { \
       if (NOT_BOUND_P(arg3)) \
-        return(name(arg2, arg1, SCM_UNDEFINED)); \
+        return(name(arg2, arg1, UNDEFINED_VALUE)); \
       else return(name(arg3, arg1, arg2)); \
 }}}
 
@@ -4319,7 +4319,7 @@ static SCM g_set_min_dB(SCM val, SCM snd, SCM chn)
       ss = get_global_state();
       ss->min_dB = db;
       ss->lin_dB = pow(10.0, db*0.05);
-      cp_fwrite(SCM_BOOL_T, SCM_BOOL_T, val, CP_MIN_DB, "set-" S_min_dB);
+      cp_fwrite(TRUE_VALUE, TRUE_VALUE, val, CP_MIN_DB, "set-" S_min_dB);
       return(TO_SCM_DOUBLE(ss->min_dB));
     }
 }
@@ -4849,7 +4849,7 @@ static SCM g_set_transform_size(SCM val, SCM snd, SCM chn)
   int len;
   ASSERT_TYPE(INTEGER_P(val), val, ARG1, "set-" S_transform_size, "an integer"); 
   len = TO_C_INT(val);
-  if (len <= 0) return(SCM_BOOL_F);
+  if (len <= 0) return(FALSE_VALUE);
   if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, val, CP_TRANSFORM_SIZE, "set-" S_transform_size));
   else
@@ -5026,7 +5026,7 @@ static SCM g_set_graph_style(SCM style, SCM snd, SCM chn)
 	}
     }
   mus_misc_error("set-" S_graph_style, "invalid style", style);
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_graph_style_reversed, g_set_graph_style)
@@ -5138,7 +5138,7 @@ to the help dialog if filename is omitted"
   char *name = NULL;
   int err;
   ASSERT_TYPE((STRING_P(filename) || (FALSE_P(filename)) || (NOT_BOUND_P(filename))), filename, ARG1, S_peaks, "a string or #f");
-  SND_ASSERT_CHAN(S_peaks, snd_n, chn_n, 2);
+  ASSERT_CHANNEL(S_peaks, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_peaks);
   if (STRING_P(filename))
     name = mus_expand_filename(TO_C_STRING(filename));
@@ -5147,7 +5147,7 @@ to the help dialog if filename is omitted"
   if (name) FREE(name);
   if ((STRING_P(filename)) && (err == 0)) 
     return(filename);
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_left_sample(SCM snd_n, SCM chn_n) 
@@ -5197,7 +5197,7 @@ static SCM g_edits(SCM snd_n, SCM chn_n)
   #define H_edits "(" S_edits " &optional snd chn) returns a vector of undoable and redoable edits in snd's channel chn"
   chan_info *cp;
   int i;
-  SND_ASSERT_CHAN(S_edits, snd_n, chn_n, 1);
+  ASSERT_CHANNEL(S_edits, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_edits);
   for (i = cp->edit_ctr + 1; i < cp->edit_size; i++)
     if (!(cp->edits[i])) break;
@@ -5210,7 +5210,7 @@ static SCM g_x_bounds(SCM snd_n, SCM chn_n)
   #define H_x_bounds "(" S_x_bounds " &optional snd chn) returns a list (x0 x1) giving the current x axis bounds of snd channel chn"
   chan_info *cp;
   axis_info *ap;
-  SND_ASSERT_CHAN(S_x_bounds, snd_n, chn_n, 1);
+  ASSERT_CHANNEL(S_x_bounds, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_x_bounds);
   ap = cp->axis;
   return(LIST_2(TO_SCM_DOUBLE(ap->x0),
@@ -5221,7 +5221,7 @@ static SCM g_set_x_bounds(SCM bounds, SCM snd_n, SCM chn_n)
 {
   chan_info *cp;
   Float x0, x1;
-  SND_ASSERT_CHAN("set-" S_x_bounds, snd_n, chn_n, 2);
+  ASSERT_CHANNEL("set-" S_x_bounds, snd_n, chn_n, 2);
   ASSERT_TYPE(LIST_P(bounds), bounds, ARG1, "set-" S_x_bounds, "a list");
   cp = get_cp(snd_n, chn_n, "set-" S_x_bounds);
   if (cp->time_graph_type == GRAPH_TIME_ONCE) 
@@ -5234,7 +5234,7 @@ static SCM g_set_x_bounds(SCM bounds, SCM snd_n, SCM chn_n)
 		 LIST_2(TO_SCM_STRING("set-" S_x_bounds),
 			bounds));
     }
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 WITH_REVERSED_CHANNEL_ARGS(g_set_x_bounds_reversed, g_set_x_bounds)
@@ -5244,8 +5244,8 @@ static SCM g_set_y_bounds(SCM bounds, SCM snd_n, SCM chn_n)
   chan_info *cp;
   Float low, hi;
   int len = 0;
-  SCM y0 = SCM_UNDEFINED, y1 = SCM_UNDEFINED;
-  SND_ASSERT_CHAN("set-" S_y_bounds, snd_n, chn_n, 2);
+  SCM y0 = UNDEFINED_VALUE, y1 = UNDEFINED_VALUE;
+  ASSERT_CHANNEL("set-" S_y_bounds, snd_n, chn_n, 2);
   ASSERT_TYPE(LIST_P_WITH_LENGTH(bounds, len), bounds, ARG1, "set-" S_y_bounds, "a list");
   cp = get_cp(snd_n, chn_n, "set-" S_y_bounds);
   if (len > 0)
@@ -5283,7 +5283,7 @@ static SCM g_set_y_bounds(SCM bounds, SCM snd_n, SCM chn_n)
   else ERROR(IMPOSSIBLE_BOUNDS,
 	     LIST_2(TO_SCM_STRING("set-" S_y_bounds),
 		    bounds));
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 WITH_REVERSED_CHANNEL_ARGS(g_set_y_bounds_reversed, g_set_y_bounds)
@@ -5293,7 +5293,7 @@ static SCM g_y_bounds(SCM snd_n, SCM chn_n)
   #define H_y_bounds "(" S_y_bounds " &optional snd chn) returns a list (y0 y1) giving the current y axis bounds of snd channel chn"
   chan_info *cp;
   axis_info *ap;
-  SND_ASSERT_CHAN(S_y_bounds, snd_n, chn_n, 1);
+  ASSERT_CHANNEL(S_y_bounds, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_y_bounds);
   ap = cp->axis;
   return(LIST_2(TO_SCM_DOUBLE(ap->y0),
@@ -5305,7 +5305,7 @@ static SCM g_forward_sample(SCM count, SCM snd, SCM chn)
   #define H_forward_sample "(" S_forward_sample " &optional (count 1) snd chn) moves the cursor forward count samples"
   chan_info *cp;
   ASSERT_TYPE(INTEGER_IF_BOUND_P(count), count, ARG1, S_forward_sample, "an integer");
-  SND_ASSERT_CHAN(S_forward_sample, snd, chn, 2);
+  ASSERT_CHANNEL(S_forward_sample, snd, chn, 2);
   cp = get_cp(snd, chn, S_forward_sample);
   handle_cursor(cp, cursor_move(cp, TO_C_INT_OR_ELSE(count, 1))); 
   return(TO_SCM_INT(cp->cursor));
@@ -5316,7 +5316,7 @@ static SCM g_backward_sample(SCM count, SCM snd, SCM chn)
   #define H_backward_sample "(" S_backward_sample " &optional (count 1) snd chn) moves the cursor back count samples"
   chan_info *cp;
   ASSERT_TYPE(INTEGER_IF_BOUND_P(count), count, ARG1, S_backward_sample, "an integer");
-  SND_ASSERT_CHAN(S_backward_sample, snd, chn, 2);
+  ASSERT_CHANNEL(S_backward_sample, snd, chn, 2);
   cp = get_cp(snd, chn, S_backward_sample);
   handle_cursor(cp, cursor_move(cp, -(TO_C_INT_OR_ELSE(count, 1)))); 
   return(TO_SCM_INT(cp->cursor));
@@ -5353,19 +5353,19 @@ static SCM g_channel_widgets_1(chan_info *cp)
 	           CONS(SND_WRAP(channel_zx(cp)),
 	             CONS(SND_WRAP(channel_zy(cp)),
 		       CONS(SND_WRAP(channel_edhist(cp)),
-	                 SCM_EOL)))))))));
+	                 EMPTY_LIST)))))))));
 }
 
 static SCM g_channel_widgets(SCM snd, SCM chn)
 {
-  SND_ASSERT_CHAN(S_channel_widgets, snd, chn, 1);
+  ASSERT_CHANNEL(S_channel_widgets, snd, chn, 1);
   return(g_channel_widgets_1(get_cp(snd, chn, S_channel_widgets)));
 }
 #endif
 
 void g_init_chn(SCM local_doc)
 {
-  cp_edpos = SCM_UNDEFINED;
+  cp_edpos = UNDEFINED_VALUE;
 
 #if (!USE_NO_GUI)
   DEFINE_PROC(S_channel_widgets,         g_channel_widgets, 0, 2, 0,         "returns channel widgets");
@@ -5376,40 +5376,40 @@ void g_init_chn(SCM local_doc)
   DEFINE_PROC(S_edit_hook,               g_edit_hook, 0, 2, 0,               H_edit_hook);
   DEFINE_PROC(S_undo_hook,               g_undo_hook, 0, 2, 0,               H_undo_hook);
 
-  define_procedure_with_reversed_setter(S_x_position_slider, SCM_FNC g_ap_sx, H_x_position_slider,
-					"set-" S_x_position_slider, SCM_FNC g_set_ap_sx, SCM_FNC g_set_ap_sx_reversed,
+  define_procedure_with_reversed_setter(S_x_position_slider, PROCEDURE g_ap_sx, H_x_position_slider,
+					"set-" S_x_position_slider, PROCEDURE g_set_ap_sx, PROCEDURE g_set_ap_sx_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_y_position_slider, SCM_FNC g_ap_sy, H_y_position_slider,
-					"set-" S_y_position_slider, SCM_FNC g_set_ap_sy, SCM_FNC g_set_ap_sy_reversed,
+  define_procedure_with_reversed_setter(S_y_position_slider, PROCEDURE g_ap_sy, H_y_position_slider,
+					"set-" S_y_position_slider, PROCEDURE g_set_ap_sy, PROCEDURE g_set_ap_sy_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_x_zoom_slider, SCM_FNC g_ap_zx, H_x_zoom_slider,
-					"set-" S_x_zoom_slider, SCM_FNC g_set_ap_zx, SCM_FNC g_set_ap_zx_reversed,
+  define_procedure_with_reversed_setter(S_x_zoom_slider, PROCEDURE g_ap_zx, H_x_zoom_slider,
+					"set-" S_x_zoom_slider, PROCEDURE g_set_ap_zx, PROCEDURE g_set_ap_zx_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_y_zoom_slider, SCM_FNC g_ap_zy, H_y_zoom_slider,
-					"set-" S_y_zoom_slider, SCM_FNC g_set_ap_zy, SCM_FNC g_set_ap_zy_reversed,
+  define_procedure_with_reversed_setter(S_y_zoom_slider, PROCEDURE g_ap_zy, H_y_zoom_slider,
+					"set-" S_y_zoom_slider, PROCEDURE g_set_ap_zy, PROCEDURE g_set_ap_zy_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_frames, SCM_FNC g_frames, H_frames,
-					"set-" S_frames, SCM_FNC g_set_frames, SCM_FNC g_set_frames_reversed,
+  define_procedure_with_reversed_setter(S_frames, PROCEDURE g_frames, H_frames,
+					"set-" S_frames, PROCEDURE g_set_frames, PROCEDURE g_set_frames_reversed,
 					local_doc, 0, 3, 0, 3);
 
-  define_procedure_with_reversed_setter(S_maxamp, SCM_FNC g_maxamp, H_maxamp,
-					"set-" S_maxamp, SCM_FNC g_set_maxamp, SCM_FNC g_set_maxamp_reversed,
+  define_procedure_with_reversed_setter(S_maxamp, PROCEDURE g_maxamp, H_maxamp,
+					"set-" S_maxamp, PROCEDURE g_set_maxamp, PROCEDURE g_set_maxamp_reversed,
 					local_doc, 0, 3, 0, 3);
 
   DEFINE_PROC(S_forward_sample,    g_forward_sample, 0, 3, 0,    H_forward_sample);
   DEFINE_PROC(S_backward_sample,   g_backward_sample, 0, 3, 0,   H_backward_sample);
   DEFINE_PROC(S_cursor_position,   g_cursor_position, 0, 2, 0,   H_cursor_position);
 
-  define_procedure_with_reversed_setter(S_edit_position, SCM_FNC g_edit_position, H_edit_position,
-					"set-" S_edit_position, SCM_FNC g_set_edit_position, SCM_FNC g_set_edit_position_reversed,
+  define_procedure_with_reversed_setter(S_edit_position, PROCEDURE g_edit_position, H_edit_position,
+					"set-" S_edit_position, PROCEDURE g_set_edit_position, PROCEDURE g_set_edit_position_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_graph_transform_p, SCM_FNC g_graph_transform_p, H_graph_transform_p,
-					"set-" S_graph_transform_p, SCM_FNC g_set_graph_transform_p, SCM_FNC g_set_graph_transform_p_reversed,
+  define_procedure_with_reversed_setter(S_graph_transform_p, PROCEDURE g_graph_transform_p, H_graph_transform_p,
+					"set-" S_graph_transform_p, PROCEDURE g_set_graph_transform_p, PROCEDURE g_set_graph_transform_p_reversed,
 					local_doc, 0, 2, 0, 3);
 
   #define H_graph_time_once "The value for " S_time_graph_type " to display the standard time domain waveform"
@@ -5418,20 +5418,20 @@ void g_init_chn(SCM local_doc)
   DEFINE_VAR(S_graph_time_once,        GRAPH_TIME_ONCE,        H_graph_time_once);
   DEFINE_VAR(S_graph_time_as_wavogram, GRAPH_TIME_AS_WAVOGRAM, H_graph_time_as_wavogram);
 
-  define_procedure_with_reversed_setter(S_graph_time_p, SCM_FNC g_graph_time_p, H_graph_time_p,
-					"set-" S_graph_time_p, SCM_FNC g_set_graph_time_p, SCM_FNC g_set_graph_time_p_reversed,
+  define_procedure_with_reversed_setter(S_graph_time_p, PROCEDURE g_graph_time_p, H_graph_time_p,
+					"set-" S_graph_time_p, PROCEDURE g_set_graph_time_p, PROCEDURE g_set_graph_time_p_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_graph_lisp_p, SCM_FNC g_graph_lisp_p, H_graph_lisp_p,
-					"set-" S_graph_lisp_p, SCM_FNC g_set_graph_lisp_p, SCM_FNC g_set_graph_lisp_p_reversed,
+  define_procedure_with_reversed_setter(S_graph_lisp_p, PROCEDURE g_graph_lisp_p, H_graph_lisp_p,
+					"set-" S_graph_lisp_p, PROCEDURE g_set_graph_lisp_p, PROCEDURE g_set_graph_lisp_p_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_squelch_update, SCM_FNC g_squelch_update, H_squelch_update,
-					"set-" S_squelch_update, SCM_FNC g_set_squelch_update, SCM_FNC g_set_squelch_update_reversed,
+  define_procedure_with_reversed_setter(S_squelch_update, PROCEDURE g_squelch_update, H_squelch_update,
+					"set-" S_squelch_update, PROCEDURE g_set_squelch_update, PROCEDURE g_set_squelch_update_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_cursor, SCM_FNC g_cursor, H_cursor,
-					"set-" S_cursor, SCM_FNC g_set_cursor, SCM_FNC g_set_cursor_reversed,
+  define_procedure_with_reversed_setter(S_cursor, PROCEDURE g_cursor, H_cursor,
+					"set-" S_cursor, PROCEDURE g_set_cursor, PROCEDURE g_set_cursor_reversed,
 					local_doc, 0, 2, 0, 3);
 
   #define H_cursor_cross "The value for " S_cursor_style " that causes is to be a cross (the default)"
@@ -5440,140 +5440,140 @@ void g_init_chn(SCM local_doc)
   DEFINE_VAR(S_cursor_cross,          CURSOR_CROSS, H_cursor_cross);
   DEFINE_VAR(S_cursor_line,           CURSOR_LINE,  H_cursor_line);
 
-  define_procedure_with_reversed_setter(S_cursor_style, SCM_FNC g_cursor_style, H_cursor_style,
-					"set-" S_cursor_style, SCM_FNC g_set_cursor_style, SCM_FNC g_set_cursor_style_reversed,
+  define_procedure_with_reversed_setter(S_cursor_style, PROCEDURE g_cursor_style, H_cursor_style,
+					"set-" S_cursor_style, PROCEDURE g_set_cursor_style, PROCEDURE g_set_cursor_style_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_cursor_size, SCM_FNC g_cursor_size, H_cursor_size,
-					"set-" S_cursor_size, SCM_FNC g_set_cursor_size, SCM_FNC g_set_cursor_size_reversed,
+  define_procedure_with_reversed_setter(S_cursor_size, PROCEDURE g_cursor_size, H_cursor_size,
+					"set-" S_cursor_size, PROCEDURE g_set_cursor_size, PROCEDURE g_set_cursor_size_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_left_sample, SCM_FNC g_left_sample, H_left_sample,
-					"set-" S_left_sample, SCM_FNC g_set_left_sample, SCM_FNC g_set_left_sample_reversed,
+  define_procedure_with_reversed_setter(S_left_sample, PROCEDURE g_left_sample, H_left_sample,
+					"set-" S_left_sample, PROCEDURE g_set_left_sample, PROCEDURE g_set_left_sample_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_right_sample, SCM_FNC g_right_sample, H_right_sample,
-					"set-" S_right_sample, SCM_FNC g_set_right_sample, SCM_FNC g_set_right_sample_reversed,
+  define_procedure_with_reversed_setter(S_right_sample, PROCEDURE g_right_sample, H_right_sample,
+					"set-" S_right_sample, PROCEDURE g_set_right_sample, PROCEDURE g_set_right_sample_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_channel_sync, SCM_FNC g_channel_sync, H_channel_sync,
-					"set-" S_channel_sync, SCM_FNC g_set_channel_sync, SCM_FNC g_set_channel_sync_reversed,
+  define_procedure_with_reversed_setter(S_channel_sync, PROCEDURE g_channel_sync, H_channel_sync,
+					"set-" S_channel_sync, PROCEDURE g_set_channel_sync, PROCEDURE g_set_channel_sync_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_max_transform_peaks, SCM_FNC g_max_transform_peaks, H_max_transform_peaks,
-					"set-" S_max_transform_peaks, SCM_FNC g_set_max_transform_peaks, SCM_FNC g_set_max_transform_peaks_reversed,
+  define_procedure_with_reversed_setter(S_max_transform_peaks, PROCEDURE g_max_transform_peaks, H_max_transform_peaks,
+					"set-" S_max_transform_peaks, PROCEDURE g_set_max_transform_peaks, PROCEDURE g_set_max_transform_peaks_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_show_y_zero, SCM_FNC g_show_y_zero, H_show_y_zero,
-					"set-" S_show_y_zero, SCM_FNC g_set_show_y_zero, SCM_FNC g_set_show_y_zero_reversed,
+  define_procedure_with_reversed_setter(S_show_y_zero, PROCEDURE g_show_y_zero, H_show_y_zero,
+					"set-" S_show_y_zero, PROCEDURE g_set_show_y_zero, PROCEDURE g_set_show_y_zero_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_show_marks, SCM_FNC g_show_marks, H_show_marks,
-					"set-" S_show_marks, SCM_FNC g_set_show_marks, SCM_FNC g_set_show_marks_reversed,
+  define_procedure_with_reversed_setter(S_show_marks, PROCEDURE g_show_marks, H_show_marks,
+					"set-" S_show_marks, PROCEDURE g_set_show_marks, PROCEDURE g_set_show_marks_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_time_graph_type, SCM_FNC g_time_graph_type, H_time_graph_type,
-					"set-" S_time_graph_type, SCM_FNC g_set_time_graph_type, SCM_FNC g_set_time_graph_type_reversed,
+  define_procedure_with_reversed_setter(S_time_graph_type, PROCEDURE g_time_graph_type, H_time_graph_type,
+					"set-" S_time_graph_type, PROCEDURE g_set_time_graph_type, PROCEDURE g_set_time_graph_type_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_wavo_hop, SCM_FNC g_wavo_hop, H_wavo_hop,
-					"set-" S_wavo_hop, SCM_FNC g_set_wavo_hop, SCM_FNC g_set_wavo_hop_reversed,
+  define_procedure_with_reversed_setter(S_wavo_hop, PROCEDURE g_wavo_hop, H_wavo_hop,
+					"set-" S_wavo_hop, PROCEDURE g_set_wavo_hop, PROCEDURE g_set_wavo_hop_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_wavo_trace, SCM_FNC g_wavo_trace, H_wavo_trace,
-					"set-" S_wavo_trace, SCM_FNC g_set_wavo_trace, SCM_FNC g_set_wavo_trace_reversed,
+  define_procedure_with_reversed_setter(S_wavo_trace, PROCEDURE g_wavo_trace, H_wavo_trace,
+					"set-" S_wavo_trace, PROCEDURE g_set_wavo_trace, PROCEDURE g_set_wavo_trace_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_show_transform_peaks, SCM_FNC g_show_transform_peaks, H_show_transform_peaks,
-					"set-" S_show_transform_peaks, SCM_FNC g_set_show_transform_peaks, SCM_FNC g_set_show_transform_peaks_reversed,
+  define_procedure_with_reversed_setter(S_show_transform_peaks, PROCEDURE g_show_transform_peaks, H_show_transform_peaks,
+					"set-" S_show_transform_peaks, PROCEDURE g_set_show_transform_peaks, PROCEDURE g_set_show_transform_peaks_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_zero_pad, SCM_FNC g_zero_pad, H_zero_pad,
-					"set-" S_zero_pad, SCM_FNC g_set_zero_pad, SCM_FNC g_set_zero_pad_reversed,
+  define_procedure_with_reversed_setter(S_zero_pad, PROCEDURE g_zero_pad, H_zero_pad,
+					"set-" S_zero_pad, PROCEDURE g_set_zero_pad, PROCEDURE g_set_zero_pad_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_verbose_cursor, SCM_FNC g_verbose_cursor, H_verbose_cursor,
-					"set-" S_verbose_cursor, SCM_FNC g_set_verbose_cursor, SCM_FNC g_set_verbose_cursor_reversed,
+  define_procedure_with_reversed_setter(S_verbose_cursor, PROCEDURE g_verbose_cursor, H_verbose_cursor,
+					"set-" S_verbose_cursor, PROCEDURE g_set_verbose_cursor, PROCEDURE g_set_verbose_cursor_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_fft_log_frequency, SCM_FNC g_fft_log_frequency, H_fft_log_frequency,
-					"set-" S_fft_log_frequency, SCM_FNC g_set_fft_log_frequency, SCM_FNC g_set_fft_log_frequency_reversed,
+  define_procedure_with_reversed_setter(S_fft_log_frequency, PROCEDURE g_fft_log_frequency, H_fft_log_frequency,
+					"set-" S_fft_log_frequency, PROCEDURE g_set_fft_log_frequency, PROCEDURE g_set_fft_log_frequency_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_fft_log_magnitude, SCM_FNC g_fft_log_magnitude, H_fft_log_magnitude,
-					"set-" S_fft_log_magnitude, SCM_FNC g_set_fft_log_magnitude, SCM_FNC g_set_fft_log_magnitude_reversed,
+  define_procedure_with_reversed_setter(S_fft_log_magnitude, PROCEDURE g_fft_log_magnitude, H_fft_log_magnitude,
+					"set-" S_fft_log_magnitude, PROCEDURE g_set_fft_log_magnitude, PROCEDURE g_set_fft_log_magnitude_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_min_dB, SCM_FNC g_min_dB, H_min_dB,
-					"set-" S_min_dB, SCM_FNC g_set_min_dB, SCM_FNC g_set_min_dB_reversed,
+  define_procedure_with_reversed_setter(S_min_dB, PROCEDURE g_min_dB, H_min_dB,
+					"set-" S_min_dB, PROCEDURE g_set_min_dB, PROCEDURE g_set_min_dB_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_wavelet_type, SCM_FNC g_wavelet_type, H_wavelet_type,
-					"set-" S_wavelet_type, SCM_FNC g_set_wavelet_type, SCM_FNC g_set_wavelet_type_reversed,
+  define_procedure_with_reversed_setter(S_wavelet_type, PROCEDURE g_wavelet_type, H_wavelet_type,
+					"set-" S_wavelet_type, PROCEDURE g_set_wavelet_type, PROCEDURE g_set_wavelet_type_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_spectro_cutoff, SCM_FNC g_spectro_cutoff, H_spectro_cutoff,
-					"set-" S_spectro_cutoff, SCM_FNC g_set_spectro_cutoff, SCM_FNC g_set_spectro_cutoff_reversed,
+  define_procedure_with_reversed_setter(S_spectro_cutoff, PROCEDURE g_spectro_cutoff, H_spectro_cutoff,
+					"set-" S_spectro_cutoff, PROCEDURE g_set_spectro_cutoff, PROCEDURE g_set_spectro_cutoff_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_spectro_start, SCM_FNC g_spectro_start, H_spectro_start,
-					"set-" S_spectro_start, SCM_FNC g_set_spectro_start, SCM_FNC g_set_spectro_start_reversed,
+  define_procedure_with_reversed_setter(S_spectro_start, PROCEDURE g_spectro_start, H_spectro_start,
+					"set-" S_spectro_start, PROCEDURE g_set_spectro_start, PROCEDURE g_set_spectro_start_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_spectro_x_angle, SCM_FNC g_spectro_x_angle, H_spectro_x_angle,
-					"set-" S_spectro_x_angle, SCM_FNC g_set_spectro_x_angle, SCM_FNC g_set_spectro_x_angle_reversed,
+  define_procedure_with_reversed_setter(S_spectro_x_angle, PROCEDURE g_spectro_x_angle, H_spectro_x_angle,
+					"set-" S_spectro_x_angle, PROCEDURE g_set_spectro_x_angle, PROCEDURE g_set_spectro_x_angle_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_spectro_x_scale, SCM_FNC g_spectro_x_scale, H_spectro_x_scale,
-					"set-" S_spectro_x_scale, SCM_FNC g_set_spectro_x_scale, SCM_FNC g_set_spectro_x_scale_reversed,
+  define_procedure_with_reversed_setter(S_spectro_x_scale, PROCEDURE g_spectro_x_scale, H_spectro_x_scale,
+					"set-" S_spectro_x_scale, PROCEDURE g_set_spectro_x_scale, PROCEDURE g_set_spectro_x_scale_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_spectro_y_angle, SCM_FNC g_spectro_y_angle, H_spectro_y_angle,
-					"set-" S_spectro_y_angle, SCM_FNC g_set_spectro_y_angle, SCM_FNC g_set_spectro_y_angle_reversed,
+  define_procedure_with_reversed_setter(S_spectro_y_angle, PROCEDURE g_spectro_y_angle, H_spectro_y_angle,
+					"set-" S_spectro_y_angle, PROCEDURE g_set_spectro_y_angle, PROCEDURE g_set_spectro_y_angle_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_spectro_y_scale, SCM_FNC g_spectro_y_scale, H_spectro_y_scale,
-					"set-" S_spectro_y_scale, SCM_FNC g_set_spectro_y_scale, SCM_FNC g_set_spectro_y_scale_reversed,
+  define_procedure_with_reversed_setter(S_spectro_y_scale, PROCEDURE g_spectro_y_scale, H_spectro_y_scale,
+					"set-" S_spectro_y_scale, PROCEDURE g_set_spectro_y_scale, PROCEDURE g_set_spectro_y_scale_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_spectro_z_angle, SCM_FNC g_spectro_z_angle, H_spectro_z_angle,
-					"set-" S_spectro_z_angle, SCM_FNC g_set_spectro_z_angle, SCM_FNC g_set_spectro_z_angle_reversed,
+  define_procedure_with_reversed_setter(S_spectro_z_angle, PROCEDURE g_spectro_z_angle, H_spectro_z_angle,
+					"set-" S_spectro_z_angle, PROCEDURE g_set_spectro_z_angle, PROCEDURE g_set_spectro_z_angle_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_spectro_z_scale, SCM_FNC g_spectro_z_scale, H_spectro_z_scale,
-					"set-" S_spectro_z_scale, SCM_FNC g_set_spectro_z_scale, SCM_FNC g_set_spectro_z_scale_reversed,
+  define_procedure_with_reversed_setter(S_spectro_z_scale, PROCEDURE g_spectro_z_scale, H_spectro_z_scale,
+					"set-" S_spectro_z_scale, PROCEDURE g_set_spectro_z_scale, PROCEDURE g_set_spectro_z_scale_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_fft_window_beta, SCM_FNC g_fft_window_beta, H_fft_window_beta,
-					"set-" S_fft_window_beta, SCM_FNC g_set_fft_window_beta, SCM_FNC g_set_fft_window_beta_reversed,
+  define_procedure_with_reversed_setter(S_fft_window_beta, PROCEDURE g_fft_window_beta, H_fft_window_beta,
+					"set-" S_fft_window_beta, PROCEDURE g_set_fft_window_beta, PROCEDURE g_set_fft_window_beta_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_spectro_hop, SCM_FNC g_spectro_hop, H_spectro_hop,
-					"set-" S_spectro_hop, SCM_FNC g_set_spectro_hop, SCM_FNC g_set_spectro_hop_reversed,
+  define_procedure_with_reversed_setter(S_spectro_hop, PROCEDURE g_spectro_hop, H_spectro_hop,
+					"set-" S_spectro_hop, PROCEDURE g_set_spectro_hop, PROCEDURE g_set_spectro_hop_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_transform_size, SCM_FNC g_transform_size, H_transform_size,
-					"set-" S_transform_size, SCM_FNC g_set_transform_size, SCM_FNC g_set_transform_size_reversed,
+  define_procedure_with_reversed_setter(S_transform_size, PROCEDURE g_transform_size, H_transform_size,
+					"set-" S_transform_size, PROCEDURE g_set_transform_size, PROCEDURE g_set_transform_size_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_transform_graph_type, SCM_FNC g_transform_graph_type, H_transform_graph_type,
-					"set-" S_transform_graph_type, SCM_FNC g_set_transform_graph_type, SCM_FNC g_set_transform_graph_type_reversed,
+  define_procedure_with_reversed_setter(S_transform_graph_type, PROCEDURE g_transform_graph_type, H_transform_graph_type,
+					"set-" S_transform_graph_type, PROCEDURE g_set_transform_graph_type, PROCEDURE g_set_transform_graph_type_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_fft_window, SCM_FNC g_fft_window, H_fft_window,
-					"set-" S_fft_window, SCM_FNC g_set_fft_window, SCM_FNC g_set_fft_window_reversed,
+  define_procedure_with_reversed_setter(S_fft_window, PROCEDURE g_fft_window, H_fft_window,
+					"set-" S_fft_window, PROCEDURE g_set_fft_window, PROCEDURE g_set_fft_window_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_transform_type, SCM_FNC g_transform_type, H_transform_type,
-					"set-" S_transform_type, SCM_FNC g_set_transform_type, SCM_FNC g_set_transform_type_reversed,
+  define_procedure_with_reversed_setter(S_transform_type, PROCEDURE g_transform_type, H_transform_type,
+					"set-" S_transform_type, PROCEDURE g_set_transform_type, PROCEDURE g_set_transform_type_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_transform_normalization, SCM_FNC g_transform_normalization, H_transform_normalization,
-					"set-" S_transform_normalization, SCM_FNC g_set_transform_normalization, SCM_FNC g_set_transform_normalization_reversed,
+  define_procedure_with_reversed_setter(S_transform_normalization, PROCEDURE g_transform_normalization, H_transform_normalization,
+					"set-" S_transform_normalization, PROCEDURE g_set_transform_normalization, PROCEDURE g_set_transform_normalization_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_show_mix_waveforms, SCM_FNC g_show_mix_waveforms, H_show_mix_waveforms,
-					"set-" S_show_mix_waveforms, SCM_FNC g_set_show_mix_waveforms, SCM_FNC g_set_show_mix_waveforms_reversed,
+  define_procedure_with_reversed_setter(S_show_mix_waveforms, PROCEDURE g_show_mix_waveforms, H_show_mix_waveforms,
+					"set-" S_show_mix_waveforms, PROCEDURE g_set_show_mix_waveforms, PROCEDURE g_set_show_mix_waveforms_reversed,
 					local_doc, 0, 2, 0, 3);
 
   /* should these be named "graph-with-lines" etc? */
@@ -5589,12 +5589,12 @@ void g_init_chn(SCM local_doc)
   DEFINE_VAR(S_graph_dots_and_lines,  GRAPH_DOTS_AND_LINES, H_graph_dots_and_lines);
   DEFINE_VAR(S_graph_lollipops,       GRAPH_LOLLIPOPS,      H_graph_lollipops);
 
-  define_procedure_with_reversed_setter(S_graph_style, SCM_FNC g_graph_style, H_graph_style,
-					"set-" S_graph_style, SCM_FNC g_set_graph_style, SCM_FNC g_set_graph_style_reversed,
+  define_procedure_with_reversed_setter(S_graph_style, PROCEDURE g_graph_style, H_graph_style,
+					"set-" S_graph_style, PROCEDURE g_set_graph_style, PROCEDURE g_set_graph_style_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_dot_size, SCM_FNC g_dot_size, H_dot_size,
-					"set-" S_dot_size, SCM_FNC g_set_dot_size, SCM_FNC g_set_dot_size_reversed,
+  define_procedure_with_reversed_setter(S_dot_size, PROCEDURE g_dot_size, H_dot_size,
+					"set-" S_dot_size, PROCEDURE g_set_dot_size, PROCEDURE g_set_dot_size_reversed,
 					local_doc, 0, 2, 0, 3);
 
   #define H_x_axis_in_seconds    "The value for " S_x_axis_style " that displays the x axis using seconds"
@@ -5605,8 +5605,8 @@ void g_init_chn(SCM local_doc)
   DEFINE_VAR(S_x_axis_in_samples,     X_AXIS_IN_SAMPLES,    H_x_axis_in_samples);
   DEFINE_VAR(S_x_axis_as_percentage,  X_AXIS_AS_PERCENTAGE, H_x_axis_as_percentage);
 
-  define_procedure_with_reversed_setter(S_x_axis_style, SCM_FNC g_x_axis_style, H_x_axis_style,
-					"set-" S_x_axis_style, SCM_FNC g_set_x_axis_style, SCM_FNC g_set_x_axis_style_reversed,
+  define_procedure_with_reversed_setter(S_x_axis_style, PROCEDURE g_x_axis_style, H_x_axis_style,
+					"set-" S_x_axis_style, PROCEDURE g_set_x_axis_style, PROCEDURE g_set_x_axis_style_reversed,
 					local_doc, 0, 2, 0, 3);
 
   #define H_show_all_axes "The value for " S_show_axes " that causes both the x and y axes to be displayed"
@@ -5617,20 +5617,20 @@ void g_init_chn(SCM local_doc)
   DEFINE_VAR(S_show_no_axes,          SHOW_NO_AXES,  H_show_no_axes);
   DEFINE_VAR(S_show_x_axis,           SHOW_X_AXIS,   H_show_x_axis);
 
-  define_procedure_with_reversed_setter(S_show_axes, SCM_FNC g_show_axes, H_show_axes,
-					"set-" S_show_axes, SCM_FNC g_set_show_axes, SCM_FNC g_set_show_axes_reversed,
+  define_procedure_with_reversed_setter(S_show_axes, PROCEDURE g_show_axes, H_show_axes,
+					"set-" S_show_axes, PROCEDURE g_set_show_axes, PROCEDURE g_set_show_axes_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_graphs_horizontal, SCM_FNC g_graphs_horizontal, H_graphs_horizontal,
-					"set-" S_graphs_horizontal, SCM_FNC g_set_graphs_horizontal, SCM_FNC g_set_graphs_horizontal_reversed,
+  define_procedure_with_reversed_setter(S_graphs_horizontal, PROCEDURE g_graphs_horizontal, H_graphs_horizontal,
+					"set-" S_graphs_horizontal, PROCEDURE g_set_graphs_horizontal, PROCEDURE g_set_graphs_horizontal_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_x_bounds, SCM_FNC g_x_bounds, H_x_bounds,
-					"set-" S_x_bounds, SCM_FNC g_set_x_bounds, SCM_FNC g_set_x_bounds_reversed,
+  define_procedure_with_reversed_setter(S_x_bounds, PROCEDURE g_x_bounds, H_x_bounds,
+					"set-" S_x_bounds, PROCEDURE g_set_x_bounds, PROCEDURE g_set_x_bounds_reversed,
 					local_doc, 0, 2, 1, 2);
 
-  define_procedure_with_reversed_setter(S_y_bounds, SCM_FNC g_y_bounds, H_y_bounds,
-					"set-" S_y_bounds, SCM_FNC g_set_y_bounds, SCM_FNC g_set_y_bounds_reversed,
+  define_procedure_with_reversed_setter(S_y_bounds, PROCEDURE g_y_bounds, H_y_bounds,
+					"set-" S_y_bounds, PROCEDURE g_set_y_bounds, PROCEDURE g_set_y_bounds_reversed,
 					local_doc, 0, 2, 1, 2);
 
   #define H_transform_hook S_transform_hook " (snd chn scaler) is called just after a spectrum is calculated."

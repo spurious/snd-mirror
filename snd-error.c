@@ -135,7 +135,7 @@ static SCM g_snd_warning(SCM msg)
  
 int ignore_mus_error(int type, char *msg)
 {
-  SCM result = SCM_BOOL_F;
+  SCM result = FALSE_VALUE;
   if (HOOKED(mus_error_hook))
     result = g_c_run_or_hook(mus_error_hook, 
 			     LIST_2(TO_SCM_INT(type), 

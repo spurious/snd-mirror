@@ -1275,8 +1275,8 @@ static SCM g_enved_dialog_widgets(void)
 				  CONS(SND_WRAP(mixB),
 				   CONS(SND_WRAP(resetB),
 				    CONS(SND_WRAP(env_list),
-					 SCM_EOL)))))))))))))))))))))))))));
-  return(SCM_EOL);
+					 EMPTY_LIST)))))))))))))))))))))))))));
+  return(EMPTY_LIST);
 }
 
 static SCM g_enved_axis_info(void)
@@ -1291,18 +1291,18 @@ static SCM g_enved_axis_info(void)
                CONS(TO_SCM_INT(ap->y_axis_y0),
                  CONS(TO_SCM_INT(ap->x_axis_x1),
 		   CONS(TO_SCM_INT(ap->y_axis_y1),
-		     SCM_EOL)))));
+		     EMPTY_LIST)))));
     }
-  return(SCM_EOL);
+  return(EMPTY_LIST);
 }
 #endif
 
 void g_init_gxenv(SCM local_doc)
 {
-  define_procedure_with_setter(S_enved_active_env, SCM_FNC g_enved_active_env, H_enved_active_env,
-			       "set-" S_enved_active_env, SCM_FNC g_set_enved_active_env, local_doc, 0, 0, 1, 0);
-  define_procedure_with_setter(S_enved_selected_env, SCM_FNC g_enved_selected_env, H_enved_selected_env,
-			       "set-" S_enved_selected_env, SCM_FNC g_set_enved_selected_env, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_enved_active_env, PROCEDURE g_enved_active_env, H_enved_active_env,
+			       "set-" S_enved_active_env, PROCEDURE g_set_enved_active_env, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_enved_selected_env, PROCEDURE g_enved_selected_env, H_enved_selected_env,
+			       "set-" S_enved_selected_env, PROCEDURE g_set_enved_selected_env, local_doc, 0, 0, 1, 0);
 
 #if DEBUGGING
   DEFINE_PROC("enved-dialog-widgets", g_enved_dialog_widgets, 0, 0, 0, "");

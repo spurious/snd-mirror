@@ -21,7 +21,7 @@ static SCM exit_hook;
 
 int snd_exit_cleanly(snd_state *ss, int force_exit)
 {  
-  SCM res = SCM_BOOL_F;
+  SCM res = FALSE_VALUE;
   if (HOOKED(exit_hook))
     res = g_c_run_or_hook(exit_hook, 
 			  LIST_0,
@@ -554,7 +554,7 @@ static SCM start_hook;
 
 static int dont_start(char *filename)
 {
-  SCM res = SCM_BOOL_F;
+  SCM res = FALSE_VALUE;
   if (HOOKED(start_hook))
     res = g_c_run_or_hook(start_hook,
 			  LIST_1(TO_SCM_STRING(filename)),
@@ -569,7 +569,7 @@ static SCM g_script_arg(void) {return(TO_SCM_INT(script_arg));}
 static SCM g_set_script_arg(SCM arg) {script_arg = TO_C_INT(arg); return(arg);}
 static SCM g_script_args(void)
 {
-  SCM lst = SCM_EOL;
+  SCM lst = EMPTY_LIST;
   int i;
   for (i = script_argn - 1; i >= 0; i--)
     lst = CONS(TO_SCM_STRING(script_args[i]), lst);
@@ -712,7 +712,7 @@ static SCM g_exit(SCM val)
   #define H_exit "(" S_exit ") exits Snd"
   if (snd_exit_cleanly(get_global_state(), FALSE))
     snd_exit(TO_C_INT_OR_ELSE(val,1)); 
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_mem_report(void) 
@@ -720,7 +720,7 @@ static SCM g_mem_report(void)
 #if DEBUG_MEMORY
   mem_report(); 
 #endif
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 void g_init_main(SCM local_doc)
@@ -739,7 +739,7 @@ If it returns #t, Snd does not exit.  This can be used to check for unsaved edit
 
   exit_hook = MAKE_HOOK(S_exit_hook, 0, H_exit_hook);
 
-  define_procedure_with_setter(S_script_arg, SCM_FNC g_script_arg, "where we are in the startup arg list",
-			       "et-" S_script_arg, SCM_FNC g_set_script_arg, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_script_arg, PROCEDURE g_script_arg, "where we are in the startup arg list",
+			       "et-" S_script_arg, PROCEDURE g_set_script_arg, local_doc, 0, 0, 1, 0);
   DEFINE_PROC(S_script_args, g_script_args, 0, 0, 0, "the args passed to Snd at startup");
 }

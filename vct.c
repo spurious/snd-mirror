@@ -59,27 +59,9 @@
   #include <string.h>
 #endif
 
-#if (!USE_SND)
-#if HAVE_GUILE
-  #include <guile/gh.h>
-  #include "sg.h"
-#endif
-#if HAVE_LIBREP 
-  #include <rep.h>
-  #include "sl.h"
-#endif
-#if HAVE_MZSCHEME
-  #include <scheme.h>
-  #include "sz.h"
-#endif
-#if (!HAVE_EXTENSION_LANGUAGE)
-  #include "noguile.h"
-#endif
-#endif
-
 #include "sndlib.h"
-#include "vct.h"
 #include "sndlib2scm.h"
+#include "vct.h"
 
 #ifndef CALLOC
   #define CALLOC(a, b)  calloc(a, b)
@@ -98,13 +80,13 @@
   #define MIN(a, b) ((a > b) ? (b) : (a))
 #endif
 
-static SND_TAG_TYPE vct_tag = 0;
+static TAG_TYPE vct_tag = 0;
 static int vct_print_length = VCT_PRINT_LENGTH;
 void set_vct_print_length(int len) {vct_print_length = len;}
 
 int vct_p(SCM obj)
 {
-  return(SMOB_TYPE_P(obj, vct_tag));
+  return(OBJECT_TYPE_P(obj, vct_tag));
 }
 
 static SCM g_vct_p(SCM obj) 
@@ -116,13 +98,13 @@ static SCM g_vct_p(SCM obj)
 vct *get_vct(SCM arg)
 {
   if (VCT_P(arg))
-    return((vct *)SND_VALUE_OF(arg));
+    return((vct *)OBJECT_REF(arg));
   return(NULL);
 }
 
 static scm_sizet free_vct(SCM obj)
 {
-  vct *v = (vct *)SND_VALUE_OF(obj);
+  vct *v = (vct *)OBJECT_REF(obj);
   if (v)
     {
       if ((v->dont_free == 0) && 
@@ -139,7 +121,7 @@ static int print_vct(SCM obj, SCM port, scm_print_state *pstate)
 {
   int len, i;
   char *buf;
-  vct *v = (vct *)SND_VALUE_OF(obj);
+  vct *v = (vct *)OBJECT_REF(obj);
   buf = (char *)CALLOC(64, sizeof(char));
   sprintf(buf, "#<vct[len=%d]:", v->length);
   WRITE_STRING(buf, port);
@@ -167,14 +149,14 @@ static SCM equalp_vct(SCM obj1, SCM obj2)
 {
   vct *v1, *v2;
   int i;
-  v1 = (vct *)SND_VALUE_OF(obj1);
-  v2 = (vct *)SND_VALUE_OF(obj2);
+  v1 = (vct *)OBJECT_REF(obj1);
+  v2 = (vct *)OBJECT_REF(obj2);
   if (v1->length != v2->length) 
-    return(SCM_BOOL_F);
+    return(FALSE_VALUE);
   for (i = 0; i < v1->length; i++)
     if (v1->data[i] != v2->data[i])
-      return(SCM_BOOL_F);
-  return(scm_return_first(SCM_BOOL_T, obj1, obj2));
+      return(FALSE_VALUE);
+  return(scm_return_first(TRUE_VALUE, obj1, obj2));
 }
 
 SCM make_vct(int len, Float *data)
@@ -184,7 +166,7 @@ SCM make_vct(int len, Float *data)
   new_vct->length = len;
   new_vct->data = data;
   new_vct->dont_free = 0;
-  SND_RETURN_NEWSMOB(vct_tag, new_vct);
+  RETURN_NEW_OBJECT(vct_tag, new_vct);
 }
 
 SCM make_vct_wrapper(int len, Float *data)
@@ -194,7 +176,7 @@ SCM make_vct_wrapper(int len, Float *data)
   new_vct->length = len;
   new_vct->data = data;
   new_vct->dont_free = 1;
-  SND_RETURN_NEWSMOB(vct_tag, new_vct);
+  RETURN_NEW_OBJECT(vct_tag, new_vct);
 }
 
 static SCM g_make_vct(SCM len)
@@ -223,7 +205,7 @@ static SCM copy_vct(SCM obj)
       memcpy((void *)copied_data, (void *)(v->data), (len * sizeof(Float)));
       return(make_vct(len, copied_data));
     }
-  return(scm_return_first(SCM_BOOL_F, obj));
+  return(scm_return_first(FALSE_VALUE, obj));
 }
 
 static SCM vct_move(SCM obj, SCM newi, SCM oldi, SCM backwards)
@@ -283,7 +265,7 @@ static SCM vct_length(SCM obj)
   return(TO_SMALL_SCM_INT(0));
 }
 
-/* static SCM reckless_vct_ref(SCM obj, SCM pos) {return(TO_SCM_DOUBLE(((vct *)SND_VALUE_OF(obj))->data[TO_SMALL_C_INT(pos)]));} */
+/* static SCM reckless_vct_ref(SCM obj, SCM pos) {return(TO_SCM_DOUBLE(((vct *)OBJECT_REF(obj))->data[TO_SMALL_C_INT(pos)]));} */
 /* this is about 4% faster than the checked version */
 
 static SCM vct_ref(SCM obj, SCM pos)
@@ -457,7 +439,7 @@ static SCM vct_map(SCM obj, SCM proc)
   if (v) 
     for (i = 0; i < v->length; i++) 
       {
-	val = CALL0(proc, S_vct_mapB);
+	val = CALL_0(proc, S_vct_mapB);
 	if (SYMBOL_P(val))
 	  break;
 	else v->data[i] = TO_C_DOUBLE(val);
@@ -477,7 +459,7 @@ static SCM vct_do(SCM obj, SCM proc)
   if (v) 
     for (i = 0; i < v->length; i++) 
       {
-	val = CALL1(proc, TO_SMALL_SCM_INT(i), S_vct_doB);
+	val = CALL_1(proc, TO_SMALL_SCM_INT(i), S_vct_doB);
 	if (SYMBOL_P(val))
 	  break;
 	else v->data[i] = TO_C_DOUBLE(val);
@@ -523,7 +505,7 @@ static SCM vcts_map(SCM args)
       vsize = v[i]->length;
   for (i = 0; i < vsize; i++)
     {
-      arg = CALL1(proc, svi, S_vcts_mapB);
+      arg = CALL_1(proc, svi, S_vcts_mapB);
       if (LIST_P(arg))
 	for (vi = 0, lst = arg; vi < vnum; vi++, lst = CDR(lst))
 	  v[vi]->data[i] = TO_C_DOUBLE(CAR(lst));
@@ -572,7 +554,7 @@ static SCM vcts_do(SCM args)
       vsize = v[i]->length;
   for (i = 0; i < vsize; i++)
     {
-      arg = CALL2(proc, svi, TO_SMALL_SCM_INT(i), S_vcts_doB);
+      arg = CALL_2(proc, svi, TO_SMALL_SCM_INT(i), S_vcts_doB);
       if (LIST_P(arg))
 	for (vi = 0, lst = arg; vi < vnum; vi++, lst = CDR(lst))
 	  v[vi]->data[i] = TO_C_DOUBLE(CAR(lst));
@@ -612,7 +594,7 @@ static SCM list2vct(SCM lst)
   SCM scv, lst1;
   ASSERT_TYPE(LIST_P_WITH_LENGTH(lst, len), lst, ARGn, S_list2vct, "a list");
   if (len == 0)
-    return(SCM_BOOL_F);
+    return(FALSE_VALUE);
   scv = make_vct(len, (Float *)CALLOC(len, sizeof(Float)));
   v = TO_VCT(scv);
   for (i = 0, lst1 = lst; i < len; i++, lst1 = CDR(lst1)) 
@@ -632,7 +614,7 @@ static SCM array_to_list(Float *arr, int i, int len)
     return(CONS(TO_SCM_DOUBLE(arr[i]), 
 		array_to_list(arr, i + 1, len)));
   else return(CONS(TO_SCM_DOUBLE(arr[i]), 
-		   SCM_EOL));
+		   EMPTY_LIST));
 }
 
 static SCM vct2list(SCM vobj)
@@ -676,7 +658,7 @@ static SCM vct_subseq(SCM vobj, SCM start, SCM end, SCM newv)
     new_len = TO_C_INT(end) - TO_C_INT(start) + 1;
   else new_len = old_len - TO_C_INT(start);
   if (new_len <= 0) 
-    return(SCM_BOOL_F);
+    return(FALSE_VALUE);
   if (VCT_P(newv))
     res = newv;
   else res = make_vct(new_len, (Float *)CALLOC(new_len, sizeof(Float)));
@@ -697,7 +679,7 @@ void init_vct(void)
   scm_set_smob_free(vct_tag, free_vct);
   scm_set_smob_equalp(vct_tag, equalp_vct);
 #if HAVE_APPLICABLE_SMOB
-  scm_set_smob_apply(vct_tag, SCM_FNC vct_ref, 1, 0, 0);
+  scm_set_smob_apply(vct_tag, PROCEDURE vct_ref, 1, 0, 0);
 #endif
 #endif
 
@@ -728,8 +710,8 @@ void init_vct(void)
   DEFINE_PROC(S_vct,           g_vct, 0, 0, 1,         H_vct);
 
 #if USE_SND
-  define_procedure_with_setter(S_vct_ref, SCM_FNC vct_ref, H_vct_ref,
-			       "set-" S_vct_ref, SCM_FNC vct_set, local_doc, 2, 0, 3, 0);
+  define_procedure_with_setter(S_vct_ref, PROCEDURE vct_ref, H_vct_ref,
+			       "set-" S_vct_ref, PROCEDURE vct_set, local_doc, 2, 0, 3, 0);
 #endif
 }
 

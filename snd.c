@@ -301,8 +301,8 @@ static repv snd_rep_main(repv arg)
 
   ss->catch_exists = 0;
   g_initialize_gh(ss);
-  ss->search_proc = SCM_UNDEFINED;
-  ss->file_sort_proc = SCM_UNDEFINED;
+  ss->search_proc = UNDEFINED_VALUE;
+  ss->file_sort_proc = UNDEFINED_VALUE;
   mus_error_set_handler(mus_error2snd);
   mus_print_set_handler(mus_print2snd);
 

@@ -436,6 +436,10 @@ static void find_ptr_location(int ptr)
 	return;
       }
   fprintf(stderr,"can't find it");
+  if (last_forgotten != -1)
+    fprintf(stderr,"last freed: at %d, size: %d, loc: %d, %s[%s: %d]\n",
+	    last_forgotten, sizes[last_forgotten], locations[last_forgotten], 
+	    functions[locations[last_forgotten]], files[locations[last_forgotten]], lines[locations[last_forgotten]]);
 }
 
 #define MAX_MALLOC (1 << 24)
@@ -680,7 +684,7 @@ static SCM start_time(SCM utag)
   tag = TO_C_INT(utag);
   times[tag].start = clock();
   times[tag].in_calls++;
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM stop_time(SCM utag)
@@ -688,14 +692,14 @@ static SCM stop_time(SCM utag)
   int tag;
   long clk;
   tag = TO_C_INT(utag);
-  if (times[tag].start <= 0) return(SCM_BOOL_F);
+  if (times[tag].start <= 0) return(FALSE_VALUE);
   clk = clock();
   if (clk >= times[tag].start)
     times[tag].total += (clk - times[tag].start); /* clock() can wrap around! */
   else times[tag].total += clk; /* semi-bogus... */
   times[tag].start = 0;
   times[tag].out_calls++;
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static int compare_time(const void *a, const void *b)
@@ -778,16 +782,16 @@ static void report_times_1(FILE *std)
 static SCM report_times(void)
 {
   report_times_1(stderr);
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 void g_init_timing(SCM local_doc)
 {
 #if HAVE_GUILE
   /* not DEFINE_PROC here! */
-  SND_NEW_PROCEDURE("start-time", start_time, 1, 0, 0);
-  SND_NEW_PROCEDURE("stop-time", stop_time, 1, 0, 0);
-  SND_NEW_PROCEDURE("report-times", report_times, 0, 0, 0);
+  NEW_PROCEDURE("start-time", start_time, 1, 0, 0);
+  NEW_PROCEDURE("stop-time", stop_time, 1, 0, 0);
+  NEW_PROCEDURE("report-times", report_times, 0, 0, 0);
 #endif
 }
 #endif

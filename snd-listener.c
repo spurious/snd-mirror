@@ -190,7 +190,7 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
   GUI_TEXT_POSITION_TYPE new_eot = 0, cmd_eot = 0;
   char *str = NULL, *full_str = NULL, *prompt;
   int i, j, slen;
-  SCM form = SCM_UNDEFINED;
+  SCM form = UNDEFINED_VALUE;
   int end_of_text, start_of_text, last_position, current_position, parens;
   full_str = GUI_TEXT(w);
   current_position = GUI_TEXT_INSERTION_POSITION(w);
@@ -373,7 +373,7 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
     {
       new_eot = GUI_TEXT_END(w);
       GUI_LISTENER_TEXT_INSERT(w, new_eot, listener_prompt_with_cr(ss));
-      last_prompt = GUI_TEXT_END(w) - 1;
+      /* last_prompt = GUI_TEXT_END(w) - 1; */
     }
   cmd_eot = GUI_TEXT_END(w);
   GUI_TEXT_GOTO(w, cmd_eot - 1);

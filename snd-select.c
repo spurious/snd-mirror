@@ -700,10 +700,10 @@ static SCM g_delete_selection(void)
   if (selection_is_active())
     {
       delete_selection(S_delete_selection, UPDATE_DISPLAY);
-      return(SCM_BOOL_T);
+      return(TRUE_VALUE);
     }
   snd_no_active_selection_error(S_delete_selection);
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_insert_selection(SCM beg, SCM snd, SCM chn)
@@ -714,7 +714,7 @@ static SCM g_insert_selection(SCM beg, SCM snd, SCM chn)
   int err = MUS_NO_ERROR;
   if (selection_is_active())
     {
-      SND_ASSERT_CHAN(S_insert_selection, snd, chn, 2);
+      ASSERT_CHANNEL(S_insert_selection, snd, chn, 2);
       ASSERT_TYPE(NUMBER_IF_BOUND_P(beg), beg, ARG1, S_insert_selection, "a number");
       ss = get_global_state();
       cp = get_cp(snd, chn, S_insert_selection);
@@ -738,7 +738,7 @@ static SCM g_mix_selection(SCM beg, SCM snd, SCM chn)
   snd_state *ss;
   if (selection_is_active())
     {
-      SND_ASSERT_CHAN(S_mix_selection, snd, chn, 2);
+      ASSERT_CHANNEL(S_mix_selection, snd, chn, 2);
       ASSERT_TYPE(NUMBER_IF_BOUND_P(beg), beg, ARG1, S_mix_selection, "a number");
       ss = get_global_state();
       cp = get_cp(snd, chn, S_mix_selection);
@@ -770,7 +770,7 @@ static SCM g_selection_position(SCM snd, SCM chn)
 	return(TO_SCM_INT(selection_beg(NULL)));
       else
 	{
-	  SND_ASSERT_CHAN(S_selection_position, snd, chn, 1);
+	  ASSERT_CHANNEL(S_selection_position, snd, chn, 1);
 	  cp = get_cp(snd, chn, S_selection_position);
 	  return(TO_SCM_INT(selection_beg(cp)));
 	}
@@ -784,7 +784,7 @@ static SCM g_set_selection_position(SCM pos, SCM snd, SCM chn)
   chan_info *cp;
   sync_info *si = NULL;
   int i, beg;
-  SND_ASSERT_CHAN("set-" S_selection_position, snd, chn, 2);
+  ASSERT_CHANNEL("set-" S_selection_position, snd, chn, 2);
   ASSERT_TYPE(NUMBER_IF_BOUND_P(pos), pos, ARG1, S_selection_position, "a number");
   beg = TO_C_INT_OR_ELSE(pos, 0);
   if (NOT_BOUND_P(snd))
@@ -824,7 +824,7 @@ static SCM g_selection_length(SCM snd, SCM chn)
 	return(TO_SCM_INT(selection_len()));
       else
 	{
-	  SND_ASSERT_CHAN(S_selection_length, snd, chn, 1);
+	  ASSERT_CHANNEL(S_selection_length, snd, chn, 1);
 	  cp = get_cp(snd, chn, S_selection_length);
 	  return(TO_SCM_INT(cp_selection_len(cp, NULL)));
 	}
@@ -858,7 +858,7 @@ static SCM g_set_selection_length(SCM samps, SCM snd, SCM chn)
     }
   else 
     {
-      SND_ASSERT_CHAN("set-" S_selection_length, snd, chn, 2);
+      ASSERT_CHANNEL("set-" S_selection_length, snd, chn, 2);
       cp = get_cp(snd, chn, "set-" S_selection_length);
       cp_set_selection_len(cp, len);
     }
@@ -872,7 +872,7 @@ static SCM g_selection_member(SCM snd, SCM chn)
 {
   #define H_selection_member "(" S_selection_member " &optional snd chn) -> #t if snd's channel chn is a member of the current selection"
   chan_info *cp;
-  SND_ASSERT_CHAN(S_selection_member, snd, chn, 1);
+  ASSERT_CHANNEL(S_selection_member, snd, chn, 1);
   cp = get_cp(snd, chn, S_selection_member);
   return(TO_SCM_BOOLEAN(selection_is_active_in_channel(cp)));
 }
@@ -880,7 +880,7 @@ static SCM g_selection_member(SCM snd, SCM chn)
 static SCM g_set_selection_member(SCM on, SCM snd, SCM chn)
 {
   chan_info *cp;
-  SND_ASSERT_CHAN("set-" S_selection_member, snd, chn, 2);
+  ASSERT_CHANNEL("set-" S_selection_member, snd, chn, 2);
   ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, ARG1, "set-" S_selection_member, "a boolean");
   cp = get_cp(snd, chn, "set-" S_selection_member);
   if ((NOT_BOUND_P(on)) || (TRUE_P(on)))
@@ -906,12 +906,12 @@ static SCM g_select_all (SCM snd_n, SCM chn_n)
   #define H_select_all "(" S_select_all " &optional snd chn) makes a new selection containing all of snd's channel chn"
   chan_info *cp;
   int id;
-  SND_ASSERT_CHAN(S_select_all, snd_n, chn_n, 1);
+  ASSERT_CHANNEL(S_select_all, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_select_all);
   id = select_all(cp);
   if (selection_creates_region(cp->state)) 
     return(TO_SCM_INT(id));
-  else return(SCM_BOOL_T);
+  else return(TRUE_VALUE);
 }
 
 static SCM g_save_selection(SCM filename, SCM header_type, SCM data_format, SCM srate, SCM comment, SCM chan)
@@ -969,16 +969,16 @@ static SCM g_selection_srate(void)
 
 void g_init_selection(SCM local_doc)
 {
-  define_procedure_with_reversed_setter(S_selection_position, SCM_FNC g_selection_position, H_selection_position,
-					"set-" S_selection_position, SCM_FNC g_set_selection_position, SCM_FNC g_set_selection_position_reversed,
+  define_procedure_with_reversed_setter(S_selection_position, PROCEDURE g_selection_position, H_selection_position,
+					"set-" S_selection_position, PROCEDURE g_set_selection_position, PROCEDURE g_set_selection_position_reversed,
 					local_doc, 0, 2, 1, 2);
 
-  define_procedure_with_reversed_setter(S_selection_length, SCM_FNC g_selection_length, H_selection_length,
-					"set-" S_selection_length, SCM_FNC g_set_selection_length, SCM_FNC g_set_selection_length_reversed,
+  define_procedure_with_reversed_setter(S_selection_length, PROCEDURE g_selection_length, H_selection_length,
+					"set-" S_selection_length, PROCEDURE g_set_selection_length, PROCEDURE g_set_selection_length_reversed,
 					local_doc, 0, 2, 1, 2);
 
-  define_procedure_with_reversed_setter(S_selection_member, SCM_FNC g_selection_member, H_selection_member,
-					"set-" S_selection_member, SCM_FNC g_set_selection_member, SCM_FNC g_set_selection_member_reversed,
+  define_procedure_with_reversed_setter(S_selection_member, PROCEDURE g_selection_member, H_selection_member,
+					"set-" S_selection_member, PROCEDURE g_set_selection_member, PROCEDURE g_set_selection_member_reversed,
 					local_doc, 0, 2, 1, 2);
 
   DEFINE_PROC(S_selection_p,      g_selection_p, 0, 0, 0,      H_selection_p);

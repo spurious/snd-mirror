@@ -1,5 +1,5 @@
 /* DIFFS: no "just-sounds" button since the search proc is apparently a simple string
- *          depending on built-in filename completion routine
+ *          depending on built-in filename completion routine -- is this fixed in gtkextra?
  *        no forced re-read of directory when file is written (update button?)
  */
 
@@ -155,6 +155,10 @@ static GtkWidget *snd_gtk_file_selection_new(snd_state *ss, char *title, GtkSign
     if (last_filename == NULL) last_filename = (char *)CALLOC(256, sizeof(char));
     getcwd(last_filename, 256);
     gtk_icon_file_selection_open_dir(GTK_ICON_FILESEL(new_dialog), last_filename);
+  #endif
+  #if HAVE_GTK_ICON_FILE_SELECTION_SHOW_TREE
+    /* gtk+extra 0.99.15 */
+    gtk_icon_file_selection_show_tree(GTK_ICON_FILESEL(new_dialog), TRUE); 
   #endif
 #else
   new_dialog = gtk_file_selection_new(title);
@@ -1501,18 +1505,18 @@ GtkWidget *edit_header(snd_info *sp)
 static SCM g_just_sounds(void)
 {
   #define H_just_sounds "not implemented in Gtk+ version of Snd"
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_set_just_sounds(SCM on) 
 {
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 void g_initialize_xgfile(SCM local_doc)
 {
-  define_procedure_with_setter(S_just_sounds, SCM_FNC g_just_sounds, H_just_sounds,
-			       "set-" S_just_sounds, SCM_FNC g_set_just_sounds, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_just_sounds, PROCEDURE g_just_sounds, H_just_sounds,
+			       "set-" S_just_sounds, PROCEDURE g_set_just_sounds, local_doc, 0, 0, 0, 1);
 
   #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label) is called when a file viewer or region label \
 is entered by the mouse. The 'type' is 0 for the current files list, 1 for previous files, and 2 for regions. The 'position' \

@@ -151,7 +151,7 @@ static int execute_named_macro_1(chan_info *cp, char *name, int count)
 static void execute_named_macro(chan_info *cp, char *name, int count)
 {
   int one_edit, i;
-  SCM form, result = SCM_UNDEFINED;
+  SCM form, result = UNDEFINED_VALUE;
   if (!(execute_named_macro_1(cp, name, count)))
     /* not a macro...*/
     {
@@ -202,7 +202,7 @@ static SCM g_key_binding(SCM key, SCM state, SCM extended)
 		     (TRUE_P(extended)) ? 1 : 0);
   if (i >= 0) 
     return(user_keymap[i].func);
-  return(SCM_UNDEFINED);
+  return(UNDEFINED_VALUE);
 }
 
 static void set_keymap_entry(int key, int state, int args, SCM func, int extended)
@@ -217,7 +217,7 @@ static void set_keymap_entry(int key, int state, int args, SCM func, int extende
 	  if (keymap_top == 0)
 	    {
 	      user_keymap = (key_entry *)CALLOC(keymap_size, sizeof(key_entry));
-	      for (i = 0; i < keymap_size; i++) user_keymap[i].func = SCM_UNDEFINED;
+	      for (i = 0; i < keymap_size; i++) user_keymap[i].func = UNDEFINED_VALUE;
 	    }
 	  else 
 	    {
@@ -226,7 +226,7 @@ static void set_keymap_entry(int key, int state, int args, SCM func, int extende
 		{
 		  user_keymap[i].key = 0; 
 		  user_keymap[i].state = 0; 
-		  user_keymap[i].func = SCM_UNDEFINED;
+		  user_keymap[i].func = UNDEFINED_VALUE;
 		  user_keymap[i].extended = 0;
 		}
 	    }
@@ -254,8 +254,8 @@ static int call_user_keymap(int hashedsym, int count)
   if (BOUND_P(user_keymap[hashedsym].func))
     {
       if (user_keymap[hashedsym].args == 0)
-	res = TO_C_INT_OR_ELSE(CALL0(user_keymap[hashedsym].func, "user key func"), KEYBOARD_NO_ACTION);
-      else res = TO_C_INT_OR_ELSE(CALL1(user_keymap[hashedsym].func, TO_SCM_INT(count), "user key func"), KEYBOARD_NO_ACTION);
+	res = TO_C_INT_OR_ELSE(CALL_0(user_keymap[hashedsym].func, "user key func"), KEYBOARD_NO_ACTION);
+      else res = TO_C_INT_OR_ELSE(CALL_1(user_keymap[hashedsym].func, TO_SCM_INT(count), "user key func"), KEYBOARD_NO_ACTION);
     }
   return(res);
 }
@@ -601,7 +601,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	      sp->search_expr = str;
 	      if (PROCEDURE_P(sp->search_proc))
 		snd_unprotect(sp->search_proc);
-	      sp->search_proc = SCM_UNDEFINED;
+	      sp->search_proc = UNDEFINED_VALUE;
 	      proc = snd_catch_any(eval_str_wrapper, str, str);
 	      if (procedure_ok_with_error(proc, 1, "find", "find", 1))
 		{
@@ -786,7 +786,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
       else proc = TO_SCM_STRING("");
       snd_protect(proc);
       if (PROCEDURE_P(sp->prompt_callback))
-	CALL1(sp->prompt_callback, proc, "prompt callback func");
+	CALL_1(sp->prompt_callback, proc, "prompt callback func");
       snd_unprotect(proc);
       if (str) free(str);
       sp->prompting = 0;
@@ -1824,7 +1824,7 @@ The function should return one of the cursor choices (e.g. cursor-no-action)."
     set_keymap_entry(TO_C_INT(key), 
 		     TO_C_INT(state), 
 		     0,
-		     SCM_UNDEFINED,
+		     UNDEFINED_VALUE,
 		     0);
   else 
     {
@@ -1845,13 +1845,13 @@ The function should return one of the cursor choices (e.g. cursor-no-action)."
 		       code,
 		       (TRUE_P(extended)) ? 1 : 0);
     }
-  return(SCM_BOOL_T);
+  return(TRUE_VALUE);
 }
 
 static SCM g_unbind_key(SCM key, SCM state, SCM extended)
 {
   #define H_unbind_key "(" S_unbind_key " key state &optional extended) undoes the effect of a prior bind-key call."
-  return(g_bind_key(key, state, SCM_BOOL_F, extended));
+  return(g_bind_key(key, state, FALSE_VALUE, extended));
 }
 
 static SCM g_key(SCM kbd, SCM buckybits, SCM snd, SCM chn)
@@ -1860,7 +1860,7 @@ static SCM g_key(SCM kbd, SCM buckybits, SCM snd, SCM chn)
   chan_info *cp;
   ASSERT_TYPE(INTEGER_P(kbd), kbd, ARG1, S_key, "an integer");
   ASSERT_TYPE(INTEGER_P(buckybits), buckybits, ARG2, S_key, "an integer");
-  SND_ASSERT_CHAN(S_key, snd, chn, 3);
+  ASSERT_CHANNEL(S_key, snd, chn, 3);
   cp = get_cp(snd, chn, S_key);
   return(TO_SCM_INT(keyboard_command(cp, 
 				     TO_C_INT(kbd), 
@@ -1893,13 +1893,13 @@ then when the user eventually responds, invokes the function callback with the r
   SCM errmsg;
   ASSERT_TYPE(STRING_P(msg), msg, ARG1, S_prompt_in_minibuffer, "a string");
   ASSERT_TYPE((NOT_BOUND_P(callback)) || (BOOLEAN_P(callback)) || PROCEDURE_P(callback), callback, ARG2, S_prompt_in_minibuffer, "#f or a procedure");
-  SND_ASSERT_SND(S_prompt_in_minibuffer, snd_n, 3);
+  ASSERT_SOUND(S_prompt_in_minibuffer, snd_n, 3);
   sp = get_sp(snd_n);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_prompt_in_minibuffer, snd_n));
   if (PROCEDURE_P(sp->prompt_callback))
     snd_unprotect(sp->prompt_callback);
-  sp->prompt_callback = SCM_BOOL_F; /* just in case something goes awry */
+  sp->prompt_callback = FALSE_VALUE; /* just in case something goes awry */
   if (PROCEDURE_P(callback))
     {
       errstr = procedure_ok(callback, 1, S_prompt_in_minibuffer, "callback", 2);
@@ -1919,7 +1919,7 @@ then when the user eventually responds, invokes the function callback with the r
   sp->minibuffer_temp = 0;
   sp->prompting = 1;
   goto_minibuffer(sp);
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_report_in_minibuffer(SCM msg, SCM snd_n)
@@ -1927,7 +1927,7 @@ static SCM g_report_in_minibuffer(SCM msg, SCM snd_n)
   #define H_report_in_minibuffer "(" S_report_in_minibuffer " msg &optional snd) displays msg in snd's minibuffer"
   snd_info *sp;
   ASSERT_TYPE(STRING_P(msg), msg, ARG1, S_report_in_minibuffer, "a string");
-  SND_ASSERT_SND(S_report_in_minibuffer, snd_n, 2);
+  ASSERT_SOUND(S_report_in_minibuffer, snd_n, 2);
   sp = get_sp(snd_n);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_report_in_minibuffer, snd_n));
@@ -1941,7 +1941,7 @@ static SCM g_append_to_minibuffer(SCM msg, SCM snd_n)
   snd_info *sp;
   char *str1 = NULL, *expr_str;
   ASSERT_TYPE(STRING_P(msg), msg, ARG1, S_append_to_minibuffer, "a string");
-  SND_ASSERT_SND(S_append_to_minibuffer, snd_n, 2);
+  ASSERT_SOUND(S_append_to_minibuffer, snd_n, 2);
   sp = get_sp(snd_n);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_append_to_minibuffer, snd_n));
@@ -1960,7 +1960,7 @@ static SCM g_forward_graph(SCM count, SCM snd, SCM chn)
   int val;
   chan_info *cp;
   ASSERT_TYPE(INTEGER_IF_BOUND_P(count), count, ARG1, S_forward_graph, "an integer");
-  SND_ASSERT_CHAN(S_forward_graph, snd, chn, 2);
+  ASSERT_CHANNEL(S_forward_graph, snd, chn, 2);
   cp = get_cp(snd, chn, S_forward_graph);
   val = TO_C_INT_OR_ELSE(count, 1);
   cp = goto_next_graph(cp, val);
@@ -1974,7 +1974,7 @@ static SCM g_backward_graph(SCM count, SCM snd, SCM chn)
   int val;
   chan_info *cp;
   ASSERT_TYPE(INTEGER_IF_BOUND_P(count), count, ARG1, S_backward_graph, "an integer");
-  SND_ASSERT_CHAN(S_backward_graph, snd, chn, 2);
+  ASSERT_CHANNEL(S_backward_graph, snd, chn, 2);
   cp = get_cp(snd, chn, S_backward_graph);
   val = -(TO_C_INT_OR_ELSE(count, 1));
   cp = goto_previous_graph(cp, val);
@@ -1988,7 +1988,7 @@ static SCM g_c_g_x(void)
   snd_state *ss;
   ss = get_global_state();
   c_g(ss, any_selected_sound(ss));
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 void g_init_kbd(SCM local_doc)

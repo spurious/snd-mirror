@@ -426,8 +426,8 @@ static void make_region_dialog(snd_state *ss)
       reg_sp->chans = (chan_info **)CALLOC(1, sizeof(chan_info *));
       reg_sp->sx_scroll_max = 100;
       reg_sp->hdr = (file_info *)CALLOC(1, sizeof(file_info));
-      reg_sp->search_proc = SCM_UNDEFINED;
-      reg_sp->prompt_callback = SCM_UNDEFINED;
+      reg_sp->search_proc = UNDEFINED_VALUE;
+      reg_sp->prompt_callback = UNDEFINED_VALUE;
       hdr = reg_sp->hdr;
       hdr->samples = region_len(id);
       hdr->srate = region_srate(id);
@@ -547,14 +547,14 @@ static SCM g_region_dialog_widgets(void)
 		 CONS(SND_WRAP(dismiss_button),
 		   CONS(SND_WRAP(delete_button),
 		     CONS(SND_WRAP(help_button),
-		       (reg_sp) ? g_channel_widgets_1(reg_sp->chans[0]) : SCM_EOL)))))));
-  return(SCM_EOL);
+		       (reg_sp) ? g_channel_widgets_1(reg_sp->chans[0]) : EMPTY_LIST)))))));
+  return(EMPTY_LIST);
 }
 static SCM g_region_row_widgets(void)
 {
   int i;
   SCM lst;
-  lst = SCM_EOL;
+  lst = EMPTY_LIST;
   for (i = region_rows_size - 1; i >= 0; i--)
     if ((region_rows[i]) &&
 	(GTK_WIDGET_IS_SENSITIVE(region_rows[i]->nm)))

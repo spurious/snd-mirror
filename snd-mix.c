@@ -3278,7 +3278,7 @@ static SCM snd_no_such_mix_error(const char *caller, SCM n)
   ERROR(NO_SUCH_MIX,
 	LIST_2(TO_SCM_STRING(caller),
 		  n));
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_mix_position(SCM n) 
@@ -3308,7 +3308,7 @@ static SCM g_mix_p(SCM n)
   #define H_mix_p "(" S_mix_p " id) -> #t if mix is active and accessible"
   if (INTEGER_P(n))
     return(TO_SCM_BOOLEAN(mix_ok(TO_C_INT_OR_ELSE(n, 0))));
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_mix_length(SCM n) 
@@ -3395,7 +3395,7 @@ static SCM g_mixes(SCM snd, SCM chn)
   snd_info *sp;
   chan_info *cp;
   int i, j;
-  SCM res1 = SCM_EOL;
+  SCM res1 = EMPTY_LIST;
   if (INTEGER_P(snd))
     {
       if (INTEGER_P(chn))
@@ -3422,7 +3422,7 @@ static SCM g_mixes(SCM snd, SCM chn)
 	{
 	  sp = ss->sounds[j];
 	  if ((sp) && (sp->inuse))
-	    res1 = CONS(g_mixes(TO_SMALL_SCM_INT(j), SCM_UNDEFINED), res1);
+	    res1 = CONS(g_mixes(TO_SMALL_SCM_INT(j), UNDEFINED_VALUE), res1);
 	}
     }
   return(res1);
@@ -3465,7 +3465,7 @@ static SCM g_mix_amp_env(SCM n, SCM chan)
   e = mix_amp_env_from_id(TO_C_INT_OR_ELSE(n, 0), 
 			  TO_C_INT_OR_ELSE(chan, 0));
   if (e) return(env2scm(e));
-  return(SCM_EOL);
+  return(EMPTY_LIST);
 }
 
 static SCM g_set_mix_position(SCM n, SCM uval) 
@@ -3741,7 +3741,7 @@ static SCM g_forward_mix(SCM count, SCM snd, SCM chn)
   int val;
   chan_info *cp;
   ASSERT_TYPE(INTEGER_IF_BOUND_P(count), count, ARG1, S_forward_mix, "an integer");
-  SND_ASSERT_CHAN(S_forward_mix, snd, chn, 2);
+  ASSERT_CHANNEL(S_forward_mix, snd, chn, 2);
   cp = get_cp(snd, chn, S_forward_mix);
   val = TO_C_INT_OR_ELSE(count, 1); 
   handle_cursor(cp, goto_mix(cp, val));
@@ -3754,7 +3754,7 @@ static SCM g_backward_mix(SCM count, SCM snd, SCM chn)
   int val; 
   chan_info *cp;
   ASSERT_TYPE(INTEGER_IF_BOUND_P(count), count, ARG1, S_backward_mix, "an integer");
-  SND_ASSERT_CHAN(S_backward_mix, snd, chn, 2);
+  ASSERT_CHANNEL(S_backward_mix, snd, chn, 2);
   cp = get_cp(snd, chn, S_backward_mix);
   val = -(TO_C_INT_OR_ELSE(count, 1)); 
   handle_cursor(cp, goto_mix(cp, val));
@@ -3778,7 +3778,7 @@ If chn is omitted, file's channels are mixed until snd runs out of channels"
   ASSERT_TYPE(STRING_P(file), file, ARG1, S_mix, "a string");
   ASSERT_TYPE(INTEGER_IF_BOUND_P(chn_samp_n), chn_samp_n, ARG2, S_mix, "an integer");
   ASSERT_TYPE(INTEGER_IF_BOUND_P(file_chn), file_chn, ARG3, S_mix, "an integer");
-  SND_ASSERT_CHAN(S_mix, snd_n, chn_n, 4);
+  ASSERT_CHANNEL(S_mix, snd_n, chn_n, 4);
   ASSERT_TYPE(NUMBER_OR_BOOLEAN_IF_BOUND_P(console), console, ARG6, S_mix, "a number");
   name = mus_expand_filename(TO_C_STRING(file));
   if (!(mus_file_probe(name)))
@@ -3842,10 +3842,10 @@ If chn is omitted, file's channels are mixed until snd runs out of channels"
 
 /* ---------------- mix sample readers ---------------- */
 
-static SND_TAG_TYPE mf_tag = 0;
-static int mf_p(SCM obj) {return(SMOB_TYPE_P(obj, mf_tag));}
-#define TO_MIX_SAMPLE_READER(obj) ((mix_fd *)SND_VALUE_OF(obj))
-#define MIX_SAMPLE_READER_P(Obj) SMOB_TYPE_P(Obj, mf_tag)
+static TAG_TYPE mf_tag = 0;
+static int mf_p(SCM obj) {return(OBJECT_TYPE_P(obj, mf_tag));}
+#define TO_MIX_SAMPLE_READER(obj) ((mix_fd *)OBJECT_REF(obj))
+#define MIX_SAMPLE_READER_P(Obj) OBJECT_TYPE_P(Obj, mf_tag)
 
 static SCM g_mf_p(SCM obj) 
 {
@@ -3856,7 +3856,7 @@ static SCM g_mf_p(SCM obj)
 static mix_fd *get_mf(SCM obj) 
 {
   if (MIX_SAMPLE_READER_P(obj)) 
-    return((mix_fd *)SND_VALUE_OF(obj)); 
+    return((mix_fd *)OBJECT_REF(obj)); 
   else return(NULL);
 }
 
@@ -3891,7 +3891,7 @@ static int print_mf(SCM obj, SCM port, scm_print_state *pstate)
 
 static scm_sizet free_mf(SCM obj) 
 {
-  mix_fd *fd = (mix_fd *)SND_VALUE_OF(obj); 
+  mix_fd *fd = (mix_fd *)OBJECT_REF(obj); 
   if (fd) free_mix_fd(fd); 
   return(sizeof(mix_fd));
 }
@@ -3909,9 +3909,9 @@ static SCM g_make_mix_sample_reader(SCM mix_id)
   if (mf)
     {
       scm_done_malloc(sizeof(mix_fd));
-      SND_RETURN_NEWSMOB(mf_tag, mf);
+      RETURN_NEW_OBJECT(mf_tag, mf);
     }
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_next_mix_sample(SCM obj)
@@ -3928,17 +3928,17 @@ static SCM g_free_mix_sample_reader(SCM obj)
   ASSERT_TYPE(MIX_SAMPLE_READER_P(obj), obj, ARGn, S_free_mix_sample_reader, "a mix-sample-reader");
   mf = TO_MIX_SAMPLE_READER(obj);
   free_mix_fd_almost(mf);
-  return(scm_return_first(SCM_BOOL_F, obj));
+  return(scm_return_first(FALSE_VALUE, obj));
 }
 
 
 
 /* ---------------- track sample readers ---------------- */
 
-static SND_TAG_TYPE tf_tag = 0;
-static int tf_p(SCM obj) {return(SMOB_TYPE_P(obj, tf_tag));}
-#define TO_TRACK_SAMPLE_READER(obj) ((track_fd *)SND_VALUE_OF(obj))
-#define TRACK_SAMPLE_READER_P(Obj) SMOB_TYPE_P(Obj, tf_tag)
+static TAG_TYPE tf_tag = 0;
+static int tf_p(SCM obj) {return(OBJECT_TYPE_P(obj, tf_tag));}
+#define TO_TRACK_SAMPLE_READER(obj) ((track_fd *)OBJECT_REF(obj))
+#define TRACK_SAMPLE_READER_P(Obj) OBJECT_TYPE_P(Obj, tf_tag)
 
 static SCM g_tf_p(SCM obj) 
 {
@@ -3949,7 +3949,7 @@ static SCM g_tf_p(SCM obj)
 static track_fd *get_tf(SCM obj) 
 {
   if (TRACK_SAMPLE_READER_P(obj))
-    return((track_fd *)SND_VALUE_OF(obj));
+    return((track_fd *)OBJECT_REF(obj));
   return(NULL);
 }
 
@@ -4005,7 +4005,7 @@ static int print_tf(SCM obj, SCM port, scm_print_state *pstate)
 
 static scm_sizet free_tf(SCM obj) 
 {
-  track_fd *fd = (track_fd *)SND_VALUE_OF(obj); 
+  track_fd *fd = (track_fd *)OBJECT_REF(obj); 
   if (fd) free_track_fd(fd); 
   return(sizeof(track_fd));
 }
@@ -4018,7 +4018,7 @@ returns a reader ready to access track's data associated with snd's channel chn 
   track_fd *tf = NULL;
   chan_info *cp;
   ASSERT_TYPE(INTEGER_P(track_id), track_id, ARG1, S_make_track_sample_reader, "an integer");
-  SND_ASSERT_CHAN(S_make_track_sample_reader, snd, chn, 3); 
+  ASSERT_CHANNEL(S_make_track_sample_reader, snd, chn, 3); 
   ASSERT_TYPE(NUMBER_IF_BOUND_P(samp), samp, ARG2, S_make_track_sample_reader, "a number");
   cp = get_cp(snd, chn, S_make_track_sample_reader);
   tf = init_track_reader(cp, 
@@ -4027,7 +4027,7 @@ returns a reader ready to access track's data associated with snd's channel chn 
   if (tf)
     {
       scm_done_malloc(sizeof(track_fd));
-      SND_RETURN_NEWSMOB(tf_tag, tf);
+      RETURN_NEW_OBJECT(tf_tag, tf);
     }
   ERROR(NO_SUCH_TRACK,
 	LIST_2(TO_SCM_STRING(S_make_track_sample_reader),
@@ -4049,7 +4049,7 @@ static SCM g_free_track_sample_reader(SCM obj)
   ASSERT_TYPE(TRACK_SAMPLE_READER_P(obj), obj, ARGn, S_free_track_sample_reader, "a track-sample-reader");
   tf = TO_TRACK_SAMPLE_READER(obj);
   free_track_fd_almost(tf);
-  return(scm_return_first(SCM_BOOL_F, obj));
+  return(scm_return_first(FALSE_VALUE, obj));
 }
 
 static SCM g_play_track(SCM num, SCM snd, SCM chn)
@@ -4085,7 +4085,7 @@ static SCM multichannel_mix_hook, mix_speed_changed_hook, mix_amp_changed_hook, 
 
 static void call_multichannel_mix_hook(int *ids, int n)
 {
-  SCM lst = SCM_EOL;
+  SCM lst = EMPTY_LIST;
   int i;
   /* create list from ids, pass to hook, if any */
   if (HOOKED(multichannel_mix_hook))
@@ -4100,7 +4100,7 @@ static void call_multichannel_mix_hook(int *ids, int n)
 
 static int call_mix_speed_changed_hook(mix_info *md)
 {  
-  SCM res = SCM_BOOL_F;
+  SCM res = FALSE_VALUE;
   if ((md) && 
       (HOOKED(mix_speed_changed_hook)))
     res = g_c_run_progn_hook(mix_speed_changed_hook,
@@ -4111,7 +4111,7 @@ static int call_mix_speed_changed_hook(mix_info *md)
 
 static int call_mix_amp_changed_hook(mix_info *md)
 {  
-  SCM res = SCM_BOOL_F;
+  SCM res = FALSE_VALUE;
   if ((md) && 
       (HOOKED(mix_amp_changed_hook)))
     res = g_c_run_progn_hook(mix_amp_changed_hook,
@@ -4122,7 +4122,7 @@ static int call_mix_amp_changed_hook(mix_info *md)
 
 static int call_mix_position_changed_hook(mix_info *md, int samps)
 {  
-  SCM res = SCM_BOOL_F;
+  SCM res = FALSE_VALUE;
   if ((md) && 
       (HOOKED(mix_position_changed_hook)))
     res = g_c_run_progn_hook(mix_position_changed_hook,
@@ -4146,7 +4146,7 @@ mixes data (a vct object) into snd's channel chn starting at beg; returns the ne
   MUS_SAMPLE_TYPE **data;
   int i, len, mix_id = -1, with_mixers = 1;
   ASSERT_TYPE(VCT_P(obj), obj, ARG1, S_mix_vct, "a vct");
-  SND_ASSERT_CHAN(S_mix_vct, snd, chn, 3);
+  ASSERT_CHANNEL(S_mix_vct, snd, chn, 3);
   ASSERT_TYPE(INTEGER_IF_BOUND_P(beg), beg, ARG2, S_mix_vct, "an integer");
   ASSERT_TYPE(BOOLEAN_IF_BOUND_P(with_tag), with_tag, ARG5, S_mix_vct, "a boolean");
   v = TO_VCT(obj);
@@ -4187,11 +4187,11 @@ finds the mix in snd's channel chn at samp, returning the mix id; returns #f if 
   int id;
   chan_info *cp = NULL;
   ASSERT_TYPE(NUMBER_IF_BOUND_P(samp_n), samp_n, ARG1, S_find_mix, "a number");
-  SND_ASSERT_CHAN(S_find_mix, snd_n, chn_n, 2); 
+  ASSERT_CHANNEL(S_find_mix, snd_n, chn_n, 2); 
   cp = get_cp(snd_n, chn_n, S_find_mix);
   id = mix_id_from_channel_position(cp, TO_C_INT_OR_ELSE_WITH_ORIGIN(samp_n, -1, S_find_mix));
   if (id == INVALID_MIX_ID)
-    return(SCM_BOOL_F);
+    return(FALSE_VALUE);
   return(TO_SCM_INT(id));
 }
 
@@ -4203,7 +4203,7 @@ void g_init_mix(SCM local_doc)
   scm_set_smob_print(mf_tag, print_mf);
   scm_set_smob_free(mf_tag, free_mf);
 #if HAVE_APPLICABLE_SMOB
-  scm_set_smob_apply(mf_tag, SCM_FNC g_next_mix_sample, 0, 0, 0);
+  scm_set_smob_apply(mf_tag, PROCEDURE g_next_mix_sample, 0, 0, 0);
 #endif
 #endif
 
@@ -4217,7 +4217,7 @@ void g_init_mix(SCM local_doc)
   scm_set_smob_print(tf_tag, print_tf);
   scm_set_smob_free(tf_tag, free_tf);
 #if HAVE_APPLICABLE_SMOB
-  scm_set_smob_apply(tf_tag, SCM_FNC g_next_track_sample, 0, 0, 0);
+  scm_set_smob_apply(tf_tag, PROCEDURE g_next_track_sample, 0, 0, 0);
 #endif
 #endif
 
@@ -4228,60 +4228,60 @@ void g_init_mix(SCM local_doc)
   DEFINE_PROC(S_play_mix,                      g_play_mix, 0, 1, 0,                          H_play_mix);
   DEFINE_PROC(S_play_track,                    g_play_track, 1, 2, 0,                        H_play_track);
 
-  define_procedure_with_setter(S_mix_position, SCM_FNC g_mix_position, H_mix_position,
-			       "set-" S_mix_position, SCM_FNC g_set_mix_position,
+  define_procedure_with_setter(S_mix_position, PROCEDURE g_mix_position, H_mix_position,
+			       "set-" S_mix_position, PROCEDURE g_set_mix_position,
 			       local_doc, 0, 1, 2, 0);
 
-  define_procedure_with_setter(S_mix_length, SCM_FNC g_mix_length, H_mix_length,
-			       "set-" S_mix_length, SCM_FNC g_set_mix_length,
+  define_procedure_with_setter(S_mix_length, PROCEDURE g_mix_length, H_mix_length,
+			       "set-" S_mix_length, PROCEDURE g_set_mix_length,
 			       local_doc, 0, 1, 2, 0);
 
-  define_procedure_with_setter(S_mix_locked, SCM_FNC g_mix_locked, H_mix_locked,
-			       "set-" S_mix_locked, SCM_FNC g_set_mix_locked,
+  define_procedure_with_setter(S_mix_locked, PROCEDURE g_mix_locked, H_mix_locked,
+			       "set-" S_mix_locked, PROCEDURE g_set_mix_locked,
 			       local_doc, 0, 1, 2, 0);
 
-  define_procedure_with_setter(S_mix_anchor, SCM_FNC g_mix_anchor, H_mix_anchor,
-			       "set-" S_mix_anchor, SCM_FNC g_set_mix_anchor,
+  define_procedure_with_setter(S_mix_anchor, PROCEDURE g_mix_anchor, H_mix_anchor,
+			       "set-" S_mix_anchor, PROCEDURE g_set_mix_anchor,
 			       local_doc, 0, 1, 2, 0);
 
-  define_procedure_with_setter(S_mix_track, SCM_FNC g_mix_track, H_mix_track,
-			       "set-" S_mix_track, SCM_FNC g_set_mix_track,
+  define_procedure_with_setter(S_mix_track, PROCEDURE g_mix_track, H_mix_track,
+			       "set-" S_mix_track, PROCEDURE g_set_mix_track,
 			       local_doc, 0, 1, 2, 0);
 
-  define_procedure_with_setter("mix-sync", SCM_FNC g_mix_track, H_mix_track,
-			       "set-mix-sync", SCM_FNC g_set_mix_track,
+  define_procedure_with_setter("mix-sync", PROCEDURE g_mix_track, H_mix_track,
+			       "set-mix-sync", PROCEDURE g_set_mix_track,
 			       local_doc, 0, 1, 2, 0);
 
-  define_procedure_with_setter(S_mix_tag_y, SCM_FNC g_mix_tag_y, H_mix_tag_y,
-			       "set-" S_mix_tag_y, SCM_FNC g_set_mix_tag_y,
+  define_procedure_with_setter(S_mix_tag_y, PROCEDURE g_mix_tag_y, H_mix_tag_y,
+			       "set-" S_mix_tag_y, PROCEDURE g_set_mix_tag_y,
 			       local_doc, 0, 1, 2, 0);
 
-  define_procedure_with_setter(S_mix_speed, SCM_FNC g_mix_speed, H_mix_speed,
-			       "set-" S_mix_speed, SCM_FNC g_set_mix_speed,
+  define_procedure_with_setter(S_mix_speed, PROCEDURE g_mix_speed, H_mix_speed,
+			       "set-" S_mix_speed, PROCEDURE g_set_mix_speed,
 			       local_doc, 0, 1, 2, 0);
 
-  define_procedure_with_setter(S_mix_name, SCM_FNC g_mix_name, H_mix_name,
-			       "set-" S_mix_name, SCM_FNC g_set_mix_name,
+  define_procedure_with_setter(S_mix_name, PROCEDURE g_mix_name, H_mix_name,
+			       "set-" S_mix_name, PROCEDURE g_set_mix_name,
 			       local_doc, 0, 1, 2, 0);
 
-  define_procedure_with_setter(S_mix_waveform_height, SCM_FNC g_mix_waveform_height, H_mix_waveform_height,
-			       "set-" S_mix_waveform_height, SCM_FNC g_set_mix_waveform_height,
+  define_procedure_with_setter(S_mix_waveform_height, PROCEDURE g_mix_waveform_height, H_mix_waveform_height,
+			       "set-" S_mix_waveform_height, PROCEDURE g_set_mix_waveform_height,
 			       local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_mix_tag_width, SCM_FNC g_mix_tag_width, H_mix_tag_width,
-			       "set-" S_mix_tag_width, SCM_FNC g_set_mix_tag_width,
+  define_procedure_with_setter(S_mix_tag_width, PROCEDURE g_mix_tag_width, H_mix_tag_width,
+			       "set-" S_mix_tag_width, PROCEDURE g_set_mix_tag_width,
 			       local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_mix_tag_height, SCM_FNC g_mix_tag_height, H_mix_tag_height,
-			       "set-" S_mix_tag_height, SCM_FNC g_set_mix_tag_height,
+  define_procedure_with_setter(S_mix_tag_height, PROCEDURE g_mix_tag_height, H_mix_tag_height,
+			       "set-" S_mix_tag_height, PROCEDURE g_set_mix_tag_height,
 			       local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_mix_amp, SCM_FNC g_mix_amp, H_mix_amp,
-			       "set-" S_mix_amp, SCM_FNC g_set_mix_amp,
+  define_procedure_with_setter(S_mix_amp, PROCEDURE g_mix_amp, H_mix_amp,
+			       "set-" S_mix_amp, PROCEDURE g_set_mix_amp,
 			       local_doc, 0, 2, 3, 0);
 
-  define_procedure_with_setter(S_mix_amp_env, SCM_FNC g_mix_amp_env, H_mix_amp_env,
-			       "set-" S_mix_amp_env, SCM_FNC g_set_mix_amp_env,
+  define_procedure_with_setter(S_mix_amp_env, PROCEDURE g_mix_amp_env, H_mix_amp_env,
+			       "set-" S_mix_amp_env, PROCEDURE g_set_mix_amp_env,
 			       local_doc, 0, 2, 3, 0);
 
 
@@ -4293,8 +4293,8 @@ void g_init_mix(SCM local_doc)
   DEFINE_PROC(S_select_mix,   g_select_mix, 1, 0, 0,   H_select_mix);
   DEFINE_PROC(S_find_mix,     g_find_mix, 0, 3, 0,     H_find_mix);
 
-  define_procedure_with_setter(S_selected_mix, SCM_FNC g_selected_mix, H_selected_mix,
-			       "set-" S_selected_mix, SCM_FNC g_select_mix,
+  define_procedure_with_setter(S_selected_mix, PROCEDURE g_selected_mix, H_selected_mix,
+			       "set-" S_selected_mix, PROCEDURE g_select_mix,
 			       local_doc, 0, 0, 1, 0);
 
   DEFINE_PROC(S_forward_mix,  g_forward_mix, 0, 3, 0,  H_forward_mix);

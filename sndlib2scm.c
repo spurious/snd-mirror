@@ -18,27 +18,8 @@
 
 #include "sndlib.h"
 #include "sndlib-strings.h"
-
-#if (!USE_SND)
-#if HAVE_GUILE
-  #include <guile/gh.h>
-  #include "sg.h"
-#endif
-#if HAVE_LIBREP 
-  #include <rep.h>
-  #include "sl.h"
-#endif
-#if HAVE_MZSCHEME
-  #include <scheme.h>
-  #include "sz.h"
-#endif
-#if (!HAVE_EXTENSION_LANGUAGE)
-  #include "noguile.h"
-#endif
-#endif
-
-#include "vct.h"
 #include "sndlib2scm.h"
+#include "vct.h"
 
 
 #if (!USE_SND)
@@ -65,8 +46,8 @@ void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char *get_h
   scm_permanent_object(
     scm_c_define(get_name,
       scm_make_procedure_with_setter(
-        SND_NEW_PROCEDURE("", SCM_FNC get_func, get_req, get_opt, 0),
-	SND_NEW_PROCEDURE(set_name, SCM_FNC set_func, set_req, set_opt, 0))));
+        NEW_PROCEDURE("", PROCEDURE get_func, get_req, get_opt, 0),
+	NEW_PROCEDURE(set_name, PROCEDURE set_func, set_req, set_opt, 0))));
   scm_set_object_property_x(TO_SCM_SYMBOL(get_name), local_doc, str);
   scm_set_procedure_property_x(SND_LOOKUP(get_name), local_doc, str);
 #else
@@ -74,8 +55,8 @@ void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char *get_h
     CDR(
       gh_define(get_name,
 	scm_make_procedure_with_setter(
-          SND_NEW_PROCEDURE("", SCM_FNC get_func, get_req, get_opt, 0),
-	  SND_NEW_PROCEDURE(set_name, SCM_FNC set_func, set_req, set_opt, 0)
+          NEW_PROCEDURE("", PROCEDURE get_func, get_req, get_opt, 0),
+	  NEW_PROCEDURE(set_name, PROCEDURE set_func, set_req, set_opt, 0)
 	  ))),
     local_doc,
     TO_SCM_STRING(get_help));
@@ -107,7 +88,7 @@ static SCM g_sound_loop_info(SCM filename)
   #define H_mus_sound_loop_info "(" S_mus_sound_loop_info " filename) -> loop info for sound as a list (start1 end1 start2 end2 base-note base-detune)"
   int *res;
   char *tmpstr;
-  SCM sres = SCM_EOL;
+  SCM sres = EMPTY_LIST;
   ASSERT_TYPE(STRING_P(filename), filename, ARGn, S_mus_sound_loop_info, "a string"); 
   tmpstr = mus_expand_filename(TO_C_STRING(filename));
   res = mus_sound_loop_info(tmpstr);
@@ -305,7 +286,7 @@ static SCM g_audio_outputs(SCM speakers, SCM headphones, SCM line_out)
 			TO_C_INT(headphones),
 			TO_C_INT(line_out));
 #endif
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_sound_max_amp_exists(SCM file)
@@ -326,7 +307,7 @@ static SCM g_sound_max_amp(SCM file)
   int chans, rtn, i;
   MUS_SAMPLE_TYPE *vals;
   char *filename;
-  SCM res = SCM_EOL;
+  SCM res = EMPTY_LIST;
   ASSERT_TYPE(STRING_P(file), file, ARGn, S_mus_sound_max_amp, "a string");
   filename = mus_expand_filename(TO_C_STRING(file));
   chans = mus_sound_chans(filename);
@@ -376,9 +357,9 @@ static SCM g_sound_set_max_amp(SCM file, SCM vals)
 
 /* to support the actual sound file/audio port stuff, we need an "smob" for the int** arrays */
 
-static SND_TAG_TYPE sound_data_tag = 0;
-int sound_data_p(SCM obj) {return(SMOB_TYPE_P(obj, sound_data_tag));}
-#define SOUND_DATA_P(Obj) SMOB_TYPE_P(Obj, sound_data_tag)
+static TAG_TYPE sound_data_tag = 0;
+int sound_data_p(SCM obj) {return(OBJECT_TYPE_P(obj, sound_data_tag));}
+#define SOUND_DATA_P(Obj) OBJECT_TYPE_P(Obj, sound_data_tag)
 
 static SCM g_sound_data_p(SCM obj) 
 {
@@ -391,7 +372,7 @@ static MUS_SAMPLE_TYPE **get_sound_data(SCM arg)
   sound_data *sd;
   if (SOUND_DATA_P(arg))
     {
-      sd = (sound_data *)(SND_VALUE_OF(arg));
+      sd = (sound_data *)(OBJECT_REF(arg));
       return(sd->data);
     }
   return(NULL);
@@ -400,7 +381,7 @@ static MUS_SAMPLE_TYPE **get_sound_data(SCM arg)
 static scm_sizet free_sound_data(SCM obj)
 {
   int i;
-  sound_data *v = (sound_data *)SND_VALUE_OF(obj);
+  sound_data *v = (sound_data *)OBJECT_REF(obj);
   if (v == NULL) return(0);
   if (v->data) 
     {
@@ -416,7 +397,7 @@ static scm_sizet free_sound_data(SCM obj)
 static int print_sound_data(SCM obj, SCM port, scm_print_state *pstate)
 {
   char *buf;
-  sound_data *v = (sound_data *)SND_VALUE_OF(obj);
+  sound_data *v = (sound_data *)OBJECT_REF(obj);
   if (v == NULL)
     WRITE_STRING("#<sound-data: null>", port);
   else
@@ -442,9 +423,9 @@ static SCM equalp_sound_data(SCM obj1, SCM obj2)
 {
   int i, chn;
   sound_data *v1, *v2;
-  v1 = (sound_data *)SND_VALUE_OF(obj1);
-  v2 = (sound_data *)SND_VALUE_OF(obj2);
-  if (v1 == v2) return(SCM_BOOL_T);
+  v1 = (sound_data *)OBJECT_REF(obj1);
+  v2 = (sound_data *)OBJECT_REF(obj2);
+  if (v1 == v2) return(TRUE_VALUE);
   if ((v1) && (v2) &&
       (v1->chans == v2->chans) &&
       (v1->length == v2->length))
@@ -452,10 +433,10 @@ static SCM equalp_sound_data(SCM obj1, SCM obj2)
       for (chn = 0; chn < v1->chans; chn++)
 	for (i = 0; i < v1->length; i++)
 	  if (v1->data[chn][i] != v2->data[chn][i])
-	    return(SCM_BOOL_F);
-      return(SCM_BOOL_T);
+	    return(FALSE_VALUE);
+      return(TRUE_VALUE);
     }
-  return(scm_return_first(SCM_BOOL_F, obj1, obj2));
+  return(scm_return_first(FALSE_VALUE, obj1, obj2));
 }
 
 static SCM sound_data_length(SCM obj)
@@ -463,8 +444,8 @@ static SCM sound_data_length(SCM obj)
   #define H_sound_data_length "(" S_sound_data_length " sd) -> length (samples) of each channel of sound-data object sd"
   sound_data *v;
   ASSERT_TYPE(SOUND_DATA_P(obj), obj, ARGn, S_sound_data_length, "a sound-data object");
-  v = (sound_data *)SND_VALUE_OF(obj);
-  if (v == NULL) return(SCM_BOOL_F);
+  v = (sound_data *)OBJECT_REF(obj);
+  if (v == NULL) return(FALSE_VALUE);
   return(TO_SCM_INT(v->length));
 }
 
@@ -473,8 +454,8 @@ static SCM sound_data_chans(SCM obj)
   #define H_sound_data_chans "(" S_sound_data_chans " sd) -> number of channels in sound-data object sd"
   sound_data *v;
   ASSERT_TYPE(SOUND_DATA_P(obj), obj, ARGn, S_sound_data_chans, "a sound-data object");
-  v = (sound_data *)SND_VALUE_OF(obj);
-  if (v == NULL) return(SCM_BOOL_F);
+  v = (sound_data *)OBJECT_REF(obj);
+  if (v == NULL) return(FALSE_VALUE);
   return(TO_SMALL_SCM_INT(v->chans));
 }
 
@@ -489,7 +470,7 @@ SCM make_sound_data(int chans, int frames)
   new_sound_data->data = (MUS_SAMPLE_TYPE **)CALLOC(chans, sizeof(MUS_SAMPLE_TYPE *));
   for (i = 0; i < chans; i++)
     new_sound_data->data[i] = (MUS_SAMPLE_TYPE *)CALLOC(frames, sizeof(MUS_SAMPLE_TYPE));
-  SND_RETURN_NEWSMOB(sound_data_tag, new_sound_data);
+  RETURN_NEW_OBJECT(sound_data_tag, new_sound_data);
 }
 
 static SCM g_make_sound_data(SCM chans, SCM frames)
@@ -515,7 +496,7 @@ static SCM sound_data_ref(SCM obj, SCM chan, SCM frame_num)
   ASSERT_TYPE(SOUND_DATA_P(obj), obj, ARG1, S_sound_data_ref, "a sound-data object");
   ASSERT_TYPE(INTEGER_P(chan), chan, ARG2, S_sound_data_ref, "an integer");
   ASSERT_TYPE(INTEGER_P(frame_num), frame_num, ARG3, S_sound_data_ref, "an integer");
-  v = (sound_data *)SND_VALUE_OF(obj);
+  v = (sound_data *)OBJECT_REF(obj);
   if (v)
     {
       chn = TO_C_INT(chan);
@@ -526,7 +507,7 @@ static SCM sound_data_ref(SCM obj, SCM chan, SCM frame_num)
 	mus_misc_error(S_sound_data_ref, "invalid frame number", LIST_2(obj, frame_num));
       return(TO_SCM_DOUBLE(MUS_SAMPLE_TO_DOUBLE(v->data[chn][loc])));
     }
-  else mus_misc_error(S_sound_data_ref, "nil sound-data?", SCM_EOL);
+  else mus_misc_error(S_sound_data_ref, "nil sound-data?", EMPTY_LIST);
   return(TO_SCM_DOUBLE(0.0));
 }
 
@@ -551,7 +532,7 @@ static SCM sound_data_set(SCM obj, SCM chan, SCM frame_num, SCM val)
   ASSERT_TYPE(INTEGER_P(chan), chan, ARG2, S_sound_data_setB, "an integer");
   ASSERT_TYPE(INTEGER_P(frame_num), frame_num, ARG3, S_sound_data_setB, "an integer");
   ASSERT_TYPE(NUMBER_P(val), val, ARG4, S_sound_data_setB, "a number");
-  v = (sound_data *)SND_VALUE_OF(obj);
+  v = (sound_data *)OBJECT_REF(obj);
   if (v)
     {
       chn = TO_C_INT(chan);
@@ -562,7 +543,7 @@ static SCM sound_data_set(SCM obj, SCM chan, SCM frame_num, SCM val)
 	mus_misc_error(S_sound_data_setB, "invalid frame number", LIST_3(obj, chan, frame_num));
       v->data[chn][loc] = MUS_DOUBLE_TO_SAMPLE(TO_C_DOUBLE(val));
     }
-  else mus_misc_error(S_sound_data_setB, "nil sound-data?", SCM_EOL);
+  else mus_misc_error(S_sound_data_setB, "nil sound-data?", EMPTY_LIST);
   return(val);
 }
 
@@ -575,7 +556,7 @@ static SCM sound_data2vct(SCM sdobj, SCM chan, SCM vobj)
   ASSERT_TYPE(SOUND_DATA_P(sdobj), sdobj, ARG1, S_sound_data2vct, "a sound-data object");
   ASSERT_TYPE(INTEGER_IF_BOUND_P(chan), chan, ARG2, S_sound_data2vct, "an integer");
   ASSERT_TYPE(NOT_BOUND_P(vobj) || VCT_P(vobj), vobj, ARG3, S_sound_data2vct, "a vct");
-  sd = (sound_data *)SND_VALUE_OF(sdobj);
+  sd = (sound_data *)OBJECT_REF(sdobj);
   if (!(VCT_P(vobj))) vobj = make_vct(sd->length, (Float *)CALLOC(sd->length, sizeof(Float)));
   v = TO_VCT(vobj);
   chn = TO_C_INT_OR_ELSE(chan, 0);
@@ -600,7 +581,7 @@ static SCM vct2sound_data(SCM vobj, SCM sdobj, SCM chan)
   ASSERT_TYPE(INTEGER_IF_BOUND_P(chan), chan, ARG3, S_vct2sound_data, "an integer");
   v = TO_VCT(vobj);
   if (!(SOUND_DATA_P(sdobj))) sdobj = make_sound_data(1, v->length);
-  sd = (sound_data *)SND_VALUE_OF(sdobj);
+  sd = (sound_data *)OBJECT_REF(sdobj);
   chn = TO_C_INT_OR_ELSE(chan, 0);
   if (chn >= sd->chans)
     mus_misc_error(S_vct2sound_data, "invalid channel", LIST_3(vobj, chan, sdobj));
@@ -862,14 +843,14 @@ static SCM g_save_audio_state (void)
 {
   #define H_mus_audio_save "(" S_mus_audio_save ") tries to save the current audio hardware state for a subsequent mus-audio-restore"
   mus_audio_save(); 
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_restore_audio_state (void) 
 {
   #define H_mus_audio_restore "(" S_mus_audio_restore ") tries to restore a previously saved audio hardware state"
   mus_audio_restore(); 
-  return(SCM_BOOL_F);
+  return(FALSE_VALUE);
 }
 
 static SCM g_audio_systems (void) 
@@ -895,7 +876,7 @@ to the audio line from the sound-data object sdata."
   ASSERT_TYPE(INTEGER_P(line), line, ARG1, S_mus_audio_write, "an integer");
   ASSERT_TYPE(SOUND_DATA_P(sdata), sdata, ARG2, S_mus_audio_write, "a sound-data object");
   ASSERT_TYPE(INTEGER_P(frames), frames, ARG3, S_mus_audio_write, "an integer");
-  sd = (sound_data *)SND_VALUE_OF(sdata);
+  sd = (sound_data *)OBJECT_REF(sdata);
   bufs = sd->data;
   frms = TO_C_INT(frames);
   outbytes = frms * sd->chans * 2;
@@ -928,7 +909,7 @@ from the audio line into the sound-data object sdata."
   ASSERT_TYPE(INTEGER_P(line), line, ARG1, S_mus_audio_read, "an integer");
   ASSERT_TYPE(SOUND_DATA_P(sdata), sdata, ARG2, S_mus_audio_read, "a sound-data object");
   ASSERT_TYPE(INTEGER_P(frames), frames, ARG3, S_mus_audio_read, "an integer");
-  sd = (sound_data *)SND_VALUE_OF(sdata);
+  sd = (sound_data *)OBJECT_REF(sdata);
   bufs = sd->data;
   frms = TO_C_INT(frames);
   inbytes = frms * sd->chans * 2;
@@ -1052,7 +1033,7 @@ static SCM g_mus_sound_report_cache(SCM file)
   #define H_mus_sound_report_cache "(" S_mus_sound_report_cache " name) prints the current sound \
 header data table to the file given or stdout if none"
 
-  SCM res = SCM_BOOL_F;
+  SCM res = FALSE_VALUE;
   if (NOT_BOUND_P(file))
     mus_sound_print_cache();
   else
@@ -1080,7 +1061,7 @@ void mus_sndlib2scm_initialize(void)
   scm_set_smob_free(sound_data_tag, free_sound_data);
   scm_set_smob_equalp(sound_data_tag, equalp_sound_data);
 #if HAVE_APPLICABLE_SMOB
-  scm_set_smob_apply(sound_data_tag, SCM_FNC sound_data_apply, 2, 0, 0);
+  scm_set_smob_apply(sound_data_tag, PROCEDURE sound_data_apply, 2, 0, 0);
 #endif
 #endif
 
@@ -1210,8 +1191,8 @@ void mus_sndlib2scm_initialize(void)
   DEFINE_PROC(S_mus_audio_open_input,     g_open_audio_input, 5, 0, 0,      H_mus_audio_open_input);
   DEFINE_PROC(S_mus_sound_report_cache,   g_mus_sound_report_cache, 0, 1, 0,H_mus_sound_report_cache);
 #if USE_SND
-  define_procedure_with_setter(S_sound_data_ref, SCM_FNC sound_data_ref, H_sound_data_ref,
-			       "set-" S_sound_data_ref, SCM_FNC sound_data_set, local_doc, 3, 0, 4, 0);
+  define_procedure_with_setter(S_sound_data_ref, PROCEDURE sound_data_ref, H_sound_data_ref,
+			       "set-" S_sound_data_ref, PROCEDURE sound_data_set, local_doc, 3, 0, 4, 0);
 #endif
 
   YES_WE_HAVE("sndlib");
