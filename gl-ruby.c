@@ -303,9 +303,13 @@ XEN_NARGIFY_1(gxg_gluEndPolygon_w, gxg_gluEndPolygon)
 #endif
 XEN_NARGIFY_1(gxg_gluErrorString_w, gxg_gluErrorString)
 XEN_NARGIFY_1(gxg_gluGetString_w, gxg_gluGetString)
+#ifdef GLU_VERSION_1_2
 XEN_NARGIFY_3(gxg_gluGetTessProperty_w, gxg_gluGetTessProperty)
+#endif
 XEN_NARGIFY_9(gxg_gluLookAt_w, gxg_gluLookAt)
+#ifdef GLU_VERSION_1_2
 XEN_NARGIFY_0(gxg_gluNewTess_w, gxg_gluNewTess)
+#endif
 #ifdef GLU_VERSION_1_2
 XEN_NARGIFY_2(gxg_gluNextContour_w, gxg_gluNextContour)
 #endif
@@ -314,12 +318,24 @@ XEN_NARGIFY_4(gxg_gluPerspective_w, gxg_gluPerspective)
 XEN_NARGIFY_5(gxg_gluPickMatrix_w, gxg_gluPickMatrix)
 XEN_NARGIFY_9(gxg_gluProject_w, gxg_gluProject)
 XEN_NARGIFY_9(gxg_gluScaleImage_w, gxg_gluScaleImage)
+#ifdef GLU_VERSION_1_2
 XEN_NARGIFY_1(gxg_gluTessBeginContour_w, gxg_gluTessBeginContour)
+#endif
+#ifdef GLU_VERSION_1_2
 XEN_NARGIFY_2(gxg_gluTessBeginPolygon_w, gxg_gluTessBeginPolygon)
+#endif
+#ifdef GLU_VERSION_1_2
 XEN_NARGIFY_1(gxg_gluTessEndContour_w, gxg_gluTessEndContour)
+#endif
+#ifdef GLU_VERSION_1_2
 XEN_NARGIFY_1(gxg_gluTessEndPolygon_w, gxg_gluTessEndPolygon)
+#endif
+#ifdef GLU_VERSION_1_2
 XEN_NARGIFY_4(gxg_gluTessNormal_w, gxg_gluTessNormal)
+#endif
+#ifdef GLU_VERSION_1_2
 XEN_NARGIFY_3(gxg_gluTessProperty_w, gxg_gluTessProperty)
+#endif
 #ifdef GLU_VERSION_1_2
 XEN_NARGIFY_3(gxg_gluTessVertex_w, gxg_gluTessVertex)
 #endif
@@ -691,9 +707,13 @@ static void define_functions(void)
 #endif_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluErrorString" XL_POST, gxg_gluErrorString_w, 1, 0, 0, H_gluErrorString);
   XEN_DEFINE_PROCEDURE(XL_PRE "gluGetString" XL_POST, gxg_gluGetString_w, 1, 0, 0, H_gluGetString);
+#ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluGetTessProperty" XL_POST, gxg_gluGetTessProperty_w, 3, 0, 0, H_gluGetTessProperty);
+#endif_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluLookAt" XL_POST, gxg_gluLookAt_w, 9, 0, 0, H_gluLookAt);
+#ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluNewTess" XL_POST, gxg_gluNewTess_w, 0, 0, 0, H_gluNewTess);
+#endif_2
 #ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluNextContour" XL_POST, gxg_gluNextContour_w, 2, 0, 0, H_gluNextContour);
 #endif_2
@@ -702,12 +722,24 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XL_PRE "gluPickMatrix" XL_POST, gxg_gluPickMatrix_w, 5, 0, 0, H_gluPickMatrix);
   XEN_DEFINE_PROCEDURE(XL_PRE "gluProject" XL_POST, gxg_gluProject_w, 9, 0, 0, H_gluProject);
   XEN_DEFINE_PROCEDURE(XL_PRE "gluScaleImage" XL_POST, gxg_gluScaleImage_w, 9, 0, 0, H_gluScaleImage);
+#ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluTessBeginContour" XL_POST, gxg_gluTessBeginContour_w, 1, 0, 0, H_gluTessBeginContour);
+#endif_2
+#ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluTessBeginPolygon" XL_POST, gxg_gluTessBeginPolygon_w, 2, 0, 0, H_gluTessBeginPolygon);
+#endif_2
+#ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluTessEndContour" XL_POST, gxg_gluTessEndContour_w, 1, 0, 0, H_gluTessEndContour);
+#endif_2
+#ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluTessEndPolygon" XL_POST, gxg_gluTessEndPolygon_w, 1, 0, 0, H_gluTessEndPolygon);
+#endif_2
+#ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluTessNormal" XL_POST, gxg_gluTessNormal_w, 4, 0, 0, H_gluTessNormal);
+#endif_2
+#ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluTessProperty" XL_POST, gxg_gluTessProperty_w, 3, 0, 0, H_gluTessProperty);
+#endif_2
 #ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluTessVertex" XL_POST, gxg_gluTessVertex_w, 3, 0, 0, H_gluTessVertex);
 #endif_2

@@ -1940,6 +1940,7 @@ void reset_spectro(snd_state *state)
   set_spectro_y_angle(state, DEFAULT_SPECTRO_Y_ANGLE);
 }
 
+static void display_channel_time_data(chan_info *cp, snd_info *sp, snd_state *ss);
 static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 {
   sono_info *si;
@@ -1956,85 +1957,131 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
   si = (sono_info *)(cp->sonogram_data);
   if ((si) && (si->scale > 0.0))
     {
-#if HAVE_GL && DEBUGGING
-      float x1, y1;
-      int **js;
-      scl = si->scale; /* unnormalized fft doesn't make much sense here (just washes out the graph) */
-      fp = cp->fft;
-      fap = fp->axis;
-      fwidth = (fap->x_axis_x1 - fap->x_axis_x0);
-      fheight = (fap->y_axis_y0 - fap->y_axis_y1);
-      bins = (int)(si->target_bins * cp->spectro_cutoff);
-      if (bins <= 0) bins = 1;
-      js = (int **)CALLOC(si->active_slices, sizeof(int *));
-      for (i = 0; i < si->active_slices; i++)
-	js[i] = (int *)CALLOC(bins, sizeof(int));
-      for (i = 0; i < si->active_slices; i++)
-	for (j = 0; j < bins; j++)
-	  {
-	    if (color_inverted(ss)) 
-	      xx = (int)(skew_color((1.0 - si->data[i][j] / scl), color_scale(ss)) * COLORMAP_SIZE); 
-	    else xx = (int)(skew_color(si->data[i][j] / scl, color_scale(ss)) * COLORMAP_SIZE);
-	    if (xx > 0) xx--; else xx = 0;
-	    js[i][j] = xx;
-	  }
-      glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)), ss->sgx->cx);
-      glEnable(GL_DEPTH_TEST);
-      glDepthFunc(GL_LEQUAL); 
-      glClearDepth(1.0);
-      glClearColor(1.0, 1.0, 1.0, 1.0);
-      glMatrixMode(GL_PROJECTION);
-      glLoadIdentity();
-      /* init:
-	 (set! (spectro-x-angle) 120.0)
-	 (set! (spectro-y-angle) 140.0)
-	 (set! (spectro-z-angle) 180.0)
-	 (set! (spectro-x-scale) 1.0)
-	 (set! (spectro-y-scale) 1.0)
-	 (set! (spectro-z-scale) 1.0)
+#if HAVE_GL
+      /* TODO: draggable y axis,
+	 TODO: axis ticks and labels
+	 TODO: multi-channel gl spectros
+	 TODO: gl wavogram, sonogram
+	 TODO: gl xrec labels
+	 TODO: 3D window-family fft (i.e. the 3rd dim tracks the window "beta" parameter)
+	 TODO: lighting, texture?
+	 TODO: background (0) case from graph color, not colormap
+	 TODO: movable viewpoints, translations
+	 SOMEDAY: editable spectrogram (select, apply any selection-proc)
+	 TODO: fix the regraph problem (glClear of partial window?)
+	 TODO: gl widget backgrounds? (3D lock, hourglass and bomb)
+	 TODO: printing support (doesn't GL->ps already exist?)
       */
-      glRotatef(cp->spectro_x_angle, 1.0, 0.0, 0.0);
-      glRotatef(cp->spectro_y_angle, 0.0, 1.0, 0.0);
-      glRotatef(cp->spectro_z_angle, 0.0, 0.0, 1.0);
-      glScalef(cp->spectro_x_scale, cp->spectro_z_scale, cp->spectro_y_scale);
-      glViewport(fap->x_axis_x0, 0, fwidth, fheight);
-      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-      xincr = 1.0 / (float)(si->active_slices);
-      yincr = 1.0 / (float)bins;
-      for (x0 = -0.5, slice = 0; slice < si->active_slices - 1; slice++, x0 += xincr)
+      if ((sp->nchans == 1) && 
+	  (color_map(ss) != BLACK_AND_WHITE))
 	{
-	  fdata = si->data[slice];
-	  for (i = 0, y0 = -0.5; i < bins - 1; i++, y0 += yincr)
+	  float x1, y1;
+	  int **js;
+	  scl = si->scale; /* unnormalized fft doesn't make much sense here (just washes out the graph) */
+	  fp = cp->fft;
+	  fap = fp->axis;
+	  fwidth = (fap->x_axis_x1 - fap->x_axis_x0);
+	  fheight = (fap->y_axis_y0 - fap->y_axis_y1);
+	  bins = (int)(si->target_bins * cp->spectro_cutoff);
+	  if (bins <= 0) bins = 1;
+	  js = (int **)CALLOC(si->active_slices, sizeof(int *));
+	  for (i = 0; i < si->active_slices; i++)
 	    {
-	      unsigned short r, g, b;
-	      glBegin(GL_POLYGON);
-	      x1 = x0 + xincr;
-	      y1 = y0 + yincr;
-
-	      get_current_color(color_map(ss), js[slice][i], &r, &g, &b);
-	      glColor3us(r, g, b);
-	      glVertex3f(x0, (si->data[slice][i] / scl) - 0.5, y0);
-
-	      get_current_color(color_map(ss), js[slice + 1][i], &r, &g, &b);
-	      glColor3us(r, g, b);
-	      glVertex3f(x1, (si->data[slice + 1][i] / scl) - 0.5, y0);
-
-	      get_current_color(color_map(ss), js[slice + 1][i + 1], &r, &g, &b);
-	      glColor3us(r, g, b);
-	      glVertex3f(x1, (si->data[slice + 1][i + 1] / scl) - 0.5, y1);
-
-	      get_current_color(color_map(ss), js[slice][i + 1], &r, &g, &b);
-	      glColor3us(r, g, b);
-	      glVertex3f(x0, (si->data[slice][i + 1] /scl) - 0.5, y1);
-
-	      glEnd();
+	      js[i] = (int *)CALLOC(bins, sizeof(int));
+	      for (j = 0; j < bins; j++)
+		{
+		  if (color_inverted(ss)) 
+		    xx = (int)(skew_color((1.0 - si->data[i][j] / scl), color_scale(ss)) * COLORMAP_SIZE); 
+		  else xx = (int)(skew_color(si->data[i][j] / scl, color_scale(ss)) * COLORMAP_SIZE);
+		  if (xx > 0) xx--; else xx = 0;
+		  js[i][j] = xx;
+		}
 	    }
+	  glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)), ss->sgx->cx);
+	  glEnable(GL_DEPTH_TEST);
+	  glDepthFunc(GL_LEQUAL); 
+	  glClearDepth(1.0);
+	  {
+	    /* a kludge for the background color */
+	    Colormap cmap;
+	    XColor tmp_color;
+	    Display *dpy;
+	    dpy = XtDisplay(MAIN_SHELL(ss));
+	    cmap = DefaultColormap(dpy, DefaultScreen(dpy));
+	    tmp_color.flags = DoRed | DoGreen | DoBlue;
+	    if (cp == selected_channel(ss))
+	      tmp_color.pixel = ss->sgx->selected_graph_color;
+	    else tmp_color.pixel = ss->sgx->graph_color;
+	    XQueryColor(dpy, cmap, &tmp_color);
+	    glClearColor((float)tmp_color.red / 65535.0,
+			 (float)tmp_color.green / 65535.0,
+			 (float)tmp_color.blue / 65535.0,
+			 0.0);
+	  }
+	  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	  glViewport(fap->x_axis_x0 - 4, 4, fwidth, fheight + 4);
+	  glMatrixMode(GL_PROJECTION);
+	  glLoadIdentity();
+	  glRotatef(cp->spectro_x_angle, 1.0, 0.0, 0.0);
+	  glRotatef(cp->spectro_y_angle, 0.0, 1.0, 0.0);
+	  glRotatef(cp->spectro_z_angle, 0.0, 0.0, 1.0);
+	  glScalef(cp->spectro_x_scale, cp->spectro_z_scale, cp->spectro_y_scale);
+
+	  /* a kludge for some axes */
+	  glBegin(GL_POLYGON);
+	  glColor3f(0.0, 0.0, 0.0);
+	  glVertex3f(-0.51, 0.0, -0.51);
+	  glVertex3f(0.51, 0.0, -0.51);
+	  glVertex3f(0.51, 0.0, -0.52);
+	  glVertex3f(-0.51, 0.0, -0.52);
+	  glEnd();
+	  glBegin(GL_POLYGON);
+	  glColor3f(0.0, 0.0, 0.0);
+	  glVertex3f(-0.51, 0.0, -0.51);
+	  glVertex3f(-0.51, 0.0, 0.51);
+	  glVertex3f(-0.52, 0.0, 0.51);
+	  glVertex3f(-0.52, 0.0, -0.51);
+	  glEnd();
+	  
+	  xincr = 1.0 / (float)(si->active_slices);
+	  yincr = 1.0 / (float)bins;
+	  for (x0 = -0.5, slice = 0; slice < si->active_slices - 1; slice++, x0 += xincr)
+	    {
+	      fdata = si->data[slice];
+	      for (i = 0, y0 = -0.5; i < bins - 1; i++, y0 += yincr)
+		{
+		  unsigned short r, g, b;
+		  glBegin(GL_POLYGON);
+		  x1 = x0 + xincr;
+		  y1 = y0 + yincr;
+		  
+		  get_current_color(color_map(ss), js[slice][i], &r, &g, &b);
+		  glColor3us(r, g, b);
+		  glVertex3f(x0, (si->data[slice][i] / scl), y0);
+		  
+		  get_current_color(color_map(ss), js[slice + 1][i], &r, &g, &b);
+		  glColor3us(r, g, b);
+		  glVertex3f(x1, (si->data[slice + 1][i] / scl), y0);
+		  
+		  get_current_color(color_map(ss), js[slice + 1][i + 1], &r, &g, &b);
+		  glColor3us(r, g, b);
+		  glVertex3f(x1, (si->data[slice + 1][i + 1] / scl), y1);
+		  
+		  get_current_color(color_map(ss), js[slice][i + 1], &r, &g, &b);
+		  glColor3us(r, g, b);
+		  glVertex3f(x0, (si->data[slice][i + 1] /scl), y1);
+		  
+		  glEnd();
+		}
+	    }
+	  glXSwapBuffers(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)));
+	  /* a kludge to get the normal graph drawn (again...) */
+	  if (cp->graph_time_p)
+	    display_channel_time_data(cp, cp->sound, cp->state); 
+	  for (i = 0; i < si->active_slices; i++) FREE(js[i]);
+	  FREE(js);
+	  return;
 	}
-      glXSwapBuffers(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)));
-      glFlush();
-      for (i = 0; i < si->active_slices; i++) FREE(js[i]);
-      FREE(js);
-      return;
 #endif
       if (cp->printing) ps_allocate_grf_points();
       scl = si->scale; /* unnormalized fft doesn't make much sense here (just washes out the graph) */
@@ -2048,7 +2095,7 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
       x0 = (fap->x_axis_x0 + fap->x_axis_x1) * 0.5;
       y0 = (fap->y_axis_y0 + fap->y_axis_y1) * 0.5;
       if (!(cp->fft_log_magnitude))
-	zscl = -(cp->spectro_z_scale * fheight/scl);
+	zscl = -(cp->spectro_z_scale * fheight / scl);
       else zscl = -(cp->spectro_z_scale * fheight);
       rotate_matrix(cp->spectro_x_angle, cp->spectro_y_angle, cp->spectro_z_angle,
 		    cp->spectro_x_scale, cp->spectro_y_scale, zscl,
@@ -2425,7 +2472,7 @@ static void draw_graph_cursor(chan_info *cp);
 
 static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_state *ss, 
 					    int width, int height, int offset, 
-					    int just_fft, int just_lisp)
+					    int just_fft, int just_lisp, int just_time)
 {
   int with_fft, with_lisp, displays, points;
   axis_info *ap = NULL;
@@ -2573,7 +2620,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	}
     }
 
-  if (!just_lisp)
+  if ((!just_lisp) && (!just_time))
     {
       if (with_fft)
 	{
@@ -2616,7 +2663,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	}
     }
 
-  if (!just_fft)
+if ((!just_fft) && (!just_time))
     {
       if (with_lisp)
 	{
@@ -2671,7 +2718,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
     } 
 }
 
-static void display_channel_data_1 (chan_info *cp, snd_info *sp, snd_state *ss, int just_fft, int just_lisp)
+static void display_channel_data_1 (chan_info *cp, snd_info *sp, snd_state *ss, int just_fft, int just_lisp, int just_time)
 {
   int width, height, offset, full_height, y0, y1, bottom, top;
   Float val, size, chan_height;
@@ -2685,7 +2732,7 @@ static void display_channel_data_1 (chan_info *cp, snd_info *sp, snd_state *ss, 
       width = widget_width(channel_graph(cp));
       height = widget_height(channel_graph(cp));
       if ((height > 5) && (width > 5))
-	display_channel_data_with_size(cp, sp, ss, width, height, 0, just_fft, just_lisp);
+	display_channel_data_with_size(cp, sp, ss, width, height, 0, just_fft, just_lisp, just_time);
     }
   else
     {
@@ -2697,7 +2744,7 @@ static void display_channel_data_1 (chan_info *cp, snd_info *sp, snd_state *ss, 
       height = widget_height(channel_graph(sp->chans[0]));
       cp->height = height;
       if (sp->channel_style == CHANNELS_SUPERIMPOSED)
-	display_channel_data_with_size(cp, sp, ss, width, height, 0, just_fft, just_lisp);
+	display_channel_data_with_size(cp, sp, ss, width, height, 0, just_fft, just_lisp, just_time);
       else
 	{
 	  val = gsy_value(sp->chans[0]);
@@ -2721,7 +2768,7 @@ static void display_channel_data_1 (chan_info *cp, snd_info *sp, snd_state *ss, 
 	    chan_height = height - offset;
 	  if (((y0 < top) && (y0 >= bottom)) || 
 	      ((y1 > bottom) && (y1 <= top)))
-	    display_channel_data_with_size(cp, sp, ss, width, (int)chan_height, offset, just_fft, just_lisp);
+	    display_channel_data_with_size(cp, sp, ss, width, (int)chan_height, offset, just_fft, just_lisp, just_time);
 	  else 
 	    {
 	      ap = cp->axis;
@@ -2733,17 +2780,22 @@ static void display_channel_data_1 (chan_info *cp, snd_info *sp, snd_state *ss, 
 
 void display_channel_fft_data(chan_info *cp, snd_info *sp, snd_state *ss)
 {
-  display_channel_data_1(cp, sp, ss, TRUE, FALSE);
+  display_channel_data_1(cp, sp, ss, TRUE, FALSE, FALSE);
 }
 
 static void display_channel_lisp_data(chan_info *cp, snd_info *sp, snd_state *ss)
 {
-  display_channel_data_1(cp, sp, ss, FALSE, TRUE);
+  display_channel_data_1(cp, sp, ss, FALSE, TRUE, FALSE);
+}
+
+static void display_channel_time_data(chan_info *cp, snd_info *sp, snd_state *ss)
+{
+  display_channel_data_1(cp, sp, ss, FALSE, FALSE, TRUE);
 }
 
 void display_channel_data(chan_info *cp, snd_info *sp, snd_state *ss)
 {
-  display_channel_data_1(cp, sp, ss, FALSE, FALSE);
+  display_channel_data_1(cp, sp, ss, FALSE, FALSE, FALSE);
 }
 
 

@@ -489,7 +489,7 @@ void set_sono_rectangle(int j, int color, Locus x, Locus y, Latus width, Latus h
 void allocate_sono_rects(snd_state *ss, int size)
 {
   int i;
-  if (color_map(ss) != -1) 
+  if (color_map(ss) != BLACK_AND_WHITE) 
     allocate_color_map(ss, color_map(ss));
   else allocate_color_map(ss, 0);
   if (size > sono_size)
@@ -635,7 +635,7 @@ static void list_color_callback(Widget w, XtPointer context, XtPointer info)
 void set_color_map(snd_state *ss, int val)
 {
   in_set_color_map(ss, val);
-  if (ccd) 
+  if ((ccd) && (val >= 0))
     XmListSelectPos(ccd->list, val + 1, FALSE);
   if (!(ss->graph_hook_active)) 
     map_over_chans(ss, update_graph, NULL);
@@ -760,6 +760,7 @@ void view_color_callback(Widget w, XtPointer context, XtPointer info)
       for (i = 0; i < NUM_COLORMAPS; i++) XmStringFree(cmaps[i]);
       FREE(cmaps);
       XtManageChild(ccd->list);
+      if (color_map(ss) >= 0) XmListSelectPos(ccd->list, color_map(ss) + 1, FALSE);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -1302,7 +1303,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, TRUE); n++;
-      XtSetArg(args[n], XmNmaximum, 200); n++;
+      XtSetArg(args[n], XmNmaximum, (int)(100 * SPECTRO_X_SCALE_MAX)); n++;
       XtSetArg(args[n], XmNvalue, (int)(spectro_x_scale(ss) * 100)); n++;
       XtSetArg(args[n], XmNtitleString, xstr); n++;
       XtSetArg(args[n], XmNdecimalPoints, 2); n++;
@@ -1317,7 +1318,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, TRUE); n++;
-      XtSetArg(args[n], XmNmaximum, 200); n++;
+      XtSetArg(args[n], XmNmaximum, (int)(100 * SPECTRO_Y_SCALE_MAX)); n++;
       XtSetArg(args[n], XmNvalue, (int)(spectro_y_scale(ss) * 100)); n++;
       XtSetArg(args[n], XmNtitleString, xstr); n++;
       XtSetArg(args[n], XmNdecimalPoints, 2); n++;
@@ -1333,6 +1334,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, TRUE); n++;
       XtSetArg(args[n], XmNdecimalPoints, 2); n++;
+      XtSetArg(args[n], XmNmaximum, (int)(100 * SPECTRO_Z_SCALE_MAX)); n++;
       XtSetArg(args[n], XmNvalue, (int)(spectro_z_scale(ss) * 100)); n++;
       XtSetArg(args[n], XmNtitleString, xstr); n++;
       oid->sz = XtCreateManagedWidget("zs", xmScaleWidgetClass, rightbox, args, n);

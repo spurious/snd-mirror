@@ -379,27 +379,57 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 
 #define spectro_x_angle(ss) ss->Spectro_X_Angle
 #define in_set_spectro_x_angle(ss, a) ss->Spectro_X_Angle = a
-#define DEFAULT_SPECTRO_X_ANGLE 90.0
+#if HAVE_GL
+  #define DEFAULT_SPECTRO_X_ANGLE 300.0
+#else
+  #define DEFAULT_SPECTRO_X_ANGLE 90.0
+#endif
 
 #define spectro_y_angle(ss) ss->Spectro_Y_Angle
 #define in_set_spectro_y_angle(ss, a) ss->Spectro_Y_Angle = a
-#define DEFAULT_SPECTRO_Y_ANGLE 0.0
+#if HAVE_GL
+  #define DEFAULT_SPECTRO_Y_ANGLE 320.0
+#else
+  #define DEFAULT_SPECTRO_Y_ANGLE 0.0
+#endif
 
 #define spectro_z_angle(ss) ss->Spectro_Z_Angle
 #define in_set_spectro_z_angle(ss, a) ss->Spectro_Z_Angle = a
-#define DEFAULT_SPECTRO_Z_ANGLE 358.0
+#if HAVE_GL
+  #define DEFAULT_SPECTRO_Z_ANGLE 0.0
+#else
+  #define DEFAULT_SPECTRO_Z_ANGLE 358.0
+#endif
 
 #define spectro_x_scale(ss) ss->Spectro_X_Scale
 #define in_set_spectro_x_scale(ss, a) ss->Spectro_X_Scale = a
-#define DEFAULT_SPECTRO_X_SCALE 1.0
+#if HAVE_GL
+  #define DEFAULT_SPECTRO_X_SCALE 1.5
+  #define SPECTRO_X_SCALE_MAX 4.0
+#else
+  #define DEFAULT_SPECTRO_X_SCALE 1.0
+  #define SPECTRO_X_SCALE_MAX 2.0
+#endif
 
 #define spectro_y_scale(ss) ss->Spectro_Y_Scale
 #define in_set_spectro_y_scale(ss, a) ss->Spectro_Y_Scale = a
-#define DEFAULT_SPECTRO_Y_SCALE 1.0
+#if HAVE_GL
+  #define DEFAULT_SPECTRO_Y_SCALE 1.5
+  #define SPECTRO_Y_SCALE_MAX 4.0
+#else
+  #define DEFAULT_SPECTRO_Y_SCALE 1.0
+  #define SPECTRO_Y_SCALE_MAX 2.0
+#endif
 
 #define spectro_z_scale(ss) ss->Spectro_Z_Scale
 #define in_set_spectro_z_scale(ss, a) ss->Spectro_Z_Scale = a
-#define DEFAULT_SPECTRO_Z_SCALE 0.1
+#if HAVE_GL
+  #define DEFAULT_SPECTRO_Z_SCALE 1.0
+  #define SPECTRO_Z_SCALE_MAX 4.0
+#else
+  #define DEFAULT_SPECTRO_Z_SCALE 0.1
+  #define SPECTRO_Z_SCALE_MAX 1.0
+#endif
 
 #define spectro_hop(ss) ss->Spectro_Hop
 #define in_set_spectro_hop(ss, a) ss->Spectro_Hop = a
@@ -407,7 +437,11 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 
 #define color_map(ss) ss->Color_Map
 #define in_set_color_map(ss, a) ss->Color_Map = a
-#define DEFAULT_COLOR_MAP BLACK_AND_WHITE
+#if HAVE_GL
+  #define DEFAULT_COLOR_MAP 2
+#else
+  #define DEFAULT_COLOR_MAP BLACK_AND_WHITE
+#endif
 
 #define speed_control_tones(ss) ss->Speed_Control_Tones
 #define in_set_speed_control_tones(ss, a) ss->Speed_Control_Tones = a

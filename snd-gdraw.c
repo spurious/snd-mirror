@@ -453,7 +453,7 @@ void set_sono_rectangle(int j, int color, Locus x, Locus y, Latus width, Latus h
 void allocate_sono_rects(snd_state *ss, int size)
 {
   int i;
-  if (color_map(ss) != -1) 
+  if (color_map(ss) != BLACK_AND_WHITE) 
     allocate_color_map(ss, color_map(ss));
   else allocate_color_map(ss, 0);
   if (size > sono_size)
@@ -593,7 +593,7 @@ static void list_color_callback(GtkWidget *w, gint row, gint column, GdkEventBut
 void set_color_map(snd_state *ss, int val)
 {
   in_set_color_map(ss, val);
-  if (ccd) SG_LIST_SELECT_ROW(ccd->list, val);
+  if ((ccd) && (val >= 0)) SG_LIST_SELECT_ROW(ccd->list, val);
   if (!(ss->graph_hook_active)) map_over_chans(ss, update_graph, NULL);
 }
 

@@ -1194,7 +1194,7 @@ gray, hsv, hot, cool, bone, copper, pink, jet, prism, autumn, winter, \
 spring, summer, colorcube, flag, and lines.  -1 means black and white."
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set-" S_colormap, "an integer"); 
-  set_color_map(state, mus_iclamp(0,
+  set_color_map(state, mus_iclamp(-1,
 				  XEN_TO_C_INT(val),
 				  NUM_COLORMAPS - 1));
   return(C_TO_XEN_INT(color_map(state)));

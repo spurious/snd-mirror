@@ -103,7 +103,7 @@ unsigned short *snd_colormap(int n)
 
 void get_current_color(int colormap, int j, unsigned short *r, unsigned short *g, unsigned short *b)
 {
-  /* used only by printer to translate to Postscript rgb colors */
+  /* used only by printer to translate to Postscript rgb colors (and by GL in snd-chn) */
   switch (colormap)
     {
     case GRAY_COLORMAP:      (*r) = gray_colormap[j * 3];      (*g) = gray_colormap[j * 3 + 1];      (*b) = gray_colormap[j * 3 + 2];      break;

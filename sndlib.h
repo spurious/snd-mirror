@@ -145,6 +145,7 @@
 #endif
 #endif
 
+BEGIN_DECLS
 
 #if (!defined(M_PI))
   #define M_PI 3.14159265358979323846264338327
@@ -349,8 +350,6 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
 #ifndef Float
   #define Float float
 #endif
-
-BEGIN_DECLS
 
 /* -------- sound.c -------- */
 

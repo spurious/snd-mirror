@@ -223,6 +223,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+23-May:  gl1.png (spectrogram uses GL now if mono and HAVE_GL).\n\
 20-May:  removed glfft.c and glfft.scm, added snd-gxl-context on -DHAVE_GL switch (configure --with-gl).\n\
          added gl.c, makegl.scm, gldata.scm (GL example in grfsnd.html).\n\
 15-May:  update-hook.\n\
@@ -232,7 +233,6 @@ void news_help(snd_state *ss)
 1-May:   maraca.scm, piano.scm.\n\
 30-Apr:  vct-map\n\
 29-Apr:  snd5.scm, singer.scm, fade.scm.\n\
-15-Apr:  snd 5.9.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

@@ -266,7 +266,9 @@
 	(cons "constchar*" "STRING")
 	))
 
-(define glu-1-2 '("GLUtesselator*" "gluBeginPolygon" "gluDeleteTess" "gluEndPolygon" "gluNextContour" "gluTessVertex"))
+(define glu-1-2 '("GLUtesselator*" "gluBeginPolygon" "gluDeleteTess" "gluEndPolygon" "gluNextContour" "gluTessVertex"
+		  "gluGetTessProperty" "gluTessBeginContour" "gluTessBeginPolygon" "gluTessEndContour" "gluTessEndPolygon"
+		  "gluTessNormal" "gluTessProperty" "gluNewTess"))
 
 (define (type-it type)
   (let ((typ (assoc type direct-types))

@@ -3183,6 +3183,7 @@ static XEN gxg_gluGetString(XEN name)
   return(C_TO_XEN_constchar_(gluGetString(XEN_TO_C_GLenum(name))));
 }
 
+#ifdef GLU_VERSION_1_2
 static XEN gxg_gluGetTessProperty(XEN tess, XEN which, XEN data)
 {
   #define H_gluGetTessProperty "void gluGetTessProperty(GLUtesselator* tess, GLenum which, GLdouble* data)"
@@ -3192,6 +3193,7 @@ static XEN gxg_gluGetTessProperty(XEN tess, XEN which, XEN data)
   gluGetTessProperty(XEN_TO_C_GLUtesselator_(tess), XEN_TO_C_GLenum(which), XEN_TO_C_GLdouble_(data));
   return(XEN_FALSE);
 }
+#endif
 
 static XEN gxg_gluLookAt(XEN eyeX, XEN eyeY, XEN eyeZ, XEN centerX, XEN centerY, XEN centerZ, XEN upX, XEN upY, XEN upZ)
 {
@@ -3211,11 +3213,13 @@ GLdouble centerY, GLdouble centerZ, GLdouble upX, GLdouble upY, GLdouble upZ)"
   return(XEN_FALSE);
 }
 
+#ifdef GLU_VERSION_1_2
 static XEN gxg_gluNewTess(void)
 {
   #define H_gluNewTess "GLUtesselator* gluNewTess( void)"
   return(C_TO_XEN_GLUtesselator_(gluNewTess()));
 }
+#endif
 
 #ifdef GLU_VERSION_1_2
 static XEN gxg_gluNextContour(XEN tess, XEN type)
@@ -3298,6 +3302,7 @@ void* dataIn, GLsizei wOut, GLsizei hOut, GLenum typeOut, GLvoid* dataOut)"
                                       XEN_TO_C_GLvoid_(dataOut))));
 }
 
+#ifdef GLU_VERSION_1_2
 static XEN gxg_gluTessBeginContour(XEN tess)
 {
   #define H_gluTessBeginContour "void gluTessBeginContour(GLUtesselator* tess)"
@@ -3305,7 +3310,9 @@ static XEN gxg_gluTessBeginContour(XEN tess)
   gluTessBeginContour(XEN_TO_C_GLUtesselator_(tess));
   return(XEN_FALSE);
 }
+#endif
 
+#ifdef GLU_VERSION_1_2
 static XEN gxg_gluTessBeginPolygon(XEN tess, XEN data)
 {
   #define H_gluTessBeginPolygon "void gluTessBeginPolygon(GLUtesselator* tess, GLvoid* data)"
@@ -3314,7 +3321,9 @@ static XEN gxg_gluTessBeginPolygon(XEN tess, XEN data)
   gluTessBeginPolygon(XEN_TO_C_GLUtesselator_(tess), XEN_TO_C_GLvoid_(data));
   return(XEN_FALSE);
 }
+#endif
 
+#ifdef GLU_VERSION_1_2
 static XEN gxg_gluTessEndContour(XEN tess)
 {
   #define H_gluTessEndContour "void gluTessEndContour(GLUtesselator* tess)"
@@ -3322,7 +3331,9 @@ static XEN gxg_gluTessEndContour(XEN tess)
   gluTessEndContour(XEN_TO_C_GLUtesselator_(tess));
   return(XEN_FALSE);
 }
+#endif
 
+#ifdef GLU_VERSION_1_2
 static XEN gxg_gluTessEndPolygon(XEN tess)
 {
   #define H_gluTessEndPolygon "void gluTessEndPolygon(GLUtesselator* tess)"
@@ -3330,7 +3341,9 @@ static XEN gxg_gluTessEndPolygon(XEN tess)
   gluTessEndPolygon(XEN_TO_C_GLUtesselator_(tess));
   return(XEN_FALSE);
 }
+#endif
 
+#ifdef GLU_VERSION_1_2
 static XEN gxg_gluTessNormal(XEN tess, XEN valueX, XEN valueY, XEN valueZ)
 {
   #define H_gluTessNormal "void gluTessNormal(GLUtesselator* tess, GLdouble valueX, GLdouble valueY, \
@@ -3342,7 +3355,9 @@ GLdouble valueZ)"
   gluTessNormal(XEN_TO_C_GLUtesselator_(tess), XEN_TO_C_GLdouble(valueX), XEN_TO_C_GLdouble(valueY), XEN_TO_C_GLdouble(valueZ));
   return(XEN_FALSE);
 }
+#endif
 
+#ifdef GLU_VERSION_1_2
 static XEN gxg_gluTessProperty(XEN tess, XEN which, XEN data)
 {
   #define H_gluTessProperty "void gluTessProperty(GLUtesselator* tess, GLenum which, GLdouble data)"
@@ -3352,6 +3367,7 @@ static XEN gxg_gluTessProperty(XEN tess, XEN which, XEN data)
   gluTessProperty(XEN_TO_C_GLUtesselator_(tess), XEN_TO_C_GLenum(which), XEN_TO_C_GLdouble(data));
   return(XEN_FALSE);
 }
+#endif
 
 #ifdef GLU_VERSION_1_2
 static XEN gxg_gluTessVertex(XEN tess, XEN location, XEN data)
@@ -4359,9 +4375,13 @@ static void define_functions(void)
 #endif
   XEN_DEFINE_PROCEDURE(XL_PRE "gluErrorString" XL_POST, gxg_gluErrorString, 1, 0, 0, H_gluErrorString);
   XEN_DEFINE_PROCEDURE(XL_PRE "gluGetString" XL_POST, gxg_gluGetString, 1, 0, 0, H_gluGetString);
+#ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluGetTessProperty" XL_POST, gxg_gluGetTessProperty, 3, 0, 0, H_gluGetTessProperty);
+#endif
   XEN_DEFINE_PROCEDURE(XL_PRE "gluLookAt" XL_POST, gxg_gluLookAt, 9, 0, 0, H_gluLookAt);
+#ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluNewTess" XL_POST, gxg_gluNewTess, 0, 0, 0, H_gluNewTess);
+#endif
 #ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluNextContour" XL_POST, gxg_gluNextContour, 2, 0, 0, H_gluNextContour);
 #endif
@@ -4370,12 +4390,24 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XL_PRE "gluPickMatrix" XL_POST, gxg_gluPickMatrix, 5, 0, 0, H_gluPickMatrix);
   XEN_DEFINE_PROCEDURE(XL_PRE "gluProject" XL_POST, gxg_gluProject, 9, 0, 0, H_gluProject);
   XEN_DEFINE_PROCEDURE(XL_PRE "gluScaleImage" XL_POST, gxg_gluScaleImage, 9, 0, 0, H_gluScaleImage);
+#ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluTessBeginContour" XL_POST, gxg_gluTessBeginContour, 1, 0, 0, H_gluTessBeginContour);
+#endif
+#ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluTessBeginPolygon" XL_POST, gxg_gluTessBeginPolygon, 2, 0, 0, H_gluTessBeginPolygon);
+#endif
+#ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluTessEndContour" XL_POST, gxg_gluTessEndContour, 1, 0, 0, H_gluTessEndContour);
+#endif
+#ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluTessEndPolygon" XL_POST, gxg_gluTessEndPolygon, 1, 0, 0, H_gluTessEndPolygon);
+#endif
+#ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluTessNormal" XL_POST, gxg_gluTessNormal, 4, 0, 0, H_gluTessNormal);
+#endif
+#ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluTessProperty" XL_POST, gxg_gluTessProperty, 3, 0, 0, H_gluTessProperty);
+#endif
 #ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluTessVertex" XL_POST, gxg_gluTessVertex, 3, 0, 0, H_gluTessVertex);
 #endif
@@ -5347,7 +5379,7 @@ static int gl_already_inited = 0;
       define_functions();
       XEN_YES_WE_HAVE("gl");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define gl-version \"21-May-02\")");
+      XEN_EVAL_C_STRING("(define gl-version \"22-May-02\")");
 #endif
       gl_already_inited = 1;
     }

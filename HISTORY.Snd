@@ -1,5 +1,6 @@
 snd change log
 
+  23-May:    gl1.png (spectrogram uses GL now if mono and HAVE_GL).
   20-May:    removed glfft.c and glfft.scm
              added snd-gxl-context on -DHAVE_GL switch (configure --with-gl)
              added gl.c, makegl.scm, gldata.scm. (GL example in grfsnd.html).
