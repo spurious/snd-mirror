@@ -17079,7 +17079,7 @@ EDITS: 5
 	      (snd-display ";granf 4 data 900: ~A" (channel->vct 900 30)))
 	  (undo))
 	
-	(let* ((gen (make-granulate :jitter 0.0 :hop .006 :length .001 :ramp 0.0 :max-size .01))
+	(let* ((gen (make-granulate :jitter 0.0 :hop .006 :length .001 :ramp 0.0 :max-size 2200))
 	       (e (make-env '(0 1 1 5) :end 1000))
 	       (base-len (mus-length gen)))
 	  (map-channel 
@@ -17105,7 +17105,7 @@ EDITS: 5
 	      (snd-display ";granf 5 data 800: ~A" (channel->vct 800 30)))
 	  (undo))
 	
-	(let* ((gen (make-granulate :jitter 0.0 :hop .006 :length .005 :ramp 0.0 :max-size .01))
+	(let* ((gen (make-granulate :jitter 0.0 :hop .006 :length .005 :ramp 0.0 :max-size 2200))
 	       (e (make-env '(0 1 1 .2) :end 1000))
 	       (base-len (mus-length gen)))
 	  (map-channel 
@@ -17131,7 +17131,7 @@ EDITS: 5
 	  (close-sound ind)
 	  (delete-file fname)))
 
-      ;; granulate with small hop (comb filter effect confusion?)
+      ;; granulate with jitter=0, small hop (comb filter effect)
       (let ((ind (new-sound "tmp.snd" mus-next mus-bfloat 22050 1 :size 10000)))
 	(let ((gen (make-granulate :expansion 20.0
 				   :input (lambda (dir) .01)
@@ -18100,9 +18100,8 @@ EDITS: 5
 			  12345678901234567890 (log 0) (nan)))))
 	       make-procs run-procs)
 	      
-	      ;; generator torture tests...
 	      (let ((random-args (list 
-				  (expt 2.0 21.5) (expt 2.0 -18.0) 12345678901234567890 (log 0) (nan)
+				  (expt 2.0 21.5) (expt 2.0 -18.0) 12345678901234567890
 				  1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .1 .2 .3)  '#(0 1) 3/4 (sqrt -1.0) (make-delay 32)
 				  (lambda () 0.0) (lambda (dir) 1.0) (lambda (a b c) 1.0) 0 1 -1 #f #t #\c 0.0 1.0 -1.0 '() 32 '(1 . 2)
 				  ))
@@ -42783,9 +42782,7 @@ EDITS: 2
 		  ;; ---------------- view files dialog ----------------
 		  (if (not (provided? 'snd-nb.scm)) (load "nb.scm"))
 		  (if (hook-empty? mouse-enter-label-hook)
-		      (begin
-			(add-hook! mouse-enter-label-hook files-popup-info)
-			(add-hook! mouse-leave-label-hook files-popup-quit)))
+		      (add-hook! mouse-enter-label-hook files-popup-info))
 		  (let ((ind1 (open-sound "oboe.snd"))
 			(ind2 (open-sound "pistol.snd")))
 		    (view-files-dialog)

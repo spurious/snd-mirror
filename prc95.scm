@@ -68,7 +68,7 @@
 
 ;;; these are 0-based versions of the clm delays
 (define (make-delaya len lag) 
-  (let ((input (make-delay len :type mus-interp-all-pass :max-size (+ len lag 1)))
+  (let ((input (make-delay len :type mus-interp-all-pass :max-size (inexact->exact (ceiling (+ len lag 1)))))
 	(outp (- lag (+ len 1))))
     (lambda (sample)
       (delay-tick input sample)
@@ -80,7 +80,7 @@
 (define (make-delayl len lag)
   ;; Perry's original had linear interp bug, I think -- this form is more in tune
   (let ((outpoint 0)
-	(input (make-delay len :max-size (+ len lag 1)))
+	(input (make-delay len :max-size (inexact->exact (ceiling (+ len lag 1)))))
 	(outp (- lag len)))
     (lambda (sample)
       (delay-tick input sample)

@@ -6478,6 +6478,8 @@ Float mus_granulate_with_editor(mus_any *ptr, Float (*input)(void *arg, int dire
 	curstart = irandom(spd->s20); /* start location in input buffer */
 	if ((curstart + spd->grain_len) > spd->in_data_len)
 	  lim = (spd->in_data_len - curstart);
+	if (lim > spd->grain_len)
+	  lim = spd->grain_len;
 	memset((void *)(spd->grain), 0, spd->grain_len * sizeof(Float));
 	if (spd->rmp > 0)
 	  {
@@ -6522,6 +6524,8 @@ Float mus_granulate_with_editor(mus_any *ptr, Float (*input)(void *arg, int dire
 	      }
 	  }
 	else new_len = spd->grain_len;
+	if (new_len > spd->out_data_len) /* can be off-by-one here if hop is just barely greater then 0.0 (user is screwing around...) */
+	  new_len = spd->out_data_len;
 	for (i = 0; i < new_len; i++)
 	  spd->out_data[i] += spd->grain[i];
       }
