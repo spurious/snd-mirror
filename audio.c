@@ -1322,8 +1322,6 @@ static void describe_audio_state_1(void)
   #define NEW_OSS 1
 #endif
 
-#define MAX_VOLUME 100
-
 #define DAC_NAME "/dev/dsp"
 #define MIXER_NAME "/dev/mixer"
 #define SYNTH_NAME "/dev/music"

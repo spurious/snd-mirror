@@ -1,7 +1,5 @@
 # Configuration script for Snd
 
-# TODO: decide how to incorporate LDFLAGS = -Wl,-export-dynamic
-
 AC_INIT(snd, 7.11, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-7.tar.gz)
 
 INVOKED_PROG="$[0]"
@@ -1133,6 +1131,9 @@ else
 case "$host" in
     *-*-linux*) 
 	AC_DEFINE(LINUX)
+	LDFLAGS="$LDFLAGS -Wl,-export-dynamic"
+# this ^ added 19-Feb-05 -- apparently this makes Snd functions available to dynamically loaded modules
+#   presumably it should depend on the loader -- should I include it in freebsd and friends below?
         LDSO_FLAGS="-shared"
         LIBS="-lm"
 #     This ^ used to be "" but in redhat 7 the -lm needs it to be explicit

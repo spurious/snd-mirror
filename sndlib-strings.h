@@ -1,6 +1,8 @@
 #ifndef SNDLIB_STRINGS_H
 #define SNDLIB_STRINGS_H
 
+#define S_array_to_file                 "array->file"
+#define S_file_to_array                 "file->array"
 #define S_make_sound_data               "make-sound-data"
 #define S_mus_aifc                      "mus-aifc"
 #define S_mus_aiff                      "mus-aiff"

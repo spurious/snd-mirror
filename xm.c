@@ -11850,7 +11850,6 @@ static XEN gxm_XConvertSelection(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg
 
 static XEN gxm_XConnectionNumber(XEN arg1)
 {
-  #define H_ConnectionNumber "returns a connection number for the specified display."
   #define H_XConnectionNumber "returns a connection number for the specified display."
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XConnectionNumber", "Display*");
   return(C_TO_XEN_INT(XConnectionNumber(XEN_TO_C_Display(arg1))));
@@ -13240,7 +13239,7 @@ static XEN gxm_XInternAtom(XEN arg1, XEN arg2, XEN arg3)
 }
 
 static XEN xm_AfterFunction = XEN_FALSE;
-static int default_after_function(Display *dpy) {return(0);}
+static int default_after_function(Display *ignore) {return(0);}
 static int gxm_AfterFunction(Display *dpy)
 {
   return(XEN_TO_C_INT(XEN_CALL_1(xm_AfterFunction, 

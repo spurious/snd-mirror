@@ -15777,6 +15777,9 @@ case "$host" in
 #define LINUX 1
 _ACEOF
 
+	LDFLAGS="$LDFLAGS -Wl,-export-dynamic"
+# this ^ added 19-Feb-05 -- apparently this makes Snd functions available to dynamically loaded modules?
+#   presumably it should depend on the loader
         LDSO_FLAGS="-shared"
         LIBS="-lm"
 #     This ^ used to be "" but in redhat 7 the -lm needs it to be explicit

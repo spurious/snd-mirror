@@ -587,9 +587,6 @@ int mus_file_buffer_size(void);
 
 void mus_mix(const char *outfile, const char *infile, off_t out_start, off_t out_samps, off_t in_start, mus_any *mx, mus_any ***envs);
 void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, off_t out_start, off_t out_frames, off_t in_start, mus_any *umx, mus_any ***envs);
-int mus_file_to_float_array(const char *filename, int chan, off_t start, int samples, Float *array);
-int mus_float_array_to_file(const char *filename, Float *ddata, int len, int srate, int channels);
-
 Float mus_apply(mus_any *gen, ...);
 
 bool mus_phase_vocoder_p(mus_any *ptr);
@@ -666,8 +663,6 @@ struct mus_xen *_mus_wrap_one_vct_wrapped(mus_any *ge);
 #define mus_make_frame2file(Filename, Chans, Format, Type) mus_make_frame_to_file(Filename, Chans, Format, Type)
 #define mus_frame2file_p(Ptr) mus_frame_to_file_p(Ptr)
 #define mus_frame2file(Ptr, Samp, Data) mus_frame_to_file(Ptr, Samp, Data)
-#define mus_file2fltarray(Filename, Chan, Start, Samples, Array) mus_file_to_float_array(Filename, Chan, Start, Samples, Array)
-#define mus_fltarray2file(Filename, Ddata, Len, Srate, Channels) mus_float_array_to_file(Filename, Ddata, Len, Srate, Channels)
 #define mus_sin(Phase) sin(Phase)
 #define MUS_LINEAR 1
 #define MUS_SINUSOIDAL 2

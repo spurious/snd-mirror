@@ -757,7 +757,8 @@ static XEN g_mus_interpolate(XEN type, XEN x, XEN obj, XEN size, XEN yn1)
   #define H_mus_interpolate "(" S_mus_interpolate " type x v (size) (yn1)) -> interpolate in \
 data ('v' is a vct) using interpolation 'type', such as " S_mus_interp_linear "."
 
-  int len, itype;
+  int len;
+  mus_interp_t itype;
   vct *v;
   Float y = 0.0;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(type), type, XEN_ARG_1, S_mus_interpolate, "an integer (interp type such as " S_mus_interp_all_pass ")");
@@ -765,7 +766,7 @@ data ('v' is a vct) using interpolation 'type', such as " S_mus_interp_linear ".
   XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ARG_3, S_mus_interpolate, "a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(size), size, XEN_ARG_4, S_mus_interpolate, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(yn1), yn1, XEN_ARG_5, S_mus_interpolate, "a number");
-  itype = XEN_TO_C_INT(type);
+  itype = (mus_interp_t)XEN_TO_C_INT(type);
   if (!(MUS_INTERP_TYPE_OK(itype)))
     XEN_OUT_OF_RANGE_ERROR(S_mus_interpolate, 1, type, "unknown interp type ~A");
   v = TO_VCT(obj);
@@ -3864,80 +3865,6 @@ handled by the output generator 'obj' at frame 'samp'"
 		      true));
 }
 
-static XEN g_array_to_file(XEN filename, XEN data, XEN len, XEN srate, XEN channels)
-{
-  #define H_array_to_file "(" S_array_to_file " filename data len srate channels): write 'data', \
-a vct of interleaved samples, to the sound file 'filename' set up to have the given \
-srate and channels.  'len' samples are written."
-
-  int olen, samps;
-  vct *v;
-  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ARG_1, S_array_to_file, "a string");
-  XEN_ASSERT_TYPE(VCT_P(data), data, XEN_ARG_2, S_array_to_file, "a vct");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(len), len, XEN_ARG_3, S_array_to_file, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(srate), srate, XEN_ARG_4, S_array_to_file, "a number");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(channels), channels, XEN_ARG_5, S_array_to_file, "an integer");
-  v = TO_VCT(data);
-  samps = XEN_TO_C_INT_OR_ELSE(len, 1);
-  if (samps <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_array_to_file, 3, len, "samples ~A <= 0?");
-  if (samps > v->length)
-    samps = v->length;
-  olen = mus_float_array_to_file(XEN_TO_C_STRING(filename),
-				 v->data,
-				 samps,
-				 XEN_TO_C_INT_OR_ELSE(srate, 0),
-				 XEN_TO_C_INT(channels));
-  return(xen_return_first(C_TO_XEN_INT(olen), filename));
-}
-
-static XEN g_file_to_array(XEN filename, XEN chan, XEN start, XEN samples, XEN data)
-{
-  #define H_file_to_array "(" S_file_to_array " filename chan start samples data): read the sound file \
-'filename' placing samples from channel 'chan' into the vct 'data' starting in the file \
-at frame 'start' and reading 'samples' samples altogether."
-
-  int chn, samps;
-  vct *v;
-  char *name = NULL;
-  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ARG_1, S_file_to_array, "a string");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_2, S_file_to_array, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(start), start, XEN_ARG_3, S_file_to_array, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(samples), samples, XEN_ARG_4, S_file_to_array, "a number");
-  XEN_ASSERT_TYPE((VCT_P(data)), data, XEN_ARG_5, S_file_to_array, "a vct");
-  name = XEN_TO_C_STRING(filename);
-  if (!(mus_file_probe(name)))
-    XEN_ERROR(NO_SUCH_FILE,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_file_to_array),
-			 filename,
-			 C_TO_XEN_STRING(strerror(errno))));
-  v = TO_VCT(data);
-  samps = XEN_TO_C_INT_OR_ELSE(samples, 1);
-  if (samps <= 0) 
-    XEN_OUT_OF_RANGE_ERROR(S_file_to_array, 4, samples, "samples ~A <= 0?");
-  chn = XEN_TO_C_INT(chan);
-  if ((chn < 0) || (chn > mus_sound_chans(name)))
-    XEN_ERROR(NO_SUCH_CHANNEL,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_file_to_array),
-			 C_TO_XEN_STRING("invalid chan: ~A, ~A has ~A chans"),
-			 XEN_LIST_3(chan,
-				    filename,
-				    C_TO_XEN_INT(mus_sound_chans(name)))));
-  if (mus_sound_chans(name) <= 0)
-    XEN_ERROR(BAD_HEADER,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_file_to_array),
-			 filename,
-			 C_TO_XEN_STRING("chans <= 0")));
-  if (samps > v->length)
-    samps = v->length;
-  mus_file_to_float_array(name,
-		    chn,
-		    XEN_TO_C_OFF_T_OR_ELSE(start, 0),
-		    samps,
-		    v->data);
-  return(xen_return_first(data, filename));
-}
-
 static XEN g_mus_file_buffer_size(void)
 {
   #define H_mus_file_buffer_size "(" S_mus_file_buffer_size "): current CLM IO buffer size (default is 8192)"
@@ -5336,8 +5263,6 @@ XEN_NARGIFY_3(g_outa_w, g_outa)
 XEN_NARGIFY_3(g_outb_w, g_outb)
 XEN_NARGIFY_3(g_outc_w, g_outc)
 XEN_NARGIFY_3(g_outd_w, g_outd)
-XEN_NARGIFY_5(g_array_to_file_w, g_array_to_file)
-XEN_NARGIFY_5(g_file_to_array_w, g_file_to_array)
 XEN_NARGIFY_1(g_mus_close_w, g_mus_close)
 XEN_NARGIFY_0(g_mus_file_buffer_size_w, g_mus_file_buffer_size)
 XEN_NARGIFY_1(g_mus_set_file_buffer_size_w, g_mus_set_file_buffer_size)
@@ -5593,8 +5518,6 @@ XEN_NARGIFY_1(g_mus_generator_p_w, g_mus_generator_p)
 #define g_outb_w g_outb
 #define g_outc_w g_outc
 #define g_outd_w g_outd
-#define g_array_to_file_w g_array_to_file
-#define g_file_to_array_w g_file_to_array
 #define g_mus_close_w g_mus_close
 #define g_mus_file_buffer_size_w g_mus_file_buffer_size
 #define g_mus_set_file_buffer_size_w g_mus_set_file_buffer_size
@@ -6032,8 +5955,6 @@ the closer the radius is to 1.0, the narrower the resonance."
   XEN_DEFINE_PROCEDURE(S_outb,                    g_outb_w,                    3, 0, 0, H_outb);
   XEN_DEFINE_PROCEDURE(S_outc,                    g_outc_w,                    3, 0, 0, H_outc);
   XEN_DEFINE_PROCEDURE(S_outd,                    g_outd_w,                    3, 0, 0, H_outd);
-  XEN_DEFINE_PROCEDURE(S_array_to_file,           g_array_to_file_w,           5, 0, 0, H_array_to_file);
-  XEN_DEFINE_PROCEDURE(S_file_to_array,           g_file_to_array_w,           5, 0, 0, H_file_to_array);
   XEN_DEFINE_PROCEDURE(S_mus_close,               g_mus_close_w,               1, 0, 0, H_mus_close);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_file_buffer_size, g_mus_file_buffer_size_w, H_mus_file_buffer_size,
@@ -6097,7 +6018,6 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_all_pass,
 	       S_all_pass_p,
 	       S_amplitude_modulate,
-	       S_array_to_file,
 	       S_array_interp,
 	       S_asymmetric_fm,
 	       S_asymmetric_fm_p,
@@ -6136,7 +6056,6 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_env_interp,
 	       S_env_p,
 	       S_exponential_window,
-	       S_file_to_array,
 	       S_file_to_frame,
 	       S_file_to_frame_p,
 	       S_file_to_sample,

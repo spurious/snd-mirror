@@ -1823,7 +1823,7 @@ of the envelope can be saved with the 'save' button, or
 printed with 'print'.</p>
 
 <p>Envelopes can be defined
-using defvar, and loaded from a separate file of envelope
+using define or defvar (the latter for CL compatibility), and loaded from a separate file of envelope
 definitions via load:
 </p>
 <pre>
@@ -1833,10 +1833,10 @@ definitions via load:
 <p>defines two envelopes that can be used in Snd wherever an
 envelope is needed (e.g. C-x C-a).  You can also define
 a new envelope in the dialog's text field;
-'(0 0 1 1) followed by return creates a ramp as a new envelope.</p>
+'(0 0 1 1) followed by return creates a ramp.</p>
 
 <p>In the overall view of envelopes,
-click an envelope, or click its name in the scrolled
+click one, or click its name in the scrolled
 list on the left to select it; click the selected envelope
 to load it into the editor portion, clearing out whatever
 was previously there.  To load an existing envelope into the editor, you can

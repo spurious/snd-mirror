@@ -1087,3 +1087,31 @@ int mus_array_to_file(const char *filename, mus_sample_t *ddata, int len, int sr
     return(mus_error(MUS_CANT_OPEN_FILE, errmsg));
   return(MUS_NO_ERROR);
 }
+
+int mus_file_to_float_array(const char *filename, int chan, off_t start, int samples, Float *array)
+{
+  mus_sample_t *idata;
+  int i, len;
+  idata = (mus_sample_t *)CALLOC(samples, sizeof(mus_sample_t));
+  len = mus_file_to_array(filename, chan, start, samples, idata);
+  if (len != -1) 
+    for (i = 0; i < samples; i++)
+      array[i] = MUS_SAMPLE_TO_FLOAT(idata[i]);
+  FREE(idata);
+  return(len);
+}
+
+int mus_float_array_to_file(const char *filename, Float *ddata, int len, int srate, int channels)
+{
+  mus_sample_t *idata;
+  int i;
+  char *errmsg;
+  idata = (mus_sample_t *)CALLOC(len, sizeof(mus_sample_t));
+  for (i = 0; i < len; i++) 
+    idata[i] = MUS_FLOAT_TO_SAMPLE(ddata[i]);
+  errmsg = mus_array_to_file_with_error(filename, idata, len, srate, channels);
+  FREE(idata);
+  if (errmsg)
+    return(mus_error(MUS_CANT_OPEN_FILE, errmsg));
+  return(MUS_NO_ERROR);
+}

@@ -4502,9 +4502,6 @@ Float mus_frame_set(mus_any *uf, int chan, Float val)
 }
 
 
-
-
-
 /* ---------------- mixer ---------------- */
 
 /* other possibilities: 
@@ -4875,7 +4872,7 @@ mus_any *mus_mixer_scale(mus_any *uf1, Float scaler, mus_any *ures)
   return((mus_any *)res);
 }
 
-/* PERHAPS: spinner -- a frame + a rotation mixer + an oscil or something to drive it
+/* PERHAPS: spinner (gyrator?) -- a frame + a rotation mixer + an oscil or something to drive it
  *            this could be done in Scheme -- perhaps makes more sense at that level
  */
 
@@ -7371,6 +7368,423 @@ void mus_convolve_files(const char *file1, const char *file2, Float maxamp, cons
 
 
 
+/* ---------------- phase-vocoder ---------------- */
+
+typedef struct {
+  mus_any_class *core;
+  Float pitch;
+  Float (*input)(void *arg, int direction);
+  void *closure;
+  bool (*analyze)(void *arg, Float (*input)(void *arg1, int direction));
+  int (*edit)(void *arg);
+  Float (*synthesize)(void *arg);
+  int outctr, interp, filptr, N, D;
+  Float *win, *ampinc, *amps, *freqs, *phases, *phaseinc, *lastphase, *in_data;
+} pv_info;
+
+bool mus_phase_vocoder_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_PHASE_VOCODER));}
+
+static bool phase_vocoder_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
+
+static char *describe_phase_vocoder(mus_any *ptr)
+{
+  char *arr = NULL;
+  pv_info *gen = (pv_info *)ptr;
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE,
+	       S_phase_vocoder ": outctr: %d, interp: %d, filptr: %d, N: %d, D: %d, in_data: %s",
+	       gen->outctr, gen->interp, gen->filptr, gen->N, gen->D,
+	       arr = print_array(gen->in_data, gen->N, 0));
+  if (arr) FREE(arr);
+  return(describe_buffer);
+}
+
+static int free_phase_vocoder(mus_any *ptr)
+{
+  pv_info *gen = (pv_info *)ptr;
+  if (gen)
+    {
+      if (gen->in_data) FREE(gen->in_data);
+      if (gen->amps) FREE(gen->amps);
+      if (gen->freqs) FREE(gen->freqs);
+      if (gen->phases) FREE(gen->phases);
+      if (gen->win) FREE(gen->win);
+      if (gen->phaseinc) FREE(gen->phaseinc);
+      if (gen->lastphase) FREE(gen->lastphase);
+      if (gen->ampinc) FREE(gen->ampinc);
+      FREE(gen);
+    }
+  return(0);
+}
+
+static off_t pv_length(mus_any *ptr) {return(((pv_info *)ptr)->N);}
+static off_t pv_hop(mus_any *ptr) {return(((pv_info *)ptr)->D);}
+static off_t pv_set_hop(mus_any *ptr, off_t val) {((pv_info *)ptr)->D = (int)val; return(val);}
+static Float pv_frequency(mus_any *ptr) {return(((pv_info *)ptr)->pitch);}
+static Float pv_set_frequency(mus_any *ptr, Float val) {((pv_info *)ptr)->pitch = val; return(val);}
+static void *pv_closure(mus_any *rd) {return(((pv_info *)rd)->closure);}
+
+Float *mus_phase_vocoder_amp_increments(mus_any *ptr) {return(((pv_info *)ptr)->ampinc);}
+Float *mus_phase_vocoder_amps(mus_any *ptr) {return(((pv_info *)ptr)->amps);}
+Float *mus_phase_vocoder_freqs(mus_any *ptr) {return(((pv_info *)ptr)->freqs);}
+Float *mus_phase_vocoder_phases(mus_any *ptr) {return(((pv_info *)ptr)->phases);}
+Float *mus_phase_vocoder_phase_increments(mus_any *ptr) {return(((pv_info *)ptr)->phaseinc);}
+int mus_phase_vocoder_outctr(mus_any *ptr) {return(((pv_info *)ptr)->outctr);}
+int mus_phase_vocoder_set_outctr(mus_any *ptr, int val) {((pv_info *)ptr)->outctr = val; return(val);}
+static Float run_phase_vocoder(mus_any *ptr, Float unused1, Float unused2) {return(mus_phase_vocoder(ptr, NULL));}
+static Float pv_increment(mus_any *rd) {return((Float)(((pv_info *)rd)->interp));}
+static Float pv_set_increment(mus_any *rd, Float val) {((pv_info *)rd)->interp = (int)val; return(val);}
+
+static void pv_reset(mus_any *ptr)
+{
+  pv_info *gen = (pv_info *)ptr;
+  if (gen->in_data) FREE(gen->in_data);
+  gen->in_data = NULL;
+  gen->outctr = gen->interp;
+  gen->filptr = 0;
+  memset((void *)(gen->ampinc), 0, gen->N * sizeof(Float));
+  memset((void *)(gen->freqs), 0, gen->N * sizeof(Float));
+  memset((void *)(gen->amps), 0, (gen->N / 2) * sizeof(Float));
+  memset((void *)(gen->phases), 0, (gen->N / 2) * sizeof(Float));
+  memset((void *)(gen->lastphase), 0, (gen->N / 2) * sizeof(Float));
+  memset((void *)(gen->phaseinc), 0, (gen->N / 2) * sizeof(Float));
+}
+
+static mus_any_class PHASE_VOCODER_CLASS = {
+  MUS_PHASE_VOCODER,
+  S_phase_vocoder,
+  &free_phase_vocoder,
+  &describe_phase_vocoder,
+  &phase_vocoder_equalp,
+  0, 0,
+  &pv_length, 0,
+  &pv_frequency,
+  &pv_set_frequency,
+  0, 0,
+  0, 0,
+  &pv_increment,
+  &pv_set_increment,
+  &run_phase_vocoder,
+  MUS_NOT_SPECIAL,
+  &pv_closure,
+  0,
+  0, 0, 0, 0, 0, 0, 
+  &pv_hop, &pv_set_hop, 
+  0, 0,
+  0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0,
+  &_mus_wrap_no_vcts,
+  &pv_reset
+};
+
+mus_any *mus_make_phase_vocoder(Float (*input)(void *arg, int direction), 
+				int fftsize, int overlap, int interp,
+				Float pitch,
+				bool (*analyze)(void *arg, Float (*input)(void *arg1, int direction)),
+				int (*edit)(void *arg), 
+				Float (*synthesize)(void *arg), 
+				void *closure)
+{
+  /* order of args is trying to match src, granulate etc
+   *   the inclusion of pitch and interp provides built-in time/pitch scaling which is 99% of phase-vocoder use
+   */
+  pv_info *pv;
+  int N2, D, i;
+  Float scl;
+  N2 = (int)(fftsize / 2);
+  if (N2 == 0) return(NULL);
+  D = fftsize / overlap;
+  if (D == 0) return(NULL);
+  pv = (pv_info *)clm_calloc(1, sizeof(pv_info), S_make_phase_vocoder);
+  pv->core = &PHASE_VOCODER_CLASS;
+  pv->N = fftsize;
+  pv->D = D;
+  pv->interp = interp;
+  pv->outctr = interp;
+  pv->filptr = 0;
+  pv->pitch = pitch;
+  pv->ampinc = (Float *)clm_calloc(fftsize, sizeof(Float), "pvoc ampinc");
+  pv->freqs = (Float *)clm_calloc(fftsize, sizeof(Float), "pvoc freqs");
+  pv->amps = (Float *)clm_calloc(N2, sizeof(Float), "pvoc amps");
+  pv->phases = (Float *)clm_calloc(N2, sizeof(Float), "pvoc phases");
+  pv->lastphase = (Float *)clm_calloc(N2, sizeof(Float), "pvoc lastphase");
+  pv->phaseinc = (Float *)clm_calloc(N2, sizeof(Float), "pvoc phaseinc");
+  pv->in_data = NULL;
+  pv->input = input;
+  pv->closure = closure;
+  pv->analyze = analyze;
+  pv->edit = edit;
+  pv->synthesize = synthesize;
+  pv->win = mus_make_fft_window(MUS_HAMMING_WINDOW, fftsize, 0.0);
+  scl = 2.0 / (0.54 * (Float)fftsize);
+  if (pv->win) /* clm2xen traps errors for later reporting (to clean up local allocation),
+		*   so clm_calloc might return NULL in all the cases here
+		*/
+    for (i = 0; i < fftsize; i++) 
+      pv->win[i] *= scl;
+  return((mus_any *)pv);
+}
+
+Float mus_phase_vocoder_with_editors(mus_any *ptr, 
+				     Float (*input)(void *arg, int direction),
+				     bool (*analyze)(void *arg, Float (*input)(void *arg1, int direction)),
+				     int (*edit)(void *arg), 
+				     Float (*synthesize)(void *arg))
+{
+  pv_info *pv = (pv_info *)ptr;
+  int N2, i;
+  Float (*pv_synthesize)(void *arg) = synthesize;
+  if (pv_synthesize == NULL) pv_synthesize = pv->synthesize;
+  N2 = pv->N / 2;
+  if (pv->outctr >= pv->interp)
+    {
+      Float scl;
+      Float (*pv_input)(void *arg, int direction) = input;
+      bool (*pv_analyze)(void *arg, Float (*input)(void *arg1, int direction)) = analyze;
+      int (*pv_edit)(void *arg) = edit;
+      if (pv_input == NULL) 
+	{
+	  pv_input = pv->input;
+	  if (pv_input == NULL)
+	    mus_error(MUS_NO_SAMPLE_INPUT, "%s has no input function!", mus_describe(ptr));
+	}
+      if (pv_analyze == NULL) pv_analyze = pv->analyze;
+      if (pv_edit == NULL) pv_edit = pv->edit;
+
+      pv->outctr = 0;
+      if ((pv_analyze == NULL) || ((*pv_analyze)(pv->closure, pv_input)))
+	{
+	  int j, buf;
+	  mus_clear_array(pv->freqs, pv->N);
+	  if (pv->in_data == NULL)
+	    {
+	      pv->in_data = (Float *)clm_calloc(pv->N, sizeof(Float), "pvoc indata");
+	      for (i = 0; i < pv->N; i++) pv->in_data[i] = (*pv_input)(pv->closure, 1);
+	    }
+	  else
+	    {
+	      for (i = 0, j = pv->D; j < pv->N; i++, j++) pv->in_data[i] = pv->in_data[j];
+	      for (i = pv->N - pv->D; i < pv->N; i++) pv->in_data[i] = (*pv_input)(pv->closure, 1);
+	    }
+	  buf = pv->filptr % pv->N;
+	  for (i = 0; i < pv->N; i++)
+	    {
+	      pv->ampinc[buf++] = pv->win[i] * pv->in_data[i];
+	      if (buf >= pv->N) buf = 0;
+	    }
+	  pv->filptr += pv->D;
+	  mus_fft(pv->ampinc, pv->freqs, pv->N, 1);
+	  mus_rectangular_to_polar(pv->ampinc, pv->freqs, N2);
+	}
+      
+      if ((pv_edit == NULL) || ((*pv_edit)(pv->closure)))
+	{
+	  Float pscl, kscl, ks;
+	  pscl = 1.0 / (Float)(pv->D);
+	  kscl = TWO_PI / (Float)(pv->N);
+	  for (i = 0, ks = 0.0; i < N2; i++, ks += kscl)
+	    {
+	      Float diff;
+	      diff = pv->freqs[i] - pv->lastphase[i];
+	      pv->lastphase[i] = pv->freqs[i];
+	      while (diff > M_PI) diff -= TWO_PI;
+	      while (diff < -M_PI) diff += TWO_PI;
+	      pv->freqs[i] = pv->pitch * (diff * pscl + ks);
+	    }
+	}
+      
+      scl = 1.0 / (Float)(pv->interp);
+      for (i = 0; i < N2; i++)
+	{
+	  pv->ampinc[i] = scl * (pv->ampinc[i] - pv->amps[i]);
+	  pv->freqs[i] = scl * (pv->freqs[i] - pv->phaseinc[i]);
+	}
+    }
+  
+  pv->outctr++;
+  if (pv_synthesize)
+    return((*pv_synthesize)(pv->closure));
+  for (i = 0; i < N2; i++)
+    {
+      pv->amps[i] += pv->ampinc[i];
+      pv->phaseinc[i] += pv->freqs[i];
+      pv->phases[i] += pv->phaseinc[i];
+    }
+  return(mus_sine_bank(pv->amps, pv->phases, N2));
+}
+
+Float mus_phase_vocoder(mus_any *ptr, Float (*input)(void *arg, int direction))
+{
+  return(mus_phase_vocoder_with_editors(ptr, input, NULL, NULL, NULL));
+}
+
+
+
+/* ---------------- single sideband "suppressed carrier" amplitude modulation (ssb-am) ---------------- */
+
+typedef struct {
+  mus_any_class *core;
+  bool shift_up;
+  Float *coeffs;
+  mus_any *sin_osc, *cos_osc, *hilbert, *dly;
+} ssbam;
+
+bool mus_ssb_am_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_SSB_AM));}
+
+Float mus_ssb_am_1(mus_any *ptr, Float insig)
+{
+  ssbam *gen = (ssbam *)ptr;
+  return((mus_oscil_0(gen->cos_osc) * mus_delay_1(gen->dly, insig)) +
+	 (mus_oscil_0(gen->sin_osc) * mus_fir_filter(gen->hilbert, insig)));
+}
+
+Float mus_ssb_am(mus_any *ptr, Float insig, Float fm)
+{
+  ssbam *gen = (ssbam *)ptr;
+  return((mus_oscil_1(gen->cos_osc, fm) * mus_delay_1(gen->dly, insig)) +
+	 (mus_oscil_1(gen->sin_osc, fm) * mus_fir_filter(gen->hilbert, insig)));
+}
+
+static int free_ssb_am(mus_any *ptr) 
+{
+  if (ptr) 
+    {
+      ssbam *gen = (ssbam *)ptr;
+      mus_free(gen->dly);
+      mus_free(gen->hilbert);
+      mus_free(gen->cos_osc);
+      mus_free(gen->sin_osc);
+      if (gen->coeffs) {FREE(gen->coeffs); gen->coeffs = NULL;}
+      FREE(ptr); 
+    }
+  return(0);
+}
+
+static Float ssb_am_freq(mus_any *ptr) 
+{
+  return(mus_radians_to_hz(((osc *)((ssbam *)ptr)->sin_osc)->freq));
+}
+
+static Float set_ssb_am_freq(mus_any *ptr, Float val) 
+{
+  ssbam *gen = (ssbam *)ptr;
+  Float rads;
+  rads = mus_hz_to_radians(val);
+  ((osc *)(gen->sin_osc))->freq = rads;
+  ((osc *)(gen->cos_osc))->freq = rads;
+  return(val);
+}
+
+static Float ssb_am_phase(mus_any *ptr) 
+{
+  return(fmod(((osc *)((ssbam *)ptr)->cos_osc)->phase - 0.5 * M_PI, TWO_PI));
+}
+
+static Float set_ssb_am_phase(mus_any *ptr, Float val) 
+{
+  ssbam *gen = (ssbam *)ptr;
+  if (gen->shift_up)
+    ((osc *)(gen->sin_osc))->phase = val + M_PI;
+  else ((osc *)(gen->sin_osc))->phase = val; 
+  ((osc *)(gen->cos_osc))->phase = val + 0.5 * M_PI;
+  return(val);
+}
+
+static off_t ssb_am_cosines(mus_any *ptr) {return(1);}
+static off_t ssb_am_order(mus_any *ptr) {return(mus_order(((ssbam *)ptr)->dly));}
+static int ssb_am_interp_type(mus_any *ptr) {return(delay_interp_type(((ssbam *)ptr)->dly));}
+static Float *ssb_am_data(mus_any *ptr) {return(filter_data(((ssbam *)ptr)->hilbert));}
+static Float ssb_am_run(mus_any *ptr, Float insig, Float fm) {return(mus_ssb_am(ptr, insig, fm));}
+static Float *ssb_am_xcoeffs(mus_any *ptr) {return(mus_xcoeffs(((ssbam *)ptr)->hilbert));}
+static Float ssb_am_xcoeff(mus_any *ptr, int index) {return(mus_xcoeff(((ssbam *)ptr)->hilbert, index));}
+static Float ssb_am_set_xcoeff(mus_any *ptr, int index, Float val) {return(mus_set_xcoeff(((ssbam *)ptr)->hilbert, index, val));}
+
+static bool ssb_am_equalp(mus_any *p1, mus_any *p2)
+{
+  return((p1 == p2) ||
+	 ((mus_ssb_am_p((mus_any *)p1)) && 
+	  (mus_ssb_am_p((mus_any *)p2)) &&
+	  (((ssbam *)p1)->shift_up == ((ssbam *)p2)->shift_up) &&
+	  (mus_equalp(((ssbam *)p1)->sin_osc, ((ssbam *)p2)->sin_osc)) &&
+	  (mus_equalp(((ssbam *)p1)->cos_osc, ((ssbam *)p2)->cos_osc)) &&
+	  (mus_equalp(((ssbam *)p1)->dly, ((ssbam *)p2)->dly)) &&
+	  (mus_equalp(((ssbam *)p1)->hilbert, ((ssbam *)p2)->hilbert))));
+}
+
+static char *describe_ssb_am(mus_any *ptr)
+{
+  ssbam *gen = (ssbam *)ptr;
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_ssb_am ": shift: %s, sin/cos: %f Hz (%f radians), order: %d",
+	       (gen->shift_up) ? "up" : "down",
+	       mus_frequency(ptr),
+	       mus_phase(ptr),
+	       (int)mus_order(ptr));
+  return(describe_buffer);
+}
+
+static void ssb_reset(mus_any *ptr)
+{
+  ssbam *gen = (ssbam *)ptr;
+  set_ssb_am_phase(ptr, 0.0);
+  mus_reset(gen->dly);
+  mus_reset(gen->hilbert);
+}
+
+static mus_any_class SSB_AM_CLASS = {
+  MUS_SSB_AM,
+  S_ssb_am,
+  &free_ssb_am,
+  &describe_ssb_am,
+  &ssb_am_equalp,
+  &ssb_am_data, 0,
+  &ssb_am_order, 0,
+  &ssb_am_freq,
+  &set_ssb_am_freq,
+  &ssb_am_phase,
+  &set_ssb_am_phase,
+  0, 0, 0, 0,
+  &ssb_am_run,
+  MUS_NOT_SPECIAL, 
+  NULL,
+  &ssb_am_interp_type,
+  0, 0, 0, 0,
+  &ssb_am_xcoeff, &ssb_am_set_xcoeff, 
+  &ssb_am_cosines, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0,
+  0, 0, 
+  &ssb_am_xcoeffs, 0,
+  &_mus_wrap_no_vcts,
+  &ssb_reset
+};
+
+mus_any *mus_make_ssb_am(Float freq, int order)
+{
+  ssbam *gen;
+  int i, k, len;
+  gen = (ssbam *)clm_calloc(1, sizeof(ssbam), S_make_ssb_am);
+  gen->core = &SSB_AM_CLASS;
+  if (freq > 0)
+    gen->shift_up = true;
+  else gen->shift_up = false;
+  gen->sin_osc = mus_make_oscil(fabs(freq), (gen->shift_up) ? M_PI : 0.0);
+  gen->cos_osc = mus_make_oscil(fabs(freq), M_PI * 0.5);
+  gen->dly = mus_make_delay(order, NULL, order, MUS_INTERP_NONE);
+  len = order * 2; /* trailing is always 0.0 */
+  gen->coeffs = (Float *)CALLOC(len, sizeof(Float));
+  for (i = -order, k = 0; i < order; i++, k++)
+    {
+      Float denom, num;
+      denom = i * M_PI;
+      num = 1.0 - cos(denom);
+      if (i == 0)
+	gen->coeffs[k] = 0.0;
+      else gen->coeffs[k] = (num / denom) * (0.54 + (0.46 * cos(denom / order)));
+    }
+  gen->hilbert = mus_make_fir_filter(len, gen->coeffs, NULL);
+  return((mus_any *)gen);
+}
+
+
+
 /* ---------------- mix files ---------------- */
 
 /* a mixing "instrument" along the lines of the mix function in clm */
@@ -7637,449 +8051,6 @@ void mus_mix(const char *outfile, const char *infile, off_t out_start, off_t out
     }
 }
 
-int mus_file_to_float_array(const char *filename, int chan, off_t start, int samples, Float *array)
-{
-  mus_sample_t *idata;
-  int i, len;
-  idata = (mus_sample_t *)clm_calloc(samples, sizeof(mus_sample_t), "file_to_array buffer");
-  len = mus_file_to_array(filename, chan, start, samples, idata);
-  if (len != -1) 
-    for (i = 0; i < samples; i++)
-      array[i] = MUS_SAMPLE_TO_FLOAT(idata[i]);
-  FREE(idata);
-  return(len);
-}
-
-int mus_float_array_to_file(const char *filename, Float *ddata, int len, int srate, int channels)
-{
-  mus_sample_t *idata;
-  int i;
-  char *errmsg;
-  idata = (mus_sample_t *)clm_calloc(len, sizeof(mus_sample_t), "array_to_file buffer");
-  for (i = 0; i < len; i++) 
-    idata[i] = MUS_FLOAT_TO_SAMPLE(ddata[i]);
-  errmsg = mus_array_to_file_with_error(filename, idata, len, srate, channels);
-  FREE(idata);
-  if (errmsg)
-    return(mus_error(MUS_CANT_OPEN_FILE, errmsg));
-  return(MUS_NO_ERROR);
-}
-
-
-
-/* ---------------- phase-vocoder ---------------- */
-
-typedef struct {
-  mus_any_class *core;
-  Float pitch;
-  Float (*input)(void *arg, int direction);
-  void *closure;
-  bool (*analyze)(void *arg, Float (*input)(void *arg1, int direction));
-  int (*edit)(void *arg);
-  Float (*synthesize)(void *arg);
-  int outctr, interp, filptr, N, D;
-  Float *win, *ampinc, *amps, *freqs, *phases, *phaseinc, *lastphase, *in_data;
-} pv_info;
-
-bool mus_phase_vocoder_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_PHASE_VOCODER));}
-
-static bool phase_vocoder_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
-
-static char *describe_phase_vocoder(mus_any *ptr)
-{
-  char *arr = NULL;
-  pv_info *gen = (pv_info *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE,
-	       S_phase_vocoder ": outctr: %d, interp: %d, filptr: %d, N: %d, D: %d, in_data: %s",
-	       gen->outctr, gen->interp, gen->filptr, gen->N, gen->D,
-	       arr = print_array(gen->in_data, gen->N, 0));
-  if (arr) FREE(arr);
-  return(describe_buffer);
-}
-
-static int free_phase_vocoder(mus_any *ptr)
-{
-  pv_info *gen = (pv_info *)ptr;
-  if (gen)
-    {
-      if (gen->in_data) FREE(gen->in_data);
-      if (gen->amps) FREE(gen->amps);
-      if (gen->freqs) FREE(gen->freqs);
-      if (gen->phases) FREE(gen->phases);
-      if (gen->win) FREE(gen->win);
-      if (gen->phaseinc) FREE(gen->phaseinc);
-      if (gen->lastphase) FREE(gen->lastphase);
-      if (gen->ampinc) FREE(gen->ampinc);
-      FREE(gen);
-    }
-  return(0);
-}
-
-static off_t pv_length(mus_any *ptr) {return(((pv_info *)ptr)->N);}
-static off_t pv_hop(mus_any *ptr) {return(((pv_info *)ptr)->D);}
-static off_t pv_set_hop(mus_any *ptr, off_t val) {((pv_info *)ptr)->D = (int)val; return(val);}
-static Float pv_frequency(mus_any *ptr) {return(((pv_info *)ptr)->pitch);}
-static Float pv_set_frequency(mus_any *ptr, Float val) {((pv_info *)ptr)->pitch = val; return(val);}
-static void *pv_closure(mus_any *rd) {return(((pv_info *)rd)->closure);}
-
-Float *mus_phase_vocoder_amp_increments(mus_any *ptr) {return(((pv_info *)ptr)->ampinc);}
-Float *mus_phase_vocoder_amps(mus_any *ptr) {return(((pv_info *)ptr)->amps);}
-Float *mus_phase_vocoder_freqs(mus_any *ptr) {return(((pv_info *)ptr)->freqs);}
-Float *mus_phase_vocoder_phases(mus_any *ptr) {return(((pv_info *)ptr)->phases);}
-Float *mus_phase_vocoder_phase_increments(mus_any *ptr) {return(((pv_info *)ptr)->phaseinc);}
-int mus_phase_vocoder_outctr(mus_any *ptr) {return(((pv_info *)ptr)->outctr);}
-int mus_phase_vocoder_set_outctr(mus_any *ptr, int val) {((pv_info *)ptr)->outctr = val; return(val);}
-static Float run_phase_vocoder(mus_any *ptr, Float unused1, Float unused2) {return(mus_phase_vocoder(ptr, NULL));}
-static Float pv_increment(mus_any *rd) {return((Float)(((pv_info *)rd)->interp));}
-static Float pv_set_increment(mus_any *rd, Float val) {((pv_info *)rd)->interp = (int)val; return(val);}
-
-static void pv_reset(mus_any *ptr)
-{
-  pv_info *gen = (pv_info *)ptr;
-  if (gen->in_data) FREE(gen->in_data);
-  gen->in_data = NULL;
-  gen->outctr = gen->interp;
-  gen->filptr = 0;
-  memset((void *)(gen->ampinc), 0, gen->N * sizeof(Float));
-  memset((void *)(gen->freqs), 0, gen->N * sizeof(Float));
-  memset((void *)(gen->amps), 0, (gen->N / 2) * sizeof(Float));
-  memset((void *)(gen->phases), 0, (gen->N / 2) * sizeof(Float));
-  memset((void *)(gen->lastphase), 0, (gen->N / 2) * sizeof(Float));
-  memset((void *)(gen->phaseinc), 0, (gen->N / 2) * sizeof(Float));
-}
-
-static mus_any_class PHASE_VOCODER_CLASS = {
-  MUS_PHASE_VOCODER,
-  S_phase_vocoder,
-  &free_phase_vocoder,
-  &describe_phase_vocoder,
-  &phase_vocoder_equalp,
-  0, 0,
-  &pv_length, 0,
-  &pv_frequency,
-  &pv_set_frequency,
-  0, 0,
-  0, 0,
-  &pv_increment,
-  &pv_set_increment,
-  &run_phase_vocoder,
-  MUS_NOT_SPECIAL,
-  &pv_closure,
-  0,
-  0, 0, 0, 0, 0, 0, 
-  &pv_hop, &pv_set_hop, 
-  0, 0,
-  0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0,
-  &_mus_wrap_no_vcts,
-  &pv_reset
-};
-
-mus_any *mus_make_phase_vocoder(Float (*input)(void *arg, int direction), 
-				int fftsize, int overlap, int interp,
-				Float pitch,
-				bool (*analyze)(void *arg, Float (*input)(void *arg1, int direction)),
-				int (*edit)(void *arg), 
-				Float (*synthesize)(void *arg), 
-				void *closure)
-{
-  /* order of args is trying to match src, granulate etc
-   *   the inclusion of pitch and interp provides built-in time/pitch scaling which is 99% of phase-vocoder use
-   */
-  pv_info *pv;
-  int N2, D, i;
-  Float scl;
-  N2 = (int)(fftsize / 2);
-  if (N2 == 0) return(NULL);
-  D = fftsize / overlap;
-  if (D == 0) return(NULL);
-  pv = (pv_info *)clm_calloc(1, sizeof(pv_info), S_make_phase_vocoder);
-  pv->core = &PHASE_VOCODER_CLASS;
-  pv->N = fftsize;
-  pv->D = D;
-  pv->interp = interp;
-  pv->outctr = interp;
-  pv->filptr = 0;
-  pv->pitch = pitch;
-  pv->ampinc = (Float *)clm_calloc(fftsize, sizeof(Float), "pvoc ampinc");
-  pv->freqs = (Float *)clm_calloc(fftsize, sizeof(Float), "pvoc freqs");
-  pv->amps = (Float *)clm_calloc(N2, sizeof(Float), "pvoc amps");
-  pv->phases = (Float *)clm_calloc(N2, sizeof(Float), "pvoc phases");
-  pv->lastphase = (Float *)clm_calloc(N2, sizeof(Float), "pvoc lastphase");
-  pv->phaseinc = (Float *)clm_calloc(N2, sizeof(Float), "pvoc phaseinc");
-  pv->in_data = NULL;
-  pv->input = input;
-  pv->closure = closure;
-  pv->analyze = analyze;
-  pv->edit = edit;
-  pv->synthesize = synthesize;
-  pv->win = mus_make_fft_window(MUS_HAMMING_WINDOW, fftsize, 0.0);
-  scl = 2.0 / (0.54 * (Float)fftsize);
-  if (pv->win) /* clm2xen traps errors for later reporting (to clean up local allocation),
-		*   so clm_calloc might return NULL in all the cases here
-		*/
-    for (i = 0; i < fftsize; i++) 
-      pv->win[i] *= scl;
-  return((mus_any *)pv);
-}
-
-Float mus_phase_vocoder_with_editors(mus_any *ptr, 
-				     Float (*input)(void *arg, int direction),
-				     bool (*analyze)(void *arg, Float (*input)(void *arg1, int direction)),
-				     int (*edit)(void *arg), 
-				     Float (*synthesize)(void *arg))
-{
-  pv_info *pv = (pv_info *)ptr;
-  int N2, i;
-  Float (*pv_synthesize)(void *arg) = synthesize;
-  if (pv_synthesize == NULL) pv_synthesize = pv->synthesize;
-  N2 = pv->N / 2;
-  if (pv->outctr >= pv->interp)
-    {
-      Float scl;
-      Float (*pv_input)(void *arg, int direction) = input;
-      bool (*pv_analyze)(void *arg, Float (*input)(void *arg1, int direction)) = analyze;
-      int (*pv_edit)(void *arg) = edit;
-      if (pv_input == NULL) 
-	{
-	  pv_input = pv->input;
-	  if (pv_input == NULL)
-	    mus_error(MUS_NO_SAMPLE_INPUT, "%s has no input function!", mus_describe(ptr));
-	}
-      if (pv_analyze == NULL) pv_analyze = pv->analyze;
-      if (pv_edit == NULL) pv_edit = pv->edit;
-
-      pv->outctr = 0;
-      if ((pv_analyze == NULL) || ((*pv_analyze)(pv->closure, pv_input)))
-	{
-	  int j, buf;
-	  mus_clear_array(pv->freqs, pv->N);
-	  if (pv->in_data == NULL)
-	    {
-	      pv->in_data = (Float *)clm_calloc(pv->N, sizeof(Float), "pvoc indata");
-	      for (i = 0; i < pv->N; i++) pv->in_data[i] = (*pv_input)(pv->closure, 1);
-	    }
-	  else
-	    {
-	      for (i = 0, j = pv->D; j < pv->N; i++, j++) pv->in_data[i] = pv->in_data[j];
-	      for (i = pv->N - pv->D; i < pv->N; i++) pv->in_data[i] = (*pv_input)(pv->closure, 1);
-	    }
-	  buf = pv->filptr % pv->N;
-	  for (i = 0; i < pv->N; i++)
-	    {
-	      pv->ampinc[buf++] = pv->win[i] * pv->in_data[i];
-	      if (buf >= pv->N) buf = 0;
-	    }
-	  pv->filptr += pv->D;
-	  mus_fft(pv->ampinc, pv->freqs, pv->N, 1);
-	  mus_rectangular_to_polar(pv->ampinc, pv->freqs, N2);
-	}
-      
-      if ((pv_edit == NULL) || ((*pv_edit)(pv->closure)))
-	{
-	  Float pscl, kscl, ks;
-	  pscl = 1.0 / (Float)(pv->D);
-	  kscl = TWO_PI / (Float)(pv->N);
-	  for (i = 0, ks = 0.0; i < N2; i++, ks += kscl)
-	    {
-	      Float diff;
-	      diff = pv->freqs[i] - pv->lastphase[i];
-	      pv->lastphase[i] = pv->freqs[i];
-	      while (diff > M_PI) diff -= TWO_PI;
-	      while (diff < -M_PI) diff += TWO_PI;
-	      pv->freqs[i] = pv->pitch * (diff * pscl + ks);
-	    }
-	}
-      
-      scl = 1.0 / (Float)(pv->interp);
-      for (i = 0; i < N2; i++)
-	{
-	  pv->ampinc[i] = scl * (pv->ampinc[i] - pv->amps[i]);
-	  pv->freqs[i] = scl * (pv->freqs[i] - pv->phaseinc[i]);
-	}
-    }
-  
-  pv->outctr++;
-  if (pv_synthesize)
-    return((*pv_synthesize)(pv->closure));
-  for (i = 0; i < N2; i++)
-    {
-      pv->amps[i] += pv->ampinc[i];
-      pv->phaseinc[i] += pv->freqs[i];
-      pv->phases[i] += pv->phaseinc[i];
-    }
-  return(mus_sine_bank(pv->amps, pv->phases, N2));
-}
-
-Float mus_phase_vocoder(mus_any *ptr, Float (*input)(void *arg, int direction))
-{
-  return(mus_phase_vocoder_with_editors(ptr, input, NULL, NULL, NULL));
-}
-
-
-/* ---------------- single sideband "suppressed carrier" amplitude modulation (ssb-am) ---------------- */
-
-typedef struct {
-  mus_any_class *core;
-  bool shift_up;
-  Float *coeffs;
-  mus_any *sin_osc, *cos_osc, *hilbert, *dly;
-} ssbam;
-
-bool mus_ssb_am_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_SSB_AM));}
-
-Float mus_ssb_am_1(mus_any *ptr, Float insig)
-{
-  ssbam *gen = (ssbam *)ptr;
-  return((mus_oscil_0(gen->cos_osc) * mus_delay_1(gen->dly, insig)) +
-	 (mus_oscil_0(gen->sin_osc) * mus_fir_filter(gen->hilbert, insig)));
-}
-
-Float mus_ssb_am(mus_any *ptr, Float insig, Float fm)
-{
-  ssbam *gen = (ssbam *)ptr;
-  return((mus_oscil_1(gen->cos_osc, fm) * mus_delay_1(gen->dly, insig)) +
-	 (mus_oscil_1(gen->sin_osc, fm) * mus_fir_filter(gen->hilbert, insig)));
-}
-
-static int free_ssb_am(mus_any *ptr) 
-{
-  if (ptr) 
-    {
-      ssbam *gen = (ssbam *)ptr;
-      mus_free(gen->dly);
-      mus_free(gen->hilbert);
-      mus_free(gen->cos_osc);
-      mus_free(gen->sin_osc);
-      if (gen->coeffs) {FREE(gen->coeffs); gen->coeffs = NULL;}
-      FREE(ptr); 
-    }
-  return(0);
-}
-
-static Float ssb_am_freq(mus_any *ptr) 
-{
-  return(mus_radians_to_hz(((osc *)((ssbam *)ptr)->sin_osc)->freq));
-}
-
-static Float set_ssb_am_freq(mus_any *ptr, Float val) 
-{
-  ssbam *gen = (ssbam *)ptr;
-  Float rads;
-  rads = mus_hz_to_radians(val);
-  ((osc *)(gen->sin_osc))->freq = rads;
-  ((osc *)(gen->cos_osc))->freq = rads;
-  return(val);
-}
-
-static Float ssb_am_phase(mus_any *ptr) 
-{
-  return(fmod(((osc *)((ssbam *)ptr)->cos_osc)->phase - 0.5 * M_PI, TWO_PI));
-}
-
-static Float set_ssb_am_phase(mus_any *ptr, Float val) 
-{
-  ssbam *gen = (ssbam *)ptr;
-  if (gen->shift_up)
-    ((osc *)(gen->sin_osc))->phase = val + M_PI;
-  else ((osc *)(gen->sin_osc))->phase = val; 
-  ((osc *)(gen->cos_osc))->phase = val + 0.5 * M_PI;
-  return(val);
-}
-
-static off_t ssb_am_cosines(mus_any *ptr) {return(1);}
-static off_t ssb_am_order(mus_any *ptr) {return(mus_order(((ssbam *)ptr)->dly));}
-static int ssb_am_interp_type(mus_any *ptr) {return(delay_interp_type(((ssbam *)ptr)->dly));}
-static Float *ssb_am_data(mus_any *ptr) {return(filter_data(((ssbam *)ptr)->hilbert));}
-static Float ssb_am_run(mus_any *ptr, Float insig, Float fm) {return(mus_ssb_am(ptr, insig, fm));}
-static Float *ssb_am_xcoeffs(mus_any *ptr) {return(mus_xcoeffs(((ssbam *)ptr)->hilbert));}
-static Float ssb_am_xcoeff(mus_any *ptr, int index) {return(mus_xcoeff(((ssbam *)ptr)->hilbert, index));}
-static Float ssb_am_set_xcoeff(mus_any *ptr, int index, Float val) {return(mus_set_xcoeff(((ssbam *)ptr)->hilbert, index, val));}
-
-static bool ssb_am_equalp(mus_any *p1, mus_any *p2)
-{
-  return((p1 == p2) ||
-	 ((mus_ssb_am_p((mus_any *)p1)) && 
-	  (mus_ssb_am_p((mus_any *)p2)) &&
-	  (((ssbam *)p1)->shift_up == ((ssbam *)p2)->shift_up) &&
-	  (mus_equalp(((ssbam *)p1)->sin_osc, ((ssbam *)p2)->sin_osc)) &&
-	  (mus_equalp(((ssbam *)p1)->cos_osc, ((ssbam *)p2)->cos_osc)) &&
-	  (mus_equalp(((ssbam *)p1)->dly, ((ssbam *)p2)->dly)) &&
-	  (mus_equalp(((ssbam *)p1)->hilbert, ((ssbam *)p2)->hilbert))));
-}
-
-static char *describe_ssb_am(mus_any *ptr)
-{
-  ssbam *gen = (ssbam *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_ssb_am ": shift: %s, sin/cos: %f Hz (%f radians), order: %d",
-	       (gen->shift_up) ? "up" : "down",
-	       mus_frequency(ptr),
-	       mus_phase(ptr),
-	       (int)mus_order(ptr));
-  return(describe_buffer);
-}
-
-static void ssb_reset(mus_any *ptr)
-{
-  ssbam *gen = (ssbam *)ptr;
-  set_ssb_am_phase(ptr, 0.0);
-  mus_reset(gen->dly);
-  mus_reset(gen->hilbert);
-}
-
-static mus_any_class SSB_AM_CLASS = {
-  MUS_SSB_AM,
-  S_ssb_am,
-  &free_ssb_am,
-  &describe_ssb_am,
-  &ssb_am_equalp,
-  &ssb_am_data, 0,
-  &ssb_am_order, 0,
-  &ssb_am_freq,
-  &set_ssb_am_freq,
-  &ssb_am_phase,
-  &set_ssb_am_phase,
-  0, 0, 0, 0,
-  &ssb_am_run,
-  MUS_NOT_SPECIAL, 
-  NULL,
-  &ssb_am_interp_type,
-  0, 0, 0, 0,
-  &ssb_am_xcoeff, &ssb_am_set_xcoeff, 
-  &ssb_am_cosines, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0,
-  0, 0, 
-  &ssb_am_xcoeffs, 0,
-  &_mus_wrap_no_vcts,
-  &ssb_reset
-};
-
-mus_any *mus_make_ssb_am(Float freq, int order)
-{
-  ssbam *gen;
-  int i, k, len;
-  gen = (ssbam *)clm_calloc(1, sizeof(ssbam), S_make_ssb_am);
-  gen->core = &SSB_AM_CLASS;
-  if (freq > 0)
-    gen->shift_up = true;
-  else gen->shift_up = false;
-  gen->sin_osc = mus_make_oscil(fabs(freq), (gen->shift_up) ? M_PI : 0.0);
-  gen->cos_osc = mus_make_oscil(fabs(freq), M_PI * 0.5);
-  gen->dly = mus_make_delay(order, NULL, order, MUS_INTERP_NONE);
-  len = order * 2; /* trailing is always 0.0 */
-  gen->coeffs = (Float *)CALLOC(len, sizeof(Float));
-  for (i = -order, k = 0; i < order; i++, k++)
-    {
-      Float denom, num;
-      denom = i * M_PI;
-      num = 1.0 - cos(denom);
-      if (i == 0)
-	gen->coeffs[k] = 0.0;
-      else gen->coeffs[k] = (num / denom) * (0.54 + (0.46 * cos(denom / order)));
-    }
-  gen->hilbert = mus_make_fir_filter(len, gen->coeffs, NULL);
-  return((mus_any *)gen);
-}
 
 
 /* ---------------- mus-apply ---------------- */
@@ -8121,6 +8092,7 @@ Float mus_apply(mus_any *gen, ...)
     }
   return(0.0);
 }
+
 
 
 

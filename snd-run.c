@@ -8368,19 +8368,28 @@ static char *descr_mus_interpolate_3f(int *args, ptree *pt)
   return(mus_format( FLT_PT " = mus-interpolate(" INT_PT ", " FLT_PT ", " VCT_PT ")", 
 		     args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2, args[3], DESC_VCT_ARG_3));
 }
-static void mus_interpolate_3f(int *args, ptree *pt) {FLOAT_RESULT = mus_interpolate(INT_ARG_1, FLOAT_ARG_2, VCT_ARG_3->data, VCT_ARG_3->length, 0.0);}
+static void mus_interpolate_3f(int *args, ptree *pt) 
+{
+  FLOAT_RESULT = mus_interpolate((mus_interp_t)(INT_ARG_1), FLOAT_ARG_2, VCT_ARG_3->data, VCT_ARG_3->length, 0.0);
+}
 static char *descr_mus_interpolate_4f(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = mus-interpolate(" INT_PT ", " FLT_PT ", " VCT_PT ", " INT_PT ")", 
 		     args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2, args[3], DESC_VCT_ARG_3, args[4], INT_ARG_4));
 }
-static void mus_interpolate_4f(int *args, ptree *pt) {FLOAT_RESULT = mus_interpolate(INT_ARG_1, FLOAT_ARG_2, VCT_ARG_3->data, INT_ARG_4, 0.0);}
+static void mus_interpolate_4f(int *args, ptree *pt) 
+{
+  FLOAT_RESULT = mus_interpolate((mus_interp_t)(INT_ARG_1), FLOAT_ARG_2, VCT_ARG_3->data, INT_ARG_4, 0.0);
+}
 static char *descr_mus_interpolate_5f(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = mus-interpolate(" INT_PT ", " FLT_PT ", " VCT_PT ", " INT_PT ", " FLT_PT ")", 
 		     args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2, args[3], DESC_VCT_ARG_3, args[4], INT_ARG_4, args[5], FLOAT_ARG_5));
 }
-static void mus_interpolate_5f(int *args, ptree *pt) {FLOAT_RESULT = mus_interpolate(INT_ARG_1, FLOAT_ARG_2, VCT_ARG_3->data, INT_ARG_4, FLOAT_ARG_5);}
+static void mus_interpolate_5f(int *args, ptree *pt) 
+{
+  FLOAT_RESULT = mus_interpolate((mus_interp_t)(INT_ARG_1), FLOAT_ARG_2, VCT_ARG_3->data, INT_ARG_4, FLOAT_ARG_5);
+}
 
 static xen_value *mus_interpolate_1(ptree *prog, xen_value **args, int num_args) 
 {

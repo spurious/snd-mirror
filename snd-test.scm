@@ -81,8 +81,8 @@
 ;(setlocale LC_ALL "de_DE")
 
 (define tests 1)
-(define keep-going #t)
-(define all-args #f) ; huge arg testing
+(define keep-going #f)
+(define all-args #t) ; huge arg testing
 (define with-big-file #t)
 
 (define (snd-display . args)
@@ -17697,13 +17697,14 @@ EDITS: 5
 	  (if (> (maxamp) .003) (snd-display ";ssb-am fm cancelled: ~A" (maxamp)))
 	  (close-sound ind)))
 
-      (let ((bands (make-vector 3))
-	    (ssbs (make-vector 3)))
-	(do ((i 0 (1+ i)))
-	    ((= i 3))
-	  (vector-set! ssbs i (make-ssb-am (+ 100.0 (random 400))))
-	  (vector-set! bands i (make-bandpass (hz->radians 500.0) (hz->radians 600.0) 10)))
-	(mus-ssb-bank ssbs bands .1 3))
+      (if (defined? 'mus-ssb-bank) ; not defined if --with-modules
+	  (let ((bands (make-vector 3))
+		(ssbs (make-vector 3)))
+	    (do ((i 0 (1+ i)))
+		((= i 3))
+	      (vector-set! ssbs i (make-ssb-am (+ 100.0 (random 400))))
+	      (vector-set! bands i (make-bandpass (hz->radians 500.0) (hz->radians 600.0) 10)))
+	    (mus-ssb-bank ssbs bands .1 3)))
 
       (let ((ind (new-sound "test.snd" :srate 22050 :channels 1 :size 1000))
 	    (ctr 0))
@@ -33232,20 +33233,22 @@ EDITS: 2
       
       (run-hook before-test-hook 20)
 
-      (test-j0)
-      (test-j1)
-      (test-jn)
-      (test-y0)
-      (test-y1)
-      (test-yn)
-      (test-k0)
-      (test-k1)
-      (test-kn)
-      (test-i0)
-      (test-i1)
-      (test-in)
-      (test-erf)
-      (test-lgamma)
+      (if (defined? 'bes-j0) ; dependent on config.h HAVE_SPECIAL_FUNCTIONS
+	  (begin
+	    (test-j0)
+	    (test-j1)
+	    (test-jn)
+	    (test-y0)
+	    (test-y1)
+	    (test-yn)
+	    (test-k0)
+	    (test-k1)
+	    (test-kn)
+	    (test-i0)
+	    (test-i1)
+	    (test-in)
+	    (test-erf)
+	    (test-lgamma)))
 
       (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests))
 	(log-mem clmtest)
@@ -53013,6 +53016,8 @@ EDITS: 2
       ))
 
 (if (and with-gui
+	 (or (provided? 'xm)
+	     (provided? 'xg))
 	 (or full-test (= snd-test 25) (= snd-test 26) (and keep-going (<= snd-test 28))))
     (if (file-exists? "misc.scm")
 	(load "misc.scm")))

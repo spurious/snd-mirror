@@ -335,4 +335,5 @@
 
 (define send-netscape send-mozilla)
 
-;;; eventually: (define in-hz hz->radians)
+(if (not (defined? 'in-hz)) (define in-hz hz->radians))
+(if (not (defined? 'restart-env)) (define restart-env mus-reset))

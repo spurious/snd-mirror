@@ -383,6 +383,9 @@ bool mus_sound_maxamp_exists(const char *ifile);
 int mus_file_to_array(const char *filename, int chan, int start, int samples, mus_sample_t *array);
 int mus_array_to_file(const char *filename, mus_sample_t *ddata, int len, int srate, int channels);
 char *mus_array_to_file_with_error(const char *filename, mus_sample_t *ddata, int len, int srate, int channels);
+int mus_file_to_float_array(const char *filename, int chan, off_t start, int samples, Float *array);
+int mus_float_array_to_file(const char *filename, Float *ddata, int len, int srate, int channels);
+
 
 
 /* -------- audio.c -------- */

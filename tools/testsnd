@@ -167,6 +167,22 @@ echo ' '
 ./snd -l snd-test 20
 make clmclean
 
+echo ' -------------------------------- configure --with-modules test -------------------------------- '
+make allclean
+rm -f snd
+rm -f config.cache
+rm -f makefile
+rm -f config.h
+rm -f sndinfo
+echo ' CFLAGS="-Wall"  --with-float-samples --with-modules '
+./configure --quiet CFLAGS="-Wall"  --with-float-samples --with-modules
+make
+echo ' '
+echo ' '
+./snd --version
+./snd -l snd-test
+make clmclean
+
 echo ' '
 echo ' '
 date

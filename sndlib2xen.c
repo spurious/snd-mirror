@@ -1157,6 +1157,82 @@ static XEN g_mus_error_to_string(XEN err)
   return(C_TO_XEN_STRING((char *)mus_error_to_string(XEN_TO_C_INT(err))));
 }
 
+static XEN g_array_to_file(XEN filename, XEN data, XEN len, XEN srate, XEN channels)
+{
+  #define H_array_to_file "(" S_array_to_file " filename data len srate channels): write 'data', \
+a vct of interleaved samples, to the sound file 'filename' set up to have the given \
+srate and channels.  'len' samples are written."
+
+  int olen, samps;
+  vct *v;
+  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ARG_1, S_array_to_file, "a string");
+  XEN_ASSERT_TYPE(VCT_P(data), data, XEN_ARG_2, S_array_to_file, "a vct");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(len), len, XEN_ARG_3, S_array_to_file, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(srate), srate, XEN_ARG_4, S_array_to_file, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(channels), channels, XEN_ARG_5, S_array_to_file, "an integer");
+  v = TO_VCT(data);
+  samps = XEN_TO_C_INT_OR_ELSE(len, 1);
+  if (samps <= 0)
+    XEN_OUT_OF_RANGE_ERROR(S_array_to_file, 3, len, "samples ~A <= 0?");
+  if (samps > v->length)
+    samps = v->length;
+  olen = mus_float_array_to_file(XEN_TO_C_STRING(filename),
+				 v->data,
+				 samps,
+				 XEN_TO_C_INT_OR_ELSE(srate, 0),
+				 XEN_TO_C_INT(channels));
+  return(xen_return_first(C_TO_XEN_INT(olen), filename));
+}
+
+static XEN g_file_to_array(XEN filename, XEN chan, XEN start, XEN samples, XEN data)
+{
+  #define H_file_to_array "(" S_file_to_array " filename chan start samples data): read the sound file \
+'filename' placing samples from channel 'chan' into the vct 'data' starting in the file \
+at frame 'start' and reading 'samples' samples altogether."
+
+  int chn, samps;
+  vct *v;
+  char *name = NULL;
+  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ARG_1, S_file_to_array, "a string");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_2, S_file_to_array, "an integer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(start), start, XEN_ARG_3, S_file_to_array, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(samples), samples, XEN_ARG_4, S_file_to_array, "a number");
+  XEN_ASSERT_TYPE((VCT_P(data)), data, XEN_ARG_5, S_file_to_array, "a vct");
+  name = XEN_TO_C_STRING(filename);
+  if (!(mus_file_probe(name)))
+    XEN_ERROR(NO_SUCH_FILE,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_file_to_array),
+			 filename,
+			 C_TO_XEN_STRING(strerror(errno))));
+  v = TO_VCT(data);
+  samps = XEN_TO_C_INT_OR_ELSE(samples, 1);
+  if (samps <= 0) 
+    XEN_OUT_OF_RANGE_ERROR(S_file_to_array, 4, samples, "samples ~A <= 0?");
+  chn = XEN_TO_C_INT(chan);
+  if ((chn < 0) || (chn > mus_sound_chans(name)))
+    XEN_ERROR(NO_SUCH_CHANNEL,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_file_to_array),
+			 C_TO_XEN_STRING("invalid chan: ~A, ~A has ~A chans"),
+			 XEN_LIST_3(chan,
+				    filename,
+				    C_TO_XEN_INT(mus_sound_chans(name)))));
+  if (mus_sound_chans(name) <= 0)
+    XEN_ERROR(BAD_HEADER,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_file_to_array),
+			 filename,
+			 C_TO_XEN_STRING("chans <= 0")));
+  if (samps > v->length)
+    samps = v->length;
+  mus_file_to_float_array(name,
+		    chn,
+		    XEN_TO_C_OFF_T_OR_ELSE(start, 0),
+		    samps,
+		    v->data);
+  return(xen_return_first(data, filename));
+}
+
+
+
 
 static XEN new_sound_hook;
 static void g_new_sound_hook(const char *filename)
@@ -1259,6 +1335,8 @@ XEN_NARGIFY_1(g_mus_sound_forget_w, g_mus_sound_forget)
 XEN_NARGIFY_0(g_mus_sound_prune_w, g_mus_sound_prune)
 XEN_NARGIFY_1(g_mus_error_to_string_w, g_mus_error_to_string)
 XEN_NARGIFY_2(g_mus_audio_set_oss_buffers_w, g_mus_audio_set_oss_buffers)
+XEN_NARGIFY_5(g_array_to_file_w, g_array_to_file)
+XEN_NARGIFY_5(g_file_to_array_w, g_file_to_array)
 #if HAVE_OSS
   XEN_NARGIFY_0(g_mus_audio_reinitialize_w, g_mus_audio_reinitialize)
 #endif
@@ -1328,6 +1406,8 @@ XEN_NARGIFY_2(g_mus_audio_set_oss_buffers_w, g_mus_audio_set_oss_buffers)
 #define g_mus_sound_prune_w g_mus_sound_prune
 #define g_mus_error_to_string_w g_mus_error_to_string
 #define g_mus_audio_set_oss_buffers_w g_mus_audio_set_oss_buffers
+#define g_array_to_file_w g_array_to_file
+#define g_file_to_array_w g_file_to_array
 #if HAVE_OSS
   #define g_mus_audio_reinitialize_w g_mus_audio_reinitialize
 #endif
@@ -1639,6 +1719,8 @@ void mus_sndlib_xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_mus_sound_report_cache,   g_mus_sound_report_cache_w,     0, 1, 0, H_mus_sound_report_cache);
   XEN_DEFINE_PROCEDURE(S_mus_error_to_string,      g_mus_error_to_string_w,        1, 0, 0, H_mus_error_to_string);
   XEN_DEFINE_PROCEDURE(S_mus_audio_set_oss_buffers, g_mus_audio_set_oss_buffers_w, 2, 0, 0, H_mus_audio_set_oss_buffers);
+  XEN_DEFINE_PROCEDURE(S_array_to_file,            g_array_to_file_w,              5, 0, 0, H_array_to_file);
+  XEN_DEFINE_PROCEDURE(S_file_to_array,            g_file_to_array_w,              5, 0, 0, H_file_to_array);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_file_prescaler, g_mus_file_prescaler_w, H_mus_file_prescaler,
 				   S_setB S_mus_file_prescaler, g_mus_file_set_prescaler_w, 1, 0, 2, 0);
@@ -1667,7 +1749,9 @@ void mus_sndlib_xen_initialize(void)
   XEN_YES_WE_HAVE("sndlib");
 
 #if WITH_MODULES
-  scm_c_export(S_make_sound_data,
+  scm_c_export(S_array_to_file,
+	       S_file_to_array,
+	       S_make_sound_data,
 	       S_mus_make_error,
 	       S_mus_aifc,
 	       S_mus_aiff,
