@@ -21,7 +21,7 @@ static void remove_temp_files(chan_info *cp)
 
 static XEN exit_hook;
 
-int snd_exit_cleanly(snd_state *ss, int force_exit)
+int snd_exit_cleanly(snd_state *ss, bool force_exit)
 {  
   XEN res = XEN_FALSE;
   if (XEN_HOOKED(exit_hook))
@@ -43,7 +43,7 @@ int snd_exit_cleanly(snd_state *ss, int force_exit)
 void sound_not_current(snd_info *sp, void *ignore)
 {
   /* check for change in update status */
-  int needs_update;
+  bool needs_update;
   snd_state *ss;
   needs_update = (file_write_date(sp->filename) != sp->write_date);
   if (needs_update != sp->need_update)
@@ -172,9 +172,9 @@ static char *enved_target_name(int choice)
 }
 
 #if HAVE_RUBY
-static char *b2s(int val) {if (val) return("true"); else return("false");}
+static char *b2s(bool val) {if (val) return("true"); else return("false");}
 #else
-static char *b2s(int val) {if (val) return("#t"); else return("#f");}
+static char *b2s(bool val) {if (val) return("#t"); else return("#f");}
 #endif
 
 #define white_space "      "
@@ -355,7 +355,7 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
     }
 }
 
-static FILE *open_restart_file(char *name, int append)
+static FILE *open_restart_file(char *name, bool append)
 {
   FILE *fd;
   char *str;
@@ -378,7 +378,7 @@ static FILE *open_restart_file(char *name, int append)
 
 FILE *open_snd_init_file (snd_state *ss)
 { /* needed also by keyboard macro saver */
-  return(open_restart_file(ss->init_file, TRUE));
+  return(open_restart_file(ss->init_file, true));
 }
 
 static char *save_options_or_error(snd_state *ss)
@@ -512,7 +512,7 @@ static void save_sound_state (snd_info *sp, void *ptr)
       psp_ss(fd, S_filter_control_env, tmpstr = env_to_string(sp->filter_control_env));
       if (tmpstr) FREE(tmpstr);
     }
-  if (sp->cursor_follows_play) psp_ss(fd, S_cursor_follows_play, b2s(sp->cursor_follows_play));
+  if (sp->cursor_follows_play) psp_ss(fd, S_cursor_follows_play, b2s((bool)(sp->cursor_follows_play))); /* a boolean from the user's point of view */
 
   if ((XEN_VECTOR_P(sp->properties)) &&
       (XEN_LIST_P(XEN_VECTOR_REF(sp->properties, 0))) &&
@@ -622,7 +622,7 @@ static char *save_state_or_error (snd_state *ss, char *save_state_name)
 #endif
   FILE *save_fd;
   char *locale = NULL;
-  save_fd = open_restart_file(save_state_name, FALSE);
+  save_fd = open_restart_file(save_state_name, false);
   if (save_fd == NULL) 
     return(mus_format(_("can't write %s: %s"), 
 		      save_state_name, 
@@ -732,7 +732,7 @@ static XEN g_script_args(void)
   return(lst);
 }
 
-int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_file_names, int with_title, int args)
+int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_file_names, bool with_title, int args)
 {
   char *argname;
   argname = auto_open_file_names[auto_open_ctr];
@@ -841,7 +841,7 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
 				  startup_filename = copy_string(argname);
 				  if (dont_start(startup_filename)) snd_exit(1);
 				}
-			      snd_open_file_unselected(argname, ss, FALSE);
+			      snd_open_file_unselected(argname, ss, false);
 			    }
 			}
 		    }
@@ -896,7 +896,7 @@ static XEN g_save_options(XEN filename)
 static XEN g_exit(XEN val) 
 {
   #define H_exit "(" S_exit "): exit Snd"
-  if (snd_exit_cleanly(get_global_state(), FALSE))
+  if (snd_exit_cleanly(get_global_state(), false))
     snd_exit(XEN_TO_C_INT_OR_ELSE(val,1)); 
   return(XEN_FALSE);
 }

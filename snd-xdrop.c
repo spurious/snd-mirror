@@ -7,7 +7,7 @@ static Atom COMPOUND_TEXT;           /* various Motif widgets use this and the n
 static Atom _MOTIF_COMPOUND_STRING;
 static Atom text_plain;              /* gtk uses this -- untested here */
 
-#define WITH_DRAG_CONVERSION FALSE
+#define WITH_DRAG_CONVERSION false
 
 #if WITH_DRAG_CONVERSION
 static Atom _MOTIF_DROP;             /* to query in-coming drag for filename */
@@ -73,7 +73,7 @@ static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom
 	  caller = (Widget)((XmDropTransferEntry)context)->client_data;
 	  if (XmIsRowColumn(caller)) /* top menuBar widget or top level menu */
 	    {
-	      sp = snd_open_file(str, ss, FALSE);
+	      sp = snd_open_file(str, ss, false);
 	      if (sp) select_channel(sp, 0);
 	    }
 	  else
@@ -235,7 +235,7 @@ static void handle_drag(Widget w, XtPointer context, XtPointer info)
 			}
 		    if (k != -1)
 		      {
-			XtVaSetValues(cb->dragContext, XmNincremental, FALSE, NULL); /* see Motif docs for XmDragContext */
+			XtVaSetValues(cb->dragContext, XmNincremental, false, NULL); /* see Motif docs for XmDragContext */
 			ok = (*proc)(cb->dragContext, &_MOTIF_DROP, &(targets[i]), &type_returned, &value, &len, &format, &maxlen, NULL, 0);
 			if (ok == True)
 			  current_file = just_filename(atom_to_filename(type_returned, value, len));
@@ -280,16 +280,16 @@ void add_drop(snd_state *ss, Widget w)
   Arg args[12];
   dpy = MAIN_DISPLAY(ss);
 #if WITH_DRAG_CONVERSION
-  _MOTIF_DROP = XInternAtom(dpy, "_MOTIF_DROP", FALSE);
+  _MOTIF_DROP = XInternAtom(dpy, "_MOTIF_DROP", false);
 #endif
   targets[0] = XA_STRING;
-  FILE_NAME = XInternAtom(dpy, "FILE_NAME", FALSE);
+  FILE_NAME = XInternAtom(dpy, "FILE_NAME", false);
   targets[1] = FILE_NAME;
-  COMPOUND_TEXT = XInternAtom(dpy, "COMPOUND_TEXT", FALSE);
+  COMPOUND_TEXT = XInternAtom(dpy, "COMPOUND_TEXT", false);
   targets[2] = COMPOUND_TEXT;
-  _MOTIF_COMPOUND_STRING = XInternAtom(dpy, "_MOTIF_COMPOUND_STRING", FALSE);
+  _MOTIF_COMPOUND_STRING = XInternAtom(dpy, "_MOTIF_COMPOUND_STRING", false);
   targets[3] = _MOTIF_COMPOUND_STRING;
-  text_plain = XInternAtom(dpy, "text/plain", FALSE);
+  text_plain = XInternAtom(dpy, "text/plain", false);
   targets[4] = text_plain;
   n = 0;
   XtSetArg(args[n], XmNdropSiteOperations, XmDROP_COPY); n++;

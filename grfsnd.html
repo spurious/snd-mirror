@@ -2001,8 +2001,8 @@ data directly to the DAC:
      (mus-audio-close audio-port)
      (ladspa-cleanup descriptor handle)))))
 </pre></td></tr></table>
-<p>For a Ladspa GUI builder, see <a href="sndscm.html#ladspadoc">ladspa.scm</a>
-and <a href="sndscm.html#dlpdoc">plugins-menu.scm</a>.  One slight "gotcha"
+<p>For a Ladspa GUI builder, see <a href="sndscm.html#ladspadoc">ladspa.scm</a>.
+One slight "gotcha"
 in this area: the Snd configuration switch --with-doubles causes "vcts" to
 be arrays of doubles, but Ladspa plugins expect to see arrays of floats.
 This is a problem only if you're calling ladpsa-connect-port yourself.

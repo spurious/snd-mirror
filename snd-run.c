@@ -188,7 +188,7 @@ static void xen_symbol_name_set_value(const char *a, XEN b)
     XEN_VARIABLE_SET(var, b);
 }
 
-static XEN symbol_to_value(XEN code, XEN sym, int *local)
+static XEN symbol_to_value(XEN code, XEN sym, bool *local)
 {
   XEN new_val = XEN_UNDEFINED;
   XEN pair = XEN_FALSE;
@@ -203,7 +203,7 @@ static XEN symbol_to_value(XEN code, XEN sym, int *local)
       /* fprintf(stderr,"look for %s in %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(code_env)); */
       if (XEN_LIST_P(code_env))
 	{
-	  (*local) = 1;
+	  (*local) = true;
 	  while (XEN_NOT_NULL_P(code_env))
 	    {
 	      pair = XEN_CAR(code_env);
@@ -232,7 +232,7 @@ static XEN symbol_to_value(XEN code, XEN sym, int *local)
     {
       new_val = XEN_VARIABLE_REF(val);
       if (XEN_BOUND_P(new_val))
-	(*local) = 0;
+	(*local) = false;
     }
   return(new_val);
 }
@@ -329,24 +329,22 @@ static int name_to_type(const char *name)
 #define VECTOR_P(Type) (((Type) >= R_FLOAT_VECTOR) && ((Type) <= R_CLM_VECTOR))
 
 enum {R_VARIABLE, R_CONSTANT};
-#define NEED_ANY_RESULT 1
-#define NEED_INT_RESULT 2
-#define NEED_XCLM_RESULT 3
+typedef enum {DONT_NEED_RESULT, NEED_ANY_RESULT, NEED_INT_RESULT, NEED_XCLM_RESULT} walk_result_t;
 
 static int current_optimization = DONT_OPTIMIZE;
-static int run_warned = FALSE;
+static bool run_warned = false;
 
 typedef struct {
   int type;
   int addr;
   int constant;
-  int gc;
+  bool gc;
 } xen_value;
 
 typedef struct {
   char *name;
   xen_value *v;
-  int global, unclean, unsettable;
+  bool global, unclean, unsettable;
 } xen_var;
 
 typedef struct {
@@ -407,21 +405,22 @@ struct ptree {
   XEN *xens;
   int xen_vars_size, xen_var_ctr;
   xen_value ***xen_vars;
-  void *outer_tree;
+  ptree *outer_tree;
   /* next needed by tree builders (temps) */
-  int constants, float_result, need_result;
+  int constants, float_result;
+  walk_result_t walk_result;
 };
 
 struct triple {
   void (*function)(int *arg_addrs, ptree *pt);
   int *args;
   char *(*descr)(int *arg_addrs, ptree *pt); /* for debugging */
-  int no_opt;
+  bool no_opt;
 };
 
 #else
 
-typedef struct {
+typedef struct ptree {
   struct triple **program;
   Int *ints; 
   Double *dbls;
@@ -458,16 +457,17 @@ typedef struct {
   XEN *xens;
   int xen_vars_size, xen_var_ctr;
   xen_value ***xen_vars;
-  void *outer_tree;
+  struct ptree *outer_tree;
   /* next needed by tree builders (temps) */
-  int constants, float_result, need_result;
+  int constants, float_result;
+  walk_result_t walk_result;
 } ptree;
 
 typedef struct {
   void (*function)(int *arg_addrs, ptree *pt);
   int *args;
   char *(*descr)(int *arg_addrs, ptree *pt); /* for debugging */
-  int no_opt;
+  bool no_opt;
 } triple;
 
 #endif
@@ -513,7 +513,7 @@ static xen_value *make_xen_value(int typ, int address, int constant)
   v->type = typ;
   v->addr = address;
   v->constant = constant;
-  v->gc = FALSE;
+  v->gc = false;
   return(v);
 }
 
@@ -522,7 +522,7 @@ static char optimizer_warning_buffer[OPTIMIZER_WARNING_BUFFER_SIZE];
 static xen_value *run_warn(const char *format, ...)
 {
   va_list ap;
-  run_warned = TRUE;
+  run_warned = true;
 #if HAVE_VPRINTF
   va_start(ap, format);
 #if HAVE_VSNPRINTF
@@ -542,7 +542,7 @@ static xen_value *run_warn(const char *format, ...)
 static xen_value *run_warn_with_free(char *str)
 {
   XEN msg;
-  run_warned = TRUE;
+  run_warned = true;
   msg = C_TO_XEN_STRING(str);
   FREE(str);
   if (XEN_HOOKED(optimization_hook))
@@ -630,7 +630,7 @@ static char *add_comments(ptree *pt, char *str)
   int addr, i, j, len;
   char *new_buf;
   char name[64];
-  int name_pending = FALSE;
+  bool name_pending = false;
   if (str == NULL) return(NULL);
   /* look for i%n(...) or d%n(...), if found, look for addr in pt tables, if found add name to buf */
   len = snd_strlen(str);
@@ -649,7 +649,7 @@ static char *add_comments(ptree *pt, char *str)
 	      for (k = 0; k < name_len; k++)
 		new_buf[j++] = name[k];
 	      new_buf[j++] = ']';
-	      name_pending = FALSE;
+	      name_pending = false;
 	      name[0] = '\0';
 	    }
 	}
@@ -678,7 +678,7 @@ static char *add_comments(ptree *pt, char *str)
 	      if (var)
 		{
 		  strcpy(name, var->name);
-		  name_pending = TRUE;
+		  name_pending = true;
 		}
 	    }
 	  new_buf[j++] = str[i];
@@ -975,12 +975,12 @@ static char *describe_xen_value(xen_value *v, ptree *pt)
   return(describe_xen_value_1(v->type, v->addr, pt));
 }
 
-static int got_lambda = FALSE; /* a temporary kludge?? */
+static bool got_lambda = false; /* a temporary kludge?? */
 
 static ptree *make_ptree(int initial_data_size)
 {
   ptree *pt;
-  got_lambda = FALSE;
+  got_lambda = false;
   pt = (ptree *)CALLOC(1, sizeof(ptree));
   if (initial_data_size > 0)
     {
@@ -1046,7 +1046,7 @@ static ptree *attach_to_ptree(ptree *pt)
   new_tree->arity = 0;
   if (pt->outer_tree)
     new_tree->outer_tree = pt->outer_tree;
-  else new_tree->outer_tree = (void *)pt;
+  else new_tree->outer_tree = pt;
   new_tree->ints = pt->ints;
   new_tree->dbls = pt->dbls;
   new_tree->vars = pt->vars;
@@ -1254,7 +1254,7 @@ static void vct_into_vector(vct *v, XEN vectr)
 static xen_var *free_xen_var(ptree *prog, xen_var *var)
 {
   XEN val;
-  int local_var;
+  bool local_var;
   if (var)
     {
       /* fprintf(stderr, "free var %s %s (global: %d, unclean: %d)\n", var->name, type_name(var->v->type), var->global, var->unclean); */
@@ -1433,7 +1433,7 @@ void *free_ptree(void *upt)
 			    }
 			  break;
 			}
-		      v->gc = FALSE;
+		      v->gc = false;
 		    }
 		  FREE(v);
 		  pt->gcs[i] = NULL;
@@ -1696,9 +1696,9 @@ static xen_var *new_xen_var(const char *name, xen_value *v)
   var = (xen_var *)CALLOC(1, sizeof(xen_var));
   var->name = copy_string(name);
   var->v = copy_xen_value(v);
-  var->unclean = FALSE;
-  var->global = FALSE;
-  var->unsettable = FALSE;
+  var->unclean = false;
+  var->global = false;
+  var->unsettable = false;
   return(var);
 }
 
@@ -1741,7 +1741,7 @@ static int add_outer_var_to_ptree(ptree *pt, const char *name, xen_value *v)
       else pt->global_vars = (xen_var **)CALLOC(pt->global_vars_size, sizeof(xen_var *));
     }
   var = new_xen_var(name, v);
-  var->global = TRUE;
+  var->global = true;
   pt->global_vars[cur] = var;
   return(cur);
 }
@@ -1854,7 +1854,7 @@ static void add_obj_to_gcs(ptree *pt, int type, int addr)
 {
   xen_value *v;
   v = make_xen_value(type, addr, R_VARIABLE);
-  v->gc = TRUE;
+  v->gc = true;
   add_xen_value_to_gcs(pt, v);
 }
 
@@ -2018,7 +2018,8 @@ static xen_value *add_global_var_to_ptree(ptree *prog, XEN form, XEN *rtn)
 {
   XEN val = XEN_UNDEFINED;
   xen_var *var;
-  int var_loc = 0, local_var = FALSE, type;
+  int var_loc = 0, type;
+  bool local_var = false;
   xen_value *v = NULL;
   ptree *upper = NULL;
   char *varname;
@@ -2045,7 +2046,7 @@ static xen_value *add_global_var_to_ptree(ptree *prog, XEN form, XEN *rtn)
     {
     case R_INT:    v = make_xen_value(R_INT, add_int_to_ptree(prog, R_XEN_TO_C_INT(val)), R_VARIABLE);                     break;
     case R_FLOAT:  v = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, XEN_TO_C_DOUBLE(val)), R_VARIABLE);                  break;
-    case R_BOOL:   v = make_xen_value(R_BOOL, add_int_to_ptree(prog, XEN_TO_C_BOOLEAN(val)), R_VARIABLE);                  break;
+    case R_BOOL:   v = make_xen_value(R_BOOL, add_int_to_ptree(prog, (Int)XEN_TO_C_BOOLEAN(val)), R_VARIABLE);                  break;
     case R_VCT:    v = make_xen_value(R_VCT, add_vct_to_ptree(prog, get_vct(val)), R_VARIABLE);                            break;
     case R_READER: v = make_xen_value(R_READER, add_reader_to_ptree(prog, get_sf(val)), R_VARIABLE);                       break;
     case R_CHAR:   v = make_xen_value(R_CHAR, add_int_to_ptree(prog, (Int)(XEN_TO_C_CHAR(val))), R_VARIABLE);              break;
@@ -2055,7 +2056,7 @@ static xen_value *add_global_var_to_ptree(ptree *prog, XEN form, XEN *rtn)
     case R_SYMBOL: v = make_xen_value(R_SYMBOL, add_xen_to_ptree(prog, val), R_VARIABLE);                                  break;
     case R_KEYWORD: v = make_xen_value(R_KEYWORD, add_xen_to_ptree(prog, val), R_VARIABLE);                                break;
     case R_CLM:
-      if (prog->need_result == NEED_XCLM_RESULT)
+      if (prog->walk_result == NEED_XCLM_RESULT)
 	v = make_xen_value(R_XCLM, add_xen_to_ptree(prog, val), R_VARIABLE);
       else v = make_xen_value(R_CLM, add_clm_to_ptree(prog, XEN_TO_MUS_ANY(val)), R_VARIABLE);
       break;
@@ -2077,7 +2078,7 @@ static xen_value *add_global_var_to_ptree(ptree *prog, XEN form, XEN *rtn)
 	iv = read_vector(val, type);
 	if (iv == NULL) return(NULL);
 	v = make_xen_value(type, add_vect_to_ptree(prog, iv), R_VARIABLE);
-	if (v) add_obj_to_gcs(prog, type, v->addr); /* this makes its own xen_value with TRUE gc field */
+	if (v) add_obj_to_gcs(prog, type, v->addr); /* this makes its own xen_value with true gc field */
       }
       break;
     default:
@@ -2089,7 +2090,7 @@ static xen_value *add_global_var_to_ptree(ptree *prog, XEN form, XEN *rtn)
     {
       var_loc = add_outer_var_to_ptree(prog, varname, v);
       if ((v->type == R_LIST) || (v->type == R_PAIR)) /* lists aren't settable yet */
-	prog->global_vars[var_loc]->unsettable = TRUE;
+	prog->global_vars[var_loc]->unsettable = true;
       else
 	{
 	  if (current_optimization < GLOBAL_SET_OK)
@@ -2155,7 +2156,7 @@ static void eval_ptree(ptree *pt)
   Double *dbls;
   ints = pt->ints;
   dbls = pt->dbls;
-  ALL_DONE = FALSE;
+  ALL_DONE = (Int)false;
   /* evaluate the parse tree */
   while (!ALL_DONE)
     {
@@ -2187,7 +2188,7 @@ static void eval_embedded_ptree(ptree *prog, ptree *pt)
   old_pc = pt->ints[0];
   old_all_done = pt->ints[1];
   pt->ints[0] = 0;
-  pt->ints[1] = FALSE;
+  pt->ints[1] = (Int)false;
   prog->ints = pt->ints;
   prog->dbls = pt->dbls;
   prog->xen_vars = pt->xen_vars;
@@ -2331,7 +2332,7 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define DESC_VECT_ARG_1 ((args[1] < pt->vect_ctr) ? pt->vects[args[1]] : NULL)
 #define DESC_VECT_ARG_2 ((args[2] < pt->vect_ctr) ? pt->vects[args[2]] : NULL)
 
-static void quit(int *args, ptree *pt) {ALL_DONE = TRUE;}
+static void quit(int *args, ptree *pt) {ALL_DONE = (Int)true;}
 static char *descr_quit(int *args, ptree *pt) {return(copy_string("quit"));}
 
 static void jump(int *args, ptree *pt) {PC += pt->ints[args[0]];}
@@ -2373,10 +2374,10 @@ static char *descr_store_f_i(int *args, ptree *pt) {return(mus_format( INT_PT " 
 static void store_i_f(int *args, ptree *pt) {FLOAT_RESULT = (Double)INT_ARG_1;}
 static char *descr_store_i_f(int *args, ptree *pt) {return(mus_format( FLT_PT " = " INT_PT , args[0], FLOAT_RESULT, args[1], INT_ARG_1));}
 
-static void store_false(int *args, ptree *pt) {BOOL_RESULT = FALSE;}
+static void store_false(int *args, ptree *pt) {BOOL_RESULT = (Int)false;}
 static char *descr_store_false(int *args, ptree *pt) {return(mus_format( BOOL_PT " = 0", args[0], B2S(BOOL_RESULT)));}
 
-static void store_true(int *args, ptree *pt) {BOOL_RESULT = TRUE;}
+static void store_true(int *args, ptree *pt) {BOOL_RESULT = (Int)true;}
 static char *descr_store_true(int *args, ptree *pt) {return(mus_format( BOOL_PT " = 1", args[0], B2S(BOOL_RESULT)));}
 
 static void store_s(int *args, ptree *pt) 
@@ -2399,7 +2400,7 @@ static xen_value *convert_int_to_dbl(ptree *prog, xen_value *i)
   return(val);
 }
 
-static xen_value *convert_dbl_to_int(ptree *prog, xen_value *i, int exact)
+static xen_value *convert_dbl_to_int(ptree *prog, xen_value *i, bool exact)
 {
   xen_value *v;
   Double val;
@@ -2421,9 +2422,9 @@ static triple *set_var(ptree *pt, xen_value *var, xen_value *init_val)
   return(add_triple_to_ptree(pt, va_make_triple(store_i, descr_store_i, 2, var, init_val)));
 }
 
-static xen_value *walk(ptree *prog, XEN form, int need_result);
+static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result);
 
-static xen_value *walk_sequence(ptree *prog, XEN body, int need_result, const char *name)
+static xen_value *walk_sequence(ptree *prog, XEN body, walk_result_t need_result, const char *name)
 {
   xen_value *v;
   int i, body_forms;
@@ -2432,18 +2433,23 @@ static xen_value *walk_sequence(ptree *prog, XEN body, int need_result, const ch
   if (XEN_NOT_BOUND_P(body)) return(NULL);
   body_forms = XEN_LIST_LENGTH(body);
   if (body_forms == 0) 
-    return(make_xen_value(R_BOOL, add_int_to_ptree(prog, FALSE), R_CONSTANT));
+    return(make_xen_value(R_BOOL, add_int_to_ptree(prog, (Int)false), R_CONSTANT));
   lbody = body;
   for (i = 0; i < body_forms; i++, lbody = XEN_CDR(lbody))
     {
       if (v) FREE(v);
-      v = walk(prog, XEN_CAR(lbody), ((need_result) && (i == (body_forms - 1))));
-      if (v == NULL) return(run_warn("%s: can't handle %s", name, XEN_AS_STRING(XEN_CAR(lbody))));
+      v = walk(prog, 
+	       XEN_CAR(lbody), 
+	       ((need_result != DONT_NEED_RESULT) && 
+		(i == (body_forms - 1))) ? 
+	       NEED_ANY_RESULT : DONT_NEED_RESULT);
+      if (v == NULL) 
+	return(run_warn("%s: can't handle %s", name, XEN_AS_STRING(XEN_CAR(lbody))));
     }
   return(v);
 }
 
-static xen_value *lambda_form(ptree *prog, XEN form, int separate, xen_value **args, int num_args, XEN local_proc);
+static xen_value *lambda_form(ptree *prog, XEN form, bool separate, xen_value **args, int num_args, XEN local_proc);
 
 static char *define_form(ptree *prog, XEN form)
 {
@@ -2456,7 +2462,7 @@ static char *define_form(ptree *prog, XEN form)
     {
       if (XEN_LIST_P(var))
 	{
-	  v = lambda_form(prog, form, FALSE, NULL, 0, XEN_FALSE);
+	  v = lambda_form(prog, form, false, NULL, 0, XEN_FALSE);
 	  if (v == NULL) return(mus_format("can't handle this define: %s", XEN_AS_STRING(form)));
 	  add_var_to_ptree(prog, XEN_SYMBOL_TO_C_STRING(XEN_CAR(var)), v);
 	  FREE(v);
@@ -2465,7 +2471,7 @@ static char *define_form(ptree *prog, XEN form)
       else return(mus_format("can't handle this definition: %s", XEN_AS_STRING(var)));
     }
   val = XEN_CADDR(form);
-  v = walk(prog, val, TRUE);
+  v = walk(prog, val, NEED_ANY_RESULT);
   if (v == NULL) return(mus_format("can't handle this define value: %s", XEN_AS_STRING(val)));
   vs = transfer_value(prog, v);
   add_var_to_ptree(prog, XEN_SYMBOL_TO_C_STRING(var), vs);
@@ -2516,7 +2522,7 @@ static char *parallel_binds(ptree *prog, XEN old_lets, const char *name)
       for (i = 0; i < vars; i++, lets = XEN_CDR(lets))
 	{
 	  var = XEN_CAR(lets);
-	  v = walk(prog, XEN_CADR(var), TRUE);
+	  v = walk(prog, XEN_CADR(var), NEED_ANY_RESULT);
 	  if (v == NULL)
 	    {
 	      int j;
@@ -2560,7 +2566,7 @@ static char *sequential_binds(ptree *prog, XEN old_lets, const char *name)
       for (i = 0; i < vars; i++, lets = XEN_CDR(lets))
 	{
 	  var = XEN_CAR(lets);
-	  v = walk(prog, XEN_CADR(var), TRUE);
+	  v = walk(prog, XEN_CADR(var), NEED_ANY_RESULT);
 	  if (v == NULL)
 	    return(mus_format("can't handle %s var: %s", name, XEN_AS_STRING(lets)));
 	  vs = transfer_value(prog, v);
@@ -2652,7 +2658,7 @@ static void undefine_locals(ptree *prog, int locals_loc)
   prog->var_ctr = locals_loc;
 }
 
-static xen_value *walk_then_undefine(ptree *prog, XEN form, int need_result, const char *name, int locals_loc)
+static xen_value *walk_then_undefine(ptree *prog, XEN form, walk_result_t need_result, const char *name, int locals_loc)
 {
   xen_value *v;
   v = walk_sequence(prog, handle_defines(prog, form), need_result, name);
@@ -2660,7 +2666,7 @@ static xen_value *walk_then_undefine(ptree *prog, XEN form, int need_result, con
   return(v);
 }
 
-static xen_value *lambda_form(ptree *prog, XEN form, int separate, xen_value **args, int num_args, XEN local_proc)
+static xen_value *lambda_form(ptree *prog, XEN form, bool separate, xen_value **args, int num_args, XEN local_proc)
 {
   /* (lambda (args...) | args etc followed by forms */
   /* as args are declared as vars, put addrs in prog->args list */
@@ -2682,7 +2688,7 @@ static xen_value *lambda_form(ptree *prog, XEN form, int separate, xen_value **a
 	}
       else
 	{
-	  new_tree->result = walk_then_undefine(new_tree, XEN_CDDR(form), TRUE, "lambda", prog->var_ctr);
+	  new_tree->result = walk_then_undefine(new_tree, XEN_CDDR(form), NEED_ANY_RESULT, "lambda", prog->var_ctr);
 	  if (new_tree->result)
 	    {
 	      xen_value *v;
@@ -2701,19 +2707,19 @@ static xen_value *lambda_form(ptree *prog, XEN form, int separate, xen_value **a
       free_embedded_ptree(new_tree);
       return(run_warn("can't handle this embedded lambda: %s", XEN_AS_STRING(form)));
     }
-  got_lambda = TRUE;
+  got_lambda = true;
   locals_loc = prog->var_ctr;
   err = declare_args(prog, form, R_FLOAT, separate, args, num_args);
   if (err) return(run_warn_with_free(err));
-  return(walk_then_undefine(prog, XEN_CDDR(form), TRUE, "lambda", locals_loc));
+  return(walk_then_undefine(prog, XEN_CDDR(form), NEED_ANY_RESULT, "lambda", locals_loc));
 }
 
-static xen_value *begin_form(ptree *prog, XEN form, int need_result)
+static xen_value *begin_form(ptree *prog, XEN form, walk_result_t need_result)
 {
   return(walk_then_undefine(prog, XEN_CDR(form), need_result, "begin", prog->var_ctr));
 }
 
-static xen_value *let_star_form(ptree *prog, XEN form, int need_result)
+static xen_value *let_star_form(ptree *prog, XEN form, walk_result_t need_result)
 {
   int locals_loc;
   char *err = NULL;
@@ -2724,7 +2730,7 @@ static xen_value *let_star_form(ptree *prog, XEN form, int need_result)
   return(walk_then_undefine(prog, XEN_CDDR(form), need_result, "let*", locals_loc));
 }
 
-static xen_value *let_form(ptree *prog, XEN form, int need_result)
+static xen_value *let_form(ptree *prog, XEN form, walk_result_t need_result)
 {
   /* keep vars until end of var section */
   XEN lets;
@@ -2738,14 +2744,14 @@ static xen_value *let_form(ptree *prog, XEN form, int need_result)
   return(walk_then_undefine(prog, XEN_CDDR(form), need_result, "let", locals_loc));
 }
 
-static xen_value *if_form(ptree *prog, XEN form, int need_result)
+static xen_value *if_form(ptree *prog, XEN form, walk_result_t need_result)
 {
   /* form: (if selector true [false]) */
   xen_value *result = NULL, *true_result = NULL, *false_result = NULL;
   xen_value *jump_to_end = NULL, *jump_to_false, *if_value;
   int current_pc, false_pc = 0, has_false;
   has_false = (XEN_LIST_LENGTH(form) == 4);
-  if_value = walk(prog, XEN_CADR(form), TRUE);                                      /* walk selector */
+  if_value = walk(prog, XEN_CADR(form), NEED_ANY_RESULT);                                      /* walk selector */
   if (if_value == NULL) return(run_warn("if: bad selector? %s", XEN_AS_STRING(XEN_CADR(form))));
   if (if_value->type != R_BOOL) 
     return(run_warn("if: selector type not boolean: %s %s", 
@@ -2776,7 +2782,7 @@ static xen_value *if_form(ptree *prog, XEN form, int need_result)
       FREE(jump_to_false);
       return(run_warn("if: can't handle true branch %s", XEN_AS_STRING(XEN_CADDR(form))));
     }
-  if (need_result)
+  if (need_result != DONT_NEED_RESULT)
     {
       result = add_empty_var_to_ptree(prog, true_result->type);
       set_var(prog, result, true_result);
@@ -2792,7 +2798,7 @@ static xen_value *if_form(ptree *prog, XEN form, int need_result)
   if (has_false)
     {
       false_result = walk(prog, XEN_CADDDR(form), need_result);                     /* walk false branch */
-      if (need_result)
+      if (need_result != DONT_NEED_RESULT)
 	{
 	  if ((false_result) && (false_result->type != true_result->type))
 	    {
@@ -2835,7 +2841,7 @@ static xen_value *if_form(ptree *prog, XEN form, int need_result)
   return(make_xen_value(R_UNSPECIFIED, -1, R_CONSTANT));
 }
 
-static xen_value *cond_form(ptree *prog, XEN form, int need_result)
+static xen_value *cond_form(ptree *prog, XEN form, walk_result_t need_result)
 {
   xen_value *result = NULL, *test_value = NULL, *clause_value = NULL, *jump_to_next_clause = NULL;
   xen_value **fixups = NULL;
@@ -2851,8 +2857,8 @@ static xen_value *cond_form(ptree *prog, XEN form, int need_result)
       /* check car -- if #t evaluate rest */
       if ((XEN_SYMBOL_P(XEN_CAR(clause))) &&
 	  (strcmp("else", XEN_SYMBOL_TO_C_STRING(XEN_CAR(clause))) == 0))
-	test_value = make_xen_value(R_BOOL, add_int_to_ptree(prog, TRUE), R_CONSTANT);
-      else test_value = walk(prog, XEN_CAR(clause), TRUE);
+	test_value = make_xen_value(R_BOOL, add_int_to_ptree(prog, true), R_CONSTANT);
+      else test_value = walk(prog, XEN_CAR(clause), NEED_ANY_RESULT);
       if ((test_value == NULL) || (test_value->type != R_BOOL))
 	return(run_warn("cond test: %s", XEN_AS_STRING(XEN_CAR(clause))));
       /* test was #t */
@@ -2876,7 +2882,7 @@ static xen_value *cond_form(ptree *prog, XEN form, int need_result)
 	}
       else clause_value = copy_xen_value(test_value);
       /* now at end of this cond clause block -- fixup the jump if false above, add jump past rest if true */
-      if (need_result)
+      if (need_result != DONT_NEED_RESULT)
 	{
 	  if (result == NULL)
 	    result = add_empty_var_to_ptree(prog, clause_value->type);
@@ -2918,12 +2924,12 @@ static xen_value *cond_form(ptree *prog, XEN form, int need_result)
 	FREE(fixups[i]);
       }
   if (fixups) FREE(fixups);
-  if (need_result)
+  if (need_result != DONT_NEED_RESULT)
     return(result);
   return(make_xen_value(R_UNSPECIFIED, -1, R_CONSTANT));
 }
 
-static xen_value *case_form(ptree *prog, XEN form, int need_result)
+static xen_value *case_form(ptree *prog, XEN form, walk_result_t need_result)
 {
   /* only int (constant) selectors here */
   /* (case selector ((...) exp ...) ...) with possible 'else' */
@@ -2933,7 +2939,7 @@ static xen_value *case_form(ptree *prog, XEN form, int need_result)
   int *locations = NULL;
   xen_value **fixups = NULL;
   selector = XEN_CADR(form);
-  selval = walk(prog, selector, TRUE);
+  selval = walk(prog, selector, NEED_ANY_RESULT);
   if (selval == NULL) return(run_warn("can't handle case selector: %s", XEN_AS_STRING(selector)));
   if (selval->type != R_INT) return(run_warn("case only with ints: %s", XEN_AS_STRING(selector)));
   jump_to_selection = make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_VARIABLE);
@@ -2947,7 +2953,7 @@ static xen_value *case_form(ptree *prog, XEN form, int need_result)
       /* ignore keys for now */
       locations[i] = prog->triple_ctr;
       v = walk_sequence(prog, XEN_CDAR(body), need_result, "case");
-      if (need_result)
+      if (need_result != DONT_NEED_RESULT)
 	{
 	  if (result == NULL)
 	    result = add_empty_var_to_ptree(prog, v->type);
@@ -3023,7 +3029,7 @@ static xen_value *case_form(ptree *prog, XEN form, int need_result)
       FREE(fixups);
     }
   if (selval) FREE(selval);
-  if (need_result)
+  if (need_result != DONT_NEED_RESULT)
     return(result);
   return(make_xen_value(R_UNSPECIFIED, -1, R_CONSTANT));
 
@@ -3043,36 +3049,36 @@ static xen_value *case_form(ptree *prog, XEN form, int need_result)
   return(NULL);
 }
 
-static int list_member(XEN symb, XEN varlst)
+static bool list_member(XEN symb, XEN varlst)
 {
   XEN lst;
   for (lst = varlst; (XEN_NOT_NULL_P(lst)); lst = XEN_CDR(lst))
     if (XEN_EQ_P(symb, XEN_CAR(lst)))
-      return(TRUE);
-  return(FALSE);
+      return(true);
+  return(false);
 }
 
-static int tree_member(XEN varlst, XEN expr)
+static bool tree_member(XEN varlst, XEN expr)
 {
   /* is any member of varlst found in expr */
   /* search expr (assumed to be a list here) for reference to any member of varlst */
   XEN symb;
-  if (XEN_NULL_P(expr)) return(FALSE);
+  if (XEN_NULL_P(expr)) return(false);
   symb = XEN_CAR(expr);
   if (XEN_SYMBOL_P(symb))
     {
       if (list_member(symb, varlst))
-	return(TRUE);
+	return(true);
     }
   else
     {
       if ((XEN_LIST_P(symb)) && (tree_member(varlst, symb)))
-	return(TRUE);
+	return(true);
     }
   return(tree_member(varlst, XEN_CDR(expr)));
 }
 
-static xen_value *do_form_1(ptree *prog, XEN form, int need_result, int sequential)
+static xen_value *do_form_1(ptree *prog, XEN form, walk_result_t need_result, bool sequential)
 {
   /* (do ([(var val [up])...]) (test [res ...]) [exp ...]): (do () (#t))  */
 
@@ -3101,7 +3107,7 @@ static xen_value *do_form_1(ptree *prog, XEN form, int need_result, int sequenti
   if (trouble) return(run_warn_with_free(trouble));
 
   test_loc = prog->triple_ctr;
-  test = walk(prog, test_form, TRUE);
+  test = walk(prog, test_form, NEED_ANY_RESULT);
   if (test == NULL) return(NULL);
   if (test->type != R_BOOL) 
     {
@@ -3114,7 +3120,7 @@ static xen_value *do_form_1(ptree *prog, XEN form, int need_result, int sequenti
   add_triple_to_ptree(prog, va_make_triple(jump_if, descr_jump_if, 2, jump_to_result, test));
   FREE(test);
   /* now walk the do body */
-  expr = walk_sequence(prog, body, FALSE, "do");
+  expr = walk_sequence(prog, body, DONT_NEED_RESULT, "do");
   if (expr == NULL)
     {
       FREE(jump_to_result);
@@ -3129,7 +3135,7 @@ static xen_value *do_form_1(ptree *prog, XEN form, int need_result, int sequenti
       if (!sequential)
 	{
 	  /* here we can optimize better if sequential is true, so look for such cases */
-	  sequential = TRUE; /* assume success */
+	  sequential = true; /* assume success */
 	  if (varlen > 1)    /* 0=doesn't matter, 1=no possible non-sequential ref */
 	    {
 	      int loc;
@@ -3150,7 +3156,7 @@ static xen_value *do_form_1(ptree *prog, XEN form, int need_result, int sequenti
 			  ((XEN_SYMBOL_P(update)) && (list_member(update, varlst))))
 			{
 			  /* fprintf(stderr,"found seq ref %s\n", XEN_AS_STRING(vars)); */
-			  sequential = FALSE;
+			  sequential = false;
 			  break;
 			}
 		    }
@@ -3167,7 +3173,7 @@ static xen_value *do_form_1(ptree *prog, XEN form, int need_result, int sequenti
 	  if ((XEN_NOT_NULL_P(XEN_CDDR(var))) && (XEN_NOT_NULL_P(XEN_CADDR(var))))
 	    {
 	      if ((sequential) && (expr)) FREE(expr);
-	      expr = walk(prog, XEN_CADDR(var), TRUE);
+	      expr = walk(prog, XEN_CADDR(var), NEED_ANY_RESULT);
 	      /* (run-eval '(do ((i 0 (1+ i)) (j 0 (1+ i)) (k 0 (hiho k))) ((= i 3)) 0)) */
 	      if (expr == NULL)
 		{
@@ -3240,16 +3246,16 @@ static xen_value *do_form_1(ptree *prog, XEN form, int need_result, int sequenti
   FREE(jump_to_result);
   /* now the result block */
   if (XEN_NOT_NULL_P(results))
-    result = walk_sequence(prog, results, TRUE, "do");
-  else result = make_xen_value(R_BOOL, add_int_to_ptree(prog, FALSE), R_CONSTANT);
+    result = walk_sequence(prog, results, NEED_ANY_RESULT, "do");
+  else result = make_xen_value(R_BOOL, add_int_to_ptree(prog, false), R_CONSTANT);
   undefine_locals(prog, locals_loc);
   return(result);
 }
 
-static xen_value *do_form(ptree *prog, XEN form, int need_result) {return(do_form_1(prog, form, need_result, FALSE));}
-static xen_value *do_star_form(ptree *prog, XEN form, int need_result) {return(do_form_1(prog, form, need_result, TRUE));}
+static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result) {return(do_form_1(prog, form, need_result, false));}
+static xen_value *do_star_form(ptree *prog, XEN form, walk_result_t need_result) {return(do_form_1(prog, form, need_result, true));}
 
-static xen_value *callcc_form(ptree *prog, XEN form, int need_result)
+static xen_value *callcc_form(ptree *prog, XEN form, walk_result_t need_result)
 {
   XEN func_form, continuation_name;
   continuation *c;
@@ -3266,7 +3272,7 @@ static xen_value *callcc_form(ptree *prog, XEN form, int need_result)
 	  FREE(v);
 	  return(run_warn("call/cc: types differ"));
 	}
-      if (need_result)
+      if (need_result != DONT_NEED_RESULT)
 	set_var(prog, c->result, v);
     }
   if (v) FREE(v);
@@ -3274,12 +3280,12 @@ static xen_value *callcc_form(ptree *prog, XEN form, int need_result)
   prog->ints[c->jump->addr] = prog->triple_ctr;
   if (c->result)
     v = copy_xen_value(c->result);
-  else v = make_xen_value(R_BOOL, add_int_to_ptree(prog, FALSE), R_CONSTANT);
+  else v = make_xen_value(R_BOOL, add_int_to_ptree(prog, false), R_CONSTANT);
   erase_goto(prog, c->name); /* now access to this depends on a set! somewhere */
   return(v);
 }
 
-static xen_value *or_form(ptree *prog, XEN form, int ignored)
+static xen_value *or_form(ptree *prog, XEN form, walk_result_t ignored)
 {
   /* (or ...) returning as soon as #t seen -- assume booleans only here */
   XEN body;
@@ -3293,7 +3299,7 @@ static xen_value *or_form(ptree *prog, XEN form, int ignored)
   fixups = (xen_value **)CALLOC(body_forms, sizeof(xen_value *));
   for (i = 0; i < body_forms; i++, body = XEN_CDR(body))
     {
-      v = walk(prog, XEN_CAR(body), TRUE);
+      v = walk(prog, XEN_CAR(body), NEED_ANY_RESULT);
       if ((v == NULL) || ((v->type != R_BOOL) && (!(POINTER_OR_GOTO_P(v->type)))))
 	{
 	  int was_null;
@@ -3328,7 +3334,7 @@ static xen_value *or_form(ptree *prog, XEN form, int ignored)
   return(result);
 }
 
-static xen_value *and_form(ptree *prog, XEN form, int ignored)
+static xen_value *and_form(ptree *prog, XEN form, walk_result_t ignored)
 {
   /* (and ...) returning as soon as #f seen -- assume booleans only here */
   XEN body;
@@ -3342,7 +3348,7 @@ static xen_value *and_form(ptree *prog, XEN form, int ignored)
   fixups = (xen_value **)CALLOC(body_forms, sizeof(xen_value *));
   for (i = 0; i < body_forms; i++, body = XEN_CDR(body))
     {
-      v = walk(prog, XEN_CAR(body), TRUE);
+      v = walk(prog, XEN_CAR(body), NEED_ANY_RESULT);
       if ((v == NULL) || ((v->type != R_BOOL) && (!(POINTER_OR_GOTO_P(v->type)))))
 	{
 	  int was_null;
@@ -3379,7 +3385,7 @@ static xen_value *and_form(ptree *prog, XEN form, int ignored)
 
 static xen_value *lookup_generalized_set(ptree *prog, XEN accessor, xen_value *arg0, xen_value *arg1, xen_value *arg2, xen_value *new_value);
 
-static xen_value *generalized_set_form(ptree *prog, XEN form, int need_result)
+static xen_value *generalized_set_form(ptree *prog, XEN form, walk_result_t need_result)
 {
   /* (set! (mus-phase gen) 0.0) */
   XEN settee, setval;
@@ -3389,26 +3395,26 @@ static xen_value *generalized_set_form(ptree *prog, XEN form, int need_result)
   setval = XEN_CADDR(form);
   if ((XEN_LIST_P(settee)) && (XEN_SYMBOL_P(XEN_CAR(settee))) && (XEN_LIST_LENGTH(settee) <= 4))
     {
-      v = walk(prog, setval, TRUE);
+      v = walk(prog, setval, NEED_ANY_RESULT);
       if (v == NULL)
 	return(run_warn("set!: can't handle: %s", XEN_AS_STRING(setval)));
       in_settee = XEN_CAR(settee);
       if (XEN_NOT_NULL_P(XEN_CDR(settee)))
 	{
-	  in_v0 = walk(prog, XEN_CADR(settee), TRUE);
+	  in_v0 = walk(prog, XEN_CADR(settee), NEED_ANY_RESULT);
 	  if ((in_v0) &&
 	      (in_v0->type != R_UNSPECIFIED) &&
 	      (!(in_v0->constant)))
 	    {
 	      if (XEN_NOT_NULL_P(XEN_CDDR(settee)))
 		{
-		  in_v1 = walk(prog, XEN_CADDR(settee), TRUE);
+		  in_v1 = walk(prog, XEN_CADDR(settee), NEED_ANY_RESULT);
 		  if ((in_v1) &&
 		      (in_v1->type != R_UNSPECIFIED))
 		    {
 		      if (XEN_NOT_NULL_P(XEN_CDDDR(settee)))
 			{
-			  in_v2 = walk(prog, XEN_CADDDR(settee), TRUE);
+			  in_v2 = walk(prog, XEN_CADDDR(settee), NEED_ANY_RESULT);
 			  if ((in_v2) &&
 			      (in_v2->type != R_UNSPECIFIED))
 			    return(lookup_generalized_set(prog, in_settee, in_v0, in_v1, in_v2, v));
@@ -3428,7 +3434,7 @@ static xen_value *generalized_set_form(ptree *prog, XEN form, int need_result)
   return(run_warn("generalized set! for %s not implemented yet", XEN_AS_STRING(settee)));
 }
 
-static xen_value *set_form(ptree *prog, XEN form, int need_result)
+static xen_value *set_form(ptree *prog, XEN form, walk_result_t need_result)
 {
   char *varname = NULL;
   xen_var *var;
@@ -3453,7 +3459,7 @@ static xen_value *set_form(ptree *prog, XEN form, int need_result)
   if ((var) && (!(var->unsettable)))
     {
       int val_type, var_type;
-      v = walk(prog, setval, TRUE);
+      v = walk(prog, setval, NEED_ANY_RESULT);
       if (v == NULL) 
 	return(run_warn("set!: can't handle: %s", XEN_AS_STRING(setval)));
       if ((var->v->addr == v->addr) && 
@@ -3482,7 +3488,7 @@ static xen_value *set_form(ptree *prog, XEN form, int need_result)
 	      (POINTER_P(var_type)))
 	    {
  	      add_triple_to_ptree(prog, va_make_triple(store_i, descr_store_i, 2, var->v, v));
-	      var->unclean = TRUE;
+	      var->unclean = true;
 	      return(v);
 	    }
 	  /* variables have only one type in this context */
@@ -3500,7 +3506,7 @@ static xen_value *set_form(ptree *prog, XEN form, int need_result)
 				   *   so we set the no_opt flag when producing the set
 				   */
 	  (prog->triple_ctr > 0) &&
-	  (((triple **)(prog->program))[prog->triple_ctr - 1]->no_opt == FALSE))
+	  (((triple **)(prog->program))[prog->triple_ctr - 1]->no_opt == false))
 	{
 	  /* if possible, simply redirect the previous store to us (implicit set) */
 	  /* (run '(let ((a 2) (b 1)) (set! a (+ b 1)))) */
@@ -3510,13 +3516,13 @@ static xen_value *set_form(ptree *prog, XEN form, int need_result)
 	      (addrs[0] == v->addr))
 	    {
 	      addrs[0] = var->v->addr; /* redirect the store to us */
-	      var->unclean = TRUE;
+	      var->unclean = true;
 	      FREE(v);
 	      return(copy_xen_value(var->v));
 	    }
 	}
       set_var(prog, var->v, v);
-      var->unclean = TRUE;
+      var->unclean = true;
       return(v);
     }
   if ((var) && (var->unsettable))
@@ -3595,7 +3601,7 @@ static char *describe_int_args(const char *func, int num_args, int *args, Int *i
   return(buf);
 }
 
-static int float_all_args(ptree *prog, int num_args, xen_value **args, int float_result)
+static int float_all_args(ptree *prog, int num_args, xen_value **args, bool float_result)
 {
   int i, j;
   xen_value *old_loc;
@@ -3997,7 +4003,7 @@ static xen_value *divide(ptree *prog, xen_value **args, int num_args)
   int i;
   if ((num_args == 1) && (args[1]->constant == R_CONSTANT))
     {
-      if (prog->need_result == NEED_INT_RESULT)
+      if (prog->walk_result == NEED_INT_RESULT)
 	{
 	  if (args[1]->type == R_INT)
 	    return(make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_CONSTANT));
@@ -4026,7 +4032,7 @@ static xen_value *divide(ptree *prog, xen_value **args, int num_args)
 	args[cons_loc] = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, fscl), R_CONSTANT);
       if (prog->constants == num_args) 
 	{
-	  if (prog->need_result == NEED_INT_RESULT)
+	  if (prog->walk_result == NEED_INT_RESULT)
 	    {
 	      if (args[1]->type == R_INT)
 		return(make_xen_value(R_INT, add_int_to_ptree(prog, (Int)((Double)(prog->ints[args[1]->addr]) / fscl)), R_CONSTANT));
@@ -4044,26 +4050,26 @@ static xen_value *divide(ptree *prog, xen_value **args, int num_args)
 	  /* divisor is a constant */
 	  if (fscl == 1.0) return(copy_xen_value(args[1]));
 	  if (fscl == 0.0) return(run_warn("division by zero"));
-	  if (prog->need_result == NEED_ANY_RESULT)
+	  if (prog->walk_result == NEED_ANY_RESULT)
 	    {
 	      /* invert here and use multiply */
 	      if (args[cons_loc]) FREE(args[cons_loc]);
 	      args[2] = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, (Double)(1.0 / fscl)), R_CONSTANT);
-	      if (args[1]->type == R_INT) float_all_args(prog, num_args, args, TRUE);
+	      if (args[1]->type == R_INT) float_all_args(prog, num_args, args, true);
 	      return(package(prog, R_FLOAT, multiply_f2, descr_multiply_f2, args, 2));
 	    }
 	}
     }
-  num_args = float_all_args(prog, num_args, args, TRUE);
+  num_args = float_all_args(prog, num_args, args, true);
   if (num_args == 1) 
     {
-      if (prog->need_result == NEED_INT_RESULT)
+      if (prog->walk_result == NEED_INT_RESULT)
 	return(package(prog, R_INT, divide_if1, descr_divide_if1, args, num_args));
       else return(package(prog, R_FLOAT, divide_f1, descr_divide_f1, args, num_args));
     }
   if (num_args == 2) 
     {
-      if (prog->need_result == NEED_INT_RESULT)
+      if (prog->walk_result == NEED_INT_RESULT)
 	return(package(prog, R_INT, divide_if2, descr_divide_if2, args, num_args));
       else return(package(prog, R_FLOAT, divide_f2, descr_divide_f2, args, num_args));
     }
@@ -4153,12 +4159,12 @@ static void CName ## _in(int *args, ptree *pt) \
     } \
 } \
 static char *descr_ ## CName ## _in(int *args, ptree *pt) {return(describe_rel_i_args(#COp, pt->ints[args[1]] + 1, args, pt->ints, 2));} \
-static xen_value * SName(ptree *prog, int float_result, xen_value **args, int num_args) \
+static xen_value * SName(ptree *prog, bool float_result, xen_value **args, int num_args) \
 { \
   int i; \
   Int lasti = 0; \
   Double lastf = 0.0; \
-  if (num_args <= 1) return(make_xen_value(R_BOOL, add_int_to_ptree(prog, TRUE), R_CONSTANT)); \
+  if (num_args <= 1) return(make_xen_value(R_BOOL, add_int_to_ptree(prog, true), R_CONSTANT)); \
   if ((prog->constants > 0) && (float_result)) float_rel_constant_args(prog, num_args, args); \
   if (prog->constants > 1) \
     { \
@@ -4176,18 +4182,18 @@ static xen_value * SName(ptree *prog, int float_result, xen_value **args, int nu
 	    if (float_result) \
 	      { \
 		if (lastf FOp prog->dbls[args[i]->addr]) \
-		  return(make_xen_value(R_BOOL, add_int_to_ptree(prog, FALSE), R_CONSTANT)); \
+		  return(make_xen_value(R_BOOL, add_int_to_ptree(prog, false), R_CONSTANT)); \
 		lastf = prog->dbls[args[i]->addr]; \
 	      } \
 	    else  \
 	      { \
 		if (lasti FOp prog->ints[args[i]->addr]) \
-		  return(make_xen_value(R_BOOL, add_int_to_ptree(prog, FALSE), R_CONSTANT)); \
+		  return(make_xen_value(R_BOOL, add_int_to_ptree(prog, false), R_CONSTANT)); \
 		lasti = prog->ints[args[i]->addr]; \
 	      } \
 	  } \
       if (prog->constants == num_args) \
-	return(make_xen_value(R_BOOL, add_int_to_ptree(prog, TRUE), R_CONSTANT)); \
+	return(make_xen_value(R_BOOL, add_int_to_ptree(prog, true), R_CONSTANT)); \
     } \
   if (float_result) \
     { \
@@ -4395,7 +4401,7 @@ static char *descr_not_b(int *args, ptree *pt)
 static xen_value *not_p(ptree *prog, xen_value **args, int num_args)
 {
   if (args[1]->type != R_BOOL)
-    return(make_xen_value(R_BOOL, add_int_to_ptree(prog, FALSE), R_CONSTANT)); /* only #f is false so (not anything)->false */
+    return(make_xen_value(R_BOOL, add_int_to_ptree(prog, false), R_CONSTANT)); /* only #f is false so (not anything)->false */
   if (prog->constants == 1)
     return(make_xen_value(R_BOOL, add_int_to_ptree(prog, !(prog->ints[args[1]->addr])), R_CONSTANT));
   return(package(prog, R_BOOL, not_b, descr_not_b, args, 1));
@@ -4434,11 +4440,11 @@ static char *descr_reader_eq_b(int *args, ptree *pt)
 static xen_value *eq_p(ptree *prog, xen_value **args, int num_args)
 {
   if ((args[1]->type != args[2]->type) || (args[1]->type == R_FLOAT) || (args[1]->type == R_FUNCTION))
-    return(make_xen_value(R_BOOL, add_int_to_ptree(prog, FALSE), R_CONSTANT));
+    return(make_xen_value(R_BOOL, add_int_to_ptree(prog, false), R_CONSTANT));
   if (prog->constants == 2) /* this can include xen vals */
     {
       if (args[1]->addr == args[2]->addr) /* types are same, checked above */
-	return(make_xen_value(R_BOOL, add_int_to_ptree(prog, TRUE), R_CONSTANT));
+	return(make_xen_value(R_BOOL, add_int_to_ptree(prog, true), R_CONSTANT));
       if ((args[1]->type == R_INT) || (args[1]->type == R_BOOL))
 	return(make_xen_value(R_BOOL, add_int_to_ptree(prog, prog->ints[args[1]->addr] == prog->ints[args[2]->addr]), R_CONSTANT));
     }
@@ -4485,7 +4491,7 @@ static char *descr_eqv_clm(int *args, ptree *pt)
 static xen_value *eqv_p(ptree *prog, xen_value **args, int num_args)
 {
   if ((args[1]->type != args[2]->type) || (args[1]->type == R_FUNCTION))
-    return(make_xen_value(R_BOOL, add_int_to_ptree(prog, FALSE), R_CONSTANT));
+    return(make_xen_value(R_BOOL, add_int_to_ptree(prog, false), R_CONSTANT));
   if (prog->constants == 2)
     {
       if (args[1]->type == R_FLOAT)
@@ -4536,7 +4542,7 @@ static xen_value *convert_to_int(ptree *pt, xen_value *v)
   xen_value *newv;
   if (v->type == R_FLOAT) 
     {
-      newv = convert_dbl_to_int(pt, v, TRUE);
+      newv = convert_dbl_to_int(pt, v, true);
       FREE(v);
       return(newv);
     }
@@ -4734,11 +4740,11 @@ static xen_value *round_1(ptree *prog, xen_value **args, int num_args)
     return(copy_xen_value(args[1]));
   if (prog->constants == 1)
     {
-      if (prog->need_result == NEED_INT_RESULT)
+      if (prog->walk_result == NEED_INT_RESULT)
 	return(make_xen_value(R_INT, add_int_to_ptree(prog, (Int)f_round(prog->dbls[args[1]->addr])), R_CONSTANT));
       return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, f_round(prog->dbls[args[1]->addr])), R_CONSTANT));
     }
-  if (prog->need_result == NEED_INT_RESULT)
+  if (prog->walk_result == NEED_INT_RESULT)
     return(package(prog, R_INT, round_i, descr_round_i, args, 1));
   return(package(prog, R_FLOAT, round_f, descr_round_f, args, 1));
 }
@@ -4769,11 +4775,11 @@ static xen_value *truncate_1(ptree *prog, xen_value **args, int num_args)
     return(copy_xen_value(args[1]));
   if (prog->constants == 1)
     {
-      if (prog->need_result == NEED_INT_RESULT)
+      if (prog->walk_result == NEED_INT_RESULT)
 	return(make_xen_value(R_INT, add_int_to_ptree(prog, (Int)f_truncate(prog->dbls[args[1]->addr])), R_CONSTANT));
       return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, f_truncate(prog->dbls[args[1]->addr])), R_CONSTANT));
     }
-  if (prog->need_result == NEED_INT_RESULT)
+  if (prog->walk_result == NEED_INT_RESULT)
     return(package(prog, R_INT, truncate_i, descr_truncate_i, args, 1));
   return(package(prog, R_FLOAT, truncate_f, descr_truncate_f, args, 1));
 }
@@ -4790,11 +4796,11 @@ static xen_value *floor_1(ptree *prog, xen_value **args, int num_args)
     return(copy_xen_value(args[1]));
   if (prog->constants == 1)
     {
-      if (prog->need_result == NEED_INT_RESULT)
+      if (prog->walk_result == NEED_INT_RESULT)
 	return(make_xen_value(R_INT, add_int_to_ptree(prog, (Int)floor(prog->dbls[args[1]->addr])), R_CONSTANT));
       return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, floor(prog->dbls[args[1]->addr])), R_CONSTANT));
     }
-  if (prog->need_result == NEED_INT_RESULT)
+  if (prog->walk_result == NEED_INT_RESULT)
     return(package(prog, R_INT, floor_i, descr_floor_i, args, 1));
   return(package(prog, R_FLOAT, floor_f, descr_floor_f, args, 1));
 }
@@ -4811,11 +4817,11 @@ static xen_value *ceiling_1(ptree *prog, xen_value **args, int num_args)
     return(copy_xen_value(args[1]));
   if (prog->constants == 1)
     {
-      if (prog->need_result == NEED_INT_RESULT)
+      if (prog->walk_result == NEED_INT_RESULT)
 	return(make_xen_value(R_INT, add_int_to_ptree(prog, (Int)ceil(prog->dbls[args[1]->addr])), R_CONSTANT));
       return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, ceil(prog->dbls[args[1]->addr])), R_CONSTANT));
     }
-  if (prog->need_result == NEED_INT_RESULT)
+  if (prog->walk_result == NEED_INT_RESULT)
     return(package(prog, R_INT, ceiling_i, descr_ceiling_i, args,1));
   return(package(prog, R_FLOAT, ceiling_f, descr_ceiling_f, args, 1));
 }
@@ -5644,7 +5650,7 @@ static xen_value *substring_1(ptree *pt, xen_value **args, int num_args)
 }
 
 
-static char *descr_strn(int *args, ptree *pt, const char *which, int bool_result)
+static char *descr_strn(int *args, ptree *pt, const char *which, bool bool_result)
 {
   int i, n, len;
   char *buf, *temp;
@@ -5688,7 +5694,7 @@ static void appendstr_n(int *args, ptree *pt)
     if (pt->strs[args[i + 1]])
       strcat(STRING_RESULT, pt->strs[args[i + 1]]);
 }
-static char *descr_appendstr_n(int *args, ptree *pt)  {return(descr_strn(args, pt, "string-append", FALSE));}
+static char *descr_appendstr_n(int *args, ptree *pt)  {return(descr_strn(args, pt, "string-append", false));}
 static xen_value *string_append_1(ptree *pt, xen_value **args, int num_args)
 {
   if (num_args == 0)
@@ -5701,24 +5707,24 @@ static xen_value *string_append_1(ptree *pt, xen_value **args, int num_args)
 }
 
 #define STR_REL_OP(CName, SName, COp) \
-static int str_ ## CName ## _n(ptree *pt, xen_value **args, int num_args) \
+static bool str_ ## CName ## _n(ptree *pt, xen_value **args, int num_args) \
 { \
   int i; \
   for (i = 2; i <= num_args; i++) \
     if (strcmp(pt->strs[args[i - 1]->addr], pt->strs[args[i]->addr]) COp 0) \
-      return(FALSE); \
-  return(TRUE); \
+      return(false); \
+  return(true); \
 } \
-static char *descr_string_ ## CName ## _n(int *args, ptree *pt) {return(descr_strn(args, pt, #SName, TRUE));} \
+static char *descr_string_ ## CName ## _n(int *args, ptree *pt) {return(descr_strn(args, pt, #SName, true));} \
 static void string_ ## CName ## _n(int *args, ptree *pt) \
 { \
   int i, n; \
   n = pt->ints[args[1]]; \
-  BOOL_RESULT = TRUE; \
+  BOOL_RESULT = true; \
   for (i = 2; i <= n; i++) \
     if (strcmp(pt->strs[args[i]], pt->strs[args[i + 1]]) COp 0) \
       { \
-	BOOL_RESULT = FALSE; \
+	BOOL_RESULT = false; \
 	break; \
       } \
 } \
@@ -5726,14 +5732,14 @@ static xen_value *string_ ## CName ## _1(ptree *pt, xen_value **args, int num_ar
 { \
   int i; \
   char *lasts = NULL; \
-  if (num_args <= 1) return(make_xen_value(R_BOOL, add_int_to_ptree(pt, TRUE), R_CONSTANT)); \
+  if (num_args <= 1) return(make_xen_value(R_BOOL, add_int_to_ptree(pt, true), R_CONSTANT)); \
   if (num_args == pt->constants) return(make_xen_value(R_BOOL, add_int_to_ptree(pt, str_ ## CName ## _n(pt, args, num_args)), R_CONSTANT)); \
   if (pt->constants > 1) \
     for (i = 1; i <= num_args; i++) \
       if (args[i]->constant == R_CONSTANT) \
 	{ \
 	  if ((lasts) && (strcmp(lasts, pt->strs[args[i]->addr]) COp 0)) \
-	    return(make_xen_value(R_BOOL, add_int_to_ptree(pt, FALSE), R_CONSTANT)); \
+	    return(make_xen_value(R_BOOL, add_int_to_ptree(pt, false), R_CONSTANT)); \
 	  lasts = pt->strs[args[i]->addr]; \
 	} \
   return(package_n(pt, R_BOOL, string_ ## CName ## _n, descr_string_ ## CName ## _n, args, num_args)); \
@@ -5766,30 +5772,30 @@ static int upper_strcmp(char *s1, char *s2)
 }
 
 #define STR_CI_REL_OP(CName, SName, COp) \
-static int str_ci_ ## CName ## _n(ptree *pt, xen_value **args, int num_args) \
+static bool str_ci_ ## CName ## _n(ptree *pt, xen_value **args, int num_args) \
 { \
   int i; \
   for (i = 2; i <= num_args; i++) \
     if (upper_strcmp(pt->strs[args[i - 1]->addr], pt->strs[args[i]->addr]) COp 0) \
-      return(FALSE); \
-  return(TRUE); \
+      return(false); \
+  return(true); \
 } \
-static char *descr_string_ci_ ## CName ## _n(int *args, ptree *pt) {return(descr_strn(args, pt, #SName, TRUE));} \
+static char *descr_string_ci_ ## CName ## _n(int *args, ptree *pt) {return(descr_strn(args, pt, #SName, true));} \
 static void string_ci_ ## CName ## _n(int *args, ptree *pt) \
 { \
   int i, n; \
   n = pt->ints[args[1]]; \
-  BOOL_RESULT = TRUE; \
+  BOOL_RESULT = true; \
   for (i = 2; i <= n; i++) \
     if (upper_strcmp(pt->strs[args[i]], pt->strs[args[i + 1]]) COp 0) \
       { \
-	BOOL_RESULT = FALSE; \
+	BOOL_RESULT = false; \
 	break; \
       } \
 } \
 static xen_value *string_ci_ ## CName ## _1(ptree *pt, xen_value **args, int num_args) \
 { \
-  if (num_args <= 1) return(make_xen_value(R_BOOL, add_int_to_ptree(pt, TRUE), R_CONSTANT)); \
+  if (num_args <= 1) return(make_xen_value(R_BOOL, add_int_to_ptree(pt, true), R_CONSTANT)); \
   if (num_args == pt->constants) return(make_xen_value(R_BOOL, add_int_to_ptree(pt, str_ci_ ## CName ## _n(pt, args, num_args)), R_CONSTANT)); \
   return(package_n(pt, R_BOOL, string_ci_ ## CName ## _n, descr_string_ci_ ## CName ## _n, args, num_args)); \
 }
@@ -6219,13 +6225,13 @@ static void c_g_p(int *args, ptree *pt)
       check_for_event(ss);
       if (ss->stopped_explicitly)
 	{
-	  ss->stopped_explicitly = FALSE;
-	  BOOL_RESULT = TRUE;
+	  ss->stopped_explicitly = false;
+	  BOOL_RESULT = true;
 	}
-      else BOOL_RESULT = FALSE;
+      else BOOL_RESULT = false;
     }
 #if USE_GTK || USE_MOTIF
-  else BOOL_RESULT = FALSE;
+  else BOOL_RESULT = false;
 #endif
 }
 
@@ -6451,7 +6457,7 @@ static xen_value *make_sample_reader_1(ptree *pt, xen_value **args, int num_args
   else
     {
       if (args[1]->type == R_FLOAT)
-	true_args[1] = convert_dbl_to_int(pt, args[1], TRUE);
+	true_args[1] = convert_dbl_to_int(pt, args[1], true);
       else true_args[1] = args[1];
     }
   true_args[0] = args[0];
@@ -6550,7 +6556,7 @@ static xen_value *vector_set_1(ptree *prog, xen_value **args, int num_args)
 {
   xen_var *var;
   var = find_var_in_ptree_via_addr(prog, args[1]->type, args[1]->addr);
-  if (var) var->unclean = TRUE;
+  if (var) var->unclean = true;
   switch (args[1]->type)
     {
     case R_FLOAT_VECTOR: 
@@ -6710,7 +6716,7 @@ static void vct_set_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value 
 {
   xen_var *var;
   var = find_var_in_ptree_via_addr(prog, in_v->type, in_v->addr);
-  if (var) var->unclean = TRUE;
+  if (var) var->unclean = true;
   if (v->type == R_FLOAT)
     {
       if (in_v1->constant == R_CONSTANT)
@@ -6730,7 +6736,7 @@ static xen_value *vct_set_2(ptree *prog, xen_value **args, int num_args)
 {
   xen_var *var;
   var = find_var_in_ptree_via_addr(prog, args[1]->type, args[1]->addr);
-  if (var) var->unclean = TRUE;
+  if (var) var->unclean = true;
   if (args[3]->type == R_FLOAT)
     {
       if (args[2]->constant == R_CONSTANT)
@@ -8193,35 +8199,35 @@ static xen_value *pair_p_1(ptree *prog, xen_value **args, int num_args)
   return(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_PAIR), R_CONSTANT));
 }
 
-static xen_value *char_ge_1(ptree *prog, xen_value **args, int num_args) {return(greater_than_or_equal(prog, FALSE, args, num_args));}
-static xen_value *char_gt_1(ptree *prog, xen_value **args, int num_args) {return(greater_than(prog, FALSE, args, num_args));}
-static xen_value *char_le_1(ptree *prog, xen_value **args, int num_args) {return(less_than_or_equal(prog, FALSE, args, num_args));}
-static xen_value *char_lt_1(ptree *prog, xen_value **args, int num_args) {return(less_than(prog, FALSE, args, num_args));}
-static xen_value *char_eq_1(ptree *prog, xen_value **args, int num_args) {return(numbers_equal(prog, FALSE, args, num_args));}
+static xen_value *char_ge_1(ptree *prog, xen_value **args, int num_args) {return(greater_than_or_equal(prog, false, args, num_args));}
+static xen_value *char_gt_1(ptree *prog, xen_value **args, int num_args) {return(greater_than(prog, false, args, num_args));}
+static xen_value *char_le_1(ptree *prog, xen_value **args, int num_args) {return(less_than_or_equal(prog, false, args, num_args));}
+static xen_value *char_lt_1(ptree *prog, xen_value **args, int num_args) {return(less_than(prog, false, args, num_args));}
+static xen_value *char_eq_1(ptree *prog, xen_value **args, int num_args) {return(numbers_equal(prog, false, args, num_args));}
 
 static xen_value *char_ci_ge_1(ptree *prog, xen_value **args, int num_args) 
 {
-  return(greater_than_or_equal(prog, FALSE, upcase_args(prog, args, num_args), num_args));
+  return(greater_than_or_equal(prog, false, upcase_args(prog, args, num_args), num_args));
 }
 
 static xen_value *char_ci_gt_1(ptree *prog, xen_value **args, int num_args) 
 {
-  return(greater_than(prog, FALSE, upcase_args(prog, args, num_args), num_args));
+  return(greater_than(prog, false, upcase_args(prog, args, num_args), num_args));
 }
 
 static xen_value *char_ci_le_1(ptree *prog, xen_value **args, int num_args) 
 {
-  return(less_than_or_equal(prog, FALSE, upcase_args(prog, args, num_args), num_args));
+  return(less_than_or_equal(prog, false, upcase_args(prog, args, num_args), num_args));
 }
 
 static xen_value *char_ci_lt_1(ptree *prog, xen_value **args, int num_args) 
 {
-  return(less_than(prog, FALSE, upcase_args(prog, args, num_args), num_args));
+  return(less_than(prog, false, upcase_args(prog, args, num_args), num_args));
 }
 
 static xen_value *char_ci_eq_1(ptree *prog, xen_value **args, int num_args) 
 {
-  return(numbers_equal(prog, FALSE, upcase_args(prog, args, num_args), num_args));
+  return(numbers_equal(prog, false, upcase_args(prog, args, num_args), num_args));
 }
 
 static xen_value *ge_1(ptree *prog, xen_value **args, int num_args) {return(greater_than_or_equal(prog, prog->float_result, args, num_args));}
@@ -8230,7 +8236,7 @@ static xen_value *le_1(ptree *prog, xen_value **args, int num_args) {return(less
 static xen_value *lt_1(ptree *prog, xen_value **args, int num_args) {return(less_than(prog, prog->float_result, args, num_args));}
 static xen_value *eq_1(ptree *prog, xen_value **args, int num_args) {return(numbers_equal(prog, prog->float_result, args, num_args));}
 
-static xen_value *unwrap_xen_object_1(ptree *prog, XEN form, const char *origin, int constant)
+static xen_value *unwrap_xen_object_1(ptree *prog, XEN form, const char *origin, bool constant)
 {
   /* fprintf(stderr,"unwrap %s (%s) (%d)\n", XEN_AS_STRING(form), type_name(xen_to_run_type(form)), constant); */
   int type;
@@ -8277,12 +8283,12 @@ static xen_value *unwrap_xen_object_1(ptree *prog, XEN form, const char *origin,
 
 static xen_value *unwrap_xen_object(ptree *prog, XEN form, const char *origin)
 {
-  return(unwrap_xen_object_1(prog, form, origin, FALSE));
+  return(unwrap_xen_object_1(prog, form, origin, false));
 }
 
 static xen_value *unwrap_constant_xen_object(ptree *prog, XEN form, const char *origin)
 {
-  return(unwrap_xen_object_1(prog, form, origin, TRUE));
+  return(unwrap_xen_object_1(prog, form, origin, true));
 }
 
 static XEN get_lst(ptree *prog, xen_value **args) {return(prog->xens[args[1]->addr]);}
@@ -8330,28 +8336,28 @@ static xen_value *integer_to_char_1(ptree *prog, xen_value **args, int num_args)
   return(newv);
 }
 
-static xen_value *declare_1(ptree *prog, XEN form, int need_result) {return(make_xen_value(R_UNSPECIFIED, -1, TRUE));}
-static xen_value *lambda_preform(ptree *prog, XEN form, int need_result) {return(lambda_form(prog, form, TRUE, NULL, 0, XEN_FALSE));}
-static xen_value *quote_form(ptree *prog, XEN form, int need_result) 
+static xen_value *declare_1(ptree *prog, XEN form, walk_result_t need_result) {return(make_xen_value(R_UNSPECIFIED, -1, R_VARIABLE));}
+static xen_value *lambda_preform(ptree *prog, XEN form, walk_result_t need_result) {return(lambda_form(prog, form, true, NULL, 0, XEN_FALSE));}
+static xen_value *quote_form(ptree *prog, XEN form, walk_result_t need_result) 
 {
   return(unwrap_constant_xen_object(prog, XEN_CADR(form), "quote"));
 }
 
 /* clm-print and xen args support */
 
-static int xenable(xen_value *v)
+static bool xenable(xen_value *v)
 {
   switch (v->type)
     {
     case R_FLOAT: case R_INT: case R_CHAR: case R_STRING: case R_BOOL:
     case R_LIST: case R_PAIR: case R_FLOAT_VECTOR: case R_VCT: case R_KEYWORD: case R_SYMBOL:
-      return(TRUE);
+      return(true);
       break;
     default:
       return(v->type > R_ANY);
       break;
     }
-  return(FALSE);
+  return(false);
 }
 
 static XEN xen_value_to_xen(ptree *pt, xen_value *v)
@@ -8527,9 +8533,10 @@ static xen_value *throw_1(ptree *prog, xen_value **args, int num_args)
 
 typedef struct {
   xen_value *(*walker)(ptree *prog, xen_value **args, int num_args);
-  xen_value *(*special_walker)(ptree *prog, XEN form, int need_result);
+  xen_value *(*special_walker)(ptree *prog, XEN form, walk_result_t need_result);
   void (*set_walker)(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v);
-  int required_args, max_args, result_type, need_int_result, num_arg_types;
+  int required_args, max_args, result_type, num_arg_types;
+  bool need_int_result;
   int *arg_types;
 } walk_info;
 
@@ -8566,12 +8573,12 @@ static XEN g_describe_walk_info(XEN obj)
 #endif
 
 static walk_info *make_walker(xen_value *(*walker)(ptree *prog, xen_value **args, int num_args),
-			      xen_value *(*special_walker)(ptree *prog, XEN form, int need_result),
+			      xen_value *(*special_walker)(ptree *prog, XEN form, walk_result_t need_result),
 			      void (*set_walker)(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v),
 			      int required_args, 
 			      int max_args, 
 			      int result_type, 
-			      int need_int_result,
+			      bool need_int_result,
 			      int num_arg_types,
 			      ...) /* arg type list, R_NUMBER=int or float, R_ANY=unchecked */
 {
@@ -8611,11 +8618,11 @@ static xen_value *clm_print_1(ptree *prog, xen_value **args, int num_args)
 {
   XEN_SET_OBJECT_PROPERTY(XEN_VAR_NAME_TO_VAR("clm-print"),
 			  walk_sym,
-			  C_TO_XEN_ULONG(make_walker(clm_print_1, NULL, NULL, 1, UNLIMITED_ARGS, R_STRING, FALSE, 1, -R_XEN)));
+			  C_TO_XEN_ULONG(make_walker(clm_print_1, NULL, NULL, 1, UNLIMITED_ARGS, R_STRING, false, 1, -R_XEN)));
   return(package_n_xen_args(prog, R_STRING, clm_print_s, descr_clm_print_s, args, num_args));
 }
 
-static xen_value *set_up_format(ptree *prog, xen_value **args, int num_args, int is_format)
+static xen_value *set_up_format(ptree *prog, xen_value **args, int num_args, bool is_format)
 {
   int i;
   XEN format_var = XEN_FALSE;
@@ -8626,7 +8633,7 @@ static xen_value *set_up_format(ptree *prog, xen_value **args, int num_args, int
       /* define a walker for format */
       XEN_SET_OBJECT_PROPERTY(format_var, 
 			      walk_sym,
-			      C_TO_XEN_ULONG(make_walker(format_1, NULL, NULL, 1, UNLIMITED_ARGS, R_STRING, FALSE, 1, -R_XEN)));
+			      C_TO_XEN_ULONG(make_walker(format_1, NULL, NULL, 1, UNLIMITED_ARGS, R_STRING, false, 1, -R_XEN)));
       format_func = XEN_VARIABLE_REF(format_var);
       /* any further formats will be checked in walk, but this one needs explicit check */
       for (i = 1; i <= num_args; i++)
@@ -8957,7 +8964,7 @@ static void clm_struct_set_r(int *args, ptree *pt)
   lst = pt->xens[args[1]];
   if ((lst != 0) && (XEN_LIST_P(lst)))
     {
-      v = make_xen_value(pt->ints[args[3]], pt->ints[args[5]], FALSE);
+      v = make_xen_value(pt->ints[args[3]], pt->ints[args[5]], R_CONSTANT);
       XEN_LIST_SET(lst, pt->ints[args[2]], xen_value_to_xen(pt, v));
       FREE(v);
     }
@@ -9105,11 +9112,11 @@ static xen_value *arg_warn(ptree *prog, char *funcname, int arg_num, xen_value *
  *   found even if name has changed -- (define hi min) for example (not very useful by itself)
  */
 
-static xen_value *walk(ptree *prog, XEN form, int need_result)
+static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 {
   /* walk form, storing vars, making program entries for operators etc */
   XEN rtnval = XEN_FALSE;
-  /* fprintf(stderr,"walk %s (needed: %d)\n", XEN_AS_STRING(form), need_result); */
+  /* fprintf(stderr,"walk %s (needed: %d)\n", XEN_AS_STRING(form), (int)walk_result); */
   if (current_optimization == DONT_OPTIMIZE) return(NULL);
 
   if (XEN_LIST_P(form))
@@ -9117,7 +9124,8 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
       XEN function, all_args;
       char *funcname = "not-a-function";
       xen_value **args = NULL;
-      int i, k, num_args, float_result = FALSE, constants = 0;
+      int i, k, num_args, constants = 0;
+      bool float_result = false;
       xen_var *var;
       xen_value *v = NULL;
       XEN walker;
@@ -9142,14 +9150,14 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 		  if ((w->max_args != UNLIMITED_ARGS) && 
 		      (num_args > w->max_args)) 
 		    return(run_warn("too many expressions for %s: %s", XEN_SYMBOL_TO_C_STRING(function), XEN_AS_STRING(form)));
-		  return((*(w->special_walker))(prog, form, need_result));
+		  return((*(w->special_walker))(prog, form, walk_result));
 		}
 	    }
 	}
       args = (xen_value **)CALLOC(num_args + 1, sizeof(xen_value *));
       if (num_args > 0)
 	{
-	  int arg_result = NEED_ANY_RESULT;
+	  walk_result_t arg_result = NEED_ANY_RESULT;
 	  for (i = 0; i < num_args; i++, all_args = XEN_CDR(all_args))
 	    {
 	      if (w)
@@ -9177,7 +9185,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 		   (XEN_EQ_P(prog->xens[args[i + 1]->addr], XEN_UNDEFINED))))
 		return(clean_up(NULL, args, num_args)); /* no run_warn here so that reported error includes enclosing form */
 	      if (args[i + 1]->constant == R_CONSTANT) constants++;
-	      if (args[i + 1]->type == R_FLOAT) float_result = TRUE; /* for "*" et al */
+	      if (args[i + 1]->type == R_FLOAT) float_result = true; /* for "*" et al */
 	    }
 	}
       funcname = XEN_SYMBOL_TO_C_STRING(function);
@@ -9305,7 +9313,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 					{
 					  /* var->name -> symbol, lookup globally -> form -> mus_xen (whew!) */
 					  XEN val;
-					  int local_var;
+					  bool local_var;
 					  val = symbol_to_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), &local_var);
 					  if (mus_xen_p(val))
 					    {
@@ -9359,7 +9367,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	    {
 	      prog->constants = constants;
 	      prog->float_result = float_result;
-	      prog->need_result = need_result;
+	      prog->walk_result = walk_result;
 	      return(clean_up((*(w->walker))(prog, args, num_args), args, num_args));
 	    }
 	}
@@ -9385,9 +9393,9 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 			  args, num_args));
 
       if (strcmp(funcname, "format") == 0)
-	return(clean_up(set_up_format(prog, args, num_args, TRUE), args, num_args));
+	return(clean_up(set_up_format(prog, args, num_args, true), args, num_args));
       if (strcmp(funcname, S_clm_print) == 0)
-	return(clean_up(set_up_format(prog, args, num_args, FALSE), args, num_args));
+	return(clean_up(set_up_format(prog, args, num_args, false), args, num_args));
 
       /* check for function defined elsewhere, get source, splice in if possible */
       if ((v == NULL) && 
@@ -9407,8 +9415,8 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	      /* look for procedure source, use current arg types as auto-declaration */
 	      int old_got_lambda;
 	      old_got_lambda = got_lambda;
-	      got_lambda = TRUE;
-	      v = lambda_form(prog, func_form, TRUE, args, num_args, rtnval);
+	      got_lambda = true;
+	      v = lambda_form(prog, func_form, true, args, num_args, rtnval);
 	      got_lambda = old_got_lambda;
 	      if (v) 
 		{
@@ -9421,7 +9429,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	    }
 	}
 
-      if ((need_result) || (XEN_LIST_P(form)))
+      if ((walk_result) || (XEN_LIST_P(form)))
 	/* need the list check as well because the called function might have side-effects */
 	return(clean_up(NULL, args, num_args));
 
@@ -9449,7 +9457,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
       if (XEN_SYMBOL_P(form))
 	{
 	  XEN ignore = XEN_FALSE;
-	  prog->need_result = need_result;
+	  prog->walk_result = walk_result;
 	  return(add_global_var_to_ptree(prog, form, &ignore));
 	}
     }
@@ -9507,9 +9515,9 @@ static xen_value *lookup_generalized_set(ptree *prog, XEN acc_form, xen_value *i
 		    xen_var *lst;
 		    triple *trp;
 		    trp = set_var(prog, sv, v);
-		    trp->no_opt = TRUE;
+		    trp->no_opt = true;
 		    lst = find_var_in_ptree_via_addr(prog, in_v->type, in_v->addr);
-		    if (lst) lst->unclean = TRUE;
+		    if (lst) lst->unclean = true;
 		    happy = 1;
 		  }
 		else 
@@ -9538,7 +9546,7 @@ static xen_value *lookup_generalized_set(ptree *prog, XEN acc_form, xen_value *i
   return(NULL);
 }
 
-static int ptree_on = FALSE;
+static bool ptree_on = false;
 static XEN g_show_ptree(XEN on)
 {
   ptree_on = XEN_TO_C_BOOLEAN(on);
@@ -9549,7 +9557,7 @@ static void *form_to_ptree(XEN code)
 {
   ptree *prog;
   XEN form;
-  run_warned = FALSE;
+  run_warned = false;
   current_optimization = optimization(get_global_state());
   if (current_optimization == DONT_OPTIMIZE) return(NULL);
   form = XEN_CAR(code);
@@ -9560,7 +9568,7 @@ static void *form_to_ptree(XEN code)
   else prog->code = XEN_FALSE;                    /* many confusing cases here -- we'll just give up */
   if (XEN_SYMBOL_P(form))
     return(free_ptree((void *)prog));
-  prog->result = walk(prog, form, TRUE);
+  prog->result = walk(prog, form, NEED_ANY_RESULT);
   if (prog->result)
     {
       add_triple_to_ptree(prog, make_triple(quit, descr_quit, NULL, 0));
@@ -9660,7 +9668,7 @@ Float evaluate_ptree_1f2f(void *upt, Float arg)
   return(pt->dbls[pt->result->addr]);
 }
 
-Float evaluate_ptree_1f1v1b2f(void *upt, Float arg, vct *v, int dir)
+Float evaluate_ptree_1f1v1b2f(void *upt, Float arg, vct *v, bool dir)
 {
   ptree *pt = (ptree *)upt;
   pt->dbls[pt->args[0]] = arg;
@@ -9685,7 +9693,7 @@ int evaluate_ptree_1f2b(void *upt, Float arg)
   return(pt->ints[pt->result->addr]);
 }
 
-Float evaluate_ptreec(void *upt, Float arg, vct *v, int dir)
+Float evaluate_ptreec(void *upt, Float arg, vct *v, bool dir)
 {
   ptree *pt = (ptree *)upt;
   pt->dbls[pt->args[0]] = arg;
@@ -9737,7 +9745,7 @@ static XEN g_run_eval(XEN code, XEN arg, XEN arg1, XEN arg2)
   XEN result = XEN_FALSE;
   current_optimization = SOURCE_OK;
   pt = make_ptree(8);
-  pt->result = walk(pt, code, TRUE);
+  pt->result = walk(pt, code, NEED_ANY_RESULT);
   if (pt->result)
     {
       add_triple_to_ptree(pt, make_triple(quit, descr_quit, NULL, 0));
@@ -9783,14 +9791,14 @@ void *form_to_ptree_1_b(XEN code) {return(NULL);}
 void *form_to_ptree_3_f(XEN code) {return(NULL);}
 void *form_to_ptree_1_b_without_env(XEN code) {return(NULL);}
 void *form_to_ptree_1_f(XEN code) {return(NULL);}
-Float evaluate_ptree_1f1v1b2f(void *upt, Float arg, vct *v, int dir) {return(0.0);}
+Float evaluate_ptree_1f1v1b2f(void *upt, Float arg, vct *v, bool dir) {return(0.0);}
 Float evaluate_ptree_0f2f(void *upt) {return(0.0);}
 void *form_to_ptree_0_f(XEN code) {return(NULL);}
 Float evaluate_ptree_1f2f(void *upt, Float arg) {return(0.0);}
 int evaluate_ptree_1f2b(void *upt, Float arg) {return(0);}
 void *free_ptree(void *upt) {return(NULL);}
 XEN ptree_code(void *p) {return(XEN_FALSE);}
-Float evaluate_ptreec(void *upt, Float arg, vct *v, int dir) {return(0.0);}
+Float evaluate_ptreec(void *upt, Float arg, vct *v, bool dir) {return(0.0);}
 #endif
 /* end with_run && have_guile and so on */
 
@@ -9977,437 +9985,437 @@ static void init_walkers(void)
   snd_protect(walk_sym);
 
   /* -------- special forms */
-  INIT_WALKER("let", make_walker(NULL, let_form, NULL, 2, UNLIMITED_ARGS, R_ANY, FALSE, 0));
-  INIT_WALKER("let*", make_walker(NULL, let_star_form, NULL, 2, UNLIMITED_ARGS, R_ANY, FALSE, 0));
-  INIT_WALKER("do", make_walker(NULL, do_form, NULL, 2, UNLIMITED_ARGS, R_ANY, FALSE, 0));
-  INIT_WALKER("do*", make_walker(NULL, do_star_form, NULL, 2, UNLIMITED_ARGS, R_ANY, FALSE, 0));
-  INIT_WALKER("begin", make_walker(NULL, begin_form, NULL, 0, UNLIMITED_ARGS, R_ANY, FALSE, 0));
-  INIT_WALKER("if", make_walker(NULL, if_form, NULL, 2, 3, R_ANY, FALSE, 0));
-  INIT_WALKER("cond", make_walker(NULL, cond_form, NULL, 1, UNLIMITED_ARGS, R_ANY, FALSE, 0));
-  INIT_WALKER("case", make_walker(NULL, case_form, NULL, 2, UNLIMITED_ARGS, R_ANY, FALSE, 0));
-  INIT_WALKER("call-with-current-continuation", make_walker(NULL, callcc_form, NULL, 1, 1, R_ANY, FALSE, 0));
-  INIT_WALKER("or", make_walker(NULL, or_form, NULL, 0, UNLIMITED_ARGS, R_ANY, FALSE, 0));
-  INIT_WALKER("and", make_walker(NULL, and_form, NULL, 0, UNLIMITED_ARGS, R_ANY, FALSE, 0));
-  INIT_WALKER("set!", make_walker(NULL, set_form, NULL, 2, 2, R_ANY, FALSE, 0)); /* Scheme set! does not take &rest args */
-  INIT_WALKER("call/cc", make_walker(NULL, callcc_form, NULL, 1, 1, R_ANY, FALSE, 0));
-  INIT_WALKER("lambda", make_walker(NULL, lambda_preform, NULL, 1, UNLIMITED_ARGS, R_ANY, FALSE, 0));
-  INIT_WALKER("quote", make_walker(NULL, quote_form, NULL, 1, 1, R_ANY, FALSE, 0));
-  INIT_WALKER("declare", make_walker(NULL, declare_1, NULL, 0, UNLIMITED_ARGS, R_ANY, FALSE, 0));
+  INIT_WALKER("let", make_walker(NULL, let_form, NULL, 2, UNLIMITED_ARGS, R_ANY, false, 0));
+  INIT_WALKER("let*", make_walker(NULL, let_star_form, NULL, 2, UNLIMITED_ARGS, R_ANY, false, 0));
+  INIT_WALKER("do", make_walker(NULL, do_form, NULL, 2, UNLIMITED_ARGS, R_ANY, false, 0));
+  INIT_WALKER("do*", make_walker(NULL, do_star_form, NULL, 2, UNLIMITED_ARGS, R_ANY, false, 0));
+  INIT_WALKER("begin", make_walker(NULL, begin_form, NULL, 0, UNLIMITED_ARGS, R_ANY, false, 0));
+  INIT_WALKER("if", make_walker(NULL, if_form, NULL, 2, 3, R_ANY, false, 0));
+  INIT_WALKER("cond", make_walker(NULL, cond_form, NULL, 1, UNLIMITED_ARGS, R_ANY, false, 0));
+  INIT_WALKER("case", make_walker(NULL, case_form, NULL, 2, UNLIMITED_ARGS, R_ANY, false, 0));
+  INIT_WALKER("call-with-current-continuation", make_walker(NULL, callcc_form, NULL, 1, 1, R_ANY, false, 0));
+  INIT_WALKER("or", make_walker(NULL, or_form, NULL, 0, UNLIMITED_ARGS, R_ANY, false, 0));
+  INIT_WALKER("and", make_walker(NULL, and_form, NULL, 0, UNLIMITED_ARGS, R_ANY, false, 0));
+  INIT_WALKER("set!", make_walker(NULL, set_form, NULL, 2, 2, R_ANY, false, 0)); /* Scheme set! does not take &rest args */
+  INIT_WALKER("call/cc", make_walker(NULL, callcc_form, NULL, 1, 1, R_ANY, false, 0));
+  INIT_WALKER("lambda", make_walker(NULL, lambda_preform, NULL, 1, UNLIMITED_ARGS, R_ANY, false, 0));
+  INIT_WALKER("quote", make_walker(NULL, quote_form, NULL, 1, 1, R_ANY, false, 0));
+  INIT_WALKER("declare", make_walker(NULL, declare_1, NULL, 0, UNLIMITED_ARGS, R_ANY, false, 0));
 
   /* -------- basic stuff */
-  INIT_WALKER("eq?", make_walker(eq_p, NULL, NULL, 2, 2, R_BOOL, FALSE, 0));
-  INIT_WALKER("eqv?", make_walker(eqv_p, NULL, NULL, 2, 2, R_BOOL, FALSE, 0));
-  INIT_WALKER("equal?", make_walker(equal_p, NULL, NULL, 2, 2, R_BOOL, FALSE, 0));
-  INIT_WALKER("boolean?", make_walker(boolean_p_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 0));
-  INIT_WALKER("number?", make_walker(number_p_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 0));
-  INIT_WALKER("integer?", make_walker(integer_p_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 0));
-  INIT_WALKER("inexact?", make_walker(inexact_p_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 0));
-  INIT_WALKER("exact?", make_walker(exact_p_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 0));
-  INIT_WALKER("real?", make_walker(real_p_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 0));
-  INIT_WALKER("char?", make_walker(char_p_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 0));
-  INIT_WALKER("string?", make_walker(string_p_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 0));
-  INIT_WALKER("keyword?", make_walker(keyword_p_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 0));
-  INIT_WALKER("symbol?", make_walker(symbol_p_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 0));
-  INIT_WALKER("vector?", make_walker(vector_p_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 0));
-  INIT_WALKER("list?", make_walker(list_p_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 0));
-  INIT_WALKER("pair?", make_walker(pair_p_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 0));
-  INIT_WALKER(">=", make_walker(ge_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, FALSE, 1, -R_NUMBER));
-  INIT_WALKER(">", make_walker(gt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, FALSE, 1, -R_NUMBER));
-  INIT_WALKER("<=", make_walker(le_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, FALSE, 1, -R_NUMBER));
-  INIT_WALKER("<", make_walker(lt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, FALSE, 1, -R_NUMBER));
-  INIT_WALKER("=", make_walker(eq_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, FALSE, 1, -R_NUMBER));
+  INIT_WALKER("eq?", make_walker(eq_p, NULL, NULL, 2, 2, R_BOOL, false, 0));
+  INIT_WALKER("eqv?", make_walker(eqv_p, NULL, NULL, 2, 2, R_BOOL, false, 0));
+  INIT_WALKER("equal?", make_walker(equal_p, NULL, NULL, 2, 2, R_BOOL, false, 0));
+  INIT_WALKER("boolean?", make_walker(boolean_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
+  INIT_WALKER("number?", make_walker(number_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
+  INIT_WALKER("integer?", make_walker(integer_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
+  INIT_WALKER("inexact?", make_walker(inexact_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
+  INIT_WALKER("exact?", make_walker(exact_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
+  INIT_WALKER("real?", make_walker(real_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
+  INIT_WALKER("char?", make_walker(char_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
+  INIT_WALKER("string?", make_walker(string_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
+  INIT_WALKER("keyword?", make_walker(keyword_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
+  INIT_WALKER("symbol?", make_walker(symbol_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
+  INIT_WALKER("vector?", make_walker(vector_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
+  INIT_WALKER("list?", make_walker(list_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
+  INIT_WALKER("pair?", make_walker(pair_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
+  INIT_WALKER(">=", make_walker(ge_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_NUMBER));
+  INIT_WALKER(">", make_walker(gt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_NUMBER));
+  INIT_WALKER("<=", make_walker(le_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_NUMBER));
+  INIT_WALKER("<", make_walker(lt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_NUMBER));
+  INIT_WALKER("=", make_walker(eq_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_NUMBER));
 
-  INIT_WALKER("*", make_walker(multiply, NULL, NULL, 0, UNLIMITED_ARGS, R_ANY, FALSE, 1, -R_NUMBER));
-  INIT_WALKER("+", make_walker(add, NULL, NULL, 0, UNLIMITED_ARGS, R_NUMBER, FALSE, 1, -R_NUMBER));
-  INIT_WALKER("-", make_walker(subtract, NULL, NULL, 1, UNLIMITED_ARGS, R_NUMBER, FALSE, 1, -R_NUMBER));
-  INIT_WALKER("/", make_walker(divide, NULL, NULL, 1, UNLIMITED_ARGS, R_NUMBER, FALSE, 1, -R_NUMBER));
-  INIT_WALKER("max", make_walker(max_1, NULL, NULL, 1, UNLIMITED_ARGS, R_NUMBER, FALSE, 1, -R_NUMBER));
-  INIT_WALKER("min", make_walker(min_1, NULL, NULL, 1, UNLIMITED_ARGS, R_NUMBER, FALSE, 1, -R_NUMBER));
-  INIT_WALKER("1+", make_walker(one_plus, NULL, NULL, 1, 1, R_NUMBER, FALSE, 1, R_NUMBER));
-  INIT_WALKER("1-", make_walker(one_minus, NULL, NULL, 1, 1, R_NUMBER, FALSE, 1, R_NUMBER));
+  INIT_WALKER("*", make_walker(multiply, NULL, NULL, 0, UNLIMITED_ARGS, R_ANY, false, 1, -R_NUMBER));
+  INIT_WALKER("+", make_walker(add, NULL, NULL, 0, UNLIMITED_ARGS, R_NUMBER, false, 1, -R_NUMBER));
+  INIT_WALKER("-", make_walker(subtract, NULL, NULL, 1, UNLIMITED_ARGS, R_NUMBER, false, 1, -R_NUMBER));
+  INIT_WALKER("/", make_walker(divide, NULL, NULL, 1, UNLIMITED_ARGS, R_NUMBER, false, 1, -R_NUMBER));
+  INIT_WALKER("max", make_walker(max_1, NULL, NULL, 1, UNLIMITED_ARGS, R_NUMBER, false, 1, -R_NUMBER));
+  INIT_WALKER("min", make_walker(min_1, NULL, NULL, 1, UNLIMITED_ARGS, R_NUMBER, false, 1, -R_NUMBER));
+  INIT_WALKER("1+", make_walker(one_plus, NULL, NULL, 1, 1, R_NUMBER, false, 1, R_NUMBER));
+  INIT_WALKER("1-", make_walker(one_minus, NULL, NULL, 1, 1, R_NUMBER, false, 1, R_NUMBER));
 
-  INIT_WALKER("inexact->exact", make_walker(inexact2exact_1, NULL, NULL, 1, 1, R_INT, TRUE, 1, R_NUMBER));
-  INIT_WALKER("exact->inexact", make_walker(exact2inexact_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_NUMBER));
-  INIT_WALKER("modulo", make_walker(modulo_1, NULL, NULL, 2, 2, R_INT, TRUE, 2, R_NUMBER, R_NUMBER));
-  INIT_WALKER("remainder", make_walker(remainder_1, NULL, NULL, 2, 2, R_INT, TRUE, 2, R_NUMBER, R_NUMBER));
-  INIT_WALKER("quotient", make_walker(quotient_1, NULL, NULL, 2, 2, R_INT, TRUE, 2, R_NUMBER, R_NUMBER));
-  INIT_WALKER("logand", make_walker(logand_1, NULL, NULL, 2, 2, R_INT, TRUE, 2, R_INT, R_INT));
-  INIT_WALKER("logxor", make_walker(logxor_1, NULL, NULL, 2, 2, R_INT, TRUE, 2, R_INT, R_INT));
-  INIT_WALKER("logior", make_walker(logior_1, NULL, NULL, 2, 2, R_INT, TRUE, 2, R_INT, R_INT));
-  INIT_WALKER("lognot", make_walker(lognot_1, NULL, NULL, 1, 1, R_INT, TRUE, 1, R_INT));
-  INIT_WALKER("ash", make_walker(ash_1, NULL, NULL, 2, 2, R_INT, TRUE, 2, R_INT, R_INT));
-  INIT_WALKER("integer->char", make_walker(integer_to_char_1, NULL, NULL, 1, 1, R_CHAR, TRUE, 1, R_INT));
-  INIT_WALKER("gcd", make_walker(gcd_1, NULL, NULL, 0, UNLIMITED_ARGS, R_INT, TRUE, 1, -R_NUMBER));
-  INIT_WALKER("lcm", make_walker(lcm_1, NULL, NULL, 0, UNLIMITED_ARGS, R_INT, TRUE, 1, -R_NUMBER));
-  INIT_WALKER("expt", make_walker(expt_1, NULL, NULL, 2, 2, R_NUMBER, FALSE, 2, R_NUMBER, R_NUMBER));
-  INIT_WALKER("atan", make_walker(atan_1, NULL, NULL, 1, 2, R_NUMBER, FALSE, 2, R_NUMBER, R_NUMBER));
-  INIT_WALKER("sin", make_walker(sin_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_NUMBER));
-  INIT_WALKER("cos", make_walker(cos_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_NUMBER));
-  INIT_WALKER("tan", make_walker(tan_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_NUMBER));
-  INIT_WALKER("abs", make_walker(abs_1, NULL, NULL, 1, 1, R_NUMBER, FALSE, 1, R_NUMBER));
-  INIT_WALKER("random", make_walker(random_1, NULL, NULL, 1, 1, R_NUMBER, FALSE, 1, R_NUMBER));
-  INIT_WALKER("log", make_walker(log_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_NUMBER));
-  INIT_WALKER("exp", make_walker(exp_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_NUMBER));
-  INIT_WALKER("asin", make_walker(asin_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_NUMBER));
-  INIT_WALKER("acos", make_walker(acos_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_NUMBER));
-  INIT_WALKER("sqrt", make_walker(sqrt_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_NUMBER));
-  INIT_WALKER("round", make_walker(round_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_NUMBER));
-  INIT_WALKER("truncate", make_walker(truncate_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_NUMBER));
-  INIT_WALKER("floor", make_walker(floor_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_NUMBER));
-  INIT_WALKER("ceiling", make_walker(ceiling_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_NUMBER));
-  INIT_WALKER("odd?", make_walker(odd_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_NUMBER));
-  INIT_WALKER("even?", make_walker(even_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_NUMBER));
-  INIT_WALKER("zero?", make_walker(zero_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_NUMBER));
-  INIT_WALKER("positive?", make_walker(positive_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_NUMBER));
-  INIT_WALKER("negative?", make_walker(negative_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_NUMBER));
-  INIT_WALKER("not", make_walker(not_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 0)); /* ?? */
+  INIT_WALKER("inexact->exact", make_walker(inexact2exact_1, NULL, NULL, 1, 1, R_INT, true, 1, R_NUMBER));
+  INIT_WALKER("exact->inexact", make_walker(exact2inexact_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("modulo", make_walker(modulo_1, NULL, NULL, 2, 2, R_INT, true, 2, R_NUMBER, R_NUMBER));
+  INIT_WALKER("remainder", make_walker(remainder_1, NULL, NULL, 2, 2, R_INT, true, 2, R_NUMBER, R_NUMBER));
+  INIT_WALKER("quotient", make_walker(quotient_1, NULL, NULL, 2, 2, R_INT, true, 2, R_NUMBER, R_NUMBER));
+  INIT_WALKER("logand", make_walker(logand_1, NULL, NULL, 2, 2, R_INT, true, 2, R_INT, R_INT));
+  INIT_WALKER("logxor", make_walker(logxor_1, NULL, NULL, 2, 2, R_INT, true, 2, R_INT, R_INT));
+  INIT_WALKER("logior", make_walker(logior_1, NULL, NULL, 2, 2, R_INT, true, 2, R_INT, R_INT));
+  INIT_WALKER("lognot", make_walker(lognot_1, NULL, NULL, 1, 1, R_INT, true, 1, R_INT));
+  INIT_WALKER("ash", make_walker(ash_1, NULL, NULL, 2, 2, R_INT, true, 2, R_INT, R_INT));
+  INIT_WALKER("integer->char", make_walker(integer_to_char_1, NULL, NULL, 1, 1, R_CHAR, true, 1, R_INT));
+  INIT_WALKER("gcd", make_walker(gcd_1, NULL, NULL, 0, UNLIMITED_ARGS, R_INT, true, 1, -R_NUMBER));
+  INIT_WALKER("lcm", make_walker(lcm_1, NULL, NULL, 0, UNLIMITED_ARGS, R_INT, true, 1, -R_NUMBER));
+  INIT_WALKER("expt", make_walker(expt_1, NULL, NULL, 2, 2, R_NUMBER, false, 2, R_NUMBER, R_NUMBER));
+  INIT_WALKER("atan", make_walker(atan_1, NULL, NULL, 1, 2, R_NUMBER, false, 2, R_NUMBER, R_NUMBER));
+  INIT_WALKER("sin", make_walker(sin_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("cos", make_walker(cos_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("tan", make_walker(tan_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("abs", make_walker(abs_1, NULL, NULL, 1, 1, R_NUMBER, false, 1, R_NUMBER));
+  INIT_WALKER("random", make_walker(random_1, NULL, NULL, 1, 1, R_NUMBER, false, 1, R_NUMBER));
+  INIT_WALKER("log", make_walker(log_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("exp", make_walker(exp_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("asin", make_walker(asin_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("acos", make_walker(acos_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("sqrt", make_walker(sqrt_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("round", make_walker(round_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("truncate", make_walker(truncate_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("floor", make_walker(floor_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("ceiling", make_walker(ceiling_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("odd?", make_walker(odd_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_NUMBER));
+  INIT_WALKER("even?", make_walker(even_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_NUMBER));
+  INIT_WALKER("zero?", make_walker(zero_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_NUMBER));
+  INIT_WALKER("positive?", make_walker(positive_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_NUMBER));
+  INIT_WALKER("negative?", make_walker(negative_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_NUMBER));
+  INIT_WALKER("not", make_walker(not_p, NULL, NULL, 1, 1, R_BOOL, false, 0)); /* ?? */
 
-  INIT_WALKER("throw", make_walker(throw_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_SYMBOL));
+  INIT_WALKER("throw", make_walker(throw_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_SYMBOL));
 
   /* -------- char funcs */
-  INIT_WALKER("char-alphabetic?", make_walker(char_alphabetic_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CHAR));
-  INIT_WALKER("char-numeric?", make_walker(char_numeric_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CHAR));
-  INIT_WALKER("char-lower-case?", make_walker(char_lower_case_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CHAR));
-  INIT_WALKER("char-upper-case?", make_walker(char_upper_case_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CHAR));
-  INIT_WALKER("char-whitespace?", make_walker(char_whitespace_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CHAR));
-  INIT_WALKER("char-upcase", make_walker(char_upcase, NULL, NULL, 1, 1, R_CHAR, FALSE, 1, R_CHAR));
-  INIT_WALKER("char-downcase", make_walker(char_downcase, NULL, NULL, 1, 1, R_CHAR, FALSE, 1, R_CHAR));
-  INIT_WALKER("char->integer", make_walker(char_to_integer, NULL, NULL, 1, 1, R_INT, FALSE, 1, R_CHAR));
-  INIT_WALKER("char>=?", make_walker(char_ge_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, FALSE, 1, -R_CHAR));
-  INIT_WALKER("char>?", make_walker(char_gt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, FALSE, 1, -R_CHAR));
-  INIT_WALKER("char<=?", make_walker(char_le_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, FALSE, 1, -R_CHAR));
-  INIT_WALKER("char<?", make_walker(char_lt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, FALSE, 1, -R_CHAR));
-  INIT_WALKER("char=?", make_walker(char_eq_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, FALSE, 1, -R_CHAR));
-  INIT_WALKER("char-ci>=?", make_walker(char_ci_ge_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, FALSE, 1, -R_CHAR));
-  INIT_WALKER("char-ci>?", make_walker(char_ci_gt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, FALSE, 1, -R_CHAR));
-  INIT_WALKER("char-ci<=?", make_walker(char_ci_le_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, FALSE, 1, -R_CHAR));
-  INIT_WALKER("char-ci<?", make_walker(char_ci_lt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, FALSE, 1, -R_CHAR));
-  INIT_WALKER("char-ci=?", make_walker(char_ci_eq_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, FALSE, 1, -R_CHAR));
-  INIT_WALKER("string", make_walker(string_1, NULL, NULL, 0, UNLIMITED_ARGS, R_STRING, FALSE, 1, -R_CHAR));
+  INIT_WALKER("char-alphabetic?", make_walker(char_alphabetic_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CHAR));
+  INIT_WALKER("char-numeric?", make_walker(char_numeric_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CHAR));
+  INIT_WALKER("char-lower-case?", make_walker(char_lower_case_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CHAR));
+  INIT_WALKER("char-upper-case?", make_walker(char_upper_case_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CHAR));
+  INIT_WALKER("char-whitespace?", make_walker(char_whitespace_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CHAR));
+  INIT_WALKER("char-upcase", make_walker(char_upcase, NULL, NULL, 1, 1, R_CHAR, false, 1, R_CHAR));
+  INIT_WALKER("char-downcase", make_walker(char_downcase, NULL, NULL, 1, 1, R_CHAR, false, 1, R_CHAR));
+  INIT_WALKER("char->integer", make_walker(char_to_integer, NULL, NULL, 1, 1, R_INT, false, 1, R_CHAR));
+  INIT_WALKER("char>=?", make_walker(char_ge_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_CHAR));
+  INIT_WALKER("char>?", make_walker(char_gt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_CHAR));
+  INIT_WALKER("char<=?", make_walker(char_le_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_CHAR));
+  INIT_WALKER("char<?", make_walker(char_lt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_CHAR));
+  INIT_WALKER("char=?", make_walker(char_eq_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_CHAR));
+  INIT_WALKER("char-ci>=?", make_walker(char_ci_ge_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_CHAR));
+  INIT_WALKER("char-ci>?", make_walker(char_ci_gt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_CHAR));
+  INIT_WALKER("char-ci<=?", make_walker(char_ci_le_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_CHAR));
+  INIT_WALKER("char-ci<?", make_walker(char_ci_lt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_CHAR));
+  INIT_WALKER("char-ci=?", make_walker(char_ci_eq_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_CHAR));
+  INIT_WALKER("string", make_walker(string_1, NULL, NULL, 0, UNLIMITED_ARGS, R_STRING, false, 1, -R_CHAR));
 
   /* -------- string funcs */
-  INIT_WALKER("string=?", make_walker(string_eq_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, FALSE, 1, -R_STRING));
-  INIT_WALKER("string>=?", make_walker(string_geq_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, FALSE, 1, -R_STRING));
-  INIT_WALKER("string<=?", make_walker(string_leq_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, FALSE, 1, -R_STRING));
-  INIT_WALKER("string>?", make_walker(string_gt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, FALSE, 1, -R_STRING));
-  INIT_WALKER("string<?", make_walker(string_lt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, FALSE, 1, -R_STRING));
-  INIT_WALKER("string-ci=?", make_walker(string_ci_eq_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, FALSE, 1, -R_STRING));
-  INIT_WALKER("string-ci>=?", make_walker(string_ci_geq_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, FALSE, 1, -R_STRING));
-  INIT_WALKER("string-ci<=?", make_walker(string_ci_leq_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, FALSE, 1, -R_STRING));
-  INIT_WALKER("string-ci>?", make_walker(string_ci_gt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, FALSE, 1, -R_STRING));
-  INIT_WALKER("string-ci<?", make_walker(string_ci_lt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, FALSE, 1, -R_STRING));
-  INIT_WALKER("string-length", make_walker(string_length_1, NULL, NULL, 1, 1, R_INT, FALSE, 1, R_STRING));
-  INIT_WALKER("string-copy", make_walker(string_copy_1, NULL, NULL, 1, 1, R_STRING, FALSE, 1, R_STRING));
-  INIT_WALKER("string-ref", make_walker(string_ref_1, NULL, NULL, 2, 2, R_CHAR, FALSE, 2, R_STRING, R_INT));
-  INIT_WALKER("substring", make_walker(substring_1, NULL, NULL, 3, 3, R_STRING, FALSE, 3, R_STRING, R_INT, R_INT));
-  INIT_WALKER("string-fill!", make_walker(string_fill_1, NULL, NULL, 2, 2, R_STRING, FALSE, 2, R_STRING, R_CHAR));
-  INIT_WALKER("string-set!", make_walker(string_set_1, NULL, NULL, 3, 3, R_STRING, FALSE, 3, R_STRING, R_INT, R_CHAR));
-  INIT_WALKER("string-append", make_walker(string_append_1, NULL, NULL, 0, UNLIMITED_ARGS, R_STRING, FALSE, 1, -R_STRING));
+  INIT_WALKER("string=?", make_walker(string_eq_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_STRING));
+  INIT_WALKER("string>=?", make_walker(string_geq_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_STRING));
+  INIT_WALKER("string<=?", make_walker(string_leq_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_STRING));
+  INIT_WALKER("string>?", make_walker(string_gt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_STRING));
+  INIT_WALKER("string<?", make_walker(string_lt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_STRING));
+  INIT_WALKER("string-ci=?", make_walker(string_ci_eq_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_STRING));
+  INIT_WALKER("string-ci>=?", make_walker(string_ci_geq_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_STRING));
+  INIT_WALKER("string-ci<=?", make_walker(string_ci_leq_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_STRING));
+  INIT_WALKER("string-ci>?", make_walker(string_ci_gt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_STRING));
+  INIT_WALKER("string-ci<?", make_walker(string_ci_lt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_STRING));
+  INIT_WALKER("string-length", make_walker(string_length_1, NULL, NULL, 1, 1, R_INT, false, 1, R_STRING));
+  INIT_WALKER("string-copy", make_walker(string_copy_1, NULL, NULL, 1, 1, R_STRING, false, 1, R_STRING));
+  INIT_WALKER("string-ref", make_walker(string_ref_1, NULL, NULL, 2, 2, R_CHAR, false, 2, R_STRING, R_INT));
+  INIT_WALKER("substring", make_walker(substring_1, NULL, NULL, 3, 3, R_STRING, false, 3, R_STRING, R_INT, R_INT));
+  INIT_WALKER("string-fill!", make_walker(string_fill_1, NULL, NULL, 2, 2, R_STRING, false, 2, R_STRING, R_CHAR));
+  INIT_WALKER("string-set!", make_walker(string_set_1, NULL, NULL, 3, 3, R_STRING, false, 3, R_STRING, R_INT, R_CHAR));
+  INIT_WALKER("string-append", make_walker(string_append_1, NULL, NULL, 0, UNLIMITED_ARGS, R_STRING, false, 1, -R_STRING));
 
-  INIT_WALKER("display", make_walker(display_1, NULL, NULL, 1, 1, R_STRING, FALSE, 0));
-  INIT_WALKER("make-string", make_walker(make_string_1, NULL, NULL, 1, 2, R_STRING, FALSE, 2, R_INT, R_CHAR));
-  INIT_WALKER("number->string", make_walker(number2string_1, NULL, NULL, 1, 2, R_STRING, FALSE, 2, R_NUMBER, R_INT));
-  INIT_WALKER("symbol->string", make_walker(symbol2string_1, NULL, NULL, 1, 1, R_STRING, FALSE, 1, R_SYMBOL));
+  INIT_WALKER("display", make_walker(display_1, NULL, NULL, 1, 1, R_STRING, false, 0));
+  INIT_WALKER("make-string", make_walker(make_string_1, NULL, NULL, 1, 2, R_STRING, false, 2, R_INT, R_CHAR));
+  INIT_WALKER("number->string", make_walker(number2string_1, NULL, NULL, 1, 2, R_STRING, false, 2, R_NUMBER, R_INT));
+  INIT_WALKER("symbol->string", make_walker(symbol2string_1, NULL, NULL, 1, 1, R_STRING, false, 1, R_SYMBOL));
 
   /* -------- vector funcs */
-  INIT_WALKER("vector-ref", make_walker(vector_ref_1, NULL, NULL, 2, 2, R_ANY, FALSE, 2, R_VECTOR, R_INT));
-  INIT_WALKER("vector-length", make_walker(vector_length_1, NULL, NULL, 1, 1, R_INT, FALSE, 1, R_VECTOR));
-  INIT_WALKER("vector-fill!", make_walker(vector_fill_1, NULL, NULL, 2, 2, R_INT, FALSE, 1, R_VECTOR));
-  INIT_WALKER("vector-set!", make_walker(vector_set_1, NULL, NULL, 3, 3, R_ANY, FALSE, 2, R_VECTOR, R_INT));
-  INIT_WALKER("make-vector", make_walker(make_vct_1, NULL, NULL, 1, 2, R_VCT, FALSE, 2, R_INT, R_FLOAT));
+  INIT_WALKER("vector-ref", make_walker(vector_ref_1, NULL, NULL, 2, 2, R_ANY, false, 2, R_VECTOR, R_INT));
+  INIT_WALKER("vector-length", make_walker(vector_length_1, NULL, NULL, 1, 1, R_INT, false, 1, R_VECTOR));
+  INIT_WALKER("vector-fill!", make_walker(vector_fill_1, NULL, NULL, 2, 2, R_INT, false, 1, R_VECTOR));
+  INIT_WALKER("vector-set!", make_walker(vector_set_1, NULL, NULL, 3, 3, R_ANY, false, 2, R_VECTOR, R_INT));
+  INIT_WALKER("make-vector", make_walker(make_vct_1, NULL, NULL, 1, 2, R_VCT, false, 2, R_INT, R_FLOAT));
 
   /* -------- list funcs */
-  INIT_WALKER("car", make_walker(car_1, NULL, NULL, 1, 1, R_ANY, FALSE, 1, R_CONS));
-  INIT_WALKER("cdr", make_walker(cdr_1, NULL, NULL, 1, 1, R_ANY, FALSE, 1, R_PAIR));
-  INIT_WALKER("caar", make_walker(caar_1, NULL, NULL, 1, 1, R_ANY, FALSE, 1, R_LIST));
-  INIT_WALKER("cadr", make_walker(cadr_1, NULL, NULL, 1, 1, R_ANY, FALSE, 1, R_LIST));
-  INIT_WALKER("caaar", make_walker(caaar_1, NULL, NULL, 1, 1, R_ANY, FALSE, 1, R_LIST));
-  INIT_WALKER("caadr", make_walker(caadr_1, NULL, NULL, 1, 1, R_ANY, FALSE, 1, R_LIST));
-  INIT_WALKER("cadar", make_walker(cadar_1, NULL, NULL, 1, 1, R_ANY, FALSE, 1, R_LIST));
-  INIT_WALKER("caddr", make_walker(caddr_1, NULL, NULL, 1, 1, R_ANY, FALSE, 1, R_LIST));
-  INIT_WALKER("caaaar", make_walker(caaaar_1, NULL, NULL, 1, 1, R_ANY, FALSE, 1, R_LIST));
-  INIT_WALKER("caaadr", make_walker(caaadr_1, NULL, NULL, 1, 1, R_ANY, FALSE, 1, R_LIST));
-  INIT_WALKER("caadar", make_walker(caadar_1, NULL, NULL, 1, 1, R_ANY, FALSE, 1, R_LIST));
-  INIT_WALKER("caaddr", make_walker(caaddr_1, NULL, NULL, 1, 1, R_ANY, FALSE, 1, R_LIST));
-  INIT_WALKER("cadaar", make_walker(cadaar_1, NULL, NULL, 1, 1, R_ANY, FALSE, 1, R_LIST));
-  INIT_WALKER("cadadr", make_walker(cadadr_1, NULL, NULL, 1, 1, R_ANY, FALSE, 1, R_LIST));
-  INIT_WALKER("caddar", make_walker(caddar_1, NULL, NULL, 1, 1, R_ANY, FALSE, 1, R_LIST));
-  INIT_WALKER("cadddr", make_walker(cadddr_1, NULL, NULL, 1, 1, R_ANY, FALSE, 1, R_LIST));
-  INIT_WALKER("null?", make_walker(null_p_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_LIST));
-  INIT_WALKER("length", make_walker(list_length_1, NULL, NULL, 1, 1, R_INT, FALSE, 1, R_LIST));
+  INIT_WALKER("car", make_walker(car_1, NULL, NULL, 1, 1, R_ANY, false, 1, R_CONS));
+  INIT_WALKER("cdr", make_walker(cdr_1, NULL, NULL, 1, 1, R_ANY, false, 1, R_PAIR));
+  INIT_WALKER("caar", make_walker(caar_1, NULL, NULL, 1, 1, R_ANY, false, 1, R_LIST));
+  INIT_WALKER("cadr", make_walker(cadr_1, NULL, NULL, 1, 1, R_ANY, false, 1, R_LIST));
+  INIT_WALKER("caaar", make_walker(caaar_1, NULL, NULL, 1, 1, R_ANY, false, 1, R_LIST));
+  INIT_WALKER("caadr", make_walker(caadr_1, NULL, NULL, 1, 1, R_ANY, false, 1, R_LIST));
+  INIT_WALKER("cadar", make_walker(cadar_1, NULL, NULL, 1, 1, R_ANY, false, 1, R_LIST));
+  INIT_WALKER("caddr", make_walker(caddr_1, NULL, NULL, 1, 1, R_ANY, false, 1, R_LIST));
+  INIT_WALKER("caaaar", make_walker(caaaar_1, NULL, NULL, 1, 1, R_ANY, false, 1, R_LIST));
+  INIT_WALKER("caaadr", make_walker(caaadr_1, NULL, NULL, 1, 1, R_ANY, false, 1, R_LIST));
+  INIT_WALKER("caadar", make_walker(caadar_1, NULL, NULL, 1, 1, R_ANY, false, 1, R_LIST));
+  INIT_WALKER("caaddr", make_walker(caaddr_1, NULL, NULL, 1, 1, R_ANY, false, 1, R_LIST));
+  INIT_WALKER("cadaar", make_walker(cadaar_1, NULL, NULL, 1, 1, R_ANY, false, 1, R_LIST));
+  INIT_WALKER("cadadr", make_walker(cadadr_1, NULL, NULL, 1, 1, R_ANY, false, 1, R_LIST));
+  INIT_WALKER("caddar", make_walker(caddar_1, NULL, NULL, 1, 1, R_ANY, false, 1, R_LIST));
+  INIT_WALKER("cadddr", make_walker(cadddr_1, NULL, NULL, 1, 1, R_ANY, false, 1, R_LIST));
+  INIT_WALKER("null?", make_walker(null_p_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_LIST));
+  INIT_WALKER("length", make_walker(list_length_1, NULL, NULL, 1, 1, R_INT, false, 1, R_LIST));
 
 
   /* -------- clm funcs */
-  INIT_WALKER(S_buffer2sample, make_walker(mus_buffer2sample_0, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_oscil_p, make_walker(oscil_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_env_p, make_walker(env_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_notch_p, make_walker(notch_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_comb_p, make_walker(comb_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_delay_p, make_walker(delay_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_all_pass_p, make_walker(all_pass_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_rand_p, make_walker(rand_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_rand_interp_p, make_walker(rand_interp_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_sum_of_cosines_p, make_walker(sum_of_cosines_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_table_lookup_p, make_walker(table_lookup_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_sawtooth_wave_p, make_walker(sawtooth_wave_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_pulse_train_p, make_walker(pulse_train_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_square_wave_p, make_walker(square_wave_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_triangle_wave_p, make_walker(triangle_wave_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_asymmetric_fm_p, make_walker(asymmetric_fm_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_sine_summation_p, make_walker(sine_summation_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_one_zero_p, make_walker(one_zero_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_one_pole_p, make_walker(one_pole_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_two_zero_p, make_walker(two_zero_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_two_pole_p, make_walker(two_pole_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_formant_p, make_walker(formant_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_wave_train_p, make_walker(wave_train_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_waveshape_p, make_walker(waveshape_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_filter_p, make_walker(filter_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_fir_filter_p, make_walker(fir_filter_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_iir_filter_p, make_walker(iir_filter_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_readin_p, make_walker(readin_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_src_p, make_walker(src_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_granulate_p, make_walker(granulate_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_phase_vocoder_p, make_walker(phase_vocoder_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_convolve_p, make_walker(convolve_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_buffer_p, make_walker(buffer_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_buffer_empty_p, make_walker(buffer_empty_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_buffer_full_p, make_walker(buffer_full_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_frame_p, make_walker(frame_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_mixer_p, make_walker(mixer_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_file2sample_p, make_walker(file2sample_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_sample2file_p, make_walker(sample2file_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_file2frame_p, make_walker(file2frame_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_frame2file_p, make_walker(frame2file_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_locsig_p, make_walker(locsig_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_mus_input_p, make_walker(input_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
-  INIT_WALKER(S_mus_output_p, make_walker(output_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
+  INIT_WALKER(S_buffer2sample, make_walker(mus_buffer2sample_0, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_oscil_p, make_walker(oscil_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_env_p, make_walker(env_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_notch_p, make_walker(notch_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_comb_p, make_walker(comb_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_delay_p, make_walker(delay_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_all_pass_p, make_walker(all_pass_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_rand_p, make_walker(rand_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_rand_interp_p, make_walker(rand_interp_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_sum_of_cosines_p, make_walker(sum_of_cosines_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_table_lookup_p, make_walker(table_lookup_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_sawtooth_wave_p, make_walker(sawtooth_wave_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_pulse_train_p, make_walker(pulse_train_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_square_wave_p, make_walker(square_wave_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_triangle_wave_p, make_walker(triangle_wave_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_asymmetric_fm_p, make_walker(asymmetric_fm_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_sine_summation_p, make_walker(sine_summation_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_one_zero_p, make_walker(one_zero_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_one_pole_p, make_walker(one_pole_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_two_zero_p, make_walker(two_zero_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_two_pole_p, make_walker(two_pole_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_formant_p, make_walker(formant_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_wave_train_p, make_walker(wave_train_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_waveshape_p, make_walker(waveshape_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_filter_p, make_walker(filter_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_fir_filter_p, make_walker(fir_filter_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_iir_filter_p, make_walker(iir_filter_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_readin_p, make_walker(readin_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_src_p, make_walker(src_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_granulate_p, make_walker(granulate_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_phase_vocoder_p, make_walker(phase_vocoder_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_convolve_p, make_walker(convolve_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_buffer_p, make_walker(buffer_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_buffer_empty_p, make_walker(buffer_empty_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_buffer_full_p, make_walker(buffer_full_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_frame_p, make_walker(frame_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_mixer_p, make_walker(mixer_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_file2sample_p, make_walker(file2sample_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_sample2file_p, make_walker(sample2file_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_file2frame_p, make_walker(file2frame_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_frame2file_p, make_walker(frame2file_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_locsig_p, make_walker(locsig_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_mus_input_p, make_walker(input_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_mus_output_p, make_walker(output_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
 
-  INIT_WALKER(S_restart_env, make_walker(restart_env_1, NULL, NULL, 1, 1, R_CLM, FALSE, 1, R_CLM));
-  INIT_WALKER(S_mus_increment, make_walker(mus_increment_0, NULL, mus_set_increment_1, 1, 1, R_FLOAT, FALSE, 1, R_CLM));
-  INIT_WALKER(S_mus_frequency, make_walker(mus_frequency_0, NULL, mus_set_frequency_1, 1, 1, R_FLOAT, FALSE, 1, R_CLM));
-  INIT_WALKER(S_mus_phase, make_walker(mus_phase_0, NULL, mus_set_phase_1, 1, 1, R_FLOAT, FALSE, 1, R_CLM));
-  INIT_WALKER(S_mus_width, make_walker(mus_width_0, NULL, mus_set_width_1, 1, 1, R_FLOAT, FALSE, 1, R_CLM));
-  INIT_WALKER(S_mus_scaler, make_walker(mus_scaler_0, NULL, mus_set_scaler_1, 1, 1, R_FLOAT, FALSE, 1, R_CLM));
-  INIT_WALKER(S_mus_offset, make_walker(mus_offset_0, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_CLM));
-  INIT_WALKER(S_mus_formant_radius, make_walker(mus_formant_radius_0, NULL, mus_set_formant_radius_1, 1, 1, R_FLOAT, FALSE, 1, R_CLM));
-  INIT_WALKER(S_mus_a0, make_walker(mus_a0_0, NULL, mus_set_a0_1, 1, 1, R_FLOAT, FALSE, 1, R_CLM));
-  INIT_WALKER(S_mus_a1, make_walker(mus_a1_0, NULL, mus_set_a1_1, 1, 1, R_FLOAT, FALSE, 1, R_CLM));
-  INIT_WALKER(S_mus_a2, make_walker(mus_a2_0, NULL, mus_set_a2_1, 1, 1, R_FLOAT, FALSE, 1, R_CLM));
-  INIT_WALKER(S_mus_b1, make_walker(mus_b1_0, NULL, mus_set_b1_1, 1, 1, R_FLOAT, FALSE, 1, R_CLM));
-  INIT_WALKER(S_mus_b2, make_walker(mus_b2_0, NULL, mus_set_b2_1, 1, 1, R_FLOAT, FALSE, 1, R_CLM));
-  INIT_WALKER(S_mus_x1, make_walker(mus_x1_0, NULL, mus_set_x1_1, 1, 1, R_FLOAT, FALSE, 1, R_CLM));
-  INIT_WALKER(S_mus_x2, make_walker(mus_x2_0, NULL, mus_set_x2_1, 1, 1, R_FLOAT, FALSE, 1, R_CLM));
-  INIT_WALKER(S_mus_y1, make_walker(mus_y1_0, NULL, mus_set_y1_1, 1, 1, R_FLOAT, FALSE, 1, R_CLM));
-  INIT_WALKER(S_mus_y2, make_walker(mus_y2_0, NULL, mus_set_y2_1, 1, 1, R_FLOAT, FALSE, 1, R_CLM));
-  INIT_WALKER(S_mus_data, make_walker(mus_data_1, NULL, NULL, 1, 1, R_VCT, FALSE, 1, R_XCLM));
-  INIT_WALKER(S_mus_xcoeffs, make_walker(mus_xcoeffs_1, NULL, NULL, 1, 1, R_VCT, FALSE, 1, R_XCLM));
-  INIT_WALKER(S_mus_ycoeffs, make_walker(mus_ycoeffs_1, NULL, NULL, 1, 1, R_VCT, FALSE, 1, R_XCLM));
-  INIT_WALKER(S_mus_feedforward, make_walker(mus_feedforward_0, NULL, mus_set_feedforward_1, 1, 1, R_FLOAT, FALSE, 1, R_CLM));
-  INIT_WALKER(S_mus_feedback, make_walker(mus_feedback_0, NULL, mus_set_feedback_1, 1, 1, R_FLOAT, FALSE, 1, R_CLM));
-  INIT_WALKER(S_mus_hop, make_walker(mus_hop_0, NULL, mus_set_hop_1, 1, 1, R_INT, FALSE, 1, R_CLM));
-  INIT_WALKER(S_mus_channels, make_walker(mus_channels_0, NULL, NULL, 1, 1, R_INT, FALSE, 1, R_CLM));
-  INIT_WALKER(S_mus_channel, make_walker(mus_channel_0, NULL, NULL, 1, 1, R_INT, FALSE, 1, R_CLM));
-  INIT_WALKER(S_mus_location, make_walker(mus_location_0, NULL, mus_set_location_1, 1, 1, R_INT, FALSE, 1, R_CLM));
-  INIT_WALKER(S_mus_ramp, make_walker(mus_ramp_0, NULL, mus_set_ramp_1, 1, 1, R_INT, FALSE, 1, R_CLM));
-  INIT_WALKER(S_mus_position, make_walker(mus_position_0, NULL, NULL, 1, 1, R_INT, FALSE, 1, R_CLM));
-  INIT_WALKER(S_mus_order, make_walker(mus_order_0, NULL, NULL, 1, 1, R_INT, FALSE, 1, R_CLM));
-  INIT_WALKER(S_mus_length, make_walker(mus_length_0, NULL, mus_set_length_1, 1, 1, R_INT, FALSE, 1, R_CLM));
-  INIT_WALKER(S_mus_cosines, make_walker(mus_cosines_0, NULL, mus_set_cosines_1, 1, 1, R_INT, FALSE, 1, R_CLM));
-  INIT_WALKER(S_mus_name, make_walker(mus_name_0, NULL, NULL, 1, 1, R_INT, FALSE, 1, R_CLM));
-  INIT_WALKER(S_mus_file_name, make_walker(mus_file_name_0, NULL, NULL, 1, 1, R_STRING, FALSE, 1, R_CLM));
-  INIT_WALKER(S_mus_describe, make_walker(mus_describe_0, NULL, NULL, 1, 1, R_STRING, FALSE, 1, R_CLM));
-  INIT_WALKER(S_mus_inspect, make_walker(mus_inspect_0, NULL, NULL, 1, 1, R_STRING, FALSE, 1, R_CLM));
+  INIT_WALKER(S_restart_env, make_walker(restart_env_1, NULL, NULL, 1, 1, R_CLM, false, 1, R_CLM));
+  INIT_WALKER(S_mus_increment, make_walker(mus_increment_0, NULL, mus_set_increment_1, 1, 1, R_FLOAT, false, 1, R_CLM));
+  INIT_WALKER(S_mus_frequency, make_walker(mus_frequency_0, NULL, mus_set_frequency_1, 1, 1, R_FLOAT, false, 1, R_CLM));
+  INIT_WALKER(S_mus_phase, make_walker(mus_phase_0, NULL, mus_set_phase_1, 1, 1, R_FLOAT, false, 1, R_CLM));
+  INIT_WALKER(S_mus_width, make_walker(mus_width_0, NULL, mus_set_width_1, 1, 1, R_FLOAT, false, 1, R_CLM));
+  INIT_WALKER(S_mus_scaler, make_walker(mus_scaler_0, NULL, mus_set_scaler_1, 1, 1, R_FLOAT, false, 1, R_CLM));
+  INIT_WALKER(S_mus_offset, make_walker(mus_offset_0, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_CLM));
+  INIT_WALKER(S_mus_formant_radius, make_walker(mus_formant_radius_0, NULL, mus_set_formant_radius_1, 1, 1, R_FLOAT, false, 1, R_CLM));
+  INIT_WALKER(S_mus_a0, make_walker(mus_a0_0, NULL, mus_set_a0_1, 1, 1, R_FLOAT, false, 1, R_CLM));
+  INIT_WALKER(S_mus_a1, make_walker(mus_a1_0, NULL, mus_set_a1_1, 1, 1, R_FLOAT, false, 1, R_CLM));
+  INIT_WALKER(S_mus_a2, make_walker(mus_a2_0, NULL, mus_set_a2_1, 1, 1, R_FLOAT, false, 1, R_CLM));
+  INIT_WALKER(S_mus_b1, make_walker(mus_b1_0, NULL, mus_set_b1_1, 1, 1, R_FLOAT, false, 1, R_CLM));
+  INIT_WALKER(S_mus_b2, make_walker(mus_b2_0, NULL, mus_set_b2_1, 1, 1, R_FLOAT, false, 1, R_CLM));
+  INIT_WALKER(S_mus_x1, make_walker(mus_x1_0, NULL, mus_set_x1_1, 1, 1, R_FLOAT, false, 1, R_CLM));
+  INIT_WALKER(S_mus_x2, make_walker(mus_x2_0, NULL, mus_set_x2_1, 1, 1, R_FLOAT, false, 1, R_CLM));
+  INIT_WALKER(S_mus_y1, make_walker(mus_y1_0, NULL, mus_set_y1_1, 1, 1, R_FLOAT, false, 1, R_CLM));
+  INIT_WALKER(S_mus_y2, make_walker(mus_y2_0, NULL, mus_set_y2_1, 1, 1, R_FLOAT, false, 1, R_CLM));
+  INIT_WALKER(S_mus_data, make_walker(mus_data_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_XCLM));
+  INIT_WALKER(S_mus_xcoeffs, make_walker(mus_xcoeffs_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_XCLM));
+  INIT_WALKER(S_mus_ycoeffs, make_walker(mus_ycoeffs_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_XCLM));
+  INIT_WALKER(S_mus_feedforward, make_walker(mus_feedforward_0, NULL, mus_set_feedforward_1, 1, 1, R_FLOAT, false, 1, R_CLM));
+  INIT_WALKER(S_mus_feedback, make_walker(mus_feedback_0, NULL, mus_set_feedback_1, 1, 1, R_FLOAT, false, 1, R_CLM));
+  INIT_WALKER(S_mus_hop, make_walker(mus_hop_0, NULL, mus_set_hop_1, 1, 1, R_INT, false, 1, R_CLM));
+  INIT_WALKER(S_mus_channels, make_walker(mus_channels_0, NULL, NULL, 1, 1, R_INT, false, 1, R_CLM));
+  INIT_WALKER(S_mus_channel, make_walker(mus_channel_0, NULL, NULL, 1, 1, R_INT, false, 1, R_CLM));
+  INIT_WALKER(S_mus_location, make_walker(mus_location_0, NULL, mus_set_location_1, 1, 1, R_INT, false, 1, R_CLM));
+  INIT_WALKER(S_mus_ramp, make_walker(mus_ramp_0, NULL, mus_set_ramp_1, 1, 1, R_INT, false, 1, R_CLM));
+  INIT_WALKER(S_mus_position, make_walker(mus_position_0, NULL, NULL, 1, 1, R_INT, false, 1, R_CLM));
+  INIT_WALKER(S_mus_order, make_walker(mus_order_0, NULL, NULL, 1, 1, R_INT, false, 1, R_CLM));
+  INIT_WALKER(S_mus_length, make_walker(mus_length_0, NULL, mus_set_length_1, 1, 1, R_INT, false, 1, R_CLM));
+  INIT_WALKER(S_mus_cosines, make_walker(mus_cosines_0, NULL, mus_set_cosines_1, 1, 1, R_INT, false, 1, R_CLM));
+  INIT_WALKER(S_mus_name, make_walker(mus_name_0, NULL, NULL, 1, 1, R_INT, false, 1, R_CLM));
+  INIT_WALKER(S_mus_file_name, make_walker(mus_file_name_0, NULL, NULL, 1, 1, R_STRING, false, 1, R_CLM));
+  INIT_WALKER(S_mus_describe, make_walker(mus_describe_0, NULL, NULL, 1, 1, R_STRING, false, 1, R_CLM));
+  INIT_WALKER(S_mus_inspect, make_walker(mus_inspect_0, NULL, NULL, 1, 1, R_STRING, false, 1, R_CLM));
 
-  INIT_WALKER(S_oscil, make_walker(oscil_1, NULL, NULL, 1, 3, R_FLOAT, FALSE, 3, R_CLM, R_NUMBER, R_NUMBER));
-  INIT_WALKER(S_one_zero, make_walker(one_zero_1, NULL, NULL, 1, 2, R_FLOAT, FALSE, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_one_pole, make_walker(one_pole_1, NULL, NULL, 1, 2, R_FLOAT, FALSE, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_out_any, make_walker(out_any_1, NULL, NULL, 4, 4, R_FLOAT, FALSE, 4, R_NUMBER, R_NUMBER, R_INT, R_CLM));
-  INIT_WALKER(S_outa, make_walker(outa_1, NULL, NULL, 3, 3, R_FLOAT, FALSE, 3, R_NUMBER, R_NUMBER, R_CLM));
-  INIT_WALKER(S_outb, make_walker(outb_1, NULL, NULL, 3, 3, R_FLOAT, FALSE, 3, R_NUMBER, R_NUMBER, R_CLM));
-  INIT_WALKER(S_outc, make_walker(outc_1, NULL, NULL, 3, 3, R_FLOAT, FALSE, 3, R_NUMBER, R_NUMBER, R_CLM));
-  INIT_WALKER(S_outd, make_walker(outd_1, NULL, NULL, 3, 3, R_FLOAT, FALSE, 3, R_NUMBER, R_NUMBER, R_CLM));
-  INIT_WALKER(S_env, make_walker(env_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_CLM));
-  INIT_WALKER(S_env_interp, make_walker(env_interp_1, NULL, NULL, 2, 2, R_FLOAT, FALSE, 2, R_FLOAT, R_CLM));
-  INIT_WALKER(S_notch, make_walker(notch_1, NULL, NULL, 1, 3, R_FLOAT, FALSE, 3, R_CLM, R_NUMBER, R_NUMBER));
-  INIT_WALKER(S_comb, make_walker(comb_1, NULL, NULL, 1, 3, R_FLOAT, FALSE, 3, R_CLM, R_NUMBER, R_NUMBER));
-  INIT_WALKER(S_convolve, make_walker(convolve_1, NULL, NULL, 1, 2, R_FLOAT, FALSE, 2, R_CLM, R_FUNCTION));
-  INIT_WALKER(S_delay, make_walker(delay_1, NULL, NULL, 1, 3, R_FLOAT, FALSE, 3, R_CLM, R_NUMBER, R_NUMBER));
-  INIT_WALKER(S_all_pass, make_walker(all_pass_1, NULL, NULL, 1, 3, R_FLOAT, FALSE, 3, R_CLM, R_NUMBER, R_NUMBER));
-  INIT_WALKER(S_asymmetric_fm, make_walker(asymmetric_fm_1, NULL, NULL, 1, 3, R_FLOAT, FALSE, 3, R_CLM, R_NUMBER, R_NUMBER));
-  INIT_WALKER(S_rand, make_walker(rand_1, NULL, NULL, 1, 2, R_FLOAT, FALSE, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_rand_interp, make_walker(rand_interp_1, NULL, NULL, 1, 2, R_FLOAT, FALSE, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_readin, make_walker(readin_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_CLM));
-  INIT_WALKER(S_src, make_walker(src_1, NULL, NULL, 1, 3, R_FLOAT, FALSE, 3, R_CLM, R_NUMBER, R_FUNCTION));
-  INIT_WALKER(S_sum_of_cosines, make_walker(sum_of_cosines_1, NULL, NULL, 1, 2, R_FLOAT, FALSE, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_sawtooth_wave, make_walker(sawtooth_wave_1, NULL, NULL, 1, 2, R_FLOAT, FALSE, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_square_wave, make_walker(square_wave_1, NULL, NULL, 1, 2, R_FLOAT, FALSE, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_sine_summation, make_walker(sine_summation_1, NULL, NULL, 1, 2, R_FLOAT, FALSE, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_sample2file, make_walker(sample2file_1, NULL, NULL, 4, 4, R_FLOAT, FALSE, 4, R_CLM, R_NUMBER, R_INT, R_NUMBER));
-  INIT_WALKER(S_sample2buffer, make_walker(sample2buffer_1, NULL, NULL, 2, 2, R_FLOAT, FALSE, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_table_lookup, make_walker(table_lookup_1, NULL, NULL, 1, 2, R_FLOAT, FALSE, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_triangle_wave, make_walker(triangle_wave_1, NULL, NULL, 1, 2, R_FLOAT, FALSE, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_two_zero, make_walker(two_zero_1, NULL, NULL, 1, 2, R_FLOAT, FALSE, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_two_pole, make_walker(two_pole_1, NULL, NULL, 1, 2, R_FLOAT, FALSE, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_tap, make_walker(tap_1, NULL, NULL, 1, 2, R_FLOAT, FALSE, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_pulse_train, make_walker(pulse_train_1, NULL, NULL, 1, 2, R_FLOAT, FALSE, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_phase_vocoder, make_walker(phase_vocoder_1, NULL, NULL, 1, 2, R_FLOAT, FALSE, 2, R_CLM, R_FUNCTION));
-  INIT_WALKER(S_formant, make_walker(formant_1, NULL, NULL, 1, 2, R_FLOAT, FALSE, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_filter, make_walker(filter_1, NULL, NULL, 1, 2, R_FLOAT, FALSE, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_fir_filter, make_walker(fir_filter_1, NULL, NULL, 1, 2, R_FLOAT, FALSE, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_file2sample, make_walker(file2sample_1, NULL, NULL, 2, 3, R_FLOAT, FALSE, 3, R_CLM, R_NUMBER, R_INT));
-  INIT_WALKER(S_frame_ref, make_walker(frame_ref_0, NULL, frame_set_1, 2, 2, R_FLOAT, FALSE, 2, R_CLM, R_INT));
-  INIT_WALKER(S_frame_set, make_walker(frame_set_2, NULL, NULL, 3, 3, R_FLOAT, FALSE, 3, R_CLM, R_INT, R_NUMBER));
-  INIT_WALKER(S_wave_train, make_walker(wave_train_1, NULL, NULL, 1, 2, R_FLOAT, FALSE, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_waveshape, make_walker(waveshape_1, NULL, NULL, 1, 3, R_FLOAT, FALSE, 3, R_CLM, R_NUMBER, R_NUMBER));
-  INIT_WALKER(S_iir_filter, make_walker(iir_filter_1, NULL, NULL, 1, 2, R_FLOAT, FALSE, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_ina, make_walker(ina_1, NULL, NULL, 2, 2, R_FLOAT, FALSE, 2, R_NUMBER, R_CLM));
-  INIT_WALKER(S_inb, make_walker(inb_1, NULL, NULL, 2, 2, R_FLOAT, FALSE, 2, R_NUMBER, R_CLM));
-  INIT_WALKER(S_in_any, make_walker(in_any_1, NULL, NULL, 3, 3, R_FLOAT, FALSE, 2, R_NUMBER, R_INT, R_CLM));
-  INIT_WALKER(S_granulate, make_walker(granulate_1, NULL, NULL, 1, 2, R_FLOAT, FALSE, 2, R_CLM, R_FUNCTION));
-  INIT_WALKER(S_move_locsig, make_walker(move_locsig_1, NULL, NULL, 3, 3, R_FLOAT, FALSE, 3, R_CLM, R_NUMBER, R_NUMBER));
-  INIT_WALKER(S_mus_set_formant_radius_and_frequency, make_walker(set_formant_radius_and_frequency_1, NULL, NULL, 3, 3, R_FLOAT, FALSE, 3, R_CLM, R_NUMBER, R_NUMBER));
-  INIT_WALKER(S_mixer_set, make_walker(mixer_set_2, NULL, NULL, 4, 4, R_FLOAT, FALSE, 4, R_CLM, R_INT, R_INT, R_NUMBER));
-  INIT_WALKER(S_mixer_ref, make_walker(mixer_ref_1, NULL, mixer_set_1, 3, 3, R_FLOAT, FALSE, 3, R_CLM, R_INT, R_INT));
-  INIT_WALKER(S_locsig_ref, make_walker(locsig_ref_0, NULL, locsig_set_1, 2, 2, R_FLOAT, FALSE, 2, R_CLM, R_INT));
-  INIT_WALKER(S_locsig_reverb_ref, make_walker(locsig_reverb_ref_0, NULL, locsig_reverb_set_1, 2, 2, R_FLOAT, FALSE, 2, R_CLM, R_INT));
-  INIT_WALKER(S_locsig_set, make_walker(locsig_set_2, NULL, NULL, 3, 3, R_FLOAT, FALSE, 3, R_CLM, R_INT, R_NUMBER));
-  INIT_WALKER(S_locsig_reverb_set, make_walker(locsig_reverb_set_2, NULL, NULL, 3, 3, R_FLOAT, FALSE, 3, R_CLM, R_INT, R_NUMBER));
-  INIT_WALKER(S_polynomial, make_walker(polynomial_1, NULL, NULL, 2, 2, R_FLOAT, FALSE, 2, R_VCT, R_NUMBER));
-  INIT_WALKER(S_clear_array, make_walker(clear_array_1, NULL, NULL, 1, 1, R_VCT, FALSE, 1, R_VCT));
-  INIT_WALKER(S_array_interp, make_walker(array_interp_1, NULL, NULL, 2, 3, R_FLOAT, FALSE, 3, R_VCT, R_FLOAT, R_INT));
-  INIT_WALKER(S_mus_srate, make_walker(mus_srate_1, NULL, mus_set_srate_1, 0, 0, R_NUMBER, FALSE, 0));
-  INIT_WALKER(S_ring_modulate, make_walker(ring_modulate_1, NULL, NULL, 2, 2, R_FLOAT, FALSE, 2, R_NUMBER, R_NUMBER));
-  INIT_WALKER(S_amplitude_modulate, make_walker(amplitude_modulate_1, NULL, NULL, 3, 3, R_FLOAT, FALSE, 3, R_NUMBER, R_NUMBER, R_NUMBER));
-  INIT_WALKER(S_contrast_enhancement, make_walker(contrast_enhancement_1, NULL, NULL, 2, 2, R_FLOAT, FALSE, 2, R_NUMBER, R_NUMBER));
-  INIT_WALKER(S_dot_product, make_walker(dot_product_1, NULL, NULL, 2, 2, R_FLOAT, FALSE, 2, R_VCT, R_VCT));
-  INIT_WALKER(S_sum_of_sines, make_walker(sum_of_sines_1, NULL, NULL, 2, 2, R_FLOAT, FALSE, 2, R_VCT, R_VCT));
-  INIT_WALKER(S_polar2rectangular, make_walker(polar2rectangular_1, NULL, NULL, 2, 2, R_VCT, FALSE, 2, R_VCT, R_VCT));
-  INIT_WALKER(S_rectangular2polar, make_walker(rectangular2polar_1, NULL, NULL, 2, 2, R_VCT, FALSE, 2, R_VCT, R_VCT));
-  INIT_WALKER(S_multiply_arrays, make_walker(multiply_arrays_1, NULL, NULL, 2, 3, R_VCT, FALSE, 3, R_VCT, R_VCT, R_INT));
-  INIT_WALKER(S_mus_fft, make_walker(mus_fft_1, NULL, NULL, 2, 4, R_VCT, FALSE, 4, R_VCT, R_VCT, R_INT, R_INT));
-  INIT_WALKER(S_spectrum, make_walker(mus_spectrum_1, NULL, NULL, 2, 5, R_VCT, FALSE, 5, R_VCT, R_VCT, R_ANY, R_INT, R_INT));
-  INIT_WALKER(S_convolution, make_walker(convolution_1, NULL, NULL, 2, 3, R_VCT, FALSE, 3, R_VCT, R_VCT, R_INT));
-  INIT_WALKER(S_formant_bank, make_walker(formant_bank_1,NULL, NULL, 3, 3, R_FLOAT, FALSE, 1, R_VCT));
-  INIT_WALKER(S_frame_add, make_walker(mus_frame_add_1, NULL, NULL, 2, 3, R_CLM, FALSE, 3, R_CLM, R_CLM, R_CLM));
-  INIT_WALKER(S_frame_multiply, make_walker(mus_frame_multiply_1, NULL, NULL, 2, 3, R_CLM, FALSE, 3, R_CLM, R_CLM, R_CLM));
-  INIT_WALKER(S_mixer_multiply, make_walker(mus_mixer_multiply_1, NULL, NULL, 2, 3, R_CLM, FALSE, 3, R_CLM, R_CLM, R_CLM));
-  INIT_WALKER(S_frame2frame, make_walker(mus_frame2frame_1, NULL, NULL, 2, 3, R_CLM, FALSE, 3, R_CLM, R_CLM, R_CLM));
-  INIT_WALKER(S_frame2sample, make_walker(frame2sample_1, NULL, NULL, 2, 2, R_FLOAT, FALSE, 2, R_CLM, R_CLM));
-  INIT_WALKER(S_sample2frame, make_walker(sample2frame_1, NULL, NULL, 2, 3, R_FLOAT, FALSE, 3, R_CLM, R_FLOAT, R_CLM));
-  INIT_WALKER(S_locsig, make_walker(locsig_1, NULL, NULL, 3, 3, R_CLM, FALSE, 3, R_CLM, R_NUMBER, R_NUMBER));
-  INIT_WALKER(S_frame2buffer, make_walker(frame2buffer_1, NULL, NULL, 2, 2, R_CLM, FALSE, 2, R_CLM, R_CLM));
-  INIT_WALKER(S_buffer2frame, make_walker(buffer2frame_1, NULL, NULL, 1, 2, R_CLM, FALSE, 2, R_CLM, R_CLM));
-  INIT_WALKER(S_frame2file, make_walker(frame2file_1, NULL, NULL, 3, 3, R_CLM, FALSE, 3, R_CLM, R_NUMBER, R_CLM));
-  INIT_WALKER(S_file2frame, make_walker(file2frame_1, NULL, NULL, 2, 3, R_CLM, FALSE, 3, R_CLM, R_NUMBER, R_CLM));
-  INIT_WALKER(S_mus_bank, make_walker(mus_bank_1, NULL, NULL, 2, 4, R_FLOAT, FALSE, 4, R_CLM_VECTOR, R_VCT, R_VCT, R_VCT));
+  INIT_WALKER(S_oscil, make_walker(oscil_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
+  INIT_WALKER(S_one_zero, make_walker(one_zero_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_one_pole, make_walker(one_pole_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_out_any, make_walker(out_any_1, NULL, NULL, 4, 4, R_FLOAT, false, 4, R_NUMBER, R_NUMBER, R_INT, R_CLM));
+  INIT_WALKER(S_outa, make_walker(outa_1, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_CLM));
+  INIT_WALKER(S_outb, make_walker(outb_1, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_CLM));
+  INIT_WALKER(S_outc, make_walker(outc_1, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_CLM));
+  INIT_WALKER(S_outd, make_walker(outd_1, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_CLM));
+  INIT_WALKER(S_env, make_walker(env_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_CLM));
+  INIT_WALKER(S_env_interp, make_walker(env_interp_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_FLOAT, R_CLM));
+  INIT_WALKER(S_notch, make_walker(notch_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
+  INIT_WALKER(S_comb, make_walker(comb_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
+  INIT_WALKER(S_convolve, make_walker(convolve_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_FUNCTION));
+  INIT_WALKER(S_delay, make_walker(delay_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
+  INIT_WALKER(S_all_pass, make_walker(all_pass_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
+  INIT_WALKER(S_asymmetric_fm, make_walker(asymmetric_fm_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
+  INIT_WALKER(S_rand, make_walker(rand_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_rand_interp, make_walker(rand_interp_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_readin, make_walker(readin_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_CLM));
+  INIT_WALKER(S_src, make_walker(src_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_FUNCTION));
+  INIT_WALKER(S_sum_of_cosines, make_walker(sum_of_cosines_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_sawtooth_wave, make_walker(sawtooth_wave_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_square_wave, make_walker(square_wave_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_sine_summation, make_walker(sine_summation_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_sample2file, make_walker(sample2file_1, NULL, NULL, 4, 4, R_FLOAT, false, 4, R_CLM, R_NUMBER, R_INT, R_NUMBER));
+  INIT_WALKER(S_sample2buffer, make_walker(sample2buffer_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_table_lookup, make_walker(table_lookup_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_triangle_wave, make_walker(triangle_wave_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_two_zero, make_walker(two_zero_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_two_pole, make_walker(two_pole_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_tap, make_walker(tap_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_pulse_train, make_walker(pulse_train_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_phase_vocoder, make_walker(phase_vocoder_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_FUNCTION));
+  INIT_WALKER(S_formant, make_walker(formant_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_filter, make_walker(filter_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_fir_filter, make_walker(fir_filter_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_file2sample, make_walker(file2sample_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_INT));
+  INIT_WALKER(S_frame_ref, make_walker(frame_ref_0, NULL, frame_set_1, 2, 2, R_FLOAT, false, 2, R_CLM, R_INT));
+  INIT_WALKER(S_frame_set, make_walker(frame_set_2, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_CLM, R_INT, R_NUMBER));
+  INIT_WALKER(S_wave_train, make_walker(wave_train_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_waveshape, make_walker(waveshape_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
+  INIT_WALKER(S_iir_filter, make_walker(iir_filter_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_ina, make_walker(ina_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_NUMBER, R_CLM));
+  INIT_WALKER(S_inb, make_walker(inb_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_NUMBER, R_CLM));
+  INIT_WALKER(S_in_any, make_walker(in_any_1, NULL, NULL, 3, 3, R_FLOAT, false, 2, R_NUMBER, R_INT, R_CLM));
+  INIT_WALKER(S_granulate, make_walker(granulate_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_FUNCTION));
+  INIT_WALKER(S_move_locsig, make_walker(move_locsig_1, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
+  INIT_WALKER(S_mus_set_formant_radius_and_frequency, make_walker(set_formant_radius_and_frequency_1, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
+  INIT_WALKER(S_mixer_set, make_walker(mixer_set_2, NULL, NULL, 4, 4, R_FLOAT, false, 4, R_CLM, R_INT, R_INT, R_NUMBER));
+  INIT_WALKER(S_mixer_ref, make_walker(mixer_ref_1, NULL, mixer_set_1, 3, 3, R_FLOAT, false, 3, R_CLM, R_INT, R_INT));
+  INIT_WALKER(S_locsig_ref, make_walker(locsig_ref_0, NULL, locsig_set_1, 2, 2, R_FLOAT, false, 2, R_CLM, R_INT));
+  INIT_WALKER(S_locsig_reverb_ref, make_walker(locsig_reverb_ref_0, NULL, locsig_reverb_set_1, 2, 2, R_FLOAT, false, 2, R_CLM, R_INT));
+  INIT_WALKER(S_locsig_set, make_walker(locsig_set_2, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_CLM, R_INT, R_NUMBER));
+  INIT_WALKER(S_locsig_reverb_set, make_walker(locsig_reverb_set_2, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_CLM, R_INT, R_NUMBER));
+  INIT_WALKER(S_polynomial, make_walker(polynomial_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_VCT, R_NUMBER));
+  INIT_WALKER(S_clear_array, make_walker(clear_array_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_VCT));
+  INIT_WALKER(S_array_interp, make_walker(array_interp_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_VCT, R_FLOAT, R_INT));
+  INIT_WALKER(S_mus_srate, make_walker(mus_srate_1, NULL, mus_set_srate_1, 0, 0, R_NUMBER, false, 0));
+  INIT_WALKER(S_ring_modulate, make_walker(ring_modulate_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_NUMBER, R_NUMBER));
+  INIT_WALKER(S_amplitude_modulate, make_walker(amplitude_modulate_1, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_NUMBER));
+  INIT_WALKER(S_contrast_enhancement, make_walker(contrast_enhancement_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_NUMBER, R_NUMBER));
+  INIT_WALKER(S_dot_product, make_walker(dot_product_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_VCT, R_VCT));
+  INIT_WALKER(S_sum_of_sines, make_walker(sum_of_sines_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_VCT, R_VCT));
+  INIT_WALKER(S_polar2rectangular, make_walker(polar2rectangular_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_VCT));
+  INIT_WALKER(S_rectangular2polar, make_walker(rectangular2polar_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_VCT));
+  INIT_WALKER(S_multiply_arrays, make_walker(multiply_arrays_1, NULL, NULL, 2, 3, R_VCT, false, 3, R_VCT, R_VCT, R_INT));
+  INIT_WALKER(S_mus_fft, make_walker(mus_fft_1, NULL, NULL, 2, 4, R_VCT, false, 4, R_VCT, R_VCT, R_INT, R_INT));
+  INIT_WALKER(S_spectrum, make_walker(mus_spectrum_1, NULL, NULL, 2, 5, R_VCT, false, 5, R_VCT, R_VCT, R_ANY, R_INT, R_INT));
+  INIT_WALKER(S_convolution, make_walker(convolution_1, NULL, NULL, 2, 3, R_VCT, false, 3, R_VCT, R_VCT, R_INT));
+  INIT_WALKER(S_formant_bank, make_walker(formant_bank_1,NULL, NULL, 3, 3, R_FLOAT, false, 1, R_VCT));
+  INIT_WALKER(S_frame_add, make_walker(mus_frame_add_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_CLM, R_CLM));
+  INIT_WALKER(S_frame_multiply, make_walker(mus_frame_multiply_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_CLM, R_CLM));
+  INIT_WALKER(S_mixer_multiply, make_walker(mus_mixer_multiply_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_CLM, R_CLM));
+  INIT_WALKER(S_frame2frame, make_walker(mus_frame2frame_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_CLM, R_CLM));
+  INIT_WALKER(S_frame2sample, make_walker(frame2sample_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_CLM, R_CLM));
+  INIT_WALKER(S_sample2frame, make_walker(sample2frame_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_CLM, R_FLOAT, R_CLM));
+  INIT_WALKER(S_locsig, make_walker(locsig_1, NULL, NULL, 3, 3, R_CLM, false, 3, R_CLM, R_NUMBER, R_NUMBER));
+  INIT_WALKER(S_frame2buffer, make_walker(frame2buffer_1, NULL, NULL, 2, 2, R_CLM, false, 2, R_CLM, R_CLM));
+  INIT_WALKER(S_buffer2frame, make_walker(buffer2frame_1, NULL, NULL, 1, 2, R_CLM, false, 2, R_CLM, R_CLM));
+  INIT_WALKER(S_frame2file, make_walker(frame2file_1, NULL, NULL, 3, 3, R_CLM, false, 3, R_CLM, R_NUMBER, R_CLM));
+  INIT_WALKER(S_file2frame, make_walker(file2frame_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_NUMBER, R_CLM));
+  INIT_WALKER(S_mus_bank, make_walker(mus_bank_1, NULL, NULL, 2, 4, R_FLOAT, false, 4, R_CLM_VECTOR, R_VCT, R_VCT, R_VCT));
 
-  INIT_WALKER(S_radians_hz, make_walker(mus_radians2hz_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_NUMBER));
-  INIT_WALKER(S_hz_radians, make_walker(mus_hz2radians_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_NUMBER));
-  INIT_WALKER(S_in_hz, make_walker(mus_hz2radians_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_NUMBER));
-  INIT_WALKER(S_degrees_radians, make_walker(mus_degrees2radians_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_NUMBER));
-  INIT_WALKER(S_radians_degrees, make_walker(mus_radians2degrees_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_NUMBER));
-  INIT_WALKER(S_db_linear, make_walker(mus_db2linear_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_NUMBER));
-  INIT_WALKER(S_linear_db, make_walker(mus_linear2db_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_NUMBER));
-  INIT_WALKER(S_mus_random, make_walker(mus_random_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_NUMBER));
+  INIT_WALKER(S_radians_hz, make_walker(mus_radians2hz_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER(S_hz_radians, make_walker(mus_hz2radians_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER(S_in_hz, make_walker(mus_hz2radians_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER(S_degrees_radians, make_walker(mus_degrees2radians_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER(S_radians_degrees, make_walker(mus_radians2degrees_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER(S_db_linear, make_walker(mus_db2linear_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER(S_linear_db, make_walker(mus_linear2db_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER(S_mus_random, make_walker(mus_random_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
 
-  INIT_WALKER(S_make_all_pass, make_walker(make_all_pass_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_asymmetric_fm, make_walker(make_asymmetric_fm_1, NULL, NULL, 0, 8, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_buffer, make_walker(make_buffer_1, NULL, NULL, 0, 4, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_comb, make_walker(make_comb_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_convolve, make_walker(make_convolve_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_delay, make_walker(make_delay_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_env, make_walker(make_env_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_fft_window, make_walker(make_fft_window_1, NULL, NULL, 2, 3, R_VCT, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_file2frame, make_walker(make_file2frame_1, NULL, NULL, 0, 1, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_file2sample, make_walker(make_file2sample_1, NULL, NULL, 0, 1, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_filter, make_walker(make_filter_1, NULL, NULL, 0, 6, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_fir_filter, make_walker(make_fir_filter_1, NULL, NULL, 0, 4, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_formant, make_walker(make_formant_1, NULL, NULL, 0, 6, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_frame, make_walker(make_frame_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_frame2file, make_walker(make_frame2file_1, NULL, NULL, 0, 4, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_granulate, make_walker(make_granulate_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_iir_filter, make_walker(make_iir_filter_1, NULL, NULL, 0, 4, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_locsig, make_walker(make_locsig_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_mixer, make_walker(make_mixer_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_notch, make_walker(make_notch_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_one_pole, make_walker(make_one_pole_1, NULL, NULL, 0, 4, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_one_zero, make_walker(make_one_zero_1, NULL, NULL, 0, 4, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_oscil, make_walker(make_oscil_1, NULL, NULL, 0, 4, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_phase_vocoder, make_walker(make_phase_vocoder_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_ppolar, make_walker(make_ppolar_1, NULL, NULL, 0, 4, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_pulse_train, make_walker(make_pulse_train_1, NULL, NULL, 0, 6, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_rand, make_walker(make_rand_1, NULL, NULL, 0, 4, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_rand_interp, make_walker(make_rand_interp_1, NULL, NULL, 0, 4, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_readin, make_walker(make_readin_1, NULL, NULL, 0, 8, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_sample2file, make_walker(make_sample2file_1, NULL, NULL, 4, 5, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_sawtooth_wave, make_walker(make_sawtooth_wave_1, NULL, NULL, 0, 6, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_sine_summation, make_walker(make_sine_summation_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_square_wave, make_walker(make_square_wave_1, NULL, NULL, 0, 6, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_src, make_walker(make_src_1, NULL, NULL, 0, 6, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_sum_of_cosines, make_walker(make_sum_of_cosines_1, NULL, NULL, 0, 6, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_table_lookup, make_walker(make_table_lookup_1, NULL, NULL, 0, 6, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_triangle_wave, make_walker(make_triangle_wave_1, NULL, NULL, 0, 6, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_two_pole, make_walker(make_two_pole_1, NULL, NULL, 0, 6, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_two_zero, make_walker(make_two_zero_1, NULL, NULL, 0, 6, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_wave_train, make_walker(make_wave_train_1, NULL, NULL, 0, 6, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_waveshape, make_walker(make_waveshape_1, NULL, NULL, 0, 8, R_CLM, FALSE, 1, -R_XEN));
-  INIT_WALKER(S_make_zpolar, make_walker(make_zpolar_1, NULL, NULL, 0, 4, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_all_pass, make_walker(make_all_pass_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_asymmetric_fm, make_walker(make_asymmetric_fm_1, NULL, NULL, 0, 8, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_buffer, make_walker(make_buffer_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_comb, make_walker(make_comb_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_convolve, make_walker(make_convolve_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_delay, make_walker(make_delay_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_env, make_walker(make_env_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_fft_window, make_walker(make_fft_window_1, NULL, NULL, 2, 3, R_VCT, false, 1, -R_XEN));
+  INIT_WALKER(S_make_file2frame, make_walker(make_file2frame_1, NULL, NULL, 0, 1, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_file2sample, make_walker(make_file2sample_1, NULL, NULL, 0, 1, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_filter, make_walker(make_filter_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_fir_filter, make_walker(make_fir_filter_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_formant, make_walker(make_formant_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_frame, make_walker(make_frame_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_frame2file, make_walker(make_frame2file_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_granulate, make_walker(make_granulate_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_iir_filter, make_walker(make_iir_filter_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_locsig, make_walker(make_locsig_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_mixer, make_walker(make_mixer_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_notch, make_walker(make_notch_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_one_pole, make_walker(make_one_pole_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_one_zero, make_walker(make_one_zero_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_oscil, make_walker(make_oscil_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_phase_vocoder, make_walker(make_phase_vocoder_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_ppolar, make_walker(make_ppolar_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_pulse_train, make_walker(make_pulse_train_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_rand, make_walker(make_rand_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_rand_interp, make_walker(make_rand_interp_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_readin, make_walker(make_readin_1, NULL, NULL, 0, 8, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_sample2file, make_walker(make_sample2file_1, NULL, NULL, 4, 5, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_sawtooth_wave, make_walker(make_sawtooth_wave_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_sine_summation, make_walker(make_sine_summation_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_square_wave, make_walker(make_square_wave_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_src, make_walker(make_src_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_sum_of_cosines, make_walker(make_sum_of_cosines_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_table_lookup, make_walker(make_table_lookup_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_triangle_wave, make_walker(make_triangle_wave_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_two_pole, make_walker(make_two_pole_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_two_zero, make_walker(make_two_zero_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_wave_train, make_walker(make_wave_train_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_waveshape, make_walker(make_waveshape_1, NULL, NULL, 0, 8, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_zpolar, make_walker(make_zpolar_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
 
 
   /* -------- sndlib funcs */
-  INIT_WALKER(S_mus_sound_samples, make_walker(mus_sound_samples_1, NULL, NULL, 1, 1, R_INT, FALSE, 1, R_STRING));
-  INIT_WALKER(S_mus_sound_frames, make_walker(mus_sound_frames_1, NULL, NULL, 1, 1, R_INT, FALSE, 1, R_STRING));
-  INIT_WALKER(S_mus_sound_datum_size, make_walker(mus_sound_datum_size_1, NULL, NULL, 1, 1, R_INT, FALSE, 1, R_STRING));
-  INIT_WALKER(S_mus_sound_data_location, make_walker(mus_sound_data_location_1, NULL, NULL, 1, 1, R_INT, FALSE, 1, R_STRING));
-  INIT_WALKER(S_mus_sound_chans, make_walker(mus_sound_chans_1, NULL, NULL, 1, 1, R_INT, FALSE, 1, R_STRING));
-  INIT_WALKER(S_mus_sound_srate, make_walker(mus_sound_srate_1, NULL, NULL, 1, 1, R_INT, FALSE, 1, R_STRING));
-  INIT_WALKER(S_mus_sound_header_type, make_walker(mus_sound_header_type_1, NULL, NULL, 1, 1, R_INT, FALSE, 1, R_STRING));
-  INIT_WALKER(S_mus_sound_data_format, make_walker(mus_sound_data_format_1, NULL, NULL, 1, 1, R_INT, FALSE, 1, R_STRING));
-  INIT_WALKER(S_mus_sound_length, make_walker(mus_sound_length_1, NULL, NULL, 1, 1, R_INT, FALSE, 1, R_STRING));
-  INIT_WALKER(S_mus_sound_duration, make_walker(mus_sound_duration_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_STRING));
-  INIT_WALKER(S_mus_sound_comment, make_walker(mus_sound_comment_1, NULL, NULL, 1, 1, R_STRING, FALSE, 1, R_STRING));
+  INIT_WALKER(S_mus_sound_samples, make_walker(mus_sound_samples_1, NULL, NULL, 1, 1, R_INT, false, 1, R_STRING));
+  INIT_WALKER(S_mus_sound_frames, make_walker(mus_sound_frames_1, NULL, NULL, 1, 1, R_INT, false, 1, R_STRING));
+  INIT_WALKER(S_mus_sound_datum_size, make_walker(mus_sound_datum_size_1, NULL, NULL, 1, 1, R_INT, false, 1, R_STRING));
+  INIT_WALKER(S_mus_sound_data_location, make_walker(mus_sound_data_location_1, NULL, NULL, 1, 1, R_INT, false, 1, R_STRING));
+  INIT_WALKER(S_mus_sound_chans, make_walker(mus_sound_chans_1, NULL, NULL, 1, 1, R_INT, false, 1, R_STRING));
+  INIT_WALKER(S_mus_sound_srate, make_walker(mus_sound_srate_1, NULL, NULL, 1, 1, R_INT, false, 1, R_STRING));
+  INIT_WALKER(S_mus_sound_header_type, make_walker(mus_sound_header_type_1, NULL, NULL, 1, 1, R_INT, false, 1, R_STRING));
+  INIT_WALKER(S_mus_sound_data_format, make_walker(mus_sound_data_format_1, NULL, NULL, 1, 1, R_INT, false, 1, R_STRING));
+  INIT_WALKER(S_mus_sound_length, make_walker(mus_sound_length_1, NULL, NULL, 1, 1, R_INT, false, 1, R_STRING));
+  INIT_WALKER(S_mus_sound_duration, make_walker(mus_sound_duration_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_STRING));
+  INIT_WALKER(S_mus_sound_comment, make_walker(mus_sound_comment_1, NULL, NULL, 1, 1, R_STRING, false, 1, R_STRING));
 
-  INIT_WALKER(S_mus_header_type_name, make_walker(mus_header_type_name_1, NULL, NULL, 1, 1, R_STRING, FALSE, 1, R_INT));
-  INIT_WALKER(S_mus_data_format_name, make_walker(mus_data_format_name_1, NULL, NULL, 1, 1, R_STRING, FALSE, 1, R_INT));
+  INIT_WALKER(S_mus_header_type_name, make_walker(mus_header_type_name_1, NULL, NULL, 1, 1, R_STRING, false, 1, R_INT));
+  INIT_WALKER(S_mus_data_format_name, make_walker(mus_data_format_name_1, NULL, NULL, 1, 1, R_STRING, false, 1, R_INT));
 
-  INIT_WALKER(S_vct_ref, make_walker(vct_ref_1, NULL, vct_set_1, 2, 2, R_FLOAT, FALSE, 2, R_VCT, R_INT));
-  INIT_WALKER(S_vct_length, make_walker(vct_length_1, NULL, NULL, 1, 1, R_INT, FALSE, 1, R_VCT));
-  INIT_WALKER(S_vct_fillB, make_walker(vct_fill_1, NULL, NULL, 2, 2, R_VCT, FALSE, 2, R_VCT, R_NUMBER));
-  INIT_WALKER(S_vct_scaleB, make_walker(vct_scale_1, NULL, NULL, 2, 2, R_VCT, FALSE, 2, R_VCT, R_NUMBER));
-  INIT_WALKER(S_vct_offsetB, make_walker(vct_offset_1, NULL, NULL, 2, 2, R_VCT, FALSE, 2, R_VCT, R_NUMBER));
-  INIT_WALKER(S_vct_addB, make_walker(vct_add_1, NULL, NULL, 2, 2, R_VCT, FALSE, 2, R_VCT, R_VCT));
-  INIT_WALKER(S_vct_subtractB, make_walker(vct_subtract_1, NULL, NULL, 2, 2, R_VCT, FALSE, 2, R_VCT, R_VCT));
-  INIT_WALKER(S_vct_multiplyB, make_walker(vct_multiply_1, NULL, NULL, 2, 2, R_VCT, FALSE, 2, R_VCT, R_VCT));
-  INIT_WALKER(S_vct_copy, make_walker(vct_copy_1, NULL, NULL, 1, 1, R_VCT, FALSE, 1, R_VCT));
-  INIT_WALKER(S_vct_peak, make_walker(vct_peak_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_VCT));
-  INIT_WALKER(S_vct_setB, make_walker(vct_set_2, NULL, NULL, 3, 3, R_FLOAT, FALSE, 3, R_VCT, R_INT, R_NUMBER));
-  INIT_WALKER(S_make_vct, make_walker(make_vct_1, NULL, NULL, 1, 2, R_VCT, FALSE, 2, R_INT, R_FLOAT));
-  INIT_WALKER(S_vct_convolve, make_walker(vct_convolve_1, NULL, NULL, 2, 2, R_VCT, FALSE, 2, R_VCT, R_VCT));
-  INIT_WALKER(S_vct, make_walker(vct_1, NULL, NULL, 1, UNLIMITED_ARGS, R_VCT, FALSE, 1, -R_FLOAT));
-  INIT_WALKER(S_vct_p, make_walker(vct_p_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 0));
+  INIT_WALKER(S_vct_ref, make_walker(vct_ref_1, NULL, vct_set_1, 2, 2, R_FLOAT, false, 2, R_VCT, R_INT));
+  INIT_WALKER(S_vct_length, make_walker(vct_length_1, NULL, NULL, 1, 1, R_INT, false, 1, R_VCT));
+  INIT_WALKER(S_vct_fillB, make_walker(vct_fill_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_NUMBER));
+  INIT_WALKER(S_vct_scaleB, make_walker(vct_scale_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_NUMBER));
+  INIT_WALKER(S_vct_offsetB, make_walker(vct_offset_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_NUMBER));
+  INIT_WALKER(S_vct_addB, make_walker(vct_add_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_VCT));
+  INIT_WALKER(S_vct_subtractB, make_walker(vct_subtract_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_VCT));
+  INIT_WALKER(S_vct_multiplyB, make_walker(vct_multiply_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_VCT));
+  INIT_WALKER(S_vct_copy, make_walker(vct_copy_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_VCT));
+  INIT_WALKER(S_vct_peak, make_walker(vct_peak_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_VCT));
+  INIT_WALKER(S_vct_setB, make_walker(vct_set_2, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_VCT, R_INT, R_NUMBER));
+  INIT_WALKER(S_make_vct, make_walker(make_vct_1, NULL, NULL, 1, 2, R_VCT, false, 2, R_INT, R_FLOAT));
+  INIT_WALKER(S_vct_convolve, make_walker(vct_convolve_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_VCT));
+  INIT_WALKER(S_vct, make_walker(vct_1, NULL, NULL, 1, UNLIMITED_ARGS, R_VCT, false, 1, -R_FLOAT));
+  INIT_WALKER(S_vct_p, make_walker(vct_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
 
   /* -------- snd funcs */
-  INIT_WALKER(S_next_sample, make_walker(next_sample_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_READER));
-  INIT_WALKER(S_previous_sample, make_walker(previous_sample_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_READER));
-  INIT_WALKER(S_read_sample, make_walker(reader_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_READER));
-  INIT_WALKER(S_make_sample_reader, make_walker(make_sample_reader_1, NULL, NULL, 0, 5, R_READER, FALSE, 1, R_NUMBER));
-  INIT_WALKER(S_sample_reader_p, make_walker(sample_reader_p_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 0));
+  INIT_WALKER(S_next_sample, make_walker(next_sample_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_READER));
+  INIT_WALKER(S_previous_sample, make_walker(previous_sample_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_READER));
+  INIT_WALKER(S_read_sample, make_walker(reader_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_READER));
+  INIT_WALKER(S_make_sample_reader, make_walker(make_sample_reader_1, NULL, NULL, 0, 5, R_READER, false, 1, R_NUMBER));
+  INIT_WALKER(S_sample_reader_p, make_walker(sample_reader_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
 
-  INIT_WALKER(S_edit_position, make_walker(edit_position_1, NULL, NULL, 0, 2, R_INT, FALSE, 0));
-  INIT_WALKER(S_frames, make_walker(frames_1, NULL, NULL, 0, 3, R_INT, FALSE, 0));
-  INIT_WALKER(S_cursor, make_walker(cursor_1, NULL, NULL, 0, 2, R_INT, FALSE, 0));
-  INIT_WALKER(S_add_mark, make_walker(add_mark_1, NULL, NULL, 1, 3, R_INT, FALSE, 0));
-  INIT_WALKER(S_maxamp, make_walker(maxamp_1, NULL, NULL, 0, 2, R_FLOAT, FALSE, 0));
-  INIT_WALKER(S_srate, make_walker(srate_1, NULL, NULL, 0, 1, R_INT, FALSE, 0));
-  INIT_WALKER(S_channels, make_walker(channels_1, NULL, NULL, 0, 1, R_INT, FALSE, 0));
-  INIT_WALKER(S_c_g, make_walker(c_g_p_1, NULL, NULL, 0, 0, R_BOOL, FALSE, 0));
-  INIT_WALKER(S_autocorrelate, make_walker(autocorrelate_1, NULL, NULL, 1, 1, R_VCT, FALSE, 1, R_VCT));
-  INIT_WALKER(S_samples2vct, make_walker(samples2vct_1, NULL, NULL, 5, 6, R_VCT, FALSE, 5, R_INT, R_INT, R_ANY, R_ANY, R_VCT));
+  INIT_WALKER(S_edit_position, make_walker(edit_position_1, NULL, NULL, 0, 2, R_INT, false, 0));
+  INIT_WALKER(S_frames, make_walker(frames_1, NULL, NULL, 0, 3, R_INT, false, 0));
+  INIT_WALKER(S_cursor, make_walker(cursor_1, NULL, NULL, 0, 2, R_INT, false, 0));
+  INIT_WALKER(S_add_mark, make_walker(add_mark_1, NULL, NULL, 1, 3, R_INT, false, 0));
+  INIT_WALKER(S_maxamp, make_walker(maxamp_1, NULL, NULL, 0, 2, R_FLOAT, false, 0));
+  INIT_WALKER(S_srate, make_walker(srate_1, NULL, NULL, 0, 1, R_INT, false, 0));
+  INIT_WALKER(S_channels, make_walker(channels_1, NULL, NULL, 0, 1, R_INT, false, 0));
+  INIT_WALKER(S_c_g, make_walker(c_g_p_1, NULL, NULL, 0, 0, R_BOOL, false, 0));
+  INIT_WALKER(S_autocorrelate, make_walker(autocorrelate_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_VCT));
+  INIT_WALKER(S_samples2vct, make_walker(samples2vct_1, NULL, NULL, 5, 6, R_VCT, false, 5, R_INT, R_INT, R_ANY, R_ANY, R_VCT));
 
-  INIT_WALKER(S_snd_print, make_walker(snd_print_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_STRING));
-  INIT_WALKER(S_snd_warning, make_walker(snd_warning_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_STRING));
-  INIT_WALKER(S_report_in_minibuffer, make_walker(report_in_minibuffer_1, NULL, NULL, 1, 2, R_BOOL, FALSE, 1, R_STRING));
+  INIT_WALKER(S_snd_print, make_walker(snd_print_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_STRING));
+  INIT_WALKER(S_snd_warning, make_walker(snd_warning_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_STRING));
+  INIT_WALKER(S_report_in_minibuffer, make_walker(report_in_minibuffer_1, NULL, NULL, 1, 2, R_BOOL, false, 1, R_STRING));
 }
 #endif
 

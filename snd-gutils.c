@@ -1,6 +1,6 @@
 #include "snd.h"
 
-int set_tiny_font(snd_state *ss, char *font)
+bool set_tiny_font(snd_state *ss, char *font)
 {
   PangoFontDescription *fs = NULL;
   state_context *sgx;
@@ -11,12 +11,12 @@ int set_tiny_font(snd_state *ss, char *font)
       if (tiny_font(ss)) FREE(tiny_font(ss));
       in_set_tiny_font(ss, copy_string(font));
       sgx->tiny_fnt = fs;
-      return(TRUE);
+      return(true);
     }
-  return(FALSE);
+  return(false);
 }
 
-int set_listener_font(snd_state *ss, char *font)
+bool set_listener_font(snd_state *ss, char *font)
 {
   PangoFontDescription *fs = NULL;
   fs = pango_font_description_from_string(font);
@@ -25,12 +25,12 @@ int set_listener_font(snd_state *ss, char *font)
       if (listener_font(ss)) FREE(listener_font(ss));
       in_set_listener_font(ss, copy_string(font));
       (ss->sgx)->listener_fnt = fs;
-      return(TRUE);
+      return(true);
     }
-  return(FALSE);
+  return(false);
 }
 
-int set_bold_button_font(snd_state *ss, char *font)
+bool set_bold_button_font(snd_state *ss, char *font)
 {
   PangoFontDescription *fs = NULL;
   fs = pango_font_description_from_string(font);
@@ -39,12 +39,12 @@ int set_bold_button_font(snd_state *ss, char *font)
       if (bold_button_font(ss)) FREE(bold_button_font(ss));
       in_set_bold_button_font(ss, copy_string(font));
       (ss->sgx)->bold_button_fnt = fs;
-      return(TRUE);
+      return(true);
     }
-  return(FALSE);
+  return(false);
 }
 
-int set_peaks_font(snd_state *ss, char *font)
+bool set_peaks_font(snd_state *ss, char *font)
 {
   PangoFontDescription *fs = NULL;
   fs = pango_font_description_from_string(font);
@@ -53,12 +53,12 @@ int set_peaks_font(snd_state *ss, char *font)
       if (peaks_font(ss)) FREE(peaks_font(ss));
       in_set_peaks_font(ss, copy_string(font));
       (ss->sgx)->peaks_fnt = fs;
-      return(TRUE);
+      return(true);
     }
-  return(FALSE);
+  return(false);
 }
 
-int set_bold_peaks_font(snd_state *ss, char *font)
+bool set_bold_peaks_font(snd_state *ss, char *font)
 {
   PangoFontDescription *fs = NULL;
   fs = pango_font_description_from_string(font);
@@ -67,12 +67,12 @@ int set_bold_peaks_font(snd_state *ss, char *font)
       if (bold_peaks_font(ss)) FREE(bold_peaks_font(ss));
       in_set_bold_peaks_font(ss, copy_string(font));
       (ss->sgx)->bold_peaks_fnt = fs;
-      return(TRUE);
+      return(true);
     }
-  return(FALSE);
+  return(false);
 }
 
-int set_axis_label_font(snd_state *ss, char *font)
+bool set_axis_label_font(snd_state *ss, char *font)
 {
   PangoFontDescription *fs = NULL;
   fs = pango_font_description_from_string(font);
@@ -84,12 +84,12 @@ int set_axis_label_font(snd_state *ss, char *font)
 #if HAVE_GL
       reload_label_font(ss);
 #endif
-      return(TRUE);
+      return(true);
     }
-  return(FALSE);
+  return(false);
 }
 
-int set_axis_numbers_font(snd_state *ss, char *font)
+bool set_axis_numbers_font(snd_state *ss, char *font)
 {
   PangoFontDescription *fs = NULL;
   fs = pango_font_description_from_string(font);
@@ -101,9 +101,9 @@ int set_axis_numbers_font(snd_state *ss, char *font)
 #if HAVE_GL
       reload_number_font(ss);
 #endif
-      return(TRUE);
+      return(true);
     }
-  return(FALSE);
+  return(false);
 }
 
 static int sg_text_width(char *txt, PangoFontDescription *font)
@@ -313,19 +313,19 @@ void check_for_event(snd_state *ss)
   /* this is needed to force label updates and provide interrupts for long computations */
   int i = 0;
   if (ss->checking_explicitly) return;
-  ss->checking_explicitly = TRUE;
+  ss->checking_explicitly = true;
   while ((i < 50) && (gtk_events_pending()))
     {
       gtk_main_iteration();
       i++; /* don't hang! */
     }
-  ss->checking_explicitly = FALSE;
+  ss->checking_explicitly = false;
 }
 
 void force_update(GtkWidget *wid)
 {
-  gdk_window_invalidate_rect(GDK_WINDOW((GTK_WIDGET(wid))->window), NULL, TRUE);
-  gdk_window_process_updates(GDK_WINDOW((GTK_WIDGET(wid))->window), TRUE);
+  gdk_window_invalidate_rect(GDK_WINDOW((GTK_WIDGET(wid))->window), NULL, true);
+  gdk_window_process_updates(GDK_WINDOW((GTK_WIDGET(wid))->window), true);
 }
 
 int event_pending(snd_state *ss)
@@ -442,7 +442,7 @@ void set_selected_mix_color(snd_state *ss, GdkColor *color)
   gdk_gc_set_foreground(sx->selected_mix_gc, color);
 }
 
-void recolor_graph(chan_info *cp, int selected)
+void recolor_graph(chan_info *cp, bool selected)
 {
   snd_state *ss;
   state_context *sx;
@@ -457,20 +457,20 @@ void reflect_resize(snd_state *ss)
   gtk_window_set_resizable(GTK_WINDOW(MAIN_SHELL(ss)), auto_resize(ss));
 }
 
-void set_sensitive(GtkWidget *wid, int val) 
+void set_sensitive(GtkWidget *wid, bool val) 
 {
   if (wid) 
     gtk_widget_set_sensitive(wid, val);
 }
 
-int is_sensitive(GtkWidget *wid) 
+bool is_sensitive(GtkWidget *wid) 
 {
   if (wid) 
     return(GTK_WIDGET_IS_SENSITIVE(wid)); 
-  return(FALSE);
+  return(false);
 }
 
-void set_toggle_button(GtkWidget *wid, int val, int passed, void *data) 
+void set_toggle_button(GtkWidget *wid, bool val, bool passed, void *data) 
 {
   if (!passed) g_signal_handlers_block_matched(GTK_OBJECT(wid), G_SIGNAL_MATCH_DATA, 0, 0, NULL, 0, (gpointer)data);
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(wid), val);
@@ -568,7 +568,7 @@ char *sg_get_text(GtkWidget *w, int start, int end)
   buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
   gtk_text_buffer_get_iter_at_offset(buf, &s, start);
   gtk_text_buffer_get_iter_at_offset(buf, &e, end);  /* this is utterly idiotic!!! */
-  return(gtk_text_buffer_get_text(buf, &s, &e, TRUE));
+  return(gtk_text_buffer_get_text(buf, &s, &e, true));
 }
 
 void sg_text_delete(GtkWidget *w, int start, int end)
@@ -624,7 +624,7 @@ GtkWidget *make_scrolled_text(snd_state *ss, GtkWidget *parent, int editable, Gt
   sw = gtk_scrolled_window_new(NULL, NULL);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
   if (boxer)
-    gtk_box_pack_start(GTK_BOX(boxer), sw, TRUE, TRUE, 4);
+    gtk_box_pack_start(GTK_BOX(boxer), sw, true, true, 4);
   new_text = gtk_text_view_new();
   buf = gtk_text_buffer_new(NULL);
   gtk_text_view_set_buffer(GTK_TEXT_VIEW(new_text), buf);
@@ -672,7 +672,7 @@ GtkWidget *sg_make_list(const char *title, GtkWidget *parent, int paned, gpointe
   switch (paned)
     {
     case PANED_ADD: gtk_paned_add1(GTK_PANED(parent), scrolled_win); break;
-    case BOX_PACK: gtk_box_pack_start(GTK_BOX(parent), scrolled_win, TRUE, TRUE, 0); break;
+    case BOX_PACK: gtk_box_pack_start(GTK_BOX(parent), scrolled_win, true, true, 0); break;
     case TABLE_ATTACH: gtk_table_attach(GTK_TABLE(parent), scrolled_win, t1, t2, t3, t4,
 			     (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
 			     (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
@@ -740,7 +740,7 @@ void sg_list_moveto(GtkWidget *lst, int row)
   w = gtk_tree_view_get_model(GTK_TREE_VIEW(lst));
   gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(w), &iter, NULL, row);
   path = gtk_tree_model_get_path(w, &iter);
-  gtk_tree_view_scroll_to_cell(GTK_TREE_VIEW(lst), path, NULL, TRUE, 0.5, 0.5);
+  gtk_tree_view_scroll_to_cell(GTK_TREE_VIEW(lst), path, NULL, true, 0.5, 0.5);
   gtk_tree_path_free(path);
 }
 
@@ -749,7 +749,7 @@ void sg_make_resizable(GtkWidget *w)
   if (GTK_IS_DIALOG(w))
     {
       gtk_window_set_default_size(GTK_WINDOW(w), -1, -1);
-      gtk_window_set_resizable(GTK_WINDOW(w), TRUE);
+      gtk_window_set_resizable(GTK_WINDOW(w), true);
     }
 }
 

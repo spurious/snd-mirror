@@ -12,18 +12,13 @@
  * "xen" from Greek xenos (guest, foreigner)
  */
 
-#ifndef __GNUC__
-  #ifndef __FUNCTION__
-    #define __FUNCTION__ ""
-  #endif
-#endif
-
 #define XEN_MAJOR_VERSION 1
 #define XEN_MINOR_VERSION 6
 #define XEN_VERSION "1.6"
 
 /* HISTORY:
  *  
+ *   12-Aug-03: various changes for ISO C99.
  *   30-Jul-03: use new SCM_VECTOR_REF/SET macros if they're defined.
  *   7-Apr-03:  changes to error handlers for more perspicuous error messages
  *              changed XEN_PROTECT_FROM_GC in Ruby to use rb_gc_register_address, added XEN_UNPROTECT_FROM_GC (rb_gc_unregister_address)
@@ -40,6 +35,30 @@
 */
 
 /* ------------------------------ GUILE ------------------------------ */
+
+#ifndef __cplusplus
+#if HAVE_STDBOOL_H
+  #include <stdbool.h>
+#else
+#ifndef true
+  #define bool	int
+  #define true	1
+  #define false	0
+#endif
+#endif
+#endif
+
+#ifndef c__FUNCTION__
+#if defined(__STDC__) && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
+  #define c__FUNCTION__ __func__
+#else
+#if defined(__GNUC__) && defined(__FUNCTION__)
+  #define c__FUNCTION__ __FUNCTION__
+#else
+  #define c__FUNCTION__ ""
+#endif
+#endif
+#endif
 
 #if HAVE_GUILE
 #include <guile/gh.h>
@@ -143,8 +162,8 @@
 #define XEN_ARG_8    8
 #define XEN_ARG_9    9
 
-#define XEN_TO_C_DOUBLE(a)            scm_num2dbl(a,  __FUNCTION__)
-#define XEN_TO_C_DOUBLE_OR_ELSE(a, b) ((XEN_NUMBER_P(a)) ? (scm_num2dbl(a,  __FUNCTION__)) : (b))
+#define XEN_TO_C_DOUBLE(a)            scm_num2dbl(a,  c__FUNCTION__)
+#define XEN_TO_C_DOUBLE_OR_ELSE(a, b) ((XEN_NUMBER_P(a)) ? (scm_num2dbl(a,  c__FUNCTION__)) : (b))
 #define XEN_TO_C_DOUBLE_WITH_CALLER(a, b) scm_num2dbl(a, b)
 #if HAVE_SCM_MAKE_REAL
   #define C_TO_XEN_DOUBLE(a)          scm_make_real(a)
@@ -154,28 +173,28 @@
 
 #if HAVE_SCM_NUM2INT
   #if defined(SCM_GUILE_MAJOR_VERSION) || defined(SCM_MAJOR_VERSION)
-    #define XEN_TO_C_INT(a)           ((XEN_TRUE_P(scm_exact_p(a))) ? (int)scm_num2int(a, 0, __FUNCTION__) : ((int)scm_num2dbl(a, __FUNCTION__)))
+    #define XEN_TO_C_INT(a)           ((XEN_TRUE_P(scm_exact_p(a))) ? (int)scm_num2int(a, 0, c__FUNCTION__) : ((int)scm_num2dbl(a, c__FUNCTION__)))
   #else
-    #define XEN_TO_C_INT(a)           ((int)scm_num2int(a, 0, __FUNCTION__))
+    #define XEN_TO_C_INT(a)           ((int)scm_num2int(a, 0, c__FUNCTION__))
   #endif
 #else
   #define XEN_TO_C_INT(a)             ((int)gh_scm2int(a))
 #endif
-#define XEN_TO_C_INT_OR_ELSE(a, b)    xen_to_c_int_or_else(a, b, __FUNCTION__)
+#define XEN_TO_C_INT_OR_ELSE(a, b)    xen_to_c_int_or_else(a, b, c__FUNCTION__)
 #define XEN_TO_C_INT_OR_ELSE_WITH_CALLER(a, b, c) xen_to_c_int_or_else(a, b, c)
 #define C_TO_XEN_INT(a)               scm_long2num((long)a)
 #define C_TO_SMALL_XEN_INT(a)         SCM_MAKINUM(a)
 #define XEN_TO_SMALL_C_INT(a)         ((int)(SCM_INUM(a)))
-#define XEN_TO_C_ULONG(a)             scm_num2ulong(a, 0, __FUNCTION__)
+#define XEN_TO_C_ULONG(a)             scm_num2ulong(a, 0, c__FUNCTION__)
 #define C_TO_XEN_ULONG(a)             scm_ulong2num((unsigned long)a)
 #define XEN_ULONG_P(Arg1)             (XEN_NOT_FALSE_P(scm_number_p(Arg1)))
 #define XEN_EXACT_P(Arg)              XEN_TRUE_P(scm_exact_p(Arg))
 #if HAVE_SCM_NUM2LONG_LONG
   #define C_TO_XEN_LONG_LONG(a)       scm_long_long2num(a)
-  #define XEN_TO_C_LONG_LONG(a)       scm_num2long_long(a, 0, __FUNCTION__)
+  #define XEN_TO_C_LONG_LONG(a)       scm_num2long_long(a, 0, c__FUNCTION__)
 #else
   #define C_TO_XEN_LONG_LONG(a)       scm_long2num(a)
-  #define XEN_TO_C_LONG_LONG(a)       scm_num2long(a, 0, __FUNCTION__)
+  #define XEN_TO_C_LONG_LONG(a)       scm_num2long(a, 0, c__FUNCTION__)
 #endif    
 
 /* there is SCM_CONTINUATIONP -- why doesn't scheme have continuation? */
@@ -189,8 +208,8 @@
 #define C_TO_XEN_STRING(a)            scm_makfrom0str((const char *)(a))
 
 #define C_TO_XEN_BOOLEAN(a)           ((a) ? XEN_TRUE : XEN_FALSE)
-#define XEN_TO_C_BOOLEAN_OR_TRUE(a)   ((XEN_FALSE_P(a) || ((SCM_INUMP(a)) && (SCM_INUM(a) == 0))) ? 0 : 1)
-#define XEN_TO_C_BOOLEAN(a)           ((XEN_FALSE_P(a)) ? 0 : 1)
+#define XEN_TO_C_BOOLEAN_OR_TRUE(a)   ((XEN_FALSE_P(a) || ((SCM_INUMP(a)) && (SCM_INUM(a) == 0))) ? false : true)
+#define XEN_TO_C_BOOLEAN(a)           ((XEN_FALSE_P(a)) ? false : true)
 
 #if HAVE_SCM_C_EVAL_STRING
   #define C_STRING_TO_XEN_FORM(Str)   scm_c_read_string(Str)
@@ -602,8 +621,8 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_TO_C_STRING(Str)              RSTRING(Str)->ptr
 
 #define C_TO_XEN_BOOLEAN(a)               ((a) ? Qtrue : Qfalse)
-#define XEN_TO_C_BOOLEAN_OR_TRUE(a)       ((XEN_FALSE_P(a) ? 0 : 1))
-#define XEN_TO_C_BOOLEAN(a)               ((XEN_FALSE_P(a) ? 0 : 1))
+#define XEN_TO_C_BOOLEAN_OR_TRUE(a)       ((XEN_FALSE_P(a) ? false : true))
+#define XEN_TO_C_BOOLEAN(a)               ((XEN_FALSE_P(a) ? false : true))
 
 #define XEN_NAME_AS_C_STRING_TO_VALUE(a)  rb_gv_get(xen_scheme_global_variable_to_ruby(a))
 #define C_STRING_TO_XEN_FORM(Str)         XEN_EVAL_C_STRING(Str)
@@ -1313,7 +1332,7 @@ XEN xen_rb_copy_list(XEN val); /* Ruby arrays (lists) are passed by reference */
 #define XEN_INTEGER_OR_BOOLEAN_P(Arg)          ((XEN_BOOLEAN_P(Arg))   || (XEN_INTEGER_P(Arg)))
 #define XEN_ULONG_IF_BOUND_P(Arg)              ((XEN_NOT_BOUND_P(Arg)) || (XEN_ULONG_P(Arg)))
 
-#define XEN_TO_C_OFF_T_OR_ELSE(a, b)  xen_to_c_off_t_or_else(a, b, __FUNCTION__)
+#define XEN_TO_C_OFF_T_OR_ELSE(a, b)  xen_to_c_off_t_or_else(a, b, c__FUNCTION__)
 #define C_TO_XEN_OFF_T(a)             c_to_xen_off_t(a)
 #define XEN_TO_C_OFF_T(a)             xen_to_c_off_t(a)
 #define XEN_AS_STRING(form)           XEN_TO_C_STRING(XEN_TO_STRING(form))

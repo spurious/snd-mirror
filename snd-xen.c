@@ -124,7 +124,7 @@ void snd_unprotect_at(int loc)
 
 /* -------- error handling -------- */
 
-static int send_error_output_to_stdout = FALSE;
+static bool send_error_output_to_stdout = false;
 static char *last_file_loaded = NULL;
 
 static void string_to_stdout(snd_state *ss, const char *msg)
@@ -143,7 +143,8 @@ static XEN snd_format_if_needed(XEN args)
 {
   /* if car has formatting info, use next arg as arg list for it */
   XEN format_args = XEN_EMPTY_LIST, cur_arg, result;
-  int i, start = 0, num_args, format_info_len, got_tilde = FALSE, was_formatted = FALSE, err_size = 8192;
+  int i, start = 0, num_args, format_info_len, err_size = 8192;
+  bool got_tilde = false, was_formatted = false;
   char *format_info, *errmsg = NULL;
   num_args = XEN_LIST_LENGTH(args);
   if (num_args == 1) return(XEN_CAR(args));
@@ -159,14 +160,14 @@ static XEN snd_format_if_needed(XEN args)
 	{
 	  strncat(errmsg, (char *)(format_info + start), i - start);
 	  start = i + 2;
-	  got_tilde = TRUE;
+	  got_tilde = true;
 	}
       else
 	{
 	  if (got_tilde)
 	    {
-	      was_formatted = TRUE;
-	      got_tilde = FALSE;
+	      was_formatted = true;
+	      got_tilde = false;
 	      switch (format_info[i])
 		{
 		case '~': errmsg = snd_strcat(errmsg, "~", &err_size); break;
@@ -245,7 +246,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
   XEN port;
   XEN stack;
   char *name_buf = NULL;
-  int need_comma = FALSE;
+  bool need_comma = false;
   snd_state *ss;
   if ((XEN_SYMBOL_P(tag)) &&
       (strcmp(XEN_SYMBOL_TO_C_STRING(tag), "snd-top-level") == 0))
@@ -287,7 +288,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 	  XEN_DISPLAY(XEN_CAR(throw_args), port);
 	  XEN_PUTS(": ", port);
 	  XEN_DISPLAY(tag, port); /* redundant in many cases */
-	  need_comma = TRUE;
+	  need_comma = true;
 	}
       /* else it's something like unbound variable which passes #f as car */
       if (XEN_LIST_LENGTH(throw_args) > 1)
@@ -367,7 +368,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 	      sp = ss->mx_sp;
 	      clear_minibuffer_prompt(sp);
 	      report_in_minibuffer(sp, name_buf);
-	      add_to_error_history(ss, name_buf, FALSE);
+	      add_to_error_history(ss, name_buf, false);
 	    }
 	  else snd_error(name_buf);
 	}
@@ -386,7 +387,8 @@ static char *msg = NULL;
 void snd_rb_raise(XEN tag, XEN throw_args)
 {
   XEN err = rb_eStandardError;
-  int need_comma = FALSE, size = 2048;
+  bool need_comma = false;
+  int size = 2048;
   if (strcmp(rb_id2name(tag), "Out_of_range") == 0) err = rb_eRangeError;
   if (msg) FREE(msg);
   msg = (char *)CALLOC(size, sizeof(char));
@@ -397,7 +399,7 @@ void snd_rb_raise(XEN tag, XEN throw_args)
       if (XEN_NOT_FALSE_P(XEN_CAR(throw_args)))
 	{
 	  snprintf(msg, 2048, "%s: %s", XEN_AS_STRING(XEN_CAR(throw_args)), rb_id2name(tag));
-	  need_comma = TRUE;
+	  need_comma = true;
 	}
       if (XEN_LIST_LENGTH(throw_args) > 1)
 	{
@@ -866,7 +868,7 @@ static char *stdin_check_for_full_expression(char *newstr)
     }
   else stdin_str = copy_string(newstr);
 #if HAVE_GUILE
-  end_of_text = check_balance(stdin_str, 0, snd_strlen(stdin_str), FALSE); /* last-arg->not in listener */
+  end_of_text = check_balance(stdin_str, 0, snd_strlen(stdin_str), false); /* last-arg->not in listener */
   if (end_of_text > 0)
     {
       if (end_of_text + 1 < snd_strlen(stdin_str))
@@ -889,9 +891,9 @@ void snd_eval_stdin_str(snd_state *ss, char *buf)
   str = stdin_check_for_full_expression(buf);
   if (str)
     {
-      send_error_output_to_stdout = TRUE;
+      send_error_output_to_stdout = true;
       result = snd_catch_any(eval_str_wrapper, (void *)str, str);
-      send_error_output_to_stdout = FALSE;
+      send_error_output_to_stdout = false;
       if (stdin_str) FREE(stdin_str);
       /* same as str here; if c-g! evaluated from stdin, clear_listener is called which frees/nullifies stdin_str */
       stdin_str = NULL;
@@ -1060,7 +1062,7 @@ The region-graph-style choices are graph-lines, graph-dots, graph-filled, graph-
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_region_graph_style, "an integer");
-  set_region_graph_style(ss, XEN_TO_C_INT(val));
+  set_region_graph_style(ss, (graph_style_t)XEN_TO_C_INT(val));
   reflect_region_graph_style(ss);
   return(val);
 }
@@ -1562,7 +1564,7 @@ static XEN g_equalize_panes(XEN snd)
 	equalize_sound_panes(get_global_state(), 
 			     sp,
 			     sp->chans[0],
-			     TRUE);
+			     true);
     }
   return(XEN_FALSE);
 }
@@ -1775,13 +1777,13 @@ static XEN g_abortq(void)
   check_for_event(ss);
   if (ss->stopped_explicitly)
     {
-      ss->stopped_explicitly = FALSE;
+      ss->stopped_explicitly = false;
       return(XEN_TRUE);
     }
   return(XEN_FALSE);
 }
 
-snd_info *get_sp(XEN x_snd_n, int accept_player)
+snd_info *get_sp(XEN x_snd_n, bool accept_player)
 {
   int snd_n, len;
   snd_state *ss;
@@ -2135,7 +2137,7 @@ static XEN g_help_dialog(XEN subject, XEN msg)
   #define H_help_dialog "(" S_help_dialog " subject message): start the Help window with subject and message"
   XEN_ASSERT_TYPE(XEN_STRING_P(subject), subject, XEN_ARG_1, S_help_dialog, "a string");
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_2, S_help_dialog, "a string");
-  return(XEN_WRAP_WIDGET(snd_help(get_global_state(), XEN_TO_C_STRING(subject), XEN_TO_C_STRING(msg), TRUE)));
+  return(XEN_WRAP_WIDGET(snd_help(get_global_state(), XEN_TO_C_STRING(subject), XEN_TO_C_STRING(msg), true)));
 }
 
 static XEN g_mix_panel(void)
@@ -2205,7 +2207,7 @@ static XEN g_yes_or_no_p(XEN msg)
 static XEN g_mus_audio_describe(void) 
 {
   #define H_mus_audio_describe "("  S_mus_audio_describe "): post a description of the audio hardware state in the Help dialog"
-  snd_help(get_global_state(), "Audio State", mus_audio_report(), FALSE); 
+  snd_help(get_global_state(), "Audio State", mus_audio_report(), false); 
   return(XEN_TRUE);
 }
 

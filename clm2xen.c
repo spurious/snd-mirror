@@ -1377,7 +1377,7 @@ get the next sample from the band-limited pulse-train produced by gen"
 
 /* ---------------- rand, rand_interp ---------------- */
 
-static XEN g_make_noi(int rand_case, XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static XEN g_make_noi(bool rand_case, XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   mus_xen *gn;
   mus_any *ge = NULL;
@@ -1413,7 +1413,7 @@ static XEN g_make_rand_interp(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 return a new " S_rand_interp " generator, producing linearly interpolated random numbers. \
 frequency is the rate at which new end-points are chosen."
 
-  return(g_make_noi(FALSE, arg1, arg2, arg3, arg4));
+  return(g_make_noi(false, arg1, arg2, arg3, arg4));
 }
 
 static XEN g_make_rand(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
@@ -1422,7 +1422,7 @@ static XEN g_make_rand(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 return a new " S_rand " generator, producing a sequence of random numbers (a step  function). \
 frequency is the rate at which new numbers are chosen."
 
-  return(g_make_noi(TRUE, arg1, arg2, arg3, arg4));
+  return(g_make_noi(true, arg1, arg2, arg3, arg4));
 }
 
 static XEN g_rand(XEN obj, XEN fm)
@@ -1584,7 +1584,8 @@ is the same in effect as " S_make_oscil "."
 
   mus_xen *gn;
   mus_any *ge;
-  int vals, table_size = DEFAULT_TABLE_SIZE, need_free = FALSE;
+  int vals, table_size = DEFAULT_TABLE_SIZE;
+  bool need_free = false;
   XEN args[8]; XEN keys[4];
   int orig_arg[4] = {0, 0, 0, 0};
   Float freq = 440.0, phase = 0.0;
@@ -1618,7 +1619,7 @@ is the same in effect as " S_make_oscil "."
       table = (Float *)CALLOC(table_size, sizeof(Float));
       if (table == NULL)
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate table-lookup table"));
-      need_free = TRUE;
+      need_free = true;
     }
   old_error_handler = mus_error_set_handler(local_mus_error); /* currently not needed (no recoverable errors from mus_make_table_lookup) */
   ge = mus_make_table_lookup(freq, phase, table, table_size);
@@ -2266,7 +2267,7 @@ static XEN g_frame_p(XEN obj)
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_frame_p(XEN_TO_MUS_ANY(obj)))));
 }
 
-static XEN g_wrap_frame(mus_any *val, int dealloc)
+static XEN g_wrap_frame(mus_any *val, bool dealloc)
 {
   mus_xen *gn;
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
@@ -2289,7 +2290,7 @@ if outf is not given, a new frame is created. outf[i] = f1[i] + f2[i]"
   return(g_wrap_frame(mus_frame_add((mus_any *)XEN_TO_MUS_ANY(uf1),
 				    (mus_any *)XEN_TO_MUS_ANY(uf2),
 				    res),
-		      (res) ? TRUE : FALSE));
+		      (res) ? true : false));
 }
 
 static XEN g_frame_multiply(XEN uf1, XEN uf2, XEN ures) /* optional res */
@@ -2306,7 +2307,7 @@ if outf is not given, a new frame is created. outf[i] = f1[i] * f2[i]."
   return(g_wrap_frame(mus_frame_multiply((mus_any *)XEN_TO_MUS_ANY(uf1),
 					 (mus_any *)XEN_TO_MUS_ANY(uf2),
 					 res),
-		      (res) ? TRUE : FALSE));
+		      (res) ? true : false));
 }
 
 static XEN g_frame_ref(XEN uf1, XEN uchan)
@@ -2363,7 +2364,7 @@ static XEN g_set_mixer_ref(XEN uf1, XEN in, XEN out, XEN val)
 #define DONT_FREE_MIXER -1
 #define FREE_MIXER 1
 
-static XEN g_wrap_mixer(mus_any *val, int dealloc)
+static XEN g_wrap_mixer(mus_any *val, bool dealloc)
 {
   mus_xen *gn;
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
@@ -2386,7 +2387,7 @@ static XEN g_mixer_multiply(XEN uf1, XEN uf2, XEN ures) /* optional res */
   return(g_wrap_mixer(mus_mixer_multiply((mus_any *)XEN_TO_MUS_ANY(uf1),
 					 (mus_any *)XEN_TO_MUS_ANY(uf2),
 					 res),
-		      (res) ? TRUE : FALSE));
+		      (res) ? true : false));
 }
 
 static XEN g_frame2frame(XEN mx, XEN infr, XEN outfr) /* optional outfr */
@@ -2403,7 +2404,7 @@ returning frame outf (or creating a new frame if necessary); this is a matrix mu
   return(g_wrap_frame(mus_frame2frame((mus_any *)XEN_TO_MUS_ANY(mx),
 				      (mus_any *)XEN_TO_MUS_ANY(infr),
 				      res),
-		      (res) ? TRUE : FALSE));
+		      (res) ? true : false));
 }
 
 static XEN g_frame2list(XEN fr)
@@ -2444,7 +2445,7 @@ returning frame outf (creating it if necessary)"
   return(g_wrap_frame(mus_sample2frame(XEN_TO_MUS_ANY(mx),
 				       XEN_TO_C_DOUBLE(insp),
 				       res),
-		      (res) ? TRUE : FALSE));
+		      (res) ? true : false));
 }
 
 static XEN g_make_mixer(XEN arglist)
@@ -2632,7 +2633,8 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
   mus_any *ge;
   XEN args[8]; XEN keys[4];
   int orig_arg[4] = {0, 0, 0, 0};
-  int vals, wsize = DEFAULT_TABLE_SIZE, need_free = FALSE;
+  int vals, wsize = DEFAULT_TABLE_SIZE;
+  bool need_free = false;
   vct *v;
   Float freq = 440.0;
   Float phase = 0.0;
@@ -2665,7 +2667,7 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
       wave = (Float *)CALLOC(wsize, sizeof(Float));
       if (wave == NULL)
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate wave-train table"));
-      need_free = TRUE;
+      need_free = true;
     }
   old_error_handler = mus_error_set_handler(local_mus_error); /* currently not needed */
   ge = mus_make_wave_train(freq, phase, wave, wsize);
@@ -3528,7 +3530,7 @@ static XEN g_file2frame(XEN obj, XEN samp, XEN outfr)
   return(g_wrap_frame(mus_file2frame(XEN_TO_MUS_ANY(obj),
 				     XEN_TO_C_OFF_T_OR_ELSE(samp, 0),
 				     res),
-		      (res) ? TRUE : FALSE));
+		      (res) ? true : false));
 }
 
 static XEN g_make_frame2file(XEN name, XEN chans, XEN out_format, XEN out_type)
@@ -3570,7 +3572,7 @@ handled by the output generator 'obj' at frame 'samp'"
   return(g_wrap_frame(mus_frame2file(XEN_TO_MUS_ANY(obj),
 				     XEN_TO_C_OFF_T_OR_ELSE(samp, 0),
 				     (mus_any *)XEN_TO_MUS_ANY(val)),
-		      TRUE));
+		      true));
 }
 
 static XEN g_array2file(XEN filename, XEN data, XEN len, XEN srate, XEN channels)
@@ -3825,7 +3827,7 @@ static XEN g_locsig(XEN obj, XEN loc, XEN val)
   return(g_wrap_frame(mus_locsig(XEN_TO_MUS_ANY(obj),
 				 XEN_TO_C_OFF_T_OR_ELSE(loc, 0),
 				 XEN_TO_C_DOUBLE(val)),
-		      TRUE));
+		      true));
 }
 
 static int clm_locsig_type = MUS_LINEAR;
@@ -4294,7 +4296,7 @@ file1 and file2 writing outfile after scaling the convolution result to maxamp."
  *   call chains).
  */
 
-static int pvedit (void *ptr)
+static bool pvedit (void *ptr)
 {
   mus_xen *gn = (mus_xen *)ptr;
   return(XEN_TO_C_BOOLEAN(XEN_CALL_1_NO_CATCH(gn->vcts[EDIT_FUNCTION], 
@@ -4310,7 +4312,7 @@ static Float pvsynthesize (void *ptr)
 					     "phase-vocoder synthesis function")));
 }
 
-static int pvanalyze (void *ptr, Float (*input)(void *arg1, int direction))
+static bool pvanalyze (void *ptr, Float (*input)(void *arg1, int direction))
 {
   mus_xen *gn = (mus_xen *)ptr;
   /* we can only get input func if it's already set up by the outer gen call, so (?) we can use that function here */

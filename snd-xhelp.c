@@ -23,7 +23,7 @@ static char *cr_to_space(char *val)
   return(val);
 }
 
-static int no_cr(const char *val)
+static bool no_cr(const char *val)
 {
   int i, len;
   if (val)
@@ -31,12 +31,13 @@ static int no_cr(const char *val)
       len = strlen(val);
       for (i = 0; i < len; i++)
 	if (val[i] == '\n')
-	  return(FALSE);
+	  return(false);
     }
-  return(TRUE);
+  return(true);
 }
 
-static int help_text_width = 0, outer_with_wrap = FALSE;
+static int help_text_width = 0;
+static bool outer_with_wrap = false;
 static void help_expose(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   int curwid;
@@ -71,10 +72,10 @@ static void create_help_monolog(snd_state *ss)
   XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
   /* this window should be resizable by the user (i.e. have the resize bars), but not resize itself */
   XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
-  XtSetArg(args[n], XmNnoResize, FALSE); n++;
-  XtSetArg(args[n], XmNtransient, FALSE); n++;
+  XtSetArg(args[n], XmNnoResize, false); n++;
+  XtSetArg(args[n], XmNtransient, false); n++;
   help_dialog = XmCreateMessageDialog(MAIN_PANE(ss), "snd-help", args, n);
-  XtAddEventHandler(help_dialog, ExposureMask, FALSE, help_expose, NULL);
+  XtAddEventHandler(help_dialog, ExposureMask, false, help_expose, NULL);
 
   XtUnmanageChild(XmMessageBoxGetChild(help_dialog, XmDIALOG_CANCEL_BUTTON));
   XtUnmanageChild(XmMessageBoxGetChild(help_dialog, XmDIALOG_HELP_BUTTON));
@@ -84,7 +85,7 @@ static void create_help_monolog(snd_state *ss)
 
   n = 0;
   XtSetArg(args[n], XmNeditMode, XmMULTI_LINE_EDIT); n++;
-  XtSetArg(args[n], XmNeditable, FALSE); n++;
+  XtSetArg(args[n], XmNeditable, false); n++;
   XtSetArg(args[n], XmNcolumns, HELP_COLUMNS); n++;
   XtSetArg(args[n], XmNrows, HELP_ROWS); n++;
   if (!(ss->using_schemes))
@@ -106,7 +107,7 @@ static void create_help_monolog(snd_state *ss)
   set_dialog_widget(ss, HELP_DIALOG, help_dialog);
 }
 
-Widget snd_help(snd_state *ss, const char *subject, const char *helpstr, int with_wrap)
+Widget snd_help(snd_state *ss, const char *subject, const char *helpstr, bool with_wrap)
 {
   /* place help string in scrollable help window */
   /* if window is already active, add this help at the top and reposition */

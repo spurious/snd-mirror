@@ -998,7 +998,7 @@ static gboolean gxg_child_func(GdkWindow* window, gpointer func_data)
   return(XEN_TO_C_gboolean(XEN_CALL_2(XEN_CAR((XEN)func_data),
                                       C_TO_XEN_GdkWindow_(window),
                                       XEN_CADR((XEN)func_data),
-                                      __FUNCTION__)));
+                                      c__FUNCTION__)));
 }
 static gboolean gxg_find_func(GtkAccelKey* key, GClosure* closure, gpointer func_data)
 {
@@ -1006,14 +1006,14 @@ static gboolean gxg_find_func(GtkAccelKey* key, GClosure* closure, gpointer func
                                       C_TO_XEN_GtkAccelKey_(key),
                                       C_TO_XEN_GClosure_(closure),
                                       XEN_CADR((XEN)func_data),
-                                      __FUNCTION__)));
+                                      c__FUNCTION__)));
 }
 static void gxg_func2(GtkWidget* w, gpointer func_data)
 {
   XEN_CALL_2(XEN_CAR((XEN)func_data),
              C_TO_XEN_GtkWidget_(w),
              XEN_CADR((XEN)func_data),
-             __FUNCTION__);
+             c__FUNCTION__);
 }
 static gint gxg_timeout_func(gpointer func_data)
 {
@@ -1021,7 +1021,7 @@ static gint gxg_timeout_func(gpointer func_data)
   XEN result = XEN_FALSE;
   result = XEN_CALL_1(XEN_CAR((XEN)func_data),
                       XEN_CADR((XEN)func_data),
-                      __FUNCTION__);
+                      c__FUNCTION__);
   if (XEN_BOOLEAN_P(result)) call_again = XEN_TO_C_BOOLEAN(result); else call_again = XEN_TO_C_INT_OR_ELSE(result, 0);
   if (!call_again) xm_unprotect_at(XEN_TO_C_INT(XEN_CADDR((XEN)func_data)));
   return(call_again);
@@ -1030,7 +1030,7 @@ static void gxg_destroy_func(gpointer func_data)
 {
   XEN_CALL_1(XEN_CADDDR((XEN)func_data),
              XEN_CADR((XEN)func_data),
-             __FUNCTION__);
+             c__FUNCTION__);
 }
 static GdkFilterReturn gxg_filter_func(GdkXEvent* xevent, GdkEvent* event, gpointer func_data)
 {
@@ -1038,27 +1038,27 @@ static GdkFilterReturn gxg_filter_func(GdkXEvent* xevent, GdkEvent* event, gpoin
                                              C_TO_XEN_GdkXEvent_(xevent),
                                              C_TO_XEN_GdkEvent_(event),
                                              XEN_CADR((XEN)func_data),
-                                             __FUNCTION__)));
+                                             c__FUNCTION__)));
 }
 static void gxg_event_func(GdkEvent* event, gpointer func_data)
 {
   XEN_CALL_2(XEN_CAR((XEN)func_data),
              C_TO_XEN_GdkEvent_(event),
              XEN_CADR((XEN)func_data),
-             __FUNCTION__);
+             c__FUNCTION__);
 }
 static void gxg_span_func(GdkSpan* span, gpointer func_data)
 {
   XEN_CALL_2(XEN_CAR((XEN)func_data),
              C_TO_XEN_GdkSpan_(span),
              XEN_CADR((XEN)func_data),
-             __FUNCTION__);
+             c__FUNCTION__);
 }
 static gboolean gxg_func1(gpointer func_data)
 {
   return(XEN_TO_C_gboolean(XEN_CALL_1(XEN_CAR((XEN)func_data),
                                       XEN_CADR((XEN)func_data),
-                                      __FUNCTION__)));
+                                      c__FUNCTION__)));
 }
 static gint gxg_snoop_func(GtkWidget* widget, GdkEventKey* event, gpointer func_data)
 {
@@ -1066,14 +1066,14 @@ static gint gxg_snoop_func(GtkWidget* widget, GdkEventKey* event, gpointer func_
                                   C_TO_XEN_GtkWidget_(widget),
                                   C_TO_XEN_GdkEventKey_(event),
                                   XEN_CADR((XEN)func_data),
-                                  __FUNCTION__)));
+                                  c__FUNCTION__)));
 }
 static gchar* gxg_translate_func(const gchar* path, gpointer func_data)
 {
   return(XEN_TO_C_gchar_(XEN_CALL_2(XEN_CAR((XEN)func_data),
                                     C_TO_XEN_gchar_(path),
                                     XEN_CADR((XEN)func_data),
-                                    __FUNCTION__)));
+                                    c__FUNCTION__)));
 }
 static void gxg_menu_position_func(GtkMenu* menu, gint* x, gint* y, gboolean* push, gpointer func_data)
 {
@@ -1083,7 +1083,7 @@ static void gxg_menu_position_func(GtkMenu* menu, gint* x, gint* y, gboolean* pu
              C_TO_XEN_gint_(y),
              C_TO_XEN_gboolean_(push),
              XEN_CADR((XEN)func_data),
-             __FUNCTION__);
+             c__FUNCTION__);
 }
 static gboolean gxg_model_func(GtkTreeModel* model, GtkTreePath* path, GtkTreeIter* iter, gpointer func_data)
 {
@@ -1092,7 +1092,7 @@ static gboolean gxg_model_func(GtkTreeModel* model, GtkTreePath* path, GtkTreeIt
                                       C_TO_XEN_GtkTreePath_(path),
                                       C_TO_XEN_GtkTreeIter_(iter),
                                       XEN_CADR((XEN)func_data),
-                                      __FUNCTION__)));
+                                      c__FUNCTION__)));
 }
 static void gxg_tree_selection_func(GtkTreeModel* model, GtkTreePath* path, GtkTreeIter* iter, gpointer func_data)
 {
@@ -1101,7 +1101,7 @@ static void gxg_tree_selection_func(GtkTreeModel* model, GtkTreePath* path, GtkT
              C_TO_XEN_GtkTreePath_(path),
              C_TO_XEN_GtkTreeIter_(iter),
              XEN_CADR((XEN)func_data),
-             __FUNCTION__);
+             c__FUNCTION__);
 }
 static void gxg_clip_received(GtkClipboard* clipboard, GtkSelectionData* selection_data, gpointer func_data)
 {
@@ -1109,7 +1109,7 @@ static void gxg_clip_received(GtkClipboard* clipboard, GtkSelectionData* selecti
              C_TO_XEN_GtkClipboard_(clipboard),
              C_TO_XEN_GtkSelectionData_(selection_data),
              XEN_CADR((XEN)func_data),
-             __FUNCTION__);
+             c__FUNCTION__);
 }
 static void gxg_clip_text_received(GtkClipboard* clipboard, const gchar* text, gpointer func_data)
 {
@@ -1117,7 +1117,7 @@ static void gxg_clip_text_received(GtkClipboard* clipboard, const gchar* text, g
              C_TO_XEN_GtkClipboard_(clipboard),
              C_TO_XEN_gchar_(text),
              XEN_CADR((XEN)func_data),
-             __FUNCTION__);
+             c__FUNCTION__);
 }
 static gboolean gxg_tree_column(GtkTreeView* tree_view, GtkTreeViewColumn* column, GtkTreeViewColumn* prev_column, GtkTreeViewColumn* next_column, gpointer func_data)
 {
@@ -1127,7 +1127,7 @@ static gboolean gxg_tree_column(GtkTreeView* tree_view, GtkTreeViewColumn* colum
                                       C_TO_XEN_GtkTreeViewColumn_(prev_column),
                                       C_TO_XEN_GtkTreeViewColumn_(next_column),
                                       XEN_CADR((XEN)func_data),
-                                      __FUNCTION__)));
+                                      c__FUNCTION__)));
 }
 static void gxg_tree_mapping(GtkTreeView* tree_view, GtkTreePath* path, gpointer func_data)
 {
@@ -1135,7 +1135,7 @@ static void gxg_tree_mapping(GtkTreeView* tree_view, GtkTreePath* path, gpointer
              C_TO_XEN_GtkTreeView_(tree_view),
              C_TO_XEN_GtkTreePath_(path),
              XEN_CADR((XEN)func_data),
-             __FUNCTION__);
+             c__FUNCTION__);
 }
 static gboolean gxg_tree_search(GtkTreeModel* model, gint column, const gchar* key, GtkTreeIter* iter, gpointer func_data)
 {
@@ -1145,7 +1145,7 @@ static gboolean gxg_tree_search(GtkTreeModel* model, gint column, const gchar* k
                                       C_TO_XEN_gchar_(key),
                                       C_TO_XEN_GtkTreeIter_(iter),
                                       XEN_CADR((XEN)func_data),
-                                      __FUNCTION__)));
+                                      c__FUNCTION__)));
 }
 static void gxg_cell_data(GtkTreeViewColumn* tree_column, GtkCellRenderer* cell, GtkTreeModel* tree_model, GtkTreeIter* iter, gpointer func_data)
 {
@@ -1155,7 +1155,7 @@ static void gxg_cell_data(GtkTreeViewColumn* tree_column, GtkCellRenderer* cell,
              C_TO_XEN_GtkTreeModel_(tree_model),
              C_TO_XEN_GtkTreeIter_(iter),
              XEN_CADR((XEN)func_data),
-             __FUNCTION__);
+             c__FUNCTION__);
 }
 static gint gxg_iter_compare(GtkTreeModel* model, GtkTreeIter* a, GtkTreeIter* b, gpointer func_data)
 {
@@ -1164,7 +1164,7 @@ static gint gxg_iter_compare(GtkTreeModel* model, GtkTreeIter* a, GtkTreeIter* b
                                   C_TO_XEN_GtkTreeIter_(a),
                                   C_TO_XEN_GtkTreeIter_(b),
                                   XEN_CADR((XEN)func_data),
-                                  __FUNCTION__)));
+                                  c__FUNCTION__)));
 }
 static gboolean gxg_tree_selection(GtkTreeSelection* selection, GtkTreeModel* model, GtkTreePath* path, gboolean path_currently_selected, gpointer func_data)
 {
@@ -1174,7 +1174,7 @@ static gboolean gxg_tree_selection(GtkTreeSelection* selection, GtkTreeModel* mo
                                       C_TO_XEN_GtkTreePath_(path),
                                       C_TO_XEN_gboolean(path_currently_selected),
                                       XEN_CADR((XEN)func_data),
-                                      __FUNCTION__)));
+                                      c__FUNCTION__)));
 }
 static void gxg_clip_get(GtkClipboard* clipboard, GtkSelectionData* selection_data, guint info, gpointer func_data)
 {
@@ -1183,14 +1183,14 @@ static void gxg_clip_get(GtkClipboard* clipboard, GtkSelectionData* selection_da
              C_TO_XEN_GtkSelectionData_(selection_data),
              C_TO_XEN_guint(info),
              XEN_CADR((XEN)func_data),
-             __FUNCTION__);
+             c__FUNCTION__);
 }
 static void gxg_clip_clear(GtkClipboard* clipboard, gpointer func_data)
 {
   XEN_CALL_2(XEN_CADDR((XEN)func_data),
              C_TO_XEN_GtkClipboard_(clipboard),
              XEN_CADR((XEN)func_data),
-             __FUNCTION__);
+             c__FUNCTION__);
 }
 
 static gboolean gxg_func3(GtkWidget *w, GdkEventAny *ev, gpointer data)
@@ -1199,7 +1199,7 @@ static gboolean gxg_func3(GtkWidget *w, GdkEventAny *ev, gpointer data)
                           C_TO_XEN_GtkWidget_(w),
                           C_TO_XEN_GdkEventAny_(ev),
                           XEN_CADR((XEN)data),
-                          __FUNCTION__)));
+                          c__FUNCTION__)));
 }
 
 
@@ -30546,7 +30546,7 @@ static void define_strings(void)
 
 /* -------------------------------- initialization -------------------------------- */
 
-static int xg_already_inited = FALSE;
+static bool xg_already_inited = false;
 
 #if WITH_GTK_AND_X11
 #if HAVE_GUILE
@@ -30575,12 +30575,12 @@ static int xg_already_inited = FALSE;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"15-Jul-03\")");
+      XEN_EVAL_C_STRING("(define xm-version \"11-Aug-03\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("15-Jul-03"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("11-Aug-03"));
 #endif
-      xg_already_inited = TRUE;
+      xg_already_inited = true;
 #if WITH_GTK_AND_X11
 #if HAVE_GUILE
       init_x11();

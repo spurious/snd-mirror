@@ -8,8 +8,8 @@
 #define POINT_BUFFER_SIZE 4096
 #define COLORMAP_SIZE 1
 
-#define BACKGROUND_QUIT TRUE
-#define BACKGROUND_CONTINUE FALSE
+#define BACKGROUND_QUIT true
+#define BACKGROUND_CONTINUE false
 #define BACKGROUND_REMOVE(func)
 #define BACKGROUND_ADD(ss, func, data) func(data)
 

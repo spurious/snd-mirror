@@ -33,21 +33,22 @@ env *copy_env(env *e)
   return(NULL);
 }
 
-int envs_equal(env *e1, env *e2)
+bool envs_equal(env *e1, env *e2)
 {
   int i;
-  if ((e1 == NULL) || (e2 == NULL)) return(FALSE);
-  if (e1->pts != e2->pts) return(FALSE);
+  if ((e1 == NULL) || (e2 == NULL)) return(false);
+  if (e1->pts != e2->pts) return(false);
   for (i = 0; i < e1->pts * 2; i++)
     if (e1->data[i] != e2->data[i])
-      return(FALSE);
-  return(TRUE);
+      return(false);
+  return(true);
 }
 
 /* mus_describe(e) */
 char *env_to_string(env *e)
 {
-  int i, j, first = TRUE, len;
+  int i, j, len;
+  bool first = true;
   char *expr_buf;
   char *news = NULL;
   if (e)
@@ -69,7 +70,7 @@ char *env_to_string(env *e)
 	  mus_snprintf(expr_buf, PRINT_BUFFER_SIZE, "%s%.3f %.3f", (first) ? "" : " ", e->data[j], e->data[j + 1]);
 #endif
 	  news = snd_strcat(news, expr_buf, &len);
-	  first = FALSE;
+	  first = false;
 	}
       FREE(expr_buf);
 #if HAVE_RUBY
@@ -187,10 +188,10 @@ typedef struct {
   int current_size;
   axis_info *axis;
   Tempus down_time;
-  int env_dragged;
+  bool env_dragged;
   int env_pos;
-  int click_to_delete;
-  int edited;
+  bool click_to_delete;
+  bool edited;
 } env_ed;
 
 void *new_env_editor(void)
@@ -201,10 +202,10 @@ void *new_env_editor(void)
   edp->current_ys = (int *)CALLOC(8, sizeof(int));
   edp->axis = (axis_info *)CALLOC(1, sizeof(axis_info));
   edp->current_size = 8;
-  edp->env_dragged = FALSE;
+  edp->env_dragged = false;
   edp->env_pos = 0;
-  edp->click_to_delete = FALSE;
-  edp->edited = FALSE;
+  edp->click_to_delete = false;
+  edp->edited = false;
   return((void *)edp);
 }
 
@@ -213,10 +214,10 @@ void edp_reset(void *spf)
   env_ed *edp = (env_ed *)spf;
   if (edp)
     {
-      edp->edited = FALSE;
-      edp->env_dragged = FALSE;
+      edp->edited = false;
+      edp->env_dragged = false;
       edp->env_pos = 0;
-      edp->click_to_delete = FALSE;
+      edp->click_to_delete = false;
     }
 }
 
@@ -232,14 +233,14 @@ static void edp_set_current_point(env_ed *edp, int pos, int x, int y)
   edp->current_ys[pos] = y;
 }
 
-static short edp_grf_y_dB(snd_state *ss, Float val, axis_info *ap, int use_dB)
+static short edp_grf_y_dB(snd_state *ss, Float val, axis_info *ap, bool use_dB)
 {
   if (use_dB)
     return(grf_y(in_dB(ss->min_dB, ss->lin_dB, val), ap));
   else return(grf_y(val, ap));
 }
 
-static double edp_ungrf_y_dB(snd_state *ss, axis_info *ap, int y, int use_dB)
+static double edp_ungrf_y_dB(snd_state *ss, axis_info *ap, int y, bool use_dB)
 {
   if (use_dB)
     return(un_dB(ss, ungrf_y(ap, y)));
@@ -254,8 +255,8 @@ axis_info *edp_ap(void *spf)
 #define EXP_SEGLEN 4
 #define MIN_FILTER_GRAPH_HEIGHT 20
 
-int edp_display_graph(snd_state *ss, void *spf, const char *name, axis_context *ax, 
-		      int x, int y, int width, int height, env *e, int use_dB, int with_dots)
+bool edp_display_graph(snd_state *ss, void *spf, const char *name, axis_context *ax, 
+		       int x, int y, int width, int height, env *e, bool use_dB, bool with_dots)
 {
   axis_info *ap;
   env_ed *edp = (env_ed *)spf;
@@ -264,7 +265,7 @@ int edp_display_graph(snd_state *ss, void *spf, const char *name, axis_context *
   int ix0, ix1, iy0, iy1, size = 4, lx0, lx1, ly0, ly1;
   Float curx, xincr;
   int dur;
-  if ((e == NULL) || (edp == NULL)) return(FALSE);
+  if ((e == NULL) || (edp == NULL)) return(false);
   ex0 = e->data[0];
   ey0 = e->data[1];
   ex1 = e->data[(e->pts * 2) - 2];
@@ -286,7 +287,7 @@ int edp_display_graph(snd_state *ss, void *spf, const char *name, axis_context *
   ap = edp->axis;
   ap->ax = ax;
   if (with_dots)
-    init_env_axes(ap, name, x, y, width, height, ex0, ex1, ey0, ey1, FALSE);
+    init_env_axes(ap, name, x, y, width, height, ex0, ex1, ey0, ey1, false);
   ix1 = grf_x(e->data[0], ap);
   iy1 = edp_grf_y_dB(ss, e->data[1], ap, use_dB);
   if (with_dots)
@@ -359,15 +360,15 @@ int edp_display_graph(snd_state *ss, void *spf, const char *name, axis_context *
   return(edp->edited);
 }
 
-void edp_handle_point(snd_state *ss, void *spf, int evx, int evy, Tempus motion_time, env *e, int use_dB, Float xmax)
+void edp_handle_point(snd_state *ss, void *spf, int evx, int evy, Tempus motion_time, env *e, bool use_dB, Float xmax)
 {
   env_ed *edp = (env_ed *)spf;
   axis_info *ap;
   Float x0, x1, x, y;
   if ((e == NULL) || (edp == NULL)) return;
   if ((motion_time - edp->down_time) < 100) return;
-  edp->env_dragged = TRUE;
-  edp->click_to_delete = FALSE;
+  edp->env_dragged = true;
+  edp->click_to_delete = false;
   ap = edp->axis;
   x = ungrf_x(ap, evx);
   if (edp->env_pos > 0) 
@@ -386,10 +387,10 @@ void edp_handle_point(snd_state *ss, void *spf, int evx, int evy, Tempus motion_
   if (y > ap->y1) y = ap->y1;
   if (use_dB) y = un_dB(ss, y);
   move_point(e, edp->env_pos, x, y);
-  edp->edited = TRUE;
+  edp->edited = true;
 }
 
-int edp_handle_press(snd_state *ss, void *spf, int evx, int evy, Tempus time, env *e, int use_dB, Float xmax)
+int edp_handle_press(snd_state *ss, void *spf, int evx, int evy, Tempus time, env *e, bool use_dB, Float xmax)
 {
   int pos;
   Float x, y;
@@ -397,7 +398,7 @@ int edp_handle_press(snd_state *ss, void *spf, int evx, int evy, Tempus time, en
   axis_info *ap;
   ap = edp->axis;
   edp->down_time = time;
-  edp->env_dragged = FALSE;
+  edp->env_dragged = false;
   pos = hit_point(ss, edp->current_xs, edp->current_ys, e->pts, evx, evy);
   x = ungrf_x(ap, evx);
   y = edp_ungrf_y_dB(ss, ap, evy, use_dB);
@@ -423,10 +424,10 @@ int edp_handle_press(snd_state *ss, void *spf, int evx, int evy, Tempus time, en
       pos = place_point(edp->current_xs, e->pts, evx);
       add_point(e, pos + 1, x, y);
       edp->env_pos = pos + 1;
-      edp->click_to_delete = FALSE;
+      edp->click_to_delete = false;
     }
-  else edp->click_to_delete = TRUE;
-  edp->edited = TRUE;
+  else edp->click_to_delete = true;
+  edp->edited = true;
   return(pos == -1);
 }
 
@@ -439,14 +440,14 @@ void edp_handle_release(void *spf, env *e)
        (edp->env_pos < (e->pts - 1))))
     delete_point(e, edp->env_pos);
   edp->env_pos = 0;
-  edp->env_dragged = FALSE;
-  edp->click_to_delete = FALSE;
+  edp->env_dragged = false;
+  edp->click_to_delete = false;
 }
 
 void edp_edited(void *spf)
 {
   env_ed *edp = (env_ed *)spf;
-  edp->edited = TRUE;
+  edp->edited = true;
 }
 
 
@@ -487,7 +488,7 @@ static void set_current_point(int pos, int x, int y)
 }
 
 void init_env_axes(axis_info *ap, const char *name, int x_offset, int ey0, int width, int height, 
-		   Float xmin, Float xmax, Float ymin, Float ymax, int printing)
+		   Float xmin, Float xmax, Float ymin, Float ymax, bool printing)
 {
   if (ap->xlabel) FREE(ap->xlabel);
   ap->xmin = xmin;
@@ -506,7 +507,7 @@ void init_env_axes(axis_info *ap, const char *name, int x_offset, int ey0, int w
   ap->y_offset = ey0;
   ap->height = height;
   ap->graph_x0 = x_offset;
-  make_axes_1(ap, X_AXIS_IN_SECONDS, 1, SHOW_ALL_AXES, printing, TRUE);
+  make_axes_1(ap, X_AXIS_IN_SECONDS, 1, SHOW_ALL_AXES, printing, true);
   /* if this is too small for an axis, it still sets up the fields needed for grf_x|y, so tiny envelope graphs will work */
 }
 
@@ -526,7 +527,7 @@ static double ungrf_y_dB(snd_state *ss, axis_info *ap, int y)
 }
 
 void display_enved_env(snd_state *ss, env *e, axis_context *ax,
-		       char *name, int x0, int y0, int width, int height, int dots, Float base, int printing)
+		       char *name, int x0, int y0, int width, int height, int dots, Float base, bool printing)
 {
   int i, j, k;
   Float ex0, ey0, ex1, ey1, val;
@@ -715,7 +716,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax,
     }
 }
 
-void view_envs(snd_state *ss, int env_window_width, int env_window_height, int printing)
+void view_envs(snd_state *ss, int env_window_width, int env_window_height, bool printing)
 {
   /* divide space available into a grid (if needed) that shows all currently defined envelopes */
   /* I suppose if there were several hundred envelopes, we'd need a scrollable viewer... */
@@ -802,13 +803,13 @@ void redo_env_edit(void)
 	  (env_list[env_list_top])) 
 	{
 	  env_list_top++;
-	  set_enved_undo_sensitive(TRUE);
-	  set_enved_revert_sensitive(TRUE);
+	  set_enved_undo_sensitive(true);
+	  set_enved_revert_sensitive(true);
 	}
       if ((env_list_top == env_list_size) || 
 	  (env_list[env_list_top] == NULL)) 
-	set_enved_redo_sensitive(FALSE);
-      set_enved_save_sensitive(TRUE);
+	set_enved_redo_sensitive(false);
+      set_enved_save_sensitive(true);
     }
 }
 
@@ -819,14 +820,14 @@ void undo_env_edit(void)
       if (env_list_top > 0)
 	{
 	  env_list_top--;
-	  set_enved_redo_sensitive(TRUE);
+	  set_enved_redo_sensitive(true);
 	}
       if (env_list_top == 0)
 	{
-	  set_enved_undo_sensitive(FALSE);
-	  set_enved_revert_sensitive(FALSE);
+	  set_enved_undo_sensitive(false);
+	  set_enved_revert_sensitive(false);
 	}
-      set_enved_save_sensitive(TRUE);
+      set_enved_save_sensitive(true);
     }
 }
 
@@ -839,9 +840,9 @@ void revert_env_edit(void)
       else 
 	{
 	  env_list_top = 0;
-	  set_enved_undo_sensitive(FALSE);
-	  set_enved_revert_sensitive(FALSE);
-	  set_enved_save_sensitive(FALSE);
+	  set_enved_undo_sensitive(false);
+	  set_enved_revert_sensitive(false);
+	  set_enved_save_sensitive(false);
 	}
     }
 }
@@ -886,7 +887,7 @@ static void add_envelope(snd_state *ss, char *name, env *val)
   all_envs_top++;
   if (enved_dialog_is_active())
     {
-      set_enved_show_sensitive(TRUE);
+      set_enved_show_sensitive(true);
       make_scrolled_env_list(ss);
     }
 }
@@ -909,7 +910,7 @@ void delete_envelope(snd_state *ss, char *name)
       if (enved_dialog_is_active())
 	{
 	  if (all_envs_top > 0)
-	    set_enved_show_sensitive(TRUE);
+	    set_enved_show_sensitive(true);
 	  make_scrolled_env_list(ss);
 	}
     }
@@ -929,9 +930,10 @@ void alert_envelope_editor(snd_state *ss, char *name, env *val)
   else add_envelope(ss, name, val);
 }
 
-void enved_show_background_waveform(snd_state *ss, axis_info *ap, axis_info *gray_ap, int apply_to_selection, int show_fft, int printing)
+void enved_show_background_waveform(snd_state *ss, axis_info *ap, axis_info *gray_ap, bool apply_to_selection, bool show_fft, bool printing)
 {
-  int srate, pts = 0, old_time_graph_type = GRAPH_ONCE;
+  int srate, pts = 0;
+  graph_type_t old_time_graph_type = GRAPH_ONCE;
   off_t samps;
   axis_info *active_ap = NULL;
   chan_info *active_channel = NULL;
@@ -958,7 +960,7 @@ void enved_show_background_waveform(snd_state *ss, axis_info *ap, axis_info *gra
 	      gray_ap->x0 = 0.0;
 	      gray_ap->x1 = SND_SRATE(active_channel->sound) / 2;
 	      init_axis_scales(gray_ap);
-	      make_fft_graph(active_channel, active_channel->sound, gray_ap, gray_ap->ax, FALSE);
+	      make_fft_graph(active_channel, active_channel->sound, gray_ap, gray_ap->ax, false);
 	      /* last arg makes sure we don't call any hooks in make_fft_graph */
 	    }
 	}
@@ -1007,7 +1009,7 @@ void enved_show_background_waveform(snd_state *ss, axis_info *ap, axis_info *gra
       active_channel->axis = active_ap;
       if (pts > 0) draw_both_grfs(gray_ap->ax, pts);
     }
-  active_channel->printing = FALSE;
+  active_channel->printing = false;
 }
 
 int enved_button_press_display(snd_state *ss, axis_info *ap, env *active_env, int evx, int evy)
@@ -1046,10 +1048,10 @@ int enved_button_press_display(snd_state *ss, axis_info *ap, env *active_env, in
       if (check_enved_hook(active_env, pos, x, y, ENVED_ADD_POINT) == 0)
 	add_point(active_env, pos + 1, x, y);
       env_pos = pos + 1;
-      set_enved_click_to_delete(FALSE);
+      set_enved_click_to_delete(false);
       env_redisplay(ss);
     }
-  else set_enved_click_to_delete(TRUE);
+  else set_enved_click_to_delete(true);
   enved_display_point_label(ss, x, y);
   return(env_pos);
 }
@@ -1314,11 +1316,12 @@ static XEN g_save_envelopes(XEN filename)
 
 static XEN enved_hook;
 
-int check_enved_hook(env *e, int pos, Float x, Float y, int reason)
+bool check_enved_hook(env *e, int pos, Float x, Float y, int reason)
 {
   XEN result = XEN_FALSE;
   XEN procs; XEN env_list;
-  int env_changed = FALSE, len = 0;
+  bool env_changed = false;
+  int len = 0;
   if (XEN_HOOKED(enved_hook))
     {
       /* if hook procedure returns a list, that is the new contents of the
@@ -1366,7 +1369,7 @@ int check_enved_hook(env *e, int pos, Float x, Float y, int reason)
 		e->data[i] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
 	      if (XEN_NOT_NULL_P(procs))
 		env_list = env_to_xen(e);
-	      env_changed = TRUE;
+	      env_changed = true;
 	    }
 #if HAVE_GUILE
 	}

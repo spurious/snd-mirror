@@ -37,14 +37,14 @@ static void drag_data_received (GtkWidget *widget, GdkDragContext *context, gint
 	    mix_at_x_y(ss, get_user_int_data(G_OBJECT(widget)), filename, x, y);
 	  else
 	    {
-	      sp = snd_open_file(filename, ss, FALSE);
+	      sp = snd_open_file(filename, ss, false);
 	      if (sp) select_channel(sp, 0);
 	    }
 	}
-      gtk_drag_finish (context, TRUE, FALSE, time);
+      gtk_drag_finish (context, true, false, time);
       return;
     }
-  gtk_drag_finish(context, FALSE, FALSE, time);
+  gtk_drag_finish(context, false, false, time);
 }
 
 static void report_mouse_position_as_seconds(GtkWidget *w, gint x, gint y)
@@ -79,7 +79,7 @@ static void clear_minibuffer_of(GtkWidget *w)
   clear_minibuffer(ss->sounds[snd]);
 }
 
-static int have_drag_title = FALSE;
+static bool have_drag_title = false;
 void drag_leave(GtkWidget *widget, GdkDragContext *context, guint time)
 {
   if (GTK_IS_DRAWING_AREA(widget))
@@ -87,7 +87,7 @@ void drag_leave(GtkWidget *widget, GdkDragContext *context, guint time)
   else 
     {
       reflect_file_change_in_title(get_global_state());
-      have_drag_title = FALSE;
+      have_drag_title = false;
     }
 }
 
@@ -105,11 +105,11 @@ gboolean drag_motion(GtkWidget *widget, GdkDragContext *context, gint x, gint y,
 	  new_title = (char *)CALLOC(64, sizeof(char));
 	  sprintf(new_title, "%s: drop to open file", ss->startup_title);
 	  gtk_window_set_title(GTK_WINDOW(MAIN_SHELL(ss)), new_title);
-	  have_drag_title = TRUE;
+	  have_drag_title = true;
 	  FREE(new_title);
 	}
     }
-  return(TRUE); /* this is what the examples return in gtk/tests/testdnd.c -- don't know what it means, if anything */
+  return(true); /* this is what the examples return in gtk/tests/testdnd.c -- don't know what it means, if anything */
 }
 
 void add_drop(snd_state *ss, GtkWidget *w)

@@ -123,7 +123,8 @@ static int be_snd_checked_write(int fd, unsigned char *buf, int bytes, const cha
 
 static int read_midi_sample_dump(const char *oldname, const char *newname, char *hdr)
 {
-  int fs = -1, fd = -1, err = MUS_NO_ERROR, totalin, happy, chans, srate, inp, outp;
+  int fs = -1, fd = -1, err = MUS_NO_ERROR, totalin, chans, srate, inp, outp;
+  bool happy;
   int val = 0, bits, block_count, header_count, state, samples, shift1, shift2, offset;
   int osp;
   unsigned char *buf = NULL;
@@ -143,7 +144,7 @@ static int read_midi_sample_dump(const char *oldname, const char *newname, char 
       CLEANUP();
       RETURN_MUS_WRITE_ERROR(oldname, newname);
     }
-  happy = TRUE;
+  happy = true;
   inp = 21;
   block_count = 120;
   state = 2;
@@ -168,7 +169,7 @@ static int read_midi_sample_dump(const char *oldname, const char *newname, char 
       if (inp >= totalin)
 	{
 	  if (totalin < TRANS_BUF_SIZE) 
-	    happy = FALSE;
+	    happy = false;
 	  else 
 	    {
 	      totalin = read(fd, buf, TRANS_BUF_SIZE); 
@@ -249,12 +250,13 @@ static int read_ieee_text(const char *oldname, const char *newname, char *hdr)
   char str[32];
   char *buf = NULL;
   int fd = -1, fs = -1, totalin;
-  int commenting, inp, outp, op, happy, i, j, s0, srate, err = MUS_NO_ERROR;
+  int inp, outp, op, i, j, s0, srate, err = MUS_NO_ERROR;
+  bool commenting, happy;
   float fsrate;
   int osp;
   STARTUP(oldname, newname, TRANS_BUF_SIZE, char);
   totalin = read(fd, buf, TRANS_BUF_SIZE);      
-  commenting = TRUE;
+  commenting = true;
   inp = 0;
   outp = 24;
   srate = 0;
@@ -288,7 +290,7 @@ static int read_ieee_text(const char *oldname, const char *newname, char *hdr)
 		    }
 		}
 	      inp++;
-	      if (buf[inp] != '%') commenting = FALSE;
+	      if (buf[inp] != '%') commenting = false;
 	      else
 		{
 		  hdr[outp] = '\n';
@@ -312,7 +314,7 @@ static int read_ieee_text(const char *oldname, const char *newname, char *hdr)
       CLEANUP();
       RETURN_MUS_WRITE_ERROR(oldname, newname);
     }
-  happy = TRUE;
+  happy = true;
   s0 = 0;
   outp = 0;
   osp = 0;
@@ -321,7 +323,7 @@ static int read_ieee_text(const char *oldname, const char *newname, char *hdr)
       if (inp >= totalin)
 	{
 	  if (totalin < TRANS_BUF_SIZE) 
-	    happy = FALSE;
+	    happy = false;
 	  else 
 	    {
 	      totalin = read(fd, buf, TRANS_BUF_SIZE); 
@@ -376,7 +378,8 @@ static int read_mus10(const char *oldname, const char *newname, char *hdr)
   /* nostalgic code -- 36 bit words, two 16-bit samples, right justified */
   /* or (even more archaeological) 12 bits packed 3 to a 36-bit word */
   unsigned char *buf = NULL;
-  int fd = -1, fs = -1, totalin, inp, outp, happy, val, err = MUS_NO_ERROR;
+  int fd = -1, fs = -1, totalin, inp, outp, val, err = MUS_NO_ERROR;
+  bool happy;
   int osp;
   float fsrate, fraction;
   int srateH, srateL, sign, exponent, chans, mode;
@@ -417,7 +420,7 @@ static int read_mus10(const char *oldname, const char *newname, char *hdr)
       CLEANUP();
       RETURN_MUS_WRITE_ERROR(oldname, newname);
     }
-  happy = TRUE;
+  happy = true;
   outp = 0;
   osp = 0;
   while (happy)
@@ -425,7 +428,7 @@ static int read_mus10(const char *oldname, const char *newname, char *hdr)
       if (inp >= totalin)
 	{
 	  if (totalin < PDP_BUF_SIZE) 
-	    happy = FALSE;
+	    happy = false;
 	  else 
 	    {
 	      totalin = read(fd, buf, PDP_BUF_SIZE); 
@@ -482,7 +485,8 @@ static int read_hcom(const char *oldname, const char *newname, char *hdr)
 {
   short **d;
   int osp, isp;
-  int dc, di, bits, outp, happy, totalin;
+  int dc, di, bits, outp, totalin;
+  bool happy;
   unsigned int curval = 0;
   int i, sample, size, datum, count, err = MUS_NO_ERROR;
   unsigned char *buf = NULL;
@@ -512,7 +516,7 @@ static int read_hcom(const char *oldname, const char *newname, char *hdr)
   totalin = read(fd, buf, TRANS_BUF_SIZE);
   osp = 0;
   isp = 0;
-  happy = TRUE;
+  happy = true;
   outp = 2;
   mus_bshort_to_char((unsigned char *)(hdr + osp), (short)((sample - 128) * 0x100)); osp += 2;
   bits = 0;
@@ -521,7 +525,7 @@ static int read_hcom(const char *oldname, const char *newname, char *hdr)
       if (isp >= totalin)
 	{
 	  if (totalin < TRANS_BUF_SIZE) 
-	    happy = FALSE;
+	    happy = false;
 	  else 
 	    {
 	      totalin = read(fd, buf, TRANS_BUF_SIZE); 
@@ -580,7 +584,8 @@ static unsigned short log2s[] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 20
 
 static int read_nist_shortpack(const char *oldname, const char *newname, char *hdr)
 {
-  int fs = -1, fd = -1, err = MUS_NO_ERROR, totalin, happy, chans, srate, outp, i = 0, k, num, bits = 0, out, els = 0;
+  int fs = -1, fd = -1, err = MUS_NO_ERROR, totalin, chans, srate, outp, i = 0, k, num, bits = 0, out, els = 0;
+  bool happy;
   int isp, osp;
   unsigned short *ptr = NULL, *stop, *start, *kptr;
   short temp = 0;
@@ -598,7 +603,7 @@ static int read_nist_shortpack(const char *oldname, const char *newname, char *h
     }
   lseek(fd, 1024, SEEK_SET);                       /* NIST header always 1024 bytes */
   totalin = read(fd, buf, TRANS_BUF_SIZE);
-  happy = TRUE;
+  happy = true;
   outp = 0;
   num = 0;
   osp = 0; /* hdr */
@@ -687,7 +692,7 @@ static int read_nist_shortpack(const char *oldname, const char *newname, char *h
       if (isp >= totalin)
 	{
 	  if (totalin < TRANS_BUF_SIZE) 
-	    happy = FALSE;
+	    happy = false;
 	  else 
 	    {
 	      totalin = read(fd, buf, TRANS_BUF_SIZE); 
@@ -793,9 +798,10 @@ static int stepsizeTable[89] = {7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 19, 21, 23,
 static int adpcm_decoder(unsigned char *indata, short *outdata, int totalbytes, int type)
 {
   unsigned int delta, inputbuffer = 0;
-  int step, valpred, vpdiff, index, bufferstep, i, j, happy;
+  int step, valpred, vpdiff, index, bufferstep, i, j;
+  bool happy;
   bufferstep = 0;
-  happy = TRUE;
+  happy = true;
   if (type == 0)
     {
       j = 4;
@@ -815,7 +821,7 @@ static int adpcm_decoder(unsigned char *indata, short *outdata, int totalbytes, 
       if (bufferstep) 
 	{
 	  delta = inputbuffer & 0xf;
-	  if (j == totalbytes) happy = FALSE;
+	  if (j == totalbytes) happy = false;
 	} 
       else 
 	{
@@ -1028,7 +1034,8 @@ static int read_12bit(const char *oldname, const char *newname, char *hdr)
 
 static int read_avi(const char *oldname, const char *newname, char *hdr)
 {
-  int totalin, fs = -1, fd = -1, cksize, num, happy;
+  int totalin, fs = -1, fd = -1, cksize, num;
+  bool happy;
 #if (!MUS_LITTLE_ENDIAN)
   int i;
   unsigned char *bb;
@@ -1045,7 +1052,7 @@ static int read_avi(const char *oldname, const char *newname, char *hdr)
     }
   hdrbuf = (unsigned char *)CALLOC(8, sizeof(unsigned char));
   lseek(fd, mus_sound_data_location(oldname), SEEK_SET);
-  happy = TRUE;
+  happy = true;
   while (happy)
     {
       totalin = read(fd, hdrbuf, 8);
@@ -1061,7 +1068,7 @@ static int read_avi(const char *oldname, const char *newname, char *hdr)
 	      totalin = read(fd, (unsigned char *)buf, num);
 	      if (totalin < 0) 
 		{
-		  happy = FALSE; 
+		  happy = false; 
 		  break;
 		}
 	      else 

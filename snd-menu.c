@@ -4,59 +4,59 @@
 
 void reflect_file_open_in_menu (void)
 {
-  set_sensitive(file_close_menu(), TRUE);
-  set_sensitive(file_print_menu(), TRUE);
-  set_sensitive(file_mix_menu(), TRUE);
-  set_sensitive(file_save_as_menu(), TRUE);
-  set_sensitive(file_update_menu(), TRUE);  
-  set_sensitive(view_equalize_panes_menu(), TRUE);  
-  set_sensitive(edit_header_menu(), TRUE);
-  set_sensitive(edit_find_menu(), TRUE);
-  set_sensitive(edit_select_all_menu(), TRUE);
+  set_sensitive(file_close_menu(), true);
+  set_sensitive(file_print_menu(), true);
+  set_sensitive(file_mix_menu(), true);
+  set_sensitive(file_save_as_menu(), true);
+  set_sensitive(file_update_menu(), true);  
+  set_sensitive(view_equalize_panes_menu(), true);  
+  set_sensitive(edit_header_menu(), true);
+  set_sensitive(edit_find_menu(), true);
+  set_sensitive(edit_select_all_menu(), true);
   if (popup_menu_exists())
     {
-      set_sensitive(popup_equalize_panes_menu(), TRUE);
-      set_sensitive(popup_play_menu(), TRUE);
-      set_sensitive(popup_info_menu(), TRUE);
+      set_sensitive(popup_equalize_panes_menu(), true);
+      set_sensitive(popup_play_menu(), true);
+      set_sensitive(popup_info_menu(), true);
     }
 }
 
 void reflect_file_change_in_menu (void)
 {
-  set_sensitive(file_save_menu(), TRUE);
-  set_sensitive(file_revert_menu(), TRUE);
-  set_sensitive(edit_undo_menu(), TRUE);
+  set_sensitive(file_save_menu(), true);
+  set_sensitive(file_revert_menu(), true);
+  set_sensitive(edit_undo_menu(), true);
   if (popup_menu_exists())
     {
-      set_sensitive(popup_undo_menu(), TRUE);
-      set_sensitive(popup_save_menu(), TRUE);
-      set_sensitive(popup_play_menu(), TRUE);
+      set_sensitive(popup_undo_menu(), true);
+      set_sensitive(popup_save_menu(), true);
+      set_sensitive(popup_play_menu(), true);
     }
 }
 
 void reflect_file_lack_in_menu (void)
 {
-  set_sensitive(file_close_menu(), FALSE);
-  set_sensitive(file_save_as_menu(), FALSE);
-  set_sensitive(file_save_menu(), FALSE);
-  set_sensitive(file_revert_menu(), FALSE);
-  set_sensitive(file_print_menu(), FALSE);
-  set_sensitive(file_mix_menu(), FALSE);
-  set_sensitive(file_update_menu(), FALSE);
-  set_sensitive(edit_undo_menu(), FALSE);
-  set_sensitive(edit_redo_menu(), FALSE);
-  set_sensitive(view_equalize_panes_menu(), FALSE);
-  set_sensitive(edit_header_menu(), FALSE);
-  set_sensitive(edit_find_menu(), FALSE);
-  set_sensitive(edit_select_all_menu(), FALSE);
+  set_sensitive(file_close_menu(), false);
+  set_sensitive(file_save_as_menu(), false);
+  set_sensitive(file_save_menu(), false);
+  set_sensitive(file_revert_menu(), false);
+  set_sensitive(file_print_menu(), false);
+  set_sensitive(file_mix_menu(), false);
+  set_sensitive(file_update_menu(), false);
+  set_sensitive(edit_undo_menu(), false);
+  set_sensitive(edit_redo_menu(), false);
+  set_sensitive(view_equalize_panes_menu(), false);
+  set_sensitive(edit_header_menu(), false);
+  set_sensitive(edit_find_menu(), false);
+  set_sensitive(edit_select_all_menu(), false);
   if (popup_menu_exists())
     {
-      set_sensitive(popup_undo_menu(), FALSE);
-      set_sensitive(popup_redo_menu(), FALSE);
-      set_sensitive(popup_save_menu(), FALSE);
-      set_sensitive(popup_play_menu(), FALSE);
-      set_sensitive(popup_info_menu(), FALSE);
-      set_sensitive(popup_equalize_panes_menu(), FALSE);
+      set_sensitive(popup_undo_menu(), false);
+      set_sensitive(popup_redo_menu(), false);
+      set_sensitive(popup_save_menu(), false);
+      set_sensitive(popup_play_menu(), false);
+      set_sensitive(popup_info_menu(), false);
+      set_sensitive(popup_equalize_panes_menu(), false);
     }
 }
 
@@ -73,7 +73,7 @@ void reflect_mix_in_menu(void)
     }
 }
 
-void reflect_equalize_panes_in_menu(int on)
+void reflect_equalize_panes_in_menu(bool on)
 {
   set_sensitive(view_equalize_panes_menu(), on);
 }
@@ -94,17 +94,17 @@ void reflect_file_revert_in_menu (snd_state *ss)
   editing = map_over_chans(ss, find_any_edits, NULL);
   if (!editing)
     {
-      set_sensitive(file_save_menu(), FALSE);
-      set_sensitive(file_revert_menu(), FALSE);
-      set_sensitive(edit_undo_menu(), FALSE);
+      set_sensitive(file_save_menu(), false);
+      set_sensitive(file_revert_menu(), false);
+      set_sensitive(edit_undo_menu(), false);
       if (popup_menu_exists())
 	{
-	  set_sensitive(popup_undo_menu(), FALSE);
-	  set_sensitive(popup_save_menu(), FALSE);
+	  set_sensitive(popup_undo_menu(), false);
+	  set_sensitive(popup_save_menu(), false);
 	}
     }
-  set_sensitive(edit_redo_menu(), TRUE);
-  if (popup_menu_exists()) set_sensitive(popup_redo_menu(), TRUE);
+  set_sensitive(edit_redo_menu(), true);
+  if (popup_menu_exists()) set_sensitive(popup_redo_menu(), true);
 }
 
 void reflect_file_save_in_menu (snd_state *ss)
@@ -113,16 +113,16 @@ void reflect_file_save_in_menu (snd_state *ss)
   editing = map_over_chans(ss, find_any_edits, NULL);
   if (!editing)
     {
-      set_sensitive(file_save_menu(), FALSE);
-      set_sensitive(file_revert_menu(), FALSE);
-      set_sensitive(edit_undo_menu(), FALSE);
+      set_sensitive(file_save_menu(), false);
+      set_sensitive(file_revert_menu(), false);
+      set_sensitive(edit_undo_menu(), false);
       if (popup_menu_exists())
 	{
-	  set_sensitive(popup_undo_menu(), FALSE);
-	  set_sensitive(popup_save_menu(), FALSE);
-	  set_sensitive(popup_redo_menu(), FALSE);
+	  set_sensitive(popup_undo_menu(), false);
+	  set_sensitive(popup_save_menu(), false);
+	  set_sensitive(popup_redo_menu(), false);
 	}
-      set_sensitive(edit_redo_menu(), FALSE);
+      set_sensitive(edit_redo_menu(), false);
     }
   editing = map_over_chans(ss, find_any_possible_edits, NULL);
 }
@@ -140,55 +140,55 @@ void reflect_file_revert_in_label (snd_info *sp)
 
 void reflect_no_more_redo_in_menu(void)
 {
-  set_sensitive(edit_redo_menu(), FALSE);
-  if (popup_menu_exists()) set_sensitive(popup_redo_menu(), FALSE);
+  set_sensitive(edit_redo_menu(), false);
+  if (popup_menu_exists()) set_sensitive(popup_redo_menu(), false);
 }
 
 void reflect_edit_with_selection_in_menu (void)
 {
-  set_sensitive(edit_cut_menu(), TRUE);
-  set_sensitive(edit_paste_menu(), TRUE);
-  set_sensitive(edit_play_menu(), TRUE);
-  set_sensitive(edit_mix_menu(), TRUE);
-  set_sensitive(edit_save_as_menu(), TRUE);
-  enved_reflect_selection(TRUE);
+  set_sensitive(edit_cut_menu(), true);
+  set_sensitive(edit_paste_menu(), true);
+  set_sensitive(edit_play_menu(), true);
+  set_sensitive(edit_mix_menu(), true);
+  set_sensitive(edit_save_as_menu(), true);
+  enved_reflect_selection(true);
 }
 
 void reflect_edit_without_selection_in_menu (void)
 {
-  set_sensitive(edit_cut_menu(), FALSE);
-  set_sensitive(edit_paste_menu(), FALSE);
-  set_sensitive(edit_mix_menu(), FALSE);
+  set_sensitive(edit_cut_menu(), false);
+  set_sensitive(edit_paste_menu(), false);
+  set_sensitive(edit_mix_menu(), false);
   if ((!(selection_is_active())) && 
       (!(region_ok(stack_position_to_id(0))))) 
-    set_sensitive(edit_paste_menu(), FALSE);
-  set_sensitive(edit_play_menu(), FALSE);
-  set_sensitive(edit_save_as_menu(), FALSE);
-  enved_reflect_selection(FALSE);
+    set_sensitive(edit_paste_menu(), false);
+  set_sensitive(edit_play_menu(), false);
+  set_sensitive(edit_save_as_menu(), false);
+  enved_reflect_selection(false);
 }
 
 void reflect_undo_in_menu(void)
 {
-  set_sensitive(edit_redo_menu(), TRUE);
-  if (popup_menu_exists()) set_sensitive(popup_redo_menu(), TRUE);
+  set_sensitive(edit_redo_menu(), true);
+  if (popup_menu_exists()) set_sensitive(popup_redo_menu(), true);
 }
 
 void reflect_redo_in_menu(void)
 {
-  set_sensitive(edit_undo_menu(), TRUE);
-  if (popup_menu_exists()) set_sensitive(popup_undo_menu(), TRUE);
+  set_sensitive(edit_undo_menu(), true);
+  if (popup_menu_exists()) set_sensitive(popup_undo_menu(), true);
   reflect_file_change_in_menu();
 }
 
 void reflect_undo_ok_in_menu(void)
 {
-  set_sensitive(edit_undo_menu(), TRUE);
-  if (popup_menu_exists()) set_sensitive(popup_undo_menu(), TRUE);
+  set_sensitive(edit_undo_menu(), true);
+  if (popup_menu_exists()) set_sensitive(popup_undo_menu(), true);
 }
 
 void reflect_undo_or_redo_in_menu(chan_info *cp)
 {
-  int undoable, redoable;
+  bool undoable, redoable;
   if ((cp) && (cp->cgx))
     {
       undoable = (cp->edit_ctr > 0);
@@ -203,26 +203,26 @@ void reflect_undo_or_redo_in_menu(chan_info *cp)
 
 void reflect_regions_in_menu(void)
 {
-  set_sensitive(view_region_menu(), TRUE);
+  set_sensitive(view_region_menu(), true);
 }
 
 void reflect_no_regions_in_menu(void)
 {
-  set_sensitive(view_region_menu(), FALSE);
+  set_sensitive(view_region_menu(), false);
 }
 
 void reflect_raw_open_in_menu(void)
 {
-  set_sensitive(file_open_menu(), TRUE);
-  set_sensitive(file_view_menu(), TRUE);
-  set_sensitive(file_new_menu(), TRUE);
+  set_sensitive(file_open_menu(), true);
+  set_sensitive(file_view_menu(), true);
+  set_sensitive(file_new_menu(), true);
 }
 
 void reflect_raw_pending_in_menu(void)
 {
-  set_sensitive(file_open_menu(), FALSE);
-  set_sensitive(file_view_menu(), FALSE);
-  set_sensitive(file_new_menu(), FALSE);
+  set_sensitive(file_open_menu(), false);
+  set_sensitive(file_view_menu(), false);
+  set_sensitive(file_new_menu(), false);
 }
 
 void close_file_from_menu(snd_state *ss)
@@ -302,7 +302,7 @@ void revert_file_from_menu(snd_state *ss)
 
 void exit_from_menu(snd_state *ss)
 {
-  if (snd_exit_cleanly(ss, FALSE))
+  if (snd_exit_cleanly(ss, false))
     snd_exit(1);
 }
 
@@ -323,32 +323,32 @@ void save_state_from_menu(snd_state *ss)
 
 static void chans_graph_style(chan_info *cp, void *ptr) 
 {
-  int style = (*((int *)ptr)); 
+  graph_style_t style = (*((graph_style_t *)ptr)); 
   cp->time_graph_style = style;
   cp->lisp_graph_style = style;
   cp->transform_graph_style = style;
   update_graph(cp);
 }
 
-void set_graph_style(snd_state *ss, int val)
+void set_graph_style(snd_state *ss, graph_style_t val)
 {
   switch (graph_style(ss))
     {
-    case GRAPH_LINES:          set_sensitive(view_lines_menu(), TRUE);          break;
-    case GRAPH_DOTS:           set_sensitive(view_dots_menu(), TRUE);           break;
-    case GRAPH_FILLED:         set_sensitive(view_filled_menu(), TRUE);         break;
-    case GRAPH_DOTS_AND_LINES: set_sensitive(view_dots_and_lines_menu(), TRUE); break;
-    case GRAPH_LOLLIPOPS:      set_sensitive(view_lollipops_menu(), TRUE);      break;
+    case GRAPH_LINES:          set_sensitive(view_lines_menu(), true);          break;
+    case GRAPH_DOTS:           set_sensitive(view_dots_menu(), true);           break;
+    case GRAPH_FILLED:         set_sensitive(view_filled_menu(), true);         break;
+    case GRAPH_DOTS_AND_LINES: set_sensitive(view_dots_and_lines_menu(), true); break;
+    case GRAPH_LOLLIPOPS:      set_sensitive(view_lollipops_menu(), true);      break;
     }
   in_set_graph_style(ss, val);
   for_each_chan_1(ss, chans_graph_style, (void *)(&val));
   switch (val)
     {
-    case GRAPH_LINES:          set_sensitive(view_lines_menu(), FALSE);          break;
-    case GRAPH_DOTS:           set_sensitive(view_dots_menu(), FALSE);           break;
-    case GRAPH_FILLED:         set_sensitive(view_filled_menu(), FALSE);         break;
-    case GRAPH_DOTS_AND_LINES: set_sensitive(view_dots_and_lines_menu(), FALSE); break;
-    case GRAPH_LOLLIPOPS:      set_sensitive(view_lollipops_menu(), FALSE);      break;
+    case GRAPH_LINES:          set_sensitive(view_lines_menu(), false);          break;
+    case GRAPH_DOTS:           set_sensitive(view_dots_menu(), false);           break;
+    case GRAPH_FILLED:         set_sensitive(view_filled_menu(), false);         break;
+    case GRAPH_DOTS_AND_LINES: set_sensitive(view_dots_and_lines_menu(), false); break;
+    case GRAPH_LOLLIPOPS:      set_sensitive(view_lollipops_menu(), false);      break;
     }
 }
 
@@ -358,7 +358,7 @@ static void chans_marks(chan_info *cp, void *ptr)
   update_graph(cp);
 }
 
-void set_show_marks(snd_state *ss, int val)
+void set_show_marks(snd_state *ss, bool val)
 {
   in_set_show_marks(ss, val);
   for_each_chan_1(ss, chans_marks, (void *)(&val));
@@ -370,7 +370,7 @@ static void chans_zero(chan_info *cp, void *ptr)
   update_graph(cp);
 }
 
-void set_show_y_zero(snd_state *ss, int val)
+void set_show_y_zero(snd_state *ss, bool val)
 {
   in_set_show_y_zero(ss, val);
   if (view_zero_menu())
@@ -388,7 +388,7 @@ static void chans_verbose_cursor(chan_info *cp, void *ptr)
   update_graph(cp);
 }
 
-void set_verbose_cursor(snd_state *ss, int val)
+void set_verbose_cursor(snd_state *ss, bool val)
 {
   in_set_verbose_cursor(ss, val);
   if (val == 0) for_each_sound(ss, clrmini, NULL);
@@ -414,10 +414,10 @@ void activate_focus_menu(snd_state *ss, int new_focus)
     {
       switch (zoom_focus_style(ss))
 	{
-	case ZOOM_FOCUS_LEFT:   set_sensitive(options_focus_left_menu(), TRUE);   break;
-	case ZOOM_FOCUS_RIGHT:  set_sensitive(options_focus_right_menu(), TRUE);  break;
-	case ZOOM_FOCUS_MIDDLE: set_sensitive(options_focus_middle_menu(), TRUE); break;
-	case ZOOM_FOCUS_ACTIVE: set_sensitive(options_focus_active_menu(), TRUE); break;
+	case ZOOM_FOCUS_LEFT:   set_sensitive(options_focus_left_menu(), true);   break;
+	case ZOOM_FOCUS_RIGHT:  set_sensitive(options_focus_right_menu(), true);  break;
+	case ZOOM_FOCUS_MIDDLE: set_sensitive(options_focus_middle_menu(), true); break;
+	case ZOOM_FOCUS_ACTIVE: set_sensitive(options_focus_active_menu(), true); break;
 	}
     }
   set_zoom_focus_style(ss, new_focus);
@@ -425,10 +425,10 @@ void activate_focus_menu(snd_state *ss, int new_focus)
     {
       switch (new_focus)
 	{
-	case ZOOM_FOCUS_LEFT:   set_sensitive(options_focus_left_menu(), FALSE);   break;
-	case ZOOM_FOCUS_RIGHT:  set_sensitive(options_focus_right_menu(), FALSE);  break;
-	case ZOOM_FOCUS_MIDDLE: set_sensitive(options_focus_middle_menu(), FALSE); break;
-	case ZOOM_FOCUS_ACTIVE: set_sensitive(options_focus_active_menu(), FALSE); break;
+	case ZOOM_FOCUS_LEFT:   set_sensitive(options_focus_left_menu(), false);   break;
+	case ZOOM_FOCUS_RIGHT:  set_sensitive(options_focus_right_menu(), false);  break;
+	case ZOOM_FOCUS_MIDDLE: set_sensitive(options_focus_middle_menu(), false); break;
+	case ZOOM_FOCUS_ACTIVE: set_sensitive(options_focus_active_menu(), false); break;
 	}
     }
 }  
@@ -439,9 +439,9 @@ void activate_speed_in_menu(snd_state *ss, int newval)
     {
       switch (speed_control_style(ss))
 	{
-	case SPEED_CONTROL_AS_RATIO:    set_sensitive(options_speed_ratio_menu(), TRUE);    break;
-	case SPEED_CONTROL_AS_SEMITONE: set_sensitive(options_speed_semitone_menu(), TRUE); break;
-	default:                        set_sensitive(options_speed_float_menu(), TRUE);    break;
+	case SPEED_CONTROL_AS_RATIO:    set_sensitive(options_speed_ratio_menu(), true);    break;
+	case SPEED_CONTROL_AS_SEMITONE: set_sensitive(options_speed_semitone_menu(), true); break;
+	default:                        set_sensitive(options_speed_float_menu(), true);    break;
 	}
     }
   set_speed_style(ss, newval);
@@ -449,9 +449,9 @@ void activate_speed_in_menu(snd_state *ss, int newval)
     {
       switch (speed_control_style(ss))
 	{
-	case SPEED_CONTROL_AS_RATIO:    set_sensitive(options_speed_ratio_menu(), FALSE);    break;
-	case SPEED_CONTROL_AS_SEMITONE: set_sensitive(options_speed_semitone_menu(), FALSE); break;
-	default:                        set_sensitive(options_speed_float_menu(), FALSE);    break;
+	case SPEED_CONTROL_AS_RATIO:    set_sensitive(options_speed_ratio_menu(), false);    break;
+	case SPEED_CONTROL_AS_SEMITONE: set_sensitive(options_speed_semitone_menu(), false); break;
+	default:                        set_sensitive(options_speed_float_menu(), false);    break;
 	}
     }
 }
@@ -480,17 +480,17 @@ static void reflect_x_axis_unit_change_in_menu(int oldval, int newval)
 {
   switch (oldval)
     {
-    case X_AXIS_IN_SECONDS:    set_sensitive(view_x_axis_seconds_menu(), TRUE);    break;
-    case X_AXIS_IN_BEATS:      set_sensitive(view_x_axis_beats_menu(), TRUE);      break;
-    case X_AXIS_IN_SAMPLES:    set_sensitive(view_x_axis_samples_menu(), TRUE);    break;
-    case X_AXIS_AS_PERCENTAGE: set_sensitive(view_x_axis_percentage_menu(), TRUE); break;
+    case X_AXIS_IN_SECONDS:    set_sensitive(view_x_axis_seconds_menu(), true);    break;
+    case X_AXIS_IN_BEATS:      set_sensitive(view_x_axis_beats_menu(), true);      break;
+    case X_AXIS_IN_SAMPLES:    set_sensitive(view_x_axis_samples_menu(), true);    break;
+    case X_AXIS_AS_PERCENTAGE: set_sensitive(view_x_axis_percentage_menu(), true); break;
     }
   switch (newval)
     {
-    case X_AXIS_IN_SECONDS:    set_sensitive(view_x_axis_seconds_menu(), FALSE);    break;
-    case X_AXIS_IN_BEATS:      set_sensitive(view_x_axis_beats_menu(), FALSE);      break;
-    case X_AXIS_IN_SAMPLES:    set_sensitive(view_x_axis_samples_menu(), FALSE);    break;
-    case X_AXIS_AS_PERCENTAGE: set_sensitive(view_x_axis_percentage_menu(), FALSE); break;
+    case X_AXIS_IN_SECONDS:    set_sensitive(view_x_axis_seconds_menu(), false);    break;
+    case X_AXIS_IN_BEATS:      set_sensitive(view_x_axis_beats_menu(), false);      break;
+    case X_AXIS_IN_SAMPLES:    set_sensitive(view_x_axis_samples_menu(), false);    break;
+    case X_AXIS_AS_PERCENTAGE: set_sensitive(view_x_axis_percentage_menu(), false); break;
     }
 }
   
@@ -519,16 +519,16 @@ void set_channel_style(snd_state *ss, int val)
 {
   switch (channel_style(ss))
     {
-    case CHANNELS_SEPARATE:     set_sensitive(view_combine_separate_menu(), TRUE);     break;
-    case CHANNELS_COMBINED:     set_sensitive(view_combine_combined_menu(), TRUE);     break;
-    case CHANNELS_SUPERIMPOSED: set_sensitive(view_combine_superimposed_menu(), TRUE); break;
+    case CHANNELS_SEPARATE:     set_sensitive(view_combine_separate_menu(), true);     break;
+    case CHANNELS_COMBINED:     set_sensitive(view_combine_combined_menu(), true);     break;
+    case CHANNELS_SUPERIMPOSED: set_sensitive(view_combine_superimposed_menu(), true); break;
     }
   in_set_channel_style(ss, val);
   switch (val)
     {
-    case CHANNELS_SEPARATE:     set_sensitive(view_combine_separate_menu(), FALSE);     break;
-    case CHANNELS_COMBINED:     set_sensitive(view_combine_combined_menu(), FALSE);     break;
-    case CHANNELS_SUPERIMPOSED: set_sensitive(view_combine_superimposed_menu(), FALSE); break;
+    case CHANNELS_SEPARATE:     set_sensitive(view_combine_separate_menu(), false);     break;
+    case CHANNELS_COMBINED:     set_sensitive(view_combine_combined_menu(), false);     break;
+    case CHANNELS_SUPERIMPOSED: set_sensitive(view_combine_superimposed_menu(), false); break;
     }
   for_each_sound(ss, update_sound, (void *)ss);
   for_each_chan(ss, update_graph);

@@ -11,7 +11,7 @@ static void edit_find_help_callback(Widget w, XtPointer context, XtPointer info)
 "This search travels through all the current channels in parallel until a match is found.  The find \
 expression is a Scheme function of one argument,  the current sample value.  It should return #t when the \
 search is satisified.  For example, (lambda (n) (> n .1)) looks for the next sample that is greater than .1.",
-	   TRUE);
+	   true);
 } 
 
 static void edit_find_ok_callback(int direction, Widget w, XtPointer context, XtPointer info)
@@ -80,7 +80,7 @@ static void edit_find_cancel_callback(Widget w, XtPointer context, XtPointer inf
   if (cb->event != (ss->sgx)->text_activate_event)
     {
       if (ss->checking_explicitly)
-	ss->stopped_explicitly = TRUE;
+	ss->stopped_explicitly = true;
       else XtUnmanageChild(edit_find_dialog);
     }
   else edit_find_next_callback(w, context, info);
@@ -100,11 +100,11 @@ static void make_edit_find_dialog(snd_state *ss)
   titlestr = XmStringCreate(_("Find"), XmFONTLIST_DEFAULT_TAG);
   XtSetArg(args[n], XmNokLabelString, xmstr1); n++;
   XtSetArg(args[n], XmNcancelLabelString, xmstr3); n++;
-  XtSetArg(args[n], XmNautoUnmanage, FALSE); n++;
+  XtSetArg(args[n], XmNautoUnmanage, false); n++;
   XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
   XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
-  XtSetArg(args[n], XmNnoResize, FALSE); n++;
-  XtSetArg(args[n], XmNtransient, FALSE); n++;
+  XtSetArg(args[n], XmNnoResize, false); n++;
+  XtSetArg(args[n], XmNtransient, false); n++;
   edit_find_dialog = XmCreateMessageDialog(MAIN_SHELL(ss), _("find"), args, n);
 
   XmStringFree(xmstr1);

@@ -5,7 +5,7 @@
 static Widget snd_error_dialog = NULL;
 static Widget snd_error_history = NULL;
 
-static void create_snd_error_dialog(snd_state *ss, int popup)
+static void create_snd_error_dialog(snd_state *ss, bool popup)
 {
   Arg args[32];
   int n;
@@ -14,7 +14,7 @@ static void create_snd_error_dialog(snd_state *ss, int popup)
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
-  XtSetArg(args[n], XmNnoResize, FALSE); n++;
+  XtSetArg(args[n], XmNnoResize, false); n++;
   XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
   snd_error_dialog = XmCreateErrorDialog(MAIN_PANE(ss), "error", args, n);
 
@@ -25,9 +25,9 @@ static void create_snd_error_dialog(snd_state *ss, int popup)
   n = attach_all_sides(args, 0);
   XtSetArg(args[n], XmNeditMode, XmMULTI_LINE_EDIT); n++;
   XtSetArg(args[n], XmNscrollBarDisplayPolicy, XmAS_NEEDED); n++;
-  XtSetArg(args[n], XmNeditable, FALSE); n++;
-  XtSetArg(args[n], XmNautoShowCursorPosition, FALSE); n++;
-  XtSetArg(args[n], XmNcursorPositionVisible, FALSE); n++;
+  XtSetArg(args[n], XmNeditable, false); n++;
+  XtSetArg(args[n], XmNautoShowCursorPosition, false); n++;
+  XtSetArg(args[n], XmNcursorPositionVisible, false); n++;
   XtSetArg(args[n], XmNscrollingPolicy, XmAUTOMATIC); n++;
   XtSetArg(args[n], XmNheight,200); n++;
   XtSetArg(args[n], XmNwidth, 400); n++;
@@ -47,7 +47,7 @@ static void create_snd_error_dialog(snd_state *ss, int popup)
   set_dialog_widget(ss, ERROR_DIALOG, snd_error_dialog);
 }
 
-void add_to_error_history(snd_state *ss, char *msg, int popup)
+void add_to_error_history(snd_state *ss, char *msg, bool popup)
 {
 #if HAVE_STRFTIME
   char *tim, *buf;
@@ -91,7 +91,7 @@ void add_to_error_history(snd_state *ss, char *msg, int popup)
 void post_error_dialog(snd_state *ss, char *msg)
 {
   XmString error_msg;
-  if (!snd_error_dialog) create_snd_error_dialog(ss, TRUE);
+  if (!snd_error_dialog) create_snd_error_dialog(ss, true);
   error_msg = XmStringCreate(msg, XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(snd_error_dialog, XmNmessageString, error_msg, NULL);
   if (!(XtIsManaged(snd_error_dialog)))
@@ -110,10 +110,10 @@ void show_snd_errors(snd_state *ss)
   else post_error_dialog(ss, _("no errors yet"));
 }
 
-static int yes_or_no = FALSE;
+static bool yes_or_no = false;
 
-static void yes_callback(Widget w, XtPointer context, XtPointer info) {yes_or_no = TRUE;}
-static void no_callback(Widget w, XtPointer context, XtPointer info) {yes_or_no = FALSE;}
+static void yes_callback(Widget w, XtPointer context, XtPointer info) {yes_or_no = true;}
+static void no_callback(Widget w, XtPointer context, XtPointer info) {yes_or_no = false;}
 
 #define YES_OR_NO_BUFFER_SIZE 1024
 
@@ -143,7 +143,7 @@ int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
   sprintf(yes_buf, "%s...[you need vprintf]", format);
 #endif
 #endif
-  yes_or_no = FALSE;
+  yes_or_no = false;
   if (!yes_or_no_dialog)
     {
       titlestr = XmStringCreate(_("Yow!"), XmFONTLIST_DEFAULT_TAG);
@@ -153,7 +153,7 @@ int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
-      XtSetArg(args[n], XmNnoResize, FALSE); n++;
+      XtSetArg(args[n], XmNnoResize, false); n++;
       XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
       XtSetArg(args[n], XmNokLabelString, xmstr1); n++;
       XtSetArg(args[n], XmNcancelLabelString, xmstr2); n++;
@@ -183,10 +183,10 @@ int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
   XtVaSetValues(yes_or_no_dialog, XmNmessageString, error_msg, NULL);
   if (with_background_processes(ss) != DISABLE_BACKGROUND_PROCESSES)
     {
-      ss->error_lock = TRUE;
+      ss->error_lock = true;
       while ((XtIsManaged(yes_or_no_dialog)) && (ss->error_lock))
 	check_for_event(ss);
-      ss->error_lock = FALSE;
+      ss->error_lock = false;
     }
   if (XtIsManaged(yes_or_no_dialog))
     XtUnmanageChild(yes_or_no_dialog);

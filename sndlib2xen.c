@@ -388,7 +388,7 @@ static void sound_data_free(sound_data *v)
   int i;
   if (v)
     {
-      if ((v->data) && (v->wrapped == FALSE))
+      if ((v->data) && (!(v->wrapped)))
 	{
 	  for (i = 0; i < v->chans; i++) if (v->data[i]) FREE(v->data[i]);
 	  FREE(v->data);
@@ -459,7 +459,7 @@ XEN make_sound_data(int chans, int frames)
   new_sound_data = (sound_data *)MALLOC(sizeof(sound_data));
   new_sound_data->length = frames;
   new_sound_data->chans = chans;
-  new_sound_data->wrapped = FALSE;
+  new_sound_data->wrapped = false;
   new_sound_data->data = (mus_sample_t **)CALLOC(chans, sizeof(mus_sample_t *));
   for (i = 0; i < chans; i++)
     new_sound_data->data[i] = (mus_sample_t *)CALLOC(frames, sizeof(mus_sample_t));
@@ -472,7 +472,7 @@ XEN wrap_sound_data(int chans, int frames, mus_sample_t **data)
   new_sound_data = (sound_data *)MALLOC(sizeof(sound_data));
   new_sound_data->length = frames;
   new_sound_data->chans = chans;
-  new_sound_data->wrapped = TRUE;
+  new_sound_data->wrapped = true;
   new_sound_data->data = data;
   XEN_MAKE_AND_RETURN_OBJECT(sound_data_tag, new_sound_data, 0, free_sound_data);
 }
@@ -948,7 +948,7 @@ to the audio line from sound-data sdata."
   fmt = audio_io_write_format(fd);
   outbytes = frms * sd->chans * mus_bytes_per_sample(fmt);
   obuf = (char *)CALLOC(outbytes, sizeof(char));
-  mus_file_write_buffer(fmt, 0, frms - 1, sd->chans, sd->data, obuf, TRUE); /* TRUE -> clipped */
+  mus_file_write_buffer(fmt, 0, frms - 1, sd->chans, sd->data, obuf, true); /* true -> clipped */
   val = mus_audio_write(fd, obuf, outbytes);
   FREE(obuf);
   return(xen_return_first(C_TO_XEN_INT(val), sdata));
@@ -1050,7 +1050,7 @@ static XEN g_mus_file_set_data_clipped(XEN fd, XEN clipped)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(fd), fd, XEN_ARG_1, S_setB S_mus_file_data_clipped, "an integer");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(clipped), fd, XEN_ARG_2, S_setB S_mus_file_data_clipped, "a boolean");
   return(C_TO_XEN_INT(mus_file_set_data_clipped(XEN_TO_C_INT(fd),
-						(XEN_FALSE_P(clipped)) ? 0 : 1)));
+						(XEN_FALSE_P(clipped)) ? false : true)));
 }
 
 static XEN g_mus_file_prescaler(XEN fd)

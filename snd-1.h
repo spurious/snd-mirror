@@ -45,7 +45,8 @@ typedef struct {
   int samps_per_bin, amp_env_size;
   mus_sample_t fmax, fmin;
   mus_sample_t *data_max, *data_min;
-  int completed, bin, top_bin;
+  bool completed;
+  int bin, top_bin;
 } env_info;
 
 typedef struct {
@@ -72,14 +73,14 @@ typedef struct {
   snd_io *io;      
   char *filename;
   file_info *hdr;
-  int temporary;
+  file_delete_t temporary;
   int edit_ctr;
   int open;
-  int inuse;
-  int copy;
+  bool inuse;
+  bool copy;
   int chan;
   off_t len;
-  int free_me;
+  bool free_me;
 } snd_data;
 
 typedef struct {
@@ -90,7 +91,8 @@ typedef struct {
   int edit_type, sound_location, ptree_location;
   off_t selection_beg, selection_end;  /* selection needs to follow edit list */
   Float maxamp, selection_maxamp;
-  int edpos, ptree_env_too;
+  int edpos;
+  bool ptree_env_too;
 } ed_list;
 
 typedef struct snd_fd {
@@ -99,7 +101,8 @@ typedef struct snd_fd {
   ed_list *current_state;
   void *cb; /* ed_fragment* */
   off_t loc, first, last;
-  int cbi, direction, at_eof;
+  int cbi, direction;
+  bool at_eof;
   mus_sample_t *data;
   snd_data *current_sound;
   off_t initial_samp; /* only real use (outside descriptions) is in apply-ladspa (sigh...) */
@@ -133,7 +136,7 @@ typedef struct {
         x_axis_x1,
         y_axis_y1,
         x_label_x, x_label_y;
-  int graph_active;
+  bool graph_active;
   off_t losamp, hisamp;                 /* displayed x-axis bounds in terms of sound sample numbers */
   Locus graph_x0;                       /* x axis offset relative to window (for double graphs) */
   void *x_ticks, *y_ticks;              /* actual type is tick_descriptor local to snd-axis.c */
@@ -144,9 +147,9 @@ typedef struct {
   double sx, zx;
   Locus y_offset;
   Latus window_width;
-  int no_data, changed;
+  bool no_data, changed;
 #if HAVE_GL
-  int use_gl, used_gl;
+  bool use_gl, used_gl;
 #endif
 } axis_info;
 
@@ -159,14 +162,13 @@ typedef struct {
 typedef struct {
   Float *data;
   int pts, data_size;
-  int exponential;
 } env;
 
 typedef struct {
   int size;
   int current_size;
   int window;              /* fft window in this case, not a display window */
-  int ok;
+  bool ok;
   Float beta;
   Float scale;
   axis_info *axis;
@@ -190,12 +192,12 @@ typedef struct {
 typedef struct chan_info {
   int chan;                /* which chan are we */
   off_t *samples;          /* current length */
-  int graph_transform_p;   /* f button state */
-  int graph_time_p;        /* w button state */
-  int graph_lisp_p;        /* is lisp graph active */
+  bool graph_transform_p;  /* f button state */
+  bool graph_time_p;       /* w button state */
+  bool graph_lisp_p;       /* is lisp graph active */
   void *lisp_info;
-  int cursor_on;           /* channel's cursor */
-  int cursor_visible;      /* for XOR decisions */
+  bool cursor_on;          /* channel's cursor */
+  bool cursor_visible;     /* for XOR decisions */
   off_t *cursors;          /* sample number (follows edit history) */
   int cursor_style, cursor_size;
   int cx, cy;               /* graph-relative cursor loc (for XOR) */
@@ -223,32 +225,38 @@ typedef struct chan_info {
   void *sonogram_data;
   void *last_sonogram, *temp_sonogram;
   void *fft_data;          /* parallels sonogram -- try to avoid repeating large ffts needlessly */
-  int printing, fft_changed;
+  bool printing;
+  int fft_changed;
   Float gsy, gzy;
   void *mix_dragging;
   int height, mixes;
   off_t original_cursor;   /* for cursor reset after cursor-moving play */
-  int hookable;
+  bool hookable;
   int selection_transform_size;
-  int squelch_update, previous_squelch_update, waiting_to_make_graph, in_as_one_edit;
+  bool squelch_update, previous_squelch_update, waiting_to_make_graph, in_as_one_edit;
   /* moved from global to channel-local 4-Aug-00 */
   Float spectro_x_scale, spectro_y_scale, spectro_z_scale, spectro_z_angle, spectro_x_angle, spectro_y_angle, spectro_cutoff, spectro_start;
   Float lin_dB, min_dB, fft_window_beta, beats_per_minute;
-  int show_y_zero, show_marks, wavo_hop, wavo_trace, zero_pad, x_axis_style, wavelet_type, verbose_cursor, max_transform_peaks;
-  int show_transform_peaks, show_axes, fft_log_frequency, fft_log_magnitude, transform_size, transform_graph_type, fft_window, time_graph_type;
-  int time_graph_style, lisp_graph_style, transform_graph_style;
+  bool show_y_zero, show_marks, verbose_cursor;
+  int wavo_hop, wavo_trace, zero_pad, x_axis_style, wavelet_type, max_transform_peaks;
+  int show_axes, transform_size, fft_window;
+  graph_type_t transform_graph_type, time_graph_type;
+  bool show_transform_peaks, fft_log_frequency, fft_log_magnitude;
+  graph_style_t time_graph_style, lisp_graph_style, transform_graph_style;
   Latus dot_size;
-  int transform_normalization, transform_type, show_mix_waveforms, spectro_hop, graphs_horizontal;
+  int transform_normalization, transform_type, spectro_hop;
+  bool show_mix_waveforms, graphs_horizontal;
   void *mix_md;
   XEN edit_hook;
   XEN undo_hook;
   XEN cursor_proc;
   XEN after_edit_hook;
   XEN properties;
-  int selection_visible, active;
+  bool selection_visible, active;
   Locus old_x0, old_x1;
   Float *amp_control; /* local amp controls in snd-dac; should it be extended to other controls? */
-  int last_search_result, just_zero;
+  int last_search_result;
+  bool just_zero;
 #if HAVE_GL
   int gl_fft_list;
 #endif
@@ -263,10 +271,10 @@ typedef struct snd_info {
   int playing;
   mark *playing_mark;
   int sync, previous_sync;
-  int expand_control_p;
-  int contrast_control_p;
-  int reverb_control_p;
-  int filter_control_p, filter_control_in_dB;
+  bool expand_control_p;
+  bool contrast_control_p;
+  bool reverb_control_p;
+  bool filter_control_p, filter_control_in_dB;
   Float amp_control;
   Float speed_control;
   int speed_control_direction, speed_control_style, speed_control_tones;
@@ -278,7 +286,8 @@ typedef struct snd_info {
   Float contrast_control, contrast_control_amp;
   Float reverb_control_length, reverb_control_scale, reverb_control_feedback, reverb_control_lowpass;
   Float reverb_control_decay, filter_control_env_xmax;
-  int filter_control_order, filter_control_changed;
+  int filter_control_order;
+  bool filter_control_changed;
   env *filter_control_env;
   int selected_channel;
   char *filename;
@@ -288,19 +297,21 @@ typedef struct snd_info {
   XEN search_proc;
   XEN prompt_callback;
   XEN properties;
-  int raw_prompt;
+  bool raw_prompt;
   char *search_expr;
   off_t marking;
-  int searching, filing, finding_mark, amping, reging, printing, loading, prompting;
+  int searching, filing, amping, reging, printing;
+  bool prompting, loading, finding_mark;
   off_t macroing;
-  int minibuffer_on, read_only;
+  int minibuffer_on;
+  bool read_only;
   chan_info **chans;
   struct snd_state *state;
   snd_context *sgx;
   file_info *hdr;             /* header of file that would be affected if we were to save current edits */
   int bomb_ctr;
   time_t write_date;          /* check for change behind back while editing */
-  int need_update;            /* current in-core data does not match actual file (someone wrote it behind our back) */
+  bool need_update;           /* current in-core data does not match actual file (someone wrote it behind our back) */
   int channel_style;          /* 0:separate panes per chan, 1:all chans in one pane */
   int allocated_chans;        /* snd_info widget tree is never pruned -- can only grow */
   int cursor_follows_play;
@@ -308,10 +319,10 @@ typedef struct snd_info {
   void *delete_me;
   chan_info *lacp;
   void *saved_controls;
-  int apply_ok, applying;
+  bool apply_ok, applying;
   /* moved from global to channel-local 4-Aug-00 */
   void *minibuffer_history, *filter_history;
-  int active;
+  bool active;
   char *name_string;
 } snd_info;
 
@@ -329,7 +340,7 @@ typedef struct snd_state {
   int catch_exists;
   char *catch_message;
 #if (!USE_GTK)
-  int using_schemes;
+  bool using_schemes;
 #endif
   state_context *sgx;
   int position_slider_width, zoom_slider_width, toggle_size, enved_point_size, channel_sash_indent, sash_size, channel_sash_size, sash_indent;
@@ -337,37 +348,53 @@ typedef struct snd_state {
   int max_sounds;
   snd_info *mx_sp;
   char *pending_change;
-  int print_choice, apply_choice, just_time, gl_has_double_buffer;
-  int stopped_explicitly, checking_explicitly, reloading_updated_file;
+  int print_choice, apply_choice;
+  bool gl_has_double_buffer, just_time;
+  bool stopped_explicitly, checking_explicitly;
+  int reloading_updated_file;
   Latus init_window_width, init_window_height;
   Locus init_window_x, init_window_y;
-  int graph_hook_active, lisp_graph_hook_active;
-  int Show_Transform_Peaks, Show_Y_Zero, Show_Marks, Fft_Log_Frequency, Fft_Log_Magnitude, Channel_Style, Sound_Style, Show_Axes;
+  bool graph_hook_active, lisp_graph_hook_active;
+  bool Show_Transform_Peaks, Show_Y_Zero, Show_Marks;
+  bool Fft_Log_Frequency, Fft_Log_Magnitude;
+  int Channel_Style, Sound_Style, Show_Axes;
   char *Eps_File, *Temp_Dir, *Save_Dir, *Ladspa_Dir;
   char *Listener_Font, *Axis_Label_Font, *Axis_Numbers_Font, *Bold_Button_Font, *Tiny_Font, *Peaks_Font, *Bold_Peaks_Font;
-  int Verbose_Cursor, Trap_Segfault;
-  int Enved_Filter_Order, Filter_Env_In_Hz;  /* for spectral envelopes from the envelope editor */
+  bool Verbose_Cursor, Trap_Segfault;
+  int Enved_Filter_Order;
+  bool Filter_Env_In_Hz;  /* for spectral envelopes from the envelope editor */
   Float Vu_Size, Vu_Font_Size, Eps_Left_Margin, Eps_Bottom_Margin, Eps_Size;
   char *Vu_Font;
   Float Spectro_X_Scale, Spectro_Y_Scale, Spectro_Z_Scale, Spectro_Z_Angle, Spectro_X_Angle, Spectro_Y_Angle, Spectro_Cutoff, Spectro_Start;
   int Default_Output_Type, Default_Output_Format, Default_Output_Chans, Default_Output_Srate;
   int Spectro_Hop, Color_Map, Wavelet_Type, Transform_Type, Optimization;
   Latus Dot_Size;
-  int Transform_Size, Fft_Window, Transform_Graph_Type, Time_Graph_Type, Zero_Pad, Ask_Before_Overwrite, Wavo_Hop, Wavo_Trace;
+  int Transform_Size, Fft_Window, Zero_Pad, Wavo_Hop, Wavo_Trace;
+  graph_type_t Transform_Graph_Type, Time_Graph_Type;
+  bool Ask_Before_Overwrite;
   Float Fft_Window_Beta, Reverb_Control_Decay;
   Float Color_Scale, Color_Cutoff, Beats_Per_Minute;
-  int Color_Inverted, Speed_Control_Style, Transform_Normalization, Show_Mix_Waveforms, Mix_Waveform_Height;
-  int Speed_Control_Tones, Sinc_Width, X_Axis_Style, Zoom_Focus_Style, Graph_Style, Region_Graph_Style;
-  int Auto_Resize, Auto_Update, Max_Regions, Max_Transform_Peaks;
-  int Audio_Output_Device, Audio_Input_Device, Show_Backtrace, Emacs_Style_Save_As, With_GL, With_Relative_Panes;
-  int Print_Length, Dac_Size, Dac_Combines_Channels, Previous_Files_Sort, Show_Selection_Transform, With_Mix_Tags, Selection_Creates_Region;
+  bool Color_Inverted, Show_Mix_Waveforms;
+  int Speed_Control_Style, Transform_Normalization, Mix_Waveform_Height;
+  int Speed_Control_Tones, Sinc_Width, X_Axis_Style, Zoom_Focus_Style;
+  graph_style_t Graph_Style, Region_Graph_Style;
+  bool Auto_Resize, Auto_Update;
+  int Max_Regions, Max_Transform_Peaks;
+  int Audio_Output_Device, Audio_Input_Device;
+  bool Show_Backtrace, Emacs_Style_Save_As, With_GL, With_Relative_Panes;
+  int Print_Length, Dac_Size, Previous_Files_Sort;
+  bool Dac_Combines_Channels, Show_Selection_Transform, With_Mix_Tags, Selection_Creates_Region;
   char *Save_State_File, *Listener_Prompt;
   Float Enved_Base, Enved_Power, Auto_Update_Interval;
-  int Enved_Clip_p, Enved_Exp_p, Enved_Target, Enved_Wave_p, Enved_in_dB, Graphs_Horizontal, With_Background_Processes;
-  int Graph_Cursor, Data_Clipped, Show_Indices, Mix_Tag_Width, Mix_Tag_Height, Minibuffer_History_Length;
+  bool Enved_Clip_p, Enved_Exp_p, Enved_Wave_p, Enved_in_dB, Graphs_Horizontal, With_Background_Processes;
+  int Graph_Cursor, Mix_Tag_Width, Mix_Tag_Height, Minibuffer_History_Length, Enved_Target;
+  bool Data_Clipped, Show_Indices;
   Float min_dB, lin_dB;
   char *HTML_Dir, *HTML_Program;
-  int error_lock, deferred_regions, jump_ok, batch_mode;
+  bool error_lock;
+  int deferred_regions;
+  bool batch_mode;
+  bool jump_ok;
 } snd_state;
 
 typedef struct {
@@ -406,12 +433,12 @@ int snd_overwrite_ok(snd_state *ss, const char *ofile);
 snd_io *make_file_state(int fd, file_info *hdr, int chan, int suggested_bufsize);
 void file_buffers_forward(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_data *cur_snd);
 void file_buffers_back(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_data *cur_snd);
-int snd_remove(const char *name, int forget);
+int snd_remove(const char *name, bool forget);
 int snd_close(int fd, const char *name);
 int snd_fclose(FILE *fd, const char *name);
 void remember_temp(const char *filename, int chans);
 void forget_temps(void);
-snd_data *make_snd_data_file(const char *name, snd_io *io, file_info *hdr, int temp, int ctr, int temp_chan);
+snd_data *make_snd_data_file(const char *name, snd_io *io, file_info *hdr, file_delete_t temp, int ctr, int temp_chan);
 snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize);
 snd_data *free_snd_data(snd_data *sf);
 snd_data *make_snd_data_buffer(mus_sample_t *data, int len, int ctr);
@@ -463,7 +490,7 @@ void reflect_file_open_in_menu (void);
 void reflect_file_change_in_menu (void);
 void reflect_file_lack_in_menu (void);
 void reflect_mix_in_menu(void);
-void reflect_equalize_panes_in_menu(int on);
+void reflect_equalize_panes_in_menu(bool on);
 void reflect_file_revert_in_menu (snd_state *ss);
 void reflect_file_save_in_menu (snd_state *ss);
 void reflect_file_revert_in_label (snd_info *sp);
@@ -488,10 +515,10 @@ void save_options_from_menu(snd_state *ss);
 void save_state_from_menu(snd_state *ss);
 snd_info *new_file_from_menu(snd_state *ss);
 void unprotect_callback(int slot);
-void set_graph_style(snd_state *ss, int val);
-void set_show_marks(snd_state *ss, int val);
-void set_show_y_zero(snd_state *ss, int val);
-void set_verbose_cursor(snd_state *ss, int val);
+void set_graph_style(snd_state *ss, graph_style_t val);
+void set_show_marks(snd_state *ss, bool val);
+void set_show_y_zero(snd_state *ss, bool val);
+void set_verbose_cursor(snd_state *ss, bool val);
 void set_view_ctrls_label(const char *lab);
 void set_view_listener_label(const char *lab);
 void activate_focus_menu(snd_state *ss, int new_focus);
@@ -505,12 +532,12 @@ void g_init_menu(void);
 
 /* -------- snd-main.c -------- */
 
-int snd_exit_cleanly(snd_state *ss, int force_exit);
+int snd_exit_cleanly(snd_state *ss, bool force_exit);
 void sound_not_current(snd_info *sp, void *dat);
 int save_options (snd_state *ss);
 FILE *open_snd_init_file (snd_state *ss);
 int save_state (snd_state *ss, char *save_state_name);
-int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_file_names, int with_title, int args);
+int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_file_names, bool with_title, int args);
 
 void g_init_main(void);
 
@@ -546,8 +573,8 @@ void clear_possible_completions(void);
 char *filename_completer(char *text);
 char *srate_completer(char *text);
 char *info_completer(char *text);
-char *complete_listener_text(char *old_text, int end, int *try_completion, char **to_file_text);
-int is_separator_char(char c);
+char *complete_listener_text(char *old_text, int end, bool *try_completion, char **to_file_text);
+bool separator_char_p(char c);
 
 
 /* -------- snd-print.c -------- */
@@ -555,8 +582,8 @@ int is_separator_char(char c);
 void ps_set_grf_points(double x, int j, Float ymin, Float ymax);
 void ps_set_grf_point(double x, int j, Float y);
 void ps_allocate_grf_points(void);
-void ps_draw_grf_points(axis_info *ap, int j, Float y0, int graph_style, int dot_size);
-void ps_draw_both_grf_points(axis_info *ap, int j, int graph_style, int dot_size);
+void ps_draw_grf_points(axis_info *ap, int j, Float y0, graph_style_t graph_style, int dot_size);
+void ps_draw_both_grf_points(axis_info *ap, int j, graph_style_t graph_style, int dot_size);
 void ps_draw_sono_rectangle(axis_info *ap, int color, Float x, Float y, Float width, Float height);
 void ps_reset_color(void);
 void ps_bg(axis_info *ap, axis_context *ax);
@@ -604,8 +631,8 @@ void ripple_marks(chan_info *cp, off_t beg, off_t change);
 void mark_define_region(chan_info *cp, int count);
 void save_mark_list(FILE *fd, chan_info *cp);
 void reverse_marks(chan_info *cp, off_t beg, off_t dur);
-void src_marks(chan_info *cp, Float ratio, off_t old_samps, off_t new_samps, off_t beg, int over_selection);
-void reset_marks(chan_info *cp, int cur_marks, off_t *samps, off_t end, off_t extension, int over_selection);
+void src_marks(chan_info *cp, Float ratio, off_t old_samps, off_t new_samps, off_t beg, bool over_selection);
+void reset_marks(chan_info *cp, int cur_marks, off_t *samps, off_t end, off_t extension, bool over_selection);
 void ripple_trailing_marks(chan_info *cp, off_t beg, off_t old_len, off_t new_len);
 void swap_marks(chan_info *cp0, chan_info *cp1);
 void g_init_marks(void);
@@ -618,7 +645,7 @@ void backup_mark_list(chan_info *cp, int cur);
 /* -------- snd-data.c -------- */
 
 chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *state);
-snd_info *make_snd_info(snd_info *sip, snd_state *state, const char *filename, file_info *hdr, int snd_slot, int read_only);
+snd_info *make_snd_info(snd_info *sip, snd_state *state, const char *filename, file_info *hdr, int snd_slot, bool read_only);
 snd_info *make_basic_snd_info(int chans);
 void initialize_control_panel(snd_state *ss, snd_info *sp);
 void free_snd_info(snd_info *sp);
@@ -632,7 +659,7 @@ void for_each_sound_chan(snd_info *sp, void (*func)(chan_info *));
 void for_each_sound(snd_state *ss, void (*func)(snd_info *, void *), void *userptr);
 int map_over_separate_chans(snd_state *ss, int (*func)(chan_info *, void *), void *userptr);
 int snd_ok (snd_info *sp);
-int active_channels (snd_state *ss, int count_virtual_channels);
+int active_channels (snd_state *ss, bool count_virtual_channels);
 int find_free_sound_slot (snd_state *state, int desired_chans);
 int find_free_sound_slot_for_channel_display (snd_state *ss);
 snd_info *selected_sound(snd_state *ss);
@@ -669,11 +696,11 @@ void free_sound_list (chan_info *cp);
 void free_ptree_list(chan_info *cp);
 void release_dangling_readers(chan_info *cp, int edit_ctr);
 void extend_with_zeros(chan_info *cp, off_t beg, off_t num, const char *origin, int edpos);
-void file_insert_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, int chan, int auto_delete, const char *origin, int edpos);
+void file_insert_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, const char *origin, int edpos);
 void delete_samples(off_t beg, off_t num, chan_info *cp, const char *origin, int edpos);
 void change_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, int lock, const char *origin, int edpos);
-void file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, int chan, int auto_delete, int lock, const char *origin, int edpos);
-void file_override_samples(off_t num, char *tempfile, chan_info *cp, int chan, int auto_delete, int lock, const char *origin);
+void file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, int lock, const char *origin, int edpos);
+void file_override_samples(off_t num, char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, int lock, const char *origin);
 Float chn_sample(off_t samp, chan_info *cp, int pos);
 snd_fd *free_snd_fd(snd_fd *sf);
 char *sf_to_string(snd_fd *fd);
@@ -681,17 +708,17 @@ void release_region_readers(int reg);
 int sf_p(XEN obj);
 snd_fd *get_sf(XEN obj);
 snd_fd *free_snd_fd_almost(snd_fd *sf);
-void scale_channel(chan_info *cp, Float scaler, off_t beg, off_t num, int pos, int in_as_one_edit);
-void ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, int pos, int in_as_one_edit);
+void scale_channel(chan_info *cp, Float scaler, off_t beg, off_t num, int pos, bool in_as_one_edit);
+void ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, int pos, bool in_as_one_edit);
 void xramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler, Float offset, 
-		   off_t beg, off_t num, int pos, int in_as_one_edit, mus_any *e, int e_pos);
-void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, int env_it, XEN init_func, int is_xen);
+		   off_t beg, off_t num, int pos, bool in_as_one_edit, mus_any *e, int e_pos);
+void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, bool env_it, XEN init_func, bool is_xen);
 snd_fd *init_sample_read(off_t samp, chan_info *cp, int direction);
 snd_fd *init_sample_read_any(off_t samp, chan_info *cp, int direction, int edit_position);
 void read_sample_change_direction(snd_fd *sf, int dir);
-int ramp_or_ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos, Float base);
-int ptree_or_sound_fragments_in_use(chan_info *cp, int pos);
-int ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos, int have_init_func);
+bool ramp_or_ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos, Float base);
+bool ptree_or_sound_fragments_in_use(chan_info *cp, int pos);
+bool ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos, int have_init_func);
 #define read_sample(Sf) (*Sf->run)(Sf)
 #define read_sample_to_float(Sf) (*Sf->runf)(Sf)
 Float protected_next_sample_to_float(snd_fd *sf);
@@ -728,11 +755,11 @@ void set_spectro_cutoff_and_redisplay(snd_state *ss, Float val);
 void c_convolve(char *fname, Float amp, int filec, off_t filehdr, int filterc, off_t filterhdr, int filtersize,
 		 int fftsize, int filter_chans, int filter_chan, int data_size, snd_info *gsp, int from_enved, int ip, int total_chans);
 void *make_sonogram_state(chan_info *cp);
-void single_fft(chan_info *cp, int dpy);
+void single_fft(chan_info *cp, bool dpy);
 Cessate sonogram_in_slices(void *sono);
 char *added_transform_name(int type);
 void clear_transform_edit_ctrs(chan_info *cp);
-void make_fft_graph(chan_info *cp, snd_info *sp, axis_info *fap, axis_context *ax, int with_hooks);
+void make_fft_graph(chan_info *cp, snd_info *sp, axis_info *fap, axis_context *ax, bool with_hooks);
 void g_init_fft(void);
 Float fft_beta_max(int win);
 void cp_free_fft_state(chan_info *cp);
@@ -755,7 +782,7 @@ XEN eval_form_wrapper(void *data);
 XEN string_to_form(void *data);
 char *g_print_1(XEN obj);
 chan_info *get_cp(XEN snd_n, XEN chn_n, const char *caller);
-snd_info *get_sp(XEN snd_n, int accept_player);
+snd_info *get_sp(XEN snd_n, bool accept_player);
 XEN g_c_make_sample_reader(snd_fd *fd);
 XEN g_call0(XEN proc, const char *caller);
 XEN g_call1(XEN proc, XEN arg, const char *caller);
@@ -859,7 +886,7 @@ void for_each_region_chan(void (*func)(chan_info *, void *), void *userptr);
 
 Float un_dB(snd_state *ss, Float py);
 env *copy_env(env *e);
-int envs_equal(env *e1, env *e2);
+bool envs_equal(env *e1, env *e2);
 env *free_env(env *e);
 char *env_to_string(env *e);
 int find_env(char *name);
@@ -870,17 +897,17 @@ env *default_env(Float x1, Float y);
 void *new_env_editor(void);
 void edp_reset(void *spf);
 axis_info *edp_ap(void *spf);
-int edp_display_graph(snd_state *ss, void *spf, const char *name, axis_context *ax, 
-		      int x, int y, int width, int height, env *e, int in_dB, int with_dots);
-void edp_handle_point(snd_state *ss, void *spf, int evx, int evy, Tempus motion_time, env *e, int in_dB, Float xmax);
-int edp_handle_press(snd_state *ss, void *spf, int evx, int evy, Tempus time, env *e, int in_dB, Float xmax);
+bool edp_display_graph(snd_state *ss, void *spf, const char *name, axis_context *ax, 
+		       int x, int y, int width, int height, env *e, bool in_dB, bool with_dots);
+void edp_handle_point(snd_state *ss, void *spf, int evx, int evy, Tempus motion_time, env *e, bool in_dB, Float xmax);
+int edp_handle_press(snd_state *ss, void *spf, int evx, int evy, Tempus time, env *e, bool in_dB, Float xmax);
 void edp_handle_release(void *spf, env *e);
 void edp_edited(void *spf);
 void init_env_axes(axis_info *ap, const char *name, int x_offset, int ey0, int width, int height, 
-		   Float xmin, Float xmax, Float ymin, Float ymax, int printing);
+		   Float xmin, Float xmax, Float ymin, Float ymax, bool printing);
 void display_enved_env(snd_state *ss, env *e, axis_context *ax, char *name, 
-		       int x0, int y0, int width, int height, int dots, Float base, int printing);
-void view_envs(snd_state *ss, int env_window_width, int env_window_height, int printing);
+		       int x0, int y0, int width, int height, int dots, Float base, bool printing);
+void view_envs(snd_state *ss, int env_window_width, int env_window_height, bool printing);
 int hit_env(int xe, int ye, int env_window_width, int env_window_height);
 void do_enved_edit(env *new_env);
 void redo_env_edit(void);
@@ -891,7 +918,7 @@ char *enved_all_names(int n);
 void set_enved_env_list_top(int n);
 env *enved_all_envs(int pos);
 void alert_envelope_editor(snd_state *ss, char *name, env *val);
-void enved_show_background_waveform(snd_state *ss, axis_info *ap, axis_info *gray_ap, int apply_to_selection, int show_fft, int printing);
+void enved_show_background_waveform(snd_state *ss, axis_info *ap, axis_info *gray_ap, bool apply_to_selection, bool show_fft, bool printing);
 int enved_button_press_display(snd_state *ss, axis_info *ap, env *active_env, int evx, int evy);
 void save_envelope_editor_state(FILE *fd);
 char *env_name_completer(char *text);
@@ -905,7 +932,7 @@ XEN env_to_xen (env *e);
 env *xen_to_env(XEN res);
 env *get_env(XEN e, const char *origin);
 void g_init_env(void);
-int check_enved_hook(env *e, int pos, Float x, Float y, int reason);
+bool check_enved_hook(env *e, int pos, Float x, Float y, int reason);
 
 
 
@@ -917,13 +944,13 @@ void stop_playing_sound(snd_info *sp);
 void stop_playing_sound_no_toggle(snd_info *sp);
 void stop_playing_all_sounds(void);
 void stop_playing_region(int n);
-void play_region(snd_state *ss, int n, int background);
-void play_channel(chan_info *cp, off_t start, off_t end, int background, XEN edpos, const char *caller, int arg_pos);
-void play_sound(snd_info *sp, off_t start, off_t end, int background, XEN edpos, const char *caller, int arg_pos);
-void play_channels(chan_info **cps, int chans, off_t *starts, off_t *ends, int background, XEN edpos, const char *caller, int arg_pos, int selection);
-void play_selection(int background, XEN edpos, const char *caller, int arg_pos);
+void play_region(snd_state *ss, int n, bool background);
+void play_channel(chan_info *cp, off_t start, off_t end, bool background, XEN edpos, const char *caller, int arg_pos);
+void play_sound(snd_info *sp, off_t start, off_t end, bool background, XEN edpos, const char *caller, int arg_pos);
+void play_channels(chan_info **cps, int chans, off_t *starts, off_t *ends, bool background, XEN edpos, const char *caller, int arg_pos, bool selection);
+void play_selection(bool background, XEN edpos, const char *caller, int arg_pos);
 void toggle_dac_pausing(snd_state *ss); /* snd-dac.c */
-int play_in_progress(void);
+bool play_in_progress(void);
 void initialize_apply(snd_info *sp, int chans, off_t beg, off_t frames);
 void finalize_apply(snd_info *sp);
 int run_apply(int ofd);
@@ -945,7 +972,8 @@ void dac_set_reverb_lowpass(snd_info *sp, Float newval);
 
 /* -------- snd-chn.c -------- */
 
-snd_info *make_simple_channel_display(snd_state *ss, int srate, int initial_length, int with_arrows, int grf_style, widget_t container, int with_events);
+snd_info *make_simple_channel_display(snd_state *ss, int srate, int initial_length, int with_arrows, 
+				      graph_style_t grf_style, widget_t container, bool with_events);
 axis_info *lisp_info_axis(chan_info *cp);
 void *free_lisp_info(chan_info *cp);
 void zx_incremented(chan_info *cp, double amount);
@@ -959,7 +987,7 @@ void set_dot_size(snd_state *ss, int val);
 chan_info *virtual_selected_channel(chan_info *cp);
 void handle_cursor(chan_info *cp, int redisplay);
 void chans_field(snd_state *ss, int field, Float val);
-void in_set_transform_graph_type(snd_state *ss, int val);
+void in_set_transform_graph_type(snd_state *ss, graph_type_t val);
 void in_set_fft_window(snd_state *ss, int val);
 void combine_sound(snd_info *sp);
 void separate_sound(snd_info *sp);
@@ -969,7 +997,7 @@ void set_chan_fft_in_progress(chan_info *cp, Cessator fp);
 void goto_graph(chan_info *cp);
 void start_amp_env(chan_info *cp);
 void stop_amp_env(chan_info *cp);
-int chan_fft_in_progress(chan_info *cp);
+bool chan_fft_in_progress(chan_info *cp);
 void force_fft_clear(chan_info *cp);
 void chan_info_cleanup(chan_info *cp);
 void update_graph(chan_info *cp);
@@ -985,7 +1013,7 @@ void sx_incremented(chan_info *cp, double amount);
 int move_axis(chan_info *cp, axis_info *ap, int x);
 void set_axes(chan_info *cp, double x0, double x1, Float y0, Float y1);
 void focus_x_axis_change(axis_info *ap, chan_info *cp, snd_info *sp, int focus_style);
-int key_press_callback(chan_info *ur_cp, int x, int y, int key_state, int keysym);
+bool key_press_callback(chan_info *ur_cp, int x, int y, int key_state, int keysym);
 void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int button, Tempus time);
 void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, int button);
 void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time, Tempus click_time);
@@ -996,12 +1024,12 @@ chan_info *which_channel(snd_info *sp, int y);
 
 void g_init_chn(void);
 XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp);
-void draw_graph_data(chan_info *cp, off_t losamp, off_t hisamp, int data_size, Float *data, Float *data1, axis_context *ax, int style);
+void draw_graph_data(chan_info *cp, off_t losamp, off_t hisamp, int data_size, Float *data, Float *data1, axis_context *ax, graph_style_t style);
 
-void fftb(chan_info *cp, int on);
-void waveb(chan_info *cp, int on);
-void f_button_callback(chan_info *cp, int on, int with_control);
-void w_button_callback(chan_info *cp, int on, int with_control);
+void fftb(chan_info *cp, bool on);
+void waveb(chan_info *cp, bool on);
+void f_button_callback(chan_info *cp, bool on, bool with_control);
+void w_button_callback(chan_info *cp, bool on, bool with_control);
 axis_context *set_context (chan_info *cp, int gc);
 axis_context *copy_context (chan_info *cp);
 axis_context *erase_context (chan_info *cp);
@@ -1019,7 +1047,7 @@ axis_context *free_axis_context(axis_context *ax);
 Locus grf_x(double val, axis_info *ap);
 Locus grf_y(Float val, axis_info *ap);
 void init_axis_scales(axis_info *ap);
-void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, int show_x_axis);
+void make_axes_1(axis_info *ap, int x_style, int srate, int axes, bool printing, bool show_x_axis);
 
 #define ungrf_x(AP, X) (((X) - (AP)->x_base) / (AP)->x_scale)
 #define ungrf_y(AP, Y) (((Y) - (AP)->y_base) / (AP)->y_scale)
@@ -1044,9 +1072,9 @@ env_info *free_env_info(env_info *ep);
 void start_env_state(chan_info *cp);
 env_info *make_mix_input_amp_env(chan_info *cp);
 Cessate get_amp_env(Indicium ptr);
-int amp_env_maxamp_ok(chan_info *cp, int edpos);
+bool amp_env_maxamp_ok(chan_info *cp, int edpos);
 Float amp_env_maxamp(chan_info *cp, int edpos);
-int amp_env_usable(chan_info *cp, Float samples_per_pixel, off_t hisamp, int start_new, int edit_pos);
+bool amp_env_usable(chan_info *cp, Float samples_per_pixel, off_t hisamp, bool start_new, int edit_pos);
 int amp_env_graph(chan_info *cp, axis_info *ap, Float samples_per_pixel, int srate);
 char *shortname(snd_info *sp);
 char *shortname_indexed(snd_info *sp);
@@ -1063,8 +1091,8 @@ Cessate apply_controls(Indicium xp);
 void *make_apply_state_with_implied_beg_and_dur(void *xp);
 void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos, Float base, Float scaler, Float offset);
 void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, int pos);
-void amp_env_ptree(chan_info *cp, void *pt, int pos, XEN init_func, int is_xen);
-void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int pos, XEN init_func, int is_xen);
+void amp_env_ptree(chan_info *cp, void *pt, int pos, XEN init_func, bool is_xen);
+void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int pos, XEN init_func, bool is_xen);
 void amp_env_insert_zeros(chan_info *cp, off_t beg, off_t num, int pos);
 snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *new_comment, off_t samples);
 
@@ -1074,43 +1102,43 @@ XEN snd_no_such_sound_error(const char *caller, XEN n);
 void set_speed_style(snd_state *ss, int val);
 void amp_env_scale_by(chan_info *cp, Float scl, int pos);
 void amp_env_scale_selection_by(chan_info *cp, Float scl, off_t beg, off_t num, int pos);
-env_info *amp_env_copy(chan_info *cp, int reversed, int edpos);
+env_info *amp_env_copy(chan_info *cp, bool reversed, int edpos);
 env_info *amp_env_section(chan_info *cp, off_t beg, off_t num, int edpos);
 void pick_one_bin(env_info *ep, int bin, off_t cursamp, chan_info *cp, int edpos);
 void remember_mini_string(snd_info *sp, char *str);
-void restore_mini_string(snd_info *s, int back);
+void restore_mini_string(snd_info *s, bool back);
 void clear_mini_strings(snd_info *sp);
 void remember_filter_string(snd_info *sp, char *str);
-void restore_filter_string(snd_info *s, int back);
+void restore_filter_string(snd_info *s, bool back);
 void clear_filter_strings(snd_info *sp);
 void remember_listener_string(char *str);
-void restore_listener_string(int back);
+void restore_listener_string(bool back);
 
 
 /* -------- snd-file -------- */
 
 void *free_axes_data(void *sa);
 void *make_axes_data(snd_info *sp);
-int restore_axes_data(snd_info *sp, void *sa, Float new_duration, int need_edit_history_update);
+bool restore_axes_data(snd_info *sp, void *sa, Float new_duration, bool need_edit_history_update);
 off_t disk_kspace (const char *filename);
 time_t file_write_date(const char *filename);
-int is_link(const char *filename);
-int is_directory(const char *filename);
+bool link_p(const char *filename);
+bool directory_p(const char *filename);
 file_info *make_file_info(const char *fullname, snd_state *ss);
 file_info *free_file_info(file_info *hdr);
 file_info *copy_header(const char *fullname, file_info *ohdr);
 file_info *make_temp_header(const char *fullname, int srate, int chans, off_t samples, const char *caller);
 dir *free_dir (dir *dp);
-int is_sound_file(char *name);
+bool sound_file_p(char *name);
 void init_sound_file_extensions(void);
 dir *find_sound_files_in_dir (const char *name);
 dir *filter_sound_files(dir *dp, char *pattern);
-snd_info *snd_open_file (const char *filename, snd_state *ss, int read_only);
-snd_info *snd_open_file_unselected (const char *filename, snd_state *ss, int read_only);
+snd_info *snd_open_file (const char *filename, snd_state *ss, bool read_only);
+snd_info *snd_open_file_unselected (const char *filename, snd_state *ss, bool read_only);
 void snd_close_file(snd_info *sp, snd_state *ss);
 int copy_file(const char *oldname, const char *newname);
 int move_file(const char *oldfile, const char *newfile);
-snd_info *make_sound_readable(snd_state *ss, const char *filename, int post_close);
+snd_info *make_sound_readable(snd_state *ss, const char *filename, bool post_close);
 snd_info *snd_update(snd_state *ss, snd_info *sp);
 char *view_curfiles_name(int pos);
 void view_curfiles_play(snd_state *ss, int pos, int play);
@@ -1186,7 +1214,7 @@ void g_init_utils(void);
 
 void command_return(widget_t w, snd_state *ss, int last_prompt);
 char *listener_prompt_with_cr(snd_state *ss);
-int check_balance(char *expr, int start, int end, int in_listener);
+int check_balance(char *expr, int start, int end, bool in_listener);
 int find_matching_paren(char *str, int parens, int pos, char *prompt, int *highlight_pos);
 XEN provide_listener_help(char *source);
 
@@ -1196,14 +1224,14 @@ void g_init_listener(void);
 
 /* -------- snd-mix.c -------- */
 
-int disk_space_p(snd_info *sp, off_t bytes, off_t other_bytes, char *filename);
+disk_space_t disk_space_p(snd_info *sp, off_t bytes, off_t other_bytes, char *filename);
 mix_context *cp_to_mix_context(chan_info *cp);
 mix_context *make_mix_context(chan_info *cp);
 mix_context *free_mix_context(mix_context *ms);
 void free_mix_list(chan_info *cp);
 void free_mixes(chan_info *cp);
-void mix_complete_file_at_cursor(snd_info *sp, char *str, const char *origin, int with_tag);
-int mix(off_t beg, off_t num, int chans, chan_info **cps, char *mixinfile, int temp, const char *origin, int with_tag);
+void mix_complete_file_at_cursor(snd_info *sp, char *str, const char *origin, bool with_tag);
+int mix(off_t beg, off_t num, int chans, chan_info **cps, char *mixinfile, int temp, const char *origin, bool with_tag);
 void backup_mix_list(chan_info *cp, int edit_ctr);
 int active_mix_p(chan_info *cp);
 off_t mix_beg(chan_info *cp);
@@ -1235,8 +1263,8 @@ void mix_play_from_id(int mix_id);
 void track_play_from_id(int mix_id);
 int current_mix_id(snd_state *ss);
 void start_mix_drag(int mix_id);
-int set_mix_speed_from_id(int mix_id, Float val, int dragging);
-int set_mix_amp_from_id(int mix_id, int chan, Float val, int dragging);
+int set_mix_speed_from_id(int mix_id, Float val, bool dragging);
+int set_mix_amp_from_id(int mix_id, int chan, Float val, bool dragging);
 void set_mix_track_from_id(int mix_id, int track);
 int mix_track_from_id(int mix_id);
 Float mix_speed_from_id(int mix_id);
@@ -1309,22 +1337,22 @@ void g_init_kbd(void);
 
 /* -------- snd-sig.c -------- */
 
-void scale_by(chan_info *cp, Float *scalers, int len, int selection);
-void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *scalers, int len, int selection);
+void scale_by(chan_info *cp, Float *scalers, int len, bool selection);
+void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *scalers, int len, bool selection);
 Float get_maxamp(snd_info *sp, chan_info *cp, int edpos);
 src_state *make_src(snd_state *ss, Float srate, snd_fd *sf, Float initial_srate);
 Float src_input_as_needed(void *arg, int dir);
 src_state *free_src(src_state *sr);
-void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_num, 
-		    int from_enved, const char *origin, int over_selection, mus_any *gen, XEN edpos, int arg_pos, Float e_base);
+void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, bool just_num, 
+		    int from_enved, const char *origin, bool over_selection, mus_any *gen, XEN edpos, int arg_pos, Float e_base);
 void apply_filter(chan_info *ncp, int order, env *e, int from_enved, const char *origin, 
 		  int over_selection, Float *ur_a, mus_any *gen, XEN edpos, int arg_pos);
-void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, int regexpr, 
+void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool regexpr, 
 	       int from_enved, const char *origin, mus_any *gen, XEN edpos, int arg_pos, Float e_base);
-void cos_smooth(chan_info *cp, off_t beg, off_t num, int regexpr, const char *origin);
+void cos_smooth(chan_info *cp, off_t beg, off_t num, bool regexpr, const char *origin);
 void display_frequency_response(snd_state *ss, env *e, axis_info *ap, axis_context *gax, int order, int dBing);
 void cursor_delete(chan_info *cp, off_t count, const char *origin);
-void cursor_zeros(chan_info *cp, off_t count, int regexpr);
+void cursor_zeros(chan_info *cp, off_t count, bool regexpr);
 void cursor_insert(chan_info *cp, off_t beg, off_t count, const char *origin);
 
 void g_init_sig(void);
@@ -1346,9 +1374,9 @@ int evaluate_ptree_1f2b(void *upt, Float arg);
 void *free_ptree(void *upt);
 void g_init_run(void);
 XEN ptree_code(void *p);
-Float evaluate_ptree_1f1v1b2f(void *upt, Float arg, vct *v, int dir);
+Float evaluate_ptree_1f1v1b2f(void *upt, Float arg, vct *v, bool dir);
 void *form_to_ptree_3_f(XEN code);
-Float evaluate_ptreec(void *upt, Float arg, vct *v, int dir);
+Float evaluate_ptreec(void *upt, Float arg, vct *v, bool dir);
 
 
 /* -------- snd-draw.c -------- */

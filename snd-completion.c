@@ -123,7 +123,7 @@ static int completions(char *text)
 static int completions(char *text) {return(0);}
 #endif
 
-int is_separator_char(char c)
+bool separator_char_p(char c)
 {
   return((!(isalpha((int)c))) &&
 	 (!(isdigit((int)c))) &&
@@ -158,7 +158,7 @@ char *command_completer(char *original_text)
     {
       len = strlen(original_text);
       for (i = len - 1; i >= 0; i--)
-	if (is_separator_char(original_text[i]))
+	if (separator_char_p(original_text[i]))
 	  break;
       beg = i + 1;
       if (beg == len) 
@@ -312,7 +312,7 @@ char *filename_completer(char *text)
   /* assume text is a partial filename */
   /* get directory name, opendir, read files checking for match */
   /* return name of same form as original (i.e. don't change user's directory indication) */
-  /* if directory, add "/" -- is_directory(name) static in snd-xfile.c */
+  /* if directory, add "/" -- directory_p(name) static in snd-xfile.c */
 
   char *full_name = NULL, *dir_name = NULL, *file_name = NULL, *current_match = NULL;
   int i, j, k, len, curlen, matches = 0;
@@ -381,7 +381,7 @@ char *filename_completer(char *text)
       file_name = (char *)CALLOC(curlen, sizeof(char));
       strncpy(file_name, text, i + 1);
       strcat(file_name, current_match);
-      if (is_directory(file_name)) 
+      if (directory_p(file_name)) 
 	strcat(file_name, "/");
       FREE(current_match);
       return(file_name);
@@ -465,7 +465,7 @@ static int find_indentation(char *str, int loc)
   return(open_paren - line_beg + 2);
 }
 
-char *complete_listener_text(char *old_text, int end, int *try_completion, char **to_file_text)
+char *complete_listener_text(char *old_text, int end, bool *try_completion, char **to_file_text)
 {
   int len, i, k, spaces, text_pos = 0, cr_pos = 0;
   char *new_text = NULL, *file_text = NULL, *new_file = NULL;
@@ -487,7 +487,7 @@ char *complete_listener_text(char *old_text, int end, int *try_completion, char 
 	      FREE(file_text);
 	      file_text = NULL;
 	    }
-	  (*try_completion) = FALSE;
+	  (*try_completion) = false;
 	  return(NULL);
 	}
       if (old_text[i] == ';')
@@ -517,7 +517,7 @@ char *complete_listener_text(char *old_text, int end, int *try_completion, char 
 	      append_listener_text(end - 1, file_text);
 	      FREE(file_text);
 	    }
-	  (*try_completion) = FALSE;
+	  (*try_completion) = false;
 	  return(NULL);
 	}
       if (old_text[i] == '\"')
@@ -538,7 +538,7 @@ char *complete_listener_text(char *old_text, int end, int *try_completion, char 
       if (isspace((int)(old_text[i]))) break;
     }
   if (new_text == NULL) new_text = command_completer(old_text);
-  (*try_completion) = TRUE;
+  (*try_completion) = true;
   (*to_file_text) = file_text;
   return(new_text);
 }

@@ -219,14 +219,14 @@ static time_t local_file_write_date(const char *filename)
 static int local_file_write_date(const char *filename) {return(1);}
 #endif
 
-static int sndlib_initialized = FALSE;
+static bool sndlib_initialized = false;
 
 int mus_sound_initialize(void)
 {
   int err = MUS_NO_ERROR;
   if (!sndlib_initialized)
     {
-      sndlib_initialized = TRUE;
+      sndlib_initialized = true;
       mus_error_handler = default_mus_error;
       err = mus_header_initialize();
       if (err == MUS_NO_ERROR) 
@@ -249,14 +249,15 @@ int mus_sample_bits(void)
 typedef struct {
   char *file_name;  /* full path -- everything is keyed to this name */
   int table_pos;
-  int *aux_comment_start, *aux_comment_end;
+  off_t *aux_comment_start, *aux_comment_end;
   int *loop_modes, *loop_starts, *loop_ends;
   int markers, base_detune, base_note;
   int *marker_ids, *marker_positions;
   off_t samples, true_file_length;
   off_t data_location;
   int srate, chans, header_type, data_format, original_sound_format, datum_size; 
-  int comment_start, comment_end, type_specifier, bits_per_sample, fact_samples, block_align;
+  off_t comment_start, comment_end;
+  int type_specifier, bits_per_sample, block_align, fact_samples;
   time_t write_date;
   mus_sample_t *maxamps;
   off_t *maxtimes;
@@ -337,7 +338,8 @@ int mus_sound_prune(void)
 
 int mus_sound_forget(const char *name)
 {
-  int i, len, free_name = FALSE;
+  int i, len;
+  bool free_name = false;
   char *short_name = NULL;
   if (name == NULL) return(MUS_ERROR);
   if (name[0] == '/')
@@ -350,7 +352,7 @@ int mus_sound_forget(const char *name)
   else
     {
       short_name = mus_expand_filename((char *)name);
-      free_name = TRUE;
+      free_name = true;
     }
   previous_sf = NULL;
   if (name)
@@ -529,8 +531,8 @@ static sound_file *fill_sf_record(const char *name, sound_file *sf)
       (mus_header_aux_comment_start(0) != 0))
 
     {
-      sf->aux_comment_start = (int *)CALLOC(4, sizeof(int));
-      sf->aux_comment_end = (int *)CALLOC(4, sizeof(int));
+      sf->aux_comment_start = (off_t *)CALLOC(4, sizeof(off_t));
+      sf->aux_comment_end = (off_t *)CALLOC(4, sizeof(off_t));
       for (i = 0; i < 4; i++)
 	{
 	  sf->aux_comment_start[i] = mus_header_aux_comment_start(i);
@@ -609,8 +611,8 @@ int mus_sound_srate (const char *arg)           {MUS_SF(arg, sf->srate);}
 int mus_sound_header_type (const char *arg)     {MUS_SF(arg, sf->header_type);}
 int mus_sound_data_format (const char *arg)     {MUS_SF(arg, sf->data_format);}
 int mus_sound_original_format (const char *arg) {MUS_SF(arg, sf->original_sound_format);}
-int mus_sound_comment_start (const char *arg)   {MUS_SF(arg, sf->comment_start);}
-int mus_sound_comment_end (const char *arg)     {MUS_SF(arg, sf->comment_end);}
+off_t mus_sound_comment_start (const char *arg) {MUS_SF(arg, sf->comment_start);}
+off_t mus_sound_comment_end (const char *arg)   {MUS_SF(arg, sf->comment_end);}
 off_t mus_sound_length (const char *arg)        {MUS_SF(arg, sf->true_file_length);}
 int mus_sound_fact_samples (const char *arg)    {MUS_SF(arg, sf->fact_samples);}
 int mus_sound_write_date (const char *arg)      {MUS_SF(arg, (int)(sf->write_date));}
@@ -700,7 +702,8 @@ void mus_sound_set_full_loop_info(const char *arg, int *loop)
 
 char *mus_sound_comment(const char *name)
 {
-  int start, end, fd, len, full_len;
+  off_t start, end;
+  int fd, len, full_len; /* comment string lengths */
   char *sc = NULL, *auxcom;
   sound_file *sf = NULL;
   sf = getsf(name); 

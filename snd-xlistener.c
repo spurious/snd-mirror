@@ -17,7 +17,7 @@ static void completion_help_help_callback(Widget w, XtPointer context, XtPointer
   snd_help(ss, 
 	   "completion",
 	   "These are the completions that Snd thinks might be likely. If you select one, it will be used to complete the current name.",
-	   TRUE);
+	   true);
 }
 
 static void completion_help_browse_callback(Widget w, XtPointer context, XtPointer info) 
@@ -77,8 +77,8 @@ static void create_completion_help_dialog(snd_state *ss, char *title)
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
   XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
-  XtSetArg(args[n], XmNnoResize, FALSE); n++;
-  /* XtSetArg(args[n], XmNtransient, FALSE); n++; */
+  XtSetArg(args[n], XmNnoResize, false); n++;
+  /* XtSetArg(args[n], XmNtransient, false); n++; */
   completion_help_dialog = XmCreateMessageDialog(MAIN_PANE(ss), "snd-completion-help", args, n);
 
   XtUnmanageChild(XmMessageBoxGetChild(completion_help_dialog, XmDIALOG_CANCEL_BUTTON));
@@ -158,7 +158,7 @@ void textfield_unfocus_callback(Widget w, XtPointer context, XtPointer info)
 
 /* -------- specialized action procs -------- */
 
-static int actions_loaded = FALSE;
+static bool actions_loaded = false;
 #define CONTROL_KEY 4
 
 static void No_op (Widget w, XEvent *ev, char **str, Cardinal *num) 
@@ -454,12 +454,12 @@ static void Name_completion(Widget w, XEvent *event, char **str, Cardinal *num)
 	  if (matches > 1) 
 	    {
 	      ss->sgx->completion_requestor = w;
-	      set_save_completions(TRUE);
+	      set_save_completions(true);
 	      search_text = complete_text(old_text, data);
 	      if (search_text) FREE(search_text);
 	      need_position = (completion_help_dialog == NULL);
 	      display_completions(ss);
-	      set_save_completions(FALSE);
+	      set_save_completions(false);
 	      if (need_position)
 		{
 		  /* try to position the newly popped up help window below the text field */
@@ -490,7 +490,7 @@ void append_listener_text(int end, char *msg)
     }
 }
 
-static int dont_check_motion = FALSE;
+static bool dont_check_motion = false;
 
 static void clear_back_to_prompt(Widget w)
 {
@@ -498,22 +498,22 @@ static void clear_back_to_prompt(Widget w)
   beg = printout_end + 1;
   end = XmTextGetLastPosition(w);
   if (end <= beg) return;
-  dont_check_motion = TRUE;
+  dont_check_motion = true;
   XmTextSetSelection(listener_text, beg, end, CurrentTime);
   XmTextRemove(listener_text);
-  dont_check_motion = FALSE;
+  dont_check_motion = false;
 }
 
 static void Listener_Meta_P(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
   clear_back_to_prompt(w);
-  restore_listener_string(TRUE);
+  restore_listener_string(true);
 }
 
 static void Listener_Meta_N(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
   clear_back_to_prompt(w);
-  restore_listener_string(FALSE);
+  restore_listener_string(false);
 }
 
 void save_listener_text(FILE *fp)
@@ -553,7 +553,7 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
    */
   int beg, end, len, matches = 0, need_position;
   char *old_text, *new_text = NULL, *file_text = NULL;
-  int try_completion = TRUE;
+  bool try_completion = true;
   Position wx, wy;
   int xoff, yoff; 
   Window wn;
@@ -590,7 +590,7 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
       if (matches > 1)
 	{
 	  clear_possible_completions();
-	  set_save_completions(TRUE);
+	  set_save_completions(true);
 	  if (file_text) 
 	    new_text = filename_completer(file_text);
 	  else new_text = command_completer(old_text);
@@ -601,7 +601,7 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
 	    }
 	  need_position = (completion_help_dialog == NULL);
 	  display_completions(ss);
-	  set_save_completions(FALSE);
+	  set_save_completions(false);
 	  if (need_position)
 	    {
 	      /* try to position the newly popped up help window below the text field */
@@ -855,7 +855,7 @@ Widget make_textfield_widget(snd_state *ss, char *name, Widget parent, Arg *args
   if (!actions_loaded) 
     {
       XtAppAddActions(MAIN_APP(ss), acts, NUM_ACTS); 
-      actions_loaded = TRUE;
+      actions_loaded = true;
     }
   if (n1) {FREE(n1); n1 = NULL;}
   XtSetArg(args[n], XmNactivateCallback, n1 = make_callback_list(remember_event, (XtPointer)ss)); n++;
@@ -864,8 +864,8 @@ Widget make_textfield_widget(snd_state *ss, char *name, Widget parent, Arg *args
   XtAddCallback(df, XmNfocusCallback, textfield_focus_callback, ss);
   XtAddCallback(df, XmNlosingFocusCallback, textfield_unfocus_callback, ss);
 
-  XtAddEventHandler(df, EnterWindowMask, FALSE, mouse_enter_text_callback, NULL);
-  XtAddEventHandler(df, LeaveWindowMask, FALSE, mouse_leave_text_callback, NULL);
+  XtAddEventHandler(df, EnterWindowMask, false, mouse_enter_text_callback, NULL);
+  XtAddEventHandler(df, LeaveWindowMask, false, mouse_leave_text_callback, NULL);
 
   if (activatable == ACTIVATABLE)
     {
@@ -889,7 +889,7 @@ void add_completer_to_textfield(snd_state *ss, Widget w, int completer)
   if (!actions_loaded) 
     {
       XtAppAddActions(MAIN_APP(ss), acts, NUM_ACTS); 
-      actions_loaded = TRUE;
+      actions_loaded = true;
     }
   if (!transTable2) 
     transTable2 = XtParseTranslationTable(TextTrans2);
@@ -904,7 +904,7 @@ Widget make_text_widget(snd_state *ss, char *name, Widget parent, Arg *args, int
   if (!actions_loaded) 
     {
       XtAppAddActions(MAIN_APP(ss), acts, NUM_ACTS); 
-      actions_loaded = TRUE;
+      actions_loaded = true;
     }
   if (n1) {FREE(n1); n1 = NULL;}
   XtSetArg(args[n], XmNactivateCallback, n1 = make_callback_list(remember_event, (XtPointer)ss)); n++;
@@ -985,10 +985,11 @@ static void flash_unbalanced_paren(XtPointer context, XtIntervalId *id)
     }
 }
 
-int highlight_unbalanced_paren(void)
+bool highlight_unbalanced_paren(void)
 {
   /* if cursor is positioned at close paren, try to find reason for unbalanced expr and highlight it */
-  int pos, success = TRUE;
+  int pos;
+  bool success = true;
   char *str = NULL;
   snd_state *ss;
   ss = get_global_state();
@@ -1010,7 +1011,7 @@ int highlight_unbalanced_paren(void)
 			      (XtTimerCallbackProc)flash_unbalanced_paren,
 			      NULL);
 	    }
-	  else success = FALSE;
+	  else success = false;
 	}
       if (str) XtFree(str);
     }
@@ -1025,7 +1026,7 @@ static void command_motion_callback(Widget w, XtPointer context, XtPointer info)
   snd_state *ss = (snd_state *)context;
   char *str = NULL;
   int pos, parens;
-  cbs->doit = TRUE; 
+  cbs->doit = true; 
   if (dont_check_motion) return;
   if (last_highlight_position != -1)
     {
@@ -1054,11 +1055,11 @@ static void command_modify_callback(Widget w, XtPointer context, XtPointer info)
   char *str = NULL, *prompt;
   int len;
   if (((cbs->text)->length > 0) || (dont_check_motion))
-    cbs->doit = TRUE;
+    cbs->doit = true;
   else
     { 
       if (cbs->currInsert < 2) 
-	cbs->doit = FALSE;
+	cbs->doit = false;
       else
 	{
 	  prompt = listener_prompt(ss);
@@ -1069,8 +1070,8 @@ static void command_modify_callback(Widget w, XtPointer context, XtPointer info)
 	       ((cbs->currInsert < (len - 1)) && 
 		(str[cbs->currInsert] == prompt[0]) && 
 		(str[cbs->currInsert - 1] == '\n')))
-	    cbs->doit = FALSE;
-	  else cbs->doit = TRUE;
+	    cbs->doit = false;
+	  else cbs->doit = true;
 	  if (str) XtFree(str);
 	}
     }
@@ -1102,7 +1103,7 @@ static void make_command_widget(snd_state *ss, int height)
   int n;
   if (!listener_text)
     {
-      if (!actions_loaded) {XtAppAddActions(MAIN_APP(ss), acts, NUM_ACTS); actions_loaded = TRUE;}
+      if (!actions_loaded) {XtAppAddActions(MAIN_APP(ss), acts, NUM_ACTS); actions_loaded = true;}
 
       n = attach_all_sides(args, 0);
       XtSetArg(args[n], XmNheight, height); n++;
@@ -1122,14 +1123,14 @@ static void make_command_widget(snd_state *ss, int height)
       if (n1) {FREE(n1); n1 = NULL;}
       XtSetArg(args[n], XmNactivateCallback, n1 = make_callback_list(remember_event, (XtPointer)ss)); n++;
       XtSetArg(args[n], XmNeditMode, XmMULTI_LINE_EDIT); n++;
-      XtSetArg(args[n], XmNskipAdjust, TRUE); n++;
+      XtSetArg(args[n], XmNskipAdjust, true); n++;
       XtSetArg(args[n], XmNvalue, listener_prompt(ss)); n++;
-      XtSetArg(args[n], XmNpendingDelete, FALSE); n++; /* don't cut selection upon paste */
+      XtSetArg(args[n], XmNpendingDelete, false); n++; /* don't cut selection upon paste */
       XtSetArg(args[n], XmNpositionIndex, XmLAST_POSITION); n++;
       listener_text = XmCreateScrolledText(listener_pane, "lisp-listener", args, n);
       ss->sgx->listener_pane = listener_text;
 
-      XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, FALSE, NULL);
+      XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, false, NULL);
 
       XtManageChild(listener_text);
       XmTextSetCursorPosition(listener_text, 1);
@@ -1142,8 +1143,8 @@ static void make_command_widget(snd_state *ss, int height)
       XtAddCallback(listener_text, XmNmotionVerifyCallback, command_motion_callback, ss);
 
       lisp_window = XtParent(listener_text);
-      XtAddEventHandler(lisp_window, EnterWindowMask, FALSE, listener_focus_callback, NULL);
-      XtAddEventHandler(lisp_window, LeaveWindowMask, FALSE, listener_unfocus_callback, NULL);
+      XtAddEventHandler(lisp_window, EnterWindowMask, false, listener_focus_callback, NULL);
+      XtAddEventHandler(lisp_window, LeaveWindowMask, false, listener_unfocus_callback, NULL);
       
       if (!(ss->using_schemes))
 	{
@@ -1154,7 +1155,7 @@ static void make_command_widget(snd_state *ss, int height)
 	  map_over_children(SOUND_PANE(ss), color_sashes, (void *)ss);
 	}
       if (auto_resize(ss))
-	XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, TRUE, NULL);
+	XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, true, NULL);
     }
 }
 
@@ -1183,7 +1184,7 @@ void color_listener_text(Pixel pix)
     XtVaSetValues(listener_text, XmNforeground, pix, NULL);
 }
 
-void handle_listener(snd_state *ss, int open)
+void handle_listener(snd_state *ss, bool open)
 {
   if (open)
     {
@@ -1283,10 +1284,10 @@ void clear_listener(void)
 {
   if (listener_text) /* this can be called even when there is no listener */
     {
-      dont_check_motion = TRUE;
+      dont_check_motion = true;
       XmTextSetSelection(listener_text, 1, XmTextGetCursorPosition(listener_text), CurrentTime);
       XmTextRemove(listener_text);
-      dont_check_motion = FALSE;
+      dont_check_motion = false;
     }
 }
 

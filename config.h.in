@@ -31,6 +31,10 @@
 #undef HAVE_SNPRINTF
 #undef HAVE_STRINGIZE
 #undef HAVE_MEMMOVE
+#undef HAVE_STRDUP
+#undef HAVE_FILENO
+#undef HAVE_LSTAT
+#undef HAVE_HYPOT
 
 #undef STDC_HEADERS
 #undef TM_IN_SYS_TIME
@@ -43,6 +47,7 @@
 #undef HAVE_LIMITS_H
 #undef HAVE_STRING_H
 #undef HAVE_UNISTD_H
+#undef HAVE_STDBOOL_H
 #undef HAVE_SYS_TIME_H
 #undef HAVE_SCHED_H
 #undef HAVE_DLFCN_H

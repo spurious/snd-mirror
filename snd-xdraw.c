@@ -162,7 +162,7 @@ void set_grf_point(Locus xi, int j, Locus yi)
   points[j].y = yi;
 }
 
-void draw_both_grf_points(chan_info *cp, axis_context *ax, int j, int graph_style)
+void draw_both_grf_points(chan_info *cp, axis_context *ax, int j, graph_style_t graph_style)
 {
   int i, size8, size4;
   switch (graph_style)
@@ -211,7 +211,7 @@ void draw_both_grf_points(chan_info *cp, axis_context *ax, int j, int graph_styl
     }
 }
 
-void draw_grf_points(chan_info *cp, axis_context *ax, int j, axis_info *ap, Float y0, int graph_style)
+void draw_grf_points(chan_info *cp, axis_context *ax, int j, axis_info *ap, Float y0, graph_style_t graph_style)
 {
   int i, gy0, size8, size4;
   switch (graph_style)
@@ -522,7 +522,7 @@ void allocate_sono_rects(int size)
 
 void allocate_color_map(snd_state *ss, int colormap)
 {
-  static int warned_color = FALSE;
+  static bool warned_color = false;
   int i;
   Colormap cmap;
   XColor tmp_color;
@@ -548,7 +548,7 @@ void allocate_color_map(snd_state *ss, int colormap)
 		{
 		  if (!warned_color)
 		    snd_error(_("can't even allocate black?!?"));
-		  warned_color = TRUE;
+		  warned_color = true;
 		}
 	    }
 	  grays[i] = tmp_color.pixel;
@@ -597,11 +597,11 @@ static void invert_color_callback(Widget w, XtPointer context, XtPointer info)
   for_each_chan(ss, update_graph_setting_fft_changed);
 }
 
-void set_color_inverted(snd_state *ss, int val)
+void set_color_inverted(snd_state *ss, bool val)
 {
   in_set_color_inverted(ss, val);
   if (ccd) 
-    XmToggleButtonSetState(ccd->invert, (Boolean)val, FALSE);
+    XmToggleButtonSetState(ccd->invert, (Boolean)val, false);
   check_color_hook();
   if (!(ss->graph_hook_active)) 
     for_each_chan(ss, update_graph_setting_fft_changed);
@@ -662,7 +662,7 @@ void set_color_map(snd_state *ss, int val)
 {
   in_set_color_map(ss, val);
   if ((ccd) && (val >= 0))
-    XmListSelectPos(ccd->list, val + 1, FALSE);
+    XmListSelectPos(ccd->list, val + 1, false);
   check_color_hook();
   if (!(ss->graph_hook_active)) 
     for_each_chan(ss, update_graph_setting_fft_changed);
@@ -726,11 +726,11 @@ void view_color_callback(Widget w, XtPointer context, XtPointer info)
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNcancelLabelString, xdismiss); n++;
       XtSetArg(args[n], XmNhelpLabelString, xhelp); n++;
-      XtSetArg(args[n], XmNautoUnmanage, FALSE); n++;
+      XtSetArg(args[n], XmNautoUnmanage, false); n++;
       XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
-      XtSetArg(args[n], XmNnoResize, FALSE); n++;
-      XtSetArg(args[n], XmNtransient, FALSE); n++;
+      XtSetArg(args[n], XmNnoResize, false); n++;
+      XtSetArg(args[n], XmNtransient, false); n++;
       ccd->dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), _("Color"), args, n);
 
       XtAddCallback(ccd->dialog, XmNcancelCallback, dismiss_color_callback, ccd);
@@ -788,7 +788,7 @@ void view_color_callback(Widget w, XtPointer context, XtPointer info)
       for (i = 0; i < NUM_COLORMAPS; i++) XmStringFree(cmaps[i]);
       FREE(cmaps);
       XtManageChild(ccd->list);
-      if (color_map(ss) >= 0) XmListSelectPos(ccd->list, color_map(ss) + 1, FALSE);
+      if (color_map(ss) >= 0) XmListSelectPos(ccd->list, color_map(ss) + 1, false);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -825,7 +825,7 @@ void view_color_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNtopWidget, sep1); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
-      XtSetArg(args[n], XmNshowValue, TRUE); n++;
+      XtSetArg(args[n], XmNshowValue, true); n++;
       XtSetArg(args[n], XmNvalue, 50); n++;
       ccd->scale = XtCreateManagedWidget("ccdscl", xmScaleWidgetClass, mainform, args, n);
       XtAddCallback(ccd->scale, XmNvalueChangedCallback, scale_color_callback, ccd);
@@ -859,7 +859,7 @@ void view_color_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNtopWidget, light_label); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
-      XtSetArg(args[n], XmNshowValue, TRUE); n++;
+      XtSetArg(args[n], XmNshowValue, true); n++;
       XtSetArg(args[n], XmNmaximum, 250); n++;
       XtSetArg(args[n], XmNdecimalPoints, 3); n++;
       xcutoff = XmStringCreate(_("data cutoff"), XmFONTLIST_DEFAULT_TAG);
@@ -1140,7 +1140,7 @@ void reflect_spectro(snd_state *ss)
   /* set color/orientaton widget values */
   if (ccd) 
     {
-      XmToggleButtonSetState(ccd->invert, (Boolean)(color_inverted(ss)), FALSE);
+      XmToggleButtonSetState(ccd->invert, (Boolean)(color_inverted(ss)), false);
       XtVaSetValues(ccd->cutoff, XmNvalue, (int)((color_cutoff(ss)) * 1000), NULL);
       reflect_color_scale(color_scale(ss));
     }
@@ -1158,7 +1158,7 @@ void reflect_spectro(snd_state *ss)
     }
 }
 
-int set_with_gl(snd_state *ss, int val)
+int set_with_gl(snd_state *ss, bool val)
 {
 #if HAVE_GL
   sgl_save_currents(ss);
@@ -1166,7 +1166,7 @@ int set_with_gl(snd_state *ss, int val)
   in_set_with_gl(ss, val);
 #if HAVE_GL
   sgl_set_currents(ss);
-  if (oid) XmToggleButtonSetState(oid->glbutton, val, FALSE);
+  if (oid) XmToggleButtonSetState(oid->glbutton, val, false);
   /* for_each_chan(ss, update_graph); */
 #endif
   return(with_gl(ss));
@@ -1235,11 +1235,11 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNcancelLabelString, xdismiss); n++;
       XtSetArg(args[n], XmNhelpLabelString, xhelp); n++;
       XtSetArg(args[n], XmNokLabelString, xreset); n++;
-      XtSetArg(args[n], XmNautoUnmanage, FALSE); n++;
+      XtSetArg(args[n], XmNautoUnmanage, false); n++;
       XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
-      XtSetArg(args[n], XmNnoResize, FALSE); n++;
-      XtSetArg(args[n], XmNtransient, FALSE); n++;
+      XtSetArg(args[n], XmNnoResize, false); n++;
+      XtSetArg(args[n], XmNtransient, false); n++;
       oid->dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), _("Orientation"), args, n);
 
       XtAddCallback(oid->dialog, XmNcancelCallback, dismiss_orientation_callback, oid);
@@ -1291,7 +1291,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       xstr = XmStringCreate(_("x angle"), XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
-      XtSetArg(args[n], XmNshowValue, TRUE); n++;
+      XtSetArg(args[n], XmNshowValue, true); n++;
       XtSetArg(args[n], XmNvalue, fixup_angle(spectro_x_angle(ss))); n++;
       XtSetArg(args[n], XmNmaximum, 360); n++;
       XtSetArg(args[n], XmNtitleString, xstr); n++;
@@ -1304,7 +1304,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       xstr = XmStringCreate(_("y angle"), XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
-      XtSetArg(args[n], XmNshowValue, TRUE); n++;
+      XtSetArg(args[n], XmNshowValue, true); n++;
       XtSetArg(args[n], XmNvalue, fixup_angle(spectro_y_angle(ss))); n++;
       XtSetArg(args[n], XmNmaximum, 360); n++;
       XtSetArg(args[n], XmNtitleString, xstr); n++;
@@ -1317,7 +1317,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       xstr = XmStringCreate(_("z angle"), XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
-      XtSetArg(args[n], XmNshowValue, TRUE); n++;
+      XtSetArg(args[n], XmNshowValue, true); n++;
       XtSetArg(args[n], XmNvalue, fixup_angle(spectro_z_angle(ss))); n++;
       XtSetArg(args[n], XmNmaximum, 360); n++;
       XtSetArg(args[n], XmNtitleString, xstr); n++;
@@ -1330,7 +1330,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       xstr = XmStringCreate(_("hop"), XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
-      XtSetArg(args[n], XmNshowValue, TRUE); n++;
+      XtSetArg(args[n], XmNshowValue, true); n++;
       XtSetArg(args[n], XmNvalue, mus_iclamp(1, spectro_hop(ss), HOP_MAX)); n++;
       XtSetArg(args[n], XmNmaximum, HOP_MAX); n++;
       XtSetArg(args[n], XmNtitleString, xstr); n++;
@@ -1344,7 +1344,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       xstr = XmStringCreate(_("x scale"), XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
-      XtSetArg(args[n], XmNshowValue, TRUE); n++;
+      XtSetArg(args[n], XmNshowValue, true); n++;
       XtSetArg(args[n], XmNmaximum, (int)(100 * SPECTRO_X_SCALE_MAX)); n++;
       XtSetArg(args[n], XmNvalue, mus_iclamp(0, (int)(spectro_x_scale(ss) * 100), 100)); n++;
       XtSetArg(args[n], XmNtitleString, xstr); n++;
@@ -1358,7 +1358,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       xstr = XmStringCreate(_("y scale"), XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
-      XtSetArg(args[n], XmNshowValue, TRUE); n++;
+      XtSetArg(args[n], XmNshowValue, true); n++;
       XtSetArg(args[n], XmNmaximum, mus_iclamp(0, (int)(100 * SPECTRO_Y_SCALE_MAX), 100)); n++;
       XtSetArg(args[n], XmNvalue, (int)(spectro_y_scale(ss) * 100)); n++;
       XtSetArg(args[n], XmNtitleString, xstr); n++;
@@ -1372,7 +1372,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       xstr = XmStringCreate(_("z scale"), XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
-      XtSetArg(args[n], XmNshowValue, TRUE); n++;
+      XtSetArg(args[n], XmNshowValue, true); n++;
       XtSetArg(args[n], XmNdecimalPoints, 2); n++;
       XtSetArg(args[n], XmNmaximum, (int)(100 * SPECTRO_Z_SCALE_MAX)); n++;
       XtSetArg(args[n], XmNvalue, mus_iclamp(0, (int)(spectro_z_scale(ss) * 100), 100)); n++;
@@ -1386,7 +1386,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       xstr = XmStringCreate(_("percent of spectrum"), XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
-      XtSetArg(args[n], XmNshowValue, TRUE); n++;
+      XtSetArg(args[n], XmNshowValue, true); n++;
       XtSetArg(args[n], XmNvalue, (int)(spectro_cutoff(ss) * 100)); n++;
       XtSetArg(args[n], XmNtitleString, xstr); n++;
       oid->cut = XtCreateManagedWidget("cut", xmScaleWidgetClass, rightbox, args, n);

@@ -57,7 +57,7 @@ typedef struct {
   Widget button_vertical_sep;
   Dimension pane_size;
   int device, system;          /* audio.c style device descriptor */
-  int **active_sliders;
+  bool **active_sliders;
   Widget **matrix_buttons;
   Position bx, by;
   Dimension bw, bh;
@@ -406,7 +406,7 @@ static int allocate_meter_2(Widget w, vu_label *vu)
 
 static Pixel yellows[VU_COLORS];
 static Pixel reds[VU_COLORS];
-static int vu_colors_allocated = FALSE;
+static bool vu_colors_allocated = false;
 static int yellow_vals[] = {0, 16, 32, 64, 96, 128, 160, 175, 185, 200, 210, 220, 230, 240};
 
 static void allocate_meter_1(snd_state *ss, vu_label *vu)
@@ -445,7 +445,7 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
   XtVaGetValues(recorder, XmNdepth, &depth, NULL);
   if (!vu_colors_allocated)
     {
-      vu_colors_allocated = TRUE;
+      vu_colors_allocated = true;
       tmp_color.flags = DoRed | DoGreen | DoBlue;
       tmp_color.red = (unsigned short)65535;
       for (i = 0; i < VU_COLORS; i++)
@@ -980,9 +980,9 @@ static Widget make_message_pane(snd_state *ss, Widget message_pane)
   n = attach_all_sides(args, n);
   XtSetArg(args[n], XmNeditMode, XmMULTI_LINE_EDIT); n++;
   XtSetArg(args[n], XmNscrollBarDisplayPolicy, XmAS_NEEDED); n++;
-  XtSetArg(args[n], XmNeditable, FALSE); n++;
-  XtSetArg(args[n], XmNautoShowCursorPosition, FALSE); n++;
-  XtSetArg(args[n], XmNcursorPositionVisible, FALSE); n++;
+  XtSetArg(args[n], XmNeditable, false); n++;
+  XtSetArg(args[n], XmNautoShowCursorPosition, false); n++;
+  XtSetArg(args[n], XmNcursorPositionVisible, false); n++;
   XtSetArg(args[n], XmNscrollingPolicy, XmAUTOMATIC); n++;
   msg = XmCreateScrolledText(message_pane, "scrolled-text", args, n);
   XtManageChild(msg);
@@ -1080,9 +1080,9 @@ static void device_button_callback(Widget w, XtPointer context, XtPointer info)
     {
       set_line_source(ss, on);
       if (on == (XmToggleButtonGetState(device_buttons[rp->microphone_button])))
-	XmToggleButtonSetState(device_buttons[rp->microphone_button], !on, TRUE); 
+	XmToggleButtonSetState(device_buttons[rp->microphone_button], !on, true); 
       if (on == (XmToggleButtonGetState(device_buttons[rp->line_in_button])))
-	XmToggleButtonSetState(device_buttons[rp->line_in_button], !on, TRUE); 
+	XmToggleButtonSetState(device_buttons[rp->line_in_button], !on, true); 
     }
   else
     {
@@ -1090,9 +1090,9 @@ static void device_button_callback(Widget w, XtPointer context, XtPointer info)
 	{
 	  if (on == (XmToggleButtonGetState(device_buttons[rp->digital_in_button])))
 	    {
-	      XmToggleButtonSetState(device_buttons[rp->digital_in_button], !on, TRUE); 
+	      XmToggleButtonSetState(device_buttons[rp->digital_in_button], !on, true); 
 	      if (!(on == (XmToggleButtonGetState(device_buttons[rp->line_in_button]))))
-		XmToggleButtonSetState(device_buttons[rp->line_in_button], on, TRUE); 
+		XmToggleButtonSetState(device_buttons[rp->line_in_button], on, true); 
 	    }
 	}
     }
@@ -1107,20 +1107,20 @@ static void device_button_callback(Widget w, XtPointer context, XtPointer info)
 	    {
 	      p = all_panes[active_device_button];
 	      for (i = p->in_chan_loc, j = 0; j < p->in_chans; j++, i++) 
-		rp->input_channel_active[i] = FALSE;
+		rp->input_channel_active[i] = false;
 	      if (active_device_button != button)
 		{
 		  /* XtVaGetValues(p->pane, XmNheight, &(p->pane_size), NULL); */
 		  XtVaSetValues(p->pane, XmNpaneMaximum, 1, NULL);
 		  XtVaSetValues(p->pane, XmNpaneMinimum, 1, XmNpaneMaximum, LOTSA_PIXELS, NULL);
-		  XmToggleButtonSetState(device_buttons[active_device_button], FALSE, FALSE); 
+		  XmToggleButtonSetState(device_buttons[active_device_button], false, false); 
 		}
 	      if (rp->taking_input) close_recorder_audio();
 	    }
 	  active_device_button = button;
 	  p = all_panes[button];
 	  for (i = p->in_chan_loc, j = 0; j < p->in_chans; j++, i++) 
-	    rp->input_channel_active[i] = TRUE;
+	    rp->input_channel_active[i] = true;
 	  rp->input_channels[0] = p->in_chans;
 
 	  /* if digital in, get its srate (and reflect in srate text) */
@@ -1136,7 +1136,7 @@ static void device_button_callback(Widget w, XtPointer context, XtPointer info)
 	    record_report(messages, recorder_device_name(p->device), NULL);
 	  else
 	    {
-	      rp->taking_input = TRUE;
+	      rp->taking_input = true;
 	      set_read_in_progress(ss);
 	    }
 	}
@@ -1152,15 +1152,15 @@ static void device_button_callback(Widget w, XtPointer context, XtPointer info)
 		  if (rp->monitor_port == -1)
 		    {
 		      record_report(messages, _("open output"), NULL);
-		      rp->monitoring = FALSE;
+		      rp->monitoring = false;
 		    }
-		  else rp->monitoring = TRUE;
+		  else rp->monitoring = true;
 		}
 	    }
 	  else 
 	    {
 	      mus_audio_close(rp->monitor_port);
-	      rp->monitoring = FALSE;
+	      rp->monitoring = false;
 	      rp->monitor_port = -1;
 	    }
 	}
@@ -1290,7 +1290,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-  recdat = make_file_data_panel(ss, ff_form, "data-form", args, n, TRUE, rp->output_header_type, rp->output_data_format, FALSE, TRUE, FALSE);
+  recdat = make_file_data_panel(ss, ff_form, "data-form", args, n, true, rp->output_header_type, rp->output_data_format, false, true, false);
   XtVaGetValues(recdat->comment_text, XmNy, &pane_max, NULL);
   XtAddCallback(recdat->srate_text, XmNactivateCallback, srate_changed_callback, (void *)ss); /* this is a no-op -- textfield widget is not activatable */
 #if SGI
@@ -1340,7 +1340,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNrecomputeSize, FALSE); n++;
+  XtSetArg(args[n], XmNrecomputeSize, false); n++;
   XtSetArg(args[n], XmNcolumns, 6); n++;
   rec_size_text = make_textfield_widget(ss, "rectext", file_form, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
   XtAddCallback(rec_size_text, XmNactivateCallback, rec_size_changed_callback, (void *)ss);
@@ -1368,7 +1368,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtSetArg(args[n], XmNleftWidget, duration_label); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNrightWidget, rec_size_label); n++;
-  XtSetArg(args[n], XmNrecomputeSize, FALSE); n++;
+  XtSetArg(args[n], XmNrecomputeSize, false); n++;
   XtSetArg(args[n], XmNmarginTop, 8); n++;
   XtSetArg(args[n], XmNmarginBottom, 8); n++;
   file_duration = XtCreateManagedWidget("  0.0 ", xmLabelWidgetClass, file_form, args, n);
@@ -1458,14 +1458,14 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
       else name = recorder_system_and_device_name(rp->ordered_systems[i], rp->ordered_devices[i]);
       device_buttons[i] = make_togglebutton_widget(name, button_holder, args, n);
       XtAddCallback(device_buttons[i], XmNvalueChangedCallback, device_button_callback, (XtPointer)all_panes[i]);
-      XmToggleButtonSetState(device_buttons[i], TRUE, FALSE); 
+      XmToggleButtonSetState(device_buttons[i], true, false); 
     }
   autoload_file = make_togglebutton_widget(_("Autoload Recording"), button_holder, args, init_n);
   device_buttons[ndevs] = autoload_file;
   /* we assume this is last in the device_buttons list in sensitize_control_buttons */
   rp->autoload_button = ndevs;
   XtAddCallback(autoload_file, XmNvalueChangedCallback, autoload_file_callback, ss);
-  XmToggleButtonSetState(autoload_file, (Boolean)(rp->autoload), FALSE); 
+  XmToggleButtonSetState(autoload_file, (Boolean)(rp->autoload), false); 
 
   FREE(n1);
   FREE(n2);
@@ -1482,8 +1482,8 @@ void lock_recording_audio(void)
   if (record_dialog_is_active())
     {
       close_recorder_audio();
-      set_sensitive(record_button, FALSE);
-      set_sensitive(reset_button, FALSE);
+      set_sensitive(record_button, false);
+      set_sensitive(reset_button, false);
     }
 }
 
@@ -1492,8 +1492,8 @@ void unlock_recording_audio(void)
   XmString s1;
   if (record_dialog_is_active())
     {
-      set_sensitive(record_button, TRUE);
-      set_sensitive(reset_button, TRUE);
+      set_sensitive(record_button, true);
+      set_sensitive(reset_button, true);
       XmProcessTraversal(reset_button, XmTRAVERSE_CURRENT);
       s1 = XmStringCreate(_("Restart"), XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(reset_button, XmNlabelString, s1, NULL);
@@ -1603,10 +1603,10 @@ static Widget make_recorder_slider(snd_state *ss, PANE *p, AMP *a, Widget last_s
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++;
-  XtSetArg(args[n], XmNrecomputeSize, FALSE); n++;
+  XtSetArg(args[n], XmNrecomputeSize, false); n++;
   XtSetArg(args[n], XmNshadowThickness, 0); n++;
   XtSetArg(args[n], XmNhighlightThickness, 0); n++;
-  XtSetArg(args[n], XmNfillOnArm, FALSE); n++;
+  XtSetArg(args[n], XmNfillOnArm, false); n++;
   a->label = make_pushbutton_widget(gain_channel_name(p->in_chans, p->out_chans, input, a->device_in_chan, a->out), 
 				       p->pane, args, n);
   XtAddCallback(a->label, XmNactivateCallback, record_amp_click_callback, a);
@@ -1623,10 +1623,10 @@ static Widget make_recorder_slider(snd_state *ss, PANE *p, AMP *a, Widget last_s
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNlabelString, s1); n++;
   XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++;
-  XtSetArg(args[n], XmNrecomputeSize, FALSE); n++;
+  XtSetArg(args[n], XmNrecomputeSize, false); n++;
   XtSetArg(args[n], XmNshadowThickness, 0); n++;
   XtSetArg(args[n], XmNhighlightThickness, 0); n++;
-  XtSetArg(args[n], XmNfillOnArm, FALSE); n++;
+  XtSetArg(args[n], XmNfillOnArm, false); n++;
   a->number = make_pushbutton_widget ("amp-number", p->pane, args, n);
   /* this could be the snd-xsnd control panel case as well */
   XtAddCallback(a->number, XmNactivateCallback, record_amp_click_callback, a);
@@ -1670,7 +1670,7 @@ static void handle_matrix_slider(Widget mb, PANE *p, int bin, int bout, int cura
   if (remove)
     {
       XmChangeColor(mb, (Pixel)((ss->sgx)->basic_color));
-      p->active_sliders[bin][bout] = FALSE;
+      p->active_sliders[bin][bout] = false;
       XtUnmanageChild(a->label);
       XtUnmanageChild(a->number);
       XtUnmanageChild(a->slider);
@@ -1679,7 +1679,7 @@ static void handle_matrix_slider(Widget mb, PANE *p, int bin, int bout, int cura
   else
     {
       XmChangeColor(mb, (Pixel)((ss->sgx)->green));
-      p->active_sliders[bin][bout] = TRUE;
+      p->active_sliders[bin][bout] = true;
       if (a->label)
 	{
 	  XtVaSetValues(a->label, XmNtopWidget, a->top, NULL);
@@ -1690,7 +1690,7 @@ static void handle_matrix_slider(Widget mb, PANE *p, int bin, int bout, int cura
 	}
       else
 	{
-	  new_top = make_recorder_slider(ss, p, a, a->top, TRUE);
+	  new_top = make_recorder_slider(ss, p, a, a->top, true);
 	}
     }
   for (i = curamp + 1; i < p->amps_size; i++)
@@ -1822,7 +1822,7 @@ static Widget make_button_matrix(snd_state *ss, PANE *p, char *name, Widget pare
   int width, height;
   Widget outputs_label, inputs_label0, inputs_label1, inputs_label2, inner_frame, inner_form, diag_button, mb;
   slider_info *si;
-  int **active_sliders;
+  bool **active_sliders;
 
   active_sliders = p->active_sliders;
   vu_rows = p->in_chans / 4;
@@ -1831,9 +1831,9 @@ static Widget make_button_matrix(snd_state *ss, PANE *p, char *name, Widget pare
   width = height;
   XtSetArg(in_args[in_n], XmNshadowType, XmSHADOW_ETCHED_IN); in_n++;
   outer_frame = XtCreateManagedWidget(name, xmFrameWidgetClass, parent, in_args, in_n);
-  XtAddEventHandler(outer_frame, ButtonPressMask, FALSE, button_matrix_button_press, (XtPointer)p);
-  XtAddEventHandler(outer_frame, ButtonMotionMask, FALSE, button_matrix_button_motion, (XtPointer)p);
-  XtAddEventHandler(outer_frame, ButtonReleaseMask, FALSE, button_matrix_button_release, (XtPointer)p);
+  XtAddEventHandler(outer_frame, ButtonPressMask, false, button_matrix_button_press, (XtPointer)p);
+  XtAddEventHandler(outer_frame, ButtonMotionMask, false, button_matrix_button_motion, (XtPointer)p);
+  XtAddEventHandler(outer_frame, ButtonReleaseMask, false, button_matrix_button_release, (XtPointer)p);
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -1842,9 +1842,9 @@ static Widget make_button_matrix(snd_state *ss, PANE *p, char *name, Widget pare
   XtSetArg(args[n], XmNwidth, (Dimension)width); n++;
   XtSetArg(args[n], XmNresizePolicy, XmRESIZE_NONE); n++;
   outer_form = XtCreateManagedWidget("outer-form", xmFormWidgetClass, outer_frame, args, n);
-  XtAddEventHandler(outer_form, ButtonPressMask, FALSE, button_matrix_button_press, (XtPointer)p);
-  XtAddEventHandler(outer_form, ButtonMotionMask, FALSE, button_matrix_button_motion, (XtPointer)p);
-  XtAddEventHandler(outer_form, ButtonReleaseMask, FALSE, button_matrix_button_release, (XtPointer)p);
+  XtAddEventHandler(outer_form, ButtonPressMask, false, button_matrix_button_press, (XtPointer)p);
+  XtAddEventHandler(outer_form, ButtonMotionMask, false, button_matrix_button_motion, (XtPointer)p);
+  XtAddEventHandler(outer_form, ButtonReleaseMask, false, button_matrix_button_release, (XtPointer)p);
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
@@ -1854,9 +1854,9 @@ static Widget make_button_matrix(snd_state *ss, PANE *p, char *name, Widget pare
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNuserData, CORNER_BUTTON); n++;
   diag_button = XtCreateManagedWidget("/", xmLabelWidgetClass, outer_form, args, n);
-  XtAddEventHandler(diag_button, ButtonPressMask, FALSE, button_matrix_button_press, (XtPointer)p);
-  XtAddEventHandler(diag_button, ButtonMotionMask, FALSE, button_matrix_button_motion, (XtPointer)p);
-  XtAddEventHandler(diag_button, ButtonReleaseMask, FALSE, button_matrix_button_release, (XtPointer)p);
+  XtAddEventHandler(diag_button, ButtonPressMask, false, button_matrix_button_press, (XtPointer)p);
+  XtAddEventHandler(diag_button, ButtonMotionMask, false, button_matrix_button_motion, (XtPointer)p);
+  XtAddEventHandler(diag_button, ButtonReleaseMask, false, button_matrix_button_release, (XtPointer)p);
   XtUninstallTranslations(diag_button);
 
   n = 0;
@@ -1869,9 +1869,9 @@ static Widget make_button_matrix(snd_state *ss, PANE *p, char *name, Widget pare
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
   XtSetArg(args[n], XmNuserData, OUTPUT_BUTTON); n++;
   outputs_label = XtCreateManagedWidget(_("out"), xmLabelWidgetClass, outer_form, args, n);
-  XtAddEventHandler(outputs_label, ButtonPressMask, FALSE, button_matrix_button_press, (XtPointer)p);
-  XtAddEventHandler(outputs_label, ButtonMotionMask, FALSE, button_matrix_button_motion, (XtPointer)p);
-  XtAddEventHandler(outputs_label, ButtonReleaseMask, FALSE, button_matrix_button_release, (XtPointer)p);
+  XtAddEventHandler(outputs_label, ButtonPressMask, false, button_matrix_button_press, (XtPointer)p);
+  XtAddEventHandler(outputs_label, ButtonMotionMask, false, button_matrix_button_motion, (XtPointer)p);
+  XtAddEventHandler(outputs_label, ButtonReleaseMask, false, button_matrix_button_release, (XtPointer)p);
   XtUninstallTranslations(outputs_label);
 
   n = 0;
@@ -1885,9 +1885,9 @@ static Widget make_button_matrix(snd_state *ss, PANE *p, char *name, Widget pare
   XtSetArg(args[n], XmNmarginWidth, 0); n++;
   XtSetArg(args[n], XmNuserData, INPUT_BUTTON); n++;
   inputs_label0 = XtCreateManagedWidget(_("i"), xmLabelWidgetClass, outer_form, args, n);
-  XtAddEventHandler(inputs_label0, ButtonPressMask, FALSE, button_matrix_button_press, (XtPointer)p);
-  XtAddEventHandler(inputs_label0, ButtonMotionMask, FALSE, button_matrix_button_motion, (XtPointer)p);
-  XtAddEventHandler(inputs_label0, ButtonReleaseMask, FALSE, button_matrix_button_release, (XtPointer)p);
+  XtAddEventHandler(inputs_label0, ButtonPressMask, false, button_matrix_button_press, (XtPointer)p);
+  XtAddEventHandler(inputs_label0, ButtonMotionMask, false, button_matrix_button_motion, (XtPointer)p);
+  XtAddEventHandler(inputs_label0, ButtonReleaseMask, false, button_matrix_button_release, (XtPointer)p);
   XtUninstallTranslations(inputs_label0);
 
   n = 0;
@@ -1901,9 +1901,9 @@ static Widget make_button_matrix(snd_state *ss, PANE *p, char *name, Widget pare
   XtSetArg(args[n], XmNmarginWidth, 0); n++;
   XtSetArg(args[n], XmNuserData, INPUT_BUTTON); n++;
   inputs_label1 = XtCreateManagedWidget(_("n"), xmLabelWidgetClass, outer_form, args, n);
-  XtAddEventHandler(inputs_label1, ButtonPressMask, FALSE, button_matrix_button_press, (XtPointer)p);
-  XtAddEventHandler(inputs_label1, ButtonMotionMask, FALSE, button_matrix_button_motion, (XtPointer)p);
-  XtAddEventHandler(inputs_label1, ButtonReleaseMask, FALSE, button_matrix_button_release, (XtPointer)p);
+  XtAddEventHandler(inputs_label1, ButtonPressMask, false, button_matrix_button_press, (XtPointer)p);
+  XtAddEventHandler(inputs_label1, ButtonMotionMask, false, button_matrix_button_motion, (XtPointer)p);
+  XtAddEventHandler(inputs_label1, ButtonReleaseMask, false, button_matrix_button_release, (XtPointer)p);
   XtUninstallTranslations(inputs_label1);
 
   n = 0;
@@ -1915,9 +1915,9 @@ static Widget make_button_matrix(snd_state *ss, PANE *p, char *name, Widget pare
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNuserData, INPUT_BUTTON); n++;
   inputs_label2 = XtCreateManagedWidget(" ", xmLabelWidgetClass, outer_form, args, n);
-  XtAddEventHandler(inputs_label2, ButtonPressMask, FALSE, button_matrix_button_press, (XtPointer)p);
-  XtAddEventHandler(inputs_label2, ButtonMotionMask, FALSE, button_matrix_button_motion, (XtPointer)p);
-  XtAddEventHandler(inputs_label2, ButtonReleaseMask, FALSE, button_matrix_button_release, (XtPointer)p);
+  XtAddEventHandler(inputs_label2, ButtonPressMask, false, button_matrix_button_press, (XtPointer)p);
+  XtAddEventHandler(inputs_label2, ButtonMotionMask, false, button_matrix_button_motion, (XtPointer)p);
+  XtAddEventHandler(inputs_label2, ButtonReleaseMask, false, button_matrix_button_release, (XtPointer)p);
   XtUninstallTranslations(inputs_label2);
 
   n = 0;
@@ -1967,7 +1967,7 @@ static Widget make_button_matrix(snd_state *ss, PANE *p, char *name, Widget pare
 	XtSetArg(args[n], XmNmarginWidth, 0); n++;
 	XtSetArg(args[n], XmNshadowThickness, 1); n++;
 	XtSetArg(args[n], XmNarmColor, (ss->sgx)->green); n++;
-	XtSetArg(args[n], XmNfillOnArm, TRUE); n++;
+	XtSetArg(args[n], XmNfillOnArm, true); n++;
 	mb = make_pushbutton_widget(" ", inner_form, args, n);
 	XtAddCallback(mb, XmNactivateCallback, matrix_button_callback, si);
 	if (active_sliders[row][col]) XmChangeColor(mb, (Pixel)((ss->sgx)->green));
@@ -2041,14 +2041,14 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
   p->meters_size = vu_meters;
   p->active = (int *)CALLOC(vu_meters, sizeof(int));
   p->active_size = vu_meters;
-  p->active_sliders = (int **)CALLOC(p->in_chans, sizeof(int *));
-  for (i = 0; i < p->in_chans; i++) p->active_sliders[i] = (int *)CALLOC(p->out_chans, sizeof(int));
+  p->active_sliders = (bool **)CALLOC(p->in_chans, sizeof(bool *));
+  for (i = 0; i < p->in_chans; i++) p->active_sliders[i] = (bool *)CALLOC(p->out_chans, sizeof(bool));
   frames = (Widget *)CALLOC(vu_meters, sizeof(Widget));
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   n = attach_all_sides(args, n);
-  XtSetArg(args[n], XmNallowResize, TRUE); n++;
+  XtSetArg(args[n], XmNallowResize, true); n++;
   p->pane = XtCreateManagedWidget("pane", xmFormWidgetClass, paned_window, args, n);
   
   last_frame = NULL;
@@ -2062,7 +2062,7 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
       for (i = 0; i < p->in_chans; i++) 
 	for (k = 0; k < p->out_chans; k++) 
 	  if (i == k) 
-	    p->active_sliders[i][k] = TRUE;
+	    p->active_sliders[i][k] = true;
 
       /* rather than default to posting 64 (or 256!) sliders, set up a channel matrix where desired sliders can be set */
       n = 0;
@@ -2079,7 +2079,7 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
     {
       for (i = 0; i < p->in_chans; i++) 
 	for (k = 0; k < p->out_chans; k++) 
-	  p->active_sliders[i][k] = TRUE;
+	  p->active_sliders[i][k] = true;
     }
 
   last_frame = make_vu_meters(ss, p, vu_meters, frames, last_frame, left_frame, overall_input_ctr, meter_size, input, first_frame);
@@ -2108,7 +2108,7 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
 #if NEW_SGI_AL
   if (p->device == MUS_AUDIO_MICROPHONE)
     for (i = p->in_chan_loc, k = 0; k < p->in_chans; i++, k++) 
-      rp->input_channel_active[i] = TRUE;
+      rp->input_channel_active[i] = true;
 #endif
 
   if (input) overall_input_ctr += p->in_chans;
@@ -2184,7 +2184,7 @@ static Widget make_vu_meters(snd_state *ss, PANE *p, int vu_meters, Widget *fram
       n = attach_all_sides(args, n);
       XtSetArg(args[n], XmNwidth, 120 * 2 * meter_size); n++;
       XtSetArg(args[n], XmNheight, 100 * meter_size); n++;
-      XtSetArg(args[n], XmNallowResize, FALSE); n++;
+      XtSetArg(args[n], XmNallowResize, false); n++;
       meter = XtCreateManagedWidget("vu", xmDrawingAreaWidgetClass, frame, args, n);
       p->meters[i] = make_vu_meter(meter, 120, 100, 120, 160, ss, meter_size);
       vu = p->meters[i];
@@ -2375,7 +2375,7 @@ static Widget make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE 
       XtSetArg(args[n], XmNwidth, 15); n++;
 
       XtSetArg(args[n], XmNvalue, (int)(vol * 100)); n++;
-      XtSetArg(args[n], XmNshowValue, FALSE); n++;
+      XtSetArg(args[n], XmNshowValue, false); n++;
       wd->wg = XtCreateManagedWidget(_("mon"), xmScaleWidgetClass, p->pane, args, n);
       last_slider = wd->wg;
       XtAddCallback(last_slider, XmNvalueChangedCallback, volume_callback, wd);
@@ -2552,7 +2552,7 @@ static Widget make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Float m
       
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-      XtSetArg(args[n], XmNrecomputeSize, FALSE); n++;
+      XtSetArg(args[n], XmNrecomputeSize, false); n++;
       if (meter_size < SMALL_FONT_CUTOFF) {XtSetArg(args[n], XM_FONT_RESOURCE, small_fontlist); n++;}
       max_label = XtCreateManagedWidget("0.000", xmLabelWidgetClass, last_max, args, n);
       wd = (Wdesc *)CALLOC(1, sizeof(Wdesc));
@@ -2703,7 +2703,7 @@ void sensitize_control_buttons(void)
   int i;
   for (i = 0; i < device_buttons_size - 1; i++) /* last button is autoload_file */
     if (device_buttons[i])
-      set_sensitive(device_buttons[i], TRUE);
+      set_sensitive(device_buttons[i], true);
 }
 
 void unsensitize_control_buttons(void)
@@ -2711,7 +2711,7 @@ void unsensitize_control_buttons(void)
   int i;
   for (i = 0; i < device_buttons_size - 1; i++)
     if (device_buttons[i])
-      set_sensitive(device_buttons[i], FALSE);
+      set_sensitive(device_buttons[i], false);
 }
 
 static void close_recorder(Widget w, XtPointer context, XtPointer info)
@@ -2732,7 +2732,7 @@ static void reset_record_callback(Widget w, XtPointer context, XtPointer info)
   rp = get_recorder_info();
   if (rp->recording)                  /* cancel */
     {
-      rp->recording = 0;
+      rp->recording = false;
       rp->triggered = (!rp->triggering);
       sensitize_control_buttons();
       XmChangeColor(record_button, (Pixel)(ss->sgx)->basic_color);
@@ -2836,7 +2836,7 @@ void finish_recording(snd_state *ss, recorder_info *rp)
     {
       if ((sp = find_sound(ss, rp->output_file, 0)))
 	snd_update(ss, sp);
-      else snd_open_file(rp->output_file, ss, FALSE);
+      else snd_open_file(rp->output_file, ss, false);
     }
 }
 
@@ -2888,7 +2888,7 @@ static void record_button_callback(Widget w, XtPointer context, XtPointer info)
 	  if (rp->out_chans <= 0)
 	    {
 	      record_report(messages, _("can't record: you screwed up the output channel number!"), NULL);
-	      rp->recording = 0;
+	      rp->recording = false;
 	      rp->triggered = (!rp->triggering);
 	      return;
 	    }
@@ -2924,7 +2924,7 @@ static void record_button_callback(Widget w, XtPointer context, XtPointer info)
 	  if (in_chans_active() == 0)
 	    {
 	      record_report(messages, _("can't record: no inputs enabled"), NULL);
-	      rp->recording = 0;
+	      rp->recording = false;
 	      rp->triggered = (!rp->triggering);
 	      return;
 	    }
@@ -2941,7 +2941,7 @@ static void record_button_callback(Widget w, XtPointer context, XtPointer info)
       else
 	{
 	  record_report(messages, _("can't record: no output file name supplied"), NULL);
-	  rp->recording = 0;
+	  rp->recording = false;
 	  rp->triggered = (!rp->triggering);
 	  return;
 	}
@@ -3042,12 +3042,12 @@ void snd_record_file(snd_state *ss)
       XtSetArg(args[n], XmNcancelLabelString, xreset); n++;
       XtSetArg(args[n], XmNhelpLabelString, xhelp); n++;
       XtSetArg(args[n], XmNokLabelString, xdismiss); n++;
-      XtSetArg(args[n], XmNautoUnmanage, FALSE); n++;
+      XtSetArg(args[n], XmNautoUnmanage, false); n++;
       XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
-      XtSetArg(args[n], XmNallowResize, TRUE); n++;
+      XtSetArg(args[n], XmNallowResize, true); n++;
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_ANY); n++;
-      XtSetArg(args[n], XmNnoResize, FALSE); n++;
-      XtSetArg(args[n], XmNtransient, FALSE); n++;
+      XtSetArg(args[n], XmNnoResize, false); n++;
+      XtSetArg(args[n], XmNtransient, false); n++;
       recorder = XmCreateTemplateDialog(MAIN_SHELL(ss), _("Record"), args, n);
 
       XtAddCallback(recorder, XmNcancelCallback, reset_record_callback, ss);
@@ -3080,7 +3080,7 @@ void snd_record_file(snd_state *ss)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNbottomWidget, XmMessageBoxGetChild(recorder, XmDIALOG_SEPARATOR)); n++;
-      XtSetArg(args[n], XmNallowResize, TRUE); n++;
+      XtSetArg(args[n], XmNallowResize, true); n++;
       XtSetArg(args[n], XmNsashHeight, ss->sash_size); n++;
       XtSetArg(args[n], XmNsashWidth, ss->sash_size); n++;
       XtSetArg(args[n], XmNsashIndent, -1); n++; /* need room for icons -- default is -10 */
@@ -3109,7 +3109,7 @@ void snd_record_file(snd_state *ss)
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       n = attach_all_sides(args, n);
-      XtSetArg(args[n], XmNallowResize, TRUE); n++;
+      XtSetArg(args[n], XmNallowResize, true); n++;
 
       file_info_pane = XtCreateManagedWidget("file-pane", xmFormWidgetClass, rec_panes, args, n);
       message_pane = XtCreateManagedWidget("msg-pane", xmFormWidgetClass, rec_panes, args, n);
@@ -3126,7 +3126,7 @@ void snd_record_file(snd_state *ss)
 	}
 
       /* in case caller closes (via window menu) dialog: */
-      wm_delete = XmInternAtom(XtDisplay(recorder), "WM_DELETE_WINDOW", FALSE);
+      wm_delete = XmInternAtom(XtDisplay(recorder), "WM_DELETE_WINDOW", false);
       XmAddWMProtocolCallback(XtParent(recorder), wm_delete, close_recorder, (XtPointer)ss);
 
       set_dialog_widget(ss, RECORDER_DIALOG, recorder);
@@ -3146,11 +3146,11 @@ void snd_record_file(snd_state *ss)
   if (!(rp->taking_input)) fire_up_recorder(ss);
 }
 
-void set_recorder_autoload(recorder_info *rp, int val)
+void set_recorder_autoload(recorder_info *rp, bool val)
 {
   rp->autoload = val;
   if (recorder) 
-    XmToggleButtonSetState(device_buttons[rp->autoload_button], (Boolean)val, FALSE); 
+    XmToggleButtonSetState(device_buttons[rp->autoload_button], (Boolean)val, false); 
 }
 
 void reflect_recorder_in_amp(int in, int out, Float val)
@@ -3202,7 +3202,7 @@ static void initialize_recorder(recorder_info *rp)
   /* in this case, digital in blocks out the others */
   long sb[2];
   int err;
-  int in_digital = FALSE;
+  bool in_digital = false;
 #endif
   for (i = 0; i < MAX_SOUNDCARDS; i++)
     {
@@ -3215,8 +3215,8 @@ static void initialize_recorder(recorder_info *rp)
 #if OLD_SGI_AL
   sb[0] = AL_INPUT_SOURCE;
   err = ALgetparams(AL_DEFAULT_DEVICE, sb, 2);
-  if ((!err) && (sb[1] == AL_INPUT_DIGITAL)) in_digital = TRUE;
-  XmToggleButtonSetState(device_buttons[rp->digital_in_button], in_digital, FALSE);
+  if ((!err) && (sb[1] == AL_INPUT_DIGITAL)) in_digital = true;
+  XmToggleButtonSetState(device_buttons[rp->digital_in_button], in_digital, false);
   device_button_callback(device_buttons[rp->digital_in_button], (XtPointer)all_panes[rp->digital_in_button], NULL);
 #endif
 #if NEW_SGI_AL || SUN
@@ -3226,7 +3226,7 @@ static void initialize_recorder(recorder_info *rp)
     if ((device_buttons[i]) &&
 	(i != rp->microphone_button) && 
 	(recorder_input_device(all_panes[i]->device)))
-      XmToggleButtonSetState(device_buttons[i], FALSE, TRUE); 
+      XmToggleButtonSetState(device_buttons[i], false, true); 
 #endif
   if (rp->trigger != 0.0) set_recorder_trigger(rp, rp->trigger);
   if (rp->max_duration <= 0.0) rp->max_duration = 1000000.0;

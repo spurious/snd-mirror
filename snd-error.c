@@ -60,7 +60,7 @@ void set_snd_error_display (void (*func)(const char *))
 }
 #endif
 
-static int direct_snd_error_call = FALSE;
+static bool direct_snd_error_call = false;
 
 void snd_error(char *format, ...)
 {
@@ -95,7 +95,7 @@ void snd_error(char *format, ...)
 	{
 	  /* don't break (unlikely) existing code? */
 #endif
-      add_to_error_history(ss, snd_error_buffer, TRUE);
+      add_to_error_history(ss, snd_error_buffer, true);
       sp = selected_sound(ss);
       ss->catch_message = snd_error_buffer;
       if ((direct_snd_error_call) ||
@@ -124,9 +124,9 @@ static XEN g_snd_error(XEN msg)
 {
   #define H_snd_error "(" S_snd_error " str): reports error message str (normally in the error dialog)"
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ONLY_ARG, S_snd_error, "a string");
-  direct_snd_error_call = TRUE;
+  direct_snd_error_call = true;
   snd_error(XEN_TO_C_STRING(msg));
-  direct_snd_error_call = FALSE;
+  direct_snd_error_call = false;
   return(msg);
 }
   

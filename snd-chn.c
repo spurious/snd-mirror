@@ -36,7 +36,7 @@ static void after_fft(chan_info *cp, Float scaler)
 static void set_y_bounds(axis_info *ap);
 static void chans_time_graph_type(chan_info *cp, void *ptr) 
 {
-  cp->time_graph_type = (*((int *)ptr)); 
+  cp->time_graph_type = (*((graph_type_t *)ptr)); 
   if (cp->time_graph_type == GRAPH_ONCE) 
     {
       set_y_bounds(cp->axis);
@@ -47,7 +47,7 @@ static void chans_time_graph_type(chan_info *cp, void *ptr)
   update_graph(cp); 
 }
 
-static void set_time_graph_type(snd_state *ss, int val) 
+static void set_time_graph_type(snd_state *ss, graph_type_t val) 
 {
   in_set_time_graph_type(ss, val); 
   for_each_chan_1(ss, chans_time_graph_type, (void *)(&val));
@@ -121,23 +121,23 @@ static void set_zero_pad(snd_state *ss, int val)
 
 static void chans_transform_graph_type(chan_info *cp, void *ptr) 
 {
-  cp->transform_graph_type = (*((int *)ptr)); 
+  cp->transform_graph_type = (*((graph_type_t *)ptr)); 
 }
 
-void in_set_transform_graph_type(snd_state *ss, int uval) 
+void in_set_transform_graph_type(snd_state *ss, graph_type_t uval) 
 {
-  int val;
-  val = mus_iclamp(0, uval, GRAPH_AS_SPECTROGRAM);
+  graph_type_t val;
+  val = (graph_type_t)mus_iclamp((int)GRAPH_ONCE, uval, (int)GRAPH_AS_SPECTROGRAM);
   in_set_transform_graph_type_1(ss, val); 
   for_each_chan_1(ss, chans_transform_graph_type, (void *)(&val));
 }
 
 static void chans_show_mix_waveforms(chan_info *cp, void *ptr) 
 {
-  cp->show_mix_waveforms = (*((int *)ptr));
+  cp->show_mix_waveforms = (*((bool *)ptr));
 }
 
-static void set_show_mix_waveforms(snd_state *ss, int val) 
+static void set_show_mix_waveforms(snd_state *ss, bool val) 
 {
   in_set_show_mix_waveforms(ss, val); 
   for_each_chan_1(ss, chans_show_mix_waveforms, (void *)(&val));
@@ -157,11 +157,11 @@ static void set_show_axes(snd_state *ss, int val)
 
 static void chans_graphs_horizontal(chan_info *cp, void *ptr) 
 {
-  cp->graphs_horizontal = (*((int *)ptr)); 
+  cp->graphs_horizontal = (*((bool *)ptr)); 
   update_graph(cp); 
 }
 
-static void set_graphs_horizontal(snd_state *ss, int val) 
+static void set_graphs_horizontal(snd_state *ss, bool val) 
 {
   in_set_graphs_horizontal(ss, val);
   for_each_chan_1(ss, chans_graphs_horizontal, (void *)(&val));
@@ -218,9 +218,9 @@ void set_sound_channel_style(snd_info *sp, int val)
     }
 }
 
-int chan_fft_in_progress(chan_info *cp)
+bool chan_fft_in_progress(chan_info *cp)
 {
-  return(((cp->cgx)->fft_in_progress) ? TRUE : FALSE);
+  return(((cp->cgx)->fft_in_progress) ? true : false);
 }
 
 void set_chan_fft_in_progress(chan_info *cp, Cessator fp) 
@@ -258,7 +258,7 @@ void chan_info_cleanup(chan_info *cp)
   if ((cp) && (cp->cgx))
     {
       cx = cp->cgx;
-      cx->selected = FALSE;
+      cx->selected = false;
       if (cx->fft_in_progress) 
 	{
 	  BACKGROUND_REMOVE(cx->fft_in_progress);
@@ -301,7 +301,7 @@ chan_info *virtual_selected_channel(chan_info *cp)
   else return(sp->chans[sp->selected_channel]);
 }
 
-static int calculate_fft_1(chan_info *cp, int no_dpy)
+static int calculate_fft_1(chan_info *cp, bool no_dpy)
 {
   snd_state *ss;
   if ((cp->graph_transform_p) &&
@@ -320,20 +320,20 @@ static int calculate_fft_1(chan_info *cp, int no_dpy)
 
 void calculate_fft(chan_info *cp)
 {
-  calculate_fft_1(cp, FALSE);
+  calculate_fft_1(cp, false);
 }
 
-static int updating = FALSE;
+static bool updating = false;
 
 #if HAVE_DYNAMIC_WIND
 static void before_dpy(void *ignore) {}
-static void after_dpy(void *context) {updating = FALSE;}
+static void after_dpy(void *context) {updating = false;}
 static XEN dpy_body(void *context)
 {
   chan_info *cp = (chan_info *)context;
   if ((cp->graph_transform_p) && 
       (!(chan_fft_in_progress(cp)))) 
-    calculate_fft_1(cp, TRUE);
+    calculate_fft_1(cp, true);
   display_channel_data(cp, cp->sound, cp->state);
   return(XEN_FALSE);
 }
@@ -352,7 +352,7 @@ void update_graph(chan_info *cp)
       (cp->sounds == NULL) || 
       (cp->sounds[cp->sound_ctr] == NULL)) 
     return;
-  updating = TRUE;
+  updating = true;
   sp = cp->sound;
 
   /* next two are needed by fft and lisp displays, but if put off until make_graph cause
@@ -378,9 +378,9 @@ void update_graph(chan_info *cp)
 #else
   if ((cp->graph_transform_p) && 
       (!(chan_fft_in_progress(cp)))) 
-    calculate_fft_1(cp, TRUE);
+    calculate_fft_1(cp, true);
   display_channel_data(cp, sp, cp->state);
-  updating = FALSE;
+  updating = false;
 #endif
 }
 
@@ -395,7 +395,7 @@ void add_channel_data_1(chan_info *cp, int srate, off_t frames, int graphed)
   Float ymin = 0.0, ymax = 0.0, y0, y1;
   double xmax, x0, x1, dur, gdur;
   char *label;
-  int ymin_set = FALSE, ymax_set = FALSE;
+  bool ymin_set = false, ymax_set = false;
   x0 = 0.0;
   x1 = 0.1;
   y0 = -1.0;
@@ -446,12 +446,12 @@ void add_channel_data_1(chan_info *cp, int srate, off_t frames, int graphed)
 	  if (len > 5)
 	    {
 	      ymin = XEN_TO_C_DOUBLE(XEN_LIST_REF(res, 5));
-	      ymin_set = TRUE;
+	      ymin_set = true;
 	    }
 	  if (len > 6)
 	    {
 	      ymax = XEN_TO_C_DOUBLE(XEN_LIST_REF(res, 6));
-	      ymax_set = TRUE;
+	      ymax_set = true;
 	    }
 	  /* ymin/ymax for possible fit data hooks */
 	}
@@ -481,7 +481,7 @@ void add_channel_data_1(chan_info *cp, int srate, off_t frames, int graphed)
     {
       ap->zx = 1.0;
       ap->sx = 1.0;
-      ap->no_data = TRUE;
+      ap->no_data = true;
     }
   else
     {
@@ -490,7 +490,7 @@ void add_channel_data_1(chan_info *cp, int srate, off_t frames, int graphed)
 	  ap->zx = (ap->x1 - ap->x0) / ap->x_ambit;
 	  ap->sx = (ap->x0 - ap->xmin) / ap->x_ambit;
 	}
-      ap->no_data = FALSE;
+      ap->no_data = false;
     }
   if (ap->y_ambit != 0.0)
     {
@@ -587,7 +587,7 @@ void set_x_bounds(axis_info *ap)
       ap->x0 = ap->x1 - range;
     }
   if (ap->x0 < ap->xmin) ap->x0 = ap->xmin;
-  ap->changed = TRUE;
+  ap->changed = true;
 }
 
 void apply_y_axis_change (axis_info *ap, chan_info *cp)
@@ -639,7 +639,7 @@ void set_x_axis_x0x1 (chan_info *cp, double x0, double x1)
   resize_sx(cp);
   resize_zx(cp);
   apply_x_axis_change(ap, cp, cp->sound); /* this checks sync */
-  ap->changed = TRUE;
+  ap->changed = true;
 }
 
 static void set_x_axis_x0(chan_info *cp, off_t left)
@@ -1005,7 +1005,7 @@ static void display_selection_transform_size (chan_info *cp, axis_info *fap)
 }
 
 snd_info *make_simple_channel_display(snd_state *ss, int srate, int initial_length, 
-				      int with_arrows, int grf_style, widget_t container, int with_events)
+				      int with_arrows, graph_style_t grf_style, widget_t container, bool with_events)
 {
   snd_info *sp;
   chan_info *cp;
@@ -1014,7 +1014,7 @@ snd_info *make_simple_channel_display(snd_state *ss, int srate, int initial_leng
   sp = make_basic_snd_info(1); /* 1 chan */
   sp->nchans = 1;
   sp->inuse = SOUND_WRAPPER;
-  sp->active = TRUE;
+  sp->active = true;
   sp->hdr = (file_info *)CALLOC(1, sizeof(file_info));
   sp->search_proc = XEN_UNDEFINED;
   sp->prompt_callback = XEN_UNDEFINED;
@@ -1033,7 +1033,7 @@ snd_info *make_simple_channel_display(snd_state *ss, int srate, int initial_leng
     }
   cp = sp->chans[0];
   cp->sound = sp;
-  cp->hookable = FALSE;
+  cp->hookable = false;
   add_channel_data_1(cp, srate, initial_length, WITH_GRAPH);
   cp->time_graph_style = grf_style;
   cp->dot_size = dot_size(ss);
@@ -1170,7 +1170,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   else
     {
       /* take min, max */
-      if (amp_env_usable(cp, samples_per_pixel, ap->hisamp, TRUE, cp->edit_ctr)) /* true = start new background amp env process if needed */
+      if (amp_env_usable(cp, samples_per_pixel, ap->hisamp, true, cp->edit_ctr)) /* true = start new background amp env process if needed */
 	j = amp_env_graph(cp, ap, samples_per_pixel, (sp) ? ((int)SND_SRATE(sp)) : 1);
       else
 	{
@@ -1183,7 +1183,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 		  ep = cp->amp_envs[cp->edit_ctr];
 		  if ((ep) && samples_per_pixel >= (Float)(ep->samps_per_bin))
 		    {                        /* and it will be useful when it finishes */
-		      cp->waiting_to_make_graph = TRUE;
+		      cp->waiting_to_make_graph = true;
 		      return(0);             /* so don't run two enormous data readers in parallel */
 		    }
 		}
@@ -1197,8 +1197,8 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	  ymin = MUS_SAMPLE_MAX;
 	  ymax = MUS_SAMPLE_MIN;
 	  if (cp->printing) pinc = samples_per_pixel/cur_srate;
-	  ap->changed = FALSE;
-	  ss->stopped_explicitly = FALSE;
+	  ap->changed = false;
+	  ss->stopped_explicitly = false;
 	  for (ioff = ap->losamp, xf = 0.0; ioff <= ap->hisamp; ioff++)
 	    {
 	      samp = read_sample(sf);
@@ -1225,8 +1225,8 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 		      check_for_event(ss);
 		      if ((ap->changed) || (ss->stopped_explicitly))
 			{
-			  ss->stopped_explicitly = FALSE;
-			  ap->changed = FALSE;
+			  ss->stopped_explicitly = false;
+			  ap->changed = false;
 			  break;
 			}
 		    }
@@ -1301,7 +1301,7 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
     }
   else
     {
-      if (amp_env_usable(cp, samples_per_pixel, hisamp, FALSE, edit_pos)) 
+      if (amp_env_usable(cp, samples_per_pixel, hisamp, false, edit_pos)) 
 	{
 	  double step, xk;
 	  mus_sample_t ymin, ymax;
@@ -1352,7 +1352,7 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
 	  j = 0;      /* graph point counter */
 	  ymin = 100.0;
 	  ymax = -100.0;
-	  ss->stopped_explicitly = FALSE;
+	  ss->stopped_explicitly = false;
 	  for (ioff = losamp, xf = 0.0; ioff <= hisamp; ioff++)
 	    {
 	      samp = read_sample_to_float(sf);
@@ -1371,8 +1371,8 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
 		    {
 		      if ((ap->changed) || (ss->stopped_explicitly))
 			{
-			  ss->stopped_explicitly = FALSE;
-			  ap->changed = FALSE;
+			  ss->stopped_explicitly = false;
+			  ap->changed = false;
 			  break;
 			}
 		    }
@@ -1392,7 +1392,7 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
 }
 
 void draw_graph_data(chan_info *cp, off_t losamp, off_t hisamp, int data_size, 
-		     Float *data, Float *data1, axis_context *ax, int style)
+		     Float *data, Float *data1, axis_context *ax, graph_style_t style)
 {
   off_t i, samps;
   Locus xi;
@@ -1452,7 +1452,7 @@ static char ampstr[LABEL_BUFFER_SIZE];
 #define LOG_FACTOR 25.0
 /* determines how we view the log -- the higher the factor, the more we emphasize the lower octaves (not sure this is a good idea) */
 
-static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler, off_t samps, Float samps_per_pixel, int fft_data, Float fft_scale)
+static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler, off_t samps, Float samps_per_pixel, bool fft_data, Float fft_scale)
 {
   int num_peaks, row, col, tens, i, with_amps, acol, acols;
   Float amp0, px;
@@ -1564,7 +1564,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
   if (peak_amps) FREE(peak_amps);
 }
 
-void make_fft_graph(chan_info *cp, snd_info *sp, axis_info *fap, axis_context *ax, int with_hooks)
+void make_fft_graph(chan_info *cp, snd_info *sp, axis_info *fap, axis_context *ax, bool with_hooks)
 {
   /* axes are already set, data is in the fft_info struct -- don't reset here! */
   /* since the fft size menu callback can occur while we are calculating the next fft, we have to lock the current size until the graph goes out */
@@ -1741,10 +1741,10 @@ void make_fft_graph(chan_info *cp, snd_info *sp, axis_info *fap, axis_context *a
       if (cp->transform_type == FOURIER)
 	display_peaks(cp, fap, data, 
 		      (int)(SND_SRATE(sp) * cp->spectro_cutoff / 2), 
-		      hisamp, samples_per_pixel, TRUE, scale);
+		      hisamp, samples_per_pixel, true, scale);
       else display_peaks(cp, fap, data, 
 			 (int)(fp->current_size * cp->spectro_cutoff), 
-			 hisamp, samples_per_pixel, TRUE, 0.0);
+			 hisamp, samples_per_pixel, true, 0.0);
     }
   if (cp->selection_transform_size != 0) display_selection_transform_size(cp, fap);
   if (with_hooks) after_fft(cp, scale);
@@ -1765,7 +1765,8 @@ static int display_transform_peaks(chan_info *ucp, char *filename)
   fft_peak *peak_freqs = NULL;
   fft_peak *peak_amps = NULL;
   FILE *fd = NULL;
-  int i, chn, samps, num_peaks, tens, srate, err = 0, tmp_file = TRUE, chars;
+  int i, chn, samps, num_peaks, tens, srate, err = 0;
+  bool tmp_file = true;
   Float samples_per_pixel;
   sync_info *si = NULL;
   chan_info *cp;
@@ -1781,7 +1782,7 @@ static int display_transform_peaks(chan_info *ucp, char *filename)
 	  report_in_minibuffer_and_save(sp, _("can't write %s: %s"), filename, strerror(errno));
 	  err = 1;
 	}
-      else tmp_file = FALSE;
+      else tmp_file = false;
     }
   if (tmp_file)
     {
@@ -1852,14 +1853,15 @@ static int display_transform_peaks(chan_info *ucp, char *filename)
 	report_in_minibuffer_and_save(sp, _("can't close %s: %s"), filename, strerror(errno));
       if (tmp_file)
 	{
+	  int chars;
 	  fd = FOPEN(filename, "r");
 	  fseek(fd, 0, SEEK_END);
-	  chars = ftell(fd);
+	  chars = ftell(fd); /* safe because this is a short file */
 	  rewind(fd);
 	  str = (char *)CALLOC(chars + 1, sizeof(char));
 	  fread(str, 1, chars, fd);
 	  snd_fclose(fd, filename);
-	  snd_help(ss, "fft peaks", str, FALSE);
+	  snd_help(ss, "fft peaks", str, false);
 	  FREE(str);
 	  err = snd_remove(filename, IGNORE_CACHE);
 	  FREE(filename);
@@ -1951,7 +1953,7 @@ static void make_sonogram(chan_info *cp, snd_info *sp, snd_state *ss)
       xfincr = ((Float)fwidth / (Float)(si->target_slices));
       xf = 2 + fap->x_axis_x0;
       ax = copy_context(cp);
-      ss->stopped_explicitly = FALSE;
+      ss->stopped_explicitly = false;
       for (slice = 0; slice < si->active_slices; slice++, xf += xfincr)
 	{
 	  memset((void *)js, 0, COLORMAP_SIZE * sizeof(int));
@@ -1984,7 +1986,7 @@ static void make_sonogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	      check_for_event(ss);
 	      if ((ss->stopped_explicitly) || (!(cp->active))) /* user closed file while trying to print */
 		{
-		  ss->stopped_explicitly = FALSE;
+		  ss->stopped_explicitly = false;
 		  report_in_minibuffer(sp, _("stopped"));
 		  break;
 		}
@@ -2089,9 +2091,9 @@ void reset_spectro(snd_state *ss)
 
 static void display_channel_time_data(chan_info *cp, snd_info *sp, snd_state *ss);
 static void display_channel_lisp_data(chan_info *cp, snd_info *sp, snd_state *ss);
-static void make_axes(chan_info *cp, axis_info *ap, int x_style, int erase_first);
-#define DONT_CLEAR_GRAPH FALSE
-#define CLEAR_GRAPH TRUE
+static void make_axes(chan_info *cp, axis_info *ap, int x_style, bool erase_first);
+#define DONT_CLEAR_GRAPH false
+#define CLEAR_GRAPH true
 
 #if HAVE_GL && USE_GTK
 #if HAVE_GTK_WIDGET_GL_MAKE_CURRENT
@@ -2109,7 +2111,7 @@ static void make_axes(chan_info *cp, axis_info *ap, int x_style, int erase_first
 #endif
 
 #if HAVE_GL
-static void gl_spectrogram(snd_state *ss, sono_info *si, int gl_fft_list, Float cutoff, int use_dB, Float min_dB,
+static void gl_spectrogram(snd_state *ss, sono_info *si, int gl_fft_list, Float cutoff, bool use_dB, Float min_dB,
 			   unsigned short br, unsigned short bg, unsigned short bb)
 {
   Float lin_dB = 0.0;
@@ -2205,7 +2207,7 @@ static void gl_spectrogram(snd_state *ss, sono_info *si, int gl_fft_list, Float 
 }
 #endif
 
-static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
+static bool make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 {
   sono_info *si;
   fft_info *fp;
@@ -2216,8 +2218,9 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
   Float xyz[3];
   Float xoff, yoff, x, y, xincr, yincr, x0, y0, binval, scl = 1.0;
   Float fwidth, fheight, zscl, yval, xval;
-  int bins = 0, slice, i, j, xx, yy, old_with_gl = FALSE;
-  if (chan_fft_in_progress(cp)) return(FALSE);
+  int bins = 0, slice, i, j, xx, yy;
+  bool old_with_gl = false;
+  if (chan_fft_in_progress(cp)) return(false);
   si = (sono_info *)(cp->sonogram_data);
   if ((si) && (si->scale > 0.0))
     {
@@ -2309,7 +2312,7 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	  glRotatef(cp->spectro_z_angle, 0.0, 0.0, 1.0);
 	  glScalef(cp->spectro_x_scale, cp->spectro_y_scale, cp->spectro_z_scale);
 	  glCallList((GLuint)(cp->gl_fft_list));
-	  fap->use_gl = TRUE;
+	  fap->use_gl = true;
 	  make_axis_info(cp,
 			 cp->axis->x0, cp->axis->x1,
 			 SND_SRATE(sp) * cp->spectro_start / 2.0, SND_SRATE(sp) * cp->spectro_cutoff / 2.0,
@@ -2318,7 +2321,7 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 			 SND_SRATE(sp) * cp->spectro_start / 2.0, SND_SRATE(sp) * cp->spectro_cutoff / 2.0,
 			 fap);
 	  make_axes(cp, fap, X_AXIS_IN_SECONDS, DONT_CLEAR_GRAPH);
-	  fap->use_gl = FALSE;
+	  fap->use_gl = false;
 #if USE_MOTIF
 	  if (ss->gl_has_double_buffer)
 	    glXSwapBuffers(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)));
@@ -2345,12 +2348,12 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 #if USE_MOTIF
 	  return(XtAppPending(MAIN_APP(ss)) == 0); /* return true if there are no pending events to force current buffer to be displayed */
 #else
-	  return(TRUE);
+	  return(true);
 #endif
 	}
 #endif
       old_with_gl = with_gl(ss);
-      if (old_with_gl) set_with_gl(ss, FALSE); /* needed to fixup spectro angles/scales etc */
+      if (old_with_gl) set_with_gl(ss, false); /* needed to fixup spectro angles/scales etc */
       if (cp->printing) ps_allocate_grf_points();
       scl = si->scale; /* unnormalized fft doesn't make much sense here (just washes out the graph) */
       fp = cp->fft;
@@ -2371,7 +2374,7 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
       ax = copy_context(cp);
       if (color_map(ss) == BLACK_AND_WHITE)
 	{
-	  ss->stopped_explicitly = FALSE;
+	  ss->stopped_explicitly = false;
 	  for (slice = 0, xoff = fap->x_axis_x0, yoff = fap->y_axis_y0; 
 	       slice < si->active_slices;
 	       slice++, yoff += yincr)
@@ -2406,7 +2409,7 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		  check_for_event(ss);
 		  if ((ss->stopped_explicitly) || (!(cp->active)))
 		    {
-		      ss->stopped_explicitly = FALSE;
+		      ss->stopped_explicitly = false;
 		      report_in_minibuffer(sp, _("stopped"));
 		      break;
 		    }
@@ -2417,7 +2420,7 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	{
 	  /* spectrogram in various colors */
 	  allocate_color_map(ss, color_map(ss));
-	  ss->stopped_explicitly = FALSE;
+	  ss->stopped_explicitly = false;
 	  for (slice = 0, xoff = fap->x_axis_x0, yoff = fap->y_axis_y0; 
 	       slice < si->active_slices; 
 	       slice++, yoff += yincr)
@@ -2463,7 +2466,7 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		  check_for_event(ss);
 		  if ((ss->stopped_explicitly) || (!(cp->active)))
 		    {
-		      ss->stopped_explicitly = FALSE;
+		      ss->stopped_explicitly = false;
 		      report_in_minibuffer(sp, _("stopped"));
 		      break;
 		    }
@@ -2472,9 +2475,9 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	  if (cp->printing) ps_reset_color();
 	}
       if (cp->hookable) after_fft(cp, 1.0 / scl);
-      if (old_with_gl) set_with_gl(ss, TRUE);
+      if (old_with_gl) set_with_gl(ss, true);
     }
-  return(FALSE);
+  return(false);
 }
 
 static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
@@ -2831,11 +2834,11 @@ static void make_lisp_graph(chan_info *cp, snd_info *sp, snd_state *ss, XEN pixe
 	  if (cp->printing) ps_reset_color();
 	}
       if (cp->show_transform_peaks) 
-	display_peaks(cp, uap, up->data[0], 1, up->len[0] - 1, samples_per_pixel, FALSE, 0.0);
+	display_peaks(cp, uap, up->data[0], 1, up->len[0] - 1, samples_per_pixel, false, 0.0);
     }
 }
 
-static void make_axes(chan_info *cp, axis_info *ap, int x_style, int erase_first)
+static void make_axes(chan_info *cp, axis_info *ap, int x_style, bool erase_first)
 {
   snd_info *sp;
   axis_context *ax;
@@ -2860,10 +2863,11 @@ static void draw_graph_cursor(chan_info *cp);
 
 static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_state *ss, 
 					    int width, int height, int offset, 
-					    int just_fft, int just_lisp, int just_time)
+					    bool just_fft, bool just_lisp, bool just_time)
 {
   /* this procedure is unnecessarily confusing! */
-  int with_fft = FALSE, with_lisp = FALSE, with_time = FALSE, displays = 0, points, grflsp = 0;
+  bool with_fft = false, with_lisp = false, with_time = false;
+  int displays = 0, points, grflsp = 0;
   axis_info *ap = NULL;
   axis_info *fap = NULL;
   axis_info *uap = NULL;
@@ -2874,7 +2878,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
       (!(ss->graph_hook_active)) &&
       (XEN_HOOKED(graph_hook)))
     {
-      ss->graph_hook_active = TRUE;
+      ss->graph_hook_active = true;
       res = run_progn_hook(graph_hook,
 			   XEN_LIST_4(C_TO_SMALL_XEN_INT((cp->sound)->index),
 				      C_TO_SMALL_XEN_INT(cp->chan),
@@ -2882,7 +2886,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 				      C_TO_XEN_DOUBLE((cp->axis)->y1)),
 			   S_graph_hook);
       /* (add-hook! graph-hook (lambda (a b c d) (snd-print (format #f "~A ~A ~A ~A" a b c d)))) */
-      ss->graph_hook_active = FALSE;
+      ss->graph_hook_active = false;
       if (XEN_TRUE_P(res)) return;
     }
   ap = cp->axis;
@@ -2896,7 +2900,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
   if (cp->graph_time_p) 
     {
       displays++;
-      with_time = TRUE;
+      with_time = true;
     }
 
   grflsp = ((cp->graph_lisp_p) || (XEN_HOOKED(lisp_graph_hook)));
@@ -2916,7 +2920,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	  uap = up->axis;
 	  if (uap)
 	    {
-	      with_lisp = TRUE;
+	      with_lisp = true;
 	      uap->height = height;
 	      uap->y_offset = offset;
 	      uap->width = width;
@@ -2934,7 +2938,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	  fap = fp->axis; 
 	  if (fap)
 	    {
-	      with_fft = TRUE;
+	      with_fft = true;
 	      fap->height = height;
 	      fap->y_offset = offset;
 	      fap->width = width;
@@ -2999,15 +3003,15 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	      ap->y1 = ap->y0 + (Float)(cp->wavo_trace * (ap->y_axis_y0 - ap->y_axis_y1)) / ((Float)(cp->wavo_hop) * SND_SRATE(sp));
 	      ap->x1 = ap->x0 + (double)(cp->wavo_trace) / (double)SND_SRATE(sp);
 	    }
-	  if ((with_gl(ss) == FALSE) || 
+	  if ((!(with_gl(ss))) || 
 	      (cp->time_graph_type != GRAPH_AS_WAVOGRAM) ||
 	      (color_map(ss) == BLACK_AND_WHITE) ||
 	      ((sp->nchans > 1) && (sp->channel_style != CHANNELS_SEPARATE)))
 	    make_axes(cp, ap,
 		      cp->x_axis_style,
 		      (((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)) ? CLEAR_GRAPH : DONT_CLEAR_GRAPH));
-	  cp->cursor_visible = FALSE;
-	  cp->selection_visible = FALSE;
+	  cp->cursor_visible = false;
+	  cp->selection_visible = false;
 	  points = make_graph(cp, sp, ss);
 	  if (points == 0) return;
 	  if ((cp->mixes) &&
@@ -3020,7 +3024,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
   if ((with_fft) && 
       (!just_lisp) && (!just_time))
     {
-      if ((with_gl(ss) == FALSE) || 
+      if ((!(with_gl(ss))) || 
 	  (cp->transform_graph_type != GRAPH_AS_SPECTROGRAM) ||
 	  (color_map(ss) == BLACK_AND_WHITE) ||
 	  ((sp->nchans > 1) && (sp->channel_style != CHANNELS_SEPARATE)))
@@ -3057,6 +3061,8 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	case GRAPH_AS_SONOGRAM:
 	  make_sonogram(cp, sp, ss);
 	  break;
+	case GRAPH_AS_WAVOGRAM:
+	  break;
 	case GRAPH_AS_SPECTROGRAM:
 #if HAVE_GL
 	  if (make_spectrogram(cp, sp, ss))
@@ -3082,13 +3088,13 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	  (!(ss->lisp_graph_hook_active)) &&
 	  (XEN_HOOKED(lisp_graph_hook)))
 	{
-	  ss->lisp_graph_hook_active = TRUE;
+	  ss->lisp_graph_hook_active = true;
 	  /* inadvertent recursive call here can hang entire computer */
 	  pixel_list = run_progn_hook(lisp_graph_hook,
 				      XEN_LIST_2(C_TO_SMALL_XEN_INT((cp->sound)->index),
 						 C_TO_SMALL_XEN_INT(cp->chan)),
 				      S_lisp_graph_hook);
-	  ss->lisp_graph_hook_active = FALSE;
+	  ss->lisp_graph_hook_active = false;
 	  if (!(XEN_FALSE_P(pixel_list))) pixel_loc = snd_protect(pixel_list);
 	}
       if (up != (lisp_grf *)(cp->lisp_info))
@@ -3129,7 +3135,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
     } 
 }
 
-static void display_channel_data_1 (chan_info *cp, snd_info *sp, snd_state *ss, int just_fft, int just_lisp, int just_time)
+static void display_channel_data_1 (chan_info *cp, snd_info *sp, snd_state *ss, bool just_fft, bool just_lisp, bool just_time)
 {
   int width, height, offset, full_height, y0, y1, bottom, top;
   Float val, size, chan_height;
@@ -3196,22 +3202,22 @@ static void display_channel_data_1 (chan_info *cp, snd_info *sp, snd_state *ss, 
 
 void display_channel_fft_data(chan_info *cp, snd_info *sp, snd_state *ss)
 {
-  display_channel_data_1(cp, sp, ss, TRUE, FALSE, FALSE);
+  display_channel_data_1(cp, sp, ss, true, false, false);
 }
 
 static void display_channel_lisp_data(chan_info *cp, snd_info *sp, snd_state *ss)
 {
-  display_channel_data_1(cp, sp, ss, FALSE, TRUE, FALSE);
+  display_channel_data_1(cp, sp, ss, false, true, false);
 }
 
 static void display_channel_time_data(chan_info *cp, snd_info *sp, snd_state *ss)
 {
-  display_channel_data_1(cp, sp, ss, FALSE, FALSE, TRUE);
+  display_channel_data_1(cp, sp, ss, false, false, true);
 }
 
 void display_channel_data(chan_info *cp, snd_info *sp, snd_state *ss)
 {
-  display_channel_data_1(cp, sp, ss, FALSE, FALSE, FALSE);
+  display_channel_data_1(cp, sp, ss, false, false, false);
 }
 
 
@@ -3253,7 +3259,7 @@ static void draw_graph_cursor(chan_info *cp)
     cp->cy = local_grf_y(0.0, ap);
   else cp->cy = local_grf_y(chn_sample(CURSOR(cp), cp, cp->edit_ctr), ap);
   draw_cursor(cp);
-  cp->cursor_visible = TRUE;
+  cp->cursor_visible = true;
 }
 
 int cursor_decision(chan_info *cp)
@@ -3308,7 +3314,7 @@ void handle_cursor(chan_info *cp, int redisplay)
 	      ax = cursor_context(cp);
 	      draw_line(ax, cp->cx, cp->cy - cp->cursor_size, cp->cx, cp->cy + cp->cursor_size);
 	      draw_line(ax, cp->cx - cp->cursor_size, cp->cy, cp->cx + cp->cursor_size, cp->cy);
-	      cp->cursor_visible = FALSE; /* don't redraw at old location */
+	      cp->cursor_visible = false; /* don't redraw at old location */
 	    }
 	  switch (redisplay)
 	    {
@@ -3368,10 +3374,11 @@ void cursor_move(chan_info *cp, off_t samps)
 
 void cursor_moveto_without_verbosity(chan_info *cp, off_t samp)
 {
-  int old_verbose, old_sync;
+  bool old_verbose;
+  int old_sync;
   old_verbose = cp->verbose_cursor;
   old_sync = cp->sound->sync;
-  cp->verbose_cursor = FALSE;
+  cp->verbose_cursor = false;
   cp->sound->sync = 0;
   cursor_moveto(cp, samp);
   cp->verbose_cursor = old_verbose;
@@ -3571,23 +3578,24 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
   return(copy_string("?"));
 }
 
-void fftb(chan_info *cp, int on)
+void fftb(chan_info *cp, bool on)
 {
   cp->graph_transform_p = on;
-  set_toggle_button(channel_f(cp), on, FALSE, (void *)cp);
+  set_toggle_button(channel_f(cp), on, false, (void *)cp);
   calculate_fft(cp);
 }
 
-void waveb(chan_info *cp, int on)
+void waveb(chan_info *cp, bool on)
 {
   cp->graph_time_p = on;
-  set_toggle_button(channel_w(cp), on, FALSE, (void *)cp);
+  set_toggle_button(channel_w(cp), on, false, (void *)cp);
   update_graph(cp);
 }
 
 static void propagate_wf_state(snd_info *sp)
 {
-  int i, w, f;
+  int i;
+  bool w, f;
   chan_info *cp;
   cp = sp->chans[0];
   w = cp->graph_time_p;
@@ -3597,13 +3605,13 @@ static void propagate_wf_state(snd_info *sp)
       cp = sp->chans[i];
       cp->graph_time_p = w;
       cp->graph_transform_p = f;
-      set_toggle_button(channel_f(cp), f, FALSE, (void *)cp);
-      set_toggle_button(channel_w(cp), w, FALSE, (void *)cp);
+      set_toggle_button(channel_f(cp), f, false, (void *)cp);
+      set_toggle_button(channel_w(cp), w, false, (void *)cp);
     }
   for_each_sound_chan(sp, update_graph);
 }
 
-void f_button_callback(chan_info *cp, int on, int with_control)
+void f_button_callback(chan_info *cp, bool on, bool with_control)
 {
   snd_info *sp;
   int i;
@@ -3624,9 +3632,9 @@ void f_button_callback(chan_info *cp, int on, int with_control)
 		{
 		  ncp->graph_transform_p = on;
 #if USE_GTK
-		  set_toggle_button(channel_f(ncp), on, TRUE, (void *)cp);
+		  set_toggle_button(channel_f(ncp), on, true, (void *)cp);
 #else
-		  set_toggle_button(channel_f(ncp), on, FALSE, (void *)cp);
+		  set_toggle_button(channel_f(ncp), on, false, (void *)cp);
 #endif
 		  update_graph(ncp);
 		}
@@ -3636,7 +3644,7 @@ void f_button_callback(chan_info *cp, int on, int with_control)
     }
 }
 
-void w_button_callback(chan_info *cp, int on, int with_control)
+void w_button_callback(chan_info *cp, bool on, bool with_control)
 {
   snd_info *sp;
   int i;
@@ -3657,9 +3665,9 @@ void w_button_callback(chan_info *cp, int on, int with_control)
 		{
 		  ncp->graph_time_p = on;
 #if USE_GTK
-		  set_toggle_button(channel_w(ncp), on, TRUE, (void *)cp);
+		  set_toggle_button(channel_w(ncp), on, true, (void *)cp);
 #else
-		  set_toggle_button(channel_w(ncp), on, FALSE, (void *)cp);
+		  set_toggle_button(channel_w(ncp), on, false, (void *)cp);
 #endif
 		  update_graph(ncp);
 		}
@@ -3669,7 +3677,7 @@ void w_button_callback(chan_info *cp, int on, int with_control)
     }
 }
 
-int key_press_callback(chan_info *ncp, int x, int y, int key_state, int keysym)
+bool key_press_callback(chan_info *ncp, int x, int y, int key_state, int keysym)
 {
   /* called by every key-intercepting widget in the entire sound pane */
   chan_info *cp;
@@ -3681,7 +3689,7 @@ int key_press_callback(chan_info *ncp, int x, int y, int key_state, int keysym)
       (within_graph(cp, x, y) == LISP) &&
       (XEN_HOOKED(key_press_hook)))
     {
-      /* return TRUE to keep this key press from being passed to keyboard_command */
+      /* return true to keep this key press from being passed to keyboard_command */
       XEN res = XEN_FALSE;
       res = run_or_hook(key_press_hook,
 			XEN_LIST_4(C_TO_SMALL_XEN_INT(sp->index),
@@ -3690,11 +3698,11 @@ int key_press_callback(chan_info *ncp, int x, int y, int key_state, int keysym)
 				   C_TO_XEN_INT(key_state)), /* this can have NumLock etc -- will be masked off in keyboard_command */
 			S_key_press_hook);
       if (XEN_TRUE_P(res))
-	return(FALSE);
+	return(false);
     }
   keyboard_command(cp, keysym, key_state);
   /* if lisp graph has cursor? */
-  return(FALSE);
+  return(false);
 }
 
 chan_info *which_channel(snd_info *sp, int y)
@@ -3729,7 +3737,7 @@ static void calculate_syncd_fft(chan_info *cp, void *ptr)
   if (cp->sound->sync == (*((int *)ptr))) calculate_fft(cp);
 }
 
-static int dragged = FALSE;
+static bool dragged = false;
 static Tempus mouse_down_time;
 static mark *mouse_mark = NULL;
 static mark *play_mark = NULL;
@@ -3759,7 +3767,7 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
 #endif
   select_channel(sp, cp->chan);
   dragged_cp = cp;
-  dragged = FALSE;
+  dragged = false;
   finish_selection_creation();
   mouse_mark = hit_mark(cp, x, y, key_state);
   if (mouse_mark == NULL) 
@@ -3833,7 +3841,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	  if (sp->playing)
 	    {
 	      stop_playing_sound(sp);
-	      set_play_button(sp, FALSE);
+	      set_play_button(sp, false);
 	    }
 	  if (play_mark != old_mark)
 	    {
@@ -3842,8 +3850,8 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	      else 
 		{
 		  if (key_state & snd_ControlMask)
-		    play_sound(sp, play_mark->samp, NO_END_SPECIFIED, TRUE, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "play button", 0);
-		  else play_channel(cp, play_mark->samp, NO_END_SPECIFIED, TRUE, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "play button", 0);
+		    play_sound(sp, play_mark->samp, NO_END_SPECIFIED, true, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "play button", 0);
+		  else play_channel(cp, play_mark->samp, NO_END_SPECIFIED, true, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "play button", 0);
 		}
 	      sp->playing_mark = play_mark;
 	    }
@@ -3872,7 +3880,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	    {
 	      if (button == BUTTON_2) /* the middle button */
 		{
-		  cp->cursor_on = TRUE;
+		  cp->cursor_on = true;
 		  cursor_moveto(cp, 
 				snd_round_off_t(ungrf_x(cp->axis, x) * 
 						(double)SND_SRATE(sp)));
@@ -3902,7 +3910,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 		    }
 		  else
 		    {
-		      cp->cursor_on = TRUE;
+		      cp->cursor_on = true;
 		      cursor_moveto(cp, 
 				    snd_round_off_t(ungrf_x(cp->axis, x) * 
 						    (double)SND_SRATE(sp)));
@@ -3964,7 +3972,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	{
 	  finish_moving_mark(cp, mouse_mark);
 	  mouse_mark = NULL;
-	  dragged = FALSE;
+	  dragged = false;
 	}
       else
 	{
@@ -3973,14 +3981,14 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	      finish_moving_play_mark(cp);
 	      stop_playing_sound(sp);
 	      play_mark = NULL;
-	      dragged = FALSE;
+	      dragged = false;
 	    }
 	  else
 	    {
 	      if (mix_tag != NO_MIX_TAG)
 		{
 		  finish_moving_mix_tag(mix_tag, x);
-		  dragged = FALSE;
+		  dragged = false;
 		  mix_tag = NO_MIX_TAG;
 		}
 	      else
@@ -3989,7 +3997,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 		    {
 		      cancel_selection_watch();
 		      finish_selection_creation();
-		      dragged = FALSE;
+		      dragged = false;
 		      if (show_selection_transform(ss)) 
 			{
 			  if (sp->sync)
@@ -4036,7 +4044,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time, Temp
   if (mouse_mark)
     {
       move_mark(cp, mouse_mark, x);
-      dragged = TRUE;
+      dragged = true;
     }
   else
     {
@@ -4053,12 +4061,12 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time, Temp
 	  if (!dragged)
 	    {
 	      first_time = mouse_time;
-	      dragged = TRUE;
+	      dragged = true;
 	      mouse_cursor = CURSOR(cp);
 	      if (!(XEN_TRUE_P(drag_res)))
 		{
 		  sp->speed_control = 0.0;
-		  play_channel(cp, play_mark->samp, NO_END_SPECIFIED, TRUE, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "drag playing mark", 0);
+		  play_channel(cp, play_mark->samp, NO_END_SPECIFIED, true, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "drag playing mark", 0);
 		}
 	    }
 	  else
@@ -4081,7 +4089,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time, Temp
 	      if (mix_tag != NO_MIX_TAG)
 		{
 		  move_mix_tag(mix_tag, x);
-		  dragged = TRUE;
+		  dragged = true;
 		  return;
 		}
 	      if (!dragged) 
@@ -4091,7 +4099,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time, Temp
 		  update_possible_selection_in_progress(snd_round_off_t(ungrf_x(cp->axis, x) * SND_SRATE(sp)));
 		  move_selection(cp, x);
 		}
-	      dragged = TRUE;
+	      dragged = true;
 	    }
 	  else
 	    {
@@ -4301,7 +4309,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, int fld, char *caller)
 	    case CP_UNDO_HOOK:               return(cp->undo_hook);                                            break;
 	    case CP_SHOW_Y_ZERO:             return(C_TO_XEN_BOOLEAN(cp->show_y_zero));                        break;
 	    case CP_SHOW_MARKS:              return(C_TO_XEN_BOOLEAN(cp->show_marks));                         break;
-	    case CP_TIME_GRAPH_TYPE:         return(C_TO_XEN_INT(cp->time_graph_type));                        break;
+	    case CP_TIME_GRAPH_TYPE:         return(C_TO_XEN_INT((int)(cp->time_graph_type)));                 break;
 	    case CP_WAVO_HOP:                return(C_TO_XEN_INT(cp->wavo_hop));                               break;
 	    case CP_WAVO_TRACE:              return(C_TO_XEN_INT(cp->wavo_trace));                             break;
 	    case CP_MAX_TRANSFORM_PEAKS:     return(C_TO_XEN_INT(cp->max_transform_peaks));                    break;
@@ -4313,7 +4321,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, int fld, char *caller)
 	    case CP_FFT_LOG_MAGNITUDE:       return(C_TO_XEN_BOOLEAN(cp->fft_log_magnitude));                  break;
 	    case CP_SPECTRO_HOP:             return(C_TO_XEN_INT(cp->spectro_hop));                            break;
 	    case CP_TRANSFORM_SIZE:          return(C_TO_XEN_INT(cp->transform_size));                         break;
-	    case CP_TRANSFORM_GRAPH_TYPE:    return(C_TO_XEN_INT(cp->transform_graph_type));                   break;
+	    case CP_TRANSFORM_GRAPH_TYPE:    return(C_TO_XEN_INT((int)(cp->transform_graph_type)));            break;
 	    case CP_FFT_WINDOW:              return(C_TO_XEN_INT(cp->fft_window));                             break;
 	    case CP_TRANSFORM_TYPE:          return(C_TO_XEN_INT(cp->transform_type));                         break;
 	    case CP_TRANSFORM_NORMALIZATION: return(C_TO_XEN_INT(cp->transform_normalization));                break;
@@ -4336,7 +4344,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, int fld, char *caller)
 		  if (chan_fft_in_progress(cp)) 
 		    force_fft_clear(cp);
 		  
-		  (cp->state)->checking_explicitly = TRUE;  /* do not allow UI events to intervene here! */
+		  (cp->state)->checking_explicitly = true;  /* do not allow UI events to intervene here! */
 		  if (cp->transform_graph_type == GRAPH_ONCE)
 		    single_fft(cp, 0);
 		  else
@@ -4344,7 +4352,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, int fld, char *caller)
 		      val = (void *)make_sonogram_state(cp);
 		      while (sonogram_in_slices(val) == BACKGROUND_CONTINUE);
 		    }
-		  (cp->state)->checking_explicitly = FALSE;
+		  (cp->state)->checking_explicitly = false;
 		}
 	      break;
 	    case CP_PROPERTIES:
@@ -4400,12 +4408,13 @@ static void reset_y_display(chan_info *cp, double sy, double zy)
   apply_y_axis_change(ap, cp);
 }
 
-static int call_update_graph = TRUE;
+static bool call_update_graph = true;
 
 static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
 {
   chan_info *cp;
   int val = 0;
+  bool bval = false;
   snd_info *sp;
   snd_state *ss;
   int i;
@@ -4453,15 +4462,19 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
       return(C_TO_XEN_INT(cp->edit_ctr));
       break;
     case CP_GRAPH_TRANSFORM_P:
-      fftb(cp, val = XEN_TO_C_BOOLEAN(on)); 
+      bval = XEN_TO_C_BOOLEAN(on); 
+      fftb(cp, bval);
       update_graph(cp);
+      return(on);
       break;
     case CP_GRAPH_TIME_P:
-      waveb(cp, val = XEN_TO_C_BOOLEAN(on)); 
+      bval = XEN_TO_C_BOOLEAN(on);
+      waveb(cp, bval);
       update_graph(cp);
+      return(on);
       break;
     case CP_CURSOR:
-      cp->cursor_on = TRUE; 
+      cp->cursor_on = true; 
       cursor_moveto(cp, beg_to_sample(on, caller));
       return(C_TO_XEN_OFF_T(CURSOR(cp)));
       break;
@@ -4473,7 +4486,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
 	cpos = beg_to_sample(on, caller);
 	if (pos == cp->edit_ctr)
 	  {
-	    cp->cursor_on = TRUE; 
+	    cp->cursor_on = true; 
 	    cursor_moveto(cp, cpos);
 	  }
 	else cp->cursors[pos] = cpos;
@@ -4482,8 +4495,8 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
       break;
     case CP_GRAPH_LISP_P:
       cp->graph_lisp_p = XEN_TO_C_BOOLEAN(on); 
-      val = cp->graph_lisp_p; 
       update_graph(cp);
+      return(on);
       break;
     case CP_AP_LOSAMP:
       set_x_axis_x0(cp, beg_to_sample(on, caller));
@@ -4554,9 +4567,9 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
       return(C_TO_XEN_BOOLEAN(cp->show_marks));
       break;
     case CP_TIME_GRAPH_TYPE:
-      cp->time_graph_type = XEN_TO_C_INT(on); /* checked already */
+      cp->time_graph_type = (graph_type_t)XEN_TO_C_INT(on); /* checked already */
       update_graph(cp); 
-      return(C_TO_XEN_INT(cp->time_graph_type));
+      return(C_TO_XEN_INT((int)(cp->time_graph_type)));
       break;
     case CP_WAVO_HOP:
       cp->wavo_hop = g_imin(1, on, DEFAULT_WAVO_HOP); 
@@ -4612,9 +4625,9 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
       return(C_TO_XEN_INT(cp->transform_size));
       break;
     case CP_TRANSFORM_GRAPH_TYPE: 
-      cp->transform_graph_type = XEN_TO_C_INT(on); /* checked already */
+      cp->transform_graph_type = (graph_type_t)XEN_TO_C_INT(on); /* checked already */
       calculate_fft(cp); 
-      return(C_TO_XEN_INT(cp->transform_graph_type)); 
+      return(C_TO_XEN_INT((int)(cp->transform_graph_type))); 
       break;
     case CP_FFT_WINDOW:
       cp->fft_window = XEN_TO_C_INT(on); /* checked */
@@ -4637,22 +4650,19 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
       return(C_TO_XEN_BOOLEAN(cp->show_mix_waveforms));
       break;
     case CP_TIME_GRAPH_STYLE:
-      val = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, DEFAULT_GRAPH_STYLE, caller);
-      cp->time_graph_style = val;
+      cp->time_graph_style = (graph_style_t)XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, DEFAULT_GRAPH_STYLE, caller);
       if (call_update_graph) update_graph(cp);
-      return(C_TO_XEN_INT(cp->time_graph_style));
+      return(C_TO_XEN_INT((int)(cp->time_graph_style)));
       break;
     case CP_LISP_GRAPH_STYLE:
-      val = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, DEFAULT_GRAPH_STYLE, caller);
-      cp->lisp_graph_style = val;
+      cp->lisp_graph_style = (graph_style_t)XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, DEFAULT_GRAPH_STYLE, caller);
       if (call_update_graph) update_graph(cp);
-      return(C_TO_XEN_INT(cp->lisp_graph_style));
+      return(C_TO_XEN_INT((int)(cp->lisp_graph_style)));
       break;
     case CP_TRANSFORM_GRAPH_STYLE:
-      val = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, DEFAULT_GRAPH_STYLE, caller);
-      cp->transform_graph_style = val;
+      cp->transform_graph_style = (graph_style_t)XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, DEFAULT_GRAPH_STYLE, caller);
       if (call_update_graph) update_graph(cp);
-      return(C_TO_XEN_INT(cp->transform_graph_style));
+      return(C_TO_XEN_INT((int)(cp->transform_graph_style)));
       break;
     case CP_X_AXIS_STYLE:
       val = XEN_TO_C_INT(on); /* range already checked */
@@ -4752,7 +4762,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
       newamp[0] = XEN_TO_C_DOUBLE(on);
       if (curamp != newamp[0])
 	{
-	  scale_to(cp->state, cp->sound, cp, newamp, 1, FALSE);
+	  scale_to(cp->state, cp->sound, cp, newamp, 1, false);
 	  update_graph(cp);
 	}
       break;
@@ -5623,15 +5633,15 @@ static XEN g_time_graph_type(XEN snd, XEN chn)
 otherwise " S_graph_once "."
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_TIME_GRAPH_TYPE, S_time_graph_type));
-  return(C_TO_XEN_INT(time_graph_type(get_global_state())));
+  return(C_TO_XEN_INT((int)time_graph_type(get_global_state())));
 }
 
 static XEN g_set_time_graph_type(XEN val, XEN snd, XEN chn) 
 {
-  int on;
+  graph_type_t on;
   snd_state *ss;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, S_setB S_time_graph_type, "an integer");
-  on = XEN_TO_C_INT(val);
+  on = (graph_type_t)XEN_TO_C_INT(val);
   if ((on != GRAPH_ONCE) && (on != GRAPH_AS_WAVOGRAM))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_time_graph_type, 1, val, "~A, must be " S_graph_once ", or " S_graph_as_wavogram);
   if (XEN_BOUND_P(snd))
@@ -5640,7 +5650,7 @@ static XEN g_set_time_graph_type(XEN val, XEN snd, XEN chn)
     {
       ss = get_global_state();
       set_time_graph_type(ss, on);
-      return(C_TO_XEN_BOOLEAN(time_graph_type(ss)));
+      return(C_TO_XEN_INT((int)time_graph_type(ss)));
     }
 }
 
@@ -5729,15 +5739,15 @@ static XEN g_transform_graph_type(XEN snd, XEN chn)
 be " S_graph_once ", " S_graph_as_sonogram ", or " S_graph_as_spectrogram "."
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_TRANSFORM_GRAPH_TYPE, S_transform_graph_type));
-  return(C_TO_XEN_INT(transform_graph_type(get_global_state())));
+  return(C_TO_XEN_INT((int)transform_graph_type(get_global_state())));
 }
 
 static XEN g_set_transform_graph_type(XEN val, XEN snd, XEN chn)
 {
   snd_state *ss;
-  int style;
+  graph_type_t style;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, S_setB S_transform_graph_type, "an integer"); 
-  style = XEN_TO_C_INT(val);
+  style = (graph_type_t)XEN_TO_C_INT(val);
   if ((style < GRAPH_ONCE) || (style > GRAPH_AS_SPECTROGRAM))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_transform_graph_type, 1, val, "~A, but must be " S_graph_once ", " S_graph_as_sonogram ", or " S_graph_as_spectrogram);
   if (XEN_BOUND_P(snd))
@@ -5746,7 +5756,7 @@ static XEN g_set_transform_graph_type(XEN val, XEN snd, XEN chn)
     {
       ss = get_global_state();
       set_transform_graph_type(ss, style);
-      return(C_TO_XEN_INT(transform_graph_type(ss)));
+      return(C_TO_XEN_INT((int)transform_graph_type(ss)));
     }
 }
 
@@ -5890,24 +5900,24 @@ of '(" S_graph_lines " " S_graph_dots " " S_graph_dots_and_lines " " S_graph_lol
 static XEN g_set_graph_style(XEN style, XEN snd, XEN chn)
 {
   snd_state *ss;
-  int val;
+  graph_style_t val;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(style), style, XEN_ARG_1, S_setB S_graph_style, "an integer"); 
-  val = XEN_TO_C_INT(style);
+  val = (graph_style_t)XEN_TO_C_INT(style);
   if (!(GRAPH_STYLE_OK(val)))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_graph_style, 1, style, "~A: unknown graph-style");
   if (XEN_BOUND_P(snd))
     {
       XEN val;
-      call_update_graph = FALSE;
+      call_update_graph = false;
       val = channel_set(snd, chn, style, CP_TIME_GRAPH_STYLE, S_setB S_graph_style);
       channel_set(snd, chn, style, CP_LISP_GRAPH_STYLE, S_setB S_graph_style);
-      call_update_graph = TRUE;
+      call_update_graph = true;
       channel_set(snd, chn, style, CP_TRANSFORM_GRAPH_STYLE, S_setB S_graph_style);
       return(val);
     }
   ss = get_global_state();
   set_graph_style(ss, val);
-  return(C_TO_XEN_INT(graph_style(ss)));
+  return(C_TO_XEN_INT((int)(graph_style(ss))));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_graph_style_reversed, g_set_graph_style)
@@ -6309,7 +6319,8 @@ If 'data' is a list of numbers, it is treated as an envelope."
   char *label = NULL;
   vct *v = NULL;
   XEN *vdata;
-  int i, len, graph, graphs, need_update = FALSE;
+  int i, len, graph, graphs;
+  bool need_update = false;
   Float ymin, ymax, val;
   double nominal_x0, nominal_x1;
   lisp_grf *old_lp = NULL;
@@ -6363,7 +6374,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
       lg->len = (int *)CALLOC(graphs, sizeof(int));
       lg->graphs = graphs;
       lg->data = (Float **)CALLOC(graphs, sizeof(Float *));
-      need_update = TRUE;
+      need_update = true;
     }
   if ((XEN_LIST_P_WITH_LENGTH(ldata, len)) &&
       (XEN_NUMBER_P(XEN_CAR(ldata))))
@@ -6442,7 +6453,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
       uap->width = w;
       uap->graph_x0 = gx0;
     }
-  cp->graph_lisp_p = TRUE;
+  cp->graph_lisp_p = true;
   if ((XEN_NOT_BOUND_P(force_display)) || 
       (XEN_NOT_FALSE_P(force_display)))
     {
@@ -6557,13 +6568,13 @@ to a standard Snd channel graph placed in the widget 'container'."
   rate = XEN_TO_C_INT_OR_ELSE(srate, (int)mus_srate());
   initial_length = XEN_TO_C_INT_OR_ELSE(length, 8192);
   ss = get_global_state();
-  sp = make_simple_channel_display(ss, rate, initial_length, WITH_FW_BUTTONS, graph_style(ss), (widget_t)(XEN_UNWRAP_WIDGET(container)), TRUE);
+  sp = make_simple_channel_display(ss, rate, initial_length, WITH_FW_BUTTONS, graph_style(ss), (widget_t)(XEN_UNWRAP_WIDGET(container)), true);
   if (sp == NULL) /* can only happen if "container" is not a form widget */
     XEN_ERROR(MUS_MISC_ERROR,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_make_variable_graph),
 			 C_TO_XEN_STRING("container must be a Form widget"),
 			 container));
-  sp->read_only = TRUE;
+  sp->read_only = true;
   sp->state = ss;
   sp->index = find_free_sound_slot_for_channel_display(ss);
   ss->sounds[sp->index] = sp;

@@ -32,6 +32,10 @@
   #define HAVE_SETLOCALE 1
   #define HAVE_MEMMOVE 1
   #define HAVE_STRINGIZE 1
+  #define HAVE_LSTAT 1
+  #define HAVE_HYPOT 1
+  #define HAVE_STRDUP 1
+  #define HAVE_FILENO 1
   #if defined(LINUX) && (!(defined(HAVE_SCHED_H)))
     #define HAVE_SCHED_H 1
   #endif
@@ -134,7 +138,8 @@
 /* defines the decimal point character used where I'm making float representations by hand */
 /* if nl_langinfo is available, its decimal point will override this */
 
-#define XOR(a, b) ((~((a) & (b))) & ((a) | (b)))
+#define XOR(a, b) ((a) ^ (b))
+
 #define UNPACK_SOUND(a) (a >> 16)
 #define UNPACK_CHANNEL(a) (a & 0xff)
 #define PACK_SOUND_AND_CHANNEL(a, b) ((a << 16) | b)
@@ -167,11 +172,11 @@ enum {ENVED_AMPLITUDE, ENVED_SPECTRUM, ENVED_SRATE};
 #define INVALID_MIX_CHANNEL -2
 #define SAVE_ALL_CHANS -1
 
-#define NOT_IN_BACKGROUND 0
-#define IN_BACKGROUND 1
+#define NOT_IN_BACKGROUND false
+#define IN_BACKGROUND true
 
-#define WITHOUT_VIRTUAL_CHANNELS 0
-#define WITH_VIRTUAL_CHANNELS 1
+#define WITHOUT_VIRTUAL_CHANNELS false
+#define WITH_VIRTUAL_CHANNELS true
 
 #define WITH_ARROWS 1
 #define WITH_FW_BUTTONS 0
@@ -180,7 +185,7 @@ enum {ENVED_AMPLITUDE, ENVED_SPECTRUM, ENVED_SRATE};
   #define POPUP_BUTTON 3
 #endif
 
-enum {GRAPH_LINES, GRAPH_DOTS, GRAPH_FILLED, GRAPH_DOTS_AND_LINES, GRAPH_LOLLIPOPS};
+typedef enum {GRAPH_LINES, GRAPH_DOTS, GRAPH_FILLED, GRAPH_DOTS_AND_LINES, GRAPH_LOLLIPOPS} graph_style_t;
 #define GRAPH_STYLE_OK(Grf) ((Grf >= GRAPH_LINES) && (Grf <= GRAPH_LOLLIPOPS))
  /* using lollipop rather than the suggested popsicle because 
   *   popsicle is a (capitalized) trade-name in the USA and I want lowercase,
@@ -188,20 +193,21 @@ enum {GRAPH_LINES, GRAPH_DOTS, GRAPH_FILLED, GRAPH_DOTS_AND_LINES, GRAPH_LOLLIPO
   *   and I think lollipop is more accurate -- in my experience lollipops have
   *     circular candies whereas popsicles have a sort of squared-off bottom.
   */
-enum {GRAPH_ONCE, GRAPH_AS_SONOGRAM, GRAPH_AS_SPECTROGRAM, GRAPH_AS_WAVOGRAM};
+typedef enum {GRAPH_ONCE, GRAPH_AS_SONOGRAM, GRAPH_AS_SPECTROGRAM, GRAPH_AS_WAVOGRAM} graph_type_t;
 enum {ZOOM_FOCUS_LEFT, ZOOM_FOCUS_RIGHT, ZOOM_FOCUS_ACTIVE, ZOOM_FOCUS_MIDDLE};
 enum {DONT_LOCK_MIXES, LOCK_MIXES};
-enum {DONT_DELETE_ME, DELETE_ME, ALREADY_DELETED, MULTICHANNEL_DELETION};
+typedef enum {DONT_DELETE_ME, DELETE_ME, ALREADY_DELETED, MULTICHANNEL_DELETION} file_delete_t;
+/* TODO: enum typedefs, rest of bools */
 enum {SND_REOPEN_CLOSED_FILE, SND_OPEN_CHANNEL, SND_COPY_READER, SND_INSERT_FILE, SND_CHANGE_FILE, SND_OVERRIDE_FILE, SND_MIX_FILE};
 enum {CURSOR_CROSS, CURSOR_LINE, CURSOR_PROC};
 enum {SHOW_NO_AXES, SHOW_ALL_AXES, SHOW_X_AXIS};
 enum {DONT_NORMALIZE, NORMALIZE_BY_CHANNEL, NORMALIZE_BY_SOUND, NORMALIZE_GLOBALLY};
-enum {NO_PROBLEM, BLIND_LEAP, GIVE_UP, HUNKER_DOWN};
+typedef enum {NO_PROBLEM, BLIND_LEAP, GIVE_UP, HUNKER_DOWN} disk_space_t;
 enum {ENVED_ADD_POINT,ENVED_DELETE_POINT,ENVED_MOVE_POINT};
 enum {CHAN_GC, CHAN_IGC, CHAN_SELGC, CHAN_CGC, CHAN_MGC, CHAN_MXGC, CHAN_TMPGC, CHAN_SELMXGC};
 #define MAX_MAIN_MENUS 64
 
-enum {CURRENT_FILE_VIEWER, PREVIOUS_FILE_VIEWER, REGION_VIEWER};
+typedef enum {CURRENT_FILE_VIEWER, PREVIOUS_FILE_VIEWER, REGION_VIEWER} file_viewer_t;
 enum {COLOR_DIALOG, ORIENTATION_DIALOG, ENVED_DIALOG, ERROR_DIALOG, YES_OR_NO_DIALOG, TRANSFORM_DIALOG,
       FILE_OPEN_DIALOG, FILE_SAVE_AS_DIALOG, VIEW_FILES_DIALOG, RAW_DATA_DIALOG, NEW_FILE_DIALOG,
       FILE_MIX_DIALOG, EDIT_HEADER_DIALOG, FIND_DIALOG, HELP_DIALOG, COMPLETION_DIALOG, MIX_PANEL_DIALOG,
@@ -229,8 +235,8 @@ enum {SOUND_IDLE, SOUND_NORMAL, SOUND_WRAPPER, SOUND_REGION, SOUND_READER};
 #define SEARCH_OK 0
 #define SEARCH_FAILED -1
 
-#define REMOVE_FROM_CACHE TRUE
-#define IGNORE_CACHE FALSE
+#define REMOVE_FROM_CACHE true
+#define IGNORE_CACHE false
 
 enum {FFT_UNCHANGED, FFT_CHANGED, FFT_CHANGE_LOCKED};
 
@@ -238,8 +244,8 @@ enum {WITHOUT_GRAPH, WITH_GRAPH, WITHOUT_INITIAL_GRAPH_HOOK};
 
 #define IS_PLAYER(snd) ((snd) && (snd->index < 0))
 #define PLAYER(snd) (-(snd->index))
-#define NO_PLAYERS FALSE
-#define PLAYERS_OK TRUE
+#define NO_PLAYERS false
+#define PLAYERS_OK true
 
 #define AT_CURRENT_EDIT_POSITION -1
 
@@ -274,16 +280,16 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 #define DEFAULT_AMP_CONTROL 1.0
 #define DEFAULT_CONTRAST_CONTROL 0.0
 #define DEFAULT_CONTRAST_CONTROL_AMP 1.0
-#define DEFAULT_CONTRAST_CONTROL_P FALSE
+#define DEFAULT_CONTRAST_CONTROL_P false
 #define DEFAULT_EXPAND_CONTROL 1.0
-#define DEFAULT_EXPAND_CONTROL_P FALSE
+#define DEFAULT_EXPAND_CONTROL_P false
 #define DEFAULT_EXPAND_CONTROL_HOP 0.05
 #define DEFAULT_EXPAND_CONTROL_LENGTH 0.15
 #define DEFAULT_EXPAND_CONTROL_RAMP 0.4
-#define DEFAULT_FILTER_CONTROL_P FALSE
+#define DEFAULT_FILTER_CONTROL_P false
 #define DEFAULT_FILTER_CONTROL_ORDER 20
 #define DEFAULT_FILTER_CONTROL_IN_DB 0
-#define DEFAULT_REVERB_CONTROL_P FALSE
+#define DEFAULT_REVERB_CONTROL_P false
 #define DEFAULT_REVERB_CONTROL_FEEDBACK 1.09
 #define DEFAULT_REVERB_CONTROL_LENGTH 1.0
 #define DEFAULT_REVERB_CONTROL_LOWPASS 0.7
@@ -329,11 +335,11 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 
 #define dac_combines_channels(ss) ss->Dac_Combines_Channels
 #define set_dac_combines_channels(ss, a) ss->Dac_Combines_Channels = a
-#define DEFAULT_DAC_COMBINES_CHANNELS TRUE
+#define DEFAULT_DAC_COMBINES_CHANNELS true
 
 #define emacs_style_save_as(ss) ss->Emacs_Style_Save_As
 #define set_emacs_style_save_as(ss, a) ss->Emacs_Style_Save_As = a
-#define DEFAULT_EMACS_STYLE_SAVE_AS FALSE
+#define DEFAULT_EMACS_STYLE_SAVE_AS false
 
 #define max_regions(ss) ss->Max_Regions
 #define in_set_max_regions(ss, a) ss->Max_Regions = a
@@ -345,11 +351,11 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 
 #define auto_resize(ss) ss->Auto_Resize
 #define set_auto_resize(ss, a) ss->Auto_Resize = a
-#define DEFAULT_AUTO_RESIZE TRUE
+#define DEFAULT_AUTO_RESIZE true
 
 #define auto_update(ss) ss->Auto_Update
 #define set_auto_update(ss, a) ss->Auto_Update = a
-#define DEFAULT_AUTO_UPDATE FALSE
+#define DEFAULT_AUTO_UPDATE false
 
 #define auto_update_interval(ss) ss->Auto_Update_Interval
 #define set_auto_update_interval(ss, a) ss->Auto_Update_Interval = a
@@ -361,7 +367,7 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 
 #define color_inverted(ss) ss->Color_Inverted
 #define in_set_color_inverted(ss, a) ss->Color_Inverted = a
-#define DEFAULT_COLOR_INVERTED TRUE
+#define DEFAULT_COLOR_INVERTED true
 
 #define color_scale(ss) ss->Color_Scale
 #define in_set_color_scale(ss, a) ss->Color_Scale = a
@@ -389,7 +395,7 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 
 #define trap_segfault(ss) ss->Trap_Segfault
 #define set_trap_segfault(ss, a) ss->Trap_Segfault = a
-#define DEFAULT_TRAP_SEGFAULT TRUE
+#define DEFAULT_TRAP_SEGFAULT true
 
 #define optimization(ss) ss->Optimization
 #define set_optimization(ss, a) ss->Optimization = a
@@ -409,7 +415,7 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 
 #define ask_before_overwrite(ss) ss->Ask_Before_Overwrite
 #define set_ask_before_overwrite(ss, a) ss->Ask_Before_Overwrite = a
-#define DEFAULT_ASK_BEFORE_OVERWRITE FALSE
+#define DEFAULT_ASK_BEFORE_OVERWRITE false
 
 #define spectro_cutoff(ss) ss->Spectro_Cutoff
 #define in_set_spectro_cutoff(ss, a) ss->Spectro_Cutoff = a
@@ -506,16 +512,16 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 
 #define verbose_cursor(ss) ss->Verbose_Cursor
 #define in_set_verbose_cursor(ss, a) ss->Verbose_Cursor = a
-#define DEFAULT_VERBOSE_CURSOR FALSE
+#define DEFAULT_VERBOSE_CURSOR false
 
 #define selection_creates_region(ss) ss->Selection_Creates_Region
 
 #define set_selection_creates_region(ss, a) ss->Selection_Creates_Region = a
-#define DEFAULT_SELECTION_CREATES_REGION TRUE
+#define DEFAULT_SELECTION_CREATES_REGION true
 
 #define filter_env_in_hz(ss) ss->Filter_Env_In_Hz
 #define set_filter_env_in_hz(ss, a) ss->Filter_Env_In_Hz = a
-#define DEFAULT_FILTER_ENV_IN_HZ FALSE
+#define DEFAULT_FILTER_ENV_IN_HZ false
 
 #define zoom_focus_style(ss) ss->Zoom_Focus_Style
 #define set_zoom_focus_style(ss, a) ss->Zoom_Focus_Style = a
@@ -606,23 +612,23 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 
 #define with_mix_tags(ss) ss->With_Mix_Tags
 #define set_with_mix_tags(ss, a) ss->With_Mix_Tags = a
-#define DEFAULT_WITH_MIX_TAGS TRUE
+#define DEFAULT_WITH_MIX_TAGS true
 
 #define with_relative_panes(ss) ss->With_Relative_Panes
 #define set_with_relative_panes(ss, a) ss->With_Relative_Panes = a
-#define DEFAULT_WITH_RELATIVE_PANES TRUE
+#define DEFAULT_WITH_RELATIVE_PANES true
 
 #define with_gl(ss) ss->With_GL
 #define in_set_with_gl(ss, a) ss->With_GL = a
 #if HAVE_GL
-  #define DEFAULT_WITH_GL TRUE
+  #define DEFAULT_WITH_GL true
 #else
-  #define DEFAULT_WITH_GL FALSE
+  #define DEFAULT_WITH_GL false
 #endif
 
 #define with_background_processes(ss) ss->With_Background_Processes
 #define set_with_background_processes(ss, a) ss->With_Background_Processes = a
-#define DEFAULT_WITH_BACKGROUND_PROCESSES TRUE
+#define DEFAULT_WITH_BACKGROUND_PROCESSES true
 #define DISABLE_BACKGROUND_PROCESSES 1234
 
 #define wavo_hop(ss) ss->Wavo_Hop
@@ -647,19 +653,19 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 
 #define show_transform_peaks(ss) ss->Show_Transform_Peaks
 #define in_set_show_transform_peaks(ss, a) ss->Show_Transform_Peaks = a
-#define DEFAULT_SHOW_TRANSFORM_PEAKS FALSE
+#define DEFAULT_SHOW_TRANSFORM_PEAKS false
 
 #define show_indices(ss) ss->Show_Indices
 #define set_show_indices(ss, a) ss->Show_Indices = a
-#define DEFAULT_SHOW_INDICES FALSE
+#define DEFAULT_SHOW_INDICES false
 
 #define show_backtrace(ss) ss->Show_Backtrace
 #define set_show_backtrace(ss, a) ss->Show_Backtrace = a
-#define DEFAULT_SHOW_BACKTRACE FALSE
+#define DEFAULT_SHOW_BACKTRACE false
 
 #define show_y_zero(ss) ss->Show_Y_Zero
 #define in_set_show_y_zero(ss, a) ss->Show_Y_Zero = a
-#define DEFAULT_SHOW_Y_ZERO FALSE
+#define DEFAULT_SHOW_Y_ZERO false
 
 #define show_axes(ss) ss->Show_Axes
 #define in_set_show_axes(ss, a) ss->Show_Axes = a
@@ -667,7 +673,7 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 
 #define show_mix_waveforms(ss) ss->Show_Mix_Waveforms
 #define in_set_show_mix_waveforms(ss, a) ss->Show_Mix_Waveforms = a
-#define DEFAULT_SHOW_MIX_WAVEFORMS TRUE
+#define DEFAULT_SHOW_MIX_WAVEFORMS true
 
 #define mix_waveform_height(ss) ss->Mix_Waveform_Height
 #define in_set_mix_waveform_height(ss, a) ss->Mix_Waveform_Height = a
@@ -675,15 +681,15 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 
 #define show_marks(ss) ss->Show_Marks
 #define in_set_show_marks(ss, a) ss->Show_Marks = a
-#define DEFAULT_SHOW_MARKS TRUE
+#define DEFAULT_SHOW_MARKS true
 
 #define fft_log_magnitude(ss) ss->Fft_Log_Magnitude
 #define in_set_fft_log_magnitude(ss, a) ss->Fft_Log_Magnitude = a
-#define DEFAULT_FFT_LOG_MAGNITUDE FALSE
+#define DEFAULT_FFT_LOG_MAGNITUDE false
 
 #define fft_log_frequency(ss) ss->Fft_Log_Frequency
 #define in_set_fft_log_frequency(ss, a) ss->Fft_Log_Frequency = a
-#define DEFAULT_FFT_LOG_FREQUENCY FALSE
+#define DEFAULT_FFT_LOG_FREQUENCY false
 
 #define channel_style(ss) ss->Channel_Style
 #define in_set_channel_style(ss, a) ss->Channel_Style = a
@@ -707,11 +713,11 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 
 #define enved_clip_p(ss) ss->Enved_Clip_p
 #define in_set_enved_clip_p(ss, a) ss->Enved_Clip_p = a
-#define DEFAULT_ENVED_CLIP_P FALSE
+#define DEFAULT_ENVED_CLIP_P false
 
 #define enved_wave_p(ss) ss->Enved_Wave_p
 #define in_set_enved_wave_p(ss, a) ss->Enved_Wave_p = a
-#define DEFAULT_ENVED_WAVE_P FALSE
+#define DEFAULT_ENVED_WAVE_P false
 
 #define enved_filter_order(ss) ss->Enved_Filter_Order
 #define in_set_enved_filter_order(ss, a) ss->Enved_Filter_Order = a
@@ -719,7 +725,7 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 
 #define enved_in_dB(ss) ss->Enved_in_dB
 #define in_set_enved_in_dB(ss, a) ss->Enved_in_dB = a
-#define DEFAULT_ENVED_IN_DB FALSE
+#define DEFAULT_ENVED_IN_DB false
 
 #define enved_target(ss) ss->Enved_Target
 #define in_set_enved_target(ss, a) ss->Enved_Target = a
@@ -735,7 +741,7 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 
 #define enved_exp_p(ss) ss->Enved_Exp_p
 #define in_set_enved_exp_p(ss, a) ss->Enved_Exp_p = a
-#define DEFAULT_ENVED_EXP_P FALSE
+#define DEFAULT_ENVED_EXP_P false
 
 #define audio_output_device(ss) ss->Audio_Output_Device
 #define set_audio_output_device(ss, a) ss->Audio_Output_Device = a
@@ -749,7 +755,7 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 
 #define data_clipped(ss) ss->Data_Clipped
 #define set_data_clipped(ss, a) ss->Data_Clipped = a
-#define DEFAULT_DATA_CLIPPED FALSE
+#define DEFAULT_DATA_CLIPPED false
 
 #define html_dir(ss) ss->HTML_Dir
 #define set_html_dir_1(ss, a) ss->HTML_Dir = a
@@ -761,7 +767,7 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 
 #define graphs_horizontal(ss) ss->Graphs_Horizontal
 #define in_set_graphs_horizontal(ss, a) ss->Graphs_Horizontal = a
-#define DEFAULT_GRAPHS_HORIZONTAL TRUE
+#define DEFAULT_GRAPHS_HORIZONTAL true
 
 #define mix_tag_width(ss) ss->Mix_Tag_Width
 #define set_mix_tag_width(ss, a) ss->Mix_Tag_Width = a

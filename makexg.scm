@@ -1360,7 +1360,7 @@
 		      (hey "XEN_CADR((XEN)func_data),~%")))
 		args)
 	       (hey (substring "                                                                      " 0 castlen))
-	       (hey "__FUNCTION__)")
+	       (hey "c__FUNCTION__)")
 	       (if void?
 		   (hey ";~%")
 		   (if (eq? gctype 'timeout)
@@ -1379,7 +1379,7 @@
 (hey "                          C_TO_XEN_GtkWidget_(w),~%")
 (hey "                          C_TO_XEN_GdkEventAny_(ev),~%")
 (hey "                          XEN_CADR((XEN)data),~%")
-(hey "                          __FUNCTION__)));~%")
+(hey "                          c__FUNCTION__)));~%")
 (hey "}~%~%")
 
 (hey "~%~%/* ---------------------------------------- functions ---------------------------------------- */~%~%")
@@ -2315,7 +2315,7 @@
 
 
 (hey "/* -------------------------------- initialization -------------------------------- */~%~%")
-(hey "static int xg_already_inited = FALSE;~%~%")
+(hey "static bool xg_already_inited = false;~%~%")
 (hey "#if WITH_GTK_AND_X11~%")
 (hey "#if HAVE_GUILE~%")
 (hey " void init_x11(void);~%")
@@ -2347,7 +2347,7 @@
 (hey "#if HAVE_RUBY~%")
 (hey "      rb_define_global_const(\"Xm_Version\", C_TO_XEN_STRING(\"~A\"));~%" (strftime "%d-%b-%y" (localtime (current-time))))
 (hey "#endif~%")
-(hey "      xg_already_inited = TRUE;~%")
+(hey "      xg_already_inited = true;~%")
 (hey "#if WITH_GTK_AND_X11~%")
 (hey "#if HAVE_GUILE~%")
 (hey "      init_x11();~%")

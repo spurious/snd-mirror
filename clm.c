@@ -150,11 +150,14 @@ Float mus_sum_of_sines(Float *amps, Float *phases, int size)
   return(sum);
 }
 
-static int check_gen(mus_any *ptr, const char *name)
+static bool check_gen(mus_any *ptr, const char *name)
 {
   if (ptr == NULL)
-    return(mus_error(MUS_NO_GEN, "null gen passed to %s", name));
-  return(TRUE);
+    {
+      mus_error(MUS_NO_GEN, "null gen passed to %s", name);
+      return(false);
+    }
+  return(true);
 }
 
 char *mus_name(mus_any *ptr) 
@@ -342,7 +345,7 @@ char *mus_inspect(mus_any *gen)
   return(NULL);
 }
 
-int mus_equalp(mus_any *p1, mus_any *p2)
+bool mus_equalp(mus_any *p1, mus_any *p2)
 {
   if ((p1) && (p2))
     {
@@ -350,7 +353,7 @@ int mus_equalp(mus_any *p1, mus_any *p2)
 	return((*((p1->core)->equalp))(p1, p2));
       else return(p1 == p2);
     }
-  return(TRUE); /* (eq nil nil) */
+  return(true); /* (eq nil nil) */
 }
 
 Float mus_frequency(mus_any *gen)
@@ -734,7 +737,7 @@ static Float oscil_phase(mus_any *ptr) {return(fmod(((osc *)ptr)->phase, TWO_PI)
 static Float set_oscil_phase(mus_any *ptr, Float val) {((osc *)ptr)->phase = val; return(val);}
 static int oscil_cosines(mus_any *ptr) {return(1);}
 
-static int oscil_equalp(mus_any *p1, mus_any *p2)
+static bool oscil_equalp(mus_any *p1, mus_any *p2)
 {
   return((p1 == p2) ||
 	 ((mus_oscil_p((mus_any *)p1)) && 
@@ -829,7 +832,7 @@ static int sum_of_cosines_cosines(mus_any *ptr) {return(((cosp *)ptr)->cosines);
 static int set_sum_of_cosines_cosines(mus_any *ptr, int val) {((cosp *)ptr)->cosines = val; return(val);}
 static Float run_sum_of_cosines(mus_any *ptr, Float fm, Float unused) {return(mus_sum_of_cosines(ptr, fm));}
 
-static int sum_of_cosines_equalp(mus_any *p1, mus_any *p2)
+static bool sum_of_cosines_equalp(mus_any *p1, mus_any *p2)
 {
   return((p1 == p2) ||
 	 ((mus_sum_of_cosines_p((mus_any *)p1)) && (mus_sum_of_cosines_p((mus_any *)p2)) &&
@@ -904,7 +907,8 @@ mus_any *mus_make_sum_of_cosines(int cosines, Float freq, Float phase)
 
 typedef struct {
   mus_any_class *core;
-  int loc, size, zdly, line_allocated;
+  int loc, size, zdly;
+  bool line_allocated;
   Float *line;
   int zloc, zsize;
   Float xscl, yscl;
@@ -1082,12 +1086,12 @@ static char *describe_all_pass(mus_any *ptr)
   return(describe_buffer);
 }
 
-static int delay_equalp(mus_any *p1, mus_any *p2)
+static bool delay_equalp(mus_any *p1, mus_any *p2)
 {
   int i;
   dly *d1 = (dly *)p1;
   dly *d2 = (dly *)p2;
-  if (p1 == p2) return(TRUE);
+  if (p1 == p2) return(true);
   if ((d1) && (d2) &&
       (d1->core->type == d2->core->type) &&
       (d1->size == d2->size) &&
@@ -1100,10 +1104,10 @@ static int delay_equalp(mus_any *p1, mus_any *p2)
     {
       for (i = 0; i < d1->size; i++)
 	if (d1->line[i] != d2->line[i])
-	  return(FALSE);
-      return(TRUE);
+	  return(false);
+      return(true);
     }
-  return(FALSE);
+  return(false);
 }
 
 static int delay_length(mus_any *ptr) {return(((dly *)ptr)->size);}
@@ -1117,7 +1121,7 @@ static Float set_delay_fb(mus_any *ptr, Float val) {((dly *)ptr)->yscl = val; re
 static Float *delay_set_data(mus_any *ptr, Float *val) 
 {
   dly *gen = (dly *)ptr;
-  if (gen->line_allocated) {FREE(gen->line); gen->line_allocated = FALSE;}
+  if (gen->line_allocated) {FREE(gen->line); gen->line_allocated = false;}
   gen->line = val; 
   return(val);
 }
@@ -1161,12 +1165,12 @@ mus_any *mus_make_delay(int size, Float *preloaded_line, int line_size)
   if (preloaded_line)
     {
       gen->line = preloaded_line;
-      gen->line_allocated = FALSE;
+      gen->line_allocated = false;
     }
   else 
     {
       gen->line = (Float *)clm_calloc(line_size, sizeof(Float), "delay line");
-      gen->line_allocated = TRUE;
+      gen->line_allocated = true;
     }
   gen->zloc = line_size - size;
   return((mus_any *)gen);
@@ -1348,7 +1352,8 @@ typedef struct {
   Float internal_mag;
   Float phase;
   Float *table;
-  int table_size, table_allocated;
+  int table_size;
+  bool table_allocated;
 } tbl;
 
 Float *mus_partials2wave(Float *partial_data, int partials, Float *table, int table_size, int normalize)
@@ -1442,12 +1447,12 @@ static char *inspect_table_lookup(mus_any *ptr)
   return(describe_buffer);
 }
 
-static int table_lookup_equalp(mus_any *p1, mus_any *p2)
+static bool table_lookup_equalp(mus_any *p1, mus_any *p2)
 {
   int i;
   tbl *t1 = (tbl *)p1;
   tbl *t2 = (tbl *)p2;
-  if (p1 == p2) return(TRUE);
+  if (p1 == p2) return(true);
   if ((t1) && (t2) &&
       (t1->core->type == t2->core->type) &&
       (t1->table_size == t2->table_size) &&
@@ -1457,10 +1462,10 @@ static int table_lookup_equalp(mus_any *p1, mus_any *p2)
     {
       for (i = 0; i < t1->table_size; i++)
 	if (t1->table[i] != t2->table[i])
-	  return(FALSE);
-      return(TRUE);
+	  return(false);
+      return(true);
     }
-  return(FALSE);
+  return(false);
 }
 
 static int free_table_lookup(mus_any *ptr) 
@@ -1477,7 +1482,7 @@ static int free_table_lookup(mus_any *ptr)
 static Float *table_set_data(mus_any *ptr, Float *val) 
 {
   tbl *gen = (tbl *)ptr;
-  if (gen->table_allocated) {FREE(gen->table); gen->table_allocated = FALSE;}
+  if (gen->table_allocated) {FREE(gen->table); gen->table_allocated = false;}
   gen->table = val; 
   return(val);
 }
@@ -1518,12 +1523,12 @@ mus_any *mus_make_table_lookup (Float freq, Float phase, Float *table, int table
   if (table)
     {
       gen->table = table;
-      gen->table_allocated = FALSE;
+      gen->table_allocated = false;
     }
   else
     {
       gen->table = (Float *)clm_calloc(table_size, sizeof(Float), "table lookup table");
-      gen->table_allocated = TRUE;
+      gen->table_allocated = true;
     }
   return((mus_any *)gen);
 }
@@ -1581,7 +1586,7 @@ static Float sw_set_width(mus_any *ptr, Float val) {((sw *)ptr)->width = (2 * M_
 static Float sawtooth_scaler(mus_any *ptr) {return(((sw *)ptr)->base * M_PI);}
 static Float set_sawtooth_scaler(mus_any *ptr, Float val) {((sw *)ptr)->base = val / M_PI; return(val);}
 
-static int sw_equalp(mus_any *p1, mus_any *p2)
+static bool sw_equalp(mus_any *p1, mus_any *p2)
 {
   sw *s1, *s2;
   s1 = (sw *)p1;
@@ -1948,7 +1953,7 @@ static Float set_noi_phase(mus_any *ptr, Float val) {((noi *)ptr)->phase = val; 
 static Float noi_scaler(mus_any *ptr) {return(((noi *)ptr)->base);}
 static Float set_noi_scaler(mus_any *ptr, Float val) {((noi *)ptr)->base = val; return(val);}
 
-static int noi_equalp(mus_any *p1, mus_any *p2)
+static bool noi_equalp(mus_any *p1, mus_any *p2)
 {
   noi *g1 = (noi *)p1;
   noi *g2 = (noi *)p2;
@@ -2092,7 +2097,7 @@ static Float set_asyfm_r(mus_any *ptr, Float val)
   return(val);
 }
 
-static int asyfm_equalp(mus_any *p1, mus_any *p2)
+static bool asyfm_equalp(mus_any *p1, mus_any *p2)
 {
   return((p1 == p2) ||
 	 (((p1->core)->type == (p2->core)->type) &&
@@ -2210,7 +2215,7 @@ static char *inspect_smpflt(mus_any *ptr)
 
 static int free_smpflt(mus_any *ptr) {if (ptr) FREE(ptr); return(0);}
 
-static int smpflt_equalp(mus_any *p1, mus_any *p2)
+static bool smpflt_equalp(mus_any *p1, mus_any *p2)
 {
   smpflt *g1 = (smpflt *)p1;
   smpflt *g2 = (smpflt *)p2;
@@ -2622,7 +2627,7 @@ static Float set_sss_a(mus_any *ptr, Float val)
   return(val);
 }
 
-static int sss_equalp(mus_any *p1, mus_any *p2)
+static bool sss_equalp(mus_any *p1, mus_any *p2)
 {
   sss *g1 = (sss *)p1;
   sss *g2 = (sss *)p2;
@@ -2718,7 +2723,8 @@ mus_any *mus_make_sine_summation(Float frequency, Float phase, int n, Float a, F
 
 typedef struct {
   mus_any_class *core;
-  int order, state_allocated;
+  int order;
+  bool state_allocated;
   Float *x, *y, *state;
 } flt;
 
@@ -2804,7 +2810,7 @@ static int free_filter(mus_any *ptr)
   return(0);
 }
 
-static int filter_equalp(mus_any *p1, mus_any *p2) 
+static bool filter_equalp(mus_any *p1, mus_any *p2) 
 {
   flt *f1, *f2;
   int i;
@@ -2817,14 +2823,14 @@ static int filter_equalp(mus_any *p1, mus_any *p2)
 	{
 	  for (i = 0; i < f1->order; i++)
 	    {
-	      if ((f1->x) && (f2->x) && (f1->x[i] != f2->x[i])) return(FALSE);
-	      if ((f1->y) && (f2->y) && (f1->y[i] != f2->y[i])) return(FALSE);
-	      if (f1->state[i] != f2->state[i]) return(FALSE);
+	      if ((f1->x) && (f2->x) && (f1->x[i] != f2->x[i])) return(false);
+	      if ((f1->y) && (f2->y) && (f1->y[i] != f2->y[i])) return(false);
+	      if (f1->state[i] != f2->state[i]) return(false);
 	    }
-	  return(TRUE);
+	  return(true);
 	}
     }
-  return(FALSE);
+  return(false);
 }
 
 static char *describe_filter(mus_any *ptr)
@@ -2907,7 +2913,7 @@ static mus_any *make_filter(mus_any_class *cls, const char *name, int order, Flo
       else 
 	{
 	  gen->state = (Float *)clm_calloc(order, sizeof(Float), "filter coeff space");
-	  gen->state_allocated = TRUE;
+	  gen->state_allocated = true;
 	}
       gen->core = cls;
       gen->order = order;
@@ -3086,7 +3092,7 @@ typedef struct {
   Float *table;
   int table_size;
   Float offset;
-  int table_allocated;
+  bool table_allocated;
 } ws;
 
 static char *inspect_ws(mus_any *ptr)
@@ -3121,12 +3127,12 @@ static int ws_size(mus_any *ptr) {return(((ws *)ptr)->table_size);}
 static int set_ws_size(mus_any *ptr, int val) {((ws *)ptr)->table_size = val; return(val);}
 static Float *ws_data(mus_any *ptr) {return(((ws *)ptr)->table);}
 
-static int ws_equalp(mus_any *p1, mus_any *p2)
+static bool ws_equalp(mus_any *p1, mus_any *p2)
 {
   int i;
   ws *w1 = (ws *)p1;
   ws *w2 = (ws *)p2;
-  if (p1 == p2) return(TRUE);
+  if (p1 == p2) return(true);
   if ((w1) && (w2) &&
       (w1->core->type == w2->core->type) &&
       (w1->freq == w2->freq) &&
@@ -3136,16 +3142,16 @@ static int ws_equalp(mus_any *p1, mus_any *p2)
     {
       for (i = 0; i < w1->table_size; i++)
 	if (w1->table[i] != w2->table[i])
-	  return(FALSE);
-      return(TRUE);
+	  return(false);
+      return(true);
     }
-  return(FALSE);
+  return(false);
 }
 
 static Float *set_ws_data(mus_any *ptr, Float *val) 
 {
   ws *gen = (ws *)ptr;
-  if (gen->table_allocated) {FREE(gen->table); gen->table_allocated = FALSE;}
+  if (gen->table_allocated) {FREE(gen->table); gen->table_allocated = false;}
   gen->table = val; 
   return(val);
 }
@@ -3198,12 +3204,12 @@ mus_any *mus_make_waveshape(Float frequency, Float phase, Float *table, int size
   if (table)
     {
       gen->table = table;
-      gen->table_allocated = FALSE;
+      gen->table_allocated = false;
     }
   else
     {
       gen->table = (Float *)clm_calloc(size, sizeof(Float), "waveshape table");
-      gen->table_allocated = TRUE;
+      gen->table_allocated = true;
     }
   gen->table_size = size;
   gen->offset = (Float)size / 2.0;
@@ -3324,7 +3330,8 @@ typedef struct {
   mus_any_class *core;
   double rate, current_value, base, offset, scaler, power, init_y, init_power, original_scaler, original_offset;
   off_t pass, end;
-  int style, index, size, data_allocated;
+  int style, index, size;
+  bool data_allocated;
   Float *original_data;
   double *rates;
   off_t *passes;
@@ -3468,12 +3475,12 @@ static Float *fixup_exp_env(seg *e, Float *data, int pts, Float offset, Float sc
   return(result);
 }
 
-static int env_equalp(mus_any *p1, mus_any *p2)
+static bool env_equalp(mus_any *p1, mus_any *p2)
 {
   int i;
   seg *e1 = (seg *)p1;
   seg *e2 = (seg *)p2;
-  if (p1 == p2) return(TRUE);
+  if (p1 == p2) return(true);
   if ((e1) && (e2) &&
       (e1->core->type == e2->core->type) &&
       (e1->pass == e2->pass) &&
@@ -3493,10 +3500,10 @@ static int env_equalp(mus_any *p1, mus_any *p2)
     {
       for (i = 0; i < e1->size * 2; i++)
 	if (e1->original_data[i] != e2->original_data[i])
-	  return(FALSE);
-      return(TRUE);
+	  return(false);
+      return(true);
     }
-  return(FALSE);
+  return(false);
 }
 
 static char *describe_env(mus_any *ptr)
@@ -3613,7 +3620,7 @@ mus_any *mus_make_env(Float *brkpts, int npts, Float scaler, Float offset, Float
   else
     {
       e->original_data = (Float *)clm_calloc(npts * 2, sizeof(Float), "env original data");
-      e->data_allocated = TRUE;
+      e->data_allocated = true;
     }
   for (i = 0; i < npts * 2; i++) e->original_data[i] = brkpts[i];
   if (base == 0.0)
@@ -3780,20 +3787,20 @@ static char *inspect_frame(mus_any *ptr) {return(describe_frame(ptr));}
 
 int mus_frame_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_FRAME));}
 
-static int equalp_frame(mus_any *p1, mus_any *p2)
+static bool equalp_frame(mus_any *p1, mus_any *p2)
 {
   mus_frame *g1, *g2;
   int i;
-  if (p1 == p2) return(TRUE);
+  if (p1 == p2) return(true);
   g1 = (mus_frame *)p1;
   g2 = (mus_frame *)p2;
   if (((g1->core)->type != (g2->core)->type) ||
       (g1->chans != g2->chans))
-    return(FALSE);
+    return(false);
   for (i = 0; i < g1->chans; i++)
     if (g1->vals[i] != g2->vals[i])
-      return(FALSE);
-  return(TRUE);
+      return(false);
+  return(true);
 }
 
 static Float run_frame(mus_any *ptr, Float arg1, Float arg2) {return(mus_frame_ref(ptr, (int)arg1));}
@@ -3951,22 +3958,22 @@ static char *inspect_mixer(mus_any *ptr) {return(describe_mixer(ptr));}
 
 int mus_mixer_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_MIXER));}
 
-static int equalp_mixer(mus_any *p1, mus_any *p2)
+static bool equalp_mixer(mus_any *p1, mus_any *p2)
 {
   mus_mixer *g1, *g2;
   int i, j;
-  if (p1 == p2) return(TRUE);
-  if ((p1 == NULL) || (p2 == NULL)) return(FALSE);
+  if (p1 == p2) return(true);
+  if ((p1 == NULL) || (p2 == NULL)) return(false);
   g1 = (mus_mixer *)p1;
   g2 = (mus_mixer *)p2;
   if (((g1->core)->type != (g2->core)->type) ||
       (g1->chans != g2->chans))
-    return(FALSE);
+    return(false);
   for (i = 0; i < g1->chans; i++)
     for (j = 0; j < g1->chans; j++)
       if (g1->vals[i][j] != g2->vals[i][j])
-	return(FALSE);
-  return(TRUE);
+	return(false);
+  return(true);
 }
 
 static Float run_mixer(mus_any *ptr, Float arg1, Float arg2) {return(mus_mixer_ref(ptr, (int)arg1, (int)arg2));}
@@ -4161,8 +4168,8 @@ typedef struct {
   int size;
   int loc;
   Float fill_time;
-  int empty;
-  int buf_allocated;
+  bool empty;
+  bool buf_allocated;
 } rblk;
 
 static char *inspect_rblk(mus_any *ptr)
@@ -4170,10 +4177,10 @@ static char *inspect_rblk(mus_any *ptr)
   rblk *gen = (rblk *)ptr;
   char *arr = NULL;
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE,
-	       "rblk buf[%d (%s)]: %s, loc: %d, fill_time: %f, empty: %d",
+	       "rblk buf[%d (%s)]: %s, loc: %d, fill_time: %f, empty: %s",
 	       gen->size, (gen->buf_allocated) ? "local" : "external",
 	       arr = print_array(gen->buf, gen->size, 0),
-	       gen->loc, gen->fill_time, gen->empty);
+	       gen->loc, gen->fill_time, (gen->empty) ? "true" : "false");
   if (arr) FREE(arr);
   return(describe_buffer);
 }
@@ -4195,12 +4202,12 @@ static int rblk_set_length(mus_any *ptr, int new_size) {((rblk *)ptr)->size = ne
 
 int mus_buffer_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_BUFFER));}
 
-static int rblk_equalp(mus_any *p1, mus_any *p2) 
+static bool rblk_equalp(mus_any *p1, mus_any *p2) 
 {
   int i;
   rblk *b1 = (rblk *)p1;
   rblk *b2 = (rblk *)p2;
-  if (p1 == p2) return(TRUE);
+  if (p1 == p2) return(true);
   if ((b1) && (b2) &&
       (b1->core->type == b2->core->type) &&
       (b1->size == b2->size) &&
@@ -4210,16 +4217,16 @@ static int rblk_equalp(mus_any *p1, mus_any *p2)
     {
       for (i = 0; i < b1->size; i++)
 	if (b1->buf[i] != b2->buf[i])
-	  return(FALSE);
-      return(TRUE);
+	  return(false);
+      return(true);
     }
-  return(FALSE);
+  return(false);
 }
 
 static Float *rblk_set_data(mus_any *ptr, Float *new_data) 
 {
   rblk *rb = (rblk *)ptr;
-  if (rb->buf_allocated) {FREE(rb->buf); rb->buf_allocated = FALSE;}
+  if (rb->buf_allocated) {FREE(rb->buf); rb->buf_allocated = false;}
   rb->buf = new_data; 
   return(new_data);
 }
@@ -4245,14 +4252,14 @@ Float mus_buffer2sample(mus_any *ptr)
     val = gen->buf[loc];
   else val = 0.0;
   loc++;
-  if ((gen->empty == FALSE) && ((Float)loc >= gen->fill_time))
+  if ((!(gen->empty)) && ((Float)loc >= gen->fill_time))
     {
       i = 0;
       for (j = loc; j < gen->size; i++, j++) gen->buf[i] = gen->buf[j];
       for (; i < gen->size; i++) gen->buf[i] = 0.0;
       gen->fill_time -= (Float)loc;
       gen->loc = 0;
-      gen->empty = TRUE; 
+      gen->empty = true; 
     }
   else gen->loc = loc;
   return(val);
@@ -4276,7 +4283,7 @@ Float mus_sample2buffer(mus_any *ptr, Float val)
 	  for (i = 0; i < old_size; i++) tmp[i] = gen->buf[i];
 	  if (gen->buf_allocated) FREE(gen->buf);
 	  gen->buf = tmp;
-	  gen->buf_allocated = TRUE;
+	  gen->buf_allocated = true;
 	}
       else
 	{
@@ -4331,16 +4338,16 @@ mus_any *mus_make_buffer(Float *preloaded_buffer, int size, Float current_fill_t
   if (preloaded_buffer)
     {
       gen->buf = preloaded_buffer;
-      gen->buf_allocated = FALSE;
+      gen->buf_allocated = false;
     }
   else
     {
       gen->buf = (Float *)clm_calloc(size, sizeof(Float), "buffer data");
-      gen->buf_allocated = TRUE;
+      gen->buf_allocated = true;
     }
   if (current_fill_time == 0) 
-    gen->empty = TRUE; 
-  else gen->empty = FALSE;
+    gen->empty = true; 
+  else gen->empty = false;
   return((mus_any *)gen);
 }
 
@@ -4382,7 +4389,7 @@ typedef struct {
   Float *wave;
   int wsize;
   rblk *b;
-  int wave_allocated;
+  bool wave_allocated;
 } wt;
 
 static char *inspect_wt(mus_any *ptr)
@@ -4409,12 +4416,12 @@ static int wt_length(mus_any *ptr) {return(((wt *)ptr)->wsize);}
 static int wt_set_length(mus_any *ptr, int val) {((wt *)ptr)->wsize = val; return(val);}
 static Float *wt_data(mus_any *ptr) {return(((wt *)ptr)->wave);}
 
-static int wt_equalp(mus_any *p1, mus_any *p2)
+static bool wt_equalp(mus_any *p1, mus_any *p2)
 {
   int i;
   wt *w1 = (wt *)p1;
   wt *w2 = (wt *)p2;
-  if (p1 == p2) return(TRUE);
+  if (p1 == p2) return(true);
   if ((w1) && (w2) &&
       (w1->core->type == w2->core->type) &&
       (w1->freq == w2->freq) &&
@@ -4423,16 +4430,16 @@ static int wt_equalp(mus_any *p1, mus_any *p2)
     {
       for (i = 0; i < w1->wsize; i++)
 	if (w1->wave[i] != w2->wave[i])
-	  return(FALSE);
+	  return(false);
       return(mus_equalp((mus_any *)(w1->b), (mus_any *)(w2->b)));
     }
-  return(FALSE);
+  return(false);
 }
 
 static Float *wt_set_data(mus_any *ptr, Float *data) 
 {
   wt *gen = (wt *)ptr;
-  if (gen->wave_allocated) {FREE(gen->wave); gen->wave_allocated = FALSE;}
+  if (gen->wave_allocated) {FREE(gen->wave); gen->wave_allocated = false;}
   gen->wave = data; 
   return(data);
 }
@@ -4458,7 +4465,7 @@ Float mus_wave_train(mus_any *ptr, Float fm)
       for (i = 0; i < b->size; i++) 
 	b->buf[i] += mus_array_interp(gen->wave, gen->phase + i, gen->wsize);
       b->fill_time += ((Float)sampling_rate / (gen->freq + (fm / w_rate)));
-      b->empty = FALSE;
+      b->empty = false;
     }
   return(mus_buffer2sample((mus_any *)(gen->b)));
 }
@@ -4474,7 +4481,7 @@ Float mus_wave_train_1(mus_any *ptr)
       for (i = 0; i < b->size; i++) 
 	b->buf[i] += mus_array_interp(gen->wave, gen->phase + i, gen->wsize);
       b->fill_time += ((Float)sampling_rate / gen->freq);
-      b->empty = FALSE;
+      b->empty = false;
     }
   return(mus_buffer2sample((mus_any *)(gen->b)));
 }
@@ -4613,7 +4620,7 @@ static char *describe_file2sample(mus_any *ptr)
   return(describe_buffer);
 }
 
-static int rdin_equalp(mus_any *p1, mus_any *p2) 
+static bool rdin_equalp(mus_any *p1, mus_any *p2) 
 {
   rdin *r1 = (rdin *)p1;
   rdin *r2 = (rdin *)p2;
@@ -4989,7 +4996,7 @@ static char *describe_sample2file(mus_any *ptr)
   return(describe_buffer);
 }
 
-static int sample2file_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
+static bool sample2file_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
 
 static int free_sample2file(mus_any *p) 
 {
@@ -5139,7 +5146,7 @@ static int sample2file_end(mus_any *ptr)
 
 int mus_sample2file_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_SAMPLE2FILE));}
 
-static mus_any *mus_make_sample2file_with_comment_1(const char *filename, int out_chans, int out_format, int out_type, const char *comment, int reopen)
+static mus_any *mus_make_sample2file_with_comment_1(const char *filename, int out_chans, int out_format, int out_type, const char *comment, bool reopen)
 {
   rdout *gen;
   int i, fd;
@@ -5196,17 +5203,17 @@ mus_any *mus_continue_sample2file(const char *filename)
 					     mus_sound_data_format(filename),
 					     mus_sound_header_type(filename),
 					     NULL,
-					     TRUE));
+					     true));
 }
 
 mus_any *mus_make_sample2file_with_comment(const char *filename, int out_chans, int out_format, int out_type, const char *comment)
 {
-  return(mus_make_sample2file_with_comment_1(filename, out_chans, out_format, out_type, comment, FALSE));
+  return(mus_make_sample2file_with_comment_1(filename, out_chans, out_format, out_type, comment, false));
 }
 
 mus_any *mus_make_sample2file(const char *filename, int out_chans, int out_format, int out_type)
 {
-  return(mus_make_sample2file_with_comment_1(filename, out_chans, out_format, out_type, NULL, FALSE));
+  return(mus_make_sample2file_with_comment_1(filename, out_chans, out_format, out_type, NULL, false));
 }
 
 /* the unchecked version of this would be sample_file(ptr, samp, chan, val) */
@@ -5341,30 +5348,30 @@ static char *inspect_locs(mus_any *ptr)
   return(describe_buffer);
 }
 
-static int locsig_equalp(mus_any *p1, mus_any *p2) 
+static bool locsig_equalp(mus_any *p1, mus_any *p2) 
 {
   locs *g1 = (locs *)p1;
   locs *g2 = (locs *)p2;
   int i;
-  if (p1 == p2) return(TRUE);
+  if (p1 == p2) return(true);
   if ((g1) && (g2) &&
       (g1->core->type == g2->core->type) &&
       (g1->chans == g2->chans))
     {
       for (i = 0; i < g1->chans; i++) 
 	if (g1->outn[i] != g2->outn[i]) 
-	  return(FALSE);
+	  return(false);
       if (g1->revn)
 	{
-	  if (!(g2->revn)) return(FALSE);
-	  if (g1->revn[0] != g2->revn[0]) return(FALSE);
+	  if (!(g2->revn)) return(false);
+	  if (g1->revn[0] != g2->revn[0]) return(false);
 	}
       else 
 	if (g2->revn) 
-	  return(FALSE);
-      return(TRUE);
+	  return(false);
+      return(true);
     }
-  return(FALSE);
+  return(false);
 }
 
 static char *describe_locsig(mus_any *ptr)
@@ -5760,7 +5767,7 @@ static int free_src_gen(mus_any *srptr)
   return(0);
 }
 
-static int src_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
+static bool src_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
 
 static char *describe_src(mus_any *ptr)
 {
@@ -5844,7 +5851,8 @@ Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int dir
   sr *srp = (sr *)srptr;
   Float sum = 0.0, x, zf, srx, factor;
   int fsx, lim, i, k, loc;
-  int xi, xs, int_ok = FALSE;
+  int xi, xs;
+  bool int_ok = false;
   lim = srp->lim;
   srx = srp->incr + sr_change;
   if (srp->x >= 1.0)
@@ -5896,7 +5904,7 @@ Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int dir
       factor = 1.0;
       zf = (Float)SRC_SINC_DENSITY;
       xi = SRC_SINC_DENSITY;
-      int_ok = TRUE;
+      int_ok = true;
     }
 
   if (int_ok)
@@ -6047,7 +6055,7 @@ static char *inspect_grn_info(mus_any *ptr)
 
 int mus_granulate_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_GRANULATE));}
 
-static int granulate_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
+static bool granulate_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
 
 static char *describe_granulate(mus_any *ptr)
 {
@@ -6505,6 +6513,9 @@ Float *mus_make_fft_window_with_window(int type, int size, Float beta, Float *wi
     case MUS_DOLPH_CHEBYSHEV_WINDOW:
 #if HAVE_GSL
       {
+	/* SOMEDAY: we would not need GSL if C had complex trig (ccos) -- this is supposed to be in ISO C99,
+	 *          but apparently it's not in gcc yet.  Other nice additions worth a look: log2, exp2.
+	 */
 	gsl_complex val;
 	Float den, alpha;
 	freq = M_PI / (Float)size;
@@ -6672,7 +6683,7 @@ static char *inspect_conv(mus_any *ptr)
   return(describe_buffer);
 }
 
-static int convolve_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
+static bool convolve_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
 
 static char *describe_convolve(mus_any *ptr)
 {
@@ -7225,8 +7236,8 @@ typedef struct {
   Float pitch;
   Float (*input)(void *arg, int direction);
   void *environ;
-  int (*analyze)(void *arg, Float (*input)(void *arg1, int direction));
-  int (*edit)(void *arg);
+  bool (*analyze)(void *arg, Float (*input)(void *arg1, int direction));
+  bool (*edit)(void *arg);
   Float (*synthesize)(void *arg);
   int outctr, interp, filptr, N, D;
   Float *win, *ampinc, *amps, *freqs, *phases, *phaseinc, *lastphase, *in_data;
@@ -7250,7 +7261,7 @@ static char *inspect_pv_info(mus_any *ptr)
 
 int mus_phase_vocoder_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_PHASE_VOCODER));}
 
-static int phase_vocoder_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
+static bool phase_vocoder_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
 
 static char *describe_phase_vocoder(mus_any *ptr)
 {
@@ -7336,8 +7347,8 @@ static mus_any_class PHASE_VOCODER_CLASS = {
 mus_any *mus_make_phase_vocoder(Float (*input)(void *arg, int direction), 
 				int fftsize, int overlap, int interp,
 				Float pitch,
-				int (*analyze)(void *arg, Float (*input)(void *arg1, int direction)),
-				int (*edit)(void *arg), 
+				bool (*analyze)(void *arg, Float (*input)(void *arg1, int direction)),
+				bool (*edit)(void *arg), 
 				Float (*synthesize)(void *arg), 
 				void *environ)
 {
@@ -7390,7 +7401,7 @@ Float mus_phase_vocoder(mus_any *ptr, Float (*input)(void *arg, int direction))
   if (pv->outctr >= pv->interp)
     {
       if ((pv->analyze == NULL) || 
-	  ((*(pv->analyze))(pv->environ, input) != 0))
+	  ((*(pv->analyze))(pv->environ, input)))
 	{
 	  mus_clear_array(pv->freqs, pv->N);
 	  pv->outctr = 0;
@@ -7438,7 +7449,7 @@ Float mus_phase_vocoder(mus_any *ptr, Float (*input)(void *arg, int direction))
 	}
       
       if ((pv->edit == NULL) || 
-	  ((*(pv->edit))(pv->environ) != 0))
+	  ((*(pv->edit))(pv->environ)))
 	{
 	  pscl = 1.0 / (Float)(pv->D);
 	  kscl = TWO_PI / (Float)(pv->N);

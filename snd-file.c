@@ -33,9 +33,9 @@
 
 #if (!HAVE_STATFS) && (!HAVE_STATVFS)
   off_t disk_kspace (const char *filename) {return(1234567);}
-  int is_link(const char *filename) {return(0);}
-  int is_directory(const char *filename) {return(0);}
-  static int is_empty_file(const char *filename) {return(0);}
+  bool link_p(const char *filename) {return(false);}
+  bool directory_p(const char *filename) {return(false);}
+  static bool empty_file_p(const char *filename) {return(false);}
   static off_t file_bytes(const char *filename) {return(0);}
 #else
 
@@ -73,33 +73,34 @@ off_t disk_kspace (const char *filename)
 }
 #endif
 
-int is_link(const char *filename)
+bool link_p(const char *filename)
 {
+#if HAVE_LSTAT
   struct stat statbuf;
   if (lstat(filename, &statbuf) >= 0) 
-    return(S_ISLNK(statbuf.st_mode));
-  return(0);
+    return((bool)(S_ISLNK(statbuf.st_mode)));
+#endif
+  return(false);
 }
 
-int is_directory(const char *filename)
+bool directory_p(const char *filename)
 {
+#if HAVE_LSTAT
   struct stat statbuf;
   if (lstat(filename, &statbuf) >= 0) 
-    return(S_ISDIR(statbuf.st_mode));
-  return(0);
+    return((bool)(S_ISDIR(statbuf.st_mode)));
+#endif
+  return(false);
 }
 
-static off_t file_bytes(const char *filename) /* using this name to make searches simpler */
+static bool empty_file_p(const char *filename)
 {
+#if HAVE_LSTAT
   struct stat statbuf;
   if (lstat(filename, &statbuf) >= 0) 
-    return(statbuf.st_size);
-  return(-1);
-}
-
-static int is_empty_file(const char *filename)
-{
-  return(file_bytes(filename) == (off_t)0);
+    return(statbuf.st_size == (off_t)0);
+#endif
+  return(false);
 }
 #endif
 
@@ -458,7 +459,7 @@ void init_sound_file_extensions(void)
 
 static XEN just_sounds_hook;
 
-int is_sound_file(char *name)
+bool sound_file_p(char *name)
 {
   int i;
   char *dot, *sp;
@@ -469,8 +470,8 @@ int is_sound_file(char *name)
   if (dot)
     for (i = 0; i < sound_file_extensions_end; i++)
       if (strcmp(dot, sound_file_extensions[i]) == 0)
-	return(1);
-  return(0);
+	return(true);
+  return(false);
 }
 
 dir *find_sound_files_in_dir(const char *name)
@@ -496,7 +497,7 @@ dir *find_sound_files_in_dir(const char *name)
 	    if (dot)
 	      for (i = 0; i < sound_file_extensions_end; i++)
 		if ((strcmp(dot, sound_file_extensions[i]) == 0) && 
-		    (!(is_empty_file(dirp->d_name))))
+		    (!(empty_file_p(dirp->d_name))))
 		  {
 		    XEN res = XEN_TRUE;
 		    if (XEN_HOOKED(just_sounds_hook))
@@ -662,7 +663,7 @@ static void after_open_file(void *context)
 }
 #endif
 
-static snd_info *snd_open_file_1 (const char *filename, snd_state *ss, int select, int read_only)
+static snd_info *snd_open_file_1 (const char *filename, snd_state *ss, bool select, bool read_only)
 {
   snd_info *sp;
   char *mcf = NULL;
@@ -711,7 +712,7 @@ static snd_info *snd_open_file_1 (const char *filename, snd_state *ss, int selec
     {
       XEN_VARIABLE_SET(memo_sound, C_TO_SMALL_XEN_INT(sp->index));
       sp->write_date = file_write_date(sp->filename);
-      sp->need_update = FALSE;
+      sp->need_update = false;
       ss->active_sounds++;
       files = ss->active_sounds;
       if (files == 1) reflect_file_open_in_menu();
@@ -744,8 +745,8 @@ static snd_info *snd_open_file_1 (const char *filename, snd_state *ss, int selec
   return(sp);
 }
 
-snd_info *snd_open_file(const char *filename, snd_state *ss, int read_only) {return(snd_open_file_1(filename, ss, TRUE, read_only));}
-snd_info *snd_open_file_unselected(const char *filename, snd_state *ss, int read_only) {return(snd_open_file_1(filename, ss, FALSE, read_only));}
+snd_info *snd_open_file(const char *filename, snd_state *ss, bool read_only) {return(snd_open_file_1(filename, ss, true, read_only));}
+snd_info *snd_open_file_unselected(const char *filename, snd_state *ss, bool read_only) {return(snd_open_file_1(filename, ss, false, read_only));}
 
 void snd_close_file(snd_info *sp, snd_state *ss)
 {
@@ -757,7 +758,7 @@ void snd_close_file(snd_info *sp, snd_state *ss)
 		      S_close_hook);
   if (XEN_TRUE_P(res)) return;
   sp->inuse = SOUND_IDLE;
-  for (i = 0; i < sp->nchans; i++) sp->chans[i]->squelch_update = TRUE;
+  for (i = 0; i < sp->nchans; i++) sp->chans[i]->squelch_update = true;
   add_to_previous_files(ss, sp->short_filename, sp->filename);
   if (sp->playing) stop_playing_sound(sp);
   if (sp->sgx) clear_minibuffer(sp); /* this can trigger a redisplay-expose sequence, so make sure channels ignore it above */
@@ -838,7 +839,7 @@ int move_file(const char *oldfile, const char *newfile)
 #define TEMP_SOUND_INDEX 123456
 /* just a marker for debugging */
 
-snd_info *make_sound_readable(snd_state *ss, const char *filename, int post_close)
+snd_info *make_sound_readable(snd_state *ss, const char *filename, bool post_close)
 {
   /* conjure up just enough Snd structure to make this sound readable by the edit-tree readers */
   snd_info *sp;
@@ -902,14 +903,14 @@ snd_info *make_sound_readable(snd_state *ss, const char *filename, int post_clos
 	   */
 	}
     }
-  sp->active = TRUE;
+  sp->active = true;
   return(sp);
 }
 
 typedef struct {
   int chans, fields;
   double *axis_data;
-  int *fftp, *wavep;
+  bool *fftp, *wavep;
 } axes_data;
 
 void *free_axes_data(void *usa)
@@ -937,8 +938,8 @@ void *make_axes_data(snd_info *sp)
   sa->chans = sp->nchans;
   sa->fields = 8;
   sa->axis_data = (double *)CALLOC(sa->fields * sa->chans, sizeof(double));
-  sa->fftp = (int *)CALLOC(sa->chans, sizeof(int));
-  sa->wavep = (int *)CALLOC(sa->chans, sizeof(int));
+  sa->fftp = (bool *)CALLOC(sa->chans, sizeof(bool));
+  sa->wavep = (bool *)CALLOC(sa->chans, sizeof(bool));
   for (i = 0; i < sa->chans; i++)
     {
       cp = sp->chans[i];
@@ -958,10 +959,11 @@ void *make_axes_data(snd_info *sp)
   return((void *)sa);
 }
 
-int restore_axes_data(snd_info *sp, void *usa, Float new_duration, int need_edit_history_update)
+bool restore_axes_data(snd_info *sp, void *usa, Float new_duration, bool need_edit_history_update)
 {
   axes_data *sa = (axes_data *)usa;
-  int i, j, loc, need_update = FALSE;
+  int i, j, loc;
+  bool need_update = false;
   Float old_duration;
   chan_info *cp;
   axis_info *ap;
@@ -992,13 +994,13 @@ int restore_axes_data(snd_info *sp, void *usa, Float new_duration, int need_edit
       update_graph(cp); /* get normalized state before messing with it */
       if (sa->fftp[j]) 
 	{
-	  fftb(cp, TRUE); 
-	  need_update = TRUE;
+	  fftb(cp, true); 
+	  need_update = true;
 	}
       if (!(sa->wavep[j])) 
 	{
-	  waveb(cp, FALSE); 
-	  need_update = TRUE;
+	  waveb(cp, false); 
+	  need_update = true;
 	}
       if (need_edit_history_update) 
 	reflect_edit_history_change(cp);
@@ -1161,7 +1163,8 @@ static XEN update_hook;
 static snd_info *snd_update_1(snd_state *ss, snd_info *sp, const char *ur_filename)
 {
   /* we can't be real smart here because the channel number may have changed and so on */
-  int i, read_only, old_srate, old_chans, old_format, old_raw, sp_chans, old_index, old_channel_style;
+  int i, old_srate, old_chans, old_format, old_raw, sp_chans, old_index, old_channel_style;
+  bool read_only;
   void *sa;
   snd_info *nsp = NULL;
   char *filename;
@@ -1220,7 +1223,7 @@ static snd_info *snd_update_1(snd_state *ss, snd_info *sp, const char *ur_filena
       nsp->saved_controls = saved_controls;
       if (saved_controls) restore_controls(nsp);
       if (nsp->nchans == sp_chans) sound_restore_chan_info(nsp, saved_sp);
-      restore_axes_data(nsp, sa, mus_sound_duration(filename), FALSE);
+      restore_axes_data(nsp, sa, mus_sound_duration(filename), false);
       sound_restore_marks(nsp, ms);
       for (i = 0; i < nsp->nchans; i++) 
 	update_graph(nsp->chans[i]);
@@ -1318,7 +1321,7 @@ void view_curfiles_play(snd_state *ss, int pos, int play)
       if (sp->playing) stop_playing_sound(sp);
       if (play)
 	play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "current files play", 0);
-      else set_play_button(sp, FALSE);
+      else set_play_button(sp, false);
     }
 }
 
@@ -1331,7 +1334,7 @@ void view_curfiles_select(snd_state *ss, int pos)
   if (sp != osp)
     {
       select_channel(sp, 0);
-      equalize_sound_panes(ss, sp, sp->chans[0], FALSE);
+      equalize_sound_panes(ss, sp, sp->chans[0], false);
       /* goto_graph(sp->chans[0]); */
     }
 }
@@ -1348,7 +1351,7 @@ void view_prevfiles_select(snd_state *ss, int pos)
 		      S_previous_files_select_hook);
   if (XEN_NOT_TRUE_P(res))
     {
-      sp = snd_open_file(prevfullnames[pos], ss, FALSE);
+      sp = snd_open_file(prevfullnames[pos], ss, false);
       if (sp) select_channel(sp, 0); 
     }
 }
@@ -1370,7 +1373,7 @@ int view_prevfiles_play(snd_state *ss, int pos, int play)
       if ((!play_sp) && (prevfullnames[pos]))
 	{
 	  if (mus_file_probe(prevfullnames[pos]))
-	    play_sp = make_sound_readable(ss, prevfullnames[pos], FALSE);
+	    play_sp = make_sound_readable(ss, prevfullnames[pos], false);
 	  else snd_error(_("play previous file: can't find %s: %s"), prevfullnames[pos], strerror(errno));
 	}
       if (play_sp)
@@ -1794,13 +1797,13 @@ static XEN g_set_previous_files_sort_procedure(XEN proc)
       if (XEN_PROCEDURE_P(proc))
 	{
 	  snd_protect(proc);
-	  set_file_sort_sensitive(TRUE);
+	  set_file_sort_sensitive(true);
 	}
-      else set_file_sort_sensitive(FALSE);
+      else set_file_sort_sensitive(false);
     }
   else 
     {
-      set_file_sort_sensitive(FALSE);
+      set_file_sort_sensitive(false);
       errstr = C_TO_XEN_STRING(error);
       FREE(error);
       return(snd_bad_arity_error(S_setB S_previous_files_sort_procedure, errstr, proc));
@@ -2130,7 +2133,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
 				str);
       if (collision->sp) 
 	{
-	  snd_open_file(fullname, ss, FALSE);
+	  snd_open_file(fullname, ss, false);
 	  if (opened == 0) opened = 1;
 	}
       FREE(fullname);
@@ -2299,7 +2302,7 @@ static char *raw_data_explanation(const char *filename, snd_state *ss, file_info
   mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nformat: %s\n", mus_data_format_name(hdr->format));
   reason_str = snd_strcat(reason_str, tmp_str, &len);
   hdr->type = MUS_RAW;
-  snd_help(ss, "Current header values", reason_str, FALSE);
+  snd_help(ss, "Current header values", reason_str, false);
   file_string = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   mus_snprintf(file_string, PRINT_BUFFER_SIZE,
 	       "Bogus header found for %s", 
@@ -2547,7 +2550,7 @@ static XEN g_open_file_dialog(XEN managed)
 {
   #define H_open_file_dialog "(" S_open_file_dialog " (managed #t)): create the file dialog if needed and display it if 'managed'"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_open_file_dialog, "a boolean");
-  make_open_file_dialog(get_global_state(), FALSE, (XEN_BOUND_P(managed)) ? XEN_TO_C_BOOLEAN(managed) : TRUE);
+  make_open_file_dialog(get_global_state(), false, (XEN_BOUND_P(managed)) ? XEN_TO_C_BOOLEAN(managed) : true);
   return(managed);
 }
 
@@ -2555,7 +2558,7 @@ static XEN g_mix_file_dialog(XEN managed)
 {
   #define H_mix_file_dialog "(" S_mix_file_dialog " (managed #t)): create the mix file dialog if needed and display it if 'managed'"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_mix_file_dialog, "a boolean");
-  make_mix_file_dialog(get_global_state(), (XEN_BOUND_P(managed)) ? XEN_TO_C_BOOLEAN(managed) : TRUE);
+  make_mix_file_dialog(get_global_state(), (XEN_BOUND_P(managed)) ? XEN_TO_C_BOOLEAN(managed) : true);
   return(managed);
 }
 

@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 34
-#define MUS_DATE "7-Aug-03"
+#define MUS_REVISION 35
+#define MUS_DATE "11-Aug-03"
 
 /* 
+ * 11-Aug:     int -> bool.
  * 7-Aug:      removed mus_type.
  * 20-July:    more run methods.
  * 15-July:    linear->dB check for 0.0 arg.
@@ -121,13 +122,6 @@
  *  if 1, include mus_fftw which calls the fftw real fft
  */
 
-#ifndef TRUE
-  #define TRUE 1
-#endif
-#ifndef FALSE
-  #define FALSE 0
-#endif
-
 #include "sndlib.h"
 
 #if(!defined(M_PI))
@@ -145,7 +139,7 @@ typedef struct mus__any_class {
   int (*release)(mus_any *ptr);
   char* (*describe)(mus_any *ptr);
   char* (*inspect)(mus_any *ptr);
-  int (*equalp)(mus_any *gen1, mus_any *gen2);
+  bool (*equalp)(mus_any *gen1, mus_any *gen2);
   Float* (*data)(mus_any *ptr);
   Float* (*set_data)(mus_any *ptr, Float *new_data);
   int (*length)(mus_any *ptr);
@@ -230,7 +224,7 @@ Float mus_array_interp(Float *wave, Float phase, int size);
 int mus_free(mus_any *ptr);
 char *mus_describe(mus_any *gen);
 char *mus_inspect(mus_any *gen);
-int mus_equalp(mus_any *g1, mus_any *g2);
+bool mus_equalp(mus_any *g1, mus_any *g2);
 Float mus_phase(mus_any *gen);
 Float mus_set_phase(mus_any *gen, Float val);
 Float mus_set_frequency(mus_any *gen, Float val);
@@ -548,8 +542,8 @@ int mus_phase_vocoder_p(mus_any *ptr);
 mus_any *mus_make_phase_vocoder(Float(*input)(void *arg, int direction), 
 				       int fftsize, int overlap, int interp,
 				       Float pitch,
-				       int(*analyze)(void *arg, Float(*input)(void *arg1, int direction)),
-				       int(*edit)(void *arg), 
+				       bool(*analyze)(void *arg, Float(*input)(void *arg1, int direction)),
+				       bool(*edit)(void *arg), 
 				       Float(*synthesize)(void *arg), 
 				       void *environ);
 Float mus_phase_vocoder(mus_any *ptr, Float(*input)(void *arg, int direction));

@@ -20,7 +20,9 @@
 
 int find_matching_paren(char *str, int parens, int pos, char *prompt, int *highlight_pos)
 {
-  int i, j, quoting = FALSE, up_comment = -1;
+  int i, j;
+  bool quoting = false;
+  int up_comment = -1;
   for (i = pos - 1; i > 0;)
     {
       if ((i > 0) && (str[i] == prompt[0]) && (str[i - 1] == '\n'))
@@ -36,7 +38,8 @@ int find_matching_paren(char *str, int parens, int pos, char *prompt, int *highl
 	      if (str[i] == '\n')
 		{
 		  /* check for comment on next line up */
-		  int up_quoting = FALSE, quote_comment = -1;
+		  bool up_quoting = false;
+		  int quote_comment = -1;
 		  for (j = i - 1; j > 0; j--)
 		    {
 		      if (str[j] == '\n') break;
@@ -73,13 +76,13 @@ int find_matching_paren(char *str, int parens, int pos, char *prompt, int *highl
   return(parens);
 }
 
-int check_balance(char *expr, int start, int end, int in_listener) 
+int check_balance(char *expr, int start, int end, bool in_listener) 
 {
   int i;
-  int non_whitespace_p = FALSE;
+  bool non_whitespace_p = false;
   int paren_count = 0;
-  int prev_separator = TRUE;
-  int quote_wait = FALSE;
+  bool prev_separator = true;
+  bool quote_wait = false;
   i = start;
   while (i < end) 
     {
@@ -99,7 +102,7 @@ int check_balance(char *expr, int start, int end, int in_listener)
 	    return(i);
 	  else 
 	    {
-	      prev_separator = TRUE;
+	      prev_separator = true;
 	      i++;
 	    }
 	  break;
@@ -123,9 +126,9 @@ int check_balance(char *expr, int start, int end, int in_listener)
 		} 
 	      else 
 		{
-		  prev_separator = TRUE;
-		  non_whitespace_p = TRUE;
-		  quote_wait = FALSE;
+		  prev_separator = true;
+		  non_whitespace_p = true;
+		  quote_wait = false;
 		}
 	    }
 	  break;
@@ -143,9 +146,9 @@ int check_balance(char *expr, int start, int end, int in_listener)
 		    i += 3;
 		  else
 		    {
-		      prev_separator = FALSE;
-		      quote_wait = FALSE;
-		      non_whitespace_p = TRUE;
+		      prev_separator = false;
+		      quote_wait = false;
+		      non_whitespace_p = true;
 		      i++;
 		    }
 		}
@@ -158,9 +161,9 @@ int check_balance(char *expr, int start, int end, int in_listener)
 	    {
 	      i++;
 	      paren_count++;
-	      non_whitespace_p = TRUE;
-	      prev_separator = TRUE;
-	      quote_wait = FALSE;
+	      non_whitespace_p = true;
+	      prev_separator = true;
+	      quote_wait = false;
 	    }
 	  break;
 	case ')' :
@@ -170,21 +173,21 @@ int check_balance(char *expr, int start, int end, int in_listener)
 	  else 
 	    {
 	      i++;
-	      non_whitespace_p = TRUE;
-	      prev_separator = TRUE;
-	      quote_wait = FALSE;
+	      non_whitespace_p = true;
+	      prev_separator = true;
+	      quote_wait = false;
 	    }
 	  break;
 	case '\'' :
 	  if (prev_separator) 
-	    quote_wait = TRUE;
-	  non_whitespace_p = TRUE;
+	    quote_wait = true;
+	  non_whitespace_p = true;
 	  i++;
 	  break;
 	default:
-	  prev_separator = FALSE;
-	  quote_wait = FALSE;
-	  non_whitespace_p = TRUE;
+	  prev_separator = false;
+	  quote_wait = false;
+	  non_whitespace_p = true;
 	  i++;
 	  break;
 	}
@@ -236,7 +239,7 @@ XEN provide_listener_help(char *source)
 	      start_of_name = i + 1;
 	      /* look forward for a name */
 	      for (j = i + 2; j < len; j++)
-		if (is_separator_char(source[j]))
+		if (separator_char_p(source[j]))
 		  return(provide_listener_help_1(source, start_of_name, j));
 	      return(provide_listener_help_1(source, start_of_name, len)); /* ran off end with no separator (cursor is at end) */
 	    }
@@ -417,7 +420,7 @@ void command_return(widget_t w, snd_state *ss, int last_prompt)
 	  end_of_text = snd_strlen(str);
 	  if (parens)
 	    {
-	      end_of_text = check_balance(str, 0, (int)end_of_text, TRUE); /* last-arg->we are in the listener */
+	      end_of_text = check_balance(str, 0, (int)end_of_text, true); /* last-arg->we are in the listener */
 	      if ((end_of_text > 0) && 
 		  (end_of_text < slen))
 		{
@@ -540,7 +543,7 @@ static XEN g_show_listener(void)
   #define H_show_listener "(" S_show_listener "): opens the lisp listener pane"
   snd_state *ss;
   ss = get_global_state();
-  handle_listener(ss, TRUE); 
+  handle_listener(ss, true); 
   return(C_TO_XEN_BOOLEAN(listener_height() > 5));
 }
 

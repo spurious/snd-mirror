@@ -32,7 +32,7 @@ static char *cr_to_space(char *val)
     }
   return(val);
 }
-static int no_cr(const char *val)
+static bool no_cr(const char *val)
 {
   int i, len;
   if (val)
@@ -40,11 +40,12 @@ static int no_cr(const char *val)
       len = strlen(val);
       for (i = 0; i < len; i++)
 	if (val[i] == '\n')
-	  return(FALSE);
+	  return(false);
     }
-  return(TRUE);
+  return(true);
 }
-static int help_text_width = 0, outer_with_wrap = FALSE;
+static int help_text_width = 0;
+static bool outer_with_wrap = false;
 static gboolean help_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
   int curwid;
@@ -64,7 +65,7 @@ static gboolean help_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer 
 	  end = gtk_text_buffer_get_char_count(buf);
 	  gtk_text_buffer_get_iter_at_offset(buf, &s, 0);
 	  gtk_text_buffer_get_iter_at_offset(buf, &e, end);
-	  cur_help = cr_to_space(gtk_text_buffer_get_text(buf, &s, &e, TRUE));
+	  cur_help = cr_to_space(gtk_text_buffer_get_text(buf, &s, &e, true));
 	  new_help = word_wrap(cur_help, curwid);
 	  gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(help_text)), "", 0);
 	  sg_text_insert(help_text, new_help);
@@ -73,7 +74,7 @@ static gboolean help_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer 
 	  help_text_width = curwid;
 	}
     }
-  return(FALSE);
+  return(false);
 }
 
 static void create_help_monolog(snd_state *ss)
@@ -101,7 +102,7 @@ static void create_help_monolog(snd_state *ss)
   gtk_widget_realize(help_dialog);
 
   ok_button = gtk_button_new_with_label(_("Ok"));
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), ok_button, FALSE, TRUE, 20);
+  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), ok_button, false, true, 20);
   g_signal_connect_closure_by_id(GTK_OBJECT(ok_button),
 				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(ok_button))),
 				 0,
@@ -109,13 +110,13 @@ static void create_help_monolog(snd_state *ss)
 				 0);
   gtk_widget_show(ok_button);
 
-  help_text = make_scrolled_text(ss, GTK_DIALOG(help_dialog)->vbox, FALSE, NULL, NULL);
+  help_text = make_scrolled_text(ss, GTK_DIALOG(help_dialog)->vbox, false, NULL, NULL);
   gtk_text_view_set_left_margin(GTK_TEXT_VIEW(help_text), 10);
   gtk_widget_show(help_dialog);
   set_dialog_widget(ss, HELP_DIALOG, help_dialog);
 }
 
-GtkWidget *snd_help(snd_state *ss, const char *subject, const char *helpstr, int with_wrap)
+GtkWidget *snd_help(snd_state *ss, const char *subject, const char *helpstr, bool with_wrap)
 {
   /* place help string in scrollable help window */
   /* if window is already active, add this help at the top and reposition */

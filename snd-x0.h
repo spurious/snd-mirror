@@ -77,15 +77,15 @@
 #define SCROLLBAR_LINEAR_MAX 150
 #define SCROLLBAR_LINEAR_MULT 0.0011584929
 
-#define BACKGROUND_QUIT TRUE
-#define BACKGROUND_CONTINUE FALSE
+#define BACKGROUND_QUIT true
+#define BACKGROUND_CONTINUE false
 #define BACKGROUND_REMOVE(func) XtRemoveWorkProc(func)
 /* #define BACKGROUND_ADD(ss, func, data) XtAppAddWorkProc(MAIN_APP(ss), func, (XtPointer)data) */
 #define BACKGROUND_ADD(ss, func, data) add_work_proc(ss, func, (XtPointer)data)
 #define NUM_COLORMAPS 16
 
 #if DEBUGGING
-  #define ASSERT_WIDGET_TYPE(Cond, Wid) if (!(Cond)) fprintf(stderr, "%s:[%s %d] %s is wrong type", __FUNCTION__, __FILE__, __LINE__, XtName(Wid))
+  #define ASSERT_WIDGET_TYPE(Cond, Wid) if (!(Cond)) fprintf(stderr, "%s:[%s %d] %s is wrong type", c__FUNCTION__, __FILE__, __LINE__, XtName(Wid))
 #else
   #define ASSERT_WIDGET_TYPE(Cond, Wid)
 #endif
@@ -114,7 +114,7 @@ typedef struct {
   Cessator amp_env_in_progress;
   void *amp_env_state;
   axis_context *ax;
-  int selected;
+  bool selected;
 } chan_context;
 
 typedef struct {

@@ -56,9 +56,7 @@ static char* vstrcat(char *buf, ...)
   char *str;
   va_start(ap, buf);
   while ((str = va_arg(ap, char *)))
-    {
-      strcat(buf, str);
-    }
+    strcat(buf, str);
   va_end(ap);
   return(buf);
 }
@@ -154,7 +152,7 @@ static char *glx_version(void)
 char *version_info(void)
 {
   char *buf;
-  buf = (char *)CALLOC(1024, sizeof(char));
+  buf = (char *)CALLOC(2048, sizeof(char));
   vstrcat(buf,
 	  _("This is Snd version "),
 	  SND_RPM_VERSION,
@@ -300,6 +298,8 @@ void news_help(snd_state *ss)
 	    "\nRecent changes include:\n\
 \n\
 11-Aug:  start-playing-selection-hook (suggested by Kjetil S. Matheussen).\n\
+         removed dlp/dp-new-effects.scm and plugins-menu.scm.\n\
+         int -> bool changes (ISO C99).\n\
 7-Aug:   dac-is-running.\n\
 1-Aug:   ladspa.scm and ladspa-help.scm thanks to Kjetil S. Matheussen.\n\
          ladspa struct constants and accessors.\n\
@@ -345,7 +345,7 @@ void ssnd_help(snd_state *ss, const char *subject, ...)
       strcat(newstr, helpstr);
     }
   va_end(ap);
-  snd_help(ss, subject, newstr, FALSE);
+  snd_help(ss, subject, newstr, false);
   FREE(newstr);
 }  
 
@@ -655,7 +655,7 @@ Successive C-s or C-r repeat the search.  C-x C-s can redefine the search patter
 events, much like Emacs. \
 \n\n\
 Normally, the search applies only to the current channel. To search all current files at once, use the Edit:Find dialog.",
-	   TRUE);
+	   true);
 }
 
 void undo_help(snd_state *ss) 
@@ -667,7 +667,7 @@ operations require that temporary files be written, so disk space may eventually
 become a problem.  Revert is the same as backing up to the last save. \
 \n\n\
 In addition, eight or so of the previous selections are saved on a 'region' stack accessible via C-y.",
-	   TRUE);
+	   true);
 }
 
 void sync_help(snd_state *ss) 
@@ -678,7 +678,7 @@ sounds, the sync button has a similar effect, but applied across multiple sounds
 \n\n\
 To get multi-channel selections, set the sync button, then define the selection (by dragging \
 the mouse) in one channel, and the parallel portions of the other channels will also be selected. ",
-	   TRUE);
+	   true);
 }
 
 static char speed_help_string[] = 
@@ -724,7 +724,7 @@ void contrast_help(snd_state *ss)
 "'Contrast enhancement' is my name for this somewhat weird waveshaper or compander.  It \
 phase-modulates a sound, which can in some cases make it sound sharper or brighter. \
 For softer sounds, it causes only an amplitude change.  Contrast is on only if the contrast button is set.",
-	   TRUE);
+	   true);
 }
 
 void env_help(snd_state *ss) 
@@ -756,7 +756,7 @@ argument. In the latter case, " S_scale_by " uses that scaler for all its channe
 normalizes all the channels together so that the loudest reaches that amplitude (that is, " S_scale_to " \
 .5) when applied to a stereo file means that both channels are scaled by the same amount so that the \
 loudest point in the file becomes .5). ",
-	   TRUE);
+	   true);
 }
 
 static char sound_files_help_string[] = 
@@ -938,7 +938,7 @@ set the 'mix' button. \
 The two toggle buttons at the lower right choose whether to show a light-colored version of the \
 currently active sound (the 'wave' button), and whether to clip mouse movement at the current y \
 axis bounds (the 'clip' button).",
-	   TRUE);
+	   true);
 }
 
 void about_snd_help(snd_state *ss)
@@ -994,14 +994,14 @@ fft_keypad_help_string,
 NULL);
 }
 
-void speed_help(snd_state *ss) {snd_help(ss, "Speed", speed_help_string, TRUE);}
-void expand_help(snd_state *ss) {snd_help(ss, "Expand", expand_help_string, TRUE);}
-void reverb_help(snd_state *ss) {snd_help(ss, "Reverb", reverb_help_string, TRUE);}
-void marks_help(snd_state *ss) {snd_help(ss, "Marks", mark_help_string, TRUE);}
-void mix_help(snd_state *ss) {snd_help(ss, "Mixing", mix_help_string, TRUE);}
-void sound_files_help(snd_state *ss) {snd_help(ss, "Format", sound_files_help_string, FALSE);}
-void recording_help(snd_state *ss) {snd_help(ss, "Recording", recording_help_string, TRUE);}
-void init_file_help(snd_state *ss) {snd_help(ss, "Customization", init_file_help_string, TRUE);}
+void speed_help(snd_state *ss) {snd_help(ss, "Speed", speed_help_string, true);}
+void expand_help(snd_state *ss) {snd_help(ss, "Expand", expand_help_string, true);}
+void reverb_help(snd_state *ss) {snd_help(ss, "Reverb", reverb_help_string, true);}
+void marks_help(snd_state *ss) {snd_help(ss, "Marks", mark_help_string, true);}
+void mix_help(snd_state *ss) {snd_help(ss, "Mixing", mix_help_string, true);}
+void sound_files_help(snd_state *ss) {snd_help(ss, "Format", sound_files_help_string, false);}
+void recording_help(snd_state *ss) {snd_help(ss, "Recording", recording_help_string, true);}
+void init_file_help(snd_state *ss) {snd_help(ss, "Customization", init_file_help_string, true);}
 
 
 /* -------- dialog help button -------- */
@@ -1035,7 +1035,7 @@ The top three buttons in the transform dialog choose between a normal fft, a son
 spectrogram. The 'peaks' button affects whether peak info is displayed alongside the graph of the \
 spectrum. The 'dB' button selects between a linear and logarithmic Y (magnitude) axis. The 'log freq' \
 button makes a similar choice along the frequency axis.",
-	   TRUE);	   
+	   true);	   
 }
 
 void color_dialog_help(snd_state *ss)
@@ -1044,7 +1044,7 @@ void color_dialog_help(snd_state *ss)
 	   "View Color",
 "This dialog sets the colormap and associated variables used during sonogram, spectrogram,  \
 and perhaps wavogram display. The cutoff scale refers to the minimum data value to be displayed.",
-	   TRUE);	   
+	   true);	   
 }
 
 void orientation_dialog_help(snd_state *ss)
@@ -1052,7 +1052,7 @@ void orientation_dialog_help(snd_state *ss)
   snd_help(ss,
 	   "View Orientation",
 	   "This dialog sets the rotation and scaling variables used during sonogram, spectrogram, and wavogram display.",
-	   TRUE);	   
+	   true);	   
 }
 
 void region_dialog_help(snd_state *ss)
@@ -1067,7 +1067,7 @@ title, the text is highlighted, and that region is displayed in the graph area. 
 region by clicking the 'Delete' button.  To dismiss the browser, click 'Ok'.  The 'edit' button \
 loads the region into the main editor as a temporary file.  It can be edited or renamed, etc.  If you save \
 the file, the region is updated to reflect any edits you made.",
-	   TRUE);
+	   true);
 }
 
 void raw_data_dialog_help(snd_state *ss)
@@ -1078,7 +1078,7 @@ void raw_data_dialog_help(snd_state *ss)
 of channels, and numerical format.  This dialog gives you a chance to set those fields. \
 To make the current settings the default for any future headerless files, click the \
 'Default' button.",
-	   TRUE);
+	   true);
 }
 
 void new_file_dialog_help(snd_state *ss)
@@ -1086,7 +1086,7 @@ void new_file_dialog_help(snd_state *ss)
   snd_help(ss,
 	   "New File",
 	   "This dialog sets the new file's output header type, data format, srate, chans, and comment if any.",
-	   TRUE);
+	   true);
 }
 
 void edit_header_dialog_help(snd_state *ss)
@@ -1097,7 +1097,7 @@ void edit_header_dialog_help(snd_state *ss)
 new header is blindly written, any unsaved edits are ignored. If you specify 'raw' as the type, \
 any existing header is removed.  This dialog is aimed at adding or removing an entire header,  \
 or editing the header comments; anything else is obviously dangerous.",
-	   TRUE);
+	   true);
 }
 
 void print_dialog_help(snd_state *ss)
@@ -1107,7 +1107,7 @@ void print_dialog_help(snd_state *ss)
 "Print causes the currently active display to be either printed (via the lpr command) or saved as \
 an eps file.  In the latter case, the file name is set either by the dialog, or taken from the \
 resource epsFile (normally snd.eps).",
-	   TRUE);
+	   true);
 }
 
 void view_files_dialog_help(snd_state *ss)
@@ -1142,7 +1142,7 @@ previous files list alphabetically, 'date' sorts by date written, 'size' sorts b
 number of samples in the sound, and 'entry' sorts by the order the sound appears in the \
 absence of explicit sorting.  The variable " S_previous_files_sort " (default 0: \
 unsorted) refers to this menu.",
-	   TRUE);	   
+	   true);	   
 }
 
 #define GLYPH_WIDTH 11
@@ -1152,7 +1152,7 @@ char* word_wrap(const char *text, int widget_len)
   char *new_text;
   int new_len, old_len, i, j, line_len = 0, desired_len;
 #if HAVE_RUBY
-  int move_paren = FALSE;
+  bool move_paren = false;
 #endif
   old_len = snd_strlen(text);
 #if HAVE_RUBY
@@ -1224,14 +1224,14 @@ char* word_wrap(const char *text, int widget_len)
 	      {
 		if ((i == 0) && (text[i] == '('))
 		  {
-		    move_paren = TRUE;
+		    move_paren = true;
 		  }
 		else 
 		  {
 		    if ((move_paren) && (text[i] == ' '))
 		      {
 			new_text[j++] = '(';
-			move_paren = FALSE;
+			move_paren = false;
 		      }
 		    else new_text[j++] = text[i];
 		  }

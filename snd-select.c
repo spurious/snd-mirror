@@ -20,12 +20,12 @@ int selection_is_active_in_channel(chan_info *cp)
   return((cp) && (cp_has_selection(cp, NULL)));
 }
 
-static int selection_is_visible(chan_info *cp)
+static bool selection_is_visible(chan_info *cp)
 {
   ed_list *ed;
   axis_info *ap;
   ed = cp->edits[cp->edit_ctr];
-  if (ed->selection_beg == NO_SELECTION) return(FALSE);
+  if (ed->selection_beg == NO_SELECTION) return(false);
   ap = cp->axis;
   return((ed) && 
 	 (ap->losamp < ed->selection_end) && 
@@ -226,7 +226,7 @@ void reactivate_selection(chan_info *cp, off_t beg, off_t end)
   if (beg > end) end = beg;
   ed->selection_beg = beg;
   ed->selection_end = end;
-  cp->selection_visible = FALSE;
+  cp->selection_visible = false;
   ed->selection_maxamp = -1.0;
   reflect_edit_with_selection_in_menu();
 }
@@ -457,7 +457,7 @@ static void cp_redraw_selection(chan_info *cp, void *with_fft)
 		     (int)(ap->y_axis_y0 - ap->y_axis_y1));
       cp->old_x0 = x0;
       cp->old_x1 = x1;
-      cp->selection_visible = TRUE;
+      cp->selection_visible = true;
     }
   if ((with_fft) && (cp->graph_transform_p) && (cp_has_selection(cp, NULL)) && (!(chan_fft_in_progress(cp))))
     {
@@ -481,7 +481,8 @@ void display_selection(chan_info *cp)
 int make_region_from_selection(void)
 {
   off_t *ends = NULL;
-  int i, happy = FALSE, id = -1;
+  int i, id = -1;
+  bool happy = false;
   sync_info *si;
   if (!(selection_is_active())) return(-1);
   si = selection_sync();
@@ -489,7 +490,7 @@ int make_region_from_selection(void)
   for (i = 0; i < si->chans; i++) 
     {
       ends[i] = selection_end(si->cps[i]);
-      if (ends[i] > si->begs[i]) happy = TRUE;
+      if (ends[i] > si->begs[i]) happy = true;
       /* C-space followed by mouse click causes a bogus selection-creation event */
     }
   if (happy) id = define_region(si, ends);
@@ -575,7 +576,8 @@ void move_selection(chan_info *cp, int x)
 int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, const char *comment, int chan)
 {
   /* type and format have already been checked */
-  int ofd, comlen, err = MUS_NO_ERROR, reporting = 0, no_space, bps;
+  int ofd, comlen, err = MUS_NO_ERROR, reporting = 0, bps;
+  disk_space_t no_space;
   off_t oloc;
   sync_info *si = NULL;
   off_t *ends;
@@ -636,7 +638,7 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
   for (i = 0; i < chans; i++) 
     data[i] = (mus_sample_t *)CALLOC(FILE_BUFFER_SIZE, sizeof(mus_sample_t)); 
   j = 0;
-  ss->stopped_explicitly = FALSE;
+  ss->stopped_explicitly = false;
   for (ioff = 0; ioff < dur; ioff++)
     {
       for (k = 0; k < chans; k++)
@@ -655,7 +657,7 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 	    progress_report(sp, S_save_selection, chans - 1, chans, (Float)((double)ioff / (double)dur), NOT_FROM_ENVED);
 	  if (ss->stopped_explicitly)
 	    {
-	      ss->stopped_explicitly = FALSE;
+	      ss->stopped_explicitly = false;
 	      snd_warning(_("save selection stopped"));
 	      break;
 	    }

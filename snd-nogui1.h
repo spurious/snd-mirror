@@ -3,13 +3,13 @@
 
 /* -------- snd-xhelp.c -------- */
 
-int snd_help(snd_state *ss, const char *subject, const char *help, int with_wrap);
+int snd_help(snd_state *ss, const char *subject, const char *help, bool with_wrap);
 void snd_completion_help(snd_state *ss, int matches, char **buffer);
 
 
 /* -------- snd-xerror.c -------- */
 
-void add_to_error_history(snd_state *ss, char *msg, int popup);
+void add_to_error_history(snd_state *ss, char *msg, bool popup);
 void post_error_dialog(snd_state *ss, char *msg);
 int snd_yes_or_no_p(snd_state *ss, char *format, ...);
 
@@ -25,8 +25,8 @@ void draw_string (axis_context *ax, int x0, int y0, char *str, int len);
 void draw_arc(axis_context *ax, int x, int y, int size);
 void set_grf_points(int xi, int j, int ymin, int ymax);
 void set_grf_point(int xi, int j, int yi);
-void draw_grf_points(chan_info *cp, axis_context *ax, int j, axis_info *ap, Float y0, int graph_style);
-void draw_both_grf_points(chan_info *cp, axis_context *ax, int j, int graph_style);
+void draw_grf_points(chan_info *cp, axis_context *ax, int j, axis_info *ap, Float y0, graph_style_t graph_style);
+void draw_both_grf_points(chan_info *cp, axis_context *ax, int j, graph_style_t graph_style);
 void draw_both_grfs(axis_context *ax, int j);
 void mix_save_graph(mix_context *ms, int j);
 void erase_and_draw_grf_points(mix_context *ms, chan_info *cp, int j);
@@ -40,7 +40,7 @@ void draw_sono_rectangles(axis_context *ax, int color, int jmax);
 int start_color_dialog(snd_state *ss, int width, int height);
 int start_orientation_dialog(snd_state *ss, int width, int height);
 void set_color_scale(snd_state *ss, Float val);
-void set_color_inverted(snd_state *ss, int val);
+void set_color_inverted(snd_state *ss, bool val);
 void set_color_cutoff(snd_state *ss, Float val);
 void set_color_map(snd_state *ss, int val);
 void set_spectro_hop(snd_state *ss, int val);
@@ -63,7 +63,7 @@ void reflect_recorder_duration(Float new_dur);
 void reflect_recorder_mixer_gain(int ind, Float val);
 void reflect_recorder_out_amp(int ind, Float val);
 void reflect_recorder_in_amp(int in, int out, Float val);
-int set_with_gl(snd_state *ss, int val);
+int set_with_gl(snd_state *ss, bool val);
 
 
 
@@ -74,11 +74,11 @@ void save_listener_text(FILE *fp);
 void listener_append_and_prompt(char *msg);
 void goto_listener(void);
 void listener_append(char *msg);
-void handle_listener(snd_state *ss, int new_state);
+void handle_listener(snd_state *ss, bool new_state);
 int listener_height(void);
 int listener_width(void);
 void clear_listener(void);
-int highlight_unbalanced_paren(void);
+bool highlight_unbalanced_paren(void);
 
 
 /* -------- snd-xmenu.c -------- */
@@ -140,7 +140,7 @@ int popup_menu_exists(void);
 void set_menu_label(int w, const char *label);
 void check_menu_labels(int key, int state, int extended);
 int g_change_menu_label(int which_menu, char *old_label, char *new_label);
-int g_set_menu_sensitive(int which_menu, char *old_label, int on);
+int g_set_menu_sensitive(int which_menu, char *old_label, bool on);
 int g_menu_is_sensitive(int which_menu, char *old_label);
 int g_add_to_main_menu(snd_state *ss, char *label, int slot);
 int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb, int position);
@@ -165,18 +165,18 @@ void set_transform_size(snd_state *ss, int val);
 void set_fft_window(snd_state *ss, int val);
 void set_transform_type(snd_state *ss, int val);
 void set_wavelet_type(snd_state *ss, int val);
-int fire_up_transform_dialog(snd_state *ss, int managed);
+int fire_up_transform_dialog(snd_state *ss, bool managed);
 int transform_dialog_is_active(void);
 
 char *transform_type_name(int choice);
 int add_transform_to_list(char *name);
 int max_transform_type(void);
 
-void set_show_transform_peaks(snd_state *ss, int val);
-void set_fft_log_magnitude(snd_state *ss, int val);
-void set_fft_log_frequency(snd_state *ss, int val);
+void set_show_transform_peaks(snd_state *ss, bool val);
+void set_fft_log_magnitude(snd_state *ss, bool val);
+void set_fft_log_frequency(snd_state *ss, bool val);
 void set_transform_normalization(snd_state *ss, int val);
-void set_show_selection_transform(snd_state *ss, int show);
+void set_show_selection_transform(snd_state *ss, bool show);
 void set_transform_graph_type(snd_state *ss, int val);
 
 
@@ -197,13 +197,13 @@ void reflect_region_graph_style(snd_state *ss);
 /* -------- snd-xutils.c -------- */
 
 void goto_window(int text);
-int set_tiny_font(snd_state *ss, char *font);
-int set_listener_font(snd_state *ss, char *font);
-int set_bold_button_font(snd_state *ss, char *font);
-int set_peaks_font(snd_state *ss, char *font);
-int set_bold_peaks_font(snd_state *ss, char *font);
-int set_axis_label_font(snd_state *ss, char *font);
-int set_axis_numbers_font(snd_state *ss, char *font);
+bool set_tiny_font(snd_state *ss, char *font);
+bool set_listener_font(snd_state *ss, char *font);
+bool set_bold_button_font(snd_state *ss, char *font);
+bool set_peaks_font(snd_state *ss, char *font);
+bool set_bold_peaks_font(snd_state *ss, char *font);
+bool set_axis_label_font(snd_state *ss, char *font);
+bool set_axis_numbers_font(snd_state *ss, char *font);
 int label_width(snd_state *ss, char *txt);
 int number_width(snd_state *ss, char *num);
 int number_height(snd_state *ss);
@@ -215,10 +215,10 @@ void white_color(snd_state *ss, int w);
 void set_title(snd_state *ss, const char *title);
 void check_for_event(snd_state *ss);
 int event_pending(snd_state *ss);
-void recolor_graph(chan_info *cp, int selected);
+void recolor_graph(chan_info *cp, bool selected);
 void reflect_resize(snd_state *ss);
-void set_sensitive(int wid, int val);
-void set_toggle_button(int wid, int val, int passed, void *data);
+void set_sensitive(int wid, bool val);
+void set_toggle_button(int wid, bool val, bool passed, void *data);
 int widget_height(int w);
 int widget_width(int w);
 void set_widget_size(int w, int width, int height);
@@ -254,10 +254,10 @@ void cleanup_cw(chan_info *cp);
 void combine_sound(snd_info *sp);
 void separate_sound(snd_info *sp);
 void superimpose_sound(snd_info *sp);
-int fixup_cp_cgx_ax_wn(chan_info *cp);
+bool fixup_cp_cgx_ax_wn(chan_info *cp);
 void get_current_color(int colormap, int j, unsigned short *r, unsigned short *g, unsigned short *b);
 void change_channel_style(snd_info *sp, int new_style);
-int add_channel_window(snd_info *sound, int channel, snd_state *ss, int chan_y, int insertion, widget_t main, int arrows, int with_events);
+int add_channel_window(snd_info *sound, int channel, snd_state *ss, int chan_y, int insertion, widget_t main, int arrows, bool with_events);
 
 
 /* -------- snd-xsnd.c -------- */
@@ -278,25 +278,25 @@ void set_snd_revlen(snd_info *sp, Float val);
 void set_snd_revscl(snd_info *sp, Float val);
 void set_snd_filter_order(snd_info *sp, int val);
 void set_filter_text(snd_info *sp, char *str);
-void toggle_expand_button(snd_info *sp, int state);
-void toggle_contrast_button(snd_info *sp, int state);
-void toggle_reverb_button(snd_info *sp, int state);
-void toggle_filter_button(snd_info *sp, int state);
-void toggle_direction_arrow(snd_info *sp, int state);
-void set_filter_in_dB(snd_info *sp, int val);
+void toggle_expand_button(snd_info *sp, bool state);
+void toggle_contrast_button(snd_info *sp, bool state);
+void toggle_reverb_button(snd_info *sp, bool state);
+void toggle_filter_button(snd_info *sp, bool state);
+void toggle_direction_arrow(snd_info *sp, bool state);
+void set_filter_in_dB(snd_info *sp, bool val);
 void filter_env_changed(snd_info *sp, env *e);
-void set_play_button(snd_info *sp, int val);
-void play_button_pause(snd_state *ss, int pausing);
+void set_play_button(snd_info *sp, bool val);
+void play_button_pause(snd_state *ss, bool pausing);
 void syncb(snd_info *sp, int on);
 void lock_apply(snd_state *ss, snd_info *sp);
 void unlock_apply(snd_state *ss, snd_info *sp);
-void set_apply_button(snd_info *sp, int val);
-void snd_file_lock_icon(snd_info *sp, int on);
-void snd_file_bomb_icon(snd_info *sp, int on);
-void x_bomb(snd_info *sp, int on);
+void set_apply_button(snd_info *sp, bool val);
+void snd_file_lock_icon(snd_info *sp, bool on);
+void snd_file_bomb_icon(snd_info *sp, bool on);
+void x_bomb(snd_info *sp, bool on);
 snd_info *add_sound_window (char *filename, snd_state *state, int read_only);
 void set_sound_pane_file_label(snd_info *sp, char *str);
-void equalize_sound_panes(snd_state *ss, snd_info *sp, chan_info *ncp, int all_panes);
+void equalize_sound_panes(snd_state *ss, snd_info *sp, chan_info *ncp, bool all_panes);
 void reflect_amp_env_completion(snd_info *sp);
 void equalize_all_panes(snd_state *ss);
 void sound_show_ctrls(snd_info *sp);
@@ -321,43 +321,43 @@ void view_curfiles_set_row_name(int pos);
 void curfile_highlight(snd_state *ss, int i);
 void set_file_browser_play_button(char *name, int state);
 void highlight_selected_sound(snd_state *ss);
-void set_file_sort_sensitive(int sensitive);
+void set_file_sort_sensitive(bool sensitive);
 int start_file_dialog(snd_state *ss, int width, int height);
 int file_dialog_is_active(void);
 int edit_header(snd_info *sp);
-void make_open_file_dialog(snd_state *ss, int read_only, int managed);
+void make_open_file_dialog(snd_state *ss, bool read_only, bool managed);
 void set_open_file_play_button(int val);
 void make_edit_save_as_dialog(snd_state *ss);
 void make_file_save_as_dialog(snd_state *ss);
-void make_mix_file_dialog(snd_state *ss, int managed);
+void make_mix_file_dialog(snd_state *ss, bool managed);
 void clear_deleted_snd_info(void *fd);
 
 
 /* -------- snd-xenv.c -------- */
 
-axis_info *enved_make_axis(char *name, axis_context *ax, int ex0, int ey0, int width, int height, Float xmin, Float xmax, Float ymin, Float ymax, int printing);
-void display_enved_env_with_selection(snd_state *ss, env *e, char *name, int x0, int y0, int width, int height, int dots, Float base, int printing);
-void set_enved_redo_sensitive(int val);
-void set_enved_revert_sensitive(int val);
-void set_enved_undo_sensitive(int val);
-void set_enved_save_sensitive(int val);
-void set_enved_show_sensitive(int val);
+axis_info *enved_make_axis(char *name, axis_context *ax, int ex0, int ey0, int width, int height, Float xmin, Float xmax, Float ymin, Float ymax, bool printing);
+void display_enved_env_with_selection(snd_state *ss, env *e, char *name, int x0, int y0, int width, int height, int dots, Float base, bool printing);
+void set_enved_redo_sensitive(bool val);
+void set_enved_revert_sensitive(bool val);
+void set_enved_undo_sensitive(bool val);
+void set_enved_save_sensitive(bool val);
+void set_enved_show_sensitive(bool val);
 void make_scrolled_env_list (snd_state *ss);
 void new_active_channel_alert(snd_state *ss);
 void env_redisplay(snd_state *ss);
 void env_redisplay_with_print(snd_state *ss);
 void enved_display_point_label(snd_state *ss, Float x, Float y);
-void set_enved_click_to_delete(int n);
+void set_enved_click_to_delete(bool n);
 int create_envelope_editor (snd_state *ss);
-void set_enved_clip_p(snd_state *ss, int val);
-void set_enved_exp_p(snd_state *ss, int val);
+void set_enved_clip_p(snd_state *ss, bool val);
+void set_enved_exp_p(snd_state *ss, bool val);
 void set_enved_base(snd_state *ss, Float val);
 void set_enved_target(snd_state *ss, int val);
-void set_enved_wave_p(snd_state *ss, int val);
-void set_enved_in_dB(snd_state *ss, int val);
+void set_enved_wave_p(snd_state *ss, bool val);
+void set_enved_in_dB(snd_state *ss, bool val);
 int enved_dialog_is_active(void);
 void set_enved_filter_order(snd_state *ss, int order);
-void enved_reflect_selection(int on);
+void enved_reflect_selection(bool on);
 void reflect_mix_in_enved(void);
 void enved_fft_update(void);
 

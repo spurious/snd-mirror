@@ -37,7 +37,7 @@ static XmFontList get_xm_font(snd_state *ss, XFontStruct *fs, char *font, char *
 }
 #endif
 
-int set_tiny_font(snd_state *ss, char *font)
+bool set_tiny_font(snd_state *ss, char *font)
 {
   XFontStruct *fs = NULL;
   state_context *sgx;
@@ -50,12 +50,12 @@ int set_tiny_font(snd_state *ss, char *font)
       sgx->tiny_fontstruct = fs;
       if (sgx->tiny_fontlist) XM_FONT_FREE(sgx->tiny_fontlist);
       sgx->tiny_fontlist = get_xm_font(ss, sgx->tiny_fontstruct, font, "tiny_font");
-      return(TRUE);
+      return(true);
     }
-  return(FALSE);
+  return(false);
 }
 
-int set_listener_font(snd_state *ss, char *font)
+bool set_listener_font(snd_state *ss, char *font)
 {
   XFontStruct *fs = NULL;
   fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
@@ -66,12 +66,12 @@ int set_listener_font(snd_state *ss, char *font)
       (ss->sgx)->listener_fontstruct = fs;
       if ((ss->sgx)->listener_fontlist) XM_FONT_FREE((ss->sgx)->listener_fontlist);
       (ss->sgx)->listener_fontlist = get_xm_font(ss, (ss->sgx)->listener_fontstruct, font, "listener_font");
-      return(TRUE);
+      return(true);
     }
-  return(FALSE);
+  return(false);
 }
 
-int set_bold_button_font(snd_state *ss, char *font)
+bool set_bold_button_font(snd_state *ss, char *font)
 {
   XFontStruct *fs = NULL;
   fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
@@ -82,12 +82,12 @@ int set_bold_button_font(snd_state *ss, char *font)
       (ss->sgx)->bold_button_fontstruct = fs;
       if ((ss->sgx)->bold_button_fontlist) XM_FONT_FREE((ss->sgx)->bold_button_fontlist);
       (ss->sgx)->bold_button_fontlist = get_xm_font(ss, (ss->sgx)->bold_button_fontstruct, font, "bold_button_font");
-      return(TRUE);
+      return(true);
     }
-  return(FALSE);
+  return(false);
 }
 
-int set_peaks_font(snd_state *ss, char *font)
+bool set_peaks_font(snd_state *ss, char *font)
 {
   XFontStruct *fs = NULL;
   fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
@@ -98,12 +98,12 @@ int set_peaks_font(snd_state *ss, char *font)
       (ss->sgx)->peaks_fontstruct = fs;
       if ((ss->sgx)->peaks_fontlist) XM_FONT_FREE((ss->sgx)->peaks_fontlist);
       (ss->sgx)->peaks_fontlist = get_xm_font(ss, (ss->sgx)->peaks_fontstruct, font, "peaks_font");
-      return(TRUE);
+      return(true);
     }
-  return(FALSE);
+  return(false);
 }
 
-int set_bold_peaks_font(snd_state *ss, char *font)
+bool set_bold_peaks_font(snd_state *ss, char *font)
 {
   XFontStruct *fs = NULL;
   fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
@@ -114,12 +114,12 @@ int set_bold_peaks_font(snd_state *ss, char *font)
       (ss->sgx)->bold_peaks_fontstruct = fs;
       if ((ss->sgx)->bold_peaks_fontlist) XM_FONT_FREE((ss->sgx)->bold_peaks_fontlist);
       (ss->sgx)->bold_peaks_fontlist = get_xm_font(ss, (ss->sgx)->bold_peaks_fontstruct, font, "bold_peaks_font");
-      return(TRUE);
+      return(true);
     }
-  return(FALSE);
+  return(false);
 }
 
-int set_axis_label_font(snd_state *ss, char *font)
+bool set_axis_label_font(snd_state *ss, char *font)
 {
   XFontStruct *fs = NULL;
   fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
@@ -131,12 +131,12 @@ int set_axis_label_font(snd_state *ss, char *font)
 #if HAVE_GL
       reload_label_font(ss);
 #endif
-      return(TRUE);
+      return(true);
     }
-  return(FALSE);
+  return(false);
 }
 
-int set_axis_numbers_font(snd_state *ss, char *font)
+bool set_axis_numbers_font(snd_state *ss, char *font)
 {
   XFontStruct *fs = NULL;
   fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
@@ -148,9 +148,9 @@ int set_axis_numbers_font(snd_state *ss, char *font)
 #if HAVE_GL
       reload_number_font(ss);
 #endif
-      return(TRUE);
+      return(true);
     }
-  return(FALSE);
+  return(false);
 }
 
 int label_width(snd_state *ss, char *txt)
@@ -283,7 +283,7 @@ void set_title(snd_state *ss, const char *title)
   XtVaSetValues(MAIN_SHELL(ss), XmNtitle, (char*)title, NULL);
 }
 
-static int complain_about_focus_policy = TRUE;
+static bool complain_about_focus_policy = true;
 
 void goto_window(Widget text)
 {
@@ -304,7 +304,7 @@ void goto_window(Widget text)
 	      else 
 		{
 		  snd_error("goto_window: keyboard focus policy is not explicit!");
-		  complain_about_focus_policy = FALSE;
+		  complain_about_focus_policy = false;
 		}
 	    }
 	}
@@ -338,7 +338,7 @@ void check_for_event(snd_state *ss)
   XtInputMask msk = 0;
   XtAppContext app;
   if (ss->checking_explicitly) return;
-  ss->checking_explicitly = TRUE;
+  ss->checking_explicitly = true;
   app = MAIN_APP(ss);
   while (1)
     {
@@ -351,7 +351,7 @@ void check_for_event(snd_state *ss)
 	}
       else break;
     }
-  ss->checking_explicitly = FALSE;
+  ss->checking_explicitly = false;
 }
 
 int event_pending(snd_state *ss)
@@ -440,7 +440,7 @@ void color_selected_data(snd_state *ss, Pixel color)
   XSetBackground(dpy, sx->selected_erase_gc, color);
 }
 
-void recolor_graph(chan_info *cp, int selected)
+void recolor_graph(chan_info *cp, bool selected)
 {
   snd_state *ss;
   state_context *sx;
@@ -479,9 +479,9 @@ void reflect_resize(snd_state *ss)
   XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, auto_resize(ss), NULL);
 }
 
-void set_sensitive(Widget wid, int val) {if (wid) XtSetSensitive(wid, val);}
-int is_sensitive(Widget wid) {if (wid) return(XtIsSensitive(wid)); return(0);}
-void set_toggle_button(Widget wid, int val, int passed, void *data) {XmToggleButtonSetState(wid, (Boolean)val, (Boolean)passed);}
+void set_sensitive(Widget wid, bool val) {if (wid) XtSetSensitive(wid, val);}
+bool is_sensitive(Widget wid) {if (wid) return(XtIsSensitive(wid)); return(0);}
+void set_toggle_button(Widget wid, bool val, bool passed, void *data) {XmToggleButtonSetState(wid, (Boolean)val, (Boolean)passed);}
 
 
 Dimension widget_height(Widget w)

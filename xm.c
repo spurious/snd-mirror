@@ -7,10 +7,11 @@
   #include <config.h>
 #endif
 
-#define XM_DATE "17-July-03"
+#define XM_DATE "11-Aug-03"
 
 
 /* HISTORY: 
+ *   11-Aug:    int -> bool.
  *   17-July:   XpmAttributes .colorsymbols is a list.
  *   15-July:   type check cleanups.
  *   14-July:   .depths returns a list of Depth pointers; similar change for .visuals.
@@ -585,8 +586,8 @@ static XEN C_TO_XEN_XEvent_1(XEvent *e, int need_free)
 }
 
 
-#define C_TO_XEN_XEvent(e)     C_TO_XEN_XEvent_1(e, FALSE)
-#define C_TO_XEN_XEvent_OBJ(e) C_TO_XEN_XEvent_1(e, TRUE)
+#define C_TO_XEN_XEvent(e)     C_TO_XEN_XEvent_1(e, false)
+#define C_TO_XEN_XEvent_OBJ(e) C_TO_XEN_XEvent_1(e, true)
 #define XEN_TO_C_XEvent(Arg)   (XEvent *)XEN_TO_C_ULONG(XEN_CADR(Arg))
 #define XEN_XEvent_P(Value)    (XEN_LIST_P(Value) &&\
                                (XEN_LIST_LENGTH(Value) == 4) &&\
@@ -801,7 +802,7 @@ static Widget *XEN_TO_C_Widgets(XEN lst, int n)
       {
 	FREE(ws);
 	ws = NULL;
-	XEN_ASSERT_TYPE(0, XEN_CAR(lst), i, __FUNCTION__, "a Widget");
+	XEN_ASSERT_TYPE(0, XEN_CAR(lst), i, c__FUNCTION__, "a Widget");
 	break;
       }
   return(ws);
@@ -819,7 +820,7 @@ static XmString *XEN_TO_C_XmStrings(XEN v, int len)
       {
 	FREE(str);
 	str = NULL;
-	XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "an XmString");
+	XEN_ASSERT_TYPE(0, XEN_CAR(v), i, c__FUNCTION__, "an XmString");
 	break;
       }
   return(str);
@@ -840,7 +841,7 @@ static XmDropTransferEntryRec *XEN_TO_C_XmDropTransferEntryRecs(XEN v, int len)
 	    {
 	      if (XEN_Atom_P(XEN_CAR(XEN_CAR(v))))
 		ps[i].target = XEN_TO_C_Atom(XEN_CAR(XEN_CAR(v)));
-	      else XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "an Atom");
+	      else XEN_ASSERT_TYPE(0, XEN_CAR(v), i, c__FUNCTION__, "an Atom");
 	      ps[i].client_data = (XtPointer)XEN_CADR(XEN_CAR(v));
 	    }
 	}
@@ -860,7 +861,7 @@ static XmStringTable XEN_TO_C_XmStringTable(XEN v, int len)
       {
 	FREE(str);
 	str = NULL;
-	XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "an XmString");
+	XEN_ASSERT_TYPE(0, XEN_CAR(v), i, c__FUNCTION__, "an XmString");
 	break;
       }
   return(str);
@@ -976,7 +977,7 @@ static Window *XEN_TO_C_Windows(XEN lst, int n)
       {
 	FREE(ws);
 	ws = NULL;
-	XEN_ASSERT_TYPE(0, XEN_CAR(lst), i, __FUNCTION__, "a Window");
+	XEN_ASSERT_TYPE(0, XEN_CAR(lst), i, c__FUNCTION__, "a Window");
 	break;
       }
   return(ws);
@@ -996,7 +997,7 @@ static XmRendition *XEN_TO_C_XmRenditions(XEN lst, int n)
       {
 	FREE(ws);
 	ws = NULL;
-	XEN_ASSERT_TYPE(0, XEN_CAR(lst), i, __FUNCTION__, "an XmRendition");
+	XEN_ASSERT_TYPE(0, XEN_CAR(lst), i, c__FUNCTION__, "an XmRendition");
 	break;
       }
   return(ws);
@@ -1015,7 +1016,7 @@ static XmTab *XEN_TO_C_XmTabs(XEN v, int len)
       {
 	FREE(str);
 	str = NULL;
-	XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "an XmTab");
+	XEN_ASSERT_TYPE(0, XEN_CAR(v), i, c__FUNCTION__, "an XmTab");
 	break;
       }
   return(str);
@@ -1035,7 +1036,7 @@ static Atom *XEN_TO_C_Atoms(XEN v, int len)
       {
 	FREE(str);
 	str = NULL;
-	XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "an Atom");
+	XEN_ASSERT_TYPE(0, XEN_CAR(v), i, c__FUNCTION__, "an Atom");
 	break;
       }
   return(str);
@@ -1054,7 +1055,7 @@ static Pixel *XEN_TO_C_Pixels(XEN v, int len)
       {
 	FREE(str);
 	str = NULL;
-	XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "a Pixel");
+	XEN_ASSERT_TYPE(0, XEN_CAR(v), i, c__FUNCTION__, "a Pixel");
 	break;
       }
   return(str);
@@ -1073,7 +1074,7 @@ static KeySym *XEN_TO_C_KeySyms(XEN v, int len)
       {
 	FREE(str);
 	str = NULL;
-	XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "a KeySym");
+	XEN_ASSERT_TYPE(0, XEN_CAR(v), i, c__FUNCTION__, "a KeySym");
 	break;
       }
   return(str);
@@ -1092,7 +1093,7 @@ static char **XEN_TO_C_Strings(XEN v, int len)
       {
 	FREE(str);
 	str = NULL;
-	XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "a char*");
+	XEN_ASSERT_TYPE(0, XEN_CAR(v), i, c__FUNCTION__, "a char*");
 	break;
       }
   return(str);
@@ -1111,7 +1112,7 @@ static int *XEN_TO_C_Ints(XEN v, int len)
       {
 	FREE(ps);
 	ps = NULL;
-	XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "an int");
+	XEN_ASSERT_TYPE(0, XEN_CAR(v), i, c__FUNCTION__, "an int");
 	break;
       }
   return(ps);
@@ -1130,7 +1131,7 @@ static Cardinal *XEN_TO_C_Cardinals(XEN v, int len)
       {
 	FREE(ps);
 	ps = NULL;
-	XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "a Cardinal");
+	XEN_ASSERT_TYPE(0, XEN_CAR(v), i, c__FUNCTION__, "a Cardinal");
 	break;
       }
   return(ps);
@@ -1150,7 +1151,7 @@ static XRectangle *XEN_TO_C_XRectangles(XEN v, int len)
 	{
 	  FREE(str);
 	  str = NULL;
-	  XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "an XRectangle");
+	  XEN_ASSERT_TYPE(0, XEN_CAR(v), i, c__FUNCTION__, "an XRectangle");
 	  break;
 	}
       str[i].x = dat->x;
@@ -1167,7 +1168,7 @@ static XRectangle *XEN_TO_C_XRectangles(XEN v, int len)
 /* -------- arglists -------- */
 
 static XEN wrap_callback_struct(int type, XtPointer info);
-static int map_over_protected_elements(int (*func)(XEN val, int loc, unsigned long fid), unsigned long id);
+static int map_over_protected_elements(bool (*func)(XEN val, int loc, unsigned long fid), unsigned long id);
 static XEN xm_protected_element(int loc);
 static int callback_struct_type(Widget w, char *name);
 static void xm_unprotect(XEN obj);
@@ -1186,14 +1187,14 @@ static void gxm_XtCallbackProc(Widget w, XtPointer context, XtPointer info)
 	     C_TO_XEN_Widget(w),
 	     XEN_LIST_REF(descr, CALLBACK_DATA),
 	     wrap_callback_struct(XEN_TO_C_INT(XEN_LIST_REF(descr, CALLBACK_STRUCT_TYPE)), info),
-	     __FUNCTION__);
+	     c__FUNCTION__);
 }
 
 #define C_TO_XEN_XM_Drop_Callback(Code) \
   XEN_LIST_5(C_STRING_TO_XEN_SYMBOL("Drop_Callback"), Code, XEN_FALSE, XEN_ZERO, XEN_ZERO)
 #define XM_Drop_Callback_P(Arg) WRAP_P("Drop_Callback", Arg)
 
-static int find_dropproc(XEN val, int loc, unsigned long w)
+static bool find_dropproc(XEN val, int loc, unsigned long w)
 {
   return((XM_Drop_Callback_P(val)) &&
 	 (((XEN_FALSE_P((XEN)w)) && 
@@ -1216,7 +1217,7 @@ static void gxm_Drop_Callback(Widget w, XtPointer context, XtPointer info)
 		   C_TO_XEN_Widget(w),
 		   XEN_FALSE,
 		   C_TO_XEN_XmDropProcCallbackStruct(cb),
-		   __FUNCTION__);
+		   c__FUNCTION__);
     }
   cb->dropSiteStatus = XmINVALID_DROP_SITE; /* try to exit cleanly from on-going drop */
 }
@@ -1225,7 +1226,7 @@ static void gxm_Drop_Callback(Widget w, XtPointer context, XtPointer info)
   XEN_LIST_5(C_STRING_TO_XEN_SYMBOL("Drag_Callback"), Code, XEN_FALSE, XEN_ZERO, XEN_ZERO)
 #define XM_Drag_Callback_P(Arg) WRAP_P("Drag_Callback", Arg)
 
-static int find_dragproc(XEN val, int loc, unsigned long w)
+static bool find_dragproc(XEN val, int loc, unsigned long w)
 {
   return((XM_Drag_Callback_P(val)) &&
 	 (((XEN_FALSE_P((XEN)w)) && 
@@ -1248,7 +1249,7 @@ static void gxm_Drag_Callback(Widget w, XtPointer context, XtPointer info)
 		   C_TO_XEN_Widget(w),
 		   XEN_FALSE,
 		   C_TO_XEN_XmDragProcCallbackStruct(cb),
-		   __FUNCTION__);
+		   c__FUNCTION__);
     }
 }
 
@@ -1256,7 +1257,7 @@ static void gxm_Drag_Callback(Widget w, XtPointer context, XtPointer info)
   XEN_LIST_5(C_STRING_TO_XEN_SYMBOL("XtPopupChild"), Code, XEN_FALSE, XEN_ZERO, XEN_ZERO)
 #define XM_XtPopupChild_P(Arg) WRAP_P("XtPopupChild", Arg)
 
-static int find_popupchild(XEN val, int loc, unsigned long w)
+static bool find_popupchild(XEN val, int loc, unsigned long w)
 {
   return((XM_XtPopupChild_P(val)) &&
 	 (((XEN_FALSE_P((XEN)w)) && 
@@ -1277,7 +1278,7 @@ static void gxm_XtPopupChild(Widget w)
       if (XEN_PROCEDURE_P(code))
 	XEN_CALL_1(code,
 		   C_TO_XEN_Widget(w),
-		   __FUNCTION__);
+		   c__FUNCTION__);
     }
 }
 
@@ -1285,7 +1286,7 @@ static void gxm_XtPopupChild(Widget w)
   XEN_LIST_5(C_STRING_TO_XEN_SYMBOL("XmSearchProc"), Code, XEN_FALSE, XEN_ZERO, XEN_ZERO)
 #define XM_XmSearchProc_P(Arg) WRAP_P("XmSearchProc", Arg)
 
-static int find_searchproc(XEN val, int loc, unsigned long w)
+static bool find_searchproc(XEN val, int loc, unsigned long w)
 {
   return((XM_XmSearchProc_P(val)) &&
 	 (((XEN_FALSE_P((XEN)w)) && 
@@ -1307,7 +1308,7 @@ static void gxm_XmSearchProc(Widget w, XmFileSelectionBoxCallbackStruct *info)
 	XEN_CALL_2(code,
 		   C_TO_XEN_Widget(w),
 		   C_TO_XEN_XmFileSelectionBoxCallbackStruct(info),
-		   __FUNCTION__);
+		   c__FUNCTION__);
     }
 }
 
@@ -1315,7 +1316,7 @@ static void gxm_XmSearchProc(Widget w, XmFileSelectionBoxCallbackStruct *info)
   XEN_LIST_5(C_STRING_TO_XEN_SYMBOL("XmQualifyProc"), Code, XEN_FALSE, XEN_ZERO, XEN_ZERO)
 #define XM_XmQualifyProc_P(Arg) WRAP_P("XmQualifyProc", Arg)
 
-static int find_qualifyproc(XEN val, int loc, unsigned long w)
+static bool find_qualifyproc(XEN val, int loc, unsigned long w)
 {
   return((XM_XmQualifyProc_P(val)) &&
 	 (((XEN_FALSE_P((XEN)w)) && 
@@ -1338,7 +1339,7 @@ static void gxm_XmQualifyProc(Widget w, XtPointer indata, XtPointer outdata)
 		   C_TO_XEN_Widget(w),
 		   C_TO_XEN_XmFileSelectionBoxCallbackStruct((XmFileSelectionBoxCallbackStruct *)indata),
 		   C_TO_XEN_XmFileSelectionBoxCallbackStruct((XmFileSelectionBoxCallbackStruct *)outdata),
-		   __FUNCTION__);
+		   c__FUNCTION__);
     }
 }
 
@@ -1346,7 +1347,7 @@ static void gxm_XmQualifyProc(Widget w, XtPointer indata, XtPointer outdata)
   XEN_LIST_5(C_STRING_TO_XEN_SYMBOL("XtOrderProc"), Code, XEN_FALSE, XEN_ZERO, XEN_ZERO)
 #define XM_XtOrderProc_P(Arg) WRAP_P("XtOrderProc", Arg)
 
-static int find_orderproc(XEN val, int loc, unsigned long w)
+static bool find_orderproc(XEN val, int loc, unsigned long w)
 {
   return((XM_XtOrderProc_P(val)) &&
 	 (((XEN_FALSE_P((XEN)w)) && 
@@ -1367,7 +1368,7 @@ static Cardinal gxm_XtOrderProc(Widget w)
       if (XEN_PROCEDURE_P(code))
 	result = XEN_TO_C_INT(XEN_CALL_1(code,
 					 C_TO_XEN_Widget(w),
-					 __FUNCTION__));
+					 c__FUNCTION__));
     }
   return((Cardinal)result);
 }
@@ -1377,7 +1378,7 @@ static Cardinal gxm_XtOrderProc(Widget w)
   XEN_LIST_5(C_STRING_TO_XEN_SYMBOL("Parse_Callback"), Code, XEN_FALSE, XEN_ZERO, XEN_ZERO)
 #define XM_Parse_Callback_P(Arg) WRAP_P("Parse_Callback", Arg)
 
-static int find_parseproc(XEN val, int loc, unsigned long w)
+static bool find_parseproc(XEN val, int loc, unsigned long w)
 {
   return((XM_Parse_Callback_P(val)) &&
 	 (((XEN_FALSE_P((XEN)w)) && 
@@ -1405,7 +1406,7 @@ static XmIncludeStatus gxm_Parse_Callback(XtPointer *in_out, XtPointer text_end,
 						 C_TO_XEN_INT(pattern_length),
 						 C_TO_XEN_XmString((*str_include)), /* can't work... */
 						 (XEN)call_data),
-				      __FUNCTION__)));
+				      c__FUNCTION__)));
     }
   return(0);
 }
@@ -1422,7 +1423,7 @@ static void gxm_XmAllocColorProc(Display *dpy, Colormap color, XColor *bs)
 		   C_TO_XEN_Display(dpy),
 		   C_TO_XEN_Colormap(color),
 		   C_TO_XEN_XColor(bs),
-		   __FUNCTION__);
+		   c__FUNCTION__);
   bs = XEN_TO_C_XColor(val);
 }
 
@@ -1437,7 +1438,7 @@ static void gxm_XmColorCalculationProc(Screen *scr, XColor *bg, XColor *fg, XCol
   lst = XEN_CALL_2(xm_XmColorCalculationProc,
 		   C_TO_XEN_Screen(scr),
 		   C_TO_XEN_XColor(bg),
-		   __FUNCTION__);
+		   c__FUNCTION__);
   loc = xm_protect(lst);
   if (XEN_LIST_P(lst))
     {
@@ -1457,7 +1458,7 @@ static void gxm_XmColorProc(XColor *bg, XColor *fg, XColor *sel, XColor *ts, XCo
   int loc;
   lst = XEN_CALL_1(xm_XmColorProc,
 		   C_TO_XEN_XColor(bg),
-		   __FUNCTION__);
+		   c__FUNCTION__);
   loc = xm_protect(lst);
   if (XEN_LIST_P(lst))
     {
@@ -1513,7 +1514,7 @@ static void gxm_XtSelectionCallbackProc(Widget w, XtPointer x, Atom *a1, Atom *a
 		       C_TO_XEN_STRING_WITH_TERMINATION((char *)x1, *l), /* should we handle Atom -> Lisp type conversions? */
 		       C_TO_XEN_ULONG(*l),
 		       C_TO_XEN_INT(*i)),
-	    __FUNCTION__);
+	    c__FUNCTION__);
 }
 
 static XEN xm_XtConvertSelectionIncr_Descr = XEN_FALSE;
@@ -1535,7 +1536,7 @@ static Boolean gxm_XtConvertSelectionIncrProc(Widget w, Atom *selection, Atom *t
 				C_TO_XEN_INT(*max_length),
 				C_TO_XEN_ULONG(client_data),
 				C_TO_XEN_ULONG(*request_id)), /* XtRequestId is XtPointer */
-		     __FUNCTION__);
+		     c__FUNCTION__);
   if (XEN_FALSE_P(result))
     return(False);
   (*type_return) = XEN_TO_C_Atom(XEN_LIST_REF(result, 0));
@@ -1564,7 +1565,7 @@ static Arg *XEN_TO_C_Args(XEN inargl)
   for (i = 0; i < len; i++, inarg = XEN_CDDR(inarg))
     {
       xname = XEN_CAR(inarg);
-      XEN_ASSERT_TYPE(XEN_STRING_P(xname), xname, 0, __FUNCTION__, "string");
+      XEN_ASSERT_TYPE(XEN_STRING_P(xname), xname, 0, c__FUNCTION__, "string");
       name = XEN_TO_C_STRING(xname);
       type = resource_type(name);
       value = XEN_CADR(inarg);
@@ -2293,7 +2294,7 @@ static void xm_unprotect_at(int ind)
   last_xm_unprotect = ind;
 }
 
-static int map_over_protected_elements(int (*func)(XEN val, int loc, unsigned long fid), unsigned long id)
+static int map_over_protected_elements(bool (*func)(XEN val, int loc, unsigned long fid), unsigned long id)
 {
   int i;
   XEN *velts;
@@ -2399,7 +2400,7 @@ static void gxm_TransferValueProc(Widget w, XtPointer context, XtPointer info)
 	     C_TO_XEN_Widget(w),
 	     XEN_LIST_REF(descr, 1),
 	     C_TO_XEN_XmSelectionCallbackStruct((XmSelectionCallbackStruct *)info),
-	     __FUNCTION__);
+	     c__FUNCTION__);
 }
 
 static XEN gxm_XmTransferValue(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
@@ -2953,7 +2954,7 @@ static XmParseTable XEN_TO_C_XmParseTable(XEN lst, int size)
       val = XEN_LIST_REF(lst, i);
       if (XEN_XmParseMapping_P(val))
 	pt[i] = XEN_TO_C_XmParseMapping(val);
-      else XEN_ASSERT_TYPE(0, val, i, __FUNCTION__, "an XmParseMapping");
+      else XEN_ASSERT_TYPE(0, val, i, c__FUNCTION__, "an XmParseMapping");
     }
   return(pt);
 }
@@ -6680,7 +6681,7 @@ static void gxm_XmCutPasteProc(Widget w, long *data, long *privater, int *reason
 	     C_TO_XEN_ULONG(*data),
 	     C_TO_XEN_ULONG(*privater),
 	     C_TO_XEN_INT(*reason),
-	     __FUNCTION__);
+	     c__FUNCTION__);
 }
 
 static XEN gxm_XmClipboardStartCopy(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
@@ -6714,7 +6715,7 @@ static void gxm_XmVoidProc(Widget w, int *data, int *privater, int *reason)
 	     C_TO_XEN_ULONG(*data),
 	     C_TO_XEN_ULONG(*privater),
 	     C_TO_XEN_INT(*reason),
-	     __FUNCTION__);
+	     c__FUNCTION__);
 }
 
 #ifndef LESSTIF_VERSION
@@ -7154,7 +7155,7 @@ static void gxm_ProtocolProc(Widget w, XtPointer context, XtPointer info)
 	     C_TO_XEN_Widget(w),
 	     XEN_CADDR(descr),
 	     C_TO_XEN_ULONG(info), /* what's this? */
-	     __FUNCTION__);
+	     c__FUNCTION__);
 }
 
 #define C_TO_XEN_XM_ProtocolHook(Code, Context, PropertyAtom, ProtocolAtom) \
@@ -7207,7 +7208,7 @@ static XEN gxm_XmActivateProtocol(XEN arg1, XEN arg2, XEN arg3)
   return(XEN_FALSE);
 }
 
-static int unprotect_protocolproc(XEN val, int loc, unsigned long udescr)
+static bool unprotect_protocolproc(XEN val, int loc, unsigned long udescr)
 {
   XEN descr = (XEN)udescr; /* ('protocolproc func data propatom protoatom) */
   return((XM_ProtocolProc_P(val)) &&
@@ -9436,7 +9437,7 @@ static XEN gxm_XQueryColors(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 	  col = XEN_TO_C_XColor(XEN_CAR(lst));
 	  cols[i].pixel = col->pixel;
 	}
-      else XEN_ASSERT_TYPE(0, XEN_CAR(lst), i, __FUNCTION__, "an XColor");
+      else XEN_ASSERT_TYPE(0, XEN_CAR(lst), i, c__FUNCTION__, "an XColor");
     }
   rtn = XQueryColors(XEN_TO_C_Display(arg1), XEN_TO_C_Colormap(arg2), cols, len);
   for (i = 0; i < len; i++)
@@ -9618,7 +9619,7 @@ from the event queue."
 static XEN xm_XPeekIfEventProc = XEN_FALSE;
 static Bool gxm_XPeekIfEventProc(Display *dpy, XEvent *e, XtPointer p)
 {
-  return(XEN_TO_C_BOOLEAN(XEN_CALL_3(xm_XPeekIfEventProc, C_TO_XEN_Display(dpy), C_TO_XEN_XEvent(e), (XEN)(p), __FUNCTION__)));
+  return(XEN_TO_C_BOOLEAN(XEN_CALL_3(xm_XPeekIfEventProc, C_TO_XEN_Display(dpy), C_TO_XEN_XEvent(e), (XEN)(p), c__FUNCTION__)));
 }
 
 static XEN gxm_XPeekIfEvent(XEN arg1, XEN arg2, XEN arg3)
@@ -11882,7 +11883,7 @@ structures that describe the types of Z format images supported by the specified
 static XEN xm_XIOErrorHandler = XEN_FALSE;
 static int gxm_XIOErrorHandler(Display *dpy)
 {
-  XEN_CALL_1(xm_XIOErrorHandler, C_TO_XEN_Display(dpy), __FUNCTION__);
+  XEN_CALL_1(xm_XIOErrorHandler, C_TO_XEN_Display(dpy), c__FUNCTION__);
   return(0); /* never happens */
 }
 
@@ -11902,7 +11903,7 @@ static XEN gxm_XSetIOErrorHandler(XEN arg1)
 static XEN xm_XErrorHandler = XEN_FALSE;
 static int gxm_XErrorHandler(Display *dpy, XErrorEvent *e)
 {
-  XEN_CALL_2(xm_XErrorHandler, C_TO_XEN_Display(dpy), C_TO_XEN_XErrorEvent((XErrorEvent *)e), __FUNCTION__);
+  XEN_CALL_2(xm_XErrorHandler, C_TO_XEN_Display(dpy), C_TO_XEN_XErrorEvent((XErrorEvent *)e), c__FUNCTION__);
   return(0); /* never happens */
 }
 
@@ -12562,7 +12563,7 @@ static int gxm_AfterFunction(Display *dpy)
 {
   return(XEN_TO_C_INT(XEN_CALL_1(xm_AfterFunction, 
 				 C_TO_XEN_Display(dpy),
-				 __FUNCTION__)));
+				 c__FUNCTION__)));
 }
 
 static XEN gxm_XSetAfterFunction(XEN arg1, XEN arg2)
@@ -13728,7 +13729,7 @@ static Boolean gxm_XtFilePredicate(String filename)
 {
   return(XEN_TO_C_BOOLEAN(XEN_CALL_1(xm_filepredicate_proc,
 				     C_TO_XEN_STRING(filename),
-				     __FUNCTION__)));
+				     c__FUNCTION__)));
 }
 
 static SubstitutionRec *gxm_make_subs(XEN lst)
@@ -13884,20 +13885,20 @@ static Boolean gxm_XtWorkProc(XtPointer cdata)
   /* (list 'Background function context gc-loc id) */
   val = XEN_TO_C_BOOLEAN(XEN_CALL_1(XEN_CADR(descr), 
 				    XEN_CADDR(descr),
-				    __FUNCTION__));
+				    c__FUNCTION__));
   if (val) xm_unprotect_at(XEN_TO_C_INT(XEN_LIST_REF(descr, 3)));
   return(val);
 }
 
-static int unprotect_workproc(XEN val, int loc, unsigned long id)
+static bool unprotect_workproc(XEN val, int loc, unsigned long id)
 {
   if ((XM_Background_P(val)) &&
       ((XtWorkProcId)XEN_TO_C_ULONG(XEN_LIST_REF(val, 4)) == id))
     {
       xm_unprotect_at(loc);
-      return(TRUE);
+      return(true);
     }
-  return(FALSE);
+  return(false);
 }
 
 static XEN gxm_XtRemoveWorkProc(XEN arg1)
@@ -14018,7 +14019,7 @@ static void gxm_XtErrorHandler(String msg)
   if (XEN_PROCEDURE_P(xm_XtErrorHandler))
     XEN_CALL_1(xm_XtErrorHandler, 
 	       C_TO_XEN_STRING(msg), 
-	       __FUNCTION__);
+	       c__FUNCTION__);
 }
 
 #if (!XM_DISABLE_DEPRECATED)
@@ -14054,7 +14055,7 @@ static void gxm_XtWarningHandler(String msg)
   if (XEN_PROCEDURE_P(xm_XtWarningHandler))
     XEN_CALL_1(xm_XtWarningHandler, 
 	       C_TO_XEN_STRING(msg), 
-	       __FUNCTION__);
+	       c__FUNCTION__);
 }
 
 #if (!XM_DISABLE_DEPRECATED)
@@ -14221,7 +14222,7 @@ static void gxm_XtErrorMsgHandler(String name, String type, String clas, String 
 		 C_TO_XEN_STRING(defp),
 		 lst,
 		 C_TO_XEN_INT(*num),
-		 __FUNCTION__);
+		 c__FUNCTION__);
       xm_unprotect(lst);
     }
 }
@@ -14274,7 +14275,7 @@ static void gxm_XtWarningMsgHandler(String name, String type, String clas, Strin
 		 C_TO_XEN_STRING(defp),
 		 lst,
 		 C_TO_XEN_INT(*num),
-		 __FUNCTION__);
+		 c__FUNCTION__);
       xm_unprotect(lst);
     }
 }
@@ -14758,7 +14759,7 @@ static String gxm_XtLanguageProc(Display* d, String s, XtPointer context)
 				    C_TO_XEN_Display(d),
 				    C_TO_XEN_STRING(s),
 				    (XEN)context,
-				    __FUNCTION__)));
+				    c__FUNCTION__)));
 }
 
 static XEN gxm_XtSetLanguageProc(XEN arg1, XEN arg2, XEN arg3)
@@ -15531,18 +15532,18 @@ static void gxm_XtInputCallbackProc(XtPointer cdata, int *fileno, XtInputId *id)
 	     XEN_CADDR(descr), 
 	     C_TO_XEN_ULONG(*fileno), 
 	     C_TO_XEN_XtInputId(*id), 
-	     __FUNCTION__);
+	     c__FUNCTION__);
 }
 
-static int unprotect_inputproc(XEN val, int loc, unsigned long id)
+static bool unprotect_inputproc(XEN val, int loc, unsigned long id)
 {
   if ((XM_Input_P(val)) &&
       ((XtInputId)XEN_TO_C_ULONG(XEN_LIST_REF(val, 4)) == id))
     {
       xm_unprotect_at(loc);
-      return(TRUE);
+      return(true);
     }
-  return(FALSE);
+  return(false);
 }
 
 static XEN gxm_XtRemoveInput(XEN arg1)
@@ -15615,19 +15616,19 @@ static void gxm_XtTimerCallbackProc(XtPointer cdata, XtIntervalId* i)
   XEN_CALL_2(XEN_CADR(descr), 
 	     XEN_CADDR(descr),
 	     C_TO_XEN_XtIntervalId(*i),
-	     __FUNCTION__);
+	     c__FUNCTION__);
   xm_unprotect_at(gc_loc);
 }
 
-static int unprotect_timeoutproc(XEN val, int loc, unsigned long id)
+static bool unprotect_timeoutproc(XEN val, int loc, unsigned long id)
 {
   if ((XM_TimeOut_P(val)) &&
       ((XtIntervalId)XEN_TO_C_ULONG(XEN_LIST_REF(val, 4)) == id))
     {
       xm_unprotect_at(loc);
-      return(TRUE);
+      return(true);
     }
-  return(FALSE);
+  return(false);
 }
 
 static XEN gxm_XtRemoveTimeOut(XEN arg1)
@@ -15814,10 +15815,10 @@ static void gxm_XtEventHandler(Widget w, XtPointer context, XEvent *event, Boole
 	     XEN_LIST_REF(descr, EVENT_HANDLER_DATA),
 	     C_TO_XEN_XEvent(event),
 	     C_TO_XEN_BOOLEAN(*flag),
-	     __FUNCTION__);
+	     c__FUNCTION__);
 }
 
-static int find_xteventproc_1(XEN val, int loc, unsigned long wd)
+static bool find_xteventproc_1(XEN val, int loc, unsigned long wd)
 {
   XEN lst = (XEN)wd;
   unsigned long w;
@@ -15983,7 +15984,7 @@ static void gxm_XtCaseProc(Display* d, KeySym k1, KeySym* k2, KeySym* k3)
   val = XEN_CALL_2(xm_XtCaseProc,
 		   C_TO_XEN_Display(d),
 		   C_TO_XEN_KeySym(k1),
-		   __FUNCTION__);
+		   c__FUNCTION__);
   loc = xm_protect(val);
   if (XEN_LIST_P(val))
     {
@@ -16022,7 +16023,7 @@ static void gxm_XtKeyProc(Display *dpy, KeyCode c, Modifiers m, Modifiers *mp, K
 		   C_TO_XEN_Display(dpy),
 		   C_TO_XEN_KeyCode(c),
 		   C_TO_XEN_Modifiers(m),
-		   __FUNCTION__);
+		   c__FUNCTION__);
   loc = xm_protect(val);
   if (XEN_LIST_P(val))
     {
@@ -16147,7 +16148,7 @@ static void gxm_XtRegisterGrabActionProc(Widget w, XEvent* e, String* s, Cardina
 	     C_TO_XEN_Widget(w),
 	     C_TO_XEN_XEvent(e),
 	     C_TO_XEN_Strings(s, *c),
-	     __FUNCTION__);
+	     c__FUNCTION__);
 }
 
 static XEN gxm_XtRegisterGrabAction(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
@@ -16223,15 +16224,15 @@ static XEN gxm_XtGetActionList(XEN arg1)
   XEN_LIST_5(C_STRING_TO_XEN_SYMBOL("ActionHook"), Code, Context, XEN_ZERO, XEN_ZERO)
 #define XM_ActionHook_P(Arg) WRAP_P("ActionHook", Arg)
 
-static int unprotect_actionhook(XEN val, int loc, unsigned long id)
+static bool unprotect_actionhook(XEN val, int loc, unsigned long id)
 {
   if ((XM_ActionHook_P(val)) &&
       ((XtActionHookId)XEN_TO_C_ULONG(XEN_LIST_REF(val, 4)) == (XtActionHookId)id))
     {
       xm_unprotect_at(loc);
-      return(TRUE);
+      return(true);
     }
-  return(FALSE);
+  return(false);
 }
 
 static XEN gxm_XtRemoveActionHook(XEN arg1)
@@ -16257,7 +16258,7 @@ static void gxm_XtActionHookProc(Widget w, XtPointer p, String s, XEvent* e, Str
 	     C_TO_XEN_STRING(s),
 	     C_TO_XEN_XEvent(e),
 	     C_TO_XEN_Strings(s1, *c),
-	     __FUNCTION__);
+	     c__FUNCTION__);
 }
 
 static XEN gxm_XtAppAddActionHook(XEN arg1, XEN arg2, XEN arg3)
@@ -16296,35 +16297,35 @@ a list maintained in the application context."
 static XEN xtactionprocs[8];
 static void gxm_XtActionProc0(Widget w, XEvent *e, char **args, Cardinal *argn) 
 {
-  XEN_CALL_3(xtactionprocs[0], C_TO_XEN_Widget(w), C_TO_XEN_XEvent(e), C_TO_XEN_Strings(args, *argn), __FUNCTION__);
+  XEN_CALL_3(xtactionprocs[0], C_TO_XEN_Widget(w), C_TO_XEN_XEvent(e), C_TO_XEN_Strings(args, *argn), c__FUNCTION__);
 }
 static void gxm_XtActionProc1(Widget w, XEvent *e, char **args, Cardinal *argn) 
 {
-  XEN_CALL_3(xtactionprocs[1], C_TO_XEN_Widget(w), C_TO_XEN_XEvent(e), C_TO_XEN_Strings(args, *argn), __FUNCTION__);
+  XEN_CALL_3(xtactionprocs[1], C_TO_XEN_Widget(w), C_TO_XEN_XEvent(e), C_TO_XEN_Strings(args, *argn), c__FUNCTION__);
 }
 static void gxm_XtActionProc2(Widget w, XEvent *e, char **args, Cardinal *argn) 
 {
-  XEN_CALL_3(xtactionprocs[2], C_TO_XEN_Widget(w), C_TO_XEN_XEvent(e), C_TO_XEN_Strings(args, *argn), __FUNCTION__);
+  XEN_CALL_3(xtactionprocs[2], C_TO_XEN_Widget(w), C_TO_XEN_XEvent(e), C_TO_XEN_Strings(args, *argn), c__FUNCTION__);
 }
 static void gxm_XtActionProc3(Widget w, XEvent *e, char **args, Cardinal *argn) 
 {
-  XEN_CALL_3(xtactionprocs[3], C_TO_XEN_Widget(w), C_TO_XEN_XEvent(e), C_TO_XEN_Strings(args, *argn), __FUNCTION__);
+  XEN_CALL_3(xtactionprocs[3], C_TO_XEN_Widget(w), C_TO_XEN_XEvent(e), C_TO_XEN_Strings(args, *argn), c__FUNCTION__);
 }
 static void gxm_XtActionProc4(Widget w, XEvent *e, char **args, Cardinal *argn) 
 {
-  XEN_CALL_3(xtactionprocs[4], C_TO_XEN_Widget(w), C_TO_XEN_XEvent(e), C_TO_XEN_Strings(args, *argn), __FUNCTION__);
+  XEN_CALL_3(xtactionprocs[4], C_TO_XEN_Widget(w), C_TO_XEN_XEvent(e), C_TO_XEN_Strings(args, *argn), c__FUNCTION__);
 }
 static void gxm_XtActionProc5(Widget w, XEvent *e, char **args, Cardinal *argn) 
 {
-  XEN_CALL_3(xtactionprocs[5], C_TO_XEN_Widget(w), C_TO_XEN_XEvent(e), C_TO_XEN_Strings(args, *argn), __FUNCTION__);
+  XEN_CALL_3(xtactionprocs[5], C_TO_XEN_Widget(w), C_TO_XEN_XEvent(e), C_TO_XEN_Strings(args, *argn), c__FUNCTION__);
 }
 static void gxm_XtActionProc6(Widget w, XEvent *e, char **args, Cardinal *argn) 
 {
-  XEN_CALL_3(xtactionprocs[6], C_TO_XEN_Widget(w), C_TO_XEN_XEvent(e), C_TO_XEN_Strings(args, *argn), __FUNCTION__);
+  XEN_CALL_3(xtactionprocs[6], C_TO_XEN_Widget(w), C_TO_XEN_XEvent(e), C_TO_XEN_Strings(args, *argn), c__FUNCTION__);
 }
 static void gxm_XtActionProc7(Widget w, XEvent *e, char **args, Cardinal *argn) 
 {
-  XEN_CALL_3(xtactionprocs[7], C_TO_XEN_Widget(w), C_TO_XEN_XEvent(e), C_TO_XEN_Strings(args, *argn), __FUNCTION__);
+  XEN_CALL_3(xtactionprocs[7], C_TO_XEN_Widget(w), C_TO_XEN_XEvent(e), C_TO_XEN_Strings(args, *argn), c__FUNCTION__);
 }
 static int xm_action_ctr = 0;
 
@@ -17223,7 +17224,7 @@ static void gxm_XPSaveProc(Display *display, XPContext context, unsigned char *s
 	     C_TO_XEN_STRING((const char *)sdata),
 	     C_TO_XEN_INT(data_len),
 	     XEN_CADDR(data),
-	     __FUNCTION__);
+	     c__FUNCTION__);
   xm_unprotect(data); /* not sure about this -- should it be deferred until the finish proc? */
 }
 
@@ -17235,7 +17236,7 @@ static void gxm_XPFinishProc(Display *display, XPContext context, XPGetDocStatus
 	     C_TO_XEN_XPContext(context),
 	     C_TO_XEN_INT(status),
 	     XEN_CADDR(data),
-	     __FUNCTION__);
+	     c__FUNCTION__);
   xm_unprotect(data);
 }
 
@@ -25354,7 +25355,7 @@ static void define_Atoms(void)
 
 /* -------------------------------- initialization -------------------------------- */
 
-static int xm_already_inited = FALSE;
+static bool xm_already_inited = false;
 
 #if WITH_GTK_AND_X11
 #if HAVE_GUILE
@@ -25430,7 +25431,7 @@ static int xm_already_inited = FALSE;
       rb_define_global_const("Xm_Version", C_TO_XEN_STRING(XM_DATE));
 #endif
 #endif
-      xm_already_inited = TRUE;
+      xm_already_inited = true;
     }
 }
 

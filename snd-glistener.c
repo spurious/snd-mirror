@@ -1,7 +1,7 @@
 #include "snd.h"
 
 static GtkWidget *completion_dialog = NULL;
-static int first_time = TRUE;
+static bool first_time = true;
 static GtkWidget *listener_text = NULL, *completion_list = NULL;
 static int printout_end;
 #define LISTENER_BUFFER gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text))
@@ -16,7 +16,7 @@ static void list_completions_callback(GtkTreeSelection *selection, gpointer *gp)
   char *old_text;
   if (first_time)
     {
-      first_time = FALSE;
+      first_time = false;
       tree = gtk_tree_view_get_selection(GTK_TREE_VIEW(completion_list));
       gtk_tree_selection_unselect_all(tree);
       return;
@@ -52,7 +52,7 @@ static void help_completion_callback(GtkWidget *w, gpointer context)
   snd_help(get_global_state(), 
 	   "completion",
 	   "These are the completions that Snd thinks might be likely. If you select one, it will be used to complete the current name.",
-	   TRUE);
+	   true);
 }
 
 static void delete_completion_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
@@ -83,8 +83,8 @@ static void start_completion_dialog(int num_items, char **items)
 
       help_button = gtk_button_new_with_label(_("Help"));
       dismiss_button = gtk_button_new_with_label(_("Dismiss"));
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(completion_dialog)->action_area), dismiss_button, FALSE, TRUE, 10);
-      gtk_box_pack_end(GTK_BOX(GTK_DIALOG(completion_dialog)->action_area), help_button, FALSE, TRUE, 10);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(completion_dialog)->action_area), dismiss_button, false, true, 10);
+      gtk_box_pack_end(GTK_BOX(GTK_DIALOG(completion_dialog)->action_area), help_button, false, true, 10);
       g_signal_connect_closure_by_id(GTK_OBJECT(dismiss_button),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(dismiss_button))),
 				     0,
@@ -97,7 +97,7 @@ static void start_completion_dialog(int num_items, char **items)
 				     0);
       gtk_widget_show(dismiss_button);
       gtk_widget_show(help_button);
-      first_time = TRUE;
+      first_time = true;
       completion_list = sg_make_list(_("Completions"), 
 				     GTK_DIALOG(completion_dialog)->vbox,
 				     CONTAINER_ADD,
@@ -157,7 +157,7 @@ static void listener_completion(snd_state *ss)
 {
   int beg, end, matches = 0;
   char *old_text, *new_text = NULL, *file_text = NULL;
-  int try_completion = TRUE;
+  bool try_completion = true;
   beg = printout_end + 1;
   end = gtk_text_buffer_get_char_count(LISTENER_BUFFER);
   if (end <= beg) return;
@@ -191,7 +191,7 @@ static void listener_completion(snd_state *ss)
       if (matches > 1)
 	{
 	  clear_possible_completions();
-	  set_save_completions(TRUE);
+	  set_save_completions(true);
 	  if (file_text) 
 	    new_text = filename_completer(file_text); 
 	  else new_text = command_completer(old_text);
@@ -201,7 +201,7 @@ static void listener_completion(snd_state *ss)
 	      new_text = NULL;
 	    }
 	  display_completions(ss);
-	  set_save_completions(FALSE);
+	  set_save_completions(false);
 	  if (file_text) FREE(file_text);
 	}
       if (old_text) g_free(old_text);
@@ -224,7 +224,7 @@ void listener_append(char *msg)
       snd_state *ss;
       ss = get_global_state();
       if ((ss->sgx)->graph_is_active)
-	(ss->sgx)->graph_is_active = FALSE;
+	(ss->sgx)->graph_is_active = false;
       append_listener_text(0, msg);
       printout_end = gtk_text_buffer_get_char_count(LISTENER_BUFFER) - 1;
     }
@@ -411,10 +411,11 @@ static gint flash_unbalanced_paren(gpointer data)
   return(0);
 }
 
-int highlight_unbalanced_paren(void)
+bool highlight_unbalanced_paren(void)
 {
   /* if cursor is positioned at close paren, try to find reason for unbalanced expr and highlight it */
-  int pos, success = TRUE;
+  int pos;
+  bool success = true;
   char *str = NULL;
   snd_state *ss;
   ss = get_global_state();
@@ -433,7 +434,7 @@ int highlight_unbalanced_paren(void)
 	      flashes = 4;
 	      gtk_timeout_add((guint32)FLASH_TIME, flash_unbalanced_paren, NULL);
 	    }
-	  else success = FALSE;
+	  else success = false;
 	}
       if (str) g_free(str);
     }
@@ -491,7 +492,7 @@ static gboolean listener_key_release(GtkWidget *w, GdkEventKey *event, gpointer 
 	}
       g_free(fstr);
     }
-  return(FALSE);
+  return(false);
 }
 
 static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
@@ -508,7 +509,7 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
     {
       cp = current_channel(ss);
       graph_key_press(channel_graph(cp), event, (gpointer)cp); 
-      return(FALSE);
+      return(false);
     }
   else
     {
@@ -548,7 +549,7 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
 				  (strcmp(fstr, listener_prompt_with_cr(ss)) != 0))
 				{
 				  g_free(fstr);
-				  return(FALSE);
+				  return(false);
 				}
 			      g_free(fstr);
 			    }
@@ -571,14 +572,14 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
 				  if (((event->keyval == snd_K_p) || (event->keyval == snd_K_P)) && (event->state & snd_MetaMask))
 				    {
 				      clear_back_to_prompt(listener_text);
-				      restore_listener_string(TRUE);
+				      restore_listener_string(true);
 				    }
 				  else 
 				    {
 				      if (((event->keyval == snd_K_n) || (event->keyval == snd_K_N)) && (event->state & snd_MetaMask))
 					{
 					  clear_back_to_prompt(listener_text);
-					  restore_listener_string(FALSE);
+					  restore_listener_string(false);
 					}
 				      else 
 					{
@@ -591,19 +592,19 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
 					      if (((event->keyval == snd_K_c) || (event->keyval == snd_K_C)) && (event->state & snd_MetaMask))
 						{
 						  /* M-c (as opposed to M-C) is trapped somewhere else */
-						  word_upper(listener_text, TRUE, FALSE);
+						  word_upper(listener_text, true, false);
 						} 
 					      else
 						{
 						  if (((event->keyval == snd_K_l) || (event->keyval == snd_K_L)) && (event->state & snd_MetaMask))
 						    {
-						      word_upper(listener_text, FALSE, FALSE);
+						      word_upper(listener_text, false, false);
 						    }
 						  else
 						    {
 						      if (((event->keyval == snd_K_u) || (event->keyval == snd_K_U)) && (event->state & snd_MetaMask))
 							{
-							  word_upper(listener_text, FALSE, TRUE);
+							  word_upper(listener_text, false, true);
 							}
 						      else
 							{
@@ -612,10 +613,10 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
 							      text_transpose(listener_text);
 							    }
 							  else
-							    return(FALSE);
+							    return(false);
 							}}}}}}}}}}}}}}
   g_signal_stop_emission(GTK_OBJECT(w), g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(w))), 0);
-  return(FALSE);
+  return(false);
 }
 
 static XEN listener_click_hook; 
@@ -623,7 +624,7 @@ static XEN listener_click_hook;
 static gboolean listener_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   snd_state *ss = (snd_state *)data;
-  (ss->sgx)->graph_is_active = FALSE;
+  (ss->sgx)->graph_is_active = false;
 
   /* this code from gedit/src/gedit-view.c.
    *    click in listener can place cursor (and autoscroll window) at any random place!
@@ -645,7 +646,7 @@ static gboolean listener_button_press(GtkWidget *w, GdkEventButton *ev, gpointer
 	       S_listener_click_hook);
   }
   goto_listener();
-  return(FALSE);
+  return(false);
 }
 
 static XEN mouse_enter_listener_hook;
@@ -660,7 +661,7 @@ static gboolean listener_focus_callback(GtkWidget *w, GdkEventCrossing *ev, gpoi
     run_hook(mouse_enter_listener_hook,
 	     XEN_LIST_1(XEN_WRAP_WIDGET(listener_text)),
 	     S_mouse_enter_listener_hook);
-  return(FALSE);
+  return(false);
 }
 
 static gboolean listener_unfocus_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
@@ -669,7 +670,7 @@ static gboolean listener_unfocus_callback(GtkWidget *w, GdkEventCrossing *ev, gp
     run_hook(mouse_leave_listener_hook,
 	     XEN_LIST_1(XEN_WRAP_WIDGET(listener_text)),
 	     S_mouse_leave_listener_hook);
-  return(FALSE);
+  return(false);
 }
 
 static gboolean mouse_enter_text_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
@@ -678,7 +679,7 @@ static gboolean mouse_enter_text_callback(GtkWidget *w, GdkEventCrossing *ev, gp
     run_hook(mouse_enter_text_hook,
 	     XEN_LIST_1(XEN_WRAP_WIDGET(w)),
 	     S_mouse_enter_text_hook);
-  return(FALSE);
+  return(false);
 }
 
 static gboolean mouse_leave_text_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
@@ -687,15 +688,15 @@ static gboolean mouse_leave_text_callback(GtkWidget *w, GdkEventCrossing *ev, gp
     run_hook(mouse_leave_text_hook,
 	     XEN_LIST_1(XEN_WRAP_WIDGET(w)),
 	     S_mouse_leave_text_hook);
-  return(FALSE);
+  return(false);
 }
 
 GtkWidget *snd_entry_new(snd_state *ss, GtkWidget *container, int with_white_background)
 {
   GtkWidget *text;
   text = gtk_entry_new();
-  gtk_editable_set_editable(GTK_EDITABLE(text), TRUE);
-  gtk_box_pack_start(GTK_BOX(container), text, TRUE, TRUE, 2);
+  gtk_editable_set_editable(GTK_EDITABLE(text), true);
+  gtk_box_pack_start(GTK_BOX(container), text, true, true, 2);
   if (with_white_background) set_background(text, (ss->sgx)->white);
   gtk_widget_show(text);
   g_signal_connect_closure_by_id(GTK_OBJECT(text),
@@ -723,7 +724,7 @@ static void make_command_widget(snd_state *ss, int height)
       if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
 	gtk_paned_add2(GTK_PANED(SOUND_PANE(ss)), frame);
       else gtk_container_add(GTK_CONTAINER(MAIN_PANE(ss)), frame);
-      listener_text = make_scrolled_text(ss, frame, TRUE, NULL, NULL);
+      listener_text = make_scrolled_text(ss, frame, true, NULL, NULL);
 
       if (ss->sgx->listener_fnt) gtk_widget_modify_font(listener_text, ss->sgx->listener_fnt);
       {
@@ -737,73 +738,73 @@ static void make_command_widget(snd_state *ss, int height)
 	gtk_binding_entry_add_signal(set, GDK_b, GDK_CONTROL_MASK, "move_cursor", 3,
 				     G_TYPE_ENUM, GTK_MOVEMENT_VISUAL_POSITIONS,
 				     G_TYPE_INT, -1,
-				     G_TYPE_BOOLEAN, FALSE);
+				     G_TYPE_BOOLEAN, false);
 	/* M-b back word */
 	gtk_binding_entry_remove(set, GDK_b, GDK_MOD1_MASK);
 	gtk_binding_entry_add_signal(set, GDK_b, GDK_MOD1_MASK, "move_cursor", 3,
 				     G_TYPE_ENUM, GTK_MOVEMENT_WORDS,
 				     G_TYPE_INT, -1,
-				     G_TYPE_BOOLEAN, FALSE);
+				     G_TYPE_BOOLEAN, false);
 	/* C-f forward char */
 	gtk_binding_entry_remove(set, GDK_f, GDK_CONTROL_MASK);
 	gtk_binding_entry_add_signal(set, GDK_f, GDK_CONTROL_MASK, "move_cursor", 3,
 				     G_TYPE_ENUM, GTK_MOVEMENT_VISUAL_POSITIONS,
 				     G_TYPE_INT, 1,
-				     G_TYPE_BOOLEAN, FALSE);
+				     G_TYPE_BOOLEAN, false);
 	/* OVERRIDDEN: M-f forward word */
 	gtk_binding_entry_remove(set, GDK_f, GDK_MOD1_MASK);
 	gtk_binding_entry_add_signal(set, GDK_f, GDK_MOD1_MASK, "move_cursor", 3,
 				     G_TYPE_ENUM, GTK_MOVEMENT_WORDS,
 				     G_TYPE_INT, 1,
-				     G_TYPE_BOOLEAN, FALSE);
+				     G_TYPE_BOOLEAN, false);
 	/* C-e end of line */
 	gtk_binding_entry_remove(set, GDK_e, GDK_CONTROL_MASK);
 	gtk_binding_entry_add_signal(set, GDK_e, GDK_CONTROL_MASK, "move_cursor", 3,
 				     G_TYPE_ENUM, GTK_MOVEMENT_DISPLAY_LINE_ENDS,
 				     G_TYPE_INT, 1,
-				     G_TYPE_BOOLEAN, FALSE);
+				     G_TYPE_BOOLEAN, false);
 	/* C-a start of line */
 	gtk_binding_entry_remove(set, GDK_a, GDK_CONTROL_MASK);
 	gtk_binding_entry_add_signal(set, GDK_a, GDK_CONTROL_MASK, "move_cursor", 3,
 				     G_TYPE_ENUM, GTK_MOVEMENT_DISPLAY_LINE_ENDS,
 				     G_TYPE_INT, -1,
-				     G_TYPE_BOOLEAN, FALSE);
+				     G_TYPE_BOOLEAN, false);
 	/* M-< start of file */
 	gtk_binding_entry_remove(set, GDK_less, GDK_MOD1_MASK);
 	gtk_binding_entry_add_signal(set, GDK_less, GDK_MOD1_MASK, "move_cursor", 3,
 				     G_TYPE_ENUM, GTK_MOVEMENT_BUFFER_ENDS,
 				     G_TYPE_INT, -1,
-				     G_TYPE_BOOLEAN, FALSE);
+				     G_TYPE_BOOLEAN, false);
 	/* M-> end of file */
 	gtk_binding_entry_remove(set, GDK_greater, GDK_MOD1_MASK);
 	gtk_binding_entry_add_signal(set, GDK_greater, GDK_MOD1_MASK, "move_cursor", 3,
 				     G_TYPE_ENUM, GTK_MOVEMENT_BUFFER_ENDS,
 				     G_TYPE_INT, 1,
-				     G_TYPE_BOOLEAN, FALSE);
+				     G_TYPE_BOOLEAN, false);
 	/* C-n down line */
 	gtk_binding_entry_remove(set, GDK_n, GDK_CONTROL_MASK);
 	gtk_binding_entry_add_signal(set, GDK_n, GDK_CONTROL_MASK, "move_cursor", 3,
 				     G_TYPE_ENUM, GTK_MOVEMENT_DISPLAY_LINES,
 				     G_TYPE_INT, 1,
-				     G_TYPE_BOOLEAN, FALSE);
+				     G_TYPE_BOOLEAN, false);
 	/* C-p up line */
 	gtk_binding_entry_remove(set, GDK_p, GDK_CONTROL_MASK);
 	gtk_binding_entry_add_signal(set, GDK_p, GDK_CONTROL_MASK, "move_cursor", 3,
 				     G_TYPE_ENUM, GTK_MOVEMENT_DISPLAY_LINES,
 				     G_TYPE_INT, -1,
-				     G_TYPE_BOOLEAN, FALSE);
+				     G_TYPE_BOOLEAN, false);
 	/* C-v down window */
 	gtk_binding_entry_remove(set, GDK_v, GDK_CONTROL_MASK);
 	gtk_binding_entry_add_signal(set, GDK_v, GDK_CONTROL_MASK, "move_cursor", 3,
 				     G_TYPE_ENUM, GTK_MOVEMENT_PAGES,
 				     G_TYPE_INT, 1,
-				     G_TYPE_BOOLEAN, FALSE);
+				     G_TYPE_BOOLEAN, false);
 	/* OVERRIDEN: M-v up window */
 	gtk_binding_entry_remove(set, GDK_v, GDK_MOD1_MASK);
 	gtk_binding_entry_add_signal(set, GDK_v, GDK_MOD1_MASK, "move_cursor", 3,
 				     G_TYPE_ENUM, GTK_MOVEMENT_PAGES,
 				     G_TYPE_INT, -1,
-				     G_TYPE_BOOLEAN, FALSE);
+				     G_TYPE_BOOLEAN, false);
 	/* C-d delete at cursor */
 	gtk_binding_entry_remove(set, GDK_d, GDK_CONTROL_MASK);
 	gtk_binding_entry_add_signal(set, GDK_d, GDK_CONTROL_MASK,
@@ -894,7 +895,7 @@ void color_listener_text(GdkColor *pix)
   (ss->sgx)->listener_text_color = pix;
 }
 
-void handle_listener(snd_state *ss, int open)
+void handle_listener(snd_state *ss, bool open)
 {
   if (open)
     {
@@ -934,7 +935,7 @@ static XEN g_listener_selected_text(void)
       GtkTextIter start, end;
       if (gtk_text_buffer_get_selection_bounds(LISTENER_BUFFER, &start, &end))
 	{
-	  txt = gtk_text_buffer_get_text(LISTENER_BUFFER, &start, &end, TRUE);
+	  txt = gtk_text_buffer_get_text(LISTENER_BUFFER, &start, &end, true);
 	  if (txt) 
 	    {
 	      res = C_TO_XEN_STRING(txt);

@@ -445,7 +445,8 @@ void mus_set_rt_audio_p (int rt)
 
 typedef struct {
   char *name;
-  int data_format, bytes_per_sample, true_fd, data_clipped, chans, header_type;
+  int data_format, bytes_per_sample, true_fd, chans, header_type;
+  bool data_clipped;
   off_t data_location;
   float prescaler;
 } io_fd;
@@ -477,7 +478,7 @@ int mus_file_set_descriptors(int tfd, const char *name, int format, int size /* 
   fd->data_format = format;
   fd->bytes_per_sample = size;
   fd->data_location = location;
-  fd->data_clipped = FALSE;
+  fd->data_clipped = false;
   fd->prescaler = 1.0;
   fd->header_type = type;
   fd->chans = chans;
@@ -489,15 +490,15 @@ int mus_file_set_descriptors(int tfd, const char *name, int format, int size /* 
   return(MUS_NO_ERROR);
 }
 
-int mus_file_data_clipped(int tfd)
+bool mus_file_data_clipped(int tfd)
 {
   io_fd *fd;
-  if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL)) return(MUS_ERROR);
+  if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL)) return(false);
   fd = io_fds[tfd];
   return(fd->data_clipped);
 }
 
-int mus_file_set_data_clipped(int tfd, int clipped)
+int mus_file_set_data_clipped(int tfd, bool clipped)
 {
   io_fd *fd;
   if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL)) return(MUS_ERROR);
@@ -764,9 +765,9 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, mus_sample_t *
   char *charbuf = NULL;
   mus_sample_t *buffer;
   float prescaling;
-  int from_buffer = FALSE;
+  bool from_buffer = false;
   if (nints <= 0) return(0);
-  if (inbuf) from_buffer = TRUE;
+  if (inbuf) from_buffer = true;
   if (!from_buffer)
     {
       if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL))
@@ -1128,18 +1129,19 @@ off_t mus_file_write_zeros(int tfd, off_t num)
 #endif
 }
 
-static int mus_write_1(int tfd, int beg, int end, int chans, mus_sample_t **bufs, char *inbuf, int clipped)
+static int mus_write_1(int tfd, int beg, int end, int chans, mus_sample_t **bufs, char *inbuf, bool clipped)
 {
   int loclim, c3;
   int err;
   io_fd *fd;
-  int bytes, j, k, lim, siz, leftover, loc, bk, val, oldloc, buflim, siz_chans, cliploc, data_format, clipping = 0;
+  int bytes, j, k, lim, siz, leftover, loc, bk, val, oldloc, buflim, siz_chans, cliploc, data_format;
+  bool clipping = false;
   unsigned char *jchar;
   char *charbuf = NULL;
-  int to_buffer = FALSE;
+  bool to_buffer = false;
   mus_sample_t *buffer;
   if (chans <= 0) return(0);
-  if (inbuf) to_buffer = TRUE;
+  if (inbuf) to_buffer = true;
   if (!to_buffer)
     {
       if (tfd == MUS_DAC_REVERB) return(0);
@@ -1153,7 +1155,7 @@ static int mus_write_1(int tfd, int beg, int end, int chans, mus_sample_t **bufs
       data_format = fd->data_format;
       clipping = fd->data_clipped;
 
-      if ((data_format == MUS_OUT_FORMAT) && (chans == 1) && (clipping == 0) && (beg == 0))
+      if ((data_format == MUS_OUT_FORMAT) && (chans == 1) && (!clipping) && (beg == 0))
 	{
 	  bytes = (end + 1) * siz;
 	  return(checked_write(tfd, (char *)(bufs[0]), bytes));
@@ -1329,15 +1331,15 @@ static int mus_write_1(int tfd, int beg, int end, int chans, mus_sample_t **bufs
 
 int mus_file_write(int tfd, int beg, int end, int chans, mus_sample_t **bufs)
 {
-  return(mus_write_1(tfd, beg, end, chans, bufs, NULL, 0));
+  return(mus_write_1(tfd, beg, end, chans, bufs, NULL, false));
 }
 
 int mus_file_write_file(int tfd, int beg, int end, int chans, mus_sample_t **bufs)
 {
-  return(mus_write_1(tfd, beg, end, chans, bufs, NULL, 0));
+  return(mus_write_1(tfd, beg, end, chans, bufs, NULL, false));
 }
 
-int mus_file_write_buffer(int charbuf_data_format, int beg, int end, int chans, mus_sample_t **bufs, char *charbuf, int clipped)
+int mus_file_write_buffer(int charbuf_data_format, int beg, int end, int chans, mus_sample_t **bufs, char *charbuf, bool clipped)
 {
   return(mus_write_1(charbuf_data_format, beg, end, chans, bufs, charbuf, clipped));
 }
@@ -1351,7 +1353,7 @@ void mus_reset_io_c(void)
 }
 
 
-#ifdef MPW_C
+#if defined(MPW_C) || (defined(HAVE_CONFIG_H) && (!HAVE_STRDUP))
 /* this taken from libit-0.7 */
 char *strdup (const char *str)
 {

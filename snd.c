@@ -49,7 +49,7 @@ static void mus_error2snd(int type, char *msg)
 	{
 	  snd_error("%s: %s", mus_error_to_string(type), msg);
 #if HAVE_SETJMP_H
-	  ss->jump_ok = TRUE;
+	  ss->jump_ok = true;
 	  top_level_catch(1); /* sigh -- try to keep going */
 #endif
 	}
@@ -65,7 +65,7 @@ static void mus_print2snd(char *msg)
       fprintf(stderr, msg);
       return;
     }
-  add_to_error_history(ss, msg, FALSE);
+  add_to_error_history(ss, msg, false);
   if (record_dialog_is_active()) recorder_error(msg);
   if (!(ignore_mus_error(MUS_NO_ERROR, msg)))
     if (msg)
@@ -243,11 +243,11 @@ static snd_state *ss = NULL;
   ss->Audio_Input_Device = DEFAULT_AUDIO_INPUT_DEVICE;
   ss->Audio_Output_Device = DEFAULT_AUDIO_OUTPUT_DEVICE;
 #if DEBUGGING
-  ss->Trap_Segfault = FALSE;
+  ss->Trap_Segfault = false;
 #else
   ss->Trap_Segfault = DEFAULT_TRAP_SEGFAULT;
 #endif
-  ss->jump_ok = FALSE;
+  ss->jump_ok = false;
   ss->Optimization = DEFAULT_OPTIMIZATION;
   ss->Print_Length = DEFAULT_PRINT_LENGTH;
   ss->Previous_Files_Sort = DEFAULT_PREVIOUS_FILES_SORT;
@@ -283,7 +283,7 @@ static snd_state *ss = NULL;
   init_sound_file_extensions();
 
   ss->max_sounds = 4;                 /* expands to accommodate any number of files */
-  ss->stopped_explicitly = FALSE;     /* C-g sets this flag so that we can interrupt various loops */
+  ss->stopped_explicitly = false;     /* C-g sets this flag so that we can interrupt various loops */
   ss->reloading_updated_file = 0;
   ss->selected_sound = NO_SELECTION;
   ss->selected_mix = INVALID_MIX_ID;
@@ -291,10 +291,10 @@ static snd_state *ss = NULL;
   ss->open_ctrls_height = 180;        /* just a first guess */
   ss->sounds = (snd_info **)CALLOC(ss->max_sounds, sizeof(snd_info *));
   ss->print_choice = PRINT_SND;
-  ss->graph_hook_active = FALSE;
-  ss->lisp_graph_hook_active = FALSE;
+  ss->graph_hook_active = false;
+  ss->lisp_graph_hook_active = false;
   ss->just_time = 0;
-  ss->error_lock = FALSE;
+  ss->error_lock = false;
   ss->deferred_regions = 0;
   init_recorder();
 

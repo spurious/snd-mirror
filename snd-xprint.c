@@ -26,7 +26,7 @@ static int lpr (char *name)
   return(system(print_string));
 }
 
-static int printing = FALSE;
+static bool printing = false;
 
 static void file_print_ok_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -36,7 +36,7 @@ static void file_print_ok_callback(Widget w, XtPointer context, XtPointer info)
   XmString plab, slab;
   snd_info *nsp = NULL;
   if (printing) 
-    ss->stopped_explicitly = TRUE;
+    ss->stopped_explicitly = true;
   else
     {
       if (ss->print_choice == PRINT_SND)
@@ -52,7 +52,7 @@ static void file_print_ok_callback(Widget w, XtPointer context, XtPointer info)
 	  XmStringFree(plab);
 	  XmStringFree(slab);
 	}
-      printing = TRUE;
+      printing = true;
       print_it = XmToggleButtonGetState(file_print_eps_or_lpr);
       quit = (ss->print_choice == PRINT_ENV);
       if (print_it)
@@ -79,7 +79,7 @@ static void file_print_ok_callback(Widget w, XtPointer context, XtPointer info)
 	  if (str) XtFree(str);
 	}
     }
-  printing = FALSE;
+  printing = false;
   if (ss->print_choice == PRINT_SND)
     {
       plab = XmStringCreate(_("Print"), XmFONTLIST_DEFAULT_TAG);
@@ -127,10 +127,10 @@ void file_print_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNokLabelString, xmstr1); n++;
       XtSetArg(args[n], XmNhelpLabelString, xmstr2); n++;
       XtSetArg(args[n], XmNcancelLabelString, xmstr3); n++;
-      XtSetArg(args[n], XmNautoUnmanage, FALSE); n++;
+      XtSetArg(args[n], XmNautoUnmanage, false); n++;
       XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
-      XtSetArg(args[n], XmNnoResize, FALSE); n++;
+      XtSetArg(args[n], XmNnoResize, false); n++;
       file_print_dialog = XmCreateMessageDialog(w, _("eps file:"), args, n);
 
       XmStringFree(xmstr1);

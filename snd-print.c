@@ -79,11 +79,11 @@ static int start_ps_graph(char *output, char *title)
 
 static void ps_graph(chan_info *cp, int x0, int y0)
 {
-  cp->printing = TRUE;
+  cp->printing = true;
   bx0 = x0;
   by0 = y0;
   display_channel_data(cp, cp->sound, cp->state);
-  cp->printing = FALSE;
+  cp->printing = false;
 }
 
 static void end_ps_graph(void)
@@ -206,7 +206,7 @@ static void ps_fill_polygons(axis_info *ap, int j, Float *xpts, Float *ypts, Flo
     }
 }
 
-void ps_draw_grf_points(axis_info *ap, int j, Float y0, int graph_style, int dot_size) 
+void ps_draw_grf_points(axis_info *ap, int j, Float y0, graph_style_t graph_style, int dot_size) 
 {
   int i, gy0, size8, size4;
   switch (graph_style)
@@ -243,7 +243,7 @@ void ps_draw_grf_points(axis_info *ap, int j, Float y0, int graph_style, int dot
     }
 }
 
-void ps_draw_both_grf_points(axis_info *ap, int j, int graph_style, int dot_size) 
+void ps_draw_both_grf_points(axis_info *ap, int j, graph_style_t graph_style, int dot_size) 
 {
   int i, size8, size4;
   switch (graph_style)

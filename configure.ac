@@ -242,7 +242,7 @@ AC_CHECK_LIB(dl,main)
 LIBS=""
 
 AC_HEADER_DIRENT
-AC_CHECK_HEADERS(fcntl.h limits.h unistd.h string.h sys/soundcard.h soundcard.h machine/soundcard.h gsl/gsl_version.h sys/mixer.h)
+AC_CHECK_HEADERS(fcntl.h limits.h unistd.h string.h sys/soundcard.h soundcard.h machine/soundcard.h gsl/gsl_version.h sys/mixer.h stdbool.h)
 AC_CHECK_HEADERS(libc.h sys/vfs.h sys/statfs.h sys/statvfs.h sys/mount.h setjmp.h sched.h pwd.h locale.h sys/fpu.h dlfcn.h sys/param.h byteswap.h)
 AC_CHECK_HEADER(/usr/local/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LOCAL_LIB_OSS)])
 AC_CHECK_HEADER(/usr/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LIB_OSS)])
@@ -252,6 +252,8 @@ AC_CHECK_HEADER(sys/sam9407.h,[AC_DEFINE(HAVE_SAM_9407)])
 AC_CHECK_HEADER(gnu/libc-version.h,[AC_DEFINE(HAVE_GNU_LIBC_VERSION_H)])
 AC_CHECK_HEADER(alsa/asoundlib.h,[AC_DEFINE(HAVE_ALSA_ASOUNDLIB_H)])
 AC_HEADER_TIME
+
+AC_CHECK_LIB(m, hypot, [AC_DEFINE(HAVE_HYPOT)])
 
 AC_C_CONST
 AC_TYPE_MODE_T
@@ -281,7 +283,6 @@ AC_CHECK_FUNCS(isnan, ,[
         	[AC_MSG_RESULT(yes)
          	 AC_DEFINE(HAVE_ISNAN)],
          	[AC_MSG_RESULT(no)])])
-
 SAVELIBS=$LIBS
 FFTW_LIBS=""
 if test "$with_fftw" != no; then
@@ -309,7 +310,7 @@ LIBS=$SAVELIBS
 
 AC_TYPE_SIGNAL
 AC_FUNC_STRFTIME
-AC_CHECK_FUNCS(getcwd strerror readlink setlocale access opendir sleep signal statfs statvfs clock vsnprintf snprintf memmove)
+AC_CHECK_FUNCS(getcwd strerror readlink setlocale access opendir sleep signal statfs statvfs clock vsnprintf snprintf memmove strdup lstat fileno)
 AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_VPRINTF
 

@@ -58,9 +58,9 @@
 #ifndef SND_AS_WIDGET
 static gint window_close(GtkWidget *w, GdkEvent *event, gpointer context)
 {
-  if (snd_exit_cleanly((snd_state *)context, TRUE))
+  if (snd_exit_cleanly((snd_state *)context, true))
     snd_exit(0);
-  return(FALSE);
+  return(false);
 }
 #endif
 
@@ -93,7 +93,7 @@ static void who_called(GtkWidget *w, GdkEvent *event, gpointer context)
   if (ev->atom == snd_c)
     {
       if (gdk_property_get(MAIN_WINDOW(ss), snd_c, 
-			   GDK_TARGET_STRING, 0L, (long)BUFSIZ, FALSE,
+			   GDK_TARGET_STRING, 0L, (long)BUFSIZ, false,
 			   &type, &format, &nitems, (guchar **)version))
 	{
 	  if (version[0])
@@ -133,7 +133,7 @@ RETSIGTYPE top_level_catch(int ignore)
 
 static char **auto_open_file_names = NULL;
 static int auto_open_files = 0;
-static int noglob = FALSE, noinit = FALSE, batch = FALSE, nostdin = FALSE;
+static bool noglob = false, noinit = false, batch = false, nostdin = false;
 
 #if HAVE_EXTENSION_LANGUAGE
 static gint stdin_id = 0;
@@ -252,7 +252,7 @@ static void setup_gcs (snd_state *ss)
 static gboolean io_invoke(GIOChannel *source, GIOCondition condition, gpointer data)
 {
   get_stdin_string((gpointer)get_global_state(), g_io_channel_unix_get_fd(source), 0);
-  return(TRUE);
+  return(true);
 }
 #endif
 
@@ -269,8 +269,8 @@ static Cessate startup_funcs(gpointer context)
     case 0:
 #ifndef SND_AS_WIDGET
       /* add X property level communication path (see sndctrl.c for the other side) */
-      snd_v = gdk_atom_intern("SND_VERSION", FALSE);
-      snd_c = gdk_atom_intern("SND_COMMAND", FALSE);
+      snd_v = gdk_atom_intern("SND_VERSION", false);
+      snd_c = gdk_atom_intern("SND_COMMAND", false);
 
       gdk_property_change(MAIN_WINDOW(ss), 
 			  snd_v, 
@@ -325,7 +325,7 @@ static Cessate startup_funcs(gpointer context)
     case 2: 
       if (auto_open_files > 0)
 	{
-	  auto_open_ctr = handle_next_startup_arg(ss, auto_open_ctr, auto_open_file_names, TRUE, auto_open_files);
+	  auto_open_ctr = handle_next_startup_arg(ss, auto_open_ctr, auto_open_file_names, true, auto_open_files);
 	  if (auto_open_ctr < auto_open_files) return(BACKGROUND_CONTINUE); /* i.e. come back to this branch */
 	}
       break;
@@ -454,17 +454,17 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 	    set_sound_style(ss, SOUNDS_IN_SEPARATE_WINDOWS);
 	  else
 	    if (strcmp(argv[i], "-noglob") == 0)
-	      noglob = TRUE;
+	      noglob = true;
 	    else
 	      if (strcmp(argv[i], "-noinit") == 0)
-		noinit = TRUE;
+		noinit = true;
 	      else
 		if (strcmp(argv[i], "-nostdin") == 0)
-		  nostdin = TRUE;
+		  nostdin = true;
 		else
 		  if ((strcmp(argv[i], "-b") == 0) || 
 		      (strcmp(argv[i], "-batch") == 0))
-		    batch = TRUE;
+		    batch = true;
 
   ss->batch_mode = batch;
   set_auto_resize(ss, AUTO_RESIZE_DEFAULT);
@@ -479,37 +479,37 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 
   ss->sgx = (state_context *)CALLOC(1, sizeof(state_context));
   sx = ss->sgx;
-  sx->graph_is_active = FALSE;
+  sx->graph_is_active = false;
   set_html_dir(ss, copy_string(DEFAULT_HTML_DIR));
 
   /* the gray shades are an attempt to get around Netscape which hogs all the colors */
-  sx->white =                 get_color(WHITE_COLOR,           NULL, NULL, TRUE);
-  sx->black =                 get_color(BLACK_COLOR,           NULL, NULL, FALSE);
-  sx->light_blue =            get_color(LIGHT_BLUE_COLOR,      NULL, NULL, TRUE);
-  sx->lighter_blue =          get_color(LIGHTER_BLUE_COLOR,    NULL, NULL, TRUE);
-  sx->red =                   get_color(RED_COLOR,             NULL, NULL, FALSE);
-  sx->green =                 get_color(GREEN_COLOR,           NULL, NULL, FALSE);
-  sx->yellow =                get_color(YELLOW_COLOR,          NULL, NULL, TRUE);
-  sx->highlight_color =       get_color(HIGHLIGHT_COLOR,       "gray90", NULL, TRUE);
-  sx->basic_color =           get_color(BASIC_COLOR,           "gray80", "gray", TRUE);
-  sx->position_color =        get_color(POSITION_COLOR,        "gray60", "gray", FALSE);
-  sx->zoom_color =            get_color(ZOOM_COLOR,            "gray20", "gray", FALSE);
-  sx->cursor_color =          get_color(CURSOR_COLOR,          NULL, NULL, FALSE);
-  sx->selection_color =       get_color(SELECTION_COLOR,       "gray80", NULL, FALSE);
-  sx->mix_color =             get_color(MIX_COLOR,             NULL, NULL, FALSE);
-  sx->selected_mix_color =    get_color(SELECTED_MIX_COLOR,    NULL, NULL, FALSE);
-  sx->enved_waveform_color =  get_color(ENVED_WAVEFORM_COLOR,  NULL, NULL, FALSE);
-  sx->filter_waveform_color = get_color(FILTER_WAVEFORM_COLOR, NULL, NULL, FALSE);
-  sx->listener_color =        get_color(LISTENER_COLOR,        NULL, NULL, TRUE);
-  sx->listener_text_color =   get_color(LISTENER_TEXT_COLOR,   NULL, NULL, TRUE);
-  sx->graph_color =           get_color(GRAPH_COLOR,           NULL, NULL, TRUE);
-  sx->selected_graph_color =  get_color(SELECTED_GRAPH_COLOR,  NULL, NULL, TRUE);
-  sx->data_color =            get_color(DATA_COLOR,            NULL, NULL, FALSE);
-  sx->selected_data_color =   get_color(SELECTED_DATA_COLOR,   NULL, NULL, FALSE);
-  sx->mark_color =            get_color(MARK_COLOR,            NULL, NULL, FALSE);
-  sx->sash_color =            get_color(SASH_COLOR,            NULL, NULL, FALSE);
-  sx->pushed_button_color =   get_color(PUSHED_BUTTON_COLOR,   NULL, NULL, FALSE);
-  sx->text_focus_color =      get_color(TEXT_FOCUS_COLOR,      NULL, NULL, FALSE);
+  sx->white =                 get_color(WHITE_COLOR,           NULL, NULL, true);
+  sx->black =                 get_color(BLACK_COLOR,           NULL, NULL, false);
+  sx->light_blue =            get_color(LIGHT_BLUE_COLOR,      NULL, NULL, true);
+  sx->lighter_blue =          get_color(LIGHTER_BLUE_COLOR,    NULL, NULL, true);
+  sx->red =                   get_color(RED_COLOR,             NULL, NULL, false);
+  sx->green =                 get_color(GREEN_COLOR,           NULL, NULL, false);
+  sx->yellow =                get_color(YELLOW_COLOR,          NULL, NULL, true);
+  sx->highlight_color =       get_color(HIGHLIGHT_COLOR,       "gray90", NULL, true);
+  sx->basic_color =           get_color(BASIC_COLOR,           "gray80", "gray", true);
+  sx->position_color =        get_color(POSITION_COLOR,        "gray60", "gray", false);
+  sx->zoom_color =            get_color(ZOOM_COLOR,            "gray20", "gray", false);
+  sx->cursor_color =          get_color(CURSOR_COLOR,          NULL, NULL, false);
+  sx->selection_color =       get_color(SELECTION_COLOR,       "gray80", NULL, false);
+  sx->mix_color =             get_color(MIX_COLOR,             NULL, NULL, false);
+  sx->selected_mix_color =    get_color(SELECTED_MIX_COLOR,    NULL, NULL, false);
+  sx->enved_waveform_color =  get_color(ENVED_WAVEFORM_COLOR,  NULL, NULL, false);
+  sx->filter_waveform_color = get_color(FILTER_WAVEFORM_COLOR, NULL, NULL, false);
+  sx->listener_color =        get_color(LISTENER_COLOR,        NULL, NULL, true);
+  sx->listener_text_color =   get_color(LISTENER_TEXT_COLOR,   NULL, NULL, true);
+  sx->graph_color =           get_color(GRAPH_COLOR,           NULL, NULL, true);
+  sx->selected_graph_color =  get_color(SELECTED_GRAPH_COLOR,  NULL, NULL, true);
+  sx->data_color =            get_color(DATA_COLOR,            NULL, NULL, false);
+  sx->selected_data_color =   get_color(SELECTED_DATA_COLOR,   NULL, NULL, false);
+  sx->mark_color =            get_color(MARK_COLOR,            NULL, NULL, false);
+  sx->sash_color =            get_color(SASH_COLOR,            NULL, NULL, false);
+  sx->pushed_button_color =   get_color(PUSHED_BUTTON_COLOR,   NULL, NULL, false);
+  sx->text_focus_color =      get_color(TEXT_FOCUS_COLOR,      NULL, NULL, false);
 
   if ((!(set_tiny_font(ss, TINY_FONT))) &&
       (!(set_tiny_font(ss, FALLBACK_FONT))))
@@ -540,9 +540,9 @@ void snd_doit(snd_state *ss, int argc, char **argv)
     ss->init_file = INIT_FILE_NAME;
 
   set_color_map(ss, DEFAULT_SPECTROGRAM_COLOR);
-  set_ask_before_overwrite(ss, FALSE);
+  set_ask_before_overwrite(ss, false);
 
-  sx->mainpane = gtk_vbox_new(FALSE, 0); /* not homogenous, spacing 0 */
+  sx->mainpane = gtk_vbox_new(false, 0); /* not homogenous, spacing 0 */
 
 #ifdef SND_AS_WIDGET
   sx->mainshell = parent;
@@ -573,8 +573,8 @@ void snd_doit(snd_state *ss, int argc, char **argv)
       else 
 	{
 	  if (sound_style(ss) == SOUNDS_HORIZONTAL)
-	    sx->soundpanebox = gtk_hbox_new(FALSE, 0);
-	  else sx->soundpanebox = gtk_vbox_new(FALSE, 0);
+	    sx->soundpanebox = gtk_hbox_new(false, 0);
+	  else sx->soundpanebox = gtk_vbox_new(false, 0);
 	}
       gtk_paned_add1(GTK_PANED(SOUND_PANE(ss)), sx->soundpanebox);
       gtk_widget_show(sx->soundpanebox);
@@ -605,7 +605,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
     {
       if (!(ss->jump_ok))
 	snd_error(_("Caught top level error (will try to continue):\n"));
-      else ss->jump_ok = FALSE;
+      else ss->jump_ok = false;
     }
 #endif
 

@@ -102,7 +102,7 @@ static int add_sound_buffer_to_edit_list(chan_info *cp, mus_sample_t *data, int 
   return(cp->sound_ctr);
 }
 
-static int add_sound_file_to_edit_list(chan_info *cp, const char *name, snd_io *io, file_info *hdr, int temp, int chan)
+static int add_sound_file_to_edit_list(chan_info *cp, const char *name, snd_io *io, file_info *hdr, file_delete_t temp, int chan)
 {
   prepare_sound_list(cp);
   cp->sounds[cp->sound_ctr] = make_snd_data_file(name, io, hdr, temp, cp->edit_ctr, chan);
@@ -439,7 +439,7 @@ enum {ED_SIMPLE, ED_ZERO,
 #define XEN_OP(Typ) ((Typ) >= ED_XEN)
 #define PTREE2_OP(Typ) (((Typ) >= ED_PTREE2) && ((Typ) < ED_XEN))
 
-static int ZERO_OP(int type)
+static bool ZERO_OP(int type)
 {
   switch (type)
     {
@@ -454,12 +454,12 @@ static int ZERO_OP(int type)
     case ED_RAMP2_PTREE2_ZERO: case ED_RAMP_PTREE2_ZERO: case ED_XRAMP_PTREE2_ZERO: case ED_RAMP3_PTREE2_ZERO:
     case ED_RAMP_XRAMP_PTREE_ZERO: case ED_RAMP2_XRAMP_PTREE_ZERO: case ED_XRAMP_RAMP_PTREE_ZERO: case ED_RAMP_XRAMP_RAMP_PTREE_ZERO:
     case ED_PTREE_RAMP_PTREE_ZERO: case ED_PTREE_RAMP2_PTREE_ZERO: case ED_PTREE_RAMP3_PTREE_ZERO: case ED_PTREE_XRAMP_PTREE_ZERO:
-      return(TRUE);
+      return(true);
       break;
     }
-  return(FALSE);
+  return(false);
 }
-static int RAMP_OP(int type)
+static bool RAMP_OP(int type)
 {
   switch (type)
     {
@@ -500,12 +500,12 @@ static int RAMP_OP(int type)
     case ED_PTREE_XRAMP2:
     case ED_PTREE_RAMP_PTREE_RAMP:
     case ED_RAMP_XEN_RAMP: case ED_RAMP2_XEN_RAMP: case ED_RAMP_XEN_RAMP2:
-      return(TRUE);
+      return(true);
       break;
     }
-  return(FALSE);
+  return(false);
 }
-static int RAMP2_OP(int type)
+static bool RAMP2_OP(int type)
 {
   switch (type)
     {
@@ -535,13 +535,13 @@ static int RAMP2_OP(int type)
     case ED_PTREE_XRAMP2:
     case ED_PTREE_RAMP_PTREE_RAMP:
     case ED_RAMP_XEN_RAMP: case ED_RAMP2_XEN_RAMP: case ED_RAMP_XEN_RAMP2:
-      return(TRUE);
+      return(true);
       break;
     }
-  return(FALSE);
+  return(false);
 }
 
-static int RAMP3_OP(int type)
+static bool RAMP3_OP(int type)
 {
   switch (type)
     {
@@ -561,9 +561,9 @@ static int RAMP3_OP(int type)
     case ED_PTREE2_RAMP3:
     case ED_PTREE_RAMP2_PTREE_RAMP: case ED_PTREE_RAMP_PTREE_RAMP2: case ED_RAMP_PTREE_RAMP_PTREE_RAMP:
     case ED_RAMP2_XEN_RAMP: case ED_RAMP_XEN_RAMP2:
-      return(TRUE);
+      return(true);
     }
-  return(FALSE);
+  return(false);
 }
 
 #define FRAGMENTS(Ed)                       (ed_fragment **)((Ed)->fragments)
@@ -652,7 +652,7 @@ static int RAMP3_OP(int type)
 enum {INSERTION_EDIT, DELETION_EDIT, CHANGE_EDIT, INITIALIZE_EDIT, SCALED_EDIT, ZERO_EDIT, RAMP_EDIT, PTREE_EDIT, XEN_EDIT};
 static char *edit_names[10] = {"insert", "delete", "set", "init", "scale", "zero", "env", "ptree", "xen", ""};
 
-static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, int with_source)
+static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool with_source)
 {
   int len, j, type, index;
   snd_data *sd;
@@ -849,7 +849,7 @@ char *edit_to_string(chan_info *cp, int edit)
   #define VECTOR_CLOSE ")"
 #endif
 
-static void display_edits(chan_info *cp, FILE *outp, int with_source)
+static void display_edits(chan_info *cp, FILE *outp, bool with_source)
 {
   int i;
   fprintf(outp, "\nEDITS: %d\n", cp->edit_ctr);
@@ -1490,7 +1490,7 @@ void extend_with_zeros(chan_info *cp, off_t beg, off_t num, const char *origin, 
   amp_env_insert_zeros(cp, beg, num, edpos);
 }
 
-void file_insert_samples(off_t beg, off_t num, char *inserted_file, chan_info *cp, int chan, int auto_delete, const char *origin, int edpos)
+void file_insert_samples(off_t beg, off_t num, char *inserted_file, chan_info *cp, int chan, file_delete_t auto_delete, const char *origin, int edpos)
 {
   off_t len;
   ed_fragment *cb;
@@ -1728,7 +1728,7 @@ static ed_list *change_samples_in_list(off_t beg, off_t num, int pos, chan_info 
   return(new_state);
 }
 
-void file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, int chan, int auto_delete, int lock, const char *origin, int edpos)
+void file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, int lock, const char *origin, int edpos)
 {
   off_t prev_len, new_len;
   ed_fragment *cb;
@@ -1784,7 +1784,7 @@ void file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, in
     }
 }
 
-void file_override_samples(off_t num, char *tempfile, chan_info *cp, int chan, int auto_delete, int lock, const char *origin)
+void file_override_samples(off_t num, char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, int lock, const char *origin)
 {
   int fd;
   ed_list *e;
@@ -1865,7 +1865,7 @@ void change_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, int
 
 /* -------------------------------- ramp/scale/ptree -------------------------------- */
 
-static int rampable_ptree_op(int typ)
+static bool rampable_ptree_op(int typ)
 {
   switch (typ)
     {
@@ -1885,13 +1885,13 @@ static int rampable_ptree_op(int typ)
     case ED_RAMP_PTREE2: case ED_RAMP_PTREE2_ZERO:
     case ED_RAMP2_PTREE2: case ED_RAMP2_PTREE2_ZERO:
     case ED_PTREE_RAMP_PTREE_RAMP:
-      return(TRUE);
+      return(true);
       break;
     }
-  return(FALSE);
+  return(false);
 }
 
-static int xrampable_ptree_op(int typ)
+static bool xrampable_ptree_op(int typ)
 {
   switch (typ)
     {
@@ -1901,13 +1901,13 @@ static int xrampable_ptree_op(int typ)
     case ED_RAMP_PTREE: case ED_RAMP_PTREE_ZERO:
     case ED_XEN: case ED_XEN_ZERO:
     case ED_PTREE2: case ED_PTREE2_ZERO:
-      return(TRUE);
+      return(true);
       break;
     }
-  return(FALSE);
+  return(false);
 }
 
-int ramp_or_ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos, Float base)
+bool ramp_or_ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos, Float base)
 {
   /* from enveloper (snd-sig.c) */
   ed_list *ed;
@@ -1917,9 +1917,9 @@ int ramp_or_ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos,
   end = beg + dur - 1;
   for (i = 0; i < ed->size - 1; i++) 
     {
-      if (FRAGMENT_SOUND(ed, i) == EDIT_LIST_END_MARK) return(FALSE);
+      if (FRAGMENT_SOUND(ed, i) == EDIT_LIST_END_MARK) return(false);
       loc = FRAGMENT_GLOBAL_POSITION(ed, i);
-      if (loc > end) return(FALSE);
+      if (loc > end) return(false);
       typ = FRAGMENT_TYPE(ed, i);
       next_loc = FRAGMENT_GLOBAL_POSITION(ed, i + 1);         /* i.e. next loc = current fragment end point */
       /* fragment starts at loc, ends just before next_loc, is of type typ */
@@ -1929,28 +1929,28 @@ int ramp_or_ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos,
 	       (((base == 1.0) && (!(rampable_ptree_op(typ)))) ||
 		((base != 1.0) && (!(xrampable_ptree_op(typ)))))) ||
 	      (RAMP3_OP(typ)))               /* all ramp fields in use */
-	    return(TRUE);
+	    return(true);
 	  if ((base != 1.0) && RAMP2_OP(typ)) /* no xramp in 3rd field */
-	    return(TRUE);
+	    return(true);
 	}
     }
-  return(FALSE);
+  return(false);
 }
 
-static int xenable_op(int typ)
+static bool xenable_op(int typ)
 {
   switch (typ)
     {
     case ED_SIMPLE: case ED_ZERO:
     case ED_RAMP: case ED_RAMP2: case ED_RAMP3:
     case ED_XRAMP:
-      return(TRUE);
+      return(true);
       break;
     }
-  return(FALSE);
+  return(false);
 }
 
-static int ptreeable_op(int typ)
+static bool ptreeable_op(int typ)
 {
   switch (typ)
     {
@@ -1963,13 +1963,13 @@ static int ptreeable_op(int typ)
     case ED_RAMP3_PTREE: case ED_RAMP3_PTREE_ZERO:
     case ED_PTREE_RAMP2: case ED_PTREE_RAMP3: case ED_PTREE_XRAMP: case ED_XRAMP_PTREE: case ED_XRAMP_PTREE_ZERO:
     case ED_RAMP2_PTREE_RAMP: case ED_RAMP_PTREE_RAMP2: case ED_RAMP_PTREE_RAMP:
-      return(TRUE);
+      return(true);
       break;
     }
-  return(FALSE);
+  return(false);
 }
 
-int ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos, int is_xen)
+bool ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos, int is_xen)
 {
   /* from ptree-channel (snd-sig.c) check for pre-existing ptree-channel */
   ed_list *ed;
@@ -1979,24 +1979,24 @@ int ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos, int is_
   end = beg + dur - 1;
   for (i = 0; i < ed->size - 1; i++) 
     {
-      if (FRAGMENT_SOUND(ed, i) == EDIT_LIST_END_MARK) return(FALSE);
+      if (FRAGMENT_SOUND(ed, i) == EDIT_LIST_END_MARK) return(false);
       loc = FRAGMENT_GLOBAL_POSITION(ed, i);
-      if (loc > end) return(FALSE);
+      if (loc > end) return(false);
       typ = FRAGMENT_TYPE(ed, i);
       next_loc = FRAGMENT_GLOBAL_POSITION(ed, i + 1);         /* i.e. next loc = current fragment end point */
       /* fragment starts at loc, ends just before next_loc, is of type typ */
       if (next_loc > beg)
 	{
 	  if ((is_xen) && (!(xenable_op(typ))))
-	    return(TRUE);
+	    return(true);
 	  if (!(ptreeable_op(typ)))
-	    return(TRUE);
+	    return(true);
 	}
     }
-  return(FALSE);
+  return(false);
 }
 
-int ptree_or_sound_fragments_in_use(chan_info *cp, int pos)
+bool ptree_or_sound_fragments_in_use(chan_info *cp, int pos)
 {
   /* (swap-channels): are there any non-simple/non-ramp edits? */
   int i, index;
@@ -2005,14 +2005,14 @@ int ptree_or_sound_fragments_in_use(chan_info *cp, int pos)
   for (i = 0; i < ed->size - 1; i++) 
     {
       index = FRAGMENT_SOUND(ed, i);
-      if (index == EDIT_LIST_END_MARK) return(FALSE);
+      if (index == EDIT_LIST_END_MARK) return(false);
       if ((index != 0) &&
 	  (index != EDIT_LIST_ZERO_MARK))
-	return(TRUE);
+	return(true);
       if (PTREE_OP(FRAGMENT_TYPE(ed, i)))
-	return(TRUE);
+	return(true);
     }
-  return(FALSE);
+  return(false);
 }
 
 static ed_list *copy_and_split_list(off_t beg, off_t num, ed_list *current_state, const char *origin)
@@ -2114,7 +2114,7 @@ static ed_list *copy_and_split_list(off_t beg, off_t num, ed_list *current_state
   return(new_state);
 }
 
-void scale_channel(chan_info *cp, Float scl, off_t beg, off_t num, int pos, int in_as_one_edit)
+void scale_channel(chan_info *cp, Float scl, off_t beg, off_t num, int pos, bool in_as_one_edit)
 {
   /* copy current ed-list and reset scalers */
   off_t len;
@@ -2178,7 +2178,7 @@ void scale_channel(chan_info *cp, Float scl, off_t beg, off_t num, int pos, int 
   if (!in_as_one_edit) update_graph(cp);
 }
 
-static void setup_ramp_fragments(ed_list *new_ed, int i, double seg0, double seg1, Float scaler, Float offset, int is_xramp)
+static void setup_ramp_fragments(ed_list *new_ed, int i, double seg0, double seg1, Float scaler, Float offset, bool is_xramp)
 {
   if (FRAGMENT_TYPE(new_ed, i) != ED_ZERO)
     {
@@ -2479,8 +2479,8 @@ static void setup_ramp_fragments(ed_list *new_ed, int i, double seg0, double seg
 }
 
 static void all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler, Float offset, 
-			     off_t beg, off_t num, int pos, int in_as_one_edit, const char *origin, 
-			     int is_x, mus_any *e, int e_pos)
+			     off_t beg, off_t num, int pos, bool in_as_one_edit, const char *origin, 
+			     bool is_x, mus_any *e, int e_pos)
 {
   off_t len;
   int i;
@@ -2574,18 +2574,18 @@ static void all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler
   reflect_edit_history_change(cp);
 }
 
-void ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, int pos, int in_as_one_edit)
+void ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, int pos, bool in_as_one_edit)
 {
-  all_ramp_channel(cp, rmp0, rmp1, 0.0, 0.0, beg, num, pos, in_as_one_edit, S_ramp_channel, FALSE, NULL, 0);
+  all_ramp_channel(cp, rmp0, rmp1, 0.0, 0.0, beg, num, pos, in_as_one_edit, S_ramp_channel, false, NULL, 0);
 }
 
 void xramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler, Float offset, 
-		   off_t beg, off_t num, int pos, int in_as_one_edit, mus_any *e, int e_pos)
+		   off_t beg, off_t num, int pos, bool in_as_one_edit, mus_any *e, int e_pos)
 {
-  all_ramp_channel(cp, rmp0, rmp1, scaler, offset, beg, num, pos, in_as_one_edit, S_xramp_channel, TRUE, e, e_pos);
+  all_ramp_channel(cp, rmp0, rmp1, scaler, offset, beg, num, pos, in_as_one_edit, S_xramp_channel, true, e, e_pos);
 }
 
-static void make_ptree_fragment(ed_list *new_ed, int i, int ptree_loc, off_t beg, off_t num, int is_xen)
+static void make_ptree_fragment(ed_list *new_ed, int i, int ptree_loc, off_t beg, off_t num, bool is_xen)
 {
   switch (FRAGMENT_TYPE(new_ed, i))
     {
@@ -2691,7 +2691,7 @@ static void make_ptree_fragment(ed_list *new_ed, int i, int ptree_loc, off_t beg
   FRAGMENT_SCALER(new_ed, i) = 1.0;
 }
 
-void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, int env_it, XEN init_func, int is_xen)
+void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, bool env_it, XEN init_func, bool is_xen)
 {
   off_t len;
   int i, ptree_loc = 0;
@@ -2796,7 +2796,7 @@ snd_fd *free_snd_fd_almost(snd_fd *sf)
       if ((sd) && 
 	  ((sd->type == SND_DATA_BUFFER) || (sd->type == SND_DATA_FILE)))
 	{
-	  sd->inuse = FALSE;
+	  sd->inuse = false;
 	  if ((sd->copy) || (sd->free_me))
 	    sd = free_snd_data(sd); 
 	}
@@ -3406,7 +3406,7 @@ static mus_sample_t next_sample_with_ptree(snd_fd *sf)
   if (sf->loc > sf->last)
      return(next_sound(sf));
   else return((mus_sample_t)(sf->rscaler * 
-			     evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), TRUE)));
+			     evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), true)));
 }
 
 static mus_sample_t previous_sample_with_ptree(snd_fd *sf)
@@ -3414,7 +3414,7 @@ static mus_sample_t previous_sample_with_ptree(snd_fd *sf)
   if (sf->loc < sf->first)
     return(previous_sound(sf));
   else return((mus_sample_t)(sf->rscaler * 
-			     evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), FALSE)));
+			     evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), false)));
 }
 
 static Float next_sample_to_float_with_ptree(snd_fd *sf)
@@ -3422,7 +3422,7 @@ static Float next_sample_to_float_with_ptree(snd_fd *sf)
   if (sf->loc > sf->last)
      return(next_sound_as_float(sf));
   else return(READER_SCALER(sf) * 
-	      evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+	      evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), true));
 }
 
 static Float previous_sample_to_float_with_ptree(snd_fd *sf)
@@ -3430,7 +3430,7 @@ static Float previous_sample_to_float_with_ptree(snd_fd *sf)
   if (sf->loc < sf->first)
     return(previous_sound_as_float(sf));
   else return(READER_SCALER(sf) * 
-	      evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), FALSE));
+	      evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), false));
 }
 
 static mus_sample_t next_sample_with_ptree_air(snd_fd *sf)
@@ -3440,7 +3440,7 @@ static mus_sample_t next_sample_with_ptree_air(snd_fd *sf)
   else 
     {
       sf->loc++;
-      return((mus_sample_t)(sf->rscaler * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), TRUE)));
+      return((mus_sample_t)(sf->rscaler * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), true)));
     }
 }
 
@@ -3451,7 +3451,7 @@ static mus_sample_t previous_sample_with_ptree_air(snd_fd *sf)
   else 
     {
       sf->loc--;
-      return((mus_sample_t)(sf->rscaler * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), FALSE)));
+      return((mus_sample_t)(sf->rscaler * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), false)));
     }
 }
 
@@ -3462,7 +3462,7 @@ static Float next_sample_to_float_with_ptree_air(snd_fd *sf)
   else 
     {
       sf->loc++;
-      return(READER_SCALER(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+      return(READER_SCALER(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), true));
     }
 }
 
@@ -3473,7 +3473,7 @@ static Float previous_sample_to_float_with_ptree_air(snd_fd *sf)
   else 
     {
       sf->loc--;
-      return(READER_SCALER(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), FALSE));
+      return(READER_SCALER(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), false));
     }
 }
 
@@ -3489,7 +3489,7 @@ static Float next_sample_to_float_with_ptree_ramp(snd_fd *sf)
       Float val;
       val = sf->data[sf->loc++] * sf->curval;
       sf->curval += sf->incr;
-      return(READER_SCALER(sf) * evaluate_ptreec(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+      return(READER_SCALER(sf) * evaluate_ptreec(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), true));
     }
 }
 
@@ -3502,7 +3502,7 @@ static Float previous_sample_to_float_with_ptree_ramp(snd_fd *sf)
       Float val;
       val = sf->data[sf->loc--] * sf->curval;
       sf->curval -= sf->incr;
-      return(READER_SCALER(sf) * evaluate_ptreec(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), FALSE));
+      return(READER_SCALER(sf) * evaluate_ptreec(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), false));
     }
 }
 
@@ -3517,7 +3517,7 @@ static Float next_sample_to_float_with_ptree_ramp2(snd_fd *sf)
   if (sf->loc > sf->last)
      return(next_sound_as_float(sf));
   else return(READER_SCALER(sf) *
-	      evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * next_ramp2_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+	      evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * next_ramp2_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), true));
 }
 
 static Float previous_sample_to_float_with_ptree_ramp2(snd_fd *sf)
@@ -3525,7 +3525,7 @@ static Float previous_sample_to_float_with_ptree_ramp2(snd_fd *sf)
   if (sf->loc < sf->first)
     return(previous_sound_as_float(sf));
   else return(READER_SCALER(sf) * 
-	      evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * previous_ramp2_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), FALSE));
+	      evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * previous_ramp2_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), false));
 }
 
 static mus_sample_t previous_sample_with_ptree_ramp2(snd_fd *sf) {return(MUS_FLOAT_TO_SAMPLE(previous_sample_to_float_with_ptree_ramp2(sf)));}
@@ -3542,7 +3542,7 @@ static Float next_sample_to_float_with_ptree_ramp3(snd_fd *sf)
     {
       Float val;
       val = sf->data[sf->loc++] * next_ramp3_to_float(sf);
-      return(READER_SCALER(sf) * evaluate_ptreec(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+      return(READER_SCALER(sf) * evaluate_ptreec(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), true));
     }
 }
 
@@ -3554,7 +3554,7 @@ static Float previous_sample_to_float_with_ptree_ramp3(snd_fd *sf)
     {
       Float val;
       val = sf->data[sf->loc--] * previous_ramp3_to_float(sf);
-      return(READER_SCALER(sf) * evaluate_ptreec(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), FALSE));
+      return(READER_SCALER(sf) * evaluate_ptreec(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), false));
     }
 }
 
@@ -3569,7 +3569,7 @@ static Float next_sample_to_float_with_ptree_xramp(snd_fd *sf)
   if (sf->loc > sf->last)
      return(next_sound_as_float(sf));
   else return(READER_SCALER(sf) * 
-	      evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * next_ptree_xramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+	      evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * next_ptree_xramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), true));
 }
 
 static Float previous_sample_to_float_with_ptree_xramp(snd_fd *sf)
@@ -3577,7 +3577,7 @@ static Float previous_sample_to_float_with_ptree_xramp(snd_fd *sf)
   if (sf->loc < sf->first)
     return(previous_sound_as_float(sf));
   else return(READER_SCALER(sf) * 
-	      evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * previous_ptree_xramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), FALSE));
+	      evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * previous_ptree_xramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), false));
 }
 
 static mus_sample_t next_sample_with_ptree_xramp(snd_fd *sf) {return(MUS_FLOAT_TO_SAMPLE(next_sample_to_float_with_ptree_xramp(sf)));}
@@ -3590,7 +3590,7 @@ static Float next_sample_to_float_with_ptree_xramp2(snd_fd *sf)
   if (sf->loc > sf->last)
      return(next_sound_as_float(sf));
   else return(READER_SCALER(sf) * 
-	      evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * next_ptree_xramp2_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+	      evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * next_ptree_xramp2_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), true));
 }
 
 static Float previous_sample_to_float_with_ptree_xramp2(snd_fd *sf)
@@ -3598,7 +3598,7 @@ static Float previous_sample_to_float_with_ptree_xramp2(snd_fd *sf)
   if (sf->loc < sf->first)
     return(previous_sound_as_float(sf));
   else return(READER_SCALER(sf) * 
-	      evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * previous_ptree_xramp2_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), FALSE));
+	      evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * previous_ptree_xramp2_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), false));
 }
 
 static mus_sample_t next_sample_with_ptree_xramp2(snd_fd *sf) {return(MUS_FLOAT_TO_SAMPLE(next_sample_to_float_with_ptree_xramp2(sf)));}
@@ -3615,7 +3615,7 @@ static Float next_sample_to_float_with_ramp_ptree(snd_fd *sf)
       Float val;
       val = sf->curval;
       sf->curval += sf->incr;
-      return(val * evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+      return(val * evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), true));
     }
 }
 
@@ -3628,7 +3628,7 @@ static Float previous_sample_to_float_with_ramp_ptree(snd_fd *sf)
       Float val;
       val = sf->curval;
       sf->curval -= sf->incr;
-      return(val * evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), FALSE));
+      return(val * evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), false));
     }
 }
 
@@ -3642,7 +3642,7 @@ static Float next_sample_to_float_with_ramp2_ptree(snd_fd *sf)
   if (sf->loc > sf->last)
      return(next_sound_as_float(sf));
   else return(next_ramp2_to_float(sf) * 
-	      evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+	      evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), true));
 }
 
 static Float previous_sample_to_float_with_ramp2_ptree(snd_fd *sf)
@@ -3650,7 +3650,7 @@ static Float previous_sample_to_float_with_ramp2_ptree(snd_fd *sf)
   if (sf->loc < sf->first)
     return(previous_sound_as_float(sf));
   else return(previous_ramp2_to_float(sf) *
-	      evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), FALSE));
+	      evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), false));
 }
 
 static mus_sample_t previous_sample_with_ramp2_ptree(snd_fd *sf) {return(MUS_FLOAT_TO_SAMPLE(previous_sample_to_float_with_ramp2_ptree(sf)));}
@@ -3664,7 +3664,7 @@ static Float next_sample_to_float_with_ramp3_ptree(snd_fd *sf)
   if (sf->loc > sf->last)
      return(next_sound_as_float(sf));
   else return(next_ramp3_to_float(sf) * 
-	      evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+	      evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), true));
 }
 
 static Float previous_sample_to_float_with_ramp3_ptree(snd_fd *sf)
@@ -3672,7 +3672,7 @@ static Float previous_sample_to_float_with_ramp3_ptree(snd_fd *sf)
   if (sf->loc < sf->first)
     return(previous_sound_as_float(sf));
   else return(previous_ramp3_to_float(sf) *
-	      evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), FALSE));
+	      evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), false));
 }
 
 static mus_sample_t previous_sample_with_ramp3_ptree(snd_fd *sf) {return(MUS_FLOAT_TO_SAMPLE(previous_sample_to_float_with_ramp3_ptree(sf)));}
@@ -3690,7 +3690,7 @@ static Float next_sample_to_float_with_ramp_ptree_air(snd_fd *sf)
       val = sf->curval;
       sf->curval += sf->incr;
       sf->loc++;
-      return(val * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+      return(val * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), true));
     }
 }
 
@@ -3704,7 +3704,7 @@ static Float previous_sample_to_float_with_ramp_ptree_air(snd_fd *sf)
       val = sf->curval;
       sf->curval -= sf->incr;
       sf->loc--;
-      return(val * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), FALSE));
+      return(val * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), false));
     }
 }
 
@@ -3727,7 +3727,7 @@ static Float next_sample_to_float_with_ramp2_ptree_air(snd_fd *sf)
   else 
     {
       sf->loc++;
-      return(next_ramp2_to_float(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+      return(next_ramp2_to_float(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), true));
     }
 }
 
@@ -3739,7 +3739,7 @@ static Float previous_sample_to_float_with_ramp2_ptree_air(snd_fd *sf)
     {
       sf->loc--;
       return(previous_ramp2_to_float(sf) *
-	     evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), FALSE));
+	     evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), false));
     }
 }
 
@@ -3763,7 +3763,7 @@ static Float next_sample_to_float_with_ramp3_ptree_air(snd_fd *sf)
   else
     {
       sf->loc++;
-      return(next_ramp3_to_float(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+      return(next_ramp3_to_float(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), true));
     }
 }
 
@@ -3774,7 +3774,7 @@ static Float previous_sample_to_float_with_ramp3_ptree_air(snd_fd *sf)
   else 
     {
       sf->loc--;
-      return(previous_ramp3_to_float(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), FALSE));
+      return(previous_ramp3_to_float(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), false));
     }
 }
 
@@ -3796,7 +3796,7 @@ static Float next_sample_to_float_with_xramp_ptree(snd_fd *sf)
   if (sf->loc > sf->last)
      return(next_sound_as_float(sf));
   else return(next_xramp_to_float(sf) * 
-	      evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+	      evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), true));
 }
 
 static Float previous_sample_to_float_with_xramp_ptree(snd_fd *sf)
@@ -3804,7 +3804,7 @@ static Float previous_sample_to_float_with_xramp_ptree(snd_fd *sf)
   if (sf->loc < sf->first)
     return(previous_sound_as_float(sf));
   else return(previous_xramp_to_float(sf) *
-	      evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), FALSE));
+	      evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), false));
 }
 
 static mus_sample_t previous_sample_with_xramp_ptree(snd_fd *sf) {return(MUS_FLOAT_TO_SAMPLE(previous_sample_to_float_with_xramp_ptree(sf)));}
@@ -3817,7 +3817,7 @@ static Float next_sample_to_float_with_xramp_ptree_air(snd_fd *sf)
   else 
     {
       sf->loc++;
-      return(next_xramp_to_float(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+      return(next_xramp_to_float(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), true));
     }
 }
 
@@ -3828,7 +3828,7 @@ static Float previous_sample_to_float_with_xramp_ptree_air(snd_fd *sf)
   else 
     {
       sf->loc--;
-      return(previous_xramp_to_float(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), FALSE));
+      return(previous_xramp_to_float(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), false));
     }
 }
 
@@ -3850,7 +3850,7 @@ static Float next_sample_to_float_with_xramp2_ptree(snd_fd *sf)
   if (sf->loc > sf->last)
      return(next_sound_as_float(sf));
   else return(next_xramp2_to_float(sf) * 
-	      evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+	      evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), true));
 }
 
 static Float previous_sample_to_float_with_xramp2_ptree(snd_fd *sf)
@@ -3858,7 +3858,7 @@ static Float previous_sample_to_float_with_xramp2_ptree(snd_fd *sf)
   if (sf->loc < sf->first)
     return(previous_sound_as_float(sf));
   else return(previous_xramp2_to_float(sf) *
-	      evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), FALSE));
+	      evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), false));
 }
 
 static mus_sample_t previous_sample_with_xramp2_ptree(snd_fd *sf) {return(MUS_FLOAT_TO_SAMPLE(previous_sample_to_float_with_xramp2_ptree(sf)));}
@@ -3871,7 +3871,7 @@ static Float next_sample_to_float_with_xramp2_ptree_air(snd_fd *sf)
   else 
     {
       sf->loc++;
-      return(next_xramp2_to_float(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+      return(next_xramp2_to_float(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), true));
     }
 }
 
@@ -3882,7 +3882,7 @@ static Float previous_sample_to_float_with_xramp2_ptree_air(snd_fd *sf)
   else 
     {
       sf->loc--;
-      return(previous_xramp2_to_float(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), FALSE));
+      return(previous_xramp2_to_float(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), false));
     }
 }
 
@@ -3903,7 +3903,7 @@ static Float next_sample_to_float_with_ramp_xramp_ptree(snd_fd *sf)
   if (sf->loc > sf->last)
      return(next_sound_as_float(sf));
   else return(next_ramp_xramp_to_float(sf) * 
-	      evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+	      evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), true));
 }
 
 static Float previous_sample_to_float_with_ramp_xramp_ptree(snd_fd *sf)
@@ -3911,7 +3911,7 @@ static Float previous_sample_to_float_with_ramp_xramp_ptree(snd_fd *sf)
   if (sf->loc < sf->first)
     return(previous_sound_as_float(sf));
   else return(previous_ramp_xramp_to_float(sf) *
-	      evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), FALSE));
+	      evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), false));
 }
 
 static mus_sample_t previous_sample_with_ramp_xramp_ptree(snd_fd *sf) 
@@ -3931,7 +3931,7 @@ static Float next_sample_to_float_with_ramp_xramp_ptree_air(snd_fd *sf)
   else 
     {
       sf->loc++;
-      return(next_ramp_xramp_to_float(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+      return(next_ramp_xramp_to_float(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), true));
     }
 }
 
@@ -3942,7 +3942,7 @@ static Float previous_sample_to_float_with_ramp_xramp_ptree_air(snd_fd *sf)
   else 
     {
       sf->loc--;
-      return(previous_ramp_xramp_to_float(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), FALSE));
+      return(previous_ramp_xramp_to_float(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), false));
     }
 }
 
@@ -3963,7 +3963,7 @@ static Float next_sample_to_float_with_ramp2_xramp_ptree(snd_fd *sf)
   if (sf->loc > sf->last)
      return(next_sound_as_float(sf));
   else return(next_ramp2_xramp_to_float(sf) * 
-	      evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+	      evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), true));
 }
 
 static Float previous_sample_to_float_with_ramp2_xramp_ptree(snd_fd *sf)
@@ -3971,7 +3971,7 @@ static Float previous_sample_to_float_with_ramp2_xramp_ptree(snd_fd *sf)
   if (sf->loc < sf->first)
     return(previous_sound_as_float(sf));
   else return(previous_ramp2_xramp_to_float(sf) *
-	      evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), FALSE));
+	      evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), false));
 }
 
 static mus_sample_t previous_sample_with_ramp2_xramp_ptree(snd_fd *sf) 
@@ -3991,7 +3991,7 @@ static Float next_sample_to_float_with_ramp2_xramp_ptree_air(snd_fd *sf)
   else 
     {
       sf->loc++;
-      return(next_ramp2_xramp_to_float(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+      return(next_ramp2_xramp_to_float(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), true));
     }
 }
 
@@ -4002,7 +4002,7 @@ static Float previous_sample_to_float_with_ramp2_xramp_ptree_air(snd_fd *sf)
   else 
     {
       sf->loc--;
-      return(previous_ramp2_xramp_to_float(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), FALSE));
+      return(previous_ramp2_xramp_to_float(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), false));
     }
 }
 
@@ -4023,7 +4023,7 @@ static Float next_sample_to_float_with_xramp_ramp_ptree(snd_fd *sf)
   if (sf->loc > sf->last)
      return(next_sound_as_float(sf));
   else return(next_xramp_ramp_to_float(sf) * 
-	      evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+	      evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), true));
 }
 
 static Float previous_sample_to_float_with_xramp_ramp_ptree(snd_fd *sf)
@@ -4031,7 +4031,7 @@ static Float previous_sample_to_float_with_xramp_ramp_ptree(snd_fd *sf)
   if (sf->loc < sf->first)
     return(previous_sound_as_float(sf));
   else return(previous_xramp_ramp_to_float(sf) *
-	      evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), FALSE));
+	      evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), false));
 }
 
 static mus_sample_t previous_sample_with_xramp_ramp_ptree(snd_fd *sf) 
@@ -4051,7 +4051,7 @@ static Float next_sample_to_float_with_xramp_ramp_ptree_air(snd_fd *sf)
   else 
     {
       sf->loc++;
-      return(next_xramp_ramp_to_float(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+      return(next_xramp_ramp_to_float(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), true));
     }
 }
 
@@ -4062,7 +4062,7 @@ static Float previous_sample_to_float_with_xramp_ramp_ptree_air(snd_fd *sf)
   else 
     {
       sf->loc--;
-      return(previous_xramp_ramp_to_float(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), FALSE));
+      return(previous_xramp_ramp_to_float(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), false));
     }
 }
 
@@ -4083,7 +4083,7 @@ static Float next_sample_to_float_with_ramp_xramp_ramp_ptree(snd_fd *sf)
   if (sf->loc > sf->last)
      return(next_sound_as_float(sf));
   else return(next_ramp_xramp_ramp_to_float(sf) * 
-	      evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+	      evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), true));
 }
 
 static Float previous_sample_to_float_with_ramp_xramp_ramp_ptree(snd_fd *sf)
@@ -4091,7 +4091,7 @@ static Float previous_sample_to_float_with_ramp_xramp_ramp_ptree(snd_fd *sf)
   if (sf->loc < sf->first)
     return(previous_sound_as_float(sf));
   else return(previous_ramp_xramp_ramp_to_float(sf) *
-	      evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), FALSE));
+	      evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), false));
 }
 
 static mus_sample_t previous_sample_with_ramp_xramp_ramp_ptree(snd_fd *sf) 
@@ -4111,7 +4111,7 @@ static Float next_sample_to_float_with_ramp_xramp_ramp_ptree_air(snd_fd *sf)
   else 
     {
       sf->loc++;
-      return(next_ramp_xramp_ramp_to_float(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+      return(next_ramp_xramp_ramp_to_float(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), true));
     }
 }
 
@@ -4122,7 +4122,7 @@ static Float previous_sample_to_float_with_ramp_xramp_ramp_ptree_air(snd_fd *sf)
   else 
     {
       sf->loc--;
-      return(previous_ramp_xramp_ramp_to_float(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), FALSE));
+      return(previous_ramp_xramp_ramp_to_float(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), false));
     }
 }
 
@@ -4146,7 +4146,7 @@ static Float next_sample_to_float_with_ramp_ptree_ramp(snd_fd *sf)
   else 
     {
       Float val; /* 2 has reader scale, 1 has ptree scale */
-      val = sf->curval2 * evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * sf->curval, (vct *)XEN_OBJECT_REF(sf->closure), TRUE);
+      val = sf->curval2 * evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * sf->curval, (vct *)XEN_OBJECT_REF(sf->closure), true);
       sf->curval += sf->incr;
       sf->curval2 += sf->incr2;
       return(val);
@@ -4160,7 +4160,7 @@ static Float previous_sample_to_float_with_ramp_ptree_ramp(snd_fd *sf)
   else 
     {
       Float val;
-      val = sf->curval2 * evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * sf->curval, (vct *)XEN_OBJECT_REF(sf->closure), FALSE);
+      val = sf->curval2 * evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * sf->curval, (vct *)XEN_OBJECT_REF(sf->closure), false);
       sf->curval -= sf->incr;
       sf->curval2 -= sf->incr2;
       return(val);
@@ -4186,7 +4186,7 @@ static Float next_sample_to_float_with_ramp2_ptree_ramp(snd_fd *sf)
   else 
     {
       Float val; /* 2 has reader scale, 1 has ptree scale */
-      val = sf->curval2 * sf->curval3 * evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * sf->curval, (vct *)XEN_OBJECT_REF(sf->closure), TRUE);
+      val = sf->curval2 * sf->curval3 * evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * sf->curval, (vct *)XEN_OBJECT_REF(sf->closure), true);
       sf->curval += sf->incr;
       sf->curval2 += sf->incr2;
       sf->curval3 += sf->incr3;
@@ -4201,7 +4201,7 @@ static Float previous_sample_to_float_with_ramp2_ptree_ramp(snd_fd *sf)
   else 
     {
       Float val;
-      val = sf->curval2 * sf->curval3 * evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * sf->curval, (vct *)XEN_OBJECT_REF(sf->closure), FALSE);
+      val = sf->curval2 * sf->curval3 * evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * sf->curval, (vct *)XEN_OBJECT_REF(sf->closure), false);
       sf->curval -= sf->incr;
       sf->curval2 -= sf->incr2;
       sf->curval3 -= sf->incr3;
@@ -4229,7 +4229,7 @@ static Float next_sample_to_float_with_ramp_ptree_ramp2(snd_fd *sf)
   else 
     {
       Float val; /* 2 has reader scale, 1 has ptree scale */
-      val = sf->curval3 * evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * next_ramp2_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), TRUE);
+      val = sf->curval3 * evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * next_ramp2_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), true);
       sf->curval3 += sf->incr3;
       return(val);
     }
@@ -4242,7 +4242,7 @@ static Float previous_sample_to_float_with_ramp_ptree_ramp2(snd_fd *sf)
   else 
     {
       Float val;
-      val = sf->curval3 * evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * previous_ramp2_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), FALSE);
+      val = sf->curval3 * evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * previous_ramp2_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), false);
       sf->curval3 -= sf->incr3;
       return(val);
     }
@@ -4263,7 +4263,7 @@ static Float next_sample_to_float_with_ramp_ptree_xramp(snd_fd *sf)
       Float val;
       val = sf->curval2;
       sf->curval2 += sf->incr2;
-      return(val * evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * next_ptree_xramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+      return(val * evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * next_ptree_xramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), true));
     }
 }
 
@@ -4276,7 +4276,7 @@ static Float previous_sample_to_float_with_ramp_ptree_xramp(snd_fd *sf)
       Float val;
       val = sf->curval2;
       sf->curval2 -= sf->incr2;
-      return(val * evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * previous_ptree_xramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), FALSE));
+      return(val * evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * previous_ptree_xramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), false));
     }
 }
 
@@ -4296,7 +4296,7 @@ static Float next_sample_to_float_with_ramp2_ptree_xramp(snd_fd *sf)
       val = sf->curval2 * sf->curval3;
       sf->curval2 += sf->incr2;
       sf->curval3 += sf->incr3;
-      return(val * evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * next_ptree_xramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+      return(val * evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * next_ptree_xramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), true));
     }
 }
 
@@ -4310,7 +4310,7 @@ static Float previous_sample_to_float_with_ramp2_ptree_xramp(snd_fd *sf)
       val = sf->curval2 * sf->curval3;
       sf->curval2 -= sf->incr2;
       sf->curval3 -= sf->incr3;
-      return(val * evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * previous_ptree_xramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), FALSE));
+      return(val * evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * previous_ptree_xramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), false));
     }
 }
 
@@ -4329,7 +4329,7 @@ static Float next_sample_to_float_with_xramp_ptree_ramp(snd_fd *sf)
       Float val;
       val = sf->curval;
       sf->curval += sf->incr;
-      return(next_xramp_2_to_float(sf) * evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * val, (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+      return(next_xramp_2_to_float(sf) * evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * val, (vct *)XEN_OBJECT_REF(sf->closure), true));
     }
 }
 
@@ -4342,7 +4342,7 @@ static Float previous_sample_to_float_with_xramp_ptree_ramp(snd_fd *sf)
       Float val;
       val = sf->curval;
       sf->curval -= sf->incr;
-      return(previous_xramp_2_to_float(sf) * evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * val, (vct *)XEN_OBJECT_REF(sf->closure), FALSE));
+      return(previous_xramp_2_to_float(sf) * evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * val, (vct *)XEN_OBJECT_REF(sf->closure), false));
     }
 }
 
@@ -4356,7 +4356,7 @@ static Float next_sample_to_float_with_ptree_ramp_xramp(snd_fd *sf)
   if (sf->loc > sf->last)
      return(next_sound_as_float(sf));
   else return(READER_SCALER(sf) * 
-	      evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * next_ramp_xramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+	      evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * next_ramp_xramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), true));
 }
 
 static Float previous_sample_to_float_with_ptree_ramp_xramp(snd_fd *sf)
@@ -4364,7 +4364,7 @@ static Float previous_sample_to_float_with_ptree_ramp_xramp(snd_fd *sf)
   if (sf->loc < sf->first)
     return(previous_sound_as_float(sf));
   else return(READER_SCALER(sf) * 
-	      evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * previous_ramp_xramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), FALSE));
+	      evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * previous_ramp_xramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), false));
 }
 
 static mus_sample_t next_sample_with_ptree_ramp_xramp(snd_fd *sf) {return(MUS_FLOAT_TO_SAMPLE(next_sample_to_float_with_ptree_ramp_xramp(sf)));}
@@ -4377,7 +4377,7 @@ static Float next_sample_to_float_with_ptree_ramp2_xramp(snd_fd *sf)
   if (sf->loc > sf->last)
      return(next_sound_as_float(sf));
   else return(READER_SCALER(sf) * 
-	      evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * next_ramp2_xramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+	      evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * next_ramp2_xramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), true));
 }
 
 static Float previous_sample_to_float_with_ptree_ramp2_xramp(snd_fd *sf)
@@ -4385,7 +4385,7 @@ static Float previous_sample_to_float_with_ptree_ramp2_xramp(snd_fd *sf)
   if (sf->loc < sf->first)
     return(previous_sound_as_float(sf));
   else return(READER_SCALER(sf) * 
-	      evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * previous_ramp2_xramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), FALSE));
+	      evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * previous_ramp2_xramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), false));
 }
 
 static mus_sample_t next_sample_with_ptree_ramp2_xramp(snd_fd *sf) {return(MUS_FLOAT_TO_SAMPLE(next_sample_to_float_with_ptree_ramp2_xramp(sf)));}
@@ -4398,7 +4398,7 @@ static Float next_sample_to_float_with_ptree_xramp_ramp(snd_fd *sf)
   if (sf->loc > sf->last)
      return(next_sound_as_float(sf));
   else return(READER_SCALER(sf) * 
-	      evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * next_xramp_ramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+	      evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * next_xramp_ramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), true));
 }
 
 static Float previous_sample_to_float_with_ptree_xramp_ramp(snd_fd *sf)
@@ -4406,7 +4406,7 @@ static Float previous_sample_to_float_with_ptree_xramp_ramp(snd_fd *sf)
   if (sf->loc < sf->first)
     return(previous_sound_as_float(sf));
   else return(READER_SCALER(sf) * 
-	      evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * previous_xramp_ramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), FALSE));
+	      evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * previous_xramp_ramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), false));
 }
 
 static mus_sample_t next_sample_with_ptree_xramp_ramp(snd_fd *sf) {return(MUS_FLOAT_TO_SAMPLE(next_sample_to_float_with_ptree_xramp_ramp(sf)));}
@@ -4419,7 +4419,7 @@ static Float next_sample_to_float_with_ptree_ramp_xramp_ramp(snd_fd *sf)
   if (sf->loc > sf->last)
      return(next_sound_as_float(sf));
   else return(READER_SCALER(sf) * 
-	      evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * next_ramp_xramp_ramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+	      evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * next_ramp_xramp_ramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), true));
 }
 
 static Float previous_sample_to_float_with_ptree_ramp_xramp_ramp(snd_fd *sf)
@@ -4427,7 +4427,7 @@ static Float previous_sample_to_float_with_ptree_ramp_xramp_ramp(snd_fd *sf)
   if (sf->loc < sf->first)
     return(previous_sound_as_float(sf));
   else return(READER_SCALER(sf) * 
-	      evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * previous_ramp_xramp_ramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), FALSE));
+	      evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * previous_ramp_xramp_ramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), false));
 }
 
 static mus_sample_t next_sample_with_ptree_ramp_xramp_ramp(snd_fd *sf) 
@@ -5040,9 +5040,9 @@ static Float next_sample_to_float_with_ptree2(snd_fd *sf)
 			      READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, 
 									 READER_PTREE_SCALER(sf) * sf->data[sf->loc++], 
 									 (vct *)XEN_OBJECT_REF(sf->closure), 
-									 TRUE), 
+									 true), 
 			      (vct *)XEN_OBJECT_REF(sf->closure1), 
-			      TRUE));
+			      true));
 }
 
 static Float previous_sample_to_float_with_ptree2(snd_fd *sf)
@@ -5054,9 +5054,9 @@ static Float previous_sample_to_float_with_ptree2(snd_fd *sf)
 			      READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, 
 									 READER_PTREE_SCALER(sf) * sf->data[sf->loc--], 
 									 (vct *)XEN_OBJECT_REF(sf->closure), 
-									 FALSE), 
+									 false), 
 			      (vct *)XEN_OBJECT_REF(sf->closure1), 
-			      FALSE));
+			      false));
 }
 
 static mus_sample_t next_sample_with_ptree2(snd_fd *sf) {return(MUS_FLOAT_TO_SAMPLE(next_sample_to_float_with_ptree2(sf)));}
@@ -5074,8 +5074,8 @@ static Float next_sample_to_float_with_ptree2_zero(snd_fd *sf)
       sf->loc++;
       return(READER_SCALER(sf) * 
 	     evaluate_ptreec(sf->ptree1, 
-			     READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), TRUE), 
-			     (vct *)XEN_OBJECT_REF(sf->closure1), TRUE));
+			     READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), true), 
+			     (vct *)XEN_OBJECT_REF(sf->closure1), true));
     }
 }
 
@@ -5088,8 +5088,8 @@ static Float previous_sample_to_float_with_ptree2_zero(snd_fd *sf)
       sf->loc--;
       return(READER_SCALER(sf) * 
 	     evaluate_ptreec(sf->ptree1, 
-			     READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), FALSE), 
-			     (vct *)XEN_OBJECT_REF(sf->closure1), FALSE));
+			     READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), false), 
+			     (vct *)XEN_OBJECT_REF(sf->closure1), false));
     }
 }
 
@@ -5111,8 +5111,8 @@ static Float next_sample_to_float_with_ptree2_ramp(snd_fd *sf)
       /* curval and incr have possible post-ramp but pre-ptree scaling embedded (choose_accessor) */
       return(READER_SCALER(sf) * 
 	     evaluate_ptreec(sf->ptree1, 
-			     READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), TRUE), 
-			     (vct *)XEN_OBJECT_REF(sf->closure1), TRUE));
+			     READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), true), 
+			     (vct *)XEN_OBJECT_REF(sf->closure1), true));
     }
 }
 
@@ -5127,8 +5127,8 @@ static Float previous_sample_to_float_with_ptree2_ramp(snd_fd *sf)
       sf->curval -= sf->incr;
       return(READER_SCALER(sf) * 
 	     evaluate_ptreec(sf->ptree1, 
-			     READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), FALSE), 
-			     (vct *)XEN_OBJECT_REF(sf->closure1), FALSE));
+			     READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), false), 
+			     (vct *)XEN_OBJECT_REF(sf->closure1), false));
     }
 }
 
@@ -5149,8 +5149,8 @@ static Float next_sample_to_float_with_ramp_ptree2(snd_fd *sf)
       return(val * evaluate_ptreec(sf->ptree1, 
 				   READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, 
 									      READER_PTREE_SCALER(sf) * sf->data[sf->loc++], 
-									      (vct *)XEN_OBJECT_REF(sf->closure), TRUE), 
-				   (vct *)XEN_OBJECT_REF(sf->closure1), TRUE));
+									      (vct *)XEN_OBJECT_REF(sf->closure), true), 
+				   (vct *)XEN_OBJECT_REF(sf->closure1), true));
     }
 }
 
@@ -5166,8 +5166,8 @@ static Float previous_sample_to_float_with_ramp_ptree2(snd_fd *sf)
       return(val * evaluate_ptreec(sf->ptree1, 
 				   READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, 
 									      READER_PTREE_SCALER(sf) * sf->data[sf->loc--], 
-									      (vct *)XEN_OBJECT_REF(sf->closure), FALSE), 
-				   (vct *)XEN_OBJECT_REF(sf->closure1), FALSE));
+									      (vct *)XEN_OBJECT_REF(sf->closure), false), 
+				   (vct *)XEN_OBJECT_REF(sf->closure1), false));
     }
 }
 
@@ -5185,8 +5185,8 @@ static Float next_sample_to_float_with_ramp_ptree2_zero(snd_fd *sf)
       sf->curval += sf->incr;
       sf->loc++;
       return(val * evaluate_ptreec(sf->ptree1, 
-				   READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), TRUE), 
-				   (vct *)XEN_OBJECT_REF(sf->closure1), TRUE));
+				   READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), true), 
+				   (vct *)XEN_OBJECT_REF(sf->closure1), true));
     }
 }
 
@@ -5201,8 +5201,8 @@ static Float previous_sample_to_float_with_ramp_ptree2_zero(snd_fd *sf)
       sf->curval -= sf->incr;
       sf->loc--;
       return(val * evaluate_ptreec(sf->ptree1, 
-				   READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), FALSE), 
-				   (vct *)XEN_OBJECT_REF(sf->closure1), FALSE));
+				   READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), false), 
+				   (vct *)XEN_OBJECT_REF(sf->closure1), false));
     }
 }
 
@@ -5219,8 +5219,8 @@ static Float next_sample_to_float_with_ramp2_ptree2(snd_fd *sf)
 	      evaluate_ptreec(sf->ptree1, 
 			      READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, 
 									 READER_PTREE_SCALER(sf) * sf->data[sf->loc++], 
-									 (vct *)XEN_OBJECT_REF(sf->closure), TRUE), 
-			      (vct *)XEN_OBJECT_REF(sf->closure1), TRUE));
+									 (vct *)XEN_OBJECT_REF(sf->closure), true), 
+			      (vct *)XEN_OBJECT_REF(sf->closure1), true));
 }
 
 static Float previous_sample_to_float_with_ramp2_ptree2(snd_fd *sf)
@@ -5231,8 +5231,8 @@ static Float previous_sample_to_float_with_ramp2_ptree2(snd_fd *sf)
 	      evaluate_ptreec(sf->ptree1, 
 			      READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, 
 									 READER_PTREE_SCALER(sf) * sf->data[sf->loc--], 
-									 (vct *)XEN_OBJECT_REF(sf->closure), FALSE), 
-			      (vct *)XEN_OBJECT_REF(sf->closure1), FALSE));
+									 (vct *)XEN_OBJECT_REF(sf->closure), false), 
+			      (vct *)XEN_OBJECT_REF(sf->closure1), false));
 }
 
 static mus_sample_t next_sample_with_ramp2_ptree2(snd_fd *sf) {return(MUS_FLOAT_TO_SAMPLE(next_sample_to_float_with_ramp2_ptree2(sf)));}
@@ -5247,8 +5247,8 @@ static Float next_sample_to_float_with_ramp2_ptree2_zero(snd_fd *sf)
       sf->loc++;
       return(next_ramp2_to_float(sf) * 
 	     evaluate_ptreec(sf->ptree1, 
-			     READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), TRUE), 
-			     (vct *)XEN_OBJECT_REF(sf->closure1), TRUE));
+			     READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), true), 
+			     (vct *)XEN_OBJECT_REF(sf->closure1), true));
     }
 }
 
@@ -5261,8 +5261,8 @@ static Float previous_sample_to_float_with_ramp2_ptree2_zero(snd_fd *sf)
       sf->loc--;
       return(previous_ramp2_to_float(sf) * 
 	     evaluate_ptreec(sf->ptree1, 
-			     READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), FALSE), 
-			     (vct *)XEN_OBJECT_REF(sf->closure1), FALSE));
+			     READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), false), 
+			     (vct *)XEN_OBJECT_REF(sf->closure1), false));
     }
 }
 
@@ -5286,8 +5286,8 @@ static Float next_sample_to_float_with_ramp3_ptree2(snd_fd *sf)
 	      evaluate_ptreec(sf->ptree1, 
 			      READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, 
 									 READER_PTREE_SCALER(sf) * sf->data[sf->loc++], 
-									 (vct *)XEN_OBJECT_REF(sf->closure), TRUE), 
-			      (vct *)XEN_OBJECT_REF(sf->closure1), TRUE));
+									 (vct *)XEN_OBJECT_REF(sf->closure), true), 
+			      (vct *)XEN_OBJECT_REF(sf->closure1), true));
 }
 
 static Float previous_sample_to_float_with_ramp3_ptree2(snd_fd *sf)
@@ -5298,8 +5298,8 @@ static Float previous_sample_to_float_with_ramp3_ptree2(snd_fd *sf)
 	      evaluate_ptreec(sf->ptree1, 
 			      READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, 
 									 READER_PTREE_SCALER(sf) * sf->data[sf->loc--], 
-									 (vct *)XEN_OBJECT_REF(sf->closure), FALSE), 
-			      (vct *)XEN_OBJECT_REF(sf->closure1), FALSE));
+									 (vct *)XEN_OBJECT_REF(sf->closure), false), 
+			      (vct *)XEN_OBJECT_REF(sf->closure1), false));
 }
 
 static mus_sample_t next_sample_with_ramp3_ptree2(snd_fd *sf) {return(MUS_FLOAT_TO_SAMPLE(next_sample_to_float_with_ramp3_ptree2(sf)));}
@@ -5314,8 +5314,8 @@ static Float next_sample_to_float_with_ramp3_ptree2_zero(snd_fd *sf)
       sf->loc++;
       return(next_ramp3_to_float(sf) * 
 	     evaluate_ptreec(sf->ptree1, 
-			     READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), TRUE), 
-			     (vct *)XEN_OBJECT_REF(sf->closure1), TRUE));
+			     READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), true), 
+			     (vct *)XEN_OBJECT_REF(sf->closure1), true));
     }
 }
 
@@ -5328,8 +5328,8 @@ static Float previous_sample_to_float_with_ramp3_ptree2_zero(snd_fd *sf)
       sf->loc--;
       return(previous_ramp3_to_float(sf) * 
 	     evaluate_ptreec(sf->ptree1, 
-			     READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), FALSE), 
-			     (vct *)XEN_OBJECT_REF(sf->closure1), FALSE));
+			     READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), false), 
+			     (vct *)XEN_OBJECT_REF(sf->closure1), false));
     }
 }
 
@@ -5353,8 +5353,8 @@ static Float next_sample_to_float_with_xramp_ptree2(snd_fd *sf)
 	      evaluate_ptreec(sf->ptree1, 
 			      READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, 
 									 READER_PTREE_SCALER(sf) * sf->data[sf->loc++], 
-									 (vct *)XEN_OBJECT_REF(sf->closure), TRUE), 
-			      (vct *)XEN_OBJECT_REF(sf->closure1), TRUE));
+									 (vct *)XEN_OBJECT_REF(sf->closure), true), 
+			      (vct *)XEN_OBJECT_REF(sf->closure1), true));
 }
 
 static Float previous_sample_to_float_with_xramp_ptree2(snd_fd *sf)
@@ -5365,8 +5365,8 @@ static Float previous_sample_to_float_with_xramp_ptree2(snd_fd *sf)
 	      evaluate_ptreec(sf->ptree1, 
 			      READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, 
 									 READER_PTREE_SCALER(sf) * sf->data[sf->loc--], 
-									 (vct *)XEN_OBJECT_REF(sf->closure), FALSE), 
-			      (vct *)XEN_OBJECT_REF(sf->closure1), FALSE));
+									 (vct *)XEN_OBJECT_REF(sf->closure), false), 
+			      (vct *)XEN_OBJECT_REF(sf->closure1), false));
 }
 
 static mus_sample_t next_sample_with_xramp_ptree2(snd_fd *sf) {return(MUS_FLOAT_TO_SAMPLE(next_sample_to_float_with_xramp_ptree2(sf)));}
@@ -5381,8 +5381,8 @@ static Float next_sample_to_float_with_xramp_ptree2_zero(snd_fd *sf)
       sf->loc++;
       return(next_xramp_to_float(sf) * 
 	     evaluate_ptreec(sf->ptree1, 
-			     READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), TRUE), 
-			     (vct *)XEN_OBJECT_REF(sf->closure1), TRUE));
+			     READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), true), 
+			     (vct *)XEN_OBJECT_REF(sf->closure1), true));
     }
 }
 
@@ -5395,8 +5395,8 @@ static Float previous_sample_to_float_with_xramp_ptree2_zero(snd_fd *sf)
       sf->loc--;
       return(previous_xramp_to_float(sf) *
 	     evaluate_ptreec(sf->ptree1, 
-			     READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), FALSE), 
-			     (vct *)XEN_OBJECT_REF(sf->closure1), FALSE));
+			     READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), false), 
+			     (vct *)XEN_OBJECT_REF(sf->closure1), false));
     }
 }
 
@@ -5424,8 +5424,8 @@ static Float next_sample_to_float_with_ptree_ramp_ptree(snd_fd *sf)
       sf->curval += sf->incr;
       return(READER_SCALER(sf) * 
 	     evaluate_ptreec(sf->ptree1, 
-			     val * evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), TRUE), 
-			     (vct *)XEN_OBJECT_REF(sf->closure1), TRUE));
+			     val * evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), true), 
+			     (vct *)XEN_OBJECT_REF(sf->closure1), true));
     }
 }
 
@@ -5440,8 +5440,8 @@ static Float previous_sample_to_float_with_ptree_ramp_ptree(snd_fd *sf)
       sf->curval -= sf->incr;
       return(READER_SCALER(sf) * 
 	     evaluate_ptreec(sf->ptree1, 
-			     val * evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), FALSE), 
-			     (vct *)XEN_OBJECT_REF(sf->closure1), FALSE));
+			     val * evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), false), 
+			     (vct *)XEN_OBJECT_REF(sf->closure1), false));
     }
 }
 
@@ -5459,8 +5459,8 @@ static Float next_sample_to_float_with_ptree_ramp_ptree_air(snd_fd *sf)
       val = sf->curval; /* has ptree2 scaler */
       sf->curval += sf->incr;
       return(READER_SCALER(sf) * 
-	     evaluate_ptreec(sf->ptree1, val * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), TRUE), 
-			     (vct *)XEN_OBJECT_REF(sf->closure1), TRUE));
+	     evaluate_ptreec(sf->ptree1, val * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), true), 
+			     (vct *)XEN_OBJECT_REF(sf->closure1), true));
     }
 }
 
@@ -5476,8 +5476,8 @@ static Float previous_sample_to_float_with_ptree_ramp_ptree_air(snd_fd *sf)
       sf->curval -= sf->incr;
       return(READER_SCALER(sf) * 
 	     evaluate_ptreec(sf->ptree1, 
-			     val * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), FALSE), 
-			     (vct *)XEN_OBJECT_REF(sf->closure1), FALSE));
+			     val * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), false), 
+			     (vct *)XEN_OBJECT_REF(sf->closure1), false));
     }
 }
 
@@ -5506,8 +5506,8 @@ static Float next_sample_to_float_with_ptree_ramp2_ptree(snd_fd *sf)
       sf->curval2 += sf->incr2;
       return(READER_SCALER(sf) * 
 	     evaluate_ptreec(sf->ptree1, 
-			     val * evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), TRUE), 
-			     (vct *)XEN_OBJECT_REF(sf->closure1), TRUE));
+			     val * evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), true), 
+			     (vct *)XEN_OBJECT_REF(sf->closure1), true));
     }
 }
 
@@ -5523,8 +5523,8 @@ static Float previous_sample_to_float_with_ptree_ramp2_ptree(snd_fd *sf)
       sf->curval2 -= sf->incr2;
       return(READER_SCALER(sf) * 
 	     evaluate_ptreec(sf->ptree1, 
-			     val * evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), FALSE), 
-			     (vct *)XEN_OBJECT_REF(sf->closure1), FALSE));
+			     val * evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), false), 
+			     (vct *)XEN_OBJECT_REF(sf->closure1), false));
     }
 }
 
@@ -5550,8 +5550,8 @@ static Float next_sample_to_float_with_ptree_ramp2_ptree_air(snd_fd *sf)
       sf->curval += sf->incr;
       sf->curval2 += sf->incr2;
       return(READER_SCALER(sf) * 
-	     evaluate_ptreec(sf->ptree1, val * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), TRUE), 
-			     (vct *)XEN_OBJECT_REF(sf->closure1), TRUE));
+	     evaluate_ptreec(sf->ptree1, val * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), true), 
+			     (vct *)XEN_OBJECT_REF(sf->closure1), true));
     }
 }
 
@@ -5568,8 +5568,8 @@ static Float previous_sample_to_float_with_ptree_ramp2_ptree_air(snd_fd *sf)
       sf->curval2 -= sf->incr2;
       return(READER_SCALER(sf) * 
 	     evaluate_ptreec(sf->ptree1, 
-			     val * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), FALSE), 
-			     (vct *)XEN_OBJECT_REF(sf->closure1), FALSE));
+			     val * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), false), 
+			     (vct *)XEN_OBJECT_REF(sf->closure1), false));
     }
 }
 
@@ -5598,8 +5598,8 @@ static Float next_sample_to_float_with_ptree_ramp3_ptree(snd_fd *sf)
       sf->curval3 += sf->incr3;
       return(READER_SCALER(sf) * 
 	     evaluate_ptreec(sf->ptree1, 
-			     val * evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), TRUE), 
-			     (vct *)XEN_OBJECT_REF(sf->closure1), TRUE));
+			     val * evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), true), 
+			     (vct *)XEN_OBJECT_REF(sf->closure1), true));
     }
 }
 
@@ -5616,8 +5616,8 @@ static Float previous_sample_to_float_with_ptree_ramp3_ptree(snd_fd *sf)
       sf->curval3 -= sf->incr3;
       return(READER_SCALER(sf) * 
 	     evaluate_ptreec(sf->ptree1, 
-			     val * evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), FALSE), 
-			     (vct *)XEN_OBJECT_REF(sf->closure1), FALSE));
+			     val * evaluate_ptreec(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), false), 
+			     (vct *)XEN_OBJECT_REF(sf->closure1), false));
     }
 }
 
@@ -5644,8 +5644,8 @@ static Float next_sample_to_float_with_ptree_ramp3_ptree_air(snd_fd *sf)
       sf->curval2 += sf->incr2;
       sf->curval3 += sf->incr3;
       return(READER_SCALER(sf) * 
-	     evaluate_ptreec(sf->ptree1, val * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), TRUE), 
-			     (vct *)XEN_OBJECT_REF(sf->closure1), TRUE));
+	     evaluate_ptreec(sf->ptree1, val * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), true), 
+			     (vct *)XEN_OBJECT_REF(sf->closure1), true));
     }
 }
 
@@ -5663,8 +5663,8 @@ static Float previous_sample_to_float_with_ptree_ramp3_ptree_air(snd_fd *sf)
       sf->curval3 -= sf->incr3;
       return(READER_SCALER(sf) * 
 	     evaluate_ptreec(sf->ptree1, 
-			     val * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), FALSE), 
-			     (vct *)XEN_OBJECT_REF(sf->closure1), FALSE));
+			     val * evaluate_ptreec(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), false), 
+			     (vct *)XEN_OBJECT_REF(sf->closure1), false));
     }
 }
 
@@ -5693,8 +5693,8 @@ static Float next_sample_to_float_with_ptree2_ramp2(snd_fd *sf)
       sf->curval2 += sf->incr2;
       return(READER_SCALER(sf) * 
 	     evaluate_ptreec(sf->ptree1, 
-			     READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), TRUE), 
-			     (vct *)XEN_OBJECT_REF(sf->closure1), TRUE));
+			     READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), true), 
+			     (vct *)XEN_OBJECT_REF(sf->closure1), true));
     }
 }
 
@@ -5710,8 +5710,8 @@ static Float previous_sample_to_float_with_ptree2_ramp2(snd_fd *sf)
       sf->curval2 -= sf->incr2;
       return(READER_SCALER(sf) * 
 	     evaluate_ptreec(sf->ptree1, 
-			     READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), FALSE), 
-			     (vct *)XEN_OBJECT_REF(sf->closure1), FALSE));
+			     READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), false), 
+			     (vct *)XEN_OBJECT_REF(sf->closure1), false));
     }
 }
 
@@ -5733,8 +5733,8 @@ static Float next_sample_to_float_with_ptree2_ramp3(snd_fd *sf)
       sf->curval3 += sf->incr3;
       return(READER_SCALER(sf) * 
 	     evaluate_ptreec(sf->ptree1, 
-			     READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), TRUE), 
-			     (vct *)XEN_OBJECT_REF(sf->closure1), TRUE));
+			     READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), true), 
+			     (vct *)XEN_OBJECT_REF(sf->closure1), true));
     }
 }
 
@@ -5751,8 +5751,8 @@ static Float previous_sample_to_float_with_ptree2_ramp3(snd_fd *sf)
       sf->curval3 -= sf->incr3;
       return(READER_SCALER(sf) * 
 	     evaluate_ptreec(sf->ptree1, 
-			     READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), FALSE), 
-			     (vct *)XEN_OBJECT_REF(sf->closure1), FALSE));
+			     READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), false), 
+			     (vct *)XEN_OBJECT_REF(sf->closure1), false));
     }
 }
 
@@ -5775,8 +5775,8 @@ static Float next_sample_to_float_with_ptree_ramp_ptree_ramp(snd_fd *sf)
       sf->curval2 += sf->incr2;
       return(READER_SCALER(sf) * 
 	     evaluate_ptreec(sf->ptree1, 
-			     val1 * evaluate_ptreec(sf->ptree, val * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), TRUE), 
-			     (vct *)XEN_OBJECT_REF(sf->closure1), TRUE));
+			     val1 * evaluate_ptreec(sf->ptree, val * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), true), 
+			     (vct *)XEN_OBJECT_REF(sf->closure1), true));
     }
 }
 
@@ -5793,8 +5793,8 @@ static Float previous_sample_to_float_with_ptree_ramp_ptree_ramp(snd_fd *sf)
       sf->curval2 -= sf->incr2;
       return(READER_SCALER(sf) * 
 	     evaluate_ptreec(sf->ptree1, 
-			     val1 * evaluate_ptreec(sf->ptree, val * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), FALSE), 
-			     (vct *)XEN_OBJECT_REF(sf->closure1), FALSE));
+			     val1 * evaluate_ptreec(sf->ptree, val * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), false), 
+			     (vct *)XEN_OBJECT_REF(sf->closure1), false));
     }
 }
 
@@ -5825,8 +5825,8 @@ static Float next_sample_to_float_with_ptree_ramp_ptree_ramp2(snd_fd *sf)
       sf->curval3 += sf->incr3;
       return(READER_SCALER(sf) * 
 	     evaluate_ptreec(sf->ptree1, 
-			     val1 * evaluate_ptreec(sf->ptree, val * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), TRUE), 
-			     (vct *)XEN_OBJECT_REF(sf->closure1), TRUE));
+			     val1 * evaluate_ptreec(sf->ptree, val * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), true), 
+			     (vct *)XEN_OBJECT_REF(sf->closure1), true));
     }
 }
 
@@ -5844,8 +5844,8 @@ static Float previous_sample_to_float_with_ptree_ramp_ptree_ramp2(snd_fd *sf)
       sf->curval3 -= sf->incr3;
       return(READER_SCALER(sf) * 
 	     evaluate_ptreec(sf->ptree1, 
-			     val1 * evaluate_ptreec(sf->ptree, val * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), FALSE), 
-			     (vct *)XEN_OBJECT_REF(sf->closure1), FALSE));
+			     val1 * evaluate_ptreec(sf->ptree, val * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), false), 
+			     (vct *)XEN_OBJECT_REF(sf->closure1), false));
     }
 }
 
@@ -5875,8 +5875,8 @@ static Float next_sample_to_float_with_ptree_ramp2_ptree_ramp(snd_fd *sf)
       sf->curval3 += sf->incr3;
       return(READER_SCALER(sf) * 
 	     evaluate_ptreec(sf->ptree1, 
-			     val1 * evaluate_ptreec(sf->ptree, val * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), TRUE), 
-			     (vct *)XEN_OBJECT_REF(sf->closure1), TRUE));
+			     val1 * evaluate_ptreec(sf->ptree, val * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), true), 
+			     (vct *)XEN_OBJECT_REF(sf->closure1), true));
     }
 }
 
@@ -5894,8 +5894,8 @@ static Float previous_sample_to_float_with_ptree_ramp2_ptree_ramp(snd_fd *sf)
       sf->curval3 -= sf->incr3;
       return(READER_SCALER(sf) * 
 	     evaluate_ptreec(sf->ptree1, 
-			     val1 * evaluate_ptreec(sf->ptree, val * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), FALSE), 
-			     (vct *)XEN_OBJECT_REF(sf->closure1), FALSE));
+			     val1 * evaluate_ptreec(sf->ptree, val * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), false), 
+			     (vct *)XEN_OBJECT_REF(sf->closure1), false));
     }
 }
 
@@ -5925,8 +5925,8 @@ static Float next_sample_to_float_with_ramp_ptree_ramp_ptree_ramp(snd_fd *sf)
       sf->curval2 += sf->incr2;
       sf->curval3 += sf->incr3;
       return(val2 * evaluate_ptreec(sf->ptree1, 
-				    val1 * evaluate_ptreec(sf->ptree, val * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), TRUE), 
-				    (vct *)XEN_OBJECT_REF(sf->closure1), TRUE));
+				    val1 * evaluate_ptreec(sf->ptree, val * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), true), 
+				    (vct *)XEN_OBJECT_REF(sf->closure1), true));
     }
 }
 
@@ -5944,8 +5944,8 @@ static Float previous_sample_to_float_with_ramp_ptree_ramp_ptree_ramp(snd_fd *sf
       sf->curval2 -= sf->incr2;
       sf->curval3 -= sf->incr3;
       return(val2 * evaluate_ptreec(sf->ptree1, 
-				    val1 * evaluate_ptreec(sf->ptree, val * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), FALSE), 
-				    (vct *)XEN_OBJECT_REF(sf->closure1), FALSE));
+				    val1 * evaluate_ptreec(sf->ptree, val * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), false), 
+				    (vct *)XEN_OBJECT_REF(sf->closure1), false));
     }
 }
 
@@ -5969,8 +5969,8 @@ static Float next_sample_to_float_with_ptree2_xramp(snd_fd *sf)
 	      evaluate_ptreec(sf->ptree1, 
 			      READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, 
 									 sf->data[sf->loc++] * next_ptree_xramp_to_float(sf), 
-									 (vct *)XEN_OBJECT_REF(sf->closure), TRUE),
-			      (vct *)XEN_OBJECT_REF(sf->closure1), TRUE));
+									 (vct *)XEN_OBJECT_REF(sf->closure), true),
+			      (vct *)XEN_OBJECT_REF(sf->closure1), true));
 }
 
 static Float previous_sample_to_float_with_ptree2_xramp(snd_fd *sf)
@@ -5981,8 +5981,8 @@ static Float previous_sample_to_float_with_ptree2_xramp(snd_fd *sf)
 	      evaluate_ptreec(sf->ptree1, 
 			      READER_PTREE2_SCALER(sf) * evaluate_ptreec(sf->ptree, 
 									 sf->data[sf->loc--] * previous_ptree_xramp_to_float(sf), 
-									 (vct *)XEN_OBJECT_REF(sf->closure), FALSE),
-			      (vct *)XEN_OBJECT_REF(sf->closure1), FALSE));
+									 (vct *)XEN_OBJECT_REF(sf->closure), false),
+			      (vct *)XEN_OBJECT_REF(sf->closure1), false));
 }
 
 static mus_sample_t next_sample_with_ptree2_xramp(snd_fd *sf) {return(MUS_FLOAT_TO_SAMPLE(next_sample_to_float_with_ptree2_xramp(sf)));}
@@ -5998,8 +5998,8 @@ static Float next_sample_to_float_with_ptree_xramp_ptree(snd_fd *sf)
 	      evaluate_ptreec(sf->ptree1, 
 			      next_ptree_xramp_1_to_float(sf) * evaluate_ptreec(sf->ptree, 
 									      sf->data[sf->loc++] * READER_PTREE_SCALER(sf),
-									      (vct *)XEN_OBJECT_REF(sf->closure), TRUE),
-			      (vct *)XEN_OBJECT_REF(sf->closure1), TRUE));
+									      (vct *)XEN_OBJECT_REF(sf->closure), true),
+			      (vct *)XEN_OBJECT_REF(sf->closure1), true));
 }
 
 static Float previous_sample_to_float_with_ptree_xramp_ptree(snd_fd *sf)
@@ -6010,8 +6010,8 @@ static Float previous_sample_to_float_with_ptree_xramp_ptree(snd_fd *sf)
 	      evaluate_ptreec(sf->ptree1, 
 			      previous_ptree_xramp_1_to_float(sf) * evaluate_ptreec(sf->ptree, 
 										    sf->data[sf->loc--] * READER_PTREE_SCALER(sf),
-										    (vct *)XEN_OBJECT_REF(sf->closure), FALSE),
-			      (vct *)XEN_OBJECT_REF(sf->closure1), FALSE));
+										    (vct *)XEN_OBJECT_REF(sf->closure), false),
+			      (vct *)XEN_OBJECT_REF(sf->closure1), false));
 }
 
 static mus_sample_t next_sample_with_ptree_xramp_ptree(snd_fd *sf) 
@@ -6036,8 +6036,8 @@ static Float next_sample_to_float_with_ptree_xramp_ptree_air(snd_fd *sf)
 	     evaluate_ptreec(sf->ptree1, 
 			     next_ptree_xramp_1_to_float(sf) * evaluate_ptreec(sf->ptree, 
 									       0.0,
-									       (vct *)XEN_OBJECT_REF(sf->closure), TRUE),
-			     (vct *)XEN_OBJECT_REF(sf->closure1), TRUE));
+									       (vct *)XEN_OBJECT_REF(sf->closure), true),
+			     (vct *)XEN_OBJECT_REF(sf->closure1), true));
     }
 }
 
@@ -6052,8 +6052,8 @@ static Float previous_sample_to_float_with_ptree_xramp_ptree_air(snd_fd *sf)
 	     evaluate_ptreec(sf->ptree1, 
 			     previous_ptree_xramp_1_to_float(sf) * evaluate_ptreec(sf->ptree, 
 										   0.0,
-										   (vct *)XEN_OBJECT_REF(sf->closure), FALSE),
-			     (vct *)XEN_OBJECT_REF(sf->closure1), FALSE));
+										   (vct *)XEN_OBJECT_REF(sf->closure), false),
+			     (vct *)XEN_OBJECT_REF(sf->closure1), false));
     }
 }
 
@@ -6111,7 +6111,7 @@ Float protected_previous_sample_to_float(snd_fd *sf)
 
 static void reader_out_of_data(snd_fd *sf)
 {
-  sf->at_eof = TRUE;
+  sf->at_eof = true;
   sf->run = end_sample;
   sf->runf = end_sample_to_float;
   sf->rev_run = end_sample;
@@ -7244,7 +7244,7 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, int 
 		  if (first_snd == NULL)
 		    return(cancel_reader(sf));
 		}
-	      first_snd->inuse = TRUE;
+	      first_snd->inuse = true;
 	      sf->current_sound = first_snd;
 	      sf->data = first_snd->buffered_data;
 	      if (direction == READ_FORWARD)
@@ -7311,7 +7311,7 @@ static void previous_sound_1 (snd_fd *sf)
       if (sf->current_sound) 
 	{
 	  prev_snd = sf->current_sound; 
-	  prev_snd->inuse = FALSE; 
+	  prev_snd->inuse = false; 
 	  sf->current_sound = NULL;
 	  if (prev_snd->copy) prev_snd = free_snd_data(prev_snd);
 	}
@@ -7343,7 +7343,7 @@ static void previous_sound_1 (snd_fd *sf)
 	      if (prev_snd->inuse) 
 		prev_snd = copy_snd_data(prev_snd, sf->cp, MIX_FILE_BUFFER_SIZE);
 	      sf->data = prev_snd->buffered_data;
-	      prev_snd->inuse = TRUE;
+	      prev_snd->inuse = true;
 	      sf->current_sound = prev_snd;
 	      file_buffers_back(ind0, ind1, ind1, sf, prev_snd);
 	    }
@@ -7384,7 +7384,7 @@ static void next_sound_1(snd_fd *sf)
 {
   off_t ind0, ind1, indx;
   snd_data *nxt_snd;
-  int at_end = FALSE;
+  bool at_end = false;
   at_end = ((sf->cb == NULL) || 
 	    (sf->current_sound == NULL) || 
 	    (READER_LOCAL_END(sf) <= sf->current_sound->io->end));
@@ -7393,7 +7393,7 @@ static void next_sound_1(snd_fd *sf)
       if (sf->current_sound) 
 	{
 	  nxt_snd = sf->current_sound; 
-	  nxt_snd->inuse = FALSE; 
+	  nxt_snd->inuse = false; 
 	  sf->current_sound = NULL;
 	  if (nxt_snd->copy) nxt_snd = free_snd_data(nxt_snd);
 	}
@@ -7430,7 +7430,7 @@ static void next_sound_1(snd_fd *sf)
 	      if (nxt_snd->inuse)
 		nxt_snd = copy_snd_data(nxt_snd, sf->cp, MIX_FILE_BUFFER_SIZE);
 	      sf->data = nxt_snd->buffered_data;
-	      nxt_snd->inuse = TRUE;
+	      nxt_snd->inuse = true;
 	      sf->current_sound = nxt_snd;
 	      file_buffers_forward(ind0, ind1, ind0, sf, nxt_snd);
 	    }
@@ -7507,8 +7507,8 @@ void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
   new1 = add_sound_file_to_edit_list(cp0, name,
 				     make_file_state(fd, hdr1, cp1->chan, FILE_BUFFER_SIZE),
 				     hdr1, DONT_DELETE_ME, cp1->chan);
-  e0 = amp_env_copy(cp0, FALSE, pos0);
-  e1 = amp_env_copy(cp1, FALSE, pos1);
+  e0 = amp_env_copy(cp0, false, pos0);
+  e1 = amp_env_copy(cp1, false, pos1);
   old_ed = cp1->edits[pos1];
   prepare_edit_list(cp0, cp1->samples[pos1], AT_CURRENT_EDIT_POSITION, S_swap_channels);
   new_ed = make_ed_list(old_ed->size);
@@ -7576,7 +7576,7 @@ static int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, o
   if (ofd == -1) return(MUS_CANT_OPEN_TEMP_FILE);
   datumb = mus_data_format_to_bytes_per_sample(hdr->format);
   obufs = (mus_sample_t **)MALLOC(chans * sizeof(mus_sample_t *));
-  ss->stopped_explicitly = FALSE;
+  ss->stopped_explicitly = false;
   for (i = 0; i < chans; i++)
     obufs[i] = (mus_sample_t *)CALLOC(FILE_BUFFER_SIZE, sizeof(mus_sample_t));
   j = 0;
@@ -7607,7 +7607,7 @@ static int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, o
 		  check_for_event(ss);
 		  if (ss->stopped_explicitly)
 		    {
-		      ss->stopped_explicitly = FALSE;
+		      ss->stopped_explicitly = false;
 		      snd_warning(_("file save cancelled by C-g"));
 		      err = MUS_INTERRUPTED;
 		      break;
@@ -7642,7 +7642,7 @@ static int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, o
 	      check_for_event(ss);
 	      if (ss->stopped_explicitly)
 		{
-		  ss->stopped_explicitly = FALSE;
+		  ss->stopped_explicitly = false;
 		  snd_warning(_("file save cancelled by C-g"));
 		  err = MUS_INTERRUPTED;
 		  break;
@@ -7752,7 +7752,7 @@ static int save_edits_and_update_display(snd_info *sp)
   else saved_errno = errno;
   sp->write_date = file_write_date(sp->filename);
   add_sound_data(sp->filename, sp, WITHOUT_INITIAL_GRAPH_HOOK);
-  restore_axes_data(sp, sa, mus_sound_duration(sp->filename), TRUE);
+  restore_axes_data(sp, sa, mus_sound_duration(sp->filename), true);
   sa = free_axes_data(sa);
   for (i = 0; i < sp->nchans; i++)
     CURSOR(sp->chans[i]) = old_cursors[i];
@@ -7891,19 +7891,20 @@ int save_channel_edits(chan_info *cp, char *ofile, XEN edpos, const char *caller
 
 void save_edits(snd_info *sp, void *ptr)
 {
-  int i, need_save, err;
+  int i, err;
+  bool need_save;
   time_t current_write_date;
   chan_info *cp;
   if (sp == NULL) return;
   if (!sp->read_only)
     {
-      need_save = FALSE;
+      need_save = false;
       for (i = 0; i < sp->nchans; i++)
 	{
 	  cp = sp->chans[i];
 	  if (cp->edit_ctr > 0) 
 	    {
-	      need_save = TRUE;
+	      need_save = true;
 	      break;
 	    }
 	}
@@ -8069,7 +8070,8 @@ static XEN g_display_edits(XEN snd, XEN chn, XEN edpos, XEN with_source)
   FILE *tmp = NULL;
   char *buf, *name;
   chan_info *cp;
-  int fd, include_source = TRUE;
+  int fd;
+  bool include_source = true;
   off_t len;
   snd_state *ss;
   XEN res;
@@ -8321,7 +8323,8 @@ void release_dangling_readers(chan_info *cp, int edit_ctr)
 void report_dangling_readers(FILE *fp);
 void report_dangling_readers(FILE *fp)
 {
-  int i, titled = FALSE;
+  int i;
+  bool titled = false;
   for (i = 0; i < dangling_reader_size; i++)
     if (dangling_readers[i])
       {
@@ -8331,7 +8334,7 @@ void report_dangling_readers(FILE *fp)
 	  {
 	    fprintf(fp, "\nDangling snd_fd:\n");
 	    fprintf(stderr, "\nDangling snd_fd:\n");
-	    titled = TRUE;
+	    titled = true;
 	  }
 	fprintf(fp, "   %p, cp: %p%s, beg: " OFF_TD ", at " OFF_TD " [frag_pos: " OFF_TD ", first: " OFF_TD ", last: " OFF_TD "], fragment %d\n",
 		sf, sf->cp,
@@ -8446,7 +8449,7 @@ snd can be a filename, a sound index number, or a list with a mix id number."
       XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(chn), chn, XEN_ARG_3, S_make_sample_reader, "an integer or boolean");
       filename = XEN_TO_C_STRING(snd);
       if (mus_file_probe(filename))
-	loc_sp = make_sound_readable(ss, filename, FALSE);
+	loc_sp = make_sound_readable(ss, filename, false);
       else return(snd_no_such_file_error(S_make_sample_reader, snd));
       chan = XEN_TO_C_INT_OR_ELSE(chn, 0);
       if ((chan < 0) || 
@@ -8664,7 +8667,7 @@ static XEN g_redo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
 
 void as_one_edit(chan_info *cp, int one_edit, const char *one_edit_origin) /* origin copied here */
 {
-  int need_backup = FALSE;
+  bool need_backup = false;
   ed_list *ed;
   need_backup = (cp->edit_ctr > one_edit);      /* cp->edit_ctr will be changing, so save this */
   if (cp->edit_ctr >= one_edit)                 /* ">=" here because the origin needs to be set even if there were no extra edits */
@@ -8693,8 +8696,8 @@ static void init_as_one_edit(chan_info *cp, void *ptr)
 {
   ((int *)ptr)[chan_ctr] = cp->edit_ctr; 
   cp->previous_squelch_update = cp->squelch_update; /* preserve possible user setting across as-one-edit call */
-  cp->squelch_update = TRUE;
-  cp->in_as_one_edit = TRUE;
+  cp->squelch_update = true;
+  cp->in_as_one_edit = true;
   chan_ctr++; 
 }
 
@@ -8702,7 +8705,7 @@ static void finish_as_one_edit(chan_info *cp, void *ptr)
 {
   as_one_edit(cp, (((int *)ptr)[chan_ctr] + 1), as_one_edit_origin);
   cp->squelch_update = cp->previous_squelch_update;
-  cp->in_as_one_edit = FALSE;
+  cp->in_as_one_edit = false;
   reflect_edit_history_change(cp);
   update_graph(cp);
   chan_ctr++; 
@@ -8816,7 +8819,7 @@ between beg and beg + num by scaler.  If channel is omitted, the scaling applies
     {
       cp = get_cp(snd, chn, S_scale_sound_by);
       pos = to_c_edit_position(cp, edpos, S_scale_sound_by, 6);
-      scale_channel(cp, scaler, samp, dur_to_samples(num, samp, cp, pos, 3, S_scale_sound_by), pos, FALSE);
+      scale_channel(cp, scaler, samp, dur_to_samples(num, samp, cp, pos, 3, S_scale_sound_by), pos, false);
     }
   else
     {
@@ -8827,7 +8830,7 @@ between beg and beg + num by scaler.  If channel is omitted, the scaling applies
 	{
 	  cp = sp->chans[i];
 	  pos = cp->edit_ctr;
-	  scale_channel(cp, scaler, samp, dur_to_samples(num, samp, cp, pos, 3, S_scale_sound_by), pos, FALSE);
+	  scale_channel(cp, scaler, samp, dur_to_samples(num, samp, cp, pos, 3, S_scale_sound_by), pos, false);
 	}
     }
   return(scl);
@@ -8850,7 +8853,7 @@ scale samples in the given sound/channel between beg and beg + num by scaler."
   samp = beg_to_sample(beg, S_scale_channel);
   cp = get_cp(snd, chn, S_scale_channel);
   pos = to_c_edit_position(cp, edpos, S_scale_channel, 6);
-  scale_channel(cp, scaler, samp, dur_to_samples(num, samp, cp, pos, 3, S_scale_channel), pos, FALSE);
+  scale_channel(cp, scaler, samp, dur_to_samples(num, samp, cp, pos, 3, S_scale_channel), pos, false);
   return(scl);
 }			  
 
@@ -8867,7 +8870,7 @@ Float local_maxamp(chan_info *cp, off_t beg, off_t num, int edpos)
   if (num > (1 << 30))
     {
       ss = cp->state;
-      ss->stopped_explicitly = FALSE;
+      ss->stopped_explicitly = false;
       for (i = 0; i < num; i++)
 	{
 	  mval = mus_sample_abs(read_sample(sf));
@@ -8878,7 +8881,7 @@ Float local_maxamp(chan_info *cp, off_t beg, off_t num, int edpos)
 	      check_for_event(ss);
 	      if (ss->stopped_explicitly)
 		{
-		  ss->stopped_explicitly = FALSE;
+		  ss->stopped_explicitly = false;
 		  report_in_minibuffer(cp->sound, _("maxamp check interrupted..."));
 		  break;
 		}
@@ -8928,7 +8931,7 @@ between beg and beg + num to peak value norm.  If channel is omitted, the scalin
       if (maxamp > 0.0)
 	{
 	  scaler /= maxamp;
-	  scale_channel(cp, scaler, samp, samps, cp->edit_ctr, FALSE);
+	  scale_channel(cp, scaler, samp, samps, cp->edit_ctr, false);
 	}
     }
   else
@@ -8949,7 +8952,7 @@ between beg and beg + num to peak value norm.  If channel is omitted, the scalin
 	    {
 	      cp = sp->chans[i];
 	      samps = dur_to_samples(num, samp, cp, cp->edit_ctr, 3, S_scale_sound_to);
-	      scale_channel(cp, scaler, samp, samps, cp->edit_ctr, FALSE);
+	      scale_channel(cp, scaler, samp, samps, cp->edit_ctr, false);
 	    }
 	}
     }
@@ -9077,7 +9080,8 @@ the new data's end."
   chan_info *cp;
   mus_sample_t *ivals;
   off_t len = 0, beg, curlen;
-  int override = 0, inchan = 0, pos, delete_file = FALSE;
+  int override = 0, inchan = 0, pos;
+  bool delete_file = false;
   char *fname, *caller;
   if (XEN_STRING_P(edname))
     caller = XEN_TO_C_STRING(edname);
@@ -9327,7 +9331,8 @@ inserts all of oboe.snd starting at sample 1000."
   chan_info *cp;
   snd_info *sp;
   char *filename = NULL;
-  int nc, fchn, i, delete_file = FALSE;
+  int nc, fchn, i;
+  bool delete_file = false;
   off_t beg = 0, len;
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_insert_sound, "a string");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(ubeg), ubeg, XEN_ARG_2, S_insert_sound, "a number");
@@ -9473,7 +9478,8 @@ insert data (either a vector, vct, or list of samples, or a filename) into snd's
 
   chan_info *cp;
   mus_sample_t *ivals;
-  int pos, delete_file = FALSE;
+  int pos;
+  bool delete_file = false;
   off_t beg, len = 0;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(samp), samp, XEN_ARG_1, S_insert_samples, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(samps), samps, XEN_ARG_2, S_insert_samples, "a number");

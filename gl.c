@@ -5166,7 +5166,7 @@ static void define_integers(void)
 
 /* -------------------------------- initialization -------------------------------- */
 
-static int gl_already_inited = FALSE;
+static bool gl_already_inited = false;
 
 #if HAVE_GUILE
  void init_gl(void);
@@ -5182,11 +5182,11 @@ static int gl_already_inited = FALSE;
       define_functions();
       XEN_YES_WE_HAVE("gl");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define gl-version \"15-May-03\")");
+      XEN_EVAL_C_STRING("(define gl-version \"10-Aug-03\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Gl_Version", C_TO_XEN_STRING("15-May-03"));
+      rb_define_global_const("Gl_Version", C_TO_XEN_STRING("10-Aug-03"));
 #endif
-      gl_already_inited = TRUE;
+      gl_already_inited = true;
     }
 }

@@ -105,7 +105,7 @@ static void vct_free(vct *v)
 {
   if (v)
     {
-      if ((v->dont_free == FALSE) && 
+      if ((!(v->dont_free)) && 
 	  (v->data)) 
 	FREE(v->data);
       v->data = NULL;
@@ -139,15 +139,15 @@ char *vct_to_string(vct *v)
   return(buf);
 }
 
-int vct_equalp(vct *v1, vct *v2)
+bool vct_equalp(vct *v1, vct *v2)
 {
   int i;
   if (v1->length != v2->length) 
-    return(FALSE);
+    return(false);
   for (i = 0; i < v1->length; i++)
     if (v1->data[i] != v2->data[i])
-      return(FALSE);
-  return(TRUE);
+      return(false);
+  return(true);
 }
 
 XEN_MAKE_OBJECT_PRINT_PROCEDURE(vct, print_vct, vct_to_string)
@@ -163,7 +163,7 @@ vct *c_make_vct(int len)
   new_vct = (vct *)MALLOC(sizeof(vct));
   new_vct->length = len;
   new_vct->data = (Float *)CALLOC(len, sizeof(Float));
-  new_vct->dont_free = FALSE;
+  new_vct->dont_free = false;
   return(new_vct);
 }
 
@@ -190,7 +190,7 @@ XEN make_vct(int len, Float *data)
   new_vct = (vct *)MALLOC(sizeof(vct));
   new_vct->length = len;
   new_vct->data = data;
-  new_vct->dont_free = FALSE;
+  new_vct->dont_free = false;
   XEN_MAKE_AND_RETURN_OBJECT(vct_tag, new_vct, 0, free_vct);
 }
 
@@ -200,7 +200,7 @@ XEN make_vct_wrapper(int len, Float *data)
   new_vct = (vct *)MALLOC(sizeof(vct));
   new_vct->length = len;
   new_vct->data = data;
-  new_vct->dont_free = TRUE;
+  new_vct->dont_free = true;
   XEN_MAKE_AND_RETURN_OBJECT(vct_tag, new_vct, 0, free_vct);
 }
 

@@ -1,6 +1,8 @@
 Snd change log
 
   11-Aug:    start-playing-selection-hook (suggested by Kjetil S. Matheussen).
+             removed dlp/dp-new-effects.scm and plugins-menu.scm.
+             int -> bool changes (ISO C99).
   7-Aug:     dac-is-running.
   1-Aug:     ladspa.scm and ladspa-help.scm thanks to Kjetil S. Matheussen.
              ladspa struct constants and accessors.

@@ -379,9 +379,9 @@ static void fast_hwt_stage(int n, int local_size, int local_half_size, Float *ou
 static void fast_hwt(Float *out, Float *in, int n)
 {
   int size;
-  int need_to_switch_on_output = FALSE;
+  bool need_to_switch_on_output = false;
   size = (0x0001 << n);
-  if ((n % 2) == 0) need_to_switch_on_output = TRUE;
+  if ((n % 2) == 0) need_to_switch_on_output = true;
   fast_hwt_stage (n, size, (size >> 1), out, in);
   if (need_to_switch_on_output) memcpy (out, in, size * sizeof(in[0])); 
 }
@@ -742,7 +742,9 @@ static void make_sonogram_axes(chan_info *cp)
 }
 
 typedef struct {
-  int size, wintype, old_style, done;
+  int size, wintype;
+  graph_type_t old_style;
+  bool done;
   void *chan;
   Float *window;
   Float *data;
@@ -750,11 +752,16 @@ typedef struct {
   int wavelet_choice, transform_type;
   off_t beg, databeg, datalen;
   off_t losamp;
-  int edit_ctr, dBing, lfreq;
+  int edit_ctr;
+  bool dBing, lfreq;
   int pad_zero;
   Float cutoff;
   snd_state *ss;
 } fft_state;
+
+#if (!HAVE_HYPOT)
+static double hypot(double r, double i) {return(sqrt(r * r + i * i));}
+#endif
 
 static void apply_fft(fft_state *fs)
 {
@@ -1090,12 +1097,13 @@ void cp_free_fft_state(chan_info *cp)
 
 int fft_window_beta_in_use(int win) {return(win >= MUS_KAISER_WINDOW);}
 
-static fft_state *make_fft_state(chan_info *cp, int simple)
+static fft_state *make_fft_state(chan_info *cp, bool simple)
 {
   fft_state *fs = NULL;
   snd_state *ss;
   axis_info *ap;
-  int reuse_old = FALSE, fftsize;
+  bool reuse_old = false;
+  int fftsize;
   off_t dbeg = 0, dlen = 0;
   ss = cp->state;
   ap = cp->axis;
@@ -1136,7 +1144,7 @@ static fft_state *make_fft_state(chan_info *cp, int simple)
 	  (fs->old_style == cp->transform_graph_type) &&
 	  (fs->wavelet_choice == cp->wavelet_type) &&
 	  (fs->edit_ctr == cp->edit_ctr))
-	reuse_old = TRUE;
+	reuse_old = true;
     }
   if (!reuse_old)
     {
@@ -1177,7 +1185,7 @@ static fft_info *make_fft_info(int size, int window, Float beta)
   fp->size = size;
   fp->window = window;
   fp->beta = beta;
-  fp->ok = TRUE;
+  fp->ok = true;
   fp->xlabel = NULL;
   fp->data = (Float *)CALLOC(size + 1, sizeof(Float)); /*  + 1 for complex storage or starts at 1 or something */
   return(fp);
@@ -1224,7 +1232,7 @@ static void one_fft(fft_state *fs)
 	      fp->size = fs->size;
 	      if (fp->data) FREE(fp->data);
 	      fp->data = (Float *)CALLOC(fp->size + 1, sizeof(Float));
-	      fp->ok = TRUE;
+	      fp->ok = true;
 	    }
 	}
       fp->current_size = fs->size; /* protect against parallel size change via fft size menu */
@@ -1254,11 +1262,11 @@ static void one_fft(fft_state *fs)
   display_fft(fs);
 }
 
-void single_fft(chan_info *cp, int dpy)
+void single_fft(chan_info *cp, bool dpy)
 {
   if (cp->transform_size < 2) return;
-  one_fft(make_fft_state(cp, TRUE));
-  if (dpy == 0) display_channel_fft_data(cp, cp->sound, cp->state);
+  one_fft(make_fft_state(cp, true));
+  if (!dpy) display_channel_fft_data(cp, cp->sound, cp->state);
   enved_fft_update();
 }
 
@@ -1287,13 +1295,16 @@ typedef struct {
   int spectrum_size;
   sono_info *scp;
   off_t beg, losamp, hisamp;
-  int done, hop;
+  bool done;
+  int hop;
   int window;
   int msg_ctr;
   int edit_ctr;
   Float old_scale;
-  int old_style, old_logxing, transform_type, w_choice;
-  int minibuffer_needs_to_be_cleared;
+  graph_type_t old_style;
+  int transform_type, w_choice;
+  bool old_logxing;
+  bool minibuffer_needs_to_be_cleared;
 } sonogram_state;
 
 void clear_transform_edit_ctrs(chan_info *cp)
@@ -1318,13 +1329,13 @@ void *make_sonogram_state(chan_info *cp)
   fft_state *fs;
   sg = (sonogram_state *)CALLOC(1, sizeof(sonogram_state));
   sg->cp = cp;
-  sg->done = FALSE;
-  fs = make_fft_state(cp, FALSE); /* 0=>not a simple one-shot fft */
+  sg->done = false;
+  fs = make_fft_state(cp, false); /* 0=>not a simple one-shot fft */
   sg->fs = fs;
   sg->msg_ctr = 8;
   sg->transform_type = cp->transform_type;
   sg->w_choice = cp->wavelet_type;
-  sg->minibuffer_needs_to_be_cleared = FALSE;
+  sg->minibuffer_needs_to_be_cleared = false;
   if (cp->temp_sonogram)
     {
       /* we must have restarted fft process without letting the previous run at all */
@@ -1376,7 +1387,7 @@ static int set_up_sonogram(sonogram_state *sg)
   if (cp->fft_changed != FFT_CHANGE_LOCKED)
     cp->fft_changed = FFT_UNCHANGED;
   else cp->fft_changed = FFT_CHANGED;
-  if ((cp->graph_transform_p == FALSE) || (cp->transform_size <= 1)) return(2);
+  if ((!(cp->graph_transform_p)) || (cp->transform_size <= 1)) return(2);
   ap = cp->axis;
   sg->slice = 0;
   sg->outer = 0;
@@ -1384,7 +1395,7 @@ static int set_up_sonogram(sonogram_state *sg)
   sg->losamp = ap->losamp;
   sg->hisamp = ap->hisamp;
   sg->window = cp->fft_window;
-  sg->minibuffer_needs_to_be_cleared = FALSE;
+  sg->minibuffer_needs_to_be_cleared = false;
   if (cp->graph_time_p) dpys++; 
   if (cp->graph_lisp_p) dpys++; 
   if (cp->transform_graph_type == GRAPH_AS_SPECTROGRAM)
@@ -1490,9 +1501,9 @@ static int run_all_ffts(sonogram_state *sg)
 		      0, 0,
 		      ((Float)(si->active_slices) / (Float)(si->target_slices)), 
 		      NOT_FROM_ENVED);
-      sg->minibuffer_needs_to_be_cleared = TRUE;
+      sg->minibuffer_needs_to_be_cleared = true;
       sg->msg_ctr = 8;
-      if (cp->graph_transform_p == FALSE) return(1);
+      if (!(cp->graph_transform_p)) return(1);
     }
   if (si->active_slices < si->total_slices)
     {
@@ -1518,7 +1529,7 @@ static int run_all_ffts(sonogram_state *sg)
       si->active_slices++;
     }
   sg->outer++;
-  if ((sg->outer == sg->outlim) || (cp->graph_transform_p == FALSE) || (cp->transform_graph_type == GRAPH_ONCE)) return(1);
+  if ((sg->outer == sg->outlim) || (!(cp->graph_transform_p)) || (cp->transform_graph_type == GRAPH_ONCE)) return(1);
   fs->beg += sg->hop;
   
   ap = cp->axis;
@@ -1536,7 +1547,7 @@ static int cleanup_sonogram(sonogram_state *sg)
   if (sg)
     {
       cp = sg->cp;
-      if (cp->graph_transform_p == FALSE)
+      if (!(cp->graph_transform_p))
 	{
 	  if (sg->fs) sg->fs = free_fft_state(sg->fs);
 	  return(1);
@@ -1549,16 +1560,16 @@ static int cleanup_sonogram(sonogram_state *sg)
       if ((sg->scp != NULL) && (sg->outlim > 1))
 	{
 	  display_channel_fft_data(cp, cp->sound, cp->state);
-	  if (sg->outer == sg->outlim) sg->done = TRUE;
+	  if (sg->outer == sg->outlim) sg->done = true;
 	  sg->old_scale = (sg->scp)->scale;
 	}
-      else sg->done = TRUE;
+      else sg->done = true;
       if ((cp->last_sonogram) && (cp->last_sonogram != sg)) FREE(cp->last_sonogram);
       cp->last_sonogram = sg;
       if (sg->minibuffer_needs_to_be_cleared)
 	{
 	  finish_progress_report(cp->sound, NOT_FROM_ENVED);
-	  sg->minibuffer_needs_to_be_cleared = FALSE;
+	  sg->minibuffer_needs_to_be_cleared = false;
 	}
     }
   return(1);
@@ -1571,7 +1582,7 @@ Cessate sonogram_in_slices(void *sono)
   int res = 0;
   cp = sg->cp;
   cp->temp_sonogram = NULL;
-  if (cp->graph_transform_p == FALSE) 
+  if (!(cp->graph_transform_p))
     {
       if (sg) cleanup_sonogram(sg);
       return(BACKGROUND_QUIT);

@@ -32,7 +32,7 @@ static int lpr (char *name)
   return(system(print_string));
 }
 
-static int printing = FALSE;
+static bool printing = false;
 
 static void file_print_ok_callback(GtkWidget *w, gpointer context)
 {
@@ -41,7 +41,7 @@ static void file_print_ok_callback(GtkWidget *w, gpointer context)
   char *name;
   snd_info *nsp = NULL;
   if (printing) 
-    ss->stopped_explicitly = TRUE;
+    ss->stopped_explicitly = true;
   else
     {
       if (ss->print_choice == PRINT_SND)
@@ -51,7 +51,7 @@ static void file_print_ok_callback(GtkWidget *w, gpointer context)
 	  mus_snprintf(print_string, PRINT_BUFFER_SIZE, _("printing %s"), nsp->short_filename);
 	  set_label(file_print_message, print_string);
 	}
-      printing = TRUE;
+      printing = true;
       print_it = GTK_TOGGLE_BUTTON(file_print_eps_or_lpr)->active;
       quit = (ss->print_choice == PRINT_ENV);
       if (print_it)
@@ -85,7 +85,7 @@ static void file_print_ok_callback(GtkWidget *w, gpointer context)
 	    }
 	}
     }
-  printing = FALSE;
+  printing = false;
   if (ss->print_choice == PRINT_SND)
     {
       set_button_label(file_print_ok_button, _("Print"));
@@ -119,9 +119,9 @@ void file_print_callback(GtkWidget *w, gpointer context)
       help_button = gtk_button_new_with_label(_("Help"));
       dismiss_button = gtk_button_new_with_label(_("Dismiss"));
       print_button = gtk_button_new_with_label(_("Print"));
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(file_print_dialog)->action_area), print_button, TRUE, TRUE, 4);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(file_print_dialog)->action_area), dismiss_button, TRUE, TRUE, 4);
-      gtk_box_pack_end(GTK_BOX(GTK_DIALOG(file_print_dialog)->action_area), help_button, TRUE, TRUE, 4);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(file_print_dialog)->action_area), print_button, true, true, 4);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(file_print_dialog)->action_area), dismiss_button, true, true, 4);
+      gtk_box_pack_end(GTK_BOX(GTK_DIALOG(file_print_dialog)->action_area), help_button, true, true, 4);
       g_signal_connect_closure_by_id(GTK_OBJECT(dismiss_button),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(dismiss_button))),
 				     0,
@@ -144,22 +144,22 @@ void file_print_callback(GtkWidget *w, gpointer context)
       file_print_ok_button = print_button;
 
       file_print_message = gtk_label_new("");
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(file_print_dialog)->vbox), file_print_message, FALSE, FALSE, 6);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(file_print_dialog)->vbox), file_print_message, false, false, 6);
       gtk_widget_show(file_print_message);
 
-      epsbox = gtk_hbox_new(FALSE, 0);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(file_print_dialog)->vbox), epsbox, FALSE, FALSE, 6);
+      epsbox = gtk_hbox_new(false, 0);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(file_print_dialog)->vbox), epsbox, false, false, 6);
       gtk_widget_show(epsbox);
       
       epslabel = gtk_label_new(_("eps file:"));
-      gtk_box_pack_start(GTK_BOX(epsbox), epslabel, FALSE, FALSE, 2);
+      gtk_box_pack_start(GTK_BOX(epsbox), epslabel, false, false, 2);
       gtk_widget_show(epslabel);
       
-      file_print_name = snd_entry_new(ss, epsbox, TRUE);
+      file_print_name = snd_entry_new(ss, epsbox, true);
       gtk_entry_set_text(GTK_ENTRY(file_print_name), eps_file(ss));
 
       file_print_eps_or_lpr = gtk_check_button_new_with_label(_("direct to printer"));
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(file_print_dialog)->vbox), file_print_eps_or_lpr, FALSE, FALSE, 6);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(file_print_dialog)->vbox), file_print_eps_or_lpr, false, false, 6);
       gtk_widget_show(file_print_eps_or_lpr);
       set_dialog_widget(ss, PRINT_DIALOG, file_print_dialog);
     }

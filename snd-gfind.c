@@ -8,7 +8,7 @@ static void edit_find_dismiss(GtkWidget *w, gpointer context)
 { /* "Done" */
   snd_state *ss = (snd_state *)context;
   if (ss->checking_explicitly)
-    ss->stopped_explicitly = TRUE;
+    ss->stopped_explicitly = true;
   else gtk_widget_hide(edit_find_dialog);
 } 
 
@@ -24,7 +24,7 @@ static void edit_find_help(GtkWidget *w, gpointer context)
 "This search travels through all the current channels in parallel until a match is found.  The find \
 expression is a Scheme function of one argument,  the current sample value.  It should return #t when the \
 search is satisified.  For example, (lambda (n) (> n .1) looks for the next sample that is greater than .1.",
-	   TRUE);
+	   true);
 } 
 
 static void edit_find_find(int direction, GtkWidget *w, gpointer context) 
@@ -103,10 +103,10 @@ void edit_find_callback(GtkWidget *w, gpointer context)
       cancelB = gtk_button_new_with_label(_("Dismiss"));
       next_button = gtk_button_new_with_label(_("Next"));
       previous_button = gtk_button_new_with_label(_("Previous"));
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_find_dialog)->action_area), cancelB, TRUE, TRUE, 10);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_find_dialog)->action_area), next_button, TRUE, TRUE, 10);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_find_dialog)->action_area), previous_button, TRUE, TRUE, 10);
-      gtk_box_pack_end(GTK_BOX(GTK_DIALOG(edit_find_dialog)->action_area), help_button, TRUE, TRUE, 10);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_find_dialog)->action_area), cancelB, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_find_dialog)->action_area), next_button, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_find_dialog)->action_area), previous_button, true, true, 10);
+      gtk_box_pack_end(GTK_BOX(GTK_DIALOG(edit_find_dialog)->action_area), help_button, true, true, 10);
       g_signal_connect_closure_by_id(GTK_OBJECT(cancelB),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(cancelB))),
 				     0,
@@ -132,15 +132,15 @@ void edit_find_callback(GtkWidget *w, gpointer context)
       gtk_widget_show(previous_button);
       gtk_widget_show(help_button);
       
-      rc = gtk_hbox_new(FALSE, 0);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_find_dialog)->vbox), rc, TRUE, TRUE, 4);
+      rc = gtk_hbox_new(false, 0);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_find_dialog)->vbox), rc, true, true, 4);
       gtk_widget_show(rc);
 
       dl = gtk_label_new(_("find:"));
-      gtk_box_pack_start(GTK_BOX(rc), dl, FALSE, FALSE, 4);
+      gtk_box_pack_start(GTK_BOX(rc), dl, false, false, 4);
       gtk_widget_show(dl);
 
-      edit_find_text = snd_entry_new(ss, rc, TRUE);
+      edit_find_text = snd_entry_new(ss, rc, true);
       g_signal_connect_closure_by_id(GTK_OBJECT(edit_find_text),
 				     g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(edit_find_text))),
 				     0,
@@ -148,7 +148,7 @@ void edit_find_callback(GtkWidget *w, gpointer context)
 				     0);
       
       edit_find_label = gtk_label_new(_("global search"));
-      gtk_box_pack_end(GTK_BOX(GTK_DIALOG(edit_find_dialog)->vbox), edit_find_label, FALSE, FALSE, 4);
+      gtk_box_pack_end(GTK_BOX(GTK_DIALOG(edit_find_dialog)->vbox), edit_find_label, false, false, 4);
       gtk_widget_show(edit_find_label);
       gtk_widget_show(edit_find_dialog);
       set_dialog_widget(ss, FIND_DIALOG, edit_find_dialog);

@@ -6,7 +6,7 @@
 
 /* ---------------- MOTIF VERSION ---------------- */
 
-static int snd_running = FALSE;
+static bool snd_running = false;
 Widget form, shell, label, snd;
 XtAppContext app;     
 int n;
@@ -22,12 +22,12 @@ static void snd_callback(Widget w, XtPointer clientData, XtPointer callData)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNallowResize, TRUE); n++;
+      XtSetArg(args[n], XmNallowResize, true); n++;
       
       snd_as_widget(0, NULL, app, form, args, n);
-      snd_open_file("~/cl/oboe.snd", get_global_state(), FALSE);
+      snd_open_file("~/cl/oboe.snd", get_global_state(), false);
 
-      snd_running = TRUE;
+      snd_running = true;
     }
 }
 
@@ -36,7 +36,7 @@ int main (int argc, char **argv )
   shell = XtVaAppInitialize (&app, "Snd-as-widget", NULL, 0, &argc, argv, NULL,
 			     XmNminWidth, 200,
 			     XmNminHeight, 40,
-			     XmNallowResize, TRUE,
+			     XmNallowResize, true,
 			     NULL);
   form = XtCreateManagedWidget("form", xmFormWidgetClass, shell, NULL, 0);
 
@@ -95,7 +95,7 @@ include makesnd.back
 
 /* Gtk+ version using Guile */
 
-static int snd_running = FALSE;
+static bool snd_running = false;
 GtkWidget *form, *shell, *label, *snd;
 
 static void snd_callback(GtkWidget *w, gpointer data) 
@@ -103,10 +103,10 @@ static void snd_callback(GtkWidget *w, gpointer data)
   if (!snd_running)
     {
       snd = snd_as_widget(0, NULL, w, NULL);
-      gtk_box_pack_start(GTK_BOX(form), snd, TRUE, TRUE, 0);
+      gtk_box_pack_start(GTK_BOX(form), snd, true, true, 0);
       gtk_widget_show(snd);
-      snd_open_file("~/cl/oboe.snd", get_global_state(), FALSE); 
-      snd_running = TRUE;
+      snd_open_file("~/cl/oboe.snd", get_global_state(), false); 
+      snd_running = true;
       gtk_label_set_text(GTK_LABEL(GTK_BIN(label)->child), "Push to quit Snd");
     }
   else
@@ -120,7 +120,7 @@ static void snd_callback(GtkWidget *w, gpointer data)
 static gint window_close(GtkWidget *w, GdkEvent *event, gpointer clientData)
 {
   gtk_main_quit();
-  return(FALSE);
+  return(false);
 }
 
 static void gsnd_main (int argc, char **argv )
@@ -129,12 +129,12 @@ static void gsnd_main (int argc, char **argv )
   shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   ALLOW_RESIZE(shell);
   SET_USIZE(shell, 200, 40);
-  form = gtk_vbox_new(FALSE, 0);
+  form = gtk_vbox_new(false, 0);
   gtk_container_add(GTK_CONTAINER(shell), form);
   gtk_widget_show(form);
 
   label = gtk_button_new_with_label("push for Snd");
-  gtk_box_pack_start(GTK_BOX(form), label, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(form), label, false, false, 0);
   gtk_widget_show(label);
   gtk_widget_show(shell);
 

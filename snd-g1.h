@@ -3,18 +3,19 @@
 
 typedef struct {
   GtkWidget *rw, *nm, *pl;
-  int pos, parent;
+  int pos;
+  file_viewer_t parent;
   snd_state *ss;
 } regrow;
 
 /* -------- snd-ghelp.c -------- */
 
-GtkWidget *snd_help(snd_state *ss, const char *subject, const char *help, int with_wrap);
+GtkWidget *snd_help(snd_state *ss, const char *subject, const char *help, bool with_wrap);
 
 
 /* -------- snd-gerror.c -------- */
 
-void add_to_error_history(snd_state *ss, char *msg, int popup);
+void add_to_error_history(snd_state *ss, char *msg, bool popup);
 void post_error_dialog(snd_state *ss, char *msg);
 void show_snd_errors(snd_state *ss);
 
@@ -40,8 +41,8 @@ void draw_lines (axis_context *ax, GdkPoint *points, int num);
 void draw_arc(axis_context *ax, int x, int y, int size);
 void set_grf_points(Locus xi, int j, Locus ymin, Locus ymax);
 void set_grf_point(Locus xi, int j, Locus yi);
-void draw_grf_points(chan_info *cp, axis_context *ax, int j, axis_info *ap, Float y0, int graph_style);
-void draw_both_grf_points(chan_info *cp, axis_context *ax, int j, int graph_style);
+void draw_grf_points(chan_info *cp, axis_context *ax, int j, axis_info *ap, Float y0, graph_style_t graph_style);
+void draw_both_grf_points(chan_info *cp, axis_context *ax, int j, graph_style_t graph_style);
 void draw_both_grfs(axis_context *ax, int j);
 void mix_save_graph(mix_context *ms, int j);
 void erase_and_draw_grf_points(mix_context *ms, chan_info *cp, int j);
@@ -50,7 +51,7 @@ void setup_axis_context(chan_info *cp, axis_context *ax);
 GtkWidget *start_color_dialog(snd_state *ss, int width, int height);
 GtkWidget *start_orientation_dialog(snd_state *ss, int width, int height);
 void set_color_scale(snd_state *ss, Float val);
-void set_color_inverted(snd_state *ss, int val);
+void set_color_inverted(snd_state *ss, bool val);
 void set_color_cutoff(snd_state *ss, Float val);
 void set_color_map(snd_state *ss, int val);
 void set_spectro_hop(snd_state *ss, int val);
@@ -72,7 +73,7 @@ void draw_sono_rectangles(axis_context *ax, int color, int jmax);
 void draw_spectro_line(axis_context *ax, int color, int x0, int y0, int x1, int y1);
 void allocate_color_map(snd_state *ss, int colormap);
 void initialize_colormap(snd_state *ss);
-int set_with_gl(snd_state *ss, int val);
+int set_with_gl(snd_state *ss, bool val);
 void g_init_gxdraw(void);
 
 
@@ -81,7 +82,7 @@ void g_init_gxdraw(void);
 
 void color_listener(GdkColor *pix);
 void color_listener_text(GdkColor *pix);
-void handle_listener(snd_state *ss, int new_state);
+void handle_listener(snd_state *ss, bool new_state);
 void snd_completion_help(snd_state *ss, int matches, char **buffer);
 int listener_height(void);
 int listener_width(void);
@@ -93,7 +94,7 @@ void listener_append_and_prompt(char *msg);
 void clear_listener(void);
 void g_init_gxlistener(void);
 GtkWidget *snd_entry_new(snd_state *ss, GtkWidget *container, int with_white_background);
-int highlight_unbalanced_paren(void);
+bool highlight_unbalanced_paren(void);
 
 
 
@@ -166,7 +167,7 @@ GtkWidget *popup_info_menu(void);
 int popup_menu_exists(void);
 void set_menu_label(GtkWidget *w, const char *label);
 int g_change_menu_label(int which_menu, char *old_label, char *new_label);
-int g_set_menu_sensitive(int which_menu, char *old_label, int on);
+int g_set_menu_sensitive(int which_menu, char *old_label, bool on);
 int g_menu_is_sensitive(int which_menu, char *old_label);
 int g_add_to_main_menu(snd_state *ss, char *label, int slot);
 int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb, int position);
@@ -187,19 +188,19 @@ void set_transform_size(snd_state *ss, int val);
 void set_fft_window(snd_state *ss, int val);
 void set_transform_type(snd_state *ss, int val);
 void set_wavelet_type(snd_state *ss, int val);
-GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed);
+GtkWidget *fire_up_transform_dialog(snd_state *ss, bool managed);
 int transform_dialog_is_active(void);
 
 char *transform_type_name(int choice);
 int add_transform_to_list(char *name);
 int max_transform_type(void);
 
-void set_show_transform_peaks(snd_state *ss, int val);
-void set_fft_log_magnitude(snd_state *ss, int val);
-void set_fft_log_frequency(snd_state *ss, int val);
+void set_show_transform_peaks(snd_state *ss, bool val);
+void set_fft_log_magnitude(snd_state *ss, bool val);
+void set_fft_log_frequency(snd_state *ss, bool val);
 void set_transform_normalization(snd_state *ss, int val);
-void set_show_selection_transform(snd_state *ss, int show);
-void set_transform_graph_type(snd_state *ss, int val);
+void set_show_selection_transform(snd_state *ss, bool show);
+void set_transform_graph_type(snd_state *ss, graph_type_t val);
 
 
 
@@ -277,11 +278,11 @@ void resize_zy(chan_info *cp);
 void initialize_scrollbars(chan_info *cp);
 Float gsy_value(chan_info *cp);
 Float gsy_size(chan_info *cp);
-int fixup_cp_cgx_ax_wn(chan_info *cp);
+bool fixup_cp_cgx_ax_wn(chan_info *cp);
 void reflect_edit_history_change(chan_info *cp);
 void reflect_edit_counter_change(chan_info *cp);
 gboolean graph_key_press(GtkWidget *w, GdkEventKey *event, gpointer data);
-int add_channel_window(snd_info *sound, int channel, snd_state *ss, int chan_y, int insertion, GtkWidget *main, int arrows, int with_events);
+int add_channel_window(snd_info *sound, int channel, snd_state *ss, int chan_y, int insertion, GtkWidget *main, int arrows, bool with_events);
 void set_peak_numbers_font(chan_info *cp);
 void set_bold_peak_numbers_font(chan_info *cp);
 void set_tiny_numbers_font(chan_info *cp);
@@ -308,13 +309,13 @@ void edit_find_callback(GtkWidget *w, gpointer info);
 
 /* -------- snd-gutils.c -------- */
 
-int set_tiny_font(snd_state *ss, char *font);
-int set_listener_font(snd_state *ss, char *font);
-int set_bold_button_font(snd_state *ss, char *font);
-int set_peaks_font(snd_state *ss, char *font);
-int set_bold_peaks_font(snd_state *ss, char *font);
-int set_axis_label_font(snd_state *ss, char *font);
-int set_axis_numbers_font(snd_state *ss, char *font);
+bool set_tiny_font(snd_state *ss, char *font);
+bool set_listener_font(snd_state *ss, char *font);
+bool set_bold_button_font(snd_state *ss, char *font);
+bool set_peaks_font(snd_state *ss, char *font);
+bool set_bold_peaks_font(snd_state *ss, char *font);
+bool set_axis_label_font(snd_state *ss, char *font);
+bool set_axis_numbers_font(snd_state *ss, char *font);
 int label_width(snd_state *ss, char *txt);
 int number_width(snd_state *ss, char *num);
 int number_height(snd_state *ss);
@@ -350,11 +351,11 @@ void color_graph(snd_state *ss, GdkColor *color);
 void color_selected_graph(snd_state *ss, GdkColor *color);
 void set_mix_color(snd_state *ss, GdkColor *color);
 void set_selected_mix_color(snd_state *ss, GdkColor *color);
-void recolor_graph(chan_info *cp, int selected);
+void recolor_graph(chan_info *cp, bool selected);
 void reflect_resize(snd_state *ss);
-void set_sensitive(GtkWidget *wid, int val);
-int is_sensitive(GtkWidget *wid);
-void set_toggle_button(GtkWidget *wid, int val, int passed, void *data);
+void set_sensitive(GtkWidget *wid, bool val);
+bool is_sensitive(GtkWidget *wid);
+void set_toggle_button(GtkWidget *wid, bool val, bool passed, void *data);
 guint16 widget_height(GtkWidget *w);
 guint16 widget_width(GtkWidget *w);
 gint16 widget_x(GtkWidget *w);
@@ -393,18 +394,18 @@ GtkWidget *w_snd_pane(snd_info *sp);
 GtkWidget *w_snd_pane_box(snd_info *sp);
 GtkWidget *w_snd_name(snd_info *sp);
 GtkWidget *unite_button(snd_info *sp);
-void set_control_panel_play_button(snd_info *sp, int val);
+void set_control_panel_play_button(snd_info *sp, bool val);
 GtkWidget *filter_graph(snd_info *sp);
-void snd_file_lock_icon(snd_info *sp, int on);
-void snd_file_bomb_icon(snd_info *sp, int on);
-void x_bomb(snd_info *sp, int on);
+void snd_file_lock_icon(snd_info *sp, bool on);
+void snd_file_bomb_icon(snd_info *sp, bool on);
+void x_bomb(snd_info *sp, bool on);
 void goto_minibuffer(snd_info *sp);
 void set_minibuffer_string(snd_info *sp, char *str);
 void set_minibuffer_cursor_position(snd_info *sp, int pos);
 char *get_minibuffer_string(snd_info *sp);
 void make_minibuffer_label(snd_info *sp, char *str);
-void set_play_button(snd_info *sp, int val);
-void play_button_pause(snd_state *ss, int pausing);
+void set_play_button(snd_info *sp, bool val);
+void play_button_pause(snd_state *ss, bool pausing);
 void syncb(snd_info *sp, int on);
 void set_snd_amp(snd_info *sp, Float val);
 void set_snd_expand(snd_info *sp, Float val);
@@ -414,12 +415,12 @@ void set_snd_revlen(snd_info *sp, Float val);
 void set_snd_revscl(snd_info *sp, Float val);
 void set_snd_filter_order(snd_info *sp, int order);
 void set_filter_text(snd_info *sp, char *str);
-void toggle_expand_button(snd_info *sp, int state);
-void toggle_contrast_button(snd_info *sp, int state);
-void toggle_reverb_button(snd_info *sp, int state);
-void toggle_filter_button(snd_info *sp, int state);
-void toggle_direction_arrow(snd_info *sp, int state);
-void set_filter_in_dB(snd_info *sp, int val);
+void toggle_expand_button(snd_info *sp, bool state);
+void toggle_contrast_button(snd_info *sp, bool state);
+void toggle_reverb_button(snd_info *sp, bool state);
+void toggle_filter_button(snd_info *sp, bool state);
+void toggle_direction_arrow(snd_info *sp, bool state);
+void set_filter_in_dB(snd_info *sp, bool val);
 void filter_env_changed(snd_info *sp, env *e);
 void color_filter_waveform(snd_state *ss, GdkColor *color);
 void lock_apply(snd_state *ss, snd_info *sp);
@@ -429,7 +430,7 @@ void reflect_amp_env_in_progress(snd_info *sp);
 snd_info *add_sound_window (char *filename, snd_state *state, int read_only);
 void set_sound_pane_file_label(snd_info *sp, char *str);
 void snd_info_cleanup(snd_info *sp);
-void equalize_sound_panes(snd_state *ss, snd_info *sp, chan_info *ncp, int all_panes);
+void equalize_sound_panes(snd_state *ss, snd_info *sp, chan_info *ncp, bool all_panes);
 void equalize_all_panes(snd_state *ss);
 void sound_show_ctrls(snd_info *sp);
 void sound_hide_ctrls(snd_info *sp);
@@ -440,7 +441,7 @@ void sound_check_control_panel(snd_info *sp, int height);
 void start_progress_report(snd_info *sp, int from_enved);
 void finish_progress_report(snd_info *sp, int from_enved);
 void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, int from_enved);
-void set_apply_button(snd_info *sp, int val);
+void set_apply_button(snd_info *sp, bool val);
 void g_init_gxsnd(void);
 
 
@@ -456,14 +457,14 @@ void reflect_no_mix_in_mix_panel(void);
 
 /* -------- snd-genv.c -------- */
 
-axis_info *enved_make_axis(char *name, axis_context *ax, int ex0, int ey0, int width, int height, Float xmin, Float xmax, Float ymin, Float ymax, int printing);
+axis_info *enved_make_axis(char *name, axis_context *ax, int ex0, int ey0, int width, int height, Float xmin, Float xmax, Float ymin, Float ymax, bool printing);
 void display_enved_env_with_selection(snd_state *ss, env *e, char *name, 
-				      int x0, int y0, int width, int height, int dots, Float base, int printing);
-void set_enved_redo_sensitive(int val);
-void set_enved_revert_sensitive(int val);
-void set_enved_undo_sensitive(int val);
-void set_enved_save_sensitive(int val);
-void set_enved_show_sensitive(int val);
+				      int x0, int y0, int width, int height, int dots, Float base, bool printing);
+void set_enved_redo_sensitive(bool val);
+void set_enved_revert_sensitive(bool val);
+void set_enved_undo_sensitive(bool val);
+void set_enved_save_sensitive(bool val);
+void set_enved_show_sensitive(bool val);
 void make_scrolled_env_list (snd_state *ss);
 void alert_enved_amp_env(snd_info *sp);
 void new_active_channel_alert(snd_state *ss);
@@ -471,17 +472,17 @@ void env_redisplay(snd_state *ss);
 void env_redisplay_with_print(snd_state *ss);
 void enved_display_point_label(snd_state *ss, Float x, Float y);
 void display_enved_progress(char *str, GdkPixmap *pix);
-void set_enved_click_to_delete(int n);
+void set_enved_click_to_delete(bool n);
 void enved_print(char *name);
 GtkWidget *create_envelope_editor (snd_state *ss);
-void set_enved_clip_p(snd_state *ss, int val);
-void set_enved_exp_p(snd_state *ss, int val);
+void set_enved_clip_p(snd_state *ss, bool val);
+void set_enved_exp_p(snd_state *ss, bool val);
 void set_enved_base(snd_state *ss, Float val);
 void set_enved_target(snd_state *ss, int val);
-void set_enved_wave_p(snd_state *ss, int val);
-void set_enved_in_dB(snd_state *ss, int val);
+void set_enved_wave_p(snd_state *ss, bool val);
+void set_enved_in_dB(snd_state *ss, bool val);
 int enved_dialog_is_active(void);
-void enved_reflect_selection(int on);
+void enved_reflect_selection(bool on);
 void set_enved_filter_order(snd_state *ss, int order);
 void color_enved_waveform(GdkColor *pix);
 void reflect_mix_in_enved(void);
@@ -513,7 +514,7 @@ int record_dialog_is_active(void);
 
 char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples);
 void alert_new_file(void);
-void make_open_file_dialog(snd_state *ss, int read_only, int managed);
+void make_open_file_dialog(snd_state *ss, bool read_only, bool managed);
 file_data *make_file_data_panel(snd_state *ss, GtkWidget *parent, char *name, int with_chan, 
 				int header_type, int data_format, int with_loc, int comment_as_entry, int with_samples);
 void make_file_save_as_dialog(snd_state *ss);
@@ -528,13 +529,13 @@ void curfile_highlight(snd_state *ss, int i);
 void view_curfiles_set_row_name(int pos);
 void set_file_browser_play_button(char *name, int state);
 void highlight_selected_sound(snd_state *ss);
-void set_file_sort_sensitive(int sensitive);
+void set_file_sort_sensitive(bool sensitive);
 void view_files_callback(GtkWidget *w, gpointer info);
 GtkWidget *start_file_dialog(snd_state *ss, int width, int height);
 int file_dialog_is_active(void);
 file_info *raw_data_dialog_to_file_info(const char *filename, snd_state *ss, const char *title);
 snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *comment);
-void make_mix_file_dialog(snd_state *ss, int managed);
+void make_mix_file_dialog(snd_state *ss, bool managed);
 GtkWidget *edit_header(snd_info *sp);
 void set_open_file_play_button(int val);
 void g_init_gxfile(void);

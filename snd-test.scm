@@ -10814,7 +10814,7 @@ EDITS: 5
 	(print-and-check gen 
 			 "buffer"
 			 "buffer: length: 3, loc: 0, fill: 3.000"
-			 "rblk buf[3 (external)]: [1.000 0.500 0.250], loc: 0, fill_time: 3.000000, empty: 1")
+			 "rblk buf[3 (external)]: [1.000 0.500 0.250], loc: 0, fill_time: 3.000000, empty: true")
 	(if (not (buffer-full? gen)) (snd-display ";buffer-full: ~A?" gen))
 	(if (not (buffer? gen)) (snd-display ";~A not buffer?" gen))
 	(if (not (= (mus-length gen) 3)) (snd-display ";buffer length: ~D?" (mus-length gen)))
@@ -10842,21 +10842,21 @@ EDITS: 5
 	(print-and-check gen 
 			 "buffer"
 			 "buffer: length: 6, loc: 0, fill: 2.000"
-			 "rblk buf[6 (external)]: [0.100 0.200 0.000 0.000 0.000 0.000], loc: 0, fill_time: 2.000000, empty: 1")
+			 "rblk buf[6 (external)]: [0.100 0.200 0.000 0.000 0.000 0.000], loc: 0, fill_time: 2.000000, empty: true")
 	(frame->buffer gen fr2)
 	(frame->buffer gen fr3)
 	
 	(print-and-check gen 
 			 "buffer"
 			 "buffer: length: 6, loc: 0, fill: 6.000"
-			 "rblk buf[6 (external)]: [0.100 0.200 0.300 0.400 0.500 0.600], loc: 0, fill_time: 6.000000, empty: 1")
+			 "rblk buf[6 (external)]: [0.100 0.200 0.300 0.400 0.500 0.600], loc: 0, fill_time: 6.000000, empty: true")
 	(buffer->frame gen fr2)
 	(if (not (equal? fr2 fr1)) (snd-display ";buffer->frame: ~A ~A?" fr1 fr2))
 	
 	(print-and-check gen 
 			 "buffer"
 			 "buffer: length: 6, loc: 2, fill: 6.000"
-			 "rblk buf[6 (external)]: [0.100 0.200 0.300 0.400 0.500 0.600], loc: 2, fill_time: 6.000000, empty: 1")
+			 "rblk buf[6 (external)]: [0.100 0.200 0.300 0.400 0.500 0.600], loc: 2, fill_time: 6.000000, empty: true")
 	(let ((f (buffer->frame gen)))
 	  (if (not (= (mus-channels f) 1)) (snd-display ";buffer->frame default: ~A?" f))
 	  (if (fneq (frame-ref f 0) .3) (snd-display ";buffer->frame: ~A?" f))
@@ -10867,7 +10867,7 @@ EDITS: 5
 	  (print-and-check gen 
 			   "buffer"
 			   "buffer: length: 6, loc: 0, fill: 3.000"
-			   "rblk buf[6 (external)]: [0.600 0.700 0.800 0.000 0.000 0.000], loc: 0, fill_time: 3.000000, empty: 1")))
+			   "rblk buf[6 (external)]: [0.600 0.700 0.800 0.000 0.000 0.000], loc: 0, fill_time: 3.000000, empty: true")))
       
       (test-gen-equal (make-buffer 3) (make-buffer 3) (make-buffer 4))
       (let ((gen (make-buffer 3))
@@ -12333,7 +12333,7 @@ EDITS: 5
 	(print-and-check gen 
 			 "wave_train"
 			 "wave_train freq: 440.000Hz, phase: 0.000, size: 20"
-			 "wt freq: 440.000000, phase: 0.000000, wave[20 (external)]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], b: rblk buf[20 (local)]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], loc: 0, fill_time: 0.000000, empty: 1")
+			 "wt freq: 440.000000, phase: 0.000000, wave[20 (external)]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], b: rblk buf[20 (local)]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], loc: 0, fill_time: 0.000000, empty: true")
 	(do ((i 0 (1+ i)))
 	    ((= i 20))
 	  (vct-set! (mus-data gen) i (* i .5))

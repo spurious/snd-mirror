@@ -187,7 +187,7 @@ static XtResource resources[] = {
 #ifndef SND_AS_WIDGET
 static void window_close(Widget w, XtPointer context, XtPointer info)
 {
-  snd_exit_cleanly((snd_state *)context, TRUE);
+  snd_exit_cleanly((snd_state *)context, true);
 }
 #endif
 
@@ -326,7 +326,7 @@ RETSIGTYPE top_level_catch(int ignore)
 
 static char **auto_open_file_names = NULL;
 static int auto_open_files = 0;
-static int noglob = FALSE, noinit = FALSE, batch = FALSE, nostdin = FALSE;
+static bool noglob = false, noinit = false, batch = false, nostdin = false;
 
 #if HAVE_EXTENSION_LANGUAGE
 static XtInputId stdin_id = 0;
@@ -384,17 +384,17 @@ static Cessate startup_funcs(XtPointer context)
 #endif
 #ifndef SND_AS_WIDGET
       /* trap outer-level Close for cleanup check */
-      wm_delete_window = XmInternAtom(dpy, "WM_DELETE_WINDOW", FALSE);
+      wm_delete_window = XmInternAtom(dpy, "WM_DELETE_WINDOW", false);
       XmAddWMProtocolCallback(shell, wm_delete_window, window_close, (XtPointer)ss);
 
-      snd_v = XInternAtom(dpy, "SND_VERSION", FALSE);
-      snd_c = XInternAtom(dpy, "SND_COMMAND", FALSE);
+      snd_v = XInternAtom(dpy, "SND_VERSION", false);
+      snd_c = XInternAtom(dpy, "SND_COMMAND", false);
       XChangeProperty(dpy, XtWindow(shell), snd_v, XA_STRING, 8, PropModeReplace, 
 		      (unsigned char *)(SND_VERSION), strlen(SND_VERSION) + 1);
 #if HAVE_EXTENSION_LANGUAGE
-      XtAddEventHandler(shell, PropertyChangeMask, FALSE, who_called, (XtPointer)ss);
+      XtAddEventHandler(shell, PropertyChangeMask, false, who_called, (XtPointer)ss);
 #endif
-      XtAddEventHandler(shell, StructureNotifyMask, FALSE, minify_maxify_window, (XtPointer)ss);
+      XtAddEventHandler(shell, StructureNotifyMask, false, minify_maxify_window, (XtPointer)ss);
 #endif
       (ss->sgx)->graph_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), in_graph_cursor(ss));
       (ss->sgx)->wait_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), XC_watch);
@@ -423,7 +423,7 @@ static Cessate startup_funcs(XtPointer context)
     case 2: 
       if (auto_open_files > 0)
 	{
-	  auto_open_ctr = handle_next_startup_arg(ss, auto_open_ctr, auto_open_file_names, FALSE, auto_open_files);
+	  auto_open_ctr = handle_next_startup_arg(ss, auto_open_ctr, auto_open_file_names, false, auto_open_files);
 	  if (auto_open_ctr < auto_open_files) 
 	    return(BACKGROUND_CONTINUE); /* i.e. come back to this branch */
 	}
@@ -633,17 +633,17 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 	    set_sound_style(ss, SOUNDS_IN_SEPARATE_WINDOWS);
 	  else
 	    if (strcmp(argv[i], "-noglob") == 0)
-	      noglob = TRUE;
+	      noglob = true;
 	    else
 	      if (strcmp(argv[i], "-noinit") == 0)
-		noinit = TRUE;
+		noinit = true;
 	      else
 		if (strcmp(argv[i], "-nostdin") == 0)
-		  nostdin = TRUE;
+		  nostdin = true;
 		else
 		  if ((strcmp(argv[i], "-b") == 0) || 
 		      (strcmp(argv[i], "-batch") == 0))
-		    batch = TRUE;
+		    batch = true;
 
   ss->batch_mode = batch;
   if (batch) XtSetMappedWhenManaged(shell, False);
@@ -673,10 +673,10 @@ void snd_doit(snd_state *ss, int argc, char **argv)
     int dblBuf[] = {GLX_RGBA, GLX_DEPTH_SIZE, 16, GLX_DOUBLEBUFFER, None};
     vi = glXChooseVisual(dpy, DefaultScreen(dpy), dblBuf);
     if (vi) 
-      ss->gl_has_double_buffer = TRUE;
+      ss->gl_has_double_buffer = true;
     else
       {
-	ss->gl_has_double_buffer = FALSE;
+	ss->gl_has_double_buffer = false;
 	vi = glXChooseVisual(dpy, DefaultScreen(dpy), snglBuf);
       }
     if (vi == NULL) 
@@ -707,33 +707,33 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   sx->mdpy = dpy;
 
   /* the gray shades are an attempt to get around Netscape which hogs all the colors */
-  sx->white =                 get_color(shell, snd_rs.white_color,           WHITE_COLOR,           NULL, NULL, TRUE);
-  sx->black =                 get_color(shell, snd_rs.black_color,           BLACK_COLOR,           NULL, NULL, FALSE);
-  sx->light_blue =            get_color(shell, snd_rs.light_blue_color,      LIGHT_BLUE_COLOR,      NULL, NULL, TRUE);
-  sx->lighter_blue =          get_color(shell, snd_rs.lighter_blue_color,    LIGHTER_BLUE_COLOR,    NULL, NULL, TRUE);
-  sx->red =                   get_color(shell, snd_rs.red_color,             RED_COLOR,             NULL, NULL, FALSE);
-  sx->green =                 get_color(shell, snd_rs.green_color,           GREEN_COLOR,           NULL, NULL, FALSE);
-  sx->yellow =                get_color(shell, snd_rs.yellow_color,          YELLOW_COLOR,          NULL, NULL, TRUE);
-  sx->highlight_color =       get_color(shell, snd_rs.highlight_color,       HIGHLIGHT_COLOR,       "gray90", NULL, TRUE);
-  sx->basic_color =           get_color(shell, snd_rs.basic_color,           BASIC_COLOR,           "gray80", "gray", TRUE);
-  sx->position_color =        get_color(shell, snd_rs.position_color,        POSITION_COLOR,        "gray60", "gray", FALSE);
-  sx->zoom_color =            get_color(shell, snd_rs.zoom_color,            ZOOM_COLOR,            "gray20", "gray", FALSE);
-  sx->cursor_color =          get_color(shell, snd_rs.cursor_color,          CURSOR_COLOR,          NULL, NULL, FALSE);
-  sx->selection_color =       get_color(shell, snd_rs.selection_color,       SELECTION_COLOR,       "gray80", NULL, FALSE);
-  sx->mix_color =             get_color(shell, snd_rs.mix_color,             MIX_COLOR,             NULL, NULL, FALSE);
-  sx->selected_mix_color =    get_color(shell, snd_rs.selected_mix_color,    SELECTED_MIX_COLOR,    NULL, NULL, FALSE);
-  sx->enved_waveform_color =  get_color(shell, snd_rs.enved_waveform_color,  ENVED_WAVEFORM_COLOR,  NULL, NULL, FALSE);
-  sx->filter_waveform_color = get_color(shell, snd_rs.filter_waveform_color, FILTER_WAVEFORM_COLOR, NULL, NULL, FALSE);
-  sx->listener_color =        get_color(shell, snd_rs.listener_color,        LISTENER_COLOR,        NULL, NULL, TRUE);
-  sx->listener_text_color =   get_color(shell, snd_rs.listener_text_color,   LISTENER_TEXT_COLOR,   NULL, NULL, TRUE);
-  sx->graph_color =           get_color(shell, snd_rs.graph_color,           GRAPH_COLOR,           NULL, NULL, TRUE);
-  sx->selected_graph_color =  get_color(shell, snd_rs.selected_graph_color,  SELECTED_GRAPH_COLOR,  NULL, NULL, TRUE);
-  sx->data_color =            get_color(shell, snd_rs.data_color,            DATA_COLOR,            NULL, NULL, FALSE);
-  sx->selected_data_color =   get_color(shell, snd_rs.selected_data_color,   SELECTED_DATA_COLOR,   NULL, NULL, FALSE);
-  sx->mark_color =            get_color(shell, snd_rs.mark_color,            MARK_COLOR,            NULL, NULL, FALSE);
-  sx->sash_color =            get_color(shell, snd_rs.sash_color,            SASH_COLOR,            NULL, NULL, FALSE);
-  sx->pushed_button_color =   get_color(shell, snd_rs.pushed_button_color,   PUSHED_BUTTON_COLOR,   NULL, NULL, FALSE);
-  sx->text_focus_color =      get_color(shell, snd_rs.text_focus_color,      TEXT_FOCUS_COLOR,      NULL, NULL, FALSE);
+  sx->white =                 get_color(shell, snd_rs.white_color,           WHITE_COLOR,           NULL, NULL, true);
+  sx->black =                 get_color(shell, snd_rs.black_color,           BLACK_COLOR,           NULL, NULL, false);
+  sx->light_blue =            get_color(shell, snd_rs.light_blue_color,      LIGHT_BLUE_COLOR,      NULL, NULL, true);
+  sx->lighter_blue =          get_color(shell, snd_rs.lighter_blue_color,    LIGHTER_BLUE_COLOR,    NULL, NULL, true);
+  sx->red =                   get_color(shell, snd_rs.red_color,             RED_COLOR,             NULL, NULL, false);
+  sx->green =                 get_color(shell, snd_rs.green_color,           GREEN_COLOR,           NULL, NULL, false);
+  sx->yellow =                get_color(shell, snd_rs.yellow_color,          YELLOW_COLOR,          NULL, NULL, true);
+  sx->highlight_color =       get_color(shell, snd_rs.highlight_color,       HIGHLIGHT_COLOR,       "gray90", NULL, true);
+  sx->basic_color =           get_color(shell, snd_rs.basic_color,           BASIC_COLOR,           "gray80", "gray", true);
+  sx->position_color =        get_color(shell, snd_rs.position_color,        POSITION_COLOR,        "gray60", "gray", false);
+  sx->zoom_color =            get_color(shell, snd_rs.zoom_color,            ZOOM_COLOR,            "gray20", "gray", false);
+  sx->cursor_color =          get_color(shell, snd_rs.cursor_color,          CURSOR_COLOR,          NULL, NULL, false);
+  sx->selection_color =       get_color(shell, snd_rs.selection_color,       SELECTION_COLOR,       "gray80", NULL, false);
+  sx->mix_color =             get_color(shell, snd_rs.mix_color,             MIX_COLOR,             NULL, NULL, false);
+  sx->selected_mix_color =    get_color(shell, snd_rs.selected_mix_color,    SELECTED_MIX_COLOR,    NULL, NULL, false);
+  sx->enved_waveform_color =  get_color(shell, snd_rs.enved_waveform_color,  ENVED_WAVEFORM_COLOR,  NULL, NULL, false);
+  sx->filter_waveform_color = get_color(shell, snd_rs.filter_waveform_color, FILTER_WAVEFORM_COLOR, NULL, NULL, false);
+  sx->listener_color =        get_color(shell, snd_rs.listener_color,        LISTENER_COLOR,        NULL, NULL, true);
+  sx->listener_text_color =   get_color(shell, snd_rs.listener_text_color,   LISTENER_TEXT_COLOR,   NULL, NULL, true);
+  sx->graph_color =           get_color(shell, snd_rs.graph_color,           GRAPH_COLOR,           NULL, NULL, true);
+  sx->selected_graph_color =  get_color(shell, snd_rs.selected_graph_color,  SELECTED_GRAPH_COLOR,  NULL, NULL, true);
+  sx->data_color =            get_color(shell, snd_rs.data_color,            DATA_COLOR,            NULL, NULL, false);
+  sx->selected_data_color =   get_color(shell, snd_rs.selected_data_color,   SELECTED_DATA_COLOR,   NULL, NULL, false);
+  sx->mark_color =            get_color(shell, snd_rs.mark_color,            MARK_COLOR,            NULL, NULL, false);
+  sx->sash_color =            get_color(shell, snd_rs.sash_color,            SASH_COLOR,            NULL, NULL, false);
+  sx->pushed_button_color =   get_color(shell, snd_rs.pushed_button_color,   PUSHED_BUTTON_COLOR,   NULL, NULL, false);
+  sx->text_focus_color =      get_color(shell, snd_rs.text_focus_color,      TEXT_FOCUS_COLOR,      NULL, NULL, false);
 
   if ((!(set_peaks_font(ss, snd_rs.peaks_font))) &&
       (!(set_peaks_font(ss, DEFAULT_PEAKS_FONT))) &&
@@ -787,7 +787,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   XtSetArg(args[n], XmNforeground, sx->black); n++;
 #endif
   n = attach_all_sides(args, n);
-  XtSetArg(args[n], XmNallowResize, TRUE); n++;
+  XtSetArg(args[n], XmNallowResize, true); n++;
   sx->mainpane = XtCreateManagedWidget("mainpane", xmFormWidgetClass, shell, args, n);
 #else
   sx->mainpane = XtCreateManagedWidget("mainpane", xmFormWidgetClass, parent, caller_args, caller_argn);
@@ -801,7 +801,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNallowResize, TRUE); n++;
+  XtSetArg(args[n], XmNallowResize, true); n++;
   switch (sound_style(ss))
     {
     case SOUNDS_IN_SEPARATE_WINDOWS:
@@ -943,7 +943,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
     {
       if (!(ss->jump_ok))
 	snd_error(_("Caught top level error (will try to continue):\n"));
-      else ss->jump_ok = FALSE;
+      else ss->jump_ok = false;
     }
 #endif
 

@@ -4,7 +4,8 @@
 typedef struct {
   mus_any *gen;
   XEN *vcts; /* one for each accessible Float array (wrapped up here in a vct) */
-  int nvcts, dont_free_gen;
+  int nvcts;
+  bool dont_free_gen;
   void *input_ptree; /* added 24-Apr-02 for snd-run.c optimizer */
 } mus_xen;
 

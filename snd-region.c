@@ -335,7 +335,7 @@ static void make_region_readable(region *r)
       cp->edits[0] = initial_ed_list(0, r->frames - 1);
       cp->edit_size = 1;
       cp->sound_size = 1;
-      cp->hookable = FALSE;
+      cp->hookable = false;
 
       ss->catch_message = NULL;
       hdr = make_file_info(r->filename, ss);
@@ -595,7 +595,7 @@ int save_region(snd_state *ss, int n, char *ofile, int data_format)
   return(INVALID_REGION);
 }
 
-static int paste_region_1(int n, chan_info *cp, int add, off_t beg, const char *origin)
+static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, const char *origin)
 {
   region *r;
   int i, err = MUS_NO_ERROR, id = -1;
@@ -652,8 +652,8 @@ static int paste_region_1(int n, chan_info *cp, int add, off_t beg, const char *
   return(id);
 }
 
-void paste_region(int n, chan_info *cp, const char *origin) {paste_region_1(n, cp, FALSE, CURSOR(cp), origin);}
-void add_region(int n, chan_info *cp, const char *origin) {paste_region_1(n, cp, TRUE, CURSOR(cp), origin);}
+void paste_region(int n, chan_info *cp, const char *origin) {paste_region_1(n, cp, false, CURSOR(cp), origin);}
+void add_region(int n, chan_info *cp, const char *origin) {paste_region_1(n, cp, true, CURSOR(cp), origin);}
 
 int define_region(sync_info *si, off_t *ends)
 {
@@ -726,7 +726,8 @@ int define_region(sync_info *si, off_t *ends)
 
 static void deferred_region_to_temp_file(region *r)
 {
-  int i, k, ofd = 0, datumb = 0, err = 0, copy_ok;
+  int i, k, ofd = 0, datumb = 0, err = 0;
+  bool copy_ok;
   off_t j, len = 0;
   mus_sample_t val, curval;
   snd_fd **sfs = NULL;
@@ -758,7 +759,7 @@ static void deferred_region_to_temp_file(region *r)
 	  (drp->lens[i] != (drp->len - 1)) ||
 	  (r->amp_envs[i] == NULL))
 	{
-	  copy_ok = FALSE;
+	  copy_ok = false;
 	  break;
 	}
 
@@ -813,7 +814,7 @@ static void deferred_region_to_temp_file(region *r)
     }
   else
     {
-      hdr = make_temp_header(r->filename, r->srate, r->chans, 0, (char *)__FUNCTION__);
+      hdr = make_temp_header(r->filename, r->srate, r->chans, 0, (char *)c__FUNCTION__);
       ofd = open_temp_file(r->filename, r->chans, hdr, ss);
       if (ofd == -1)
 	snd_error(_("can't write region temp file %s: %s"), r->filename, strerror(errno));
@@ -999,7 +1000,7 @@ void region_edit(snd_state *ss, int pos)
 	  err = copy_file(r->filename, temp_region_name);
 	  if (err == MUS_NO_ERROR)
 	    {
-	      sp = snd_open_file(temp_region_name, ss, FALSE);
+	      sp = snd_open_file(temp_region_name, ss, false);
 	      if (sp)
 		{
 		  r->editor_copy = sp;
@@ -1139,7 +1140,7 @@ insert region data into snd's channel chn starting at start-samp"
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_insert_region, reg_n));
   samp = beg_to_sample(samp_n, S_insert_region);
-  paste_region_1(rg, cp, FALSE, samp, S_insert_region);
+  paste_region_1(rg, cp, false, samp, S_insert_region);
   update_graph(cp);
   return(reg_n);
 }
@@ -1230,10 +1231,11 @@ static XEN g_forget_region (XEN n)
 static XEN g_play_region (XEN n, XEN wait) 
 {
   #define H_play_region "(" S_play_region " (reg 0) (wait #f)): play region reg; if wait is #t, play to end before returning"
-  int rg, wt = FALSE;
+  int rg;
+  bool wt = false;
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ARG_1, S_play_region, "a region id");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(wait), wait, XEN_ARG_2, S_play_region, "a boolean");
-  if (XEN_TRUE_P(wait)) wt = TRUE;
+  if (XEN_TRUE_P(wait)) wt = true;
   rg = XEN_REGION_TO_C_INT(n);
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_play_region, n));
@@ -1387,7 +1389,7 @@ mix region into snd's channel chn starting at chn-samp; return new mix id."
     samp = beg_to_sample(chn_samp_n, S_mix_region);
   else samp = CURSOR(cp);
   cp->state->catch_message = NULL;
-  id = paste_region_1(rg, cp, TRUE, samp, S_mix_region);
+  id = paste_region_1(rg, cp, true, samp, S_mix_region);
   if (id == INVALID_MIX_ID)
     XEN_ERROR(MUS_MISC_ERROR,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_mix_region),

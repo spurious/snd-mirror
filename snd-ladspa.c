@@ -37,10 +37,10 @@
 /*****************************************************************************/
 
 typedef struct {
-  char * m_pcPackedFilename;
-  const char * m_pcLabel;
-  const LADSPA_Descriptor * m_psDescriptor;
-  void * m_pvPluginHandle;
+  char *m_pcPackedFilename;
+  const char *m_pcLabel;
+  const LADSPA_Descriptor *m_psDescriptor;
+  void *m_pvPluginHandle;
 } LADSPAPluginInfo;
 
 /*****************************************************************************/
@@ -56,7 +56,7 @@ static long g_lLADSPARepositoryCount;
 
 static int lInputCount, lOutputCount;
 
-static void isLADSPAPluginSupported(const LADSPA_Descriptor * psDescriptor) {
+static void isLADSPAPluginSupported(const LADSPA_Descriptor *psDescriptor) {
   unsigned int lIndex;
   LADSPA_PortDescriptor iPortDescriptor;
 
@@ -75,12 +75,12 @@ static void isLADSPAPluginSupported(const LADSPA_Descriptor * psDescriptor) {
 /*****************************************************************************/
 
 /* Assumes repository initialised, returns NULL if not found. */
-static const LADSPA_Descriptor *findLADSPADescriptor(const char * pcPackedFilename, const char * pcLabel) {
+static const LADSPA_Descriptor *findLADSPADescriptor(const char *pcPackedFilename, const char *pcLabel) {
 
   /* FIXME: Could be using hashtables, binary chops etc. Instead we simply scan the table. */
 
   long lIndex;
-  LADSPAPluginInfo * psInfo;
+  LADSPAPluginInfo *psInfo;
 
   for (lIndex = 0; lIndex < g_lLADSPARepositoryCount; lIndex++) {
     psInfo = g_psLADSPARepository[lIndex];
@@ -96,10 +96,10 @@ static const LADSPA_Descriptor *findLADSPADescriptor(const char * pcPackedFilena
 
 /* Allocate a new string. The string will contain a library filename,
    stripped of path and .so (if present) */
-static char * packLADSPAFilename(const char * pcFilename) {
+static char *packLADSPAFilename(const char * pcFilename) {
 
-  const char * pcStart, * pcEnd;
-  char * pcPackedFilename;
+  const char *pcStart, * pcEnd;
+  char *pcPackedFilename;
 
   /* Move start past last /, move pcEnd to end. */
   pcStart = pcFilename;
@@ -146,13 +146,13 @@ static void unloadLADSPA() {
 /*****************************************************************************/
 
 /* Called only from within loadLADSPA->loadLADSPADirectory. */
-static void loadLADSPALibrary(void * pvPluginHandle,
-			      char * pcFilename,
+static void loadLADSPALibrary(void *pvPluginHandle,
+			      char *pcFilename,
 			      LADSPA_Descriptor_Function fDescriptorFunction) {
 
-  LADSPAPluginInfo ** psOldRepository, * psInfo;
+  LADSPAPluginInfo **psOldRepository, *psInfo;
   long lNewCapacity, lIndex;
-  const LADSPA_Descriptor * psDescriptor;
+  const LADSPA_Descriptor *psDescriptor;
 
   for (lIndex = 0;
        (psDescriptor = fDescriptorFunction(lIndex)) != NULL;
@@ -183,15 +183,15 @@ static void loadLADSPALibrary(void * pvPluginHandle,
 
 /* Search just the one directory. Called only from within
    loadLADSPA. */
-static void loadLADSPADirectory(const char * pcDirectory) {
+static void loadLADSPADirectory(const char *pcDirectory) {
 
-  char * pcFilename = NULL;
-  DIR * psDirectory;
+  char *pcFilename = NULL;
+  DIR *psDirectory;
   LADSPA_Descriptor_Function fDescriptorFunction;
   long lDirLength;
   long iNeedSlash;
-  struct dirent * psDirectoryEntry;
-  void * pvPluginHandle;
+  struct dirent *psDirectoryEntry;
+  void *pvPluginHandle;
 
   lDirLength = strlen(pcDirectory);
   if (!lDirLength)
@@ -247,10 +247,10 @@ static void loadLADSPADirectory(const char * pcDirectory) {
 
 static void loadLADSPA() {
 
-  char * pcBuffer = NULL;
-  const char * pcEnd;
-  const char * pcLADSPAPath;
-  const char * pcStart;
+  char *pcBuffer = NULL;
+  const char *pcEnd;
+  const char *pcLADSPAPath;
+  const char *pcStart;
 
   g_bLADSPAInitialised = 1;
   g_psLADSPARepository = (LADSPAPluginInfo **)MALLOC(sizeof(LADSPAPluginInfo *)
@@ -325,7 +325,7 @@ list containing the plugin-file and plugin-label is included."
 
   long lIndex;
   XEN xenList; XEN xenPluginList;
-  LADSPAPluginInfo * psInfo;
+  LADSPAPluginInfo *psInfo;
 
   if (!g_bLADSPAInitialised)
     loadLADSPA();
@@ -359,8 +359,8 @@ list is the name of the port. Other hint information may follow this to help \
 a user interface edit the parameter in a useful way."
 
   long lIndex;
-  const LADSPA_Descriptor * psDescriptor;
-  char * pcFilename, * pcLabel, * pcTmp;
+  const LADSPA_Descriptor *psDescriptor;
+  char *pcFilename, *pcLabel, *pcTmp;
   XEN xenList; XEN xenPortData;
   LADSPA_PortRangeHintDescriptor iHint;
 
@@ -447,9 +447,9 @@ plugin-label for the LADSPA plugin, as provided by list-ladspa, followed \
 by any arguments. The reader argument can also be a list of readers. \
 Information about about parameters can be acquired using analyse-ladspa."
 
-  const LADSPA_Descriptor * psDescriptor;
-  char * pcFilename, * pcLabel, * pcTmp;
-  LADSPA_Handle * psHandle;
+  const LADSPA_Descriptor *psDescriptor;
+  char *pcFilename, *pcLabel, *pcTmp;
+  LADSPA_Handle *psHandle;
   unsigned long lSampleRate, lPortIndex, lBlockSize, lSampleIndex;
   off_t lAt;
   unsigned long lParameterCount;
@@ -582,7 +582,7 @@ Information about about parameters can be acquired using analyse-ladspa."
   sp = (cp->sound);
 
   lSampleRate = (unsigned long)(sp->hdr->srate);
-  psHandle = (void **)psDescriptor->instantiate(psDescriptor, lSampleRate);
+  psHandle = (LADSPA_Handle *)psDescriptor->instantiate(psDescriptor, lSampleRate);
   if (!psHandle)
     XEN_ERROR(PLUGIN_ERROR,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_apply_ladspa),
@@ -650,7 +650,7 @@ Information about about parameters can be acquired using analyse-ladspa."
     psDescriptor->activate(psHandle);
 
   lAt = 0;
-  state->stopped_explicitly = FALSE;
+  state->stopped_explicitly = false;
   while (lAt < num) {
 
     /* Decide how much audio to process this frame. */
@@ -720,7 +720,7 @@ Information about about parameters can be acquired using analyse-ladspa."
   else 
     {
       report_in_minibuffer(sp, _(S_apply_ladspa " interrupted"));
-      state->stopped_explicitly = FALSE;
+      state->stopped_explicitly = false;
     }
   if (ofile) FREE(ofile);
   for (i = 0; i < inchans; i++)

@@ -43,7 +43,7 @@ static void reposition_file_buffers_1(off_t loc, snd_io *io)
 static void reposition_file_buffers(snd_data *sd, off_t index)
 {
   int fd = 0;
-  int reclose = FALSE;
+  bool reclose = false;
   file_info *hdr;
   if (index < 0) index = 0; /* if reading in reverse, don't fall off the start of the buffer */
   if (sd->open == FD_CLOSED)
@@ -69,7 +69,7 @@ static void reposition_file_buffers(snd_data *sd, off_t index)
       /* fix up io->fd and whatever else is clobbered by mus_file_close */
       sd->io->fd = fd;
       sd->open = FD_OPEN;
-      reclose = TRUE;
+      reclose = true;
     }
   reposition_file_buffers_1(index, sd->io);
   if (reclose)
@@ -267,7 +267,7 @@ int snd_write_header(snd_state *ss, const char *name, int type, int srate, int c
   return(err);
 }
 
-int snd_remove(const char *name, int forget)
+int snd_remove(const char *name, bool forget)
 {
   int err = 0;
   if (forget == REMOVE_FROM_CACHE) mus_sound_forget(name); /* no error here if not in sound tables */
@@ -341,7 +341,8 @@ void remember_temp(const char *filename, int chans)
 
 static void forget_temp(const char *filename, int chan)
 {
-  int i, j, happy = FALSE;
+  int i, j;
+  bool happy = false;
   tempfile_ctr *tmp;
   for (i = 0; i < tempfiles_size; i++)
     {
@@ -352,7 +353,7 @@ static void forget_temp(const char *filename, int chan)
 	  for (j = 0; j < tmp->chans; j++)
 	    if (tmp->ticks[j] > 0) 
 	      {
-		happy = TRUE;
+		happy = true;
 		return;
 	      }
 	  if (!happy)
@@ -392,7 +393,7 @@ void forget_temps(void)
       snd_remove(tempfiles[i]->name, REMOVE_FROM_CACHE);
 }
 
-snd_data *make_snd_data_file(const char *name, snd_io *io, file_info *hdr, int temp, int ctr, int temp_chan)
+snd_data *make_snd_data_file(const char *name, snd_io *io, file_info *hdr, file_delete_t temp, int ctr, int temp_chan)
 {
   snd_data *sd;
   sd = (snd_data *)CALLOC(1, sizeof(snd_data));
@@ -405,8 +406,8 @@ snd_data *make_snd_data_file(const char *name, snd_io *io, file_info *hdr, int t
   if (temp == MULTICHANNEL_DELETION) tick_temp(name, temp_chan);
   sd->edit_ctr = ctr;
   sd->open = FD_OPEN;
-  sd->inuse = FALSE;
-  sd->copy = FALSE;
+  sd->inuse = false;
+  sd->copy = false;
   sd->chan = temp_chan;
   sd->len = (hdr->samples) * (mus_bytes_per_sample(hdr->format)) + hdr->data_location;
   return(sd);
@@ -440,8 +441,8 @@ snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize)
   sf->temporary = DONT_DELETE_ME;
   sf->edit_ctr = sd->edit_ctr;
   sf->open = FD_OPEN;
-  sf->inuse = FALSE;
-  sf->copy = TRUE;
+  sf->inuse = false;
+  sf->copy = true;
   return(sf);
 }
 
@@ -457,8 +458,8 @@ snd_data *make_snd_data_buffer(mus_sample_t *data, int len, int ctr)
   /*   C > (make-region 1000 2000) (insert-region (cursor)) C-v hits this empty slot and gets confused about the previously final sample value */
   memcpy((void *)(sf->buffered_data), (void *)data, len * sizeof(mus_sample_t));
   sf->edit_ctr = ctr;
-  sf->copy = FALSE;
-  sf->inuse = FALSE;
+  sf->copy = false;
+  sf->inuse = false;
   sf->len = len * 4;
   return(sf);
 }
@@ -470,8 +471,8 @@ snd_data *make_snd_data_buffer_for_simple_channel(int len)
   sf->type = SND_DATA_BUFFER;
   sf->buffered_data = (mus_sample_t *)CALLOC(len, sizeof(mus_sample_t));
   sf->edit_ctr = 0;
-  sf->copy = FALSE;
-  sf->inuse = FALSE;
+  sf->copy = false;
+  sf->inuse = false;
   sf->len = len * 4;
   return(sf);
 }
@@ -480,7 +481,7 @@ snd_data *free_snd_data(snd_data *sd)
 {
   if (sd)
     {
-      if (sd->inuse == FALSE)
+      if (!(sd->inuse))
 	{
 	  /* assume the inuse cases will eventually be freed via Guile GC.
 	   *   this can happen if a sample-reader is created, and forgotten,
@@ -522,13 +523,13 @@ snd_data *free_snd_data(snd_data *sd)
 	  if (sd->filename) FREE(sd->filename);
 	  sd->filename = NULL;
 	  sd->temporary = ALREADY_DELETED;
-	  sd->copy = FALSE;
+	  sd->copy = false;
 	  sd->type = 0;
 	  FREE(sd);
 	}
       else 
 	{
-	  sd->free_me = TRUE;
+	  sd->free_me = true;
 	}
     }
   return(NULL);

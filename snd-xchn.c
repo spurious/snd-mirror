@@ -16,8 +16,8 @@ enum {
 #define NUM_CHAN_WIDGETS 16
 #define DEFAULT_EDIT_HISTORY_WIDTH 1
 
-#define START_JUST_TIME(cp) (cp->state)->just_time = TRUE
-#define END_JUST_TIME(cp) (cp->state)->just_time = FALSE
+#define START_JUST_TIME(cp) (cp->state)->just_time = true
+#define END_JUST_TIME(cp) (cp->state)->just_time = false
 
 Widget channel_main_pane(chan_info *cp)
 {
@@ -607,7 +607,7 @@ static void remake_edit_history(Widget lst, chan_info *cp, int from_graph)
   for (i = 0; i <= eds; i++) 
     XmStringFree(edits[i]);
   FREE(edits);
-  XmListSelectPos(lst, cp->edit_ctr + 1, FALSE);
+  XmListSelectPos(lst, cp->edit_ctr + 1, false);
   XtVaGetValues(lst, XmNvisibleItemCount, &items, NULL);
   if (items <= eds)
     XtVaSetValues(lst, XmNtopItemPosition, eds - items + 2, NULL);
@@ -628,7 +628,7 @@ static void watch_edit_history_sash(Widget w, XtPointer closure, XtPointer info)
 	{
 	  edhist = EDIT_HISTORY_LIST(cp);
 	  if (edhist)
-	    remake_edit_history(edhist, cp, FALSE);
+	    remake_edit_history(edhist, cp, false);
 	}
     }
 }
@@ -647,7 +647,7 @@ void reflect_edit_history_change(chan_info *cp)
     {
       lst = EDIT_HISTORY_LIST(cp);
 #if WITH_RELATIVE_PANES
-      if ((lst) && (widget_width(lst) > 1)) remake_edit_history(lst, cp, TRUE);
+      if ((lst) && (widget_width(lst) > 1)) remake_edit_history(lst, cp, true);
 #else
       /* old form */
       if (lst)
@@ -686,7 +686,7 @@ void reflect_edit_history_change(chan_info *cp)
 		    XmStringFree(edits[i]);
 		  FREE(edits);
 		}
-	      XmListSelectPos(lst, cp->edit_ctr + 1, FALSE);
+	      XmListSelectPos(lst, cp->edit_ctr + 1, false);
 	      XtVaGetValues(lst, XmNvisibleItemCount, &items, NULL);
 	      if (items <= eds)
 		XtVaSetValues(lst, XmNtopItemPosition, eds - items + 2, NULL);
@@ -711,7 +711,7 @@ void reflect_edit_counter_change(chan_info *cp)
       lst = EDIT_HISTORY_LIST(cp);
       if ((lst) && (widget_width(lst) > 1))
 	{
-	  XmListSelectPos(lst, cp->edit_ctr + 1, FALSE);
+	  XmListSelectPos(lst, cp->edit_ctr + 1, false);
 	  XtVaGetValues(lst, 
 			XmNvisibleItemCount, &len, 
 			XmNtopItemPosition, &top, 
@@ -729,7 +729,7 @@ void reflect_edit_counter_change(chan_info *cp)
 
 static void cp_graph_key_press(Widget w, XtPointer context, XEvent *event, Boolean *cont);
 
-int add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int insertion, Widget main, int button_style, int with_events)
+int add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int insertion, Widget main, int button_style, bool with_events)
 {
   Widget *cw;
   XtCallbackList n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14;
@@ -737,7 +737,8 @@ int add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int
   chan_context *cx;
   axis_context *cax;
   state_context *sx;
-  int make_widgets, i, n, need_colors, need_extra_scrollbars;
+  int make_widgets, i, n;
+  bool need_colors, need_extra_scrollbars;
   Arg args[32];
   make_widgets = ((sp->chans[channel]) == NULL);
   sp->chans[channel] = make_chan_info(sp->chans[channel], channel, sp, ss);
@@ -773,7 +774,7 @@ int add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int
 	  XtSetArg(args[n], XmNsashIndent, 2); n++;
 	  XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
 	  cw[W_top] = XtCreateManagedWidget("chn-main-window", xmPanedWindowWidgetClass, cw[W_form], args, n);
-	  XtAddEventHandler(cw[W_top], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
+	  XtAddEventHandler(cw[W_top], KeyPressMask, false, graph_key_press, (XtPointer)sp);
 
 	  n = 0;
 	  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->white); n++;}
@@ -785,12 +786,12 @@ int add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int
 	  if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
 	  XtSetArg(args[n], XmNpaneMaximum, LOTSA_PIXELS); n++;
 	  cw[W_main_window] = XtCreateManagedWidget("chn-main-window", xmFormWidgetClass, cw[W_top], args, n);
-	  XtAddEventHandler(cw[W_main_window], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
+	  XtAddEventHandler(cw[W_main_window], KeyPressMask, false, graph_key_press, (XtPointer)sp);
 	  XtManageChild(cw[W_edhist]);
 
 	  XtAddCallback(cw[W_edhist], XmNbrowseSelectionCallback, history_select_callback, cp);
-	  XtAddEventHandler(cw[W_edhist], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
-	  XtAddEventHandler(XtParent(cw[W_edhist]), KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
+	  XtAddEventHandler(cw[W_edhist], KeyPressMask, false, graph_key_press, (XtPointer)sp);
+	  XtAddEventHandler(XtParent(cw[W_edhist]), KeyPressMask, false, graph_key_press, (XtPointer)sp);
 #if WITH_RELATIVE_PANES
 	{
 	  int i;
@@ -812,7 +813,7 @@ int add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int
 #else
 	/* Motif 1 */
 	  cw[W_main_window] = XtCreateManagedWidget("chn-main-window", xmFormWidgetClass, w_snd_pane(sp), args, n);
-	  XtAddEventHandler(cw[W_main_window], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
+	  XtAddEventHandler(cw[W_main_window], KeyPressMask, false, graph_key_press, (XtPointer)sp);
 #endif
 	}
       else cw[W_main_window] = main;
@@ -837,25 +838,25 @@ int add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int
 	  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, sx->pushed_button_color); n++;}
 	  cw[W_f] = make_togglebutton_widget(_("f"), cw[W_wf_buttons], args, n);
 	  XtAddCallback(cw[W_f], XmNvalueChangedCallback, f_toggle_callback, cp);
-	  XtAddEventHandler(cw[W_f], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
+	  XtAddEventHandler(cw[W_f], KeyPressMask, false, graph_key_press, (XtPointer)sp);
 	  
-	  XtSetArg(args[n], XmNset, TRUE); n++;
+	  XtSetArg(args[n], XmNset, true); n++;
 	  cw[W_w] = make_togglebutton_widget(_("w"), cw[W_wf_buttons], args, n);
 	  XtAddCallback(cw[W_w], XmNvalueChangedCallback, w_toggle_callback, cp);
-	  XtAddEventHandler(cw[W_w], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
+	  XtAddEventHandler(cw[W_w], KeyPressMask, false, graph_key_press, (XtPointer)sp);
 	}
       else
 	{
 	  n = 0;
 	  if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
 	  XtSetArg(args[n], XmNarrowDirection, XmARROW_UP); n++;
-	  XtSetArg(args[n], XmNsensitive, FALSE); n++;
+	  XtSetArg(args[n], XmNsensitive, false); n++;
 	  cw[W_f] = XtCreateManagedWidget("up", xmArrowButtonWidgetClass, cw[W_wf_buttons], args, n);
 
 	  n = 0;
 	  if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
 	  XtSetArg(args[n], XmNarrowDirection, XmARROW_DOWN); n++;
-	  XtSetArg(args[n], XmNsensitive, FALSE); n++;
+	  XtSetArg(args[n], XmNsensitive, false); n++;
 	  cw[W_w] = XtCreateManagedWidget("down", xmArrowButtonWidgetClass, cw[W_wf_buttons], args, n);
 	}
 
@@ -869,7 +870,7 @@ int add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNspacing, 0); n++;
       cw[W_left_scrollers] = XtCreateManagedWidget("chn-left", xmRowColumnWidgetClass, cw[W_main_window], args, n);
-      XtAddEventHandler(cw[W_left_scrollers], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
+      XtAddEventHandler(cw[W_left_scrollers], KeyPressMask, false, graph_key_press, (XtPointer)sp);
 
       n = 0;
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->zoom_color); n++;}
@@ -885,7 +886,7 @@ int add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int
       XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(zy_drag_callback, (XtPointer)cp)); n++;
       XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(zy_valuechanged_callback, (XtPointer)cp)); n++;
       cw[W_zy] = XtCreateManagedWidget("chn-zy", xmScrollBarWidgetClass, cw[W_left_scrollers], args, n);
-      XtAddEventHandler(cw[W_zy], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
+      XtAddEventHandler(cw[W_zy], KeyPressMask, false, graph_key_press, (XtPointer)sp);
 
       n = 0;
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->position_color); n++;}
@@ -902,7 +903,7 @@ int add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int
       XtSetArg(args[n], XmNdragCallback, n3 = make_callback_list(sy_drag_callback, (XtPointer)cp)); n++;
       XtSetArg(args[n], XmNvalueChangedCallback, n4 = make_callback_list(sy_valuechanged_callback, (XtPointer)cp)); n++;
       cw[W_sy] = XtCreateManagedWidget("chn-sy", xmScrollBarWidgetClass, cw[W_left_scrollers], args, n);
-      XtAddEventHandler(cw[W_sy], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
+      XtAddEventHandler(cw[W_sy], KeyPressMask, false, graph_key_press, (XtPointer)sp);
 
       n = 0;
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -914,7 +915,7 @@ int add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNspacing, 0); n++;
       cw[W_bottom_scrollers] = XtCreateManagedWidget("chn-bottom", xmRowColumnWidgetClass, cw[W_main_window], args, n);
-      XtAddEventHandler(cw[W_bottom_scrollers], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
+      XtAddEventHandler(cw[W_bottom_scrollers], KeyPressMask, false, graph_key_press, (XtPointer)sp);
 
       n = 0;
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->position_color); n++;}
@@ -931,7 +932,7 @@ int add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int
       XtSetArg(args[n], XmNdecrementCallback, n7 = make_callback_list(sx_decrement_callback, (XtPointer)cp)); n++;
       XtSetArg(args[n], XmNvalueChangedCallback, n8 = make_callback_list(sx_valuechanged_callback, (XtPointer)cp)); n++;
       cw[W_sx] = XtCreateManagedWidget("chn-sx", xmScrollBarWidgetClass, cw[W_bottom_scrollers], args, n);
-      XtAddEventHandler(cw[W_sx], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
+      XtAddEventHandler(cw[W_sx], KeyPressMask, false, graph_key_press, (XtPointer)sp);
 
       n = 0;
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->zoom_color); n++;}
@@ -947,7 +948,7 @@ int add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int
       XtSetArg(args[n], XmNdragCallback, n9 = make_callback_list(zx_drag_callback, (XtPointer)cp)); n++;
       XtSetArg(args[n], XmNvalueChangedCallback, n10 = make_callback_list(zx_valuechanged_callback, (XtPointer)cp)); n++;
       cw[W_zx] = XtCreateManagedWidget("chn-zx", xmScrollBarWidgetClass, cw[W_bottom_scrollers], args, n);
-      XtAddEventHandler(cw[W_zx], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
+      XtAddEventHandler(cw[W_zx], KeyPressMask, false, graph_key_press, (XtPointer)sp);
 
       n = 0;
       if (need_colors) 
@@ -976,12 +977,12 @@ int add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int
 	}
       if (main == NULL)
 	{
-	  XtAddEventHandler(cw[W_graph], EnterWindowMask, FALSE, graph_mouse_enter, (XtPointer)ss);
-	  XtAddEventHandler(cw[W_graph], LeaveWindowMask, FALSE, graph_mouse_leave, (XtPointer)cp);
-	  XtAddEventHandler(cw[W_graph], ButtonPressMask, FALSE, graph_button_press, (XtPointer)cp);
-	  XtAddEventHandler(cw[W_graph], ButtonMotionMask, FALSE, graph_button_motion, (XtPointer)cp);
-	  XtAddEventHandler(cw[W_graph], ButtonReleaseMask, FALSE, graph_button_release, (XtPointer)cp);
-	  XtAddEventHandler(cw[W_graph], KeyPressMask, FALSE, cp_graph_key_press, (XtPointer)cp);
+	  XtAddEventHandler(cw[W_graph], EnterWindowMask, false, graph_mouse_enter, (XtPointer)ss);
+	  XtAddEventHandler(cw[W_graph], LeaveWindowMask, false, graph_mouse_leave, (XtPointer)cp);
+	  XtAddEventHandler(cw[W_graph], ButtonPressMask, false, graph_button_press, (XtPointer)cp);
+	  XtAddEventHandler(cw[W_graph], ButtonMotionMask, false, graph_button_motion, (XtPointer)cp);
+	  XtAddEventHandler(cw[W_graph], ButtonReleaseMask, false, graph_button_release, (XtPointer)cp);
+	  XtAddEventHandler(cw[W_graph], KeyPressMask, false, cp_graph_key_press, (XtPointer)cp);
 	  add_drop(ss, cw[W_graph]);
 	}
       FREE(n1);
@@ -1014,7 +1015,7 @@ int add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int
 	  XtSetArg(args[n], XmNdragCallback, n11 = make_callback_list(gzy_drag_callback, (XtPointer)cp)); n++;
 	  XtSetArg(args[n], XmNvalueChangedCallback, n12 = make_callback_list(gzy_valuechanged_callback, (XtPointer)cp)); n++;
 	  cw[W_gzy] = XtCreateManagedWidget("chn-gzy", xmScrollBarWidgetClass, cw[W_main_window], args, n);
-	  XtAddEventHandler(cw[W_gzy], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
+	  XtAddEventHandler(cw[W_gzy], KeyPressMask, false, graph_key_press, (XtPointer)sp);
 
 	  n = 0;
 	  if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->position_color); n++;}
@@ -1032,7 +1033,7 @@ int add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int
 	  XtSetArg(args[n], XmNdragCallback, n13 = make_callback_list(gsy_drag_callback, (XtPointer)cp)); n++;
 	  XtSetArg(args[n], XmNvalueChangedCallback, n14 = make_callback_list(gsy_valuechanged_callback, (XtPointer)cp)); n++;
 	  cw[W_gsy] = XtCreateManagedWidget("chn-gsy", xmScrollBarWidgetClass, cw[W_main_window], args, n);
-	  XtAddEventHandler(cw[W_gsy], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
+	  XtAddEventHandler(cw[W_gsy], KeyPressMask, false, graph_key_press, (XtPointer)sp);
 	  
 	  FREE(n11);
 	  FREE(n12);
@@ -1061,7 +1062,7 @@ int add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int
 	  if (cw[i])
 	    if  (!XtIsManaged(cw[i])) 
 	      XtManageChild(cw[i]);
-      recolor_graph(cp, FALSE); /* in case selection color left over from previous use */
+      recolor_graph(cp, false); /* in case selection color left over from previous use */
     }
 #if (XmVERSION > 1)
   if (cw[W_edhist]) 
@@ -1179,14 +1180,14 @@ void cleanup_cw(chan_info *cp)
   if ((cp) && (cp->cgx))
     {
       cx = cp->cgx;
-      cx->selected = FALSE;
+      cx->selected = false;
       cw = cx->chan_widgets;
       if (cw)
 	{
 	  if (cw[W_w])
 	    {
-	      XtVaSetValues(cw[W_w], XmNset, TRUE, NULL);
-	      XtVaSetValues(cw[W_f], XmNset, FALSE, NULL);
+	      XtVaSetValues(cw[W_w], XmNset, true, NULL);
+	      XtVaSetValues(cw[W_f], XmNset, false, NULL);
 	    }
 	  if (channel_main_pane(cp))
 	    XtUnmanageChild(channel_main_pane(cp));
@@ -1257,7 +1258,7 @@ void change_channel_style(snd_info *sp, int new_style)
 	      channel_open_pane(sp->chans[0], NULL);
 	      channel_unlock_pane(sp->chans[0], NULL);
 	      sound_unlock_control_panel(sp, NULL);
-	      XmToggleButtonSetState(unite_button(sp), TRUE, FALSE);
+	      XmToggleButtonSetState(unite_button(sp), true, false);
 	    }
 	  else
 	    {
@@ -1304,12 +1305,12 @@ void change_channel_style(snd_info *sp, int new_style)
 #endif
 			}
 #endif
-		      XmToggleButtonSetState(cw[W_f], (Boolean)(cp->graph_transform_p), FALSE);
-		      XmToggleButtonSetState(cw[W_w], (Boolean)(cp->graph_time_p), FALSE);
+		      XmToggleButtonSetState(cw[W_f], (Boolean)(cp->graph_transform_p), false);
+		      XmToggleButtonSetState(cw[W_w], (Boolean)(cp->graph_time_p), false);
 		      /* these can get out of sync if changes are made in the unseparated case */
 		      set_axes(cp, ap->x0, ap->x1, ap->y0, ap->y1);
 		    }
-		  XmToggleButtonSetState(unite_button(sp), FALSE, FALSE);
+		  XmToggleButtonSetState(unite_button(sp), false, false);
 		  if (sp->selected_channel > 0) color_selected_channel(sp);
 		}
 	    }
@@ -1319,10 +1320,10 @@ void change_channel_style(snd_info *sp, int new_style)
 }
 
 
-int fixup_cp_cgx_ax_wn(chan_info *cp) 
+bool fixup_cp_cgx_ax_wn(chan_info *cp) 
 {
   ((cp->cgx)->ax)->wn = XtWindow((cp->cgx)->chan_widgets[W_graph]); 
-  return(TRUE);
+  return(true);
 }
 
 static XEN g_channel_widgets(XEN snd, XEN chn)

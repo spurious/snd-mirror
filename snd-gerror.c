@@ -15,7 +15,7 @@ static void delete_snd_error(GtkWidget *w, GdkEvent *event, gpointer context)
   gtk_widget_hide(snd_error_dialog);
 }
 
-static void create_snd_error_dialog(snd_state *ss, int popup)
+static void create_snd_error_dialog(snd_state *ss, bool popup)
 {
   GtkWidget *ok_button;
 
@@ -33,19 +33,19 @@ static void create_snd_error_dialog(snd_state *ss, int popup)
   gtk_widget_realize(snd_error_dialog);
 
   ok_button = gtk_button_new_with_label(_("Ok"));
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(snd_error_dialog)->action_area), ok_button, FALSE, TRUE, 20);
+  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(snd_error_dialog)->action_area), ok_button, false, true, 20);
   g_signal_connect_closure_by_id(GTK_OBJECT(ok_button),
 				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(ok_button))),
 				 0,
 				 g_cclosure_new(GTK_SIGNAL_FUNC(dismiss_snd_error), (gpointer)ss, 0),
 				 0);
   gtk_widget_show(ok_button);
-  snd_error_history = make_scrolled_text(ss, GTK_DIALOG(snd_error_dialog)->vbox, FALSE, NULL, NULL);
+  snd_error_history = make_scrolled_text(ss, GTK_DIALOG(snd_error_dialog)->vbox, false, NULL, NULL);
   if (popup) gtk_widget_show(snd_error_dialog);
   set_dialog_widget(ss, ERROR_DIALOG, snd_error_dialog);
 }
 
-void add_to_error_history(snd_state *ss, char *msg, int popup)
+void add_to_error_history(snd_state *ss, char *msg, bool popup)
 {
 #if HAVE_STRFTIME
   char *tim, *buf;
@@ -75,8 +75,8 @@ void add_to_error_history(snd_state *ss, char *msg, int popup)
 
 void post_error_dialog(snd_state *ss, char *msg)
 {
-  if (!snd_error_dialog) create_snd_error_dialog(ss, TRUE); else raise_dialog(snd_error_dialog);
-  add_to_error_history(ss, msg, TRUE);
+  if (!snd_error_dialog) create_snd_error_dialog(ss, true); else raise_dialog(snd_error_dialog);
+  add_to_error_history(ss, msg, true);
 }
 
 void show_snd_errors(snd_state *ss)
@@ -90,14 +90,14 @@ void show_snd_errors(snd_state *ss)
   else post_error_dialog(ss, _("no errors yet"));
 }
 
-static int yes_or_no = FALSE;
+static bool yes_or_no = false;
 static GtkWidget *yes_or_no_dialog = NULL;
 static GtkWidget *yn_label;
 static GtkWidget *yes_button, *no_button;
 
-static void yes_callback(GtkWidget *w, gpointer context) {gtk_widget_hide(yes_or_no_dialog); yes_or_no = TRUE;}
-static void no_callback(GtkWidget *w, gpointer context) {gtk_widget_hide(yes_or_no_dialog); yes_or_no = FALSE;}
-static void delete_yes_or_no_dialog(GtkWidget *w, GdkEvent *event, gpointer context) {gtk_widget_hide(yes_or_no_dialog); yes_or_no = TRUE;}
+static void yes_callback(GtkWidget *w, gpointer context) {gtk_widget_hide(yes_or_no_dialog); yes_or_no = true;}
+static void no_callback(GtkWidget *w, gpointer context) {gtk_widget_hide(yes_or_no_dialog); yes_or_no = false;}
+static void delete_yes_or_no_dialog(GtkWidget *w, GdkEvent *event, gpointer context) {gtk_widget_hide(yes_or_no_dialog); yes_or_no = true;}
 
 #define YES_OR_NO_BUFFER_SIZE 1024
 
@@ -123,7 +123,7 @@ int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
 #endif
 #endif
 
-  yes_or_no = FALSE;
+  yes_or_no = false;
   if (!yes_or_no_dialog)
     {
       yes_or_no_dialog = gtk_dialog_new();
@@ -141,8 +141,8 @@ int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
 
       yes_button = gtk_button_new_with_label(_("Yes"));
       no_button = gtk_button_new_with_label(_("No"));
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(yes_or_no_dialog)->action_area), yes_button, FALSE, TRUE, 10);
-      gtk_box_pack_end(GTK_BOX(GTK_DIALOG(yes_or_no_dialog)->action_area), no_button, FALSE, TRUE, 10);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(yes_or_no_dialog)->action_area), yes_button, false, true, 10);
+      gtk_box_pack_end(GTK_BOX(GTK_DIALOG(yes_or_no_dialog)->action_area), no_button, false, true, 10);
       g_signal_connect_closure_by_id(GTK_OBJECT(yes_button),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(yes_button))),
 				     0,
@@ -164,10 +164,10 @@ int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
     }
   else gtk_label_set_text(GTK_LABEL(yn_label), yes_buf);
   gtk_widget_show(yes_or_no_dialog);
-  ss->error_lock = TRUE;
+  ss->error_lock = true;
   while ((GTK_WIDGET_VISIBLE(yes_or_no_dialog))  && (ss->error_lock))
     check_for_event(ss);
-  ss->error_lock = FALSE;
+  ss->error_lock = false;
   if (GTK_WIDGET_VISIBLE(yes_or_no_dialog))
     gtk_widget_hide(yes_or_no_dialog);
   FREE(yes_buf);

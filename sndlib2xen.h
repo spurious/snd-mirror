@@ -15,7 +15,7 @@
 typedef struct {
   int length, chans;
   mus_sample_t **data;
-  int wrapped;
+  bool wrapped;
 } sound_data;
 
 int sound_data_p(XEN obj);

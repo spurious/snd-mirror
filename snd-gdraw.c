@@ -9,13 +9,13 @@ void draw_line (axis_context *ax, int x0, int y0, int x1, int y1)
 void fill_rectangle (axis_context *ax, int x0, int y0, int width, int height)
 {
   if (ax->wn == NULL) return;
-  gdk_draw_rectangle(ax->wn, ax->gc, TRUE, (gint)x0, (gint)y0, (gint)width, (gint)height);
+  gdk_draw_rectangle(ax->wn, ax->gc, true, (gint)x0, (gint)y0, (gint)width, (gint)height);
 }
 
 void erase_rectangle (chan_info *cp, axis_context *ax, int x0, int y0, int width, int height)
 {
   if (ax->wn == NULL) return;
-  gdk_draw_rectangle(ax->wn, erase_GC(cp), TRUE, (gint)x0, (gint)y0, (gint)width, (gint)height);
+  gdk_draw_rectangle(ax->wn, erase_GC(cp), true, (gint)x0, (gint)y0, (gint)width, (gint)height);
 }
 
 void draw_string (axis_context *ax, int x0, int y0, char *str, int len)
@@ -46,7 +46,7 @@ void fill_polygon(axis_context *ax, int points, ...)
       pts[i].y = va_arg(ap, int);
     }
   va_end(ap);
-  gdk_draw_polygon(ax->wn, ax->gc, TRUE, pts, points);
+  gdk_draw_polygon(ax->wn, ax->gc, true, pts, points);
   FREE(pts);
 }
 
@@ -84,7 +84,7 @@ void draw_points (axis_context *ax, GdkPoint *points, int num, int size)
     {
       size2 = size / 2;
       for (i = 0; i < num; i++) 
-	gdk_draw_arc(ax->wn, ax->gc, TRUE, points[i].x - size2, points[i].y - size2, size, size, 0, 360 * 64);
+	gdk_draw_arc(ax->wn, ax->gc, true, points[i].x - size2, points[i].y - size2, size, size, 0, 360 * 64);
     }
 }
 
@@ -93,12 +93,12 @@ static void draw_point (GdkDrawable *wn, GdkGC *gc, GdkPoint point, int size)
   if (size == 1)
     gdk_draw_point(wn, gc, point.x, point.y);
   else
-    gdk_draw_arc(wn, gc, TRUE, point.x - size / 2, point.y - size / 2, size, size, 0, 360 * 64);
+    gdk_draw_arc(wn, gc, true, point.x - size / 2, point.y - size / 2, size, size, 0, 360 * 64);
 }
 
 void draw_arc(axis_context *ax, int x, int y, int size)
 {
-  gdk_draw_arc(ax->wn, ax->gc, TRUE, x - size / 2, y - size / 2, size, size, 0, 360 * 64);
+  gdk_draw_arc(ax->wn, ax->gc, true, x - size / 2, y - size / 2, size, size, 0, 360 * 64);
 }
 
 static GdkPoint polypts[4];
@@ -116,7 +116,7 @@ static void fill_polygons (axis_context *ax, GdkPoint *points, int num, axis_inf
       polypts[2].y = y0;
       polypts[3].x = points[i - 1].x;
       polypts[3].y = y0;
-      gdk_draw_polygon(ax->wn, ax->gc, TRUE, polypts, 4);
+      gdk_draw_polygon(ax->wn, ax->gc, true, polypts, 4);
     }
 }
 
@@ -133,7 +133,7 @@ static void fill_two_sided_polygons(axis_context *ax, GdkPoint *points, GdkPoint
       polypts[2].y = points1[i].y;
       polypts[3].x = points1[i - 1].x;
       polypts[3].y = points1[i - 1].y;
-      gdk_draw_polygon(ax->wn, ax->gc, TRUE, polypts, 4);
+      gdk_draw_polygon(ax->wn, ax->gc, true, polypts, 4);
     }
 }
 
@@ -154,7 +154,7 @@ void set_grf_point(Locus xi, int j, Locus yi)
   points[j].y = yi;
 }
 
-void draw_both_grf_points(chan_info *cp, axis_context *ax, int j, int graph_style)
+void draw_both_grf_points(chan_info *cp, axis_context *ax, int j, graph_style_t graph_style)
 {
   int i, size8, size4;
   switch (graph_style)
@@ -193,12 +193,12 @@ void draw_both_grf_points(chan_info *cp, axis_context *ax, int j, int graph_styl
 	  draw_points(ax, points, j, cp->dot_size);
 	  draw_points(ax, points1, j, cp->dot_size);
 	  for (i = 0; i < j; i++)
-	    gdk_draw_rectangle(ax->wn, ax->gc, TRUE, points[i].x - size8, points[i].y, size4, points1[i].y - points[i].y);
+	    gdk_draw_rectangle(ax->wn, ax->gc, true, points[i].x - size8, points[i].y, size4, points1[i].y - points[i].y);
 	}
     }
 }
 
-void draw_grf_points(chan_info *cp, axis_context *ax, int j, axis_info *ap, Float y0, int graph_style)
+void draw_grf_points(chan_info *cp, axis_context *ax, int j, axis_info *ap, Float y0, graph_style_t graph_style)
 {
   int i, gy0, size8, size4;
   switch (graph_style)
@@ -225,8 +225,8 @@ void draw_grf_points(chan_info *cp, axis_context *ax, int j, axis_info *ap, Floa
 	  draw_points(ax, points, j, cp->dot_size);
 	  for (i = 0; i < j; i++)
 	    if (points[i].y > gy0) /* unsigned int height */
-	      gdk_draw_rectangle(ax->wn, ax->gc, TRUE, points[i].x - size8, gy0, size4, points[i].y - gy0);
-	    else gdk_draw_rectangle(ax->wn, ax->gc, TRUE, points[i].x - size8, points[i].y, size4, gy0 - points[i].y);
+	      gdk_draw_rectangle(ax->wn, ax->gc, true, points[i].x - size8, gy0, size4, points[i].y - gy0);
+	    else gdk_draw_rectangle(ax->wn, ax->gc, true, points[i].x - size8, points[i].y, size4, gy0 - points[i].y);
 	}
       break;
     }
@@ -436,7 +436,7 @@ void draw_sono_rectangles(axis_context *ax, int color, int jmax)
   int i;
   gdk_gc_set_foreground(colormap_GC, grays[color]);
   for (i = 0; i < jmax; i++)
-    gdk_draw_rectangle(ax->wn, colormap_GC, TRUE, 
+    gdk_draw_rectangle(ax->wn, colormap_GC, true, 
 		       sono_data[color][i].x, 
 		       sono_data[color][i].y, 
 		       sono_data[color][i].width, 
@@ -536,10 +536,10 @@ static void invert_color_callback(GtkWidget *w, gpointer context)
   for_each_chan(ss, update_graph_setting_fft_changed);
 }
 
-void set_color_inverted(snd_state *ss, int val)
+void set_color_inverted(snd_state *ss, bool val)
 {
   in_set_color_inverted(ss, val);
-  if (ccd) set_toggle_button(ccd->invert, FALSE, FALSE, (gpointer)ss);
+  if (ccd) set_toggle_button(ccd->invert, false, false, (gpointer)ss);
   check_color_hook();
   if (!(ss->graph_hook_active)) for_each_chan(ss, update_graph_setting_fft_changed);
 }
@@ -665,8 +665,8 @@ void view_color_callback(GtkWidget *w, gpointer context)
 
       help_button = gtk_button_new_with_label(_("Help"));
       dismiss_button = gtk_button_new_with_label(_("Dismiss"));
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(ccd->dialog)->action_area), dismiss_button, FALSE, TRUE, 10);
-      gtk_box_pack_end(GTK_BOX(GTK_DIALOG(ccd->dialog)->action_area), help_button, FALSE, TRUE, 10);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(ccd->dialog)->action_area), dismiss_button, false, true, 10);
+      gtk_box_pack_end(GTK_BOX(GTK_DIALOG(ccd->dialog)->action_area), help_button, false, true, 10);
       g_signal_connect_closure_by_id(GTK_OBJECT(dismiss_button),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(dismiss_button))),
 				     0,
@@ -680,10 +680,10 @@ void view_color_callback(GtkWidget *w, gpointer context)
       gtk_widget_show(dismiss_button);
       gtk_widget_show(help_button);
 
-      outer_table = gtk_table_new(3, 2, FALSE);
+      outer_table = gtk_table_new(3, 2, false);
       gtk_container_add(GTK_CONTAINER(GTK_DIALOG(ccd->dialog)->vbox), outer_table);
 
-      scale_box = gtk_table_new(2, 2, FALSE);
+      scale_box = gtk_table_new(2, 2, false);
       gtk_table_attach_defaults(GTK_TABLE(outer_table), scale_box, 0, 1, 0, 1);
       
       ccd->scale_adj = gtk_adjustment_new(50.0, 0.0, 101.0, 0.1, 1.0, 1.0);
@@ -693,7 +693,7 @@ void view_color_callback(GtkWidget *w, gpointer context)
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(ccd->scale)), GTK_UPDATE_CONTINUOUS);
       gtk_scale_set_digits(GTK_SCALE(ccd->scale), 0);
       gtk_scale_set_value_pos(GTK_SCALE(ccd->scale), GTK_POS_TOP);
-      gtk_scale_set_draw_value(GTK_SCALE(ccd->scale), TRUE);
+      gtk_scale_set_draw_value(GTK_SCALE(ccd->scale), true);
       gtk_table_attach_defaults(GTK_TABLE(scale_box), ccd->scale, 0, 2, 0, 1);
       g_signal_connect_closure_by_id(GTK_OBJECT(ccd->scale_adj),
 				     g_signal_lookup("value_changed", G_OBJECT_TYPE(GTK_OBJECT(ccd->scale_adj))),
@@ -713,7 +713,7 @@ void view_color_callback(GtkWidget *w, gpointer context)
       gtk_widget_show(dark_label);
       gtk_widget_show(scale_box);
 
-      cutoff_box = gtk_table_new(2, 2, FALSE);
+      cutoff_box = gtk_table_new(2, 2, false);
       gtk_table_attach_defaults(GTK_TABLE(outer_table), cutoff_box, 0, 1, 1, 2);
 
       ccd->cutoff_adj = gtk_adjustment_new(color_cutoff(ss), 0.0, 1.01, 0.001, 0.01, .01);
@@ -722,7 +722,7 @@ void view_color_callback(GtkWidget *w, gpointer context)
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(ccd->cutoff)), GTK_UPDATE_CONTINUOUS);
       gtk_scale_set_digits(GTK_SCALE(ccd->cutoff), 3);
       gtk_scale_set_value_pos(GTK_SCALE(ccd->cutoff), GTK_POS_TOP);
-      gtk_scale_set_draw_value(GTK_SCALE(ccd->cutoff), TRUE);
+      gtk_scale_set_draw_value(GTK_SCALE(ccd->cutoff), true);
       gtk_table_attach_defaults(GTK_TABLE(cutoff_box), ccd->cutoff, 0, 2, 0, 1);
       g_signal_connect_closure_by_id(GTK_OBJECT(ccd->cutoff_adj),
 				     g_signal_lookup("value_changed", G_OBJECT_TYPE(GTK_OBJECT(ccd->cutoff_adj))),
@@ -746,9 +746,9 @@ void view_color_callback(GtkWidget *w, gpointer context)
 				     g_cclosure_new(GTK_SIGNAL_FUNC(invert_color_callback), (gpointer)ss, 0),
 				     0);
       gtk_widget_show(ccd->invert);
-      set_toggle_button(ccd->invert, color_inverted(ss), FALSE, (gpointer)ss);
+      set_toggle_button(ccd->invert, color_inverted(ss), false, (gpointer)ss);
 
-      colormap_box = gtk_vbox_new(FALSE, 0);
+      colormap_box = gtk_vbox_new(false, 0);
       gtk_table_attach(GTK_TABLE(outer_table), colormap_box, 1, 2, 0, 3,
 		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND),
 		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
@@ -1001,7 +1001,7 @@ void reflect_spectro(snd_state *ss)
   /* set color/orientaton widget values */
   if (ccd)
     {
-      set_toggle_button(ccd->invert, color_inverted(ss), FALSE, (gpointer)ss);
+      set_toggle_button(ccd->invert, color_inverted(ss), false, (gpointer)ss);
       gtk_adjustment_set_value(GTK_ADJUSTMENT(ccd->cutoff_adj), color_cutoff(ss));
       reflect_color_scale(color_scale(ss));
     }
@@ -1074,9 +1074,9 @@ void view_orientation_callback(GtkWidget *w, gpointer context)
       help_button = gtk_button_new_with_label(_("Help"));
       dismiss_button = gtk_button_new_with_label(_("Dismiss"));
       reset_button = gtk_button_new_with_label(_("Reset"));
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(oid->dialog)->action_area), reset_button, FALSE, TRUE, 10);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(oid->dialog)->action_area), dismiss_button, FALSE, TRUE, 10);
-      gtk_box_pack_end(GTK_BOX(GTK_DIALOG(oid->dialog)->action_area), help_button, FALSE, TRUE, 10);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(oid->dialog)->action_area), reset_button, false, true, 10);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(oid->dialog)->action_area), dismiss_button, false, true, 10);
+      gtk_box_pack_end(GTK_BOX(GTK_DIALOG(oid->dialog)->action_area), help_button, false, true, 10);
       g_signal_connect_closure_by_id(GTK_OBJECT(reset_button),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(reset_button))),
 				     0,
@@ -1097,14 +1097,14 @@ void view_orientation_callback(GtkWidget *w, gpointer context)
       gtk_widget_show(help_button);
 
 #if HAVE_GL
-      outer_table = gtk_table_new(5, 2, TRUE);
+      outer_table = gtk_table_new(5, 2, true);
 #else
-      outer_table = gtk_table_new(4, 2, TRUE);
+      outer_table = gtk_table_new(4, 2, true);
 #endif
       gtk_container_add(GTK_CONTAINER(GTK_DIALOG(oid->dialog)->vbox), outer_table);
 
       /* AX */
-      ax_box = gtk_table_new(2, 1, FALSE);
+      ax_box = gtk_table_new(2, 1, false);
       gtk_table_attach(GTK_TABLE(outer_table), ax_box, 0, 1, 0, 1,
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), X_PAD, Y_PAD);
 
@@ -1114,7 +1114,7 @@ void view_orientation_callback(GtkWidget *w, gpointer context)
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(oid->ax)), GTK_UPDATE_CONTINUOUS);
       gtk_scale_set_digits(GTK_SCALE(oid->ax), 0);
       gtk_scale_set_value_pos(GTK_SCALE(oid->ax), GTK_POS_TOP);
-      gtk_scale_set_draw_value(GTK_SCALE(oid->ax), TRUE);
+      gtk_scale_set_draw_value(GTK_SCALE(oid->ax), true);
       gtk_table_attach(GTK_TABLE(ax_box), oid->ax, 0, 1, 0, 1,
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), XX_PAD, YY_PAD);
 
@@ -1134,7 +1134,7 @@ void view_orientation_callback(GtkWidget *w, gpointer context)
       gtk_widget_show(ax_box);
 
       /* AY */
-      ay_box = gtk_table_new(2, 1, FALSE);
+      ay_box = gtk_table_new(2, 1, false);
       gtk_table_attach(GTK_TABLE(outer_table), ay_box, 0, 1, 1, 2,
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), X_PAD, Y_PAD);
 
@@ -1144,7 +1144,7 @@ void view_orientation_callback(GtkWidget *w, gpointer context)
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(oid->ay)), GTK_UPDATE_CONTINUOUS);
       gtk_scale_set_digits(GTK_SCALE(oid->ay), 0);
       gtk_scale_set_value_pos(GTK_SCALE(oid->ay), GTK_POS_TOP);
-      gtk_scale_set_draw_value(GTK_SCALE(oid->ay), TRUE);
+      gtk_scale_set_draw_value(GTK_SCALE(oid->ay), true);
       gtk_table_attach(GTK_TABLE(ay_box), oid->ay, 0, 1, 0, 1,
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), XX_PAD, YY_PAD);
 
@@ -1164,7 +1164,7 @@ void view_orientation_callback(GtkWidget *w, gpointer context)
       gtk_widget_show(ay_box);
 
       /* AZ */
-      az_box = gtk_table_new(2, 1, FALSE);
+      az_box = gtk_table_new(2, 1, false);
       gtk_table_attach(GTK_TABLE(outer_table), az_box, 0, 1, 2, 3,
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), X_PAD, Y_PAD);
 
@@ -1174,7 +1174,7 @@ void view_orientation_callback(GtkWidget *w, gpointer context)
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(oid->az)), GTK_UPDATE_CONTINUOUS);
       gtk_scale_set_digits(GTK_SCALE(oid->az), 0);
       gtk_scale_set_value_pos(GTK_SCALE(oid->az), GTK_POS_TOP);
-      gtk_scale_set_draw_value(GTK_SCALE(oid->az), TRUE);
+      gtk_scale_set_draw_value(GTK_SCALE(oid->az), true);
       gtk_table_attach(GTK_TABLE(az_box), oid->az, 0, 1, 0, 1,
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), XX_PAD, YY_PAD);
 
@@ -1194,7 +1194,7 @@ void view_orientation_callback(GtkWidget *w, gpointer context)
       gtk_widget_show(az_box);
 
       /* HOP */
-      hop_box = gtk_table_new(2, 1, FALSE);
+      hop_box = gtk_table_new(2, 1, false);
       gtk_table_attach(GTK_TABLE(outer_table), hop_box, 0, 1, 3, 4,
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), X_PAD, Y_PAD);
 
@@ -1204,7 +1204,7 @@ void view_orientation_callback(GtkWidget *w, gpointer context)
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(oid->hop)), GTK_UPDATE_CONTINUOUS);
       gtk_scale_set_digits(GTK_SCALE(oid->hop), 0);
       gtk_scale_set_value_pos(GTK_SCALE(oid->hop), GTK_POS_TOP);
-      gtk_scale_set_draw_value(GTK_SCALE(oid->hop), TRUE);
+      gtk_scale_set_draw_value(GTK_SCALE(oid->hop), true);
       gtk_table_attach(GTK_TABLE(hop_box), oid->hop, 0, 1, 0, 1,
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), XX_PAD, YY_PAD);
 
@@ -1224,7 +1224,7 @@ void view_orientation_callback(GtkWidget *w, gpointer context)
       gtk_widget_show(hop_box);
 
       /* SX */
-      sx_box = gtk_table_new(2, 1, FALSE);
+      sx_box = gtk_table_new(2, 1, false);
       gtk_table_attach(GTK_TABLE(outer_table), sx_box, 1, 2, 0, 1,
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), X_PAD, Y_PAD);
 
@@ -1234,7 +1234,7 @@ void view_orientation_callback(GtkWidget *w, gpointer context)
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(oid->sx)), GTK_UPDATE_CONTINUOUS);
       gtk_scale_set_digits(GTK_SCALE(oid->sx), 2);
       gtk_scale_set_value_pos(GTK_SCALE(oid->sx), GTK_POS_TOP);
-      gtk_scale_set_draw_value(GTK_SCALE(oid->sx), TRUE);
+      gtk_scale_set_draw_value(GTK_SCALE(oid->sx), true);
       gtk_table_attach(GTK_TABLE(sx_box), oid->sx, 0, 1, 0, 1,
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), XX_PAD, YY_PAD);
 
@@ -1254,7 +1254,7 @@ void view_orientation_callback(GtkWidget *w, gpointer context)
       gtk_widget_show(sx_box);
 
       /* SY */
-      sy_box = gtk_table_new(2, 1, FALSE);
+      sy_box = gtk_table_new(2, 1, false);
       gtk_table_attach(GTK_TABLE(outer_table), sy_box, 1, 2, 1, 2,
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), X_PAD, Y_PAD);
 
@@ -1264,7 +1264,7 @@ void view_orientation_callback(GtkWidget *w, gpointer context)
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(oid->sy)), GTK_UPDATE_CONTINUOUS);
       gtk_scale_set_digits(GTK_SCALE(oid->sy), 2);
       gtk_scale_set_value_pos(GTK_SCALE(oid->sy), GTK_POS_TOP);
-      gtk_scale_set_draw_value(GTK_SCALE(oid->sy), TRUE);
+      gtk_scale_set_draw_value(GTK_SCALE(oid->sy), true);
       gtk_table_attach(GTK_TABLE(sy_box), oid->sy, 0, 1, 0, 1,
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), XX_PAD, YY_PAD);
       g_signal_connect_closure_by_id(GTK_OBJECT(oid->sy_adj),
@@ -1283,7 +1283,7 @@ void view_orientation_callback(GtkWidget *w, gpointer context)
       gtk_widget_show(sy_box);
 
       /* SZ */
-      sz_box = gtk_table_new(2, 1, FALSE);
+      sz_box = gtk_table_new(2, 1, false);
       gtk_table_attach(GTK_TABLE(outer_table), sz_box, 1, 2, 2, 3,
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), X_PAD, Y_PAD);
 
@@ -1293,7 +1293,7 @@ void view_orientation_callback(GtkWidget *w, gpointer context)
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(oid->sz)), GTK_UPDATE_CONTINUOUS);
       gtk_scale_set_digits(GTK_SCALE(oid->sz), 3);
       gtk_scale_set_value_pos(GTK_SCALE(oid->sz), GTK_POS_TOP);
-      gtk_scale_set_draw_value(GTK_SCALE(oid->sz), TRUE);
+      gtk_scale_set_draw_value(GTK_SCALE(oid->sz), true);
       gtk_table_attach(GTK_TABLE(sz_box), oid->sz, 0, 1, 0, 1,
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), XX_PAD, YY_PAD);
       g_signal_connect_closure_by_id(GTK_OBJECT(oid->sz_adj),
@@ -1311,7 +1311,7 @@ void view_orientation_callback(GtkWidget *w, gpointer context)
       gtk_widget_show(sz_box);
 
       /* CUT */
-      cut_box = gtk_table_new(2, 1, FALSE);
+      cut_box = gtk_table_new(2, 1, false);
       gtk_table_attach(GTK_TABLE(outer_table), cut_box, 1, 2, 3, 4,
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), X_PAD, Y_PAD);
 
@@ -1321,7 +1321,7 @@ void view_orientation_callback(GtkWidget *w, gpointer context)
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(oid->cut)), GTK_UPDATE_CONTINUOUS);
       gtk_scale_set_digits(GTK_SCALE(oid->cut), 2);
       gtk_scale_set_value_pos(GTK_SCALE(oid->cut), GTK_POS_TOP);
-      gtk_scale_set_draw_value(GTK_SCALE(oid->cut), TRUE);
+      gtk_scale_set_draw_value(GTK_SCALE(oid->cut), true);
       gtk_table_attach(GTK_TABLE(cut_box), oid->cut, 0, 1, 0, 1,
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), XX_PAD, YY_PAD);
       g_signal_connect_closure_by_id(GTK_OBJECT(oid->cut_adj),
@@ -1349,7 +1349,7 @@ void view_orientation_callback(GtkWidget *w, gpointer context)
 				     g_cclosure_new(GTK_SIGNAL_FUNC(glbutton_callback), (gpointer)ss, 0),
 				     0);
       gtk_widget_show(oid->glbutton);
-      set_toggle_button(oid->glbutton, with_gl(ss), FALSE, (gpointer)ss);
+      set_toggle_button(oid->glbutton, with_gl(ss), false, (gpointer)ss);
 #endif
 
       gtk_widget_show(outer_table);
@@ -1371,7 +1371,7 @@ GtkWidget *start_orientation_dialog(snd_state *ss, int width, int height)
   return(oid->dialog);
 }
 
-int set_with_gl(snd_state *ss, int val)
+int set_with_gl(snd_state *ss, bool val)
 {
   in_set_with_gl(ss, val);
 #if HAVE_GL
@@ -1380,7 +1380,7 @@ int set_with_gl(snd_state *ss, int val)
   in_set_with_gl(ss, val);
 #if HAVE_GL
   sgl_set_currents(ss);
-  set_toggle_button(oid->glbutton, val, FALSE, (gpointer)ss);
+  set_toggle_button(oid->glbutton, val, false, (gpointer)ss);
   for_each_chan(ss, update_graph);
 #endif
   return(with_gl(ss));

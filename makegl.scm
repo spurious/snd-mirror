@@ -897,7 +897,7 @@
 (hey "}~%~%")
 
 (hey "/* -------------------------------- initialization -------------------------------- */~%~%")
-(hey "static int gl_already_inited = FALSE;~%~%")
+(hey "static bool gl_already_inited = false;~%~%")
 (hey "#if HAVE_GUILE~%")
 (hey " void init_gl(void);~%")
 (hey " void init_gl(void)~%")
@@ -917,7 +917,7 @@
 (hey "#if HAVE_RUBY~%")
 (hey "      rb_define_global_const(\"Gl_Version\", C_TO_XEN_STRING(\"~A\"));~%" (strftime "%d-%b-%y" (localtime (current-time))))
 (hey "#endif~%")
-(hey "      gl_already_inited = TRUE;~%")
+(hey "      gl_already_inited = true;~%")
 (hey "    }~%")
 (hey "}~%")
 

@@ -189,7 +189,7 @@ static XEN g_fill_polygon(XEN pts, XEN snd, XEN chn, XEN ax_id)
 #if USE_MOTIF
   XFillPolygon(ax->dp, ax->wn, ax->gc, pack_pts, XEN_VECTOR_LENGTH(pts) / 2, Complex, CoordModeOrigin);
 #else
-  gdk_draw_polygon(ax->wn, ax->gc, TRUE, pack_pts, XEN_VECTOR_LENGTH(pts) / 2);
+  gdk_draw_polygon(ax->wn, ax->gc, true, pack_pts, XEN_VECTOR_LENGTH(pts) / 2);
 #endif
   FREE(pack_pts);
   return(pts);
@@ -445,7 +445,7 @@ data in the recipient's graph between points low and high in the drawing mode gr
 		  v0->data,
 		  (v1) ? (v1->data) : NULL,
 		  get_ax(cp, XEN_TO_C_INT_OR_ELSE(ax, CHAN_GC), S_graph_data),
-		  XEN_TO_C_INT_OR_ELSE(style, cp->time_graph_style));
+		  (graph_style_t)XEN_TO_C_INT_OR_ELSE(style, cp->time_graph_style));
   return(data);
 }
 
@@ -630,7 +630,7 @@ static XEN g_widget_text(XEN wid)
 		      end = gtk_text_buffer_get_char_count(buf);
 		      gtk_text_buffer_get_iter_at_offset(buf, &s, 0);
 		      gtk_text_buffer_get_iter_at_offset(buf, &e, end);
-		      text = gtk_text_buffer_get_text(buf, &s, &e, TRUE);
+		      text = gtk_text_buffer_get_text(buf, &s, &e, true);
 		      if (text)
 			{
 			  val = C_TO_XEN_STRING(text); /* this copies, so it should be safe to free the original */

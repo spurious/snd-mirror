@@ -709,7 +709,8 @@ void dump_protection(FILE *Fp);
 
 void mem_report(void)
 {
-  int loc, i, j, sum, ptr = 0, have_stacks = FALSE;
+  int loc, i, j, sum, ptr = 0;
+  bool have_stacks = false;
   int *sums, *ptrs;
   FILE *Fp;
   time_t ts;
@@ -721,7 +722,7 @@ void mem_report(void)
   for (i = 0; i < mem_size; i++)
     if (stacks[i])
       {
-	have_stacks = TRUE;
+	have_stacks = true;
 	break;
       }
 
@@ -766,7 +767,8 @@ void mem_report(void)
 	  fprintf(Fp, "%s[%d]:%s:  %d (%d)", files[ptr], lines[ptr], functions[ptr], sums[ptr], ptrs[ptr]);
 	  if (0)
 	    {
-	      int fd, i, line, bytes, happy = TRUE;
+	      int fd, i, line, bytes;
+	      bool happy = true;
 	      char buf[8192];
 	      fd = open(files[ptr], O_RDONLY, 0);
 	      line = 1;
@@ -776,7 +778,7 @@ void mem_report(void)
 		  if (bytes <= 0) 
 		    {
 		      fprintf(Fp, "where is %s[%d]?\n", files[ptr], lines[ptr]);
-		      happy = FALSE;
+		      happy = false;
 		      break;
 		    }
 		  for (i = 0; i < bytes; i++)
@@ -788,7 +790,7 @@ void mem_report(void)
 			  if (line > lines[ptr]) 
 			    {
 			      fprintf(Fp, "\n");
-			      happy = FALSE;
+			      happy = false;
 			      break;
 			    }
 			}
@@ -852,6 +854,7 @@ void stop_timing(void) {fprintf(stderr, "time: %d ",(int)((clock() - start) * 10
 #endif
 
 #if HAVE_GUILE
+#define S_file2string "file->string"
 static XEN g_file_to_string(XEN name)
 { 
   char *filename;
@@ -859,10 +862,11 @@ static XEN g_file_to_string(XEN name)
   int size;
   char *content = NULL;
   XEN val = XEN_FALSE;
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, S_file2string, "a string");
   filename = XEN_TO_C_STRING(name);
   if ((file = fopen(filename, "r")) == NULL) return(XEN_FALSE);
   fseek(file, 0, SEEK_END);
-  size = ftell(file);
+  size = ftell(file); /* safe because this is not a huge file */
   rewind(file);
   content = (char *)CALLOC(size + 1, sizeof(char));
   fread(content, 1, size, file);
@@ -877,6 +881,6 @@ void g_init_utils(void)
 {
   decimal_pt = local_decimal_point();
 #if HAVE_GUILE
-  XEN_DEFINE_PROCEDURE("file->string", g_file_to_string, 1, 0, 0, "file contents as string");
+  XEN_DEFINE_PROCEDURE(S_file2string, g_file_to_string, 1, 0, 0, "file contents as string");
 #endif
 }

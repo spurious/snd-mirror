@@ -16,10 +16,10 @@ void reflect_regions_in_region_browser(void)
   int i;
   if (rsp)
     {
-      rsp->active = TRUE;
+      rsp->active = true;
       if (rsp->chans)
 	for (i = 0; i < rsp->nchans; i++)
-	  rsp->chans[i]->active = TRUE;
+	  rsp->chans[i]->active = true;
     }
 }
 
@@ -28,10 +28,10 @@ void reflect_no_regions_in_region_browser(void)
   int i;
   if (rsp)
     {
-      rsp->active = FALSE;
+      rsp->active = false;
       if (rsp->chans)
 	for (i = 0; i < rsp->nchans; i++)
-	  rsp->chans[i]->active = FALSE;
+	  rsp->chans[i]->active = false;
     }
 }
 
@@ -55,7 +55,7 @@ void reflect_region_graph_style(snd_state *ss)
       rsp->chans[0]->time_graph_style = region_graph_style(ss);
       rsp->chans[0]->dot_size = dot_size(ss);
       /* update_graph(rsp->chans[0]); */
-      update_region_browser(ss, TRUE);
+      update_region_browser(ss, true);
     }
 }
 
@@ -116,7 +116,7 @@ void update_region_browser(snd_state *ss, int grf_too)
       r = region_row(i);
       ASSERT_WIDGET_TYPE(XmIsToggleButton(r->pl), r->pl);
       set_button_label_bold(r->nm, rs->name[i]);
-      XmToggleButtonSetState(r->pl, FALSE, FALSE);
+      XmToggleButtonSetState(r->pl, false, false);
       XtManageChild(r->rw);
     }
   for (i = len; i < max_regions(ss); i++) 
@@ -136,7 +136,7 @@ void update_region_browser(snd_state *ss, int grf_too)
 	{
 	  cp->sound = rsp;
 	  cp->chan = 0;
-	  set_sensitive(channel_f(cp), FALSE);
+	  set_sensitive(channel_f(cp), false);
 	  set_sensitive(channel_w(cp), (region_chans(stack_position_to_id(0)) > 1));
 	  rsp->hdr = fixup_region_data(cp, 0, 0);
 	  make_region_labels(rsp->hdr);
@@ -201,7 +201,7 @@ static void region_up_arrow_callback(Widget w, XtPointer context, XtPointer info
     {
       cp->chan--;
       set_sensitive(channel_f(cp), (cp->chan > 0));
-      set_sensitive(channel_w(cp), TRUE);
+      set_sensitive(channel_w(cp), true);
       fixup_region_data(cp, cp->chan, current_region);
       region_update_graph(cp);
     }
@@ -215,7 +215,7 @@ static void region_down_arrow_callback(Widget w, XtPointer context, XtPointer in
   if ((cp->chan + 1) < region_chans(stack_position_to_id(current_region)))
     {
       cp->chan++;
-      set_sensitive(channel_f(cp), TRUE);
+      set_sensitive(channel_f(cp), true);
       set_sensitive(channel_w(cp), (region_chans(stack_position_to_id(current_region)) > (cp->chan + 1)));
       fixup_region_data(cp, cp->chan, current_region);
       region_update_graph(cp);
@@ -235,7 +235,7 @@ static void region_focus_callback(Widget w, XtPointer context, XtPointer info)
   cp->sound = rsp;
   cp->chan  = 0;
   highlight_region(ss);
-  set_sensitive(channel_f(cp), FALSE);
+  set_sensitive(channel_f(cp), false);
   set_sensitive(channel_w(cp), (region_chans(stack_position_to_id(current_region)) > 1));
   rsp->hdr = fixup_region_data(cp, 0, current_region);
   if (rsp->hdr == NULL) return;
@@ -250,7 +250,7 @@ void reflect_play_region_stop(int n)
   if (region_rows)
     {
       rg = region_row(id_to_stack_position(n));
-      if (rg) XmToggleButtonSetState(rg->pl, FALSE, FALSE);
+      if (rg) XmToggleButtonSetState(rg->pl, false, false);
     }
 }
 
@@ -297,11 +297,11 @@ static void make_region_dialog(snd_state *ss)
   XtSetArg(args[n], XmNcancelLabelString, xdelete); n++;
   XtSetArg(args[n], XmNhelpLabelString, xhelp); n++;
   XtSetArg(args[n], XmNokLabelString, xok); n++;
-  XtSetArg(args[n], XmNautoUnmanage, FALSE); n++;
+  XtSetArg(args[n], XmNautoUnmanage, false); n++;
   XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
   XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
-  XtSetArg(args[n], XmNnoResize, FALSE); n++;
-  XtSetArg(args[n], XmNtransient, FALSE); n++;
+  XtSetArg(args[n], XmNnoResize, false); n++;
+  XtSetArg(args[n], XmNtransient, false); n++;
   region_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), _("Regions"), args, n);
 
   XtAddCallback(region_dialog, XmNokCallback, region_ok_callback, ss);
@@ -451,7 +451,7 @@ static void make_region_dialog(snd_state *ss)
   if (widget_width(region_dialog) < 400) set_widget_width(region_dialog, 400);
 
   id = stack_position_to_id(0);
-  rsp = make_simple_channel_display(ss, region_srate(id), region_len(id), WITH_ARROWS, region_graph_style(ss), region_grf, FALSE);
+  rsp = make_simple_channel_display(ss, region_srate(id), region_len(id), WITH_ARROWS, region_graph_style(ss), region_grf, false);
   rsp->inuse = SOUND_REGION;
   current_region = 0;
   cp = rsp->chans[0];
@@ -469,8 +469,8 @@ static void make_region_dialog(snd_state *ss)
   /* channel_f is up arrow, channel_w is down arrow */
   XtAddCallback(channel_f(cp), XmNactivateCallback, region_up_arrow_callback, (XtPointer)ss);
   XtAddCallback(channel_w(cp), XmNactivateCallback, region_down_arrow_callback, (XtPointer)ss);
-  set_sensitive(channel_f(cp), FALSE);
-  if (region_chans(stack_position_to_id(0)) > 1) set_sensitive(channel_w(cp), TRUE);
+  set_sensitive(channel_f(cp), false);
+  if (region_chans(stack_position_to_id(0)) > 1) set_sensitive(channel_w(cp), true);
   cp->chan = 0;
   rsp->hdr = fixup_region_data(cp, 0, 0);
   make_region_labels(rsp->hdr);

@@ -15,10 +15,10 @@ void reflect_regions_in_region_browser(void)
   int i;
   if (rsp)
     {
-      rsp->active = TRUE;
+      rsp->active = true;
       if (rsp->chans)
 	for (i = 0; i < rsp->nchans; i++)
-	  rsp->chans[i]->active = TRUE;
+	  rsp->chans[i]->active = true;
     }
 }
 
@@ -27,10 +27,10 @@ void reflect_no_regions_in_region_browser(void)
   int i;
   if (rsp)
     {
-      rsp->active = FALSE;
+      rsp->active = false;
       if (rsp->chans)
 	for (i = 0; i < rsp->nchans; i++)
-	  rsp->chans[i]->active = FALSE;
+	  rsp->chans[i]->active = false;
     }
 }
 
@@ -54,7 +54,7 @@ void reflect_region_graph_style(snd_state *ss)
       rsp->chans[0]->time_graph_style = region_graph_style(ss);
       rsp->chans[0]->dot_size = dot_size(ss);
       /* update_graph(rsp->chans[0]); */
-      update_region_browser(ss, TRUE);
+      update_region_browser(ss, true);
     }
 }
 
@@ -108,7 +108,7 @@ void update_region_browser(snd_state *ss, int grf_too)
       regrow *r;
       r = region_row(i);
       set_button_label_bold(r->nm, rs->name[i]);
-      set_toggle_button(r->pl, FALSE, FALSE, (void *)r);
+      set_toggle_button(r->pl, false, false, (void *)r);
       gtk_widget_show(r->rw);
     }
   for (i = len; i < max_regions(ss); i++) 
@@ -128,7 +128,7 @@ void update_region_browser(snd_state *ss, int grf_too)
 	{
 	  cp->sound = rsp;
 	  cp->chan = 0;
-	  set_sensitive(channel_f(cp), FALSE);
+	  set_sensitive(channel_f(cp), false);
 	  set_sensitive(channel_w(cp), (region_chans(stack_position_to_id(0)) > 1));
 	  rsp->hdr = fixup_region_data(cp, 0, 0);
 	  make_region_labels(rsp->hdr);
@@ -141,7 +141,7 @@ void update_region_browser(snd_state *ss, int grf_too)
 static gboolean region_browser_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(region_dialog);
-  return(FALSE);
+  return(false);
 }
 
 static void region_ok_callback(GtkWidget *w, gpointer context)
@@ -157,13 +157,13 @@ int region_browser_is_active(void)
 static gboolean region_resize_callback(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
 {
   region_update_graph((chan_info *)data);
-  return(FALSE);
+  return(false);
 }
 
 static gboolean region_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
   region_update_graph((chan_info *)data);
-  return(FALSE);
+  return(false);
 }
 
 void delete_region_and_update_browser(snd_state *ss, int pos)
@@ -207,11 +207,11 @@ static gboolean region_up_arrow_callback(GtkWidget *w, GdkEventButton *ev, gpoin
     {
       cp->chan--;
       set_sensitive(channel_f(cp), (cp->chan > 0));
-      set_sensitive(channel_w(cp), TRUE);
+      set_sensitive(channel_w(cp), true);
       fixup_region_data(cp, cp->chan, current_region);
       region_update_graph(cp);
     }
-  return(FALSE);
+  return(false);
 }
 
 static gboolean region_down_arrow_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
@@ -222,12 +222,12 @@ static gboolean region_down_arrow_callback(GtkWidget *w, GdkEventButton *ev, gpo
   if ((cp->chan + 1) < region_chans(stack_position_to_id(current_region)))
     {
       cp->chan++;
-      set_sensitive(channel_f(cp), TRUE);
+      set_sensitive(channel_f(cp), true);
       set_sensitive(channel_w(cp), (region_chans(stack_position_to_id(current_region)) > (cp->chan + 1)));
       fixup_region_data(cp, cp->chan, current_region);
       region_update_graph(cp);
     }
-  return(FALSE);
+  return(false);
 }
 
 static void region_focus_callback(GtkWidget *w, gpointer context) /* button clicked callback */
@@ -243,7 +243,7 @@ static void region_focus_callback(GtkWidget *w, gpointer context) /* button clic
   cp->sound = rsp;
   cp->chan  = 0;
   highlight_region(ss);
-  set_sensitive(channel_f(cp), FALSE);
+  set_sensitive(channel_f(cp), false);
   set_sensitive(channel_w(cp), (region_chans(stack_position_to_id(current_region)) > 1));
   rsp->hdr = fixup_region_data(cp, 0, current_region);
   make_region_labels(rsp->hdr);
@@ -256,7 +256,7 @@ void reflect_play_region_stop(int n)
   if (region_rows)
     {
       rg = region_row(id_to_stack_position(n));
-      if (rg) set_toggle_button(rg->pl, FALSE, FALSE, (void *)rg);
+      if (rg) set_toggle_button(rg->pl, false, false, (void *)rg);
     }
 }
 
@@ -284,7 +284,7 @@ static void region_edit_callback(GtkWidget *w, gpointer context)
 static gboolean region_labels_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
 {
   g_signal_stop_emission(GTK_OBJECT(w), g_signal_lookup("enter_notify_event", G_OBJECT_TYPE(GTK_OBJECT(w))), 0);
-  return(FALSE);
+  return(false);
 }
 
 static GtkWidget *print_button, *edit_button;
@@ -315,9 +315,9 @@ static void make_region_dialog(snd_state *ss)
   dismiss_button = gtk_button_new_with_label(_("Dismiss"));
   delete_button = gtk_button_new_with_label(_("Delete"));
 
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(region_dialog)->action_area), dismiss_button, TRUE, TRUE, 4);
-  gtk_box_pack_end(GTK_BOX(GTK_DIALOG(region_dialog)->action_area), help_button, TRUE, TRUE, 4);
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(region_dialog)->action_area), delete_button, TRUE, TRUE, 4);
+  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(region_dialog)->action_area), dismiss_button, true, true, 4);
+  gtk_box_pack_end(GTK_BOX(GTK_DIALOG(region_dialog)->action_area), help_button, true, true, 4);
+  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(region_dialog)->action_area), delete_button, true, true, 4);
 
   g_signal_connect_closure_by_id(GTK_OBJECT(delete_button),
 				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(delete_button))),
@@ -343,8 +343,8 @@ static void make_region_dialog(snd_state *ss)
   wwl = make_title_row(ss, GTK_DIALOG(region_dialog)->vbox, _("play"), _("regions"), DONT_PAD_TITLE, WITHOUT_SORT_BUTTON, WITH_PANED_WINDOW);
   region_list = wwl->list;
 
-  infobox = gtk_vbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(wwl->toppane), infobox, FALSE, FALSE, 2);
+  infobox = gtk_vbox_new(false, 0);
+  gtk_box_pack_start(GTK_BOX(wwl->toppane), infobox, false, false, 2);
   gtk_widget_show(infobox);
   
   region_rows = (regrow **)CALLOC(max_regions(ss), sizeof(regrow *));
@@ -368,7 +368,7 @@ static void make_region_dialog(snd_state *ss)
 
   labels = gtk_button_new();
   set_background(labels, (ss->sgx)->highlight_color);
-  gtk_box_pack_start(GTK_BOX(infobox), labels, TRUE, TRUE, 2);
+  gtk_box_pack_start(GTK_BOX(infobox), labels, true, true, 2);
   gtk_widget_show(labels);
   g_signal_connect_closure_by_id(GTK_OBJECT(labels),
 				 g_signal_lookup("enter_notify_event", G_OBJECT_TYPE(GTK_OBJECT(labels))),
@@ -376,28 +376,28 @@ static void make_region_dialog(snd_state *ss)
 				 g_cclosure_new(GTK_SIGNAL_FUNC(region_labels_mouse_enter), NULL, 0),
 				 0);
 
-  labbox = gtk_vbox_new(TRUE, 0);
+  labbox = gtk_vbox_new(true, 0);
   gtk_container_add(GTK_CONTAINER(labels), labbox);
   gtk_widget_show(labbox);
 
   srate_text = gtk_label_new(_("srate:"));
   sg_left_justify_label(srate_text);
-  gtk_box_pack_start(GTK_BOX(labbox), srate_text, FALSE, FALSE, 2);
+  gtk_box_pack_start(GTK_BOX(labbox), srate_text, false, false, 2);
   gtk_widget_show(srate_text);
 
   chans_text = gtk_label_new(_("chans:"));
   sg_left_justify_label(chans_text);
-  gtk_box_pack_start(GTK_BOX(labbox), chans_text, FALSE, FALSE, 2);
+  gtk_box_pack_start(GTK_BOX(labbox), chans_text, false, false, 2);
   gtk_widget_show(chans_text);
 
   length_text = gtk_label_new(_("length:"));
   sg_left_justify_label(length_text);
-  gtk_box_pack_start(GTK_BOX(labbox), length_text, FALSE, FALSE, 2);
+  gtk_box_pack_start(GTK_BOX(labbox), length_text, false, false, 2);
   gtk_widget_show(length_text);
 
   maxamp_text = gtk_label_new(_("maxamp:"));
   sg_left_justify_label(maxamp_text);
-  gtk_box_pack_start(GTK_BOX(labbox), maxamp_text, FALSE, FALSE, 2);
+  gtk_box_pack_start(GTK_BOX(labbox), maxamp_text, false, false, 2);
   gtk_widget_show(maxamp_text);
 
   edit_button = gtk_button_new_with_label(_("edit"));
@@ -406,7 +406,7 @@ static void make_region_dialog(snd_state *ss)
 				 0,
 				 g_cclosure_new(GTK_SIGNAL_FUNC(region_edit_callback), (gpointer)ss, 0),
 				 0);
-  gtk_box_pack_start(GTK_BOX(infobox), edit_button, TRUE, TRUE, 2);
+  gtk_box_pack_start(GTK_BOX(infobox), edit_button, true, true, 2);
   gtk_widget_show(edit_button);
 
   print_button = gtk_button_new_with_label(_("print"));
@@ -415,14 +415,14 @@ static void make_region_dialog(snd_state *ss)
 				 0,
 				 g_cclosure_new(GTK_SIGNAL_FUNC(region_print_callback), (gpointer)ss, 0),
 				 0);
-  gtk_box_pack_start(GTK_BOX(infobox), print_button, TRUE, TRUE, 2);
+  gtk_box_pack_start(GTK_BOX(infobox), print_button, true, true, 2);
   gtk_widget_show(print_button);
 
   region_grf = wwl->panes;
   gtk_widget_show(region_dialog);
 
   id = stack_position_to_id(0);
-  rsp = make_simple_channel_display(ss, region_srate(id), region_len(id), WITH_ARROWS, region_graph_style(ss), region_grf, FALSE);
+  rsp = make_simple_channel_display(ss, region_srate(id), region_len(id), WITH_ARROWS, region_graph_style(ss), region_grf, false);
   rsp->inuse = SOUND_REGION;
   current_region = 0;
   cp = rsp->chans[0];
@@ -450,8 +450,8 @@ static void make_region_dialog(snd_state *ss)
 				 g_cclosure_new(GTK_SIGNAL_FUNC(region_down_arrow_callback), (gpointer)ss, 0),
 				 0);
 
-  set_sensitive(channel_f(cp), FALSE);
-  if (region_chans(stack_position_to_id(0)) > 1) set_sensitive(channel_w(cp), TRUE);
+  set_sensitive(channel_f(cp), false);
+  if (region_chans(stack_position_to_id(0)) > 1) set_sensitive(channel_w(cp), true);
   cp->chan = 0;
   rsp->hdr = fixup_region_data(cp, 0, 0);
   make_region_labels(rsp->hdr);

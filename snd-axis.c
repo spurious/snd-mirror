@@ -194,7 +194,7 @@ static Locus tick_grf_x(double val, axis_info *ap, int style, int srate)
 }
 
 #if HAVE_GL
-static int gl_fonts_activated = FALSE;
+static bool gl_fonts_activated = false;
 static int label_base, number_base;
 static void activate_gl_fonts(snd_state *ss)
 {
@@ -208,7 +208,7 @@ static void activate_gl_fonts(snd_state *ss)
       number_base = glGenLists(128);
       glXUseXFont(label->fid, 32, 96, label_base + 32);
       glXUseXFont(number->fid, 32, 96, number_base + 32);
-      gl_fonts_activated = TRUE;
+      gl_fonts_activated = true;
     }
 #else
   if (!gl_fonts_activated)
@@ -222,7 +222,7 @@ static void activate_gl_fonts(snd_state *ss)
       gdk_gl_font_use_pango_font(AXIS_LABEL_FONT(ss), 32, 96, label_base + 32);
       gdk_gl_font_use_pango_font(AXIS_NUMBERS_FONT(ss), 32, 96, number_base + 32);
 #endif
-      gl_fonts_activated = TRUE;
+      gl_fonts_activated = true;
     }
 #endif
 }
@@ -286,7 +286,7 @@ void reload_number_font(snd_state *ss)
   #define X_NUMBERS_OFFSET -5
 #endif
 
-void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, int show_x_axis)
+void make_axes_1(axis_info *ap, int x_style, int srate, int axes, bool printing, bool show_x_axis)
 {
   snd_state *ss;
   Latus width, height;
@@ -294,7 +294,7 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
   Latus axis_thickness, left_border_width, bottom_border_width, top_border_width, right_border_width;
   Latus inner_border_width, tick_label_width;
   Latus major_tick_length, minor_tick_length, x_tick_spacing, y_tick_spacing;
-  int include_x_label, include_x_ticks, include_x_tick_labels, include_y_ticks, include_y_tick_labels;
+  bool include_x_label, include_x_ticks, include_x_tick_labels, include_y_ticks, include_y_tick_labels;
   Latus x_label_width, x_label_height, x_number_height;
   int num_ticks, majy, miny, majx, minx, x, y, tx, ty, x0, y0;
   double fy, fx;
@@ -366,9 +366,9 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
     }
   else
     {
-      include_x_label = FALSE;
-      include_x_tick_labels = FALSE;
-      include_x_ticks = FALSE;
+      include_x_label = false;
+      include_x_tick_labels = false;
+      include_x_ticks = false;
     }
   if (axes != SHOW_X_AXIS)
     {
@@ -377,8 +377,8 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
     }
   else
     {
-      include_y_tick_labels = FALSE;
-      include_y_ticks = FALSE;
+      include_y_tick_labels = false;
+      include_y_ticks = false;
     }
 
   curx = left_border_width;
@@ -393,7 +393,7 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
       x_label_width = label_width(ss, ap->xlabel);
       if ((x_label_width + curx + right_border_width) > width)
 	{
-	  include_x_label = FALSE;
+	  include_x_label = false;
 	  x_label_width = 0;
 	  x_label_height = 0;
 	}
@@ -451,7 +451,7 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 	    tick_label_width = tdy->max_label_width;
 	  if (((curx + tick_label_width) > (int)(.61 * width)) || 
 	      ((4 * x_number_height) > height))
-	    include_y_tick_labels = FALSE;
+	    include_y_tick_labels = false;
 	  else curx += tick_label_width;
 	}
       
@@ -522,7 +522,7 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 	  if (tick_label_width < tdx->max_label_width) 
 	    tick_label_width = tdx->max_label_width;
 	  if ((curx + 2 * tick_label_width) > (int)(.61 * width)) 
-	    include_x_tick_labels = FALSE;
+	    include_x_tick_labels = false;
 	}
       tdx->maj_tick_len = major_tick_length;
       tdx->min_tick_len = minor_tick_length;
@@ -1103,7 +1103,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   ap->graph_x0 = 0;
   clear_window(ax);
   ax->gc = gc;
-  make_axes_1(ap, x_style, 1, axes, FALSE, TRUE);
+  make_axes_1(ap, x_style, 1, axes, false, true);
   val = XEN_CONS(C_TO_XEN_INT(ap->x_axis_x0),
 	 XEN_CONS(C_TO_XEN_INT(ap->y_axis_y0),
           XEN_CONS(C_TO_XEN_INT(ap->x_axis_x1),

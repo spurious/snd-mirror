@@ -8,7 +8,7 @@ static GtkWidget *transform_list, *size_list, *window_list, *wavelet_list,
                  *window_beta_scale, *graph_drawer = NULL, *graph_frame = NULL;
 static GtkObject *beta_adj;
 static GdkGC *gc = NULL, *fgc = NULL;
-static int ignore_callbacks;
+static bool ignore_callbacks;
 
 #define GRAPH_SIZE 128
 static Float current_graph_data[GRAPH_SIZE]; /* fft window graph in transform options dialog */
@@ -99,7 +99,7 @@ static void graph_redisplay(snd_state *ss)
   axis_ap->height = widget_height(graph_drawer);
   axis_ap->graph_x0 = 0;
   gdk_window_clear(ax->wn);
-  make_axes_1(axis_ap, X_AXIS_IN_SECONDS, 1, SHOW_ALL_AXES, FALSE, TRUE);
+  make_axes_1(axis_ap, X_AXIS_IN_SECONDS, 1, SHOW_ALL_AXES, false, true);
   ax->gc = gc;
   ix1 = grf_x(0.0, axis_ap);
   iy1 = grf_y(current_graph_data[0], axis_ap);
@@ -152,7 +152,7 @@ static void chans_transform_size(chan_info *cp, void *ptr)
   if (cp->fft) 
     {
       fp = cp->fft;
-      if (fp->size < size) fp->ok = FALSE; /* "dirty" flag for fft data array = needs REALLOCation */
+      if (fp->size < size) fp->ok = false; /* "dirty" flag for fft data array = needs REALLOCation */
       fp->size = size;
     }
 }
@@ -298,9 +298,10 @@ static void map_show_transform_peaks(chan_info *cp, void *ptr) {cp->show_transfo
 
 static void peaks_callback(GtkWidget *w, gpointer context)
 {
-  int val = 0;
+  bool val = 0;
   snd_state *ss = (snd_state *)context;
-  in_set_show_transform_peaks(ss, val = (GTK_TOGGLE_BUTTON(w)->active));
+  val = (bool)(GTK_TOGGLE_BUTTON(w)->active);
+  in_set_show_transform_peaks(ss, val);
   for_each_chan_1(ss, map_show_transform_peaks, (void *)(&val));
   for_each_chan(ss, calculate_fft);
 }
@@ -314,8 +315,9 @@ static void chans_fft_log_magnitude(chan_info *cp, void *ptr)
 static void db_callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
-  int val;
-  in_set_fft_log_magnitude(ss, val = (GTK_TOGGLE_BUTTON(w)->active));
+  bool val;
+  val = (bool)(GTK_TOGGLE_BUTTON(w)->active);
+  in_set_fft_log_magnitude(ss, val);
   for_each_chan_1(ss, chans_fft_log_magnitude, (void *)(&val));
   for_each_chan(ss, calculate_fft);
 }
@@ -329,8 +331,9 @@ static void chans_fft_log_frequency(chan_info *cp, void *ptr)
 static void logfreq_callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
-  int val;
-  in_set_fft_log_frequency(ss, val = (GTK_TOGGLE_BUTTON(w)->active));
+  bool val;
+  val = (bool)(GTK_TOGGLE_BUTTON(w)->active);
+  in_set_fft_log_frequency(ss, val);
   for_each_chan_1(ss, chans_fft_log_frequency, (void *)(&val));
   for_each_chan(ss, calculate_fft);
 }
@@ -411,10 +414,11 @@ static void help_transform_callback(GtkWidget *w, gpointer context)
 #define BUTTON_WIDTH 40
 /* for some reason gtk puts a mile and a half of padding around buttons */
 
-GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
+GtkWidget *fire_up_transform_dialog(snd_state *ss, bool managed)
 {
   GtkWidget *outer_table, *buttons;
-  int i, need_callback = FALSE;
+  int i;
+  bool need_callback = false;
   GtkWidget *display_frame, *help_button, *dismiss_button;
   GtkWidget *window_box, *orient_button, *color_button;
 
@@ -437,10 +441,10 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
       dismiss_button = gtk_button_new_with_label(_("Dismiss"));
       color_button = gtk_button_new_with_label(_("Color"));
       orient_button = gtk_button_new_with_label(_("Orientation"));
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(transform_dialog)->action_area), dismiss_button, FALSE, TRUE, 10);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(transform_dialog)->action_area), color_button, FALSE, TRUE, 10);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(transform_dialog)->action_area), orient_button, FALSE, TRUE, 10);
-      gtk_box_pack_end(GTK_BOX(GTK_DIALOG(transform_dialog)->action_area), help_button, FALSE, TRUE, 10);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(transform_dialog)->action_area), dismiss_button, false, true, 10);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(transform_dialog)->action_area), color_button, false, true, 10);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(transform_dialog)->action_area), orient_button, false, true, 10);
+      gtk_box_pack_end(GTK_BOX(GTK_DIALOG(transform_dialog)->action_area), help_button, false, true, 10);
       g_signal_connect_closure_by_id(GTK_OBJECT(dismiss_button),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(dismiss_button))),
 				     0,
@@ -466,7 +470,7 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
       gtk_widget_show(orient_button);
       gtk_widget_show(help_button);
 
-      outer_table = gtk_table_new(2, 3, FALSE);
+      outer_table = gtk_table_new(2, 3, false);
       gtk_container_add(GTK_CONTAINER(GTK_DIALOG(transform_dialog)->vbox), outer_table);
       gtk_table_set_row_spacings(GTK_TABLE(outer_table), 4);
       gtk_table_set_col_spacings(GTK_TABLE(outer_table), 4);
@@ -508,12 +512,12 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
       gtk_frame_set_label_align(GTK_FRAME(display_frame), 0.5, 0.0);
       gtk_frame_set_shadow_type(GTK_FRAME(display_frame), GTK_SHADOW_ETCHED_IN);
 
-      buttons = gtk_vbox_new(FALSE, 0);
+      buttons = gtk_vbox_new(false, 0);
       gtk_container_add(GTK_CONTAINER(display_frame), buttons);
       set_background(buttons, (ss->sgx)->position_color);
 
       normal_fft_button = gtk_radio_button_new_with_label(NULL, _("single transform"));
-      gtk_box_pack_start(GTK_BOX(buttons), normal_fft_button, FALSE, FALSE, 0);
+      gtk_box_pack_start(GTK_BOX(buttons), normal_fft_button, false, false, 0);
       gtk_widget_show(normal_fft_button);
       g_signal_connect_closure_by_id(GTK_OBJECT(normal_fft_button),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(normal_fft_button))),
@@ -523,7 +527,7 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
       gtk_widget_set_size_request(GTK_WIDGET(normal_fft_button), BUTTON_WIDTH, BUTTON_HEIGHT);
 
       sono_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(normal_fft_button)), _("sonogram"));
-      gtk_box_pack_start(GTK_BOX(buttons), sono_button, FALSE, FALSE, 0);
+      gtk_box_pack_start(GTK_BOX(buttons), sono_button, false, false, 0);
       gtk_widget_show(sono_button);
       g_signal_connect_closure_by_id(GTK_OBJECT(sono_button),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(sono_button))),
@@ -533,7 +537,7 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
       gtk_widget_set_size_request(GTK_WIDGET(sono_button), BUTTON_WIDTH, BUTTON_HEIGHT);
 
       spectro_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(normal_fft_button)), _("spectrogram"));
-      gtk_box_pack_start(GTK_BOX(buttons), spectro_button, FALSE, FALSE, 0);
+      gtk_box_pack_start(GTK_BOX(buttons), spectro_button, false, false, 0);
       gtk_widget_show(spectro_button);
       g_signal_connect_closure_by_id(GTK_OBJECT(spectro_button),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(spectro_button))),
@@ -543,7 +547,7 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
       gtk_widget_set_size_request(GTK_WIDGET(spectro_button), BUTTON_WIDTH, BUTTON_HEIGHT);
       
       peaks_button = gtk_check_button_new_with_label(_("peaks"));
-      gtk_box_pack_start(GTK_BOX(buttons), peaks_button, FALSE, FALSE, 0);
+      gtk_box_pack_start(GTK_BOX(buttons), peaks_button, false, false, 0);
       gtk_widget_show(peaks_button);
       g_signal_connect_closure_by_id(GTK_OBJECT(peaks_button),
 				     g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(peaks_button))),
@@ -553,7 +557,7 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
       gtk_widget_set_size_request(GTK_WIDGET(peaks_button), BUTTON_WIDTH, BUTTON_HEIGHT);
  
       db_button = gtk_check_button_new_with_label(_("dB"));
-      gtk_box_pack_start(GTK_BOX(buttons), db_button, FALSE, FALSE, 0);
+      gtk_box_pack_start(GTK_BOX(buttons), db_button, false, false, 0);
       gtk_widget_show(db_button);
       g_signal_connect_closure_by_id(GTK_OBJECT(db_button),
 				     g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(db_button))),
@@ -563,7 +567,7 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
       gtk_widget_set_size_request(GTK_WIDGET(db_button), BUTTON_WIDTH, BUTTON_HEIGHT);
  
       logfreq_button = gtk_check_button_new_with_label(_("log freq"));
-      gtk_box_pack_start(GTK_BOX(buttons), logfreq_button, FALSE, FALSE, 0);
+      gtk_box_pack_start(GTK_BOX(buttons), logfreq_button, false, false, 0);
       gtk_widget_show(logfreq_button);
       g_signal_connect_closure_by_id(GTK_OBJECT(logfreq_button),
 				     g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(logfreq_button))),
@@ -573,7 +577,7 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
       gtk_widget_set_size_request(GTK_WIDGET(logfreq_button), BUTTON_WIDTH, BUTTON_HEIGHT);
 
       normalize_button = gtk_check_button_new_with_label(_("normalize"));
-      gtk_box_pack_start(GTK_BOX(buttons), normalize_button, FALSE, FALSE, 0);
+      gtk_box_pack_start(GTK_BOX(buttons), normalize_button, false, false, 0);
       gtk_widget_show(normalize_button);
       g_signal_connect_closure_by_id(GTK_OBJECT(normalize_button),
 				     g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(normalize_button))),
@@ -583,7 +587,7 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
       gtk_widget_set_size_request(GTK_WIDGET(normalize_button), BUTTON_WIDTH, BUTTON_HEIGHT);
 
       selection_button = gtk_check_button_new_with_label(_("selection"));
-      gtk_box_pack_start(GTK_BOX(buttons), selection_button, FALSE, FALSE, 0);
+      gtk_box_pack_start(GTK_BOX(buttons), selection_button, false, false, 0);
       gtk_widget_show(selection_button);
       g_signal_connect_closure_by_id(GTK_OBJECT(selection_button),
 				     g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(selection_button))),
@@ -601,7 +605,7 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
       gtk_widget_show(wavelet_list);
 
       /* WINDOW */
-      window_box = gtk_table_new(2, 2, FALSE);
+      window_box = gtk_table_new(2, 2, false);
       gtk_table_attach_defaults(GTK_TABLE(outer_table), window_box, 1, 2, 1, 2);
       window_list = sg_make_list(_("window"), window_box, TABLE_ATTACH, (gpointer)ss, GUI_NUM_FFT_WINDOWS, FFT_WINDOWS, 
 				 GTK_SIGNAL_FUNC(window_browse_callback), 0, 1, 0, 1);
@@ -612,7 +616,7 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(window_beta_scale)), GTK_UPDATE_CONTINUOUS);
       gtk_scale_set_digits(GTK_SCALE(window_beta_scale), 2);
       gtk_scale_set_value_pos(GTK_SCALE(window_beta_scale), GTK_POS_TOP);
-      gtk_scale_set_draw_value(GTK_SCALE(window_beta_scale), TRUE);
+      gtk_scale_set_draw_value(GTK_SCALE(window_beta_scale), true);
       g_signal_connect_closure_by_id(GTK_OBJECT(beta_adj),
 				     g_signal_lookup("value_changed", G_OBJECT_TYPE(GTK_OBJECT(beta_adj))),
 				     0,
@@ -658,22 +662,22 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
 	    break;
 	  }
 
-      ignore_callbacks = TRUE;
-      if (transform_graph_type(ss) == GRAPH_ONCE) set_toggle_button(normal_fft_button, TRUE, FALSE, (gpointer)ss);
-      if (transform_graph_type(ss) == GRAPH_AS_SONOGRAM) set_toggle_button(sono_button, TRUE, FALSE, (gpointer)ss);
-      if (transform_graph_type(ss) == GRAPH_AS_SPECTROGRAM) set_toggle_button(spectro_button, TRUE, FALSE, (gpointer)ss);
-      ignore_callbacks = FALSE;
+      ignore_callbacks = true;
+      if (transform_graph_type(ss) == GRAPH_ONCE) set_toggle_button(normal_fft_button, true, false, (gpointer)ss);
+      if (transform_graph_type(ss) == GRAPH_AS_SONOGRAM) set_toggle_button(sono_button, true, false, (gpointer)ss);
+      if (transform_graph_type(ss) == GRAPH_AS_SPECTROGRAM) set_toggle_button(spectro_button, true, false, (gpointer)ss);
+      ignore_callbacks = false;
 
-      set_toggle_button(peaks_button, show_transform_peaks(ss), FALSE, (gpointer)ss);
-      set_toggle_button(db_button, fft_log_magnitude(ss), FALSE, (gpointer)ss);
-      set_toggle_button(logfreq_button, fft_log_frequency(ss), FALSE, (gpointer)ss);
-      set_toggle_button(normalize_button, transform_normalization(ss), FALSE, (gpointer)ss);
-      set_toggle_button(selection_button, show_selection_transform(ss), FALSE, (gpointer)ss);
+      set_toggle_button(peaks_button, show_transform_peaks(ss), false, (gpointer)ss);
+      set_toggle_button(db_button, fft_log_magnitude(ss), false, (gpointer)ss);
+      set_toggle_button(logfreq_button, fft_log_frequency(ss), false, (gpointer)ss);
+      set_toggle_button(normalize_button, transform_normalization(ss), false, (gpointer)ss);
+      set_toggle_button(selection_button, show_selection_transform(ss), false, (gpointer)ss);
       sg_list_select(window_list, fft_window(ss));
       sg_list_moveto(window_list, fft_window(ss));
       sg_list_select(wavelet_list, wavelet_type(ss));
       sg_list_moveto(wavelet_list, wavelet_type(ss));
-      need_callback = TRUE;
+      need_callback = true;
       gtk_widget_show(outer_table);
       set_dialog_widget(ss, TRANSFORM_DIALOG, transform_dialog);
     }
@@ -693,7 +697,7 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(graph_configure_callback), (gpointer)ss, 0),
 				     0);
-      need_callback = FALSE;
+      need_callback = false;
     }
   return(transform_dialog);
 }
@@ -777,50 +781,52 @@ void set_wavelet_type(snd_state *ss, int val)
 }
 
 /* various set- cases need to be reflected in the transform dialog */
-void set_show_transform_peaks(snd_state *ss, int val)
+void set_show_transform_peaks(snd_state *ss, bool val)
 {
   in_set_show_transform_peaks(ss, val);
   for_each_chan_1(ss, map_show_transform_peaks, (void *)(&val));
   if (transform_dialog) 
-    set_toggle_button(peaks_button, val, FALSE, (void *)ss);
+    set_toggle_button(peaks_button, val, false, (void *)ss);
   if (!(ss->graph_hook_active)) 
     for_each_chan(ss, calculate_fft);
 }
 
-void set_fft_log_frequency(snd_state *ss, int val)
+void set_fft_log_frequency(snd_state *ss, bool val)
 {
   in_set_fft_log_frequency(ss, val);
   for_each_chan_1(ss, chans_fft_log_frequency, (void *)(&val));
   if (transform_dialog)
-    set_toggle_button(logfreq_button, val, FALSE, (void *)ss);
+    set_toggle_button(logfreq_button, val, false, (void *)ss);
   if (!(ss->graph_hook_active)) 
     for_each_chan(ss, calculate_fft);
 }
 
-void set_fft_log_magnitude(snd_state *ss, int val)
+void set_fft_log_magnitude(snd_state *ss, bool val)
 {
   in_set_fft_log_magnitude(ss, val);
   for_each_chan_1(ss, chans_fft_log_magnitude, (void *)(&val));
   if (transform_dialog) 
-    set_toggle_button(db_button, val, FALSE, (void *)ss);
+    set_toggle_button(db_button, val, false, (void *)ss);
   if (!(ss->graph_hook_active)) 
     for_each_chan(ss, calculate_fft);
 }
 
-void set_transform_graph_type(snd_state *ss, int val)
+void set_transform_graph_type(snd_state *ss, graph_type_t val)
 {
   in_set_transform_graph_type(ss, val);
   if (transform_dialog) 
     switch (val)
       {
       case GRAPH_ONCE: 
-	set_toggle_button(normal_fft_button, TRUE, FALSE, (void *)ss); 
+	set_toggle_button(normal_fft_button, true, false, (void *)ss); 
 	break;
       case GRAPH_AS_SONOGRAM:   
-	set_toggle_button(sono_button, TRUE, FALSE, (void *)ss); 
+	set_toggle_button(sono_button, true, false, (void *)ss); 
 	break;
       case GRAPH_AS_SPECTROGRAM:
-	set_toggle_button(spectro_button, TRUE, FALSE, (void *)ss);
+	set_toggle_button(spectro_button, true, false, (void *)ss);
+	break;
+      case GRAPH_AS_WAVOGRAM:
 	break;
       }
   if (!(ss->graph_hook_active)) 
@@ -832,16 +838,16 @@ void set_transform_normalization(snd_state *ss, int val)
   in_set_transform_normalization(ss, val);
   for_each_chan_1(ss, chans_transform_normalization, (void *)(&val));
   if (transform_dialog) 
-    set_toggle_button(normalize_button, val, FALSE, (void *)ss);
+    set_toggle_button(normalize_button, val, false, (void *)ss);
   if (!(ss->graph_hook_active)) 
     for_each_chan(ss, calculate_fft);
 }
 
-void set_show_selection_transform(snd_state *ss, int show)
+void set_show_selection_transform(snd_state *ss, bool show)
 {
   in_set_show_selection_transform(ss, show);
   if (transform_dialog)
-    set_toggle_button(selection_button, show, FALSE, (void *)ss); 
+    set_toggle_button(selection_button, show, false, (void *)ss); 
   if (!(ss->graph_hook_active)) 
     for_each_chan(ss, calculate_fft);
 }

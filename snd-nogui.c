@@ -1,9 +1,9 @@
 #include "snd.h"
 
 void check_menu_labels(int key, int state, int extended) {}
-int add_channel_window(snd_info *sound, int channel, snd_state *ss, int chan_y, int insertion, widget_t main, int arrows, int with_events) {return(0);}
-int snd_help(snd_state *ss, const char *subject, const char *help, int with_wrap) {fprintf(stdout, help); return(0);}
-void add_to_error_history(snd_state *ss, char *msg, int popup) {}
+int add_channel_window(snd_info *sound, int channel, snd_state *ss, int chan_y, int insertion, widget_t main, int arrows, bool with_events) {return(0);}
+int snd_help(snd_state *ss, const char *subject, const char *help, bool with_wrap) {fprintf(stdout, help); return(0);}
+void add_to_error_history(snd_state *ss, char *msg, bool popup) {}
 void post_error_dialog(snd_state *ss, char *msg) {}
 int snd_yes_or_no_p(snd_state *ss, char *format, ...) {return(0);}
 void draw_line (axis_context *ax, int x0, int y0, int x1, int y1) {}
@@ -14,8 +14,8 @@ void draw_string (axis_context *ax, int x0, int y0, char *str, int len) {}
 void draw_arc(axis_context *ax, int x, int y, int size) {}
 void set_grf_points(Locus xi, int j, Locus ymin, Locus ymax) {}
 void set_grf_point(Locus xi, int j, Locus yi) {}
-void draw_grf_points(chan_info *cp, axis_context *ax, int j, axis_info *ap, Float y0, int graph_style) {}
-void draw_both_grf_points(chan_info *cp, axis_context *ax, int j, int graph_style) {}
+void draw_grf_points(chan_info *cp, axis_context *ax, int j, axis_info *ap, Float y0, graph_style_t graph_style) {}
+void draw_both_grf_points(chan_info *cp, axis_context *ax, int j, graph_style_t graph_style) {}
 void draw_both_grfs(axis_context *ax, int j) {}
 void mix_save_graph(mix_context *ms, int j) {}
 void erase_rectangle (chan_info *cp, axis_context *ax, int x0, int y0, int width, int height) {}
@@ -25,13 +25,13 @@ void setup_axis_context(chan_info *cp, axis_context *ax) {}
 void draw_spectro_line(axis_context *ax, int color, int x0, int y0, int x1, int y1) {}
 void allocate_color_map(snd_state *ss, int colormap) {}
 void allocate_sono_rects(int size) {}
-int set_with_gl(snd_state *ss, int val) {return(0);}
+int set_with_gl(snd_state *ss, bool val) {return(0);}
 void set_sono_rectangle(int j, int color, Locus x, Locus y, Latus width, Latus height) {}
 void draw_sono_rectangles(axis_context *ax, int color, int jmax) {}
 int start_color_dialog(snd_state *ss, int width, int height) {return(0);}
 int start_orientation_dialog(snd_state *ss, int width, int height) {return(0);}
 void set_color_scale(snd_state *ss, Float val) {}
-void set_color_inverted(snd_state *ss, int val) {}
+void set_color_inverted(snd_state *ss, bool val) {}
 void set_color_cutoff(snd_state *ss, Float val) {}
 void set_color_map(snd_state *ss, int val) {}
 void set_spectro_hop(snd_state *ss, int val) {}
@@ -50,10 +50,10 @@ void goto_listener(void) {}
 void save_listener_text(FILE *fp) {}
 void append_listener_text(int end, char *msg) {}
 void listener_append(char *msg) {fprintf(stderr, "%s", msg);}
-void handle_listener(snd_state *ss, int new_state) {}
+void handle_listener(snd_state *ss, bool new_state) {}
 int listener_height(void) {return(0);}
 int listener_width(void) {return(0);}
-int highlight_unbalanced_paren(void) {return(TRUE);}
+bool highlight_unbalanced_paren(void) {return(true);}
 int file_open_menu(void) {return(0);}
 int file_close_menu(void) {return(0);}
 int file_save_menu(void) {return(0);}
@@ -110,20 +110,20 @@ int popup_info_menu(void) {return(0);}
 int popup_menu_exists(void) {return(0);}
 void set_menu_label(int w, const char *label) {}
 int g_change_menu_label(int which_menu, char *old_label, char *new_label) {return(0);}
-int g_set_menu_sensitive(int which_menu, char *old_label, int on) {return(0);}
+int g_set_menu_sensitive(int which_menu, char *old_label, bool on) {return(0);}
 int g_menu_is_sensitive(int which_menu, char *old_label) {return(-1);}
 int g_add_to_main_menu(snd_state *ss, char *label, int slot) {return(0);}
 int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb, int position) {return(0);}
 int g_remove_from_menu(int which_menu, char *label) {return(0);}
 void reflect_play_stop_in_popup_menu(void) {}
 void reflect_play_selection_stop(void) {}
-int fire_up_transform_dialog(snd_state *ss, int managed) {return(0);}
+int fire_up_transform_dialog(snd_state *ss, bool managed) {return(0);}
 int transform_dialog_is_active(void) {return(0);}
-void set_show_transform_peaks(snd_state *ss, int val) {}
-void set_fft_log_magnitude(snd_state *ss, int val) {}
-void set_fft_log_frequency(snd_state *ss, int val) {}
+void set_show_transform_peaks(snd_state *ss, bool val) {}
+void set_fft_log_magnitude(snd_state *ss, bool val) {}
+void set_fft_log_frequency(snd_state *ss, bool val) {}
 void set_transform_normalization(snd_state *ss, int val) {}
-void set_show_selection_transform(snd_state *ss, int show) {}
+void set_show_selection_transform(snd_state *ss, bool show) {}
 void reflect_regions_in_region_browser(void) {}
 void reflect_no_regions_in_region_browser(void) {}
 void update_region_browser(snd_state *ss, int grf_too) {}
@@ -134,13 +134,13 @@ int region_dialog_is_active(void) {return(0);}
 void allocate_region_rows(int n) {}
 void reflect_region_graph_style(snd_state *ss) {}
 void snd_completion_help(snd_state *ss, int matches, char **buffer) {}
-int set_tiny_font(snd_state *ss, char *font) {ss->Tiny_Font = copy_string(font); return(0);}
-int set_listener_font(snd_state *ss, char *font) {ss->Listener_Font = copy_string(font); return(0);}
-int set_bold_button_font(snd_state *ss, char *font) {ss->Bold_Button_Font = copy_string(font); return(0);}
-int set_peaks_font(snd_state *ss, char *font) {ss->Peaks_Font = copy_string(font); return(0);}
-int set_bold_peaks_font(snd_state *ss, char *font) {ss->Bold_Peaks_Font = copy_string(font); return(0);}
-int set_axis_label_font(snd_state *ss, char *font) {ss->Axis_Label_Font = copy_string(font); return(0);}
-int set_axis_numbers_font(snd_state *ss, char *font) {ss->Axis_Numbers_Font = copy_string(font); return(0);}
+bool set_tiny_font(snd_state *ss, char *font) {ss->Tiny_Font = copy_string(font); return(false);}
+bool set_listener_font(snd_state *ss, char *font) {ss->Listener_Font = copy_string(font); return(false);}
+bool set_bold_button_font(snd_state *ss, char *font) {ss->Bold_Button_Font = copy_string(font); return(false);}
+bool set_peaks_font(snd_state *ss, char *font) {ss->Peaks_Font = copy_string(font); return(false);}
+bool set_bold_peaks_font(snd_state *ss, char *font) {ss->Bold_Peaks_Font = copy_string(font); return(false);}
+bool set_axis_label_font(snd_state *ss, char *font) {ss->Axis_Label_Font = copy_string(font); return(false);}
+bool set_axis_numbers_font(snd_state *ss, char *font) {ss->Axis_Numbers_Font = copy_string(font); return(false);}
 int label_width(snd_state *ss, char *txt) {return(0);}
 int number_width(snd_state *ss, char *num) {return(0);}
 int number_height(snd_state *ss) {return(0);}
@@ -153,10 +153,10 @@ void set_title(snd_state *ss, const char *title) {}
 void goto_window(int text) {}
 void check_for_event(snd_state *ss) {}
 int event_pending(snd_state *ss) {return(0);}
-void recolor_graph(chan_info *cp, int selected) {}
+void recolor_graph(chan_info *cp, bool selected) {}
 void reflect_resize(snd_state *ss) {}
-void set_sensitive(int wid, int val) {}
-void set_toggle_button(int wid, int val, int passed, void *data) {}
+void set_sensitive(int wid, bool val) {}
+void set_toggle_button(int wid, bool val, bool passed, void *data) {}
 int widget_height(int w) {return(0);}
 int widget_width(int w) {return(0);}
 void set_widget_size(int w, int width, int height) {}
@@ -189,7 +189,7 @@ void change_channel_style(snd_info *sp, int new_style) {}
 void reflect_amp_env_in_progress(snd_info *sp) {}
 void cleanup_cw(chan_info *cp) {}
 void clear_deleted_snd_info(void *fd) {}
-int fixup_cp_cgx_ax_wn(chan_info *cp) {return(FALSE);}
+bool fixup_cp_cgx_ax_wn(chan_info *cp) {return(false);}
 int w_snd_name(snd_info *sp) {return(0);}
 int filter_graph(snd_info *sp) {return(0);}
 void make_minibuffer_label(snd_info *sp, char *str) {}
@@ -198,23 +198,23 @@ void set_minibuffer_string(snd_info *sp, char *str) {if ((str) && (*str)) fprint
 void set_minibuffer_cursor_position(snd_info *sp, int pos) {}
 char *get_minibuffer_string(snd_info *sp) {return(NULL);}
 void snd_info_cleanup(snd_info *sp) {}
-void toggle_expand_button(snd_info *sp, int state) {}
-void toggle_contrast_button(snd_info *sp, int state) {}
-void toggle_reverb_button(snd_info *sp, int state) {}
-void toggle_filter_button(snd_info *sp, int state) {}
-void toggle_direction_arrow(snd_info *sp, int state) {}
+void toggle_expand_button(snd_info *sp, bool state) {}
+void toggle_contrast_button(snd_info *sp, bool state) {}
+void toggle_reverb_button(snd_info *sp, bool state) {}
+void toggle_filter_button(snd_info *sp, bool state) {}
+void toggle_direction_arrow(snd_info *sp, bool state) {}
 void filter_env_changed(snd_info *sp, env *e) {}
-void set_play_button(snd_info *sp, int val) {}
-void play_button_pause(snd_state *ss, int pausing) {}
+void set_play_button(snd_info *sp, bool val) {}
+void play_button_pause(snd_state *ss, bool pausing) {}
 void syncb(snd_info *sp, int on) {sp->sync = on;}
 void lock_apply(snd_state *ss, snd_info *sp) {}
 void unlock_apply(snd_state *ss, snd_info *sp) {}
-void set_apply_button(snd_info *sp, int val) {}
-void snd_file_lock_icon(snd_info *sp, int on) {}
-void snd_file_bomb_icon(snd_info *sp, int on) {}
-void x_bomb(snd_info *sp, int on) {}
+void set_apply_button(snd_info *sp, bool val) {}
+void snd_file_lock_icon(snd_info *sp, bool on) {}
+void snd_file_bomb_icon(snd_info *sp, bool on) {}
+void x_bomb(snd_info *sp, bool on) {}
 void set_sound_pane_file_label(snd_info *sp, char *str) {}
-void equalize_sound_panes(snd_state *ss, snd_info *sp, chan_info *ncp, int all_panes) {}
+void equalize_sound_panes(snd_state *ss, snd_info *sp, chan_info *ncp, bool all_panes) {}
 void reflect_amp_env_completion(snd_info *sp) {}
 void equalize_all_panes(snd_state *ss) {}
 void sound_show_ctrls(snd_info *sp) {}
@@ -231,7 +231,7 @@ void make_prev_name_row(int old_size, int new_size) {}
 void make_prevfiles_list (snd_state *ss) {}
 void make_curfiles_list (snd_state *ss) {}
 void curfile_highlight(snd_state *ss, int i) {}
-void set_file_sort_sensitive(int sensitive) {}
+void set_file_sort_sensitive(bool sensitive) {}
 void view_curfiles_set_row_name(int pos) {}
 void set_file_browser_play_button(char *name, int state) {}
 void highlight_selected_sound(snd_state *ss) {}
@@ -241,30 +241,30 @@ int edit_header(snd_info *sp) {return(0);}
 void make_edit_save_as_dialog(snd_state *ss) {}
 void make_file_save_as_dialog(snd_state *ss) {}
 axis_info *enved_make_axis(char *name, axis_context *ax, int ex0, int ey0, int width, int height, 
-			   Float xmin, Float xmax, Float ymin, Float ymax, int printing) {return(NULL);}
-void display_enved_env_with_selection(snd_state *ss, env *e, char *name, int x0, int y0, int width, int height, int dots, Float base, int printing) {}
-void set_enved_redo_sensitive(int val) {}
-void set_enved_revert_sensitive(int val) {}
-void set_enved_undo_sensitive(int val) {}
-void set_enved_save_sensitive(int val) {}
-void set_enved_show_sensitive(int val) {}
+			   Float xmin, Float xmax, Float ymin, Float ymax, bool printing) {return(NULL);}
+void display_enved_env_with_selection(snd_state *ss, env *e, char *name, int x0, int y0, int width, int height, int dots, Float base, bool printing) {}
+void set_enved_redo_sensitive(bool val) {}
+void set_enved_revert_sensitive(bool val) {}
+void set_enved_undo_sensitive(bool val) {}
+void set_enved_save_sensitive(bool val) {}
+void set_enved_show_sensitive(bool val) {}
 void enved_fft_update(void) {}
 void make_scrolled_env_list (snd_state *ss) {}
 void new_active_channel_alert(snd_state *ss) {}
 void env_redisplay(snd_state *ss) {}
 void env_redisplay_with_print(snd_state *ss) {}
 void enved_display_point_label(snd_state *ss, Float x, Float y) {}
-void set_enved_click_to_delete(int n) {}
+void set_enved_click_to_delete(bool n) {}
 int create_envelope_editor (snd_state *ss) {return(0);}
-void set_enved_clip_p(snd_state *ss, int val) {}
-void set_enved_exp_p(snd_state *ss, int val) {}
+void set_enved_clip_p(snd_state *ss, bool val) {}
+void set_enved_exp_p(snd_state *ss, bool val) {}
 void set_enved_base(snd_state *ss, Float val) {}
 void set_enved_target(snd_state *ss, int val) {}
-void set_enved_wave_p(snd_state *ss, int val) {}
-void set_enved_in_dB(snd_state *ss, int val) {}
+void set_enved_wave_p(snd_state *ss, bool val) {}
+void set_enved_in_dB(snd_state *ss, bool val) {}
 int enved_dialog_is_active(void) {return(0);}
 void set_enved_filter_order(snd_state *ss, int order) {}
-void enved_reflect_selection(int on) {}
+void enved_reflect_selection(bool on) {}
 void reflect_mix_in_enved(void) {}
 void lock_recording_audio(void) {}
 void unlock_recording_audio(void) {}
@@ -274,8 +274,8 @@ void recorder_error(char *msg) {}
 void reflect_record_size(int val) {}
 void unsensitize_control_buttons(void) {}
 void reflect_recorder_duration(Float new_dur) {}
-void make_open_file_dialog(snd_state *ss, int read_only, int managed) {}
-void make_mix_file_dialog(snd_state *ss, int managed) {}
+void make_open_file_dialog(snd_state *ss, bool read_only, bool managed) {}
+void make_mix_file_dialog(snd_state *ss, bool managed) {}
 void clear_listener(void) {}
 int menu_widget(int which_menu) {return(0);}
 void get_current_color(int colormap, int j, unsigned short *r, unsigned short *g, unsigned short *b) {}
@@ -311,7 +311,7 @@ void set_snd_srate(snd_info *sp, Float val) {sp->speed_control = val;}
 void set_snd_revlen(snd_info *sp, Float val) {sp->reverb_control_length = val;}
 void set_snd_revscl(snd_info *sp, Float val) {sp->reverb_control_scale = val;}
 void set_snd_filter_order(snd_info *sp, int val) {sp->filter_control_order = val;}
-void set_filter_in_dB(snd_info *sp, int val) {sp->filter_control_in_dB = val;}
+void set_filter_in_dB(snd_info *sp, bool val) {sp->filter_control_in_dB = val;}
 
 void reflect_recorder_mixer_gain(int ind, Float val) {}
 void reflect_recorder_out_amp(int ind, Float val) {}
@@ -321,13 +321,14 @@ snd_info *add_sound_window (char *filename, snd_state *ss, int read_only)
 {
   snd_info *sp;
   file_info *hdr;
-  int snd_slot, nchans, i, free_filename = FALSE;
+  int snd_slot, nchans, i;
+  bool free_filename = false;
   hdr = make_file_info(filename, ss);
   if (!hdr) return(NULL);
   if (ss->pending_change) 
     {
       filename = ss->pending_change;
-      free_filename = TRUE;
+      free_filename = true;
       ss->pending_change = NULL;
     }
   nchans = hdr->chans;
@@ -356,7 +357,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss, int read_only)
 static XEN menu_hook;
 static char **auto_open_file_names = NULL;
 static int auto_open_files = 0;
-static int noglob = FALSE, noinit = FALSE, nostdin = FALSE;
+static bool noglob = false, noinit = false, nostdin = false;
 
 #if HAVE_SETJMP_H
 #if TRAP_SEGFAULT
@@ -503,16 +504,16 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   for (i = 1; i < argc; i++)
     {
       if (strcmp(argv[i], "-noglob") == 0)
-	noglob = TRUE;
+	noglob = true;
       else
 	if (strcmp(argv[i], "-noinit") == 0)
-	  noinit = TRUE;
+	  noinit = true;
 	else
 	  if (strcmp(argv[i], "-nostdin") == 0)
-	    nostdin = TRUE;
+	    nostdin = true;
 	  else
 	    if ((strcmp(argv[i], "-b") == 0) || (strcmp(argv[i], "-batch") == 0))
-	      ss->batch_mode = TRUE;
+	      ss->batch_mode = true;
     }
   snd_load_init_file(ss, noglob, noinit);
 #if HAVE_SIGNAL
@@ -522,7 +523,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   auto_open_files = argc - 1;
   if (argc > 1) auto_open_file_names = (char **)(argv + 1);
   while (auto_open_ctr < auto_open_files)
-    auto_open_ctr = handle_next_startup_arg(ss, auto_open_ctr, auto_open_file_names, FALSE, auto_open_files);
+    auto_open_ctr = handle_next_startup_arg(ss, auto_open_ctr, auto_open_file_names, false, auto_open_files);
 #if TRAP_SEGFAULT
   if (trap_segfault(ss)) signal(SIGSEGV, segv);
 #endif

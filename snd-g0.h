@@ -27,8 +27,8 @@
 
 #define NUM_COLORMAPS 16
 
-#define BACKGROUND_QUIT FALSE
-#define BACKGROUND_CONTINUE TRUE
+#define BACKGROUND_QUIT false
+#define BACKGROUND_CONTINUE true
 #define BACKGROUND_REMOVE(func) gtk_idle_remove(func)
 #define BACKGROUND_ADD(ss, func, data) add_work_proc(ss, func, (gpointer)data)
 
@@ -68,7 +68,7 @@ typedef struct {
   Cessator amp_env_in_progress;
   void *amp_env_state;
   axis_context *ax;
-  int selected;
+  bool selected;
 } chan_context;
 
 typedef struct {
@@ -79,7 +79,9 @@ typedef struct {
   GtkWidget *tab;
   void *flt;
   GtkWidget *dialog;
-  int controls_fixed, page, mini_active;
+  bool controls_fixed;
+  int page;
+  bool mini_active;
 } snd_context;
 
 typedef struct {
@@ -117,7 +119,7 @@ typedef struct {
   GdkGC *fltenv_basic_gc, *fltenv_data_gc;
 
   GtkWidget **dialogs;
-  int graph_is_active;
+  bool graph_is_active;
   
   GdkCursor *arrow_cursor, *wait_cursor, *graph_cursor;
 } state_context;

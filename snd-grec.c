@@ -50,7 +50,7 @@ typedef struct {
   GtkWidget *button_vertical_sep;
   int pane_size;
   int device, system;          /* audio.c style device descriptor */
-  int **active_sliders;
+  bool **active_sliders;
   GtkWidget ***matrix_buttons;
   int bx, by;
   int bw, bh;
@@ -171,7 +171,7 @@ static GdkPixmap *device_pix(int device)
 static gboolean recorder_noop_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
 {
   g_signal_stop_emission(GTK_OBJECT(w), g_signal_lookup("enter_notify_event", G_OBJECT_TYPE(GTK_OBJECT(w))), 0);
-  return(FALSE);
+  return(false);
 }
 /* g_signal_connect_closure_by_id(GTK_OBJECT(w),
    g_signal_lookup("enter_notify_event", G_OBJECT_TYPE(GTK_OBJECT(w))),
@@ -211,7 +211,7 @@ static void allocate_meter_2(GtkWidget *w, vu_label *vu)
 
 static GdkColor *yellows[VU_COLORS];
 static GdkColor *reds[VU_COLORS];
-static int vu_colors_allocated = FALSE;
+static bool vu_colors_allocated = false;
 static int yellow_vals[] = {0, 16, 32, 64, 96, 128, 160, 175, 185, 200, 210, 220, 230, 240};
 
 static void allocate_meter_1(snd_state *ss, vu_label *vu)
@@ -243,7 +243,7 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
 
   if (!vu_colors_allocated)
     {
-      vu_colors_allocated = TRUE;
+      vu_colors_allocated = true;
       tmp_color.red = (unsigned short)65535;
       for (i = 0; i < VU_COLORS; i++)
 	{
@@ -270,7 +270,7 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
 					  (unsigned int)(CENTER_Y * size), 
 					  -1);
 	  gdk_gc_set_foreground(draw_gc, reds[0]);	    
-	  gdk_draw_rectangle(vu->clip_label, draw_gc, TRUE, 0, 0, 
+	  gdk_draw_rectangle(vu->clip_label, draw_gc, true, 0, 0, 
 			     (unsigned int)(CENTER_X * 2 * size), 
 			     (unsigned int)(CENTER_Y * size));
 	}
@@ -281,7 +281,7 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
 					(unsigned int)(CENTER_Y * size),
 					-1);
 	  gdk_gc_set_foreground(draw_gc, yellows[2]);
-	  gdk_draw_rectangle(vu->on_label, draw_gc, TRUE, 0, 0, 
+	  gdk_draw_rectangle(vu->on_label, draw_gc, true, 0, 0, 
 			     (unsigned int)(CENTER_X * 2 * size), 
 			     (unsigned int)(CENTER_Y * size));
 	}
@@ -301,8 +301,8 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
       pts[6].x = pts[0].x;
       pts[6].y = pts[0].y;
       if (k == 1)
-	gdk_draw_polygon(vu->clip_label, draw_gc, TRUE, pts, 7);
-      else gdk_draw_polygon(vu->on_label, draw_gc, TRUE, pts, 7);
+	gdk_draw_polygon(vu->clip_label, draw_gc, true, pts, 7);
+      else gdk_draw_polygon(vu->on_label, draw_gc, true, pts, 7);
 
       for (i = 1; i < VU_COLORS; i++)
 	{
@@ -330,8 +330,8 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
 	  pts[12].x = pts[0].x;
 	  pts[12].y = pts[0].y;
 	  if (k == 1)
-	    gdk_draw_polygon(vu->clip_label, draw_gc, TRUE, pts, 13);
-	  else gdk_draw_polygon(vu->on_label, draw_gc, TRUE, pts, 13);
+	    gdk_draw_polygon(vu->clip_label, draw_gc, true, pts, 13);
+	  else gdk_draw_polygon(vu->on_label, draw_gc, true, pts, 13);
 	  for (j = 0; j < 6; j++) 
 	    { 
 	      /* set up initial portion of next polygon */
@@ -347,7 +347,7 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
 				 -1);
   /* not on, so just display a white background */
   gdk_gc_set_foreground(draw_gc, white);
-  gdk_draw_rectangle(vu->off_label, draw_gc, TRUE, 0, 0, 
+  gdk_draw_rectangle(vu->off_label, draw_gc, true, 0, 0, 
 		     (unsigned int)(CENTER_X * 2 * size), 
 		     (unsigned int)(CENTER_Y * size));
 
@@ -363,20 +363,20 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
   xs[3] = (int)(size * (CENTER_X - 116));
   ys[3] = (int)(size * (CENTER_Y - 116));
 
-  gdk_draw_arc(vu->on_label, draw_gc, FALSE, xs[0], ys[0], (unsigned int)(size * (240)), (unsigned int)(size * (240)), 45 * 64, 90 * 64);
-  gdk_draw_arc(vu->on_label, draw_gc, FALSE, xs[1], ys[1], (unsigned int)(size * (239)), (unsigned int)(size * (239)), 45 * 64, 89 * 64);
-  gdk_draw_arc(vu->on_label, draw_gc, FALSE, xs[2], ys[2], (unsigned int)(size * (239)), (unsigned int)(size * (239)), 45 * 64, 89 * 64);
-  gdk_draw_arc(vu->on_label, draw_gc, FALSE, xs[3], ys[3], (unsigned int)(size * (232)), (unsigned int)(size * (232)), 45 * 64, 90 * 64);
+  gdk_draw_arc(vu->on_label, draw_gc, false, xs[0], ys[0], (unsigned int)(size * (240)), (unsigned int)(size * (240)), 45 * 64, 90 * 64);
+  gdk_draw_arc(vu->on_label, draw_gc, false, xs[1], ys[1], (unsigned int)(size * (239)), (unsigned int)(size * (239)), 45 * 64, 89 * 64);
+  gdk_draw_arc(vu->on_label, draw_gc, false, xs[2], ys[2], (unsigned int)(size * (239)), (unsigned int)(size * (239)), 45 * 64, 89 * 64);
+  gdk_draw_arc(vu->on_label, draw_gc, false, xs[3], ys[3], (unsigned int)(size * (232)), (unsigned int)(size * (232)), 45 * 64, 90 * 64);
 
-  gdk_draw_arc(vu->off_label, draw_gc, FALSE, xs[0], ys[0], (unsigned int)(size * (240)), (unsigned int)(size * (240)), 45 * 64, 90 * 64);
-  gdk_draw_arc(vu->off_label, draw_gc, FALSE, xs[1], ys[1], (unsigned int)(size * (239)), (unsigned int)(size * (239)), 45 * 64, 89 * 64);
-  gdk_draw_arc(vu->off_label, draw_gc, FALSE, xs[2], ys[2], (unsigned int)(size * (239)), (unsigned int)(size * (239)), 45 * 64, 89 * 64);
-  gdk_draw_arc(vu->off_label, draw_gc, FALSE, xs[3], ys[3], (unsigned int)(size * (232)), (unsigned int)(size * (232)), 45 * 64, 90 * 64);
+  gdk_draw_arc(vu->off_label, draw_gc, false, xs[0], ys[0], (unsigned int)(size * (240)), (unsigned int)(size * (240)), 45 * 64, 90 * 64);
+  gdk_draw_arc(vu->off_label, draw_gc, false, xs[1], ys[1], (unsigned int)(size * (239)), (unsigned int)(size * (239)), 45 * 64, 89 * 64);
+  gdk_draw_arc(vu->off_label, draw_gc, false, xs[2], ys[2], (unsigned int)(size * (239)), (unsigned int)(size * (239)), 45 * 64, 89 * 64);
+  gdk_draw_arc(vu->off_label, draw_gc, false, xs[3], ys[3], (unsigned int)(size * (232)), (unsigned int)(size * (232)), 45 * 64, 90 * 64);
 
-  gdk_draw_arc(vu->clip_label, draw_gc, FALSE, xs[0], ys[0], (unsigned int)(size * (240)), (unsigned int)(size * (240)), 45 * 64, 90 * 64);
-  gdk_draw_arc(vu->clip_label, draw_gc, FALSE, xs[1], ys[1], (unsigned int)(size * (239)), (unsigned int)(size * (239)), 45 * 64, 89 * 64);
-  gdk_draw_arc(vu->clip_label, draw_gc, FALSE, xs[2], ys[2], (unsigned int)(size * (239)), (unsigned int)(size * (239)), 45 * 64, 89 * 64);
-  gdk_draw_arc(vu->clip_label, draw_gc, FALSE, xs[3], ys[3], (unsigned int)(size * (232)), (unsigned int)(size * (232)), 45 * 64, 90 * 64);
+  gdk_draw_arc(vu->clip_label, draw_gc, false, xs[0], ys[0], (unsigned int)(size * (240)), (unsigned int)(size * (240)), 45 * 64, 90 * 64);
+  gdk_draw_arc(vu->clip_label, draw_gc, false, xs[1], ys[1], (unsigned int)(size * (239)), (unsigned int)(size * (239)), 45 * 64, 89 * 64);
+  gdk_draw_arc(vu->clip_label, draw_gc, false, xs[2], ys[2], (unsigned int)(size * (239)), (unsigned int)(size * (239)), 45 * 64, 89 * 64);
+  gdk_draw_arc(vu->clip_label, draw_gc, false, xs[3], ys[3], (unsigned int)(size * (232)), (unsigned int)(size * (232)), 45 * 64, 90 * 64);
 
   /* draw the axis ticks */
   for (i = 0; i < 5; i++)
@@ -497,7 +497,7 @@ static void display_vu_meter(VU *vu)
       bub0 = (int)(size * 117);
       bub1 = (int)(size * 119);
       for (i = bub0, j = bub0 * 2; i <= bub1; i++, j += (int)(2 * size))
-	gdk_draw_arc(vu->wn, vu_gc, FALSE, vu->center_x - i, vu->center_y - i, j, j, 135 * 64 - redx, redy);
+	gdk_draw_arc(vu->wn, vu_gc, false, vu->center_x - i, vu->center_y - i, j, j, 135 * 64 - redx, redy);
       gdk_gc_set_foreground(vu_gc, sx->black);
     }
 }
@@ -505,13 +505,13 @@ static void display_vu_meter(VU *vu)
 static gboolean meter_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
   display_vu_meter((VU *)data);
-  return(FALSE);
+  return(false);
 }
 
 static gboolean meter_resize_callback(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
 {
   display_vu_meter((VU *)data);
-  return(FALSE);
+  return(false);
 }
 
 static VU *make_vu_meter(GtkWidget *meter, int light_x, int light_y, int center_x, int center_y, snd_state *ss, Float size)
@@ -651,7 +651,7 @@ static gboolean record_amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpoi
   record_amp_changed(ap, val);
   GTK_ADJUSTMENT(ap->adj)->value = val;
   gtk_adjustment_value_changed(GTK_ADJUSTMENT(ap->adj));
-  return(FALSE);
+  return(false);
 }
 
 static void record_amp_drag_callback(GtkAdjustment *adj, gpointer data)
@@ -714,9 +714,9 @@ static void device_button_callback(GtkWidget *w, gpointer context)
     {
       set_line_source(p->ss, on);
       if (on == (GTK_TOGGLE_BUTTON(device_buttons[rp->microphone_button])->active))
-	set_toggle_button(device_buttons[rp->microphone_button], !on, TRUE, (void *)(all_panes[rp->microphone_button])); 
+	set_toggle_button(device_buttons[rp->microphone_button], !on, true, (void *)(all_panes[rp->microphone_button])); 
       if (on == GTK_TOGGLE_BUTTON(device_buttons[rp->line_in_button])->active)
-	set_toggle_button(device_buttons[rp->line_in_button], !on, TRUE, (void *)(all_panes[rp->line_in_button])); 
+	set_toggle_button(device_buttons[rp->line_in_button], !on, true, (void *)(all_panes[rp->line_in_button])); 
     }
   else
     {
@@ -724,9 +724,9 @@ static void device_button_callback(GtkWidget *w, gpointer context)
 	{
 	  if (on == (GTK_TOGGLE_BUTTON(device_buttons[rp->digital_in_button])->active))
 	    {
-	      set_toggle_button(device_buttons[rp->digital_in_button], !on, TRUE, (void *)(all_panes[rp->digital_in_button])); 
+	      set_toggle_button(device_buttons[rp->digital_in_button], !on, true, (void *)(all_panes[rp->digital_in_button])); 
 	      if (!(on == (GTK_TOGGLE_BUTTON(device_buttons[rp->line_in_button])->active)))
-		set_toggle_button(device_buttons[rp->line_in_button], on, TRUE, (void *)(all_panes[rp->line_in_button])); 
+		set_toggle_button(device_buttons[rp->line_in_button], on, true, (void *)(all_panes[rp->line_in_button])); 
 	    }
 	}
     }
@@ -740,16 +740,16 @@ static void device_button_callback(GtkWidget *w, gpointer context)
   	  if (active_device_button != -1)
 	    {
 	      p = all_panes[active_device_button];
-	      for (i = p->in_chan_loc, j = 0; j < p->in_chans; j++, i++) rp->input_channel_active[i] = FALSE;
+	      for (i = p->in_chan_loc, j = 0; j < p->in_chans; j++, i++) rp->input_channel_active[i] = false;
 	      if (active_device_button != button)
 		{
-		  set_toggle_button(device_buttons[active_device_button], FALSE, FALSE, (void *)(all_panes[active_device_button])); 
+		  set_toggle_button(device_buttons[active_device_button], false, false, (void *)(all_panes[active_device_button])); 
 		}
 	      if (rp->taking_input) close_recorder_audio();
 	    }
 	  active_device_button = button;
 	  p = all_panes[button];
-	  for (i = p->in_chan_loc, j = 0; j < p->in_chans; j++, i++) rp->input_channel_active[i] = TRUE;
+	  for (i = p->in_chan_loc, j = 0; j < p->in_chans; j++, i++) rp->input_channel_active[i] = true;
 	  rp->input_channels[0] = p->in_chans;
 
 	  /* if digital in, get its srate (and reflect in srate text) */
@@ -764,7 +764,7 @@ static void device_button_callback(GtkWidget *w, gpointer context)
 	    record_report(messages, recorder_device_name(p->device), NULL);
 	  else
 	    {
-	      rp->taking_input = TRUE;
+	      rp->taking_input = true;
 	      set_read_in_progress(ss);
 	    }
 	}
@@ -780,15 +780,15 @@ static void device_button_callback(GtkWidget *w, gpointer context)
 		  if (rp->monitor_port == -1)
 		    {
 		      record_report(messages, _("open output"), NULL);
-		      rp->monitoring = FALSE;
+		      rp->monitoring = false;
 		    }
-		  else rp->monitoring = TRUE;
+		  else rp->monitoring = true;
 		}
 	    }
 	  else 
 	    {
 	      mus_audio_close(rp->monitor_port);
-	      rp->monitoring = FALSE;
+	      rp->monitoring = false;
 	      rp->monitor_port = -1;
 	    }
 	}
@@ -850,37 +850,37 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
 
   /* file_pane is the outer frame widget */
 
-  file_form = gtk_hbox_new(FALSE, 0);
+  file_form = gtk_hbox_new(false, 0);
   gtk_container_add(GTK_CONTAINER(file_pane), file_form);
   gtk_widget_show(file_form);
 
-  left_form = gtk_vbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(file_form), left_form, TRUE, TRUE, 0);
+  left_form = gtk_vbox_new(false, 0);
+  gtk_box_pack_start(GTK_BOX(file_form), left_form, true, true, 0);
   gtk_widget_show(left_form);
 
   ff_sep1 = gtk_vseparator_new();
-  gtk_box_pack_start(GTK_BOX(file_form), ff_sep1, FALSE, FALSE, 2);
+  gtk_box_pack_start(GTK_BOX(file_form), ff_sep1, false, false, 2);
   gtk_widget_show(ff_sep1);
 
-  right_form = gtk_vbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(file_form), right_form, TRUE, TRUE, 0);
+  right_form = gtk_vbox_new(false, 0);
+  gtk_box_pack_start(GTK_BOX(file_form), right_form, true, true, 0);
   gtk_widget_show(right_form);
 
-  filebox = gtk_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(left_form), filebox, FALSE, FALSE, 0);
+  filebox = gtk_hbox_new(false, 0);
+  gtk_box_pack_start(GTK_BOX(left_form), filebox, false, false, 0);
   gtk_widget_show(filebox);
 
   file_label = gtk_label_new(_("file:"));
-  gtk_box_pack_start(GTK_BOX(filebox), file_label, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(filebox), file_label, false, false, 0);
   gtk_widget_show(file_label);
 
-  file_text = snd_entry_new(ss, filebox, TRUE);
+  file_text = snd_entry_new(ss, filebox, true);
 
   ff_sep3 = gtk_hseparator_new();
-  gtk_box_pack_start(GTK_BOX(left_form), ff_sep3, FALSE, FALSE, 8);
+  gtk_box_pack_start(GTK_BOX(left_form), ff_sep3, false, false, 8);
   gtk_widget_show(ff_sep3);
 
-  recdat = make_file_data_panel(ss, left_form, "data-form", TRUE, rp->output_header_type, rp->output_data_format, FALSE, TRUE, FALSE);
+  recdat = make_file_data_panel(ss, left_form, "data-form", true, rp->output_header_type, rp->output_data_format, false, true, false);
   g_signal_connect_closure_by_id(GTK_OBJECT(recdat->srate_text), 
 				 g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(recdat->srate_text))),
 				 0,
@@ -896,23 +896,23 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
   mus_snprintf(timbuf, TIME_STR_SIZE, "%d", rp->out_chans);
   gtk_entry_set_text(GTK_ENTRY(recdat->chans_text), copy_string(timbuf));
 
-  durbox = gtk_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(right_form), durbox, FALSE, FALSE, 0);
+  durbox = gtk_hbox_new(false, 0);
+  gtk_box_pack_start(GTK_BOX(right_form), durbox, false, false, 0);
   gtk_widget_show(durbox);
 
   duration_label = gtk_label_new(_("duration:"));
-  gtk_box_pack_start(GTK_BOX(durbox), duration_label, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(durbox), duration_label, false, false, 0);
   gtk_widget_show(duration_label);
 
   file_duration = gtk_label_new("0.000");
-  gtk_box_pack_start(GTK_BOX(durbox), file_duration, TRUE, TRUE, 0);
+  gtk_box_pack_start(GTK_BOX(durbox), file_duration, true, true, 0);
   gtk_widget_show(file_duration);
   
   rec_size_label = gtk_label_new(_("buf:"));
-  gtk_box_pack_start(GTK_BOX(durbox), rec_size_label, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(durbox), rec_size_label, false, false, 0);
   gtk_widget_show(rec_size_label);
 
-  rec_size_text = snd_entry_new(ss, durbox, TRUE);
+  rec_size_text = snd_entry_new(ss, durbox, true);
   g_signal_connect_closure_by_id(GTK_OBJECT(rec_size_text), 
 				 g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(rec_size_text))),
 				 0,
@@ -922,24 +922,24 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
   gtk_entry_set_text(GTK_ENTRY(rec_size_text), timbuf);
 
   ff_sep2 = gtk_hseparator_new();
-  gtk_box_pack_start(GTK_BOX(right_form), ff_sep2, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(right_form), ff_sep2, false, false, 0);
   gtk_widget_show(ff_sep2);
 
-  triggerbox = gtk_hbox_new(FALSE, 0);
-  gtk_box_pack_end(GTK_BOX(right_form), triggerbox, FALSE, FALSE, 0);
+  triggerbox = gtk_hbox_new(false, 0);
+  gtk_box_pack_end(GTK_BOX(right_form), triggerbox, false, false, 0);
   gtk_widget_show(triggerbox);
 
   trigger_label = gtk_label_new(_("trigger:"));
-  gtk_box_pack_start(GTK_BOX(triggerbox), trigger_label, FALSE, FALSE, 4);
+  gtk_box_pack_start(GTK_BOX(triggerbox), trigger_label, false, false, 4);
   gtk_widget_show(trigger_label);
 
   trigger_adj = gtk_adjustment_new(0.0, 0.0, 1.01, .01, .1, .01);
   trigger_scale = gtk_hscale_new(GTK_ADJUSTMENT(trigger_adj));
   gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(trigger_scale)), GTK_UPDATE_CONTINUOUS);
   gtk_scale_set_digits(GTK_SCALE(trigger_scale), 3);
-  gtk_scale_set_draw_value(GTK_SCALE(trigger_scale), TRUE);
+  gtk_scale_set_draw_value(GTK_SCALE(trigger_scale), true);
   gtk_scale_set_value_pos(GTK_SCALE(trigger_scale), GTK_POS_LEFT);
-  gtk_box_pack_start(GTK_BOX(triggerbox), trigger_scale, TRUE, TRUE, 0);
+  gtk_box_pack_start(GTK_BOX(triggerbox), trigger_scale, true, true, 0);
   g_signal_connect_closure_by_id(GTK_OBJECT(trigger_adj),
 				 g_signal_lookup("value_changed", G_OBJECT_TYPE(GTK_OBJECT(trigger_adj))),
 				 0,
@@ -950,10 +950,10 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
   /* buttons */
   
   button_frame = gtk_frame_new(NULL);
-  gtk_box_pack_start(GTK_BOX(right_form), button_frame, TRUE, TRUE, 0);
+  gtk_box_pack_start(GTK_BOX(right_form), button_frame, true, true, 0);
   gtk_widget_show(button_frame);
 
-  button_holder = gtk_vbox_new(TRUE, 0);
+  button_holder = gtk_vbox_new(true, 0);
   gtk_container_add(GTK_CONTAINER(button_frame), button_holder);
   gtk_widget_show(button_holder);
 
@@ -963,7 +963,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
 	name = recorder_device_name(rp->ordered_devices[i]);
       else name = recorder_system_and_device_name(rp->ordered_systems[i], rp->ordered_devices[i]);
       device_buttons[i] = gtk_check_button_new_with_label(name);
-      gtk_box_pack_start(GTK_BOX(button_holder), device_buttons[i], TRUE, TRUE, 0);
+      gtk_box_pack_start(GTK_BOX(button_holder), device_buttons[i], true, true, 0);
       gtk_widget_show(device_buttons[i]);
       set_user_int_data(G_OBJECT(device_buttons[i]), i);
       g_signal_connect_closure_by_id(GTK_OBJECT(device_buttons[i]),
@@ -971,11 +971,11 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(device_button_callback), (gpointer)all_panes[i], 0),
 				     0);
-      set_toggle_button(device_buttons[i], TRUE, FALSE, (void *)(all_panes[i]));
+      set_toggle_button(device_buttons[i], true, false, (void *)(all_panes[i]));
     }
 
   autoload_file = gtk_check_button_new_with_label(_("Autoload Recording"));
-  gtk_box_pack_start(GTK_BOX(button_holder), autoload_file, TRUE, TRUE, 0);
+  gtk_box_pack_start(GTK_BOX(button_holder), autoload_file, true, true, 0);
   gtk_widget_show(autoload_file);
   device_buttons[ndevs] = autoload_file;
   /* we assume this is last in the device_buttons list in sensitize_control_buttons */
@@ -985,7 +985,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
 				 0,
 				 g_cclosure_new(GTK_SIGNAL_FUNC(autoload_file_callback), (gpointer)ss, 0),
 				 0);
-  set_toggle_button(autoload_file, rp->autoload, FALSE, (void *)ss); 
+  set_toggle_button(autoload_file, rp->autoload, false, (void *)ss); 
 }
 
 void reflect_recorder_duration(Float new_dur)
@@ -999,8 +999,8 @@ void lock_recording_audio(void)
   if ((recorder) && (GTK_WIDGET_VISIBLE(recorder)))
     {
       close_recorder_audio();
-      set_sensitive(record_button, FALSE);
-      set_sensitive(reset_button, FALSE);
+      set_sensitive(record_button, false);
+      set_sensitive(reset_button, false);
     }
 }
 
@@ -1008,8 +1008,8 @@ void unlock_recording_audio(void)
 {
   if ((recorder) && (GTK_WIDGET_VISIBLE(recorder)))
     {
-      set_sensitive(record_button, TRUE);
-      set_sensitive(reset_button, TRUE);
+      set_sensitive(record_button, true);
+      set_sensitive(reset_button, true);
       set_button_label(reset_button, _("Restart"));
     }
 }
@@ -1098,13 +1098,13 @@ static void make_recorder_slider(snd_state *ss, PANE *p, AMP *a, int input)
 {
   GtkWidget *hb;
 
-  hb = gtk_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(p->slider_box), hb, FALSE, FALSE, 0);
+  hb = gtk_hbox_new(false, 0);
+  gtk_box_pack_start(GTK_BOX(p->slider_box), hb, false, false, 0);
   gtk_widget_show(hb);
 
   a->label = gtk_button_new_with_label(gain_channel_name(p->in_chans, p->out_chans, input, a->device_in_chan, a->out));
   gtk_button_set_relief(GTK_BUTTON(a->label), GTK_RELIEF_NONE);
-  gtk_box_pack_start(GTK_BOX(hb), a->label, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(hb), a->label, false, false, 0);
   gtk_widget_show(a->label);
   g_signal_connect_closure_by_id(GTK_OBJECT(a->label),
 				 g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(a->label))),
@@ -1119,7 +1119,7 @@ static void make_recorder_slider(snd_state *ss, PANE *p, AMP *a, int input)
 
   a->number = gtk_button_new_with_label(amp_to_string(global_amp(a)));
   gtk_button_set_relief(GTK_BUTTON(a->number), GTK_RELIEF_NONE);
-  gtk_box_pack_start(GTK_BOX(hb), a->number, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(hb), a->number, false, false, 0);
   gtk_widget_show(a->number);
   g_signal_connect_closure_by_id(GTK_OBJECT(a->number),
 				 g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(a->number))),
@@ -1134,7 +1134,7 @@ static void make_recorder_slider(snd_state *ss, PANE *p, AMP *a, int input)
 
   a->adj = gtk_adjustment_new(amp_to_slider(global_amp(a)), 0.0, 1.00, 0.001, 0.01, .1);
   a->slider = gtk_hscrollbar_new(GTK_ADJUSTMENT(a->adj));
-  gtk_box_pack_start(GTK_BOX(hb), a->slider, TRUE, TRUE, 6);
+  gtk_box_pack_start(GTK_BOX(hb), a->slider, true, true, 6);
   set_background(a->slider, (ss->sgx)->position_color);
   g_signal_connect_closure_by_id(GTK_OBJECT(a->adj),
 				 g_signal_lookup("value_changed", G_OBJECT_TYPE(GTK_OBJECT(a->adj))),
@@ -1155,7 +1155,7 @@ static void handle_matrix_slider(GtkWidget *mb, PANE *p, int bin, int bout, int 
   if (remove)
     {
       set_backgrounds(mb, (ss->sgx)->basic_color);
-      p->active_sliders[bin][bout] = FALSE;
+      p->active_sliders[bin][bout] = false;
       gtk_widget_hide(a->label);
       gtk_widget_hide(a->number);
       gtk_widget_hide(a->slider);
@@ -1163,7 +1163,7 @@ static void handle_matrix_slider(GtkWidget *mb, PANE *p, int bin, int bout, int 
   else
     {
       set_backgrounds(mb, (ss->sgx)->green);
-      p->active_sliders[bin][bout] = TRUE;
+      p->active_sliders[bin][bout] = true;
       if (a->label)
 	{
 	  gtk_widget_show(a->label);
@@ -1171,7 +1171,7 @@ static void handle_matrix_slider(GtkWidget *mb, PANE *p, int bin, int bout, int 
 	  gtk_widget_show(a->slider);
 	}
       else
-	make_recorder_slider(ss, p, a, TRUE);
+	make_recorder_slider(ss, p, a, true);
     }
 }
 
@@ -1198,7 +1198,7 @@ static GtkWidget *make_button_matrix(snd_state *ss, PANE *p, char *name, GtkWidg
   int width, height;
   GtkWidget *outputs_label, *inputs_label0, *inputs_label1, *inputs_label2, *diag_button, *mb;
   slider_info *si;
-  int **active_sliders;
+  bool **active_sliders;
 
   active_sliders = p->active_sliders;
   vu_rows = p->in_chans / 4;
@@ -1207,47 +1207,47 @@ static GtkWidget *make_button_matrix(snd_state *ss, PANE *p, char *name, GtkWidg
   width = height;
 
   outer_frame = gtk_frame_new(NULL);
-  gtk_box_pack_start(GTK_BOX(parent), outer_frame, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(parent), outer_frame, false, false, 0);
   gtk_widget_show(outer_frame);
 
-  outer_vbox = gtk_vbox_new(FALSE, 0);
+  outer_vbox = gtk_vbox_new(false, 0);
   gtk_container_add(GTK_CONTAINER(outer_frame), outer_vbox);
   gtk_widget_show(outer_vbox);
 
-  top_hbox = gtk_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(outer_vbox), top_hbox, FALSE, FALSE, 0);
+  top_hbox = gtk_hbox_new(false, 0);
+  gtk_box_pack_start(GTK_BOX(outer_vbox), top_hbox, false, false, 0);
   gtk_widget_show(top_hbox);
 
-  outer_hbox = gtk_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(outer_vbox), outer_hbox, TRUE, TRUE, 0);
+  outer_hbox = gtk_hbox_new(false, 0);
+  gtk_box_pack_start(GTK_BOX(outer_vbox), outer_hbox, true, true, 0);
   gtk_widget_show(outer_hbox);
 
-  left_vbox = gtk_vbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(outer_hbox), left_vbox, FALSE, FALSE, 0);
+  left_vbox = gtk_vbox_new(false, 0);
+  gtk_box_pack_start(GTK_BOX(outer_hbox), left_vbox, false, false, 0);
   gtk_widget_show(left_vbox);
 
-  buttons = gtk_table_new(ins, outs, TRUE);
-  gtk_box_pack_start(GTK_BOX(outer_hbox), buttons, TRUE, TRUE, 0);
+  buttons = gtk_table_new(ins, outs, true);
+  gtk_box_pack_start(GTK_BOX(outer_hbox), buttons, true, true, 0);
   gtk_widget_show(buttons);
 
   diag_button = gtk_label_new("/ ");
-  gtk_box_pack_start(GTK_BOX(top_hbox), diag_button, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(top_hbox), diag_button, false, false, 0);
   gtk_widget_show(diag_button);
 
   outputs_label = gtk_label_new(_("out"));
-  gtk_box_pack_start(GTK_BOX(top_hbox), outputs_label, TRUE, TRUE, 0);
+  gtk_box_pack_start(GTK_BOX(top_hbox), outputs_label, true, true, 0);
   gtk_widget_show(outputs_label);
 
   inputs_label0 = gtk_label_new(_("i"));
-  gtk_box_pack_start(GTK_BOX(left_vbox), inputs_label0, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(left_vbox), inputs_label0, false, false, 0);
   gtk_widget_show(inputs_label0);
 
   inputs_label1 = gtk_label_new(_("n"));
-  gtk_box_pack_start(GTK_BOX(left_vbox), inputs_label1, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(left_vbox), inputs_label1, false, false, 0);
   gtk_widget_show(inputs_label1);
 
   inputs_label2 = gtk_label_new(" ");
-  gtk_box_pack_start(GTK_BOX(left_vbox), inputs_label2, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(left_vbox), inputs_label2, false, false, 0);
   gtk_widget_show(inputs_label2);
 
   ins = p->in_chans;
@@ -1343,31 +1343,31 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, GtkWidget *paned_window
   p->meters_size = vu_meters;
   p->active = (int *)CALLOC(vu_meters, sizeof(int));
   p->active_size = vu_meters;
-  p->active_sliders = (int **)CALLOC(p->in_chans, sizeof(int *));
-  for (i = 0; i < p->in_chans; i++) p->active_sliders[i] = (int *)CALLOC(p->out_chans, sizeof(int));
+  p->active_sliders = (bool **)CALLOC(p->in_chans, sizeof(bool *));
+  for (i = 0; i < p->in_chans; i++) p->active_sliders[i] = (bool *)CALLOC(p->out_chans, sizeof(bool));
 
   /* paned_window is a vbox = stack of panes, each pane is hbox = meters, sliders | gains */
-  p->pane = gtk_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(paned_window), p->pane, TRUE, TRUE, 6);
+  p->pane = gtk_hbox_new(false, 0);
+  gtk_box_pack_start(GTK_BOX(paned_window), p->pane, true, true, 6);
   gtk_widget_show(p->pane);
 
   meter_size = vu_size(ss);
   if (vu_meters > 4) meter_size *= .6; else if (vu_meters > 2) meter_size *= .8;
   if ((vu_meters%5) == 0) meter_size *= 0.8;
 
-  vuv = gtk_vbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(p->pane), vuv, TRUE, TRUE, 0);
+  vuv = gtk_vbox_new(false, 0);
+  gtk_box_pack_start(GTK_BOX(p->pane), vuv, true, true, 0);
   gtk_widget_show(vuv);
   p->slider_box = vuv;
 
-  gv = gtk_hbox_new(FALSE, 0);
-  gtk_box_pack_end(GTK_BOX(p->pane), gv, FALSE, FALSE, 0);
+  gv = gtk_hbox_new(false, 0);
+  gtk_box_pack_end(GTK_BOX(p->pane), gv, false, false, 0);
   gtk_widget_show(gv);
 
   /* now left side = vuv divided vuh then sliders, right side = gv */
 
-  vuh = gtk_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(vuv), vuh, FALSE, FALSE, 0);
+  vuh = gtk_hbox_new(false, 0);
+  gtk_box_pack_start(GTK_BOX(vuv), vuh, false, false, 0);
   gtk_widget_show(vuh);
 
   if ((input) && ((p->in_chans*p->out_chans) > 8))
@@ -1375,7 +1375,7 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, GtkWidget *paned_window
       for (i = 0; i < p->in_chans; i++) 
 	for (k = 0; k < p->out_chans; k++) 
 	  if (i == k) 
-	    p->active_sliders[i][k] = TRUE;
+	    p->active_sliders[i][k] = true;
 
       /* rather than default to posting 64 (or 256!) sliders, set up a channel matrix where desired sliders can be set */
       matrix_frame = make_button_matrix(ss, p, "channel-matrix", vuh, meter_size);
@@ -1384,7 +1384,7 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, GtkWidget *paned_window
     {
       for (i = 0; i < p->in_chans; i++) 
 	for (k = 0; k < p->out_chans; k++) 
-	  p->active_sliders[i][k] = TRUE;
+	  p->active_sliders[i][k] = true;
     }
 
   make_vu_meters(ss, p, vu_meters, overall_input_ctr, meter_size, input, vuh);
@@ -1421,7 +1421,7 @@ static void make_vu_meters(snd_state *ss, PANE *p, int vu_meters,
   VU *vu;
   GtkWidget **hboxes, *vbox, *frame;
 
-  vbox = gtk_vbox_new(TRUE, 0);
+  vbox = gtk_vbox_new(true, 0);
   gtk_box_pack_start(GTK_BOX(vuh), vbox, input, input, 0);
   gtk_widget_show(vbox);
 
@@ -1432,8 +1432,8 @@ static void make_vu_meters(snd_state *ss, PANE *p, int vu_meters,
   hboxes = (GtkWidget **)CALLOC(rows, sizeof(GtkWidget *));
   for (i = 0; i < rows; i++) 
     {
-      hboxes[i] = gtk_hbox_new(TRUE, 0);
-      gtk_box_pack_start(GTK_BOX(vbox), hboxes[i], TRUE, TRUE, 0);
+      hboxes[i] = gtk_hbox_new(true, 0);
+      gtk_box_pack_start(GTK_BOX(vbox), hboxes[i], true, true, 0);
       gtk_widget_show(hboxes[i]);
     }
 
@@ -1444,7 +1444,7 @@ static void make_vu_meters(snd_state *ss, PANE *p, int vu_meters,
 
       frame = gtk_frame_new(NULL);
 
-      gtk_box_pack_start(GTK_BOX(hboxes[row]), frame, TRUE, TRUE, 0);
+      gtk_box_pack_start(GTK_BOX(hboxes[row]), frame, true, true, 0);
       gtk_container_set_border_width(GTK_CONTAINER(frame), 2);
       gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_ETCHED_IN);
       set_backgrounds(frame, ss->sgx->black);
@@ -1484,7 +1484,7 @@ static gboolean spix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
   snd_state *ss;
   ss = get_global_state();
   gdk_draw_drawable(GDK_DRAWABLE(w->window), ss->sgx->basic_gc, device_pix(wd->device), 0, 0, 2, 4, 12, 12);
-  return(FALSE);
+  return(false);
 }
 
 static void make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE *p, 
@@ -1513,8 +1513,8 @@ static void make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE *p
       if (vol < 0.0) vol = 0.0;
       if (vol > 1.0) vol = 1.0;
       
-      sbox = gtk_vbox_new(FALSE, 0);
-      gtk_box_pack_end(GTK_BOX(gv), sbox, FALSE, FALSE, 0);
+      sbox = gtk_vbox_new(false, 0);
+      gtk_box_pack_end(GTK_BOX(gv), sbox, false, false, 0);
       gtk_widget_show(sbox);
 
 #if (HAVE_OSS || HAVE_ALSA)
@@ -1528,7 +1528,7 @@ static void make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE *p
 	  gtk_widget_set_events(spix, GDK_EXPOSURE_MASK);
 	  set_background(spix, (ss->sgx)->basic_color);
 	  gtk_widget_set_size_request(spix, 16, 16);
-	  gtk_box_pack_start(GTK_BOX(sbox), spix, FALSE, FALSE, 0);
+	  gtk_box_pack_start(GTK_BOX(sbox), spix, false, false, 0);
 	  gtk_widget_show(spix);
 	  g_signal_connect_closure_by_id(GTK_OBJECT(spix),
 					 g_signal_lookup("expose_event", G_OBJECT_TYPE(GTK_OBJECT(spix))),
@@ -1543,13 +1543,13 @@ static void make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE *p
 	      if ((!input) && (this_device == MUS_AUDIO_DAC_FILTER))
 		slabel = gtk_label_new(_("ton"));
 	      else slabel = gtk_label_new(recorder_field_abbreviation(this_device));
-	      gtk_box_pack_start(GTK_BOX(sbox), slabel, FALSE, FALSE, 0);
+	      gtk_box_pack_start(GTK_BOX(sbox), slabel, false, false, 0);
 	      gtk_widget_show(slabel);
 	    }
 	  else
 	    {
 	      slabel = gtk_label_new("---");
-	      gtk_box_pack_start(GTK_BOX(sbox), slabel, FALSE, FALSE, 0);
+	      gtk_box_pack_start(GTK_BOX(sbox), slabel, false, false, 0);
 	      gtk_widget_show(slabel);
 	    }
 	}
@@ -1557,8 +1557,8 @@ static void make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE *p
       wd->adj = gtk_adjustment_new(1.0 - vol, 0.0, 1.01, 0.001, 0.01, .01);
       wd->wg = gtk_vscale_new(GTK_ADJUSTMENT(wd->adj));
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(wd->wg)), GTK_UPDATE_CONTINUOUS);
-      gtk_scale_set_draw_value(GTK_SCALE(wd->wg), FALSE);
-      gtk_box_pack_start(GTK_BOX(sbox), wd->wg, TRUE, TRUE, 0);
+      gtk_scale_set_draw_value(GTK_SCALE(wd->wg), false);
+      gtk_box_pack_start(GTK_BOX(sbox), wd->wg, true, true, 0);
       set_backgrounds(wd->wg, (ss->sgx)->zoom_color);
       gtk_widget_show(wd->wg);
       g_signal_connect_closure_by_id(GTK_OBJECT(wd->adj),
@@ -1581,15 +1581,15 @@ static GtkWidget *make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Flo
   VU *vu;
   GtkWidget **hboxes;
 
-  btab = gtk_vbox_new(FALSE, 0);
+  btab = gtk_vbox_new(false, 0);
   /* gtk_box_pack_start(GTK_BOX(vuh), btab, !input, !input, 10); */
-  gtk_box_pack_start(GTK_BOX(vuh), btab, TRUE, TRUE, 10);
+  gtk_box_pack_start(GTK_BOX(vuh), btab, true, true, 10);
   gtk_widget_show(btab);
 
   if ((rp->systems == 1) || (!input))
     button_label = gtk_label_new(recorder_device_name(p->device));
   else button_label = gtk_label_new(mus_audio_system_name(p->system));
-  gtk_box_pack_start(GTK_BOX(btab), button_label, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(btab), button_label, false, false, 0);
   gtk_widget_show(button_label);
 
   /* need secondary set of boxes if vu_meters > 4 */
@@ -1599,8 +1599,8 @@ static GtkWidget *make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Flo
   hboxes = (GtkWidget **)CALLOC(rows, sizeof(GtkWidget *));
   for (i = 0; i < rows; i++) 
     {
-      hboxes[i] = gtk_hbox_new(FALSE, 0);
-      gtk_box_pack_start(GTK_BOX(btab), hboxes[i], TRUE, TRUE, 0);
+      hboxes[i] = gtk_hbox_new(false, 0);
+      gtk_box_pack_start(GTK_BOX(btab), hboxes[i], true, true, 0);
       gtk_widget_show(hboxes[i]);
     }
 
@@ -1616,23 +1616,23 @@ static GtkWidget *make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Flo
       p->on_buttons[i] = gtk_button_new();
       /* gtk_container_set_border_width(GTK_CONTAINER(p->on_buttons[i]), 6); */
       set_background(p->on_buttons[i], (ss->sgx)->basic_color);
-      gtk_box_pack_start(GTK_BOX(hboxes[row]), p->on_buttons[i], TRUE, TRUE, 0);
+      gtk_box_pack_start(GTK_BOX(hboxes[row]), p->on_buttons[i], true, true, 0);
       gtk_widget_show(p->on_buttons[i]);
 
-      bbox = gtk_vbox_new(FALSE, 0);
+      bbox = gtk_vbox_new(false, 0);
       gtk_container_add(GTK_CONTAINER(p->on_buttons[i]), bbox);
       gtk_widget_show(bbox);
 
       chan_label = gtk_label_new(channel_name(p->in_chans, p->out_chans, i));
-      gtk_box_pack_start(GTK_BOX(bbox), chan_label, TRUE, TRUE, 1);
+      gtk_box_pack_start(GTK_BOX(bbox), chan_label, true, true, 1);
       gtk_widget_show(chan_label);
 
       hsep = gtk_hseparator_new();
-      gtk_box_pack_start(GTK_BOX(bbox), hsep, FALSE, FALSE, 2);
+      gtk_box_pack_start(GTK_BOX(bbox), hsep, false, false, 2);
       gtk_widget_show(hsep);
 
       max_label = gtk_label_new("0.000");
-      gtk_box_pack_start(GTK_BOX(bbox), max_label, TRUE, TRUE, 1);
+      gtk_box_pack_start(GTK_BOX(bbox), max_label, true, true, 1);
       gtk_widget_show(max_label);
 
       wd = (Wdesc *)CALLOC(1, sizeof(Wdesc));
@@ -1662,7 +1662,7 @@ static void make_reset_button(snd_state *ss, PANE *p, GtkWidget *btab)
 {
   p->reset_button = gtk_button_new_with_label(_("Reset"));
   set_background(p->reset_button, (ss->sgx)->basic_color);
-  gtk_box_pack_start(GTK_BOX(btab), p->reset_button, TRUE, TRUE, 0);
+  gtk_box_pack_start(GTK_BOX(btab), p->reset_button, true, true, 0);
   gtk_widget_show(p->reset_button);
   g_signal_connect_closure_by_id(GTK_OBJECT(p->reset_button),
 				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(p->reset_button))),
@@ -1679,7 +1679,7 @@ static int make_amp_sliders(snd_state *ss, recorder_info *rp, PANE *p, int input
   GtkWidget *amp_sep;
 
   amp_sep = gtk_hseparator_new();
-  gtk_box_pack_start(GTK_BOX(p->slider_box), amp_sep, FALSE, FALSE, 6);
+  gtk_box_pack_start(GTK_BOX(p->slider_box), amp_sep, false, false, 6);
   gtk_widget_show(amp_sep);
 
   if (input) 
@@ -1751,7 +1751,7 @@ void sensitize_control_buttons(void)
   for (i = 0; i < device_buttons_size - 1; i++) /* last button is autoload_file */
     {
       if (device_buttons[i])
-	set_sensitive(device_buttons[i], TRUE);
+	set_sensitive(device_buttons[i], true);
     }
 }
 
@@ -1761,7 +1761,7 @@ void unsensitize_control_buttons(void)
   for (i = 0; i < device_buttons_size - 1; i++)
     {
       if (device_buttons[i])
-	set_sensitive(device_buttons[i], FALSE);
+	set_sensitive(device_buttons[i], false);
     }
 }
 
@@ -1777,7 +1777,7 @@ static void reset_record_callback(GtkWidget *w, gpointer context)
   rp = get_recorder_info();
   if (rp->recording)                  /* cancel */
     {
-      rp->recording = 0;
+      rp->recording = false;
       rp->triggered = (!rp->triggering);
       sensitize_control_buttons();
       set_button_label(reset_button, _("Reset"));
@@ -1855,7 +1855,7 @@ void finish_recording(snd_state *ss, recorder_info *rp)
     {
       if ((sp = find_sound(ss, rp->output_file, 0)))
 	snd_update(ss, sp);
-      else snd_open_file(rp->output_file, ss, FALSE);
+      else snd_open_file(rp->output_file, ss, false);
     }
 }
 
@@ -1907,7 +1907,7 @@ static void record_button_callback(GtkWidget *w, gpointer context)
 	  if (rp->out_chans <= 0)
 	    {
 	      record_report(messages, _("can't record: you screwed up the output channel number!"), NULL);
-	      rp->recording = 0;
+	      rp->recording = false;
 	      rp->triggered = (!rp->triggering);
 	      return;
 	    }
@@ -1943,7 +1943,7 @@ static void record_button_callback(GtkWidget *w, gpointer context)
 	  if (in_chans_active() == 0)
 	    {
 	      record_report(messages, _("can't record: no inputs enabled"), NULL);
-	      rp->recording = 0;
+	      rp->recording = false;
 	      rp->triggered = (!rp->triggering);
 	      return;
 	    }
@@ -1956,7 +1956,7 @@ static void record_button_callback(GtkWidget *w, gpointer context)
       else
 	{
 	  record_report(messages, _("can't record: no output file name supplied"), NULL);
-	  rp->recording = 0;
+	  rp->recording = false;
 	  rp->triggered = (!rp->triggering);
 	  return;
 	}
@@ -1973,7 +1973,7 @@ static GtkWidget *rec_panes, *file_info_pane;
 static gboolean recorder_delete(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   dismiss_record_callback(w, context);
-  return(FALSE);
+  return(false);
 }
 
 void snd_record_file(snd_state *ss)
@@ -2037,10 +2037,10 @@ void snd_record_file(snd_state *ss)
       record_button = gtk_button_new_with_label(_("Record"));
       set_backgrounds(record_button, (ss->sgx)->basic_color);
 
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(recorder)->action_area), dismiss_button, TRUE, TRUE, 10);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(recorder)->action_area), reset_button, TRUE, TRUE, 10);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(recorder)->action_area), record_button, TRUE, TRUE, 10);
-      gtk_box_pack_end(GTK_BOX(GTK_DIALOG(recorder)->action_area), help_button, TRUE, TRUE, 10);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(recorder)->action_area), dismiss_button, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(recorder)->action_area), reset_button, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(recorder)->action_area), record_button, true, true, 10);
+      gtk_box_pack_end(GTK_BOX(GTK_DIALOG(recorder)->action_area), help_button, true, true, 10);
 
       g_signal_connect_closure_by_id(GTK_OBJECT(dismiss_button),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(dismiss_button))),
@@ -2072,7 +2072,7 @@ void snd_record_file(snd_state *ss)
       gtk_container_add(GTK_CONTAINER(GTK_DIALOG(recorder)->vbox), rec_panes);
       gtk_widget_show(rec_panes);
 
-      rec_panes_box = gtk_vbox_new(FALSE, 0);
+      rec_panes_box = gtk_vbox_new(false, 0);
       gtk_paned_add1(GTK_PANED(rec_panes), rec_panes_box);
       gtk_widget_show(rec_panes_box);
 
@@ -2099,11 +2099,11 @@ void snd_record_file(snd_state *ss)
       /* then make file_info_pane and messages at the bottom */
       file_info_pane = gtk_frame_new(NULL);
       /* set_backgrounds(file_info_pane, ss->sgx->black); */
-      gtk_box_pack_end(GTK_BOX(rec_panes_box), file_info_pane, FALSE, FALSE, 0);
+      gtk_box_pack_end(GTK_BOX(rec_panes_box), file_info_pane, false, false, 0);
       gtk_widget_show(file_info_pane);
 
       make_file_info_pane(ss, rp, file_info_pane, rp->ordered_devices_size);
-      messages = make_scrolled_text(ss, NULL, FALSE, NULL, rec_panes);
+      messages = make_scrolled_text(ss, NULL, false, NULL, rec_panes);
       set_dialog_widget(ss, RECORDER_DIALOG, recorder);
       initialize_recorder(rp);
     }
@@ -2111,7 +2111,7 @@ void snd_record_file(snd_state *ss)
   if (!(rp->taking_input)) fire_up_recorder(ss);
 }
 
-void set_recorder_autoload(recorder_info *rp, int val)
+void set_recorder_autoload(recorder_info *rp, bool val)
 {
   rp->autoload = val;
   if (recorder) 
@@ -2174,15 +2174,15 @@ static void initialize_recorder(recorder_info *rp)
   /* in this case, digital in blocks out the others */
   long sb[2];
   int err;
-  int in_digital = FALSE;
+  bool in_digital = false;
 #endif
   for (i = 0; i < MAX_SOUNDCARDS; i++) rp->raw_input_bufs[i] = NULL;
 #if OLD_SGI_AL
   sb[0] = AL_INPUT_SOURCE;
   err = ALgetparams(AL_DEFAULT_DEVICE, sb, 2);
-  if ((!err) && (sb[1] == AL_INPUT_DIGITAL)) in_digital = TRUE;
+  if ((!err) && (sb[1] == AL_INPUT_DIGITAL)) in_digital = true;
   set_toggle_button(device_buttons[rp->digital_in_button], 
-		    in_digital, FALSE, 
+		    in_digital, false, 
 		    (void *)(all_panes[rp->digital_in_button]));
   device_button_callback(device_buttons[rp->digital_in_button], 
 			 all_panes[rp->digital_in_button]);
@@ -2193,7 +2193,7 @@ static void initialize_recorder(recorder_info *rp)
   for (i = 0; i < device_buttons_size - 1; i++)
     if ((device_buttons[i]) &&
 	((i != rp->microphone_button) && (recorder_input_device(all_panes[i]->device))))
-      set_toggle_button(device_buttons[i], FALSE, TRUE, (void *)(all_panes[i])); 
+      set_toggle_button(device_buttons[i], false, true, (void *)(all_panes[i])); 
 #endif
   if (rp->trigger != 0.0) set_recorder_trigger(rp, rp->trigger);
   if (rp->max_duration <= 0.0) rp->max_duration = 1000000.0;

@@ -1,7 +1,15 @@
 
-
 ;; Ladspa2.scm
 ;; Use ladspa plugins with the help of a mouse. -Kjetil S. Matheussen.
+
+
+;; Changes 8.8.2003 -> 9.8.2003
+;; -Added some workaround code for vst plugins. Previously, applying didnt work.
+;; -Possible to use plugins without input audio ports.
+;; -Channels were reversed. Fixed
+;; -Applying to a single channel allways made the script apply to channel 0. Fixed.
+;; -Try to fix dialog-proportions after opening.
+
 
 ;; Changes 5.8.2003 -> 8.8.2003
 ;; -Fixed segfaults when exiting.
@@ -10,6 +18,7 @@
 ;; -Fixed the sliders so that sound is updated also when changing
 ;;  position. Not only after releasing.
 ;; 
+
 ;; ladspa.scm -> ladspa2.scm:
 ;; -Making heavy use of the new ladspa-functions in snd 6.11.
 ;; -Realtime preview works perfectly. Seems to at least.
@@ -23,14 +32,14 @@
 ;; -Added the hour-glass progress reporter when applying.
 ;;
 ;; Problems:
-;; -The channels might have been switched after applying.
+;; -Theres a lot of (if (not (string=? "vst" libname)) tests. This is a workaround
+;;  to make a vst plugin remember parametersettings even when changed inside a native gui.
+;;  However, this can lead to problems when the number of channels for the
+;;  selection is changed from what was the situation when
+;;  the dialog was opened. Doing a workaround for that situation too is messy as well.
 ;; -The Model-E vst plugin have no less than 513 input control ports,
 ;;  and makes the script stop because snd is out of stack. There might
 ;;  be something wrong with the script. Don't know scheme too well.
-;; -Applying plugins seems to take quite a long time. The apply! function
-;;  should perhaps be optimized a bit. (Haven't run benchmark)
-;; -Dialogs with many input control ports should be wider an shorter.
-;;  (there is one with 513 input control ports! :)
 ;; -In some resize-positions, some widgets becomes invisible.
 ;; -Realtime preview wont work if number of frames sent to the
 ;;  dac-hook is more than 8192. (minor problem probably, and is solved
@@ -99,8 +108,13 @@
   (define input-audios '())
   (define output-audios '())
 
+  ;; Is #t if ladspa plugin has no audio inputs.
+  (define no_audio_inputs #f)
+
   ;; A ladspa plugin does not need to have equal number of audio
   ;; inputs and outputs. This variable holds the mininum of the two.
+  ;; Except when no_audio_inputs is #t. Then it holds the number
+  ;; of audio-outputs instead.
   (define min_num_audios 0)
 
 
@@ -108,11 +122,18 @@
   (define ports '())
 
 
+  (define isopened #f)
+
 
   (define* (open #:optional (num_handles 1))
+    (set! ports (map (lambda (port) (if port
+					port
+					(make-vct maxbuf)))
+		     ports))
     (if (= 0 num_handles)
 	#t
 	(let ((handle (ladspa-instantiate descriptor (srate) )))
+	  ;;(display "open called ")(display num_handles)(newline)
 	  (if (not handle)
 	      (begin
 		(close)
@@ -126,10 +147,11 @@
 		(ladspa-activate descriptor handle)
 		(set! handles (cons handle handles))
 		(open (- num_handles 1)))))))
-
+  
 
   ;; Close all handles.
   (define (close)
+    ;;(display "close called ")(display (length handles))(newline)
     (if (not (null? handles))
 	(let ((handle (car handles)))
 	  (ladspa-deactivate descriptor handle)
@@ -228,6 +250,7 @@
 
 
 
+  ;; This one always return #f because it can be used as a hook.
   (define (apply-soundobject sdobj)
     (let* ((len (sound-data-length sdobj))
 	   (num_chans (sound-data-chans sdobj)))
@@ -239,12 +262,13 @@
 	  (begin 
 	    (let ((chan 0))
 	      (for-each (lambda (handle)
-			  (c-for 0 < min_num_audios 1
-				 (lambda (n)
-				   (if (< (+ chan n) num_chans)
-				       (sound-data->vct sdobj
-							(+ chan n)
-							(get-input-audio-port n)))))
+			  (if (not no_audio_inputs)
+			      (c-for 0 < min_num_audios 1
+				     (lambda (n)
+				       (if (< (+ chan n) num_chans)
+					   (sound-data->vct sdobj
+							    (+ chan n)
+							    (get-input-audio-port n))))))
 			  (ladspa-run descriptor handle len)
 			  (c-for 0 < min_num_audios 1
 				 (lambda (n)
@@ -257,7 +281,14 @@
     #f)
 
 
+
+    
+
   (define (apply!)
+    (define (get-startchan snd chan)
+      (if (selection-member? snd chan)
+	  chan
+	  (get-startchan snd (+ chan 1))))
     (if (not (selection?))
 	(select-all graph-popup-snd graph-popup-chn))
     (let* ((snd (selected-sound))
@@ -265,13 +296,19 @@
 	   (length (selection-frames))
 	   (end (+ (selection-position) (selection-frames)))
 	   (chans (selection-chans))
+	   (startchan (get-startchan snd 0))
 	   (tempfilenames '())
 	   (new-files '())
 	   (vct-out (make-vct maxbuf))
 	   (sdobj (make-sound-data chans maxbuf))
 	   (readers '()))
 
-      (if (not (open (minimum-num-handles chans min_num_audios)))
+      (define (apply-open)
+	(if (not (string=? "vst" libname))
+	    (open (minimum-num-handles chans min_num_audios))
+	    #t))
+
+      (if (not (apply-open))
 	  (begin
 	    (display "Could not start plugin.")
 	    (newline))
@@ -279,10 +316,10 @@
 
 	    ;; Set up sample readers and tempfilenames for each channel.
 	    (c-for 0 < chans 1
-		   (lambda (n)
+		   (lambda (ch)
 		     (set! readers (cons (make-sample-reader start
 							     snd
-							     n)
+							     (+ startchan ch))
 					 readers))
 		     (set! tempfilenames (cons (snd-tempnam)
 					       tempfilenames))))
@@ -315,16 +352,22 @@
 			       (set! sdobj (make-sound-data chans len))
 			       (set! vct-out (make-vct len)))
 
-			   (let ((ch 0))
-			     (for-each (lambda (reader)
-					 (vct-map! vct-out
-						   (lambda () (next-sample reader)))
-					 (vct->sound-data vct-out sdobj ch)
-					 (set! ch (+ ch 1)))
-				       readers))
 
+			   ;; Reading data into soundobject from soundfile.
+			   (if (not no_audio_inputs)
+			       (let ((ch 0))
+				 (for-each (lambda (reader)
+					     (vct-map! vct-out
+						       (lambda () (next-sample reader)))
+					     (vct->sound-data vct-out sdobj ch)
+					     (set! ch (+ ch 1)))
+					   readers)))
+
+			   ;; Process soundobject
 			   (apply-soundobject sdobj)
 
+
+			   ;; Writing data from soundobject into temporary file.
 			   (c-for 0 < chans 1
 				  (lambda (ch)
 				    (sound-data->vct sdobj ch vct-out)
@@ -337,22 +380,23 @@
 	    (for-each (lambda (file) (close-sound-file file (* 4 length)))
 		      new-files)
 
-	    ;; Let snd know about the new files. (Edit here if channels are switched)
-	    (let ((ch 0))  ; Change to (let ((ch chans)) if channels are switched.
+	    ;; Let snd know about the new files.
+	    (let ((ch startchan))
 	      (for-each (lambda (filename)
 			  (set! (samples start
 					 length
 					 snd
 					 ch)
 				filename)
-			  (set! ch (+ ch 1))) ; Change to (set! ch (- ch 1))) if channels are switched.
-			tempfilenames))
+			  (set! ch (+ ch 1)))
+			(reverse tempfilenames)))
 	    
 	    ;; Close hour-glass
 	    (finish-progress-report)
 
 	    ;; Close plugin.
-	    (close)))))
+	    (if (not (string=? "vst" libname))
+		(close))))))
 
 
       
@@ -362,20 +406,29 @@
     (let* ((num_channels (channels (selected-sound)))
 	   (num_ins (length input-audios))
 	   (num_outs (length output-audios)))
+      (define (init-dac-hook-stuff)
+	(if (not (open (minimum-num-handles num_channels min_num_audios)))
+	    #f
+	    (begin
+	      (add-hook! dac-hook apply-soundobject)
+	      #t)))
       (if (= 0 min_num_audios)
 	  (begin
-	    (display "Ladspa plugin either have no input or output audio ports.")(newline)
+	    (display "Ladspa plugin have no output audio ports.")(newline)
 	    #f)
-	  (if (not (open (minimum-num-handles num_channels min_num_audios)))
-	      #f
-	      (begin
-		(add-hook! dac-hook apply-soundobject)
-		#t)))))
+	  (if (not (string=? "vst" libname))
+	      (init-dac-hook-stuff)
+	      (if (null? handles)
+		  (init-dac-hook-stuff)
+		  (begin
+		    (add-hook! dac-hook apply-soundobject)
+		    #t))))))
+
 
   (define (remove-dac-hook!)
     (remove-hook! dac-hook apply-soundobject)
-    (close))
-  
+    (if (not (string=? "vst" libname))    
+	(close)))
 
 
   (define (constructor)
@@ -398,10 +451,14 @@
 	  (set! output-controls (reverse output-controls))
 	  (set! input-audios (reverse input-audios))
 	  (set! output-audios (reverse output-audios))
-	  (set! min_num_audios (min (length input-audios) (length output-audios)))
-	  (set! ports (map (lambda (x) (make-vct (if (> (logand x LADSPA_PORT_CONTROL) 0)
-						     1
-						     maxbuf)))
+	  (if (= (length input-audios) 0)
+	      (begin
+		(set! min_num_audios (length output-audios))
+		(set! no_audio_inputs #t))
+	      (set! min_num_audios (min (length input-audios) (length output-audios))))
+	  (set! ports (map (lambda (x) (if (> (logand x LADSPA_PORT_CONTROL) 0)
+					   (make-vct 1)
+					   #f))
 			   (.PortDescriptors descriptor)))
 	  (set-default-input-controls)
 	  #t)))
@@ -480,7 +537,8 @@
 
     (XtAddCallback new-dialog XmNcancelCallback (lambda (w c i)
 						  (cancel-callback)
-						  (XtUnmanageChild new-dialog)))
+						  (XtUnmanageChild new-dialog)
+						  (focus-widget (list-ref (channel-widgets (selected-sound) 0) 0))))
 
     (XtAddCallback new-dialog XmNhelpCallback (lambda (w c i) (help-callback)))
     (XtAddCallback new-dialog XmNokCallback (lambda (w c i) (ok-callback)))
@@ -515,7 +573,12 @@
   ;; Increase this number if you can't preview sound because of large latency in the system.
   ;; Note, this is not the latency, just the maximum buffer size. The only bad consequence about
   ;; increasing this number, is the increased use of memory.
+
+  ;; Note, because of a bug in the vstserver,
+  ;; 1024 is used as maximimum buffer size for vst plugins, no matter what maxbuf is.
+
   (define maxbuf 8192)
+
 
   
   (let* ((ladspa-effects-menu (add-to-main-menu "Ladspa" (lambda () (update-label '()))))
@@ -560,6 +623,9 @@
 	(define (ShowDialog)
 	  (activate-dialog ladspa-dialog)
 	  (XtSetValues onoffbutton (list XmNset #t))
+	  (let ((num_inputs (+ 1 (length ((ladspa-object 'input-control-ports))))))
+	    (set! (widget-size ladspa-dialog) (list (min 800 (max 400 (* num_inputs 20)))
+						    (min 800 (max 120 (* num_inputs 70))))))
 	  (enableplugin))
 
 	(define (Help)
@@ -577,6 +643,8 @@
 
 	(define (Cancel)
 	  (disableplugin)
+	  (if (string=? "vst" libraryname)
+	      ((ladspa-object 'close)))
 	  (XtSetValues onoffbutton (list XmNset #f)))
 
 
@@ -610,7 +678,9 @@
 
 
 
-	(set! ladspa-object (ladspa-class libraryname effectname maxbuf))
+	(set! ladspa-object (ladspa-class libraryname effectname (if (string=? "vst" libraryname)
+								     1024
+								     maxbuf)))
 	(if ((ladspa-object 'constructor))
 	    (let ((descriptor ((ladspa-object 'descriptor))))
 
@@ -618,6 +688,8 @@
 	      ;; Make sure the plugin is disabled before quitting.
 	      (add-hook! exit-hook (lambda args
 				     (disableplugin)
+				     (if (string=? "vst" libraryname)
+					 ((ladspa-object 'close)))
 				     #f))
 
 	      

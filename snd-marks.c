@@ -184,7 +184,7 @@ void marks_off(chan_info *cp)
 
 static XEN draw_mark_hook;
 
-static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, int show)
+static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, bool show)
 {
   /* fields are samp and name */
   int len, top, cx, y0, y1;
@@ -248,12 +248,12 @@ static void draw_play_triangle(chan_info *cp, Locus x)
 
 static void draw_mark(chan_info *cp, axis_info *ap, mark *mp)
 {
-  if (!(mp->id & MARK_VISIBLE)) draw_mark_1(cp, ap, mp, TRUE);
+  if (!(mp->id & MARK_VISIBLE)) draw_mark_1(cp, ap, mp, true);
 }
 
 static void erase_mark(chan_info *cp, axis_info *ap, mark *mp)
 {
-  if (mp->id & MARK_VISIBLE) draw_mark_1(cp, ap, mp, FALSE);
+  if (mp->id & MARK_VISIBLE) draw_mark_1(cp, ap, mp, false);
 }
 
 
@@ -329,7 +329,7 @@ mark *hit_triangle(chan_info *cp, int x, int y)
 }
 
 
-static int watching_mouse = FALSE; /* this is tracking axis moves */
+static bool watching_mouse = false; /* this is tracking axis moves */
 static int last_mouse_x = 0;
 static mark *moving_mark = NULL; /* used only while "off-screen" during axis moves */
 
@@ -340,32 +340,32 @@ static Cessate WatchMouse(Indicium cp)
   if (watch_mouse_button)
     {
       move_axis_to_track_mark((chan_info *)cp);
-      return(BACKGROUND_CONTINUE);
+      return((Cessate)BACKGROUND_CONTINUE);
     }
-  else return(BACKGROUND_QUIT);
+  else return((Cessate)BACKGROUND_QUIT);
 }
 
 static void start_mark_watching(chan_info *cp, mark *mp)
 {
   moving_mark = mp;
   watch_mouse_button = BACKGROUND_ADD(cp->state, WatchMouse, cp);
-  watching_mouse = TRUE;
+  watching_mouse = true;
 }
 
 static void cancel_mark_watch(chan_info *cp)
 {
   if (watch_mouse_button) BACKGROUND_REMOVE(watch_mouse_button);
   watch_mouse_button = 0;
-  watching_mouse = FALSE;
+  watching_mouse = false;
   moving_mark = NULL;
 }
 
-static int move_mark_1(chan_info *cp, mark *mp, int x)
+static bool move_mark_1(chan_info *cp, mark *mp, int x)
 {
   axis_info *ap;
   int nx;
   off_t samps;
-  int redraw;
+  bool redraw;
   ap = cp->axis;
   redraw = (!watching_mouse);
   if ((x > ap->x_axis_x1) || (x < ap->x_axis_x0)) 
@@ -374,7 +374,7 @@ static int move_mark_1(chan_info *cp, mark *mp, int x)
 	{
 	  if (((x < ap->x_axis_x0) && (ap->x0 == ap->xmin)) ||
 	      ((x > ap->x_axis_x1) && (ap->x1 == ap->xmax)))
-	    return(FALSE);
+	    return(false);
 	}
       nx = move_axis(cp, ap, x);
       if (!watching_mouse) start_mark_watching(cp, mp);
@@ -1091,7 +1091,7 @@ void reverse_marks(chan_info *cp, off_t beg, off_t dur) /* beg -1 for full sound
     qsort((void *)mps, cp->mark_ctr[ed] + 1, sizeof(mark *), compare_mark_samps);
 }
 
-void src_marks(chan_info *cp, Float ratio, off_t old_samps, off_t new_samps, off_t beg, int over_selection)
+void src_marks(chan_info *cp, Float ratio, off_t old_samps, off_t new_samps, off_t beg, bool over_selection)
 {
   int i, marks, pos;
   off_t end;
@@ -1138,7 +1138,7 @@ void src_marks(chan_info *cp, Float ratio, off_t old_samps, off_t new_samps, off
     }
 }
 
-void reset_marks(chan_info *cp, int cur_marks, off_t *samps, off_t end, off_t extension, int over_selection)
+void reset_marks(chan_info *cp, int cur_marks, off_t *samps, off_t end, off_t extension, bool over_selection)
 {
   int i, marks, pos;
   mark *m;
@@ -1298,7 +1298,7 @@ static syncdata *free_syncdata(syncdata *sd)
   return(NULL);
 }
 
-static int mark_control_clicked = FALSE; /* C-click of mark -> drag data as mark is dragged */
+static bool mark_control_clicked = false; /* C-click of mark -> drag data as mark is dragged */
 static off_t mark_initial_sample = 0;
 static syncdata *mark_sd = NULL;
 static mix_context **mark_movers = NULL;
@@ -1541,7 +1541,7 @@ void play_syncd_mark(chan_info *cp, mark *m)
   if ((sd) && (sd->mark_ctr > 0))
     play_channels(sd->chans, sd->mark_ctr, sd->initial_samples, NULL, IN_BACKGROUND, 
 		  C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 
-		  "drag and play sync'd marks", 0, FALSE);
+		  "drag and play sync'd marks", 0, false);
   if (sd) free_syncdata(sd);
 }
 
@@ -1606,7 +1606,7 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, off_t initial_sample, o
     }
   else
     {
-      if (amp_env_usable(cp, samples_per_pixel, ap->hisamp, FALSE, cp->edit_ctr)) 
+      if (amp_env_usable(cp, samples_per_pixel, ap->hisamp, false, cp->edit_ctr)) 
 	{
 	  /* needs two sets of pointers and a frame within the amp env:
 	   *   sample given mark edit: i and xk
@@ -1870,7 +1870,7 @@ static XEN mark_set(XEN mark_n, XEN val, int fld, char *caller)
     case MARK_SYNC: 
       if (XEN_INTEGER_P(val))
 	set_mark_sync(m, XEN_TO_C_INT(val));
-      else set_mark_sync(m, XEN_TO_C_BOOLEAN(val));
+      else set_mark_sync(m, (int)XEN_TO_C_BOOLEAN(val));
       break;
     case MARK_NAME:
       if (m->name) FREE(m->name);
