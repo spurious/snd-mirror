@@ -380,7 +380,9 @@ void init_recorder(void)
   rp->srate = DEFAULT_RECORDER_SRATE;
   rp->trigger = DEFAULT_RECORDER_TRIGGER;
   rp->max_duration = DEFAULT_RECORDER_MAX_DURATION;
-  rp->output_file = DEFAULT_RECORDER_FILE;
+  if (DEFAULT_RECORDER_FILE != NULL)
+    rp->output_file = copy_string(DEFAULT_RECORDER_FILE);
+  else rp->output_file = NULL;
   rp->in_device = MUS_AUDIO_DEFAULT;
   rp->triggering = 0;
   rp->triggered = 1;
@@ -437,7 +439,10 @@ void save_recorder_state(FILE *fd)
   if (rp->in_format != DEFAULT_RECORDER_IN_FORMAT) fprintf(fd, "(set! (%s) %d)\n", S_recorder_in_format, rp->in_format);
   if (rp->in_device != MUS_AUDIO_DEFAULT) fprintf(fd, "(set! (%s) %d)\n", S_recorder_in_device, rp->in_device);
   if (rp->srate != DEFAULT_RECORDER_SRATE) fprintf(fd, "(set! (%s) %d)\n", S_recorder_srate, rp->srate);
-  if (rp->output_file != DEFAULT_RECORDER_FILE) fprintf(fd, "(set! (%s) \"%s\")\n", S_recorder_file, rp->output_file);
+  if ((rp->output_file != NULL) &&
+      ((DEFAULT_RECORDER_FILE == NULL) ||
+       (strcmp(rp->output_file, DEFAULT_RECORDER_FILE) != 0)))
+    fprintf(fd, "(set! (%s) \"%s\")\n", S_recorder_file, rp->output_file);
   if (fneq(rp->trigger, DEFAULT_RECORDER_TRIGGER)) fprintf(fd, "(set! (%s) %.4f)\n", S_recorder_trigger, rp->trigger);
   if (fneq(rp->max_duration, DEFAULT_RECORDER_MAX_DURATION)) fprintf(fd, "(set! (%s) %.4f)\n", S_recorder_max_duration, rp->max_duration);
 #endif
@@ -449,7 +454,10 @@ void save_recorder_state(FILE *fd)
   if (rp->in_format != DEFAULT_RECORDER_IN_FORMAT) fprintf(fd, "set_%s %d\n", S_recorder_in_format, rp->in_format);
   if (rp->in_device != MUS_AUDIO_DEFAULT) fprintf(fd, "set_%s %d\n", S_recorder_in_device, rp->in_device);
   if (rp->srate != DEFAULT_RECORDER_SRATE) fprintf(fd, "set_%s %d\n", S_recorder_srate, rp->srate);
-  if (rp->output_file != DEFAULT_RECORDER_FILE) fprintf(fd, "set_%s \"%s\"\n", S_recorder_file, rp->output_file);
+  if ((rp->output_file != NULL) &&
+      ((DEFAULT_RECORDER_FILE == NULL) ||
+       (strcmp(rp->output_file, DEFAULT_RECORDER_FILE) != 0)))
+    fprintf(fd, "set_%s \"%s\"\n", S_recorder_file, rp->output_file);
   if (fneq(rp->trigger, DEFAULT_RECORDER_TRIGGER)) fprintf(fd, "set_%s %.4f\n", S_recorder_trigger, rp->trigger);
   if (fneq(rp->max_duration, DEFAULT_RECORDER_MAX_DURATION)) fprintf(fd, "set_%s %.4f\n", S_recorder_max_duration, rp->max_duration);
 #endif
@@ -1533,7 +1541,8 @@ static BACKGROUND_TYPE run_adc(GUI_POINTER ss)
 
 void set_read_in_progress (snd_state *ss)
 {
-  rp->recorder_reader = BACKGROUND_ADD(ss, run_adc, ss);
+  if (with_background_processes(ss) != 1234)
+    rp->recorder_reader = BACKGROUND_ADD(ss, run_adc, ss);
 }
 
 
@@ -1566,8 +1575,12 @@ static XEN g_set_recorder_file(XEN val)
   #define H_recorder_file "(" S_recorder_file ") -> default recorder file name"
   XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, "set-" S_recorder_file, "a string"); 
   if (XEN_FALSE_P(val))
-    rp->output_file = DEFAULT_RECORDER_FILE;
-  else rp->output_file = XEN_TO_NEW_C_STRING(val);
+    {
+      if (DEFAULT_RECORDER_FILE != NULL)
+	rp->output_file = copy_string(DEFAULT_RECORDER_FILE);
+      else rp->output_file = NULL;
+    }
+  else rp->output_file = copy_string(XEN_TO_C_STRING(val));
   return(C_TO_XEN_STRING(rp->output_file));
 }
 

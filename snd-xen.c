@@ -1259,9 +1259,17 @@ static XEN g_with_background_processes(void) {return(C_TO_XEN_BOOLEAN(with_backg
 static XEN g_set_with_background_processes(XEN val) 
 {
   #define H_with_background_processes "(" S_with_background_processes ") -> #t if Snd should use background (idle time) processing"
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, "set-" S_with_background_processes, "a boolean");
-  set_with_background_processes(state, XEN_TO_C_BOOLEAN_OR_TRUE(val));
-  return(C_TO_XEN_BOOLEAN(with_background_processes(state)));
+  if ((XEN_INTEGER_P(val)) && (XEN_TO_C_INT(val) == 1234))
+    {
+      set_with_background_processes(state, 1234);
+      return(C_STRING_TO_XEN_SYMBOL("internal-testing"));
+    }
+  else
+    {
+      XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, "set-" S_with_background_processes, "a boolean");
+      set_with_background_processes(state, XEN_TO_C_BOOLEAN_OR_TRUE(val));
+      return(C_TO_XEN_BOOLEAN(with_background_processes(state)));
+    }
 }
 
 static XEN g_use_sinc_interp(void) {return(C_TO_XEN_BOOLEAN(use_sinc_interp(state)));}

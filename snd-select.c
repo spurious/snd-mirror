@@ -473,14 +473,7 @@ int make_region_from_selection(void)
       if (ends[i] > si->begs[i]) happy = 1;
       /* C-space followed by mouse click causes a bogus selection-creation event */
     }
-  if (happy)
-    {
-      if (selection_len() > 10000000)
-	report_in_minibuffer(si->cps[0]->sound, "making region...");
-      id = define_region(si, ends);
-      if (selection_len() > 10000000) 
-	report_in_minibuffer(si->cps[0]->sound, " ");
-    }
+  if (happy) id = define_region(si, ends);
   si = free_sync_info(si);
   if (ends) FREE(ends);
   return(id);

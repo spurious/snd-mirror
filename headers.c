@@ -57,6 +57,8 @@
  * Microsoft Multimedia Programmer's Reference Manual at ftp.microsoft.com:/SoftLib/MSLFILES/MDRK.EXE.
  * AVI format is described in http://www.rahul.net/jfm/avi.html.
  *
+ * For a lot of info and examples see http://www.TSP.ECE.McGill.CA/Docs/AudioFormats
+ *
  * The main problem with compressed sound files is that you can't do reliable
  * random access to the data, can't easily read backwards, and most of the compression
  * schemes are proprietary (and appalling), but to translate Mus10/Sam, HCOM, IEEE text, 
@@ -1479,6 +1481,7 @@ char *mus_header_aiff_aux_comment(const char *name, int *starts, int *ends)
  *              0x1000: OLIGSM, 0x1001: OLIADPCM, 0x1002: OLICELP, 0x1003: OLISBC, 0x1004: OLIOPR
  *              0x1100: LH codec, 0x1400: Norris, 0x1401: isaudio, 0x1500: Soundspace musicompression, 0x2000: DVM
  * (see http://www.microsoft.com/asf/resources/draft-ietf-fleischman-codec-subtree-00.txt)
+ *   and new:   0xFFFE: wave_format_extensible: bits/sample, mapping, 16 byte guid, 1st 2 bytes are code as above
  *
  * RIFF and LIST chunks have nested chunks.  Registered chunk names include:
  *   LIST with subchunks, one of which can be:
@@ -2495,7 +2498,7 @@ static int read_bicsf_header (int chan)
  *    8: chans
  *   12: data format indicator (2 = 16-bit linear, 4 = 32-bit float)
  *       according to new Sox (version 11), these packing modes are now bytes/sample in low short, code in high
- *       so 1 = char, 0x10001 = alaw, 0x20001 = mulaw, 2 = short, 0x40004 = long, 4 = float
+ *       so 1 = char, 0x10001 = alaw, 0x20001 = mulaw, 2 = short, 3 = 24bit?, 0x40004 = long, 4 = float (AFsp sez 4 can also be double)
  *   16: comment start -- how to tell if it's a real comment?
  *       apparently these are separated as short code, short blocksize, then data
  *       codes: 0 = end, 1 = maxamp, 2 = comment, 3 = pvdata, 4 = audioencode and codemax??
@@ -2545,6 +2548,11 @@ static int read_ircam_header (int chan)
   else if (original_data_format == 0x10001) data_format = MUS_ALAW;
   else if (original_data_format == 0x20001) data_format = MUS_MULAW;
   else if (original_data_format == 1) data_format = MUS_BYTE;
+  else if (original_data_format == 3)
+    {
+      if (little) data_format = MUS_L24INT;
+      else data_format = MUS_B24INT;
+    }
   srate = (int)big_or_little_endian_float((unsigned char *)(hdrbuf + 4), little);
   chans = big_or_little_endian_int((unsigned char *)(hdrbuf + 8), little);
   bloc = 16;
@@ -3066,13 +3074,13 @@ static int read_smp_header(int chan)
  *         Bytes   Type    Contents
  *     0   160    char   Text strings (2 * 80)
  *   160    80    char   Command line
- *   240     2    int    Domain
+ *   240     2    int    Domain (1-time, 2-freq, 3-qfreq)
  *   242     2    int    Frame size
  *   244     4    float  Sampling frequency
  *   252     2    int    File identifier (i.e. #o100 #o303)
  *   254     2    int    Data type (0xfc0e = sampled data file)
- *   256     2    int    Resolution (in bits)
- *   258     2    int    Companding flag (1 = linear, 2 = alaw, 3 = mulaw)
+ *   256     2    int    Resolution (in bits 8, 16)
+ *   258     2    int    Companding flag (1 = ulaw, 2 = alaw, 3 = int
  *   272   240    char   Text strings (3 * 80)
  *   512   ...    --     Audio data
  *
@@ -3099,6 +3107,7 @@ static int read_sppack_header(int chan)
 	  srate = (int)sr;
 	  switch (typ)
 	    {
+	      /* typ decode from SPPACK.html 1-Nov-01 -- this is the old form */
 	    case 1: if (bits == 16) data_format = MUS_BSHORT; else data_format = MUS_BYTE; break;
 	    case 2: data_format = MUS_ALAW; break;
 	    case 3: data_format = MUS_MULAW; break;
@@ -3366,12 +3375,12 @@ static int read_maud_header (int chan)
 
 /* ------------------------------------ CSL ------------------------------------- 
  *
- * "Computer Speech Laboratories(?) -- this info taken from wavesurfer/snack
+ * "Computerized Speech Labs -- this info taken from wavesurfer/snack
  *
  * very similar to AIFF:
  * 0: FORM
  * 4: DS16 (kinda weird)
- * 8: size (int le??)
+ * 8: size (int le)
  * 12: chunks
  *     HEDR or HDR8
  *     4: size (int)
@@ -3408,7 +3417,9 @@ static int read_csl_header (int chan)
       if ((match_four_chars((unsigned char *)hdrbuf, I_HEDR)) || 
 	  (match_four_chars((unsigned char *)hdrbuf, I_HDR8)))
 	{
-	  if ((mus_char_to_lshort((unsigned char *)(hdrbuf + 36)) != -1) &&
+	  /* 8..20: date as ascii */
+	  /* 32: data length (int) in bytes */
+	  if ((mus_char_to_lshort((unsigned char *)(hdrbuf + 36)) != -1) && /* these are maxamps, -1=none */
 	      (mus_char_to_lshort((unsigned char *)(hdrbuf + 38)) != -1))
 	    chans = 2;
 	  srate = mus_char_to_lint((unsigned char *)(hdrbuf + 28));
@@ -3433,7 +3444,7 @@ static int read_csl_header (int chan)
 	    }
 	}
       chunkloc = (8 + chunksize);
-      if (chunksize & 1) chunkloc++; /* ?? */
+      if (chunksize & 1) chunkloc++;
     }
   true_file_length = SEEK_FILE_LENGTH(chan);
   data_size = mus_long_bytes_to_samples(data_format, data_size);

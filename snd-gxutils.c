@@ -389,7 +389,7 @@ static XEN g_click_button(XEN button)
 	  if (XtIsSensitive(w))
 	    XtCallCallbacks(w, XmNvalueChangedCallback, (void *)get_global_state());
 	}
-      else fprintf(stderr,"bad type");
+      else fprintf(stderr,"click_button: %s, not a push or toggle button\n", XtName(w));
     }
 #endif
 #if USE_GTK

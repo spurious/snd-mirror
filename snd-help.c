@@ -267,14 +267,12 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+5-Nov:   snd 5.4.\n\
 29-Oct:  added contrib/dlp directory with Dave Phillips' ladspa plugin stuff.\n\
 16-Oct:  multichannel ladspa plugins, ladspa-dir.\n\
 12-Oct:  various regularized *-channel functions.\n\
 8-Oct:   snap-mix|mark-to-beat.\n\
 5-Oct:   x-axis-in-beats, beats-per-minute.\n\
-1-Oct:   Snd 5.3.\n\
-26-Sep:  after-edit-hook.\n\
-24-Sep:  changed mus-sound-max-amp to mus-sound-maxamp to match all other such cases (old name still exists)\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'",

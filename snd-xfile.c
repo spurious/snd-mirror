@@ -2107,8 +2107,9 @@ file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss, const cha
   reflect_raw_pending_in_menu();
   if (!XtIsManaged(raw_data_dialog)) 
     XtManageChild(raw_data_dialog);
-  while (XtIsManaged(raw_data_dialog)) 
-    check_for_event(ss);
+  if (with_background_processes(ss) != 1234)
+    while (XtIsManaged(raw_data_dialog)) 
+      check_for_event(ss);
   reflect_raw_open_in_menu();
   if (raw_cancelled) return(NULL);
   mus_header_raw_defaults(&sr, &oc, &fr);

@@ -182,10 +182,13 @@ int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
   if (!(XtIsManaged(yes_or_no_dialog))) 
     XtManageChild(yes_or_no_dialog);
   XtVaSetValues(yes_or_no_dialog, XmNmessageString, error_msg, NULL);
-  ss->error_lock = 1;
-  while ((XtIsManaged(yes_or_no_dialog)) && (ss->error_lock == 1))
-    check_for_event(ss);
-  ss->error_lock = 0;
+  if (with_background_processes(ss) != 1234)
+    {
+      ss->error_lock = 1;
+      while ((XtIsManaged(yes_or_no_dialog)) && (ss->error_lock == 1))
+	check_for_event(ss);
+      ss->error_lock = 0;
+    }
   if (XtIsManaged(yes_or_no_dialog))
     XtUnmanageChild(yes_or_no_dialog);
   XmStringFree(error_msg);
