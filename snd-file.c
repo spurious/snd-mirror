@@ -1,10 +1,5 @@
 #include "snd.h"
 
-/* TODO: bad header decision starts dialog even if opened from code -- this should
- *        throw an error!  Perhaps bad-header-dialog added, and only starts if called
- *        via function or from file menu.
- */
-
 #if HAVE_DIRENT_H
   #include <dirent.h>
 #else

@@ -1170,6 +1170,11 @@
   XEN_NARGIFY_1(gxm_XmListGetSelectedPos_w, gxm_XmListGetSelectedPos)
   XEN_NARGIFY_1(gxm_XmWidgetGetDisplayRect_w, gxm_XmWidgetGetDisplayRect)
 
+#if HAVE_XmCreateButtonBox
+  XEN_NARGIFY_1(gxm_XmIsButtonBox_w, gxm_XmIsButtonBox)
+  XEN_ARGIFY_4(gxm_XmCreateButtonBox_w, gxm_XmCreateButtonBox)
+#endif
+
 #if (!XM_DISABLE_DEPRECATED)
   XEN_NARGIFY_1(gxm_XmStringLength_w, gxm_XmStringLength)
   XEN_NARGIFY_2(gxm_XmStringByteCompare_w, gxm_XmStringByteCompare)
@@ -2469,6 +2474,10 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmIsManager, gxm_XmIsManager_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmIsMenuShell, gxm_XmIsMenuShell_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmListGetSelectedPos, gxm_XmListGetSelectedPos_w, 1, 0, 0, H_XmListGetSelectedPos);
+#endif
+#if HAVE_XmCreateButtonBox
+  XM_DEFINE_PROCEDURE(XmIsButtonBox, gxm_XmIsButtonBox_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmCreateButtonBox, gxm_XmCreateButtonBox_w, 3, 1, 0, H_XmCreateButtonBox);
 #endif
 
 #if HAVE_MOTIF

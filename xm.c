@@ -11,7 +11,7 @@
 
 /* HISTORY: 
  *
- *   7-Apr:     XmButtonBox stuff.
+ *   7-Apr:     XmButtonBox.
  *   22-Mar:    added feature 'Xp to indicate that the Xp stuff is included.
  *   8-Mar:     XtAppAddActionHook arity bugfix.
  *   12-Jan:    resources for XmFontSelector.
@@ -5151,6 +5151,28 @@ static XEN gxm_XmCreateButtonBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 The ButtonBox widget creation function"
   return(gxm_new_widget("XmCreateButtonBox", XmCreateButtonBox, arg1, arg2, arg3, arg4));
 }
+
+#ifndef XmIsButtonBox
+#define XmIsButtonBox(w) (XtIsSubclass(w, xmButtonBoxWidgetClass))
+#endif
+
+static XEN gxm_XmIsButtonBox(XEN arg)
+{
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsButtonBox", "Widget");
+  return(C_TO_XEN_BOOLEAN(XmIsButtonBox(XEN_TO_C_Widget(arg))));
+}
+
+/* XmIsTabBox XmIsTabStack XmIsColumn apparently exist already */
+#ifndef XmIsDataField
+#define XmIsDatField(w) (XtIsSubclass(w, xmDataFieldWidgetClass))
+#endif
+#ifndef XmIsDropDown
+#define XmIsDropDown(w) (XtIsSubclass(w, xmDropDownWidgetClass))
+#endif
+#ifndef XmIsMultiList
+#define XmIsMultiList(w) (XtIsSubclass(w, xmMultiListWidgetClass))
+#endif
+
 #endif
 
 #if HAVE_XmCreateFontSelector
@@ -19165,6 +19187,9 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmIsManager, gxm_XmIsManager, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmIsMenuShell, gxm_XmIsMenuShell, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmListGetSelectedPos, gxm_XmListGetSelectedPos, 1, 0, 0, H_XmListGetSelectedPos);
+#if HAVE_XmCreateButtonBox
+  XM_DEFINE_PROCEDURE(XmIsButtonBox, gxm_XmIsButtonBox, 1, 0, 0, NULL);
+#endif
 
 #if (!XM_DISABLE_DEPRECATED)
   XM_DEFINE_PROCEDURE(XtWarning, gxm_XtWarning, 1, 0, 0, H_XtWarning);
@@ -20298,12 +20323,8 @@ static XEN gxm_flags(XEN ptr)
   if (XEN_XmConvertCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmConvertCallbackStruct(ptr))->flags)));
 #endif
   if (XEN_XWMHints_P(ptr)) return(C_TO_XEN_INT((long)((XEN_TO_C_XWMHints(ptr))->flags)));
-#if WITH_GTK_AND_X11
-  return(gxg_flags(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "flags", "a struct with a flags field");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_flags(XEN ptr, XEN val)
@@ -20460,24 +20481,16 @@ static XEN gxm_descent(XEN ptr)
 {
   if (XEN_XFontStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XFontStruct(ptr))->descent)));
   if (XEN_XCharStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XCharStruct(ptr))->descent)));
-#if WITH_GTK_AND_X11
-  return(gxg_descent(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "descent", "a struct with a descent field");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_ascent(XEN ptr)
 {
   if (XEN_XFontStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XFontStruct(ptr))->ascent)));
   if (XEN_XCharStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XCharStruct(ptr))->ascent)));
-#if WITH_GTK_AND_X11
-  return(gxg_ascent(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "ascent", "a struct with an ascent field");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_rbearing(XEN ptr)
@@ -20573,12 +20586,8 @@ static XEN gxm_format(XEN ptr)
   if (XEN_XmTextBlock_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmTextBlock(ptr))->format)));
 #endif
   if (XEN_XClientMessageEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XClientMessageEvent(ptr))->format)));
-#if WITH_GTK_AND_X11
-  return(gxg_format(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "format", "XClientMessageEvent");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_format(XEN ptr, XEN val)
@@ -20915,12 +20924,8 @@ static XEN gxm_border_width(XEN ptr)
   if (XEN_XConfigureRequestEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XConfigureRequestEvent(ptr))->border_width)));
   if (XEN_XConfigureEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XConfigureEvent(ptr))->border_width)));
   if (XEN_XCreateWindowEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XCreateWindowEvent(ptr))->border_width)));
-#if WITH_GTK_AND_X11
-  return(gxg_border_width(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "border_width", "a struct with a border_width field");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_border_width(XEN ptr, XEN val)
@@ -21563,12 +21568,8 @@ static XEN gxm_backing_store(XEN ptr)
   if (XEN_XWindowAttributes_P(ptr)) return(C_TO_XEN_BOOLEAN((int)((XEN_TO_C_XWindowAttributes(ptr))->backing_store)));
   if (XEN_XSetWindowAttributes_P(ptr)) return(C_TO_XEN_BOOLEAN((int)((XEN_TO_C_XSetWindowAttributes(ptr))->backing_store)));
   if (XEN_Screen_P(ptr)) return(C_TO_XEN_BOOLEAN((int)((XEN_TO_C_Screen(ptr))->backing_store)));
-#if WITH_GTK_AND_X11
-  return(gxg_backing_store(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "backing_store", "a struct with a backing_store field");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_backing_store(XEN ptr, XEN val)
@@ -21767,12 +21768,8 @@ static XEN gxm_root(XEN ptr)
   if (XEN_XButtonEvent_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XButtonEvent(ptr))->root)));
   if (XEN_XKeyEvent_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XKeyEvent(ptr))->root)));
   if (XEN_Screen_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_Screen(ptr))->root)));
-#if WITH_GTK_AND_X11
-  return(gxg_root(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "root", "a struct with a root field");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_root(XEN ptr, XEN val)
@@ -22065,12 +22062,8 @@ static XEN gxm_font(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_Font((Font)((XEN_TO_C_XGCValues(ptr))->font)));
   if (XEN_XTextItem_P(ptr)) return(C_TO_XEN_Font((Font)((XEN_TO_C_XTextItem(ptr))->font)));
-#if WITH_GTK_AND_X11
-  return(gxg_font(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "font", "a struct with a font field");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_font(XEN ptr, XEN val)
@@ -22320,12 +22313,8 @@ static XEN gxm_data(XEN ptr)
 #if HAVE_XPM
   if (XEN_XpmImage_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XpmImage(ptr))->data)));
 #endif
-#if WITH_GTK_AND_X11
-  return(gxg_data(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "data", "XpmImage");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_data(XEN ptr, XEN val)
@@ -25906,6 +25895,15 @@ static void define_pointers(void)
 #endif
 #if HAVE_XmCreateButtonBox
   DEFINE_POINTER(xmButtonBoxWidgetClass);
+  /*
+  DEFINE_POINTER(xmColumnWidgetClass);
+  DEFINE_POINTER(xmDataFieldWidgetClass);
+  DEFINE_POINTER(xmDropDownWidgetClass);
+  DEFINE_POINTER(xmMultiListWidgetClass);
+  DEFINE_POINTER(xmHierarchyWidgetClass);
+  DEFINE_POINTER(xmTabBoxWidgetClass);
+  DEFINE_POINTER(xmTabStackWidgetClass);
+  */
 #endif
 #if HAVE_XmCreateFontSelector
   DEFINE_POINTER(xmFontSelectorWidgetClass);
@@ -26095,12 +26093,7 @@ static bool xm_already_inited = false;
 /* end HAVE_EXTENSION_LANGUAGE */
 
 
-/* SOMEDAY: Motif 2.2.3: MultiList, DropDown, DataField,  Hierarchy, Outline, Tree, Panned, TabBox, TabStack, Column, 
-         these (public?) h files appear to be new: 
-	   Column.h ComboBox2.h DataF.h DrawUtils.h DropDown.h Ext18List.h Ext.h Hierarchy.h 
-	   MultiList.h Outline.h Paned.h SlideC.h TabBox.h TabList.h TabStack.h Tree.h
-
-	   the following lists need to be pruned!
+/* SOMEDAY: Motif 2.2.3: MultiList, DropDown, DataField,  Hierarchy, Paned, TabBox, TabStack, Column, 
 
          resource names:
 	 XmNbadActionParameters
@@ -26126,27 +26119,7 @@ static bool xm_already_inited = false;
 	 XmNunparsableColor
 	 XmNnodeParentIsSelf
 	 XmNstringGetFailed
-	 XmNslideFinishCallback
-	 XmNslideMotionCallback
-	 XmNslideWidget
-	 XmNslideInterval
-	 XmNslideDestWidth
-	 XmNslideDestHeight
-	 XmNslideDestX
-	 XmNslideDestY
 	 + many more that don't seem to be defined anywhere?!?
-
-	 widget classes:
-	 xmColumnWidgetClass
-	 xmCombinationBox2WidgetClass
-	 xmDataFieldWidgetClass
-	 xmMultiListWidgetClass
-	 xiHierarchyWidgetClass
-	 xmOutlineWidgetClass
-	 xmSlideContextWidgetClass
-	 xiTabBoxWidgetClass
-	 xmTabStackWidgetClass
-	 xmTreeWidgetClass
 
 	 macros/enums (ints):
 	 XmMULTILIST_FOUND
@@ -26179,8 +26152,6 @@ static bool xm_already_inited = false;
 	 XmTabBoxCallbackStruct: int reason; XEvent *event; int tab_index; int old_index;
 
 	 functions:
-	 XmIsTabStack(w)
-	 XmIsColumn(w)
 	 Widget XmCreateColumn(Widget, String, ArgList, Cardinal);
 	 Widget XmColumnGetChildLabel(Widget);
 	 Widget XmCreateDataField(Widget, String, ArgList, Cardinal);
@@ -26220,8 +26191,6 @@ static bool xm_already_inited = false;
 	 XmMultiListDeselectRow(w,r)
 	 XmMultiListGetSelectedRowArray(w,n)
 	 XmMultiListMakeRowVisible(w,r)
-	 Widget XmCreateOutline(Widget, String, ArgList, Cardinal);
-	 XmIsTabBox(w)
 	 Widget XmCreateTabBox(Widget, String, ArgList, Cardinal);
 	 int XmTabBoxGetIndex(Widget, int, int);
 	 int XmTabBoxGetNumRows(Widget);
@@ -26250,8 +26219,8 @@ static bool xm_already_inited = false;
 	 extern void XmTabStackSelectTab(Widget, Boolean);
 	 extern Widget XmTabStackIndexToWidget(Widget, int);
 	 extern Widget XmTabStackXYToWidget(Widget, int, int);
-	 Widget XmCreateTree(Widget, String, ArgList, Cardinal);
 
-	 missing: XmIsButtonBox
+	 missing: XmCreateHierarchy
+
 */
 

@@ -37,7 +37,6 @@ XEN_NARGIFY_2(gxg_gdk_colormap_new_w, gxg_gdk_colormap_new)
 XEN_NARGIFY_0(gxg_gdk_colormap_get_system_w, gxg_gdk_colormap_get_system)
 XEN_NARGIFY_6(gxg_gdk_colormap_alloc_colors_w, gxg_gdk_colormap_alloc_colors)
 XEN_NARGIFY_4(gxg_gdk_colormap_alloc_color_w, gxg_gdk_colormap_alloc_color)
-XEN_NARGIFY_3(gxg_gdk_colormap_free_colors_w, gxg_gdk_colormap_free_colors)
 XEN_NARGIFY_3(gxg_gdk_colormap_query_color_w, gxg_gdk_colormap_query_color)
 XEN_NARGIFY_1(gxg_gdk_colormap_get_visual_w, gxg_gdk_colormap_get_visual)
 XEN_NARGIFY_1(gxg_gdk_color_copy_w, gxg_gdk_color_copy)
@@ -258,13 +257,7 @@ XEN_NARGIFY_1(gxg_gdk_atom_name_w, gxg_gdk_atom_name)
 XEN_VARGIFY(gxg_gdk_property_get_w, gxg_gdk_property_get)
 XEN_NARGIFY_7(gxg_gdk_property_change_w, gxg_gdk_property_change)
 XEN_NARGIFY_2(gxg_gdk_property_delete_w, gxg_gdk_property_delete)
-XEN_NARGIFY_5(gxg_gdk_text_property_to_text_list_w, gxg_gdk_text_property_to_text_list)
-XEN_NARGIFY_5(gxg_gdk_text_property_to_utf8_list_w, gxg_gdk_text_property_to_utf8_list)
 XEN_NARGIFY_1(gxg_gdk_utf8_to_string_target_w, gxg_gdk_utf8_to_string_target)
-XEN_ARGIFY_5(gxg_gdk_utf8_to_compound_text_w, gxg_gdk_utf8_to_compound_text)
-XEN_NARGIFY_1(gxg_gdk_free_text_list_w, gxg_gdk_free_text_list)
-XEN_ARGIFY_5(gxg_gdk_string_to_compound_text_w, gxg_gdk_string_to_compound_text)
-XEN_NARGIFY_1(gxg_gdk_free_compound_text_w, gxg_gdk_free_compound_text)
 XEN_NARGIFY_0(gxg_gdk_region_new_w, gxg_gdk_region_new)
 XEN_NARGIFY_3(gxg_gdk_region_polygon_w, gxg_gdk_region_polygon)
 XEN_NARGIFY_1(gxg_gdk_region_copy_w, gxg_gdk_region_copy)
@@ -386,8 +379,6 @@ XEN_NARGIFY_2(gxg_gdk_window_process_updates_w, gxg_gdk_window_process_updates)
 XEN_NARGIFY_1(gxg_gdk_window_set_debug_updates_w, gxg_gdk_window_set_debug_updates)
 XEN_ARGIFY_6(gxg_gdk_window_constrain_size_w, gxg_gdk_window_constrain_size)
 XEN_ARGIFY_4(gxg_gdk_window_get_internal_paint_info_w, gxg_gdk_window_get_internal_paint_info)
-XEN_NARGIFY_2(gxg_gtk_window_group_add_window_w, gxg_gtk_window_group_add_window)
-XEN_NARGIFY_2(gxg_gtk_window_group_remove_window_w, gxg_gtk_window_group_remove_window)
 XEN_NARGIFY_2(gxg_gtk_window_remove_embedded_xid_w, gxg_gtk_window_remove_embedded_xid)
 XEN_NARGIFY_2(gxg_gtk_window_add_embedded_xid_w, gxg_gtk_window_add_embedded_xid)
 XEN_NARGIFY_2(gxg_gdk_window_set_type_hint_w, gxg_gdk_window_set_type_hint)
@@ -1946,7 +1937,6 @@ XEN_ARGIFY_3(gxg_gtk_window_get_position_w, gxg_gtk_window_get_position)
 XEN_NARGIFY_2(gxg_gtk_window_parse_geometry_w, gxg_gtk_window_parse_geometry)
 XEN_NARGIFY_1(gxg_gtk_window_reshow_with_initial_size_w, gxg_gtk_window_reshow_with_initial_size)
 XEN_NARGIFY_0(gxg_gtk_window_group_get_type_w, gxg_gtk_window_group_get_type)
-XEN_NARGIFY_0(gxg_gtk_window_group_new_w, gxg_gtk_window_group_new)
 XEN_NARGIFY_0(gxg_pango_color_get_type_w, gxg_pango_color_get_type)
 XEN_NARGIFY_1(gxg_pango_color_copy_w, gxg_pango_color_copy)
 XEN_NARGIFY_1(gxg_pango_color_free_w, gxg_pango_color_free)
@@ -2167,6 +2157,8 @@ XEN_NARGIFY_2(gxg_g_list_remove_link_w, gxg_g_list_remove_link)
 XEN_NARGIFY_2(gxg_g_object_get_data_w, gxg_g_object_get_data)
 XEN_NARGIFY_3(gxg_g_object_set_data_w, gxg_g_object_set_data)
 XEN_NARGIFY_2(gxg_g_list_nth_data_w, gxg_g_list_nth_data)
+XEN_NARGIFY_1(gxg_g_quark_from_string_w, gxg_g_quark_from_string)
+XEN_NARGIFY_1(gxg_g_quark_to_string_w, gxg_g_quark_to_string)
 #if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND
 XEN_NARGIFY_5(gxg_pango_default_break_w, gxg_pango_default_break)
 XEN_NARGIFY_0(gxg_pango_context_new_w, gxg_pango_context_new)
@@ -2789,7 +2781,6 @@ XEN_NARGIFY_1(gxg_GTK_VSCROLLBAR_w, gxg_GTK_VSCROLLBAR)
 XEN_NARGIFY_1(gxg_GTK_VSEPARATOR_w, gxg_GTK_VSEPARATOR)
 XEN_NARGIFY_1(gxg_GTK_WIDGET_w, gxg_GTK_WIDGET)
 XEN_NARGIFY_1(gxg_GTK_WINDOW_w, gxg_GTK_WINDOW)
-XEN_NARGIFY_1(gxg_GTK_WINDOW_GROUP_w, gxg_GTK_WINDOW_GROUP)
 XEN_NARGIFY_1(gxg_PANGO_CONTEXT_w, gxg_PANGO_CONTEXT)
 XEN_NARGIFY_1(gxg_PANGO_FONT_FACE_w, gxg_PANGO_FONT_FACE)
 XEN_NARGIFY_1(gxg_PANGO_FONT_w, gxg_PANGO_FONT)
@@ -2978,7 +2969,6 @@ XEN_NARGIFY_1(gxg_GTK_IS_VSCROLLBAR_w, gxg_GTK_IS_VSCROLLBAR)
 XEN_NARGIFY_1(gxg_GTK_IS_VSEPARATOR_w, gxg_GTK_IS_VSEPARATOR)
 XEN_NARGIFY_1(gxg_GTK_IS_WIDGET_w, gxg_GTK_IS_WIDGET)
 XEN_NARGIFY_1(gxg_GTK_IS_WINDOW_w, gxg_GTK_IS_WINDOW)
-XEN_NARGIFY_1(gxg_GTK_IS_WINDOW_GROUP_w, gxg_GTK_IS_WINDOW_GROUP)
 XEN_NARGIFY_1(gxg_PANGO_IS_CONTEXT_w, gxg_PANGO_IS_CONTEXT)
 XEN_NARGIFY_1(gxg_PANGO_IS_FONT_FACE_w, gxg_PANGO_IS_FONT_FACE)
 XEN_NARGIFY_1(gxg_PANGO_IS_FONT_w, gxg_PANGO_IS_FONT)
@@ -3306,7 +3296,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_colormap_get_system, gxg_gdk_colormap_get_system_w, 0, 0, 0, H_gdk_colormap_get_system);
   XG_DEFINE_PROCEDURE(gdk_colormap_alloc_colors, gxg_gdk_colormap_alloc_colors_w, 6, 0, 0, H_gdk_colormap_alloc_colors);
   XG_DEFINE_PROCEDURE(gdk_colormap_alloc_color, gxg_gdk_colormap_alloc_color_w, 4, 0, 0, H_gdk_colormap_alloc_color);
-  XG_DEFINE_PROCEDURE(gdk_colormap_free_colors, gxg_gdk_colormap_free_colors_w, 3, 0, 0, H_gdk_colormap_free_colors);
   XG_DEFINE_PROCEDURE(gdk_colormap_query_color, gxg_gdk_colormap_query_color_w, 3, 0, 0, H_gdk_colormap_query_color);
   XG_DEFINE_PROCEDURE(gdk_colormap_get_visual, gxg_gdk_colormap_get_visual_w, 1, 0, 0, H_gdk_colormap_get_visual);
   XG_DEFINE_PROCEDURE(gdk_color_copy, gxg_gdk_color_copy_w, 1, 0, 0, H_gdk_color_copy);
@@ -3527,13 +3516,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_property_get, gxg_gdk_property_get_w, 0, 0, 1, H_gdk_property_get);
   XG_DEFINE_PROCEDURE(gdk_property_change, gxg_gdk_property_change_w, 7, 0, 0, H_gdk_property_change);
   XG_DEFINE_PROCEDURE(gdk_property_delete, gxg_gdk_property_delete_w, 2, 0, 0, H_gdk_property_delete);
-  XG_DEFINE_PROCEDURE(gdk_text_property_to_text_list, gxg_gdk_text_property_to_text_list_w, 5, 0, 0, H_gdk_text_property_to_text_list);
-  XG_DEFINE_PROCEDURE(gdk_text_property_to_utf8_list, gxg_gdk_text_property_to_utf8_list_w, 5, 0, 0, H_gdk_text_property_to_utf8_list);
   XG_DEFINE_PROCEDURE(gdk_utf8_to_string_target, gxg_gdk_utf8_to_string_target_w, 1, 0, 0, H_gdk_utf8_to_string_target);
-  XG_DEFINE_PROCEDURE(gdk_utf8_to_compound_text, gxg_gdk_utf8_to_compound_text_w, 3, 2, 0, H_gdk_utf8_to_compound_text);
-  XG_DEFINE_PROCEDURE(gdk_free_text_list, gxg_gdk_free_text_list_w, 1, 0, 0, H_gdk_free_text_list);
-  XG_DEFINE_PROCEDURE(gdk_string_to_compound_text, gxg_gdk_string_to_compound_text_w, 3, 2, 0, H_gdk_string_to_compound_text);
-  XG_DEFINE_PROCEDURE(gdk_free_compound_text, gxg_gdk_free_compound_text_w, 1, 0, 0, H_gdk_free_compound_text);
   XG_DEFINE_PROCEDURE(gdk_region_new, gxg_gdk_region_new_w, 0, 0, 0, H_gdk_region_new);
   XG_DEFINE_PROCEDURE(gdk_region_polygon, gxg_gdk_region_polygon_w, 3, 0, 0, H_gdk_region_polygon);
   XG_DEFINE_PROCEDURE(gdk_region_copy, gxg_gdk_region_copy_w, 1, 0, 0, H_gdk_region_copy);
@@ -3655,8 +3638,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_window_set_debug_updates, gxg_gdk_window_set_debug_updates_w, 1, 0, 0, H_gdk_window_set_debug_updates);
   XG_DEFINE_PROCEDURE(gdk_window_constrain_size, gxg_gdk_window_constrain_size_w, 4, 2, 0, H_gdk_window_constrain_size);
   XG_DEFINE_PROCEDURE(gdk_window_get_internal_paint_info, gxg_gdk_window_get_internal_paint_info_w, 1, 3, 0, H_gdk_window_get_internal_paint_info);
-  XG_DEFINE_PROCEDURE(gtk_window_group_add_window, gxg_gtk_window_group_add_window_w, 2, 0, 0, H_gtk_window_group_add_window);
-  XG_DEFINE_PROCEDURE(gtk_window_group_remove_window, gxg_gtk_window_group_remove_window_w, 2, 0, 0, H_gtk_window_group_remove_window);
   XG_DEFINE_PROCEDURE(gtk_window_remove_embedded_xid, gxg_gtk_window_remove_embedded_xid_w, 2, 0, 0, H_gtk_window_remove_embedded_xid);
   XG_DEFINE_PROCEDURE(gtk_window_add_embedded_xid, gxg_gtk_window_add_embedded_xid_w, 2, 0, 0, H_gtk_window_add_embedded_xid);
   XG_DEFINE_PROCEDURE(gdk_window_set_type_hint, gxg_gdk_window_set_type_hint_w, 2, 0, 0, H_gdk_window_set_type_hint);
@@ -5215,7 +5196,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_window_parse_geometry, gxg_gtk_window_parse_geometry_w, 2, 0, 0, H_gtk_window_parse_geometry);
   XG_DEFINE_PROCEDURE(gtk_window_reshow_with_initial_size, gxg_gtk_window_reshow_with_initial_size_w, 1, 0, 0, H_gtk_window_reshow_with_initial_size);
   XG_DEFINE_PROCEDURE(gtk_window_group_get_type, gxg_gtk_window_group_get_type_w, 0, 0, 0, H_gtk_window_group_get_type);
-  XG_DEFINE_PROCEDURE(gtk_window_group_new, gxg_gtk_window_group_new_w, 0, 0, 0, H_gtk_window_group_new);
   XG_DEFINE_PROCEDURE(pango_color_get_type, gxg_pango_color_get_type_w, 0, 0, 0, H_pango_color_get_type);
   XG_DEFINE_PROCEDURE(pango_color_copy, gxg_pango_color_copy_w, 1, 0, 0, H_pango_color_copy);
   XG_DEFINE_PROCEDURE(pango_color_free, gxg_pango_color_free_w, 1, 0, 0, H_pango_color_free);
@@ -5436,6 +5416,8 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(g_object_get_data, gxg_g_object_get_data_w, 2, 0, 0, H_g_object_get_data);
   XG_DEFINE_PROCEDURE(g_object_set_data, gxg_g_object_set_data_w, 3, 0, 0, H_g_object_set_data);
   XG_DEFINE_PROCEDURE(g_list_nth_data, gxg_g_list_nth_data_w, 2, 0, 0, H_g_list_nth_data);
+  XG_DEFINE_PROCEDURE(g_quark_from_string, gxg_g_quark_from_string_w, 1, 0, 0, H_g_quark_from_string);
+  XG_DEFINE_PROCEDURE(g_quark_to_string, gxg_g_quark_to_string_w, 1, 0, 0, H_g_quark_to_string);
 #if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND
   XG_DEFINE_PROCEDURE(pango_default_break, gxg_pango_default_break_w, 5, 0, 0, H_pango_default_break);
   XG_DEFINE_PROCEDURE(pango_context_new, gxg_pango_context_new_w, 0, 0, 0, H_pango_context_new);
@@ -6058,7 +6040,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_VSEPARATOR, gxg_GTK_VSEPARATOR_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GTK_WIDGET, gxg_GTK_WIDGET_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GTK_WINDOW, gxg_GTK_WINDOW_w, 1, 0, 0, NULL);
-  XG_DEFINE_PROCEDURE(GTK_WINDOW_GROUP, gxg_GTK_WINDOW_GROUP_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(PANGO_CONTEXT, gxg_PANGO_CONTEXT_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(PANGO_FONT_FACE, gxg_PANGO_FONT_FACE_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(PANGO_FONT, gxg_PANGO_FONT_w, 1, 0, 0, NULL);
@@ -6252,7 +6233,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_IS_VSEPARATOR, gxg_GTK_IS_VSEPARATOR_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GTK_IS_WIDGET, gxg_GTK_IS_WIDGET_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GTK_IS_WINDOW, gxg_GTK_IS_WINDOW_w, 1, 0, 0, NULL);
-  XG_DEFINE_PROCEDURE(GTK_IS_WINDOW_GROUP, gxg_GTK_IS_WINDOW_GROUP_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(PANGO_IS_CONTEXT, gxg_PANGO_IS_CONTEXT_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(PANGO_IS_FONT_FACE, gxg_PANGO_IS_FONT_FACE_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(PANGO_IS_FONT, gxg_PANGO_IS_FONT_w, 1, 0, 0, NULL);
