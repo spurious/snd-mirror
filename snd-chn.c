@@ -4525,7 +4525,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
     case CP_TIME_GRAPH_STYLE:
       val = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, DEFAULT_GRAPH_STYLE, caller);
       if (!(GRAPH_STYLE_OK(val)))
-	mus_misc_error(caller, "unknown graph-style", on);
+	mus_misc_error(caller, "unknown " S_time_graph_style, on);
       cp->time_graph_style = val;
       if (call_update_graph) update_graph(cp);
       return(C_TO_XEN_INT(cp->time_graph_style));
@@ -4533,7 +4533,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
     case CP_LISP_GRAPH_STYLE:
       val = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, DEFAULT_GRAPH_STYLE, caller);
       if (!(GRAPH_STYLE_OK(val)))
-	mus_misc_error(caller, "unknown graph-style", on);
+	mus_misc_error(caller, "unknown " S_lisp_graph_style, on);
       cp->lisp_graph_style = val;
       if (call_update_graph) update_graph(cp);
       return(C_TO_XEN_INT(cp->lisp_graph_style));
@@ -4541,7 +4541,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
     case CP_TRANSFORM_GRAPH_STYLE:
       val = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, DEFAULT_GRAPH_STYLE, caller);
       if (!(GRAPH_STYLE_OK(val)))
-	mus_misc_error(caller, "unknown graph-style", on);
+	mus_misc_error(caller, "unknown " S_transform_graph_style, on);
       cp->transform_graph_style = val;
       if (call_update_graph) update_graph(cp);
       return(C_TO_XEN_INT(cp->transform_graph_style));

@@ -93,7 +93,15 @@ char *just_filename(char *name)
 }
 
 #if HAVE_LANGINFO_DECIMAL_POINT || HAVE_LANGINFO_RADIXCHAR
-#include <langinfo.h>
+#if NL_TYPES_H_DEFINES_MALLOC
+  /* SGI complication */
+  #undef MALLOC
+  #include <langinfo.h>
+  #undef MALLOC
+  #define MALLOC malloc
+#else
+  #include <langinfo.h>
+#endif
 #endif
 
 static char decimal_pt;

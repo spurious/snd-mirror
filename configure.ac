@@ -1069,6 +1069,15 @@ AC_SUBST(SNDLIB_LIB)
 
 AM_GNU_GETTEXT([external])
 
+AC_CHECK_HEADER(nl_types.h,
+  [AC_MSG_CHECKING([whether nl_types.h defines MALLOC])
+   AC_COMPILE_IFELSE(
+     [AC_LANG_PROGRAM([#include <langinfo.h>],
+		      [char i; i = MALLOC; return(0)])],
+     [AC_DEFINE(NL_TYPES_H_DEFINES_MALLOC)
+      AC_MSG_RESULT(yes)
+     ],
+     [AC_MSG_RESULT(no)])])
 
 CFLAGS="-I. $CFLAGS"
 # needed since we're looking for <config.h>, I think (where is config.h written?)

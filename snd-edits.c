@@ -832,7 +832,7 @@ char *edit_to_string(chan_info *cp, int edit)
   #define TO_PROC_NAME(Str) Str
   #define PROC_OPEN " "
   #define PROC_SEP " "
-  #define VECTOR_OPEN "#("
+  #define VECTOR_OPEN "'#("
   #define VECTOR_CLOSE ")"
 #endif
 
