@@ -1,0 +1,406 @@
+
+<html>
+<body bgcolor="#FFFFFF">
+
+
+<u><b>A BRIEF TUTORIAL FOR SND</b></u>
+<p>
+
+Before beginning this tutorial you should load the following Scheme files into Snd. These files are included with the Snd source package:
+<p>
+
+<pre>
+    snd-motif.scm	provides Motif GUI components (sliders, buttons, entry boxes)
+    examp.scm		various examples
+    extensions.scm	various extensions
+    dsp.scm		some DSP code
+    draw.scm		drawing routines
+    env.scm		envelope-specific code
+    enved.scm		envelope editing routines
+    marks.scm		mark-related procedures
+    mix.scm		routines for mixing soundfiles
+    moog.scm		the Moog filter code
+    popup.scm		provides various popup menus
+    rubber.scm		code to stretch/contract sound
+</pre>
+
+The following files are my own additions (see the Resources at the end of this article):
+<p>
+
+<pre>
+    special-menu.scm	adds a special menu to the main menu bar
+    my_backgrounds.scm	some background pixmaps
+    marks-menu.scm	adds a menu for mark processes
+    dp-new-effects.scm	adds an expanded effects menu
+    panic.scm		adds a panic menu for stopping Snd processes
+    misc.scm		includes all of these files and some miscellaneous code
+</pre>
+
+See the previous section for instructions on how to load these files, then launch Snd with this command string:
+<p>
+
+<pre>
+	snd foo.wav
+</pre>
+<p>
+
+Loading the soundfile is optional. You can of course add new soundfiles via the File/Open dialog box at any time. The customization package adds some nice features to the dialog, including buttons for toggling a soundfiles-only listing and for playing the selected file. Multichannel soundfiles are listed in different colors, and the dialog displays useful information about the selected file. [Figure 7]
+<p>
+
+<center> <img src="images/jpg/3_01-snd_file_popup.jpg">
+<p>
+<b>Figure 7.</b> The File dialog
+</center>
+<p>
+
+
+
+<b>Documentation</b>
+<p>
+
+Bill Schottstaedt has provided extensive and well-written documentation for Snd in the snd.html file (or snd1.html if your browser supports frames). The HTML documentation is quite complete and should be considered the definitive reference. I advise all users to read at least the "Getting Started" section. As mentioned earlier there is also a manual page, but it is very brief, containing only a description of the program and a list of some of the command-line flags. I'll cover some of the material found in the HTML documentation, but in a more tutorial fashion. 
+<p>
+
+<b>The Heart Of The Matter</b>
+<p>
+
+In his <cite>Computer Music Tutorial</cite> Curtis Roads lists these basic functions of soundfile editors:
+<p>
+
+<ul>
+    <li> cut/copy/paste
+    <li> splice/insert/replace
+    <li> move samples
+    <li> mix tracks
+    <li> syncronize files/tracks
+    <li> compress/expand time scale
+    <li> pitch shifting
+    <li> equalization/filtering
+    <li> sample rate conversion
+    <li> transfer sounds to external sampler
+    <li> displays in different time formats
+    <li> display multiple views of file
+    <li> display multiple files simultaneously
+    <li> independent X/Y axis control
+    <li> find maximum sample value
+    <li> display amplitude envelope in various representations (db, peak, RMS)
+    <li> edit pitch and amplitude envelopes
+    <li> varispeed playback
+    <li> print out display of samples
+    <li> spectrum analysis
+    <li> segment and label musical notes in sample stream
+</ul>
+
+Snd meets nearly all the baseline criteria in that list. Direct I/O with external samplers is perhaps better considered as a function of hardware support, although Snd does support the MIDI Sample File Dump standard as well as a variety of sampler-specific file formats. The identification of a sound sample's musical note values is still technically very problematic and is not commonly found in the popular soundfile editors for Windows, the Mac, or Linux. All the other operations are present and accounted for in Snd.
+<p>
+
+Beyond the baseline criteria I've culled a set of common operations from the results of an informal poll of Cool Edit users on the mail lists for Csound, LAD (Linux Audio Developers), and Common Music. Those users most frequently employed the following functions and operations in Cool Edit:
+<p>
+
+<ul>
+    <li> recording and editing large files
+    <li> trimming files
+    <li> accurate edits at the single-sample level
+    <li> noise reduction and click removal
+    <li> varispeed play
+    <li> amplitude editing (gain, normalization, fade in/out, crossfade)
+    <li> zoom view and play zoomed view
+    <li> unlimited undo/redo
+    <li> spectral view
+    <li> FFT filtering
+    <li> adding reverb and other effects
+    <li> play 32-bit files
+    <li> file format conversion
+    <li> DirectX plugins
+    <li> compression/limiting dynamic range 
+</ul>
+
+With only a few exceptions Snd again meets the criteria. Noise reduction and compression/limiting are still in development, and of course DirectX plugin support is absent. However, Snd does support the LADSPA plugins, and there are a few other ways of plugging into Snd that we'll look at later.
+<p>
+
+However, it is one thing to say that Snd has this or that specific function available, and it is another thing to access the function or operation. In classic Snd many of the baseline functions and Cool Edit-style edits are invoked from the Listener via the Guile/Scheme language. However, the most recent releases of Snd have added a number of widgets and menu items to graphically access its editing tools and signal processors. Power users still have the Listener, but new users can now more easily make their way into Snd's considerable toolkit.
+<p>
+
+Before we start using that toolkit let's see how to determine an editing area in Snd.
+<p>
+
+<u><b>BASIC EDITING AREAS OF SND</b></u>
+<p>
+
+Edit areas in Snd include the whole file or files, the area between marks, and the selection (highlighted) area. The assumed edit area is the whole file. At this time most of the effects are applied only to whole files, but work is underway to add options to restrict processing to the highlighted selection or to a marked area.
+<p>
+
+<b>Marked Areas</b>
+<p>
+
+Marks can be placed into a file in three different forms. Type Ctrl-m or select "Add mark" from the graph display popup menu to add a normal mark into your file. Named marks are created with the Ctrl-x-m keyboard combination, and sync'd marks are added with the Ctrl-M command. In each case, the cursor position defines the mark insert point in the graph display. Delete marks via the channel graph popup: Set the cursor near the mark you want to delete, select "Delete mark" from the popup, and it's gone. 
+<p>
+
+Any mark can be moved by left-clicking and holding on the handle at the top of the mark and carrying it with the mouse to a new location. You can toggle playback from any mark position by clicking on the triangular tab at the bottom of the mark, or you can drag the mark tab to "scrub" through the sound data. Marks can be used to move sections of a file forwards or backwards in time: hold down the Control key and left-click on the mark handle, then drag the mark forward to replace the existing data (if any) with the dragged material, or drag the mark backwards to shift the soundfile back and to add silence for the space of the drag. Marks can be used to define sample-accurate boundaries for processing a selection area: Place your marks at single-sample resolution, then select "Define selection by marks" from the Marks menu, and voil&agrave;, the marked area will become a sample-accurate highlighted selection area. 
+<p>
+
+Named marks are simply normal marks with names added for display and identification. If Snd's marks.scm package is loaded the report-mark-names function will display mark names in the minibuffer during playback.
+<p>
+
+Sync'd marks are marks whose actions are syncronized. Whatever is done with one mark will be done for all others sync'd with it: move one mark and the others will follow, even across different channels and files. Click on any sync'd mark's tab and multichannel playback will begin from the position of each sync'd mark.
+<p>
+
+You can sync previously-placed normal and named marks with the Start/Stop mark sync items in the Marks menu provided by the customization package. That menu includes many other mark-related editing functions, such as crop and trim operations, loop-play between marks, and a "fit selection to marks" function that time-scales a selected (highlighted) area and fits it between two marks, mixing it with any pre-existing material in the same marked area.
+<p>
+
+<b>Selected Areas And Regions</b>
+<p>
+
+A highlighted selection area is made by holding down the left mouse button anywhere within the channel graph display and sweeping the mouse to the left or right. The swept area will be highlighted; release the mouse button to finalize your selection (a Select All/Unselect All function is also available from the channel graph popup menu). Right-click anywhere within the highlighted area to pop up a menu of actions to perform on the selection, such as playback, loop play, reverse, and copy-to-new.
+<p>
+
+A selected area defines a region. View/Regions will call up the Regions Browser [Figure 8], a dialog window that includes a list of all the selections you've made up to that point, including selections from files that have been closed. At present, the browser is not too useful. You can play individual regions and send them to new edit channels, you can lock regions from deletion or further editing, and you can delete selections from the browser. 
+<p>
+
+<center> <img src="images/jpg/3_02-snd_regions.jpg">
+<p>
+<b>Figure 8.</b> The Regions browser
+</center>
+<p>
+
+Snd's examp.scm file includes code for two forms of sequential playback of regions. This command in the Listener:
+<p>
+
+<pre>
+	(region-play-sequence '(0 2 1))
+</pre>
+<p>
+
+will play regions 0, 2, and 1 in an uninterrupted sequence. This command:
+<p>
+
+<pre>
+	(region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0 2) (list 1.0 0)))
+</pre>
+<p>
+
+will play region 0 at 0.0 seconds, region 1 at .5 seconds, and regions 2 and 0 together at 1 second after the start. Hopefully the regions browser will eventually incorporate these commands into a set of graphic controls.
+<p>
+
+<b>Mixes And Tracks</b>
+<p>
+
+Standard soundfile mixing operations include functions to paste, insert, and replace data. Paste-mix blends the mix file (which Snd just calls a mix) with the original data, insert-mix splices in the mix at the cursor point (lengthening the original by the length of the mix data), and replace-mix wipes out the original data and replaces it with the new.
+<p>
+
+Snd provides a few different methods of paste-mixing. Double-clicking on a soundfile name in the File/Mix dialog will paste-mix that file into the active channel. Alternately, you can drag a highlighted file name from the entry box of any file dialog in Snd and drop it into any channel graph display. Paste-mix is also available from the channel graph popup menu, but in this case the mix source is the currently selected area. Make your selection, position the cursor at the mix point, then click on Mix Selection from the popup menu. In all these methods the mix is pasted in at the cursor position, and a waveform graphic will appear at the top of the channel display. You can reposition the mix waveform by clicking and dragging the handle at the left end of the graph [Figure 9].
+<p>
+
+<center> <img src="images/jpg/3_03-snd_mix.jpg">
+<p>
+<b>Figure 9.</b> The Mix panel
+</center>
+<p>
+
+Insert-mix is present as an insert-file action and as an insert-selection operation. To make things easy, I've added an Insert File item to the menu created by the special.scm file. Click on the menu item, select your file from the dialog box, and the original data will be pushed aside by the inserted mix data. The Edit menu and the channel graph popup menu both provide an Insert Selection function that operates the same way using the selected area for the mix data. Note too that middle-clicking will insert the last selected area at the cursor position for very fast insert-mixing.
+<p>
+
+Mix by replacement is also available from the Edit and channel popup menus. Once again the mix point is the cursor location in the active channel, and any highlighted data will be mixed into the channel, replacing any existing data from the cursor forwards. 
+<p>
+
+Here's a rather elaborate replace-mix technique for a precise remove/edit/replace operation: Select an area in your soundfile and copy it to a new file. Snap a pair of marks to the original selection boundaries, then zero out the selected area (copy-to-new, snap-marks, and zero-out are all found in the selection area popup menu). Now switch to the copied selection (named newf-n.snd by default), edit and add effects to taste, click on Edit/Select All, then switch back to the original channel. Position the cursor anywhere before the first marker and type C-j to accurately position the cursor at the mark point. Right-clck in the channel graph display and choose "Mix selection" or "Replace with selection" from the popup menu to replace the zeroed out area with your edited region. If the mix material is longer than the original selection area the mix method will determine whether the mix blends with existing data or replaces it.
+<p>
+
+Other mixing functions are available via the Mix Panel (see Figure 9), including a way to organize your mix files into tracks. A track is a specifier for a group of mix files: When mixes are defined into a track, any action on one of the track members occurs upon all other members sharing the same track identifier. If you move one mix file, all other mix files with the same track number will be moved too. The Mix Panel also includes speed and amplitude sliders that again can be used to adjust one or several mix files at once. Note that clicking on any mix file in the channel graph will update the mix panel to represent the selected mix.
+<p>
+
+Mixing creates temporary files stored at Snd's $TMPDIR directory. These files add up, so make sure $TMPDIR points to a spacious directory. I put the following line in my $HOME/.bashrc file to set the temporary files in a large empty directory:
+<p>
+
+<pre>
+	export TMPDIR=/usr/local/dump
+</pre>
+<p>
+
+Finally, be aware that by default the various mix procedures do not automatically normalize or scale amplitudes. You may want to adjust the gain of your original file, or you can use the Mix Panel amplitude slider to scale the volume of the mix file (or files).
+<p>
+
+<u><b>IF COOL EDIT CAN DO IT...</b></u>
+<p>
+
+Now that we know how to designate edit areas let's perform some of those operations commonly employed by Cool Edit users to see how Snd does the same things.
+<p>
+
+<b>Amplitude And Dynamics Processing</b>
+<p>
+
+Gain and normalization are simple processes. Go to the Effects menu, select the appropriate process, adjust the value slider in the GUI widget, and click on the DoIt button. Most (but not yet all) effects in Snd will call a small hourglass icon to indicate elapsed time during the processing; when the hourglass has filled its bottom half the process is ended and the channel display will update automatically. Gain and normalize can be applied to the whole file, highlighted selection, or marked area.
+<p>
+
+<b>Cutting And Trimming Files</b>
+<p>
+
+The easiest way to cut data from a file is to select it with the mouse, then right-click in the selected area to open the Selection popup menu. From there you can choose to delete or erase the area or to crop the data surrounding the selected area. Alternately, you can cut or copy your selection to a new channel. If you sync a group of files you can perform the same cut over all the sync'd files. Trimming and cropping are also mark operations, available as Scheme code or items in the Marks menu. Trim cuts the file length before or behind a mark, crop cuts everything outside a marked area.
+<p>
+
+<b>Zooming And High-resolution Edits</b>
+<p>
+
+Snd has excellent zoom controls. You can use the horizontal sliders beneath a sound's channel graph display to adjust zoom factor and and viewing position, or you can use the keyboard's arrow keys to zoom in or out and move the display view from left to right. The zoom focus can be controlled from the whole-file view down to the individual sample level. To the left of the channel graph display you can see Snd's vertical resolution sliders. These sliders are especially helpful when editing files with very low amplitudes. You can quickly set the x/y axes to minimum or maximum view by middle-clicking at either end of the slider trough.
+<p>
+
+Some Cool Edit users specifically mentioned that program's use of sinc interpolation between sample points. According to one user this method of interpolation yields smoother sound, reducing the possibility of clicks after an edit. Snd employs linear interpolation between sample points, but it also provides a smooth-sound function similar to sinc interpolation for smoothing the results of some editing processes. Snd's default interpolation is quite good though, and all operations available for marked and selected areas can be applied to a single sample.
+<p>
+
+Sinc interpolation is employed by default for Snd's high-quality sample-rate conversion. The sinc width can be set to improve the lowpass filter during conversion, and sinc interpolation can be toggled to linear interpolation for lower-powered machines.
+<p>
+
+<b>Undo/Redo</b>
+<p>
+
+Snd has an "unlimited" undo/redo function. Snd's Edit History panel (see Figure 6) provides another way to undo/redo and compare edits: simply click on any listing in the panel and the channel graph immediately displays that particular edit stage. Very sweet...
+<p>
+
+<b>Varispeed And Other Realtime Controls</b>
+<p>
+
+From the main menu click on View/Show Controls. A set of sliders and other control widgets will unfold beneath the active file's channel graph display (see Figure 6). All of the sliders work in realtime: the amplitude and speed controls are always active, the others are toggled on or off by a check-box to the right of their displays. Select Options/Hidden Controls to open a bank of sliders to fine-tune some of the effects parameters [Figure 10]. In case you were wondering, the icon to the right of the speed slider is a pair of arrows (&lt;--&gt;) for toggling playback direction, in realtime of course.
+<p>
+
+<center> <img src="images/jpg/3_04-snd_hidden_controls.jpg">
+<p>
+<b>Figure 10.</b> The hidden controls
+</center>
+<p>
+
+
+Realtime response was quite smooth for most of the effects. High values for the reverb scaler tended to distort the sound, and the Contrast effect was particularly sensitive. Time compress/expand and pitch-shifting performed smoothly over a looping playback (an ideal setup for the musician trying to learn a difficult passage from a recording), and within reasonable scaling limits the reverb was equally responsive.
+<p>
+
+<b>Filtering And Envelope Editing</b>
+<p>
+
+Snd provides two graphic filter editors, one below the default control panel display and one in the Edit menu. Several pre-defined filters are also available in the Effects menu.
+<p>
+
+Pull up the control panel's sash from its default position to uncover a frequency response envelope editor for an arbitrary-order (even-numbered) FIR filter. Plot your envelope points, set the order of the filter by clicking the tiny increment/decrement buttons to the right of the data box labelled "filter:", then press Apply to filter the active soundfile. Judge the results, undo as necessary and repeat process until satisfied.
+<p>
+
+Select Edit Envelope from the Edit menu to open another graphic editor [Figure 11]. This one is more general-purpose: you can create linear or exponential envelopes for amplitude (amp), frequency (flt), and sample rate conversion (src), and you can apply them to the whole file or just to the selected area. The frequency response envelope is applied to an arbitrary-order FIR or FFT filter, the exponentiation factor can be adjusted (with the slider labelled "exp:"), and envelopes can be named and saved to files for later use.
+<p>
+
+<center> <img src="images/jpg/3_05-snd_enved.jpg">
+<p>
+<b>Figure 11.</b> The envelope editor
+</center>
+<p>
+
+The Effects menu includes a variety of pre-fabricated filters. Butterworth filters are available in band-pass, band-reject, high-pass, and low-pass configurations, two comb filters are on the menu, and there's even a Moog-style lowpass-filter (24db/oct) with variable Q. More filters and filter parameter controls are available via the Listener, and work proceeds to bring more of that code into the Effects menu and the graphic control widgets.
+<p>
+
+<b>Reverb And Other Effects</b>
+<p>
+
+We have already seen the realtime reverb controls available on Snd's control panel. The algorithm employed for that reverb is from composer Michael McNabb's Nrev, and it can now be called from the Effects menu with more of its parameters exposed. Composer John Chowning's reverb also produces a good sounding reverb with only two controls. 
+<p>
+
+Convolution is an excellent means of applying a natural reverberation to a soundfile. The process typically requires a soundfile to be effected and an impulse response (IR) file to supply the effect. IR files are recordings of very brief sound events such as a finger-snap or a firecracker in an interesting acoustic environment. When a soundfile is convolved with an impulse response file it will sound as though it had been originally recorded in that environment. Snd's "simple" convolution is surprisingly effective, and I had great fun reverberating soundfiles with impulse responses from subway stations, stone cathedrals, and gigantic gas tanks. I also rediscovered the value of the Normalize amplitude scaler: the convolution produced a soundfile with a greatly expanded dynamic range, but normalizing scaled the data back to the range comfortable for my 16-bit audio device.
+<p>
+
+The Effects menu includes other common signal processing routines such as flange, echo, and time-scaling/pitch-shifting. It also includes less-common routines such as cross synthesis and adaptive saturation. All of these processing options have been available via the Listener, but the graphic controls invite experimentation without the language learning curve.
+<p>
+
+<b>Spectral View</b>
+<p>
+
+Snd's frequency analysis displays are impressive. Your soundfile can be analyzed by any of nine transforms, with more than a dozen window types and sizes. The spectral view itself can be controlled by the keys of your numeric keypad: The arrow keys control the perspective, the forward slash and asterisk keys control the transform size, and the plus and minus keys adjust the analysis window's "hop" size. The keypad Enter key resets the analysis defaults. You can also control the resolution of the x axis by left-clicking on the axis display and dragging the mouse to zoom in and out of the analysis data. Many other options are available from the frequency graph popup menu [Figure 12] or from Options/Transform Options on the main menu bar.
+<p>
+
+<center> <img src="images/jpg/3_06-snd_fft_popup.jpg">
+<p>
+<b>Figure 12.</b> Popup menu for the frequency-domain display
+</center>
+<p>
+
+<b>32-bit File Support And File Format Conversion</b>
+<p>
+
+Snd correctly reads and displays 32-bit soundfiles, automatically scaling the output for 16-bit audio equipment. I tested Snd's 32-bit capability by using Csound to create two 32-bit files, one in IRCAM's SF format and the other as a WAV file. Both soundfiles loaded and played without complaint. Note however that my soundcard is certainly not 32-bit capable; Snd performs an internal conversion to 16-bits to accomodate typical consumer-grade soundcards.
+<p>
+
+You can convert the soundfile's format with File/Save As. That dialog includes selection boxes for header style and data representation (with default associations), an entry box for comments, and the default sampling rate (user-definable).
+<p>
+ 
+<b>Plugin Support And Dynamically Loaded Modules</b>
+<p>
+
+If Snd is configured --with-ladspa you can dynamically load LADSPA plugins (see my <a href=http://linux.oreillynet.com/pub/a/linux/2001/02/02/ladspa.html>article on LADSPA plugins</a> on the O'Reilly Network). I have "hard-coded" a number of widgets to provide graphic controls for LADSPA plugins as stand-alone effects, but loading them via the Listener is not terribly diffcult. Here's a basic example:
+<p>
+
+<pre>
+	(apply-ladspa (make-sample-reader 0) (list "cmt" "delay_5s" .3 .5) 12000 "/home/dlphilp/soundfiles/bunt.wav")
+</pre>
+<p>
+
+This sequence tells Snd to read a block of 12000 samples from the bunt.wav file, starting at sample number 0, and apply the delay_5s LADSPA plug-in (found in the cmt.so library) with a delay time of .3 seconds and a 50/50 balance of uneffected and effected sound.
+<p>
+
+<u><b>FILE PLAYBACK AND RECORDING</b></u>
+<p>
+
+<b>Playing Files</b>
+<p>
+
+Play commands are available everywhere in Snd. The Play button toggles playback from the start of the file; when toggled off the cursor returns to its original position. Normal play and loop play are available for the whole file, highlighted selection, or marked area. The channel graph popup menu includes commands for normal play (from the start of the file), play from cursor position, play previous edit, and play the original unedited file. Use sync'd marks for multichannel play as described above. Press the space bar to pause playback, press again to continue playback from the stop point. Type C-t to stop the player at any time, or select Stop Play from the Panic Control menu created by the customization package.
+<p>
+
+Snd will load and play monaural, stereo, and multichannel soundfiles in 8, 16, or 32 bit resolution. If your audio hardware supports true multichannel playback Snd will distribute the channels properly, but it will also nicely fold multichannel files into stereo output if the hardware is not capable of handling more than two channels. You can also make a multichannel soundfile by specifying the desired number of channels when creating a new empty file from the File/New dialog.
+<p>
+
+<b>Recording With Snd</b>
+<p>
+
+Go to File/Record to open Snd's Recorder window [Figure 13]. In this window you can monitor and record audio input, set system sound levels, and save your recordings in a variety of file formats. You can specify a filename for your recording, along with its sample rate and number of channels, and if necessary you can adjust the record buffer size. 
+<p>
+
+<center> <img src="images/jpg/3_07-snd_recorder.jpg">
+<p>
+<b>Figure 13.</b> The Recorder window
+</center>
+<p>
+Snd's default input device is the microphone channel of the system soundcard mixer. To change the recording device, close the Recorder and make this entry in the Listener:
+<p>
+
+<pre>
+        (set! (recorder-in-device) mus-audio-line-in)
+</pre>
+
+Reopen the Recorder and the input channel will now be set to the line-in of your soundcard mixer. To set the input channel back to the microphone, close the record window and run this command in the Listener:
+<p>
+
+<pre>
+        (set! (recorder-in-device) mus-audio-microphone)
+</pre>
+
+Replace 'microphone' with 'cd' to record from your CD player. Or you can skip all that typing by using a widget I put together for my SBLive (found in the Special menu), but you'll still need to open/close the Recorder window to reset the input device.
+<p>
+
+The instructions above are valid for ALSA, OSS/Linux, and the kernel drivers. However, if you're using the ALSA drivers you have an extra record input option: you can tap the soundcard mixer's master output as a recording source, letting you record the output from programs like <a href=http://www.bitmechanic.com/projects/freebirth/>Freebirth</a> (a cool synth/sample-player/sequencer with, alas, no file-save function) or from Internet streaming audio broadcasts. This Listener command correctly informs the Recorder to take its input from the soundcard mixer's master output:
+<p>
+
+<pre>
+        (set! (recorder-in-device) mus-audio-line-out)
+</pre>
+
+It will not reset the system mixer, because Snd is slightly out of sync the current ALSA packages. Any ALSA-aware mixer should include a switch to set the master output as the record source, and hopefully, Snd's support for native ALSA features will improve after ALSA reaches version 1.0. Until then, ALSA's OSS emulation layer works perfectly for Snd compiled with support for the OSS/Free (kernel sound) API.
+<p>
+
+<i>Note: Snd hacker Fernando Lopez-Lezcano has been working to improve Snd's support for native ALSA. Snd does support ALSA 0.5.x (now deprecated) and 0.9.x, though your mileage with Snd + ALSA may vary according to your particular soundcard. See the documentation in the latest Snd packages for the latest information regarding Snd and ALSA.</i>
+<p>
+
+Once you've selected your recording device you can set its level from the mixer in the top right corner of the Recorder window. When you are satisfied with the level settings, activate the Recorder's input channels by pressing one or both of the A/B buttons beside the input level meters. Now give your recording a new name and press the Record button; when you've finished, press the Done button (it replaced Record). If you toggled the Autoload button your new file will be loaded immediately after recording. 
+<p>
+
+You can also start recording only after the input signal passes a certain level. When you move the Trigger slider the Record button becomes a Triggered Record button: press it, but no recording will occur until the input level reaches the amplitude set by the threshold slider.
+<p>
+
+Snd's recording facilities are rather Spartan, but Snd was not designed to replace a hard-disk recording system. The Recorder is a useful tool, and if your recording needs are not particularly heavy it may suit your purpose perfectly.
+<p>
+
+</body>
+</html>
