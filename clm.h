@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 6
-#define MUS_DATE "11-Sep-04"
+#define MUS_REVISION 7
+#define MUS_DATE "13-Dec-04"
 
 /*
+ * 13-Dec:     mus_env_linear.
  * 11-Sep:     removed buffer generator.
  * 6-Sep:      removed mus_oscil_bank, mus_bank.
  * 24-Aug:     removed mus_inspect method -- overlaps mus_describe and is useless given gdb capabilities.
@@ -449,8 +450,10 @@ Float *mus_partials_to_waveshape(int npartials, Float *partials, int size, Float
 Float *mus_partials_to_polynomial(int npartials, Float *partials, int kind);
 
 Float mus_env(mus_any *ptr);
+Float mus_env_linear(mus_any *ptr);
 mus_any *mus_make_env(Float *brkpts, int pts, Float scaler, Float offset, Float base, Float duration, off_t start, off_t end, Float *odata);
 bool mus_env_p(mus_any *ptr);
+bool mus_env_linear_p(mus_any *ptr);
 void mus_restart_env(mus_any *ptr);
 Float mus_env_interp(Float x, mus_any *env);
 off_t *mus_env_passes(mus_any *gen); /* for Snd */

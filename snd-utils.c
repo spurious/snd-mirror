@@ -47,13 +47,19 @@ Float in_dB(Float min_dB, Float lin_dB, Float py)
   return((py <= lin_dB) ? min_dB : (20.0 * log10(py)));
 }
 
+#if DEBUGGING && DEBUG_MEMORY
+char *copy_string_1(const char *str, const char *caller)
+#else
 char *copy_string(const char *str)
+#endif
 {
 #if DEBUG_MEMORY
   char *newstr = NULL;
   if (str)
     {
+      set_encloser(caller);
       newstr = (char *)MALLOC((strlen(str) + 1) * sizeof(char));
+      set_encloser(NULL);
       strcpy(newstr, str);
     }
   return(newstr);

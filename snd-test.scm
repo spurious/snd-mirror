@@ -40,7 +40,7 @@
 ;(setlocale LC_ALL "de_DE")
 
 (define tests 1)
-(define keep-going #f)
+(define keep-going #t)
 (define all-args #f) ; huge arg testing
 (define with-big-file #t)
 
@@ -206,10 +206,14 @@
 	    (fveql a (cdr b) (+ i 1))))))
 
 (define (vequal v0 v1)
-  (<= (vct-peak (vct-subtract! (vct-copy v0) v1)) .001))
+  (and v0 v1
+       (vct? v0) (vct? v1)
+       (<= (vct-peak (vct-subtract! (vct-copy v0) v1)) .001)))
 
 (define (vvequal v0 v1)
-  (<= (vct-peak (vct-subtract! (vct-copy v0) v1)) .00002))
+  (and v0 v1
+       (vct? v0) (vct? v1)
+       (<= (vct-peak (vct-subtract! (vct-copy v0) v1)) .00002)))
 
 (define (string-=? a b)
   (or (string=? a b)
@@ -21862,7 +21866,7 @@ EDITS: 5
 
 	      (close-sound ind)))
 
-	  (if (not (provided? 'snd-nogui))
+	  (if (or (provided? 'xm) (provided? 'xg))
 	      (begin
 		(load "oscope.scm")
 		;; oscope exists
@@ -30271,6 +30275,116 @@ EDITS: 1
 	  
 	  (close-sound ind)
 	  )	
+
+	(if (and all-args (= test-16 0))
+	    (let ((old-opt (optimization))
+		  (tries 256))
+	      (set! (optimization) 6)
+	      (snd-display ";frames: ~,2F ~,2F" 
+			   (exact->inexact (/ (mus-sound-frames "1.snd") (mus-sound-frames "oboe.snd")))
+			   (exact->inexact (/ (mus-sound-frames "1.snd") (mus-sound-frames "1a.snd"))))
+	      (for-each
+	       (lambda (name func)
+		 (let* ((ind (open-sound "1.snd"))
+			(start-time-1 (real-time)))
+		   (set! (squelch-update ind 0) #t)
+		   (do ((i 0 (1+ i)))
+		       ((= i tries))
+		     (func ind i))
+		   (let ((mid-time-1 (real-time)))
+		     (revert-sound ind)
+		     (set! (squelch-update ind 0) #f)
+		     (close-sound ind)
+		     (let ((end-time-1 (real-time)))
+		       (let* ((ind (open-sound "oboe.snd"))
+			      (start-time-2 (real-time)))
+			 (set! (squelch-update ind 0) #t)
+			 (do ((i 0 (1+ i)))
+			     ((= i tries))
+			   (func ind i))
+			 (let ((mid-time-2 (real-time)))
+			   (revert-sound ind)
+			   (set! (squelch-update ind 0) #f)
+			   (close-sound ind)
+			   (let ((end-time-2 (real-time)))
+			     (let* ((ind (open-sound "1a.snd"))
+				    (start-time (real-time)))
+			       (set! (squelch-update ind 0) #t)
+			       (do ((i 0 (1+ i)))
+				   ((= i tries))
+				 (func ind i))
+			       (let ((mid-time (real-time)))
+				 (revert-sound ind)
+				 (set! (squelch-update ind 0) #f)
+				 (close-sound ind)
+				 (let ((end-time (real-time)))
+				   (snd-display ";~A:~12T~A~17T~A~26T~A~31T~A~40T~A~45T~A~52T(~,2F, ~,2F)" 
+						name 
+						
+						(hundred (- mid-time-1 start-time-1)) (hundred (- end-time-1 mid-time-1))
+						(hundred (- mid-time-2 start-time-2)) (hundred (- end-time-2 mid-time-2))
+						(hundred (- mid-time start-time)) (hundred (- end-time mid-time))
+						
+						(exact->inexact (/ (+ (hundred (- mid-time-1 start-time-1)) (hundred (- end-time-1 mid-time-1)))
+								   (max 1 (+ (hundred (- mid-time-2 start-time-2)) (hundred (- end-time-2 mid-time-2))))))
+						(exact->inexact (/ (+ (hundred (- mid-time-1 start-time-1)) (hundred (- end-time-1 mid-time-1)))
+								   (max 1 (+ (hundred (- mid-time start-time)) (hundred (- end-time mid-time)))))))))))))))))
+	       
+	       (list "scale" "set!" "env" "env-exp" "env-step" "delete" "insert" "ptree" "pad"
+		     "mix-no-tag" "mix-tag" "mix-amp" "mix-scale" "src-2" "src" 
+		     "filter" "filter-sym" "f10" "f10sym" "clm" 
+		     "reverse" 
+		     )
+	       (list 
+		(lambda (snd i)
+		  (scale-channel (* i .01)))
+		(lambda (snd i)
+		  (set! (sample i) .5))
+		(lambda (snd i)
+		  (env-channel '(0 0 1 1)))
+		(lambda (snd i)
+		  (env-channel-with-base '(0 0 1 1) 32.0))
+		(lambda (snd i)
+		  (env-channel-with-base '(0 0 1 1) 0.0))
+		(lambda (snd i)
+		  (delete-sample (* 10 i)))
+		(lambda (snd i)
+		  (insert-sample (* 10 i) .5))
+		(lambda (snd i)
+		  (ptree-channel (lambda (y) (* y .999))))
+		(lambda (snd i)
+		  (pad-channel (* 10 i) (* 10 i)))
+		(lambda (snd i)
+		  (mix "pistol.snd" (* i 10) 0 snd 0 #f))
+		(lambda (snd i)
+		  (mix "pistol.snd" (* i 10) 0 snd 0 #t))
+		(lambda (snd i)
+		  (let ((mx (mix "pistol.snd" (* i 100))))
+		    (set! (mix-amp mx 0) .01)))
+		(lambda (snd i)
+		  (let ((mx (mix "pistol.snd" (* i 100))))
+		    (scale-to .5)))
+		(lambda (snd i)
+		  (src-sound 2.0)
+		  (undo))
+		(lambda (snd i)
+		  (src-sound 2.01)
+		  (undo))
+		(lambda (snd i)
+		  (filter-channel (vct .25 .5 .25 .1) 4))
+		(lambda (snd i)
+		  (filter-channel (vct .25 .5 .5 .25) 4))
+		(lambda (snd i)
+		  (filter-channel (vct .1 .2 .1 .1 .1 .1 .1 .2 .1 .1) 10))
+		(lambda (snd i)
+		  (filter-channel (vct .1 .1 .1 .1 .1 .1 .1 .1 .1 .1) 10))
+		(lambda (snd i)
+		  (clm-channel (make-two-zero .5 .5)))
+		(lambda (snd i)
+		  (reverse-channel (* i 10) (* i 100)))
+		))
+	      (set! (optimization) old-opt)))
+	
 	))
       (run-hook after-test-hook 16)
       ))
@@ -31497,6 +31611,7 @@ EDITS: 2
 	  (revert-sound)
 	  
 	  ;; ---- *.scm
+	  (if (or (provided? 'xm) (provided? 'xg))
 	  (let ((ctr 1))
 	    (for-each
 	     (lambda (func1 descr)
@@ -31651,7 +31766,7 @@ EDITS: 2
 	      "(lambda (snd chn) (effects-jc-reverb-1 0.1 0 #f snd chn))"
 
 	      )
-	     ))
+	     )))
 	  
 	  (close-sound ind)
 	  ))
@@ -33060,6 +33175,30 @@ EDITS: 2
 	  (update-time-graph)
 	  (close-sound ind1)
 	  (close-sound ind2)))
+
+      (let ((ind (new-sound "tmp.snd" mus-next mus-bfloat 22050 1 :size 50)))
+	(set! (sample 3) 1.0)
+	(filter-channel (vct .5 1.0 .5) 3)
+	(let ((data (channel->vct 0 10)))
+	  (if (not (vequal data (vct 0.000 0.000 0.000 0.500 1.000 0.500 0.000 0.000 0.000 0.000)))
+	      (snd-display ";filter (sym 3): ~A" data)))
+	(undo)
+	(filter-channel (vct .5 1.0 .25) 3)
+	(let ((data (channel->vct 0 10)))
+	  (if (not (vequal data (vct 0.000 0.000 0.000 0.500 1.000 0.250 0.000 0.000 0.000 0.000)))
+	      (snd-display ";filter (3): ~A" data)))
+	(undo)
+	(filter-channel (vct .5 1.0 1.0 .5) 4)
+	(let ((data (channel->vct 0 10)))
+	  (if (not (vequal data (vct 0.000 0.000 0.000 0.500 1.000 1.000 0.500 0.000 0.000 0.000)))
+	      (snd-display ";filter (sym 4): ~A" data)))
+	(undo)
+	(filter-channel (vct .5 1.0 1.0 .25) 4)
+	(let ((data (channel->vct 0 10)))
+	  (if (not (vequal data (vct 0.000 0.000 0.000 0.500 1.000 1.000 0.250 0.000 0.000 0.000)))
+	      (snd-display ";filter (4): ~A" data)))
+	(undo)
+	(close-sound ind))
 
       (let ((ind (new-sound "tmp.snd" mus-next mus-bfloat 22050 1 #f 100)))
 	(set! (sample 10) 0.5)
@@ -38871,6 +39010,7 @@ EDITS: 2
 
 (define old-opt-23 (optimization))
 (set! (optimization) max-optimization)
+(dismiss-all-dialogs)
 
 (define (make-cndf n freq)
   (let ((amps (make-vct (1- n) 0.0))

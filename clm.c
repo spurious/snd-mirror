@@ -3637,6 +3637,7 @@ typedef struct {
 /* what about breakpoint triples for per-segment exp envs? */
 
 bool mus_env_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_ENV));}
+bool mus_env_linear_p(mus_any *ptr) {return(mus_env_p(ptr) && (((seg *)ptr)->style == ENV_SEG));}
 
 Float mus_env(mus_any *ptr)
 {
@@ -3660,6 +3661,21 @@ Float mus_env(mus_any *ptr)
 	}
       break;
     }
+  gen->pass++;
+  return(val);
+}
+
+Float mus_env_linear(mus_any *ptr)
+{
+  seg *gen = (seg *)ptr;
+  Float val;
+  val = gen->current_value;
+  if ((gen->index < gen->size) && (gen->pass >= gen->passes[gen->index]))
+    {
+      gen->index++;
+      gen->rate = gen->rates[gen->index];
+    }
+  gen->current_value += gen->rate;
   gen->pass++;
   return(val);
 }

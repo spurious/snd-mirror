@@ -630,7 +630,7 @@ void add_channel_data(char *filename, chan_info *cp, channel_graph_t graphed)
 				    chdr->chans,
 				    chdr->type);
 	  during_open(fd, filename, SND_OPEN_CHANNEL);
-	  io = make_file_state(fd, chdr, chn, FILE_BUFFER_SIZE);
+	  io = make_file_state(fd, chdr, chn, 0, FILE_BUFFER_SIZE);
 	  cp->sounds[0] = make_snd_data_file(filename, io, chdr, DONT_DELETE_ME, cp->edit_ctr, chn);
 	}
     }

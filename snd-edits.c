@@ -419,6 +419,10 @@ typedef struct {
         ptree_pos1, ptree_dur1;
 } ed_fragment;
 
+/* when editing long edit lists, it might be faster to copy the current one if
+ *   we used arrays of structs here, rather than arrays of pointers to structs
+ */
+
 #define FRAGMENTS(Ed)                       (ed_fragment **)((Ed)->fragments)
 #define FRAGMENT(Ed, Pos)                  ((ed_fragment **)((Ed)->fragments))[Pos]
 #define FRAGMENT_GLOBAL_POSITION(Ed, Pos)  ((ed_fragment **)((Ed)->fragments))[Pos]->out
@@ -4854,10 +4858,10 @@ static ed_list *make_ed_list(int size)
   ed->allocated_size = size;
 #if (!(defined(__GNUC__))) || (!(defined(__cplusplus)))
   /* this form required by the several compilers */
-  ed->fragments = (void *)CALLOC(size, sizeof(ed_fragment *));
+  ed->fragments = (void *)MALLOC(size * sizeof(ed_fragment *));
 #else
   /* this form apparently required by g++ */
-  FRAGMENTS(ed) = (ed_fragment **)MALLOC(size, sizeof(ed_fragment *));
+  FRAGMENTS(ed) = (ed_fragment **)MALLOC(size * sizeof(ed_fragment *));
 #endif
   for (i = 0; i < size; i++)
     FRAGMENT(ed, i) = (ed_fragment *)calloc(1, sizeof(ed_fragment)); /* remove this from the memory tracker -- it's glomming up everything */
@@ -5139,9 +5143,11 @@ static void new_trailing_ramp(ed_fragment *new_back, ed_fragment *old_back, off_
       ED_RAMP4_END(new_back) = rmp1;
     }
   if (PTREE_OP(ED_TYPE(new_back)))
-    ED_PTREE_POSITION(new_back) = ED_PTREE_POSITION(old_back) + samp - ED_GLOBAL_POSITION(old_back);
-  if (PTREE2_OP(ED_TYPE(new_back)))
-    ED_PTREE2_POSITION(new_back) = ED_PTREE2_POSITION(old_back) + samp - ED_GLOBAL_POSITION(old_back);
+    {
+      ED_PTREE_POSITION(new_back) = ED_PTREE_POSITION(old_back) + samp - ED_GLOBAL_POSITION(old_back);
+      if (PTREE2_OP(ED_TYPE(new_back)))
+	ED_PTREE2_POSITION(new_back) = ED_PTREE2_POSITION(old_back) + samp - ED_GLOBAL_POSITION(old_back);
+    }
 }
 
 static void ripple_all(chan_info *cp, off_t beg, off_t samps)
@@ -5340,7 +5346,7 @@ bool file_insert_samples(off_t beg, off_t num, char *inserted_file, chan_info *c
 				hdr->type);
       during_open(fd, inserted_file, SND_INSERT_FILE);
       ED_SOUND(cb) = add_sound_file_to_edit_list(cp, inserted_file, 
-						 make_file_state(fd, hdr, chan, FILE_BUFFER_SIZE),
+						 make_file_state(fd, hdr, chan, 0, FILE_BUFFER_SIZE),
 						 hdr, auto_delete, chan);
       {
 	ed_list *ed;
@@ -5596,7 +5602,7 @@ bool file_mix_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp
 				hdr->type);
       during_open(fd, tempfile, SND_CHANGE_FILE);
       ED_SOUND(cb) = add_sound_file_to_edit_list(cp, tempfile, 
-						 make_file_state(fd, hdr, chan, FILE_BUFFER_SIZE),
+						 make_file_state(fd, hdr, chan, 0, FILE_BUFFER_SIZE),
 						 hdr, auto_delete, chan);
       {
 	ed_list *ed;
@@ -5655,7 +5661,7 @@ bool file_override_samples(off_t num, char *tempfile, chan_info *cp, int chan, f
       cp->edits[cp->edit_ctr] = e;
       if (lock == LOCK_MIXES) lock_affected_mixes(cp, 0, num);
       FRAGMENT_SOUND(e, 0) = add_sound_file_to_edit_list(cp, tempfile, 
-							 make_file_state(fd, hdr, chan, FILE_BUFFER_SIZE),
+							 make_file_state(fd, hdr, chan, 0, FILE_BUFFER_SIZE),
 							 hdr, auto_delete, chan);
       e->edit_type = CHANGE_EDIT;
       e->sound_location = FRAGMENT_SOUND(e, 0);
@@ -6437,7 +6443,7 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
 	       */
 	      if (first_snd->inuse)
 		{
-		  first_snd = copy_snd_data(first_snd, bufsize);
+		  first_snd = copy_snd_data(first_snd, samp, bufsize);
 		  if (!first_snd)
 		    return(cancel_reader(sf));
 		}
@@ -6539,14 +6545,11 @@ static void previous_sound_1 (snd_fd *sf)
 	    {
 	      if (prev_snd->inuse) 
 		{
-		  prev_snd = copy_snd_data(prev_snd, MIX_FILE_BUFFER_SIZE);
+		  prev_snd = copy_snd_data(prev_snd, ind0, MIX_FILE_BUFFER_SIZE);
 		  if (prev_snd == NULL)
 		    {
 		      /* too many files open or something of that sort */
 		      reader_out_of_data(sf);
-#if DEBUGGING
-		      fprintf(stderr, "previous_sound reader closed");
-#endif
 		      return;
 		    }
 		}
@@ -6637,13 +6640,10 @@ static void next_sound_1(snd_fd *sf)
 	    {
 	      if (nxt_snd->inuse)
 		{
-		  nxt_snd = copy_snd_data(nxt_snd, MIX_FILE_BUFFER_SIZE);
+		  nxt_snd = copy_snd_data(nxt_snd, ind0, MIX_FILE_BUFFER_SIZE);
 		  if (nxt_snd == NULL)
 		    {
 		      reader_out_of_data(sf);
-#if DEBUGGING
-		      fprintf(stderr, "next_sound reader closed");
-#endif
 		      return;
 		    }
 		}
@@ -6708,7 +6708,7 @@ bool copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
 			    hdr0->chans,
 			    hdr0->type);
   new0 = add_sound_file_to_edit_list(cp1, name,
-				     make_file_state(fd, hdr0, cp0->chan, FILE_BUFFER_SIZE),
+				     make_file_state(fd, hdr0, cp0->chan, 0, FILE_BUFFER_SIZE),
 				     hdr0, DONT_DELETE_ME, cp0->chan);
   name = cp1->sound->filename;
   hdr1 = copy_header(name, cp1->sound->hdr);
@@ -6721,7 +6721,7 @@ bool copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
 			    hdr1->chans,
 			    hdr1->type);
   new1 = add_sound_file_to_edit_list(cp0, name,
-				     make_file_state(fd, hdr1, cp1->chan, FILE_BUFFER_SIZE),
+				     make_file_state(fd, hdr1, cp1->chan, 0, FILE_BUFFER_SIZE),
 				     hdr1, DONT_DELETE_ME, cp1->chan);
   e0 = amp_env_copy(cp0, false, pos0);
   e1 = amp_env_copy(cp1, false, pos1);

@@ -479,11 +479,16 @@ typedef struct {
 
 /* -------- snd-io.c -------- */
 
+#if DEBUGGING && DEBUG_MEMORY
+int snd_open_read_1(const char *arg, const char *caller);
+#define snd_open_read(File) snd_open_read_1(File, __FUNCTION__)
+#else
 int snd_open_read(const char *arg);
+#endif
 int snd_reopen_write(const char *arg);
 int snd_write_header(const char *name, int type, int srate, int chans, off_t loc, off_t samples, int format, const char *comment, int len, int *loops);
 bool snd_overwrite_ok(const char *ofile);
-snd_io *make_file_state(int fd, file_info *hdr, int chan, int suggested_bufsize);
+snd_io *make_file_state(int fd, file_info *hdr, int chan, off_t beg, int suggested_bufsize);
 void file_buffers_forward(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_data *cur_snd);
 void file_buffers_back(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_data *cur_snd);
 int snd_remove(const char *name, cache_remove_t forget);
@@ -492,7 +497,7 @@ int snd_fclose(FILE *fd, const char *name);
 void remember_temp(const char *filename, int chans);
 void forget_temps(void);
 snd_data *make_snd_data_file(const char *name, snd_io *io, file_info *hdr, file_delete_t temp, int ctr, int temp_chan);
-snd_data *copy_snd_data(snd_data *sd, int bufsize);
+snd_data *copy_snd_data(snd_data *sd, off_t beg, int bufsize);
 snd_data *free_snd_data(snd_data *sf);
 snd_data *make_snd_data_buffer(mus_sample_t *data, int len, int ctr);
 snd_data *make_snd_data_buffer_for_simple_channel(int len);
@@ -1304,7 +1309,12 @@ off_t snd_abs_off_t(off_t val);
 int snd_ipow2(int n);
 int snd_2pow2(int n);
 Float in_dB(Float min_dB, Float lin_dB, Float py);
+#if DEBUGGING && DEBUG_MEMORY
+char *copy_string_1(const char *str, const char *caller);
+#define copy_string(Str) copy_string_1(Str, __FUNCTION__)
+#else
 char *copy_string(const char *str);
+#endif
 int snd_strlen(const char *str);
 char *snd_strcat(char *errmsg, const char *str, int *err_size);
 char *string_to_colon(char *val);

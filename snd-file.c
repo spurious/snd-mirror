@@ -959,7 +959,7 @@ snd_info *make_sound_readable(const char *filename, bool post_close)
 				    hdr->data_location,
 				    hdr->chans,
 				    hdr->type);
-	  io = make_file_state(fd, hdr, i, 
+	  io = make_file_state(fd, hdr, i, 0,
 			       (post_close) ? MAX_BUFFER_SIZE : MIX_FILE_BUFFER_SIZE);
 	  cp->sounds[0] = make_snd_data_file(filename, io,
 					     copy_header(hdr->name, hdr),

@@ -98,7 +98,7 @@
 #define TIME_STR_SIZE 64
 #define PRINT_BUFFER_SIZE 512
 #define LABEL_BUFFER_SIZE 64
-#define REPORTING_SIZE (FILE_BUFFER_SIZE * 20)
+#define REPORTING_SIZE (MAX_BUFFER_SIZE * 8)
 /* progress bar (hourglass icon) is displayed if more than this many samples are being processed */
 #define NUM_GLASSES 15
 #define NUM_BOMBS 15

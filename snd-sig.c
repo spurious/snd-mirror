@@ -614,7 +614,7 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, 
   if (dur <= 0) return;
   if ((!(editable_p(cp0))) || (!(editable_p(cp1)))) return;
   sp0 = cp0->sound;
-  reporting = ((sp0) && (dur > REPORTING_SIZE));
+  reporting = ((sp0) && (dur > REPORTING_SIZE) && (!(cp0->squelch_update)));
   if (reporting) start_progress_report(sp0, NOT_FROM_ENVED);
   if (dur > MAX_BUFFER_SIZE)
     {
@@ -778,7 +778,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
   if (!(editable_p(cp))) return(NULL);
   sp = cp->sound;
   full_chan = ((beg == 0) && (dur == CURRENT_SAMPLES(cp)));
-  reporting = ((sp) && (dur > REPORTING_SIZE));
+  reporting = ((sp) && (dur > REPORTING_SIZE) && (!(cp->squelch_update)));
   if (reporting) start_progress_report(sp, from_enved);
   ofile = snd_tempnam();
   hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, (char *)origin);
@@ -1305,7 +1305,7 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, of
       mus_sample_t **data;
       mus_sample_t *idata;
       off_t offk;
-      reporting = ((sp) && (dur > REPORTING_SIZE));
+      reporting = ((sp) && (dur > REPORTING_SIZE) && (!(cp->squelch_update)));
       if (order == 0) order = 65536; /* presumably fsize is enormous here, so no MIN needed */
       if (!(POWER_OF_2_P(order)))
 	order = snd_2pow2(order);
@@ -1403,7 +1403,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t b
   if ((!over_selection) || (!truncate))
     dur += order;
   /* if over-selection this causes it to clobber samples beyond the selection end -- maybe mix? */
-  reporting = ((sp) && (dur > REPORTING_SIZE));
+  reporting = ((sp) && (dur > REPORTING_SIZE) && (!(cp->squelch_update)));
   if (reporting) start_progress_report(sp, from_enved);
   if (dur > MAX_BUFFER_SIZE)
     {
@@ -1455,10 +1455,12 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t b
       if (gen)
 	{
 	  for (j = 0; j < dur; j++)
-	    idata[j] = MUS_RUN(gen, read_sample_to_float(sf), 0.0);
+	    idata[j] = MUS_FLOAT_TO_SAMPLE(MUS_RUN(gen, read_sample_to_float(sf), 0.0));
 	}
       else
 	{
+	  /* splitting out symmetric case did not speed up this loop appreciably */
+	  /* and using memmove for the "state" changes slowed it down by a factor of 2! */
 	  for (j = 0; j < dur; j++)
 	    {
 	      x = 0.0; 
@@ -2134,29 +2136,53 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
       for (i = 0; i < si->chans; i++) 
 	{
 	  if (temp_file)
-	    data[i] = (mus_sample_t *)CALLOC(FILE_BUFFER_SIZE, sizeof(mus_sample_t)); 
+	    data[i] = (mus_sample_t *)CALLOC(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
 	  else data[i] = (mus_sample_t *)CALLOC(dur, sizeof(mus_sample_t)); 
 	}
       j = 0;
-      reporting = (dur > REPORTING_SIZE);
+      reporting = ((dur > REPORTING_SIZE) && (!(cp->squelch_update)));
       if (reporting) start_progress_report(sp, from_enved);
       if (si->chans > 1)
 	{
 	  ss->stopped_explicitly = false;
-	  for (ioff = 0; ioff < dur; ioff++)
+	  if (temp_file)
 	    {
-	      egen_val = mus_env(egen);
-	      for (k = 0; k < si->chans; k++)
-		data[k][j] = (mus_sample_t)(read_sample(sfs[k]) * egen_val);
-	      j++;
-	      if ((temp_file) && (j == FILE_BUFFER_SIZE))
+	      for (ioff = 0; ioff < dur; ioff++)
 		{
-		  if (reporting) 
-		    progress_report(sp, origin, 0, 0, (Float)((double)ioff / ((double)dur)), from_enved);
-		  err = mus_file_write(ofd, 0, j - 1, si->chans, data);
-		  j = 0;
-		  if (err == -1) break;
-		  if (ss->stopped_explicitly) break;
+		  egen_val = mus_env(egen);
+		  for (k = 0; k < si->chans; k++)
+		    data[k][j] = (mus_sample_t)(read_sample(sfs[k]) * egen_val);
+		  j++;
+		  if ((temp_file) && (j == MAX_BUFFER_SIZE))
+		    {
+		      if (reporting) 
+			progress_report(sp, origin, 0, 0, (Float)((double)ioff / ((double)dur)), from_enved);
+		      err = mus_file_write(ofd, 0, j - 1, si->chans, data);
+		      j = 0;
+		      if (err == -1) break;
+		      if (ss->stopped_explicitly) break;
+		    }
+		}
+	    }
+	  else
+	    {
+	      if (mus_env_linear_p(egen))
+		{
+		  for (j = 0; j < dur; j++)
+		    {
+		      egen_val = mus_env_linear(egen);
+		      for (k = 0; k < si->chans; k++)
+			data[k][j] = (mus_sample_t)(read_sample(sfs[k]) * egen_val);
+		    }
+		}
+	      else
+		{
+		  for (j = 0; j < dur; j++)
+		    {
+		      egen_val = mus_env(egen);
+		      for (k = 0; k < si->chans; k++)
+			data[k][j] = (mus_sample_t)(read_sample(sfs[k]) * egen_val);
+		    }
 		}
 	    }
 	}
@@ -2171,7 +2197,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 		{
 		  idata[j] = (mus_sample_t)(read_sample(sf) * mus_env(egen));
 		  j++;
-		  if ((temp_file) && (j == FILE_BUFFER_SIZE))
+		  if ((temp_file) && (j == MAX_BUFFER_SIZE))
 		    {
 		      if (reporting)
 			progress_report(sp, origin, 0, 0, (Float)((double)ioff / ((double)dur)), from_enved);
@@ -2184,8 +2210,16 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 	    }
 	  else
 	    {
-	      for (ioff = 0; ioff < dur; ioff++)
-		idata[j++] = (mus_sample_t)(read_sample(sf) * mus_env(egen));
+	      if (mus_env_linear_p(egen))
+		{
+		  for (j = 0; j < dur; j++)
+		    idata[j] = (mus_sample_t)(read_sample(sf) * mus_env_linear(egen));
+		}
+	      else
+		{
+		  for (j = 0; j < dur; j++)
+		    idata[j] = (mus_sample_t)(read_sample(sf) * mus_env(egen));
+		}
 	    }
 	}
       if (temp_file)
@@ -2684,7 +2718,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 	    }
 	}
       sp = cp->sound;
-      reporting = (num > REPORTING_SIZE);
+      reporting = ((num > REPORTING_SIZE) && (!(cp->squelch_update)));
       if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
       sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
       if (sf == NULL) 
@@ -3181,7 +3215,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 				     (void *)sc));
   }
 #else
-  reporting = (num > REPORTING_SIZE);
+  reporting = ((num > REPORTING_SIZE) && (!(cp->squelch_update)));
   if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
   rpt4 = MAX_BUFFER_SIZE / 4;
   ss->stopped_explicitly = false;

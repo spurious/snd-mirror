@@ -3128,13 +3128,13 @@ int previous_mix_id(int id)
 
 static void draw_mix_waveform(mix_info *md) 
 {
-  if (md->cp->show_mix_waveforms)
+  if ((md->cp->show_mix_waveforms) && (!(md->cp->squelch_update)))
     display_mix_waveform(md->cp, md, true);
 }
 
 static void erase_mix_waveform(mix_info *md) 
 {
-  if (md->cp->show_mix_waveforms)
+  if ((md->cp->show_mix_waveforms) && (!(md->cp->squelch_update)))
     display_mix_waveform(md->cp, md, false);
 }
 

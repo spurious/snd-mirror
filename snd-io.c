@@ -80,7 +80,7 @@ static void reposition_file_buffers(snd_data *sd, off_t index)
     }
 }
 
-snd_io *make_file_state(int fd, file_info *hdr, int chan, int suggested_bufsize)
+snd_io *make_file_state(int fd, file_info *hdr, int chan, off_t beg, int suggested_bufsize)
 {
   snd_io *io;
   int bufsize;
@@ -103,7 +103,7 @@ snd_io *make_file_state(int fd, file_info *hdr, int chan, int suggested_bufsize)
   if (bufsize <= 0) {fprintf(stderr,"make_file_state, bufsize: %d\n", bufsize); abort();}
 #endif
   io->arrays[chan] = (mus_sample_t *)CALLOC(bufsize, sizeof(mus_sample_t));
-  reposition_file_buffers_1(0, io); /* get ready to read -- we're assuming mus_file_read_chans here */
+  reposition_file_buffers_1(beg, io); /* get ready to read -- we're assuming mus_file_read_chans here */
   return(io);
 }
 
@@ -189,10 +189,19 @@ static int too_many_files_cleanup(void)
   return(rtn);
 }
 
+#if DEBUGGING && DEBUG_MEMORY
+int snd_open_read_1(const char *arg, const char* caller)
+#else
 int snd_open_read(const char *arg) 
+#endif
 {
   int fd;
+#if DEBUGGING && DEBUG_MEMORY
+  /* try to track down a weird lost file problem in full arg snd-test 28 */
+  fd = io_open(arg, O_RDONLY, 0, caller, "snd_open_read in snd-io.c", 195);
+#else
   fd = OPEN(arg, O_RDONLY, 0);
+#endif
   if ((fd == -1) && (errno == EMFILE)) /* there's also ENFILE = file table overflow (/usr/include/asm/errno.h) */
     {
       fd = too_many_files_cleanup();
@@ -418,7 +427,7 @@ snd_data *make_snd_data_file(const char *name, snd_io *io, file_info *hdr, file_
   return(sd);
 }
 
-snd_data *copy_snd_data(snd_data *sd, int bufsize)
+snd_data *copy_snd_data(snd_data *sd, off_t beg, int bufsize)
 {
   snd_data *sf;
   snd_io *io;
@@ -436,7 +445,7 @@ snd_data *copy_snd_data(snd_data *sd, int bufsize)
 			    hdr->chans,
 			    hdr->type);
   during_open(fd, sd->filename, SND_COPY_READER);
-  io = make_file_state(fd, hdr, sd->chan, bufsize);
+  io = make_file_state(fd, hdr, sd->chan, beg, bufsize);
   sf = (snd_data *)CALLOC(1, sizeof(snd_data));
   sf->type = sd->type;
   sf->buffered_data = io->arrays[sd->chan];

@@ -29,13 +29,15 @@ axis_info *get_ap(chan_info *cp, axis_info_t ap_id, const char *caller)
   if ((cp) && (AXIS_INFO_ID_OK(ap_id)))
     switch (ap_id)
       {
-      case TIME_AXIS_INFO:      return(cp->axis);                               break;
-      case TRANSFORM_AXIS_INFO: if (cp->fft) return(cp->fft->axis);             break;
+      case TIME_AXIS_INFO:      return(cp->axis);                              break;
+      case TRANSFORM_AXIS_INFO: if (cp->fft) return(cp->fft->axis);            break;
       case LISP_AXIS_INFO:      if (cp->lisp_info) return(lisp_info_axis(cp)); break;
       }
   XEN_ERROR(NO_SUCH_AXIS_INFO,
 	    XEN_LIST_3(C_TO_XEN_STRING(caller),
-		       C_TO_XEN_STRING("axis: ~A, sound index: ~A (~A), chan: ~A (axis should be one of " S_time_graph ", " S_lisp_graph ", or " S_transform_graph ")"),
+		       ((!(cp->squelch_update)) || (!(AXIS_INFO_ID_OK(ap_id)))) ?
+		       C_TO_XEN_STRING("axis: ~A of sound ~A (~A), chan: ~A (axis should be " S_time_graph ", " S_lisp_graph ", or " S_transform_graph ")") :
+		       C_TO_XEN_STRING("axis: ~A of sound ~A (~A), chan: ~A does not exist, probably because output is squelched"),
 		       XEN_LIST_4(C_TO_XEN_INT((int)(ap_id)),
 				  C_TO_XEN_INT(cp->sound->index),
 				  C_TO_XEN_STRING(cp->sound->short_filename),
