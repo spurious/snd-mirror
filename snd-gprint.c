@@ -109,7 +109,6 @@ void file_print_callback(GtkWidget *w, gpointer context)
 				     0);
       gtk_window_set_title(GTK_WINDOW(file_print_dialog), _("Print"));
       sg_make_resizable(file_print_dialog);
-      set_background(file_print_dialog, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(file_print_dialog), 10);
       gtk_window_resize(GTK_WINDOW(file_print_dialog), 220, 160);
       gtk_widget_realize(file_print_dialog);

@@ -129,11 +129,14 @@ static void start_completion_dialog(int num_items, char **items)
 void save_listener_text(FILE *fp)
 {
   char *str = NULL;
-  str = sg_get_text(listener_text, 0, -1);
-  if (str)
+  if (listener_text)
     {
-      fwrite((void *)str, sizeof(char), snd_strlen(str), fp);
-      g_free(str);
+      str = sg_get_text(listener_text, 0, -1);
+      if (str)
+	{
+	  fwrite((void *)str, sizeof(char), snd_strlen(str), fp);
+	  g_free(str);
+	}
     }
 }
 
@@ -141,7 +144,7 @@ void append_listener_text(int end, char *msg)
 {
   /* "end" arg needed in Motif */
   int chars;
-  if (listener_print_p(msg))
+  if ((listener_print_p(msg)) && (listener_text))
     {
       chars = gtk_text_buffer_get_char_count(LISTENER_BUFFER);
       if (chars > 0) sg_set_cursor(listener_text, chars + 1);
@@ -351,8 +354,6 @@ static void listener_help(void)
       g_free(source);
     }
 }
-
-/* /home/bil/test/gtk+-2.1.1/demos/gtk-demo/textview.c */
 
 static GtkTextTag *flash_tag = NULL;
 static int flashes = 0;
@@ -632,7 +633,6 @@ static XEN mouse_leave_text_hook;
 
 static gboolean listener_focus_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
 {
-  /* apparently called in gtkmarshal.c via gtk_marshal_BOOL__POINTER which passes 3 args */
   if (XEN_HOOKED(mouse_enter_listener_hook))
     run_hook(mouse_enter_listener_hook,
 	     XEN_LIST_1(XEN_WRAP_WIDGET(listener_text)),
@@ -871,6 +871,8 @@ void color_listener(GdkColor *pix)
 void color_listener_text(GdkColor *pix)
 {
   (ss->sgx)->listener_text_color = pix;
+  if (listener_text) 
+    gtk_widget_modify_text(listener_text, GTK_STATE_NORMAL, (ss->sgx)->listener_text_color);
 }
 
 void handle_listener(bool open)

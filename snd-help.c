@@ -1708,7 +1708,8 @@ static XEN g_help_dialog(XEN subject, XEN msg, XEN xrefs)
       len = XEN_LIST_LENGTH(xrefs);
       refs = (char **)CALLOC(len + 1, sizeof(char *));
       for (i = 0; i < len; i++)
-	refs[i] = XEN_TO_C_STRING(XEN_LIST_REF(xrefs, i));
+	if (XEN_STRING_P(XEN_LIST_REF(xrefs, i)))
+	  refs[i] = XEN_TO_C_STRING(XEN_LIST_REF(xrefs, i));
       w = snd_help_with_xrefs(XEN_TO_C_STRING(subject),
 			      XEN_TO_C_STRING(msg), 
 			      true,

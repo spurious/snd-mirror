@@ -175,11 +175,6 @@ void clear_window(axis_context *ax)
   if (ax) gdk_window_clear(ax->wn);
 }
 
-void set_background(GtkWidget *w, GdkColor *col)
-{ 
-  gtk_widget_modify_bg(w, GTK_STATE_NORMAL, col);
-}
-
 void raise_dialog(GtkWidget *w)
 {
   /* since we're using non-transient message dialogs, the dialog window can become completely
@@ -353,7 +348,7 @@ void recolor_graph(chan_info *cp, bool selected)
 {
   state_context *sx;
   sx = ss->sgx;
-  set_background(channel_graph(cp), (selected) ? sx->selected_graph_color : sx->graph_color);
+  gtk_widget_modify_bg(channel_graph(cp), GTK_STATE_NORMAL, (selected) ? sx->selected_graph_color : sx->graph_color);
 }
 
 
@@ -514,7 +509,6 @@ int sg_cursor_position(GtkWidget *w)
   buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
   m = gtk_text_buffer_get_insert(buf);
   gtk_text_buffer_get_iter_at_mark(buf, &pos, m);
-  /* free m? */
   return(gtk_text_iter_get_offset(&pos));
 }
 
@@ -562,6 +556,19 @@ GtkWidget *sg_make_list(const char *title, GtkWidget *parent, int paned, gpointe
   celler->ypad = 0;
   column = gtk_tree_view_column_new_with_attributes(title, celler, "text", 0, NULL);
   gtk_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_AUTOSIZE);
+
+  {
+    GtkWidget *gad;
+    char *padded_title;
+    padded_title = (char *)CALLOC(16 + snd_strlen(title), sizeof(char));
+    sprintf(padded_title, "    %s", title);
+    gad = snd_gtk_label_new(padded_title, ss->sgx->highlight_color);
+    FREE(padded_title);
+    gtk_widget_show(gad);
+    gtk_tree_view_column_set_widget(column, gad);
+    gtk_widget_set_size_request(gad, -1, 16);
+  }
+
   gtk_tree_view_append_column(GTK_TREE_VIEW(list), column);
   scrolled_win = gtk_scrolled_window_new(NULL, NULL);
   gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scrolled_win), GTK_SHADOW_IN);  

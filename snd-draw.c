@@ -681,7 +681,7 @@ static XEN g_recolor_widget(XEN wid, XEN color)
 #if USE_MOTIF
       XmChangeColor(w, XEN_UNWRAP_PIXEL(color));
 #else
-      set_background(w, XEN_UNWRAP_PIXEL(color));
+      gtk_widget_modify_bg(w, GTK_STATE_NORMAL, XEN_UNWRAP_PIXEL(color));
 #endif
     }
   else XEN_ERROR(NO_SUCH_WIDGET,

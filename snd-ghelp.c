@@ -1,9 +1,6 @@
 #include "snd.h"
 
-/* SOMEDAY: blue list title bgs */
-/* SOMEDAY: highlight bracketed help text in red fg */
-/* SOMEDAY: gtk help related list double click callback -- how to get double click notification? */
-
+/* SOMEDAY: highlight bracketed help text in red fg (via pango layouts?) */
 
 static GtkWidget *help_dialog = NULL;
 static void dismiss_help_dialog(GtkWidget *w, gpointer context) {gtk_widget_hide(help_dialog);}
@@ -101,6 +98,31 @@ static bool new_help(const char *pattern)
   return(false);
 }
 
+static char *find_highlighted_text(const char *value)
+{
+  char *topic = NULL;
+  int i, k, len, start = -1, end;
+  len = snd_strlen(value);
+  for (i = 0; i < len; i++)
+    if (value[i] == '{')
+      start = i + 1;
+    else 
+      {
+	if (value[i] == '}')
+	  {
+	    end = i;
+	    if ((start > 0) && ((end - start) > 0))
+	      {
+		topic = (char *)CALLOC(end - start + 1, sizeof(char));
+		for (i = start, k = 0; i < end; i++, k++)
+		  topic[k] = value[i];
+		return(topic);
+	      }
+	  }
+      }
+  return(NULL);
+}
+
 static void help_browse_callback(GtkTreeSelection *selection, gpointer *gp)
 {
   GtkTreeIter iter;
@@ -111,34 +133,42 @@ static void help_browse_callback(GtkTreeSelection *selection, gpointer *gp)
   if (value)
     {
       char *topic = NULL;
-      int i, k, len, start = -1, end;
-      len = snd_strlen(value);
-      for (i = 0; i < len; i++)
-	if (value[i] == '{')
-	  start = i + 1;
-	else 
-	  {
-	    if (value[i] == '}')
-	      {
-		end = i;
-		if ((start > 0) && ((end - start) > 0))
-		  {
-		    topic = (char *)CALLOC(end - start + 1, sizeof(char));
-		    for (i = start, k = 0; i < end; i++, k++)
-		      topic[k] = value[i];
-		    name_to_html_viewer(topic);
-		    FREE(topic);
-		    g_free(value);
-		    return;
-		  }
-	      }
-	  }
-      /* arrive here if no '{}' */
-      if (value)
+      topic = find_highlighted_text(value);
+      if (topic)
 	{
-	  new_help(value);
-	  g_free(value);
+	  name_to_html_viewer(topic);
+	  FREE(topic);
 	}
+      else
+	{
+	  if (value)
+	    new_help(value);
+	}
+    }
+  g_free(value);
+}
+
+static void double_callback(GtkTreeView *tree_view, GtkTreePath *path, GtkTreeViewColumn *column, gpointer data)
+{
+  GtkTreeModel *model = gtk_tree_view_get_model(tree_view);
+  GtkTreeIter iter;
+  gchar *topic, *value;
+  gtk_tree_model_get_iter(model, &iter, path);
+  gtk_tree_model_get(model, &iter, 0, &value, -1);
+  if (value)
+    {
+      topic = find_highlighted_text(value);
+      if (topic)
+	{
+	  name_to_html_viewer(topic);
+	  FREE(topic);
+	}
+      else
+	{
+	  if (value)
+	    name_to_html_viewer(value);
+	}
+      g_free(value);
     }
 }
 
@@ -213,6 +243,9 @@ static void create_help_monolog(void)
 			       GTK_DIALOG(help_dialog)->vbox, 
 			       BOX_PACK, NULL, 0, NULL,
 			       GTK_SIGNAL_FUNC(help_browse_callback), 0, 0, 0, 0);
+  gtk_widget_add_events(related_items, GDK_ALL_EVENTS_MASK);
+  g_signal_connect(GTK_OBJECT(related_items), "row_activated", G_CALLBACK(double_callback), NULL);
+
 
   hbox = gtk_hbox_new(false, 0);
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->vbox), hbox, false, false, 10); 

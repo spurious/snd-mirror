@@ -650,16 +650,16 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, 
 
 /* -------- src -------- */
 
-Float src_input_as_needed(void *arg, int dir) 
+Float src_input_as_needed(void *arg, int direction) 
 {
   src_state *sr = (src_state *)arg;
   snd_fd *sf;
   sf = sr->sf;
   sr->sample++;
-  if (dir != sr->dir)
+  if (direction != sr->dir)
     {
-      read_sample_change_direction(sf, (dir == 1) ? READ_FORWARD : READ_BACKWARD);
-      sr->dir = dir;
+      read_sample_change_direction(sf, (direction == 1) ? READ_FORWARD : READ_BACKWARD);
+      sr->dir = direction;
     }
   return(read_sample_to_float(sf));
 }

@@ -324,7 +324,6 @@ int number_height(void);
 int label_height(void);
 int mark_name_width(char *txt);
 void clear_window(axis_context *ax);
-void set_background(GtkWidget *w, GdkColor *col);
 void highlight_color(GtkWidget *w);
 void raise_dialog(GtkWidget *w);
 void set_button_label(GtkWidget *label, const char *str);

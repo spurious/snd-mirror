@@ -2447,7 +2447,7 @@ static XEN g_set_selected_graph_color(XEN color)
 #if USE_MOTIF
       XtVaSetValues(channel_graph(cp), XmNbackground, XEN_UNWRAP_PIXEL(color), NULL);
 #else
-      set_background(channel_graph(cp), XEN_UNWRAP_PIXEL(color));
+      gtk_widget_modify_bg(channel_graph(cp), GTK_STATE_NORMAL, XEN_UNWRAP_PIXEL(color));
 #endif
     }
   return(color);
@@ -2486,7 +2486,7 @@ static void recolor_everything(widget_t w, void *ptr)
 #if USE_GTK
   if (GTK_IS_WIDGET(w)) 
     {
-      set_background(w, (GdkColor *)ptr);
+      gtk_widget_modify_bg(w, GTK_STATE_NORMAL, (GdkColor *)ptr);
       if (GTK_IS_CONTAINER(w))
 	gtk_container_foreach(GTK_CONTAINER(w), recolor_everything, (gpointer)ptr);
     }

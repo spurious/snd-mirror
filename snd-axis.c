@@ -1,7 +1,5 @@
 #include "snd.h"
 
-/* TODO: if chans united only the bottom (visible) axis should be labelled */
-
 axis_context *free_axis_context(axis_context *ax)
 {
   if (ax) FREE(ax);

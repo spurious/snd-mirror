@@ -1634,8 +1634,7 @@ The prompt is important!  Snd uses it to find the current form to evaluate, so i
 forgets to include it, you can end up with a comatose listener.  To get out of this state, include
 the prompt by hand (i.e. type "&gt;(reset-hook! print-hook)").
 This is intended to make it possible to
-distinguish Snd responses from user-typing, or add arbitrarily fancy prompts, etc.  Here are two
-examples, the first adds a timestamp, the second (in Gtk) displays Snd's responses in red:
+distinguish Snd responses from user-typing, or add arbitrarily fancy prompts, etc.
 </td></tr>
 <tr><td></td><td colspan=2>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
@@ -1647,14 +1646,6 @@ examples, the first adds a timestamp, the second (in Gtk) displays Snd's respons
 			   msg 
 			   (strftime "%d-%b %H:%M %Z" (localtime (current-time)))
 			   (listener-prompt))))))
-
-(add-hook! <em class=red>print-hook</em>
-  (lambda (msg) 
-    (let ((old-color (listener-text-color)))
-    (set! (listener-text-color) (make-color 1 0 0))
-    (snd-print msg)
-    (set! (listener-text-color) old-color))
-    (snd-print (listener-prompt))))
 </pre></td></tr></table></td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -8028,15 +8019,6 @@ See <i>html</i> in index.scm.
 <!-- listener-text-color -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="listenertextcolor">listener-text-color</a></em> ()</code></span></td></tr>
 <tr><td></td><td>text color in lisp listener.</td></tr>
-
-<tr><td></td><td><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define (red-alert msg)
-  ;; this only works in the gtk version (in Motif all existing text changes color)
-  (let ((old-color (<em class=red>listener-text-color</em>)))
-    (set! (listener-text-color) (make-color 1 0 0))
-    (snd-print msg)
-    (set! (listener-text-color) old-color)))
-</pre></td></tr></table></td></tr>
 
 <!-- mix-panel -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixpanel">mix-panel</a></em> ()</code></span></td></tr>

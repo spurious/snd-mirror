@@ -162,7 +162,7 @@ static void get_stdin_string(gpointer context, gint fd, int condition)
 }
 #endif
 
-static void setup_gcs (void)
+static void setup_gcs(void)
 {
   GdkWindow *wn;	
   state_context *sx;
@@ -274,7 +274,7 @@ static Cessate startup_funcs(gpointer context)
 			  (guchar *)(SND_VERSION), 
 			  strlen(SND_VERSION) + 1);
 #if HAVE_EXTENSION_LANGUAGE
-      gtk_widget_add_events (MAIN_SHELL(ss), gtk_widget_get_events (MAIN_SHELL(ss)) | GDK_PROPERTY_CHANGE_MASK);
+      gtk_widget_add_events(MAIN_SHELL(ss), GDK_PROPERTY_CHANGE_MASK);
       g_signal_connect_closure_by_id(GTK_OBJECT(MAIN_SHELL(ss)),
 				     g_signal_lookup("property_notify_event", G_OBJECT_TYPE(GTK_OBJECT(MAIN_SHELL(ss)))),
 				     0,
@@ -405,7 +405,7 @@ void snd_doit(int argc, char **argv)
   int i;
   state_context *sx;
 #ifdef SND_AS_WIDGET
-  set_snd_error_display (error_func);
+  set_snd_error_display(error_func);
   ss = snd_main(argc, argv);
 #else
   gtk_init(&argc, &argv);
@@ -531,7 +531,7 @@ void snd_doit(int argc, char **argv)
 
   if (mus_file_probe("Snd.gtkrc"))
     gtk_rc_parse("Snd.gtkrc");
-  else gtk_rc_parse_string ("\n\
+  else gtk_rc_parse_string("\n\
 \n\
 # This is the same as Snd.gtkrc\n\
 style \"default\"\n\
@@ -704,7 +704,7 @@ widget \"*.reset_button\" style \"reset\"\n\
       gtk_widget_show(SOUND_PANE(ss));
     }
   gtk_widget_show(MAIN_PANE(ss));
-  gtk_widget_show (MAIN_SHELL(ss));
+  gtk_widget_show(MAIN_SHELL(ss));
 
 #ifndef SND_AS_WIDGET
   MAIN_WINDOW(ss) = MAIN_SHELL(ss)->window;

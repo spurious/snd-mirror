@@ -1176,7 +1176,7 @@ GtkWidget *create_envelope_editor (void)
 
       baseAdj = gtk_adjustment_new(0.5, 0.0, 1.0, 0.001, 0.01, .1);
       baseScale = gtk_hscrollbar_new(GTK_ADJUSTMENT(baseAdj));
-      set_background(baseScale, (ss->sgx)->position_color);
+      gtk_widget_modify_bg(baseScale, GTK_STATE_NORMAL, (ss->sgx)->position_color);
       g_signal_connect_closure_by_id(GTK_OBJECT(baseAdj),
 				     g_signal_lookup("value_changed", G_OBJECT_TYPE(GTK_OBJECT(baseAdj))),
 				     0,
@@ -1329,7 +1329,7 @@ void enved_reflect_selection(bool on)
       if ((apply_to_selection) && (!on))
 	{
 	  apply_to_selection = false;
-	  set_background(selectionB, (ss->sgx)->basic_color);
+	  gtk_widget_modify_bg(selectionB, GTK_STATE_NORMAL, (ss->sgx)->basic_color);
 	}
       if ((enved_target(ss) != ENVED_SPECTRUM) && 
 	  (enved_wave_p(ss)) && 

@@ -473,6 +473,7 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("def main_widgets (s) false end");
   XEN_EVAL_C_STRING("def current_font () false end");
   XEN_EVAL_C_STRING("def reset_listener_cursor () false end");
+  XEN_EVAL_C_STRING("def enved_filter () false end");
 
   XEN_EVAL_C_STRING("$mouse_enter_graph_hook = false");
   XEN_EVAL_C_STRING("$mouse_leave_graph_hook = false");

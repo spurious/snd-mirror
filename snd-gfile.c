@@ -1709,7 +1709,7 @@ GtkWidget *edit_header(snd_info *sp)
       /* gtk_window_set_title(GTK_WINDOW(edit_header_dialog), _("Edit Header")); */
       sg_make_resizable(edit_header_dialog);
       gtk_container_set_border_width (GTK_CONTAINER(edit_header_dialog), 10);
-      gtk_window_resize(GTK_WINDOW(edit_header_dialog), 360, 250);
+      gtk_window_resize(GTK_WINDOW(edit_header_dialog), 400, 250);
       gtk_widget_realize(edit_header_dialog);
 
       help_button = gtk_button_new_with_label(_("Help"));
