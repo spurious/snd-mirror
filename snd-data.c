@@ -75,6 +75,10 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
   cp->gsy = 1.0;
   cp->selection_transform_size = 0;
   if (cp->last_sonogram) {FREE(cp->last_sonogram); cp->last_sonogram = NULL;}
+#if FILE_PER_CHAN
+  cp->hdr = NULL;
+  cp->filename = NULL;
+#endif
   return(cp);
 }
 
@@ -118,9 +122,11 @@ static chan_info *free_chan_info(chan_info *cp)
     }
   cp->lisp_graphing = 0;
   cp->selection_transform_size = 0;
-
-  /* if FILE_PER_CHAN, check filename, hdr, close sound[0]? -- make sure it's not deleted! */
-
+#if FILE_PER_CHAN
+  /* assuming here that the sound_list cleanup will close the file pointer */
+  if (cp->hdr) cp->hdr = free_file_info(cp->hdr);
+  if (cp->filename) {FREE(cp->filename); cp->filename = NULL;}
+#endif
   return(cp);  /* pointer is left for possible future re-use */
 }
 
@@ -229,6 +235,10 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
       /* can't use snd-chn.c get_maxamp here because the file edit tree is not yet set up */
       /* can't use mus_sound_chans etc here because this might be a raw header file */
     }
+#if FILE_PER_CHAN
+  sp->chan_type = FILE_PER_SOUND;
+  sp->channel_filenames = NULL;
+#endif
   return(sp);
 }
 
@@ -299,7 +309,19 @@ snd_info *free_snd_info(snd_info *sp)
   if (sp->hdr) sp->hdr = free_file_info(sp->hdr);
   if (sp->edited_region) clear_region_backpointer(sp);
 
-  /* if FILE_PER_CHAN reset chan_type */
+#if FILE_PER_CHAN
+  if (sp->chan_type == FILE_PER_CHANNEL)
+    {
+      sp->chan_type = FILE_PER_SOUND;
+      if (sp->channel_filenames)
+	{
+	  for (i=0;i<sp->nchans;i++)
+	    if (sp->channel_filenames[i]) FREE(sp->channel_filenames[i]);
+	  FREE(sp->channel_filenames);
+	}
+      sp->channel_filenames = NULL;
+    }
+#endif
 
   return(sp);  /* pointer is left for possible future re-use */
 }

@@ -752,3 +752,93 @@ void run_apply_to_completion(snd_info *sp)
   ap = (apply_manager *)make_apply_state((void *)sp);
   while (apply_controls_1(ap) == BACKGROUND_CONTINUE);
 }
+
+#if FILE_PER_CHAN
+multifile_info *sort_multifile_channels(snd_state *ss, char *filename)
+{
+  int i,k,len,total_chans=0,ok,chan_num;
+  char *chan_name;
+  file_info *hdr = NULL;
+  dir *file_chans;
+  int *chan_locs;
+  multifile_info *res;
+  /* read files in dir, assuming chan.take notation (hook here?)
+   * set chan_type FILE_PER_CHANNEL (hdr and sp), make dummy header for sound
+   * hook could be (func name) -> channel if to be included else #f
+   *    else FILE_PER_SOUND as chan_type [set temporary field in sound_data_file to DONT_DELETE_ME]
+   */
+  file_chans = all_files_in_dir(filename);
+  /* file_chans->len is how many files we found, now we need to decide how many channels they represent and make a header */
+  /* assume as default that files are named chan.<whatever> -- if a number look for 0 */
+  total_chans = 0;
+  chan_locs = (int *)CALLOC(file_chans->len,sizeof(int));
+  for (i=0;i<file_chans->len;i++)
+    {
+      chan_name = just_filename(file_chans->files[i]);
+      len = snd_strlen(chan_name);
+      if (len > 0)
+	{
+	  ok = 1;
+#if HAVE_GUILE
+	  chan_num = multifile_channel(chan_name);
+	  if (chan_num != -2) /* -2 => not a member of this sound (hook procedure returned #f) */
+	    {
+	      if (chan_num != -1) /* -1 => no hook procedures, or hook can't decide */
+		{
+		  chan_locs[chan_num] = i;
+		  if (total_chans < (chan_num+1)) total_chans = chan_num+1;
+		}
+	      else
+		{
+#endif
+		  for (k=0;k<len;k++)
+		    if (!(isdigit(chan_name[k]))) {ok=0; break;}
+		  if (ok)
+		    {
+		      sscanf(chan_name,"%d",&chan_num);
+		      if ((chan_num > 0) && (chan_num <= file_chans->len))
+			{
+			  chan_locs[chan_num-1] = i;
+			  if (total_chans < chan_num) total_chans = chan_num;
+			}
+		    }
+#if HAVE_GUILE
+		}
+	    }
+#endif
+	  FREE(chan_name);
+	}
+    }
+  if (total_chans > 0)
+    {
+      /* make sp level header */
+      hdr = (file_info *)CALLOC(1,sizeof(file_info));
+      hdr->name = just_filename(filename);
+      chan_name = (char *)CALLOC(MUS_MAX_FILE_NAME,sizeof(char));
+      sprintf(chan_name,"%s/%s",filename,file_chans->files[chan_locs[0]]);
+      hdr->type = mus_sound_header_type(chan_name);
+      if ((hdr->type == MUS_RAW) && (use_raw_defaults(ss)))
+	{
+	  hdr->srate = raw_srate(ss);
+	  hdr->format = raw_format(ss);
+	  mus_header_set_raw_defaults(raw_srate(ss),raw_chans(ss),raw_format(ss));
+	}
+      else
+	{
+	  hdr->srate = mus_sound_srate(chan_name);
+	  hdr->format = mus_sound_data_format(chan_name);
+	}
+      hdr->samples = mus_sound_samples(chan_name) * total_chans; /* assume same length for starters */
+      hdr->data_location = mus_sound_data_location(chan_name);
+      hdr->comment = NULL;
+      hdr->chan_type = FILE_PER_CHANNEL;
+      hdr->chans = total_chans;
+      FREE(chan_name);
+    }
+  res = (multifile_info *)CALLOC(1,sizeof(multifile_info));
+  res->hdr = hdr;
+  res->file_chans = file_chans;
+  res->chan_locs = chan_locs;
+  return(res);
+}
+#endif

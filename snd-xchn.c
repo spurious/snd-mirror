@@ -734,6 +734,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  XtSetArg(args[n],XmNpaneMinimum,chan_y); n++;
 #if (XmVERSION > 1)
 	  cw[W_form] = sndCreateFormWidget("hiho",w_snd_pane(sp),args,n);
+	  if ((sp->combining == CHANNELS_COMBINED) && (channel > 0)) XtUnmanageChild(cw[W_form]);
 
 	  n=0;
 	  if (need_colors) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
@@ -1055,21 +1056,22 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 #if (XmVERSION > 1)
       if (cw[W_edhist]) XtVaSetValues(XtParent(cw[W_edhist]),XmNpaneMaximum,1,NULL);
 #endif
-      for (i=0;i<NUM_CHAN_WIDGETS;i++)
-	{
-	  if (cw[i])
-	    {
-	      if  (!XtIsManaged(cw[i])) XtManageChild(cw[i]);
-	      if (i == W_sx) 
-		{
-		  int current_size;
-		  XtVaSetValues(cw[i],XmNvalue,0,NULL);
-		  XtVaGetValues(cw[i],XmNsliderSize,&current_size,NULL);
-		  if (current_size > sp->sx_scroll_max) XtVaSetValues(cw[i],XmNsliderSize,sp->sx_scroll_max/2,NULL);
-		  XtVaSetValues(cw[i],XmNmaximum,sp->sx_scroll_max,NULL);
-		}
-	    }
-	}
+      if ((sp->combining != CHANNELS_COMBINED) || (channel == 0))
+	for (i=0;i<NUM_CHAN_WIDGETS;i++)
+	  {
+	    if (cw[i])
+	      {
+		if  (!XtIsManaged(cw[i])) XtManageChild(cw[i]);
+		if (i == W_sx) 
+		  {
+		    int current_size;
+		    XtVaSetValues(cw[i],XmNvalue,0,NULL);
+		    XtVaGetValues(cw[i],XmNsliderSize,&current_size,NULL);
+		    if (current_size > sp->sx_scroll_max) XtVaSetValues(cw[i],XmNsliderSize,sp->sx_scroll_max/2,NULL);
+		    XtVaSetValues(cw[i],XmNmaximum,sp->sx_scroll_max,NULL);
+		  }
+	      }
+	  }
     }
 #if (XmVERSION > 1)
   if (cw[W_edhist]) XtVaSetValues(XtParent(cw[W_edhist]),XmNpaneMaximum,LOTSA_PIXELS,NULL);

@@ -254,7 +254,7 @@ static void make_region_readable(region *r, snd_state *ss)
 	      datai = make_file_state(fd,hdr,SND_IO_IN_FILE,i,FILE_BUFFER_SIZE,ss);
 	      cp->sounds[0] = make_snd_data_file(r->filename,datai,
 						 MUS_SAMPLE_ARRAY(datai[SND_IO_DATS+SND_AREF_HEADER_SIZE+i]),
-						 hdr,0,cp->edit_ctr,i); /* don't auto-delete! */
+						 hdr,DONT_DELETE_ME,cp->edit_ctr,i); /* don't auto-delete! */
 	    }
 	}
     }

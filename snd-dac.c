@@ -1,4 +1,9 @@
-/* TODO: use clm for expsrc */
+/* TODO: use clm for expsrc
+ *       make revlen follow slider in "real-time":
+ *         set up line_size in mus_make_comb to 5.0*srate/25641, then
+ *         then as running, at each block reset to initial - new scaled
+ *         (negative pm = longer delay)
+ */
 
 #include "snd.h"
 

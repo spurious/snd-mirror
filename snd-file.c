@@ -78,9 +78,6 @@ file_info *make_file_info_1(char *fullname, snd_state *ss)
 {
   int fd;
   file_info *hdr;
-  
-  /* if FILE_PER_CHAN we need to return some indication here that subsequent channel reads can find, and set up a overall header */
-
   fd = open(fullname,O_RDONLY,0);
   if (fd == -1)
     {
@@ -410,6 +407,34 @@ dir *find_sound_files_in_dir (char *name)
 #endif
 }
 
+#if FILE_PER_CHAN
+dir *all_files_in_dir (char *name)
+{
+#if defined(_MSC_VER)
+  return(NULL);
+#else
+  struct dirent *dirp;
+  DIR *dpos;
+  dir *dp = NULL;
+  if ((dpos=opendir(name)) != NULL)
+    {
+      dp = make_dir(name);
+      while ((dirp=readdir(dpos)) != NULL)
+	{
+	  if (dirp->d_name[0] != '.')
+	    add_snd_file_to_dir_list(dp,dirp->d_name);
+	}
+#if defined(CLOSEDIR_VOID)
+      closedir(dpos);
+#else
+      if (closedir(dpos) != 0) snd_error("%s[%d] %s: closedir failed!",__FILE__,__LINE__,__FUNCTION__);
+#endif
+    }
+  return(dp);
+#endif
+}
+#endif
+
 
 #if DEBUGGING
 int temp_files_in_tmpdir(snd_state *ss)
@@ -730,7 +755,7 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
       cp->sounds[0] = make_snd_data_file(filename,datai,
 					 MUS_SAMPLE_ARRAY(datai[SND_IO_DATS + SND_AREF_HEADER_SIZE+i]),
 					 copy_header(hdr->name,hdr),
-					 0,cp->edit_ctr,i);
+					 DONT_DELETE_ME,cp->edit_ctr,i);
       if (post_close) {snd_close(fd); sd = cp->sounds[0]; sd->open = FD_CLOSED; datai[SND_IO_FD] = -1;}
       /* this is not as crazy as it looks -- we've read in the first 64K (or whatever) samples,
        * and may need this file channel for other opens, so this file can be closed until mus_file_reset

@@ -897,7 +897,7 @@ void filter_env_changed(snd_info *sp, env *e)
   XmTextSetString(w_snd_filter(sp),tmpstr=env_to_string(e));
   if (tmpstr) FREE(tmpstr);
   sp_display_env(sp);
-  /* this is called also from snd-gh */
+  /* this is called also from snd-scm.c */
   sp->filter_changed = 1;
 }
 
@@ -1302,8 +1302,8 @@ static void Close_Sound_Dialog(Widget w,XtPointer clientData,XtPointer callData)
 
 snd_info *add_sound_window (char *filename, snd_state *ss)
 {  
-  snd_info *sp,*osp;
-  file_info *hdr;
+  snd_info *sp=NULL,*osp;
+  file_info *hdr=NULL;
   Widget *sw;
   XmString s1;
   int snd_slot,nchans,make_widgets,i,k,need_colors,n,old_chans;
@@ -1316,10 +1316,31 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
   Widget form;
   snd_context *sx;
   Atom sound_delete;
+#if FILE_PER_CHAN
+  dir *file_chans = NULL;
+  int *chan_locs;
+  multifile_info *minfo;
+#endif
   static int first_window = 1;
   set_snd_IO_error(SND_NO_ERROR);
   errno = 0;
+#if FILE_PER_CHAN
+  if (is_directory(filename))
+    {
+      minfo = sort_multifile_channels(ss,filename);
+      file_chans = minfo->file_chans;
+      chan_locs = minfo->chan_locs;
+      hdr = minfo->hdr;
+      FREE(minfo);
+    }
+  else
+    {
+      hdr = make_file_info(filename,ss);
+      hdr->chan_type = FILE_PER_SOUND;
+    }
+#else
   hdr = make_file_info(filename,ss);
+#endif
   if (!hdr) return(NULL);
   if (ss->pending_change) 
     {
@@ -1328,9 +1349,6 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
       ss->pending_change = NULL;
     }
   nchans = hdr->chans;
-
-  /* if FILE_PER_CHAN check hdr for chan_type = file case */
-
   XtVaGetValues(MAIN_SHELL(ss),XmNy,&app_y,XmNheight,&app_dy,NULL);
   screen_y = DisplayHeight(MAIN_DISPLAY(ss),DefaultScreen(MAIN_DISPLAY(ss)));
   app_dy = (screen_y - app_y - app_dy - 20*nchans);
@@ -1348,6 +1366,22 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
   ss->sounds[snd_slot] = make_snd_info(ss->sounds[snd_slot],ss,filename,hdr,snd_slot);
   sp = ss->sounds[snd_slot];
   sp->inuse = 1;
+#if FILE_PER_CHAN
+  sp->chan_type = hdr->chan_type;
+  if (sp->chan_type == FILE_PER_CHANNEL)
+    {
+      sp->channel_filenames = (char **)CALLOC(hdr->chans,sizeof(char *));
+      for (i=0;i<hdr->chans;i++)
+	{
+	  sp->channel_filenames[i] = (char *)CALLOC(MUS_MAX_FILE_NAME,sizeof(char));
+	  sprintf(sp->channel_filenames[i],"%s/%s",filename,file_chans->files[chan_locs[i]]);
+	}
+      FREE(chan_locs);
+      chan_locs = NULL;
+      free_dir(file_chans);
+      file_chans = NULL;
+    }
+#endif
   sx = sp->sgx;
 #if HAVE_XPM
   sx->file_pix = blank_pixmap;

@@ -1888,6 +1888,7 @@ int close_temp_file(int ofd, file_info *hdr, long bytes, snd_info *sp)
 int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, int length, snd_state *ss)
 {
   /* create ofile, fill it by following sfs, use hdr for srate/type/format decisions */
+  /* used only in this file and snd-chn (for external temps, snd->temp) */
   int ofd;
   int i,j,len,datumb,reporting=0,total=0,err=0;
   chan_info *cp=NULL;
@@ -1980,6 +1981,46 @@ int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, int leng
   return(snd_io_error);
 }
 
+#if FILE_PER_CHAN
+static int snd_save_file_chans(char *ofile, snd_info *sp, snd_fd **sfs, snd_state *ss, int save_as)
+{
+  /* write each channel as a separate file */
+  int i,err=0,needs_free=1;
+  chan_info *cp;
+  snd_fd *cpfs[1];
+  char *nfile,*file;
+  for (i=0;i<sp->nchans;i++)
+    {
+      cp = sp->chans[i];
+      cpfs[0] = sfs[i];
+      if (save_as)
+	{
+	  nfile = snd_tempnam(ss);
+	  snd_make_file(nfile,1,cp->hdr,cpfs,current_ed_samples(cp),ss);
+#if HAVE_GUILE
+	  file = multifile_save(sp->index,cp->chan);
+	  if (file == NULL)
+	    {
+#endif
+	  file = (char *)CALLOC(MUS_MAX_FILE_NAME,sizeof(char));
+	  sprintf(file,"%s/%d.1",ofile,cp->chan);
+#if HAVE_GUILE
+	    }
+	  else needs_free=0;
+#endif
+	  err = snd_copy_file(ss,nfile,file);
+	  if (needs_free) FREE(file);
+	}
+      else
+	{
+	  snd_make_file(ofile,1,cp->hdr,cpfs,current_ed_samples(cp),ss);
+	  err = snd_copy_file(ss,ofile,cp->filename);
+	}
+    }
+  return(err);
+}
+#endif
+
 static int only_save_edits(snd_info *sp, file_info *nhdr, char *ofile)
 {
   snd_state *ss;
@@ -1988,6 +2029,11 @@ static int only_save_edits(snd_info *sp, file_info *nhdr, char *ofile)
   ss = sp->state;
   sf = (snd_fd **)CALLOC(sp->nchans,sizeof(snd_fd *));
   for (i=0;i<sp->nchans;i++) sf[i] = init_sample_read(0,sp->chans[i],READ_FORWARD);
+#if FILE_PER_CHAN
+  if (sp->chan_type == FILE_PER_CHANNEL)
+    err = snd_save_file_chans(ofile,sp,sf,ss,TRUE);
+  else
+#endif
   err = snd_make_file(ofile,sp->nchans,nhdr,sf,current_ed_samples(sp->chans[0]),ss);
   for (i=0;i<sp->nchans;i++) free_snd_fd(sf[i]);
   FREE(sf);
@@ -2043,6 +2089,11 @@ static int save_edits_1(snd_info *sp)
   sprintf(edit_buf,STR_saving,sp->shortname);
   report_in_minibuffer(sp,edit_buf);
   sphdr = sp->hdr;
+#if FILE_PER_CHAN
+  if (sp->chan_type == FILE_PER_CHANNEL)
+    snd_io_error = snd_save_file_chans(ofile,sp,sf,ss,FALSE);
+  else
+#endif
   snd_io_error = snd_make_file(ofile,sp->nchans,sp->hdr,sf,samples,ss);
   if (snd_io_error != SND_NO_ERROR) 
     {
@@ -2064,6 +2115,13 @@ static int save_edits_1(snd_info *sp)
       if (cp->sounds) free_sound_list(cp);
     }
   FREE(sf);
+#if FILE_PER_CHAN
+  if (sp->chan_type == FILE_PER_SOUND)
+    {
+      err = 0;
+      saved_errno = 0;
+#endif
+
 #if defined(_MSC_VER)
   err = 0;
 #else
@@ -2076,6 +2134,9 @@ static int save_edits_1(snd_info *sp)
       if (err) saved_errno = errno;
     }
   else saved_errno = errno;
+#if FILE_PER_CHAN
+    }
+#endif
   sp->write_date = file_write_date(sp->fullname);
 
   add_sound_data(sp->fullname,sp,ss);

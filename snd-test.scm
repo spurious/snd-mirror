@@ -2598,7 +2598,8 @@
      (file-dialog) (w)
      (region-dialog) (w)
      (edit-header-dialog) (w)
-     (if (not (member 'gtk *features*))
+     (if (and (not (member 'gtk *features*))
+	      (not (member 'snd-guile-gtk *features*)))
 	 (begin
 	   (recorder-dialog) (w)
 	   (set-recorder-file "hiho.snd")

@@ -281,36 +281,33 @@
 
 ;;; -------- superimpose spectra of sycn'd sounds
 
-(define make-one-fft
-  (lambda (samp size snd chn)
-    (let* ((fdr (samples->vct samp size snd chn))
-	   (fdi (make-vct size))
-	   (spectr (make-vct (/ size 2))))
-      (vct-add! spectr (spectrum fdr fdi #f size 2)))))
-
-(define min-at-sync 
-  (lambda (snd ind)
-    (if (>= ind (max-sounds)) 
-	#t
-	(if (or (= snd ind)
-		(not (ok? ind))
-		(and (= (syncing snd) (syncing ind))
-		     (> ind snd)))
-	    (min-at-sync snd (1+ ind))
-	    #f))))
-
-(define collect-ffts 
-  (lambda (samp size snd chn ffts ind)
-    (if (>= ind (max-sounds)) 
-	ffts
-	(if (and (ok? ind)
-		 (= (syncing snd) (syncing ind))
-		 (> (chans ind) chn))
-	    (collect-ffts samp size snd chn (append ffts (list (make-one-fft samp size ind chn))) (1+ ind))
-	    (collect-ffts samp size snd chn ffts (1+ ind))))))
-	
 (define superimpose-ffts
   (lambda (snd chn y0 y1)
+    (define make-one-fft
+      (lambda (samp size snd chn)
+	(let* ((fdr (samples->vct samp size snd chn))
+	       (fdi (make-vct size))
+	       (spectr (make-vct (/ size 2))))
+	  (vct-add! spectr (spectrum fdr fdi #f size 2)))))
+    (define min-at-sync 
+      (lambda (snd ind)
+	(if (>= ind (max-sounds)) 
+	    #t
+	    (if (or (= snd ind)
+		    (not (ok? ind))
+		    (and (= (syncing snd) (syncing ind))
+			 (> ind snd)))
+		(min-at-sync snd (1+ ind))
+		#f))))
+    (define collect-ffts 
+      (lambda (samp size snd chn ffts ind)
+	(if (>= ind (max-sounds)) 
+	    ffts
+	    (if (and (ok? ind)
+		     (= (syncing snd) (syncing ind))
+		     (> (chans ind) chn))
+		(collect-ffts samp size snd chn (append ffts (list (make-one-fft samp size ind chn))) (1+ ind))
+		(collect-ffts samp size snd chn ffts (1+ ind))))))
     (if (and (> (syncing snd) 0)
 	     (min-at-sync snd 0))
 	;; we are syncing, and we are the top sound in this sync group
@@ -1366,20 +1363,18 @@
 ;;; will depend on the expansion envelope -- we integrate it to get
 ;;; the overall expansion, then use that to decide the new length.
 
-(define integrate-envelope
-  (lambda (e sum)
-    (if (or (null? e) (null? (cddr e)))
-	sum
-      (integrate-envelope (cddr e) (+ sum (* (+ (cadr e) (cadddr e)) .5 (- (caddr e) (car e))))))))
-
-(define max-x
-  (lambda (e)
-    (if (null? (cddr e))
-	(car e)
-      (max-x (cddr e)))))
-
 (define expsnd
   (lambda (gr-env)
+    (define integrate-envelope
+      (lambda (e sum)
+	(if (or (null? e) (null? (cddr e)))
+	    sum
+	    (integrate-envelope (cddr e) (+ sum (* (+ (cadr e) (cadddr e)) .5 (- (caddr e) (car e))))))))
+    (define max-x
+      (lambda (e)
+	(if (null? (cddr e))
+	    (car e)
+	    (max-x (cddr e)))))
     (let* ((dur (/ (* (/ (frames) (srate)) (integrate-envelope gr-env 0.0)) (max-x gr-env)))
 	   (gr (make-granulate :expansion (cadr gr-env) :jitter 0))
 	   (ge (make-env :envelope gr-env :duration dur))
@@ -1563,26 +1558,26 @@
 ;;; mix a scissor-tailed flycatcher call into the current sound
 ;;; CLM version is bigbird.ins (see bird.ins and bird.clm for lots more)
 
-(define sum-partials
-  (lambda (lst sum)
-    (if (null? lst)
-	sum
-      (sum-partials (cddr lst) (+ sum (cadr lst))))))
-
-(define scale-partials
-  (lambda (lst scl newlst)
-    (if (null? lst)
-	newlst
-      (scale-partials (cddr lst) scl (append newlst (list (car lst) (* scl (cadr lst))))))))
-
-(define normalize-partials
-  (lambda (lst)
-    (scale-partials lst (/ 1.0 (sum-partials lst 0.0)) '())))
-
 (define bigbird
   (lambda (start dur frequency freqskew amplitude
 		 freq-envelope amp-envelope partials
 		 lpcoeff)
+    (define sum-partials
+      (lambda (lst sum)
+	(if (null? lst)
+	    sum
+	    (sum-partials (cddr lst) (+ sum (cadr lst))))))
+
+    (define scale-partials
+      (lambda (lst scl newlst)
+	(if (null? lst)
+	    newlst
+	    (scale-partials (cddr lst) scl (append newlst (list (car lst) (* scl (cadr lst))))))))
+
+    (define normalize-partials
+      (lambda (lst)
+	(scale-partials lst (/ 1.0 (sum-partials lst 0.0)) '())))
+
     (let* ((gls-env (make-env freq-envelope (hz->radians freqskew) dur))
 	   (os (make-oscil :frequency frequency))
 	   (fil (make-one-pole lpcoeff (- 1.0 lpcoeff)))
@@ -2106,4 +2101,23 @@
 ;;; this argument to make-regexp is looking for *.wav and *.snd
 ;;; in fact, we could use regexp's in place of Snd's sound-files-in-directory.
 
+;;; a prettier version might use a function written by Dirk Herrmann:
 
+(define (filter-list pred? objects)
+  (let loop ((objs objects)
+	     (result '()))
+    (cond ((null? objs) (reverse! result))
+	  ((pred? (car objs)) (loop (cdr objs) (cons (car objs) result)))
+	  (else (loop (cdr objs) result)))))
+
+(define match-sound-files-1
+  (lambda args
+    (filter-list 
+     (car args) 
+     (vector->list 
+      (sound-files-in-directory 
+       (if (null? (cdr args)) 
+	   "." 
+	   (cadr args)))))))
+
+    

@@ -322,21 +322,36 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, snd_state *ss, int graphed)
 
 void add_channel_data(char *filename, chan_info *cp, file_info *hdr, snd_state *ss)
 {
-  int fd;
+  int fd,chn=0;
   int *datai;
   snd_info *sp;
   file_info *chdr;
   sp = cp->sound;
   add_channel_data_1(cp,sp,ss,1);
   cp->edits[0] = initial_ed_list(0,(hdr->samples/hdr->chans) - 1);
-
+#if FILE_PER_CHAN
   /* if FILE_PER_CHAN
      check for special case here (can be in hdr or sp),
      set up individual header (sp->hdr[cp->chan] = chdr for filename = sp->filenames[cp->chan])
      open that as cp->sounds[0]
   */
-     
+  if (sp->chan_type == FILE_PER_SOUND)
+    {
+      chdr = copy_header(filename,sp->hdr);
+      chn = cp->chan;
+    }
+  else
+    {
+      filename = sp->channel_filenames[cp->chan];
+      chdr = make_file_info(filename,ss);
+      cp->filename = copy_string(filename);
+      cp->hdr = copy_header(filename,chdr);
+      chn = 0;
+    }
+#else     
   chdr = copy_header(filename,sp->hdr); /* need one separate from snd_info case */
+  chn = cp->chan;
+#endif
   if (chdr)
     {
       fd = snd_open_read(ss,filename);
@@ -344,10 +359,10 @@ void add_channel_data(char *filename, chan_info *cp, file_info *hdr, snd_state *
 	{
 	  mus_file_open_descriptors(fd,chdr->format,mus_data_format_to_bytes_per_sample(chdr->format),chdr->data_location);
 	  during_open(fd,filename,SND_OPEN_CHANNEL);
-	  datai = make_file_state(fd,chdr,SND_IO_IN_FILE,cp->chan,FILE_BUFFER_SIZE,ss);
+	  datai = make_file_state(fd,chdr,SND_IO_IN_FILE,chn,FILE_BUFFER_SIZE,ss);
 	  cp->sounds[0] = make_snd_data_file(filename,datai,
-					     MUS_SAMPLE_ARRAY(datai[SND_IO_DATS+SND_AREF_HEADER_SIZE+cp->chan]),
-					     chdr,0,cp->edit_ctr,cp->chan);
+					     MUS_SAMPLE_ARRAY(datai[SND_IO_DATS+SND_AREF_HEADER_SIZE+chn]),
+					     chdr,DONT_DELETE_ME,cp->edit_ctr,chn);
 	  if (show_usage_stats(ss)) gather_usage_stats(cp);
 	}
     }

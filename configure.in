@@ -29,6 +29,7 @@ AC_ARG_WITH(ardour,
 	    AC_DEFINE(MUS_SAMPLE_BITS,32)
 	    AC_DEFINE(SNDLIB_USE_FLOATS)
 	    AC_DEFINE(GTKRC_COLORS)
+            AC_DEFINE(FILE_PER_CHAN)
 	    with_gtk="yes"
 	    audio_system="ardour"
 	fi)

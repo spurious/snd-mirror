@@ -15,7 +15,7 @@
 #endif
       
 
-#define NUM_COMMANDS 717
+#define NUM_COMMANDS 721
 
 static char *snd_commands[NUM_COMMANDS]={
   S_abort,S_abortQ,S_activate_listener,S_active_sounds,S_add_mark,S_add_sound_file_extension,S_add_to_main_menu,S_add_to_menu,S_add_transform,
@@ -48,7 +48,7 @@ static char *snd_commands[NUM_COMMANDS]={
   S_expand_length,S_expand_ramp,S_expanding,
 
   S_fft,S_fft_beta,S_fft_hook,S_fft_log_frequency,S_fft_log_magnitude,
-  S_fft_size,S_fft_style,S_fft_window,S_ffting,S_file_dialog,S_file_name,
+  S_fft_size,S_fft_style,S_fft_window,S_ffting,S_file_dialog,S_file_name,S_file_names,
   S_filter_dBing,S_filter_env,S_filter_env_order,
   S_filter_order,S_filter_selection,S_filter_sound,S_filter_waveform_color,S_filtering,
   S_find,S_find_mark,S_find_sound,S_finish_progress_report,
@@ -83,7 +83,7 @@ static char *snd_commands[NUM_COMMANDS]={
 
   S_new_sound,S_next_mix_sample,S_next_sample,S_next_track_sample,S_normal_fft,S_normalize_fft,S_normalize_on_open,S_normalize_view,
 
-  S_okQ,S_open_alternate_sound,S_open_hook,S_open_raw_sound,S_open_sound,S_open_sound_file,S_orientation_dialog,
+  S_okQ,S_open_alternate_sound,S_open_hook,S_open_multifile_sound_hook,S_open_raw_sound,S_open_sound,S_open_sound_file,S_orientation_dialog,
   S_output_comment_hook,S_output_name_hook,
   S_override_data_format,S_override_data_location,S_override_data_size,
 
@@ -102,7 +102,7 @@ static char *snd_commands[NUM_COMMANDS]={
   S_reverbing,S_reverse_selection,S_reverse_sound,S_revert_sound,S_right_sample,
 
   S_sample,S_sample_reader_at_endQ,S_sample_readerQ,S_samples,S_samples2sound_data,S_samples_vct,
-  S_save_control_panel,S_save_dir,S_save_edit_history,S_save_envelopes,S_save_macros,S_save_marks,S_save_options,
+  S_save_control_panel,S_save_dir,S_save_edit_history,S_save_envelopes,S_save_macros,S_save_marks,S_save_multifile_sound_hook,S_save_options,
   S_save_region,S_save_selection,S_save_sound,S_save_sound_as,S_save_state,S_save_state_file,
   S_save_state_on_exit,S_scale_by,S_scale_selection_by, S_scale_selection_to,S_scale_to,
   S_scan_across_all_chans,S_scan_across_chans,S_scan_across_sound_chans,S_scan_all_chans,S_scan_chan,S_scan_chans,S_scan_sound_chans,
@@ -158,7 +158,7 @@ static char *snd_commands[NUM_COMMANDS]={
   S_set_x_axis_style,S_set_x_bounds,S_set_xmax,S_set_xmin,S_set_y_bounds,
   S_set_ymax,S_set_ymin,S_set_zero_pad,S_set_zoom_color,S_set_zoom_focus_style,
 
-  S_short_file_name,S_show_axes,S_show_fft_peaks,S_show_listener,S_show_marks,
+  S_short_file_name,S_short_file_names,S_show_axes,S_show_fft_peaks,S_show_listener,S_show_marks,
   S_show_mix_consoles,S_show_mix_waveforms,S_show_selection_transform,S_show_usage_stats,S_show_y_zero,
   S_showing_controls,S_sinc_width,S_smooth,S_smooth_selection,
   S_snd_error_hook,S_snd_spectrum,S_snd_warning_hook,

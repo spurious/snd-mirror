@@ -192,7 +192,7 @@ typedef struct chan__info {
   int *stats;
   int squelch_update,waiting_to_make_graph;
   void *mix_md;
-#if HAVE_FILE_PER_CHAN
+#if FILE_PER_CHAN
   char *filename;
   file_info *hdr;
 #endif
@@ -251,7 +251,8 @@ typedef struct snd__info {
   chan_info *lacp;
   void *saved_controls;
   int apply_ok,applying;
-#if HAVE_FILE_PER_CHAN
+#if FILE_PER_CHAN
+  char **channel_filenames;
   int chan_type;
 #endif
 } snd_info;
@@ -791,6 +792,10 @@ char *added_transform_name(int type);
   SCM g_call3(SCM proc,SCM arg1,SCM arg2,SCM arg3);
   int procedure_ok(SCM proc, int req_args, int opt_args, char *caller, char *arg_name, int argn);
   char *output_name(snd_state *ss);
+  #if FILE_PER_CHAN
+    int multifile_channel(char *filename);
+    char *multifile_save(int snd, int chn);
+  #endif
 #endif
 env *string2env(char *str);
 Float string2Float(char *str);
@@ -1077,7 +1082,14 @@ void stop_applying(snd_info *sp);
 void *make_apply_state(void *xp);
 BACKGROUND_TYPE apply_controls(void *xp);
 void run_apply_to_completion(snd_info *sp);
-
+#if FILE_PER_CHAN
+typedef struct {
+  file_info *hdr;
+  dir *file_chans;
+  int *chan_locs;
+} multifile_info;
+multifile_info *sort_multifile_channels(snd_state *ss, char *filename);
+#endif
 
 /* -------- snd-file -------- */
 
@@ -1096,6 +1108,9 @@ int *free_file_state(int *datai);
 void add_sound_file_extension(char *ext);
 void init_sound_file_extensions(void);
 dir *find_sound_files_in_dir (char *name);
+#if FILE_PER_CHAN
+  dir *all_files_in_dir (char *name);
+#endif
 #if DEBUGGING
   int temp_files_in_tmpdir(snd_state *ss);
 #endif

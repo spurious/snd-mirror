@@ -2582,7 +2582,7 @@ static Widget sndCreateButtonMatrix(snd_state *ss, PANE *p, char *name, Widget p
   vu_rows = p->in_chans / 4;
   if (vu_rows == 0) vu_rows = 1;
   height = (int)(vu_rows*(3*2 + LIGHT_Y*meter_size));
-  width = (int)(LIGHT_Y*meter_size);
+  width = height;
   XtSetArg(in_args[in_n],XmNshadowType,XmSHADOW_ETCHED_IN); in_n++;
   outer_frame = sndCreateFrameWidget(name,parent,in_args,in_n);
   XtAddEventHandler(outer_frame,ButtonPressMask,FALSE,button_matrix_button_press,(XtPointer)p);
@@ -2741,7 +2741,7 @@ static Widget sndCreateButtonMatrix(snd_state *ss, PANE *p, char *name, Widget p
 
 int device_channels(int dev); /* audio.c */
 /* for testing, it's convenient to fake up a device here */
-/* static int device_channels(int dev) {return(12);} */
+/* static int device_channels(int dev) {return(8);} */
 int device_gains(int dev);
 
 static PANE *make_pane(snd_state *ss, Widget paned_window, int device, int system)
@@ -4226,7 +4226,6 @@ void snd_record_file(snd_state *ss)
 		    }
 		}
 	    }
-	  /* done: */ /* this is illegal in C++ */
 	}
       else
 	{

@@ -2607,6 +2607,44 @@ static SCM g_comment(SCM snd_n)
   return(sp_iread(snd_n,COMMENTF));
 }
 
+#if FILE_PER_CHAN
+static SCM string_array_to_list(char **arr, int i, int len)
+{
+  if (i < (len-1))
+    return(gh_cons(gh_str02scm(arr[i]),string_array_to_list(arr,i+1,len)));
+  else return(gh_cons(gh_str02scm(arr[i]),SCM_EOL));
+}
+
+static SCM g_file_names(SCM snd_n) 
+{
+  #define H_file_names "(" S_file_names " &optional snd) -> channel file names associated with snd"
+  snd_info *sp;
+  ERRSP(S_file_names,snd_n,1);
+  sp = get_sp(snd_n);
+  if (sp == NULL) return(NO_SUCH_SOUND);
+  if (sp->chan_type == FILE_PER_SOUND) return(sp_iread(snd_n,FILENAMEF));
+  return(string_array_to_list(sp->channel_filenames,0,sp->nchans));
+}
+
+static SCM g_short_file_names(SCM snd_n) 
+{
+  #define H_short_file_names "(" S_short_file_names " &optional snd) -> channel file names (no directory) associated with snd"
+  snd_info *sp;
+  SCM result = SCM_EOL;
+  int i;
+  char **strs;
+  ERRSP(S_short_file_names,snd_n,1);
+  sp = get_sp(snd_n);
+  if (sp == NULL) return(NO_SUCH_SOUND);
+  if (sp->chan_type == FILE_PER_SOUND) return(sp_iread(snd_n,SHORTFILENAMEF));
+  strs = (char **)CALLOC(sp->nchans,sizeof(char *));
+  for (i=0;i<sp->nchans;i++) strs[i] = filename_without_home_directory(sp->channel_filenames[i]);
+  result = string_array_to_list(strs,0,sp->nchans);
+  FREE(strs);
+  return(result);
+}
+#endif
+
 static SCM g_close_sound(SCM snd_n) 
 {
   #define H_close_sound "(" S_close_sound " snd) closes snd"
@@ -7436,6 +7474,9 @@ static SCM mouse_release_hook,mouse_drag_hook,key_press_hook,stop_playing_hook,s
 static SCM mark_click_hook,start_playing_hook,output_comment_hook,output_name_hook,multichannel_mix_hook;
 static SCM mix_console_state_changed_hook,mix_speed_changed_hook,mix_amp_changed_hook,mix_position_changed_hook;
 static SCM graph_hook,after_graph_hook,mus_error_hook,snd_error_hook,snd_warning_hook;
+#if FILE_PER_CHAN
+  static SCM open_multifile_sound_hook,save_multifile_sound_hook;
+#endif
 static SCM memo_sound;
 
 #if HAVE_LADSPA
@@ -7968,6 +8009,10 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure1_1(S_set_filter_order,g_set_filter_order),H_set_filter_order);
   DEFINE_PROC(gh_new_procedure0_1(S_file_name,g_file_name),H_file_name);
   DEFINE_PROC(gh_new_procedure0_1(S_short_file_name,g_short_file_name),H_short_file_name);
+#if FILE_PER_CHAN
+  DEFINE_PROC(gh_new_procedure0_1(S_file_names,g_file_names),H_file_names);
+  DEFINE_PROC(gh_new_procedure0_1(S_short_file_names,g_short_file_names),H_short_file_names);
+#endif
   DEFINE_PROC(gh_new_procedure0_1(S_contrast,g_contrast),H_contrast);
   DEFINE_PROC(gh_new_procedure1_1(S_set_contrast,g_set_contrast),H_set_contrast);
   DEFINE_PROC(gh_new_procedure0_1(S_contrast_amp,g_contrast_amp),H_contrast_amp);
@@ -8166,6 +8211,10 @@ void g_initialize_gh(snd_state *ss)
   mus_error_hook = scm_create_hook(S_mus_error_hook,2);           /* arg = error-type error-message */
   snd_error_hook = scm_create_hook(S_snd_error_hook,1);           /* arg = error-message */
   snd_warning_hook = scm_create_hook(S_snd_warning_hook,1);       /* arg = error-message */
+  #if FILE_PER_CHAN
+    open_multifile_sound_hook = scm_create_hook(S_open_multifile_sound_hook,1);       /* arg = filename */
+    save_multifile_sound_hook = scm_create_hook(S_save_multifile_sound_hook,2);       /* args = snd chn */
+  #endif
 #else
   open_hook = gh_define(S_open_hook,SCM_BOOL_F);
   during_open_hook = gh_define(S_during_open_hook,SCM_BOOL_F);
@@ -8194,6 +8243,10 @@ void g_initialize_gh(snd_state *ss)
   mus_error_hook = gh_define(S_mus_error_hook,SCM_BOOL_F);
   snd_error_hook = gh_define(S_snd_error_hook,SCM_BOOL_F);
   snd_warning_hook = gh_define(S_snd_warning_hook,SCM_BOOL_F);
+  #if FILE_PER_CHAN
+    open_multifile_sound_hook = gh_define(S_open_multifile_sound_hook,SCM_BOOL_F);
+    save_multifile_sound_hook = gh_define(S_save_multifile_sound_hook,SCM_BOOL_F);
+  #endif
 #endif
 
   gh_init_marks();
@@ -8561,6 +8614,29 @@ char *output_name(snd_state *ss)
   return(NULL);
 }
 
+  #if FILE_PER_CHAN
+    int multifile_channel(char *filename)
+    {
+      int res = -1;
+      SCM hookres = SCM_BOOL_F;
+      if (HOOKED(open_multifile_sound_hook))
+	{
+	  hookres = g_c_run_progn_hook(open_multifile_sound_hook,SCM_LIST1(gh_str02scm(filename)));
+	  res = g_scm2intdef(hookres,-2);
+	}
+      return(res);
+    }
+    char *multifile_save(int snd, int chn)
+    {
+      SCM hookres = SCM_BOOL_F;
+      if (HOOKED(save_multifile_sound_hook))
+	hookres = g_c_run_progn_hook(save_multifile_sound_hook,SCM_LIST2(gh_int2scm(snd),gh_int2scm(chn)));
+      if (gh_string_p(hookres))
+	return(gh_scm2newstr(hookres,NULL));
+      return(NULL);
+    }
+  #endif
+
 #else
 int dont_open(snd_state *ss, char *file) {return(0);}
 int dont_close(snd_state *ss, snd_info *sp) {return(0);}
@@ -8588,6 +8664,10 @@ int ignore_mus_error(int type, char *msg) {return(0);}
 int ignore_snd_error(char *msg) {return(0);}
 int ignore_snd_warning(char *msg) {return(0);}
 char *output_name(snd_state *ss) {return(NULL);}
+  #if FILE_PER_CHAN
+    int multifile_channel(char *filename) {return(-1);}
+    char *multifile_save(int snd, int chn) {return(NULL);}
+  #endif
 #endif
 
 void set_memo_sound(snd_info *sp)

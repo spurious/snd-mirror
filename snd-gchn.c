@@ -684,7 +684,8 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       gtk_paned_set_position(GTK_PANED(cw[W_main_window]),1);
       gtk_widget_show(cw[W_graph_window]);
     }
-  gtk_widget_show_all(cw[W_main_window]);
+  if ((sp->combining != CHANNELS_COMBINED) || (channel == 0))
+    gtk_widget_show_all(cw[W_main_window]);
 
   if ((need_extra_scrollbars) && (sp->combining == CHANNELS_SEPARATE)) 
     hide_gz_scrollbars(sp); /* default is on in this case */  

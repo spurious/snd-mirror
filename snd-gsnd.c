@@ -1207,9 +1207,30 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
   /* these dimensions are used to try to get a reasonable channel graph size without falling off the screen bottom */
   int samples_per_channel;
   snd_context *sx;
+#if FILE_PER_CHAN
+  dir *file_chans = NULL;
+  int *chan_locs;
+  multifile_info *minfo;
+#endif
   set_snd_IO_error(SND_NO_ERROR);
   errno = 0;
+#if FILE_PER_CHAN
+  if (is_directory(filename))
+    {
+      minfo = sort_multifile_channels(ss,filename);
+      file_chans = minfo->file_chans;
+      chan_locs = minfo->chan_locs;
+      hdr = minfo->hdr;
+      FREE(minfo);
+    }
+  else
+    {
+      hdr = make_file_info(filename,ss);
+      hdr->chan_type = FILE_PER_SOUND;
+    }
+#else
   hdr = make_file_info(filename,ss);
+#endif
   if (!hdr) return(NULL);
   if (ss->pending_change) 
     {
@@ -1238,6 +1259,22 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
   ss->sounds[snd_slot] = make_snd_info(ss->sounds[snd_slot],ss,filename,hdr,snd_slot);
   sp = ss->sounds[snd_slot];
   sp->inuse = 1;
+#if FILE_PER_CHAN
+  sp->chan_type = hdr->chan_type;
+  if (sp->chan_type == FILE_PER_CHANNEL)
+    {
+      sp->channel_filenames = (char **)CALLOC(hdr->chans,sizeof(char *));
+      for (i=0;i<hdr->chans;i++)
+	{
+	  sp->channel_filenames[i] = (char *)CALLOC(MUS_MAX_FILE_NAME,sizeof(char));
+	  sprintf(sp->channel_filenames[i],"%s/%s",filename,file_chans->files[chan_locs[i]]);
+	}
+      FREE(chan_locs);
+      chan_locs = NULL;
+      free_dir(file_chans);
+      file_chans = NULL;
+    }
+#endif
   sx = sp->sgx;
   sx->controls_fixed = 0;
   sx->file_pix = blank;
