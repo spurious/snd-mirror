@@ -9257,6 +9257,12 @@ If you include a documentation string in the function, it is included in the Hel
 	    (if (&lt; (<a class=quiet href="#rightsample">right-sample</a>) (<a class=quiet href="#frames">frames</a>))
 		(set! (<a class=quiet href="#leftsample">left-sample</a>) (<a class=quiet href="#rightsample">right-sample</a>)))
 	    <a class=quiet href="#bindkey">keyboard-no-action</a>))
+
+(<em class=red>bind-key</em> (char-&gt;integer #\v) 0 
+          (lambda () 
+            "remove click" 
+            (set! (<a class=quiet href="#sample">sample</a> (<a class=quiet href="#cursor">cursor</a>)) (* 0.5 (+ (<a class=quiet href="#sample">sample</a> (1- (<a class=quiet href="#cursor">cursor</a>))) (<a class=quiet href="#sample">sample</a> (1+ (<a class=quiet href="#cursor">cursor</a>)))))) 
+            cursor-in-view))
 </pre></td></tr></table></td></tr>
 <tr><td></td><td>
 

@@ -208,3 +208,5 @@
 (define pv-outctr phase-vocoder-outctr)
 (define pv-phase-increments phase-vocoder-phase-increments)
 (define pv-phases phase-vocoder-phases)
+
+(define mus-inspect mus-describe)

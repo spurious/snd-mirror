@@ -2324,16 +2324,40 @@ butterworth.cl has several Butterworth filters.
 
 <p>The generators have internal fields that are sometimes of interest at run-time.  To get or
 set these fields, use these functions (they are described in conjunction with the associated generators):</p>
-<pre>
-  <a class=def name="mus-frequency">mus-frequency</a>    <a class=def name="mus-cosines">mus-cosines</a>         <a class=def name="mus-phase">mus-phase</a>     <a class=def name="mus-location">mus-location</a>
-  <a class=def name="mus-length">mus-length</a>       <a class=def name="mus-increment">mus-increment</a>       <a class=def name="mus-data">mus-data</a>      <a class=def name="mus-order">mus-order</a>
-  <a class=def name="mus-channel">mus-channel</a>      <a class=def name="mus-formant-radius">mus-formant-radius</a>  <a class=def name="mus-channels">mus-channels</a>  <a class=def name="mus-xcoeffs">mus-xcoeffs</a>
-  <a class=def name="mus-scaler">mus-scaler</a>       <a class=def name="mus-ycoeffs">mus-ycoeffs</a>         <a class=def name="mus-ramp">mus-ramp</a>      <a class=def name="mus-feedback">mus-feedback</a>
-  <a class=def name="mus-feedforward">mus-feedforward</a>  <a class=def name="mus-hop">mus-hop</a>             <a class=def name="mus-run">mus-run</a>
-  <a class=def name="mus-file-name">mus-file-name</a>    <a class=def name="mus-offset">mus-offset</a>          <a class=def name="mus-width">mus-width</a>     <a class=def name="mus-interp-type">mus-interp-type</a>
-  <a class=def name="mus-name">mus-name</a>         <a class=def name="mus-xcoeff">mus-xcoeff</a>          <a class=def name="mus-ycoeff">mus-ycoeff</a>
-</pre>
-<p>
+
+<table>
+
+<tr><td width=200><a class=def name="mus-channel">mus-channel</a></td><td>channel being read/written</td></tr>
+<tr><td><a class=def name="mus-channels">mus-channels</a></td>      <td>channels open</td></tr>
+<tr><td><a class=def name="mus-cosines">mus-cosines</a></td>        <td>sinusoids in output</td></tr>
+<tr><td><a class=def name="mus-data">mus-data</a></td>              <td>array of data</td></tr>
+<tr><td><a class=def name="mus-describe">mus-describe</a></td>      <td>description of current state</td></tr>
+<tr><td><a class=def name="mus-feedback">mus-feedback</a></td>      <td>feedback coefficient</td></tr>
+<tr><td><a class=def name="mus-feedforward">mus-feedforward</a></td><td>feedforward coefficient</td></tr>
+<tr><td><a class=def name="mus-file-name">mus-file-name</a></td>    <td>file being read/written</td></tr>
+<tr><td><a class=def name="mus-formant-radius">mus-formant-radius</a></td><td>width of formant</td></tr>
+<tr><td><a class=def name="mus-frequency">mus-frequency</a></td>    <td>frequency (Hz)</td></tr>
+<tr><td><a class=def name="mus-hop">mus-hop</a></td>                <td>hop size for block processing</td></tr>
+<tr><td><a class=def name="mus-increment">mus-increment</a></td>    <td>various increments</td></tr>
+<tr><td><a class=def name="mus-interp-type">mus-interp-type</a></td><td>interpolation type (mus-interp-linear, etc)</td></tr>
+<tr><td><a class=def name="mus-length">mus-length</a></td>          <td>data array length</td></tr>
+<tr><td><a class=def name="mus-location">mus-location</a></td>      <td>sample location for reads/writes</td></tr>
+<tr><td><a class=def name="mus-name">mus-name</a></td>              <td>generator name ("oscil")</td></tr>
+<tr><td><a class=def name="mus-offset">mus-offset</a></td>          <td>envelope offset</td></tr>
+<tr><td><a class=def name="mus-order">mus-order</a></td>            <td>filter order</td></tr>
+<tr><td><a class=def name="mus-phase">mus-phase</a></td>            <td>phase (radians)</td></tr>
+<tr><td><a class=def name="mus-ramp">mus-ramp</a></td>              <td>granulate grain envelope ramp setting</td></tr>
+<tr><td><a class=def name="mus-run">mus-run</a></td>                <td>run any generator</td></tr>
+<tr><td><a class=def name="mus-scaler">mus-scaler</a></td>          <td>scaler, normally on an amplitude</td></tr>
+<tr><td><a class=def name="mus-width">mus-width</a></td>            <td>width of interpolation tables, etc</td></tr>
+<tr><td><a class=def name="mus-xcoeff">mus-xcoeff</a></td>          <td>x (input) coefficient</td></tr>
+<tr><td><a class=def name="mus-xcoeffs">mus-xcoeffs</a></td>        <td>array of x (input) coefficients</td></tr>
+<tr><td><a class=def name="mus-ycoeff">mus-ycoeff</a></td>          <td>y (output, feedback) coefficient</td></tr>
+<tr><td><a class=def name="mus-ycoeffs">mus-ycoeffs</a></td>        <td>array of y (feedback) coefficients</td></tr>
+
+</table>
+
+<p>Many of these are settable:
 <code>(setf (mus-frequency osc1) 440.0)</code>
 sets osc1's current frequency to (<a class=quiet href="#hz-&gt;radians">hz-&gt;radians</a> 440.0). 
 

@@ -695,6 +695,8 @@ void *_mus_wrap_one_vct_wrapped(mus_any *ge);
 #define mus_outc(Samp, Val, Outp) mus_out_any(Samp, Val, 2, Outp)
 #define mus_outd(Samp, Val, Outp) mus_out_any(Samp, Val, 3, Outp)
 
+#define mus_inspect(Gen) mus_describe(Gen)
+
 #endif
 
 #ifdef __cplusplus

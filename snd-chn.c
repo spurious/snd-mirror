@@ -3,13 +3,8 @@
 #include "clm-strings.h"
 
 /* TODO: show sonogram in wave window so marks/selections etc can be used to edit that data */
-/* TODO: drag sample (x and y) -- also mix/selection? (tag up/down = overall amp change) */
 /* SOMEDAY: if superimposed and 2chn cursor set, 1chan is xor'd, subsequent click sets both (and chan1 cursor takes precedence?) */
 /*    cursor redraw can check for this, but it gloms up code */
-/* TODO: if cursor line, don't draw into the upper corner graph */
-/*    would need some way to add a region to a list saying "don't overwrite this" */
-/*    channel-clip-regions? */
-/*    or just a cursor-drawing proc that knows the right 1/4 is in use */
 /* TODO: tracking cursor in sonogram (or spectrogram -- would need projected xor'd line) */
 /*    and what about the xor effect over unknown bg colors? -- perhaps white here? */
 /*    for sonogram, can use local_grf_x[y not needed?] here, just as in time case, I think */

@@ -114,7 +114,7 @@
 
 #define XEN_UNDEFINED       SCM_UNDEFINED
 
-#if HAVE_SCM_IS_SYMBOL
+#if HAVE_SCM_C_MAKE_RECTANGULAR
   #define C_STRING_TO_XEN_SYMBOL(a)   scm_from_locale_symbol(a)
 #else
   #if HAVE_SCM_STR2SYMBOL
@@ -326,7 +326,7 @@
   #define C_STRING_TO_XEN_FORM(Str)   scm_read_0str(Str)
 #endif
 
-#if HAVE_SCM_IS_SYMBOL
+#if HAVE_SCM_C_MAKE_RECTANGULAR
   #define XEN_EVAL_FORM(Form)         scm_eval((XEN)(Form), scm_interaction_environment())
   #define XEN_SYMBOL_TO_C_STRING(a)   XEN_TO_C_STRING(scm_symbol_to_string(a))
 #else
@@ -452,7 +452,7 @@
   #define SCM_SYMBOLP(Arg)            gh_symbol_p(Arg)
 #endif
 
-#if HAVE_SCM_IS_SYMBOL
+#if HAVE_SCM_C_MAKE_RECTANGULAR
   #define XEN_SYMBOL_P(Arg)           scm_is_symbol(Arg)
 #else
   #define XEN_SYMBOL_P(Arg)           (SCM_SYMBOLP(Arg))
