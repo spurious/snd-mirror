@@ -575,6 +575,12 @@
       (set! (graphs-horizontal) (graphs-horizontal))
       (if (not (equal? (graphs-horizontal)  #t)) 
 	  (snd-display ";graphs-horizontal set def: ~A" (graphs-horizontal)))
+      (set! (html-dir) (html-dir))
+      (if (not (equal? (html-dir)  ".")) 
+	  (snd-display ";html-dir set def: ~A" (html-dir)))
+      (set! (html-program) (html-program))
+      (if (not (equal? (html-program)  "netscape")) 
+	  (snd-display ";html-program set def: ~A" (html-program)))
       (set! (just-sounds) (just-sounds))
       (if (not (equal? (just-sounds)  #f)) 
 	  (snd-display ";just-sounds set def: ~A" (just-sounds)))
@@ -773,9 +779,9 @@
 	       (if (or (not (string? (func)))
 		       (not (string=? val (func))))
 		   (snd-display ";set ~A to bogus value: ~A ~A" name val (func)))))
-	   (list axis-label-font axis-numbers-font listener-font help-text-font 
+	   (list axis-label-font axis-numbers-font help-text-font 
 		 tiny-font button-font bold-button-font peaks-font bold-peaks-font)
-	   (list 'axis-label-font 'axis-numbers-font 'listener-font 'help-text-font 
+	   (list 'axis-label-font 'axis-numbers-font 'help-text-font 
 		 'tiny-font button-font 'bold-button-font 'peaks-font 'bold-peaks-font)))
 
       ))
@@ -858,6 +864,8 @@
 	'filter-control? (without-errors (filter-control?)) 'no-such-sound
 	'graph-cursor (graph-cursor) 34
 	'graph-style (graph-style) graph-lines
+	'html-dir (html-dir) "."
+	'html-program (html-program) "netscape"
 	'lisp-graph? (without-errors (lisp-graph?)) 'no-such-sound
 	'graphs-horizontal (graphs-horizontal) #t
 	'just-sounds (just-sounds) #f
@@ -9109,7 +9117,11 @@ EDITS: 5
 		      (vct-ref v2 0))))
 	(if (fneq (vct-ref v1 12) .1) (snd-display ";vct-map! twice: ~A" (vct-ref v1 12))))
       (let ((hi (make-vct 3)))
-	(if (vct-subseq hi 1 0) (snd-display ";vct-subseq 0 len: ~A" (vct-subseq hi 1 0)))
+	(let ((tag (catch #t
+			  (lambda () (vct-subseq hi 1 0))
+			  (lambda args (car args)))))
+	  (if (not (eq? tag 'out-of-range))
+	      (snd-display ";vct-subseq 1 0: ~A" tag)))
 	(if (vct) (snd-display ";(vct) -> ~A" (vct)))
 	(let ((tag (catch #t (lambda () (make-vct 0)) (lambda args (car args)))))
 	  (if (not (eq? tag 'out-of-range)) (snd-display ";make-vct 0 -> ~A" tag)))
@@ -14215,21 +14227,6 @@ EDITS: 5
 	       (set! (recorder-in-amp 0 0) 0.5)
 	       (if (> (abs (- (recorder-in-amp 0 0) 0.5)) .01) (snd-display ";set-recorder-in-amp: ~A?" (recorder-in-amp 0 0)))))
 	 (let ((held (help-dialog "Test" "snd-test here")))
-	   (if (provided? 'snd-html)
-	       (begin
-		 ;; these are trying to flush out html syntax errors
-		 (help-dialog "Find" "#find")
-		 (help-dialog "CLM" "grfsnd.html#sndwithclm")
-		 (help-dialog "Find" "snd.html#find")
-		 (help-dialog "Constants" "extsnd.html#sndconstants")
-		 (help-dialog "Sndinfo" "sndlib.html#sndinfo")
-		 (help-dialog "Generators" "clm.html#generators")
-		 (if (not (string=? (html-dir) "."))
-		     (snd-display ";default html-dir: ~A" (html-dir)))
-		 (set! (html-dir) "/usr/local/share")
-		 (if (not (string=? (html-dir) "/usr/local/share"))
-		     (snd-display ";html-dir: ~A" (html-dir)))
-		 ))
 	   (if (not (= (length (menu-widgets)) 6)) (snd-display ";menu-widgets: ~A?" (menu-widgets)))
 	   (if (not (equal? (widget-position (car (menu-widgets))) (list 0 0)))
 	       (snd-display ";position main menubar: ~A?" (widget-position (car (menu-widgets)))))
@@ -14307,6 +14304,17 @@ EDITS: 5
 	       (if (not (string=? linked-str (widget-text (cadr (sound-widgets ind)))))
 		   (snd-display ";linked name text (no index): ~A ~A" linked-str (widget-text (cadr (sound-widgets ind))))))
 	   (close-sound ind)))
+
+     (if (and (provided? 'xm)
+	      (provided? 'snd-motif))
+	 (begin
+	   (snd-error "a test")
+	   (let ((errwid (list-ref (dialog-widgets) 3)))
+	     (if (not (Widget? errwid))
+		 (snd-display ";snd-error no dialog?")
+		 (let ((OK (find-child errwid "OK")))
+		   (if (Widget? OK)
+		       (XtCallCallbacks OK XmNactivateCallback #f)))))))
 
      ))
 
@@ -26839,6 +26847,8 @@ EDITS: 2
 
 (load "v.scm")
 (load "jcrev.scm") ; redefines jc-reverb (different from examp.scm version used above)
+(define old-opt-23 (optimization))
+(set! (optimization) max-optimization)
 
 (define (ws-sine freq)
   (let ((o (make-oscil freq)))
@@ -27026,6 +27036,7 @@ EDITS: 2
 
 
       ))
+(set! (optimization) old-opt-23)
 
 
 ;;; ---------------- test 24: user-interface ----------------
@@ -29154,6 +29165,12 @@ EDITS: 2
 			(snd-display ";no yes dialog"))
 		    (XtManageChild yesd)
 		    (click-button (XmMessageBoxGetChild yesd XmDIALOG_OK_BUTTON)) (force-event))
+		  (let* ((val (yes-or-no? "hiho"))
+			 (yesd (list-ref (dialog-widgets) 4)))
+		    (if (not yesd)
+			(snd-display ";no no dialog"))
+		    (XtManageChild yesd)
+		    (click-button (XmMessageBoxGetChild yesd XmDIALOG_CANCEL_BUTTON)) (force-event))
 		  (set! (with-background-processes) old-val))
 
 		;; ---------------- transform dialog ----------------
@@ -34876,7 +34893,7 @@ EDITS: 2
 			  fft-window-beta fft-log-frequency fft-log-magnitude transform-size transform-graph-type fft-window
 			  transform-graph? graph-style lisp-graph? left-sample make-graph-data max-transform-peaks maxamp
 			  time-graph-style lisp-graph-style transform-graph-style
-			  min-dB transform-normalization peak-env-info reverse-sound right-sample show-axes channel-properties
+			  min-dB transform-normalization peak-env-info reverse-sound right-sample show-axes 
 			  show-transform-peaks show-marks show-mix-waveforms show-y-zero spectro-cutoff spectro-hop
 			  spectro-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle
 			  spectro-z-scale squelch-update transform-samples->vct transform-samples-size transform-type

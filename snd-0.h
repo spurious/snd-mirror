@@ -755,6 +755,10 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 #define set_html_dir_1(ss, a) ss->HTML_Dir = a
 #define DEFAULT_HTML_DIR "."
 
+#define html_program(ss) ss->HTML_Program
+#define set_html_program(ss, a) ss->HTML_Program = a
+#define DEFAULT_HTML_PROGRAM "netscape"
+
 #define graphs_horizontal(ss) ss->Graphs_Horizontal
 #define in_set_graphs_horizontal(ss, a) ss->Graphs_Horizontal = a
 #define DEFAULT_GRAPHS_HORIZONTAL TRUE

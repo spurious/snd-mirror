@@ -10,11 +10,6 @@ static Widget help_dialog = NULL;
 static Widget help_text = NULL;
 static char help_window_label[LABEL_BUFFER_SIZE];
 
-static void help_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  help_dialog_help((snd_state *)context);
-}
-
 static char *cr_to_space(char *val)
 {
   int i, len;
@@ -89,8 +84,8 @@ static void create_help_monolog(snd_state *ss)
   }
 
   XtUnmanageChild(XmMessageBoxGetChild(help_dialog, XmDIALOG_CANCEL_BUTTON));
+  XtUnmanageChild(XmMessageBoxGetChild(help_dialog, XmDIALOG_HELP_BUTTON));
   XtUnmanageChild(XmMessageBoxGetChild(help_dialog, XmDIALOG_SYMBOL_LABEL));
-  XtAddCallback(help_dialog, XmNhelpCallback, help_help_callback, ss);
       
   XmStringFree(titlestr);
 
@@ -114,13 +109,12 @@ static void create_help_monolog(snd_state *ss)
     {
       map_over_children(help_dialog, set_main_color_of_widget, (void *)ss);
       XtVaSetValues(help_text, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(help_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
       XtVaSetValues(XmMessageBoxGetChild(help_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
     }
   set_dialog_widget(ss, HELP_DIALOG, help_dialog);
 }
 
-static Widget snd_help_1(snd_state *ss, char *subject, char *helpstr, int with_wrap)
+Widget snd_help(snd_state *ss, char *subject, char *helpstr, int with_wrap)
 {
   /* place help string in scrollable help window */
   /* if window is already active, add this help at the top and reposition */
@@ -151,14 +145,4 @@ static Widget snd_help_1(snd_state *ss, char *subject, char *helpstr, int with_w
     XtManageChild(help_dialog);
   XmStringFree(xstr1);
   return(help_dialog);
-}
-
-Widget snd_help(snd_state *ss, char *subject, char *helpstr)
-{
-  return(snd_help_1(ss, subject, helpstr, FALSE));
-}
-
-Widget snd_help_with_wrap(snd_state *ss, char *subject, char *helpstr)
-{
-  return(snd_help_1(ss, subject, helpstr, TRUE));
 }

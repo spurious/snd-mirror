@@ -295,7 +295,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
-12-May:  removed --with-html and associated variables.\n\
+12-May:  removed --with-html and associated variables. added html-program.\n\
 7-May:   or-hooks run all functions on the hook list now.\n\
          mix-drag-hook.\n\
 5-May:   after-save-state-hook.\n\
@@ -312,9 +312,6 @@ void news_help(snd_state *ss)
 25-Apr:  check-for-unsaved-edits arg defaults to #t now.\n\
 22-Apr:  samples function returns a vct, not a vector.\n\
 15-Apr:  removed fix-bar, makefile.motif.osx, and makefile.gtk.osx\n\
-11-Apr:  moved dismiss-all-dialogs to snd6.scm.\n\
-         change-property -> change-window-property (old form in snd6.scm)\n\
-9-Apr:   nb.rb, ws.rb, dlocsig.rb from Michael Scholz.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
@@ -353,7 +350,7 @@ void ssnd_help(snd_state *ss, char *subject, ...)
       strcat(newstr, helpstr);
     }
   va_end(ap);
-  snd_help(ss, subject, newstr);
+  snd_help(ss, subject, newstr, FALSE);
   FREE(newstr);
 }  
 
@@ -661,7 +658,7 @@ data values, to some extent), set the variable\n\
 
 void find_help(snd_state *ss) 
 {
-  snd_help_with_wrap(ss, "Find", 
+  snd_help(ss, "Find", 
 "Searches in Snd refer to the sound data, and are in general patterned after Emacs.  When you type \
 c-s or c-r, the minibuffer below the graph is activated and you are asked for the search function. \
 The expression is a Scheme function of one argument, the current sample value.  It should return #t when the \
@@ -669,28 +666,31 @@ search is satisified.  For example, (lambda (n) (> n .1) looks for the next samp
 Successive c-s or c-r repeat the search.  c-x c-s can redefine the search pattern, which is also cleared in other \
 events, much like Emacs. \
 \n\n\
-Normally, the search applies only to the current channel. To search all current files at once, use the Edit:Find dialog.");
+Normally, the search applies only to the current channel. To search all current files at once, use the Edit:Find dialog.",
+	   TRUE);
 }
 
 void undo_help(snd_state *ss) 
 {
-  snd_help_with_wrap(ss, "Undo", 
+  snd_help(ss, "Undo", 
 "Snd supports unlimited undo in the sense that you can backup through all \
 the edits since the last save, and at any point redo those edits.  Certain \
 operations require that temporary files be written, so disk space may eventually \
 become a problem.  Revert is the same as backing up to the last save. \
 \n\n\
-In addition, eight or so of the previous selections are saved on a stack accessible via c-y.");
+In addition, eight or so of the previous selections are saved on a stack accessible via c-y.",
+	   TRUE);
 }
 
 void sync_help(snd_state *ss) 
 {
-  snd_help_with_wrap(ss, "Sync", 
+  snd_help(ss, "Sync", 
 "The sync button causes certain operations to apply to all channels simultaneously.  In mono \
 sounds, the sync button has a similar effect, but applied across multiple sounds. \
 \n\n\
 To get multi-channel selections, set the sync button, then define the selection (by dragging \
-the mouse) in one channel, and the parallel portions of the other channels will also be selected. ");
+the mouse) in one channel, and the parallel portions of the other channels will also be selected. ",
+	   TRUE);
 }
 
 static char speed_help_string[] = 
@@ -733,15 +733,16 @@ The reverb is on only if the reverb button is set.\
 
 void contrast_help(snd_state *ss) 
 {
-  snd_help_with_wrap(ss, "Contrast", 
+  snd_help(ss, "Contrast", 
 "'Contrast enhancement' is my name for this somewhat weird waveshaper or compander.  It \
 phase-modulates a sound, which can in some cases make it sound sharper or brighter. \
-For softer sounds, it causes only an amplitude change.  Contrast is on only if the contrast button is set.");
+For softer sounds, it causes only an amplitude change.  Contrast is on only if the contrast button is set.",
+	   TRUE);
 }
 
 void env_help(snd_state *ss) 
 {
-  snd_help_with_wrap(ss, "Envelope", 
+  snd_help(ss, "Envelope", 
 "An envelope in Snd is a list of x y break-point pairs. The x axis range is \
 arbitrary. For example, to define a triangle curve: '(0 0 1 1 2 0). There is no (obvious) limit \
 on the number of breakpoints. \
@@ -767,7 +768,8 @@ corresponding to each successsive member of the current set of sync'd channels, 
 argument. In the latter case, " S_scale_by " uses that scaler for all its channels, and " S_scale_to " \
 normalizes all the channels together so that the loudest reaches that amplitude (that is, " S_scale_to " \
 .5) when applied to a stereo file means that both channels are scaled by the same amount so that the \
-loudest point in the file becomes .5). ");
+loudest point in the file becomes .5). ",
+	   TRUE);
 }
 
 static char sound_files_help_string[] = 
@@ -927,7 +929,7 @@ click the 'digital input' button; otherwise you'll get a stuttering effect becau
 
 void envelope_editor_dialog_help(snd_state *ss)
 {
-  snd_help_with_wrap(ss, "Envelope Editor",
+  snd_help(ss, "Envelope Editor",
 "The Edit Envelope dialog (under the Edit menu) fires up a window for viewing and editing \
 envelopes. The dialog has a display showing either the envelope currently being edited or a panorama \
 of all currently loaded envelopes. The current envelope can be edited with the mouse: click at \
@@ -962,7 +964,8 @@ set the 'mix' button. \
 \n\n\
 The two toggle buttons at the lower right choose whether to show a light-colored version of the \
 currently active sound (the 'wave' button), and whether to clip mouse movement at the current y \
-axis bounds (the 'clip' button).");
+axis bounds (the 'clip' button).",
+	   TRUE);
 }
 
 void about_snd_help(snd_state *ss)
@@ -1024,30 +1027,22 @@ fft_keypad_help_string,
 NULL);
 }
 
-void speed_help(snd_state *ss) {snd_help_with_wrap(ss, "Speed", speed_help_string);}
-void expand_help(snd_state *ss) {snd_help_with_wrap(ss, "Expand", expand_help_string);}
-void reverb_help(snd_state *ss) {snd_help_with_wrap(ss, "Reverb", reverb_help_string);}
-void marks_help(snd_state *ss) {snd_help(ss, "Marks", mark_help_string);}
-void mix_help(snd_state *ss) {snd_help_with_wrap(ss, "Mixing", mix_help_string);}
-void sound_files_help(snd_state *ss) {snd_help(ss, "Format", sound_files_help_string);}
-void recording_help(snd_state *ss) {snd_help_with_wrap(ss, "Recording", recording_help_string);}
+void speed_help(snd_state *ss) {snd_help(ss, "Speed", speed_help_string, TRUE);}
+void expand_help(snd_state *ss) {snd_help(ss, "Expand", expand_help_string, TRUE);}
+void reverb_help(snd_state *ss) {snd_help(ss, "Reverb", reverb_help_string, TRUE);}
+void marks_help(snd_state *ss) {snd_help(ss, "Marks", mark_help_string, FALSE);}
+void mix_help(snd_state *ss) {snd_help(ss, "Mixing", mix_help_string, TRUE);}
+void sound_files_help(snd_state *ss) {snd_help(ss, "Format", sound_files_help_string, FALSE);}
+void recording_help(snd_state *ss) {snd_help(ss, "Recording", recording_help_string, TRUE);}
 void init_file_help(snd_state *ss) {ssnd_help(ss, "Customization", init_file_help_string, NULL);}
 
 
 /* -------- dialog help button -------- */
 
-void help_dialog_help(snd_state *ss)
-{
-  snd_help_with_wrap(ss,
-		     "Help",
-"You can get help within Snd either from the Help Menu items or from the " S_snd_help " function. \
-Or read the %#$*@! documentation.");
-}
-
 void transform_dialog_help(snd_state *ss)
 {
-  snd_help_with_wrap(ss,
-		     "Transform Options",
+  snd_help(ss,
+	   "Transform Options",
 "This dialog presents the various transform (fft) related choices. \
 \n\n\
 On the upper left is a list of available transform types; next on the right is a list of fft sizes;  \
@@ -1072,27 +1067,30 @@ including about 20 wavelet choices. \
 The top three buttons in the transform dialog choose between a normal fft, a sonogram, or a \
 spectrogram. The 'peaks' button affects whether peak info is displayed alongside the graph of the \
 spectrum. The 'dB' button selects between a linear and logarithmic Y (magnitude) axis. The 'log freq' \
-button makes a similar choice along the frequency axis.");	   
+button makes a similar choice along the frequency axis.",
+	   TRUE);	   
 }
 
 void color_dialog_help(snd_state *ss)
 {
-  snd_help_with_wrap(ss,
-		     "View Color",
+  snd_help(ss,
+	   "View Color",
 "This dialog sets the colormap and associated variables used during sonogram, spectrogram,  \
-and perhaps wavogram display. The cutoff scale refers to the minimum data value to be displayed.");	   
+and perhaps wavogram display. The cutoff scale refers to the minimum data value to be displayed.",
+	   TRUE);	   
 }
 
 void orientation_dialog_help(snd_state *ss)
 {
-  snd_help_with_wrap(ss,
-		     "View Orientation",
-"This dialog sets the rotation and scaling variables used during sonogram, spectrogram, and wavogram display.");	   
+  snd_help(ss,
+	   "View Orientation",
+	   "This dialog sets the rotation and scaling variables used during sonogram, spectrogram, and wavogram display.",
+	   TRUE);	   
 }
 
 void region_dialog_help(snd_state *ss)
 {
-  snd_help_with_wrap(ss, "Region Browser",
+  snd_help(ss, "Region Browser",
 "This is the 'region browser'.  The scrolled window contains the list of current regions \
 with a brief title to indicate the provenance thereof, and two buttons.  The 'save' button \
 protects or unprotects the region from deletion. The 'play' button plays the associated region. \
@@ -1101,49 +1099,54 @@ down arrows move up or down in the region's list of channels.  If you click a re
 title, the text is highlighted, and that region is displayed in the graph area.  You can delete the \
 region by clicking the 'Delete' button.  To dismiss the browser, click 'Ok'.  The 'edit' button \
 loads the region into the main editor as a temporary file.  It can be edited or renamed, etc.  If you save \
-the file, the region is updated to reflect any edits you made.");
+the file, the region is updated to reflect any edits you made.",
+	   TRUE);
 }
 
 void raw_data_dialog_help(snd_state *ss)
 {
-  snd_help_with_wrap(ss,
-		     "Raw Data",
+  snd_help(ss,
+	   "Raw Data",
 "To display and edit sound data, Snd needs to know how the data's sampling rate, number \
 of channels, and numerical format.  This dialog gives you a chance to set those fields. \
 To make the current settings the default for any future headerless files, click the \
-'Default' button.");
+'Default' button.",
+	   TRUE);
 }
 
 void new_file_dialog_help(snd_state *ss)
 {
-  snd_help_with_wrap(ss,
-		     "New File",
-"This dialog sets the new file's output header type, data format, srate, chans, and comment if any.");
+  snd_help(ss,
+	   "New File",
+	   "This dialog sets the new file's output header type, data format, srate, chans, and comment if any.",
+	   TRUE);
 }
 
 void edit_header_dialog_help(snd_state *ss)
 {
-  snd_help_with_wrap(ss,
-		     "Edit Header",
+  snd_help(ss,
+	   "Edit Header",
 "This dialog edits the header of a sound file. No change is made to the actual sound data; the \
 new header is blindly written, any unsaved edits are ignored. If you specify 'raw' as the type, \
 any existing header is removed.  This dialog is aimed at adding or removing an entire header,  \
-or editing the header comments; anything else is obviously dangerous.");
+or editing the header comments; anything else is obviously dangerous.",
+	   TRUE);
 }
 
 void print_dialog_help(snd_state *ss)
 {
-  snd_help_with_wrap(ss,
-		     "File Print",
+  snd_help(ss,
+	   "File Print",
 "Print causes the currently active display to be either printed (via the lpr command) or saved as \
 an eps file.  In the latter case, the file name is set either by the dialog, or taken from the \
-resource epsFile (normally snd.eps).");
+resource epsFile (normally snd.eps).",
+	   TRUE);
 }
 
 void view_files_dialog_help(snd_state *ss)
 {
-  snd_help_with_wrap(ss,
-		     "File Browser",
+  snd_help(ss,
+	   "File Browser",
 "This dialog provides two lists, one of the currently active files in Snd, and \
 the other of previously active files. The save button saves current edits, the \
 play button plays the file, and the unlist button removes a file from the \
@@ -1171,7 +1174,8 @@ The 'sort' label on the right activates a menu of sorting choices; 'name' sorts 
 previous files list alphabetically, 'date' sorts by date written, 'size' sorts by the \
 number of samples in the sound, and 'entry' sorts by the order the sound appears in the \
 absence of explicit sorting.  The variable " S_previous_files_sort " (default 0: \
-unsorted) refers to this menu.");	   
+unsorted) refers to this menu.",
+	   TRUE);	   
 }
 
 #define GLYPH_WIDTH 11
@@ -1352,15 +1356,35 @@ static XEN g_set_html_dir(XEN val)
   return(val);
 }
 
+static XEN g_html_program(void) 
+{
+  #define H_html_program "(" S_html_program "): name of documentation reader (netscape, by default)"
+  return(C_TO_XEN_STRING(html_program(get_global_state())));
+}
+
+static XEN g_set_html_program(XEN val) 
+{
+  snd_state *ss;
+  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_html_program, "a string");
+  ss = get_global_state();
+  if (html_program(ss)) FREE(html_program(ss));
+  set_html_program(ss, copy_string(XEN_TO_C_STRING(val))); 
+  return(val);
+}
+
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_2(g_listener_help_w, g_listener_help)
 XEN_NARGIFY_0(g_html_dir_w, g_html_dir)
 XEN_NARGIFY_1(g_set_html_dir_w, g_set_html_dir)
+XEN_NARGIFY_0(g_html_program_w, g_html_program)
+XEN_NARGIFY_1(g_set_html_program_w, g_set_html_program)
 #else
 #define g_listener_help_w g_listener_help
 #define g_html_dir_w g_html_dir
 #define g_set_html_dir_w g_set_html_dir
+#define g_html_program_w g_html_program
+#define g_set_html_program_w g_set_html_program
 #endif
 
 void g_init_help(void)
@@ -1383,4 +1407,5 @@ If more than one hook function, each function gets the previous function's outpu
   XEN_DEFINE_HOOK(output_comment_hook, S_output_comment_hook, 1, H_output_comment_hook); /* arg = current mus_sound_comment(hdr) if any */
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_html_dir, g_html_dir_w, H_html_dir, S_setB S_html_dir, g_set_html_dir_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_html_program, g_html_program_w, H_html_program, S_setB S_html_program, g_set_html_program_w,  0, 0, 1, 0);
 }

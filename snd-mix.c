@@ -415,7 +415,7 @@ typedef struct {
   int *ctr;
   off_t *samples;
   mus_sample_t **idata;
-  int samps_per_bin;
+  int samps_per_bin, dangling_loc;
 } mix_fd;
 
 static snd_info *make_mix_readable(mix_info *md)
@@ -643,6 +643,7 @@ static mix_fd *init_mix_read_any(mix_info *md, int old, int type)
   mf->md = md;
   mf->cs = cs;
   mf->chans = chans;
+  mf->dangling_loc = -1;
   for (i = 0; i < chans; i++)
     if (cs->scalers[i] != 0.0) 
       {
@@ -813,10 +814,17 @@ static mix_fd *free_mix_fd_almost(mix_fd *mf)
   return(NULL);
 }
 
+#if DEBUGGING
+  static void check_dangling_mix_readers(mix_fd *md);
+#endif
+
 static mix_fd *free_mix_fd(mix_fd *mf)
 {
   if (mf)
     {
+#if DEBUGGING
+      check_dangling_mix_readers(mf);
+#endif      
       free_mix_fd_almost(mf);
       FREE(mf);
     }
@@ -2785,7 +2793,6 @@ static track_fd *init_track_reader(chan_info *cp, int track_num, int global) /* 
 		(md->cp == cp))
 	      {
 		fd->fds[mix] = init_mix_read(md, FALSE);
-		list_mix_reader(fd->fds[mix]);
 		cs = md->current_cs;
 		fd->state[mix] = cs->orig - track_beg;
 		fd->len[mix] = cs->len;
@@ -2805,10 +2812,7 @@ static void free_track_fd_almost(track_fd *fd)
 	{
 	  for (i = 0; i < fd->mixes; i++)
 	    if (fd->fds[i]) 
-	      {
-		unlist_mix_reader(fd->fds[i]);
-		fd->fds[i] = free_mix_fd(fd->fds[i]);
-	      }
+	      fd->fds[i] = free_mix_fd(fd->fds[i]);
 	  FREE(fd->fds);
 	  fd->fds = NULL;
 	}
@@ -2841,7 +2845,10 @@ static Float next_track_sample(track_fd *fd)
 	      sum += next_mix_sample(fd->fds[i]);
 	      fd->len[i]--;
 	      if (fd->len[i] <= 0) 
-		fd->fds[i] = free_mix_fd(fd->fds[i]);
+		{
+		  unlist_mix_reader(fd->fds[i]);
+		  fd->fds[i] = free_mix_fd(fd->fds[i]);
+		}
 	    }
 	  else fd->state[i]--;
 	}
@@ -4099,18 +4106,17 @@ static void list_mix_reader(mix_fd *fd)
 	  for (i = loc; i < dangling_mix_reader_size; i++) dangling_mix_readers[i] = NULL;
 	}
     }
+  fd->dangling_loc = loc;
   dangling_mix_readers[loc] = fd;
 }
 
 static void unlist_mix_reader(mix_fd *fd)
 {
-  int i;
-  for (i = 0; i < dangling_mix_reader_size; i++)
-    if (fd == dangling_mix_readers[i])
-      {
-	dangling_mix_readers[i] = NULL;
-	break;
-      }
+  if ((fd) && (fd->dangling_loc >= 0))
+    {
+      dangling_mix_readers[fd->dangling_loc] = NULL;
+      fd->dangling_loc = -1;
+    }
 }
 
 static void mf_free(mix_fd *fd)
@@ -4136,10 +4142,46 @@ static void release_dangling_mix_readers(mix_info *md)
 	{
 	  fd->calc = C_ZERO;
 	  fd->md = NULL;
+	  fd->dangling_loc = -1;
 	  dangling_mix_readers[i] = NULL;
 	}
     }
 }
+
+#if DEBUGGING
+void report_dangling_mix_readers(FILE *fp);
+void report_dangling_mix_readers(FILE *fp)
+{
+  int i, titled = FALSE;
+  for (i = 0; i < dangling_mix_reader_size; i++)
+    if (dangling_mix_readers[i])
+      {
+	mix_fd *sf;
+	sf = dangling_mix_readers[i];
+	if (!titled)
+	  {
+	    fprintf(fp, "\nDangling mix_fd:\n");
+	    fprintf(stderr, "\nDangling mix_fd:\n");
+	    titled = TRUE;
+	  }
+	fprintf(fp, "  %p, md: %p, type: %d\n",	sf, sf->md, sf->type);
+	fprintf(stderr, "  %p, md: %p, type: %d\n",	sf, sf->md, sf->type);
+      }
+}
+static void check_dangling_mix_readers(mix_fd *md)
+{
+  int i;
+  if (md)
+    {
+      for (i = 0; i < dangling_mix_reader_size; i++)
+	if (dangling_mix_readers[i] == md)
+	  {
+	    fprintf(stderr, "lost mix reader: %p\n", md);
+	    abort();
+	  }
+    }
+}
+#endif
 
 static XEN g_make_mix_sample_reader(XEN mix_id)
 {
@@ -4245,7 +4287,17 @@ XEN_MAKE_OBJECT_PRINT_PROCEDURE(track_fd, print_tf, tf_to_string)
 
 static void tf_free(track_fd *fd)
 {
-  if (fd) free_track_fd(fd); 
+  int i;
+  if (fd) 
+    {
+      if (fd->fds)
+	{
+	  for (i = 0; i < fd->mixes; i++)
+	    if (fd->fds[i]) 
+	      unlist_mix_reader(fd->fds[i]);
+	}
+      free_track_fd(fd); 
+    }
 }
 
 XEN_MAKE_OBJECT_FREE_PROCEDURE(track_fd, free_tf, tf_free)
@@ -4257,6 +4309,7 @@ return a reader ready to access track's data associated with snd's channel chn"
 
   track_fd *tf = NULL;
   chan_info *cp;
+  int i;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(track_id), track_id, XEN_ARG_1, S_make_track_sample_reader, "an integer");
   ASSERT_JUST_CHANNEL(S_make_track_sample_reader, snd, chn, 2); 
   cp = get_cp(snd, chn, S_make_track_sample_reader);
@@ -4267,6 +4320,12 @@ return a reader ready to access track's data associated with snd's channel chn"
     XEN_ERROR(NO_SUCH_TRACK,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_make_track_sample_reader),
 			 track_id));
+  if (tf->fds)
+    {
+      for (i = 0; i < tf->mixes; i++)
+	if (tf->fds[i]) 
+	  list_mix_reader(tf->fds[i]);
+    }
   XEN_MAKE_AND_RETURN_OBJECT(tf_tag, tf, 0, free_tf);
 }
 
@@ -4288,8 +4347,15 @@ static XEN g_free_track_sample_reader(XEN obj)
 {
   #define H_free_track_sample_reader "(" S_free_track_sample_reader " reader): free the track sample reader"
   track_fd *tf = NULL;
+  int i;
   XEN_ASSERT_TYPE(TRACK_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_free_track_sample_reader, "a track-sample-reader");
   tf = TO_TRACK_SAMPLE_READER(obj);
+  if ((tf) && (tf->fds))
+    {
+      for (i = 0; i < tf->mixes; i++)
+	if (tf->fds[i]) 
+	  unlist_mix_reader(tf->fds[i]);
+    }
   free_track_fd_almost(tf);
   return(xen_return_first(XEN_FALSE, obj));
 }

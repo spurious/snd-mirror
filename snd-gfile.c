@@ -846,6 +846,7 @@ regrow *make_regrow(snd_state *ss, GtkWidget *ww,
   gtk_widget_show(r->pl);
 
   r->nm = gtk_button_new_with_label("");
+  sg_left_justify_button(r->nm);
   set_backgrounds(r->nm, (ss->sgx)->highlight_color);
   gtk_box_pack_start(GTK_BOX(r->rw), r->nm, TRUE, TRUE, 2);
   g_signal_connect_closure_by_id(GTK_OBJECT(r->nm),

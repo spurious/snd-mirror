@@ -19,11 +19,12 @@ static void edit_find_delete(GtkWidget *w, GdkEvent *event, gpointer context)
 
 static void edit_find_help(GtkWidget *w, gpointer context) 
 {
-  snd_help_with_wrap((snd_state *)context,
-		     "Global Find",
+  snd_help((snd_state *)context,
+	   "Global Find",
 "This search travels through all the current channels in parallel until a match is found.  The find \
 expression is a Scheme function of one argument,  the current sample value.  It should return #t when the \
-search is satisified.  For example, (lambda (n) (> n .1) looks for the next sample that is greater than .1.");
+search is satisified.  For example, (lambda (n) (> n .1) looks for the next sample that is greater than .1.",
+	   TRUE);
 } 
 
 static void edit_find_find(int direction, GtkWidget *w, gpointer context) 

@@ -140,6 +140,8 @@ static int sg_text_width(char *txt, PangoFontDescription *font)
 {
   PangoLayout *layout = NULL;
   int wid = 0;
+  if (txt == NULL) return(0);
+  if (strlen(txt) == 0) return(0);
   layout = pango_layout_new(gdk_pango_context_get());
   if (layout)
     {
@@ -318,6 +320,21 @@ void set_button_label(GtkWidget *label, const char *str)
 void set_label(GtkWidget *label, const char *str)
 {
   gtk_label_set_text(GTK_LABEL(label), str);
+}
+
+void sg_left_justify_button(GtkWidget *button)
+{
+  gfloat x, y;
+  gtk_misc_get_alignment(GTK_MISC(GTK_LABEL(GTK_BIN(button)->child)), &x, &y);
+  gtk_misc_set_alignment(GTK_MISC(GTK_LABEL(GTK_BIN(button)->child)), 0.05, y); /* jeez...gtk is a joke */
+}
+
+void sg_left_justify_label(GtkWidget *label)
+{
+  /* the label justify function in Gtk refers to the text of the lines after the 1st! */
+  gfloat x, y;
+  gtk_misc_get_alignment(GTK_MISC(GTK_LABEL(label)), &x, &y);
+  gtk_misc_set_alignment(GTK_MISC(GTK_LABEL(label)), 0.05, y);
 }
 
 

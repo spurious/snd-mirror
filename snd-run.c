@@ -704,25 +704,30 @@ static char *describe_ptree(ptree *p)
     }
   buf = str_append(buf, &size, mus_format("ints: %d, dbls: %d, triples: %d, vars: %d\n  [",
 					  p->int_ctr, p->dbl_ctr, p->triple_ctr, p->var_ctr));
-  
-  for (i = 0; i < p->int_ctr - 1; i++)
+  if (p->int_ctr > 0) 
     {
+      for (i = 0; i < p->int_ctr - 1; i++)
+	{
+	  temp = (char *)CALLOC(16, sizeof(char));
+	  mus_snprintf(temp, 16, "%d, ", ints[i]);
+	  buf = str_append(buf, &size, temp);
+	}
       temp = (char *)CALLOC(16, sizeof(char));
-      mus_snprintf(temp, 16, "%d, ", ints[i]);
+      mus_snprintf(temp, 16, "%d], [", ints[p->int_ctr - 1]);
       buf = str_append(buf, &size, temp);
     }
-  temp = (char *)CALLOC(16, sizeof(char));
-  mus_snprintf(temp, 16, "%d], [", ints[p->int_ctr - 1]);
-  buf = str_append(buf, &size, temp);
-  for (i = 0; i < p->dbl_ctr - 1; i++)
+  if (p->dbl_ctr > 0)
     {
+      for (i = 0; i < p->dbl_ctr - 1; i++)
+	{
+	  temp = (char *)CALLOC(16, sizeof(char));
+	  mus_snprintf(temp, 16, "%.4f, ", dbls[i]);
+	  buf = str_append(buf, &size, temp);
+	}
       temp = (char *)CALLOC(16, sizeof(char));
-      mus_snprintf(temp, 16, "%.4f, ", dbls[i]);
+      mus_snprintf(temp, 16, "%.4f]\n", dbls[p->dbl_ctr - 1]);
       buf = str_append(buf, &size, temp);
     }
-  temp = (char *)CALLOC(16, sizeof(char));
-  mus_snprintf(temp, 16, "%.4f]\n", dbls[p->dbl_ctr - 1]);
-  buf = str_append(buf, &size, temp);
   for (i = 0; i < p->triple_ctr; i++)
     {
       temp = add_comments(p, describe_triple(p->program[i], ints, dbls));
@@ -7898,7 +7903,7 @@ static xen_value *set_up_format(ptree *prog, xen_value **args, int num_args, int
 	if (!(xenable(args[i])))
 	  {
 	    char *xv;
-	    xv = describe_xen_value(args[i + 1], prog->ints, prog->dbls);
+	    xv = describe_xen_value(args[i], prog->ints, prog->dbls);
 	    run_warn("can't handle %s as arg (%d) to %s", xv, i, (is_format) ? "format" : "clm-print");
 	    FREE(xv);
 	    return(NULL);

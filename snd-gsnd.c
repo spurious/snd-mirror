@@ -9,9 +9,7 @@ enum {W_pane, W_pane_box, W_control_panel,
       W_contrast_form, W_contrast, W_contrast_event, W_contrast_label, W_contrast_number, W_contrast_button,
       W_reverb_form, W_revscl, W_revscl_event, W_revscl_label, W_revscl_number,
       W_revlen, W_revlen_event, W_revlen_label, W_revlen_number, W_reverb_button,
-
       W_filter_form, W_filter_label, W_filter_order, W_filter_env, W_filter, W_filter_button, W_filter_dB, W_filter_frame,
-
       W_apply_form, W_remember, W_restore, W_apply, W_reset
 };
 
@@ -57,8 +55,6 @@ GtkWidget *w_snd_name(snd_info *sp)     {return((sp->sgx)->snd_widgets[W_name]);
 #define MINIBUFFER_LABEL(Sp)     (Sp->sgx)->snd_widgets[W_info_label]
 #define MINIBUFFER_TEXT(Sp)      (Sp->sgx)->snd_widgets[W_info]
 #define SYNC_BUTTON(Sp)          (Sp->sgx)->snd_widgets[W_sync]
-
-static GtkWidget *w_snd_name_pix(snd_info *sp) {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_name_pix]); else return(NULL);}
 
 #define AMP_ADJUSTMENT(Sp)       (Sp->sgx)->snd_adjs[W_amp_adj]
 #define SRATE_ADJUSTMENT(Sp)     (Sp->sgx)->snd_adjs[W_srate_adj]

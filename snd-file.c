@@ -195,7 +195,9 @@ static file_info *translate_file(char *filename, snd_state *ss, int type)
 }
 
 static XEN open_raw_sound_hook, bad_header_hook;
+#if (!USE_NO_GUI)
 static char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr);
+#endif
 
 file_info *make_file_info(char *fullname, snd_state *ss)
 {
@@ -2170,6 +2172,7 @@ void edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_da
     snd_error(_("can't write file %s: %s"), sp->short_filename, strerror(errno));
 }
 
+#if (!USE_NO_GUI)
 /* raw data dialog funcs */
 
 static int swap_int(int n)
@@ -2274,7 +2277,7 @@ static char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
   mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nformat: %s\n", mus_data_format_name(hdr->format));
   strcat(reason_str, tmp_str);
   hdr->type = MUS_RAW;
-  snd_help(ss, "Current header values", reason_str);
+  snd_help(ss, "Current header values", reason_str, FALSE);
   file_string = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   mus_snprintf(file_string, PRINT_BUFFER_SIZE,
 	       "Bogus header found for %s", 
@@ -2283,7 +2286,7 @@ static char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
   FREE(reason_str);
   return(file_string);
 }
-
+#endif
 
 static XEN g_add_sound_file_extension(XEN ext)
 {

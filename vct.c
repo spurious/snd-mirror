@@ -340,6 +340,7 @@ static XEN vct_add(XEN obj1, XEN obj2, XEN offs)
   if (XEN_INTEGER_P(offs))
     {
       j = XEN_TO_C_INT(offs); /* needed by g++ 3.2 -- otherwise segfault from the compiler! */
+      if (j < 0) XEN_OUT_OF_RANGE_ERROR(S_vct_addB, 3, offs, "offset ~A < 0?");
       if ((j + lim) > v1->length)
 	lim = (v1->length - j);
       for (i = 0; i < lim; i++, j++) 
@@ -464,15 +465,23 @@ static XEN vct_subseq(XEN vobj, XEN start, XEN end, XEN newv)
   #define H_vct_subseq "(" S_vct_subseq " v start (end len) (vnew #f)): v[start..end], placed in vnew if given or new vct"
   vct *vold, *vnew;
   XEN res;
-  int i, old_len, new_len, j;
+  int i, old_len, new_len, j, istart, iend;
   XEN_ASSERT_TYPE(VCT_P(vobj), vobj, XEN_ARG_1, S_vct_subseq, "a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(start), start, XEN_ARG_2, S_vct_subseq, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(end), end, XEN_ARG_3, S_vct_subseq, "an integer");
+  istart = XEN_TO_C_INT(start);
+  if (istart < 0)
+    XEN_OUT_OF_RANGE_ERROR(S_vct_subseq, 2, start, "start ~A < 0?");
   vold = TO_VCT(vobj);
   old_len = vold->length;
   if (XEN_INTEGER_P(end))
-    new_len = XEN_TO_C_INT(end) - XEN_TO_C_INT(start) + 1;
-  else new_len = old_len - XEN_TO_C_INT(start);
+    {
+      iend = XEN_TO_C_INT(end);
+      if (iend < istart)
+	XEN_OUT_OF_RANGE_ERROR(S_vct_subseq, 3, end, "end ~A < start?");
+      new_len = iend - istart + 1;
+    }
+  else new_len = old_len - istart;
   if (new_len <= 0) 
     return(XEN_FALSE);
   if (VCT_P(newv))
@@ -481,7 +490,7 @@ static XEN vct_subseq(XEN vobj, XEN start, XEN end, XEN newv)
   vnew = TO_VCT(res);
   if (new_len > vnew->length) 
     new_len = vnew->length;
-  for (i = XEN_TO_C_INT(start), j = 0; (j < new_len) && (i < old_len); i++, j++)
+  for (i = istart, j = 0; (j < new_len) && (i < old_len); i++, j++)
     vnew->data[j] = vold->data[i];
   return(xen_return_first(res, vobj, vnew));
 }

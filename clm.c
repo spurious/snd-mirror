@@ -321,13 +321,10 @@ static char *print_off_t_array(off_t *arr, int len, int loc)
 
 int mus_free(mus_any *gen)
 {
-  if (check_gen(gen, "mus-free"))
-    {
-      if ((gen->core)->release)
-	return((*((gen->core)->release))(gen));
-      mus_error(MUS_NO_FREE, "can't free %s", mus_name(gen));
-    }
-  return(0);
+  if ((check_gen(gen, "mus-free")) &&
+      ((gen->core)->release))
+    return((*((gen->core)->release))(gen));
+  return(mus_error(MUS_NO_FREE, "can't free %s", mus_name(gen)));
 }
 
 char *mus_describe(mus_any *gen)
@@ -363,156 +360,114 @@ int mus_equalp(mus_any *p1, mus_any *p2)
 
 Float mus_frequency(mus_any *gen)
 {
-  if (check_gen(gen, S_mus_frequency))
-    {
-      if ((gen->core)->frequency)
-	return((*((gen->core)->frequency))(gen));
-      mus_error(MUS_NO_FREQUENCY, "can't get %s's frequency", mus_name(gen));
-    }
-  return(0.0);
+  if ((check_gen(gen, S_mus_frequency)) &&
+      ((gen->core)->frequency))
+    return((*((gen->core)->frequency))(gen));
+  return((Float)mus_error(MUS_NO_FREQUENCY, "can't get %s's frequency", mus_name(gen)));
 }
 
 Float mus_set_frequency(mus_any *gen, Float val)
 {
-  if (check_gen(gen, S_setB S_mus_frequency))
-    {
-      if ((gen->core)->set_frequency)
-	return((*((gen->core)->set_frequency))(gen, val));
-      mus_error(MUS_NO_FREQUENCY, "can't set %s's frequency", mus_name(gen));
-    }
-  return(0.0);
+  if ((check_gen(gen, S_setB S_mus_frequency)) &&
+      ((gen->core)->set_frequency))
+    return((*((gen->core)->set_frequency))(gen, val));
+  return((Float)mus_error(MUS_NO_FREQUENCY, "can't set %s's frequency", mus_name(gen)));
 }
 
 Float mus_phase(mus_any *gen)
 {
-  if (check_gen(gen, S_mus_phase))
-    {
-      if ((gen->core)->phase)
-	return((*((gen->core)->phase))(gen));
-      mus_error(MUS_NO_PHASE, "can't get %s's phase", mus_name(gen));
-    }
-  return(0.0);
+  if ((check_gen(gen, S_mus_phase)) &&
+      ((gen->core)->phase))
+    return((*((gen->core)->phase))(gen));
+  return((Float)mus_error(MUS_NO_PHASE, "can't get %s's phase", mus_name(gen)));
 }
 
 Float mus_set_phase(mus_any *gen, Float val)
 {
-  if (check_gen(gen, S_setB S_mus_phase))
-    {
-      if ((gen->core)->set_phase)
-	return((*((gen->core)->set_phase))(gen, val));
-      mus_error(MUS_NO_PHASE, "can't set %s's phase", mus_name(gen));
-    }
-  return(0.0);
+  if ((check_gen(gen, S_setB S_mus_phase)) &&
+      ((gen->core)->set_phase))
+    return((*((gen->core)->set_phase))(gen, val));
+  return((Float)mus_error(MUS_NO_PHASE, "can't set %s's phase", mus_name(gen)));
 }
 
 Float mus_scaler(mus_any *gen)
 {
-  if (check_gen(gen, S_mus_scaler))
-    {
-      if ((gen->core)->scaler)
-	return((*((gen->core)->scaler))(gen));
-      mus_error(MUS_NO_SCALER, "can't get %s's scaler", mus_name(gen));
-    }
-  return(0.0);
+  if ((check_gen(gen, S_mus_scaler)) &&
+      ((gen->core)->scaler))
+    return((*((gen->core)->scaler))(gen));
+  return((Float)mus_error(MUS_NO_SCALER, "can't get %s's scaler", mus_name(gen)));
 }
 
 Float mus_set_scaler(mus_any *gen, Float val)
 {
-  if (check_gen(gen, S_setB S_mus_scaler))
-    {
-      if ((gen->core)->set_scaler)
-	return((*((gen->core)->set_scaler))(gen, val));
-      mus_error(MUS_NO_SCALER, "can't set %s's scaler", mus_name(gen));
-    }
-  return(0.0);
+  if ((check_gen(gen, S_setB S_mus_scaler)) &&
+      ((gen->core)->set_scaler))
+    return((*((gen->core)->set_scaler))(gen, val));
+  return((Float)mus_error(MUS_NO_SCALER, "can't set %s's scaler", mus_name(gen)));
 }
 
 Float mus_offset(mus_any *gen)
 {
-  if (check_gen(gen, S_mus_offset))
-    {
-      if ((gen->core)->offset)
-	return((*((gen->core)->offset))(gen));
-      mus_error(MUS_NO_OFFSET, "can't get %s's offset", mus_name(gen));
-    }
-  return(0.0);
+  if ((check_gen(gen, S_mus_offset)) &&
+      ((gen->core)->offset))
+    return((*((gen->core)->offset))(gen));
+  return((Float)mus_error(MUS_NO_OFFSET, "can't get %s's offset", mus_name(gen)));
 }
 
 Float mus_set_offset(mus_any *gen, Float val)
 {
-  if (check_gen(gen, S_setB S_mus_offset))
-    {
-      if ((gen->core)->set_offset)
-	return((*((gen->core)->set_offset))(gen, val));
-      mus_error(MUS_NO_OFFSET, "can't set %s's offset", mus_name(gen));
-    }
-  return(0.0);
+  if ((check_gen(gen, S_setB S_mus_offset)) &&
+      ((gen->core)->set_offset))
+    return((*((gen->core)->set_offset))(gen, val));
+  return((Float)mus_error(MUS_NO_OFFSET, "can't set %s's offset", mus_name(gen)));
 }
 
 Float mus_width(mus_any *gen)
 {
-  if (check_gen(gen, S_mus_width))
-    {
-      if ((gen->core)->width)
-	return((*((gen->core)->width))(gen));
-      mus_error(MUS_NO_WIDTH, "can't get %s's width", mus_name(gen));
-    }
-  return(0.0);
+  if ((check_gen(gen, S_mus_width)) &&
+      ((gen->core)->width))
+    return((*((gen->core)->width))(gen));
+  return((Float)mus_error(MUS_NO_WIDTH, "can't get %s's width", mus_name(gen)));
 }
 
 Float mus_set_width(mus_any *gen, Float val)
 {
-  if (check_gen(gen, S_setB S_mus_width))
-    {
-      if ((gen->core)->set_width)
-	return((*((gen->core)->set_width))(gen, val));
-      mus_error(MUS_NO_WIDTH, "can't set %s's width", mus_name(gen));
-    }
-  return(0.0);
+  if ((check_gen(gen, S_setB S_mus_width)) &&
+      ((gen->core)->set_width))
+    return((*((gen->core)->set_width))(gen, val));
+  return((Float)mus_error(MUS_NO_WIDTH, "can't set %s's width", mus_name(gen)));
 }
 
 Float mus_b2(mus_any *gen)
 {
-  if (check_gen(gen, S_mus_b2))
-    {
-      if ((gen->core)->b2)
-	return((*((gen->core)->b2))(gen));
-      mus_error(MUS_NO_B2, "can't get %s's b2", mus_name(gen));
-    }
-  return(0.0);
+  if ((check_gen(gen, S_mus_b2)) &&
+      ((gen->core)->b2))
+    return((*((gen->core)->b2))(gen));
+  return((Float)mus_error(MUS_NO_B2, "can't get %s's b2", mus_name(gen)));
 }
 
 Float mus_set_b2(mus_any *gen, Float val)
 {
-  if (check_gen(gen, S_setB S_mus_b2))
-    {
-      if ((gen->core)->set_b2)
-	return((*((gen->core)->set_b2))(gen, val));
-      mus_error(MUS_NO_B2, "can't set %s's b2", mus_name(gen));
-    }
-  return(0.0);
+  if ((check_gen(gen, S_setB S_mus_b2)) &&
+      ((gen->core)->set_b2))
+    return((*((gen->core)->set_b2))(gen, val));
+  return((Float)mus_error(MUS_NO_B2, "can't set %s's b2", mus_name(gen)));
 }
 
 Float mus_increment(mus_any *gen)
 {
-  if (check_gen(gen, S_mus_increment))
-    {
-      if ((gen->core)->increment)
-	return((*((gen->core)->increment))(gen));
-      mus_error(MUS_NO_INCREMENT, "can't get %s's increment", mus_name(gen));
-    }
-  return(0.0);
+  if ((check_gen(gen, S_mus_increment)) &&
+      ((gen->core)->increment))
+    return((*((gen->core)->increment))(gen));
+  return((Float)mus_error(MUS_NO_INCREMENT, "can't get %s's increment", mus_name(gen)));
 }
 
 Float mus_set_increment(mus_any *gen, Float val)
 {
-  if (check_gen(gen, S_setB S_mus_increment))
-    {
-      if ((gen->core)->set_increment)
-	return((*((gen->core)->set_increment))(gen, val));
-      mus_error(MUS_NO_INCREMENT, "can't set %s's increment", mus_name(gen));
-    }
-  return(0.0);
+  if ((check_gen(gen, S_setB S_mus_increment)) &&
+      ((gen->core)->set_increment))
+    return((*((gen->core)->set_increment))(gen, val));
+  return((Float)mus_error(MUS_NO_INCREMENT, "can't set %s's increment", mus_name(gen)));
 }
 
 void *mus_environ(mus_any *gen)
@@ -524,111 +479,82 @@ void *mus_environ(mus_any *gen)
 
 Float mus_run(mus_any *gen, Float arg1, Float arg2)
 {
-  if (check_gen(gen, "mus-run"))
-    {
-      if ((gen->core)->run)
-	return((*((gen->core)->run))(gen, arg1, arg2));
-      mus_error(MUS_NO_RUN, "can't run %s", mus_name(gen));
-    }
-  return(0.0);
+  if ((check_gen(gen, "mus-run")) &&
+      ((gen->core)->run))
+    return((*((gen->core)->run))(gen, arg1, arg2));
+  return((Float)mus_error(MUS_NO_RUN, "can't run %s", mus_name(gen)));
 }
 
 int mus_length(mus_any *gen)
 {
-  if (check_gen(gen, S_mus_length))
-    {
-      if ((gen->core)->length)
-	return((*((gen->core)->length))(gen));
-      else mus_error(MUS_NO_LENGTH, "can't get %s's length", mus_name(gen));
-    }
-  return(0);
+  if ((check_gen(gen, S_mus_length)) &&
+      ((gen->core)->length))
+    return((*((gen->core)->length))(gen));
+  return(mus_error(MUS_NO_LENGTH, "can't get %s's length", mus_name(gen)));
 }
 
 int mus_set_length(mus_any *gen, int len)
 {
-  if (check_gen(gen, S_setB S_mus_length))
-    {
-      if ((gen->core)->set_length)
-	return((*((gen->core)->set_length))(gen, len));
-      else mus_error(MUS_NO_LENGTH, "can't set %s's length", mus_name(gen));
-    }
-  return(0);
+  if ((check_gen(gen, S_setB S_mus_length)) &&
+      ((gen->core)->set_length))
+    return((*((gen->core)->set_length))(gen, len));
+  return(mus_error(MUS_NO_LENGTH, "can't set %s's length", mus_name(gen)));
 }
 
 int mus_channels(mus_any *gen)
 {
-  if (check_gen(gen, S_mus_channels))
-    {
-      if ((gen->core)->channels)
-	return((*((gen->core)->channels))(gen));
-      else mus_error(MUS_NO_CHANNELS, "can't get %s's channels", mus_name(gen));
-    }
-  return(0);
+  if ((check_gen(gen, S_mus_channels)) &&
+      ((gen->core)->channels))
+    return((*((gen->core)->channels))(gen));
+  return(mus_error(MUS_NO_CHANNELS, "can't get %s's channels", mus_name(gen)));
 }
 
 int mus_channel(mus_any *gen)
 {
-  if (check_gen(gen, S_mus_channel))
-    {
-      if ((gen->core)->channel)
-	return(((*(gen->core)->channel))(gen));
-      else mus_error(MUS_NO_CHANNEL, "can't get %s's channel", mus_name(gen));
-    }
-  return(0);
+  if ((check_gen(gen, S_mus_channel)) &&
+      ((gen->core)->channel))
+    return(((*(gen->core)->channel))(gen));
+  return(mus_error(MUS_NO_CHANNEL, "can't get %s's channel", mus_name(gen)));
 }
 
 int mus_hop(mus_any *gen)
 {
-  if (check_gen(gen, S_mus_hop))
-    {
-      if ((gen->core)->hop)
-	return((*((gen->core)->hop))(gen));
-      else mus_error(MUS_NO_HOP, "can't get %s's hop value", mus_name(gen));
-    }
-  return(0);
+  if ((check_gen(gen, S_mus_hop)) &&
+      ((gen->core)->hop))
+    return((*((gen->core)->hop))(gen));
+  return(mus_error(MUS_NO_HOP, "can't get %s's hop value", mus_name(gen)));
 }
 
 int mus_set_hop(mus_any *gen, int len)
 {
-  if (check_gen(gen, S_setB S_mus_hop))
-    {
-      if ((gen->core)->set_hop)
-	return((*((gen->core)->set_hop))(gen, len));
-      else mus_error(MUS_NO_HOP, "can't set %s's hop value", mus_name(gen));
-    }
-  return(0);
+  if ((check_gen(gen, S_setB S_mus_hop)) &&
+      ((gen->core)->set_hop))
+    return((*((gen->core)->set_hop))(gen, len));
+  return(mus_error(MUS_NO_HOP, "can't set %s's hop value", mus_name(gen)));
 }
 
 int mus_ramp(mus_any *gen)
 {
-  if (check_gen(gen, S_mus_ramp))
-    {
-      if ((gen->core)->ramp)
-	return((*((gen->core)->ramp))(gen));
-      else mus_error(MUS_NO_RAMP, "can't get %s's ramp value", mus_name(gen));
-    }
-  return(0);
+  if ((check_gen(gen, S_mus_ramp)) &&
+      ((gen->core)->ramp))
+    return((*((gen->core)->ramp))(gen));
+  return(mus_error(MUS_NO_RAMP, "can't get %s's ramp value", mus_name(gen)));
 }
 
 int mus_set_ramp(mus_any *gen, int len)
 {
-  if (check_gen(gen, S_setB S_mus_ramp))
-    {
-      if ((gen->core)->set_ramp)
-	return((*((gen->core)->set_ramp))(gen, len));
-      else mus_error(MUS_NO_RAMP, "can't set %s's ramp value", mus_name(gen));
-    }
-  return(0);
+  if ((check_gen(gen, S_setB S_mus_ramp)) &&
+      ((gen->core)->set_ramp))
+    return((*((gen->core)->set_ramp))(gen, len));
+  return(mus_error(MUS_NO_RAMP, "can't set %s's ramp value", mus_name(gen)));
 }
 
 Float *mus_data(mus_any *gen)
 {
-  if (check_gen(gen, S_mus_data))
-    {
-      if ((gen->core)->data)
-	return((*((gen->core)->data))(gen));
-      else mus_error(MUS_NO_DATA, "can't get %s's data", mus_name(gen));
-    }
+  if ((check_gen(gen, S_mus_data)) &&
+      ((gen->core)->data))
+    return((*((gen->core)->data))(gen));
+  mus_error(MUS_NO_DATA, "can't get %s's data", mus_name(gen));
   return(NULL);
 }
 
@@ -654,13 +580,10 @@ Float *mus_set_data(mus_any *gen, Float *new_data)
 
 off_t mus_location(mus_any *gen)
 {
-  if (check_gen(gen, S_mus_location))
-    {
-      if ((gen->core)->location)
-	return(((*(gen->core)->location))(gen));
-      else mus_error(MUS_NO_LOCATION, "can't get %s's location", mus_name(gen));
-    }
-  return(0);
+  if ((check_gen(gen, S_mus_location)) &&
+      ((gen->core)->location))
+    return(((*(gen->core)->location))(gen));
+  return((off_t)mus_error(MUS_NO_LOCATION, "can't get %s's location", mus_name(gen)));
 }
 
 
@@ -3083,89 +3006,69 @@ void mus_clear_filter_state(mus_any *gen)
 
 Float mus_x1(mus_any *gen)
 {
-  if (gen)
-    {
-      if ((gen->core)->extended_type == MUS_SIMPLE_FILTER)
-	return(((smpflt *)gen)->x1);
-      else mus_error(MUS_NO_X1, "can't get %s's x1", mus_name(gen));
-    }
-  return(0.0);
+  if ((gen) &&
+      ((gen->core)->extended_type == MUS_SIMPLE_FILTER))
+    return(((smpflt *)gen)->x1);
+  return((Float)mus_error(MUS_NO_X1, "can't get %s's x1", mus_name(gen)));
 }
 
 Float mus_set_x1(mus_any *gen, Float val)
 {
-  if (gen)
-    {
-      if ((gen->core)->extended_type == MUS_SIMPLE_FILTER)
-	((smpflt *)gen)->x1 = val;
-      else mus_error(MUS_NO_X1, "can't set %s's x1", mus_name(gen));
-    }
+  if ((gen) &&
+      ((gen->core)->extended_type == MUS_SIMPLE_FILTER))
+    ((smpflt *)gen)->x1 = val;
+  else mus_error(MUS_NO_X1, "can't set %s's x1", mus_name(gen));
   return(val);
 }
 
 Float mus_x2(mus_any *gen)
 {
-  if (gen)
-    {
-      if ((gen->core)->extended_type == MUS_SIMPLE_FILTER)
-	return(((smpflt *)gen)->x2);
-      else mus_error(MUS_NO_X2, "can't get %s's x2", mus_name(gen));
-    }
-  return(0.0);
+  if ((gen) &&
+      ((gen->core)->extended_type == MUS_SIMPLE_FILTER))
+    return(((smpflt *)gen)->x2);
+  return((Float)mus_error(MUS_NO_X2, "can't get %s's x2", mus_name(gen)));
 }
 
 Float mus_set_x2(mus_any *gen, Float val)
 {
-  if (gen)
-    {
-      if ((gen->core)->extended_type == MUS_SIMPLE_FILTER)
-	((smpflt *)gen)->x2 = val;
-      else mus_error(MUS_NO_X2, "can't set %s's x2", mus_name(gen));
-    }
+  if ((gen) &&
+      ((gen->core)->extended_type == MUS_SIMPLE_FILTER))
+    ((smpflt *)gen)->x2 = val;
+  else mus_error(MUS_NO_X2, "can't set %s's x2", mus_name(gen));
   return(val);
 }
 
 Float mus_y1(mus_any *gen)
 {
-  if (gen)
-    {
-      if ((gen->core)->extended_type == MUS_SIMPLE_FILTER)
-	return(((smpflt *)gen)->y1);
-      else mus_error(MUS_NO_Y1, "can't get %s's y1", mus_name(gen));
-    }
-  return(0.0);
+  if ((gen) &&
+      ((gen->core)->extended_type == MUS_SIMPLE_FILTER))
+    return(((smpflt *)gen)->y1);
+  return((Float)mus_error(MUS_NO_Y1, "can't get %s's y1", mus_name(gen)));
 }
 
 Float mus_set_y1(mus_any *gen, Float val)
 {
-  if (gen)
-    {
-      if ((gen->core)->extended_type == MUS_SIMPLE_FILTER)
-	((smpflt *)gen)->y1 = val;
-      else mus_error(MUS_NO_Y1, "can't set %s's y1", mus_name(gen));
-    }
+  if ((gen) &&
+      ((gen->core)->extended_type == MUS_SIMPLE_FILTER))
+    ((smpflt *)gen)->y1 = val;
+  else mus_error(MUS_NO_Y1, "can't set %s's y1", mus_name(gen));
   return(val);
 }
 
 Float mus_y2(mus_any *gen)
 {
-  if (gen)
-    {
-      if ((gen->core)->extended_type == MUS_SIMPLE_FILTER)
-	return(((smpflt *)gen)->y2);
-      else mus_error(MUS_NO_Y2, "can't get %s's y2", mus_name(gen));
-    }
-  return(0.0);
+  if ((gen) &&
+      ((gen->core)->extended_type == MUS_SIMPLE_FILTER))
+    return(((smpflt *)gen)->y2);
+  return((Float)mus_error(MUS_NO_Y2, "can't get %s's y2", mus_name(gen)));
 }
 
 Float mus_set_y2(mus_any *gen, Float val)
 {
-  if (gen)
-    {
-      if ((gen->core)->extended_type == MUS_SIMPLE_FILTER)
-	((smpflt *)gen)->y2 = val;
-      else mus_error(MUS_NO_Y2, "can't set %s's y2", mus_name(gen));
-    }
+  if ((gen) &&
+      ((gen->core)->extended_type == MUS_SIMPLE_FILTER))
+    ((smpflt *)gen)->y2 = val;
+  else mus_error(MUS_NO_Y2, "can't set %s's y2", mus_name(gen));
   return(val);
 }
 
@@ -4632,38 +4535,30 @@ int mus_wave_train_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_WA
 
 static Float mus_read_sample(mus_any *fd, off_t frame, int chan) 
 {
-  if (check_gen(fd, "mus-read-sample"))
-    {
-      if ((fd->core)->read_sample)
-	return(((*(fd->core)->read_sample))(fd, frame, chan));
-      mus_error(MUS_NO_SAMPLE_INPUT, 
-		"can't find %s's sample input function", 
-		mus_name(fd));
-    }
-  return(0.0);
+  if ((check_gen(fd, "mus-read-sample")) &&
+      ((fd->core)->read_sample))
+    return(((*(fd->core)->read_sample))(fd, frame, chan));
+  return((Float)mus_error(MUS_NO_SAMPLE_INPUT, 
+			  "can't find %s's sample input function", 
+			  mus_name(fd)));
 }
 
 static Float mus_write_sample(mus_any *fd, off_t frame, int chan, Float samp) 
 {
-  if (check_gen(fd, "mus-write-sample"))
-    {
-      if ((fd->core)->write_sample)
-	return(((*(fd->core)->write_sample))(fd, frame, chan, samp));
-      mus_error(MUS_NO_SAMPLE_OUTPUT, 
-		"can't find %s's sample output function", 
-		mus_name(fd));
-    }
-  return(0.0);
+  if ((check_gen(fd, "mus-write-sample")) &&
+      ((fd->core)->write_sample))
+    return(((*(fd->core)->write_sample))(fd, frame, chan, samp));
+  return((Float)mus_error(MUS_NO_SAMPLE_OUTPUT, 
+			  "can't find %s's sample output function", 
+			  mus_name(fd)));
 }
 
 char *mus_file_name(mus_any *gen)
 {
-  if (check_gen(gen, "mus-file-name"))
-    {
-      if ((gen->core)->file_name)
-	return((*((gen->core)->file_name))(gen));
-      else mus_error(MUS_NO_FILE_NAME, "can't get %s's file name", mus_name(gen));
-    }
+  if ((check_gen(gen, "mus-file-name")) &&
+      ((gen->core)->file_name))
+    return((*((gen->core)->file_name))(gen));
+  else mus_error(MUS_NO_FILE_NAME, "can't get %s's file name", mus_name(gen));
   return(NULL);
 }
 
@@ -4801,12 +4696,9 @@ static Float file_sample(mus_any *ptr, off_t samp, int chan)
       gen->data_end = newloc + clm_file_buffer_size - 1;
       fd = mus_sound_open_input(gen->file_name);
       if (fd == -1)
-	{
-	  mus_error(MUS_CANT_OPEN_FILE, 
-		    "open(%s) -> %s", 
-		    gen->file_name, strerror(errno));
-	  return(0.0);
-	}
+	return((Float)mus_error(MUS_CANT_OPEN_FILE, 
+				"open(%s) -> %s", 
+				gen->file_name, strerror(errno)));
       else
 	{ 
 	  if (gen->ibufs == NULL) 
@@ -4965,13 +4857,10 @@ Float mus_readin(mus_any *ptr)
 
 off_t mus_set_location(mus_any *gen, off_t loc)
 {
-  if (check_gen(gen, S_setB S_mus_location))
-    {
-      if ((gen->core)->set_location)
-	return((*((gen->core)->set_location))(gen, loc));
-      mus_error(MUS_NO_LOCATION, "can't set %s's location", mus_name(gen));
-    }
-  return(0);
+  if ((check_gen(gen, S_setB S_mus_location)) &&
+      ((gen->core)->set_location))
+    return((*((gen->core)->set_location))(gen, loc));
+  return((off_t)mus_error(MUS_NO_LOCATION, "can't set %s's location", mus_name(gen)));
 }
 
 

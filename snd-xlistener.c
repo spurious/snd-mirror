@@ -16,9 +16,8 @@ static void completion_help_help_callback(Widget w, XtPointer context, XtPointer
   snd_state *ss = (snd_state *)context;
   snd_help(ss, 
 	   "completion",
-"These are the completions that Snd thinks might be likely.\n\
-If you select one, it will be used to complete the current name.\n\
-");
+	   "These are the completions that Snd thinks might be likely. If you select one, it will be used to complete the current name.",
+	   TRUE);
 }
 
 static void completion_help_browse_callback(Widget w, XtPointer context, XtPointer info) 

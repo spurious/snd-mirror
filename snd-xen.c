@@ -2169,7 +2169,7 @@ static XEN g_help_dialog(XEN subject, XEN msg)
   #define H_help_dialog "(" S_help_dialog " subject message): start the Help window with subject and message"
   XEN_ASSERT_TYPE(XEN_STRING_P(subject), subject, XEN_ARG_1, S_help_dialog, "a string");
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_2, S_help_dialog, "a string");
-  return(XEN_WRAP_WIDGET(snd_help_with_wrap(get_global_state(), XEN_TO_C_STRING(subject), XEN_TO_C_STRING(msg))));
+  return(XEN_WRAP_WIDGET(snd_help(get_global_state(), XEN_TO_C_STRING(subject), XEN_TO_C_STRING(msg), TRUE)));
 }
 
 static XEN g_mix_panel(void)
@@ -2239,7 +2239,7 @@ static XEN g_yes_or_no_p(XEN msg)
 static XEN g_mus_audio_describe(void) 
 {
   #define H_mus_audio_describe "("  S_mus_audio_describe "): post a description of the audio hardware state in the Help dialog"
-  snd_help(get_global_state(), "Audio State", mus_audio_report()); 
+  snd_help(get_global_state(), "Audio State", mus_audio_report(), FALSE); 
   return(XEN_TRUE);
 }
 

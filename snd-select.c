@@ -25,7 +25,7 @@ static int selection_is_visible(chan_info *cp)
   ed_list *ed;
   axis_info *ap;
   ed = cp->edits[cp->edit_ctr];
-  if (ed->selection_beg == NO_SELECTION) return(0);
+  if (ed->selection_beg == NO_SELECTION) return(FALSE);
   ap = cp->axis;
   return((ed) && 
 	 (ap->losamp < ed->selection_end) && 

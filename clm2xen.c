@@ -75,6 +75,12 @@ static void local_mus_error(int type, char *msg)
   local_error_msg = strdup(msg);
 }
 
+static XEN clm_mus_error(int type, char *msg)
+{
+  mus_error(type, msg);
+  return(XEN_FALSE);
+}
+
 
 /* ---------------- keywords ---------------- */
 
@@ -938,7 +944,7 @@ static XEN g_mus_bank(XEN gens, XEN amps, XEN inp, XEN inp2)
   if (gs == NULL)
     {
       if (scls) FREE(scls);
-      mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate mus-bank gens array");
+      return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate mus-bank gens array"));
     }
   data = XEN_VECTOR_ELEMENTS(gens);
   for (i = 0; i < size; i++) 
@@ -1111,7 +1117,7 @@ static XEN g_make_delay_1(int choice, XEN arglist)
 					 initial_contents));
 		  line = (Float *)CALLOC(len, sizeof(Float));
 		  if (line == NULL)
-		    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate delay line");
+		    return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate delay line"));
 		  for (i = 0, lst = XEN_COPY_ARG(initial_contents); (i < len) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
 		    line[i] = XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst), 0.0);
 		}
@@ -1162,7 +1168,7 @@ static XEN g_make_delay_1(int choice, XEN arglist)
     {
       line = (Float *)CALLOC(max_size, sizeof(Float));
       if (line == NULL)
-	mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate delay line");
+	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate delay line"));
       if (initial_element != 0.0) 
 	for (i = 0; i < max_size; i++) 
 	  line[i] = initial_element;
@@ -1185,8 +1191,7 @@ static XEN g_make_delay_1(int choice, XEN arglist)
       return(mus_xen_to_object_with_vct(gn, make_vct(max_size, line)));
     }
   if (line) FREE(line);
-  mus_error(local_error_type, local_error_msg);
-  return(XEN_FALSE);
+  return(clm_mus_error(local_error_type, local_error_msg));
 }
 
 static XEN g_make_delay(XEN args) 
@@ -1512,14 +1517,14 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
     {
       wave = (Float *)CALLOC(DEFAULT_TABLE_SIZE, sizeof(Float));
       if (wave == NULL)
-	mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate wave table");
+	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate wave table"));
       table = make_vct(DEFAULT_TABLE_SIZE, wave);
     }
   else table = utable;
   f = TO_VCT(table);
   partial_data = (Float *)CALLOC(len, sizeof(Float));
   if (partial_data == NULL)
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate partials table");
+    return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate partials table"));
   for (i = 0, lst = XEN_COPY_ARG(partials); i < len; i++, lst = XEN_CDR(lst)) 
     partial_data[i] = XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst), 0.0);
   mus_partials2wave(partial_data, len / 2, f->data, f->length, (XEN_TRUE_P(normalize)));
@@ -1552,14 +1557,14 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
     {
       wave = (Float *)CALLOC(DEFAULT_TABLE_SIZE, sizeof(Float));
       if (wave == NULL)
-	mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate wave table");
+	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate wave table"));
       table = make_vct(DEFAULT_TABLE_SIZE, wave);
     }
   else table = utable;
   f = TO_VCT(table);
   partial_data = (Float *)CALLOC(len, sizeof(Float));
   if (partial_data == NULL)
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate partials table");
+    return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate partials table"));
   for (i = 0, lst = XEN_COPY_ARG(partials); i < len; i++, lst = XEN_CDR(lst)) 
     partial_data[i] = XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst), 0.0);
   mus_phasepartials2wave(partial_data, len / 3, f->data, f->length, (XEN_TRUE_P(normalize)));
@@ -1604,7 +1609,7 @@ is the same in effect as " S_make_oscil "."
     {
       table = (Float *)CALLOC(table_size, sizeof(Float));
       if (table == NULL)
-	mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate table-lookup table");
+	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate table-lookup table"));
       need_free = TRUE;
     }
   old_error_handler = mus_error_set_handler(local_mus_error); /* currently not needed (no recoverable errors from mus_make_table_lookup) */
@@ -1619,8 +1624,7 @@ is the same in effect as " S_make_oscil "."
       return(mus_xen_to_object_with_vct(gn, make_vct(table_size, table)));
     }
   if (need_free) FREE(table);
-  mus_error(local_error_type, local_error_msg);
-  return(XEN_FALSE);
+  return(clm_mus_error(local_error_type, local_error_msg));
 }
 
 static XEN g_table_lookup (XEN obj, XEN fm) 
@@ -2537,7 +2541,7 @@ processing, normally involving overlap-adds."
     return(XEN_FALSE);
   buf = (Float *)CALLOC(siz, sizeof(Float));
   if (buf == NULL)
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate buffer");
+    return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate buffer"));
   old_error_handler = mus_error_set_handler(local_mus_error); /* currently not needed */
   ge = mus_make_buffer(buf, siz, filltime);
   mus_error_set_handler(old_error_handler);
@@ -2550,8 +2554,7 @@ processing, normally involving overlap-adds."
       return(mus_xen_to_object_with_vct(gn, make_vct(siz, buf)));
     }
   FREE(buf);
-  mus_error(local_error_type, local_error_msg);
-  return(XEN_FALSE);
+  return(clm_mus_error(local_error_type, local_error_msg));
 }
 
 static XEN g_buffer2sample(XEN obj)
@@ -2648,7 +2651,7 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
     {
       wave = (Float *)CALLOC(wsize, sizeof(Float));
       if (wave == NULL)
-	mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate wave-train table");
+	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate wave-train table"));
       need_free = TRUE;
     }
   old_error_handler = mus_error_set_handler(local_mus_error); /* currently not needed */
@@ -2663,8 +2666,7 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
       return(mus_xen_to_object_with_vct(gn, make_vct(wsize, wave)));
     }
   if (need_free) FREE(wave);
-  mus_error(local_error_type, local_error_msg);
-  return(XEN_FALSE);
+  return(clm_mus_error(local_error_type, local_error_msg));
 }
 
 static XEN g_wave_train(XEN obj, XEN fm)
@@ -3198,10 +3200,10 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 	  npts = len / 2;
 	  brkpts = (Float *)CALLOC(len, sizeof(Float));
 	  if (brkpts == NULL)
-	    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate env list");
+	    return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate env list"));
 	  odata = (Float *)CALLOC(len, sizeof(Float));
 	  if (odata == NULL)
-	    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate env copy");
+	    return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate env copy"));
 	  for (i = 0, lst = XEN_COPY_ARG(keys[0]); (i < len) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
 	    {
 	      brkpts[i] = XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst), 0.0);
@@ -3236,8 +3238,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
       return(mus_xen_to_object_with_vct(gn, make_vct(len, odata)));
     }
   FREE(odata);
-  mus_error(local_error_type, local_error_msg);
-  return(XEN_FALSE);
+  return(clm_mus_error(local_error_type, local_error_msg));
 }
 
 static XEN g_env_interp(XEN x, XEN env1) /* "env" causes trouble in Objective-C!! */
@@ -4040,8 +4041,7 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
     }
   FREE(gn->vcts);
   FREE(gn);
-  mus_error(local_error_type, local_error_msg);
-  return(XEN_FALSE);
+  return(clm_mus_error(local_error_type, local_error_msg));
 }
 
 
@@ -4147,8 +4147,7 @@ jitter controls the randomness in that spacing, input can be a file pointer."
       return(mus_xen_to_object(gn));
     }
   FREE(gn);
-  mus_error(local_error_type, local_error_msg);
-  return(XEN_FALSE);
+  return(clm_mus_error(local_error_type, local_error_msg));
 }
 
 
@@ -4236,8 +4235,7 @@ return a new convolution generator which convolves its input with the impulse re
       return(mus_xen_to_object(gn));
     }
   FREE(gn);
-  mus_error(local_error_type, local_error_msg);
-  return(XEN_FALSE);
+  return(clm_mus_error(local_error_type, local_error_msg));
 }
 
 static XEN g_convolve_files(XEN file1, XEN file2, XEN maxamp, XEN outfile)
@@ -4426,8 +4424,7 @@ is run.  'synthesize' is a function of 1 arg, the generator; it is called to get
       return(pv_obj);
     }
   FREE(gn);
-  mus_error(local_error_type, local_error_msg);
-  return(XEN_FALSE);
+  return(clm_mus_error(local_error_type, local_error_msg));
 }
 
 static XEN g_pv_amps(XEN pv) 

@@ -9,8 +9,7 @@ typedef struct {
 
 /* -------- snd-ghelp.c -------- */
 
-GtkWidget *snd_help(snd_state *ss, char *subject, char *help);
-GtkWidget *snd_help_with_wrap(snd_state *ss, char *subject, char *help);
+GtkWidget *snd_help(snd_state *ss, char *subject, char *help, int with_wrap);
 
 
 /* -------- snd-gerror.c -------- */
@@ -338,6 +337,8 @@ void raise_dialog(GtkWidget *w);
 void set_button_label_bold(GtkWidget *button, const char *str);
 void set_button_label(GtkWidget *label, const char *str);
 void set_label(GtkWidget *label, const char *str);
+void sg_left_justify_button(GtkWidget *button);
+void sg_left_justify_label(GtkWidget *label);
 void check_for_event(snd_state *ss);
 int event_pending(snd_state *ss);
 void set_title(snd_state *ss, const char *title);

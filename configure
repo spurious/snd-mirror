@@ -2775,6 +2775,8 @@ _ACEOF
 
 
 
+#TODO: --without-gtk --without-motif ends up with gtk?
+
 #--------------------------------------------------------------------------------
 # configuration options
 #   --with-motif          use Motif (the default)
@@ -3390,8 +3392,7 @@ _ACEOF
 #define DEBUG_MEMORY 1
 _ACEOF
 
-    CFLAGS="$CFLAGS -w -Wall"
-# crazy looking switches to turn off the goddamn system header warning in gcc 3.2: -Wno-system-headers is a no-op
+    CFLAGS="$CFLAGS -Wall"
   fi
 fi;
 
@@ -15544,7 +15545,9 @@ fi
 # set SNDLIB_FILES and SNDLIB_LIB
 
 SNDLIB_FILES="SNDLIB_O_FILES"
-SNDLIB_LIB=""
+if test "$enable_snd_debug" != yes ; then
+  SNDLIB_LIB=""
+fi
 SNDLIB_PREFIX=""
 
 # Check whether --with-shared-sndlib or --without-shared-sndlib was given.

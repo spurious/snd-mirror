@@ -680,6 +680,7 @@ int io_fclose(FILE *stream, const char *func, const char *file, int line)
 void dump_protection(FILE *Fp);
 #if DEBUGGING
   void report_dangling_readers(FILE *fp);
+  void report_dangling_mix_readers(FILE *fp);
 #endif
 
 void mem_report(void)
@@ -800,6 +801,7 @@ void mem_report(void)
   /* mus_sound_report_cache(Fp); */
 #if DEBUGGING
   report_dangling_readers(Fp);
+  report_dangling_mix_readers(Fp);
 #endif
 
   for (i = 0; i < file_size; i++)

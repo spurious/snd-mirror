@@ -20,6 +20,8 @@ AC_DEFINE_UNQUOTED(VERSION, "$VERSION")
 AC_SUBST(PACKAGE)
 AC_SUBST(VERSION)
 
+#TODO: --without-gtk --without-motif ends up with gtk?
+
 #--------------------------------------------------------------------------------
 # configuration options
 #   --with-motif          use Motif (the default)
@@ -212,8 +214,7 @@ AC_ARG_ENABLE(snd-debug,
   if test "$enable_snd_debug" = yes ; then
     AC_DEFINE(DEBUGGING)
     AC_DEFINE(DEBUG_MEMORY)
-    CFLAGS="$CFLAGS -w -Wall"
-# crazy looking switches to turn off the goddamn system header warning in gcc 3.2: -Wno-system-headers is a no-op
+    CFLAGS="$CFLAGS -Wall"
   fi)
 
 
@@ -1011,7 +1012,9 @@ fi
 # set SNDLIB_FILES and SNDLIB_LIB
 
 SNDLIB_FILES="SNDLIB_O_FILES"
-SNDLIB_LIB=""
+if test "$enable_snd_debug" != yes ; then
+  SNDLIB_LIB=""
+fi
 SNDLIB_PREFIX=""
 AC_ARG_WITH(shared-sndlib,[  --with-shared-sndlib	  try to load libsndlib.so])
 if test "$with_shared_sndlib" = yes; then

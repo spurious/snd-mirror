@@ -401,24 +401,24 @@ static void make_region_dialog(snd_state *ss)
   labbox = gtk_vbox_new(TRUE, 0);
   gtk_container_add(GTK_CONTAINER(labels), labbox);
   gtk_widget_show(labbox);
-  
+
   srate_text = gtk_label_new(_("srate:"));
-  gtk_label_set_justify(GTK_LABEL(srate_text), GTK_JUSTIFY_LEFT);  /* these appear to be no-ops! */
+  sg_left_justify_label(srate_text);
   gtk_box_pack_start(GTK_BOX(labbox), srate_text, FALSE, FALSE, 2);
   gtk_widget_show(srate_text);
 
   chans_text = gtk_label_new(_("chans:"));
-  gtk_label_set_justify(GTK_LABEL(chans_text), GTK_JUSTIFY_LEFT);
+  sg_left_justify_label(chans_text);
   gtk_box_pack_start(GTK_BOX(labbox), chans_text, FALSE, FALSE, 2);
   gtk_widget_show(chans_text);
 
   length_text = gtk_label_new(_("length:"));
-  gtk_label_set_justify(GTK_LABEL(length_text), GTK_JUSTIFY_LEFT);
+  sg_left_justify_label(length_text);
   gtk_box_pack_start(GTK_BOX(labbox), length_text, FALSE, FALSE, 2);
   gtk_widget_show(length_text);
 
   maxamp_text = gtk_label_new(_("maxamp:"));
-  gtk_label_set_justify(GTK_LABEL(maxamp_text), GTK_JUSTIFY_LEFT);
+  sg_left_justify_label(maxamp_text);
   gtk_box_pack_start(GTK_BOX(labbox), maxamp_text, FALSE, FALSE, 2);
   gtk_widget_show(maxamp_text);
 

@@ -14,7 +14,6 @@ static void list_completions_callback(GtkTreeSelection *selection, gpointer *gp)
   GtkTreeSelection *tree;
   int beg, end, i, j, old_len, new_len;
   char *old_text;
-  snd_state *ss = (snd_state *)gp;
   if (first_time)
     {
       first_time = FALSE;
@@ -52,9 +51,8 @@ static void help_completion_callback(GtkWidget *w, gpointer context)
 {
   snd_help(get_global_state(), 
 	   "completion",
-"These are the completions that Snd thinks might be likely.\n\
-If you select one, it will be used to complete the current name.\n\
-");
+	   "These are the completions that Snd thinks might be likely. If you select one, it will be used to complete the current name.",
+	   TRUE);
 }
 
 static void delete_completion_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
@@ -636,7 +634,7 @@ static gboolean listener_button_press(GtkWidget *w, GdkEventButton *ev, gpointer
     GtkTextIter iter;
     GtkTextIter start, end;
     GtkTextView *view = (GtkTextView *)w;
-    gtk_text_view_window_to_buffer_coords(view, GTK_TEXT_WINDOW_TEXT, ev->x, ev->y, &x, &y);
+    gtk_text_view_window_to_buffer_coords(view, GTK_TEXT_WINDOW_TEXT, (gint)(ev->x), (gint)(ev->y), &x, &y);
     gtk_text_view_get_iter_at_location(view, &iter, x, y);
     if (!(gtk_text_buffer_get_selection_bounds(gtk_text_view_get_buffer(view), &start, &end) &&          
 	  gtk_text_iter_in_range(&iter, &start, &end)))

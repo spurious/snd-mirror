@@ -1801,7 +1801,7 @@ static int display_transform_peaks(chan_info *ucp, char *filename)
 	  str = (char *)CALLOC(chars + 1, sizeof(char));
 	  fread(str, 1, chars, fd);
 	  snd_fclose(fd, filename);
-	  snd_help(ss, "fft peaks", str);
+	  snd_help(ss, "fft peaks", str, FALSE);
 	  FREE(str);
 	  err = snd_remove(filename, FALSE);
 	  FREE(filename);
@@ -3049,7 +3049,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
   
   if ((!just_lisp) && (!just_fft))
     {
-      if (with_time)
+      if ((with_time) && (cp->hookable)) /* hookable if not region graph */
 	{
 	  display_selection(cp);
 	  display_channel_marks(cp);

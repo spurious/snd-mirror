@@ -434,18 +434,6 @@ int use_filename_completer(int filing)
 	  (filing == INSERT_FILING)));   /* C-x C-i */
 }
 
-static char *dir_from_tempnam(snd_state *ss)
-{
-  char *name;
-  int i;
-  name = snd_tempnam(ss);
-  i = strlen(name)-1;
-  while ((name[i] != '/') && (i > 0)) i--;
-  if (i == 0) name[0] ='.';
-  name[i + 1] ='\0';
-  return(name);
-}
-
 static chan_info *goto_next_graph (chan_info *cp, int count);
 
 static chan_info *goto_previous_graph (chan_info *cp, int count)
@@ -586,7 +574,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
   off_t len;
   chan_info *active_chan;
   char *str = NULL, *mcf = NULL;
-  char *tok, *newdir, *str1;
+  char *newdir, *str1;
   env *e;
   mark *m;
 #if HAVE_OPENDIR
@@ -737,10 +725,8 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 		}
 	      else 
 		{
-		  tok = dir_from_tempnam(ss);
-		  report_in_minibuffer_and_save(sp, _("can't access %s! temp dir is still %s"), newdir, tok);
-		  if (newdir) free(newdir);
-		  if (tok) FREE(tok);
+		  report_in_minibuffer_and_save(sp, _("can't access %s! temp dir is unchanged"), newdir);
+		  if (newdir) FREE(newdir);
 		}
 	      break;
 #endif

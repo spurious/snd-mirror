@@ -259,6 +259,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->Reverb_Control_Decay = DEFAULT_REVERB_CONTROL_DECAY;
   allocate_regions(ss, max_regions(ss));
   ss->HTML_Dir = NULL;
+  ss->HTML_Program = copy_string(DEFAULT_HTML_PROGRAM);
   ss->min_dB = DEFAULT_MIN_DB;
   ss->lin_dB = pow(10.0, DEFAULT_MIN_DB * 0.05);
   ss->init_window_x = DEFAULT_INIT_WINDOW_X; 

@@ -228,6 +228,7 @@
 #define S_hide_widget                   "hide-widget"
 #define S_highlight_color               "highlight-color"
 #define S_html_dir                      "html-dir"
+#define S_html_program                  "html-program"
 #if HAVE_RUBY
   #define S_in                          "call-in"
 #else
@@ -504,6 +505,7 @@
 #define S_selection_p                   "selection?"
 #define S_selection_position            "selection-position"
 #define S_selection_srate               "selection-srate"
+#define S_send_netscape                 "send-netscape"
 #define S_short_file_name               "short-file-name"
 #define S_show_all_axes                 "show-all-axes"
 #define S_show_axes                     "show-axes"

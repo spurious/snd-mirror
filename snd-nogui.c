@@ -2,8 +2,7 @@
 
 void check_menu_labels(int key, int state, int extended) {}
 void add_channel_window(snd_info *sound, int channel, snd_state *ss, int chan_y, int insertion, widget_t main, int arrows) {}
-int snd_help(snd_state *ss, char *subject, char *help) {fprintf(stdout, help); return(0);}
-int snd_help_with_wrap(snd_state *ss, char *subject, char *help) {fprintf(stdout, help); return(0);}
+int snd_help(snd_state *ss, char *subject, char *help, int with_wrap) {fprintf(stdout, help); return(0);}
 void add_to_error_history(snd_state *ss, char *msg, int popup) {}
 void post_error_dialog(snd_state *ss, char *msg) {}
 int snd_yes_or_no_p(snd_state *ss, char *format, ...) {return(0);}
@@ -412,12 +411,12 @@ void snd_doit(snd_state *ss, int argc, char **argv)
                (define " S_menu_hook " (make-hook 2))\
                (define " S_color_hook " (make-hook 0))\
                (define " S_orientation_hook " (make-hook 0))\
+               (define " S_listener_click_hook " (make-hook 1)) \
                (define " S_window_property_changed_hook " (make-hook 1))");
 
   XEN_EVAL_C_STRING("(define " S_enved_active_env " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_enved_selected_env " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_just_sounds " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
-               (define " S_html_dir " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_copy_context " 0)\
                (define " S_cursor_context " 3)\
                (define " S_selection_context " 2)\
@@ -485,6 +484,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   XEN_EVAL_C_STRING("$menu_hook = false");
   XEN_EVAL_C_STRING("$color_hook = false");
   XEN_EVAL_C_STRING("$orientation_hook = false");
+  XEN_EVAL_C_STRING("$listener_click_hook = false");
   XEN_EVAL_C_STRING("$window_property_changed_hook = false");
 
   XEN_EVAL_C_STRING("Copy_context = 0");

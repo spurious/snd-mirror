@@ -224,6 +224,7 @@ static void prepare_edit_list(chan_info *cp, off_t len, int pos, const char *cal
 	  cp->edits[i] = NULL; 
 	  cp->amp_envs[i] = NULL; 
 	  cp->samples[i] = 0;
+	  cp->cursors[i] = 0;
 	}
     }
   prune_edits(cp, cp->edit_ctr);
@@ -2795,8 +2796,15 @@ snd_fd *free_snd_fd_almost(snd_fd *sf)
   return(NULL);
 }
 
+#if DEBUGGING
+  static void check_dangling_readers(snd_fd *md);
+#endif
+
 snd_fd *free_snd_fd(snd_fd *sf)
 {
+#if DEBUGGING
+  check_dangling_readers(sf);
+#endif      
   free_snd_fd_almost(sf);
   FREE(sf);
   return(NULL);
@@ -6070,8 +6078,10 @@ void read_sample_change_direction(snd_fd *sf, int dir)
   /* direction reversal can happen in dac(speed arrow), src gen, or user can call next/previous independent of initial dir */
   swap_readers(sf);
   sf->direction = dir;
-  /* can't optimize anything here -- some accessors have state */
-  read_sample(sf);
+  /* can't optimize anything here -- some accessors have state, but how to handle the loc=-1 case? */
+  if ((dir == READ_FORWARD) && (sf->loc < 0)) 
+    sf->loc = 0;
+  else read_sample(sf);
 }
 
 Float protected_next_sample_to_float(snd_fd *sf)
@@ -7174,6 +7184,7 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, int 
   sf->direction = direction;
   sf->current_state = ed;
   sf->edit_ctr = edit_position;
+  sf->dangling_loc = -1;
   if ((curlen <= 0) ||    /* no samples, not ed->len (delete->len = #deleted samps) */
       (samp < 0) ||       /* this should never happen */
       ((samp >= curlen) && (direction == READ_FORWARD)))
@@ -7694,6 +7705,7 @@ static int save_edits_and_update_display(snd_info *sp)
   for (i = 0; i < sp->nchans; i++)
     {
       cp = sp->chans[i];
+      old_cursors[i] = CURSOR(cp); /* depends on edit_ctr -- set to -1 by free_edit_list below */
       if (ss->deferred_regions > 0)
 	sequester_deferred_regions(cp, -1);
       if (cp->mixes) reset_mix_list(cp);
@@ -7705,7 +7717,6 @@ static int save_edits_and_update_display(snd_info *sp)
 	  FREE(cp->samples); 
 	  cp->samples = NULL;
 	}
-      old_cursors[i] = CURSOR(cp);
       if (cp->cursors) 
 	{
 	  FREE(cp->cursors); 
@@ -8235,18 +8246,17 @@ static void list_reader(snd_fd *fd)
 	  for (i = loc; i < dangling_reader_size; i++) dangling_readers[i] = NULL;
 	}
     }
+  fd->dangling_loc = loc;
   dangling_readers[loc] = fd;
 }
 
 static void unlist_reader(snd_fd *fd)
 {
-  int i;
-  for (i = 0; i < dangling_reader_size; i++)
-    if (fd == dangling_readers[i])
-      {
-	dangling_readers[i] = NULL;
-	break;
-      }
+  if ((fd) && (fd->dangling_loc >= 0))
+    {
+      dangling_readers[fd->dangling_loc] = NULL;
+      fd->dangling_loc = -1;
+    }
 }
 
 static void sf_free(snd_fd *fd)
@@ -8293,15 +8303,35 @@ void report_dangling_readers(FILE *fp)
 	if (!titled)
 	  {
 	    fprintf(fp, "\nDangling snd_fd:\n");
+	    fprintf(stderr, "\nDangling snd_fd:\n");
 	    titled = TRUE;
 	  }
-	fprintf(fp, "   %p, cp: %p%s, beg: " OFF_TD ", at " OFF_TD " [frag_pos: " OFF_TD ", first: " OFF_TD ", last: " OFF_TD "], fragment %d",
+	fprintf(fp, "   %p, cp: %p%s, beg: " OFF_TD ", at " OFF_TD " [frag_pos: " OFF_TD ", first: " OFF_TD ", last: " OFF_TD "], fragment %d\n",
+		sf, sf->cp,
+		(sf->at_eof) ? ", at eof" : "",
+		sf->initial_samp,
+		sf->loc, sf->frag_pos, sf->first, sf->last,
+		sf->cbi);
+	fprintf(stderr, "   %p, cp: %p%s, beg: " OFF_TD ", at " OFF_TD " [frag_pos: " OFF_TD ", first: " OFF_TD ", last: " OFF_TD "], fragment %d\n",
 		sf, sf->cp,
 		(sf->at_eof) ? ", at eof" : "",
 		sf->initial_samp,
 		sf->loc, sf->frag_pos, sf->first, sf->last,
 		sf->cbi);
       }
+}
+static void check_dangling_readers(snd_fd *fd)
+{
+  int i;
+  if (fd)
+    {
+      for (i = 0; i < dangling_reader_size; i++)
+	if (dangling_readers[i] == fd)
+	  {
+	    fprintf(stderr, "lost reader: %p\n", fd);
+	    abort();
+	  }
+    }
 }
 #endif
 

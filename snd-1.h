@@ -115,7 +115,7 @@ typedef struct snd__fd {
   double incr2, curval2, incr3, curval3;
   mus_sample_t (*rev_run)(struct snd__fd *sf);
   Float (*rev_runf)(struct snd__fd *sf);
-  int edit_ctr;
+  int edit_ctr, dangling_loc;
 } snd_fd;
 
 typedef struct {Float freq; Float amp;} fft_peak;
@@ -371,7 +371,7 @@ typedef struct snd__state {
   int Enved_Clip_p, Enved_Exp_p, Enved_Target, Enved_Wave_p, Enved_in_dB, Graphs_Horizontal, With_Background_Processes;
   int Graph_Cursor, Data_Clipped, Show_Indices, Mix_Tag_Width, Mix_Tag_Height, Minibuffer_History_Length;
   Float min_dB, lin_dB;
-  char *HTML_Dir;
+  char *HTML_Dir, *HTML_Program;
   int error_lock, deferred_regions, jump_ok, batch_mode;
 } snd_state;
 
@@ -444,7 +444,6 @@ void init_file_help(snd_state *ss);
 void recording_help(snd_state *ss);
 char *version_info(void);
 void news_help(snd_state *ss);
-void help_dialog_help(snd_state *ss);
 void transform_dialog_help(snd_state *ss);
 void color_dialog_help(snd_state *ss);
 void orientation_dialog_help(snd_state *ss);

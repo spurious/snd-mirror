@@ -1,9 +1,5 @@
 #include "snd.h"
 
-
-/* TODO: does this work for mozilla?  How about other browsers?
- */
-
 #if HAVE_X
 
 #if USE_GTK
@@ -56,16 +52,15 @@ static Window find_window(Display *display,
   return(window);
 }
 
-XEN send_netscape(XEN cmd);
-XEN send_netscape(XEN cmd)
+static XEN send_netscape(XEN cmd)
 {
-  #define H_send_netscape "(send-netscape cmd): find netscape (or start it if necessary), and send it the \
-string 'cmd'.  cmd should be a URL.  This is used by index.scm."
+  #define H_send_netscape "(" S_send_netscape " cmd): find an html-reader (or start it if necessary), and send it the \
+string 'cmd'.  cmd should be a URL."
   Window window;
   snd_state *ss;
   Display *dpy;
   char *command, *tmp = NULL;
-  XEN_ASSERT_TYPE(XEN_STRING_P(cmd), cmd, XEN_ONLY_ARG, "send-netscape", "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(cmd), cmd, XEN_ONLY_ARG, S_send_netscape, "a string");
   ss = get_global_state();
   dpy = MAIN_DISPLAY(ss);
   command = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
@@ -86,9 +81,12 @@ string 'cmd'.  cmd should be a URL.  This is used by index.scm."
     {
       if (!(fork()))
         {
-	  mus_snprintf(command, PRINT_BUFFER_SIZE, "netscape file:%s", tmp);
+	  mus_snprintf(command, PRINT_BUFFER_SIZE, "%s file:%s", html_program(ss), tmp);
 	  if (execl("/bin/sh", "/bin/sh", "-c", command, NULL) == -1)
-	    return(XEN_FALSE);
+	    {
+	      FREE(command);
+	      return(XEN_FALSE);
+	    }
 	}
     }
   FREE(command);
@@ -145,7 +143,7 @@ XEN_NARGIFY_3(g_change_window_property_w, g_change_window_property)
 
 void g_init_gxutils(void)
 {
-  XEN_DEFINE_PROCEDURE("send-netscape", send_netscape_w, 1, 0, 0, H_send_netscape);
+  XEN_DEFINE_PROCEDURE(S_send_netscape, send_netscape_w, 1, 0, 0, H_send_netscape);
   XEN_DEFINE_PROCEDURE(S_change_window_property, g_change_window_property_w, 3, 0, 0, H_change_window_property);
 }
 
