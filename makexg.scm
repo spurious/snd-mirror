@@ -622,6 +622,12 @@
 	;(cons "GdkWChar" "ULONG")
 
 	(cons "Drawable_was_Window*" "DRAWABLE_WAS_WINDOW")
+
+	(cons "GtkFileChooserAction" "INT")
+	(cons "GtkUIManagerItemType" "INT")
+	(cons "GtkFileFilterFlags" "INT")
+	(cons "GtkIconLookupFlags" "INT")
+	(cons "GtkScrollStep" "INT")
 	))
 
 (define (type-it type)
@@ -1727,7 +1733,9 @@
 	 (for-each
 	  (lambda (arg)
 	    (if (ref-arg? arg)
-		(hey "  ~A ~A;~%" (deref-type arg) (deref-name arg))))
+		(if (has-stars (deref-type arg))
+		    (hey "  ~A ~A = NULL;~%" (deref-type arg) (deref-name arg))
+		    (hey "  ~A ~A;~%" (deref-type arg) (deref-name arg)))))
 	  args))
      (if (and (>= (length args) max-args)
 	      (> xgargs 0))
@@ -1855,16 +1863,17 @@
 		    (types (caddr spec-data))
 		    (modlen (length types)))
 	       (hey "  {~%")
-	       (hey "    int etc_len;~%")
+	       (hey "    int etc_len = 0;~%")
 	       (if (not (string=? return-type "void"))
 		   (hey "    ~A result = ~A;~%" return-type (if (has-stars return-type) "NULL" "0")))
 	       (do ((i 0 (1+ i)))
 		   ((= i (1- cargs)))
 		 (let ((arg (list-ref args i)))
 		   (hey "    ~A p_arg~D;~%" (car arg) i)))
-	       (hey "    etc_len = XEN_LIST_LENGTH(~A);~%" list-name)
-	       (hey "    if (etc_len < ~D) XEN_OUT_OF_RANGE_ERROR(~S, ~A, ~A, \"... list must have at least ~D entr~A\");~%"
-		    min-len name (1- cargs) list-name min-len (if (= min-len 1) "y" "ies"))
+	       (hey "    if (XEN_LIST_P(~A)) etc_len = XEN_LIST_LENGTH(~A);~%" list-name list-name)
+	       (if (> min-len 0)
+		   (hey "    if (etc_len < ~D) XEN_OUT_OF_RANGE_ERROR(~S, ~A, ~A, \"... list must have at least ~D entr~A\");~%"
+			min-len name (1- cargs) list-name min-len (if (= min-len 1) "y" "ies")))
 	       (hey "    if (etc_len > ~D) XEN_OUT_OF_RANGE_ERROR(~S, ~A, ~A, \"... list too long (max len: ~D)\");~%"
 		    max-len name (1- cargs) list-name max-len)
 	       (if (not (= modlen 1))
@@ -2243,16 +2252,17 @@
   (let* ((cargs (length (caddr func)))
 	 (refargs (+ (ref-args (caddr func)) (opt-args (caddr func))))
 	 (args (- cargs refargs)))
+
     (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A, ~D, ~D, ~D, H_~A);~%"
 		     (car func) (car func) 
 		     (if (>= cargs 10) 0 args)
-		     (if (>= cargs 10) 0 refargs) ; optional ignored
+		     (if (>= cargs 10) 0 refargs)
 		     (if (>= cargs 10) 1 0)
 		     (car func))
     (say "  XG_DEFINE_PROCEDURE(~A, gxg_~A_w, ~D, ~D, ~D, H_~A);~%"
 		     (car func) (car func) 
 		     (if (>= cargs 10) 0 args)
-		     (if (>= cargs 10) 0 refargs) ; optional ignored
+		     (if (>= cargs 10) 0 refargs)
 		     (if (>= cargs 10) 1 0)
 		     (car func))))
 

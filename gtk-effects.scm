@@ -310,7 +310,7 @@
 
 (define (activate-dialog w)
   (gtk_widget_show w)
-  (gdk_window_raise (.window w)))
+  (gtk_window_present (GTK_WINDOW w)))
 
 (define (effect-frames target)
   (if (eq? target 'sound)

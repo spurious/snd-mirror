@@ -806,7 +806,7 @@ Reverb-feedback sets the scaler on the feedback.
 
 (define (raise-dialog w)
   (gtk_widget_show w)
-  (gdk_window_raise (.window w)))
+  (gtk_window_present (GTK_WINDOW w)))
 
 
 ;;; -------- select-file --------
