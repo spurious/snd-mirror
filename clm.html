@@ -306,7 +306,7 @@ Lisp functions can occur within the body of the run macro:</p>
     floor ceiling round truncate signum sqrt random float
     ash log expt exp sin cos tan asin acos atan cosh sinh tanh asinh acosh atanh 
     or and not null if unless when cond progn prog1 prog2 case tagbody go 
-    error warn print princ terpri print-object probe-file
+    error warn print princ terpri probe-file
     block return return-from let let* loop do do* dotimes declare
     lambda apply loop-finish
     aref elt svref array-total-size array-in-bounds-p array-rank array-dimension
@@ -3756,41 +3756,6 @@ statement that will send its output to the lisp listener, use the function mus_e
 of 0; next run the C compiler and loader, making a new instrument object file, start gdb with lisp, run
 lisp loading clm, load your instrument, and run it.  This is incredibly tedious!
 </p>
-<p>Once in gdb, you can use clm_print_object to display the fields of a generator:</p>
-<pre><small>
-Program received signal SIGSEGV, Segmentation fault.
-0x804af4d in clm_lnxacl_fm_violin3 (clm_beg=0, clm_end=22050,clm_double=0x8079b08, clm_int=0x8079ea8)
-    at /space/home/bil/cl/clm_lnxacl_FM-VIOLIN.c:507
-507              ((int *)(clm_int[rIO[CLM_IO_DATS + 1]+i]))[data_end] += (int)(revn[i] * CLM_12263);
-</small></pre>
-<p>Now we look at clm_lnxacl_FM-VIOLIN.c (the C code produced by the run macro),
-and find the generator locations (toward the start of the violin function):</p>
-<pre><small>
-int clm_lnxacl_fm_violin3 (int clm_beg, int clm_end, double *clm_double, int *clm_int)
-... 
-  #define c_l_m__REVERB_ 34
-  #define c_l_m__REVERB__r 17
-  #define CARRIER 38
-  #define CARRIER_r 19
- ...
-</small></pre>
-<p>To see the carrier fields, we call clm_print_object with the
-two locations:</p>
-<pre><small>
-(gdb) p <em class=red>clm_print_object</em>(38,19,0,clm_int,clm_double)
-#&lt;oscil: freq: 440.000 Hz, phase: 8.554 deg&gt;
-</small></pre>
-<p>
-But we're more interested in the segfault, which obviously has something to do with
-the reverb output file, or the locsig generator:</p>
-<pre><small>
-(gdb) p <em class=red>clm_print_object</em>(34,17,0,clm_int,clm_double)
-#&lt;IO: "test.reverb", write, [chan: 0, loc: 0], chans: 1, fil: 8, beg: 0, end: 65535, 
-  frames: 0, bufsize: 65536, hdr-end: 28, data-start: 0, data-end: 0, 
-  dats: #&lt;integer-array[1]: [0]&gt;&gt;
-</small></pre>
-<p>In this case the output buffer looks suspicious...</p>
-
 
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>Help</h4></td></tr></table>
 <!-- INDEX clm-help:Help  -->

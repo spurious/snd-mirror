@@ -1,4 +1,4 @@
-;; Snd tests
+;;; Snd tests
 ;;;
 ;;; test 0: constants 
 ;;; test 1: defaults
@@ -12917,6 +12917,24 @@ EDITS: 5
 		(val2 (o2)))
 	    (if (fneq val1 val2) (snd-display ";~D: o1: ~A, o2: ~A" i val1 val2)))))
       
+      (let ((gen1 (make-oscil 100.0))
+	    (gen2 (make-oscil -100.0))
+	    (mx 0.0))
+	(do ((i 0 (1+ i)))
+	    ((= i 100))
+	  (set! mx (max mx (abs (+ (gen1) (gen2))))))
+	(if (fneq mx 0.0)
+	    (snd-display ";oscil +-: ~A" mx)))
+
+      (let ((gen1 (make-oscil 100.0 (* pi 0.5)))
+	    (gen2 (make-oscil -100.0 (* pi 0.5)))
+	    (mx 0.0))
+	(do ((i 0 (1+ i)))
+	    ((= i 100))
+	  (set! mx (max mx (abs (- (gen1) (gen2))))))
+	(if (fneq mx 0.0)
+	    (snd-display ";cosil +-: ~A" mx)))
+
       (fm-test (make-oscil))
       (fm-test (make-sine-summation))
       (fm-test (make-square-wave))
@@ -13246,6 +13264,15 @@ EDITS: 5
 	    (if (> (abs (- val1 val2)) .002)
 		(snd-display ";sum-of-cosines: ~A: ~A ~A" i val1 val2)))))
 
+      (let ((gen1 (make-sum-of-cosines 10 100.0))
+	    (gen2 (make-sum-of-cosines 10 -100.0))
+	    (mx 0.0))
+	(do ((i 0 (1+ i)))
+	    ((= i 100))
+	  (set! mx (max mx (abs (- (gen1) (gen2))))))
+	(if (fneq mx 0.0)
+	    (snd-display ";sum-of-cosines +-: ~A" mx)))
+
       (let ((gen (make-sum-of-sines 10 440.0))
 	    (v0 (make-vct 10))
 	    (gen1 (make-sum-of-sines 10 440.0))
@@ -13281,6 +13308,15 @@ EDITS: 5
 		 (val2 (gen 0.0)))
 	    (if (fneq val1 val2)
 		(snd-display ";sum-of-sines: ~A ~A" val1 val2)))))
+
+      (let ((gen1 (make-sum-of-sines 10 100.0))
+	    (gen2 (make-sum-of-sines 10 -100.0))
+	    (mx 0.0))
+	(do ((i 0 (1+ i)))
+	    ((= i 100))
+	  (set! mx (max mx (abs (+ (gen1) (gen2))))))
+	(if (fneq mx 0.0)
+	    (snd-display ";sum-of-sines +-: ~A" mx)))
 
       (let ((gen (make-sine-summation 440.0))
 	    (v0 (make-vct 10))
@@ -13981,6 +14017,15 @@ EDITS: 5
       (test-gen-equal (make-sawtooth-wave 440.0) (make-sawtooth-wave 440.0) (make-sawtooth-wave 440.0 1.0 1.0))
       (test-gen-equal (make-sawtooth-wave 440.0) (make-sawtooth-wave 440.0) (make-sawtooth-wave 440.0 0.5))
       
+      (let ((gen1 (make-sawtooth-wave 100.0))
+	    (gen2 (make-sawtooth-wave -100.0))
+	    (mx 0.0))
+	(do ((i 0 (1+ i)))
+	    ((= i 100))
+	  (set! mx (max mx (abs (+ (gen1) (gen2))))))
+	(if (fneq mx 0.0)
+	    (snd-display ";sawtooth +-: ~A" mx)))
+
       (let ((gen (make-square-wave 440.0))
 	    (v0 (make-vct 10))
 	    (gen1 (make-square-wave 440.0))
@@ -14013,6 +14058,17 @@ EDITS: 5
       (test-gen-equal (make-square-wave 440.0) (make-square-wave 440.0) (make-square-wave 440.0 1.0 1.0))
       (test-gen-equal (make-square-wave 440.0) (make-square-wave 440.0) (make-square-wave 440.0 0.5))
       
+      (let ((old-srate (mus-srate)))
+	(set! (mus-srate) 500.0)
+	(let ((gen (make-square-wave 100.0 -0.5 (* pi 0.5)))
+	      (v0 (make-vct 20)))
+	  (do ((i 0 (1+ i)))
+	      ((= i 20))
+	    (vct-set! v0 i (gen)))
+	  (if (not (vequal v0 (vct -0.5 -0.5 0.0 0.0 -0.5 -0.5 -0.5 0.0 0.0 -0.5 -0.5 -0.5 0.0 0.0 -0.5 -0.5 -0.5 0.0 0.0 -0.5)))
+	      (snd-display ";square-wave -.5: ~A " v0)))
+	(set! (mus-srate) old-srate))
+
       (let ((gen (make-triangle-wave 440.0))
 	    (gen1 (make-triangle-wave 440.0 1.0 pi))
 	    (v0 (make-vct 10))
@@ -14036,6 +14092,15 @@ EDITS: 5
 	(if (fneq (mus-scaler gen) 0.5) (snd-display ";set! triangle-wave scaler: ~F?" (mus-scaler gen)))
 	(if (or (fneq (vct-ref v0 1) 0.080) (fneq (vct-ref v0 8) 0.639)) (snd-display ";triangle-wave output: ~A" v0)))
       
+      (let ((gen1 (make-triangle-wave 100.0))
+	    (gen2 (make-triangle-wave -100.0))
+	    (mx 0.0))
+	(do ((i 0 (1+ i)))
+	    ((= i 100))
+	  (set! mx (max mx (abs (+ (gen1) (gen2))))))
+	(if (fneq mx 0.0)
+	    (snd-display ";triangle +-: ~A" mx)))
+
       (test-gen-equal (make-triangle-wave 440.0) (make-triangle-wave 440.0) (make-triangle-wave 120.0))
       (test-gen-equal (make-triangle-wave 440.0) (make-triangle-wave 440.0) (make-triangle-wave 440.0 1.0 1.0))
       (test-gen-equal (make-triangle-wave 440.0) (make-triangle-wave 440.0) (make-triangle-wave 440.0 0.5))
@@ -14046,7 +14111,7 @@ EDITS: 5
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "pulse-train"
-			 "pulse-train freq: 440.000Hz, phase: 6.283, amp: 1.000"
+			 "pulse-train freq: 440.000Hz, phase: 0.000, amp: 1.000"
 			 "sw current_value: 0.000000, freq: 0.125379, phase: 6.283185, base: 1.000000")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
@@ -14064,6 +14129,18 @@ EDITS: 5
       (test-gen-equal (make-pulse-train 440.0) (make-pulse-train 440.0) (make-pulse-train 120.0))
       (test-gen-equal (make-pulse-train 440.0) (make-pulse-train 440.0) (make-pulse-train 440.0 1.0 1.0))
       (test-gen-equal (make-pulse-train 440.0) (make-pulse-train 440.0) (make-pulse-train 440.0 0.5))
+
+      (let ((old-srate (mus-srate)))
+	(set! (mus-srate) 500.0)
+	(let ((gen (make-pulse-train 100.0 -0.5 (* pi 0.5)))
+	      (v0 (make-vct 20)))
+	  (do ((i 0 (1+ i)))
+	      ((= i 20))
+	    (vct-set! v0 i (gen)))
+	  (if (not (vequal v0 (vct  0.0 0.0 0.0 0.0 -0.5 0.0 0.0 0.0 0.0 -0.5 0.0 0.0 0.0 0.0 -0.5 0.0 0.0 0.0 0.0 -0.5)))
+	      (snd-display ";pulse-train -.5: ~A " v0)))
+	(set! (mus-srate) old-srate))
+
       
       (let ((gen (make-ppolar .1 1200.0))
 	    (v0 (make-vct 10)))
@@ -14846,7 +14923,7 @@ EDITS: 5
 	(print-and-check gen 
 			 "waveshape"
 			 "waveshape freq: 440.000Hz, phase: 0.000, size: 512"
-			 "ws freq: 0.125379, phase: 0.000000, offset: 255.500000, table[512 (external)]: [-1.000 -0.996 -0.992 -0.988 -0.984 -0.980 -0.977 -0.973...]")
+			 "ws freq: 0.125379, phase: 0.000000, offset: 255.500000, table[512 (external)]: [-1.000 -0.996 -0.992 -0.988 -0.984 -0.980 -0.977 -0.973...(0: -1.000, 511: 1.000)]")
 	(if (not (= (mus-length gen) 512)) (snd-display ";waveshape length: ~A?" (mus-length gen)))
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
@@ -14950,7 +15027,7 @@ EDITS: 5
 	(print-and-check gen 
 			 "wave-train"
 			 "wave-train freq: 440.000Hz, phase: 0.000, size: 20, interp: linear"
-			 "wt freq: 440.000000, phase: 0.000000, wave[20 (external)]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], type: linear, b: rblk buf[20 (local)]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], loc: 0, fill_time: 0.000000, empty: true")
+			 "wt freq: 440.000000, phase: 0.000000, wave[20 (external)]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)], type: linear, b: rblk buf[20 (local)]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)], loc: 0, fill_time: 0.000000, empty: true")
 	(do ((i 0 (1+ i)))
 	    ((= i 20))
 	  (vct-set! (mus-data gen) i (* i .5))
@@ -15386,8 +15463,7 @@ EDITS: 5
 	(print-and-check gen 
 			 "rand"
 			 "rand freq: 10000.000Hz, phase: 0.000, amp: 1.000, with distribution envelope"
-                         "noi freq: 2.849517, phase: 0.000000, base: 1.000000, output: 0.000000, incr: 0.000000, envelope: [0.020 0.054 0.072 0.086 0.098 0.108 0.118 0.126...]")
-
+			 "noi freq: 2.849517, phase: 0.000000, base: 1.000000, output: 0.000000, incr: 0.000000, envelope: [0.020 0.054 0.072 0.086 0.098 0.108 0.118 0.126...(0: 0.020, 511: 1.000)]")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (rand gen 0.0)))
@@ -15480,7 +15556,7 @@ EDITS: 5
 	(print-and-check gen 
 			 "rand"
 			 "rand freq: 10000.000Hz, phase: 0.000, amp: 1.000, with distribution envelope"
-                         "noi freq: 2.849517, phase: 0.000000, base: 1.000000, output: 0.000000, incr: 0.000000, envelope: [0.000 0.054 0.072 0.086 0.098 0.108 0.118 0.126...]")
+			 "noi freq: 2.849517, phase: 0.000000, base: 1.000000, output: 0.000000, incr: 0.000000, envelope: [0.000 0.054 0.072 0.086 0.098 0.108 0.118 0.126...(0: 0.000, 511: 1.000)]")
 
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
@@ -16048,7 +16124,7 @@ EDITS: 5
 	(print-and-check gen 
 			 "src"
 			 "src: width: 10, x: 0.000, incr: 2.000, sinc table len: 10000"
-			 "sr x: 0.000000, incr: 2.000000, width: 10, sinc table len: 10000, data[21]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...]")
+			 "sr x: 0.000000, incr: 2.000000, width: 10, sinc table len: 10000, data[21]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)]")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (src gen 0.0 (lambda (dir) (readin rd)))))
@@ -16089,8 +16165,8 @@ EDITS: 5
 	(print-and-check gen 
 			 "granulate"
 			 "granulate: expansion: 2.000 (551/1102), scaler: 0.600, length: 0.150 secs (3308 samps), ramp: 0.060"
-			 "grn_info s20: 1102, s50: 441, rmp: 1323, amp: 0.600000, len: 3308, cur_out: 0, cur_in: 0, input_hop: 551, ctr: 0, output_hop: 1102, in_data_start: 5513, in_data[5513]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], data[4410]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...]"
-			 "grn_info s20: 1102, s50: 441, rmp: 1323, amp: 0.600000, len: 3308, cur_out: 0, cur_in: 0, input_hop: 551, ctr: 0, output_hop: 1102, in_data_start: 5512, in_data[5512]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], data[4409]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...]")
+			 "grn_info s20: 1102, s50: 441, rmp: 1323, amp: 0.600000, len: 3308, cur_out: 0, cur_in: 0, input_hop: 551, ctr: 0, output_hop: 1102, in_data_start: 5513, in_data[5513]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)], data[4410]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)]"
+			 "grn_info s20: 1102, s50: 441, rmp: 1323, amp: 0.600000, len: 3308, cur_out: 0, cur_in: 0, input_hop: 551, ctr: 0, output_hop: 1102, in_data_start: 5512, in_data[5512]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)], data[4409]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)]")
 	(do ((i 0 (1+ i)))
 	    ((= i 1000))
 	  (vct-set! v0 i (granulate gen (lambda (dir) (readin rd)))))
@@ -16165,7 +16241,7 @@ EDITS: 5
 	  (print-and-check gen 
 			   "convolve"
 			   "convolve: size: 64"
-			   "conv fftsize: 64, fftsize2: 32, filtersize: 32, ctr: 32, rl1: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], rl2: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], buf: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], filter: [0.000 1.000 0.500 0.333 0.250 0.200 0.167 0.143...]")
+			   "conv fftsize: 64, fftsize2: 32, filtersize: 32, ctr: 32, rl1: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)], rl2: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)], buf: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)], filter: [0.000 1.000 0.500 0.333 0.250 0.200 0.167 0.143...(0: 0.000, 1: 1.000)]")
 	  (if (not (convolve? gen)) (snd-display ";~A not convolve?" gen))
 	  (let ((genx gen1))
 	    (if (not (equal? genx gen1)) (snd-display ";convolve equal?: ~A ~A ~A" genx gen1 (equal? genx gen1))))
@@ -16548,7 +16624,7 @@ EDITS: 5
 	(print-and-check pv 
 			 "phase-vocoder"
 			 "phase-vocoder: outctr: 128, interp: 128, filptr: 0, N: 512, D: 128, in_data: nil"
-			 "pv_info outctr: 128, interp: 128, filptr: 0, N: 512, D: 128, in_data: nil, amps: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], freqs: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...]")
+			 "pv_info outctr: 128, interp: 128, filptr: 0, N: 512, D: 128, in_data: nil, amps: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)], freqs: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)]")
 	(select-sound ind)
 	(map-chan (lambda (val)
  		    (phase-vocoder pv (lambda (dir) 
@@ -16699,7 +16775,7 @@ EDITS: 5
 	(print-and-check gen 
 			 "ssb-am"
 			 "ssb-am: shift: up, sin/cos: 439.999975 Hz (0.000000 radians), order: 40"
-			 "ssbam: shift_up: true, sin: osc freq: 0.125379, phase: 0.000000, cos: osc freq: 0.125379, phase: 1.570796, delay: dly line[40,40 at 0,0 (local)]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], xscl: 0.000000, yscl: 0.000000, type: step, hilbert: flt order: 80, state (local): [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], x: [-0.000 -0.001 -0.000 -0.002 -0.000 -0.002 -0.000 -0.003...], y: nil")
+			 "ssbam: shift_up: true, sin: osc freq: 0.125379, phase: 0.000000, cos: osc freq: 0.125379, phase: 1.570796, delay: dly line[40,40 at 0,0 (local)]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)], xscl: 0.000000, yscl: 0.000000, type: step, hilbert: flt order: 80, state (local): [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)], x: [-0.000 -0.001 -0.000 -0.002 -0.000 -0.002 -0.000 -0.003...(39: -0.636, 41: 0.636)], y: nil")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (ssb-am gen 0.0)))
@@ -34742,6 +34818,8 @@ EDITS: 2
 	      (if (or (not (vequal v0 (vct 1.0 1.0 1.0)))
 		      (not (vequal v1 (vct 0.5 0.5 0.5))))
 		  (snd-display ";vct-map 1.0 0.5: ~A ~A" v0 v1)))
+
+	    (if (not (string=? (mus-decribe (make-frame)) "frame[1]: [0.000]")) (snd-display ";make-frame 0 args: ~A" (mus-describe (make-frame))))
 	    
 	    (set! (locsig-type) mus-interp-linear)
 	    (let ((v0 (make-vct 3))
@@ -35004,6 +35082,22 @@ EDITS: 2
 	      (if (fneq (mus-b2 flt) .123) (snd-display ";run set mus-b2: ~A" (mus-b2 flt)))
 	      (if (fneq (mus-formant-radius flt) .3) (snd-display ";run set mus-formant-radius: ~A" (mus-formant-radius flt))))
 	    
+	    (let ((ind (open-sound "oboe.snd")))
+	      ;; ycoeff is after old end, so there's some small hope this could catch incomplete class declarations
+	      (for-each
+	       (lambda (n)
+		 (let ((tag (catch #t
+				   (lambda ()
+				     (mus-ycoeff (n) 0))
+				   (lambda args (car args)))))
+		   (if (not (eq? tag 'mus-error))
+		       (snd-display ";~A ~A" n tag))))
+	       (list make-all-pass make-asymmetric-fm make-snd->sample make-average make-buffer make-comb make-delay make-frame make-granulate
+		     make-locsig make-mixer make-notch make-oscil make-pulse-train make-rand make-rand-interp make-sawtooth-wave
+		     make-sine-summation make-square-wave make-src make-sum-of-cosines make-sum-of-sines make-table-lookup make-triangle-wave
+		     make-wave-train make-waveshape make-phase-vocoder make-ssb-am))
+	      (close-sound ind))
+
 	    (let ((frm (make-formant .1 440.0))
 		  (v (make-vct 3)))
 	      (vct-map! v (lambda ()
@@ -47541,7 +47635,7 @@ EDITS: 2
 			  make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
 			  make-sine-summation make-square-wave make-src make-sum-of-cosines make-sum-of-sines make-table-lookup make-triangle-wave
 			  make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar make-phase-vocoder make-ssb-am
-			  make-color make-player make-track make-region make-snd->sample make-xen->sample 
+			  make-color make-player make-track make-region
 			  ))
       
       (define keyargs

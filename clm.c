@@ -76,6 +76,7 @@ int mus_set_file_buffer_size(int size) {clm_file_buffer_size = size; return(size
 
 #define DESCRIBE_BUFFER_SIZE 2048
 static char describe_buffer[DESCRIBE_BUFFER_SIZE];
+#define STR_SIZE 128
 
 static void *clm_calloc(int num, int size, const char* what)
 {
@@ -138,14 +139,14 @@ static char *print_array(Float *arr, int len, int loc)
     }
   if ((array_print_length * 12) > size) size = array_print_length * 12;
   base = (char *)CALLOC(size, sizeof(char));
-  str = (char *)CALLOC(64, sizeof(char));
+  str = (char *)CALLOC(STR_SIZE, sizeof(char));
   sprintf(base, "[");
   lim = len;
   if (lim > array_print_length) lim = array_print_length;
   k = loc;
   for (i = 0; i < lim - 1; i++)
     {
-      mus_snprintf(str, 64, "%.3f ", arr[k]);
+      mus_snprintf(str, STR_SIZE, "%.3f ", arr[k]);
       strcat(base, str);
       if ((int)(strlen(base) + 32) > size)
 	{
@@ -156,8 +157,23 @@ static char *print_array(Float *arr, int len, int loc)
       k++;
       if (k >= len) k = 0;
     }
-  mus_snprintf(str, 64, "%.3f%s]", arr[k], (len > lim) ? "..." : "");
+  mus_snprintf(str, STR_SIZE, "%.3f%s", arr[k], (len > lim) ? "..." : "]");
   strcat(base, str);
+  if (len > lim)
+    {
+      /* print ranges */
+      int min_loc = 0, max_loc = 0;
+      Float min_val, max_val;
+      min_val = arr[0];
+      max_val = arr[0];
+      for (i = 1; i < len; i++)
+	{
+	  if (arr[i] < min_val) {min_val = arr[i]; min_loc = i;}
+	  if (arr[i] > max_val) {max_val = arr[i]; max_loc = i;}
+	}
+      mus_snprintf(str, STR_SIZE, "(%d: %.3f, %d: %.3f)]", min_loc, min_val, max_loc, max_val);
+      strcat(base, str);
+    }
   FREE(str);
   return(base);
 }
@@ -174,14 +190,14 @@ static char *print_double_array(double *arr, int len, int loc)
     }
   if ((array_print_length * 16) > size) size = array_print_length * 16;
   base = (char *)CALLOC(size, sizeof(char));
-  str = (char *)CALLOC(128, sizeof(char));
+  str = (char *)CALLOC(STR_SIZE, sizeof(char));
   sprintf(base, "[");
   lim = len;
   if (lim > array_print_length) lim = array_print_length;
   k = loc;
   for (i = 0; i < lim - 1; i++)
     {
-      mus_snprintf(str, 128, "%.3f ", arr[k]);
+      mus_snprintf(str, STR_SIZE, "%.3f ", arr[k]);
       strcat(base, str);
       if ((int)(strlen(base) + 32) > size)
 	{
@@ -192,8 +208,23 @@ static char *print_double_array(double *arr, int len, int loc)
       k++;
       if (k >= len) k = 0;
     }
-  mus_snprintf(str, 128, "%.3f%s]", arr[k], (len > lim) ? "..." : "");
+  mus_snprintf(str, STR_SIZE, "%.3f%s", arr[k], (len > lim) ? "..." : "]");
   strcat(base, str);
+  if (len > lim)
+    {
+      /* print ranges */
+      int min_loc = 0, max_loc = 0;
+      double min_val, max_val;
+      min_val = arr[0];
+      max_val = arr[0];
+      for (i = 1; i < len; i++)
+	{
+	  if (arr[i] < min_val) {min_val = arr[i]; min_loc = i;}
+	  if (arr[i] > max_val) {max_val = arr[i]; max_loc = i;}
+	}
+      mus_snprintf(str, STR_SIZE, "(%d: %.3f, %d: %.3f)]", min_loc, min_val, max_loc, max_val);
+      strcat(base, str);
+    }
   FREE(str);
   return(base);
 }
@@ -210,14 +241,14 @@ static char *print_off_t_array(off_t *arr, int len, int loc)
     }
   if ((array_print_length * 16) > size) size = array_print_length * 16;
   base = (char *)CALLOC(size, sizeof(char));
-  str = (char *)CALLOC(32, sizeof(char));
+  str = (char *)CALLOC(STR_SIZE, sizeof(char));
   sprintf(base, "[");
   lim = len;
   if (lim > array_print_length) lim = array_print_length;
   k = loc;
   for (i = 0; i < lim - 1; i++)
     {
-      mus_snprintf(str, 32, OFF_TD " ", arr[k]);
+      mus_snprintf(str, STR_SIZE, OFF_TD " ", arr[k]);
       strcat(base, str);
       if ((int)(strlen(base) + 32) > size)
 	{
@@ -228,8 +259,23 @@ static char *print_off_t_array(off_t *arr, int len, int loc)
       k++;
       if (k >= len) k = 0;
     }
-  mus_snprintf(str, 32, OFF_TD "%s]", arr[k], (len > lim) ? "..." : "");
+  mus_snprintf(str, STR_SIZE, OFF_TD "%s", arr[k], (len > lim) ? "..." : "]");
   strcat(base, str);
+  if (len > lim)
+    {
+      /* print ranges */
+      int min_loc = 0, max_loc = 0;
+      off_t min_val, max_val;
+      min_val = arr[0];
+      max_val = arr[0];
+      for (i = 1; i < len; i++)
+	{
+	  if (arr[i] < min_val) {min_val = arr[i]; min_loc = i;}
+	  if (arr[i] > max_val) {max_val = arr[i]; max_loc = i;}
+	}
+      mus_snprintf(str, STR_SIZE, "(%d: " OFF_TD ", %d: " OFF_TD ")]", min_loc, min_val, max_loc, max_val);
+      strcat(base, str);
+    }
   FREE(str);
   return(base);
 }
@@ -805,7 +851,9 @@ static bool oscil_equalp(mus_any *p1, mus_any *p2)
 
 static char *describe_oscil(mus_any *ptr)
 {
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_oscil " freq: %.3fHz, phase: %.3f", mus_radians_to_hz(((osc *)ptr)->freq), ((osc *)ptr)->phase);
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_oscil " freq: %.3fHz, phase: %.3f", 
+	       oscil_freq(ptr), 
+	       oscil_phase(ptr));
   return(describe_buffer);
 }
 
@@ -907,11 +955,10 @@ static bool sum_of_cosines_equalp(mus_any *p1, mus_any *p2)
 
 static char *describe_sum_of_cosines(mus_any *ptr)
 {
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       S_sum_of_cosines " freq: %.3fHz, phase: %.3f, cosines: %d",
-	       mus_radians_to_hz(((cosp *)ptr)->freq), 
-	       ((cosp *)ptr)->phase, 
-	       ((cosp *)ptr)->cosines);
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_sum_of_cosines " freq: %.3fHz, phase: %.3f, cosines: %d",
+	       sum_of_cosines_freq(ptr),
+	       sum_of_cosines_phase(ptr),
+	       (int)sum_of_cosines_cosines(ptr));
   return(describe_buffer);
 }
 
@@ -982,11 +1029,10 @@ static bool sum_of_sines_equalp(mus_any *p1, mus_any *p2)
 
 static char *describe_sum_of_sines(mus_any *ptr)
 {
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       S_sum_of_sines " freq: %.3fHz, phase: %.3f, sines: %d",
-	       mus_radians_to_hz(((cosp *)ptr)->freq), 
-	       ((cosp *)ptr)->phase, 
-	       ((cosp *)ptr)->cosines);
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_sum_of_sines " freq: %.3fHz, phase: %.3f, sines: %d",
+	       sum_of_cosines_freq(ptr),
+	       sum_of_cosines_phase(ptr),
+	       (int)sum_of_cosines_cosines(ptr));
   return(describe_buffer);
 }
 
@@ -1721,12 +1767,11 @@ static int table_lookup_interp_type(mus_any *ptr) {return((int)(((tbl *)ptr)->ty
 
 static char *describe_table_lookup(mus_any *ptr)
 {
-  tbl *gen = (tbl *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       S_table_lookup ": freq: %.3fHz, phase: %.3f, length: %d, interp: %s",
-	       gen->freq * sampling_rate / gen->table_size, 
-	       gen->phase, gen->table_size,
-	       interp_name[gen->type]);
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_table_lookup ": freq: %.3fHz, phase: %.3f, length: %d, interp: %s",
+	       table_lookup_freq(ptr),
+	       table_lookup_phase(ptr),
+	       (int)table_lookup_length(ptr),
+	       interp_name[table_lookup_interp_type(ptr)]);
   return(describe_buffer);
 }
 
@@ -1899,11 +1944,10 @@ static bool sw_equalp(mus_any *p1, mus_any *p2)
 
 static char *describe_sawtooth(mus_any *ptr)
 {
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       S_sawtooth_wave " freq: %.3fHz, phase: %.3f, amp: %.3f",
-	       mus_radians_to_hz(((sw *)ptr)->freq), 
-	       ((sw *)ptr)->phase, 
-	       ((sw *)ptr)->base * M_PI);
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_sawtooth_wave " freq: %.3fHz, phase: %.3f, amp: %.3f",
+	       sw_freq(ptr),
+	       sw_phase(ptr),
+	       sawtooth_scaler(ptr));
   return(describe_buffer);
 }
 
@@ -1956,19 +2000,19 @@ Float mus_square_wave(mus_any *ptr, Float fm)
 
 bool mus_square_wave_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_SQUARE_WAVE));}
 
+static Float run_square_wave(mus_any *ptr, Float fm, Float unused) {return(mus_square_wave(ptr, fm));}
+static Float square_wave_scaler(mus_any *ptr) {return(((sw *)ptr)->base);}
+static Float set_square_wave_scaler(mus_any *ptr, Float val) {((sw *)ptr)->base = val; return(val);}
+
 static char *describe_square_wave(mus_any *ptr)
 {
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
 	       S_square_wave " freq: %.3fHz, phase: %.3f, amp: %.3f",
-	       mus_radians_to_hz(((sw *)ptr)->freq), 
-	       ((sw *)ptr)->phase,
-	       ((sw *)ptr)->base);
+	       sw_freq(ptr),
+	       sw_phase(ptr),
+	       square_wave_scaler(ptr));
   return(describe_buffer);
 }
-
-static Float run_square_wave(mus_any *ptr, Float fm, Float unused) {return(mus_square_wave(ptr, fm));}
-static Float square_wave_scaler(mus_any *ptr) {return(((sw *)ptr)->base);}
-static Float set_square_wave_scaler(mus_any *ptr, Float val) {((sw *)ptr)->base = val; return(val);}
 
 static mus_any_class SQUARE_WAVE_CLASS = {
   MUS_SQUARE_WAVE,
@@ -2036,11 +2080,10 @@ static Float set_triangle_wave_scaler(mus_any *ptr, Float val) {((sw *)ptr)->bas
 
 static char *describe_triangle_wave(mus_any *ptr)
 {
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       S_triangle_wave " freq: %.3fHz, phase: %.3f, amp: %.3f",
-	       mus_radians_to_hz(((sw *)ptr)->freq), 
-	       ((sw *)ptr)->phase, 
-	       ((sw *)ptr)->base * M_PI_2);
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_triangle_wave " freq: %.3fHz, phase: %.3f, amp: %.3f",
+	       sw_freq(ptr),
+	       sw_phase(ptr),
+	       triangle_wave_scaler(ptr));
   return(describe_buffer);
 }
 
@@ -2106,11 +2149,10 @@ static Float set_pulse_train_scaler(mus_any *ptr, Float val) {((sw *)ptr)->base 
 
 static char *describe_pulse_train(mus_any *ptr)
 {
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       S_pulse_train " freq: %.3fHz, phase: %.3f, amp: %.3f",
-	       mus_radians_to_hz(((sw *)ptr)->freq), 
-	       ((sw *)ptr)->phase, 
-	       ((sw *)ptr)->base);
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_pulse_train " freq: %.3fHz, phase: %.3f, amp: %.3f",
+	       sw_freq(ptr),
+	       sw_phase(ptr),
+	       pulse_train_scaler(ptr));
   return(describe_buffer);
 }
 
@@ -2293,18 +2335,16 @@ static char *describe_noi(mus_any *ptr)
 {
   noi *gen = (noi *)ptr;
   if (mus_rand_p(ptr))
-    mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-		 S_rand " freq: %.3fHz, phase: %.3f, amp: %.3f%s",
-		 mus_radians_to_hz(gen->freq), 
-		 gen->phase, 
-		 gen->base,
+    mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_rand " freq: %.3fHz, phase: %.3f, amp: %.3f%s",
+		 noi_freq(ptr),
+		 noi_phase(ptr),
+		 noi_scaler(ptr),
 		 (gen->distribution) ? ", with distribution envelope" : "");
   else
-    mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-		 S_rand_interp " freq: %.3fHz, phase: %.3f, amp: %.3f, incr: %.3f, curval: %.3f%s",
-		 mus_radians_to_hz(gen->freq),
-		 gen->phase, 
-		 gen->base, 
+    mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_rand_interp " freq: %.3fHz, phase: %.3f, amp: %.3f, incr: %.3f, curval: %.3f%s",
+		 noi_freq(ptr),
+		 noi_phase(ptr),
+		 noi_scaler(ptr),
 		 gen->incr,
 		 gen->output,
 		 (gen->distribution) ? ", with distribution envelope" : "");
@@ -2454,10 +2494,10 @@ static char *describe_asyfm(mus_any *ptr)
 {
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
 	       S_asymmetric_fm " freq: %.3fHz, phase: %.3f, ratio: %.3f, r: %.3f",
-	       mus_radians_to_hz(((asyfm *)ptr)->freq), 
-	       ((asyfm *)ptr)->phase, 
+	       asyfm_freq(ptr),
+	       asyfm_phase(ptr),
 	       ((asyfm *)ptr)->ratio, 
-	       ((asyfm *)ptr)->r);
+	       asyfm_r(ptr));
   return(describe_buffer);
 }
 
@@ -2580,10 +2620,12 @@ bool mus_sine_summation_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == M
 static char *describe_sss(mus_any *ptr)
 {
   sss *gen = (sss *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       S_sine_summation ": frequency: %.3f, phase: %.3f, n: %d, a: %.3f, ratio: %.3f",
-	       mus_radians_to_hz(gen->freq), 
-	       gen->phase, gen->n, gen->a, gen->b);
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_sine_summation ": frequency: %.3f, phase: %.3f, n: %d, a: %.3f, ratio: %.3f",
+	       sss_freq(ptr),
+	       sss_phase(ptr),
+	       gen->n, 
+	       sss_a(ptr),
+	       gen->b);
   return(describe_buffer);
 }
 
@@ -3515,11 +3557,10 @@ static Float *set_ws_data(mus_any *ptr, Float *val)
 
 static char *describe_waveshape(mus_any *ptr)
 {
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       S_waveshape " freq: %.3fHz, phase: %.3f, size: %d",
-	       mus_radians_to_hz(((ws *)ptr)->freq), 
-	       ((ws *)ptr)->phase, 
-	       ((ws *)ptr)->table_size);
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_waveshape " freq: %.3fHz, phase: %.3f, size: %d",
+	       ws_freq(ptr),
+	       ws_phase(ptr),
+	       (int)ws_size(ptr));
   return(describe_buffer);
 }
 
@@ -4835,9 +4876,11 @@ static Float *wt_set_data(mus_any *ptr, Float *data)
 
 static char *describe_wt(mus_any *ptr)
 {
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       S_wave_train " freq: %.3fHz, phase: %.3f, size: " OFF_TD ", interp: %s",
-	       wt_freq(ptr), wt_phase(ptr), wt_length(ptr), interp_name[((wt *)ptr)->type]);
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_wave_train " freq: %.3fHz, phase: %.3f, size: " OFF_TD ", interp: %s",
+	       wt_freq(ptr), 
+	       wt_phase(ptr), 
+	       wt_length(ptr), 
+	       interp_name[wt_interp_type(ptr)]);
   return(describe_buffer);
 }
 
@@ -5767,7 +5810,6 @@ static bool locsig_equalp(mus_any *p1, mus_any *p2)
 
 static char *describe_locsig(mus_any *ptr)
 {
-  #define STR_SIZE 32
   char *str;
   int i, lim = 16;
   locs *gen = (locs *)ptr;
@@ -7254,6 +7296,19 @@ mus_any *mus_make_convolve(Float (*input)(void *arg, int direction), Float *filt
   gen->feeder = input;
   gen->closure = closure;
   gen->filter = filter;
+  if (filter)
+    {
+      int i;
+      bool all_zero = true;
+      for (i = 0; i < filtersize; i++)
+	if (fabs(filter[i]) != 0.0) /* I'm getting -0.000 != 0.000 */
+	  {
+	    all_zero = false;
+	    break;
+	  }
+      if (all_zero)
+	mus_print("make_convolve: filter contains only 0.0.");
+    }
   gen->filtersize = filtersize;
   gen->fftsize = fftsize;
   gen->fftsize2 = gen->fftsize / 2;

@@ -2557,14 +2557,19 @@ with chans samples, each sample set from the trailing arguments (defaulting to 0
   Float *vals;
   XEN cararg, lst;
   int size = 0, i, len = 0;
-  XEN_ASSERT_TYPE((XEN_LIST_P_WITH_LENGTH(arglist, len)) && (len > 0), arglist, XEN_ARG_1, S_make_frame, "a list");
-  cararg = XEN_CAR(arglist);
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(cararg), cararg, 1, S_make_frame, "a number");
-  size = XEN_TO_C_INT_OR_ELSE(cararg, 0);
-  if (len > (size + 1)) 
-    mus_misc_error(S_make_frame, "extra trailing args?", arglist);
-  if (size <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_make_frame, 1, C_TO_XEN_INT(size), "size ~A <= 0?");
+  XEN_ASSERT_TYPE((XEN_LIST_P_WITH_LENGTH(arglist, len)) && (len >= 0), arglist, XEN_ARG_1, S_make_frame, "a list");
+  if (len == 0)
+    size = 1;
+  else
+    {
+      cararg = XEN_CAR(arglist);
+      XEN_ASSERT_TYPE(XEN_NUMBER_P(cararg), cararg, 1, S_make_frame, "a number");
+      size = XEN_TO_C_INT_OR_ELSE(cararg, 0);
+      if (len > (size + 1)) 
+	mus_misc_error(S_make_frame, "extra trailing args?", arglist);
+      if (size <= 0)
+	XEN_OUT_OF_RANGE_ERROR(S_make_frame, 1, C_TO_XEN_INT(size), "size ~A <= 0?");
+    }
   ge = (mus_any *)mus_make_empty_frame(size);
   if (ge)
     {

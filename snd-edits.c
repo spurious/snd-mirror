@@ -8483,7 +8483,7 @@ static XEN g_insert_samples_with_origin(XEN samp, XEN samps, XEN origin, XEN vec
 
 #include "clm2xen.h"
 
-static int SND2SAMPLE = 0, XEN2SAMPLE = 0;
+static int SND_TO_SAMPLE = 0, XEN_TO_SAMPLE = 0;
 
 typedef struct {
   mus_any_class *core;
@@ -8499,8 +8499,8 @@ typedef struct {
   int gc_loc;
 } xen_to_sample;
 
-bool snd_to_sample_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == SND2SAMPLE));}
-bool xen_to_sample_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == XEN2SAMPLE));}
+bool snd_to_sample_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == SND_TO_SAMPLE));}
+bool xen_to_sample_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == XEN_TO_SAMPLE));}
 
 static bool snd_to_sample_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
 static bool xen_to_sample_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
@@ -8659,7 +8659,7 @@ Float xen_to_sample_read(mus_any *ptr, off_t frame, int chan)
   return(XEN_TO_C_DOUBLE(result));
 }
 
-static mus_any_class SND2SAMPLE_CLASS = {
+static mus_any_class SND_TO_SAMPLE_CLASS = {
   -1,
   S_snd_to_sample,
   &snd_to_sample_free,
@@ -8682,10 +8682,11 @@ static mus_any_class SND2SAMPLE_CLASS = {
   0,
   &snd_to_sample_location,
   0,  /* set location (ptr, off_t loc) */
-  0
+  0,
+  0, 0, 0, 0
 };
 
-static mus_any_class XEN2SAMPLE_CLASS = {
+static mus_any_class XEN_TO_SAMPLE_CLASS = {
   -1,
   S_xen_to_sample,
   &xen_to_sample_free,
@@ -8703,15 +8704,16 @@ static mus_any_class XEN2SAMPLE_CLASS = {
   0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   &xen_to_sample_read, /* read sample (ptr, samp, chan) */
-  0, 0, 0, 0, 0, 0
+  0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0
 };
 
 static mus_any *make_snd_to_sample(snd_info *sp, int edpos)
 {
   snd_to_sample *gen;
   gen = (snd_to_sample *)CALLOC(1, sizeof(snd_to_sample));
-  gen->core = &SND2SAMPLE_CLASS;
-  gen->core->type = SND2SAMPLE;
+  gen->core = &SND_TO_SAMPLE_CLASS;
+  gen->core->type = SND_TO_SAMPLE;
   gen->chans = sp->nchans;
   gen->sp = sp;
   gen->edpos = edpos;
@@ -8724,8 +8726,8 @@ static mus_any *make_xen_to_sample(XEN reader)
 {
   xen_to_sample *gen;
   gen = (xen_to_sample *)CALLOC(1, sizeof(xen_to_sample));
-  gen->core = &XEN2SAMPLE_CLASS;
-  gen->core->type = XEN2SAMPLE;
+  gen->core = &XEN_TO_SAMPLE_CLASS;
+  gen->core->type = XEN_TO_SAMPLE;
   gen->gc_loc = snd_protect(reader);
   gen->reader = reader;
   return((mus_any *)gen);
@@ -9007,8 +9009,8 @@ keep track of which files are in a given saved state batch, and a way to rename 
   empty_closure = make_vct(1, (Float *)CALLOC(1, sizeof(Float)));
   XEN_PROTECT_FROM_GC(empty_closure);
 
-  XEN2SAMPLE = mus_make_class_tag();
-  SND2SAMPLE = mus_make_class_tag();
+  XEN_TO_SAMPLE = mus_make_class_tag();
+  SND_TO_SAMPLE = mus_make_class_tag();
 
 
 #if DEBUGGING && 0

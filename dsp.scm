@@ -1550,16 +1550,12 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 ;;; TODO: auto-detect main freq so ssb-bank can work semi-automatically (bw/pairs choices also automated)
 ;;; TODO: freq env to add (or remove) pitch fluctuations [if pitch follower, this could be automated]
-;;; TODO: make multiplier an arg (inharmonic or stretched partials) -- or an env [zip -> freq domain via these funcs]
 ;;; TODO: hz->radians should be smart (or someone should) about srates
-;;; TODO: what about widely changing/noisy sounds?
 ;;; TODO: should some form of ssb-bank be moved into CLM?
 ;;; TODO: a channel (regularized) version of ssb-bank -- repitch-channel? (+ retime or whatever)
 ;;; TODO: a realtime interface to this -- a slider for pitch/bw etc
-
 ;;; TODO: complex-data freq processing funcs
 ;;; TODO: run support for complex data? (what about generators?)
-
 
 #!
 (define* (repitch-sound old-freq new-freq)
