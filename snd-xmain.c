@@ -476,10 +476,10 @@ static BACKGROUND_TYPE startup_funcs(XtPointer clientData)
 		  else
 		    {
 		      if ((strcmp("-l",argname) == 0) ||
-			  (strcmp("-load",argname) == 0))
+			  (strcmp("-load",argname) == 0) ||
+			  ((file_extension(argname)) && (strcmp(file_extension(argname),"scm") == 0)))
 			{
-			  /* grab session name -- if arg is "." grab latest on this directory */
-			  auto_open_ctr++;
+			  if ((strcmp("-l",argname) == 0) || (strcmp("-load",argname) == 0)) auto_open_ctr++;
 			  snd_load_file(auto_open_file_names[auto_open_ctr]);
 			  auto_open_ctr++;
 			}

@@ -142,6 +142,7 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
   if (gh_string_p(stmp)) 
     scm_display_error_message(stmp, gh_caddr(throw_args), port);
   else scm_display(tag, port);
+#if 1
   /* scm_display(gh_car(gh_cdddr(throw_args)), port); */
   /* scm_display_error (scm_the_last_stack_fluid, port, gh_car(throw_args), SCM_CADR(throw_args), SCM_CADDR(throw_args), SCM_EOL); */
   /* this from libguile/backtrace.c */
@@ -149,6 +150,8 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
   stack = scm_fluid_ref(SCM_CDR(scm_the_last_stack_fluid));
   if (SCM_NFALSEP(stack)) scm_display_backtrace(stack,port,SCM_UNDEFINED,SCM_UNDEFINED);
 #endif
+#endif
+
 #if (!HAVE_GUILE_1_3_0)
   scm_force_output(port); /* needed to get rid of trailing garbage chars */
   ans = scm_strport_to_string(port);
@@ -157,6 +160,7 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
   ans = scm_makfromstr (SCM_CHARS (SCM_CDR (SCM_STREAM (port))),SCM_INUM (SCM_CAR (SCM_STREAM (port))),0);
   SCM_ALLOW_INTS;
 #endif
+
   name_buf = gh_scm2newstr(ans,NULL);
   if (state->mx_sp)
     {
@@ -174,7 +178,8 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
       snd_error(name_buf);
   g_error_occurred = 1;
   if (name_buf) free(name_buf);
-  return(SCM_BOOL_F);
+  state->eval_error = 1;
+  return(gh_symbol2scm("snd-eval-error"));
 }
 
 int procedure_ok(SCM proc, int req_args, int opt_args, char *caller, char *arg_name, int argn)

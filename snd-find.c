@@ -33,6 +33,11 @@ static int run_global_search (snd_state *ss, gfd *g)
 	  if (gh_procedure_p(ss->search_proc))
 	    {
 	      res = g_call1(ss->search_proc,gh_double2scm((double)(MUS_SAMPLE_TO_FLOAT(sf->current_value))));
+	      if (ss->eval_error)
+		{
+		  for (j=i;j<g->chans;j++) free_snd_fd(g->fds[j]);
+		  return(0);
+		}
 	      if (SCM_NFALSEP(res))
 		{
 		  g->n = i;
@@ -180,6 +185,7 @@ static int cursor_find(snd_info *sp, chan_info *cp, int count, int end_sample)
 	next_sample_1(sf);
       else previous_sample_1(sf);
       res = g_call1(sp->search_proc,gh_double2scm((double)(MUS_SAMPLE_TO_FLOAT(sf->current_value))));
+      if (ss->eval_error) break;
       if (SCM_NFALSEP(res)) {c--; if (c == 0) break;}
       i+=inc;
       passes++;
@@ -194,6 +200,7 @@ static int cursor_find(snd_info *sp, chan_info *cp, int count, int end_sample)
   ss->stopped_explicitly = 0;
   free_snd_fd(sf);
   ss->search_in_progress = 0;
+  ss->eval_error = 0;
   if (c != 0) return(-1); /* impossible sample number, so => failure */
   return(i);
 #else

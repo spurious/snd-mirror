@@ -13,7 +13,7 @@ clean:
 	rm -f sndplay.o audinfo.o sndrecord.o sndinfo.o sndsine.o
 
 clmclean:
-	rm io.o headers.o audio.o sound.o
+	rm io.o headers.o audio.o sound.o clm.o
 
 sndplay: $(SNDLIB_HEADERS) $(SNDLIB_O_FILES) sndplay.o
 	$(CC) $(LDFLAGS) $(CFLAGS) $(SNDLIB_O_FILES) sndplay.o -o sndplay $(AUDIO_LIB) $(GDBM_LIB) $(LIBS)

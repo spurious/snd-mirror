@@ -194,7 +194,8 @@ If there are no arguments, Snd comes up as a bare menu bar. If a name is
 preceded by "-p" or "-preload", it is treated as a directory name and all
 sound files found in that directory are preloaded into the previous files
 list. To load arbitrary Snd customizations (scheme code, or a saved state
-file for example) precede the file name with "-l" or "-load".
+file for example) use a ".scm" extension, or precede the file name with "-l"
+or "-load".
 
   snd oboe.snd -l examp.scm
 

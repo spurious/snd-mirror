@@ -286,7 +286,7 @@ typedef struct snd__state {
   snd_info *mx_sp;
   char *pending_change;
   int print_choice,apply_choice;
-  int stopped_explicitly,checking_explicitly;
+  int stopped_explicitly,checking_explicitly,eval_error;
   int result_printout,listening,init_window_width,init_window_height,init_window_x,init_window_y;
   int open_hook_active,close_hook_active,fft_hook_active,graph_hook_active,exit_hook_active,start_hook_active,save_hook_active;
   int Show_Fft_Peaks,Show_Y_Zero,Erase_Zeros,Show_Marks,Fft_Log_Frequency,Fft_Log_Magnitude,Channel_Style,Sound_Style,Show_Wave_In_Enved,Show_Axes;
@@ -1115,6 +1115,7 @@ char *copy_string(char *str);
 int snd_strlen(char *str);
 char *filename_without_home_directory(char *name);
 char *just_filename(char *name);
+char *file_extension(char *arg);
 #ifndef sqr
   Float sqr(Float a);
 #endif

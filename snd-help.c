@@ -189,6 +189,9 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+14-Jul:  Snd appears to work in FreeBSD (thanks to Heiko Recktenwald).\n\
+         pvoc.scm, loop.scm, fmv.scm.\n\
+         -l no longer necessary -- if file has .scm extension, it is assumed to be Scheme.\n\
 10-Jul:  added sounds (list of currently active sounds).\n\
          region-id and id-region, regions now returns a list of active region ids.\n\
          mixes now returns a list similar to marks.\n\

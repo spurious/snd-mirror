@@ -4708,27 +4708,6 @@ void init_mus2scm_module(void)
 }
 
 
-/* (definstrument a (arg ...) (let (... (e (make-env))) (... (run (loop ... (env e) (outa ...))))))
-
- *   return closure of outer let and run as appliable func?
- *   could all CL-compatibility stuff be local to definstrument?  (i.e. first for car)
- *
- *  (let (...) (let (beg end) (init envs) (loop...)))
- *
- *  (with-sound (...) ...) -> current chans, create if none?
- *  sampling_rate from :srate
- *  with-sound would need fluid-let as outer
- *
- * here is something close to with-sound body handling:
- * (defmacro with-fluids (bindings . body)
- *   `(with-fluids* (list ,@(map car bindings)) (list ,@(map cadr bindings))
- *      (lambda () ,@body)))
- * 
- * (defmacro with-sound (bindings . body)
- *   `(with-sound-internal (fluid-let ,bindings . ,body)))
- */
-
-
 #define NUM_CLM_NAMES 242
 static char *clm_names[NUM_CLM_NAMES] = {
 S_all_pass,S_all_pass_p,S_amplitude_modulate,S_array2file,S_array_interp,S_asymmetric_fm,S_asymmetric_fm_p,S_bartlett_window,

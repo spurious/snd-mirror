@@ -2597,8 +2597,9 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
 	    {
 	      NEXT_SAMPLE(val,sf);
 	      res = g_call1(proc,gh_double2scm((double)(MUS_SAMPLE_TO_FLOAT(val))));
-	      if (SCM_NFALSEP(res))
+	      if ((SCM_NFALSEP(res)) || (ss->eval_error))
 		{
+		  ss->eval_error = 0;
 		  for (j=ip;j<si->chans;j++) free_snd_fd(sfs[j]);
 		  free_sync_state(sc); 
 		  if (reporting) finish_progress_report(ss,sp,NOT_FROM_ENVED);
@@ -2684,7 +2685,7 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
 	  NEXT_SAMPLE(val,sfs[0]);
 	  gh_vector_set_x(args,zero,gh_double2scm((double)(MUS_SAMPLE_TO_FLOAT(val))));
 	  res = g_call2(proc,args,gh_chans);
-	  if (SCM_NFALSEP(res)) {pos = kp+beg; break;}
+	  if ((SCM_NFALSEP(res)) || (ss->eval_error)) {pos = kp+beg; break;}
 	  if (reporting) 
 	    {
 	      rpt++;
@@ -2693,7 +2694,7 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
 		  progress_report(ss,sp,"scan",1,1,(Float)kp / (Float)num,NOT_FROM_ENVED);
 		  rpt = 0;
 		  check_for_event(ss);
-		  if ((ss->stopped_explicitly) || (!(cp->sound))) break;
+ 		  if ((ss->stopped_explicitly) || (!(cp->sound))) break;
 		}
 	    }
 	}
@@ -2708,7 +2709,7 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
 	      gh_vector_set_x(args,gh_int2scm(ip),gh_double2scm((double)(MUS_SAMPLE_TO_FLOAT(val))));
 	    }
 	  res = g_call2(proc,args,gh_chans);
-	  if (SCM_NFALSEP(res)) {pos = kp+beg; break;}
+	  if ((SCM_NFALSEP(res)) || (ss->eval_error)) {pos = kp+beg; break;}
 	  if (reporting) 
 	    {
 	      rpt++;
@@ -2716,7 +2717,7 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
 		{
 		  progress_report(ss,sp,"scan",1,1,(Float)kp / (Float)num,NOT_FROM_ENVED);
 		  rpt = 0;
-		  if (ss->stopped_explicitly) break;
+ 		  if (ss->stopped_explicitly) break;
 		}
 	    }
 	}
@@ -2724,13 +2725,17 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
   if (reporting) finish_progress_report(ss,sp,NOT_FROM_ENVED);
   for (ip=0;ip<si->chans;ip++) free_snd_fd(sfs[ip]);
   free_sync_state(sc); 
-  if (ss->stopped_explicitly)
+  if ((ss->stopped_explicitly) || (ss->eval_error))
     {
       ss->stopped_explicitly = 0;
-      cgbuf = (char *)CALLOC(128,sizeof(char));
-      sprintf(cgbuf,"C-G stopped scan at sample %d",kp+beg);
-      report_in_minibuffer(sp,cgbuf);
-      FREE(cgbuf);
+      ss->eval_error = 0;
+      if (ss->stopped_explicitly)
+	{
+	  cgbuf = (char *)CALLOC(128,sizeof(char));
+	  sprintf(cgbuf,"C-G stopped scan at sample %d",kp+beg);
+	  report_in_minibuffer(sp,cgbuf);
+	  FREE(cgbuf);
+	}
       return(SCM_BOOL_F);
     }
   else
@@ -2840,7 +2845,7 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
   snd_info *sp;
   snd_fd **sfs;
   snd_fd *sf;
-  output_state *os;
+  output_state *os = NULL;
   int kp,j,k,ip,num,val_size,reporting = 0,rpt = 0,rpt4;
   MUS_SAMPLE_TYPE val;
   MUS_SAMPLE_TYPE *vals;
@@ -2873,6 +2878,15 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
 	    {
 	      NEXT_SAMPLE(val,sf);
 	      res = g_call1(proc,gh_double2scm((double)(MUS_SAMPLE_TO_FLOAT(val))));
+	      if (ss->eval_error)
+		{
+		  end_output(os,beg,cp,origin);
+		  for (j=ip;j<si->chans;j++) free_snd_fd(sfs[j]);    
+		  free_sync_state(sc); 
+		  if (reporting) finish_progress_report(ss,sp,NOT_FROM_ENVED);
+		  ss->eval_error = 0;
+		  return(SCM_BOOL_F);
+		}
 	      if (SCM_NFALSEP(res)) /* if #f, no output on this pass */
 		{
 		  if (res != SCM_BOOL_T) /* if #t we halt the entire map */
@@ -2977,6 +2991,7 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
 	}
       res = g_call2(proc,args,gh_chans);
       /* #f -> no output in any channel, #t -> halt */
+      if (ss->eval_error) break;
       if (SCM_NFALSEP(res)) /* if #f, no output on this pass */
 	{
 	  if (res != SCM_BOOL_T) /* if #t we halt the entire map */
@@ -3027,6 +3042,11 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
     }
   FREE(os_arr);
   free_sync_state(sc);
+  if (ss->eval_error)
+    {
+      ss->eval_error = 0;
+      return(SCM_BOOL_F);
+    }
   if (ss->stopped_explicitly)
     {
       ss->stopped_explicitly = 0;
@@ -5060,6 +5080,13 @@ static void eval_expression(chan_info *cp, snd_info *sp, int count, int regexpr)
 	      for (k=0;k<chan_dur;k++)
 		{
 		  res = g_call1(sp->eval_proc,gh_double2scm((double)(MUS_SAMPLE_TO_FLOAT(sf->current_value))));
+		  if (ss->eval_error)
+		    {
+		      ss->eval_error = 0;
+		      for (j=chan;j<si->chans;j++) free_snd_fd(sfs[j]);
+		      free_sync_state(sc);
+		      return;
+		    }
 		  next_sample_1(sf);
 		  if (gh_number_p(res)) val = gh_scm2double(res);
 		  j++;

@@ -1739,6 +1739,7 @@
 ;;;
 ;;; here we're using the keyword stuff in guile/ice-9/optargs.scm
 ;;; CLM version is v.ins, C version is in sndlib.html
+;;; a version treating the entire violin as a generator is in fmv.scm.
 
 (define (keyword->symbol kw)
   (let ((sym (symbol->string (keyword-dash-symbol kw))))
@@ -1862,6 +1863,7 @@
 ;;; create the 'digital zipper' effect
 ;;; a not-very-debonair way to fade out file1 and fade in file2
 ;;; CLM version in zipper.ins
+;;; zipper as generator: zip.scm
 
 ;(define max-envelope
 ;  (lambda (e mx)
@@ -2005,6 +2007,7 @@
 ;;; -------- phase vocoder --------
 ;;;
 ;;; this is a translation of Michael Klingbeil's pvoc.ins in CLM
+;;;   see pvoc.scm for a generator-oriented version
 
 (define ifloor (lambda (n) (inexact->exact (floor n))))
 (define pi 3.141592653589793)
@@ -2027,11 +2030,10 @@
 	   (Nw fftsize) ;; window size -- currently restricted to the fftsize
 	   (D (ifloor (/ fftsize overlap))) ; decimation factor (how often do we take an fft)
 	   (interp (* (ifloor (/ fftsize overlap)) time)) ; interpolation factor how often do we synthesize
-	   (windowsum 0.0)        ; for window normalization
 	   ;; take a resynthesis gate specificed in dB, convert to linear amplitude
 	   (syngate (if (= 0.0 gate) 0.0 (expt 10 (/ (- (abs gate)) 20))))
 	   (poffset (hz->radians hoffset))
-	   (window (make-vct Nw)) ; array for the window
+	   (window (make-fft-window hamming-window fftsize))
 	   (fdr (make-vct N))     ; buffer for real fft data
 	   (fdi (make-vct N))     ; buffer for imaginary fft data
 	   (lastphase (make-vct N2)) ;; last phase change
@@ -2052,18 +2054,7 @@
       (do ((i 0 (1+ i)))
 	  ((= i N2))
 	(vector-set! resynth-oscils i (make-oscil :frequency 0)))
-      ;; set-up the analysis window here
-      (set! windowsum 0.0)
-      ;; create a Hamming window (Moore p. 251)
-      (do ((k 0 (1+ k)))
-	  ((= k Nw))
-	(let ((val (- 0.54 (* 0.46 (cos (* 2 pi (/ k (- Nw 1))))))))
-	  (vct-set! window k val)
-	  (set! windowsum (+ windowsum val))))
-      ;; normalize window
-      (set! windowsum (/ 2.0 windowsum))
-      ;; loop over normalizing the window
-      (vct-scale! window windowsum)
+      (vct-scale! window (/ 2.0 (* 0.54 fftsize))) ;den = hamming window integrated
       (call-with-current-continuation
        (lambda (break)
 	 (do ((i 0 (1+ i)))

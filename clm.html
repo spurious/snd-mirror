@@ -3733,7 +3733,29 @@ where to look for the library files; <a name="*rc-directory*">*rc-directory*</a>
 to write the <a name="rc">rc</a> program and its various header files and modules. 
 See <a href="rc.lisp">rc.lisp</a> for more details.</p>
 
-<h4>Instruments as generators not implemented yet.</h4>
+<h4>Instruments as generators</h4>
+
+<p>Instruments as generators are not implemented yet in common lisp (not difficult)
+or in the run macro (difficult).
+They are working in the Scheme/Snd versions however -- see fmv.scm for an example
+of treating the fm-violin (v.ins) as a generator; pvoc.scm for a phase-vocoder
+generator; and zip.scm for the zipper.  There are two main
+differences between an instrument and a generator: first, the generator
+does not know its duration, so envelopes have to be packaged as functions
+(closures), and second, sound input (as from a sound file) should be handled as
+an "as-needed" function, rather than calling in-any or whatever.  The other
+difference is one of approach; you need to separate the note-list-oriented
+portion of an instrument from its signal-processing or synthesis section.
+Once split apart, the same code can be used in "real-time"
+situations (the "control" function and the closures-as-envelopes are
+interchangeable).
+</p>
+
+<p>I may rewrite CLM's instruments to use this format even if it doesn't
+work in the run macro; it irks me that progress is seriously impeded
+by a desperate attempt to speed up Lisp.  The first step toward run-macro
+revision is to make cmus.c use clm.c -- that is, imbed the current
+C clm implementation into lisp. </p>
 
 <hr>
 
