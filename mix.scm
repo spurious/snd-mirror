@@ -37,19 +37,23 @@
 
 ;;; find mix id given mix name (for regex-style track creation)
 
+(define (tree-apply func tree)
+  (cond ((null? tree) '())
+	((not (pair? tree)) (func tree))
+	(else (tree-apply func (car tree))
+	      (tree-apply func (cdr tree)))))
+
 (define mix-name->id
   (lambda (name)
     "(mix-name->id name) -> id of named mix"
-    (letrec ((find-name 
-	      (lambda (name id lim)
-		(if (< id lim)
-		    (if (and (mix? id)
-			     (string=? name (mix-name id)))
-			id
-			(find-name name (1+ id) lim))
-		    #f))))
-      (find-name name 0 (mixes)))))
-
+    (call-with-current-continuation
+     (lambda (return-name)
+       (tree-apply
+	(lambda (n)
+	  (if (string=? name (mix-name n))
+	      (return-name n)))
+	(mixes))
+       'no-such-mix))))
 
 ;;; pan mix (if input is not mono, only chan 0 is mixed)
 
@@ -108,17 +112,14 @@
 ;;; (make-track 2 '(3 12 5)) -> '(3 12 5)
 
 (define track
-  (lambda (n)
+  (lambda (id)
     "(track id) returns the list of mixes (id numbers) currently in track id"
-    (letrec ((find-track
-	      (lambda (trk id lim)
-		(if (< id lim)
-		    (if (and (mix? id)
-			     (= (mix-track id) trk))
-			(cons id (find-track trk (1+ id) lim))
-			(find-track trk (1+ id) lim))
-		    '()))))
-      (find-track n 0 (mixes)))))
+    (let ((trk '()))
+      (tree-apply (lambda (n)
+		    (if (= id (mix-track n))
+			(set! trk (cons n trk))))
+		  (mixes))
+      trk)))
 	   
 ;;; (track 1) returns a list of mixes in track 1
 
@@ -374,13 +375,11 @@
 
 (define unused-track
   (lambda ()
-    (let ((lim (mixes))
-	  (ntrack 0))
-      (do ((i 0 (1+ i)))
-	  ((= i lim) (+ ntrack 1))
-	(if (and (mix? i)
-		 (> (mix-track i) ntrack))
-	    (set! ntrack (mix-track i)))))))
+    (let ((ntrack 0))
+      (tree-apply (lambda (n)
+		    (set! ntrack (max ntrack (mix-track n))))
+		  (mixes))
+      (+ ntrack 1))))
 
 (define sync-multichannel-mixes
   (lambda (mix-ids)

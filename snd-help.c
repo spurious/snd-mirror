@@ -189,6 +189,10 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+10-Jul:  added sounds (list of currently active sounds).\n\
+         region-id and id-region, regions now returns a list of active region ids.\n\
+         mixes now returns a list similar to marks.\n\
+         removed active-sounds.\n\
 6-Jul:   snd 4.4.\n\
          user-specified menu callbacks must be functions (not strings).\n\
          removed dsp-devices.\n\
@@ -997,6 +1001,7 @@ user-interface manipulations.\n\
   " S_save_hook "\n\
   " S_fft_hook "\n\
   " S_graph_hook "\n\
+  " S_after_graph_hook "(snd chn)\n\
   " S_exit_hook "\n\
   " S_start_hook "\n\
   " S_stop_playing_hook "\n\
@@ -1013,6 +1018,11 @@ user-interface manipulations.\n\
   " S_snd_warning_hook "\n\
   " S_edit_hook "(snd chn)\n\
   " S_undo_hook "(snd chn)\n\
+  " S_output_comment_hook "(str)\n\
+  " S_output_name_hook "()\n\
+  " S_mouse_drag_hook "(snd chn button state x y)\n\
+  " S_mouse_press_hook "(snd chn button state x y)\n\
+  " S_mouse_release_hook "(snd chn button state x y)\n\
 \n\
 ";
 
@@ -1027,7 +1037,6 @@ all refer to the same thing.\n\
   " S_abort "             ()\n\
   " S_abortQ "            ()\n\
   " S_activate_listener " ()\n\
-  " S_active_sounds "     ()\n\
   " S_add_mark "          (sample snd chn)\n\
   " S_add_to_main_menu "  (menu-label)\n\
   " S_add_to_menu "       (top-menu menu-label callback)\n\
@@ -1105,6 +1114,7 @@ all refer to the same thing.\n\
   " S_header_type "       (snd)\n\
   " S_help_dialog "       (subject help)\n\
   " S_hide_listener "     ()\n\
+  " S_id_region "         (id)\n\
   " S_in "                (ms code)\n\
   " S_insert_sound "      (file in_chan snd chn)\n\
   " S_insert_region "     (beg reg snd chn)\n\
@@ -1173,6 +1183,7 @@ all refer to the same thing.\n\
   " S_redo "              (edits snd chn)\n\
   " S_region_chans "      (reg)\n\
   " S_region_dialog "     ()\n\
+  " S_region_id "         (reg)\n\
   " S_region_length "     (reg)\n\
   " S_region_maxamp "     (reg)\n\
   " S_region_sample "     (samp reg chn)\n\
@@ -1288,6 +1299,7 @@ all refer to the same thing.\n\
   " S_sound_to_temp "     (type format)\n\
   " S_sound_to_temps "    (type format)\n\
   " S_soundQ "            (snd)\n\
+  " S_sounds "            ()\n\
   " S_snd_apropos "       (name)\n\
   " S_snd_error "         (str)\n\
   " S_snd_help "          (name)\n\

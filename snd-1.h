@@ -236,7 +236,6 @@ typedef struct snd__info {
   char *eval_expr;
   int minibuffer_on,minibuffer_temp;
   int sx_scroll_max;
-  int info_active;
   int read_only;
   chan_info **chans;
   struct snd__state *state;
@@ -286,7 +285,7 @@ typedef struct snd__state {
   int play_start_time;
   snd_info *mx_sp;
   char *pending_change;
-  int print_choice,apply_choice,mix_drawing;
+  int print_choice,apply_choice;
   int stopped_explicitly,checking_explicitly;
   int result_printout,listening,init_window_width,init_window_height,init_window_x,init_window_y;
   int open_hook_active,close_hook_active,fft_hook_active,graph_hook_active,exit_hook_active,start_hook_active,save_hook_active;
@@ -373,7 +372,7 @@ typedef struct {
   int curcons;
   int temporary;               /* in-filename was written by us and needs to be deleted when mix console is deleted */
   snd_info *add_snd;  /* readable snd_info struct for mix input */
-  int state,changed,out_chan,width,beg_in_samps,main_chan,sweep_tag;
+  int state,changed,out_chan,width,beg_in_samps,main_chan;
   /* beg_in_samps = mix title time display choice (seconds or samples) */
   int *rows;
   int id,y,track,selected_chan; /* number used in snd-scm calls */
@@ -716,7 +715,6 @@ int chan_save_edits(chan_info *cp, char *ofile);
 int save_edits(snd_info *sp, void *ptr);
 int save_edits_2(snd_info *sp, char *new_name, int type, int format, int srate, char *comment);
 int revert_edits(chan_info *cp, void *ptr);
-int snd_IO_error(void);
 void set_snd_IO_error(int err);
 char *snd_error_name(int i);
 int open_temp_file(char *ofile, int chans, file_info *hdr, snd_state *ss);

@@ -126,7 +126,6 @@ void mus_file_reset(int loc0, int *io, int *datai)
 	}
     }
   io[SND_IO_END] = io[SND_IO_BEG]+io[SND_IO_BUFSIZ]-1;
-  /* io[SND_IO_LOC] = (loc0-io[SND_IO_BEG]); */
 }
 
 /* now wrappers for low level sndlib open/close/access functions -- we can't use

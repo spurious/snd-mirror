@@ -449,7 +449,6 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="sndabort">abort?</a>            ()            check for C-g to interrupt on-going computation (and let other UI 
                                   events through).
   <a name="activatelistener">activate-listener</a> ()            make listener active, even if not open.
-  <a name="sndactivesounds">active-sounds</a>     ()            number of currently active (displayed) sounds.
   <a name="sndaddmark">add-mark</a>          (sample <i>snd chn</i>) add mark at <i>sample</i>, returning mark id.
   <a name="addsoundfileextension">add-sound-file-extension</a> (ext)  add <i>ext</i> to the list of sound file extensions.
   <a name="sndaddtomainmenu">add-to-main-menu</a>  (menu-label)  add new top-level menu named <i>menu-label</i>, return menu index.
@@ -684,7 +683,8 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="sndhelpdialog">help-dialog</a>       (subject help) fire up the help dialog with title <i>subject</i> and body <i>help</i>.
                                       (help-dialog "xyzzy" "are we having fun?")
   <a name="sndhidelistener">hide-listener</a>     ()            close the lisp listener pane.
-  <a name="gin">in</a>                (ms thunk)     <i>ms</i> milliseconds from now, evaluate <i>thunk</i>, a function of no arguments.
+  <a name="sndidregion">id-region</a>         (<i>id</i>)          map from region-id <i>id</i> to its current region stack location.
+  <a name="gin">in</a>                (ms thunk)    <i>ms</i> milliseconds from now, evaluate <i>thunk</i>, a function of no arguments.
   <a name="sndinsertfile">insert-sound</a>      (file <i>in_chan snd chn</i>)
                                   insert channel <i>in_chan</i> of <i>file</i> at the cursor in <i>snd</i>'s channel <i>chn</i>.
   <a name="sndinsertregion">insert-region</a>     (<i>beg reg snd chn</i>) insert region <i>reg</i> at sample <i>beg</i> in <i>snd</i>'s channel <i>chn</i>.
@@ -762,6 +762,9 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="sndmarksync">mark-sync</a>         (<i>id</i>)          mark <i>id</i>'s sync value.
   <a name="sndmarksyncmax">mark-sync-max</a>     ()            max mark sync value seen so far.
   <a name="sndmarks">marks</a>             (<i>snd chn pos</i>) list of mark ids in <i>snd</i>'s channel <i>chn</i> at edit history position <i>pos</i>.
+                                  If <i>chn</i> and <i>pos</i> are omitted, a list of lists is returned, each inner list 
+                                  representing a channel of <i>snd</i>.  If <i>snd</i> is also omitted, a list of lists 
+                                  of lists is returned, representing each sound and its channels.
   <a name="sndmarkok">mark?</a>             (<i>id</i>)          #t if mark <i>id</i> is active.
   <a name="sndmaxsounds">max-sounds</a>        ()            current size of sound array (grows as required, may contain holes).
   <a name="sndmaxamp">maxamp</a>            (<i>snd chn</i>)     max amp of <i>snd</i>'s channel <i>chn</i>.
@@ -773,7 +776,8 @@ would refer to the original form.  I may extend this to accept a list of (more t
                                   increment this number). id of -1 means some error occurred.
                                   If <i>with-mix-consoles</i> is #f (default is #t), the data is simply
                                   mixed without creating any mix consoles.
-  <a name="sndmixes">mixes</a>             ()            number of mixes created so far.
+  <a name="sndmixes">mixes</a>             (<i>snd chn</i>)     list of currently active mixes in <i>snd</i>'s channel <i>chn</i> at history <i>pos</i>.
+                                  Omitted args are handled as in <a href="#sndmarks">marks</a>.
   <a name="sndmixamp">mix-amp</a>           (<i>mix chan</i>)    amplitude of <i>mix</i>'s channel <i>chan</i>.
   <a name="sndmixampenv">mix-amp-env</a>       (<i>mix chan</i>)    amplitude envelope of <i>mix</i>'s channel <i>chan</i>.
   <a name="sndmixanchor">mix-anchor</a>        (<i>mix</i>)         anchor position (within the mix) of <i>mix</i>.
@@ -873,6 +877,7 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="sndredo">redo</a>              (<i>edits snd chn</i>) redo <i>edits</i> edits (default is 1) in <i>snd</i>'s channel <i>chn</i>.
   <a name="sndregionchans">region-chans</a>      (<i>reg</i>)         number of channels in region <i>reg</i>.
   <a name="sndregiondialog">region-dialog</a>     ()            fire up <a href="snd.html#regionbrowser">region browser</a> (a no-op if no regions).
+  <a name="sndregionid">region-id</a>         (<i>reg</i>)         unique identifier attached to region <i>reg</i>.
   <a name="sndregionlength">region-length</a>     (<i>reg</i>)         number of samples (per channel) in region <i>reg</i>.
   <a name="sndregionmaxamp">region-maxamp</a>     (<i>reg</i>)         maximum amplitude of region <i>reg</i>.
   <a name="sndregionsample">region-sample</a>     (<i>samp reg chn</i>) value of sample <i>samp</i> in region <i>reg</i> in channel <i>chn</i>.
@@ -882,7 +887,7 @@ would refer to the original form.  I may extend this to accept a list of (more t
                                   return vct struct of <i>samps</i> samples starting at <i>samp</i> in region <i>reg</i>'s channel <i>chn</i>.
                                   If v (a vct object) is provided, it is filled, rather than creating a new vct object.
   <a name="sndregionsrate">region-srate</a>      (<i>reg</i>)         original (nominal) sampling rate of region <i>reg</i>.
-  <a name="sndregions">regions</a>           ()            number of regions in the region stack.
+  <a name="sndregions">regions</a>           ()            list of ids of regions currently active.
   <a name="regionok">region?</a>           (<i>reg</i>)         #t if region <i>reg</i> has data.
   <a name="sndremovefrommenu">remove-from-menu</a>  (top-menu menu-label) 
                                   remove menu <i>menu-label</i> from the top top-level menu whose index is <i>top-menu</i>.
@@ -1141,6 +1146,25 @@ would refer to the original form.  I may extend this to accept a list of (more t
                                            (sf2it (<em class=red>soundfont-info</em>)))))
 
   <a name="sndok">sound?</a>            (<i>snd</i>)         #t if <i>snd</i> (an index) is active.
+  <a name="sndsounds">sounds</a>            ()            list of currently active sounds (id numbers).
+                                  A common Snd trope is (map func (sounds)): (map maxamp (sounds)).  This can be
+                                  extended to provide a complete list of sounds and channels (since many Snd functions
+                                  take the "snd chn" arguments:
+
+                                       (define all-chans
+                                         (lambda ()
+                                           (let ((sndlist '())
+                                                 (chnlist '()))
+                                             (map (lambda (snd)
+                                                    (do ((i (1- (channels snd)) (1- i)))
+                                                        ((< i 0))
+                                                      (set! sndlist (cons snd sndlist))
+                                                      (set! chnlist (cons i chnlist))))
+                                                  (<em class=red>sounds</em>))
+                                             (list sndlist chnlist))))
+
+                                      (apply map maxamp (all-chans))
+
   <a name="sndspeed">speed</a>             (<i>snd</i>)         current <a href="snd.html#speed">speed</a> (control panel).
   <a name="squelchupdate">squelch-update</a>    (<i>snd chn</i>)     #t graphic updates are currently squelched (turned off).
   <a name="sndsrate">srate</a>             (<i>snd</i>)         <i>snd</i>'s sampling rate.

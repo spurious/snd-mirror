@@ -46,15 +46,7 @@
 #define ERRB4(a,b) SCM_ASSERT((gh_number_p(a)) || (gh_boolean_p(a)) || (SCM_UNBNDP(a)),a,SCM_ARG4,b)
 
 #define ERRV1(a,b) SCM_ASSERT(((vct_p(a)) || (gh_vector_p(a))),a,SCM_ARG1,b)
-#define ERRV2(a,b) SCM_ASSERT(((vct_p(a)) || (gh_vector_p(a))),a,SCM_ARG2,b)
-#define ERRV3(a,b) SCM_ASSERT(((vct_p(a)) || (gh_vector_p(a))),a,SCM_ARG3,b)
-
-#define ERRVECT1(a,b) SCM_ASSERT((gh_vector_p(a)),a,SCM_ARG1,b)
-#define ERRVECT2(a,b) SCM_ASSERT((gh_vector_p(a)),a,SCM_ARG2,b)
-#define ERRVECT4(a,b) SCM_ASSERT((gh_vector_p(a)),a,SCM_ARG4,b)
-
 #define ERRSB1(a,b) SCM_ASSERT(((gh_string_p(a)) || (SCM_FALSEP(a)) || (SCM_UNBNDP(a))),a,SCM_ARG1,b)
-#define ERRSB3(a,b) SCM_ASSERT(((gh_string_p(a)) || (SCM_FALSEP(a)) || (SCM_UNBNDP(a))),a,SCM_ARG3,b)
 
 #define RTNBOOL(a) return((a) ? SCM_BOOL_T : SCM_BOOL_F)
 #define RTNINT(a) return(gh_int2scm(a))

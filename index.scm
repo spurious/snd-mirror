@@ -5,7 +5,6 @@
     (list "abort" "extsnd.html#abort")
     (list "abort?" "extsnd.html#sndabort")
     (list "activate-listener" "extsnd.html#activatelistener")
-    (list "active-sounds" "extsnd.html#sndactivesounds")
     (list "add-clm-method" "clm.html#add-clm-method")
     (list "add-mark" "extsnd.html#sndaddmark")
     (list "add-mark" "clm.html#add-mark")

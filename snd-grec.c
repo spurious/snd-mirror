@@ -2795,7 +2795,7 @@ static void Record_Button_Callback(GtkWidget *w,gpointer clientData)
 				 recorder_out_format(ss),comment,snd_strlen(comment),NULL);
 	  if (err)
 	    {
-	      record_report(ss,messages,recorder_file(ss),":\n  ",strerror(errno),"\n  (",snd_error_name(snd_IO_error()),")",NULL);
+	      record_report(ss,messages,recorder_file(ss),":\n  ",strerror(errno),NULL);
 	      recording = 0;
 	      triggered = (!triggering);
 	      return;

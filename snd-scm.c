@@ -1823,6 +1823,24 @@ static SCM g_max_sounds(void)
   RTNINT(state->max_sounds);
 }
 
+static SCM g_sounds(void)
+{
+  #define H_sounds "(" S_sounds ") -> list of active sounds (ids)"
+  int i;
+  snd_state *ss;
+  snd_info *sp;
+  SCM result;
+  ss = get_global_state();
+  result = SCM_EOL;
+  for (i=0;i<ss->max_sounds;i++)
+    {
+      sp=((snd_info *)(ss->sounds[i]));
+      if ((sp) && (sp->inuse))
+	result = gh_cons(gh_int2scm(i),result);
+    }
+  return(result);
+}
+
 static SCM g_max_fft_peaks(void) 
 {
   #define H_max_fft_peaks "(" S_max_fft_peaks ") -> max number of fft peaks reported in fft display"
@@ -2769,15 +2787,6 @@ static SCM g_insert_samples_with_origin(SCM samp, SCM samps, SCM origin, SCM vec
   RTNINT(len);
 }
 
-static SCM g_active_sounds(void)
-{
-  #define H_active_sounds "(" S_active_sounds ") -> the number of sounds currently active (open and displayed)"
-  int i,num;
-  num = 0;
-  for (i=0;i<state->max_sounds;i++) if (snd_ok(state->sounds[i])) num++;
-  RTNINT(num);
-}
-
 static SCM g_insert_sound(SCM file, SCM file_chn, SCM snd_n, SCM chn_n)
 {
   #define H_insert_sound "(" S_insert_sound " file &optional (file-chan 0) snd chn) inserts channel 'file-chan'\n\
@@ -3321,7 +3330,7 @@ static SCM g_fft_1(SCM reals, SCM imag, SCM sign, int use_fft)
   int ipow,n,n2,i,isign = 1;
   Float *rl,*im;
   ERRV1(reals,((use_fft) ? S_fft : S_convolve_arrays));
-  ERRV2(imag,((use_fft) ? S_fft : S_convolve_arrays));
+  SCM_ASSERT(((vct_p(imag)) || (gh_vector_p(imag))),imag,SCM_ARG2,((use_fft) ? S_fft : S_convolve_arrays));
   if ((vct_p(reals)) && (vct_p(imag)))
     {
       v1 = (vct *)GH_VALUE_OF(reals);
@@ -3817,6 +3826,9 @@ static SCM g_progress_report(SCM pct, SCM name, SCM cur_chan, SCM chans, SCM snd
 
 void init_mus2scm_module(void);
 
+/* GOOPS */
+/* #include <goops.h> */
+
 static SCM during_open_hook,exit_hook,start_hook,after_open_hook;
 static SCM output_comment_hook;
 static SCM mix_console_state_changed_hook,mix_speed_changed_hook,mix_amp_changed_hook,mix_position_changed_hook;
@@ -4162,8 +4174,8 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure2_2(S_delete_samples,g_delete_samples),H_delete_samples);
   DEFINE_PROC(gh_new_procedure2_2(S_insert_sample,g_insert_sample),H_insert_sample);
   DEFINE_PROC(gh_new_procedure3_2(S_insert_samples,g_insert_samples),H_insert_samples);
-  DEFINE_PROC(gh_new_procedure0_0(S_active_sounds,g_active_sounds),H_active_sounds);
   DEFINE_PROC(gh_new_procedure0_0(S_max_sounds,g_max_sounds),H_max_sounds);
+  DEFINE_PROC(gh_new_procedure0_0(S_sounds,g_sounds),H_sounds);
   DEFINE_PROC(gh_new_procedure0_0(S_max_fft_peaks,g_max_fft_peaks),H_max_fft_peaks);
   DEFINE_PROC(gh_new_procedure1_0(S_set_max_fft_peaks,g_set_max_fft_peaks),H_set_max_fft_peaks);
   DEFINE_PROC(gh_new_procedure0_0(S_cut,g_cut),H_cut);
@@ -4280,6 +4292,10 @@ void g_initialize_gh(snd_state *ss)
   g_init_main(local_doc);
   g_init_snd(local_doc);
   g_init_file(local_doc);
+
+  /* GOOPS */
+  /* scm_init_oop_goops_goopscore_module (); */
+
 
 #if HAVE_LADSPA
   g_ladspa_to_snd(local_doc);

@@ -181,7 +181,7 @@ static SCM g_make_vct(SCM len)
   ERRN1(len,S_make_vct);
   size = gh_scm2int(len);
   if (size <= 0) scm_misc_error(S_make_vct,"size: ~S?",SCM_LIST1(len));
-  return(make_vct(size,(Float *)CALLOC(size,sizeof(Float))));
+  return(scm_return_first(make_vct(size,(Float *)CALLOC(size,sizeof(Float))),len));
 }
 
 static SCM copy_vct(SCM obj)
@@ -246,7 +246,7 @@ static SCM vct_set(SCM obj, SCM pos, SCM val)
       else scm_misc_error(S_vct_setB,"invalid index: ~S[~S] = ~S",SCM_LIST3(obj,pos,val));
     }
   else scm_misc_error(S_vct_setB,"nil vct?",SCM_EOL);
-  return(val);
+  return(scm_return_first(val,obj,pos));
 }
 
 static SCM vct_multiply(SCM obj1, SCM obj2)
@@ -512,7 +512,7 @@ static SCM list2vct(SCM lst)
   scv = make_vct(len,(Float *)CALLOC(len,sizeof(Float)));
   v = get_vct(scv);
   for (i=0;i<len;i++) v->data[i] = (Float)gh_scm2double(scm_list_ref(lst,gh_int2scm(i)));
-  return(scv);
+  return(scm_return_first(scv,lst));
 }
 
 static SCM vector2vct(SCM vect)
@@ -526,7 +526,7 @@ static SCM vector2vct(SCM vect)
   scv = make_vct(len,(Float *)CALLOC(len,sizeof(Float)));
   v = get_vct(scv);
   for (i=0;i<len;i++) v->data[i] = (Float)gh_scm2double(scm_vector_ref(vect,gh_int2scm(i)));
-  return(scv);
+  return(scm_return_first(scv,vect));
 }
 
 void init_vct(void)

@@ -638,7 +638,8 @@ Snd is currently in flux.
   help-dialog       (subject help) fire up the help dialog with title subject and body help.
                                       (help-dialog "xyzzy" "are we having fun?")
   hide-listener     ()            close the lisp listener pane.
-  in                (ms thunk)     ms milliseconds from now, evaluate thunk, a function of no arguments.
+  id-region         (id)          map from region-id id to its current region stack location.
+  in                (ms thunk)    ms milliseconds from now, evaluate thunk, a function of no arguments.
   insert-sound      (file in_chan snd chn)
                                   insert channel in_chan of file at the cursor in snd's channel chn.
   insert-region     (beg reg snd chn) insert region reg at sample beg in snd's channel chn.
@@ -716,6 +717,9 @@ Snd is currently in flux.
   mark-sync         (id)          mark id's sync value.
   mark-sync-max     ()            max mark sync value seen so far.
   marks             (snd chn pos) list of mark ids in snd's channel chn at edit history position pos.
+                                  If chn and pos are omitted, a list of lists is returned, each inner list
+                                  representing a channel of snd.  If snd is also omitted, a list of lists
+                                  of lists is returned, representing each sound and its channels.
   mark?             (id)          #t if mark id is active.
   max-sounds        ()            current size of sound array (grows as required, may contain holes).
   maxamp            (snd chn)     max amp of snd's channel chn.
@@ -727,7 +731,8 @@ Snd is currently in flux.
                                   increment this number). id of -1 means some error occurred.
                                   If with-mix-consoles is #f (default is #t), the data is simply
                                   mixed without creating any mix consoles.
-  mixes             ()            number of mixes created so far.
+  mixes             (snd chn pos) list of currently active mixes in snd's channel chn at history pos.
+                                  Omitted args are handled as in marks.
   mix-amp           (mix chan)    amplitude of mix's channel chan.
   mix-amp-env       (mix chan)    amplitude envelope of mix's channel chan.
   mix-anchor        (mix)         anchor position (within the mix) of mix.
@@ -827,6 +832,7 @@ Snd is currently in flux.
   redo              (edits snd chn) redo edits edits (default is 1) in snd's channel chn.
   region-chans      (reg)         number of channels in region reg.
   region-dialog     ()            fire up region browser (a no-op if no regions).
+  region-id         (reg)         unique identifier attached to region reg.
   region-length     (reg)         number of samples (per channel) in region reg.
   region-maxamp     (reg)         maximum amplitude of region reg.
   region-sample     (samp reg chn) value of sample samp in region reg in channel chn.
@@ -836,7 +842,7 @@ Snd is currently in flux.
                                   return vct struct of samps samples starting at samp in region reg's channel chn.
                                   If v (a vct object) is provided, it is filled, rather than creating a new vct object.
   region-srate      (reg)         original (nominal) sampling rate of region reg.
-  regions           ()            number of regions in the region stack.
+  regions           ()            list of ids of regions currently active.
   region?           (reg)         #t if region reg has data.
   remove-from-menu  (top-menu menu-label)
                                   remove menu menu-label from the top top-level menu whose index is top-menu.
@@ -1095,6 +1101,25 @@ Snd is currently in flux.
                                            (sf2it (soundfont-info)))))
 
   sound?            (snd)         #t if snd (an index) is active.
+  sounds            ()            list of currently active sounds (id numbers).
+                                  A common Snd trope is (map func (sounds)): (map maxamp (sounds)).  This can be
+                                  extended to provide a complete list of sounds and channels (since many Snd functions
+                                  take the "snd chn" arguments:
+
+                                       (define all-chans
+                                         (lambda ()
+                                           (let ((sndlist '())
+                                                 (chnlist '()))
+                                             (map (lambda (snd)
+                                                    (do ((i (1- (channels snd)) (1- i)))
+                                                        ((< i 0))
+                                                      (set! sndlist (cons snd sndlist))
+                                                      (set! chnlist (cons i chnlist))))
+                                                  (sounds))
+                                             (list sndlist chnlist))))
+
+                                      (apply map maxamp (all-chans))
+
   speed             (snd)         current speed (control panel).
   squelch-update    (snd chn)     #t graphic updates are currently squelched (turned off).
   srate             (snd)         snd's sampling rate.

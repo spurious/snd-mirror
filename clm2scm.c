@@ -67,6 +67,7 @@ static void mus_error2scm(int type, char *msg)
   scm_misc_error("mus_error",msg,SCM_EOL);
 }
 
+#if (!USE_SND)
 static int g_scm2int(SCM obj)
 {
   /* don't want errors here about floats with non-zero fractions etc */
@@ -77,6 +78,7 @@ static int g_scm2int(SCM obj)
       return((int)scm_num2dbl(obj,"g_scm2int"));
   return(0);
 }
+#endif
 
 #if (!HAVE_GUILE_1_3_0)
 /* new version uses guile's built-in keyword support */
@@ -2752,7 +2754,7 @@ static SCM g_frame2list(SCM fr)
   SCM_ASSERT(((mus_scm_p(fr)) && (mus_frame_p(mus_get_any(fr)))),fr,SCM_ARG1,S_frame2list);
   val = (mus_frame *)mus_get_any(fr);
   for (i=(val->chans)-1;i>=0;i--) res = scm_cons(gh_double2scm(val->vals[i]),res);
-  return(res);
+  return(scm_return_first(res,fr));
 }
 
 static SCM g_frame2sample(SCM mx, SCM fr)
@@ -4673,40 +4675,41 @@ void init_mus2scm_module(void)
 
   /* this next code implements (setf (mus-frequency gen) val) constructs */
   /* it is from the guile mailing list, written by Maciej Stachowiak <mstachow@mit.edu> */
-  gh_eval_str("(defmacro setf (place value) (if (pair? place) `((setter ,(car place)) ,@(cdr place) ,value) `(set! place value)))\n\
-               (define (setter proc) (procedure-property proc 'setter))\n\
-               (set-procedure-property! setter 'setter (lambda (proc setter) (set-procedure-property! proc 'setter setter)))\n\
+  /*   original used 'setter property, but that collides with goops */
+  gh_eval_str("(defmacro setf (place value) (if (pair? place) `((clm-setter ,(car place)) ,@(cdr place) ,value) `(set! place value)))\n\
+               (define (clm-setter proc) (procedure-property proc 'clm-setter))\n\
+               (set-procedure-property! clm-setter 'clm-setter (lambda (proc clm-setter) (set-procedure-property! proc 'clm-setter clm-setter)))\n\
 \n\
-               (setf (setter " S_mus_phase ") " S_mus_set_phase ")\n\
-               (setf (setter " S_mus_data ") " S_mus_set_data ")\n\
-               (setf (setter " S_mus_length ") " S_mus_set_length ")\n\
-               (setf (setter " S_mus_frequency ") " S_mus_set_frequency ")\n\
-               (setf (setter " S_mus_scaler ") " S_mus_set_scaler ")\n\
-               (setf (setter " S_mus_a0 ") " S_mus_set_a0 ")\n\
-               (setf (setter " S_mus_a1 ") " S_mus_set_a1 ")\n\
-               (setf (setter " S_mus_a2 ") " S_mus_set_a2 ")\n\
-               (setf (setter " S_mus_b1 ") " S_mus_set_b1 ")\n\
-               (setf (setter " S_mus_b2 ") " S_mus_set_b2 ")\n\
-               (setf (setter " S_mus_formant_radius ") " S_mus_set_formant_radius ")\n\
-               (setf (setter " S_mus_feedback ") " S_mus_set_feedback ")\n\
-               (setf (setter " S_mus_feedforward ") " S_mus_set_feedforward ")\n\
-               (setf (setter " S_mus_location ") " S_mus_set_location ")\n\
-               (setf (setter " S_mus_increment ") " S_mus_set_increment ")\n\
-               (setf (setter " S_mus_ramp ") " S_mus_set_ramp ")\n\
-               (setf (setter " S_mus_hop ") " S_mus_set_hop ")\n\
-               (setf (setter " S_frame_ref ") " S_frame_set ")\n\
-               (setf (setter " S_mixer_ref ") " S_mixer_set ")\n\
-               (setf (setter " S_locsig_ref ") " S_locsig_set ")\n\
-               (setf (setter " S_locsig_reverb_ref ") " S_locsig_reverb_set ")\n\
+               (setf (clm-setter " S_mus_phase ") " S_mus_set_phase ")\n\
+               (setf (clm-setter " S_mus_data ") " S_mus_set_data ")\n\
+               (setf (clm-setter " S_mus_length ") " S_mus_set_length ")\n\
+               (setf (clm-setter " S_mus_frequency ") " S_mus_set_frequency ")\n\
+               (setf (clm-setter " S_mus_scaler ") " S_mus_set_scaler ")\n\
+               (setf (clm-setter " S_mus_a0 ") " S_mus_set_a0 ")\n\
+               (setf (clm-setter " S_mus_a1 ") " S_mus_set_a1 ")\n\
+               (setf (clm-setter " S_mus_a2 ") " S_mus_set_a2 ")\n\
+               (setf (clm-setter " S_mus_b1 ") " S_mus_set_b1 ")\n\
+               (setf (clm-setter " S_mus_b2 ") " S_mus_set_b2 ")\n\
+               (setf (clm-setter " S_mus_formant_radius ") " S_mus_set_formant_radius ")\n\
+               (setf (clm-setter " S_mus_feedback ") " S_mus_set_feedback ")\n\
+               (setf (clm-setter " S_mus_feedforward ") " S_mus_set_feedforward ")\n\
+               (setf (clm-setter " S_mus_location ") " S_mus_set_location ")\n\
+               (setf (clm-setter " S_mus_increment ") " S_mus_set_increment ")\n\
+               (setf (clm-setter " S_mus_ramp ") " S_mus_set_ramp ")\n\
+               (setf (clm-setter " S_mus_hop ") " S_mus_set_hop ")\n\
+               (setf (clm-setter " S_frame_ref ") " S_frame_set ")\n\
+               (setf (clm-setter " S_mixer_ref ") " S_mixer_set ")\n\
+               (setf (clm-setter " S_locsig_ref ") " S_locsig_set ")\n\
+               (setf (clm-setter " S_locsig_reverb_ref ") " S_locsig_reverb_set ")\n\
 \n\
 ");
-
   scm_add_feature("clm");
 
 }
 
 
 /* (definstrument a (arg ...) (let (... (e (make-env))) (... (run (loop ... (env e) (outa ...))))))
+
  *   return closure of outer let and run as appliable func?
  *   could all CL-compatibility stuff be local to definstrument?  (i.e. first for car)
  *

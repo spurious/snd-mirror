@@ -209,8 +209,8 @@ file_info *make_file_info(char *fullname, snd_state *ss)
     {
       set_snd_IO_error(SND_CANNOT_FIND_FILE);
       if (errno != 0)
-	snd_error("%s: %s (%s)",fullname,strerror(errno),snd_error_name(snd_IO_error()));
-      else snd_error("%s: %s",fullname,snd_error_name(snd_IO_error()));
+	snd_error("can't find %s: %s",fullname,strerror(errno));
+      else snd_error("can't find %s",fullname);
     }
   return(hdr);
 }
@@ -783,7 +783,7 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
   sp->reverbing = 0;
   sp->revscl = 0.0;
   sp->filtering = 0;
-  sp->index = NOT_AN_INDEX;
+  sp->index = -2;
   sp->sgx = NULL;
   len = (hdr->samples)/(hdr->chans);
   for (i=0;i<sp->nchans;i++)

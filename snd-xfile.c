@@ -2004,7 +2004,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
   if (!new_dialog)
     {
       title = (char *)CALLOC(snd_strlen(newname) + 32,sizeof(char));
-      sprintf(title,S_create_new_sound_p,newname);
+      sprintf(title,STR_create_new_sound_p,newname);
       titlestr = XmStringCreate(title,XmFONTLIST_DEFAULT_TAG);
       FREE(title);
       xhelp = XmStringCreate(STR_Help,XmFONTLIST_DEFAULT_TAG);

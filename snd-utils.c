@@ -410,7 +410,7 @@ char *kmg (int num)
  * REALLOC, and FREE (never MALLOC though it's defined).
  */
 
-#define MEM_SIZE 16384
+#define MEM_SIZE 65536
 
 static char *encloser = NULL;
 void set_encloser(char *name) {encloser = name;} /* for exposing call chains */
@@ -482,7 +482,7 @@ static void forget_pointer(void *ptr, char *func, char *file, int line)
 	pointers[i] = 0;
 	return;
       }
-  fprintf(stderr,"forget %p ",ptr); abort();
+  if (forgetting == 0) {fprintf(stderr,"forget %p ",ptr); abort();}
 }
 
 static void remember_pointer(void *ptr, size_t len, char *func, char *file, int line)
@@ -501,7 +501,7 @@ static void remember_pointer(void *ptr, size_t len, char *func, char *file, int 
 	  least_loc = i;
 	}
     }
-  if (pointers[least_loc] != 0) forgetting = 1;
+  if (pointers[least_loc] != 0) {forgetting = 1; fprintf(stderr,"mem overflow!"); abort();}
   pointers[least_loc] = (int)ptr;
   sizes[least_loc] = (int)len;
   locations[least_loc] = find_mem_location(func,file,line);

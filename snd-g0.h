@@ -151,7 +151,6 @@ typedef struct {
 } ww_info;
 
 #define snd_ShiftMask GDK_SHIFT_MASK
-#define snd_LockMask GDK_LOCK_MASK
 #define snd_ControlMask GDK_CONTROL_MASK
 #ifndef SUN
   #define snd_MetaMask GDK_MOD1_MASK
@@ -180,7 +179,6 @@ typedef struct {
 /* now pull in the key names */
 #define snd_K_Shift_L GDK_Shift_L	 
 #define snd_K_space GDK_space 
-#define snd_K_exclam GDK_exclam 
 #define snd_K_openparen GDK_parenleft 
 #define snd_K_closeparen GDK_parenright 
 #define snd_K_plus GDK_plus 
@@ -200,7 +198,6 @@ typedef struct {
 #define snd_K_less GDK_less 
 #define snd_K_equal GDK_equal 
 #define snd_K_greater GDK_greater 
-#define snd_K_at GDK_at 
 #define snd_K_A GDK_A 
 #define snd_K_B GDK_B 
 #define snd_K_C GDK_C 

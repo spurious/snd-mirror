@@ -1820,13 +1820,10 @@ int read_sample_eof (snd_fd *sf)
 
 
 static int snd_io_error;
-int snd_IO_error(void) {return(snd_io_error);}
 void set_snd_IO_error(int err) {snd_io_error = err;}
 
 static char *snd_error_names[] = {
-  STR_no_error,STR_cant_write_header,STR_cant_open_file,
-  STR_cant_allocate_IO_buffers,STR_cant_write_data,
-  STR_cant_remove_file,STR_cant_rename_file,STR_cant_read_header,
+  STR_no_error,STR_cant_write_header,STR_cant_open_file,STR_cant_write_data,
   STR_unsupported_header_type,STR_cant_find_file,STR_unsupported_data_format,STR_output_interrupted};
 
 char *snd_error_name(int i) {return(snd_error_names[i]);}

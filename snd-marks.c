@@ -1762,36 +1762,51 @@ static SCM g_syncd_marks(SCM sync)
 static SCM g_marks(SCM snd_n, SCM chn_n, SCM pos_n) 
 {
   #define H_marks "(" S_marks " &optional snd chn pos) -> list of marks (ids) in snd/chn at edit history position pos"
-  /* mark list is: channel: (id id id), snd: ((id id) (id id...)) */
+  /* mark list is: channel: (id id id), snd: ((id id) (id id...)), neither: (((id...)...)...) */
   chan_info *cp;
   snd_info *sp;
+  snd_state *ss;
   SCM res,res1 = SCM_EOL;
   int *ids;
-  int i,pos;
-  if ((SCM_INUMP(snd_n)) && (SCM_INUMP(chn_n)))
-    {
-      cp = get_cp(snd_n,chn_n);
-      if (cp == NULL) return(NO_SUCH_CHANNEL);
-      if (SCM_INUMP(pos_n)) pos = SCM_INUM(pos_n); else pos = cp->edit_ctr;
-      ids = channel_marks(cp,pos);
-      if (ids == NULL) return(SCM_EOL);
-      if (ids[0] == 0) {FREE(ids); return(SCM_EOL);}
-      res = int_array_to_list(ids,1,ids[0]);
-      FREE(ids);
-      return(res);
-    }
+  int i,pos,j;
+  if (SCM_INUMP(snd_n))
+      {
+	if (SCM_INUMP(chn_n))
+	  {
+	    cp = get_cp(snd_n,chn_n);
+	    if (cp == NULL) return(NO_SUCH_CHANNEL);
+	    if (SCM_INUMP(pos_n)) pos = SCM_INUM(pos_n); else pos = cp->edit_ctr;
+	    ids = channel_marks(cp,pos);
+	    if (ids == NULL) return(SCM_EOL);
+	    if (ids[0] == 0) {FREE(ids); return(SCM_EOL);}
+	    res = int_array_to_list(ids,1,ids[0]);
+	    FREE(ids);
+	    return(res);
+	  }
+	else
+	  {
+	    sp = get_sp(snd_n);
+	    if (sp == NULL) return(NO_SUCH_SOUND);
+	    for (i=sp->nchans-1;i>=0;i--)
+	      {
+		cp = sp->chans[i];
+		ids = channel_marks(cp,cp->edit_ctr);
+		if ((ids == NULL) || (ids[0] == 0))
+		  res1 = gh_cons(SCM_EOL,res1);
+		else res1 = gh_cons(int_array_to_list(ids,1,ids[0]),res1);
+		if (ids) FREE(ids);
+	      }
+	  }
+      }
   else
     {
-      sp = get_sp(snd_n);
-      if (sp == NULL) return(NO_SUCH_SOUND);
-      for (i=sp->nchans-1;i>=0;i--)
+      /* all marks */
+      ss = get_global_state();
+      for (j=ss->max_sounds-1;j>=0;j--)
 	{
-	  cp = sp->chans[i];
-	  ids = channel_marks(cp,cp->edit_ctr);
-	  if ((ids == NULL) || (ids[0] == 0))
-	    res1 = gh_cons(SCM_EOL,res1);
-	  else res1 = gh_cons(int_array_to_list(ids,1,ids[0]),res1);
-	  if (ids) FREE(ids);
+	  sp = ss->sounds[j];
+	  if ((sp) && (sp->inuse))
+	    res1 = gh_cons(g_marks(gh_int2scm(j),SCM_UNDEFINED,SCM_UNDEFINED),res1);
 	}
     }
   return(res1);

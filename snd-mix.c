@@ -2790,10 +2790,44 @@ static SCM g_mix_speed(SCM n)
   return(NO_SUCH_MIX);
 }
 
-static SCM g_mixes(void) 
+static SCM g_mixes(SCM snd, SCM chn)
 {
-  #define H_mixes "(" S_mixes ") -> number of mixes created so far (for looping through mix id's)"
-  RTNINT(mixes());
+  #define H_mixes "(" S_mixes ") -> list of mixes (ids) associated with snd and chn"
+  snd_state *ss;
+  snd_info *sp;
+  chan_info *cp;
+  int i,j;
+  SCM res1 = SCM_EOL;
+  if (SCM_INUMP(snd))
+    {
+      if (SCM_INUMP(chn))
+	{
+	  /* scan all mixes for any associated with this channel */
+	  cp = get_cp(snd,chn);
+	  if (cp == NULL) return(NO_SUCH_CHANNEL);
+	  for (i=0;i<mixdatas_ctr;i++)
+	    if ((mix_ok(i)) && (mixdatas[i]->cp == cp))
+	      res1 = gh_cons(gh_int2scm(i),res1);
+	}
+      else
+	{
+	  sp = get_sp(snd);
+	  if (sp == NULL) return(NO_SUCH_SOUND);
+	  for (i=sp->nchans-1;i>=0;i--)
+	    res1 = gh_cons(g_mixes(snd,gh_int2scm(i)),res1);
+	}
+    }
+  else
+    {
+      ss = get_global_state();
+      for (j=ss->max_sounds-1;j>=0;j--)
+	{
+	  sp = ss->sounds[j];
+	  if ((sp) && (sp->inuse))
+	    res1 = gh_cons(g_mixes(gh_int2scm(j),SCM_UNDEFINED),res1);
+	}
+    }
+  return(res1);
 }
 
 static SCM g_mix_sound_index(SCM n) 
@@ -3534,7 +3568,7 @@ void g_init_mix(SCM local_doc)
   DEFINE_PROC(gh_new_procedure0_1(S_mixQ,g_mixQ),H_mixQ);
   DEFINE_PROC(gh_new_procedure0_1(S_mix_sound_channel,g_mix_sound_channel),H_mix_sound_channel);
   DEFINE_PROC(gh_new_procedure0_1(S_mix_sound_index,g_mix_sound_index),H_mix_sound_index);
-  DEFINE_PROC(gh_new_procedure0_0(S_mixes,g_mixes),H_mixes);
+  DEFINE_PROC(gh_new_procedure0_2(S_mixes,g_mixes),H_mixes);
   DEFINE_PROC(gh_new_procedure2_0(S_set_mix_position,g_set_mix_position),H_set_mix_position);
   DEFINE_PROC(gh_new_procedure2_0(S_set_mix_length,g_set_mix_length),H_set_mix_length);
   DEFINE_PROC(gh_new_procedure1_1(S_set_mix_locked,g_set_mix_locked),H_set_mix_locked);

@@ -36,6 +36,8 @@ static int samp1(region_context *rg)
 /* region data can be stored either in-core (if less than MAX_BUFFER_SIZE ints), else in a temp file that */
 /*    is deleted when the region is deleted (hence must be copied upon insert or mix) */
 
+static int region_id_ctr = 0;
+
 typedef struct {
   MUS_SAMPLE_TYPE **data;
   int chans;
@@ -52,6 +54,7 @@ typedef struct {
   Float maxamp;
   snd_info *editor_copy;
   char *editor_name;
+  int id;
 } region;
 
 static void free_region_contexts(region *r)
@@ -161,6 +164,16 @@ int region_len(int n) {if (region_ok(n)) return(regions[n]->len); else return(0)
 int region_chans(int n) {if (region_ok(n)) return(regions[n]->chans); else return(0);}
 int region_srate(int n) {if (region_ok(n)) return(regions[n]->srate); else return(0);}
 Float region_maxamp(int n) {if (region_ok(n)) return(regions[n]->maxamp); else return(0.0);}
+
+static int region_id(int n) {if (region_ok(n)) return(regions[n]->id); else return(-1);}
+static int id_region(int id)
+{
+  int i;
+  for (i=0;i<regions_size;i++)
+    if ((regions[i]) && (regions[i]->id == id))
+      return(i);
+  return(-1);
+}
 
 int selection_is_current(void) 
 {
@@ -371,6 +384,7 @@ void select_region(int n)
 int delete_region(int n)
 {
   int i;
+  /* delete-region-hook? (passes region-id to hook, if #t, don't delete?) -- restack uses free_region instead */
   if (n >= regions_size) return(INVALID_REGION);
   if (region_ok(n)) 
     {
@@ -996,6 +1010,7 @@ void create_selection(chan_info *cp)
   region_context *rg;
   int chans,i,j,k;
   r = (region *)CALLOC(1,sizeof(region));
+  r->id = region_id_ctr++;
   sp = cp->sound;
   ss = cp->state;
   if (regions[0]) stack_region(ss,r); else regions[0] = r;
@@ -1477,6 +1492,7 @@ static SCM g_restore_region(SCM n, SCM chans, SCM len, SCM srate, SCM maxamp, SC
   int i,j,k;
   r = (region *)CALLOC(1,sizeof(region));
   regions[gh_scm2int(n)] = r;
+  r->id = region_id_ctr++;
   r->maxamp = gh_scm2double(maxamp);
   r->chans = gh_scm2int(chans);
   r->rsp = NULL;
@@ -1553,7 +1569,7 @@ static SCM g_set_max_regions(SCM n)
   RTNINT(max_regions(ss));
 }
 
-enum {REGION_LENGTH,REGION_SRATE,REGION_CHANS,REGION_MAXAMP,REGION_SELECT,REGION_DELETE,REGION_PLAY};
+enum {REGION_LENGTH,REGION_SRATE,REGION_CHANS,REGION_MAXAMP,REGION_SELECT,REGION_DELETE,REGION_PLAY,REGION_ID};
 
 static SCM region_read(int field, SCM n)
 {
@@ -1569,6 +1585,7 @@ static SCM region_read(int field, SCM n)
 	case REGION_MAXAMP: RTNFLT(region_maxamp(rg)); break;
 	case REGION_SELECT: select_region_and_update_browser(get_global_state(),rg); return(n); break;
 	case REGION_DELETE: delete_region_and_update_browser(get_global_state(),rg); return(n); break;
+	case REGION_ID:     RTNINT(region_id(rg)); break;
 	}
     }
   else return(NO_SUCH_REGION);
@@ -1601,6 +1618,23 @@ static SCM g_region_chans (SCM n)
   #define H_region_chans "(" S_region_chans " &optional (n 0) -> channels of data in region n"
   ERRB1(n,S_region_chans); 
   return(region_read(REGION_CHANS,n));
+}
+
+static SCM g_region_id (SCM n) 
+{
+  #define H_region_id "(" S_region_id " &optional (n 0) -> unique id of region n"
+  ERRB1(n,S_region_id); 
+  return(region_read(REGION_ID,n));
+}
+
+static SCM g_id_region (SCM n) 
+{
+  #define H_id_region "(" S_id_region " &optional (id 0) -> stack location of region with id"
+  int sn;
+  ERRB1(n,S_id_region); 
+  sn = id_region(g_scm2intdef(n,0));
+  if (sn == -1) return(NO_SUCH_REGION);
+  RTNINT(sn);
 }
 
 static SCM g_region_maxamp (SCM n) 
@@ -1650,8 +1684,14 @@ static SCM g_protect_region (SCM n, SCM protect)
 
 static SCM g_regions(void) 
 {
-  #define H_regions "(" S_regions ") -> how many regions are currently in the region list"
-  RTNINT(snd_regions());
+  #define H_regions "(" S_regions ") -> list of ids of regions currently in the region list"
+  int i;
+  SCM result;
+  result = SCM_EOL;
+  for (i=(regions_size-1);i>=0;i--)
+    if (regions[i])
+      result = gh_cons(gh_int2scm(regions[i]->id),result);
+  return(result);
 }
 
 static SCM g_make_region (SCM beg, SCM end, SCM snd_n, SCM chn_n)
@@ -1849,6 +1889,8 @@ void g_init_regions(SCM local_doc)
   DEFINE_PROC(gh_new_procedure(S_region_length,SCM_FNC g_region_length,0,1,0),H_region_length);
   DEFINE_PROC(gh_new_procedure(S_region_srate,SCM_FNC g_region_srate,0,1,0),H_region_srate);
   DEFINE_PROC(gh_new_procedure(S_region_chans,SCM_FNC g_region_chans,0,1,0),H_region_chans);
+  DEFINE_PROC(gh_new_procedure(S_region_id,SCM_FNC g_region_id,0,1,0),H_region_id);
+  DEFINE_PROC(gh_new_procedure(S_id_region,SCM_FNC g_id_region,0,1,0),H_id_region);
   DEFINE_PROC(gh_new_procedure(S_region_maxamp,SCM_FNC g_region_maxamp,0,1,0),H_region_maxamp);
   DEFINE_PROC(gh_new_procedure(S_save_region,SCM_FNC g_save_region,2,1,0),H_save_region);
   DEFINE_PROC(gh_new_procedure(S_select_region,SCM_FNC g_select_region,0,1,0),H_select_region);

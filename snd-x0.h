@@ -240,7 +240,6 @@ typedef struct {
 } ww_info;
 
 #define snd_ShiftMask ShiftMask
-#define snd_LockMask LockMask
 #define snd_ControlMask ControlMask
 #ifndef SUN
   #define snd_MetaMask Mod1Mask
@@ -267,7 +266,6 @@ typedef struct {
 /* now pull in the key names (/usr/include/X11/keysymdef.h) */
 #define snd_K_Shift_L XK_Shift_L	 
 #define snd_K_space XK_space 
-#define snd_K_exclam XK_exclam 
 #define snd_K_openparen XK_parenleft 
 #define snd_K_closeparen XK_parenright 
 #define snd_K_plus XK_plus 
@@ -286,7 +284,6 @@ typedef struct {
 #define snd_K_9 XK_9 
 #define snd_K_less XK_less 
 #define snd_K_greater XK_greater 
-#define snd_K_at XK_at 
 #define snd_K_A XK_A 
 #define snd_K_B XK_B 
 #define snd_K_C XK_C 

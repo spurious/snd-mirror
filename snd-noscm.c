@@ -71,8 +71,7 @@ READ_BUFFER:
       k = read(fd,(char *)(noscm_buffer+len),noscm_buffer_size - len);
       if (k <= 0) 
 	{
-	  snd_error(STR_error_reading_file_extra_open_paren);
-	  snd_error("\ncurrent expression started at byte %d\n",start);
+	  snd_error("error reading file: extra ')'?\ncurrent expression started at byte %d\n",start);
 	  return(0); /* this ends the read loops below */
 	}
       bytes = len + k;
@@ -650,13 +649,6 @@ static int symit(snd_state *ss,char **str)
 	  isym(ss,0);
 	  return(0);
 	}
-      if (strcmp(tok,S_active_sounds) == 0) 
-	{
-	  num = 0;
-	  for (i=0;i<ss->max_sounds;i++) if (snd_ok(ss->sounds[i])) num++;
-	  isym(ss,num);
-	  return(0);
-	}
       if (strcmp(tok,S_abort) == 0) abort();
       if (strcmp(tok,S_add_mark) == 0) {cp = get_cp(ss,str[2],str[3]); if (cp) isym(ss,mark_id(add_mark(istr(str[1]),NULL,cp))); return(0);}
       if (strcmp(tok,S_amp) == 0) {sp = get_sp(ss,str[1]); if (sp) fsym(ss,sp->amp); else isym(ss,0); return(0);}
@@ -917,7 +909,7 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,S_left_sample) == 0) 
 	{cp = get_cp(ss,str[1],str[2]); if ((cp) && (cp->axis)) isym(ss,(cp->axis)->losamp); else isym(ss,0); return(0);}
       if (strcmp(tok,S_line_size) == 0) {isym(ss,line_size(ss)); return(0);}
-      if (strcmp(tok,S_load) == 0) {ival = snd_load_file(filename = mus_file_full_name(sstr(str[1]))); if (filename) FREE(filename); isym(ss,ival); return(0);}
+      if (strcmp(tok,"load") == 0) {ival = snd_load_file(filename = mus_file_full_name(sstr(str[1]))); if (filename) FREE(filename); isym(ss,ival); return(0);}
       break;
     case 'm':
       if (strcmp(tok,S_make_region) == 0) {cp = get_cp(ss,str[3],str[4]); if (cp) define_region(cp,istr(str[1]),istr(str[2]),FALSE); isym(ss,0); return(0);}

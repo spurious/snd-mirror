@@ -6979,7 +6979,7 @@ static SCM g_temps_to_sound(SCM data, SCM new_names, SCM origin)
 
   snd_exf *program_data;
   int i;
-  ERRVECT2(new_names,S_temps_to_sound);
+  SCM_ASSERT((gh_vector_p(new_names)),new_names,SCM_ARG2,S_temps_to_sound);
   ERRS3(origin,S_temps_to_sound);
   program_data = (snd_exf *)(gh_scm2ulong(data));
   for (i=0;i<(int)gh_vector_length(new_names);i++)
@@ -7014,7 +7014,7 @@ static SCM g_sp_scan(SCM proc, int chan_choice, SCM s_beg, SCM s_end, int series
 	case SCAN_ALL_CHANS: if (series) origin = S_map_all_chans; else origin = S_map_across_all_chans; break;
 	case SCAN_SYNCD_CHANS: if (series) origin = S_map_chans; else origin = S_map_across_chans; break;
 	}
-      if (gh_string_p(org)) ed_origin = gh_scm2newstr(org,NULL); else ed_origin = copy_string(origin);
+      if (gh_string_p(org)) ed_origin = gh_scm2newstr(org,NULL);
     }
   SCM_ASSERT((gh_procedure_p(proc)),proc,SCM_ARG1,origin);
   SCM_ASSERT((gh_number_p(s_beg)) || (gh_boolean_p(s_beg)) || (SCM_UNBNDP(s_beg)),s_beg,SCM_ARG2,origin);
@@ -7032,10 +7032,11 @@ static SCM g_sp_scan(SCM proc, int chan_choice, SCM s_beg, SCM s_end, int series
     }
   else
     {
+      if (ed_origin) origin = ed_origin;
       if (series)
-	result = series_map(ss,cp,proc,chan_choice,beg,end,ed_origin);
-      else result = parallel_map(ss,cp,proc,chan_choice,beg,end,ed_origin);
-      if (ed_origin) FREE(ed_origin);
+	result = series_map(ss,cp,proc,chan_choice,beg,end,origin); /* origin copied by insert_samples_1 or whatever in snd-edits.c */
+      else result = parallel_map(ss,cp,proc,chan_choice,beg,end,origin);
+      if (ed_origin) free(ed_origin);
       return(result);
     }
 }

@@ -4047,7 +4047,7 @@ static void Record_Button_Callback(Widget w,XtPointer clientData,XtPointer callD
 				 recorder_out_format(ss),comment,snd_strlen(comment),NULL);
 	  if (err)
 	    {
-	      record_report(messages,recorder_file(ss),":\n  ",strerror(errno),"\n  (",snd_error_name(snd_IO_error()),")",NULL);
+	      record_report(messages,recorder_file(ss),":\n  ",strerror(errno),NULL);
 	      recording = 0;
 	      triggered = (!triggering);
 	      return;

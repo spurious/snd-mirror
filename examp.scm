@@ -36,6 +36,7 @@
 ;;; echo (delays)
 ;;; ring-modulation, am
 ;;; src-related sound effects (src, rand-interp, etc)
+;;; vct func like list
 ;;; compand (array-interp)
 ;;; shift pitch keeping duration constant (src+granulate)
 ;;; tempo change via envelope (granulate)
@@ -52,7 +53,6 @@
 ;;; time varying FIR filter, notch filter, frequency-response -> FIR coeffs
 ;;; map-sound-files, match-sound-files
 ;;; move sound down 8ve using fft
-;;; vct func like list
 ;;; swap selection chans
 
 
@@ -63,13 +63,26 @@
 (read-enable 'positions)
 (read-set! keywords 'prefix) ;this so we can use ":" as the keyword prefix
 
+(define all-chans
+  (lambda ()
+    (let ((sndlist '())
+	  (chnlist '()))
+      (map (lambda (snd)
+	     (do ((i (1- (channels snd)) (1- i)))
+		 ((< i 0))
+	       (set! sndlist (cons snd sndlist))
+	       (set! chnlist (cons i chnlist))))
+	   (sounds))
+      (list sndlist chnlist))))
+
+
 ;;; -------- snd.html examples made harder to break --------
 ;;;
 ;;; this mainly involves keeping track of the current sound/channel
 
 (define region-rms-1
   (lambda (n)
-    "(region-rms n) -> rms of region n's data (chan 0)"
+    "(region-rms-1 n) -> rms of region n's data (chan 0) the slow way"
     (if (region? n)
 	(let* ((data (region-samples 0 0 n))
 	       (len (vector-length data))
@@ -80,7 +93,7 @@
 
 (define selection-rms-1
   (lambda ()
-    "(selection-rms) -> rms of selection data"
+    "(selection-rms-1) -> rms of selection data using sample readers"
     (if (selection?)
 	(let* ((reader (make-sample-reader (selection-beg)))
 	       (len (selection-length))
@@ -96,6 +109,7 @@
 ;;; if you'd rather use recursion:
 (define selection-rms-2
   (lambda ()
+    "(selection-rms-2) -> rms of selection data using sample readers and recursion"
     ;; this is actually slightly faster than selection-rms
     ;; all the DO loops in this file could be re-written in this form, but I find loops easier to read
     (if (selection?)
@@ -112,6 +126,7 @@
 ;;; but by far the fastest is:
 (define selection-rms
   (lambda ()
+    "(selection-rms) -> rms of selection data using sample readers and dot-product"
     (if (selection?)
 	(let* ((data (region-samples->vct 0 0 0)))
 	  (sqrt (/ (dot-product data data) (vct-length data)))))))
@@ -185,6 +200,8 @@
 
 (define no-startup-file?
   (lambda (ind file)
+    "(no-startup-file?) is intended as a start-hook procedure; if a file is specified in the
+  Snd invocation, but the file doesn't exist, Snd exits back to the shell"
     (if (= ind (max-sounds))
 	(begin
 	  (write (string-append "can't open " file) (current-error-port))
@@ -199,6 +216,7 @@
 
 (define fft-peak
   (lambda (snd chn scale)
+    "(fft-peak) returns the peak spectral magnitude"
     (if (and (ffting) (= (fft-style) normal-fft))
 	(report-in-minibuffer 
 	 (number->string (/ (* 2.0 (vct-peak (transform-samples->vct snd chn))) (fft-size)))
@@ -229,6 +247,7 @@
 
 (define correlate
  (lambda (snd chn y0 y1)
+   "(correlate snd chn y0 y1) returns the correlation of snd's 2 channels"
    (if (and (= (channels snd) 2)
 	    (> (frames snd 0) 1)
 	    (> (frames snd 1) 1))
@@ -281,6 +300,7 @@
 
 (define open-buffer
   (lambda (filename)
+    "(open-buffer filename) adds a menu item that will select filename"
     (add-to-menu buffer-menu 
 		 filename 
 		 (lambda () (select-sound (find-sound filename))))
@@ -288,6 +308,7 @@
 
 (define close-buffer 
   (lambda (snd)
+    "(close-buffer snd) removes the menu item associated with snd"
     (remove-from-menu buffer-menu (file-name snd))
     #f))
 
@@ -334,6 +355,7 @@
 
 (define superimpose-ffts
   (lambda (snd chn y0 y1)
+    "(superimpose-ffts snd chn y0 y1) superimposes ffts of multiple (syncd) sounds"
     (define make-one-fft
       (lambda (samp size snd chn)
 	(let* ((fdr (samples->vct samp size snd chn))
@@ -474,6 +496,7 @@
 
 (define loopit
   (lambda (m1 m2 bufsize)
+    "(loopit mark1 mark2 buffersize) plays while looping between two marks"
     (let* ((pos1 (mark-sample m1))
 	   (pos2 (mark-sample m2))
 	   (beg (min pos1 pos2))
@@ -508,6 +531,7 @@
 
 (define play-section
   (lambda* (beg end #&optional (snd 0))
+    "(play-section beg end snd) plays snd's data between samples beg and end"
     (if (and (sound? snd) (> end beg))
 	(let* ((chans (channels snd))
 	       (edited (make-vector chans)))
@@ -563,6 +587,7 @@
 
 (define mpg
   (lambda (mpgfile rawfile chans)
+    "(mpg file tmpname chans) converts file from MPEG-3 to raw 16-bit samples using mpg123"
     ;; there's probably a way to get the channels automatically
     (system (format #f "mpg123 -s ~A > ~A" mpgfile rawfile))
     (set-raw-srate 44100)
@@ -578,6 +603,7 @@
 
 (define auto-dot
   (lambda (snd chn y0 y1)
+    "(auto-dot snd chn y0 y1) sets the dot size depending on the number of samples being displayed"
     (let ((dots (- (right-sample snd chn)
 		   (left-sample snd chn))))
       (if (> dots 100) 
@@ -660,26 +686,20 @@
 
 (add-hook! close-hook auto-save-done)
 (add-hook! save-hook (lambda (snd name) (auto-save-done snd)))
-(add-hook! exit-hook
-	   (lambda ()
-	     (let ((lim (max-sounds)))
-	       (do ((i 0 (1+ i)))
-		   ((= i lim))
-		 (if (sound? i) (auto-save-done i))))))
+(add-hook! exit-hook (lambda () (map auto-save-done (sounds))))
 
 (define auto-save-func
   (lambda ()
     (if auto-saving
-	(let ((lim (max-sounds)))
-	  (do ((i 0 (1+ i)))
-	      ((= i lim))
-	    (if (and (sound? i)
-		     (> (unsaved-edits i) 0))
-		(begin
-		  (report-in-minibuffer "auto-saving..." i)
-		  (in (* 1000 3) (lambda () (report-in-minibuffer "" i)))
-		  (save-sound-as (string-append "/tmp/#" (short-file-name i) "#") i)
-		  (clear-unsaved-edits i))))
+	(begin
+	  (map (lambda (snd)
+		 (if (> (unsaved-edits snd) 0)
+		     (begin
+		       (report-in-minibuffer "auto-saving..." snd)
+		       (in (* 1000 3) (lambda () (report-in-minibuffer "" snd)))
+		       (save-sound-as (string-append "/tmp/#" (short-file-name snd) "#") snd)
+		       (clear-unsaved-edits snd))))
+	     (sounds))
 	  (in (* 1000 auto-save-interval) auto-save-func)))))
 
 (define auto-save
@@ -699,6 +719,7 @@
 
 (define first-mark-in-window-at-left
   (lambda ()
+    "(first-mark-in-window-at-left) moves the graph so that the leftmost visible mark is at the left edge"
     (let* ((keysnd (or (selected-sound) 0))
 	   (keychn (or (selected-channel keysnd) 0))
 	   (current-left-sample (left-sample keysnd keychn))
@@ -731,6 +752,7 @@
 
 (define flash-selected-data
   (lambda (interval)
+    "(flash-selected-data millisecs) causes the selected data to flash red and green"
     (if (selected-sound)
 	(begin
 	  (set-selected-data-color (if data-red? green red))
@@ -755,6 +777,7 @@
 
 (define mark-loops
   (lambda ()
+    "(mark-loops) places marks at loop points found in the selected sound's header"
     (let ((loops (mus-sound-loop-info (file-name))))
       (if (not (null? loops))
 	  (begin
@@ -774,18 +797,16 @@
 
 (define delete-selection-and-smooth
   (lambda ()
+    "(delete-selection-and-smooth) deletes the current selection and smooths the splice"
     (if (selection?)
 	(let ((beg (selection-beg))
 	      (len (selection-length)))
-	  (do ((i 0 (1+ i)))
-	      ((= i (max-sounds)) #f)
-	    (if (sound? i)
-		(do ((j 0 (1+ j)))
-		    ((= j (channels i)) #f)
-		  (if (selection-member i j)
-		      (let ((smooth-beg (max 0 (- beg 16))))
-			(delete-samples beg len i j)
-			(smooth smooth-beg 32 i j))))))))))
+	  (apply map (lambda (snd chn)
+		       (if (selection-member snd chn)
+			   (let ((smooth-beg (max 0 (- beg 16))))
+			     (delete-samples beg len snd chn)
+			     (smooth smooth-beg 32 snd chn))))
+		 (all-chans))))))
 
 
 ;;; -------- eval over selection, replacing current samples, mapped to "x" key using prompt-in-minibuffer
@@ -803,25 +824,24 @@
 
 (define eval-over-selection 
   (lambda (func snd)
+    "(eval-over-selection func snd) evaluates func on each sample in the current selection"
     (if (procedure? func) 
 	(let* ((beg (selection-beg))
 	       (len (selection-length)))
-	  (do ((i 0 (1+ i))) ;here we're treating each sound in the current selection
-	      ((= i (max-sounds)) #f)
-	    (if (sound? i)
-		(do ((j 0 (1+ j))) ;here we're treating each channel of the current sound in the current selection
-		    ((= j (channels i)) #f)
-		  (if (selection-member i j)
-		      (let ((new-data (make-vct len))
-			    (old-data (samples->vct beg len i j)))
-			(do ((k 0 (1+ k))) ;here we're applying our function to each sample in the currently selected portion
-			    ((= k len) (set-samples beg len new-data i j))
-			  (vct-set! new-data k (func (vct-ref old-data k)))))))))))))
+	  (apply map (lambda (snd chn)
+		       (if (selection-member snd chn)
+			   (let ((new-data (make-vct len))
+				 (old-data (samples->vct beg len snd chn)))
+			     (do ((k 0 (1+ k))) ;here we're applying our function to each sample in the currently selected portion
+				 ((= k len) (set-samples beg len new-data snd chn))
+			       (vct-set! new-data k (func (vct-ref old-data k)))))))
+		 (all-chans))))))
 
 ;;; the same idea can be used to apply a function between two marks:
 
 (define eval-between-marks
   (lambda (func snd)
+    "(eval-between-marks func snd) evaluates func between the leftmost marks in snd"
     (define (find-if pred l) ; this is from guile/ice-9/common-list.scm but returns l not car l
       (cond ((null? l) #f)
 	    ((pred (car l)) l)
@@ -853,10 +873,10 @@
 ;;; -------- mix with result at original peak amp
 
 (define normalized-mix 
-  (lambda (filename beg in_chan snd chn)
-    ;; like mix but returns result with same peak amp as before (return scaler)
+  (lambda (filename beg in-chan snd chn)
+    "(normalized-mix filename beg in-chan snd chn) is like mix but mix result has same peak amp as unmixed snd/chn (returns scaler)"
     (let ((original-max-amp (maxamp snd chn)))
-      (mix filename beg in_chan snd chn)
+      (mix filename beg in-chan snd chn)
       (let ((new-max-amp (maxamp snd chn)))
 	(if (not (= original-max-amp new-max-amp))
 	    (let ((scaler (/ original-max-amp new-max-amp))
@@ -872,51 +892,55 @@
 ;;;
 
 (define do-all-chans
-  (lambda (proc args origin)
-    (do ((i 0 (1+ i)))
-	((= i (max-sounds)) #f)
-      (if (sound? i)
-	  (do ((j 0 (1+ j)))
-	      ((= j (channels i)) #f)
-	    (map-chan (apply proc args) #f #f origin i j))))))
+  (lambda (func origin)
+    "(do-all-chans func edhist) applies func to all active channels, using edhist as the edit history indication"
+    (apply map (lambda (snd chn)
+		 (map-chan func #f #f origin snd chn))
+	   (all-chans))))
+
+;; (do-all-chans (lambda (val) (if val (* 2.0 val) #f)) "double all samples") 
 
 (define update-graphs
   (lambda ()
-    (do ((i 0 (1+ i)))
-	((= i (max-sounds)) #f)
-      (if (sound? i)
-	  (do ((j 0 (1+ j)))
-	      ((= j (channels i)) #f)
-	    (update-graph i j))))))
+    "(update-graphs) updates (redraws) all graphs"
+    (apply map (lambda (snd chn)
+		 (update-graph snd chn))
+	   (all-chans))))
 
 (define do-chans
-  (lambda (proc args origin)
-    (if (> (syncing) 0)
-	(do ((snc (syncing))
-	     (i 0 (1+ i)))
-	    ((= i (max-sounds)) #f)
-	  (if (and (sound? i) (= (syncing i) snc))
-	      (do ((j 0 (1+ j)))
-		  ((= j (channels i)) #f)
-		(map-chan (apply proc args) #f #f origin i j))))
-	(map-chan (apply proc args)))))
+  (lambda (func origin)
+    "(do-chans func edhist) applies func to all sync'd channels using edhist as the edit history indication"
+    (let ((snc (syncing)))
+      (if (> snc 0)
+	  (apply map
+		 (lambda (snd chn)
+		   (if (= (syncing snd) snc)
+		       (map-chan func #f #f origin snd chn)))
+		 (all-chans))
+	  (snd-warning "sync not set")))))
 
 (define do-sound-chans
-  (lambda (proc args origin)
-    (let ((ind (selected-sound)))
-      (do ((j 0 (1+ j)))
-	  ((= j (channels ind)) #f)
-      (map-chan (apply proc args) #f #f origin ind j)))))
-
+  (lambda (proc origin)
+    "(do-sound-chans func args edhist) applies func to all selected channels using edhist as the edit history indication"
+    (let ((snd (selected-sound)))
+      (if (sound? snd)
+	  (begin
+	    (do ((chn 0 (1+ chn)))
+		((= chn (channels snd)) #f)
+	      (map-chan proc #f #f origin snd chn)))
+	  (snd-warning "no selected sound")))))
 
 (define every-sample?
   (lambda (proc)
+    "(every-sample func) -> #t if func is not #f for all samples in the current channel,
+  otherwise it moves the cursor to the first offending sample"
     (let ((baddy (scan-chan (lambda (y) (if y (not (proc y)) #f)))))
       (if baddy (set-cursor (cadr baddy)))
       (not baddy))))
 
 (define sort-samples
   (lambda (nbins)
+    "(sort-samples bins) provides a histogram in bins bins"
     (let ((bins (make-vector nbins 0)))
       (lambda (y)
 	(if y
@@ -1390,22 +1414,22 @@
 ; (fp 1.0 .3 20)
 	    
 
+;;; -------- vct func like list -- takes any number of args and creates vct
+;;;
+;;;  (vct 1 2 3)
+;;;  -> #<vct 1.000 2.000 3.000>
+
+(define vct (lambda args (list->vct args)))
+
+
 ;;; -------- compand
+
 
 (define compand
   (lambda ()
-    (let* ((tbl (make-vct 17)))
-      ;; we'll fill this by hand with some likely-looking companding curve
+    (let* ((tbl (vct -1.000 -0.960 -0.900 -0.820 -0.720 -0.600 -0.450 -0.250 
+		     0.000 0.250 0.450 0.600 0.720 0.820 0.900 0.960 1.000)))
       ;; (we're eye-balling the curve on p55 of Steiglitz's "a DSP Primer")
-      (vct-set! tbl 8 0.0)
-      (vct-set! tbl 7 -.25) (vct-set! tbl 9  .25) 
-      (vct-set! tbl 6 -.45) (vct-set! tbl 10 .45) 
-      (vct-set! tbl 5 -.6)  (vct-set! tbl 11 .6)
-      (vct-set! tbl 4 -.72) (vct-set! tbl 12 .72)
-      (vct-set! tbl 3 -.82) (vct-set! tbl 13 .82)
-      (vct-set! tbl 2 -.90) (vct-set! tbl 14 .90)
-      (vct-set! tbl 1 -.96) (vct-set! tbl 15 .96)
-      (vct-set! tbl 0 -1.0) (vct-set! tbl 16 1.0)
       (lambda (inval)
 	(if inval
 	    (let ((index (+ 8.0 (* 8.0 inval))))
@@ -2227,11 +2251,7 @@
 (define map-sound-files
   (lambda args
     "(map-sound-files func &optional dir) applies func to each sound file in dir"
-    (let* ((func (car args))
-	   (files (sound-files-in-directory (if (null? (cdr args)) "." (cadr args)))))
-      (do ((i 0 (1+ i)))
-	  ((= i (vector-length files)))
-	(func (vector-ref files i))))))
+    (map (car args) (vector->list (sound-files-in-directory (if (null? (cdr args)) "." (cadr args)))))))
 
 (define match-sound-files
   (lambda args
@@ -2300,14 +2320,6 @@
       (vct->samples 0 (* 2 fftlen) rl2))))
 
 
-;;; -------- vct func like list -- takes any number of args and creates vct
-;;;
-;;;  (vct 1 2 3)
-;;;  -> #<vct 1.000 2.000 3.000>
-
-(define vct (lambda args (list->vct args)))
-
-
 ;;; -------- swap selection chans
 
 (define swap-selection-channels 
@@ -2316,16 +2328,13 @@
       (lambda (not-this)
 	(call-with-current-continuation
 	 (lambda (return)
-	   (do ((i 0 (1+ i)))
-	       ((= i (max-sounds)) #f)
-	     (if (sound? i) 
-		 (do ((j 0 (1+ j)))
-		     ((= j (channels i)) #f)
-		   (if (and (selection-member i j)
-			    (or (null? not-this)
-				(not (= i (car not-this)))
-				(not (= j (cadr not-this)))))
-		       (return (list i j))))))))))
+	   (apply map (lambda (snd chn)
+			(if (and (selection-member snd chn)
+				 (or (null? not-this)
+				     (not (= snd (car not-this)))
+				     (not (= chn (cadr not-this)))))
+			    (return (list snd chn))))
+		  (all-chans))))))
     (if (selection?)
 	(if (= (region-chans 0) 2)
 	    (let* ((beg (selection-beg))

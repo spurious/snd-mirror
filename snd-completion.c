@@ -15,10 +15,10 @@
 #endif
       
 
-#define NUM_COMMANDS 743
+#define NUM_COMMANDS 745
 
 static char *snd_commands[NUM_COMMANDS]={
-  S_abort,S_abortQ,S_activate_listener,S_active_sounds,S_add_mark,S_add_sound_file_extension,S_add_to_main_menu,S_add_to_menu,S_add_transform,
+  S_abort,S_abortQ,S_activate_listener,S_add_mark,S_add_sound_file_extension,S_add_to_main_menu,S_add_to_menu,S_add_transform,
   S_after_graph_hook,S_after_open_hook,
   S_amp,S_amplitude_env,S_append_to_minibuffer,S_as_one_edit,S_ask_before_overwrite,
   S_audio_output_device,S_audio_state_file,S_auto_resize,S_auto_update,S_autocorrelate,S_autocorrelation,S_axis_label_font,S_axis_numbers_font,
@@ -63,7 +63,7 @@ static char *snd_commands[NUM_COMMANDS]={
   S_hadamard_transform,S_hankel_transform,S_header_type,S_help_dialog,S_help_text_font,
   S_hide_listener,S_highlight_color,S_html_dir,
 
-  S_in,S_initial_x0,S_initial_x1,S_initial_y0,S_initial_y1,S_insert_region,S_insert_sample,
+  S_id_region,S_in,S_initial_x0,S_initial_x1,S_initial_y0,S_initial_y1,S_insert_region,S_insert_sample,
   S_insert_samples,S_insert_sound,
 
   S_key,S_key_press_hook,S_keyboard_no_action,
@@ -95,7 +95,7 @@ static char *snd_commands[NUM_COMMANDS]={
   S_raw_chans,S_raw_format,S_raw_srate,S_read_only,
   S_recorder_autoload,S_recorder_buffer_size,S_recorder_dialog,
   S_recorder_file,S_recorder_gain,S_recorder_in_amp,S_recorder_in_format,S_recorder_max_duration,S_recorder_out_amp,S_recorder_out_chans,
-  S_recorder_out_format,S_recorder_srate,S_recorder_trigger,S_redo,S_region_chans,S_region_dialog,S_region_length,
+  S_recorder_out_format,S_recorder_srate,S_recorder_trigger,S_redo,S_region_chans,S_region_dialog,S_region_id,S_region_length,
   S_region_maxamp,S_region_sample,S_region_samples,S_region_samples_vct,
   S_region_srate,S_regionQ,S_regions,
   S_remove_from_menu,S_report_in_minibuffer,S_restore_control_panel,
@@ -165,7 +165,7 @@ static char *snd_commands[NUM_COMMANDS]={
   S_showing_controls,S_sinc_width,S_smooth,S_smooth_selection,
   S_snd_apropos,S_snd_error,S_snd_error_hook,S_snd_help,S_snd_spectrum,S_snd_version,S_snd_warning,S_snd_warning_hook,
   S_sonogram,S_sound_files_in_directory,
-  S_sound_to_temp,S_sound_to_temps,S_soundQ,S_soundfont_info,
+  S_sound_to_temp,S_sound_to_temps,S_soundQ,S_soundfont_info,S_sounds,
   S_spectro_cutoff,S_spectro_hop,S_spectro_start,S_spectro_x_angle,S_spectro_x_scale,S_spectro_y_angle,S_spectro_y_scale,
   S_spectro_z_angle,S_spectro_z_scale,S_spectrogram,S_spectrum_env,S_speed,S_speed_as_float,S_speed_as_ratio,S_speed_as_semitone,
   S_speed_style,S_speed_tones,S_squelch_update,S_srate,S_srate_env,
