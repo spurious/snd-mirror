@@ -10,12 +10,17 @@
 
 #define ENVED_DOT_SIZE 10
 
+XEN envelope_base_sym;
 #if HAVE_GUILE
-  XEN envelope_base_sym;
   #define XEN_VARIABLE_PROPERTY(Obj, Prop)          scm_object_property(Obj, Prop)
   #define XEN_SET_VARIABLE_PROPERTY(Obj, Prop, Val) scm_set_object_property_x(XEN_VARIABLE_REF(Obj), Prop, Val)
   #define XEN_OBJECT_PROPERTY(Obj, Prop)            scm_object_property(Obj, Prop)
   #define XEN_SET_OBJECT_PROPERTY(Obj, Prop, Val)   scm_set_object_property_x(Obj, Prop, Val)
+#else
+  #define XEN_VARIABLE_PROPERTY(Obj, Prop)          rb_property(rb_obj_id(Obj), Prop)
+  #define XEN_SET_VARIABLE_PROPERTY(Obj, Prop, Val) rb_set_property(rb_obj_id(Obj), Prop, Val)
+  #define XEN_OBJECT_PROPERTY(Obj, Prop)            rb_property(rb_obj_id(Obj), Prop)
+  #define XEN_SET_OBJECT_PROPERTY(Obj, Prop, Val)   rb_set_property(rb_obj_id(Obj), Prop, Val)
 #endif
 
 
@@ -1485,6 +1490,12 @@ env *name_to_env(const char *str)
   return(e);
 }
 
+#if HAVE_RUBY
+#define SND_ENV_MAX_VARS 100
+static XEN snd_env_array[SND_ENV_MAX_VARS];
+static int env_index = -1;
+#endif
+
 static XEN g_define_envelope(XEN name, XEN data, XEN base)
 {
   /* defines 'name' and attaches various 'envelope-* properties */
@@ -1501,21 +1512,25 @@ and 'base' into the envelope editor."
   if ((e) && (XEN_NUMBER_P(base)))
     e->base = XEN_TO_C_DOUBLE(base);
   alert_envelope_editor(ename, e);
+#if HAVE_RUBY
+  if (env_index >= SND_ENV_MAX_VARS)
+    env_index = 0;
+  else
+    env_index++;
+  XEN_DEFINE_VARIABLE(ename, snd_env_array[env_index], data); /* need global C variable */
+  /* add property */
+  XEN_SET_VARIABLE_PROPERTY(snd_env_array[env_index], envelope_base_sym, C_TO_XEN_DOUBLE(e->base));
+  return(snd_env_array[env_index]);
+#else
   XEN_DEFINE_VARIABLE(ename, temp, data); /* already gc protected */
-#if HAVE_GUILE
   /* add property */
   XEN_SET_VARIABLE_PROPERTY(temp, envelope_base_sym, C_TO_XEN_DOUBLE(e->base));
-#endif
   return(temp);
+#endif
 }
 
-#if HAVE_GUILE
 XEN envelope_base(XEN obj) {return(XEN_VARIABLE_PROPERTY(obj, envelope_base_sym));}
 static XEN set_envelope_base(XEN obj, XEN base) {XEN_SET_VARIABLE_PROPERTY(obj, envelope_base_sym, base); return(base);}
-#else
-XEN envelope_base(XEN obj) {return(XEN_FALSE);}
-/* static XEN set_envelope_base(XEN obj, XEN base) {return(XEN_FALSE);} */
-#endif
 
 XEN env_to_xen(env *e)
 {
@@ -1822,13 +1837,17 @@ void g_init_env(void)
 #if HAVE_GUILE
   XEN_DEFINE_PROCEDURE(S_define_envelope "-1", g_define_envelope_w, 2, 1, 0, H_define_envelope);
   XEN_EVAL_C_STRING("(defmacro defvar (a b) `(define-envelope-1 (symbol->string ',a) ,b))");
+
 #if WITH_RUN
   /* defmacro* is in optargs.scm in 1.3.4 and probably 1.4, but it uses #& rather than #: */
   XEN_EVAL_C_STRING("(defmacro* define-envelope (a b #:optional c) `(define-envelope-1 (symbol->string ',a) ,b ,c))");
 #endif
+
   envelope_base_sym = C_STRING_TO_XEN_SYMBOL(S_envelope_base);
   XEN_PROTECT_FROM_GC(envelope_base_sym);
 #else
+  /* scheme-to-ruby name (S_envelope_base) */
+  envelope_base_sym = XEN_MAKE_KEYWORD(S_envelope_base);
   XEN_DEFINE_PROCEDURE(S_define_envelope, g_define_envelope_w, 2, 1, 0, H_define_envelope);
 #endif
 

@@ -1869,3 +1869,35 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 		 (vct-set! results loc (/ numsum densum))))))))))
 	     
 
+;;; ----------------
+;;;
+;;; invert-filter inverts a filter
+;;;
+;;; say we previously filtered a sound via (filter-channel (vct .5 .25 .125))
+;;;   and we want to undo it without using (undo):
+;;;   (filter-channel (invert-filter (vct .5 .25 .125)))
+;;;
+;;; there are a million gotchas here.  The primary one is that the inverse filter
+;;; can "explode" -- the coefficients can grow without bound.  For example, any
+;;; filter returned by spectrum->coeffs above will be bad (and will probably
+;;; segfault because Guile tries to print out a huge number and seems to get confused).
+
+(define (invert-filter fcoeffs)
+  (let* ((flen (vct-length fcoeffs))
+	 (coeffs (make-vct (+ 32 flen))) ; add room for coeffs to die away
+	 (order (vct-length coeffs)))
+    (do ((i 0 (1+ i)))
+	((= i flen))
+      (vct-set! coeffs i (vct-ref fcoeffs i)))
+    (let ((nfilt (make-vct order)))
+      (vct-set! nfilt 0 (/ 1.0 (vct-ref coeffs 0)))
+      (do ((i 1 (1+ i)))
+	  ((= i order))
+	(let ((sum 0.0))
+	  (do ((j 0 (1+ j))
+	       (k i (1- k)))
+	      ((= j i))
+	    (set! sum (+ sum (* (vct-ref nfilt j) (vct-ref coeffs k)))))
+	  (vct-set! nfilt i (/ sum (- (vct-ref coeffs 0))))))
+      nfilt)))
+

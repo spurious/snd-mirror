@@ -20,11 +20,12 @@
  */
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 29
-#define XEN_VERSION "1.29"
+#define XEN_MINOR_VERSION 30
+#define XEN_VERSION "1.30"
 
 /* HISTORY:
  *
+ *  24-Mar-05: Ruby properties (Mike Scholz).
  *  8-Mar-05:  Ruby improvements in keywords and hooks (Mike Scholz).
  *  7-Mar-05:  C99 complex number changes (creal, _Complex_I) (Steve Bankowitz).
  *  2-Mar-05:  Ruby support for off_t (Mike Scholz).
@@ -1380,6 +1381,8 @@ VALUE xen_rb_is_hook_p(VALUE hook);
 VALUE xen_rb_hook_c_new(char *name, int arity, char *help);
 VALUE xen_rb_hook_reset_hook(VALUE hook);
 VALUE xen_rb_hook_to_a(VALUE hook);
+XEN rb_property(XEN obj, XEN prop);
+XEN rb_set_property(XEN obj, XEN prop, XEN val);
 void Init_Hook(void);
 typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #endif

@@ -536,12 +536,17 @@ char *xen_scheme_global_variable_to_ruby(const char *name)
 {
   /* prepend $ */
   char *new_name;
-  int i, len;
   new_name = scheme_to_ruby(name);
-  len = strlen(new_name);
-  for (i = len; i > 0; i--)
-    new_name[i] = new_name[i - 1];
-  new_name[0] = '$';
+  if (new_name[0] == '_')
+    new_name[0] = '$';
+  else
+    {
+      int i, len;
+      len = strlen(new_name);
+      for (i = len; i > 0; i--)
+	new_name[i] = new_name[i - 1];
+      new_name[0] = '$';
+    }
   return(new_name);
 }
 
@@ -1029,8 +1034,66 @@ static VALUE xen_rb_new(int argc, VALUE *argv, VALUE klass)
 }
 #endif
 
+static XEN rb_object_properties = XEN_FALSE;
+
+#define S_property       "property"
+#define S_set_property   "set_property"
+#define S_properties     "properties"
+
+XEN rb_property(XEN obj, XEN key)
+{
+#define H_property S_property "(obj, key)  \
+if key exists, return obj's value (maybe nil) associated with key otherwise false"
+  XEN props = XEN_FALSE;
+
+  XEN_ASSERT_TYPE((obj), obj, XEN_ARG_1, S_property, "an object of any kind");
+  XEN_ASSERT_TYPE((key), key, XEN_ARG_2, S_property, "an object of any kind");
+  
+  if (XEN_FALSE_P(rb_object_properties))
+    return XEN_FALSE;
+
+  props = rb_hash_aref(rb_object_properties, obj);
+
+  if (XEN_FALSE_P(props) || props == Qnil)
+    return XEN_FALSE;
+  else
+    return rb_hash_aref(props, key);
+}
+
+XEN rb_set_property(XEN obj, XEN key, XEN value)
+{
+#define H_set_property S_set_property "(obj, key, value)  \
+set key-value pair for obj and return value"
+  XEN props = XEN_FALSE;
+
+  XEN_ASSERT_TYPE((obj), obj, XEN_ARG_1, S_set_property, "an object of any kind");
+  XEN_ASSERT_TYPE((key), key, XEN_ARG_2, S_set_property, "an object of any kind");
+  XEN_ASSERT_TYPE((value), value, XEN_ARG_3, S_set_property, "an object of any kind");
+
+  if (XEN_FALSE_P(rb_object_properties))
+    rb_object_properties = rb_hash_new();
+  else
+    props = rb_hash_aref(rb_object_properties, obj);
+  
+  if (XEN_FALSE_P(props) || props == Qnil)
+    props = rb_hash_new();
+  
+  rb_hash_aset(props, key, value);
+  rb_hash_aset(rb_object_properties, obj, props);
+  return value;
+}
+
+XEN rb_properties(void)
+{
+#define H_properties S_properties "()  return all properties of rb_object_properties (a hash)"
+  return rb_object_properties;
+}
+
 XEN_ARGIFY_1(g_get_help_w, g_get_help);
 XEN_NARGIFY_2(g_add_help_w, g_add_help);
+XEN_NARGIFY_3(g_set_property_w, rb_set_property);
+XEN_NARGIFY_2(g_property_w, rb_property);
+XEN_NARGIFY_0(g_properties_w, rb_properties);
 
 static bool hook_inited = false;
 
@@ -1071,6 +1134,10 @@ void Init_Hook(void)
 
   XEN_DEFINE_PROCEDURE(S_get_help,             g_get_help_w,             0, 1, 0, H_get_help);
   XEN_DEFINE_PROCEDURE(S_add_help,             g_add_help_w,             2, 0, 0, H_add_help);
+
+  XEN_DEFINE_PROCEDURE(S_set_property,         g_set_property_w,         3, 0, 0, H_set_property);
+  XEN_DEFINE_PROCEDURE(S_property,             g_property_w,             2, 0, 0, H_property);
+  XEN_DEFINE_PROCEDURE(S_properties,           g_properties_w,           0, 0, 0, H_properties);
 }
 
 /* end of class Hook */

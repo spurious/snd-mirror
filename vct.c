@@ -148,17 +148,24 @@ char *vct_to_readable_string(vct *v)
   if (v == NULL) return(NULL);
   len = v->length;
   buf = (char *)CALLOC(64 + len * 8, sizeof(char));
+#if HAVE_GUILE
   sprintf(buf, "(vct");
+#else
+  sprintf(buf, "vct(");
+#endif
   for (i = 0; i < len; i++)
     {
+#if HAVE_GUILE
       mus_snprintf(flt, 16, " %.3f", v->data[i]);
+#else
+      mus_snprintf(flt, 16, "%.3f%s", v->data[i], i + 1 < len ? ", " : "");
+#endif
       strcat(buf, flt);
     }
   strcat(buf, ")");
   return(buf);
 }
 
-#if HAVE_GUILE
 static XEN g_vct_to_readable_string(XEN obj)
 {
   char *vstr;
@@ -170,7 +177,6 @@ static XEN g_vct_to_readable_string(XEN obj)
   FREE(vstr);
   return(result);
 }
-#endif
 
 bool vct_equalp(vct *v1, vct *v2)
 {
@@ -761,6 +767,107 @@ static XEN g_vct_map_store(XEN obj)
   }
   return obj;
 }
+
+/* v1.add!(v2[,offset=0]) destructive */
+static XEN rb_vct_add(int argc, XEN *argv, XEN obj1)
+{
+  XEN obj2, offs;
+  rb_scan_args(argc, argv, "11", &obj2, &offs);
+  return vct_add(obj1, obj2, (argc == 2) ? offs : XEN_UNDEFINED);
+}
+
+/* v1.add(v2[,offset=0]) returns new vct */
+static XEN rb_vct_add_cp(int argc, XEN *argv, XEN obj1)
+{
+  XEN obj2, offs;
+  rb_scan_args(argc, argv, "11", &obj2, &offs);
+  return vct_add(copy_vct(obj1), obj2, (argc == 2) ? offs : XEN_UNDEFINED);
+}
+
+/* v1.subtract(v2) returns new vct */
+static XEN rb_vct_subtract_cp(XEN obj1, XEN obj2)
+{
+  return vct_subtract(copy_vct(obj1), obj2);
+}
+
+static XEN rb_vct_offset_cp(XEN obj, XEN scl)
+{
+  return vct_offset(copy_vct(obj), scl);
+}
+
+static XEN rb_vct_multiply_cp(XEN obj1, XEN obj2)
+{
+  return vct_multiply(copy_vct(obj1), obj2);
+}
+
+static XEN rb_vct_scale_cp(XEN obj, XEN scl)
+{
+  return vct_scale(copy_vct(obj), scl);
+}
+
+static XEN rb_vct_fill_cp(XEN obj, XEN scl)
+{
+  return vct_fill(copy_vct(obj), scl);
+}
+
+/* destructive */
+static XEN rb_vct_move(int argc, XEN *argv, XEN obj)
+{
+  XEN new, old, backward;
+  rb_scan_args(argc, argv, "21", &new, &old, &backward);
+  return vct_move(obj, new, old, (argc == 3) ? backward : XEN_UNDEFINED);
+}
+
+/* returns new vct */
+static XEN rb_vct_move_cp(int argc, XEN *argv, XEN obj)
+{
+  XEN new, old, backward;
+  rb_scan_args(argc, argv, "21", &new, &old, &backward);
+  return vct_move(copy_vct(obj), new, old, (argc == 3) ? backward : XEN_UNDEFINED);
+}
+
+static XEN rb_vct_subseq(int argc, XEN *argv, XEN obj)
+{
+  XEN start, end, vnew;
+  rb_scan_args(argc, argv, "12", &start, &end, &vnew);
+    return vct_subseq(obj, start, (argc > 1) ? end :XEN_UNDEFINED, (argc > 2) ? vnew : XEN_UNDEFINED);
+}
+
+/* destructive */
+static XEN rb_vct_reverse(int argc, XEN *argv, XEN obj)
+{
+  XEN len;
+  rb_scan_args(argc, argv, "01", &len);
+  return vct_reverse(obj, (argc > 0) ? len : XEN_UNDEFINED);
+}
+
+/* returns new vct */
+static XEN rb_vct_reverse_cp(int argc, XEN *argv, XEN obj)
+{
+  XEN len;
+  rb_scan_args(argc, argv, "01", &len);
+  return vct_reverse(copy_vct(obj), (argc > 0) ? len : XEN_UNDEFINED);
+}
+
+static XEN rb_vct_first(XEN obj)
+{
+  return vct_ref(obj, C_TO_XEN_INT(0));
+}
+
+static XEN rb_set_vct_first(XEN obj, XEN val)
+{
+  return vct_set(obj, C_TO_XEN_INT(0), val);
+}
+
+static XEN rb_vct_last(XEN obj)
+{
+  return vct_ref(obj, C_TO_XEN_INT(TO_VCT(obj)->length - 1));
+}
+
+static XEN rb_set_vct_last(XEN obj, XEN val)
+{
+  return vct_set(obj, C_TO_XEN_INT(TO_VCT(obj)->length - 1), val);
+}
 #endif
 
 #if WITH_MODULES
@@ -781,6 +888,7 @@ void vct_init(void)
 #if HAVE_RUBY
   rb_include_module(vct_tag, rb_mComparable);
   rb_include_module(vct_tag, rb_mEnumerable);
+
   rb_define_method(vct_tag, "to_s",     XEN_PROCEDURE_CAST print_vct, 0);
   rb_define_method(vct_tag, "eql?",     XEN_PROCEDURE_CAST equalp_vct, 1);
   rb_define_method(vct_tag, "[]",       XEN_PROCEDURE_CAST vct_ref, 1);
@@ -794,7 +902,30 @@ void vct_init(void)
   rb_define_method(vct_tag, "to_a",     XEN_PROCEDURE_CAST vct_to_vector, 0);
   rb_define_method(rb_cArray, "to_vct", XEN_PROCEDURE_CAST vector_to_vct, 0);
 
-  /* many more could be added */
+  rb_define_method(vct_tag, "to_str",    XEN_PROCEDURE_CAST g_vct_to_readable_string, 0);
+  rb_define_method(vct_tag, "dup",       XEN_PROCEDURE_CAST copy_vct, 0);
+  rb_define_method(vct_tag, "peak",      XEN_PROCEDURE_CAST vct_peak, 0);
+  rb_define_method(vct_tag, "add",       XEN_PROCEDURE_CAST rb_vct_add_cp, -1);
+  rb_define_method(vct_tag, "add!",      XEN_PROCEDURE_CAST rb_vct_add, -1);
+  rb_define_method(vct_tag, "subtract",  XEN_PROCEDURE_CAST rb_vct_subtract_cp, 1);
+  rb_define_method(vct_tag, "subtract!", XEN_PROCEDURE_CAST vct_subtract, 1);
+  rb_define_method(vct_tag, "offset",    XEN_PROCEDURE_CAST rb_vct_offset_cp, 1);
+  rb_define_method(vct_tag, "offset!",   XEN_PROCEDURE_CAST vct_offset, 1);
+  rb_define_method(vct_tag, "multiply",  XEN_PROCEDURE_CAST rb_vct_multiply_cp, 1);
+  rb_define_method(vct_tag, "multiply!", XEN_PROCEDURE_CAST vct_multiply, 1);
+  rb_define_method(vct_tag, "scale",     XEN_PROCEDURE_CAST rb_vct_scale_cp, 1);
+  rb_define_method(vct_tag, "scale!",    XEN_PROCEDURE_CAST vct_scale, 1);
+  rb_define_method(vct_tag, "fill",      XEN_PROCEDURE_CAST vct_fill, 1);
+  rb_define_method(vct_tag, "move",      XEN_PROCEDURE_CAST rb_vct_move_cp, -1);
+  rb_define_method(vct_tag, "move!",     XEN_PROCEDURE_CAST rb_vct_move, -1);
+  rb_define_method(vct_tag, "subseq",    XEN_PROCEDURE_CAST rb_vct_subseq, -1);
+  rb_define_method(vct_tag, "reverse",   XEN_PROCEDURE_CAST rb_vct_reverse_cp, -1);
+  rb_define_method(vct_tag, "reverse!",  XEN_PROCEDURE_CAST rb_vct_reverse, -1);
+  rb_define_method(vct_tag, "first",     XEN_PROCEDURE_CAST rb_vct_first, 0);
+  rb_define_method(vct_tag, "first=",    XEN_PROCEDURE_CAST rb_set_vct_first, 0);
+  rb_define_method(vct_tag, "last",      XEN_PROCEDURE_CAST rb_vct_last, 0);
+  rb_define_method(vct_tag, "last=",     XEN_PROCEDURE_CAST rb_set_vct_last, 0);
+
 #endif
 
   XEN_DEFINE_PROCEDURE(S_make_vct,      g_make_vct_w,   1, 1, 0, H_make_vct);
@@ -826,10 +957,10 @@ void vct_init(void)
 
 #if HAVE_GUILE
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_vct_ref, vct_ref_w, H_vct_ref, "set-" S_vct_ref, vct_set_w,  2, 0, 3, 0);
-  XEN_DEFINE_PROCEDURE(S_vct_to_string, g_vct_to_readable_string, 1, 0, 0, H_vct_to_string);
 #else
   XEN_DEFINE_PROCEDURE(S_vct_ref,       vct_ref_w,      2, 0, 0, H_vct_ref);
 #endif
+  XEN_DEFINE_PROCEDURE(S_vct_to_string, g_vct_to_readable_string, 1, 0, 0, H_vct_to_string);
   XEN_DEFINE_PROCEDURE(S_vct_setB,      vct_set_w,      3, 0, 0, H_vct_setB);
 
 #if WITH_MODULES
