@@ -1096,7 +1096,7 @@ int mix(off_t beg, off_t num, int chans, chan_info **cps, char *mixinfile, int t
   return(id);
 }
 
-static int mix_complete_file(snd_info *sp, off_t beg, char *fullname, const char *origin, int with_tag)
+int mix_complete_file(snd_info *sp, off_t beg, char *fullname, const char *origin, int with_tag)
 {
   /* no need to save as temp here, but we do need sync info (from menu and keyboard) */
   chan_info *cp;

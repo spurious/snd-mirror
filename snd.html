@@ -1557,14 +1557,15 @@ use C-u 0 C-x p.  C-g stops any playing in progress.
 <p>Mixing (adding, not multiplying by a sinusoid) is the most common
 editing operation performed on sounds, so there is relatively
 elaborate support for it in Snd.  To mix in a file, use the File Mix menu option,
-the command C-x C-q, or one of the various mixing functions.  Currently the only difference
+the command C-x C-q, drag-and-drop it into its new home, or use one of the many mixing functions.  Currently the only difference
 between the first two is that the Mix menu option tries
 to take the current sync state into account, whereas
 the C-x C-q command does not. To mix a selection, use
 C-x q.
-The mix
-starts at the current cursor location.
-It is displayed as a separate waveform above the main waveform with
+In drag-and-drop, the mix starts at the mouse location;
+in the other cases, the default is to
+start at the current cursor location.
+The mixed-in sound is displayed as a separate waveform above the main waveform with
 a red tag at the beginning.  You can drag the tag to reposition the
 mix.  The underlying sound begin mixed can be edited by the same
 functions used throughout Snd; the mix number is used as the first

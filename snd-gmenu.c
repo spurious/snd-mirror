@@ -483,8 +483,6 @@ void check_menu_labels(int key, int state, int extended) {}
 
 /* -------------------------------- MAIN MENU -------------------------------- */
 
-GtkWidget *get_menubar(void) {return(mw[menu_menu]);}
-
 GtkWidget *add_menu(snd_state *ss)
 {
   /* this mainly passes the global data pointer (ss) to all the menu-related callbacks */
@@ -497,6 +495,7 @@ GtkWidget *add_menu(snd_state *ss)
 
   mw[menu_menu] = gtk_menu_bar_new();
   ml[menu_menu] = NULL;
+  add_drop(ss, mw[menu_menu]);
   gtk_box_pack_start(GTK_BOX(MAIN_PANE(ss)), mw[menu_menu], FALSE, TRUE, 0);
   gtk_widget_show(mw[menu_menu]);
 

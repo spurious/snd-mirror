@@ -1147,6 +1147,7 @@ char **set_header_and_data_positions(file_data *fdat, int type, int format);
 int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *str, int save_type, int srate, int type, int format, char *comment);
 void edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_data);
 snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *new_comment);
+void reflect_file_change_in_title(snd_state *ss);
 
 int header_type_from_position(int pos);
 int data_format_from_position(int header, int pos);
@@ -1208,6 +1209,7 @@ mix_context *free_mix_context(mix_context *ms);
 void free_mix_list(chan_info *cp);
 void free_mixes(chan_info *cp);
 void mix_complete_file_at_cursor(snd_info *sp, char *str, const char *origin, int with_tag);
+int mix_complete_file(snd_info *sp, off_t beg, char *fullname, const char *origin, int with_tag);
 int mix(off_t beg, off_t num, int chans, chan_info **cps, char *mixinfile, int temp, const char *origin, int with_tag);
 void backup_mix_list(chan_info *cp, int edit_ctr);
 int active_mix_p(chan_info *cp);

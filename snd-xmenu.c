@@ -510,7 +510,11 @@ void check_menu_labels(int key, int state, int extended)
 
 /* -------------------------------- MAIN MENU -------------------------------- */
 
-Widget get_menubar(void) {return(mw[menu_menu]);}
+void add_menu_drop(snd_state *ss)
+{
+  add_drop(ss, mw[menu_menu]);
+  /* can't figure out how to add the pulldown menus as well */
+}
 
 Widget add_menu(snd_state *ss)
 {
@@ -533,6 +537,7 @@ Widget add_menu(snd_state *ss)
   XtSetArg(high_args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
   XtSetArg(high_args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(high_args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+
 #ifdef SND_AS_WIDGET
   mw[menu_menu] = XtCreateWidget("mb", xmRowColumnWidgetClass, MAIN_PANE(ss), high_args, n);
 #else
@@ -941,7 +946,7 @@ Widget menu_widget(int which_menu)
   CompositeWidget cw;
   int menu;
   if (which_menu == 5) return(popup_menu); /* special case -- not in main menuBar, presumably */
-  w = get_menubar();
+  w = mw[menu_menu];
   cw = (CompositeWidget)w;
   for (i = 0; i < cw->composite.num_children; i++)
     {

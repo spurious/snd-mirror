@@ -289,7 +289,7 @@ at random), and car3+mod3 putting a sort of formant at the minor third
 <p><i>scratch</i> moves back and forth in a sound file according to
 a list of turn times (see also <a href="#exenvsoundinterp">env-sound-interp</a>).
 </p>
-<p><i>pins</i> is a simple implementation of thje spectral modeling sysnthesis
+<p><i>pins</i> is a simple implementation of thje spectral modeling synthesis
 of Xavier Serra and Julius Smith.  It is similar to the phase vocoder.
 </p>
 <p>The "z" instruments demonstrate "zdelay" effects -- interpolating
@@ -305,7 +305,7 @@ generators, with an optional envelope on each formant.
 <i>anoi</i> is a stab at noise reduction
 based on Perry Cook's Scrubber.m.
 </p>
-<p><i>fullmix</i> is complicated (and currently slow) way to mix stuff.
+<p><i>fullmix</i> is complicated way to mix stuff.
 </p>
 <br>
 
@@ -963,7 +963,6 @@ I'm slowly dividing out related groups of procedures to separate files.
     <li>cross-synthesis (using a formant bank)
     <li>voiced-&gt;unvoiced (formants)
     <li>convolution (convolve)
-    <li>fancier locsig
     <li>"vector synthesis"
     <li>chain-dsps
   </ul>
@@ -1271,7 +1270,7 @@ is the currently selected sound) into a bunch of files of the form sample-name.a
 <p><a href="#mixdoc">mix.scm</a> has mix and track related functions.
 </p>
 <pre>
-  <em class=def>place-sound</em> mono-snd stereo-snd panning-envelope-or-degree
+  <em class=def><A NAME="placesound">place-sound</a></em> mono-snd stereo-snd panning-envelope-or-degree
 </pre>
 <p>If <i>panning-envelope-or-degree</i> is a number (in degrees),
 the <i>place-sound</i> function has the same effect as using
@@ -1281,6 +1280,18 @@ it into two copies whose amplitudes depend on the desired location.
 If <i>panning-envelope-or-degree</i> is an envelope,
 the split depends on the panning envelope (0 = all in chan 0, etc).
 </p>
+<pre><blockquote><small>
+  Panning or Sound Placement
+Place sound: <a href="#placesound">place-sound</a> above.
+Pan mix: <a href="#panmix">pan-mix</a>, or via the amplitude and envelope controls in the mix dialog
+Place mix: <a href="grfsnd.html#musmix">mus-mix</a>
+Play sound with panning: <a href="#explaypanned">play-panned</a>
+CLM placement generator: <a href="clm.html#locsig">locsig</a>
+CLM moving sound generator: <a href="#dlocsigdoc">dlocsig</a>
+Move sound via flanging: see flanging effect in new-effects.scm
+Cross fade in frequency domain: <a href="#fadedoc">fade.scm</a>
+</small></blockquote></pre>
+<br>
 
 <!-- -------------------------------- SOUND EFFECTS -------------------------------- -->
 <span class=bbox><h3><A NAME="sssoundeffects">sound effects</a></h3></span>
@@ -2464,7 +2475,10 @@ These can be edited to move the mark, or deleted to delete the mark.
 </p><p><b>make-sound-box</b> makes a container of sound file icons, each icon
 containing a little sketch of the waveform, the length of the
 file, and the filename.  What happens when an icon is selected
-is up to the caller-supplied procedure.
+is up to the caller-supplied procedure.  However, if you drag (via 
+button 2) the icon to the menubar, that sound will be opened,
+and if you drag it to a channel graph, it will be mixed at the
+mouse location in that channel.
 </p>
 <pre>
 (make-sound-box "sounds"

@@ -137,6 +137,9 @@
 /* if nl_langinfo is available, its decimal point will override this */
 
 #define XOR(a, b) ((~((a) & (b))) & ((a) | (b)))
+#define UNPACK_SOUND(a) (a >> 16)
+#define UNPACK_CHANNEL(a) (a & 0xff)
+#define PACK_SOUND_AND_CHANNEL(a, b) ((a << 16) | b)
 
 #define FILE_BUFFER_SIZE 8192
 #define MAX_BUFFER_SIZE 65536

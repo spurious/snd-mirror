@@ -1234,7 +1234,11 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ;;; make-sound-box makes a container of sound file icons, each icon
 ;;;   containing a little sketch of the waveform, the length of the
 ;;;   file, and the filename.  What happens when an icon is selected
-;;;   is up to caller-supplied procedure.
+;;;   is up to caller-supplied procedure.  However, if you drag (via 
+;;;   button 2) the icon to the menubar, that sound will be opened,
+;;;   and if you drag it to a channel graph, it will be mixed at the
+;;;   cursor in that channel.
+
 
 (define (thumbnail-graph dpy wn gc pts width height)
   ;; make a little graph of the data
@@ -1352,20 +1356,23 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
       ;; now the actual sound-box maker
       ;; SOMEDAY: multi-channel thumbnail sketches, filled polygon rather than lines, small/large icon distinction
-      ;; SOMEDAY: drag from sound-box?
       (lambda (name parent select-func peak-func sounds args)
 	;; select-func called when sound selected and passed sound file name
 	;; peak-func (if any) tells icon where to find peak-env-info-file (if any)
 	;; sounds is list of sound file names
 	;; args is list of resource settings for each icon
 	(let ((container (XtCreateManagedWidget name xmContainerWidgetClass parent
-			   (list XmNlayoutType     XmSPATIAL
-				 XmNbackground     (white-pixel)
-				 XmNentryViewType  XmANY_ICON
-				 XmNlargeCellWidth 80))))
+			   (list XmNlayoutType         XmSPATIAL
+				 XmNspatialResizeModel XmGROW_BALANCED
+				 XmNbackground         (white-pixel)
+				 XmNentryViewType      XmANY_ICON
+				 XmNlargeCellWidth     80))))
+	  (XtVaSetValues parent (list XmNworkWindow container))
 	  (XtAddCallback container XmNselectionCallback 
 	    (lambda (w c i)
-	      (if (= (.auto_selection_type i) XmAUTO_BEGIN) ; just click to select for now
+	      (if (and (= (.auto_selection_type i) XmAUTO_BEGIN) ; just click to select for now
+		       (list? (.selected_items i))
+		       (not (null? (.selected_items i))))
 		  (select-func (XtName (car (.selected_items i)))))))
 	  (for-each
 	   (lambda (file)
@@ -1378,25 +1385,30 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	   sounds)
 	  container)))))
 
-#!
-(make-sound-box "sounds"
-		(list-ref (main-widgets) 3)
-		(lambda (file) 
-		  (mix file))
-		(lambda (file chn)
-		  (define (without-directories filename)
-		    (call-with-current-continuation
-		     (lambda (return)
-		       (do ((i (- (string-length filename) 1) (1- i)))
-			   ((= 0 i) filename)
-			 (if (char=? (string-ref filename i) #\/)
-			     (return (substring filename (+ i 1))))))))
-		  (format #f "~~/peaks/~A-peaks-~D" 
-			  (without-directories (mus-expand-filename file)) 
-			  chn))
-		(list "oboe.snd" "pistol.snd" "cardinal.snd" "storm.snd")
-		'())
-!#
+(define* (show-sounds-in-directory #:optional (dir "."))
+  (make-sound-box
+   "sounds"
+   (XtCreateManagedWidget "scrolled-window" xmScrolledWindowWidgetClass (list-ref (main-widgets) 3)
+			  (list XmNscrollBarDisplayPolicy XmAS_NEEDED
+				XmNbackground             (basic-color)
+				XmNvisualPolicy           XmVARIABLE
+				XmNscrollingPolicy        XmAUTOMATIC))
+   (lambda (file) 
+     (open-sound file))
+   (lambda (file chn)
+     (define (without-directories filename)
+       (call-with-current-continuation
+	(lambda (return)
+	  (do ((i (- (string-length filename) 1) (1- i)))
+	      ((= 0 i) filename)
+	    (if (char=? (string-ref filename i) #\/)
+		(return (substring filename (+ i 1))))))))
+     (format #f "~~/peaks/~A-peaks-~D" 
+	     (without-directories (mus-expand-filename file)) 
+	     chn))
+   (sound-files-in-directory dir)
+   '()))
+
 
     
 

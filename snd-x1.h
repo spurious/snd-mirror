@@ -161,10 +161,10 @@ Widget popup_equalize_panes_menu(void);
 Widget popup_info_menu(void);
 int popup_menu_exists(void);
 void set_menu_label(Widget w, const char *label);
-Widget get_menubar(void);
 Widget add_menu(snd_state *state);
 void create_popup_menu(snd_state *ss);
 void post_popup(XButtonPressedEvent *event);
+void add_menu_drop(snd_state *ss);
 
 int g_change_menu_label(int which_menu, char *old_label, char *new_label);
 int g_set_menu_sensitive(int which_menu, char *old_label, int on);

@@ -357,10 +357,6 @@ static gboolean channel_resize_callback(GtkWidget *w, GdkEventConfigure *ev, gpo
 static XEN mouse_enter_graph_hook;
 static XEN mouse_leave_graph_hook;
 
-#define UNPACK_SOUND(a) (a >> 16)
-#define UNPACK_CHANNEL(a) (a & 0xff)
-#define PACK_SOUND_AND_CHANNEL(a, b) ((a << 16) | b)
-
 static gboolean graph_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
 {
   /* how many args does this thing take?  does it return an int?  what does the int mean? */
@@ -654,6 +650,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
   #endif
 #endif
 #endif
+      add_drop(ss, cw[W_graph]);
       set_user_int_data(G_OBJECT(cw[W_graph]), PACK_SOUND_AND_CHANNEL(sp->index, cp->chan));
       gtk_widget_set_events(cw[W_graph], GDK_ALL_EVENTS_MASK);
       GTK_WIDGET_SET_FLAGS(cw[W_graph], GTK_CAN_FOCUS);

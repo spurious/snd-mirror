@@ -485,10 +485,6 @@ static void channel_resize_callback(Widget w, XtPointer context, XtPointer info)
 static XEN mouse_enter_graph_hook;
 static XEN mouse_leave_graph_hook;
 
-#define UNPACK_SOUND(a) (a >> 16)
-#define UNPACK_CHANNEL(a) (a & 0xff)
-#define PACK_SOUND_AND_CHANNEL(a, b) ((a << 16) | b)
-
 static void graph_mouse_enter(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
   snd_state *ss = (snd_state *)context;

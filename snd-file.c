@@ -561,7 +561,7 @@ static void add_sound_to_active_list (snd_info *sp, void *sptr1)
 
 static char title_buffer[4 * (MUS_MAX_FILE_NAME)];
 
-static void reflect_file_change_in_title(snd_state *ss)
+void reflect_file_change_in_title(snd_state *ss)
 {
   active_sound_list *alist;
   int i, j;

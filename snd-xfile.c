@@ -423,7 +423,7 @@ static void just_sounds_callback(Widget w, XtPointer context, XtPointer info)
 static void file_dialog_select_callback(Widget w, XtPointer context, XtPointer info)
 {
   XmString *strs;
-  char *filename;
+  char *filename = NULL;
   XmString label;
   char *buf;
   char timestr[64];
@@ -459,6 +459,7 @@ static void file_dialog_select_callback(Widget w, XtPointer context, XtPointer i
       XtVaSetValues(fd->dialog_info2, XmNlabelString, label, NULL);
       XmStringFree(label);
       FREE(buf);
+      XtFree(filename);
       if (!(XtIsManaged(fd->dialog_frame))) 
 	XtManageChild(fd->dialog_frame);
     }

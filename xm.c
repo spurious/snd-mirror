@@ -25311,3 +25311,93 @@ static int xm_already_inited = FALSE;
 
 #endif
 /* end HAVE_EXTENSION_LANGUAGE */
+
+
+/* TODO: add these from lib/Xm/TransferP.h (despite the "P", these are used in applications):
+
+Atom XmeGetEncodingAtom(Widget w)
+  can't tell what this does -- it's part of XmeStandardConvert
+
+Atom* XmeStandardTargets(Widget w, int count, int *tcount)
+  XmeStandardTargets takes a widget, and a count of the widget's
+  private target list, and returns a list of standard targets.
+  The count of standard targets is returned in the passed in
+  integer.
+
+void XmeStandardConvert(Widget w, XtPointer ignore, XmConvertCallbackStruct *cs)
+  XmeStandardConvert is called when receiving an unknown target.  It should be called last in most convert procs.
+
+void XmeDropSink(Widget w, ArgList in_args, Cardinal in_arg_count)
+  creates a drop site that will use the destinationCallbacks to handle drops
+
+Boolean XmeClipboardSink(Widget w, XtEnum op, XtPointer location_data)
+  begins a transfer for the contents of the CLIPBOARD selection.
+
+Boolean XmeSecondarySink(Widget w, Time time)
+  takes ownership of the MOTIF_DESTINATION selection
+
+Boolean XmeNamedSink(Widget w, Atom sel, XtEnum op, XtPointer location_data, Time time)
+   begins a transfer for the contents of the named selection.
+
+Widget XmeDragSource(Widget w, XtPointer location_data, XEvent *event, ArgList in_args, Cardinal in_arg_count)
+  Sets up for drag and drop and calls XmDragStart
+
+Boolean XmePrimarySink(Widget w, XtEnum op, XtPointer location_data, Time time)
+  begins a transfer for the contents of the XA_PRIMARY selection.
+
+Boolean XmeClipboardSource(Widget w, XtEnum op, Time time)
+  Puts data onto the clipboard.
+
+void XmeSecondaryTransfer(Widget w, Atom target, XtEnum op, Time time)
+  Triggers the actual secondary transfer by requesting the target passed into XmeSecondarySource of the selection _MOTIF_DESTINATION
+
+void XmeConvertMerge(XtPointer data, Atom type, int format, unsigned long size, XmConvertCallbackStruct *cs)
+  merges the new data into the old return value in the callback structure.
+
+void XmeTransferAddDoneProc(XtPointer id, XmSelectionFinishedProc done_proc)
+  Adds a new done proc to the end of the current list of done procs.
+
+Boolean XmePrimarySource(Widget w, Time time)
+  Owns the primary selection and sets up the appropriate conversion handling
+
+Boolean XmeNamedSource(Widget w, Atom sel, Time time)
+  Owns the named selection and sets up the appropriate conversion handling
+
+Boolean XmeSecondarySource(Widget w, Time time)
+  Owns the secondary selection and sets up the appropriate conversion handling.  This is the function to call when starting the secondary selection.
+
+these also exist, but don't seem very useful:
+
+XmeClearBorder
+XmeConfigureObject
+XmeDrawArrow
+XmeDrawDiamond
+XmeDrawSeparator
+XmeDrawShadows
+XmeDrawHighlight
+XmeRenderTableGetDefaultFont
+XmeFromHorizontalPixels
+XmeFromVerticalPixels
+XmeReplyToQueryGeometry
+XmeGetDefaultRenderTable
+XmeQueryBestCursorSize
+XmeGetNullCursor
+XmeGetTextualDragIcon
+XmeMicroSleep
+XmeNavigChangeManaged
+XmeGetHomeDirName
+XmeGetLocalizedString
+XmeRedisplayGadgets
+XmeStringIsValid
+XmeSetWMShellTitle
+XmeNamesAreEqual
+XmeToHorizontalPixels
+XmeToVerticalPixels
+
+The only useful-looking Xmu function is XmuReshapeWidget
+
+TODO: XmCvtByteStream...(2)
+      XmCvtTextProp...(2)
+
+*/
+

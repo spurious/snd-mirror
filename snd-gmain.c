@@ -270,12 +270,6 @@ static Cessate startup_funcs(gpointer context)
     {
     case 0:
 #ifndef SND_AS_WIDGET
-#ifndef __alpha__
-      add_drop(ss, MAIN_SHELL(ss));
-#endif
-#endif
-
-#ifndef SND_AS_WIDGET
       /* add X property level communication path (see sndctrl.c for the other side) */
       snd_v = gdk_atom_intern("SND_VERSION", FALSE);
       snd_c = gdk_atom_intern("SND_COMMAND", FALSE);
@@ -314,22 +308,19 @@ static Cessate startup_funcs(gpointer context)
 #if HAVE_SIGNAL && HAVE_EXTENSION_LANGUAGE
       if (!nostdin)
 	{
+	  GIOChannel *channel;
 	  signal(SIGTTIN, SIG_IGN);
 	  signal(SIGTTOU, SIG_IGN);
 	  /* these signals are sent by a shell if we start Snd as a background process,
 	   * but try to read stdin (needed to support the emacs subjob connection).  If
 	   * we don't do this, the background job is suspended when the shell sends SIGTTIN.
 	   */
-	  
-	  {
-	    GIOChannel *channel;
-	    channel = g_io_channel_unix_new(fileno(stdin));
-	    stdin_id = g_io_add_watch_full(channel, 
-					   G_PRIORITY_DEFAULT, 
-					   (GIOCondition)(G_IO_IN | G_IO_HUP | G_IO_ERR), 
-					   io_invoke, NULL, NULL);
-	    g_io_channel_unref (channel);
-	  }
+	  channel = g_io_channel_unix_new(fileno(stdin));
+	  stdin_id = g_io_add_watch_full(channel, 
+					 G_PRIORITY_DEFAULT, 
+					 (GIOCondition)(G_IO_IN | G_IO_HUP | G_IO_ERR), 
+					 io_invoke, NULL, NULL);
+	  g_io_channel_unref(channel);
 	}
 #endif
       break;

@@ -385,7 +385,7 @@ static Cessate startup_funcs(XtPointer context)
       create_popup_menu(ss);
 #ifndef SND_AS_WIDGET
 #ifndef __alpha__
-      add_drop(ss, get_menubar());
+      add_menu_drop(ss);
 #endif
 #endif
 #ifndef SND_AS_WIDGET

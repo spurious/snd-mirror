@@ -465,9 +465,7 @@ find out what the optimizer found confusing.
 One dangerous assumption involved in local variables (optimization = 5) is that
 such a variable might be a continuation set within the run-optimized code, but then
 called from outside that block.  This (obviously!) won't work, but it's too much trouble to
-try to trap it in the context of run.  Another problem can arise if optimization = 6: 
-a shadowed variable can be found in place of the actual local variable (this is on my
-"todo" list to fix).
+try to trap it in the context of run.
 Here are some representative results;
 the first number is the unoptimized time, the second is the optimized time, the third is
 the speed-up ratio:<br><br></td></tr>
@@ -833,7 +831,7 @@ in snd-motif.scm uses this hook to draw sync'd marks in some other color than th
 called each time Snd receives a drag-and-drop event, passing the hook the filename.
 If it returns #t, the file is not opened.  If you drag the file icon to the menubar, 
 Snd opens it as if you had called open-sound.  If you drag it to a particular channel,
-Snd mixes it at the cursor in that channel.  To get Snd to
+Snd mixes it at the mouse location in that channel.  To get Snd to
 mix the dragged file even from the menubar:
 <br><br><code>(add-hook! drop-hook (lambda (filename) (mix filename) #t))</code><br><br>
 snd-motif.scm has examples that add a drop callback to an arbitrary widget, or
@@ -2042,6 +2040,7 @@ of these below.
 </p>
 
 <br>
+<!-- INDEX Vcts:Vcts -->
 <span class=cbox><h3><A NAME="Vcts">Vcts</a></h3></span>
 <p>
 Many of the Snd and CLM functions handle vectors (arrays) of data.
@@ -3226,7 +3225,7 @@ See mix.scm for more mix-related (and track-related) functions including:
 <!-- INDEX mixingexamples:Mixing -->
 <A NAME="mixingexamples"></a>
 <blockquote><small>
-mix sound file: <a href="#sndmixsound">mix-sound</a>
+mix sound file: <a href="#sndmixsound">mix-sound</a> or drag-and-drop it where you want it mixed.
 mix channel: see <i>mix-channel</i> in extensions.scm
 mix region: <a href="#sndmixregion">mix-region</a>
 mix selection: <a href="#sndmixselection">mix-selection</a>
