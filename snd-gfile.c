@@ -365,7 +365,7 @@ void make_mix_file_dialog(snd_state *ss, int managed)
 
 /* -------- file data choices -------- */
 
-static void save_as_header_type_Callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
+static void save_as_header_type_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
 {
   file_data *fd;
   fd = (file_data *)get_user_data(GTK_OBJECT(w));
@@ -380,7 +380,7 @@ static void save_as_header_type_Callback(GtkWidget *w, gint row, gint column, Gd
     }
 }
 
-static void save_as_data_format_Callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
+static void save_as_data_format_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
 {
   file_data *fd;
   fd = (file_data *)get_user_data(GTK_OBJECT(w));
@@ -431,7 +431,7 @@ file_data *sndCreateFileDataForm(snd_state *ss, GtkWidget *parent, char *name,
   gtk_container_add(GTK_CONTAINER(hlab), hscroll);
 
   gtk_clist_select_row(GTK_CLIST(fdat->header_list), fdat->header_pos, 0);
-  gtk_signal_connect(GTK_OBJECT(fdat->header_list), "select_row", GTK_SIGNAL_FUNC(save_as_header_type_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(fdat->header_list), "select_row", GTK_SIGNAL_FUNC(save_as_header_type_callback), (gpointer)ss);
   gtk_widget_show(hlab);
   gtk_widget_show(fdat->header_list);
   gtk_widget_show(hscroll);
@@ -459,7 +459,7 @@ file_data *sndCreateFileDataForm(snd_state *ss, GtkWidget *parent, char *name,
   gtk_container_add(GTK_CONTAINER(dlab), dscroll);
 
   gtk_clist_select_row(GTK_CLIST(fdat->format_list), fdat->format_pos, 0);
-  gtk_signal_connect(GTK_OBJECT(fdat->format_list), "select_row", GTK_SIGNAL_FUNC(save_as_data_format_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(fdat->format_list), "select_row", GTK_SIGNAL_FUNC(save_as_data_format_callback), (gpointer)ss);
   gtk_widget_show(dlab);
   gtk_widget_show(fdat->format_list);
   gtk_widget_show(dscroll);
@@ -888,34 +888,34 @@ void view_curfiles_set_row_name(int pos)
   FREE(str);
 }
 
-static void View_Files_Help_Callback(GtkWidget *w, gpointer context) 
+static void view_files_help_callback(GtkWidget *w, gpointer context) 
 {
   view_files_dialog_help((snd_state *)context);
 }
 
-static void View_Files_Dismiss_Callback(GtkWidget *w, gpointer context) 
+static void view_files_dismiss_callback(GtkWidget *w, gpointer context) 
 {
   gtk_widget_hide(view_files_dialog);
 }
 
-static void View_Files_Delete_Callback(GtkWidget *w, GdkEvent *event, gpointer context)
+static void view_files_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(view_files_dialog);
 }
 
-static void View_Files_Clear_Callback(GtkWidget *w, gpointer context) 
+static void view_files_clear_callback(GtkWidget *w, gpointer context) 
 {
   /* clear previous files list and associated widget list */
   clear_prevlist((snd_state *)context);
 }
 
-static void View_Files_Update_Callback(GtkWidget *w, gpointer context) 
+static void view_files_update_callback(GtkWidget *w, gpointer context) 
 {
   /* run through previous files list looking for any that have been deleted behind our back */
   update_prevlist((snd_state *)context);
 }
 
-static void View_CurFiles_Save_Callback(GtkWidget *w, gpointer context) 
+static void view_curfiles_save_callback(GtkWidget *w, gpointer context) 
 {
   regrow *r = (regrow *)context;
   view_curfiles_save(r->ss, r->pos);
@@ -939,7 +939,7 @@ void set_file_browser_play_button(char *name, int state)
     }
 }
 
-static void View_CurFiles_Play_Callback(GtkWidget *w, gpointer context) 
+static void view_curfiles_play_callback(GtkWidget *w, gpointer context) 
 {
   regrow *r = (regrow *)context;
   view_curfiles_play(r->ss, r->pos, GTK_TOGGLE_BUTTON(w)->active);
@@ -973,20 +973,20 @@ void curfile_highlight(snd_state *ss, int i)
     }
 }
 
-static void View_CurFiles_Select_Callback(GtkWidget *w, gpointer context) 
+static void view_curfiles_select_callback(GtkWidget *w, gpointer context) 
 {
   regrow *r = (regrow *)context;
   view_curfiles_select(r->ss, r->pos);
 }
 
-static void View_PrevFiles_Unlist_Callback(GtkWidget *w, gpointer context) 
+static void view_prevfiles_unlist_callback(GtkWidget *w, gpointer context) 
 {
   regrow *r = (regrow *)context;
   file_unprevlist(get_prevname(r->pos));
   make_prevfiles_list(r->ss);
 }
 
-static void View_PrevFiles_Play_Callback(GtkWidget *w, gpointer context) 
+static void view_prevfiles_play_callback(GtkWidget *w, gpointer context) 
 {
   /* open and play -- close at end or when button off toggled */
   regrow *r = (regrow *)context;
@@ -994,7 +994,7 @@ static void View_PrevFiles_Play_Callback(GtkWidget *w, gpointer context)
     set_toggle_button(w, FALSE, FALSE, (void *)r);
 }
 
-static void View_PrevFiles_Select_Callback(GtkWidget *w, gpointer context) 
+static void view_prevfiles_select_callback(GtkWidget *w, gpointer context) 
 {
   /* open and set as selected */
   regrow *r = (regrow *)context;
@@ -1028,9 +1028,9 @@ void make_curfiles_list (snd_state *ss)
       if (r == NULL)
 	{
 	  r = make_regrow(ss, vf_curww, 
-			  (void (*)())View_CurFiles_Save_Callback, 
-			  (void (*)())View_CurFiles_Play_Callback, 
-			  (void (*)())View_CurFiles_Select_Callback);
+			  (void (*)())view_curfiles_save_callback, 
+			  (void (*)())view_curfiles_play_callback, 
+			  (void (*)())view_curfiles_select_callback);
 	  cur_name_row[i] = r;
 	  r->pos = i;
 	  r->ss = ss;
@@ -1106,9 +1106,9 @@ void make_prevfiles_list (snd_state *ss)
 	  if (!((r = prev_name_row[i])))
 	    {
 	      r = make_regrow(ss, vf_prevww, 
-			      (void (*)())View_PrevFiles_Unlist_Callback,
-			      (void (*)())View_PrevFiles_Play_Callback, 
-			      (void (*)())View_PrevFiles_Select_Callback);
+			      (void (*)())view_prevfiles_unlist_callback,
+			      (void (*)())view_prevfiles_play_callback, 
+			      (void (*)())view_prevfiles_select_callback);
 	      prev_name_row[i] = r;
 	      r->pos = i;
 	      r->ss = ss;
@@ -1152,7 +1152,7 @@ void View_Files_Callback(GtkWidget *w, gpointer context)
 
       view_files_dialog = gtk_dialog_new();
       set_dialog_widget(ss, VIEW_FILES_DIALOG, view_files_dialog);
-      gtk_signal_connect(GTK_OBJECT(view_files_dialog), "delete_event", GTK_SIGNAL_FUNC(View_Files_Delete_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(view_files_dialog), "delete_event", GTK_SIGNAL_FUNC(view_files_delete_callback), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(view_files_dialog), STR_Files);
       gtk_window_set_policy(GTK_WINDOW(view_files_dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */
       set_backgrounds(view_files_dialog, (ss->sgx)->basic_color);
@@ -1168,10 +1168,10 @@ void View_Files_Callback(GtkWidget *w, gpointer context)
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(view_files_dialog)->action_area), updateB, TRUE, TRUE, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(view_files_dialog)->action_area), clearB, TRUE, TRUE, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(view_files_dialog)->action_area), helpB, TRUE, TRUE, 10);
-      gtk_signal_connect(GTK_OBJECT(dismissB), "clicked", GTK_SIGNAL_FUNC(View_Files_Dismiss_Callback), (gpointer)ss);
-      gtk_signal_connect(GTK_OBJECT(helpB), "clicked", GTK_SIGNAL_FUNC(View_Files_Help_Callback), (gpointer)ss);
-      gtk_signal_connect(GTK_OBJECT(updateB), "clicked", GTK_SIGNAL_FUNC(View_Files_Update_Callback), (gpointer)ss);
-      gtk_signal_connect(GTK_OBJECT(clearB), "clicked", GTK_SIGNAL_FUNC(View_Files_Clear_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(dismissB), "clicked", GTK_SIGNAL_FUNC(view_files_dismiss_callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(helpB), "clicked", GTK_SIGNAL_FUNC(view_files_help_callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(updateB), "clicked", GTK_SIGNAL_FUNC(view_files_update_callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(clearB), "clicked", GTK_SIGNAL_FUNC(view_files_clear_callback), (gpointer)ss);
       set_pushed_button_colors(helpB, ss);
       set_pushed_button_colors(dismissB, ss);
       set_pushed_button_colors(updateB, ss);
@@ -1248,17 +1248,17 @@ static GtkWidget *raw_srate_text, *raw_chans_text, *raw_location_text, *raw_data
 static int raw_data_location = 0;
 static int raw_cancelled = 0, raw_done = 0;
 
-static void raw_data_ok_Callback(GtkWidget *w, gpointer context) {raw_cancelled = 0; raw_done = 1;}
-static void raw_data_cancel_Callback(GtkWidget *w, gpointer context) {raw_cancelled = 1; raw_done = 1;}
-static void raw_data_delete_Callback(GtkWidget *w, GdkEvent *event, gpointer context) {raw_cancelled = 1; raw_done = 1;}
+static void raw_data_ok_callback(GtkWidget *w, gpointer context) {raw_cancelled = 0; raw_done = 1;}
+static void raw_data_cancel_callback(GtkWidget *w, gpointer context) {raw_cancelled = 1; raw_done = 1;}
+static void raw_data_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context) {raw_cancelled = 1; raw_done = 1;}
 
-static void raw_data_default_Callback(GtkWidget *w, gpointer context) 
+static void raw_data_default_callback(GtkWidget *w, gpointer context) 
 {
   raw_cancelled = 0; 
   raw_done = 1;
 }
 
-static void raw_data_browse_Callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
+static void raw_data_browse_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
 {
   int sr, oc, fr;
   mus_header_raw_defaults(&sr, &oc, &fr);
@@ -1266,7 +1266,7 @@ static void raw_data_browse_Callback(GtkWidget *w, gint row, gint column, GdkEve
   mus_header_set_raw_defaults(sr, oc, fr);
 }
 
-static void raw_data_help_Callback(GtkWidget *w, gpointer context) 
+static void raw_data_help_callback(GtkWidget *w, gpointer context) 
 {
   raw_data_dialog_help((snd_state *)context);
 }
@@ -1283,7 +1283,7 @@ static void make_raw_data_dialog(snd_state *ss)
 
   raw_data_dialog = gtk_dialog_new();
   set_dialog_widget(ss, RAW_DATA_DIALOG, raw_data_dialog);
-  gtk_signal_connect(GTK_OBJECT(raw_data_dialog), "delete_event", GTK_SIGNAL_FUNC(raw_data_delete_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(raw_data_dialog), "delete_event", GTK_SIGNAL_FUNC(raw_data_delete_callback), (gpointer)ss);
   gtk_window_set_title(GTK_WINDOW(raw_data_dialog), STR_No_Header_on_File);
   gtk_window_set_policy(GTK_WINDOW(raw_data_dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */
   set_background(raw_data_dialog, (ss->sgx)->basic_color);
@@ -1299,10 +1299,10 @@ static void make_raw_data_dialog(snd_state *ss)
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(raw_data_dialog)->action_area), defaultB, TRUE, TRUE, 10);
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(raw_data_dialog)->action_area), cancelB, TRUE, TRUE, 10);
   gtk_box_pack_end(GTK_BOX(GTK_DIALOG(raw_data_dialog)->action_area), helpB, TRUE, TRUE, 10);
-  gtk_signal_connect(GTK_OBJECT(okB), "clicked", GTK_SIGNAL_FUNC(raw_data_ok_Callback), (gpointer)ss);
-  gtk_signal_connect(GTK_OBJECT(helpB), "clicked", GTK_SIGNAL_FUNC(raw_data_help_Callback), (gpointer)ss);
-  gtk_signal_connect(GTK_OBJECT(defaultB), "clicked", GTK_SIGNAL_FUNC(raw_data_default_Callback), (gpointer)ss);
-  gtk_signal_connect(GTK_OBJECT(cancelB), "clicked", GTK_SIGNAL_FUNC(raw_data_cancel_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(okB), "clicked", GTK_SIGNAL_FUNC(raw_data_ok_callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(helpB), "clicked", GTK_SIGNAL_FUNC(raw_data_help_callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(defaultB), "clicked", GTK_SIGNAL_FUNC(raw_data_default_callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(cancelB), "clicked", GTK_SIGNAL_FUNC(raw_data_cancel_callback), (gpointer)ss);
   set_pushed_button_colors(helpB, ss);
   set_pushed_button_colors(okB, ss);
   set_pushed_button_colors(defaultB, ss);
@@ -1360,7 +1360,7 @@ static void make_raw_data_dialog(snd_state *ss)
       str = data_format_name(i);
       gtk_clist_append(GTK_CLIST(lst), &str);
     }
-  gtk_signal_connect(GTK_OBJECT(lst), "select_row", GTK_SIGNAL_FUNC(raw_data_browse_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(lst), "select_row", GTK_SIGNAL_FUNC(raw_data_browse_callback), (gpointer)ss);
 
   scroller = gtk_scrolled_window_new(NULL, NULL);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
@@ -1521,22 +1521,22 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
 static GtkWidget *edit_header_dialog = NULL;
 static file_data *edit_header_data;
 
-static void edit_header_help_Callback(GtkWidget *w, gpointer context) 
+static void edit_header_help_callback(GtkWidget *w, gpointer context) 
 {
   edit_header_dialog_help((snd_state *)context);
 }
 
-static void edit_header_cancel_Callback(GtkWidget *w, gpointer context) 
+static void edit_header_cancel_callback(GtkWidget *w, gpointer context) 
 {
   gtk_widget_hide(edit_header_dialog);
 }
 
-static void edit_header_delete_Callback(GtkWidget *w, GdkEvent *event, gpointer context)
+static void edit_header_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(edit_header_dialog);
 }
 
-static void edit_header_ok_Callback(GtkWidget *w, gpointer context) 
+static void edit_header_ok_callback(GtkWidget *w, gpointer context) 
 {
   snd_state *ss;
   snd_info *sp = (snd_info *)context;
@@ -1566,7 +1566,7 @@ GtkWidget *edit_header(snd_info *sp)
     {
       edit_header_dialog = gtk_dialog_new();
       set_dialog_widget(ss, EDIT_HEADER_DIALOG, edit_header_dialog);
-      gtk_signal_connect(GTK_OBJECT(edit_header_dialog), "delete_event", GTK_SIGNAL_FUNC(edit_header_delete_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(edit_header_dialog), "delete_event", GTK_SIGNAL_FUNC(edit_header_delete_callback), (gpointer)ss);
       /* gtk_window_set_title(GTK_WINDOW(edit_header_dialog), STR_Edit_Header); */
       gtk_window_set_policy(GTK_WINDOW(edit_header_dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */
       set_background(edit_header_dialog, (ss->sgx)->basic_color);
@@ -1580,9 +1580,9 @@ GtkWidget *edit_header(snd_info *sp)
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_header_dialog)->action_area), cancel_button, TRUE, TRUE, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_header_dialog)->action_area), save_button, TRUE, TRUE, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(edit_header_dialog)->action_area), help_button, TRUE, TRUE, 10);
-      gtk_signal_connect(GTK_OBJECT(cancel_button), "clicked", GTK_SIGNAL_FUNC(edit_header_cancel_Callback), (gpointer)ss);
-      gtk_signal_connect(GTK_OBJECT(help_button), "clicked", GTK_SIGNAL_FUNC(edit_header_help_Callback), (gpointer)ss);
-      gtk_signal_connect(GTK_OBJECT(save_button), "clicked", GTK_SIGNAL_FUNC(edit_header_ok_Callback), (gpointer)sp);
+      gtk_signal_connect(GTK_OBJECT(cancel_button), "clicked", GTK_SIGNAL_FUNC(edit_header_cancel_callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(help_button), "clicked", GTK_SIGNAL_FUNC(edit_header_help_callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(save_button), "clicked", GTK_SIGNAL_FUNC(edit_header_ok_callback), (gpointer)sp);
       set_pushed_button_colors(help_button, ss);
       set_pushed_button_colors(cancel_button, ss);
       set_pushed_button_colors(save_button, ss);

@@ -252,7 +252,7 @@ static XEN g_sound_set_maxamp(XEN file, XEN vals)
       mvals = (MUS_SAMPLE_TYPE *)CALLOC(chans * 2, sizeof(MUS_SAMPLE_TYPE));
       for (i = 0, lst = vals; i < len; i += 2, lst = XEN_CDDR(lst))
 	{
-	  mvals[i] = MUS_INT_TO_SAMPLE(XEN_TO_C_INT_OR_ELSE(XEN_CAR(lst), 0));
+	  mvals[i] = (MUS_SAMPLE_TYPE)(XEN_TO_C_INT_OR_ELSE(XEN_CAR(lst), 0));
 	  mvals[i + 1] = MUS_DOUBLE_TO_SAMPLE(XEN_TO_C_DOUBLE(XEN_CADR(lst)));
 	}
       mus_sound_set_maxamp(filename, mvals);

@@ -10961,7 +10961,8 @@ EDITS: 3
 			     (let ((type (|XmStringGetNextTriple (cadr c))))
 			       (if (= (car type) |XmSTRING_COMPONENT_TEXT)
 				   (if (or (not (= (cadr type) (list-ref (list 0 0 2 0 0 0 4 0 0 0 3 0 0 0 4) i)))
-					   (not (string=? (caddr type) (list-ref (list "o" "o" "go" "o" "o" "o" "well" "o" "o" "o" "and" "o" "o" "o" "then") i))))
+					   (not (string=? (caddr type) 
+							  (list-ref (list "o" "o" "go" "o" "o" "o" "well" "o" "o" "o" "and" "o" "o" "o" "then") i))))
 				       (snd-display ";component ~A -> ~A" i (cdr type)))
 				   (if (not (= (car type) |XmSTRING_COMPONENT_TAB))
 				       (if (= (car type) |XmSTRING_COMPONENT_END)
@@ -11033,21 +11034,25 @@ EDITS: 3
 		(close-sound)))
 
 	  (let* ((create-procs (list
-				|XmCreateMenuShell |XmCreateSimpleCheckBox |XmCreateSimpleRadioBox |XmCreateSimpleOptionMenu |XmCreateSimplePulldownMenu
-				|XmCreateSimplePopupMenu |XmCreateSimpleMenuBar |XmCreateMainWindow |XmCreateScrolledList |XmCreateList
-				|XmCreateLabel |XmCreateLabelGadget |XmCreateToggleButton 
-			        |XmCreateToggleButtonGadget |XmCreateGrabShell |XmCreateFrame |XmCreateFormDialog |XmCreateForm
-				|XmCreateText |XmCreateScrolledText |XmCreateFileSelectionDialog |XmCreateFileSelectionBox
-				|XmCreateTextField |XmCreateSimpleSpinBox |XmCreateDrawnButton |XmCreateSpinBox |XmCreateDrawingArea
-				|XmCreateSeparator |XmCreateDragIcon |XmCreateSeparatorGadget |XmCreatePromptDialog |XmCreateSelectionDialog
-				|XmCreateSelectionBox |XmCreateScrolledWindow |XmCreateDialogShell |XmCreateScrollBar
-				|XmCreateScale |XmCreateContainer |XmCreatePulldownMenu |XmCreatePopupMenu |XmCreateMenuBar
-				|XmCreateOptionMenu |XmCreateRadioBox |XmCreateWorkArea |XmCreateRowColumn |XmCreateCommandDialog
-				|XmCreateCommand |XmCreateDropDownList |XmCreateDropDownComboBox |XmCreateComboBox |XmCreatePushButton
-				|XmCreatePushButtonGadget |XmCreateCascadeButton |XmCreateCascadeButtonGadget |XmCreateBulletinBoardDialog
-				|XmCreateBulletinBoard |XmCreatePanedWindow |XmCreateNotebook |XmCreateArrowButton |XmCreateArrowButtonGadget
-				|XmCreateTemplateDialog |XmCreateWorkingDialog |XmCreateWarningDialog |XmCreateQuestionDialog |XmCreateInformationDialog
-				|XmCreateErrorDialog |XmCreateMessageDialog |XmCreateMessageBox))
+				|XmCreateMenuShell |XmCreateSimpleCheckBox |XmCreateSimpleRadioBox
+				|XmCreateSimpleOptionMenu |XmCreateSimplePulldownMenu |XmCreateSimplePopupMenu
+				|XmCreateSimpleMenuBar |XmCreateMainWindow |XmCreateScrolledList |XmCreateList
+				|XmCreateLabel |XmCreateLabelGadget |XmCreateToggleButton |XmCreateToggleButtonGadget
+				|XmCreateGrabShell |XmCreateFrame |XmCreateFormDialog |XmCreateForm |XmCreateText
+				|XmCreateScrolledText |XmCreateFileSelectionDialog |XmCreateFileSelectionBox
+				|XmCreateTextField |XmCreateSimpleSpinBox |XmCreateDrawnButton |XmCreateSpinBox
+				|XmCreateDrawingArea |XmCreateSeparator |XmCreateDragIcon |XmCreateSeparatorGadget
+				|XmCreatePromptDialog |XmCreateSelectionDialog |XmCreateSelectionBox
+				|XmCreateScrolledWindow |XmCreateDialogShell |XmCreateScrollBar |XmCreateScale
+				|XmCreateContainer |XmCreatePulldownMenu |XmCreatePopupMenu |XmCreateMenuBar
+				|XmCreateOptionMenu |XmCreateRadioBox |XmCreateWorkArea |XmCreateRowColumn
+				|XmCreateCommandDialog |XmCreateCommand |XmCreateDropDownList |XmCreateDropDownComboBox
+				|XmCreateComboBox |XmCreatePushButton |XmCreatePushButtonGadget |XmCreateCascadeButton
+				|XmCreateCascadeButtonGadget |XmCreateBulletinBoardDialog |XmCreateBulletinBoard
+				|XmCreatePanedWindow |XmCreateNotebook |XmCreateArrowButton |XmCreateArrowButtonGadget
+				|XmCreateTemplateDialog |XmCreateWorkingDialog |XmCreateWarningDialog
+				|XmCreateQuestionDialog |XmCreateInformationDialog |XmCreateErrorDialog
+				|XmCreateMessageDialog |XmCreateMessageBox))
 		 (parent (|Widget (list-ref (main-widgets) 3)))
 		 (str (|XmStringCreateLocalized "yow"))
 		 (args (list |XmNheight 100 |XmNwidth 100 |XmNlabelString str))
@@ -11093,195 +11098,263 @@ EDITS: 3
 		 ))
 	     create-procs ques is))
 
+	  (if (not (|XEvent? (|XEvent)))
+	      (snd-display ";xevent type trouble! ~A -> ~A" (|XEvent) (|XEvent? (|XEvent))))
+	  (if (not (|XGCValues? (|XGCValues)))
+	      (snd-display ";xgcvalues type trouble! ~A -> ~A" (|XGCValues) (|XGCValues? (|XGCValues))))
+
 	  (let ((xm-procs 
+		 ;; these can't be called in this context:
+		 ;;   |XtProcessEvent |XtAppProcessEvent |XtMainLoop |XtAppMainLoop |XtAppAddActions |XtAddActions 
+		 ;;   |XtNextEvent |XtAppNextEvent |XtPeekEvent |XtAppPeekEvent |XtMalloc |XtCalloc |XtRealloc |XtFree |XFree 
+		 ;;   |freeXPoints |moveXPoints |vector->XPoints |XNextEvent |XPutBackEvent |XmParseMappingCreate |XmParseMappingSetValues 
+		 ;;   |XReadBitmapFile |XReadBitmapFileData |XmTransferStartRequest |XmTransferSendRequest |XmTransferDone 
 		 (list
 		  |XpStartPage |XpEndPage |XpCancelPage |XpStartJob |XpEndJob |XpCancelJob |XpStartDoc |XpEndDoc
 		  |XpCancelDoc |XpRehashPrinterList |XpCreateContext |XpSetContext |XpGetContext |XpDestroyContext
 		  |XpGetLocaleNetString |XpNotifyPdm |XpSendAuth |XpGetImageResolution |XpGetAttributes |XpSetAttributes
-		  |XpGetOneAttribute |XpGetScreenOfContext |XpFreePrinterList |XpQueryVersion |XpQueryExtension |XpQueryScreens
-		  |XpGetPdmStartParams |XpGetAuthParams |XpSendOneTicket |XpGetPageDimensions |XpSetImageResolution |XpGetPrinterList
-		  |XpSelectInput |XpInputSelected |XpPutDocumentData |XpGetDocumentData |XtSetArg |XtManageChildren |XtManageChild
-		  |XtUnmanageChildren |XtUnmanageChild |XtDispatchEvent |XtCallAcceptFocus ;|XtPeekEvent |XtAppPeekEvent 
-		  |XtIsSubclass
-		  |XtIsObject |XtIsManaged |XtIsRealized |XtIsSensitive |XtOwnSelection |XtOwnSelectionIncremental |XtMakeResizeRequest
-		  |XtTranslateCoords |XtKeysymToKeycodeList |XtStringConversionWarning |XtDisplayStringConversionWarning |XtParseTranslationTable
-		  |XtParseAcceleratorTable |XtOverrideTranslations |XtAugmentTranslations |XtInstallAccelerators |XtInstallAllAccelerators
-		  |XtUninstallTranslations |XtAppAddActions |XtAddActions |XtAppAddActionHook |XtRemoveActionHook |XtGetActionList
-		  |XtCallActionProc |XtRegisterGrabAction |XtSetMultiClickTime |XtGetMultiClickTime |XtGetActionKeysym |XtTranslateKeycode
-		  |XtTranslateKey |XtSetKeyTranslator |XtRegisterCaseConverter |XtConvertCase |XtAddEventHandler |XtRemoveEventHandler
-		  |XtAddRawEventHandler |XtRemoveRawEventHandler |XtInsertEventHandler |XtInsertRawEventHandler |XtDispatchEventToWidget
-		  |XtBuildEventMask |XtAddGrab |XtRemoveGrab ;|XtProcessEvent |XtAppProcessEvent |XtMainLoop |XtAppMainLoop 
-		  |XtAddExposureToRegion
-		  |XtSetKeyboardFocus |XtGetKeyboardFocusWidget |XtLastEventProcessed |XtLastTimestampProcessed |XtAddTimeOut |XtAppAddTimeOut
-		  |XtRemoveTimeOut |XtAddInput |XtAppAddInput |XtRemoveInput ;|XtNextEvent |XtAppNextEvent 
-		  |XtPending |XtAppPending |XtRealizeWidget
-		  |XtUnrealizeWidget |XtDestroyWidget |XtSetSensitive |XtNameToWidget |XtWindowToWidget |XtMergeArgLists |XtVaCreateArgsList |XtDisplay
-		  |XtDisplayOfObject |XtScreen |XtScreenOfObject |XtWindow |XtWindowOfObject |XtName |XtSuperclass |XtClass |XtParent
-		  |XtAddCallback |XtRemoveCallback |XtAddCallbacks |XtRemoveCallbacks |XtRemoveAllCallbacks |XtCallCallbacks |XtCallCallbackList
-		  |XtHasCallbacks |XtCreatePopupShell |XtVaCreatePopupShell |XtPopup |XtPopupSpringLoaded |XtCallbackNone |XtCallbackNonexclusive
-		  |XtCallbackExclusive |XtPopdown |XtCallbackPopdown |XtCreateWidget |XtCreateManagedWidget |XtVaCreateWidget |XtVaCreateManagedWidget
-		  |XtCreateApplicationShell |XtAppCreateShell |XtVaAppCreateShell |XtToolkitInitialize |XtSetLanguageProc |XtDisplayInitialize
-		  |XtOpenApplication |XtVaOpenApplication |XtAppInitialize |XtVaAppInitialize |XtInitialize |XtOpenDisplay |XtCreateApplicationContext
-		  |XtDestroyApplicationContext |XtInitializeWidgetClass |XtWidgetToApplicationContext |XtDisplayToApplicationContext |XtCloseDisplay
-		  |XtSetValues |XtVaSetValues |XtGetValues |XtVaGetValues |XtAppSetErrorMsgHandler |XtSetErrorMsgHandler |XtAppSetWarningMsgHandler
-		  |XtSetWarningMsgHandler |XtAppErrorMsg |XtErrorMsg |XtAppWarningMsg |XtWarningMsg |XtAppSetErrorHandler |XtSetErrorHandler
-		  |XtAppSetWarningHandler |XtSetWarningHandler |XtAppError |XtError |XtAppWarning |XtWarning |XtMalloc |XtCalloc |XtRealloc
-		  |XtFree |XtAddWorkProc |XtAppAddWorkProc |XtRemoveWorkProc |XtGetGC |XtAllocateGC |XtDestroyGC |XtReleaseGC |XtSetWMColormapWindows
-		  |XtFindFile |XtResolvePathname |XtDisownSelection |XtGetSelectionValue |XtGetSelectionValues |XtAppSetSelectionTimeout |XtSetSelectionTimeout
-		  |XtAppGetSelectionTimeout |XtGetSelectionTimeout |XtGetSelectionRequest |XtGetSelectionValueIncremental |XtGetSelectionValuesIncremental
-		  |XtCreateSelectionRequest |XtSendSelectionRequest |XtCancelSelectionRequest |XtReservePropertyAtom |XtReleasePropertyAtom
-		  |XtGrabKey |XtUngrabKey |XtGrabKeyboard |XtUngrabKeyboard |XtGrabButton |XtUngrabButton |XtGrabPointer |XtUngrabPointer
-		  |XtGetApplicationNameAndClass |XtRegisterDrawable |XtUnregisterDrawable |XtHooksOfDisplay |XtGetDisplays |XtToolkitThreadInitialize
-		  |XtAppLock |XtAppUnlock |XtIsRectObj |XtIsWidget |XtIsComposite |XtIsConstraint |XtIsShell |XtIsOverrideShell |XtIsWMShell
-		  |XtIsVendorShell |XtIsTransientShell |XtIsTopLevelShell |XtIsApplicationShell |XtIsSessionShell |XtMapWidget |XtUnmapWidget
-		  |XtAppContext |XLoadQueryFont |XQueryFont |XGetMotionEvents |XDeleteModifiermapEntry |XGetModifierMapping |XInsertModifiermapEntry
-		  |XNewModifiermap |XCreateImage |XInitImage |XGetImage |XGetSubImage |XOpenDisplay |XFetchBytes |XFetchBuffer |XGetAtomName
-		  |XGetDefault |XDisplayName |XKeysymToString |XSynchronize |XSetAfterFunction |XInternAtom |XCopyColormapAndFree |XCreateColormap
-		  |XCreatePixmapCursor |XCreateGlyphCursor |XCreateFontCursor |XLoadFont |XCreateGC |XFlushGC |XCreatePixmap |XCreateBitmapFromData
-		  |XCreatePixmapFromBitmapData |XCreateSimpleWindow |XGetSelectionOwner |XCreateWindow |XListInstalledColormaps |XListFonts
-		  |XListFontsWithInfo |XGetFontPath |XListExtensions |XListProperties |XListHosts |XKeycodeToKeysym |XLookupKeysym |XGetKeyboardMapping
-		  |XStringToKeysym |XMaxRequestSize |XExtendedMaxRequestSize |XResourceManagerString |XScreenResourceString |XDisplayMotionBufferSize
-		  |XVisualIDFromVisual |XInitThreads |XLockDisplay |XUnlockDisplay |XRootWindow |XDefaultRootWindow |XRootWindowOfScreen |XDefaultVisual
-		  |XDefaultVisualOfScreen |XDefaultGC |XDefaultGCOfScreen |XBlackPixel |XWhitePixel |XAllPlanes |XBlackPixelOfScreen |XWhitePixelOfScreen
-		  |XNextRequest |XLastKnownRequestProcessed |XServerVendor |XDisplayString |XDefaultColormap |XDefaultColormapOfScreen |XDisplayOfScreen
-		  |XScreenOfDisplay |XDefaultScreenOfDisplay |XEventMaskOfScreen |XScreenNumberOfScreen |XSetErrorHandler |XSetIOErrorHandler |XListPixmapFormats
-		  |XListDepths |XReconfigureWMWindow |XGetWMProtocols |XSetWMProtocols |XIconifyWindow |XWithdrawWindow |XGetCommand |XGetWMColormapWindows
-		  |XSetWMColormapWindows |XFreeStringList |XSetTransientForHint |XActivateScreenSaver |XAddHost |XAddHosts |XAddToSaveSet |XAllocColor
-		  |XAllocColorCells |XAllocColorPlanes |XAllocNamedColor |XAllowEvents |XAutoRepeatOff |XAutoRepeatOn |XBell |XBitmapBitOrder |XBitmapPad
-		  |XBitmapUnit |XCellsOfScreen |XChangeActivePointerGrab |XChangeGC |XChangeKeyboardControl |XChangeKeyboardMapping |XChangePointerControl
-		  |XChangeProperty |XChangeSaveSet |XChangeWindowAttributes |XCheckIfEvent |XCheckMaskEvent |XCheckTypedEvent |XCheckTypedWindowEvent
-		  |XCheckWindowEvent |XCirculateSubwindows |XCirculateSubwindowsDown |XCirculateSubwindowsUp |XClearArea |XClearWindow |XCloseDisplay
-		  |XConfigureWindow |XConnectionNumber |XConvertSelection |XCopyArea |XCopyGC |XCopyPlane |XDefaultDepth |XDefaultDepthOfScreen
-		  |XDefaultScreen |XDefineCursor |XDeleteProperty |XDestroyWindow |XDestroySubwindows |XDoesBackingStore |XDoesSaveUnders
-		  |XDisableAccessControl |XDisplayCells |XDisplayHeight |XDisplayHeightMM |XDisplayKeycodes |XDisplayPlanes |XDisplayWidth
-		  |XDisplayWidthMM  |XDrawArc |XDrawArcs |XDrawImageString |XDrawLine |XDrawLines |XDrawLinesDirect |freeXPoints |moveXPoints
-		  |vector->XPoints |XDrawPoint |XDrawPoints |XDrawRectangle |XDrawRectangles |XDrawSegments |XDrawString |XDrawText |XEnableAccessControl
-		  |XEventsQueued |XFetchName |XFillArc |XFillArcs |XFillPolygon |XFillRectangle |XFillRectangles |XFlush |XForceScreenSaver |XFree
-		  |XFreeColormap |XFreeColors |XFreeCursor |XFreeExtensionList |XFreeFont |XFreeFontInfo |XFreeFontNames |XFreeFontPath |XFreeGC |XFreeModifiermap
-		  |XFreePixmap |XGeometry |XGetErrorDatabaseText |XGetErrorText |XGetFontProperty |XGetGCValues |XGCValues |XEvent |XGetGeometry |XGetIconName
-		  |XGetInputFocus |XGetKeyboardControl |XGetPointerControl |XGetPointerMapping |XGetScreenSaver |XGetTransientForHint |XGetWindowProperty
-		  |XGetWindowAttributes |XGrabButton |XGrabKey |XGrabKeyboard |XGrabPointer |XGrabServer |XHeightMMOfScreen |XHeightOfScreen |XIfEvent
-		  |XImageByteOrder |XInstallColormap |XKeysymToKeycode |XKillClient |XLookupColor |XLowerWindow |XMapRaised |XMapSubwindows |XMapWindow
-		  |XMaskEvent |XMaxCmapsOfScreen |XMinCmapsOfScreen |XMoveResizeWindow |XMoveWindow ;|XNextEvent 
-		  |XNoOp |XParseColor |XParseGeometry
-		  |XPeekEvent |XPeekIfEvent |XPending |XPlanesOfScreen |XProtocolRevision |XProtocolVersion ;|XPutBackEvent 
-		  |XPutImage |XQLength
-		  |XQueryBestCursor |XQueryBestSize |XQueryBestStipple |XQueryBestTile |XQueryColor |XQueryColors |XQueryExtension |XQueryKeymap
-		  |XQueryPointer |XQueryTextExtents |XQueryTree |XRaiseWindow |XReadBitmapFile |XReadBitmapFileData |XRebindKeysym |XRecolorCursor
-		  |XRefreshKeyboardMapping |XRemoveFromSaveSet |XRemoveHost |XRemoveHosts |XReparentWindow |XResetScreenSaver |XResizeWindow |XRestackWindows
-		  |XRotateBuffers |XRotateWindowProperties |XScreenCount |XSelectInput |XSendEvent |XSetAccessControl |XSetArcMode |XSetBackground |XSetClipMask
-		  |XSetClipOrigin |XSetClipRectangles |XSetCloseDownMode |XSetCommand |XSetDashes |XSetFillRule |XSetFillStyle |XSetFont |XSetFontPath |XSetForeground
-		  |XSetFunction |XSetGraphicsExposures |XSetIconName |XSetInputFocus |XSetLineAttributes |XSetModifierMapping |XSetPlaneMask |XSetPointerMapping
-		  |XSetScreenSaver |XSetSelectionOwner |XSetState |XSetStipple |XSetSubwindowMode |XSetTSOrigin |XSetTile |XSetWindowBackground 
-		  |XSetWindowBackgroundPixmap
-		  |XSetWindowBorder |XSetWindowBorderPixmap |XSetWindowBorderWidth |XSetWindowColormap |XStoreBuffer |XStoreBytes |XStoreColor |XStoreColors
-		  |XStoreName |XStoreNamedColor |XSync |XTextExtents |XTextWidth |XTranslateCoordinates |XUndefineCursor |XUngrabButton |XUngrabKey |XUngrabKeyboard
-		  |XUngrabPointer |XUngrabServer |XUninstallColormap |XUnloadFont |XUnmapSubwindows |XUnmapWindow |XVendorRelease |XWarpPointer |XWidthMMOfScreen
-		  |XWidthOfScreen |XWindowEvent |XWriteBitmapFile |XSupportsLocale |XSetLocaleModifiers |XCreateFontSet |XFreeFontSet |XFontsOfFontSet 
-		  |XBaseFontNameListOfFontSet
-		  |XLocaleOfFontSet |XContextDependentDrawing |XDirectionalDependentDrawing |XContextualDrawing |XExtentsOfFontSet |XFilterEvent |XAllocIconSize
-		  |XAllocStandardColormap |XAllocWMHints |XClipBox |XCreateRegion |XDefaultString |XDeleteContext |XDestroyRegion |XEmptyRegion |XEqualRegion
-		  |XFindContext |XGetIconSizes |XGetRGBColormaps |XGetStandardColormap |XGetVisualInfo |XGetWMHints |XIntersectRegion |XConvertCase |XLookupString
-		  |XMatchVisualInfo |XOffsetRegion |XPointInRegion |XPolygonRegion |XRectInRegion |XSaveContext |XSetRGBColormaps |XSetWMHints |XSetRegion
-		  |XSetStandardColormap |XShrinkRegion |XSubtractRegion |XUnionRectWithRegion |XUnionRegion |XXorRegion |DefaultScreen |DefaultRootWindow |QLength
-		  |ScreenCount |ServerVendor |ProtocolVersion |ProtocolRevision |VendorRelease |DisplayString |BitmapUnit |BitmapBitOrder |BitmapPad |ImageByteOrder
-		  |NextRequest |LastKnownRequestProcessed |DefaultScreenOfDisplay |DisplayOfScreen |RootWindowOfScreen |BlackPixelOfScreen |WhitePixelOfScreen
-		  |DefaultColormapOfScreen |DefaultDepthOfScreen |DefaultGCOfScreen |DefaultVisualOfScreen |WidthOfScreen |HeightOfScreen |WidthMMOfScreen 
-		  |HeightMMOfScreen
-		  |PlanesOfScreen |CellsOfScreen |MinCmapsOfScreen |MaxCmapsOfScreen |DoesSaveUnders |DoesBackingStore |EventMaskOfScreen |RootWindow |DefaultVisual
-		  |DefaultGC |BlackPixel |WhitePixel |DisplayWidth |DisplayHeight |DisplayWidthMM |DisplayHeightMM |DisplayPlanes |DisplayCells |DefaultColormap
-		  |ScreenOfDisplay |DefaultDepth |IsKeypadKey |IsPrivateKeypadKey |IsCursorKey |IsPFKey |IsFunctionKey |IsMiscFunctionKey |IsModifierKey
-		  |XmCreateMessageBox |XmCreateMessageDialog |XmCreateErrorDialog |XmCreateInformationDialog |XmCreateQuestionDialog |XmCreateWarningDialog
-		  |XmCreateWorkingDialog |XmCreateTemplateDialog |XmMessageBoxGetChild |XmCreateArrowButtonGadget |XmCreateArrowButton |XmCreateNotebook
-		  |XmNotebookGetPageInfo |XmPrintSetup |XmPrintToFile |XmPrintPopupPDM |XmRedisplayWidget |XmTransferSetParameters |XmTransferDone
-		  |XmTransferValue |XmTransferStartRequest |XmTransferSendRequest |XmCreateComboBox |XmCreateDropDownComboBox |XmCreateDropDownList |XmComboBoxAddItem
-		  |XmComboBoxDeletePos |XmComboBoxSelectItem |XmComboBoxSetItem |XmComboBoxUpdate |XmCreateContainer |XmContainerGetItemChildren |XmContainerRelayout
-		  |XmContainerReorder |XmContainerCut |XmContainerCopy |XmContainerPaste |XmContainerCopyLink |XmContainerPasteLink |XmCreateSpinBox
-		  |XmSpinBoxValidatePosition |XmCreateSimpleSpinBox |XmSimpleSpinBoxAddItem |XmSimpleSpinBoxDeletePos |XmSimpleSpinBoxSetItem |XmDropSiteRegistered
-		  |XmTextFieldCopyLink |XmTextFieldPasteLink |XmTextGetCenterline |XmToggleButtonGadgetSetValue |XmGetIconFileName |XmCreateIconGadget
-		  |XmCreateIconHeader |XmObjectAtPoint |XmConvertStringToUnits |XmCreateGrabShell |XmToggleButtonSetValue |XmTextPasteLink |XmTextCopyLink
-		  |XmScaleSetTicks |XmInternAtom |XmGetAtomName |XmCreatePanedWindow |XmCreateBulletinBoard |XmCreateBulletinBoardDialog |XmCreateCascadeButtonGadget
-		  |XmCascadeButtonGadgetHighlight |XmAddProtocols |XmRemoveProtocols |XmAddProtocolCallback |XmRemoveProtocolCallback |XmActivateProtocol
-		  |XmDeactivateProtocol |XmSetProtocolHooks |XmCreateCascadeButton |XmCascadeButtonHighlight |XmCreatePushButtonGadget |XmCreatePushButton
-		  |XmCreateCommand |XmCommandGetChild |XmCommandSetValue |XmCommandAppendValue |XmCommandError |XmCreateCommandDialog |XmMenuPosition
-		  |XmCreateRowColumn |XmCreateWorkArea |XmCreateRadioBox |XmCreateOptionMenu |XmOptionLabelGadget |XmOptionButtonGadget |XmCreateMenuBar
-		  |XmCreatePopupMenu |XmCreatePulldownMenu |XmGetPostedFromWidget |XmGetTearOffControl |XmAddToPostFromList |XmRemoveFromPostFromList
-		  |XmScaleSetValue |XmScaleGetValue |XmCreateScale |XmClipboardBeginCopy |XmClipboardStartCopy |XmClipboardCopy |XmClipboardEndCopy
-		  |XmClipboardCancelCopy |XmClipboardWithdrawFormat |XmClipboardCopyByName |XmClipboardUndoCopy |XmClipboardLock |XmClipboardUnlock
-		  |XmClipboardStartRetrieve |XmClipboardEndRetrieve |XmClipboardRetrieve |XmClipboardInquireCount |XmClipboardInquireFormat |XmClipboardInquireLength
-		  |XmClipboardInquirePendingItems |XmClipboardRegisterFormat |XmGetXmScreen |XmCreateScrollBar |XmScrollBarGetValues |XmScrollBarSetValues
-		  |XmCreateDialogShell |XmScrolledWindowSetAreas |XmCreateScrolledWindow |XmScrollVisible |XmGetDragContext |XmGetXmDisplay |XmSelectionBoxGetChild
-		  |XmCreateSelectionBox |XmCreateSelectionDialog |XmCreatePromptDialog |XmDragStart |XmDragCancel |XmTargetsAreCompatible |XmCreateSeparatorGadget
-		  |XmCreateDragIcon |XmCreateSeparator |XmCreateDrawingArea |XmCreateDrawnButton |XmDropSiteRegister |XmDropSiteUnregister |XmDropSiteStartUpdate
-		  |XmDropSiteUpdate |XmDropSiteEndUpdate |XmDropSiteRetrieve |XmDropSiteQueryStackingOrder |XmDropSiteConfigureStackingOrder |XmDropTransferStart
-		  |XmDropTransferAdd |XmTextFieldGetString |XmTextFieldGetSubstring |XmTextFieldGetLastPosition |XmTextFieldSetString |XmTextFieldReplace
-		  |XmTextFieldInsert |XmTextFieldSetAddMode |XmTextFieldGetAddMode |XmTextFieldGetEditable |XmTextFieldSetEditable |XmTextFieldGetMaxLength
-		  |XmTextFieldSetMaxLength |XmTextFieldGetCursorPosition |XmTextFieldGetInsertionPosition |XmTextFieldSetCursorPosition 
-		  |XmTextFieldSetInsertionPosition
-		  |XmTextFieldGetSelectionPosition |XmTextFieldGetSelection |XmTextFieldRemove |XmTextFieldCopy |XmTextFieldCut |XmTextFieldPaste 
-		  |XmTextFieldClearSelection
-		  |XmTextFieldSetSelection |XmTextFieldXYToPos |XmTextFieldPosToXY |XmTextFieldShowPosition |XmTextFieldSetHighlight |XmTextFieldGetBaseline
-		  |XmCreateTextField |XmFileSelectionBoxGetChild |XmFileSelectionDoSearch |XmCreateFileSelectionBox |XmCreateFileSelectionDialog |XmTextSetHighlight
-		  |XmCreateScrolledText |XmCreateText |XmTextGetSubstring |XmTextGetString |XmTextGetLastPosition |XmTextSetString |XmTextReplace
-		  |XmTextInsert |XmTextSetAddMode |XmTextGetAddMode |XmTextGetEditable |XmTextSetEditable |XmTextGetMaxLength |XmTextSetMaxLength
-		  |XmTextGetTopCharacter |XmTextSetTopCharacter |XmTextGetCursorPosition |XmTextGetInsertionPosition |XmTextSetInsertionPosition
-		  |XmTextSetCursorPosition |XmTextRemove |XmTextCopy |XmTextCut |XmTextPaste |XmTextGetSelection |XmTextSetSelection |XmTextClearSelection
-		  |XmTextGetSelectionPosition |XmTextXYToPos |XmTextPosToXY |XmTextGetSource |XmTextSetSource |XmTextShowPosition |XmTextScroll
-		  |XmTextGetBaseline |XmTextDisableRedisplay |XmTextEnableRedisplay |XmTextFindString |XmCreateForm |XmCreateFormDialog |XmCreateFrame
-		  |XmToggleButtonGadgetGetState |XmToggleButtonGadgetSetState |XmCreateToggleButtonGadget |XmToggleButtonGetState |XmToggleButtonSetState
-		  |XmCreateToggleButton |XmCreateLabelGadget |XmCreateLabel |XmIsMotifWMRunning |XmListAddItem |XmListAddItems |XmListAddItemsUnselected
-		  |XmListAddItemUnselected |XmListDeleteItem |XmListDeleteItems |XmListDeletePositions |XmListDeletePos |XmListDeleteItemsPos |XmListDeleteAllItems
-		  |XmListReplaceItems |XmListReplaceItemsPos |XmListReplaceItemsUnselected |XmListReplaceItemsPosUnselected |XmListReplacePositions |XmListSelectItem
-		  |XmListSelectPos |XmListDeselectItem |XmListDeselectPos |XmListDeselectAllItems |XmListSetPos |XmListSetBottomPos |XmListSetItem
-		  |XmListSetBottomItem |XmListSetAddMode |XmListItemExists |XmListItemPos |XmListGetKbdItemPos |XmListSetKbdItemPos |XmListYToPos
-		  |XmListPosToBounds |XmListGetMatchPos |XmListGetSelectedPos |XmListSetHorizPos |XmListUpdateSelectedList |XmListPosSelected
-		  |XmCreateList |XmCreateScrolledList |XmTranslateKey |XmMainWindowSetAreas |XmMainWindowSep1 |XmMainWindowSep2 |XmMainWindowSep3
-		  |XmCreateMainWindow |XmInstallImage |XmUninstallImage |XmGetPixmap |XmGetPixmapByDepth |XmDestroyPixmap |XmUpdateDisplay |XmWidgetGetBaselines
-		  |XmWidgetGetDisplayRect |XmRegisterSegmentEncoding |XmMapSegmentEncoding |XmCvtCTToXmString |XmCvtXmStringToCT |XmConvertUnits
-		  |XmCvtToHorizontalPixels |XmCvtToVerticalPixels |XmCvtFromHorizontalPixels |XmCvtFromVerticalPixels |XmSetFontUnits |XmSetFontUnit
-		  |XmSetMenuCursor |XmGetMenuCursor |XmCreateSimpleMenuBar |XmCreateSimplePopupMenu |XmCreateSimplePulldownMenu |XmCreateSimpleOptionMenu
-		  |XmCreateSimpleRadioBox |XmCreateSimpleCheckBox |XmVaCreateSimpleMenuBar |XmVaCreateSimplePopupMenu |XmVaCreateSimplePulldownMenu
-		  |XmVaCreateSimpleOptionMenu |XmVaCreateSimpleRadioBox |XmVaCreateSimpleCheckBox |XmTrackingEvent |XmTrackingLocate |XmSetColorCalculation
-		  |XmGetColorCalculation |XmGetColors |XmChangeColor |XmStringCreate |XmStringCreateSimple |XmStringCreateLocalized |XmStringDirectionCreate
-		  |XmStringSeparatorCreate |XmStringSegmentCreate |XmStringLtoRCreate |XmStringCreateLtoR |XmStringInitContext |XmStringFreeContext 
-		  |XmStringGetNextComponent
-		  |XmStringPeekNextComponent |XmStringGetNextSegment |XmStringGetLtoR |XmFontListEntryCreate |XmFontListEntryCreate_r |XmFontListCreate_r
-		  |XmStringCreateFontList_r |XmStringConcatAndFree |XmStringIsVoid |XmCvtXmStringToByteStream |XmCvtByteStreamToXmString |XmStringByteStreamLength
-
-		  |XmStringPeekNextTriple |XmStringGetNextTriple |XmStringComponentCreate |XmStringUnparse |XmStringParseText |XmStringToXmStringTable
-		  |XmStringTableToXmString |XmStringTableUnparse |XmStringTableParseStringArray |XmDirectionToStringDirection |XmStringDirectionToDirection
-		  |XmStringGenerate |XmStringPutRendition |XmParseMappingCreate |XmParseMappingSetValues |XmParseMappingGetValues |XmParseMappingFree
-		  |XmParseTableFree |XmStringTableProposeTablist |XmTabSetValue |XmTabGetValues |XmTabFree |XmTabCreate |XmTabListTabCount |XmTabListRemoveTabs
-		  |XmTabListReplacePositions |XmTabListGetTab |XmTabListCopy |XmTabListInsertTabs |XmRenderTableCvtFromProp |XmRenderTableCvtToProp
-		  |XmRenditionUpdate |XmRenditionRetrieve |XmRenditionFree |XmRenditionCreate |XmRenderTableGetRenditions |XmRenderTableGetRendition
-		  |XmRenderTableGetTags |XmRenderTableFree |XmRenderTableCopy |XmRenderTableRemoveRenditions |XmRenderTableAddRenditions |XmFontListEntryFree
-		  |XmFontListEntryGetFont |XmFontListEntryGetTag |XmFontListAppendEntry |XmFontListNextEntry |XmFontListRemoveEntry |XmFontListEntryLoad
-		  |XmFontListCreate |XmStringCreateFontList |XmFontListFree |XmFontListAdd |XmFontListCopy |XmFontListInitFontContext |XmFontListGetNextFont
-		  |XmFontListFreeFontContext |XmStringConcat |XmStringNConcat |XmStringCopy |XmStringNCopy |XmStringByteCompare |XmStringCompare |XmStringLength
-		  |XmStringEmpty |XmStringHasSubstring |XmStringFree |XmStringBaseline |XmStringWidth |XmStringHeight |XmStringExtent |XmStringLineCount |XmStringDraw
-		  |XmStringDrawImage |XmStringDrawUnderline |XmGetDestination |XmIsTraversable |XmGetVisibility |XmGetTabGroup |XmGetFocusWidget |XmProcessTraversal
-		  |XmAddTabGroup |XmRemoveTabGroup |XmCreateMenuShell |XmIsMessageBox |XmIsArrowButtonGadget |XmIsArrowButton |XmIsNotebook |XmIsPrintShell
-		  |XmIsComboBox |XmIsContainer |XmIsGrabShell |XmIsIconGadget |XmIsIconHeader |XmIsPanedWindow |XmIsBulletinBoard |XmIsPrimitive 
-		  |XmIsCascadeButtonGadget
-		  |XmIsCascadeButton |XmIsPushButtonGadget |XmIsPushButton |XmIsCommand |XmIsRowColumn |XmIsScale |XmIsScreen |XmIsScrollBar |XmIsDialogShell
-		  |XmIsScrolledWindow |XmIsDisplay |XmGetDisplay |XmIsSelectionBox |XmIsDragContext |XmIsSeparatorGadget |XmIsDragIconObjectClass |XmIsSeparator
-		  |XmIsDrawingArea |XmIsDrawnButton |XmIsDropSiteManager |XmIsDropTransfer |XmIsTextField |XmIsFileSelectionBox |XmIsText |XmIsForm |XmIsFrame
-		  |XmIsGadget |XmIsToggleButtonGadget |XmIsToggleButton |XmIsLabelGadget |XmIsLabel |XmIsVendorShell |XmIsList |XmIsMainWindow |XmIsManager
-		  |XmIsMenuShell |XpmCreatePixmapFromData |XpmCreateDataFromPixmap |XpmReadFileToPixmap |XpmReadPixmapFile |XpmWriteFileFromPixmap |XpmWritePixmapFile
-		  |XpmCreatePixmapFromBuffer |XpmCreateBufferFromImage |XpmCreateBufferFromPixmap |XpmCreatePixmapFromXpmImage |XpmCreateXpmImageFromPixmap
-		  |XGetPixel |XDestroyImage |XPutPixel |XSubImage |XAddPixel |Pixel |GC |Widget |XtAppContext? |XtRequestId? |XtWorkProcId? |XtInputId?
-		  |XtIntervalId? |Screen? |XEvent? |XRectangle? |XArc? |XPoint? |XSegment? |XColor? |XHostAddress? |Atom? |Colormap? |XModifierKeymap? |Depth?
-		  |Display? |Drawable? |Font? |GC? |KeySym? |Pixel? |Pixmap? |Region? |Time? |Visual? |Window? |XFontProp? |XFontSet? |XFontStruct? |XGCValues?
-		  |XImage? |XVisualInfo? |XWMHints? |XWindowAttributes? |XWindowChanges? |KeyCode? |XContext? |XCharStruct? |XTextItem? |XStandardColormap? 
-		  |Substitution?
-		  |XPContext? |Widget? |XmStringContext? |WidgetClass? |XmString? |XmToggleButton? |XmDrawingArea? |XmPushButton? |XmTextField? |XmFileSelectionBox?
-		  |XmText? |XmFrame? |XmLabel? |XmList? |XmArrowButton? |XmScrollBar? |XmCommand? |XmScale? |XmRowColumn? |XmParseTable? |XmTab? |XmNotebook?
-		  |XmPrintShell? |XmComboBox? |XmContainer? |XmIconHeader? |XmGrabShell? |XmRendition? |XmRenderTable? |XmIconGadget? |XmTabList? |XmParseMapping?
-		  |XmPanedWindow? |XmScrolledWindow? |XmCascadeButton? |XmForm? |XmBulletinBoard? |XmScreen? |XmDialogShell? |XmDisplay? |XmSelectionBox? 
-		  |XmDragContext?
-		  |XmDragIconObjectClass? |XmSeparator? |XmDropSiteManager? |XmDropTransfer? |XmVendorShell? |XmMainWindow? |XmMessageBox? |XmManager? |XmMenuShell?
-		  |XmLabelGadget? |XmPushButtonGadget? |XmSeparatorGadget? |XmArrowButtonGadget? |XmCascadeButtonGadget? |XmToggleButtonGadget? |XmDrawnButton?
-		  |XmPrimitive? |XmFontList? |XmFontContext? |XmFontListEntry? |XmTextSource? |XpmAttributes? |XpmImage? |XpmColorSymbol?
+		  |XpGetOneAttribute |XpGetScreenOfContext |XpFreePrinterList |XpQueryVersion |XpQueryExtension
+		  |XpQueryScreens |XpGetPdmStartParams |XpGetAuthParams |XpSendOneTicket |XpGetPageDimensions
+		  |XpSetImageResolution |XpGetPrinterList |XpSelectInput |XpInputSelected |XpPutDocumentData
+		  |XpGetDocumentData |XtSetArg |XtManageChildren |XtManageChild |XtUnmanageChildren |XtUnmanageChild
+		  |XtDispatchEvent |XtCallAcceptFocus |XtIsSubclass |XtIsObject |XtIsManaged |XtIsRealized
+		  |XtIsSensitive |XtOwnSelection |XtOwnSelectionIncremental |XtMakeResizeRequest |XtTranslateCoords
+		  |XtKeysymToKeycodeList |XtStringConversionWarning |XtDisplayStringConversionWarning
+		  |XtParseTranslationTable |XtParseAcceleratorTable |XtOverrideTranslations |XtAugmentTranslations
+		  |XtInstallAccelerators |XtInstallAllAccelerators |XtUninstallTranslations |XtAppAddActionHook
+		  |XtRemoveActionHook |XtGetActionList |XtCallActionProc |XtRegisterGrabAction |XtSetMultiClickTime
+		  |XtGetMultiClickTime |XtGetActionKeysym |XtTranslateKeycode |XtTranslateKey |XtSetKeyTranslator
+		  |XtRegisterCaseConverter |XtConvertCase |XtAddEventHandler |XtRemoveEventHandler |XtAddRawEventHandler
+		  |XtRemoveRawEventHandler |XtInsertEventHandler |XtInsertRawEventHandler |XtDispatchEventToWidget
+		  |XtBuildEventMask |XtAddGrab |XtRemoveGrab |XtAddExposureToRegion |XtSetKeyboardFocus
+		  |XtGetKeyboardFocusWidget |XtLastEventProcessed |XtLastTimestampProcessed |XtAddTimeOut
+		  |XtAppAddTimeOut |XtRemoveTimeOut |XtAddInput |XtAppAddInput |XtRemoveInput |XtPending |XtAppPending
+		  |XtRealizeWidget |XtUnrealizeWidget |XtDestroyWidget |XtSetSensitive |XtNameToWidget |XtWindowToWidget
+		  |XtMergeArgLists |XtVaCreateArgsList |XtDisplay |XtDisplayOfObject |XtScreen |XtScreenOfObject
+		  |XtWindow |XtWindowOfObject |XtName |XtSuperclass |XtClass |XtParent |XtAddCallback |XtRemoveCallback
+		  |XtAddCallbacks |XtRemoveCallbacks |XtRemoveAllCallbacks |XtCallCallbacks |XtCallCallbackList
+		  |XtHasCallbacks |XtCreatePopupShell |XtVaCreatePopupShell |XtPopup |XtPopupSpringLoaded
+		  |XtCallbackNone |XtCallbackNonexclusive |XtCallbackExclusive |XtPopdown |XtCallbackPopdown
+		  |XtCreateWidget |XtCreateManagedWidget |XtVaCreateWidget |XtVaCreateManagedWidget
+		  |XtCreateApplicationShell |XtAppCreateShell |XtVaAppCreateShell |XtToolkitInitialize
+		  |XtSetLanguageProc |XtDisplayInitialize |XtOpenApplication |XtVaOpenApplication |XtAppInitialize
+		  |XtVaAppInitialize |XtInitialize |XtOpenDisplay |XtCreateApplicationContext
+		  |XtDestroyApplicationContext |XtInitializeWidgetClass |XtWidgetToApplicationContext
+		  |XtDisplayToApplicationContext |XtCloseDisplay |XtSetValues |XtVaSetValues |XtGetValues |XtVaGetValues
+		  |XtAppSetErrorMsgHandler |XtSetErrorMsgHandler |XtAppSetWarningMsgHandler |XtSetWarningMsgHandler
+		  |XtAppErrorMsg |XtErrorMsg |XtAppWarningMsg |XtWarningMsg |XtAppSetErrorHandler |XtSetErrorHandler
+		  |XtAppSetWarningHandler |XtSetWarningHandler |XtAppError |XtError |XtAppWarning |XtWarning
+		  |XtAddWorkProc |XtAppAddWorkProc |XtRemoveWorkProc |XtGetGC |XtAllocateGC |XtDestroyGC |XtReleaseGC
+		  |XtSetWMColormapWindows |XtFindFile |XtResolvePathname |XtDisownSelection |XtGetSelectionValue
+		  |XtGetSelectionValues |XtAppSetSelectionTimeout |XtSetSelectionTimeout |XtAppGetSelectionTimeout
+		  |XtGetSelectionTimeout |XtGetSelectionRequest |XtGetSelectionValueIncremental
+		  |XtGetSelectionValuesIncremental |XtCreateSelectionRequest |XtSendSelectionRequest
+		  |XtCancelSelectionRequest |XtReservePropertyAtom |XtReleasePropertyAtom |XtGrabKey |XtUngrabKey
+		  |XtGrabKeyboard |XtUngrabKeyboard |XtGrabButton |XtUngrabButton |XtGrabPointer |XtUngrabPointer
+		  |XtGetApplicationNameAndClass |XtRegisterDrawable |XtUnregisterDrawable |XtHooksOfDisplay
+		  |XtGetDisplays |XtToolkitThreadInitialize |XtAppLock |XtAppUnlock |XtIsRectObj |XtIsWidget
+		  |XtIsComposite |XtIsConstraint |XtIsShell |XtIsOverrideShell |XtIsWMShell |XtIsVendorShell
+		  |XtIsTransientShell |XtIsTopLevelShell |XtIsApplicationShell |XtIsSessionShell |XtMapWidget
+		  |XtUnmapWidget |XtAppContext |XLoadQueryFont |XQueryFont |XGetMotionEvents |XDeleteModifiermapEntry
+		  |XGetModifierMapping |XInsertModifiermapEntry |XNewModifiermap |XCreateImage |XInitImage |XGetImage
+		  |XGetSubImage |XOpenDisplay |XFetchBytes |XFetchBuffer |XGetAtomName |XGetDefault |XDisplayName
+		  |XKeysymToString |XSynchronize |XSetAfterFunction |XInternAtom |XCopyColormapAndFree |XCreateColormap
+		  |XCreatePixmapCursor |XCreateGlyphCursor |XCreateFontCursor |XLoadFont |XCreateGC |XFlushGC
+		  |XCreatePixmap |XCreateBitmapFromData |XCreatePixmapFromBitmapData |XCreateSimpleWindow
+		  |XGetSelectionOwner |XCreateWindow |XListInstalledColormaps |XListFonts |XListFontsWithInfo
+		  |XGetFontPath |XListExtensions |XListProperties |XListHosts |XKeycodeToKeysym |XLookupKeysym
+		  |XGetKeyboardMapping |XStringToKeysym |XMaxRequestSize |XExtendedMaxRequestSize
+		  |XResourceManagerString |XScreenResourceString |XDisplayMotionBufferSize |XVisualIDFromVisual
+		  |XInitThreads |XLockDisplay |XUnlockDisplay |XRootWindow |XDefaultRootWindow |XRootWindowOfScreen
+		  |XDefaultVisual |XDefaultVisualOfScreen |XDefaultGC |XDefaultGCOfScreen |XBlackPixel |XWhitePixel
+		  |XAllPlanes |XBlackPixelOfScreen |XWhitePixelOfScreen |XNextRequest |XLastKnownRequestProcessed
+		  |XServerVendor |XDisplayString |XDefaultColormap |XDefaultColormapOfScreen |XDisplayOfScreen
+		  |XScreenOfDisplay |XDefaultScreenOfDisplay |XEventMaskOfScreen |XScreenNumberOfScreen
+		  |XSetErrorHandler |XSetIOErrorHandler |XListPixmapFormats |XListDepths |XReconfigureWMWindow
+		  |XGetWMProtocols |XSetWMProtocols |XIconifyWindow |XWithdrawWindow |XGetCommand |XGetWMColormapWindows
+		  |XSetWMColormapWindows |XFreeStringList |XSetTransientForHint |XActivateScreenSaver |XAddHost
+		  |XAddHosts |XAddToSaveSet |XAllocColor |XAllocColorCells |XAllocColorPlanes |XAllocNamedColor
+		  |XAllowEvents |XAutoRepeatOff |XAutoRepeatOn |XBell |XBitmapBitOrder |XBitmapPad |XBitmapUnit
+		  |XCellsOfScreen |XChangeActivePointerGrab |XChangeGC |XChangeKeyboardControl |XChangeKeyboardMapping
+		  |XChangePointerControl |XChangeProperty |XChangeSaveSet |XChangeWindowAttributes |XCheckIfEvent
+		  |XCheckMaskEvent |XCheckTypedEvent |XCheckTypedWindowEvent |XCheckWindowEvent |XCirculateSubwindows
+		  |XCirculateSubwindowsDown |XCirculateSubwindowsUp |XClearArea |XClearWindow |XCloseDisplay
+		  |XConfigureWindow |XConnectionNumber |XConvertSelection |XCopyArea |XCopyGC |XCopyPlane |XDefaultDepth
+		  |XDefaultDepthOfScreen |XDefaultScreen |XDefineCursor |XDeleteProperty |XDestroyWindow
+		  |XDestroySubwindows |XDoesBackingStore |XDoesSaveUnders |XDisableAccessControl |XDisplayCells
+		  |XDisplayHeight |XDisplayHeightMM |XDisplayKeycodes |XDisplayPlanes |XDisplayWidth |XDisplayWidthMM
+		  |XDrawArc |XDrawArcs |XDrawImageString |XDrawLine |XDrawLines |XDrawLinesDirect |XDrawPoint
+		  |XDrawPoints |XDrawRectangle |XDrawRectangles |XDrawSegments |XDrawString |XDrawText
+		  |XEnableAccessControl |XEventsQueued |XFetchName |XFillArc |XFillArcs |XFillPolygon |XFillRectangle
+		  |XFillRectangles |XFlush |XForceScreenSaver |XFreeColormap |XFreeColors |XFreeCursor
+		  |XFreeExtensionList |XFreeFont |XFreeFontInfo |XFreeFontNames |XFreeFontPath |XFreeGC
+		  |XFreeModifiermap |XFreePixmap |XGeometry |XGetErrorDatabaseText |XGetErrorText |XGetFontProperty
+		  |XGetGCValues |XGCValues |XEvent |XGetGeometry |XGetIconName |XGetInputFocus |XGetKeyboardControl
+		  |XGetPointerControl |XGetPointerMapping |XGetScreenSaver |XGetTransientForHint |XGetWindowProperty
+		  |XGetWindowAttributes |XGrabButton |XGrabKey |XGrabKeyboard |XGrabPointer |XGrabServer
+		  |XHeightMMOfScreen |XHeightOfScreen |XIfEvent |XImageByteOrder |XInstallColormap |XKeysymToKeycode
+		  |XKillClient |XLookupColor |XLowerWindow |XMapRaised |XMapSubwindows |XMapWindow |XMaskEvent
+		  |XMaxCmapsOfScreen |XMinCmapsOfScreen |XMoveResizeWindow |XMoveWindow |XNoOp |XParseColor
+		  |XParseGeometry |XPeekEvent |XPeekIfEvent |XPending |XPlanesOfScreen |XProtocolRevision
+		  |XProtocolVersion |XPutImage |XQLength |XQueryBestCursor |XQueryBestSize |XQueryBestStipple
+		  |XQueryBestTile |XQueryColor |XQueryColors |XQueryExtension |XQueryKeymap |XQueryPointer
+		  |XQueryTextExtents |XQueryTree |XRaiseWindow |XRebindKeysym |XRecolorCursor |XRefreshKeyboardMapping
+		  |XRemoveFromSaveSet |XRemoveHost |XRemoveHosts |XReparentWindow |XResetScreenSaver |XResizeWindow
+		  |XRestackWindows |XRotateBuffers |XRotateWindowProperties |XScreenCount |XSelectInput |XSendEvent
+		  |XSetAccessControl |XSetArcMode |XSetBackground |XSetClipMask |XSetClipOrigin |XSetClipRectangles
+		  |XSetCloseDownMode |XSetCommand |XSetDashes |XSetFillRule |XSetFillStyle |XSetFont |XSetFontPath
+		  |XSetForeground |XSetFunction |XSetGraphicsExposures |XSetIconName |XSetInputFocus |XSetLineAttributes
+		  |XSetModifierMapping |XSetPlaneMask |XSetPointerMapping |XSetScreenSaver |XSetSelectionOwner
+		  |XSetState |XSetStipple |XSetSubwindowMode |XSetTSOrigin |XSetTile |XSetWindowBackground
+		  |XSetWindowBackgroundPixmap |XSetWindowBorder |XSetWindowBorderPixmap |XSetWindowBorderWidth
+		  |XSetWindowColormap |XStoreBuffer |XStoreBytes |XStoreColor |XStoreColors |XStoreName
+		  |XStoreNamedColor |XSync |XTextExtents |XTextWidth |XTranslateCoordinates |XUndefineCursor
+		  |XUngrabButton |XUngrabKey |XUngrabKeyboard |XUngrabPointer |XUngrabServer |XUninstallColormap
+		  |XUnloadFont |XUnmapSubwindows |XUnmapWindow |XVendorRelease |XWarpPointer |XWidthMMOfScreen
+		  |XWidthOfScreen |XWindowEvent |XWriteBitmapFile |XSupportsLocale |XSetLocaleModifiers |XCreateFontSet
+		  |XFreeFontSet |XFontsOfFontSet |XBaseFontNameListOfFontSet |XLocaleOfFontSet |XContextDependentDrawing
+		  |XDirectionalDependentDrawing |XContextualDrawing |XExtentsOfFontSet |XFilterEvent |XAllocIconSize
+		  |XAllocStandardColormap |XAllocWMHints |XClipBox |XCreateRegion |XDefaultString |XDeleteContext
+		  |XDestroyRegion |XEmptyRegion |XEqualRegion |XFindContext |XGetIconSizes |XGetRGBColormaps
+		  |XGetStandardColormap |XGetVisualInfo |XGetWMHints |XIntersectRegion |XConvertCase |XLookupString
+		  |XMatchVisualInfo |XOffsetRegion |XPointInRegion |XPolygonRegion |XRectInRegion |XSaveContext
+		  |XSetRGBColormaps |XSetWMHints |XSetRegion |XSetStandardColormap |XShrinkRegion |XSubtractRegion
+		  |XUnionRectWithRegion |XUnionRegion |XXorRegion |DefaultScreen |DefaultRootWindow |QLength
+		  |ScreenCount |ServerVendor |ProtocolVersion |ProtocolRevision |VendorRelease |DisplayString
+		  |BitmapUnit |BitmapBitOrder |BitmapPad |ImageByteOrder |NextRequest |LastKnownRequestProcessed
+		  |DefaultScreenOfDisplay |DisplayOfScreen |RootWindowOfScreen |BlackPixelOfScreen |WhitePixelOfScreen
+		  |DefaultColormapOfScreen |DefaultDepthOfScreen |DefaultGCOfScreen |DefaultVisualOfScreen
+		  |WidthOfScreen |HeightOfScreen |WidthMMOfScreen |HeightMMOfScreen |PlanesOfScreen |CellsOfScreen
+		  |MinCmapsOfScreen |MaxCmapsOfScreen |DoesSaveUnders |DoesBackingStore |EventMaskOfScreen |RootWindow
+		  |DefaultVisual |DefaultGC |BlackPixel |WhitePixel |DisplayWidth |DisplayHeight |DisplayWidthMM
+		  |DisplayHeightMM |DisplayPlanes |DisplayCells |DefaultColormap |ScreenOfDisplay |DefaultDepth
+		  |IsKeypadKey |IsPrivateKeypadKey |IsCursorKey |IsPFKey |IsFunctionKey |IsMiscFunctionKey
+		  |IsModifierKey |XmCreateMessageBox |XmCreateMessageDialog |XmCreateErrorDialog
+		  |XmCreateInformationDialog |XmCreateQuestionDialog |XmCreateWarningDialog |XmCreateWorkingDialog
+		  |XmCreateTemplateDialog |XmMessageBoxGetChild |XmCreateArrowButtonGadget |XmCreateArrowButton
+		  |XmCreateNotebook |XmNotebookGetPageInfo |XmPrintSetup |XmPrintToFile |XmPrintPopupPDM
+		  |XmRedisplayWidget |XmTransferSetParameters |XmTransferValue |XmCreateComboBox
+		  |XmCreateDropDownComboBox |XmCreateDropDownList |XmComboBoxAddItem |XmComboBoxDeletePos
+		  |XmComboBoxSelectItem |XmComboBoxSetItem |XmComboBoxUpdate |XmCreateContainer
+		  |XmContainerGetItemChildren |XmContainerRelayout |XmContainerReorder |XmContainerCut |XmContainerCopy
+		  |XmContainerPaste |XmContainerCopyLink |XmContainerPasteLink |XmCreateSpinBox
+		  |XmSpinBoxValidatePosition |XmCreateSimpleSpinBox |XmSimpleSpinBoxAddItem |XmSimpleSpinBoxDeletePos
+		  |XmSimpleSpinBoxSetItem |XmDropSiteRegistered |XmTextFieldCopyLink |XmTextFieldPasteLink
+		  |XmTextGetCenterline |XmToggleButtonGadgetSetValue |XmGetIconFileName |XmCreateIconGadget
+		  |XmCreateIconHeader |XmObjectAtPoint |XmConvertStringToUnits |XmCreateGrabShell
+		  |XmToggleButtonSetValue |XmTextPasteLink |XmTextCopyLink |XmScaleSetTicks |XmInternAtom |XmGetAtomName
+		  |XmCreatePanedWindow |XmCreateBulletinBoard |XmCreateBulletinBoardDialog |XmCreateCascadeButtonGadget
+		  |XmCascadeButtonGadgetHighlight |XmAddProtocols |XmRemoveProtocols |XmAddProtocolCallback
+		  |XmRemoveProtocolCallback |XmActivateProtocol |XmDeactivateProtocol |XmSetProtocolHooks
+		  |XmCreateCascadeButton |XmCascadeButtonHighlight |XmCreatePushButtonGadget |XmCreatePushButton
+		  |XmCreateCommand |XmCommandGetChild |XmCommandSetValue |XmCommandAppendValue |XmCommandError
+		  |XmCreateCommandDialog |XmMenuPosition |XmCreateRowColumn |XmCreateWorkArea |XmCreateRadioBox
+		  |XmCreateOptionMenu |XmOptionLabelGadget |XmOptionButtonGadget |XmCreateMenuBar |XmCreatePopupMenu
+		  |XmCreatePulldownMenu |XmGetPostedFromWidget |XmGetTearOffControl |XmAddToPostFromList
+		  |XmRemoveFromPostFromList |XmScaleSetValue |XmScaleGetValue |XmCreateScale |XmClipboardBeginCopy
+		  |XmClipboardStartCopy |XmClipboardCopy |XmClipboardEndCopy |XmClipboardCancelCopy
+		  |XmClipboardWithdrawFormat |XmClipboardCopyByName |XmClipboardUndoCopy |XmClipboardLock
+		  |XmClipboardUnlock |XmClipboardStartRetrieve |XmClipboardEndRetrieve |XmClipboardRetrieve
+		  |XmClipboardInquireCount |XmClipboardInquireFormat |XmClipboardInquireLength
+		  |XmClipboardInquirePendingItems |XmClipboardRegisterFormat |XmGetXmScreen |XmCreateScrollBar
+		  |XmScrollBarGetValues |XmScrollBarSetValues |XmCreateDialogShell |XmScrolledWindowSetAreas
+		  |XmCreateScrolledWindow |XmScrollVisible |XmGetDragContext |XmGetXmDisplay |XmSelectionBoxGetChild
+		  |XmCreateSelectionBox |XmCreateSelectionDialog |XmCreatePromptDialog |XmDragStart |XmDragCancel
+		  |XmTargetsAreCompatible |XmCreateSeparatorGadget |XmCreateDragIcon |XmCreateSeparator
+		  |XmCreateDrawingArea |XmCreateDrawnButton |XmDropSiteRegister |XmDropSiteUnregister
+		  |XmDropSiteStartUpdate |XmDropSiteUpdate |XmDropSiteEndUpdate |XmDropSiteRetrieve
+		  |XmDropSiteQueryStackingOrder |XmDropSiteConfigureStackingOrder |XmDropTransferStart
+		  |XmDropTransferAdd |XmTextFieldGetString |XmTextFieldGetSubstring |XmTextFieldGetLastPosition
+		  |XmTextFieldSetString |XmTextFieldReplace |XmTextFieldInsert |XmTextFieldSetAddMode
+		  |XmTextFieldGetAddMode |XmTextFieldGetEditable |XmTextFieldSetEditable |XmTextFieldGetMaxLength
+		  |XmTextFieldSetMaxLength |XmTextFieldGetCursorPosition |XmTextFieldGetInsertionPosition
+		  |XmTextFieldSetCursorPosition |XmTextFieldSetInsertionPosition |XmTextFieldGetSelectionPosition
+		  |XmTextFieldGetSelection |XmTextFieldRemove |XmTextFieldCopy |XmTextFieldCut |XmTextFieldPaste
+		  |XmTextFieldClearSelection |XmTextFieldSetSelection |XmTextFieldXYToPos |XmTextFieldPosToXY
+		  |XmTextFieldShowPosition |XmTextFieldSetHighlight |XmTextFieldGetBaseline |XmCreateTextField
+		  |XmFileSelectionBoxGetChild |XmFileSelectionDoSearch |XmCreateFileSelectionBox
+		  |XmCreateFileSelectionDialog |XmTextSetHighlight |XmCreateScrolledText |XmCreateText
+		  |XmTextGetSubstring |XmTextGetString |XmTextGetLastPosition |XmTextSetString |XmTextReplace
+		  |XmTextInsert |XmTextSetAddMode |XmTextGetAddMode |XmTextGetEditable |XmTextSetEditable
+		  |XmTextGetMaxLength |XmTextSetMaxLength |XmTextGetTopCharacter |XmTextSetTopCharacter
+		  |XmTextGetCursorPosition |XmTextGetInsertionPosition |XmTextSetInsertionPosition
+		  |XmTextSetCursorPosition |XmTextRemove |XmTextCopy |XmTextCut |XmTextPaste |XmTextGetSelection
+		  |XmTextSetSelection |XmTextClearSelection |XmTextGetSelectionPosition |XmTextXYToPos |XmTextPosToXY
+		  |XmTextGetSource |XmTextSetSource |XmTextShowPosition |XmTextScroll |XmTextGetBaseline
+		  |XmTextDisableRedisplay |XmTextEnableRedisplay |XmTextFindString |XmCreateForm |XmCreateFormDialog
+		  |XmCreateFrame |XmToggleButtonGadgetGetState |XmToggleButtonGadgetSetState |XmCreateToggleButtonGadget
+		  |XmToggleButtonGetState |XmToggleButtonSetState |XmCreateToggleButton |XmCreateLabelGadget
+		  |XmCreateLabel |XmIsMotifWMRunning |XmListAddItem |XmListAddItems |XmListAddItemsUnselected
+		  |XmListAddItemUnselected |XmListDeleteItem |XmListDeleteItems |XmListDeletePositions |XmListDeletePos
+		  |XmListDeleteItemsPos |XmListDeleteAllItems |XmListReplaceItems |XmListReplaceItemsPos
+		  |XmListReplaceItemsUnselected |XmListReplaceItemsPosUnselected |XmListReplacePositions
+		  |XmListSelectItem |XmListSelectPos |XmListDeselectItem |XmListDeselectPos |XmListDeselectAllItems
+		  |XmListSetPos |XmListSetBottomPos |XmListSetItem |XmListSetBottomItem |XmListSetAddMode
+		  |XmListItemExists |XmListItemPos |XmListGetKbdItemPos |XmListSetKbdItemPos |XmListYToPos
+		  |XmListPosToBounds |XmListGetMatchPos |XmListGetSelectedPos |XmListSetHorizPos
+		  |XmListUpdateSelectedList |XmListPosSelected |XmCreateList |XmCreateScrolledList |XmTranslateKey
+		  |XmMainWindowSetAreas |XmMainWindowSep1 |XmMainWindowSep2 |XmMainWindowSep3 |XmCreateMainWindow
+		  |XmInstallImage |XmUninstallImage |XmGetPixmap |XmGetPixmapByDepth |XmDestroyPixmap |XmUpdateDisplay
+		  |XmWidgetGetBaselines |XmWidgetGetDisplayRect |XmRegisterSegmentEncoding |XmMapSegmentEncoding
+		  |XmCvtCTToXmString |XmCvtXmStringToCT |XmConvertUnits |XmCvtToHorizontalPixels |XmCvtToVerticalPixels
+		  |XmCvtFromHorizontalPixels |XmCvtFromVerticalPixels |XmSetFontUnits |XmSetFontUnit |XmSetMenuCursor
+		  |XmGetMenuCursor |XmCreateSimpleMenuBar |XmCreateSimplePopupMenu |XmCreateSimplePulldownMenu
+		  |XmCreateSimpleOptionMenu |XmCreateSimpleRadioBox |XmCreateSimpleCheckBox |XmVaCreateSimpleMenuBar
+		  |XmVaCreateSimplePopupMenu |XmVaCreateSimplePulldownMenu |XmVaCreateSimpleOptionMenu
+		  |XmVaCreateSimpleRadioBox |XmVaCreateSimpleCheckBox |XmTrackingEvent |XmTrackingLocate
+		  |XmSetColorCalculation |XmGetColorCalculation |XmGetColors |XmChangeColor |XmStringCreate
+		  |XmStringCreateSimple |XmStringCreateLocalized |XmStringDirectionCreate |XmStringSeparatorCreate
+		  |XmStringSegmentCreate |XmStringLtoRCreate |XmStringCreateLtoR |XmStringInitContext
+		  |XmStringFreeContext |XmStringGetNextComponent |XmStringPeekNextComponent |XmStringGetNextSegment
+		  |XmStringGetLtoR |XmFontListEntryCreate |XmFontListEntryCreate_r |XmFontListCreate_r
+		  |XmStringCreateFontList_r |XmStringConcatAndFree |XmStringIsVoid |XmCvtXmStringToByteStream
+		  |XmCvtByteStreamToXmString |XmStringByteStreamLength |XmStringPeekNextTriple |XmStringGetNextTriple
+		  |XmStringComponentCreate |XmStringUnparse |XmStringParseText |XmStringToXmStringTable
+		  |XmStringTableToXmString |XmStringTableUnparse |XmStringTableParseStringArray
+		  |XmDirectionToStringDirection |XmStringDirectionToDirection |XmStringGenerate |XmStringPutRendition
+		  |XmParseMappingGetValues |XmParseMappingFree |XmParseTableFree |XmStringTableProposeTablist
+		  |XmTabSetValue |XmTabGetValues |XmTabFree |XmTabCreate |XmTabListTabCount |XmTabListRemoveTabs
+		  |XmTabListReplacePositions |XmTabListGetTab |XmTabListCopy |XmTabListInsertTabs
+		  |XmRenderTableCvtFromProp |XmRenderTableCvtToProp |XmRenditionUpdate |XmRenditionRetrieve
+		  |XmRenditionFree |XmRenditionCreate |XmRenderTableGetRenditions |XmRenderTableGetRendition
+		  |XmRenderTableGetTags |XmRenderTableFree |XmRenderTableCopy |XmRenderTableRemoveRenditions
+		  |XmRenderTableAddRenditions |XmFontListEntryFree |XmFontListEntryGetFont |XmFontListEntryGetTag
+		  |XmFontListAppendEntry |XmFontListNextEntry |XmFontListRemoveEntry |XmFontListEntryLoad
+		  |XmFontListCreate |XmStringCreateFontList |XmFontListFree |XmFontListAdd |XmFontListCopy
+		  |XmFontListInitFontContext |XmFontListGetNextFont |XmFontListFreeFontContext |XmStringConcat
+		  |XmStringNConcat |XmStringCopy |XmStringNCopy |XmStringByteCompare |XmStringCompare |XmStringLength
+		  |XmStringEmpty |XmStringHasSubstring |XmStringFree |XmStringBaseline |XmStringWidth |XmStringHeight
+		  |XmStringExtent |XmStringLineCount |XmStringDraw |XmStringDrawImage |XmStringDrawUnderline
+		  |XmGetDestination |XmIsTraversable |XmGetVisibility |XmGetTabGroup |XmGetFocusWidget
+		  |XmProcessTraversal |XmAddTabGroup |XmRemoveTabGroup |XmCreateMenuShell |XmIsMessageBox
+		  |XmIsArrowButtonGadget |XmIsArrowButton |XmIsNotebook |XmIsPrintShell |XmIsComboBox |XmIsContainer
+		  |XmIsGrabShell |XmIsIconGadget |XmIsIconHeader |XmIsPanedWindow |XmIsBulletinBoard |XmIsPrimitive
+		  |XmIsCascadeButtonGadget |XmIsCascadeButton |XmIsPushButtonGadget |XmIsPushButton |XmIsCommand
+		  |XmIsRowColumn |XmIsScale |XmIsScreen |XmIsScrollBar |XmIsDialogShell |XmIsScrolledWindow |XmIsDisplay
+		  |XmGetDisplay |XmIsSelectionBox |XmIsDragContext |XmIsSeparatorGadget |XmIsDragIconObjectClass
+		  |XmIsSeparator |XmIsDrawingArea |XmIsDrawnButton |XmIsDropSiteManager |XmIsDropTransfer |XmIsTextField
+		  |XmIsFileSelectionBox |XmIsText |XmIsForm |XmIsFrame |XmIsGadget |XmIsToggleButtonGadget
+		  |XmIsToggleButton |XmIsLabelGadget |XmIsLabel |XmIsVendorShell |XmIsList |XmIsMainWindow |XmIsManager
+		  |XmIsMenuShell |XpmCreatePixmapFromData |XpmCreateDataFromPixmap |XpmReadFileToPixmap
+		  |XpmReadPixmapFile |XpmWriteFileFromPixmap |XpmWritePixmapFile |XpmCreatePixmapFromBuffer
+		  |XpmCreateBufferFromImage |XpmCreateBufferFromPixmap |XpmCreatePixmapFromXpmImage
+		  |XpmCreateXpmImageFromPixmap |XGetPixel |XDestroyImage |XPutPixel |XSubImage |XAddPixel |Pixel |GC
+		  |Widget |XtAppContext? |XtRequestId?  |XtWorkProcId? |XtInputId?  |XtIntervalId? |Screen?  |XEvent?
+		  |XRectangle? |XArc? |XPoint?  |XSegment?  |XColor? |XHostAddress?  |Atom? |Colormap?
+		  |XModifierKeymap? |Depth?  |Display? |Drawable?  |Font? |GC?  |KeySym? |Pixel?  |Pixmap? |Region?
+		  |Time? |Visual? |Window?  |XFontProp? |XFontSet?  |XFontStruct? |XGCValues?  |XImage?  |XVisualInfo?
+		  |XWMHints? |XWindowAttributes? |XWindowChanges?  |KeyCode? |XContext?  |XCharStruct? |XTextItem?
+		  |XStandardColormap?  |Substitution?  |XPContext?  |Widget?  |XmStringContext? |WidgetClass? |XmString?
+		  |XmToggleButton?  |XmDrawingArea? |XmPushButton?  |XmTextField?  |XmFileSelectionBox?  |XmText?
+		  |XmFrame? |XmLabel? |XmList?  |XmArrowButton?  |XmScrollBar? |XmCommand? |XmScale?  |XmRowColumn?
+		  |XmParseTable? |XmTab? |XmNotebook?  |XmPrintShell?  |XmComboBox? |XmContainer? |XmIconHeader?
+		  |XmGrabShell? |XmRendition? |XmRenderTable?  |XmIconGadget?  |XmTabList? |XmParseMapping?
+		  |XmPanedWindow?  |XmScrolledWindow? |XmCascadeButton?  |XmForm?  |XmBulletinBoard? |XmScreen?
+		  |XmDialogShell? |XmDisplay?  |XmSelectionBox?  |XmDragContext?  |XmDragIconObjectClass?  |XmSeparator?
+		  |XmDropSiteManager? |XmDropTransfer?  |XmVendorShell?  |XmMainWindow? |XmMessageBox?  |XmManager?
+		  |XmMenuShell?  |XmLabelGadget?  |XmPushButtonGadget?  |XmSeparatorGadget?  |XmArrowButtonGadget?
+		  |XmCascadeButtonGadget?  |XmToggleButtonGadget?  |XmDrawnButton?  |XmPrimitive? |XmFontList?
+		  |XmFontContext?  |XmFontListEntry? |XmTextSource?  |XpmAttributes?  |XpmImage?  |XpmColorSymbol?
 		   )))
 	    ;; ---------------- 0 Args
 	    (for-each 
@@ -11292,6 +11365,34 @@ EDITS: 3
 		      (lambda args (car args))))
 	     xm-procs)
 
+	    ;; ---------------- 1 Arg
+	    (for-each 
+	     (lambda (arg)
+	       (for-each 
+		(lambda (n)
+		  (catch #t
+			 (lambda () (n arg))
+			 (lambda args (car args))))
+		xm-procs))
+	     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  #(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
+		   (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t '() 12345678901234567890))
+
+	    ;; ---------------- 2 Args
+	    (for-each 
+	     (lambda (arg1)
+	       (for-each 
+		(lambda (arg2)
+		  (for-each 
+		   (lambda (n)
+		     (catch #t
+			    (lambda () (n arg1 arg2))
+			    (lambda args (car args))))
+		   xm-procs))
+		(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) #(0 1) 3/4 
+		      (sqrt -1.0) (make-delay 32) :feedback -1 0 #f #t '() 12345678901234567890)))
+	     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) #(0 1) 3/4 
+		   (sqrt -1.0) (make-delay 32) :frequency -1 0 #f #t '() 12345678901234567890))
+	    (gc)
 	    )
 	    ))))
 
@@ -11311,121 +11412,139 @@ EDITS: 3
 (defvar env3 '(0 0 1 1))
 
 (define procs (list 
-	       add-mark add-player add-sound-file-extension add-to-main-menu add-to-menu add-transform amp-control append-to-minibuffer
-	       as-one-edit ask-before-overwrite audio-input-device audio-output-device audio-state-file auto-resize auto-update autocorrelate axis-info
-	       axis-label-font axis-numbers-font backward-graph backward-mark backward-mix backward-sample basic-color bind-key bold-button-font
-	       bomb button-font c-g? apply-controls change-menu-label change-samples-with-origin channel-style channel-sync channel-widgets channels
-	       chans clear-audio-inputs close-sound close-sound-file color-cutoff color-dialog color-inverted color-scale color->list colormap
-	       color? comment contrast-control contrast-control-amp contrast-control-procedure contrast-control? convolve-arrays 
-	       convolve-selection-with convolve-with auto-update-interval
-	       count-matches current-font cursor cursor-color cursor-follows-play cursor-size cursor-style dac-combines-channels dac-size data-clipped
-	       data-color data-format data-location default-output-chans default-output-format default-output-srate default-output-type define-envelope
-	       delete-mark delete-marks forget-region delete-sample delete-samples delete-samples-with-origin delete-selection dialog-widgets
-	       dismiss-all-dialogs display-edits dot-size draw-dot draw-dots draw-line draw-lines draw-string edit-header-dialog edit-fragment edit-position
-	       edit-tree edits env-selection env-sound enved-active-env enved-base enved-clip? enved-in-dB enved-dialog enved-exp? enved-power
-	       enved-selected-env enved-target enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin eps-size expand-control
-	       expand-control-hop expand-control-length expand-control-ramp expand-control? fft fft-window-beta fft-log-frequency 
-	       fft-log-magnitude transform-size transform-graph-type fft-window graph-transform?
-	       fht file-dialog mix-file-dialog file-name fill-polygon fill-rectangle filter-sound filter-control-in-dB 
-	       filter-control-env enved-filter-order enved-filter filter-env-in-hz filter-control-order
-	       filter-selection filter-waveform-color filter-control? find find-mark find-sound finish-progress-report foreground-color
-	       forward-graph forward-mark forward-mix forward-sample frames free-mix-sample-reader free-sample-reader free-track-sample-reader graph
-	       graph-color graph-cursor graph-data graph->ps graph-style graph-lisp? graphs-horizontal header-type help-dialog help-text-font
-	       highlight-color in insert-region insert-sample insert-samples insert-samples-with-origin insert-selection insert-silence
-	       insert-sound just-sounds key key-binding left-sample listener-color listener-font listener-prompt listener-selection listener-text-color
-	       load-font loop-samples main-widgets make-color make-graph-data make-mix-sample-reader make-player make-region
-	       make-region-sample-reader make-sample-reader make-track-sample-reader 
-	       map-chan mark-color mark-name mark-sample mark-sync mark-sync-max mark-home marks mark?
-	       max-transform-peaks max-regions max-sounds maxamp menu-sensitive menu-widgets minibuffer-history-length min-dB mix mixes mix-amp mix-amp-env
-	       mix-anchor mix-chans mix-color mix-track mix-length mix-locked mix-name mix? mix-panel mix-position mix-region mix-sample-reader?
-	       mix-selection mix-sound mix-home mix-speed mix-tag-height mix-tag-width mix-tag-y mix-vct mix-waveform-height
-	       movies new-sound next-mix-sample next-sample next-track-sample transform-normalization equalize-panes
-	       open-raw-sound open-sound open-sound-file orientation-dialog peak-env-info peaks play play-and-wait play-mix play-region play-selection
-	       play-track player? position-color position->x position->y preload-directory preload-file previous-files-sort previous-sample 
-	       print-length progress-report prompt-in-minibuffer protect-region pushed-button-color read-only recorder-in-device
-	       read-peak-env-info-file recorder-autoload recorder-buffer-size recorder-dialog recorder-file recorder-gain recorder-in-amp recorder-in-format
-	       recorder-max-duration recorder-out-amp recorder-out-chans recorder-out-format recorder-srate recorder-trigger redo region-chans region-dialog
-	       region-graph-style region-length region-maxamp region-sample region-samples region-samples->vct region-srate regions region? remove-from-menu
-	       report-in-minibuffer reset-controls restore-controls restore-marks restore-region reverb-control-decay reverb-control-feedback 
-	       reverb-control-procedures reverb-control-length reverb-control-lowpass reverb-control-scale reverb-control? 
-	       reverse-sound reverse-selection revert-sound right-sample sample sample-reader-at-end?
-	       sample-reader? samples samples->vct samples->sound-data sash-color save-controls save-dir save-edit-history save-envelopes
-	       save-listener save-macros save-marks save-options save-region save-selection save-sound save-sound-as save-state save-state-file
-	       scale-by scale-selection-by scale-selection-to scale-to scale-sound-by scale-sound-to
-	       scan-chan search-procedure select-all select-channel select-mix select-sound
-	       selected-channel selected-data-color selected-graph-color selected-mix selected-mix-color selected-sound selection-position selection-color
-	       selection-creates-region selection-length selection-member? selection? short-file-name 
-	       show-axes show-backtrace show-controls show-transform-peaks
-	       show-indices show-listener show-marks show-mix-waveforms show-selection-transform show-usage-stats show-y-zero sinc-width smooth-sound
-	       smooth-selection snd-print snd-spectrum snd-tempnam snd-version sound-files-in-directory sound-loop-info sound-widgets
-	       soundfont-info sound? sounds spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale
-	       spectro-z-angle spectro-z-scale speed-control speed-control-style speed-control-tones 
-	       squelch-update srate src-sound src-selection start-playing start-progress-report
-	       stop-player stop-playing swap-channels syncd-marks sync temp-dir text-focus-color tiny-font 
-	       track-sample-reader? transform-dialog transform-sample
-	       transform-samples transform-samples->vct transform-samples-size transform-type trap-segfault 
-	       unbind-key undo update-transform update-time-graph
-	       update-lisp-graph update-sound update-usage-stats use-sinc-interp vct->samples vct->sound-file verbose-cursor view-sound
-	       vu-font vu-font-size vu-size wavelet-type graph-time? time-graph-type wavo-hop 
-	       wavo-trace window-height window-width window-x window-y with-mix-tags
-	       write-peak-env-info-file x-axis-style x-bounds x-position-slider x->position x-zoom-slider y-bounds y-position-slider y->position
-	       y-zoom-slider zero-pad zoom-color zoom-focus-style mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size
-	       mus-sound-data-location mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-data-format mus-sound-length mus-sound-type-specifier
-	       mus-header-type-name mus-data-format-name mus-sound-comment mus-sound-write-date mus-data-format-bytes-per-sample mus-sound-loop-info
-	       mus-audio-report mus-audio-sun-outputs mus-sound-maxamp mus-sound-maxamp-exists? mus-sound-open-input mus-sound-open-output
-	       mus-sound-reopen-output mus-sound-close-input mus-sound-close-output mus-sound-read mus-sound-write mus-sound-seek mus-sound-seek-frame
-	       mus-file-set-data-clipped mus-file-prescaler mus-file-set-prescaler mus-expand-filename make-sound-data sound-data-ref sound-data-set!
-	       sound-data? sound-data-length sound-data-maxamp sound-data-chans sound-data->vct vct->sound-data all-pass all-pass? amplitude-modulate array->file
-	       array-interp asymmetric-fm asymmetric-fm? buffer->frame buffer->sample buffer-empty? buffer? clear-array comb comb? contrast-enhancement
-	       convolution convolve convolve? db->linear degrees->radians delay delay? dot-product env env-interp env? file->array file->frame file->frame?
-	       file->sample file->sample? filter filter? fir-filter fir-filter? formant formant-bank formant? frame* frame+ frame->buffer frame->file
-	       frame->file? frame->frame frame->list frame->sample frame-ref frame-set! frame? granulate granulate? hz->radians iir-filter iir-filter?
-	       in-any in-hz ina inb linear->db locsig locsig-ref locsig-reverb-ref locsig-reverb-set! locsig-set! locsig? make-all-pass make-asymmetric-fm
-	       make-buffer make-comb make-convolve make-delay make-env make-fft-window make-file->frame make-file->sample make-filter make-fir-filter
-	       make-formant make-frame make-frame->file make-granulate make-iir-filter make-locsig make-mixer make-notch make-one-pole make-one-zero
-	       make-oscil make-ppolar make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave make-sine-summation
-	       make-square-wave make-src make-sum-of-cosines make-table-lookup make-triangle-wave make-two-pole make-two-zero make-wave-train make-waveshape
-	       make-zpolar mixer* mixer-ref mixer-set! mixer? multiply-arrays mus-a0 mus-a1 mus-a2 mus-array-print-length mus-b1 mus-b2 mus-channel
-	       mus-channels mus-close mus-cosines mus-data mus-feedback mus-feedforward mus-fft mus-formant-radius mus-frequency mus-hop mus-increment
-	       mus-input? mus-length mus-location mus-mix mus-order mus-output? mus-phase mus-ramp mus-random mus-scaler mus-srate mus-xcoeffs mus-ycoeffs
-	       notch notch? one-pole one-pole? one-zero one-zero? oscil oscil-bank oscil? out-any outa outb outc outd partials->polynomial partials->wave
-	       partials->waveshape phase-partials->wave polynomial pulse-train pulse-train? radians->degrees radians->hz rand rand-interp rand-interp?
-	       rand? readin readin? rectangular->polar restart-env ring-modulate sample->buffer sample->file sample->file? sample->frame sawtooth-wave
-	       sawtooth-wave? sine-summation sine-summation? spectrum square-wave square-wave? src src? sum-of-cosines sum-of-cosines? table-lookup
-	       table-lookup? tap triangle-wave triangle-wave? two-pole two-pole? two-zero two-zero? wave-train wave-train? waveshape waveshape?
-	       make-vct vct-add! vct-subtract! vct-copy vct-length vct-multiply! vct-offset! vct-ref vct-scale! vct-fill! vct-set! mus-audio-describe
-	       vct-peak vct? list->vct vct->list vector->vct vct-move! vct-subseq vct little-endian?))
+	       add-mark add-player add-sound-file-extension add-to-main-menu add-to-menu add-transform amp-control
+	       append-to-minibuffer as-one-edit ask-before-overwrite audio-input-device audio-output-device
+	       audio-state-file auto-resize auto-update autocorrelate axis-info axis-label-font axis-numbers-font
+	       backward-graph backward-mark backward-mix backward-sample basic-color bind-key bold-button-font bomb
+	       button-font c-g?  apply-controls change-menu-label change-samples-with-origin channel-style channel-sync
+	       channel-widgets channels chans clear-audio-inputs close-sound close-sound-file color-cutoff color-dialog
+	       color-inverted color-scale color->list colormap color?  comment contrast-control contrast-control-amp
+	       contrast-control-procedure contrast-control?  convolve-arrays convolve-selection-with convolve-with
+	       auto-update-interval count-matches current-font cursor cursor-color cursor-follows-play cursor-size
+	       cursor-style dac-combines-channels dac-size data-clipped data-color data-format data-location
+	       default-output-chans default-output-format default-output-srate default-output-type define-envelope
+	       delete-mark delete-marks forget-region delete-sample delete-samples delete-samples-with-origin
+	       delete-selection dialog-widgets dismiss-all-dialogs display-edits dot-size draw-dot draw-dots draw-line
+	       draw-lines draw-string edit-header-dialog edit-fragment edit-position edit-tree edits env-selection
+	       env-sound enved-active-env enved-base enved-clip? enved-in-dB enved-dialog enved-exp? enved-power
+	       enved-selected-env enved-target enved-waveform-color enved-wave? eps-file eps-left-margin
+	       eps-bottom-margin eps-size expand-control expand-control-hop expand-control-length expand-control-ramp
+	       expand-control? fft fft-window-beta fft-log-frequency fft-log-magnitude transform-size
+	       transform-graph-type fft-window graph-transform?  fht file-dialog mix-file-dialog file-name fill-polygon
+	       fill-rectangle filter-sound filter-control-in-dB filter-control-env enved-filter-order enved-filter
+	       filter-env-in-hz filter-control-order filter-selection filter-waveform-color filter-control? find
+	       find-mark find-sound finish-progress-report foreground-color forward-graph forward-mark forward-mix
+	       forward-sample frames free-mix-sample-reader free-sample-reader free-track-sample-reader graph
+	       graph-color graph-cursor graph-data graph->ps graph-style graph-lisp?  graphs-horizontal header-type
+	       help-dialog help-text-font highlight-color in insert-region insert-sample insert-samples
+	       insert-samples-with-origin insert-selection insert-silence insert-sound just-sounds key key-binding
+	       left-sample listener-color listener-font listener-prompt listener-selection listener-text-color load-font
+	       loop-samples main-widgets make-color make-graph-data make-mix-sample-reader make-player make-region
+	       make-region-sample-reader make-sample-reader make-track-sample-reader map-chan mark-color mark-name
+	       mark-sample mark-sync mark-sync-max mark-home marks mark?  max-transform-peaks max-regions max-sounds
+	       maxamp menu-sensitive menu-widgets minibuffer-history-length min-dB mix mixes mix-amp mix-amp-env
+	       mix-anchor mix-chans mix-color mix-track mix-length mix-locked mix-name mix? mix-panel mix-position
+	       mix-region mix-sample-reader?  mix-selection mix-sound mix-home mix-speed mix-tag-height mix-tag-width
+	       mix-tag-y mix-vct mix-waveform-height movies new-sound next-mix-sample next-sample next-track-sample
+	       transform-normalization equalize-panes open-raw-sound open-sound open-sound-file orientation-dialog
+	       peak-env-info peaks play play-and-wait play-mix play-region play-selection play-track player?
+	       position-color position->x position->y preload-directory preload-file previous-files-sort previous-sample
+	       print-length progress-report prompt-in-minibuffer protect-region pushed-button-color read-only
+	       recorder-in-device read-peak-env-info-file recorder-autoload recorder-buffer-size recorder-dialog
+	       recorder-file recorder-gain recorder-in-amp recorder-in-format recorder-max-duration recorder-out-amp
+	       recorder-out-chans recorder-out-format recorder-srate recorder-trigger redo region-chans region-dialog
+	       region-graph-style region-length region-maxamp region-sample region-samples region-samples->vct
+	       region-srate regions region?  remove-from-menu report-in-minibuffer reset-controls restore-controls
+	       restore-marks restore-region reverb-control-decay reverb-control-feedback reverb-control-procedures
+	       reverb-control-length reverb-control-lowpass reverb-control-scale reverb-control?  reverse-sound
+	       reverse-selection revert-sound right-sample sample sample-reader-at-end?  sample-reader? samples
+	       samples->vct samples->sound-data sash-color save-controls save-dir save-edit-history save-envelopes
+	       save-listener save-macros save-marks save-options save-region save-selection save-sound save-sound-as
+	       save-state save-state-file scale-by scale-selection-by scale-selection-to scale-to scale-sound-by
+	       scale-sound-to scan-chan search-procedure select-all select-channel select-mix select-sound
+	       selected-channel selected-data-color selected-graph-color selected-mix selected-mix-color selected-sound
+	       selection-position selection-color selection-creates-region selection-length selection-member? selection?
+	       short-file-name show-axes show-backtrace show-controls show-transform-peaks show-indices show-listener
+	       show-marks show-mix-waveforms show-selection-transform show-usage-stats show-y-zero sinc-width
+	       smooth-sound smooth-selection snd-print snd-spectrum snd-tempnam snd-version sound-files-in-directory
+	       sound-loop-info sound-widgets soundfont-info sound? sounds spectro-cutoff spectro-hop spectro-start
+	       spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale
+	       speed-control speed-control-style speed-control-tones squelch-update srate src-sound src-selection
+	       start-playing start-progress-report stop-player stop-playing swap-channels syncd-marks sync temp-dir
+	       text-focus-color tiny-font track-sample-reader?  transform-dialog transform-sample transform-samples
+	       transform-samples->vct transform-samples-size transform-type trap-segfault unbind-key undo
+	       update-transform update-time-graph update-lisp-graph update-sound update-usage-stats use-sinc-interp
+	       vct->samples vct->sound-file verbose-cursor view-sound vu-font vu-font-size vu-size wavelet-type
+	       graph-time?  time-graph-type wavo-hop wavo-trace window-height window-width window-x window-y
+	       with-mix-tags write-peak-env-info-file x-axis-style x-bounds x-position-slider x->position x-zoom-slider
+	       y-bounds y-position-slider y->position y-zoom-slider zero-pad zoom-color zoom-focus-style
+	       mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size mus-sound-data-location
+	       mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-data-format mus-sound-length
+	       mus-sound-type-specifier mus-header-type-name mus-data-format-name mus-sound-comment mus-sound-write-date
+	       mus-data-format-bytes-per-sample mus-sound-loop-info mus-audio-report mus-audio-sun-outputs
+	       mus-sound-maxamp mus-sound-maxamp-exists? mus-sound-open-input mus-sound-open-output
+	       mus-sound-reopen-output mus-sound-close-input mus-sound-close-output mus-sound-read mus-sound-write
+	       mus-sound-seek mus-sound-seek-frame mus-file-set-data-clipped mus-file-prescaler mus-file-set-prescaler
+	       mus-expand-filename make-sound-data sound-data-ref sound-data-set!  sound-data? sound-data-length
+	       sound-data-maxamp sound-data-chans sound-data->vct vct->sound-data all-pass all-pass? amplitude-modulate
+	       array->file array-interp asymmetric-fm asymmetric-fm?  buffer->frame buffer->sample buffer-empty? buffer?
+	       clear-array comb comb? contrast-enhancement convolution convolve convolve? db->linear degrees->radians
+	       delay delay? dot-product env env-interp env? file->array file->frame file->frame?  file->sample
+	       file->sample?  filter filter? fir-filter fir-filter? formant formant-bank formant? frame* frame+
+	       frame->buffer frame->file frame->file? frame->frame frame->list frame->sample frame-ref frame-set! frame?
+	       granulate granulate? hz->radians iir-filter iir-filter?  in-any in-hz ina inb linear->db locsig
+	       locsig-ref locsig-reverb-ref locsig-reverb-set! locsig-set!  locsig? make-all-pass make-asymmetric-fm
+	       make-buffer make-comb make-convolve make-delay make-env make-fft-window make-file->frame
+	       make-file->sample make-filter make-fir-filter make-formant make-frame make-frame->file make-granulate
+	       make-iir-filter make-locsig make-mixer make-notch make-one-pole make-one-zero make-oscil make-ppolar
+	       make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
+	       make-sine-summation make-square-wave make-src make-sum-of-cosines make-table-lookup make-triangle-wave
+	       make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar mixer* mixer-ref mixer-set! mixer?
+	       multiply-arrays mus-a0 mus-a1 mus-a2 mus-array-print-length mus-b1 mus-b2 mus-channel mus-channels
+	       mus-close mus-cosines mus-data mus-feedback mus-feedforward mus-fft mus-formant-radius mus-frequency
+	       mus-hop mus-increment mus-input?  mus-length mus-location mus-mix mus-order mus-output?  mus-phase
+	       mus-ramp mus-random mus-scaler mus-srate mus-xcoeffs mus-ycoeffs notch notch? one-pole one-pole?
+	       one-zero one-zero? oscil oscil-bank oscil? out-any outa outb outc outd partials->polynomial
+	       partials->wave partials->waveshape phase-partials->wave polynomial pulse-train pulse-train?
+	       radians->degrees radians->hz rand rand-interp rand-interp?  rand? readin readin?  rectangular->polar
+	       restart-env ring-modulate sample->buffer sample->file sample->file? sample->frame sawtooth-wave
+	       sawtooth-wave? sine-summation sine-summation? spectrum square-wave square-wave? src src? sum-of-cosines
+	       sum-of-cosines? table-lookup table-lookup? tap triangle-wave triangle-wave? two-pole two-pole? two-zero
+	       two-zero? wave-train wave-train?  waveshape waveshape?  make-vct vct-add! vct-subtract!  vct-copy
+	       vct-length vct-multiply! vct-offset! vct-ref vct-scale! vct-fill! vct-set! mus-audio-describe vct-peak
+	       vct? list->vct vct->list vector->vct vct-move!  vct-subseq vct little-endian?))
 
 (define set-procs (list 
-		   amp-control ask-before-overwrite audio-input-device audio-output-device audio-state-file auto-resize auto-update
-		   axis-label-font axis-numbers-font basic-color bold-button-font button-font channel-style channel-sync color-cutoff color-inverted
-		   color-scale contrast-control contrast-control-amp contrast-control-procedure contrast-control? auto-update-interval 
-		   current-font cursor cursor-color cursor-follows-play
-		   cursor-size cursor-style dac-combines-channels dac-size data-clipped data-color 
-		   default-output-chans default-output-format default-output-srate
-		   default-output-type dot-size enved-active-env enved-base enved-clip? enved-in-dB enved-exp? enved-power enved-selected-env
+		   amp-control ask-before-overwrite audio-input-device audio-output-device audio-state-file auto-resize
+		   auto-update axis-label-font axis-numbers-font basic-color bold-button-font button-font channel-style
+		   channel-sync color-cutoff color-inverted color-scale contrast-control contrast-control-amp
+		   contrast-control-procedure contrast-control? auto-update-interval current-font cursor cursor-color
+		   cursor-follows-play cursor-size cursor-style dac-combines-channels dac-size data-clipped data-color
+		   default-output-chans default-output-format default-output-srate default-output-type dot-size
+		   enved-active-env enved-base enved-clip? enved-in-dB enved-exp? enved-power enved-selected-env
 		   enved-target enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin eps-size
-		   expand-control expand-control-hop expand-control-length
-		   expand-control-ramp expand-control? fft-window-beta fft-log-frequency fft-log-magnitude 
-		   transform-size transform-graph-type fft-window graph-transform? filter-control-in-dB filter-control-env
-		   enved-filter-order enved-filter filter-env-in-hz filter-control-order filter-waveform-color filter-control? 
-		   foreground-color graph-color graph-cursor
-		   graph-style graph-lisp? graphs-horizontal help-text-font highlight-color just-sounds left-sample listener-color listener-font
-		   listener-prompt listener-text-color mark-color mark-name mark-sample mark-sync max-transform-peaks max-regions menu-sensitive min-dB mix-amp
-		   mix-amp-env mix-anchor mix-chans mix-color mix-track mix-length mix-locked mix-name mix-position mix-speed mix-tag-height
-		   mix-tag-width mix-tag-y mix-waveform-height movies transform-normalization equalize-panes position-color recorder-in-device
-		   previous-files-sort print-length pushed-button-color recorder-autoload recorder-buffer-size recorder-dialog recorder-file recorder-gain
-		   recorder-in-amp recorder-in-format recorder-max-duration recorder-out-amp recorder-out-chans recorder-out-format recorder-srate
-		   region-graph-style recorder-trigger reverb-control-decay reverb-control-feedback reverb-control-procedures 
-		   reverb-control-length reverb-control-lowpass reverb-control-scale reverb-control? sash-color
-		   save-dir save-state-file selected-data-color selected-graph-color selected-mix-color
-		   selection-color selection-creates-region show-axes show-backtrace show-controls show-transform-peaks show-indices show-marks
-		   show-mix-waveforms show-selection-transform show-usage-stats show-y-zero sinc-width spectro-cutoff spectro-hop spectro-start
-		   spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale 
-		   speed-control speed-control-style speed-control-tones
-		   squelch-update sync temp-dir text-focus-color tiny-font transform-type trap-segfault use-sinc-interp verbose-cursor
-		   vu-font vu-font-size vu-size wavelet-type graph-time? wavo-hop wavo-trace 
-		   with-mix-tags x-axis-style zero-pad zoom-color zoom-focus-style ))
+		   expand-control expand-control-hop expand-control-length expand-control-ramp expand-control?
+		   fft-window-beta fft-log-frequency fft-log-magnitude transform-size transform-graph-type fft-window
+		   graph-transform? filter-control-in-dB filter-control-env enved-filter-order enved-filter
+		   filter-env-in-hz filter-control-order filter-waveform-color filter-control?  foreground-color
+		   graph-color graph-cursor graph-style graph-lisp? graphs-horizontal help-text-font highlight-color
+		   just-sounds left-sample listener-color listener-font listener-prompt listener-text-color mark-color
+		   mark-name mark-sample mark-sync max-transform-peaks max-regions menu-sensitive min-dB mix-amp
+		   mix-amp-env mix-anchor mix-chans mix-color mix-track mix-length mix-locked mix-name mix-position
+		   mix-speed mix-tag-height mix-tag-width mix-tag-y mix-waveform-height movies transform-normalization
+		   equalize-panes position-color recorder-in-device previous-files-sort print-length pushed-button-color
+		   recorder-autoload recorder-buffer-size recorder-dialog recorder-file recorder-gain recorder-in-amp
+		   recorder-in-format recorder-max-duration recorder-out-amp recorder-out-chans recorder-out-format
+		   recorder-srate region-graph-style recorder-trigger reverb-control-decay reverb-control-feedback
+		   reverb-control-procedures reverb-control-length reverb-control-lowpass reverb-control-scale
+		   reverb-control? sash-color save-dir save-state-file selected-data-color selected-graph-color
+		   selected-mix-color selection-color selection-creates-region show-axes show-backtrace show-controls
+		   show-transform-peaks show-indices show-marks show-mix-waveforms show-selection-transform
+		   show-usage-stats show-y-zero sinc-width spectro-cutoff spectro-hop spectro-start spectro-x-angle
+		   spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale speed-control
+		   speed-control-style speed-control-tones squelch-update sync temp-dir text-focus-color tiny-font
+		   transform-type trap-segfault use-sinc-interp verbose-cursor vu-font vu-font-size vu-size wavelet-type
+		   graph-time? wavo-hop wavo-trace with-mix-tags x-axis-style zero-pad zoom-color zoom-focus-style ))
 
 (reset-all-hooks)
 
@@ -11441,16 +11560,14 @@ EDITS: 3
 				(lambda args (car args)))))
 		    (if (not (eq? tag 'no-such-sound))
 			(snd-display ";snd no-such-sound ~A: ~A" n tag))))
-		(list amp-control bomb apply-controls channels chans close-sound comment 
-		      contrast-control contrast-control-amp contrast-control? data-format data-location
-		      expand-control expand-control-hop expand-control-length expand-control-ramp 
-		      expand-control? file-name filter-control-in-dB filter-control-env filter-control-order filter-control?
-		      finish-progress-report frames header-type progress-report read-only reset-controls restore-controls
-		      reverb-control-decay reverb-control-feedback reverb-control-length 
-		      reverb-control-lowpass reverb-control-scale reverb-control? save-controls select-sound
-		      short-file-name sound-loop-info soundfont-info speed-control speed-control-style 
-		      speed-control-tones srate channel-style start-progress-report
-		      sync swap-channels))
+		(list amp-control bomb apply-controls channels chans close-sound comment contrast-control
+		      contrast-control-amp contrast-control? data-format data-location expand-control expand-control-hop
+		      expand-control-length expand-control-ramp expand-control? file-name filter-control-in-dB
+		      filter-control-env filter-control-order filter-control?  finish-progress-report frames header-type
+		      progress-report read-only reset-controls restore-controls reverb-control-decay reverb-control-feedback
+		      reverb-control-length reverb-control-lowpass reverb-control-scale reverb-control? save-controls
+		      select-sound short-file-name sound-loop-info soundfont-info speed-control speed-control-style
+		      speed-control-tones srate channel-style start-progress-report sync swap-channels))
       
       (for-each (lambda (arg)
 		  (for-each (lambda (n)
@@ -11461,16 +11578,15 @@ EDITS: 3
 					    (lambda args (car args)))))
 				(if (not (eq? tag 'wrong-type-arg))
 				    (snd-display ";snd wrong-type-arg ~A: ~A ~A" n tag arg))))
-			    (list amp-control bomb apply-controls channels chans close-sound comment 
-				  contrast-control contrast-control-amp contrast-control? data-format data-location
-				  expand-control expand-control-hop expand-control-length expand-control-ramp 
-				  expand-control? file-name filter-control-in-dB filter-control-env filter-control-order filter-control?
+			    (list amp-control bomb apply-controls channels chans close-sound comment contrast-control
+				  contrast-control-amp contrast-control? data-format data-location expand-control
+				  expand-control-hop expand-control-length expand-control-ramp expand-control? file-name
+				  filter-control-in-dB filter-control-env filter-control-order filter-control?
 				  finish-progress-report frames header-type read-only reset-controls restore-controls
-				  reverb-control-decay reverb-control-feedback reverb-control-length 
-				  reverb-control-lowpass reverb-control-scale reverb-control? save-controls select-sound
-				  short-file-name sound-loop-info soundfont-info speed-control speed-control-style 
-				  speed-control-tones srate channel-style start-progress-report
-				  sync swap-channels)))
+				  reverb-control-decay reverb-control-feedback reverb-control-length reverb-control-lowpass
+				  reverb-control-scale reverb-control? save-controls select-sound short-file-name
+				  sound-loop-info soundfont-info speed-control speed-control-style speed-control-tones srate
+				  channel-style start-progress-report sync swap-channels)))
 		(list (current-module) (sqrt -1.0) 1.5 "hiho"))
 
       (for-each (lambda (arg)
@@ -11484,13 +11600,13 @@ EDITS: 3
 				  (if (not (eq? tag 'wrong-type-arg))
 				      (snd-display ";snd set wrong-type-arg ~D: ~A: ~A ~A" ctr n tag arg))
 				  (set! ctr (+ ctr 1))))
-			      (list amp-control channels chans comment contrast-control contrast-control-amp 
-				    contrast-control? data-format data-location expand-control expand-control-hop 
-				    expand-control-length expand-control-ramp expand-control? filter-control-in-dB 
-				    filter-control-env filter-control-order filter-control? frames header-type 
-				    read-only reverb-control-decay reverb-control-feedback 
-				    reverb-control-length reverb-control-lowpass reverb-control-scale reverb-control? sound-loop-info 
-				    soundfont-info speed-control speed-control-style speed-control-tones srate channel-style sync))))
+			      (list amp-control channels chans comment contrast-control contrast-control-amp
+				    contrast-control? data-format data-location expand-control expand-control-hop
+				    expand-control-length expand-control-ramp expand-control? filter-control-in-dB
+				    filter-control-env filter-control-order filter-control? frames header-type read-only
+				    reverb-control-decay reverb-control-feedback reverb-control-length reverb-control-lowpass
+				    reverb-control-scale reverb-control? sound-loop-info soundfont-info speed-control
+				    speed-control-style speed-control-tones srate channel-style sync))))
 		(list (current-module) (sqrt -1.0) 1.5 "hiho"))
 
       (let ((index (open-sound "obtest.snd")))
@@ -11505,11 +11621,12 @@ EDITS: 3
 				    (if (not (eq? tag 'wrong-type-arg))
 					(snd-display ";snd safe set wrong-type-arg ~A: ~A ~A ~A" ctr n tag arg))
 				    (set! ctr (+ ctr 1))))
-			      (list amp-control contrast-control contrast-control-amp contrast-control? 
-				    expand-control expand-control-hop expand-control-length expand-control-ramp expand-control? filter-control-in-dB 
-				    filter-control-env filter-control-order filter-control? reverb-control-decay 
-				    reverb-control-feedback reverb-control-length reverb-control-lowpass reverb-control-scale 
-				    reverb-control? speed-control speed-control-style speed-control-tones channel-style sync))))
+			      (list amp-control contrast-control contrast-control-amp contrast-control?  expand-control
+				    expand-control-hop expand-control-length expand-control-ramp expand-control?
+				    filter-control-in-dB filter-control-env filter-control-order filter-control?
+				    reverb-control-decay reverb-control-feedback reverb-control-length reverb-control-lowpass
+				    reverb-control-scale reverb-control? speed-control speed-control-style speed-control-tones
+				    channel-style sync))))
 		  (list (current-module) (sqrt -1.0) "hiho"))
 	(close-sound index))
 
@@ -11633,18 +11750,22 @@ EDITS: 3
 					      (lambda args (car args)))))
 				  (if (not (eq? tag 'wrong-type-arg))
 				      (snd-display ";clm ~A: ~A ~A" n tag arg))))
-			      (list all-pass asymmetric-fm buffer->sample clear-array comb convolve db->linear degrees->radians delay env formant frame->list 
-				    granulate hz->radians in-hz linear->db make-all-pass make-asymmetric-fm make-buffer make-comb make-convolve make-delay make-env 
-				    make-file->frame make-file->sample make-filter make-fir-filter make-formant make-frame make-granulate make-iir-filter make-locsig 
-				    make-notch make-one-pole make-one-zero make-oscil make-ppolar make-pulse-train make-rand make-rand-interp make-readin 
-				    make-sawtooth-wave make-sine-summation make-square-wave make-src make-sum-of-cosines make-table-lookup make-triangle-wave 
-				    make-two-pole make-two-zero make-wave-train make-waveshape 
-				    make-zpolar mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-channel mus-channels 
-				    mus-cosines mus-data mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop mus-increment mus-length mus-location 
-				    mus-order mus-phase mus-ramp mus-random mus-run mus-scaler mus-set-rand-seed mus-set-srate mus-xcoeffs mus-ycoeffs notch 
-				    one-pole one-zero oscil partials->polynomial partials->wave partials->waveshape phase-partials->wave phase-vocoder pulse-train 
-				    radians->degrees radians->hz rand rand-interp readin restart-env sawtooth-wave sine-summation square-wave src sum-of-cosines 
-				    table-lookup tap triangle-wave two-pole two-zero wave-train waveshape)))
+			      (list all-pass asymmetric-fm buffer->sample clear-array comb convolve db->linear
+				    degrees->radians delay env formant frame->list granulate hz->radians in-hz linear->db
+				    make-all-pass make-asymmetric-fm make-buffer make-comb make-convolve make-delay make-env
+				    make-file->frame make-file->sample make-filter make-fir-filter make-formant make-frame
+				    make-granulate make-iir-filter make-locsig make-notch make-one-pole make-one-zero
+				    make-oscil make-ppolar make-pulse-train make-rand make-rand-interp make-readin
+				    make-sawtooth-wave make-sine-summation make-square-wave make-src make-sum-of-cosines
+				    make-table-lookup make-triangle-wave make-two-pole make-two-zero make-wave-train
+				    make-waveshape make-zpolar mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-channel mus-channels
+				    mus-cosines mus-data mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop
+				    mus-increment mus-length mus-location mus-order mus-phase mus-ramp mus-random mus-run
+				    mus-scaler mus-set-rand-seed mus-set-srate mus-xcoeffs mus-ycoeffs notch one-pole one-zero
+				    oscil partials->polynomial partials->wave partials->waveshape phase-partials->wave
+				    phase-vocoder pulse-train radians->degrees radians->hz rand rand-interp readin restart-env
+				    sawtooth-wave sine-summation square-wave src sum-of-cosines table-lookup tap triangle-wave
+				    two-pole two-zero wave-train waveshape)))
 		(list (current-module) (sqrt -1.0)))
 	(gc)
 
@@ -11656,16 +11777,19 @@ EDITS: 3
 				  (lambda args (car args)))))
 		      (if (not (eq? tag 'wrong-type-arg))
 			  (snd-display ";oscil clm ~A: ~A" n tag))))
-		  (list all-pass array-interp asymmetric-fm comb contrast-enhancement convolution convolve convolve-files delay dot-product env-interp 
-			file->frame file->sample filter fir-filter formant formant-bank frame* frame+ frame->buffer frame->frame frame-ref frame->sample 
-			granulate iir-filter ina inb locsig-ref locsig-reverb-ref make-all-pass make-asymmetric-fm make-buffer make-comb 
-			make-convolve make-delay make-env make-fft-window make-filter make-fir-filter make-formant make-frame make-granulate make-iir-filter 
-			make-locsig make-notch make-one-pole make-one-zero make-oscil make-phase-vocoder make-ppolar make-pulse-train make-rand 
-			make-rand-interp make-readin make-sawtooth-wave make-sine-summation make-square-wave make-src make-sum-of-cosines make-table-lookup 
-			make-triangle-wave make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar mixer* multiply-arrays 
-			mus-bank notch one-pole one-zero oscil oscil-bank partials->polynomial partials->wave partials->waveshape phase-partials->wave 
-			phase-vocoder polynomial pulse-train rand rand-interp rectangular->polar ring-modulate sample->buffer sample->frame sawtooth-wave 
-			sine-summation square-wave src sum-of-cosines sum-of-sines table-lookup tap triangle-wave two-pole two-zero wave-train waveshape ))
+		  (list all-pass array-interp asymmetric-fm comb contrast-enhancement convolution convolve
+			convolve-files delay dot-product env-interp file->frame file->sample filter fir-filter formant
+			formant-bank frame* frame+ frame->buffer frame->frame frame-ref frame->sample granulate iir-filter ina
+			inb locsig-ref locsig-reverb-ref make-all-pass make-asymmetric-fm make-buffer make-comb make-convolve
+			make-delay make-env make-fft-window make-filter make-fir-filter make-formant make-frame make-granulate
+			make-iir-filter make-locsig make-notch make-one-pole make-one-zero make-oscil make-phase-vocoder
+			make-ppolar make-pulse-train make-rand make-rand-interp make-readin make-sawtooth-wave
+			make-sine-summation make-square-wave make-src make-sum-of-cosines make-table-lookup make-triangle-wave
+			make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar mixer* multiply-arrays mus-bank
+			notch one-pole one-zero oscil oscil-bank partials->polynomial partials->wave partials->waveshape
+			phase-partials->wave phase-vocoder polynomial pulse-train rand rand-interp rectangular->polar
+			ring-modulate sample->buffer sample->frame sawtooth-wave sine-summation square-wave src sum-of-cosines
+			sum-of-sines table-lookup tap triangle-wave two-pole two-zero wave-train waveshape ))
 
 	(for-each (lambda (n)
 		    (let ((tag
@@ -11675,9 +11799,10 @@ EDITS: 3
 				  (lambda args (car args)))))
 		      (if (not (eq? tag 'wrong-type-arg))
 			  (snd-display ";mus-gen ~A: ~A" n tag))))
-		  (list mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-bank mus-channel mus-channels mus-cosines mus-data mus-feedback mus-feedforward 
-			mus-formant-radius mus-frequency mus-hop mus-increment mus-length mus-location mus-mix mus-order mus-phase mus-ramp 
-			mus-random mus-run mus-scaler mus-xcoeffs mus-ycoeffs))
+		  (list mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-bank mus-channel mus-channels mus-cosines mus-data
+			mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop mus-increment mus-length
+			mus-location mus-mix mus-order mus-phase mus-ramp mus-random mus-run mus-scaler mus-xcoeffs
+			mus-ycoeffs))
 	(gc)
 
 	(for-each (lambda (n)
@@ -11688,10 +11813,11 @@ EDITS: 3
 				  (lambda args (car args)))))
 		      (if (not (eq? tag 'wrong-type-arg))
 			  (snd-display ";mus-sound ~A: ~A" n tag))))
-		  (list mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size mus-sound-data-location mus-sound-chans
-			mus-sound-srate mus-sound-header-type mus-sound-data-format mus-sound-length mus-sound-type-specifier mus-header-type-name
-			mus-data-format-name mus-sound-comment mus-sound-write-date mus-data-format-bytes-per-sample mus-sound-loop-info
-			mus-sound-maxamp mus-sound-maxamp-exists?))
+		  (list mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size
+			mus-sound-data-location mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-data-format
+			mus-sound-length mus-sound-type-specifier mus-header-type-name mus-data-format-name mus-sound-comment
+			mus-sound-write-date mus-data-format-bytes-per-sample mus-sound-loop-info mus-sound-maxamp
+			mus-sound-maxamp-exists?))
 
 	(for-each (lambda (n)
 		    (let ((tag
@@ -11701,10 +11827,11 @@ EDITS: 3
 				  (lambda args (car args)))))
 		      (if (not (eq? tag 'wrong-number-of-args))
 			  (snd-display ";no arg mus-sound ~A: ~A" n tag))))
-		  (list mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size mus-sound-data-location mus-sound-chans
-			mus-sound-srate mus-sound-header-type mus-sound-data-format mus-sound-length mus-sound-type-specifier mus-header-type-name
-			mus-data-format-name mus-sound-comment mus-sound-write-date mus-data-format-bytes-per-sample mus-sound-loop-info
-			mus-sound-maxamp mus-sound-maxamp-exists?))
+		  (list mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size
+			mus-sound-data-location mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-data-format
+			mus-sound-length mus-sound-type-specifier mus-header-type-name mus-data-format-name mus-sound-comment
+			mus-sound-write-date mus-data-format-bytes-per-sample mus-sound-loop-info mus-sound-maxamp
+			mus-sound-maxamp-exists?))
 
 	(for-each (lambda (n)
 		    (let ((tag
@@ -11714,9 +11841,10 @@ EDITS: 3
 				  (lambda args (car args)))))
 		      (if (not (eq? tag 'mus-error))
 			  (snd-display ";bad file mus-sound ~A: ~A" n tag))))
-		  (list mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size mus-sound-data-location mus-sound-chans
-			mus-sound-srate mus-sound-header-type mus-sound-data-format mus-sound-length mus-sound-type-specifier mus-sound-comment 
-			mus-sound-write-date mus-sound-maxamp mus-sound-maxamp-exists?))
+		  (list mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size
+			mus-sound-data-location mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-data-format
+			mus-sound-length mus-sound-type-specifier mus-sound-comment mus-sound-write-date mus-sound-maxamp
+			mus-sound-maxamp-exists?))
 
 	(let ((ctr 0))
 	  (for-each (lambda (n)
@@ -11728,19 +11856,19 @@ EDITS: 3
 			(if (not (eq? tag 'wrong-type-arg))
 			    (snd-display ";~D: chn (no snd) procs ~A: ~A" ctr n tag))
 			(set! ctr (+ ctr 1))))
-		    (list backward-graph backward-sample channel-sync channel-widgets convolve-with count-matches cursor cursor-follows-play cursor-position 
-			  cursor-size cursor-style delete-sample display-edits dot-size draw-dots draw-lines edit-fragment edit-position edit-tree edits 
-			  fft-window-beta fft-log-frequency fft-log-magnitude transform-size 
-			  transform-graph-type fft-window graph-transform? find forward-graph forward-mark forward-mix 
-			  forward-sample graph graph-style graph-lisp? insert-region insert-sound left-sample make-graph-data 
-			  map-chan max-transform-peaks maxamp min-dB mix-region 
-			  transform-normalization peak-env-info peaks play play-and-wait position->x position->y reverse-sound revert-sound right-sample sample 
-			  samples->vct samples->sound-data save-sound save-sound-as 
-			  scan-chan select-channel show-axes show-transform-peaks show-marks show-mix-waveforms 
-			  show-y-zero spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale 
-			  spectro-z-angle spectro-z-scale squelch-update transform-sample transform-samples transform-samples->vct transform-samples-size 
-			  transform-type update-transform update-time-graph update-lisp-graph 
-			  update-sound wavelet-type graph-time? time-graph-type wavo-hop wavo-trace x-bounds 
+		    (list backward-graph backward-sample channel-sync channel-widgets convolve-with count-matches cursor
+			  cursor-follows-play cursor-position cursor-size cursor-style delete-sample display-edits dot-size
+			  draw-dots draw-lines edit-fragment edit-position edit-tree edits fft-window-beta fft-log-frequency
+			  fft-log-magnitude transform-size transform-graph-type fft-window graph-transform? find forward-graph
+			  forward-mark forward-mix forward-sample graph graph-style graph-lisp? insert-region insert-sound
+			  left-sample make-graph-data map-chan max-transform-peaks maxamp min-dB mix-region
+			  transform-normalization peak-env-info peaks play play-and-wait position->x position->y reverse-sound
+			  revert-sound right-sample sample samples->vct samples->sound-data save-sound save-sound-as scan-chan
+			  select-channel show-axes show-transform-peaks show-marks show-mix-waveforms show-y-zero
+			  spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle
+			  spectro-y-scale spectro-z-angle spectro-z-scale squelch-update transform-sample transform-samples
+			  transform-samples->vct transform-samples-size transform-type update-transform update-time-graph
+			  update-lisp-graph update-sound wavelet-type graph-time? time-graph-type wavo-hop wavo-trace x-bounds
 			  x-position-slider x-zoom-slider y-bounds y-position-slider y-zoom-slider zero-pad))
 	  (gc))
 
@@ -11754,20 +11882,20 @@ EDITS: 3
 			(if (not (eq? tag 'wrong-type-arg))
 			    (snd-display ";~D: chn (no chn) procs ~A: ~A" ctr n tag))
 			(set! ctr (+ ctr 1))))
-		    (list backward-graph backward-sample channel-sync channel-widgets convolve-with count-matches cursor cursor-position 
-			  cursor-size cursor-style delete-sample display-edits dot-size draw-dots draw-lines edit-fragment edit-position edit-tree edits 
-			  fft-window-beta fft-log-frequency fft-log-magnitude transform-size 
-			  transform-graph-type fft-window graph-transform? find forward-graph forward-mark forward-mix 
-			  forward-sample graph graph-style graph-lisp? insert-region insert-sound left-sample make-graph-data
-			  map-chan max-transform-peaks maxamp min-dB mix-region 
-			  transform-normalization peak-env-info peaks play play-and-wait position->x position->y reverse-sound right-sample sample 
-			  samples->vct samples->sound-data save-sound-as 
-			  scan-chan show-axes show-transform-peaks show-marks show-mix-waveforms 
-			  show-y-zero spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale 
-			  spectro-z-angle spectro-z-scale squelch-update transform-sample transform-samples transform-samples->vct transform-samples-size 
-			  transform-type update-transform update-time-graph update-lisp-graph 
-			  wavelet-type graph-time? time-graph-type wavo-hop wavo-trace x-bounds 
-			  x-position-slider x-zoom-slider y-bounds y-position-slider y-zoom-slider zero-pad)))
+		    (list backward-graph backward-sample channel-sync channel-widgets convolve-with count-matches cursor
+			  cursor-position cursor-size cursor-style delete-sample display-edits dot-size draw-dots draw-lines
+			  edit-fragment edit-position edit-tree edits fft-window-beta fft-log-frequency fft-log-magnitude
+			  transform-size transform-graph-type fft-window graph-transform? find forward-graph forward-mark
+			  forward-mix forward-sample graph graph-style graph-lisp? insert-region insert-sound left-sample
+			  make-graph-data map-chan max-transform-peaks maxamp min-dB mix-region transform-normalization
+			  peak-env-info peaks play play-and-wait position->x position->y reverse-sound right-sample sample
+			  samples->vct samples->sound-data save-sound-as scan-chan show-axes show-transform-peaks show-marks
+			  show-mix-waveforms show-y-zero spectro-cutoff spectro-hop spectro-start spectro-x-angle
+			  spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale squelch-update
+			  transform-sample transform-samples transform-samples->vct transform-samples-size transform-type
+			  update-transform update-time-graph update-lisp-graph wavelet-type graph-time? time-graph-type
+			  wavo-hop wavo-trace x-bounds x-position-slider x-zoom-slider y-bounds y-position-slider
+			  y-zoom-slider zero-pad)))
 
         (let ((ctr 0))
 	  (for-each (lambda (n)
@@ -11779,20 +11907,20 @@ EDITS: 3
 			(if (not (eq? tag 'no-such-sound))
 			    (snd-display ";~D: chn procs ~A: ~A" ctr n tag))
 			(set! ctr (+ ctr 1))))
-		    (list backward-graph backward-sample channel-sync channel-widgets cursor cursor-follows-play cursor-position cursor-size cursor-style 
-			  delete-sample display-edits dot-size edit-fragment edit-position edit-tree edits env-sound 
-			  fft-window-beta fft-log-frequency fft-log-magnitude 
-			  transform-size transform-graph-type fft-window graph-transform? filter-sound 
-			  forward-graph forward-mark forward-mix forward-sample graph-data graph-style 
-			  graph-lisp? insert-region left-sample make-graph-data max-transform-peaks maxamp min-dB transform-normalization peak-env-info play 
-			  play-and-wait position->x position->y redo reverse-sound revert-sound right-sample sample samples->vct samples->sound-data 
-			  save-sound scale-by scale-to show-axes show-transform-peaks show-marks show-mix-waveforms show-y-zero spectro-cutoff spectro-hop 
-			  spectro-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale squelch-update 
+		    (list backward-graph backward-sample channel-sync channel-widgets cursor cursor-follows-play
+			  cursor-position cursor-size cursor-style delete-sample display-edits dot-size edit-fragment
+			  edit-position edit-tree edits env-sound fft-window-beta fft-log-frequency fft-log-magnitude
+			  transform-size transform-graph-type fft-window graph-transform? filter-sound forward-graph
+			  forward-mark forward-mix forward-sample graph-data graph-style graph-lisp? insert-region left-sample
+			  make-graph-data max-transform-peaks maxamp min-dB transform-normalization peak-env-info play
+			  play-and-wait position->x position->y redo reverse-sound revert-sound right-sample sample
+			  samples->vct samples->sound-data save-sound scale-by scale-to show-axes show-transform-peaks
+			  show-marks show-mix-waveforms show-y-zero spectro-cutoff spectro-hop spectro-start spectro-x-angle
+			  spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale squelch-update
 			  src-sound transform-sample transform-samples transform-samples->vct scale-sound-by scale-sound-to
-			  transform-samples-size transform-type undo update-transform update-time-graph 
-			  update-lisp-graph update-sound wavelet-type graph-time? time-graph-type 
-			  wavo-hop wavo-trace x-bounds x-position-slider x->position x-zoom-slider 
-			  y-bounds y-position-slider y->position y-zoom-slider zero-pad )))
+			  transform-samples-size transform-type undo update-transform update-time-graph update-lisp-graph
+			  update-sound wavelet-type graph-time? time-graph-type wavo-hop wavo-trace x-bounds x-position-slider
+			  x->position x-zoom-slider y-bounds y-position-slider y->position y-zoom-slider zero-pad )))
 
         (let ((ctr 0))
 	  (for-each (lambda (n)
@@ -11804,9 +11932,9 @@ EDITS: 3
 			(if (not (eq? tag 'no-such-sound))
 			    (snd-display ";~D: snd(1) chn procs ~A: ~A" ctr n tag))
 			(set! ctr (+ ctr 1))))
-		    (list backward-graph backward-sample delete-sample edit-fragment forward-graph forward-mark forward-mix forward-sample graph-data 
-			  graph-style play play-and-wait position->x position->y redo scale-sound-by scale-sound-to scale-by scale-to 
-			  undo x->position y->position)))
+		    (list backward-graph backward-sample delete-sample edit-fragment forward-graph forward-mark
+			  forward-mix forward-sample graph-data graph-style play play-and-wait position->x position->y redo
+			  scale-sound-by scale-sound-to scale-by scale-to undo x->position y->position)))
 
         (let ((ctr 0)
 	      (index (open-sound "oboe.snd")))
@@ -11819,8 +11947,9 @@ EDITS: 3
 			(if (not (eq? tag 'no-such-channel))
 			    (snd-display ";~D: snd(1 1234) chn procs ~A: ~A" ctr n tag))
 			(set! ctr (+ ctr 1))))
-		    (list backward-graph backward-sample delete-sample edit-fragment forward-graph forward-mark forward-mix forward-sample graph-data 
-			  play play-and-wait position->x position->y redo scale-by scale-to undo x->position y->position))
+		    (list backward-graph backward-sample delete-sample edit-fragment forward-graph forward-mark
+			  forward-mix forward-sample graph-data play play-and-wait position->x position->y redo scale-by
+			  scale-to undo x->position y->position))
 	  (close-sound index))
 
         (let ((ctr 0)
@@ -11834,15 +11963,16 @@ EDITS: 3
 			(if (not (eq? tag 'no-such-channel))
 			    (snd-display ";~D: chn procs ~A: ~A" ctr n tag))
 			(set! ctr (+ ctr 1))))
-		    (list channel-sync channel-widgets cursor cursor-position cursor-size cursor-style display-edits dot-size 
-			  edit-position edit-tree edits fft-window-beta fft-log-frequency fft-log-magnitude transform-size transform-graph-type fft-window 
-			  graph-transform? graph-style graph-lisp? left-sample make-graph-data max-transform-peaks maxamp min-dB transform-normalization
-			  peak-env-info reverse-sound right-sample show-axes show-transform-peaks show-marks show-mix-waveforms show-y-zero 
-			  spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale 
-			  spectro-z-angle spectro-z-scale squelch-update transform-samples->vct transform-samples-size transform-type update-transform 
-			  update-time-graph update-lisp-graph wavelet-type graph-time? 
-			  time-graph-type wavo-hop wavo-trace x-bounds x-position-slider x-zoom-slider 
-			  y-bounds y-position-slider y-zoom-slider zero-pad ))
+		    (list channel-sync channel-widgets cursor cursor-position cursor-size cursor-style display-edits
+			  dot-size edit-position edit-tree edits fft-window-beta fft-log-frequency fft-log-magnitude
+			  transform-size transform-graph-type fft-window graph-transform? graph-style graph-lisp? left-sample
+			  make-graph-data max-transform-peaks maxamp min-dB transform-normalization peak-env-info
+			  reverse-sound right-sample show-axes show-transform-peaks show-marks show-mix-waveforms show-y-zero
+			  spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle
+			  spectro-y-scale spectro-z-angle spectro-z-scale squelch-update transform-samples->vct
+			  transform-samples-size transform-type update-transform update-time-graph update-lisp-graph
+			  wavelet-type graph-time?  time-graph-type wavo-hop wavo-trace x-bounds x-position-slider
+			  x-zoom-slider y-bounds y-position-slider y-zoom-slider zero-pad ))
 	  (close-sound index))
 
         (let ((ctr 0)
@@ -11856,16 +11986,16 @@ EDITS: 3
 			(if (not (eq? tag 'wrong-type-arg))
 			    (snd-display ";~D: set chn procs ~A: ~A" ctr n tag))
 			(set! ctr (+ ctr 1))))
-		    (list channel-sync channel-widgets cursor cursor-position
-			  display-edits dot-size 
-			  edit-tree edits fft-window-beta fft-log-frequency fft-log-magnitude transform-size transform-graph-type fft-window 
-			  graph-transform? graph-style graph-lisp? left-sample make-graph-data max-transform-peaks maxamp min-dB transform-normalization
-			  peak-env-info reverse-sound right-sample show-axes show-transform-peaks show-marks show-mix-waveforms show-y-zero 
-			  spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale 
-			  spectro-z-angle spectro-z-scale squelch-update transform-samples->vct transform-samples-size transform-type update-transform 
-			  update-time-graph update-lisp-graph wavelet-type graph-time? time-graph-type 
-			  wavo-hop wavo-trace x-bounds x-position-slider x-zoom-slider 
-			  y-bounds y-position-slider y-zoom-slider zero-pad
+		    (list channel-sync channel-widgets cursor cursor-position display-edits dot-size edit-tree edits
+			  fft-window-beta fft-log-frequency fft-log-magnitude transform-size transform-graph-type fft-window
+			  graph-transform? graph-style graph-lisp? left-sample make-graph-data max-transform-peaks maxamp
+			  min-dB transform-normalization peak-env-info reverse-sound right-sample show-axes
+			  show-transform-peaks show-marks show-mix-waveforms show-y-zero spectro-cutoff spectro-hop
+			  spectro-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle
+			  spectro-z-scale squelch-update transform-samples->vct transform-samples-size transform-type
+			  update-transform update-time-graph update-lisp-graph wavelet-type graph-time? time-graph-type
+			  wavo-hop wavo-trace x-bounds x-position-slider x-zoom-slider y-bounds y-position-slider
+			  y-zoom-slider zero-pad
 			  ))
 	  (gc)
 	  (close-sound index))
@@ -12002,20 +12132,25 @@ EDITS: 3
 			(if (not (eq? tag 'wrong-type-arg))
 			    (snd-display ";~D: misc procs ~A: ~A" ctr n tag))
 			(set! ctr (+ ctr 1))))
-		    (list enved-filter-order enved-filter filter-env-in-hz filter-waveform-color ask-before-overwrite audio-state-file auto-resize auto-update 
-			  axis-label-font axis-numbers-font basic-color bind-key bold-button-font button-font channel-style color-cutoff color-dialog 
-			  color-inverted color-scale cursor-color dac-combines-channels dac-size data-clipped data-color default-output-chans default-output-format 
-			  default-output-srate default-output-type enved-active-env enved-base enved-clip? enved-in-dB enved-dialog enved-exp? 
-			  enved-power enved-selected-env enved-target enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin eps-size
-			  foreground-color graph-color graph-cursor help-text-font highlight-color just-sounds key-binding listener-color 
-			  listener-font listener-prompt listener-text-color max-regions max-sounds minibuffer-history-length mix-waveform-height 
-			  region-graph-style movies position-color previous-files-sort print-length pushed-button-color recorder-in-device
-			  recorder-autoload recorder-buffer-size recorder-file recorder-in-format recorder-max-duration recorder-out-chans recorder-out-format 
-			  recorder-srate recorder-trigger sash-color save-dir save-state-file selected-channel selected-data-color 
-			  selected-graph-color selected-mix selected-mix-color selected-sound selection-creates-region show-backtrace show-controls 
-			  show-indices show-listener show-selection-transform show-usage-stats sinc-width temp-dir text-focus-color tiny-font trap-segfault 
-			  unbind-key use-sinc-interp verbose-cursor vu-font vu-font-size vu-size window-height window-width window-x 
-			  window-y with-mix-tags x-axis-style zoom-color zoom-focus-style mix-tag-height mix-tag-width ))
+		    (list enved-filter-order enved-filter filter-env-in-hz filter-waveform-color ask-before-overwrite
+			  audio-state-file auto-resize auto-update axis-label-font axis-numbers-font basic-color bind-key
+			  bold-button-font button-font channel-style color-cutoff color-dialog color-inverted color-scale
+			  cursor-color dac-combines-channels dac-size data-clipped data-color default-output-chans
+			  default-output-format default-output-srate default-output-type enved-active-env enved-base
+			  enved-clip? enved-in-dB enved-dialog enved-exp?  enved-power enved-selected-env enved-target
+			  enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin eps-size
+			  foreground-color graph-color graph-cursor help-text-font highlight-color just-sounds key-binding
+			  listener-color listener-font listener-prompt listener-text-color max-regions max-sounds
+			  minibuffer-history-length mix-waveform-height region-graph-style movies position-color
+			  previous-files-sort print-length pushed-button-color recorder-in-device recorder-autoload
+			  recorder-buffer-size recorder-file recorder-in-format recorder-max-duration recorder-out-chans
+			  recorder-out-format recorder-srate recorder-trigger sash-color save-dir save-state-file
+			  selected-channel selected-data-color selected-graph-color selected-mix selected-mix-color
+			  selected-sound selection-creates-region show-backtrace show-controls show-indices show-listener
+			  show-selection-transform show-usage-stats sinc-width temp-dir text-focus-color tiny-font
+			  trap-segfault unbind-key use-sinc-interp verbose-cursor vu-font vu-font-size vu-size window-height
+			  window-width window-x window-y with-mix-tags x-axis-style zoom-color zoom-focus-style mix-tag-height
+			  mix-tag-width ))
 	  (gc))
 
 	(for-each (lambda (n)

@@ -2830,6 +2830,8 @@ static XEN g_sound_widgets(XEN snd)
 }
 #endif
 
+/* TODO: peak-amp envs assume sndlib sample type (and byte order) does not change */
+
 static XEN g_peak_env_info(XEN snd, XEN chn, XEN pos)
 {
   #define H_peak_env_info "(" S_peak_env_info " snd chn pos) -> '(complete ymin ymax)"

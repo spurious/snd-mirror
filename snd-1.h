@@ -61,7 +61,6 @@ typedef struct {
   int len;
   int just_zeros;
   int free_me;
-  int extra;
 } snd_data;
 
 typedef struct {
@@ -72,11 +71,6 @@ typedef struct {
   int sfnum;
   int selection_beg, selection_end;    /* added 11-Sep-00: selection needs to follow edit list */
   Float maxamp, selection_maxamp;      /* added 3-Oct-00 */
-#if WITH_PARSE_TREES
-  /* work-in-progress: embedded edit list fragment (composite) functions */
-  MUS_SAMPLE_TYPE (*func)(void *cp, int pos, void *sf, void *env);
-  void *environ;
-#endif
 } ed_list;
 
 typedef struct snd_fd {
@@ -94,7 +88,6 @@ typedef struct snd_fd {
   struct chan__info *cp;
   struct snd__info *local_sp;          /* for local reads via make-sample-reader from Scheme */
   Float scaler;
-  int extra;
 } snd_fd;
 
 typedef struct {Float freq; Float amp;} fft_peak;

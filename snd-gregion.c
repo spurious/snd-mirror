@@ -152,12 +152,12 @@ void update_region_browser(snd_state *ss, int grf_too)
 }
 
 
-static void region_browser_delete_Callback(GtkWidget *w, GdkEvent *event, gpointer context)
+static void region_browser_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(region_dialog);
 }
 
-static void region_ok_Callback(GtkWidget *w, gpointer context)
+static void region_ok_callback(GtkWidget *w, gpointer context)
 {
   gtk_widget_hide(region_dialog);
 }
@@ -167,12 +167,12 @@ int region_browser_is_active(void)
   return((region_dialog) && (GTK_WIDGET_VISIBLE(region_dialog)));
 }
 
-static void region_resize_Callback(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
+static void region_resize_callback(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
 {
   region_update_graph((chan_info *)data);
 }
 
-static void region_expose_Callback(GtkWidget *w, GdkEventExpose *ev, gpointer data)
+static void region_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
   region_update_graph((chan_info *)data);
 }
@@ -197,19 +197,19 @@ void delete_region_and_update_browser(snd_state *ss, int pos)
     }
 }
 
-static void region_delete_Callback(GtkWidget *w, gpointer context)
+static void region_delete_callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   if (current_region != -1)
     delete_region_and_update_browser(ss, current_region);
 }
 
-static void region_help_Callback(GtkWidget *w, gpointer context)
+static void region_help_callback(GtkWidget *w, gpointer context)
 {
   region_dialog_help((snd_state *)context);
 }
 
-static void region_up_arrow_Callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
+static void region_up_arrow_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   chan_info *cp;
   cp = reg_sp->chans[0];
@@ -224,7 +224,7 @@ static void region_up_arrow_Callback(GtkWidget *w, GdkEventButton *ev, gpointer 
     }
 }
 
-static void region_down_arrow_Callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
+static void region_down_arrow_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   chan_info *cp;
   cp = reg_sp->chans[0];
@@ -239,7 +239,7 @@ static void region_down_arrow_Callback(GtkWidget *w, GdkEventButton *ev, gpointe
     }
 }
 
-static void region_focus_Callback(GtkWidget *w, gpointer context) /* button clicked callback */
+static void region_focus_callback(GtkWidget *w, gpointer context) /* button clicked callback */
 {
   snd_state *ss;
   chan_info *cp;
@@ -269,7 +269,7 @@ void reflect_play_region_stop(int n)
     }
 }
 
-static void region_play_Callback(GtkWidget *w, gpointer context)
+static void region_play_callback(GtkWidget *w, gpointer context)
 {
   regrow *r = (regrow *)context;
   if (GTK_TOGGLE_BUTTON(r->pl)->active)
@@ -277,7 +277,7 @@ static void region_play_Callback(GtkWidget *w, gpointer context)
   else stop_playing_region(stack_position_to_id(r->pos));
 }
 
-static void region_save_Callback(GtkWidget *w, gpointer context)
+static void region_save_callback(GtkWidget *w, gpointer context)
 {
   regrow *r = (regrow *)context;
   protect_region(r->pos, GTK_TOGGLE_BUTTON(r->sv)->active);
@@ -294,14 +294,14 @@ void set_region_protect(int id, int protect)
     }
 }
 
-static void region_print_Callback(GtkWidget *w, gpointer context)
+static void region_print_callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   if (current_region != -1)
     region_print(eps_file(ss), "region", reg_sp->chans[0]);
 }
 
-static void region_edit_Callback(GtkWidget *w, gpointer context)
+static void region_edit_callback(GtkWidget *w, gpointer context)
 {
   if (current_region != -1) 
     region_edit((snd_state *)context, current_region);
@@ -326,7 +326,7 @@ static void make_region_dialog(snd_state *ss)
 
   region_dialog = gtk_dialog_new();
   set_dialog_widget(ss, REGION_DIALOG, region_dialog);
-  gtk_signal_connect(GTK_OBJECT(region_dialog), "delete_event", GTK_SIGNAL_FUNC(region_browser_delete_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(region_dialog), "delete_event", GTK_SIGNAL_FUNC(region_browser_delete_callback), (gpointer)ss);
   gtk_window_set_title(GTK_WINDOW(region_dialog), STR_Regions);
   gtk_window_set_policy(GTK_WINDOW(region_dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */
   set_backgrounds(region_dialog, (ss->sgx)->basic_color);
@@ -342,9 +342,9 @@ static void make_region_dialog(snd_state *ss)
   gtk_box_pack_end(GTK_BOX(GTK_DIALOG(region_dialog)->action_area), help_button, TRUE, TRUE, 4);
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(region_dialog)->action_area), delete_button, TRUE, TRUE, 4);
 
-  gtk_signal_connect(GTK_OBJECT(delete_button), "clicked", GTK_SIGNAL_FUNC(region_delete_Callback), (gpointer)ss);
-  gtk_signal_connect(GTK_OBJECT(help_button), "clicked", GTK_SIGNAL_FUNC(region_help_Callback), (gpointer)ss);
-  gtk_signal_connect(GTK_OBJECT(dismiss_button), "clicked", GTK_SIGNAL_FUNC(region_ok_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(delete_button), "clicked", GTK_SIGNAL_FUNC(region_delete_callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(help_button), "clicked", GTK_SIGNAL_FUNC(region_help_callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(dismiss_button), "clicked", GTK_SIGNAL_FUNC(region_ok_callback), (gpointer)ss);
 
   set_pushed_button_colors(help_button, ss);
   set_pushed_button_colors(delete_button, ss);
@@ -366,9 +366,9 @@ static void make_region_dialog(snd_state *ss)
   for (i = 0; i < max_regions(ss); i++)
     {
       r = make_regrow(ss, region_list, 
-		      (void (*)())region_save_Callback, 
-		      (void (*)())region_play_Callback, 
-		      (void (*)())region_focus_Callback);
+		      (void (*)())region_save_callback, 
+		      (void (*)())region_play_callback, 
+		      (void (*)())region_focus_callback);
       region_rows[i] = r;
       r->pos = i;
       r->ss = ss;
@@ -416,13 +416,13 @@ static void make_region_dialog(snd_state *ss)
 
   edit_button = gtk_button_new_with_label(STR_edit);
   set_pushed_button_colors(edit_button, ss);
-  gtk_signal_connect(GTK_OBJECT(edit_button), "clicked", GTK_SIGNAL_FUNC(region_edit_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(edit_button), "clicked", GTK_SIGNAL_FUNC(region_edit_callback), (gpointer)ss);
   gtk_box_pack_start(GTK_BOX(infobox), edit_button, TRUE, TRUE, 2);
   gtk_widget_show(edit_button);
 
   print_button = gtk_button_new_with_label(STR_print);
   set_pushed_button_colors(print_button, ss);
-  gtk_signal_connect(GTK_OBJECT(print_button), "clicked", GTK_SIGNAL_FUNC(region_print_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(print_button), "clicked", GTK_SIGNAL_FUNC(region_print_callback), (gpointer)ss);
   gtk_box_pack_start(GTK_BOX(infobox), print_button, TRUE, TRUE, 2);
   gtk_widget_show(print_button);
 
@@ -472,11 +472,11 @@ static void make_region_dialog(snd_state *ss)
   gtk_paned_set_position(GTK_PANED(region_grf), 150);
 
   cp->hookable = 0;
-  gtk_signal_connect(GTK_OBJECT(channel_graph(cp)), "expose_event", GTK_SIGNAL_FUNC(region_resize_Callback), (gpointer)cp);
-  gtk_signal_connect(GTK_OBJECT(channel_graph(cp)), "configure_event", GTK_SIGNAL_FUNC(region_expose_Callback), (gpointer)cp);
+  gtk_signal_connect(GTK_OBJECT(channel_graph(cp)), "expose_event", GTK_SIGNAL_FUNC(region_resize_callback), (gpointer)cp);
+  gtk_signal_connect(GTK_OBJECT(channel_graph(cp)), "configure_event", GTK_SIGNAL_FUNC(region_expose_callback), (gpointer)cp);
 
-  gtk_signal_connect(GTK_OBJECT(channel_up_arrow(cp)), "button_press_event", GTK_SIGNAL_FUNC(region_up_arrow_Callback), (gpointer)ss);
-  gtk_signal_connect(GTK_OBJECT(channel_down_arrow(cp)), "button_press_event", GTK_SIGNAL_FUNC(region_down_arrow_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(channel_up_arrow(cp)), "button_press_event", GTK_SIGNAL_FUNC(region_up_arrow_callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(channel_down_arrow(cp)), "button_press_event", GTK_SIGNAL_FUNC(region_down_arrow_callback), (gpointer)ss);
 
   set_sensitive(channel_f(cp), FALSE);
   if (region_chans(stack_position_to_id(0)) > 1) set_sensitive(channel_w(cp), TRUE);
@@ -530,9 +530,9 @@ static regrow *region_row(int n)
 	{
 	  ss = get_global_state();
 	  r = make_regrow(ss, region_list, 
-			  (void (*)())region_save_Callback, 
-			  (void (*)())region_play_Callback, 
-			  (void (*)())region_focus_Callback);
+			  (void (*)())region_save_callback, 
+			  (void (*)())region_play_callback, 
+			  (void (*)())region_focus_callback);
 	  region_rows[n] = r;
 	  r->pos = n;
 	  r->ss = ss;

@@ -8,7 +8,7 @@
 
 
 /* TODO: selection-oriented Xt callbacks
- * TODO: more regression tests
+ * TODO: more regression tests (snd-test.scm test 22)
  * TODO: XEvent fields should be settable
  * TODO: struct accessors for XIconSize (see min_height)?
  * TODO: XmVaCreateSimple* (need special arglist handlers)
@@ -489,8 +489,16 @@ static void define_xm_obj(void)
              C_TO_XEN_ULONG((unsigned long)Value), \
              make_xm_obj(Value))
 
-#define UNWRAP_FOR_C(Value)       XEN_TO_C_ULONG(XEN_CADR(Value))
-#define WRAP_P(Name, Value)       (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_EQ_P(C_STRING_TO_XEN_SYMBOL(Name), XEN_CAR(Value))))
+#define UNWRAP_FOR_C(Value) XEN_TO_C_ULONG(XEN_CADR(Value))
+#if 0
+#define WRAP_P(Name, Value) (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_EQ_P(C_STRING_TO_XEN_SYMBOL(Name), XEN_CAR(Value))))
+#else
+/* presumably this is faster */
+#define WRAP_P(Name, Value) (XEN_LIST_P(Value) &&\
+                            (XEN_LIST_LENGTH(Value) >= 2) &&\
+                            (XEN_SYMBOL_P(XEN_CAR(Value))) &&\
+                            (strcmp(Name, XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
+#endif
 
 #define XM_TYPE(Name, XType) \
   static XEN C_TO_XEN_ ## Name (XType val) {return(WRAP_FOR_XEN(#Name, val));} \
@@ -710,11 +718,29 @@ static XEN C_TO_XEN_XEvent_1(XEvent *e, int need_free)
   return(WRAP_FOR_XEN(type, e));
 }
 
+static int is_probably_xevent(XEN sym)
+{
+  /* rather than check 35 or so names, just look for Event -- a kludge */
+  char *name;
+  int len;
+  name = XEN_SYMBOL_TO_C_STRING(sym);
+  if (name)
+    {
+      len = strlen(name);
+      name = (char *)(name + (len - 5));
+      return(strcmp(name, "Event") == 0);
+    }
+  return(0);
+}
+
 #define C_TO_XEN_XEvent(e) C_TO_XEN_XEvent_1(e, FALSE)
 #define C_TO_XEN_XEvent_OBJ(e) C_TO_XEN_XEvent_1(e, TRUE)
-#define XEN_TO_C_XEvent(Arg) (XEvent *)(XEN_TO_C_ULONG(Arg))
-#define XEN_XEvent_P(Arg) XEN_ULONG_P(Arg)
-static XEN XEN_XEvent_p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("XEvent", val)));}
+#define XEN_TO_C_XEvent(Arg) (XEvent *)UNWRAP_FOR_C(Arg)
+#define XEN_XEvent_P(Value) (XEN_LIST_P(Value) &&\
+                            (XEN_LIST_LENGTH(Value) >= 2) &&\
+                            (XEN_SYMBOL_P(XEN_CAR(Value))) &&\
+                            (is_probably_xevent(XEN_CAR(Value))))
+static XEN XEN_XEvent_p(XEN val) {return(C_TO_XEN_BOOLEAN(XEN_XEvent_P(val)));}
 
 static XEN gxm_XGCValues(void) 
 {
@@ -795,7 +821,7 @@ static Widget *XEN_TO_C_Widgets(XEN lst, int n)
   Widget *ws;
   int i;
   ws = (Widget *)CALLOC(n, sizeof(Widget));
-  for (i = 0; i < n; i++, lst = XEN_CDR(lst))
+  for (i = 0; (i < n) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
     if (XEN_Widget_P(XEN_CAR(lst)))
       ws[i] = XEN_TO_C_Widget(XEN_CAR(lst));
     else XEN_ASSERT_TYPE(0, XEN_CAR(lst), i, __FUNCTION__, "a Widget");
@@ -807,7 +833,7 @@ static XmString *XEN_TO_C_XmStrings(XEN v, int len)
   XmString *str;
   int i;
   str = (XmString *)CALLOC(len, sizeof(XmString));
-  for (i = 0; i < len; i++, v = XEN_CDR(v))
+  for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     if (XEN_XmString_P(XEN_CAR(v)))
       str[i] = (XmString)XEN_TO_C_XmString(XEN_CAR(v));
     else XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "an XmString");
@@ -819,7 +845,7 @@ static XmDropTransferEntryRec *XEN_TO_C_XmDropTransferEntryRecs(XEN v, int len)
   XmDropTransferEntryRec *ps;
   int i;
   ps = (XmDropTransferEntryRec *)CALLOC(len, sizeof(XmDropTransferEntryRec));
-  for (i = 0; i < len; i++, v = XEN_CDR(v))
+  for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     {
       if (XEN_LIST_P(XEN_CAR(v)))
 	{
@@ -843,7 +869,7 @@ static XmStringTable XEN_TO_C_XmStringTable(XEN v, int len)
   XmStringTable str;
   int i;
   str = (XmStringTable)CALLOC(len + 1, sizeof(XmString));
-  for (i = 0; i < len; i++, v = XEN_CDR(v))
+  for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     if (XEN_XmString_P(XEN_CAR(v)))
       str[i] = XEN_TO_C_XmString(XEN_CAR(v));
     else XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "an XmString");
@@ -927,7 +953,7 @@ static Window *XEN_TO_C_Windows(XEN lst, int n)
   Window *ws;
   int i;
   ws = (Window *)CALLOC(n, sizeof(Window));
-  for (i = 0; i < n; i++, lst = XEN_CDR(lst))
+  for (i = 0; (i < n) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
     if (XEN_Window_P(XEN_CAR(lst)))
       ws[i] = XEN_TO_C_Window(XEN_CAR(lst));
     else XEN_ASSERT_TYPE(0, XEN_CAR(lst), i, __FUNCTION__, "a Window");
@@ -940,7 +966,7 @@ static XmRendition *XEN_TO_C_XmRenditions(XEN lst, int n)
   XmRendition *ws;
   int i;
   ws = (XmRendition *)CALLOC(n, sizeof(XmRendition));
-  for (i = 0; i < n; i++, lst = XEN_CDR(lst))
+  for (i = 0; (i < n) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
     if (XEN_XmRendition_P(XEN_CAR(lst)))
       ws[i] = XEN_TO_C_XmRendition(XEN_CAR(lst));
     else XEN_ASSERT_TYPE(0, XEN_CAR(lst), i, __FUNCTION__, "an XmRendition");
@@ -952,7 +978,7 @@ static XmTab *XEN_TO_C_XmTabs(XEN v, int len)
   XmTab *str;
   int i;
   str = (XmTab *)CALLOC(len, sizeof(XmTab));
-  for (i = 0; i < len; i++, v = XEN_CDR(v))
+  for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     if (XEN_XmTab_P(XEN_CAR(v)))
       str[i] = (XmTab)XEN_TO_C_XmTab(XEN_CAR(v));
     else XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "an XmTab");
@@ -965,7 +991,7 @@ static Atom *XEN_TO_C_Atoms(XEN v, int len)
   Atom *str;
   int i;
   str = (Atom *)CALLOC(len, sizeof(Atom));
-  for (i = 0; i < len; i++, v = XEN_CDR(v))
+  for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     if (XEN_Atom_P(XEN_CAR(v)))
       str[i] = (Atom)XEN_TO_C_Atom(XEN_CAR(v));
     else XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "an Atom");
@@ -977,7 +1003,7 @@ static Pixel *XEN_TO_C_Pixels(XEN v, int len)
   Pixel *str;
   int i;
   str = (Pixel *)CALLOC(len, sizeof(Pixel));
-  for (i = 0; i < len; i++, v = XEN_CDR(v))
+  for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     if (XEN_Pixel_P(XEN_CAR(v)))
       str[i] = (Pixel)XEN_TO_C_Pixel(XEN_CAR(v));
     else XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "a Pixel");
@@ -989,7 +1015,7 @@ static KeySym *XEN_TO_C_KeySyms(XEN v, int len)
   KeySym *str;
   int i;
   str = (KeySym *)CALLOC(len, sizeof(KeySym));
-  for (i = 0; i < len; i++, v = XEN_CDR(v))
+  for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     if (XEN_KeySym_P(XEN_CAR(v)))
       str[i] = (KeySym)XEN_TO_C_KeySym(XEN_CAR(v));
     else XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "a KeySym");
@@ -1001,7 +1027,7 @@ static char **XEN_TO_C_Strings(XEN v, int len)
   char **str;
   int i;
   str = (char **)CALLOC(len, sizeof(char *));
-  for (i = 0; i < len; i++, v = XEN_CDR(v))
+  for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     if (XEN_STRING_P(XEN_CAR(v)))
       str[i] = XEN_TO_C_STRING(XEN_CAR(v));
     else XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "a char*");
@@ -1013,7 +1039,7 @@ static int *XEN_TO_C_Ints(XEN v, int len)
   int *ps;
   int i;
   ps = (int *)CALLOC(len, sizeof(int));
-  for (i = 0; i < len; i++, v = XEN_CDR(v))
+  for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     if (XEN_INTEGER_P(XEN_CAR(v)))
       ps[i] = XEN_TO_C_INT(XEN_CAR(v));
     else XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "an int");
@@ -1025,7 +1051,7 @@ static Cardinal *XEN_TO_C_Cardinals(XEN v, int len)
   Cardinal *ps;
   int i;
   ps = (Cardinal *)CALLOC(len, sizeof(int));
-  for (i = 0; i < len; i++, v = XEN_CDR(v))
+  for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     if (XEN_INTEGER_P(XEN_CAR(v)))
       ps[i] = (Cardinal)XEN_TO_C_INT(XEN_CAR(v));
     else XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "a Cardinal");
@@ -1037,7 +1063,7 @@ static XRectangle *XEN_TO_C_XRectangles(XEN v, int len)
   XRectangle *str, *dat;
   int i;
   str = (XRectangle *)CALLOC(len, sizeof(XRectangle));
-  for (i = 0; i < len; i++, v = XEN_CDR(v))
+  for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     {
       if (XEN_XRectangle_P(XEN_CAR(v)))
 	dat = (XRectangle *)XEN_TO_C_XRectangle(XEN_CAR(v));
@@ -1675,6 +1701,9 @@ static void fixup_args(Widget w, Arg *args, int len)
 	    {
 	    case XM_STRING_TABLE:
 	      FREE((XmStringTable *)(args[i].value));
+	      break;
+	    case XM_WIDGET_LIST:
+	      FREE((Widget *)(args[i].value));
 	      break;
 	    case XM_CALLBACK:
 	      cl = (XtCallbackRec *)(args[i].value);
@@ -2605,8 +2634,8 @@ returns tab values"
   char **a3;
   float res;
   XEN val;
-  a3 = (char **)CALLOC(1, sizeof(char *));
   XEN_ASSERT_TYPE(XEN_XmTab_P(arg1), arg1, 1, "XmTabGetValues", "XmTab");
+  a3 = (char **)CALLOC(1, sizeof(char *));
   res = XmTabGetValues(XEN_TO_C_XmTab(arg1), &a1, &off, &a2, a3);
   val = XEN_LIST_5(C_TO_XEN_DOUBLE((double)res),
 		   C_TO_XEN_INT((int)a1),
@@ -3692,10 +3721,10 @@ static XEN gxm_XmTrackingEvent(XEN arg1, XEN arg2, XEN arg3)
    */
   XEvent *e; /* do we need to allocate? */
   Widget w;
-  e = (XEvent *)CALLOC(1, sizeof(XEvent));
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTrackingEvent", "Widget");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XmTrackingEvent", "Cursor");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg3), arg3, 3, "XmTrackingEvent", "boolean");
+  e = (XEvent *)CALLOC(1, sizeof(XEvent));
   w = XmTrackingEvent(XEN_TO_C_Widget(arg1), XEN_TO_C_ULONG(arg2), XEN_TO_C_BOOLEAN(arg3), e);
   return(XEN_LIST_2(C_TO_XEN_Widget(w), C_TO_XEN_XEvent_OBJ(e)));
 }
@@ -6469,9 +6498,12 @@ static XEN gxm_XmContainerReorder(XEN arg1, XEN arg2, XEN arg3)
   XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XmContainerReorder", "WidgetList");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmContainerReorder", "int");
   len = XEN_TO_C_INT(arg3);
-  ws = XEN_TO_C_Widgets(arg2, len);
-  XmContainerReorder(XEN_TO_C_Widget(arg1), ws, len);
-  FREE(ws);
+  if (len > 0)
+    {
+      ws = XEN_TO_C_Widgets(arg2, len);
+      XmContainerReorder(XEN_TO_C_Widget(arg1), ws, len);
+      if (ws) FREE(ws);
+    }
   return(XEN_FALSE);
 }
 
@@ -7589,7 +7621,7 @@ static XEN gxm_XPolygonRegion(XEN arg1, XEN arg2, XEN arg3)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XPolygonRegion", "int");
   len = XEN_TO_C_INT(arg2);
   pt = (XPoint *)CALLOC(len, sizeof(XPoint));
-  for (i = 0; i < len; i++, arg1 = XEN_CDR(arg1))
+  for (i = 0; (i < len) && (XEN_NOT_NULL_P(arg1)); i++, arg1 = XEN_CDR(arg1))
     {
       pt1 = XEN_TO_C_XPoint(XEN_CAR(arg1));
       pt[i].x = pt1->x;
@@ -7626,11 +7658,11 @@ visual that matches the specified depth and class for a screen."
   /* DIFF: XMatchVisualInfo dpy scr dep class [visual] -> #f or visual
    */
   int val;
-  match_visual_info = (XVisualInfo *)CALLOC(1, sizeof(XVisualInfo));
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XMatchVisualInfo", "Display*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XMatchVisualInfo", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XMatchVisualInfo", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XMatchVisualInfo", "int");
+  match_visual_info = (XVisualInfo *)CALLOC(1, sizeof(XVisualInfo));
   val = XMatchVisualInfo(XEN_TO_C_Display(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_INT(arg3), XEN_TO_C_INT(arg4), match_visual_info);
   if (val)
     return(C_TO_XEN_XVisualInfo(match_visual_info));
@@ -8006,10 +8038,10 @@ the specified window and event mask. "
    */
   XEvent *e;
   int val;
-  e = (XEvent *)CALLOC(1, sizeof(XEvent));
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XWindowEvent", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XWindowEvent", "Window");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XWindowEvent", "long");
+  e = (XEvent *)CALLOC(1, sizeof(XEvent));
   val = XWindowEvent(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), XEN_TO_C_INT(arg3), e);
   return(XEN_LIST_2(C_TO_XEN_INT(val), C_TO_XEN_XEvent_OBJ(e)));
 }
@@ -8247,7 +8279,7 @@ pixel members of the XColor structures."
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XStoreColors", "int");
   len = XEN_TO_C_INT(arg4);
   xc = (XColor *)CALLOC(len, sizeof(XColor));
-  for (i = 0; i < len; i++, arg3 = XEN_CDR(arg3))
+  for (i = 0; (i < len) && (XEN_NOT_NULL_P(arg3)); i++, arg3 = XEN_CDR(arg3))
     {
       xc1 = XEN_TO_C_XColor(XEN_CAR(arg3));
       xc[i].pixel = xc1->pixel;
@@ -8614,7 +8646,7 @@ the specified GC to the specified list of rectangles and sets the clip origin."
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg7), arg7, 7, "XSetClipRectangles", "int");
   len = XEN_TO_C_INT(arg6);
   pt = (XRectangle *)CALLOC(len, sizeof(XRectangle));
-  for (i = 0; i < len; i++, arg5 = XEN_CDR(arg5))
+  for (i = 0; (i < len) && (XEN_NOT_NULL_P(arg5)); i++, arg5 = XEN_CDR(arg5))
     {
       pt1 = XEN_TO_C_XRectangle(XEN_CAR(arg5));
       pt[i].x = pt1->x;
@@ -9204,9 +9236,9 @@ static XEN gxm_XPeekIfEvent(XEN arg1, XEN arg2, XEN arg3)
    */
   XEvent *e;
   int val;
-  e = (XEvent *)CALLOC(1, sizeof(XEvent));
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XPeekIfEvent", "Display*");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg2) && (XEN_REQUIRED_ARGS(arg2) == 3), arg2, 2, "XPeekIfEvent", "(Bool_Proc dpy ev data)");
+  e = (XEvent *)CALLOC(1, sizeof(XEvent));
   val = XPeekIfEvent(XEN_TO_C_Display(arg1), 
 		     e, 
 		     (Bool (*)(Display *d, XEvent *e, char *p))gxm_XPeekIfEventProc, /* C++ insists on the cast */
@@ -9221,8 +9253,8 @@ static XEN gxm_XPeekEvent(XEN arg1)
    */
   XEvent *e;
   int val;
-  e = (XEvent *)CALLOC(1, sizeof(XEvent));
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XPeekEvent", "Display*");
+  e = (XEvent *)CALLOC(1, sizeof(XEvent));
   val = XPeekEvent(XEN_TO_C_Display(arg1), e);
   return(XEN_LIST_2(C_TO_XEN_INT(val), C_TO_XEN_XEvent_OBJ(e)));
 }
@@ -9270,8 +9302,8 @@ and then removes it from the queue."
    */
   XEvent *e;
   int val;
-  e = (XEvent *)CALLOC(1, sizeof(XEvent));
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XNextEvent", "Display*");
+  e = (XEvent *)CALLOC(1, sizeof(XEvent));
   val = XNextEvent(XEN_TO_C_Display(arg1), e);
   return(XEN_LIST_2(C_TO_XEN_INT(val), C_TO_XEN_XEvent_OBJ(e)));
 }
@@ -9323,9 +9355,9 @@ static XEN gxm_XMaskEvent(XEN arg1, XEN arg2)
    */
   XEvent *e;
   int val;
-  e = (XEvent *)CALLOC(1, sizeof(XEvent));
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XMaskEvent", "Display*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XMaskEvent", "long");
+  e = (XEvent *)CALLOC(1, sizeof(XEvent));
   val = XMaskEvent(XEN_TO_C_Display(arg1), XEN_TO_C_INT(arg2), e);
   return(XEN_LIST_2(C_TO_XEN_INT(val), C_TO_XEN_XEvent_OBJ(e)));
 }
@@ -9417,9 +9449,9 @@ an event, which indicates an event in the queue matches."
    */
   XEvent *e;
   int val;
-  e = (XEvent *)CALLOC(1, sizeof(XEvent));
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XIfEvent", "Display*");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg2) && (XEN_REQUIRED_ARGS(arg2) == 3), arg2, 2, "XIfEvent", "(Bool_Proc dpy ev data)");
+  e = (XEvent *)CALLOC(1, sizeof(XEvent));
   val = XIfEvent(XEN_TO_C_Display(arg1), 
 		 e, 
 		 (Bool (*)(Display *d, XEvent *e, char *p))gxm_XPeekIfEventProc, 
@@ -9542,9 +9574,9 @@ specified window to an XWindowAttributes structure."
   /* DIFF: XGetWindowAttributes omits and rtns arg3 
    */
   XWindowAttributes *w;
-  w = (XWindowAttributes *)CALLOC(1, sizeof(XWindowAttributes));
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XGetWindowAttributes", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XGetWindowAttributes", "Window");
+  w = (XWindowAttributes *)CALLOC(1, sizeof(XWindowAttributes));
   XGetWindowAttributes(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), w);
   return(C_TO_XEN_XWindowAttributes(w));
 }
@@ -9999,7 +10031,7 @@ static XEN gxm_XFillRectangles(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XFillRectangles", "int");
   len = XEN_TO_C_INT(arg5);
   pt = (XRectangle *)CALLOC(len, sizeof(XRectangle));
-  for (i = 0; i < len; i++, arg4 = XEN_CDR(arg4))
+  for (i = 0; (i < len) && (XEN_NOT_NULL_P(arg4)); i++, arg4 = XEN_CDR(arg4))
     {
       pt1 = XEN_TO_C_XRectangle(XEN_CAR(arg4));
       pt[i].x = pt1->x;
@@ -10046,7 +10078,7 @@ static XEN gxm_XFillPolygon(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XE
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg7), arg7, 7, "XFillPolygon", "int");
   len = XEN_TO_C_INT(arg5);
   pt = (XPoint *)CALLOC(len, sizeof(XPoint));
-  for (i = 0; i < len; i++, arg4 = XEN_CDR(arg4))
+  for (i = 0; (i < len) && (XEN_NOT_NULL_P(arg4)); i++, arg4 = XEN_CDR(arg4))
     {
       pt1 = XEN_TO_C_XPoint(XEN_CAR(arg4));
       pt[i].x = pt1->x;
@@ -10081,7 +10113,7 @@ static XEN gxm_XFillArcs(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
   dpy = XEN_TO_C_Display(arg1);
   draw = XEN_TO_C_Window(arg2);
   gc = XEN_TO_C_GC(arg3);
-  for (i = 0; i < len; i++, arg4 = XEN_CDR(arg4))
+  for (i = 0; (i < len) && (XEN_NOT_NULL_P(arg4)); i++, arg4 = XEN_CDR(arg4))
     {
       arc = XEN_TO_C_XArc(XEN_CAR(arg4));
       XFillArc(dpy, draw, gc, arc->x, arc->y, arc->width, arc->height, arc->angle1, arc->angle2);
@@ -10188,7 +10220,7 @@ static XEN gxm_XDrawSegments(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XDrawSegments", "int");
   len = XEN_TO_C_INT(arg5);
   pt = (XSegment *)CALLOC(len, sizeof(XSegment));
-  for (i = 0; i < len; i++, arg4 = XEN_CDR(arg4))
+  for (i = 0; (i < len) && (XEN_NOT_NULL_P(arg4)); i++, arg4 = XEN_CDR(arg4))
     {
       pt1 = XEN_TO_C_XSegment(XEN_CAR(arg4));
       pt[i].x1 = pt1->x1;
@@ -10218,7 +10250,7 @@ static XEN gxm_XDrawRectangles(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XDrawRectangles", "int");
   len = XEN_TO_C_INT(arg5);
   pt = (XRectangle *)CALLOC(len, sizeof(XRectangle));
-  for (i = 0; i < len; i++, arg4 = XEN_CDR(arg4))
+  for (i = 0; (i < len) && (XEN_NOT_NULL_P(arg4)); i++, arg4 = XEN_CDR(arg4))
     {
       pt1 = XEN_TO_C_XRectangle(XEN_CAR(arg4));
       pt[i].x = pt1->x;
@@ -10265,7 +10297,7 @@ static XEN gxm_XDrawPoints(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XDrawPoints", "int");
   len = XEN_TO_C_INT(arg5);
   pt = (XPoint *)CALLOC(len, sizeof(XPoint));
-  for (i = 0; i < len; i++, arg4 = XEN_CDR(arg4))
+  for (i = 0; (i < len) && (XEN_NOT_NULL_P(arg4)); i++, arg4 = XEN_CDR(arg4))
     {
       pt1 = XEN_TO_C_XPoint(XEN_CAR(arg4));
       pt[i].x = pt1->x;
@@ -10311,7 +10343,7 @@ between each pair of points (point[i], point[i+1]) in the array of XPoint struct
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XDrawLines", "int");
   len = XEN_TO_C_INT(arg5);
   pt = (XPoint *)CALLOC(len, sizeof(XPoint));
-  for (i = 0; i < len; i++, arg4 = XEN_CDR(arg4))
+  for (i = 0; (i < len) && (XEN_NOT_NULL_P(arg4)); i++, arg4 = XEN_CDR(arg4))
     {
       pt1 = XEN_TO_C_XPoint(XEN_CAR(arg4));
       pt[i].x = pt1->x;
@@ -10455,7 +10487,7 @@ static XEN gxm_XDrawArcs(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
   dpy = XEN_TO_C_Display(arg1);
   draw = XEN_TO_C_Window(arg2);
   gc = XEN_TO_C_GC(arg3);
-  for (i = 0; i < len; i++, arg4 = XEN_CDR(arg4))
+  for (i = 0; (i < len) && (XEN_NOT_NULL_P(arg4)); i++, arg4 = XEN_CDR(arg4))
     {
       arc = XEN_TO_C_XArc(XEN_CAR(arg4));
       XDrawArc(dpy, draw, gc, arc->x, arc->y, arc->width, arc->height, arc->angle1, arc->angle2);
@@ -10816,10 +10848,10 @@ on the server connection for the first event that matches the specified window a
    */
   XEvent *e;
   int val;
-  e = (XEvent *)CALLOC(1, sizeof(XEvent));
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XCheckWindowEvent", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XCheckWindowEvent", "Window");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XCheckWindowEvent", "long");
+  e = (XEvent *)CALLOC(1, sizeof(XEvent));
   val = XCheckWindowEvent(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), XEN_TO_C_INT(arg3), e);
   return(XEN_LIST_2(C_TO_XEN_BOOLEAN(val), C_TO_XEN_XEvent_OBJ(e)));
 }
@@ -10832,10 +10864,10 @@ available on the server connection for the first event that matches the specifie
    */
   XEvent *e;
   int val;
-  e = (XEvent *)CALLOC(1, sizeof(XEvent));
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XCheckTypedWindowEvent", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XCheckTypedWindowEvent", "Window");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XCheckTypedWindowEvent", "int");
+  e = (XEvent *)CALLOC(1, sizeof(XEvent));
   val = XCheckTypedWindowEvent(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), XEN_TO_C_INT(arg3), e);
   return(XEN_LIST_2(C_TO_XEN_BOOLEAN(val), C_TO_XEN_XEvent_OBJ(e)));
 }
@@ -10848,9 +10880,9 @@ on the server connection for the first event that matches the specified type."
    */
   XEvent *e;
   int val;
-  e = (XEvent *)CALLOC(1, sizeof(XEvent));
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XCheckTypedEvent", "Display*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XCheckTypedEvent", "int");
+  e = (XEvent *)CALLOC(1, sizeof(XEvent));
   val = XCheckTypedEvent(XEN_TO_C_Display(arg1), XEN_TO_C_INT(arg2), e);
   return(XEN_LIST_2(C_TO_XEN_BOOLEAN(val), C_TO_XEN_XEvent_OBJ(e)));
 }
@@ -10863,9 +10895,9 @@ the server connection for the first event that matches the specified mask."
    */
   XEvent *e;
   int val;
-  e = (XEvent *)CALLOC(1, sizeof(XEvent));
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XCheckMaskEvent", "Display*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XCheckMaskEvent", "long");
+  e = (XEvent *)CALLOC(1, sizeof(XEvent));
   val = XCheckMaskEvent(XEN_TO_C_Display(arg1), XEN_TO_C_INT(arg2), e);
   return(XEN_LIST_2(C_TO_XEN_BOOLEAN(val), C_TO_XEN_XEvent_OBJ(e)));
 }
@@ -10877,9 +10909,9 @@ static XEN gxm_XCheckIfEvent(XEN arg1, XEN arg2, XEN arg3)
    */
   XEvent *e;
   int val;
-  e = (XEvent *)CALLOC(1, sizeof(XEvent));
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XCheckIfEvent", "Display*");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg2) && (XEN_REQUIRED_ARGS(arg2) == 3), arg2, 2, "XCheckIfEvent", "(Bool_Proc dpy ev data)");
+  e = (XEvent *)CALLOC(1, sizeof(XEvent));
   val = XCheckIfEvent(XEN_TO_C_Display(arg1), 
 		      e, 
 		      (Bool (*)(Display *d, XEvent *e, char *p))gxm_XPeekIfEventProc, 
@@ -12409,15 +12441,15 @@ static XEN gxm_DefaultScreen(XEN arg)
 
 static XEN gxm_DefaultRootWindow(XEN arg)
 {
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg), arg, 0, "DefaultRootWindow", "int");
-  return(C_TO_XEN_Window(DefaultRootWindow(XEN_TO_C_INT(arg))));
+  XEN_ASSERT_TYPE(XEN_Display_P(arg), arg, 0, "DefaultRootWindow", "Display*");
+  return(C_TO_XEN_Window(DefaultRootWindow(XEN_TO_C_Display(arg))));
 }
 
 static XEN gxm_QLength(XEN arg)
 {
   /* QLength(display) */
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg), arg, 0, "QLength", "int");
-  return(C_TO_XEN_INT(QLength(XEN_TO_C_INT(arg))));
+  XEN_ASSERT_TYPE(XEN_Display_P(arg), arg, 0, "QLength", "Display*");
+  return(C_TO_XEN_INT(QLength(XEN_TO_C_Display(arg))));
 }
 
 static XEN gxm_ScreenCount(XEN arg1)
@@ -12429,68 +12461,68 @@ static XEN gxm_ScreenCount(XEN arg1)
 
 static XEN gxm_ServerVendor(XEN arg)
 {
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg), arg, 0, "ServerVendor", "int");
-  return(C_TO_XEN_STRING(ServerVendor(XEN_TO_C_INT(arg))));
+  XEN_ASSERT_TYPE(XEN_Display_P(arg), arg, 0, "ServerVendor", "Display*");
+  return(C_TO_XEN_STRING(ServerVendor(XEN_TO_C_Display(arg))));
 }
 
 static XEN gxm_ProtocolVersion(XEN arg)
 {
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg), arg, 0, "ProtocolVersion", "int");
-  return(C_TO_XEN_INT(ProtocolVersion(XEN_TO_C_INT(arg))));
+  XEN_ASSERT_TYPE(XEN_Display_P(arg), arg, 0, "ProtocolVersion", "Display*");
+  return(C_TO_XEN_INT(ProtocolVersion(XEN_TO_C_Display(arg))));
 }
 
 static XEN gxm_ProtocolRevision(XEN arg)
 {
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg), arg, 0, "ProtocolRevision", "int");
-  return(C_TO_XEN_INT(ProtocolRevision(XEN_TO_C_INT(arg))));
+  XEN_ASSERT_TYPE(XEN_Display_P(arg), arg, 0, "ProtocolRevision", "Display*");
+  return(C_TO_XEN_INT(ProtocolRevision(XEN_TO_C_Display(arg))));
 }
 
 static XEN gxm_VendorRelease(XEN arg)
 {
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg), arg, 0, "VendorRelease", "int");
-  return(C_TO_XEN_INT(VendorRelease(XEN_TO_C_INT(arg))));
+  XEN_ASSERT_TYPE(XEN_Display_P(arg), arg, 0, "VendorRelease", "Display*");
+  return(C_TO_XEN_INT(VendorRelease(XEN_TO_C_Display(arg))));
 }
 
 static XEN gxm_DisplayString(XEN arg)
 {
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg), arg, 0, "DisplayString", "int");
-  return(C_TO_XEN_STRING(DisplayString(XEN_TO_C_INT(arg))));
+  XEN_ASSERT_TYPE(XEN_Display_P(arg), arg, 0, "DisplayString", "Display*");
+  return(C_TO_XEN_STRING(DisplayString(XEN_TO_C_Display(arg))));
 }
 
 static XEN gxm_BitmapUnit(XEN arg)
 {
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg), arg, 0, "BitmapUnit", "int");
-  return(C_TO_XEN_INT(BitmapUnit(XEN_TO_C_INT(arg))));
+  XEN_ASSERT_TYPE(XEN_Display_P(arg), arg, 0, "BitmapUnit", "Display*");
+  return(C_TO_XEN_INT(BitmapUnit(XEN_TO_C_Display(arg))));
 }
 
 static XEN gxm_BitmapBitOrder(XEN arg)
 {
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg), arg, 0, "BitmapBitOrder", "int");
-  return(C_TO_XEN_INT(BitmapBitOrder(XEN_TO_C_INT(arg))));
+  XEN_ASSERT_TYPE(XEN_Display_P(arg), arg, 0, "BitmapBitOrder", "Display*");
+  return(C_TO_XEN_INT(BitmapBitOrder(XEN_TO_C_Display(arg))));
 }
 
 static XEN gxm_BitmapPad(XEN arg)
 {
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg), arg, 0, "BitmapPad", "int");
-  return(C_TO_XEN_INT(BitmapPad(XEN_TO_C_INT(arg))));
+  XEN_ASSERT_TYPE(XEN_Display_P(arg), arg, 0, "BitmapPad", "Display*");
+  return(C_TO_XEN_INT(BitmapPad(XEN_TO_C_Display(arg))));
 }
 
 static XEN gxm_ImageByteOrder(XEN arg)
 {
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg), arg, 0, "ImageByteOrder", "int");
-  return(C_TO_XEN_INT(ImageByteOrder(XEN_TO_C_INT(arg))));
+  XEN_ASSERT_TYPE(XEN_Display_P(arg), arg, 0, "ImageByteOrder", "Display*");
+  return(C_TO_XEN_INT(ImageByteOrder(XEN_TO_C_Display(arg))));
 }
 
 static XEN gxm_NextRequest(XEN arg)
 {
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg), arg, 0, "NextRequest", "int");
-  return(C_TO_XEN_ULONG(NextRequest(XEN_TO_C_INT(arg))));
+  XEN_ASSERT_TYPE(XEN_Display_P(arg), arg, 0, "NextRequest", "Display*");
+  return(C_TO_XEN_ULONG(NextRequest(XEN_TO_C_Display(arg))));
 }
 
 static XEN gxm_LastKnownRequestProcessed(XEN arg)
 {
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg), arg, 0, "LastKnownRequestProcessed", "int");
-  return(C_TO_XEN_ULONG(LastKnownRequestProcessed(XEN_TO_C_INT(arg))));
+  XEN_ASSERT_TYPE(XEN_Display_P(arg), arg, 0, "LastKnownRequestProcessed", "Display*");
+  return(C_TO_XEN_ULONG(LastKnownRequestProcessed(XEN_TO_C_Display(arg))));
 }
 
 static XEN gxm_DefaultScreenOfDisplay(XEN arg)
@@ -13827,10 +13859,6 @@ static XEN gxm_XtDestroyApplicationContext(XEN arg1)
 static XEN gxm_XtCreateApplicationContext(void)
 {
   #define H_XtCreateApplicationContext "XtAppContext XtCreateApplicationContext()"
-  #define H_XtAppInitialize "Widget XtAppInitialize(app_context_return, application_class, options, num_options, argc_in_out, argv_in_out, \
-fallback_resources, args, num_args) calls XtToolkitInitialize followed by XtCreateApplicationContext ,then calls XtOpenDisplay with \
-display_string NULL and application_name NULL, and finally calls XtAppCreateShell with appcation_name NULL, widget_class applicationShellWidgetClass , \
-and the specified args and num_args and returns the created shell. "
   return(C_TO_XEN_XtAppContext(XtCreateApplicationContext()));
 }
 
@@ -13942,6 +13970,10 @@ static XEN gxm_XtVaAppInitialize(XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg
 
 static XEN gxm_XtAppInitialize(XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8, XEN arg9)
 {
+  #define H_XtAppInitialize "Widget XtAppInitialize(app_context_return, application_class, options, num_options, argc_in_out, argv_in_out, \
+fallback_resources, args, num_args) calls XtToolkitInitialize followed by XtCreateApplicationContext ,then calls XtOpenDisplay with \
+display_string NULL and application_name NULL, and finally calls XtAppCreateShell with appcation_name NULL, widget_class applicationShellWidgetClass , \
+and the specified args and num_args and returns the created shell. "
   /* DIFF: XtAppInitialize [app] class {options numopts} {argc} argv resources args numargs -> (list widget app), argc is int not int* fallback/options/num ignored
      Arg *args;
      app is returned not passed (list widget app) 
@@ -14843,8 +14875,8 @@ procedures triggered by them."
   /* DIFF: XtAppNextEvent app [ev] -> ev
    */
   XEvent *e;
-  e = (XEvent *)CALLOC(1, sizeof(XEvent));
   XEN_ASSERT_TYPE(XEN_XtAppContext_P(arg1), arg1, 1, "XtAppNextEvent", "XtAppContext");
+  e = (XEvent *)CALLOC(1, sizeof(XEvent));
   XtAppNextEvent(XEN_TO_C_XtAppContext(arg1), e);
   return(C_TO_XEN_XEvent_OBJ(e));
 }
@@ -15916,8 +15948,8 @@ input is on the queue, XtAppPeekEvent flushes the output buffer and blocks until
    */
   XEvent *e;
   int val;
-  e = (XEvent *)CALLOC(1, sizeof(XEvent));
   XEN_ASSERT_TYPE(XEN_XtAppContext_P(arg1), arg1, 1, "XtAppPeekEvent", "XtAppContext");
+  e = (XEvent *)CALLOC(1, sizeof(XEvent));
   val = XtAppPeekEvent(XEN_TO_C_XtAppContext(arg1), e);
   return(XEN_LIST_2(C_TO_XEN_BOOLEAN(val), C_TO_XEN_XEvent_OBJ(e)));
 }
@@ -15973,9 +16005,12 @@ static XEN gxm_XtUnmanageChildren(XEN arg1, XEN arg2)
   XEN_ASSERT_TYPE(XEN_LIST_P(arg1), arg1, 1, "XtUnmanageChildren", "WidgetList");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XtUnmanageChildren", "int");
   len = XEN_TO_C_INT(arg2);
-  ws1 = XEN_TO_C_Widgets(arg1, len);
-  XtUnmanageChildren(ws1, len);
-  FREE(ws1);
+  if (len > 0)
+    {
+      ws1 = XEN_TO_C_Widgets(arg1, len);
+      XtUnmanageChildren(ws1, len);
+      if (ws1) FREE(ws1);
+    }
   return(XEN_FALSE);
 }
 
@@ -15997,9 +16032,12 @@ static XEN gxm_XtManageChildren(XEN arg1, XEN arg2)
   XEN_ASSERT_TYPE(XEN_LIST_P(arg1), arg1, 1, "XtManageChildren", "WidgetList");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XtManageChildren", "int");
   len = XEN_TO_C_INT(arg2);
-  ws1 = XEN_TO_C_Widgets(arg1, len);
-  XtManageChildren(ws1, len);
-  FREE(ws1);
+  if (len > 0)
+    {
+      ws1 = XEN_TO_C_Widgets(arg1, len);
+      XtManageChildren(ws1, len);
+      if (ws1) FREE(ws1);
+    }
   return(XEN_FALSE);
 }
 
@@ -24280,7 +24318,7 @@ static int xm_already_inited = 0;
       define_structs();
       XEN_YES_WE_HAVE("xm");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"1-Oct-01\")");
+      XEN_EVAL_C_STRING("(define xm-version \"3-Oct-01\")");
 #endif
       xm_already_inited = 1;
     }

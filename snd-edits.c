@@ -1,41 +1,5 @@
 #include "snd.h"
 
-/* 
- * not implemented yet...
- * under the WITH_PARSE_TREES switch;  ed_list has 2 extra fields:
- *      MUS_SAMPLE_TYPE (*func)(struct chan__info *cp, int pos, struct snd__fd *sf, void *env);
- *      void *environ;
- * where the function (if defined) applies to the entire ed_list fragment list using environ as its state
- *   when this function needs a new sample (i.e. "as-needed input" as in CLM)
- *     it calls the function beneath it in the cp->edits list; that can also descend etc;
- *   if a list is hit that has no function, its next sample is returned (via the as-needed
- *     handler of the function above it in the list), the calls then unwind the stack of calls 
- *     (func(func...(func val))), returning the next value.  This means a given init_sample_read
- *     needs to initialize (have a make function for) the stack of functions, needs to set up
- *     the actual reader on the bottom level.  Also, the current length of the sound has no relation
- *     to its fragment indices.  Any non-global edits would have to force the list to become explicit.
- *   To include a user-defined function, we'd need a wrapper for XEN procs and a tie into user-declared
- *     as-needed-input.
- *   Even something simple like reverse needs a way to handle cut/paste pointers after the (virtual) reversal.
- *
- * A simpler version would allow only one level of this, and collapse it out if any further edits take place.
- *   (problem is that amp env reads new form and that's just as expensive as writing it out in some cases --
- *   reverse and amp-env can be done directly).
- *
- * step func as amp env: split input into pieces following the steps and set scalers (no loss ampenv)
- *   seg envs could be similar, but add incr (so now + * not just *)
- * reverse could set read-dir and loc based on assumed reverse; if subsequent edit, perform the reverse
- *   or do the reverse as a background op until it's needed (whereupon force completion)
- * offsets could be added, but need reader-proc at init time (and isn't a very common editing operation)
- */
-
-/* TODO: if edit applies to edpos not current, show that somehow in the edit-history list */
-
-/* another thing we could use: anonymous edit -- an unattached edlist passable to init-sample-read etc
- *   perhaps make-edit-list? or expose edit-lists directly
- */
-
-
 /* -------------------------------- EDIT LISTS --------------------------------
  *
  * each channel has a list of lists containing the current edit history and the associated sound temp files or buffers
@@ -243,21 +207,21 @@ static void display_edits(chan_info *cp, FILE *outp)
 
 static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 {
-  snd_data *sf;
+  snd_data *sd;
   snd_state *ss;
   char *newname;
   int i, snd;
   snd = EDIT_LOCATION(ed->sfnum);
   if (snd < cp->sound_size)
     {
-      sf = cp->sounds[snd];
+      sd = cp->sounds[snd];
       ss = cp->state;
-      if (sf->type == SND_DATA_BUFFER)
+      if (sd->type == SND_DATA_BUFFER)
 	{
 	  if ((ed->len > 16) && (save_dir(ss)))
 	    {
 	      newname = shorter_tempnam(save_dir(ss), "snd_");
-	      mus_array_to_file(newname, sf->buffered_data, ed->len, 22050, 1);
+	      mus_array_to_file(newname, sd->buffered_data, ed->len, 22050, 1);
 	      fprintf(fd, "\"%s\"", newname);
 	      FREE(newname);
 	    }
@@ -266,16 +230,16 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 	      fprintf(fd, "#(");
 	      for (i = 0; i < ed->len; i++) 
 #if SNDLIB_USE_FLOATS
-		fprintf(fd, "%f ", sf->buffered_data[i]);
+		fprintf(fd, "%f ", sd->buffered_data[i]);
 #else
-	        fprintf(fd, "%d ", sf->buffered_data[i]);
+	        fprintf(fd, "%d ", sd->buffered_data[i]);
 #endif
 	      fprintf(fd, ")");
 	    }
 	}
       else
 	{
-	  if (sf->just_zeros) 
+	  if (sd->just_zeros) 
 	    {
 	      fprintf(fd, "#f");
 	      return;
@@ -283,7 +247,7 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 	  if (save_dir(ss))
 	    {
 	      newname = shorter_tempnam(save_dir(ss), "snd_");
-	      copy_file(sf->filename, newname);
+	      copy_file(sd->filename, newname);
 	      fprintf(fd, "\"%s\"", newname);
 	      FREE(newname);
 	    }
@@ -294,24 +258,24 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 	      MUS_SAMPLE_TYPE *buffer;
 	      MUS_SAMPLE_TYPE **ibufs;
 	      fprintf(fd, "#(");
-	      ifd = mus_file_open_read(sf->filename);
+	      ifd = mus_file_open_read(sd->filename);
 	      if (ifd == -1) 
 		{
 		  snd_error("can't open %s: %s! [%s[%d] %s]",
-			    sf->filename,
+			    sd->filename,
 			    strerror(errno),
 			    __FILE__, __LINE__, __FUNCTION__); 
 		  return;
 		}
-	      idataloc = mus_sound_data_location(sf->filename);
+	      idataloc = mus_sound_data_location(sd->filename);
 	      mus_file_open_descriptors(ifd,
-					sf->filename,
-					mus_sound_data_format(sf->filename),
-					mus_sound_datum_size(sf->filename),
+					sd->filename,
+					mus_sound_data_format(sd->filename),
+					mus_sound_datum_size(sd->filename),
 					idataloc,
-					mus_sound_chans(sf->filename),
-					mus_sound_header_type(sf->filename));
-	      samples = mus_sound_samples(sf->filename);
+					mus_sound_chans(sd->filename),
+					mus_sound_header_type(sd->filename));
+	      samples = mus_sound_samples(sd->filename);
 	      mus_file_seek(ifd, idataloc, SEEK_SET);
 	      ibufs = (MUS_SAMPLE_TYPE **)MALLOC(sizeof(MUS_SAMPLE_TYPE *));
 	      ibufs[0] = (MUS_SAMPLE_TYPE *)CALLOC(FILE_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE));
@@ -334,7 +298,7 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 			{
 			  if (mus_file_close(ifd) != 0)
 			    snd_error("can't close %d (%s): %s! [%s[%d] %s]",
-				      ifd, sf->filename,
+				      ifd, sd->filename,
 				      strerror(errno),
 				      __FILE__, __LINE__, __FUNCTION__);
 			  fprintf(fd, ")");
@@ -349,7 +313,7 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 	      fprintf(fd, ")");
 	      if (mus_file_close(ifd) != 0)
 		snd_error("can't close %d (%s): %s! [%s[%d] %s]",
-			  ifd, sf->filename,
+			  ifd, sd->filename,
 			  strerror(errno),
 			  __FILE__, __LINE__, __FUNCTION__);
 	    }
@@ -507,7 +471,7 @@ static ed_list *free_ed_list(ed_list *ed)
 void backup_edit_list(chan_info *cp)
 {
   int cur, i;
-  snd_data *sf;
+  snd_data *sd;
   cur = cp->edit_ctr;
   if (cur <= 0) return;
   free_ed_list(cp->edits[cur - 1]);
@@ -521,8 +485,8 @@ void backup_edit_list(chan_info *cp)
     { /* protect from release_pending_sounds upon edit after undo after as-one-edit or whatever */
       for (i = 0; i < cp->sound_size; i++)
 	{
-	  sf = cp->sounds[i];
-	  if ((sf) && (sf->edit_ctr == cur)) sf->edit_ctr--;
+	  sd = cp->sounds[i];
+	  if ((sd) && (sd->edit_ctr == cur)) sd->edit_ctr--;
 	}
     }
   /* marks backup added 23-Jun-00 */
@@ -787,43 +751,43 @@ void forget_temps(void)
 
 snd_data *make_snd_data_file(char *name, int *io, MUS_SAMPLE_TYPE *data, file_info *hdr, int temp, int ctr, int temp_chan)
 {
-  snd_data *sf;
-  sf = (snd_data *)CALLOC(1, sizeof(snd_data));
-  sf->type = SND_DATA_FILE;
-  sf->buffered_data = data;
-  sf->io = io;
-  sf->filename = copy_string(name);
-  sf->hdr = hdr;
-  sf->temporary = temp;
+  snd_data *sd;
+  sd = (snd_data *)CALLOC(1, sizeof(snd_data));
+  sd->type = SND_DATA_FILE;
+  sd->buffered_data = data;
+  sd->io = io;
+  sd->filename = copy_string(name);
+  sd->hdr = hdr;
+  sd->temporary = temp;
   if (temp == MULTICHANNEL_DELETION) tick_temp(name, temp_chan);
-  sf->edit_ctr = ctr;
-  sf->open = FD_OPEN;
-  sf->inuse = FALSE;
-  sf->copy = FALSE;
-  sf->chan = temp_chan;
-  sf->len = (hdr->samples) * (mus_data_format_to_bytes_per_sample(hdr->format)) + hdr->data_location;
-  sf->just_zeros = 0;
-  return(sf);
+  sd->edit_ctr = ctr;
+  sd->open = FD_OPEN;
+  sd->inuse = FALSE;
+  sd->copy = FALSE;
+  sd->chan = temp_chan;
+  sd->len = (hdr->samples) * (mus_data_format_to_bytes_per_sample(hdr->format)) + hdr->data_location;
+  sd->just_zeros = 0;
+  return(sd);
 }
 
 static snd_data *make_snd_data_zero_file(int size, int *io, MUS_SAMPLE_TYPE *data, int ctr)
 {
-  snd_data *sf;
-  sf = (snd_data *)CALLOC(1, sizeof(snd_data));
-  sf->type = SND_DATA_FILE;
-  sf->buffered_data = data;
-  sf->io = io;
-  sf->filename = NULL;
-  sf->hdr = NULL;
-  sf->temporary = DONT_DELETE_ME;
-  sf->edit_ctr = ctr;
-  sf->open = FD_CLOSED;
-  sf->inuse = FALSE;
-  sf->copy = FALSE;
-  sf->chan = 0;
-  sf->len = size;
-  sf->just_zeros = 1;
-  return(sf);
+  snd_data *sd;
+  sd = (snd_data *)CALLOC(1, sizeof(snd_data));
+  sd->type = SND_DATA_FILE;
+  sd->buffered_data = data;
+  sd->io = io;
+  sd->filename = NULL;
+  sd->hdr = NULL;
+  sd->temporary = DONT_DELETE_ME;
+  sd->edit_ctr = ctr;
+  sd->open = FD_CLOSED;
+  sd->inuse = FALSE;
+  sd->copy = FALSE;
+  sd->chan = 0;
+  sd->len = size;
+  sd->just_zeros = 1;
+  return(sd);
 }
 
 snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize)
@@ -894,11 +858,6 @@ snd_data *make_snd_data_buffer(MUS_SAMPLE_TYPE *data, int len, int ctr)
   return(sf);
 }
 
-static int snd_data_looks_legit(snd_data *sd)
-{
-  return((sd->type == SND_DATA_BUFFER) || (sd->type == SND_DATA_FILE));
-}
-
 snd_data *free_snd_data(snd_data *sd)
 {
   if (sd)
@@ -912,11 +871,6 @@ snd_data *free_snd_data(snd_data *sd)
 	   *   forgotten sample-reader is still idle somewhere thinking it
 	   *   might someday find a use for itself...
 	   */
-#if DEBUGGING
-	  /* these copied accessors are causing endless grief! */
-	  if (!(snd_data_looks_legit(sd))) {fprintf(stderr,"illegit ptr!"); abort();}
-	  if (sd->extra != 0) {fprintf(stderr,"snd_data extra: %d\n", sd->extra); abort();}
-#endif
 	  if (sd->temporary == ALREADY_DELETED)
 	    return(NULL);
 	  if (sd->temporary == MULTICHANNEL_DELETION)
@@ -1872,10 +1826,8 @@ snd_fd *free_snd_fd_almost(snd_fd *sf)
   if (sf) 
     {
       sd = sf->current_sound;
-#if DEBUGGING
-      if ((sd) && (!(snd_data_looks_legit(sd)))) fprintf(stderr,"illegit sd");
-#endif
-      if ((sd) && (snd_data_looks_legit(sd)))
+      if ((sd) && 
+	  ((sd->type == SND_DATA_BUFFER) || (sd->type == SND_DATA_FILE)))
 	{
 	  sd->inuse = FALSE;
 	  if ((sd->copy == 1) || (sd->free_me == 1))
@@ -1891,9 +1843,6 @@ snd_fd *free_snd_fd_almost(snd_fd *sf)
 snd_fd *free_snd_fd(snd_fd *sf)
 {
   free_snd_fd_almost(sf);
-#if DEBUGGING
-  if (sf->extra != 0) {fprintf(stderr,"snd_fd extra: %d\n", sf->extra); abort();}
-#endif
   FREE(sf);
   return(NULL);
 }

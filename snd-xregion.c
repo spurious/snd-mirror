@@ -160,7 +160,7 @@ void update_region_browser(snd_state *ss, int grf_too)
     }
 }
 
-static void region_ok_Callback(Widget w, XtPointer context, XtPointer info) 
+static void region_ok_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XtUnmanageChild(region_dialog);
 }
@@ -170,7 +170,7 @@ int region_browser_is_active(void)
   return((region_dialog) && (XtIsRealized(region_dialog)));
 }
 
-static void region_resize_Callback(Widget w, XtPointer context, XtPointer info)
+static void region_resize_callback(Widget w, XtPointer context, XtPointer info)
 {
   region_update_graph((chan_info *)context);
 }
@@ -195,19 +195,19 @@ void delete_region_and_update_browser(snd_state *ss, int pos)
     }
 }
 
-static void region_delete_Callback(Widget w, XtPointer context, XtPointer info) 
+static void region_delete_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss = (snd_state *)context;
   if (current_region != -1)
     delete_region_and_update_browser(ss, current_region);
 }
 
-static void region_help_Callback(Widget w, XtPointer context, XtPointer info) 
+static void region_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   region_dialog_help((snd_state *)context);
 }
 
-static void region_up_arrow_Callback(Widget w, XtPointer context, XtPointer info) 
+static void region_up_arrow_callback(Widget w, XtPointer context, XtPointer info) 
 {
   chan_info *cp;
   cp = reg_sp->chans[0];
@@ -222,7 +222,7 @@ static void region_up_arrow_Callback(Widget w, XtPointer context, XtPointer info
     }
 }
 
-static void region_down_arrow_Callback(Widget w, XtPointer context, XtPointer info) 
+static void region_down_arrow_callback(Widget w, XtPointer context, XtPointer info) 
 {
   chan_info *cp;
   cp = reg_sp->chans[0];
@@ -237,7 +237,7 @@ static void region_down_arrow_Callback(Widget w, XtPointer context, XtPointer in
     }
 }
 
-static void region_focus_Callback(Widget w, XtPointer context, XtPointer info) 
+static void region_focus_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss;
   chan_info *cp;
@@ -269,7 +269,7 @@ void reflect_play_region_stop(int n)
     }
 }
 
-static void region_play_Callback(Widget w, XtPointer context, XtPointer info) 
+static void region_play_callback(Widget w, XtPointer context, XtPointer info) 
 {
   regrow *r = (regrow *)context;
   if (XmToggleButtonGetState(r->pl))
@@ -277,7 +277,7 @@ static void region_play_Callback(Widget w, XtPointer context, XtPointer info)
   else stop_playing_region(stack_position_to_id(r->pos));
 }
 
-static void region_save_Callback(Widget w, XtPointer context, XtPointer info) 
+static void region_save_callback(Widget w, XtPointer context, XtPointer info) 
 {
   regrow *r = (regrow *)context;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
@@ -296,14 +296,14 @@ void set_region_protect(int id, int protect)
     }
 }
 
-static void region_print_Callback(Widget w, XtPointer context, XtPointer info) 
+static void region_print_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss = (snd_state *)context;
   if (current_region != -1)
     region_print(eps_file(ss), "region", reg_sp->chans[0]);
 }
 
-static void region_edit_Callback(Widget w, XtPointer context, XtPointer info) 
+static void region_edit_callback(Widget w, XtPointer context, XtPointer info) 
 {
   if (current_region != -1) 
     region_edit((snd_state *)context, current_region);
@@ -340,9 +340,9 @@ static void make_region_dialog(snd_state *ss)
   region_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Regions, args, n);
   set_dialog_widget(ss, REGION_DIALOG, region_dialog);
 
-  XtAddCallback(region_dialog, XmNokCallback, region_ok_Callback, ss);
-  XtAddCallback(region_dialog, XmNcancelCallback, region_delete_Callback, ss);
-  XtAddCallback(region_dialog, XmNhelpCallback, region_help_Callback, ss);
+  XtAddCallback(region_dialog, XmNokCallback, region_ok_callback, ss);
+  XtAddCallback(region_dialog, XmNcancelCallback, region_delete_callback, ss);
+  XtAddCallback(region_dialog, XmNhelpCallback, region_help_callback, ss);
   XmStringFree(xhelp);
   XmStringFree(xok);
   XmStringFree(xdelete);
@@ -375,7 +375,7 @@ static void make_region_dialog(snd_state *ss)
   region_rows_size = max_regions(ss);
   for (i = 0; i < max_regions(ss); i++)
     {
-      r = make_regrow(ss, ww, last_row, region_save_Callback, region_play_Callback, region_focus_Callback);
+      r = make_regrow(ss, ww, last_row, region_save_callback, region_play_callback, region_focus_callback);
       region_rows[i] = r;
       r->pos = i;
       r->ss = ss;
@@ -458,7 +458,7 @@ static void make_region_dialog(snd_state *ss)
   XtSetArg(args[n], XM_FONT_RESOURCE, BOLD_BUTTON_FONT(ss)); n++;
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;
   editb = XtCreateManagedWidget(STR_edit, xmPushButtonWidgetClass, wwl->toppane, args, n);
-  XtAddCallback(editb, XmNactivateCallback, region_edit_Callback, (XtPointer)ss);
+  XtAddCallback(editb, XmNactivateCallback, region_edit_callback, (XtPointer)ss);
 
   n = 0;
   if (!(ss->using_schemes)) 
@@ -475,7 +475,7 @@ static void make_region_dialog(snd_state *ss)
   XtSetArg(args[n], XM_FONT_RESOURCE, BOLD_BUTTON_FONT(ss)); n++;
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;
   prtb = XtCreateManagedWidget(STR_print, xmPushButtonWidgetClass, wwl->toppane, args, n);
-  XtAddCallback(prtb, XmNactivateCallback, region_print_Callback, (XtPointer)ss);
+  XtAddCallback(prtb, XmNactivateCallback, region_print_callback, (XtPointer)ss);
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->white); n++;}
@@ -537,12 +537,12 @@ static void make_region_dialog(snd_state *ss)
   XtVaSetValues(wwl->toppane, XmNpaneMinimum, 1, NULL);
   XtVaSetValues(region_grf, XmNpaneMinimum, 1, NULL);
 
-  XtAddCallback(channel_graph(cp), XmNresizeCallback, region_resize_Callback, (XtPointer)cp);
-  XtAddCallback(channel_graph(cp), XmNexposeCallback, region_resize_Callback, (XtPointer)cp);
+  XtAddCallback(channel_graph(cp), XmNresizeCallback, region_resize_callback, (XtPointer)cp);
+  XtAddCallback(channel_graph(cp), XmNexposeCallback, region_resize_callback, (XtPointer)cp);
 
   /* channel_f is up arrow, channel_w is down arrow */
-  XtAddCallback(channel_f(cp), XmNactivateCallback, region_up_arrow_Callback, (XtPointer)ss);
-  XtAddCallback(channel_w(cp), XmNactivateCallback, region_down_arrow_Callback, (XtPointer)ss);
+  XtAddCallback(channel_f(cp), XmNactivateCallback, region_up_arrow_callback, (XtPointer)ss);
+  XtAddCallback(channel_w(cp), XmNactivateCallback, region_down_arrow_callback, (XtPointer)ss);
   set_sensitive(channel_f(cp), FALSE);
   if (region_chans(stack_position_to_id(0)) > 1) set_sensitive(channel_w(cp), TRUE);
   cp->chan = 0;
@@ -597,7 +597,7 @@ static regrow *region_row(int n)
 	  ss = get_global_state();
 	  r = make_regrow(ss, region_ww, 
 			  (n > 0) ? (region_rows[n - 1]->rw) : NULL, 
-			  region_save_Callback, region_play_Callback, region_focus_Callback);
+			  region_save_callback, region_play_callback, region_focus_callback);
 	  region_rows[n] = r;
 	  r->pos = n;
 	  r->ss = ss;

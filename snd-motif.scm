@@ -1973,27 +1973,27 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	      (set! rename-dialog new-dialog)
 
 	      (let* ((mainform (|XtCreateManagedWidget "formd" |xmRowColumnWidgetClass rename-dialog
-				     (list |XmNleftAttachment      |XmATTACH_FORM
-					   |XmNrightAttachment     |XmATTACH_FORM
-					   |XmNtopAttachment       |XmATTACH_FORM
-					   |XmNbottomAttachment    |XmATTACH_WIDGET
-					   |XmNbottomWidget        (|XmMessageBoxGetChild rename-dialog |XmDIALOG_SEPARATOR)
-					   |XmNorientation         |XmVERTICAL
-					   |XmNbackground          (|Pixel (snd-pixel (basic-color))))))
+				     (list |XmNleftAttachment   |XmATTACH_FORM
+					   |XmNrightAttachment  |XmATTACH_FORM
+					   |XmNtopAttachment    |XmATTACH_FORM
+					   |XmNbottomAttachment |XmATTACH_WIDGET
+					   |XmNbottomWidget     (|XmMessageBoxGetChild rename-dialog |XmDIALOG_SEPARATOR)
+					   |XmNorientation      |XmVERTICAL
+					   |XmNbackground       (|Pixel (snd-pixel (basic-color))))))
 		     (label (|XtCreateManagedWidget "new name:" |xmLabelWidgetClass mainform
-				     (list |XmNleftAttachment      |XmATTACH_FORM
-					   |XmNrightAttachment     |XmATTACH_NONE
-					   |XmNtopAttachment       |XmATTACH_FORM
-					   |XmNbottomAttachment    |XmATTACH_FORM
-					   |XmNbackground          (|Pixel (snd-pixel (basic-color)))))))
+				     (list |XmNleftAttachment   |XmATTACH_FORM
+					   |XmNrightAttachment  |XmATTACH_NONE
+					   |XmNtopAttachment    |XmATTACH_FORM
+					   |XmNbottomAttachment |XmATTACH_FORM
+					   |XmNbackground       (|Pixel (snd-pixel (basic-color)))))))
 		(set! rename-text 
 		      (|XtCreateManagedWidget "newname" |xmTextFieldWidgetClass mainform
-				     (list |XmNleftAttachment      |XmATTACH_WIDGET
-					   |XmNleftWidget          label
-					   |XmNrightAttachment     |XmATTACH_FORM
-					   |XmNtopAttachment       |XmATTACH_FORM
-					   |XmNbottomAttachment    |XmATTACH_FORM
-					   |XmNbackground          (|Pixel (snd-pixel (basic-color))))))
+				     (list |XmNleftAttachment   |XmATTACH_WIDGET
+					   |XmNleftWidget       label
+					   |XmNrightAttachment  |XmATTACH_FORM
+					   |XmNtopAttachment    |XmATTACH_FORM
+					   |XmNbottomAttachment |XmATTACH_FORM
+					   |XmNbackground       (|Pixel (snd-pixel (basic-color))))))
 		(|XtAddEventHandler rename-text |EnterWindowMask #f
 				    (lambda (w context ev flag)
 				      (|XmProcessTraversal w |XmTRAVERSE_CURRENT)

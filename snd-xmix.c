@@ -33,7 +33,7 @@ static void change_mix_speed(int mix_id, Float val)
   set_label(w_speed_number, speed_number_buffer);
 }
 
-static void Speed_Click_Callback(Widget w, XtPointer context, XtPointer info) 
+static void speed_click_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss = (snd_state *)context;
   change_mix_speed(current_mix_id(ss), 1.0);
@@ -59,7 +59,7 @@ static int mix_speed_to_int(Float uval, snd_info *sp)
   else return(0);
 }
 
-static void Speed_Drag_Callback(Widget w, XtPointer context, XtPointer info) 
+static void speed_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
   int ival;
   snd_state *ss = (snd_state *)context;
@@ -70,7 +70,7 @@ static void Speed_Drag_Callback(Widget w, XtPointer context, XtPointer info)
   change_mix_speed(current_mix_id(ss), exp((Float)(ival - 450.0) / 150.0));
 }
 
-static void Speed_ValueChanged_Callback(Widget w, XtPointer context, XtPointer info) 
+static void speed_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)info;
   snd_state *ss = (snd_state *)context;
@@ -131,7 +131,7 @@ static void change_mix_amp(int mix_id, int chan, Float val)
   FREE(sfs);
 }
 
-static void Amp_Click_Callback(Widget w, XtPointer context, XtPointer info) 
+static void amp_click_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss = (snd_state *)context;
   int chan;
@@ -152,7 +152,7 @@ static Float int_amp_to_Float(int amp)
     }
 }
 
-static void Amp_Drag_Callback(Widget w, XtPointer context, XtPointer info) 
+static void amp_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
   int ival, chan;
   snd_state *ss = (snd_state *)context;
@@ -164,7 +164,7 @@ static void Amp_Drag_Callback(Widget w, XtPointer context, XtPointer info)
   change_mix_amp(current_mix_id(ss), chan, int_amp_to_Float(ival));
 }
 
-static void Amp_ValueChanged_Callback(Widget w, XtPointer context, XtPointer info) 
+static void amp_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
 {
   int ival, chan;
   snd_state *ss = (snd_state *)context;
@@ -292,7 +292,7 @@ static void name_activated(snd_state *ss)
     }
 }
 
-static void Dismiss_Mix_Panel_Callback(Widget w, XtPointer context, XtPointer info) 
+static void dismiss_mix_panel_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss = (snd_state *)context;
   state_context *sgx;
@@ -322,7 +322,7 @@ static void Dismiss_Mix_Panel_Callback(Widget w, XtPointer context, XtPointer in
     }
 }
 
-static void Help_Mix_Panel_Callback(Widget w, XtPointer context, XtPointer info) 
+static void help_mix_panel_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
 		     "Mix Panel",
@@ -396,8 +396,8 @@ Widget make_mix_panel(snd_state *ss)
       mix_panel = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Mix_Panel, args, n);
       set_dialog_widget(ss, MIX_PANEL_DIALOG, mix_panel);
 
-      XtAddCallback(mix_panel, XmNokCallback, Dismiss_Mix_Panel_Callback, ss);
-      XtAddCallback(mix_panel, XmNhelpCallback, Help_Mix_Panel_Callback, ss);
+      XtAddCallback(mix_panel, XmNokCallback, dismiss_mix_panel_callback, ss);
+      XtAddCallback(mix_panel, XmNhelpCallback, help_mix_panel_callback, ss);
 
       XmStringFree(xhelp);
       XmStringFree(xdismiss);
@@ -490,7 +490,7 @@ Widget make_mix_panel(snd_state *ss)
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, FALSE); n++;
       w_speed_label = sndCreatePushButtonWidget("speed-label", mainform, args, n);
-      XtAddCallback(w_speed_label, XmNactivateCallback, Speed_Click_Callback, ss);
+      XtAddCallback(w_speed_label, XmNactivateCallback, speed_click_callback, ss);
       XmStringFree(s1);
 
       n = 0;
@@ -520,8 +520,8 @@ Widget make_mix_panel(snd_state *ss)
       XtSetArg(args[n], XmNmaximum, SPEED_SCROLLBAR_MAX); n++;
       XtSetArg(args[n], XmNvalue, 450); n++;
       XtSetArg(args[n], XmNheight, 16); n++;
-      XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(Speed_Drag_Callback, (XtPointer)ss)); n++;
-      XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(Speed_ValueChanged_Callback, (XtPointer)ss)); n++;
+      XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(speed_drag_callback, (XtPointer)ss)); n++;
+      XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(speed_valuechanged_callback, (XtPointer)ss)); n++;
       w_speed = XtCreateManagedWidget("speed", xmScrollBarWidgetClass, mainform, args, n);
   
       FREE(n1);
@@ -551,7 +551,7 @@ Widget make_mix_panel(snd_state *ss)
 	  XtSetArg(args[n], XmNfillOnArm, FALSE); n++;
 	  XtSetArg(args[n], XmNuserData, i); n++;
 	  w_amp_labels[i] = sndCreatePushButtonWidget("amp-label", mainform, args, n);
-	  XtAddCallback(w_amp_labels[i], XmNactivateCallback, Amp_Click_Callback, ss);
+	  XtAddCallback(w_amp_labels[i], XmNactivateCallback, amp_click_callback, ss);
 	  XmStringFree(s1);
 
 	  n = 0;
@@ -581,8 +581,8 @@ Widget make_mix_panel(snd_state *ss)
 	  XtSetArg(args[n], XmNmaximum, SCROLLBAR_MAX); n++;
 	  XtSetArg(args[n], XmNuserData, i); n++;
 	  XtSetArg(args[n], XmNvalue, SCROLLBAR_MID); n++;
-	  XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(Amp_Drag_Callback, (XtPointer)ss)); n++;
-	  XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(Amp_ValueChanged_Callback, (XtPointer)ss)); n++;
+	  XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(amp_drag_callback, (XtPointer)ss)); n++;
+	  XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(amp_valuechanged_callback, (XtPointer)ss)); n++;
 	  w_amps[i] = XtCreateManagedWidget("amp", xmScrollBarWidgetClass, mainform, args, n);
 	  FREE(n1);
 	  FREE(n2);

@@ -681,7 +681,7 @@ static void save_as_cancel_callback(Widget w, XtPointer context, XtPointer info)
   XtUnmanageChild(save_as_dialog);
 } 
 
-static void file_data_Type_Callback(Widget w, XtPointer context, XtPointer info) 
+static void file_data_type_callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* this can be called from any header list created by sndCreateFileDataForm */
   int pos;
@@ -700,7 +700,7 @@ static void file_data_Type_Callback(Widget w, XtPointer context, XtPointer info)
     }
 }
 
-static void file_data_Format_Callback(Widget w, XtPointer context, XtPointer info) 
+static void file_data_format_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
   file_data *fd;
@@ -825,7 +825,7 @@ file_data *sndCreateFileDataForm(snd_state *ss, Widget parent, char *name, Arg *
   FREE(strs);
   XmListSelectPos(hlist, fdat->header_pos + 1, FALSE);
   fdat->header_list = hlist;
-  XtAddCallback(fdat->header_list, XmNbrowseSelectionCallback, file_data_Type_Callback, ss);
+  XtAddCallback(fdat->header_list, XmNbrowseSelectionCallback, file_data_type_callback, ss);
 
   n = 0;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -867,7 +867,7 @@ file_data *sndCreateFileDataForm(snd_state *ss, Widget parent, char *name, Arg *
   XmListSelectPos(dlist, fdat->format_pos + 1, FALSE);
   XtManageChild(dlist);
   fdat->format_list = dlist;
-  XtAddCallback(fdat->format_list, XmNbrowseSelectionCallback, file_data_Format_Callback, ss);
+  XtAddCallback(fdat->format_list, XmNbrowseSelectionCallback, file_data_format_callback, ss);
 
   n = 0;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -1471,29 +1471,29 @@ void view_curfiles_set_row_name(int pos)
   FREE(str);
 }
 
-static void View_Files_Help_Callback(Widget w, XtPointer context, XtPointer info) 
+static void view_files_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   view_files_dialog_help((snd_state *)context);
 }
 
-static void View_Files_Dismiss_Callback(Widget w, XtPointer context, XtPointer info) 
+static void view_files_dismiss_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XtUnmanageChild(view_files_dialog);
 }
 
-static void View_Files_Clear_Callback(Widget w, XtPointer context, XtPointer info) 
+static void view_files_clear_callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* clear previous files list and associated widget list */
   clear_prevlist((snd_state *)context);
 }
 
-static void View_Files_Update_Callback(Widget w, XtPointer context, XtPointer info) 
+static void view_files_update_callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* run through previous files list looking for any that have been deleted behind our back */
   update_prevlist((snd_state *)context);
 }
 
-static void View_CurFiles_Save_Callback(Widget w, XtPointer context, XtPointer info) 
+static void view_curfiles_save_callback(Widget w, XtPointer context, XtPointer info) 
 {
   regrow *r = (regrow *)context;
   view_curfiles_save(r->ss, r->pos);
@@ -1517,7 +1517,7 @@ void set_file_browser_play_button(char *name, int state)
     }
 }
 
-static void View_CurFiles_Play_Callback(Widget w, XtPointer context, XtPointer info) 
+static void view_curfiles_play_callback(Widget w, XtPointer context, XtPointer info) 
 {
   regrow *r = (regrow *)context;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
@@ -1553,20 +1553,20 @@ void curfile_highlight(snd_state *ss, int i)
     }
 }
 
-static void View_CurFiles_Select_Callback(Widget w, XtPointer context, XtPointer info) 
+static void view_curfiles_select_callback(Widget w, XtPointer context, XtPointer info) 
 {
   regrow *r = (regrow *)context;
   view_curfiles_select(r->ss, r->pos);
 }
 
-static void View_PrevFiles_Unlist_Callback(Widget w, XtPointer context, XtPointer info) 
+static void view_prevfiles_unlist_callback(Widget w, XtPointer context, XtPointer info) 
 {
   regrow *r = (regrow *)context;
   file_unprevlist(get_prevname(r->pos));
   make_prevfiles_list(r->ss);
 }
 
-static void View_PrevFiles_Play_Callback(Widget w, XtPointer context, XtPointer info) 
+static void view_prevfiles_play_callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* open and play -- close at end or when button off toggled */
   regrow *r = (regrow *)context;
@@ -1576,7 +1576,7 @@ static void View_PrevFiles_Play_Callback(Widget w, XtPointer context, XtPointer 
     XmToggleButtonSetState(w, FALSE, FALSE);
 }
 
-static void View_PrevFiles_Select_Callback(Widget w, XtPointer context, XtPointer info) 
+static void view_prevfiles_select_callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* open and set as selected */
   regrow *r = (regrow *)context;
@@ -1611,7 +1611,7 @@ void make_curfiles_list (snd_state *ss)
       if (r == NULL)
 	{
 	  r = make_regrow(ss, vf_curww, last_row, 
-			  View_CurFiles_Save_Callback, View_CurFiles_Play_Callback, View_CurFiles_Select_Callback);
+			  view_curfiles_save_callback, view_curfiles_play_callback, view_curfiles_select_callback);
 	  cur_name_row[i] = r;
 	  r->pos = i;
 	  r->ss = ss;
@@ -1685,7 +1685,7 @@ void make_prevfiles_list (snd_state *ss)
 	  if (!((r = prev_name_row[i])))
 	    {
 	      r = make_regrow(ss, vf_prevww, last_row, 
-			      View_PrevFiles_Unlist_Callback, View_PrevFiles_Play_Callback, View_PrevFiles_Select_Callback);
+			      view_prevfiles_unlist_callback, view_prevfiles_play_callback, view_prevfiles_select_callback);
 	      prev_name_row[i] = r;
 	      r->pos = i;
 	      r->ss = ss;
@@ -1756,9 +1756,9 @@ void View_Files_Callback(Widget w, XtPointer context, XtPointer info)
       view_files_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_File_Browser, args, n);
       set_dialog_widget(ss, VIEW_FILES_DIALOG, view_files_dialog);
 
-      XtAddCallback(view_files_dialog, XmNcancelCallback, View_Files_Clear_Callback, ss);
-      XtAddCallback(view_files_dialog, XmNhelpCallback, View_Files_Help_Callback, ss);
-      XtAddCallback(view_files_dialog, XmNokCallback, View_Files_Dismiss_Callback, ss);
+      XtAddCallback(view_files_dialog, XmNcancelCallback, view_files_clear_callback, ss);
+      XtAddCallback(view_files_dialog, XmNhelpCallback, view_files_help_callback, ss);
+      XtAddCallback(view_files_dialog, XmNokCallback, view_files_dismiss_callback, ss);
       XmStringFree(xhelp);
       XmStringFree(xdismiss);
       XmStringFree(xclear);
@@ -1778,7 +1778,7 @@ void View_Files_Callback(Widget w, XtPointer context, XtPointer info)
 	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
 	}
       updateB = XtCreateManagedWidget(STR_Update, xmPushButtonWidgetClass, view_files_dialog, args, n);
-      XtAddCallback(updateB, XmNactivateCallback, View_Files_Update_Callback, ss);
+      XtAddCallback(updateB, XmNactivateCallback, view_files_update_callback, ss);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -1833,7 +1833,7 @@ void View_Files_Callback(Widget w, XtPointer context, XtPointer info)
 	  init_curfiles(4);
 	  cur_name_row = (regrow **)CALLOC(4, sizeof(regrow *));
 	  r = make_regrow(ss, vf_curww, NULL, 
-			  View_CurFiles_Save_Callback, View_CurFiles_Play_Callback, View_CurFiles_Select_Callback);
+			  view_curfiles_save_callback, view_curfiles_play_callback, view_curfiles_select_callback);
 	  cur_name_row[0] = r;
 	  r->pos = 0;
 	  r->ss = ss;
@@ -1861,7 +1861,7 @@ void View_Files_Callback(Widget w, XtPointer context, XtPointer info)
 	  init_prevfiles(4);
 	  prev_name_row = (regrow **)CALLOC(4, sizeof(regrow *));
 	  r = make_regrow(ss, vf_prevww, NULL, 
-			  View_PrevFiles_Unlist_Callback, View_PrevFiles_Play_Callback, View_PrevFiles_Select_Callback);
+			  view_prevfiles_unlist_callback, view_prevfiles_play_callback, view_prevfiles_select_callback);
 	  prev_name_row[0] = r;
 	  r->pos = 0;
 	  r->ss = ss;
@@ -1900,15 +1900,15 @@ static Widget raw_srate_text, raw_chans_text, raw_location_text;
 static int raw_data_location = 0;
 static int raw_cancelled = 0;
 
-static void raw_data_ok_Callback(Widget w, XtPointer context, XtPointer info) {raw_cancelled = 0;}
-static void raw_data_cancel_Callback(Widget w, XtPointer context, XtPointer info) {raw_cancelled = 1;}
+static void raw_data_ok_callback(Widget w, XtPointer context, XtPointer info) {raw_cancelled = 0;}
+static void raw_data_cancel_callback(Widget w, XtPointer context, XtPointer info) {raw_cancelled = 1;}
 
-static void raw_data_default_Callback(Widget w, XtPointer context, XtPointer info) 
+static void raw_data_default_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  raw_data_ok_Callback(w, context, info);
+  raw_data_ok_callback(w, context, info);
 }
 
-static void raw_data_browse_Callback(Widget w, XtPointer context, XtPointer info) 
+static void raw_data_browse_callback(Widget w, XtPointer context, XtPointer info) 
 {
   int sr, oc, fr;
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
@@ -1918,7 +1918,7 @@ static void raw_data_browse_Callback(Widget w, XtPointer context, XtPointer info
   mus_header_set_raw_defaults(sr, oc, fr);
 }
 
-static void raw_data_help_Callback(Widget w, XtPointer context, XtPointer info) 
+static void raw_data_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   raw_data_dialog_help((snd_state *)context);
 }
@@ -1961,9 +1961,9 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   raw_data_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), "raw data", args, n);
   set_dialog_widget(ss, RAW_DATA_DIALOG, raw_data_dialog);
 
-  XtAddCallback(raw_data_dialog, XmNcancelCallback, raw_data_cancel_Callback, ss);
-  XtAddCallback(raw_data_dialog, XmNhelpCallback, raw_data_help_Callback, ss);
-  XtAddCallback(raw_data_dialog, XmNokCallback, raw_data_ok_Callback, ss);
+  XtAddCallback(raw_data_dialog, XmNcancelCallback, raw_data_cancel_callback, ss);
+  XtAddCallback(raw_data_dialog, XmNhelpCallback, raw_data_help_callback, ss);
+  XtAddCallback(raw_data_dialog, XmNokCallback, raw_data_ok_callback, ss);
   XmStringFree(xstr1);
   XmStringFree(xstr2);
   XmStringFree(xstr3);
@@ -1973,7 +1973,7 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   defw = XtCreateManagedWidget(STR_Default, xmPushButtonWidgetClass, raw_data_dialog, args, n);
-  XtAddCallback(defw, XmNactivateCallback, raw_data_default_Callback, ss);
+  XtAddCallback(defw, XmNactivateCallback, raw_data_default_callback, ss);
 
   rform = sndCreateFormWidget("sretc", raw_data_dialog, NULL, 0);
 
@@ -2070,7 +2070,7 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   for (i = 1; i < num_data_formats(); i++) 
     XmStringFree(formats[i]);
   FREE(formats);
-  XtAddCallback(lst, XmNbrowseSelectionCallback, raw_data_browse_Callback, ss);
+  XtAddCallback(lst, XmNbrowseSelectionCallback, raw_data_browse_callback, ss);
 
   XtManageChild(raw_data_dialog);
 
@@ -2274,17 +2274,17 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
 static Widget edit_header_dialog = NULL;
 static file_data *edit_header_data;
 
-static void edit_header_help_Callback(Widget w, XtPointer context, XtPointer info) 
+static void edit_header_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   edit_header_dialog_help((snd_state *)context);
 }
 
-static void edit_header_cancel_Callback(Widget w, XtPointer context, XtPointer info) 
+static void edit_header_cancel_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XtUnmanageChild(edit_header_dialog);
 }
 
-static void edit_header_ok_Callback(Widget w, XtPointer context, XtPointer info) 
+static void edit_header_ok_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss;
   snd_info *sp = (snd_info *)context;
@@ -2338,9 +2338,9 @@ Widget edit_header(snd_info *sp)
       edit_header_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Edit_Header, args, n);
       set_dialog_widget(ss, EDIT_HEADER_DIALOG, edit_header_dialog);
 
-      XtAddCallback(edit_header_dialog, XmNcancelCallback, edit_header_cancel_Callback, ss);
-      XtAddCallback(edit_header_dialog, XmNhelpCallback, edit_header_help_Callback, ss);
-      XtAddCallback(edit_header_dialog, XmNokCallback, edit_header_ok_Callback, sp);
+      XtAddCallback(edit_header_dialog, XmNcancelCallback, edit_header_cancel_callback, ss);
+      XtAddCallback(edit_header_dialog, XmNhelpCallback, edit_header_help_callback, ss);
+      XtAddCallback(edit_header_dialog, XmNokCallback, edit_header_ok_callback, sp);
       XmStringFree(xstr1);
       XmStringFree(xstr2);
       XmStringFree(xstr3);

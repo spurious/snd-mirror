@@ -22,16 +22,16 @@ snd change log
   20-Aug:    add-listener-popup, fft-popup in popup.scm.
   17-Aug:    GSL 0.9. Gtk+extra 0.99.16.
   16-Aug:    removed load-colormap.
-  14-Aug:    added recorder-in-device for OSS.
+  14-Aug:    recorder-in-device for OSS.
   13-Aug:    stop-dac-hook, file-save-as-dialog, stop-playing-selection-hook.
              remember-sound-state in extensions.scm.
   10-Aug:    make-level-meter, with-level-meters in snd-motif.scm.
-             added dac-hook, sound-data-maxamp.
+             dac-hook, sound-data-maxamp.
   9-Aug:     show-smpte-label in snd-motif.scm.
-             added region-graph-style.
+             region-graph-style.
   7-Aug:     snd-print locale bugfix (thanks to Ludger Brummer).
              makefile.in prefix bugfix (thanks to Marc Herbert).
-             edit-save-as-dialog added (for selection popup menu in snd-motif.scm).
+             edit-save-as-dialog (for selection popup menu in snd-motif.scm).
   6-Aug:     drop file into channel graph mixes at cursor.
              make-sound-box, select-file, snd-clock-icon in snd-motif.scm.
   3-Aug:     moved listener widget to main-widgets list.

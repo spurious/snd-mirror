@@ -1150,6 +1150,7 @@ void fht(int powerOfFour, Float *array)
 }
 
 /* TODO: non-fht(fft) case is centered but straight case is not! */
+/* TODO: apply_filter should take beg/dur */
 
 static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_enved, 
 				   const char *origin, int over_selection, Float *ur_a, mus_any *gen, XEN edpos, int arg_pos)
