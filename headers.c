@@ -186,8 +186,8 @@ static const unsigned char I_8SVX[4] = {'8','S','V','X'};  /* AIFF other choice 
 static const unsigned char I_VOC0[4] = {'C','r','e','a'};  /* Actual text is "Creative Voice File" */
 static const unsigned char I_VOC1[4] = {'t','i','v','e'};
 static const unsigned char I_SOUN[4] = {'S','O','U','N'};  /* Sound Tools first word="SOUND" -- not unique as SMP files start with "SOUND SAMPLE" */
-static const unsigned char I_SMP1[4] = {'D',' ','S','A'};
-static const unsigned char I_SMP2[4] = {'M','P','L','E'};
+static const unsigned char I_D_SA[4] = {'D',' ','S','A'};
+static const unsigned char I_MPLE[4] = {'M','P','L','E'};
 static const unsigned char I_BODY[4] = {'B','O','D','Y'};  /* next 4 for 8svx chunk names */
 static const unsigned char I_VHDR[4] = {'V','H','D','R'};
 static const unsigned char I_CHAN[4] = {'C','H','A','N'};
@@ -264,8 +264,14 @@ static const unsigned char I_SU7R[4] = {'S','U','7','R'};
 static const unsigned char I_PVF1[4] = {'P','V','F','1'};  /* portable voice format (mgetty) */
 static const unsigned char I_PVF2[4] = {'P','V','F','2'};
 static const unsigned char I_AUTH[4] = {'A','U','T','H'};
-static const unsigned char I_riff[4] = {'r','i','f','f'};  /* Sonic Foundry apparently */
+static const unsigned char I_riff[4] = {'r','i','f','f'};  /* SourceForge */
 static const unsigned char I_TWIN[4] = {'T','W','I','N'};  /* TwinVQ */
+static const unsigned char I_IMPS[4] = {'I','M','P','S'};  /* Impulse Tracker */
+static const unsigned char I_Exte[4] = {'E','x','t','e'};  /* Fast Tracker */
+static const unsigned char I_nded[4] = {'n','d','e','d'};  /* Fast Tracker */
+static const unsigned char I__Ins[4] = {' ','I','n','s'};  /* Fast Tracker */
+static const unsigned char I_SMP1[4] = {'S','M','P','1'};  /* Korg */
+
 
 /* .glt and .shp -> Perry Cook's SPASM data files */
 
@@ -436,6 +442,10 @@ const char *mus_header_type_name(int type)
     case MUS_YAMAHA_SY85:      return("Sy-85");                   break;
     case MUS_YAMAHA_SY99:      return("Sy-99");                   break;
     case MUS_KURZWEIL_2000:    return("Kurzweil 2000");           break;
+    case MUS_KORG:             return("Korg");                    break;
+    case MUS_IMPULSETRACKER:   return("Impulse Tracker");         break;
+    case MUS_AKAI4:            return("AKAI 4");                  break;
+    case MUS_FASTTRACKER:      return("Fast Tracker");            break;
     case MUS_DIGIPLAYER:       return("Digiplayer ST3");          break;
     case MUS_COVOX:            return("Covox V8");                break;
     case MUS_SPL:              return("Digitracker SPL");         break;
@@ -1787,9 +1797,8 @@ static int read_soundforge_header (int chan)
 	{
 	  if ((match_four_chars((unsigned char *)hdrbuf, I_data)) && (data_location == 0))
 	    {
-	      update_ssnd_location = offset + 4;
-	      data_location = offset + 8;
-	      data_size = mus_char_to_ulint((unsigned char *)(hdrbuf + 4));
+	      data_location = offset + 16 + 8;
+	      data_size = mus_char_to_ulint((unsigned char *)(hdrbuf + 16));
 	      if (chunksize == 0) break; /* see aiff comment */
 	    }
 	  else
@@ -2619,10 +2628,10 @@ static int read_voc_header(int chan)
   curbase = mus_char_to_lshort((unsigned char *)(hdrbuf + 20));
   lseek(chan, curbase, SEEK_SET);
   read(chan, hdrbuf, HDRBUFSIZ);
-  type = (int)(hdrbuf[0]);
-  len = (((int)hdrbuf[3]) << 16) + (((int)hdrbuf[2]) << 8) + (((int)hdrbuf[1]));
   while (happy)
     {
+      type = (int)(hdrbuf[0]);
+      len = (((int)hdrbuf[3]) << 16) + (((int)hdrbuf[2]) << 8) + (((int)hdrbuf[1]));
       if (type == 1) /* voc_data */
 	{
 	  data_size = len - 1; /* was -3 */
@@ -3707,7 +3716,7 @@ static int read_farandole_header(int chan)
   chans = 1; 
   data_location = 51;
   true_file_length = SEEK_FILE_LENGTH(chan);
-  data_size = (true_file_length-data_location);
+  data_size = (true_file_length - data_location);
   srate = 8000;
   if (hdrbuf[49] == 0)
     data_format = MUS_BYTE;
@@ -3740,7 +3749,7 @@ static int read_tx16w_header(int chan)
   chans = 1; 
   data_location = 32;
   true_file_length = SEEK_FILE_LENGTH(chan);
-  data_size = (true_file_length-data_location);
+  data_size = (true_file_length - data_location);
   srate = 16000;
   if (hdrbuf[23] == 1) srate = 33000;
   else if (hdrbuf[23] == 2) srate = 50000;
@@ -3779,7 +3788,7 @@ static int read_sy85_header(int chan)
   chans = 1; 
   data_location = 1024;
   true_file_length = SEEK_FILE_LENGTH(chan);
-  data_size = (true_file_length-data_location);
+  data_size = (true_file_length - data_location);
   srate = 8000; /* unknown */
   data_format = MUS_BSHORT; /* not right */
   data_size = mus_bytes_to_samples(data_format, data_size);
@@ -3797,9 +3806,79 @@ static int read_kurzweil_2000_header(int chan)
   chans = 1; 
   data_location = mus_char_to_bint((unsigned char *)(hdrbuf + 4));
   true_file_length = SEEK_FILE_LENGTH(chan);
-  data_size = (true_file_length-data_location);
+  data_size = (true_file_length - data_location);
   srate = 44100; /* unknown */
   data_format = MUS_BSHORT;
+  data_size = mus_bytes_to_samples(data_format, data_size);
+  return(MUS_NO_ERROR);
+}
+
+
+/* ------------------------------------ Korg -------------------------------------
+ * 
+ * "SMP1" -- guessing on the rest
+ */
+static int read_korg_header(int chan)
+{
+  chans = 1; 
+  data_location = 70;
+  true_file_length = SEEK_FILE_LENGTH(chan);
+  data_size = (true_file_length - data_location);
+  srate = mus_char_to_bint((unsigned char *)(hdrbuf + 48));
+  data_format = MUS_BSHORT;
+  data_size = mus_bytes_to_samples(data_format, data_size);
+  return(MUS_NO_ERROR);
+}
+
+
+/* ------------------------------------ Impulse Tracker -------------------------------------
+ * 
+ * data from its2raw.c by Ben Collver
+ * 0:  IMPS
+ * 4:  filename (12 bytes)
+ * 17: global vol
+ * 18: flags (1: 16-bit or 8(0), 2: stereo or mono(0)
+ * 19: default vol
+ * 20: sample name (26 bytes)
+ * 46: convert
+ * 47: default pan
+ * 48: length (samps)
+ * 52: loop start
+ * 56: loop end
+ * 60: srate
+ * 64: sustain loop start
+ * 68: sustain loop end
+ * 72: data location
+ * 76: vib speed
+ * 77: vib depth
+ * 78: vib wave
+ * 79: vib rate
+ */
+static int read_impulsetracker_header(int chan)
+{
+  if (hdrbuf[18] & 4) chans = 2; else chans = 1;
+  if (hdrbuf[18] & 2) data_format = MUS_LSHORT; else data_format = MUS_BYTE;
+  data_location = mus_char_to_lint((unsigned char *)(hdrbuf + 72));
+  true_file_length = SEEK_FILE_LENGTH(chan);
+  data_size = (true_file_length - data_location);
+  srate = mus_char_to_lint((unsigned char *)(hdrbuf + 60));
+  data_size = mus_bytes_to_samples(data_format, data_size);
+  return(MUS_NO_ERROR);
+}
+
+
+/* ------------------------------------ AKAI 4 -------------------------------------
+ * 
+ * 1, 4, info from Paul Kellet -- lost the url
+ */
+static int read_akai4_header(int chan)
+{
+  chans = hdrbuf[21] + 1;
+  data_location = 42;
+  true_file_length = SEEK_FILE_LENGTH(chan);
+  data_size = (true_file_length - data_location);
+  srate = mus_char_to_ulshort((unsigned char *)(hdrbuf + 40));
+  data_format = MUS_LSHORT;
   data_size = mus_bytes_to_samples(data_format, data_size);
   return(MUS_NO_ERROR);
 }
@@ -3871,7 +3950,7 @@ static int read_ultratracker_header(int chan)
   chans = 1; 
   data_location = 64;
   true_file_length = SEEK_FILE_LENGTH(chan);
-  data_size = (true_file_length-data_location);
+  data_size = (true_file_length - data_location);
   srate = 8000;
   data_format = MUS_LSHORT;
   data_size = mus_bytes_to_samples(data_format, data_size);
@@ -3923,7 +4002,7 @@ static int read_sample_dump_header(int chan)
   chans = 1; 
   data_location = i + 3 + len + 23;
   true_file_length = SEEK_FILE_LENGTH(chan);
-  data_size = (true_file_length-data_location);
+  data_size = (true_file_length - data_location);
   if (hdrbuf[0] == 0)
     data_format = MUS_ULSHORT;
   else data_format = MUS_UNSUPPORTED;
@@ -3962,7 +4041,7 @@ static int read_digiplayer_header(int chan)
   chans = 1; 
   data_location = 80;
   true_file_length = SEEK_FILE_LENGTH(chan);
-  data_size = (true_file_length-data_location);
+  data_size = (true_file_length - data_location);
   srate = 8000;
   data_format = MUS_ULSHORT;
   if (hdrbuf[30] & 2) chans = 2;
@@ -4068,7 +4147,7 @@ static int read_diamondware_header(int chan)
 
 /* ------------------------------------ Ensoniq Paris -------------------------------------
  * _paf -> Ensoniq Paris?  (this info from libaudiofile)
- *  0   paf (or fap for little endian)
+ *  0   paf (or fap)
  *  4  version (0)
  *  8  endianess (0 = big)
  * 12  rate (unsigned int)
@@ -4078,12 +4157,13 @@ static int read_diamondware_header(int chan)
  * 2048 data (24 bit files are compressed)
  */
 
-static int read_paf_header (int chan, int little)
+static int read_paf_header(int chan)
 {
-  int form;
+  int form, little = FALSE;
   lseek(chan, 0, SEEK_SET);
   read(chan, hdrbuf, 32);
   data_format = MUS_UNSUPPORTED;
+  if (mus_char_to_bint((unsigned char *)(hdrbuf + 8))) little = TRUE;
   if (little)
     {
       srate = mus_char_to_ulint((unsigned char *)(hdrbuf + 12));
@@ -4493,8 +4573,8 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
     }
   if (match_four_chars((unsigned char *)hdrbuf, I_SOUN))
     {
-      if ((match_four_chars((unsigned char *)(hdrbuf + 4), I_SMP1)) && 
-	  (match_four_chars((unsigned char *)(hdrbuf + 8), I_SMP2)))
+      if ((match_four_chars((unsigned char *)(hdrbuf + 4), I_D_SA)) && 
+	  (match_four_chars((unsigned char *)(hdrbuf + 8), I_MPLE)))
 	{
 	  header_type = MUS_SMP;
 	  return(read_smp_header(chan));
@@ -4697,6 +4777,23 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
       header_type = MUS_KURZWEIL_2000;
       return(read_kurzweil_2000_header(chan));
     }
+  if (match_four_chars((unsigned char *)hdrbuf, I_SMP1))
+    {
+      header_type = MUS_KORG;
+      return(read_korg_header(chan));
+    }
+  if (match_four_chars((unsigned char *)hdrbuf, I_IMPS))
+    {
+      header_type = MUS_IMPULSETRACKER;
+      return(read_impulsetracker_header(chan));
+    }
+  if ((match_four_chars((unsigned char *)hdrbuf, I_Exte)) &&
+      (match_four_chars((unsigned char *)(hdrbuf + 4), I_nded)) &&
+      (match_four_chars((unsigned char *)(hdrbuf + 8), I__Ins)))
+    {
+      header_type = MUS_FASTTRACKER;
+      return(MUS_NO_ERROR); /* TODO: figure fas out see xi2raw.c of Ben Collver */
+    }
   if (match_four_chars((unsigned char *)(hdrbuf + 35), I_UWFD))
     {
       header_type = MUS_ULTRATRACKER;
@@ -4712,15 +4809,11 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
       header_type = MUS_COVOX;
       return(read_covox_header(chan));
     }
-  if (match_four_chars((unsigned char *)hdrbuf, I__PAF))
+  if ((match_four_chars((unsigned char *)hdrbuf, I__PAF)) ||
+      (match_four_chars((unsigned char *)hdrbuf, I_FAP_)))
     {
       header_type = MUS_PAF;
-      return(read_paf_header(chan, 0));
-    }
-  if (match_four_chars((unsigned char *)hdrbuf, I_FAP_))
-    {
-      header_type = MUS_PAF;
-      return(read_paf_header(chan, 1));
+      return(read_paf_header(chan));
     }
   if (match_four_chars((unsigned char *)hdrbuf, I_DSPL))
     {
@@ -4758,7 +4851,11 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
       header_type = MUS_QUICKTIME;
       return(read_qt_header(chan));
     }
-  
+  if ((hdrbuf[0] == 1) && (hdrbuf[1] == 4))
+    {
+      header_type = MUS_AKAI4;
+      return(read_akai4_header(chan));
+    }
   if ((match_four_chars((unsigned char *)hdrbuf, I_asf0)) &&
       (match_four_chars((unsigned char *)(hdrbuf + 4), I_asf1)) &&
       (match_four_chars((unsigned char *)(hdrbuf + 8), I_asf2)) &&
@@ -5386,9 +5483,6 @@ int mus_header_writable(int type, int format) /* -2 to ignore format for this ca
  * 62: -29000 if not sampled, -32000 if sampled, 63: 32149 if initialized.
  * 128: data starts (or 256 in v3, I think) -- byte 512 in any case.
  */
-
-/* Fast Tracker: starts with "Extended Instrument" 16 bit data embedded see xi2raw.c of Ben Collver */
-/* Impulse Tracker: starts with "IMPS" 12 bit(?) see its2raw.c of Ben Collver */
 
 /* from /usr/share/magic:
 # Real Audio (Magic .ra\0375)

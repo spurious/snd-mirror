@@ -309,6 +309,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+28-Apr:  freeverb.rb and freeverb.scm from Michael Scholz.\n\
 25-Apr:  check-for-unsaved-edits arg defaults to #t now.\n\
 22-Apr:  samples function returns a vct, not a vector.\n\
 15-Apr:  removed fix-bar, makefile.motif.osx, and makefile.gtk.osx\n\
