@@ -4049,7 +4049,7 @@ The following substitutions can be made:
 <a href="#setsamples">set-samples</a> beg dur data s c trunc origin fchan <a href="#vct_to_channel">vct-&gt;channel</a> vct beg dur s c e
 <a href="#smoothsound">smooth-sound</a> beg dur s c                        <a href="#smoothchannel">smooth-channel</a> beg dur s c e
 <a href="#insertsilence">insert-silence</a> beg dur s c                      <a href="#padchannel">pad-channel</a> beg dur s c e
-<a href="#srcsound">src-sound</a> num base s c e                        <a href="#srcchannel">src-channel</a> ratio-or-env-gen beg dur s c e
+<a href="#srcsound">src-sound</a> num base s c e                        <a href="#srcchannel">src-channel</a> ratio-or-env beg dur s c e
 <a href="#convolvewith">convolve-with</a> file amp s c e                    <a href="#clmchannel">clm-channel</a> convolve-gen beg dur s c e
 <a href="grfsnd.html#applyladspa">apply-ladspa</a> reader dat dur origin              <a href="grfsnd.html#ladspachannel">ladspa-channel</a> dat beg dur s c e
 <a href="#mix">mix</a> file beg filechn s c with-tags              <a href="sndscm.html#mixchannel">mix-channel</a> filedat beg dur s c e
@@ -4860,6 +4860,7 @@ if you don't want all the directory junk).  See examp.scm for many examples.
 The regularized version of filter-sound.  If the end of the filtered portion is not the end of the sound,
 the <i>trunc</i> argument determines whether the filtered sound is truncated at that point (the default: #t),
 or mixed with the overlapping section, similar to the truncate argument to <a href="#filterselection">filter-selection</a>.
+<i>env</i> can be either the frequency response envelope, or a vct containing the desired coefficients.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -4872,7 +4873,7 @@ or mixed with the overlapping section, similar to the truncate argument to <a hr
 apply an FIR filter of order <i>order</i> (actually one more than the nominal order)
 and frequency response <i>env</i>
 to <i>snd</i>'s channel <i>chn</i>.  <i>env</i> can be the filter coefficients
-themselves, in a vct with at least order elements.
+themselves in a vct with at least order elements.
 It can also be any CLM filtering generator 
 (e.g. comb, formant, one-pole, iir-filter, etc). The generator 
 is called in C, not Scheme, so this is the fastest way to apply 
@@ -7223,11 +7224,11 @@ is the sampling rate of the ADC.
 
 <!-- src-channel -->
 <tr><td colspan=2>
-<code><a class=def name="srcchannel">src-channel</a> (num-or-env-gen <i>beg dur snd chn edpos</i>)</code>
+<code><a class=def name="srcchannel">src-channel</a> (num-or-env <i>beg dur snd chn edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
 sampling rate conversion using 'warped sinc interpolation'.  The
-argument <i>num-or-env-gen</i> can be either a number or an envelope generator.
+argument <i>num-or-env</i> can be a number, an envelope, or a CLM env generator.
 This is the <a class=quiet href="#regularizedargs">regularized</a> version of <a href="#srcsound">src-sound</a>.
 
 <!-- INDEX resampleexamples:Resampling -->
@@ -8362,7 +8363,6 @@ The edit list functions are:</p>
 <table border=0 cellspacing=10>
 
 <!-- as-one-edit -->
-
 <tr><td colspan=2>
 <code><a class=def name="asoneedit">as-one-edit</a> (func <i>origin</i>)</code>
 </td></tr>
@@ -8387,7 +8387,6 @@ to copy the last edit history string and use its associated bounds -- unlikely t
 <tr><td></td><td></td></tr>
 
 <!-- display-edits -->
-
 <tr><td colspan=2>
 <code><a class=def name="displayedits">display-edits</a> (<i>snd chn edpos with-source</i>)</code>
 </td></tr>
@@ -8398,9 +8397,8 @@ return the current edit list contents as a string.  If <i>edpos</i> is specified
 <tr><td></td><td></td></tr>
 
 <!-- edit-fragment -->
-
 <tr><td colspan=2>
-<code><a class=def name="editfragment">edit-fragment</a> (<i>num</i> snd chn)</code>
+<code><a class=def name="editfragment">edit-fragment</a> (<i>num snd chn</i>)</code>
 </td></tr>
 <tr><td></td><td>
 return a list similar to that displayed in the edit history window giving 
@@ -8411,8 +8409,20 @@ edit.
 </td></tr>
 <tr><td></td><td></td></tr>
 
-<!-- edit-position -->
+<!-- edit-list->function -->
+<tr><td colspan=2>
+<code><a class=def name="editlist_to_function">edit-list-&gt;function</a> (<i>start end snd chn</i>)</code>
+</td></tr>
+<tr><td></td><td>
+return a function encapsulating the current edit history list.  This provides a way to save an edit
+sequence and re-apply it in some other context.  For example, you can back up to some earlier point,
+save the edit list, make a change, then re-run the saved edit sequence.  Eventually I'll add user
+interface support for this "sound spreadsheet" approach to editing.  This facility is not finished!
+The function returned takes 2 arguments, a sound index and channel number.
+</td></tr>
+<tr><td></td><td></td></tr>
 
+<!-- edit-position -->
 <tr><td colspan=2>
 <code><a class=def name="editposition">edit-position</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
@@ -8424,7 +8434,6 @@ See <a href="#makesamplereader">make-sample-reader</a>.
 <tr><td></td><td></td></tr>
 
 <!-- edits -->
-
 <tr><td colspan=2>
 <code><a class=def name="edits">edits</a> (snd chn)</code>
 </td></tr>
@@ -8435,7 +8444,6 @@ no redo-able edits, (edits) returns (list 2 0).
 <tr><td></td><td></td></tr>
 
 <!-- edit-tree -->
-
 <tr><td colspan=2>
 <code><a class=def name="edittree">edit-tree</a> (<i>snd chn pos</i>)</code>
 </td></tr>

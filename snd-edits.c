@@ -4287,7 +4287,6 @@ static void display_edits(chan_info *cp, FILE *outp, bool with_source)
 static int snd_make_file(const char *ofile, int chans, file_info *hdr, snd_fd **sfs, off_t length)
 {
   /* create ofile, fill it by following sfs, use hdr for srate/type/format decisions */
-  /* used only in this file and snd-chn (for external temps, snd->temp) */
   int ofd;
   int i, j, datumb, err = 0;
   bool reporting = false;
@@ -4773,6 +4772,7 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
       ed = cp->edits[i];
       if (ed)
 	{
+	  old_function = function;
 	  if (ed->backed_up)
 	    {
 	      /* as-one-edit -- this includes envelopes!? */
@@ -4780,7 +4780,6 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 	    }
 	  else
 	    {
-	      old_function = function;
 	      switch (ed->edit_type)
 		{
 		case INSERTION_EDIT: 
@@ -4823,8 +4822,8 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 		  function = mus_format("%s (%s " OFF_TD " " OFF_TD " snd chn)", function, S_pad_channel, ed->beg, ed->len);
 		  break;
 		}
-	      if (old_function) {FREE(old_function); old_function = NULL;}
 	    }
+	  if (old_function) {FREE(old_function); old_function = NULL;}
 	}
     }
   old_function = function;
@@ -9078,6 +9077,8 @@ static XEN g_edit_list_to_function(XEN snd, XEN chn, XEN start, XEN end)
 {
   #define H_edit_list_to_function "(" S_edit_list_to_function " snd chn start end) -> function encapsulating edits"
   chan_info *cp;
+  char *funcstr = NULL;
+  XEN func;
   int start_pos = 1, end_pos = -1;
   ASSERT_CHANNEL(S_edit_list_to_function, snd, chn, 1);
   cp = get_cp(snd, chn, S_edit_list_to_function);
@@ -9085,7 +9086,10 @@ static XEN g_edit_list_to_function(XEN snd, XEN chn, XEN start, XEN end)
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(end), end, XEN_ARG_4, S_edit_list_to_function, "an integer");  
   start_pos = XEN_TO_C_INT_OR_ELSE(start, 1);
   end_pos = XEN_TO_C_INT_OR_ELSE(end, -1);
-  return(XEN_EVAL_C_STRING(edit_list_to_function(cp, start_pos, end_pos)));
+  funcstr = edit_list_to_function(cp, start_pos, end_pos);
+  func = XEN_EVAL_C_STRING(funcstr);
+  FREE(funcstr);
+  return(func);
 }
 #endif
 

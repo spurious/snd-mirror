@@ -1395,6 +1395,9 @@ bool recorder_start_output_file(const char *comment)
   int comlen, err, i;
   off_t oloc = 0;
   char *msg;
+#if DEBUGGING
+  if (comment == NULL) comment = copy_string("recorder start output file (snd-rec.c)");
+#endif
   comlen = (int)(snd_strlen(comment) + 3) / 4;
   comlen *= 4;
   /*

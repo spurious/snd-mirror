@@ -915,15 +915,43 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
   hdr = free_file_info(hdr);
   if (!(ss->stopped_explicitly))
     {
+      char *new_origin = NULL;
+      /* egen null -> use ratio, else env, if dur=samples #f */
+      if (egen == NULL)
+	{
+	  if (dur == CURRENT_SAMPLES(cp))
+	    new_origin = mus_format("%s %.4f " OFF_TD " #f", S_src_channel, ratio, beg);
+	  else new_origin = mus_format("%s %.4f " OFF_TD " " OFF_TD, S_src_channel, ratio, beg, dur);
+	}
+      else
+	{
+	  Float base, scaler, offset;
+	  char *envstr;
+	  env *newe;
+	  scaler = mus_env_scaler(egen); /* fixed-up versions if base != 1.0 */
+	  offset = mus_env_offset(egen);
+	  base = mus_increment(egen);
+	  newe = make_envelope_with_offset_and_scaler(mus_data(egen), mus_env_breakpoints(egen) * 2, mus_offset(egen), mus_scaler(egen));
+	  envstr = env_to_string(newe);
+	  if (base == 1.0)
+	    {
+	      if (dur == CURRENT_SAMPLES(cp))
+		new_origin = mus_format("%s %s " OFF_TD " #f", S_src_channel, envstr, beg);
+	      else new_origin = mus_format("%s %s " OFF_TD " " OFF_TD, S_src_channel, envstr, beg, dur);
+	    }
+	  else new_origin = mus_format("%s (make-env %s :base %.4f :end " OFF_TD ") " OFF_TD " " OFF_TD, S_src_channel, envstr, base, dur, beg, dur);
+	  if (envstr) FREE(envstr);
+	  free_env(newe);
+	}
       if (!full_chan)
 	{
 	  /* here we need delete followed by insert since dur is probably different */
 	  if (k == dur)
-	    file_change_samples(beg, dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, origin, cp->edit_ctr);
+	    file_change_samples(beg, dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, new_origin, cp->edit_ctr);
 	  else
 	    {
 	      delete_samples(beg, dur, cp, origin, cp->edit_ctr);
-	      file_insert_samples(beg, k, ofile, cp, 0, DELETE_ME, origin, cp->edit_ctr);
+	      file_insert_samples(beg, k, ofile, cp, 0, DELETE_ME, new_origin, cp->edit_ctr);
 	      if (over_selection)
 		reactivate_selection(cp, beg, beg + k); /* backwards compatibility */
 	      backup_edit_list(cp);
@@ -931,7 +959,8 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 	    }
 	  update_graph(cp);
 	}
-      else file_override_samples(k, ofile, cp, 0, DELETE_ME, LOCK_MIXES, origin);
+      else file_override_samples(k, ofile, cp, 0, DELETE_ME, LOCK_MIXES, new_origin);
+      if (new_origin) FREE(new_origin);
       /* not file_change_samples because that would not necessarily change the current file length */
       if (cp->marks)
 	{
@@ -1355,6 +1384,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t b
   file_info *hdr = NULL;
   int j, ofd = 0, datumb = 0, err = 0;
   bool temp_file;
+  char *new_origin = NULL;
   mus_sample_t **data;
   mus_sample_t *idata;
   char *ofile = NULL;
@@ -1473,15 +1503,33 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t b
       free_snd_fd(sfold);
     }
   if (reporting) finish_progress_report(sp, from_enved);
+  if (precalculated_coeffs)
+    {
+      /* TODO: new_origin = filter-channel + vct -- what about CLM gen case from filter-sound? */
+      /* char *vctstr; */
+      /* if order > 100 or thereabouts, need a way to refer to a stored vct (similarly for insert|set-samples) */
+      new_origin = copy_string(S_filter_channel); /* a stop-gap */
+    }
+  else
+    {
+      /* new_origin = filter-channel + envelope */
+      char *envstr;
+      envstr = env_to_string(e);
+      if (dur == (order + CURRENT_SAMPLES(cp)))
+	new_origin = mus_format("%s %s %d " OFF_TD " #f", S_filter_channel, envstr, order, beg);
+      else new_origin = mus_format("%s %s %d " OFF_TD " " OFF_TD, S_filter_channel, envstr, order, beg, dur);
+      if (envstr) FREE(envstr);
+    }
   if (temp_file)
     {
       if (j > 0) mus_file_write(ofd, 0, j - 1, 1, data);
       close_temp_file(ofile, ofd, hdr->type, dur * datumb, sp);
       hdr = free_file_info(hdr);
-      file_change_samples(beg, dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, origin, cp->edit_ctr);
+      file_change_samples(beg, dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, new_origin, cp->edit_ctr);
       if (ofile) {FREE(ofile); ofile = NULL;}
     }
-  else change_samples(beg, dur, data[0], cp, LOCK_MIXES, origin, cp->edit_ctr);
+  else change_samples(beg, dur, data[0], cp, LOCK_MIXES, new_origin, cp->edit_ctr);
+  if (new_origin) FREE(new_origin);
   update_graph(cp); 
   cp->edit_hook_checked = false;
   FREE(data[0]);
@@ -1491,7 +1539,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t b
   return(NULL);
 }
 
-static char *filter_channel(chan_info *cp, int order, env *e, off_t beg, off_t dur, int edpos, const char *origin, bool truncate)
+static char *filter_channel(chan_info *cp, int order, env *e, off_t beg, off_t dur, int edpos, const char *origin, bool truncate, Float *coeffs)
 {
   bool over_selection;
   snd_fd *sf;
@@ -1501,10 +1549,10 @@ static char *filter_channel(chan_info *cp, int order, env *e, off_t beg, off_t d
 #if HAVE_FFTW || HAVE_FFTW3
   if ((!over_selection) &&
       ((order == 0) || (order >= 128)))
-    errstr = convolution_filter(cp, order, e, sf, beg, dur, origin, NOT_FROM_ENVED, NULL);
+    errstr = convolution_filter(cp, order, e, sf, beg, dur, origin, NOT_FROM_ENVED, coeffs);
   else
 #endif
-    errstr = direct_filter(cp, order, e, sf, beg, dur, origin, truncate, NOT_FROM_ENVED, over_selection, NULL, NULL);
+    errstr = direct_filter(cp, order, e, sf, beg, dur, origin, truncate, NOT_FROM_ENVED, over_selection, NULL, coeffs);
   free_snd_fd(sf);
   return(errstr);
 }
@@ -4054,10 +4102,10 @@ static Float check_src_envelope(int pts, Float *data, const char *caller)
 }
 
 
-static XEN g_src_channel(XEN ratio_or_env_gen, XEN beg_n, XEN dur_n, XEN snd_n, XEN chn_n, XEN edpos)
+static XEN g_src_channel(XEN ratio_or_env, XEN beg_n, XEN dur_n, XEN snd_n, XEN chn_n, XEN edpos)
 {
-  #define H_src_channel "(" S_src_channel " ratio-or-env-gen (beg 0) (dur len) (snd #f) (chn #f) (edpos #f)): \
-sampling-rate convert snd's channel chn by ratio, or following an envelope generator."
+  #define H_src_channel "(" S_src_channel " ratio-or-env (beg 0) (dur len) (snd #f) (chn #f) (edpos #f)): \
+sampling-rate convert snd's channel chn by ratio, or following an envelope (a list or a CLM env generator)."
 
   chan_info *cp;
   char *errmsg;
@@ -4066,10 +4114,11 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope gener
   int pos;
   mus_any *egen = NULL;
   Float ratio = 0.0; /* not 1.0 here! -- the zero is significant */
-  XEN_ASSERT_TYPE((XEN_NUMBER_P(ratio_or_env_gen)) || 
-		  ((mus_xen_p(ratio_or_env_gen)) && 
-		   (mus_env_p(egen = XEN_TO_MUS_ANY(ratio_or_env_gen)))),
-		  ratio_or_env_gen, XEN_ARG_1, S_src_channel, "a number or a CLM env generator");
+  XEN_ASSERT_TYPE((XEN_NUMBER_P(ratio_or_env)) || 
+		  (XEN_LIST_P(ratio_or_env)) ||
+		  ((mus_xen_p(ratio_or_env)) && 
+		   (mus_env_p(egen = XEN_TO_MUS_ANY(ratio_or_env)))),
+		  ratio_or_env, XEN_ARG_1, S_src_channel, "a number, an envelope, or a CLM env generator");
   ASSERT_SAMPLE_TYPE(S_src_channel, beg_n, XEN_ARG_2);
   ASSERT_SAMPLE_TYPE(S_src_channel, dur_n, XEN_ARG_3);
   ASSERT_CHANNEL(S_src_channel, snd_n, chn_n, 4);
@@ -4079,12 +4128,21 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope gener
   dur = dur_to_samples(dur_n, beg, cp, pos, 3, S_src_channel);
   if (dur == 0) return(XEN_FALSE);
   if (beg > cp->samples[pos]) return(XEN_FALSE);
-  if (XEN_NUMBER_P(ratio_or_env_gen))
+  if (XEN_NUMBER_P(ratio_or_env))
     {
-      ratio = XEN_TO_C_DOUBLE(ratio_or_env_gen);
+      ratio = XEN_TO_C_DOUBLE(ratio_or_env);
       if ((ratio == 0.0) || (ratio == 1.0)) return(XEN_FALSE);
     }
-  else check_src_envelope(mus_env_breakpoints(egen), mus_data(egen), S_src_channel);
+  else 
+    {
+      if (egen == NULL)
+	{
+	  env *e;
+	  e = get_env(ratio_or_env, S_src_channel);
+	  egen = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, 0, dur - 1, NULL);
+	}
+      check_src_envelope(mus_env_breakpoints(egen), mus_data(egen), S_src_channel);
+    }
   sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
   errmsg = src_channel_with_error(cp, sf, beg, dur, ratio, egen, NOT_FROM_ENVED, S_src_channel, OVER_SOUND, 1, 1);
   sf = free_snd_fd(sf);
@@ -4097,7 +4155,7 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope gener
 		XEN_LIST_2(C_TO_XEN_STRING(S_src_channel),
 			   err));
     }
-  return(ratio_or_env_gen);
+  return(ratio_or_env);
 }
 
 static XEN g_src_1(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edpos, const char *caller, bool over_selection)
@@ -4163,14 +4221,17 @@ sampling-rate convert the currently selected data by ratio (which can be an enve
 static XEN g_filter_channel(XEN e, XEN order, XEN beg, XEN dur, XEN snd_n, XEN chn_n, XEN edpos, XEN truncate)
 {
   #define H_filter_channel "(" S_filter_channel " env order beg dur snd chn edpos (truncate #t)): \
-the regularized version of " S_filter_sound
+applies an FIR filter to snd's channel chn. 'env' is the frequency response envelope, or a vct with the coefficients."
+
   chan_info *cp;
   char *errstr = NULL;
   bool truncate_1 = true;
   int order_1 = 0, edpos_1 = -1;
   off_t beg_1 = 0, dur_1 = 0;
   env *e_1 = NULL;
-  XEN_ASSERT_TYPE(XEN_LIST_P(e), e, XEN_ARG_1, S_filter_channel, "an envelope");
+  vct *v = NULL;
+  Float *coeffs = NULL;
+  XEN_ASSERT_TYPE(XEN_LIST_P(e) || VCT_P(e), e, XEN_ARG_1, S_filter_channel, "an envelope or a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(order), order, XEN_ARG_2, S_filter_channel, "an integer");
   order_1 = XEN_TO_C_INT_OR_ELSE(order, 0);
   ASSERT_CHANNEL(S_filter_channel, snd_n, chn_n, 5);
@@ -4182,10 +4243,18 @@ the regularized version of " S_filter_sound
   beg_1 = beg_to_sample(beg, S_filter_channel);
   edpos_1 = to_c_edit_position(cp, edpos, S_filter_channel, 7);
   dur_1 = dur_to_samples(dur, beg_1, cp, edpos_1, 4, S_filter_channel);
-  e_1 = get_env(e, S_filter_channel);
-  if (e_1 == NULL) return(XEN_FALSE);
-  errstr = filter_channel(cp, order_1, e_1, beg_1, dur_1, edpos_1, S_filter_channel, truncate_1);
-  free_env(e_1);
+  if (XEN_LIST_P(e))
+    {
+      e_1 = get_env(e, S_filter_channel);
+      if (e_1 == NULL) return(XEN_FALSE);
+    }
+  else 
+    {
+      v = TO_VCT(e);
+      coeffs = v->data;
+    }
+  errstr = filter_channel(cp, order_1, e_1, beg_1, dur_1, edpos_1, S_filter_channel, truncate_1, coeffs);
+  if (e_1) free_env(e_1);
   if (errstr)
     XEN_ERROR(MUS_MISC_ERROR,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_filter_channel),

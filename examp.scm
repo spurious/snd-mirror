@@ -429,6 +429,7 @@ this can be confusing if fft normalization is on (the default)"
 	   n)))))
 
 
+;;; -------- do?
 ;;; a version of "do" that is interruptible and continuable
 ;;;   to continue an interrupted "do?", (do-go-on)
 

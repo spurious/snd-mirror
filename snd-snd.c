@@ -11,6 +11,9 @@ snd_info *snd_new_file(char *newname, int header_type, int data_format, int srat
       if (mus_header_writable(header_type, data_format))
 	{
 	  int err;
+#if DEBUGGING
+	  if (new_comment == NULL) new_comment = copy_string("snd new file in snd-snd.c");
+#endif
 	  err = snd_write_header(newname, header_type, srate, chans, 0, /* 0 is loc? */
 				 samples * chans, /* total samples apparently */
 				 data_format, new_comment, 

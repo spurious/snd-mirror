@@ -608,6 +608,9 @@ int save_selection(char *ofile, int type, int format, int srate, const char *com
   mus_sample_t **data;
   si = selection_sync();
   if ((si) && (si->cps) && (si->cps[0])) sp = si->cps[0]->sound;
+#if DEBUGGING
+  if (comment == NULL) comment = copy_string("save selection in snd-select.c");
+#endif
   comlen = snd_strlen(comment);
   dur = selection_len();
   if (chan == SAVE_ALL_CHANS)

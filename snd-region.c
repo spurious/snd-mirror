@@ -814,7 +814,17 @@ static void deferred_region_to_temp_file(region *r)
     }
   else
     {
+#if DEBUGGING
+      char *regstr;
+      regstr = mus_format("region %d (%s: %s %s), from %s[%d]",
+			  r->id, r->name, r->start, r->end,
+			  (r->rsp) ? (r->rsp->filename) : "unknown sound",
+			  (r->rsp) ? (r->rsp->index) : 0);
+      hdr = make_temp_header(r->filename, r->srate, r->chans, 0, regstr);
+      FREE(regstr);
+#else
       hdr = make_temp_header(r->filename, r->srate, r->chans, 0, (char *)c__FUNCTION__);
+#endif
       ofd = open_temp_file(r->filename, r->chans, hdr);
       if (ofd == -1)
 	snd_error(_("can't write region temp file %s: %s"), r->filename, strerror(errno));

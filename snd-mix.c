@@ -994,7 +994,7 @@ static char *save_as_temp_file(mus_sample_t **raw_data, int chans, int len, int 
   int format, ofd, err;
   disk_space_t no_space;
   format = MUS_OUT_FORMAT;
-  newname = shorter_tempnam(temp_dir(ss), "snd_");
+  newname = shorter_tempnam(temp_dir(ss), "snd_mix_");
                       /* we're writing our own private version of this thing, so we can use our own formats */
   err = snd_write_header(newname, MUS_NEXT, nominal_srate, chans, 28, len * chans, format, NULL, 0, NULL);
   /* Watch out!  28's below are assuming no comment here! */

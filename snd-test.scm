@@ -1,38 +1,40 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [355]
-;;;  test 1: defaults                           [901]
-;;;  test 2: headers                            [1073]
-;;;  test 3: variables                          [1372]
-;;;  test 4: sndlib                             [1758]
-;;;  test 5: simple overall checks              [3549]
-;;;  test 6: vcts                               [10778]
-;;;  test 7: colors                             [11025]
-;;;  test 8: clm                                [11521]
-;;;  test 9: mix                                [17719]
-;;;  test 10: marks                             [20715]
-;;;  test 11: dialogs                           [21413]
-;;;  test 12: extensions                        [21723]
-;;;  test 13: menus, edit lists, hooks, etc     [22137]
-;;;  test 14: all together now                  [23406]
-;;;  test 15: chan-local vars                   [24459]
-;;;  test 16: regularized funcs                 [25719]
-;;;  test 17: dialogs and graphics              [30101]
-;;;  test 18: enved                             [30175]
-;;;  test 19: save and restore                  [30195]
-;;;  test 20: transforms                        [30791]
-;;;  test 21: new stuff                         [31875]
-;;;  test 22: run                               [32629]
-;;;  test 23: with-sound                        [37716]
-;;;  test 24: user-interface                    [38701]
-;;;  test 25: X/Xt/Xm                           [41876]
-;;;  test 26: Gtk                               [46395]
-;;;  test 27: GL                                [49504]
-;;;  test 28: errors                            [49608]
-;;;  test all done                              [51551]
+;;;  test 0: constants                          [360]
+;;;  test 1: defaults                           [909]
+;;;  test 2: headers                            [1082]
+;;;  test 3: variables                          [1381]
+;;;  test 4: sndlib                             [1768]
+;;;  test 5: simple overall checks              [3559]
+;;;  test 6: vcts                               [10786]
+;;;  test 7: colors                             [11033]
+;;;  test 8: clm                                [11529]
+;;;  test 9: mix                                [17758]
+;;;  test 10: marks                             [20754]
+;;;  test 11: dialogs                           [21452]
+;;;  test 12: extensions                        [21762]
+;;;  test 13: menus, edit lists, hooks, etc     [22176]
+;;;  test 14: all together now                  [23445]
+;;;  test 15: chan-local vars                   [24496]
+;;;  test 16: regularized funcs                 [25756]
+;;;  test 17: dialogs and graphics              [30093]
+;;;  test 18: enved                             [30167]
+;;;  test 19: save and restore                  [30187]
+;;;  test 20: transforms                        [31301]
+;;;  test 21: new stuff                         [32385]
+;;;  test 22: run                               [33140]
+;;;  test 23: with-sound                        [38221]
+;;;  test 24: user-interface                    [39206]
+;;;  test 25: X/Xt/Xm                           [42381]
+;;;  test 26: Gtk                               [46900]
+;;;  test 27: GL                                [50011]
+;;;  test 28: errors                            [50115]
+;;;  test all done                              [52115]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
+
+;;; TODO: src-channel with envelope tests, perhaps env-channel-with-base, filter-channel with vct
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -30772,7 +30774,525 @@ EDITS: 2
 				  -2 -2 -2 -2 -2)))
 		(snd-display ";embed save-state vals: ~A" (channel->vct 0 25 ind 0))))
 	  )))
-      
+
+      (let ((ind (open-sound "oboe.snd")))
+	(let ((mx0 (maxamp))
+	      (frs (frames)))
+	  ;; ---- simple scale
+	  (scale-channel 2.0)
+	  (if (fneq (* 2 mx0) (maxamp)) (snd-display ";edit-list->function off to a bad start: ~A" (maxamp)))
+	  (let ((func (edit-list->function)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 1: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (scale-channel 2.0 0 #f snd chn))"))
+		(snd-display ";edit-list->function 1: ~A" (object->string (procedure-source func))))
+	    (func ind 0)
+	    (let ((mx (maxamp)))
+	      (if (fneq (* 4 mx0) mx) (snd-display ";edit-list->function called (1): ~A ~A" mx mx0))))
+	  (revert-sound ind)
+	  
+	  (scale-by 2.0)
+	  (let ((func (edit-list->function)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 1a: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (scale-channel 2.0 0 #f snd chn))"))
+		(snd-display ";edit-list->function 1a: ~A" (object->string (procedure-source func)))))
+	  (revert-sound ind)
+	  (scale-sound-by 2.0)
+	  (let ((func (edit-list->function)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 1b: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (scale-channel 2.0 0 #f snd chn))"))
+		(snd-display ";edit-list->function 1b: ~A" (object->string (procedure-source func)))))
+	  (revert-sound ind)
+	  (scale-to 1.0)
+	  (let ((func (edit-list->function)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 1c: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (scale-channel 6.791 0 #f snd chn))"))
+		(snd-display ";edit-list->function 1c: ~A" (object->string (procedure-source func)))))
+	  (revert-sound ind)
+	  (scale-sound-to 1.0)
+	  (let ((func (edit-list->function)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 1d: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (scale-channel 6.791 0 #f snd chn))"))
+		(snd-display ";edit-list->function 1d: ~A" (object->string (procedure-source func)))))
+	  (revert-sound ind)
+	  
+	  ;; ---- simple delete
+	  (delete-samples 10 100)
+	  (if (not (= (frames) (- frs 100))) (snd-display ";edit-list->function delete: ~A ~A" frs (frames)))
+	  (let ((func (edit-list->function)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 2: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (delete-samples 10 100 snd chn))"))
+		(snd-display ";edit-list->function 2: ~A" (object->string (procedure-source func))))
+	    (func ind 0)
+	    (if (not (= (frames) (- frs 200))) (snd-display ";edit-list->function called (2): ~A ~A" frs (frames))))
+	  (revert-sound ind)
+	  
+	  ;; ---- simple delete (a)
+	  (delete-sample 100)
+	  (if (not (= (frames) (- frs 1))) (snd-display ";edit-list->function delete (2a): ~A ~A" frs (frames)))
+	  (let ((func (edit-list->function)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 2a: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (delete-samples 100 1 snd chn))"))
+		(snd-display ";edit-list->function 2a: ~A" (object->string (procedure-source func))))
+	    (func ind 0)
+	    (if (not (= (frames) (- frs 2))) (snd-display ";edit-list->function called (2a): ~A ~A" frs (frames))))
+	  (revert-sound ind)
+	  
+	  ;; ---- simple zero pad
+	  (pad-channel 10 100)
+	  (if (not (= (frames) (+ frs 100))) (snd-display ";edit-list->function pad: ~A ~A" frs (frames)))
+	  (let ((func (edit-list->function)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 3: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (pad-channel 10 100 snd chn))"))
+		(snd-display ";edit-list->function 3: ~A" (object->string (procedure-source func))))
+	    (func ind 0)
+	    (if (not (= (frames) (+ frs 200))) (snd-display ";edit-list->function called (3): ~A ~A" frs (frames))))
+	  (revert-sound ind)
+	  
+	  ;; ---- simple zero pad (a)
+	  (insert-silence 10 100)
+	  (if (not (= (frames) (+ frs 100))) (snd-display ";edit-list->function pad (3a): ~A ~A" frs (frames)))
+	  (let ((func (edit-list->function)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 3a: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (pad-channel 10 100 snd chn))"))
+		(snd-display ";edit-list->function 3a: ~A" (object->string (procedure-source func))))
+	    (func ind 0)
+	    (if (not (= (frames) (+ frs 200))) (snd-display ";edit-list->function called (3a): ~A ~A" frs (frames))))
+	  (revert-sound ind)
+	  
+	  ;; --- simple ramp
+	  (ramp-channel 0.2 0.9)
+	  (if (fneq (maxamp) 0.0899) (snd-display ";edit-list ramp: ~A" (maxamp)))
+	  (let ((func (edit-list->function)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 4: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (ramp-channel 0.2 0.9 0 #f snd chn))"))
+		(snd-display ";edit-list->function 4: ~A" (object->string (procedure-source func))))
+	    (func ind 0)
+	    (let ((mx (maxamp)))
+	      (if (fneq mx 0.061) (snd-display ";edit-list->function called (4): ~A" mx))))
+	  (revert-sound ind)
+	  
+	  ;; --- simple xramp
+	  (xramp-channel 0.2 0.9 32.0)
+	  (if (and (fneq (maxamp) 0.055) (fneq (maxamp .056))) (snd-display ";edit-list xramp: ~A" (maxamp)))
+	  (let ((func (edit-list->function)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 5: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (xramp-channel 0.2 0.9 32.0 0 #f snd chn))"))
+		(snd-display ";edit-list->function 5: ~A" (object->string (procedure-source func))))
+	    (func ind 0)
+	    (let ((mx (maxamp)))
+	      (if (fneq mx 0.0266) (snd-display ";edit-list->function called (5): ~A" mx))))
+	  (revert-sound ind)
+	  
+	  ;; ---- simple env
+	  (env-sound '(0 0 1 1))
+	  (if (fneq (maxamp) 0.0906) (snd-display ";edit-list env: ~A" (maxamp)))
+	  (let ((func (edit-list->function)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 6: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) 
+			       "(lambda (snd chn) (env-channel (quote (0.0 0.0 1.0 1.0)) 0 #f snd chn))"))
+		(snd-display ";edit-list->function 6: ~A" (object->string (procedure-source func))))
+	    (func ind 0)
+	    (let ((mx (maxamp)))
+	      (if (fneq mx 0.0634) (snd-display ";edit-list->function called (6): ~A" mx))))
+	  (revert-sound ind)
+	  
+	  ;; ---- less simple env
+	  (env-sound '(0 0 1 .3 2 .8 3 0))
+	  (if (fneq (maxamp) 0.107) (snd-display ";edit-list env: ~A" (maxamp)))
+	  (let ((func (edit-list->function)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 7: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) 
+			       "(lambda (snd chn) (env-channel (quote (0.0 0.0 1.0 0.3 2.0 0.8 3.0 0.0)) 0 #f snd chn))"))
+		(snd-display ";edit-list->function 7: ~A" (object->string (procedure-source func))))
+	    (func ind 0)
+	    (let ((mx (maxamp)))
+	      (if (fneq mx 0.0857) (snd-display ";edit-list->function called (7): ~A" mx))))
+	  (revert-sound ind)
+	  
+	  (env-channel '(0 0 1 .3 2 .8 3 0))
+	  (let ((func (edit-list->function)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 7a: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) 
+			       "(lambda (snd chn) (env-channel (quote (0.0 0.0 1.0 0.3 2.0 0.8 3.0 0.0)) 0 #f snd chn))"))
+		(snd-display ";edit-list->function 7a: ~A" (object->string (procedure-source func)))))
+	  (revert-sound ind)
+	  
+	  (env-channel '(0 0 1 .3 2 .8 3 0) 1000 2000)
+	  (let ((func (edit-list->function)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 7b: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) 
+			       "(lambda (snd chn) (env-channel (make-env (quote (0.0 0.0 1.0 0.3 2.0 0.8 3.0 0.0)) #:base 1.0 #:end 1999) 1000 2000 snd chn))"))
+		(snd-display ";edit-list->function 7b: ~A" (object->string (procedure-source func)))))
+	  (revert-sound ind)
+	  
+	  (env-channel (make-env '(0.0 0.0 1.0 0.3 2.0 0.8 3.0 0.0) #:base 32.0 #:end 1999) 1000 2000)
+	  (let ((func (edit-list->function))
+		(mxenv0 (maxamp)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 7c: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) 
+			       "(lambda (snd chn) (env-channel (make-env (quote (0.0 0.0 1.0 0.3 2.0 0.8 3.0 0.0)) #:base 32.0 #:end 1999) 1000 2000 snd chn))"))
+		(snd-display ";edit-list->function 7c: ~A" (object->string (procedure-source func))))
+	    (revert-sound ind)
+	    
+	    (env-channel (make-env '(0.0 0.0 1.0 0.3 2.0 0.8 3.0 0.0) #:end 1999 #:offset 2.0 #:scaler 3.0) 1000 2000)
+	    (let ((func (edit-list->function))
+		  (mxenv1 (maxamp)))
+	      (if (not (procedure? func)) 
+		  (snd-display ";edit-list->function 7d: ~A" func))
+	      (if (not (string=? (object->string (procedure-source func)) 
+				 "(lambda (snd chn) (env-channel (make-env (quote (0.0 2.0 1.0 2.9 2.0 4.4 3.0 2.0)) #:base 1.0 #:end 1999) 1000 2000 snd chn))"))
+		  (snd-display ";edit-list->function 7d: ~A" (object->string (procedure-source func))))
+	      (revert-sound ind)
+	      (func ind 0)
+	      (let ((nmx (maxamp)))
+		(if (fneq nmx mxenv1) (snd-display ";edit-list->function 7d max: ~A ~A ~A" nmx mxenv1 mxenv0)))))
+	  (revert-sound ind)
+	  
+	  (do ((i 0 (1+ i)))
+	      ((= i 5)) ; get to unrampable case
+	    (env-channel '(0 0 1 1 2 0)))
+	  (let ((func (edit-list->function)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 7e: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) 
+			       "(lambda (snd chn) (env-channel (quote (0.0 0.0 1.0 1.0 2.0 0.0)) 0 #f snd chn) (env-channel (quote (0.0 0.0 1.0 1.0 2.0 0.0)) 0 #f snd chn) (env-channel (quote (0.0 0.0 1.0 1.0 2.0 0.0)) 0 #f snd chn) (env-channel (quote (0.0 0.0 1.0 1.0 2.0 0.0)) 0 #f snd chn) (env-channel (quote (0.0 0.0 1.0 1.0 2.0 0.0)) 0 #f snd chn))"))
+		(snd-display ";edit-list->function 7e: ~A" (object->string (procedure-source func))))
+	    (revert-sound ind)
+	    (func ind 0)
+	    (if (fneq (maxamp) 0.1459) (snd-display ";edit-list->function 7e max: ~A" (maxamp)))
+	    (if (not (= (edit-position) 5)) (snd-display ";edit-list->function 7e edpos: ~A" (edit-position))))
+	  (revert-sound ind)
+	  
+	  (env-sound '(0 0 1 1 2 0) 0 (frames) 32.0)
+	  (if (fneq (maxamp) 0.146) (snd-display ";edit-list env 7f: ~A" (maxamp)))
+	  (let ((func (edit-list->function)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 7f: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) 
+			       "(lambda (snd chn) (env-channel-with-base (quote (0.0 0.0 1.0 1.0 2.0 0.0)) 32.0 0 #f snd chn))"))
+		(snd-display ";edit-list->function 7f: ~A" (object->string (procedure-source func))))
+	    (revert-sound ind)
+	    (func ind 0)
+	    (let ((mx (maxamp)))
+	      (if (fneq mx 0.146) (snd-display ";edit-list->function called (7f): ~A" mx))))
+	  (revert-sound ind)
+	  
+	  (env-sound '(0 0 1 1 2 1 3 0) 0 (frames) 0.0)
+	  (if (fneq (sample 4000) 0.0) (snd-display ";edit-list env 7g: ~A" (sample 4000)))
+	  (let ((func (edit-list->function)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 7g: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) 
+			       "(lambda (snd chn) (env-channel-with-base (quote (0.0 0.0 1.0 1.0 2.0 1.0 3.0 0.0)) 0.0 0 #f snd chn))"))
+		(snd-display ";edit-list->function 7g: ~A" (object->string (procedure-source func))))
+	    (revert-sound ind)
+	    (func ind 0)
+	    (if (fneq (sample 4000) 0.0) (snd-display ";edit-list function 7g: ~A" (sample 4000))))
+	  (revert-sound ind)
+	  
+	  ;; ---- simple ptree
+	  (ptree-channel (lambda (y) (+ y .1)))
+	  (if (fneq (maxamp) 0.247) (snd-display ";edit-list ptree: ~A" (maxamp)))
+	  (let ((func (edit-list->function)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 8: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) 
+			       "(lambda (snd chn) (ptree-channel (lambda (y) (+ y 0.1)) 0 50828 snd chn))")) ; TODO: ptree needs dur #f support
+		(snd-display ";edit-list->function 8: ~A" (object->string (procedure-source func))))
+	    (func ind 0)
+	    (let ((mx (maxamp)))
+	      (if (fneq mx 0.347) (snd-display ";edit-list->function called (8): ~A" mx))))
+	  (revert-sound ind)
+	  
+	  ;; TODO: xen is broken
+	  
+	  ;; ---- simple 1 sample insert
+	  (insert-sample 100 .1)
+	  (if (not (= (frames) (+ frs 1))) (snd-display ";edit-list->function insert-sample: ~A ~A" frs (frames)))
+	  (let ((func (edit-list->function)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 9: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (insert-sample 100 0.1 snd chn))"))
+		(snd-display ";edit-list->function 9: ~A" (object->string (procedure-source func))))
+	    (func ind 0)
+	    (if (not (vequal (channel->vct 99 4) (vct 0.0 0.1 0.1 0.0)))
+		(snd-display ";edit-list->function func 9: ~A" (channel->vct 99 4)))
+	    (if (not (= (frames) (+ frs 2))) (snd-display ";edit-list->function called (9): ~A ~A" frs (frames))))
+	  (revert-sound ind)
+	  
+	  ;; ---- simple 1 sample set
+	  (let ((val (sample 100)))
+	    (set! (sample 100) .1)
+	    (if (not (= (frames) frs)) (snd-display ";edit-list->function set-sample frames: ~A ~A" frs (frames)))
+	    (if (fneq (sample 100) .1) (snd-display ";edit-list->function set-sample val: ~A ~A" val (sample 100)))
+	    (let ((func (edit-list->function)))
+	      (revert-sound)
+	      (if (fneq val (sample 100)) (snd-display ";edit-list->function unset-sample val: ~A ~A" val (sample 100)))
+	      (if (not (procedure? func)) 
+		  (snd-display ";edit-list->function 10: ~A" func))
+	      (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (set-sample 100 0.1 snd chn))"))
+		  (snd-display ";edit-list->function 10: ~A" (object->string (procedure-source func))))
+	      (func ind 0)
+	      (if (not (vequal (channel->vct 99 4) (vct 0.0 0.1 0.0 0.0)))
+		  (snd-display ";edit-list->function func 10: ~A" (channel->vct 99 4)))))
+	  (revert-sound ind)
+	  
+	  (let ((pfrs (mus-sound-frames "pistol.snd")))
+	    (insert-sound "pistol.snd" 1000)
+	    (if (not (= (frames) (+ frs pfrs))) (snd-display ";edit-list->function insert-sound: ~A ~A" frs (frames)))
+	    (let ((func (edit-list->function)))
+	      (if (not (procedure? func)) 
+		  (snd-display ";edit-list->function 10: ~A" func))
+	      (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (insert-sound \"/home/bil/cl/pistol.snd\" 1000 0 snd chn))"))
+		  (snd-display ";edit-list->function 10: ~A" (object->string (procedure-source func))))
+	      (revert-sound ind)
+	      (func ind 0)
+	      (if (not (= (frames) (+ frs pfrs))) (snd-display ";edit-list->function called (10): ~A ~A" frs (frames)))))
+	  (revert-sound ind)
+	  
+	  (let ((pfrs (mus-sound-frames "pistol.snd")))
+	    (insert-samples 1000 pfrs "pistol.snd")
+	    (if (not (= (frames) (+ frs pfrs))) (snd-display ";edit-list->function insert-samples: ~A ~A" frs (frames)))
+	    (let ((func (edit-list->function)))
+	      (if (not (procedure? func)) 
+		  (snd-display ";edit-list->function 11: ~A" func))
+	      (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (insert-samples 1000 41623 \"/home/bil/cl/pistol.snd\" snd chn))"))
+		  (snd-display ";edit-list->function 11: ~A" (object->string (procedure-source func))))
+	      (revert-sound ind)
+	      (func ind 0)
+	      (if (not (= (frames) (+ frs pfrs))) (snd-display ";edit-list->function called (11): ~A ~A" frs (frames)))))
+	  (revert-sound ind)
+	  
+	  (smooth-channel 1000 100)
+	  (let ((func (edit-list->function))
+		(val (sample 1050)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 12: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (smooth-channel 1000 100 snd chn))"))
+		(snd-display ";edit-list->function 12: ~A" (object->string (procedure-source func))))
+	    (revert-sound ind)
+	    (func ind 0)
+	    (if (fneq (sample 1050) val) (snd-display ";edit-list->function 12: ~A ~A" (sample 1050) val)))
+	  (revert-sound ind)
+	  
+	  (smooth-sound 1000 100)
+	  (let ((func (edit-list->function)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 12a: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (smooth-channel 1000 100 snd chn))"))
+		(snd-display ";edit-list->function 12a: ~A" (object->string (procedure-source func)))))
+	  (revert-sound ind)
+	  
+	  
+	  ;; ---- selection stuff
+	  (make-selection 1000 11000)
+	  (scale-selection-by 2.0)
+	  (let ((func (edit-list->function)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 13: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (scale-channel 2.0 1000 10001 snd chn))"))
+		(snd-display ";edit-list->function 13: ~A" (object->string (procedure-source func))))
+	    (revert-sound ind)
+	    (func ind 0)
+	    (let ((mx (maxamp)))
+	      (if (fneq mx .269) (snd-display ";edit-list->function called (13): ~A" mx))))
+	  (revert-sound ind)
+	  
+	  (scale-selection-to 1.0)
+	  (let ((func (edit-list->function)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 13a: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) 
+			       "(lambda (snd chn) (scale-channel 7.432 1000 10001 snd chn))"))
+		(snd-display ";edit-list->function 13a: ~A" (object->string (procedure-source func)))))
+	  (revert-sound ind)
+	  
+	  (env-selection '(0 0 1 1 2 0))
+	  (let ((func (edit-list->function)))
+	    (if (fneq (sample 4000) 0.0173) (snd-display ";edit-list->function 14 samp: ~A" (sample 4000)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 14: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) 
+			       "(lambda (snd chn) (env-channel (make-env (quote (0.0 0.0 1.0 1.0 2.0 0.0)) #:base 1.0 #:end 10000) 1000 10001 snd chn))"))
+		(snd-display ";edit-list->function 14: ~A" (object->string (procedure-source func))))
+	    (revert-sound ind)
+	    (func ind 0)
+	    (if (fneq (sample 4000) 0.0173) (snd-display ";edit-list->function 14 re-samp: ~A" (sample 4000))))
+	  (revert-sound ind)
+	  
+	  (make-selection 1000 1100)
+	  (smooth-selection)
+	  (let ((func (edit-list->function))
+		(val (sample 1050)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 14a: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (smooth-channel 1000 101 snd chn))"))
+		(snd-display ";edit-list->function 14a: ~A" (object->string (procedure-source func))))
+	    (revert-sound ind)
+	    (func ind 0)
+	    (if (fneq (sample 1050) val) (snd-display ";edit-list->function 14a: ~A ~A" (sample 1050) val)))
+	  (revert-sound ind)
+	  
+	  
+	  ;; ---- sticky env end
+	  (env-channel (make-env '(0 0 1 1 2 0) :end 500) 1000 1000)
+	  (let ((func (edit-list->function)))
+	    (if (fneq (sample 1750) 0.0) (snd-display ";edit-list->function 15 samp: ~A" (sample 1750)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 15: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) 
+			       "(lambda (snd chn) (env-channel (make-env (quote (0.0 0.0 1.0 1.0 2.0 0.0)) #:base 1.0 #:end 500) 1000 1000 snd chn))"))
+		(snd-display ";edit-list->function 15: ~A" (object->string (procedure-source func))))
+	    (revert-sound ind)
+	    (func ind 0)
+	    (if (fneq (sample 1750) 0.0) (snd-display ";edit-list->function 15 re-samp: ~A" (sample 1750))))
+	  (revert-sound ind)
+	  
+	  ;; ---- simple reapply
+	  (env-channel '(0 0 1 1 2 0))
+	  (let ((func (edit-list->function)))
+	    (close-sound ind)
+	    (set! ind (new-sound "tmp.snd" mus-next mus-bfloat 22050 1 :size 20 :comment #f))
+	    (map-channel (lambda (y) 1.0))
+	    (func ind 0)
+	    (let ((data (channel->vct)))
+	      (if (not (vequal data (vct 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 0.889 0.778 0.667 0.556 0.444 0.333 0.222 0.111 0.0)))
+		  (snd-display ";edit-list->function env reapply: ~A" data)))
+	    (close-sound ind)
+	    (set! ind (open-sound "oboe.snd")))
+	  
+	  ;; ---- insert-region
+	  (let ((reg (make-region 1000 1100)))
+	    (insert-region 2000 reg)
+	    (let ((func (edit-list->function))
+		  (val (sample 2050)))
+	      (if (not (procedure? func)) 
+		  (snd-display ";edit-list->function 16: ~A" func))
+	      (if (not (string=? (object->string (procedure-source func)) 
+				 (string-append "(lambda (snd chn) (insert-region 2000 " (number->string reg) " snd chn))")))
+		  (snd-display ";edit-list->function 16: ~A" (object->string (procedure-source func))))
+	      (revert-sound ind)
+	      (func ind 0)
+	      (if (fneq (sample 2050) val) (snd-display ";edit-list->function 16: ~A ~A" (sample 2050) val))))
+	  (revert-sound ind)
+	  
+	  ;; ---- reverse
+	  (reverse-channel)
+	  (let ((func (edit-list->function))
+		(val (sample 2000)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 17: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (reverse-channel 0 #f snd chn))"))
+		(snd-display ";edit-list->function 17: ~A" (object->string (procedure-source func))))
+	    (if (fneq val -.002) (snd-display ";edit-list->function val: ~A" val))
+	    (revert-sound ind)
+	    (func ind 0)
+	    (if (fneq val -.002) (snd-display ";edit-list->function 17 re-val: ~A" val)))
+	  (revert-sound ind)
+	  
+	  (reverse-sound)
+	  (let ((func (edit-list->function))
+		(val (sample 2000)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 17a: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (reverse-channel 0 #f snd chn))"))
+		(snd-display ";edit-list->function 17a: ~A" (object->string (procedure-source func))))
+	    (if (fneq val -.002) (snd-display ";edit-list->function 17a val: ~A" val)))
+	  (revert-sound ind)
+	  
+	  (reverse-channel 1000 500)
+	  (let ((func (edit-list->function)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 17b: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (reverse-channel 1000 500 snd chn))"))
+		(snd-display ";edit-list->function 17b: ~A" (object->string (procedure-source func)))))
+	  (revert-sound ind)
+	  
+	  ;; ---- src
+	  (src-sound 2.0)
+	  (if (> (abs (- (frames) 25415)) 2) (snd-display ";edit-list->function 18 len: ~A" (frames)))
+	  (let ((func (edit-list->function)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 18: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (src-channel 2.0 0 #f snd chn))"))
+		(snd-display ";edit-list->function 18: ~A" (object->string (procedure-source func))))
+	    (revert-sound ind)
+	    (func ind 0)
+	    (if (> (abs (- (frames) 25415)) 2) (snd-display ";edit-list->function 18 re-len: ~A" (frames))))
+	  (revert-sound ind)
+	  
+	  (src-channel 2.0 1000 500)
+	  (let ((func (edit-list->function))
+		(frs (frames)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 18a: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (src-channel 2.0 1000 500 snd chn))"))
+		(snd-display ";edit-list->function 18a: ~A" (object->string (procedure-source func))))
+	    (revert-sound ind)
+	    (func ind 0)
+	    (if (not (= frs (frames))) (snd-display ";edit-list->function 18a re-len: ~A ~A" frs (frames))))
+	  (revert-sound)
+	  
+	  (src-sound '(0 1 1 2 2 1))
+	  (let ((func (edit-list->function))
+		(frs (frames)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 18b: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) 
+			       "(lambda (snd chn) (src-channel (quote (0.0 1.0 1.0 2.0 2.0 1.0)) 0 #f snd chn))"))
+		(snd-display ";edit-list->function 18b: ~A" (object->string (procedure-source func))))
+	    (revert-sound ind)
+	    (func ind 0)
+	    (if (not (= frs (frames))) (snd-display ";edit-list->function 18b re-len: ~A ~A" frs (frames))))
+	  (revert-sound)
+	  
+	  (src-channel '(0 1 1 2) 1000 500)
+	  (let ((func (edit-list->function))
+		(frs (frames)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 18c: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) 
+			       "(lambda (snd chn) (src-channel (quote (0.0 1.0 1.0 2.0)) 1000 500 snd chn))"))
+		(snd-display ";edit-list->function 18c: ~A" (object->string (procedure-source func))))
+	    (revert-sound ind)
+	    (func ind 0)
+	    (if (not (= frs (frames))) (snd-display ";edit-list->function 18c re-len: ~A ~A" frs (frames))))
+	  (revert-sound)
+	  
+	  ;; ---- filter-channel
+	  (filter-channel '(0 1 1 0) 10)
+	  (let ((func (edit-list->function))
+		(mx (maxamp)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 19: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) 
+			       "(lambda (snd chn) (filter-channel (quote (0.0 1.0 1.0 0.0)) 10 0 #f snd chn))"))
+		(snd-display ";edit-list->function 19: ~A" (object->string (procedure-source func))))
+	    (revert-sound ind)
+	    (func ind 0)
+	    (if (fneq mx (maxamp)) (snd-display ";edit-list->function 19 re-filter: ~A ~A" mx (maxamp))))
+	  (revert-sound)
+
+
+	  (close-sound ind)
+	  ))
+	  
       (mus-sound-prune)
       (run-hook after-test-hook 19)
       ))
@@ -32015,24 +32535,24 @@ EDITS: 2
 	(undo)
 	(make-selection 5 15)
 	(filter-selection '(0 1 1 1) 100)
-	(if (not (equal? (edit-fragment 2) (list "filter-selection" "set" 5 11)))
+	(if (not (equal? (edit-fragment 2) (list "filter-channel" "set" 5 11)))
 	    (snd-display ";filter-selection truncated: ~A" (edit-fragment 2)))
 	(if (not (vequal (channel->vct 20 10) (make-vct 10 0.0)))
 	    (snd-display ";filter-selection trunc overwrote: ~A" (channel->vct 20 10)))
 	(undo)
 	(filter-selection '(0 1 1 1) 100 #f)  
-	(if (not (equal? (edit-fragment 2) (list "filter-selection" "set" 5 111)))
+	(if (not (equal? (edit-fragment 2) (list "filter-channel" "set" 5 111)))
 	    (snd-display ";filter-selection not truncated: ~A" (edit-fragment 2)))
 	(if (not (vequal (channel->vct 50 10) (vct -0.016 0.018 -0.021 0.024 -0.029 0.035 -0.045 0.064 -0.106 0.318)))
 	    (snd-display ";filter-selection no trunc: ~A" (channel->vct 50 10)))
 	(undo)
 	(filter-selection '(0 1 1 1) 1000 #t)
-	(if (not (equal? (edit-fragment 2) (list "filter-selection" "set" 5 11)))
+	(if (not (equal? (edit-fragment 2) (list "filter-channel" "set" 5 11)))
 	    (snd-display ";filter-selection truncated (1000): ~A" (edit-fragment 2)))
 	(if (fneq (maxamp) 0.0) (snd-display ";filter-selection 1000 untrunc? ~A" (maxamp)))
 	(undo)
 	(filter-selection '(0 1 1 1) 1000 #f)
-	(if (not (equal? (edit-fragment 2) (list "filter-selection" "set" 5 1011)))
+	(if (not (equal? (edit-fragment 2) (list "filter-channel" "set" 5 1011)))
 	    (snd-display ";filter-selection not truncated (1000): ~A" (edit-fragment 2)))
 	(if (fneq (maxamp) 0.318) (snd-display ";filter-selection 1000 no trunc? ~A" (maxamp)))
 	(if (not (vequal (channel->vct 505 10) (vct 0.035 -0.045 0.064 -0.106 0.318 0.318 -0.106 0.064 -0.045 0.035)))
@@ -40574,7 +41094,7 @@ EDITS: 2
 			  (snd-display ";apply flt: ~A?" (edits ind)))
 		      (catch 'no-such-edit
 			     (lambda ()
-			       (if (and (not (equal? (edit-fragment 2) (list "Enved: flt" "set" 0 50868)))
+			       (if (and (not (equal? (edit-fragment 2) (list "filter-channel" "set" 0 50868)))
 					(not (equal? (edit-fragment 2) (list "Enved: flt" "set" 0 50828))))
 				   (snd-display ";apply flt fragment: ~A?" (edit-fragment 2))))
 			     (lambda args (snd-display ";click enved apply failed")))
@@ -40587,7 +41107,7 @@ EDITS: 2
 			  (snd-display ";apply src: ~A?" (edits ind)))
 		      (catch 'no-such-edit
 			     (lambda ()
-			       (if (and (not (equal? (edit-fragment 3) (list "Enved: src" "set" 0 113510)))
+			       (if (and (not (equal? (edit-fragment 3) (list "src-channel '(0.000 0.500 1.000 0.400) 0 #f" "set" 0 113510)))
 					(not (equal? (edit-fragment 3) (list "Enved: src" "set" 0 113420))))
 				   (snd-display ";apply flt fragment: ~A?" (edit-fragment 3))))
 			     (lambda args (snd-display ";again click enved apply failed")))
