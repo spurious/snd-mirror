@@ -241,59 +241,58 @@ static void auto_update_check(XtPointer context, XtIntervalId *id)
     }
 }
 
-void add_dialog(snd_state *ss, Widget dialog)
-{
-  state_context *sx;
-  int i;
-  sx = ss->sgx;
-  if (sx->dialogs)
-    for (i = 0; i < sx->ndialogs; i++)
-      if (sx->dialogs[i] == dialog)
-	return;
-  if (sx->dialog_list_size == 0)
-    {
-      sx->dialog_list_size = 8;
-      sx->dialogs = (Widget *)CALLOC(sx->dialog_list_size, sizeof(Widget));
-      sx->ndialogs = 0;
-    }
-  else
-    {
-      if (sx->ndialogs == sx->dialog_list_size)
-	{
-	  sx->dialog_list_size *= 2;
-	  sx->dialogs = (Widget *)REALLOC(sx->dialogs, sx->dialog_list_size * sizeof(Widget));
-	  for (i = sx->ndialogs; i < sx->dialog_list_size; i++) sx->dialogs[i] = NULL;
-	}
-    }
-  sx->dialogs[sx->ndialogs] = dialog;
-  sx->ndialogs++;
-}
-
 void dismiss_all_dialogs(snd_state *ss)
 {
   state_context *sx;
   int i;
   sx = ss->sgx;
   if (record_dialog_is_active()) close_recorder_audio();
-  if (sx->dialog_list_size > 0)
-    for (i = 0; i < sx->ndialogs; i++)
+  if (sx->dialogs)
+    for (i = 0; i < NUM_DIALOGS; i++)
       if (sx->dialogs[i])
 	if (XtIsManaged(sx->dialogs[i])) 
 	  XtUnmanageChild(sx->dialogs[i]);
 }
 
+static int *live_dialogs = NULL;
 static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   XMapEvent *ev = (XMapEvent *)event;
   snd_state *ss = (snd_state *)context;
+  state_context *sx;
+  int i;
+  sx = ss->sgx;
   /* ev->type can be several things, but the ones we care about here are
    * MapNotify and UnmapNotify.  Snd dialogs are "windows" in X-jargon, so
    * when the main window is minimized (iconified), other active dialogs
    * aren't also closed unless we mess with them explicitly here.  We keep
    * a list of created dialogs, and depend on XtIsManaged to tell us which
-   * ones need to be unmanaged. 
+   * ones need to be unmanaged. But, if the user has several "desks", a change
+   * of desk can also generate an unmap event, and if we dismiss the dialogs,
+   * they don't come back upon remap; if we save a list of live dialogs, they
+   * don't return to their previous location upon being re-managed.  We
+   * need to see just iconfication events here, but there's no way I can
+   * see to distinguish an iconify event from a desk event (WM_STATE atom state
+   * of property changed event is identical etc), so I'll do what I can...
    */
-  if (ev->type == UnmapNotify) dismiss_all_dialogs(ss);
+  if (ev->type == UnmapNotify) 
+    {
+      if ((sx) && (sx->dialogs))
+	{
+	  if (live_dialogs == NULL)
+	    live_dialogs = (int *)CALLOC(NUM_DIALOGS, sizeof(int));
+	  for (i = 0; i < NUM_DIALOGS; i++)
+	    live_dialogs[i] = ((sx->dialogs[i]) && (XtIsManaged(sx->dialogs[i])));
+	}
+      dismiss_all_dialogs(ss);
+    }
+  else
+    {
+      if ((ev->type == MapNotify) && (sx) && (sx->dialogs) && (live_dialogs))
+	  for (i = 0; i < NUM_DIALOGS; i++)
+	    if ((live_dialogs[i]) && (sx->dialogs[i]))
+	      XtManageChild(sx->dialogs[i]);
+    }
 }
 
 static Atom snd_v, snd_c;
@@ -698,7 +697,6 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 
   ss->sgx = (state_context *)CALLOC(1, sizeof(state_context));
   sx = ss->sgx;
-  sx->dialog_list_size = 0;
 
 #ifndef SND_AS_WIDGET
   XtAppSetWarningMsgHandler(app, muffle_warning);

@@ -1000,6 +1000,7 @@ void set_play_button(snd_info *sp, int val)
     {
       XmToggleButtonSetState(w_snd_play(sp), val, FALSE);
       set_file_browser_play_button(sp->short_filename, val);
+      set_open_file_play_button(val);
     }
 }
 
@@ -1486,10 +1487,8 @@ snd_info *add_sound_window (char *filename, snd_state *ss, int read_only)
 	      /* using popup shell here gets around the problem that the shell passes resize requests to all its children
 	       * -- as a popup, it's not considered a child
 	       */
-	      add_dialog(ss, sx->dialog);
 	      sound_delete = XmInternAtom(XtDisplay(sx->dialog), "WM_DELETE_WINDOW", FALSE);
 	      XmAddWMProtocolCallback(sx->dialog, sound_delete, Close_Sound_Dialog, (XtPointer)sp);
-	      add_popup_handler(sx->dialog);
 	    }
 	  else XtVaSetValues(sx->dialog, XmNtitle, title, NULL);
 	  FREE(title);

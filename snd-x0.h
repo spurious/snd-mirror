@@ -170,9 +170,8 @@ typedef struct {
   GC fltenv_basic_gc, fltenv_data_gc, speed_gc;
 
   XEvent *text_activate_event;
-  Widget text_widget;
+  Widget text_widget, listener_pane;
   Widget *dialogs;
-  int dialog_list_size, ndialogs;
 
   Cursor mix_cursor, graph_cursor, wait_cursor;
 #if HAVE_THEMES

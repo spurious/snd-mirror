@@ -1296,8 +1296,13 @@ void create_popup_menu(snd_state *ss)
       n = 0;
       if (!ss->using_schemes) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       mainp = MAIN_PANE(ss);
+#if (XmVERSION >= 2)
+      XtSetArg(args[n], XmNpopupEnabled, XmPOPUP_AUTOMATIC_RECURSIVE); n++;
+#endif
       popup_menu = XmCreatePopupMenu(mainp, "popup-menu", args, n);
+#if (XmVERSION == 1)
       XtAddEventHandler(mainp, ButtonPressMask, FALSE, Post_Popup_Menu, popup_menu);
+#endif
 
       popup_children[W_pop_menu] = XtCreateManagedWidget("snd", xmLabelWidgetClass, popup_menu, args, n);
       popup_children[W_pop_sep] = XtCreateManagedWidget("sep", xmSeparatorWidgetClass, popup_menu, args, n);
@@ -1322,11 +1327,6 @@ void create_popup_menu(snd_state *ss)
     }
 }
 
-void add_popup_handler(Widget w)
-{
-  XtAddEventHandler(w, ButtonPressMask, FALSE, Post_Popup_Menu, popup_menu);
-}
-
 static XEN g_menu_widgets(void)
 {
   #define H_menu_widgets "(" S_menu_widgets ") returns list of top level menu widgets (main file edit view options help)"
@@ -1336,7 +1336,7 @@ static XEN g_menu_widgets(void)
             XEN_CONS(XEN_WRAP_C_POINTER(mw[v_cascade_menu]),
              XEN_CONS(XEN_WRAP_C_POINTER(mw[o_cascade_menu]),
               XEN_CONS(XEN_WRAP_C_POINTER(mw[h_cascade_menu]),
-		   XEN_EMPTY_LIST)))))));
+	       XEN_EMPTY_LIST)))))));
 }
 
 static XEN g_test_menus(void) 

@@ -95,6 +95,7 @@ typedef struct {
   GtkWidget *mainpane;
   GtkWidget *soundpane;
   GtkWidget *soundpanebox;
+  GtkWidget *listener_pane;
   GdkWindow *mainwindow;
 
   GdkFont *button_fnt;
@@ -119,7 +120,7 @@ typedef struct {
   GdkGC *fltenv_basic_gc, *fltenv_data_gc, *speed_gc;
 
   GtkWidget **dialogs;
-  int dialog_list_size, ndialogs, graph_is_active;
+  int graph_is_active;
   
   GdkCursor *arrow_cursor, *wait_cursor, *mix_cursor, *graph_cursor;
 } state_context;

@@ -1,5 +1,7 @@
 snd change log
 
+  3-Aug:     moved listener widget to main-widgets list.
+             add-selection-popup in snd-motif.scm.
   2-Aug:     mark-hook and add-mark-pane in snd-motif.scm.
   1-Aug:     region browser display bugfix (thanks to Dave Phillips).
              check-for-unsaved-edits in extensions.scm.

@@ -239,8 +239,7 @@ static void create_help_monolog(snd_state *ss)
   XtSetArg(args[n], XmNnoResize, FALSE); n++;
   XtSetArg(args[n], XmNtransient, FALSE); n++;
   help_dialog = XmCreateMessageDialog(MAIN_PANE(ss), "snd-help", args, n);
-  set_dialog_widget(HELP_DIALOG, help_dialog);
-  add_dialog(ss, help_dialog);
+  set_dialog_widget(ss, HELP_DIALOG, help_dialog);
 
   n = 0;
   if (!(ss->using_schemes)) 

@@ -13403,6 +13403,15 @@ static XEN wrap_callback_struct(int type, XtPointer info)
 
 static int callback_struct_type(Widget w, char *name)
 {
+#if MOTIF_2
+  if (strcmp(name, XmNdestinationCallback) == 0) return(GXM_Destination);
+  if (strcmp(name, XmNpopupHandlerCallback) == 0) return (GXM_Popup);
+  if (strcmp(name, XmNconvertCallback) == 0) return(GXM_Convert);
+  if (strcmp(name, XmNdragStartCallback) == 0) return(GXM_Drag_Start);
+#endif
+  if (strcmp(name, XmNdropProc) == 0) return(GXM_Drop_Proc);      
+  if (strcmp(name, XmNdragProc) == 0) return(GXM_Drag_Proc);      
+
   if (XmIsArrowButton(w)) return(GXM_Arrow);
   if (XmIsPushButton(w)) return(GXM_PushButton);
   if (XmIsScale(w)) return(GXM_Scale);
@@ -13411,14 +13420,7 @@ static int callback_struct_type(Widget w, char *name)
   if (XmIsToggleButton(w)) return(GXM_ToggleButton);
   if (XmIsList(w)) return(GXM_List);
   if (XmIsFileSelectionBox(w)) return(GXM_File);
-  if (XmIsDrawingArea(w)) 
-    {
-#if MOTIF_2
-      if (strcmp(name, XmNdestinationCallback) == 0) return(GXM_Destination);
-      if (strcmp(name, XmNconvertCallback) == 0) return(GXM_Convert);
-#endif
-      return(GXM_Drawing);
-    }
+  if (XmIsDrawingArea(w)) return(GXM_Drawing);
   if (XmIsScrolledWindow(w)) return(GXM_Traverse);
 #if MOTIF_2
   if (XmIsNotebook(w)) return(GXM_Notebook);
@@ -13426,9 +13428,6 @@ static int callback_struct_type(Widget w, char *name)
 #endif
   if ((XmIsText(w)) || (XmIsTextField(w)))
     {
-#if MOTIF_2
-      if (strcmp(name, XmNdestinationCallback) == 0) return(GXM_Destination);
-#endif
       if ((strcmp(name, XmNlosingFocusCallback) == 0) ||
 	  (strcmp(name, XmNmodifyVerifyCallback) == 0) ||
 	  (strcmp(name, XmNmotionVerifyCallback) == 0))
@@ -13442,7 +13441,6 @@ static int callback_struct_type(Widget w, char *name)
       if ((strcmp(name, XmNselectionCallback) == 0) ||
 	  (strcmp(name, XmNdefaultActionCallback) == 0))
 	return(GXM_Container_Select);
-      if (strcmp(name, XmNconvertCallback) == 0) return(GXM_Convert);
       return(GXM_Destination); 
     }
   /* how to recognize a SpinBox? */
@@ -13451,13 +13449,7 @@ static int callback_struct_type(Widget w, char *name)
 #endif
 #endif
   if (XmIsCommand(w)) return(GXM_Command);
-  if (XmIsDisplay(w))
-    {
-#if MOTIF_2
-      if (strcmp(name, XmNdragStartCallback) == 0) return(GXM_Drag_Start);
-#endif
-      return(GXM_Display);
-    }
+  if (XmIsDisplay(w)) return(GXM_Display);
   if (XmIsSelectionBox(w)) return(GXM_Selection);
   if (XmIsDragContext(w))
     {
@@ -13472,13 +13464,6 @@ static int callback_struct_type(Widget w, char *name)
       if (strcmp(name, XmNtopLevelLeaveCallback) == 0) return(GXM_TopLevel_Leave);
     }
   if (XmIsDrawnButton(w)) return(GXM_Drawn);
-#if MOTIF_2
-  if (strcmp(name, XmNdestinationCallback) == 0) return(GXM_Destination);
-  if (strcmp(name, XmNpopupHandlerCallback) == 0) return (GXM_Popup);
-  if (strcmp(name, XmNconvertCallback) == 0) return(GXM_Convert);
-#endif
-  if (strcmp(name, XmNdropProc) == 0) return(GXM_Drop_Proc);      
-  if (strcmp(name, XmNdragProc) == 0) return(GXM_Drag_Proc);      
   return(GXM_Any);
 }
 
@@ -18360,6 +18345,18 @@ static XEN gxm_menuToPost(XEN ptr)
   if (XEN_XmPopupHandlerCallbackStruct_P(ptr)) return(C_TO_XEN_Widget((Widget)((XEN_TO_C_XmPopupHandlerCallbackStruct(ptr))->menuToPost)));
   return(XEN_FALSE);
 }
+
+static XEN gxm_set_postIt(XEN ptr, XEN post)
+{
+  if (XEN_XmPopupHandlerCallbackStruct_P(ptr)) (XEN_TO_C_XmPopupHandlerCallbackStruct(ptr))->postIt = XEN_TO_C_BOOLEAN(post);
+  return(post);
+}
+
+static XEN gxm_set_menuToPost(XEN ptr, XEN menu)
+{
+  if (XEN_XmPopupHandlerCallbackStruct_P(ptr)) (XEN_TO_C_XmPopupHandlerCallbackStruct(ptr))->menuToPost = (Widget)XEN_TO_C_Widget(menu);
+  return(menu);
+}
 #endif
 
 static XEN gxm_pattern_length(XEN ptr)
@@ -19155,8 +19152,6 @@ static void define_structs(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "remaining" XM_POSTFIX, gxm_remaining, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "item_or_text" XM_POSTFIX, gxm_item_or_text, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "auto_selection_type" XM_POSTFIX, gxm_auto_selection_type, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "menuToPost" XM_POSTFIX, gxm_menuToPost, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "postIt" XM_POSTFIX, gxm_postIt, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "new_outline_state" XM_POSTFIX, gxm_new_outline_state, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "prev_page_number" XM_POSTFIX, gxm_prev_page_number, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "prev_page_widget" XM_POSTFIX, gxm_prev_page_widget, 1, 0, 0, NULL);
@@ -19225,6 +19220,12 @@ static void define_structs(void)
 				   XM_PREFIX "set-doit" XM_POSTFIX, gxm_set_doit,  1, 0, 2, 0); 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "colormap" XM_POSTFIX, gxm_colormap, "",
 				   XM_PREFIX "set-colormap" XM_POSTFIX, gxm_set_colormap, 1, 0, 2, 0);
+#if MOTIF_2
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "menuToPost" XM_POSTFIX, gxm_menuToPost, "",
+				   XM_PREFIX "set-menuToPost", gxm_set_menuToPost, 1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "postIt" XM_POSTFIX, gxm_postIt, "",
+				   XM_PREFIX "set-postIt" XM_POSTFIX, gxm_set_postIt, 1, 0, 2, 0);
+#endif
 
 #if HAVE_XPM
   XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "valuemask" XM_POSTFIX, gxm_valuemask, "", 

@@ -717,8 +717,7 @@ void View_Color_Callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       XtSetArg(args[n], XmNtransient, FALSE); n++;
       ccd->dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Color, args, n);
-      set_dialog_widget(COLOR_DIALOG, ccd->dialog);
-      add_dialog(ss, ccd->dialog);
+      set_dialog_widget(ss, COLOR_DIALOG, ccd->dialog);
 
       XtAddCallback(ccd->dialog, XmNcancelCallback, Dismiss_Color_Callback, ccd);
       XtAddCallback(ccd->dialog, XmNhelpCallback, Help_Color_Callback, ss);
@@ -1206,8 +1205,7 @@ void View_Orientation_Callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       XtSetArg(args[n], XmNtransient, FALSE); n++;
       oid->dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Orientation, args, n);
-      set_dialog_widget(ORIENTATION_DIALOG, oid->dialog);
-      add_dialog(ss, oid->dialog);
+      set_dialog_widget(ss, ORIENTATION_DIALOG, oid->dialog);
 
       XtAddCallback(oid->dialog, XmNcancelCallback, Dismiss_Orientation_Callback, oid);
       XtAddCallback(oid->dialog, XmNhelpCallback, Help_Orientation_Callback, ss);

@@ -75,53 +75,17 @@ static gint auto_update_check(gpointer context)
   return(0);
 }
 
-void add_dialog(snd_state *ss, GtkWidget *dialog)
-{
-  state_context *sx;
-  int i;
-  sx = ss->sgx;
-  if (sx->dialogs)
-    for (i = 0; i < sx->ndialogs; i++)
-      if (sx->dialogs[i] == dialog)
-	return;
-  if (sx->dialog_list_size == 0)
-    {
-      sx->dialog_list_size = 8;
-      sx->dialogs = (GtkWidget **)CALLOC(sx->dialog_list_size, sizeof(GtkWidget *));
-      sx->ndialogs = 0;
-    }
-  else
-    {
-      if (sx->ndialogs == sx->dialog_list_size)
-	{
-	  sx->dialog_list_size *= 2;
-	  sx->dialogs = (GtkWidget **)REALLOC(sx->dialogs, sx->dialog_list_size * sizeof(GtkWidget *));
-	  for (i = sx->ndialogs; i < sx->dialog_list_size; i++) sx->dialogs[i] = NULL;
-	}
-    }
-  sx->dialogs[sx->ndialogs] = dialog;
-  sx->ndialogs++;
-}
-
 void dismiss_all_dialogs(snd_state *ss)
 {
   state_context *sx;
   int i;
   sx = ss->sgx;
   if (record_dialog_is_active()) close_recorder_audio();
-  if (sx->dialog_list_size > 0)
-    for (i = 0; i < sx->ndialogs; i++)
+  if (sx->dialogs)
+    for (i = 0; i < NUM_DIALOGS; i++)
       if (sx->dialogs[i])
 	gtk_widget_hide(sx->dialogs[i]);
 }
-
-#ifndef SND_AS_WIDGET
-static gint iconify_window(GtkWidget *w, GdkEvent *event, gpointer context) 
-{ 
-  dismiss_all_dialogs((snd_state *)context);
-  return(FALSE);
-}
-#endif
 
 static GdkAtom snd_v, snd_c;
 static XEN property_changed_hook;
@@ -316,7 +280,6 @@ static BACKGROUND_TYPE startup_funcs(gpointer context)
 
       /* trap outer-level Close for cleanup check */
       gtk_signal_connect(GTK_OBJECT(tm->shell), "delete_event", GTK_SIGNAL_FUNC(Window_Close), (gpointer)ss);
-      gtk_signal_connect(GTK_OBJECT(tm->shell), "unmap_event", GTK_SIGNAL_FUNC(iconify_window), (gpointer)ss);
 #endif
 
       (ss->sgx)->graph_cursor = gdk_cursor_new((GdkCursorType)in_graph_cursor(ss));
@@ -497,7 +460,6 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 
   ss->sgx = (state_context *)CALLOC(1, sizeof(state_context));
   sx = ss->sgx;
-  sx->dialog_list_size = 0;
   sx->graph_is_active = 0;
 
   /* the gray shades are an attempt to get around Netscape which hogs all the colors */

@@ -440,7 +440,6 @@ static void sndCreateCommandWidget(snd_state *ss, int height)
       gtk_container_add(GTK_CONTAINER(frame), listener_pane);
 
       listener_text = gtk_text_new(NULL, NULL);
-      set_dialog_widget(LISTENER_PANE, listener_text);
       gtk_table_attach (GTK_TABLE(listener_pane), listener_text, 0, 1, 0, 1, 
 			(GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
 			(GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK),
@@ -454,6 +453,7 @@ static void sndCreateCommandWidget(snd_state *ss, int height)
       /* gtk_signal_connect_after(GTK_OBJECT(listener_text), "button_press_event", GTK_SIGNAL_FUNC(after_listener_button_press), (gpointer)ss); */
       gtk_signal_connect(GTK_OBJECT(listener_text), "enter_notify_event", GTK_SIGNAL_FUNC(listener_focus_callback), NULL);
       gtk_signal_connect(GTK_OBJECT(listener_text), "leave_notify_event", GTK_SIGNAL_FUNC(listener_unfocus_callback), NULL);
+      ss->sgx->listener_pane = listener_text;
 
       gtk_widget_show(listener_text);
       gtk_text_insert(GTK_TEXT(listener_text),

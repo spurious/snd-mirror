@@ -324,8 +324,7 @@ static void make_region_dialog(snd_state *ss)
   XtSetArg(args[n], XmNnoResize, FALSE); n++;
   XtSetArg(args[n], XmNtransient, FALSE); n++;
   region_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Regions, args, n);
-  set_dialog_widget(REGION_DIALOG, region_dialog);
-  add_dialog(ss, region_dialog);
+  set_dialog_widget(ss, REGION_DIALOG, region_dialog);
 
   XtAddCallback(region_dialog, XmNokCallback, region_ok_Callback, ss);
   XtAddCallback(region_dialog, XmNcancelCallback, region_delete_Callback, ss);

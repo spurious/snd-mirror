@@ -170,6 +170,7 @@ int widget_x(int w) {return(0);}
 int widget_y(int w) {return(0);}
 void set_widget_x(int w, int x) {}
 void set_widget_y(int w, int y) {}
+void set_open_file_play_button(int val) {}
 void fixup_axis_context(axis_context *ax, int w, int gc) {}
 int channel_w(chan_info *cp) {return(0);}
 int channel_f(chan_info *cp) {return(0);}

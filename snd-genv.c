@@ -778,14 +778,13 @@ GtkWidget *create_envelope_editor (snd_state *ss)
   if (!enved_dialog)
     {
       enved_dialog = gtk_dialog_new();
-      set_dialog_widget(ENVED_DIALOG, enved_dialog);
+      set_dialog_widget(ss, ENVED_DIALOG, enved_dialog);
       gtk_signal_connect(GTK_OBJECT(enved_dialog), "delete_event", GTK_SIGNAL_FUNC(delete_enved_dialog), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(enved_dialog), STR_Edit_Envelope);
       gtk_window_set_policy(GTK_WINDOW(enved_dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */
       set_background(enved_dialog, (ss->sgx)->basic_color);
       gtk_container_set_border_width(GTK_CONTAINER(enved_dialog), 4);
       gtk_widget_realize(enved_dialog);
-      add_dialog(ss, enved_dialog);
       gtk_widget_set_usize(GTK_WIDGET(enved_dialog), 500, 500);
 
       gc = gdk_gc_new(MAIN_WINDOW(ss));

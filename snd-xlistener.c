@@ -50,8 +50,7 @@ static void create_completion_help_dialog(snd_state *ss, char *title)
   XtSetArg(args[n], XmNnoResize, FALSE); n++;
   /* XtSetArg(args[n], XmNtransient, FALSE); n++; */
   completion_help_dialog = XmCreateMessageDialog(MAIN_PANE(ss), "snd-completion-help", args, n);
-  set_dialog_widget(COMPLETION_DIALOG, completion_help_dialog);
-  add_dialog(ss, completion_help_dialog);
+  set_dialog_widget(ss, COMPLETION_DIALOG, completion_help_dialog);
 
   XtUnmanageChild(XmMessageBoxGetChild(completion_help_dialog, XmDIALOG_CANCEL_BUTTON));
   XtUnmanageChild(XmMessageBoxGetChild(completion_help_dialog, XmDIALOG_SYMBOL_LABEL));
@@ -957,7 +956,7 @@ static void sndCreateCommandWidget(snd_state *ss, int height)
       XtSetArg(args[n], XmNpositionIndex, XmLAST_POSITION); n++;
       XtSetArg(args[n], XmNpaneMinimum, height); n++;
       listener_text = XmCreateScrolledText(listener_pane, "lisp-listener", args, n);
-      set_dialog_widget(LISTENER_PANE, listener_text);
+      ss->sgx->listener_pane = listener_text;
 
       XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, FALSE, NULL);
 

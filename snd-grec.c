@@ -2098,14 +2098,13 @@ void snd_record_file(snd_state *ss)
       small_font = gdk_font_load((vu_size(ss) < SMALLER_FONT_CUTOFF) ? SMALLER_FONT : SMALL_FONT);
 
       recorder = gtk_dialog_new();
-      set_dialog_widget(RECORDER_DIALOG, recorder);
+      set_dialog_widget(ss, RECORDER_DIALOG, recorder);
       gtk_signal_connect(GTK_OBJECT(recorder), "delete_event", GTK_SIGNAL_FUNC(recorder_delete), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(recorder), STR_Record);
       gtk_window_set_policy(GTK_WINDOW(recorder), TRUE, TRUE, FALSE); /* allow shrink or grow */
       set_background(recorder, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(recorder), 10);
       gtk_widget_realize(recorder);
-      add_dialog(ss, recorder);
 
       help_button = gtk_button_new_with_label(STR_Help);
       dismiss_button = gtk_button_new_with_label(STR_Dismiss);

@@ -3444,8 +3444,7 @@ void snd_record_file(snd_state *ss)
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       XtSetArg(args[n], XmNtransient, FALSE); n++;
       recorder = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Record, args, n);
-      set_dialog_widget(RECORDER_DIALOG, recorder);
-      add_dialog(ss, recorder);
+      set_dialog_widget(ss, RECORDER_DIALOG, recorder);
 
       XtAddCallback(recorder, XmNcancelCallback, Reset_Record_Callback, ss);
       XtAddCallback(recorder, XmNhelpCallback, Help_Record_Callback, ss);

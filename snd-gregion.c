@@ -311,7 +311,7 @@ static void make_region_dialog(snd_state *ss)
   GtkWidget *infobox, *labels, *labbox;
 
   region_dialog = gtk_dialog_new();
-  set_dialog_widget(REGION_DIALOG, region_dialog);
+  set_dialog_widget(ss, REGION_DIALOG, region_dialog);
   gtk_signal_connect(GTK_OBJECT(region_dialog), "delete_event", GTK_SIGNAL_FUNC(region_browser_delete_Callback), (gpointer)ss);
   gtk_window_set_title(GTK_WINDOW(region_dialog), STR_Regions);
   gtk_window_set_policy(GTK_WINDOW(region_dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */
@@ -319,7 +319,6 @@ static void make_region_dialog(snd_state *ss)
   gtk_container_set_border_width(GTK_CONTAINER(region_dialog), 10);
   gtk_widget_set_usize(GTK_WIDGET(region_dialog), 400, 400);
   gtk_widget_realize(region_dialog);
-  add_dialog(ss, region_dialog);
 
   help_button = gtk_button_new_with_label(STR_Help);
   dismiss_button = gtk_button_new_with_label(STR_Dismiss);

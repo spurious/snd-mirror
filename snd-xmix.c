@@ -390,8 +390,7 @@ Widget make_mix_panel(snd_state *ss)
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       XtSetArg(args[n], XmNtransient, FALSE); n++;
       mix_panel = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Mix_Panel, args, n);
-      set_dialog_widget(MIX_PANEL_DIALOG, mix_panel);
-      add_dialog(ss, mix_panel);
+      set_dialog_widget(ss, MIX_PANEL_DIALOG, mix_panel);
 
       XtAddCallback(mix_panel, XmNokCallback, Dismiss_Mix_Panel_Callback, ss);
       XtAddCallback(mix_panel, XmNhelpCallback, Help_Mix_Panel_Callback, ss);

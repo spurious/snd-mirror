@@ -1052,6 +1052,7 @@ static void reflect_play_stop (snd_info *sp)
 {
   if (w_snd_play(sp)) set_toggle_button(w_snd_play(sp), FALSE, FALSE, sp);
   set_file_browser_play_button(sp->short_filename, 0);
+  set_open_file_play_button(0);
 }
 
 static void free_player(snd_info *sp);

@@ -9,7 +9,10 @@
 ;;; (display-scanned-synthesis) opens a scanned-synthesis viewer
 ;;; (disable-control-panel) does away with the control panel
 ;;; (add-mark-pane) adds a pane of mark locations to each channel that has marks
+;;; (add-selection-popup) creates a selection-oriented popup menu that is activated if you click button 3 in the selected portion
 
+
+(use-modules (ice-9 common-list))
 
 (if (not (provided? 'xm))
     (let ((hxm (dlopen "xm.so")))
@@ -924,6 +927,116 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 
 
+;;; -------- add-selection-popup --------
+;;;
+;;; if pointer is in selected portion, a different popup menu is posted if button 3
+
+(define (make-popup-menu name parent top-args entries)
+  (let ((menu (|XmCreatePopupMenu parent name top-args)))
+    (for-each
+     (lambda (entry)
+       ;; entry is list: name type args callback
+       (let ((widget (|XtCreateManagedWidget (car entry)
+					     (cadr entry)
+					     menu
+					     (caddr entry))))
+	 (if (not (null? (cdddr entry)))
+	     (|XtAddCallback widget |XmNactivateCallback (cadddr entry)))))
+     entries)
+    menu))
+
+(define selection-popup-menu 
+  (make-popup-menu 
+   "selection-popup"
+   (|Widget (caddr (main-widgets)))
+   (list |XmNpopupEnabled #t
+	  |XmNbackground (|Pixel (snd-pixel (highlight-color))))
+   (list
+    (list "Selection" 
+	  |xmLabelWidgetClass 
+	   (list |XmNbackground (|Pixel (snd-pixel (highlight-color)))))
+    (list "sep"
+	  |xmSeparatorWidgetClass
+	   (list |XmNbackground (|Pixel (snd-pixel (highlight-color)))))
+    (list "play"
+	  |xmPushButtonWidgetClass
+	   (list |XmNbackground (|Pixel (snd-pixel (highlight-color))))
+	   (lambda (w c i) 
+	     (play-selection)))
+    (list "delete"
+	  |xmPushButtonWidgetClass
+	   (list |XmNbackground (|Pixel (snd-pixel (highlight-color))))
+	   (lambda (w c i) 
+	     (delete-selection)))
+    (list "crop"
+	  |xmPushButtonWidgetClass
+	   (list |XmNbackground (|Pixel (snd-pixel (highlight-color))))
+	   (lambda (w c i)
+	     ;; delete everything except selection
+	     (for-each
+	      (lambda (selection)
+		(as-one-edit
+		 (lambda ()
+		   (let* ((snd (car selection))
+			  (chn (cadr selection))
+			  (beg (selection-position snd chn))
+			  (len (selection-length snd chn)))
+		     (if (> beg 0) 
+			 (delete-samples 0 beg snd chn))
+		     (if (< len (frames snd chn))
+			 (delete-samples (+ len 1) (- (frames snd chn) len) snd chn))))))
+	      (let ((sndlist '()))
+		(map (lambda (snd)
+		       (do ((i (1- (channels snd)) (1- i)))
+			   ((< i 0))
+			 (if (selection-member? snd i)
+			     (set! sndlist (cons (list snd i) sndlist)))))
+		     (sounds))
+		sndlist))))
+    (list "reverse"
+	  |xmPushButtonWidgetClass
+	   (list |XmNbackground (|Pixel (snd-pixel (highlight-color))))
+	   (lambda (w c i) 
+	     (reverse-selection)))
+    (list "invert"
+	  |xmPushButtonWidgetClass
+	   (list |XmNbackground (|Pixel (snd-pixel (highlight-color))))
+	   (lambda (w c i) 
+	     (scale-selection-by -1))))))
+
+(define (add-selection-popup)
+  (let ((popups '()))
+    (define (find-popup snd chn dats)
+      (if (not (null? dats))
+	  (let ((cur (car dats)))
+	    (if (and (= (car cur) snd)
+		     (= (cadr cur) chn))
+		cur
+		(find-popup snd chn (cdr dats))))
+	  #f))
+    (add-hook! after-open-hook
+      (lambda (snd)
+	(do ((chn 0 (1+ chn)))
+	    ((= chn (chans snd)))
+	  (if (not (find-popup snd chn popups))
+	      (begin
+		(set! popups (cons (list snd chn) popups))
+		(|XtAddCallback (|Widget (car (channel-widgets snd chn))) |XmNpopupHandlerCallback 
+		  (lambda (w data info)
+		    (if (selection?)
+			(let* ((e (|event info))
+			       (beg (/ (selection-position snd chn) (srate snd)))
+			       (end (/ (+ (selection-position snd chn) (selection-length snd chn)) (srate snd)))
+			       (xe (- (|x_root e) (car (|XtTranslateCoords w 0 0)))))
+			  (if (and (>= xe (x->position beg snd chn))
+				   (<= xe (x->position end snd chn)))
+			      (set! (|menuToPost info) selection-popup-menu)))))))))))))
+
+;(add-selection-popup)
+
+
+
+
 
 ;;; animated pixmaps
 ;;; spectral editing in new window
@@ -931,3 +1044,8 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ;;; panel of icons at top (cut/paste/undo/redo/save/play/play-selection
 ;;; bess-translations
 ;;; separate chan amp controls (from snd-gtk.scm)
+;;; specialized popup for enved, listener, fft-window (channel), lisp-window
+;;;   toss info from main popup -- change play/stop-play in all cases, re-order other menus
+;;; cue-list as mix set?
+;;; glfft broken
+;;; midi trigger

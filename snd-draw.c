@@ -455,10 +455,10 @@ static XEN g_main_widgets(void)
 	   XEN_CONS(XEN_WRAP_C_POINTER(MAIN_SHELL(ss)),
              XEN_CONS(XEN_WRAP_C_POINTER(MAIN_PANE(ss)),
                XEN_CONS(XEN_WRAP_C_POINTER(SOUND_PANE(ss)),
-		 XEN_EMPTY_LIST)))));
+		 XEN_CONS((ss->sgx->listener_pane) ? XEN_WRAP_C_POINTER(ss->sgx->listener_pane) : XEN_FALSE,
+		   XEN_EMPTY_LIST))))));
 }
 
-#define NUM_DIALOGS 22
 static XEN dialog_widgets;
 
 static XEN g_dialog_widgets(void)
@@ -467,7 +467,7 @@ static XEN g_dialog_widgets(void)
 color orientation enved error yes_or_no transform \
 file_open file_save_as view_files raw_data new_file \
 file_mix edit_header find help completion mix_panel \
-print recorder region stats listener"
+print recorder region stats"
 
   if (!(XEN_VECTOR_P(dialog_widgets)))
     {
@@ -477,8 +477,13 @@ print recorder region stats listener"
   return(XEN_VECTOR_TO_LIST(dialog_widgets));
 }
 
-void set_dialog_widget(int which, GUI_WIDGET wid)
+void set_dialog_widget(snd_state *ss, int which, GUI_WIDGET wid)
 {
+  state_context *sx;
+  sx = ss->sgx;
+  if (sx->dialogs == NULL)
+    sx->dialogs = (GUI_WIDGET *)CALLOC(NUM_DIALOGS, sizeof(GUI_WIDGET));
+  sx->dialogs[which] = wid;
   if (!(XEN_VECTOR_P(dialog_widgets)))
     {
       dialog_widgets = XEN_MAKE_VECTOR(NUM_DIALOGS, XEN_FALSE);

@@ -1359,7 +1359,7 @@ int to_c_edit_samples(chan_info *cp, XEN edpos, const char *caller, int arg_pos)
 #if (!USE_NO_GUI)
   axis_info *get_ap(chan_info *cp, int ap_id, const char *caller);
   void g_init_draw(void);
-  void set_dialog_widget(int which, GUI_WIDGET wid);
+  void set_dialog_widget(snd_state *ss, int which, GUI_WIDGET wid);
 #endif
 
 #endif

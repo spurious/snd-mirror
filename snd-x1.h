@@ -169,7 +169,6 @@ void set_menu_label(Widget w, const char *label);
 Widget get_menubar(void);
 Widget add_menu(snd_state *state);
 void create_popup_menu(snd_state *ss);
-void add_popup_handler(Widget w);
 
 int g_change_menu_label(int which_menu, char *old_label, char *new_label);
 int g_set_menu_sensitive(int which_menu, char *old_label, int on);
@@ -184,7 +183,6 @@ void g_init_gxmenu(void);
 
 /* -------- snd-xmain.c -------- */
 
-void add_dialog(snd_state *ss, Widget dialog);
 void dismiss_all_dialogs(snd_state *ss);
 void snd_doit(snd_state *state, int argc, char **argv);
 #ifdef SND_AS_WIDGET
@@ -475,6 +473,7 @@ int file_dialog_is_active(void);
 file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss, const char *title);
 void File_Mix_Callback(Widget w, XtPointer clientData, XtPointer callData);
 Widget edit_header(snd_info *sp);
+void set_open_file_play_button(int val);
 
 void g_initialize_xgfile(void);
 

@@ -133,7 +133,7 @@ void File_Print_Callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       file_print_dialog = XmCreateMessageDialog(w, STR_eps_file_p, args, n);
-      set_dialog_widget(PRINT_DIALOG, file_print_dialog);
+      set_dialog_widget(ss, PRINT_DIALOG, file_print_dialog);
 
       XmStringFree(xmstr1);
       XmStringFree(xmstr2);
@@ -181,7 +181,6 @@ void File_Print_Callback(Widget w, XtPointer context, XtPointer info)
 	  XtVaSetValues(XmMessageBoxGetChild(file_print_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	  XtVaSetValues(file_print_eps_or_lpr, XmNselectColor, (ss->sgx)->pushed_button_color, NULL);
 	}
-      add_dialog(ss, file_print_dialog);
     }
   else
     {

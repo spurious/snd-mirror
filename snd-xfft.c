@@ -503,8 +503,7 @@ Widget fire_up_transform_dialog(snd_state *ss)
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       XtSetArg(args[n], XmNtransient, FALSE); n++;
       transform_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Transform_Options, args, n);
-      set_dialog_widget(TRANSFORM_DIALOG, transform_dialog);
-      add_dialog(ss, transform_dialog);
+      set_dialog_widget(ss, TRANSFORM_DIALOG, transform_dialog);
 
       XtAddCallback(transform_dialog, XmNcancelCallback, Orient_Transform_Callback, ss);
       XtAddCallback(transform_dialog, XmNokCallback, Dismiss_Transform_Callback, ss);

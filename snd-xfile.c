@@ -404,6 +404,12 @@ static Widget just_sounds_button = NULL;
 static int just_sounds_state = FALSE;
 static Widget play_selected_button = NULL;
 
+void set_open_file_play_button(int val)
+{
+  if (play_selected_button)
+    XmToggleButtonSetState(play_selected_button, val, FALSE);
+}
+
 #if (XmVERSION > 1)
 static Widget open_dialog_info1 = NULL, open_dialog_info2 = NULL, open_dialog_frame = NULL;
 
@@ -477,7 +483,7 @@ void make_open_file_dialog(snd_state *ss, int read_only, int managed)
       s1 = XmStringCreate("open:", XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNselectionLabelString, s1); n++;
       open_dialog = XmCreateFileSelectionDialog(w, STR_File, args, n);
-      set_dialog_widget(FILE_OPEN_DIALOG, open_dialog);
+      set_dialog_widget(ss, FILE_OPEN_DIALOG, open_dialog);
       XmStringFree(s1);
 
       rc1 = XtVaCreateManagedWidget("filebuttons", 
@@ -530,7 +536,6 @@ void make_open_file_dialog(snd_state *ss, int read_only, int managed)
       XtAddCallback(XmFileSelectionBoxGetChild(open_dialog, XmDIALOG_LIST),
 		    XmNbrowseSelectionCallback, open_dialog_select_callback, NULL);
 #endif
-      add_dialog(ss, open_dialog);
     }
   if (new_file_written) 
     {
@@ -940,7 +945,7 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int header_type
       XtSetArg(args[n], XmNchildPlacement, XmPLACE_ABOVE_SELECTION); n++;
       XtSetArg(args[n], XmNallowOverlap, FALSE); n++;
       save_as_dialog = XmCreateFileSelectionDialog(MAIN_SHELL(ss), "save-as", args, n);
-      set_dialog_widget(FILE_SAVE_AS_DIALOG, save_as_dialog);
+      set_dialog_widget(ss, FILE_SAVE_AS_DIALOG, save_as_dialog);
       FREE(file_string);
 
       XtManageChild(save_as_dialog);
@@ -968,7 +973,6 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int header_type
 	  XtVaSetValues(save_as_file_data->header_list, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
 	}
 
-      add_dialog(ss, save_as_dialog);
     }
   else
     {
@@ -1682,8 +1686,7 @@ void View_Files_Callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       XtSetArg(args[n], XmNtransient, FALSE); n++;
       view_files_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_File_Browser, args, n);
-      set_dialog_widget(VIEW_FILES_DIALOG, view_files_dialog);
-      add_dialog(ss, view_files_dialog);
+      set_dialog_widget(ss, VIEW_FILES_DIALOG, view_files_dialog);
 
       XtAddCallback(view_files_dialog, XmNcancelCallback, View_Files_Clear_Callback, ss);
       XtAddCallback(view_files_dialog, XmNhelpCallback, View_Files_Help_Callback, ss);
@@ -1884,7 +1887,7 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   XtSetArg(args[n], XmNnoResize, FALSE); n++;
   /* not transient -- we want this window to remain visible if possible */
   raw_data_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), "raw data", args, n);
-  set_dialog_widget(RAW_DATA_DIALOG, raw_data_dialog);
+  set_dialog_widget(ss, RAW_DATA_DIALOG, raw_data_dialog);
 
   XtAddCallback(raw_data_dialog, XmNcancelCallback, raw_data_cancel_Callback, ss);
   XtAddCallback(raw_data_dialog, XmNhelpCallback, raw_data_help_Callback, ss);
@@ -2104,8 +2107,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
       XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       new_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), "new", args, n);
-      set_dialog_widget(NEW_FILE_DIALOG, new_dialog);
-      add_dialog(ss, new_dialog);
+      set_dialog_widget(ss, NEW_FILE_DIALOG, new_dialog);
       XmStringFree(titlestr);
       XmStringFree(xok);
       XmStringFree(xcancel);
@@ -2230,7 +2232,7 @@ void File_Mix_Callback(Widget w, XtPointer context, XtPointer info)
       s1 = XmStringCreate("mix in:", XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNselectionLabelString, s1); n++;
       file_mix_dialog = XmCreateFileSelectionDialog(w, STR_mix_file_p, args, n);
-      set_dialog_widget(FILE_MIX_DIALOG, file_mix_dialog);
+      set_dialog_widget(ss, FILE_MIX_DIALOG, file_mix_dialog);
       XmStringFree(s1);
       XtAddCallback(file_mix_dialog, XmNhelpCallback, file_mix_help_callback, ss);
       XtAddCallback(file_mix_dialog, XmNcancelCallback, file_mix_cancel_callback, ss);
@@ -2246,7 +2248,6 @@ void File_Mix_Callback(Widget w, XtPointer context, XtPointer info)
       wtmp = XtNameToWidget(file_mix_dialog, "FilterText");
       if (!wtmp) wtmp = XmFileSelectionBoxGetChild(file_mix_dialog, XmDIALOG_FILTER_TEXT);
       if (wtmp) add_completer_to_textfield(ss, wtmp, add_completer_func(filename_completer));
-      add_dialog(ss, file_mix_dialog);
     }
   if (!XtIsManaged(file_mix_dialog)) XtManageChild(file_mix_dialog);
 }
@@ -2319,8 +2320,7 @@ Widget edit_header(snd_info *sp)
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       XtSetArg(args[n], XmNtransient, FALSE); n++;
       edit_header_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Edit_Header, args, n);
-      set_dialog_widget(EDIT_HEADER_DIALOG, edit_header_dialog);
-      add_dialog(ss, edit_header_dialog);
+      set_dialog_widget(ss, EDIT_HEADER_DIALOG, edit_header_dialog);
 
       XtAddCallback(edit_header_dialog, XmNcancelCallback, edit_header_cancel_Callback, ss);
       XtAddCallback(edit_header_dialog, XmNhelpCallback, edit_header_help_Callback, ss);

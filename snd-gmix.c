@@ -361,7 +361,7 @@ GtkWidget *make_mix_panel(snd_state *ss)
   if (mix_panel == NULL)
     {
       mix_panel = gtk_dialog_new();
-      set_dialog_widget(MIX_PANEL_DIALOG, mix_panel);
+      set_dialog_widget(ss, MIX_PANEL_DIALOG, mix_panel);
       gtk_signal_connect(GTK_OBJECT(mix_panel), "delete_event", GTK_SIGNAL_FUNC(delete_mix_panel), (gpointer)ss);
       /* gtk_signal_connect(GTK_OBJECT(mix_panel), "destroy", (GtkSignalFunc)dismiss_mix_panel, (gpointer)ss); */
       gtk_window_set_title(GTK_WINDOW(mix_panel), STR_Mix_Panel);
@@ -370,7 +370,6 @@ GtkWidget *make_mix_panel(snd_state *ss)
       gtk_container_set_border_width (GTK_CONTAINER(mix_panel), 6);
       /* gtk_widget_set_usize (GTK_WIDGET(mix_panel), 200, 300); */
       gtk_widget_realize(mix_panel);
-      add_dialog(ss, mix_panel);
       
       dismiss_button = gtk_button_new_with_label(STR_Dismiss);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(mix_panel)->action_area), dismiss_button, FALSE, TRUE, 10);

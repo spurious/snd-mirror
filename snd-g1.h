@@ -101,7 +101,6 @@ GtkWidget *snd_entry_new(snd_state *ss, GtkWidget *container, int with_white_bac
 
 /* -------- snd-gmain.c -------- */
 
-void add_dialog(snd_state *ss, GtkWidget *dialog);
 void dismiss_all_dialogs(snd_state *ss);
 void snd_doit(snd_state *state, int argc, char **argv);
 #ifdef SND_AS_WIDGET

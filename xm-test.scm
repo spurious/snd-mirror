@@ -84,7 +84,7 @@
        (app (|XtAppContext (car wids)))
        (shell (|Widget (cadr wids)))
        (sound-pane (|Widget (cadddr wids)))
-       (listener (|Widget (list-ref (dialog-widgets) 21)))
+       (listener (|Widget (list-ref (main-widgets) 4)))
        (dpy (|XtDisplay shell))
        (black (|BlackPixelOfScreen 
 		(|DefaultScreenOfDisplay 
