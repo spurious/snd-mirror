@@ -1,0 +1,229 @@
+#! /usr/bin/env gforth-fast
+\ cm-examp.gfm -- (cm-2.4.0/etc/examples) intro.cm, reich.cm -*- forth -*-
+
+\ Copyright (C) 2003--2004 Michael Scholz
+
+\ Author: Michael Scholz <scholz-micha@gmx.de>
+\ Created: Sun Aug 17 02:23:42 CEST 2003
+\ Last: Fri Oct 08 20:27:53 CEST 2004
+\ Ident: $Id: cm-examp.gfm,v 1.43 2004/10/08 18:28:04 mike Exp $
+
+\ This file is part of GFM Gforth Music.
+
+\ This program is free software; you can redistribute it and/or
+\ modify it under the terms of the GNU General Public License as
+\ published by the Free Software Foundation; either version 2 of
+\ the License, or (at your option) any later version.
+
+\ This program is distributed in the hope that it will be
+\ useful, but WITHOUT ANY WARRANTY; without even the implied
+\ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+\ PURPOSE.  See the GNU General Public License for more details.
+
+\ You should have received a copy of the GNU General Public
+\ License along with this program; if not, write to the Free
+\ Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+\ MA 02111-1307 USA
+
+\ Commentary:
+
+\ These examples are found in Rick Taube's CM Common Music package
+\ (cm-2.4.0/etc/examples).  Examples are taken from intro.cm and
+\ reich.cm.
+
+\ cm-inst ( start dur freq amp fm-index -- )
+\ sinus ( len cycl low hi rhy dur amp fm-index -- )
+\ simul ( num -- )
+\ sierpinski ( key ints dur amp depth -- )
+\ drunkard ( num -- )
+\ octie ( num -- )
+\ cage ( offset -- )
+\ piano-phase ( trope pulse amp stay move -- )
+
+\ Code:
+
+true value *clm-use-csndlib*
+0 assert-level !
+
+argc @ 2 > [if]
+    s" -f" 2 arg str= [if] false to *clm-use-csndlib* [then]
+    s" -c" 2 arg str= [if] true to *clm-use-csndlib* [then]
+[then]
+
+require gfm.fs
+
+0e 0e 20e 1e 40e 0.6e 90e 0.5e 100e 0e 10 >vct value ind-env-brass
+: cm-inst ( f: start f: dur f: freq f: amp f: index ) ind-env-brass fm-violin ;
+
+: sinus { w: len f: cycl f: low f: hi f: rhy f: dur f: amp f: fm-index }
+    len 0 do
+	i s>f len s>f f/ two-pi f* cycl f* fsin -1e 1e low hi rescale fround f>s keynum>hertz
+	now@ dur frot amp fm-index cm-inst
+	rhy wait
+    loop
+;
+event: sinus1 ( -- ) 80 4e 20e 100e 0.1e 0.1e 0.5e 1.5e sinus ;event
+event: sinus2 ( -- ) 60 5.7e 50e 80e 0.1e 0.1e 0.5e 0.5e sinus ;event
+
+: simul { num -- }
+    C4 D4 Ef4 F4 G4 Af4 Bf4 C5 8 >vct { pat-ary }
+    0e 0.2e 5e 0.8e 4 >vct { amp-ary }
+    -24 -12 12 24 4 >array { oct-ary }
+    0.1e { f: rhy } 0e { f: freq }
+    num 0 do
+	i 8 mod pat-ary vct@ to freq
+	now@				\ start
+	rhy 1.25e f*			\ dur
+	freq				\ freq
+	i 6 mod s>f amp-ary interp 0.5e f- \ amp
+	1e cm-inst
+	now@				\ start
+	rhy 1.25e f*			\ dur
+	freq hertz>keynum oct-ary rnd-pick array@ + keynum>hertz \ freq
+	i 6 mod s>f amp-ary interp 0.5e f- \ amp
+	1e cm-inst
+	rhy wait
+    loop
+;
+event: simul1 ( -- ) 40 simul ;event
+
+: sierpinski recursive { w: key w: ints f: dur f: amp w: depth }
+    ints array-length 0 do
+	key i ints array@ + { keyn }
+	depth 1 > if
+	    now@ { f: cur }
+	    keyn 12 +			 \ key
+	    ints			 \ ints
+	    dur ints array-length s>f f/ \ dur
+	    amp				 \ amp
+	    depth 1-			 \ depth
+	    sierpinski
+	    cur now!
+	then
+	now@ dur keyn keynum>hertz amp 2e cm-inst
+	dur wait
+    loop
+;
+event: sierp1 ( -- ) A0 hertz>keynum 0 7 5 3 >array 3e 0.3e 4 sierpinski ;event
+event: sierp2 ( -- ) A0 hertz>keynum 0 -1 2 13 4 >array 6e 0.3e 4 sierpinski ;event
+
+: drunkard { num -- }
+    Q S S A A A 6 >vct { rpat }
+    0e 1e 0.5e 0.5e 1e 1e 6 >vct { dur-ary }
+    60 0e 0e { key f: amp f: dur }
+    num 0 do
+	0.2e 0.4e fbetween to amp
+	i s>f num s>f f/ dur-ary interp rpat rnd-pick vct@ f2/ f* to dur
+	now@ dur key keynum>hertz amp 2e cm-inst
+	0.4e ?odds if
+	    now@
+	    dur 1.5e f*
+	    0.5e ?odds if key 11 + else key 13 - then keynum>hertz
+	    amp 3e cm-inst
+	then
+	key 6 30 90 drunk to key
+	dur wait
+    loop
+;
+event: drunkard1 ( -- ) 100 drunkard ;event
+
+: octie { num -- }
+    -24 -12 0 12 24 5 >array rnd-pick array@ { oct }
+    C4 D4 Ef4 F4 G4 Af4 B4 7 >vct { pitches }
+    0.1e { f: rhy }
+    0e 0.2e 5e 0.8e 4 >vct { amp-ary }
+    num 0 do
+	now@
+	rhy 1.25e f*
+	i 7 mod pitches vct@ hertz>keynum oct + keynum>hertz
+	i 6 mod s>f amp-ary interp
+	1e cm-inst
+	rhy wait
+    loop
+;
+event: octie1 ( -- ) 40 octie ;event
+
+: make-chance ( ary-1 ary-w ary-interp "name" -- )
+    create , , ,
+  does> ( idx -- n )
+    { f: idx } dup @ { ary-interp } dup cell+ @ { ary-w } 2 cells + @ { ary-1 }
+    idx ary-interp interp { f: val }
+    1e val 0.25e 3 >vct { rnd-ary }
+    begin rnd-ary rnd-pick over -rot vct@ ?chance 0= while drop repeat
+    case
+	0 of ary-1 rnd-pick vct@ hertz>keynum endof
+	1 of ary-w rnd-pick vct@ hertz>keynum endof
+	2 of -1 endof
+    endcase
+;
+
+Bf3 D4 F4 3 >vct
+G3 A3 C4 E4 G4 5 >vct
+0e 0.5e 90e 4e 4 >vct make-chance cage-rnd
+
+: cage { offset -- }
+    0e { f: rhy } 0 { key }
+    S A T T 4 >vct { rhy-ary }
+    100 0 do
+	rhy-ary rnd-pick vct@ to rhy
+	i s>f cage-rnd to key
+	key 0>= if now@ rhy key offset + keynum>hertz 0.3e 1e cm-inst then
+	rhy wait
+    loop
+;
+event: cage4 ( -- )
+    65e tempo!
+    now@ { f: cur }
+    25 -12 do i cage now@ cur now! 12 +loop
+    now! 3 0 do now@ fmax now! loop
+    60e tempo!
+;event
+
+: piano-phase { w: trope f: pulse f: amp w: stay w: move }
+    trope vct-length { len }
+    pulse f2* 0.01e f- { f: dur }
+    len len * stay move + * { stop }
+    now@ { f: cur }
+    stop 0 do
+	now@ dur i len mod trope vct@ amp 1.5e cm-inst
+	pulse wait
+    loop
+    cur now!
+    len stay * { ary1-len }
+    len move * { ary2-len }
+    ary1-len ary2-len + { ary-len }
+    ary1-len 0 do 1e loop ary2-len 0 do ary2-len 1 - s>f ary2-len s>f f/ loop
+    ary-len >vct { tempo }
+    stop 0 do
+	now@ dur i len mod trope vct@ amp 0.5e cm-inst
+	pulse i ary-len mod tempo vct@ f* wait
+    loop
+;
+E4 Fs4 B4 Cs5 D5 Fs4 E4 Cs5 B4 Fs4 D5 Cs5 12 >vct value pnotes
+event: reich ( -- ) pnotes 0.15e 0.3e 5 3 piano-phase ;event
+
+lambda:
+    .sndversion
+    sinus1 1e wait
+    sinus2 1e wait
+    simul1 1e wait
+    sierp1 1e wait
+    sierp2 1e wait
+    drunkard1 1e wait
+    octie1 1e wait
+    octie1 1e wait
+    octie1 1e wait
+    cage4 1e wait
+    reich
+;
+true :play
+2 :channels
+' jc-reverb :reverb
+false :notehook
+*clm-search-list* s" cm-examp.snd" $+ :output
+*clm-search-list* s" cm-examp.reverb" $+ :rev-file-name
+s" cm-2.4.0/etc/examples/intro.cm using GFM Gforth Music" :comment with-sound
+
+script? [if] bye [then]
+
+\ cm-examp.gfm ends here

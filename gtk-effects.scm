@@ -354,7 +354,7 @@
 						   (if pts
 						       (if with-env
 							   (env-sound with-env (car pts) (- (cadr pts) (car pts)))
-							   (scale-sound-by gain-amount (car pts) (- (cadr pts) (car pts))))))))))
+							   (scale-by gain-amount (car pts) (- (cadr pts) (car pts))))))))))
 				     (lambda (w data)
 				       (help-dialog 
 					"Gain"
@@ -413,7 +413,7 @@
 						   (snd-print "no selection"))
 					       (let ((pts (plausible-mark-samples)))
 						 (if pts
-						     (scale-sound-to normalize-amount (car pts) (- (cadr pts) (car pts))))))))
+						     (scale-to normalize-amount (car pts) (- (cadr pts) (car pts))))))))
 				     (lambda (w data)
 				       (help-dialog 
 					"Normalize"
@@ -2610,7 +2610,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 			 (remove-click (+ click 2))))))
 	       (remove-click 0)))
 (add-to-menu effects-menu "Remove DC" (lambda () 
-					(map-chan
+					(map-channel
 					 (let ((lastx 0.0)
 					       (lasty 0.0))
 					   (lambda (inval)

@@ -2695,10 +2695,34 @@ Use <a href="extsnd.html#channel_to_vct">channel-&gt;vct</a> instead.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
+<!-- scale-sound-by -->
+<tr><td colspan=2>
+<a class=def NAME="scalesoundby">scale-sound-by</a> (scaler <i>beg num snd chn edpos</i>)
+</td></tr>
+<tr><td></td><td>
+scales the samples in the given channel between beg and beg + num by scaler.  If the channel argument is omitted,
+<b>scale-sound-by</b> scales the entire sound.  <i>beg</i> defaults to 0; <i>num</i> defaults to the length of the channel.
+<i>snd</i> defaults to the selected sound, and <i>chn</i> to the selected channel.  Unlike scale-by, this ignores the sync setting.
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+
+<!-- scale-sound-to -->
+<tr><td colspan=2>
+<a class=def NAME="scalesoundto">scale-sound-to</a> (norm <i>beg num snd chn</i>)
+</td></tr>
+<tr><td></td><td>
+normalizes the samples in the given channel between beg and beg + num to norm.  If the channel argument is omitted,
+<b>scale-sound-to</b> normalizes the entire sound.  <i>beg</i> defaults to 0; <i>num</i> defaults to the length of the channel.
+<i>snd</i> defaults to the selected sound, and <i>chn</i> to the selected channel.  Unlike scale-to, this ignores the sync setting.
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+
 <!-- vct->samples -->
 <tr><td colspan=2><em class=emdef>vct-&gt;samples</em> (samp samps data <i>snd chn</i>)
 </td></tr>
-<tr><td></td><td>A synonym for <a href="#setsamples">set-samples</a>, but you can also pass just a vct as the first argument, or a start
+<tr><td></td><td>A synonym for <a href="extsnd.html#setsamples">set-samples</a>, but you can also pass just a vct as the first argument, or a start
 sample and a vct as the second argument.  Use <a href="extsnd.html#vct_to_channel">vct-&gt;channel</a> instead.
 </td></tr>
 

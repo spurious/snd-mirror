@@ -30213,6 +30213,12 @@ EDITS: 1
 	  (< (abs (- a b)) .001))
       (eq? a b)))
 
+(define* (insert-vct v #:optional beg dur snd chn)
+  (insert-samples (or beg 0) dur v snd chn #f #f (format #f "insert-vct ~A ~A ~A" (vct->string v) beg dur)))
+
+(define* (clm-channel-test #:optional snd chn)
+  (clm-channel (make-two-zero 1 -1) 0 #f snd chn #f #f "clm-channel-test"))
+
 (if (or full-test (= snd-test 19) (and keep-going (<= snd-test 19)))
     (let ((nind (open-sound "oboe.snd")))
       (run-hook before-test-hook 19)
@@ -30391,7 +30397,7 @@ EDITS: 5
 	  (set! sfile nind)
 	  (load "hiho.scm")
 	  (set! (optimization) old-opt))
-	(if (not (equal? (edit-fragment 1) '("xen 0 0 #f" "xen" 0 50828)))
+	(if (not (equal? (edit-fragment 1) '("ptree-channel" "xen" 0 50828)))
 	    (snd-display ";save-edit-history xen 1: ~A?" (edit-fragment 1)))
 	(close-sound nind))
       
@@ -30792,9 +30798,12 @@ EDITS: 2
 		(snd-display ";embed save-state vals: ~A" (channel->vct 0 25 ind 0))))
 	  )))
 
+      ;; ---------------- edit-list->function ----------------
+
       (let ((ind (open-sound "oboe.snd")))
 	(let ((mx0 (maxamp))
 	      (frs (frames)))
+	  
 	  ;; ---- simple scale
 	  (scale-channel 2.0)
 	  (if (fneq (* 2 mx0) (maxamp)) (snd-display ";edit-list->function off to a bad start: ~A" (maxamp)))
@@ -31037,8 +31046,6 @@ EDITS: 2
 	      (if (fneq mx 0.347) (snd-display ";edit-list->function called (8): ~A" mx))))
 	  (revert-sound ind)
 	  
-	  ;; TODO: xen is broken
-	  
 	  ;; ---- simple 1 sample insert
 	  (insert-sample 100 .1)
 	  (if (not (= (frames) (+ frs 1))) (snd-display ";edit-list->function insert-sample: ~A ~A" frs (frames)))
@@ -31185,7 +31192,7 @@ EDITS: 2
 	    (revert-sound ind)
 	    (func ind 0))
 	  (revert-sound ind)
-
+	  
 	  
 	  ;; ---- sticky env end
 	  (env-channel (make-env '(0 0 1 1 2 0) :end 500) 1000 1000)
@@ -31325,8 +31332,8 @@ EDITS: 2
 	    (func ind 0)
 	    (if (fneq mx (maxamp)) (snd-display ";edit-list->function 19 re-filter: ~A ~A" mx (maxamp))))
 	  (revert-sound)
-
-
+	  
+	  ;; ---- *.scm
 	  (let ((ctr 1))
 	    (for-each
 	     (lambda (func1 descr)
@@ -31340,6 +31347,8 @@ EDITS: 2
 	       (set! ctr (1+ ctr))
 	       (revert-sound ind))
 	     (list 
+	      (lambda () (insert-vct (vct 1.0 0.5) 0 2))
+	      (lambda () (clm-channel-test))
 	      
 	      ;; examp.scm
 	      (lambda () (fft-edit 1000 3000))
@@ -31357,6 +31366,7 @@ EDITS: 2
 	      (lambda () (compand-channel))
 	      (lambda () (smooth-channel-via-ptree))
 	      (lambda () (ring-modulate-channel 300))
+	      (lambda () (filtered-env '(0 0 1 1 2 0)))
 	      
 	      ;; extensions.scm
 	      (lambda () (mix-channel "1a.snd" 1200))
@@ -31390,7 +31400,8 @@ EDITS: 2
 	      
 	      )
 	     (list 
-;	   "(lambda (snd chn) (normalized-mix \"1a.snd\" 0 0 snd chn))"
+	      "(lambda (snd chn) (insert-vct (vct 1.0 0.5) 0 2 snd chn))"
+	      "(lambda (snd chn) (clm-channel-test snd chn))"
 	      
 	      "(lambda (snd chn) (fft-edit 1000 3000 snd chn))"
 	      "(lambda (snd chn) (fft-squelch 0.01 snd chn))"
@@ -31407,6 +31418,7 @@ EDITS: 2
 	      "(lambda (snd chn) (compand-channel 0 #f snd chn))"
 	      "(lambda (snd chn) (smooth-channel-via-ptree 0 #f snd chn))"
 	      "(lambda (snd chn) (ring-modulate-channel 300 0 #f snd chn))"
+	      "(lambda (snd chn) (filtered-env (quote (0 0 1 1 2 0)) snd chn))"
 	      
 	      "(lambda (snd chn) (mix-channel \"1a.snd\" 1200 #f snd chn))"
 	      "(lambda (snd chn) (insert-channel \"1a.snd\" 1200 #f snd chn))"
@@ -31436,7 +31448,8 @@ EDITS: 2
 	      "(lambda (snd chn) (spectral-polynomial (vct 0.0 1.0) snd chn))"
 	      "(lambda (snd chn) (notch-channel (quote (60.0 120.0 240.0)) #f #f #f snd chn))"
 	      
-	      )))
+	      )
+	     ))
 	  
 	  (close-sound ind)
 	  ))
@@ -32687,24 +32700,24 @@ EDITS: 2
 	(undo)
 	(make-selection 5 15)
 	(filter-selection '(0 1 1 1) 100)
-	(if (not (equal? (edit-fragment 2) (list "filter-channel" "set" 5 11)))
+	(if (not (equal? (edit-fragment 2) (list "filter-selection" "set" 5 11)))
 	    (snd-display ";filter-selection truncated: ~A" (edit-fragment 2)))
 	(if (not (vequal (channel->vct 20 10) (make-vct 10 0.0)))
 	    (snd-display ";filter-selection trunc overwrote: ~A" (channel->vct 20 10)))
 	(undo)
 	(filter-selection '(0 1 1 1) 100 #f)  
-	(if (not (equal? (edit-fragment 2) (list "filter-channel" "set" 5 111)))
+	(if (not (equal? (edit-fragment 2) (list "filter-selection" "set" 5 111)))
 	    (snd-display ";filter-selection not truncated: ~A" (edit-fragment 2)))
 	(if (not (vequal (channel->vct 50 10) (vct -0.016 0.018 -0.021 0.024 -0.029 0.035 -0.045 0.064 -0.106 0.318)))
 	    (snd-display ";filter-selection no trunc: ~A" (channel->vct 50 10)))
 	(undo)
 	(filter-selection '(0 1 1 1) 1000 #t)
-	(if (not (equal? (edit-fragment 2) (list "filter-channel" "set" 5 11)))
+	(if (not (equal? (edit-fragment 2) (list "filter-selection" "set" 5 11)))
 	    (snd-display ";filter-selection truncated (1000): ~A" (edit-fragment 2)))
 	(if (fneq (maxamp) 0.0) (snd-display ";filter-selection 1000 untrunc? ~A" (maxamp)))
 	(undo)
 	(filter-selection '(0 1 1 1) 1000 #f)
-	(if (not (equal? (edit-fragment 2) (list "filter-channel" "set" 5 1011)))
+	(if (not (equal? (edit-fragment 2) (list "filter-selection" "set" 5 1011)))
 	    (snd-display ";filter-selection not truncated (1000): ~A" (edit-fragment 2)))
 	(if (fneq (maxamp) 0.318) (snd-display ";filter-selection 1000 no trunc? ~A" (maxamp)))
 	(if (not (vequal (channel->vct 505 10) (vct 0.035 -0.045 0.064 -0.106 0.318 0.318 -0.106 0.064 -0.045 0.035)))
@@ -41248,7 +41261,7 @@ EDITS: 2
 		      (catch 'no-such-edit
 			     (lambda ()
 			       (if (and (not (equal? (edit-fragment 2) (list "filter-channel" "set" 0 50868)))
-					(not (equal? (edit-fragment 2) (list "Enved: flt" "set" 0 50828))))
+					(not (equal? (edit-fragment 2) (list "Enved: flt" "set" 0 50868))))
 				   (snd-display ";apply flt fragment: ~A?" (edit-fragment 2))))
 			     (lambda args (snd-display ";click enved apply failed")))
 		      (click-button reset-button) (force-event)

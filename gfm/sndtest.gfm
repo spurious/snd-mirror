@@ -1,0 +1,320 @@
+#! /usr/bin/env gforth
+\ sndtest.gfm -- sndlib test -*- forth -*-
+
+\ Copyright (C) 2003--2004 Michael Scholz
+
+\ Author: Michael Scholz <scholz-micha@gmx.de>
+\ Created: Wed Aug 27 17:20:45 CEST 2003
+\ Last: Sat Oct 09 01:13:23 CEST 2004
+\ Ident: $Id: sndtest.gfm,v 1.50 2004/10/08 23:14:01 mike Exp $
+
+\ This file is part of GFM Gforth Music.
+
+\ This program is free software; you can redistribute it and/or
+\ modify it under the terms of the GNU General Public License as
+\ published by the Free Software Foundation; either version 2 of
+\ the License, or (at your option) any later version.
+
+\ This program is distributed in the hope that it will be
+\ useful, but WITHOUT ANY WARRANTY; without even the implied
+\ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+\ PURPOSE.  See the GNU General Public License for more details.
+
+\ You should have received a copy of the GNU General Public
+\ License along with this program; if not, write to the Free
+\ Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+\ MA 02111-1307 USA
+
+\ Commentary:
+
+\ some tests need one or more of the following sound files, contents
+\ isn't important:
+\ 
+\ fyow.snd
+\ oboe.snd
+\ pistol.snd
+
+\ Code:
+
+require utils.fs
+
+: usage ( -- )
+    ." Usage: sndtest.gfm  [ options ]" cr
+    ."    -f, --fsound      	Forth sound library version" cr
+    ."    -c, --csound      	C sound library version" cr
+    ."    -p, --play FILENAME   play file" cr cr
+    ."    -h, --help            display this help message and exit" cr
+    bye
+;
+
+false value *clm-use-csndlib*
+false value *clm-dac-output*
+\ 0 assert-level !
+
+argc @ 2 > [if]
+    s" -f" 2 arg str= [if] false to *clm-use-csndlib* [then]
+    s" -c" 2 arg str= [if] true to *clm-use-csndlib* [then]
+    s" -h" 2 arg str= [if] usage [then]
+[then]
+
+script? 0= [if] cr [then]
+require gfm.fs
+.sndversion
+
+*clm-search-list* s" forth.snd" $+ $to *clm-file-name*
+*clm-search-list* s" forth.reverb" $+ $to *clm-reverb-file-name*
+
+\ input definition used by SRC, CONVOLVE, GRANULATE and PHASE-VOCODER
+: input-fn { gen -- xt; dir gen addr -- r }
+    lambda-create gen , latestxt
+  does> { dir gen addr -- r }
+    addr @ readin
+;
+
+\ === SRC ===
+\ It is possible to set the input definition in-between of the run
+\ loop like in SRC-SIMP-2, but a better solution is to provide it at
+\ initialization time to MAKE-SRC/CONVOLVE/GRANULATE/PHASE-VOCODER
+\ like SRC-SIMP-1.
+instrument: src-simp-1 { f: start f: dur f: amp f: srt srt-env d: fname -- }
+    fname open-input { fil }
+    fil input-fn ( input ) srt 10 make-src { sr }
+    srt-env 1e dur make-env { senv }
+    90e random :locsig-degree
+    start dur run-instrument false amp senv env sr src f* end-run
+    fil close-input
+    sr mus-free
+    senv mus-free
+;instrument
+
+instrument: src-simp-2 { f: start f: dur f: amp f: srt f: fmamp f: fmfreq d: fname -- }
+    fname open-input { fil }
+    false srt 10 make-src { sr }
+    fmfreq 0e make-oscil { os }
+    90e random :locsig-degree
+    start dur run-instrument fil input-fn fmamp 0e 0e os oscil f*  sr src  amp f*  end-run
+    fil close-input
+    sr mus-free
+    os mus-free
+;instrument
+
+instrument: hello-dentist { f: start f: dur f: freq f: amp d: fname -- }
+    fname open-input { fil }
+    freq amp make-rand-interp { rn }
+    fil input-fn 1e 5 make-src { sr }
+    90e random :locsig-degree
+    start dur run-instrument false 0e rn rand-interp sr src end-run
+    fil close-input
+    rn mus-free
+    sr mus-free
+;instrument
+
+\ === CONVOLVE ===
+instrument: conv-array { f: start f: dur filt d: fname f: amp -- }
+    fname open-input { fil }
+    fil input-fn filt make-convolve { cv }
+    90e random :locsig-degree
+    start dur run-instrument  false cv convolve  amp f*  end-run
+    fil close-input
+    cv mus-free
+;instrument
+
+instrument: conv-file { f: start f: dur d: filt d: fname f: amp -- }
+    fname open-input { fil }
+    filt sound-frames { len }
+    filt 0 0 len file>array { data }
+    fil input-fn data make-convolve { cv }
+    90e random :locsig-degree
+    start dur run-instrument  false cv convolve  amp f*  end-run
+    fil close-input
+    cv mus-free
+    data free-vct
+;instrument
+
+\ === GRANULATE ===
+instrument: gran-snd { f: start f: dur f: orig-beg d: fname -- }
+    fname sound-srate s>f orig-beg f* fround f>s { fstart } 
+    fname 0 fstart 1 make-readin { fil }
+    fil input-fn 1e false make-granulate { ex-a }
+    90e random :locsig-degree
+    start dur run-instrument  false ex-a granulate  end-run
+    fil close-input
+    ex-a mus-free
+;instrument
+
+instrument: grev { f: start f: dur f: exp-amt d: fname f: fstart -- }
+    fstart seconds>samples { fbeg }
+    fname 0 fbeg start fstart f< if -1 else 1 then make-readin { fil }
+    false exp-amt false make-granulate { ex-a }
+    90e random :locsig-degree
+    start dur run-instrument  fil input-fn ex-a granulate  end-run
+    fil close-input
+    ex-a mus-free
+;instrument
+
+\ === PHASE VOCODER ===
+\ no analyze, edit and synthesize definitions
+instrument: phase-simp-1 { f: start f: dur f: amp d: fname -- }
+    fname open-input { fil }
+    fil input-fn 512 4 128 1e false false false make-phase-vocoder { pv }
+    90e random :locsig-degree
+    start dur run-instrument  false pv phase-vocoder  amp f*  end-run
+    fil close-input
+    pv mus-free
+;instrument
+
+\ with analyze, edit and synthesize definitions
+: pv-analyze-fn { val -- xt ; input gen addr -- f }
+    lambda-create val , latestxt
+  does> { input gen addr -- f }
+    1 addr @ +!
+    true
+;
+: pv-edit-fn { val -- xt; gen addr -- f }
+    lambda-create val , latestxt
+  does> { gen addr --  f }
+    1 addr @ +!
+    true
+;
+: pv-synthesis-fn { val -- xt; gen addr -- f }
+    lambda-create val , latestxt
+  does> { gen addr --  f }
+    1 addr @ +!
+    0e
+;
+instrument: phase-simp-2 { f: start f: dur f: amp d: fname -- }
+    fname open-input { fil }
+    0 0 0 { w^ incalls w^ outcalls w^ edcalls }
+    false 512 4 128 1e
+    incalls pv-analyze-fn		\ count the in calls
+    edcalls pv-edit-fn			\ count the edit calls
+    outcalls pv-synthesis-fn		\ count the out calls and return 0e
+    make-phase-vocoder { pv }
+    90e random :locsig-degree
+    start dur run-instrument  fil input-fn pv phase-vocoder  amp f*  end-run
+    incalls ? edcalls ? outcalls ? cr	\ print the counter values
+    fil close-input
+    pv mus-free
+;instrument
+
+\ with edit function only
+: edit-fn-3 { -- xt; gen addr -- f }
+    lambda-create latestxt
+  does> { gen addr -- f }
+    gen pv-length@ { N }
+    gen pv-hop@ { D }
+    N 2/ { N2 }
+    D s>f 1/f { f: pscl }
+    two-pi N s>f f/ { f: kscl }
+    0e { f: phasediff }
+    N2 0 do
+	i gen pv-freqs@ i gen pv-lastphase@ f- to phasediff
+	i gen pv-freqs@ i gen pv-lastphase!
+	begin phasediff pi f> while phasediff two-pi f- to phasediff repeat
+	begin phasediff pi fnegate f< while phasediff two-pi f+ to phasediff repeat
+	phasediff pscl f*  i s>f kscl f*  f+  f2/  i gen pv-freqs!
+    loop
+    false
+;
+instrument: phase-simp-3 { f: start f: dur f: amp d: fname -- }
+    fname open-input { fil }
+    fil input-fn 512 4 128 1e false edit-fn-3 false make-phase-vocoder { pv }
+    90e random :locsig-degree
+    start dur run-instrument  false pv phase-vocoder  amp f*  end-run
+    fil close-input
+    pv mus-free
+;instrument
+
+: edit-fn-4 { f: gate -- xt; gen addr -- f }
+    lambda-create gate f, latestxt
+  does> { gen addr -- f }
+    addr f@ { f: gate }
+    gen pv-length@ 0 do
+	i gen pv-amp-increments@ gate f< if 0e i gen pv-amp-increments! then
+    loop
+    true
+;
+instrument: phase-simp-4 { f: start f: dur f: amp f: gate d: fname -- }
+    fname open-input { fil }
+    false 512 4 128 1e false gate edit-fn-4 false make-phase-vocoder { pv }
+    90e random :locsig-degree
+    start dur run-instrument  fil input-fn pv phase-vocoder  amp f*  end-run
+    fil close-input
+    pv mus-free
+;instrument
+
+event: input-test
+    2e { f: dur }
+    \ src
+    now@ 1.5e 0.5e 0.2e  0e 0e 50e 1e 100e 0e 6 >vct s" fyow.snd" src-simp-1
+    now@ 1.5e 0.2e f+ f+ now!
+    now@ 1e 0.5e 1e 0.3e 20e s" fyow.snd" src-simp-2 now@ 1e 0.2e f+ f+ now!
+    now@ 2e 0.5e 0.01e 1e 10e s" fyow.snd" src-simp-2 now@ 2e 0.2e f+ f+ now!
+    now@ 1e 40e 0.5e s" oboe.snd" hello-dentist now@ 1e 0.2e f+ f+ now!
+    \ convolve
+    now@ 1e 0.5e 0.2e 0.1e 0.05e 0e 0e 0e 0e 8 >vct s" fyow.snd" 0.5e conv-array
+    now@ 1e 0.2e f+ f+ now!
+    now@ 1.2e s" 1.snd" s" oboe.snd" 0.3e conv-file now@ 1.2e 0.2e f+ f+ now!
+    now@ 1e s" 1.snd" s" v.snd" 0.3e conv-file now@ 1e 0.2e f+ f+ now!
+    \ granulate
+    now@ 2e 2e s" pistol.snd" 1e grev now@ 2e 0.2e f+ f+ now!
+    now@ 2.2e 0e s" oboe.snd" gran-snd now@ 2.2e 0.2e f+ f+ now!
+    \ phase-vocoder
+    now@ 1e 0.5e s" fyow.snd" phase-simp-1 now@ 1e 0.2e f+ f+ now!
+    now@ 1e 0.5e s" fyow.snd" phase-simp-3 now@ 1e 0.2e f+ f+ now!
+    now@ 1e 0.5e 0.05e s" fyow.snd" phase-simp-4 now@ 1e 0.2e f+ f+ now!
+;event
+
+\ snd-7/clm.html
+instrument: move-osc { f: start f: dur -- }
+    0.3e { f: amp }
+    440e 0e make-oscil { os }
+    0e 0e 1e 90e 4 >vct amp dur make-env { en }
+    90e random :locsig-degree
+    start dur run-instrument
+	0e 0e os oscil  amp  f*
+	en env 1e *locsig* move-locsig
+    end-run
+    os mus-free
+    en mus-free
+;instrument
+
+event: move-test ( -- )
+    0e 2e move-osc
+;event
+
+event: test-all
+    2 to *clm-channels*
+    ['] nrev to *clm-reverb*
+    \ tests from clm-ins.fs
+    ['] fm-violin-test with-sound
+    ['] resflt-test with-sound
+    ['] fofins-test with-sound
+    ['] formant-test with-sound
+    ['] touch-tone-test false :reverb with-sound
+    ['] fm-insect-test with-sound
+    ['] fm-noise-test ['] jc-reverb :reverb with-sound
+    ['] pqw-test with-sound
+    ['] anoi-test with-sound
+    ['] pluck-test false :reverb 1 :channels with-sound
+    ['] polter-test with-sound
+    \ tests see above
+    ['] move-test with-sound
+    ['] input-test false :reverb with-sound
+;event
+
+: main ( -- )
+    argc @ 2 > if
+	s" -p" 2 arg str= if 3 arg play-sound exit then
+	s" -h" 2 arg str= if usage then
+    then
+    test-all
+;
+
+script? [if]
+    main
+    .s f.s cr
+    bye
+[then]
+
+\ sndtest.gfm ends here

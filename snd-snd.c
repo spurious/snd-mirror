@@ -1311,10 +1311,14 @@ void sp_name_click(snd_info *sp)
 
 /* ---------------- save and restore control panel buttons ----------------*/
 
+/* TODO: what about: contrast_amp, expand_length|ramp|hop|jitter, reverb_feedback|low_pass|decay
+ * TODO: what about remembering the remembered controls state in save-state?
+ */
+
 typedef struct {
   Float amp, speed, contrast, expand, revscl, revlen;
   env *filter_env;
-  bool expand_on, contrast_on, reverb_on, filter_on, direction;
+  bool expand_on, contrast_on, reverb_on, filter_on, reversed;
   int filter_order;
 } ctrl_state;
 
@@ -1356,8 +1360,8 @@ void save_controls(snd_info *sp)
       cs->filter_env = copy_env(sp->filter_control_envelope);
     }
   if (sp->speed_control_direction == 1) 
-    cs->direction = false; 
-  else cs->direction = true;
+    cs->reversed = false; 
+  else cs->reversed = true;
 }
 
 void restore_controls(snd_info *sp) 
@@ -1371,7 +1375,7 @@ void restore_controls(snd_info *sp)
       cs = (ctrl_state *)(sp->saved_controls);
       cs->amp = DEFAULT_AMP_CONTROL;
       cs->speed = DEFAULT_SPEED_CONTROL;
-      cs->direction = false; /* false = forward, true = backward (this is the button's view) */
+      cs->reversed = false; /* (this is the button's view) */
       cs->expand = DEFAULT_EXPAND_CONTROL;
       cs->expand_on = DEFAULT_EXPAND_CONTROL_P;
       cs->revscl = DEFAULT_REVERB_CONTROL_SCALE;
@@ -1387,7 +1391,7 @@ void restore_controls(snd_info *sp)
   toggle_contrast_button(sp, cs->contrast_on);
   toggle_reverb_button(sp, cs->reverb_on);
   toggle_filter_button(sp, cs->filter_on);
-  toggle_direction_arrow(sp, cs->direction);
+  toggle_direction_arrow(sp, cs->reversed);
   set_amp(sp, cs->amp);
   set_speed(sp, cs->speed);
   set_contrast(sp, cs->contrast);
@@ -3767,6 +3771,53 @@ static XEN g_set_filter_control_envelope(XEN val, XEN snd)
 
 WITH_REVERSED_ARGS(g_set_filter_control_envelope_reversed, g_set_filter_control_envelope)
 
+/* TODO: g_controls_to_channel doc test handle settings etc
+   TODO: similarly ladspa->channel
+*/
+
+static XEN g_controls_to_channel(XEN settings, XEN beg, XEN dur, XEN snd, XEN chn, XEN edpos, XEN origin)
+{
+  #define H_controls_to_channel "(" S_controls_to_channel " settings beg dur snd chn edpos origin) sets up \
+snd's controls to reflect 'settings' (unspecified settings are not changed), the applies the controls as \
+an edit of channel 'chn'. The 'settings' argument is a list:\n\
+\n\
+(list amp speed\n\
+  (list contrast_on contrast contrast_amp)\n\
+  (list expand_on expand expand_length expand_ramp expand_hop expand_jitter)\n\
+  (list reverb_on reverb_scale reverb_length reverb_feedback reverb_low_pass reverb_decay)\n\
+  (list filter_on filter_order filter_env))\n\
+\n\
+where #f or an empty list leaves the associated settings unchanged.  So, to mimic \
+clicking the 'Apply' button, (" S_controls_to_channel ")."
+
+  snd_info *sp;
+  chan_info *cp;
+  int pos;
+  ASSERT_CHANNEL(S_controls_to_channel, snd, chn, 4);
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(beg), beg, XEN_ARG_2, S_controls_to_channel, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(dur), dur, XEN_ARG_3, S_controls_to_channel, "an integer");
+  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, XEN_ARG_7, S_controls_to_channel, "a string");
+  sp = get_sp(snd, NO_PLAYERS); /* control changes make sense, but not 'apply' -- expecting just 'play' if a player */
+  if (sp)
+    {
+      apply_state *ap;
+      int old_selected_channel;
+      if (XEN_OFF_T_P(beg)) apply_beg = XEN_TO_C_OFF_T(beg); else apply_beg = 0;
+      if (XEN_OFF_T_P(dur)) apply_dur = XEN_TO_C_OFF_T(dur); else apply_dur = 0;
+      cp = get_cp(snd, chn, S_controls_to_channel);
+      old_selected_channel = sp->selected_channel;
+      sp->selected_channel = cp->chan;
+      pos = to_c_edit_position(cp, edpos, S_controls_to_channel, XEN_ARG_6);
+      ss->apply_choice = APPLY_TO_CHANNEL;
+      sp->applying = true;
+      ap = (apply_state *)make_apply_state((void *)sp);
+      if (ap)
+	while (apply_controls((Indicium)ap) == BACKGROUND_CONTINUE);
+      sp->selected_channel = old_selected_channel;
+    }
+  return(settings);
+}
+
 static XEN g_apply_controls(XEN snd, XEN choice, XEN beg, XEN dur)
 {
   #define H_apply_controls "(" S_apply_controls " (snd #f) (choice 0) (beg 0) (dur len)): \
@@ -4537,6 +4588,7 @@ XEN_VARGIFY(g_new_sound_w, g_new_sound)
 XEN_ARGIFY_1(g_revert_sound_w, g_revert_sound)
 XEN_VARGIFY(g_save_sound_as_w, g_save_sound_as)
 XEN_ARGIFY_4(g_apply_controls_w, g_apply_controls)
+XEN_ARGIFY_7(g_controls_to_channel_w, g_controls_to_channel)
 XEN_ARGIFY_1(g_filter_control_envelope_w, g_filter_control_envelope)
 XEN_ARGIFY_2(g_set_filter_control_envelope_w, g_set_filter_control_envelope)
 XEN_ARGIFY_1(g_cursor_follows_play_w, g_cursor_follows_play)
@@ -4659,6 +4711,7 @@ XEN_ARGIFY_1(g_equalize_panes_w, g_equalize_panes)
 #define g_revert_sound_w g_revert_sound
 #define g_save_sound_as_w g_save_sound_as
 #define g_apply_controls_w g_apply_controls
+#define g_controls_to_channel_w g_controls_to_channel
 #define g_filter_control_envelope_w g_filter_control_envelope
 #define g_set_filter_control_envelope_w g_set_filter_control_envelope
 #define g_cursor_follows_play_w g_cursor_follows_play
@@ -4803,6 +4856,7 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
   XEN_DEFINE_PROCEDURE(S_revert_sound,           g_revert_sound_w,            0, 1, 0, H_revert_sound);
   XEN_DEFINE_PROCEDURE(S_save_sound_as,          g_save_sound_as_w,           0, 0, 1, H_save_sound_as);
   XEN_DEFINE_PROCEDURE(S_apply_controls,         g_apply_controls_w,          0, 4, 0, H_apply_controls);
+  XEN_DEFINE_PROCEDURE(S_controls_to_channel,    g_controls_to_channel_w,     0, 7, 0, H_controls_to_channel);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_filter_control_envelope, g_filter_control_envelope_w, H_filter_control_envelope,
 					    S_setB S_filter_control_envelope, g_set_filter_control_envelope_w, g_set_filter_control_envelope_reversed, 

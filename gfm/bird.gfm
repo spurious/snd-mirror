@@ -1,0 +1,1096 @@
+#! /usr/bin/env gforth-fast
+\ bird.gfm -- clm-2/bird.clm -*- forth -*-
+
+\ Copyright (C) 2003--2004 Michael Scholz
+
+\ Author: Michael Scholz <scholz-micha@gmx.de>
+\ Created: Mon Aug 25 16:42:06 CEST 2003
+\ Last: Fri Oct 08 20:27:31 CEST 2004
+\ Ident: $Id: bird.gfm,v 1.35 2004/10/08 18:27:38 mike Exp $
+
+\ This file is part of GFM Gforth Music.
+
+\ This program is free software; you can redistribute it and/or
+\ modify it under the terms of the GNU General Public License as
+\ published by the Free Software Foundation; either version 2 of
+\ the License, or (at your option) any later version.
+
+\ This program is distributed in the hope that it will be
+\ useful, but WITHOUT ANY WARRANTY; without even the implied
+\ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+\ PURPOSE.  See the GNU General Public License for more details.
+
+\ You should have received a copy of the GNU General Public
+\ License along with this program; if not, write to the Free
+\ Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+\ MA 02111-1307 USA
+
+\ Commentary:
+\
+\ This is a translation of the score file clm-2/bird.clm.
+
+\ Code:
+
+true value *clm-use-csndlib*
+0 assert-level !
+
+argc @ 2 > [if]
+    s" -f" 2 arg str= [if] false to *clm-use-csndlib* [then]
+    s" -c" 2 arg str= [if] true to *clm-use-csndlib* [then]
+[then]
+
+require gfm.fs
+
+0e 0e 0.25e 1e 0.6e 0.7e 0.75e 1e 1e 0e 10 >vct value amp
+0e 0e 0.01e 1e 0.99e 1e 1e 0e 8 >vct value tap-amp
+0e 0e 0.25e 1e 0.75e 1e 1e 0e 8 >vct value bird-amp
+0e 0e 1e 1e 4 >vct value bird-up
+0e 1e 1e 0e 4 >vct value bird-down
+
+event: orchard-oriole { f: beg }
+    0e 0e 0.6e 1e 1e 0.6e 6 >vct { oriupdwna }
+    0e 0.5e 0.3e 1e 1e 0e 6 >vct { oriupdwnb }
+    0e 0.9e 0.15e 1e 0.4e 0.3e 0.6e 0.6e 0.85e 0e 1e 0e 12 >vct { oribiga }
+    0e 1e 0.05e 0.5e 0.1e 1e 0.25e 0e 0.85e 0.5e 1e 0e 12 >vct { orimid }
+    0e 0.3e 0.25e 0e 1e 1e 6 >vct { oridwnup }
+    0e 0e 0.1e 1e 1e 0e 6 >vct { oriamp }
+
+    0.00e beg f+ 0.03e 3700e  100e 0.05e bird-down amp bird
+    0.41e beg f+ 0.05e 2500e 1000e 0.10e bird-up amp bird
+    0.50e beg f+ 0.10e 2000e  800e 0.2e oriupdwna amp 1e 1e 2e 0.02e 3e 0.05e 6 >vct bigbird
+    0.65e beg f+ 0.03e 3900e 1200e 0.10e bird-down amp bird
+    0.70e beg f+ 0.21e 2000e 1200e 0.15e oribiga amp 1e 1e 2e 0.05e 4 >vct bigbird
+    1.00e beg f+ 0.05e 4200e 1000e 0.10e bird-down amp bird
+    1.10e beg f+ 0.10e 2000e 1000e 0.25e orimid amp 1e 1e 2e 0.05e 4 >vct bigbird
+    1.30e beg f+ 0.10e 2000e 1000e 0.25e orimid amp 1e 1e 2e 0.05e 4 >vct bigbird
+    1.48e beg f+ 0.10e 2300e 3200e 0.10e oriupdwnb oriamp bird
+    1.65e beg f+ 0.03e 1800e  300e 0.05e bird-up amp bird
+    1.70e beg f+ 0.03e 2200e  100e 0.04e bird-down amp bird
+    1.80e beg f+ 0.07e 2500e 2000e 0.15e oriupdwnb oriamp bird
+    1.92e beg f+ 0.20e 2400e 1200e 0.25e oridwnup amp 1e 1e 2e 0.04e 4 >vct bigbird
+    2.20e beg f+ 0.02e 2200e 3000e 0.04e bird-up amp bird
+    2.28e beg f+ 0.02e 2200e 3000e 0.04e bird-up amp bird
+    2.40e beg f+ 0.17e 2000e 1000e 0.20e oriupdwna oriamp 1e 1e 2e 0.04e 4 >vct bigbird
+    2.4e 0.17e f+ wait
+;event
+
+event: cassins-kingbird { f: beg }
+    0e 0.3e 0.45e 1e 0.9e 0.1e 1e 0e 8 >vct { kingfirst }
+    0.00e 0.00e 0.02e 0.50e 0.04e 0.00e 0.06e 0.55e 0.08e 0.05e 0.10e 0.60e
+    0.12e 0.05e 0.14e 0.65e 0.16e 0.10e 0.18e 0.70e 0.20e 0.10e 0.22e 0.75e
+    0.24e 0.15e 0.26e 0.80e 0.28e 0.20e 0.30e 0.85e 0.32e 0.25e 0.34e 0.90e
+    0.36e 0.30e 0.38e 0.95e 0.40e 0.40e 0.42e 1.00e 0.44e 0.50e 0.46e 1.00e
+    0.48e 0.45e 0.50e 1.00e 0.52e 0.50e 0.54e 1.00e 0.56e 0.40e 0.58e 0.95e
+    0.60e 0.40e 0.62e 0.90e 0.64e 0.40e 0.66e 0.85e 0.68e 0.35e 0.70e 0.80e
+    0.72e 0.30e 0.74e 0.75e 0.76e 0.25e 0.78e 0.70e 0.80e 0.20e 0.82e 0.65e
+    0.84e 0.10e 0.86e 0.60e 0.88e 0.00e 0.90e 0.55e 0.92e 0.00e 0.94e 0.50e
+    0.96e 0.00e 1.00e 0.40e 100 >vct { kingsecond }
+
+    0.03e beg f+ 0.04e 1700e 1200e 0.15e kingfirst amp
+    1e 1e 2e 0.5e 3e 0e 4e 0.2e 8 >vct bigbird
+    0.12e beg f+ 0.18e 1700e  900e 0.25e kingsecond amp
+    1e 1e 2e 0.01e 3e 0e 4e 0.1e 8 >vct bigbird
+    0.12e 0.18e f+ wait
+;event
+
+event: chipping-sparrow { f: beg }
+    0e 0.8e 0.15e 1e 0.75e 0.3e 1e 0e 8 >vct { chip-up }
+
+    0.00e beg f+ 0.05e 4000e 2400e 0.2e chip-up amp bird
+    0.06e beg f+ 0.05e 4000e 2400e 0.2e chip-up amp bird
+    0.12e beg f+ 0.05e 4000e 2400e 0.2e chip-up amp bird
+    0.18e beg f+ 0.05e 4000e 2400e 0.2e chip-up amp bird
+    0.24e beg f+ 0.05e 4000e 2400e 0.2e chip-up amp bird
+    0.30e beg f+ 0.05e 4000e 2400e 0.2e chip-up amp bird
+    0.36e beg f+ 0.05e 4000e 2400e 0.2e chip-up amp bird
+    0.42e beg f+ 0.05e 4000e 2400e 0.2e chip-up amp bird
+    0.48e beg f+ 0.05e 4000e 2400e 0.2e chip-up amp bird
+    0.54e beg f+ 0.05e 4000e 2400e 0.2e chip-up amp bird
+    0.60e beg f+ 0.05e 4000e 2400e 0.2e chip-up amp bird
+    0.66e beg f+ 0.05e 4000e 2400e 0.2e chip-up amp bird
+    0.72e beg f+ 0.05e 4000e 2400e 0.2e chip-up amp bird
+    0.78e beg f+ 0.05e 4000e 2400e 0.2e chip-up amp bird
+    0.84e beg f+ 0.05e 4000e 2400e 0.2e chip-up amp bird
+    0.90e beg f+ 0.05e 4000e 2400e 0.2e chip-up amp bird
+    0.96e beg f+ 0.05e 4000e 2400e 0.2e chip-up amp bird
+    0.96e 0.05e f+ wait
+;event
+
+event: bobwhite { f: beg }
+    0e 0e 0.4e 1e 1e 1e 6 >vct { bobup1 }
+    0e 0e 0.65e 0.5e 1e 1e 6 >vct { bobup2 }
+
+    0.4e beg f+ 0.2e 1800e  200e 0.1e bobup1 amp 1e 1e 2e 0.02e 4 >vct bigbird
+    1.0e beg f+ 0.2e 1800e 1200e 0.2e bobup2 amp 1e 1e 2e 0.02e 4 >vct bigbird
+    1e 0.2e f+ wait
+;event
+
+event: western-meadowlark { f: beg }
+    0e 0e 1e 0e 4 >vct { no-skw }
+    0e 1e 0.4e 0.4e 1e 0e 6 >vct { down-skw }
+
+    0.80e beg f+ 0.10e 2010e    0e 0.10e no-skw amp 1e 1e 2e 0.04e 4 >vct bigbird
+    1.10e beg f+ 0.15e 3000e  100e 0.11e down-skw amp 1e 1e 2e 0.04e 4 >vct bigbird
+    1.30e beg f+ 0.25e 2000e  150e 0.20e down-skw amp 1e 1e 2e 0.04e 4 >vct bigbird
+    1.65e beg f+ 0.15e 3010e  250e 0.11e down-skw amp 1e 1e 2e 0.04e 4 >vct bigbird
+    1.85e beg f+ 0.10e 2200e  150e 0.11e down-skw amp 1e 1e 2e 0.04e 4 >vct bigbird
+    2.00e beg f+ 0.10e 3200e 1400e 0.11e bird-down amp 1e 1e 2e 0.04e 4 >vct bigbird
+    2.20e beg f+ 0.05e 2000e  200e 0.11e bird-down amp 1e 1e 2e 0.04e 4 >vct bigbird
+    2.30e beg f+ 0.10e 1600e    0e 0.11e bird-down amp 1e 1e 2e 0.04e 4 >vct bigbird
+    2.3e 0.1e f+ wait
+;event
+
+event: scissor-tailed-flycatcher { f: beg }
+    0e 0e 0.4e 1e 0.6e 1e 1e 0e 8 >vct { scissor }
+    beg 0.05e 1800e 1800e 0.2e scissor amp
+    1e 0.5e 2e 1e 3e 0.5e 4e 0.1e 5e 0.01e 10 >vct bigbird
+    0.05e wait
+;event
+
+event: great-horned-owl { f: beg }
+    0e 0e 0.3e 1e 1e 1e 6 >vct { owlup }
+    1e 1e 3e 0.02e 7e 0.01e 6 >vct { owl-parts }
+
+    0.30e beg f+ 0.10e 300e 0e 0.1e amp amp owl-parts bigbird
+    0.60e beg f+ 0.40e 293e 6e 0.1e bird-down amp owl-parts bigbird
+    1.75e beg f+ 0.35e 293e 7e 0.1e owlup amp owl-parts bigbird
+    2.50e beg f+ 0.20e 300e 0e 0.1e owlup amp owl-parts bigbird
+    2.5e 0.2e f+ wait
+;event
+
+event: black-throated-gray-warbler { f: beg }
+    0.00e 0.50e 0.02e 0.60e 0.04e 0.45e 0.06e 0.62e 0.08e 0.40e 0.10e 0.65e
+    0.12e 0.35e 0.14e 0.70e 0.18e 0.30e 0.20e 0.70e 0.22e 0.30e 0.24e 0.70e
+    0.25e 0.20e 0.30e 0.80e 0.35e 0.10e 0.40e 0.90e 0.45e 0.00e 0.50e 1.00e
+    0.55e 0.00e 0.60e 1.00e 0.65e 0.00e 0.70e 1.00e 0.75e 0.00e 0.80e 1.00e
+    0.85e 0.00e 0.90e 1.00e 0.95e 0.00e 1.00e 0.50e
+    56 >vct { gray-one }
+    0.00e 0.00e 0.01e 0.40e 0.02e 0.00e 0.03e 0.40e 0.04e 0.00e 0.05e 0.40e
+    0.06e 0.00e 0.07e 0.40e 0.08e 0.00e 0.09e 0.40e 0.10e 0.00e 0.25e 0.80e
+    0.40e 0.30e 0.55e 1.00e 0.70e 0.00e 0.85e 0.80e 1.00e 0.40e
+    34 >vct { gray-two }
+    0.00e 1.00e 0.01e 0.60e 0.02e 1.00e 0.03e 0.60e 0.04e 1.00e 0.05e 0.60e
+    0.06e 1.00e 0.07e 0.60e 0.08e 1.00e 0.09e 0.60e 0.10e 1.00e 0.11e 0.60e
+    0.12e 1.00e 0.13e 0.60e 0.14e 1.00e 0.15e 0.60e 0.16e 1.00e 0.17e 0.60e
+    0.18e 1.00e 0.19e 0.60e 0.20e 1.00e 0.21e 0.55e 0.22e 1.00e 0.23e 0.50e
+    0.24e 1.00e 0.25e 0.50e 0.26e 1.00e 0.27e 0.50e 0.28e 1.00e 0.29e 0.50e
+    0.30e 1.00e 0.31e 0.50e 0.32e 1.00e 0.33e 0.50e 0.34e 1.00e 0.35e 0.50e
+    0.36e 1.00e 0.37e 0.50e 0.38e 1.00e 0.39e 0.50e 0.40e 1.00e 0.41e 0.50e
+    0.42e 1.00e 0.43e 0.50e 0.44e 1.00e 0.45e 0.50e 0.46e 1.00e 0.47e 0.50e
+    0.48e 1.00e 0.49e 0.50e 0.50e 1.00e 0.51e 0.50e 0.52e 1.00e 0.53e 0.50e
+    0.54e 1.00e 0.55e 0.50e 0.56e 1.00e 0.57e 0.50e 0.58e 1.00e 0.59e 0.50e
+    0.60e 1.00e 1.00e 0.00e
+    124 >vct { gray-three }
+
+    0.00e beg f+ 0.12e 3700e  600e 0.05e gray-one amp bird
+    0.18e beg f+ 0.08e 3000e  800e 0.07e gray-two amp bird
+    0.28e beg f+ 0.12e 3700e  600e 0.12e gray-one amp bird
+    0.44e beg f+ 0.08e 3000e  800e 0.15e gray-two amp bird
+    0.54e beg f+ 0.12e 3700e  600e 0.20e gray-one amp bird
+    0.72e beg f+ 0.08e 3000e  800e 0.25e gray-two amp bird
+    0.82e beg f+ 0.12e 3700e  600e 0.25e gray-one amp bird
+    0.96e beg f+ 0.20e 3000e 2000e 0.20e gray-three amp bird
+    1.20e beg f+ 0.02e 4500e  500e 0.05e bird-up amp bird
+    1.25e beg f+ 0.02e 4200e  800e 0.05e bird-up amp bird
+    1.30e beg f+ 0.02e 4000e  900e 0.05e bird-up amp bird
+    1.3e 0.02e f+ wait
+;event
+
+event: yellow-warbler { f: beg }
+    0e 0e 0.6e 1e 1e 0.5e 6 >vct { yellow-up }
+    0e 1e 0.05e 1e 0.6e 0e 0.8e 0.3e 1e 0.1e 10 >vct { yellow-swirl }
+    0e 0e 0.3e 0.2e 0.8e 0.7e 1e 1e 8 >vct { yellow-last }
+    0e 0e 0.9e 1e 1e 0e 6 >vct { swirl-amp }
+
+    0.00e beg f+ 0.050e 5600e  400e 0.05e yellow-up amp bird
+    0.23e beg f+ 0.120e 5000e 1500e 0.15e yellow-swirl amp bird
+    0.45e beg f+ 0.130e 5000e 1700e 0.17e yellow-swirl amp bird
+    0.62e beg f+ 0.160e 5000e 2000e 0.20e yellow-swirl amp bird
+    0.85e beg f+ 0.150e 5000e 2000e 0.20e yellow-swirl amp bird
+    1.05e beg f+ 0.075e 3700e 1000e 0.20e bird-down amp bird
+    1.15e beg f+ 0.075e 3700e  800e 0.15e bird-down amp bird
+    1.25e beg f+ 0.075e 3700e  800e 0.15e bird-down amp bird
+    1.40e beg f+ 0.200e 3700e 2000e 0.20e yellow-last amp bird
+    1.4e 0.2e f+ wait
+;event
+
+event: black-necked-stilt { f: beg }
+    0e 0e 0.9e 1e 1e 0e 6 >vct { upamp }
+    0e 0e 0.5e 1e 1e 0.2e 6 >vct { rampup }
+    1e 0.5e 2e 1e 3e 0.75e 4e 0.5e 5e 0.1e 10 >vct { bns-parts }
+
+    0.0e beg f+ 0.1e 900e 100e 0.2e rampup upamp bns-parts bigbird
+    0.3e beg f+ 0.1e 900e 200e 0.2e rampup upamp bns-parts bigbird
+    0.6e beg f+ 0.1e 900e 250e 0.2e rampup upamp bns-parts bigbird
+    0.6e 0.1e f+ wait
+;event
+
+event: chestnut-sided-warbler { f: beg }
+    0e 1e 0.3e 0.5e 0.6e 1e 0.8e 0.2e 1e 0e 10 >vct { ycurve }
+    0e 0.2e 0.5e 1e 1e 0e 6 >vct { vcurve }
+    0e 0.5e 0.15e 0e 0.45e 0.1e 0.6e 1e 0.7e 0.9e 1e 0.9e 12 >vct { wcurve }
+    0e 0e 0.95e 1e 1e 1e 6 >vct { upcurve }
+    0e 1e 0.25e 0.3e 0.6e 0.15e 1e 0e 8 >vct { downcurve }
+    0e 0e 0.9e 1e 1e 0e 6 >vct { louder }
+    0e 0e 0.1e 1e 0.4e 0.1e 0.5e 0.9e 0.6e 0.1e 0.7e 1e 1e 0e 14 >vct { wamp }
+
+    0.10e beg f+ 0.10e 4050e 1200e 0.050e ycurve amp 1e 1e 2e 0.1e 4 >vct bigbird
+    0.25e beg f+ 0.03e 3900e  300e 0.075e vcurve amp 1e 1e 2e 0.1e 4 >vct bigbird
+    0.30e beg f+ 0.10e 4050e 1200e 0.150e ycurve louder 1e 1e 2e 0.1e 4 >vct bigbird
+    0.42e beg f+ 0.03e 3800e  500e 0.100e vcurve amp 1e 1e 2e 0.1e 4 >vct bigbird
+    0.50e beg f+ 0.10e 4000e 1200e 0.200e ycurve tap-amp 1e 1e 2e 0.1e 4 >vct bigbird
+    0.65e beg f+ 0.03e 3800e  500e 0.150e vcurve amp 1e 1e 2e 0.1e 4 >vct bigbird
+    0.72e beg f+ 0.10e 4000e 1200e 0.200e ycurve tap-amp 1e 1e 2e 0.1e 4 >vct bigbird
+    0.85e beg f+ 0.03e 3800e  500e 0.150e vcurve amp 1e 1e 2e 0.1e 4 >vct bigbird
+    0.91e beg f+ 0.10e 4000e 1200e 0.200e ycurve tap-amp 1e 1e 2e 0.1e 4 >vct bigbird
+    1.05e beg f+ 0.12e 3800e 2200e 0.150e wcurve wamp 1e 1e 2e 0.1e 4 >vct bigbird
+    1.20e beg f+ 0.12e 3800e 2200e 0.150e wcurve wamp 1e 1e 2e 0.1e 4 >vct bigbird
+    1.35e beg f+ 0.12e 2500e 2200e 0.250e upcurve louder 1e 1e 2e 0.1e 4 >vct bigbird
+    1.50e beg f+ 0.12e 2500e 4000e 0.150e downcurve amp 1e 1e 2e 0.1e 4 >vct bigbird
+    1.5e 0.12e f+ wait
+;event
+
+event: grasshopper-sparrow { f: beg }
+    0.00e 0.50e 0.02e 0.80e 0.04e 0.30e 0.06e 0.80e 0.07e 0.10e 0.08e 0.90e
+    0.10e 0.00e 0.11e 0.90e 0.12e 0.00e 0.13e 0.90e 0.14e 0.10e 0.15e 1.00e
+    0.16e 0.10e 0.17e 1.00e 0.18e 0.10e 0.19e 1.00e 0.20e 0.10e 0.21e 1.00e
+    0.22e 0.10e 0.23e 1.00e 0.24e 0.10e 0.25e 1.00e 0.26e 0.10e 0.27e 1.00e
+    0.28e 0.10e 0.29e 1.00e 0.30e 0.10e 0.31e 1.00e 0.32e 0.10e 0.33e 1.00e
+    0.34e 0.10e 0.35e 1.00e 0.36e 0.10e 0.37e 1.00e 0.38e 0.10e 0.39e 1.00e
+    0.40e 0.10e 0.41e 1.00e 0.42e 0.10e 0.43e 1.00e 0.44e 0.10e 0.45e 1.00e
+    0.46e 0.10e 0.47e 1.00e 0.48e 0.10e 0.49e 1.00e 0.50e 0.10e 0.51e 1.00e
+    0.52e 0.10e 0.53e 1.00e 0.54e 0.10e 0.55e 1.00e 0.56e 0.10e 0.57e 1.00e
+    0.58e 0.10e 0.59e 1.00e 0.60e 0.10e 0.61e 1.00e 0.62e 0.10e 0.63e 1.00e
+    0.64e 0.10e 0.65e 1.00e 0.66e 0.10e 0.67e 1.00e 0.68e 0.10e 0.69e 1.00e
+    0.70e 0.10e 0.71e 1.00e 0.72e 0.10e 0.73e 1.00e 0.74e 0.10e 0.75e 1.00e
+    0.76e 0.10e 0.77e 1.00e 0.78e 0.10e 0.79e 1.00e 0.80e 0.10e 0.81e 1.00e
+    0.82e 0.10e 0.83e 1.00e 0.84e 0.10e 0.85e 1.00e 0.86e 0.10e 0.87e 1.00e
+    0.88e 0.10e 0.89e 1.00e 0.90e 0.10e 0.91e 1.00e 0.92e 0.10e 0.93e 1.00e
+    0.94e 0.10e 0.95e 1.00e 0.96e 0.10e 0.97e 1.00e 0.98e 0.10e 1.00e 1.00e
+    192 >vct { grass-one }
+    0.00e 0.00e 0.10e 1.00e 0.20e 0.00e 0.30e 1.00e 0.40e 0.00e 0.50e 1.00e
+    0.60e 0.00e 0.70e 1.00e 0.80e 0.00e 0.90e 1.00e 1.00e 0.00e
+    22 >vct { grass-two }
+   
+    0.49e beg f+ 0.01e 8000e  100e 0.1e grass-two amp bird
+    0.60e beg f+ 0.01e 5700e  300e 0.1e grass-two amp bird
+    0.92e beg f+ 0.01e 3900e  100e 0.1e grass-two amp bird
+    1.00e beg f+ 1.40e 6000e 2500e 0.2e grass-one amp bird
+    1e 1.4e f+ wait
+;event
+
+event: swamp-sparrow { f: beg }
+    0e 0e 0.6e 0.7e 1e 1e 6 >vct { swamp-up }
+    0e 1e 0.5e 0.5e 0.6e 0.6e 1e 0e 8 >vct { swamp-down }
+
+    0.000e beg f+ 0.020e 3900e  200e 0.3e swamp-up amp bird
+    0.035e beg f+ 0.035e 3200e 3000e 0.1e swamp-down amp bird
+    0.080e beg f+ 0.025e 3700e    0e 0.1e amp amp bird
+    0.100e beg f+ 0.020e 3900e  200e 0.3e swamp-up amp bird
+    0.135e beg f+ 0.035e 3200e 3000e 0.1e swamp-down amp bird
+    0.180e beg f+ 0.025e 3700e    0e 0.1e amp amp bird
+    0.200e beg f+ 0.020e 3900e  200e 0.3e swamp-up amp bird
+    0.235e beg f+ 0.035e 3200e 3000e 0.1e swamp-down amp bird
+    0.280e beg f+ 0.025e 3700e    0e 0.1e amp amp bird
+    0.300e beg f+ 0.020e 3900e  200e 0.3e swamp-up amp bird
+    0.335e beg f+ 0.035e 3200e 3000e 0.1e swamp-down amp bird
+    0.380e beg f+ 0.025e 3700e    0e 0.1e amp amp bird
+    0.400e beg f+ 0.020e 3900e  200e 0.3e swamp-up amp bird
+    0.435e beg f+ 0.035e 3200e 3000e 0.1e swamp-down amp bird
+    0.480e beg f+ 0.025e 3700e    0e 0.1e amp amp bird
+    0.500e beg f+ 0.020e 3900e  200e 0.3e swamp-up amp bird
+    0.535e beg f+ 0.035e 3200e 3000e 0.1e swamp-down amp bird
+    0.580e beg f+ 0.025e 3700e    0e 0.1e amp amp bird
+    0.600e beg f+ 0.020e 3900e  200e 0.3e swamp-up amp bird
+    0.635e beg f+ 0.035e 3200e 3000e 0.1e swamp-down amp bird
+    0.680e beg f+ 0.025e 3700e    0e 0.1e amp amp bird
+    0.700e beg f+ 0.020e 3900e  200e 0.3e swamp-up amp bird
+    0.735e beg f+ 0.035e 3200e 3000e 0.1e swamp-down amp bird
+    0.780e beg f+ 0.025e 3700e    0e 0.1e amp amp bird
+    0.800e beg f+ 0.020e 3900e  200e 0.3e swamp-up amp bird
+    0.835e beg f+ 0.035e 3200e 3000e 0.1e swamp-down amp bird
+    0.880e beg f+ 0.025e 3700e    0e 0.1e amp amp bird
+    0.900e beg f+ 0.020e 3900e  200e 0.3e swamp-up amp bird
+    0.935e beg f+ 0.035e 3200e 3000e 0.1e swamp-down amp bird
+    0.980e beg f+ 0.025e 3700e    0e 0.1e amp amp bird
+    0.98e 0.025e f+ wait
+;event
+
+event: golden-crowned-sparrow { f: beg }
+    0e 1e 0.25e 0.2e 1e 0e 6 >vct { gold-one }
+    0e 0.9e 0.05e 1e 0.1e 0.4e 1e 0e 8 >vct { gold-two }
+    0e 0.5e 0.1e 0e 0.2e 1e 0.3e 0e 0.4e 1e 0.5e 0e 0.6e 1e 0.7e 0e 0.8e 1e 0.9e 0e 1e 0.5e
+    22 >vct { gold-trill }
+
+    0.60e beg f+ 0.50e 4300e 1000e 0.15e gold-one amp bird
+    1.30e beg f+ 0.45e 3300e  200e 0.15e gold-one amp bird
+    1.75e beg f+ 0.40e 3800e  100e 0.15e gold-two amp bird
+    2.20e beg f+ 0.30e 3800e  100e 0.10e gold-trill amp bird
+    2.2e 0.3e f+ wait
+;event
+
+event: indigo-bunting { f: beg }
+    0e 0e 0.5e 1e 1e 0e 6 >vct { bunt-v }
+    0e 1e 0.5e 0e 1e 0.9e 6 >vct { bunt-y }
+    0e 0.8e 0.3e 1e 0.7e 0.2e 1e 0e 8 >vct { bunt-n }
+    0e 1e 0.1e 0.5e 0.25e 0.9e 1e 0e 8 >vct { bunt-x }
+
+    0.40e beg f+ 0.08e 3000e  700e 0.25e bird-down amp bird
+    0.52e beg f+ 0.02e 6200e 1000e 0.05e bird-down amp bird
+    0.55e beg f+ 0.15e 3500e 2300e 0.10e bunt-v amp bird
+    0.74e beg f+ 0.02e 6200e 1800e 0.05e bunt-x amp bird
+    0.80e beg f+ 0.15e 3400e 2300e 0.10e bunt-v amp bird
+    1.00e beg f+ 0.10e 3400e  800e 0.20e bunt-v amp bird
+    1.13e beg f+ 0.03e 4100e 2000e 0.05e bird-down amp bird
+    1.25e beg f+ 0.08e 3400e  800e 0.20e bunt-v amp bird
+    1.40e beg f+ 0.03e 4100e 2000e 0.05e bird-down amp bird
+    1.50e beg f+ 0.07e 3700e  300e 0.10e bird-down amp bird
+    1.60e beg f+ 0.10e 4100e 2200e 0.15e bunt-y amp bird
+    1.72e beg f+ 0.05e 3700e  300e 0.10e bird-down amp bird
+    1.81e beg f+ 0.10e 4100e 2200e 0.15e bunt-y amp bird
+    1.94e beg f+ 0.07e 5200e 1800e 0.20e bunt-n amp bird
+    2.05e beg f+ 0.08e 3000e 1500e 0.15e bird-up amp bird
+    2.20e beg f+ 0.07e 5200e 1800e 0.20e bunt-n amp bird
+    2.33e beg f+ 0.08e 3000e 1500e 0.15e bird-up amp bird
+    2.43e beg f+ 0.07e 5200e 1800e 0.10e bunt-n amp bird
+    2.51e beg f+ 0.08e 3000e 1500e 0.10e bird-up amp bird
+    2.51e 0.08e f+ wait
+;event
+
+event: hooded-warbler { f: beg }
+    0.60e beg f+ 0.03e 3900e 1600e 0.05e bird-down amp bird
+    0.64e beg f+ 0.03e 3900e 1700e 0.05e bird-down amp bird
+    0.80e beg f+ 0.03e 3900e 2000e 0.10e bird-down amp bird
+    0.84e beg f+ 0.03e 3900e 2000e 0.10e bird-down amp bird
+    0.93e beg f+ 0.03e 3900e 2100e 0.15e bird-down amp bird
+    0.97e beg f+ 0.03e 3900e 2100e 0.15e bird-down amp bird
+    1.05e beg f+ 0.03e 3900e 2100e 0.05e bird-down amp bird
+    1.09e beg f+ 0.03e 3900e 2100e 0.20e bird-down amp bird
+    1.17e beg f+ 0.03e 3900e 2100e 0.20e bird-down amp bird
+    1.21e beg f+ 0.03e 3900e 2100e 0.20e bird-down amp bird
+    1.39e beg f+ 0.03e 3900e 2100e 0.20e bird-down amp bird
+    1.43e beg f+ 0.03e 3900e 2100e 0.20e bird-down amp bird
+    1.51e beg f+ 0.03e 3900e 2100e 0.20e bird-down amp bird
+    1.55e beg f+ 0.03e 3900e 2100e 0.20e bird-down amp bird
+    1.63e beg f+ 0.03e 3900e 2100e 0.20e bird-down amp bird
+    1.67e beg f+ 0.03e 3900e 2100e 0.20e bird-down amp bird
+    1.75e beg f+ 0.03e 3900e 2100e 0.20e bird-down amp bird
+    1.80e beg f+ 0.03e 3900e 2100e 0.20e bird-down amp bird
+    1.90e beg f+ 0.04e 3000e 1000e 0.15e bird-up amp bird
+    1.98e beg f+ 0.04e 3000e 1000e 0.15e bird-up amp bird
+    2.05e beg f+ 0.04e 3000e 1000e 0.15e bird-up amp bird
+    2.13e beg f+ 0.04e 3000e 1000e 0.15e bird-up amp bird
+    2.21e beg f+ 0.04e 3000e 1000e 0.15e bird-up amp bird
+    2.29e beg f+ 0.04e 3000e 1000e 0.15e bird-up amp bird
+    2.37e beg f+ 0.04e 3000e 1000e 0.15e bird-up amp bird
+    2.45e beg f+ 0.04e 3000e 1000e 0.15e bird-up amp bird
+    2.45e 0.04e f+ wait
+;event
+
+event: american-widgeon { f: beg }
+    0e 0e 0.5e 1e 1e 0e 6 >vct { widgeon }
+
+    0.30e beg f+ 0.07e 1900e  300e 0.15e widgeon widgeon 1e 1e 2e 0.02e 4 >vct bigbird
+    0.40e beg f+ 0.11e 1700e 1400e 0.25e widgeon widgeon 1e .7e 2e 1e 3e .02e 6 >vct bigbird
+    0.55e beg f+ 0.07e 1900e  300e 0.15e widgeon widgeon 1e 1e 2e 0.02e 4 >vct bigbird
+    0.55e 0.07e f+ wait
+;event
+
+event: louisiana-waterthrush { f: beg }
+    0e 0.8e 0.35e 0.4e 0.45e 0.9e 0.5e 1e 0.75e 1e 1e 1e 12 >vct { water-one }
+    0e 1e 0.4e 0e 0.6e 0.1e 1e 0.8e 8 >vct { water-two }
+    0e 1e 0.95e 0e 1e 0e 6 >vct { water-three }
+    0e 0e 1e 1e 4 >vct { water-four }
+    0e 1e 1e 0e 4 >vct { water-five }
+    0e 0e 0.35e 1e 0.5e 0.2e 0.9e 1e 1e 0e 10 >vct { water-amp }
+    0e 0e 0.9e 1e 1e 0e 6 >vct { water-damp }
+
+    0.00e beg f+ 0.170e 4100e 2000e 0.20e water-one water-amp bird
+    0.32e beg f+ 0.180e 4050e 2050e 0.30e water-one water-amp bird
+    0.64e beg f+ 0.200e 4000e 1900e 0.25e water-one water-amp bird
+    0.90e beg f+ 0.200e 3900e 2000e 0.30e water-two tap-amp bird
+    1.25e beg f+ 0.120e 3000e 3000e 0.25e water-three water-damp bird
+    1.40e beg f+ 0.100e 2700e 1500e 0.20e water-four water-damp bird
+    1.58e beg f+ 0.020e 5200e 1000e 0.10e water-five amp bird
+    1.65e beg f+ 0.020e 5200e 1000e 0.10e water-five amp bird
+    1.70e beg f+ 0.035e 3200e 1000e 0.10e water-three water-damp bird
+    1.7e 0.03e f+ wait
+;event
+
+event: robin { f: beg }
+    0.00e 0.10e 0.08e 0.70e 0.30e 0.00e 0.35e 1.00e 0.40e 0.30e 1.00e 0.30e
+    12 >vct { r-one }
+    0.00e 0.00e 0.10e 1.00e 0.20e 0.70e 0.35e 0.70e 0.65e 0.30e 0.70e 0.50e
+    0.80e 0.00e 0.90e 0.20e 1.00e 0.00e
+    18 >vct { r-two }
+    0.00e 0.20e 0.25e 1.00e 0.60e 0.70e 0.90e 0.00e 1.00e 0.10e
+    10 >vct { r-three }
+    0.00e 0.50e 0.10e 0.00e 0.20e 1.00e 0.30e 0.00e 0.40e 1.00e 0.50e 0.00e
+    0.60e 1.00e 0.70e 0.50e 1.00e 0.20e
+    18 >vct { r-five }
+    0.00e 0.00e 0.12e 0.70e 0.30e 0.00e 0.70e 1.00e 1.00e 0.50e 10 >vct { r-six }
+
+    0.45e beg f+ 0.06e 2000e  800e 0.15e r-six amp 1e 1e 2e 0.1e 4 >vct bigbird
+    0.56e beg f+ 0.10e 2000e  900e 0.15e r-one amp 1e 1e 2e 0.1e 4 >vct bigbird
+    1.04e beg f+ 0.24e 2000e 2000e 0.25e r-two amp 1e 1e 2e 0.1e 4 >vct bigbird
+    1.63e beg f+ 0.13e 1900e 1600e 0.20e r-three amp 1e 1e 2e 0.1e 4 >vct bigbird
+    1.80e beg f+ 0.11e 2200e 1200e 0.25e bird-down amp 1e 1e 2e 0.1e 4 >vct bigbird
+    2.31e beg f+ 0.21e 1950e 2000e 0.15e r-five amp 1e 1e 2e 0.1e 4 >vct bigbird
+    2.31e 0.21e f+ wait
+;event
+
+event: solitary-vireo { f: beg }
+    0.00e 0.20e 0.03e 0.30e 0.06e 0.10e 0.10e 0.50e 0.13e 0.40e 0.16e 0.80e
+    0.19e 0.50e 0.22e 0.90e 0.25e 0.60e 0.28e 1.00e 0.31e 0.60e 0.34e 1.00e
+    0.37e 0.50e 0.41e 0.90e 0.45e 0.40e 0.49e 0.80e 0.51e 0.40e 0.54e 0.75e
+    0.57e 0.35e 0.60e 0.70e 0.63e 0.30e 0.66e 0.60e 0.69e 0.25e 0.72e 0.50e
+    0.75e 0.20e 0.78e 0.30e 0.82e 0.10e 0.85e 0.30e 0.88e 0.05e 0.91e 0.30e
+    0.94e 0.00e 0.95e 0.30e 0.99e 0.00e 1.00e 0.10e
+    68 >vct { bigskew }
+    beg 0.4e 1800e 1200e 0.2e bigskew amp bird
+    0.4e wait
+;event
+
+event: pigeon-hawk { f: beg }
+    0e 0e 0.3e 1e 0.7e 1e 1e 0e 8 >vct { hupdown }
+
+    0.00e beg f+ 0.10e 1900e 200e 0.2e hupdown amp 1e 0.7e 2e 1e 4 >vct bigbird
+    0.12e beg f+ 0.01e 2050e   0e 0.1e amp amp 1e 0.5e 2e 1e 4 >vct bigbird
+    0.13e beg f+ 0.10e 1900e 200e 0.2e hupdown amp 1e 0.7e 2e 1e 4 >vct bigbird
+    0.25e beg f+ 0.01e 2050e   0e 0.1e amp amp 1e 0.5e 2e 1e 4 >vct bigbird
+    0.26e beg f+ 0.10e 1900e 200e 0.2e hupdown amp 1e 0.7e 2e 1e 4 >vct bigbird
+    0.38e beg f+ 0.01e 2050e   0e 0.1e amp amp 1e 0.5e 2e 1e 4 >vct bigbird
+    0.39e beg f+ 0.10e 1900e 200e 0.2e hupdown amp 1e 0.7e 2e 1e 4 >vct bigbird
+    0.51e beg f+ 0.01e 2050e   0e 0.1e amp amp 1e 0.5e 2e 1e 4 >vct bigbird
+    0.52e beg f+ 0.10e 1900e 200e 0.2e hupdown amp 1e 0.7e 2e 1e 4 >vct bigbird
+    0.64e beg f+ 0.01e 2050e   0e 0.1e amp amp 1e 0.5e 2e 1e 4 >vct bigbird
+    0.65e beg f+ 0.10e 1900e 200e 0.2e hupdown amp 1e 0.7e 2e 1e 4 >vct bigbird
+    0.77e beg f+ 0.01e 2050e   0e 0.1e amp amp 1e 0.5e 2e 1e 4 >vct bigbird
+    0.78e beg f+ 0.10e 1900e 200e 0.2e hupdown amp 1e 0.7e 2e 1e 4 >vct bigbird
+    0.90e beg f+ 0.01e 2050e   0e 0.1e amp amp 1e 0.5e 2e 1e 4 >vct bigbird
+    0.91e beg f+ 0.10e 1900e 200e 0.2e hupdown amp 1e 0.7e 2e 1e 4 >vct bigbird
+    1.03e beg f+ 0.01e 2050e   0e 0.1e amp amp 1e 0.5e 2e 1e 4 >vct bigbird
+    1.04e beg f+ 0.10e 1900e 200e 0.2e hupdown amp 1e 0.7e 2e 1e 4 >vct bigbird
+    1.16e beg f+ 0.01e 2050e   0e 0.1e amp amp 1e 0.5e 2e 1e 4 >vct bigbird
+    1.17e beg f+ 0.10e 1900e 200e 0.2e hupdown amp 1e 0.7e 2e 1e 4 >vct bigbird
+    1.29e beg f+ 0.01e 2050e   0e 0.1e amp amp 1e 0.5e 2e 1e 4 >vct bigbird
+    1.30e beg f+ 0.10e 1900e 200e 0.2e hupdown amp 1e 0.7e 2e 1e 4 >vct bigbird
+    1.42e beg f+ 0.01e 2050e   0e 0.1e amp amp 1e 0.5e 2e 1e 4 >vct bigbird
+    1.43e beg f+ 0.10e 1900e 200e 0.2e hupdown amp 1e 0.7e 2e 1e 4 >vct bigbird
+    1.55e beg f+ 0.01e 2050e   0e 0.1e amp amp 1e 0.5e 2e 1e 4 >vct bigbird
+    1.56e beg f+ 0.10e 1900e 200e 0.2e hupdown amp 1e 0.7e 2e 1e 4 >vct bigbird
+    1.68e beg f+ 0.01e 2050e   0e 0.1e amp amp 1e 0.5e 2e 1e 4 >vct bigbird
+    1.69e beg f+ 0.10e 1900e 200e 0.2e hupdown amp 1e 0.7e 2e 1e 4 >vct bigbird
+    1.81e beg f+ 0.01e 2050e   0e 0.1e amp amp 1e 0.5e 2e 1e 4 >vct bigbird
+    1.82e beg f+ 0.10e 1900e 200e 0.2e hupdown amp 1e 0.7e 2e 1e 4 >vct bigbird
+    1.82e 0.1e f+ wait
+;event
+
+event: cerulean-warbler { f: beg }
+    0e 0.8e 0.1e 1e 0.25e 0.5e 0.4e 1e 0.55e 0.5e 0.7e 1e 1e 0e 14 >vct { trill }
+
+    0.27e beg f+ 0.05e 3000e 1000e 0.050e bird-down amp bird
+    0.33e beg f+ 0.05e 3000e  800e 0.075e bird-up amp bird
+    0.41e beg f+ 0.01e 3200e  700e 0.070e bird-down amp bird
+    0.42e beg f+ 0.01e 3200e  700e 0.080e bird-down amp bird
+    0.43e beg f+ 0.06e 3200e  700e 0.090e bird-down amp bird
+    0.51e beg f+ 0.06e 3200e  500e 0.100e bird-up amp bird
+    0.60e beg f+ 0.10e 3000e 1200e 0.200e trill amp bird
+    0.72e beg f+ 0.05e 3000e  800e 0.200e bird-up amp bird
+    0.80e beg f+ 0.10e 3000e 1200e 0.200e trill amp bird
+    0.92e beg f+ 0.05e 3000e  800e 0.200e bird-up amp bird
+    1.00e beg f+ 0.01e 3900e  600e 0.100e bird-up amp bird
+    1.01e beg f+ 0.01e 3910e  800e 0.100e bird-up amp bird
+    1.02e beg f+ 0.01e 3940e  500e 0.100e bird-up amp bird
+    1.03e beg f+ 0.01e 4000e  500e 0.100e bird-up amp bird
+    1.04e beg f+ 0.01e 3900e 1000e 0.100e bird-up amp bird
+    1.05e beg f+ 0.01e 3900e 1000e 0.100e bird-up amp bird
+    1.06e beg f+ 0.01e 3900e 1000e 0.100e bird-up amp bird
+    1.07e beg f+ 0.01e 3900e 1000e 0.100e bird-up amp bird
+    1.08e beg f+ 0.01e 3900e 1000e 0.100e bird-up amp bird
+    1.09e beg f+ 0.01e 3900e 1000e 0.100e bird-up amp bird
+    1.10e beg f+ 0.01e 3900e 1000e 0.100e bird-up amp bird
+    1.11e beg f+ 0.01e 3900e 1000e 0.100e bird-up amp bird
+    1.12e beg f+ 0.01e 3900e 1000e 0.100e bird-up amp bird
+    1.13e beg f+ 0.01e 3900e 1000e 0.100e bird-up amp bird
+    1.14e beg f+ 0.01e 3900e 1000e 0.100e bird-up amp bird
+    1.15e beg f+ 0.01e 3900e 1000e 0.100e bird-up amp bird
+    1.16e beg f+ 0.01e 3900e 1000e 0.100e bird-up amp bird
+    1.17e beg f+ 0.01e 3900e 1000e 0.100e bird-up amp bird
+    1.18e beg f+ 0.01e 3900e 1000e 0.100e bird-up amp bird
+    1.19e beg f+ 0.01e 3900e 1000e 0.100e bird-up amp bird
+    1.20e beg f+ 0.01e 3900e 1000e 0.100e bird-up amp bird
+    1.21e beg f+ 0.01e 3900e 1000e 0.100e bird-up amp bird
+    1.22e beg f+ 0.01e 3900e 1000e 0.100e bird-up amp bird
+    1.23e beg f+ 0.01e 3900e 1200e 0.100e bird-up amp bird
+    1.24e beg f+ 0.01e 3900e 1200e 0.100e bird-up amp bird
+    1.25e beg f+ 0.01e 3900e 1200e 0.100e bird-up amp bird
+    1.26e beg f+ 0.01e 3900e 1200e 0.100e bird-up amp bird
+    1.27e beg f+ 0.01e 3900e 1400e 0.100e bird-up amp bird
+    1.28e beg f+ 0.01e 3900e 1400e 0.100e bird-up amp bird
+    1.29e beg f+ 0.01e 3900e 1400e 0.100e bird-up amp bird
+    1.30e beg f+ 0.01e 3900e 1400e 0.100e bird-up amp bird
+    1.3e 0.01e f+ wait
+;event
+
+event: nashville-warbler { f: beg }
+    0e 0.6e 0.35e 1e 1e 0e 6 >vct { nash-blip }
+    0e 0.9e 0.05e 1e 0.1e 0.9e 0.65e 0.5e 1e 0e 10 >vct { nash-down }
+    0e 0e 0.15e 0.2e 0.25e 0.05e 0.9e 0.95e 1e 1e 10 >vct { nash-up }
+    0e 0e 0.8e 1e 1e 0e 6 >vct { nash-amp }
+
+    0.15e beg f+ 0.025e 3900e  300e 0.300e nash-blip amp bird
+    0.24e beg f+ 0.160e 4200e 3800e 0.150e nash-down nash-amp bird
+    0.42e beg f+ 0.025e 3900e  300e 0.300e nash-blip amp bird
+    0.55e beg f+ 0.140e 4300e 3700e 0.150e nash-down nash-amp bird
+    0.75e beg f+ 0.030e 3950e  350e 0.300e nash-blip amp bird
+    0.81e beg f+ 0.170e 4200e 3900e 0.175e nash-down amp bird
+    1.00e beg f+ 0.020e 3800e  400e 0.250e nash-blip amp bird
+    1.11e beg f+ 0.140e 4200e 3800e 0.165e nash-down nash-amp bird
+    1.30e beg f+ 0.030e 3750e  300e 0.200e nash-blip amp bird
+    1.40e beg f+ 0.110e 4200e 3700e 0.100e nash-down amp bird
+    1.57e beg f+ 0.100e 3800e 2200e 0.100e nash-up amp bird
+    1.70e beg f+ 0.100e 3800e 2150e 0.125e nash-up amp bird
+    1.85e beg f+ 0.075e 3900e 1800e 0.100e nash-up nash-amp bird
+    1.85e 0.075e f+ wait
+;event
+
+event: eastern-phoebe { f: beg }
+    0e 0e 0.3e 0.3e 0.35e 0.5e 0.55e 0.4e 0.7e 0.8e 0.75e 0.7e
+    0.8e 1e 0.95e 0.9e 1e 0e 18 >vct { phoebe-one }
+    0e 0e 0.5e 1e 1e 0e 6 >vct { phoebe-two }
+    0e 0e 0.1e 0.4e 0.8e 1e 1e 0.1e 8 >vct { phoebe-three }
+    0e 1e 0.5e 0.7e 1e 0e 6 >vct { phoebe-four }
+    0e 0e 0.1e 1e 1e 0e 6 >vct { phoebe-amp }
+
+    0.00e beg f+ 0.225e 3000e 1300e 0.3e phoebe-one amp bird
+    0.35e beg f+ 0.120e 3000e  500e 0.1e phoebe-two phoebe-amp bird
+    0.40e beg f+ 0.100e 3000e 1500e 0.2e phoebe-three phoebe-amp bird
+    0.55e beg f+ 0.050e 3000e 1400e 0.2e phoebe-four phoebe-amp bird
+    0.55e 0.05e f+ wait
+;event
+
+event: painted-bunting { f: beg }
+    0e 0e 0.9e 1e 1e 0e 6 >vct { b-two }
+    0e 0e 0.5e 1e 1e 0e 6 >vct { b-four }
+    0e 0.7e 0.15e 0e 0.4e 1e 0.8e 1e 1e 0.5e 10 >vct { b-five }
+    0e 0e 0.1e 0.5e 0.15e 0e 0.4e 1e 0.9e 1e 1e 0e 12 >vct { b-six }
+    0e 1e 0.25e 0.4e 0.75e 0.5e 1e 0e 8 >vct { b-seven }
+    0e 0.3e 0.4e 0.4e 0.5e 1e 0.6e 0.2e 1e 0e 10 >vct { b-eight }
+    0e 0e 0.05e 1e 0.3e 1e 0.5e 0.3e 0.9e 1e 1e 0e 12 >vct { b-nine }
+    0e 0.4e 0.25e 0e 0.35e 1e 0.5e 0e 0.65e 1e 0.75e 0e 0.85e 1e 1e 0e 16 >vct { b-ten }
+    0e 0e 0.5e 1e 1e 0.5e 6 >vct { b-twelve }
+    0e 0e 0.05e 1e 0.3e 0.2e 0.6e 0.2e 0.9e 1e 1e 0e 12 >vct { b-thirteen }
+    0e 0.3e 0.3e 1e 0.6e 0.3e 1e 0e 8 >vct { b-fourteen }
+    0e 0e 0.1e 0.5e 0.5e 0.5e 0.9e 1e 1e 0e 10 >vct { b-fifteen }
+
+    0.05e beg f+ 0.10e 3100e  900e 0.05e bird-up b-two bird
+    0.21e beg f+ 0.07e 4100e  700e 0.15e bird-down amp bird
+    0.36e beg f+ 0.12e 3700e 1000e 0.20e b-four amp bird
+    0.52e beg f+ 0.08e 2300e 1600e 0.15e b-five b-six bird
+    0.68e beg f+ 0.10e 4000e 1000e 0.25e bird-up tap-amp bird
+    0.80e beg f+ 0.12e 2300e 1700e 0.20e b-seven amp bird
+    0.96e beg f+ 0.15e 3800e 2200e 0.30e b-eight b-nine bird
+    1.18e beg f+ 0.10e 2300e 1600e 0.15e b-ten amp bird
+    1.30e beg f+ 0.02e 3200e 1000e 0.10e bird-down amp bird
+    1.33e beg f+ 0.02e 3200e 1000e 0.10e bird-down amp bird
+    1.36e beg f+ 0.02e 3200e 1000e 0.10e bird-down amp bird
+    1.40e beg f+ 0.03e 4000e 2000e 0.12e b-twelve b-thirteen bird
+    1.47e beg f+ 0.10e 2300e 1700e 0.20e b-fourteen b-fifteen bird
+    1.47e 0.1e f+ wait
+;event
+
+event: western-flycatcher { f: beg }
+    0e 0e 0.1e 1e 0.2e 0.4e 0.95e 0.1e 1e 0e 10 >vct { f-one }
+    0e 0e 0.1e 0.2e 0.2e 0.1e 0.3e 1e 0.9e 1e 1e 0e 12 >vct { a-one }
+    0e 0.5e 0.25e 1e 0.5e 0e 0.6e 0e 0.95e 0.3e 1e 0.6e 12 >vct { f-two }
+    0e 0e 0.1e 1e 0.2e 1e 0.5e 0.1e 0.6e 0.1e 0.9e 1e 1e 0e 14 >vct { a-two }
+    1e 1e 2e 0.02e 3e 0.1e 4e 0.01e 8 >vct { fc-parts }
+    
+    0.0e beg f+ 0.2e 2000e 2200e 0.2e f-one a-one fc-parts bigbird
+    0.3e beg f+ 0.2e 2000e 1100e 0.2e f-two a-two fc-parts bigbird
+    0.3e 0.2e f+ wait
+;event
+
+event: bachmans-sparrow { f: beg }
+    0e 1e 0.1e 0.5e 0.9e 0.5e 1e 0e 8 >vct { sopening }
+    0e 0.1e 0.35e 0e 1e 1e 6 >vct { sup }
+    0e 1e 0.4e 0.5e 1e 0e 6 >vct { sdwn }
+    0e 1e 0.25e 0e 0.75e 0.4e 1e 0.5e 8 >vct { slast }
+
+    0.00e beg f+ 0.510e 4900e  200e 0.3e sopening amp bird
+    0.52e beg f+ 0.015e 3800e  200e 0.1e sup amp bird
+    0.52e beg f+ 0.015e 3750e  250e 0.1e sup amp bird
+    0.54e beg f+ 0.015e 3600e  300e 0.1e sup amp bird
+    0.56e beg f+ 0.015e 3500e  250e 0.1e sup amp bird
+    0.58e beg f+ 0.015e 3400e  200e 0.1e sup amp bird
+    0.60e beg f+ 0.015e 3200e  200e 0.1e sup amp bird
+    0.62e beg f+ 0.015e 3800e  100e 0.1e sup amp bird
+    0.65e beg f+ 0.070e 3000e  750e 0.2e sup amp bird
+    0.73e beg f+ 0.030e 5000e 1000e 0.1e sdwn amp bird
+    0.80e beg f+ 0.070e 3000e  750e 0.2e sup amp bird
+    0.88e beg f+ 0.030e 5000e 1000e 0.1e sdwn amp bird
+    0.95e beg f+ 0.070e 3000e  750e 0.2e sup amp bird
+    1.03e beg f+ 0.030e 5000e 1000e 0.1e sdwn amp bird
+    1.10e beg f+ 0.070e 3000e  750e 0.2e sup amp bird
+    1.18e beg f+ 0.030e 5000e 1000e 0.1e sdwn amp bird
+    1.25e beg f+ 0.070e 3000e  750e 0.2e sup amp bird
+    1.33e beg f+ 0.030e 5000e 1000e 0.1e sdwn amp bird
+    1.40e beg f+ 0.070e 3000e  750e 0.2e sup amp bird
+    1.48e beg f+ 0.030e 5000e 1000e 0.1e sdwn amp bird
+    1.55e beg f+ 0.070e 3000e  750e 0.2e sup amp bird
+    1.63e beg f+ 0.030e 5000e 1000e 0.1e sdwn amp bird
+    2.80e beg f+ 0.060e 4000e 1700e 0.1e bird-up amp bird
+    2.87e beg f+ 0.010e 5200e    0e 0.2e bird-up amp bird
+    2.90e beg f+ 0.060e 4000e 1700e 0.1e bird-up amp bird
+    2.97e beg f+ 0.010e 5200e    0e 0.2e bird-up amp bird
+    3.00e beg f+ 0.060e 4000e 1700e 0.1e bird-up amp bird
+    3.07e beg f+ 0.010e 5200e    0e 0.2e bird-up amp bird
+    3.10e beg f+ 0.060e 4000e 1700e 0.1e bird-up amp bird
+    3.17e beg f+ 0.010e 5200e    0e 0.2e bird-up amp bird
+    3.20e beg f+ 0.060e 4000e 1700e 0.1e bird-up amp bird
+    3.27e beg f+ 0.010e 5200e    0e 0.2e bird-up amp bird
+
+    3.40e beg f+ 0.150e 3000e 1000e 0.2e slast amp bird
+    3.60e beg f+ 0.150e 3000e 1000e 0.2e slast amp bird
+    3.80e beg f+ 0.150e 3000e 1000e 0.2e slast amp bird
+    4.00e beg f+ 0.150e 3000e 1000e 0.2e slast amp bird
+    4.20e beg f+ 0.150e 3000e 1000e 0.2e slast amp bird
+    4.40e beg f+ 0.150e 3000e 1000e 0.2e slast amp bird
+    4.4e 0.15e f+ wait
+;event
+
+event: cedar-waxwing { f: beg }
+    0e 0e 0.25e 0.7e 0.7e 1e 0.9e 1e 1e 0.2e 10 >vct { cedar }
+    0e 0e 0.2e 1e 0.4e 1e 1e 0e 8 >vct { cedamp }
+    beg 0.5e 6000e 800e 0.2e cedar cedamp bird
+    0.5e wait
+;event
+
+event: bairds-sparrow { f: beg }
+    0e 0e 0.25e 1e 0.5e 0e 0.75e 1e 1e 0e 10 >vct { bairdend }
+    0.00e 0.50e 0.05e 1.00e 0.10e 0.00e 0.15e 1.00e 0.20e 0.00e 0.25e 1.00e
+    0.30e 0.00e 0.35e 1.00e 0.40e 0.00e 0.45e 1.00e 0.50e 0.00e 0.55e 1.00e
+    0.60e 0.00e 0.65e 1.00e 0.70e 0.00e 0.75e 1.00e 0.80e 0.00e 0.85e 1.00e
+    0.90e 0.00e 0.95e 1.00e 1.00e 0.00e
+    42 >vct { bairdstart }
+
+    0.00e beg f+ 0.09e 6500e 1500e 0.20e bairdstart amp bird
+    0.22e beg f+ 0.01e 5900e  100e 0.20e bairdend amp bird
+    0.25e beg f+ 0.09e 6000e 1000e 0.20e bairdstart amp bird
+    0.45e beg f+ 0.01e 4200e  100e 0.20e bairdend amp bird
+    0.50e beg f+ 0.08e 4200e  600e 0.20e bairdstart amp bird
+    0.59e beg f+ 0.01e 4400e  100e 0.20e bairdend amp bird
+    0.60e beg f+ 0.01e 4400e  100e 0.20e bairdend amp bird
+    0.68e beg f+ 0.07e 5400e  700e 0.20e bairdstart amp bird
+    0.75e beg f+ 0.01e 4200e  100e 0.20e bairdend amp bird
+    0.79e beg f+ 0.01e 4400e  100e 0.20e bairdend amp bird
+    0.83e beg f+ 0.01e 4200e  100e 0.19e bairdend amp bird
+    0.87e beg f+ 0.01e 4400e  100e 0.19e bairdend amp bird
+    0.91e beg f+ 0.01e 4200e  100e 0.18e bairdend amp bird
+    0.95e beg f+ 0.01e 4400e  100e 0.18e bairdend amp bird
+    0.99e beg f+ 0.01e 4200e  100e 0.17e bairdend amp bird
+    1.03e beg f+ 0.01e 4400e  100e 0.17e bairdend amp bird
+    1.07e beg f+ 0.01e 4200e  100e 0.16e bairdend amp bird
+    1.11e beg f+ 0.01e 4400e  100e 0.16e bairdend amp bird
+    1.15e beg f+ 0.01e 4200e  100e 0.15e bairdend amp bird
+    1.19e beg f+ 0.01e 4400e  100e 0.15e bairdend amp bird
+    1.23e beg f+ 0.01e 4200e  100e 0.14e bairdend amp bird
+    1.27e beg f+ 0.01e 4400e  100e 0.14e bairdend amp bird
+    1.31e beg f+ 0.01e 4200e  100e 0.13e bairdend amp bird
+    1.35e beg f+ 0.01e 4400e  100e 0.13e bairdend amp bird
+    1.39e beg f+ 0.01e 4200e  100e 0.12e bairdend amp bird
+    1.43e beg f+ 0.01e 4400e  100e 0.12e bairdend amp bird
+    1.47e beg f+ 0.01e 4200e  100e 0.11e bairdend amp bird
+    1.51e beg f+ 0.01e 4400e  100e 0.11e bairdend amp bird
+    1.55e beg f+ 0.01e 4200e  100e 0.10e bairdend amp bird
+    1.59e beg f+ 0.01e 4400e  100e 0.10e bairdend amp bird
+    1.63e beg f+ 0.01e 4200e  100e 0.09e bairdend amp bird
+    1.67e beg f+ 0.01e 4400e  100e 0.09e bairdend amp bird
+    1.71e beg f+ 0.01e 4200e  100e 0.08e bairdend amp bird
+    1.75e beg f+ 0.01e 4400e  100e 0.08e bairdend amp bird
+    1.79e beg f+ 0.01e 4200e  100e 0.07e bairdend amp bird
+    1.83e beg f+ 0.01e 4400e  100e 0.07e bairdend amp bird
+    1.87e beg f+ 0.01e 4200e  100e 0.06e bairdend amp bird
+    1.92e beg f+ 0.01e 4400e  100e 0.06e bairdend amp bird
+    1.97e beg f+ 0.01e 4200e  100e 0.05e bairdend amp bird
+    1.97e 0.01e f+ wait
+;event
+
+event: kentucky-warbler { f: beg }
+    0e 0.3e 0.5e 1e 1e 0e 6 >vct { kenstart }
+    0e 0.9e 0.1e 1e 1e 0e 6 >vct { kendwn }
+    0e 1e 0.25e 0e 0.5e 0e 0.75e 1e 1e 0e 10 >vct { kentrill }
+    1e 1e 2e 0.1e 4 >vct { ken-parts-1 }
+    1e 1e 2e 0.01e 4 >vct { ken-parts-01 }
+    1e 1e 2e 0.03e 4 >vct { ken-parts-03 }
+
+    0.60e beg f+ 0.02e 3800e  200e 0.05e kenstart amp ken-parts-03 bigbird
+    0.65e beg f+ 0.03e 4300e  200e 0.15e bird-up amp ken-parts-1 bigbird
+    0.73e beg f+ 0.02e 3200e  100e 0.10e kendwn amp ken-parts-1 bigbird
+    0.75e beg f+ 0.05e 3000e  800e 0.15e kenstart amp ken-parts-01 bigbird
+    0.82e beg f+ 0.06e 3100e 1200e 0.10e kendwn amp ken-parts-01 bigbird
+    0.90e beg f+ 0.06e 3200e 1200e 0.10e kendwn amp ken-parts-01 bigbird
+    0.98e beg f+ 0.05e 4600e  100e 0.20e kentrill amp ken-parts-1 bigbird
+    1.10e beg f+ 0.05e 2900e  800e 0.15e kenstart amp ken-parts-01 bigbird
+    1.17e beg f+ 0.06e 3000e 1200e 0.10e kendwn amp ken-parts-01 bigbird
+    1.25e beg f+ 0.06e 3100e 1200e 0.10e kendwn amp ken-parts-01 bigbird
+    1.33e beg f+ 0.05e 4600e  100e 0.20e kentrill amp ken-parts-1 bigbird
+    1.43e beg f+ 0.05e 2800e  800e 0.15e kenstart amp ken-parts-01 bigbird
+    1.50e beg f+ 0.05e 2700e 1200e 0.10e kendwn amp ken-parts-01 bigbird
+    1.57e beg f+ 0.06e 2800e 1200e 0.10e kendwn amp ken-parts-01 bigbird
+    1.64e beg f+ 0.05e 4600e  100e 0.20e kentrill amp ken-parts-1 bigbird
+    1.75e beg f+ 0.05e 2700e  800e 0.15e kenstart amp ken-parts-01 bigbird
+    1.81e beg f+ 0.05e 2600e 1200e 0.10e kendwn amp ken-parts-01 bigbird
+    1.88e beg f+ 0.06e 2600e 1200e 0.10e kendwn amp ken-parts-01 bigbird
+    1.97e beg f+ 0.05e 4600e  100e 0.20e kentrill amp ken-parts-1 bigbird
+    2.05e beg f+ 0.05e 2700e  800e 0.15e kenstart amp ken-parts-01 bigbird
+    2.12e beg f+ 0.06e 2600e 1200e 0.10e kendwn amp ken-parts-01 bigbird
+    2.20e beg f+ 0.05e 4600e  100e 0.20e kentrill amp ken-parts-1 bigbird
+    2.30e beg f+ 0.05e 2800e  800e 0.15e kenstart amp ken-parts-01 bigbird
+    2.37e beg f+ 0.06e 2700e 1200e 0.10e kendwn amp ken-parts-01 bigbird
+    2.45e beg f+ 0.05e 4700e  100e 0.25e kentrill amp ken-parts-1 bigbird
+    2.45e 0.05e f+ wait
+;event
+
+event: rufous-sided-towhee { f: beg }
+    0.00e 0.10e 0.02e 0.05e 0.04e 0.15e 0.06e 0.05e 0.08e 0.20e 0.10e 0.04e
+    0.12e 0.25e 0.14e 0.03e 0.16e 0.30e 0.18e 0.02e 0.20e 0.35e 0.22e 0.01e
+    0.24e 0.40e 0.26e 0.00e 0.28e 0.45e 0.30e 0.00e 0.32e 0.50e 0.34e 0.00e
+    0.36e 0.50e 0.80e 1.00e 1.00e 0.00e
+    42 >vct { towhee-one }
+    1e 0.03e 2e 1e 3e 0.03e 6 >vct { towhee-parts }
+
+    0.250e beg f+ 0.13e 1400e 1100e 0.20e towhee-one amp towhee-parts bigbird
+    0.450e beg f+ 0.13e 1400e 1100e 0.20e towhee-one amp towhee-parts bigbird
+    0.600e beg f+ 0.13e 1400e 1100e 0.20e towhee-one amp towhee-parts bigbird
+    0.750e beg f+ 0.10e 1400e 1100e 0.20e towhee-one amp towhee-parts bigbird
+    0.880e beg f+ 0.01e 5100e 2000e 0.10e bird-up amp bird
+    0.895e beg f+ 0.01e 5100e 1600e 0.10e bird-up amp bird
+    0.910e beg f+ 0.01e 5100e 1000e 0.10e bird-up amp bird
+    0.930e beg f+ 0.01e 3000e 1200e 0.10e bird-down amp bird
+    0.945e beg f+ 0.01e 5100e 2000e 0.09e bird-up amp bird
+    0.960e beg f+ 0.01e 5100e 1600e 0.09e bird-up amp bird
+    0.975e beg f+ 0.01e 5100e 1000e 0.09e bird-up amp bird
+    0.995e beg f+ 0.01e 3000e 1200e 0.09e bird-down amp bird
+    1.010e beg f+ 0.01e 5100e 2000e 0.10e bird-up amp bird
+    1.025e beg f+ 0.01e 5100e 1600e 0.10e bird-up amp bird
+    1.040e beg f+ 0.01e 5100e 1000e 0.10e bird-up amp bird
+    1.060e beg f+ 0.01e 3000e 1200e 0.10e bird-down amp bird
+    1.075e beg f+ 0.01e 5100e 2000e 0.09e bird-up amp bird
+    1.090e beg f+ 0.01e 5100e 1600e 0.09e bird-up amp bird
+    1.105e beg f+ 0.01e 5100e 1000e 0.09e bird-up amp bird
+    1.125e beg f+ 0.01e 3000e 1200e 0.09e bird-down amp bird
+    1.140e beg f+ 0.01e 5100e 2000e 0.08e bird-up amp bird
+    1.155e beg f+ 0.01e 5100e 1600e 0.08e bird-up amp bird
+    1.170e beg f+ 0.01e 5100e 1000e 0.08e bird-up amp bird
+    1.190e beg f+ 0.01e 3000e 1200e 0.08e bird-down amp bird
+    1.205e beg f+ 0.01e 5100e 2000e 0.08e bird-up amp bird
+    1.220e beg f+ 0.01e 5100e 1600e 0.08e bird-up amp bird
+    1.235e beg f+ 0.01e 5100e 1000e 0.08e bird-up amp bird
+    1.255e beg f+ 0.01e 3000e 1200e 0.08e bird-down amp bird
+    1.270e beg f+ 0.01e 5100e 2000e 0.07e bird-up amp bird
+    1.285e beg f+ 0.01e 5100e 1600e 0.07e bird-up amp bird
+    1.300e beg f+ 0.01e 5100e 1000e 0.07e bird-up amp bird
+    1.320e beg f+ 0.01e 3000e 1200e 0.07e bird-down amp bird
+    1.335e beg f+ 0.01e 5100e 2000e 0.06e bird-up amp bird
+    1.350e beg f+ 0.01e 5100e 1600e 0.06e bird-up amp bird
+    1.365e beg f+ 0.01e 5100e 1000e 0.06e bird-up amp bird
+    1.385e beg f+ 0.01e 3000e 1200e 0.06e bird-down amp bird
+    1.400e beg f+ 0.01e 5100e 2000e 0.05e bird-up amp bird
+    1.415e beg f+ 0.01e 5100e 1600e 0.05e bird-up amp bird
+    1.430e beg f+ 0.01e 5100e 1000e 0.05e bird-up amp bird
+    1.450e beg f+ 0.01e 3000e 1200e 0.05e bird-down amp bird
+    1.465e beg f+ 0.01e 5100e 2000e 0.03e bird-up amp bird
+    1.480e beg f+ 0.01e 5100e 1600e 0.03e bird-up amp bird
+    1.495e beg f+ 0.01e 5100e 1000e 0.03e bird-up amp bird
+    1.515e beg f+ 0.01e 3000e 1200e 0.03e bird-down amp bird
+    1.515e 0.01e f+ wait
+;event
+
+event: prothonotary-warbler { f: beg }
+    0e 0.1e 0.2e 0e 1e 1e 6 >vct { pro-one }
+    0e 0e 0.2e 1e 0.4e 0.5e 1e 0e 8 >vct { pro-amp }
+
+    0.76e beg f+ 0.08e 3000e 3000e 0.05e pro-one pro-amp bird
+    0.85e beg f+ 0.05e 4000e 2500e 0.06e bird-up bird-amp bird
+    1.02e beg f+ 0.08e 3000e 3000e 0.10e pro-one pro-amp bird
+    1.12e beg f+ 0.05e 4000e 2500e 0.10e bird-up bird-amp bird
+
+    1.26e beg f+ 0.08e 3000e 3000e 0.15e pro-one pro-amp bird
+    1.35e beg f+ 0.05e 4000e 2500e 0.16e bird-up bird-amp bird
+
+    1.54e beg f+ 0.08e 3000e 3000e 0.20e pro-one pro-amp bird
+    1.63e beg f+ 0.05e 4000e 2500e 0.19e bird-up bird-amp bird
+
+    1.80e beg f+ 0.08e 3000e 3000e 0.20e pro-one pro-amp bird
+    1.89e beg f+ 0.05e 4000e 2500e 0.16e bird-up bird-amp bird
+
+    2.03e beg f+ 0.08e 3000e 3000e 0.15e pro-one pro-amp bird
+    2.12e beg f+ 0.05e 4000e 2500e 0.10e bird-up bird-amp bird
+
+    2.30e beg f+ 0.08e 3000e 3000e 0.10e pro-one pro-amp bird
+    2.39e beg f+ 0.05e 4000e 2500e 0.06e bird-up bird-amp bird
+    2.39e 0.05e f+ wait
+;event
+
+event: audubons-warbler { f: beg }
+    0e 0e 0.15e 1e 0.45e 0.9e 0.5e 0e 0.55e 1e 0.9e 0.9e 1e 1e 14 >vct { w-end }
+    0e 0.1e 0.5e 1e 1e 0e 6 >vct { w-updown }
+
+    0.75e beg f+ 0.04e 2400e  200e 0.05e bird-down bird-amp bird
+    0.83e beg f+ 0.03e 3200e  200e 0.10e bird-up bird-amp bird
+    0.90e beg f+ 0.04e 2500e  300e 0.15e bird-up bird-amp bird
+    0.97e beg f+ 0.04e 2300e  600e 0.15e bird-down bird-amp bird
+
+    1.02e beg f+ 0.03e 3500e  400e 0.20e bird-up bird-amp bird
+    1.06e beg f+ 0.04e 2300e 1200e 0.10e bird-up bird-amp bird
+    1.13e beg f+ 0.05e 2300e 1200e 0.15e bird-down bird-amp bird
+    1.22e beg f+ 0.02e 3200e  800e 0.25e bird-up bird-amp bird
+    1.25e beg f+ 0.08e 2400e  600e 0.20e w-updown bird-amp bird
+    1.35e beg f+ 0.02e 2200e  400e 0.10e bird-up bird-amp bird
+    1.38e beg f+ 0.07e 2400e 1400e 0.15e bird-down bird-amp bird
+    1.47e beg f+ 0.03e 3000e  800e 0.20e bird-up bird-amp bird
+    1.50e beg f+ 0.03e 2500e  400e 0.10e w-updown bird-amp bird
+    1.55e beg f+ 0.01e 2300e  100e 0.05e bird-up bird-amp bird
+    1.56e beg f+ 0.06e 2200e 1400e 0.15e bird-down bird-amp bird
+    1.65e beg f+ 0.03e 3100e  800e 0.10e bird-up bird-amp bird
+    1.70e beg f+ 0.07e 2800e  800e 0.15e w-updown bird-amp bird
+    1.79e beg f+ 0.06e 2400e 1000e 0.10e bird-down bird-amp bird
+    1.86e beg f+ 0.14e 3100e  900e 0.25e w-end bird-amp bird
+    2.02e beg f+ 0.12e 3200e  800e 0.20e w-end bird-amp bird
+    2.02e 0.12e f+ wait
+;event
+
+event: lark-bunting { f: beg }
+    0.00e 0.00e 0.06e 0.80e 0.12e 0.00e 0.18e 0.85e 0.24e 0.05e 0.36e 0.90e
+    0.42e 0.10e 0.48e 0.95e 0.54e 0.20e 0.60e 1.00e 0.66e 0.20e 0.72e 1.00e
+    0.78e 0.20e 0.84e 1.00e 0.90e 0.20e 1.00e 1.00e
+    32 >vct { b-trill-one }
+    0.00e 0.00e 0.05e 0.80e 0.10e 0.00e 0.15e 0.85e 0.20e 0.00e 0.25e 0.90e
+    0.30e 0.00e 0.35e 0.95e 0.40e 0.00e 0.45e 1.00e 0.50e 0.00e 0.55e 1.00e
+    0.60e 0.00e 0.65e 1.00e 0.70e 0.00e 0.75e 1.00e 0.80e 0.00e 0.85e 1.00e
+    0.90e 0.00e 0.95e 1.00e 1.00e 0.00e
+    42 >vct { b-trill-two }
+
+    0.10e beg f+ 0.03e 1800e 100e 0.10e bird-up bird-amp bird
+    0.20e beg f+ 0.12e 3700e 400e 0.20e bird-up bird-amp bird
+    0.40e beg f+ 0.03e 4100e 500e 0.15e bird-down bird-amp bird
+    0.45e beg f+ 0.05e 2000e 400e 0.20e bird-down bird-amp bird
+    0.51e beg f+ 0.03e 1800e 100e 0.10e bird-up bird-amp bird
+    0.04e beg f+ 0.03e 4100e 500e 0.15e bird-down bird-amp bird
+    0.65e beg f+ 0.05e 2000e 400e 0.20e bird-down bird-amp bird
+    0.71e beg f+ 0.03e 1800e 100e 0.10e bird-up bird-amp bird
+    0.80e beg f+ 0.03e 4100e 500e 0.15e bird-down bird-amp bird
+    0.85e beg f+ 0.05e 2000e 400e 0.20e bird-down bird-amp bird
+    0.91e beg f+ 0.03e 1800e 100e 0.10e bird-up bird-amp bird
+    1.00e beg f+ 0.03e 4100e 500e 0.15e bird-down bird-amp bird
+    1.05e beg f+ 0.05e 2000e 400e 0.20e bird-down bird-amp bird
+    1.01e beg f+ 0.03e 1800e 100e 0.10e bird-up bird-amp bird
+    1.20e beg f+ 0.03e 4100e 500e 0.15e bird-down bird-amp bird
+    1.25e beg f+ 0.05e 2000e 400e 0.20e bird-down bird-amp bird
+    1.31e beg f+ 0.03e 1800e 100e 0.10e bird-up bird-amp bird
+    1.40e beg f+ 0.03e 4100e 500e 0.15e bird-down bird-amp bird
+    1.45e beg f+ 0.05e 2000e 400e 0.20e bird-down bird-amp bird
+    1.51e beg f+ 0.03e 1800e 100e 0.10e bird-up bird-amp bird
+    1.60e beg f+ 0.03e 4100e 500e 0.15e bird-down bird-amp bird
+    1.65e beg f+ 0.05e 2000e 400e 0.20e bird-down bird-amp bird
+    1.71e beg f+ 0.03e 1800e 100e 0.10e bird-up bird-amp bird
+    1.770e beg f+ 0.23e 6000e 600e 0.15e b-trill-one bird-amp bird
+    2.005e beg f+ 0.28e 6000e 600e 0.15e b-trill-two bird-amp bird
+    2.005e 0.28e f+ wait
+;event
+
+event: eastern-bluebird { f: beg }
+    0.00e 0.60e 0.10e 1.00e 0.20e 0.00e 0.25e 1.00e 0.30e 0.00e 0.35e 1.00e
+    0.40e 0.00e 0.45e 1.00e 0.50e 0.00e 0.75e 1.00e 1.00e 0.00e 22 >vct { blue-three }
+    0e 0e 0.5e 1e 1e 0e 6 >vct { blue-four }
+    0.00e 0.50e 0.10e 1.00e 0.20e 0.00e 0.35e 1.00e 0.50e 0.00e 0.65e 1.00e
+    0.80e 0.00e 0.95e 1.00e 1.00e 0.50e 18 >vct { blue-five }
+
+    0.75e beg f+ 0.02e 2000e 1600e 0.10e bird-up bird-amp bird
+    0.80e beg f+ 0.02e 2000e 1600e 0.10e bird-up bird-amp bird
+    0.86e beg f+ 0.02e 2000e 1600e 0.10e bird-up bird-amp bird
+    1.00e beg f+ 0.13e 2000e 1400e 0.20e bird-down bird-amp bird
+    1.20e beg f+ 0.24e 2000e  800e 0.20e blue-three bird-amp bird
+    1.68e beg f+ 0.03e 2200e  400e 0.10e bird-up bird-amp bird
+    1.72e beg f+ 0.10e 1950e  100e 0.15e blue-four bird-amp bird
+    1.96e beg f+ 0.15e 2000e  600e 0.20e blue-five bird-amp bird
+    1.96e 0.15e f+ wait
+;event
+
+event: chuck-wills-widow { f: beg }
+    0e 0e 0.1e 0.1e 0.25e 1e 0.5e 0.3e 0.8e 0.7e 1e 0e 12 >vct { wid-one }
+    0e 0.2e 0.3e 1e 0.5e 0.3e 0.6e 0.7e 0.9e 0.1e 1e 0e 12 >vct { wid-two }
+
+    0.05e beg f+ 0.03e 1000e  800e 0.1e bird-down bird-amp bird
+    0.32e beg f+ 0.20e 1000e 1000e 0.2e wid-one bird-amp bird
+    0.56e beg f+ 0.29e  900e 1100e 0.2e wid-two bird-amp bird
+    0.56e 0.29e f+ wait
+;event
+
+event: blue-gray-gnatcatcher { f: beg }
+    0e 0e 0.15e 1e 0.75e 0.8e 0.9e 1e 1e 0.7e 10 >vct { gskw1 }
+    0e 0e 0.25e 1e 0.75e 0.7e 1e 0e 8 >vct { gskw2 }
+    1e 0.4e 2e 1e 3e 0.1e 6 >vct { gparts-1 }
+    1e 0.4e 2e 1e 3e 0.2e 6 >vct { gparts-2 }
+    1e 0.4e 2e 1e 3e 0.3e 6 >vct { gparts-3 }
+
+    0.5e beg f+ 0.20e 4000e 1000e 0.2e gskw1 bird-amp gparts-1 bigbird
+    0.8e beg f+ 0.13e 4000e  800e 0.2e gskw2 bird-amp gparts-2 bigbird
+    1.4e beg f+ 0.25e 4000e  800e 0.2e gskw2 bird-amp gparts-3 bigbird
+    1.8e beg f+ 0.17e 4000e  900e 0.2e gskw1 bird-amp gparts-3 bigbird
+    2.0e beg f+ 0.17e 4000e  700e 0.2e gskw1 bird-amp gparts-3 bigbird
+    2.2e beg f+ 0.17e 4000e  800e 0.2e gskw2 bird-amp gparts-3 bigbird
+    2.2e 0.17e f+ wait
+;event
+
+event: black-throated-sparrow { f: beg }
+    0e 0e 0.75e 1e 1e 0e 6 >vct { black-down-amp }
+    0e 0e 0.5e 1e 1e 0.2e 6 >vct { black-up-down }
+    0e 0e 0.5e 1e 1e 0e 6 >vct { black-amp }
+    0.00e 0.00e 0.03e 0.70e 0.06e 0.00e 0.09e 0.75e 0.12e 0.00e 0.15e 0.80e
+    0.18e 0.05e 0.21e 0.85e 0.24e 0.10e 0.27e 0.90e 0.30e 0.10e 0.33e 1.00e
+    0.36e 0.10e 0.39e 1.00e 0.42e 0.10e 0.45e 1.00e 0.48e 0.10e 0.51e 1.00e
+    0.54e 0.10e 0.57e 1.00e 0.60e 0.10e 0.63e 1.00e 0.66e 0.10e 0.69e 1.00e
+    0.72e 0.10e 0.75e 1.00e 0.78e 0.10e 0.81e 1.00e 0.84e 0.10e 0.87e 1.00e
+    0.90e 0.00e 0.93e 0.95e 0.96e 0.00e 1.00e 0.90e
+    68 >vct { black-trill }
+
+    0.80e beg f+ 0.02e 2200e 1000e 0.10e bird-down bird-amp bird
+    0.83e beg f+ 0.01e 3000e  200e 0.05e bird-up bird-amp bird
+    0.96e beg f+ 0.02e 5800e  500e 0.05e bird-up bird-amp bird
+    1.00e beg f+ 0.02e 4000e  200e 0.05e bird-up bird-amp bird
+    1.04e beg f+ 0.10e 2100e 1700e 0.15e bird-down black-down-amp bird
+    1.15e beg f+ 0.05e 5700e  400e 0.25e bird-up bird-amp bird
+    1.25e beg f+ 0.25e 2000e  900e 0.20e black-trill bird-amp bird
+    1.52e beg f+ 0.05e 5600e  400e 0.15e black-up-down bird-amp bird
+
+    1.60e beg f+ 0.04e 3900e 1100e 0.15e bird-up bird-amp bird
+    1.66e beg f+ 0.01e 1900e  100e 0.10e bird-up black-amp bird
+
+    1.69e beg f+ 0.01e 3600e  300e 0.10e bird-up black-amp bird
+    1.71e beg f+ 0.03e 3900e 1000e 0.15e bird-up black-amp bird
+    1.74e beg f+ 0.02e 5000e  100e 0.20e bird-up black-amp bird
+    1.76e beg f+ 0.01e 1900e  100e 0.10e bird-up black-amp bird
+
+    1.78e beg f+ 0.01e 3600e  300e 0.10e bird-up black-amp bird
+    1.80e beg f+ 0.03e 3900e 1000e 0.15e bird-up black-amp bird
+    1.83e beg f+ 0.02e 5000e  100e 0.20e bird-up black-amp bird
+    1.85e beg f+ 0.01e 1900e  100e 0.10e bird-up black-amp bird
+
+    1.87e beg f+ 0.01e 3600e  300e 0.10e bird-up black-amp bird
+    1.89e beg f+ 0.03e 3900e 1000e 0.15e bird-up black-amp bird
+    1.92e beg f+ 0.02e 5000e  100e 0.20e bird-up black-amp bird
+    1.94e beg f+ 0.01e 1900e  100e 0.10e bird-up black-amp bird
+
+    1.96e beg f+ 0.01e 3600e  300e 0.10e bird-up black-amp bird
+    1.98e beg f+ 0.03e 3900e 1000e 0.15e bird-up black-amp bird
+    2.01e beg f+ 0.02e 5000e  100e 0.20e bird-up black-amp bird
+    2.03e beg f+ 0.01e 1900e  100e 0.10e bird-up black-amp bird
+
+    2.05e beg f+ 0.01e 3600e  300e 0.10e bird-up black-amp bird
+    2.07e beg f+ 0.03e 3900e 1000e 0.15e bird-up black-amp bird
+    2.10e beg f+ 0.02e 5000e  100e 0.20e bird-up black-amp bird
+    2.13e beg f+ 0.01e 1900e  100e 0.10e bird-up black-amp bird
+
+    2.16e beg f+ 0.03e 3800e  300e 0.10e bird-up bird-amp bird
+    2.16e 0.03e f+ wait
+;event
+
+event: black-chinned-sparrow { f: beg }
+    0e 0e 0.3e 0.2e 1e 1e 6 >vct { chin-up }
+
+    0.60e beg f+ 0.20e 4200e  100e 0.10e bird-up bird-amp bird
+    1.00e beg f+ 0.09e 3800e 2000e 0.10e chin-up bird-amp bird
+    1.25e beg f+ 0.08e 3900e 1700e 0.12e chin-up bird-amp bird
+    1.40e beg f+ 0.08e 3600e 2300e 0.13e bird-up bird-amp bird
+    1.50e beg f+ 0.11e 3100e 2800e 0.14e bird-up bird-amp bird
+    1.65e beg f+ 0.07e 2900e 2700e 0.15e bird-up bird-amp bird
+    1.74e beg f+ 0.07e 2900e 2700e 0.15e bird-up bird-amp bird
+    1.82e beg f+ 0.07e 3000e 2300e 0.13e bird-up bird-amp bird
+    1.89e beg f+ 0.07e 3200e 2000e 0.10e bird-up bird-amp bird
+    1.97e beg f+ 0.05e 3200e 1500e 0.10e bird-up bird-amp bird
+
+    2.04e beg f+ 0.04e 3400e 1000e 0.07e bird-up bird-amp bird
+    2.10e beg f+ 0.03e 3600e  700e 0.05e bird-up bird-amp bird
+    2.15e beg f+ 0.03e 3800e  300e 0.05e bird-up bird-amp bird
+    2.19e beg f+ 0.02e 3900e  100e 0.03e bird-up bird-amp bird
+    2.22e beg f+ 0.01e 3900e  100e 0.01e bird-up bird-amp bird
+    2.24e beg f+ 0.01e 3900e  100e 0.01e bird-up bird-amp bird
+    2.24e 0.01e f+ wait
+;event
+
+event: various-gull-cries-from-end-of-colony-5 { f: beg }
+    0e 0e 10e 1e 20e 0.5e 40e 0.6e 60e 0.5e 100e 0e 12 >vct { gull-start }
+    0e 0e 10e 1e 30e 0.5e 80e 0.5e 100e 0e 10 >vct { gull-middle }
+    0e 0e 5e 1e 10e 0.5e 90e 0.4e 100e 0e 10 >vct { gull-end }
+    1e 0.1e 2e 1e 3e 0.1e 4e 0.01e 5e 0.09e 6e 0.01e 7e 0.01e 14 >vct { gull-parts }
+
+    0.25e beg f+ 0.80e 1180e 1180e 0.08e gull-end bird-amp gull-parts bigbird
+    1.50e beg f+ 0.90e 1180e 1180e 0.07e gull-end bird-amp gull-parts bigbird
+    2.75e beg f+ 1.00e 1050e 1050e 0.08e gull-end bird-amp gull-parts bigbird
+    4.80e beg f+ 0.05e 1180e 1180e 0.06e gull-start bird-amp gull-parts bigbird
+    4.95e beg f+ 0.10e 1180e 1180e 0.08e gull-start bird-amp gull-parts bigbird
+    5.15e beg f+ 0.10e 1180e 1180e 0.09e gull-start bird-amp gull-parts bigbird
+    5.35e beg f+ 0.10e 1180e 1180e 0.10e gull-middle bird-amp gull-parts bigbird
+    5.45e beg f+ 0.40e 1050e 1050e 0.10e gull-end bird-amp gull-parts bigbird
+    6.25e beg f+ 0.80e 1050e 1050e 0.10e gull-end bird-amp gull-parts bigbird
+    7.45e beg f+ 1.80e 1050e 1050e 0.10e gull-end bird-amp gull-parts bigbird
+;event
+
+lambda:
+    .sndversion
+    1e { f: forward }
+    now@ orchard-oriole forward wait
+    now@ cassins-kingbird forward wait
+    now@ chipping-sparrow forward wait
+    now@ bobwhite forward wait
+    now@ western-meadowlark forward wait
+    now@ scissor-tailed-flycatcher forward wait
+    now@ great-horned-owl forward wait
+    now@ black-throated-gray-warbler forward wait
+    now@ yellow-warbler forward wait
+    now@ black-necked-stilt forward wait
+    now@ chestnut-sided-warbler forward wait
+    now@ grasshopper-sparrow forward wait
+    now@ swamp-sparrow forward wait
+    now@ golden-crowned-sparrow forward wait
+    now@ indigo-bunting forward wait
+    now@ hooded-warbler forward wait
+    now@ american-widgeon forward wait
+    now@ louisiana-waterthrush forward wait
+    now@ robin forward wait
+    now@ solitary-vireo forward wait
+    now@ pigeon-hawk forward wait
+    now@ cerulean-warbler forward wait
+    now@ nashville-warbler forward wait
+    now@ eastern-phoebe forward wait
+    now@ painted-bunting forward wait
+    now@ western-flycatcher forward wait
+    now@ bachmans-sparrow forward wait
+    now@ cedar-waxwing forward wait
+    now@ bairds-sparrow forward wait
+    now@ kentucky-warbler forward wait
+    now@ rufous-sided-towhee forward wait
+    now@ prothonotary-warbler forward wait
+    now@ audubons-warbler forward wait
+    now@ lark-bunting forward wait
+    now@ eastern-bluebird forward wait
+    now@ chuck-wills-widow forward wait
+    now@ blue-gray-gnatcatcher forward wait
+    now@ black-throated-sparrow forward wait
+    now@ black-chinned-sparrow forward wait
+    now@ various-gull-cries-from-end-of-colony-5
+;
+true :play
+2 :channels
+' jc-reverb :reverb
+false :notehook
+*clm-search-list* s" bird.snd" $+ :output
+*clm-search-list* s" bird.reverb" $+ :rev-file-name
+s" clm-2/bird.clm using GFM Gforth Music" :comment with-sound
+
+script? [if] bye [then]
+
+\ bird.gfm ends here

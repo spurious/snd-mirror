@@ -1402,7 +1402,7 @@ Example: rbm_mix(\"tmp\")\n") if filename == :help
   end
 
   def scaled_to_sound(scl, beg, len)
-    @channels.times do |chn| scale_sound_to(scl, beg, len, @ws_output, chn) end
+    @channels.times do |chn| scale_to(scl, beg, len, @ws_output, chn) end
   end
 
   def scaled_by_sound(scl, beg, len)
@@ -1550,7 +1550,7 @@ Example: rbm_mix(\"tmp\")\n") if filename == :help
       unless snd = find_sound(@output)
         snd = open_sound(@output)
       end
-      @channels.times do |chn| scale_sound_to(scl, beg, len, snd, chn) end
+      @channels.times do |chn| scale_to(scl, beg, len, snd, chn) end
     else
       amax = mus_sound_maxamp(@output)
       tmpa = []

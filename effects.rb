@@ -448,7 +448,7 @@ decay is how long to run the effect past the end of the sound\n") if target == :
               if with_env
                 env_sound(with_env, pts[0], pts[1] - pts[0])
               else
-                scale_sound_by(@amount, pts[0], pts[1] - pts[0])
+                scale_by(@amount, pts[0], pts[1] - pts[0])
               end
             end
           end
@@ -504,7 +504,7 @@ Move the slider to change the scaling amount.",
             selection? ? scale_selection_to(@amount) : snd_warning("no selection")
           else
             if pts = plausible_mark_samples
-              scale_sound_to(@amount, pts[0], pts[1] - pts[0])
+              scale_to(@amount, pts[0], pts[1] - pts[0])
             end
           end
         end

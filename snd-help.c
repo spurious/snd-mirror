@@ -370,6 +370,9 @@ void about_snd_help(void)
 	    "\nRecent changes include:\n\
 \n\
 11-Oct:  vct->string\n\
+         moved scale-sound-by and scale-sound-to to snd7.scm.\n\
+	 added sndins and gfm directories (Mike Scholz sndlib/clm code)\n\
+         controls->channel\n\
 5-Oct:   snd 7.7.\n\
 4-Oct:   moved vct->samples and samples->vct to snd7.scm.\n\
          added edit-list->function\n\

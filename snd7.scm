@@ -293,3 +293,25 @@
 (define transform-samples->vct transform->vct)
 (define transform-samples-size transform-frames)
 (define region-samples->vct region->vct)
+
+(define* (scale-sound-by scl #:optional beg dur snd chn edpos)
+  (if (integer? chn)
+      (scale-channel scl beg dur snd chn edpos)
+      (do ((i 0 (1+ i)))
+	  ((= i (chans snd)))
+	(scale-channel scl beg dur snd i))))
+
+(define* (scale-sound-to norm #:optional beg dur snd chn)
+  (if (integer? chn)
+      (let ((mx (maxamp snd chn)))
+	(if (and (not (= mx 0.0))
+		 (not (= mx norm)))
+	    (scale-channel (/ norm mx) beg dur snd chn)))
+      (let ((mx (apply max (maxamp snd #t))))
+	(if (and (not (= mx 0.0))
+		 (not (= mx norm)))
+	    (do ((i 0 (1+ i)))
+		((= i (chans snd)))
+	      (scale-channel (/ norm mx) beg dur snd i))))))
+
+

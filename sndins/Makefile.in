@@ -1,0 +1,60 @@
+# Makefile.in for libsndins.so
+
+srcdir = @srcdir@
+top_srcdir = @top_srcdir@
+VPATH = @srcdir@
+top_builddir = ..
+
+INSTALL = @INSTALL@
+CC = @CC@
+CFLAGS = @CFLAGS@
+SO_INSTALL = @SO_INSTALL@
+SO_LD = @SO_LD@
+A_LD = @A_LD@
+A_LD_FLAGS = @A_LD_FLAGS@
+LD_FLAGS = @LD_FLAGS@
+LDFLAGS = @LDFLAGS@
+LDSO_FLAGS = @LDSO_FLAGS@
+LIBS = @LIBS@
+SHELL = @SHELL@
+XEN_CFLAGS = @GUILE_CFLAGS@
+XEN_LIBS = @GUILE_LIBS@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+includedir = @includedir@
+libdir = @libdir@
+prefix = @prefix@
+mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
+DEFS = @DEFS@
+HEADERS	= sndins.h $(top_builddir)/config.h sndlib.h xen.h clm.h clm2xen.h sndlib2xen.h
+OBJS	= sndins.o xen.o
+SO_TARGET = libsndins.so
+A_TARGET = libsndins.a
+
+DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_srcdir) -I$(top_builddir)
+
+sndins: $(OBJS)
+	$(SO_LD) $(LDFLAGS) $(OBJS) -o $(SO_TARGET) $(LDSO_FLAGS) $(XEN_LIBS) $(LIBS)
+	$(A_LD) $(LDFLAGS) $(OBJS) -o $(A_TARGET) $(LD_FLAGS) $(A_LD_FLAGS) $(XEN_LIBS) $(LIBS)
+
+sndins.o: sndins.c
+	$(CC) -c $(DEFS) $(DEFAULT_INCLUDES) $(CFLAGS) $(XEN_CFLAGS) $<
+
+xen.o: $(top_builddir)/xen.c
+	$(CC) -c $(DEFS) $(DEFAULT_INCLUDES) $(CFLAGS) $(XEN_CFLAGS) $<
+
+install: sndins
+	$(mkinstalldirs) $(libdir)
+	$(mkinstalldirs) $(includedir)
+	$(SO_INSTALL) $(SO_TARGET) $(libdir)/$(SO_TARGET)
+	$(INSTALL) $(A_TARGET) $(libdir)/$(A_TARGET)
+
+uninstall:
+	rm -f $(libdir)/$(SO_TARGET)
+	rm -f $(libdir)/$(A_TARGET)
+
+clean:
+	rm -f $(A_TARGET) $(SO_TARGET) *.o 0
+
+distclean:
+	rm -f Makefile $(A_TARGET) $(SO_TARGET) *.o 0

@@ -755,7 +755,7 @@ indication: (do-all-chans (lambda (val) (* 2.0 val)) \"double all samples\")"
 (define (every-sample? proc)
   "(every-sample func) -> #t if func is not #f for all samples in the current channel, 
 otherwise it moves the cursor to the first offending sample"
-  (let ((baddy (scan-chan 
+  (let ((baddy (scan-channel 
 		(lambda (y) 
 		  (not (proc y))))))
     (if baddy (set! (cursor) (cadr baddy)))
@@ -764,7 +764,7 @@ otherwise it moves the cursor to the first offending sample"
 (define (sort-samples nbins)
   "(sort-samples bins) provides a histogram in 'bins' bins"
   (let ((bins (make-vector nbins 0)))
-    (scan-chan
+    (scan-channel
      (lambda (y)
        (let ((bin (inexact->exact (floor (* (abs y) nbins)))))
 	 (vector-set! bins bin (+ (vector-ref bins bin) 1))
@@ -1612,18 +1612,19 @@ this clock, set retitle-time to 0"
 
 ;;; -------- filtered-env 
 
-(define (filtered-env e)
+(define* (filtered-env e #:optional snd chn)
   "(filtered-env env) is a time-varying one-pole filter: when env is at 1.0, no filtering, 
 as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount move together"
   (let* ((samps (frames))
 	 (flt (make-one-pole 1.0 0.0))
 	 (amp-env (make-env e :end (1- samps))))
-    (map-chan
+    (map-channel
      (lambda (val)
        (let ((env-val (env amp-env)))
 	 (set! (mus-xcoeff flt 0) env-val)
 	 (set! (mus-ycoeff flt 1) (- env-val 1.0))
-	 (one-pole flt (* env-val val)))))))
+	 (one-pole flt (* env-val val))))
+     0 #f snd chn #f (format #f "filtered-env '~A" e))))
 
 
 ;;; -------- multi-colored rxvt printout

@@ -1,6 +1,9 @@
 Snd change log
 
   11-Oct:    vct->string
+             moved scale-sound-by and scale-sound-to to snd7.scm.
+	     added sndins and gfm directories (Mike Scholz sndlib/clm code)
+             controls->channel
   5-Oct:     snd 7.7.
   4-Oct:     moved vct->samples and samples->vct to snd7.scm.
              added edit-list->function

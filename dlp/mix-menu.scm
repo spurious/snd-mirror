@@ -30,9 +30,9 @@
 	  (apply map
 		 (lambda (snd chn)
 		   (if (= (sync snd) snc)
-		       (map-chan (func) #f #f origin snd chn)))
+		       (map-channel (func) 0 #f snd chn #f origin)))
 		 (all-chans))
-	  (map-chan (func) #f #f origin)))))
+	  (map-channel (func) 0 #f #f #f #f origin)))))
 
 ;;; ------ Delete mix
 ;;;

@@ -7937,45 +7937,6 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
   return(xen_return_first(result, proc, origin));
 }
 
-static XEN g_scale_sound_by(XEN scl, XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
-{
-  #define H_scale_sound_by "(" S_scale_sound_by " scaler (beg 0) (dur len) (snd #f) (chn #f) (edpos #f)): \
-scale samples in the given sound/channel \
-between beg and beg + num by scaler.  If channel is omitted, the scaling applies to the entire sound (and edpos is ignored)."
-
-  int pos;
-  snd_info *sp;
-  chan_info *cp;
-  off_t samp;
-  Float scaler;
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(scl), scl, XEN_ARG_1, S_scale_sound_by, "a number");
-  ASSERT_SAMPLE_TYPE(S_scale_sound_by, beg, XEN_ARG_2);
-  ASSERT_SAMPLE_TYPE(S_scale_sound_by, num, XEN_ARG_3);
-  ASSERT_SOUND(S_scale_sound_by, snd, 4);
-  scaler = XEN_TO_C_DOUBLE(scl);
-  samp = beg_to_sample(beg, S_scale_sound_by);
-  if (XEN_INTEGER_P(chn))
-    {
-      cp = get_cp(snd, chn, S_scale_sound_by);
-      pos = to_c_edit_position(cp, edpos, S_scale_sound_by, 6);
-      scale_channel(cp, scaler, samp, dur_to_samples(num, samp, cp, pos, 3, S_scale_sound_by), pos, false);
-    }
-  else
-    {
-      int i;
-      sp = get_sp(snd, NO_PLAYERS);
-      if (sp == NULL)
-	return(snd_no_such_sound_error(S_scale_sound_by, snd));
-      for (i = 0; i < sp->nchans; i++)
-	{
-	  cp = sp->chans[i];
-	  pos = cp->edit_ctr;
-	  scale_channel(cp, scaler, samp, dur_to_samples(num, samp, cp, pos, 3, S_scale_sound_by), pos, false);
-	}
-    }
-  return(scl);
-}
-
 static XEN g_scale_channel(XEN scl, XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
 {
   #define H_scale_channel "(" S_scale_channel " scaler (beg 0) (dur len) (snd #f) (chn #f) (edpos #f)): \
@@ -8036,65 +7997,6 @@ Float local_maxamp(chan_info *cp, off_t beg, off_t num, int edpos)
     }
   free_snd_fd(sf);
   return(MUS_SAMPLE_TO_FLOAT(ymax));
-}
-
-static XEN g_scale_sound_to(XEN norm, XEN beg, XEN num, XEN snd, XEN chn)
-{
-  #define H_scale_sound_to "(" S_scale_sound_to " norm (beg 0) (num len) (snd #f) (chn #f)): \
-scale samples in the given sound/channel \
-between beg and beg + num to peak value norm.  If channel is omitted, the scaling applies to the entire sound."
-
-  snd_info *sp;
-  chan_info *cp;
-  int i;
-  off_t samp, samps;
-  Float scaler, maxamp = 0.0;
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(norm), norm, XEN_ARG_1, S_scale_sound_to, "a number");
-  ASSERT_SAMPLE_TYPE(S_scale_sound_to, beg, XEN_ARG_2);
-  ASSERT_SAMPLE_TYPE(S_scale_sound_to, num, XEN_ARG_3);
-  ASSERT_SOUND(S_scale_sound_to, snd, 4);
-  scaler = XEN_TO_C_DOUBLE(norm);
-  samp = beg_to_sample(beg, S_scale_sound_to);
-  sp = get_sp(snd, NO_PLAYERS);
-  if (sp == NULL)
-    return(snd_no_such_sound_error(S_scale_sound_to, snd));
-  if (XEN_INTEGER_P(chn))
-    {
-      cp = get_cp(snd, chn, S_scale_sound_by);
-      samps = dur_to_samples(num, samp, cp, cp->edit_ctr, 3, S_scale_sound_to);
-      if ((samp == 0) &&
-	  (samps >= CURRENT_SAMPLES(cp)))
-	maxamp = get_maxamp(sp, cp, AT_CURRENT_EDIT_POSITION);
-      else maxamp = local_maxamp(cp, samp, samps, cp->edit_ctr);
-      if (maxamp > 0.0)
-	{
-	  scaler /= maxamp;
-	  scale_channel(cp, scaler, samp, samps, cp->edit_ctr, false);
-	}
-    }
-  else
-    {
-      for (i = 0; i < sp->nchans; i++)
-	{
-	  cp = sp->chans[i];
-	  samps = dur_to_samples(num, samp, cp, cp->edit_ctr, 3, S_scale_sound_to);
-	  if ((samp == 0) &&
-	      (samps >= CURRENT_SAMPLES(cp)))
-	    maxamp = get_maxamp(sp, cp, AT_CURRENT_EDIT_POSITION);
-	  else maxamp = local_maxamp(cp, samp, samps, cp->edit_ctr);
-	}
-      if (maxamp > 0.0)
-	{
-	  scaler /= maxamp;
-	  for (i = 0; i < sp->nchans; i++)
-	    {
-	      cp = sp->chans[i];
-	      samps = dur_to_samples(num, samp, cp, cp->edit_ctr, 3, S_scale_sound_to);
-	      scale_channel(cp, scaler, samp, samps, cp->edit_ctr, false);
-	    }
-	}
-    }
-  return(norm);
 }
 
 static mus_sample_t *g_floats_to_samples(XEN obj, int *size, const char *caller, int position)
@@ -9126,9 +9028,7 @@ XEN_ARGIFY_8(g_insert_samples_w, g_insert_samples)
 XEN_ARGIFY_7(g_vct_to_channel_w, g_vct_to_channel)
 XEN_ARGIFY_5(g_channel_to_vct_w, g_channel_to_vct)
 XEN_ARGIFY_7(g_insert_sound_w, g_insert_sound)
-XEN_ARGIFY_6(g_scale_sound_by_w, g_scale_sound_by)
 XEN_ARGIFY_6(g_scale_channel_w, g_scale_channel)
-XEN_ARGIFY_5(g_scale_sound_to_w, g_scale_sound_to)
 XEN_ARGIFY_8(g_change_samples_with_origin_w, g_change_samples_with_origin)
 XEN_NARGIFY_6(g_delete_samples_with_origin_w, g_delete_samples_with_origin)
 XEN_ARGIFY_8(g_insert_samples_with_origin_w, g_insert_samples_with_origin)
@@ -9170,9 +9070,7 @@ XEN_NARGIFY_1(g_make_xen_to_sample_w, g_make_xen_to_sample)
 #define g_vct_to_channel_w g_vct_to_channel
 #define g_channel_to_vct_w g_channel_to_vct
 #define g_insert_sound_w g_insert_sound
-#define g_scale_sound_by_w g_scale_sound_by
 #define g_scale_channel_w g_scale_channel
-#define g_scale_sound_to_w g_scale_sound_to
 #define g_change_samples_with_origin_w g_change_samples_with_origin
 #define g_delete_samples_with_origin_w g_delete_samples_with_origin
 #define g_insert_samples_with_origin_w g_insert_samples_with_origin
@@ -9243,12 +9141,8 @@ void g_init_edits(void)
   XEN_DEFINE_PROCEDURE(S_vct_to_channel,            g_vct_to_channel_w,            1, 6, 0, H_vct_to_channel);
   XEN_DEFINE_PROCEDURE(S_channel_to_vct,            g_channel_to_vct_w,            0, 5, 0, H_channel_to_vct);
   XEN_DEFINE_PROCEDURE(S_insert_sound,              g_insert_sound_w,              1, 6, 0, H_insert_sound);
-  XEN_DEFINE_PROCEDURE(S_scale_sound_by,            g_scale_sound_by_w,            1, 5, 0, H_scale_sound_by);
   XEN_DEFINE_PROCEDURE(S_scale_channel,             g_scale_channel_w,             1, 5, 0, H_scale_channel);
-  XEN_DEFINE_PROCEDURE(S_scale_sound_to,            g_scale_sound_to_w,            1, 4, 0, H_scale_sound_to);
 
-  /* internal functions (restore-state) */
-  XEN_DEFINE_PROCEDURE("section-scale-by",             g_scale_sound_by_w,               1, 5, 0, "internal scaling function used in save-state");
   XEN_DEFINE_PROCEDURE(S_change_samples_with_origin,   g_change_samples_with_origin_w,   7, 1, 0, "internal function used in save-state");
   XEN_DEFINE_PROCEDURE(S_delete_samples_with_origin,   g_delete_samples_with_origin_w,   6, 0, 0, "internal function used in save-state");
   XEN_DEFINE_PROCEDURE(S_insert_samples_with_origin,   g_insert_samples_with_origin_w,   7, 1, 0, "internal function used in save-state");

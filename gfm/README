@@ -1,0 +1,543 @@
+* README -*- outline -*-
+
+* Introduction
+
+The package GFM Gforth Music provides an implementation of Bill
+Schottstaedt's CLM, written in Forth, especially in Gforth 0.6.x.
+Gforth version 0.6.2 comes along with a passable FFI so that it's
+possible to integrate the shared sound library libsndlib.so which can
+be found on fft://ccrma-ftp.stanford.edu/pub/Lisp/sndlib.tar.gz.  If
+you haven't a working libsndlib.so, GFM Gforth Music provides nearly
+all of the sndlib-generators written in Forth in fsndlib.fs, though
+they consume around twice the time than the corresponding csndlib.fs
+generators.
+
+The aim writing this package was to yield a fast version of CLM
+without using C.  I remembered my first programming language Forth
+being a very fast and extensible one.  The result is of course not so
+fast than Lisp (FFI) but it's faster than Scheme or Ruby.
+
+* Installation
+
+There are several needs for using this package.
+
+If you want to use libsndlib.so, you have to install (before
+configuring Gforth!) the ffcall libraries found at
+
+ftp://ftp.santafe.edu/pub/gnu/ffcall-1.8.tar.gz (USA) 
+ftp://ftp.ilog.fr/pub/Users/haible/gnu/ffcall-1.8.tar.gz (Europe) 
+
+Gforth itself can be found at
+
+ftp://ftp.complang.tuwien.ac.at/pub/forth/gforth/gforth-0.6.2.tar.gz
+
+Gforth comes with a nice Forth tutorial!
+
+Using csndlib you need a working libsndlib.so library in
+$LD_LIBRARY_PATH or you set the path in csndlib.fs, around line 48
+
+ 	library sndlib libsndlib.so
+
+to e.g.	
+
+	library sndlib /usr/local/lib/libsndlib.so
+
+Important: I compiled libsndlib.so with configure option
+--with-float-samples and C-type Float is float (not double).  If you
+have other configurations, the whole csndlib.fs file must be changed
+as well as the vct- and sound-data-definitions in gfm.fs.
+
+After installing ffcall, gforth and sndlib, unzip and untar the
+package and a new directory will be created where the *.fs and *.gfm
+files can be found.  You can test the executable *.gfm scripts
+directly.  You may also replace the value of the global variable
+`*clm-player*' with `sndplay' in .gfmrc (see below):
+
+	s" sndplay" $to *clm-player*
+
+You can install the *.fs in $(prefix)/share/gforth/site-forth files by
+
+    	make install (defaults to prefix=/usr/local)
+or
+	make install prefix=/usr/gnu
+
+For using the audio definitions of fsndlib it is important to watch
+the constants in the `=== Audio ===' part of fsndlib.fs.  They work
+here but may need adjustments at your machine.  The program `audinfo'
+and the header file `soundcard.h' may help.
+
+If something goes wrong, please don't hesitate to ask me for help.  I
+will try to do my best. (scholz-micha@gmx.de)
+
+* Usage
+
+GFM Gforth Music can be started on command line:
+
+    gforth gfm.fs
+
+or as an executable script (see below).
+
+A simple session (I added an empty line after input):
+
+% gforth gfm.fs
+Gforth 0.6.2, Copyright (C) 1995-2003 Free Software Foundation, Inc.
+Gforth comes with ABSOLUTELY NO WARRANTY; for details type `license'
+Type `bye' to exit
+using csndlib
+' fm-violin-test with-sound 
+
+\    event: fm-violin-test
+\ <fm-violin>
+\ filename: "/home/mike/.snd.d/zap/forth.snd"
+\    chans: 1, srate: 22050 
+\   format: little endian short (16 bits) [Sun]
+\   length: 2.000 (44100 frames)
+\     real: 0.428  (utime 0.404, stime 0.010)
+\    ratio: 0.21  (uratio 0.20)
+\   maxamp: [0.500] ok
+
+help fm-violin-test  no description available  ok
+help make-src 
+
+make-src ( input-xt f: srate width -- gen )
+s"pistol.snd" 0 0 1 make-readin value rd
+lambda: drop rd readin ; 1e 10 make-src value sr false 0e sr src f.
+\ or
+false 1e 10 make-src value sr
+lambda: drop rd readin ; 0e sr src f. ok
+
+bye 
+%
+
+GFM has a simple online help.  Most CLM-functions have at least a help
+string showing the stack effect, some have simple examples and
+describing text.
+
+help make-oscil
+
+shows the help string of make-oscil, the output is:
+
+help make-oscil
+make-oscil ( f: freq f: phase -- gen ) \ 440e 0e make-oscil value os ok
+
+The main Forth script is gfm.fs.  Global variables and
+sndlib-constants (from sndlib.h) can be found here.  This file must be
+included in your script file, it loads the other files in correct
+order.  If your Gforth implementation is capable of using FFI, i.e. if
+you have installed ffcall and gforth >= 0.6.2, it loads csndlib.fs
+automatically which contains the connection to libsndlib.so, otherwise
+it loads the pure Forth version in fsndlib.fs.  If you define the
+variable *clm-use-csndlib* and set it to false before loading gfm.fs,
+you can force to load fsndlib.fs (e.g. for testing).  All *.gfm
+scripts have two command line options: -f uses fsndlib.fs and -c uses
+csndlib.fs.  After initializing global variables but before using them
+gfm.fs loads a file `.gfmrc' or `$HOME/.gfmrc' if one of it exists,
+where you can set global *clm-...-variables.
+
+If you have set the environment variable $SFDIR, the global Forth
+$value *clm-search-list* is predefined with that directory, otherwise
+with the current working directory.  This variable is similar to
+CLM's *clm-search-list* but contains only one path.
+
+GFM sets the file-buffer-size to 1MB, you can change this value in
+.gfmrc by e.g.
+
+       1024 8 * file-buffer-size!
+
+There are three types of global *clm-...* variables (or better values
+in Forth's context):
+
+gfm.fs (definition)                     ~/.gfmrc (resetting)
+===================                     ====================
+        true  value *clm-play*                false  to *clm-play*
+       0.05e fvalue *clm-reverb-amount*       0.01e fto *clm-reverb-amount*
+s" test.snd" $value *clm-file-name*     s" foo.snd" $to *clm-file-name*
+
+FTO (float-to) sets floats, $TO (string-to) sets strings and TO sets
+integers and pointers.  This is important if you set global predefined
+values in your ~/.gfmrc or in a script (see *.gfm files for examples).
+FVALUEs and $VALUEs can't be set in colon definitions.  (The local
+variables in colon definitions haven't these restrictions, TO sets all
+types.)
+
+** Scripting
+
+Gforth provides scripting mechanism.  The first line in a script may
+be:
+
+#! /usr/bin/env gforth  or #! /usr/local/bin/gforth
+
+Note the space between #! and the path!
+
+Before loading gfm.fs in your script you can set several variables.
+
+To use csndlib.fs: true value *clm-use-csndlib*
+
+To use fsndlib.fs: false value *clm-use-csndlib*
+
+Writing to DAC: true value *clm-dac-output*
+
+Instruments using run-instrument/end-run work with file output as well
+as with dac output.  You must set the global variable *clm-dac-output*
+to true if you want to write to dac, default is false.
+
+If your testing is finished you can disable the assertions on some
+generators and arrays by
+
+0 assert-level !
+
+The default value of ASSERT-LEVEL is 1.  Speeding up computation you
+can replace gforth by gforth-fast.
+
+The head of a testing phase script may look like this:
+
+#! /usr/bin/env gforth
+require gfm.fs
+[...]
+
+and after testing:
+
+#! /usr/bin/env gforth-fast
+0 assert-level !
+require gfm.fs
+[...]
+
+** Note list
+
+GFM Gforth Music defines some convenient words.  To define an
+instrument you can use
+
+        instrument: inst-name ... ;instrument
+
+instead of
+
+        : inst-name ... ;
+
+If the hook variable *clm-notehook* is set this value is performed on
+every instrument call:
+
+        lambda: ( addr u -- ) cr ." \ <" type ." >" cr ; to *clm-notehook*
+
+The hook variable is called with the instrument name in Forth's
+convention for strings with addr len.  The above example prints on
+every instrument call
+
+\ <instrument-name-here>
+
+Furthermore the variable *clm-instruments* is filled; the value
+of *clm-instruments* can be seen by
+
+        show-instruments
+
+A named piece of note list can be written by
+
+        event: event-name ... ;event
+
+instead of
+
+        : event-name ... ;
+
+If the word `event-name' is called later, it prints its name if the
+global variable *clm-verbose* is true (see *.gfm files).
+
+Writing instruments you can use as a shorthand
+
+        start dur run   0e 0e os oscil   i loc locsig   loop
+
+instead of
+
+        start dur times>samples do   0e 0e os oscil   i loc locsig   loop
+
+or better
+
+	start dur run-instrument   0e 0e os oscil   end-run
+
+RUN-INSTRUMENT makes an locsig-generator and END-RUN writes a float
+after every loop in the corresponding locsig-place and frees the
+generator after finishing the loop.  The locsig-generator sets the
+global variable *locsig* which can be used in the run-loop for
+MOVE-LOCSIG etc.  Degree, distance, and reverb-amount may be set
+before RUN-INSTRUMENT with :LOCSIG-DEGREE, :LOCSIG-DISTANCE, and
+:LOCSIG-REVERB-AMOUNT.
+
+instrument: simp { f: start f: dur -- }
+    440e 0e make-oscil { os }
+    90e random :locsig-degree
+    1e :locsig-distance
+    start dur run-instrument   0e 0e oscil  0.1e f*   end-run
+    os mus-free
+;instrument
+
+lambda: 0e 2e simp ; with-sound
+
+See clm-ins.fs and sndtest.fs for more examples.
+
+To compute and play sound files it exists the `with-sound' word.  It
+must be called at least with an (note-list-)XT (e.g. ' fofins-test
+with-sound) and can take additional arguments (something like keyword
+arguments).
+
+        ' fofins-test with-sound
+        ' fofins-test ' jc-reverb :reverb with-sound
+        ' fofins-test 2 :channels s" fofins.snd" :output false :play with-sound
+        
+Here are all arguments used by with-sound.  The global variables in
+the second column contain the default values which mentioned in the
+third column.  You can change default values in ~/.gfmrc.
+
+        :play              *clm-play*             true
+        :statistics        *clm-statistics*       true
+        :verbose           *clm-verbose*          true
+        :continue-old-file (false)
+        :delete-reverb     *clm-delete-reverb*    true
+        :reverb            *clm-reverb*           false
+        :channels          *clm-channels*         1
+        :reverb-channels   *clm-reverb-channels*  1
+        :srate             *clm-srate*            22050
+        :rt-bufsize        *clm-rt-bufsize*       8192
+        :table-size        *clm-table-size*       512
+        :locsig-type       *clm-locsig-type*      mus-interp-linear
+        :header-type       *clm-header-type*      mus-next
+        :data-format       *clm-data-format*      mus-lshort
+        :device            *clm-device*           mus-audio-default
+        :notehook          *clm-notehook*         false
+        :output            *clm-file-name*        s" test.snd"
+        :rev-file-name     *clm-reverb-file-name* s" test.reverb"
+        :player            *clm-player*           s" intern"
+        :comment           *clm-comment*          make-default-comment
+        :reverb-amount     *clm-reverb-amount*    0.01e
+        :decay-time        *clm-decay-time*       1.0e
+
+** Generators   
+
+All generators have the following definitions:
+
+make-generator ( ... -- gen )
+generator ( ... gen -- r )
+?generator ( gen -- f )
+gen .gen
+
+e.g.
+make-oscil ( f: freq f: phase -- gen )
+oscil ( f: fm f: pm gen -- r )
+?oscil ( gen -- f )
+os .gen
+
+instrument: simp { f: start f: dur f: freq f: amp -- }
+    freq 0e make-oscil { os }
+    0e 0e 25e 1e 75e 1e 100e 0e 8 >vct amp dur make-env { en }
+    start dur run-instrument  0e 0e os oscil  en env  f*   end-run
+    os mus-free
+    en mus-free
+;instrument
+
+lambda: 0e 2e 330e 0.3e simp ; with-sound
+
+The inspect function is .GEN; all generators show their description as
+string.
+
+440e 0e make-oscil .gen
+440e 0e make-oscil value os
+os .gen
+
+The comparison function is GEN= (but it works only with csndlib.fs).
+
+440e 0e make-oscil value os1
+440e 0e make-oscil value os2
+os1 os2 gen= .
+
+** Accessors, Conventions
+
+Following existing Forth-conventions GFM provides different forms of
+names used in CLM's sndlib.  Words for storing and fetching values end
+in `!' and `@', words printing results have the prefix `.' and words
+leaving a flag on the stack have the prefix `?'.  Converting values
+have a `>' in between the word-name.
+
+Scheme                               Forth
+(set! gen (make-oscil freq phase))   freq phase make-oscil value gen
+(oscil gen fm pm)                    fm pm gen oscil
+(oscil? gen)                         gen ?oscil
+gen                                  gen .gen
+(set! (frequency gen) val)           val gen frequency!
+(frequency gen)                      gen frequency@
+(file->sample gen samp chan)         samp chan gen file>sample
+
+Nearly all generators have the same accessors as the CLM ones.  The
+example below shows the usage of FREQUENCY!, PHASE!, SCALER@, and
+SCALER!  on a square-wave generator.
+
+instrument: simp { f: start f: dur }
+    440e 1e 0e make-square-wave { sw }
+    \ sw .gen ( this would show the description of the square-wave generator )
+    0 { stp }
+    start seconds>samples { beg }
+    dur mus-srate@ f* 10e f/ f>s { lim }
+    start dur run-instrument
+	i beg = if 0e sw phase! then
+	i beg - 5000 = if 660e sw frequency! then
+	stp lim = if
+	    sw scaler@ 0.1e f- sw scaler!
+	    0 to stp
+	then
+	stp 1+ to stp
+	0.1e  0e sw square-wave  f*
+    end-run
+    sw mus-free
+;instrument
+
+lambda: 0e 1e simp ; with-sound
+
+** Arrays, Envelops, Partials
+
+There are float arrays, sound-data array of arrays (VCT, SOUND-DATA)
+and integer arrays (ARRAY).  Vct and sound-data provide nearly all
+functions like in Snd.
+
+Envelops and partials are arrays of floats only, not integers and
+floats.  To make an envelop generator we can write:
+
+0e 0e 25e 1e 75e 1e 100e 0e ( values ) 8 ( length ) >vct value env-array
+env-array ( envelope ) 1e ( scaler ) 1.5e ( duration in seconds ) make-env value en
+
+instrument: simp { f: start f: dur f: freq f: amp }
+    freq 0e make-oscil { os }
+    0e 0e 100e 1e 4 >vct  amp  dur make-env { en }
+    start dur run-instrument   en env  0e 0e os oscil  f*   end-run
+    os mus-free
+;instrument
+
+lambda: 0e 1e 440e 0.5e simp ; with-sound
+
+* Emacs
+
+;;;;
+;;;; GForth additions in .emacs
+;;;;
+(autoload 'forth-mode "gforth" "Major mode for GForth." t)
+(autoload 'forth-block-mode "gforth" "Major mode for GForth." t)
+(autoload 'inferior-forth-mode "gforth" "Major mode for GForth." t)
+
+(require 'forth-mode "gforth")
+
+(setq forth-use-objects t)
+
+(setq forth-custom-words
+      '((("instrument:" "event:") definition-starter (font-lock-keyword-face . 1)
+	 "[ \t\n]" t name (font-lock-function-name-face . 3))
+	(("lambda:") definition-starter (font-lock-keyword-face . 1))
+	((";instrument" ";event") definition-ender (font-lock-keyword-face . 1))
+	(("const-does>") compile-only (font-lock-keyword-face . 1))
+	(("run" "run-instrument" "end-run" "vct-each" "array-each")
+	 compile-only (font-lock-keyword-face . 2))
+	(("float" "double") non-immediate (font-lock-constant-face . 2))
+	(("fvalue" "f2value" "2value" "$value") non-immediate (font-lock-type-face . 2)
+	 "[ \t\n]" t name (font-lock-variable-name-face . 3))
+	(("2to" "fto" "$to") immediate (font-lock-keyword-face . 2)
+	 "[ \t\n]" t name (font-lock-variable-name-face . 3))
+	(("defines") non-immediate (font-lock-type-face . 2)
+	 "[ \t\n]" t name (font-lock-function-name-face . 3))
+	(("s\\\"" "c\\\"") immediate (font-lock-string-face . 1)
+	 "[^\\][\"\n]" nil string (font-lock-string-face . 1))
+	((".\\\"") compile-only (font-lock-string-face . 1)
+	 "[^\\][\"\n]" nil string (font-lock-string-face . 1))
+	(("lambda-create" "noname-create") non-immediate (font-lock-type-face . 2) nil)))
+
+(setq forth-custom-indent-words
+      '((("instrument:" "event:" "lambda:") (0 . 2) (0 . 2) non-immediate)
+	(("run" "run-instrument" "vct-each" "array-each") (0 . 2) (0 . 2))
+	(("end-run") (-2 . 0) (-2 . 0))
+	(("const-does>") (-1 . 1) (0 . 0))
+	((";instrument" ";event") (-2 . 0) (0 . -2))))
+
+(defun forth-quit ()
+  "Kill inferior Forth mode."
+  (interactive)
+  (unless (one-window-p)
+    (delete-window (get-buffer-window forth-process-buffer)))
+  (delete-process (get-buffer-process forth-process-buffer))
+  (kill-buffer forth-process-buffer))
+
+(defun forth-proc-p ()
+  "Return non-nil if no process buffer available."
+  (save-current-buffer
+    (comint-check-proc forth-process-buffer)))
+
+(defun forth-load-file (file-name)
+  "Load a Forth file FILE-NAME into the inferior Forth process."
+  (interactive (comint-get-source "Load Forth file: " forth-prev-l/c-dir/file
+				  forth-source-modes t))
+  (comint-check-source file-name)
+  (setq forth-prev-l/c-dir/file (cons (file-name-directory    file-name)
+				      (file-name-nondirectory file-name)))
+  (comint-send-string (forth-proc) (concat "include " file-name "\n")))
+
+(defun make-forth-mode-menu ()
+  "Make `forth-mode' menu."
+  (define-key (current-local-map) [menu-bar forth-mode]
+    (cons "Forth" (make-sparse-keymap "Forth")))
+  (define-key (current-local-map) [menu-bar forth-mode quit]
+    '(menu-item "Kill Forth Process" forth-quit
+		:enable (forth-proc-p)))
+  (define-key (current-local-map) [menu-bar forth-mode switch]
+    '(menu-item "Switch to Forth Process" forth-switch-to-interactive
+		:enable (forth-proc-p)))
+  (define-key (current-local-map) [menu-bar forth-mode start]
+    '(menu-item "Start Forth Process" run-forth
+		:enable (not (forth-proc-p))))
+  (define-key (current-local-map) [menu-bar forth-mode sep-doc] '(menu-item "--"))
+  (define-key (current-local-map) [menu-bar forth-mode describe]
+    '(menu-item "Describe mode" describe-mode))
+  (define-key (current-local-map) [menu-bar forth-mode symdoc]
+    '(menu-item "Info lookup ..." info-lookup-symbol
+		:enable (forth-proc-p)))
+  (define-key (current-local-map) [menu-bar forth-mode sep-eval] '(menu-item "--"))
+  (define-key (current-local-map) [menu-bar forth-mode region]
+    '(menu-item "Eval region" forth-send-region
+		:enable (and (forth-proc-p) mark-active)))
+  (define-key (current-local-map) [menu-bar forth-mode defun]
+    '(menu-item "Eval paragraph" forth-send-paragraph
+		:enable (forth-proc-p)))
+  (define-key (current-local-map) [menu-bar forth-mode defun]
+    '(menu-item "Eval buffer" forth-send-buffer
+		:enable (forth-proc-p)))
+  (define-key (current-local-map) [menu-bar forth-mode sep-compile] '(menu-item "--"))
+  (define-key (current-local-map) [menu-bar forth-mode load]
+    '(menu-item "Load file ..." forth-load-file
+		:enable (forth-proc-p))))
+
+(add-hook 'forth-mode-hook
+	  '(lambda ()
+	     (define-key (current-local-map) "\C-c\C-k" 'forth-quit)
+	     (define-key (current-local-map) "\C-c\C-q" 'forth-quit)
+	     (define-key (current-local-map) "\C-c\C-o" 'forth-send-buffer)
+	     (define-key (current-local-map) "\C-c\C-r" 'forth-send-region)
+	     (define-key (current-local-map) "\C-c\C-e" 'forth-send-paragraph)
+	     (define-key (current-local-map) "\C-c\C-s" 'run-forth)
+	     (make-forth-mode-menu)))
+
+* Files
+
+** package
+*** COPYING
+*** README
+*** Makefile
+
+** note list examples
+*** sndtest.gfm
+*** bird.gfm
+*** cm-examp.gfm
+*** pachelbel.gfm
+*** ricercari12.gfm
+
+** library files
+*** gfm.fs
+*** clm-ins.fs
+*** gfm-defs.fs
+*** gfm-gens.fs
+*** csndlib.fs
+*** fsndlib.fs
+*** notelist.fs
+*** utils.fs
+
+* Author: Michael Scholz <scholz-micha@gmx.de>

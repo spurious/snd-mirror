@@ -4046,13 +4046,10 @@ The following substitutions can be made:
 </p>
 <small>
 <pre>
-<a href="#envsound">env-sound</a> env beg dur base s c e                <a href="#envchannel">env-channel</a> clm-env-gen beg dur s c e
+<a href="#envsound">env-sound</a> env beg dur base s c e                <a href="#envchannel">env-channel</a> env beg dur s c e
 <a href="#filtersound">filter-sound</a> env order s c e                    <a href="#clmchannel">clm-channel</a> clm-filter-gen beg dur s c e overlap or <a href="#filterchannel">filter-channel</a> env order beg dur s c e trunc
-<a href="#mapchan">map-chan</a> func beg end origin s c e              <a href="#mapchannel">map-channel</a> func beg dur s c e origin (or <a href="#ptreechannel">ptree-channel</a>)
-<a href="#scanchan">scan-chan</a> func beg end s c e                    <a href="#scanchannel">scan-channel</a> func beg dur s c e
 <a href="#play">play</a> beg s c sync end e                         <a href="#playchannel">play-channel</a> beg dur s c e
 <a href="#reversesound">reverse-sound</a> s c e                             <a href="#reversechannel">reverse-channel</a> beg dur s c e
-<a href="#scalesoundby">scale-sound-by</a> scl beg dur s c e                <a href="#scalechannel">scale-channel</a> scl beg dur s c e
 <a href="#setsamples">set-samples</a> beg dur data s c trunc origin fchan <a href="#vct_to_channel">vct-&gt;channel</a> vct beg dur s c e
 <a href="#smoothsound">smooth-sound</a> beg dur s c                        <a href="#smoothchannel">smooth-channel</a> beg dur s c e
 <a href="#insertsilence">insert-silence</a> beg dur s c                      <a href="#padchannel">pad-channel</a> beg dur s c e
@@ -4065,14 +4062,6 @@ The following substitutions can be made:
 <a href="#undo">undo</a> edits s c                                  <a href="#undochannel">undo-channel</a> edits s c
 </pre>
 </small>
-<p><small>An equivalent to map-channel might be:</small></p>
-<pre>
-<small>
- (define* (map-channel func #:optional (beg 0) dur snd chn edpos (edname "map-channel"))
-   (let* ((end (if dur (+ beg dur) (1- (<a class=quiet href="#frames">frames</a> snd chn edpos)))))
-     (<a class=quiet href="#mapchan">map-chan</a> func beg end edname snd chn edpos)))
-</small>
-</pre>
 <p><small>Another case that might deserve "regularization" is make-sample-reader which confusingly interpolates
 the direction argument between the channel and edit-position:
 </small></p>
@@ -5339,7 +5328,7 @@ sound/channel pair that displays a graph of spectrum of the arbitrary data acces
 
 <!-- map-chan -->
 <tr><td colspan=2>
-<code><a class=def name="mapchan">map-chan</a> (func <i>start end edname snd chn edpos</i>)</code>
+<code><a class=def NAME="mapchan">map-chan</a> (func <i>start end edname snd chn edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
 <b>map-chan</b> applies <i>func</i> to samples in the specified channel.
@@ -6570,8 +6559,8 @@ is scaled (defaults to the currently selected channel).  <code>(scale-by 2.0)</c
 <code><a class=def name="scalechannel">scale-channel</a> (scl <i>beg dur snd chn edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
-<b>scale-channel</b> is the <a class=quiet href="#regularizedargs">regularized</a> version of <a href="#scalesoundby">scale-sound-by</a>;
-it scales (changes the amplitude) of a sound by <i>scl</i>.
+<b>scale-channel</b> 
+scales (changes the amplitude) of a sound by <i>scl</i>.
 <a href="sndscm.html#channelpolynomial">channel-polynomial</a> is a generalization of the idea.
 There are approximately a bazillion ways to scale samples in Snd; here's a potpourri of increasingly silly choices:<br><br>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
@@ -6636,30 +6625,6 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
 <tr><td colspan=2></td></tr>
 
 
-<!-- scale-sound-by -->
-<tr><td colspan=2>
-<code><a class=def name="scalesoundby">scale-sound-by</a> (scaler <i>beg num snd chn edpos</i>)</code>
-</td></tr>
-<tr><td></td><td>
-scales the samples in the given channel between beg and beg + num by scaler.  If the channel argument is omitted,
-<b>scale-sound-by</b> scales the entire sound.  <i>beg</i> defaults to 0; <i>num</i> defaults to the length of the channel.
-<i>snd</i> defaults to the selected sound, and <i>chn</i> to the selected channel.  Unlike scale-by, this ignores the sync setting.
-</td></tr>
-<tr><td colspan=2></td></tr>
-
-
-<!-- scale-sound-to -->
-<tr><td colspan=2>
-<code><a class=def name="scalesoundto">scale-sound-to</a> (norm <i>beg num snd chn</i>)</code>
-</td></tr>
-<tr><td></td><td>
-normalizes the samples in the given channel between beg and beg + num to norm.  If the channel argument is omitted,
-<b>scale-sound-to</b> normalizes the entire sound.  <i>beg</i> defaults to 0; <i>num</i> defaults to the length of the channel.
-<i>snd</i> defaults to the selected sound, and <i>chn</i> to the selected channel.  Unlike scale-to, this ignores the sync setting.
-</td></tr>
-<tr><td colspan=2></td></tr>
-
-
 <!-- scale-to -->
 <tr><td colspan=2>
 <code><a class=def name="scaleto">scale-to</a> (<i>scalers snd chn</i>)</code>
@@ -6675,57 +6640,43 @@ If all the samples are 0.0, scale-to returns #f and does not perform any edit.
 
 <!-- scan-chan -->
 <tr><td colspan=2>
-<code><a class=def name="scanchan">scan-chan</a> (func <i>start end snd chn edpos</i>)</code>
+<code><a class=def NAME="scanchan">scan-chan</a> (func <i>start end snd chn edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
 <b>scan-chan</b> applies <i>func</i> to samples in the specified channel.
-A subsequence of the data can be requested via
-'start' and 'end' points.  'start' defaults to 0; 'end'
-defaults to the end of the channel.
-The function is passed the current sample as its argument.
-If it returns something other than #f, the scan is stopped and a list is returned
+It is the old ("irregular") version of <a href="#scanchannel">scan-channel</a>.
+</td></tr>
+<tr><td colspan=2></td></tr>
+<!-- scan-channel -->
+<tr><td colspan=2>
+<code><a class=def name="scanchannel">scan-channel</a> (func <i>beg dur snd chn edpos</i>)</code>
+</td></tr>
+<tr><td></td><td>
+scan-channel "scans" the data in the specified channel between the given sample numbers (default
+is the entire sound) by applying <i>func</i> to each sample.
+If <i>func</i> returns something other than #f, the scan is halted, 
+and a list is returned
 containing that value and the current sample position of the
 scan. The following call scans the
 current channel from sample 0 to the end looking for any sample greater than
 .1:<br>
 <pre>
-&gt;<em class=typing>(scan-chan (lambda (y) (&gt; y .1)))</em>
+&gt;<em class=typing>(scan-channel (lambda (y) (&gt; y .1)))</em>
 <em class=listener>(#t 4423)</em>
 </pre>
 In this case, we found such a sample at position 4423.<br>
 <pre>
 (define every-sample?
   (lambda (proc)
-    (let ((baddy (<em class=red>scan-chan</em> (lambda (y) 
-			      (not (proc y))))))
+    (let ((baddy (<em class=red>scan-channel</em> (lambda (y) 
+			         (not (proc y))))))
       (if baddy (set! (<a class=quiet href="#cursor">cursor</a>) (cadr baddy)))
       (not baddy))))
 
 &gt;<em class=typing>(every-sample? (lambda (y) (&lt; y .5)))</em>
 <em class=listener>#t</em>
 </pre>
-<i>scan-chan</i> could be defined in terms of make-sample-reader:<br><br>
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-(define* (scan-chan func #:optional (start 0) end snd chn)
-  (let* ((fend (or end (<a class=quiet href="#frames">frames</a> snd chn)))
-	 (reader (<a class=quiet href="#makesamplereader">make-sample-reader</a> start snd chn))
-	 (result #f))
-    (do ((i start (1+ i)))
-	((or result (= i fend))
-	 (and result 
-	      (list result (- i 1))))
-      (set! result (func (reader))))))
-</pre></td></tr></table>
-</td></tr>
-<tr><td colspan=2></td></tr>
 
-
-<!-- scan-channel -->
-<tr><td colspan=2>
-<code><a class=def name="scanchannel">scan-channel</a> (func <i>beg dur snd chn edpos</i>)</code>
-</td></tr>
-<tr><td></td><td>
-<b>scan-channel</b> is the <a class=quiet href="#regularizedargs">regularized</a> version of <a href="#scanchan">scan-chan</a>.
 In scan-chan, scan-channel, find, and count-matches (all the same underlying procedure), an attempt to jump back
 into a previous call will not work.  That is,<br><br>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
