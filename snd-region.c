@@ -576,6 +576,7 @@ static int save_region_1(snd_state *ss, char *ofile, int type, int format, int s
 
 int save_region(snd_state *ss, int n, char *ofile, int data_format)
 {
+  /* called only in snd-kbd.c */
   region *r;
   r = id_to_region(n);
   if (r)

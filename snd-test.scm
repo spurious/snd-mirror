@@ -10961,6 +10961,8 @@ EDITS: 3
 	(key-event win (char->integer ch) (shifted? ch)))
       (force-event))))
 
+(define mxa 32)
+
 (if (or full-test (= snd-test 22) (and keep-going (<= snd-test 22)))
     (begin
       (if (procedure? test-hook) (test-hook 22))
@@ -11526,6 +11528,12 @@ EDITS: 3
 		  (if (not (= (selection-length) 10))
 		      (snd-display ";C-space for selection len: ~A?" (selection-length)))
 
+		  (key-event cwin (char->integer #\x) 8) (force-event)
+		  (widget-string minibuffer "(set! mxa 3)")
+		  (key-event (widget-window minibuffer) snd-return-key 0) (force-event)
+		  (if (not (= mxa 3))
+		      (snd-display ";M-x (set! mxa 3) -> ~A" mxa))
+
 		  (key-event cwin (char->integer #\x) 4) (force-event)
 		  (key-event cwin (char->integer #\a) 0) (force-event)
 		  (widget-string minibuffer "'(0 0 1 1)")
@@ -11763,6 +11771,29 @@ EDITS: 3
 	      (if (not (= (mus-sound-frames "fmv.snd") 50828))
 		  (snd-display ";C-x C-w wrote wrong number of samples: ~A" (mus-sound-frames "fmv.snd")))
 	      (delete-file "fmv.snd")
+	      (select-all)
+	      (key-event cwin (char->integer #\x) 4) (force-event)
+	      (key-event cwin (char->integer #\w) 0) (force-event)
+	      (widget-string minibuffer "fmv1.snd")
+	      (key-event (widget-window minibuffer) snd-return-key 0) (force-event)
+	      (if (not (= (mus-sound-frames "fmv1.snd") 50828))
+		  (snd-display ";C-x w wrote wrong number of samples: ~A" (mus-sound-frames "fmv1.snd")))
+	      (delete-file "fmv1.snd")
+	      (set! (selection-member? #t) #f)
+	      (let* ((rid (car (regions)))
+		     (ridstr (number->string rid)))
+		(key-event cwin (char->integer #\u) 4) (force-event)
+		(do ((i 0 (1+ i)))
+		    ((= i (string-length ridstr)))
+		  (key-event cwin (char->integer (string-ref ridstr i)) 0) (force-event))
+		(key-event cwin (char->integer #\x) 4) (force-event)
+		(key-event cwin (char->integer #\w) 0) (force-event)
+		(widget-string minibuffer "fmv2.snd")
+		(key-event (widget-window minibuffer) snd-return-key 0) (force-event)
+		(if (not (= (mus-sound-frames "fmv2.snd") 50828))
+		    (snd-display ";C-u region C-x w wrote wrong number of samples: ~A" (mus-sound-frames "fmv2.snd")))
+		(delete-file "fmv2.snd"))
+	      (widget-string minibuffer "")
 	      (close-sound ind))
 
 	    ;; -------- filter envelope editor
@@ -12530,7 +12561,7 @@ EDITS: 3
 		    (if (not (sound? newind)) 
 			(snd-display ";new file dialog: ~A" newind)
 			(close-sound newind)))
-		  (set (with-background-processes) old-val))
+		  (set! (with-background-processes) old-val))
 
 		;; ---------------- file:mix dialog ----------------
                 (if (list-ref (dialog-widgets) 11)
@@ -13418,9 +13449,19 @@ EDITS: 3
 		   show-transform-peaks show-indices show-marks show-mix-waveforms show-selection-transform show-listener
 		   show-usage-stats show-y-zero sinc-width spectro-cutoff spectro-hop spectro-start spectro-x-angle
 		   spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale speed-control
-		   speed-control-style speed-control-tones squelch-update sync temp-dir text-focus-color tiny-font
-		   transform-type trap-segfault use-sinc-interp verbose-cursor vu-font vu-font-size vu-size wavelet-type
-		   graph-time? wavo-hop wavo-trace with-mix-tags x-axis-style beats-per-minute zero-pad zoom-color zoom-focus-style ))
+		   speed-control-style speed-control-tones squelch-update sync temp-dir text-focus-color tiny-font y-bounds
+		   transform-type trap-segfault use-sinc-interp verbose-cursor vu-font vu-font-size vu-size wavelet-type x-bounds
+		   graph-time? wavo-hop wavo-trace with-mix-tags x-axis-style beats-per-minute zero-pad zoom-color zoom-focus-style 
+
+		   window-x window-y window-width window-height
+		   channels chans colormap comment data-format data-location edit-position frames header-type maxamp
+		   minibuffer-history-length read-only right-sample sample samples selected-channel
+		   selected-mix selected-sound selection-position selection-length selection-member? sound-loop-info
+		   srate time-graph-type x-position-slider x-zoom-slider
+		   y-position-slider y-zoom-slider sound-data-ref mus-a0 mus-a1 mus-a2 mus-array-print-length 
+		   mus-b1 mus-b2 mus-data mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop
+		   mus-increment mus-length mus-location mus-phase mus-ramp mus-scaler mus-srate vct-ref
+		   ))
 
 (reset-all-hooks)
 
@@ -14097,6 +14138,7 @@ EDITS: 3
 	(check-error-tag 'no-such-sound (lambda () (set! (search-procedure 1234) (lambda (a) a))))
 	(check-error-tag 'bad-arity (lambda () (bind-key (char->integer #\p) 0 (lambda (a b) (play-often (max 1 a))))))
 	(let ((ind (open-sound "oboe.snd"))) 
+	  (select-all)
 	  (check-error-tag 'mus-error (lambda () (set! (filter-control-env ind) '())))
 	  (check-error-tag 'bad-arity (lambda () (set! (search-procedure ind) (lambda (a b c) #t))))
 	  (check-error-tag 'bad-arity (lambda () (map-chan (lambda (a b c) 1.0))))
@@ -14117,9 +14159,15 @@ EDITS: 3
 	  (check-error-tag 'no-such-sound (lambda () (axis-info 1234)))
 	  (check-error-tag 'impossible-bounds (lambda () (set! (x-bounds) (list 0 0))))
 	  (check-error-tag 'impossible-bounds (lambda () (set! (x-bounds) (list .1 -.1))))
+	  (check-error-tag 'impossible-bounds (lambda () (make-region 100 0)))
 	  (check-error-tag 'no-such-file (lambda () (play "/bad/baddy.snd")))
 	  (check-error-tag 'no-such-sound (lambda () (play 0 1234)))
 	  (check-error-tag 'no-such-channel (lambda () (play 0 ind 1234)))
+	  (check-error-tag 'no-such-channel (lambda () (region-sample 0 (car (regions)) 1234)))
+	  (check-error-tag 'no-such-region (lambda () (region-samples 0 1 (+ 1234 (apply max (regions))))))
+	  (check-error-tag 'no-such-region (lambda () (region-samples->vct 0 1 -1)))
+	  (check-error-tag 'no-such-channel (lambda () (region-samples 0 1 (car (regions)) 1234)))
+	  (check-error-tag 'no-such-channel (lambda () (region-samples->vct 0 1 (car (regions)) 1234)))
 	  (check-error-tag 'cannot-save (lambda () (save-sound-as "/bad/baddy.snd")))
 	  (check-error-tag 'no-such-sound (lambda () (transform-sample 0 1 1234)))
 	  (check-error-tag 'no-such-channel (lambda () (transform-sample 0 1 ind 1234)))
@@ -14129,6 +14177,7 @@ EDITS: 3
 	  (check-error-tag 'no-such-channel (lambda () (samples->sound-data 0 100 ind 1234)))
 	  (check-error-tag 'no-such-sound (lambda () (graph #(0 1) "hi" 0 1 0 1 1234)))
 	  (check-error-tag 'no-such-channel (lambda () (graph #(0 1) "hi" 0 1 0 1 ind 1234)))
+	  (set! (selection-member? #t) #f)
 	  (check-error-tag 'no-active-selection (lambda () (save-selection "/bad/baddy.snd")))
 	  (check-error-tag 'no-such-region (lambda () (save-region 1234 "/bad/baddy.snd")))
 	  (make-region 0 100 ind 0)

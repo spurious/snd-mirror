@@ -508,7 +508,7 @@ static XEN g_set_widget_position(XEN wid, XEN xy)
 {
   GUI_WIDGET w;
   XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(wid), wid, XEN_ONLY_ARG, "set-" S_widget_position, "a wrapped object");  
-  XEN_ASSERT_TYPE(XEN_LIST_P(xy), xy, XEN_ARG_2, "set-" S_widget_position, "a list");  
+  XEN_ASSERT_TYPE(XEN_LIST_P(xy) && (XEN_LIST_LENGTH(xy) == 2), xy, XEN_ARG_2, "set-" S_widget_position, "a list: (x y)");  
   w = (GUI_WIDGET)(XEN_UNWRAP_C_POINTER(wid));
   if (w)
     set_widget_position(w,
@@ -540,7 +540,7 @@ static XEN g_set_widget_size(XEN wid, XEN wh)
 {
   GUI_WIDGET w;
   XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(wid), wid, XEN_ARG_1, "set-" S_widget_size, "a wrapped object");  
-  XEN_ASSERT_TYPE(XEN_LIST_P(wh), wh, XEN_ARG_2, "set-" S_widget_size, "a list");  
+  XEN_ASSERT_TYPE(XEN_LIST_P(wh) && (XEN_LIST_LENGTH(wh) == 2), wh, XEN_ARG_2, "set-" S_widget_size, "a list: (width height)");  
   w = (GUI_WIDGET)(XEN_UNWRAP_C_POINTER(wid));
   if (w)
     set_widget_size(w,

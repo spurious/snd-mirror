@@ -2041,7 +2041,9 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ;;; TODO: radar scope style region cue list
 ;;; (create-sound-window (list-ref (main-widgets) 3) "pistol.snd")
 ;;;   will probably want to disable close here, or use replace?
-
+;;; TODO: DAP-style loop point dialog
+;;; TODO: ladspa+enved example
+;;; TODO: mix-panning via enved
 
 (define (change-label widget new-label)
   (let ((str (|XmStringCreateLocalized new-label)))

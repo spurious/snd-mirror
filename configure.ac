@@ -773,7 +773,9 @@ dnl should we include -lSgm if motif?
         ;;
     *-apple-*)
 	AC_DEFINE(MAC_OSX)
-	audio_system=Mac
+	audio_system=MacOSX
+	AUDIO_LIB="-framework CoreAudio"
+	AC_SUBST(AUDIO_LIB)
 	;;
 esac
 AC_MSG_CHECKING([for audio system])

@@ -5368,7 +5368,7 @@ static XEN g_set_x_bounds(XEN bounds, XEN snd_n, XEN chn_n)
   chan_info *cp;
   Float x0, x1;
   ASSERT_CHANNEL("set-" S_x_bounds, snd_n, chn_n, 2);
-  XEN_ASSERT_TYPE(XEN_LIST_P(bounds), bounds, XEN_ARG_1, "set-" S_x_bounds, "a list");
+  XEN_ASSERT_TYPE(XEN_LIST_P(bounds) && (XEN_LIST_LENGTH(bounds) == 2), bounds, XEN_ARG_1, "set-" S_x_bounds, "a list: (x0 x1)");
   cp = get_cp(snd_n, chn_n, "set-" S_x_bounds);
   if (cp->time_graph_type == GRAPH_TIME_ONCE) 
     {

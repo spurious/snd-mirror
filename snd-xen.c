@@ -294,7 +294,9 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
   if (!(XEN_PROCEDURE_P(proc)))
     {
       if (XEN_NOT_FALSE_P(proc)) /* #f as explicit arg to clear */
-	return(mus_format("%s (%s arg %d) is not a procedure!", arg_name, caller, argn));
+	return(mus_format("%s: %s (%s arg %d) is not a procedure!", 
+			  XEN_TO_C_STRING(XEN_TO_STRING(proc)),
+			  arg_name, caller, argn));
     }
   else
     {
@@ -1398,7 +1400,7 @@ static XEN g_set_help_text_font(XEN val)
 {
   #define H_help_text_font "(" S_help_text_font ") -> font used in the Help dialog"
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set-" S_help_text_font, "a string"); 
-  /* TODO: check free here and below */
+  /* TODO: check free here and below [needs a bazillion copy_strings in snd-xmain and so on] */
   set_help_text_font(state, copy_string(XEN_TO_C_STRING(val))); 
   return(val);
 }
@@ -1481,13 +1483,35 @@ static XEN g_window_y(void)
   return(C_TO_XEN_INT(widget_y(MAIN_SHELL(state))));
 }
 
+static int snd_screen_height(void)
+{
+#if HAVE_X
+  return(HeightOfScreen(ScreenOfDisplay(MAIN_DISPLAY(get_global_state()), 0)));
+#else
+  return(4000);
+#endif
+}
+
+static int snd_screen_width(void)
+{
+#if HAVE_X
+  return(WidthOfScreen(ScreenOfDisplay(MAIN_DISPLAY(get_global_state()), 0)));
+#else
+  return(4000);
+#endif
+}
+
 static XEN g_set_window_height(XEN height) 
 {
   #define H_set_window_height "(" "set-" S_window_height " val) sets the Snd window height in pixels"
   Latus val;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(height), height, XEN_ONLY_ARG, "set-" S_window_height, "a number"); 
-  set_widget_height(MAIN_SHELL(state), val = (Latus)XEN_TO_C_INT_OR_ELSE(height, 0));
-  state->init_window_height = val;
+  val = (Latus)XEN_TO_C_INT_OR_ELSE(height, 0);
+  if ((val > 0) && (val < snd_screen_height()))
+    {
+      set_widget_height(MAIN_SHELL(state), val);
+      state->init_window_height = val;
+    }
   return(height);
 }
 
@@ -1496,8 +1520,12 @@ static XEN g_set_window_width(XEN width)
   #define H_set_window_width "(" "set-" S_window_width " val) sets the Snd window width in pixels"
   Latus val;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(width), width, XEN_ONLY_ARG, "set-" S_window_width, "a number"); 
-  set_widget_width(MAIN_SHELL(state), val = (Latus)XEN_TO_C_INT_OR_ELSE(width, 0)); 
-  state->init_window_width = val;
+  val = (Latus)XEN_TO_C_INT_OR_ELSE(width, 0);
+  if ((val > 0) && (val < snd_screen_width()))
+    {
+      set_widget_width(MAIN_SHELL(state), val);
+      state->init_window_width = val;
+    }
   return(width);
 }
 
@@ -1506,8 +1534,12 @@ static XEN g_set_window_x(XEN val)
   #define H_set_window_x "(" "set-" S_window_x " val) sets the Snd window x position in pixels"
   Locus x;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set-" S_window_x, "a number"); 
-  set_widget_x(MAIN_SHELL(state), x = (Locus)XEN_TO_C_INT_OR_ELSE(val, 0));
-  state->init_window_x = x;
+  x = (Locus)XEN_TO_C_INT_OR_ELSE(val, 0);
+  if ((x >= 0) && (x < snd_screen_width()))
+    {
+      set_widget_x(MAIN_SHELL(state), x);
+      state->init_window_x = x;
+    }
   return(val);
 }
 
@@ -1516,8 +1548,12 @@ static XEN g_set_window_y(XEN val)
   #define H_set_window_y "(" "set-" S_window_y " val) sets the Snd window y position in pixels"
   Locus y;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set-" S_window_y, "a number"); 
-  set_widget_y(MAIN_SHELL(state), y = (Locus)XEN_TO_C_INT_OR_ELSE(val, 0)); 
-  state->init_window_y = y;
+  y = (Locus)XEN_TO_C_INT_OR_ELSE(val, 0);
+  if ((y >= 0) && (y < snd_screen_height()))
+    {
+      set_widget_y(MAIN_SHELL(state), y);
+      state->init_window_y = y;
+    }
   return(val);
 }
 
@@ -2001,7 +2037,10 @@ If 'data' is a list of numbers, it is treated as an envelope."
   Locus o = 0, gx0 = 0;
   axis_info *uap = NULL;
   /* ldata can be a vct object, a vector, or a list of either */
-  XEN_ASSERT_TYPE(((VCT_P(ldata)) || (XEN_VECTOR_P(ldata)) || (XEN_LIST_P(ldata))), ldata, XEN_ARG_1, S_graph, "a vct, vector, or list");
+  XEN_ASSERT_TYPE(((VCT_P(ldata)) || 
+		   (XEN_VECTOR_P(ldata)) || 
+		   ((XEN_LIST_P(ldata)) && (XEN_LIST_LENGTH(ldata) > 0))),
+		  ldata, XEN_ARG_1, S_graph, "a vct, vector, or list");
   ASSERT_CHANNEL(S_graph, snd_n, chn_n, 7);
   cp = get_cp(snd_n, chn_n, S_graph);
   ymin = 32768.0;

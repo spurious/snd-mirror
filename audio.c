@@ -995,7 +995,6 @@ static void describe_audio_state_1(void)
 {
   int rv;
   ALvalue x[16];
-  if (!audio_strbuf) audio_strbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   pprint("Devices and Interfaces on this system:\n"); 
   rv= alQueryValues(AL_SYSTEM, AL_DEVICES, x, 16, 0, 0);
   if (rv > 0) 
@@ -1326,7 +1325,6 @@ static void describe_audio_state_1(void)
 {
   float amps[1];
   int err;
-  if (!audio_strbuf) audio_strbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   err = mus_audio_mixer_read(MUS_AUDIO_SPEAKERS, MUS_AUDIO_SRATE, 0, amps);
   if (err == MUS_NO_ERROR) 
     {mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "srate: %.2f\n", amps[0]); pprint(audio_strbuf);} 
@@ -3026,8 +3024,6 @@ static void oss_describe_audio_state_1(void)
     }
 #endif
 
-  if (!audio_strbuf) audio_strbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-  
   if (new_oss_running)
     {
 #ifdef NEW_OSS
@@ -5584,7 +5580,6 @@ static void alsa_describe_audio_state_1(void)
     snd_pcm_info_t pcminfo;
     snd_pcm_channel_info_t strinfo;
 
-    if (!audio_strbuf) audio_strbuf=(char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
     mask = snd_cards_mask();
     if (!mask) {
 	mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "no soundcards found...\n");
@@ -6259,7 +6254,6 @@ static void describe_audio_state_1(void)
   /* get volume -- not much else we can do here */
   float amps[1];
   float val;
-  if (!audio_strbuf) audio_strbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   mus_audio_mixer_read(MUS_AUDIO_DEFAULT, MUS_AUDIO_AMP, 0, amps);
   val = amps[0];
   mus_audio_mixer_read(MUS_AUDIO_DEFAULT, MUS_AUDIO_AMP, 1, amps);
@@ -7099,7 +7093,6 @@ static void describe_audio_state_1(void)
   int audio_fd, err;
   char *dev_name;
   AUDIO_INITINFO(&info);
-  if (!audio_strbuf) audio_strbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   if (getenv(AUDIODEV_ENV) != NULL) 
     dev_name = getenv(AUDIODEV_ENV); 
   else dev_name = DAC_NAME;
@@ -7462,7 +7455,6 @@ static void describe_audio_state_1(void)
   int i, j, devs, rates, range, sizes, connected;
   long refnum;
   Handle h;
-  if (!audio_strbuf) audio_strbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   nv = SndSoundManagerVersion();
   mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "Sound Manager: %d.%d.%d.%d\n", 
 	  nv.majorRev, nv.minorAndBugRev, nv.stage, nv.nonRelRev);
@@ -8207,7 +8199,6 @@ static void describe_audio_state_1(void)
   gain.channel_mask = (AUDIO_CHANNEL_LEFT | AUDIO_CHANNEL_RIGHT);
   ioctl(fd, AUDIO_GET_GAINS, &gain);
   close(fd);
-  if (!audio_strbuf) audio_strbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   g[0] = gain.cgain[0].transmit_gain; 
   g[1] = gain.cgain[1].transmit_gain;
   mina = desc.min_transmit_gain;  
@@ -8970,7 +8961,6 @@ static void describe_audio_state_1(void)
 #endif
   need_comma = 1;
   chans = 1;
-  if (!audio_strbuf) audio_strbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   devs = waveOutGetNumDevs();
   if (devs > 0)
     {
@@ -10158,23 +10148,68 @@ char *mus_audio_moniker(void) {return("OS2 audio");}
 #include <CoreServices/CoreServices.h>
 #include <CoreAudio/CoreAudio.h>
 
+char *device_name(AudioDeviceID deviceID)
+{
+  OSStatus err = noErr;
+  UInt32 size = 0, msize = 0;
+  char *name = NULL, *mfg = NULL, *full_name = NULL;
+  err =  AudioDeviceGetPropertyInfo(deviceID, 0, false, kAudioDevicePropertyDeviceName, &size, NULL);
+  if (err == noErr) err =  AudioDeviceGetPropertyInfo(deviceID, 0, false, kAudioDevicePropertyDeviceManufacturer, &msize, NULL);
+  if (err == noErr)
+    {
+      name = (char *)MALLOC(size + 1);
+      err = AudioDeviceGetProperty(deviceID, 0, false, kAudioDevicePropertyDeviceName, &size, name);
+      mfg = (char *)MALLOC(msize + 1);
+      err = AudioDeviceGetProperty(deviceID, 0, false, kAudioDevicePropertyDeviceManufacturer, &msize, mfg);
+      full_name = (char *)MALLOC(size + msize + 3);
+      mus_snprintf(full_name, size + msize + 3, "%s: %s", mfg, name);
+      FREE(name);
+      FREE(mfg);
+    }
+  return(full_name);
+}	
+
 static void describe_audio_state_1(void) 
 {
   OSStatus err = noErr;
   UInt32 num_devices = 0, size = 0;
+  Float32 vol;
+  int i;
   AudioDeviceID *devices = NULL;
+  AudioDeviceID device, default_output, default_input;
+  AudioStreamBasicDescription *desc;
   err = AudioHardwareGetPropertyInfo(kAudioHardwarePropertyDevices, &size, NULL);	
   if (err != noErr) return;
   num_devices = size / sizeof(AudioDeviceID);
   if (num_devices <= 0) return;
-  devices = MALLOC(size);
-  err = AudioHardwareGetProperty(kAudioHardwarePropertyDevices, &size, (void *)devices);	
+  devices = (AudioDeviceID *)MALLOC(size);
+  size = 0;
+  err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultInputDevice, &size, &default_input);
+  size = 0;
+  err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultOutputDevice, &size, &default_output);
   if (err != noErr)
     {
       FREE(devices);
       return;
     }
-  
+  size = 0;
+  err = AudioHardwareGetProperty(kAudioHardwarePropertyDevices, &size, (void *)devices);	
+  mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "found %d devices\n", num_devices); pprint(audio_strbuf);
+  for (i = 0; i < num_devices; i++)
+    {
+      device = devices[i];
+      pprint(device_name(device));
+      if (device == default_output) pprint("output default");
+      if (device == default_input) pprint("input default");
+      size = 0;
+      err = AudioHardwareGetProperty(kAudioHardwarePropertyVolumeScalar, &size, &vol);
+      mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "vol: %f ", vol); pprint(audio_strbuf);
+      size = sizeof(*desc); /* ???? */
+      err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormat, &size, (void *)desc);
+      mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "srate: %d, format: %d, chans: %d, frames: %d\n",
+		   (int)(desc->mSampleRate), (int)(desc->mFormatID), (int)(desc->mChannelsPerFrame), (int)(desc->mFramesPerPacket));
+      pprint(audio_strbuf);
+    }
 }
 
 static AudioDeviceID device = kAudioDeviceUnknown;
@@ -10639,6 +10674,7 @@ char *mus_audio_report(void)
     }
   save_it_loc = 0;
   print_it = 0;
+  if (!audio_strbuf) audio_strbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   describe_audio_state_1();
   return(save_it);
 }
@@ -10647,6 +10683,7 @@ void mus_audio_describe(void)
 {
   mus_audio_initialize();
   print_it = 1;
+  if (!audio_strbuf) audio_strbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   describe_audio_state_1();
 }
 

@@ -3287,7 +3287,6 @@ static XEN g_scale_sound_to(XEN norm, XEN beg, XEN num, XEN snd, XEN chn)
   #define H_scale_sound_to "(" S_scale_sound_to " norm beg num snd chn) scales samples in the given sound/channel \
 between beg and beg + num to peak value norm.  If channel is omitted, the scaling applies to the entire sound."
 
-  /* TODO: edpos for scale_sound_to */
   snd_info *sp;
   chan_info *cp;
   int i, samp, samps;

@@ -6244,6 +6244,7 @@ The following substitutions can be made:
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->return (list x0 x1) -- current x axis time domain bounds in seconds.
+<!-- --><code>(set! (x-bounds) (list 0.0 (/ (frames) (srate))))</code> shows the full sound.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -7911,6 +7912,10 @@ variable %load-verbosely to #t.
 <!-- -->The "Page Up" key is given as 0xFF55, which in Scheme would be #xff55 (65365).
 <!-- --><pre>
 <!-- -->  (bind-key #xff55 0 (lambda () (snd-print "Page up") keyboard-no-action))
+<!-- --></pre>
+<!-- -->Similarly, the End key if #xFF57, so we could bind it to cause the full sound to be displayed:
+<!-- --><pre>
+<!-- -->  (bind-key #xFF57 0 (lambda () (set! (x-bounds) (list 0.0 (/ (frames) (srate))))))
 <!-- --></pre>
 <!-- --></td></tr>
 <!-- -->

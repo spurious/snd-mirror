@@ -410,7 +410,7 @@ int mus_set_length(mus_any *gen, int len)
 {
   if (gen)
     {
-      if ((gen->core)->length)
+      if ((gen->core)->set_length)
 	{
 	  (*((gen->core)->set_length))(gen, len);
 	  return(len);
