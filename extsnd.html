@@ -1055,15 +1055,14 @@ when you save a sound via the "save" dialog.</p>
 <!-- --><tr><td width=50>0:  </td><td> no use of parse trees at all (use the standard Guile parser/evaluator)</td></tr>
 <!-- --><tr><td>1:  </td><td> allow simple ops (if complex result possible, give up)</td></tr>
 <!-- --><tr><td>2:  </td><td>assume nothing will return a complex number</td></tr>
-<!-- --><tr><td>3:  </td><td> if undefined global variable encountered, try to determine eventual type from context</td></tr>
-<!-- --><tr><td>4:  </td><td> make dangerous assumptions about variable types, try to use procedure source</td></tr>
+<!-- --><tr><td>3:  </td><td>if undefined global variable encountered, try to determine eventual type from context</td></tr>
+<!-- --><tr><td>4:  </td><td>make dangerous assumptions about variable types, try to use procedure source</td></tr>
+<!-- --><tr><td>5:  </td><td>make dangerous assumptions about variable locations (for set!)</td></tr>
 <!-- --></table><br></td></tr>
 <!-- --><tr><td></td><td colspan=2><small>Currently, the optimizer is able to speed up Scheme code by factors between
 <!-- -->8 and 20; see snd-run.c for what is implemented, what the major limitations are, and so on.
-<!-- -->A major problem is that Guile is not a clear and simple piece of code, so it is a major
-<!-- -->research project to figure out where local variables are.  I may someday jettison Guile,
-<!-- -->and limit Snd's extensions to whatever Scheme functions I support directly.  I no longer
-<!-- -->see any prospect of a Scheme compiler, and Guile itself is in a parlous state.
+<!-- -->If you set the optimization-hook to print out whatever it's argument is, you can
+<!-- -->find out what the optimizer found confusing.
 <!-- --><br><br></small></td></tr>
 <!-- -->
 <!-- save-dir -->

@@ -24,7 +24,7 @@
 ;;; test 21: goops
 ;;; test 22: run
 ;;; test 23: Snd user-interface
-;;; test 245: X/Xt/Xm/Xpm
+;;; test 24: X/Xt/Xm/Xpm
 ;;; test 25: Glib/gdk/gdk-pixbuf/pango/gtk (none yet)
 ;;; test 26: errors
 
@@ -15199,6 +15199,16 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
       (ftsta '(lambda (y) (define a (lambda (b) (declare (b string)) b)) (+ y (string-length (a "hi")))) 1.0 3.0)
       (itsta '(lambda (y) (declare (y integer)) (+ y 1)) 1 2)
       (itsta '(lambda (y) (declare (y string)) (string-length y)) "hi" 2)
+      (ftsta '(lambda (y) (define (a) 3) (+ y (a))) 1.0 4.0)
+      (ftsta '(lambda (y) (define (a) 3) (+ y (a))) 1.0 4.0)
+      (ftsta '(lambda (y) (define (a b) (+ b 3)) (+ y (a 1))) 1.0 5.0)
+      (ftsta '(lambda (y) (define (a b c) (+ b c)) (+ y (a 1 3))) 1.0 5.0)
+      (ftsta '(lambda (y) (define (a b c) (declare (b real)) (+ b c)) (+ y (a 1.5 3))) 1.0 5.5)
+      (ftsta '(lambda (y) (define (a b c) (declare (b real) (c int)) (+ b c)) (+ y (a 1.5 3))) 1.0 5.5)
+      (ftsta '(lambda (y) (define (a b c) (declare (b int)) (+ b c)) (+ y (a 1 3))) 1.0 5.0)
+      (ftsta '(lambda (y) (define (a b) (declare (b string)) (+ (string-length b) 3)) (+ y (a "hi"))) 1.0 6.0)
+      (ftsta '(lambda (y) (define (a b) (declare (b string)) b) (+ y (string-length (a "hi")))) 1.0 3.0)
+      (ftsta '(lambda (y) (define (a b) (declare (b string)) b) (+ y (string-length (a "hi")))) 1.0 3.0)
 
       (itst '(let ((a 0)) (do ((i 0 (1+ i))) ((= i 3) a) (set! a (1+ a)))) 3)
       (itst '(let ((a 0)) (do ((i 0 (1+ i)) (j 1 (* j 2))) ((= i 3) a) (set! a j))) 4)
@@ -15730,6 +15740,14 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
       (ftst '(let ((v (make-vct 3))) (vct-fill! v 1.0) (vct-ref (vct-scale! v 2.0) 1)) 2.0)
       (ftst '(let ((v (make-vct 3))) (vct-fill! v 1.0) (vct-ref (vct-scale! (vct-add! v v) 2.0) 1)) 4.0)
 
+      (itst '(case 1 ((1) 4) ((2 3) 5)) 4)
+      (stst '(case 2 ((1) "hi") ((2 3) "ho")) "ho")
+      (itsta '(lambda (y) (declare (y integer)) (case y ((1) (let ((a y)) (+ a 1))) ((2 3 4) (* y 2)))) 1 2)
+      (itsta '(lambda (y) (declare (y integer)) (case y ((1) (let ((a y)) (+ a 1))) ((2 3 4) (* y 2)))) 3 6)
+      (itst '(case 1 ((1) 4) ((2 3) 5) (else 123)) 4)
+      (itst '(case 3 ((1) 4) ((2 3) 5) (else 123)) 5)
+      (itst '(case 10 ((1) 4) ((2 3) 5) (else 123)) 123)
+
       (itst '(cond ((> 1 0) 1)) 1)
       (itst '(cond ((> 1 0) 1) ((< 0 1) 2)) 1)
       (itst '(cond ((< 1 0) 1) ((< 0 1) 2)) 2)
@@ -15903,9 +15921,15 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 	  (undo 1 ind)
 	  (set! (optimization) 4) 
 	  (set! t1 (time-it (expsnd '(0 1 2 .4))))
+	  (set! ts (cons (list "expsnd " t0 t1 (inexact->exact (round (/ t0 t1)))) ts))
+	  (undo 1 ind)
+	  (set! (optimization) 0) 
+	  (set! t0 (time-it (jc-reverb 1.0 #t 1.0 #f)))
+	  (undo 1 ind)
+	  (set! (optimization) 4) 
+	  (set! t1 (time-it (jc-reverb 1.0 #t 1.0 #f)))
+	  (set! ts (cons (list "jcrev  " t0 t1 (inexact->exact (round (/ t0 t1)))) ts))
 	  (close-sound ind))
-	(set! ts (cons (list "expsnd " t0 t1 (inexact->exact (round (/ t0 t1)))) ts))
-
 	(snd-display "         ~{~%       ~A~}~%" ts))
 
       ))))
@@ -21984,7 +22008,7 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 					    (lambda args (car args)))))
 				(IF (not (eq? tag 'wrong-type-arg))
 				    (snd-display ";vct 2 wrong-type-arg ~A: ~A" n tag))))
-			    (list vct-add! vct-subtract! vct-multiply! vct-ref vct-scale! vct-fill! vct-do! vct-map!)))
+			    (list vct-add! vct-subtract! vct-multiply! vct-ref vct-scale! vct-fill! vct-map!)))
 		(list (current-module) "hiho" (sqrt -1.0) (list 1 0) '#(0 1)))
 
         (let ((tag

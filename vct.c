@@ -448,6 +448,7 @@ static XEN vct_map(XEN obj, XEN proc)
   return(xen_return_first(obj, proc));
 }
 
+#if 0
 static XEN vct_do(XEN obj, XEN proc)
 {
   #define H_vct_doB "(" S_vct_doB " v proc) -> v with each element set to value of proc: v[i] = (proc i)"
@@ -460,6 +461,7 @@ static XEN vct_do(XEN obj, XEN proc)
     v->data[i] = XEN_TO_C_DOUBLE(XEN_CALL_1_NO_CATCH(proc, C_TO_SMALL_XEN_INT(i), S_vct_doB));
   return(xen_return_first(obj, proc));
 }
+#endif
 
 static XEN vcts_map(XEN args)
 {
@@ -684,7 +686,7 @@ XEN vct2vector(XEN vobj)
 }
 
 #ifdef XEN_ARGIFY_1
-XEN_NARGIFY_1(g_make_vct_w, g_make_vct)
+XEN_ARGIFY_2(g_make_vct_w, g_make_vct)
 XEN_NARGIFY_1(copy_vct_w, copy_vct)
 XEN_NARGIFY_1(g_vct_p_w, g_vct_p)
 XEN_NARGIFY_1(list2vct_w, list2vct)
@@ -701,7 +703,7 @@ XEN_ARGIFY_3(vct_add_w, vct_add)
 XEN_NARGIFY_2(vct_subtract_w, vct_subtract)
 XEN_NARGIFY_2(vct_offset_w, vct_offset)
 XEN_NARGIFY_2(vct_map_w, vct_map)
-XEN_NARGIFY_2(vct_do_w, vct_do)
+  /* XEN_NARGIFY_2(vct_do_w, vct_do) */
 XEN_NARGIFY_1(vct_peak_w, vct_peak)
 XEN_VARGIFY(vcts_map_w, vcts_map)
 XEN_VARGIFY(vcts_do_w, vcts_do)
@@ -726,7 +728,7 @@ XEN_VARGIFY(g_vct_w, g_vct)
 #define vct_subtract_w vct_subtract
 #define vct_offset_w vct_offset
 #define vct_map_w vct_map
-#define vct_do_w vct_do
+  /* #define vct_do_w vct_do */
 #define vct_peak_w vct_peak
 #define vcts_map_w vcts_map
 #define vcts_do_w vcts_do
@@ -812,7 +814,7 @@ void init_vct(void)
   XEN_DEFINE_PROCEDURE(S_vct_addB,      vct_add_w, 2, 1, 0,       H_vct_addB);
   XEN_DEFINE_PROCEDURE(S_vct_subtractB, vct_subtract_w, 2, 0, 0,  H_vct_subtractB);
   XEN_DEFINE_PROCEDURE(S_vct_offsetB,   vct_offset_w, 2, 0, 0,    H_vct_offsetB);
-  XEN_DEFINE_PROCEDURE(S_vct_doB,       vct_do_w, 2, 0, 0,        H_vct_doB);
+  /* XEN_DEFINE_PROCEDURE(S_vct_doB,       vct_do_w, 2, 0, 0,        H_vct_doB); */
   XEN_DEFINE_PROCEDURE(S_vct_peak,      vct_peak_w, 1, 0, 0,      H_vct_peak);
   XEN_DEFINE_PROCEDURE(S_vcts_mapB,     vcts_map_w, 0, 0, 1,      H_vcts_mapB);
   XEN_DEFINE_PROCEDURE(S_vcts_doB,      vcts_do_w, 0, 0, 1,       H_vcts_doB);
@@ -830,6 +832,12 @@ void init_vct(void)
 #if HAVE_GUILE
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_vct_ref, vct_ref_w, H_vct_ref,
 				   "set-" S_vct_ref, vct_set_w,  2, 0, 3, 0);
+  XEN_EVAL_C_STRING("(define (vct-do! v func) \
+                       (vct-map! v (let ((i 0)) \
+                         (lambda () \
+                           (let ((val (func i))) \
+                             (set! i (1+ i)) \
+                             val)))))");
 #endif
 }
 

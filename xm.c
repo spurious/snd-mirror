@@ -12,6 +12,7 @@
  */
 
 /* HISTORY: 
+ *   29-Apr:    minor 64-bit fixups.
  *   29-Mar:    XmParseProc.
  *   20-Mar:    XpmGetErrorString omitted inadvertently earlier.
  *   4-Mar:     XWindowChanges and XSetWindowAttributes struct creators.
@@ -1369,7 +1370,7 @@ static Boolean gxm_XtConvertSelectionIncrProc(Widget w, Atom* selection, Atom* t
 				C_TO_XEN_Atom(*target),
 				C_TO_XEN_INT(*max_length),
 				C_TO_XEN_ULONG(client_data),
-				C_TO_XEN_INT((int)(*request_id))),
+				C_TO_XEN_ULONG(*request_id)), /* XtRequestId is XtPointer */
 		     __FUNCTION__);
   if (XEN_FALSE_P(result))
     return(False);
@@ -3707,7 +3708,7 @@ returns the type and value of the next component in a compound string (list val 
 		    xdir,
 		    C_TO_XEN_INT((int)component),
 		    C_TO_XEN_INT((int)len),
-		    C_TO_XEN_INT((int)value)));
+		    C_TO_XEN_STRING((const char *)value)));
 }
 #endif
 
@@ -16569,7 +16570,7 @@ Display *video_display,Window video_window)"
 		    C_TO_XEN_Atom(a1),
 		    C_TO_XEN_Atom(a2),
 		    C_TO_XEN_INT(i1),
-		    C_TO_XEN_INT((int)pars),
+		    C_TO_XEN_STRING((const char *)pars),
 		    C_TO_XEN_INT(i2)));
 }
 
@@ -24530,7 +24531,7 @@ static int xm_already_inited = 0;
       define_structs();
       XEN_YES_WE_HAVE("xm");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"29-Mar-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"29-Apr-02\")");
 #endif
       xm_already_inited = 1;
     }

@@ -1090,13 +1090,13 @@ formants: (map-chan (osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3)))
 (define (fp sr osamp osfrq)
   "(fp sr osamp osfrq) varies the sampling rate via an oscil: (fp 1.0 .3 20)"
   (let* ((os (make-oscil osfrq))
-	 (sr (make-src :srate sr))
+	 (s (make-src :srate sr))
 	 (len (frames))
 	 (sf (make-sample-reader))
 	 (out-data (make-vct len)))
     (vct-map! out-data
 	      (lambda () 
-		(src sr (* osamp (oscil os))
+		(src s (* osamp (oscil os))
 		     (lambda (dir)
 		       (if (> dir 0)
 			   (next-sample sf)
@@ -1312,33 +1312,33 @@ selected sound: (map-chan (cross-synthesis 1 .5 128 6.0))"
 	 (comb3 (make-comb 0.715 5399))
 	 (comb4 (make-comb 0.697 5801))
 	 (outdel1 (make-delay (round (* .013 (srate)))))
-	 (comb-sum 0.0)
-	 (comb-sum-1 0.0)
-	 (comb-sum-2 0.0)
-	 (all-sums 0.0)
-	 (delA 0.0)
-	 (delB 0.0)
 	 (dur (+ decay-dur (/ (frames) (srate))))
 	 (envA (if amp-env (make-env :envelope amp-env :scaler volume :duration dur) #f))
 	 (len (round (* dur (srate)))))
     (map-chan
-     (lambda (inval)
-       (let ((allpass-sum (all-pass allpass3 (all-pass allpass2 (all-pass allpass1 inval)))))
-	 (set! comb-sum-2 comb-sum-1)
-	 (set! comb-sum-1 comb-sum)
-	 (set! comb-sum 
-	       (+ (comb comb1 allpass-sum)
-		  (comb comb2 allpass-sum)
-		  (comb comb3 allpass-sum)
-		  (comb comb4 allpass-sum)))
-	 (if low-pass
-	     (set! all-sums (+ (* .25 (+ comb-sum comb-sum-2)) (* .5 comb-sum-1)))
-	     (set! all-sums comb-sum))
-	 (+ inval
-	    (if envA
-		(* (env envA) (delay outdel1 all-sums))
-		(* volume (delay outdel1 all-sums))))))
-     0 (round (* dur (srate))))))
+     (let ((comb-sum 0.0)
+	   (comb-sum-1 0.0)
+	   (comb-sum-2 0.0)
+	   (all-sums 0.0)
+	   (delA 0.0)
+	   (delB 0.0))
+       (lambda (inval)
+	 (let ((allpass-sum (all-pass allpass3 (all-pass allpass2 (all-pass allpass1 inval)))))
+	   (set! comb-sum-2 comb-sum-1)
+	   (set! comb-sum-1 comb-sum)
+	   (set! comb-sum 
+		 (+ (comb comb1 allpass-sum)
+		    (comb comb2 allpass-sum)
+		    (comb comb3 allpass-sum)
+		    (comb comb4 allpass-sum)))
+	   (if low-pass
+	       (set! all-sums (+ (* .25 (+ comb-sum comb-sum-2)) (* .5 comb-sum-1)))
+	       (set! all-sums comb-sum))
+	   (+ inval
+	      (if envA
+		  (* (env envA) (delay outdel1 all-sums))
+		  (* volume (delay outdel1 all-sums)))))))
+       0 (round (* dur (srate))))))
 
 
 
