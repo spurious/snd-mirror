@@ -1,13 +1,26 @@
 # examp.rb -- Guile -> Ruby translation
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Tue Mar 18 01:21:09 CET 2003
-# Version: $Revision: 1.38 $
+# Last: Wed Apr 02 03:16:14 CEST 2003
+# Version: $Revision: 1.48 $
 
 #
 # Utilities
 #
 # Class Hook
+#  initialize(name) { |*args| ... }
+#  add_hook!(name) { |*args| ... }
+#  remove_hook!(name)
+#  call(*args)
+#  to_s
+#  inspect
+#
+# extensions to Class Integer
+#  even?
+#  odd?
+#
+# extension to Module Enumerable
+#  map_with_index { |x, i| ... }
 #
 # get_func_name(n)
 # doc(str), putd(func), snd_putd(func)
@@ -34,8 +47,9 @@
 # fm_violin_rb(start, dur, freq, amp, *args)
 # jc_reverb_rb(*args)
 # with_sound(*args) { ... }
+# sound_let(fname, *args) { |tmp_fname| ... }
 #
-# fm_play(func, outfile, play_f)
+# fm_play(*args) { |len| ... }
 # fm_bell_snd(start, dur, freq, amp, amp_env, index_env, index)
 # n_rev(*args)
 # hello_dentist(frq, amp)
@@ -63,6 +77,7 @@
 #
 # Module Env (see env.scm)
 #  envelope_interp(*args)
+#  stretch_envelope(*args)
 #
 # Module Moog (see moog.scm)
 #  make_moog_filter(freq, q)
@@ -165,7 +180,7 @@ end
 
 class Hook
   doc "#{self.class} #{self.name}
-To set, add, and remove named hooks (see popup.rb).
+To set, add, remove, and show named hooks (see popup.rb).
 
 Example:
 
@@ -183,13 +198,17 @@ Example:
     set_channel_style(Channels_combined, snd)
   end
 
+  #after_open_hook.to_s -> \"Hook name: my_hook (|*a|)\"
+
   $after_open_hook.remove_hook!(\"my_hook\")\n"
   
-  def initialize(name = nil, &func)
+  def initialize(name = nil)
     @hooks = Hash.new
     add_hook!(name) do |*args|
-      func.call(*args)
-    end if name and func
+      yield(*args)
+    end if name and block_given?
+  rescue
+    warn get_func_name
   end
   
   def add_hook!(name, &func)
@@ -207,12 +226,10 @@ Example:
     @hooks.each_value do |f|
       f.call(*args)
     end
+  rescue
+    warn get_func_name
   end
 
-  def inspect
-    set_hook
-  end
-  
   def set_hook
     lambda do |*args|
       @hooks.each_value do |f|
@@ -221,6 +238,66 @@ Example:
     end
   end
   private :set_hook
+
+  def hook_arity(f)
+    case f.arity
+    when 0
+      "||"
+    when 2
+      "|a, b|"
+    when 3
+      "|a, b, c|"
+    when -1
+      "|*a|"
+    when -2
+      "|a, *b|"
+    end
+  end
+  private :hook_arity
+
+  def to_s
+    str = ""
+    @hooks.each do |k, v|
+      str << "Hook name: " << k << " (" + hook_arity(v) + ")\n"
+    end
+    str
+  end
+
+  def inspect
+    to_s
+  end
+end
+
+class Integer
+  doc "#{self.class} #{self.name}
+usefule lisp-like extensions [(evenp x), (oddp x)]:
+  x.even?
+  x.odd?\n"
+
+  def even?
+    (self % 2) == 0
+  end
+
+  def odd?
+    (self % 2) == 1
+  end
+end
+
+module Enumerable
+  doc "#{self.class} #{self.name}
+usefule extensions:
+  map_with_index
+
+  ary = [1, 2, 4]
+  [3, 5, 7].map_with_index { |x, i| x + ary[i] } --> [4, 7, 11]\n"
+
+  def map_with_index
+    i = -1
+    map do |x|
+      i += 1
+      yield(x, i)
+    end
+  end
 end
 
 ##
@@ -252,7 +329,7 @@ def cdr(v) v.shift; v; end
 # and in Snd too.
 
 def warn(str = "Warning")
-  if $IN_SND
+  if $IN_SND and (not ENV['EMACS'])
     snd_print("\n#{str}#{$! ? ": #{$!}" : ""}")
     snd_print("\n[#{$@.join("\n")}]") if $@ and $DEBUG
   else
@@ -273,7 +350,7 @@ def die(str = "Error", n = 1)
 end
 
 def message(*args)
-  if $IN_SND
+  if $IN_SND and (not ENV['EMACS'])
     snd_print "\n" << format(*args)
   else
     STDOUT.print format(*args) << "\n"
@@ -455,6 +532,7 @@ $rbm_reverb = false
 $rbm_reverb_file_name = "reverb.snd"
 $rbm_reverb_channels = 1
 $rbm_reverb_func = false
+$rbm_locsig_type = Mus_sinusoidal
 
 ##
 ## Michael McNabb's FM bell (see bell.scm and fm_bell_snd() below)
@@ -607,7 +685,7 @@ Example: with_sound { fm_violin_rb(0, 1, 440, 0.1, :fm_index, 2.0) }\n") if star
 	       (fm2_rat - fm2_rat.floor).zero? and 
 	       (fm3_rat - fm3_rat.floor).zero?)
   coeffs = (easy_case and modulate and 
-	    partials2polynomial([fm1_rat, index1, 
+	    partials2polynomial([fm1_rat.floor, index1, 
 				  (fm2_rat / fm1_rat).floor, index2,
 				  (fm3_rat / fm1_rat).floor, index3]))
   norm = ((easy_case and modulate and 1.0) or index1)
@@ -729,22 +807,25 @@ end
 
 def with_sound(*args)
   doc("with_sound(*args) { ... }
-	:output,            $rbm_file_name
+	:output,            $rbm_file_name (#$rbm_file_name)
 	:continue_old_file, false
-	:channels,          $rbm_channels
-	:statistics,        $rbm_statistics
-	:play,              $rbm_play
-	:player,            $rbm_player
-	:srate,             $rbm_srate
-	:header_type,       $rbm_header_type
-	:data_format,       $rbm_data_format
-	:comment,           $rbm_comment
-	:reverb,            false
-	:revfile,           $rbm_reverb_file_name
-	:reverb_channels,   $rbm_reverb_channels
-	:reverb_data,       []
+	:channels,          $rbm_channels (#$rbm_channels)
+	:statistics,        $rbm_statistics (#$rbm_statistics)
+	:play,              $rbm_play (#$rbm_play)
+	:player,            $rbm_player (#$rbm_player)
+	:srate,             $rbm_srate (#$rbm_srate)
+	:header_type,       $rbm_header_type (#$rbm_header_type)
+	:data_format,       $rbm_data_format (#$rbm_data_format)
+	:comment,           $rbm_comment (#$rbm_comment)
+	:reverb,            $rbm_reverb_func (#$rbm_reverb_func)
+	:revfile,           $rbm_reverb_file_name (#$rbm_reverb_file_name)
+	:reverb_channels,   $rbm_reverb_channels (#$rbm_reverb_channels)
+	:reverb_data,       []    [:decay, 1.0, :low_pass, 0, :volume, 1.0,
+                                   :amp_env1/2, false, :delay1/2, 0.013/0.011]
 	:scaled_to,         false
 	:scaled_by,         false
+        :snd_mix,           false
+
 Usage: with_sound(:play, 1, :statistics, true) { fm_violin }\n") if get_args(args, :help, false)
   output            = get_args(args, :output, $rbm_file_name)
   continue_old_file = get_args(args, :continue_old_file, false)
@@ -762,20 +843,20 @@ Usage: with_sound(:play, 1, :statistics, true) { fm_violin }\n") if get_args(arg
   reverb_data       = get_args(args, :reverb_data, [])
   scaled_to         = get_args(args, :scaled_to, false)
   scaled_by         = get_args(args, :scaled_by, false)
+  snd_mix           = get_args(args, :snd_mix, false)
   $rbm_file_name = output
-  $rbm_channels = channels
   $rbm_srate = srate
-  $rbm_reverb_file_name = revfile
+  $rbm_channels = channels
   $rbm_reverb_channels = reverb_channels
-  case play
-  when true
-    play = 1
-  when false, nil
-    play = 0
-  else
-    play = play.abs
-  end
-  $rbm_play = play
+  play = case play
+         when true
+           1
+         when false, nil
+           0
+         else
+           play.abs
+         end
+  play, statistics = 0, false if snd_mix or continue_old_file
   if $IN_SND and (snd = find_sound(output))
     close_sound(snd)
   end
@@ -793,12 +874,12 @@ Usage: with_sound(:play, 1, :statistics, true) { fm_violin }\n") if get_args(arg
     $rbm_output = continue_sample2file(output)
     $rbm_reverb = continue_sample2file(revfile) if reverb
   end
-  atime = Time.new if statistics
+  atime = Time.now if statistics
   yield
   if reverb
     mus_close($rbm_reverb)
     $rbm_reverb = make_file2sample(revfile)
-    (reverb.class == Proc) ? reverb.call(reverb_data) : send(reverb, reverb_data)
+    (reverb.class == Proc) ? reverb.call(*reverb_data) : send(reverb, *reverb_data)
   end
   unless continue_old_file
     if reverb
@@ -809,7 +890,10 @@ Usage: with_sound(:play, 1, :statistics, true) { fm_violin }\n") if get_args(arg
     $rbm_output = false
     set_mus_srate(old_srate)
   end
-  if $IN_SND
+  if $IN_SND and snd_mix and (snd = find_sound(output))
+    close_sound(snd)
+  end
+  if $IN_SND and (not snd_mix)
     snd = open_sound(output)
     olds = sync(snd)
     set_sync(true, snd)
@@ -819,25 +903,29 @@ Usage: with_sound(:play, 1, :statistics, true) { fm_violin }\n") if get_args(arg
     set_sync(olds, snd)
   end
   if statistics
-    rtime = Time.new - atime
+    rtime = Time.now - atime
     samps = mus_sound_samples(output)
     max_amp = mus_sound_maxamp(output)
-    srate = srate.to_f
+    srate = $rbm_srate.to_f
     message("    Sound File: %s", output)
     message("      Duration: %.4f", (samps / srate / channels))
     message("  Compute time: %.3f, Compute ratio: %.2f", rtime,
 	    rtime * (srate / samps) * channels)
-    message("  OutA max amp: %.3f (near %.3f secs)", max_amp[1], max_amp[0] / srate)
-    message("  OutB max amp: %.3f (near %.3f secs)",
-	    max_amp[3], max_amp[2] / srate) if channels == 2
+    out_chan = 64.chr
+    0.step(2 * channels - 1, 2) do |i|
+      message("  Out%s max amp: %.3f (near %.3f secs)",
+              out_chan.next!, max_amp[i + 1], max_amp[i] / srate)
+    end
     if(reverb)
       max_amp = mus_sound_maxamp(revfile)
-      message("  RevA max amp: %.3f (near %.3f secs)", max_amp[1], max_amp[0] / srate)
-      message("  RevB max amp: %.3f (near %.3f secs)",
-	      max_amp[3], max_amp[2] / srate) if reverb_channels == 2
+      out_chan = 64.chr
+      0.step(2 * reverb_channels - 1, 2) do |i|
+        message("  Rev%s max amp: %.3f (near %.3f secs)",
+                out_chan.next!, max_amp[i + 1], max_amp[i] / srate)
+      end
     end
   end
-  1.upto(play) { |i| ($IN_SND ? play_and_wait(snd) : system("#{player} #{output}")) }
+  1.upto(play) do |i| ($IN_SND ? play_and_wait(snd) : system("#{player} #{output}")) end
   output
 rescue
   die get_func_name
@@ -890,16 +978,146 @@ with_sound(:play, 1) {
 
 =end
 
-def fm_play(func, outfile = "test.snd", play_f = true)
-  doc("fm_play(func[, outfile=\"test.snd\"[, play_f=true]])
-Usage: fm_play(lambda { fm_bell_snd(0, 1, 440, 0.1) })\n") if func == :help
-  snd = new_sound(outfile, Mus_next, Mus_bshort, 22050, 1, "created by fm_play()")
-  atime = Time.new
-  func.call()
-  btime = Time.new
-  save_sound(snd)
-  message("time: #{btime - atime}")
-  play() if play_f
+def sound_let(fname = nil, *args)
+  doc("sound_let(fname = nil, *args) { |tmp_fname| ... }
+mimics more or less CLM's and Snd/Guile's (sound-let)
+
+FNAME means a temporary sound filename; if not given snd_tempnam()
+creates a unique one.  *ARGS means with_sound()-args.  FNAME will be
+deleted afterwards and the result will be mixed in
+with_sound()-output.  Returns the used temporary filename.
+
+Usage: with_sound() {
+  sound_let() { |tmp_file|
+    fm_violin(0, 2, 220, 0.5)
+  }
+}\n") if fname == :help
+  tfname = (fname or snd_tempnam())
+  args += [:output, tfname]
+  old_file_name = $rbm_file_name
+  old_output = $rbm_output
+  old_channels = $rbm_channels
+  old_reverb = $rbm_reverb
+  old_reverb_channels = $rbm_reverb_channels
+  result = with_sound(:snd_mix, true, *args) do yield(tfname) end
+  mus_mix(old_file_name, $rbm_file_name, mus_sound_frames(old_file_name))
+  $rbm_reverb_channels = old_reverb_channels
+  $rbm_reverb = old_reverb
+  $rbm_channels = old_channels
+  $rbm_output = old_output
+  $rbm_file_name = old_file_name
+  File.unlink(tfname) if File.exists?(tfname)
+  result
+end
+
+def fm_play(*args)
+  doc("fm_play(*args) { |len| ... }
+  VCT options:
+	:start,             false
+	:dur,               false
+	:degree,            kernel_rand(90.0)
+	:reverb,            false [true means n_rev]
+        :reverb_data,       []    [:amount, 0.1, :filter, 0.5, :feedback, 1.09]
+	:distance,          1.0
+	:scaled_to,         false
+	:scaled_by,         false
+
+  PLAYING options:
+	:play,              $rbm_play (#$rbm_play)
+	:statistics,        $rbm_statistics (#$rbm_statistics)
+
+  If the above two options are set, options below will be used for the
+  new file:
+	:output,            false
+	:save_after,        false
+
+  options for new sound file:
+	:channels,          $rbm_channels (#$rbm_channels)
+	:srate,             $rbm_srate (#$rbm_srate)
+	:header_type,       $rbm_header_type (#$rbm_header_type)
+	:data_format,       $rbm_data_format (#$rbm_data_format)
+	:comment,           \"created by fm_play()\"
+
+If :start and :dur are given, the block may return an out_data vct
+which will be set to the channel(s), e.g.:
+
+fm_play(:start, 0, :dur, 9.8,
+        :channels, 4, :output, \"noise.snd\") { |len|
+  vct_map!(make_vct(len), make_fm_noise(len, 500))
+}
+
+If :output is false, the default, the current sound is used, otherwise
+a new sound will be opened with values of :channels, :srate, etc.
+
+fm_play(:output, \"bell.snd\") {
+  fbell = [0, 1, 2, 1.1000, 25, 0.7500, 75, 0.5000, 100, 0.2000]
+  abell = [0, 0, 0.1000, 1, 10, 0.6000, 25, 0.3000, 50, 0.1500, 90, 0.1000, 100, 0]
+  fm_bell_snd(0.0, 1.0, 220.0, 0.5, abell, fbell, 1.0)
+}\n") if get_args(args, :help, false)
+  start       = get_args(args, :start, false)
+  dur         = get_args(args, :dur, false)
+  degree      = get_args(args, :degree, kernel_rand(90.0))
+  reverb      = get_args(args, :reverb, false)
+  reverb_data = get_args(args, :reverb_data, [])
+  distance    = get_args(args, :distance, 1.0)
+  scaled_to   = get_args(args, :scaled_to, false)
+  scaled_by   = get_args(args, :scaled_by, false)
+  play        = get_args(args, :play, $rbm_play)
+  statistics  = get_args(args, :statistics, $rbm_statistics)
+  output      = get_args(args, :output, false)
+  save_after  = get_args(args, :save_after, false)
+  chns        = get_args(args, :channels, $rbm_channels)
+  srate       = get_args(args, :srate, $rbm_srate)
+  header_type = get_args(args, :header_type, $rbm_header_type)
+  data_format = get_args(args, :data_format, $rbm_data_format)
+  comment     = get_args(args, :comment, "created by " + get_func_name + "()")
+  play = case play
+         when true
+           1
+         when false, nil
+           0
+         else
+           play.abs
+         end
+  if output
+    if snd = find_sound(output)
+      close_sound(snd)
+    end
+    snd = new_sound(output, header_type, data_format, srate, chns, comment)
+  else
+    snd = false
+  end
+  chns = (channels(snd) rescue $rbm_channels) unless chns
+  if start and dur
+    beg = (start * srate(snd)).round
+    len = (dur * srate(snd)).round
+    loc = make_locsig(:degree, degree, :distance, distance, :channels, chns,
+                      :type, $rbm_locsig_type)
+  end
+  atime = Time.now if statistics
+  data = yield((len or 0))
+  if data and loc
+    chns.times do |i|
+      mix_vct(vct_scale!(vct_copy(data), locsig_ref(loc, i)), beg, snd, i, false)
+    end
+  end
+  chns.times do |i| scale_to(scaled_to, snd, i) end if scaled_to
+  chns.times do |i| scale_by(scaled_by, snd, i) end if scaled_by
+  n_rev(*reverb_data) if reverb
+  save_sound(snd) if save_after
+  if statistics
+    rtime = Time.now - atime
+    samps = frames(snd)
+    srate = srate(snd).to_f
+    message("    Sound File: %s", output)
+    message("      Duration: %.4f", samps / srate)
+    message("  Compute time: %.3f, Compute ratio: %.2f", rtime, rtime * srate / samps)
+    out_chan = 64.chr
+    chns.times do |i| message("  Out%s max amp: %.3f", out_chan.next!, maxamp(snd, i)) end  # .
+    message("        Reverb: n_rev(%s)", reverb_data.inspect) if reverb
+  end
+  1.upto(play) do |i| play(0, snd) end
+  output
 end
 
 #
@@ -917,11 +1135,11 @@ def fm_bell_snd(start = 0.0, dur = 1.1, freq = 220.0, amp = 0.3,
 Mixes in one fm bell note (see bell.scm).
 fm_bell_snd works with fm_play in difference to fm_bell, which works
 with with_sound.
-fm_play(lambda {
+fm_play(:output, \"bell.snd\") {
   fbell = [0, 1, 2, 1.1000, 25, 0.7500, 75, 0.5000, 100, 0.2000]
   abell = [0, 0, 0.1000, 1, 10, 0.6000, 25, 0.3000, 50, 0.1500, 90, 0.1000, 100, 0]
   fm_bell_snd(0.0, 1.0, 220.0, 0.5, abell, fbell, 1.0)
-}, \"bell.snd\")\n") if start == :help
+}\n") if start == :help
   srate = (srate() rescue 22050);
   beg = (srate * start).round;
   len = beg + (srate * dur).round;
@@ -950,8 +1168,8 @@ fm_play(lambda {
   mix_vct(out_data, beg, false, 0, false);
 end
 
-def n_rev(args = [])
-  doc("n_rev([args=[]])
+def n_rev(*args)
+  doc("n_rev(*args)
 	:amount,   0.1
 	:filter,   0.5
 	:feedback, 1.09
@@ -1372,6 +1590,80 @@ envelope_interp(0.3, [0, 0, 0.5, 1, 1, 0]) -> 0.6\n") if args.first == :help
       end
     else
       envelope_interp(x, env[2..-1])
+    end
+  end
+
+  def stretch_envelope(*args)
+    doc("stretch_envelope(*args)
+args: env, old_attack, new_attack, old_decay, new_decay
+Takes ENV and returns a new envelope based on it but with the attack
+and optionally decay portions stretched or squeezed; OLD_ATTACK is the
+original x axis attack end point, NEW_ATTACK is where that section
+should end in the new envelope.  Similarly for OLD_DECAY and
+NEW_DECAY.  This mimics divseg in early versions of CLM and its
+antecedents in Sambox and Mus10 (linen).
+stretch_envelope([0, 0, 1, 1], 0.1, 0.2)
+                 -> [0, 0, 0.2, 0.1, 1.0, 1]
+stretch_envelope([0, 0, 1, 1, 2, 0], 0.1, 0.2, 1.5, 1.6)
+                 -> [0, 0, 0.2, 0.1, 1.1, 1, 1.6, 0.5, 2.0, 0]\n") if args[0] == :help
+    fn = args[0].map do |x| x.to_f end
+    old_att = (args[1].to_f or false)
+    new_att = (args[2].to_f or false)
+    old_dec = (args[3].to_f or false)
+    new_dec = (args[4].to_f or false)
+    if old_att and (not new_att)
+      warn "wrong number of arguments"
+    elsif not new_att
+      fn
+    elsif old_dec and (not new_dec)
+      warn "wrong number of arguments"
+    else
+      new_x = x0 = fn[0]
+      last_x = fn[fn.length - 2]
+      y0 = fn[1]
+      new_fn = [y0, x0]
+      scl = (new_att - x0) / [0.0001, old_att - x0].max
+      stretch_envelope_1 = lambda do |new_fn, old_fn|
+        if old_fn.empty?
+          new_fn
+        else
+          x1 = old_fn[0]
+          y1 = old_fn[1]
+          if x0 < old_att and x1 >= old_att
+            if x1 == old_att
+              y0 = y1
+            else
+              y0 = y0 + (y1 - y0) * ((old_att - x0) / (x1 - x0))
+            end
+            x0 = old_att
+            new_x = new_att
+            new_fn << new_x << y0
+            scl = (old_dec ? ((new_dec - new_att) / (old_dec - old_att)) :
+                   ((last_x - new_att) / (last_x - old_att)))
+          end
+          if old_dec and x0 < old_dec and x1 >= old_dec
+            if x1 == old_dec
+              y0 = y1
+            else
+              y0 = y0 + (y1 - y0) * ((old_dec - x0) / (x1 - x0))
+            end
+            x0 = old_dec
+            new_x = new_dec
+            new_fn << new_x << y0
+            scl = (last_x - new_dec) / (last_x - old_dec)
+          end
+          unless x0 == x1
+            new_x += scl * (x1 - x0)
+            new_fn << new_x << y1
+            x0, y0 = x1, y1
+          end
+          stretch_envelope_1.call(new_fn, old_fn[2..-1])
+        end
+      end
+      if old_dec and old_dec == old_att
+        old_dec = 0.000001 * last_x
+      end
+      stretch_envelope_1.call(new_fn, fn[2..-1])
     end
   end
 end
