@@ -2561,23 +2561,27 @@
 ;;; so that a call looks like 
 ;;;    (with-sound (:srate 44100) (fm-violin 0 1 440 .1))
 
-(defmacro with-sound-1 (args . body) 
+(defmacro with-sound (args . body) 
   `((lambda* (#:key (srate 22050)
+		    (output "test.snd")
+		    (channels 1)
 		    (explode #f))
       (let ((old-srate (mus-srate)))
 	(dynamic-wind
 	 (lambda ()
 	   (set! (mus-srate) srate))
 	 (lambda () 
+	   (if (find-sound output) (close-sound (find-sound output)))
+	   (new-sound output (default-output-type) (default-output-format) srate channels)
 	   ,@body)
 	 (lambda ()
 	   (set! (mus-srate) old-srate)))))
     ,@args))
 
-;;; now instrument calls (outa etc) need to write to the currently selected sounds,
-;;;   or to a newly opened sound -- output and continue-old-file?
-;;; if explode, each call makes a new mix
-;;; should old-srate be *clm-srate* (i.e. nested calls carry down the outer setting?)
+;;; now instrument calls (outa etc) need to write (mix) to the currently selected sounds,
+;;;   or to a newly opened sound
+;;; TODO: if not explode, don't save intermediate temps
+;;; TODO: should old-srate be *clm-srate* (i.e. nested calls carry down the outer setting?)
 
 ;;; here's a better version courtesy of K Olle
 ;;; but it doesn't seem to work in Guile 1.4 (it needs 1.4.1)

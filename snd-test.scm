@@ -72,7 +72,7 @@
 ;;; preliminaries -- check constants, default variable values (assumes -noinit), sndlib and clm stuff
 
 (snd-print (format #f ";;~A" (snd-version)))
-(define tracing #f)
+(define tracing #t)
 
 
 ;;; ---------------- test 0: constants ----------------
@@ -2415,6 +2415,21 @@
 	(revert-sound nind)
 	(close-sound nind))
       (if (file-exists? "fmv.snd") (delete-file "fmv.snd"))
+      (let ((nind (new-sound "fmv.snd")))
+	(if (not (= (header-type nind) (default-output-type)))
+	    (snd-print (format #f "new-sound default header-type: ~A ~A?"
+			       (mus-header-type-name (header-type nind))
+			       (mus-header-type-name (default-output-type)))))
+	(if (not (= (data-format nind) (default-output-format)))
+	    (snd-print (format #f "new-sound default data-format: ~A ~A?"
+			       (mus-data-format-name (data-format nind))
+			       (mus-data-format-name (default-output-format)))))
+	(if (not (= (chans nind) (default-output-chans)))
+	    (snd-print (format #f "new-sound default chans: ~A ~A?" (chans nind) (default-output-chans))))
+	(if (not (= (srate nind) (default-output-srate)))
+	    (snd-print (format #f "new-sound default srate: ~A ~A?" (srate nind) (default-output-srate))))
+	(close-sound nind)
+	(if (file-exists? "fmv.snd") (delete-file "fmv.snd")))
       (let ((nind (new-sound "fmv.snd" mus-nist mus-bshort 22050 1 "this is a comment")))
 	(set! (sample 0 nind) 1.0) 
 	(convolve-with "oboe.snd") 
@@ -2594,6 +2609,7 @@
 
 ;;; ---------------- test 9: mix ----------------
 (if (or full-test (= snd-test 9))
+    (begin
     (do ((test-ctr 0 (1+ test-ctr)))
 	((= test-ctr tests))
       (let ((new-index (new-sound "hiho.wave" mus-next mus-bshort 22050 1)))
@@ -2797,6 +2813,11 @@
 	    (if (fneq (vct-ref data i) (next-sample reader))
 		(snd-print "external reader trouble")))
 	  (free-sample-reader reader)))
+      )
+      (load "bird.scm")
+      (make-birds "fmv.snd")
+      (play-and-wait 0 (find-sound "fmv.snd"))
+      (close-sound (find-sound "fmv.snd"))
       ))
 
 

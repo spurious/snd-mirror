@@ -204,7 +204,7 @@ file_info *make_file_info(char *fullname, snd_state *ss)
   return(hdr);
 }
 
-file_info *make_temp_header(snd_state *ss, char *fullname, file_info *old_hdr, int samples)
+file_info *make_temp_header(snd_state *ss, char *fullname, int srate, int chans, int samples)
 {
   /* make a header for Sun/NeXT, no comment, copy other old_hdr fields */
   file_info *hdr;
@@ -212,10 +212,11 @@ file_info *make_temp_header(snd_state *ss, char *fullname, file_info *old_hdr, i
   hdr->name = copy_string(fullname);
   hdr->samples = samples;
   hdr->data_location = 28;
-  hdr->srate = old_hdr->srate;
-  hdr->chans = old_hdr->chans;
-  hdr->format = default_output_format(ss);
-  hdr->type = default_output_type(ss);
+  hdr->srate = srate;
+  hdr->chans = chans;
+  hdr->format = MUS_OUT_FORMAT; /* default_output_format(ss); */
+  hdr->type = MUS_NEXT; /* default_output_type(ss); */
+  /* want direct read/writes for temp files */
   hdr->comment = NULL;
   return(hdr);
 }

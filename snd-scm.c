@@ -528,6 +528,9 @@ void snd_eval_stdin_str(snd_state *ss, char *buf)
 {
   SCM result;
   char *str = NULL;
+#if DEBUGGING
+  fprintf(stderr,"received [%s]\n",buf);
+#endif
   if ((snd_strlen(buf) == 0) || ((snd_strlen(buf) == 1) && (buf[0] == '\n'))) return;
   send_error_output_to_stdout = 1;
   result = snd_internal_stack_catch(SCM_BOOL_T,eval_str_wrapper,buf,snd_catch_scm_error,buf);

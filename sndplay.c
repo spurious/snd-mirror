@@ -45,6 +45,13 @@ static void set_buffers(char *bufs)
 
 /* special case multicard quad code split out for clarity (it could be folded into the main branches) */
 
+#ifdef DEBUG_MEMORY
+void *mem_calloc(size_t len, size_t size, char *func, char *file, int line) {return(calloc(len,size));}
+void *mem_malloc(size_t len, char *func, char *file, int line) {return(malloc(len));}
+void mem_free(void *ptr, char *func, char *file, int line) {free(ptr);}
+void *mem_realloc(void *ptr, size_t size, char *func, char *file, int line) {return(realloc(ptr,size));}
+#endif
+
 int main(int argc, char *argv[])
 {
   int fd,afd,i,j,n,k,chans,srate,frames,outbytes;

@@ -791,16 +791,20 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
   mult_dur = 1.0 / fabs(sp->srate);
   if (sp->expanding) mult_dur *= sp->expand;
   if (sp->reverbing) added_dur += (int)((SND_SRATE(sp)*reverb_decay(ss)));
-  if ((ss->apply_choice == APPLY_TO_SOUND) &&
-      (sp->amp != 1.0) && (sp->srate == 1.0) &&
+  if ((ss->apply_choice != APPLY_TO_SELECTION) &&
+      (sp->srate == 1.0) &&
       (!(sp->filtering)) && (!(sp->expanding)) && (!(sp->reverbing)) && (!(sp->contrasting)))
     {
       old_sync = sp->syncing;
-      maxsync[0] = 0;
-      map_over_sounds(ss,max_sync,(void *)maxsync);
-      sp->syncing = maxsync[0] + 1;
+      if (ss->apply_choice == APPLY_TO_SOUND)
+	{
+	  maxsync[0] = 0;
+	  map_over_sounds(ss,max_sync,(void *)maxsync);
+	  sp->syncing = maxsync[0] + 1;
+	}
+      else sp->syncing = 0;
       scaler[0] = sp->amp;
-      scale_by(ss,sp,sp->chans[0],scaler,1,FALSE);
+      scale_by(ss,sp,(sp->selected_channel == NO_SELECTION) ? sp->chans[0] : sp->chans[sp->selected_channel],scaler,1,FALSE);
       sp->syncing = old_sync;
     }
   else
@@ -811,7 +815,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 	  ap->ofile = NULL;
 	  lock_apply(ss,sp);
 	  ap->ofile = snd_tempnam(ss);
-	  ap->hdr = make_temp_header(ss,ap->ofile,sp->hdr,0);
+	  ap->hdr = make_temp_header(ss,ap->ofile,SND_SRATE(sp),sp->nchans,0);
 	  switch (ss->apply_choice)
 	    {
 	    case APPLY_TO_CHANNEL:   
@@ -1820,20 +1824,25 @@ static SCM g_new_sound(SCM name, SCM type, SCM format, SCM srate, SCM chans, SCM
   SCM_ASSERT(gh_string_p(name),name,SCM_ARG1,S_new_sound);
   ss = get_global_state();
   str = full_filename(name);
-  if ((!(gh_number_p(type))) || (g_scm2int(type) == MUS_UNSUPPORTED))
-    sp = snd_new_file(ss,str,MUS_UNSUPPORTED,MUS_UNSUPPORTED,0,0,NULL,WITH_DIALOG);
+  if (SCM_UNBNDP(type))
+    sp = snd_new_file(ss,str,
+		      default_output_type(ss),
+		      default_output_format(ss),
+		      default_output_srate(ss),
+		      default_output_chans(ss),
+		      NULL,WITHOUT_DIALOG);
   else 
     {
-      ht = g_scm2int(type);
+      ht = g_scm2intdef(type,default_output_type(ss));
       if (MUS_HEADER_TYPE_OK(ht))
 	{
-	  df = g_scm2intdef(format,MUS_OUT_FORMAT);
+	  df = g_scm2intdef(format,default_output_format(ss));
 	  if (MUS_DATA_FORMAT_OK(df))
 	    {
 	      if (mus_header_writable(ht,df))
 		{
-		  sr = g_scm2intdef(srate,22050);
-		  ch = g_scm2intdef(chans,1);
+		  sr = g_scm2intdef(srate,default_output_srate(ss));
+		  ch = g_scm2intdef(chans,default_output_chans(ss));
 		  if (gh_string_p(comment))
 		    com = gh_scm2newstr(comment,NULL);
 		  sp = snd_new_file(ss,str,ht,df,sr,ch,com,WITHOUT_DIALOG);

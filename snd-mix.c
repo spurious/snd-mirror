@@ -1032,9 +1032,7 @@ static mixdata *file_mix_samples(int beg, int num, char *tempfile, chan_info *cp
   in_chans = ihdr->chans;
   if (in_chans <= chan) {base = 0; scaler = 0.0;} else {base = chan; scaler = 1.0;}
   ofile = snd_tempnam(ss);
-  ohdr = make_temp_header(ss,ofile,sp->hdr,0);
-  ohdr->chans = 1;
-  ohdr->format = MUS_OUT_FORMAT;
+  ohdr = make_temp_header(ss,ofile,SND_SRATE(sp),1,0);
   ofd = open_temp_file(ofile,1,ohdr,ss);
   if (ofd == -1) {snd_error("mix temp file %s: %s",ofile,strerror(errno)); return(NULL);}
   no_space = disk_space_p(cp->sound,ofd,num*4,0);
@@ -1305,12 +1303,7 @@ void remix_file(mixdata *md, char *origin)
   if (use_temp_file)
     {
       ofile = snd_tempnam(ss);
-      ohdr = make_temp_header(ss,ofile,cursp->hdr,0);
-      /* old header used for srate */
-      ohdr->chans = 1;
-
-      /* we can't (normally) write 16-bit files here because the current mix state may overflow -1.0..1.0 */
-      ohdr->format = MUS_OUT_FORMAT;
+      ohdr = make_temp_header(ss,ofile,SND_SRATE(cursp),1,0);
       ofd = open_temp_file(ofile,1,ohdr,ss);
       no_space = disk_space_p(cursp,ofd,num*4,num*2);
       switch (no_space)
@@ -2212,6 +2205,13 @@ void mix_title_move(mixmark *m, int x, TIME_TYPE time, TIME_TYPE multiclick, int
     }
 }
 
+mix_context *cp_to_mix_context(chan_info *cp)
+{
+  mixdata *md;
+  md = (mixdata *)(cp->mix_dragging);
+  if (md) return(md->wg);
+  return(NULL);
+}
 
 
 /* ---------------- MIX ACTIONS ---------------- */

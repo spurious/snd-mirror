@@ -804,9 +804,7 @@ char *added_transform_name(int type);
 					     SCM local_doc,
 					     int get_req, int get_opt, int set_req, int set_opt);
 #endif
-/* Float string2Float(char *str); */
 int string2int(char *str);
-/* char *string2string(char *str); */
 int dont_exit(snd_state *ss);
 int dont_start(snd_state *ss, char *file);
 void call_mix_console_state_changed_hook(mixdata *md);
@@ -1114,7 +1112,7 @@ file_info *make_file_info(char *fullname,snd_state *ss);
 file_info *make_file_info_1(char *fullname, snd_state *ss);
 file_info *free_file_info(file_info *hdr);
 file_info *copy_header(char *fullname, file_info *ohdr);
-file_info *make_temp_header(snd_state *ss, char *fullname, file_info *old_hdr, int samples);
+file_info *make_temp_header(snd_state *ss, char *fullname, int srate, int chans, int samples);
 dir *free_dir (dir *dp);
 void init_sound_file_extensions(void);
 dir *find_sound_files_in_dir (char *name);
@@ -1213,6 +1211,7 @@ char *kmg (int num);
 /* -------- snd-mix.c -------- */
 
 chan_info *m_to_cp(mixmark *m);
+mix_context *cp_to_mix_context(chan_info *cp);
 snd_info *make_mix_readable(mixdata *md);
 mix_context *make_mix_context(chan_info *cp);
 mix_context *free_mix_context(mix_context *ms);

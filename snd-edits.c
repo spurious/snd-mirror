@@ -2644,8 +2644,7 @@ static SCM g_loop_samples(SCM reader, SCM proc, SCM calls, SCM origin)
   func = (g_plug)gh_scm2ulong(proc);
   ofile = snd_tempnam(ss);
   sp = (cp->sound);
-  hdr = make_temp_header(ss,ofile,sp->hdr,num);
-  hdr->chans = 1;
+  hdr = make_temp_header(ss,ofile,SND_SRATE(sp),1,num);
   ofd = open_temp_file(ofile,1,hdr,ss);
   datumb = mus_data_format_to_bytes_per_sample(hdr->format);
   data = (MUS_SAMPLE_TYPE **)CALLOC(1,sizeof(MUS_SAMPLE_TYPE *));
@@ -2756,6 +2755,7 @@ static SCM g_redo(SCM ed_n, SCM snd_n, SCM chn_n) /* opt ed_n */
 }
 
 static int chan_ctr=0;
+static char *as_one_edit_origin;
 
 static int init_as_one_edit(chan_info *cp, void *ptr) 
 {
@@ -2767,20 +2767,31 @@ static int init_as_one_edit(chan_info *cp, void *ptr)
 static int finish_as_one_edit(chan_info *cp, void *ptr) 
 {
   int one_edit;
+  ed_list *ed;
   one_edit = (((int *)ptr)[chan_ctr]+1);
   if (cp->edit_ctr > one_edit)
     {
       while (cp->edit_ctr > one_edit) backup_edit_list(cp);
       if (cp->mixes) backup_mix_list(cp,one_edit);
+      if (as_one_edit_origin)
+	{
+	  ed = cp->edits[cp->edit_ctr];
+	  if (ed)
+	    {
+	      if (ed->origin) FREE(ed->origin);
+	      ed->origin = copy_string(as_one_edit_origin);
+	      reflect_edit_history_change(cp);
+	    }
+	}
+      update_graph(cp,NULL); 
     }
-  update_graph(cp,NULL); 
   chan_ctr++; 
   return(0);
 }
 
-static SCM g_as_one_edit(SCM proc)
+static SCM g_as_one_edit(SCM proc, SCM origin)
 {
-  #define H_as_one_edit "(" S_as_one_edit " func) runs func, collecting all edits into one from the edit historys' point of view"
+  #define H_as_one_edit "(" S_as_one_edit " func &optional origin) runs func, collecting all edits into one from the edit historys' point of view"
   int chans;
   int *cur_edits;
   snd_state *ss;
@@ -2790,6 +2801,9 @@ static SCM g_as_one_edit(SCM proc)
   chans = active_channels(ss,WITH_VIRTUAL_CHANNELS);
   if (chans > 0)
     {
+      if (gh_string_p(origin))
+	as_one_edit_origin = gh_scm2newstr(origin,NULL);
+      else as_one_edit_origin = NULL;
       cur_edits = (int *)CALLOC(chans,sizeof(int));
       chan_ctr = 0;
       map_over_chans(ss,init_as_one_edit,(void *)cur_edits);
@@ -2797,6 +2811,11 @@ static SCM g_as_one_edit(SCM proc)
       chan_ctr = 0;
       map_over_chans(ss,finish_as_one_edit,(void *)cur_edits);
       FREE(cur_edits);
+      if (as_one_edit_origin)
+	{
+	  free(as_one_edit_origin);
+	  as_one_edit_origin = NULL;
+	}
     }
   return(result);
 }
@@ -2859,7 +2878,7 @@ void g_init_edits(SCM local_doc)
   DEFINE_PROC(gh_new_procedure(S_edit_fragment,SCM_FNC g_edit_fragment,0,3,0),H_edit_fragment);
   DEFINE_PROC(gh_new_procedure(S_undo,SCM_FNC g_undo,0,3,0),H_undo);
   DEFINE_PROC(gh_new_procedure(S_redo,SCM_FNC g_redo,0,3,0),H_redo);
-  DEFINE_PROC(gh_new_procedure1_0(S_as_one_edit,g_as_one_edit),H_as_one_edit);
+  DEFINE_PROC(gh_new_procedure(S_as_one_edit,SCM_FNC g_as_one_edit,1,1,0),H_as_one_edit);
 
 #if DEBUGGING
   DEFINE_PROC(gh_new_procedure("display-edits",SCM_FNC g_display_edits,0,2,0),H_display_edits);

@@ -105,10 +105,11 @@ section with cross-references where needed.  The <a href="grfsnd.html#extsndinde
 provides alphabetical entry.</p>
 
 <p>There are many examples in examp.scm and snd-test.scm.  In addition,
-various extensions to Snd can be found in:
+various examples of and extensions to Snd can be found in:
 </p>
 <pre>
 bell.scm          the fm-bell from CLM
+bird.scm          various North-American birds (from bird.clm)
 effects.scm       an Effects menu based on examp.scm
 env.scm           various envelope functions from CLM
 fmv.scm           the fm-violin tied to real-time gtk graphics
@@ -1711,7 +1712,7 @@ sets its value to val.
                                   microtonal scale (<i>speed-as-semitone</i>).  
   <a name="speedtones">speed-tones</a>       (<em class=narg>snd</em>)         The number of tones per octave in the <i>speed-as-semitone</i> speed 
                                   style (default: 12).
-  <a name="squelchupdate">squelch-update</a>    (<em class=targ>snd chn</em>)     #t graphic updates are currently squelched (turned off).
+  <a name="squelchupdate">squelch-update</a>    (<em class=targ>snd chn</em>)     are graphic updates squelched (turned off).
   <a name="sndsrate">srate</a>             (<em class=targ>snd</em>)         <i>snd</i>'s sampling rate.
   <a name="sndsrc">src-sound</a>         (num-or-env <i>base snd chn</i>) 
                                   sampling rate conversion using 'warped sinc interpolation'.  The
@@ -1828,7 +1829,7 @@ channel saying "sample n was deleted".  Undo and redo move around in this list (
 pointer to the current edit history position); all the positions are accessible just like the current
 one, and are exposed in many functions described above as the <i>pos</i> argument. The edit list functions are:</p>
 <pre>
-  <a name="asoneedit">as-one-edit</a>   (func)        apply <i>func</i> (a function of no arguments), treating it as
+  <a name="asoneedit">as-one-edit</a>   (func <i>origin</i>)  apply <i>func</i> (a function of no arguments), treating it as
                                 one edit (in all channels) in the edit history mechanism.
 <small>
                                      (<em class=red>as-one-edit</em> (lambda () (set! (sample 100) .1) (set! (sample 200) .2)))

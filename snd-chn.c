@@ -1865,11 +1865,15 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	      y=yoff;
 	      for (i=0;i<bins;i++,x+=xincr)
 		{
-		  xyz[0]=x-x0; 
-		  xyz[1]=y-y0; 
+		  xyz[0] =x - x0; 
+		  xyz[1] =y - y0; 
 		  if (!(cp->fft_log_magnitude))
-		    xyz[2]=fdata[i];
-		  else {binval = fdata[i]/scl; xyz[2] = 1.0 - (cp_dB(cp,binval))/cp->min_dB;}
+		    xyz[2] = fdata[i];
+		  else 
+		    {
+		      binval = fdata[i]/scl; 
+		      xyz[2] = 1.0 - (cp_dB(cp,binval))/cp->min_dB;
+		    }
 		  rotate(xyz,matrix);
 		  yval = xyz[1]+xyz[2];
 		  xval = xyz[0];
@@ -1897,18 +1901,28 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	  for (slice=0,xoff=fap->x_axis_x0,yoff=fap->y_axis_y0;slice<si->active_slices;slice++,yoff+=yincr)
 	    {
 	      fdata = si->data[slice];
-	      x=xoff;
-	      y=yoff;
-	      xyz[0]=x-x0; xyz[1]=y-y0; xyz[2]=fdata[0]; rotate(xyz,matrix); xx=(int)(xyz[0]+x0); yy=(int)(xyz[1]+xyz[2]+y0);
+	      x = xoff;
+	      y = yoff;
+	      xyz[0] = x - x0; 
+	      xyz[1] = y - y0; 
+	      xyz[2] = fdata[0]; 
+	      rotate(xyz,matrix);
+	      xx = (int)(xyz[0] + x0); 
+	      yy = (int)(xyz[1] + xyz[2] + y0);
 	      for (i=0;i<bins;i++,x+=xincr)
 		{
-		  xyz[0]=x-x0; xyz[1]=y-y0;
+		  xyz[0] = x - x0; 
+		  xyz[1] = y - y0;
 		  binval = fdata[i]/scl;
 		  if (!(cp->fft_log_magnitude)) 		  
-		    xyz[2]=fdata[i];
-		  else {xyz[2] = 1.0 - (cp_dB(cp,binval))/cp->min_dB; binval = xyz[2];}
+		    xyz[2] = fdata[i];
+		  else 
+		    {
+		      xyz[2] = 1.0 - (cp_dB(cp,binval))/cp->min_dB; 
+		      binval = xyz[2];
+		    }
 		  rotate(xyz,matrix);
-		  yval = xyz[1]+xyz[2];
+		  yval = xyz[1] + xyz[2];
 		  xval = xyz[0];
 		  if (binval >= color_cutoff(ss))
 		    {
@@ -1920,7 +1934,8 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		      draw_spectro_line(copy_context(cp),j,xx,yy,(int)(xval+x0),(int)(yval+y0));
 		      if (cp->printing) ps_draw_spectro_line(cp,j,xx,yy,xval+x0,yval+y0);
 		    }
-		  xx = (int)(xval+x0); yy=(int)(yval+y0);
+		  xx = (int)(xval+x0); 
+		  yy = (int)(yval+y0);
 		}
 	      if (cp->printing) 
 		{
@@ -1991,16 +2006,18 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
       allocate_color_map(ss,color_map(ss));
       for (xoff=ap->x_axis_x0,yoff=ap->y_axis_y0;yoff>ap->y_axis_y1;yoff+=yincr)
 	{
-	  xx=-1;
-	  x=xoff;
-	  y=yoff;
+	  xx = -1;
+	  x = xoff;
+	  y = yoff;
 	  yy = (int)y0; /* ? */
 	  for (i=0;i<cp->wavo_trace;i++,x+=xincr)
 	    {
 	      binval = next_sample_to_float(sf);
-	      xyz[0]=x-x0; xyz[1]=y-y0; xyz[2]=binval;
+	      xyz[0] = x - x0; 
+	      xyz[1] = y - y0; 
+	      xyz[2] = binval;
 	      rotate(xyz,matrix);
-	      yval = xyz[1]+xyz[2];
+	      yval = xyz[1] + xyz[2];
 	      xval = xyz[0];
 	      /* for color decision here we need absolute value of data */
 	      if (binval < 0.0) binval = -binval;
@@ -2014,7 +2031,8 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		  draw_spectro_line(copy_context(cp),j,xx,yy,(int)(xval+x0),(int)(yval+y0));
 		  if (cp->printing) ps_draw_spectro_line(cp,j,xx,yy,xval+x0,yval+y0);
 		}
-	      xx = (int)(xval+x0); yy=(int)(yval+y0);
+	      xx = (int)(xval+x0); 
+	      yy = (int)(yval+y0);
 	    }
 	}
       if (cp->printing) ps_reset_color(cp);
@@ -2244,7 +2262,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	  if ((cp->show_mix_consoles) && 
 	      (cp->mixes) &&
 	      (cp->mix_dragging)) 
-	    mix_save_graph(ss,((mixdata *)(cp->mix_dragging))->wg,points);
+	    mix_save_graph(ss,cp_to_mix_context(cp),points);
 	  if (cp->cursor_on) draw_graph_cursor(cp);
 	}
     }
@@ -3065,7 +3083,7 @@ static output_state *start_output(int bufsize, file_info *default_hdr, int orig_
   return(os);
 }
 
-static void output_sample(snd_state *ss, output_state *os, MUS_SAMPLE_TYPE sample)
+static void output_sample(snd_state *ss, output_state *os, int srate, MUS_SAMPLE_TYPE sample)
 {
   os->buffer[os->loc] = sample;
   os->loc++;
@@ -3076,8 +3094,7 @@ static void output_sample(snd_state *ss, output_state *os, MUS_SAMPLE_TYPE sampl
 	{
 	  os->filename = snd_tempnam(ss);
 	  os->filing = 1;
-	  os->hdr = make_temp_header(ss,os->filename,os->sp_hdr,0);
-	  (os->hdr)->chans = 1;
+	  os->hdr = make_temp_header(ss,os->filename,srate,1,0);
 	  os->fd = open_temp_file(os->filename,1,os->hdr,ss);
 	  os->datumb = mus_data_format_to_bytes_per_sample((os->hdr)->format);
 	  os->mus_data = (MUS_SAMPLE_TYPE **)CALLOC(1,sizeof(MUS_SAMPLE_TYPE *));
@@ -3184,14 +3201,14 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
 			  return(scm_throw(res,SCM_LIST1(gh_str02scm(origin))));
 			}
 		      if (gh_number_p(res)) /* one number -> replace current sample */
-			output_sample(ss,os,MUS_FLOAT_TO_SAMPLE(gh_scm2double(res)));
+			output_sample(ss,os,SND_SRATE(sp),MUS_FLOAT_TO_SAMPLE(gh_scm2double(res)));
 		      else /* list or vector or vct, splice in data */
 			{
 			  val_size = 0;
 			  vals = g_floats_to_samples(res,&val_size,origin,1);
 			  if (vals)
 			    {
-			      for (k=0;k<val_size;k++) output_sample(ss,os,vals[k]);
+			      for (k=0;k<val_size;k++) output_sample(ss,os,SND_SRATE(sp),vals[k]);
 			      FREE(vals);
 			    }
 			}
@@ -3292,14 +3309,14 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
 		      if (SCM_NFALSEP(resval))
 			{
 			  if (gh_number_p(resval)) /* one number -> replace current sample */
-			    output_sample(ss,os_arr[n],MUS_FLOAT_TO_SAMPLE(gh_scm2double(resval)));
+			    output_sample(ss,os_arr[n],SND_SRATE(sp),MUS_FLOAT_TO_SAMPLE(gh_scm2double(resval)));
 			  else /* list or vector or vct, splice in data */
 			    {
 			      val_size = 0;
 			      vals = g_floats_to_samples(resval,&val_size,origin,1);
 			      if (vals)
 				{
-				  for (k=0;k<val_size;k++) output_sample(ss,os_arr[n],vals[k]);
+				  for (k=0;k<val_size;k++) output_sample(ss,os_arr[n],SND_SRATE(sp),vals[k]);
 				  FREE(vals);
 				}
 			    }
@@ -3530,8 +3547,7 @@ static void scale_with(snd_state *ss, sync_state *sc, Float *scalers, char *orig
 	{
 	  temp_file = 1; 
 	  ofile = snd_tempnam(ss);
-	  hdr = make_temp_header(ss,ofile,sp->hdr,dur);
-	  hdr->chans = 1;
+	  hdr = make_temp_header(ss,ofile,SND_SRATE(sp),1,dur);
 	  ofd = open_temp_file(ofile,1,hdr,ss);
 	  datumb = mus_data_format_to_bytes_per_sample(hdr->format);
 	}
@@ -3786,13 +3802,11 @@ static void swap_channels(snd_state *ss, int beg, int dur, snd_fd *c0, snd_fd *c
     {
       temp_file = 1; 
       ofile0 = snd_tempnam(ss);
-      hdr0 = make_temp_header(ss,ofile0,sp0->hdr,dur);
-      hdr0->chans = 1;
+      hdr0 = make_temp_header(ss,ofile0,SND_SRATE(sp0),1,dur);
       ofd0 = open_temp_file(ofile0,1,hdr0,ss);
       datumb = mus_data_format_to_bytes_per_sample(hdr0->format);
       ofile1 = snd_tempnam(ss);
-      hdr1 = make_temp_header(ss,ofile1,sp0->hdr,dur);
-      hdr1->chans = 1;
+      hdr1 = make_temp_header(ss,ofile1,SND_SRATE(sp0),1,dur);
       ofd1 = open_temp_file(ofile1,1,hdr1,ss);
     }
   else temp_file = 0;
@@ -4156,8 +4170,7 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 	  reporting = ((sp) && (dur > (MAX_BUFFER_SIZE * 4)));
 	  if (reporting) start_progress_report(sp,from_enved);
 	  ofile = snd_tempnam(ss);
-	  hdr = make_temp_header(ss,ofile,sp->hdr,dur);
-	  hdr->chans = 1;
+	  hdr = make_temp_header(ss,ofile,SND_SRATE(sp),1,dur);
 	  ofd = open_temp_file(ofile,1,hdr,ss);
 	  datumb = mus_data_format_to_bytes_per_sample(hdr->format);
 	  sf = sfs[i];
@@ -4278,6 +4291,10 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 	  if (j > 0) mus_file_write(ofd,0,j-1,1,data);
 	  close_temp_file(ofd,hdr,k*datumb,sp);
 	  hdr = free_file_info(hdr);
+	  /* TODO: if straight src (no env) and src amount is close to 1.0,
+	   *         we could copy the amp-env, reset samps per bin as
+	   *         ep->samps_per_bin = (int)(ceil((Float)(new samples)/(Float)(ep->amp_env_size)))
+	   */
 	  if (over_selection)
 	    {
 	      /* here we need delete followed by insert since dur is probably different */
@@ -4472,8 +4489,7 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
 	    {
 	      temp_file = 1; 
 	      ofile = snd_tempnam(ss);
-	      hdr = make_temp_header(ss,ofile,sp->hdr,dur);
-	      hdr->chans = 1;
+	      hdr = make_temp_header(ss,ofile,SND_SRATE(sp),1,dur);
 	      ofd = open_temp_file(ofile,1,hdr,ss);
 	      datumb = mus_data_format_to_bytes_per_sample(hdr->format);
 	    }
@@ -4602,8 +4618,7 @@ static void reverse_sound(chan_info *ncp, int over_selection)
 	    {
 	      temp_file = 1; 
 	      ofile = snd_tempnam(ss);
-	      hdr = make_temp_header(ss,ofile,sp->hdr,dur);
-	      hdr->chans = 1;
+	      hdr = make_temp_header(ss,ofile,SND_SRATE(sp),1,dur);
 	      ofd = open_temp_file(ofile,1,hdr,ss);
 	      datumb = mus_data_format_to_bytes_per_sample(hdr->format);
 	    }
@@ -5100,10 +5115,11 @@ static int cursor_insert(chan_info *cp, int count)
 
 static int cursor_zeros(chan_info *cp, int count, int regexpr)
 {
-  MUS_SAMPLE_TYPE *zeros;
-  int i,num;
-  snd_info *sp;
+  MUS_SAMPLE_TYPE *zeros=NULL;
+  int i,num,old_sync;
+  snd_info *sp,*nsp;
   sync_info *si;
+  Float scaler[1];
   si = NULL;
   sp = cp->sound;
   if (count < 0) num = -count; else num = count;
@@ -5121,15 +5137,28 @@ static int cursor_zeros(chan_info *cp, int count, int regexpr)
 	}
     }
   if (!si) si = make_simple_sync(cp,cp->cursor);
-  zeros = (MUS_SAMPLE_TYPE *)CALLOC(num,sizeof(MUS_SAMPLE_TYPE));
   for (i=0;i<si->chans;i++)
     {
-      if (count < 0) 
-	change_samples(si->begs[i]+count,num,zeros,si->cps[i],LOCK_MIXES,"C-z"); 
-      else change_samples(si->begs[i],num,zeros,si->cps[i],LOCK_MIXES,"C-z");
+      /* if zeroing entire sound, set scalers and remake amp_env */
+      if ((si->begs[i] == 0) && (num >= current_ed_samples(si->cps[i])))
+	{
+	  nsp = si->cps[i]->sound;
+	  old_sync = nsp->syncing;
+	  nsp->syncing = 0;
+	  scaler[0] = 0.0;
+	  scale_by(nsp->state,nsp,si->cps[i],scaler,1,FALSE);
+	  nsp->syncing = old_sync;
+	}
+      else
+	{
+	  if (zeros == NULL) zeros = (MUS_SAMPLE_TYPE *)CALLOC(num,sizeof(MUS_SAMPLE_TYPE));
+	  if (count < 0) 
+	    change_samples(si->begs[i]+count,num,zeros,si->cps[i],LOCK_MIXES,"C-z"); 
+	  else change_samples(si->begs[i],num,zeros,si->cps[i],LOCK_MIXES,"C-z");
+	}
       update_graph(si->cps[i],NULL);
     }
-  FREE(zeros);
+  if (zeros) FREE(zeros);
   si = free_sync_info(si);
   return(CURSOR_IN_VIEW);
 }

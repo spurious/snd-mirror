@@ -1,5 +1,6 @@
 snd change log
 
+  9-Oct:     bird.scm.  added origin arg to as-one-edit.
   6-Oct:     removed chans arg to mix-vct.
   4-Oct:     added enved-active-env and enved-selected-env.
   3-Oct:     scale-by and scale-to now use embedded fragment scalers.

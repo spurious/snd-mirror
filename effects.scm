@@ -32,7 +32,6 @@
 ;;;      expsrc?
 ;;;      unvoice?
 ;;;
-;;;
 ;;; to modify, for example, the gain (set! gain-amount .75)
 
 

@@ -608,11 +608,9 @@ by any arguments. (Information about about parameters can be acquired using anal
      file. */
   hdr = make_temp_header(cp->state,
 			 ofile,
-			 sp->hdr,
+			 SND_SRATE(sp),
+			 1,
 			 num);
-
-  /* The output file has only one channel. */
-  hdr->chans = 1;
 
   /* Open the output file, using the header we've been working on. */
   ofd = open_temp_file(ofile, 1, hdr, state);

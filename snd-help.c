@@ -256,6 +256,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+9-Oct:   bird.scm.  added origin arg to as-one-edit.\n\
 6-Oct:   removed chans arg to mix-vct.\n\
 4-Oct:   added enved-active-env and enved-selected-env.\n\
 3-Oct:   scale-by and scale-to now use embedded fragment scalers.\n\
@@ -271,10 +272,6 @@ void news_help(snd_state *ss)
 11-Sep:  generalized set! now built-in.\n\
            removed setf.scm.\n\
            x-bounds and y-bounds setters now take a list of (low high) values.\n\
-8-Sep:   make-player, add-player, stop-player, start-playing.\n\
-           (and make-amp-controls example in snd-gtk.scm).\n\
-         changed setf.scm to use Guile 1.4's generalized set! (rather than setf).\n\
-6-Sep:   gtk menu accelerators, stop-playing-channel-hook, just-sounds-hook.\n\
 ",
 NULL);
   FREE(info);

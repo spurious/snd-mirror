@@ -68,6 +68,7 @@ There are many examples in examp.scm and snd-test.scm. In addition, various
 extensions to Snd can be found in:
 
 bell.scm          the fm-bell from CLM
+bird.scm          various North-American birds (from bird.clm)
 effects.scm       an Effects menu based on examp.scm
 env.scm           various envelope functions from CLM
 fmv.scm           the fm-violin tied to real-time gtk graphics
@@ -1017,10 +1018,9 @@ way as to create an associated mix object:
 
   mix-sound (file start)  mix file into selected sound at start [no-such-file].
 
-  mix-vct (vct beg in-chans snd chn with-mix-consoles)
+  mix-vct (vct beg snd chn with-mix-consoles)
                       mix the contents of vct into snd's channel chn starting at frame beg.
-                      The data in the vct represent in-chans input channels, with samples
-                      interleaved. returns the id of the new mix, or -1 if some error occurred.
+                      Returns the id of the new mix, or -1 if some error occurred.
                       If with-mix-consoles is #f (default is #t), the data is simply
                       mixed without creating any mix consoles.
 
@@ -1620,7 +1620,7 @@ value to val.
                                   microtonal scale (speed-as-semitone).
   speed-tones       (snd)         The number of tones per octave in the speed-as-semitone speed
                                   style (default: 12).
-  squelch-update    (snd chn)     #t graphic updates are currently squelched (turned off).
+  squelch-update    (snd chn)     are graphic updates squelched (turned off).
   srate             (snd)         snd's sampling rate.
   src-sound         (num-or-env base snd chn)
                                   sampling rate conversion using 'warped sinc interpolation'.  The
@@ -1732,7 +1732,7 @@ history position); all the positions are accessible just like the current
 one, and are exposed in many functions described above as the pos argument.
 The edit list functions are:
 
-  as-one-edit   (func)        apply func (a function of no arguments), treating it as
+  as-one-edit   (func origin)  apply func (a function of no arguments), treating it as
                                 one edit (in all channels) in the edit history mechanism.
 
                                      (as-one-edit (lambda () (set! (sample 100) .1) (set! (sample 200) .2)))
