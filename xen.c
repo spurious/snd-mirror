@@ -712,9 +712,10 @@ XEN xen_rb_funcall_0(XEN func)
   return(val);
 }
 
+#if (!HAVE_RB_ARY_DUP)
 XEN xen_rb_copy_list(XEN val)
 {
-  /* if this is considered bad form, we could fall back on flatten */
+  /* if this is considered bad form, we could fall back on flatten (rb_ary_dup?) */
   long len, i;
   VALUE collect;
   len = RARRAY(val)->len;
@@ -724,6 +725,7 @@ XEN xen_rb_copy_list(XEN val)
   RARRAY(collect)->len = len;
   return(collect);
 }
+#endif
 
 XEN xen_rb_str_new2(char *arg)
 {

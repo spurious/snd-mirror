@@ -4746,7 +4746,12 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
   if ((end_pos > 0) && (end_pos < edits)) edits = end_pos;
   if (start_pos > edits)
     return(copy_string("(lambda (snd chn) #f)"));
-  function = copy_string("(lambda (snd chn)");
+  if (cp->have_mixes)
+    {
+      function = mus_format("(lambda (snd chn) (let (%s)", old_function = edit_list_mix_and_track_init(cp));
+      if (old_function) {FREE(old_function); old_function = NULL;}
+    }
+  else function = copy_string("(lambda (snd chn)");
   for (i = start_pos; i <= edits; i++)
     {
       ed = cp->edits[i];
@@ -4767,9 +4772,12 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 		  function = mus_format("%s (%s snd chn)", function, ed->origin);
 		  break;
 		case CHANGE_EDIT:
-		  function = mus_format("%s (%s snd chn)", function, ed->origin);
+		  if ((ed->origin) && (strncmp(ed->origin, "set!", 4) == 0))
+		    function = mus_format("%s (%s)", function, ed->origin);
+		  else function = mus_format("%s (%s snd chn)", function, ed->origin);
 		  break;
 		case DELETION_EDIT:
+		  /* what about delete-mix? */
 		  function = mus_format("%s (%s " OFF_TD " " OFF_TD " snd chn)", function, S_delete_samples, ed->beg, ed->len);
 		  break;
 		case SCALED_EDIT: 
@@ -4810,7 +4818,9 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 	}
     }
   old_function = function;
-  function = mus_format("%s)", function);
+  if (cp->have_mixes)
+    function = mus_format("%s))", function); /* close the "let" */
+  else function = mus_format("%s)", function);
   FREE(old_function);
   return(function);
 }
@@ -6769,7 +6779,7 @@ static bool save_edits_and_update_display(snd_info *sp)
       if (ss->deferred_regions > 0)
 	sequester_deferred_regions(cp, -1);
       if (cp->tracks) free_track_info_list(cp); /* needs to precede free_edit_list which clobbers cp->edit_size */
-      if (cp->mixes) reset_mix_list(cp);
+      if (cp->have_mixes) reset_mix_list(cp);
       if (cp->edits) free_edit_list(cp);
       free_snd_fd(sf[i]);  /* must precede free_sound_list since it accesses the snd_data structs that free_sound_list frees */
       if (cp->sounds) free_sound_list(cp);
@@ -7783,7 +7793,7 @@ void as_one_edit(chan_info *cp, int one_edit, const char *one_edit_origin) /* or
       if (ss->deferred_regions > 0)
 	sequester_deferred_regions(cp, one_edit - 1);
       while (cp->edit_ctr > one_edit) backup_edit_list(cp);
-      if ((need_backup) && (cp->mixes)) backup_mix_list(cp, one_edit);
+      if ((need_backup) && (cp->have_mixes)) backup_mix_list(cp, one_edit);
       if (one_edit_origin)
 	{
 	  ed_list *ed;

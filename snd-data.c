@@ -18,7 +18,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
       cp = (chan_info *)CALLOC(1, sizeof(chan_info)); 
       cp->cgx = (chan_context *)CALLOC(1, sizeof(chan_context));
       (cp->cgx)->ax = (axis_context *)CALLOC(1, sizeof(axis_context));
-      cp->mixes = 0;
+      cp->have_mixes = false;
       cp->last_sonogram = NULL;
       cp->temp_sonogram = NULL;
 #if HAVE_GL

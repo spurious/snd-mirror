@@ -54,7 +54,7 @@ static void save_loaded_files_list(FILE *fd)
 {
   /* make sure all previously loaded code is available */
   char *files;
-  files = XEN_AS_STRING(XEN_EVAL_C_STRING("snd-loaded-files"));
+  files = XEN_AS_STRING(XEN_LIST_REVERSE(XEN_EVAL_C_STRING("snd-loaded-files"))); 
   if (files)
     {
       fprintf(fd, ";;; reload any missing files\n");

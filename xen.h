@@ -20,11 +20,12 @@
  */
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 21
-#define XEN_VERSION "1.21"
+#define XEN_MINOR_VERSION 22
+#define XEN_VERSION "1.22"
 
 /* HISTORY:
  *
+ *  21-Oct-04: XEN_LIST_REVERSE, (using rb_ary_dup available in 1.8)
  *  7-Oct-04:  keyword changes for new Guile.
  *  28-Sep-04: deprecated *_WITH_CALLER -- these no longer do anything useful in Guile.
  *             NaNs and Infs -> 0 or 0.0 in XEN_TO_C_INT|DOUBLE -- perhaps I should add another set of macros?
@@ -457,6 +458,7 @@
 #define XEN_LIST_LENGTH(Arg)          ((int)(scm_ilength(Arg)))
 #define XEN_LIST_REF(Lst, Num)        scm_list_ref(Lst, C_TO_XEN_INT(Num))
 #define XEN_LIST_SET(Lst, Loc, Val)   scm_list_set_x(Lst, C_TO_XEN_INT(Loc), Val)
+#define XEN_LIST_REVERSE(Lst)         scm_reverse(Lst)
 #define XEN_CONS(Arg1, Arg2)          scm_cons(Arg1, Arg2)
 #define XEN_CONS_2(Arg1, Arg2, Arg3)  scm_cons2(Arg1, Arg2, Arg3)
 #if HAVE_SCM_LIST_N
@@ -912,12 +914,17 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #define XEN_CADDDR(a)                   rb_ary_entry(a, 3)
 #define XEN_CDR(a)                      xen_rb_cdr(a)
 #define XEN_CDDR(a)                     XEN_CDR(XEN_CDR(a))
-#define XEN_COPY_ARG(Lst)               xen_rb_copy_list(Lst)
+#if HAVE_RB_ARY_DUP
+  #define XEN_COPY_ARG(Lst)             rb_ary_dup(Lst)
+#else
+  #define XEN_COPY_ARG(Lst)             xen_rb_copy_list(Lst)
+#endif
 #define XEN_CONS(Arg1, Arg2)            xen_rb_cons(Arg1, Arg2)
 #define XEN_CONS_2(Arg1, Arg2, Arg3)    xen_rb_cons2(Arg1, Arg2, Arg3)
 #define XEN_LIST_REF(Lst, Num)          rb_ary_entry(Lst, Num)
 #define XEN_LIST_SET(Lst, Num, Val)     rb_ary_store(Lst, Num, Val)
 #define XEN_APPEND(X, Y)                rb_ary_concat(X, Y)
+#define XEN_LIST_REVERSE(Lst)           rb_ary_reverse(XEN_COPY_ARG(Lst))
 
 #define XEN_HOOK_PROCEDURES(a)          ((xen_rb_is_hook_p(a)) ? xen_rb_hook_to_a(a) : ((XEN_NULL_P(a)) ? Qnil : XEN_LIST_1(a)))
 #define XEN_CLEAR_HOOK(a)               ((xen_rb_is_hook_p(a)) ? xen_rb_hook_reset_hook(a) : (a = Qnil))
@@ -1327,7 +1334,9 @@ XEN xen_rb_ary_new_with_initial_element(long num, XEN element);
 XEN xen_rb_apply(XEN func, XEN args);
 XEN xen_rb_funcall_0(XEN func);
 int xen_rb_required_args(XEN val);
-XEN xen_rb_copy_list(XEN val); /* Ruby arrays (lists) are passed by reference */
+#if (!HAVE_RB_ARY_DUP)
+XEN xen_rb_copy_list(XEN val);
+#endif
 XEN xen_rb_str_new2(char *arg);
 void xen_add_help(char *name, const char *help);
 char *xen_help(char *name);
@@ -1449,6 +1458,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_CONS_2(Arg1, Arg2, Arg3) 0
 #define XEN_LIST_REF(Lst, Num) 0
 #define XEN_LIST_SET(Lst, Num, Val)
+#define XEN_LIST_REVERSE(Lst) 0
 #define XEN_VECTOR_REF(Vect, Num) 0
 #define XEN_VECTOR_SET(a, b, c)
 #define XEN_EVAL_C_STRING(Arg) 0

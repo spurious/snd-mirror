@@ -2603,10 +2603,35 @@ static XEN g_snd_stdin_test(XEN str)
 #endif
 #endif
 
+
+#define S_gc_off "gc-off"
+#define S_gc_on "gc-on"
+
+static XEN g_gc_off(void) 
+{
+  #define H_gc_off "(" S_gc_off ") turns off garbage collection"
 #if HAVE_GUILE
-static SCM g_gc_off(void) {++scm_block_gc; return(XEN_FALSE);}
-static SCM g_gc_on(void) {--scm_block_gc; return(XEN_FALSE);}
+  ++scm_block_gc; 
+#else
+#if HAVE_RUBY && HAVE_RB_GC_DISABLE
+  rb_gc_disable();
 #endif
+#endif
+  return(XEN_FALSE);
+}
+
+static XEN g_gc_on(void) 
+{
+  #define H_gc_on "(" S_gc_on ") turns on garbage collection"
+#if HAVE_GUILE
+  --scm_block_gc; 
+#else
+#if HAVE_RUBY && HAVE_RB_GC_DISABLE
+  rb_gc_enable();
+#endif
+#endif
+  return(XEN_FALSE);
+}
 
 
 #if (!HAVE_SCM_CONTINUATION_P)
@@ -2795,6 +2820,8 @@ XEN_NARGIFY_0(g_mus_audio_describe_w, g_mus_audio_describe)
   XEN_NARGIFY_1(g_snd_sound_pointer_w, g_snd_sound_pointer)
 #endif
 XEN_NARGIFY_2(g_fmod_w, g_fmod)
+XEN_NARGIFY_0(g_gc_off_w, g_gc_off)
+XEN_NARGIFY_0(g_gc_on_w, g_gc_on)
 
 #else
 #if HAVE_GUILE && HAVE_DLFCN_H
@@ -2961,6 +2988,8 @@ XEN_NARGIFY_2(g_fmod_w, g_fmod)
   #define g_snd_sound_pointer_w g_snd_sound_pointer
 #endif
 #define g_fmod_w g_fmod
+#define g_gc_off_w g_gc_off
+#define g_gc_on_w g_gc_on
 #endif
 
 #if HAVE_STATIC_XM
@@ -2993,10 +3022,8 @@ void g_initialize_gh(void)
 #endif
 #endif
 
-#if HAVE_GUILE
-  XEN_DEFINE_PROCEDURE("gc-off", g_gc_off, 0, 0, 0, "turns off the garbage collector");
-  XEN_DEFINE_PROCEDURE("gc-on", g_gc_on, 0, 0, 0, "turns on the garbage collector");
-#endif
+  XEN_DEFINE_PROCEDURE(S_gc_off, g_gc_off_w, 0, 0, 0, H_gc_off);
+  XEN_DEFINE_PROCEDURE(S_gc_on,  g_gc_on_w,  0, 0, 0, H_gc_on);
 
 #if (!HAVE_SCM_CONTINUATION_P)
 #if HAVE_GUILE

@@ -192,6 +192,7 @@ AC_ARG_WITH(ruby,
               CFLAGS="$GUILE_CFLAGS -lm"
               AC_CHECK_LIB(ruby, rb_num2ll, [AC_DEFINE(HAVE_RB_NUM2LL)])
               AC_CHECK_LIB(ruby, rb_gc_disable, [AC_DEFINE(HAVE_RB_GC_DISABLE)])
+	      AC_CHECK_LIB(ruby, rb_ary_dup, [AC_DEFINE(HAVE_RB_ARY_DUP)])
               LIBS="$OLD_LIBS"
               CFLAGS="$OLD_CFLAGS"
               LOCAL_LANGUAGE="Ruby"

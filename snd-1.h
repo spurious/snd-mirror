@@ -239,7 +239,8 @@ typedef struct chan_info {
   fft_change_t fft_changed;
   Float gsy, gzy;
   void *mix_dragging;
-  int height, mixes;
+  int height;
+  bool have_mixes;
   off_t original_cursor, original_left_sample, original_window_size;   /* for cursor reset after cursor-moving play */
   with_hook_t hookable;
   int selection_transform_size;
@@ -1450,6 +1451,10 @@ XEN g_track_sample_reader_home(XEN obj);
 XEN g_track_sample_reader_at_end_p(XEN obj);
 XEN g_track_sample_reader_position(XEN obj);
 XEN g_free_track_sample_reader(XEN obj);
+
+#if HAVE_GUILE
+char *edit_list_mix_and_track_init(chan_info *cp);
+#endif
 
 
 

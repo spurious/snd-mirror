@@ -189,7 +189,7 @@ static void execute_named_macro(chan_info *cp, char *name, off_t count)
 	  if (ss->deferred_regions > 0) 
 	    sequester_deferred_regions(cp, one_edit - 1);
 	  while (cp->edit_ctr > one_edit) backup_edit_list(cp);
-	  if (cp->mixes) backup_mix_list(cp, one_edit);
+	  if (cp->have_mixes) backup_mix_list(cp, one_edit);
 	}
 #else
       /* not sure it's possible to get here at all -- execute undefined named macro?? */

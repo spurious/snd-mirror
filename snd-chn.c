@@ -7,7 +7,7 @@
 /*    cursor redraw can check for this, but it gloms up code */
 
 /* 
- * TODO: tick choice based on stuff like beats-in-measure (div 3 7) -> measure numbers
+ * TODO: tick choice based on stuff like beats-in-measure (div 3 7) -> measure numbers (like smpte display?)
  * TODO: overlay of rms env
  * TODO: fill in two-sided with colormap choice based on rms of underlying pixels (same for line graph?) -- would want peak-env style support
  * TODO: bark scale as axis or color as above (fft as well?)
@@ -3132,7 +3132,7 @@ static void display_channel_data_with_size (chan_info *cp,
 	  cp->selection_visible = false;
 	  points = make_graph(cp);
 	  if (points == 0) return;
-	  if ((cp->mixes) &&
+	  if ((cp->have_mixes) &&
 	      (cp->mix_dragging)) 
 	    mix_save_graph(cp_to_mix_context(cp), points);
 	  if (cp->cursor_on) draw_graph_cursor(cp);
@@ -3257,7 +3257,7 @@ static void display_channel_data_with_size (chan_info *cp,
 	      display_channel_marks(cp);
 	    }
 	  if (cp->show_y_zero) display_y_zero(cp);
-	  if ((cp->mixes)) display_channel_mixes(cp);
+	  if ((cp->have_mixes)) display_channel_mixes(cp);
 	}
       if ((sp->channel_style != CHANNELS_SUPERIMPOSED) && (height > 10))
 	display_channel_id(cp, height + offset, sp->nchans);
@@ -3323,7 +3323,7 @@ static void display_channel_data_1(chan_info *cp, bool just_fft, bool just_lisp,
 	    }
 #if USE_GTK
 	  /* this only needed because Gtk signal blocking is screwed up */
-	  if ((cp->chan > 0) && (cp->mixes) && (cp->axis->height != height)) clear_mix_y(cp);
+	  if ((cp->chan > 0) && (cp->have_mixes) && (cp->axis->height != height)) clear_mix_y(cp);
 #endif
 	  if ((cp->chan == (sp->nchans - 1)) && 
 	      ((offset + chan_height) < height))
