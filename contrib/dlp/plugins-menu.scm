@@ -1,7 +1,5 @@
 (use-modules (ice-9 format))
 
-(load "new-effects.scm")
-
 (define plugins-list '()) ; menu labels are updated to show current default settings
 
 (define plugins-menu (add-to-main-menu "LADSPA Plugins" (lambda ()
