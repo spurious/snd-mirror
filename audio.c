@@ -1644,10 +1644,6 @@ static char *dac_name(int sys, int offset)
 static int **mixer_state = NULL;
 static int *init_srate = NULL, *init_chans = NULL, *init_format = NULL;
 
-void set_dsp_reset(int val);
-static int dsp_reset = 0;               /* trying to find out if DSP_RESET is ever needed */
-void set_dsp_reset(int val) {dsp_reset = val;}
-
 static int oss_mus_audio_initialize(void) 
 {
   /* here we need to set up the map of /dev/dsp and /dev/mixer to a given system */
@@ -2182,7 +2178,6 @@ static int oss_mus_audio_write(int line, char *buf, int bytes)
 
 static int oss_mus_audio_close(int line)
 {
-  if (dsp_reset) ioctl(line, SNDCTL_DSP_RESET, 0);  /* is this needed? */
   return(linux_audio_close(line));
 }
 
@@ -2362,7 +2357,6 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int format
       FREE(str1);
       FREE(str2);
     }
-  if (dsp_reset) ioctl(audio_fd, SNDCTL_DSP_RESET, 0);
   if ((fragments_locked) && (requested_size != 0))
     {
       buffer_info = (FRAGMENTS << 16) | (FRAGMENT_SIZE);
@@ -2923,7 +2917,6 @@ static int oss_mus_audio_mixer_write(int ur_dev, int field, int chan, float *val
 	  fd = open(dac_name(sys, 0), O_WRONLY, 0);
 	  if (fd == -1) fd = open(DAC_NAME, O_WRONLY, 0);
 
-          if (dsp_reset) ioctl(fd, SNDCTL_DSP_RESET, 0);  /* is this needed? */
           err = ioctl(fd, SNDCTL_DSP_SPEED, &vol);
           break;
         default: 

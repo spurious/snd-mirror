@@ -693,15 +693,12 @@ static int off_t_compare(const void *a, const void *b)
   return(1);
 }
 
-Float mus_src_05(mus_any *srptr, Float (*input)(void *arg, int direction));
-Float mus_src_20(mus_any *srptr, Float (*input)(void *arg, int direction));
-
 static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, Float ratio, mus_any *egen, 
 				    bool from_enved, const char *origin, bool over_selection, int curchan, int chans)
 {
   snd_info *sp = NULL;
   bool reporting = false;
-  int idiff, jj;
+  int jj;
   bool full_chan;
   mus_sample_t **data;
   file_info *hdr = NULL;
@@ -834,6 +831,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 	    }
 	  if (next_pass != sr->sample)             /* tick env forward dependent on sr->sample */
 	    {
+	      off_t idiff;
 	      idiff = sr->sample - next_pass;
 	      next_pass = sr->sample;
 	      if ((new_marks) && 

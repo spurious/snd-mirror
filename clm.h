@@ -508,6 +508,8 @@ void mus_fill_locsig(Float *arr, int chans, Float degree, Float scaler, mus_locs
 mus_any *mus_make_src(Float(*input)(void *arg, int direction), Float srate, int width, void *environ);
 Float mus_src(mus_any *srptr, Float sr_change, Float(*input)(void *arg, int direction));
 bool mus_src_p(mus_any *ptr);
+Float mus_src_20(mus_any *srptr, Float (*input)(void *arg, int direction));
+Float mus_src_05(mus_any *srptr, Float (*input)(void *arg, int direction));
 
 bool mus_convolve_p(mus_any *ptr);
 Float mus_convolve(mus_any *ptr, Float(*input)(void *arg, int direction));

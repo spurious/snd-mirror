@@ -1006,7 +1006,7 @@ static XEN g_ungrf_y(XEN val, XEN snd, XEN chn, XEN ap)
 static XEN g_axis_info(XEN snd, XEN chn, XEN ap_id)
 {
   #define H_axis_info "(" S_axis_info " (snd #f) (chn #f) (grf #f)): info about axis: (list losamp hisamp \
-x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset label)"
+x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset xscale yscale label)"
   axis_info *ap;
   ASSERT_JUST_CHANNEL(S_axis_info, snd, chn, 1);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap_id), ap_id, XEN_ARG_3, S_axis_info, "an integer");

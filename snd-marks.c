@@ -1558,7 +1558,7 @@ static void make_mark_graph(chan_info *cp, off_t initial_sample, off_t current_s
   cur_srate = (double)SND_SRATE(sp);
   ap->losamp = (off_t)(ap->x0 * cur_srate);
   if (ap->losamp < 0) ap->losamp = 0;
-  if (ap->x0 != (ap->losamp / cur_srate)) ap->losamp++;
+  if (ap->x0 != ((double)(ap->losamp) / cur_srate)) ap->losamp++;
   start_time = (double)(ap->losamp) / cur_srate;
   ap->hisamp = (off_t)(ap->x1 * cur_srate);
   if ((ap->losamp == 0) && (ap->hisamp == 0)) return;

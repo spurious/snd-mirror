@@ -62,7 +62,11 @@
 #endif
 
 #if HAVE_GUILE
-#include <guile/gh.h>
+#if (!HAVE_SCM_NUM2INT)
+  #include <guile/gh.h>
+#else
+  #include <libguile.h>
+#endif
 
 #define XEN_OK 1
 

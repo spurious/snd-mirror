@@ -305,8 +305,8 @@ typedef struct snd_info {
   bool raw_prompt;
   char *search_expr;
   off_t marking;
-  int searching, filing, amping, reging, printing;
-  bool prompting, loading, finding_mark;
+  int searching, filing, amping, reging;
+  bool prompting, loading, finding_mark, printing;
   off_t macroing;
   minibuffer_choice_t minibuffer_on;
   bool read_only;
@@ -1413,5 +1413,12 @@ Float evaluate_ptreec(void *upt, Float arg, vct *v, bool dir);
   void sgl_save_currents(void);
   void sgl_set_currents(void);
 #endif
+
+
+/* -------- snd-ladspa.c -------- */
+#if HAVE_LADSPA
+void g_ladspa_to_snd(void);
+#endif
+
 #endif
 

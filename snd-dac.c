@@ -6,6 +6,8 @@
  *   channels can come and go as a play is in progress
  */
 
+/* SOMEDAY: script to produce CD */
+
 #define NO_SUCH_PLAYER XEN_ERROR_TYPE("no-such-player")
 
 /* -------------------------------- per-channel control-panel state -------------------------------- */
@@ -1481,7 +1483,7 @@ static void stop_audio_output(dac_state *dacp);
  * in place designed to select whatever the user _really_ wants. Till 
  * then set this to "1" to always send to the first device. */
 
-int feed_first_device = 0;
+static int feed_first_device = 0;
 
 #define ALSA_MAX_DEVICES 64
 static int alsa_devices[ALSA_MAX_DEVICES];

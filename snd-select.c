@@ -639,11 +639,11 @@ int save_selection(char *ofile, int type, int format, int srate, const char *com
 	    {
 	      iloc = mus_header_data_location();
 	      lseek(fdi, iloc + chans * bps * si->begs[0], SEEK_SET);
-	      buffer = (char *)CALLOC(8192, sizeof(char));
-	      for (j = 0; j < num; j += 8192)
+	      buffer = (char *)CALLOC(MAX_BUFFER_SIZE, sizeof(char));
+	      for (j = 0; j < num; j += MAX_BUFFER_SIZE)
 		{
 		  bytes = num - j;
-		  if (bytes > 8192) bytes = 8192;
+		  if (bytes > MAX_BUFFER_SIZE) bytes = MAX_BUFFER_SIZE;
 		  read(fdi, buffer, bytes);
 		  write(ofd, buffer, bytes);
 		}

@@ -6961,24 +6961,25 @@ static char *descr_gen(int *args, ptree *pt, const char *which, int num_args)
     if (num_args == 2) return(package(prog, R_FLOAT, Name ## _1f, descr_ ## Name ## _1f, args, 2)); \
     return(package(prog, R_FLOAT, Name ## _2f, descr_ ## Name ## _2f, args, 3)); \
   }
-#define GEN_OSCIL(Name) \
-  static char *descr_ ## Name ## _0f_1(int *args, ptree *pt) {return(descr_gen(args, pt, #Name, 0));} \
-  static void Name ## _0f_1(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name ## _0(CLM_ARG_1);} \
-  static char *descr_ ## Name ## _1f_1(int *args, ptree *pt) {return(descr_gen(args, pt, #Name, 1));} \
-  static void Name ## _1f_1(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name ## _1(CLM_ARG_1, FLOAT_ARG_2);} \
-  static char *descr_ ## Name ## _2f(int *args, ptree *pt) {return(descr_gen(args, pt, #Name, 2));} \
-  static void Name ## _2f(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name (CLM_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);} \
-  GEN_P(Name) \
-  static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
-  { \
-    if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2); \
-    if ((num_args > 2) && (args[3]->type == R_INT)) single_to_float(prog, args, 3); \
-    if ((num_args == 1) || ((num_args == 2) && (args[2]->constant == R_CONSTANT) && (prog->dbls[args[2]->addr] == 0.0))) \
-      return(package(prog, R_FLOAT, Name ## _0f_1, descr_ ## Name ## _0f_1, args, 1)); \
-    if ((num_args == 2) || ((num_args == 3) && (args[3]->constant == R_CONSTANT) && (prog->dbls[args[3]->addr] == 0.0))) \
-      return(package(prog, R_FLOAT, Name ## _1f_1, descr_ ## Name ## _1f_1, args, 2)); \
-    return(package(prog, R_FLOAT, Name ## _2f, descr_ ## Name ## _2f, args, 3)); \
-  }
+
+static char *descr_oscil_0f_1(int *args, ptree *pt) {return(descr_gen(args, pt, "oscil", 0));}
+static void oscil_0f_1(int *args, ptree *pt) {FLOAT_RESULT = mus_oscil_0(CLM_ARG_1);}
+static char *descr_oscil_1f_1(int *args, ptree *pt) {return(descr_gen(args, pt, "oscil", 1));}
+static void oscil_1f_1(int *args, ptree *pt) {FLOAT_RESULT = mus_oscil_1(CLM_ARG_1, FLOAT_ARG_2);}
+static char *descr_oscil_2f(int *args, ptree *pt) {return(descr_gen(args, pt, "oscil", 2));}
+static void oscil_2f(int *args, ptree *pt) {FLOAT_RESULT = mus_oscil(CLM_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);}
+GEN_P(oscil)
+static xen_value * oscil_1(ptree *prog, xen_value **args, int num_args)
+{
+  if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2);
+  if ((num_args > 2) && (args[3]->type == R_INT)) single_to_float(prog, args, 3);
+  if ((num_args == 1) || ((num_args == 2) && (args[2]->constant == R_CONSTANT) && (prog->dbls[args[2]->addr] == 0.0)))
+    return(package(prog, R_FLOAT, oscil_0f_1, descr_oscil_0f_1, args, 1));
+  if ((num_args == 2) || ((num_args == 3) && (args[3]->constant == R_CONSTANT) && (prog->dbls[args[3]->addr] == 0.0)))
+    return(package(prog, R_FLOAT, oscil_1f_1, descr_oscil_1f_1, args, 2));
+  return(package(prog, R_FLOAT, oscil_2f, descr_oscil_2f, args, 3));
+}
+
 #define GEN2(Name) \
   GEN2_0(Name) \
   GEN2_1(Name) \
@@ -7043,7 +7044,6 @@ static char *descr_int_gen0(int *args, ptree *pt, const char *which)
     return(package(prog, R_INT, Name ## _0i, descr_ ## Name ## _0i, args, 1)); \
   }
 
-GEN_OSCIL(oscil)
 GEN1(env)
 GEN3(notch)
 GEN3(comb)

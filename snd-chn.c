@@ -344,12 +344,20 @@ void update_graph(chan_info *cp)
   if ((updating) || 
       (!(cp->active)) ||
       (cp->cgx == NULL) || 
-      (cp->squelch_update) || 
       (cp->sounds == NULL) || 
       (cp->sounds[cp->sound_ctr] == NULL)) 
     return;
-  updating = true;
   sp = cp->sound;
+  if (cp->squelch_update)
+    {
+      if (sp)
+	{
+	  set_minibuffer_string(sp, "(update squelched)"); /* this has tripped me one too many times... */
+	  sp->minibuffer_on = MINI_REPORT;
+	}
+      return;
+    }
+  updating = true;
   /* next two are needed by fft and lisp displays, but if put off until make_graph cause
    * the display to happen twice in some cases 
    */
@@ -4489,6 +4497,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *calle
 	  if (cp->edit_ctr == 0)
 	    reflect_file_revert_in_label(cp->sound);
 	  else reflect_file_change_in_label(cp);
+	  clear_minibuffer(cp->sound);
 	}
       break;
     case CP_CURSOR_SIZE:

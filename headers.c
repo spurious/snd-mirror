@@ -1819,10 +1819,10 @@ static int read_soundforge_header(int chan)
 static int read_avi_header(int chan)
 {
   /* we know we have checked for RIFF xxxx AVI  when we arrive here */
-  int chunksize, chunkloc, cksize, rdsize, bits;
+  int chunksize, chunkloc, cksize, bits;
   bool happy;
   off_t ckoff, cktotal, offset;
-  off_t cksizer, ckoffr, cktotalr;
+  off_t cksizer, ckoffr, cktotalr, rdsize;
   type_specifier = mus_char_to_uninterpreted_int((unsigned char *)(hdrbuf + 8));
   chunkloc = 12;
   offset = 0;
@@ -2146,7 +2146,8 @@ static int read_nist_header(int chan)
 {
   char str[MAX_FIELD_LENGTH], name[MAX_FIELD_LENGTH];
   bool happy = true;
-  int k, hend, curbase, j, n, nm, samples, bytes, read_bytes, byte_format, idata_location;
+  off_t curbase;
+  int k, hend, j, n, nm, samples, bytes, read_bytes, byte_format, idata_location;
   type_specifier = mus_char_to_uninterpreted_int((unsigned char *)hdrbuf); /* the actual id is "NIST_1A" */
   for (k = 8; k < 16; k++) 
     str[k - 8] = hdrbuf[k];
@@ -2604,7 +2605,8 @@ static int read_8svx_header(int chan, bool bytewise)
 
 static int read_voc_header(int chan)
 {
-  int type, len, curbase, voc_extended, bits, code;
+  off_t curbase;
+  int type, len, voc_extended, bits, code;
   bool happy;
   data_format = MUS_UBYTE;
   chans = 1;
@@ -3048,7 +3050,8 @@ static int read_esps_header(int chan)
 {
   char str[80];
   bool happy = true;
-  int k, hend, curbase, j, n, chars, floats, shorts, doubles, little, bytes;
+  off_t curbase;
+  int k, hend, j, n, chars, floats, shorts, doubles, little, bytes;
   little = (hdrbuf[18] == 0);
   if (little)
     data_location = mus_char_to_lint((unsigned char *)(hdrbuf + 8));
@@ -4977,7 +4980,8 @@ int mus_header_change_samples(const char *filename, off_t new_samples)
 
 int mus_header_change_chans(const char *filename, int new_chans)
 {
-  int err = MUS_NO_ERROR, fd, new_frames;
+  int err = MUS_NO_ERROR, fd;
+  off_t new_frames;
   err = mus_header_read(filename);
   if (err == MUS_NO_ERROR)
     {
@@ -5079,8 +5083,8 @@ int mus_header_change_type(const char *filename, int new_type, int new_format)
   int err = MUS_NO_ERROR;
   /* open temp, write header, copy data, replace original with temp */
   char *new_file, *comment = NULL;
-  int ofd, ifd, len = 0, nbytes;
-  off_t loc;
+  int ofd, ifd, nbytes;
+  off_t loc, len = 0;
   char *buf = NULL;
   err = mus_header_read(filename);
   if (err == MUS_NO_ERROR)
@@ -5124,7 +5128,8 @@ int mus_header_change_type(const char *filename, int new_type, int new_format)
 
 int mus_header_change_format(const char *filename, int new_format)
 {
-  int err = MUS_NO_ERROR, fd, old_bytes;
+  int err = MUS_NO_ERROR, fd;
+  off_t old_bytes;
   err = mus_header_read(filename);
   if (err == MUS_NO_ERROR)
     {

@@ -212,7 +212,7 @@ static time_t local_file_write_date(const char *filename)
   struct stat statbuf;
   int err;
   err = stat(filename, &statbuf);
-  if (err < 0) return(err);
+  if (err < 0) return((time_t)0);
   return((time_t)(statbuf.st_mtime));
 }
 #else
@@ -702,8 +702,8 @@ void mus_sound_set_full_loop_info(const char *arg, int *loop)
 
 char *mus_sound_comment(const char *name)
 {
-  off_t start, end;
-  int fd, len, full_len; /* comment string lengths */
+  off_t start, end, len;
+  int fd, full_len; /* comment string lengths */
   char *sc = NULL, *auxcom;
   sound_file *sf = NULL;
   sf = getsf(name); 
@@ -951,8 +951,8 @@ int mus_sound_maxamp_exists(const char *ifile)
 off_t mus_sound_maxamps(const char *ifile, int chans, mus_sample_t *vals, off_t *times)
 {
   int ifd, ichans, chn, j;
-  unsigned int i, bufnum, curframes;
-  off_t n, frames;
+  unsigned int i, bufnum;
+  off_t n, frames, curframes;
   mus_sample_t abs_samp;
   mus_sample_t *buffer, *samp;
   off_t *time;

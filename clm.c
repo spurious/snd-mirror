@@ -4967,8 +4967,8 @@ static mus_any_class SAMPLE2FILE_CLASS = {
 
 static void flush_buffers(rdout *gen)
 {
-  int fd, i, j, last, hdrfrm, hdrtyp, num;
-  off_t size, hdrend;
+  int fd, i, j, hdrfrm, hdrtyp;
+  off_t size, hdrend, num, last;
   mus_sample_t **addbufs;
   if ((gen->obufs == NULL) || (mus_file_probe(gen->file_name) == 0))
     return; /* can happen if output abandoned, then later mus_free called via GC sweep */
@@ -5744,7 +5744,7 @@ mus_any *mus_make_src(Float (*input)(void *arg, int direction), Float srate, int
 	{
 	  srp = (sr *)clm_calloc(1, sizeof(sr), "src");
 	  if (width == 0) width = SRC_SINC_WIDTH;
-	  if (width < (fabs(srate) * 2)) 
+	  if (width < (int)(fabs(srate) * 2))
 	    wid = (int)(ceil(fabs(srate)) * 2); 
 	  else wid = width;
 	  srp->core = &SRC_CLASS;
@@ -5855,7 +5855,6 @@ Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int dir
 
 
 /* it was a cold, rainy day... */
-Float mus_src_20(mus_any *srptr, Float (*input)(void *arg, int direction));
 Float mus_src_20(mus_any *srptr, Float (*input)(void *arg, int direction))
 {
   sr *srp = (sr *)srptr;
@@ -5892,7 +5891,6 @@ Float mus_src_20(mus_any *srptr, Float (*input)(void *arg, int direction))
   return(sum * 0.5);
 }
 
-Float mus_src_05(mus_any *srptr, Float (*input)(void *arg, int direction));
 Float mus_src_05(mus_any *srptr, Float (*input)(void *arg, int direction))
 {
   sr *srp = (sr *)srptr;
@@ -6705,8 +6703,8 @@ mus_any *mus_make_convolve(Float (*input)(void *arg, int direction), Float *filt
 
 void mus_convolve_files(const char *file1, const char *file2, Float maxamp, const char *output_file)
 {
-  off_t file1_len, file2_len;
-  int fftlen, outlen, totallen, file1_chans, file2_chans, output_chans, c1, c2;
+  off_t file1_len, file2_len, outlen, totallen;
+  int fftlen, file1_chans, file2_chans, output_chans, c1, c2;
   Float *data1, *data2, *outdat;
   mus_sample_t *samps;
   char *errmsg = NULL;

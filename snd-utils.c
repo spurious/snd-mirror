@@ -18,6 +18,7 @@ off_t snd_round_off_t(double x)
 
 off_t snd_abs_off_t(off_t val)
 {
+  /* div is also limited to int */
   return((val < 0) ? -val : val);
 }
 

@@ -1021,7 +1021,6 @@ XEN_NARGIFY_4(g_ladspa_connect_port_w, g_ladspa_connect_port)
 #define g_ladspa_connect_port_w g_ladspa_connect_port
 #endif
 
-void g_ladspa_to_snd(void);
 void g_ladspa_to_snd(void)
 {
   XEN_DEFINE_PROCEDURE(S_analyse_ladspa, g_analyse_ladspa_w, 2, 0, 0, H_analyse_ladspa);

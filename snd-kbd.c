@@ -368,7 +368,7 @@ void clear_minibuffer(snd_info *sp)
   sp->searching = 0;
   sp->marking = 0;
   sp->filing = NOT_FILING;
-  sp->printing = 0;
+  sp->printing = false;
   sp->minibuffer_on = MINI_OFF;
   sp->loading = false;
   sp->amping = 0;
@@ -652,7 +652,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
       if (sp->printing)
 	{
 	  snd_print(str);
-	  sp->printing = 0;
+	  sp->printing = false;
 	  clear_minibuffer(sp);
 	  free(str);
 	  return;
@@ -1310,7 +1310,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      break;
 	    case snd_K_D: case snd_K_d: 
 	      prompt(sp, _("eps file:"), NULL); 
-	      sp->printing = ext_count; 
+	      sp->printing = (ext_count != 0);
 	      searching = true; 
 	      break;
 	    case snd_K_E: case snd_K_e: 

@@ -772,11 +772,11 @@ static void deferred_region_to_temp_file(region *r)
 	  else
 	    {
 	      lseek(fdi, 28 + r->chans * datumb * drp->begs[0], SEEK_SET);
-	      buffer = (char *)CALLOC(8192, sizeof(char));
-	      for (j = 0; j < data_size; j += 8192)
+	      buffer = (char *)CALLOC(MAX_BUFFER_SIZE, sizeof(char));
+	      for (j = 0; j < data_size; j += MAX_BUFFER_SIZE)
 		{
 		  bytes = data_size - j;
-		  if (bytes > 8192) bytes = 8192;
+		  if (bytes > MAX_BUFFER_SIZE) bytes = MAX_BUFFER_SIZE;
 		  read(fdi, buffer, bytes);
 		  write(fdo, buffer, bytes);
 		}

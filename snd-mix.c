@@ -2227,7 +2227,7 @@ static Cessate watch_mix(Indicium m)
   else return(BACKGROUND_QUIT);
 }
 
-XEN mix_drag_hook;
+static XEN mix_drag_hook;
 
 static void move_mix(mix_info *md)
 {

@@ -7184,7 +7184,7 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, int 
   sf->initial_samp = samp;
   sf->cp = cp;
   sf->fscaler = MUS_FIX_TO_FLOAT;
-  sf->rscaler = MUS_FLOAT_TO_FIX;
+  sf->rscaler = (Float)(MUS_FLOAT_TO_FIX);
   sf->direction = direction;
   sf->current_state = ed;
   sf->edit_ctr = edit_position;
