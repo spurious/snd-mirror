@@ -2118,7 +2118,6 @@ void set_recorder_trigger(recorder_info *rp, Float val)
 
 void set_recorder_srate(recorder_info *rp, int val)
 {
-  char sbuf[LABEL_BUFFER_SIZE];
   if (val < 1000) return;
   /* this just reflects the setting in the text field -- it doesn't actually set anything in the audio system */
   if (val > 0)

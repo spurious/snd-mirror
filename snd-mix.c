@@ -105,6 +105,7 @@ static void color_one_mix_from_id(int mix_id, color_t color)
   if (md) md->wg->color = color;
 }
 
+#if (!USE_NO_GUI)
 static color_t mix_to_color_from_id(int mix_id)
 {
   mix_info *md;
@@ -113,6 +114,7 @@ static color_t mix_to_color_from_id(int mix_id)
     return(md->wg->color);
   return(ss->sgx->basic_color);
 }
+#endif
 
 static axis_context *set_mix_waveform_context(chan_info *cp, mix_info *md)
 {

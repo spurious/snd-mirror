@@ -96,7 +96,7 @@ static void graph_redisplay(void)
   axis_ap->height = widget_height(graph_drawer);
   axis_ap->graph_x0 = 0;
   gdk_window_clear(ax->wn);
-  make_axes_1(axis_ap, X_AXIS_IN_SECONDS, 1, SHOW_ALL_AXES, false, true);
+  make_axes_1(axis_ap, X_AXIS_IN_SECONDS, 1, SHOW_ALL_AXES, NOT_PRINTING, WITH_X_AXIS, NO_GRID, WITH_LINEAR_AXES);
   ax->gc = gc;
   ix1 = grf_x(0.0, axis_ap);
   iy1 = grf_y(current_graph_data[0], axis_ap);
@@ -418,14 +418,14 @@ static void max_peaks_callback(GtkWidget *w, gpointer data)
 static void min_db_callback(GtkWidget *w, gpointer data)
 {
   Float new_db;
-  new_db = gtk_spin_button_get_value_as_float(GTK_SPIN_BUTTON(data));
+  new_db = gtk_spin_button_get_value(GTK_SPIN_BUTTON(data));
   set_min_db(-new_db);
 }
 
 static void log_freq_callback(GtkWidget *w, gpointer data)
 {
   Float new_lfb;
-  new_lfb = gtk_spin_button_get_value_as_float(GTK_SPIN_BUTTON(data));
+  new_lfb = gtk_spin_button_get_value(GTK_SPIN_BUTTON(data));
   set_log_freq_start(new_lfb);
 }
 

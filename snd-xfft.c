@@ -104,7 +104,7 @@ static void graph_redisplay(void)
   axis_ap->graph_x0 = 0;
   clear_window(ax);
   ax->gc = gc;
-  make_axes_1(axis_ap, X_AXIS_IN_SECONDS, 1, SHOW_ALL_AXES, false, true);
+  make_axes_1(axis_ap, X_AXIS_IN_SECONDS, 1, SHOW_ALL_AXES, NOT_PRINTING, WITH_X_AXIS, NO_GRID, WITH_LINEAR_AXES);
   ix1 = local_grf_x(0.0, axis_ap);
   iy1 = local_grf_y(current_graph_data[0], axis_ap);
   xincr = 1.0 / (Float)GRAPH_SIZE;

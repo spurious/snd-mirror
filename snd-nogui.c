@@ -245,8 +245,8 @@ widget_t make_edit_save_as_dialog(bool managed) {return(0);}
 widget_t make_file_save_as_dialog(bool managed) {return(0);}
 widget_t make_file_print_dialog(bool managed) {return(0);}
 axis_info *enved_make_axis(const char *name, axis_context *ax, int ex0, int ey0, int width, int height, 
-			   Float xmin, Float xmax, Float ymin, Float ymax, bool printing) {return(NULL);}
-void display_enved_env_with_selection(env *e, char *name, int x0, int y0, int width, int height, bool dots, bool printing) {}
+			   Float xmin, Float xmax, Float ymin, Float ymax, printing_t printing) {return(NULL);}
+void display_enved_env_with_selection(env *e, char *name, int x0, int y0, int width, int height, bool dots, printing_t printing) {}
 void set_enved_redo_sensitive(bool val) {}
 void set_enved_revert_sensitive(bool val) {}
 void set_enved_undo_sensitive(bool val) {}

@@ -34,7 +34,7 @@ static bool ignore_button_release = false;
 axis_info *enved_make_axis(const char *name, axis_context *ax, 
 			   int ex0, int ey0, int width, int height, 
 			   Float xmin, Float xmax, Float ymin, Float ymax,
-			   bool printing)
+			   printing_t printing)
 {
   /* conjure up minimal context for axis drawer in snd-axis.c */
   if (!axis) 
@@ -54,7 +54,7 @@ axis_info *enved_make_axis(const char *name, axis_context *ax,
   return(axis);
 }
 
-static void display_env(env *e, char *name, GdkGC *cur_gc, int x0, int y0, int width, int height, bool dots, bool printing)
+static void display_env(env *e, char *name, GdkGC *cur_gc, int x0, int y0, int width, int height, bool dots, printing_t printing)
 {
   axis_context *ax = NULL;  
   ax = (axis_context *)CALLOC(1, sizeof(axis_context));
@@ -66,7 +66,7 @@ static void display_env(env *e, char *name, GdkGC *cur_gc, int x0, int y0, int w
   ax = free_axis_context(ax);
 }
 
-void display_enved_env_with_selection(env *e, char *name, int x0, int y0, int width, int height, bool dots, bool printing)
+void display_enved_env_with_selection(env *e, char *name, int x0, int y0, int width, int height, bool dots, printing_t printing)
 {
   display_env(e, name, (selected_env == e) ? rgc : gc, x0, y0, width, height, dots, printing);
 }
@@ -194,7 +194,7 @@ static void apply_enved(void)
     }
 }
 
-static void env_redisplay_1(bool printing)
+static void env_redisplay_1(printing_t printing)
 {
   char *name = NULL;
   if (enved_dialog_is_active())
@@ -210,7 +210,7 @@ static void env_redisplay_1(bool printing)
 	  name = NULL;
 	  if (enved_wave_p(ss))
 	    {
-	      if ((enved_target(ss) == ENVED_SPECTRUM) && (active_env) && (FIR_p) && (!printing))
+	      if ((enved_target(ss) == ENVED_SPECTRUM) && (active_env) && (FIR_p) && (printing == NOT_PRINTING))
 		display_frequency_response(active_env, axis, gray_ap->ax, enved_filter_order(ss), enved_in_dB(ss));
 	      enved_show_background_waveform(axis, gray_ap, apply_to_selection, (enved_target(ss) == ENVED_SPECTRUM), printing);
 	    }
@@ -218,8 +218,8 @@ static void env_redisplay_1(bool printing)
     }
 }
 
-void env_redisplay(void) {env_redisplay_1(false);}
-void env_redisplay_with_print(void) {env_redisplay_1(true);}
+void env_redisplay(void) {env_redisplay_1(NOT_PRINTING);}
+void env_redisplay_with_print(void) {env_redisplay_1(PRINTING);}
 
 static void enved_filter_order_callback(GtkWidget *w, gpointer data)
 {

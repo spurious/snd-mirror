@@ -234,7 +234,7 @@ typedef struct chan_info {
   void *sonogram_data;
   void *last_sonogram, *temp_sonogram;
   void *fft_data;          /* parallels sonogram -- try to avoid repeating large ffts needlessly */
-  bool printing;
+  printing_t printing;
   fft_change_t fft_changed;
   Float gsy, gzy;
   void *mix_dragging;
@@ -246,7 +246,8 @@ typedef struct chan_info {
   /* moved from global to channel-local 4-Aug-00 */
   Float spectro_x_scale, spectro_y_scale, spectro_z_scale, spectro_z_angle, spectro_x_angle, spectro_y_angle, spectro_cutoff, spectro_start;
   Float lin_dB, min_dB, fft_window_beta, beats_per_minute;
-  bool show_y_zero, show_marks, verbose_cursor, show_grid;
+  bool show_y_zero, show_marks, verbose_cursor;
+  with_grid_t show_grid;
   int wavo_hop, wavo_trace, zero_pad, wavelet_type, max_transform_peaks;
   x_axis_style_t x_axis_style;
   show_axes_t show_axes;
@@ -320,7 +321,8 @@ typedef struct snd_info {
   off_t marking;
   int searching, amping;
   sp_filing_t filing;
-  bool prompting, loading, finding_mark, printing, selectioning;
+  bool prompting, loading, finding_mark, selectioning;
+  printing_t printing;
   off_t macroing;
   minibuffer_choice_t minibuffer_on;
   bool read_only;
@@ -374,7 +376,8 @@ typedef struct snd_state {
   Latus init_window_width, init_window_height;
   Locus init_window_x, init_window_y;
   bool graph_hook_active, lisp_graph_hook_active;
-  bool Show_Transform_Peaks, Show_Y_Zero, Show_Marks, Show_Grid;
+  bool Show_Transform_Peaks, Show_Y_Zero, Show_Marks;
+  with_grid_t Show_Grid;
   bool Fft_Log_Frequency, Fft_Log_Magnitude;
   channel_style_t Channel_Style;
   sound_style_t Sound_Style;
@@ -990,10 +993,10 @@ bool env_editor_button_press(env_editor *edp, int evx, int evy, Tempus time, env
 void env_editor_button_release(env_editor *edp, env *e);
 double env_editor_ungrf_y_dB(env_editor *edp, int y);
 void init_env_axes(axis_info *ap, const char *name, int x_offset, int ey0, int width, int height, 
-		   Float xmin, Float xmax, Float ymin, Float ymax, bool printing);
+		   Float xmin, Float xmax, Float ymin, Float ymax, printing_t printing);
 void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const char *name, 
-			    int x0, int y0, int width, int height, bool printing);
-void view_envs(int env_window_width, int env_window_height, bool printing);
+			    int x0, int y0, int width, int height, printing_t printing);
+void view_envs(int env_window_width, int env_window_height, printing_t printing);
 int hit_env(int xe, int ye, int env_window_width, int env_window_height);
 void prepare_enved_edit(env *new_env);
 void redo_env_edit(void);
@@ -1004,7 +1007,7 @@ char *enved_all_names(int n);
 void set_enved_env_list_top(int n);
 env *enved_all_envs(int pos);
 void alert_envelope_editor(char *name, env *val);
-void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool apply_to_selection, bool show_fft, bool printing);
+void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool apply_to_selection, bool show_fft, printing_t printing);
 void save_envelope_editor_state(FILE *fd);
 char *env_name_completer(char *text);
 env *enved_next_env(void);
@@ -1143,7 +1146,8 @@ axis_context *free_axis_context(axis_context *ax);
 Locus grf_x(double val, axis_info *ap);
 Locus grf_y(Float val, axis_info *ap);
 void init_axis_scales(axis_info *ap);
-void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t axes, bool printing, bool show_x_axis);
+void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t axes, printing_t printing, 
+		 with_x_axis_t show_x_axis, with_grid_t grid, log_axis_t log_axes);
 
 #define ungrf_x(AP, X) (((X) - (AP)->x_base) / (AP)->x_scale)
 #define ungrf_y(AP, Y) (((Y) - (AP)->y_base) / (AP)->y_scale)

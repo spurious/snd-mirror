@@ -179,6 +179,10 @@ typedef enum {SEARCH_OK, SEARCH_FAILED} search_result_t;
 typedef enum {IGNORE_CACHE, REMOVE_FROM_CACHE} cache_remove_t;
 typedef enum {FFT_UNCHANGED, FFT_CHANGED, FFT_CHANGE_LOCKED} fft_change_t;
 typedef enum {WITHOUT_GRAPH, WITH_GRAPH, WITHOUT_INITIAL_GRAPH_HOOK} channel_graph_t;
+typedef enum {NOT_PRINTING, PRINTING} printing_t;
+typedef enum {NO_X_AXIS, WITH_X_AXIS} with_x_axis_t;
+typedef enum {NO_GRID, WITH_GRID} with_grid_t;
+typedef enum {WITH_LINEAR_AXES, WITH_LOG_X_AXIS, WITH_LOG_Y_AXIS, WITH_LOG_AXES} log_axis_t;
 
 #if defined(__GNUC__) && (!(defined(__cplusplus)))
   #define IS_PLAYER(snd) ({ snd_info *_snd_0_h_1 = snd; ((_snd_0_h_1) && (_snd_0_h_1->index < 0)); })
@@ -720,7 +724,7 @@ typedef enum {PLAY_COMPLETE, PLAY_CLOSE, PLAY_BUTTON_UNSET, PLAY_STOP_CALLED, PL
 
 #define show_grid(ss) ss->Show_Grid
 #define in_set_show_grid(a) ss->Show_Grid = a
-#define DEFAULT_SHOW_GRID false
+#define DEFAULT_SHOW_GRID NO_GRID
 
 #define show_axes(ss) ss->Show_Axes
 #define in_set_show_axes(a) ss->Show_Axes = a

@@ -5977,7 +5977,6 @@ Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int dir
 	    (*sr_input)(srp->closure, (srx >= 0.0) ? 1 : -1);
 	  fsx = lim;
 	}
-      /* TODO: have memmove?? */
       loc = lim - fsx;
       if (loc > 0)
 	memmove((void *)(srp->data), (void *)(srp->data + fsx), sizeof(Float) * loc);

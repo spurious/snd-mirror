@@ -9,10 +9,6 @@
 /*    and what about the xor effect over unknown bg colors? -- perhaps white here? */
 /*    for sonogram, can use local_grf_x[y not needed?] here, just as in time case, I think */
 
-/* TODO: if log-freq+sonogram click in fft returns silly results */
-/* TODO: click in spectrogram returns "?" (log-freq ignored here, also normalize) */
-
-
 
 typedef enum {CLICK_NOGRAPH, CLICK_WAVE, CLICK_FFT_AXIS, CLICK_LISP, CLICK_FFT_MAIN} click_loc_t;    /* for marks, regions, mouse click detection */
 
@@ -127,11 +123,11 @@ static void set_zero_pad(int val)
 
 static void chans_show_grid(chan_info *cp, void *ptr)
 {
-  cp->show_grid = (*((bool *)ptr));
+  cp->show_grid = (*((with_grid_t *)ptr));
   update_graph(cp);
 }
 
-static void set_show_grid(bool val)
+static void set_show_grid(with_grid_t val)
 {
   in_set_show_grid(val);
   for_each_chan_1(chans_show_grid, (void *)(&val));
@@ -1963,12 +1959,15 @@ static void make_sonogram(chan_info *cp)
   fft_info *fp;
   axis_info *fap;
   Float *fdata;
-  Float binval, xf, xfincr, yf, yfincr, scaler = 0.0, frectw, frecth, xscl, scl = 1.0;
+  Float binval, xf, xfincr, yf, yfincr, frectw, frecth, xscl, scl = 1.0;
   Float *hfdata;
   Locus *hidata;
   axis_context *ax;
   static int *sono_js = NULL;
   static int sono_js_size = 0;
+
+  Float minlx = 0.0, maxlx, curlx = 0.0, fap_range, log_range, lscale = 1.0;
+
   if (chan_fft_in_progress(cp)) return;
   sp = cp->sound;
   si = (sono_info *)(cp->sonogram_data);
@@ -1984,9 +1983,6 @@ static void make_sonogram(chan_info *cp)
       if (cp->printing) ps_allocate_grf_points();
       allocate_sono_rects(si->total_bins);
       allocate_color_map(color_map(ss));
-#if 0
-      if (cp->fft_log_frequency) scaler = 1.0 / log(log_freq_base(ss));
-#endif
       scl = si->scale; 
       fp = cp->fft;
       fap = fp->axis;
@@ -2003,18 +1999,24 @@ static void make_sonogram(chan_info *cp)
       hidata = (Locus *)MALLOC((bins + 1) * sizeof(Locus));
       if (cp->transform_type == FOURIER)
 	{
-#if 0
 	  if (cp->fft_log_frequency)
-	      yfincr = (cp->spectro_cutoff * (log_freq_base(ss) - 1.0)) / (Float)bins;
-	  else yfincr = cp->spectro_cutoff * (Float)SND_SRATE(cp->sound) * 0.5 / (Float)bins;
-#endif
+	    {
+	      /* TODO: log_freq_start in sonogram (spectro_start not ignored -- not sure it's correct however) */
+	      fap_range = fap->y1 - fap->y0;
+	      if (fap->y0 > 1.0) minlx = log(fap->y0); else minlx = 0.0;
+	      maxlx = log(fap->y1);
+	      log_range = (maxlx - minlx);
+	      lscale = fap_range / log_range;
+	    }
+	  yfincr = cp->spectro_cutoff * (Float)SND_SRATE(cp->sound) * 0.5 / (Float)bins;
 	}
       else yfincr = 1.0;
       if (cp->fft_log_frequency)
 	{
 	  for (yf = 0.0, i = 0; i <= bins; i++, yf += yfincr)
 	    {
-	      hfdata[i] = log(yf + 1.0) * scaler;
+	      if (yf > 1.0) curlx = log(yf); else curlx = 0.0;
+	      hfdata[i] = fap->y0 + lscale * (curlx - minlx);
 	      hidata[i] = local_grf_y(hfdata[i], fap);
 	    }
 	}
@@ -2068,7 +2070,6 @@ static void make_sonogram(chan_info *cp)
 		}
 	    }
 	}
-
       if (cp->printing) ps_reset_color();
       FREE(hfdata);
       FREE(hidata);
@@ -2168,7 +2169,7 @@ void reset_spectro(void)
 
 static void display_channel_time_data(chan_info *cp);
 static void display_channel_lisp_data(chan_info *cp);
-static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool erase_first);
+static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool erase_first, with_grid_t grid, log_axis_t log_axes);
 #define DONT_CLEAR_GRAPH false
 #define CLEAR_GRAPH true
 
@@ -2387,7 +2388,7 @@ static bool make_spectrogram(chan_info *cp)
 			 cp->axis->x0, cp->axis->x1,
 			 SND_SRATE(sp) * cp->spectro_start / 2.0, SND_SRATE(sp) * cp->spectro_cutoff / 2.0,
 			 fap);
-	  make_axes(cp, fap, X_AXIS_IN_SECONDS, DONT_CLEAR_GRAPH);
+	  make_axes(cp, fap, X_AXIS_IN_SECONDS, DONT_CLEAR_GRAPH, NO_GRID, WITH_LINEAR_AXES);
 	  fap->use_gl = false;
 #if USE_MOTIF
 	  if (ss->gl_has_double_buffer)
@@ -2909,7 +2910,7 @@ static void make_lisp_graph(chan_info *cp, XEN pixel_list)
     }
 }
 
-static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool erase_first)
+static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool erase_first, with_grid_t grid, log_axis_t log_axes)
 {
   snd_info *sp;
   axis_context *ax;
@@ -2925,10 +2926,12 @@ static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool
   if (erase_first == CLEAR_GRAPH)
     erase_rectangle(cp, ap->ax, ap->graph_x0, ap->y_offset, ap->width, ap->height); 
   make_axes_1(ap, x_style, SND_SRATE(sp), cp->show_axes, cp->printing,
-	      ((sp->channel_style != CHANNELS_COMBINED) || 
-	       (cp->show_axes == SHOW_ALL_AXES) || 
-	       (cp->show_axes == SHOW_ALL_AXES_UNLABELLED) || 
-	       (cp->chan == (sp->nchans - 1))));
+	      (((sp->channel_style != CHANNELS_COMBINED) || 
+		(cp->show_axes == SHOW_ALL_AXES) || 
+		(cp->show_axes == SHOW_ALL_AXES_UNLABELLED) || 
+		(cp->chan == (sp->nchans - 1))) ? WITH_X_AXIS : NO_X_AXIS),
+	      grid, 
+	      log_axes);
 }
 
 static void draw_graph_cursor(chan_info *cp);
@@ -3070,7 +3073,7 @@ static void display_channel_data_with_size (chan_info *cp,
 	  if (cp->time_graph_type == GRAPH_AS_WAVOGRAM)
 	    {
 	      if (ap->y_axis_y0 == ap->y_axis_y1) 
-		make_axes(cp, ap, cp->x_axis_style, DONT_CLEAR_GRAPH); /* first time needs setup */
+		make_axes(cp, ap, cp->x_axis_style, DONT_CLEAR_GRAPH, cp->show_grid, WITH_LINEAR_AXES); /* first time needs setup */
 	      ap->y0 = ap->x0;
 	      ap->y1 = ap->y0 + (Float)(cp->wavo_trace * (ap->y_axis_y0 - ap->y_axis_y1)) / ((Float)(cp->wavo_hop) * SND_SRATE(sp));
 	      ap->x1 = ap->x0 + (double)(cp->wavo_trace) / (double)SND_SRATE(sp);
@@ -3081,7 +3084,9 @@ static void display_channel_data_with_size (chan_info *cp,
 	      ((sp->nchans > 1) && (sp->channel_style != CHANNELS_SEPARATE)))
 	    make_axes(cp, ap,
 		      cp->x_axis_style,
-		      (((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)) ? CLEAR_GRAPH : DONT_CLEAR_GRAPH));
+		      (((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)) ? CLEAR_GRAPH : DONT_CLEAR_GRAPH),
+		      cp->show_grid,
+		      WITH_LINEAR_AXES);
 	  cp->cursor_visible = false;
 	  cp->selection_visible = false;
 	  points = make_graph(cp);
@@ -3099,12 +3104,16 @@ static void display_channel_data_with_size (chan_info *cp,
       if ((!(with_gl(ss))) || 
 	  (cp->transform_graph_type != GRAPH_AS_SPECTROGRAM) ||
 	  (color_map(ss) == 0) ||
-	  ((sp->nchans > 1) && (sp->channel_style != CHANNELS_SEPARATE)))
+	  ((sp->nchans > 1) && 
+	   (sp->channel_style != CHANNELS_SEPARATE)))
 	make_axes(cp, fap,
+
 		  ((cp->x_axis_style == X_AXIS_IN_SAMPLES) || 
 		   (cp->x_axis_style == X_AXIS_IN_BEATS)) ? X_AXIS_IN_SECONDS : (cp->x_axis_style),
 #if USE_MOTIF
-		  (((cp->chan == (sp->nchans - 1)) || (sp->channel_style != CHANNELS_SUPERIMPOSED)) ? CLEAR_GRAPH : DONT_CLEAR_GRAPH)
+		  (((cp->chan == (sp->nchans - 1)) || 
+		    (sp->channel_style != CHANNELS_SUPERIMPOSED)) ? CLEAR_GRAPH : DONT_CLEAR_GRAPH),
+
 		  /* Xt documentation says the most recently added work proc runs first, but we're
 		   *   adding fft work procs in channel order, normally, so the channel background
 		   *   clear for the superimposed case needs to happen on the highest-numbered 
@@ -3112,10 +3121,18 @@ static void display_channel_data_with_size (chan_info *cp,
 		   *   selected background, if any of the current sound's channels is selected.
 		   */
 #else
-		  (((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)) ? CLEAR_GRAPH : DONT_CLEAR_GRAPH)
+		  (((cp->chan == 0) || 
+		    (sp->channel_style != CHANNELS_SUPERIMPOSED)) ? CLEAR_GRAPH : DONT_CLEAR_GRAPH),
+
 		  /* In Gtk+ (apparently) the first proc added is run, not the most recent */
 #endif
-		  );
+		  ((cp->show_grid) && 
+		   (cp->transform_graph_type != GRAPH_AS_SPECTROGRAM) &&
+		   (!(cp->fft_log_frequency))) ? WITH_GRID : NO_GRID,
+
+		  ((!(cp->fft_log_frequency)) || 
+		   (cp->transform_graph_type == GRAPH_AS_SPECTROGRAM)) ? WITH_LINEAR_AXES :
+		  ((cp->transform_graph_type == GRAPH_AS_SONOGRAM) ? WITH_LOG_Y_AXIS : WITH_LOG_X_AXIS));
 	  
       if ((!with_time) || (just_fft))
 	{ /* make_graph does this -- sets losamp needed by fft to find its starting point */
@@ -3176,7 +3193,9 @@ static void display_channel_data_with_size (chan_info *cp,
       /* if these were changed in the hook function, the old fields should have been saved across the change (g_graph below) */
       make_axes(cp, uap, /* defined in this file l 2293 */
 		X_AXIS_IN_SECONDS,
-		(((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)) ? CLEAR_GRAPH : DONT_CLEAR_GRAPH));
+		(((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)) ? CLEAR_GRAPH : DONT_CLEAR_GRAPH),
+		cp->show_grid,
+		WITH_LINEAR_AXES);
       if (XEN_PROCEDURE_P(pixel_list))
 	XEN_CALL_0(pixel_list, "lisp-graph");
       else make_lisp_graph(cp, pixel_list);
@@ -3699,7 +3718,21 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
 	  yf = ap->y0 + (ap->y1 - ap->y0) * (Float)(y - ap->y_axis_y0) / (Float)(ap->y_axis_y1 - ap->y_axis_y0);
 	  si = (sono_info *)(cp->sonogram_data);
 	  if (cp->transform_type == FOURIER)
-	    ind = (int)((fp->current_size * yf) / (Float)SND_SRATE(cp->sound));
+	    {
+	      if (cp->fft_log_frequency)
+		{
+		  /* TODO: functionalize these log freq calcs */
+		  Float minlx = 0.0, maxlx, ap_range, log_range, lscale = 1.0;
+		  ap_range = ap->y1 - ap->y0;
+		  if (ap->y0 > 1.0) minlx = log(ap->y0); else minlx = 0.0;
+		  maxlx = log(ap->y1);
+		  log_range = (maxlx - minlx);
+		  lscale = ap_range / log_range;
+		  yf = exp((yf - ap->y0) / lscale + minlx);
+		  ind = (int)((fp->current_size * yf) / (Float)SND_SRATE(cp->sound));
+		}
+	      else ind = (int)((fp->current_size * yf) / (Float)SND_SRATE(cp->sound));
+	    }
 	  else ind = (int)yf;
 	  if (ind >= si->total_bins) ind = si->total_bins - 1;
 	  time = (int)(si->target_slices * (Float)(x - ap->x_axis_x0) / (Float)(ap->x_axis_x1 - ap->x_axis_x0));
@@ -4476,7 +4509,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, char *caller)
 	      return(cp->undo_hook);
 	      break;
 	    case CP_SHOW_Y_ZERO:             return(C_TO_XEN_BOOLEAN(cp->show_y_zero));                        break;
-	    case CP_SHOW_GRID:               return(C_TO_XEN_BOOLEAN(cp->show_grid));                          break;
+	    case CP_SHOW_GRID:               return(C_TO_XEN_BOOLEAN((bool)(cp->show_grid)));                  break;
 	    case CP_SHOW_MARKS:              return(C_TO_XEN_BOOLEAN(cp->show_marks));                         break;
 	    case CP_TIME_GRAPH_TYPE:         return(C_TO_XEN_INT((int)(cp->time_graph_type)));                 break;
 	    case CP_WAVO_HOP:                return(C_TO_XEN_INT(cp->wavo_hop));                               break;
@@ -4726,9 +4759,9 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *calle
       return(C_TO_XEN_BOOLEAN(cp->show_y_zero));
       break;
     case CP_SHOW_GRID:
-      cp->show_grid = XEN_TO_C_BOOLEAN(on); 
+      cp->show_grid = (with_grid_t)(XEN_TO_C_BOOLEAN(on)); 
       update_graph(cp); 
-      return(C_TO_XEN_BOOLEAN(cp->show_grid));
+      return(C_TO_XEN_BOOLEAN((bool)(cp->show_grid)));
       break;
     case CP_SHOW_MARKS:
       cp->show_marks = XEN_TO_C_BOOLEAN(on); 
@@ -5358,7 +5391,7 @@ static XEN g_show_grid(XEN snd, XEN chn)
   #define H_show_grid "(" S_show_grid " (snd #f) (chn #f)): #t if Snd should display a background grid in the graphs"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_SHOW_GRID, S_show_grid));
-  return(C_TO_XEN_BOOLEAN(show_grid(ss)));
+  return(C_TO_XEN_BOOLEAN((bool)show_grid(ss)));
 }
 
 static XEN g_set_show_grid(XEN on, XEN snd, XEN chn) 
@@ -5368,8 +5401,8 @@ static XEN g_set_show_grid(XEN on, XEN snd, XEN chn)
     return(channel_set(snd, chn, on, CP_SHOW_GRID, S_setB S_show_grid));
   else
     {
-      set_show_grid(XEN_TO_C_BOOLEAN(on));
-      return(C_TO_XEN_BOOLEAN(show_grid(ss)));
+      set_show_grid((with_grid_t)(XEN_TO_C_BOOLEAN(on)));
+      return(C_TO_XEN_BOOLEAN((bool)show_grid(ss)));
     }
 }
 

@@ -294,7 +294,8 @@ static void draw_vertical_grid_line(int x, axis_info *ap, axis_context *ax)
   set_foreground_color(ap->cp, ax, old_color);
 }
 
-void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t axes, bool printing, bool show_x_axis)
+void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t axes, printing_t printing, 
+		 with_x_axis_t show_x_axis, with_grid_t with_grid, log_axis_t log_axes)
 {
   Latus width, height;
   double x_range, y_range, tens;
@@ -316,7 +317,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
   width = ap->width;
   height = ap->height;
   ap->graph_active = ((width > 4) || (height > 10));
-  include_grid = ((ap->cp) && (ap->cp->show_grid));
+  include_grid = ((ap->cp) && (with_grid));
 
   if ((axes == SHOW_NO_AXES) || (width < 40) || (height < 40) || (ap->xmax == 0.0))
     {
@@ -378,8 +379,8 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
       if ((axes == SHOW_X_AXIS_UNLABELLED) || (axes == SHOW_ALL_AXES_UNLABELLED))
 	include_x_label = false;
       else include_x_label = ((ap->xlabel) && ((height > 100) && (width > 100)));
-      include_x_tick_labels = ((height > 60) && (width > 100));
-      include_x_ticks = ((height > 40) && (width > 40));
+      include_x_tick_labels = ((height > 60) && (width > 100) && (log_axes != WITH_LOG_X_AXIS));
+      include_x_ticks = ((height > 40) && (width > 40) && (log_axes != WITH_LOG_X_AXIS));
     }
   else
     {
@@ -389,8 +390,8 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
     }
   if ((axes != SHOW_X_AXIS) && (axes != SHOW_X_AXIS_UNLABELLED))
     {
-      include_y_tick_labels = ((width > 100) && (height > 60));
-      include_y_ticks = ((width > 100) && (height > 40));
+      include_y_tick_labels = ((width > 100) && (height > 60) && (log_axes != WITH_LOG_Y_AXIS));
+      include_y_ticks = ((width > 100) && (height > 40) && (log_axes != WITH_LOG_Y_AXIS));
     }
   else
     {
@@ -690,6 +691,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 #endif
 		  tdy->min_label,
 		  strlen(tdy->min_label));
+
       draw_string(ax,
 		  ap->y_axis_x0 - tdy->maj_tick_len - tdy->max_label_width - inner_border_width,
 #if USE_GTK
@@ -708,6 +710,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 		      ap->y_axis_x0 - tdy->maj_tick_len - tdy->min_label_width - inner_border_width,
 		      (int)(grf_y(tdy->mlo, ap) + .25 * x_number_height),
 		      tdy->min_label);
+
 	  ps_draw_string(ap,
 		      ap->y_axis_x0 - tdy->maj_tick_len - tdy->max_label_width - inner_border_width,
 		      (int)(grf_y(tdy->mhi, ap) + .5 * x_number_height),
@@ -1179,7 +1182,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   ap->graph_x0 = 0;
   clear_window(ax);
   ax->gc = gc;
-  make_axes_1(ap, x_style, 1, axes, false, true);
+  make_axes_1(ap, x_style, 1, axes, NOT_PRINTING, WITH_X_AXIS, NO_GRID, WITH_LINEAR_AXES);
   val = XEN_CONS(C_TO_XEN_INT(ap->x_axis_x0),
 	 XEN_CONS(C_TO_XEN_INT(ap->y_axis_y0),
           XEN_CONS(C_TO_XEN_INT(ap->x_axis_x1),

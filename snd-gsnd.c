@@ -946,7 +946,7 @@ void display_filter_env(snd_info *sp)
   edp->in_dB = sp->filter_control_in_dB;
   edp->with_dots = true;
   if (sp->filter_control_envelope == NULL) sp->filter_control_envelope = default_env(sp->filter_control_xmax, 1.0);
-  env_editor_display_env(edp, sp->filter_control_envelope, ax, _("frequency response"), 0, 0, width, height, false);
+  env_editor_display_env(edp, sp->filter_control_envelope, ax, _("frequency response"), 0, 0, width, height, NOT_PRINTING);
   if (edp->edited)
     {
       ax->gc = (ss->sgx)->fltenv_data_gc;

@@ -91,7 +91,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
   cp->show_axes = show_axes(ss);
   cp->graph_time_p = true; /* the default state (button is set when we start) */
   cp->graph_transform_p = false;
-  cp->printing = false;
+  cp->printing = NOT_PRINTING;
   cp->waiting_to_make_graph = false;
   cp->new_peaks = false;
   cp->amp_envs = NULL;
@@ -132,7 +132,7 @@ static chan_info *free_chan_info(chan_info *cp)
   if (cp->fft) cp->fft = free_fft_info(cp->fft);
   cp_free_fft_state(cp);
   cp->graph_transform_p = false;
-  cp->printing = false;
+  cp->printing = NOT_PRINTING;
   cp->graph_time_p = true;
   release_dangling_readers(cp, -1);
   if (cp->samples) {FREE(cp->samples); cp->samples = NULL;}

@@ -32,7 +32,7 @@ static int lpr (char *name)
   return(system(print_string));
 }
 
-static bool printing = false;
+static printing_t printing = NOT_PRINTING;
 
 static void file_print_ok_callback(GtkWidget *w, gpointer context)
 {
@@ -51,7 +51,7 @@ static void file_print_ok_callback(GtkWidget *w, gpointer context)
 	  mus_snprintf(print_string, PRINT_BUFFER_SIZE, _("printing %s"), nsp->short_filename);
 	  set_label(file_print_message, print_string);
 	}
-      printing = true;
+      printing = PRINTING;
       print_it = (bool)GTK_TOGGLE_BUTTON(file_print_eps_or_lpr)->active;
       quit = (ss->print_choice == PRINT_ENV);
       if (print_it)
@@ -85,7 +85,7 @@ static void file_print_ok_callback(GtkWidget *w, gpointer context)
 	    }
 	}
     }
-  printing = false;
+  printing = NOT_PRINTING;
   if (ss->print_choice == PRINT_SND)
     {
       set_button_label(file_print_ok_button, _("Print"));

@@ -76,11 +76,11 @@ static int start_ps_graph(char *output, char *title)
 
 static void ps_graph(chan_info *cp, int x0, int y0)
 {
-  cp->printing = true;
+  cp->printing = PRINTING;
   bx0 = x0;
   by0 = y0;
   display_channel_data(cp);
-  cp->printing = false;
+  cp->printing = NOT_PRINTING;
 }
 
 static void end_ps_graph(void)

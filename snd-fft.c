@@ -3,7 +3,6 @@
 /* SOMEDAY: fftw error catcher (memerr = exit) (fftw does not yet support this) */
 
 /* TODO: logfreq in spectrogram?
- * TODO: freq axis label (now 1.0) in spectro/sono if log, also dB?
  */
 
 #if WITH_SHARED_SNDLIB
@@ -621,16 +620,14 @@ static void make_sonogram_axes(chan_info *cp)
       ap = cp->axis;
       if (cp->transform_type == FOURIER)
 	{
-	  /* if ((cp->fft_log_frequency) || (cp->transform_graph_type == GRAPH_AS_SPECTROGRAM)) */
 	  if (cp->transform_graph_type == GRAPH_AS_SPECTROGRAM)
 	    {
-	      max_freq = cp->spectro_cutoff;
-	      min_freq = cp->spectro_start;
+	      max_freq = cp->spectro_cutoff * (Float)SND_SRATE(cp->sound) * 0.5;
+	      min_freq = cp->spectro_start * (Float)SND_SRATE(cp->sound) * 0.5;
 	    }
 	  else 
 	    {
 	      max_freq = cp->spectro_cutoff * (Float)SND_SRATE(cp->sound) * 0.5;
-
 	      if ((cp->fft_log_frequency) && ((SND_SRATE(cp->sound) * 0.5 * cp->spectro_start) < log_freq_start(ss)))
 		min_freq = log_freq_start(ss);
 	      else min_freq = cp->spectro_start * (Float)SND_SRATE(cp->sound) * 0.5;
@@ -1201,7 +1198,6 @@ void single_fft(chan_info *cp, bool dpy)
 
 /* as we run the ffts, we need to save the fft data for subsequent redisplay/printing etc */
 /* many of these can be running in parallel so the pointers can't be global */
-/* display_channel_data above needs to be smart about updates here -- just new data */
 
 /* this work proc calls a loop by pixels (hop depends on pixel/samps decision)
    each pixel(group) sets up the fft_state pointer with beg reflecting hop

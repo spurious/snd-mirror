@@ -223,14 +223,14 @@ static void mix_amp_env_resize(GtkWidget *w)
     {
       spfs[chan]->with_dots = true;
       env_editor_display_env(spfs[chan], e[chan], ax, _("mix env"), (int)(chan * widget_width(w) / chans), 0,
-			     widget_width(w) / chans, widget_height(w), false);
+			     widget_width(w) / chans, widget_height(w), NOT_PRINTING);
       cur_env = mix_dialog_mix_amp_env(mix_dialog_id, chan);
       if (cur_env)
 	{
 	  gdk_gc_set_foreground(ax->gc, (ss->sgx)->enved_waveform_color);
 	  spfs[chan]->with_dots = false;
 	  env_editor_display_env(spfs[chan], cur_env, ax, _("mix env"), (int)(chan * widget_width(w) / chans), 0,
-				 widget_width(w) / chans, widget_height(w), false);
+				 widget_width(w) / chans, widget_height(w), NOT_PRINTING);
 	  gdk_gc_set_foreground(ax->gc, (ss->sgx)->black);
 	}
       if (with_mix_background_wave)
@@ -1152,13 +1152,13 @@ static void track_amp_env_resize(GtkWidget *w)
   else clear_window(track_ax);
   e = track_dialog_env(track_dialog_id);
   track_spf->with_dots = true;
-  env_editor_display_env(track_spf, e, track_ax, _("track env"), 0, 0, widget_width(w), widget_height(w), false);
+  env_editor_display_env(track_spf, e, track_ax, _("track env"), 0, 0, widget_width(w), widget_height(w), NOT_PRINTING);
   cur_env = track_dialog_track_amp_env(track_dialog_id);
   if (cur_env)
     {
       gdk_gc_set_foreground(track_ax->gc, (ss->sgx)->enved_waveform_color);
       track_spf->with_dots = false;
-      env_editor_display_env(track_spf, cur_env, track_ax, _("track env"), 0, 0, widget_width(w), widget_height(w), false);
+      env_editor_display_env(track_spf, cur_env, track_ax, _("track env"), 0, 0, widget_width(w), widget_height(w), NOT_PRINTING);
       gdk_gc_set_foreground(track_ax->gc, (ss->sgx)->black);
     }
   if (with_track_background_wave)

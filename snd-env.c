@@ -496,7 +496,7 @@ static void local_mus_error(int type, char *msg)
 }
 
 void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const char *name, 
-			    int x0, int y0, int width, int height, bool printing)
+			    int x0, int y0, int width, int height, printing_t printing)
 {
   int i, j, k;
   Float ex0, ey0, ex1, ey1, val;
@@ -544,7 +544,7 @@ void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const cha
       ap = edp->axis;
       ap->ax = ax;
       if (edp->with_dots)
-	init_env_axes(ap, name, x0, y0, width, height, ex0, ex1, ey0, ey1, false);
+	init_env_axes(ap, name, x0, y0, width, height, ex0, ex1, ey0, ey1, NOT_PRINTING);
     }
   if (e)
     {
@@ -805,7 +805,7 @@ static int all_envs_size = 0;    /* size of this array */
 static int all_envs_top = 0;     /* one past pointer to last entry in this array */
 
 void init_env_axes(axis_info *ap, const char *name, int x_offset, int ey0, int width, int height, 
-		   Float xmin, Float xmax, Float ymin, Float ymax, bool printing)
+		   Float xmin, Float xmax, Float ymin, Float ymax, printing_t printing)
 {
   if (ap->xlabel) FREE(ap->xlabel);
   ap->xmin = xmin;
@@ -824,11 +824,11 @@ void init_env_axes(axis_info *ap, const char *name, int x_offset, int ey0, int w
   ap->y_offset = ey0;
   ap->height = height;
   ap->graph_x0 = x_offset;
-  make_axes_1(ap, X_AXIS_IN_SECONDS, 1, SHOW_ALL_AXES, printing, true);
+  make_axes_1(ap, X_AXIS_IN_SECONDS, 1, SHOW_ALL_AXES, printing, WITH_X_AXIS, NO_GRID, WITH_LINEAR_AXES);
   /* if this is too small for an axis, it still sets up the fields needed for grf_x|y, so tiny envelope graphs will work */
 }
 
-void view_envs(int env_window_width, int env_window_height, bool printing)
+void view_envs(int env_window_width, int env_window_height, printing_t printing)
 {
   /* divide space available into a grid (if needed) that shows all currently defined envelopes */
   /* I suppose if there were several hundred envelopes, we'd need a scrollable viewer... */
@@ -1201,11 +1201,12 @@ static void display_enved_spectrum(chan_info *cp, enved_fft *ef, axis_info *ap)
 }
 
 
-void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool apply_to_selection, bool show_fft, bool printing)
+void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool apply_to_selection, bool show_fft, printing_t printing)
 {
   int srate, pts = 0;
   graph_type_t old_time_graph_type = GRAPH_ONCE;
-  off_t samps, old_printing;
+  off_t samps;
+  printing_t old_printing;
   bool two_sided = false;
   axis_info *active_ap = NULL;
   chan_info *active_channel = NULL;
@@ -1503,7 +1504,7 @@ XEN envelope_base(XEN obj) {return(XEN_VARIABLE_PROPERTY(obj, envelope_base_sym)
 static XEN set_envelope_base(XEN obj, XEN base) {XEN_SET_VARIABLE_PROPERTY(obj, envelope_base_sym, base); return(base);}
 #else
 XEN envelope_base(XEN obj) {return(XEN_FALSE);}
-static XEN set_envelope_base(XEN obj, XEN base) {return(XEN_FALSE);}
+/* static XEN set_envelope_base(XEN obj, XEN base) {return(XEN_FALSE);} */
 #endif
 
 XEN env_to_xen(env *e)

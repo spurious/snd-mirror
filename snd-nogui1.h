@@ -343,8 +343,8 @@ void reflect_just_sounds_state(void);
 /* -------- snd-xenv.c -------- */
 
 axis_info *enved_make_axis(const char *name, axis_context *ax, int ex0, int ey0, int width, int height, 
-			   Float xmin, Float xmax, Float ymin, Float ymax, bool printing);
-void display_enved_env_with_selection(env *e, char *name, int x0, int y0, int width, int height, bool dots, bool printing);
+			   Float xmin, Float xmax, Float ymin, Float ymax, printing_t printing);
+void display_enved_env_with_selection(env *e, char *name, int x0, int y0, int width, int height, bool dots, printing_t printing);
 void set_enved_redo_sensitive(bool val);
 void set_enved_revert_sensitive(bool val);
 void set_enved_undo_sensitive(bool val);

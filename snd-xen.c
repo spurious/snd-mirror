@@ -1489,19 +1489,6 @@ static XEN g_set_show_selection_transform(XEN val)
   return(C_TO_XEN_BOOLEAN(show_selection_transform(ss)));
 }
 
-static void update_db_fft_graph(chan_info *cp)
-{
-  if ((!(cp->active)) ||
-      (cp->cgx == NULL) || 
-      (cp->sounds == NULL) || 
-      (cp->sounds[cp->sound_ctr] == NULL) ||
-      (!(cp->graph_transform_p)) ||
-      (!(cp->fft_log_magnitude)) ||
-      (chan_fft_in_progress(cp)))
-    return;
-  calculate_fft(cp);
-}
-
 static void update_log_freq_fft_graph(chan_info *cp)
 {
   if ((!(cp->active)) ||

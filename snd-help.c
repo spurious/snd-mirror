@@ -355,15 +355,16 @@ char *version_info(void)
 
 void about_snd_help(void)
 {
-  char *info = NULL, *features = NULL, *files = NULL;
-  info = version_info();
+  char *info = NULL, *features = NULL;
 #if HAVE_GUILE
+  char *files = NULL;
   features = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING("*features*")), 400);
   files = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING("snd-loaded-files")), 400);
 #endif
 #if HAVE_RUBY
   features = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING("$\".join(' ')")), 400);
 #endif
+  info = version_info();
   main_snd_help("Snd is a sound editor.",
 	    info,
 	    "\nRecent changes include:\n\
