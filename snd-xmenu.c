@@ -10,8 +10,8 @@ enum {menu_menu,
           e_redo_menu, e_find_menu, e_edenv_menu, e_header_menu, e_select_all_menu,
           e_select_sep_menu, e_edit_sep_menu,
         help_menu, h_cascade_menu,
-          h_about_snd_menu, h_fft_menu, h_find_menu, h_undo_menu, h_sync_menu, h_speed_menu,
-          h_expand_menu, h_contrast_menu, h_reverb_menu, h_env_menu, h_marks_menu, h_sound_files_menu, h_init_file_menu,
+          h_about_snd_menu, h_fft_menu, h_find_menu, h_undo_menu, h_sync_menu, h_controls_menu,
+          h_env_menu, h_marks_menu, h_sound_files_menu, h_init_file_menu,
           h_mix_menu, h_recording_menu, h_news_menu,
         option_menu, o_cascade_menu,
           o_transform_menu,
@@ -36,7 +36,7 @@ enum {menu_menu,
           v_sep2_menu
 };
 
-#define NUM_MENU_WIDGETS 97
+#define NUM_MENU_WIDGETS 94
 static Widget mw[NUM_MENU_WIDGETS];
 
 enum {W_pop_menu, W_pop_sep, W_pop_play, W_pop_undo, W_pop_redo, W_pop_save, W_pop_equalize_panes, W_pop_info};
@@ -464,10 +464,7 @@ static void help_fft_callback (Widget w, XtPointer info, XtPointer context) {if 
 static void help_find_callback (Widget w, XtPointer info, XtPointer context) {if (call_menu_hook(w)) find_help();}
 static void help_undo_callback (Widget w, XtPointer info, XtPointer context) {if (call_menu_hook(w)) undo_help();}
 static void help_sync_callback (Widget w, XtPointer info, XtPointer context) {if (call_menu_hook(w)) sync_help();}
-static void help_speed_callback (Widget w, XtPointer info, XtPointer context) {if (call_menu_hook(w)) speed_help();}
-static void help_expand_callback (Widget w, XtPointer info, XtPointer context) {if (call_menu_hook(w)) expand_help();}
-static void help_reverb_callback (Widget w, XtPointer info, XtPointer context) {if (call_menu_hook(w)) reverb_help();}
-static void help_contrast_callback (Widget w, XtPointer info, XtPointer context) {if (call_menu_hook(w)) contrast_help();}
+static void help_controls_callback (Widget w, XtPointer info, XtPointer context) {if (call_menu_hook(w)) controls_help();}
 static void help_env_callback (Widget w, XtPointer info, XtPointer context) {if (call_menu_hook(w)) env_help();}
 static void help_marks_callback (Widget w, XtPointer info, XtPointer context) {if (call_menu_hook(w)) marks_help();}
 static void help_mix_callback (Widget w, XtPointer info, XtPointer context) {if (call_menu_hook(w)) mix_help();}
@@ -852,35 +849,23 @@ Widget add_menu(void)
   XtSetArg(high_args[high_n], XmNuserData, 4); high_n++;
   mw[h_cascade_menu] = XtCreateManagedWidget(_("Help"), xmCascadeButtonWidgetClass, mw[menu_menu], high_args, high_n);
 
-  mw[h_about_snd_menu] = XtCreateManagedWidget(_("Overview"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
+  mw[h_about_snd_menu] = XtCreateManagedWidget(_("About Snd"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
   XtAddCallback(mw[h_about_snd_menu], XmNactivateCallback, help_about_snd_callback, NULL);
   XtVaSetValues(mw[h_about_snd_menu], XmNmnemonic, 'O', NULL);
 
-  mw[h_fft_menu] = XtCreateManagedWidget(_("FFT"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
-  XtAddCallback(mw[h_fft_menu], XmNactivateCallback, help_fft_callback, NULL);
+  mw[h_news_menu] = XtCreateManagedWidget(_("About this version"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
+  XtAddCallback(mw[h_news_menu], XmNactivateCallback, help_news_callback, NULL);
 
-  mw[h_find_menu] = XtCreateManagedWidget(_("Find"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
-  XtAddCallback(mw[h_find_menu], XmNactivateCallback, help_find_callback, NULL);
+  mw[h_init_file_menu] = XtCreateManagedWidget(_("Customization"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
+  XtAddCallback(mw[h_init_file_menu], XmNactivateCallback, help_init_file_callback, NULL);
 
-  mw[h_undo_menu] = XtCreateManagedWidget(_("Undo and redo"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
-  XtAddCallback(mw[h_undo_menu], XmNactivateCallback, help_undo_callback, NULL);
+  mw[h_controls_menu] = XtCreateManagedWidget(_("Control Panel"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
+  XtAddCallback(mw[h_controls_menu], XmNactivateCallback, help_controls_callback, NULL);
 
-  mw[h_sync_menu] = XtCreateManagedWidget(_("Sync"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
-  XtAddCallback(mw[h_sync_menu], XmNactivateCallback, help_sync_callback, NULL);
+  mw[h_recording_menu] = XtCreateManagedWidget(_("Recording"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
+  XtAddCallback(mw[h_recording_menu], XmNactivateCallback, help_recording_callback, NULL);
 
-  mw[h_speed_menu] = XtCreateManagedWidget(_("Speed"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
-  XtAddCallback(mw[h_speed_menu], XmNactivateCallback, help_speed_callback, NULL);
-
-  mw[h_expand_menu] = XtCreateManagedWidget(_("Expand"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
-  XtAddCallback(mw[h_expand_menu], XmNactivateCallback, help_expand_callback, NULL);
-
-  mw[h_reverb_menu] = XtCreateManagedWidget(_("Reverb"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
-  XtAddCallback(mw[h_reverb_menu], XmNactivateCallback, help_reverb_callback, NULL);
-
-  mw[h_contrast_menu] = XtCreateManagedWidget(_("Contrast"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
-  XtAddCallback(mw[h_contrast_menu], XmNactivateCallback, help_contrast_callback, NULL);
-
-  mw[h_env_menu] = XtCreateManagedWidget(_("Envelope"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
+  mw[h_env_menu] = XtCreateManagedWidget(_("Envelopes"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
   XtAddCallback(mw[h_env_menu], XmNactivateCallback, help_env_callback, NULL);
 
   mw[h_marks_menu] = XtCreateManagedWidget(_("Marks"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
@@ -889,17 +874,20 @@ Widget add_menu(void)
   mw[h_mix_menu] = XtCreateManagedWidget(_("Mixing"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
   XtAddCallback(mw[h_mix_menu], XmNactivateCallback, help_mix_callback, NULL);
 
-  mw[h_sound_files_menu] = XtCreateManagedWidget(_("Formats"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
+  mw[h_undo_menu] = XtCreateManagedWidget(_("Undo and redo"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
+  XtAddCallback(mw[h_undo_menu], XmNactivateCallback, help_undo_callback, NULL);
+
+  mw[h_fft_menu] = XtCreateManagedWidget(_("FFTs"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
+  XtAddCallback(mw[h_fft_menu], XmNactivateCallback, help_fft_callback, NULL);
+
+  mw[h_find_menu] = XtCreateManagedWidget(_("Searching"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
+  XtAddCallback(mw[h_find_menu], XmNactivateCallback, help_find_callback, NULL);
+
+  mw[h_sync_menu] = XtCreateManagedWidget(_("Sync"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
+  XtAddCallback(mw[h_sync_menu], XmNactivateCallback, help_sync_callback, NULL);
+
+  mw[h_sound_files_menu] = XtCreateManagedWidget(_("Headers and Data"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
   XtAddCallback(mw[h_sound_files_menu], XmNactivateCallback, help_sound_files_callback, NULL);
-
-  mw[h_init_file_menu] = XtCreateManagedWidget(_("Customization"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
-  XtAddCallback(mw[h_init_file_menu], XmNactivateCallback, help_init_file_callback, NULL);
-
-  mw[h_recording_menu] = XtCreateManagedWidget(_("Recording"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
-  XtAddCallback(mw[h_recording_menu], XmNactivateCallback, help_recording_callback, NULL);
-
-  mw[h_news_menu] = XtCreateManagedWidget(_("News"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
-  XtAddCallback(mw[h_news_menu], XmNactivateCallback, help_news_callback, NULL);
 
   XtVaSetValues(mw[menu_menu], XmNmenuHelpWidget, mw[h_cascade_menu], NULL);
 #ifndef SND_AS_WIDGET

@@ -683,11 +683,11 @@ static void reflect_apply_state (void)
   if (!(ss->using_schemes))
     {
       XmChangeColor(ampB, 
-		    (enved_target(ss) == ENVED_AMPLITUDE) ? ((Pixel)(ss->sgx)->green) : ((Pixel)(ss->sgx)->highlight_color));
+		    (enved_target(ss) == ENVED_AMPLITUDE) ? ((Pixel)(ss->sgx)->yellow) : ((Pixel)(ss->sgx)->highlight_color));
       XmChangeColor(fltB, 
-		    (enved_target(ss) == ENVED_SPECTRUM) ? ((Pixel)(ss->sgx)->green) : ((Pixel)(ss->sgx)->highlight_color));
+		    (enved_target(ss) == ENVED_SPECTRUM) ? ((Pixel)(ss->sgx)->yellow) : ((Pixel)(ss->sgx)->highlight_color));
       XmChangeColor(srcB, 
-		    (enved_target(ss) == ENVED_SRATE) ? ((Pixel)(ss->sgx)->green) : ((Pixel)(ss->sgx)->highlight_color));
+		    (enved_target(ss) == ENVED_SRATE) ? ((Pixel)(ss->sgx)->yellow) : ((Pixel)(ss->sgx)->highlight_color));
     }
   if ((!showing_all_envs) && 
       (enved_wave_p(ss))) 
@@ -1349,7 +1349,7 @@ Widget create_envelope_editor(void)
       if (!(ss->using_schemes)) 
 	{
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;
-	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
+	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->yellow); n++;
 	}
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;	
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -1364,7 +1364,7 @@ Widget create_envelope_editor(void)
       if (!(ss->using_schemes)) 
 	{
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;
-	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
+	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->yellow); n++;
 	}
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;	
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -1380,7 +1380,7 @@ Widget create_envelope_editor(void)
       if (!(ss->using_schemes)) 
 	{
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;
-	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
+	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->yellow); n++;
 	}
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;	
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;

@@ -49,9 +49,7 @@ static void dismiss_completion_callback(GtkWidget *w, gpointer context)
 
 static void help_completion_callback(GtkWidget *w, gpointer context)
 {
-  snd_help("completion",
-	   "These are the completions that Snd thinks might be likely. If you select one, it will be used to complete the current name.",
-	   true);
+  completion_dialog_help();
 }
 
 static void delete_completion_dialog(GtkWidget *w, GdkEvent *event, gpointer context)

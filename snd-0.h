@@ -739,7 +739,7 @@ typedef enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_U
 
 #define html_program(ss) ss->HTML_Program
 #define set_html_program(a) ss->HTML_Program = a
-#define DEFAULT_HTML_PROGRAM "netscape"
+#define DEFAULT_HTML_PROGRAM "mozilla"
 
 #define graphs_horizontal(ss) ss->Graphs_Horizontal
 #define in_set_graphs_horizontal(a) ss->Graphs_Horizontal = a

@@ -1,6 +1,6 @@
 #include "snd.h"
 
-/* TODO: basic-[small|large]-[bodl]-font (somehow set default font in motif)
+/* TODO: basic-[small|large]-[bold]-font (somehow set default font in motif)
  */
 
 #include <X11/cursorfont.h>

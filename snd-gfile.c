@@ -162,6 +162,8 @@ static GtkWidget *snd_gtk_file_selection_new(char *title, GtkSignalFunc gdelete,
   g_list_foreach(cells, unpad, NULL);
   g_list_free(cells);
 
+  
+
   /* make entry widget look like one of ours */
   entry = filer->selection_entry;
   gtk_widget_modify_bg(entry, GTK_STATE_NORMAL, ss->sgx->white);
@@ -196,7 +198,7 @@ static GtkWidget *snd_gtk_file_selection_new(char *title, GtkSignalFunc gdelete,
 
 typedef struct {
   int file_dialog_read_only, need_update, new_file_written;
-  GtkWidget *dialog, *play_selected_button, *dialog_frame, *dialog_info1, *dialog_info2, *dialog_vbox, *playb;
+  GtkWidget *dialog, *play_selected_button, *dialog_frame, *dialog_info1, *dialog_info2, *dialog_vbox, *playb, *just_sounds_button;
   snd_info *file_play_sp;
 } file_dialog_info;
 
@@ -264,6 +266,59 @@ void clear_deleted_snd_info(void *data)
   fd->file_play_sp = NULL;
 }
 
+static bool just_sounds_state = false;
+
+static char *just_directory(const char *uname)
+{
+  int i, len, last_slash;
+  char *name;
+  last_slash = 0;
+  name = copy_string(uname);
+  len = strlen(name);
+  if (name[len - 1] = '/') 
+    return(name);
+  for (i = len - 2; i > 0; i--)
+    if (name[i] == '/') 
+      {
+	name[i + 1] = '\0';
+	return(name);
+      }
+  return(NULL);
+}
+
+static void prune_file_list(GtkFileSelection *filer)
+{
+  GtkListStore *list_store;  
+  GtkTreeIter iter;
+  GtkTreeModel *tree_model;
+  char *dirname;
+  bool more_files = true;
+  tree_model = gtk_tree_view_get_model(GTK_TREE_VIEW(filer->file_list));
+  list_store = GTK_LIST_STORE(tree_model);
+  dirname = just_directory((char *)gtk_file_selection_get_filename(filer)); /* unused but perhaps hook or proc? */
+  if (gtk_tree_model_get_iter_first(tree_model, &iter))
+    {
+      while (more_files)
+	{
+	  gchar *name;
+	  gtk_tree_model_get(tree_model, &iter, 0, &name, -1);
+	  if (!(sound_file_p(name)))
+	    more_files = gtk_list_store_remove(list_store, &iter);
+	  else more_files = gtk_tree_model_iter_next(tree_model, &iter);
+	}
+    }
+}
+
+/* TODO: for just-sounds, how to get notification that the file list has changed? */
+
+static void just_sounds_callback(GtkWidget *w, gpointer data)
+{
+  file_dialog_info *fd = (file_dialog_info *)data;
+  if (GTK_TOGGLE_BUTTON(w)->active)
+    prune_file_list(GTK_FILE_SELECTION(fd->dialog));
+  else gtk_file_selection_complete(GTK_FILE_SELECTION(fd->dialog), ""); /* i.e. re-read dir, make a new file list */
+}
+
 static void play_selected_callback(GtkWidget *w, gpointer data)
 {
   file_dialog_info *fd = (file_dialog_info *)data;
@@ -299,9 +354,19 @@ static file_dialog_info *make_file_dialog(int read_only, char *title, snd_dialog
 					  file_delete_proc,
 					  file_ok_proc,
 					  file_dismiss_proc);
+
+  fd->just_sounds_button = gtk_check_button_new_with_label(_("sound files only"));
+  gtk_box_pack_start(GTK_BOX(GTK_FILE_SELECTION(fd->dialog)->main_vbox), fd->just_sounds_button, false, false, 6);
+  gtk_widget_show(fd->just_sounds_button);
+  g_signal_connect_closure_by_id(GTK_OBJECT(fd->just_sounds_button),
+				 g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(fd->just_sounds_button))),
+				 0,
+				 g_cclosure_new(GTK_SIGNAL_FUNC(just_sounds_callback), (gpointer)fd, 0),
+				 0);
+
+  /* these start out hidden -- are shown only when a file is selected */
   fd->dialog_frame = gtk_frame_new(NULL);
   gtk_box_pack_start(GTK_BOX(GTK_FILE_SELECTION(fd->dialog)->main_vbox), fd->dialog_frame, true, true, 0);
-  /* gtk+extra/gtkiconfilesel.h says action_area as gtk table here? */
   gtk_frame_set_shadow_type(GTK_FRAME(fd->dialog_frame), GTK_SHADOW_ETCHED_IN);
   
   fd->dialog_vbox = gtk_vbox_new(false, 0);
@@ -1690,13 +1755,26 @@ GtkWidget *edit_header(snd_info *sp)
 
 static XEN g_just_sounds(void)
 {
-  #define H_just_sounds "not implemented in Gtk+ version of Snd"
-  return(XEN_FALSE);
+  #define H_just_sounds "(" S_just_sounds "): the 'just sounds' button in the file chooser dialog"
+  return(C_TO_XEN_BOOLEAN(just_sounds_state));
 }
 
 static XEN g_set_just_sounds(XEN on) 
 {
-  return(XEN_FALSE);
+  bool n;
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_just_sounds, "a boolean");
+  n = XEN_TO_C_BOOLEAN(on);
+  if (open_dialog) prune_file_list(GTK_FILE_SELECTION(open_dialog->dialog));
+
+  /* TODO: finish tying just-sounds variable into gtk, also just-sounds-hook? */
+#if 0
+  if ((open_dialog) && (open_dialog->just_sounds_button))
+    XmToggleButtonSetState(open_dialog->just_sounds_button, n, true);
+  if ((mix_dialog) && (mix_dialog->just_sounds_button))
+    XmToggleButtonSetState(mix_dialog->just_sounds_button, n, true);
+#endif
+  just_sounds_state = n;
+  return(C_TO_XEN_BOOLEAN(n));
 }
 
 #ifdef XEN_ARGIFY_1
@@ -1707,9 +1785,12 @@ XEN_NARGIFY_1(g_set_just_sounds_w, g_set_just_sounds)
 #define g_set_just_sounds_w g_set_just_sounds
 #endif
 
+
+
 void g_init_gxfile(void)
 {
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_just_sounds, g_just_sounds_w, H_just_sounds, S_setB S_just_sounds, g_set_just_sounds_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_just_sounds, g_just_sounds_w, H_just_sounds,
+				   S_setB S_just_sounds, g_set_just_sounds_w,  0, 0, 1, 0);
 
   #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label): called when the mouse enters a file viewer or region label. \
 The 'type' is 0 for the current files list, 1 for previous files, and 2 for regions. The 'position' \
@@ -1726,4 +1807,5 @@ See also nb.scm."
   XEN_DEFINE_HOOK(mouse_enter_label_hook, S_mouse_enter_label_hook, 3, H_mouse_enter_label_hook);
   XEN_DEFINE_HOOK(mouse_leave_label_hook, S_mouse_leave_label_hook, 3, H_mouse_leave_label_hook);
 }
+
 

@@ -1,7 +1,5 @@
 #include "snd.h"
 
-/* most the dialogs present a view of the various file header possibilities */
-
 #define NUM_VISIBLE_HEADERS 4
 
 char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples)
@@ -219,9 +217,7 @@ typedef struct {
 
 static void file_help_callback (Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help("File",
-"If you click the 'Sound Files Only' button, only those files in the current directory that look vaguely like sound files will be displayed.",
-	   true);
+  open_file_dialog_help();
 }
 
 static void file_dialog_stop_playing(file_dialog_info *fd)
@@ -635,12 +631,10 @@ static void file_mix_ok_callback(Widget w, XtPointer context, XtPointer info)
   XmStringGetLtoR (cbs->value, XmFONTLIST_DEFAULT_TAG, &filename);
   file_dialog_stop_playing(fd);
   if (!(directory_p(filename)))               /* this can be a directory name if the user clicked 'ok' when he meant 'cancel' */
-    {
-      mix_complete_file_at_cursor(any_selected_sound(), 
-				  filename,
-				  "File: mix",
-				  with_mix_tags(ss));
-    }
+    mix_complete_file_at_cursor(any_selected_sound(), 
+				filename,
+				"File: mix",
+				with_mix_tags(ss));
   else snd_error(_("%s is a directory"), filename);
 }
 
@@ -1022,16 +1016,7 @@ file_data *make_file_data_panel(Widget parent, char *name, Arg *in_args, int in_
 
 static void save_as_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help("Save As",
-"You can save the current state of a file or region under a different file name using the Save \
-As option.  The output header type, data format,  and sampling rate can also be set.  The data formats \
-are big-endian where relevant except for 'wave' output.  If a file by the chosen name already exists \
-it is silently overwritten, unless that file is already open in Snd and has edits.  In that case,  \
-you'll be asked what to do.  If you want to be warned whenever a file is about to be overwritten by this \
-option, set the resource overwriteCheck to 1. If you give the current file name to Save As,  \
-any current edits will be saved and the current version in Snd will be updated (that is, in this \
-case, the current edit tree is not preserved).",
-	   true);
+  save_as_dialog_help();
 }
 
 static void make_save_as_dialog(char *sound_name, int header_type, int format_type)

@@ -348,18 +348,8 @@ static void dismiss_mix_panel_callback(Widget w, XtPointer context, XtPointer in
 
 static void help_mix_panel_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help("Mix Panel",
-"This dialog provides various commonly-used controls on the currently \
-selected mix.  At the top are the mix id, begin and end times, \
-track number, and a play button.  Beneath that are various sliders \
-controlling the speed (sampling rate) of the mix, and the amplitude of each \
-input channel; and finally, an envelope editor for the mix's (input) channels. \
-The current mix amp env is not actually changed until you click 'Apply Env'.\
-The editor envelope is drawn in black with dots whereas the current \
-mix amp env (if any) is drawn in blue.",
-	   true);
+  mix_dialog_help();
 }
-
 
 static bool mix_playing = false;
 bool mix_play_stopped(void) {return(!mix_playing);}

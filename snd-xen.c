@@ -2490,7 +2490,7 @@ static XEN g_basic_color(void)
   return(XEN_WRAP_PIXEL((ss->sgx)->basic_color));
 }
 
-void recolor_everything(widget_t w, void *ptr)
+static void recolor_everything(widget_t w, void *ptr)
 {
 #if USE_GTK
   if (GTK_IS_WIDGET(w)) 

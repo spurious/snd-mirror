@@ -467,14 +467,11 @@ int close_temp_file(int ofd, file_info *hdr, off_t bytes, snd_info *sp);
 /* -------- snd-help.c -------- */
 
 void about_snd_help(void);
+void controls_help(void);
 void fft_help(void);
 void find_help(void);
 void undo_help(void);
 void sync_help(void);
-void speed_help(void);
-void expand_help(void);
-void reverb_help(void);
-void contrast_help(void);
 void env_help(void);
 void marks_help(void);
 void mix_help(void);
@@ -493,6 +490,11 @@ void new_file_dialog_help(void);
 void edit_header_dialog_help(void);
 void print_dialog_help(void);
 void view_files_dialog_help(void);
+void mix_dialog_help(void);
+void find_dialog_help(void);
+void completion_dialog_help(void);
+void open_file_dialog_help(void);
+void save_as_dialog_help(void);
 void ssnd_help(const char *subject, ...);
 char* word_wrap(const char *text, int widget_len);
 void g_init_help(void);

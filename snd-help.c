@@ -298,6 +298,7 @@ void news_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+15-Sep:  just-sounds support in Gtk.\n\
 12-Sep:  quit-button-color, help-button-color, reset-button-color, \n\
          doit-button-color, doit-again-button-color.\n\
 8-Sep:   added show-all-axes-unlabelled and show-x-axis-unlabelled.\n\
@@ -682,52 +683,6 @@ the mouse) in one channel, and the parallel portions of the other channels will 
 	   true);
 }
 
-static char speed_help_string[] = 
-"'Speed' refers to the rate at which the sound data is consumed during playback. \
-Another term might be 'srate'.  Snd uses sinc interpolation to perform the speed \
-change.  The arrow button on the right determines the direction it moves through the data. \
-The scroll bar position is normally interpreted as a float between .05 and 20.  The Options \
-Speed Style menu (or the " S_speed_control_style " variable) can change this to use semitones (actually microtones) \
-or just-intonation ratios.  The number of equal divisions to the octave in the semitone case is \
-set by the variable " S_speed_control_tones " (normally 12). \
-\n\
-";
-
-static char expand_help_string[] = 
-"'Expand' refers to a kind of granular synthesis used to change the tempo of events \
-in the sound without changing pitch.  Successive short slices of the file are overlapped with \
-the difference in size between the input and output hops (between successive slices) giving \
-the change in tempo.  This doesn't work in all files -- it sometimes sounds like execrable reverb \
-or is too buzzy -- but it certainly is more robust than the phase vocoder approach to the \
-same problem.  \
-\n\n\
-There are a variety of variables that control hop sizes, segment lengths, and overall segment \
-envelopes: \
-\n\
-  " S_expand_control_ramp ": the length of the ramp up (.4, 0 to .5)\n\
-  " S_expand_control_length ": the length of each slice (.15)\n\
-  " S_expand_control_hop ": the hop size (.05)\n\
-\n\
-The expander is on only if the expand button is set. \
-\n\
-";
-
-static char reverb_help_string[] = 
-"The Snd reverberator is a version of Michael McNabb's Nrev.  In addition to the controls \
-in the control pane, you can set the reverb feedback gains and the coefficient of the low \
-pass filter in the allpass bank. The variables are '" S_reverb_control_feedback "' and '" S_reverb_control_lowpass "'. \
-The reverb is on only if the reverb button is set.\
-";
-
-void contrast_help(void) 
-{
-  snd_help("Contrast", 
-"'Contrast enhancement' is my name for this somewhat weird waveshaper or compander.  It \
-phase-modulates a sound, which can in some cases make it sound sharper or brighter. \
-For softer sounds, it causes only an amplitude change.  Contrast is on only if the contrast button is set.",
-	   true);
-}
-
 void env_help(void) 
 {
   snd_help("Envelope", 
@@ -821,14 +776,17 @@ and forth by hand on the spindles. Or just click the arrow to play the data star
 at the mark.";
 
 static char init_file_help_string[] =
-"Nearly everything in Snd can be set in an initialization file, loaded at any\n\
-time from a saved-state (Guile) file, specified via inter-process communciation from any\n\
-other program, invoked via M-x in the minibuffer, imbedded in a keyboard\n\
-macro, or dealt with from the lisp listener panel. I've tried to bring out to lisp nearly\n\
-every portion of Snd, both the signal-processing functions, and much of the\n\
-user interface. You can, for example, add your own menu choices, editing\n\
-operations, or graphing alternatives. These extensions can be loaded at any\n\
-time.  See extsnd.html and grfsnd.html for details.\n\
+"Nearly everything in Snd can be set in an initialization file,\n\
+loaded at any time from a saved-state (Guile) file, specified \n\
+via inter-process communciation from any other program, invoked \n\
+via M-x in the minibuffer, imbedded in a keyboard\n\
+macro, or dealt with from the lisp listener panel. \n\
+I've tried to bring out to lisp nearly every portion of Snd,\n\
+both the signal-processing functions, and much of the user\n\
+interface. You can, for example, add your own menu choices,\n\
+editing operations, or graphing alternatives. These\n\
+extensions can be loaded at any time.  See extsnd.html and\n\
+grfsnd.html for details.\n\
 \n\
 ";
 
@@ -993,14 +951,59 @@ fft_keypad_help_string,
 NULL);
 }
 
-void speed_help(void) {snd_help("Speed", speed_help_string, true);}
-void expand_help(void) {snd_help("Expand", expand_help_string, true);}
-void reverb_help(void) {snd_help("Reverb", reverb_help_string, true);}
+void controls_help(void) 
+{
+  ssnd_help("The Control Panel", 
+"The control panel can provide a quick preview of various common \n\
+ways to process a sound. \n\
+\n\n\
+'Speed' refers to the rate at which the sound data is consumed during \n\
+playback.  Another term might be 'srate'.  Snd uses sinc interpolation \n\
+to perform the speed change.  The arrow button on the right determines \n\
+the direction it moves through the data.  The scroll bar position is \n\
+normally interpreted as a float between .05 and 20.  The Options Speed \n\
+Style menu (oor the speed-control-style variable) can change this to \n\
+use semitones (actually microtones) or just-intonation ratios.  The \n\
+number of equal divisions to the octave in the semitone case is set by \n\
+the variable speed-control-tones (normally 12). \n\
+\n\n\
+'Expand' refers to a kind of granular synthesis used to change the \n\
+tempo of events in the sound without changing pitch.  Successive short \n\
+slices of the file are overlapped with the difference in size between \n\
+the input and output hops (between successive slices) giving the \n\
+change in tempo.  This doesn't work in all files -- it sometimes \n\
+sounds like execrable reverb or is too buzzy -- but it certainly is \n\
+more robust than the phase vocoder approach to the same problem. \n\
+\n\
+There are a variety of variables that control hop sizes,  \n\
+segment lengths, and overall segment envelopes:  \n\
+\n\
+  expand-control-ramp: the length of the ramp up (.4, 0 to .5)\n\
+  expand-control-length: the length of each slice (.15)\n\
+  expand-control-hop: the hop size (.05)\n\
+\n\
+The expander is on only if the expand button is set. \n\
+\n\n\
+'Contrast enhancement' is my name for this somewhat weird waveshaper \n\
+or compander.  It phase-modulates a sound, which can in some cases \n\
+make it sound sharper or brighter.  For softer sounds, it causes only \n\
+an amplitude change.  Contrast is on only if the contrast button is \n\
+set. \n\
+\n\n\
+The control panel reverberator is a version of Michael McNabb's Nrev. \n\
+In addition to the controls in the control pane, you can set the \n\
+reverb feedback gains and the coefficient of the low pass filter in \n\
+the allpass bank (reverb-control-feedback and reverb-control-lowpass). \n\
+The reverb is on only if the reverb button is set. \n\
+",
+NULL);
+}
+
 void marks_help(void) {snd_help("Marks", mark_help_string, true);}
 void mix_help(void) {snd_help("Mixing", mix_help_string, true);}
-void sound_files_help(void) {snd_help("Format", sound_files_help_string, false);}
+void sound_files_help(void) {snd_help("Headers and Data", sound_files_help_string, false);}
 void recording_help(void) {snd_help("Recording", recording_help_string, true);}
-void init_file_help(void) {snd_help("Customization", init_file_help_string, true);}
+void init_file_help(void) {ssnd_help("Customization", init_file_help_string, NULL);}
 
 
 /* -------- dialog help button -------- */
@@ -1073,6 +1076,58 @@ void raw_data_dialog_help(void)
 of channels, and numerical format.  This dialog gives you a chance to set those fields. \
 To make the current settings the default for any future headerless files, click the \
 'Default' button.",
+	   true);
+}
+
+void completion_dialog_help(void)
+{
+  snd_help("completion",
+	   "These are the completions that Snd thinks might be likely. If you select one, it will be used to complete the current name.",
+	   true);
+}
+
+void save_as_dialog_help(void)
+{
+  snd_help("Save As",
+"You can save the current state of a file or region under a different file name using the Save \
+As option.  The output header type, data format,  and sampling rate can also be set.  The data formats \
+are little-endian where relevant except for 'aifc' output.  If a file by the chosen name already exists \
+it is silently overwritten, unless that file is already open in Snd and has edits.  In that case,  \
+you'll be asked what to do.  If you want to be warned whenever a file is about to be overwritten by this \
+option, set the resource overwriteCheck to 1 (or the ask-before-overwrite variable to #t). \
+If you give the current file name to Save As,  \
+any current edits will be saved and the current version in Snd will be updated (that is, in this \
+case, the edit tree is not preserved).",
+	   true);
+}
+
+void open_file_dialog_help(void)
+{
+  snd_help("File",
+"If you click the 'Sound Files Only' button, only those files in the current directory that look vaguely like sound files will be displayed.",
+	   true);
+}
+
+void find_dialog_help(void)
+{
+  snd_help("Global Find",
+"This search travels through all the current channels in parallel until a match is found.  The find \
+expression is a Scheme function of one argument,  the current sample value.  It should return #t when the \
+search is satisified.  For example, (lambda (n) (> n .1)) looks for the next sample that is greater than .1.",
+	   true);
+}
+
+void mix_dialog_help(void)
+{
+  snd_help("Mix Panel",
+"This dialog provides various commonly-used controls on the currently \
+selected mix.  At the top are the mix id, begin and end times, \
+track number, and a play button.  Beneath that are various sliders \
+controlling the speed (sampling rate) of the mix, and the amplitude of each \
+input channel; and finally, an envelope editor for the mix's (input) channels. \
+The current mix amp env is not actually changed until you click 'Apply Env'.\
+The editor envelope is drawn in black with dots whereas the current \
+mix amp env (if any) is drawn in blue.",
 	   true);
 }
 

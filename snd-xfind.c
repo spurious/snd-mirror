@@ -6,11 +6,7 @@ static Widget edit_find_dialog, edit_find_text, cancelB, edit_find_label, findne
 
 static void edit_find_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help("Global Find",
-"This search travels through all the current channels in parallel until a match is found.  The find \
-expression is a Scheme function of one argument,  the current sample value.  It should return #t when the \
-search is satisified.  For example, (lambda (n) (> n .1)) looks for the next sample that is greater than .1.",
-	   true);
+  find_dialog_help();
 } 
 
 static void edit_find_ok_callback(read_direction_t direction, Widget w, XtPointer context, XtPointer info)

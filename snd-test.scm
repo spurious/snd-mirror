@@ -625,7 +625,7 @@
       (if (not (equal? (html-dir)  ".")) 
 	  (snd-display ";html-dir set def: ~A" (html-dir)))
       (set! (html-program) (html-program))
-      (if (not (equal? (html-program)  "netscape")) 
+      (if (not (equal? (html-program)  "mozilla")) 
 	  (snd-display ";html-program set def: ~A" (html-program)))
       (set! (just-sounds) (just-sounds))
       (if (not (equal? (just-sounds)  #f)) 
@@ -909,7 +909,7 @@
 	'graph-cursor (graph-cursor) 34
 	'graph-style (graph-style) graph-lines
 	'html-dir (html-dir) "."
-	'html-program (html-program) "netscape"
+	'html-program (html-program) "mozilla"
 	'lisp-graph? (without-errors (lisp-graph?)) 'no-such-sound
 	'graphs-horizontal (graphs-horizontal) #t
 	'just-sounds (just-sounds) #f

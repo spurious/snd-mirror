@@ -616,9 +616,9 @@ static void redo_button_pressed(GtkWidget *w, gpointer context)
 static void reflect_apply_state (void)
 {
   gtk_label_set_text(GTK_LABEL(nameL), _(env_names[enved_target(ss)]));
-  gtk_widget_modify_bg(ampB, GTK_STATE_NORMAL, (enved_target(ss) == ENVED_AMPLITUDE) ? (ss->sgx)->green : (ss->sgx)->basic_color);
-  gtk_widget_modify_bg(fltB, GTK_STATE_NORMAL, (enved_target(ss) == ENVED_SPECTRUM) ? (ss->sgx)->green : (ss->sgx)->basic_color);
-  gtk_widget_modify_bg(srcB, GTK_STATE_NORMAL, (enved_target(ss) == ENVED_SRATE) ? (ss->sgx)->green : (ss->sgx)->basic_color);
+  gtk_widget_modify_bg(ampB, GTK_STATE_NORMAL, (enved_target(ss) == ENVED_AMPLITUDE) ? (ss->sgx)->yellow : (ss->sgx)->basic_color);
+  gtk_widget_modify_bg(fltB, GTK_STATE_NORMAL, (enved_target(ss) == ENVED_SPECTRUM) ? (ss->sgx)->yellow : (ss->sgx)->basic_color);
+  gtk_widget_modify_bg(srcB, GTK_STATE_NORMAL, (enved_target(ss) == ENVED_SRATE) ? (ss->sgx)->yellow : (ss->sgx)->basic_color);
   if ((!showing_all_envs) && (enved_wave_p(ss))) env_redisplay();
 }
 
