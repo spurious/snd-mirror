@@ -9563,7 +9563,9 @@
        (vct-set! v i (+ off (* scale (cos (+ angle (* i incr)))))))))
 
 (if (or full-test (= snd-test 15) (and keep-going (<= snd-test 15)))
-    (let ((obi (open-sound (car (match-sound-files (lambda (file) (= (mus-sound-chans file) 1)))))))
+    (let ((obi (open-sound (car (match-sound-files (lambda (file) 
+						     (and (not (= (mus-sound-header-type file) mus-raw))
+							  (= (mus-sound-chans file) 1))))))))
 
       (define (test-selection ind beg len scaler)
 	(set! (selection-member? ind 0) #t)

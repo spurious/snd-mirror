@@ -1174,6 +1174,7 @@ static XEN snd_access(char *dir, char *caller)
       FREE(temp);
       return(res);
     }
+  else close(err);
   remove(temp);
   FREE(temp);
   return(C_TO_XEN_STRING(dir));
@@ -3737,7 +3738,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(set! %load-hook (lambda (filename)\
                                         (set! snd-last-file-loaded filename)\
                                         (if %load-verbosely\
-                                          (snd-print (format #f \";;; loading ~S\" filename)))\
+                                          (snd-print (format #f \"~%;;; loading ~S\" filename)))\
                                         (if snd-remember-paths\
                                             (let ((curfile (mus-expand-filename filename))\
                                                   (last-slash 0))\

@@ -847,7 +847,7 @@ void clear_region_backpointer(snd_info *sp);
 void save_region_backpointer(snd_info *sp);
 void sequester_deferred_regions(chan_info *cp, int edit_top);
 void g_init_regions(void);
-
+int map_over_region_chans(snd_state *ss, int (*func)(chan_info *, void *), void *userptr);
 
 
 /* -------- snd-env.c -------- */

@@ -212,13 +212,11 @@
 (define (add-sound-file-extension-1 ext) 
   (set! sound-file-extensions (cons ext sound-file-extensions)))
 
-(if (defined? 'define*)
 (define* (sound-files-in-directory-1 #:optional (dir "."))
   (sort (grep
 	 (format #f "\\.(~{~A~^|~})$" sound-file-extensions)
 	 (directory->list dir))
 	string<?))
-)
 
     
 ;;; -------- selection-members
@@ -240,7 +238,6 @@
 
 ;;; -------- make-selection
 
-(if (defined? 'define*)
 (define* (make-selection #:optional beg end snd chn)
   (let ((current-sound (or (and (number? snd) snd) (selected-sound))))
     (define (add-chan-to-selection s0 s1 s c)
@@ -271,7 +268,7 @@
 		     ((= i (chans s)))
 		   (add-chan-to-selection beg end s i))))
 	   (sounds))))))
-)
+
 
 ;;; -------- delete selected portion and smooth the splice
 
@@ -531,7 +528,6 @@
 
 ;;; -------- mix-channel, insert-channel
 
-(if (defined? 'define*)
 (define* (mix-channel file-data #:optional beg dur snd chn edpos)
   ;; file-data can be the file name or a list (file-name [beg [channel]])
   (let* ((file-name (if (string? file-data) file-data (car file-data)))
@@ -548,9 +544,8 @@
     (map-channel (lambda (val)
 		   (+ val (next-sample reader)))
 		 (or beg 0) len snd chn edpos "mix-channel")))
-)
 
-(if (defined? 'define*)
+
 (define* (insert-channel file-data #:optional beg dur snd chn edpos)
   ;; file-data can be the file name or a list (file-name [beg [channel]])
   (let* ((file-name (if (string? file-data) file-data (car file-data)))
@@ -569,4 +564,3 @@
 	((= i len))
       (vct-set! data i (next-sample reader)))
     (insert-samples (or beg 0) len data snd chn edpos)))
-)

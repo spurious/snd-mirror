@@ -1256,18 +1256,22 @@ mark *hit_mark(chan_info *cp, int x, int y, int key_state)
 			  (mark_sd->marks[0] != mp))
 			{
 			  mark *tm;
-			  int ts, loc;
+			  int ts, loc = 1;
 			  chan_info *tc;
-			  loc = mark_sd->mark_ctr - 1;
-			  tm = mark_sd->marks[0];
-			  ts = mark_sd->initial_samples[0];
-			  tc = mark_sd->chans[0];
-			  mark_sd->marks[0] = mark_sd->marks[loc];
-			  mark_sd->initial_samples[0] = mark_sd->initial_samples[loc];
-			  mark_sd->chans[0] = mark_sd->chans[loc];
-			  mark_sd->marks[loc] = tm;
-			  mark_sd->initial_samples[loc] = ts;
-			  mark_sd->chans[loc] = tc;
+			  for (loc = 1; loc < mark_sd->mark_ctr; loc++)
+			    if (mark_sd->marks[loc] == mp) break;
+			  if (loc < mark_sd->mark_ctr)
+			    {
+			      tm = mark_sd->marks[0];
+			      ts = mark_sd->initial_samples[0];
+			      tc = mark_sd->chans[0];
+			      mark_sd->marks[0] = mark_sd->marks[loc];
+			      mark_sd->initial_samples[0] = mark_sd->initial_samples[loc];
+			      mark_sd->chans[0] = mark_sd->chans[loc];
+			      mark_sd->marks[loc] = tm;
+			      mark_sd->initial_samples[loc] = ts;
+			      mark_sd->chans[loc] = tc;
+			    }
 			}
 
 		      initialize_md_context(mark_sd->mark_ctr, mark_sd->chans);

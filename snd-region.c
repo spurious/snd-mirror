@@ -403,6 +403,25 @@ file_info *fixup_region_data(chan_info *cp, int chan, int pos)
   return(NULL);
 }
 
+int map_over_region_chans(snd_state *ss, int (*func)(chan_info *, void *), void *userptr)
+{
+  int i, chn, val = 0;
+  region *r;
+  chan_info *cp;
+  for (i = 0; i < regions_size; i++)
+    {
+      r = regions[i];
+      if ((r) && (r->rsp) && (r->use_temp_file == REGION_FILE))
+	for (chn = 0; chn < r->chans; chn++)
+	  {
+	    cp = r->rsp->chans[chn];
+	    val = (*func)(cp, userptr);
+	    if (val) return(val);
+	  }
+    }
+  return(val);
+}
+
 region_state *region_report(void)
 {
   region_state *rs;

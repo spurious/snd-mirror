@@ -318,7 +318,9 @@ static int too_many_files_cleanup(snd_state *ss)
   (*closed) = 0;
   map_over_chans(ss, close_temp_files, (void *)closed);
   if ((*closed) == 0) 
-    rtn = -1; 
+    map_over_region_chans(ss, close_temp_files, (void *)closed);
+  if ((*closed) == 0)
+    rtn = -1;
   else rtn = (*closed);
   FREE(closed);
   return(rtn);
@@ -336,6 +338,18 @@ int snd_open_read(snd_state *ss, const char *arg)
       if (fd == -1) 
 	snd_error("%s: %s", arg, strerror(errno));
     }
+#if DEBUG_IO
+  {
+    int i;
+    if (fd == -1)
+      fprintf(stderr,"%s: can't read\n",arg);
+    else
+      {
+	for (i = 0; i < fd; i++) fprintf(stderr," ");
+	fprintf(stderr,"read %s: %d\n",arg, fd);
+      }
+  }
+#endif
   return(fd);
 }
 
@@ -371,6 +385,18 @@ int snd_reopen_write(snd_state *ss, const char *arg)
       if (fd == -1) 
 	snd_error("%s: %s", arg, strerror(errno));
     }
+#if DEBUG_IO
+  {
+    int i;
+    if (fd == -1)
+      fprintf(stderr,"%s: can't write\n",arg);
+    else
+      {
+	for (i = 0; i < fd; i++) fprintf(stderr," ");
+	fprintf(stderr,"write %s: %d\n",arg, fd);
+      }
+  }
+#endif
   return(fd);
 }
 
