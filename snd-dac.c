@@ -580,7 +580,7 @@ static void stop_playing_with_toggle(dac_info *dp, int toggle)
       if (sp->playing > 0) sp->playing--;
       if (sp->playing == 0) sp_stopping = 1;
       if ((sp->inuse) && (sp->cursor_follows_play != DONT_FOLLOW))
-	cursor_moveto(cp, cp->original_cursor);
+	cursor_moveto_without_verbosity(cp, cp->original_cursor);
       if ((sp_stopping) && (sp->cursor_follows_play == FOLLOW_ONCE)) 
 	sp->cursor_follows_play = DONT_FOLLOW;
       /* if ctrl-click play, c-t, c-q -> this flag is still set from aborted previous play, so clear at c-t (or c-g) */
@@ -861,7 +861,7 @@ static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, int start
 	    {
 	      cp->original_cursor = cp->cursor;
 	      cp->cursor_on = 1;
-	      cursor_moveto(cp, start);
+	      cursor_moveto_without_verbosity(cp, start);
 	    }
 	}
       return(init_dp(slot, cp, sp, sf, start, end, pos));
@@ -1111,7 +1111,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		  (sp->cursor_follows_play != DONT_FOLLOW) &&
 		  (!(read_sample_eof(dp->chn_fd))) &&
 		  (dp->chn_fd->cb))
-		cursor_moveto(dp->cp, current_location(dp->chn_fd));
+		cursor_moveto_without_verbosity(dp->cp, current_location(dp->chn_fd));
 	      /* TODO: make this more accurate by taking fragments (soundcard buffers) into account */
 
 	      /* add a buffer's worth from the current source into dp->audio_chan */

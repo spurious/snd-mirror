@@ -214,6 +214,7 @@ enum {TIME_AXIS_INFO, TRANSFORM_AXIS_INFO, LISP_AXIS_INFO};
 #define LISP_GRAPH_STYLE(cp) (((cp->graph_style & 0xff0000) != 0) ? (((cp->graph_style >> 16) & 0xff) - 1) : (cp->graph_style & 0xff))
 
 enum {COLOR_POSITION, COLOR_ZOOM};
+enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 
 #define DEFAULT_MIN_DB -60.0
 

@@ -279,7 +279,7 @@ static void get_find_expression(snd_info *sp, int count)
   /* clear previous ? */
   set_minibuffer_string(sp, NULL);
   make_minibuffer_label(sp, "find:");
-  sp->minibuffer_on = 1;
+  sp->minibuffer_on = MINI_FIND;
   goto_minibuffer(sp);
   sp->searching = count;
 }
@@ -325,7 +325,7 @@ void cursor_search(chan_info *cp, int count)
 	      cp->last_search_result = SEARCH_OK;
 	      FREE(s1);
 	      FREE(s2);
-	      cursor_moveto(cp, samp);
+	      cursor_moveto_without_verbosity(cp, samp);
 	    }
 	}
       else get_find_expression(sp, count);

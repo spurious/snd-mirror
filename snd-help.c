@@ -204,6 +204,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+9-Apr:   ramp-channel.\n\
 8-Apr:   virtualized envelopes.\n\
 4-Apr:   improvements in contrib/dlp, thanks to Dave Phillips.\n\
 3-Apr:   read-sample, read-mix-sample, read-track-sample, selection-maxamp.\n\
@@ -1240,6 +1241,7 @@ all refer to the same thing.\n\
   " S_previous_sample "   (rd)\n\
   " S_prompt_in_minibuffer "(prompt callback snd)\n\
   " S_protect_region "    (reg protect)\n\
+  " S_ramp_channel "      (rmp0 rmp1 beg dur snd chn pos)\n\
   " S_read_mix_sample "   (rd)\n\
   " S_read_only "         (snd)\n\
   " S_read_sample "       (rd)\n\
@@ -1288,6 +1290,7 @@ all refer to the same thing.\n\
   " S_save_sound_as "     (filename snd type format srate)\n\
   " S_save_state "        (filename)\n\
   " S_scale_by "          (scalers snd chn)\n\
+  " S_scale_channel "     (scl beg dur snd chn pos)\n\
   " S_scale_selection_by "(scalers)\n\
   " S_scale_selection_to "(scalers)\n\
   " S_scale_sound_by "    (scaler beg num snd chn)\n\

@@ -40,6 +40,10 @@ snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_f
 
 /* ---------------- amp envs ---------------- */
 
+#if DEBUGGING
+static void check_env(chan_info *cp, env_info *new_ep);
+#endif
+
 typedef struct {
   int slice; 
   int samples;  
@@ -277,7 +281,6 @@ static int tick_amp_env(chan_info *cp, env_state *es)
 	  subsamp = ep->samps_per_bin / AMP_ENV_SUBSAMPLE;
 	  bin_size = ep->samps_per_bin / subsamp;
 	  nc = cp->chan;
-
 	  bufs = (MUS_SAMPLE_TYPE **)CALLOC(sp->nchans * subsamp, sizeof(MUS_SAMPLE_TYPE *));
 	  /* we're claiming the file has sp->nchans * subsamp channels to get mus_file_read to subsample by subsamp */
 	  bufs[nc] = (MUS_SAMPLE_TYPE *)CALLOC(lm * (bin_size + 2), sizeof(MUS_SAMPLE_TYPE));
@@ -702,9 +705,17 @@ void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos)
       for (i = 0; i < new_ep->amp_env_size; i++) 
 	{
 	  val = mus_env(e);
-	  new_ep->data_min[i] = (MUS_SAMPLE_TYPE)(old_ep->data_min[i] * val);
+	  if (val >= 0.0)
+	    {
+	      new_ep->data_min[i] = (MUS_SAMPLE_TYPE)(old_ep->data_min[i] * val);
+	      new_ep->data_max[i] = (MUS_SAMPLE_TYPE)(old_ep->data_max[i] * val);
+	    }
+	  else
+	    {
+	      new_ep->data_min[i] = (MUS_SAMPLE_TYPE)(old_ep->data_max[i] * val);
+	      new_ep->data_max[i] = (MUS_SAMPLE_TYPE)(old_ep->data_min[i] * val);
+	    }
 	  if (new_ep->data_min[i] < fmin) fmin = new_ep->data_min[i];
-	  new_ep->data_max[i] = (MUS_SAMPLE_TYPE)(old_ep->data_max[i] * val);
 	  if (new_ep->data_max[i] > fmax) fmax = new_ep->data_max[i];
 	}
       new_ep->fmin = fmin;
@@ -714,6 +725,71 @@ void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos)
       new_ep->top_bin = old_ep->top_bin;
       cp->amp_envs[cp->edit_ctr] = new_ep;
       mus_free(e);
+    }
+}
+
+void amp_env_env_selection_by(chan_info *cp, mus_any *e, int beg, int num, int pos)
+{
+  env_info *old_ep, *new_ep = NULL;
+  Float val, xmax = 1.0;
+  Float *data;
+  MUS_SAMPLE_TYPE fmax = MUS_SAMPLE_0, fmin = MUS_SAMPLE_0;
+  int i, cursamp, start, end;
+  old_ep = cp->amp_envs[pos];
+  if ((old_ep) && (old_ep->completed))
+    {
+      new_ep = cp->amp_envs[cp->edit_ctr];
+      if ((new_ep) && 
+	  (new_ep->amp_env_size != old_ep->amp_env_size)) 
+	new_ep = free_amp_env(cp, cp->edit_ctr);
+      if (new_ep == NULL)
+	{
+	  new_ep = (env_info *)CALLOC(1, sizeof(env_info));
+	  new_ep->data_max = (MUS_SAMPLE_TYPE *)MALLOC(old_ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE));
+	  new_ep->data_min = (MUS_SAMPLE_TYPE *)MALLOC(old_ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE));
+	}
+      new_ep->amp_env_size = old_ep->amp_env_size;
+      new_ep->samps_per_bin = old_ep->samps_per_bin;
+      end = beg + num - 1;
+      start = beg - new_ep->samps_per_bin;
+      data = mus_data(e);
+      xmax = data[mus_length(e) * 2 - 2];
+      for (i = 0, cursamp = 0; i < new_ep->amp_env_size; i++, cursamp += new_ep->samps_per_bin) 
+	{
+	  if ((cursamp >= end) || (cursamp <= start))
+	    {
+	      new_ep->data_min[i] = old_ep->data_min[i];
+	      new_ep->data_max[i] = old_ep->data_max[i];
+	    }
+	  else
+	    {
+	      /* if segment is entirely in scaled section, just scale it */
+	      if ((cursamp >= beg) && ((cursamp + new_ep->samps_per_bin) <= end))
+		{
+		  val = mus_env_interp((Float)(cursamp - beg) * xmax / (Float)num, e);
+		  if (val >= 0.0)
+		    {
+		      new_ep->data_max[i] = (MUS_SAMPLE_TYPE)(old_ep->data_max[i] * val);
+		      new_ep->data_min[i] = (MUS_SAMPLE_TYPE)(old_ep->data_min[i] * val);
+		    }
+		  else
+		    {
+		      new_ep->data_max[i] = (MUS_SAMPLE_TYPE)(old_ep->data_min[i] * val);
+		      new_ep->data_min[i] = (MUS_SAMPLE_TYPE)(old_ep->data_max[i] * val);
+		    }
+
+		}
+	      else pick_one_bin(new_ep, i, cursamp, cp, cp->edit_ctr);
+	    }
+	  if (fmin > new_ep->data_min[i]) fmin = new_ep->data_min[i];
+	  if (fmax < new_ep->data_max[i]) fmax = new_ep->data_max[i];
+	}
+      new_ep->fmin = fmin;
+      new_ep->fmax = fmax;
+      new_ep->completed = 1;
+      new_ep->bin = old_ep->bin;
+      new_ep->top_bin = old_ep->top_bin;
+      cp->amp_envs[cp->edit_ctr] = new_ep;
     }
 }
 
@@ -2287,6 +2363,7 @@ static XEN g_update_sound(XEN snd_n)
   return(sound_get(snd_n, SP_UPDATE, S_update_sound));
 }
 
+/* should this throw an error if write-protected or whatever (not snd_error in this context)?  */
 static XEN g_save_sound(XEN snd_n) 
 {
   #define H_save_sound "(" S_save_sound " &optional snd) saves snd (updates the on-disk data to match Snd's current version)"

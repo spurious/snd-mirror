@@ -303,8 +303,7 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
   sp->loading = 0;
   sp->marking = 0;
   sp->filing = 0;
-  sp->minibuffer_on = 0;
-  sp->minibuffer_temp = 0;
+  sp->minibuffer_on = MINI_OFF;
   if (filter_env_in_hz(ss))
     sp->filter_control_env_xmax = hdr->srate / 2;
   else sp->filter_control_env_xmax = 1.0;
@@ -363,8 +362,7 @@ void free_snd_info(snd_info *sp)
   sp->applying = 0;
   sp->channel_style = CHANNELS_SEPARATE;
   sp->read_only = 0;
-  sp->minibuffer_on = 0;                     /* if it's on, should we clear it first ?? */
-  sp->minibuffer_temp = 0;
+  sp->minibuffer_on = MINI_OFF;                     /* if it's on, should we clear it first ?? */
   if (sp->search_expr) 
     {
       FREE(sp->search_expr); 

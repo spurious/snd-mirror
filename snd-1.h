@@ -267,8 +267,7 @@ typedef struct snd__info {
   int raw_prompt;
   char *search_expr;
   int searching, marking, filing, finding_mark, amping, reging, printing, loading, macroing, prompting;
-  int minibuffer_on, minibuffer_temp;
-  int read_only;
+  int minibuffer_on, read_only;
   chan_info **chans;
   struct snd__state *state;
   snd_context *sgx;
@@ -673,7 +672,7 @@ void move_to_next_sample(snd_fd *sf);
 snd_fd *init_sample_read(int samp, chan_info *cp, int direction);
 snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_position);
 void read_sample_change_direction(snd_fd *sf, int dir);
-int ramped_fragments_in_use(chan_info *cp, int pos);
+int ramped_fragments_in_use(chan_info *cp, int beg, int dur, int pos);
 #define read_sample(Sf) (*Sf->run)(Sf)
 #define read_sample_to_float(Sf) (*Sf->runf)(Sf)
 Float protected_next_sample_to_float(snd_fd *sf);
@@ -929,6 +928,7 @@ int cursor_decision(chan_info *cp);
 void reset_x_display(chan_info *cp, double sx, double zx);
 void set_x_axis_x0x1 (chan_info *cp, double x0, double x1);
 void cursor_move (chan_info *cp, int samps);
+void cursor_moveto_without_verbosity(chan_info *cp, int samp);
 void set_wavo_trace(snd_state *ss, int uval);
 void set_dot_size(snd_state *ss, int val);
 chan_info *virtual_selected_channel(chan_info *cp);
@@ -1033,6 +1033,7 @@ void remove_apply(snd_info *sp);
 BACKGROUND_TYPE apply_controls(GUI_POINTER xp);
 void *make_apply_state_with_implied_beg_and_dur(void *xp);
 void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos);
+void amp_env_env_selection_by(chan_info *cp, mus_any *e, int beg, int num, int pos);
 
 void g_init_snd(void);
 XEN snd_no_such_sound_error(const char *caller, XEN n);

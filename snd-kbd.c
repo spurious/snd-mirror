@@ -311,7 +311,7 @@ void report_in_minibuffer(snd_info *sp, char *format, ...)
 #endif
 #endif
   set_minibuffer_string(sp, buf);
-  sp->minibuffer_temp = 1;
+  sp->minibuffer_on = MINI_REPORT;
   FREE(buf);
   /* leave sp->minibuffer off so that keyboard_command doesn't clear it */
 }
@@ -343,7 +343,7 @@ void report_in_minibuffer_and_save(snd_info *sp, char *format, ...)
 #endif
 #endif
   set_minibuffer_string(sp, buf);
-  sp->minibuffer_temp = 1;
+  sp->minibuffer_on = MINI_REPORT;
   add_to_error_history(sp->state, buf, FALSE);
   FREE(buf);
   /* leave sp->minibuffer off so that keyboard_command doesn't clear it */
@@ -359,7 +359,7 @@ void clear_minibuffer(snd_info *sp)
   sp->marking = 0;
   sp->filing = NOT_FILING;
   sp->printing = 0;
-  sp->minibuffer_on = 0;
+  sp->minibuffer_on = MINI_OFF;
   sp->loading = 0;
   sp->amping = 0;
   sp->macroing = 0;
@@ -369,7 +369,6 @@ void clear_minibuffer(snd_info *sp)
 void clear_minibuffer_prompt(snd_info *sp)
 {
   make_minibuffer_label(sp, "     ");
-  sp->minibuffer_temp = 0;
 }
 
 static void prompt(snd_info *sp, char *msg, char *preload)
@@ -382,8 +381,7 @@ static void prompt(snd_info *sp, char *msg, char *preload)
   else
     set_minibuffer_string(sp, NULL);
   make_minibuffer_label(sp, msg);
-  sp->minibuffer_on = 1;
-  sp->minibuffer_temp = 0;
+  sp->minibuffer_on = MINI_PROMPT;
   goto_minibuffer(sp);
 }
 
@@ -400,7 +398,7 @@ static void prompt_named_mark(chan_info *cp)
   snd_info *sp = cp->sound;
   clear_minibuffer(sp);
   make_minibuffer_label(sp, "mark:");
-  sp->minibuffer_on = 1;
+  sp->minibuffer_on = MINI_PROMPT;
   goto_minibuffer(sp);
   sp->marking = cp->cursor + 1; /*  + 1 so it's not confused with 0 (if (sp->marking)...) */
 }
@@ -1062,7 +1060,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
       return;
     }
 #endif
-  if (sp->minibuffer_temp) clear_minibuffer(sp);
+  /* if (sp->minibuffer_temp) clear_minibuffer(sp); */
 
   if (state & snd_ControlMask)
     {
@@ -1756,7 +1754,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
   if (!extended_mode) ext_count = NO_CX_ARG_SPECIFIED;
   if (clear_search)
     {
-      if ((sp->minibuffer_on) && (!searching)) 
+      if ((sp->minibuffer_on == MINI_FIND) && (!searching)) 
 	clear_minibuffer(sp);
       else 
 	if (!cursor_searching) 
@@ -1876,8 +1874,7 @@ returned as a string; otherwise it is evaluated first as Scheme code"
     }
   sp->prompt_callback = callback;
   make_minibuffer_label(sp, XEN_TO_C_STRING(msg));
-  sp->minibuffer_on = 1;
-  sp->minibuffer_temp = 0;
+  sp->minibuffer_on = MINI_USER;
   sp->prompting = 1;
   goto_minibuffer(sp);
   return(XEN_FALSE);
@@ -1913,7 +1910,7 @@ static XEN g_append_to_minibuffer(XEN msg, XEN snd_n)
 	       XEN_TO_C_STRING(msg));
   set_minibuffer_string(sp, expr_str);
   FREE(expr_str);
-  sp->minibuffer_temp = 1;
+  sp->minibuffer_on = MINI_USER;
   if (str1) free(str1);
   return(msg);
 }

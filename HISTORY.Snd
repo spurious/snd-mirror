@@ -1,5 +1,6 @@
 snd change log
 
+  9-Apr:     ramp-channel.
   8-Apr:     virtualized envelopes.
   4-Apr:     improvements in contrib/dlp, thanks to Dave Phillips.
   3-Apr:     read-sample, read-mix-sample, read-track-sample, selection-maxamp.

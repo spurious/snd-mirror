@@ -5411,6 +5411,17 @@ the direction argument between the channel and edit-position.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
+<!-- ramp-channel -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="rampchannel">ramp-channel</a></em> (rmp0 rmp1 <i>beg dur snd chn edpos</i>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- --><b>ramp-channel</b> is a slight extension of scale-channel. It scales samples in the given sound/channel
+<!-- -->between beg and beg + dur by a ramp going from rmp0 to rmp1.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
 <!-- read-only -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndreadonly">read-only</a></em> (<em class=targ>snd</em>)</code></span>
@@ -7093,7 +7104,7 @@ edit lists.  For example, if you delete a portion of a sound, the
 only thing that happens is that the edit list of that sound is
 updated to reflect the jump over the deleted portion.  Similarly,
 all scaling operations (normalization etc), operations resulting
-in zeros, and simple cases of channel swaps are actually only editing
+in zeros, most non-exponential envelopes, and simple cases of channel swaps are actually only editing
 the edit list.  This means that ideally such operations are instantaneous
 and take no disk space no matter how large the sound being edited
 (in other cases we have to save at least the changed portion of the

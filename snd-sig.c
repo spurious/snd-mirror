@@ -1733,9 +1733,11 @@ static void reverse_sound(chan_info *ncp, int over_selection, XEN edpos, int arg
   free_sync_state(sc);
 }
 
+void amp_env_env_selection_by(chan_info *cp, mus_any *e, int beg, int num, int pos);
 
 /* amplitude envelopes */
 /*   changed to use mus_env 20-Dec-00 */
+/*   changed to use virtual envs (fragment eds) 8-Apr-02 */
 
 void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexpr, 
 	       int from_enved, const char *origin, mus_any *gen, XEN edpos, int arg_pos, Float e_base)
@@ -1748,6 +1750,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
    */
 
   /* TODO: split this into 4 functions! */
+  /* TODO: test the sync business */
 
   snd_fd *sf = NULL;
   snd_info *sp;
@@ -1755,7 +1758,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
   sync_state *sc = NULL;
   snd_fd **sfs;
   file_info *hdr = NULL;
-  int i, j, k, ofd = 0, datumb = 0, temp_file = FALSE, err = 0, scalable = TRUE, rampable = TRUE;
+  int i, j, k, ofd = 0, datumb = 0, temp_file = FALSE, err = 0, scalable = TRUE, rampable = TRUE, len;
   MUS_SAMPLE_TYPE **data;
   MUS_SAMPLE_TYPE *idata;
   int reporting = 0;
@@ -1763,6 +1766,8 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
   char *ofile = NULL;
   snd_state *ss;
   mus_any *egen;
+  int *passes;
+  double *rates;
   Float egen_val;
   
   if ((!e) && (!gen)) return;
@@ -1815,21 +1820,20 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
     egen = mus_make_env(e->data, e->pts, scaler, 0.0, e_base, 0.0, 0, dur - 1, NULL); /* dur - 1 = end sample number */
   else egen = gen;
 
+  len = mus_length(egen);
+  passes = mus_env_passes(egen);
+  rates = mus_env_rates(egen);
+
   if (mus_increment(egen) == 0.0) 
     {
       /* step env -- handled as sequence of scalings */
-      int local_edpos, len, k, pos, segbeg, segnum, segend, old_squelch;
-      int *passes;
-      double *rates;
+      int local_edpos, k, pos, segbeg, segnum, segend, old_squelch;
       env *newe;
       char *new_origin; /* need a complete origin since this appears as a scaled-edit in 
 			 *   the edit history lists, save_edit_history needs something
 			 *   that can actually recreate the original.
 			 */
       /* base == 0 originally, so it's a step env */
-      len = mus_length(egen);
-      passes = mus_env_passes(egen);
-      rates = mus_env_rates(egen);
       sc = get_sync_state_without_snd_fds(ss, sp, cp, beg, regexpr);
       if (sc == NULL) return;
       si = sc->si;
@@ -1881,6 +1885,8 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
       else si = make_simple_sync(cp, 0);
       for (i = 0; i < si->chans; i++)
 	if (ramped_fragments_in_use(si->cps[i], 
+				    beg,
+				    dur,
 				    to_c_edit_position(si->cps[i], edpos, origin, arg_pos)))
 	  {
 	    rampable = FALSE;
@@ -1986,17 +1992,19 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 	    {
 	      if (temp_file)
 		{
-		  int pos, len;
-		  int *passes;
-		  passes = mus_env_passes(egen);
-		  len = mus_length(egen);
+		  int pos;
 		  pos = to_c_edit_position(si->cps[i], edpos, origin, arg_pos);
 		  file_change_samples(si->begs[i], dur, ofile, si->cps[i], i, 
 				      (si->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME, 
 				      LOCK_MIXES, origin, si->cps[i]->edit_ctr);
-		  /* TODO: extend env'd env-channel to dur != env dur */
-		  if (dur == (passes[len - 2] + 1))
+		  if ((si->begs[i] == 0) && (dur == si->cps[i]->samples[pos]))
 		    amp_env_env(si->cps[i], mus_data(egen), len, pos);
+		  else 
+		    {
+		      if ((len < 2) || (abs(dur - passes[len - 2]) < 2))
+			amp_env_env_selection_by(si->cps[i], egen, si->begs[i], dur, pos);
+		    }
+
 		}
 	      else change_samples(si->begs[i], dur, data[i], si->cps[i], LOCK_MIXES, origin, si->cps[i]->edit_ctr);
 	      update_graph(si->cps[i], NULL);
@@ -2013,9 +2021,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
   else
     {
       /* line segment env that is long enough to reward optimization -- handled as sequence of ramps and scalings */
-      int local_edpos, len, k, m, pos, segbeg, segnum, segend, old_squelch, env_pos;
-      int *passes;
-      double *rates;
+      int local_edpos, k, m, pos, segbeg, segnum, segend, old_squelch, env_pos;
       Float *data;
       env *newe;
       char *new_origin; /* need a complete origin since this appears as a scaled-edit in 
@@ -2023,9 +2029,6 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 			 *   that can actually recreate the original.
 			 */
       /* base == 0 originally, so it's a step env */
-      len = mus_length(egen);
-      passes = mus_env_passes(egen);
-      rates = mus_env_rates(egen);
       data = mus_data(egen);
       sc = get_sync_state_without_snd_fds(ss, sp, cp, beg, regexpr);
       if (sc == NULL) return;
@@ -2066,14 +2069,20 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 	      if (segbeg >= segend) break;
 	      segnum = passes[k + 1] - passes[k];
 	    }
-	  if (dur == (passes[len - 2] + 1))
+	  if ((si->begs[i] == 0) && (dur == si->cps[i]->samples[env_pos]))
 	    amp_env_env(si->cps[i], mus_data(egen), len, env_pos);
+	  else 
+	    {
+	      if ((len < 2) || (abs(dur - passes[len - 2]) < 2))
+		amp_env_env_selection_by(si->cps[i], egen, si->begs[i], dur, env_pos);
+	    }
 	  si->cps[i]->squelch_update = old_squelch;
 	  newe = make_envelope(mus_data(egen), mus_length(egen) * 2);
 	  new_origin = mus_format("env-channel (make-env %s :base 1 :end %d) %d %d",
 				  env_to_string(newe), 
 				  (len > 1) ? (passes[len - 2] - 1) : dur,
 				  beg, dur);
+	  /* TODO: does this need snd(sfile?) chn? */
 	  free_env(newe);
 	  as_one_edit(si->cps[i], local_edpos + 1, new_origin);
 	  FREE(new_origin);

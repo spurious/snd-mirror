@@ -1,7 +1,5 @@
 #include "snd.h"
 
-/* TODO: if verbose cursor, should be updated after undo/redo etc */
-
 enum {NOGRAPH, WAVE, FFT_AXIS, LISP, FFT_MAIN};    /* for marks, regions, mouse click detection */
 
 static XEN lisp_graph_hook;
@@ -1117,6 +1115,12 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
       if (cp->printing)
 	ps_reset_color();
     }
+  if ((cp->verbose_cursor) && (cp->cursor_on) && (cp->cursor >= ap->losamp) && (cp->cursor <= ap->hisamp) &&
+      ((sp->minibuffer_on == MINI_OFF) || (sp->minibuffer_on == MINI_CURSOR)))
+    {
+      show_cursor_info(cp); 
+      sp->minibuffer_on = MINI_CURSOR;
+    } 
   return(j);
 }
 
@@ -2708,10 +2712,10 @@ void handle_cursor(chan_info *cp, int redisplay)
   if (redisplay != KEYBOARD_NO_ACTION)
     {
       sp = cp->sound;
-      if ((cp->verbose_cursor) && (sp->minibuffer_on == 0)) /* don't overwrite M-X results with cursor garbage! */
+      if (cp->verbose_cursor)
 	{
 	  show_cursor_info(cp); 
-	  sp->minibuffer_on = 0;
+	  sp->minibuffer_on = MINI_CURSOR;
 	} 
       if (redisplay != CURSOR_IN_VIEW)
 	{
@@ -2743,7 +2747,7 @@ void handle_cursor(chan_info *cp, int redisplay)
   update_possible_selection_in_progress(cp->cursor);
 }
 
-void cursor_moveto (chan_info *cp, int samp)
+void cursor_moveto(chan_info *cp, int samp)
 {
   snd_info *sp;
   chan_info *ncp;
@@ -2768,9 +2772,18 @@ void cursor_moveto (chan_info *cp, int samp)
     }
 }
 
-void cursor_move (chan_info *cp, int samps)
+void cursor_move(chan_info *cp, int samps)
 {
   cursor_moveto(cp, cp->cursor + samps);
+}
+
+void cursor_moveto_without_verbosity(chan_info *cp, int samp)
+{
+  int old_verbose;
+  old_verbose = cp->verbose_cursor;
+  cp->verbose_cursor = 0;
+  cursor_moveto(cp, samp);
+  cp->verbose_cursor = old_verbose;
 }
 
 void show_cursor_info(chan_info *cp)
@@ -2792,7 +2805,7 @@ void show_cursor_info(chan_info *cp)
   expr_str = (char *)CALLOC(PRINT_BUFFER_SIZE,sizeof(char));
   if (sp->nchans == 1)
     mus_snprintf(expr_str, PRINT_BUFFER_SIZE, "cursor at %s (sample %d) = %s",
-		 s1 = prettyf((double)samp/(double)SND_SRATE(sp), 2),
+		 s1 = prettyf((double)samp / (double)SND_SRATE(sp), 2),
 		 samp,
 		 s2 = prettyf(y, digits));
   else
@@ -2800,7 +2813,7 @@ void show_cursor_info(chan_info *cp)
       if (sp->sync == 0)
 	mus_snprintf(expr_str, PRINT_BUFFER_SIZE, "chan %d, cursor at %s (sample %d) = %s",
 		     cp->chan + 1,
-		     s1 = prettyf((double)samp/(double)SND_SRATE(sp), 2),
+		     s1 = prettyf((double)samp / (double)SND_SRATE(sp), 2),
 		     samp,
 		     s2 = prettyf(y, digits));
       else
@@ -2808,7 +2821,7 @@ void show_cursor_info(chan_info *cp)
 	  /* in this case, assume we show all on chan 0 and ignore the call otherwise (see above) */
 	  /* "cursor at..." then list of values */
 	  mus_snprintf(expr_str, PRINT_BUFFER_SIZE, "cursor at %s (sample %d): %s",
-		       s1 = prettyf((double)samp/(double)SND_SRATE(sp), 2),
+		       s1 = prettyf((double)samp / (double)SND_SRATE(sp), 2),
 		       samp,
 		       s2 = prettyf(y, digits));
 	  for (i = 1; i < sp->nchans; i++)
@@ -2832,7 +2845,7 @@ void show_cursor_info(chan_info *cp)
 	}
     }
   set_minibuffer_string(sp, expr_str);
-  sp->minibuffer_on = 1;
+  sp->minibuffer_on = MINI_CURSOR;
   FREE(expr_str);
   FREE(s1);
   FREE(s2);
