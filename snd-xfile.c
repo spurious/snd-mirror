@@ -869,7 +869,7 @@ void make_file_save_as_dialog(snd_state *ss)
   save_as_dialog_type = FILE_SAVE_AS;
   sp = any_selected_sound(ss);
   if (sp) hdr = sp->hdr;
-  make_save_as_dialog(ss, (char *)((sp) ? sp->shortname : ""),
+  make_save_as_dialog(ss, (char *)((sp) ? sp->short_filename : ""),
 		      default_output_type(ss),
 		      default_output_format(ss));
 
@@ -1394,7 +1394,7 @@ void highlight_selected_sound(snd_state *ss)
   sp = selected_sound(ss);
   if (sp)
     {
-      i = find_curfile_regrow(sp->shortname);
+      i = find_curfile_regrow(sp->short_filename);
       if (i != -1) 
 	curfile_highlight(ss, i); 
       else curfile_unhighlight(ss);
@@ -2153,7 +2153,7 @@ static void edit_header_ok_Callback(Widget w, XtPointer context, XtPointer info)
   if (cb->event == ((ss->sgx)->text_activate_event)) return; /* <cr> in one of text fields */
   if (!(sp->read_only))
     edit_header_callback(ss, sp, edit_header_data);
-  else snd_error("%s is write-protected", sp->shortname);
+  else snd_error("%s is write-protected", sp->short_filename);
   XtUnmanageChild(edit_header_dialog);
 }
 
@@ -2182,7 +2182,7 @@ Widget edit_header(snd_info *sp)
       xstr3 = XmStringCreate(STR_Save, XmFONTLIST_DEFAULT_TAG);
       titlestr = XmStringCreate(STR_Edit_Header, XmFONTLIST_DEFAULT_TAG);
       str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(str, PRINT_BUFFER_SIZE, STR_Edit_header_of, sp->shortname);
+      mus_snprintf(str, PRINT_BUFFER_SIZE, STR_Edit_header_of, sp->short_filename);
       xstr4 = XmStringCreate(str, XmFONTLIST_DEFAULT_TAG);
       FREE(str);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}

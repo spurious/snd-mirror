@@ -2276,17 +2276,17 @@ to be displayed goes from low to high (normally 0.0 to 1.0)"
 					proc)));
 }
 
-static SCM g_transform_graph_data_size(SCM snd, SCM chn)
+static SCM g_transform_samples_size(SCM snd, SCM chn)
 {
-  #define H_transform_graph_data_size "(" S_transform_graph_data_size " &optional snd chn)\n\
+  #define H_transform_samples_size "(" S_transform_samples_size " &optional snd chn)\n\
 returns a description of transform graph data in snd's channel chn, based on " S_transform_graph_type ".\
 If no transform graph, returns 0; if " S_graph_transform_once ", returns " S_transform_size ",\
 and otherwise returns a list (total-size active-bins active-slices)"
 
   chan_info *cp;
   sono_info *si;
-  SND_ASSERT_CHAN(S_transform_graph_data_size, snd, chn, 1);
-  cp = get_cp(snd, chn, S_transform_graph_data_size);
+  SND_ASSERT_CHAN(S_transform_samples_size, snd, chn, 1);
+  cp = get_cp(snd, chn, S_transform_samples_size);
   if (!(cp->graph_transform_p)) 
     return(INTEGER_ZERO);
   if (transform_graph_type(cp->state) == GRAPH_TRANSFORM_ONCE) 
@@ -2555,7 +2555,7 @@ of a moving mark:\n\
   DEFINE_VAR(S_graph_transform_as_sonogram,    GRAPH_TRANSFORM_AS_SONOGRAM,    H_graph_transform_as_sonogram);
   DEFINE_VAR(S_graph_transform_as_spectrogram, GRAPH_TRANSFORM_AS_SPECTROGRAM, H_graph_transform_as_spectrogram);
 
-  DEFINE_PROC(S_transform_graph_data_size,  g_transform_graph_data_size, 0, 2, 0,H_transform_graph_data_size);
+  DEFINE_PROC(S_transform_samples_size,  g_transform_samples_size, 0, 2, 0,H_transform_samples_size);
   DEFINE_PROC(S_transform_samples,     g_transform_samples, 0, 2, 0,   H_transform_samples);
   DEFINE_PROC(S_transform_sample,      g_transform_sample, 0, 4, 0,    H_transform_sample);
   DEFINE_PROC(S_transform_samples2vct, transform_samples2vct, 0, 3, 0, H_transform_samples2vct);

@@ -327,7 +327,7 @@ void set_play_button(snd_info *sp, int val)
   if (!(IS_PLAYER(sp)))
     {
       set_toggle_button(w_snd_play(sp), val, FALSE, (void *)sp);
-      set_file_browser_play_button(sp->shortname, val);
+      set_file_browser_play_button(sp->short_filename, val);
     }
 }
 
@@ -361,7 +361,7 @@ static void play_button_click_callback(GtkWidget *w, gpointer data)
 	sp->cursor_follows_play = FOLLOW_ONCE;
       else sp->cursor_follows_play = DONT_FOLLOW;
     }
-  set_file_browser_play_button(sp->shortname, on);
+  set_file_browser_play_button(sp->short_filename, on);
   cp = any_selected_channel(sp);
   goto_graph(cp);
   if ((!(cp->cursor_on)) && 
@@ -1390,7 +1390,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 	{
 	  if (sound_style(ss) == SOUNDS_IN_NOTEBOOK)
 	    {
-	      tablab = gtk_label_new(sp->shortname);
+	      tablab = gtk_label_new(sp->short_filename);
 	      gtk_widget_show(tablab);
 	      gtk_notebook_append_page(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), sw[W_pane], tablab);
 	    }
@@ -1813,7 +1813,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
       gtk_label_set_text(GTK_LABEL(sw[W_revscl_label]), reverb_name());
       if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
 	{
-	  gtk_notebook_set_tab_label_text(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), sw[W_pane], sp->shortname);
+	  gtk_notebook_set_tab_label_text(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), sw[W_pane], sp->short_filename);
 	  set_text_background(gtk_notebook_get_tab_label(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), 
 							 sw[W_pane]), 
 			      (ss->sgx)->basic_color);
@@ -1823,7 +1823,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
   if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
     {
       title = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(title, PRINT_BUFFER_SIZE, "%d: %s", snd_slot, sp->shortname);
+      mus_snprintf(title, PRINT_BUFFER_SIZE, "%d: %s", snd_slot, sp->short_filename);
       gtk_window_set_title(GTK_WINDOW(sx->dialog), title);
       FREE(title);
     }
@@ -1832,7 +1832,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
     gtk_widget_hide(sw[W_combine]);
   add_sound_data(filename, sp, ss, WITH_GRAPH);
 
-  snd_file_lock_icon(sp, (sp->read_only || (cant_write(sp->fullname))));
+  snd_file_lock_icon(sp, (sp->read_only || (cant_write(sp->filename))));
   if (ss->pending_change)
     report_in_minibuffer(sp, "(translated %s)", old_name);
   after_open(sp->index);

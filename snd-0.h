@@ -344,7 +344,7 @@ enum {COLOR_POSITION, COLOR_ZOOM};
 #define DEFAULT_TRANSFORM_GRAPH_TYPE GRAPH_TRANSFORM_ONCE
 
 #define time_graph_type(ss) ss->Time_Graph_Type
-#define in_set_time_graph_type_1(ss, a) ss->Time_Graph_Type = a
+#define in_set_time_graph_type(ss, a) ss->Time_Graph_Type = a
 #define DEFAULT_TIME_GRAPH_TYPE GRAPH_TIME_ONCE
 
 #define fft_window(ss) ss->Fft_Window
@@ -526,10 +526,6 @@ enum {COLOR_POSITION, COLOR_ZOOM};
 #define wavo_hop(ss) ss->Wavo_Hop
 #define in_set_wavo_hop(ss, a) ss->Wavo_Hop = a
 #define DEFAULT_WAVO_HOP 3
-
-#define wavo(ss) ss->Wavo
-#define in_set_wavo(ss, a) ss->Wavo = a
-#define DEFAULT_WAVO 0
 
 #define wavo_trace(ss) ss->Wavo_Trace
 #define in_set_wavo_trace(ss, a) ss->Wavo_Trace = a

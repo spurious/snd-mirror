@@ -48,7 +48,7 @@ static void file_print_ok_callback(GtkWidget *w, gpointer context)
 	{
 	  set_button_label(file_print_ok_button, STR_Stop);
 	  nsp = any_selected_sound(ss);
-	  mus_snprintf(print_string, PRINT_BUFFER_SIZE, "printing %s", nsp->shortname);
+	  mus_snprintf(print_string, PRINT_BUFFER_SIZE, "printing %s", nsp->short_filename);
 	  set_label(file_print_message, print_string);
 	}
       printing = 1;
@@ -90,7 +90,7 @@ static void file_print_ok_callback(GtkWidget *w, gpointer context)
   if (ss->print_choice == PRINT_SND)
     {
       set_button_label(file_print_ok_button, STR_Print);
-      mus_snprintf(print_string, PRINT_BUFFER_SIZE, "print %s", nsp->shortname);
+      mus_snprintf(print_string, PRINT_BUFFER_SIZE, "print %s", nsp->short_filename);
       set_label(file_print_message, print_string);
     }
   ss->print_choice = PRINT_SND;
@@ -155,7 +155,7 @@ void File_Print_Callback(GtkWidget *w, gpointer context)
   if (ss->print_choice == PRINT_SND)
     {
       nsp = any_selected_sound(ss);
-      mus_snprintf(print_string, PRINT_BUFFER_SIZE, "print %s", nsp->shortname);
+      mus_snprintf(print_string, PRINT_BUFFER_SIZE, "print %s", nsp->short_filename);
     }
   else mus_snprintf(print_string, PRINT_BUFFER_SIZE, "%s", STR_print_env);
   gtk_label_set_text(GTK_LABEL(file_print_message), print_string);

@@ -181,6 +181,8 @@
 	'riemann-window riemann-window 10 
 	'graph-transform-as-sonogram graph-transform-as-sonogram 1
 	'graph-transform-as-spectrogram graph-transform-as-spectrogram 2 
+        'graph-time-once graph-time-once 0
+        'graph-time-as-wavogram graph-time-as-wavogram 1
 	'enved-spectrum enved-spectrum 1
 	'speed-control-as-float speed-control-as-float 0 
 	'speed-control-as-ratio speed-control-as-ratio 1 
@@ -356,7 +358,7 @@
 	'vu-size (vu-size) 1.0 
 	'wavelet-type (wavelet-type) 0 
 	'graph-time? (without-errors (graph-time?)) 'no-such-sound
-	'wavo (wavo) #f 
+	'time-graph-type (time-graph-type) graph-time-once
 	'wavo-hop (wavo-hop) 3 
 	'wavo-trace (wavo-trace) 64 
 	'x-axis-style (x-axis-style) 0 
@@ -845,7 +847,7 @@
 	  (list 'vu-font-size vu-font-size 1.0 set-vu-font-size 2.0)
 	  (list 'wavelet-type wavelet-type 0 set-wavelet-type 1)
 	  (list 'graph-time? graph-time? #f set-graph-time? #t)
-	  (list 'wavo wavo #f set-wavo #t)
+	  (list 'time-graph-type time-graph-type graph-time-once set-time-graph-type graph-time-as-wavogram)
 	  (list 'wavo-hop wavo-hop 3 set-wavo-hop 6)
 	  (list 'wavo-trace wavo-trace 64 set-wavo-trace 128)
 	  (list 'with-mix-tags with-mix-tags #t set-with-mix-tags #f)
@@ -1513,7 +1515,7 @@
       (play-and-wait "oboe.snd" 12000 15000)
       (play-and-wait 0 #f #f #f #f (1- (edit-position)))
       (bomb index #t)
-      (if (not (= (transform-graph-data-size) 0)) (snd-display (format #f ";transform-graph-data-size ~A?" (transform-graph-data-size))))
+      (if (not (= (transform-samples-size) 0)) (snd-display (format #f ";transform-samples-size ~A?" (transform-samples-size))))
       (set! (graph-transform?) #t)
       (set! (graph-time?) #t)
       (graph '(0 0 1 1 2 0))
@@ -1524,7 +1526,7 @@
 	(graph #(0 1 2)) 
 	(graph (list #(0 1 2) #(3 2 1) #(1 2 3)))
 	(graph (list #(0 1 2) #(3 2 1))))
-      (if (= (transform-graph-data-size) 0) (snd-display (format #f ";graph-transform? transform-graph-data-size ~A?" (transform-graph-data-size))))
+      (if (= (transform-samples-size) 0) (snd-display (format #f ";graph-transform? transform-samples-size ~A?" (transform-samples-size))))
       (update-transform)
       (peaks "tmp.peaks")
       (if (defined? 'read-line)
@@ -6858,25 +6860,25 @@
 	  ((= i digits))
 	(key (char->integer (string-ref ns i)) 0 id)))))
 
-(define funcs (list wavo wavo-hop wavo-trace max-transform-peaks show-transform-peaks zero-pad transform-graph-type fft-window 
+(define funcs (list time-graph-type wavo-hop wavo-trace max-transform-peaks show-transform-peaks zero-pad transform-graph-type fft-window 
 		    verbose-cursor fft-log-frequency fft-log-magnitude min-dB wavelet-type transform-size fft-window-beta transform-type 
 		    transform-normalization show-mix-waveforms graph-style dot-size show-axes show-y-zero show-marks
 		    spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale
 		    spectro-hop spectro-cutoff spectro-start graphs-horizontal
 		    ))
-(define set-funcs (list set-wavo set-wavo-hop set-wavo-trace set-max-transform-peaks set-show-transform-peaks set-zero-pad set-transform-graph-type set-fft-window 
+(define set-funcs (list set-time-graph-type set-wavo-hop set-wavo-trace set-max-transform-peaks set-show-transform-peaks set-zero-pad set-transform-graph-type set-fft-window 
 		    set-verbose-cursor set-fft-log-frequency set-fft-log-magnitude set-min-dB set-wavelet-type set-transform-size set-fft-window-beta set-transform-type 
 		    set-transform-normalization set-show-mix-waveforms set-graph-style set-dot-size set-show-axes set-show-y-zero set-show-marks
 		    set-spectro-x-angle set-spectro-x-scale set-spectro-y-angle set-spectro-y-scale set-spectro-z-angle set-spectro-z-scale
 		    set-spectro-hop set-spectro-cutoff set-spectro-start set-graphs-horizontal
 		    ))
-(define func-names (list 'wavo 'wavo-hop 'wavo-trace 'max-transform-peaks 'show-transform-peaks 'zero-pad 'transform-graph-type 'fft-window
+(define func-names (list 'time-graph-type 'wavo-hop 'wavo-trace 'max-transform-peaks 'show-transform-peaks 'zero-pad 'transform-graph-type 'fft-window
 			 'verbose-cursor 'fft-log-frequency 'fft-log-magnitude 'min-dB 'wavelet-type 'transform-size 'fft-window-beta 'transform-type
 			 'transform-normalization 'show-mix-waveforms 'graph-style 'dot-size 'show-axes 'show-y-zero 'show-marks
 			 'spectro-x-angle 'spectro-x-scale 'spectro-y-angle 'spectro-y-scale 'spectro-z-angle 'spectro-z-scale
 			 'spectro-hop 'spectro-cutoff 'spectro-start 'graphs-horizontal
 			 ))
-(define new-values (list #t 12 512 3 #t 32 graph-transform-as-sonogram cauchy-window
+(define new-values (list graph-time-as-wavogram 12 512 3 #t 32 graph-transform-as-sonogram cauchy-window
 			 #t #t #t -120.0 3 32 .5 autocorrelation
 			 0 #t graph-lollipops 8 show-no-axes #t #f
 			 32.0 .5 32.0 .5 32.0 .5
@@ -7033,6 +7035,7 @@
 	(set! (graph-transform? obi 0) #t)
 	(update-graphs)
 	(set! s2i (open-sound (car (match-sound-files-1 (lambda (file) (= (mus-sound-chans file) 2))))))
+	(if (not (= (chans s2i) 2)) (snd-display (format #f ";match 2 got ~A with ~A chans" (short-file-name s2i) (chans s2i))))
 	(update-graphs)
 	(remove-hook! graph-hook auto-dot)
 	(remove-hook! graph-hook superimpose-ffts)
@@ -7071,8 +7074,9 @@
 	  (revert-sound obi))
 	(update-usage-stats)
 	(set! s2i (open-sound (car (match-sound-files-1 (lambda (file) 
-							  (and (>= (mus-sound-chans file) 2)
+							  (and (= (mus-sound-chans file) 2)
 							       (> (mus-sound-frames file) 1000)))))))
+	(if (not (= (chans s2i) 2)) (snd-display (format #f ";match 2+1000 got ~A with ~A chans" (short-file-name s2i) (chans s2i))))
 	(let ((o1 (sample 1000 obi 0))
 	      (s1 (sample 1000 s2i 0))
 	      (s2 (sample 1000 s2i 1)))
@@ -7154,7 +7158,16 @@
 	      (s2 (sample 1000 s2i 1)))
 	  (set! (sync s2i) 4)
 	  (select-all)
-	  (if (not (= (selection-chans) 2)) (snd-display (format #f ";selection-chans(2): ~A?" (selection-chans))))
+	  (if (not (= (selection-chans) 2)) 
+	      (begin
+		(snd-display (format #f ";selection-chans(2): ~A?" (selection-chans)))
+		(for-each
+		 (lambda (snd)
+		   (do ((i 0 (1+ i)))
+		       ((= i (chans snd)))
+		     (if (selection-member? snd i)
+			 (snd-display (format #f ";  ~A[~A] at ~A" (short-file-name snd) i (selection-position snd i))))))
+		 (sounds))))
 	  (if (not (= (selection-srate) (srate s2i))) (snd-display (format #f ";selection-srate: ~A ~A?" (selection-srate) (srate s2i))))
 	  (swap-selection-channels)
 	  (if (or (fneq s1 (sample 1000 s2i 1))
@@ -7894,9 +7907,9 @@ EDITS: 3
 	       spectro-z-angle spectro-z-scale speed-control speed-control-style speed-control-tones 
 	       squelch-update srate src-sound src-selection start-playing start-progress-report
 	       stop-player stop-playing swap-channels syncd-marks sync temp-dir text-focus-color tiny-font track-sample-reader? transform-dialog transform-sample
-	       transform-samples transform-samples->vct transform-graph-data-size transform-type trap-segfault unbind-key undo update-transform update-time-graph
+	       transform-samples transform-samples->vct transform-samples-size transform-type trap-segfault unbind-key undo update-transform update-time-graph
 	       update-lisp-graph update-sound update-usage-stats use-sinc-interp vct->samples vct->sound-file verbose-cursor view-sound
-	       vu-font vu-font-size vu-size wavelet-type graph-time? wavo wavo-hop wavo-trace window-height window-width window-x window-y with-mix-tags
+	       vu-font vu-font-size vu-size wavelet-type graph-time? time-graph-type wavo-hop wavo-trace window-height window-width window-x window-y with-mix-tags
 	       write-peak-env-info-file x-axis-style x-bounds x-position-slider x->position x-zoom-slider y-bounds y-position-slider y->position
 	       y-zoom-slider zero-pad zoom-color zoom-focus-style mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size
 	       mus-sound-data-location mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-data-format mus-sound-length mus-sound-type-specifier
@@ -8260,8 +8273,8 @@ EDITS: 3
 			  samples->vct samples->sound-data save-sound save-sound-as 
 			  scan-chan select-channel show-axes show-transform-peaks show-marks show-mix-waveforms 
 			  show-y-zero spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale 
-			  spectro-z-angle spectro-z-scale squelch-update transform-sample transform-samples transform-samples->vct transform-graph-data-size 
-			  transform-type update-transform update-time-graph update-lisp-graph update-sound wavelet-type graph-time? wavo wavo-hop wavo-trace x-bounds 
+			  spectro-z-angle spectro-z-scale squelch-update transform-sample transform-samples transform-samples->vct transform-samples-size 
+			  transform-type update-transform update-time-graph update-lisp-graph update-sound wavelet-type graph-time? time-graph-type wavo-hop wavo-trace x-bounds 
 			  x-position-slider x-zoom-slider y-bounds y-position-slider y-zoom-slider zero-pad))
 	  (gc))
 
@@ -8284,8 +8297,8 @@ EDITS: 3
 			  samples->vct samples->sound-data save-sound-as 
 			  scan-chan show-axes show-transform-peaks show-marks show-mix-waveforms 
 			  show-y-zero spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale 
-			  spectro-z-angle spectro-z-scale squelch-update transform-sample transform-samples transform-samples->vct transform-graph-data-size 
-			  transform-type update-transform update-time-graph update-lisp-graph wavelet-type graph-time? wavo wavo-hop wavo-trace x-bounds 
+			  spectro-z-angle spectro-z-scale squelch-update transform-sample transform-samples transform-samples->vct transform-samples-size 
+			  transform-type update-transform update-time-graph update-lisp-graph wavelet-type graph-time? time-graph-type wavo-hop wavo-trace x-bounds 
 			  x-position-slider x-zoom-slider y-bounds y-position-slider y-zoom-slider zero-pad)))
 
         (let ((ctr 0))
@@ -8305,8 +8318,8 @@ EDITS: 3
 			  play-and-wait position->x position->y redo reverse-sound revert-sound right-sample sample samples->vct samples->sound-data 
 			  save-sound scale-by scale-to show-axes show-transform-peaks show-marks show-mix-waveforms show-y-zero spectro-cutoff spectro-hop 
 			  spectro-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale squelch-update 
-			  src-sound transform-sample transform-samples transform-samples->vct transform-graph-data-size transform-type undo update-transform update-time-graph 
-			  update-lisp-graph update-sound wavelet-type graph-time? wavo wavo-hop wavo-trace x-bounds x-position-slider x->position x-zoom-slider 
+			  src-sound transform-sample transform-samples transform-samples->vct transform-samples-size transform-type undo update-transform update-time-graph 
+			  update-lisp-graph update-sound wavelet-type graph-time? time-graph-type wavo-hop wavo-trace x-bounds x-position-slider x->position x-zoom-slider 
 			  y-bounds y-position-slider y->position y-zoom-slider zero-pad )))
 
         (let ((ctr 0))
@@ -8353,8 +8366,8 @@ EDITS: 3
 			  graph-transform? graph-style graph-lisp? left-sample make-graph-data max-transform-peaks maxamp min-dB transform-normalization
 			  peak-env-info reverse-sound right-sample show-axes show-transform-peaks show-marks show-mix-waveforms show-y-zero 
 			  spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale 
-			  spectro-z-angle spectro-z-scale squelch-update transform-samples->vct transform-graph-data-size transform-type update-transform 
-			  update-time-graph update-lisp-graph wavelet-type graph-time? wavo wavo-hop wavo-trace x-bounds x-position-slider x-zoom-slider 
+			  spectro-z-angle spectro-z-scale squelch-update transform-samples->vct transform-samples-size transform-type update-transform 
+			  update-time-graph update-lisp-graph wavelet-type graph-time? time-graph-type wavo-hop wavo-trace x-bounds x-position-slider x-zoom-slider 
 			  y-bounds y-position-slider y-zoom-slider zero-pad ))
 	  (close-sound index))
 
@@ -8375,8 +8388,8 @@ EDITS: 3
 			  graph-transform? graph-style graph-lisp? left-sample make-graph-data max-transform-peaks maxamp min-dB transform-normalization
 			  peak-env-info reverse-sound right-sample show-axes show-transform-peaks show-marks show-mix-waveforms show-y-zero 
 			  spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale 
-			  spectro-z-angle spectro-z-scale squelch-update transform-samples->vct transform-graph-data-size transform-type update-transform 
-			  update-time-graph update-lisp-graph wavelet-type graph-time? wavo wavo-hop wavo-trace x-bounds x-position-slider x-zoom-slider 
+			  spectro-z-angle spectro-z-scale squelch-update transform-samples->vct transform-samples-size transform-type update-transform 
+			  update-time-graph update-lisp-graph wavelet-type graph-time? time-graph-type wavo-hop wavo-trace x-bounds x-position-slider x-zoom-slider 
 			  y-bounds y-position-slider y-zoom-slider zero-pad
 			  ))
 	  (gc)

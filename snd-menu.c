@@ -126,7 +126,7 @@ void reflect_file_revert_in_label (snd_info *sp)
       if (!editing)
 	{
 	  set_sound_pane_file_label(sp, shortname_indexed(sp));
-	  make_a_big_star_outa_me(sp->shortname, 0);
+	  make_a_big_star_outa_me(sp->short_filename, 0);
 	}
     }
 }
@@ -246,7 +246,7 @@ static int file_update(snd_info *sp, void *ptr)
   /* here we should only update files that have changed on disk */
   if ((sp) && (sp->edited_region == NULL) &&
       ((sp->need_update) || 
-       (file_write_date(sp->fullname) != sp->write_date)))
+       (file_write_date(sp->filename) != sp->write_date)))
     snd_update(ss, sp);
   return(0);
 }

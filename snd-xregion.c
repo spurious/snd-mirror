@@ -48,6 +48,8 @@ static void make_region_element(region_state *rs, int i)
 {
   regrow *r;
   r = region_row(i);
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(r->sv), r->sv);
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(r->pl), r->pl);
   set_button_label_bold(r->nm, rs->name[i]);
   XmToggleButtonSetState(r->sv, rs->save[i], FALSE);
   XmToggleButtonSetState(r->pl, FALSE, FALSE);
@@ -583,10 +585,6 @@ static regrow *region_row(int n)
 	}
       return(region_rows[n]);
     }
-#if DEBUGGING
-  fprintf(stderr,"access region_rows[%d] size=%d\n", n, region_rows_size);
-  abort();
-#endif
   return(NULL);
 }
 

@@ -3271,7 +3271,7 @@ read, even if not playing.  'files' is a list of files to be played."
       (define x-in-samples      x-axis-in-samples)
 
       (define graphing          graph-lisp?)
-      ;; old transform-size is shadowed by new version = transform-graph-data-size
+      ;; old transform-size is shadowed by new version = transform-samples-size
       (define waving            graph-time?)
       (define ffting            graph-transform?)
       (define fft-graph         transform-graph)
@@ -3292,6 +3292,7 @@ read, even if not playing.  'files' is a list of files to be played."
       (define update-fft        update-transform)
       (define update-graph      update-time-graph)
       (define fft-size          transform-size)
+      (define wavo              time-graph-type) ;not quite right since wavo used booleans
 
       (define uniting 
 	(make-procedure-with-setter 
@@ -3301,6 +3302,7 @@ read, even if not playing.  'files' is a list of files to be played."
 	   (if (= (length args) 1)
 	       (set! (channel-style) (car args))
 	       (set! (channel-style (car args)) (cadr args))))))
+
       ))
 
 

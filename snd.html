@@ -867,13 +867,13 @@ be able to interrupt anything).
 <A NAME="wavogram">"wavogram"</a>, mimics the spectrogram in the time domain.
 The same rotation commands apply to this display,
 with the additional variable <a href="extsnd.html#wavohop">wavo-hop</a> which sets the
-density of the traces.  To get this display <code>M-x (set! (wavo) #t)</code>.  It is
+density of the traces.  To get this display <code>M-x (set! (time-graph-type) graph-time-as-wavogram)</code>.  It is
 important in this case to get the length of each trace
 so successive peaks more or less line up.  The
 trace length in samples is set by the variable wavo-trace,
 or the numeric keypad + and - keys.
 </p>
-        <!-- I(wavogram):A(wavogram) --><!-- I(wavogram):L(wavo)(wavogram) --><!-- I(wavogram):O(wavo-trace, wavo-hop)(wavohop) -->
+        <!-- I(wavogram):A(wavogram) --><!-- I(wavogram):L(time-graph-type)(wavogram) --><!-- I(wavogram):O(wavo-trace, wavo-hop)(wavohop) -->
 
 <A NAME="saveoptions"></a><p>The Save options menu option is best explained as a part
 of the <a href="extsnd.html#appearance">customization</a> process.  It basically
@@ -2221,7 +2221,7 @@ panel are:</p>
 <center>
 <table border rows=121>
   <caption>Index</caption>
-  <!-- created 3-June-01 -->
+  <!-- created 5-June-01 -->
   <tr><th>Action<th>Menu<th>Keyboard<th>Lisp<th>Other</tr>
   <tr><td><a href="#kgc">abort command</a></td><td><br></td><td><a href="#kgc"><small>Cg</small></a></td><td><a href="extsnd.html#sndabort"><small>c-g?</small></a></td><td><small>mouse click</small></td></tr>
   <tr><td><a href="#ampenvs">amp env</a></td><td><small>Edit: <a href="#editenvelope">Edit Env</a></small></td><td><a href="#cxca"><small>Cx Ca, Cx a</small></a></td><td><a href="extsnd.html#sndenv"><small>env-sound</small></a></td><td><a href="extsnd.html#sndscaleto"><small>scale-to, scale-by</small></a></td></tr>
@@ -2339,7 +2339,7 @@ panel are:</p>
   <tr><td><a href="#updatefile">update file</a></td><td><small>File: <a href="#updatefile">Update</a></small></td><td><small>[Home]</small></td><td><a href="extsnd.html#sndupdate"><small>update</small></a></td><td><a href="extsnd.html#corruptiontime"><small>corruption-time, auto-update</small></a></td></tr>
   <tr><td><a href="#editenvelope">view envs</a></td><td><small>Edit: <a href="#editenvelope">Edit Env</a></small></td><td><br></td><td><a href="extsnd.html#sndenveddialog"><small>enved-dialog</small></a></td><td><br></td></tr>
   <tr><td><a href="#transformtype">wavelets</a></td><td><small>Options: <a href="#transformtype">Transform</a></small></td><td><br></td><td><a href="extsnd.html#wavelettype"><small>wavelet-type</small></a></td><td><br></td></tr>
-  <tr><td><a href="#wavogram">wavogram</a></td><td><br></td><td><br></td><td><a href="#wavogram"><small>wavo</small></a></td><td><a href="extsnd.html#wavohop"><small>wavo-trace, wavo-hop</small></a></td></tr>
+  <tr><td><a href="#wavogram">wavogram</a></td><td><br></td><td><br></td><td><a href="#wavogram"><small>time-graph-type</small></a></td><td><a href="extsnd.html#wavohop"><small>wavo-trace, wavo-hop</small></a></td></tr>
   <tr><td><a href="extsnd.html#xaxisstyle">X axis units</a></td><td><small>View: <a href="extsnd.html#xaxisstyle">X axis units</a></small></td><td><br></td><td><a href="extsnd.html#xaxisstyle"><small>x-axis-style</small></a></td><td><br></td></tr>
   <tr><td><a href="#viewy0">y=0 line</a></td><td><small>View: <a href="#viewy0">Show y=0</a></small></td><td><br></td><td><a href="extsnd.html#showyzero"><small>show-y-zero</small></a></td><td><br></td></tr>
   <tr><td><a href="#zoomoption">zoom focus</a></td><td><small>Options: <a href="#zoomoption">Zoom style</a></small></td><td><br></td><td><a href="extsnd.html#zoomfocusstyle"><small>zoom-focus-style</small></a></td><td><br></td></tr>

@@ -482,7 +482,7 @@ void make_file_save_as_dialog(snd_state *ss)
   sp = any_selected_sound(ss);
   if (sp) hdr = sp->hdr;
   make_save_as_dialog(ss,
-		      (char *)((sp) ? sp->shortname : ""),
+		      (char *)((sp) ? sp->short_filename : ""),
 		      FILE_SAVE_AS,
 		      default_output_type(ss),
 		      default_output_format(ss));
@@ -856,7 +856,7 @@ void highlight_selected_sound(snd_state *ss)
   sp = selected_sound(ss);
   if (sp)
     {
-      i = find_curfile_regrow(sp->shortname);
+      i = find_curfile_regrow(sp->short_filename);
       if (i != -1) 
 	curfile_highlight(ss, i); 
       else curfile_unhighlight(ss);
@@ -1415,7 +1415,7 @@ static void edit_header_ok_Callback(GtkWidget *w, gpointer context)
   ss = sp->state;
   if (!(sp->read_only))
     edit_header_callback(ss, sp, edit_header_data);
-  else snd_error("%s is write-protected", sp->shortname);
+  else snd_error("%s is write-protected", sp->short_filename);
   gtk_widget_hide(edit_header_dialog);
 }
 
@@ -1469,7 +1469,7 @@ GtkWidget *edit_header(snd_info *sp)
     }
 
   str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-  mus_snprintf(str, PRINT_BUFFER_SIZE, STR_Edit_header_of, sp->shortname);
+  mus_snprintf(str, PRINT_BUFFER_SIZE, STR_Edit_header_of, sp->short_filename);
   gtk_window_set_title(GTK_WINDOW(edit_header_dialog), str);
   FREE(str);
   gtk_widget_show(edit_header_dialog);

@@ -518,10 +518,6 @@ static regrow *region_row(int n)
 	}
       return(region_rows[n]);
     }
-#if DEBUGGING
-  fprintf(stderr,"access region_rows[%d] size=%d\n", n, region_rows_size);
-  abort();
-#endif
   return(NULL);
 }
 

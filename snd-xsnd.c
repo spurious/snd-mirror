@@ -996,7 +996,7 @@ void set_play_button(snd_info *sp, int val)
   if (!(IS_PLAYER(sp)))
     {
       XmToggleButtonSetState(w_snd_play(sp), val, FALSE);
-      set_file_browser_play_button(sp->shortname, val);
+      set_file_browser_play_button(sp->short_filename, val);
     }
 }
 
@@ -1028,7 +1028,7 @@ static void Play_button_Callback(Widget w, XtPointer context, XtPointer info)
 	sp->cursor_follows_play = FOLLOW_ONCE;
       else sp->cursor_follows_play = DONT_FOLLOW;
     }
-  set_file_browser_play_button(sp->shortname, cb->set);
+  set_file_browser_play_button(sp->short_filename, cb->set);
   cp = any_selected_channel(sp);
   goto_graph(cp);
   if ((!(cp->cursor_on)) && (sp->cursor_follows_play != DONT_FOLLOW))
@@ -1382,7 +1382,7 @@ void snd_file_lock_icon(snd_info *sp, int on) {}
 void snd_file_bomb_icon(snd_info *sp, int on) 
 {
   if (on)
-    report_in_minibuffer(sp, "%s has changed since we last read it!", sp->shortname);
+    report_in_minibuffer(sp, "%s has changed since we last read it!", sp->short_filename);
 }
 static void snd_file_glasses_icon(snd_info *sp, int on, int glass) {}
 void x_bomb(snd_info *sp, int on) {}
@@ -1470,7 +1470,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss, int read_only)
       if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
 	{
 	  title = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-	  mus_snprintf(title, PRINT_BUFFER_SIZE, "%d: %s", snd_slot, sp->shortname);
+	  mus_snprintf(title, PRINT_BUFFER_SIZE, "%d: %s", snd_slot, sp->short_filename);
 	  if (sx->dialog == NULL)
 	    {
 	      n = 0;
@@ -2479,7 +2479,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss, int read_only)
       if (sound_style(ss) == SOUNDS_IN_NOTEBOOK)
 	{
 	  char name[MAX_NOTEBOOK_TAB_LENGTH + 11];
-	  strncpy(name, just_filename(sp->shortname), MAX_NOTEBOOK_TAB_LENGTH);
+	  strncpy(name, just_filename(sp->short_filename), MAX_NOTEBOOK_TAB_LENGTH);
 	  name[MAX_NOTEBOOK_TAB_LENGTH] ='\0';
 	  n = 0;
 	  if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->graph_color); n++;}
@@ -2499,7 +2499,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss, int read_only)
       else 
 	{
 	  title = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-	  mus_snprintf(title, PRINT_BUFFER_SIZE, "%d: %s", snd_slot, sp->shortname);
+	  mus_snprintf(title, PRINT_BUFFER_SIZE, "%d: %s", snd_slot, sp->short_filename);
 	  XtVaSetValues(sx->dialog, XmNtitle, title, NULL);
 	  FREE(title);
 	  if (!XtIsManaged(sx->dialog)) XtManageChild(sx->dialog);
@@ -2519,7 +2519,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss, int read_only)
 #if (XmVERSION > 1)
       if (sound_style(ss) == SOUNDS_IN_NOTEBOOK)
 	{
-	  set_label(sx->tab, just_filename(sp->shortname));
+	  set_label(sx->tab, just_filename(sp->short_filename));
 	}
 #endif
     }
@@ -2529,7 +2529,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss, int read_only)
       XtUnmanageChild(w_snd_combine(sp));
     }
   add_sound_data(filename, sp, ss, WITH_GRAPH);
-  snd_file_lock_icon(sp, (sp->read_only || (cant_write(sp->fullname))));
+  snd_file_lock_icon(sp, (sp->read_only || (cant_write(sp->filename))));
   if (ss->pending_change)
     report_in_minibuffer(sp, "(translated %s)", old_name);
   if (!(ss->using_schemes)) map_over_children(SOUND_PANE(ss), color_sashes, (void *)ss);

@@ -693,7 +693,7 @@ void reflect_edit_history_change(chan_info *cp)
 		    {
 		      sp = cp->sound;
 		      edits = (XmString *)CALLOC(eds + 1, sizeof(XmString));
-		      edits[0] = XmStringCreate(sp->fullname, XmFONTLIST_DEFAULT_TAG);
+		      edits[0] = XmStringCreate(sp->filename, XmFONTLIST_DEFAULT_TAG);
 		      for (i = 1; i <= eds; i++) 
 			edits[i] = XmStringCreate(edit_to_string(cp, i), XmFONTLIST_DEFAULT_TAG);
 		      XtVaSetValues(lst, 
@@ -1236,7 +1236,6 @@ GC erase_GC(chan_info *cp)
 
 void graph_key_press(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
-  /* called by every key-intercepting widget in the entire sound pane */
   XKeyEvent *ev = (XKeyEvent *)event;
   KeySym keysym;
   int key_state;

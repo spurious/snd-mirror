@@ -28,10 +28,9 @@
 #endif
 #endif
 
-#if defined(SUN) || defined(LINUX)
+#if (XmVERSION >= 2)
   #define OVERRIDE_TOGGLE 1
-  /* Metrolink Motif (Linux) defines control-button1 to be "take focus" -- this is not a good idea!! */
-  /*    (without this override ctrl-button1 in a graph causes a segfault in Metrolink Motif because someone is calling XmProcessTraversal) */
+  /* Motif 2.0 defines control-button1 to be "take focus" -- this is not a good idea!! */
 #else
   #define OVERRIDE_TOGGLE 0
 #endif

@@ -436,7 +436,7 @@ static char *snd_print_or_error(snd_state *ss, char *output)
 		  offsets[j] = offsets[i + sp->nchans - 1];
 	    i += sp->nchans;
 	  }
-      err = start_ps_graph(output, ((si->cps[0])->sound)->fullname);
+      err = start_ps_graph(output, ((si->cps[0])->sound)->filename);
       if (err == 0)
 	{
 	  for (i = 0; i < si->chans; i++)

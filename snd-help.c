@@ -268,13 +268,14 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+5-June:  replaced wavo by time-graph-type, graph-time-one, graph-time-as-wavogram (analogous to transform-graph-type).\n\
 4-June:  configure.ac for autoconf 2.50.\n\
          prepended \"zoom-\" to the zoom-focus-style choices (e.g. zoom-focus-left)\n\
          added \"axis-\" to x-axis-style choices (e.g. x-axis-in-samples),  x-to-one -> x-axis-as-percentage.\n\
          added print-hook.\n\
          graphing -> graph-lisp?, ffting -> graph-transform?, waving -> graph-time?,\n\
          fft-graph -> transform-graph, fft-beta -> fft-window-beta, fft-hook -> transform-hook,\n\
-         transform-size -> transform-graph-data-size, fft-size -> transform-size, fft-style -> transform-graph-type,\n\
+         transform-size -> transform-samples-size, fft-size -> transform-size, fft-style -> transform-graph-type,\n\
          before-fft-hook -> before-transform-hook, max-fft-peaks -> max-transform-peaks,\n\
          show-fft-peaks -> show-transform-peaks, normal-fft -> graph-transform-once,\n\
          sonogram -> graph-transform-as-sonogram, spectrogram -> graph-transform-as-spectrogram,\n\
@@ -1101,7 +1102,6 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_vu_font_size "          1.0\n\
   " S_vu_size "               1.0\n\
   " S_wavelet_type "          0 (snd #t) (chn #t)\n\
-  " S_wavo "                  #f (snd #t) (chn #t)\n\
   " S_wavo_hop "              3 (snd #t) (chn #t)\n\
   " S_wavo_trace "            64 (snd #t) (chn #t)\n\
   " S_window_height "         0\n\
@@ -1429,7 +1429,7 @@ all refer to the same thing.\n\
   " S_transform_sample "  (bin slice snd chn)\n\
   " S_transform_samples " (snd chn()\n\
   " S_transform_samples2vct " (snd chn)\n\
-  " S_transform_graph_data_size " (snd chn)\n\
+  " S_transform_samples_size " (snd chn)\n\
   " S_unbind_key "        (key state)\n\
   " S_undo "              (edits snd chn)\n\
   " S_update_lisp_graph " (snd chn)\n\

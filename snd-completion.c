@@ -231,7 +231,7 @@ static char *snd_commands[NUM_COMMANDS] ={
   S_stop_player, S_stop_playing, S_stop_playing_channel_hook, S_stop_playing_hook, S_stop_playing_region_hook,
   S_swap_channels, S_sync, S_syncd_marks,
 
-  S_temp_dir, S_text_focus_color, 
+  S_temp_dir, S_text_focus_color, S_time_graph_type,
   S_tiny_font, S_track_sample_reader_p,
   S_transform_dialog, S_transform_graph_type, S_transform_hook, S_transform_normalization, 
   S_transform_sample, S_transform_samples, S_transform_samples2vct, 
@@ -244,7 +244,7 @@ static char *snd_commands[NUM_COMMANDS] ={
   S_vct_multiplyB, S_vct_offsetB, S_vct_peak, S_vct_ref, S_vct_scaleB, S_vct_setB, S_vct_subtractB, S_vct_p, S_vcts_doB, S_vcts_mapB,
   S_verbose_cursor, S_view_sound, S_vu_font, S_vu_font_size, S_vu_size,
 
-  S_walsh_transform, S_wavelet_transform, S_wavelet_type, S_wavo, S_wavo_hop, S_wavo_trace,
+  S_walsh_transform, S_wavelet_transform, S_wavelet_type, S_wavo_hop, S_wavo_trace,
   S_window_height, S_window_width, S_window_x, S_window_y, S_with_mix_tags,
 
   S_x_axis_as_percentage, S_x_axis_in_samples, S_x_axis_in_seconds, S_x_axis_style, S_x_bounds, S_x_position_slider, S_x_zoom_slider,

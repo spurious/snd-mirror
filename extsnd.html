@@ -5358,9 +5358,20 @@ desired edit history position.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
-<!-- transform-graph-data-size -->
+<!-- time-graph-type -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="transformgraphsize">transform-graph-data-size</a></em> (<i>snd chn</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="wavo">time-graph-type</a></em> (<em class=narg>snd chn</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->If <b>time-graph-type</b> is <code>graph-time-as-wavogram</code>, the time domain waveform is displayed as a '<a href="snd.html#wavogram">wavogram</a>'.
+<!-- -->The default is <code>graph-time-once</code>.  See also <a href="#wavohop">wavo-hop</a> and <a href="#wavotrace">wavo-trace</a>.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- transform-samples-size -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="transformgraphsize">transform-samples-size</a></em> (<i>snd chn</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->returns either 0 if no transform, transform-graph-type if graph-transform-once,
@@ -5535,23 +5546,13 @@ desired edit history position.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
-<!-- wavo -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="wavo">wavo</a></em> (<em class=narg>snd chn</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->If #t, the time domain waveform is displayed as a '<a href="snd.html#wavogram">wavogram</a>'.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
 <!-- wavo-hop -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="wavohop">wavo-hop</a></em> (<em class=narg>snd chn</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->This sets the distance upward between wavogram traces; that is,
-<!-- -->the smaller this number, the more traces can be displayed (default: 3).
+<!-- -->the smaller this number, the more traces can be displayed (default: 3).  See <a href="#wavo">time-graph-type<a/>.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5561,7 +5562,7 @@ desired edit history position.
 <!-- --><span class=defbox><code><em class=def><a name="wavotrace">wavo-trace</a></em> (<em class=narg>snd chn</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->This sets the length (samples) of each wavogram trace (default: 64).
+<!-- -->This sets the length (samples) of each wavogram trace (default: 64).  See <a href="#wavo">time-graph-type<a/>.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6447,7 +6448,7 @@ And an example that lets us see the result of filtering the waveform:
 <tr><td width=200><a href="#sndffting">graph-transform?</a></td><td><a href="#showfftpeaks">show-transform-peaks</a></td><td><a href="#sndtransformsample">transform-sample</a></td></tr>
 <tr><td><a href="#fftbeta">fft-window-beta</a></td><td><a href="#lshowselectiontransform">show-selection-transform</a></td><td><a href="#sndtransformsamples">transform-samples</a></td></tr>
 <tr><td><a href="#ffthook">transform-hook</a></td><td><a href="#spectrocutoff">spectro-cutoff</a></td><td><a href="#transformsamples2vct">transform-samples-&gt;vct</a></td></tr>
-<tr><td><a href="#fftlogfrequency">fft-log-frequency</a></td><td><a href="#spectrohop">spectro-hop</a></td><td><a href="#transformgraphsize">transform-graph-data-size</a></td></tr>
+<tr><td><a href="#fftlogfrequency">fft-log-frequency</a></td><td><a href="#spectrohop">spectro-hop</a></td><td><a href="#transformgraphsize">transform-samples-size</a></td></tr>
 <tr><td><a href="#fftlogmagnitude">fft-log-magnitude</a></td><td><a href="#spectrostart">spectro-start</a></td><td><a href="#ltransformtype">transform-type</a></td></tr>
 <tr><td><a href="#lfftsize">transform-size</a></td><td><a href="#spectroxangle">spectro-x-angle</a></td><td><a href="#sndupdatefft">update-transform</a></td></tr>
 <tr><td><a href="#lfftstyle">transform-graph-type</a></td><td><a href="#spectroxscale">spectro-x-scale</a></td><td><a href="#normalizefft">transform-normalization</a></td></tr>
@@ -6913,9 +6914,14 @@ variable %load-verbosely to #t.
   <a name="musoutformat">mus-out-format</a>
 </pre>
 <br>
-<p><b>FFT style</b> (the Transform Options Display choice):</p>
+<p><b>Time domain graph type</b>:</p>
 <pre>
-  normal-fft         sonogram            spectrogram
+  graph-time-once  graph-time-as-wavogram
+</pre>
+<br>
+<p><b>Transform graph type</b> (the Transform Options Display choice):</p>
+<pre>
+  graph-transform-once  graph-transform-as-sonogram  graph-transform-as-spectrogram
 </pre>
 <br>
 <p><b>Transform type</b>:

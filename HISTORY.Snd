@@ -1,12 +1,13 @@
 snd change log
 
+  5-June:    replaced wavo by time-graph-type, graph-time-once, graph-time-as-wavogram (analogous to transform-graph-type).
   4-June:    configure.ac for autoconf 2.50.
              prepended "zoom-" to the zoom-focus-style choices (e.g. zoom-focus-left).
              added axis- to x-axis-style choices (e.g. x-axis-in-samples). x-to-one -> x-axis-as-percentage.
              added print-hook.
              graphing -> graph-lisp?, ffting -> graph-transform?, waving -> graph-time?,
              fft-graph -> transform-graph, fft-beta -> fft-window-beta, fft-hook -> transform-hook,
-             transform-size -> transform-graph-data-size, fft-size -> transform-size, fft-style -> transform-graph-type,
+             transform-size -> transform-samples-size, fft-size -> transform-size, fft-style -> transform-graph-type,
              before-fft-hook -> before-transform-hook, max-fft-peaks -> max-transform-peaks,
              show-fft-peaks -> show-transform-peaks, normal-fft -> graph-transform-once,
              sonogram -> graph-transform-as-sonogram, spectrogram -> graph-transform-as-spectrogram,

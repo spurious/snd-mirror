@@ -328,6 +328,7 @@ file_info *fixup_region_data(chan_info *cp, int chan, int pos)
 	  make_region_readable(r, cp->state);
 	  nsp = r->rsp;
 	  ncp = nsp->chans[chan];
+	  /* cp->sound = ncp->sound; */ /* added for hdr->srate 4-june-01 */
 	  cp->sounds = ncp->sounds;
 	  cp->sound_size = ncp->sound_size;
 	  cp->edits = ncp->edits;
@@ -655,7 +656,7 @@ int define_region(sync_info *si, int *ends)
   r->srate = SND_SRATE(sp0);
   r->maxamp = 0.0;
   r->editor_copy = NULL;
-  r->name = copy_string(sp0->shortname);
+  r->name = copy_string(sp0->short_filename);
   r->chans = si->chans;
   r->data = (MUS_SAMPLE_TYPE **)CALLOC(r->chans, sizeof(MUS_SAMPLE_TYPE *));
   r->frames = len;

@@ -1066,7 +1066,6 @@ int listener_width(void)
 }
 
 #if OVERRIDE_TOGGLE
-/* Metrolink Motif defines control-button1 to be "take focus" and then segfaults if you use it!! */
 static char ToggleTrans2[] =
        "c<Btn1Down>:   ArmAndActivate()\n";
 static XtTranslations toggleTable2 = NULL;

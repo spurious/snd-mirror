@@ -1889,9 +1889,9 @@ static char *mark_file_name(snd_info *sp)
 {
   char *newname;
   int len, i;
-  len = strlen(sp->fullname);
+  len = strlen(sp->filename);
   newname = (char *)CALLOC(len + 7, sizeof(char));
-  strcpy(newname, sp->fullname);
+  strcpy(newname, sp->filename);
   for (i = len - 1; i > 0; i--) 
     if (newname[i] == '.') 
       break;
@@ -1918,7 +1918,7 @@ static char *save_marks(snd_info *sp)
       fd = fopen(newname, "w");
       if (fd)
 	{
-	  fprintf(fd, "(let ((sfile (find-sound \"%s\")))\n", sp->shortname);
+	  fprintf(fd, "(let ((sfile (find-sound \"%s\")))\n", sp->short_filename);
 	  for (i = 0; i < sp->nchans; i++)
 	    save_mark_list(fd, sp->chans[i]);
 	  fprintf(fd, ")");

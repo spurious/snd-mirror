@@ -1092,7 +1092,7 @@ void cleanup_dac(void)
 static void reflect_play_stop (snd_info *sp) 
 {
   if (w_snd_play(sp)) set_toggle_button(w_snd_play(sp), FALSE, FALSE, sp);
-  set_file_browser_play_button(sp->shortname, 0);
+  set_file_browser_play_button(sp->short_filename, 0);
 }
 
 static void free_player(snd_info *sp);
@@ -1283,7 +1283,7 @@ static char *describe_dac(int error_type)
       }
   if ((players == 1) && 
       (ptr->sp))
-    return(ptr->sp->shortname);
+    return(ptr->sp->short_filename);
   return("");
 }
 
@@ -2540,8 +2540,8 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
 										 mus_sound_header_type(name)))));
 	}
       sp = make_sound_readable(get_global_state(), name, FALSE);
-      sp->shortname = filename_without_home_directory(name);
-      sp->fullname = NULL;
+      sp->short_filename = filename_without_home_directory(name);
+      sp->filename = NULL;
       sp->delete_me = 1;
       samp = TO_C_INT_OR_ELSE(snd_n, 0);
       if (INTEGER_P(chn_n)) end = TO_C_INT(chn_n);
@@ -2687,7 +2687,7 @@ static void free_player(snd_info *sp)
       players[PLAYER(sp)] = NULL;
       player_chans[PLAYER(sp)] = 0;
     }
-  FREE(sp->fullname);
+  FREE(sp->filename);
   FREE(sp->chans);
   FREE(sp);
 }

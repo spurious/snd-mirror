@@ -190,7 +190,7 @@ typedef struct chan__info {
   /* moved from global to channel-local 4-Aug-00 */
   Float spectro_x_scale, spectro_y_scale, spectro_z_scale, spectro_z_angle, spectro_x_angle, spectro_y_angle, spectro_cutoff, spectro_start;
   Float lin_dB, min_dB, fft_window_beta;
-  int show_y_zero, show_marks, wavo, wavo_hop, wavo_trace, zero_pad, x_axis_style, wavelet_type, verbose_cursor, max_transform_peaks;
+  int show_y_zero, show_marks, wavo_hop, wavo_trace, zero_pad, x_axis_style, wavelet_type, verbose_cursor, max_transform_peaks;
   int show_transform_peaks, show_axes, graph_style, fft_log_frequency, fft_log_magnitude, transform_size, transform_graph_type, fft_window, time_graph_type;
   Latus dot_size;
   int transform_normalization, transform_type, show_mix_waveforms, spectro_hop, graphs_horizontal;
@@ -224,8 +224,8 @@ typedef struct snd__info {
   int filter_control_order, filter_control_changed;
   env *filter_control_env;
   int selected_channel;
-  char *fullname;
-  char *shortname;
+  char *filename;
+  char *short_filename;
   int nchans;
   SCM search_proc;
   SCM prompt_callback;
@@ -301,7 +301,7 @@ typedef struct snd__state {
   int Default_Output_Type, Default_Output_Format, Default_Output_Chans, Default_Output_Srate;
   int Spectro_Hop, Color_Map, Wavelet_Type, Transform_Type;
   Latus Dot_Size;
-  int Transform_Size, Fft_Window, Transform_Graph_Type, Time_Graph_Type, Zero_Pad, Ask_Before_Overwrite, Wavo_Hop, Wavo, Wavo_Trace;
+  int Transform_Size, Fft_Window, Transform_Graph_Type, Time_Graph_Type, Zero_Pad, Ask_Before_Overwrite, Wavo_Hop, Wavo_Trace;
   Float Fft_Window_Beta, Reverb_Control_Decay;
   Float Color_Scale, Color_Cutoff;
   int Color_Inverted, Speed_Control_Style, Movies, Transform_Normalization, Show_Mix_Waveforms, Mix_Waveform_Height;

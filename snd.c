@@ -157,7 +157,7 @@ static repv snd_rep_main(repv arg)
   ss->Zero_Pad = DEFAULT_ZERO_PAD;
   ss->Ask_Before_Overwrite = DEFAULT_ASK_BEFORE_OVERWRITE;
   ss->X_Axis_Style = DEFAULT_AXIS_STYLE;
-  ss->Wavo = DEFAULT_WAVO;
+  ss->Time_Graph_Type = DEFAULT_TIME_GRAPH_TYPE;
   ss->Wavo_Hop = DEFAULT_WAVO_HOP;
   ss->Wavo_Trace = DEFAULT_WAVO_TRACE;
   ss->Spectro_Hop = DEFAULT_SPECTRO_HOP;

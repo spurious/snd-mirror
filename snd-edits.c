@@ -1178,7 +1178,7 @@ static void reflect_file_change_in_label (chan_info *cp)
     strcat(starred_name, "(*)");
   else strcat(starred_name, "*");
   set_sound_pane_file_label(sp, starred_name);
-  make_a_big_star_outa_me(sp->shortname, 1);
+  make_a_big_star_outa_me(sp->short_filename, 1);
   FREE(starred_name);
 }
 
@@ -1855,9 +1855,9 @@ snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_po
   sp = cp->sound;
   if (sp->need_update) 
     {
-      if (mus_file_probe(sp->fullname) == 0)
-	snd_error("%s no longer exists!", sp->shortname);
-      else snd_warning("%s has changed since we last read it!", sp->shortname);
+      if (mus_file_probe(sp->filename) == 0)
+	snd_error("%s no longer exists!", sp->short_filename);
+      else snd_warning("%s has changed since we last read it!", sp->short_filename);
     }
   curlen = cp->samples[edit_position];
   sf = (snd_fd *)CALLOC(1, sizeof(snd_fd));
@@ -2252,7 +2252,7 @@ static int save_edits_and_update_display(snd_info *sp)
     }
   if (err == MUS_NO_ERROR)
     {
-      report_in_minibuffer(sp, "saving %s", sp->shortname);
+      report_in_minibuffer(sp, "saving %s", sp->short_filename);
       sphdr = sp->hdr;
       err = snd_make_file(ofile, sp->nchans, sp->hdr, sf, samples, ss);
     }
@@ -2287,18 +2287,18 @@ static int save_edits_and_update_display(snd_info *sp)
 #if (!HAVE_ACCESS)
   err = 0;
 #else
-  err = access(sp->fullname, W_OK);
+  err = access(sp->filename, W_OK);
 #endif
   /* very weird -- in Linux we can write a write-protected file?? */
   if (err == 0)
     {
-      err = move_file(ofile, sp->fullname);
+      err = move_file(ofile, sp->filename);
       if (err) saved_errno = errno;
     }
   else saved_errno = errno;
-  sp->write_date = file_write_date(sp->fullname);
+  sp->write_date = file_write_date(sp->filename);
 
-  add_sound_data(sp->fullname, sp, ss, WITHOUT_INITIAL_GRAPH_HOOK);
+  add_sound_data(sp->filename, sp, ss, WITHOUT_INITIAL_GRAPH_HOOK);
 
   for (i = 0; i < sp->nchans; i++)
     {
@@ -2321,7 +2321,7 @@ static int save_edits_and_update_display(snd_info *sp)
   reflect_file_save_in_menu(ss);
   if (err)
     report_in_minibuffer_and_save(sp, "write failed: %s, edits saved in: %s", strerror(saved_errno), ofile);
-  else report_in_minibuffer(sp, "wrote %s", sp->fullname); 
+  else report_in_minibuffer(sp, "wrote %s", sp->filename); 
   if (ofile) 
     {
       FREE(ofile); 
@@ -2398,11 +2398,11 @@ int save_channel_edits(chan_info *cp, char *ofile, SCM edpos, const char *caller
   err = MUS_NO_ERROR;
   if (!(snd_overwrite_ok(ss, ofile))) return(MUS_NO_ERROR); /* no error because decision was explicit */
   pos = to_c_edit_position(cp, edpos, caller, arg_pos);
-  if (strcmp(ofile, sp->fullname) == 0)
+  if (strcmp(ofile, sp->filename) == 0)
     {
       if (sp->read_only)
 	{
-	  report_in_minibuffer_and_save(sp, "can't save channel as %s (%s is write-protected)", ofile, sp->shortname);
+	  report_in_minibuffer_and_save(sp, "can't save channel as %s (%s is write-protected)", ofile, sp->short_filename);
 	  return(MUS_WRITE_ERROR);
 	}
       /* here we're overwriting the current (possibly multi-channel) file with one of its channels */
@@ -2462,15 +2462,15 @@ void save_edits(snd_info *sp, void *ptr)
 	{
 	  errno = 0;
 	  /* check for change to file while we were editing it */
-	  current_write_date = file_write_date(sp->fullname);
+	  current_write_date = file_write_date(sp->filename);
 	  if ((current_write_date - sp->write_date) > 1) /* weird!! In Redhat 7.1 these can differ by 1?? Surely this is a bug! */
 	    {
-	      err = snd_yes_or_no_p(sp->state, "%s changed on disk! Save anyway?", sp->shortname);
+	      err = snd_yes_or_no_p(sp->state, "%s changed on disk! Save anyway?", sp->short_filename);
 	      if (err == 0) return;
 	    }
 	  err = save_edits_and_update_display(sp);
 	  if (err)
-	    report_in_minibuffer_and_save(sp, "%s: %s", sp->fullname, strerror(errno));
+	    report_in_minibuffer_and_save(sp, "%s: %s", sp->filename, strerror(errno));
 	  else
 	    {
 	      if (sp->edited_region) 
@@ -2481,7 +2481,7 @@ void save_edits(snd_info *sp, void *ptr)
 	report_in_minibuffer(sp, "(no changes need to be saved)");
     }
   else
-    report_in_minibuffer_and_save(sp, "can't write %s (it is read-only)", sp->shortname);
+    report_in_minibuffer_and_save(sp, "can't write %s (it is read-only)", sp->short_filename);
 }
 
 void revert_edits(chan_info *cp, void *ptr)
@@ -2744,7 +2744,7 @@ static int print_sf(SCM obj, SCM port, scm_print_state *pstate)
       else
 	{
 	  if (cp) 
-	    name = (cp->sound)->shortname;
+	    name = (cp->sound)->short_filename;
 	  else name = "unknown source";
 	}
       desc = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));

@@ -10,10 +10,10 @@ static SCM mouse_release_hook, mouse_drag_hook, key_press_hook, transform_hook;
 static SCM graph_hook, after_graph_hook;
 
 static void set_y_bounds(axis_info *ap);
-static int map_chans_wavo(chan_info *cp, void *ptr) 
+static int map_chans_time_graph_type(chan_info *cp, void *ptr) 
 {
-  cp->wavo = (*((int *)ptr)); 
-  if (cp->wavo == 0) 
+  cp->time_graph_type = (*((int *)ptr)); 
+  if (cp->time_graph_type == GRAPH_TIME_ONCE) 
     {
       set_y_bounds(cp->axis);
       resize_sy(cp);
@@ -23,7 +23,7 @@ static int map_chans_wavo(chan_info *cp, void *ptr)
   update_graph(cp, NULL); 
   return(0);
 }
-static void set_wavo(snd_state *ss, int val) {in_set_wavo(ss, val); map_over_chans(ss, map_chans_wavo, (void *)(&val));}
+static void set_time_graph_type(snd_state *ss, int val) {in_set_time_graph_type(ss, val); map_over_chans(ss, map_chans_time_graph_type, (void *)(&val));}
 
 static int map_chans_wavo_hop(chan_info *cp, void *ptr) {cp->wavo_hop = (*((int *)ptr)); update_graph(cp, NULL); return(0);}
 static void set_wavo_hop(snd_state *ss, int uval) 
@@ -932,7 +932,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   ap = cp->axis;
   /* check for no graph */
   if ((!ap) || (!(ap->graph_active)) || (ap->x0 == ap->x1)) return(0);
-  if (cp->wavo) 
+  if (cp->time_graph_type == GRAPH_TIME_AS_WAVOGRAM) 
     {
       make_wavogram(cp, sp, ss); 
       return(0);
@@ -1643,7 +1643,7 @@ static int display_transform_peaks(chan_info *ucp, char *filename)
 		  if ((num_peaks != 1) || 
 		      (peak_freqs[0].freq != 0.0))
 		    {
-		      fprintf(fd, sp->shortname);
+		      fprintf(fd, sp->short_filename);
 		      if (sp->nchans > 1) fprintf(fd, ": chan %d", cp->chan);
 		      fprintf(fd, ", fft %d points beginning at sample %d (%.3f secs)\n\n",
 			      fp->current_size, 
@@ -2373,7 +2373,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 
       if (cp->graph_time_p)
 	{
-	  if (cp->wavo)
+	  if (cp->time_graph_type == GRAPH_TIME_AS_WAVOGRAM)
 	    {
 	      if (ap->y_axis_y0 == ap->y_axis_y1) 
 		make_axes(cp, ap, x_axis_style(ss), FALSE); /* first time needs setup */
@@ -3496,12 +3496,12 @@ static axis_context *combined_context (chan_info *cp)       {return(set_context(
 
 enum {CP_GRAPH_TRANSFORM_P, CP_GRAPH_TIME_P, CP_FRAMES, CP_CURSOR, CP_GRAPH_LISP_P, CP_AP_LOSAMP, CP_AP_HISAMP, CP_SQUELCH_UPDATE,
       CP_EDIT_CTR, CP_CURSOR_STYLE, CP_EDIT_HOOK, CP_UNDO_HOOK,
-      CP_SHOW_Y_ZERO, CP_SHOW_MARKS, CP_WAVO, CP_WAVO_HOP, CP_WAVO_TRACE, CP_MAX_TRANSFORM_PEAKS, 
+      CP_SHOW_Y_ZERO, CP_SHOW_MARKS, CP_TIME_GRAPH_TYPE, CP_WAVO_HOP, CP_WAVO_TRACE, CP_MAX_TRANSFORM_PEAKS, 
       CP_SHOW_TRANSFORM_PEAKS, CP_ZERO_PAD, CP_VERBOSE_CURSOR, CP_FFT_LOG_FREQUENCY, CP_FFT_LOG_MAGNITUDE,
       CP_WAVELET_TYPE, CP_SPECTRO_HOP, CP_TRANSFORM_SIZE, CP_TRANSFORM_GRAPH_TYPE, CP_FFT_WINDOW, CP_TRANSFORM_TYPE,
       CP_TRANSFORM_NORMALIZATION, CP_SHOW_MIX_WAVEFORMS, CP_GRAPH_STYLE, CP_DOT_SIZE,
       CP_SHOW_AXES, CP_GRAPHS_HORIZONTAL, CP_SYNC, CP_CURSOR_SIZE, CP_CURSOR_POSITION,
-      CP_EDPOS_FRAMES, CP_TIME_GRAPH_TYPE
+      CP_EDPOS_FRAMES
 };
 
 static SCM cp_edpos;
@@ -3556,7 +3556,7 @@ static SCM cp_iread(SCM snd_n, SCM chn_n, int fld, char *caller)
 	    case CP_UNDO_HOOK:          return(cp->undo_hook);                                     break;
 	    case CP_SHOW_Y_ZERO:        return(TO_SCM_BOOLEAN(cp->show_y_zero));                   break;
 	    case CP_SHOW_MARKS:         return(TO_SCM_BOOLEAN(cp->show_marks));                    break;
-	    case CP_WAVO:               return(TO_SCM_BOOLEAN(cp->wavo));                          break;
+	    case CP_TIME_GRAPH_TYPE:    return(TO_SCM_INT(cp->time_graph_type));                   break;
 	    case CP_WAVO_HOP:           return(TO_SCM_INT(cp->wavo_hop));                          break;
 	    case CP_WAVO_TRACE:         return(TO_SCM_INT(cp->wavo_trace));                        break;
 	    case CP_MAX_TRANSFORM_PEAKS: return(TO_SCM_INT(cp->max_transform_peaks));              break;
@@ -3580,7 +3580,6 @@ static SCM cp_iread(SCM snd_n, SCM chn_n, int fld, char *caller)
 	    case CP_SYNC:               return(TO_SCM_INT(cp->sync));                              break;
 	    case CP_CURSOR_POSITION:    return(SCM_LIST2(TO_SCM_INT(cp->cx), TO_SCM_INT(cp->cy))); break;
 	    case CP_EDPOS_FRAMES:       return(TO_SCM_INT(to_c_edit_samples(cp, cp_edpos, caller, 3))); break;
-	    case CP_TIME_GRAPH_TYPE:    return(TO_SCM_INT(cp->time_graph_type));                   break;
 	    }
 	}
     }
@@ -3716,10 +3715,10 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
       update_graph(cp, NULL); 
       return(TO_SCM_BOOLEAN(cp->show_marks));
       break;
-    case CP_WAVO:
-      cp->wavo = TO_C_BOOLEAN_OR_T(on); 
+    case CP_TIME_GRAPH_TYPE:
+      cp->time_graph_type = TO_C_INT_OR_ELSE(on, GRAPH_TIME_ONCE);
       update_graph(cp, NULL); 
-      return(TO_SCM_BOOLEAN(cp->wavo));
+      return(TO_SCM_INT(cp->time_graph_type));
       break;
     case CP_WAVO_HOP:
       cp->wavo_hop = g_imin(1, on, DEFAULT_WAVO_HOP); 
@@ -3834,8 +3833,6 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
       cp->sync = TO_C_INT_OR_ELSE_WITH_ORIGIN(on, 1, caller); 
       return(TO_SCM_INT(cp->sync)); 
       break;
-    case CP_TIME_GRAPH_TYPE: 
-      cp->time_graph_type = TO_C_INT_OR_ELSE_WITH_ORIGIN(on, GRAPH_TIME_ONCE, caller);
     case CP_FRAMES:
       /* if less than current, delete, else zero pad */
       curlen = current_ed_samples(cp);
@@ -4741,31 +4738,32 @@ static SCM g_set_verbose_cursor(SCM on, SCM snd, SCM chn)
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_verbose_cursor_reversed, g_set_verbose_cursor)
 
 
-static SCM g_wavo(SCM snd, SCM chn)
+static SCM g_time_graph_type(SCM snd, SCM chn)
 {
-  #define H_wavo "(" S_wavo " (snd #t) (chn #t)) -> #t if Snd's time domain display is a 'wavogram'"
+  #define H_time_graph_type "(" S_time_graph_type " (snd #t) (chn #t)) -> " S_graph_time_as_wavogram " if Snd's time domain display is a 'wavogram',\
+otherwise " S_graph_time_once "."
   if (BOUND_P(snd))
-    return(cp_iread(snd, chn, CP_WAVO, S_wavo));
-  return(TO_SCM_BOOLEAN(wavo(get_global_state())));
+    return(cp_iread(snd, chn, CP_TIME_GRAPH_TYPE, S_time_graph_type));
+  return(TO_SCM_INT(time_graph_type(get_global_state())));
 }
 
-static SCM g_set_wavo(SCM val, SCM snd, SCM chn) 
+static SCM g_set_time_graph_type(SCM val, SCM snd, SCM chn) 
 {
   int on;
   snd_state *ss;
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARG1, "set-" S_wavo, "a boolean");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(val), val, SCM_ARG1, "set-" S_time_graph_type, "an integer (default: " S_graph_time_once ")");
   if (BOUND_P(snd))
-    return(cp_iwrite(snd, chn, val, CP_WAVO, "set-" S_wavo));
+    return(cp_iwrite(snd, chn, val, CP_TIME_GRAPH_TYPE, "set-" S_time_graph_type));
   else
     {
       ss = get_global_state();
-      on = TO_C_BOOLEAN_OR_T(val);
-      set_wavo(ss, on);
-      return(TO_SCM_BOOLEAN(wavo(ss)));
+      on = TO_C_INT_OR_ELSE(val, GRAPH_TIME_ONCE);
+      set_time_graph_type(ss, on);
+      return(TO_SCM_BOOLEAN(time_graph_type(ss)));
     }
 }
 
-WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_wavo_reversed, g_set_wavo)
+WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_time_graph_type_reversed, g_set_time_graph_type)
 
 static SCM g_wavo_hop(SCM snd, SCM chn)
 {
@@ -5397,8 +5395,8 @@ void g_init_chn(SCM local_doc)
 					"set-" S_show_marks, SCM_FNC g_set_show_marks, SCM_FNC g_set_show_marks_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_wavo, SCM_FNC g_wavo, H_wavo,
-					"set-" S_wavo, SCM_FNC g_set_wavo, SCM_FNC g_set_wavo_reversed,
+  define_procedure_with_reversed_setter(S_time_graph_type, SCM_FNC g_time_graph_type, H_time_graph_type,
+					"set-" S_time_graph_type, SCM_FNC g_set_time_graph_type, SCM_FNC g_set_time_graph_type_reversed,
 					local_doc, 0, 2, 0, 3);
 
   define_procedure_with_reversed_setter(S_wavo_hop, SCM_FNC g_wavo_hop, H_wavo_hop,

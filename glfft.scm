@@ -21,7 +21,7 @@
 	       (or (= selchn -1) (= selchn chn))
 	       (not (file-exists? lock-file)))
 	  (let ((data (transform-samples->vct snd chn))
-		(sizes (cons (srate) (cons scaler (transform-graph-data-size snd chn))))
+		(sizes (cons (srate) (cons scaler (transform-samples-size snd chn))))
 		(fd (mus-sound-open-output data-file 1 1 mus-bfloat mus-raw "")))
 	    (if (not (vct? data))
 		(snd-error (format #f "fft-data: ~A?" data)))

@@ -230,7 +230,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, SC
 	    {
 	      FREE(ofile);
 	      return(mus_format("convolve: save chan (%s[%d]) in %s: %s\n",
-				sp->shortname, ucp->chan, 
+				sp->short_filename, ucp->chan, 
 				saved_chan_file, strerror(errno)));
 	    }
 	  else
@@ -238,7 +238,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, SC
 	      scfd = mus_file_open_read(saved_chan_file);
 	      if (scfd == -1) 
 		return(mus_format("convolve: open saved chan (%s[%d]) file %s: %s\n",
-				  sp->shortname, ucp->chan, 
+				  sp->short_filename, ucp->chan, 
 				  saved_chan_file, strerror(errno)));
 	      else
 		{
@@ -286,7 +286,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, SC
 		}
 	      if (mus_file_close(scfd) != 0)
 		return(mus_format("convolve: close saved chan (%s[%d]) file %s: %s\n",
-				  sp->shortname, ucp->chan, 
+				  sp->short_filename, ucp->chan, 
 				  saved_chan_file, strerror(errno)));
 	    }
 	  snd_remove(saved_chan_file);
@@ -2280,8 +2280,8 @@ static SCM g_swap_channels(SCM snd0, SCM chn0, SCM snd1, SCM chn1, SCM beg, SCM 
 	  e1 = amp_env_copy(cp1, FALSE, cp1->edit_ctr);
 	  cp0->squelch_update = 1;
 	  cp1->squelch_update = 1;
-	  file_override_samples(dur1, cp1->sound->fullname, cp0, cp1->chan, DONT_DELETE_ME, LOCK_MIXES, S_swap_channels);
-	  file_override_samples(dur0, cp0->sound->fullname, cp1, cp0->chan, DONT_DELETE_ME, LOCK_MIXES, S_swap_channels);
+	  file_override_samples(dur1, cp1->sound->filename, cp0, cp1->chan, DONT_DELETE_ME, LOCK_MIXES, S_swap_channels);
+	  file_override_samples(dur0, cp0->sound->filename, cp1, cp0->chan, DONT_DELETE_ME, LOCK_MIXES, S_swap_channels);
 	  if ((e0) && (e1))
 	    {
 	      cp0->amp_envs[cp0->edit_ctr] = e1;

@@ -486,7 +486,7 @@ typedef struct {
 static int add_sound_to_active_list (snd_info *sp, void *sptr1)
 {
   active_sound_list *sptr = (active_sound_list *)sptr1;
-  sptr->names[sptr->active_sounds] = sp->fullname;
+  sptr->names[sptr->active_sounds] = sp->filename;
   sptr->sounds[sptr->active_sounds] = sp->index;
   (sptr->active_sounds)++;
   return(0);                        /*assume no problem -- nothing can go wrong! */
@@ -530,15 +530,15 @@ static char *memo_file_name(snd_info *sp)
 {
   char *newname;
   int len;
-  len = strlen(sp->fullname);
+  len = strlen(sp->filename);
   newname = (char *)CALLOC(len + 5, sizeof(char));
-  mus_snprintf(newname, len + 5, "%s.scm", sp->fullname);
+  mus_snprintf(newname, len + 5, "%s.scm", sp->filename);
   return(newname);
 }
 
 static void read_memo_file(snd_info *sp)
 {
-  /* sp->fullname + ".scm" = possible memo file (memo-sound set in this file, snd_open_file_1) */
+  /* sp->filename + ".scm" = possible memo file (memo-sound set in this file, snd_open_file_1) */
   char *newname;
   newname = memo_file_name(sp);
   if (file_write_date(newname) >= sp->write_date)
@@ -600,7 +600,7 @@ static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select, int
   if (sp)
     {
       SET_SCM_VALUE(memo_sound, TO_SMALL_SCM_INT(sp->index));
-      sp->write_date = file_write_date(sp->fullname);
+      sp->write_date = file_write_date(sp->filename);
       sp->need_update = 0;
       ss->active_sounds++;
       files = ss->active_sounds;
@@ -608,7 +608,7 @@ static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select, int
       reflect_equalize_panes_in_menu(active_channels(ss, WITHOUT_VIRTUAL_CHANNELS) > 1);
       reflect_file_change_in_title(ss);
       unlock_ctrls(sp);
-      greet_me(ss, sp->shortname);
+      greet_me(ss, sp->short_filename);
     }
   map_over_separate_chans(ss, channel_open_pane, NULL);
   map_over_separate_chans(ss, channel_unlock_pane, NULL);
@@ -638,7 +638,7 @@ void snd_close_file(snd_info *sp, snd_state *ss)
   int files;
   if (dont_close(sp)) return;
   sp->inuse = 0;
-  remember_me(ss, sp->shortname, sp->fullname);
+  remember_me(ss, sp->short_filename, sp->filename);
   if (sp->playing) stop_playing_sound(sp);
   clear_minibuffer(sp);
   if (sp == selected_sound(ss)) 
@@ -894,16 +894,16 @@ void snd_update(snd_state *ss, snd_info *sp)
 {
   int app_x, app_y;
   if (sp->edited_region) return;
-  if (mus_file_probe(sp->fullname) == 0)
+  if (mus_file_probe(sp->filename) == 0)
     {
       /* user deleted file while editing it? */
-      report_in_minibuffer_and_save(sp, "%s no longer exists!", sp->shortname);
+      report_in_minibuffer_and_save(sp, "%s no longer exists!", sp->short_filename);
       return;
     }
   app_x = widget_width(MAIN_SHELL(ss));
   app_y = widget_height(MAIN_SHELL(ss));
-  sp = snd_update_1(ss, sp, sp->fullname);
-  report_in_minibuffer(sp, "updated %s", sp->shortname);
+  sp = snd_update_1(ss, sp, sp->filename);
+  report_in_minibuffer(sp, "updated %s", sp->short_filename);
   set_widget_size(MAIN_SHELL(ss), app_x, app_y);
 }
 
@@ -923,12 +923,12 @@ char *update_chan_stats(chan_info *cp)
   vals[7] = kmg(cp->stats[AMP_ENV_USAGE]);
   if (cp->stats[TEMPS_ACTIVE] != cp->stats[TEMPS_OPEN])
     mus_snprintf(desc, PRINT_BUFFER_SIZE, "%s %d: %s (%s), %s, %s (%s, %s), %s %s\n",
-	    (cp->sound)->shortname,
+	    (cp->sound)->short_filename,
 	    cp->chan + 1,
 	    vals[0], vals[1], vals[2], vals[3], vals[4], vals[5], vals[6], vals[7]);
   else
     mus_snprintf(desc, PRINT_BUFFER_SIZE, "%s %d: %s (%s), %s, %s (%s), %s %s\n",
-	    (cp->sound)->shortname,
+	    (cp->sound)->short_filename,
 	    cp->chan + 1,
 	    vals[0], vals[1], vals[2], vals[3], vals[4], vals[6], vals[7]);
   for (i = 0; i < 8; i++) free(vals[i]);
@@ -967,7 +967,7 @@ char *get_curfullname(int pos)
   snd_state *ss;
   ss = get_global_state();
   sp = find_sound(ss, curnames[pos]);
-  if (sp) return(sp->fullname);
+  if (sp) return(sp->filename);
   return(NULL);
 }
 
@@ -1031,7 +1031,7 @@ int view_prevfiles_play(snd_state *ss, int pos, int play)
       if (play_sp)
 	{
 	  if (play_sp->playing) return(1); /* can't play two of these at once */
-	  if (strcmp(play_sp->shortname, prevnames[pos]) != 0)
+	  if (strcmp(play_sp->short_filename, prevnames[pos]) != 0)
 	    {
 	      completely_free_snd_info(play_sp);
 	      play_sp = NULL;
@@ -1045,8 +1045,8 @@ int view_prevfiles_play(snd_state *ss, int pos, int play)
 	}
       if (play_sp)
 	{
-	  play_sp->shortname = prevnames[pos];
-	  play_sp->fullname = NULL;
+	  play_sp->short_filename = prevnames[pos];
+	  play_sp->filename = NULL;
 	  play_sound(play_sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), "previous files play", 0);
 	}
       else return(1); /* can't find or setup file */
@@ -1696,7 +1696,7 @@ char **set_header_positions_from_type(file_data *fdat, int header_type, int data
 
 typedef struct {
   snd_info *sp;
-  char *fullname;
+  char *filename;
   int edits;
 } same_name_info;
 
@@ -1705,7 +1705,7 @@ static int check_for_same_name(snd_info *sp1, void *ur_info)
   int i;
   chan_info *cp;
   same_name_info *info = (same_name_info *)ur_info;
-  if ((sp1) && (strcmp(sp1->fullname, info->fullname) == 0))
+  if ((sp1) && (strcmp(sp1->filename, info->filename) == 0))
     {
       info->sp = sp1;
       for (i = 0; i < sp1->nchans; i++) 
@@ -1730,7 +1730,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
   /* also it's possible the new file name is the same as the current file name(!) */
   fullname = mus_expand_filename(str);
   if (!(snd_overwrite_ok(ss, fullname))) {FREE(fullname); return(-1);}
-  if (strcmp(fullname, sp->fullname) == 0)
+  if (strcmp(fullname, sp->filename) == 0)
     {
       /* normally save-as saves the current edit tree, merely saving the current state
        * in a separate, presumably inactive file; here we're being asked to overwrite
@@ -1739,7 +1739,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
        */
       if (sp->read_only)
 	{
-	  report_in_minibuffer_and_save(sp, "can't save-as %s (%s is write-protected)", fullname, sp->shortname);
+	  report_in_minibuffer_and_save(sp, "can't save-as %s (%s is write-protected)", fullname, sp->short_filename);
 	  FREE(fullname);
 	  return(-1);
 	}
@@ -1751,7 +1751,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
       else result = save_selection(ss, ofile, type, format, srate, comment, SAVE_ALL_CHANS);
       if (result != MUS_NO_ERROR)
 	report_in_minibuffer(sp, "save as temp: %s: %s", ofile, strerror(errno));
-      else err = move_file(ofile, sp->fullname);
+      else err = move_file(ofile, sp->filename);
       snd_update(ss, sp);
       FREE(ofile);
       FREE(fullname);
@@ -1759,7 +1759,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
   else
     {
       collision = (same_name_info *)CALLOC(1, sizeof(same_name_info));
-      collision->fullname = fullname;
+      collision->filename = fullname;
       collision->edits = 0;
       collision->sp = NULL;
       map_over_sounds(ss, check_for_same_name, (void *)collision);
@@ -1785,7 +1785,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
       if (result != MUS_NO_ERROR)
 	report_in_minibuffer_and_save(sp, "%s: %s", str, strerror(errno));
       else report_in_minibuffer(sp, "%s saved as %s",
-				(save_type == FILE_SAVE_AS) ? sp->shortname : "selection",
+				(save_type == FILE_SAVE_AS) ? sp->short_filename : "selection",
 				str);
       if (collision->sp) snd_open_file(fullname, ss, FALSE);
       FREE(fullname);
@@ -1805,13 +1805,13 @@ void edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_da
   char *comment;
   file_info *hdr;
 #if HAVE_ACCESS
-  err = access(sp->fullname, W_OK);
+  err = access(sp->filename, W_OK);
 #else
   err = 0;
 #endif
   if (err == 0)
     {
-      fd = open(sp->fullname, O_RDWR, 0);
+      fd = open(sp->filename, O_RDWR, 0);
       if (fd != -1)
 	{
 	  hdr = sp->hdr;
@@ -1827,8 +1827,8 @@ void edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_da
 	  type = hdr->type;
 	  if ((type == MUS_AIFF) || 
 	      (type == MUS_AIFC))
-	    mus_header_set_aiff_loop_info(mus_sound_loop_info(sp->fullname));
-	  mus_sound_forget(sp->fullname);
+	    mus_header_set_aiff_loop_info(mus_sound_loop_info(sp->filename));
+	  mus_sound_forget(sp->filename);
 	  format = hdr->format;
 	  loc = hdr->data_location;
 	  comment = read_file_data_choices(edit_header_data, &srate, &chans, &type, &format, &loc);
@@ -1884,7 +1884,7 @@ void edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_da
 	    }
 	  if (close(fd) != 0)
 	    snd_error("can't close %d (%s): %s [%s[%d] %s]",
-		      fd, sp->fullname, strerror(errno),
+		      fd, sp->filename, strerror(errno),
 		      __FILE__, __LINE__, __FUNCTION__);
 	  clear_minibuffer(sp);
 	  snd_file_bomb_icon(sp, TRUE);
@@ -1895,11 +1895,11 @@ void edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_da
 	    map_over_sounds(ss, snd_not_current, NULL);
 	}
       else 
-	snd_error("can't open %s: %s", sp->shortname, strerror(errno));
+	snd_error("can't open %s: %s", sp->short_filename, strerror(errno));
       mus_header_set_aiff_loop_info(NULL);
     }
   else 
-    snd_error("can't write %s: %s", sp->shortname, strerror(errno));
+    snd_error("can't write %s: %s", sp->short_filename, strerror(errno));
 }
 
 
@@ -2027,7 +2027,7 @@ static SCM g_sound_loop_info(SCM snd)
   sp = get_sp(snd);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_sound_loop_info, snd));
-  res = mus_sound_loop_info(sp->fullname);
+  res = mus_sound_loop_info(sp->filename);
   if (res)
     {
       sres = SCM_LIST6(TO_SCM_INT(res[0]), TO_SCM_INT(res[1]), TO_SCM_INT(res[2]),
@@ -2066,13 +2066,13 @@ static SCM g_set_sound_loop_info(SCM snd, SCM vals)
   hdr->loops[1] = TO_C_INT_OR_ELSE(end0, 0);
   hdr->loops[2] = TO_C_INT_OR_ELSE(start1, 0);
   hdr->loops[3] = TO_C_INT_OR_ELSE(end1, 0);
-  mus_sound_set_loop_info(sp->fullname, hdr->loops);
+  mus_sound_set_loop_info(sp->filename, hdr->loops);
   type = hdr->type;
   if ((type != MUS_AIFF) && 
       (type != MUS_AIFC))
     {
       snd_warning("changing %s header from %s to aifc to accommodate loop info",
-		  sp->shortname,
+		  sp->short_filename,
 		  mus_header_type_name(type));
       type = MUS_AIFC;
     }
@@ -2083,7 +2083,7 @@ static SCM g_set_sound_loop_info(SCM snd, SCM vals)
 			     hdr->comment,
 			     TO_SCM_INT(AT_CURRENT_EDIT_POSITION),
 			     S_sound_loop_info, 0);
-  move_file(tmp_file, sp->fullname);
+  move_file(tmp_file, sp->filename);
   FREE(tmp_file);
   snd_update(sp->state, sp);
   return(SCM_BOOL_T);
@@ -2102,7 +2102,7 @@ each inner list has the form: (name start loopstart loopend)"
   sp = get_sp(snd);
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_soundfont_info, snd));
-  mus_header_read(sp->fullname);
+  mus_header_read(sp->filename);
   if (mus_header_type() == MUS_SOUNDFONT)
     {
       lim = mus_header_sf2_entries();

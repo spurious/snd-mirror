@@ -1506,14 +1506,14 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 #endif
 	    case snd_keypad_Add:
-	      if (wavo(ss)) 
+	      if (time_graph_type(ss) == GRAPH_TIME_AS_WAVOGRAM) 
 		set_wavo_trace(ss, wavo_trace(ss) + 1); 
 	      else set_spectro_hop(ss, spectro_hop(ss) + 1);
 	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      reflect_spectro(ss); 
 	      break;
 	    case snd_keypad_Subtract: 
-	      if (wavo(ss)) 
+	      if (time_graph_type(ss) == GRAPH_TIME_AS_WAVOGRAM) 
 		{
 		  if (wavo_trace(ss)>1) 
 		    set_wavo_trace(ss, wavo_trace(ss) - 1);

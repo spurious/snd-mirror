@@ -3491,6 +3491,7 @@ If more than one hook function, results are concatenated. If none, the current c
                (define dont-normalize    dont-normalize-transform)\
                (define update-fft        update-transform)\
                (define update-graph      update-time-graph)\
+               (define wavo              time-graph-type)\
                (define uniting \
                  (make-procedure-with-setter \
                    (lambda arg \

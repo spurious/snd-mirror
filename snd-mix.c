@@ -404,8 +404,8 @@ static snd_info *make_mix_readable(mix_info *md)
 	  return(NULL);
 	}
       add_sp = md->add_snd;
-      add_sp->fullname = copy_string(md->in_filename);
-      add_sp->shortname = filename_without_home_directory(add_sp->fullname);
+      add_sp->filename = copy_string(md->in_filename);
+      add_sp->short_filename = filename_without_home_directory(add_sp->filename);
       for (i = 0; i < add_sp->nchans; i++) 
 	{
 	  cp = add_sp->chans[i];

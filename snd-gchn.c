@@ -427,7 +427,7 @@ void reflect_edit_history_change(chan_info *cp)
 	    {
 	      gtk_clist_clear(GTK_CLIST(lst));
 	      sp = cp->sound;
-	      str = sp->fullname;
+	      str = sp->filename;
 	      gtk_clist_append(GTK_CLIST(lst), &str);
 	      for (i = 1; i <= eds; i++) 
 		{

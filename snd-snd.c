@@ -258,14 +258,14 @@ int tick_amp_env(chan_info *cp, env_state *es)
 	   * (bin_size+1) should be ok (it can't be bin_size due to annoying round-off problems that
 	   *   accumulate over 100 bins, and I'm paranoid)
 	   */
-	  fd = mus_file_open_read(sp->fullname);
+	  fd = mus_file_open_read(sp->filename);
 	  mus_file_open_descriptors(fd,
-				   sp->fullname,
-				   mus_sound_data_format(sp->fullname),
-				   mus_sound_datum_size(sp->fullname),
-				   mus_sound_data_location(sp->fullname),
+				   sp->filename,
+				   mus_sound_data_format(sp->filename),
+				   mus_sound_datum_size(sp->filename),
+				   mus_sound_data_location(sp->filename),
 				   sp->nchans,
-				   mus_sound_header_type(sp->fullname));
+				   mus_sound_header_type(sp->filename));
 	  mus_file_seek_frame(fd, ep->bin * ep->samps_per_bin);
 	  mus_file_read_any(fd, 0,
 			    sp->nchans * subsamp,
@@ -683,12 +683,12 @@ Float srate_changed(Float val, char *srcbuf, int style, int tones)
 static char sname[PRINT_BUFFER_SIZE];
 char *shortname(snd_info *sp)
 {
-  if (is_link(sp->fullname))
+  if (is_link(sp->filename))
     {
-      mus_snprintf(sname, PRINT_BUFFER_SIZE, "(%s)", sp->shortname);
+      mus_snprintf(sname, PRINT_BUFFER_SIZE, "(%s)", sp->short_filename);
       return(sname);
     }
-  else return(sp->shortname);
+  else return(sp->short_filename);
 }
 
 char *shortname_indexed(snd_info *sp)
@@ -768,7 +768,7 @@ void sp_name_click(snd_info *sp)
       hdr = sp->hdr;
       if (hdr)
 	{
-	  linked = is_link(sp->fullname);
+	  linked = is_link(sp->filename);
 	  dur = (Float)(hdr->samples) / (Float)(hdr->chans * hdr->srate);
 #if HAVE_STRFTIME
 	  strftime(timebuf,
@@ -788,7 +788,7 @@ void sp_name_click(snd_info *sp)
 			       short_sound_format(hdr->format, hdr->type),
 			       timebuf,
 			       (linked) ? ", (link to " : "",
-			       (linked) ? linked_file(sp->fullname) : "",
+			       (linked) ? linked_file(sp->filename) : "",
 			       (linked) ? ")" : "");
 	}
     }
@@ -1456,8 +1456,8 @@ static SCM sp_iread(SCM snd_n, int fld, char *caller)
     case SP_RESTORE_CONTROLS:    restore_controls(sp);                            break;
     case SP_RESET_CONTROLS:      reset_controls(sp);                              break;
     case SP_SELECTED_CHANNEL:    return(TO_SCM_INT(sp->selected_channel));        break;
-    case SP_FILE_NAME:           return(TO_SCM_STRING(sp->fullname));             break;
-    case SP_SHORT_FILE_NAME:     return(TO_SCM_STRING(sp->shortname));            break;
+    case SP_FILE_NAME:           return(TO_SCM_STRING(sp->filename));             break;
+    case SP_SHORT_FILE_NAME:     return(TO_SCM_STRING(sp->short_filename));            break;
     case SP_CLOSE:               snd_close_file(sp, sp->state);                   break;
     case SP_SAVE:                save_edits(sp, NULL);                            break;
     case SP_UPDATE:              snd_update(sp->state, sp);                       break;
@@ -1466,7 +1466,7 @@ static SCM sp_iread(SCM snd_n, int fld, char *caller)
     case SP_SPEED_TONES:         return(TO_SCM_INT(sp->speed_control_tones));     break;
     case SP_SPEED_STYLE:         return(TO_SCM_INT(sp->speed_control_style));     break;
     case SP_COMMENT:
-      str = mus_sound_comment(sp->fullname);
+      str = mus_sound_comment(sp->filename);
       res = TO_SCM_STRING(str);
       if (str) FREE(str);
       return(res);
@@ -1543,18 +1543,18 @@ static SCM sp_iwrite(SCM snd_n, SCM val, int fld, char *caller)
       sp->speed_control_style = mus_iclamp(0, TO_C_INT(val), MAX_SPEED_CONTROL_STYLE);
       break;
     case SP_SRATE:
-      mus_sound_set_srate(sp->fullname, TO_C_INT(val));
+      mus_sound_set_srate(sp->filename, TO_C_INT(val));
       snd_update(ss, sp); 
       break;
     case SP_NCHANS: 
-      mus_sound_set_chans(sp->fullname, TO_C_INT(val));
+      mus_sound_set_chans(sp->filename, TO_C_INT(val));
       snd_update(ss, sp); 
       break;
     case SP_DATA_FORMAT:
       ival = TO_C_INT(val);
       if (MUS_DATA_FORMAT_OK(ival))
 	{
-	  mus_sound_set_data_format(sp->fullname, ival);
+	  mus_sound_set_data_format(sp->filename, ival);
 	  snd_update(ss, sp);
 	}
       else mus_misc_error("set-" S_data_format, "unknown data format", val);
@@ -1563,19 +1563,19 @@ static SCM sp_iwrite(SCM snd_n, SCM val, int fld, char *caller)
       ival = TO_C_INT(val);
       if (MUS_HEADER_TYPE_OK(ival))
 	{
-	  mus_sound_set_header_type(sp->fullname, ival);
+	  mus_sound_set_header_type(sp->filename, ival);
 	  snd_update(ss, sp); 
 	}
       else mus_misc_error("set-" S_header_type, "unknown header type", val);
       break;
     case SP_DATA_LOCATION:  
-      mus_sound_set_data_location(sp->fullname, TO_C_INT(val));
+      mus_sound_set_data_location(sp->filename, TO_C_INT(val));
       snd_update(ss, sp); 
       break;
     case SP_COMMENT:      
       /* this is safe only with aifc and riff headers */
       com = TO_NEW_C_STRING(val);
-      mus_header_update_comment(sp->fullname, 0, com, snd_strlen(com), mus_sound_header_type(sp->fullname));
+      mus_header_update_comment(sp->filename, 0, com, snd_strlen(com), mus_sound_header_type(sp->filename));
       free(com);
       snd_update(ss, sp);
       break;

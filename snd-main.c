@@ -44,7 +44,7 @@ int snd_not_current(snd_info *sp, void *ignore)
   /* check for change in update status */
   int needs_update;
   snd_state *ss;
-  needs_update = (file_write_date(sp->fullname) != sp->write_date);
+  needs_update = (file_write_date(sp->filename) != sp->write_date);
   if (needs_update != sp->need_update)
     {
       ss = sp->state;
@@ -118,6 +118,15 @@ static char *transform_graph_type_name(int choice)
     case GRAPH_TRANSFORM_AS_SONOGRAM: return(S_graph_transform_as_sonogram); break;
     case GRAPH_TRANSFORM_AS_SPECTROGRAM: return(S_graph_transform_as_spectrogram); break;
     default: return(S_graph_transform_once); break;
+    }
+}
+
+static char *time_graph_type_name(int choice)
+{
+  switch (choice)
+    {
+    case GRAPH_TIME_AS_WAVOGRAM: return(S_graph_time_as_wavogram); break;
+    default: return(S_graph_time_once); break;
     }
 }
 
@@ -201,6 +210,7 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (minibuffer_history_length(ss) != DEFAULT_MINIBUFFER_HISTORY_LENGTH) pss_sd(fd, S_minibuffer_history_length, minibuffer_history_length(ss));
   if (fft_window(ss) != DEFAULT_FFT_WINDOW) pss_ss(fd, S_fft_window, mus_fft_window_name(fft_window(ss)));
   if (transform_graph_type(ss) != DEFAULT_TRANSFORM_GRAPH_TYPE) pss_ss(fd, S_transform_graph_type, transform_graph_type_name(transform_graph_type(ss)));
+  if (time_graph_type(ss) != DEFAULT_TIME_GRAPH_TYPE) pss_ss(fd, S_time_graph_type, time_graph_type_name(time_graph_type(ss)));
   if (x_axis_style(ss) != DEFAULT_AXIS_STYLE) pss_ss(fd, S_x_axis_style, x_axis_style_name(x_axis_style(ss)));
   if (graph_style(ss) != DEFAULT_GRAPH_STYLE) pss_ss(fd, S_graph_style, graph_style_name(graph_style(ss)));
   if (speed_control_style(ss) != DEFAULT_SPEED_CONTROL_STYLE) pss_ss(fd, S_speed_control_style, speed_control_style_name(speed_control_style(ss)));
@@ -229,7 +239,6 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (zero_pad(ss) != DEFAULT_ZERO_PAD) pss_sd(fd, S_zero_pad, zero_pad(ss));
   if (ask_before_overwrite(ss) != DEFAULT_ASK_BEFORE_OVERWRITE) pss_ss(fd, S_ask_before_overwrite, b2s(ask_before_overwrite(ss)));
   if (dac_combines_channels(ss) != DEFAULT_DAC_COMBINES_CHANNELS) pss_ss(fd, S_dac_combines_channels, b2s(dac_combines_channels(ss)));
-  if (wavo(ss) != DEFAULT_WAVO) pss_ss(fd, S_wavo, b2s(wavo(ss)));
   if (wavo_hop(ss) != DEFAULT_WAVO_HOP) pss_sd(fd, S_wavo_hop, wavo_hop(ss));
   if (wavo_trace(ss) != DEFAULT_WAVO_TRACE) pss_sd(fd, S_wavo_trace, wavo_trace(ss));
   if (spectro_hop(ss) != DEFAULT_SPECTRO_HOP) pss_sd(fd, S_spectro_hop, spectro_hop(ss));
@@ -370,9 +379,9 @@ static int save_sound_state (snd_info *sp, void *ptr)
   fd = (FILE *)ptr;
   fprintf(fd, "(let ((sfile (or (%s \"%s\") (%s \"%s\"))))\n  (if sfile\n    (begin\n",
 	  S_find_sound,
-	  sp->shortname,
+	  sp->short_filename,
 	  (sp->read_only) ? S_view_sound : S_open_sound,
-	  sp->fullname);
+	  sp->filename);
   if (sp->sync != DEFAULT_SYNC) psp_sd(fd, S_sync, sp->sync);
   if (sp->contrast_control_p != DEFAULT_CONTRAST_CONTROL_P) psp_ss(fd, S_contrast_control_p, b2s(sp->contrast_control_p));
   if (sp->contrast_control != DEFAULT_CONTRAST_CONTROL) psp_sf(fd, S_contrast_control, sp->contrast_control);
@@ -419,7 +428,6 @@ static int save_sound_state (snd_info *sp, void *ptr)
       if (cp->cursor_style != CURSOR_CROSS) pcp_sd(fd, S_cursor_style, cp->cursor_style, chan);
       if (cp->show_marks != DEFAULT_SHOW_MARKS) pcp_ss(fd, S_show_marks, b2s(cp->show_marks), chan);
       if (cp->show_y_zero != DEFAULT_SHOW_Y_ZERO) pcp_ss(fd, S_show_y_zero, b2s(cp->show_y_zero), chan);
-      if (cp->wavo != DEFAULT_WAVO) pcp_ss(fd, S_wavo, b2s(cp->wavo), chan);
       if (cp->wavo_hop != DEFAULT_WAVO_HOP) pcp_sd(fd, S_wavo_hop, cp->wavo_hop, chan);
       if (cp->wavo_trace != DEFAULT_WAVO_TRACE) pcp_sd(fd, S_wavo_trace, cp->wavo_trace, chan);
       if (cp->max_transform_peaks != DEFAULT_MAX_TRANSFORM_PEAKS) pcp_sd(fd, S_max_transform_peaks, cp->max_transform_peaks, chan);
@@ -442,6 +450,7 @@ static int save_sound_state (snd_info *sp, void *ptr)
       if (cp->spectro_hop != DEFAULT_SPECTRO_HOP) pcp_sd(fd, S_spectro_hop, cp->spectro_hop, chan);
       if (cp->transform_size != DEFAULT_TRANSFORM_SIZE) pcp_sd(fd, S_transform_size, cp->transform_size, chan);
       if (cp->transform_graph_type != DEFAULT_TRANSFORM_GRAPH_TYPE) pcp_ss(fd, S_transform_graph_type, transform_graph_type_name(cp->transform_graph_type), chan);
+      if (cp->time_graph_type != DEFAULT_TIME_GRAPH_TYPE) pcp_ss(fd, S_time_graph_type, time_graph_type_name(cp->time_graph_type), chan);
       if (cp->fft_window != DEFAULT_FFT_WINDOW) pcp_ss(fd, S_fft_window, mus_fft_window_name(cp->fft_window), chan);
       if (cp->transform_type != DEFAULT_TRANSFORM_TYPE) pcp_ss(fd, S_transform_type, transform_type_name(cp->transform_type), chan);
       if (cp->transform_normalization != DEFAULT_TRANSFORM_NORMALIZATION) pcp_ss(fd, S_transform_normalization, transform_normalization_name(cp->transform_normalization), chan);

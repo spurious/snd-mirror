@@ -71,7 +71,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
   cp->squelch_update = 0;
   cp->show_y_zero = show_y_zero(ss);
   cp->show_marks = show_marks(ss);
-  cp->wavo = wavo(ss);
+  cp->time_graph_type = time_graph_type(ss);
   cp->wavo_hop = wavo_hop(ss);
   cp->wavo_trace = wavo_trace(ss);
   cp->max_transform_peaks = max_transform_peaks(ss);
@@ -231,8 +231,8 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
   sp->nchans = chans;
   sp->hdr = hdr;
   sp->inuse = 1;
-  sp->fullname = copy_string(filename);
-  sp->shortname = filename_without_home_directory(sp->fullname); /* a pointer into fullname, not a new string */
+  sp->filename = copy_string(filename);
+  sp->short_filename = filename_without_home_directory(sp->filename); /* a pointer into filename, not a new string */
   sp->state = ss;
   sp->sync = DEFAULT_SYNC;
   sp->expand_control = DEFAULT_EXPAND_CONTROL;
@@ -350,9 +350,9 @@ void free_snd_info(snd_info *sp)
     snd_unprotect(sp->prompt_callback);
   sp->prompt_callback = SCM_UNDEFINED;
   sp->selected_channel = NO_SELECTION;
-  sp->shortname = NULL;                      /* was a pointer into fullname */
-  if (sp->fullname) FREE(sp->fullname);
-  sp->fullname = NULL;
+  sp->short_filename = NULL;                      /* was a pointer into filename */
+  if (sp->filename) FREE(sp->filename);
+  sp->filename = NULL;
   if (sp->filter_control_env) sp->filter_control_env = free_env(sp->filter_control_env);
   if (sp->saved_controls) free_controls(sp);
   sp->env_anew = 0;
@@ -706,15 +706,15 @@ snd_info *find_sound(snd_state *ss, char *name)
     {
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse))
-	if ((strcmp(name, sp->shortname) == 0) || 
-	    (strcmp(name, sp->fullname) == 0)) 
+	if ((strcmp(name, sp->short_filename) == 0) || 
+	    (strcmp(name, sp->filename) == 0)) 
 	  return(sp);
     }
   sname = filename_without_home_directory(name);
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
-      if ((sp) && (sp->inuse) && (strcmp(sname, sp->shortname) == 0))
+      if ((sp) && (sp->inuse) && (strcmp(sname, sp->short_filename) == 0))
 	return(sp);
     }
   return(NULL);
@@ -752,10 +752,10 @@ void display_info(snd_info *sp)
       if (hdr)
 	{
 	  buffer = (char *)CALLOC(INFO_BUFFER_SIZE, sizeof(char));
-	  cstr = mus_sound_comment(sp->fullname);
+	  cstr = mus_sound_comment(sp->filename);
 	  comment = cstr;
-	  if (mus_sound_max_amp_exists(sp->fullname))
-	    ampstr = display_max_amps(sp->fullname, sp->nchans);
+	  if (mus_sound_max_amp_exists(sp->filename))
+	    ampstr = display_max_amps(sp->filename, sp->nchans);
 	  while ((comment) && (*comment) && 
 		 (((*comment) == '\n') || 
 		  ((*comment) == '\t') || 
@@ -779,7 +779,7 @@ void display_info(snd_info *sp)
 		       (comment) ? "\ncomment: " : "",
 		       (comment) ? comment : "");
 	  ssnd_help(sp->state,
-		    sp->shortname,
+		    sp->short_filename,
 		    buffer,
 		    NULL);
 	  if (cstr) FREE(cstr);
