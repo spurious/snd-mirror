@@ -1881,7 +1881,13 @@ static BACKGROUND_TYPE fft_in_slices(void *fftData)
     case 6: res = snd_fft_cleanup(fs);           break;
     case 7: res = snd_fft_to_spectrum(fs);       break;
     case 8: res = display_snd_fft(fs);           break;
-    default: snd_error("impossible fft slice! %d", fs->slice); break;
+    default: 
+      snd_error("impossible fft slice! %d", fs->slice); 
+#if DEBUGGING
+      abort();
+#endif
+      return(BACKGROUND_QUIT);
+      break;
     }
   if (res == -1) 
     {

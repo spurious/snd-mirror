@@ -86,7 +86,7 @@ char *global_search(snd_state *ss, int direction)
    * update cursor/graph and report success (if any) in associated info window
    * subsequent runs (if no new text) repeat the search from the current locations
    */
-  int chans, i, redisplay, passes = 0;
+  int chans, i, passes = 0;
   gfd *fd;
   chan_info *cp;
   if (search_in_progress) 
@@ -152,16 +152,12 @@ char *global_search(snd_state *ss, int direction)
 	{
 	  /* fd->n is winner, fd->inc is how far forward we searched from current cursor loc */
 	  cp = fd->cps[fd->n];
-	  if (direction == READ_FORWARD)
-	    cp->cursor += fd->inc;
-	  else cp->cursor -= fd->inc;
-	  /* now in its own info window show find state, and update graph if needed */
           cp->cursor_on = 1;
+	  if (direction == READ_FORWARD)
+	    cursor_move(cp, fd->inc);
+	  else cursor_move(cp, -fd->inc);
+	  /* now in its own info window show find state, and update graph if needed */
 	  show_cursor_info(cp);
-	  if ((cp->cursor >= (cp->axis)->losamp) && (cp->cursor <= (cp->axis)->hisamp))
-	    redisplay  = CURSOR_IN_VIEW;
-	  else redisplay = CURSOR_IN_MIDDLE;
-	  handle_cursor(cp, redisplay);
 	}
       ss->stopped_explicitly = 0;
       for (i = 0; i < chans; i++) 

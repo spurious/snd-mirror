@@ -3283,6 +3283,17 @@ a globally unique id number (returned by <b>find-mark</b> or <b>add-mark</b>, fo
 <!-- -->each inner list representing a channel of <i>snd</i>.  If <i>snd</i> is 
 <!-- -->also omitted, a list of lists of lists is returned, representing
 <!-- -->each sound and its channels.
+<!-- --><tr><td colspan=2>
+<!-- --><center><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(define (how-many-marks-in-channel snd chn)
+  (length (marks snd chn)))
+
+(define (how-many-marks-in-sound snd)
+  (apply + (map length (marks snd))))
+
+(define (how-many-marks)
+  (apply + (map how-many-marks-in-sound (sounds))))
+<!-- --></pre></td></tr></table></center>
 <!-- --></td></tr>
 <!-- -->
 <!-- mark? -->

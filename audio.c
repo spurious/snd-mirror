@@ -10186,12 +10186,12 @@ char *device_name(AudioDeviceID deviceID)
 static void describe_audio_state_1(void) 
 {
   OSStatus err = noErr;
-  UInt32 num_devices = 0, size = 0;
+  UInt32 num_devices = 0, size = 0, buffer_size = 0;
   Float32 vol;
   int i, j;
   AudioDeviceID *devices = NULL;
   AudioDeviceID device, default_output, default_input;
-  AudioStreamBasicDescription *desc;
+  AudioStreamBasicDescription desc;
   err = AudioHardwareGetPropertyInfo(kAudioHardwarePropertyDevices, &size, NULL);	
   if (err != noErr) return;
   num_devices = size / sizeof(AudioDeviceID);
@@ -10209,40 +10209,50 @@ static void describe_audio_state_1(void)
     }
   size = sizeof(*devices);
   err = AudioHardwareGetProperty(kAudioHardwarePropertyDevices, &size, (void *)devices);	
-  mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "found %d audio devices", num_devices); pprint(audio_strbuf);
+  mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "found %d audio device%s", 
+	       num_devices, (num_devices != 1) ? "s" : "");
+  pprint(audio_strbuf);
   for (i = 0; i < num_devices; i++)
     {
       device = devices[i];
       pprint(device_name(device));
       if (device == default_output) pprint("\n    (output default)");
       if (device == default_input) pprint("\n    (input default)");
-      size = sizeof(*desc);
-      err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormat, &size, (void *)desc);
+      size = sizeof(buffer_size);
+      err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyBufferSize, &size, &buffer_size);
       if (err != noErr) 
 	{
 	  fprintf(stderr, "err: %d %s", err, osx_error(err));
+	  FREE(devices);
 	  return;
 	}
-      mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "\n    srate: %d, chans: %d, frames: %d",
-		   (int)(desc->mSampleRate), (int)(desc->mChannelsPerFrame), (int)(desc->mFramesPerPacket));
-      pprint(audio_strbuf);
-#if 0
-      if ((int)(desc->mChannelsPerFrame) > 0)
+      size = sizeof(desc);
+      err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormat, &size, &desc);
+      if (err != noErr) 
 	{
-	  pprint("\n    vols: ");
-	  for (j = 1; j <= (int)(desc->mChannelsPerFrame); j++)
+	  fprintf(stderr, "err: %d %s", err, osx_error(err));
+	  FREE(devices);
+	  return;
+	}
+      mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "\n    srate: %d, chans: %d, frames: %d, buf: %d",
+		   (int)(desc.mSampleRate), (int)(desc.mChannelsPerFrame), (int)(desc.mFramesPerPacket), buffer_size);
+      pprint(audio_strbuf);
+      if ((int)(desc.mChannelsPerFrame) > 0)
+	{
+	  pprint("\n    vols:");
+	  for (j = 1; j <= (int)(desc.mChannelsPerFrame); j++)
 	    {
 	      size = sizeof(vol);
 	      err = AudioDeviceGetProperty(device, j, false, kAudioDevicePropertyVolumeScalar, &size, &vol);
 	      if (err != noErr) 
 		{
 		  fprintf(stderr, "err: %d %s", err, osx_error(err));
+		  FREE(devices);
 		  return;
 		}
-	      mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "%.3f", vol); pprint(audio_strbuf); 
+	      mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, " %.3f", vol); pprint(audio_strbuf); 
 	    }
 	}
-#endif
     }
   pprint("\n");
   if (devices) FREE(devices);

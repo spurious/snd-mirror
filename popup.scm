@@ -330,6 +330,12 @@
 						      (car ms)))))))
 		(if id
 		    (delete-mark id)))))
+      (list "To next mark"       |xmPushButtonWidgetClass every-menu
+            (lambda (w c i)
+              (forward-mark 1 graph-popup-snd graph-popup-chn)))
+      (list "To last mark"       |xmPushButtonWidgetClass every-menu
+            (lambda (w c i)
+              (backward-mark 1 graph-popup-snd graph-popup-chn)))
       (list "sep"                |xmSeparatorWidgetClass  every-menu)
       (list "Exit"               |xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
@@ -369,7 +375,9 @@
 				     ((if (> (cursor snd chn) 0) |XtManageChild |XtUnmanageChild) w)
 				     (if (string=? name "Play original")
 					 ((if (> (car eds) 1) |XtManageChild |XtUnmanageChild) w)
-					 (if (string=? name "Delete mark")
+					 (if (or (string=? name "Delete mark")
+						 (string=? name "To next mark")
+						 (string=? name "To last mark"))
 					     ((if (null? (marks snd chn)) |XtUnmanageChild |XtManageChild) w)))))))))))))))
 
 

@@ -954,7 +954,6 @@ void dac_set_reverb_lowpass(snd_info *sp, Float newval);
 /* -------- snd-chn.c -------- */
 
 void zx_incremented(chan_info *cp, double amount);
-void handle_cursor_with_sync(chan_info *cp, int decision);
 int cursor_decision(chan_info *cp);
 void reset_x_display(chan_info *cp, double sx, double zx);
 void set_x_axis_x0x1 (chan_info *cp, double x0, double x1);
@@ -962,7 +961,7 @@ int cursor_move (chan_info *cp, int samps);
 void set_wavo_trace(snd_state *ss, int uval);
 void set_dot_size(snd_state *ss, int val);
 chan_info *virtual_selected_channel(chan_info *cp);
-
+void handle_cursor(chan_info *cp, int redisplay);
 void map_chans_field(snd_state *ss, int field, Float val);
 void in_set_transform_graph_type(snd_state *ss, int val);
 void in_set_fft_window(snd_state *ss, int val);
@@ -981,7 +980,6 @@ void chan_info_cleanup(chan_info *cp);
 int update_graph(chan_info *cp, void *ptr);
 void add_channel_data(char *filename, chan_info *cp, file_info *hdr, snd_state *ss, int graphed);
 void add_channel_data_1(chan_info *cp, snd_info *sp, int graphed);
-void handle_cursor(chan_info *cp, int redisplay);
 void set_x_bounds(axis_info *ap);
 void display_channel_data (chan_info *cp, snd_info *sp, snd_state *ss);
 void display_channel_fft_data (chan_info *cp, snd_info *sp, snd_state *ss);
@@ -1307,7 +1305,7 @@ void clear_minibuffer(snd_info *sp);
 void clear_minibuffer_prompt(snd_info *sp);
 void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta);
 int use_filename_completer(int filing);
-int keyboard_command (chan_info *cp, int keysym, int state);
+void keyboard_command (chan_info *cp, int keysym, int state);
 
 void g_init_kbd(void);
 

@@ -262,7 +262,7 @@ static void set_keymap_entry(int key, int state, int args, XEN func, int extende
   if (XEN_PROCEDURE_P(func)) snd_protect(func);
 }
 
-static int call_user_keymap(int hashedsym, int count)
+static void call_user_keymap(int hashedsym, int count)
 {
   int res = KEYBOARD_NO_ACTION;
   /* if guile call the associated scheme code, else see if basic string parser can handle it */
@@ -277,7 +277,7 @@ static int call_user_keymap(int hashedsym, int count)
 						 "user key func"),
 				      KEYBOARD_NO_ACTION);
     }
-  return(res);
+  handle_cursor(selected_channel(get_global_state()), res);
 }
 
 void save_macro_state (FILE *fd)
@@ -633,7 +633,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	    }
 	}
       if (active_chan)
-	handle_cursor_with_sync(active_chan, cursor_search(active_chan, sp->searching));
+	cursor_search(active_chan, sp->searching);
       return;
     }
 #endif
@@ -654,7 +654,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	}	
       else 
 	{
-	  handle_cursor_with_sync(active_chan, goto_named_mark(active_chan, str));
+	  goto_named_mark(active_chan, str);
 	  sp->finding_mark = 0;
 	}
       if (str) free(str);
@@ -789,13 +789,6 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	  ss->mx_sp = NULL;
 	  if (sp->state == NULL) return;
 	  sp->macroing = 0;
-	  if (active_chan->cursor != len)
-	    {
-	      nc = cursor_decision(active_chan);
-	      if (nc == CURSOR_IN_VIEW) nc = CURSOR_UPDATE_DISPLAY; 
-	    }
-	  else nc = CURSOR_UPDATE_DISPLAY; 
-	  handle_cursor_with_sync(active_chan, nc);
 	  if (str) free(str);
 	  return;
 	}
@@ -996,7 +989,7 @@ static void c_g(snd_state *ss, snd_info *sp)
   ss->error_lock = 0;
 }
 
-int keyboard_command (chan_info *cp, int keysym, int state)
+void keyboard_command (chan_info *cp, int keysym, int state)
 {
   /* we can't use the meta bit in some cases because this is trapped at a higher level for the Menu mnemonics */
   /* state here is the kbd bucky-bit state */
@@ -1013,7 +1006,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
   sync_info *si;
   mark *mk = NULL;
   /* fprintf(stderr, "kbd: %d %d %d ", keysym, state, extended_mode); */
-  if (!cp) return(KEYBOARD_NO_ACTION);
+  if (!cp) return;
   redisplay = CURSOR_IN_VIEW;
   searching = 0;
   cursor_searching = 0;
@@ -1021,7 +1014,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
   sp = cp->sound;
   ss = cp->state;
   ap = cp->axis;
-  if (keysym >= snd_K_Shift_L) return(KEYBOARD_NO_ACTION); 
+  if (keysym >= snd_K_Shift_L) return;
   /* this happens when the user presses Control or Shift etc prior to hitting the actual (modified) key */
   if (defining_macro) continue_macro(keysym, state);
   if (!m) count = 1; else m = 0;
@@ -1045,13 +1038,13 @@ int keyboard_command (chan_info *cp, int keysym, int state)
       number_ctr = 0;
       counting = 0;
       dot_seen = 0;
-      if (m) return(KEYBOARD_NO_ACTION);
+      if (m) return;
     }
   u_count = 0;
   if ((keysym != snd_K_X) && (keysym != snd_K_x))
     {
       got_count = 0;
-      if (count == 0) return(KEYBOARD_NO_ACTION);
+      if (count == 0) return;
     }
 #if HAVE_EXTENSION_LANGUAGE
   if ((state & snd_MetaMask) && 
@@ -1061,13 +1054,14 @@ int keyboard_command (chan_info *cp, int keysym, int state)
       ss->mx_sp = sp;
       prompt(sp, "M-x:", NULL);
       sp->macroing = count;
-      return(KEYBOARD_NO_ACTION);
+      return;
     }
   hashloc = in_user_keymap(keysym, state, extended_mode);
   if (hashloc != -1)                       /* found user-defined key */
     {
       extended_mode = 0;
-      return(call_user_keymap(hashloc, count));
+      call_user_keymap(hashloc, count);
+      return;
     }
 #endif
   if (sp->minibuffer_temp) clear_minibuffer(sp);
@@ -1635,7 +1629,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      if ((state & snd_MetaMask) &&
 		  ((keysym == snd_K_f) || (keysym == snd_K_e) || (keysym == snd_K_v) || (keysym == snd_K_o) || (keysym == snd_K_h)))
 		/* here the accelerators are f e v o h (not upper case for some reason -- it's given as 'F' in snd-xmenu.c) */
-		return(KEYBOARD_NO_ACTION);
+		return;
 	      /* it might be better to remove the menu accelerators -- they are a dubious feature to begin with */
 #endif
 #if HAVE_EXTENSION_LANGUAGE
@@ -1691,6 +1685,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_B: case snd_K_b: 
 	      cp->cursor_on = 1; 
 	      redisplay = CURSOR_ON_LEFT; 
+	      handle_cursor(cp, redisplay);
 	      break;
 	    case snd_K_C: case snd_K_c: 
 	      mark_define_region(cp, (ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count); 
@@ -1710,6 +1705,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_F: case snd_K_f: 
 	      cp->cursor_on = 1; 
 	      redisplay = CURSOR_ON_RIGHT; 
+	      handle_cursor(cp, redisplay);
 	      break;
 	    case snd_K_I: case snd_K_i: 
 	      paste_selection_or_region(ss, (ext_count == NO_CX_ARG_SPECIFIED) ? 0 : ext_count, cp, "C-x i");
@@ -1834,9 +1830,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	clear_minibuffer(sp);
       else if (!cursor_searching) 
 	sp->searching = 0;
-      return(redisplay);
     }
-  else return(KEYBOARD_NO_ACTION);
 }
 
 
@@ -1895,9 +1889,8 @@ static XEN g_key(XEN kbd, XEN buckybits, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(buckybits), buckybits, XEN_ARG_2, S_key, "an integer");
   ASSERT_CHANNEL(S_key, snd, chn, 3);
   cp = get_cp(snd, chn, S_key);
-  return(C_TO_XEN_INT(keyboard_command(cp, 
-				       XEN_TO_C_INT(kbd), 
-				       XEN_TO_C_INT(buckybits))));
+  keyboard_command(cp, XEN_TO_C_INT(kbd), XEN_TO_C_INT(buckybits));
+  return(kbd);
 }
 
 static XEN g_save_macros(void) 

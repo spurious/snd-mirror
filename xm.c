@@ -2281,17 +2281,18 @@ static XEN gxm_XmRenderTableAddRenditions(XEN arg1, XEN arg2, XEN arg3, XEN arg4
 XmRendition *renditions, Cardinal rendition_count, XmMergeMode merge_mode) adds renditions to a render table"
   /* DIFF: XmRenderTableAddRenditions arg2 is list of Renditions, arg1 can be #f = NULL
    */
-  Cardinal len;
+  int len;
   XmRendition *rs;
   XmRenderTable res;
   XEN_ASSERT_TYPE(XEN_XmRenderTable_P(arg1) || XEN_FALSE_P(arg1), arg1, 1, "XmRenderTableAddRenditions", "XmRenderTable");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XmRenderTableAddRenditions", "list of XmRendition");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmRenderTableAddRenditions", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XmRenderTableAddRenditions", "XmMergeMode");
-  len = (Cardinal)XEN_TO_C_INT(arg3);
+  len = XEN_TO_C_INT(arg3);
+  if (len <= 0) return(XEN_FALSE);
   rs = XEN_TO_C_XmRenditions(arg2, len);
   res = XmRenderTableAddRenditions(XEN_FALSE_P(arg1) ? NULL : XEN_TO_C_XmRenderTable(arg1), 
-				   rs, len, 
+				   rs, (Cardinal)len, 
 				   (XmMergeMode)XEN_TO_C_INT(arg4));
   FREE(rs);
   return(C_TO_XEN_XmRenderTable(res));
@@ -2310,6 +2311,7 @@ removes renditions"
   XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XmRenderTableRemoveRenditions", "XmStringTag*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmRenderTableRemoveRenditions", "int");
   len = XEN_TO_C_INT(arg3);
+  if (len <= 0) return(XEN_FALSE);
   tags = (XmStringTag *)XEN_TO_C_Strings(arg2, len);
   rt = XmRenderTableRemoveRenditions(XEN_TO_C_XmRenderTable(arg1), tags, len);
   FREE(tags);
@@ -2328,6 +2330,7 @@ static XEN gxm_XmRenderTableCopy(XEN arg1, XEN arg2, XEN arg3)
   XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XmRenderTableCopy", "XmStringTag*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmRenderTableCopy", "int");
   len = XEN_TO_C_INT(arg3);
+  if (len <= 0) return(XEN_FALSE);
   tags = (XmStringTag *)XEN_TO_C_Strings(arg2, len);
   rt = XmRenderTableCopy(XEN_TO_C_XmRenderTable(arg1), tags, len);
   FREE(tags);
@@ -2381,17 +2384,18 @@ static XEN gxm_XmRenderTableGetRenditions(XEN arg1, XEN arg2, XEN arg3)
 matches rendition tags"
   /* DIFF: XmRenderTableGetRenditions returns list of XmRenditions, arg2 is list of strings
    */
-  Cardinal i, len, loc;
+  int i, len, loc;
   XEN lst = XEN_EMPTY_LIST;
   XmRendition *rs;
   XmStringTag *tags;
   XEN_ASSERT_TYPE(XEN_XmRenderTable_P(arg1), arg1, 1, "XmRenderTableGetRenditions", "XmRenderTable");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XmRenderTableGetRenditions", "list of String");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmRenderTableGetRenditions", "int");
+  len = XEN_TO_C_INT(arg3);
+  if (len <= 0) return(XEN_FALSE);
   loc = xm_protect(lst);
-  len = (Cardinal)XEN_TO_C_INT(arg3);
   tags = (XmStringTag *)XEN_TO_C_Strings(arg2, len);
-  rs = XmRenderTableGetRenditions(XEN_TO_C_XmRenderTable(arg1), tags, len);
+  rs = XmRenderTableGetRenditions(XEN_TO_C_XmRenderTable(arg1), tags, (Cardinal)len);
   FREE(tags);
   for (i = len - 1; i >= 0; i--)
     {
@@ -2451,6 +2455,7 @@ retrieves rendition resources"
     /* here we need to make sure the ref args are ok from C's point of view */
     r = XEN_TO_C_XmRendition(arg1);
     len = XEN_TO_C_INT_DEF(arg3, arg2);
+    if (len <= 0) XEN_ASSERT_TYPE(0, arg3, 3, "XmRenditionRetrieve", "positive integer");
     args = (Arg *)CALLOC(len, sizeof(Arg));
     locs = (unsigned long *)CALLOC(len, sizeof(unsigned long));
     for (i = 0; i < len; i++, arg2 = XEN_CDDR(arg2))
@@ -2523,6 +2528,7 @@ inserts tabs into a tab list"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmTabListInsertTabs", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XmTabListInsertTabs", "int");
   len = XEN_TO_C_INT(arg3);
+  if (len <= 0) return(XEN_FALSE);
   tabs = XEN_TO_C_XmTabs(arg2, len);
   tl = XmTabListInsertTabs(XEN_FALSE_P(arg1) ? NULL : XEN_TO_C_XmTabList(arg1), 
 			   tabs, len, XEN_TO_C_INT(arg4));
@@ -2565,12 +2571,13 @@ creates a new tab list with replacement tabs"
   Cardinal *ts;
   int len;
   XEN res;
- XmTab *tabs;
+  XmTab *tabs;
   XEN_ASSERT_TYPE(XEN_XmTabList_P(arg1), arg1, 1, "XmTabListReplacePositions", "XmTabList");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XmTabListReplacePositions", "list of ints");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmTabListReplacePositions", "list of XmTab");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XmTabListReplacePositions", "int");
   len = XEN_TO_C_INT(arg4);
+  if (len <= 0) return(XEN_FALSE);
   ts = XEN_TO_C_Cardinals(arg2, len);
   tabs = XEN_TO_C_XmTabs(arg3, len);
   res = C_TO_XEN_XmTabList(XmTabListReplacePositions(XEN_TO_C_XmTabList(arg1), ts, tabs, len));
@@ -2592,6 +2599,7 @@ removes noncontiguous tabs"
   XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XmTabListRemoveTabs", "list of int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmTabListRemoveTabs", "int");
   len = XEN_TO_C_INT(arg3);
+  if (len <= 0) return(XEN_FALSE);
   ts = XEN_TO_C_Cardinals(arg2, len);
   res = C_TO_XEN_XmTabList(XmTabListRemoveTabs(XEN_TO_C_XmTabList(arg1), ts, XEN_TO_C_INT(arg3)));
   FREE(ts);
@@ -2760,13 +2768,17 @@ static XEN gxm_XmStringGenerate(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmStringGenerate "XmString XmStringGenerate(XtPointer text, XmStringTag tag, XmTextType type, XmStringTag rendition) \
 generates a compound string"
+
+  XmTextType type;
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XmStringGenerate", "XtPointer");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2) || XEN_FALSE_P(arg2), arg2, 2, "XmStringGenerate", "XmStringTag");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmStringGenerate", "XmTextType");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg4), arg4, 4, "XmStringGenerate", "XmStringTag");
+  type = (XmTextType)XEN_TO_C_INT(arg3);
+  if ((type < 0) || (type > 1)) XEN_ASSERT_TYPE(0, arg3, 3, "XmStringGenerate", "XmTextType");
   return(C_TO_XEN_XmString(XmStringGenerate((XtPointer)XEN_TO_C_STRING(arg1), 
 					    XEN_FALSE_P(arg2) ? NULL : XEN_TO_C_STRING(arg2), 
-					    (XmTextType)XEN_TO_C_INT(arg3), 
+					    type,
 					    XEN_TO_C_STRING(arg4))));
 }
 
@@ -2797,18 +2809,22 @@ to a compound string table"
   int len;
   XmStringTable val;
   XEN lst;
+  XmTextType type;
   XEN_ASSERT_TYPE(XEN_LIST_P(arg1), arg1, 1, "XmStringTableParseStringArray", "list of strings");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmStringTableParseStringArray", "int");
   XEN_ASSERT_TYPE(XEN_FALSE_P(arg3) || XEN_STRING_P(arg3), arg3, 3, "XmStringTableParseStringArray", "XmStringTag");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XmStringTableParseStringArray", "XmTextType");
   XEN_ASSERT_TYPE(XEN_FALSE_P(arg5) || XEN_XmParseTable_P(arg5), arg5, 5, "XmStringTableParseStringArray", "XmParseTable");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XmStringTableParseStringArray", "int");
+  type = (XmTextType)XEN_TO_C_INT(arg4);
+  if ((type < 0) || (type > 1)) XEN_ASSERT_TYPE(0, arg4, 4, "XmStringTableParseStringArray", "XmTextType");
   len = XEN_TO_C_INT(arg2);
+  if (len <= 0) return(XEN_FALSE);
   strs = XEN_TO_C_Strings(arg1, len);
   val = XmStringTableParseStringArray((XtPointer *)strs, 
 				      (Cardinal)len, 
 				      (XEN_FALSE_P(arg3)) ? NULL : XEN_TO_C_STRING(arg3),
-				      (XmTextType)XEN_TO_C_INT(arg4), 
+				      type,
 				      (XEN_FALSE_P(arg5)) ? NULL : XEN_TO_C_XmParseTable(arg5), 
 				      XEN_TO_C_INT(arg6),
 				      (XtPointer)arg7);
@@ -2829,6 +2845,7 @@ compound strings to an array of text"
   char **tab;
   XmStringTable tb;
   int i, len, loc;
+  XmTextType type1, type2;
   XEN_ASSERT_TYPE(XEN_LIST_P(arg1), arg1, 1, "XmStringTableUnparse", "XmStringTable");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmStringTableUnparse", "int");
   XEN_ASSERT_TYPE(XEN_FALSE_P(arg3) || XEN_STRING_P(arg3), arg3, 3, "XmStringTableUnparse", "XmStringTag");
@@ -2837,14 +2854,19 @@ compound strings to an array of text"
   XEN_ASSERT_TYPE(XEN_FALSE_P(arg6) || XEN_XmParseTable_P(arg6), arg6, 6, "XmStringTableUnparse", "XmParseTable");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg7), arg7, 7, "XmStringTableUnparse", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg8), arg8, 8, "XmStringTableUnparse", "XmParseModel");
-  loc = xm_protect(lst);
+  type1 = (XmTextType)XEN_TO_C_INT(arg4);
+  if ((type1 < 0) || (type1 > 1)) XEN_ASSERT_TYPE(0, arg4, 4, "XmStringTableUnparse", "XmTextType");
+  type2 = (XmTextType)XEN_TO_C_INT(arg5);
+  if ((type2 < 0) || (type2 > 1)) XEN_ASSERT_TYPE(0, arg5, 5, "XmStringTableUnparse", "XmTextType");
   len = XEN_TO_C_INT(arg2);
+  if (len <= 0) return(XEN_FALSE);
+  loc = xm_protect(lst);
   tb = XEN_TO_C_XmStringTable(arg1, len);
   tab = (char **)XmStringTableUnparse(tb,
 				      len, 
 				      (XEN_FALSE_P(arg3)) ? NULL : XEN_TO_C_STRING(arg3), 
-				      (XmTextType)XEN_TO_C_INT(arg4), 
-				      (XmTextType)XEN_TO_C_INT(arg5), 
+				      type1,
+				      type2,
 				      (XEN_FALSE_P(arg6)) ? NULL : XEN_TO_C_XmParseTable(arg6), 
 				      XEN_TO_C_INT(arg7), 
 				      (XmParseModel)XEN_TO_C_INT(arg8));
@@ -2900,18 +2922,21 @@ XmParseTable parse_table, Cardinal parse_count, XtPointer call_data) converts a 
    */
   int loc;
   char *str;
+  XmTextType type;
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XmStringParseText", "string");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmStringParseText", "int");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg3), arg3, 3, "XmStringParseText", "XmStringTag");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XmStringParseText", "XmTextType");
   XEN_ASSERT_TYPE(XEN_XmParseTable_P(arg5), arg5, 5, "XmStringParseText", "XmParseTable");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XmStringParseText", "int");
+  type = (XmTextType)XEN_TO_C_INT(arg4);
+  if ((type < 0) || (type > 1)) XEN_ASSERT_TYPE(0, arg4, 4, "XmStringParseText", "XmTextType");
   loc = XEN_TO_C_INT(arg2);
   str = XEN_TO_C_STRING(arg1);
   return(C_TO_XEN_XmString(XmStringParseText(str, 
 					     (XtPointer *)(str + loc), 
 					     XEN_TO_C_STRING(arg3), 
-					     (XmTextType)XEN_TO_C_INT(arg4), 
+					     type,
 					     XEN_TO_C_XmParseTable(arg5), 
 					     XEN_TO_C_INT(arg6), 
 					     (XtPointer)arg7)));
@@ -2921,6 +2946,7 @@ static XEN gxm_XmStringUnparse(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5,
 {
   #define H_XmStringUnparse "XtPointer XmStringUnparse(XmString string, XmStringTag tag, XmTextType tag_type, XmTextType output_type, \
 XmParseTable parse_table, Cardinal parse_count, XmParseModel parse_model) unparses text"
+  XmTextType type1, type2;
   XEN_ASSERT_TYPE(XEN_XmString_P(arg1), arg1, 1, "XmStringUnparse", "XmString");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmStringUnparse", "XmStringTag");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmStringUnparse", "XmTextType");
@@ -2928,10 +2954,14 @@ XmParseTable parse_table, Cardinal parse_count, XmParseModel parse_model) unpars
   XEN_ASSERT_TYPE(XEN_XmParseTable_P(arg5), arg5, 5, "XmStringUnparse", "XmParseTable");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XmStringUnparse", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg7), arg7, 7, "XmStringUnparse", "XmParseModel");
+  type1 = (XmTextType)XEN_TO_C_INT(arg3);
+  if ((type1 < 0) || (type1 > 1)) XEN_ASSERT_TYPE(0, arg3, 3, "XmStringUnparse", "XmTextType");
+  type2 = (XmTextType)XEN_TO_C_INT(arg4);
+  if ((type2 < 0) || (type2 > 1)) XEN_ASSERT_TYPE(0, arg4, 4, "XmStringUnparse", "XmTextType");
   return(C_TO_XEN_STRING((const char *)XmStringUnparse(XEN_TO_C_XmString(arg1), 
 						       XEN_TO_C_STRING(arg2), 
-						       (XmTextType)XEN_TO_C_INT(arg3), 
-						       (XmTextType)XEN_TO_C_INT(arg4), 
+						       type1,
+						       type2,
 						       XEN_TO_C_XmParseTable(arg5), 
 						       XEN_TO_C_INT(arg6), 
 						       (XmParseModel)XEN_TO_C_INT(arg7))));
@@ -3383,13 +3413,17 @@ static XEN gxm_XmFontListEntryLoad(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmFontListEntryLoad "XmFontListEntry XmFontListEntryLoad(Display *display, char *font_name, XmFontType type, char *tag) \
 loads a font or creates a font set and creates an accompanying font list entry"
+
+  XmFontType type;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmFontListEntryLoad", "Display*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmFontListEntryLoad", "char*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmFontListEntryLoad", "XmFontType");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg4), arg4, 4, "XmFontListEntryLoad", "char*");
+  type = (XmFontType)XEN_TO_C_INT(arg3);
+  if ((type < 0) || (type > 1)) XEN_WRONG_TYPE_ARG_ERROR("XmFontListEntryLoad", 3, arg3, "XmFontType");
   return(C_TO_XEN_XmFontListEntry(XmFontListEntryLoad(XEN_TO_C_Display(arg1),
 						      XEN_TO_C_STRING(arg2),
-						      (XmFontType)XEN_TO_C_INT(arg3), 
+						      type,
 						      XEN_TO_C_STRING(arg4))));
 }
 
@@ -3460,8 +3494,10 @@ static XEN gxm_XmFontListEntryCreate_r(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   XtPointer gad;
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XmFontListEntryCreate_r", "char*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmFontListEntryCreate_r", "XmFontType");
+  XEN_ASSERT_TYPE(XEN_XFontStruct_P(arg3) || XEN_XFontSet_P(arg3), arg3, 3, "XmFontListEntryCreate_r", "XFontSet or XFontStruct");
   XEN_ASSERT_TYPE(XEN_Widget_P(arg4), arg4, 4, "XmFontListEntryCreate_r", "Widget");
   type = (XmFontType)XEN_TO_C_INT(arg2);
+  if ((type < 0) || (type > 1)) XEN_WRONG_TYPE_ARG_ERROR("XmFontListEntryCreate_r", 2, arg2, "XmFontType");
   if (type == XmFONT_IS_FONTSET)
     gad = (XtPointer)XEN_TO_C_XFontSet(arg3);
   else gad = (XtPointer)XEN_TO_C_XFontStruct(arg3);
@@ -3480,7 +3516,9 @@ creates a font list entry"
   XtPointer gad;
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XmFontListEntryCreate", "char*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmFontListEntryCreate", "XmFontType");
+  XEN_ASSERT_TYPE(XEN_XFontStruct_P(arg3) || XEN_XFontSet_P(arg3), arg3, 3, "XmFontListEntryCreate", "XFontSet or XFontStruct");
   type = (XmFontType)XEN_TO_C_INT(arg2);
+  if ((type < 0) || (type > 1)) XEN_WRONG_TYPE_ARG_ERROR("XmFontListEntryCreate", 2, arg2, "XmFontType");
   if (type == XmFONT_IS_FONTSET)
     gad = (XtPointer)XEN_TO_C_XFontSet(arg3);
   else gad = (XtPointer)XEN_TO_C_XFontStruct(arg3);
@@ -4529,6 +4567,7 @@ replaces items in a list based on position"
   XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmListReplacePositions", "list of XmString");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XmListReplacePositions", "int");
   len = XEN_TO_C_INT(arg4);
+  if (len <= 0) return(XEN_FALSE);
   ps = XEN_TO_C_Ints(arg2, len);
   str = XEN_TO_C_XmStrings(arg3, len);
   XmListReplacePositions(XEN_TO_C_Widget(arg1), ps, str, len);
@@ -4550,6 +4589,7 @@ replaces items in a list without selecting the replacement items"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmListReplaceItemsPosUnselected", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XmListReplaceItemsPosUnselected", "int");
   len = XEN_TO_C_INT(arg3);
+  if (len <= 0) return(XEN_FALSE);
   str = XEN_TO_C_XmStrings(arg2, len);
   XmListReplaceItemsPosUnselected(XEN_TO_C_Widget(arg1), str, len, XEN_TO_C_INT(arg4));
   FREE(str);
@@ -4569,6 +4609,7 @@ replaces items in a list"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmListReplaceItemsUnselected", "int");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg4), arg4, 4, "XmListReplaceItemsUnselected", "list of XmString");
   len = XEN_TO_C_INT(arg3);
+  if (len <= 0) return(XEN_FALSE);
   str1 = XEN_TO_C_XmStrings(arg2, len);
   str2 = XEN_TO_C_XmStrings(arg4, len);
   XmListReplaceItemsUnselected(XEN_TO_C_Widget(arg1), str1, len, str2);
@@ -4590,6 +4631,7 @@ replaces the specified elements in the list"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmListReplaceItemsPos", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XmListReplaceItemsPos", "int");
   len = XEN_TO_C_INT(arg3);
+  if (len <= 0) return(XEN_FALSE);
   str = XEN_TO_C_XmStrings(arg2, len);
   XmListReplaceItemsPos(XEN_TO_C_Widget(arg1), str, len, XEN_TO_C_INT(arg4));
   FREE(str);
@@ -4609,6 +4651,7 @@ replaces the specified elements in the list"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmListReplaceItems", "int");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg4), arg4, 4, "XmListReplaceItems", "XmString*");
   len = XEN_TO_C_INT(arg3);
+  if (len <= 0) return(XEN_FALSE);
   str1 = XEN_TO_C_XmStrings(arg2, len);
   str2 = XEN_TO_C_XmStrings(arg4, len);
   XmListReplaceItems(XEN_TO_C_Widget(arg1), str1, len, str2);
@@ -4657,6 +4700,7 @@ items from a list based on an array of positions"
   XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XmListDeletePositions", "list of int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmListDeletePositions", "int");
   len = XEN_TO_C_INT(arg3);
+  if (len <= 0) return(XEN_FALSE);
   pos = XEN_TO_C_Ints(arg2, len);
   XmListDeletePositions(XEN_TO_C_Widget(arg1), pos, len);
   FREE(pos);
@@ -4674,6 +4718,7 @@ static XEN gxm_XmListDeleteItems(XEN arg1, XEN arg2, XEN arg3)
   XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XmListDeleteItems", "list of XmString");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmListDeleteItems", "int");
   len = XEN_TO_C_INT(arg3);
+  if (len <= 0) return(XEN_FALSE);
   str = XEN_TO_C_XmStrings(arg2, len);
   XmListDeleteItems(XEN_TO_C_Widget(arg1), str, len);
   FREE(str);
@@ -4712,6 +4757,7 @@ adds items to a list"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmListAddItemsUnselected", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XmListAddItemsUnselected", "int");
   len = XEN_TO_C_INT(arg3);
+  if (len <= 0) return(XEN_FALSE);
   str = XEN_TO_C_XmStrings(arg2, len);
   XmListAddItemsUnselected(XEN_TO_C_Widget(arg1), str, len, XEN_TO_C_INT(arg4));
   FREE(str);
@@ -4730,6 +4776,7 @@ static XEN gxm_XmListAddItems(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmListAddItems", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XmListAddItems", "int");
   len = XEN_TO_C_INT(arg3);
+  if (len <= 0) return(XEN_FALSE);
   str = XEN_TO_C_XmStrings(arg2, len);
   XmListAddItems(XEN_TO_C_Widget(arg1), str, len, XEN_TO_C_INT(arg4));
   FREE(str);
@@ -5649,6 +5696,7 @@ enables additional drop transfer entries to be processed after initiating a drop
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmDropTransferAdd", "Widget");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XmDropTransferAdd", "XmDropTransferEntry");
   len = XEN_LIST_LENGTH(arg2);
+  if (len <= 0) return(XEN_FALSE);
   entries = XEN_TO_C_XmDropTransferEntryRecs(arg2, len);
   XmDropTransferAdd(XEN_TO_C_Widget(arg1), entries, len);
   FREE(entries);
@@ -6159,6 +6207,7 @@ returns a specified format name"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmClipboardInquireFormat", "int");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg4), arg4, 4, "XmClipboardInquireFormat", "ulong");
   len = XEN_TO_C_ULONG(arg4);
+  if (len <= 0) return(XEN_FALSE);
   buf = (XtPointer *)CALLOC(len, sizeof(XtPointer));
   val = XmClipboardInquireFormat(XEN_TO_C_Display(arg1), 
 				 XEN_TO_C_Window(arg2), 
@@ -6204,6 +6253,7 @@ retrieves a data item from the clipboard"
   XEN_ASSERT_TYPE(XEN_STRING_P(arg3), arg3, 3, "XmClipboardRetrieve", "char*");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg4), arg4, 4, "XmClipboardRetrieve", "ulong");
   len = XEN_TO_C_ULONG(arg4);
+  if (len <= 0) return(XEN_FALSE);
   buf = (XtPointer *)CALLOC(len, sizeof(XtPointer));
   val = XmClipboardRetrieve(XEN_TO_C_Display(arg1), 
 			    XEN_TO_C_Window(arg2), 
@@ -6920,6 +6970,7 @@ removes the protocols from the protocol manager and deallocates the internal tab
   XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmRemoveProtocols", "list of Atom");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XmRemoveProtocols", "int");
   len = XEN_TO_C_INT(arg4);
+  if (len <= 0) return(XEN_FALSE);
   outs = XEN_TO_C_Atoms(arg3, len);
   XmRemoveProtocols(XEN_TO_C_Widget(arg1), XEN_TO_C_Atom(arg2), outs, len);
   FREE(outs);
@@ -6939,6 +6990,7 @@ adds the protocols to the protocol manager and allocates the internal tables"
   XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmAddProtocols", "list of Atom");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XmAddProtocols", "int");
   len = XEN_TO_C_INT(arg4);
+  if (len <= 0) return(XEN_FALSE);
   outs = XEN_TO_C_Atoms(arg3, len);
   XmAddProtocols(XEN_TO_C_Widget(arg1), XEN_TO_C_Atom(arg2), outs, len);
   FREE(outs);
@@ -7616,13 +7668,17 @@ static XEN gxm_XPolygonRegion(XEN arg1, XEN arg2, XEN arg3)
   XPoint *pt, *pt1;
   int i, len;
   Region res;
+  XEN xp;
   XEN_ASSERT_TYPE(XEN_LIST_P(arg1), arg1, 1, "XPolygonRegion", "list of XPoints");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XPolygonRegion", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XPolygonRegion", "int");
   len = XEN_TO_C_INT(arg2);
+  if (len <= 0) XEN_ASSERT_TYPE(0, arg2, 2, "XPolygonRegion", "positive integer");
   pt = (XPoint *)CALLOC(len, sizeof(XPoint));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(arg1)); i++, arg1 = XEN_CDR(arg1))
     {
+      xp = XEN_CAR(arg1);
+      if (!(XEN_XPoint_P(xp))) XEN_ASSERT_TYPE(0, xp, i, "XPolygonRegion", "XPoint");
       pt1 = XEN_TO_C_XPoint(XEN_CAR(arg1));
       pt[i].x = pt1->x;
       pt[i].y = pt1->y;
@@ -8278,6 +8334,7 @@ pixel members of the XColor structures."
   XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XStoreColors", "list of XColor");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XStoreColors", "int");
   len = XEN_TO_C_INT(arg4);
+  if (len <= 0) XEN_ASSERT_TYPE(0, arg4, 4, "XStoreColors", "positive integer");
   xc = (XColor *)CALLOC(len, sizeof(XColor));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(arg3)); i++, arg3 = XEN_CDR(arg3))
     {
@@ -8615,6 +8672,7 @@ static XEN gxm_XSetCommand(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XSetCommand", "list of char*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XSetCommand", "int");
   len = XEN_TO_C_INT(arg4);
+  if (len <= 0) return(XEN_FALSE);
   str = XEN_TO_C_Strings(arg3, len);
   val = XSetCommand(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), str, len);
   FREE(str);
@@ -8645,6 +8703,7 @@ the specified GC to the specified list of rectangles and sets the clip origin."
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XSetClipRectangles", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg7), arg7, 7, "XSetClipRectangles", "int");
   len = XEN_TO_C_INT(arg6);
+  if (len <= 0) XEN_ASSERT_TYPE(0, arg6, 6, "XSetClipRectangles", "positive integer");
   pt = (XRectangle *)CALLOC(len, sizeof(XRectangle));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(arg5)); i++, arg5 = XEN_CDR(arg5))
     {
@@ -8753,6 +8812,7 @@ window and causes the X server to generate PropertyNotify events."
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XRotateWindowProperties", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XRotateWindowProperties", "int");
   len = XEN_TO_C_INT(arg4);
+  if (len <= 0) return(XEN_FALSE);
   outs = XEN_TO_C_Atoms(arg3, len);
   val = XRotateWindowProperties(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), outs, len, XEN_TO_C_INT(arg5));
   FREE(outs);
@@ -8779,6 +8839,7 @@ static XEN gxm_XRestackWindows(XEN arg1, XEN arg2, XEN arg3)
   XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XRestackWindows", "list of Windows");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XRestackWindows", "int");
   len = XEN_TO_C_INT(arg3);
+  if (len <= 0) return(XEN_FALSE);
   ws = XEN_TO_C_Windows(arg2, len);
   rtn = XRestackWindows(XEN_TO_C_Display(arg1), ws, len);
   FREE(ws);
@@ -8874,6 +8935,7 @@ static XEN gxm_XRebindKeysym(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, X
   XEN_ASSERT_TYPE(XEN_STRING_P(arg5), arg5, 5, "XRebindKeysym", "string");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XRebindKeysym", "int");
   len = XEN_TO_C_INT(arg4);
+  if (len <= 0) return(XEN_FALSE);
   ks = XEN_TO_C_KeySyms(arg3, len);
   val = XRebindKeysym(XEN_TO_C_Display(arg1), 
 		      XEN_TO_C_KeySym(arg2),
@@ -9665,6 +9727,7 @@ static XEN gxm_XGetPointerMapping(XEN arg1, XEN arg2, XEN arg3)
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XGetPointerMapping", "Display*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XGetPointerMapping", "int");
   len = XEN_TO_C_INT(arg3);
+  if (len <= 0) XEN_ASSERT_TYPE(0, arg3, 3, "XGetPointerMapping", "positive integer");
   map = (unsigned char *)CALLOC(len, sizeof(unsigned char));
   len = XGetPointerMapping(XEN_TO_C_Display(arg1), map, len);
   loc = xm_protect(lst);
@@ -9813,6 +9876,7 @@ code into the specified buffer."
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XGetErrorText", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XGetErrorText", "int");
   len = XEN_TO_C_INT(arg4);
+  if (len <= 0) XEN_ASSERT_TYPE(0, arg4, 4, "XGetErrorText", "positive integer");
   buf = (char *)CALLOC(len, sizeof(char));
   val = XGetErrorText(XEN_TO_C_Display(arg1), XEN_TO_C_INT(arg2), buf, len);
   str = C_TO_XEN_STRING(buf);
@@ -9836,6 +9900,7 @@ message (or the default message) from the error message database."
   XEN_ASSERT_TYPE(XEN_STRING_P(arg4), arg4, 4, "XGetErrorDatabaseText", "char*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XGetErrorDatabaseText", "int");
   len = XEN_TO_C_INT(arg6);
+  if (len <= 0) XEN_ASSERT_TYPE(0, arg6, 6, "XGetErrorDatabaseText", "positive integer");
   buf = (char *)CALLOC(len, sizeof(char));
   val = XGetErrorDatabaseText(XEN_TO_C_Display(arg1), 
 			      XEN_TO_C_STRING(arg2), 
@@ -9976,6 +10041,7 @@ static XEN gxm_XFreeColors(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XFreeColors", "int");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg5), arg5, 5, "XFreeColors", "ulong");
   len = XEN_TO_C_INT(arg4);
+  if (len <= 0) return(XEN_FALSE);
   ps = XEN_TO_C_Pixels(arg3, len);
   val = XFreeColors(XEN_TO_C_Display(arg1), 
 		    XEN_TO_C_Colormap(arg2), 
@@ -10030,6 +10096,7 @@ static XEN gxm_XFillRectangles(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
   XEN_ASSERT_TYPE(XEN_LIST_P(arg4), arg4, 4, "XFillRectangles", "list of XRectangle");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XFillRectangles", "int");
   len = XEN_TO_C_INT(arg5);
+  if (len <= 0) XEN_ASSERT_TYPE(0, arg5, 5, "XFillRectangles", "positive integer");
   pt = (XRectangle *)CALLOC(len, sizeof(XRectangle));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(arg4)); i++, arg4 = XEN_CDR(arg4))
     {
@@ -10069,6 +10136,7 @@ static XEN gxm_XFillPolygon(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XE
    */
   XPoint *pt, *pt1;
   int i, len;
+  XEN xp;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XFillPolygon", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XFillPolygon", "Drawable");
   XEN_ASSERT_TYPE(XEN_GC_P(arg3), arg3, 3, "XFillPolygon", "GC");
@@ -10077,10 +10145,13 @@ static XEN gxm_XFillPolygon(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XE
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XFillPolygon", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg7), arg7, 7, "XFillPolygon", "int");
   len = XEN_TO_C_INT(arg5);
+  if (len <= 0) XEN_ASSERT_TYPE(0, arg5, 5, "XFillPolygon", "positive integer");
   pt = (XPoint *)CALLOC(len, sizeof(XPoint));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(arg4)); i++, arg4 = XEN_CDR(arg4))
     {
-      pt1 = XEN_TO_C_XPoint(XEN_CAR(arg4));
+      xp = XEN_CAR(arg4);
+      if (!(XEN_XPoint_P(xp))) XEN_ASSERT_TYPE(0, xp, i, "XFillRegion", "XPoint");
+      pt1 = XEN_TO_C_XPoint(xp);
       pt[i].x = pt1->x;
       pt[i].y = pt1->y;
     }
@@ -10110,6 +10181,7 @@ static XEN gxm_XFillArcs(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
   XEN_ASSERT_TYPE(XEN_LIST_P(arg4), arg4, 4, "XFillArcs", "list of XArcs");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XFillArcs", "int");
   len = XEN_TO_C_INT(arg5);
+  if (len <= 0) return(XEN_FALSE);
   dpy = XEN_TO_C_Display(arg1);
   draw = XEN_TO_C_Window(arg2);
   gc = XEN_TO_C_GC(arg3);
@@ -10219,6 +10291,7 @@ static XEN gxm_XDrawSegments(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
   XEN_ASSERT_TYPE(XEN_XSegment_P(arg4), arg4, 4, "XDrawSegments", "list of XSegments");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XDrawSegments", "int");
   len = XEN_TO_C_INT(arg5);
+  if (len <= 0) XEN_ASSERT_TYPE(0, arg5, 5, "XDrawSegments", "positive integer");
   pt = (XSegment *)CALLOC(len, sizeof(XSegment));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(arg4)); i++, arg4 = XEN_CDR(arg4))
     {
@@ -10249,6 +10322,7 @@ static XEN gxm_XDrawRectangles(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
   XEN_ASSERT_TYPE(XEN_LIST_P(arg4), arg4, 4, "XDrawRectangles", "list of XRectangles");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XDrawRectangles", "int");
   len = XEN_TO_C_INT(arg5);
+  if (len <= 0) XEN_ASSERT_TYPE(0, arg5, 5, "XDrawRectangles", "positive integer");
   pt = (XRectangle *)CALLOC(len, sizeof(XRectangle));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(arg4)); i++, arg4 = XEN_CDR(arg4))
     {
@@ -10289,6 +10363,7 @@ static XEN gxm_XDrawPoints(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN
    */
   XPoint *pt, *pt1;
   int i, len;
+  XEN xp;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XDrawPoints", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XDrawPoints", "Drawable");
   XEN_ASSERT_TYPE(XEN_GC_P(arg3), arg3, 3, "XDrawPoints", "GC");
@@ -10296,10 +10371,13 @@ static XEN gxm_XDrawPoints(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XDrawPoints", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XDrawPoints", "int");
   len = XEN_TO_C_INT(arg5);
+  if (len <= 0) XEN_ASSERT_TYPE(0, arg5, 5, "XDrawPoints", "positive integer");
   pt = (XPoint *)CALLOC(len, sizeof(XPoint));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(arg4)); i++, arg4 = XEN_CDR(arg4))
     {
-      pt1 = XEN_TO_C_XPoint(XEN_CAR(arg4));
+      xp = XEN_CAR(arg4);
+      if (!(XEN_XPoint_P(xp))) XEN_ASSERT_TYPE(0, xp, i, "XDrawPoints", "XPoint");
+      pt1 = XEN_TO_C_XPoint(xp);
       pt[i].x = pt1->x;
       pt[i].y = pt1->y;
     }
@@ -10335,6 +10413,7 @@ between each pair of points (point[i], point[i+1]) in the array of XPoint struct
    */
   XPoint *pt, *pt1;
   int i, len;
+  XEN xp;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XDrawLines", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XDrawLines", "Drawable");
   XEN_ASSERT_TYPE(XEN_GC_P(arg3), arg3, 3, "XDrawLines", "GC");
@@ -10342,10 +10421,13 @@ between each pair of points (point[i], point[i+1]) in the array of XPoint struct
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XDrawLines", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XDrawLines", "int");
   len = XEN_TO_C_INT(arg5);
+  if (len <= 0) XEN_ASSERT_TYPE(0, arg5, 5, "XDrawLines", "positive integer");
   pt = (XPoint *)CALLOC(len, sizeof(XPoint));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(arg4)); i++, arg4 = XEN_CDR(arg4))
     {
-      pt1 = XEN_TO_C_XPoint(XEN_CAR(arg4));
+      xp = XEN_CAR(arg4);
+      if (!(XEN_XPoint_P(xp))) XEN_ASSERT_TYPE(0, xp, i, "XDrawLines", "XPoint");
+      pt1 = XEN_TO_C_XPoint(xp);
       pt[i].x = pt1->x;
       pt[i].y = pt1->y;
     }
@@ -10371,6 +10453,7 @@ static XEN gxm_XDrawLinesDirect(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XDrawLines", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XDrawLines", "int");
   len = XEN_TO_C_INT(arg5);
+  if (len <= 0) return(XEN_FALSE);
   pt = (XPoint *)XEN_TO_C_ULONG(arg4);
   XDrawLines(XEN_TO_C_Display(arg1), 
 	     XEN_TO_C_Window(arg2), 
@@ -10391,6 +10474,7 @@ static XEN gxm_Vector2XPoints(XEN arg1)
   XPoint *pt;
   XEN_ASSERT_TYPE(XEN_VECTOR_P(arg1), arg1, XEN_ONLY_ARG, "vector->XPoints", "vector of x,y values");
   len = XEN_VECTOR_LENGTH(arg1) / 2;
+  if (len <= 0) XEN_ASSERT_TYPE(0, arg1, 1, "vector->XPoints", "positive integer");
   velts = XEN_VECTOR_ELEMENTS(arg1);
   pt = (XPoint *)CALLOC(len, sizeof(XPoint));
   for (i = 0, j = 0; i < len; i++, j += 2)
@@ -10987,6 +11071,7 @@ symbols for the specified number of KeyCodes starting with first_keycode."
   XEN_ASSERT_TYPE(XEN_LIST_P(arg4), arg4, 4, "XChangeKeyboardMapping", "list of KeySym");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XChangeKeyboardMapping", "int");
   len = XEN_TO_C_INT(arg5);
+  if (len <= 0) return(XEN_FALSE);
   ks = XEN_TO_C_KeySyms(arg4, len);
   val = XChangeKeyboardMapping(XEN_TO_C_Display(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_INT(arg3), ks, len);
   FREE(ks);
@@ -11136,6 +11221,7 @@ static XEN gxm_XAllocColorPlanes(XEN args)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg7), arg7, 7, "XAllocColorPlanes", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg8), arg8, 8, "XAllocColorPlanes", "int");
   len = XEN_TO_C_INT(arg5);
+  if (len <= 0) XEN_ASSERT_TYPE(0, arg5, 5, "XAllocColorPlanes", "positive integer");
   ps = (unsigned long *)CALLOC(len, sizeof(unsigned long));
   val = XAllocColorPlanes(XEN_TO_C_Display(arg1), 
 			  XEN_TO_C_Colormap(arg2), 
@@ -11174,7 +11260,9 @@ allocates read/write color cells."
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg4), arg4, 4, "XAllocColorCells", "unsigned int");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg5), arg5, 5, "XAllocColorCells", "unsigned int");
   mlen = XEN_TO_C_INT(arg4);
+  if (mlen <= 0) return(XEN_FALSE);
   plen = XEN_TO_C_INT(arg5);
+  if (plen <= 0) return(XEN_FALSE);
   ms = (unsigned long *)CALLOC(mlen, sizeof(unsigned long));
   ps = (unsigned long *)CALLOC(plen, sizeof(unsigned long));
   val = XAllocColorCells(XEN_TO_C_Display(arg1), 
@@ -11271,6 +11359,7 @@ on the specified window with the list of windows specified by the colormap_windo
   XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XSetWMColormapWindows", "list of Windows");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XSetWMColormapWindows", "int");
   len = XEN_TO_C_INT(arg4);
+  if (len <= 0) return(XEN_FALSE);
   ws = XEN_TO_C_Windows(arg3, len);
   rtn = XSetWMColormapWindows(XEN_TO_C_Display(arg1), 
 			      XEN_TO_C_Window(arg2),
@@ -11358,6 +11447,7 @@ specified window with the list of atoms specified by the protocols argument."
   XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XSetWMProtocols", "list of Atom");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XSetWMProtocols", "int");
   len = XEN_TO_C_INT(arg4);
+  if (len <= 0) return(XEN_FALSE);
   outs = XEN_TO_C_Atoms(arg3, len);
   val = XSetWMProtocols(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), outs, len);
   FREE(outs);
@@ -11994,6 +12084,7 @@ pixmap of the given depth and then does a bitmap-format XPutImage of the data in
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg7), arg7, 7, "XCreatePixmapFromBitmapData", "ulong");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg8), arg8, 8, "XCreatePixmapFromBitmapData", "unsigned int");
   len = XEN_LIST_LENGTH(arg3);
+  if (len <= 0) XEN_ASSERT_TYPE(0, arg3, 3, "XCreatePixmapFromBitmapData", "positive integer");
   bits = (char *)CALLOC(len, sizeof(char));
   for (i = 0; i < len; i++, arg3 = XEN_CDR(arg3))
     bits[i] = (char)XEN_TO_C_INT(XEN_CAR(arg3));
@@ -12022,6 +12113,7 @@ program a bitmap file that was written out by XWriteBitmapFile"
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg4), arg4, 4, "XCreateBitmapFromData", "unsigned int");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg5), arg5, 5, "XCreateBitmapFromData", "unsigned int");
   len = XEN_LIST_LENGTH(arg3);
+  if (len <= 0) XEN_ASSERT_TYPE(0, arg3, 3, "XCreateBitmapFromData", "positive integer");
   bits = (char *)CALLOC(len, sizeof(char));
   for (i = 0; i < len; i++, arg3 = XEN_CDR(arg3))
     bits[i] = (char)XEN_TO_C_INT(XEN_CAR(arg3));
@@ -13116,6 +13208,7 @@ value of the selection converted to each of the targets."
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg5), arg5, 5, "XtGetSelectionValuesIncremental", "XtSelectionCallbackProc");
   XEN_ASSERT_TYPE(XEN_Time_P(arg7), arg7, 7, "XtGetSelectionValuesIncremental", "Time");
   len = XEN_TO_C_INT(arg4);
+  if (len <= 0) return(XEN_FALSE);
   outs = XEN_TO_C_Atoms(arg3, len);
   xm_XtSelectionCallback_Descr = XEN_LIST_2(arg5, arg6);
   XtGetSelectionValuesIncremental(XEN_TO_C_Widget(arg1), 
@@ -13198,6 +13291,7 @@ converted to each of the targets."
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg5), arg5, 5, "XtGetSelectionValues", "XtSelectionCallbackProc");
   XEN_ASSERT_TYPE(XEN_Time_P(arg7), arg7, 7, "XtGetSelectionValues", "Time");
   len = XEN_TO_C_INT(arg4);
+  if (len <= 0) return(XEN_FALSE);
   outs = XEN_TO_C_Atoms(arg3, len);
   xm_XtSelectionCallback_Descr = XEN_LIST_2(arg5, arg6);
   XtGetSelectionValues(XEN_TO_C_Widget(arg1), 
@@ -13315,6 +13409,7 @@ static XEN gxm_XtSetWMColormapWindows(XEN arg1, XEN arg2, XEN arg3)
   XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XtSetWMColormapWindows", "Widget list");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XtSetWMColormapWindows", "int");
   len = XEN_LIST_LENGTH(arg2);
+  if (len <= 0) XEN_ASSERT_TYPE(0, arg2, 2, "XtSetWMColormapWindows", "positive integer");
   ws = (Widget *)CALLOC(len, sizeof(Widget *));
   for (i = 0; i < len; i++, arg2 = XEN_CDR(arg2)) 
     ws[i] = XEN_TO_C_Widget(XEN_CAR(arg2));
@@ -13577,7 +13672,7 @@ static XEN gxm_XtWarningMsg(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XE
 is called when a nonfatal error condition occurs."
   /* DIFF: XtWarningMsg takes final int not int*, arg5 is list of strings
    */
-  Cardinal size;
+  int size;
   char **pars;
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XtWarningMsg", "char*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XtWarningMsg", "char*");
@@ -13585,7 +13680,8 @@ is called when a nonfatal error condition occurs."
   XEN_ASSERT_TYPE(XEN_STRING_P(arg4), arg4, 4, "XtWarningMsg", "char*");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg5), arg5, 5, "XtWarningMsg", "list of String");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XtWarningMsg", "int");
-  size = (Cardinal)XEN_TO_C_INT(arg6);
+  size = XEN_TO_C_INT(arg6);
+  if (size <= 0) return(XEN_FALSE);
   pars = XEN_TO_C_Strings(arg5, size);
   XtWarningMsg(XEN_TO_C_STRING(arg1), XEN_TO_C_STRING(arg2), XEN_TO_C_STRING(arg3), XEN_TO_C_STRING(arg4), pars, &size);
   FREE(pars);
@@ -13598,7 +13694,7 @@ static XEN gxm_XtAppWarningMsg(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5,
 handler and passes the specified information."
   /* DIFF: XtAppWarningMsg takes final int not int*, arg5 is list of strings
    */
-  Cardinal size;
+  int size;
   char **pars;
   XEN_ASSERT_TYPE(XEN_XtAppContext_P(arg1), arg1, 1, "XtAppWarningMsg", "XtAppContext");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XtAppWarningMsg", "char*");
@@ -13607,7 +13703,8 @@ handler and passes the specified information."
   XEN_ASSERT_TYPE(XEN_STRING_P(arg5), arg5, 5, "XtAppWarningMsg", "char*");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg6), arg6, 6, "XtAppWarningMsg", "list of String");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg7), arg7, 7, "XtAppWarningMsg", "int");
-  size = (Cardinal)XEN_TO_C_INT(arg7);
+  size = XEN_TO_C_INT(arg7);
+  if (size <= 0) return(XEN_FALSE);
   pars = XEN_TO_C_Strings(arg5, size);
   XtAppWarningMsg(XEN_TO_C_XtAppContext(arg1), XEN_TO_C_STRING(arg2), 
 		  XEN_TO_C_STRING(arg3), XEN_TO_C_STRING(arg4), XEN_TO_C_STRING(arg5), 
@@ -13622,7 +13719,7 @@ static XEN gxm_XtErrorMsg(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN 
 when a fatal error occurs."
   /* DIFF: XtErrorMsg takes final int not int*, arg5 is list of strings
    */
-  Cardinal size;
+  int size;
   char **pars;
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XtErrorMsg", "char*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XtErrorMsg", "char*");
@@ -13630,7 +13727,8 @@ when a fatal error occurs."
   XEN_ASSERT_TYPE(XEN_STRING_P(arg4), arg4, 4, "XtErrorMsg", "char*");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg5), arg5, 5, "XtErrorMsg", "list of String");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XtErrorMsg", "int");
-  size = (Cardinal)XEN_TO_C_INT(arg6);
+  size = XEN_TO_C_INT(arg6);
+  if (size <= 0) return(XEN_FALSE);
   pars = XEN_TO_C_Strings(arg5, size);
   XtErrorMsg(XEN_TO_C_STRING(arg1), XEN_TO_C_STRING(arg2), XEN_TO_C_STRING(arg3), XEN_TO_C_STRING(arg4), pars, &size);
   FREE(pars);
@@ -13642,7 +13740,7 @@ static XEN gxm_XtAppErrorMsg(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, X
   #define H_XtErrorMsg "void XtErrorMsg(name, type, class, default, params, num_params) has been superseded by XtAppErrorMsg."
   /* DIFF: XtAppErrorMsg takes final int not int*, arg5 is list of strings
    */
-  Cardinal size;
+  int size;
   char **pars;
   XEN_ASSERT_TYPE(XEN_XtAppContext_P(arg1), arg1, 1, "XtAppErrorMsg", "XtAppContext");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XtAppErrorMsg", "char*");
@@ -13651,7 +13749,8 @@ static XEN gxm_XtAppErrorMsg(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, X
   XEN_ASSERT_TYPE(XEN_STRING_P(arg5), arg5, 5, "XtAppErrorMsg", "char*");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg6), arg6, 6, "XtAppErrorMsg", "list of String");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg7), arg7, 7, "XtAppErrorMsg", "int");
-  size = (Cardinal)XEN_TO_C_INT(arg7);
+  size = XEN_TO_C_INT(arg7);
+  if (size <= 0) return(XEN_FALSE);
   pars = XEN_TO_C_Strings(arg5, size);
   XtAppErrorMsg(XEN_TO_C_XtAppContext(arg1), XEN_TO_C_STRING(arg2), 
 		XEN_TO_C_STRING(arg3), XEN_TO_C_STRING(arg4), 
@@ -15622,6 +15721,7 @@ static XEN gxm_XtAddActions(XEN arg1)
   int i, len;
   XEN_ASSERT_TYPE(XEN_LIST_P(arg1), arg1, 1, "XtAddActions", "list of XtActions");
   len = XEN_LIST_LENGTH(arg1);
+  if (len <= 0) XEN_ASSERT_TYPE(0, arg1, 1, "XtAddActions", "positive integer");
   act = (XtActionsRec *)CALLOC(len, sizeof(XtActionsRec));
   for (i = 0; i < len; i++, arg1 = XEN_CDR(arg1))
     {
@@ -15664,6 +15764,7 @@ with the translation manager."
   XEN_ASSERT_TYPE(XEN_XtAppContext_P(arg1), arg1, 1, "XtAppAddActions", "XtAppContext");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XtAppAddActions", "list of XtActions");
   len = XEN_LIST_LENGTH(arg2);
+  if (len <= 0) XEN_ASSERT_TYPE(0, arg2, 2, "XtAppAddActions", "positive integer");
   act = (XtActionsRec *)CALLOC(len, sizeof(XtActionsRec));
   for (i = 0; i < len; i++, arg2 = XEN_CDR(arg2))
     {
@@ -16671,6 +16772,7 @@ static XEN gxm_XpmCreatePixmapFromData(XEN arg1, XEN arg2, XEN arg3, XEN arg6)
   XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XpmCreatePixmapFromData", "list of char*");
   XEN_ASSERT_TYPE(XEN_XpmAttributes_P(arg6), arg6, 6, "XpmCreatePixmapFromData", "XpmAttributes*");
   len = XEN_LIST_LENGTH(arg3);
+  if (len <= 0) XEN_ASSERT_TYPE(0, arg3, 3, "XpmCreatePixmapFromData", "positive integer");
   bits = (char **)CALLOC(len, sizeof(char *));
   for (i = 0; i < len; i++, arg3 = XEN_CDR(arg3))
     bits[i] = XEN_TO_C_STRING(XEN_CAR(arg3));
@@ -24288,7 +24390,7 @@ static int xm_already_inited = 0;
       define_structs();
       XEN_YES_WE_HAVE("xm");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"4-Oct-01\")");
+      XEN_EVAL_C_STRING("(define xm-version \"9-Nov-01\")");
 #endif
       xm_already_inited = 1;
     }

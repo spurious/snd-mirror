@@ -14,7 +14,7 @@
 ;;; check-for-unsaved-edits
 ;;; remember-sound-state
 
-(use-modules (ice-9 common-list))
+(use-modules (ice-9 common-list) (ice-9 optargs) (ice-9 format))
 
 
 ;;; -------- accessors for graph-style fields

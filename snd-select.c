@@ -217,18 +217,21 @@ static void update_selection(chan_info *cp, int newend)
   ed_list *ed;
   int samps;
   ed = cp->edits[cp->edit_ctr];
-  if (newend < ed->selection_beg) 
+  if ((newend != ed->selection_beg) && (newend != ed->selection_end)) /* redundant call from somewhere */
     {
-      if (newend >= 0)
-	ed->selection_beg = newend;
-      else ed->selection_beg = 0;
-    }
-  else 
-    {
-      samps = current_ed_samples(cp);
-      if (newend < samps)
-	ed->selection_end = newend;
-      else ed->selection_end = samps-1;
+      if (newend < ed->selection_beg) 
+	{
+	  if (newend >= 0)
+	    ed->selection_beg = newend;
+	  else ed->selection_beg = 0;
+	}
+      else 
+	{
+	  samps = current_ed_samples(cp);
+	  if (newend < samps)
+	    ed->selection_end = newend;
+	  else ed->selection_end = samps - 1;
+	}
     }
 }
 

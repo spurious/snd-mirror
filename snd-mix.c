@@ -2668,7 +2668,7 @@ int goto_mix(chan_info *cp, int count)
       if (k < 0) k = 0;
       if (k >= j) k = j - 1;
       samp = css[k];
-      cp->cursor = samp;
+      cursor_moveto(cp, samp);
       FREE(css);
       if ((count > 0) && (samp > (cp->axis)->hisamp)) return(CURSOR_IN_MIDDLE);
       if ((count < 0) && (samp < (cp->axis)->losamp)) return(CURSOR_IN_MIDDLE);
@@ -3770,7 +3770,7 @@ static XEN g_forward_mix(XEN count, XEN snd, XEN chn)
   ASSERT_CHANNEL(S_forward_mix, snd, chn, 2);
   cp = get_cp(snd, chn, S_forward_mix);
   val = XEN_TO_C_INT_OR_ELSE(count, 1); 
-  handle_cursor(cp, goto_mix(cp, val));
+  goto_mix(cp, val);
   return(C_TO_XEN_INT(mix_id_from_channel_position(cp, cp->cursor)));
 }
 
@@ -3783,7 +3783,7 @@ static XEN g_backward_mix(XEN count, XEN snd, XEN chn)
   ASSERT_CHANNEL(S_backward_mix, snd, chn, 2);
   cp = get_cp(snd, chn, S_backward_mix);
   val = -(XEN_TO_C_INT_OR_ELSE(count, 1)); 
-  handle_cursor(cp, goto_mix(cp, val));
+  goto_mix(cp, val);
   return(C_TO_XEN_INT(mix_id_from_channel_position(cp, cp->cursor)));
 }
 

@@ -34,7 +34,7 @@
 (define total-tests 23)
 (define with-exit (< snd-test 0))
 (set! (with-background-processes) #f)
-(define all-args #t) ; huge arg testing
+(define all-args #f) ; huge arg testing
 
 (define home-dir "/home")
 (define sf-dir "/sf1")
@@ -9992,6 +9992,40 @@
 	      (free-sample-reader reader)))
 	(close-sound ind))
 
+      (let ((ind (open-sound "2.snd")))
+	(set! (sync ind) 1)
+	(key (char->integer #\>) 4) (force-event)
+	(key (char->integer #\space) 4) (force-event)
+	(key (char->integer #\<) 4) (force-event)
+	(if (or (not (selection-member? ind 0))
+		(not (selection-member? ind 1))
+		(not (= (selection-position ind 0) 0))
+		(not (= (selection-position ind 1) 0))
+		(not (= (selection-length ind 0) (frames ind 0)))
+		(not (= (selection-length ind 1) (frames ind 1))))
+	    (snd-display ";sync selection via <-: ~A ~A ~A ~A ~A ~A"
+			 (selection-member? ind 0) (selection-member? ind 1)
+			 (selection-position ind 0) (selection-position ind 1)
+			 (selection-length ind 0) (selection-length ind 1)))
+	(key (char->integer #\space) 4) (force-event)
+	(key (char->integer #\>) 4) (force-event)
+	(if (or (not (selection-member? ind 0))
+		(not (selection-member? ind 1))
+		(not (= (selection-position ind 0) 0))
+		(not (= (selection-position ind 1) 0))
+		(not (= (selection-length ind 0) (frames ind 0)))
+		(not (= (selection-length ind 1) (frames ind 1))))
+	    (snd-display ";sync selection via ->: ~A ~A ~A ~A ~A ~A"
+			 (selection-member? ind 0) (selection-member? ind 1)
+			 (selection-position ind 0) (selection-position ind 1)
+			 (selection-length ind 0) (selection-length ind 1)))
+	(set! (cursor ind 1) 0)
+	(set! (cursor ind 0) 1000)
+	(if (not (= (cursor ind 1) 1000)) (snd-display ";syncd cursors: ~A ~A" (cursor ind 0) (cursor ind 1)))
+	(key (char->integer #\f) 4) (force-event)
+	(if (not (= (cursor ind 1) 1001)) (snd-display ";syncd cursors C-f: ~A ~A" (cursor ind 0) (cursor ind 1)))
+	(close-sound ind))
+
       (let ((ind (open-sound "oboe.snd")))
 	(test-selection ind 1200 100 2.0)
 	(test-selection ind 600 1200 2.0)
@@ -13366,11 +13400,34 @@ EDITS: 3
 			      (for-each 
 			       (lambda (n)
 				 (catch #t
-					(lambda () (n arg1 arg2 arg3))
+					(lambda () (n arg1 arg2 arg3 arg4))
 					(lambda args (car args))))
 			       xm-procs))
 			    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :start -1 0 #f #t '() 12345678901234567890)))
 			 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :phase -1 0 #f #t '() 12345678901234567890)))
+		      (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890)))
+		   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890))
+
+		  ;; ---------------- 5 Args
+		  (for-each 
+		   (lambda (arg1)
+		     (for-each 
+		      (lambda (arg2)
+			(for-each 
+			 (lambda (arg3)
+			   (for-each 
+			    (lambda (arg4)
+			      (for-each 
+			       (lambda (arg5)
+				 (for-each 
+				  (lambda (n)
+				    (catch #t
+					   (lambda () (n arg1 arg2 arg3 arg4 arg5))
+					   (lambda args (car args))))
+				  xm-procs))
+			       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :start -1 0 #f #t '() 12345678901234567890)))
+			    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :phase -1 0 #f #t '() 12345678901234567890)))
+			 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890)))
 		      (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890)))
 		   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890))
 		  ))
@@ -14504,6 +14561,32 @@ EDITS: 3
 		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :srate -1 0 1 #f #t '() 12345678901234567890)))
 		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :input -1 0 1 #f #t '() 12345678901234567890)))
 	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :order -1 0 1 #f #t '() 12345678901234567890))
+
+	      ;; ---------------- 6 Args
+	      (for-each 
+	       (lambda (arg1)
+		 (for-each 
+		  (lambda (arg2)
+		    (for-each 
+		     (lambda (arg3)
+		       (for-each 
+			(lambda (arg4)
+			  (for-each
+			   (lambda (arg5)
+			     (for-each 
+			      (lambda (arg6)
+				(for-each 
+				 (lambda (n)
+				   (catch #t
+					  (lambda () (n arg1 arg2 arg3 arg4 arg5 arg6))
+					  (lambda args (car args))))
+				 procs))
+			      (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-delay 32) :wave -1 0 1 #f #t '() 12345678901234567890)))
+			   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-delay 32) :initial-contents -1 0 1 #f #t '() 12345678901234567890)))
+			(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-delay 32) :srate -1 0 1 #f #t '() 12345678901234567890)))
+		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-delay 32) :input -1 0 1 #f #t '() 12345678901234567890)))
+		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-delay 32) :order -1 0 1 #f #t '() 12345678901234567890)))
+	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-delay 32) :size -1 0 1 #f #t '() 12345678901234567890))
 	    (gc)
 	    ))
       ))
