@@ -3082,7 +3082,7 @@ static void Reset_Record_Callback(Widget w,XtPointer clientData,XtPointer callDa
       s1 = XmStringCreate((char *)((rp->triggering) ? STR_Triggered_Record : STR_Record),XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(record_button,XmNlabelString,s1,NULL);
       XmStringFree(s1);
-      snd_close(rp->output_file_descriptor);
+      mus_file_close(rp->output_file_descriptor);
       rp->output_file_descriptor = -1;
       str = just_filename(rp->output_file);
       record_report(messages,str," recording cancelled",NULL);
@@ -3145,12 +3145,27 @@ void finish_recording(snd_state *ss, recorder_info *rp)
   s2 = XmStringCreate((char *)((rp->triggering) ? STR_Triggered_Record : STR_Record),XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(record_button,XmNlabelString,s2,NULL);
   XmStringFree(s2);
-  snd_close(rp->output_file_descriptor);
+  if (mus_file_close(rp->output_file_descriptor) != 0)
+    snd_error("can't close %d (%s): %s [%s[%d] %s]",
+	      rp->output_file_descriptor,
+	      rp->output_file,
+	      strerror(errno),
+	      __FILE__,__LINE__,__FUNCTION__);
   rp->output_file_descriptor = mus_file_reopen_write(rp->output_file);
+  if (rp->output_file_descriptor == -1)
+    snd_error("can't update %s: %s [%s[%d] %s]",
+	      rp->output_file,
+	      strerror(errno),
+	      __FILE__,__LINE__,__FUNCTION__);
   mus_header_update_with_fd(rp->output_file_descriptor,
 			    rp->output_header_type,
 			    rp->total_output_frames*rp->out_chans*mus_data_format_to_bytes_per_sample(rp->out_format));
-  close(rp->output_file_descriptor);
+  if (close(rp->output_file_descriptor) != 0)
+    snd_error("can't close %d (%s): %s [%s[%d] %s]",
+	      rp->output_file_descriptor,
+	      rp->output_file,
+	      strerror(errno),
+	      __FILE__,__LINE__,__FUNCTION__);
   rp->output_file_descriptor = -1;
   duration = (Float)rp->total_output_frames / (Float)(rp->srate);
   /* 25-Jun-00: this used to divide by chans, but rp->total_output_frames is in terms of frames (it was named total_out_samps) */

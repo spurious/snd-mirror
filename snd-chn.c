@@ -1631,7 +1631,8 @@ static int display_fft_peaks(chan_info *ucp, char *filename)
 		}
 	    }
 	}
-      fclose(fd);
+      if (fclose(fd) != 0)
+	report_in_minibuffer_and_save(sp,"can't close %s: %s",filename,strerror(errno));
       if (tmp_file)
 	{
 	  fd = fopen(filename,"r");
@@ -3485,10 +3486,13 @@ void convolve_with(char *filename, Float amp, chan_info *cp)
 			  impulse_chan++;
 			  if (impulse_chan >= filter_chans) impulse_chan = 0;
 			}
-		      mus_file_close(fltfd);
+		      if (mus_file_close(fltfd) != 0)
+			snd_error("convolve: close filter file %s: %s\n",filename,strerror(errno));
 		    }
 		}
-	      mus_file_close(scfd);
+	      if (mus_file_close(scfd) != 0)
+		snd_error("convolve: close saved chan (%s[%d]) file %s: %s\n",
+			  sp->shortname,ucp->chan,saved_chan_file,strerror(errno));
 	    }
 	  mus_sound_forget(saved_chan_file);
 	  remove(saved_chan_file);
@@ -3583,7 +3587,7 @@ Float get_maxamp(snd_info *sp, chan_info *cp)
 {
   snd_fd *sf;
   Float ymax,val;
-  int i;
+  int i,len;
   if (!sp) return(0.0);
   if (!cp) cp = sp->chans[0];
   if (amp_env_maxamp_ok(cp)) return(amp_env_maxamp(cp));
@@ -3591,7 +3595,8 @@ Float get_maxamp(snd_info *sp, chan_info *cp)
   if (val >= 0.0) return(val);
   sf = init_sample_read(0,cp,READ_FORWARD);
   ymax = 0.0;
-  for (i=0;i<current_ed_samples(cp);i++)
+  len = current_ed_samples(cp);
+  for (i=0;i<len;i++)
     {
       val = next_sample_to_float(sf);
       if (val < 0.0) val = -val;
@@ -7769,11 +7774,12 @@ static SCM g_temps_to_sound(SCM data, SCM new_names, SCM origin)
    using data returned by the latter and origin as the edit history entry for the edit"
 
   snd_exf *program_data;
-  int i;
+  int i,len;
   SCM_ASSERT((gh_vector_p(new_names)),new_names,SCM_ARG2,S_temps_to_sound);
   SCM_ASSERT(gh_string_p(origin),origin,SCM_ARG3,S_temps_to_sound);
   program_data = (snd_exf *)(gh_scm2ulong(data));
-  for (i=0;i<(int)gh_vector_length(new_names);i++)
+  len = (int)gh_vector_length(new_names);
+  for (i=0;i<len;i++)
     program_data->new_filenames[i] = gh_scm2newstr(gh_vector_ref(new_names,gh_int2scm(i)),NULL);
   temp_to_snd(program_data,gh_scm2newstr(origin,NULL));
   return(SCM_BOOL_T);
@@ -7953,20 +7959,14 @@ static SCM g_map_across_sound_chans(SCM proc, SCM beg, SCM end, SCM org, SCM snd
 
 static SCM g_find(SCM expr, SCM sample, SCM snd_n, SCM chn_n)
 {
-  #define H_find "(" S_find " func &optional (start-samp 0) snd chn) applyies func, a function of one argument,\n\
+  #define H_find "(" S_find " func &optional (start-samp 0) snd chn) applies func, a function of one argument,\n\
    the current sample, to each sample in snd's channel chn, starting at 'start-samp' until func returns #t"
 
   /* no free here -- it's handled as ss->search_expr in snd-find.c */
-  chan_info *cp = NULL;
-  SCM_ASSERT((gh_string_p(expr) || gh_procedure_p(expr)),expr,SCM_ARG1,S_find);
+  SCM_ASSERT(gh_procedure_p(expr),expr,SCM_ARG1,S_find);
   ERRB2(sample,S_find);
   ERRCP(S_find,snd_n,chn_n,3);
-  if (gh_string_p(expr))
-    {
-      cp = get_cp(snd_n,chn_n,S_find);
-      RTNINT(snd_find_1(cp,gh_scm2newstr(expr,NULL),g_scm2intdef(sample,0),FALSE)); 
-    }
-  else return(g_sp_scan(expr,SCAN_CURRENT_CHAN,sample,SCM_BOOL_F,TRUE,TRUE,SCM_BOOL_F,snd_n,chn_n));
+  return(g_sp_scan(expr,SCAN_CURRENT_CHAN,sample,SCM_BOOL_F,TRUE,TRUE,SCM_BOOL_F,snd_n,chn_n));
 }
 
 static SCM g_count_matches(SCM expr, SCM sample, SCM snd_n, SCM chn_n)
@@ -7977,31 +7977,25 @@ static SCM g_count_matches(SCM expr, SCM sample, SCM snd_n, SCM chn_n)
   chan_info *cp = NULL;
   int samp = 0,matches,lim;
   SCM match,cursamp;
-  SCM_ASSERT((gh_string_p(expr) || gh_procedure_p(expr)),expr,SCM_ARG1,S_count_matches);
+  SCM_ASSERT(gh_procedure_p(expr),expr,SCM_ARG1,S_count_matches);
   ERRB2(sample,S_count_matches);
   ERRCP(S_count_matches,snd_n,chn_n,3);
   cp = get_cp(snd_n,chn_n,S_count_matches);
   samp = g_scm2intdef(sample,0);
-  if (gh_string_p(expr))
-    RTNINT(snd_find_1(cp,gh_scm2newstr(expr,NULL),g_scm2intdef(sample,0),TRUE));
-  else
+  matches = 0;
+  lim = current_ed_samples(cp);
+  while (samp < lim)
     {
-      matches = 0;
-      lim = current_ed_samples(cp);
-      while (samp < lim)
+      cursamp = gh_int2scm(samp);
+      match = g_sp_scan(expr,SCAN_CURRENT_CHAN,cursamp,SCM_BOOL_F,TRUE,TRUE,SCM_BOOL_F,snd_n,chn_n);
+      if ((gh_list_p(match)) && (SCM_TRUE_P(SCM_CAR(match))))
 	{
-	  cursamp = gh_int2scm(samp);
-	  match = g_sp_scan(expr,SCAN_CURRENT_CHAN,cursamp,SCM_BOOL_F,TRUE,TRUE,SCM_BOOL_F,snd_n,chn_n);
-	  if ((gh_list_p(match)) && (SCM_TRUE_P(SCM_CAR(match))))
-	    {
-	      matches++;
-	      samp = g_scm2int(SCM_CADR(match)) + 1;
-	    }
-	  else break;
+	  matches++;
+	  samp = g_scm2int(SCM_CADR(match)) + 1;
 	}
-      return(gh_int2scm(matches));
+      else break;
     }
-  return(SCM_BOOL_F);
+  return(gh_int2scm(matches));
 }
 
 static SCM g_prompt_in_minibuffer(SCM msg, SCM callback, SCM snd_n)
@@ -8101,12 +8095,17 @@ static SCM g_key(SCM kbd, SCM buckybits, SCM snd, SCM chn)
 static SCM g_save_macros(void) 
 {
   #define H_save_macros "(" S_save_macros ") saves keyboard macros in Snd's init file (.snd)"
-  FILE *fd;
+  FILE *fd = NULL;
   snd_state *ss;
   ss = get_global_state();
   fd = open_snd_init_file(ss);
-  save_macro_state(fd);
-  fclose(fd);
+  if (fd)
+    {
+      save_macro_state(fd);
+      if (fclose(fd) != 0)
+	snd_error("save-macros: close init file %s: %s\n",ss->init_file,strerror(errno));
+    }
+  else snd_error("save-macros: open init file %s: %s\n",ss->init_file,strerror(errno));
   return(SCM_BOOL_F);
 }
 

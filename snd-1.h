@@ -76,8 +76,8 @@ typedef struct {
   Float xmin,xmax,ymin,ymax;           /* data-dependent absolute limits */
   Float y_scale;
   double x_scale;
-  char *xlabel,*ylabel;
-  int y_label_x,y_label_y,x_label_x,x_label_y;
+  char *xlabel;
+  int x_label_x,x_label_y;
   int y_axis_x0,x_axis_x0,
       y_axis_y0,x_axis_y0,
       x_axis_x1,
@@ -360,7 +360,6 @@ typedef struct {
 
 int snd_open_read(snd_state *ss, char *arg);
 int snd_reopen_write(snd_state *ss, char *arg);
-void snd_close(int fd);
 int snd_write_header(snd_state *ss, char *name, int type, int srate, int chans, int loc, int size, int format, char *comment, int len, int *loops);
 int snd_overwrite_ok(snd_state *ss, char *ofile);
 int file_state_channel_offset(int chan);
@@ -1221,7 +1220,6 @@ int mix_ok(int n);
 
 /* -------- snd-find.c -------- */
 
-int snd_find_1(chan_info *cp, char *c_expr, int start, int count_matches);
 char *global_search(snd_state *ss, int direction);
 int cursor_search(chan_info *cp, int count);
 

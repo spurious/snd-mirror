@@ -2,6 +2,8 @@ snd change log
 
 2001 ----------------------------------------------------------------
 
+  18-Dec:    enved.scm (suggested by Anders Vinjar).
+             play-hook, player?.
   15-Dec:    update-lisp-graph. graph data arg can be envelope.
              graph-style can apply to time, transform, and lisp graphs independently.
   13-Dec:    prc95.scm (Perry Cook's physical modelling examples).

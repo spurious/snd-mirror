@@ -601,7 +601,7 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 	  FREE(data);
 	  si = free_sync_info(si);
 	  FREE(ends);
-	  snd_close(ofd);
+	  mus_file_close(ofd);
 	  alert_new_file();
 	  return(MUS_NO_ERROR);
 	}

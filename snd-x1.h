@@ -299,7 +299,6 @@ XtCallbackList make_callback_list(XtCallbackProc callback, XtPointer closure);
 void color_sashes(Widget w, void *ptr);
 void check_for_event(snd_state *ss);
 int event_pending(snd_state *ss);
-void work_wait(snd_state *ss);
 void color_cursor(snd_state *ss, Pixel color);
 void color_marks(snd_state *ss, Pixel color);
 void color_selection(snd_state *ss, Pixel color);

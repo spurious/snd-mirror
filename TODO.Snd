@@ -55,6 +55,11 @@ More effects (see list of suggestions in effects.scm)
 
 Add Gnome tie-ins.  (The main useful one, I think, is the "save-yourself"
   signal).
+#include <gnome.h>
+/* do we need gnome_init("Snd",argc,argv);? */
+GnomeClient *client = gnome_master_client();
+gtk_signal_connect(GTK_OBJECT(client),"save_yourself",GTK_SIGNAL_FUNC(save_snd_state),"snd");
+gtk_signal_connect(GTK_OBJECT(client),"die",GTK_SIGNAL_FUNC(exit_cleanly),NULL);
 
 
 Gettext support, if there's interest. (How does gettext handle Scheme-style

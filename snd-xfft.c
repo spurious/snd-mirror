@@ -89,7 +89,6 @@ static axis_context *make_axis_cp(snd_state *ss, Widget w)
   ap->ymin = 0.0;
   ap->ymax = 1.0;
   ap->xlabel = NULL;
-  ap->ylabel = NULL;
   ap->x0 = 0.0;
   ap->x1 = 1.0;
   ap->y0 = 0.0;

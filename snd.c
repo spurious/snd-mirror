@@ -84,6 +84,8 @@ static void mus_print2snd(char *msg)
   #endif
 #endif
 
+  mus_sound_initialize(); /* has to precede version check (mus_audio_moniker needs to be setup in Alsa/Oss) */
+
   for (i=1;i<argc;i++)
     {
       if (strcmp(argv[i],"--version") == 0)
@@ -99,8 +101,6 @@ static void mus_print2snd(char *msg)
 	    snd_exit(0);
 	  }
     }
-
-  mus_sound_initialize();
 
   ss=(snd_state *)CALLOC(1,sizeof(snd_state));
 

@@ -3979,6 +3979,7 @@ static int read_asf_header (int chan)
   asf_huge = 0;
   srate = 0;
   chans = 0;
+  data_size = 0;
   while (i<len)
     {
       seek_and_read(chan,(unsigned char *)hdrbuf,i,HDRBUFSIZ);
@@ -4134,7 +4135,7 @@ static int mus_resource(char *resname)
 
 /* ------------------------------------ all together now ------------------------------------ */
 
-int mus_header_read_with_fd (int chan)
+static int mus_header_read_with_fd_and_name(int chan, const char *filename)
 {
   /* returns 0 on success (at least to the extent that we can report the header type), -1 for error */
   int i,happy,loc = 0,bytes;
@@ -4142,6 +4143,7 @@ int mus_header_read_with_fd (int chan)
   data_format = MUS_UNSUPPORTED;
   comment_start = 0;
   comment_end = 0;
+  data_size = 0;
   if (loop_modes)
     {
       loop_modes[0] = 0;
@@ -4152,14 +4154,16 @@ int mus_header_read_with_fd (int chan)
   if (bytes < 0) 
     {
       mus_error(MUS_HEADER_READ_FAILED,
-		"read header failed: %s!\n  [%s[%d] %s]",
+		"%s%sread header failed: %s!\n  [%s[%d] %s]",
+		(filename) ? filename : "",(filename) ? ": " : "",
 		strerror(errno),__FILE__,__LINE__,__FUNCTION__);
       return(MUS_ERROR);
     }
   if (bytes == 0) 
     {
       mus_error(MUS_HEADER_READ_FAILED,
-		"attempt to read header of an empty file!\n  [%s[%d] %s]",
+		"%s%sattempt to read header of an empty file!\n  [%s[%d] %s]",
+		(filename) ? filename : "",(filename) ? ": " : "",
 		__FILE__,__LINE__,__FUNCTION__);
       return(MUS_ERROR);
     }
@@ -4173,7 +4177,8 @@ int mus_header_read_with_fd (int chan)
       if (bytes < 24) 
 	{
 	  mus_error(MUS_HEADER_READ_FAILED,
-		    "NeXT header truncated? read only %d bytes\n  [%s[%d] %s]",
+		    "%s%sNeXT header truncated? read only %d bytes\n  [%s[%d] %s]",
+		(filename) ? filename : "",(filename) ? ": " : "",
 		bytes,__FILE__,__LINE__,__FUNCTION__);
 	  return(MUS_ERROR);
 	}
@@ -4186,7 +4191,8 @@ int mus_header_read_with_fd (int chan)
       if (bytes < 12) 
 	{
 	  mus_error(MUS_HEADER_READ_FAILED,
-		    "AIFF header truncated? read only %d bytes\n  [%s[%d] %s]",
+		    "%s%sAIFF header truncated? read only %d bytes\n  [%s[%d] %s]",
+		(filename) ? filename : "",(filename) ? ": " : "",
 		bytes,__FILE__,__LINE__,__FUNCTION__);
 	  return(MUS_ERROR);
 	}
@@ -4218,7 +4224,9 @@ int mus_header_read_with_fd (int chan)
 	  return(read_csl_header(chan));
 	}
 
-      mus_print("unrecognized \"FORM\" (i.e. AIFF) header\n  [%s[%d] %s]",__FILE__,__LINE__,__FUNCTION__);
+      mus_print("%s%sunrecognized \"FORM\" (i.e. AIFF) header\n  [%s[%d] %s]",
+		(filename) ? filename : "",(filename) ? ": " : "",
+		__FILE__,__LINE__,__FUNCTION__);
       return(MUS_ERROR); /* i.e. unknown FORM header */
     }
   if ((match_four_chars((unsigned char *)hdrbuf,I_RIFF)) || match_four_chars((unsigned char *)hdrbuf,I_RIFX))
@@ -4226,7 +4234,8 @@ int mus_header_read_with_fd (int chan)
       if (bytes < 12) 
 	{
 	  mus_error(MUS_HEADER_READ_FAILED,
-		    "RIFF header truncated? read only %d bytes\n  [%s[%d] %s]",
+		    "%s%sRIFF header truncated? read only %d bytes\n  [%s[%d] %s]",
+		(filename) ? filename : "",(filename) ? ": " : "",
 		bytes,__FILE__,__LINE__,__FUNCTION__);
 	  return(MUS_ERROR);
 	}
@@ -4245,7 +4254,9 @@ int mus_header_read_with_fd (int chan)
 	  header_type = MUS_AVI;
 	  return(read_avi_header(chan));
 	}
-      mus_print("unrecognized \"RIFF\" (i.e. 'wave') header\n  [%s[%d] %s]",__FILE__,__LINE__,__FUNCTION__);
+      mus_print("%s%sunrecognized \"RIFF\" (i.e. 'wave') header\n  [%s[%d] %s]",
+		(filename) ? filename : "",(filename) ? ": " : "",
+		__FILE__,__LINE__,__FUNCTION__);
       return(MUS_ERROR); /* unknown RIFF header */
     }
   if ((equal_big_or_little_endian((unsigned char *)hdrbuf,I_IRCAM_VAX)) || 
@@ -4256,7 +4267,8 @@ int mus_header_read_with_fd (int chan)
       if (bytes < 24) 
 	{
 	  mus_error(MUS_HEADER_READ_FAILED,
-		    "IRCAM header truncated? read only %d bytes\n  [%s[%d] %s]",
+		    "%s%sIRCAM header truncated? read only %d bytes\n  [%s[%d] %s]",
+		(filename) ? filename : "",(filename) ? ": " : "",
 		bytes,__FILE__,__LINE__,__FUNCTION__);
 	  return(MUS_ERROR);
 	}
@@ -4280,7 +4292,9 @@ int mus_header_read_with_fd (int chan)
 	  header_type = MUS_SNDT;
 	  return(read_sndt_header(chan));
 	}
-      mus_print("unrecognized \"SOUND\" header\n  [%s[%d] %s]",__FILE__,__LINE__,__FUNCTION__);
+      mus_print("%s%sunrecognized \"SOUND\" header\n  [%s[%d] %s]",
+		(filename) ? filename : "",(filename) ? ": " : "",
+		__FILE__,__LINE__,__FUNCTION__);
       return(MUS_ERROR);
     }
   if ((match_four_chars((unsigned char *)hdrbuf,I_VOC0)) && (match_four_chars((unsigned char *)(hdrbuf+4),I_VOC1)))
@@ -4545,7 +4559,7 @@ int mus_header_read (const char *name)
 		name,strerror(errno),__FILE__,__LINE__,__FUNCTION__); 
       return(MUS_ERROR);
     }
-  err = mus_header_read_with_fd(chan);
+  err = mus_header_read_with_fd_and_name(chan,name);
   
 #ifdef MACOS
   /* on the Mac, we should look for the resource fork. */
@@ -4584,11 +4598,25 @@ int mus_header_read (const char *name)
 
 #endif
 
-  close(chan);  
+  if (close(chan) != 0)
+    {
+      mus_error(MUS_CANT_CLOSE_FILE,
+		"can't close file %d, %s: %s\n  [%s[%d] %s]",
+		chan,name,strerror(errno),__FILE__,__LINE__,__FUNCTION__); 
+      return(MUS_ERROR);
+    }
+
   return(err);
 }
 
-int mus_header_write_with_fd (int chan, int type, int in_srate, int in_chans, int loc, int size, int format, const char *comment, int len)
+int mus_header_read_with_fd (int chan)
+{
+  return(mus_header_read_with_fd_and_name(chan,NULL));
+}
+
+static int mus_header_write_with_fd_and_name(int chan, int type, int in_srate, int in_chans, 
+					     int loc, int size, int format, const char *comment, 
+					     int len, const char *filename)
 {
   int siz;
   siz = mus_samples_to_bytes(format,size);
@@ -4611,7 +4639,8 @@ int mus_header_write_with_fd (int chan, int type, int in_srate, int in_chans, in
     default:
       {
 	mus_error(MUS_UNSUPPORTED_HEADER_TYPE,
-		  "Sndlib can't write %s headers\n  [%s[%d] %s]",
+		  "%s%scan't write %s headers\n  [%s[%d] %s]",
+		  (filename) ? filename : "",(filename) ? ": " : "",
 		  mus_header_type_name(type),
 		  __FILE__,__LINE__,__FUNCTION__);
 	return(MUS_ERROR);
@@ -4619,6 +4648,11 @@ int mus_header_write_with_fd (int chan, int type, int in_srate, int in_chans, in
       }
     }
   return(MUS_NO_ERROR);
+}
+
+int mus_header_write_with_fd(int chan, int type, int in_srate, int in_chans, int loc, int size, int format, const char *comment, int len)
+{
+  return(mus_header_write_with_fd_and_name(chan,type,in_srate,in_chans,loc,size,format,comment,len,NULL));
 }
 
 int mus_header_write (const char *name, int type, int in_srate, int in_chans, int loc, int size, int format, const char *comment, int len)
@@ -4633,8 +4667,14 @@ int mus_header_write (const char *name, int type, int in_srate, int in_chans, in
 		__FILE__,__LINE__,__FUNCTION__);
       return(MUS_ERROR);
     }
-  err = mus_header_write_with_fd(chan,type,in_srate,in_chans,loc,size,format,comment,len);
-  close(chan);
+  err = mus_header_write_with_fd_and_name(chan,type,in_srate,in_chans,loc,size,format,comment,len,name);
+  if (close(chan) != 0)
+    {
+      mus_error(MUS_CANT_CLOSE_FILE,
+		"can't close file %d, %s: %s\n  [%s[%d] %s]",
+		chan,name,strerror(errno),__FILE__,__LINE__,__FUNCTION__); 
+      return(MUS_ERROR);
+    }
   return(err);
 }
 
@@ -4698,7 +4738,13 @@ int mus_header_update (const char *name, int type, int size, int srate, int form
 	  write(chan,hdrbuf,4);
 	}
     }
-  close(chan);
+  if (close(chan) != 0)
+    {
+      mus_error(MUS_CANT_CLOSE_FILE,
+		"can't close file %d, %s: %s\n  [%s[%d] %s]",
+		chan,name,strerror(errno),__FILE__,__LINE__,__FUNCTION__); 
+      return(MUS_ERROR);
+    }
   return(err);
 }
 

@@ -857,11 +857,11 @@ static char *save_as_temp_file(MUS_SAMPLE_TYPE **raw_data, int chans, int len, i
   no_space = disk_space_p(any_selected_sound(ss),ofd,len*chans*4,0);
   if (no_space == GIVE_UP)
     {
-      snd_close(ofd);
+      mus_file_close(ofd);
       return(newname);
     }
   mus_file_write(ofd,0,len-1,chans,raw_data);
-  snd_close(ofd);
+  mus_file_close(ofd);
   return(newname);
 }
 
@@ -940,7 +940,7 @@ static mix_info *file_mix_samples(int beg, int num, char *tempfile, chan_info *c
   no_space = disk_space_p(cp->sound,ofd,num*4,0);
   if (no_space == GIVE_UP)
     {
-      snd_close(ofd);
+      mus_file_close(ofd);
       mus_sound_forget(ofile);
       remove(ofile);
       free(ofile);
@@ -991,7 +991,7 @@ static mix_info *file_mix_samples(int beg, int num, char *tempfile, chan_info *c
       if (j > 1) mus_file_write(ofd,0,j-1,1,&chandata);
     }
   close_temp_file(ofd,ohdr,num*mus_data_format_to_bytes_per_sample(ohdr->format),sp);
-  snd_close(ifd);
+  mus_file_close(ifd);
   free_snd_fd(csf);
   FREE(data[base]);
   FREE(data);

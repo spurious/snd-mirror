@@ -638,7 +638,6 @@ static int symit(snd_state *ss,char **str)
 	  isym(ss,0); 
 	  return(0);
 	}
-      if (strcmp(tok,S_count_matches) == 0) {isym(ss,snd_find_1(get_cp(ss,str[3],str[4]),copy_string(str[1]),istr(str[2]),TRUE)); return(0);}
       if (strcmp(tok,S_corruption_time) == 0) {isym(ss,(int)(corruption_time(ss))); return(0);}
       if (strcmp(tok,S_cursor) == 0) {cp = get_cp(ss,str[1],str[2]); if (cp) isym(ss,cp->cursor); else isym(ss,0); return(0);}
       if (strcmp(tok,S_cursor_follows_play) == 0) {sp = get_sp(ss,str[1]); if (sp) isym(ss,sp->cursor_follows_play); else isym(ss,0); return(0);}
@@ -761,7 +760,6 @@ static int symit(snd_state *ss,char **str)
 	  isym(ss,0); 
 	  return(0);
 	}
-      if (strcmp(tok,S_find) == 0) {isym(ss,snd_find_1(get_cp(ss,str[3],str[4]),copy_string(str[1]),istr(str[2]),FALSE)); return(0);}
       if (strcmp(tok,S_find_sound) == 0) 
 	{
 	  filename = sstr(str[1]);

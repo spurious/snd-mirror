@@ -601,7 +601,7 @@ int mus_file_probe(const char *arg)
   #endif
 #endif
   if (fd == -1) return(0);
-  close(fd);
+  if (close(fd) != 0) return(0);
   return(1);
 }
 

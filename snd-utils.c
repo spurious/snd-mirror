@@ -374,8 +374,7 @@ static int mem_size = 0;
 
 #if 0
 /* from glibc/debug/backtrace-tst.c -- doesn't decode local (Snd) function names) */
-/*    we need some way to search the symbol table given an address (gdb symtab.c?) */
-/*    see ltrace code! */
+/*   so, to get this to work, we need to build Snd as a shared object, then load it */
 #include <execinfo.h>
 #include <inttypes.h>
 void show_stack(void);

@@ -2243,7 +2243,17 @@
 (define map-sound-files
   (lambda args
     "(map-sound-files func &optional dir) applies func to each sound file in dir"
-    (map (car args) (vector->list (sound-files-in-directory (if (null? (cdr args)) "." (cadr args)))))))
+    (map (car args) 
+	 (vector->list (sound-files-in-directory (if (null? (cdr args)) "." (cadr args)))))))
+
+; (map-sound-files 
+;  (lambda (n) 
+;    (catch #t
+;           (lambda ()
+; 	      (if (not (null? (mus-sound-loop-info (string-append "/home/bil/sf/" n)))) 
+; 		  (snd-print n)))
+;             (lambda args #f)))
+;  "/home/bil/sf")
 
 (define match-sound-files
   (lambda args

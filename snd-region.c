@@ -430,11 +430,11 @@ static int save_region_1(snd_state *ss, char *ofile,int type, int format, int sr
 	      if (err == -1) break;
 	      check_for_event(ss); /* added 3-Jul-00 -- is this safe? */
 	    }
-	  snd_close(ifd);
+	  mus_file_close(ifd);
 	  for (i=0;i<chans;i++) FREE(bufs[i]);
 	  FREE(bufs);
 	}
-      snd_close(ofd);
+      mus_file_close(ofd);
       alert_new_file();
     }
   return(MUS_NO_ERROR);
@@ -852,6 +852,15 @@ void save_region_backpointer(snd_info *sp)
 
 #if HAVE_GUILE
 
+static char *g_scm2newstr(SCM str)
+{
+  char *temp,*res;
+  temp = gh_scm2newstr(str,NULL);
+  res = copy_string(temp);
+  free(temp);
+  return(res);
+}
+
 static SCM g_restore_region(SCM n, SCM chans, SCM len, SCM srate, SCM maxamp, SCM name, SCM start, SCM end, SCM data)
 {
   region *r;
@@ -867,13 +876,13 @@ static SCM g_restore_region(SCM n, SCM chans, SCM len, SCM srate, SCM maxamp, SC
   r->editor_name = NULL;
   r->frames = gh_scm2int(len);
   r->srate = gh_scm2int(srate);
-  r->name = gh_scm2newstr(name,NULL);
-  r->start = gh_scm2newstr(start,NULL);
-  r->end = gh_scm2newstr(end,NULL);
+  r->name = g_scm2newstr(name);
+  r->start = g_scm2newstr(start);
+  r->end = g_scm2newstr(end);
   if (gh_string_p(data))
     {
       r->use_temp_file = REGION_FILE;
-      r->filename = gh_scm2newstr(data,NULL);
+      r->filename = g_scm2newstr(data);
     }
   else 
     {

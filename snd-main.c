@@ -382,7 +382,8 @@ int save_options(snd_state *ss)
   if (fd)
     {
       save_snd_state_options(ss,fd);
-      fclose(fd);
+      if (fclose(fd) != 0)
+	snd_error("can't close %s: %s [%s[%d] %s]",ss->init_file,strerror(errno),__FILE__,__LINE__,__FUNCTION__);
       return(0);
     }
   else return(-1);
@@ -519,7 +520,8 @@ int save_state (snd_state *ss, char *save_state_name)
       if (file_dialog_is_active()) fprintf(save_fd,"(%s)\n",S_file_dialog); /* View: Files dialog, not Open: File */
       if (region_dialog_is_active()) fprintf(save_fd,"(%s)\n",S_region_dialog);
       if (record_dialog_is_active()) fprintf(save_fd,"(%s)\n",S_recorder_dialog);
-      fclose(save_fd);
+      if (fclose(save_fd) != 0)
+	snd_error("can't close %s: %s [%s[%d] %s]",save_state_name,strerror(errno),__FILE__,__LINE__,__FUNCTION__);
       /* TODO save mix? */
       /* TODO save hooks?
        *    (procedure-source (car (hook->list exit-hook))) (map it)
@@ -623,15 +625,17 @@ static SCM g_save_options(SCM filename)
   SCM_ASSERT(gh_string_p(filename),filename,SCM_ARG1,S_save_options);
   urn = gh_scm2newstr(filename,NULL);
   name = mus_file_full_name(urn);
-  free(urn);
   fd = fopen(name,"w");
   if (name) FREE(name);
   if (fd) 
     {
       save_snd_state_options(get_global_state(),fd);
-      fclose(fd);
+      if (fclose(fd) != 0)
+	snd_error("can't close %s: %s [%s[%d] %s]",urn,strerror(errno),__FILE__,__LINE__,__FUNCTION__);
+      free(urn);
       return(filename);
     }
+  free(urn);
   return(scm_throw(CANNOT_SAVE,SCM_LIST1(gh_str02scm(S_save_options))));
 }
 

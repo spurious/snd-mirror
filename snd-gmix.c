@@ -577,6 +577,7 @@ static void update_mix_panel(int mix_id)
   Float val;
   char lab[32];
   ss = get_global_state();
+  if (mix_id == INVALID_MIX_ID) return;
   if (mix_id == current_mix_id(ss))
     {
       if (mix_panel == NULL) 

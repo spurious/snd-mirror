@@ -1780,9 +1780,9 @@ static SCM transform_samples2vct(SCM snd_n, SCM chn_n, SCM v)
   vct *v1 = get_vct(v);
   ERRCP(S_transform_samples_vct,snd_n,chn_n,1);
   cp = get_cp(snd_n,chn_n,S_transform_samples_vct);
-  if (cp->ffting)
+  if ((cp->ffting) && (cp->fft))
     {
-      while (chan_fft_in_progress(cp)) {work_wait(cp->state);}
+      /* BACK */
       if (fft_style(state) == NORMAL_FFT)
 	{
 	  fp = cp->fft;
@@ -2388,7 +2388,7 @@ static SCM g_transform_sample(SCM bin, SCM slice, SCM snd_n, SCM chn_n)
   cp = get_cp(snd_n,chn_n,S_transform_sample);
   if (cp->ffting)
     {
-      while (chan_fft_in_progress(cp)) {work_wait(cp->state);}
+      /* BACK */
       fbin = g_scm2intdef(bin,0);
       fp = cp->fft;
       if ((fp) && (fbin < fp->current_size))
@@ -2420,7 +2420,7 @@ static SCM g_transform_samples(SCM snd_n, SCM chn_n)
   cp = get_cp(snd_n,chn_n,S_transform_samples);
   if (cp->ffting)
     {
-      while (chan_fft_in_progress(cp)) {work_wait(cp->state);}
+      /* BACK */
       fp = cp->fft;
       if (fp)
 	{

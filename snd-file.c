@@ -160,7 +160,8 @@ static file_info *translate_file(char *filename, snd_state *ss, int type)
       newname = copy_string(tempname);
       free(tempname);
     }
-  close(fd);
+  if (close(fd) != 0)
+    snd_error("can't close %d (%s): %s [%s[%d] %s]",fd,newname,strerror(errno),__FILE__,__LINE__,__FUNCTION__);
   err = snd_translate(filename,newname,type);
   if (err == MUS_NO_ERROR)
     {
@@ -171,6 +172,7 @@ static file_info *translate_file(char *filename, snd_state *ss, int type)
 	  if (hdr) ss->pending_change = newname;
 	}
     }
+  else remove(newname);
   return(hdr);
 }
 
@@ -601,7 +603,12 @@ int copy_file(char *oldname, char *newname)
   ifd = open(oldname,O_RDONLY,0);
   if (ifd == -1) return(MUS_CANT_OPEN_FILE);
   ofd = creat(newname,0666);
-  if (ofd == -1) {close(ifd); return(MUS_CANT_OPEN_FILE);}
+  if (ofd == -1) 
+    {
+      if (close(ifd) != 0)
+	snd_error("can't close %d (%s): %s [%s[%d] %s]",ifd,oldname,strerror(errno),__FILE__,__LINE__,__FUNCTION__);
+      return(MUS_CANT_OPEN_FILE);
+    }
   buf = (char *)CALLOC(8192,sizeof(char));
   while ((bytes = read(ifd,buf,8192)))
     {
@@ -609,13 +616,16 @@ int copy_file(char *oldname, char *newname)
       wb = write(ofd,buf,bytes);
       if (wb != bytes) 
 	{
-	  close(ofd); 
-	  close(ifd); 
+	  if (close(ofd) != 0)
+	    snd_error("can't close %d (%s): %s [%s[%d] %s]",ofd,newname,strerror(errno),__FILE__,__LINE__,__FUNCTION__);
+	  if (close(ifd) != 0)
+	    snd_error("can't close %d (%s): %s [%s[%d] %s]",ifd,oldname,strerror(errno),__FILE__,__LINE__,__FUNCTION__);
 	  FREE(buf); 
 	  return(MUS_WRITE_ERROR);
 	}
     }
-  close(ifd);
+  if (close(ifd) != 0)
+    snd_error("can't close %d (%s): %s [%s[%d] %s]",ifd,oldname,strerror(errno),__FILE__,__LINE__,__FUNCTION__);
   total = total >> 10;
   wb = disk_kspace(ofd);
   if (wb < 0) 
@@ -624,7 +634,8 @@ int copy_file(char *oldname, char *newname)
     if (total > wb) 
       snd_error("disk nearly full: used %d Kbytes leaving %d",(int)total,(int)wb);
   FREE(buf);
-  close(ofd);
+  if (close(ofd) != 0)
+    snd_error("can't close %d (%s): %s [%s[%d] %s]",ofd,newname,strerror(errno),__FILE__,__LINE__,__FUNCTION__);
   return(MUS_NO_ERROR);
 }
 
@@ -696,6 +707,8 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
       cp->edit_size = 1;
       cp->sound_size = 1;
       fd = snd_open_read(ss,filename);
+      if (fd == -1)
+	snd_error("can't open %s: %s [%s[%d] %s]",filename,strerror(errno),__FILE__,__LINE__,__FUNCTION__);
       mus_file_set_descriptors(fd,
 			       filename,
 			       hdr->format,
@@ -710,7 +723,8 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
 					 DONT_DELETE_ME,cp->edit_ctr,i);
       if (post_close) 
 	{
-	  snd_close(fd); 
+	  if (mus_file_close(fd) != 0)
+	    snd_error("can't close %d (%s): %s [%s[%d] %s]",fd,filename,strerror(errno),__FILE__,__LINE__,__FUNCTION__);
 	  sd = cp->sounds[0]; 
 	  sd->open = FD_CLOSED; 
 	  set_file_state_fd(datai,-1);
@@ -1176,7 +1190,11 @@ void update_prevlist(snd_state *ss)
 	      FREE(prevnames[i]); prevnames[i]=NULL;
 	      FREE(prevfullnames[i]); prevfullnames[i]=NULL;
 	    }
-	  else close(fd);
+	  else 
+	    {
+	      if (close(fd) != 0)
+		snd_error("can't close %d (%s): %s [%s[%d] %s]",fd,prevfullnames[i],strerror(errno),__FILE__,__LINE__,__FUNCTION__);
+	    }
 	}
     }
   for (i=0,j=0;i<=prevfile_end;i++)
@@ -1655,7 +1673,8 @@ void edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_da
 		}
 	      if (curbytes > totalbytes) break; /* ?? this should not happen */
 	    }
-	  close(fd);
+	  if (close(fd) != 0)
+	    snd_error("can't close %d (%s): %s [%s[%d] %s]",fd,sp->fullname,strerror(errno),__FILE__,__LINE__,__FUNCTION__);
 	  clear_minibuffer(sp);
 	  snd_file_bomb_icon(sp,TRUE);
 	  FREE(ripple0);
@@ -1776,7 +1795,8 @@ snd_info *finish_new_file(snd_state *ss,char *newname,int header_type, int data_
 	  size = chans * mus_samples_to_bytes(data_format,2); /* why 2 samples? */
 	  buf = (unsigned char *)CALLOC(size,sizeof(unsigned char));
 	  write(chan,buf,size);
-	  close(chan);
+	  if (close(chan) != 0)
+	    snd_error("can't close %d (%s): %s [%s[%d] %s]",chan,newname,strerror(errno),__FILE__,__LINE__,__FUNCTION__);
 	  FREE(buf);
 	  sp = snd_open_file(newname,ss);
 	  return(sp);

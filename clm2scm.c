@@ -939,15 +939,25 @@ static SCM mus_scm_to_smob_with_vct(mus_scm *gn, SCM v)
 static SCM g_inspect(SCM gen)
 {
   #define H_mus_inspect "(" S_mus_inspect " gen) -> the internal state of gen"
+  char *buf;
+  SCM result;
   SCM_ASSERT((mus_scm_p(gen)),gen,SCM_ARG1,S_mus_inspect);
-  return(gh_str02scm(mus_inspect(mus_get_any(gen))));
+  buf = mus_inspect(mus_get_any(gen));
+  result = gh_str02scm(buf);
+  FREE(buf);
+  return(result);
 }
 
 static SCM g_describe(SCM gen) 
 {
   #define H_mus_describe "(" S_mus_describe " gen) -> the user's view of the state of gen"
+  char *buf;
+  SCM result;
   SCM_ASSERT((mus_scm_p(gen)),gen,SCM_ARG1,S_mus_describe);
-  return(gh_str02scm(mus_describe(mus_get_any(gen))));
+  buf = mus_describe(mus_get_any(gen));
+  result = gh_str02scm(buf);
+  FREE(buf);
+  return(result);
 }
 
 static SCM g_phase(SCM gen) 
@@ -1773,7 +1783,7 @@ static SCM g_partials2wave(SCM partials, SCM utable, SCM normalize)
   Float *partial_data,*wave;
   int len,i;
   SCM_ASSERT(gh_list_p(partials),partials,SCM_ARG1,S_partials2wave);
-  if (SCM_UNBNDP(utable))
+  if ((SCM_UNBNDP(utable)) || (!(vct_p(utable))))
     {
       wave = (Float *)CALLOC(DEFAULT_TABLE_SIZE,sizeof(Float));
       table = make_vct(DEFAULT_TABLE_SIZE,wave);
@@ -1803,7 +1813,7 @@ static SCM g_phasepartials2wave(SCM partials, SCM utable, SCM normalize)
      (set! gen (make-table-lookup 440.0 :wave (phase-partials->wave (list 1 .75 0.0 2 .25 (* pi .5)))))"
 
   SCM_ASSERT(gh_list_p(partials),partials,SCM_ARG1,S_phasepartials2wave);
-  if (SCM_UNBNDP(utable))
+  if ((SCM_UNBNDP(utable)) || (!(vct_p(utable))))
     {
       wave = (Float *)CALLOC(DEFAULT_TABLE_SIZE,sizeof(Float));
       table = make_vct(DEFAULT_TABLE_SIZE,wave);

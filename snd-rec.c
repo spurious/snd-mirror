@@ -1417,7 +1417,7 @@ void cleanup_recording (void)
       rp->recording = 0;
       rp->triggered = (!rp->triggering);
       sensitize_control_buttons();
-      snd_close(rp->output_file_descriptor);
+      mus_file_close(rp->output_file_descriptor);
     }
 }
 

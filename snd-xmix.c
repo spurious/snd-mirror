@@ -670,7 +670,7 @@ void make_mix_panel(snd_state *ss)
   /* TODO: what if need more/less amp chans? */
   else raise_dialog(mix_panel);
   if (!(XtIsManaged(mix_panel))) XtManageChild(mix_panel);
-  
+
   update_mix_panel(current_mix_id(ss));
 }
 
@@ -682,6 +682,7 @@ static void update_mix_panel(int mix_id)
   Float val;
   char lab[32];
   ss = get_global_state();
+  if (mix_id == INVALID_MIX_ID) return;
   if (mix_id == current_mix_id(ss))
     {
       if (mix_panel == NULL) 

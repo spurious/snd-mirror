@@ -286,6 +286,7 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 	      MUS_SAMPLE_TYPE **ibufs;
 	      fprintf(fd,"#(");
 	      ifd = mus_file_open_read(sf->filename);
+	      if (ifd == -1) {snd_error("can't open %s! [%s[%d] %s]",sf->filename,__FILE__,__LINE__,__FUNCTION__); return;}
 	      idataloc = mus_sound_data_location(sf->filename);
 	      mus_file_set_descriptors(ifd,
 				       sf->filename,
@@ -322,7 +323,8 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 		    }
 		}
 	      fprintf(fd,")");
-	      mus_file_close(ifd);
+	      if (mus_file_close(ifd) != 0)
+		snd_error("can't close %d (%s)! [%s[%d] %s]",ifd,sf->filename,__FILE__,__LINE__,__FUNCTION__);
 	    }
 	}
     }
@@ -2121,8 +2123,7 @@ int close_temp_file(int ofd, file_info *hdr, long bytes, snd_info *sp)
       if ((kused > kleft) && (sp))
 	report_in_minibuffer_and_save(sp,"disk nearly full: used %d Kbytes leaving %d",kused,kleft);
     }
-  snd_close(ofd);
-  return(0);
+  return(mus_file_close(ofd));
 }
 
 int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, int length, snd_state *ss)
@@ -2212,7 +2213,7 @@ int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, int leng
       close_temp_file(ofd,hdr,len*chans*datumb,any_selected_sound(ss));
       alert_new_file();
     }
-  else snd_close(ofd);
+  else mus_file_close(ofd);
   if (reporting) finish_progress_report(cp->sound,NOT_FROM_ENVED);
   for (i=0;i<chans;i++) FREE(obufs[i]);
   FREE(obufs);
@@ -2574,8 +2575,8 @@ void redo_edit_with_sync(chan_info *cp, int count)
 
 static SCM g_display_edits(SCM snd, SCM chn)
 {
-  #define H_display_edits "(" S_display_edits ") prints current edit tree state"
-  FILE *tmp;
+  #define H_display_edits "(" S_display_edits " &optional snd chn) prints current edit tree state"
+  FILE *tmp = NULL;
   char *buf,*name;
   int len,fd;
   snd_state *ss;
@@ -2583,17 +2584,22 @@ static SCM g_display_edits(SCM snd, SCM chn)
   name = snd_tempnam(ss);
   display_edits(get_cp(snd,chn,S_display_edits),stderr);
   tmp = fopen(name,"w");
-  display_edits(get_cp(snd,chn,S_display_edits),tmp);
-  fclose(tmp);
-  fd = mus_file_open_read(name);
-  len = lseek(fd,0L,SEEK_END);
-  buf = (char *)CALLOC(len+1,sizeof(char));
-  lseek(fd,0L,SEEK_SET);
-  read(fd,buf,len);
-  close(fd);
-  remove(name);
-  snd_append_command(ss,buf);
-  FREE(buf);
+  if (tmp)
+    {
+      display_edits(get_cp(snd,chn,S_display_edits),tmp);
+      if (fclose(tmp) != 0)
+	snd_error("can't close %s: %s [%s[%d] %s]",name,strerror(errno),__FILE__,__LINE__,__FUNCTION__);
+      fd = mus_file_open_read(name);
+      len = lseek(fd,0L,SEEK_END);
+      buf = (char *)CALLOC(len+1,sizeof(char));
+      lseek(fd,0L,SEEK_SET);
+      read(fd,buf,len);
+      close(fd);
+      remove(name);
+      snd_append_command(ss,buf);
+      FREE(buf);
+    }
+  else snd_error("can't open %s: %s [%s[%d] %s]",name,strerror(errno),__FILE__,__LINE__,__FUNCTION__);
   return(SCM_BOOL_F);
 }
 
@@ -2931,13 +2937,12 @@ static SCM g_save_edit_history(SCM filename, SCM snd, SCM chn)
   int i,j;
   snd_info *sp;
   chan_info *cp;
-  char *mcf = NULL,*urn;
+  char *mcf = NULL,*urn = NULL;
   snd_state *ss;
   SCM_ASSERT(gh_string_p(filename),filename,SCM_ARG1,S_save_edit_history);
   ERRCP(S_save_edit_history,snd,chn,2);
   urn = gh_scm2newstr(filename,NULL);
   mcf = mus_file_full_name(urn);
-  free(urn);
   fd = fopen(mcf,"w");
   if (mcf) FREE(mcf);
   if (fd)
@@ -2972,9 +2977,12 @@ static SCM g_save_edit_history(SCM filename, SCM snd, SCM chn)
 		}
 	    }
 	}
-      fclose(fd);
+      if (fclose(fd) != 0)
+	snd_error("can't close %s! [%s[%d] %s]",urn,__FILE__,__LINE__,__FUNCTION__);
+      if (urn) free(urn);
       return(SCM_BOOL_T);
     }
+  if (urn) free(urn);
   return(scm_throw(CANNOT_SAVE,SCM_LIST1(gh_str02scm(S_save_edit_history))));
 }
 

@@ -346,12 +346,6 @@ void color_sashes(Widget w, void *ptr)
     XmChangeColor(w,(Pixel)(((snd_state *)ptr)->sgx)->sash_color);
 }
 
-void work_wait(snd_state *ss)
-{
-  /* intended for transform-samples where we want to force a background fft process to complete */
-  XtAppProcessEvent(MAIN_APP(ss),XtIMAll);
-}
-
 void check_for_event(snd_state *ss)
 {
   /* this is needed to force label updates and provide interrupts for long computations */

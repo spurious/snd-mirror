@@ -131,7 +131,7 @@ static void reposition_file_buffers(snd_data *sd, int index)
 
   if (reclose)
     {
-      snd_close(fd); 
+      mus_file_close(fd); 
       sd->open = FD_CLOSED; 
       sd->io[SND_IO_FD] = -1;
     }
@@ -200,7 +200,7 @@ int *free_file_state(int *datai)
 
 int file_state_channel_offset(int chan) {return(SND_IO_DATS + SND_AREF_HEADER_SIZE + chan);}
 void set_file_state_fd(int *datai, int fd) {datai[SND_IO_FD] = fd;}
-void close_file_state_fd(int *datai) {snd_close(datai[SND_IO_FD]);}
+void close_file_state_fd(int *datai) {mus_file_close(datai[SND_IO_FD]);}
 int file_state_buffer_size(int *datai) {return(datai[SND_IO_BUFSIZ]);}
 
 void file_buffers_forward(int ind0, int ind1, int indx, snd_fd *sf, snd_data *cur_snd)
@@ -306,7 +306,7 @@ static int close_temp_files(chan_info *cp, void *closed)
 	      sd = cp->sounds[i];
 	      if ((sd) && (sd->type == SND_DATA_FILE) && (sd->io) && (sd->open == FD_OPEN))
 		{
-		  snd_close(sd->io[SND_IO_FD]);
+		  mus_file_close(sd->io[SND_IO_FD]);
 		  sd->open = FD_CLOSED;
 		  sd->io[SND_IO_FD] = -1;
 		  rtn++;
@@ -374,12 +374,6 @@ int snd_reopen_write(snd_state *ss, char *arg)
       if (fd == -1) snd_error("%s: %s",arg,strerror(errno));
     }
   return(fd);
-}
-
-void snd_close(int fd)
-{
-  mus_file_close_descriptors(fd);
-  close(fd);
 }
 
 int snd_write_header(snd_state *ss, char *name, int type, int srate, int chans, int loc, int size, int format, char *comment, int len, int *loops)

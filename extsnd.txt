@@ -73,6 +73,7 @@ bell.scm          the fm-bell from CLM
 bird.scm          various North-American birds (from bird.clm)
 effects.scm       an Effects menu based on examp.scm
 env.scm           various envelope functions from CLM
+enved.scm         envelope editor in lisp graph section
 fmv.scm           the fm-violin tied to real-time gtk graphics
 glfft.scm         OpenGL for spectra (needs work)
 goopsnd.scm       first look at Goops (Guile Object System) for Snd
@@ -555,6 +556,9 @@ functions invoked by the hook.
   start-hook (filename)               called upon start-up. (or)
                                       If it returns #t, snd exits immediately.
 
+  play-hook (samps)                   called each time a buffer (size: samps) is about to be
+                                      filled for the DAC (see enved.scm). (progn)
+
   start-playing-hook (snd)            called when a play request is triggered. (or)
                                       If it returns #t, snd does not play.
 
@@ -615,7 +619,8 @@ functions invoked by the hook.
            "(unprotect &optional snd chn) allows edits at any edit history position"
            (lambda args (reset-hook! (apply edit-hook args))))
 
-See also menu-hook below.
+enved.scm uses several of these hooks to implement an envelope editor in
+lisp. See also menu-hook below.
 
 Snd's objects
 
@@ -1686,6 +1691,8 @@ value to val.
   play-and-wait     (samp snd chn sync end)
                                   play snd's channel chn starting from sample samp and wait
                                   for it to finish.
+
+  player?           (obj)         #t is obj is an active player.
 
   progress-report   (pct name current-channel channels snd)
                                   The functions start-progress-report, progress-report, and

@@ -788,13 +788,15 @@ static void file_maxamps(char *ifile, Float *vals, int ichans, int format)
   samples = (idatasize / ichans);
   if (samples <= 0) 
     {
-      mus_file_close(ifd); 
+      if (mus_file_close(ifd) != 0)
+	snd_error("%s[%d] %s: close file %s: %s\n",__FILE__,__LINE__,__FUNCTION__,ifile,strerror(errno));
       return;
     }
   loc=mus_file_seek(ifd,idataloc,SEEK_SET);
   if (loc<idataloc) 
     {
-      mus_file_close(ifd); 
+      if (mus_file_close(ifd) != 0)
+	snd_error("%s[%d] %s: close file %s: %s\n",__FILE__,__LINE__,__FUNCTION__,ifile,strerror(errno));
       return;
     }
   ibufs = (MUS_SAMPLE_TYPE **)CALLOC(ichans,sizeof(MUS_SAMPLE_TYPE *));
@@ -820,10 +822,11 @@ static void file_maxamps(char *ifile, Float *vals, int ichans, int format)
 	  amps[chn]=fc;
 	}
     }
-  mus_file_close(ifd);
   for (chn=0;chn<ichans;chn++) vals[chn] = MUS_SAMPLE_TO_FLOAT(amps[chn]);
   for (i=0;i<ichans;i++) FREE(ibufs[i]);
   FREE(ibufs);
   FREE(amps);
+  if (mus_file_close(ifd) != 0)
+    snd_error("%s[%d] %s: close file %s: %s\n",__FILE__,__LINE__,__FUNCTION__,ifile,strerror(errno));
 }
 

@@ -2,6 +2,7 @@
 
 /* TODO: make this thread-safe by wrapping locks around the header/data base references */
 /*       (if using gdbm, this would also need to handle the gdbm file pointer differently) */
+/*       if not using gdbm, it might be better to use a hash table in place of the sound_file array */
 
 #if defined(HAVE_CONFIG_H)
   #include "config.h"

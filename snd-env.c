@@ -614,7 +614,6 @@ void init_env_axes(chan_info *acp, char *name, int ex0, int ey0, int width, int 
   ap->ymin = ymin;
   ap->ymax = ymax;
   ap->xlabel = copy_string(name);
-  ap->ylabel = NULL;
   ap->x0 = xmin;
   ap->x1 = xmax;
   ap->y0 = ymin;
@@ -1435,13 +1434,15 @@ static SCM g_save_envelopes(SCM filename)
     name = full_filename(filename);
   else name = copy_string("envs.save");
   fd = fopen(name,"w");
-  if (name) FREE(name);
   if (fd)
     {
       save_envelope_editor_state(fd);
-      fclose(fd);
+      if (fclose(fd) != 0)
+	snd_error("can't close %s! [%s[%d] %s]",name,__FILE__,__LINE__,__FUNCTION__);
+      if (name) FREE(name);
       return(filename);
     }
+  if (name) FREE(name);
   return(scm_throw(CANNOT_SAVE,SCM_LIST3(gh_str02scm(S_save_envelopes),filename,gh_str02scm(strerror(errno)))));
 }
 

@@ -156,6 +156,7 @@ static SCM g_set_expand_funcs(SCM expnd, SCM make_expnd, SCM free_expnd)
   static void call_stop_playing_region_hook(int n);
   static void call_stop_playing_channel_hook(snd_info *sp, chan_info *cp);
   static int call_start_playing_hook(snd_info *sp);
+  static SCM play_hook;
 #else
   static void call_stop_playing_hook(snd_info *sp) {}
   static void call_stop_playing_region_hook(int n) {}
@@ -1167,6 +1168,10 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
     cursor_change = 0;
   else
     {
+#if HAVE_HOOKS
+      if (HOOKED(play_hook))
+	g_c_run_progn_hook(play_hook,SCM_LIST1(gh_int2scm(frames)));
+#endif
       cursor_time += frames;
       cursor_change = (cursor_time >= CURSOR_UPDATE_INTERVAL);
       for (i=0;i<=max_active_slot;i++)
@@ -2077,7 +2082,7 @@ static int make_player(snd_info *sp, chan_info *cp)
 
 snd_info *player(int index)
 {
-  if ((-index) < players_size) 
+  if ((index < 0) && ((-index) < players_size))
     return(players[-index]);
   return(NULL);
 }
@@ -2120,12 +2125,12 @@ static SCM g_make_player(SCM snd, SCM chn)
 static SCM g_add_player(SCM snd_chn, SCM start, SCM end)
 {
   #define H_add_player "(" S_add_player " &optional player start end) starts playing snd's channel chn"
-  snd_info *sp;
+  snd_info *sp = NULL;
   chan_info *cp;
   int index;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(snd_chn)),snd_chn,SCM_ARG1,S_add_player);
   index = -gh_scm2int(snd_chn);
-  sp = players[index];
+  if ((index > 0) && (index < players_size)) sp = players[index];
   if (sp)
     {
       cp = sp->chans[player_chans[index]];
@@ -2147,17 +2152,25 @@ static SCM g_stop_player(SCM snd_chn)
 {
   #define H_stop_player "(" S_stop_player " player) stops player"
   int index;
-  snd_info *sp;
+  snd_info *sp = NULL;
   index = -gh_scm2int(snd_chn);
-  sp = players[index];
+  if ((index > 0) && (index < players_size)) sp = players[index];
   if (sp) 
     stop_playing_sound(sp);
-  else return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_stop_player),snd_chn)));
+  else return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_stop_player),snd_chn))); /* should this be NO_SUCH_PLAYER? */
   return(snd_chn);
 }
 
 /* also the dac filler needs to run on empty buffers in this case? */
 
+static SCM g_player_p(SCM snd_chn)
+{
+  #define H_playerQ "(" S_playerQ " obj) -> is obj an active player"
+  int index;
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(snd_chn)),snd_chn,SCM_ARG1,S_playerQ);
+  index = -gh_scm2int(snd_chn);
+  RTNBOOL((index > 0) && (index < players_size) && (players[index]));
+}
 
 
 static SCM start_playing_hook,stop_playing_hook,stop_playing_region_hook,stop_playing_channel_hook;
@@ -2208,12 +2221,14 @@ void g_init_dac(SCM local_doc)
   DEFINE_PROC(gh_new_procedure(S_add_player,SCM_FNC g_add_player,1,2,0),H_add_player);
   DEFINE_PROC(gh_new_procedure(S_start_playing,SCM_FNC g_start_playing,0,3,0),H_start_playing);
   DEFINE_PROC(gh_new_procedure(S_stop_player,SCM_FNC g_stop_player,1,0,0),H_stop_player);
+  DEFINE_PROC(gh_new_procedure(S_playerQ,SCM_FNC g_player_p,1,0,0),H_playerQ);
 
 #if HAVE_HOOKS
   stop_playing_hook = scm_create_hook(S_stop_playing_hook,1);                     /* arg = sound */
   stop_playing_channel_hook = scm_create_hook(S_stop_playing_channel_hook,2);     /* args = sound channel */
   stop_playing_region_hook = scm_create_hook(S_stop_playing_region_hook,1);       /* arg = region number */
   start_playing_hook = scm_create_hook(S_start_playing_hook,1);                   /* arg = sound */
+  play_hook = scm_create_hook(S_play_hook,1);                                     /* args = size */
 #else
   stop_playing_hook = gh_define(S_stop_playing_hook,SCM_BOOL_F);
   stop_playing_channel_hook = gh_define(S_stop_playing_channel_hook,SCM_BOOL_F);

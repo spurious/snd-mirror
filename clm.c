@@ -3205,6 +3205,7 @@ static Float mus_env_interp_1(Float x, mus_any *ptr)
 {
   seg *gen = (seg *)ptr;
   Float *data;
+  Float intrp;
   int i;
   if (gen)
     {
@@ -3213,20 +3214,20 @@ static Float mus_env_interp_1(Float x, mus_any *ptr)
 	{
 	  for (i=0;i<gen->size*2-2;i+=2)
 	    {
-	      if (x <= data[i]) return(data[i+1]);
 	      if (x < data[i+2])
 		{
-		  if (data[i+1] == data[i+3]) return(data[i+1]);
 		  switch (gen->style)
 		    {
 		    case ENV_STEP: 
 		      return(data[i+1]); 
 		      break;
 		    case ENV_SEG:
+		      if ((x <= data[i]) || (data[i+1] == data[i+3])) return(data[i+1]);
 		      return(data[i+1] + ((x - data[i]) / (data[i+2] - data[i])) * (data[i+3] - data[i+1]));
 		      break;
 		    case ENV_EXP:
-		      return(data[i+1] + ((data[i+3] - data[i+1]) / gen->b1) * (exp(gen->base * (x - data[i]) / (data[i+2] - data[i])) - 1.0));
+		      intrp = data[i+1] + ((x - data[i]) / (data[i+2] - data[i])) * (data[i+3] - data[i+1]);
+		      return(exp(gen->base * intrp) - 1.0);
 		      break;
 		    }
 		}
@@ -3276,14 +3277,7 @@ static char *describe_frame(void *ptr)
   return(desc);
 }
 
-static char *inspect_frame(void *ptr)
-{
-  mus_frame *gen = (mus_frame *)ptr;
-  char *desc;
-  desc = make_desc_buf(ptr,FALSE);
-  if (desc) sprintf(desc,"frame[%d]: %s",gen->chans,print_array(gen->vals,gen->chans,0));
-  return(desc);
-}
+static char *inspect_frame(void *ptr) {return(describe_frame(ptr));}
 
 int mus_frame_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_FRAME));}
 
@@ -3442,23 +3436,7 @@ static char *describe_mixer(void *ptr)
   return(desc);
 }
 
-static char *inspect_mixer(void *ptr)
-{
-  mus_mixer *gen = (mus_mixer *)ptr;
-  int i,j;
-  char *desc;
-  desc = make_desc_buf(ptr,FALSE);
-  if (desc) 
-    {
-      sprintf(desc,"mixer: chans: %d, vals: [",gen->chans);
-      for (i=0;i<gen->chans;i++)
-	for (j=0;j<gen->chans;j++)
-	  fprintf(stderr,"%s%.3f%s%s",
-		  (j == 0) ? "(" : "",gen->vals[i][j],(j == (gen->chans - 1)) ? ")" : "",
-		  ((i == (gen->chans - 1)) && (j == (gen->chans - 1))) ? "]" : " ");
-    }
-  return(desc);
-}
+static char *inspect_mixer(void *ptr) {return(describe_mixer(ptr));}
 
 int mus_mixer_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_MIXER));}
 
@@ -3535,6 +3513,7 @@ mus_mixer *mus_make_mixer(int chans, ...)
   mus_mixer *mx;
   int i,j;
   va_list ap;
+  if (chans <= 0) return(NULL);
   mx = mus_make_empty_mixer(chans);
   if (mx) 
     {
@@ -4613,7 +4592,11 @@ mus_any *mus_make_sample2file(const char *filename, int out_chans, int out_forma
 	  /* clear previous, if any */
 	  if (fd == -1)
 	    mus_error(MUS_CANT_OPEN_FILE,"open(%s) -> %s",gen->file_name,strerror(errno));
-	  else mus_file_close(fd);
+	  else 
+	    {
+	      if (mus_file_close(fd) != 0)
+		mus_error(MUS_CANT_CLOSE_FILE,"close(%d, %s) -> %s",fd,gen->file_name,strerror(errno));
+	    }
 	  return((mus_any *)gen);
 	}
     }
@@ -5267,7 +5250,7 @@ static char *describe_granulate(void *ptr)
       if (mus_granulate_p((mus_any *)ptr))
 	{
 	  sprintf(desc,"granulate: expansion: %.3f (%d/%d), scaler: %.3f, length: %.3f secs (%d samps), ramp: %.3f",
-		  (Float)(gen->input_hop) / (Float)(gen->output_hop),
+		  (Float)(gen->output_hop) / (Float)(gen->input_hop),
 		  gen->input_hop,gen->output_hop,
 		  gen->amp,
 		  (Float)(gen->len) / (Float)sampling_rate,gen->len,
@@ -5562,7 +5545,7 @@ Float *mus_make_fft_window_with_window(int type, int size, Float beta, Float *wi
    *
    * JOS had slightly different numbers for the Blackman-Harris windows.
    */
-  int i,j,midn,midp1,midm1;
+  int i,j,midn,midp1;
   Float freq,rate,sr1,angle,expn,expsum,I0beta,cx;
 #if HAVE_GSL
   Float *rl,*im;
@@ -5570,7 +5553,6 @@ Float *mus_make_fft_window_with_window(int type, int size, Float beta, Float *wi
 #endif
   midn = size >> 1;
   midp1 = (size+1)/2;
-  midm1 = (size-1)/2;
   freq = TWO_PI/(Float)size;
   rate = 1.0/(Float)midn;
   angle = 0.0;
@@ -5585,10 +5567,10 @@ Float *mus_make_fft_window_with_window(int type, int size, Float beta, Float *wi
       for (i=0,j=size-1,angle=0.0;i<=midn;i++,j--,angle+=freq) {window[j]=(window[i]=0.5-0.5*cos(angle));}
       break; 
     case MUS_WELCH_WINDOW:
-      for (i=0,j=size-1;i<=midn;i++,j--) {window[j]=(window[i]=1.0-sqr((Float)(i-midm1)/(Float)midp1));}
+      for (i=0,j=size-1;i<=midn;i++,j--) {window[j]=(window[i]=1.0-sqr((Float)(i-midn)/(Float)midp1));}
       break; 
     case MUS_PARZEN_WINDOW:
-      for (i=0,j=size-1;i<=midn;i++,j--) {window[j]=(window[i]=1.0-fabs((Float)(i-midm1)/(Float)midp1));}
+      for (i=0,j=size-1;i<=midn;i++,j--) {window[j]=(window[i]=1.0-fabs((Float)(i-midn)/(Float)midp1));}
       break; 
     case MUS_BARTLETT_WINDOW:
       for (i=0,j=size-1,angle=0.0;i<=midn;i++,j--,angle+=rate) {window[j]=(window[i]=angle);}

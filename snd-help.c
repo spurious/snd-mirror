@@ -256,6 +256,8 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+18-Dec:  enved.scm (suggested by Anders Vinjar).\n\
+         play-hook, player?.\n\
 15-Dec:  update-lisp-graph. graph data arg can be envelope.\n\
          graph-style can apply to time, transform, and lisp graphs independently.\n\
 13-Dec:  prc95.scm (Perry Cook's physical modelling examples).\n\
@@ -263,13 +265,6 @@ void news_help(snd_state *ss)
          save-listener.\n\
          play-syncd-marks (marks.scm)\n\
 11-Dec:  snd 4.9.\n\
-7-Dec:   zero-pad bugfixes.\n\
-29-Nov:  before-fft-hook, string completion from help list.\n\
-28-Nov:  BSD support thanks to Steven Schultz.\n\
-         Dolph-Chebyshev window if HAVE_GSL.\n\
-24-Nov:  fht (Hartley transform).\n\
-21-Nov:  abort? -> C-g?.  edit-tree and display-edits documented.\n\
-17-Nov:  esd support thanks to Nick Bailey.\n\
 ",
 NULL);
   FREE(info);
@@ -1063,6 +1058,7 @@ user-interface manipulations.\n\
   " S_after_graph_hook "(snd chn)\n\
   " S_exit_hook "\n\
   " S_start_hook "\n\
+  " S_play_hook "\n\
   " S_stop_playing_channel_hook "\n\
   " S_stop_playing_hook "\n\
   " S_stop_playing_region_hook "\n\
@@ -1241,6 +1237,7 @@ all refer to the same thing.\n\
   " S_play_and_wait "     (samp snd chn sync end)\n\
   " S_play_region "       (reg to-end)\n\
   " S_play_selection "    ()\n\
+  " S_playerQ "           (obj)\n\
   " S_preload_directory " (dir)\n\
   " S_preload_file "      (file)\n\
   " S_previous_sample "   (rd)\n\

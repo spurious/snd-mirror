@@ -122,6 +122,7 @@ bell.scm          the fm-bell from CLM
 bird.scm          various North-American birds (from bird.clm)
 effects.scm       an Effects menu based on examp.scm
 env.scm           various envelope functions from CLM
+enved.scm         envelope editor in lisp graph section
 fmv.scm           the fm-violin tied to real-time gtk graphics
 glfft.scm         OpenGL for spectra (needs work)
 goopsnd.scm       first look at Goops (Guile Object System) for Snd
@@ -530,6 +531,8 @@ the hook.
                                            (if (= (mus-sound-header-type name) mus-raw)
                                                (mus-file-set-prescaler fd 500.0))))
 </small>
+                                      The prescaling affects only sound data made up of floats or doubles.
+
   <b><a name="exithook">exit-hook</a></b> ()                        called upon exit. (<b>or</b>)
                                       If it returns #t, Snd does not exit.  This can be used to check 
                                       for unsaved edits, or to perform cleanup activities.
@@ -633,6 +636,9 @@ the hook.
   <b><a name="starthook">start-hook</a></b> (filename)               called upon start-up. (<b>or</b>)
                                       If it returns #t, snd exits immediately.
 
+  <b><a name=playhook">play-hook</a></b> (samps)                   called each time a buffer (size: <i>samps</i>) is about to be 
+                                      filled for the DAC (see enved.scm and marks.scm). (<b>progn</b>)
+
   <b><a name="startplayinghook">start-playing-hook</a></b> (snd)            called when a play request is triggered. (<b>or</b>)
                                       If it returns #t, snd does not play.
 
@@ -695,7 +701,8 @@ the hook.
            (lambda args (reset-hook! (apply edit-hook args))))
 </small>
 </pre>
-<p>See also <a href="#menuhook">menu-hook</a> below.</p>
+<p>enved.scm uses several of these hooks to implement an envelope editor in lisp.
+See also <a href="#menuhook">menu-hook</a> below.</p>
 
 <br>
 <span class=bbox><h3><a name="sndobjects">Snd's objects</a></h3></span>
@@ -1810,6 +1817,8 @@ sets its value to val.
   <b><a name="sndplayandwait">play-and-wait</a></b>     (<i>samp snd chn sync end</i>) 
                                   play <i>snd</i>'s channel <i>chn</i> starting from sample <i>samp</i> and wait 
                                   for it to finish.
+
+  <b><a name="playerQ">player?</a></b>           (obj)         #t is <i>obj</i> is an active player.
 
   <b><a name="progressreport">progress-report</a></b>   (pct <i>name current-channel channels snd</i>)
                                   The functions <i>start-progress-report</i>, <i>progress-report</i>, and 

@@ -1861,7 +1861,7 @@ static void Reset_Record_Callback(GtkWidget *w,gpointer clientData)
       set_button_label(reset_button,STR_Reset);
       set_backgrounds(record_button,(ss->sgx)->basic_color);
       set_button_label(record_button,(rp->triggering) ? STR_Triggered_Record : STR_Record);
-      snd_close(rp->output_file_descriptor);
+      mus_file_close(rp->output_file_descriptor);
       rp->output_file_descriptor = -1;
       str = just_filename(rp->output_file);
       record_report(messages,str," recording cancelled",NULL);
@@ -1913,7 +1913,7 @@ void finish_recording(snd_state *ss, recorder_info *rp)
   set_backgrounds(record_button,(ss->sgx)->basic_color);
   set_button_label(reset_button,STR_Reset);
   set_button_label(record_button,(rp->triggering) ? STR_Triggered_Record : STR_Record);
-  snd_close(rp->output_file_descriptor);
+  mus_file_close(rp->output_file_descriptor);
   rp->output_file_descriptor = mus_file_reopen_write(rp->output_file);
   mus_header_update_with_fd(rp->output_file_descriptor,
 			    rp->output_header_type,

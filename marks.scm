@@ -1,3 +1,17 @@
+;;; examples of mark-related functions
+
+;;; Contents:
+;;;     mark-name->id is a global version of find-mark
+;;;     move-syncd-marks moves all syncd marks together
+;;;     describe-mark shows mark history
+;;;     click marks between start-sync and stop-sync to sync them together
+;;;     syncronize sounds at a given mark
+;;;     fit selection between marks, expanding via granulate (this needs some tweaking...)
+;;;     pad-marks inserts silence before each in a list of marks
+;;;     play-syncd-marks
+;;;     report-mark-names causes mark names to be posted in the minibuffer as a sound is played
+
+
 ;;; -------- mark-name->id is a global version of find-mark
 
 (define mark-name->id
@@ -23,7 +37,7 @@
        (syncd-marks sync)))
 
 
-;;; -------- describe-mark show mark history
+;;; -------- describe-mark shows mark history
 
 (define (describe-mark id)
   "(describe-mark id) returns a description of the movements of mark id over the channel's edit history"
@@ -63,7 +77,7 @@
 (define (start-sync) (set! mark-sync-number (+ (mark-sync-max) 1)))
 (define (stop-sync) (set! mark-sync-number 0))
 (define (click-to-sync id) (set! (mark-sync id) mark-sync-number) #f)
-(add-hook! mark-click-hook click-to-sync)
+;(add-hook! mark-click-hook click-to-sync)
 
 
 ;;; -------- syncronize sounds at a given mark
@@ -151,3 +165,29 @@
 	     (set! rate (max rate (srate sound)))))
 	 (syncd-marks sync))
     (start-playing chans rate)))
+
+
+;;; -------- report-mark-names causes mark names to be posted in the minibuffer as a sound is played
+
+(define (report-mark-names)
+  (add-hook! start-playing-hook 
+	     (lambda (snd)
+	       (let* ((marklist (marks snd 0))
+		      (samplist (map mark-sample marklist))
+		      (samp 0))
+		 (add-hook! stop-playing-hook
+			    (lambda (snd)
+			      (report-in-minibuffer "" snd)
+			      (reset-hook! play-hook)
+			      (reset-hook! stop-playing-hook)))
+		 (add-hook! play-hook 
+			    (lambda (size)
+			      (set! samp (+ samp size))
+			      (if (and (not (null? samplist))
+				       (>= samp (car samplist)))
+				  (begin
+				    (report-in-minibuffer (mark-name (car marklist)) snd)
+				    (set! marklist (cdr marklist))
+				    (set! samplist (cdr samplist))))))))))
+
+

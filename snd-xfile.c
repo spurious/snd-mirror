@@ -524,6 +524,7 @@ file_data *sndCreateFileDataForm(snd_state *ss, Widget parent, char *name, Arg *
     slab,stext,clab,ctext,sep2,sep3, 
     comment_label,comment_text,sep4,
     loclab,loctext;
+  int hdrtyps;
   file_data *fdat;
   Arg args[32];
   int i,n;
@@ -573,15 +574,16 @@ file_data *sndCreateFileDataForm(snd_state *ss, Widget parent, char *name, Arg *
   XtSetArg(args[n],XmNlistMarginWidth,1); n++;
   XtSetArg(args[n],XmNuserData,(XtPointer)fdat); n++;
   /* what is selected depends on current type */
-  strs = (XmString *)CALLOC(num_header_types(),sizeof(XmString)); 
-  for (i=0;i<num_header_types();i++) strs[i] = XmStringCreate(header_short_name(i),XmFONTLIST_DEFAULT_TAG);
+  hdrtyps = num_header_types();
+  strs = (XmString *)CALLOC(hdrtyps,sizeof(XmString)); 
+  for (i=0;i<hdrtyps;i++) strs[i] = XmStringCreate(header_short_name(i),XmFONTLIST_DEFAULT_TAG);
   XtSetArg(args[n],XmNitems,strs); n++;
   XtSetArg(args[n],XmNitemCount,num_header_types()); n++;
   XtSetArg(args[n],XmNvisibleItemCount,NUM_VISIBLE_HEADERS); n++;
   hlist = XmCreateScrolledList(form,"header type",args,n);
   XtAddCallback(hlist,XmNhelpCallback,file_header_help_callback,ss);
   XtManageChild(hlist);
-  for (i=0;i<num_header_types();i++) XmStringFree(strs[i]);
+  for (i=0;i<hdrtyps;i++) XmStringFree(strs[i]);
   FREE(strs);
   XmListSelectPos(hlist,fdat->header_pos+1,FALSE);
   fdat->header_list = hlist;

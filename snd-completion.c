@@ -18,7 +18,7 @@
   #endif
 #endif
       
-#define NUM_COMMANDS 561
+#define NUM_COMMANDS 563
 
 static char *snd_commands[NUM_COMMANDS]={
   S_abort,S_activate_listener,S_add_mark,S_add_player,S_add_sound_file_extension,S_add_to_main_menu,S_add_to_menu,S_add_transform,
@@ -95,7 +95,7 @@ static char *snd_commands[NUM_COMMANDS]={
   S_open_alternate_sound,S_open_hook,S_open_raw_sound,S_open_sound,S_open_sound_file,S_orientation_dialog,
   S_output_comment_hook,S_output_name_hook,
 
-  S_peaks,S_play,S_play_and_wait,S_play_mix,S_play_region,S_play_selection,S_play_track,
+  S_peaks,S_play,S_play_and_wait,S_play_hook,S_play_mix,S_play_region,S_play_selection,S_play_track,S_playerQ,
   S_position_color,S_prefix_arg,S_preload_directory,S_preload_file,
   S_previous_files_sort,S_previous_sample,S_print_length,
   S_progress_report,S_prompt_in_minibuffer,S_protect_region,S_pushed_button_color,
@@ -198,7 +198,7 @@ const char **sndlib_commands(void);
 void check_snd_commands(void);
 void check_snd_commands(void)
 {
-  int i;
+  int i,len;
   char **names;
   if (strcmp(snd_commands[NUM_COMMANDS-1],S_zoom_focus_style) != 0)
     fprintf(stderr,"last command (%d) is %s?",NUM_COMMANDS,snd_commands[NUM_COMMANDS - 1]);
@@ -206,12 +206,14 @@ void check_snd_commands(void)
     if (strcmp(snd_commands[i-1],snd_commands[i]) >= 0)
       fprintf(stderr,"%s >= %s\n",snd_commands[i-1],snd_commands[i]);
   names = (char **)sndlib_commands();
-  for (i=1;i<sndlib_num_commands();i++)
+  len = sndlib_num_commands();
+  for (i=1;i<len;i++)
     if (strcmp(names[i-1],names[i]) >= 0)
       fprintf(stderr,"%s >= %s\n",names[i-1],names[i]);
 #if HAVE_GUILE
   names = mus_commands();
-  for (i=1;i<mus_num_commands();i++)
+  len = mus_num_commands();
+  for (i=1;i<len;i++)
     if (strcmp(names[i-1],names[i]) >= 0)
       fprintf(stderr,"%s >= %s\n",names[i-1],names[i]);
 #endif
@@ -623,17 +625,19 @@ static SCM g_apropos(SCM text)
 static SCM g_save_listener(SCM filename)
 {
   #define H_save_listener "(" S_save_listener " filename) saves the current listener text in filename"
-  char *urn;
-  FILE *fp;
+  char *urn = NULL;
+  FILE *fp = NULL;
   SCM_ASSERT(gh_string_p(filename),filename,SCM_ARG1,S_save_listener);
   urn = gh_scm2newstr(filename,NULL);
   fp = fopen(urn,"w");
   if (fp)
     {
       save_listener_text(fp);
-      fclose(fp);
+      if (fclose(fp) != 0)
+	snd_error("save-listener: close file %s: %s\n",urn,strerror(errno));
     }
   else scm_throw(CANNOT_SAVE,SCM_LIST3(gh_str02scm(S_save_listener),filename,gh_str02scm(strerror(errno))));
+  if (urn) free(urn);
   return(filename);
 }
 

@@ -228,7 +228,8 @@ static SCM vct_move(SCM obj, SCM newi, SCM oldi)
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(newi)),newi,SCM_ARG2,S_vct_moveB);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(oldi)),oldi,SCM_ARG3,S_vct_moveB);
   v = get_vct(obj);
-  if (v) for (i=SCM_INUM(newi),j=SCM_INUM(oldi);j<v->length;i++,j++) v->data[i] = v->data[j];
+  if (v) for (i=SCM_INUM(newi),j=SCM_INUM(oldi);(j<v->length) && (i<v->length);i++,j++) 
+    v->data[i] = v->data[j];
   return(obj);
 }
 

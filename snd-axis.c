@@ -1,13 +1,14 @@
 #include "snd.h"
 
 /* changed to use doubles here 14-Nov-00: very small windows appear to get arithmetic problems otherwise */
+/* removed y-label support 18-Dec-00 */
 
 typedef struct {
   double hi,lo; 
   int max_ticks;
   double flo,fhi,mlo,mhi,step,tenstep;
   int tens,min_label_width,max_label_width;
-  int min_label_x,min_label_y,max_label_x,max_label_y,maj_tick_len,min_tick_len;
+  int min_label_x,max_label_x,maj_tick_len,min_tick_len;
   char *min_label,*max_label;
 } tick_descriptor;
 
@@ -109,7 +110,6 @@ axis_info *free_axis_info(axis_info *ap)
   if (ap->y_ticks) ap->y_ticks = (void *)free_tick_descriptor((tick_descriptor *)(ap->y_ticks));
   if (ap->ax) ap->ax = free_axis_context(ap->ax);
   if (ap->xlabel) {FREE(ap->xlabel); ap->xlabel = NULL;}
-  if (ap->ylabel) {FREE(ap->ylabel); ap->ylabel = NULL;}
   FREE(ap);
   return(NULL);
 }
@@ -166,12 +166,12 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
 {
   int width,height;
   int axis_style;                 /* x_bottom or x_middle or xy_middle => |_ or |- or + */
-  double x_range,y_range,non_label_room,tens;
+  double x_range,y_range,tens;
   int axis_thickness,left_border_width,bottom_border_width,top_border_width,right_border_width;
   int inner_border_width,tick_label_width;
   int major_tick_length,minor_tick_length,x_tick_spacing,y_tick_spacing;
-  int include_x_label,include_x_ticks,include_x_tick_labels,include_y_label,include_y_ticks,include_y_tick_labels;
-  int x_label_width,x_label_height,y_label_height,y_label_width,x_number_height;
+  int include_x_label,include_x_ticks,include_x_tick_labels,include_y_ticks,include_y_tick_labels;
+  int x_label_width,x_label_height,x_number_height;
   int num_ticks,majy,miny,majx,minx,x,y,tx,ty,x0,y0;
   double fy,fx;
   tick_descriptor *tdx = NULL,*tdy = NULL;
@@ -248,8 +248,6 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
       include_x_tick_labels = 0;
       include_x_ticks = 0;
     }
-  /* include_y_label = ((ap->ylabel) && ((width > 100) && (height > 100))); */
-  include_y_label = 0; /* it looks dumber and dumber... */
   if ((sp == NULL) || (cp->show_axes != SHOW_X_AXIS))
     {
       include_y_tick_labels = ((width > 100) && (height > 60));
@@ -266,25 +264,8 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
   
   x_number_height = number_height(ax);
   x_label_height = 0;
-  y_label_height = 0;
   x_label_width = 0;
-  y_label_width = 0;
 
-  if (include_y_label)
-    {
-      /* center y label rotated 90 degress */
-      y_label_height = label_width(ax,ap->ylabel);
-      if ((y_label_height+bottom_border_width+top_border_width) > ((int)(.8*height)))
-	{
-	  include_y_label = 0;
-	  y_label_height = 0;
-	  y_label_width = 0;
-	}
-      else
-	{
-	  y_label_width = label_height(ax);
-	}
-    }
   if (include_x_label)
     {
       x_label_width = label_width(ax,ap->xlabel);
@@ -304,16 +285,6 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
       x_label_height = label_height(ax);
 
   curdy = cury;
-  if (include_y_label)
-    {
-      if (include_x_label) curdy -= (x_label_height+inner_border_width);
-      if (include_x_ticks) curdy -= major_tick_length;
-      if (include_x_tick_labels) curdy -= x_number_height;
-      /* now curdy is basically how much y space we have */
-      ap->y_label_x = curx+y_label_width;
-      ap->y_label_y = (curdy+y_label_height)/2;
-      curx += (y_label_width+inner_border_width);
-    }
   if (include_y_ticks)
     {
       /* figure out how long the longest tick label will be and make room for it */
@@ -354,19 +325,7 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
 	      include_y_tick_labels = 0;
 	    }
 	  else
-	    {
-	      curx+=tick_label_width;
-	      non_label_room = (double)(cury-y_label_height)/(3.0*height);
-	      if (((y_label_height+3*x_number_height+major_tick_length+top_border_width+bottom_border_width+20) < cury) &&
-		  (((tdy->mlo-tdy->flo)/y_range) < non_label_room) &&
-		  (((tdy->fhi-tdy->mhi)/y_range) < non_label_room))
-		/* last two checks are trying to keep number labels from colliding with the label */
-		{
-		  if (y_label_width < tick_label_width)
-		    curx -=y_label_width;
-		  else curx-=(y_label_width/2);
-		}
-	    }
+	    curx+=tick_label_width;
 	}
       
       curx+=major_tick_length;
@@ -436,7 +395,6 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
   ap->y_axis_x0 += ap->graph_x0;
   ap->x_axis_x0 += ap->graph_x0;
   ap->x_axis_x1 += ap->graph_x0;
-  ap->y_label_x += ap->graph_x0;
   ap->x_label_x += ap->graph_x0;
   if (axis_style == axis_x_bottom)
     {
@@ -459,23 +417,7 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
   ap->y_axis_y0 += ap->y_offset;
   ap->y_axis_y1 += ap->y_offset;
   ap->x_label_y += ap->y_offset;
-  ap->y_label_y += ap->y_offset;
 
-  if (include_y_label)
-    { /* used to use DrawVString here from sciplot, but it causes the display to flash */
-      int col,row,len,i;
-      len = snd_strlen(ap->ylabel);
-      col = ap->y_label_x;
-      row = ap->y_label_y-y_label_height;
-      activate_label_font(ax);
-      if (cp->printing) ps_set_label_font(cp);
-      for (i=0;i<len;i++)
-	{
-	  draw_string(ax,col,row,&ap->ylabel[i],1);
-	  if (cp->printing) ps_draw_string(cp,col,row,&ap->ylabel[i]);
-	  row+=y_label_width;
-	}
-    }
   if (include_x_label)
     {
       activate_label_font(ax);
