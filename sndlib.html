@@ -823,7 +823,7 @@ void fm_violin(float start, float dur, float frequency, float amplitude, float f
   pervib = mus_make_triangle_wave(pervibfrq, frq_scl * pervibamp, 0.0);
   ranvib = mus_make_rand_interp(ranvibfrq, frq_scl * ranvibamp);
   if (noise_amount != 0.0) fmnoi = mus_make_rand(noise_frq, noise_amount * M_PI);
-  loc = mus_make_locsig(degree, distance, reverb_amount, 1, (mus_output *)op, NULL);
+  loc = mus_make_locsig(degree, distance, reverb_amount, 1, (mus_output *)op, NULL, MUS_LINEAR);
   for (i = beg; i &lt; end; i++)
     {
       if (noise_amount != 0.0) fuzz = mus_rand(fmnoi, 0.0);

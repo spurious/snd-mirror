@@ -1963,6 +1963,7 @@ static XEN gxm_XtGetValues_1(XEN arg1, XEN larg2, int len)
   int i;
   char *name;
   /* here we need to make sure the ref args are ok from C's point of view */
+  if (len <= 0) return(XEN_FALSE);
   w = XEN_TO_C_Widget(arg1);
   arg2 = XEN_COPY_ARG(larg2);
   args = (Arg *)CALLOC(len, sizeof(Arg));
@@ -15095,7 +15096,7 @@ static XEN gxm_XtAddTimeOut(XEN arg1, XEN arg2, XEN arg3)
 		    gxm_XtTimerCallbackProc, 
 		    (XtPointer)descr);
   XEN_LIST_SET(descr, 3, C_TO_XEN_INT(gc_loc));
-  XEN_LIST_SET(descr, 4, C_TO_XEN_XtIntervalId(id));
+  XEN_LIST_SET(descr, 4, C_TO_XEN_ULONG(id));
   return(C_TO_XEN_XtIntervalId(id));
 }
 #endif
@@ -16174,7 +16175,7 @@ static XEN gxm_XtUnmapWidget(XEN arg)
 static XEN gxm_XtSetArg(XEN arg1, XEN arg2, XEN arg3)
 {
   #define H_XtSetArg "XtSetArg in xm is useless -- it returns its arguments as a list"
-  return(XEN_CONS_2(arg2, arg3, arg1));
+  return(XEN_LIST_3(arg2, arg3, arg1));
 }
 
 

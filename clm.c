@@ -5207,6 +5207,23 @@ static char *describe_locsig(void *ptr)
       if (gen->chans - 1 > lim) strcat(describe_buffer, "...");
       sprintf(str, "%.3f]", gen->outn[gen->chans - 1]);
       strcat(describe_buffer, str);
+      if (gen->rev_chans > 0)
+	{
+	  sprintf(str, ", revn: [");
+	  strcat(describe_buffer, str);
+	  lim = 16;
+	  if (gen->rev_chans - 1 < lim) lim = gen->rev_chans - 1;
+	  for (i = 0; i < lim; i++)
+	    {
+	      sprintf(str, "%.3f ", gen->revn[i]);
+	      if ((strlen(describe_buffer) + strlen(str)) < (DESCRIBE_BUFFER_SIZE - 16))
+		strcat(describe_buffer, str);
+	      else break;
+	    }
+	  if (gen->rev_chans - 1 > lim) strcat(describe_buffer, "...");
+	  sprintf(str, "%.3f]", gen->revn[gen->chans - 1]);
+	  strcat(describe_buffer, str);
+	}
       FREE(str);
     }
   else describe_bad_gen(ptr, "locsig", "a");
@@ -5307,11 +5324,57 @@ static mus_any_class LOCSIG_CLASS = {
 
 int mus_locsig_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_LOCSIG));}
 
-mus_any *mus_make_locsig(Float degree, Float distance, Float reverb, int chans, mus_output *output, mus_output *revput)
+static void fill_locsig(Float *arr, int chans, Float degree, Float scaler, int type)
+{
+  Float deg, pos, frac, degs_per_chan, ldeg, c, s;
+  int left, right;
+  if (chans == 1)
+    arr[0] = scaler;
+  else
+    {
+      if (chans == 2)
+	{
+	  if (degree > 90.0)
+	    deg = 90.0;
+	  else
+	    {
+	      if (degree < 0.0)
+		deg = 0.0;
+	      else deg = degree;
+	    }
+	  degs_per_chan = 90.0;
+	}
+      else 
+	{
+	  deg = fmod(degree, 360.0);
+	  degs_per_chan = 360.0 / chans;
+	}
+      pos = deg / degs_per_chan;
+      left = (int)floor(pos);
+      right = left + 1;
+      if (right == chans) right = 0;
+      frac = pos - left;
+      if (type == MUS_LINEAR)
+	{
+	  arr[left] = scaler * (1.0 - frac);
+	  arr[right] = scaler * frac;
+	}
+      else
+	{
+	  ldeg = M_PI_2 * (0.5 - frac);
+	  scaler *= sqrt(2.0) / 2.0;
+	  c = cos(ldeg);
+	  s = sin(ldeg);
+	  arr[left] = scaler * (c + s);
+	  arr[right] = scaler * (c - s);
+	}
+    }
+}
+
+mus_any *mus_make_locsig(Float degree, Float distance, Float reverb, int chans, mus_output *output, mus_output *revput, int type)
 {
   locs *gen;
-  Float dist, frac;
-  int i;
+  Float dist;
   gen = (locs *)CALLOC(1, sizeof(locs));
   if (gen == NULL) 
     mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_locsig!");
@@ -5331,56 +5394,15 @@ mus_any *mus_make_locsig(Float degree, Float distance, Float reverb, int chans, 
 	  if (gen->rev_chans > 0)
 	    {
 	      gen->revn = (Float *)CALLOC(gen->rev_chans, sizeof(Float));
-	      for (i = 0; i < gen->rev_chans; i++) 
-		gen->revn[i] = reverb * sqrt(dist);
 	      gen->revf = mus_make_empty_frame(gen->rev_chans);
+	      fill_locsig(gen->revn, gen->rev_chans, degree, (reverb * sqrt(dist)), type);
 	    }
 	}
       else gen->rev_chans = 0;
       gen->outn = (Float *)CALLOC(chans, sizeof(Float));
       if (gen->outn == NULL) 
 	mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate outn array for mus_make_locsig!");
-      if (chans == 1)
-	gen->outn[0] = dist;
-      else
-	{
-	  if (chans == 2)
-	    {
-	      if (degree < 0.0) degree = 0.0; else if (degree > 90.0) degree = 90.0;
-	      frac = degree / 90.0;
-	      gen->outn[0] = dist * (1.0 - frac);
-	      gen->outn[1] = dist * frac;
-	    }
-	  else
-	    {
-	      if ((degree >= 0.0) && (degree < 90.0))
-		{
-		  gen->outn[0] = dist * (90.0 - degree) / 90.0;
-		  gen->outn[1] = dist * degree / 90.0;
-		}
-	      else
-		{
-		  if ((degree >= 90.0) && (degree < 180.0))
-		    {
-		      gen->outn[1] = dist * (180.0 - degree) / 90.0;
-		      gen->outn[2] = dist * (degree - 90.0) / 90.0;
-		    }
-		  else
-		    {
-		      if ((degree >= 180.0) && (degree < 270.0))
-			{
-			  gen->outn[2] = dist * (270.0 - degree) / 90.0;
-			  if (gen->chans > 3) gen->outn[3] = dist * (degree - 180.0) / 90.0;
-			}
-		      else
-			{
-			  if (gen->chans > 3) gen->outn[3] = dist * (360.0 - degree) / 90.0;
-			  gen->outn[0] = dist * (degree - 270.0) / 90.0;
-			}
-		    }
-		}
-	    }
-	}
+      fill_locsig(gen->outn, chans, degree, dist, type);
       return((mus_any *)gen);
     }
   return(NULL);

@@ -608,7 +608,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   */
   XtSetArg(args[0], XtNwidth, 640);
   XtSetArg(args[1], XtNheight, 256);
-  shell = XtAppInitialize( &app, "Snd", NULL, 0, &argc, argv, NULL, args, 2 );
+  shell = XtAppInitialize( &app, "Snd", NULL, 0, &argc, argv, NULL, args, 2);
 #else
   shell = XtVaOpenApplication(&app, "Snd", NULL, 0, &argc, argv, NULL, applicationShellWidgetClass,
 			      XmNallowShellResize, AUTO_RESIZE_DEFAULT,

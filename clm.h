@@ -1,11 +1,12 @@
 #ifndef MUS_H
 #define MUS_H
 
-#define MUS_VERSION 1
-#define MUS_REVISION 62
-#define MUS_DATE "6-Mar-02"
+#define MUS_VERSION 2
+#define MUS_REVISION 0
+#define MUS_DATE "15-Mar-02"
 
 /* 
+ * 15-Mar:     n-chan locsig (and reverb scalers), 'type' arg to mus_make_locsig.
  * 6-Mar:      mus_scaler in asymmetric-fm now refers to the "r" parameter, "a" in sine-summation.
  * 5-Mar:      dumb typo in asymmetric-fm generator fixed.
  * 19-Feb:     buffer reallocation redundant free bugfix.
@@ -111,6 +112,7 @@
 #endif
 
 #include "sndlib.h"
+enum {MUS_LINEAR, MUS_SINUSOIDAL};
 
 #if (!defined(M_PI))
   #define M_PI 3.14159265358979323846264338327
@@ -466,7 +468,7 @@ int mus_frame2file_p            PROTO((mus_any *ptr));
 mus_frame *mus_frame2file       PROTO((mus_any *ptr, int samp, mus_frame *data));
 
 mus_frame *mus_locsig           PROTO((mus_any *ptr, int loc, Float val));
-mus_any *mus_make_locsig        PROTO((Float degree, Float distance, Float reverb, int chans, mus_output *output, mus_output *revput));
+mus_any *mus_make_locsig        PROTO((Float degree, Float distance, Float reverb, int chans, mus_output *output, mus_output *revput, int type));
 int mus_locsig_p                PROTO((mus_any *ptr));
 int mus_channels                PROTO((mus_any *ptr));
 Float mus_locsig_ref            PROTO((mus_any *ptr, int chan));

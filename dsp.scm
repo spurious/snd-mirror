@@ -492,9 +492,6 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 
 ;;; -------- asymmetric FM with the I0 form
-;;;
-;;; in CLM currently, you can't easily sweep "r" so the moving formant idea is hard to implement
-;;;   in this version, just (set! (asyfm-r gen) (env e)) (or whatever)
 
 (define* (make-asyfm #:key
 		     (frequency 440.0) (initial-phase 0.0)

@@ -1371,6 +1371,10 @@ it in conjunction with <i>mixer</i>to scale/envelope all the various ins and out
 </table>
 <br>
 
+<p>In Snd, the default locsig interpolation type is handled via locsig-type, rather than CLM's global
+variable *clm-locsig-type*.
+</p>
+
 <p><b>formant-bank</b> and <b>oscil-bank</b> are optimizations for situations like the phase
 vocoder or cross synthesis (see <a href="sndscm.html#exampdoc">examp.scm</a>).  It is assumed that you have a vector of generators,
 all summing their outputs into a single float.  The amplitude scalers (the first argument to

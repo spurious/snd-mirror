@@ -106,6 +106,12 @@
 		    (/ (|green col) 65535.0)
 		    (/ (|blue col) 65535.0)))))
 
+(define (host-name)
+  "(host-name) -> name of current machine"
+  (let* ((dpy (|XtDisplay (cadr (main-widgets))))
+	 (win (|XtWindow (cadr (main-widgets))))
+	 (host (|XGetWindowProperty dpy win (|XInternAtom (|XtDisplay (cadr (main-widgets))) "WM_CLIENT_MACHINE" #f) 0 32 #f |XA_STRING)))
+    (and host (list-ref host 5))))
 
 
 ;;; -------- install-searcher --------

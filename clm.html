@@ -1982,7 +1982,7 @@ readin and <a href="#env">env</a> (see also the fullmix instrument in fullmix.in
 <!-- INDEX make-locsig:Sound placement -->
 <span class=cbox><h4>LOCSIG</h4></span>
 <pre>
- <a name="make-locsig"><em class=def>make-locsig</em></a> <a href="#optional-key">&amp;optional-key</a> (<i>degree</i> 0.0) (<i>distance</i> 1.0) <i>reverb channels</i>
+ <a name="make-locsig"><em class=def>make-locsig</em></a> <a href="#optional-key">&amp;optional-key</a> (<i>degree</i> 0.0) (<i>distance</i> 1.0) <i>reverb channels type</i>
  <a name="locsig"><em class=def>locsig</em></a> <i>loc i in-sig</i>
  <a name="locsig?"><em class=def>locsig?</em></a> <i>loc</i>
  <a name="locsig-ref"><em class=def>locsig-ref</em></a> <i>loc chan</i>
@@ -1997,7 +1997,13 @@ an extremely dumb manner, it just scales the respective amplitudes
 the direct signal gets sent to the reverberator.  <i>Distance</i> tries to
 imitate a distance cue by fooling with the relative amounts of direct and
 reverberated signal (independent of <i>reverb</i>).  <i>Distance</i> should
-be greater than or equal to 1.0. Locsig is a
+be greater than or equal to 1.0.  
+<i>type</i> can be <i>mus-linear</i> (the default) or <i>mus-sinusoidal</i>.
+This parameter can be set globally via <i>*clm-locsig-type*</i>.  The mus-sinusoidal
+case uses sin and cos to set the respective channel amplitudes (this is reported to
+help with the "hole-in-the-middle" problem).
+</p>
+<p>Locsig is a
 kludge, but then so is any pretence of placement when you're piping the signal
 out a loudspeaker.  It is my current belief that locsig does the "right"
 thing for all the wrong reasons; a good concert hall provides "auditory
@@ -2006,14 +2012,13 @@ that is, a diffuse sound source is the ideal!  By sending an arbitrary mix of
 signal and reverberation to various speakers, locsig gives you a very
 diffuse "source"; it does the opposite of what it claims to do, and by
 some perversity of Mother Nature, that is what you want.  (See "Binaural
-Phenomena" by J Blauert).</p>
+Phenomena" by J Blauert).
+</p>
 
-<p>Locsig can send output to any number of channels. The <i>degree</i> and
-<i>distance</i> arguments are ignored if the output file has more than 4 channels.
-In the quad case, the speakers are assumed to be in
-a circle with channel 0 at 0 degrees, channel 1 at 90, and so on.  In other
-cases, you can set the mix you want via the <b>locsig-ref</b> and <b>locsig-reverb-ref</b>
-functions.
+<p>Locsig can send output to any number of channels.
+If channels > 2, the speakers are assumed to be evenly spaced in
+a circle.
+You can use locsig-set! and locsig-ref to override the placement decisions.
 For example, to have full output to both channels,</p>
 <pre>
 (setf (locsig-ref loc 0) 1.0) ;or (locsig-set! loc 0 1.0)
@@ -2056,8 +2061,7 @@ loop to pan between speakers:</p>
 <a name="make-roomsig"><em class=def>make-roomsig</em></a> in <a href="roomsig.cl">roomsig.cl</a>.
 For a moving sound
 source, see Fernando Lopez Lezcano's <a name="dlocsig"><em class=def>dlocsig</em></a>, documented in
-<a href="dlocsig/index.html">dlocsig/index.html</a>.  Michael Edwards has provided a
-fancier placement algorithm in panning.lsp.
+<a href="dlocsig/index.html">dlocsig/index.html</a>.
 </p>
 <br>
 
@@ -3232,6 +3236,7 @@ current dynamic value of that variable is *&lt;var&gt;*.
   <a name="*clm-version*"><em class=def>*clm-version*</em></a>            version identifier (a number -- also *clm-revision*)
   <a name="*clm-date*"><em class=def>*clm-date*</em></a>               creation date of the current version
   <a name="*clm-safety*"><em class=def>*clm-safety*</em></a>             default safety setting (run loop debugging choices)
+  <a name="*clm-locsig-type*"><em class=def>*clm-locsig-type*</em></a>        locsig interpolation choice (mus-linear or mus-sinusoidal)
   <a name="*output*"><em class=def>*output*</em></a>                 current output stream (for outa and friends)
   <a name="*input*"><em class=def>*input*</em></a>                  current input stream (for ina and friends)
   <a name="*reverb*"><em class=def>*reverb*</em></a>                 current reverb stream

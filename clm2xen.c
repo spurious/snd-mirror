@@ -3706,6 +3706,10 @@ static XEN g_channel(XEN obj)
 #define S_locsig_set        "locsig-set!"
 #define S_locsig_reverb_ref "locsig-reverb-ref"
 #define S_locsig_reverb_set "locsig-reverb-set!"
+#define S_mus_linear        "mus-linear"
+#define S_mus_sinusoidal    "mus-sinusoidal"
+#define S_locsig_type       "locsig-type"
+#define S_set_locsig_type   "set-locsig-type"
 
 static XEN g_locsig_ref(XEN obj, XEN chan)
 {
@@ -3763,28 +3767,48 @@ static XEN g_locsig(XEN obj, XEN loc, XEN val)
 		      DONT_FREE_FRAME));
 }
 
+static int clm_locsig_type = MUS_LINEAR;
+
+static XEN g_locsig_type()
+{
+  #define H_locsig_type "(" S_locsig_type ") -> default locsig interpolation type"
+  return(C_TO_XEN_INT(clm_locsig_type));
+}
+
+static XEN g_set_locsig_type(XEN val)
+{
+  int newval;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_locsig_type, "mus-linear or mus-sinusoidal");
+  newval = XEN_TO_C_INT(val);
+  if ((newval == MUS_LINEAR) || (newval == MUS_SINUSOIDAL))
+    clm_locsig_type = newval;
+  return(C_TO_XEN_INT(clm_locsig_type));
+}
+
 static XEN g_make_locsig(XEN arglist)
 {
-  #define H_make_locsig "(" S_make_locsig " &opt-key (degree 0.0) (distance 1.0) (reverb 0.0) output revout (channels 1))\n\
-returns a new generator for signal placement in up to 4 channels.  Channel 0 corresponds to 0 degrees."
+  #define H_make_locsig "(" S_make_locsig " &opt-key (degree 0.0) (distance 1.0) (reverb 0.0) output revout (channels 1) (type mus-linear))\n\
+returns a new generator for signal placement in n channels.  Channel 0 corresponds to 0 degrees."
 
   XEN out_obj = XEN_UNDEFINED; XEN rev_obj = XEN_UNDEFINED;
   mus_xen *gn;
   mus_output *outp = NULL, *revp = NULL;
-  XEN args[12]; XEN keys[6];
-  int orig_arg[6] = {0, 0, 0, 0, 0, 0};
-  int vals, i, arglist_len, vlen = 0, out_chans = 1;
+  XEN args[14]; XEN keys[7];
+  int orig_arg[7] = {0, 0, 0, 0, 0, 0, 0};
+  int vals, i, arglist_len, vlen = 0, out_chans = 1, type;
   Float degree = 0.0, distance = 1.0, reverb = 0.0;
+  type = clm_locsig_type;
   keys[0] = all_keys[C_degree];
   keys[1] = all_keys[C_distance];
   keys[2] = all_keys[C_reverb];
   keys[3] = all_keys[C_output];  
   keys[4] = all_keys[C_revout];
   keys[5] = all_keys[C_channels];
-  for (i = 0; i < 12; i++) args[i] = XEN_UNDEFINED;
+  keys[6] = all_keys[C_type];
+  for (i = 0; i < 14; i++) args[i] = XEN_UNDEFINED;
   arglist_len = XEN_LIST_LENGTH(arglist);
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
-  vals = decode_keywords(S_make_locsig, 6, keys, 12, args, orig_arg);
+  vals = decode_keywords(S_make_locsig, 7, keys, 14, args, orig_arg);
   if (vals > 0)
     {
       degree = fkeyarg(keys[0], S_make_locsig, orig_arg[0] + 1, degree);
@@ -3820,7 +3844,9 @@ returns a new generator for signal placement in up to 4 channels.  Channel 0 cor
 	    }
 	}
       out_chans = ikeyarg(keys[5], S_make_locsig, orig_arg[5] + 1, out_chans);
+      type = ikeyarg(keys[6], S_make_locsig, orig_arg[6] + 1, type);
       XEN_ASSERT_TYPE(out_chans > 0, keys[5], orig_arg[5] + 1, S_make_locsig, "int > 0");
+      XEN_ASSERT_TYPE((type == MUS_LINEAR) || (type == MUS_SINUSOIDAL), keys[6], orig_arg[6] + 1, S_make_locsig, "mus-linear or mus-sinusoidal");
     }
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
   if (vlen > 0)
@@ -3831,7 +3857,7 @@ returns a new generator for signal placement in up to 4 channels.  Channel 0 cor
       if (XEN_BOUND_P(rev_obj)) gn->vcts[i] = rev_obj;
       gn->nvcts = vlen;
     }
-  gn->gen = mus_make_locsig(degree, distance, reverb, out_chans, outp, revp);
+  gn->gen = mus_make_locsig(degree, distance, reverb, out_chans, outp, revp, type);
   return(mus_xen_to_object(gn));
 }
 
@@ -4632,7 +4658,7 @@ it in conjunction with mixer to scale/envelope all the various ins and outs."
   mus_mix(outfile, infile, ostart, osamps, istart, mx1, envs1);
   if (envs1) 
     {
-      for (i = 0; i < in_len; i++) if (envs1[i]) FREE(envs1[i]);
+      for (i = 0; i < in_size; i++) if (envs1[i]) FREE(envs1[i]);
       FREE(envs1);
     }
   return(XEN_TRUE);
@@ -4855,6 +4881,8 @@ XEN_NARGIFY_2(g_set_increment_w, g_set_increment)
 XEN_NARGIFY_1(g_locsig_p_w, g_locsig_p)
 XEN_NARGIFY_3(g_locsig_w, g_locsig)
 XEN_VARGIFY(g_make_locsig_w, g_make_locsig)
+XEN_NARGIFY_0(g_locsig_type_w, g_locsig_type)
+XEN_NARGIFY_1(g_set_locsig_type_w, g_set_locsig_type)
 XEN_NARGIFY_1(g_channels_w, g_channels)
 XEN_NARGIFY_2(g_locsig_ref_w, g_locsig_ref)
 XEN_NARGIFY_2(g_locsig_reverb_ref_w, g_locsig_reverb_ref)
@@ -5115,6 +5143,8 @@ XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 #define g_locsig_p_w g_locsig_p
 #define g_locsig_w g_locsig
 #define g_make_locsig_w g_make_locsig
+#define g_locsig_type_w g_locsig_type
+#define g_set_locsig_type_w g_set_locsig_type
 #define g_channels_w g_channels
 #define g_locsig_ref_w g_locsig_ref
 #define g_locsig_reverb_ref_w g_locsig_reverb_ref
@@ -5271,6 +5301,8 @@ void mus_xen_init(void)
   XEN_DEFINE_CONSTANT(S_tukey_window,           MUS_TUKEY_WINDOW,           H_tukey_window);
   XEN_DEFINE_CONSTANT(S_dolph_chebyshev_window, MUS_DOLPH_CHEBYSHEV_WINDOW, H_dolph_chebyshev_window);
 
+  XEN_DEFINE_CONSTANT(S_mus_linear,             MUS_LINEAR,                 "locsig linear interpolation");
+  XEN_DEFINE_CONSTANT(S_mus_sinusoidal,         MUS_SINUSOIDAL,             "locsig sinusoidal interpolation");
 
   XEN_DEFINE_PROCEDURE(S_mus_inspect,  g_inspect_w, 1, 0, 0,  H_mus_inspect);
   XEN_DEFINE_PROCEDURE(S_mus_describe, g_describe_w, 1, 0, 0, H_mus_describe);
@@ -5466,7 +5498,7 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_locsig_reverb_ref, g_locsig_reverb_ref_w, 2, 0, 0, H_locsig_reverb_ref);
   XEN_DEFINE_PROCEDURE(S_locsig_set,        g_locsig_set_w, 3, 0, 0,        H_locsig_set);
   XEN_DEFINE_PROCEDURE(S_locsig_reverb_set, g_locsig_reverb_set_w, 3, 0, 0, H_locsig_reverb_set);
-
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_locsig_type, g_locsig_type_w, H_locsig_type, S_set_locsig_type, g_set_locsig_type_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE(S_file2sample_p,    g_file2sample_p_w, 1, 0, 0,    H_file2sample_p);
   XEN_DEFINE_PROCEDURE(S_make_file2sample, g_make_file2sample_w, 1, 0, 0, H_make_file2sample);

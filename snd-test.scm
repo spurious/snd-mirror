@@ -6520,21 +6520,19 @@
 	     (lc (make-locsig 60.0 :reverb .1 :channels 4 :distance 4.0 :output gen :revout rev)))
 	(print-and-check lc
 			 "locsig"
-			 "locsig: chans 4, outn: [0.083 0.167 0.000 0.000]"
-			 "locs outn[4]: [0.083 0.167 0.000 0.000], revn[4]: [0.050 0.050 0.050 0.050]")
+			 "locsig: chans 4, outn: [0.083 0.167 0.000 0.000], revn: [0.017 0.033 0.000 0.000]"
+			 "locs outn[4]: [0.083 0.167 0.000 0.000], revn[4]: [0.017 0.033 0.000 0.000]")
 	(do ((i 0 (1+ i)))
 	    ((= i 100))
 	  (locsig lc i 1.0))
 	(do ((i 0 (1+ i)))
 	    ((= i 4))
-	  (IF (fneq (locsig-reverb-ref lc i) .05)
-	      (snd-display ";locsig reverb ref[~A]: ~A?" i (locsig-reverb-ref lc i)))
 	  (locsig-reverb-set! lc i (* i .1))
 	  (IF (fneq (locsig-reverb-ref lc i) (* i .1))
 	      (snd-display ";locsig reverb set![~A]: ~A?" i (locsig-reverb-ref lc i))))
 	(print-and-check lc
 			 "locsig"
-			 "locsig: chans 4, outn: [0.083 0.167 0.000 0.000]"
+			 "locsig: chans 4, outn: [0.083 0.167 0.000 0.000], revn: [0.000 0.100 0.200 0.300]"
 			 "locs outn[4]: [0.083 0.167 0.000 0.000], revn[4]: [0.000 0.100 0.200 0.300]")
 	(mus-close gen)
 	(mus-close rev))
@@ -6556,21 +6554,156 @@
 			 "locsig: chans 2, outn: [0.000 1.000]"
 			 "locs outn[2]: [0.000 1.000], revn[0]: nil")
 
-      (let ((gen (make-src :srate 2.0))
-	    (v0 (make-vct 10))
-	    (rd (make-readin "oboe.snd" 0 2000)))
-	(print-and-check gen 
-			 "src"
-			 "src: width: 10, x: 0.000, incr: 2.000, len: 10000"
-			 "sr x: 0.000000, incr: 2.000000, width: 10, len: 10000, data[21]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...]")
-	(do ((i 0 (1+ i)))
-	    ((= i 10))
-	  (vct-set! v0 i (src gen 0.0 (lambda (dir) (readin rd)))))
-	(IF (not (src? gen)) (snd-display ";~A not scr?" gen))
-	(IF (or (fneq (vct-ref v0 1) .001) (fneq (vct-ref v0 7) .021)) (snd-display ";src output: ~A" v0))
-	(IF (fneq (mus-increment gen) 2.0) (snd-display ";src increment: ~F?" (mus-increment gen))))
-
-      (let ((var (catch #t (lambda () (make-src :width -1)) (lambda args args))))
+	(for-each 
+	 (lambda (rev-chans)
+	   
+	   (define (locsig-scalers chans degree type)
+	     (define (fmod a b)
+	       (let ((pos (inexact->exact (floor (/ a b)))))
+		 (- a (* pos b))))
+	     (if (= chans 1)
+		 (vct 1.0)
+		 (let* ((deg (if (= chans 2)
+				 (max 0.0 (min 90.0 degree))
+				 (fmod degree 360.0)))
+			(degs-per-chan (if (= chans 2)
+					   90.0
+					   (/ 360.0 chans)))
+			(pos (/ deg degs-per-chan))
+			(left (inexact->exact (floor pos)))
+			(right (modulo (+ left 1) chans))
+			(frac (- pos left))
+			(v (make-vct chans)))
+		   (if (= type mus-linear)
+		       (begin
+			 (vct-set! v left (- 1.0 frac))
+			 (vct-set! v right frac))
+		       (let* ((ldeg (* (/ pi 2) (- 0.5 frac)))
+			      (norm (/ (sqrt 2.0) 2.0))
+			      (c (cos ldeg))
+			      (s (sin ldeg)))
+			 (vct-set! v left (* norm (+ c s)))
+			 (vct-set! v right (* norm (- c s)))))
+		   v)))
+	   
+	   (if (file-exists? "test.reverb") (delete-file "test.reverb"))
+	   (let ((revfile (if (> rev-chans 0)
+			      (make-frame->file "test.reverb" rev-chans mus-bshort mus-next)
+			      #f)))
+	     (for-each
+	      (lambda (type)
+		;; global type def as well as local par override etc
+		
+		(set! (locsig-type) type)
+		(IF (not (= (locsig-type) type)) (snd-display ";locsig-type: ~A ~A" type (locsig-type)))
+		
+		(call-with-current-continuation
+		 (lambda (quit)
+		   
+		   (for-each 
+		    (lambda (deg)
+		      (let ((gen (make-locsig deg :channels 1 :revout revfile :reverb .1 :distance 2.0))
+			    (revs (if revfile (locsig-scalers rev-chans deg type))))
+			(IF (not (= (mus-channels gen) 1)) (snd-display ";locsig ~A: ~A" deg gen))
+			(IF (fneq (locsig-ref gen 0) 0.5) (snd-display ";locsig scaler[~A] ~A: ~A" type deg (locsig-ref gen 0)))
+			(if revfile
+			    (do ((i 0 (1+ i)))
+				((= i rev-chans))
+			      (IF (fneq (locsig-reverb-ref gen i) (* (/ .1 (sqrt 2.0)) (vct-ref revs i)))
+				  (begin 
+				    (snd-display ";mono locrev[~A] ~A at ~A: ~A ~A" 
+						 type gen deg 
+						 (locsig-reverb-ref gen i) 
+						 (* (/ .1 (sqrt 2.0)) (vct-ref revs i)))
+				    (quit)))))))
+		    (list 0.0 45.0 90.0 1234.0))
+		   
+		   (for-each
+		    (lambda (ltype)
+		      (for-each 
+		       (lambda (deg)
+			 (let ((gen (make-locsig deg :channels 1 :type ltype)))
+			   (IF (not (= (mus-channels gen) 1)) (snd-display ";locsig ~A: ~A" deg gen))
+			   (IF (fneq (locsig-ref gen 0) 1.0) (snd-display ";locsig[~A] scaler ~A: ~A" ltype deg (locsig-ref gen 0)))))
+		       (list 0.0 45.0 90.0 1234.0)))
+		    (list mus-linear mus-sinusoidal))
+		   
+		   (for-each
+		    (lambda (chans)
+		      (for-each 
+		       (lambda (deg)
+			 (let ((gen (make-locsig deg :channels chans :revout revfile :reverb .1)))
+			   (IF (not (= (mus-channels gen) chans)) (begin (snd-display ";multi locsig ~A: ~A" deg gen) (quit)))
+			   (let ((scalers (locsig-scalers chans deg type))
+				 (revs (if revfile (locsig-scalers rev-chans deg type))))
+			     (do ((i 0 (1+ i)))
+				 ((= i chans))
+			       (IF (fneq (locsig-ref gen i) (vct-ref scalers i)) 
+				   (begin 
+				     (snd-display ";locsig[~A] ~A at ~A: ~A ~A" type gen deg (locsig-ref gen i) (vct-ref scalers i)) 
+				     (quit))))
+			     (if revfile
+				 (do ((i 0 (1+ i)))
+				     ((= i rev-chans))
+				   (IF (fneq (locsig-reverb-ref gen i) (* .1 (vct-ref revs i)))
+				       (begin 
+					 (snd-display ";locrev[~A] ~A at ~A: ~A ~A" 
+						      type gen deg 
+						      (locsig-reverb-ref gen i) 
+						      (* .1 (vct-ref revs i)))
+					 (quit))))))))
+		       (list 0.0 45.0 90.0 120.0 180.0 275.0 315.0 300.0 15.0 1234.0)))
+		    (list 2 3 4 5 8 12 16 24))
+		   
+		   (for-each
+		    (lambda (chans)
+		      (for-each 
+		       (lambda (ltype)
+			 (for-each
+			  (lambda (deg)
+			    (let ((gen (make-locsig deg :channels chans :type ltype :revout revfile :reverb .1)))
+			      (IF (not (= (mus-channels gen) chans)) (begin (snd-display ";stereo locsig ~A: ~A" deg gen) (quit)))
+			      (let ((scalers (locsig-scalers chans deg ltype))
+				    (revs (if revfile (locsig-scalers rev-chans deg ltype))))
+				(do ((i 0 (1+ i)))
+				    ((= i chans))
+				  (IF (fneq (locsig-ref gen i) (vct-ref scalers i)) 
+				      (begin
+					(snd-display ";locsig[~A] ~A at ~A: ~A ~A" ltype gen deg (locsig-ref gen i) (vct-ref scalers i))
+					(quit))))
+				(if revfile
+				    (do ((i 0 (1+ i)))
+					((= i rev-chans))
+				      (IF (fneq (locsig-reverb-ref gen i) (* .1 (vct-ref revs i)))
+					  (begin 
+					    (snd-display ";locrev[~A] ~A at ~A: ~A ~A" 
+							 type gen deg 
+							 (locsig-reverb-ref gen i) 
+							 (* .1 (vct-ref revs i)))
+					    (quit))))))))
+			  (list 0.0 45.0 90.0 120.0 180.0 275.0 315.0 300.0 15.0 1234.0)))
+		       (list mus-linear mus-sinusoidal)))
+		    (list 2 3 4 5 8 12 16 24))
+		   )))
+	      (list mus-linear mus-sinusoidal))
+	     (if revfile (mus-close revfile))))
+	 (list 0 1 2 4))
+	
+	(let ((gen (make-src :srate 2.0))
+	      (v0 (make-vct 10))
+	      (rd (make-readin "oboe.snd" 0 2000)))
+	  (print-and-check gen 
+			   "src"
+			   "src: width: 10, x: 0.000, incr: 2.000, len: 10000"
+			   "sr x: 0.000000, incr: 2.000000, width: 10, len: 10000, data[21]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...]")
+	  (do ((i 0 (1+ i)))
+	      ((= i 10))
+	    (vct-set! v0 i (src gen 0.0 (lambda (dir) (readin rd)))))
+	  (IF (not (src? gen)) (snd-display ";~A not scr?" gen))
+	  (IF (or (fneq (vct-ref v0 1) .001) (fneq (vct-ref v0 7) .021)) (snd-display ";src output: ~A" v0))
+	  (IF (fneq (mus-increment gen) 2.0) (snd-display ";src increment: ~F?" (mus-increment gen))))
+	
+	(let ((var (catch #t (lambda () (make-src :width -1)) (lambda args args))))
 	(IF (not (eq? (car var) 'mus-error))
 	    (snd-display ";make-src bad width: ~A" var)))
 
@@ -15518,6 +15651,40 @@ EDITS: 4
 		    (snd-display ";XtConvertCase: ~A" k))
 		(IF (not (equal? k x))
 		    (snd-display ";X(t)ConvertCase: ~A ~A" k x)))
+	      (let ((vals (|XtTranslateKeycode dpy (list 'KeyCode |XK_B) 0)))
+		(IF (or (not (= (car vals) 0))
+			(not (|KeySym? (cadr vals))))
+		    (snd-display ";XtTranslateKeycode: ~A" vals))
+		(IF (not (equal? vals (|XtTranslateKey dpy (list 'KeyCode |XK_B) 0)))
+		    (snd-display ";XtTranslateKey: ~A ~A" vals (|XtTranslateKey dpy (list 'KeyCode |XK_B) 0)))
+		(|XtSetKeyTranslator dpy #f)
+		(IF (not (equal? vals (|XtTranslateKeycode dpy (list 'KeyCode |XK_B) 0)))
+		    (snd-display ";XtSetKeyTranslator #f: ~A ~A" vals (|XtTranslateKeycode dpy (list 'KeyCode |XK_B) 0)))
+		(|XtSetKeyTranslator dpy (lambda (d k m)
+					   (IF (not (equal? d dpy)) (snd-display ";d in keyproc: ~A ~A" d dpy))
+					   (|XtTranslateKey d k m)))
+		(let ((newvals (|XtTranslateKeycode dpy (list 'KeyCode |XK_B) 0)))
+		  (IF (not (equal? vals newvals)) (snd-display ";XtSetKeyTranslator: ~A ~A" vals newvals)))
+		(|XtSetKeyTranslator dpy #f))
+	      (let ((kv (|XtKeysymToKeycodeList dpy (list 'KeySym 65509))))
+		(IF (not (equal? (car kv) (list 'KeyCode 66))) 
+		    (snd-display ";XtKeysymToKeycodeList: ~A ~A" kv (|XtKeysymToKeycodeList dpy (list 'KeySym 65509)))))
+	      (|XtInstallAllAccelerators (cadr (main-widgets)) (caddr (main-widgets)))
+	      (|XtInstallAccelerators (cadr (main-widgets)) (caddr (main-widgets)))
+	      (IF (not (equal? (list 0 1 2) (|XtSetArg 0 1 2))) (snd-display ";XtSetArg: ~A" (|XtSetArg 0 1 2)))
+	      (IF (not (|Widget? (|XtGetKeyboardFocusWidget (cadr (main-widgets)))))
+		  (snd-display ";XtGetKeyboardFocusWidget: ~A" (|XtGetKeyboardFocusWidget (cadr (main-widgets)))))
+	      (let ((id (|XtAddTimeOut 10000 (lambda (a b) 0) #f)))
+		(|XtRemoveTimeOut id)
+		(set! id (|XtAppAddTimeOut (car (main-widgets)) 10000 (lambda (a b) 0) #f))
+		(|XtRemoveTimeOut id))
+	      (let ((id (|XtAppAddInput (car (main-widgets)) 1 |XtInputReadMask (lambda (a b c) #f) #f)))
+		(|XtRemoveInput id)
+		(set! id (|XtAddInput 1 |XtInputReadMask (lambda (a b c) #f) #f))
+		(|XtRemoveInput id))
+	      (IF (not (equal? (caddr (main-widgets)) (|XtNameToWidget (cadr (main-widgets)) "mainpane")))
+		  (snd-display ";XtNameToWidget: ~A ~A" (caddr (main-widgets)) (|XtNameToWidget (cadr (main-widgets)) "mainpane")))
+	      (|XtVaCreatePopupShell "hiho" |vendorShellWidgetClass (cadr (main-widgets)) '())
 	      )
 
 	    (let ((pop (|XtCreatePopupShell "hiho" |xmGrabShellWidgetClass (cadr (main-widgets)) '())))

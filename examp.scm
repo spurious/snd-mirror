@@ -1935,6 +1935,7 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 
 ;;; -------- locsig using fancier placement choice
 ;;;
+;;; this is now built into the standard locsig
 
 (define (make-cpp-locsig . args)
   "(make-cpp-locsig .args) is a slightly fancier locsig -- it uses sin and cos to set respective amplitude. \
