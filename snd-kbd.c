@@ -759,13 +759,16 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	      if (sp->search_expr) FREE(sp->search_expr);
 	      sp->search_expr = copy_string(str);
 	      if (XEN_PROCEDURE_P(sp->search_proc))
-		snd_unprotect(sp->search_proc);
+		{
+		  snd_unprotect_at(sp->search_proc_loc);
+		  sp->search_proc_loc = -1;
+		}
 	      sp->search_proc = XEN_UNDEFINED;
 	      proc = snd_catch_any(eval_str_wrapper, str, str);
 	      if (procedure_ok_with_error(proc, 1, _("find"), _("find"), 1))
 		{
 		  sp->search_proc = proc;
-		  snd_protect(proc);
+		  sp->search_proc_loc = snd_protect(proc);
  		}
 	      if (active_chan) active_chan->last_search_result = SEARCH_OK;
 	    }
@@ -2054,7 +2057,10 @@ returned as a string; otherwise it is evaluated first as Scheme code"
   if ((sp == NULL) || (sp->inuse != SOUND_NORMAL))
     return(snd_no_such_sound_error(S_prompt_in_minibuffer, snd_n));
   if (XEN_PROCEDURE_P(sp->prompt_callback))
-    snd_unprotect(sp->prompt_callback);
+    {
+      snd_unprotect_at(sp->prompt_callback_loc);
+      sp->prompt_callback_loc = -1;
+    }
   sp->prompt_callback = XEN_FALSE; /* just in case something goes awry */
   if (XEN_BOUND_P(raw)) sp->raw_prompt = XEN_TO_C_BOOLEAN(raw); else sp->raw_prompt = false;
   if (XEN_PROCEDURE_P(callback))
@@ -2070,7 +2076,7 @@ returned as a string; otherwise it is evaluated first as Scheme code"
 				     errmsg,
 				     callback));
 	}
-      snd_protect(callback);  
+      sp->prompt_callback_loc = snd_protect(callback);  
     }
   sp->prompt_callback = callback;
   make_minibuffer_label(sp, XEN_TO_C_STRING(msg));

@@ -4572,7 +4572,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, char *caller)
 	      if (!(XEN_HOOK_P(cp->edit_hook)))
 		{
 		  XEN_DEFINE_SIMPLE_HOOK(cp->edit_hook, 0);
-		  snd_protect(cp->edit_hook);
+		  cp->edit_hook_loc = snd_protect(cp->edit_hook);
 		}
 	      return(cp->edit_hook);
 	      break;
@@ -4580,7 +4580,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, char *caller)
 	      if (!(XEN_HOOK_P(cp->after_edit_hook)))
 		{
 		  XEN_DEFINE_SIMPLE_HOOK(cp->after_edit_hook, 0);
-		  snd_protect(cp->after_edit_hook);
+		  cp->after_edit_hook_loc = snd_protect(cp->after_edit_hook);
 		}
 	      return(cp->after_edit_hook);
 	      break;
@@ -4588,7 +4588,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, char *caller)
 	      if (!(XEN_HOOK_P(cp->undo_hook)))
 		{
 		  XEN_DEFINE_SIMPLE_HOOK(cp->undo_hook, 0);
-		  snd_protect(cp->undo_hook);
+		  cp->undo_hook_loc = snd_protect(cp->undo_hook);
 		}
 	      return(cp->undo_hook);
 	      break;
@@ -4654,8 +4654,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, char *caller)
 	      if (!(XEN_VECTOR_P(cp->properties)))
 		{
 		  cp->properties = XEN_MAKE_VECTOR(1, XEN_EMPTY_LIST);
-		  /* snd_protect(cp->properties); */
-		  XEN_PROTECT_FROM_GC(cp->properties); /* permanent */
+		  cp->properties_loc = snd_protect(cp->properties);
 		}
 	      return(XEN_VECTOR_REF(cp->properties, 0));
 	      break;
@@ -5020,8 +5019,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *calle
       if (!(XEN_VECTOR_P(cp->properties)))
 	{
 	  cp->properties = XEN_MAKE_VECTOR(1, XEN_EMPTY_LIST);
-	  /* snd_protect(cp->properties); */
-	  XEN_PROTECT_FROM_GC(cp->properties); /* permanent */
+	  cp->properties_loc = snd_protect(cp->properties);
 	}
       XEN_VECTOR_SET(cp->properties, 0, on);
       return(XEN_VECTOR_REF(cp->properties, 0));

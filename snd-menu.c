@@ -551,6 +551,7 @@ static XEN g_set_save_state_file(XEN val)
 }
 
 static XEN *menu_functions = NULL;
+static int *menu_functions_loc = NULL;
 static int callbacks_size = 0;
 static int callb = 0;
 #define CALLBACK_INCR 16
@@ -568,11 +569,15 @@ static int make_callback_slot(void)
 	{
 	  menu_functions = (XEN *)CALLOC(callbacks_size, sizeof(XEN));
 	  for (i = 0; i < callbacks_size; i++) menu_functions[i] = XEN_UNDEFINED;
+	  menu_functions_loc = (int *)CALLOC(callbacks_size, sizeof(int));
+	  for (i = 0; i < callbacks_size; i++) menu_functions_loc[i] = -1;
 	}
       else 
 	{
 	  menu_functions = (XEN *)REALLOC(menu_functions, callbacks_size * sizeof(XEN));
 	  for (i = callbacks_size - CALLBACK_INCR; i < callbacks_size; i++) menu_functions[i] = XEN_UNDEFINED;
+	  menu_functions_loc = (int *)REALLOC(menu_functions_loc, callbacks_size * sizeof(int));
+	  for (i = callbacks_size - CALLBACK_INCR; i < callbacks_size; i++) menu_functions_loc[i] = -1;
 	}
     }
   old_callb = callb;
@@ -585,7 +590,7 @@ static void add_callback(int slot, XEN callback)
   if ((slot >= 0) && (slot < callbacks_size))
     {
       menu_functions[slot] = callback;
-      snd_protect(callback);
+      menu_functions_loc[slot] = snd_protect(callback);
     }
 }
 
@@ -595,7 +600,10 @@ void unprotect_callback(int slot)
   if ((slot >= 0) && (slot < callbacks_size))
     {
       if (XEN_PROCEDURE_P(menu_functions[slot]))
-	snd_unprotect(menu_functions[slot]);
+	{
+	  snd_unprotect_at(menu_functions_loc[slot]);
+	  menu_functions_loc[slot] = -1;
+	}
       menu_functions[slot] = XEN_FALSE;  /* not XEN_UNDEFINED -- need a way to distinguish "no callback" from "recyclable slot" */
     }
 }

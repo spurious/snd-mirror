@@ -1070,7 +1070,9 @@ if test $GUILE_CONFIG_works = yes; then
       echo found old out-of-date Guile library
     fi
     if test "`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string>=? (version) "1.5"))'`" = "#t"; then
-      AC_DEFINE(WITH_RUN)
+      if test $ac_cv_c_stringize = yes; then
+        AC_DEFINE(WITH_RUN)
+      fi
     fi
   fi
 else

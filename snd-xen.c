@@ -11,7 +11,7 @@
 
 static XEN gc_protection;
 static int gc_protection_size = 0;
-#define DEFAULT_GC_VALUE XEN_ZERO
+#define DEFAULT_GC_VALUE XEN_UNDEFINED
 static int gc_last_cleared = -1;
 static int gc_last_set = -1;
 
@@ -24,7 +24,7 @@ void dump_protection(FILE *Fp)
   if (XEN_VECTOR_P(gc_protection))
     {
       int i;
-      fprintf(Fp, "\n\nsnd_protect (%d table size, used: %d):\n", gc_protection_size, max_gc_index);
+      fprintf(Fp, "\n\nsnd_protect (%d table size, most used: %d):\n", gc_protection_size, max_gc_index);
       for (i = 0; i < gc_protection_size; i++)
 	{
 	  XEN gcdat;
@@ -53,11 +53,6 @@ int snd_protect(XEN obj)
 {
   int i, old_size;
   XEN tmp;
-  if ((XEN_NUMBER_P(obj)) || 
-      (XEN_EQ_P(obj, XEN_EMPTY_LIST)) ||
-      (XEN_FALSE_P(obj)) || 
-      (XEN_TRUE_P(obj)))
-    return(-1);
   if (gc_protection_size == 0)
     {
       gc_protection_size = 128;
@@ -113,7 +108,6 @@ int snd_protect(XEN obj)
 #if HAVE_RUBY
       XEN_UNPROTECT_FROM_GC(tmp);
 #endif
-
 #if DEBUGGING
       snd_protect_callers = (char **)realloc(snd_protect_callers, gc_protection_size * sizeof(char *));
       snd_protect_callers[old_size] = (char *)caller;
@@ -126,30 +120,6 @@ int snd_protect(XEN obj)
   return(gc_last_set);
 }
 
-void snd_unprotect(XEN obj)
-{
-  int i;
-  if (XEN_EQ_P(obj, XEN_EMPTY_LIST)) return;
-  if ((gc_last_set >= 0) && 
-      (XEN_EQ_P(XEN_VECTOR_REF(gc_protection, gc_last_set), obj)))
-    {
-      XEN_VECTOR_SET(gc_protection, gc_last_set, DEFAULT_GC_VALUE);
-      gc_last_cleared = gc_last_set;
-      gc_last_set = -1;
-      return;
-    }
-  for (i = 0; i < gc_protection_size; i++)
-    if (XEN_EQ_P(XEN_VECTOR_REF(gc_protection, i), obj))
-      {
-	XEN_VECTOR_SET(gc_protection, i, DEFAULT_GC_VALUE);
-	gc_last_cleared = i;
-	return;
-      }
-#if DEBUGGING
-  fprintf(stderr, "can't unprotect %s", XEN_AS_STRING(obj));
-#endif
-}
-
 void snd_unprotect_at(int loc)
 {
   if (loc >= 0)
@@ -157,6 +127,13 @@ void snd_unprotect_at(int loc)
       XEN_VECTOR_SET(gc_protection, loc, DEFAULT_GC_VALUE);
       gc_last_cleared = loc;
     }
+#if DEBUGGING
+  else
+    {
+      fprintf(stderr,"attempt to unprotect at %d\n", loc);
+      abort();
+    }
+#endif  
 }
 
 

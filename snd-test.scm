@@ -1317,7 +1317,7 @@
 	    (list "oboe.nsp" 1 22050 2.305125 "CSL" "little endian short (16 bits)")
 	    (list "oboe.nvf" 1 8000 6.353500 "Creative NVF" "unknown")
 	    (list "oboe-ulaw.voc" 1 22050 2.305669 "VOC" "mulaw (8 bits)")
-	    (list "oboe-lf32.voc" 1 22050 2.305669 "IRCAM" "little endian float (32 bits)")
+	    (list "oboe-lf32.sf" 1 22050 2.305669 "IRCAM" "little endian float (32 bits)")
 	    (list "oboe.wfp" 1 22050 2.305125 "Turtle Beach" "little endian short (16 bits)")
 	    (list "oki.snd" 2 44100 0.0041950112208724 "raw (no header)" "big endian short (16 bits)")
 	    (list "oki.wav" 1 44100 0.016780 "RIFF" "unknown")
@@ -34233,6 +34233,17 @@ EDITS: 2
 			      (set! ctr (1+ ctr))
 			      #f)))
 	    (if (fneq diff 0.0) (snd-display ";arr->file->array overall max diff: ~A" diff))))
+
+	;; now clear sono bins if possible 
+;	(set! (colormap) 1)
+	(set! (colormap-size) 16)
+	(set! (transform-size ind 0) 8)
+	(set! (transform-graph-type ind 0) graph-as-sonogram)
+	(set! (transform-graph? ind 0) #t)
+	(update-transform-graph)
+	(set! (x-bounds) (list 0.0 .04))
+	(update-time-graph)
+	(update-transform-graph)
 	(close-sound ind))
 
       (if (file-exists? "test.snd") (delete-file "test.snd"))
@@ -39462,6 +39473,7 @@ EDITS: 2
 
       (run-hook after-test-hook 22)
       ))
+
 
 
 ;;; ---------------- test 23: with-sound ----------------

@@ -97,7 +97,8 @@ static XEN optimization_hook;
 enum {RUN_UNSAFE, RUN_SAFE};
 static int run_safety = RUN_UNSAFE;
 
-#if HAVE_GUILE && WITH_RUN && HAVE_STRINGIZE
+/* WITH_RUN set only if HAVE_STRINGIZE, HAVE_GUILE, and Guile version >= 1.5 */
+#if WITH_RUN
 
 #define Int off_t
 #define INT_PT  "i%d(%lld)"
@@ -8992,7 +8993,8 @@ PV_VCT_1(phases)
 PV_VCT_1(phase_increments)
 
 INT_GEN0(phase_vocoder_outctr)
-
+#if 0
+  /* this code needs to be folded into generalized set! */
 static char *descr_pv_set_outctr(int *args, ptree *pt)
 {
   return(mus_format("phase-vocoder-set-outctr(" CLM_PT ", " INT_PT ")" , args[0], DESC_CLM_RESULT, args[1], INT_ARG_1));
@@ -9003,7 +9005,7 @@ static xen_value *mus_phase_vocoder_set_outctr_1(ptree *prog, xen_value **args, 
   if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, phase_vocoder_check, descr_phase_vocoder_check, args, 1);
   return(package(prog, R_INT, pv_set_outctr, descr_pv_set_outctr, args, 2));
 }
-
+#endif
 
 /* ---------------- contrast_enhancement ---------------- */
 
@@ -10825,273 +10827,6 @@ static XEN eval_ptree_to_xen(ptree *pt)
   return(result);
 }
 
-/* ---------------- internal testing stuff ---------------- */
-
-static XEN g_run_eval(XEN code, XEN arg, XEN arg1, XEN arg2)
-{
-  ptree *pt;
-  XEN result = XEN_FALSE;
-  current_optimization = SOURCE_OK;
-  pt = make_ptree(8);
-  pt->result = walk(pt, code, NEED_ANY_RESULT);
-  if (pt->result)
-    {
-      add_triple_to_ptree(pt, make_triple(quit, descr_quit, NULL, 0));
-#ifdef DESCRIBE_PTREE
-      {
-	char *msg;
-	msg = describe_ptree(pt);
-	if (ptree_on == STDERR_PTREE_DISPLAY) fprintf(stderr, msg);
-	else if (ptree_on == LISTENER_PTREE_DISPLAY) listener_append(msg);
-	FREE(msg);
-      }
-#endif
-      if (pt->args)
-	{
-	  bool arity_err = false;
-	  if (pt->arity > 3)
-	    arity_err = true;
-	  else
-	    {
-	      if (pt->arity > 0)
-		{
-		  if (XEN_BOUND_P(arg))
-		    {
-		      xen_to_addr(pt, arg, pt->arg_types[0], pt->args[0]);
-		      if (pt->arity > 1)
-			{
-			  if (XEN_BOUND_P(arg1))
-			    {
-			      xen_to_addr(pt, arg1, pt->arg_types[1], pt->args[1]);
-			      if (pt->arity > 2)
-				{
-				  if (XEN_BOUND_P(arg2))
-				    xen_to_addr(pt, arg2, pt->arg_types[2], pt->args[2]);
-				  else arity_err = true;
-				}
-			    }
-			  else arity_err = true;
-			}
-		    }
-		  else arity_err = true;
-		}
-	    }
-	  if (arity_err) 
-	    {
-	      free_ptree((void *)pt); 
-	      XEN_ERROR(XEN_ERROR_TYPE("wrong-number-of-args"), code); 
-	      return(XEN_FALSE);
-	    }
-	}
-      eval_ptree(pt);
-      result = eval_ptree_to_xen(pt);
-      free_ptree((void *)pt);
-      return(result);
-    }
-  if (pt) free_ptree((void *)pt);
-  XEN_ERROR(CANNOT_PARSE,
-	    code);
-  return(XEN_FALSE);
-}
-#else
-void *form_to_ptree_1_b(XEN code) {return(NULL);}
-void *form_to_ptree_3_f(XEN code) {return(NULL);}
-void *form_to_ptree_1_b_without_env(XEN code) {return(NULL);}
-void *form_to_ptree_1_f(XEN code) {return(NULL);}
-Float evaluate_ptree_1f1v1b2f(void *upt, Float arg, vct *v, bool dir) {return(0.0);}
-Float evaluate_ptree_0f2f(void *upt) {return(0.0);}
-void *form_to_ptree_0_f(XEN code) {return(NULL);}
-Float evaluate_ptree_1f2f(void *upt, Float arg) {return(0.0);}
-int evaluate_ptree_1f2b(void *upt, Float arg) {return(0);}
-void *free_ptree(void *upt) {return(NULL);}
-XEN ptree_code(void *p) {return(XEN_FALSE);}
-Float evaluate_ptreec(void *upt, Float arg, vct *v, bool dir) {return(0.0);}
-#endif
-/* end with_run && have_guile and so on */
-
-
-#if 0
-/*
-;;; -------- vct-map
-
- (define (vct-map . args)
-  "(vct-map thunk v0 ...) calls 'thunk' within vct-map! applying the frame result to the vcts passed. \
-This is intended for use with locsig in multi-channel situations where you want the optimization that \
-vct-map! provides."
-  (let* ((func (car args))
-	 (vcts (cdr args))
-	 (len (length vcts))
-	 (vect (make-vector len)))
-    (let ((i 0))
-      (for-each
-       (lambda (v)
-	 (vector-set! vect i v)
-	 (set! i (1+ i)))
-       vcts))
-    (vct-map! 
-     (vector-ref vect 0)
-     (let ((ctr 0))
-       (lambda ()
-	 (let* ((fr (func))
-		(chans (mus-channels fr)))
-	   (do ((i 1 (1+ i)))
-	       ((= i chans))
-	     (vct-set! (vector-ref vect i) ctr (frame-ref fr i)))
-	   (set! ctr (1+ ctr))
-	   (frame-ref fr 0)))))))
-	   */
-#endif
-/* that Scheme code would have worked except I don't currently optimize "(func)",
-   so, we need (at least for now), a C version:
-*/
-
-static XEN g_vct_map(XEN proc_and_code, XEN arglist)
-{
-  #define H_vct_map "(" S_vct_map " thunk v ...): call 'thunk' which should return a frame; the frame result \
-is then parcelled out to the vcts passed as the trailing arguments.  This is intended for use with locsig \
-in multi-channel situations where you want the optimization that vct-map! provides."
-  int i, j, len, min_len = 0;
-  vct **vs = NULL;
-  XEN proc, obj, code;
-  Float *vals;
-  mus_any *f;
-  if (XEN_LIST_P(proc_and_code))
-    {
-      proc = XEN_CAR(proc_and_code);
-      code = XEN_CADR(proc_and_code);
-    }
-  else
-    {
-      proc = proc_and_code;
-      code = proc_and_code;
-    }
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code) && (XEN_REQUIRED_ARGS_OK(code, 0)), code, XEN_ARG_1, S_vct_map, "a thunk");
-  len = XEN_LIST_LENGTH(arglist);
-  if (len == 0)
-    mus_misc_error(S_vct_map, "no vcts passed to vct-map", arglist);
-  vs = (vct **)CALLOC(len, sizeof(vct *));
-  for (i = 0; i < len; i++, arglist = XEN_CDR(arglist))
-    {
-      obj = XEN_CAR(arglist);
-      if (!(VCT_P(obj)))
-	{
-	  FREE(vs);
-	  vs = NULL;
-	  XEN_ASSERT_TYPE(false, obj, i + 2, S_vct_map, "a vct"); /* i.e. throw the error */
-	  return(XEN_FALSE); /* won't happen, I hope */
-	}
-      vs[i] = TO_VCT(obj);
-      if (min_len == 0)
-	min_len = vs[i]->length;
-      else
-	{
-	  if (min_len > vs[i]->length)
-	    min_len = vs[i]->length;
-	}
-    }
-
-#if WITH_RUN
-  if (optimization(ss) != DONT_OPTIMIZE)
-    {
-      ptree *pt = NULL;
-      pt = (ptree *)form_to_ptree(proc_and_code);
-      if (pt)
-	{
-	  for (i = 0; i < min_len; i++) 
-	    {
-	      eval_ptree(pt);
-	      vals = mus_data(pt->clms[pt->result->addr]);
-	      for (j = 0; j < len; j++)
-		vs[j]->data[i] = vals[j];
-	    }
-	  if (pt) free_ptree(pt);
-	  if (vs) FREE(vs);
-	  return(proc);
-	}
-      /* else fall through to guile */
-      if (pt) free_ptree(pt);
-    }
-#endif
-
-  for (i = 0; i < min_len; i++) 
-    {
-      obj = XEN_CALL_0_NO_CATCH(code);
-      if (mus_xen_p(obj))
-	{
-	  f = XEN_TO_MUS_ANY(obj);
-	  if (mus_frame_p(f))
-	    {
-	      vals = mus_data(f);
-	      if (vals)
-		for (j = 0; j < len; j++)
-		  vs[j]->data[i] = vals[j];
-	    }
-	}
-    }
-  if (vs) FREE(vs);
-  return(proc);
-}
-
-static XEN g_optimization(void) {return(C_TO_XEN_INT(optimization(ss)));}
-static XEN g_set_optimization(XEN val) 
-{
-  #define H_optimization "(" S_optimization "): the current 'run' optimization level (default 0 = off, max is 6)"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_optimization, "an integer");
-  set_optimization(XEN_TO_C_INT(val));
-  return(C_TO_XEN_INT(optimization(ss)));
-}
-
-static XEN g_run_safety(void) {return(C_TO_XEN_INT(run_safety));}
-static XEN g_set_run_safety(XEN val) 
-{
-  #define H_run_safety "(" S_run_safety "): the current 'run' safety level (default 0 = off)"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_run_safety, "an integer");
-  run_safety = XEN_TO_C_INT(val);
-  if ((run_safety != RUN_SAFE) && (run_safety != RUN_UNSAFE))
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_run_safety, XEN_ONLY_ARG, val, "must be 0 (no checks) or 1 (with checks)");
-  return(C_TO_XEN_INT(run_safety));
-}
-
-#if WITH_RUN
-static XEN g_run(XEN proc_and_code)
-{
-  #define H_run "(" S_run " thunk): try to optimize the procedure passed as its argument, \
-then evaluate it; if the optimizer can't handle something in the procedure, it is passed \
-to Guile and is equivalent to (thunk)."
-
-  XEN code, result = XEN_FALSE;
-  ptree *pt = NULL;
-  code = XEN_CADR(proc_and_code);
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code) && (XEN_REQUIRED_ARGS_OK(code, 0)), code, XEN_ONLY_ARG, S_run, "a thunk");
-  pt = (ptree *)form_to_ptree(proc_and_code);
-  if (pt)
-    {
-      eval_ptree(pt);
-      result = eval_ptree_to_xen(pt);
-      free_ptree(pt);
-    }
-  else result = XEN_CALL_0(code, S_run);
-  return(result);
-}
-#endif
-
-#ifdef XEN_ARGIFY_1
-XEN_NARGIFY_0(g_optimization_w, g_optimization)
-XEN_NARGIFY_1(g_set_optimization_w, g_set_optimization)
-XEN_NARGIFY_0(g_run_safety_w, g_run_safety)
-XEN_NARGIFY_1(g_set_run_safety_w, g_set_run_safety)
-XEN_NARGIFY_2(g_vct_map_w, g_vct_map)
-#else
-#define g_optimization_w g_optimization
-#define g_set_optimization_w g_set_optimization
-#define g_run_safety_w g_run_safety
-#define g_set_run_safety_w g_set_run_safety
-#define g_vct_map_w g_vct_map
-#endif
-
-#if HAVE_GUILE && WITH_RUN
-
-/* make_walker: walker, special walker, set walker, req args, max args, result type, need int, num arg types, ... */
 #if WITH_PROCPROP
 #define INIT_WALKER(Name, Val) \
   XEN_SET_OBJECT_PROPERTY(C_STRING_TO_XEN_SYMBOL(Name), walk_sym, C_TO_XEN_ULONG(Val)); \
@@ -11110,6 +10845,8 @@ static void init_walkers(void)
   XEN_DEFINE_VARIABLE("declare", declare, XEN_FALSE);
   walk_sym = C_STRING_TO_XEN_SYMBOL("snd-walk");
   XEN_PROTECT_FROM_GC(walk_sym);
+
+  /* make_walker: walker, special walker, set walker, req args, max args, result type, need int, num arg types, ... */
 
   /* -------- special forms */
   INIT_WALKER("let", make_walker(NULL, let_form, NULL, 2, UNLIMITED_ARGS, R_ANY, false, 0));
@@ -11387,7 +11124,7 @@ static void init_walkers(void)
   INIT_WALKER(S_phase_vocoder_phases, make_walker(phase_vocoder_phases_1, NULL, NULL, 1, 1, R_VCT, false, 0));
   INIT_WALKER(S_phase_vocoder_phase_increments, make_walker(phase_vocoder_phase_increments_1, NULL, NULL, 1, 1, R_VCT, false, 0));
   INIT_WALKER(S_phase_vocoder_outctr, make_walker(mus_phase_vocoder_outctr_0, NULL, NULL, 1, 1, R_INT, false, 1, R_CLM));
-  INIT_WALKER(S_phase_vocoder_set_outctr, make_walker(mus_phase_vocoder_set_outctr_1, NULL, NULL, 2, 2, R_INT, false, 2, R_CLM, R_INT));
+  /* the set side for outctr needs to be handled as a generalized set! */
 
   INIT_WALKER(S_formant, make_walker(formant_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_filter, make_walker(filter_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
@@ -11600,6 +11337,229 @@ static void init_walkers(void)
 
   INIT_WALKER(S_fft, make_walker(fft_1, NULL, NULL, 2, 3, R_VCT, false, 3, R_VCT, R_VCT, R_INT));
 }
+
+static XEN g_run_eval(XEN code, XEN arg, XEN arg1, XEN arg2)
+{
+  ptree *pt;
+  XEN result = XEN_FALSE;
+  current_optimization = SOURCE_OK;
+  pt = make_ptree(8);
+  pt->result = walk(pt, code, NEED_ANY_RESULT);
+  if (pt->result)
+    {
+      add_triple_to_ptree(pt, make_triple(quit, descr_quit, NULL, 0));
+#ifdef DESCRIBE_PTREE
+      {
+	char *msg;
+	msg = describe_ptree(pt);
+	if (ptree_on == STDERR_PTREE_DISPLAY) fprintf(stderr, msg);
+	else if (ptree_on == LISTENER_PTREE_DISPLAY) listener_append(msg);
+	FREE(msg);
+      }
+#endif
+      if (pt->args)
+	{
+	  bool arity_err = false;
+	  if (pt->arity > 3)
+	    arity_err = true;
+	  else
+	    {
+	      if (pt->arity > 0)
+		{
+		  if (XEN_BOUND_P(arg))
+		    {
+		      xen_to_addr(pt, arg, pt->arg_types[0], pt->args[0]);
+		      if (pt->arity > 1)
+			{
+			  if (XEN_BOUND_P(arg1))
+			    {
+			      xen_to_addr(pt, arg1, pt->arg_types[1], pt->args[1]);
+			      if (pt->arity > 2)
+				{
+				  if (XEN_BOUND_P(arg2))
+				    xen_to_addr(pt, arg2, pt->arg_types[2], pt->args[2]);
+				  else arity_err = true;
+				}
+			    }
+			  else arity_err = true;
+			}
+		    }
+		  else arity_err = true;
+		}
+	    }
+	  if (arity_err) 
+	    {
+	      free_ptree((void *)pt); 
+	      XEN_ERROR(XEN_ERROR_TYPE("wrong-number-of-args"), code); 
+	      return(XEN_FALSE);
+	    }
+	}
+      eval_ptree(pt);
+      result = eval_ptree_to_xen(pt);
+      free_ptree((void *)pt);
+      return(result);
+    }
+  if (pt) free_ptree((void *)pt);
+  XEN_ERROR(CANNOT_PARSE,
+	    code);
+  return(XEN_FALSE);
+}
+
+static XEN g_run(XEN proc_and_code)
+{
+  #define H_run "(" S_run " thunk): try to optimize the procedure passed as its argument, \
+then evaluate it; if the optimizer can't handle something in the procedure, it is passed \
+to Guile and is equivalent to (thunk)."
+
+  XEN code, result = XEN_FALSE;
+  ptree *pt = NULL;
+  code = XEN_CADR(proc_and_code);
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code) && (XEN_REQUIRED_ARGS_OK(code, 0)), code, XEN_ONLY_ARG, S_run, "a thunk");
+  pt = (ptree *)form_to_ptree(proc_and_code);
+  if (pt)
+    {
+      eval_ptree(pt);
+      result = eval_ptree_to_xen(pt);
+      free_ptree(pt);
+    }
+  else result = XEN_CALL_0(code, S_run);
+  return(result);
+}
+
+#else
+void *form_to_ptree_1_b(XEN code) {return(NULL);}
+void *form_to_ptree_3_f(XEN code) {return(NULL);}
+void *form_to_ptree_1_b_without_env(XEN code) {return(NULL);}
+void *form_to_ptree_1_f(XEN code) {return(NULL);}
+Float evaluate_ptree_1f1v1b2f(void *upt, Float arg, vct *v, bool dir) {return(0.0);}
+Float evaluate_ptree_0f2f(void *upt) {return(0.0);}
+void *form_to_ptree_0_f(XEN code) {return(NULL);}
+Float evaluate_ptree_1f2f(void *upt, Float arg) {return(0.0);}
+int evaluate_ptree_1f2b(void *upt, Float arg) {return(0);}
+void *free_ptree(void *upt) {return(NULL);}
+XEN ptree_code(void *p) {return(XEN_FALSE);}
+Float evaluate_ptreec(void *upt, Float arg, vct *v, bool dir) {return(0.0);}
+#endif
+/* endif WITH_RUN */
+
+static XEN g_vct_map(XEN proc_and_code, XEN arglist)
+{
+  #define H_vct_map "(" S_vct_map " thunk v ...): call 'thunk' which should return a frame; the frame result \
+is then parcelled out to the vcts passed as the trailing arguments.  This is intended for use with locsig \
+in multi-channel situations where you want the optimization that vct-map! provides."
+  int i, j, len, min_len = 0;
+  vct **vs = NULL;
+  XEN proc, obj, code;
+  Float *vals;
+  mus_any *f;
+  if (XEN_LIST_P(proc_and_code))
+    {
+      proc = XEN_CAR(proc_and_code);
+      code = XEN_CADR(proc_and_code);
+    }
+  else
+    {
+      proc = proc_and_code;
+      code = proc_and_code;
+    }
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code) && (XEN_REQUIRED_ARGS_OK(code, 0)), code, XEN_ARG_1, S_vct_map, "a thunk");
+  len = XEN_LIST_LENGTH(arglist);
+  if (len == 0)
+    mus_misc_error(S_vct_map, "no vcts passed to vct-map", arglist);
+  vs = (vct **)CALLOC(len, sizeof(vct *));
+  for (i = 0; i < len; i++, arglist = XEN_CDR(arglist))
+    {
+      obj = XEN_CAR(arglist);
+      if (!(VCT_P(obj)))
+	{
+	  FREE(vs);
+	  vs = NULL;
+	  XEN_ASSERT_TYPE(false, obj, i + 2, S_vct_map, "a vct"); /* i.e. throw the error */
+	  return(XEN_FALSE); /* won't happen, I hope */
+	}
+      vs[i] = TO_VCT(obj);
+      if (min_len == 0)
+	min_len = vs[i]->length;
+      else
+	{
+	  if (min_len > vs[i]->length)
+	    min_len = vs[i]->length;
+	}
+    }
+#if WITH_RUN
+  if (optimization(ss) != DONT_OPTIMIZE)
+    {
+      ptree *pt = NULL;
+      pt = (ptree *)form_to_ptree(proc_and_code);
+      if (pt)
+	{
+	  for (i = 0; i < min_len; i++) 
+	    {
+	      eval_ptree(pt);
+	      vals = mus_data(pt->clms[pt->result->addr]);
+	      for (j = 0; j < len; j++)
+		vs[j]->data[i] = vals[j];
+	    }
+	  if (pt) free_ptree(pt);
+	  if (vs) FREE(vs);
+	  return(proc);
+	}
+      /* else fall through to guile */
+      if (pt) free_ptree(pt);
+    }
+#endif
+
+  for (i = 0; i < min_len; i++) 
+    {
+      obj = XEN_CALL_0_NO_CATCH(code);
+      if (mus_xen_p(obj))
+	{
+	  f = XEN_TO_MUS_ANY(obj);
+	  if (mus_frame_p(f))
+	    {
+	      vals = mus_data(f);
+	      if (vals)
+		for (j = 0; j < len; j++)
+		  vs[j]->data[i] = vals[j];
+	    }
+	}
+    }
+  if (vs) FREE(vs);
+  return(proc);
+}
+
+static XEN g_optimization(void) {return(C_TO_XEN_INT(optimization(ss)));}
+static XEN g_set_optimization(XEN val) 
+{
+  #define H_optimization "(" S_optimization "): the current 'run' optimization level (default 0 = off, max is 6)"
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_optimization, "an integer");
+  set_optimization(XEN_TO_C_INT(val));
+  return(C_TO_XEN_INT(optimization(ss)));
+}
+
+static XEN g_run_safety(void) {return(C_TO_XEN_INT(run_safety));}
+static XEN g_set_run_safety(XEN val) 
+{
+  #define H_run_safety "(" S_run_safety "): the current 'run' safety level (default 0 = off)"
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_run_safety, "an integer");
+  run_safety = XEN_TO_C_INT(val);
+  if ((run_safety != RUN_SAFE) && (run_safety != RUN_UNSAFE))
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_run_safety, XEN_ONLY_ARG, val, "must be 0 (no checks) or 1 (with checks)");
+  return(C_TO_XEN_INT(run_safety));
+}
+
+#ifdef XEN_ARGIFY_1
+XEN_NARGIFY_0(g_optimization_w, g_optimization)
+XEN_NARGIFY_1(g_set_optimization_w, g_set_optimization)
+XEN_NARGIFY_0(g_run_safety_w, g_run_safety)
+XEN_NARGIFY_1(g_set_run_safety_w, g_set_run_safety)
+XEN_NARGIFY_2(g_vct_map_w, g_vct_map)
+#else
+#define g_optimization_w g_optimization
+#define g_set_optimization_w g_set_optimization
+#define g_run_safety_w g_run_safety
+#define g_set_run_safety_w g_set_run_safety
+#define g_vct_map_w g_vct_map
 #endif
 
 void g_init_run(void)
@@ -11627,18 +11587,18 @@ void g_init_run(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_run_safety, g_run_safety_w, H_run_safety,
 				   S_setB S_run_safety, g_set_run_safety_w,  0, 0, 1, 0);
 
-#if HAVE_GUILE
+#if WITH_RUN
   #define H_optimization_hook S_optimization_hook " (msg): called if the run macro encounters \
 something it can't optimize.  'msg' is a string description of the offending form:\n\
   (add-hook! optimization-hook (lambda (msg) (snd-print msg)))\n\
 You can often slightly rewrite the form to make run happy."
 #else
-#define H_optimization_hook S_optimization_hook " (msg): has no effect since 'run' is Guile-specific."
+#define H_optimization_hook S_optimization_hook " (msg): has no effect since 'run' is not included in this version of Snd."
 #endif
 
   XEN_DEFINE_HOOK(optimization_hook, S_optimization_hook, 1, H_optimization_hook);      /* arg = message */
 
-#if HAVE_GUILE && WITH_RUN 
+#if WITH_RUN 
   init_walkers();
   init_type_names();
 #endif

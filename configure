@@ -10100,7 +10100,7 @@ _ACEOF
 fi
 
     else
-# need to check for -lXmu required by (buggy) libXm.a (openmotif 2.2.2)
+        # need to check for -lXmu required by (buggy) libXm.a (openmotif 2.2.2)
 	echo "$as_me:$LINENO: checking whether libXm requires libXmu" >&5
 echo $ECHO_N "checking whether libXm requires libXmu... $ECHO_C" >&6
 	cat >conftest.$ac_ext <<_ACEOF
@@ -11181,7 +11181,8 @@ sed 's/^/| /' conftest.$ac_ext >&5
 
 echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
-# perhaps the user hasn't installed the Motif headers?
+
+            # perhaps the user hasn't installed the Motif headers?
              echo "$as_me:$LINENO: checking for Motif headers" >&5
 echo $ECHO_N "checking for Motif headers... $ECHO_C" >&6
 	     cat >conftest.$ac_ext <<_ACEOF
@@ -15421,10 +15422,12 @@ echo "${ECHO_T}no" >&6
       echo found old out-of-date Guile library
     fi
     if test "`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string>=? (version) "1.5"))'`" = "#t"; then
-      cat >>confdefs.h <<\_ACEOF
+      if test $ac_cv_c_stringize = yes; then
+        cat >>confdefs.h <<\_ACEOF
 #define WITH_RUN 1
 _ACEOF
 
+      fi
     fi
   fi
 else

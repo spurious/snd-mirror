@@ -265,9 +265,9 @@ typedef struct chan_info {
   XEN edit_hook;
   XEN undo_hook;
   XEN cursor_proc;
-  int cursor_proc_loc;
   XEN after_edit_hook;
   XEN properties;
+  int cursor_proc_loc, edit_hook_loc, undo_hook_loc, after_edit_hook_loc, properties_loc;
   bool selection_visible, active;
   Locus old_x0, old_x1;
   Float *amp_control; /* local amp controls in snd-dac; should it be extended to other controls? */
@@ -318,6 +318,7 @@ typedef struct snd_info {
   XEN search_proc;
   XEN prompt_callback;
   XEN properties;
+  int search_proc_loc, prompt_callback_loc, properties_loc;
   bool raw_prompt;
   char *search_expr;
   off_t marking;
@@ -359,7 +360,7 @@ typedef struct snd_state {
   void *search_tree;
   XEN search_proc;
   XEN file_sort_proc;
-  int catch_exists;
+  int catch_exists, file_sort_proc_loc, search_proc_loc;
   char *catch_message;
 #if (!USE_GTK)
   bool using_schemes;
@@ -894,7 +895,6 @@ bool procedure_arity_ok(XEN proc, int args);
 #else
   int snd_protect(XEN obj);
 #endif
-void snd_unprotect(XEN obj);
 void snd_unprotect_at(int loc);
 XEN run_or_hook (XEN hook, XEN args, const char *caller);
 XEN run_progn_hook (XEN hook, XEN args, const char *caller);

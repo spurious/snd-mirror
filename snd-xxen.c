@@ -2,8 +2,9 @@
 
 static void timed_eval(XtPointer in_code, XtIntervalId *id)
 {
-  XEN_CALL_0((XEN)in_code, "timed callback func");
-  snd_unprotect((XEN)in_code);
+  XEN lst = (XEN)in_code;
+  XEN_CALL_0(XEN_CADR(lst), "timed callback func");
+  snd_unprotect_at(XEN_TO_C_INT(XEN_CAR(lst)));
 }
 
 static XEN g_in(XEN ms, XEN code)
@@ -19,13 +20,15 @@ static XEN g_in(XEN ms, XEN code)
 	XEN_OUT_OF_RANGE_ERROR(S_in, XEN_ARG_1, ms, "a positive integer");
       else
 	{
+	  XEN lst;
+	  lst = XEN_LIST_2(XEN_FALSE, code);
+	  XEN_LIST_SET(lst, 0, C_TO_XEN_INT(snd_protect(lst)));
 	  XtAppAddTimeOut(MAIN_APP(ss), 
 			  (unsigned long)secs,
 			  (XtTimerCallbackProc)timed_eval, 
-			  (XtPointer)code);
+			  (XtPointer)lst);
 	  /* this "code" can still be something misleading like an applicable smob */
-	  /*   there's a way to catch that in snd-run.c line 129, but not sure it's the "right thing" here */
-	  snd_protect(code);
+	  /*   there's a way to catch that in snd-run.c line 129, but I'm not sure it's the "right thing" here */
 	}
     }
   else XEN_BAD_ARITY_ERROR(S_in, 2, code, "should take no args");

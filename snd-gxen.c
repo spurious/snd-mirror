@@ -2,8 +2,9 @@
 
 static gint timed_eval(gpointer in_code)
 {
-  XEN_CALL_0((XEN)in_code, "timed callback func");
-  snd_unprotect((XEN)in_code);
+  XEN lst = (XEN)in_code;
+  XEN_CALL_0(XEN_CADR(lst), "timed callback func");
+  snd_unprotect_at(XEN_TO_C_INT(XEN_CAR(lst)));
   return(0);
 }
 
@@ -20,8 +21,10 @@ static XEN g_in(XEN ms, XEN code)
 	XEN_OUT_OF_RANGE_ERROR(S_in, XEN_ARG_1, ms, "a positive integer");
       else
 	{
-	  g_timeout_add_full(0, (guint32)secs, timed_eval, (gpointer)code, NULL);
-	  snd_protect(code);
+	  XEN lst;
+	  lst = XEN_LIST_2(XEN_FALSE, code);
+	  XEN_LIST_SET(lst, 0, C_TO_XEN_INT(snd_protect(lst)));
+	  g_timeout_add_full(0, (guint32)secs, timed_eval, (gpointer)lst, NULL);
 	}
     }
   else XEN_BAD_ARITY_ERROR(S_in, 2, code, "should take no args");

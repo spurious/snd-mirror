@@ -11,7 +11,7 @@ static void edit_find_help_callback(Widget w, XtPointer context, XtPointer info)
 
 static void edit_find_ok_callback(read_direction_t direction, Widget w, XtPointer context, XtPointer info)
 { /* "Find" is the label here */
-  char *str, *buf = NULL;
+  char *str = NULL, *buf = NULL;
   XmString s1;
   XEN proc;
   str = XmTextGetString(edit_find_text);
@@ -19,7 +19,11 @@ static void edit_find_ok_callback(read_direction_t direction, Widget w, XtPointe
     { 
       if (ss->search_expr) FREE(ss->search_expr);
       ss->search_expr = copy_string(str);
-      if (XEN_PROCEDURE_P(ss->search_proc)) snd_unprotect(ss->search_proc);
+      if (XEN_PROCEDURE_P(ss->search_proc))
+	{
+	  snd_unprotect_at(ss->search_proc_loc);
+	  ss->search_proc_loc = -1;
+	}
       ss->search_proc = XEN_UNDEFINED;
       if (ss->search_tree)
 	ss->search_tree = free_ptree(ss->search_tree);
@@ -27,7 +31,7 @@ static void edit_find_ok_callback(read_direction_t direction, Widget w, XtPointe
       if ((XEN_PROCEDURE_P(proc)) && (procedure_arity_ok(proc, 1)))
 	{
 	  ss->search_proc = proc;
-	  snd_protect(proc);
+	  ss->search_proc_loc = snd_protect(proc);
 	  if (optimization(ss) > 0)
 	    ss->search_tree = form_to_ptree_1_b_without_env(C_STRING_TO_XEN_FORM(str));
 	  buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
@@ -36,7 +40,6 @@ static void edit_find_ok_callback(read_direction_t direction, Widget w, XtPointe
 	  XmTextSetString(edit_find_text, NULL);
 	  FREE(buf);
 	}
-      if (str) XtFree(str);
     }
   else
     {
@@ -50,6 +53,7 @@ static void edit_find_ok_callback(read_direction_t direction, Widget w, XtPointe
 	  FREE(buf);
 	}
     }
+  if (str) XtFree(str);
   if ((XEN_PROCEDURE_P(ss->search_proc)) || (ss->search_tree))
     {
       s1 = XmStringCreate(_("Stop"), XmFONTLIST_DEFAULT_TAG);

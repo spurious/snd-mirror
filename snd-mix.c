@@ -4168,7 +4168,7 @@ static XEN g_set_mix_amp(XEN n, XEN uchan_1, XEN uval_1)
 
 static XEN g_set_mix_amp_env(XEN n, XEN chan_1, XEN val_1) 
 {
-  env *e = NULL;
+  static env *e = NULL;
   int res;
   XEN chan, val;
   if (XEN_BOUND_P(val_1))
@@ -4184,6 +4184,7 @@ static XEN g_set_mix_amp_env(XEN n, XEN chan_1, XEN val_1)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, S_setB S_mix_amp_env, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_2, S_setB S_mix_amp_env, "an integer");
   XEN_ASSERT_TYPE(XEN_LIST_P(val) || XEN_FALSE_P(val), val, XEN_ARG_3, S_setB S_mix_amp_env, "a list or #f");
+  if (e) e = free_env(e); /* somehow there's a memory leak here? */
   if (XEN_LIST_P(val)) e = get_env(val, S_setB S_mix_amp_env);
   res = set_mix_amp_env(XEN_TO_C_INT(n), 
 			(XEN_BOUND_P(chan)) ? XEN_TO_C_INT(chan) : 0,

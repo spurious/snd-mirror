@@ -180,7 +180,7 @@ static int add_colormap(char *name, XEN func)
 {
   cmap *c;
   Float **rgb;
-  int index = -1, i;
+  int index = -1, i, loc;
   for (i = 0; i < cmaps_size; i++)
     if (!(cmaps[i]))
       {
@@ -194,11 +194,12 @@ static int add_colormap(char *name, XEN func)
       cmaps = (cmap **)REALLOC(cmaps, cmaps_size * sizeof(cmap *));
       for (i = index; i < cmaps_size; i++) cmaps[i] = NULL;
     }
+  loc = snd_protect(func);
   rgb = make_xen_colormap(color_map_size(ss), func);
   c = new_cmap(name, color_map_size(ss), rgb);
   c->make_rgb = make_xen_colormap;
   c->lambda = func;
-  c->gc_loc = snd_protect(func);
+  c->gc_loc = loc;
   for (i = 0; i < 3; i++) FREE(rgb[i]);
   FREE(rgb);
   cmaps[index] = c;

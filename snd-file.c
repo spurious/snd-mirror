@@ -1129,10 +1129,7 @@ static void copy_chan_info(chan_info *ncp, chan_info *ocp)
     ncp->cursor_proc_loc = snd_protect(ncp->cursor_proc);
   else ncp->cursor_proc_loc = -1;
   if (XEN_VECTOR_P(ocp->properties))
-    {
-      ncp->properties = XEN_VECTOR_REF(ocp->properties, 0);
-      snd_protect(ncp->properties);
-    }
+    ncp->properties = XEN_VECTOR_REF(ocp->properties, 0);
   else
     {
       if (XEN_LIST_P(ocp->properties))
@@ -1140,10 +1137,9 @@ static void copy_chan_info(chan_info *ncp, chan_info *ocp)
 	  if (!(XEN_VECTOR_P(ncp->properties)))
 	    {
 	      ncp->properties = XEN_MAKE_VECTOR(1, XEN_EMPTY_LIST);
-	      snd_protect(ncp->properties);
+	      ncp->properties_loc = snd_protect(ncp->properties);
 	    }
 	  XEN_VECTOR_SET(ncp->properties, 0, ocp->properties);
-	  snd_unprotect(ocp->properties);
 	}
       else ncp->properties = XEN_FALSE;
     }
@@ -1170,12 +1166,10 @@ static void copy_snd_info(snd_info *nsp, snd_info *osp)
   nsp->search_expr = osp->search_expr;
   osp->search_expr = NULL;
   nsp->search_proc = osp->search_proc;
-  if (XEN_BOUND_P(nsp->search_proc)) snd_protect(nsp->search_proc);
+  if (XEN_BOUND_P(nsp->search_proc)) 
+    nsp->search_proc_loc = snd_protect(nsp->search_proc);
   if (XEN_VECTOR_P(osp->properties))
-    {
-      nsp->properties = XEN_VECTOR_REF(osp->properties, 0);
-      snd_protect(nsp->properties);
-    }
+    nsp->properties = XEN_VECTOR_REF(osp->properties, 0);
   else
     {
       if (XEN_LIST_P(osp->properties))
@@ -1183,10 +1177,9 @@ static void copy_snd_info(snd_info *nsp, snd_info *osp)
 	  if (!(XEN_VECTOR_P(nsp->properties)))
 	    {
 	      nsp->properties = XEN_MAKE_VECTOR(1, XEN_EMPTY_LIST);
-	      snd_protect(nsp->properties);
+	      nsp->properties_loc = snd_protect(nsp->properties);
 	    }
 	  XEN_VECTOR_SET(nsp->properties, 0, osp->properties);
-	  snd_unprotect(osp->properties);
 	}
       else nsp->properties = XEN_FALSE;
     }
@@ -1228,7 +1221,8 @@ static void sound_restore_chan_info(snd_info *nsp, snd_info *osp)
     }
   if (XEN_BOUND_P(osp->search_proc))
     {
-      snd_unprotect(osp->search_proc);
+      snd_unprotect_at(osp->search_proc_loc);
+      osp->search_proc_loc = -1;
       osp->search_proc = XEN_UNDEFINED;
     }
 }
@@ -1904,7 +1898,10 @@ static XEN g_set_previous_files_sort_procedure(XEN proc)
 {
   char *error = NULL;
   if (XEN_PROCEDURE_P(ss->file_sort_proc))
-    snd_unprotect(ss->file_sort_proc);
+    {
+      snd_unprotect_at(ss->file_sort_proc_loc);
+      ss->file_sort_proc_loc = -1;
+    }
   ss->file_sort_proc = XEN_UNDEFINED;
   error = procedure_ok(proc, 1, "file sort", "sort", 1);
   if (error == NULL)
@@ -1912,7 +1909,7 @@ static XEN g_set_previous_files_sort_procedure(XEN proc)
       ss->file_sort_proc = proc;
       if (XEN_PROCEDURE_P(proc))
 	{
-	  snd_protect(proc);
+	  ss->file_sort_proc_loc = snd_protect(proc);
 	  set_file_sort_sensitive(true);
 	}
       else set_file_sort_sensitive(false);

@@ -148,11 +148,12 @@ char *global_search(read_direction_t direction)
 	  /* search_expr can be null if user set search_proc directly */
 	  if (XEN_PROCEDURE_P(ss->search_proc))
 	    {
-	      snd_unprotect(ss->search_proc);
+	      snd_unprotect_at(ss->search_proc_loc);
+	      ss->search_proc_loc = -1;
 	      ss->search_proc = XEN_UNDEFINED;
 	    }
 	  ss->search_proc = snd_catch_any(eval_str_wrapper, ss->search_expr, ss->search_expr);
-	  snd_protect(ss->search_proc);
+	  ss->search_proc_loc = snd_protect(ss->search_proc);
 	}
     }
   search_in_progress = true;
@@ -415,7 +416,8 @@ void cursor_search(chan_info *cp, int count)
 	      /* see note above about closures */
 	      if (XEN_PROCEDURE_P(sp->search_proc))
 		{
-		  snd_unprotect(sp->search_proc);
+		  snd_unprotect_at(sp->search_proc_loc);
+		  sp->search_proc_loc = -1;
 		  sp->search_proc = XEN_UNDEFINED;
 		}
 	      if (sp->search_tree)
@@ -425,7 +427,7 @@ void cursor_search(chan_info *cp, int count)
 	      if (sp->search_tree == NULL)
 		{
 		  sp->search_proc = snd_catch_any(eval_str_wrapper, sp->search_expr, sp->search_expr);
-		  snd_protect(sp->search_proc);
+		  sp->search_proc_loc = snd_protect(sp->search_proc);
 		}
 	    }
 	  if (count > 0)
@@ -490,7 +492,11 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
 	  error = procedure_ok(proc, 1, S_setB S_search_procedure, "proc", 1);
 	  if (error == NULL)
 	    {
-	      if (XEN_PROCEDURE_P(sp->search_proc)) snd_unprotect(sp->search_proc);
+	      if (XEN_PROCEDURE_P(sp->search_proc)) 
+		{
+		  snd_unprotect_at(sp->search_proc_loc);
+		  sp->search_proc_loc = -1;
+		}
 	      sp->search_proc = XEN_UNDEFINED;
 	      if (sp->search_expr) FREE(sp->search_expr);
 	      sp->search_expr = NULL;
@@ -503,7 +509,7 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
 		    sp->search_tree = form_to_ptree_1_b(XEN_LIST_2(XEN_PROCEDURE_SOURCE(proc), proc));
 #endif
 		  sp->search_proc = proc;
-		  snd_protect(proc);
+		  sp->search_proc_loc = snd_protect(proc);
 		}
 	      return(proc);
 	    }
@@ -523,7 +529,11 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
       error = procedure_ok(snd, 1, S_setB S_search_procedure, "proc", 1);
       if (error == NULL)
 	{
-	  if (XEN_PROCEDURE_P(ss->search_proc)) snd_unprotect(ss->search_proc);
+	  if (XEN_PROCEDURE_P(ss->search_proc)) 
+	    {
+	      snd_unprotect_at(ss->search_proc_loc);
+	      ss->search_proc_loc = -1;
+	    }
 	  ss->search_proc = XEN_UNDEFINED;
 	  if (ss->search_expr) FREE(ss->search_expr);
 	  ss->search_expr = NULL;
@@ -535,7 +545,7 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
 		ss->search_tree = form_to_ptree_1_b(XEN_LIST_2(XEN_PROCEDURE_SOURCE(snd), snd));
 #endif
 	      ss->search_proc = snd;
-	      snd_protect(snd);
+	      ss->search_proc_loc = snd_protect(snd);
 	    }
 	}
       else 

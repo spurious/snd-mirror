@@ -3531,8 +3531,12 @@ static void get_sf_closure(snd_fd *sf)
 {
   XEN proc;
   proc = sf->cp->ptree_inits[READER_PTREE_INDEX(sf)];
-  if ((XEN_BOUND_P(sf->closure)) && (!(XEN_EQ_P(sf->closure, empty_closure))))
-    snd_unprotect_at(sf->protect);
+  /* if ((XEN_BOUND_P(sf->closure)) && (!(XEN_EQ_P(sf->closure, empty_closure)))) */
+  if (sf->protect >= 0)
+    {
+      snd_unprotect_at(sf->protect);
+      sf->protect = -1;
+    }
   sf->closure = empty_closure;
   if (XEN_PROCEDURE_P(proc))
     {
@@ -3549,8 +3553,12 @@ static void get_sf_closure2(snd_fd *sf)
 {
   XEN proc;
   proc = sf->cp->ptree_inits[READER_PTREE2_INDEX(sf)];
-  if ((XEN_BOUND_P(sf->closure2)) && (!(XEN_EQ_P(sf->closure2, empty_closure))))
-    snd_unprotect_at(sf->protect2);
+  /* if ((XEN_BOUND_P(sf->closure2)) && (!(XEN_EQ_P(sf->closure2, empty_closure)))) */
+  if (sf->protect2 >= 0)
+    {
+      snd_unprotect_at(sf->protect2);
+      sf->protect2 = -1;
+    }
   sf->closure2 = empty_closure;
   if (XEN_PROCEDURE_P(proc))
     {
@@ -3567,8 +3575,12 @@ static void get_sf_closure3(snd_fd *sf)
 {
   XEN proc;
   proc = sf->cp->ptree_inits[READER_PTREE3_INDEX(sf)];
-  if ((XEN_BOUND_P(sf->closure3)) && (!(XEN_EQ_P(sf->closure3, empty_closure))))
-    snd_unprotect_at(sf->protect3);
+  /* if ((XEN_BOUND_P(sf->closure3)) && (!(XEN_EQ_P(sf->closure3, empty_closure)))) */
+  if (sf->protect3 >= 0)
+    {
+      snd_unprotect_at(sf->protect3);
+      sf->protect3 = -1;
+    }
   sf->closure3 = empty_closure;
   if (XEN_PROCEDURE_P(proc))
     {
@@ -6365,15 +6377,26 @@ snd_fd *free_snd_fd_almost(snd_fd *sf)
   if (sf) 
     {
       snd_data *sd;
-      if ((XEN_BOUND_P(sf->closure)) && (!(XEN_EQ_P(sf->closure, empty_closure))))
+      /* if ((XEN_BOUND_P(sf->closure)) && (!(XEN_EQ_P(sf->closure, empty_closure)))) */
+      if (sf->protect >= 0)
  	{
  	  snd_unprotect_at(sf->protect);
  	  sf->closure = XEN_UNDEFINED;
+	  sf->protect = -1;
  	}
-      if ((XEN_BOUND_P(sf->closure2)) && (!(XEN_EQ_P(sf->closure2, empty_closure))))
+      /* if ((XEN_BOUND_P(sf->closure2)) && (!(XEN_EQ_P(sf->closure2, empty_closure)))) */
+      if (sf->protect2 >= 0)
  	{
  	  snd_unprotect_at(sf->protect2);
  	  sf->closure2 = XEN_UNDEFINED;
+	  sf->protect2 = -1;
+ 	}
+      /* if ((XEN_BOUND_P(sf->closure3)) && (!(XEN_EQ_P(sf->closure3, empty_closure)))) */
+      if (sf->protect3 >= 0)
+ 	{
+ 	  snd_unprotect_at(sf->protect3);
+ 	  sf->closure3 = XEN_UNDEFINED;
+	  sf->protect3 = -1;
  	}
       reader_out_of_data(sf);
       sd = sf->current_sound;
@@ -6433,6 +6456,10 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
   sf = (snd_fd *)CALLOC(1, sizeof(snd_fd)); /* only creation point */
   sf->closure = XEN_UNDEFINED;
   sf->closure2 = XEN_UNDEFINED;
+  sf->closure3 = XEN_UNDEFINED;
+  sf->protect = -1;
+  sf->protect2 = -1;
+  sf->protect3 = -1;
   sf->region = INVALID_REGION;
   sf->initial_samp = samp;
   sf->cp = cp;

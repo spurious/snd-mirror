@@ -30,7 +30,11 @@ static void edit_find_find(read_direction_t direction, GtkWidget *w, gpointer co
     {
       XEN proc;
       ss->search_expr = copy_string(str);
-      if (XEN_PROCEDURE_P(ss->search_proc)) snd_unprotect(ss->search_proc);
+      if (XEN_PROCEDURE_P(ss->search_proc)) 
+	{
+	  snd_unprotect_at(ss->search_proc_loc);
+	  ss->search_proc_loc = -1;
+	}
       ss->search_proc = XEN_UNDEFINED;
       if (ss->search_tree)
 	ss->search_tree = free_ptree(ss->search_tree);
@@ -38,7 +42,7 @@ static void edit_find_find(read_direction_t direction, GtkWidget *w, gpointer co
       if ((XEN_PROCEDURE_P(proc)) && (procedure_arity_ok(proc, 1)))
 	{
 	  ss->search_proc = proc;
-	  snd_protect(proc);
+	  ss->search_proc_loc = snd_protect(proc);
 	  if (optimization(ss) > 0)
 	    ss->search_tree = form_to_ptree_1_b_without_env(C_STRING_TO_XEN_FORM(str));
 	  buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
