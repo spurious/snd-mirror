@@ -168,10 +168,10 @@ static void apply_enved(void)
 	  switch (enved_target(ss))
 	    {
 	    case ENVED_AMPLITUDE:
-	      origin = mus_format("%s %s%s", 
-				  (apply_to_selection) ? S_env_selection : S_env_channel,
+	      origin = mus_format("%s" PROC_OPEN "%s%s", 
+				  TO_PROC_NAME((apply_to_selection) ? S_env_selection : S_env_channel),
 				  estr = env_to_string(active_env),
-				  (apply_to_selection) ? "" : " 0 #f");
+				  (apply_to_selection) ? "" : PROC_SEP "0" PROC_SEP PROC_FALSE);
 	      apply_env(active_channel, active_env, 0,
 			CURRENT_SAMPLES(active_channel), 
 			apply_to_selection, FROM_ENVED, 
@@ -182,10 +182,11 @@ static void apply_enved(void)
 	      if (origin) FREE(origin);
 	      break;
 	    case ENVED_SPECTRUM: 
-	      origin = mus_format("%s %s %d%s",
-				  (apply_to_selection) ? S_filter_selection : S_filter_channel,
-				  estr = env_to_string(active_env), enved_filter_order(ss),
-				  (apply_to_selection) ? "" : " 0 #f");
+	      origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%d%s",
+				  TO_PROC_NAME((apply_to_selection) ? S_filter_selection : S_filter_channel),
+				  estr = env_to_string(active_env), 
+				  enved_filter_order(ss),
+				  (apply_to_selection) ? "" : PROC_SEP "0" PROC_SEP PROC_FALSE);
 	      apply_filter(active_channel,
 			   (FIR_p) ? enved_filter_order(ss) : 0,
 			   active_env, FROM_ENVED, 

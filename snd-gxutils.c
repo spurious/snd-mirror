@@ -52,6 +52,10 @@ static Window find_window(Display *display,
   return(window);
 }
 
+/* /usr/share/emacs/21.2/lisp/net/browse-url.el.htmlview: info on other browsers
+ *   could we use htmlview instead here?
+ */
+
 bool send_mozilla(const char *html_viewer, const char *url)
 {
   Window window;

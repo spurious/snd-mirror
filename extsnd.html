@@ -4720,8 +4720,7 @@ To get .1 seconds of attack and decay:
 <A NAME="envexamples"></a>
 An 'envelope' in Snd is a list of breakpoints. It can be packaged as a CLM generator (an 'env') via <a href="clm.html#make-env">make-env</a>.
 It can be declared via define, just like any other variable, or <a href="#defvar">defvar</a> (for CLM/Snd intercompatibility),
-or <a href="#defineenvelope">define-envelope</a>.  The latter is probably most convenient because it automatically
-sets up the envelope property 'envelope-base.
+or <a href="#defineenvelope">define-envelope</a>.
 <!-- INDEX envexamples:Envelopes -->
 <br><br>
 <TABLE border=3 bordercolor="tan" hspace=40><tr><td>
@@ -4751,6 +4750,16 @@ Customizing the envelope editor: <a href="#envedhook">enved-hook</a><br>
 </td></tr></TABLE>
 </td></tr>
 <tr><td colspan=2></td></tr>
+
+
+<!-- env-channel-with-base -->
+<tr><td colspan=2>
+<code><a class=def name="envchannelwithbase">env-channel-with-base</a> (clm-env-gen <i>base beg dur snd chn edpos</i>)</code>
+</td></tr>
+<tr><td></td><td>
+<b>env-channel-with-base</b> is a slight variation on <b>env-channel</b>.  There are times when it's a bother
+to call <a href="clm.html#make-env">make-env</a> just to get an exponential envelope.
+</td></tr>
 
 
 <!-- env-sound -->

@@ -1,5 +1,7 @@
 Snd change log
 
+  28-Feb:    env-channel-with-base.
+             Ruby side of edit-list->function.
   24-Feb:    mix.rb thanks to Mike Scholz.
   22-Feb:    changed libxm to libxg in gtk case, also xm-version to xg-version
                added --with-static-xg configure option

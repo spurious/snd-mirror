@@ -4666,7 +4666,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 	      if (err != MUS_NO_ERROR)
 		report_in_minibuffer_and_save(cp->sound, _("edit history save data as %s hit error: %s"), nfile, strerror(errno));
 #if HAVE_RUBY
-	      fprintf(fd, "      %s(\"%s\", " OFF_TD ", sfile, %d, ", S_override_samples_with_origin, nfile, len, cp->chan);
+	      fprintf(fd, "      %s(\"%s\", " OFF_TD ", sfile, %d, ", TO_PROC_NAME(S_override_samples_with_origin), nfile, len, cp->chan);
 	      if (ed->origin) 
 		fprintf_with_possible_embedded_string(fd, ed->origin);
 	      else fprintf(fd, "\"\"");
@@ -4715,7 +4715,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 			  cp->chan);
 		  break;
 		case CHANGE_EDIT:
-		  fprintf(fd, "%s" PROC_OPEN OFF_TD PROC_SEP  OFF_TD PROC_SEP,
+		  fprintf(fd, "%s" PROC_OPEN OFF_TD PROC_SEP OFF_TD PROC_SEP,
 			  TO_PROC_NAME(S_change_samples_with_origin),
 			  ed->beg,
 			  ed->len);
@@ -4907,13 +4907,8 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
   FREE(old_function);
   return(function);
 #else
+
   #if HAVE_RUBY
-
-  /* TODO: finish Ruby side of edit-list->function
-   * all origin settings (more than 100) need to have Ruby cases
-   *  [file_change_samples, file_insert_samples, etc]
-   */
-
   char *function = NULL, *old_function = NULL;
   bool close_mix_let = false, first = true;
   int i, edits;
@@ -4932,7 +4927,7 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
       if (mix_list)
 	{
 	  close_mix_let = true;
-	  function = mus_format("Proc.new {|snd, chn| %s", mix_list);
+	  function = mus_format("Proc.new {|snd, chn| %s; ", mix_list);
 	  FREE(mix_list);
 	}
       else function = copy_string("Proc.new {|snd, chn| ");
@@ -4994,11 +4989,9 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
     function = mus_format("%s }", function);
   else function = mus_format("%s }", function);
   FREE(old_function);
-#if DEBUGGING
-  fprintf(stderr, "%s\n", function);
-#endif
   return(function);
   #endif
+
 #endif
 }
 
@@ -5613,7 +5606,7 @@ static ed_list *delete_section_from_list(off_t beg, off_t num, ed_list *current_
   new_state->size = new_i;
   new_state->beg = beg;
   new_state->len = num;
-  new_state->origin = mus_format("%s " OFF_TD " " OFF_TD, S_delete_samples, beg, num);
+  new_state->origin = mus_format("%s" PROC_OPEN OFF_TD PROC_SEP OFF_TD, TO_PROC_NAME(S_delete_samples), beg, num);
   new_state->edit_type = DELETION_EDIT;
   new_state->sound_location = 0;
   return(new_state);
@@ -6096,31 +6089,13 @@ bool scale_channel_with_origin(chan_info *cp, Float scl, off_t beg, off_t num, i
   else
     {
       if (num == len)
-	{
-#if HAVE_RUBY
-	  new_ed->origin = mus_format("%s(%.3f, " OFF_TD ", false", TO_PROC_NAME(S_scale_channel), scl, beg);
-#else
-	  new_ed->origin = mus_format("%s %.3f " OFF_TD " #f", S_scale_channel, scl, beg);
-#endif
-	}
+	new_ed->origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP OFF_TD PROC_SEP PROC_FALSE, TO_PROC_NAME(S_scale_channel), scl, beg);
       else
 	{
 	  if (len == num)
-	    {
-#if HAVE_RUBY
-	      new_ed->origin = mus_format("%s(%.3f, " OFF_TD ", false", TO_PROC_NAME(S_scale_channel), scl, beg);
-#else
-	      new_ed->origin = mus_format("%s %.3f " OFF_TD " #f", S_scale_channel, scl, beg);
-#endif
-	    }
+	      new_ed->origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP OFF_TD PROC_SEP PROC_FALSE, TO_PROC_NAME(S_scale_channel), scl, beg);
 	  else
-	    {
-#if HAVE_RUBY
-	      new_ed->origin = mus_format("%s(%.3f, " OFF_TD ", " OFF_TD, TO_PROC_NAME(S_scale_channel), scl, beg, num);
-#else
-	      new_ed->origin = mus_format("%s %.3f " OFF_TD " " OFF_TD, S_scale_channel, scl, beg, num);
-#endif
-	    }
+	    new_ed->origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP OFF_TD PROC_SEP OFF_TD, TO_PROC_NAME(S_scale_channel), scl, beg, num);
 	}
     }
   new_ed->edpos = pos;
@@ -6280,46 +6255,20 @@ static bool all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler
   if (!is_x)
     {
       if (num == len)
-	{
-#if HAVE_RUBY
-	  new_ed->origin = mus_format("%s(%.3f, %.3f, " OFF_TD ", false", TO_PROC_NAME(origin), rmp0, rmp1, beg);
-#else
-	  new_ed->origin = mus_format("%s %.3f %.3f " OFF_TD " #f", origin, rmp0, rmp1, beg);
-#endif
-	}
+	new_ed->origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "%.3f" PROC_SEP OFF_TD PROC_SEP PROC_FALSE, TO_PROC_NAME(origin), rmp0, rmp1, beg);
       else
-	{
-#if HAVE_RUBY
-	  new_ed->origin = mus_format("%s(%.3f, %.3f, " OFF_TD ", " OFF_TD, TO_PROC_NAME(origin), rmp0, rmp1, beg, num);
-#else
-	  new_ed->origin = mus_format("%s %.3f %.3f " OFF_TD " " OFF_TD, origin, rmp0, rmp1, beg, num);
-#endif
-	}
+	new_ed->origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "%.3f" PROC_SEP OFF_TD PROC_SEP OFF_TD, TO_PROC_NAME(origin), rmp0, rmp1, beg, num);
     }
   else
     {
       Float *data;
       data = mus_data(e);
       if (num == len)
-	{
-#if HAVE_RUBY
-	  new_ed->origin = mus_format("%s(%.3f, %.3f, %.3f, " OFF_TD ", false", 
-				      TO_PROC_NAME(origin), data[e_pos * 2 + 1], data[e_pos * 2 + 3], mus_increment(e), beg);
-#else
-	  new_ed->origin = mus_format("%s %.3f %.3f %.3f " OFF_TD " #f", 
-				      origin, data[e_pos * 2 + 1], data[e_pos * 2 + 3], mus_increment(e), beg);
-#endif
-	}
+	new_ed->origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "%.3f" PROC_SEP "%.3f" PROC_SEP OFF_TD PROC_SEP PROC_FALSE, 
+				    TO_PROC_NAME(origin), data[e_pos * 2 + 1], data[e_pos * 2 + 3], mus_increment(e), beg);
       else
-	{
-#if HAVE_RUBY
-	  new_ed->origin = mus_format("%s(%.3f, %.3f, %.3f, " OFF_TD ", " OFF_TD, 
-				      TO_PROC_NAME(origin), data[e_pos * 2 + 1], data[e_pos * 2 + 3], mus_increment(e), beg, num);
-#else
-	  new_ed->origin = mus_format("%s %.3f %.3f %.3f " OFF_TD " " OFF_TD, 
-				      origin, data[e_pos * 2 + 1], data[e_pos * 2 + 3], mus_increment(e), beg, num);
-#endif
-	}
+	new_ed->origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "%.3f" PROC_SEP "%.3f" PROC_SEP OFF_TD PROC_SEP OFF_TD, 
+				    TO_PROC_NAME(origin), data[e_pos * 2 + 1], data[e_pos * 2 + 3], mus_increment(e), beg, num);
     }
   new_ed->edpos = pos;
   new_ed->selection_beg = old_ed->selection_beg;
@@ -8131,12 +8080,12 @@ scale samples in the given sound/channel between beg and beg + num to norm."
   if ((samp == 0) && (samps == CURRENT_SAMPLES(cp)))
     {
       cur_max = channel_maxamp(cp, pos);
-      origin = mus_format("%s %.3f 0 #f", S_normalize_channel, norm);
+      origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "0" PROC_SEP PROC_FALSE, TO_PROC_NAME(S_normalize_channel), norm);
     }
   else 
     {
       cur_max = channel_local_maxamp(cp, samp, samps, pos);
-      origin = mus_format("%s %.3f " OFF_TD " " OFF_TD, S_normalize_channel, norm, samp, samps);
+      origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP OFF_TD PROC_SEP OFF_TD, TO_PROC_NAME(S_normalize_channel), norm, samp, samps);
     }
   if (cur_max != 0.0)
     scale_channel_with_origin(cp, norm / cur_max, samp, samps, pos, NOT_IN_AS_ONE_EDIT, origin);
@@ -8268,7 +8217,7 @@ static XEN g_set_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n, XEN edpos)
   else beg = CURSOR(cp);
   fval = XEN_TO_C_DOUBLE(val);
   ival[0] = MUS_FLOAT_TO_SAMPLE(fval);
-  origin = mus_format("set-sample " OFF_TD " %.4f", beg, fval);
+  origin = mus_format("%s" PROC_OPEN OFF_TD PROC_SEP "%.4f", TO_PROC_NAME("set-sample"), beg, fval);
   if (change_samples(beg, 1, ival, cp, LOCK_MIXES, origin, pos))
     update_graph(cp);
   FREE(origin);
@@ -8619,7 +8568,7 @@ inserts all of oboe.snd starting at sample 1000."
       fchn = XEN_TO_C_INT(file_chn);
       if (fchn < nc)
 	{
-	  origin = mus_format("%s \"%s\" " OFF_TD " %d", S_insert_sound, filename, beg, fchn);
+	  origin = mus_format("%s" PROC_OPEN "\"%s\"" PROC_SEP OFF_TD PROC_SEP "%d", TO_PROC_NAME(S_insert_sound), filename, beg, fchn);
 	  if (file_insert_samples(beg, len, filename, cp, fchn, (delete_file) ? DELETE_ME : DONT_DELETE_ME, origin,
 				  to_c_edit_position(cp, edpos, S_insert_sound, 6)))
 	    update_graph(cp);
@@ -8635,7 +8584,7 @@ inserts all of oboe.snd starting at sample 1000."
       if (sp->nchans < nc) nc = sp->nchans;
       for (i = 0; i < nc; i++)
 	{
-	  origin = mus_format("%s \"%s\" " OFF_TD " %d", S_insert_sound, filename, beg, i);
+	  origin = mus_format("%s" PROC_OPEN "\"%s\"" PROC_SEP OFF_TD PROC_SEP "%d", TO_PROC_NAME(S_insert_sound), filename, beg, i);
 	  if (file_insert_samples(beg, len, filename, sp->chans[i], i, (delete_file) ? DELETE_ME: DONT_DELETE_ME, origin,
 				  /* this edit_position cannot be optimized out -- each channel may have
 				   *   a different edit history, but edpos might be -1 throughout etc.
@@ -8713,7 +8662,7 @@ static XEN g_insert_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n, XEN edpos)
   pos = to_c_edit_position(cp, edpos, S_insert_sample, 5);
   fval = XEN_TO_C_DOUBLE(val);
   ival[0] = MUS_FLOAT_TO_SAMPLE(fval);
-  origin = mus_format("%s " OFF_TD " %.4f", S_insert_sample, beg, fval);
+  origin = mus_format("%s" PROC_OPEN OFF_TD PROC_SEP "%.4f", TO_PROC_NAME(S_insert_sample), beg, fval);
   if (insert_samples(beg, 1, ival, cp, origin, pos))
     update_graph(cp); 
   FREE(origin);
@@ -8752,7 +8701,7 @@ insert data (either a vct, a list of samples, or a filename) into snd's channel 
 	  FREE(filename);
 	  return(snd_no_such_file_error(S_insert_samples, vect));
 	}
-      if (!origin) origin = mus_format("%s " OFF_TD " " OFF_TD " \"%s\"", S_insert_samples, beg, len, filename);
+      if (!origin) origin = mus_format("%s" PROC_OPEN OFF_TD PROC_SEP OFF_TD PROC_SEP "\"%s\"", TO_PROC_NAME(S_insert_samples), beg, len, filename);
       file_insert_samples(beg, len, filename, cp, 0, (delete_file) ? DELETE_ME : DONT_DELETE_ME, origin, pos);
       if (filename) FREE(filename);
     }

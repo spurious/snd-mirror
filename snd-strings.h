@@ -145,6 +145,7 @@
 #define S_edit_tree                     "edit-tree"
 #define S_edits                         "edits"
 #define S_env_channel                   "env-channel"
+#define S_env_channel_with_base         "env-channel-with-base"
 #define S_env_selection                 "env-selection"
 #define S_env_sound                     "env-sound"
 #define S_enved_add_point               "enved-add-point"

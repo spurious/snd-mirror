@@ -92,14 +92,7 @@ char *env_to_string(env *e)
       news = snd_strcat(news, ")", &len);
 #endif
     }
-  else
-    {
-#if HAVE_RUBY
-      news = copy_string("false");
-#else
-      news = copy_string("#f");
-#endif
-    }
+  else news = copy_string(PROC_FALSE);
   return(news);
 }
 

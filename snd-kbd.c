@@ -917,7 +917,8 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 			  {
 			    ncp = sp->chans[i];
 			    chan_beg = CURSOR(active_chan);
-			    origin = mus_format("%s \"%s\" " OFF_TD " %d", S_insert_sound, filename, chan_beg, j);
+			    origin = mus_format("%s" PROC_OPEN "\"%s\"" PROC_SEP OFF_TD PROC_SEP "%d", 
+						TO_PROC_NAME(S_insert_sound), filename, chan_beg, j);
 			    if (file_insert_samples(chan_beg, len, filename, ncp, j, DONT_DELETE_ME, origin, ncp->edit_ctr))
 			      update_graph(ncp);
 			    FREE(origin);

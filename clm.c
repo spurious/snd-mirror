@@ -3938,8 +3938,6 @@ Float *mus_make_fir_coeffs(int order, Float *envl, Float *aa)
   return(a);
 }
 
-/* PERHAPS: mus_cascade_to_canonical
- */
 
 
 /* ---------------- env ---------------- */

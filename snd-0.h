@@ -171,20 +171,30 @@ typedef enum {NOT_FILING, INPUT_FILING, REGION_FILING, CHANNEL_FILING, TEMP_FILI
   #define TO_PROC_NAME(Str) xen_scheme_procedure_to_ruby(Str)
   #define TO_VAR_NAME(Str) xen_scheme_constant_to_ruby(Str)
   #define PROC_OPEN "("
+  #define PROC_CLOSE ")"
   #define PROC_SEP ", "
   #define VECTOR_OPEN "["
   #define VECTOR_CLOSE "]"
+  #define LIST_OPEN "["
+  #define LIST_CLOSE "]"
   #define BPAREN ""
   #define EPAREN ""
+  #define PROC_FALSE "false"
+  #define PROC_TRUE "true"
 #else
   #define TO_PROC_NAME(Str) Str
   #define TO_VAR_NAME(Str) Str
   #define PROC_OPEN " "
+  #define PROC_CLOSE ""
   #define PROC_SEP " "
   #define VECTOR_OPEN "'#("
   #define VECTOR_CLOSE ")"
+  #define LIST_OPEN "(list "
+  #define LIST_CLOSE ")"
   #define BPAREN "("
   #define EPAREN ")"
+  #define PROC_FALSE "#f"
+  #define PROC_TRUE  "#t"
 #endif
 
 #define MAX_MAIN_MENUS 64

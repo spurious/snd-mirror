@@ -393,7 +393,8 @@ static int calculate_fft_1(chan_info *cp, bool update_display)
 	single_fft(cp, update_display, DONT_FORCE_REFFT);
       else set_chan_fft_in_progress(cp,
 				    BACKGROUND_ADD(sonogram_in_slices,
-						   make_sonogram_state(cp, DONT_FORCE_REFFT)));
+						   make_sonogram_state(cp, 
+								       DONT_FORCE_REFFT)));
     }
   return(0);
 }

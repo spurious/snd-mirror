@@ -1685,43 +1685,46 @@ static bool apply_controls(apply_state *ap)
 	      /* to reproduce this on a channel-independent basis, we need to use controls->channel
 	       *   and conjure up a list of settings that match the current ones.
 	       */
-#if HAVE_GUILE
 	      char *ampstr, *speedstr, *contraststr, *expandstr, *filterstr, *reverbstr;
 	      if (sp->amp_control != DEFAULT_AMP_CONTROL)
-		ampstr = mus_format("%.4f", sp->amp_control);
-	      else ampstr = copy_string("#f");
+		ampstr = mus_format("%.4f", 
+				    sp->amp_control);
+	      else ampstr = copy_string(PROC_FALSE);
 	      if ((!(snd_feq(sp->speed_control, DEFAULT_SPEED_CONTROL))) || 
 		  (sp->speed_control_direction == -1))
-		speedstr = mus_format("%.4f", sp->speed_control * sp->speed_control_direction);
-	      else speedstr = copy_string("#f");
+		speedstr = mus_format("%.4f", 
+				      sp->speed_control * sp->speed_control_direction);
+	      else speedstr = copy_string(PROC_FALSE);
 	      if (sp->contrast_control_p)
-		contraststr = mus_format("'(%.4f %.4f)", sp->contrast_control, sp->contrast_control_amp);
-	      else contraststr = copy_string("#f");
+		contraststr = mus_format(LIST_OPEN "%.4f" PROC_SEP "%.4f" LIST_CLOSE, 
+					 sp->contrast_control, sp->contrast_control_amp);
+	      else contraststr = copy_string(PROC_FALSE);
 	      if (sp->expand_control_p)
-		expandstr = mus_format("'(%.4f %.4f %.4f %.4f %.4f)",
+		expandstr = mus_format(LIST_OPEN "%.4f" PROC_SEP "%.4f" PROC_SEP "%.4f" PROC_SEP "%.4f" PROC_SEP "%.4f" LIST_CLOSE,
 				       sp->expand_control, sp->expand_control_length, sp->expand_control_ramp, 
 				       sp->expand_control_hop, sp->expand_control_jitter);
-	      else expandstr = copy_string("#f");
+	      else expandstr = copy_string(PROC_FALSE);
 	      if (sp->reverb_control_p)
-		reverbstr = mus_format("'(%.4f %.4f %.4f %.4f %.4f)",
+		reverbstr = mus_format(LIST_OPEN "%.4f" PROC_SEP "%.4f" PROC_SEP "%.4f" PROC_SEP "%.4f" PROC_SEP "%.4f" LIST_CLOSE,
 				       sp->reverb_control_scale, sp->reverb_control_length, sp->reverb_control_feedback, 
 				       sp->reverb_control_lowpass, sp->reverb_control_decay);
-	      else reverbstr = copy_string("#f");
+	      else reverbstr = copy_string(PROC_FALSE);
 	      if (sp->filter_control_p)
 		{
 		  char *envstr;
 		  envstr = env_to_string(sp->filter_control_envelope);
-		  filterstr = mus_format("'(%d %s)", sp->filter_control_order, envstr);
+		  filterstr = mus_format(LIST_OPEN "%d" PROC_SEP "%s" LIST_CLOSE, 
+					 sp->filter_control_order, envstr);
 		  FREE(envstr);
 		}
-	      else filterstr = copy_string("#f");
+	      else filterstr = copy_string(PROC_FALSE);
 	      if (orig_apply_dur == 0)
-	      ap->origin = mus_format("%s (list %s %s %s %s %s %s) " OFF_TD " #f", 
-				      S_controls_to_channel,
+	      ap->origin = mus_format("%s" PROC_OPEN LIST_OPEN "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" LIST_CLOSE PROC_SEP OFF_TD PROC_SEP PROC_FALSE, 
+				      TO_PROC_NAME(S_controls_to_channel),
 				      ampstr, speedstr, contraststr, expandstr, reverbstr, filterstr, 
 				      apply_beg);
-	      else ap->origin = mus_format("%s (list %s %s %s %s %s %s) " OFF_TD " " OFF_TD,
-					   S_controls_to_channel,
+	      else ap->origin = mus_format("%s" PROC_OPEN LIST_OPEN "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" LIST_CLOSE PROC_SEP OFF_TD PROC_SEP OFF_TD,
+					   TO_PROC_NAME(S_controls_to_channel),
 					   ampstr, speedstr, contraststr, expandstr, reverbstr, filterstr,
 					   apply_beg, apply_dur);
 	      FREE(ampstr);
@@ -1730,9 +1733,6 @@ static bool apply_controls(apply_state *ap)
 	      FREE(expandstr);
 	      FREE(reverbstr);
 	      FREE(filterstr);
-#else
-	      ap->origin = copy_string(S_apply_controls);
-#endif	      
 	    }
 	  orig_dur = apply_dur;
 	  apply_dur = (off_t)(mult_dur * (apply_dur + added_dur));
@@ -3847,6 +3847,12 @@ static XEN controls_to_channel_body(void *context)
 }
 #endif
 
+#if HAVE_GUILE
+  #define PROC_QUOTE "'"
+#else
+  #define PROC_QUOTE ""
+#endif
+
 static XEN g_controls_to_channel(XEN settings, XEN beg, XEN dur, XEN snd, XEN chn, XEN origin)
 {
   #define H_controls_to_channel "(" S_controls_to_channel " settings beg dur snd chn origin) sets up \
@@ -3959,8 +3965,16 @@ where each inner list entry can also be #f."
       sp->applying = true;
       ap = (apply_state *)make_apply_state(sp);
       if (!(XEN_NUMBER_P(dur)))
-	ap->origin = mus_format("%s '%s " OFF_TD " #f", S_controls_to_channel, XEN_AS_STRING(settings), apply_beg);
-      else ap->origin = mus_format("%s '%s " OFF_TD " " OFF_TD, S_controls_to_channel, XEN_AS_STRING(settings), apply_beg, apply_dur);
+	ap->origin = mus_format("%s" PROC_OPEN "%s%s" PROC_SEP OFF_TD PROC_SEP PROC_FALSE, 
+				TO_PROC_NAME(S_controls_to_channel), 
+				PROC_QUOTE,
+				XEN_AS_STRING(settings), 
+				apply_beg);
+      else ap->origin = mus_format("%s" PROC_OPEN "%s%s" PROC_SEP OFF_TD PROC_SEP OFF_TD, 
+				   TO_PROC_NAME(S_controls_to_channel), 
+				   PROC_QUOTE,
+				   XEN_AS_STRING(settings), 
+				   apply_beg, apply_dur);
 #if HAVE_GUILE_DYNAMIC_WIND
       saved_settings->sp = sp;
       saved_settings->old_selected_channel = old_selected_channel;

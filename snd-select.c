@@ -315,7 +315,7 @@ static int mix_selection(chan_info *cp, off_t beg)
     {
       sync_info *si_out;
       si_out = sync_to_chan(cp);
-      origin = mus_format("%s " OFF_TD, S_mix_selection, beg);
+      origin = mus_format("%s" PROC_OPEN OFF_TD, TO_PROC_NAME(S_mix_selection), beg);
       id = mix_file(beg, selection_len(), si_out->chans, si_out->cps, tempfile, 
 		    (si_out->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME, 
 		    origin, with_mix_tags(ss), 0);
@@ -364,7 +364,7 @@ static int insert_selection(chan_info *cp, off_t beg)
 	      cp_out = si_out->cps[i]; /* currently syncd chan that we might paste to */
 	      cp_in = si_in->cps[i];   /* selection chan to paste in (no wrap-around here) */
 	      len = cp_selection_len(cp_in, NULL);
-	      origin = mus_format("%s " OFF_TD, S_insert_selection, beg);
+	      origin = mus_format("%s" PROC_OPEN OFF_TD, TO_PROC_NAME(S_insert_selection), beg);
 	      if (file_insert_samples(beg, len,
 				      tempfile, cp_out, i,
 				      (si_in->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,

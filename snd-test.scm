@@ -81,7 +81,7 @@
 ;(setlocale LC_ALL "de_DE")
 
 (define tests 1)
-(define keep-going #f)
+(define keep-going #t)
 (define all-args #f) ; huge arg testing
 (define with-big-file #t)
 
@@ -16531,8 +16531,6 @@ EDITS: 5
 	      (snd-display ";ws move-locsig by jump -20 rev data: ~A" (mus-xcoeffs locs))))
 	(mus-close sf)
 	(mus-close sfrev))
-
-;;; TODO: with-sound here somehow confuses subsequent region reads? doesn't seem possible...
 
       (if (file-exists? "fmv4.snd") (delete-file "fmv4.snd"))
       (if (file-exists? "fmv4.reverb") (delete-file "fmv4.reverb"))

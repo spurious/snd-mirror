@@ -627,7 +627,7 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, int trk)
 	}
       else 
 	{
-	  origin = mus_format("%s " OFF_TD " %d ", S_mix_region, beg, n);
+	  origin = mus_format("%s" PROC_OPEN OFF_TD PROC_SEP "%d", TO_PROC_NAME(S_mix_region), beg, n);
 	  id = mix_file(beg, r->frames, si->chans, si->cps, newname, DELETE_ME, origin, with_mix_tags(ss), trk);
 	  FREE(origin);
 	}
@@ -651,7 +651,7 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, int trk)
 	    if (r->chans > 1) 
 	      remember_temp(tempfile, r->chans);
 	}
-      origin = mus_format("%s " OFF_TD " %d", S_insert_region, beg, n);
+      origin = mus_format("%s" PROC_OPEN OFF_TD PROC_SEP "%d", TO_PROC_NAME(S_insert_region), beg, n);
       for (i = 0; ((i < r->chans) && (i < si->chans)); i++)
 	{
 	  chan_info *ncp;
