@@ -1509,18 +1509,6 @@ writes region's samples starting at beg for samps in channel chan to vct obj, re
   return(XEN_FALSE);
 }
 
-static XEN g_region_samples(XEN beg_n, XEN num, XEN reg_n, XEN chn_n)
-{
-  #define H_region_samples "(" S_region_samples " &optional (beg 0) samps (region 0) (chan 0))\n\
-returns a vector with region's samples starting at samp for samps from channel chan"
-
-  XEN val;
-  val = g_region_samples2vct(beg_n, num, reg_n, chn_n, XEN_FALSE);
-  if (VCT_P(val))
-    return(vct2vector(val));
-  return(XEN_FALSE);
-}
-
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_9(g_restore_region_w, g_restore_region)
 XEN_ARGIFY_4(g_insert_region_w, g_insert_region)
@@ -1536,7 +1524,6 @@ XEN_ARGIFY_2(g_play_region_w, g_play_region)
 XEN_ARGIFY_4(g_make_region_w, g_make_region)
 XEN_ARGIFY_4(g_mix_region_w, g_mix_region)
 XEN_ARGIFY_3(g_region_sample_w, g_region_sample)
-XEN_ARGIFY_4(g_region_samples_w, g_region_samples)
 XEN_ARGIFY_5(g_region_samples2vct_w, g_region_samples2vct)
 XEN_NARGIFY_1(g_region_p_w, g_region_p)
 XEN_NARGIFY_0(g_max_regions_w, g_max_regions)
@@ -1556,7 +1543,6 @@ XEN_NARGIFY_1(g_set_max_regions_w, g_set_max_regions)
 #define g_make_region_w g_make_region
 #define g_mix_region_w g_mix_region
 #define g_region_sample_w g_region_sample
-#define g_region_samples_w g_region_samples
 #define g_region_samples2vct_w g_region_samples2vct
 #define g_region_p_w g_region_p
 #define g_max_regions_w g_max_regions
@@ -1579,7 +1565,6 @@ void g_init_regions(void)
   XEN_DEFINE_PROCEDURE(S_make_region,        g_make_region_w, 0, 4, 0,        H_make_region);
   XEN_DEFINE_PROCEDURE(S_mix_region,         g_mix_region_w, 0, 4, 0,         H_mix_region);
   XEN_DEFINE_PROCEDURE(S_region_sample,      g_region_sample_w, 0, 3, 0,      H_region_sample);
-  XEN_DEFINE_PROCEDURE(S_region_samples,     g_region_samples_w, 0, 4, 0,     H_region_samples);
   XEN_DEFINE_PROCEDURE(S_region_samples2vct, g_region_samples2vct_w, 0, 5, 0, H_region_samples2vct);
   XEN_DEFINE_PROCEDURE(S_region_p,           g_region_p_w, 1, 0, 0,           H_region_p);
 

@@ -6031,7 +6031,8 @@ EDITS: 5
 			     (check4 data)
 			     (if (not (vvequal data (channel->vct)))
 				 (snd-display ";5 case: ~A(~A(~A(~A(~A)))): ~A" 
-					      (procedure-name func4) (procedure-name func3) (procedure-name func2) (procedure-name func1) (procedure-name func) 
+					      (procedure-name func4) (procedure-name func3) (procedure-name func2) 
+					      (procedure-name func1) (procedure-name func) 
 					      (channel->vct))))
 			   (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1 xen)
 			   (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1 cxen)))
@@ -6043,6 +6044,53 @@ EDITS: 5
 		  (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1)))
 	       (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1)
 	       (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1))
+
+	      ;; 6 case
+	      (for-each
+	       (lambda (func check)
+		 (for-each
+		  (lambda (func1 check1)
+		    (for-each
+		     (lambda (func2 check2)
+		       (for-each
+			(lambda (func3 check3)
+			  (for-each
+			   (lambda (func4 check4)
+			     (for-each
+			      (lambda (func5 check5)
+				(revert-sound)
+				(set-to-1)
+				(cset-to-1 data)
+				(func)
+				(check data)
+				(func1)
+				(check1 data)
+				(func2)
+				(check2 data)
+				(func3)
+				(check3 data)
+				(func4)
+				(check4 data)
+				(func5)
+				(check5 data)
+				(if (not (vvequal data (channel->vct)))
+				    (snd-display ";6 case: ~A(~A(~A(~A(~A(~A))))): ~A" 
+						 (procedure-name func5) (procedure-name func4) (procedure-name func3) 
+						 (procedure-name func2) (procedure-name func1) (procedure-name func) 
+						 (channel->vct))))
+			      (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1 xen)
+			      (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1 cxen)))
+			   (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1 xen)
+			   (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1 cxen)))
+			(list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1 xen)
+			(list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1 cxen)))
+		     (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1)
+		     (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1)))
+		  (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air)
+		  (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air)))
+	       (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air)
+	       (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air))
+
 	      ))
 	(close-sound ind))
 	
@@ -6440,16 +6488,16 @@ EDITS: 5
 	  (select-all index) 
 	  (let ((rread (make-region-sample-reader 0 (car (regions))))
 		(sread (make-sample-reader 0 index))
-		(rvect (region-samples 0 100 (car (regions))))
+		(rvect (region-samples->vct 0 100 (car (regions))))
 		(svect (samples 0 100 index)))
-	    (IF (fneq (vector-ref rvect 1) (region-sample 1 (car (regions))))
-		(snd-display ";region-sample: ~A ~A?" (region-sample 1 (car (regions))) (vector-ref rvect 1)))
+	    (IF (fneq (vct-ref rvect 1) (region-sample 1 (car (regions))))
+		(snd-display ";region-sample: ~A ~A?" (region-sample 1 (car (regions))) (vct-ref rvect 1)))
 	    (do ((i 0 (1+ i)))
 		((= i 100))
 	      (let ((rval (next-sample rread))
 		    (sval (next-sample sread)))
 		(IF (fneq rval sval) (snd-display ";sample-read: ~A ~A?" rval sval))
-		(IF (fneq rval (vector-ref rvect i)) (snd-display ";region-samples: ~A ~A?" rval (vector-ref rvect i)))
+		(IF (fneq rval (vct-ref rvect i)) (snd-display ";region-samples: ~A ~A?" rval (vct-ref rvect i)))
 		(IF (fneq sval (vector-ref svect i)) (snd-display ";samples: ~A ~A?" sval (vector-ref svect i)))))
 	    (free-sample-reader rread) 
 	    (let ((val0 (next-sample sread)))
@@ -6982,7 +7030,6 @@ EDITS: 5
 	    (snd-display ";transform-samples-size: ~A" (transform-samples-size ind 0)))
 	(IF (transform-sample 0 0 ind 0) (snd-display ";transform-sample (empty): ~A" (transform-sample 0 0 ind 0)))
 	(IF (transform-samples->vct ind 0) (snd-display ";transform-samples->vct (empty): ~A" (transform-samples->vct ind 0)))
-	(IF (transform-samples ind 0) (snd-display ";transform-samples (empty): ~A" (transform-samples ind 0)))
 	(close-sound ind)
 	(set! ind (open-sound "4.aiff"))
 	(IF (ffneq (amp-control ind) 1.0) (snd-display ";amp-control upon open (1.0): ~A?" (amp-control ind)))
@@ -14237,22 +14284,7 @@ EDITS: 5
 	 (set! (transform-graph-type fd 0) dpy-type)
 	 (set! (transform-type fd 0) fft-type)
 	 (update-transform-graph fd 0)
-	 (let ((v0 (transform-samples->vct fd 0))
-	       (vc (transform-samples fd 0))
-	       (val (catch #t (lambda () (transform-sample 50 0 fd 0)) (lambda args -1234.1234))))
-	   (if (and v0 vc)
-	       (begin
-		 (IF (fneq val (vector-ref vc 50)) 
-		     (snd-display ";~A ~A transform-sample: ~A ~A?" dpy-type fft-type val (vector-ref vc 50)))
-		 (do ((i 0 (1+ i))) ((= i 100)) 
-		   (if (fneq (vector-ref vc i) (vct-ref v0 i)) 
-		       (snd-display ";~A ~A transform-samples[~D]: ~A ~A?" dpy-type fft-type i (vector-ref vc i) (vct-ref v0 i)))))
-	       (snd-display ";fft not ready yet: transform-samples->vct: ~A, transform-samples: ~A (type: ~A, graph: ~A, ffting: ~A ~A)" 
-			    v0 vc
-			    (transform-type fd 0)
-			    (transform-graph-type fd 0)
-			    (transform-graph? fd 0)
-			    (frames fd 0)))))
+	 (transform-samples->vct fd 0))
        (list graph-once graph-as-sonogram graph-as-spectrogram
 	     graph-once graph-as-sonogram graph-as-spectrogram)
        (list fourier-transform fourier-transform fourier-transform 
@@ -33033,7 +33065,7 @@ EDITS: 2
 	       recorder-in-device read-peak-env-info-file recorder-autoload recorder-buffer-size recorder-dialog
 	       recorder-file recorder-gain recorder-in-amp recorder-in-format recorder-max-duration recorder-out-amp
 	       recorder-out-chans recorder-out-format recorder-srate recorder-trigger redo region-chans region-dialog
-	       region-graph-style region-frames region-maxamp selection-maxamp region-sample region-samples region-samples->vct
+	       region-graph-style region-frames region-maxamp selection-maxamp region-sample region-samples->vct
 	       region-srate regions region?  remove-from-menu report-in-minibuffer reset-controls restore-controls
 	       restore-marks restore-region reverb-control-decay reverb-control-feedback 
 	       reverb-control-length reverb-control-lowpass reverb-control-scale reverb-control?  reverse-sound
@@ -33051,7 +33083,7 @@ EDITS: 2
 	       spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale
 	       speed-control speed-control-style speed-control-tones squelch-update srate src-sound src-selection
 	       start-playing start-progress-report stop-player stop-playing swap-channels syncd-marks sync sound-properties temp-dir
-	       text-focus-color tiny-font track-sample-reader?  transform-dialog transform-sample transform-samples
+	       text-focus-color tiny-font track-sample-reader?  transform-dialog transform-sample
 	       transform-samples->vct transform-samples-size transform-type trap-segfault optimization unbind-key undo
 	       update-transform-graph update-time-graph update-lisp-graph update-sound use-sinc-interp
 	       vct->samples vct->sound-file verbose-cursor view-sound vu-font vu-font-size vu-size wavelet-type
@@ -33507,7 +33539,7 @@ EDITS: 2
 			  revert-sound right-sample sample samples->vct samples->sound-data save-sound save-sound-as scan-chan
 			  select-channel show-axes show-transform-peaks show-marks show-mix-waveforms show-y-zero
 			  spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle
-			  spectro-y-scale spectro-z-angle spectro-z-scale squelch-update transform-sample transform-samples
+			  spectro-y-scale spectro-z-angle spectro-z-scale squelch-update transform-sample
 			  transform-samples->vct transform-samples-size transform-type update-transform-graph update-time-graph
 			  update-lisp-graph update-sound wavelet-type time-graph? time-graph-type wavo-hop wavo-trace x-bounds
 			  x-position-slider x-zoom-slider y-bounds y-position-slider y-zoom-slider zero-pad))
@@ -33534,7 +33566,7 @@ EDITS: 2
 			  samples->vct samples->sound-data save-sound-as scan-chan show-axes show-transform-peaks show-marks
 			  show-mix-waveforms show-y-zero spectro-cutoff spectro-hop spectro-start spectro-x-angle
 			  spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale squelch-update
-			  transform-sample transform-samples transform-samples->vct transform-samples-size transform-type
+			  transform-sample transform-samples->vct transform-samples-size transform-type
 			  update-transform-graph update-time-graph update-lisp-graph wavelet-type time-graph? time-graph-type
 			  wavo-hop wavo-trace x-bounds x-position-slider x-zoom-slider y-bounds y-position-slider
 			  y-zoom-slider zero-pad)))
@@ -33560,7 +33592,7 @@ EDITS: 2
 			  samples->vct samples->sound-data save-sound scale-by scale-to show-axes show-transform-peaks
 			  show-marks show-mix-waveforms show-y-zero spectro-cutoff spectro-hop spectro-start spectro-x-angle
 			  spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale squelch-update
-			  src-sound transform-sample transform-samples transform-samples->vct scale-sound-by scale-sound-to
+			  src-sound transform-sample transform-samples->vct scale-sound-by scale-sound-to
 			  transform-samples-size transform-type undo update-transform-graph update-time-graph update-lisp-graph
 			  update-sound wavelet-type time-graph? time-graph-type wavo-hop wavo-trace x-bounds x-position-slider
 			  x->position x-zoom-slider y-bounds y-position-slider y->position y-zoom-slider zero-pad scale-channel)))
@@ -33753,7 +33785,7 @@ EDITS: 2
 					(snd-display ";~D: region procs ~A: ~A ~A" ctr n tag arg))
 				    (set! ctr (+ ctr 1))))
 				(list play-region region-chans region-frames region-maxamp region-sample 
-				      region-samples region-samples->vct region-srate forget-region))))
+				      region-samples->vct region-srate forget-region))))
 		  (list (current-module) '#(0 1) (sqrt -1.0) "hiho" (list 0 1)))
 
         (let ((ctr 0))
@@ -33982,9 +34014,7 @@ EDITS: 2
 	  (check-error-tag 'no-such-sound (lambda () (play 0 1234)))
 	  (check-error-tag 'no-such-channel (lambda () (play 0 ind 1234)))
 	  (check-error-tag 'no-such-channel (lambda () (region-sample 0 (car (regions)) 1234)))
-	  (check-error-tag 'no-such-region (lambda () (region-samples 0 1 (+ 1234 (apply max (regions))))))
 	  (check-error-tag 'no-such-region (lambda () (region-samples->vct 0 1 -1)))
-	  (check-error-tag 'no-such-channel (lambda () (region-samples 0 1 (car (regions)) 1234)))
 	  (check-error-tag 'no-such-channel (lambda () (region-samples->vct 0 1 (car (regions)) 1234)))
 	  (check-error-tag 'cannot-save (lambda () (save-sound-as "/bad/baddy.snd")))
 	  (check-error-tag 'no-such-sound (lambda () (transform-sample 0 1 1234)))

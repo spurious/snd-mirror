@@ -18,3 +18,6 @@
 (define set-oss-buffers mus-audio-set-oss-buffers)
 
 (define (max-sounds) (apply max (sounds)))
+
+(define (transform-samples snd chn) (vct->vector (transform-samples->vct snd chn)))
+(define (region-samples samp samps reg chn) (vct->vector (region-samples->vct samp samps reg chn)))

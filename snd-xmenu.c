@@ -1012,7 +1012,6 @@ int g_remove_from_menu(int which_menu, char *label)
   if (top_menu)
     {
       or_over_children(top_menu, clobber_menu, (void *)label);
-      /* TODO: widget should be destroyed or re-used -- memleak currently */
       return(0);
     }
   return(INVALID_MENU);
@@ -1110,6 +1109,12 @@ int g_menu_is_sensitive(int which_menu, char *old_label)
   return(FALSE);
 }
 
+static void set_widget_name(Widget w, char *new_name)
+{
+  /* based on XtName in Xt/Intrinsic.c, Xt/Create.c, and Xt/ResourceI.h */
+  w->core.xrm_name = XrmStringToName(new_name);
+}
+
 static int new_menu = 5;
 
 int g_add_to_main_menu(snd_state *ss, char *label, int slot)
@@ -1141,20 +1146,40 @@ int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb, int pos
 {
   Widget m, menw;
   static Arg args[12];
-  int n;
+  int n = 0;
+  unsigned int i;
   menw = menu_widget(which_menu);
   if (menw == NULL) return(INVALID_MENU);
-  n = 0;
-  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-  if (position >= 0) {XtSetArg(args[n], XmNpositionIndex, position); n++;}
   if (label)
     {
+      /* look for currently unused widget first */
+      CompositeWidget cw = (CompositeWidget)menw;
+      for (i = 0; i < cw->composite.num_children; i++)
+	{
+	  m = cw->composite.children[i];
+	  if ((m) && (!(XtIsManaged(m))))
+	    {
+	      if (strcmp(XtName(m), label) != 0)
+		{
+		  set_widget_name(m, label);
+		  set_button_label(m, label);
+		}
+	      if (position >= 0) XtVaSetValues(m, XmNpositionIndex, position, NULL);
+	      XtVaSetValues(m, XmNuserData, PACK_MENU_DATA(callb, which_menu), NULL);
+	      XtManageChild(m);
+	      return(0);
+	    }
+	}
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
+      if (position >= 0) {XtSetArg(args[n], XmNpositionIndex, position); n++;}
       XtSetArg(args[n], XmNuserData, PACK_MENU_DATA(callb, which_menu)); n++;
       m = XtCreateManagedWidget(label, xmPushButtonWidgetClass, menw, args, n);
       XtAddCallback(m, XmNactivateCallback, SND_callback, ss);
     }
   else
     {
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
+      if (position >= 0) {XtSetArg(args[n], XmNpositionIndex, position); n++;}
       XtCreateManagedWidget("sep", xmSeparatorWidgetClass, menw, args, n);
     }
   return(0);

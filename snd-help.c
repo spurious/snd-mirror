@@ -272,6 +272,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+20-Feb:  removed transform-samples and region-samples.\n\
 17-Feb:  snd 6.6.\n\
 10-Feb:  removed click-for-help option.\n\
 7-Feb:   German translation (po/de.po) thanks to Michael Scholz.\n\
@@ -1249,7 +1250,6 @@ all refer to the same thing.\n\
   " S_region_frames "     (reg)\n\
   " S_region_maxamp "     (reg)\n\
   " S_region_sample "     (samp reg chn)\n\
-  " S_region_samples "    (samp samps reg chn)\n\
   " S_region_samples2vct "(samp samps reg chn)\n\
   " S_region_srate "      (reg)\n\
   " S_regions "           ()\n\
@@ -1332,7 +1332,6 @@ all refer to the same thing.\n\
   " S_transform_dialog "  ()\n\
   " S_transform_graph_p "  (snd chn)\n\
   " S_transform_sample "  (bin slice snd chn)\n\
-  " S_transform_samples " (snd chn()\n\
   " S_transform_samples2vct " (snd chn)\n\
   " S_transform_samples_size " (snd chn)\n\
   " S_unbind_key "        (key state extended)\n\

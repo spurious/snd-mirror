@@ -1852,34 +1852,12 @@ called just after an FFT (or spectrum) is calculated.
 
 <tr><td></td><td colspan=2>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(add-hook! <em class=red>transform-hook</em>
-  (lambda (snd chn scale)
-    (if (and (transform-graph? snd chn) 
-             (= (transform-graph-type snd chn) graph-once))
-	(report-in-minibuffer 
-	 (number-&gt;string (/ (* 2.0 (vct-peak (transform-samples-&gt;vct snd chn))) 
-                            (transform-size snd chn)))
-	 snd)
-      #f)))
-</pre></td></tr></table></td></tr>
-<tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define fft-peak
-  (lambda (snd chn scale)
-    (if (and (transform-graph?) 
-             (= (transform-graph-type) graph-once))
-	(let* ((samps (transform-samples snd chn))
-	       (len (vector-length samps))
-	       (mx (vector-ref samps 0))
-	       (peak (do ((i 1 (+ i 1))) 
-                         ((= i len) 
-                          (/ (* 2 mx) (transform-size)))
-		       (let ((val (abs (vector-ref samps i))))
-			 (if (&gt; val mx) 
-                             (set! mx val))))))
-	  (report-in-minibuffer (number-&gt;string peak) snd))
-      #f)))
-	
+(define (fft-peak snd chn scale)
+  (if (and (transform-graph?) 
+           (= (transform-graph-type) graph-once))
+      (report-in-minibuffer 
+        (number-&gt;string (/ (* 2 (vct-peak (transform-samples-&gt;vct snd chn))) 
+                           (transform-size)))))
 (add-hook! <em class=red>transform-hook</em> fft-peak)
 </pre></td></tr></table>
 </td></tr><tr><td colspan=3></td></tr>
@@ -3308,7 +3286,7 @@ Most of the region number arguments default to the current region (the first in 
 <tr><td valign=top><span class=defbox><code><em class=def><a name="snddeleteregion">forget-region</a></em> (<i>reg</i>)</code></span></td>
 <td>
 "forget" region <i>reg</i>, removing it 
-from the region stack.  Once forgotten, the region's data no longer exists (as a separate entity accessible via region-samples and so on).
+from the region stack.  Once forgotten, the region's data no longer exists (as a separate entity accessible via region-samples-&gt;vct and so on).
 </td></tr>
 
 <!-- insert-region -->
@@ -3384,28 +3362,7 @@ maximum amplitude of region <i>reg</i>.
 value of sample <i>samp</i> in region <i>reg</i> in channel <i>chn</i>.
 </td></tr>
 
-<!-- region-samples -->
-
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndregionsamples">region-samples</a></em> (<i>samp samps reg chn</i>)</code></span></td>
-</tr><tr><td></td><td>
-return vector of <i>samps</i> samples starting at <i>samp</i> in region <i>reg</i>'s 
-channel <i>chn</i>.  (This function calls region-samples-&gt;vct, then vct-&gt;vector; it may someday return the vct instead).
-</td></tr>
-<tr><td colspan=2>
-<center><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define region-rms
- (lambda (n)
-  (let* ((data (<em class=red>region-samples</em> 0 0 n)) ; len=0 =&gt; entire region
-	 (len (vector-length data))
-	 (sum 0.0))
-   (do ((i 0 (1+ i))) 
-	((= i len) (sqrt (/ sum len))) 
-    (set! sum (+ sum (* (vector-ref data i) (vector-ref data i))))))))
-</pre></td></tr></table></center>
-</td></tr>
-
 <!-- region-samples->vct -->
-
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndregionsamples2vct">region-samples-&gt;vct</a></em> (<i>samp samps reg chn v</i>)</code></span></td></tr>
 <tr><td></td>
 <td>
@@ -3413,6 +3370,15 @@ return vct struct of <i>samps</i> samples starting at <i>samp</i> in region <i>r
 channel <i>chn</i>. If v (a vct object) is provided, it is filled, 
 rather than creating a new vct object.
 </td></tr>
+<tr><td colspan=2>
+<center><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(define (region-rms n)
+  (let* ((data (<em class=red>region-samples-&gt;vct</em> 0 0 n)) ; len=0 =&gt; entire region
+	 (len (vct-length data)))
+    (sqrt (/ (dot-product data data len) len))))
+</pre></td></tr></table></center>
+</td></tr>
+
 
 <!-- region-srate -->
 
@@ -6538,17 +6504,6 @@ sonogram or spectrogram) <i>slice</i> in <i>snd</i>'s channel <i>chn</i>.
 <tr><td colspan=2></td></tr>
 
 
-<!-- transform-samples -->
-<tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="sndtransformsamples">transform-samples</a></em> (<i>snd chn</i>)</code></span>
-</td></tr>
-<tr><td></td><td>
-return the transform data currently in <i>snd</i>'s channel <i>chn</i>.
-(This function calls transform-samples-&gt;vct, then vct-&gt;vector; it may someday return the vct instead).
-</td></tr>
-<tr><td colspan=2></td></tr>
-
-
 <!-- transform-samples->vct -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="transformsamples2vct">transform-samples-&gt;vct</a></em> (<i>snd chn v</i>)</code></span>
@@ -7528,15 +7483,15 @@ input data). <i>sgn</i> is 1 for an FFT, -1 for an inverse FFT; (default 1).
 <p>Other related variables and functions:</p>
 <table cellpadding=0 celspacing=10 border=0>
 <tr><td width=200><a href="#sndffting"><small>transform-graph?</small></a></td><td width=200><a href="#showfftpeaks"><small>show-transform-peaks</small></a></td><td><a href="#sndtransformsample"><small>transform-sample</small></a></td></tr>
-<tr><td><a href="#fftbeta"><small>fft-window-beta</small></a></td><td><a href="#lshowselectiontransform"><small>show-selection-transform</small></a></td><td><a href="#sndtransformsamples"><small>transform-samples</small></a></td></tr>
-<tr><td><a href="#ffthook"><small>transform-hook</small></a></td><td><a href="#spectrocutoff"><small>spectro-cutoff</small></a></td><td><a href="#transformsamples2vct"><small>transform-samples-&gt;vct</small></a></td></tr>
-<tr><td><a href="#fftlogfrequency"><small>fft-log-frequency</small></a></td><td><a href="#spectrohop"><small>spectro-hop</small></a></td><td><a href="#transformgraphsize"><small>transform-samples-size</small></a></td></tr>
-<tr><td><a href="#fftlogmagnitude"><small>fft-log-magnitude</small></a></td><td><a href="#spectrostart"><small>spectro-start</small></a></td><td><a href="#ltransformtype"><small>transform-type</small></a></td></tr>
-<tr><td><a href="#lfftsize"><small>transform-size</small></a></td><td><a href="#spectroxangle"><small>spectro-x-angle</small></a></td><td><a href="#sndupdatefft"><small>update-transform-graph</small></a></td></tr>
-<tr><td><a href="#lfftstyle"><small>transform-graph-type</small></a></td><td><a href="#spectroxscale"><small>spectro-x-scale</small></a></td><td><a href="#normalizefft"><small>transform-normalization</small></a></td></tr>
-<tr><td><a href="#lfftwindow"><small>fft-window</small></a></td><td><a href="#spectroyangle"><small>spectro-y-angle</small></a></td><td><a href="#zeropad"><small>zero-pad</small></a></td></tr>
-<tr><td><a href="#maxfftpeaks"><small>max-transform-peaks</small></a></td><td><a href="#spectroyscale"><small>spectro-y-scale</small></a></td><td><a href="#wavelettype"><small>wavelet-type</small></a></td></tr>
-<tr><td><a href="#mindb"><small>min-dB</small></a></td><td><a href="#spectrozangle"><small>spectro-z-angle</small></a></td><td><a href="#spectrozscale"><small>spectro-z-scale</small></a></td></tr>
+<tr><td><a href="#fftbeta"><small>fft-window-beta</small></a></td><td><a href="#lshowselectiontransform"><small>show-selection-transform</small></a></td><td><a href="#transformsamples2vct"><small>transform-samples-&gt;vct</small></a></td></tr>
+<tr><td><a href="#ffthook"><small>transform-hook</small></a></td><td><a href="#spectrocutoff"><small>spectro-cutoff</small></a></td><td><a href="#transformgraphsize"><small>transform-samples-size</small></a></td></tr>
+<tr><td><a href="#fftlogfrequency"><small>fft-log-frequency</small></a></td><td><a href="#spectrohop"><small>spectro-hop</small></a></td><td><a href="#ltransformtype"><small>transform-type</small></a></td></tr>
+<tr><td><a href="#fftlogmagnitude"><small>fft-log-magnitude</small></a></td><td><a href="#spectrostart"><small>spectro-start</small></a></td><td><a href="#sndupdatefft"><small>update-transform-graph</small></a></td></tr>
+<tr><td><a href="#lfftsize"><small>transform-size</small></a></td><td><a href="#spectroxangle"><small>spectro-x-angle</small></a></td><td><a href="#normalizefft"><small>transform-normalization</small></a></td></tr>
+<tr><td><a href="#lfftstyle"><small>transform-graph-type</small></a></td><td><a href="#spectroxscale"><small>spectro-x-scale</small></a></td><td><a href="#zeropad"><small>zero-pad</small></a></td></tr>
+<tr><td><a href="#lfftwindow"><small>fft-window</small></a></td><td><a href="#spectroyangle"><small>spectro-y-angle</small></a></td><td><a href="#wavelettype"><small>wavelet-type</small></a></td></tr>
+<tr><td><a href="#maxfftpeaks"><small>max-transform-peaks</small></a></td><td><a href="#spectroyscale"><small>spectro-y-scale</small></a></td><td><a href="#spectrozscale"><small>spectro-z-scale</small></a></td></tr>
+<tr><td><a href="#mindb"><small>min-dB</small></a></td><td><a href="#spectrozangle"><small>spectro-z-angle</small></a></td><td></td></tr>
 </table>
 
 <p>And some of the fft-based effects/editing functions:

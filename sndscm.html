@@ -85,7 +85,7 @@
 </center>
 <br>
 
-<p>This file contains notes upon the various *.scm files included with Snd.
+<p>This file contains notes on the Scheme and Ruby files included with Snd.
 To use any of these files, (load &lt;file&gt;); for example <code>(load "bell.scm")</code>.  To start Snd with
 the file already loaded, <code>snd -l bell.scm</code>, or put the load statement in ~/.snd.
 </p>
@@ -138,7 +138,7 @@ at random), and car3+mod3 putting a sort of formant at the minor third
 
 <p>bess.scm is a Guile script (independent of Snd) that loads sndlib and xmlib into Guile,
 opens the DAC, puts up a bunch of scale widgets, and starts two CLM oscils doing
-frequency modulation in semi-real-time (how "real-time" it is depends on how your
+frequency modulation in semi-real-time (how "real-time" it is depends on your
 audio setup).  This is a translation to the Sndlib/Libxm system of bess.cl in CLM.
 Michael Scholz has contributed a Ruby translation of this with many improvements:
 bess.rb.
@@ -153,7 +153,7 @@ bess.rb.
   <em class=def><A NAME="make-birds">make-birds</a></em> &amp;optional (output-file "test.snd")
 </pre>
 <p>
-bird.scm is a translation of Sambox/CLM bird songs.  The two instruments set
+bird.scm is a translation of the Sambox/CLM bird songs.  The two instruments set
 up a simple sine wave (bird) and simple waveshaping synthesis (bigbird).  Use a
 low-pass filter for distance effects (a bird song sounds really silly
 reverberated).  All the real information is in the amplitude and frequency
@@ -163,14 +163,12 @@ whether each bird is tagged so that you can move it around later (for a pretty p
 result, check <a href="snd.html#mixingfiles">this</a> out).  The function
 <i>one-bird</i> mixes in one complete birdsong, using the bird's name for the
 edit history list.  Many of these birds were used in "Colony".  To hear all the
-birds, call <code>(make-birds)</code>.  This writes the sequence out as "test.snd"; give the
+birds, <code>(make-birds)</code>.  This writes the sequence out as "test.snd"; give the
 desired file name as the (optional) argument to <i>make-birds</i>: <code>(make-birds "birds.snd")</code>.
 Waveshaping is described in Le Brun, "Digital Waveshaping Synthesis", JAES 1979 April, vol 27, no 4, p250.
 </p>
 <pre>
 (define (one-bird beg maxdur func birdname)
-  ;; it would be better if this could get the needed mix length automatically
-  ;; saving the individual squeaks in one vector saves us zillions of temp files (and is faster)
   (set! out-data (make-vct (round (* (srate) maxdur))))
   (func)
   (as-one-edit 
@@ -205,10 +203,7 @@ and heard these calls every day). The <i>func</i> in this case is:</p>
 <p>which calls bigbird twice (the "bob" and the "white"). It also reports the
 name "bobwhite" in the minibuffer (this is mostly to let the caller know that
 something is happening -- since we aren't calling update-graph, there's no
-visual indication that a bird has been mixed in). <i>one-bird</i> uses
-<i>as-one-edit</i> mostly to package up the birdsong with any possible
-file extension (if <i>beg</i> is beyond the current end-of-file)
-which would otherwise appear as a separate edit in the edit history list.
+visual indication that a bird has been mixed in).
 In <i>bigbird</i> the lines
 </p>
 <pre>
@@ -224,7 +219,6 @@ polynomial coefficients given the desired spectrum; the spectrum then
 results from driving that polynomial with an oscillator.  Besides the
 bird guides, there are now numerous recordings of birds that could
 easily be turned into sonograms and transcribed as envelopes.
-In fact, in Snd this could be automated...
 </p>
 <p>In CLM, the bird is:</p>
 <pre>
@@ -294,8 +288,8 @@ include:
 
 <p>draw.scm has examples of graphics additions; some of these are shown in extsnd.html.
 <b>display-energy</b> is a lisp-graph-hook procedure that displays the current time
-domain data as energy, not amplitude, using the y zoom slider to control the lisp
-graph y axis.  The other procedures in draw.scm are intended for use with the
+domain data as energy, not amplitude, using the y zoom slider to control the
+y axis.  The other procedures in draw.scm are intended for use with the
 after-graph-hook.  
 <b>display-colored-samples</b> (color beg dur snd chn) displays samples from beg for dur in color
 whenever they're in the current view. This is intended for use with <b>color-samples</b>. 
@@ -396,7 +390,7 @@ together several successive samples, causing a more spikey output.
 scanned synthesis of Bill Verplank and Max Mathews.
 To watch the wave, open some sound (so Snd has some place to put the graph), turn off
 the time domain display (to give our graph all the window)
-then <code>(testunif 1.0 0.1 0.0)</code> or whatever.
+then <code>(testunif 1.0 0.1 0.0)</code>.
 The <A NAME="spotfreq">spot-freq</a> function is a simple first-pass at using autocorrelation for
 pitch tracking; it's easily fooled, but could probably be made relatively robust.
 The code:
@@ -426,8 +420,8 @@ the moving formant idea mentioned in the original article.
 </p>
 
 <p><i>cosine-summation</i> is a variation on J.A.Moorer's sine-summation;
-the generating formula is much simpler, but the result is basically the same.  This
-could also be viewed as a version of the sum-of-cosines generator, giving control
+the generating formula is much simpler, but the result is the same.  This
+can also be viewed as a version of the sum-of-cosines generator, giving control
 on the ratio between successive cosines in the sum (i.e. the "r" parameter in
 sine-summation, applied within the sum-of-cosines output).  <i>legendre-summation</i>
 uses the sum-of-cosines generator to produce a band-limited pulse-train whose
@@ -466,8 +460,7 @@ Polynomials driven by a cosine). Three other similar functions are <i>sum-of-n-s
 <p>new-effects.scm implements an "Effects" menu.  If you have Motif,
 you can load xm.so (or build Snd with it preloaded), and get sliders
 to control most of the effects.  (Use gtk-effects.scm with Gtk, obviously).
-The actual list of effects changes relatively frequently, but
-probably has:
+The effects include:
 </p>
 <pre>
   reverse
@@ -659,7 +652,9 @@ repetition to be in reverse.
 <br>
 
 <A NAME="enveddoc"></a><span class=box><h2>enved.scm</h2></span>
-<img src="envs.png" alt="channel enveds" align=right hspace=10 vspace=20>
+<br>
+<img src="envs.png" alt="channel enveds">
+
 <pre>
   <em class=def><A NAME="startenveloping">start-enveloping</a></em>
   <em class=def><A NAME="stopenveloping">stop-enveloping</a></em>
@@ -705,10 +700,8 @@ the second if you're setting it to something new:
 <A NAME="eventdoc"></a><span class=box><h2>event.scm</h2></span>
 
 <p>event.scm has functions used by snd-test.scm to exercise the user interface.
-These functions use the xm module and XSendEvent primarily, but there are
-also scheme implementations of some of the built-in functions (change-prop).
-Once the xg module is stable, I'll start moving most of the
-graphics extensions out of C and into Scheme.
+These functions depend on the xm module and XSendEvent primarily, but there are
+also Scheme implementations of some of the built-in functions (change-prop).
 </p>
 
 
@@ -845,7 +838,7 @@ I'm slowly dividing out related groups of procedures to separate files.
   <em class=def><A NAME="exoscformants">osc-formants</a></em> radius bases amounts freqs
   <em class=def><A NAME="exremoveclick">remove-click</a></em>
 </pre>
-<p>The two versions of <i>comb-filter</i> implement a comb filter both
+<p>The two versions of <i>comb-filter</i> implement a comb filter,
 "by hand" and using CLM. <i>comb-chord</i> uses comb filters at harmonically
 related sizes to create a chord (see also chordalize in new-effects.scm).  <i>amp</i>
 here is an overall amplitude scaler.  <i>zcomb</i> is a time-varying comb
