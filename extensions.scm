@@ -1,7 +1,6 @@
 ;;; various generally useful Snd extensions
 
 ;;; channel-property, sound-property
-;;; accessors for graph-style fields
 ;;; delete selected portion and smooth the splice
 ;;; eval over selection
 ;;; mix with result at original peak amp
@@ -62,55 +61,6 @@
   (make-procedure-with-setter
    (lambda (snd chn) (channel-property 'sync snd chn))
    (lambda (snd chn val) (set! (channel-property 'sync snd chn) val))))
-
-
-
-;;; -------- accessors for graph-style fields
-
-(define time-graph-style
-  (make-procedure-with-setter
-   (lambda (snd chn)
-     ;; apparently we can't put a string here and thereby set the (procedure time-graph-style) documentation property
-     (logand (graph-style snd chn) #xff))
-   (lambda (snd chn val)
-     (set! (graph-style snd chn)
-	   (logior (logand (graph-style snd chn) #xffff00)
-		   val)))))
-
-(set-object-property! time-graph-style 'documentation
-		      "(time-graph-style snd chn) -> channel specific time-domain graph-style. (set! (time-graph-style 0 0) graph-dots).")
-
-(define transform-graph-style
-  (make-procedure-with-setter
-   (lambda (snd chn)
-     (let ((style (logand (ash (graph-style snd chn) -8) #xff)))
-       (if (= style 0)
-	   (time-graph-style snd chn)
-	   (- style 1))))
-   (lambda (snd chn val)
-     ;; -1 will unset
-     (set! (graph-style snd chn)
-	   (logior (logand (graph-style snd chn) #xff00ff)
-		   (ash (+ val 1) 8))))))
-
-(set-object-property! transform-graph-style 'documentation
-		      "(transform-graph-style snd chn) -> channel specific frequency-domain graph-style. (set! (transform-graph-style 0 0) graph-dots).")
-
-(define lisp-graph-style
-  (make-procedure-with-setter
-   (lambda (snd chn)
-     (let ((style (logand (ash (graph-style snd chn) -16) #xff)))
-       (if (= style 0)
-	   (time-graph-style snd chn)
-	   (- style 1))))
-   (lambda (snd chn val)
-     ;; -1 will unset
-     (set! (graph-style snd chn)
-	   (logior (logand (graph-style snd chn) #xffff)
-		   (ash (+ val 1) 16))))))
-
-(set-object-property! lisp-graph-style 'documentation
-		      "(lisp-graph-style snd chn) -> channel specific lisp-generated graph-style. (set! (lisp-graph-style 0 0) graph-dots).")
 
 
 (if (not (defined? 'all-chans))
@@ -537,8 +487,8 @@ If 'check' is #f, the hooks are removed."
 			     cursor-style show-marks show-y-zero wavo-hop wavo-trace max-transform-peaks
 			     show-transform-peaks fft-log-frequency fft-log-magnitude verbose-cursor zero-pad
 			     wavelet-type min-dB transform-size transform-graph-type time-graph-type fft-window
-			     transform-type transform-normalization graph-style show-mix-waveforms dot-size
-			     x-axis-style show-axes graphs-horizontal)))
+			     transform-type transform-normalization time-graph-style show-mix-waveforms dot-size
+			     x-axis-style show-axes graphs-horizontal lisp-graph-style transform-graph-style)))
     (define saved-state
       (make-procedure-with-setter
        (lambda (snd)

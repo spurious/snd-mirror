@@ -1,4 +1,5 @@
 #include "snd.h"
+#include "vct.h"
 
 snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *new_comment)
 {
@@ -1739,7 +1740,7 @@ enum {SP_SYNC, SP_READ_ONLY, SP_NCHANS, SP_CONTRASTING, SP_EXPANDING, SP_REVERBI
       SP_FILTER_DBING, SP_SPEED_TONES, SP_SPEED_STYLE, SP_RESET_CONTROLS,
       SP_AMP, SP_CONTRAST, SP_CONTRAST_AMP, SP_EXPAND, SP_EXPAND_LENGTH, SP_EXPAND_RAMP, SP_EXPAND_HOP,
       SP_SPEED, SP_REVERB_LENGTH, SP_REVERB_FEEDBACK, SP_REVERB_SCALE, SP_REVERB_LOW_PASS,
-      SP_REVERB_DECAY, SP_PROPERTIES
+      SP_REVERB_DECAY, SP_PROPERTIES, SP_FILTER_COEFFS,
 };
 
 static XEN sound_get(XEN snd_n, int fld, char *caller)
@@ -1819,7 +1820,20 @@ static XEN sound_get(XEN snd_n, int fld, char *caller)
     case SP_REVERB_SCALE:        return(C_TO_XEN_DOUBLE(sp->reverb_control_scale));    break;
     case SP_REVERB_LOW_PASS:     return(C_TO_XEN_DOUBLE(sp->reverb_control_lowpass));  break;
     case SP_REVERB_DECAY:        return(C_TO_XEN_DOUBLE(sp->reverb_control_decay));    break;
-
+    case SP_FILTER_COEFFS: 
+      if (sp->filter_control_env)
+	{
+	  int len;
+	  Float *coeffs, *data;
+	  len = sp->filter_control_order;
+	  coeffs = (Float *)CALLOC(len, len * sizeof(Float));
+	  data = sample_linear_env(sp->filter_control_env, len);
+	  mus_make_fir_coeffs(len, data, coeffs);
+	  FREE(data);
+	  return(make_vct(len, coeffs));
+	}
+      return(XEN_FALSE);
+      break;
     }
   return(XEN_FALSE);
 }
@@ -2291,6 +2305,12 @@ static XEN g_set_filter_control_in_dB(XEN on, XEN snd_n)
 }
 
 WITH_REVERSED_BOOLEAN_ARGS(g_set_filter_control_in_dB_reversed, g_set_filter_control_in_dB)
+
+static XEN g_filter_control_coeffs(XEN snd_n) 
+{
+  #define H_filter_control_coeffs "(" S_filter_control_coeffs " &optional snd) -> current control panel filter coeffs"
+  return(sound_get(snd_n, SP_FILTER_COEFFS, S_filter_control_coeffs));
+}
 
 static XEN g_filter_control_order(XEN snd_n) 
 {
@@ -3510,6 +3530,7 @@ XEN_ARGIFY_1(g_filter_control_p_w, g_filter_control_p)
 XEN_ARGIFY_2(g_set_filter_control_p_w, g_set_filter_control_p)
 XEN_ARGIFY_1(g_filter_control_in_dB_w, g_filter_control_in_dB)
 XEN_ARGIFY_2(g_set_filter_control_in_dB_w, g_set_filter_control_in_dB)
+XEN_ARGIFY_1(g_filter_control_coeffs_w, g_filter_control_coeffs)
 XEN_ARGIFY_1(g_filter_control_order_w, g_filter_control_order)
 XEN_ARGIFY_2(g_set_filter_control_order_w, g_set_filter_control_order)
 XEN_ARGIFY_1(g_contrast_control_w, g_contrast_control)
@@ -3609,6 +3630,7 @@ XEN_ARGIFY_5(g_progress_report_w, g_progress_report)
 #define g_set_filter_control_p_w g_set_filter_control_p
 #define g_filter_control_in_dB_w g_filter_control_in_dB
 #define g_set_filter_control_in_dB_w g_set_filter_control_in_dB
+#define g_filter_control_coeffs_w g_filter_control_coeffs
 #define g_filter_control_order_w g_filter_control_order
 #define g_set_filter_control_order_w g_set_filter_control_order
 #define g_contrast_control_w g_contrast_control
@@ -3750,6 +3772,8 @@ If it returns #t, the apply is aborted."
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_filter_control_in_dB, g_filter_control_in_dB_w, H_filter_control_in_dB,
 					    "set-" S_filter_control_in_dB, g_set_filter_control_in_dB_w, g_set_filter_control_in_dB_reversed, 0, 1, 0, 2);
+  
+  XEN_DEFINE_PROCEDURE(S_filter_control_coeffs, g_filter_control_coeffs_w, 0, 1, 0, H_filter_control_coeffs);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_filter_control_order, g_filter_control_order_w, H_filter_control_order,
 					    "set-" S_filter_control_order, g_set_filter_control_order_w, g_set_filter_control_order_reversed, 0, 1, 0, 2);

@@ -876,7 +876,7 @@ static void make_sonogram_axes(chan_info *cp)
       ap = cp->axis;
       if (cp->transform_type == FOURIER)
 	{
-	  if ((cp->fft_log_frequency) || (cp->transform_graph_type == GRAPH_TRANSFORM_AS_SPECTROGRAM))
+	  if ((cp->fft_log_frequency) || (cp->transform_graph_type == GRAPH_AS_SPECTROGRAM))
 	    {
 	      max_freq = cp->spectro_cutoff;
 	      min_freq = cp->spectro_start;
@@ -902,7 +902,7 @@ static void make_sonogram_axes(chan_info *cp)
 	}
       yang = fmod(cp->spectro_y_angle, 360.0);
       if (yang < 0.0) yang += 360.0;
-      if (cp->transform_graph_type == GRAPH_TRANSFORM_AS_SPECTROGRAM)
+      if (cp->transform_graph_type == GRAPH_AS_SPECTROGRAM)
 	{
 	  if (cp->transform_type == FOURIER)
 	    {
@@ -1022,7 +1022,7 @@ static void apply_fft(fft_state *fs)
       (fs->datalen > 0))
     {
       ind0 = fs->databeg;
-      if (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE) data_len = (int)(fs->datalen);
+      if (cp->transform_graph_type == GRAPH_ONCE) data_len = (int)(fs->datalen);
     }
   else 
     {
@@ -1199,7 +1199,7 @@ static void display_fft(fft_state *fs)
   data = fp->data;
   if (data == NULL) return;
   sp = cp->sound;
-  if (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE)
+  if (cp->transform_graph_type == GRAPH_ONCE)
     {
       xlabel = spectro_xlabel(cp);
       switch (cp->transform_type)
@@ -1379,7 +1379,7 @@ static fft_state *make_fft_state(chan_info *cp, int simple)
   ss = cp->state;
   ap = cp->axis;
   if ((show_selection_transform(ss)) && 
-      (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE) && 
+      (cp->transform_graph_type == GRAPH_ONCE) && 
       (selection_is_active_in_channel(cp)))
     {
       /* override transform_size(ss) in this case (sonograms cover selection but use preset size) */
@@ -1530,7 +1530,7 @@ void single_fft(chan_info *cp, int dpy)
 }
 
 
-/* -------------------------------- GRAPH_TRANSFORM_AS_SONOGRAM -------------------------------- */
+/* -------------------------------- GRAPH_AS_SONOGRAM -------------------------------- */
 /*
  * calls calculate_fft for each slice, each bin being a gray-scaled rectangle in the display
  */
@@ -1656,7 +1656,7 @@ static int set_up_sonogram(sonogram_state *sg)
   sg->minibuffer_needs_to_be_cleared = 0;
   if (cp->graph_time_p) dpys++; 
   if (cp->graph_lisp_p) dpys++; 
-  if (cp->transform_graph_type == GRAPH_TRANSFORM_AS_SPECTROGRAM)
+  if (cp->transform_graph_type == GRAPH_AS_SPECTROGRAM)
     sg->outlim = ap->height / cp->spectro_hop;
   else sg->outlim = ap->window_width / dpys;
   if (sg->outlim <= 1) return(2);
@@ -1755,7 +1755,7 @@ static int run_all_ffts(sonogram_state *sg)
   if (sg->msg_ctr == 0)
     {
       progress_report(cp->sound, 
-		      (cp->transform_graph_type == GRAPH_TRANSFORM_AS_SONOGRAM) ? S_graph_transform_as_sonogram : S_graph_transform_as_spectrogram, 
+		      (cp->transform_graph_type == GRAPH_AS_SONOGRAM) ? S_graph_as_sonogram : S_graph_as_spectrogram, 
 		      0, 0,
 		      ((Float)(si->active_slices) / (Float)(si->target_slices)), 
 		      NOT_FROM_ENVED);
@@ -1787,7 +1787,7 @@ static int run_all_ffts(sonogram_state *sg)
       si->active_slices++;
     }
   sg->outer++;
-  if ((sg->outer == sg->outlim) || (cp->graph_transform_p == 0) || (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE)) return(1);
+  if ((sg->outer == sg->outlim) || (cp->graph_transform_p == 0) || (cp->transform_graph_type == GRAPH_ONCE)) return(1);
   fs->beg += sg->hop;
   
   ap = cp->axis;
@@ -1862,7 +1862,7 @@ BACKGROUND_TYPE sonogram_in_slices(void *sono)
 
 void sono_update(chan_info *cp)
 {
-  if (cp->transform_graph_type != GRAPH_TRANSFORM_ONCE) make_sonogram_axes(cp);
+  if (cp->transform_graph_type != GRAPH_ONCE) make_sonogram_axes(cp);
   update_graph(cp);
 }
 
@@ -2033,7 +2033,7 @@ static XEN g_transform_samples_size(XEN snd, XEN chn)
 {
   #define H_transform_samples_size "(" S_transform_samples_size " &optional snd chn)\n\
 returns a description of transform graph data in snd's channel chn, based on " S_transform_graph_type ".\
-If no transform graph, returns 0; if " S_graph_transform_once ", returns " S_transform_size ",\
+If no transform graph, returns 0; if " S_graph_once ", returns " S_transform_size ",\
 and otherwise returns a list (total-size active-bins active-slices)"
 
   chan_info *cp;
@@ -2042,7 +2042,7 @@ and otherwise returns a list (total-size active-bins active-slices)"
   cp = get_cp(snd, chn, S_transform_samples_size);
   if (!(cp->graph_transform_p)) 
     return(XEN_ZERO);
-  if (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE)
+  if (cp->transform_graph_type == GRAPH_ONCE)
     return(C_TO_SMALL_XEN_INT(cp->transform_size));
   si = (sono_info *)(cp->sonogram_data);
   if (si) return(XEN_LIST_3(C_TO_XEN_DOUBLE(cp->spectro_cutoff),
@@ -2072,7 +2072,7 @@ returns the current transform sample at bin and slice in snd channel chn (assumi
 	{
 	  if (fbin < fp->current_size)
 	    {
-	      if (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE)
+	      if (cp->transform_graph_type == GRAPH_ONCE)
 		return(C_TO_XEN_DOUBLE(fp->data[fbin]));
 	      else 
 		{
@@ -2117,7 +2117,7 @@ returns a vct object (vct-obj if passed), with the current transform data from s
   cp = get_cp(snd_n, chn_n, S_transform_samples2vct);
   if ((cp->graph_transform_p) && (cp->fft))
     {
-      if (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE)
+      if (cp->transform_graph_type == GRAPH_ONCE)
 	{
 	  fp = cp->fft;
 	  len = fp->current_size;
@@ -2294,14 +2294,6 @@ of a moving mark:\n\
   XEN_DEFINE_CONSTANT(S_hadamard_transform,  HADAMARD,        H_hadamard_transform);
   XEN_DEFINE_CONSTANT(S_walsh_transform,     WALSH,           H_walsh_transform);
   XEN_DEFINE_CONSTANT(S_autocorrelation,     AUTOCORRELATION, H_autocorrelation);
-
-  #define H_graph_transform_once "The value for " S_transform_graph_type " that causes a single transform to be displayed"
-  #define H_graph_transform_as_sonogram "The value for " S_transform_graph_type " that causes a snongram to be displayed"
-  #define H_graph_transform_as_spectrogram "The value for " S_transform_graph_type " that causes a spectrogram to be displayed"
-
-  XEN_DEFINE_CONSTANT(S_graph_transform_once,           GRAPH_TRANSFORM_ONCE,           H_graph_transform_once);
-  XEN_DEFINE_CONSTANT(S_graph_transform_as_sonogram,    GRAPH_TRANSFORM_AS_SONOGRAM,    H_graph_transform_as_sonogram);
-  XEN_DEFINE_CONSTANT(S_graph_transform_as_spectrogram, GRAPH_TRANSFORM_AS_SPECTROGRAM, H_graph_transform_as_spectrogram);
 
   #define H_dont_normalize_transform "The value for " S_transform_normalization " that causes the transform to display raw data"
   #define H_normalize_transform_by_channel "The value for " S_transform_normalization " that causes the transform to be normalized in each channel independently"

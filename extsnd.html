@@ -4325,63 +4325,14 @@ the direction argument between the channel and edit-position:
 <!-- --><span class=defbox><code><em class=def><a name="graphstyle">graph-style</a></em> (<em class=narg>snd chn</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->how sound data is displayed (default: <i>graph-lines</i>)
+<!-- -->how sound data is displayed by default (default: <i>graph-lines</i>)
 <!-- -->The choices are:<pre>
-<!-- -->
 <!-- -->graph-lines  graph-dots  graph-filled  graph-lollipops  graph-dots-and-lines 
 <!-- --></pre>
-<!-- -->It is possible to set the graph-style of each of a channel's graphs 
-<!-- -->independently.  The lower 8 bits of the graph-style apply to the main 
-<!-- -->graph, and to the other graphs if they aren't set explicitly; the 
-<!-- -->second 8 bits refers to the fft graph offset by 1, and the next 
-<!-- -->8 bits are the lisp graph.  This is clumsy, but backwards compatible.  
-<!-- -->For example,
-<!-- --></td></tr>
-<!-- -->
-<!-- --><tr><td></td><td>
-<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(set! (<em class=red>graph-style</em> 0 0)
-      (+ graph-dots (ash (+ graph-lines 1) 8) 
-                    (ash (+ graph-lollipops 1) 16)))
-<!-- --></pre></td></tr></table>
-<!-- --></td></tr>
-<!-- -->
-<!-- --><tr><td></td><td>
-<!-- -->causes the main (time domain) graph to be displayed using dots, 
-<!-- -->the fft graph to use lines, and the lisp graph lollipops.  There 
-<!-- -->are some functions in <a href="sndscm.html#extensionsdoc">extensions.scm</a> (time-graph-style et al) that 
-<!-- -->might make these fields easier to access and change.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- graph-lisp? -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndgraphing">graph-lisp?</a></em> (<i>snd chn</i>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->#t if lisp-generated graph is displayed.  This graph section is also active if there's an active function
-<!-- -->on the <a href="#lispgraphhook">lisp-graph-hook</a>.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- graph-time? -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndwaving">graph-time?</a></em> (<em class=targ>snd chn</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->the state of <i>snd</i>'s channel <i>chn</i>'s 'w' button.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- graph-transform? -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndffting">graph-transform?</a></em> (<em class=targ>snd chn</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->#t if <i>snd</i>'s channel <i>chn</i> is displaying a spectrum (the 'f' button).
+<!-- -->In the set! case, if no <i>snd</i> is specified, all graph-styles are set to the
+<!-- -->new value.  If <i>snd</i> is given, the three graph styles for that sound's channels (or channel <i>chn</i>) are
+<!-- -->set. See <a href="#timegraphstyle">time-graph-style</a>, <a href="#lispgraphstyle">lisp-graph-style</a>, and
+<!-- --><a href="#transformgraphstyle">transform-graph-style</a> to override the default for a specific graph.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4485,6 +4436,30 @@ the direction argument between the channel and edit-position:
 	(wr (<a href="#sndrightsample">right-sample</a>)))
    (<a href="#sndsamples">samples</a> wl (+ 1 (- wr wl)))))
 <!-- --></pre></td></tr></table>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- lisp-graph? -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndgraphing">lisp-graph?</a></em> (<i>snd chn</i>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->#t if lisp-generated graph is displayed.  This graph section is also active if there's an active function
+<!-- -->on the <a href="#lispgraphhook">lisp-graph-hook</a>.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- lisp-graph-style -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="lispgraphstyle">lisp-graph-style</a></em> (<em class=narg>snd chn</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->how lisp-generated data is displayed.
+<!-- -->The choices are:<pre>
+<!-- -->graph-lines  graph-dots  graph-filled  graph-lollipops  graph-dots-and-lines 
+<!-- --></pre>
+<!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
@@ -5929,13 +5904,59 @@ This can be
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
+<!-- time-graph? -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndwaving">time-graph?</a></em> (<em class=targ>snd chn</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->#t if the time domain graph is being displayed (the 'w' button).
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- time-graph-style -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="timegraphstyle">time-graph-style</a></em> (<em class=narg>snd chn</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->how time-domain data is displayed.
+<!-- -->The choices are:<pre>
+<!-- -->graph-lines  graph-dots  graph-filled  graph-lollipops  graph-dots-and-lines 
+<!-- --></pre>
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
 <!-- time-graph-type -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="wavo">time-graph-type</a></em> (<em class=narg>snd chn</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->If <b>time-graph-type</b> is <code>graph-time-as-wavogram</code>, the time domain waveform is displayed as a '<a href="snd.html#wavogram">wavogram</a>'.
-<!-- -->The default is <code>graph-time-once</code>.  See also <a href="#wavohop">wavo-hop</a> and <a href="#wavotrace">wavo-trace</a>.
+<!-- -->If <b>time-graph-type</b> is <code>graph-as-wavogram</code>, the time domain waveform is displayed as a '<a href="snd.html#wavogram">wavogram</a>'.
+<!-- -->The default is <code>graph-once</code>.  See also <a href="#wavohop">wavo-hop</a> and <a href="#wavotrace">wavo-trace</a>.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- transform-graph? -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndffting">transform-graph?</a></em> (<em class=targ>snd chn</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->#t if <i>snd</i>'s channel <i>chn</i> is displaying a spectrum (the 'f' button).
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- transform-graph-style -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="transformgraphstyle">transform-graph-style</a></em> (<em class=narg>snd chn</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->how frequency-domain data is displayed.
+<!-- -->The choices are:<pre>
+<!-- -->graph-lines  graph-dots  graph-filled  graph-lollipops  graph-dots-and-lines 
+<!-- --></pre>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5945,8 +5966,8 @@ This can be
 <!-- --><span class=defbox><code><em class=def><a name="lfftstyle">transform-graph-type</a></em> (<em class=narg>snd chn</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->choice of spectral display.  The choices are (default) <i>graph-transform-once</i>, 
-<!-- --><i>graph-transform-as-sonogram</i>, and <i>graph-transform-as-spectrogram</i>.
+<!-- -->choice of spectral display.  The choices are (default) <i>graph-once</i>, 
+<!-- --><i>graph-as-sonogram</i>, and <i>graph-as-spectrogram</i>.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6434,6 +6455,16 @@ The control panel procedures are:
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->#t if <i>snd</i>'s expand button is on.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- filter-control-coeffs -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndfiltercoeffs">filter-control-coeffs</a></em> (<em class=targ>snd</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- --><i>snd</i>'s control panel <a href="snd.html#filter">filter</a> coefficients (read-only currently).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -7721,12 +7752,12 @@ run
 <br>
 <p><b>Time domain graph type</b> (<a href="#wavo">time-graph-type</a>):</p>
 <pre>
-  graph-time-once  graph-time-as-wavogram
+  graph-once  graph-as-wavogram
 </pre>
 <br>
 <p><b>Transform graph type</b> (the Transform Options Display choice, <a href="#lfftstyle">transform-graph-type</a>):</p>
 <pre>
-  graph-transform-once  graph-transform-as-sonogram  graph-transform-as-spectrogram
+  graph-once  graph-as-sonogram  graph-as-spectrogram
 </pre>
 <br>
 <p><b>Transform type</b> (<a href="#ltransformtype">transform-type</a>):</p>

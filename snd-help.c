@@ -271,6 +271,14 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+26-Aug:  added filter-control-coeffs.\n\
+         graph-lisp|time|transform? inverted to be lisp|time|transform-graph?\n\
+         graph-time-once -> graph-once\n\
+         graph-transform-once -> graph-once\n\
+         graph-time-as-wavogram -> graph-as-wavogram\n\
+         graph-transform-as-sonogram -> graph-as-sonogram\n\
+         graph-transform-as-spectrogram -> graph-as-spectrogram.\n\
+         snd6.scm.\n\
 16-Aug:  added IBM adpcm from Perry Cook's adpcmdec.c.\n\
 15-Aug:  set-channel-drop in snd-motif.scm.\n\
 13-Aug:  snd 6.0.\n\
@@ -280,7 +288,6 @@ void news_help(snd_state *ss)
 17-Jul:  mix-length -> mix-frames, region-length -> region-frames, selection-length -> selection-frames.\n\
 15-Jul:  snd 5.12.\n\
          continue-sample->file, read/write-ogg in examp.scm.\n\
-11-Jul:  run macro for Snd.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
@@ -890,10 +897,10 @@ static char constants_help_string[] =
   " S_mus_bdouble " " S_mus_b24int "   " S_mus_bfloat "  " S_mus_lint "\n\
 \n\
 Time domain graph type (" S_time_graph_type "):\n\
-  " S_graph_time_once "    " S_graph_time_as_wavogram "\n\
+  " S_graph_once "    " S_graph_as_wavogram "\n\
 \n\
 Transform Graph style (the Transform Options Display choice, " S_transform_graph_type "):\n\
-  " S_graph_transform_once "   " S_graph_transform_as_sonogram "  " S_graph_transform_as_spectrogram "\n\
+  " S_graph_once "   " S_graph_as_sonogram "  " S_graph_as_spectrogram "\n\
 \n\
 Transform type (" S_transform_type "):\n\
   " S_fourier_transform "  " S_wavelet_transform "   " S_hankel_transform "  " S_chebyshev_transform "   " S_cepstrum "\n\
@@ -1059,7 +1066,7 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_temp_dir "              nil\n\
   " S_text_focus_color "      white\n\
   " S_transform_size "        256 (snd #t) (chn #t)\n\
-  " S_transform_graph_type "  " S_graph_transform_once " (snd #t) (chn #t)\n\
+  " S_transform_graph_type "  " S_graph_once " (snd #t) (chn #t)\n\
   " S_transform_type "        " S_fourier_transform " (snd #t) (chn #t)\n\
   " S_trap_segfault "         #t\n\
   " S_use_sinc_interp "       #f\n\
@@ -1216,6 +1223,7 @@ all refer to the same thing.\n\
   " S_fft "               (rl im sgn)\n\
   " S_file_dialog "       ()\n\
   " S_file_name "         (snd)\n\
+  " S_filter_control_coeffs "(snd)\n\
   " S_filter_control_env " (snd)\n\
   " S_filter_control_order " (snd)\n\
   " S_filter_control_p "   (snd)\n\
@@ -1230,9 +1238,6 @@ all refer to the same thing.\n\
   " S_forward_mix "       (count)\n\
   " S_free_sample_reader "(rd)\n\
   " S_graph "             (data xlabel x0 x1 snd chn)\n\
-  " S_graph_lisp_p "       (snd chn)\n\
-  " S_graph_time_p "       (snd chn)\n\
-  " S_graph_transform_p "  (snd chn)\n\
   " S_graph2ps "         ()\n\
   " S_header_type "       (snd)\n\
   " S_help_dialog "       (subject help)\n\
@@ -1247,6 +1252,7 @@ all refer to the same thing.\n\
   " S_key_binding "       (key state)\n\
   " S_left_sample "       (snd chn)\n\
   " S_listener_selection "()\n\
+  " S_lisp_graph_p "       (snd chn)\n\
   " S_list2vct "         (lst)\n\
   " S_loop_samples "      (reader function calls origin environ)\n\
   " S_make_color "        (r g b)\n\
@@ -1398,7 +1404,9 @@ all refer to the same thing.\n\
   " S_swap_channels "     (snd1 chn1 snd2 chn2 beg dur)\n\
   " S_syncd_marks "       (sync)\n\
   " S_sync "              (snd)\n\
+  " S_time_graph_p "       (snd chn)\n\
   " S_transform_dialog "  ()\n\
+  " S_transform_graph_p "  (snd chn)\n\
   " S_transform_sample "  (bin slice snd chn)\n\
   " S_transform_samples " (snd chn()\n\
   " S_transform_samples2vct " (snd chn)\n\

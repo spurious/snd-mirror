@@ -28,7 +28,7 @@ static void set_y_bounds(axis_info *ap);
 static void chans_time_graph_type(chan_info *cp, void *ptr) 
 {
   cp->time_graph_type = (*((int *)ptr)); 
-  if (cp->time_graph_type == GRAPH_TIME_ONCE) 
+  if (cp->time_graph_type == GRAPH_ONCE) 
     {
       set_y_bounds(cp->axis);
       resize_sy(cp);
@@ -126,7 +126,7 @@ static void chans_transform_graph_type(chan_info *cp, void *ptr)
 void in_set_transform_graph_type(snd_state *ss, int uval) 
 {
   int val;
-  val = mus_iclamp(0, uval, MAX_TRANSFORM_GRAPH_TYPE);
+  val = mus_iclamp(0, uval, GRAPH_AS_SPECTROGRAM);
   in_set_transform_graph_type_1(ss, val); 
   for_each_chan_1(ss, chans_transform_graph_type, (void *)(&val));
 }
@@ -279,8 +279,7 @@ static void set_spectro_start(snd_state *ss, Float val)
 static void chans_dot_size(chan_info *cp, void *ptr) 
 {
   cp->dot_size = (*((int *)ptr)); 
-  if ((cp->graph_style != GRAPH_LINES) && (cp->graph_style != GRAPH_FILLED))
-    update_graph(cp);
+  update_graph(cp);
 }
 
 void set_dot_size(snd_state *ss, int val)
@@ -308,7 +307,7 @@ static int calculate_fft_1(chan_info *cp, int no_dpy)
       (!(chan_fft_in_progress(cp))))
     {
       ss = cp->state;
-      if (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE)
+      if (cp->transform_graph_type == GRAPH_ONCE)
 	single_fft(cp, no_dpy);
       else set_chan_fft_in_progress(cp,
 				    BACKGROUND_ADD(ss,
@@ -1016,7 +1015,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   ap = cp->axis;
   /* check for no graph */
   if ((!ap) || (!(ap->graph_active)) || (ap->x0 == ap->x1)) return(0);
-  if (cp->time_graph_type == GRAPH_TIME_AS_WAVOGRAM) 
+  if (cp->time_graph_type == GRAPH_AS_WAVOGRAM) 
     {
       make_wavogram(cp, sp, ss); 
       return(0);
@@ -1094,9 +1093,9 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	}
       if (sp)
 	{
-	  draw_grf_points(cp, ax, j, ap, 0.0, TIME_GRAPH_STYLE(cp));
+	  draw_grf_points(cp, ax, j, ap, 0.0, cp->time_graph_style);
 	  if (cp->printing) 
-	    ps_draw_grf_points(ap, j, 0.0, TIME_GRAPH_STYLE(cp), cp->dot_size);
+	    ps_draw_grf_points(ap, j, 0.0, cp->time_graph_style, cp->dot_size);
 	}
     }
   else
@@ -1165,9 +1164,9 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	}
       if (sp)
 	{
-	  draw_both_grf_points(cp, ax, j, TIME_GRAPH_STYLE(cp));
+	  draw_both_grf_points(cp, ax, j, cp->time_graph_style);
 	  if (cp->printing) 
-	    ps_draw_both_grf_points(ap, j, TIME_GRAPH_STYLE(cp), cp->dot_size);
+	    ps_draw_both_grf_points(ap, j, cp->time_graph_style, cp->dot_size);
 	}
     }
   if (sf) {free_snd_fd(sf); sf = NULL;}
@@ -1588,9 +1587,9 @@ void make_fft_graph(chan_info *cp, snd_info *sp, axis_info *fap, axis_context *a
 		}
 	    }
 	}
-      draw_grf_points(cp, ax, i - losamp, fap, 0.0, TRANSFORM_GRAPH_STYLE(cp));
+      draw_grf_points(cp, ax, i - losamp, fap, 0.0, cp->transform_graph_style);
       if (cp->printing) 
-	ps_draw_grf_points(fap, i - losamp, 0.0, TRANSFORM_GRAPH_STYLE(cp), cp->dot_size);
+	ps_draw_grf_points(fap, i - losamp, 0.0, cp->transform_graph_style, cp->dot_size);
     }
   else
     {
@@ -1663,9 +1662,9 @@ void make_fft_graph(chan_info *cp, snd_info *sp, axis_info *fap, axis_context *a
 		}
 	    }
 	}
-      draw_grf_points(cp, ax, j, fap, 0.0, TRANSFORM_GRAPH_STYLE(cp));
+      draw_grf_points(cp, ax, j, fap, 0.0, cp->transform_graph_style);
       if (cp->printing) 
-	ps_draw_grf_points(fap, j, 0.0, TRANSFORM_GRAPH_STYLE(cp), cp->dot_size);
+	ps_draw_grf_points(fap, j, 0.0, cp->transform_graph_style, cp->dot_size);
     }
   if (sp->channel_style == CHANNELS_SUPERIMPOSED)
     {
@@ -2324,10 +2323,10 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		    ps_set_grf_point(ungrf_x(fap, (int)(xval + x0)), i, 
 				     ungrf_y(fap, (int)(yval + y0)));
 		}
-	      draw_grf_points(cp, ax, bins, fap, 0.0, TRANSFORM_GRAPH_STYLE(cp));
+	      draw_grf_points(cp, ax, bins, fap, 0.0, cp->transform_graph_style);
 	      if (cp->printing) 
 		{
-		  ps_draw_grf_points(fap, bins, 0.0, TRANSFORM_GRAPH_STYLE(cp), cp->dot_size);
+		  ps_draw_grf_points(fap, bins, 0.0, cp->transform_graph_style, cp->dot_size);
 		  check_for_event(ss);
 		  if ((ss->stopped_explicitly) || (!(cp->active)))
 		    {
@@ -2551,9 +2550,9 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		ps_set_grf_point(ungrf_x(ap, (int)(xval + x0)), i, 
 				 ungrf_y(ap, (int)(y0 + yval)));
 	    }
-	  draw_grf_points(cp, ax, cp->wavo_trace, ap, 0.0, TIME_GRAPH_STYLE(cp));
+	  draw_grf_points(cp, ax, cp->wavo_trace, ap, 0.0, cp->time_graph_style);
 	  if (cp->printing) 
-	    ps_draw_grf_points(ap, cp->wavo_trace, 0.0, TIME_GRAPH_STYLE(cp), cp->dot_size);
+	    ps_draw_grf_points(ap, cp->wavo_trace, 0.0, cp->time_graph_style, cp->dot_size);
 	}
     }
   else
@@ -2680,9 +2679,9 @@ static void make_lisp_graph(chan_info *cp, snd_info *sp, snd_state *ss, XEN pixe
 		  if (cp->printing) 
 		    ps_set_grf_point(x, i, y);
 		}
-	      draw_grf_points(cp, ax, grf_len, uap, 0.0, LISP_GRAPH_STYLE(cp));
+	      draw_grf_points(cp, ax, grf_len, uap, 0.0, cp->lisp_graph_style);
 	      if (cp->printing) 
-		ps_draw_grf_points(uap, grf_len, 0.0, LISP_GRAPH_STYLE(cp), cp->dot_size);
+		ps_draw_grf_points(uap, grf_len, 0.0, cp->lisp_graph_style, cp->dot_size);
 	    }
 	  else
 	    {
@@ -2718,9 +2717,9 @@ static void make_lisp_graph(chan_info *cp, snd_info *sp, snd_state *ss, XEN pixe
 		      ymax = -32768.0;
 		    }
 		}
-	      draw_both_grf_points(cp, ax, j, LISP_GRAPH_STYLE(cp));
+	      draw_both_grf_points(cp, ax, j, cp->lisp_graph_style);
 	      if (cp->printing) 
-		ps_draw_both_grf_points(uap, j, LISP_GRAPH_STYLE(cp), cp->dot_size);
+		ps_draw_both_grf_points(uap, j, cp->lisp_graph_style, cp->dot_size);
 	    }
 	}
       if (up->graphs > 1) set_foreground_color(cp, ax, old_color);
@@ -2893,7 +2892,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 
       if (with_time)
 	{
-	  if (cp->time_graph_type == GRAPH_TIME_AS_WAVOGRAM)
+	  if (cp->time_graph_type == GRAPH_AS_WAVOGRAM)
 	    {
 	      if (ap->y_axis_y0 == ap->y_axis_y1) 
 		make_axes(cp, ap, cp->x_axis_style, DONT_CLEAR_GRAPH); /* first time needs setup */
@@ -2902,7 +2901,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	      ap->x1 = ap->x0 + (double)(cp->wavo_trace) / (double)SND_SRATE(sp);
 	    }
 	  if ((with_gl(ss) == FALSE) || 
-	      (cp->time_graph_type != GRAPH_TIME_AS_WAVOGRAM) ||
+	      (cp->time_graph_type != GRAPH_AS_WAVOGRAM) ||
 	      (color_map(ss) == BLACK_AND_WHITE) ||
 	      ((sp->nchans > 1) && (sp->channel_style != CHANNELS_SEPARATE)))
 	    make_axes(cp, ap,
@@ -2923,7 +2922,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
       (!just_lisp) && (!just_time))
     {
       if ((with_gl(ss) == FALSE) || 
-	  (cp->transform_graph_type != GRAPH_TRANSFORM_AS_SPECTROGRAM) ||
+	  (cp->transform_graph_type != GRAPH_AS_SPECTROGRAM) ||
 	  (color_map(ss) == BLACK_AND_WHITE) ||
 	  ((sp->nchans > 1) && (sp->channel_style != CHANNELS_SEPARATE)))
 	make_axes(cp, fap,
@@ -2950,16 +2949,16 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	}
       switch (cp->transform_graph_type)
 	{
-	case GRAPH_TRANSFORM_ONCE:
+	case GRAPH_ONCE:
 	  make_fft_graph(cp, sp,
 			 cp->fft->axis,
 			 (sp->channel_style == CHANNELS_SUPERIMPOSED) ? combined_context(cp) : copy_context(cp),
 			 cp->hookable);
 	  break;
-	case GRAPH_TRANSFORM_AS_SONOGRAM:
+	case GRAPH_AS_SONOGRAM:
 	  make_sonogram(cp, sp, ss);
 	  break;
-	case GRAPH_TRANSFORM_AS_SPECTROGRAM:
+	case GRAPH_AS_SPECTROGRAM:
 #if HAVE_GL
 	  if (make_spectrogram(cp, sp, ss))
 	    glDrawBuffer(GL_BACK); /* was make_spectrogram(cp, sp, ss); */
@@ -3384,7 +3383,7 @@ static int within_graph(chan_info *cp, int x, int y)
       ap = fp->axis;
       /* look first for on-axis (axis drag) mouse */
 #if HAVE_GL
-      if ((cp->transform_graph_type == GRAPH_TRANSFORM_AS_SPECTROGRAM) && (ap->used_gl))
+      if ((cp->transform_graph_type == GRAPH_AS_SPECTROGRAM) && (ap->used_gl))
 	{
 	  GLdouble xx;
 	  xx = unproject2x(x, y);
@@ -3392,7 +3391,7 @@ static int within_graph(chan_info *cp, int x, int y)
 	    return(FFT_AXIS);
 	}
 #endif
-      if (cp->transform_graph_type != GRAPH_TRANSFORM_AS_SONOGRAM)
+      if (cp->transform_graph_type != GRAPH_AS_SONOGRAM)
 	{
 	  if (((x >= ap->x_axis_x0) && (x <= ap->x_axis_x1)) && 
 	      ((y0 <= ap->y_axis_y0) && (y1 >= ap->y_axis_y0)))
@@ -3436,7 +3435,7 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
   xf = ap->x0 + (ap->x1 - ap->x0) * (Float)(x - ap->x_axis_x0) / (Float)(ap->x_axis_x1 - ap->x_axis_x0);
   if (cp->fft_log_frequency)                                /* map axis x1 = 1.0 to srate/2 */
     xf = ((exp(xf * log(LOG_FACTOR + 1.0)) - 1.0) / LOG_FACTOR) * SND_SRATE(cp->sound) * 0.5 * cp->spectro_cutoff; 
-  if (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE)                          /* fp->data[bins] */
+  if (cp->transform_graph_type == GRAPH_ONCE)                          /* fp->data[bins] */
     {
       if (cp->transform_type == FOURIER)
 	ind = (int)((fp->current_size * xf) / (Float)SND_SRATE(cp->sound));
@@ -3450,7 +3449,7 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
     }
   else 
     {
-      if (cp->transform_graph_type == GRAPH_TRANSFORM_AS_SONOGRAM) 	  /* si->data[slices][bins] */
+      if (cp->transform_graph_type == GRAPH_AS_SONOGRAM) 	  /* si->data[slices][bins] */
 	{
 	  yf = ap->y0 + (ap->y1 - ap->y0) * (Float)(y - ap->y_axis_y0) / (Float)(ap->y_axis_y1 - ap->y_axis_y0);
 	  si = (sono_info *)(cp->sonogram_data);
@@ -3640,7 +3639,7 @@ static Float fft_axis_extent(chan_info *cp)
   fft_info *fp;
   fp = cp->fft;
   ap = fp->axis;
-  if (cp->transform_graph_type != GRAPH_TRANSFORM_AS_SONOGRAM)
+  if (cp->transform_graph_type != GRAPH_AS_SONOGRAM)
     return((Float)(ap->x_axis_x1 - ap->x_axis_x0));
   else return((Float)(ap->y_axis_y0 - ap->y_axis_y1));
 }
@@ -3679,10 +3678,10 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
   click_within_graph = within_graph(cp, x, y);
   if (click_within_graph == FFT_AXIS) 
     {
-      if (cp->transform_graph_type != GRAPH_TRANSFORM_AS_SONOGRAM)
+      if (cp->transform_graph_type != GRAPH_AS_SONOGRAM)
 	{
 #if HAVE_GL
-	  if ((with_gl(cp->state)) && (cp->transform_graph_type == GRAPH_TRANSFORM_AS_SPECTROGRAM))
+	  if ((with_gl(cp->state)) && (cp->transform_graph_type == GRAPH_AS_SPECTROGRAM))
 	    fft_faxis_start = unproject2y(x, y);
 #endif
 	  fft_axis_start = x;
@@ -3971,10 +3970,10 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, TIME_TYPE time, T
 		{
 		  /* change spectro_cutoff(ss) and redisplay fft */
 		  old_cutoff = cp->spectro_cutoff;
-		  if (cp->transform_graph_type != GRAPH_TRANSFORM_AS_SONOGRAM)
+		  if (cp->transform_graph_type != GRAPH_AS_SONOGRAM)
 		    {
 #if HAVE_GL
-		      if ((with_gl(ss)) && (cp->transform_graph_type == GRAPH_TRANSFORM_AS_SPECTROGRAM))
+		      if ((with_gl(ss)) && (cp->transform_graph_type == GRAPH_AS_SPECTROGRAM))
 			{
 			  Float ny;
 			  ny = unproject2y(x, y);
@@ -3996,7 +3995,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, TIME_TYPE time, T
 		  if (old_cutoff != spectro_cutoff(ss)) 
 		    {
 		      reflect_spectro(ss);
-		      if (cp->transform_graph_type != GRAPH_TRANSFORM_ONCE)
+		      if (cp->transform_graph_type != GRAPH_ONCE)
 			for_each_chan(ss, sono_update);
 		      else for_each_chan(ss, update_graph);
 		    }
@@ -4096,7 +4095,7 @@ enum {CP_GRAPH_TRANSFORM_P, CP_GRAPH_TIME_P, CP_FRAMES, CP_CURSOR, CP_GRAPH_LISP
       CP_SHOW_Y_ZERO, CP_SHOW_MARKS, CP_TIME_GRAPH_TYPE, CP_WAVO_HOP, CP_WAVO_TRACE, CP_MAX_TRANSFORM_PEAKS, 
       CP_SHOW_TRANSFORM_PEAKS, CP_ZERO_PAD, CP_VERBOSE_CURSOR, CP_FFT_LOG_FREQUENCY, CP_FFT_LOG_MAGNITUDE,
       CP_WAVELET_TYPE, CP_SPECTRO_HOP, CP_TRANSFORM_SIZE, CP_TRANSFORM_GRAPH_TYPE, CP_FFT_WINDOW, CP_TRANSFORM_TYPE,
-      CP_TRANSFORM_NORMALIZATION, CP_SHOW_MIX_WAVEFORMS, CP_GRAPH_STYLE, CP_DOT_SIZE,
+      CP_TRANSFORM_NORMALIZATION, CP_SHOW_MIX_WAVEFORMS, CP_TIME_GRAPH_STYLE, CP_LISP_GRAPH_STYLE, CP_TRANSFORM_GRAPH_STYLE, CP_DOT_SIZE,
       CP_SHOW_AXES, CP_GRAPHS_HORIZONTAL, CP_CURSOR_SIZE, CP_CURSOR_POSITION,
       CP_EDPOS_FRAMES, CP_X_AXIS_STYLE, CP_UPDATE_TIME, CP_UPDATE_TRANSFORM_GRAPH, CP_UPDATE_LISP, CP_PROPERTIES,
       CP_MIN_DB, CP_SPECTRO_X_ANGLE, CP_SPECTRO_Y_ANGLE, CP_SPECTRO_Z_ANGLE, CP_SPECTRO_X_SCALE, CP_SPECTRO_Y_SCALE, CP_SPECTRO_Z_SCALE,
@@ -4174,7 +4173,9 @@ static XEN channel_get(XEN snd_n, XEN chn_n, int fld, char *caller)
 	    case CP_TRANSFORM_TYPE:     return(C_TO_XEN_INT(cp->transform_type));                    break;
 	    case CP_TRANSFORM_NORMALIZATION: return(C_TO_XEN_INT(cp->transform_normalization));      break;
 	    case CP_SHOW_MIX_WAVEFORMS: return(C_TO_XEN_BOOLEAN(cp->show_mix_waveforms));            break;
-	    case CP_GRAPH_STYLE:        return(C_TO_XEN_INT(cp->graph_style));                       break;
+	    case CP_TIME_GRAPH_STYLE:   return(C_TO_XEN_INT(cp->time_graph_style));                  break;
+	    case CP_LISP_GRAPH_STYLE:   return(C_TO_XEN_INT(cp->lisp_graph_style));                  break;
+	    case CP_TRANSFORM_GRAPH_STYLE: return(C_TO_XEN_INT(cp->transform_graph_style));          break;
 	    case CP_X_AXIS_STYLE:       return(C_TO_XEN_INT(cp->x_axis_style));                      break;
 	    case CP_DOT_SIZE:           return(C_TO_XEN_INT(cp->dot_size));                          break;
 	    case CP_SHOW_AXES:          return(C_TO_XEN_INT(cp->show_axes));                         break;
@@ -4191,7 +4192,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, int fld, char *caller)
 		    force_fft_clear(cp);
 		  
 		  (cp->state)->checking_explicitly = 1;  /* do not allow UI events to intervene here! */
-		  if (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE)
+		  if (cp->transform_graph_type == GRAPH_ONCE)
 		    single_fft(cp, 0);
 		  else
 		    {
@@ -4257,6 +4258,8 @@ static void reset_y_display(chan_info *cp, double sy, double zy)
   resize_zy(cp);
   apply_y_axis_change(ap, cp);
 }
+
+static int call_update_graph = TRUE;
 
 static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
 {
@@ -4380,7 +4383,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
       return(C_TO_XEN_BOOLEAN(cp->show_marks));
       break;
     case CP_TIME_GRAPH_TYPE:
-      cp->time_graph_type = XEN_TO_C_INT_OR_ELSE(on, GRAPH_TIME_ONCE);
+      cp->time_graph_type = XEN_TO_C_INT_OR_ELSE(on, GRAPH_ONCE);
       update_graph(cp); 
       return(C_TO_XEN_INT(cp->time_graph_type));
       break;
@@ -4438,7 +4441,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
       return(C_TO_XEN_INT(cp->transform_size));
       break;
     case CP_TRANSFORM_GRAPH_TYPE: 
-      cp->transform_graph_type = g_mus_iclamp(0, on, DEFAULT_TRANSFORM_GRAPH_TYPE, MAX_TRANSFORM_GRAPH_TYPE); 
+      cp->transform_graph_type = g_mus_iclamp(0, on, DEFAULT_TRANSFORM_GRAPH_TYPE, GRAPH_AS_SPECTROGRAM);
       calculate_fft(cp); 
       return(C_TO_XEN_INT(cp->transform_graph_type)); 
       break;
@@ -4470,10 +4473,20 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
       update_graph(cp); 
       return(C_TO_XEN_BOOLEAN(cp->show_mix_waveforms));
       break;
-    case CP_GRAPH_STYLE:
-      cp->graph_style = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, DEFAULT_GRAPH_STYLE, caller);
-      update_graph(cp); 
-      return(C_TO_XEN_INT(cp->graph_style));
+    case CP_TIME_GRAPH_STYLE:
+      cp->time_graph_style = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, DEFAULT_GRAPH_STYLE, caller);
+      if (call_update_graph) update_graph(cp);
+      return(C_TO_XEN_INT(cp->time_graph_style));
+      break;
+    case CP_LISP_GRAPH_STYLE:
+      cp->lisp_graph_style = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, DEFAULT_GRAPH_STYLE, caller);
+      if (call_update_graph) update_graph(cp);
+      return(C_TO_XEN_INT(cp->lisp_graph_style));
+      break;
+    case CP_TRANSFORM_GRAPH_STYLE:
+      cp->transform_graph_style = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, DEFAULT_GRAPH_STYLE, caller);
+      if (call_update_graph) update_graph(cp);
+      return(C_TO_XEN_INT(cp->transform_graph_style));
       break;
     case CP_X_AXIS_STYLE:
       val = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, DEFAULT_X_AXIS_STYLE, caller);
@@ -4625,47 +4638,47 @@ static XEN g_set_edit_position(XEN on, XEN snd_n, XEN chn_n)
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_edit_position_reversed, g_set_edit_position)
 
-static XEN g_graph_transform_p(XEN snd_n, XEN chn_n) 
+static XEN g_transform_graph_p(XEN snd_n, XEN chn_n) 
 {
-  #define H_graph_transform_p "(" S_graph_transform_p " &optional snd chn) -> #t if fft display is active in snd's channel chn"
-  return(channel_get(snd_n, chn_n, CP_GRAPH_TRANSFORM_P, S_graph_transform_p));
+  #define H_transform_graph_p "(" S_transform_graph_p " &optional snd chn) -> #t if fft display is active in snd's channel chn"
+  return(channel_get(snd_n, chn_n, CP_GRAPH_TRANSFORM_P, S_transform_graph_p));
 }
 
-static XEN g_set_graph_transform_p(XEN on, XEN snd_n, XEN chn_n) 
+static XEN g_set_transform_graph_p(XEN on, XEN snd_n, XEN chn_n) 
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(on), on, XEN_ARG_1, "set-" S_graph_transform_p, "a boolean");
-  return(channel_set(snd_n, chn_n, on, CP_GRAPH_TRANSFORM_P, "set-" S_graph_transform_p));
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(on), on, XEN_ARG_1, "set-" S_transform_graph_p, "a boolean");
+  return(channel_set(snd_n, chn_n, on, CP_GRAPH_TRANSFORM_P, "set-" S_transform_graph_p));
 }
 
-WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_graph_transform_p_reversed, g_set_graph_transform_p)
+WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_transform_graph_p_reversed, g_set_transform_graph_p)
 
-static XEN g_graph_time_p(XEN snd_n, XEN chn_n) 
+static XEN g_time_graph_p(XEN snd_n, XEN chn_n) 
 {
-  #define H_graph_time_p "(" S_graph_time_p " &optional snd chn) -> #t if time domain display is active in snd's channel chn"
-  return(channel_get(snd_n, chn_n, CP_GRAPH_TIME_P, S_graph_time_p));
+  #define H_time_graph_p "(" S_time_graph_p " &optional snd chn) -> #t if time domain display is active in snd's channel chn"
+  return(channel_get(snd_n, chn_n, CP_GRAPH_TIME_P, S_time_graph_p));
 }
 
-static XEN g_set_graph_time_p(XEN on, XEN snd_n, XEN chn_n) 
+static XEN g_set_time_graph_p(XEN on, XEN snd_n, XEN chn_n) 
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(on), on, XEN_ARG_1, "set-" S_graph_time_p, "a boolean");
-  return(channel_set(snd_n, chn_n, on, CP_GRAPH_TIME_P, "set-" S_graph_time_p));
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(on), on, XEN_ARG_1, "set-" S_time_graph_p, "a boolean");
+  return(channel_set(snd_n, chn_n, on, CP_GRAPH_TIME_P, "set-" S_time_graph_p));
 }
 
-WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_graph_time_p_reversed, g_set_graph_time_p)
+WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_time_graph_p_reversed, g_set_time_graph_p)
 
-static XEN g_graph_lisp_p(XEN snd_n, XEN chn_n) 
+static XEN g_lisp_graph_p(XEN snd_n, XEN chn_n) 
 {
-  #define H_graph_lisp_p "(" S_graph_lisp_p " &optional snd chn) -> #t if lisp-generated data display is active in snd's channel chn"
-  return(channel_get(snd_n, chn_n, CP_GRAPH_LISP_P, S_graph_lisp_p));
+  #define H_lisp_graph_p "(" S_lisp_graph_p " &optional snd chn) -> #t if lisp-generated data display is active in snd's channel chn"
+  return(channel_get(snd_n, chn_n, CP_GRAPH_LISP_P, S_lisp_graph_p));
 }
 
-static XEN g_set_graph_lisp_p(XEN on, XEN snd_n, XEN chn_n) 
+static XEN g_set_lisp_graph_p(XEN on, XEN snd_n, XEN chn_n) 
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(on), on, XEN_ARG_1, "set-" S_graph_lisp_p, "a boolean");
-  return(channel_set(snd_n, chn_n, on, CP_GRAPH_LISP_P, "set-" S_graph_lisp_p));
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(on), on, XEN_ARG_1, "set-" S_lisp_graph_p, "a boolean");
+  return(channel_set(snd_n, chn_n, on, CP_GRAPH_LISP_P, "set-" S_lisp_graph_p));
 }
 
-WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_graph_lisp_p_reversed, g_set_graph_lisp_p)
+WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_lisp_graph_p_reversed, g_set_lisp_graph_p)
 
 static XEN g_cursor(XEN snd_n, XEN chn_n) 
 {
@@ -5345,8 +5358,8 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_verbose_cursor_reversed, g_set_verbose_
 
 static XEN g_time_graph_type(XEN snd, XEN chn)
 {
-  #define H_time_graph_type "(" S_time_graph_type " (snd #t) (chn #t)) -> " S_graph_time_as_wavogram " if Snd's time domain display is a 'wavogram',\
-otherwise " S_graph_time_once "."
+  #define H_time_graph_type "(" S_time_graph_type " (snd #t) (chn #t)) -> " S_graph_as_wavogram " if Snd's time domain display is a 'wavogram',\
+otherwise " S_graph_once "."
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_TIME_GRAPH_TYPE, S_time_graph_type));
   return(C_TO_XEN_INT(time_graph_type(get_global_state())));
@@ -5356,13 +5369,13 @@ static XEN g_set_time_graph_type(XEN val, XEN snd, XEN chn)
 {
   int on;
   snd_state *ss;
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(val), val, XEN_ARG_1, "set-" S_time_graph_type, "an integer (default: " S_graph_time_once ")");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(val), val, XEN_ARG_1, "set-" S_time_graph_type, "an integer (default: " S_graph_once ")");
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_TIME_GRAPH_TYPE, "set-" S_time_graph_type));
   else
     {
       ss = get_global_state();
-      on = XEN_TO_C_INT_OR_ELSE(val, GRAPH_TIME_ONCE);
+      on = XEN_TO_C_INT_OR_ELSE(val, GRAPH_ONCE);
       set_time_graph_type(ss, on);
       return(C_TO_XEN_BOOLEAN(time_graph_type(ss)));
     }
@@ -5460,7 +5473,7 @@ static XEN g_set_transform_graph_type(XEN val, XEN snd, XEN chn)
   snd_state *ss;
   int style;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, "set-" S_transform_graph_type, "an integer"); 
-  style = mus_iclamp(GRAPH_TRANSFORM_ONCE, XEN_TO_C_INT(val), GRAPH_TRANSFORM_AS_SPECTROGRAM);
+  style = mus_iclamp(GRAPH_ONCE, XEN_TO_C_INT(val), GRAPH_AS_SPECTROGRAM);
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, C_TO_SMALL_XEN_INT(style), CP_TRANSFORM_GRAPH_TYPE, "set-" S_transform_graph_type));
   else
@@ -5578,13 +5591,14 @@ static XEN g_set_max_transform_peaks(XEN n, XEN snd, XEN chn)
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_max_transform_peaks_reversed, g_set_max_transform_peaks)
 
+
 static XEN g_graph_style(XEN snd, XEN chn)
 {
-  #define H_graph_style "(" S_graph_style " (snd #t) (chn #t)) -> one of '(" S_graph_lines " " S_graph_dots " " S_graph_dots_and_lines " " S_graph_lollipops " " S_graph_filled ") \
-determines how graphs are drawn (default: " S_graph_lines ")"
+  #define H_graph_style "(" S_graph_style " (snd #t) (chn #t)) -> graph style, one \
+of '(" S_graph_lines " " S_graph_dots " " S_graph_dots_and_lines " " S_graph_lollipops " " S_graph_filled ")"
 
   if (XEN_BOUND_P(snd))
-    return(channel_get(snd, chn, CP_GRAPH_STYLE, S_graph_style));
+    return(channel_get(snd, chn, CP_TIME_GRAPH_STYLE, S_time_graph_style));
   return(C_TO_XEN_INT(graph_style(get_global_state())));
 }
 
@@ -5596,10 +5610,16 @@ static XEN g_set_graph_style(XEN style, XEN snd, XEN chn)
   val = XEN_TO_C_INT(style);
   if (XEN_BOUND_P(snd))
     {
-      if ((GRAPH_STYLE_OK((val & 0xf))) &&
-	  (GRAPH_STYLE_OK(((val >> 8) & 0xf))) &&
-	  (GRAPH_STYLE_OK(((val >> 16) & 0xf))))
-	return(channel_set(snd, chn, style, CP_GRAPH_STYLE, "set-" S_graph_style));
+      if (GRAPH_STYLE_OK(val))
+	{
+	  XEN val;
+	  call_update_graph = FALSE;
+	  val = channel_set(snd, chn, style, CP_TIME_GRAPH_STYLE, "set-" S_graph_style);
+	  channel_set(snd, chn, style, CP_LISP_GRAPH_STYLE, "set-" S_graph_style);
+	  call_update_graph = TRUE;
+	  channel_set(snd, chn, style, CP_TRANSFORM_GRAPH_STYLE, "set-" S_graph_style);
+	  return(val);
+	}
     }
   else
     {
@@ -5615,6 +5635,73 @@ static XEN g_set_graph_style(XEN style, XEN snd, XEN chn)
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_graph_style_reversed, g_set_graph_style)
+
+static XEN g_time_graph_style(XEN snd, XEN chn)
+{
+  #define H_time_graph_style "(" S_time_graph_style " snd chn) -> time domain graph drawing style. \
+one of '(" S_graph_lines " " S_graph_dots " " S_graph_dots_and_lines " " S_graph_lollipops " " S_graph_filled ")"
+  ASSERT_SOUND(S_time_graph_style, snd, 0);
+  return(channel_get(snd, chn, CP_TIME_GRAPH_STYLE, S_time_graph_style));
+}
+
+static XEN g_set_time_graph_style(XEN style, XEN snd, XEN chn)
+{
+  int val;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(style), style, XEN_ARG_1, "set-" S_time_graph_style, "an integer"); 
+  ASSERT_SOUND(S_time_graph_style, snd, 0);
+  val = XEN_TO_C_INT(style);
+  if (GRAPH_STYLE_OK(val))
+    return(channel_set(snd, chn, style, CP_TIME_GRAPH_STYLE, "set-" S_time_graph_style));
+  mus_misc_error("set-" S_time_graph_style, "invalid style", style);
+  return(XEN_FALSE);
+}
+
+WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_time_graph_style_reversed, g_set_time_graph_style)
+
+static XEN g_lisp_graph_style(XEN snd, XEN chn)
+{
+  #define H_lisp_graph_style "(" S_lisp_graph_style " snd chn) -> lisp graph drawing style. \
+one of '(" S_graph_lines " " S_graph_dots " " S_graph_dots_and_lines " " S_graph_lollipops " " S_graph_filled ")"
+  ASSERT_SOUND(S_lisp_graph_style, snd, 0);
+  return(channel_get(snd, chn, CP_LISP_GRAPH_STYLE, S_lisp_graph_style));
+}
+
+static XEN g_set_lisp_graph_style(XEN style, XEN snd, XEN chn)
+{
+  int val;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(style), style, XEN_ARG_1, "set-" S_lisp_graph_style, "an integer"); 
+  ASSERT_SOUND(S_lisp_graph_style, snd, 0);
+  val = XEN_TO_C_INT(style);
+  if (GRAPH_STYLE_OK(val))
+    return(channel_set(snd, chn, style, CP_LISP_GRAPH_STYLE, "set-" S_lisp_graph_style));
+  mus_misc_error("set-" S_lisp_graph_style, "invalid style", style);
+  return(XEN_FALSE);
+}
+
+WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_lisp_graph_style_reversed, g_set_lisp_graph_style)
+
+static XEN g_transform_graph_style(XEN snd, XEN chn)
+{
+  #define H_transform_graph_style "(" S_lisp_graph_style " snd chn) -> fft graph drawing style, one \
+of '(" S_graph_lines " " S_graph_dots " " S_graph_dots_and_lines " " S_graph_lollipops " " S_graph_filled ")"
+  ASSERT_SOUND(S_transform_graph_style, snd, 0);
+  return(channel_get(snd, chn, CP_TRANSFORM_GRAPH_STYLE, S_transform_graph_style));
+}
+
+static XEN g_set_transform_graph_style(XEN style, XEN snd, XEN chn)
+{
+  int val;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(style), style, XEN_ARG_1, "set-" S_transform_graph_style, "an integer"); 
+  ASSERT_SOUND(S_transform_graph_style, snd, 0);
+  val = XEN_TO_C_INT(style);
+  if (GRAPH_STYLE_OK(val))
+    return(channel_set(snd, chn, style, CP_TRANSFORM_GRAPH_STYLE, "set-" S_transform_graph_style));
+  mus_misc_error("set-" S_transform_graph_style, "invalid style", style);
+  return(XEN_FALSE);
+}
+
+WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_transform_graph_style_reversed, g_set_transform_graph_style)
+
 
 static XEN g_dot_size(XEN snd, XEN chn)
 {
@@ -5834,7 +5921,7 @@ static XEN g_set_x_bounds(XEN bounds, XEN snd_n, XEN chn_n)
   ASSERT_CHANNEL("set-" S_x_bounds, snd_n, chn_n, 2);
   XEN_ASSERT_TYPE(XEN_LIST_P(bounds) && (XEN_LIST_LENGTH(bounds) == 2), bounds, XEN_ARG_1, "set-" S_x_bounds, "a list: (x0 x1)");
   cp = get_cp(snd_n, chn_n, "set-" S_x_bounds);
-  if (cp->time_graph_type == GRAPH_TIME_ONCE) 
+  if (cp->time_graph_type == GRAPH_ONCE) 
     {
       x0 = XEN_TO_C_DOUBLE(XEN_CAR(bounds));
       x1 = XEN_TO_C_DOUBLE(XEN_CADR(bounds));
@@ -6115,12 +6202,12 @@ XEN_ARGIFY_3(g_set_maxamp_w, g_set_maxamp)
 XEN_ARGIFY_2(g_cursor_position_w, g_cursor_position)
 XEN_ARGIFY_2(g_edit_position_w, g_edit_position)
 XEN_ARGIFY_3(g_set_edit_position_w, g_set_edit_position)
-XEN_ARGIFY_2(g_graph_transform_p_w, g_graph_transform_p)
-XEN_ARGIFY_3(g_set_graph_transform_p_w, g_set_graph_transform_p)
-XEN_ARGIFY_2(g_graph_time_p_w, g_graph_time_p)
-XEN_ARGIFY_3(g_set_graph_time_p_w, g_set_graph_time_p)
-XEN_ARGIFY_2(g_graph_lisp_p_w, g_graph_lisp_p)
-XEN_ARGIFY_3(g_set_graph_lisp_p_w, g_set_graph_lisp_p)
+XEN_ARGIFY_2(g_transform_graph_p_w, g_transform_graph_p)
+XEN_ARGIFY_3(g_set_transform_graph_p_w, g_set_transform_graph_p)
+XEN_ARGIFY_2(g_time_graph_p_w, g_time_graph_p)
+XEN_ARGIFY_3(g_set_time_graph_p_w, g_set_time_graph_p)
+XEN_ARGIFY_2(g_lisp_graph_p_w, g_lisp_graph_p)
+XEN_ARGIFY_3(g_set_lisp_graph_p_w, g_set_lisp_graph_p)
 XEN_ARGIFY_2(g_squelch_update_w, g_squelch_update)
 XEN_ARGIFY_3(g_set_squelch_update_w, g_set_squelch_update)
 XEN_ARGIFY_2(g_cursor_w, g_cursor)
@@ -6195,6 +6282,12 @@ XEN_ARGIFY_2(g_show_mix_waveforms_w, g_show_mix_waveforms)
 XEN_ARGIFY_3(g_set_show_mix_waveforms_w, g_set_show_mix_waveforms)
 XEN_ARGIFY_2(g_graph_style_w, g_graph_style)
 XEN_ARGIFY_3(g_set_graph_style_w, g_set_graph_style)
+XEN_ARGIFY_2(g_time_graph_style_w, g_time_graph_style)
+XEN_ARGIFY_3(g_set_time_graph_style_w, g_set_time_graph_style)
+XEN_ARGIFY_2(g_lisp_graph_style_w, g_lisp_graph_style)
+XEN_ARGIFY_3(g_set_lisp_graph_style_w, g_set_lisp_graph_style)
+XEN_ARGIFY_2(g_transform_graph_style_w, g_transform_graph_style)
+XEN_ARGIFY_3(g_set_transform_graph_style_w, g_set_transform_graph_style)
 XEN_ARGIFY_2(g_dot_size_w, g_dot_size)
 XEN_ARGIFY_3(g_set_dot_size_w, g_set_dot_size)
 XEN_ARGIFY_2(g_x_axis_style_w, g_x_axis_style)
@@ -6235,12 +6328,12 @@ XEN_NARGIFY_2(g_colormap_ref_w, g_colormap_ref)
 #define g_cursor_position_w g_cursor_position
 #define g_edit_position_w g_edit_position
 #define g_set_edit_position_w g_set_edit_position
-#define g_graph_transform_p_w g_graph_transform_p
-#define g_set_graph_transform_p_w g_set_graph_transform_p
-#define g_graph_time_p_w g_graph_time_p
-#define g_set_graph_time_p_w g_set_graph_time_p
-#define g_graph_lisp_p_w g_graph_lisp_p
-#define g_set_graph_lisp_p_w g_set_graph_lisp_p
+#define g_transform_graph_p_w g_transform_graph_p
+#define g_set_transform_graph_p_w g_set_transform_graph_p
+#define g_time_graph_p_w g_time_graph_p
+#define g_set_time_graph_p_w g_set_time_graph_p
+#define g_lisp_graph_p_w g_lisp_graph_p
+#define g_set_lisp_graph_p_w g_set_lisp_graph_p
 #define g_squelch_update_w g_squelch_update
 #define g_set_squelch_update_w g_set_squelch_update
 #define g_cursor_w g_cursor
@@ -6315,6 +6408,12 @@ XEN_NARGIFY_2(g_colormap_ref_w, g_colormap_ref)
 #define g_set_show_mix_waveforms_w g_set_show_mix_waveforms
 #define g_graph_style_w g_graph_style
 #define g_set_graph_style_w g_set_graph_style
+#define g_time_graph_style_w g_time_graph_style
+#define g_set_time_graph_style_w g_set_time_graph_style
+#define g_lisp_graph_style_w g_lisp_graph_style
+#define g_set_lisp_graph_style_w g_set_lisp_graph_style
+#define g_transform_graph_style_w g_transform_graph_style
+#define g_set_transform_graph_style_w g_set_transform_graph_style
 #define g_dot_size_w g_dot_size
 #define g_set_dot_size_w g_set_dot_size
 #define g_x_axis_style_w g_x_axis_style
@@ -6372,20 +6471,26 @@ void g_init_chn(void)
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_edit_position, g_edit_position_w, H_edit_position,
 					    "set-" S_edit_position, g_set_edit_position_w, g_set_edit_position_reversed, 0, 2, 0, 3);
 
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_graph_transform_p, g_graph_transform_p_w, H_graph_transform_p,
-					    "set-" S_graph_transform_p, g_set_graph_transform_p_w, g_set_graph_transform_p_reversed, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_transform_graph_p, g_transform_graph_p_w, H_transform_graph_p,
+					    "set-" S_transform_graph_p, g_set_transform_graph_p_w, g_set_transform_graph_p_reversed, 0, 2, 0, 3);
 
-  #define H_graph_time_once "The value for " S_time_graph_type " to display the standard time domain waveform"
-  #define H_graph_time_as_wavogram "The value for " S_time_graph_type " to make a spectrogram-like form of the time-domain data"
+  #define H_graph_once "The value for the graph-types that displays the standard waveform"
+  #define H_graph_as_wavogram "The value for " S_time_graph_type " to make a spectrogram-like form of the time-domain data"
 
-  XEN_DEFINE_CONSTANT(S_graph_time_once,        GRAPH_TIME_ONCE,        H_graph_time_once);
-  XEN_DEFINE_CONSTANT(S_graph_time_as_wavogram, GRAPH_TIME_AS_WAVOGRAM, H_graph_time_as_wavogram);
+  XEN_DEFINE_CONSTANT(S_graph_once,        GRAPH_ONCE,        H_graph_once);
+  XEN_DEFINE_CONSTANT(S_graph_as_wavogram, GRAPH_AS_WAVOGRAM, H_graph_as_wavogram);
 
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_graph_time_p, g_graph_time_p_w, H_graph_time_p,
-					    "set-" S_graph_time_p, g_set_graph_time_p_w, g_set_graph_time_p_reversed, 0, 2, 0, 3);
+  #define H_graph_as_sonogram "The value for " S_transform_graph_type " that causes a snongram to be displayed"
+  #define H_graph_as_spectrogram "The value for " S_transform_graph_type " that causes a spectrogram to be displayed"
+
+  XEN_DEFINE_CONSTANT(S_graph_as_sonogram,    GRAPH_AS_SONOGRAM,    H_graph_as_sonogram);
+  XEN_DEFINE_CONSTANT(S_graph_as_spectrogram, GRAPH_AS_SPECTROGRAM, H_graph_as_spectrogram);
+
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_time_graph_p, g_time_graph_p_w, H_time_graph_p,
+					    "set-" S_time_graph_p, g_set_time_graph_p_w, g_set_time_graph_p_reversed, 0, 2, 0, 3);
   
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_graph_lisp_p, g_graph_lisp_p_w, H_graph_lisp_p,
-					    "set-" S_graph_lisp_p, g_set_graph_lisp_p_w, g_set_graph_lisp_p_reversed, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_lisp_graph_p, g_lisp_graph_p_w, H_lisp_graph_p,
+					    "set-" S_lisp_graph_p, g_set_lisp_graph_p_w, g_set_lisp_graph_p_reversed, 0, 2, 0, 3);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_squelch_update, g_squelch_update_w, H_squelch_update,
 					    "set-" S_squelch_update, g_set_squelch_update_w, g_set_squelch_update_reversed, 0, 2, 0, 3);
@@ -6514,6 +6619,16 @@ void g_init_chn(void)
   XEN_DEFINE_CONSTANT(S_graph_dots_and_lines,  GRAPH_DOTS_AND_LINES, H_graph_dots_and_lines);
   XEN_DEFINE_CONSTANT(S_graph_lollipops,       GRAPH_LOLLIPOPS,      H_graph_lollipops);
   
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_time_graph_style, g_time_graph_style_w, H_time_graph_style,
+					    "set-" S_time_graph_style, g_set_time_graph_style_w, g_set_time_graph_style_reversed,
+					    1, 1, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_lisp_graph_style, g_lisp_graph_style_w, H_lisp_graph_style,
+					    "set-" S_lisp_graph_style, g_set_lisp_graph_style_w, g_set_lisp_graph_style_reversed,
+					    1, 1, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_transform_graph_style, g_transform_graph_style_w, H_transform_graph_style,
+					    "set-" S_transform_graph_style, g_set_transform_graph_style_w, g_set_transform_graph_style_reversed,
+					    1, 1, 1, 2);
+
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_graph_style, g_graph_style_w, H_graph_style,
 					    "set-" S_graph_style, g_set_graph_style_w, g_set_graph_style_reversed,
 					    0, 2, 0, 3);

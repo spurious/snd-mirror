@@ -425,7 +425,7 @@ data in the recipient's graph between points low and high in the drawing mode gr
 		  v0->data,
 		  (v1) ? (v1->data) : NULL,
 		  get_ax(cp, XEN_TO_C_INT_OR_ELSE(ax, CHAN_GC), S_graph_data),
-		  XEN_TO_C_INT_OR_ELSE(style, TIME_GRAPH_STYLE(cp)));
+		  XEN_TO_C_INT_OR_ELSE(style, cp->time_graph_style));
 
   return(XEN_FALSE);
 }

@@ -536,7 +536,7 @@ this can be confusing if fft normalization is on (the default)"
 
 ;;; -------- make dot size dependent on number of samples being displayed
 ;;; 
-;;; this could be extended to set graph-style to graph-lines if many samples are displayed, etc
+;;; this could be extended to set time-graph-style to graph-lines if many samples are displayed, etc
 
 (define (auto-dot snd chn y0 y1)
   "(auto-dot snd chn y0 y1) sets the dot size depending on the number of samples being displayed (use with graph-hook)"

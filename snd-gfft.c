@@ -313,8 +313,8 @@ static void normal_fft_callback(GtkWidget *w, gpointer context)
   snd_state *ss = (snd_state *)context;
   if (ignore_callbacks) return;
   if (GTK_TOGGLE_BUTTON(w)->active)
-    in_set_transform_graph_type(ss, GRAPH_TRANSFORM_ONCE);
-  else in_set_transform_graph_type(ss, GRAPH_TRANSFORM_AS_SONOGRAM);
+    in_set_transform_graph_type(ss, GRAPH_ONCE);
+  else in_set_transform_graph_type(ss, GRAPH_AS_SONOGRAM);
   for_each_chan(ss, calculate_fft);
 }
 
@@ -323,8 +323,8 @@ static void sonogram_callback(GtkWidget *w, gpointer context)
   snd_state *ss = (snd_state *)context;
   if (ignore_callbacks) return;
   if (GTK_TOGGLE_BUTTON(w)->active)
-    in_set_transform_graph_type(ss, GRAPH_TRANSFORM_AS_SONOGRAM);
-  else in_set_transform_graph_type(ss, GRAPH_TRANSFORM_ONCE);
+    in_set_transform_graph_type(ss, GRAPH_AS_SONOGRAM);
+  else in_set_transform_graph_type(ss, GRAPH_ONCE);
   for_each_chan(ss, calculate_fft);
 }
 
@@ -333,8 +333,8 @@ static void spectrogram_callback(GtkWidget *w, gpointer context)
   snd_state *ss = (snd_state *)context;
   if (ignore_callbacks) return;
   if (GTK_TOGGLE_BUTTON(w)->active)
-    in_set_transform_graph_type(ss, GRAPH_TRANSFORM_AS_SPECTROGRAM);
-  else in_set_transform_graph_type(ss, GRAPH_TRANSFORM_ONCE);
+    in_set_transform_graph_type(ss, GRAPH_AS_SPECTROGRAM);
+  else in_set_transform_graph_type(ss, GRAPH_ONCE);
   for_each_chan(ss, calculate_fft);
 }
 
@@ -706,9 +706,9 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
 	  }
 
       ignore_callbacks = TRUE;
-      if (transform_graph_type(ss) == GRAPH_TRANSFORM_ONCE) set_toggle_button(normal_fft_button, TRUE, FALSE, (gpointer)ss);
-      if (transform_graph_type(ss) == GRAPH_TRANSFORM_AS_SONOGRAM) set_toggle_button(sono_button, TRUE, FALSE, (gpointer)ss);
-      if (transform_graph_type(ss) == GRAPH_TRANSFORM_AS_SPECTROGRAM) set_toggle_button(spectro_button, TRUE, FALSE, (gpointer)ss);
+      if (transform_graph_type(ss) == GRAPH_ONCE) set_toggle_button(normal_fft_button, TRUE, FALSE, (gpointer)ss);
+      if (transform_graph_type(ss) == GRAPH_AS_SONOGRAM) set_toggle_button(sono_button, TRUE, FALSE, (gpointer)ss);
+      if (transform_graph_type(ss) == GRAPH_AS_SPECTROGRAM) set_toggle_button(spectro_button, TRUE, FALSE, (gpointer)ss);
       ignore_callbacks = FALSE;
 
       set_toggle_button(peaks_button, show_transform_peaks(ss), FALSE, (gpointer)ss);
@@ -851,13 +851,13 @@ void set_transform_graph_type(snd_state *ss, int val)
   if (transform_dialog) 
     switch (val)
       {
-      case GRAPH_TRANSFORM_ONCE: 
+      case GRAPH_ONCE: 
 	set_toggle_button(normal_fft_button, TRUE, FALSE, (void *)ss); 
 	break;
-      case GRAPH_TRANSFORM_AS_SONOGRAM:   
+      case GRAPH_AS_SONOGRAM:   
 	set_toggle_button(sono_button, TRUE, FALSE, (void *)ss); 
 	break;
-      case GRAPH_TRANSFORM_AS_SPECTROGRAM:
+      case GRAPH_AS_SPECTROGRAM:
 	set_toggle_button(spectro_button, TRUE, FALSE, (void *)ss);
 	break;
       }

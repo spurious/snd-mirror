@@ -1,5 +1,11 @@
 Snd change log
 
+  24-Aug:    added filter-control-coeffs.
+             graph-lisp|time|transform? inverted to be lisp|time|transform-graph?
+             graph-time-once -> graph-once, graph-transform-once -> graph-once
+             graph-time-as-wavogram -> graph-as-wavogram, graph-transform-as-sonogram -> graph-as-sonogram
+             graph-transform-as-spectrogram -> graph-as-spectrogram.
+	     added snd6.scm.
   16-Aug:    added IBM adpcm from Perry Cook's adpcmdec.c.
   15-Aug:    set-channel-drop in snd-motif.scm.
   13-Aug:    snd 6.0.

@@ -3664,6 +3664,16 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(read-set! keywords 'prefix)");
   XEN_EVAL_C_STRING("(print-enable 'source)");  /* added 13-Feb-01 -- print closures with source  */
 
+  /* backwards compatibility */
+  XEN_EVAL_C_STRING("(define graph-lisp? lisp-graph?)");
+  XEN_EVAL_C_STRING("(define graph-transform? transform-graph?)");
+  XEN_EVAL_C_STRING("(define graph-time? time-graph?)");
+  XEN_EVAL_C_STRING("(define graph-time-once 0)");
+  XEN_EVAL_C_STRING("(define graph-transform-once 0)");
+  XEN_EVAL_C_STRING("(define graph-time-as-wavogram 3)");
+  XEN_EVAL_C_STRING("(define graph-transform-as-sonogram 1)");
+  XEN_EVAL_C_STRING("(define graph-transform-as-spectrogram 2)");
+
   /* from ice-9/r4rs.scm but with output to snd listener */
   XEN_EVAL_C_STRING("(define snd-remember-paths #f)");
   XEN_EVAL_C_STRING("(defmacro declare args #f)"); /* for optimizer */

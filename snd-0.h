@@ -132,9 +132,7 @@ enum {ENVED_AMPLITUDE, ENVED_SPECTRUM, ENVED_SRATE};
 
 enum {GRAPH_LINES, GRAPH_DOTS, GRAPH_FILLED, GRAPH_DOTS_AND_LINES, GRAPH_LOLLIPOPS};
 #define GRAPH_STYLE_OK(Grf) ((Grf >= GRAPH_LINES) && (Grf <= GRAPH_LOLLIPOPS))
-enum {GRAPH_TRANSFORM_ONCE, GRAPH_TRANSFORM_AS_SONOGRAM, GRAPH_TRANSFORM_AS_SPECTROGRAM};
-#define MAX_TRANSFORM_GRAPH_TYPE GRAPH_TRANSFORM_AS_SPECTROGRAM
-enum {GRAPH_TIME_ONCE, GRAPH_TIME_AS_WAVOGRAM};
+enum {GRAPH_ONCE, GRAPH_AS_SONOGRAM, GRAPH_AS_SPECTROGRAM, GRAPH_AS_WAVOGRAM};
 enum {ZOOM_FOCUS_LEFT, ZOOM_FOCUS_RIGHT, ZOOM_FOCUS_ACTIVE, ZOOM_FOCUS_MIDDLE};
 enum {DONT_LOCK_MIXES, LOCK_MIXES};
 enum {DONT_DELETE_ME, DELETE_ME, ALREADY_DELETED, MULTICHANNEL_DELETION};
@@ -207,10 +205,6 @@ enum {FCP_X_ANGLE, FCP_X_SCALE, FCP_Y_ANGLE, FCP_Y_SCALE, FCP_Z_ANGLE, FCP_Z_SCA
 
 enum {TIME_AXIS_INFO, TRANSFORM_AXIS_INFO, LISP_AXIS_INFO};
 #define AXIS_INFO_ID_OK(Id) ((Id >= TIME_AXIS_INFO) && ((Id <= LISP_AXIS_INFO)))
-
-#define TIME_GRAPH_STYLE(cp) (cp->graph_style & 0xff)
-#define TRANSFORM_GRAPH_STYLE(cp) (((cp->graph_style & 0xff00) != 0) ? (((cp->graph_style >> 8) & 0xff) - 1) : (cp->graph_style & 0xff))
-#define LISP_GRAPH_STYLE(cp) (((cp->graph_style & 0xff0000) != 0) ? (((cp->graph_style >> 16) & 0xff) - 1) : (cp->graph_style & 0xff))
 
 enum {COLOR_POSITION, COLOR_ZOOM};
 enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
@@ -329,11 +323,11 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 
 #define transform_graph_type(ss) ss->Transform_Graph_Type
 #define in_set_transform_graph_type_1(ss, a) ss->Transform_Graph_Type = a
-#define DEFAULT_TRANSFORM_GRAPH_TYPE GRAPH_TRANSFORM_ONCE
+#define DEFAULT_TRANSFORM_GRAPH_TYPE GRAPH_ONCE
 
 #define time_graph_type(ss) ss->Time_Graph_Type
 #define in_set_time_graph_type(ss, a) ss->Time_Graph_Type = a
-#define DEFAULT_TIME_GRAPH_TYPE GRAPH_TIME_ONCE
+#define DEFAULT_TIME_GRAPH_TYPE GRAPH_ONCE
 
 #define fft_window(ss) ss->Fft_Window
 #define in_set_fft_window_1(ss, a) ss->Fft_Window = a

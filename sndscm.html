@@ -1242,10 +1242,6 @@ convenient if they were in one file.
   <em class=def><a name="exchannelproperty">channel-property</a></em> key snd chn
   <em class=def><a name="exsoundproperty">sound-property</a></em> key snd
 
-  <em class=def><a name="exmaingraphstyle">time-graph-style</a></em> snd chn
-  <em class=def><a name="exfftgraphstyle">transform-graph-style</a></em> snd chn
-  <em class=def><a name="exlispgraphstyle">lisp-graph-style</a></em> snd chn
-
   <em class=def><a name="exsnddebug">snd-debug</a></em>
   <em class=def><a name="readlistenerline">read-listener-line</a></em> prompt
   <em class=def><a name="exsndtrace">snd-trace</a></em>
@@ -1275,41 +1271,6 @@ convenient if they were in one file.
 property list.  To add or change a property, use set! with this procedure.  Similarly,
 <i>sound-property</i> provides access to a sound's property list.
 </p>
-
-<p>The graph-style functions provide accessors for the channel-specific
-graph styles. Each is of the form:
-</p>
-<pre>
-(define time-graph-style
-  (make-procedure-with-setter
-   (lambda (snd chn)
-     (logand (graph-style snd chn) #xff))
-   (lambda (snd chn val)
-     (set! (graph-style snd chn)
-	   (logior (logand (graph-style snd chn) #xffff00)
-		   val)))))
-</pre>
-<p>This uses the generalized set! support in Guile; <i>make-procedure-with-setter</i>
-takes two arguments, the reader and the writer of the field.  The reader picks off the
-bits that are of interest (in this case <code>(logand (graph-style snd chn) #xff)</code>);
-the writer sets those bits without affecting the other two fields.  Normally all three
-fields are accessed at the same time (by <a href="extsnd.html#graphstyle">graph-style</a>).
-To return to this mode after setting a specific field, set that field to -1.
-</p>
-<pre>
-:<em class=typing>graph-dots</em>
-<em class=listener>1</em>
-:<em class=typing>(set! (transform-graph-style 0 0) graph-dots) ;now the time-domain uses lines, the fft dots</em>
-<em class=listener>512</em>
-:<em class=typing>(transform-graph-style 0 0)</em>
-<em class=listener>1</em>
-:<em class=typing>(time-graph-style 0 0)</em>
-<em class=listener>0</em>
-:<em class=typing>(set! (transform-graph-style 0 0) -1)</em>
-<em class=listener>0</em>
-:<em class=typing>(transform-graph-style 0 0)</em>
-<em class=listener>0</em>
-</pre>
 
 <p>In <i>snd-debug</i> we're 
 redirecting the Guile debugger's stdin and stdout IO via a read-write soft-port

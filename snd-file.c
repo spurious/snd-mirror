@@ -1019,7 +1019,9 @@ static void copy_chan_info(chan_info *ncp, chan_info *ocp)
   ncp->max_transform_peaks = ocp->max_transform_peaks;
   ncp->show_transform_peaks = ocp->show_transform_peaks;
   ncp->show_axes = ocp->show_axes;
-  ncp->graph_style = ocp->graph_style;
+  ncp->time_graph_style = ocp->time_graph_style;
+  ncp->lisp_graph_style = ocp->lisp_graph_style;
+  ncp->transform_graph_style = ocp->transform_graph_style;
   ncp->fft_log_frequency = ocp->fft_log_frequency;
   ncp->fft_log_magnitude = ocp->fft_log_magnitude;
   ncp->transform_size = ocp->transform_size;

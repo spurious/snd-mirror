@@ -120,9 +120,9 @@ static char *transform_graph_type_name(int choice)
 {
   switch (choice)
     {
-    case GRAPH_TRANSFORM_AS_SONOGRAM:    return(TO_VAR_NAME(S_graph_transform_as_sonogram));    break;
-    case GRAPH_TRANSFORM_AS_SPECTROGRAM: return(TO_VAR_NAME(S_graph_transform_as_spectrogram)); break;
-    default:                             return(TO_VAR_NAME(S_graph_transform_once));           break;
+    case GRAPH_AS_SONOGRAM:    return(TO_VAR_NAME(S_graph_as_sonogram));    break;
+    case GRAPH_AS_SPECTROGRAM: return(TO_VAR_NAME(S_graph_as_spectrogram)); break;
+    default:                   return(TO_VAR_NAME(S_graph_once));           break;
     }
 }
 
@@ -130,8 +130,8 @@ static char *time_graph_type_name(int choice)
 {
   switch (choice)
     {
-    case GRAPH_TIME_AS_WAVOGRAM: return(TO_VAR_NAME(S_graph_time_as_wavogram)); break;
-    default:                     return(TO_VAR_NAME(S_graph_time_once));        break;
+    case GRAPH_AS_WAVOGRAM: return(TO_VAR_NAME(S_graph_as_wavogram)); break;
+    default:                return(TO_VAR_NAME(S_graph_once));        break;
     }
 }
 
@@ -465,9 +465,9 @@ static void save_sound_state (snd_info *sp, void *ptr)
     {
       cp = sp->chans[chan];
       ap = cp->axis;
-      if (!(cp->graph_time_p)) pcp_ss(fd, S_graph_time_p, b2s(cp->graph_time_p), chan);
-      if (cp->graph_transform_p) pcp_ss(fd, S_graph_transform_p, b2s(cp->graph_transform_p), chan);
-      if (cp->graph_lisp_p) pcp_ss(fd, S_graph_lisp_p, b2s(cp->graph_lisp_p), chan);
+      if (!(cp->graph_time_p)) pcp_ss(fd, S_time_graph_p, b2s(cp->graph_time_p), chan);
+      if (cp->graph_transform_p) pcp_ss(fd, S_transform_graph_p, b2s(cp->graph_transform_p), chan);
+      if (cp->graph_lisp_p) pcp_ss(fd, S_lisp_graph_p, b2s(cp->graph_lisp_p), chan);
       if (((ap->x0 != 0.0) || (ap->x1 != 0.1)) && (ap->x1 > .0005)) pcp_sl(fd, S_x_bounds, ap->x0, ap->x1, chan);
       if ((ap->y0 != -1.0) || (ap->y1 != 1.0)) pcp_sl(fd, S_y_bounds, ap->y0, ap->y1, chan);
       if (cp->cursor != 0) pcp_sod(fd, S_cursor, cp->cursor, chan);
@@ -501,7 +501,9 @@ static void save_sound_state (snd_info *sp, void *ptr)
       if (cp->fft_window != DEFAULT_FFT_WINDOW) pcp_ss(fd, S_fft_window, mus_fft_window_name(cp->fft_window), chan);
       if (cp->transform_type != DEFAULT_TRANSFORM_TYPE) pcp_ss(fd, S_transform_type, transform_type_name(cp->transform_type), chan);
       if (cp->transform_normalization != DEFAULT_TRANSFORM_NORMALIZATION) pcp_ss(fd, S_transform_normalization, transform_normalization_name(cp->transform_normalization), chan);
-      if (cp->graph_style != DEFAULT_GRAPH_STYLE) pcp_ss(fd, S_graph_style, graph_style_name(cp->graph_style), chan);
+      if (cp->time_graph_style != DEFAULT_GRAPH_STYLE) pcp_ss(fd, S_time_graph_style, graph_style_name(cp->time_graph_style), chan);
+      if (cp->lisp_graph_style != DEFAULT_GRAPH_STYLE) pcp_ss(fd, S_lisp_graph_style, graph_style_name(cp->lisp_graph_style), chan);
+      if (cp->transform_graph_style != DEFAULT_GRAPH_STYLE) pcp_ss(fd, S_transform_graph_style, graph_style_name(cp->transform_graph_style), chan);
       if (cp->show_mix_waveforms != DEFAULT_SHOW_MIX_WAVEFORMS) pcp_ss(fd, S_show_mix_waveforms, b2s(cp->show_mix_waveforms), chan);
       if (cp->dot_size != DEFAULT_DOT_SIZE) pcp_sd(fd, S_dot_size, cp->dot_size, chan);
       if (cp->x_axis_style != DEFAULT_X_AXIS_STYLE) pcp_sd(fd, S_x_axis_style, cp->x_axis_style, chan);

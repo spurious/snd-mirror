@@ -57,6 +57,7 @@ typedef struct dac__info {
 
 
 /* -------- filter -------- */
+
 static mus_any *make_flt(dac_info *dp, int order, Float *env)
 {
   if (order <= 0) return(NULL);
@@ -374,7 +375,7 @@ Float list_interp(Float x, Float *e, int size)
   return(e[loc + 1] + (x - e[loc]) * (e[loc + 3] - e[loc + 1]) / (e[loc + 2] - e[loc]));
 }
 
-static Float *sample_linear_env(env *e, int order)
+Float *sample_linear_env(env *e, int order)
 {
   Float *data;
   Float last_x, step, x;

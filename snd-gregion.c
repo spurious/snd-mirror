@@ -51,7 +51,7 @@ void reflect_region_graph_style(snd_state *ss)
       (rsp->chans[0]) &&
       (region_dialog_is_active()))
     {
-      rsp->chans[0]->graph_style = region_graph_style(ss);
+      rsp->chans[0]->time_graph_style = region_graph_style(ss);
       rsp->chans[0]->dot_size = dot_size(ss);
       update_graph(rsp->chans[0]);
     }

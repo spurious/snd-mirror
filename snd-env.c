@@ -922,7 +922,7 @@ void alert_envelope_editor(snd_state *ss, char *name, env *val)
 
 void enved_show_background_waveform(snd_state *ss, axis_info *ap, axis_info *gray_ap, int apply_to_selection, int show_fft, int printing)
 {
-  int srate, pts = 0, old_time_graph_type = GRAPH_TIME_ONCE;
+  int srate, pts = 0, old_time_graph_type = GRAPH_ONCE;
   off_t samps;
   axis_info *active_ap = NULL;
   chan_info *active_channel = NULL;
@@ -979,7 +979,7 @@ void enved_show_background_waveform(snd_state *ss, axis_info *ap, axis_info *gra
 	  srate = SND_SRATE(active_channel->sound);
 	  gray_ap->losamp = 0;
 	  gray_ap->hisamp = samps - 1;
-	  if (active_channel->time_graph_type == GRAPH_TIME_AS_WAVOGRAM)
+	  if (active_channel->time_graph_type == GRAPH_AS_WAVOGRAM)
 	    {
 	      gray_ap->y0 = -1.0;
 	      gray_ap->y1 = 1.0;
@@ -998,7 +998,7 @@ void enved_show_background_waveform(snd_state *ss, axis_info *ap, axis_info *gra
       gray_ap->y_base = (Float)(gray_ap->y_axis_y0 - gray_ap->y0 * gray_ap->y_scale);
       active_channel->axis = gray_ap;
       old_time_graph_type = active_channel->time_graph_type;
-      active_channel->time_graph_type = GRAPH_TIME_ONCE;
+      active_channel->time_graph_type = GRAPH_ONCE;
       pts = make_graph(active_channel, NULL, ss);
       active_channel->time_graph_type = old_time_graph_type;
       active_channel->axis = active_ap;

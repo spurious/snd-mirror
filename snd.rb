@@ -69,15 +69,14 @@ if Hanning_window != 1 then snd_display sprintf("\n# Hanning_window => %d", Hann
 if Kaiser_window != 11 then snd_display sprintf("\n# Kaiser_window => %d", Kaiser_window) end
 if Keyboard_no_action != 4 then snd_display sprintf("\n# Keyboard_no_action => %d", Keyboard_no_action) end
 if Cepstrum != 5 then snd_display sprintf("\n# Cepstrum => %d", Cepstrum) end
-if Graph_transform_once != 0 then snd_display sprintf("\n# Graph_transform_once => %d", Graph_transform_once) end
 if Parzen_window != 3 then snd_display sprintf("\n# Parzen_window => %d", Parzen_window) end
 if Poisson_window != 13 then snd_display sprintf("\n# Poisson_window => %d", Poisson_window) end
 if Rectangular_window != 0 then snd_display sprintf("\n# Rectangular_window => %d", Rectangular_window) end
 if Riemann_window != 10 then snd_display sprintf("\n# Riemann_window => %d", Riemann_window) end
-if Graph_transform_as_sonogram != 1 then snd_display sprintf("\n# Graph_transform_as_sonogram => %d", Graph_transform_as_sonogram) end
-if Graph_transform_as_spectrogram != 2 then snd_display sprintf("\n# Graph_transform_as_spectrogram => %d", Graph_transform_as_spectrogram) end
-if Graph_time_once != 0 then snd_display sprintf("\n# Graph_time_once => %d", Graph_time_once) end
-if Graph_time_as_wavogram != 1 then snd_display sprintf("\n# Graph_time_as_wavogram => %d", Graph_time_as_wavogram) end
+if Graph_as_sonogram != 1 then snd_display sprintf("\n# Graph_as_sonogram => %d", Graph_as_sonogram) end
+if Graph_as_spectrogram != 2 then snd_display sprintf("\n# Graph_as_spectrogram => %d", Graph_as_spectrogram) end
+if Graph_once != 0 then snd_display sprintf("\n# Graph_once => %d", Graph_once) end
+if Graph_as_wavogram != 3 then snd_display sprintf("\n# Graph_as_wavogram => %d", Graph_as_wavogram) end
 if Enved_spectrum != 1 then snd_display sprintf("\n# Enved_spectrum => %d", Enved_spectrum) end
 if Speed_control_as_float != 0 then snd_display sprintf("\n# Speed_control_as_float => %d", Speed_control_as_float) end
 if Speed_control_as_ratio != 1 then snd_display sprintf("\n# Speed_control_as_ratio => %d", Speed_control_as_ratio) end
@@ -192,7 +191,7 @@ if channel_style != 0 then snd_display sprintf("\n# channel_style: %s", channel_
 if fneq(color_cutoff, 0.003) then snd_display sprintf("\n# color_cutoff: %s", color_cutoff) end
 if color_inverted != true then snd_display sprintf("\n# color_inverted: %s", color_inverted) end
 if color_scale != 1.0 then snd_display sprintf("\n# color_scale: %s", color_scale) end
-if colormap != 2 then snd_display sprintf("\n# colormap: %s", colormap) end
+if colormap != -1 then snd_display sprintf("\n# colormap: %s", colormap) end
 if auto_update_interval != 60.0 then snd_display sprintf("\n# auto_update_interval: %s", auto_update_interval) end
 if dac_combines_channels != true then snd_display sprintf("\n# dac_combines_channels: %s", dac_combines_channels) end
 if emacs_style_save_as != false then snd_display sprintf("\n# emacs_style_save_as: %s", emacs_style_save_as) end
@@ -265,7 +264,7 @@ if spectro_x_angle != 90.0 then snd_display sprintf("\n# spectro_x_angle: %s", s
 if spectro_x_scale != 1.0 then snd_display sprintf("\n# spectro_x_scale: %s", spectro_x_scale) end
 if spectro_y_angle != 0.0 then snd_display sprintf("\n# spectro_y_angle: %s", spectro_y_angle) end
 if spectro_y_scale != 1.0 then snd_display sprintf("\n# spectro_y_scale: %s", spectro_y_scale) end
-if spectro_z_angle != -2.0 then snd_display sprintf("\n# spectro_z_angle: %s", spectro_z_angle) end
+if spectro_z_angle != 358.0 then snd_display sprintf("\n# spectro_z_angle: %s", spectro_z_angle) end
 if fneq(spectro_z_scale, 0.1) then snd_display sprintf("\n# spectro_z_scale: %s", spectro_z_scale) end
 if speed_control_style != 0 then snd_display sprintf("\n# speed_control_style: %s", speed_control_style) end
 if speed_control_tones != 12 then snd_display sprintf("\n# speed_control_tones: %s", speed_control_tones) end
@@ -280,7 +279,7 @@ if vu_font != "" then snd_display sprintf("\n# vu_font: %s", vu_font) end
 if vu_font_size != 1.0 then snd_display sprintf("\n# vu_font_size: %s", vu_font_size) end
 if vu_size != 1.0 then snd_display sprintf("\n# vu_size: %s", vu_size) end
 if wavelet_type != 0 then snd_display sprintf("\n# wavelet_type: %s", wavelet_type) end
-if time_graph_type != Graph_time_once then snd_display sprintf("\n# time_graph_type: %s", time_graph_type) end
+if time_graph_type != Graph_once then snd_display sprintf("\n# time_graph_type: %s", time_graph_type) end
 if wavo_hop != 3 then snd_display sprintf("\n# wavo_hop: %s", wavo_hop) end
 if wavo_trace != 64 then snd_display sprintf("\n# wavo_trace: %s", wavo_trace) end
 if x_axis_style != 0 then snd_display sprintf("\n# x_axis_style: %s", x_axis_style) end
@@ -982,10 +981,10 @@ set_graph_time? true
 if graph_time? !=  true then snd_display sprintf("\n# graph_time?: %s", graph_time?) end
 set_graph_time? false 
 if graph_time? != false then snd_display sprintf("\n# graph_time?: %s", graph_time?) end
-set_time_graph_type Graph_time_as_wavogram
-if time_graph_type !=  Graph_time_as_wavogram then snd_display sprintf("\n# time_graph_type: %s", time_graph_type) end
-set_time_graph_type Graph_time_once 
-if time_graph_type != Graph_time_once then snd_display sprintf("\n# time_graph_type: %s", time_graph_type) end
+set_time_graph_type Graph_as_wavogram
+if time_graph_type !=  Graph_as_wavogram then snd_display sprintf("\n# time_graph_type: %s", time_graph_type) end
+set_time_graph_type Graph_once 
+if time_graph_type != Graph_once then snd_display sprintf("\n# time_graph_type: %s", time_graph_type) end
 set_wavo_hop 6
 if wavo_hop !=  6 then snd_display sprintf("\n# wavo_hop: %s", wavo_hop) end
 set_wavo_hop 3 

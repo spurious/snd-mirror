@@ -314,7 +314,14 @@ void save_state_from_menu(snd_state *ss)
     report_in_minibuffer(any_selected_sound(ss), "saved state in %s", save_state_file(ss));
 }
 
-static void chans_graph_style(chan_info *cp, void *ptr) {cp->graph_style = (*((int *)ptr)); update_graph(cp);}
+static void chans_graph_style(chan_info *cp, void *ptr) 
+{
+  int style = (*((int *)ptr)); 
+  cp->time_graph_style = style;
+  cp->lisp_graph_style = style;
+  cp->transform_graph_style = style;
+  update_graph(cp);
+}
 
 void set_graph_style(snd_state *ss, int val)
 {

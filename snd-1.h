@@ -238,7 +238,8 @@ typedef struct chan__info {
   Float spectro_x_scale, spectro_y_scale, spectro_z_scale, spectro_z_angle, spectro_x_angle, spectro_y_angle, spectro_cutoff, spectro_start;
   Float lin_dB, min_dB, fft_window_beta, beats_per_minute;
   int show_y_zero, show_marks, wavo_hop, wavo_trace, zero_pad, x_axis_style, wavelet_type, verbose_cursor, max_transform_peaks;
-  int show_transform_peaks, show_axes, graph_style, fft_log_frequency, fft_log_magnitude, transform_size, transform_graph_type, fft_window, time_graph_type;
+  int show_transform_peaks, show_axes, fft_log_frequency, fft_log_magnitude, transform_size, transform_graph_type, fft_window, time_graph_type;
+  int time_graph_style, lisp_graph_style, transform_graph_style;
   Latus dot_size;
   int transform_normalization, transform_type, show_mix_waveforms, spectro_hop, graphs_horizontal;
   void *mix_md;
@@ -945,6 +946,7 @@ int play_in_progress(void);
 void initialize_apply(snd_info *sp, int chans, off_t beg, off_t frames);
 void finalize_apply(snd_info *sp);
 int run_apply(int ofd);
+Float *sample_linear_env(env *e, int order);
 
 void g_init_dac(void);
 snd_info *player(int index);

@@ -285,7 +285,7 @@ void erase_and_draw_grf_points(mix_context *ms, chan_info *cp, int nj)
   draw_gc = copy_GC(cp);
   undraw_gc = erase_GC(cp);
   min = ((nj < previous_j) ? nj : previous_j);
-  if (cp->graph_style == GRAPH_LINES)
+  if (cp->time_graph_style == GRAPH_LINES)
     {
       if (min <= 0) min = 1;
       for (i = 0, j = 1; i < min - 1; i++, j++)
@@ -345,7 +345,7 @@ void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
   draw_gc = copy_GC(cp);
   undraw_gc = erase_GC(cp);
   min = ((nj < previous_j) ? nj : previous_j);
-  if (cp->graph_style == GRAPH_LINES)
+  if (cp->time_graph_style == GRAPH_LINES)
     {
       for (i = 0, j = 1; i < min - 1; i++, j++)
 	{

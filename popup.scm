@@ -459,7 +459,7 @@
 			(lambda (w c i) 
 			  (set! (transform-graph-type graph-popup-snd (choose-chan)) val))))
 		(list "once" "sonogram" "spectrogram")
-		(list graph-transform-once graph-transform-as-sonogram graph-transform-as-spectrogram))
+		(list graph-once graph-as-sonogram graph-as-spectrogram))
      fft-popup 
      (lambda (lst)
        (let ((ctr 0))

@@ -283,12 +283,12 @@ static void graph_transform_once_callback(Widget w, XtPointer context, XtPointer
     {
       XmToggleButtonSetState(sono_button, FALSE, FALSE);
       XmToggleButtonSetState(spectro_button, FALSE, FALSE);
-      in_set_transform_graph_type(ss, GRAPH_TRANSFORM_ONCE);
+      in_set_transform_graph_type(ss, GRAPH_ONCE);
     }
   else
     {
       XmToggleButtonSetState(sono_button, TRUE, FALSE);
-      in_set_transform_graph_type(ss, GRAPH_TRANSFORM_AS_SONOGRAM);
+      in_set_transform_graph_type(ss, GRAPH_AS_SONOGRAM);
     }
   for_each_chan(ss, calculate_fft);
 }
@@ -302,12 +302,12 @@ static void sonogram_callback(Widget w, XtPointer context, XtPointer info)
     {
       XmToggleButtonSetState(normo_button, FALSE, FALSE);
       XmToggleButtonSetState(spectro_button, FALSE, FALSE);
-      in_set_transform_graph_type(ss, GRAPH_TRANSFORM_AS_SONOGRAM);
+      in_set_transform_graph_type(ss, GRAPH_AS_SONOGRAM);
     }
   else
     {
       XmToggleButtonSetState(normo_button, TRUE, FALSE);
-      in_set_transform_graph_type(ss, GRAPH_TRANSFORM_ONCE);
+      in_set_transform_graph_type(ss, GRAPH_ONCE);
     }
   for_each_chan(ss, calculate_fft);
 }
@@ -321,12 +321,12 @@ static void spectrogram_callback(Widget w, XtPointer context, XtPointer info)
     {
       XmToggleButtonSetState(normo_button, FALSE, FALSE);
       XmToggleButtonSetState(sono_button, FALSE, FALSE);
-      in_set_transform_graph_type(ss, GRAPH_TRANSFORM_AS_SPECTROGRAM);
+      in_set_transform_graph_type(ss, GRAPH_AS_SPECTROGRAM);
     }
   else
     {
       XmToggleButtonSetState(normo_button, TRUE, FALSE);
-      in_set_transform_graph_type(ss, GRAPH_TRANSFORM_ONCE);
+      in_set_transform_graph_type(ss, GRAPH_ONCE);
     }
   for_each_chan(ss, calculate_fft);
 }
@@ -1007,9 +1007,9 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       gv.foreground = (ss->sgx)->enved_waveform_color;
       fgc = XtGetGC(graph_drawer, GCForeground | GCFunction, &gv);
 
-      XmToggleButtonSetState(normo_button, transform_graph_type(ss) == GRAPH_TRANSFORM_ONCE, FALSE);
-      XmToggleButtonSetState(sono_button, transform_graph_type(ss) == GRAPH_TRANSFORM_AS_SONOGRAM, FALSE);
-      XmToggleButtonSetState(spectro_button, transform_graph_type(ss) == GRAPH_TRANSFORM_AS_SPECTROGRAM, FALSE);
+      XmToggleButtonSetState(normo_button, transform_graph_type(ss) == GRAPH_ONCE, FALSE);
+      XmToggleButtonSetState(sono_button, transform_graph_type(ss) == GRAPH_AS_SONOGRAM, FALSE);
+      XmToggleButtonSetState(spectro_button, transform_graph_type(ss) == GRAPH_AS_SPECTROGRAM, FALSE);
       XmToggleButtonSetState(peaks_button, show_transform_peaks(ss), FALSE);
       XmToggleButtonSetState(db_button, fft_log_magnitude(ss), FALSE);
       XmToggleButtonSetState(logfreq_button, fft_log_frequency(ss), FALSE);
@@ -1079,17 +1079,17 @@ void set_transform_graph_type(snd_state *ss, int val)
   if (transform_dialog)
     switch (val)
       {
-      case GRAPH_TRANSFORM_ONCE:
+      case GRAPH_ONCE:
 	XmToggleButtonSetState(normo_button, TRUE, FALSE);
 	XmToggleButtonSetState(spectro_button, FALSE, FALSE);
 	XmToggleButtonSetState(sono_button, FALSE, FALSE);
 	break;
-      case GRAPH_TRANSFORM_AS_SONOGRAM:
+      case GRAPH_AS_SONOGRAM:
 	XmToggleButtonSetState(normo_button, FALSE, FALSE);
 	XmToggleButtonSetState(spectro_button, FALSE, FALSE);
 	XmToggleButtonSetState(sono_button, TRUE, FALSE);
 	break;
-      case GRAPH_TRANSFORM_AS_SPECTROGRAM:
+      case GRAPH_AS_SPECTROGRAM:
 	XmToggleButtonSetState(normo_button, FALSE, FALSE);
 	XmToggleButtonSetState(spectro_button, TRUE, FALSE);
 	XmToggleButtonSetState(sono_button, FALSE, FALSE);

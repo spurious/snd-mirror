@@ -345,7 +345,7 @@ snd_info *make_initial_region_sp(snd_state *ss, GUI_WIDGET region_grf)
   cp->sound_ctr = 0;
   cp->sounds = (snd_data **)CALLOC(cp->sound_size, sizeof(snd_data *));
   cp->samples[0] = region_len(id);
-  cp->graph_style = region_graph_style(ss); /* added 8-Aug-01 */
+  cp->time_graph_style = region_graph_style(ss); /* added 8-Aug-01 */
   cp->dot_size = dot_size(ss);
   return(reg_sp);
 }

@@ -108,7 +108,9 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
   cp->transform_type = transform_type(ss);
   cp->transform_normalization = transform_normalization(ss);
   cp->show_mix_waveforms = show_mix_waveforms(ss);
-  cp->graph_style = graph_style(ss);
+  cp->time_graph_style = graph_style(ss);
+  cp->lisp_graph_style = graph_style(ss);
+  cp->transform_graph_style = graph_style(ss);
   cp->graphs_horizontal = graphs_horizontal(ss);
   cp->dot_size = dot_size(ss);
   cp->x_axis_style = x_axis_style(ss);
