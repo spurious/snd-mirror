@@ -3073,6 +3073,13 @@
 	(test-orig (lambda (snd) (filter-sound (make-one-zero :a0 2.0 :a1 0.0) 0 ind1 0)) 
 		   (lambda (snd) (filter-sound (make-one-zero :a0 0.5 :a1 0.0)) 0 ind1 0) 'filter-sound ind1)
   
+	(let ((var (catch #t (lambda () (src-sound '(0 0 1 1))) (lambda args args))))
+	  (if (not (eq? (car var) 'mus-error))
+	      (snd-display ";src-sound env at 0: ~A" var)))
+	(let ((var (catch #t (lambda () (src-sound '(0 1 1 -1))) (lambda args args))))
+	  (if (not (eq? (car var) 'mus-error))
+	      (snd-display ";src-sound env through 0: ~A" var)))
+
 	(scale-to 1.0 ind1)
 	(let ((v0 (make-vct 10))
 	      (v1 (samples->vct 12000 10 ind1 0)))
@@ -10552,7 +10559,11 @@ EDITS: 3
 		(snd-kp-divide-key #xFFAF)
 		(snd-kp-0-key #xFFB0)
 		(snd-kp-enter-key #xFF8D)
-		(snd-space-key #x20))
+		(snd-space-key #x20)
+		(snd-kp-left-key #xFF96)
+		(snd-kp-right-key #xFF98)
+		(snd-kp-up-key #xFF97)
+		(snd-kp-down-key #xFF99))
 
 	    (define (all-help wid)
 	      (if (and wid
@@ -10578,8 +10589,9 @@ EDITS: 3
 	    ;;   these functions send either Xevents or directly invoke the Motif button callbacks
 	    ;; resize-pane pane size 
 
-	    ;; TRANSFORM_DIALOG, FILE_OPEN_DIALOG, FILE_SAVE_AS_DIALOG, VIEW_FILES_DIALOG, RAW_DATA_DIALOG, 
-	    ;; FILE_MIX_DIALOG, EDIT_HEADER_DIALOG, MIX_PANEL_DIALOG, RECORDER_DIALOG, NEW_FILE_DIALOG
+	    ;; scale widget use (key-event (widget-window (cadr w)) #xFF53 0) etc (focus-widget) and (force-event)
+	    ;; list widget use XmListSelectPos with (w pos #t)
+	    ;; scrollbar use XmScrollBarSetValues (w value slider_size increment page #t) or use the key-events 
 
 	    (reset-all-hooks)
 
@@ -10668,6 +10680,21 @@ EDITS: 3
 		      (snd-display ";<- not by window? ~A ~A" ls (left-sample)))
 		  (if (> (abs (- len (- (right-sample) (left-sample)))) 1)
 		      (snd-display ";<- size diff? ~A ~A" len (- (right-sample) (left-sample))))
+
+		  (for-each (lambda (msk val)
+			      (key-event cwin snd-right-key msk) (force-event)
+			      (if (> (abs (- (left-sample) (* val len) ls)) 1)
+				  (snd-display ";~A-> not by window? ~A ~A" msk rs (left-sample)))
+			      (if (> (abs (- len (- (right-sample) (left-sample)))) 1)
+				  (snd-display ";~A-> size diff? ~A ~A" msk len (- (right-sample) (left-sample))))
+			      (key-event cwin snd-left-key msk) (force-event)
+			      (if (> (abs (- (left-sample) ls)) 1)
+				  (snd-display ";~A<- not by window? ~A ~A" msk ls (left-sample)))
+			      (if (> (abs (- len (- (right-sample) (left-sample)))) 1)
+				  (snd-display ";~A<- size diff? ~A ~A" msk len (- (right-sample) (left-sample)))))
+			    (list 1 4 8 5 9 13)
+			    (list 0.5 0.5 0.5 0.25 0.25 0.125))
+
 		  (key-event cwin snd-up-key 0) (force-event)
 		  (if (> (abs (- (* 2 len) (- (right-sample) (left-sample)))) 3)
 		      (snd-display ";up size diff? ~A ~A" ( * 2 len) (- (right-sample) (left-sample))))
@@ -10680,6 +10707,47 @@ EDITS: 3
 		  (key-event cwin snd-down-key 4) (force-event)
 		  (if (> (abs (- len (- (right-sample) (left-sample)))) 2)
 		      (snd-display ";C-down size diff? ~A ~A" len (- (right-sample) (left-sample))))
+
+		  (for-each (lambda (msk val)
+			      (key-event cwin snd-up-key msk) (force-event)
+			      (if (> (abs (- (* val len) (- (right-sample) (left-sample)))) 3)
+				  (snd-display ";~A up size diff? ~A ~A" msk ( * val len) (- (right-sample) (left-sample))))
+			      (key-event cwin snd-down-key msk) (force-event)
+			      (if (> (abs (- len (- (right-sample) (left-sample)))) 3)
+				  (snd-display ";~A down size diff? ~A ~A" msk len (- (right-sample) (left-sample)))))
+			    (list 1 4 8 5 9 13)
+			    (list 1.5 1.5 1.5 1.25 1.25 1.125))
+		  
+		  (let ((y (spectro-y-angle))
+			(x (spectro-x-angle)))
+		    (key-event cwin snd-kp-left-key 4) (force-event)
+		    (if (fneq (spectro-y-angle) (- y 1.0))
+			(snd-display ";C-keypad-left: ~A ~A" y (spectro-y-angle)))
+		    (key-event cwin snd-kp-right-key 4) (force-event)
+		    (if (fneq (spectro-y-angle) y)
+			(snd-display ";C-keypad-right: ~A ~A" y (spectro-y-angle)))
+		    (key-event cwin snd-kp-down-key 4) (force-event)
+		    (if (fneq (spectro-x-angle) (- x 1.0))
+			(snd-display ";C-keypad-down: ~A ~A" x (spectro-x-angle)))
+		    (key-event cwin snd-kp-up-key 4) (force-event)
+		    (if (fneq (spectro-x-angle) x)
+			(snd-display ";C-keypad-up: ~A ~A" x (spectro-x-angle))))
+
+		  (let ((za (spectro-z-angle))
+			(zs (spectro-z-scale)))
+		    (key-event cwin snd-kp-left-key 0) (force-event)
+		    (if (fneq (spectro-z-angle) (- za 1.0))
+			(snd-display ";keypad-left: ~A ~A" za (spectro-z-angle)))
+		    (key-event cwin snd-kp-right-key 0) (force-event)
+		    (if (fneq (spectro-z-angle) za)
+			(snd-display ";keypad-right: ~A ~A" za (spectro-z-angle)))
+		    (key-event cwin snd-kp-down-key 0) (force-event)
+		    (if (fneq (spectro-z-scale) (- zs .01))
+			(snd-display ";keypad-down: ~A ~A" zs (spectro-z-scale)))
+		    (key-event cwin snd-kp-up-key 0) (force-event)
+		    (if (fneq (spectro-z-scale) zs)
+			(snd-display ";keypad-up: ~A ~A" zs (spectro-z-scale))))
+
 		  (bind-key (char->integer #\p) 0 (lambda () cursor-on-left))
 		  (bind-key (char->integer #\q) 0 (lambda () cursor-in-middle))
 		  (bind-key (char->integer #\r) 0 (lambda () cursor-on-right))
@@ -11234,7 +11302,6 @@ EDITS: 3
 		   (previous-button (list-ref find-widgets 3))
 		   (cancel-button (list-ref find-widgets 4)))
 
-	      (for-each all-help find-widgets)
 	      (widget-string text-widget "(lambda (n) (> n .1))")
 	      (key-event (widget-window text-widget) snd-return-key 0) (force-event)
 	      (if (or (not (= (cursor) 4423))
@@ -11284,7 +11351,6 @@ EDITS: 3
 		   (env-list (list-ref enved-widgets 25))
 		   (ewin (widget-window drawer)))
 
-	      (for-each all-help enved-widgets)
 	      (click-button reset-button) (force-event)
 	      (let* ((axis (enved-axis-info))
 		     (axis-x0 (list-ref axis 0))
@@ -11434,7 +11500,6 @@ EDITS: 3
 		   (regs (regions))
 		   (len (length regs))
 		   (row (region-row-widgets)))
-	      (for-each all-help rwids)
               (for-each (lambda (n) (close-sound)) (sounds))
 	      (do ((i 0 (1+ i)))
 		  ((= i len))
@@ -11464,12 +11529,53 @@ EDITS: 3
 		      (snd-display ";click delete region: ~A ~A" regs new-regs))))
 	      (click-button ok-button))
 
+	    (for-each (lambda (dialog)
+			(all-help dialog))
+		      (dialog-widgets))
+
 	    (x-synchronize #f)
 
 	  (if (provided? 'snd-motif)
 	      (begin
 		(load "popup.scm")
 		(load "snd-motif.scm")
+
+		(if (not (car (dialog-widgets))) (test-menus))
+		(let ((inv (find-child (|Widget (car (dialog-widgets))) "invert")))
+		  (if (and inv
+			   (|Widget? inv))
+		      (begin
+			(|XmToggleButtonSetState inv #f #t)
+			(if (color-inverted)
+			    (snd-display ";toggle invert off"))
+			(|XmToggleButtonSetState inv #t #t)
+			(if (not (color-inverted))
+			    (snd-display ";toggle invert on")))))
+		(let* ((transd (|Widget (list-ref (dialog-widgets) 5))))
+		  (for-each (lambda (name check off2)
+			      (let ((button (find-child transd name)))
+				(if (and button (|Widget? button))
+				    (begin
+				      (if off2
+					  (begin
+					    (|XmToggleButtonSetState button #f #t)
+					    (if (check)
+						(snd-display ";toggle ~A off" name))))
+				      (|XmToggleButtonSetState button #t #t)
+				      (if (not (check))
+					  (snd-display ";toggle ~A on" name))))))
+			    (list "normo-button" "sono-button" "spectro-button" "peaks-button" "db-button" 
+				  "logfreq-button" "normalize-button" "selection-button")
+			    (list (lambda () (= (transform-graph-type) graph-transform-once))
+				  (lambda () (= (transform-graph-type) graph-transform-as-sonogram))
+				  (lambda () (= (transform-graph-type) graph-transform-as-spectrogram))
+				  show-transform-peaks
+				  fft-log-magnitude
+				  fft-log-frequency
+				  (lambda () (= (transform-normalization) 1))
+				  show-selection-transform)
+			    (list #f #f #f #t #t
+				  #t #t #t)))
 
 		(let ((version (list-ref (|XGetWindowProperty (|XtDisplay (|Widget (cadr (main-widgets))) )
 							      (|XtWindow (|Widget (cadr (main-widgets))) )

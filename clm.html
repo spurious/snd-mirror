@@ -2825,7 +2825,10 @@ run a real-time spectrum analyzer.
 Obviously this only works if the body can be computed faster than
 real-time. Ordinary C instruments can be handled if there's only
 one note in the body; for more complex cases, use parallel
-instruments (defpinstrument).  
+instruments (defpinstrument).  Local input sound files should not
+be closed until with-psound returns (that is, if you call open-input,
+you need to save the file pointer -- don't call close-input in the
+instrument.
 Record (microphone) input is enabled when
 <b>rec-chans</b> is greater than 0 (see <a href="#rec-any">rec-any</a>).
 Reverb in this mode is handled currently by the

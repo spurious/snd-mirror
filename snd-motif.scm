@@ -47,6 +47,7 @@
 ;;; -------- apply func to every widget belonging to w (and w) --------
 
 (define (for-each-child w func)
+  "(for-each-child w func) applies func to w and each of its children"
   (func w)
   (if (|XtIsComposite w)
       (for-each 
