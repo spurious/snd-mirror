@@ -10,7 +10,7 @@ typedef struct {
 
 /* -------- snd-xhelp.c -------- */
 
-void snd_help(snd_state *ss, char *subject, char *help);
+Widget snd_help(snd_state *ss, char *subject, char *help);
 
 
 /* -------- snd-xerror.c -------- */
@@ -56,8 +56,8 @@ void draw_sono_rectangles(axis_context *ax, int color, int jmax);
 
 void x_load_colormap(Pixel *colors);
 
-void start_color_dialog(snd_state *ss, int width, int height);
-void start_orientation_dialog(snd_state *ss, int width, int height);
+Widget start_color_dialog(snd_state *ss, int width, int height);
+Widget start_orientation_dialog(snd_state *ss, int width, int height);
 void set_color_scale(snd_state *ss, Float val);
 void set_color_inverted(snd_state *ss, int val);
 void set_color_cutoff(snd_state *ss, Float val);
@@ -204,7 +204,7 @@ void set_fft_size(snd_state *ss, int val);
 void set_fft_window(snd_state *ss, int val);
 void set_transform_type(snd_state *ss, int val);
 void set_wavelet_type(snd_state *ss, int val);
-void fire_up_transform_dialog(snd_state *ss);
+Widget fire_up_transform_dialog(snd_state *ss);
 int transform_dialog_is_active(void);
 
 char *transform_type_name(int choice);
@@ -461,11 +461,11 @@ void make_a_big_star_outa_me(char *shortname, int big_star);
 void set_file_browser_play_button(char *name, int state);
 void highlight_selected_sound(snd_state *ss);
 void View_Files_Callback(Widget w, XtPointer clientData, XtPointer callData);
-void start_file_dialog(snd_state *ss, int width, int height);
+Widget start_file_dialog(snd_state *ss, int width, int height);
 int file_dialog_is_active(void);
 file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss, const char *title);
 void File_Mix_Callback(Widget w, XtPointer clientData, XtPointer callData);
-void edit_header(snd_info *sp);
+Widget edit_header(snd_info *sp);
 
 void g_initialize_xgfile(SCM local_doc);
 
@@ -488,7 +488,7 @@ void enved_display_point_label(snd_state *ss, Float x, Float y);
 void display_enved_progress(char *str, Pixmap pix);
 void set_enved_click_to_delete(int n);
 void enved_print(char *name);
-void create_envelope_editor (snd_state *ss);
+Widget create_envelope_editor (snd_state *ss);
 void set_enved_clipping(snd_state *ss, int val);
 void set_enved_exping(snd_state *ss, int val);
 void set_enved_base(snd_state *ss, Float val);
@@ -508,7 +508,7 @@ void g_init_gxenv(SCM local_doc);
 /* -------- snd-xmix.c -------- */
 
 void reflect_mix_in_mix_panel(int mix_id);
-void make_mix_panel(snd_state *ss);
+Widget make_mix_panel(snd_state *ss);
 int mix_play_stopped(void);
 void reflect_mix_play_stop(void);
 

@@ -999,7 +999,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp)
 	  ofile = snd_tempnam(ss);
 
 	  saved_chan_file = snd_tempnam(ss);
-	  err = chan_save_edits(ucp, saved_chan_file);
+	  err = save_channel_edits(ucp, saved_chan_file, AT_CURRENT_EDIT_POSITION);
 	  if (err != MUS_NO_ERROR)
 	    {
 	      FREE(ofile);

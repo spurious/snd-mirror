@@ -310,7 +310,7 @@ variables and functions control this:</p>
 <tr><td width=180><code><em class=def><a name="colorcutoff">color-cutoff</a></em></code></td><td width=100>0.003</td>
 <td>In spectra, sets the lowest data value that will be colored.</td></tr>
 <tr><td><code><em class=def><a name="sndcolordialog">color-dialog</a></em></code></td><td>()</td>
-<td>Fire up the Color dialog (to choose a colormap etc).</td></tr>
+<td>Create the Color dialog (to choose a colormap etc), if necessary, activate it and return the dialog widget.</td></tr>
 <tr><td><code><em class=def><a name="colorinverted">color-inverted</a></em></code></td><td>#t</td>
 <td>The 'invert' button in the <a href="snd.html#colorbrowser">color</a> dialog, negated (hunh?!).</td></tr>
 <tr><td><code><em class=def><a name="colorscale">color-scale</a></em></code></td><td>0.5</td>
@@ -5055,13 +5055,17 @@ sets its value to val.
 <!-- -->
 <!-- save-sound-as -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndsaveas">save-sound-as</a></em> (filename <i>snd header-type data-format srate channel</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="sndsaveas">save-sound-as</a></em> (filename <i>snd header-type data-format srate channel edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->save <i>snd</i> as <i>filename</i> (same as File Save as option).  If channel is specified,
-<!-- -->only that channel is saved (extracted). [<em class=error>cannot-save</em>].
+<!-- -->only that channel is saved (extracted).  <i>edpos</i>, if given, specifies which edit history position to save.
+<!-- -->Any argument can be #f which causes its value to be taken from the sound being saved. [<em class=error>cannot-save</em>].
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
+<!--
+(save-sound-as...) followed by (open-sound...) to branch
+-->
 <!-- -->
 <!-- -->
 <!-- scale-by -->
@@ -6614,7 +6618,7 @@ And an example that lets us see the result of filtering the waveform:
 <!-- file-dialog -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sndfiledialog">file-dialog</a></em> ()</code></span></td>
-<!-- --><td>fire up the <a href="snd.html#prevfiles">list</a> of current and previous files (not the file browser).</td></tr>
+<!-- --><td>create the <a href="snd.html#prevfiles">list</a> of current and previous files (not the file browser), if necessary, activate it, and return the dialog widget.</td></tr>
 <!-- -->
 <!-- previous-files-sort -->
 <!-- -->
@@ -6649,7 +6653,7 @@ And an example that lets us see the result of filtering the waveform:
 <!-- enved-dialog -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sndenveddialog">enved-dialog</a></em> ()</code></span></td>
-<!-- --><td>fire up the Envelope editor dialog. See also <a href="#envedhook">enved-hook</a>.</td></tr>
+<!-- --><td>create the Envelope editor dialog, if necessary, activate it, and return the dialog widget. See also <a href="#envedhook">enved-hook</a>.</td></tr>
 <!-- -->
 <!-- enved-exping -->
 <!-- -->
@@ -6696,7 +6700,7 @@ And an example that lets us see the result of filtering the waveform:
 <!-- help-dialog -->
 <!-- -->
 <!-- --><tr><td colspan=2 valign=top><span class=defbox><code><em class=def><a name="sndhelpdialog">help-dialog</a></em> (subject help-string) </code></span></td>
-<!-- --><tr><td></td><td>fire up the help dialog with title <i>subject</i> and body <i>help</i>.<br>
+<!-- --><tr><td></td><td>start the help dialog with title <i>subject</i> and body <i>help</i>, returning the dialog widget.<br>
 <!-- --><code>(help-dialog "xyzzy" "are we having fUn?")</code>
 <!-- --></td></tr>
 <!-- -->
@@ -6765,12 +6769,12 @@ And an example that lets us see the result of filtering the waveform:
 <!-- mix-panel -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sndmixpanel">mix-panel</a></em> ()</code></span></td>
-<!-- --><td>start the Mix Panel.</td></tr>
+<!-- --><td>create the Mix Panel Dialog, if necessary, activate it, and return the dialog widget.</td></tr>
 <!-- -->
 <!-- orientation-dialog -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sndorientationdialog">orientation-dialog</a></em> ()</code></span></td>
-<!-- --><td>fire up the <a href="snd.html#orientationbrowser">Orientation</a> dialog.</td></tr>
+<!-- --><td>Create the <a href="snd.html#orientationbrowser">Orientation</a> dialog, if necessary, activate it, and return the dialog widget.</td></tr>
 <!-- -->
 <!-- --><tr><td valign=top><span class=defbox><code><a href="#spectrocutoff">spectro-cutoff</a> ()</code></span></td>
 <!-- --><td>The amount of the frequency domain to include in the spectrum display.
@@ -6898,7 +6902,7 @@ And an example that lets us see the result of filtering the waveform:
 <!-- transform-dialog -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sndtransformdialog">transform-dialog</a></em> ()</code></span></td>
-<!-- --><td>fire up the Transform window (Option menu's Transform Options choice).</td></tr>
+<!-- --><td>create the Transform Dialog, if necessary, activate it, and return the dialog widget.  (This is Option menu's Transform Options choice).</td></tr>
 <!-- -->
 <!-- yes-or-no-p -->
 <!-- -->

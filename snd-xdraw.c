@@ -1368,7 +1368,7 @@ int orientation_dialog_is_active(void)
   return((oid) && (oid->dialog) && (XtIsManaged(oid->dialog)));
 }
 
-void start_color_dialog(snd_state *ss, int width, int height)
+Widget start_color_dialog(snd_state *ss, int width, int height)
 {
   View_Color_Callback(NULL, (XtPointer)ss, NULL);
   if (width != 0) 
@@ -1376,9 +1376,10 @@ void start_color_dialog(snd_state *ss, int width, int height)
 		  XmNwidth, (Dimension)width, 
 		  XmNheight, (Dimension)height, 
 		  NULL);
+  return(ccd->dialog);
 }
 
-void start_orientation_dialog(snd_state *ss, int width, int height)
+Widget start_orientation_dialog(snd_state *ss, int width, int height)
 {
   View_Orientation_Callback(NULL, (XtPointer)ss, NULL);
   if (width != 0) 
@@ -1386,5 +1387,6 @@ void start_orientation_dialog(snd_state *ss, int width, int height)
 		  XmNwidth, (Dimension)width, 
 		  XmNheight, (Dimension)height, 
 		  NULL);
+  return(oid->dialog);
 }
 

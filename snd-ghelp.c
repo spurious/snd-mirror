@@ -123,7 +123,7 @@ static void create_help_monolog(snd_state *ss)
   gtk_widget_show(help_dialog);
 }
 
-void snd_help(snd_state *ss, char *subject, char *helpstr)
+GtkWidget *snd_help(snd_state *ss, char *subject, char *helpstr)
 {
   /* place help string in scrollable help window */
   /* if window is already active, add this help at the top and reposition */
@@ -134,6 +134,7 @@ void snd_help(snd_state *ss, char *subject, char *helpstr)
   chars = gtk_text_get_length(GTK_TEXT(help_text));
   if (chars > 0) gtk_editable_delete_text(GTK_EDITABLE(help_text), 0, -1);
   add_help_text(ss, help_text, helpstr);
+  return(help_dialog);
 }
 
 void move_help_dialog_to(int x, int y)

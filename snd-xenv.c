@@ -1128,7 +1128,7 @@ static void Base_Click_Callback(Widget w, XtPointer context, XtPointer info)
   XtVaSetValues(baseScale, XmNvalue, val, NULL);
 }
 
-void create_envelope_editor (snd_state *ss)
+Widget create_envelope_editor (snd_state *ss)
 {
   int n;
   Arg args[32];
@@ -1702,6 +1702,7 @@ void create_envelope_editor (snd_state *ss)
     XtManageChild(enved_dialog);
   active_channel = current_channel(ss);
   set_sensitive(mixB, (mixes() > 0));
+  return(enved_dialog);
 }
 
 void set_enved_clipping(snd_state *ss, int val) 

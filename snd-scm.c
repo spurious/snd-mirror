@@ -2103,56 +2103,48 @@ static SCM g_update_lisp_graph(SCM snd, SCM chn)
   return(SCM_BOOL_F);
 }
 
-/* TODO: these should return the dialog widget */
 static SCM g_help_dialog(SCM subject, SCM msg)
 {
   #define H_help_dialog "(" S_help_dialog " subject message) fires up the Help window with subject and message"
   ASSERT_TYPE(STRING_P(subject), subject, SCM_ARG1, S_help_dialog, "a string");
   ASSERT_TYPE(STRING_P(msg), msg, SCM_ARG2, S_help_dialog, "a string");
-  snd_help(state, TO_C_STRING(subject), TO_C_STRING(msg));
-  return(SCM_BOOL_F);
+  return(SND_WRAP(snd_help(state, TO_C_STRING(subject), TO_C_STRING(msg))));
 }
 
 static SCM g_mix_panel(void)
 {
-  #define H_mix_panel "(" S_mix_panel ") starts the mix panel"
-  make_mix_panel(get_global_state());
-  return(SCM_BOOL_F);
+  #define H_mix_panel "(" S_mix_panel ") starts (and returns) the mix panel"
+  return(SND_WRAP(make_mix_panel(get_global_state())));
 }
 
 static SCM g_enved_dialog(void) 
 {
   #define H_enved_dialog "(" S_enved_dialog ") fires up the Envelope Editor"
-  create_envelope_editor(state); 
-  return(SCM_BOOL_F);
+  return(SND_WRAP(create_envelope_editor(state))); 
 }
 
 static SCM g_color_dialog(void) 
 {
   #define H_color_dialog "(" S_color_dialog ") fires up the Color dialog"
-  start_color_dialog(state, 0, 0); 
-  return(SCM_BOOL_F);
+  return(SND_WRAP(start_color_dialog(state, 0, 0))); 
 }
 
 static SCM g_orientation_dialog(void) 
 {
   #define H_orientation_dialog "(" S_orientation_dialog ") fires up the Orientation dialog"
-  start_orientation_dialog(state, 0, 0); 
-  return(SCM_BOOL_F);
+  return(SND_WRAP(start_orientation_dialog(state, 0, 0))); 
 }
 
 static SCM g_transform_dialog(void) 
 {
   #define H_transform_dialog "(" S_transform_dialog ") fires up the Transforms dialog"
-  fire_up_transform_dialog(state); 
-  return(SCM_BOOL_F);
+  return(SND_WRAP(fire_up_transform_dialog(state))); 
 }
 
 static SCM g_file_dialog(void) 
 {
   #define H_file_dialog "(" S_file_dialog ") fires up the File dialog"
-  start_file_dialog(state, 0, 0);
-  return(SCM_BOOL_F);
+  return(SND_WRAP(start_file_dialog(state, 0, 0)));
 }
 
 static SCM g_edit_header_dialog(SCM snd_n) 
@@ -2161,9 +2153,9 @@ static SCM g_edit_header_dialog(SCM snd_n)
   snd_info *sp; 
   sp = get_sp(snd_n); 
   if (sp) 
-    edit_header(sp); 
+    return(SND_WRAP(edit_header(sp))); 
   else snd_no_such_sound_error(S_edit_header_dialog, snd_n);
-  return(SCM_BOOL_F);
+  return(SCM_BOOL_F); /* make compiler happy */
 }
 
 static SCM g_yes_or_no_p(SCM msg) 

@@ -1659,13 +1659,14 @@ void View_Files_Callback(Widget w, XtPointer context, XtPointer info)
   highlight_selected_sound(ss);
 }
 
-void start_file_dialog(snd_state *ss, int width, int height)
+Widget start_file_dialog(snd_state *ss, int width, int height)
 {
   View_Files_Callback(NULL, (XtPointer)ss, NULL);
   if (width > 0) XtVaSetValues(view_files_dialog, 
 			       XmNwidth, (Dimension)width, 
 			       XmNheight, (Dimension)height, 
 			       NULL);
+  return(view_files_dialog);
 }
 
 int file_dialog_is_active(void)
@@ -2147,7 +2148,7 @@ static void edit_header_ok_Callback(Widget w, XtPointer context, XtPointer info)
   XtUnmanageChild(edit_header_dialog);
 }
 
-void edit_header(snd_info *sp)
+Widget edit_header(snd_info *sp)
 {
   /* like display-info, but writable.
    * need fields for srate, channels, type, format, data location, comment
@@ -2160,7 +2161,7 @@ void edit_header(snd_info *sp)
   snd_state *ss;
   file_info *hdr;
   char *str;
-  if (!sp) return;
+  if (!sp) return(NULL);
   ss = sp->state;
   hdr = sp->hdr;
 
@@ -2224,6 +2225,7 @@ void edit_header(snd_info *sp)
     }
   else raise_dialog(edit_header_dialog);
   if (!(XtIsManaged(edit_header_dialog))) XtManageChild(edit_header_dialog);
+  return(edit_header_dialog);
 }
 
 

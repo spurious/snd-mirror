@@ -264,8 +264,9 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
-7-May:   added edit-position arg to various play functions.\n\
+7-May:   added edit-position arg to various play functions and save-sound-as.\n\
          \"vector synthesis\" in examp.scm\n\
+         Guile 1.5\n\
 1-May:   Alpha (64-bit) and FreeBSD (Old OSS) fixups.\n\
 25-Apr:  snd.1 (and mandir business in makefile.in)\n\
 24-Apr:  added mouse-enter|leave-text-hook.\n\

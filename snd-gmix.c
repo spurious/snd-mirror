@@ -350,7 +350,7 @@ static void mix_panel_help(GtkWidget *w, gpointer context)
 "This dialog controls the currently selected mix");
 }
 
-void make_mix_panel(snd_state *ss)
+GtkWidget *make_mix_panel(snd_state *ss)
 {
   GtkWidget *dismiss_button, *help_button, *rc;
   GdkWindow *wn;
@@ -524,6 +524,7 @@ void make_mix_panel(snd_state *ss)
   else raise_dialog(mix_panel);
 
   update_mix_panel(current_mix_id(ss));
+  return(mix_panel);
 }
 
 static void update_mix_panel(int mix_id) 

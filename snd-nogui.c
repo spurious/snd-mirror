@@ -1,6 +1,6 @@
 #include "snd.h"
 
-void snd_help(snd_state *ss, char *subject, char *help) {}
+int snd_help(snd_state *ss, char *subject, char *help) {return(0);}
 void add_to_error_history(snd_state *ss, char *msg, int popup) {}
 void post_error_dialog(snd_state *ss, char *msg) {}
 int snd_yes_or_no_p(snd_state *ss, char *format, ...) {return(0);}
@@ -27,8 +27,8 @@ void allocate_sono_rects(snd_state *ss, int size) {}
 void set_sono_rectangle(int j, int color, Locus x, Locus y, Latus width, Latus height) {}
 void draw_sono_rectangles(axis_context *ax, int color, int jmax) {}
 void x_load_colormap(int *colors) {}
-void start_color_dialog(snd_state *ss, int width, int height) {}
-void start_orientation_dialog(snd_state *ss, int width, int height) {}
+int start_color_dialog(snd_state *ss, int width, int height) {return(0);}
+int start_orientation_dialog(snd_state *ss, int width, int height) {return(0);}
 void set_color_scale(snd_state *ss, Float val) {}
 void set_color_inverted(snd_state *ss, int val) {}
 void set_color_cutoff(snd_state *ss, Float val) {}
@@ -115,7 +115,7 @@ int g_add_to_main_menu(snd_state *ss, char *label, int slot) {return(0);}
 int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb) {return(0);}
 int g_remove_from_menu(int which_menu, char *label) {return(0);}
 void dismiss_all_dialogs(snd_state *ss) {}
-void fire_up_transform_dialog(snd_state *ss) {}
+int fire_up_transform_dialog(snd_state *ss) {return(0);}
 int transform_dialog_is_active(void) {return(0);}
 void set_show_fft_peaks(snd_state *ss, int val) {}
 void set_fft_log_magnitude(snd_state *ss, int val) {}
@@ -245,9 +245,9 @@ void curfile_highlight(snd_state *ss, int i) {}
 void view_curfiles_set_row_name(int pos) {}
 void set_file_browser_play_button(char *name, int state) {}
 void highlight_selected_sound(snd_state *ss) {}
-void start_file_dialog(snd_state *ss, int width, int height) {}
+int start_file_dialog(snd_state *ss, int width, int height) {return(0);}
 int file_dialog_is_active(void) {return(0);}
-void edit_header(snd_info *sp) {}
+int edit_header(snd_info *sp) {return(0);}
 chan_info *enved_make_axis_cp(snd_state *ss, char *name, axis_context *ax, int ex0, int ey0, int width, int height, Float xmin, Float xmax, Float ymin, Float ymax) {return(NULL);}
 void display_enved_env_with_selection(snd_state *ss, env *e, char *name, int x0, int y0, int width, int height, int dots) {}
 void set_enved_redo_sensitive(int val) {}
@@ -260,7 +260,7 @@ void new_active_channel_alert(snd_state *ss) {}
 void env_redisplay(snd_state *ss) {}
 void enved_display_point_label(snd_state *ss, Float x, Float y) {}
 void set_enved_click_to_delete(int n) {}
-void create_envelope_editor (snd_state *ss) {}
+int create_envelope_editor (snd_state *ss) {return(0);}
 void set_enved_clipping(snd_state *ss, int val) {}
 void set_enved_exping(snd_state *ss, int val) {}
 void set_enved_base(snd_state *ss, Float val) {}
@@ -302,7 +302,7 @@ void set_filter_text(snd_info *sp, char *str) {}
 int max_transform_type(void) {return(19);}
 
 void reflect_mix_in_mix_panel(int mix_id) {}
-void make_mix_panel(snd_state *ss) {}
+int make_mix_panel(snd_state *ss) {return(0);}
 int mix_play_stopped(void) {return(0);}
 void reflect_mix_play_stop(void) {}
 

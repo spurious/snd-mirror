@@ -2076,12 +2076,14 @@ static void mus_local_error(int type, char *msg)
 		  TO_SCM_STRING(msg)));
 }
 
-static SCM g_save_sound_as(SCM newfile, SCM index, SCM type, SCM format, SCM srate, SCM channel)
+static SCM g_save_sound_as(SCM newfile, SCM index, SCM type, SCM format, SCM srate, SCM channel, SCM edpos)
 {
-  #define H_save_sound_as "("  S_save_sound_as " filename\n     &optional snd header-type data-format srate channel)\n\
-saves snd in filename using the indicated attributes.  If channel is specified, only that channel is saved (extracted)."
+  #define H_save_sound_as "("  S_save_sound_as " filename\n     &optional snd header-type data-format srate channel edpos)\n\
+saves snd in filename using the indicated attributes.  If channel is specified, only that channel is saved (extracted). \
+Any argument can be #f which causes its value to be taken from the sound being saved."
 
   snd_info *sp;
+  chan_info *cp;
   file_info *hdr;
   int ht, df, sr, chan;
   char *fname = NULL;
@@ -2090,14 +2092,15 @@ saves snd in filename using the indicated attributes.  If channel is specified, 
   sp = get_sp(index);
   if (sp == NULL) 
     snd_no_such_sound_error(S_save_sound_as, index);
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(type), type, SCM_ARG3, S_save_sound_as, "an integer (a header type id)");
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(format), format, SCM_ARG4, S_save_sound_as, "an integer (a data format id)");
-  ASSERT_TYPE(NUMBER_IF_BOUND_P(srate), srate, SCM_ARG5, S_save_sound_as, "a number");
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(channel), channel, SCM_ARG6, S_save_sound_as, "an integer");
+  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(type), type, SCM_ARG3, S_save_sound_as, "an integer (a header type id)");
+  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(format), format, SCM_ARG4, S_save_sound_as, "an integer (a data format id)");
+  ASSERT_TYPE(NUMBER_OR_BOOLEAN_IF_BOUND_P(srate), srate, SCM_ARG5, S_save_sound_as, "a number");
+  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(channel), channel, SCM_ARG6, S_save_sound_as, "an integer");
+  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(edpos), edpos, SCM_ARG7, S_save_sound_as, "an integer");
   fname = mus_expand_filename(TO_C_STRING(newfile));
   hdr = sp->hdr;
-  ht = TO_C_INT_OR_ELSE(type, hdr->type);
-  sr = TO_C_INT_OR_ELSE(srate, hdr->srate);
+  ht = TO_C_INT_OR_ELSE_WITH_ORIGIN(type, hdr->type, S_save_sound_as);
+  sr = TO_C_INT_OR_ELSE_WITH_ORIGIN(srate, hdr->srate, S_save_sound_as);
   if (INTEGER_P(format)) 
     df = TO_C_INT(format);
   else    
@@ -2121,9 +2124,15 @@ saves snd in filename using the indicated attributes.  If channel is specified, 
 	  if (fname) FREE(fname);
 	  snd_no_such_channel_error(S_save_sound_as, index, channel);
 	}
-      else chan_save_edits(sp->chans[chan], fname);
+      else 
+	{
+	  cp = sp->chans[chan];
+	  save_channel_edits(cp, fname, 
+			     TO_C_INT_OR_ELSE_WITH_ORIGIN(edpos, cp->edit_ctr, S_save_sound_as));
+	}
     }
-  else save_edits_2(sp, fname, ht, df, sr, NULL); /* last arg is comment */
+  else save_edits_without_display(sp, fname, ht, df, sr, NULL, 
+				  TO_C_INT_OR_ELSE_WITH_ORIGIN(edpos, AT_CURRENT_EDIT_POSITION, S_save_sound_as));
   mus_error_set_handler(old_mus_error);
 
   if (fname) FREE(fname);
@@ -2835,7 +2844,7 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
   DEFINE_PROC(S_view_sound,           g_view_sound, 1, 0, 0,           H_view_sound);
   DEFINE_PROC(S_new_sound,            g_new_sound, 1, 5, 0,            H_new_sound);
   DEFINE_PROC(S_revert_sound,         g_revert_sound, 0, 1, 0,         H_revert_sound);
-  DEFINE_PROC(S_save_sound_as,        g_save_sound_as, 1, 5, 0,        H_save_sound_as);
+  DEFINE_PROC(S_save_sound_as,        g_save_sound_as, 1, 6, 0,        H_save_sound_as);
   DEFINE_PROC(S_call_apply,           g_call_apply, 0, 2, 0,           H_call_apply);
 
 

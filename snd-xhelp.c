@@ -317,7 +317,7 @@ static void create_help_monolog(snd_state *ss)
     }
 }
 
-void snd_help(snd_state *ss, char *subject, char *helpstr)
+Widget snd_help(snd_state *ss, char *subject, char *helpstr)
 {
   /* place help string in scrollable help window */
   /* if window is already active, add this help at the top and reposition */
@@ -400,5 +400,6 @@ void snd_help(snd_state *ss, char *subject, char *helpstr)
   if (!XtIsManaged(help_dialog)) 
     XtManageChild(help_dialog);
   XmStringFree(xstr1);
+  return(help_dialog);
 }
 

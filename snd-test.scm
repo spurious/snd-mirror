@@ -25,7 +25,7 @@
 
 (use-modules (ice-9 format) (ice-9 debug))
 
-(define tests 10)
+(define tests 1)
 (define snd-test -1)
 (define full-test (< snd-test 0))
 
@@ -92,7 +92,7 @@
 	0 ;sigh...
 	(random n))))
 
-(define rsp (lambda (n) (< (my-random 1.0) n)))
+;(define rs (lambda (n) (< (my-random 1.0) n)))
 (define rs (lambda (n) #t))
 
 ;;; preliminaries -- check constants, default variable values (assumes -noinit), sndlib and clm stuff
@@ -105,6 +105,7 @@
 			 (vector-set! timings (- n 1) (- (get-internal-real-time) (vector-ref timings (- n 1)))))
 		     (vector-set! timings n (get-internal-real-time))
 		     (snd-display (format #f ";test ~D~%" n))
+		     (gc)
 		     ;(snd-display (gc-stats))
 		     ))
 
@@ -1354,6 +1355,7 @@
 
 
 ;;; ---------------- test 5: simple overall checks ----------------
+
 (if (or full-test (= snd-test 5))
     (let* ((index (open-sound "oboe.snd"))
 	   (bnds (x-bounds index))
@@ -1520,7 +1522,6 @@
 	    ((= i 50827))
 	  (if (not (= (next-sample vr) (vct-ref samps1 i) (vct-ref samps2 i)))
 	      (snd-display (format #f ";readers disagree at ~D" i))))
-	(if (rs .5) (gc))
 	(free-sample-reader vr))
       
       (revert-sound index)
@@ -1631,7 +1632,6 @@
 	(vct-set! v0 127 .5)
 	(vct->samples 0 128 v0 index 0)
 	(make-region 0 126) 
-	(if (rs .5) (gc))
 	(smooth-selection) 
 	(set! v0 (samples->vct 0 128 index 0 v0))
 	(if (or (fneq (sample 127) .5) (fneq (sample 120) .4962) (fneq (sample 32) 0.07431) (fneq (sample 64) 0.25308))
@@ -2109,12 +2109,12 @@
 	(if (> ctr 4)
 	    (snd-display (format #f ";map-chan no-edit count: ~A?" ctr)))
 	(revert-sound ind1)
+	(gc)
 	(map-chan (lambda (n)
 		    (vct n (* n 3)))
 		  0 (frames ind1) "cut 2" ind1 0)
 	(if (> (abs (- (frames ind1) (* len 2))) 3)
 	    (snd-display (format #f ";map-chan double: ~A ~A?" len (frames ind1))))
-	
 	(close-sound ind1))
       ))
 
@@ -2170,7 +2170,6 @@
 	  ((= i 10))
 	(if (fneq (vct-ref v0 i) 1.5) (snd-display (format #f ";add v0[~D] = ~F?" i (vct-ref v0 i)))))
       (vct-subtract! v0 v1)
-      (if (rs .5) (gc))
       (do ((i 0 (1+ i)))
 	  ((= i 10))
 	(if (fneq (vct-ref v0 i) 1.0) (snd-display (format #f ";subtract v0[~D] = ~F?" i (vct-ref v0 i)))))
@@ -2224,7 +2223,6 @@
 	    ((= i 10))
 	  (if (fneq (vct-ref v0 i) (* i .5)) (snd-display (format #f ";do v0[~D] = ~F?" i (vct-ref v0 i)))))
 	(vct-map! v0 (lambda () 1.0))
-	(if (rs .5) (gc))
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (if (fneq (vct-ref v0 i) 1.0) (snd-display (format #f ";map v0[~D] = ~F?" i (vct-ref v0 i)))))
@@ -2385,12 +2383,8 @@
 	  (if (equal? g0 g2)
 	      (snd-display (format #f ";run ~A not equal? ~A ~A" (mus-name g0) g0 g2)))))))
     
-(define ggctr 0)
-(define (gc1) (snd-display (format #f "~A" ggctr)) (set! ggctr (1+ ggctr)))
-
 (if (or full-test (= snd-test 8))
     (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests))
-(set! ggctr 0)
       (if (procedure? trace-hook) (trace-hook 8))
       (log-mem clmtest)
       (if (> tests 1) (snd-display (format #f ";clm test ~D " clmtest)))
@@ -3674,7 +3668,7 @@
 	(if (fneq (mus-phase gen) 5.114882) (snd-display (format #f ";rand-interp phase: ~F?" (mus-phase gen))))
 	(if (fneq (mus-frequency gen) 4000.0) (snd-display (format #f ";rand-interp frequency: ~F?" (mus-frequency gen))))
 	(if (= (vct-ref v0 1) (vct-ref v0 8)) (snd-display (format #f ";rand-interp output: ~A" v0))))
-(gc1)            
+
       (let* ((gen (make-locsig 30.0 :channels 2))
 	     (gen1 (make-locsig 60.0 :channels 2))
 	     (gen2 (make-locsig 60.0 :channels 4))
@@ -3694,7 +3688,6 @@
 	(if (or (fneq (locsig-ref gen 0) .667) (fneq (locsig-ref gen 1) .333))
 	    (snd-display (format #f ";locsig ref: ~F ~F?" (locsig-ref gen 0) (locsig-ref gen 1))))
 	(locsig-set! gen 0 .5)
-	(if (rs .1) (gc1))
 	(set! fr0 (locsig gen 0 1.0))
 	(if (fneq (frame-ref fr0 0) .5) (snd-display (format #f ";locsig-set: ~F?" (frame-ref fr0 0))))
 	(set! gen (make-locsig 120.0 2.0 .1 :channels 4))
@@ -3703,7 +3696,7 @@
 	(set! gen (make-locsig 300.0 2.0 .1 :channels 4))
 	(set! fr0 (locsig gen 0 1.0))
 	(if (or (fneq (frame-ref fr0 3) .333) (fneq (frame-ref fr0 0) .167)) (snd-display (format #f ";300 locsig quad output: ~A" fr0))))
-(gc1)      
+
       (if (file-exists? "fmv4.snd") (delete-file "fmv4.snd"))
       (if (file-exists? "fmv4.reverb") (delete-file "fmv4.reverb"))
       (let* ((gen (make-frame->file "fmv4.snd" 2 mus-bshort mus-next))
@@ -3725,7 +3718,7 @@
 	  (file->array "fmv4.reverb" 0 0 100 v2)
 	  (if (fneq (vct-ref v2 0) .1) (snd-display (format #f ";locsig reverb: ~A?" v2)))
 	  (if (fneq (* 2 (vct-ref v0 0)) (vct-ref v1 0)) (snd-display (format #f ";locsig direct: ~A?" (vct-ref v0 0) (vct-ref v1 0))))))
-(gc1)      
+
       (let ((gen (make-src :srate 2.0))
 	    (v0 (make-vct 10))
 	    (rd (make-readin "oboe.snd" 0 2000)))
@@ -3739,7 +3732,7 @@
 	(if (not (src? gen)) (snd-display (format #f ";~A not scr?" gen)))
 	(if (or (fneq (vct-ref v0 1) .001) (fneq (vct-ref v0 7) .021)) (snd-display (format #f ";src output: ~A" v0)))
 	(if (fneq (mus-increment gen) 2.0) (snd-display (format #f ";src increment: ~F?" (mus-increment gen)))))
-(gc1)            
+
       (let ((gen (make-granulate :expansion 2.0))
 	    (v0 (make-vct 1000))
 	    (rd (make-readin "oboe.snd" 0 4000)))
@@ -3763,7 +3756,7 @@
 	(set! (mus-length gen) 3000) (if (not (= (mus-length gen) 3000)) (snd-display (format #f ";granulate set-length: ~A?" (mus-length gen))))
 	(set! (mus-increment gen) 3.0)
 	(if (> (abs (- (mus-increment gen) 3.0)) .01) (snd-display (format #f ";granulate set-increment: ~F?" (mus-increment gen)))))
-(gc1)            
+
       (let* ((v0 (make-vct 32))
 	     (v1 (make-vct 256))
 	     (v2 (make-vct 256)))
@@ -3791,7 +3784,7 @@
 	(if (fneq (vector-ref (mus-sound-max-amp "fmv.snd") 1) .5) 
 	    (snd-display (format #f ";convolve-files: ~A /= .5?" (vector-ref (mus-sound-max-amp "fmv.snd") 1))))
 	(play-sound "fmv.snd"))
-(gc1)            
+
       (let* ((fd (mus-sound-open-input "oboe.snd"))
 	     (chans (mus-sound-chans "oboe.snd"))
 	     (data (make-sound-data chans 2000)))
@@ -3802,7 +3795,7 @@
 	(let ((val (sound-data-ref data 0 1497)))
 	  (mus-sound-close-input fd)
 	  (if (fneq val 0.02893066) (snd-display (format #f ";mus-sound-read: ~F?" val)))))
-(gc1)      
+
       (let ((nind (new-sound "fmv.snd" mus-aifc mus-bshort 22050 1 "this is a comment")))
 	(time (fm-violin 0 1 440 .1))
 	(fofins 1 1 270 .2 .001 730 .6 1090 .3 2440 .1) 
@@ -3830,7 +3823,7 @@
 	(revert-sound nind)
 	(close-sound nind))
       (if (file-exists? "fmv.snd") (delete-file "fmv.snd"))
-(gc1)      
+
       (let ((nind (new-sound "fmv.snd")))
 	(if (not (= (header-type nind) (default-output-type)))
 	    (snd-display (format #f ";new-sound default header-type: ~A ~A?"
@@ -3918,7 +3911,7 @@
 	(pqw-vox 0 1 300 300 .1 '(0 0 50 1 100 0) '(0 0 100 0) 0 '(0 L 100 L) '(.33 .33 .33) '((1 1 2 .5) (1 .5 2 .5 3 1) (1 1 4 .5)))
 	(play-and-wait 0 nind)
 	(close-sound nind))
-(gc1)      
+
       (if (file-exists? "fmv.snd") (delete-file "fmv.snd"))
       (if (file-exists? "fmv1.snd") (delete-file "fmv1.snd"))
       (if (file-exists? "fmv2.snd") (delete-file "fmv2.snd"))
@@ -3961,8 +3954,7 @@
 	(mus-mix "fmv.snd" "fmv3.snd" 0 2 0)
 	(file->array "fmv.snd" 0 0 3 v0)
 	(if (or (fneq (vct-ref v0 0) .6) (fneq (vct-ref v0 2) .38)) (snd-display (format #f ";mus-mix(4->4): ~A?" v0))))
-      (if (rs .5) (gc1))
-(gc1)      
+
       (let* ((ind (open-sound "oboe.snd"))
 	     (pi2 (* 2.0 pi))
 	     (pv (make-phase-vocoder #f
@@ -4060,7 +4052,7 @@
 	(undo 1)
 	(free-sample-reader reader)
 	(close-sound ind))
-(gc1)      
+
       ))
 
 
@@ -4177,7 +4169,6 @@
 	      (snd-display (format #f ";(mix) insert-sample: ~A ~A?" (sample 100 (list mix-id)) (frames (list mix-id)))))
 	  (let ((v0 (make-vector 3))
 		(v1 (make-vct 3)))
-	    (if (rs .5) (gc))
 	    (vct-fill! v1 .75)
 	    (do ((i 0 (1+ i))) ((= i 3)) (vector-set! v0 i .25))
 	    (insert-samples 200 3 v0 (list mix-id)) 
@@ -5922,7 +5913,7 @@
 			    
 			    (if index
 				(if (equal? minval #f)
-				    (setfnc (rsp 0.5) index)
+				    (setfnc (rs 0.5) index)
 				  (if (exact? minval)
 				      (if (equal? name #t)
 					  (setfnc (inexact->exact
@@ -5932,7 +5923,7 @@
 					(setfnc (+ minval (inexact->exact (floor (* (- maxval minval) (my-random 1.0))))) index))
 				    (setfnc (+ minval (* (- maxval minval) (my-random 1.0))) index)))
 			      (if (equal? minval #f)
-				  (setfnc (rsp 0.5))
+				  (setfnc (rs 0.5))
 				(if (exact? minval)
 				    (if (equal? name #t)
 					(setfnc (inexact->exact
@@ -6370,10 +6361,10 @@
 	(let ((tag
 	       (catch #t
 		      (lambda ()
-			(id-region (1+ (max-regions))))
+			(id-region 123456))
 		      (lambda args (car args)))))
 	  (if (not (eq? tag 'no-such-region))
-	      (snd-display (format #f ";id-region of non-region: ~A?" (id-region (1+ (max-regions)))))))
+	      (snd-display (format #f ";id-region of non-region: ~A?" (id-region 123456)))))
 	(do ((i (1- (max-regions)) (1- i)))
 	    ((< i 0))
 	  (if (region? i)
@@ -6808,36 +6799,38 @@
 (if (or full-test (= snd-test 16))
     (let ((hi 32)
 	  (ho 0))
-      (load "loop.scm")
       (if (procedure? trace-hook) (trace-hook 16))
+      (load "loop.scm")
       (set! hi (progn (dotimes (k 3) (set! ho (1+ ho))) ho))
       (if (not (= hi 3)) (snd-display (format #f ";dotimes: ~A ~A?" ho hi)))
       (loop for k from 0 to 12 do (set! ho (+ ho 1)))
       (if (not (= ho 16)) (snd-display (format #f ";loop: ~A?" ho)))
       (set! hi (prog1 (+ 2 ho) (set! ho 3)))
-      (if (not (= hi 18)) (snd-display (format #f ";prog1: ~A?" hi)))))
+      (if (not (= hi 18)) (snd-display (format #f ";prog1: ~A?" hi)))
+      (if (provided? 'snd-new-smob) (load "goopsnd.scm"))))
 
 
 ;;; ---------------- test 17: guile-gtk dialogs and graphics ----------------
 
 (define (-> x0 y0 size snd chn)
-                          "draw an arrow pointing (from the left) at the point (x0 y0)"
-                          (let ((points (make-vector 8)))
-                            (define (point i x y)
-                              (vector-set! points (* i 2) x)
-                              (vector-set! points (+ (* i 2) 1) y))
-                            (define (arrow-head x y)
-                              (point 0 x y)
-                              (point 1 (- x (* 2 size)) (- y size))
-                              (point 2 (- x (* 2 size)) (+ y size))
-                              (point 3 x y)
-                              (fill-polygon points snd chn))
-                            (arrow-head x0 y0)
-                            (fill-rectangle (- x0 (* 4 size)) 
-                                            (inexact->exact (- y0 (* .4 size)))
-                                            (* 2 size)
-                                            (inexact->exact (* .8 size))
-                                            snd chn)))  
+  "draw an arrow pointing (from the left) at the point (x0 y0)"
+  (let ((points (make-vector 8)))
+    (define (point i x y)
+      (vector-set! points (* i 2) x)
+      (vector-set! points (+ (* i 2) 1) y))
+    (define (arrow-head x y)
+      (point 0 x y)
+      (point 1 (- x (* 2 size)) (- y size))
+      (point 2 (- x (* 2 size)) (+ y size))
+      (point 3 x y)
+      (fill-polygon points snd chn))
+    (arrow-head x0 y0)
+    (fill-rectangle (- x0 (* 4 size)) 
+		    (inexact->exact (- y0 (* .4 size)))
+		    (* 2 size)
+		    (inexact->exact (* .8 size))
+		    snd chn)))  
+
 (if (and (or full-test (= snd-test 17))
 	 (not (provided? 'snd-nogui)))
     (begin
@@ -8614,6 +8607,8 @@ EDITS: 3
 ;;; TODO: these aren't tested at all yet (except as bare error checks in a few cases):
 ;;;   stop-player add-input remove-input loop-samples focus-widget 
 ;;;   sound-to-temp selection-to-temp temp-to-sound temp-to-selection scan-all-chans map-all-chans map-across-sound-chans graph-data
+;;;
+;;;   also that help-dialog et al return the correct widget
 ;;;
 ;;; only touched upon:
 ;;;   convolve-files map-across-all-chans map-chans scan-across-chans map-sound-chans scan-sound-chans scan-chans

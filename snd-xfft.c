@@ -466,7 +466,7 @@ static void Help_Transform_Callback(Widget w, XtPointer context, XtPointer info)
   transform_dialog_help((snd_state *)context);
 }
 
-void fire_up_transform_dialog(snd_state *ss)
+Widget fire_up_transform_dialog(snd_state *ss)
 {
   XmString xhelp, xdismiss, xtitle, bstr;
   Arg args[32];
@@ -1055,6 +1055,7 @@ void fire_up_transform_dialog(snd_state *ss)
       XtAddCallback(graph_drawer, XmNexposeCallback, graph_resize_Callback, ss);
       need_callback = 0;
     }
+  return(transform_dialog);
 }
 
 int transform_dialog_is_active(void)

@@ -1081,10 +1081,11 @@ void View_Files_Callback(GtkWidget *w, gpointer context)
   set_widget_height(fs1, widget_height(fs3));
 }
 
-void start_file_dialog(snd_state *ss, int width, int height)
+GtkWidget *start_file_dialog(snd_state *ss, int width, int height)
 {
   View_Files_Callback(NULL, (gpointer)ss);
   if (width > 0) set_widget_size(view_files_dialog, width, height);
+  return(view_files_dialog);
 }
 
 int file_dialog_is_active(void)
@@ -1445,7 +1446,7 @@ static void edit_header_ok_Callback(GtkWidget *w, gpointer context)
   gtk_widget_hide(edit_header_dialog);
 }
 
-void edit_header(snd_info *sp)
+GtkWidget *edit_header(snd_info *sp)
 {
   /* like display-info, but writable.
    * need fields for srate, channels, type, format, data location, comment
@@ -1456,7 +1457,7 @@ void edit_header(snd_info *sp)
   snd_state *ss;
   char *str;
   file_info *hdr;
-  if (!sp) return;
+  if (!sp) return(NULL);
   ss = sp->state;
   hdr = sp->hdr;
 
@@ -1499,6 +1500,7 @@ void edit_header(snd_info *sp)
   gtk_window_set_title(GTK_WINDOW(edit_header_dialog), str);
   FREE(str);
   gtk_widget_show(edit_header_dialog);
+  return(edit_header_dialog);
 }
 
 

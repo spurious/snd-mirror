@@ -2176,30 +2176,7 @@ int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, int leng
   return(err);
 }
 
-static int only_save_edits(snd_info *sp, file_info *nhdr, char *ofile)
-{
-  snd_state *ss;
-  int i, err = MUS_NO_ERROR;
-  snd_fd **sf;
-  ss = sp->state;
-  sf = (snd_fd **)MALLOC(sp->nchans * sizeof(snd_fd *));
-  for (i = 0; i < sp->nchans; i++) 
-    {
-      sf[i] = init_sample_read(0, sp->chans[i], READ_FORWARD);  /* TODO: bring out edit position here (and elsewhere) */
-      if (sf[i] == NULL) err = MUS_ERROR;
-    }
-  if (err == MUS_NO_ERROR)
-    err = snd_make_file(ofile, sp->nchans, nhdr, sf, current_ed_samples(sp->chans[0]), ss);
-  for (i = 0; i < sp->nchans; i++) 
-    free_snd_fd(sf[i]);
-  FREE(sf);
-  if (err == MUS_NO_ERROR)
-    for (i = 0; i < sp->nchans; i++) 
-      reflect_save_as_in_edit_history(sp->chans[i], ofile);
-  return(err);
-}
-
-static int save_edits_1(snd_info *sp)
+static int save_edits_and_update_display(snd_info *sp)
 {
   /* open temp, write current state, rename to old, reopen and clear all state */
   /* can't overwrite current because we may have cut/paste backpointers scattered around the current edit list */
@@ -2238,7 +2215,7 @@ static int save_edits_1(snd_info *sp)
   sf = (snd_fd **)CALLOC(sp->nchans, sizeof(snd_fd *));
   for (i = 0; i < sp->nchans; i++)
     {
-      sf[i] = init_sample_read(0, sp->chans[i], READ_FORWARD); /* TODO: pos? */
+      sf[i] = init_sample_read(0, sp->chans[i], READ_FORWARD);
       if (sf[i] == NULL) err = MUS_ERROR;
     }
   if (err == MUS_NO_ERROR)
@@ -2323,11 +2300,16 @@ static int save_edits_1(snd_info *sp)
   return(MUS_NO_ERROR); /* don't erase our error message for the special write-permission problem */
 }
 
-int save_edits_2(snd_info *sp, char *new_name, int type, int format, int srate, char *comment)
-{ /* file save as menu option -- changed 19-June-97 to retain current state after writing */
+int save_edits_without_display(snd_info *sp, char *new_name, int type, int format, int srate, char *comment, int edpos)
+{ 
+  /* file save as menu option -- changed 19-June-97 to retain current state after writing */
   file_info *hdr, *ohdr;
-  int res;
-  if (dont_save(sp->state, sp, new_name)) return(MUS_NO_ERROR);
+  snd_state *ss;
+  int i, err = MUS_NO_ERROR, frames = 0, pos;
+  snd_fd **sf;
+  chan_info *cp;
+  ss = sp->state;
+  if (dont_save(ss, sp, new_name)) return(MUS_NO_ERROR);
   if (MUS_DATA_FORMAT_OK(format))
     {
       if (MUS_HEADER_TYPE_OK(type))
@@ -2341,9 +2323,25 @@ int save_edits_2(snd_info *sp, char *new_name, int type, int format, int srate, 
 	    hdr->comment = copy_string(comment); 
 	  else hdr->comment = NULL;
 	  hdr->data_location = 0; /* in case comment changes it */
-	  res = only_save_edits(sp, hdr, new_name);
+	  sf = (snd_fd **)MALLOC(sp->nchans * sizeof(snd_fd *));
+	  for (i = 0; i < sp->nchans; i++) 
+	    {
+	      cp = sp->chans[i];
+	      if (edpos == AT_CURRENT_EDIT_POSITION) pos = cp->edit_ctr; else pos = edpos;
+	      sf[i] = init_sample_read_any(0, cp, READ_FORWARD, pos);
+	      if (frames < cp->samples[pos]) frames = cp->samples[pos];
+	      if (sf[i] == NULL) err = MUS_ERROR;
+	    }
+	  if (err == MUS_NO_ERROR)
+	    err = snd_make_file(new_name, sp->nchans, hdr, sf, frames, ss);
+	  for (i = 0; i < sp->nchans; i++) 
+	    free_snd_fd(sf[i]);
+	  FREE(sf);
+	  if (err == MUS_NO_ERROR)
+	    for (i = 0; i < sp->nchans; i++) 
+	      reflect_save_as_in_edit_history(sp->chans[i], new_name);
 	  free_file_info(hdr);
-	  return(res);
+	  return(err);
 	}
       else 
 	{
@@ -2355,18 +2353,19 @@ int save_edits_2(snd_info *sp, char *new_name, int type, int format, int srate, 
   return(MUS_UNSUPPORTED_DATA_FORMAT);
 }
 
-int chan_save_edits(chan_info *cp, char *ofile)
+int save_channel_edits(chan_info *cp, char *ofile, int edpos)
 {
   /* channel extraction -- does not (normally) cause reversion of edits, or change of in-window file, etc */
   snd_info *sp;
   snd_fd **sf;
-  int err;
+  int err, pos;
   char *nfile;
   snd_state *ss;
   ss = cp->state;
   sp = cp->sound;
   err = MUS_NO_ERROR;
   if (!(snd_overwrite_ok(ss, ofile))) return(MUS_NO_ERROR); /* no error because decision was explicit */
+  if (edpos == AT_CURRENT_EDIT_POSITION) pos = cp->edit_ctr; else pos = edpos;
   if (strcmp(ofile, sp->fullname) == 0)
     {
       if (sp->read_only)
@@ -2377,12 +2376,12 @@ int chan_save_edits(chan_info *cp, char *ofile)
       /* here we're overwriting the current (possibly multi-channel) file with one of its channels */
       nfile = snd_tempnam(ss); 
       sf = (snd_fd **)MALLOC(sizeof(snd_fd *));
-      sf[0] = init_sample_read(0, cp, READ_FORWARD); /* TODO: pos? */
+      sf[0] = init_sample_read_any(0, cp, READ_FORWARD, pos); 
       if (sf[0] == NULL)
 	err = MUS_ERROR;
       else
 	{
-	  err = snd_make_file(nfile, 1, sp->hdr, sf, current_ed_samples(cp), cp->state);
+	  err = snd_make_file(nfile, 1, sp->hdr, sf, cp->samples[pos], cp->state);
 	  free_snd_fd(sf[0]);
 	}
       FREE(sf);
@@ -2396,12 +2395,12 @@ int chan_save_edits(chan_info *cp, char *ofile)
   else
     {
       sf = (snd_fd **)MALLOC(sizeof(snd_fd *));
-      sf[0] = init_sample_read(0, cp, READ_FORWARD); /* TODO: pos? */
+      sf[0] = init_sample_read_any(0, cp, READ_FORWARD, pos);
       if (sf[0] == NULL)
 	err = MUS_ERROR;
       else
 	{
-	  err = snd_make_file(ofile, 1, sp->hdr, sf, current_ed_samples(cp), cp->state);
+	  err = snd_make_file(ofile, 1, sp->hdr, sf, cp->samples[pos], cp->state);
 	  free_snd_fd(sf[0]);
 	}
       FREE(sf);
@@ -2431,15 +2430,15 @@ void save_edits(snd_info *sp, void *ptr)
 	  errno = 0;
 	  /* check for change to file while we were editing it */
 	  current_write_date = file_write_date(sp->fullname);
-	  if ((current_write_date - sp->write_date) > 1) /* weird!! In Redhat 7.1 these can differ by 1?? */
+	  if ((current_write_date - sp->write_date) > 1) /* weird!! In Redhat 7.1 these can differ by 1?? Surely this is a bug! */
 	    {
 #if DEBUGGING
-	      fprintf(stderr,"current: %d, sp: %d ",current_write_date, sp->write_date);
+	      fprintf(stderr,"current: %d, sp: %d ",(int)current_write_date, (int)(sp->write_date));
 #endif
 	      err = snd_yes_or_no_p(sp->state, "%s changed on disk! Save anyway?", sp->shortname);
 	      if (err == 0) return;
 	    }
-	  err = save_edits_1(sp);
+	  err = save_edits_and_update_display(sp);
 	  if (err)
 	    report_in_minibuffer_and_save(sp, "%s: %s", sp->fullname, strerror(errno));
 	  else

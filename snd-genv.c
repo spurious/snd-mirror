@@ -740,7 +740,7 @@ static void base_changed_callback(GtkAdjustment *adj, gpointer context)
   base_changed(ss, adj->value);
 }
 
-void create_envelope_editor (snd_state *ss)
+GthWidget *create_envelope_editor (snd_state *ss)
 {
   GtkWidget *mainform, *helpB, *leftbox, *bottombox, *leftframe, *toprow, *bottomrow, *brkbox;
   if (!enved_dialog)
@@ -1053,6 +1053,7 @@ void create_envelope_editor (snd_state *ss)
   else raise_dialog(enved_dialog);
   active_channel = current_channel(ss);
   set_sensitive(mixB, (mixes() > 0));
+  return(enved_dialog);
 }
 
 void set_enved_clipping(snd_state *ss, int val) 

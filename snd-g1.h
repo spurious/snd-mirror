@@ -9,7 +9,7 @@ typedef struct {
 
 /* -------- snd-ghelp.c -------- */
 
-void snd_help(snd_state *ss, char *subject, char *help);
+GtkWidget *snd_help(snd_state *ss, char *subject, char *help);
 void move_help_dialog_to(int x, int y);
 int help_dialog_is_active(void);
 
@@ -50,8 +50,8 @@ void mix_save_graph(snd_state *ss, mix_context *ms, int j);
 void erase_and_draw_grf_points(mix_context *ms, chan_info *cp, int j);
 void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int j);
 void setup_axis_context(chan_info *cp, axis_context *ax);
-void start_color_dialog(snd_state *ss, int width, int height);
-void start_orientation_dialog(snd_state *ss, int width, int height);
+GtkWidget *start_color_dialog(snd_state *ss, int width, int height);
+GtkWidget *start_orientation_dialog(snd_state *ss, int width, int height);
 void set_color_scale(snd_state *ss, Float val);
 void set_color_inverted(snd_state *ss, int val);
 void set_color_cutoff(snd_state *ss, Float val);
@@ -190,7 +190,7 @@ void set_fft_size(snd_state *ss, int val);
 void set_fft_window(snd_state *ss, int val);
 void set_transform_type(snd_state *ss, int val);
 void set_wavelet_type(snd_state *ss, int val);
-void fire_up_transform_dialog(snd_state *ss);
+GtkWidget *fire_up_transform_dialog(snd_state *ss);
 int transform_dialog_is_active(void);
 
 char *transform_type_name(int choice);
@@ -440,7 +440,7 @@ void set_apply_button(snd_info *sp, int val);
 /* -------- snd-gmix.c -------- */
 
 void reflect_mix_in_mix_panel(int mix_id);
-void make_mix_panel(snd_state *ss);
+GtkWidget *make_mix_panel(snd_state *ss);
 int mix_play_stopped(void);
 void reflect_mix_play_stop(void);
 
@@ -463,7 +463,7 @@ void enved_display_point_label(snd_state *ss, Float x, Float y);
 void display_enved_progress(char *str, GdkPixmap *pix, GdkBitmap *mask);
 void set_enved_click_to_delete(int n);
 void enved_print(char *name);
-void create_envelope_editor (snd_state *ss);
+GtkWidget *create_envelope_editor (snd_state *ss);
 void set_enved_clipping(snd_state *ss, int val);
 void set_enved_exping(snd_state *ss, int val);
 void set_enved_base(snd_state *ss, Float val);
@@ -535,12 +535,12 @@ void make_a_big_star_outa_me(char *shortname, int big_star);
 void set_file_browser_play_button(char *name, int state);
 void highlight_selected_sound(snd_state *ss);
 void View_Files_Callback(GtkWidget *w, gpointer clientData);
-void start_file_dialog(snd_state *ss, int width, int height);
+GtkWidget *start_file_dialog(snd_state *ss, int width, int height);
 int file_dialog_is_active(void);
 file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss, const char *title);
 snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *comment);
 void File_Mix_Callback(GtkWidget *w, gpointer clientData);
-void edit_header(snd_info *sp);
+GtkWidget *edit_header(snd_info *sp);
 
 void g_initialize_xgfile(SCM local_doc);
 

@@ -757,10 +757,11 @@ int color_dialog_is_active(void)
   return((ccd) && (ccd->dialog) && (GTK_WIDGET_VISIBLE(ccd->dialog))); /* ismanaged ...? */
 }
 
-void start_color_dialog(snd_state *ss, int width, int height)
+GtkWidget *start_color_dialog(snd_state *ss, int width, int height)
 {
   View_Color_Callback(NULL, (gpointer)ss);
   if (width != 0) gtk_widget_set_usize(GTK_WIDGET(ccd->dialog), width, height);
+  return(ccd->dialog);
 }
 
 
@@ -1215,9 +1216,10 @@ int orientation_dialog_is_active(void)
   return((oid) && (oid->dialog) && (GTK_WIDGET_VISIBLE(oid->dialog)));
 }
 
-void start_orientation_dialog(snd_state *ss, int width, int height)
+GtkWidget *start_orientation_dialog(snd_state *ss, int width, int height)
 {
   View_Orientation_Callback(NULL, (gpointer)ss);
   if (width != 0) gtk_widget_set_usize(GTK_WIDGET(oid->dialog), width, height);
+  return(oid->dialog);
 }
 

@@ -1,7 +1,8 @@
 snd change log
 
-  7-May:     added edit-position arg to various play functions.
+  7-May:     added edit-position arg to various play functions and save-sound-as.
              "vector synthesis" in examp.scm.
+             Guile 1.5.
   1-May:     Alpha (64-bit) and FreeBSD (Old OSS) fixups.
   29-Apr:    describe-audio replaced by mus-audio-describe.
   28-Apr:    noguile play segfault caused by backwards NOT_BOUND_P macro (thanks to Bob Sturm).

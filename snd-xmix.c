@@ -359,7 +359,7 @@ static unsigned char p_speaker_bits[] = {
    0x00, 0x07, 0xc0, 0x04, 0x30, 0x04, 0x0e, 0x04, 0x06, 0x04, 0x06, 0x04,
    0x06, 0x04, 0x06, 0x04, 0x0e, 0x04, 0x30, 0x04, 0xc0, 0x04, 0x00, 0x07};
 
-void make_mix_panel(snd_state *ss) 
+Widget make_mix_panel(snd_state *ss) 
 {
   Widget mainform, w_row, last_label, last_number, w_track_label, w_id_label;
   Pixmap speaker_r;
@@ -623,6 +623,7 @@ void make_mix_panel(snd_state *ss)
   if (!(XtIsManaged(mix_panel))) XtManageChild(mix_panel);
 
   update_mix_panel(current_mix_id(ss));
+  return(mix_panel);
 }
 
 static void update_mix_panel(int mix_id) 

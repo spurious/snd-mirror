@@ -709,7 +709,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	      FREE(str1);
 	      break;
 	    case CHANNEL_FILING:
-	      chan_save_edits(active_chan, mcf = mus_expand_filename(str));
+	      save_channel_edits(active_chan, mcf = mus_expand_filename(str), AT_CURRENT_EDIT_POSITION);
 	      if (mcf) FREE(mcf);
 	      clear_minibuffer(sp);
 	      break;
