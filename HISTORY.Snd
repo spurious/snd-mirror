@@ -1,5 +1,6 @@
 snd change log
 
+  31-Aug:    Snd 5.2.
   29-Aug:    added edit-menu.scm and merged in Dave Phillips changes for effects.scm.
   28-Aug:    after-apply-hook, before-apply-hook.
   24-Aug:    add-amp-controls in snd-motif.scm, add-notes in examp.scm.

@@ -29,7 +29,7 @@
 	  (snd-error (format #f "snd-motif.scm needs the xm module: ~A" hxm))
 	  (dlinit hxm "init_xm"))))
 
-;;; apparently the new way within Guile to do this is (load-extension "xm.so" "init_xm")
+;;; apparently the new way within Guile to do this is (load-extension "xm" "init_xm")
 ;;;   but that forces us to use Libtool's very poor dlopen wrapper.
 
 

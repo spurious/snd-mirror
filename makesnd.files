@@ -9,6 +9,8 @@ O_FILES = snd-io.o snd-utils.o snd-listener.o snd-error.o snd-completion.o snd-m
 
 X_O_FILES = snd-xutils.o snd-xerror.o snd-xhelp.o snd-xfind.o snd-xmenu.o snd-xdraw.o snd-xlistener.o snd-xchn.o snd-xsnd.o snd-xregion.o snd-xdrop.o snd-xmain.o snd-xmix.o snd-xrec.o snd-xenv.o snd-gxutils.o snd-gxbitmaps.o snd-gxcolormaps.o snd-xfft.o snd-xprint.o snd-xfile.o snd-xstats.o snd-xxen.o
 
+XM_O_FILES = snd-xutils.o snd-xerror.o snd-xhelp.o snd-xfind.o snd-xmenu.o snd-xdraw.o snd-xlistener.o snd-xchn.o snd-xsnd.o snd-xregion.o snd-xdrop.o snd-xmain.o snd-xmix.o snd-xrec.o snd-xenv.o snd-gxutils.o snd-gxbitmaps.o snd-gxcolormaps.o snd-xfft.o snd-xprint.o snd-xfile.o snd-xstats.o snd-xxen.o xm.o
+
 G_O_FILES = snd-gutils.o snd-gerror.o snd-ghelp.o snd-gfind.o snd-gmenu.o snd-gdraw.o snd-glistener.o snd-gchn.o snd-gsnd.o snd-gregion.o snd-gdrop.o snd-gmain.o snd-gmix.o snd-grec.o snd-genv.o snd-gxutils.o snd-gxbitmaps.o snd-gxcolormaps.o snd-gfft.o snd-gprint.o snd-gfile.o snd-gstats.o snd-gxen.o
 
 NO_GUI_O_FILES = snd-nogui.o

@@ -255,6 +255,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+31-Aug:  Snd 5.2.\n\
 29-Aug:  added edit-menu.scm and merged in Dave Phillips changes for effects.scm.\n\
 28-Aug:  after-apply-hook, before-apply-hook.\n\
 24-Aug:  add-amp-controls in snd-motif.scm, add-notes in examp.scm.\n\
