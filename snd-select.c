@@ -204,19 +204,18 @@ int delete_selection(const char *origin, int regraph)
     {
       ss = get_global_state();
       map_over_chans(ss, cp_delete_selection, (void *)origin);
-      if (regraph == UPDATE_DISPLAY) map_over_chans(ss, update_graph, NULL);
+      if (regraph == UPDATE_DISPLAY) for_each_chan(ss, update_graph);
       reflect_edit_without_selection_in_menu();
       return(1);
     }
   return(0);
 }
 
-static int cp_deactivate_selection(chan_info *cp, void *ignore)
+static void cp_deactivate_selection(chan_info *cp)
 {
   ed_list *ed;
   ed = cp->edits[cp->edit_ctr];
   if (ed) ed->selection_beg = NO_SELECTION;
-  return(0);
 }
 
 static sync_info *selection_creation_chans = NULL;
@@ -225,8 +224,8 @@ void deactivate_selection(void)
 {
   snd_state *ss;
   ss = get_global_state();
-  map_over_chans(ss, cp_deactivate_selection, NULL);
-  map_over_chans(ss, update_graph, NULL);
+  for_each_chan(ss, cp_deactivate_selection);
+  for_each_chan(ss, update_graph);
   reflect_edit_without_selection_in_menu();
   if (selection_creation_chans) 
     selection_creation_chans = free_sync_info(selection_creation_chans);
@@ -376,7 +375,7 @@ static int insert_selection(snd_state *ss, chan_info *cp, off_t beg, const char 
 			      tempfile, cp_out, i,
 			      (si_in->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
 			      origin, cp_out->edit_ctr);
-	  update_graph(cp_out, NULL);
+	  update_graph(cp_out);
 	}
       free_sync_info(si_in);
       free_sync_info(si_out);
@@ -481,7 +480,7 @@ static int cp_redraw_selection(chan_info *cp, void *with_fft)
     {
       ss = get_global_state();
       if (show_selection_transform(ss)) 
-	calculate_fft(cp, NULL);
+	calculate_fft(cp);
     }
   return(0);
 }
@@ -528,7 +527,7 @@ int select_all(chan_info *cp)
       for (i = 0; i < si->chans; i++)
 	{
 	  reactivate_selection(si->cps[i], 0, current_ed_samples(si->cps[i]));
-	  update_graph(si->cps[i], NULL);
+	  update_graph(si->cps[i]);
 	}
       si = free_sync_info(si);
       if (selection_creates_region(cp->state)) 
@@ -922,7 +921,7 @@ static XEN g_set_selection_member(XEN on, XEN snd, XEN chn)
 	    cp_set_selection_beg(cp, selection_beg(NULL));
 	  else cp_set_selection_beg(cp, 0);
 	}
-      else cp_deactivate_selection(cp, NULL);
+      else cp_deactivate_selection(cp);
       if (selection_is_active())
 	{
 	  reflect_edit_with_selection_in_menu();

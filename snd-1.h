@@ -647,7 +647,9 @@ void free_snd_info(snd_info *sp);
 snd_info *completely_free_snd_info(snd_info *sp);
 int map_over_sounds (snd_state *ss, int (*func)(snd_info *, void *), void *userptr);
 int map_over_chans (snd_state *ss, int (*func)(chan_info *, void *), void *userptr);
+void for_each_chan(snd_state *ss, void (*func)(chan_info *));
 int map_over_sound_chans (snd_info *sp, int (*func)(chan_info *, void *), void *userptr);
+void for_each_sound_chan(snd_info *sp, void (*func)(chan_info *));
 int map_over_separate_chans(snd_state *ss, int (*func)(chan_info *, void *), void *userptr);
 int snd_ok (snd_info *sp);
 int active_channels (snd_state *ss, int count_virtual_channels);
@@ -734,7 +736,7 @@ fft_info *free_fft_info(fft_info *fp);
 void free_sonogram_fft_state(void *ptr);
 int fft_window_beta_in_use(int win);
 void free_sono_info (chan_info *cp);
-int sono_update(chan_info *cp, void *ptr);
+void sono_update(chan_info *cp);
 void set_spectro_cutoff_and_redisplay(snd_state *ss, Float val);
 void c_convolve(char *fname, Float amp, int filec, int filehdr, int filterc, int filterhdr, int filtersize,
 		 int fftsize, int filter_chans, int filter_chan, int data_size, snd_info *gsp, int from_enved, int ip, int total_chans);
@@ -978,9 +980,9 @@ void goto_graph(chan_info *cp);
 void start_amp_env(chan_info *cp);
 void stop_amp_env(chan_info *cp);
 int chan_fft_in_progress(chan_info *cp);
-int force_fft_clear(chan_info *cp, void *ptr);
+void force_fft_clear(chan_info *cp);
 void chan_info_cleanup(chan_info *cp);
-int update_graph(chan_info *cp, void *ptr);
+void update_graph(chan_info *cp);
 void add_channel_data(char *filename, chan_info *cp, file_info *hdr, snd_state *ss, int graphed);
 void add_channel_data_1(chan_info *cp, snd_info *sp, int graphed);
 void set_x_bounds(axis_info *ap);
@@ -1017,7 +1019,7 @@ axis_context *selection_context (chan_info *cp);
 axis_context *mark_context (chan_info *cp);
 axis_context *mix_waveform_context (chan_info *cp);
 axis_context *selected_mix_waveform_context (chan_info *cp);
-int calculate_fft(chan_info *cp, void *ptr);
+void calculate_fft(chan_info *cp);
 
 
 /* -------- snd-axis.c -------- */

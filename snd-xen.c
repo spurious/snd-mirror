@@ -2177,7 +2177,7 @@ static XEN g_set_cursor_color (XEN color)
   if (v) 
     {
       color_cursor(state, v->color);
-      map_over_chans(state, update_graph, NULL);
+      for_each_chan(state, update_graph);
     }
   return(color);
 }
@@ -2211,7 +2211,7 @@ static XEN g_set_mark_color (XEN color)
   if (v) 
     {
       color_marks(state, v->color);
-      map_over_chans(state, update_graph, NULL);
+      for_each_chan(state, update_graph);
     }
   return(color);
 }
@@ -2328,7 +2328,7 @@ static XEN g_set_selection_color (XEN color)
   if (v) 
     {
       color_selection(state, v->color);
-      map_over_chans(state, update_graph, NULL);
+      for_each_chan(state, update_graph);
     }
   return(color);
 }
@@ -2357,7 +2357,7 @@ static XEN g_set_mix_color (XEN arg1, XEN arg2)
       if (XEN_INTEGER_P(mix_id))
 	color_one_mix_from_id(XEN_TO_SMALL_C_INT(mix_id), v->color);
       else set_mix_color(state, v->color);
-      map_over_chans(state, update_graph, NULL);
+      for_each_chan(state, update_graph);
     }
   return(color);
 }
@@ -2378,7 +2378,7 @@ static XEN g_set_selected_mix_color (XEN color)
   if (v) 
     {
       set_selected_mix_color(state, v->color);
-      map_over_chans(state, update_graph, NULL);
+      for_each_chan(state, update_graph);
     }
   return(color);
 }
@@ -2427,7 +2427,7 @@ static XEN g_set_data_color (XEN color)
   if (v) 
     {
       color_data(state, v->color);
-      map_over_chans(state, update_graph, NULL);
+      for_each_chan(state, update_graph);
     }
   return(color);
 }
@@ -2451,7 +2451,7 @@ static XEN g_set_selected_data_color (XEN color)
       if (cp) 
 	{
 	  color_selected_data(state, v->color);
-	  update_graph(cp, NULL);
+	  update_graph(cp);
 	}
     }
   return(color);

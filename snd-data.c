@@ -451,7 +451,21 @@ int map_over_chans (snd_state *ss, int (*func)(chan_info *, void *), void *userp
   return(val);
 }
 
-int map_over_sound_chans (snd_info *sp, int (*func)(chan_info *, void *), void *userptr)
+void for_each_chan(snd_state *ss, void (*func)(chan_info *))
+{
+  int i, j;
+  snd_info *sp;
+  chan_info *cp;
+  if (ss)
+    for (i = 0; i < ss->max_sounds; i++)
+      if ((sp = ((snd_info *)(ss->sounds[i]))) && 
+	  (sp->inuse))
+	for (j = 0; j < sp->nchans; j++)
+	  if ((cp = ((chan_info *)(sp->chans[j]))))
+	    (*func)(cp);
+}
+
+int map_over_sound_chans(snd_info *sp, int (*func)(chan_info *, void *), void *userptr)
 {
   /* argument to func is chan_info pointer+void pointer of user spec, return non-zero = abort map, skips inactive sounds */
   int j, val;
@@ -466,7 +480,16 @@ int map_over_sound_chans (snd_info *sp, int (*func)(chan_info *, void *), void *
   return(val);
 }
 
-int map_over_sounds (snd_state *ss, int (*func)(snd_info *, void *), void *userptr)
+void for_each_sound_chan(snd_info *sp, void (*func)(chan_info *))
+{
+  int j;
+  chan_info *cp;
+  for (j = 0; j < sp->nchans; j++)
+    if ((cp = sp->chans[j]))
+      (*func)(cp);
+}
+
+int map_over_sounds(snd_state *ss, int (*func)(snd_info *, void *), void *userptr)
 {
   /* argument to func is snd_info pointer, return non-zero = abort map, skips inactive sounds */
   int i, val;
@@ -652,7 +675,7 @@ void select_channel(snd_info *sp, int chan)
 	  recolor_graph(cp, FALSE);
 	  (cp->cgx)->selected = 0;
 	  if (sp != cp->sound) (cp->sound)->selected_channel = NO_SELECTION;
-	  update_graph(cp, NULL);
+	  update_graph(cp);
 	}
   if (XEN_HOOKED(select_channel_hook))
     g_c_run_progn_hook(select_channel_hook,
@@ -664,7 +687,7 @@ void select_channel(snd_info *sp, int chan)
       recolor_graph(ncp, TRUE);
       (ncp->cgx)->selected = 1;
       if ((ss->sgx)->data_color != (ss->sgx)->selected_data_color) 
-	update_graph(ncp, NULL);
+	update_graph(ncp);
       goto_graph(ncp);
     }
 }

@@ -1994,10 +1994,10 @@ all the samples between the cursor and the next mark.</p>
 <tr><td>C-k</td><td>delete one line's worth of samples</td><td><code><small>(lambda (arg) (delete-samples (cursor) (* 128 arg)))</small></code></td></tr>
 <tr><td>C-l</td><td>position window so cursor is in the middle</td><td><code><small>(lambda () cursor-in-middle)</small></code></td></tr>
 <tr><td>C-m</td><td>place (or remove) mark at cursor location</td><td><code><small>(lambda () (add-mark (cursor)))</small></code></td></tr>
-<tr><td>C-n</td><td>move cursor ahead one 'line'</td><td><code><small>(lambda (arg) (forward-sample (* 128 arg)))</small></code></td></tr>
+<tr><td>C-n</td><td>move cursor ahead one 'line'</td><td><code><small>(lambda (arg) (set! (cursor) (+ (cursor) (* 128 arg))))</small></code></td></tr>
 <tr><td>M-n</td><td colspan=2>move ahead one form in history</td></tr>
 <tr><td>C-o</td><td>insert one zero sample at cursor</td><td><code><small>(lambda (arg) (insert-samples (cursor) arg (make-vct arg))) ;see <a href="extsnd.html#newcp">go-to-zero</a></small></code></td></tr>
-<tr><td>C-p</td><td>move cursor back one 'line'</td><td><code><small>(lambda (arg) (backward-sample (* 128 arg)))</small></code></td></tr>
+<tr><td>C-p</td><td>move cursor back one 'line'</td><td><code><small>(lambda (arg) (set! (cursor) (- (cursor) (* 128 arg))))</small></code></td></tr>
 <tr><td>M-p</td><td colspan=2>move back one form in history</td></tr>
 <tr><td>C-q</td><td>play current channel(s) starting at cursor</td><td><code><small>(lambda () (play (cursor) (selected-sound) (selected-channel)))</small></code></td></tr>
 <tr><td>C-r</td><td>search backwards</td><td></td></tr>
@@ -2327,8 +2327,8 @@ panel are:</p>
   <tr><td><a href="extsnd.html#sndmaxamp">max amp</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sndmaxamp"><small>maxamp</small></a></td><td><br></td></tr>
   <tr><td><a href="#mixingfiles">mix file</a></td><td><small>File: <a href="#mixingfiles">Mix</a></small></td><td><a href="#cxcq"><small>Cx Cq</small></a></td><td><a href="extsnd.html#sndmix"><small>mix</small></a></td><td><small>see mix.scm for tracks</small></td></tr>
   <tr><td><a href="#editcut">mix selection</a></td><td><small>Edit: <a href="#editcut">Mix</a></small></td><td><a href="#cxq"><small>Cx q</small></a></td><td><a href="extsnd.html#sndmixselection"><small>mix-selection</small></a></td><td><a href="extsnd.html#sndmixregion"><small>mix-region</small></a></td></tr>
-  <tr><td><a href="#thecursor">move cursor ahead</a></td><td><br></td><td><a href="#ce"><small>Cf, Cn, Ce</small></a></td><td><a href="extsnd.html#sndforwardsample"><small>forward-sample</small></a></td><td><small>also &gt;</small></td></tr>
-  <tr><td><a href="#thecursor">move cursor back</a></td><td><br></td><td><a href="#ca"><small>Cb, Cp, Ca</small></a></td><td><a href="extsnd.html#sndbackwardsample"><small>backward-sample</small></a></td><td><small>also &lt;</small></td></tr>
+  <tr><td><a href="#thecursor">move cursor ahead</a></td><td><br></td><td><a href="#ce"><small>Cf, Cn, Ce</small></a></td><td><a href="extsnd.html#sndcursor"><small>set cursor</small></a></td><td><small>also &gt;</small></td></tr>
+  <tr><td><a href="#thecursor">move cursor back</a></td><td><br></td><td><a href="#ca"><small>Cb, Cp, Ca</small></a></td><td><a href="extsnd.html#sndcursor"><small>set cursor</small></a></td><td><small>also &lt;</small></td></tr>
   <tr><td><a href="#mixingfiles">move mixed file</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sndmixposition"><small>mix-position</small></a></td><td><a href="#mixingfiles"><small>drag mix tag</small></a></td></tr>
   <tr><td><a href="#cj">move to mark</a></td><td><br></td><td><a href="#cj"><small>Cj, Cx j</small></a></td><td><a href="extsnd.html#sndforwardmark"><small>forward-mark</small></a></td><td><a href="#cxj"><small>Cx j -&gt; named mark</small></a></td></tr>
   <tr><td><a href="#gotomix">move to mix</a></td><td><br></td><td><a href="#cxcj"><small>Cx Cj</small></a></td><td><a href="extsnd.html#sndforwardmix"><small>forward-mix</small></a></td><td><br></td></tr>

@@ -298,7 +298,7 @@ BACKGROUND_TYPE get_amp_env(GUI_POINTER ptr)
       if (cp->waiting_to_make_graph) 
 	{
 	  cp->waiting_to_make_graph = 0;
-	  update_graph(cp, NULL);
+	  update_graph(cp);
 	}
       return(BACKGROUND_QUIT);
     }
@@ -1381,7 +1381,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 			  file_change_samples(apply_beg, apply_dur, ap->ofile, sp->chans[i], i,
 					      (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
 					      LOCK_MIXES, "Apply", sp->chans[i]->edit_ctr);
-			  update_graph(sp->chans[i], NULL);
+			  update_graph(sp->chans[i]);
 			}
 		    }
 		  else
@@ -1399,7 +1399,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 		    {
 		      file_change_samples(apply_beg, apply_dur, ap->ofile, sp->chans[curchan], 0, 
 					  DELETE_ME, LOCK_MIXES, "Apply to channel", sp->chans[curchan]->edit_ctr);
-		      update_graph(sp->chans[curchan], NULL);
+		      update_graph(sp->chans[curchan]);
 		    }
 		  else file_override_samples(apply_dur, ap->ofile, sp->chans[curchan], 0, 
 					     DELETE_ME, LOCK_MIXES, "Apply to channel");
@@ -1415,7 +1415,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 			  file_change_samples(si->begs[i], apply_dur, ap->ofile, si->cps[i], i,
 					      (si->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
 					      LOCK_MIXES, "Apply to selection", si->cps[i]->edit_ctr);
-			  update_graph(si->cps[i], NULL);
+			  update_graph(si->cps[i]);
 			}
 		    }
 		  else
@@ -1456,7 +1456,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 			      src_marks(cp, ratio, orig_dur, apply_dur, 
 					(over_selection) ? selection_beg(cp) : 0,
 					over_selection);
-			      update_graph(cp, NULL);
+			      update_graph(cp);
 			    }
 			}
 		    }
@@ -1570,7 +1570,7 @@ static XEN g_select_sound(XEN snd_n)
 	    {
 	      select_channel(sp, 0);
 	      equalize_sound_panes(ss, sp, sp->chans[0], FALSE);
-	      map_over_chans(ss, update_graph, NULL);
+	      for_each_chan(ss, update_graph);
 	      return(snd_n);
 	    }
 	}
@@ -2326,7 +2326,7 @@ static XEN g_revert_sound(XEN index)
   for (i = 0; i < sp->nchans; i++) 
     {
       revert_edits(sp->chans[i], NULL); 
-      update_graph(sp->chans[i], NULL);
+      update_graph(sp->chans[i]);
     }
   reflect_file_revert_in_label(sp);
   reflect_file_revert_in_menu(sp->state);

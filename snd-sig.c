@@ -517,7 +517,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 		      ripple_trailing_marks(ucp, si->begs[ip], sc->dur, filtersize + filesize);
 		    }
 		  else snd_remove(ofile, TRUE);
-		  update_graph(ucp, NULL); 
+		  update_graph(ucp); 
 		}
 	      else file_override_samples(filtersize + filesize, ofile, ucp, 0, DELETE_ME, LOCK_MIXES, origin);
 	    }
@@ -785,8 +785,8 @@ static void swap_channels(snd_state *ss, off_t beg, off_t dur, snd_fd *c0, snd_f
       change_samples(beg, dur, data1[0], cp1, LOCK_MIXES, S_swap_channels, cp1->edit_ctr);
     }
   swap_marks(cp0, cp1);
-  update_graph(cp0, NULL);
-  update_graph(cp1, NULL);
+  update_graph(cp0);
+  update_graph(cp1);
   if (ofile0) FREE(ofile0);
   if (ofile1) FREE(ofile1);
   FREE(data0[0]);
@@ -998,7 +998,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 	  backup_edit_list(cp);
 	  ripple_marks(cp, 0, 0);
 	}
-      update_graph(cp, NULL);
+      update_graph(cp);
     }
   else file_override_samples(k, ofile, cp, 0, DELETE_ME, LOCK_MIXES, origin);
   /* not file_change_samples because that would not necessarily change the current file length */
@@ -1011,7 +1011,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 	  if (new_marks) 
 	    reset_marks(cp, cur_marks, new_marks, beg + dur, (k - dur), full_chan);
 	}
-      update_graph(cp, NULL);
+      update_graph(cp);
     }
   if (old_marks) FREE(old_marks);
   old_marks = NULL;
@@ -1291,7 +1291,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
       if (dur > 0) 
 	change_samples(beg, dur, idata, cp, LOCK_MIXES, caller, cp->edit_ctr);
     }
-  update_graph(cp, NULL); 
+  update_graph(cp); 
   free_snd_fd(sf);
   FREE(data[0]);
   FREE(data);
@@ -1414,7 +1414,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 	  hdr = free_file_info(hdr);
 	  file_change_samples(0, dur + order, ofile, cp, 0, DELETE_ME, LOCK_MIXES, origin, cp->edit_ctr);
 	  if (ofile) {FREE(ofile); ofile = NULL;}
-	  update_graph(cp, NULL);
+	  update_graph(cp);
 	  FREE(sndrdat);
 	  FREE(fltdat);
 	  check_for_event(ss);
@@ -1540,7 +1540,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 		  if (ofile) {FREE(ofile); ofile = NULL;}
 		}
 	      else change_samples(si->begs[i], dur, data[0], cp, LOCK_MIXES, origin, cp->edit_ctr);
-	      update_graph(cp, NULL); 
+	      update_graph(cp); 
 	      sfs[i] = free_snd_fd(sfs[i]);
 	      if (ss->stopped_explicitly) 
 		{
@@ -1664,7 +1664,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XE
   else change_samples(beg, dur, idata, cp, LOCK_MIXES, caller, cp->edit_ctr);
   if (ep) cp->amp_envs[cp->edit_ctr] = ep;
   reverse_marks(cp, (section) ? beg : -1, dur);
-  update_graph(cp, NULL); 
+  update_graph(cp); 
   FREE(data[0]);
   FREE(data);
   return(NULL);
@@ -2036,7 +2036,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
 
 		}
 	      else change_samples(si->begs[i], dur, data[i], si->cps[i], LOCK_MIXES, origin, si->cps[i]->edit_ctr);
-	      update_graph(si->cps[i], NULL);
+	      update_graph(si->cps[i]);
 	    }
 	}
       for (i = 0; i < si->chans; i++)
@@ -2156,7 +2156,7 @@ void cursor_delete(chan_info *cp, off_t count, const char *origin)
 	{
 	  delete_samples(beg, count, cps[i], origin, cps[i]->edit_ctr); 
 	  cps[i]->cursor = beg;
-	  update_graph(si->cps[i], NULL);
+	  update_graph(si->cps[i]);
 	}
       si = free_sync_info(si);
     }
@@ -2191,7 +2191,7 @@ void cursor_insert(chan_info *cp, off_t beg, off_t count, const char *origin)
 			    mus_oclamp(0, beg, current_ed_samples(si->cps[i]) - 1), 
 			    count, origin,
 			    cps[i]->edit_ctr);
-	  update_graph(cps[i], NULL);
+	  update_graph(cps[i]);
 	}
       si = free_sync_info(si);
     }
@@ -2201,7 +2201,7 @@ void cursor_insert(chan_info *cp, off_t beg, off_t count, const char *origin)
 			mus_oclamp(0, beg, current_ed_samples(cp)), 
 			count, origin,
 			cp->edit_ctr);
-      update_graph(cp, NULL);
+      update_graph(cp);
     }
 }
 
@@ -2276,7 +2276,7 @@ static void smooth_channel(chan_info *cp, off_t beg, off_t dur, int edpos, const
   for (k = 0; k < dur; k++, angle += incr) 
     data[k] = MUS_FLOAT_TO_SAMPLE(off + scale * cos(angle));
   change_samples(beg, dur, data, cp, LOCK_MIXES, origin, cp->edit_ctr);
-  update_graph(cp, NULL);
+  update_graph(cp);
   FREE(data);
 }
 
@@ -2365,7 +2365,7 @@ static char *run_channel(chan_info *cp, void *upt, off_t beg, off_t dur, int edp
       if (dur > 0) 
 	change_samples(beg, dur, idata, cp, LOCK_MIXES, S_map_channel, cp->edit_ctr);
     }
-  update_graph(cp, NULL); 
+  update_graph(cp); 
   free_snd_fd(sf);
   FREE(data[0]);
   FREE(data);
@@ -2542,7 +2542,7 @@ static XEN g_map_chan_1(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN ch
 		}
 	      else snd_remove(filename, TRUE);
 	    }
-	  update_graph(cp, NULL);
+	  update_graph(cp);
 	}
       FREE(filename);
     }
@@ -2959,8 +2959,8 @@ static XEN g_swap_channels(XEN snd0, XEN chn0, XEN snd1, XEN chn1, XEN beg, XEN 
 	  cp0->squelch_update = old_squelch0;
 	  cp1->squelch_update = old_squelch1;
 	  swap_marks(cp0, cp1);
-	  update_graph(cp0, NULL);
-	  update_graph(cp1, NULL);
+	  update_graph(cp0);
+	  update_graph(cp1);
 	}
       else
 	{

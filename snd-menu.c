@@ -315,7 +315,7 @@ void save_state_from_menu(snd_state *ss)
     report_in_minibuffer(any_selected_sound(ss), "saved state in %s", save_state_file(ss));
 }
 
-static int map_chans_graph_style(chan_info *cp, void *ptr) {cp->graph_style = (*((int *)ptr)); update_graph(cp, NULL); return(0);}
+static int map_chans_graph_style(chan_info *cp, void *ptr) {cp->graph_style = (*((int *)ptr)); update_graph(cp); return(0);}
 
 void set_graph_style(snd_state *ss, int val)
 {
@@ -342,7 +342,7 @@ void set_graph_style(snd_state *ss, int val)
 static int map_chans_marks(chan_info *cp, void *ptr)
 {
   cp->show_marks = (*((int *)ptr));
-  update_graph(cp, NULL);
+  update_graph(cp);
   return(0);
 }
 
@@ -355,7 +355,7 @@ void set_show_marks(snd_state *ss, int val)
 static int map_chans_zero(chan_info *cp, void *ptr)
 {
   cp->show_y_zero = (*((int *)ptr));
-  update_graph(cp, NULL);
+  update_graph(cp);
   return(0);
 }
 
@@ -457,7 +457,7 @@ int map_chans_x_axis_style(chan_info *cp, void *ptr)
 	case X_AXIS_AS_PERCENTAGE: ap->xlabel = copy_string(STR_time_percent); break;
 	default:                   ap->xlabel = copy_string(STR_time);         break;
 	}
-      update_graph(cp, NULL);
+      update_graph(cp);
     }
   return(0);
 } 
@@ -520,7 +520,7 @@ void set_channel_style(snd_state *ss, int val)
     case CHANNELS_SUPERIMPOSED: set_sensitive(view_combine_superimposed_menu(), FALSE); break;
     }
   map_over_sounds(ss, update_sound, (void *)ss);
-  map_over_chans(ss, update_graph, NULL);
+  for_each_chan(ss, update_graph);
 }
 
 static XEN snd_no_such_menu_error(const char *caller, XEN id)

@@ -1,5 +1,7 @@
 snd change log
 
+  12-Jun:    snd 5.11.
+             moved forward|backward-sample to snd5.scm.
   10-Jun:    mix panel amp envs are now editable.
   7-Jun:     added fftw support, removed fht.
   6-Jun:     removed --with-big-colormap switch (use -DCOLORMAP_SIZE=64 to get old form).

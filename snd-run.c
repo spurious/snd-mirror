@@ -274,8 +274,8 @@ static xen_value *run_warn(char *format, ...)
   run_warned = TRUE;
 #if HAVE_VPRINTF
   va_start(ap, format);
-#if HAVE_VMUS_SNPRINTF
-  vmus_snprintf(optimizer_warning_buffer, OPTIMIZER_WARNING_BUFFER_SIZE, format, ap);
+#if HAVE_VSNPRINTF
+  vsnprintf(optimizer_warning_buffer, OPTIMIZER_WARNING_BUFFER_SIZE, format, ap);
 #else
   vsprintf(optimizer_warning_buffer, format, ap);
 #endif

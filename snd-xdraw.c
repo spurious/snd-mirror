@@ -552,10 +552,10 @@ typedef struct {
 
 static color_chooser_info *ccd = NULL;
 
-static int update_graph_setting_fft_changed(chan_info *cp, void *ptr)
+static void update_graph_setting_fft_changed(chan_info *cp)
 {
   cp->fft_changed = FFT_CHANGE_LOCKED;
-  return(update_graph(cp, ptr));
+  return(update_graph(cp));
 }
 
 static void invert_color_callback(Widget w, XtPointer context, XtPointer info)
@@ -566,7 +566,7 @@ static void invert_color_callback(Widget w, XtPointer context, XtPointer info)
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   ss = cd->state;
   in_set_color_inverted(ss, cb->set);
-  map_over_chans(ss, update_graph_setting_fft_changed, NULL);
+  for_each_chan(ss, update_graph_setting_fft_changed);
 }
 
 void set_color_inverted(snd_state *ss, int val)
@@ -575,7 +575,7 @@ void set_color_inverted(snd_state *ss, int val)
   if (ccd) 
     XmToggleButtonSetState(ccd->invert, val, FALSE);
   if (!(ss->graph_hook_active)) 
-    map_over_chans(ss, update_graph_setting_fft_changed, NULL);
+    for_each_chan(ss, update_graph_setting_fft_changed);
 }
 
 static void scale_color_callback(Widget w, XtPointer context, XtPointer info)
@@ -592,7 +592,7 @@ static void scale_color_callback(Widget w, XtPointer context, XtPointer info)
     val = (Float)(scale_val + 1) / 51.0;
   else val = 1.0 + (Float)((scale_val - 50) * (scale_val - 50)) / 12.5;
   in_set_color_scale(ss, val);
-  map_over_chans(ss, update_graph_setting_fft_changed, NULL);
+  for_each_chan(ss, update_graph_setting_fft_changed);
 }
 
 static void reflect_color_scale(Float val)
@@ -613,7 +613,7 @@ void set_color_scale(snd_state *ss, Float val)
   if (ccd) 
     reflect_color_scale(color_scale(ss));
   if (!(ss->graph_hook_active)) 
-    map_over_chans(ss, update_graph_setting_fft_changed, NULL);
+    for_each_chan(ss, update_graph_setting_fft_changed);
 }
 
 static void list_color_callback(Widget w, XtPointer context, XtPointer info)
@@ -624,7 +624,7 @@ static void list_color_callback(Widget w, XtPointer context, XtPointer info)
   ASSERT_WIDGET_TYPE(XmIsList(w), w);
   ss = cd->state;
   in_set_color_map(ss, (cbs->item_position - 1));
-  map_over_chans(ss, update_graph_setting_fft_changed, NULL);
+  for_each_chan(ss, update_graph_setting_fft_changed);
 }
 
 void set_color_map(snd_state *ss, int val)
@@ -633,7 +633,7 @@ void set_color_map(snd_state *ss, int val)
   if ((ccd) && (val >= 0))
     XmListSelectPos(ccd->list, val + 1, FALSE);
   if (!(ss->graph_hook_active)) 
-    map_over_chans(ss, update_graph_setting_fft_changed, NULL);
+    for_each_chan(ss, update_graph_setting_fft_changed);
 }
 
 static void cutoff_color_callback(Widget w, XtPointer context, XtPointer info) /* cutoff point */
@@ -645,7 +645,7 @@ static void cutoff_color_callback(Widget w, XtPointer context, XtPointer info) /
   ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   ss = cd->state;
   in_set_color_cutoff(ss, (Float)(cbs->value) / 1000.0);
-  map_over_chans(ss, update_graph_setting_fft_changed, NULL);
+  for_each_chan(ss, update_graph_setting_fft_changed);
 }
 
 void set_color_cutoff(snd_state *ss, Float val)
@@ -654,7 +654,7 @@ void set_color_cutoff(snd_state *ss, Float val)
   if (ccd) 
     XmScaleSetValue(ccd->cutoff, (int)(val * 1000.0));
   if (!(ss->graph_hook_active)) 
-    map_over_chans(ss, update_graph_setting_fft_changed, NULL);
+    for_each_chan(ss, update_graph_setting_fft_changed);
 }
 
 
@@ -897,7 +897,7 @@ static void ax_orientation_callback(Widget w, XtPointer context, XtPointer info)
   ss = od->state;
   in_set_spectro_x_angle(ss, (Float)(cbs->value));
   map_chans_field(ss, FCP_X_ANGLE, (Float)(cbs->value));
-  map_over_chans(ss, update_graph, NULL);
+  for_each_chan(ss, update_graph);
 }
 
 void set_spectro_x_angle(snd_state *ss, Float val)
@@ -906,7 +906,7 @@ void set_spectro_x_angle(snd_state *ss, Float val)
   if (oid) XmScaleSetValue(oid->ax, (int)val);
   map_chans_field(ss, FCP_X_ANGLE, val);
   if (!(ss->graph_hook_active)) 
-    map_over_chans(ss, update_graph, NULL);
+    for_each_chan(ss, update_graph);
 }
 
 static void ax_help_callback(Widget w, XtPointer context, XtPointer info) 
@@ -925,7 +925,7 @@ static void ay_orientation_callback(Widget w, XtPointer context, XtPointer info)
   ss = od->state;
   in_set_spectro_y_angle(ss, (Float)(cbs->value));
   map_chans_field(ss, FCP_Y_ANGLE, (Float)(cbs->value));
-  map_over_chans(ss, update_graph, NULL);
+  for_each_chan(ss, update_graph);
 }
 
 void set_spectro_y_angle(snd_state *ss, Float val)
@@ -934,7 +934,7 @@ void set_spectro_y_angle(snd_state *ss, Float val)
   if (oid) XmScaleSetValue(oid->ay, (int)val);
   map_chans_field(ss, FCP_Y_ANGLE, val);
   if (!(ss->graph_hook_active)) 
-    map_over_chans(ss, update_graph, NULL);
+    for_each_chan(ss, update_graph);
 }
 
 static void ay_help_callback(Widget w, XtPointer context, XtPointer info) 
@@ -953,7 +953,7 @@ static void az_orientation_callback(Widget w, XtPointer context, XtPointer info)
   ss = od->state;
   in_set_spectro_z_angle(ss, (Float)(cbs->value));
   map_chans_field(ss, FCP_Z_ANGLE, (Float)(cbs->value));
-  map_over_chans(ss, update_graph, NULL);
+  for_each_chan(ss, update_graph);
 }
 
 void set_spectro_z_angle(snd_state *ss, Float val)
@@ -963,7 +963,7 @@ void set_spectro_z_angle(snd_state *ss, Float val)
   if (oid) XmScaleSetValue(oid->az, (int)val);
   map_chans_field(ss, FCP_Z_ANGLE, val);
   if (!(ss->graph_hook_active)) 
-    map_over_chans(ss, update_graph, NULL);
+    for_each_chan(ss, update_graph);
 }
 
 static void az_help_callback(Widget w, XtPointer context, XtPointer info) 
@@ -982,7 +982,7 @@ static void sx_orientation_callback(Widget w, XtPointer context, XtPointer info)
   ss = od->state;
   in_set_spectro_x_scale(ss, (Float)(cbs->value) * 0.01);
   map_chans_field(ss, FCP_X_SCALE, (Float)(cbs->value) * 0.01);
-  map_over_chans(ss, update_graph, NULL);
+  for_each_chan(ss, update_graph);
 }
 
 void set_spectro_x_scale(snd_state *ss, Float val)
@@ -991,7 +991,7 @@ void set_spectro_x_scale(snd_state *ss, Float val)
   if (oid) XmScaleSetValue(oid->sx, (int)(val * 100));
   map_chans_field(ss, FCP_X_SCALE, val);
   if (!(ss->graph_hook_active)) 
-    map_over_chans(ss, update_graph, NULL);
+    for_each_chan(ss, update_graph);
 }
 
 static void sx_help_callback(Widget w, XtPointer context, XtPointer info) 
@@ -1010,7 +1010,7 @@ static void sy_orientation_callback(Widget w, XtPointer context, XtPointer info)
   ss = od->state;
   in_set_spectro_y_scale(ss, (Float)(cbs->value) * 0.01);
   map_chans_field(ss, FCP_Y_SCALE, (Float)(cbs->value) * 0.01);
-  map_over_chans(ss, update_graph, NULL);
+  for_each_chan(ss, update_graph);
 }
 
 void set_spectro_y_scale(snd_state *ss, Float val)
@@ -1019,7 +1019,7 @@ void set_spectro_y_scale(snd_state *ss, Float val)
   if (oid) XmScaleSetValue(oid->sy, (int)(val * 100));
   map_chans_field(ss, FCP_Y_SCALE, val);
   if (!(ss->graph_hook_active)) 
-    map_over_chans(ss, update_graph, NULL);
+    for_each_chan(ss, update_graph);
 }
 
 static void sy_help_callback(Widget w, XtPointer context, XtPointer info) 
@@ -1038,7 +1038,7 @@ static void sz_orientation_callback(Widget w, XtPointer context, XtPointer info)
   ss = od->state;
   in_set_spectro_z_scale(ss, (Float)(cbs->value) * 0.01);
   map_chans_field(ss, FCP_Z_SCALE, (Float)(cbs->value) * 0.01);
-  map_over_chans(ss, update_graph, NULL);
+  for_each_chan(ss, update_graph);
 }
 
 void set_spectro_z_scale(snd_state *ss, Float val)
@@ -1047,7 +1047,7 @@ void set_spectro_z_scale(snd_state *ss, Float val)
   if (oid) XmScaleSetValue(oid->sz, (int)(val * 100));
   map_chans_field(ss, FCP_Z_SCALE, val);
   if (!(ss->graph_hook_active)) 
-    map_over_chans(ss, update_graph, NULL);
+    for_each_chan(ss, update_graph);
 }
 
 static void sz_help_callback(Widget w, XtPointer context, XtPointer info) 
@@ -1070,7 +1070,7 @@ static void hop_orientation_callback(Widget w, XtPointer context, XtPointer info
   val = mus_iclamp(1, cbs->value, 20);
   in_set_spectro_hop(ss, val);
   map_over_chans(ss, map_chans_spectro_hop, (void *)(&val));
-  map_over_chans(ss, update_graph, NULL);
+  for_each_chan(ss, update_graph);
 }
 
 void set_spectro_hop(snd_state *ss, int val)
@@ -1081,7 +1081,7 @@ void set_spectro_hop(snd_state *ss, int val)
       if (oid) XmScaleSetValue(oid->hop, val);
       map_over_chans(ss, map_chans_spectro_hop, (void *)(&val));
       if (!(ss->graph_hook_active)) 
-	map_over_chans(ss, update_graph, NULL);
+	for_each_chan(ss, update_graph);
     }
 }
 
@@ -1092,7 +1092,7 @@ static void hop_help_callback(Widget w, XtPointer context, XtPointer info)
 "This slider changes the hop size.");
 }
 
-static int map_chans_spectro_cut(chan_info *cp, void *ptr) {cp->fft_changed = FFT_CHANGE_LOCKED; return(0);}
+static void map_chans_spectro_cut(chan_info *cp) {cp->fft_changed = FFT_CHANGE_LOCKED;}
 
 static void cut_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -1103,7 +1103,7 @@ static void cut_orientation_callback(Widget w, XtPointer context, XtPointer info
   ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   ss = od->state;
   map_chans_field(ss, FCP_CUTOFF, (Float)(cbs->value) * 0.01);
-  map_over_chans(ss, map_chans_spectro_cut, NULL);
+  for_each_chan(ss, map_chans_spectro_cut);
   set_spectro_cutoff_and_redisplay(ss, (Float)(cbs->value) * 0.01); /* calls in_set... */
 } 
 
@@ -1113,7 +1113,7 @@ void set_spectro_cutoff(snd_state *ss, Float val)
   if (oid) XmScaleSetValue(oid->cut, (int)(val * 100));
   map_chans_field(ss, FCP_CUTOFF, val);
   if (!(ss->graph_hook_active)) 
-    map_over_chans(ss, update_graph_setting_fft_changed, NULL);
+    for_each_chan(ss, update_graph_setting_fft_changed);
 }
 
 static void cut_help_callback(Widget w, XtPointer context, XtPointer info) 
@@ -1163,7 +1163,7 @@ int set_with_gl(snd_state *ss, int val)
 #if HAVE_GL
   sgl_set_currents(ss);
   if (oid) XmToggleButtonSetState(oid->glbutton, val, FALSE);
-  map_over_chans(ss, update_graph, NULL);
+  for_each_chan(ss, update_graph);
 #endif
   return(with_gl(ss));
 } 
@@ -1178,7 +1178,7 @@ static void with_gl_callback(Widget w, XtPointer context, XtPointer info)
   sgl_save_currents(ss);
   in_set_with_gl(ss, cb->set);
   sgl_set_currents(ss);
-  map_over_chans(ss, update_graph, NULL);
+  for_each_chan(ss, update_graph);
 }
 
 static void with_gl_help_callback(Widget w, XtPointer context, XtPointer info) 
@@ -1208,7 +1208,7 @@ static void reset_orientation_callback(Widget w, XtPointer context, XtPointer in
   ss = od->state;
   reset_spectro(ss);
   reflect_spectro(ss);
-  map_over_chans(ss, update_graph, NULL);
+  for_each_chan(ss, update_graph);
 }
 
 void view_orientation_callback(Widget w, XtPointer context, XtPointer info)

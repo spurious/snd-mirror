@@ -927,7 +927,7 @@ static mix_info *add_mix(chan_info *cp, int chan, off_t beg, off_t num,
   md->in_filename = copy_string(full_original_file);
   reflect_mix_in_menu();
   reflect_mix_in_enved();
-  update_graph(cp, NULL);
+  update_graph(cp);
   return(md);
 }
 
@@ -1406,7 +1406,7 @@ static void remix_file(mix_info *md, const char *origin)
       ap->ymax = maxy;
       ap->y_ambit = (ap->ymax - ap->ymin);
     }
-  update_graph(cp, NULL);
+  update_graph(cp);
 }
 
 /* ---------------- MIX GRAPHS ---------------- */
@@ -3695,7 +3695,7 @@ static XEN g_set_mix_anchor(XEN n, XEN uval)
       if (val >= 0)
 	{
 	  md->anchor = val;
-	  update_graph(md->cp, NULL);
+	  update_graph(md->cp);
 	}
     }
   return(uval);
@@ -3737,7 +3737,7 @@ static XEN g_set_mix_tag_y(XEN n, XEN val)
   if (md == NULL)
     return(snd_no_such_mix_error("set-" S_mix_tag_y, n));
   md->tag_y = XEN_TO_C_INT_OR_ELSE(val, 0);
-  update_graph(md->cp, NULL);
+  update_graph(md->cp);
   return(val);
 }
 
@@ -3844,10 +3844,9 @@ static XEN g_mix_sound(XEN file, XEN start_samp)
   return(C_TO_XEN_INT(err));
 }
 
-static int update_mix_waveforms(chan_info *cp, void *ptr)
+static void update_mix_waveforms(chan_info *cp)
 {
-  if ((cp) && (cp->mixes)) update_graph(cp, NULL);
-  return(0);
+  if ((cp) && (cp->mixes)) update_graph(cp);
 }
 
 static int update_mix_waveform_height(mix_info *md, void *new_val)
@@ -3868,7 +3867,7 @@ static XEN g_set_mix_waveform_height(XEN val)
   new_val[0] = XEN_TO_C_INT_OR_ELSE(val, 0);
   in_set_mix_waveform_height(ss, new_val[0]);
   map_over_mixes(update_mix_waveform_height, (void *)new_val);
-  map_over_chans(ss, update_mix_waveforms, NULL);
+  for_each_chan(ss, update_mix_waveforms);
   return(C_TO_XEN_INT(mix_waveform_height(ss)));
 }
 
@@ -3895,7 +3894,7 @@ static XEN g_set_mix_tag_width(XEN val)
   ss = get_global_state(); 
   width = XEN_TO_C_INT_OR_ELSE(val, DEFAULT_MIX_TAG_WIDTH);
   set_mix_tag_width(ss, width);
-  map_over_chans(ss, update_graph, NULL);
+  for_each_chan(ss, update_graph);
   return(C_TO_XEN_INT(mix_tag_width(ss)));
 }
 
@@ -3909,7 +3908,7 @@ static XEN g_set_mix_tag_height(XEN val)
   ss = get_global_state(); 
   height = XEN_TO_C_INT_OR_ELSE(val, DEFAULT_MIX_TAG_HEIGHT);
   set_mix_tag_height(ss, height);
-  map_over_chans(ss, update_graph, NULL);
+  for_each_chan(ss, update_graph);
   return(C_TO_XEN_INT(mix_tag_height(ss)));
 }
 
@@ -4371,7 +4370,7 @@ mixes data (a vct object) into snd's channel chn starting at beg; returns the ne
 	  if (!with_mixer) snd_remove(newname, TRUE);
 	  FREE(newname);
 	}
-      update_graph(cp, NULL);
+      update_graph(cp);
       FREE(data);
     }
   return(xen_return_first(C_TO_SMALL_XEN_INT(mix_id), obj));

@@ -611,7 +611,6 @@ static void delete_marks(chan_info *cp)
 	    }
 	  cp->mark_ctr[ed] = -1;
 	  run_mark_hook(cp, -1, MARKS_DELETE);
-	  /* if (!(ss->graph_hook_active)) update_graph(cp, NULL); */
 	}
     }
 }
@@ -961,7 +960,7 @@ void mark_define_region(chan_info *cp, int count)
 		  for (i = 0; i < si->chans; i++)
 		    {
 		      reactivate_selection(si->cps[i], beg, ends[0]);
-		      update_graph(si->cps[i], NULL);
+		      update_graph(si->cps[i]);
 		    }
 		  si = free_sync_info(si);
 		}
@@ -1436,7 +1435,7 @@ static void edit_dragged_mark(chan_info *cp, mark *m, off_t initial_sample)
     {
       new_m = map_over_marks(cp, find_mark_id_1, (void *)(&id), READ_FORWARD);
       new_m->samp = mark_final_sample;
-      update_graph(cp, NULL);
+      update_graph(cp);
     }
 }
 
@@ -1813,7 +1812,7 @@ static XEN mark_set(XEN mark_n, XEN val, int fld, char *caller)
 			   current_ed_samples(cp[0]));
       sort_marks(cp[0]); /* update and re-sort current mark list */
       run_mark_hook(cp[0], mark_id(m), MARK_MOVE);
-      update_graph(cp[0], NULL);
+      update_graph(cp[0]);
       break;
     case MARK_SYNC: 
       set_mark_sync(m, XEN_TO_C_INT_OR_ELSE_WITH_CALLER(val, 0, caller));
@@ -1821,7 +1820,7 @@ static XEN mark_set(XEN mark_n, XEN val, int fld, char *caller)
     case MARK_NAME:
       if (m->name) FREE(m->name);
       m->name = copy_string(XEN_TO_C_STRING(val));
-      update_graph(cp[0], NULL);
+      update_graph(cp[0]);
       break;
     }
   return(val);
@@ -1948,7 +1947,7 @@ static XEN g_add_mark(XEN samp_n, XEN snd_n, XEN chn_n)
       m = add_mark(loc, NULL, cp);
       if (m)
 	{
-	  update_graph(cp, NULL);
+	  update_graph(cp);
 	  return(C_TO_XEN_INT(mark_id(m)));
 	}
     }
@@ -1967,7 +1966,7 @@ static XEN g_delete_mark(XEN id_n)
   if (m == NULL) 
     return(snd_no_such_mark_error(S_delete_mark, id_n));
   delete_mark_id(id, cp[0]);
-  update_graph(cp[0], NULL);
+  update_graph(cp[0]);
   return(id_n);
 }
 

@@ -129,13 +129,13 @@ static void gzy_changed(float value, chan_info *cp)
   cp->gzy = value;
   GTK_ADJUSTMENT(gsy_adj(cp))->page_size = value; 
   gtk_adjustment_changed(GTK_ADJUSTMENT(gsy_adj(cp)));
-  map_over_sound_chans(cp->sound, update_graph, NULL);
+  for_each_sound_chan(cp->sound, update_graph);
 }
 
 static void gsy_changed(float value, chan_info *cp)
 {
   cp->gsy = cp->gzy * value;
-  map_over_sound_chans(cp->sound, update_graph, NULL);
+  for_each_sound_chan(cp->sound, update_graph);
 }
 
 Float gsy_value(chan_info *cp)
@@ -330,8 +330,8 @@ static gboolean channel_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpoint
     
   sp = cp->sound;
   if (sp->channel_style != CHANNELS_SEPARATE)
-    map_over_sound_chans(sp, update_graph, NULL);
-  else update_graph(cp, NULL);
+    for_each_sound_chan(sp, update_graph);
+  else update_graph(cp);
 
   sound_check_control_panel(sp, widget_height(SOUND_PANE(ss)));
   return(FALSE);
@@ -346,8 +346,8 @@ static gboolean channel_resize_callback(GtkWidget *w, GdkEventConfigure *ev, gpo
   sp = cp->sound;
   if (sp == NULL) return(FALSE);
   if (sp->channel_style != CHANNELS_SEPARATE)
-    map_over_sound_chans(sp, update_graph, NULL);
-  else update_graph(cp, NULL);
+    for_each_sound_chan(sp, update_graph);
+  else update_graph(cp);
   return(FALSE);
 }
 

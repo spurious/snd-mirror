@@ -1,4 +1,11 @@
 ;;; backwards compatibility within Snd-5 versions
+(use-modules (ice-9 optargs))
+
+(define* (forward-sample #:optional (count 1) snd chn)
+  (set! (cursor snd chn) (+ (cursor snd chn) count)))
+
+(define* (backward-sample #:optional (count 1) snd chn)
+  (set! (cursor snd chn) (max 0 (- (cursor snd chn) count))))
 
 (define (vct-do! v func) 
   (vct-map! v (let ((i 0))

@@ -194,7 +194,7 @@ static void size_browse_callback(Widget w, XtPointer context, XtPointer info)
   in_set_transform_size(ss, transform_sizes[cbs->item_position - 1]);
   size = transform_size(ss);
   map_over_chans(ss, map_chans_transform_size, (void *)(&size));
-  map_over_chans(ss, calculate_fft, NULL);
+  for_each_chan(ss, calculate_fft);
   set_label(graph_label, FFT_WINDOWS[fft_window(ss)]);
   get_fft_window_data(ss);
   graph_redisplay(ss);
@@ -211,7 +211,7 @@ static void wavelet_browse_callback(Widget w, XtPointer context, XtPointer info)
   in_set_wavelet_type(ss, val = (cbs->item_position - 1)); /* make these numbers 0-based as in mus.lisp */
   map_over_chans(ss, map_chans_wavelet_type, (void *)(&val));
   if (transform_type(ss) == WAVELET)
-    map_over_chans(ss, calculate_fft, NULL);
+    for_each_chan(ss, calculate_fft);
 }
 
 static void wavelet_help_callback(Widget w, XtPointer context, XtPointer info) 
@@ -230,7 +230,7 @@ static void window_browse_callback(Widget w, XtPointer context, XtPointer info)
   ASSERT_WIDGET_TYPE(XmIsList(w), w);
   fft_window_choice = (cbs->item_position - 1); /* make these numbers 0-based as in mus.lisp */
   in_set_fft_window(ss, fft_window_choice);
-  map_over_chans(ss, calculate_fft, NULL);
+  for_each_chan(ss, calculate_fft);
   set_label(graph_label, FFT_WINDOWS[fft_window(ss)]);
   get_fft_window_data(ss);
   graph_redisplay(ss);
@@ -260,10 +260,10 @@ static void transform_type_browse_callback(Widget w, XtPointer context, XtPointe
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsList(w), w);
   type = cbs->item_position - 1;
-  map_over_chans(ss, force_fft_clear, NULL);
+  for_each_chan(ss, force_fft_clear);
   in_set_transform_type(ss, type);
   map_over_chans(ss, map_chans_transform_type, (void *)(&type));
-  map_over_chans(ss, calculate_fft, NULL);
+  for_each_chan(ss, calculate_fft);
 }
 
 static void transform_type_help_callback(Widget w, XtPointer context, XtPointer info)
@@ -291,7 +291,7 @@ static void graph_transform_once_callback(Widget w, XtPointer context, XtPointer
       XmToggleButtonSetState(sono_button, TRUE, FALSE);
       in_set_transform_graph_type(ss, GRAPH_TRANSFORM_AS_SONOGRAM);
     }
-  map_over_chans(ss, calculate_fft, NULL);
+  for_each_chan(ss, calculate_fft);
 }
 
 static void sonogram_callback(Widget w, XtPointer context, XtPointer info)
@@ -310,7 +310,7 @@ static void sonogram_callback(Widget w, XtPointer context, XtPointer info)
       XmToggleButtonSetState(normo_button, TRUE, FALSE);
       in_set_transform_graph_type(ss, GRAPH_TRANSFORM_ONCE);
     }
-  map_over_chans(ss, calculate_fft, NULL);
+  for_each_chan(ss, calculate_fft);
 }
 
 static void spectrogram_callback(Widget w, XtPointer context, XtPointer info)
@@ -329,7 +329,7 @@ static void spectrogram_callback(Widget w, XtPointer context, XtPointer info)
       XmToggleButtonSetState(normo_button, TRUE, FALSE);
       in_set_transform_graph_type(ss, GRAPH_TRANSFORM_ONCE);
     }
-  map_over_chans(ss, calculate_fft, NULL);
+  for_each_chan(ss, calculate_fft);
 }
 
 static int map_show_transform_peaks(chan_info *cp, void *ptr) {cp->show_transform_peaks = (*((int *)ptr)); return(0);}
@@ -342,7 +342,7 @@ static void peaks_callback(Widget w, XtPointer context, XtPointer info)
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   in_set_show_transform_peaks(ss, val = (cb->set));
   map_over_chans(ss, map_show_transform_peaks, (void *)(&val));
-  map_over_chans(ss, calculate_fft, NULL);
+  for_each_chan(ss, calculate_fft);
 }
 
 static int map_chans_fft_log_magnitude(chan_info *cp, void *ptr) 
@@ -360,7 +360,7 @@ static void db_callback(Widget w, XtPointer context, XtPointer info)
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   in_set_fft_log_magnitude(ss, val = cb->set);
   map_over_chans(ss, map_chans_fft_log_magnitude, (void *)(&val));
-  map_over_chans(ss, calculate_fft, NULL);
+  for_each_chan(ss, calculate_fft);
 }
 
 static int map_chans_fft_log_frequency(chan_info *cp, void *ptr) 
@@ -378,7 +378,7 @@ static void logfreq_callback(Widget w, XtPointer context, XtPointer info)
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   in_set_fft_log_frequency(ss, val = cb->set);
   map_over_chans(ss, map_chans_fft_log_frequency, (void *)(&val));
-  map_over_chans(ss, calculate_fft, NULL);
+  for_each_chan(ss, calculate_fft);
 }
 
 static int map_chans_transform_normalization(chan_info *cp, void *ptr) 
@@ -397,7 +397,7 @@ static void normalize_callback(Widget w, XtPointer context, XtPointer info)
   choice = (cb->set) ? NORMALIZE_TRANSFORM_BY_CHANNEL : DONT_NORMALIZE_TRANSFORM;
   in_set_transform_normalization(ss, choice);
   map_over_chans(ss, map_chans_transform_normalization, (void *)(&choice));
-  map_over_chans(ss, calculate_fft, NULL);
+  for_each_chan(ss, calculate_fft);
 }
 
 static void selection_callback(Widget w, XtPointer context, XtPointer info)
@@ -406,7 +406,7 @@ static void selection_callback(Widget w, XtPointer context, XtPointer info)
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   in_set_show_selection_transform(ss, cb->set);
-  map_over_chans(ss, calculate_fft, NULL);
+  for_each_chan(ss, calculate_fft);
 }
 
 
@@ -430,7 +430,7 @@ static void beta_callback(Widget w, XtPointer context, XtPointer info)
       get_fft_window_data(ss);
       graph_redisplay(ss);
       if (transform_type(ss) == FOURIER) 
-	map_over_chans(ss, calculate_fft, NULL);
+	for_each_chan(ss, calculate_fft);
     }
 } 
 
@@ -1074,7 +1074,7 @@ void set_fft_window_beta(snd_state *ss, Float val)
       graph_redisplay(ss);
     }
   if (!(ss->graph_hook_active)) 
-    map_over_chans(ss, calculate_fft, NULL);
+    for_each_chan(ss, calculate_fft);
 }
 
 void set_transform_graph_type(snd_state *ss, int val)
@@ -1100,7 +1100,7 @@ void set_transform_graph_type(snd_state *ss, int val)
 	break;
       }
   if (!(ss->graph_hook_active)) 
-    map_over_chans(ss, calculate_fft, NULL);
+    for_each_chan(ss, calculate_fft);
 }
 
 void set_transform_size(snd_state *ss, int val)
@@ -1117,13 +1117,13 @@ void set_transform_size(snd_state *ss, int val)
 	    break;
 	  }
     }
-  if (!(ss->graph_hook_active)) map_over_chans(ss, calculate_fft, NULL);
+  if (!(ss->graph_hook_active)) for_each_chan(ss, calculate_fft);
 }
 
 void set_fft_window(snd_state *ss, int val)
 {
   in_set_fft_window(ss, val);
-  if (!(ss->graph_hook_active)) map_over_chans(ss, calculate_fft, NULL);
+  if (!(ss->graph_hook_active)) for_each_chan(ss, calculate_fft);
   if (transform_dialog)
     {
       XmListSelectPos(window_list, val + 1, FALSE);
@@ -1138,11 +1138,11 @@ void set_fft_window(snd_state *ss, int val)
   
 void set_transform_type(snd_state *ss, int val)
 {
-  if (!(ss->graph_hook_active)) map_over_chans(ss, force_fft_clear, NULL);
+  if (!(ss->graph_hook_active)) for_each_chan(ss, force_fft_clear);
   in_set_transform_type(ss, val);
   map_over_chans(ss, map_chans_transform_type, (void *)(&val));
   if (!(ss->graph_hook_active)) 
-    map_over_chans(ss, calculate_fft, NULL);
+    for_each_chan(ss, calculate_fft);
   if (transform_dialog) XmListSelectPos(type_list, val + 1, FALSE);
 }
 
@@ -1153,7 +1153,7 @@ void set_wavelet_type(snd_state *ss, int val)
   map_over_chans(ss, map_chans_wavelet_type, (void *)(&val));
   if ((transform_type(ss) == WAVELET) && 
       (!(ss->graph_hook_active))) 
-    map_over_chans(ss, calculate_fft, NULL);
+    for_each_chan(ss, calculate_fft);
 }
 
 /* various set- cases need to be reflected in the transform dialog */
@@ -1164,7 +1164,7 @@ void set_show_transform_peaks(snd_state *ss, int val)
   if (transform_dialog) 
     set_toggle_button(peaks_button, val, FALSE, (void *)ss);
   if (!(ss->graph_hook_active)) 
-    map_over_chans(ss, calculate_fft, NULL);
+    for_each_chan(ss, calculate_fft);
 }
 
 void set_fft_log_frequency(snd_state *ss, int val)
@@ -1174,7 +1174,7 @@ void set_fft_log_frequency(snd_state *ss, int val)
   if (transform_dialog)
     set_toggle_button(logfreq_button, val, FALSE, (void *)ss);
   if (!(ss->graph_hook_active)) 
-    map_over_chans(ss, calculate_fft, NULL);
+    for_each_chan(ss, calculate_fft);
 }
 
 void set_fft_log_magnitude(snd_state *ss, int val)
@@ -1184,7 +1184,7 @@ void set_fft_log_magnitude(snd_state *ss, int val)
   if (transform_dialog) 
     set_toggle_button(db_button, val, FALSE, (void *)ss);
   if (!(ss->graph_hook_active)) 
-    map_over_chans(ss, calculate_fft, NULL);
+    for_each_chan(ss, calculate_fft);
 }
 
 void set_transform_normalization(snd_state *ss, int val)
@@ -1194,7 +1194,7 @@ void set_transform_normalization(snd_state *ss, int val)
   if (transform_dialog) 
     set_toggle_button(normalize_button, val, FALSE, (void *)ss);
   if (!(ss->graph_hook_active)) 
-    map_over_chans(ss, calculate_fft, NULL);
+    for_each_chan(ss, calculate_fft);
 }
 
 void set_show_selection_transform(snd_state *ss, int show)
@@ -1203,7 +1203,7 @@ void set_show_selection_transform(snd_state *ss, int show)
   if (transform_dialog)
     set_toggle_button(selection_button, show, FALSE, (void *)ss); 
   if (!(ss->graph_hook_active)) 
-    map_over_chans(ss, calculate_fft, NULL);
+    for_each_chan(ss, calculate_fft);
 }
 
 int add_transform_to_list(char *name)

@@ -1329,7 +1329,7 @@ void file_override_samples(off_t num, char *tempfile, chan_info *cp, int chan, i
       reflect_sample_change_in_axis(cp);
       ripple_marks(cp, 0, 0);
       check_for_first_edit(cp);
-      update_graph(cp, NULL);
+      update_graph(cp);
       if (cp->mix_md) reflect_mix_edit(cp, origin);
       after_edit(cp);
     }
@@ -1441,7 +1441,7 @@ void scale_channel(chan_info *cp, Float scl, off_t beg, off_t num, int pos)
   lock_affected_mixes(cp, beg, beg + num);
   if (cp->mix_md) reflect_mix_edit(cp, "scale"); /* 30-Jan-02 */
   reflect_edit_history_change(cp);
-  update_graph(cp, NULL);
+  update_graph(cp);
 }
 
 void ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, int pos)
@@ -1508,7 +1508,7 @@ void ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, i
   lock_affected_mixes(cp, beg, beg + num);
   if (cp->mix_md) reflect_mix_edit(cp, "ramp"); /* 30-Jan-02 */
   reflect_edit_history_change(cp);
-  update_graph(cp, NULL);
+  update_graph(cp);
 }
 
 
@@ -2546,7 +2546,7 @@ void revert_edits(chan_info *cp, void *ptr)
   if (selection_is_active())
     reflect_edit_with_selection_in_menu(); 
   else reflect_edit_without_selection_in_menu();
-  update_graph(cp, NULL);
+  update_graph(cp);
   reflect_mix_in_menu();
   reflect_mix_in_enved();
   if (XEN_HOOKED(cp->undo_hook))
@@ -2573,7 +2573,7 @@ void undo_edit(chan_info *cp, int count)
       if (selection_is_active()) 
 	reflect_edit_with_selection_in_menu();
       else reflect_edit_without_selection_in_menu();
-      update_graph(cp, NULL);
+      update_graph(cp);
       reflect_mix_in_menu();
       reflect_mix_in_enved();
       if (XEN_HOOKED(cp->undo_hook))
@@ -2626,7 +2626,7 @@ void redo_edit(chan_info *cp, int count)
 	  if (selection_is_active()) 
 	    reflect_edit_with_selection_in_menu(); 
 	  else reflect_edit_without_selection_in_menu();
-	  update_graph(cp, NULL);
+	  update_graph(cp);
 	  reflect_mix_in_menu();
 	  reflect_mix_in_enved();
 	}
@@ -3056,7 +3056,7 @@ replacing current data with the function results; origin is the edit-history nam
   close_temp_file(ofd, hdr, num * datumb, sp);
   hdr = free_file_info(hdr);
   file_change_samples(sf->initial_samp, num, ofile, cp, 0, DELETE_ME, LOCK_MIXES, XEN_TO_C_STRING(origin), cp->edit_ctr);
-  update_graph(cp, NULL);
+  update_graph(cp);
   if (ofile) FREE(ofile);
   FREE(data[0]);
   FREE(data);
@@ -3172,7 +3172,7 @@ void as_one_edit(chan_info *cp, int one_edit, char *one_edit_origin) /* origin c
 	    }
 	}
       if (need_backup) prune_edits(cp, cp->edit_ctr + 1);
-      update_graph(cp, NULL); 
+      update_graph(cp); 
     }
 }
 
@@ -3486,7 +3486,7 @@ static XEN g_set_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n, XEN edpos)
   pos = to_c_edit_position(cp, edpos, "set-" S_sample, 5);
   ival[0] = MUS_FLOAT_TO_SAMPLE(XEN_TO_C_DOUBLE(val));
   change_samples(XEN_TO_C_OFF_T_OR_ELSE(samp_n, cp->cursor), 1, ival, cp, LOCK_MIXES, "set-" S_sample, pos);
-  update_graph(cp, NULL);
+  update_graph(cp);
   return(val);
 }
 
@@ -3560,7 +3560,7 @@ the new data's end."
 	  FREE(ivals);
 	}
     }
-  update_graph(cp, NULL);
+  update_graph(cp);
   return(vect);
 }
 
@@ -3767,7 +3767,7 @@ static XEN g_change_samples_with_origin(XEN samp_0, XEN samps, XEN origin, XEN v
 			  XEN_TO_C_STRING(origin), 
 			  pos);
     }
-  update_graph(cp, NULL);
+  update_graph(cp);
   return(xen_return_first(vect, origin));
 }
 
@@ -3809,7 +3809,7 @@ inserts channel 'file-chan' of 'file' (or all chans if file-chan not given) into
 	{
 	  file_insert_samples(beg, len, filename, cp, fchn, DONT_DELETE_ME, S_insert_sound,
 			      to_c_edit_position(cp, edpos, S_insert_sound, 6));
-	  update_graph(cp, NULL);
+	  update_graph(cp);
 	  if (filename) FREE(filename);
 	  return(C_TO_XEN_OFF_T(len));
 	}
@@ -3830,7 +3830,7 @@ inserts channel 'file-chan' of 'file' (or all chans if file-chan not given) into
 			       *   a different edit history, but edpos might be -1 throughout etc.
 			       */
 			      to_c_edit_position(sp->chans[i], edpos, S_insert_sound, 6));
-	  update_graph(sp->chans[i], NULL);
+	  update_graph(sp->chans[i]);
 	}
       if (filename) FREE(filename);
       return(C_TO_XEN_OFF_T(len));
@@ -3852,7 +3852,7 @@ static XEN g_delete_sample(XEN samp_n, XEN snd_n, XEN chn_n, XEN edpos)
   if ((samp >= 0) && (samp <= current_ed_samples(cp)))
     {
       delete_samples(samp, 1, cp, S_delete_sample, pos);
-      update_graph(cp, NULL);
+      update_graph(cp);
       return(XEN_TRUE);
     }
   XEN_ERROR(NO_SUCH_SAMPLE,
@@ -3874,7 +3874,7 @@ static XEN g_delete_samples_1(XEN samp_n, XEN samps, XEN snd_n, XEN chn_n, const
   delete_samples(XEN_TO_C_OFF_T_OR_ELSE(samp_n, 0),
 		 XEN_TO_C_OFF_T_OR_ELSE(samps, 0),
 		 cp, origin, pos);
-  update_graph(cp, NULL);
+  update_graph(cp);
   return(XEN_TRUE);
 }
 
@@ -3914,7 +3914,7 @@ static XEN g_insert_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n, XEN edpos)
   pos = to_c_edit_position(cp, edpos, S_insert_sample, 5);
   ival[0] = MUS_FLOAT_TO_SAMPLE(XEN_TO_C_DOUBLE(val));
   insert_samples(beg, 1, ival, cp, S_insert_sample, pos);
-  update_graph(cp, NULL);
+  update_graph(cp);
   return(val);
 }
 
@@ -3948,7 +3948,7 @@ inserts data (either a vector, vct, or list of samples, or a filename) into snd'
 	  FREE(ivals);
 	}
     }
-  update_graph(cp, NULL);
+  update_graph(cp);
   return(C_TO_XEN_OFF_T(len));
 }
 
@@ -3994,7 +3994,7 @@ static XEN g_insert_samples_with_origin(XEN samp, XEN samps, XEN origin, XEN vec
 			    pos);
       else extend_with_zeros(cp, beg, len, XEN_TO_C_STRING(origin), pos);
     }
-  update_graph(cp, NULL);
+  update_graph(cp);
   return(C_TO_XEN_OFF_T(len));
 }
 
@@ -4364,5 +4364,6 @@ the file is being saved under a new name (as in sound-save-as)."
   scm_c_define_gsubr("free-flange", 1, 0, 0, g_free_flange);
   scm_c_define_gsubr("get-flange", 0, 0, 0, g_get_flange);
   scm_c_define_gsubr("make-flange", 3, 0, 0, g_make_flange);
+  init_fcomb();
 #endif
 }

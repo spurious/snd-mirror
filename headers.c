@@ -3835,7 +3835,7 @@ static int read_tx16w_header(int chan)
     }
   original_data_format = MUS_L12INT; /* can't read this format yet */
   data_format = MUS_UNSUPPORTED;
-  data_size = (int)((float)data_size / 1.5);
+  data_size = (off_t)((float)data_size / 1.5);
   if (hdrbuf[22] == 0x49)
     {
       loop_modes[0] = 1;

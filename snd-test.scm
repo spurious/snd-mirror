@@ -29,13 +29,12 @@
 ;;; test 26: errors
 
 ;;; TODO: test of off_t mark search
-;;; TODO: GL tests
+;;; TODO: GL tests, gtk (xg) tests
 ;;; TODO: load-font current-font send-netscape apply-ladspa set-enved-selected-env
 ;;; TODO: mix panel env editor (apply button)
-;;; TODO: loop-samples of large section, scale-to with chn but 0..dur, fcomb, transform-hook? output-name-hook?
+;;; TODO: loop-samples of large section, scale-to with chn but 0..dur, transform-hook? output-name-hook [requires New dialog]?
 ;;; TODO: make-graph of 1 samp, 
 ;;; TODO: lisp-graph-hook with forward proc, colormap-ref with no pos arg, linear src moving backwards
-;;; TODO: insert|mix-selection w/o chn
 ;;; TODO: srate control change while using semitones
 ;;; TODO: control-panel apply to channel
 ;;; TODO: raw|new data dialog help, delete enved env? ...
@@ -1557,6 +1556,8 @@
 	(mus-sound-datum-size file)
 	frame)))
 
+(load "snd5.scm")
+
 (define (show-input-1 . arg)
   ;; from rtio.scm
   (define (card+device card device)
@@ -2602,7 +2603,7 @@
 (load "extensions.scm")
 (load "examp.scm")
 (load "snd4.scm") ; needed for various scan/map extensions, external program testers etc
-(load "snd5.scm")
+;(load "snd5.scm")
 (load "dsp.scm")
 (load "pvoc.scm")
 (define g-init-val 0)
@@ -11944,6 +11945,8 @@
 	      (IF (not (equal? (mix-home sel-mix-id) (list ind 0)))
 		  (snd-display ";mix-selection mix-home: ~A (~A 0)?" (mix-home sel-mix-id) ind))
 	      (insert-selection 3000 ind 0)
+	      (insert-selection 3000 ind)
+	      (mix-selection 3000 ind)
 	      (delete-selection)
 	      (revert-sound ind))))
 	(close-sound ind))
@@ -12033,6 +12036,24 @@
 	  (snd-display ";concatenate-envelopes: ~A" (concatenate-envelopes '(0 0 1 1) '(0 1 1 0))))
       (IF (not (feql (concatenate-envelopes '(0 0 1 1.5) '(0 1 1 0)) '(0.0 0 1.0 1.5 1.01 1 2.01 0)))
 	  (snd-display ";concatenate-envelopes: ~A" (concatenate-envelopes '(0 0 1 1.5) '(0 1 1 0))))
+
+      (let ((ind (new-sound "fmv.snd"))
+	    (v (make-vct 20)))
+	(vct-fill! v 1.0)
+	(vct->channel v)
+	(set! (selection-position ind 0) 5)
+	(set! (selection-length) 5)
+	(scale-selection-to 0.5)
+	(insert-selection 15 ind)
+	(if (not (= (frames ind) 25)) (snd-display ";insert-selection 5: ~A" (frames ind)))
+	(if (not (vequal (channel->vct 0 25) (vct 1.0 1.0 1.0 1.0 1.0 0.5 0.5 0.5 0.5 0.5 
+						  1.0 1.0 1.0 1.0 1.0 0.5 0.5 0.5 0.5 0.5
+						  1.0 1.0 1.0 1.0 1.0)))
+	    (snd-display "insert-selection: ~A" (channel->vct 0 25)))
+	(mix-selection 1)
+	(if (not (vequal (channel->vct 0 10) (vct 1.0 1.5 1.5 1.5 1.5 1.0 0.5 0.5 0.5 0.5)))
+	    (snd-display ";mix-selection: ~A" (channel->vct 0 10)))
+	(close-sound ind))
 
       (let ((ind (new-sound "fmv.snd"))
 	    (v (make-vct 2000))
@@ -12265,7 +12286,10 @@
 	    (begin
 	      (c-channel (get-test-a2) 0 123 oboe 0)
 	      (IF (not (= (edit-position oboe) 11))
-		  (snd-display ";oboe c-channel? ~A ~A" (edit-position oboe) (edit-fragment)))))
+		  (snd-display ";oboe c-channel? ~A ~A" (edit-position oboe) (edit-fragment)))
+	      (loop-samples (make-sample-reader 0) (get-flange) (frames) "flange" (make-flange 2.0 5.0 0.001))
+	      (let ((cmb (dmake-fcomb .1 10 .2 .3)))
+		(clm-channel cmb))))
 	(revert-sound)
 	
 	(let ((tag (catch #t (lambda () (scale-channel 2.0 0 123 oboe 0 (lambda (hi) #f))) (lambda args (car args)))))
@@ -23086,7 +23110,7 @@ EDITS: 5
 	       add-mark add-player add-sound-file-extension add-to-main-menu add-to-menu add-transform amp-control
 	       append-to-minibuffer as-one-edit ask-before-overwrite audio-input-device audio-output-device
 	       audio-state-file auto-resize auto-update autocorrelate axis-info axis-label-font axis-numbers-font
-	       backward-graph backward-mark backward-mix backward-sample basic-color bind-key bold-button-font bomb
+	       backward-graph backward-mark backward-mix basic-color bind-key bold-button-font bomb
 	       button-font c-g?  apply-controls change-menu-label change-samples-with-origin channel-style
 	       channel-widgets channels chans clear-audio-inputs close-sound close-sound-file color-cutoff color-dialog
 	       color-inverted color-scale color->list colormap color?  comment contrast-control contrast-control-amp
@@ -23105,7 +23129,7 @@ EDITS: 5
 	       fill-rectangle filter-sound filter-control-in-dB filter-control-env enved-filter-order enved-filter
 	       filter-env-in-hz filter-control-order filter-selection filter-waveform-color filter-control? find
 	       find-mark find-sound finish-progress-report foreground-color forward-graph forward-mark forward-mix
-	       forward-sample frames free-mix-sample-reader free-sample-reader free-track-sample-reader graph
+	       frames free-mix-sample-reader free-sample-reader free-track-sample-reader graph
 	       graph-color graph-cursor graph-data graph->ps graph-style graph-lisp?  graphs-horizontal header-type
 	       help-dialog help-text-font highlight-color in insert-region insert-sample insert-samples
 	       insert-samples-with-origin insert-selection insert-silence insert-sound just-sounds key key-binding
@@ -23572,11 +23596,11 @@ EDITS: 5
 			(IF (not (eq? tag 'wrong-type-arg))
 			    (snd-display ";~D: chn (no snd) procs ~A: ~A" ctr n tag))
 			(set! ctr (+ ctr 1))))
-		    (list backward-graph backward-sample channel-widgets count-matches cursor channel-properties
+		    (list backward-graph channel-widgets count-matches cursor channel-properties
 			  cursor-follows-play cursor-position cursor-size cursor-style delete-sample display-edits dot-size
 			  draw-dots draw-lines edit-fragment edit-position edit-tree edits fft-window-beta fft-log-frequency
 			  fft-log-magnitude transform-size transform-graph-type fft-window graph-transform? find forward-graph
-			  forward-mark forward-mix forward-sample graph graph-style graph-lisp? insert-region insert-sound
+			  forward-mark forward-mix graph graph-style graph-lisp? insert-region insert-sound
 			  left-sample make-graph-data map-chan max-transform-peaks maxamp min-dB mix-region
 			  transform-normalization peak-env-info peaks play play-and-wait position->x position->y reverse-sound
 			  revert-sound right-sample sample samples->vct samples->sound-data save-sound save-sound-as scan-chan
@@ -23598,11 +23622,11 @@ EDITS: 5
 			(IF (not (eq? tag 'wrong-type-arg))
 			    (snd-display ";~D: chn (no chn) procs ~A: ~A" ctr n tag))
 			(set! ctr (+ ctr 1))))
-		    (list backward-graph backward-sample channel-widgets count-matches cursor channel-properties
+		    (list backward-graph channel-widgets count-matches cursor channel-properties
 			  cursor-position cursor-size cursor-style delete-sample display-edits dot-size draw-dots draw-lines
 			  edit-fragment edit-position edit-tree edits fft-window-beta fft-log-frequency fft-log-magnitude
 			  transform-size transform-graph-type fft-window graph-transform? find forward-graph forward-mark
-			  forward-mix forward-sample graph graph-style graph-lisp? insert-region insert-sound left-sample
+			  forward-mix graph graph-style graph-lisp? insert-region insert-sound left-sample
 			  make-graph-data map-chan max-transform-peaks maxamp min-dB mix-region transform-normalization
 			  peak-env-info peaks play play-and-wait position->x position->y reverse-sound right-sample sample
 			  samples->vct samples->sound-data save-sound-as scan-chan show-axes show-transform-peaks show-marks
@@ -23623,11 +23647,11 @@ EDITS: 5
 			(IF (not (eq? tag 'no-such-sound))
 			    (snd-display ";~D: chn procs ~A: ~A" ctr n tag))
 			(set! ctr (+ ctr 1))))
-		    (list backward-graph backward-sample channel-widgets cursor cursor-follows-play channel-properties
+		    (list backward-graph channel-widgets cursor cursor-follows-play channel-properties
 			  cursor-position cursor-size cursor-style delete-sample display-edits dot-size edit-fragment
 			  edit-position edit-tree edits env-sound fft-window-beta fft-log-frequency fft-log-magnitude
 			  transform-size transform-graph-type fft-window graph-transform? filter-sound forward-graph
-			  forward-mark forward-mix forward-sample graph-data graph-style graph-lisp? insert-region left-sample
+			  forward-mark forward-mix graph-data graph-style graph-lisp? insert-region left-sample
 			  make-graph-data max-transform-peaks maxamp min-dB transform-normalization peak-env-info play
 			  play-and-wait position->x position->y redo reverse-sound revert-sound right-sample sample
 			  samples->vct samples->sound-data save-sound scale-by scale-to show-axes show-transform-peaks
@@ -23648,8 +23672,8 @@ EDITS: 5
 			(IF (not (eq? tag 'no-such-sound))
 			    (snd-display ";~D: snd(1) chn procs ~A: ~A" ctr n tag))
 			(set! ctr (+ ctr 1))))
-		    (list backward-graph backward-sample delete-sample edit-fragment forward-graph forward-mark
-			  forward-mix forward-sample graph-data graph-style play play-and-wait position->x position->y redo
+		    (list backward-graph delete-sample edit-fragment forward-graph forward-mark
+			  forward-mix graph-data graph-style play play-and-wait position->x position->y redo
 			  scale-sound-by scale-sound-to scale-by scale-to undo x->position y->position)))
 
         (let ((ctr 0)
@@ -23663,8 +23687,8 @@ EDITS: 5
 			(IF (not (eq? tag 'no-such-channel))
 			    (snd-display ";~D: snd(1 1234) chn procs ~A: ~A" ctr n tag))
 			(set! ctr (+ ctr 1))))
-		    (list backward-graph backward-sample delete-sample edit-fragment forward-graph forward-mark
-			  forward-mix forward-sample graph-data play play-and-wait position->x position->y redo scale-by
+		    (list backward-graph delete-sample edit-fragment forward-graph forward-mark
+			  forward-mix graph-data play play-and-wait position->x position->y redo scale-by
 			  scale-to undo x->position y->position))
 	  (close-sound index))
 

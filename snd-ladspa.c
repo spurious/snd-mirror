@@ -705,7 +705,7 @@ Information about about parameters can be acquired using analyse-ladspa."
 			  LOCK_MIXES,
 			  XEN_TO_C_STRING(origin),
 			  ncp->edit_ctr);
-      update_graph(ncp, NULL);
+      update_graph(ncp);
       j++;
       if (j >= inchans) j = 0;
     }

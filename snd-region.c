@@ -696,7 +696,7 @@ static int paste_region_1(int n, chan_info *cp, int add, off_t beg, const char *
 	  file_insert_samples(beg, r->frames, tempfile, ncp, i,
 			      (r->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
 			      origin, ncp->edit_ctr);
-	  update_graph(si->cps[i], NULL);
+	  update_graph(si->cps[i]);
 	}
       if ((r->use_temp_file == REGION_FILE) && (tempfile)) FREE(tempfile);
     }
@@ -1194,7 +1194,7 @@ inserts region data into snd's channel chn starting at 'start-samp'"
     return(snd_no_such_region_error(S_insert_region, reg_n));
   samp = XEN_TO_C_OFF_T_OR_ELSE(samp_n, 0);
   paste_region_1(rg, cp, FALSE, samp, S_insert_region);
-  update_graph(cp, NULL);
+  update_graph(cp);
   return(reg_n);
 }
 

@@ -39,7 +39,7 @@ static void region_update_graph(chan_info *cp)
   if (current_region == -1) return;
   rsp->nchans = region_chans(stack_position_to_id(current_region));
   if (rsp->nchans == 0) return;
-  update_graph(cp, NULL);
+  update_graph(cp);
   rsp->nchans = 1;
 }
 
@@ -53,7 +53,7 @@ void reflect_region_graph_style(snd_state *ss)
     {
       rsp->chans[0]->graph_style = region_graph_style(ss);
       rsp->chans[0]->dot_size = dot_size(ss);
-      update_graph(rsp->chans[0], NULL);
+      update_graph(rsp->chans[0]);
     }
 }
 

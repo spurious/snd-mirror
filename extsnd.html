@@ -2150,7 +2150,7 @@ the hook.
     (reset-hook! <em class=red>read-hook</em>)
     res))
 <!-- --></pre></td></tr></table></td></tr>
-<!-- --><tr><td colspan=3>See also snd-debug in extensions.scm.</td></tr>
+<!-- --><tr><td></td><td colspan=2>See also snd-debug in extensions.scm.</td></tr>
 <!-- -->
 <!-- save-hook -->
 <!-- --><tr><td colspan=2>
@@ -4188,15 +4188,6 @@ the direction argument between the channel and edit-position.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
-<!-- backward-sample -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndbackwardsample">backward-sample</a></em> (<i>count snd chn</i>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->move back <i>count</i> samples (C-b), return new cursor position.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
 <!-- beats-per-minute -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="beatsperminute">beats-per-minute</a></em> (<em class=narg>snd chn</em>)</code></span>
@@ -4751,16 +4742,6 @@ the direction argument between the channel and edit-position.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->move forward (down or right) <i>count</i> graphs (C-x C-o), returning a list of the new sound index and channel number.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- forward-sample -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndforwardsample">forward-sample</a></em> (<i>count snd chn</i>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->move forward <i>count</i> samples (C-f), return new cursor position.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -8191,8 +8172,8 @@ run
 <!-- --><tr><td></td><td>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define line-size 128)
-(<em class=red>bind-key</em> (char-&gt;integer #\n) 4 (lambda (arg) (forward-sample (* line-size arg))))
-(<em class=red>bind-key</em> (char-&gt;integer #\p) 4 (lambda (arg) (backward-sample (* line-size arg))))
+(<em class=red>bind-key</em> (char-&gt;integer #\n) 4 (lambda (arg) (set! (cursor) (+ (cursor) (* line-size arg)))))
+(<em class=red>bind-key</em> (char-&gt;integer #\p) 4 (lambda (arg) (set! (cursor) (- (cursor) (* line-size arg)))))
 <!-- --></pre></td></tr></table></td></tr>
 <!-- -->
 <!-- --><tr><td></td><td>
@@ -8781,8 +8762,8 @@ is handy in snd-motif.scm where many of the procedures want an X-style Pixel val
         <!-- I(fft window):L(fft-window)(lfftwindow) -->
 	<!-- I(fft size):L(transform-size)(lfftsize) -->
         <!-- I(fft window parameter):L(fft-window-beta)(fftbeta) -->
-	<!-- I(move cursor ahead):L(forward-sample)(sndforwardsample) -->
-        <!-- I(move cursor back):L(backward-sample)(sndbackwardsample) -->
+	<!-- I(move cursor ahead):L(set cursor)(sndcursor) -->
+        <!-- I(move cursor back):L(set cursor)(sndcursor) -->
         <!-- I(insert zeros):L(insert-silence)(sndinsertsilence) -->
         <!-- I(insert zeros):O(pad-channel)(padchannel) -->
 	<!-- I(change samples):L(set-samples)(sndsetsamples) -->

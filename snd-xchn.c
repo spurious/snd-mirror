@@ -143,7 +143,7 @@ static void gzy_changed(int value, chan_info *cp)
   else new_gsy = cp->gsy;
   if (new_gsy < 0.0) new_gsy = 0.0;
   set_scrollbar(channel_gsy(cp), new_gsy, new_size, SCROLLBAR_MAX);
-  map_over_sound_chans(cp->sound, update_graph, NULL);
+  for_each_sound_chan(cp->sound, update_graph);
 }
 
 static void gsy_changed(int value, chan_info *cp)
@@ -151,7 +151,7 @@ static void gsy_changed(int value, chan_info *cp)
   Float low;
   low = get_scrollbar(channel_gsy(cp), value, SCROLLBAR_MAX);
   cp->gsy = (1.0 - cp->gzy) * low;
-  map_over_sound_chans(cp->sound, update_graph, NULL);
+  for_each_sound_chan(cp->sound, update_graph);
 }
 
 void fixup_gsy(chan_info *cp, Float low, Float high)
@@ -542,9 +542,9 @@ static void channel_expose_callback(Widget w, XtPointer context, XtPointer info)
   if (sp->channel_style != CHANNELS_SEPARATE)
     {
       if ((cp->chan == 0) && (ev->width > 10) && (ev->height > 10))
-	map_over_sound_chans(sp, update_graph, NULL);
+	for_each_sound_chan(sp, update_graph);
     }
-  else update_graph(cp, NULL);
+  else update_graph(cp);
 }
 
 static void channel_resize_callback(Widget w, XtPointer context, XtPointer info)
@@ -556,9 +556,9 @@ static void channel_resize_callback(Widget w, XtPointer context, XtPointer info)
   if (sp->channel_style != CHANNELS_SEPARATE)
     {
       if (cp->chan == 0)
-	map_over_sound_chans(sp, update_graph, NULL);
+	for_each_sound_chan(sp, update_graph);
     }
-  else update_graph(cp, NULL);
+  else update_graph(cp);
 }
 
 static XEN mouse_enter_graph_hook;

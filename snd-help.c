@@ -246,6 +246,8 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+12-Jun:  snd 5.11.\n\
+         moved forward|backward-sample to snd5.scm.\n\
 10-Jun:  mix panel amp envs are now editable.\n\
 7-Jun:   added fftw support, removed fht.\n\
 6-Jun:   removed --with-big-colormap switch (use -DCOLORMAP_SIZE=64 to get old form).\n\
@@ -257,7 +259,6 @@ void news_help(snd_state *ss)
 20-May:  removed glfft.c and glfft.scm, added snd-gxl-context on -DHAVE_GL switch (configure --with-gl).\n\
          added gl.c, makegl.scm, gldata.scm (GL example in grfsnd.html).\n\
 15-May:  update-hook.\n\
-13-May:  snd 5.10.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
@@ -1139,7 +1140,6 @@ all refer to the same thing.\n\
   " S_backward_graph "    (count)\n\
   " S_backward_mark "     (count)\n\
   " S_backward_mix "      (count)\n\
-  " S_backward_sample "   (count)\n\
   " S_bind_key "          (key state code ignore-prefix)\n\
   " S_c_g "               ()\n\
   " S_c_g_x "              ()\n\
@@ -1202,7 +1202,6 @@ all refer to the same thing.\n\
   " S_forward_graph "     (count)\n\
   " S_forward_mark "      (count)\n\
   " S_forward_mix "       (count)\n\
-  " S_forward_sample "    (count)\n\
   " S_free_sample_reader "(rd)\n\
   " S_graph "             (data xlabel x0 x1 snd chn)\n\
   " S_graph_lisp_p "       (snd chn)\n\

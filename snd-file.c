@@ -961,7 +961,7 @@ int restore_axes_data(snd_info *sp, axes_data *sa, Float new_duration, int need_
 	       sa->axis_data[loc + SA_X1], 
 	       sa->axis_data[loc + SA_Y0], 
 	       sa->axis_data[loc + SA_Y1]);
-      update_graph(cp, NULL); /* get normalized state before messing with it */
+      update_graph(cp); /* get normalized state before messing with it */
       if (sa->fftp[j]) 
 	{
 	  fftb(cp, TRUE); 
@@ -1190,7 +1190,7 @@ static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
       restore_axes_data(nsp, sa, mus_sound_duration(filename), FALSE);
       if (nsp->nchans == sp_chans) sound_restore_marks(nsp, ms);
       for (i = 0; i < nsp->nchans; i++) 
-	update_graph(nsp->chans[i], NULL);
+	update_graph(nsp->chans[i]);
     }
 
   if (XEN_PROCEDURE_P(update_hook_result))

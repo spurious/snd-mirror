@@ -637,7 +637,7 @@ float mus_sound_duration(const char *arg)
   sf = getsf(arg); 
   if (sf) 
     {
-      if ((sf->chans > 0) && (sf->srate > 0.0))
+      if ((sf->chans > 0) && (sf->srate > 0))
 	val = (float)(sf->samples) / ((float)(sf->chans) * (float)(sf->srate));
       else val = 0.0;
     }

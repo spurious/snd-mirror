@@ -14,11 +14,10 @@
   #define TO_PROC_NAME(Str)
 #endif
 
-static int remove_temp_files(chan_info *cp, void *ignore)
+static void remove_temp_files(chan_info *cp)
 {
   free_sound_list(cp);
   free_mix_list(cp);
-  return(0);
 }
 
 #ifdef DEBUG_MEMORY
@@ -37,7 +36,7 @@ int snd_exit_cleanly(snd_state *ss, int force_exit)
   if ((XEN_TRUE_P(res)) && (!force_exit)) return(0);
   mus_sound_finalize();
   cleanup_dac();
-  map_over_chans(ss, remove_temp_files, NULL);
+  for_each_chan(ss, remove_temp_files);
   cleanup_region_temp_files();
   cleanup_recording();
   forget_temps();

@@ -1785,17 +1785,16 @@ BACKGROUND_TYPE sonogram_in_slices(void *sono)
   return(BACKGROUND_CONTINUE);
 }
 
-int sono_update(chan_info *cp, void *ignore)
+void sono_update(chan_info *cp)
 {
   if (cp->transform_graph_type != GRAPH_TRANSFORM_ONCE) make_sonogram_axes(cp);
-  update_graph(cp, NULL);
-  return(0);
+  update_graph(cp);
 }
 
 void set_spectro_cutoff_and_redisplay(snd_state *ss, Float val)
 {
   in_set_spectro_cutoff(ss, val); 
-  map_over_chans(ss, sono_update, NULL);
+  for_each_chan(ss, sono_update);
 }
 
 static void spectral_multiply (Float* rl1, Float* rl2, int n)
