@@ -2909,7 +2909,6 @@ Float *mus_ycoeffs(mus_any *ptr)
 
 Float *mus_make_fir_coeffs(int order, Float *envl, Float *aa)
 {
-  /* TODO: speed up mus_make_fir_coeffs */
   /* envl = evenly sampled freq response, has order samples */
   int n, m, i, j, jj;
   Float am, q, xt = 0.0, xt0, scl, qj, x;
@@ -2919,33 +2918,47 @@ Float *mus_make_fir_coeffs(int order, Float *envl, Float *aa)
   if (aa) 
     a = aa;
   else a = (Float *)clm_calloc(order, sizeof(Float), "coeff space");
-  m = (n + 1) / 2;
-  am = 0.5 * (n + 1);
-  scl = 2.0 / (Float)n;
-  q = TWO_PI / (Float)n;
-  xt0 = envl[0] * 0.5;
-  for (j = 0, jj = n - 1; j < m; j++, jj--)
+  if (!(POWER_OF_2_P(order)))
     {
-      xt = xt0;
-      qj = q * (am - j - 1);
-      for (i = 1, x = qj; i < m; i++, x += qj)
-	xt += (envl[i] * cos(x));
-      /* we could use waveshaping here and get a major speedup via:
-       * 
-       *  Float *cheby;
-       *  cheby = mus_partials2polynomial(m, envl, 1);
-       *  for (j = 0, jj = n - 1; j < m; j++, jj--)
-       *    a[j] = scl * (xt0 + mus_polynomial(cheby, cos(q * (am - j -1)), m));
-       *
-       * but the highest term is always 2^i * envl[i], and in large spectra (i > 8192 for example)
-       *  this causes numerical overflows.
-       */
-      a[j] = xt * scl;
-      a[jj] = a[j];
+      m = (n + 1) / 2;
+      am = 0.5 * (n + 1);
+      scl = 2.0 / (Float)n;
+      q = TWO_PI / (Float)n;
+      xt0 = envl[0] * 0.5;
+      for (j = 0, jj = n - 1; j < m; j++, jj--)
+	{
+	  xt = xt0;
+	  qj = q * (am - j - 1);
+	  for (i = 1, x = qj; i < m; i++, x += qj)
+	    xt += (envl[i] * cos(x));
+	  a[j] = xt * scl;
+	  a[jj] = a[j];
+	}
+    }
+  else /* use fft if it's easy to match -- there must be a way to handle odd orders here */
+    {
+      Float *rl, *im;
+      int fsize, lim;
+      Float scl, offset;
+      fsize = 2 * snd_2pow2(order);
+      rl = (Float *)CALLOC(fsize, sizeof(Float));
+      im = (Float *)CALLOC(fsize, sizeof(Float));
+      lim = order / 2;
+      for (i = 0; i < lim; i++) rl[i] = envl[i];
+      mus_fft(rl, im, fsize, 1);
+      scl = 4.0 / fsize;
+      offset = -2.0 * envl[0] / fsize;
+      for (i = 0; i < fsize; i++) rl[i] = rl[i] * scl + offset;
+      for (i = 1, j = lim - 1, jj = lim; i < order; i += 2, j--, jj++) 
+	{
+	  a[j] = rl[i]; 
+	  a[jj] = rl[i];
+	}
+      FREE(rl);
+      FREE(im);
     }
   return(a);
 }
-
 
 void mus_clear_filter_state(mus_any *gen)
 {

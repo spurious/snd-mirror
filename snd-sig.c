@@ -1079,7 +1079,7 @@ void display_frequency_response(env *e, axis_info *ap, axis_context *gax, int or
   x1 = ap->x_axis_x0;
   coeffs = get_filter_coeffs(order, e);
   if (!coeffs) return;
-  fsize = 2 * snd_2pow2(pts); /* *2 for 1/2 frqs */
+  fsize = 2 * snd_2pow2((pts > order) ? pts : order); /* *2 for 1/2 frqs */
   rl = (Float *)CALLOC(fsize, sizeof(Float));
   im = (Float *)CALLOC(fsize, sizeof(Float));
   for (i = 0, j = order - 1; i < order / 2; i++, j -= 2) rl[j] = coeffs[i]; /* by 2 from 1 for 1/2 bins */
@@ -1302,26 +1302,34 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, of
   else
     {
       /* we think there's enough memory to do the entire thing in one pass */
-      sndrdat = (Float *)CALLOC(fsize, sizeof(Float));
       if (precalculated_coeffs)
 	fltdat = precalculated_coeffs;
       else fltdat = sample_linear_env(e, fsize);
-      for (k = 0; k < dur; k++) 
-	sndrdat[k] = (Float)(read_sample_to_float(sf));
-      mus_fftw(sndrdat, fsize, 1);
-      scale = 1.0 / (Float)fsize;
-      for (k = 0; k < fsize; k++)
-	sndrdat[k] *= (scale * fltdat[k]);         /* fltdat is already reflected around midpoint */
-      mus_fftw(sndrdat, fsize, -1);
-      write(ofd, sndrdat, fsize * sizeof(Float));
-      close_temp_file(ofd, hdr, fsize * sizeof(Float), sp);
-      file_change_samples(beg, dur + order, ofile, cp, 0, DELETE_ME, LOCK_MIXES, origin, cp->edit_ctr);
-      FREE(sndrdat);
+      if (fltdat)
+	{
+	  sndrdat = (Float *)CALLOC(fsize, sizeof(Float));
+	  for (k = 0; k < dur; k++) 
+	    sndrdat[k] = (Float)(read_sample_to_float(sf));
+	  mus_fftw(sndrdat, fsize, 1);
+	  scale = 1.0 / (Float)fsize;
+	  for (k = 0; k < fsize; k++)
+	    sndrdat[k] *= (scale * fltdat[k]);         /* fltdat is already reflected around midpoint */
+	  mus_fftw(sndrdat, fsize, -1);
+	  write(ofd, sndrdat, fsize * sizeof(Float));
+	  close_temp_file(ofd, hdr, fsize * sizeof(Float), sp);
+	  file_change_samples(beg, dur + order, ofile, cp, 0, DELETE_ME, LOCK_MIXES, origin, cp->edit_ctr);
+	  FREE(sndrdat);
+	}
+      else 
+	{
+	  close_temp_file(ofd, hdr, 0, sp);
+	  snd_remove(ofile, REMOVE_FROM_CACHE);
+	}
     }
   if (ofile) {FREE(ofile); ofile = NULL;}
   hdr = free_file_info(hdr);
   cp->edit_hook_checked = false;
-  if (!precalculated_coeffs)  FREE(fltdat);
+  if ((fltdat) && (!precalculated_coeffs))  FREE(fltdat);
   update_graph(cp);
   return(NULL);
 }
@@ -3750,7 +3758,6 @@ scale samples in the given sound/channel between beg and beg + num by an exponen
 	      data[2] = 1.0;
 	      data[3] = XEN_TO_C_DOUBLE(rmp1);
 	      e = mus_make_env(data, 2, 1.0, 0.0, ebase, 0.0, samp, samp + samps - 1, NULL);
-	      /* fprintf(stderr,"e: %s\n", mus_inspect(e)); */
 	      r0 = mus_env_initial_power(e);
 	      rates = mus_env_rates(e);
 	      passes = mus_env_passes(e);

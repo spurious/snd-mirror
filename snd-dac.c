@@ -308,8 +308,10 @@ static Float contrast (dac_info *dp, Float amp, Float index, Float inval)
 }
 
 static mus_error_handler_t *old_error_handler;
+static bool got_local_error = false;
 static void local_mus_error(int type, char *msg)
 {
+  got_local_error = true;
   snd_error(msg);
 }
 
@@ -318,22 +320,26 @@ Float *sample_linear_env(env *e, int order)
   /* used only for filter coeffs (env here is the frequency response curve) */
   mus_any *ge;
   int ordp;
-  Float *data;
+  Float *data = NULL;
   Float last_x, step, x;
   int i, j;
-  data = (Float *)CALLOC(order, sizeof(Float));
   last_x = e->data[(e->pts - 1) * 2];
   step = 2 * last_x / ((Float)order - 1);
   ordp = e->pts; 
   if (ordp < order) ordp = order;
+  got_local_error = false;
   old_error_handler = mus_error_set_handler(local_mus_error);
   ge = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, 0, 1000 * ordp, NULL);
   mus_error_set_handler(old_error_handler);
-  for (i = 0, x = 0.0; i < order / 2; i++, x += step) 
-    data[i] = mus_env_interp(x, ge);
-  for (j = order / 2 - 1, i = order / 2; (i < order) && (j >= 0); i++, j--) 
-    data[i] = data[j];
-  mus_free(ge);
+  if (!got_local_error)
+    {
+      data = (Float *)CALLOC(order, sizeof(Float));
+      for (i = 0, x = 0.0; i < order / 2; i++, x += step) 
+	data[i] = mus_env_interp(x, ge);
+      for (j = order / 2 - 1, i = order / 2; (i < order) && (j >= 0); i++, j--) 
+	data[i] = data[j];
+      mus_free(ge);
+    }
   return(data);
 }
 
@@ -368,8 +374,12 @@ static dac_info *make_dac_info(chan_info *cp, snd_info *sp, snd_fd *fd)
 	  else
 	    {
 	      data = sample_linear_env(sp->filter_control_envelope, sp->filter_control_order);
-	      dp->flt = make_flt(dp, sp->filter_control_order, data);
-	      FREE(data);
+	      if (data)
+		{
+		  dp->flt = make_flt(dp, sp->filter_control_order, data);
+		  FREE(data);
+		}
+	      else dp->filtering = false;
 	    }
 	}
     }
@@ -1262,8 +1272,11 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		  if ((dp->filtering) && (sp->filter_control_changed))
 		    {
 		      data = sample_linear_env(sp->filter_control_envelope, sp->filter_control_order);
-		      mus_make_fir_coeffs(sp->filter_control_order, data, dp->a); /* since dp->a is used directly, this might work */
-		      FREE(data);
+		      if (data)
+			{
+			  mus_make_fir_coeffs(sp->filter_control_order, data, dp->a); /* since dp->a is used directly, this might work */
+			  FREE(data);
+			}
 		      sp->filter_control_changed = false;
 		    }
 		  if (dp->expanding)

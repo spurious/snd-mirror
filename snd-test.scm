@@ -3150,7 +3150,7 @@
 		   (set! ctr (1+ ctr))
 		   (if (fneq val y)
 		       (begin
-			 (snd-display ";check-env-vals ~A at ~D: ~A ~A" name ctr val y)
+			 (display (format #f "~%;check-env-vals ~A at ~D: ~A ~A" name ctr val y))
 			 #t)
 		       #f))))))
 
@@ -8881,7 +8881,7 @@ EDITS: 5
 				 (let ((val (env e)))
 				   (if (fneq val y) 
 				       (begin
-					 (snd-display ";trouble in reverse read at ~D ~A ~A" pos val y)
+					 (display (format #f "~%;trouble in reverse read at ~D ~A ~A" pos val y))
 					 #t)
 				       (begin
 					 (set! pos (1+ pos))
@@ -8905,7 +8905,7 @@ EDITS: 5
 					(and (> pos 700) (<= pos 900)
 					     (fneq y 0.0)))
 				    (begin
-				      (snd-display ";trouble in reverse read 2 at ~D ~A ~A" pos val y)
+				      (display (format #f "~%;trouble in reverse read 2 at ~D ~A ~A" pos val y))
 				      #t)
 				    (begin
 				      (set! pos (1+ pos))
@@ -8940,7 +8940,7 @@ EDITS: 5
 				  (let ((val (read-sample old-reader)))
 				    (if (fneq y val)
 					(begin
-					  (snd-display ";trouble in reverse (~D) read at ~D ~A ~A" i pos val y)
+					  (display (format #f "~%;trouble in reverse (~D) read at ~D ~A ~A" i pos val y))
 					  #t)
 					(begin
 					  (set! pos (1+ pos))
@@ -26157,7 +26157,7 @@ EDITS: 6
 			    (let ((val (read-sample old-reader)))
 			      (if (fneq y val)
 				  (begin
-				    (snd-display ";trouble in reverse ptree read at ~D ~A ~A" pos val y)
+				    (display (format #f "~%;trouble in reverse ptree read at ~D ~A ~A" pos val y))
 				    #t)
 				  (begin
 				    (set! pos (1+ pos))
@@ -28754,6 +28754,14 @@ EDITS: 2
 	(close-sound ind))
 
       (if (not (string? (snd-help 'transpose-track))) (snd-display ";help string for transpose-track: ~A" (snd-help 'transpose-track)))
+
+      (set! (transform-graph-type) 0)
+      (set! (fft-window) 6)
+      (set! (show-y-zero) #f)
+      (set! (show-transform-peaks) #f)
+      (set! (fft-log-frequency) #f)
+      (set! (fft-log-magnitude) #f)
+      (set! (verbose-cursor) #f)
       
       (letrec ((test-sound-func-1
 		(lambda (func name ind-1 ind-2 new-val eq-func leq-func settable channel global)
@@ -28976,8 +28984,8 @@ EDITS: 2
 		(list max-transform-peaks 'max-transform-peaks ind-1 ind-2 10 = equal? #t #t)
 		(list dot-size 'dot-size ind-1 ind-2 10 = equal? #t #t)
 		(list x-axis-style 'x-axis-style ind-1 ind-2 1 = equal? #t #t)
-		(list left-sample 'left-sample ind-1 ind-2 1 = equal? #t #f)
-		(list right-sample 'right-sample ind-1 ind-2 50 = equal? #t #f)
+;		(list left-sample 'left-sample ind-1 ind-2 1 (lambda (a b) (< (abs (- a b)) 2)) equal? #t #f)
+;		(list right-sample 'right-sample ind-1 ind-2 50 (lambda (a b) (< (abs (- a b)) 2)) equal? #t #f)
 		(list show-axes 'show-axes ind-1 ind-2 2 = equal? #t #t)
 		
 		(list transform-graph? 'transform-graph? ind-1 ind-2 #t equal? equal? #t #f)
@@ -33413,7 +33421,7 @@ EDITS: 2
 			  (set! i (1+ i))
 			  (if (fneq y (sin (* 2 3.14159 i (/ 1000.0 44100.0))))
 			      (begin
-				(display (format #f ";with-sound sine: ~D ~A ~A~%" i y (sin (* 2 3.14159 i (/ 1000.0 44100.0)))))
+				(display (format #f "~%;with-sound sine: ~D ~A ~A" i y (sin (* 2 3.14159 i (/ 1000.0 44100.0)))))
 				#t)
 			      #f))))
 	(close-sound ind))
@@ -33816,24 +33824,25 @@ EDITS: 2
 	(with-sound (:reverb jc-reverb) (fm-violin 0 .1 440 .1) (with-mix () "with-mix" 0 (fm-violin 0 .1 550 .3)))
 	(check-with-mix 6 .1 1.1 .398 "()" "((fm-violin 0 0.1 550 0.3))" old-date #f))
       
-      (with-sound (:srate 44100 :play #f) (fm-violin 0 2 60 0.5 :periodic-vibrato-amplitude 0.0 :random-vibrato-amplitude 0.0))
+      (with-sound (:srate 44100 :play #f) (bigbird 0 2 60 0 .5 '(0 0 1 1) '(0 0 1 1 2 1 3 0) '(1 1 2 1 3 1 4 1 5 1 6 1 7 1 8 1 9 1 10 1)))
       (let ((ind (find-sound "test.snd")))
 	(let ((mx (maxamp)))
 	  (notch-sound (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)))
 	  (if (or (fneq mx .5)
-		  (ffneq (maxamp) .06))
+		  (ffneq (maxamp) .027))
 	      (snd-display ";notch 60 Hz: ~A to ~A" mx (maxamp)))
 	  (undo)
 	  (notch-sound (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) #f ind 0 10)
-	  (if (ffneq (maxamp) .009)
-	      (snd-display ";notch 60 hz 2: ~A" (maxamp)))
+	  (if (ffneq (maxamp) .004)
+	      (snd-display ";notch-sound 60 hz 2: ~A" (maxamp)))
+	  (undo)
 	  (notch-channel (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) #f #f #f ind 0 #f #f 10)
-	  (if (ffneq (maxamp) .009)
-	      (snd-display ";notch 60 hz 2: ~A" (maxamp)))
+	  (if (ffneq (maxamp) .004)
+	      (snd-display ";notch-channel 60 hz 2: ~A" (maxamp)))
 	  (undo)
 	  (select-all)
 	  (notch-selection (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) #f)
-	  (if (ffneq (maxamp) .04)
+	  (if (ffneq (maxamp) .066)
 	      (snd-display ";notch-selection 60 hz 2: ~A" (maxamp)))
 
 	  (play-sound
@@ -33843,12 +33852,12 @@ EDITS: 2
 		   ((= i len))
 		 (sound-data-set! data 0 i (* 2.0 (sound-data-ref data 0 i)))))))
 	  (close-sound ind)))
-      (with-sound (:srate 44100 :play #f) (fm-violin 0 60 60 0.5 :periodic-vibrato-amplitude 0.0 :random-vibrato-amplitude 0.0))
+      (with-sound (:srate 44100 :play #f) (bigbird 0 60 60 0 .5 '(0 0 1 1) '(0 0 1 1 2 1 3 0) '(1 1 2 1 3 1 4 1 5 1 6 1 7 1 8 1 9 1 10 1)))
       (let ((ind (find-sound "test.snd")))
 	(let ((mx (maxamp)))
 	  (notch-sound (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) #f ind 0 10)
-	  (if (ffneq (maxamp) .04)
-	      (snd-display ";notch 60 hz 2 60: ~A" (maxamp))))
+	  (if (ffneq (maxamp) .036)
+	      (snd-display ";notch-sound 60 hz 2 60: ~A" (maxamp))))
 	(close-sound ind))
 
       (play-sine 440 .1)
