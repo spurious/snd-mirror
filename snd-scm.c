@@ -947,6 +947,15 @@ static SCM g_set_listener_prompt(SCM val)
   #define H_listener_prompt "(" S_listener_prompt ") -> the current lisp listener prompt character ('>') "
   SCM_ASSERT(gh_string_p(val),val,SCM_ARG1,"set-" S_listener_prompt); 
   set_listener_prompt(state,gh_scm2newstr(val,0));
+#if USE_NO_GUI
+  {
+    char *str;
+    str = (char *)CALLOC(128,sizeof(char));
+    sprintf(str,"(set! scm-repl-prompt \"%s\")",listener_prompt(state));
+    gh_eval_str(str);
+    FREE(str);
+  }
+#endif
   RTNSTR(listener_prompt(state));
 }
 

@@ -1,5 +1,4 @@
 /* TODO: should this implement all the GUI-specific scm functions? (make-color etc)
- * TODO: what about the emacs connection (does it need the SIG business?)
  */
 
 #include "snd.h"
@@ -379,6 +378,8 @@ void snd_doit(snd_state *ss,int argc, char **argv)
     ss->init_file = INIT_FILE_NAME;
   set_eps_file(ss,EPS_FILE_NAME);
 
+  gh_eval_str("(set! scm-repl-prompt \"snd> \")");
+
   for (i=1;i<argc;i++)
     {
       if (strcmp(argv[i],"-noglob") == 0)
@@ -388,6 +389,10 @@ void snd_doit(snd_state *ss,int argc, char **argv)
 	  noinit = 1;
     }
   snd_load_init_file(ss,noglob,noinit);
+#if HAVE_SIGNAL
+  signal(SIGTTIN,SIG_IGN);
+  signal(SIGTTOU,SIG_IGN);
+#endif
   auto_open_files = argc-1;
   if (argc > 1) auto_open_file_names = (char **)(argv+1);
   while (auto_open_ctr < auto_open_files)
@@ -402,14 +407,12 @@ void snd_doit(snd_state *ss,int argc, char **argv)
       select_channel(ss->sounds[0],0);
     }
 
-  gh_eval_str("(set! scm-repl-prompt \"snd> \")");
-
 #if TRAP_SEGFAULT
   if (sigsetjmp(envHandleEventsLoop,1))
     snd_error("Caught seg fault; trying to continue...");
 #endif
 
-  gh_repl(1,argv); /* not argc because damned scm_shell tries to interpret all args! */
+  gh_repl(1,argv); /* not argc because scm_shell tries to interpret all args! */
 }
 #else
   void snd_doit(snd_state *ss,int argc, char **argv) {}

@@ -4,6 +4,8 @@
 
 #ifndef USE_GTK
 
+/* ---------------- MOTIF VERSION ---------------- */
+
 static int snd_running = 0;
 Widget form,shell,label,snd;
 XtAppContext app;     
@@ -88,6 +90,8 @@ include makesnd.back
 */
 
 #else
+
+/* ---------------- GTK VERSION ---------------- */
 
 /* Gtk+ version using Guile */
 

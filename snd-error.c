@@ -64,6 +64,11 @@ void snd_error(char *format, ...)
       fprintf(stderr,snd_error_buffer);
 #endif
 
+#if USE_NO_GUI
+      /* this can happen if there's an error in the init file; after that the guile repl handles errors */
+      fprintf(stderr,snd_error_buffer);
+#else
+
 #ifdef SND_AS_WIDGET
       if (snd_error_display) 
 	snd_error_display(snd_error_buffer);
@@ -78,6 +83,7 @@ void snd_error(char *format, ...)
       else post_error_dialog(ss,snd_error_buffer);
 #ifdef SND_AS_WIDGET
 	}
+#endif
 #endif
     }
   else 
