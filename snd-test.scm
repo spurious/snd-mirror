@@ -10589,10 +10589,6 @@ EDITS: 3
 	    ;;   these functions send either Xevents or directly invoke the Motif button callbacks
 	    ;; resize-pane pane size 
 
-	    ;; scale widget use (key-event (widget-window (cadr w)) #xFF53 0) etc (focus-widget) and (force-event)
-	    ;; list widget use XmListSelectPos with (w pos #t)
-	    ;; scrollbar use XmScrollBarSetValues (w value slider_size increment page #t) or use the key-events 
-
 	    (reset-all-hooks)
 
 	    (for-each all-help (cdr (main-widgets)))
@@ -11540,18 +11536,35 @@ EDITS: 3
 		(load "popup.scm")
 		(load "snd-motif.scm")
 
+;;; (|XmScrollBarGetValues (|Widget (list-ref (channel-widgets) 3))))
+;;; (|XmScrollBarSetValues (|Widget (list-ref (channel-widgets) 3)) 10 43 1 10 #t)
+;;; can be used for control panel, all 6 channel sliders, xenv scale, xmix speed, amps
+
 		(if (not (car (dialog-widgets))) (test-menus))
-		(let ((inv (find-child (|Widget (car (dialog-widgets))) "invert")))
-		  (if (and inv
-			   (|Widget? inv))
+
+		;; ---------------- color dialog ----------------
+		(let* ((colord (|Widget (car (dialog-widgets))))
+		       (inv (find-child colord "invert")))
+		  (if (and inv (|Widget? inv))
 		      (begin
 			(|XmToggleButtonSetState inv #f #t)
 			(if (color-inverted)
 			    (snd-display ";toggle invert off"))
 			(|XmToggleButtonSetState inv #t #t)
 			(if (not (color-inverted))
-			    (snd-display ";toggle invert on")))))
+			    (snd-display ";toggle invert on")))
+		      (snd-display ";can't find color invert button?"))
+		  (let ((lst (find-child colord "colormap-list")))
+		    (|XmListSelectPos lst 8 #t)
+		    (if (not (= (colormap) 7))
+			(snd-display ";color dialog list 7: ~A" (colormap)))
+		    (|XmListSelectPos lst 4 #t)
+		    (if (not (= (colormap) 3))
+			(snd-display ";color dialog list 4: ~A" (colormap)))))
+
+		;; ---------------- transform dialog ----------------
 		(let* ((transd (|Widget (list-ref (dialog-widgets) 5))))
+		  ;; push all the buttons
 		  (for-each (lambda (name check off2)
 			      (let ((button (find-child transd name)))
 				(if (and button (|Widget? button))
@@ -11563,7 +11576,8 @@ EDITS: 3
 						(snd-display ";toggle ~A off" name))))
 				      (|XmToggleButtonSetState button #t #t)
 				      (if (not (check))
-					  (snd-display ";toggle ~A on" name))))))
+					  (snd-display ";toggle ~A on" name)))
+				    (snd-display ";no ~A togglebutton widget in transform dialog?" name))))
 			    (list "normo-button" "sono-button" "spectro-button" "peaks-button" "db-button" 
 				  "logfreq-button" "normalize-button" "selection-button")
 			    (list (lambda () (= (transform-graph-type) graph-transform-once))
@@ -11575,7 +11589,39 @@ EDITS: 3
 				  (lambda () (= (transform-normalization) 1))
 				  show-selection-transform)
 			    (list #f #f #f #t #t
-				  #t #t #t)))
+				  #t #t #t))
+		  ;; click all the lists
+		  (for-each (lambda (name check)
+			      (let ((lst (find-child transd name)))
+				(if (and lst (|Widget? lst))
+				    (check lst)
+				    (snd-display ";no ~A list widget in transform dialog?" name))))
+			    (list "type-list" "size-list" "wavelet-list" "window-list")
+			    (list (lambda (w)
+				    (|XmListSelectPos w (+ autocorrelation 1) #t)
+				    (if (not (= (transform-type) autocorrelation))
+					(snd-display ";transform-type autocorrelation: ~A ~A?" (transform-type) autocorrelation))
+				    (|XmListSelectPos w (+ wavelet-transform 1) #t)
+				    (if (not (= (transform-type) wavelet-transform))
+					(snd-display ";transform-type wavelet-transform: ~A ~A?" (transform-type) wavelet-transform)))
+				  (lambda (w)
+				    (|XmListSelectPos w 7 #t)
+				    (if (not (= (transform-size) 1024))
+					(snd-display ";transform-size ~A ~A" (transform-size) 1024))
+				    (|XmListSelectPos w 2 #t)
+				    (if (not (= (transform-size) 32))
+					(snd-display ";transform-size ~A ~A" (transform-size) 32)))
+				  (lambda (w)
+				    (|XmListSelectPos w 4 #t)
+				    (if (not (= (wavelet-type) 3))
+					(snd-display ";wavelet-type: ~A" (wavelet-type))))
+				  (lambda (w)
+				    (|XmListSelectPos w (+ bartlett-window 1) #t)
+				    (if (not (= (fft-window) bartlett-window))
+					(snd-display ";fft-window bartlett: ~A ~A" (fft-window) bartlett-window))
+				    (|XmListSelectPos w (+ kaiser-window 1) #t)
+				    (if (not (= (fft-window) kaiser-window))
+					(snd-display ";fft-window kaiser: ~A ~A" (fft-window) kaiser-window))))))
 
 		(let ((version (list-ref (|XGetWindowProperty (|XtDisplay (|Widget (cadr (main-widgets))) )
 							      (|XtWindow (|Widget (cadr (main-widgets))) )
