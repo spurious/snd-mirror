@@ -2831,7 +2831,7 @@ int save_channel_edits(chan_info *cp, char *ofile, XEN edpos, const char *caller
 	err = MUS_ERROR;
       else
 	{
-	  err = snd_make_file(nfile, 1, sp->hdr, sf, cp->samples[pos], cp->state);
+	  err = snd_make_file(nfile, 1, sp->hdr, sf, cp->samples[pos], ss);
 	  free_snd_fd(sf[0]);
 	}
       FREE(sf);
@@ -2856,7 +2856,7 @@ int save_channel_edits(chan_info *cp, char *ofile, XEN edpos, const char *caller
 	err = MUS_ERROR;
       else
 	{
-	  err = snd_make_file(ofile, 1, sp->hdr, sf, cp->samples[pos], cp->state);
+	  err = snd_make_file(ofile, 1, sp->hdr, sf, cp->samples[pos], ss);
 	  free_snd_fd(sf[0]);
 	}
       FREE(sf);
@@ -3429,7 +3429,7 @@ replacing current data with the function results; origin is the edit-history nam
   if (ofile) FREE(ofile);
   FREE(data[0]);
   FREE(data);
-  return(XEN_FALSE);
+  return(proc);
 }
 
 

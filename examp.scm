@@ -1683,7 +1683,7 @@ synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
 	   (reader (make-sound-interp 0 snd chn))
 	   (read-env (make-env envelope :end newlen :scaler len))
 	   (tempfilename (snd-tempnam))
-	   (fil (mus-sound-open-output tempfilename (srate snd) 1 #f mus-next ""))
+	   (fil (mus-sound-open-output tempfilename (srate snd) 1 #f mus-next "env-sound-interp temp file"))
 	   ;; #f as data-format -> format compatible with sndlib (so no data translation is needed)
 	   (bufsize 8192)
 	   (data (make-sound-data 1 bufsize))
@@ -1700,7 +1700,8 @@ synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
 	  (mus-sound-write fil 0 (1- data-ctr) 1 data))
       (mus-sound-close-output fil (* 4 newlen))
       ;; #t trunc arg to set samples shortens the sound as needed
-      (set-samples 0 newlen tempfilename snd chn #t))))
+      (set-samples 0 newlen tempfilename snd chn #t)
+      (delete-file tempfilename))))
 
 
 

@@ -1751,7 +1751,7 @@ the name reported if an error occurs."
 		     0,
 		     XEN_UNDEFINED,
 		     0,
-		     (XEN_STRING_P(origin)) ? XEN_TO_C_STRING(origin) : "user key func");
+		     NULL);
   else 
     {
       args = XEN_REQUIRED_ARGS(code);
@@ -1769,9 +1769,9 @@ the name reported if an error occurs."
 		       args, 
 		       code,
 		       (XEN_TRUE_P(extended)) ? 1 : 0,
-		       (XEN_STRING_P(origin)) ? XEN_TO_C_STRING(origin) : "user key func");
+		       (XEN_STRING_P(origin)) ? XEN_TO_C_STRING(origin) : (char *)("user key func"));
     }
-  return(XEN_TRUE);
+  return(code);
 }
 
 static XEN g_unbind_key(XEN key, XEN state, XEN extended)
@@ -1847,7 +1847,7 @@ returned as a string; otherwise it is evaluated first as Scheme code"
   sp->minibuffer_on = MINI_USER;
   sp->prompting = 1;
   goto_minibuffer(sp);
-  return(XEN_FALSE);
+  return(callback);
 }
 
 static XEN g_report_in_minibuffer(XEN msg, XEN snd_n)

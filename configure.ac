@@ -150,6 +150,37 @@ AC_ARG_WITH(ruby,
 	  	  fi
 		fi
 	      fi
+              RUBY_PATH=`$RUBY -e [['puts \$:[0]']]`  # good grief... 
+	      RUBY_SEARCH_PATH="$RUBY_PATH"
+              RUBY_PATH=`$RUBY -e [['puts \$:[1]']]`
+	      if test "$RUBY_PATH" != nil; then
+		RUBY_SEARCH_PATH="$RUBY_SEARCH_PATH:$RUBY_PATH"
+                RUBY_PATH=`$RUBY -e [['puts \$:[2]']]`
+	        if test "$RUBY_PATH" != nil; then
+		  RUBY_SEARCH_PATH="$RUBY_SEARCH_PATH:$RUBY_PATH"
+                  RUBY_PATH=`$RUBY -e [['puts \$:[3]']]`
+	          if test "$RUBY_PATH" != nil; then
+		    RUBY_SEARCH_PATH="$RUBY_SEARCH_PATH:$RUBY_PATH"
+                    RUBY_PATH=`$RUBY -e [['puts \$:[4]']]`
+	            if test "$RUBY_PATH" != nil; then
+		      RUBY_SEARCH_PATH="$RUBY_SEARCH_PATH:$RUBY_PATH"
+                      RUBY_PATH=`$RUBY -e [['puts \$:[5]']]`
+	              if test "$RUBY_PATH" != nil; then
+		        RUBY_SEARCH_PATH="$RUBY_SEARCH_PATH:$RUBY_PATH"
+                        RUBY_PATH=`$RUBY -e [['puts \$:[6]']]`
+	                if test "$RUBY_PATH" != nil; then
+		          RUBY_SEARCH_PATH="$RUBY_SEARCH_PATH:$RUBY_PATH"
+                          RUBY_PATH=`$RUBY -e [['puts \$:[7]']]`
+	                  if test "$RUBY_PATH" != nil; then
+		            RUBY_SEARCH_PATH="$RUBY_SEARCH_PATH:$RUBY_PATH"
+			  fi
+  		        fi
+	 	      fi
+	            fi
+	  	  fi
+		fi
+	      fi
+	      AC_DEFINE_UNQUOTED(RUBY_SEARCH_PATH,"${RUBY_SEARCH_PATH}")
 
               GUILE_LIBS="$GUILE_LIBS -lruby -ldl -lcrypt"
 	      AC_CHECK_LIB(readline, readline, 
@@ -496,6 +527,9 @@ else
       	AC_SUBST(GTK_LIBS)
       	AC_SUBST(GTK_CFLAGS)
       	AC_DEFINE(USE_GTK)
+
+	AC_CHECK_LIB(gdk, gdk_draw_pixbuf, [AC_DEFINE(HAVE_GDK_DRAW_PIXBUF)], ,$GTK_LIBS)
+	# gtk 2.1
 
 	if test "$with_html" = yes ; then
 	  AC_PATH_PROG(MOZILLA_CONFIG, mozilla-config, no)

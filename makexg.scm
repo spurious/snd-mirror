@@ -851,6 +851,7 @@
 (hey " * ~A: test suite (snd-test 24)~%" (string-append "T" "ODO"))
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     25-Oct:    removed (deprecated) gdk_set_pointer_hooks~%")
 (hey " *     23-Oct:    gtk_init and friends ref args ignored~%")
 (hey " *     31-Jul:    removed GTK 1.n support~%")
 (hey " *     24-Jul:    changed Guile prefix (R5RS reserves vertical-bar).~%")

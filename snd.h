@@ -40,11 +40,7 @@
  *   SND_AS_WIDGET This causes the entire Snd editor to become a module loadable
  *                 into some other program as a kind of enormous widget (see saw.c).
  *
- *   HAVE_HTML     define if using Gtk+ and the mozilla browser library is available 
- *                 (used by help functions).  (The configure script assumes you have
- *                 /usr/lib/mozilla and /usr/include/mozilla).
- *                 To use this with Motif and the XmHTML widget, see README.Snd for 
- *                 a change needed in the XmHTML sources.
+ *   HAVE_HTML     define if an HTML browser is available (used by help functions).
  *
  *   Float         This can be defined to double in CFLAGS if you want Snd to use 
  *                 doubles throughout (i.e. -DFloat=double).
@@ -138,7 +134,7 @@
 
 #include "snd-strings.h"
 
-#define SND_VERSION "24-Oct-02"
+#define SND_VERSION "25-Oct-02"
 #define SND_RPM_VERSION "6.3"
 #define SND_MAJOR_VERSION 6
 #define SND_MINOR_VERSION 3

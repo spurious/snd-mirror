@@ -101,7 +101,7 @@ static XEN g_draw_string(XEN text, XEN x0, XEN y0, XEN snd, XEN chn, XEN ax)
 	      XEN_TO_C_INT(y0),
 	      XEN_TO_C_STRING(text),
 	      snd_strlen(XEN_TO_C_STRING(text)));
-  return(XEN_FALSE);
+  return(text);
 }
 
 #if USE_MOTIF
@@ -426,8 +426,7 @@ data in the recipient's graph between points low and high in the drawing mode gr
 		  (v1) ? (v1->data) : NULL,
 		  get_ax(cp, XEN_TO_C_INT_OR_ELSE(ax, CHAN_GC), S_graph_data),
 		  XEN_TO_C_INT_OR_ELSE(style, cp->time_graph_style));
-
-  return(XEN_FALSE);
+  return(data);
 }
 
 static XEN g_main_widgets(void)

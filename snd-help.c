@@ -268,6 +268,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+25-Oct:  added -I switch to add dir to load path.\n\
 23-Oct:  added origin arg to bind-key, edpos arg to find-mark.\n\
 14-Oct:  removed max-sounds.\n\
 11-Oct:  add-find-to-listener in snd-motif.scm.\n\

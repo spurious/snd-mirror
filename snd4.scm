@@ -214,7 +214,8 @@
 	  (begin
 	    (if (not (= outsamp len))
 		(delete-samples beg len (car s) (car c)))
-	    (set! (samples beg outsamp (car s) (car c) #t edname) (vector-ref filenames j)))))))
+	    (set! (samples beg outsamp (car s) (car c) #t edname) (vector-ref filenames j))
+	    (delete-file (vector-ref filenames j)))))))
 
 (define* (scan-across-all-chans proc #:optional (beg 0) end snd edpos)
   "(scan-across-all-chans proc #:optional (beg 0) end edname snd edpos) applies scan-chan with proc to all channels in parallel"
@@ -277,7 +278,8 @@
 	  (begin
 	    (if (not (= outsamp len))
 		(delete-samples beg len snd j))
-	    (set! (samples beg outsamp snd j #t edname) (vector-ref filenames j)))))))
+	    (set! (samples beg outsamp snd j #t edname) (vector-ref filenames j))
+	    (delete-file (vector-ref filenames j)))))))
 
 
 ;;; Snd-4 external program support stuff

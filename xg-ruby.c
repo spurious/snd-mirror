@@ -416,7 +416,6 @@ XEN_ARGIFY_2(gxg_gdk_window_get_user_data_w, gxg_gdk_window_get_user_data)
 XEN_NARGIFY_6(gxg_gdk_window_get_geometry_w, gxg_gdk_window_get_geometry)
 XEN_ARGIFY_3(gxg_gdk_window_get_position_w, gxg_gdk_window_get_position)
 XEN_NARGIFY_3(gxg_gdk_window_get_origin_w, gxg_gdk_window_get_origin)
-XEN_NARGIFY_1(gxg_gdk_set_pointer_hooks_w, gxg_gdk_set_pointer_hooks)
 XEN_NARGIFY_0(gxg_gdk_get_default_root_window_w, gxg_gdk_get_default_root_window)
 XEN_NARGIFY_0(gxg_gdk_pixbuf_error_quark_w, gxg_gdk_pixbuf_error_quark)
 XEN_NARGIFY_0(gxg_gdk_pixbuf_get_type_w, gxg_gdk_pixbuf_get_type)
@@ -3642,7 +3641,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_window_get_geometry, gxg_gdk_window_get_geometry_w, 6, 0, 0, H_gdk_window_get_geometry);
   XG_DEFINE_PROCEDURE(gdk_window_get_position, gxg_gdk_window_get_position_w, 1, 2, 0, H_gdk_window_get_position);
   XG_DEFINE_PROCEDURE(gdk_window_get_origin, gxg_gdk_window_get_origin_w, 3, 0, 0, H_gdk_window_get_origin);
-  XG_DEFINE_PROCEDURE(gdk_set_pointer_hooks, gxg_gdk_set_pointer_hooks_w, 1, 0, 0, H_gdk_set_pointer_hooks);
   XG_DEFINE_PROCEDURE(gdk_get_default_root_window, gxg_gdk_get_default_root_window_w, 0, 0, 0, H_gdk_get_default_root_window);
   XG_DEFINE_PROCEDURE(gdk_pixbuf_error_quark, gxg_gdk_pixbuf_error_quark_w, 0, 0, 0, H_gdk_pixbuf_error_quark);
   XG_DEFINE_PROCEDURE(gdk_pixbuf_get_type, gxg_gdk_pixbuf_get_type_w, 0, 0, 0, H_gdk_pixbuf_get_type);

@@ -5910,7 +5910,7 @@ static XEN g_set_x_bounds(XEN bounds, XEN snd_n, XEN chn_n)
 		     XEN_LIST_2(C_TO_XEN_STRING("set! " S_x_bounds),
 				bounds));
     }
-  return(XEN_FALSE);
+  return(bounds);
 }
 
 WITH_REVERSED_CHANNEL_ARGS(g_set_x_bounds_reversed, g_set_x_bounds)
@@ -5972,7 +5972,7 @@ static XEN g_set_y_bounds(XEN bounds, XEN snd_n, XEN chn_n)
   else XEN_ERROR(IMPOSSIBLE_BOUNDS,
 		 XEN_LIST_2(C_TO_XEN_STRING("set! " S_y_bounds),
 			    bounds));
-  return(XEN_FALSE);
+  return(bounds);
 }
 
 WITH_REVERSED_CHANNEL_ARGS(g_set_y_bounds_reversed, g_set_y_bounds)

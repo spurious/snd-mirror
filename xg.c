@@ -432,7 +432,6 @@ XM_TYPE_PTR(GtkWindow_, GtkWindow*)
 #define C_TO_XEN_GdkWindowHints(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkWindowHints(Arg) (GdkWindowHints)(XEN_TO_C_INT(Arg))
 #define XEN_GdkWindowHints_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_PTR(GdkPointerHooks_, GdkPointerHooks*)
 XM_TYPE(GdkColorspace, GdkColorspace)
 XM_TYPE_PTR(GError_, GError*)
 XM_TYPE(GdkPixbufDestroyNotify, GdkPixbufDestroyNotify)
@@ -4915,12 +4914,6 @@ static XEN gxg_gdk_window_get_origin(XEN window, XEN x, XEN y)
   XEN_ASSERT_TYPE(XEN_gint__P(x), x, 2, "gdk_window_get_origin", "gint*");
   XEN_ASSERT_TYPE(XEN_gint__P(y), y, 3, "gdk_window_get_origin", "gint*");
   return(C_TO_XEN_gint(gdk_window_get_origin(XEN_TO_C_GdkWindow_(window), XEN_TO_C_gint_(x), XEN_TO_C_gint_(y))));
-}
-static XEN gxg_gdk_set_pointer_hooks(XEN new_hooks)
-{
-  #define H_gdk_set_pointer_hooks "GdkPointerHooks* gdk_set_pointer_hooks(GdkPointerHooks* new_hooks)"
-  XEN_ASSERT_TYPE(XEN_GdkPointerHooks__P(new_hooks) || XEN_FALSE_P(new_hooks), new_hooks, 1, "gdk_set_pointer_hooks", "GdkPointerHooks*");
-  return(C_TO_XEN_GdkPointerHooks_(gdk_set_pointer_hooks(XEN_TO_C_GdkPointerHooks_(new_hooks))));
 }
 static XEN gxg_gdk_get_default_root_window(void)
 {
@@ -20834,7 +20827,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_window_get_geometry, gxg_gdk_window_get_geometry, 6, 0, 0, H_gdk_window_get_geometry);
   XG_DEFINE_PROCEDURE(gdk_window_get_position, gxg_gdk_window_get_position, 1, 2, 0, H_gdk_window_get_position);
   XG_DEFINE_PROCEDURE(gdk_window_get_origin, gxg_gdk_window_get_origin, 3, 0, 0, H_gdk_window_get_origin);
-  XG_DEFINE_PROCEDURE(gdk_set_pointer_hooks, gxg_gdk_set_pointer_hooks, 1, 0, 0, H_gdk_set_pointer_hooks);
   XG_DEFINE_PROCEDURE(gdk_get_default_root_window, gxg_gdk_get_default_root_window, 0, 0, 0, H_gdk_get_default_root_window);
   XG_DEFINE_PROCEDURE(gdk_pixbuf_error_quark, gxg_gdk_pixbuf_error_quark, 0, 0, 0, H_gdk_pixbuf_error_quark);
   XG_DEFINE_PROCEDURE(gdk_pixbuf_get_type, gxg_gdk_pixbuf_get_type, 0, 0, 0, H_gdk_pixbuf_get_type);
@@ -29710,7 +29702,7 @@ static int xg_already_inited = 0;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"22-Oct-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"24-Oct-02\")");
 #endif
       xg_already_inited = 1;
     }

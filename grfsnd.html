@@ -264,6 +264,7 @@ the usual Xt/X-related flags like -xrm).</p>
 <tr><td><code>-l -load &lt;file&gt;</code></td>   <td>load guile (scheme) code in &lt;file&gt; (for example, snd -l test.scm)</td></tr>
 <tr><td><code>-e -eval expr</code></td>           <td>evaluate expr</td></tr>
 <tr><td><code>-b -batch &lt;file&gt;</code></td>  <td>load guile (scheme) code in &lt;file&gt; as a batch (no GUI) job</td></tr>
+<tr><td><code>-I &lt;dir&gt;</code></td>          <td>add &lt;dir&gt; to the load search list</td></tr>
 </table>
 
 <p>
@@ -1880,8 +1881,7 @@ Say we save this as the file "comments".</p>
 This scripting mechanism actually will work in any version of Snd;
 to keep the Snd window from popping up, use the -b (-batch) switch in
 place of -l.
-</p>
-<p>Here's another script example; it looks for any sounds that are longer
+Here's another script example; it looks for any sounds that are longer
 than 40 seconds in duration, and truncates them to 40 seconds:
 </p>
 <pre>
@@ -1897,6 +1897,13 @@ than 40 seconds in duration, and truncates them to 40 seconds:
 	    (set! (frames ind) (* 40 (srate ind)))
 	    (save-sound ind)
 	    (close-sound ind))))))
+(exit)
+</pre>
+<p>Here's a sndplay replacement script:</p>
+<pre>
+#!snd -b
+!#
+(play-and-wait (list-ref (script-args) (+ (script-arg) 1)))
 (exit)
 </pre>
 <br>

@@ -2776,6 +2776,40 @@ _ACEOF
 	  	  fi
 		fi
 	      fi
+              RUBY_PATH=`$RUBY -e 'puts \$:[0]'`  # good grief...
+	      RUBY_SEARCH_PATH="$RUBY_PATH"
+              RUBY_PATH=`$RUBY -e 'puts \$:[1]'`
+	      if test "$RUBY_PATH" != nil; then
+		RUBY_SEARCH_PATH="$RUBY_SEARCH_PATH:$RUBY_PATH"
+                RUBY_PATH=`$RUBY -e 'puts \$:[2]'`
+	        if test "$RUBY_PATH" != nil; then
+		  RUBY_SEARCH_PATH="$RUBY_SEARCH_PATH:$RUBY_PATH"
+                  RUBY_PATH=`$RUBY -e 'puts \$:[3]'`
+	          if test "$RUBY_PATH" != nil; then
+		    RUBY_SEARCH_PATH="$RUBY_SEARCH_PATH:$RUBY_PATH"
+                    RUBY_PATH=`$RUBY -e 'puts \$:[4]'`
+	            if test "$RUBY_PATH" != nil; then
+		      RUBY_SEARCH_PATH="$RUBY_SEARCH_PATH:$RUBY_PATH"
+                      RUBY_PATH=`$RUBY -e 'puts \$:[5]'`
+	              if test "$RUBY_PATH" != nil; then
+		        RUBY_SEARCH_PATH="$RUBY_SEARCH_PATH:$RUBY_PATH"
+                        RUBY_PATH=`$RUBY -e 'puts \$:[6]'`
+	                if test "$RUBY_PATH" != nil; then
+		          RUBY_SEARCH_PATH="$RUBY_SEARCH_PATH:$RUBY_PATH"
+                          RUBY_PATH=`$RUBY -e 'puts \$:[7]'`
+	                  if test "$RUBY_PATH" != nil; then
+		            RUBY_SEARCH_PATH="$RUBY_SEARCH_PATH:$RUBY_PATH"
+			  fi
+  		        fi
+	 	      fi
+	            fi
+	  	  fi
+		fi
+	      fi
+	      cat >>confdefs.h <<_ACEOF
+#define RUBY_SEARCH_PATH "${RUBY_SEARCH_PATH}"
+_ACEOF
+
 
               GUILE_LIBS="$GUILE_LIBS -lruby -ldl -lcrypt"
 	      echo "$as_me:$LINENO: checking for readline in -lreadline" >&5
@@ -11471,6 +11505,70 @@ echo "$as_me: WARNING: trouble with gtk -- will try to make Snd without any GUI"
 #define USE_GTK 1
 _ACEOF
 
+
+	echo "$as_me:$LINENO: checking for gdk_draw_pixbuf in -lgdk" >&5
+echo $ECHO_N "checking for gdk_draw_pixbuf in -lgdk... $ECHO_C" >&6
+if test "${ac_cv_lib_gdk_gdk_draw_pixbuf+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lgdk $GTK_LIBS $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char gdk_draw_pixbuf ();
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+gdk_draw_pixbuf ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_gdk_gdk_draw_pixbuf=yes
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+ac_cv_lib_gdk_gdk_draw_pixbuf=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_gdk_gdk_draw_pixbuf" >&5
+echo "${ECHO_T}$ac_cv_lib_gdk_gdk_draw_pixbuf" >&6
+if test $ac_cv_lib_gdk_gdk_draw_pixbuf = yes; then
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_GDK_DRAW_PIXBUF 1
+_ACEOF
+
+fi
+
+	# gtk 2.1
 
 	if test "$with_html" = yes ; then
 	  # Extract the first word of "mozilla-config", so it can be a program name with args.

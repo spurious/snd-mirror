@@ -719,12 +719,38 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
 			}
 		      else
 			{
-			  if (startup_filename == NULL)
+			  if (strcmp("-I", argname) == 0)
 			    {
-			      startup_filename = copy_string(argname);
-			      if (dont_start(startup_filename)) snd_exit(1);
+			      /* added 24-Oct-02: add to load path in either extension language */
+			      auto_open_ctr++;
+			      if ((auto_open_ctr >= args) ||
+				  (auto_open_file_names[auto_open_ctr] == NULL))
+				snd_error("-I but no path?");
+			      else 
+				{
+				  argname = auto_open_file_names[auto_open_ctr];
+#if HAVE_RUBY
+				  extern VALUE rb_load_path;
+				  rb_ary_shift(rb_load_path);  /* prepend -I as they appear (kinda unintuitive) */
+				  rb_ary_store(rb_load_path, 0, rb_str_new2(argname));
+#else
+  #if HAVE_GUILE
+				  char buf[256];
+				  sprintf(buf, "(set! %%load-path (cons \"%s\" %%load-path))", argname);
+				  XEN_EVAL_C_STRING(buf);
+  #endif
+#endif
+				}
 			    }
-			  snd_open_file_unselected(argname, ss, FALSE);
+			  else
+			    {
+			      if (startup_filename == NULL)
+				{
+				  startup_filename = copy_string(argname);
+				  if (dont_start(startup_filename)) snd_exit(1);
+				}
+			      snd_open_file_unselected(argname, ss, FALSE);
+			    }
 			}
 		    }
 		}

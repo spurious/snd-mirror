@@ -1257,7 +1257,7 @@ static XEN g_define_envelope(XEN a, XEN b)
     alert_envelope_editor(get_global_state(), 
 			  XEN_TO_C_STRING(a), 
 			  xen_to_env(b));
-  return(XEN_FALSE);
+  return(b);
 }
 
 XEN env_to_xen (env *e)

@@ -52,11 +52,16 @@
 ;  (syntax-rules ()
 ;    ((IF <form1> <form2>) (begin <form2>))
 ;    ((IF <form1> <form2> <form3>) (begin <form2>))))
-;(define last-form #f)
 ;(define-syntax IF
 ;  (syntax-rules ()
-;    ((IF <form1> <form2>) (begin (set! last-form (quote <form1>)) (if <form1> <form2>) (gc)))
-;    ((IF <form1> <form2> <form3>) (begin (set! last-form (quote <form1>)) (if <form1> <form2> <form3>) (gc)))))
+;    ((IF <form1> <form2>) 
+;     (begin 
+;       (display (format #f "~A " (quote <form1>)))
+;       (if <form1> <form2>)))
+;    ((IF <form1> <form2> <form3>) 
+;     (begin 
+;       (display (format #f "~A " (quote <form1>)))
+;       (if <form1> <form2> <form3>)))))
 ;(define-syntax IF
 ;  (syntax-rules ()
 ;    ((IF <form1> <form2>) (begin (display (quote <form1>)) (if <form1> <form2>) (gc)))
@@ -7942,7 +7947,7 @@
 	  (IF (or (fneq (vct-ref v0 1) .001) (fneq (vct-ref v0 7) .021)) (snd-display ";src output: ~A" v0))
 	  (IF (fneq (mus-increment gen) 2.0) (snd-display ";src increment: ~F?" (mus-increment gen)))
 	  (IF (fneq (mus-increment rd) 1.0) (snd-display ";readin increment: ~F?" (mus-increment rd)))
-	  (IF (not (= (mus-length gen) (sinc-width))) (snd-display ";src length: ~A, sinc-width: ~A" (mus-length gen) (sinc-width)))
+	  (IF (not (= (mus-length gen) 10)) (snd-display ";src length: ~A" (mus-length gen)))
 	  (let ((gold gen))
 	    (set! gen (make-src (lambda (dir)
 				  0.0)))
@@ -12335,7 +12340,7 @@
 	(let ((o1 (sample 1000 obi 0))
 	      (s1 (sample 1000 s2i 0))
 	      (s2 (sample 1000 s2i 1)))
-	  (do-all-chans (lambda (val) (IF val (* 2.0 val) #f)) "double all samples")
+	  (do-all-chans (lambda (val) (if val (* 2.0 val) #f)) "double all samples")
 	  (let ((o11 (sample 1000 obi 0))
 		(s11 (sample 1000 s2i 0))
 		(s21 (sample 1000 s2i 1)))

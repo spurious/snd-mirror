@@ -1,5 +1,6 @@
 Snd change log
 
+  25-Oct:    added -I switch to add dir to load path.
   23-Oct:    added origin arg to bind-key, edpos arg to find-mark.
   14-Oct:    removed max-sounds.
   11-Oct:    add-find-to-listener in snd-motif.scm.

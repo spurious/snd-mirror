@@ -3166,18 +3166,19 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE("little-endian?",      g_little_endian_w, 0, 0, 0,       "return #t if host is little endian");
   XEN_DEFINE_PROCEDURE("snd-completion",      g_snd_completion_w, 1, 0, 0,      "return completion of arg");
 
-  #define H_during_open_hook S_during_open_hook " (fd name reason) is called after file is opened, but before data has been read. \n\
-(add-hook! during-open-hook \n\
-  (lambda (fd name reason) \n\
-    (if (= (mus-sound-header-type name) mus-raw) \n\
-        (mus-file-set-prescaler fd 500.0))))"
+  #define H_during_open_hook S_during_open_hook " (fd name reason) is called after file is opened, \
+but before data has been read. \n\
+  (add-hook! during-open-hook \n\
+    (lambda (fd name reason) \n\
+      (if (= (mus-sound-header-type name) mus-raw) \n\
+          (mus-file-set-prescaler fd 500.0))))"
 
   #define H_after_open_hook S_after_open_hook " (snd) is called just before the new file's window is displayed. \
 This provides a way to set various sound-specific defaults. \n\
-(add-hook! after-open-hook \n\
-  (lambda (snd) \n\
-    (if (> (channels snd) 1) \n\
-        (set! (channel-style snd) channels-combined))))"
+  (add-hook! after-open-hook \n\
+    (lambda (snd) \n\
+      (if (> (channels snd) 1) \n\
+          (set! (channel-style snd) channels-combined))))"
 
   XEN_DEFINE_HOOK(during_open_hook,    S_during_open_hook, 3,    H_during_open_hook);    /* args = fd filename reason */
   XEN_DEFINE_HOOK(after_open_hook,     S_after_open_hook, 1,     H_after_open_hook);     /* args = sound */
@@ -3312,6 +3313,35 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 #endif
 #if HAVE_RUBY
   XEN_YES_WE_HAVE("snd-ruby");
+  /* we need to set up the search path so that load and require will work as in the program Ruby */
+  #ifdef RUBY_SEARCH_PATH
+    /* TODO: check -I arg here */
+    {
+      /* this code stolen from ruby.c */
+      extern VALUE rb_load_path;
+      char *str;
+      char buf[FILENAME_MAX];
+      int i, j = 0, len;
+      str = RUBY_SEARCH_PATH;
+      len = snd_strlen(str);
+      for (i = 0; i < len; i++)
+	if (str[i] == ':')
+	  {
+	    buf[j] = 0;
+	    if (j > 0)
+	      {
+		rb_ary_push(rb_load_path, rb_str_new2(buf));
+	      }
+	    j = 0;
+	  }
+	else buf[j++] = str[i];
+      if (j > 0)
+	{
+	  buf[j] = 0;
+	  rb_ary_push(rb_load_path, rb_str_new2(buf));
+	}
+    }
+  #endif
 #endif
 #if DEBUGGING
   XEN_YES_WE_HAVE("snd-debug");

@@ -1,5 +1,5 @@
 ;;; [] for ref args, @ for ptr args that can be null, # are optional (default #f)
-;;; || for ref arg currently ignored, but init'd to null, {} for ref currentl ignored but init'd to 0
+;;; || for ref arg currently ignored, but init'd to null, {} for ref currently ignored but init'd to 0
 (CFNC "gchar* g_type_name GType type")
 (CFNC "GQuark g_type_qname GType type")
 (CFNC "GType g_type_from_name gchar* name")
@@ -799,15 +799,34 @@
 (CFNC "void gdk_pixbuf_render_threshold_alpha GdkPixbuf* pixbuf GdkBitmap* bitmap int src_x int src_y int dest_x int dest_y int width int height int alpha_threshold")
 (CFNC "void gdk_pixbuf_render_to_drawable GdkPixbuf* pixbuf GdkDrawable* drawable GdkGC* gc int src_x int src_y int dest_x int dest_y int width int height GdkRgbDither dither int x_dither int y_dither")
 
+
+;;; -------- 2.1 changes 
+
 ;;; TODO: named gdk_draw_pixbuf in 2.1.1
-;;;       also GdkDisplay and GdkScreen stuff
+;;;       also GdkDisplay and GdkScreen stuff [gdk/gdkdisplay*.h, gdk/gdkscreen.h]
 ;;; TODO: added in gtk 2.1.0: gtk_tree_model_get_string_from_iter
 ;;;       gtk_tree_model_sort_iter_is_valid(), gtk_tree_view_expand_to_path() 
 ;;;       gtk_tree_selection_get_selected_rows(),
 ;;;       gtk_tree_selection_count_selected_rows() 
-;;;       gtk_tree_path_new_from_indices(),  gtk_{list,tree}_store_{reorder,swap,_move} 
+;;;       gtk_tree_path_new_from_indices() -- uses ... arg,  gtk_{list,tree}_store_{reorder,swap,_move} 
 ;;;       gtk_menu_shell_select_first() gtk_notebook_get_n_pages()
 
+; (CFNC "void gdk_draw_pixbuf GdkDrawable* drawable GdkGC* gc GdkPixbuf* pixbuf int src_x int src_y int dest_x int dest_y int width int height GdkRgbDither dither int x_dither int y_dither")
+; (CFNC "gchar* gtk_tree_model_get_string_from_iter GtkTreeModel* tree_model GtkTreeIter* iter")
+; (CFNC "gboolean gtk_tree_model_sort_iter_is_valid GtkTreeModelSort* tree_model_sort GtkTreeIter* iter")
+; (CFNC "void gtk_tree_view_expand_to_path GtkTreeView* tree_view GtkTreePath* path")
+; (CFNC "GList* gtk_tree_selection_get_selected_rows GtkTreeSelection* selection GtkTreeModel** model")
+; (CFNC "int gtk_tree_selection_count_selected_rows GtkTreeSelection* selection")
+; (CFNC "void gtk_menu_shell_select_first GtkMenuShell* menu_shell gboolean search_sensitive")
+; (CFNC "int gtk_notebook_get_n_pages GtkNotebook* notebook")
+; (CFNC "void gtk_list_store_reorder GtkListStore* store int* new_order")
+; (CFNC "void gtk_list_store_swap GtkListStore* store GtkTreeIter* a GtkTreeIter* b")
+; (CFNC "void gtk_list_store_move GtkListStore* store GtkTreeIter* iter GtkTreePath* position")
+; (CFNC "void gtk_tree_store_reorder GtkTreeStore* tree_store GtkTreeIter* parent int* new_order")
+; (CFNC "void gtk_tree_store_swap GtkTreeStore* tree_store GtkTreeIter* a GtkTreeIter* b")
+; (CFNC "void gtk_tree_store_move GtkTreeStore* tree_store GtkTreeIter* iter GtkTreePath* position")
+
+;;; --------
 
 (CFNC "void gdk_pixbuf_render_to_drawable_alpha GdkPixbuf* pixbuf GdkDrawable* drawable int src_x int src_y int dest_x int dest_y int width int height GdkPixbufAlphaMode alpha_mode int alpha_threshold GdkRgbDither dither int x_dither int y_dither")
 (CFNC "void gdk_pixbuf_render_pixmap_and_mask_for_colormap GdkPixbuf* pixbuf GdkColormap* colormap GdkPixmap** [pixmap_return] GdkBitmap** [mask_return] int alpha_threshold")
