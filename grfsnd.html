@@ -2001,13 +2001,13 @@ def display_energy(snd, chn)
   graph(data, "energy", ls / sr, rs / sr, 0.0, y_max * y_max, snd, chn, false)
   end
 
-# $lisp_graph_hook = Proc.new {|snd,chn| display_energy(snd,chn)}
+# $lisp_graph_hook = Proc.new {|snd, chn| display_energy(snd, chn)}
 </pre>
 <p>
 In Ruby you make a symbol by prepending ":", so Guile's
 </p>
 <pre>
-(list 'KeySym (char->integer #\F)
+(list 'KeySym (char-&gt;integer #\F)
 </pre> 
 <p>becomes</p>
 <pre>

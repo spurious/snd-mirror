@@ -281,7 +281,6 @@ void news_help(snd_state *ss)
 16-Aug:  added IBM adpcm from Perry Cook's adpcmdec.c.\n\
 15-Aug:  set-channel-drop in snd-motif.scm.\n\
 13-Aug:  snd 6.0.\n\
-1-Aug:   def-clm-struct (ws.scm).\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

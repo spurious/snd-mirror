@@ -2070,7 +2070,7 @@ loop to pan between speakers (but see move-locsig below):</p>
 		   (distval (env dist-env)))
 	       (setf dist-scaler (/ 1.0 distval))
 	       (setf (<em class=red>locsig-ref</em> loc 0) (* (- 1.0 degval) dist-scaler))
-               (if (> (mus-channels *output*) 1) (setf (<em class=red>locsig-ref</em> loc 1) (* degval dist-scaler)))
+               (if (&gt; (mus-channels *output*) 1) (setf (<em class=red>locsig-ref</em> loc 1) (* degval dist-scaler)))
 	       (when *reverb* 
                  (setf (<em class=red>locsig-reverb-ref</em> loc 0) (* reverb-amount (sqrt dist-scaler))))
 	       (<em class=red>locsig</em> loc i rdval)))))

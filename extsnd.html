@@ -160,8 +160,9 @@ various examples of and extensions to Snd can be found in the contrib directory,
 <tr><td><a href="sndscm.html#singerdoc">singer.scm</a></td>  <td>Perry Cook's vocal-tract physical model</td></tr>
 <tr><td><a href="sndscm.html#sndmotifdoc">snd-motif.scm</a></td><td>Motif module (xm.c)</td></tr>
 <tr><td><a href="sndscm.html#sndgldoc">snd-gl.scm</a></td><td>OpenGL examples (gl.c)</td></tr>
-<tr><td><a href="sndscm.html#snd4doc">snd4.scm</a></td>      <td>backwards compatibility stuff</td></tr>
-<tr><td><a href="sndscm.html#snd5doc">snd5.scm</a></td>      <td>backwards compatibility stuff</td></tr>
+<tr><td><a href="sndscm.html#snd4doc">snd4.scm</a></td>      <td>backwards compatibility for version 4</td></tr>
+<tr><td><a href="sndscm.html#snd5doc">snd5.scm</a></td>      <td>backwards compatibility for version 5</td></tr>
+<tr><td><a href="sndscm.html#snd6doc">snd6.scm</a></td>      <td>backwards compatibility for version 6</td></tr>
 <tr><td><a href="sndscm.html#vdoc">v.scm</a></td>            <td>fm-violin (from CLM)</td></tr>
 <tr><td><a href="sndscm.html#wsdoc">ws.scm</a></td>          <td>with-sound implementation</td></tr>
 <tr><td><a href="sndscm.html#xmenveddoc">xm-enved.scm</a></td><td>xm-based envelope editor</td></tr>
@@ -798,7 +799,7 @@ the hook.
 <!-- -->Snd opens it as if you had called open-sound.  If you drag it to a particular channel,
 <!-- -->Snd mixes it at the cursor in that channel.  To get Snd to
 <!-- -->mix the dragged file even from the menubar:
-<!-- --></br><br><code>(add-hook! drop-hook (lambda (filename) (mix filename) #t))</code><br><br>
+<!-- --><br><br><code>(add-hook! drop-hook (lambda (filename) (mix filename) #t))</code><br><br>
 <!-- -->snd-motif.scm has examples that add a drop callback to an arbitrary widget, or
 <!-- -->change an existing callback (to pass the sound index and channel number to the drop callback function, bypassing drop-hook).
 <!-- --></td></tr><tr><td colspan=3></td></tr>
