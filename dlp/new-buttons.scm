@@ -1,3 +1,5 @@
+(provide 'snd-new-buttons.scm)
+
 (define (add-listener-pane name type args)
   (let* ((listener (find-child (cadr (main-widgets)) "lisp-listener"))
          ;; this is the listener text widget, hopefully

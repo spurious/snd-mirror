@@ -502,8 +502,12 @@
 	(define (MyPlay)
 	  (if (not (selection-member? (selected-sound)))
 	      (select-all (selected-sound)))
-	  (add-hook! stop-playing-selection-hook play-selection)
-	  (play-selection))
+	  (letrec ((das-play (lambda ()
+			       (play-selection #f #f
+					       (lambda (x)
+						 (if (and (= x 0) c-islooping)
+						     (das-play)))))))
+	    (das-play)))
 
 	(define (MyStop)
 	  (remove-hook! stop-playing-selection-hook play-selection)

@@ -1,3 +1,5 @@
+(provide 'snd-new-icons.scm)
+
 (define save-as (list
 "32 25 5 1"
 "       c white"

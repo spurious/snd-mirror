@@ -132,6 +132,7 @@
 ;;##############################################################
 
 (add-to-menu 4 "--------------------------------" (lambda ()(newline)) 0)
+
 (add-to-menu 4 "But! How do I..."
 	     (lambda ()
 	       (help-dialog  "How do I..."
@@ -211,10 +212,6 @@
 							 ))))
 	       )
 	     0)
-
-
-
-
 
 
 
@@ -422,10 +419,9 @@
 	    (add-hook! stop-playing-selection-hook c-play-selection2))
 	(play-selection))
       (play-selection #f #f
-		      (lambda x
-;			(c-display "c-play-selection lambda")
-			(if c-islooping
-			    (c-play-selection))))))
+                      (lambda (x)
+                        (if (and (= x 0) c-islooping)
+                            (c-play-selection))))))
 
 (define (c-play2 snd)
   (if c-islooping
@@ -440,8 +436,8 @@
 	    (add-hook! stop-playing-hook c-play2))
 	(play pos))
       (play pos #f #f #f #f #f
-	    (lambda x
-	      (if c-islooping
+	    (lambda (x)
+	      (if (and (= x 0) c-islooping)
 		  (c-play pos))))))
 
 

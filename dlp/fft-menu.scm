@@ -1,5 +1,7 @@
 (use-modules (ice-9 format))
 
+(provide 'snd-fft-menu.scm)
+
 ;;; TODO: add gtk support here and in other dlp additions
 
 (define fft-list '()) ; menu labels are updated to show current default settings

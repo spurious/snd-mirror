@@ -1,3 +1,4 @@
+(provide 'snd-new-backgrounds.scm)
 
 ;;; some backgrounds -- wood granite rough blueish smoke 
 

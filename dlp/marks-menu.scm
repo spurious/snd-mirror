@@ -1,4 +1,5 @@
 (use-modules (ice-9 format))
+(provide 'snd-marks-menu.scm)
 
 (define marks-list '()) ; menu labels are updated to show current default settings
 

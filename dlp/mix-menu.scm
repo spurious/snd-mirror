@@ -1,6 +1,7 @@
 (use-modules (ice-9 format))
+(provide 'snd-mix-menu.scm)
 
-(if (not (defined? 'retempo-track)) (load-from-path "mix.scm"))
+(if (not (provided? 'snd-mix.scm)) (load-from-path "mix.scm"))
 
 (define mix-list '()) ; menu labels are updated to show current default settings
 
