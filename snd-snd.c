@@ -1705,9 +1705,7 @@ Cessate apply_controls(Indicium ptr)
 			}
 		    }
 		}
-	      /* sr .07 -> infinite output? */
 	    }
-	  
 	  return(BACKGROUND_CONTINUE);
 	  break;
 	  

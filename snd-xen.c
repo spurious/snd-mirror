@@ -680,7 +680,7 @@ static XEN eval_file_wrapper(void *data)
 #if HAVE_GUILE
 static XEN g_call0_1(void *arg)
 {
-  return(scm_apply((XEN)arg, XEN_EMPTY_LIST, XEN_EMPTY_LIST));
+  return(XEN_CALL_0_NO_CATCH((XEN)arg, "call0"));
 }
 #endif
 
@@ -696,9 +696,7 @@ XEN g_call0(XEN proc, const char *caller) /* replacement for gh_call0 -- protect
 #if HAVE_GUILE
 static XEN g_call1_1(void *arg)
 {
-  return(scm_apply(((XEN *)arg)[0], 
- 		   ((XEN *)arg)[1], 
- 		   XEN_APPLY_ARG_LIST_END));
+  return(XEN_CALL_1_NO_CATCH(((XEN *)arg)[0], ((XEN *)arg)[1], "call1"));
 }
 #endif
 
@@ -717,9 +715,7 @@ XEN g_call1(XEN proc, XEN arg, const char *caller)
 #if HAVE_GUILE
 static XEN g_call_any_1(void *arg)
 {
-  return(scm_apply(((XEN *)arg)[0], 
-		   ((XEN *)arg)[1], 
-		   XEN_EMPTY_LIST));
+  return(XEN_APPLY_NO_CATCH(((XEN *)arg)[0], ((XEN *)arg)[1], "call any"));
 }
 #endif
 
@@ -738,9 +734,7 @@ XEN g_call_any(XEN proc, XEN arglist, const char *caller)
 #if HAVE_GUILE
 static XEN g_call2_1(void *arg)
 {
-  return(scm_apply(((XEN *)arg)[0], 
- 		   ((XEN *)arg)[1], 
- 		   XEN_CONS(((XEN *)arg)[2], XEN_APPLY_ARG_LIST_END)));
+  return(XEN_CALL_2_NO_CATCH(((XEN *)arg)[0], ((XEN *)arg)[1], ((XEN *)arg)[2], "call2"));
 }
 #endif
 
@@ -760,11 +754,7 @@ XEN g_call2(XEN proc, XEN arg1, XEN arg2, const char *caller)
 #if HAVE_GUILE
 static XEN g_call3_1(void *arg)
 {
-  return(scm_apply(((XEN *)arg)[0], 
-		   ((XEN *)arg)[1], 
-		   XEN_CONS_2(((XEN *)arg)[2], 
-			      ((XEN *)arg)[3], 
-			      XEN_APPLY_ARG_LIST_END)));
+  return(XEN_CALL_3_NO_CATCH(((XEN *)arg)[0], ((XEN *)arg)[1], ((XEN *)arg)[2], ((XEN *)arg)[3], "call3"));
 }
 #endif
 

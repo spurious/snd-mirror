@@ -810,9 +810,7 @@ returns the maximum X value:
 <em class=listener>3.0</em>
 </pre>
 <p>Similarly, <b>min-envelope</b> returns the minimum y value.</p>
-<p><b>integrate-envelope</b> returns the area under the envelope; this is
-useful when you need to know in advance the overall effect of an envelope
-controlling the sampling rate.
+<p><b>integrate-envelope</b> returns the area under the envelope.
 </p>
 <pre>
 :<em class=typing>(integrate-envelope '(0 0 1 1))</em>
@@ -835,10 +833,15 @@ to an envelope, much like divseg in clm-1.</p>
 reverses an envelope.
 <b>repeat-envelope</b> repeats an envelope (concatenates copies of itself).
 </p>
+
+<table border=0><tr><td>
 <pre>
-:<em class=typing>(repeat-envelope '(0 0 100 1) 2)</em>
-<em class=listener>(0 0 100 1 101 0 201 1)</em>
+:<em class=typing>(repeat-envelope '(0 0 .1 .9 1 1 1.3 .2 2 0) 2)</em>
+<em class=listener>(0 0 0.1 0.9 1.0 1 1.3 0.2 2.0 0 2.1 0.9 3.0 1 3.3 0.2 4.0 0)</em>
 </pre>
+</td><td><img src="repenv.png">
+</td></tr></table>
+
 <p>If the final y value is different from the first y value (as above), a quick ramp is
 inserted between repeats. 'normalized' causes the new envelope's x axis
 to have the same extent as the original's. 'reflected' causes every other
@@ -1538,7 +1541,7 @@ convenient if they were in one file.
   <A class=def NAME="rampsquared">ramp-squared</A> a0 a1 #:optional (symmetric #t) beg dur snd chn edpos
   <A class=def NAME="envsquaredchannel">env-squared-channel</A> env #:optional (symmetric #t) beg dur snd chn edpos
   <A class=def NAME="rampexpt">ramp-expt</A> a0 a1 exponent #:optional (symmetric #t) beg dur snd chn edpos
-  <A class=def NAME="envexptchannel">env-expt-channel</A> env exponent #:optional (symmetric #t) beg dur snd chn edpos
+  <a class=def name="envexptchannel">env-expt-channel</a> env exponent #:optional (symmetric #t) beg dur snd chn edpos
 
   <a class=def name="offsetchannel">offset-channel</a> amount #:optional beg dur snd chn edpos	
   <a class=def name="contrastchannel">contrast-channel</a> index #:optional beg dur snd chn edpos	
@@ -2353,7 +2356,6 @@ which is already used by Scheme, so (at the suggestion of Dave Phillips)
 this color is named "tawny" in rgb.scm.
 </p>
 
-  <li><A href="#rmsgaindoc">rmsgain.scm</a>: RMS-based gain and balance methods
 <A NAME="rmsgaindoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>rmsgain.scm</h2></td></tr></table>
 
 <p>rmsgain.scm is an implementation of the balance generators of CLM (based
@@ -2530,7 +2532,7 @@ waterfall spectrum display of the incoming audio data.  <b>stop-waterfall</b> tu
   <em class=emdef>create-fmv-dialog</em> 
   <em class=emdef>make-pixmap</em> strs
   <em class=emdef>display-scanned-synthesis</em> 
-  <em class=emdef>disable-control-panel</em> 
+  <A class=def NAME="disablecontrolpanel">disable-control-panel</a> 
   <a class=def name="addmarkpane">add-mark-pane</a> 
   <em class=emdef>select-file</em> func <i>title dir filter help</i>
   <em class=emdef>snd-clock-icon</em> snd hour
@@ -2541,7 +2543,7 @@ waterfall spectrum display of the incoming audio data.  <b>stop-waterfall</b> tu
   <em class=emdef>show-disk-space</em>
   <em class=emdef>keep-file-dialog-open-upon-ok</em>
   <A class=def NAME="usepanmixinmixmenu">use-pan-mix-in-mix-menu</a>
-  <em class=emdef>add-amp-controls</em>
+  <a class=def name="addampcontrols">add-amp-controls</a>
   <em class=emdef>add-very-useful-icons</em>
   <A class=def NAME="adddeleteoption">add-delete-option, add-rename-option</a>
   <em class=emdef>mark-sync-color</em> new-color

@@ -264,7 +264,7 @@ to the listener here, as described above):</p>
 <pre>
 &gt;<em class=typing><a class=quiet href="#autoresize">auto_resize</a></em>
 <em class=listener>true</em>
-&gt;<em class=typing>set_auto-resize</a> false</em>
+&gt;<em class=typing>set_auto-resize false</em>
 <em class=listener>false</em>
 </pre>
 </td></tr></table>
@@ -3853,26 +3853,26 @@ this is the same as <i>src-sound</i> but applied to selection.
 <TABLE border=3 bordercolor="tan" hspace=40><tr><td>
 <small><blockquote>
 See also:<br>
-<a href="#selectioncolor">selection-color</a>: color of selected portion<br>
-<a href="#selectioncreatesregion">selection-creates-region</a>: if #f, creating a selection does not create a region<br>
-<a href="#lshowselectiontransform">show-selection-transform</a>: if #t, fft graph refers to the selection<br>
-<a href="#stopplayingselectionhook">stop-playing-selection-hook</a>: hook called when selection stops playing<br>
-<a href="sndscm.html#exswapselectionchannels">swap-selection-channels</a>: swap chans in selected portion<br>
-<a href="sndscm.html#exreplacewithselection">replace-with-selection</a>: replace portion with selection<br>
-<a href="sndscm.html#exmakeselection">make-selection</a>: select portion via function<br>
-<a href="sndscm.html#exevaloverselection">eval-over-selection</a> (map-selection in effect): evaluate func on each sample of selection<br>
-<a href="sndscm.html#exselectionmembers">selection-members</a>: list of lists of sound index and channel if selection is active there<br>
-<a href="sndscm.html#exselectionrms">selection-rms</a>: rms of selection data<br>
-<a href="sndscm.html#exdeleteselectionandsmooth">delete-selection-and-smooth</a>: delete selection and smooth the splice<br>
-<a href="sndscm.html#exdefineselectionviamarks">define-selection-via-marks</a>: select portion between two marks<br>
-<a href="sndscm.html#exsnapmarks">snap-marks</a>: place marks at selection start and end<br>
-<a href="sndscm.html#fitselectionbetweenmarks">fit-selection-between-marks</a>: squeeze selection between marks<br>
-<a href="sndscm.html#addselectionpopup">add-selection-popup</a>: add context-sensitive popup menu specific to selection<br>
-<a href="sndscm.html#editmenudoc">cut-selection-&gt;new</a>: delete selection and write it to a file<br>
-<a href="sndscm.html#editmenudoc">append-selection</a>: append selection<br>
-<a href="sndscm.html#editmenudoc">selection-&gt;new</a>: write selection to a file<br>
-<a href="sndscm.html#dlpdoc">deselect-all</a>: undo select-all.<br>
-<a href="#selectionchangedhook">selection-changed-hook</a>: hook called when selection created or deleted.<br>
+color of selected portion: <a href="#selectioncolor">selection-color</a><br>
+set whether creating a selection creates a region: <a href="#selectioncreatesregion">selection-creates-region</a><br>
+fft graph refers to the selection: <a href="#lshowselectiontransform">show-selection-transform</a><br>
+hook called when selection stops playing: <a href="#stopplayingselectionhook">stop-playing-selection-hook</a><br>
+swap chans in selected portion: <a href="sndscm.html#exswapselectionchannels">swap-selection-channels</a><br>
+replace portion with selection: <a href="sndscm.html#exreplacewithselection">replace-with-selection</a><br>
+select portion via function: <a href="sndscm.html#exmakeselection">make-selection</a><br>
+evaluate func on each sample of selection: <a href="sndscm.html#exevaloverselection">eval-over-selection</a> (map-selection in effect)<br>
+selection members as list of lists of sound indices and channels: <a href="sndscm.html#exselectionmembers">selection-members</a><br>
+rms of selection data: <a href="sndscm.html#exselectionrms">selection-rms</a><br>
+delete selection and smooth the splice: <a href="sndscm.html#exdeleteselectionandsmooth">delete-selection-and-smooth</a><br>
+select portion between two marks: <a href="sndscm.html#exdefineselectionviamarks">define-selection-via-marks</a><br>
+place marks at selection start and end: <a href="sndscm.html#exsnapmarks">snap-marks</a><br>
+squeeze selection between marks: <a href="sndscm.html#fitselectionbetweenmarks">fit-selection-between-marks</a><br>
+add context-sensitive popup menu specific to selection: <a href="sndscm.html#addselectionpopup">add-selection-popup</a><br>
+delete selection and write it to a file: <a href="sndscm.html#editmenudoc">cut-selection-&gt;new</a><br>
+append selection: <a href="sndscm.html#editmenudoc">append-selection</a><br>
+write selection to a file: <a href="sndscm.html#editmenudoc">selection-&gt;new</a><br>
+undo select-all.: <a href="sndscm.html#dlpdoc">deselect-all</a><br>
+hook called when selection created or deleted.: <a href="#selectionchangedhook">selection-changed-hook</a><br>
 <br>
 </blockquote></small>
 </td></tr></TABLE>
@@ -4329,10 +4329,10 @@ I wonder whether "track" or "frame" has the most uses.
 <TABLE border=3 bordercolor="tan" hspace=40><tr><td>
 <blockquote><small>
 <br>
-To play from the current cursor position with a tracking cursor:  <a href="#pfc">pfc</a>.<br>
-To display tracking cursor as a full height vertical line: <a href="#cursorstyle">cursor-style</a>.<br>
-To track play once: control-click 'play'. (You can add a mark at the current tracking cursor location during the play with C-m).<br>
-To leave the cursor at the final position after tracking play: if-cursor-follows-play-it-stays-where-play-stopped in examp.scm.<br>
+play from the current cursor position with a tracking cursor:  <a href="#pfc">pfc</a>.<br>
+display tracking cursor as a full height vertical line: <a href="#cursorstyle">cursor-style</a>.<br>
+track play once: control-click 'play'. (You can add a mark at the current tracking cursor location during the play with C-m).<br>
+leave the cursor at the final position after tracking play: if-cursor-follows-play-it-stays-where-play-stopped in examp.scm.<br>
 <br>
 </small></blockquote>
 </td></tr></TABLE>
@@ -4514,16 +4514,16 @@ delete sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
 <br><br>
 <TABLE border=3 bordercolor="tan" hspace=40><tr><td>
 <small><blockquote>
-To delete a file: use the Guile function delete-file or Ruby's File.delete.<br>
-To delete a region: <a href="#forgetregion">forget-region</a><br>
-To delete the currently selected samples: <a href="#snddeleteselection">delete-selection</a><br>
-To delete the selection and smooth the splice: <a href="sndscm.html#exdeleteselectionandsmooth">delete-selection-and-smooth</a><br>
-To delete a mix or all mixes: <a href="#snddeletemix">delete-mix</a><br>
-To delete a track or all tracks: <a href="#deletetrack">delete-track</a><br>
-To delete a mark or all marks: <a href="#snddeletemark">delete-mark</a><br>
-To remove a file from the sound cache: <a href="#soundforget">mus-sound-forget</a><br>
-To remove a menu item: <a href="#sndremovefrommenu">remove-from-menu</a><br>
-To add a 'delete' option to the file selection dialog: <a href="sndscm.html#adddeleteoption">add-delete-option</a><br>
+delete a file: use the Guile function delete-file or Ruby's File.delete.<br>
+delete a region: <a href="#forgetregion">forget-region</a><br>
+delete the currently selected samples: <a href="#snddeleteselection">delete-selection</a><br>
+delete the selection and smooth the splice: <a href="sndscm.html#exdeleteselectionandsmooth">delete-selection-and-smooth</a><br>
+delete a mix or all mixes: <a href="#snddeletemix">delete-mix</a><br>
+delete a track or all tracks: <a href="#deletetrack">delete-track</a><br>
+delete a mark or all marks: <a href="#snddeletemark">delete-mark</a><br>
+remove a file from the sound cache: <a href="#soundforget">mus-sound-forget</a><br>
+remove a menu item: <a href="#sndremovefrommenu">remove-from-menu</a><br>
+add a 'delete' option to the file selection dialog: <a href="sndscm.html#adddeleteoption">add-delete-option</a><br>
 <br>
 </blockquote></small>
 </td></tr></TABLE>
@@ -4675,6 +4675,7 @@ Fredric J. Harris, 'On the Use of Windows for Harmonic Analysis with the Discret
 IEEE, Vol. 66, No. 1, January 1978, with updates from: Albert H. Nuttall, 'Some Windows with Very Good Sidelobe Behaviour', IEEE Transactions
 of Acoustics, Speech, and Signal Processing, Vol. ASSP-29, 1, February 1981. 
 Briefly, the best one is the Dolph-Chebyshev window.
+</p>
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -4975,13 +4976,13 @@ insert sample <i>value</i> at sample <i>samp</i> in <i>snd</i>'s channel <i>chn<
 <br><br>
 <TABLE border=3 bordercolor="tan" hspace=40><tr><td>
 <small><blockquote>
-To insert some portion of a channel: <a href="sndscm.html#insertchannel">insert-channel</a><br>
-To insert a silence: <a href="#padchannel">pad-channel</a>, <a href="#sndinsertsilence">insert-silence</a><br>
-To insert a region: <a href="#sndinsertregion">insert-region</a><br>
-To insert the selection: <a href="#sndinsertselection">insert-selection</a><br>
-To insert a vct of samples: <a href="#sndinsertsamples">insert-samples</a><br>
-To insert a sound: <a href="#sndinsertfile">insert-sound</a><br>
-To append a sound and silence: <a href="#appendsound">append-sound</a><br>
+insert some portion of a channel: <a href="sndscm.html#insertchannel">insert-channel</a><br>
+insert a silence: <a href="#padchannel">pad-channel</a>, <a href="#sndinsertsilence">insert-silence</a><br>
+insert a region: <a href="#sndinsertregion">insert-region</a><br>
+insert the selection: <a href="#sndinsertselection">insert-selection</a><br>
+insert a vct of samples: <a href="#sndinsertsamples">insert-samples</a><br>
+insert a sound: <a href="#sndinsertfile">insert-sound</a><br>
+append a sound and silence: <a href="#appendsound">append-sound</a><br>
 </blockquote></small>
 </td></tr></TABLE>
 </td></tr>
@@ -5520,27 +5521,27 @@ The following code plays from the cursor with a moving ("tracking") cursor:<br><
 <br><br>
 <TABLE border=3 bordercolor="tan" hspace=40><tr><td>
 <small><blockquote>
-To play one channel: <a href="#playchannel">play-channel</a>, play button in control panel or files dialog<br>
-To play from cursor: C-q and example above<br>
-To play from cursor with tracking cursor: <a href="#pfc">pfc</a> above<br>
-To play the selection: <a href="#sndplayselection">play-selection</a>, <a href="snd.html#cxp">C-x p</a><br>
-To play a region: <a href="#sndplayregion">play-region</a>, <a href="snd.html#cxp">C-x p</a>, play button in Region dialog<br>
-To play a mix: <a href="#sndplaymix">play-mix</a>, play button in Mix dialog<br>
-To play a track: <a href="#sndplaytrack">play-track</a><br>
-To play from mark: click or drag triangle (control-click for all chans)<br>
-To play continuously between two marks: <a href="sndscm.html#exloopbetweenmarks">loop-it</a><br>
-To stop playing: C-g, C-t, <a href="#sndstop">stop-playing</a><br>
-To pause or resume playback: space<br>
-To play repeatedly: <a href="sndscm.html#explayoften">play-often</a><br>
-To play repeatedly until C-g: <a href="sndscm.html#explayuntilcg">play-until-c-g</a><br>
-To play region repeatedly: <a href="sndscm.html#explayregionforever">play-region-forever</a><br>
-To play a file upon a keystroke: <a href="#extendedpiano">bind-key</a><br>
-To play using an external program: (shell "sndplay wood16.wav")<br>
-To play arbitrary mixtures of things: <a href="#makeplayer">make-player</a> and related functions, <a href="sndscm.html#playsyncdmarks">play-syncd-marks</a><br>
-To send arbitrary data to the DAC: <a href="#musaudiowrite">mus-audio-write</a>, <a href="sndscm.html#exstartdac">start-dac</a><br>
-To play after sending the data through some function: <a href="sndscm.html#explaysound">play-sound</a><br>
-To play with applied amplitude envelope: <a href="sndscm.html#explaywithenvs">play-with-envs</a>, <a href="sndscm.html#explaypanned">play-panned</a><br>
-To play an external file: (play "file")<br>
+play one channel: <a href="#playchannel">play-channel</a>, play button in control panel or files dialog<br>
+play from cursor: C-q and example above<br>
+play from cursor with tracking cursor: <a href="#pfc">pfc</a> above<br>
+play the selection: <a href="#sndplayselection">play-selection</a>, <a href="snd.html#cxp">C-x p</a><br>
+play a region: <a href="#sndplayregion">play-region</a>, <a href="snd.html#cxp">C-x p</a>, play button in Region dialog<br>
+play a mix: <a href="#sndplaymix">play-mix</a>, play button in Mix dialog<br>
+play a track: <a href="#sndplaytrack">play-track</a><br>
+play from mark: click or drag triangle (control-click for all chans)<br>
+play continuously between two marks: <a href="sndscm.html#exloopbetweenmarks">loop-it</a><br>
+stop playing: C-g, C-t, <a href="#sndstop">stop-playing</a><br>
+pause or resume playback: space<br>
+play repeatedly: <a href="sndscm.html#explayoften">play-often</a><br>
+play repeatedly until C-g: <a href="sndscm.html#explayuntilcg">play-until-c-g</a><br>
+play region repeatedly: <a href="sndscm.html#explayregionforever">play-region-forever</a><br>
+play a file upon a keystroke: <a href="#extendedpiano">bind-key</a><br>
+play using an external program: (shell "sndplay wood16.wav")<br>
+play arbitrary mixtures of things: <a href="#makeplayer">make-player</a> and related functions, <a href="sndscm.html#playsyncdmarks">play-syncd-marks</a><br>
+send arbitrary data to the DAC: <a href="#musaudiowrite">mus-audio-write</a>, <a href="sndscm.html#exstartdac">start-dac</a><br>
+play after sending the data through some function: <a href="sndscm.html#explaysound">play-sound</a><br>
+play with applied amplitude envelope: <a href="sndscm.html#explaywithenvs">play-with-envs</a>, <a href="sndscm.html#explaypanned">play-panned</a><br>
+play an external file: (play "file")<br>
 </blockquote></small>
 </td></tr></TABLE>
 </td></tr>
@@ -6096,12 +6097,12 @@ temporary messages.  C-g clears it.
 <TABLE border=3 bordercolor="tan" hspace=40><tr><td>
 <blockquote><small>
 <br>
-To reverse selected portion: <a href="#sndreverseselection">reverse-selection</a><br>
-To read samples in reverse: use <a href="#makesamplereader">make-sample-reader</a> with direction -1.<br>
-To reverse at new sampling rate: use <a href="#srcchannel">src-channel</a> with a negative ratio.<br>
+reverse selected portion: <a href="#sndreverseselection">reverse-selection</a><br>
+read samples in reverse: use <a href="#makesamplereader">make-sample-reader</a> with direction -1.<br>
+reverse at new sampling rate: use <a href="#srcchannel">src-channel</a> with a negative ratio.<br>
 Reverse in control panel: <a href="snd.html#speed">control panel</a> and <a href="#sndspeed">speed-control</a> variable.<br>
-To reverse a track: <a href="sndscm.html#reversetrack">reverse-track</a><br>
-To reverse an envelope: <a href="sndscm.html#reverseenvelope">reverse-envelope</a><br>
+reverse a track: <a href="sndscm.html#reversetrack">reverse-track</a><br>
+reverse an envelope: <a href="sndscm.html#reverseenvelope">reverse-envelope</a><br>
 Virtual reverse-channel: <a href="#virtualreverse">xen-channel</a><br>
 <br>
 </small></blockquote>
@@ -6251,32 +6252,32 @@ save <i>snd</i>; same as File menu's Save option. <a href="#savehook">save-hook<
 <A NAME="saveexamples"></a>
 <TABLE border=3 bordercolor="tan" hspace=40><tr><td>
 <small><blockquote>
-To save all sounds: <code>(for-each save-sound (sounds))</code>.<br>
-To save a sound under a different name: <a href="#sndsaveas">save-sound-as</a><br>
-To extract one channel of a sound: <a href="#sndsaveas">save-sound-as</a><br>
-To save a sound in a different format or header: <a href="#sndsaveas">save-sound-as</a><br>
-To backup edits automatically: <a href="sndscm.html#exautosave">autosave</a><br>
-To check first for unsaved edits: <a href="sndscm.html#exunsavededits">check-for-unsaved-edits</a><br>
-To save Snd's complete state (unsaved edits and all): <a href="#sndsavestate">save-state</a>, <a href="#savedir">save-dir</a>, <a href="#savestatehook">save-state-hook</a>, <a href="#lsavestatefile">save-state-file</a><br>
-To save just the current options: <a href="#sndsaveoptions">save-options</a><br>
-To save the selection: <a href="#sndsaveselection">save-selection</a><br>
-To save a region: <a href="#sndsaveregion">save-region</a><br>
-To save a mix: <a href="sndscm.html#savemix">save-mix</a><br>
-To save a track: <a href="sndscm.html#savetrack">save-track</a><br>
-To save the control panel state: <a href="#sndcontrolsave">save-controls</a><br>
-To save currently defined envelopes (envelope editor): <a href="#sndsaveenvelopes">save-envelopes</a><br>
-To start the file save dialog: <a href="#sndfilesaveasdialog">file-save-as-dialog</a><br>
-To start the selection save dialog: <a href="#sndeditsaveasdialog">edit-save-as-dialog</a><br>
-To use Emacs-style save-as behavior: <a href="#emacssytlesaveas">emacs-style-save-as</a><br>
-To save the current listener text: <a href="#sndsavelistener">save-listener</a><br>
-To save keyboard macros: <a href="#sndsavemacros">save-macros</a><br>
-To save marks: <a href="#sndsavemarks">save-marks</a><br>
-To save the audio hardware settings: <a href="#musaudiosave">mus-audio-save</a><br>
-To save just the edit history: <a href="#sndsaveedithistory">save-edit-history</a><br>
-To save the peak-env data: <a href="sndscm.html#peakenvdoc">save-peak-env-info</a><br>
-To take some action upon a window manager save-yourself signal: <a href="sndscm.html#uponsaveyourself">upon-save-yourself</a><br>
-To save the current sound setup for a later reopen: <a href="sndscm.html#exremembersoundstate">remember-sound-state</a><br>
-To save the current fft peak info: <a href="#sndpeaks">peaks</a><br>
+save all sounds: <code>(for-each save-sound (sounds))</code>.<br>
+save a sound under a different name: <a href="#sndsaveas">save-sound-as</a><br>
+extract one channel of a sound: <a href="#sndsaveas">save-sound-as</a><br>
+save a sound in a different format or header: <a href="#sndsaveas">save-sound-as</a><br>
+backup edits automatically: <a href="sndscm.html#exautosave">autosave</a><br>
+check first for unsaved edits: <a href="sndscm.html#exunsavededits">check-for-unsaved-edits</a><br>
+save Snd's complete state (unsaved edits and all): <a href="#sndsavestate">save-state</a>, <a href="#savedir">save-dir</a>, <a href="#savestatehook">save-state-hook</a>, <a href="#lsavestatefile">save-state-file</a><br>
+save just the current options: <a href="#sndsaveoptions">save-options</a><br>
+save the selection: <a href="#sndsaveselection">save-selection</a><br>
+save a region: <a href="#sndsaveregion">save-region</a><br>
+save a mix: <a href="sndscm.html#savemix">save-mix</a><br>
+save a track: <a href="sndscm.html#savetrack">save-track</a><br>
+save the control panel state: <a href="#sndcontrolsave">save-controls</a><br>
+save currently defined envelopes (envelope editor): <a href="#sndsaveenvelopes">save-envelopes</a><br>
+start the file save dialog: <a href="#sndfilesaveasdialog">file-save-as-dialog</a><br>
+start the selection save dialog: <a href="#sndeditsaveasdialog">edit-save-as-dialog</a><br>
+use Emacs-style save-as behavior: <a href="#emacssytlesaveas">emacs-style-save-as</a><br>
+save the current listener text: <a href="#sndsavelistener">save-listener</a><br>
+save keyboard macros: <a href="#sndsavemacros">save-macros</a><br>
+save marks: <a href="#sndsavemarks">save-marks</a><br>
+save the audio hardware settings: <a href="#musaudiosave">mus-audio-save</a><br>
+save just the edit history: <a href="#sndsaveedithistory">save-edit-history</a><br>
+save the peak-env data: <a href="sndscm.html#peakenvdoc">save-peak-env-info</a><br>
+take some action upon a window manager save-yourself signal: <a href="sndscm.html#uponsaveyourself">upon-save-yourself</a><br>
+save the current sound setup for a later reopen: <a href="sndscm.html#exremembersoundstate">remember-sound-state</a><br>
+save the current fft peak info: <a href="#sndpeaks">peaks</a><br>
 </blockquote></small>
 </td></tr></TABLE>
 </td></tr>
@@ -6666,13 +6667,13 @@ If #t, the y=0 axis is displayed.  This is the '<a href="snd.html#viewy0">Show Y
 <A NAME="smoothexamples"></a>
 <TABLE border=3 bordercolor="tan" hspace=40><tr><td>
 <small><blockquote>
-To smooth all channels: <a href="#sndsmooth">smooth-sound</a><br>
-To smooth selection: <a href="#sndsmoothselection">smooth-selection</a><br>
-To delete the selection and smooth the splice: <a href="sndscm.html#exdeleteselectionandsmooth">delete-selection-and-smooth</a><br>
-Smoothing as virtual op: smooth-channel-via-ptree in examp.scm<br>
-Smoothing via fft: <a href="sndscm.html#exfftsmoother">fft-smoother</a><br>
-Smooth via low-pass <a href="#filtersinsnd">filter</a><br>
-Smooth over click: Remove-click in examp.scm<br>
+smooth all channels: <a href="#sndsmooth">smooth-sound</a><br>
+smooth selection: <a href="#sndsmoothselection">smooth-selection</a><br>
+delete the selection and smooth the splice: <a href="sndscm.html#exdeleteselectionandsmooth">delete-selection-and-smooth</a><br>
+smoothing as virtual op: smooth-channel-via-ptree in examp.scm<br>
+smoothing via fft: <a href="sndscm.html#exfftsmoother">fft-smoother</a><br>
+smooth via low-pass <a href="#filtersinsnd">filter</a><br>
+smooth over click: Remove-click in examp.scm<br>
 </blockquote></small>
 </td></tr></TABLE>
 </td></tr>
@@ -7531,6 +7532,13 @@ of the fft points, making the display smoother.
 
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="customcontrols">the control panel</a></h4></td></tr></table>
 
+<p>The control panel makes it easy to try out various quick effects without
+editing anything.  You can change volume ('amp'), pitch ('speed'), tempo
+('expand'), reverb amount ('reverb'), simulated room size ('reverb len'),
+brightness ('contrast'), and dullness ('filter').  To treat a current
+setting as an edit operation, use the 'apply' button.  For more on
+the effects themselves (and a pretty picture!), see the discussion in <a href="snd.html#controls">snd.html</a>.
+</p>
 <p>
 The control panel normally processes samples as follows: if the sampling
 rate conversion is on (the 'Speed' control is not 1.0), it applies srate
@@ -7894,11 +7902,19 @@ style (default: 12).
 <tr><td colspan=2></td></tr>
 </table>
 
+<p>
 <a href="sndscm.html#makehiddencontrolsdialog">make-hidden-controls-dialog</a> in
 snd-motif.scm sets up a dialog to handle the controls that aren't handled by
 the control panel (expand-control-hop, expand-control-length, expand-control-ramp,
 contrast-control-amp, reverb-control-lowpass, and reverb-control-feedback).
-<br><br>
+The control panel itself is accessible as <code>(list-ref (<a href="#soundwidgets">sound-widgets</a>) 2)</code>.
+You can add or remove controls; <a href="sndscm.html#addampcontrols">add-amp-controls</a>
+in snd-motif.scm sets up a separate amp slider for each channel in the current sound.
+<a href="sndscm.html#disablecontrolpanel">disable-control-panel</a> disables (hides) the
+entire panel.
+</p>
+
+<br>
 
 <!-- INDEX editlists:Edit lists -->
 <!-- Edit Lists -->

@@ -68,7 +68,7 @@
 /*   currently using scm_internal_dynamic_wind, scm_current_module,
  *   scm_procedure_source, scm_set_smob*, scm_object_property, scm_set_object_property,
  *   scm_c_define, scm_hook_to_list, scm_mkstrport, scm_make_string, scm_current_error_port, scm_fluid_ref, scm_frame_source,
- *   scm_stack_ref, scm_source_property, scm_internal_stack_catch, scm_apply, 
+ *   scm_stack_ref, scm_source_property, scm_internal_stack_catch,
  *   scm_display_backtrace, scm_the_last_fluid_var, scm_prin1, scm_c_use_module, scm_c_export,
  *   SCM_OPB, SCM_WRTNG, SCM_HASHTABLE_BUCKETS, SCM_MODULE_USES, SCM_MODULE_OBARRAY, SCM_HASHTABLE_N_BUCKETS, 
  *   and all the snd-run cases.  
@@ -536,35 +536,6 @@
                        C_TO_XEN_STRING(Descr), \
                        XEN_LIST_1(Arg)))
 
-#if USE_SND
-  /* take advantage of Snd's elaborate error handling */
-  #define XEN_CALL_0(Func, Caller)                   g_call0(Func, Caller)
-  #define XEN_CALL_1(Func, Arg1, Caller)             g_call1(Func, Arg1, Caller)
-  #define XEN_CALL_2(Func, Arg1, Arg2, Caller)       g_call2(Func, Arg1, Arg2, Caller)
-  #define XEN_CALL_3(Func, Arg1, Arg2, Arg3, Caller) g_call3(Func, Arg1, Arg2, Arg3, Caller)
-  #define XEN_APPLY(Func, Args, Caller)              g_call_any(Func, Args, Caller)
-  #define XEN_CALL_4(Func, Arg1, Arg2, Arg3, Arg4, Caller) g_call_any(Func, XEN_LIST_4(Arg1, Arg2, Arg3, Arg4), Caller) 
-  #define XEN_CALL_5(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Caller) g_call_any(Func, XEN_LIST_5(Arg1, Arg2, Arg3, Arg4, Arg5), Caller) 
-  #define XEN_CALL_6(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Caller) g_call_any(Func, XEN_LIST_6(Arg1, Arg2, Arg3, Arg4, Arg5, Arg6), Caller) 
-#else
-  #define XEN_CALL_0(Func, Caller)                   scm_apply(Func, XEN_EMPTY_LIST, XEN_EMPTY_LIST)
-  #define XEN_CALL_1(Func, Arg1, Caller)             scm_apply(Func, Arg1, scm_listofnull)
-  #define XEN_CALL_2(Func, Arg1, Arg2, Caller)       scm_apply(Func, Arg1, scm_cons(Arg2, scm_listofnull))
-  #define XEN_CALL_3(Func, Arg1, Arg2, Arg3, Caller) scm_apply(Func, Arg1, scm_cons2(Arg2, Arg3, scm_listofnull))
-  #define XEN_APPLY(Func, Args, Caller)              scm_apply(Func, Args, XEN_EMPTY_LIST)
-  #define XEN_CALL_4(Func, Arg1, Arg2, Arg3, Arg4, Caller) \
-     scm_apply(Func, Arg1, scm_cons2(Arg2, Arg3, scm_cons(Arg4, scm_listofnull)))
-  #define XEN_CALL_5(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Caller) \
-     scm_apply(Func, Arg1, scm_cons2(Arg2, Arg3, scm_cons2(Arg4, Arg5, scm_listofnull)))
-  #define XEN_CALL_6(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Caller) \
-     scm_apply(Func, Arg1, scm_cons2(Arg2, Arg3, scm_cons2(Arg4, Arg5, scm_cons(Arg6, scm_listofnull))))
-#endif
-#define XEN_APPLY_NO_CATCH(Func, Args, Caller)              scm_apply(Func, Args, XEN_EMPTY_LIST)
-#define XEN_CALL_0_NO_CATCH(Func, Caller)                   scm_apply(Func, XEN_EMPTY_LIST, XEN_EMPTY_LIST)
-#define XEN_CALL_1_NO_CATCH(Func, Arg1, Caller)             scm_apply(Func, Arg1, scm_listofnull)
-#define XEN_CALL_2_NO_CATCH(Func, Arg1, Arg2, Caller)       scm_apply(Func, Arg1, scm_cons(Arg2, scm_listofnull))
-#define XEN_CALL_3_NO_CATCH(Func, Arg1, Arg2, Arg3, Caller) scm_apply(Func, Arg1, scm_cons2(Arg2, Arg3, scm_listofnull))
-
 #ifdef WINDOZE
 /* can't use scm_listofnull in Windows because the loader can't deal with it:
  *    snd-xen.o(.text+0x1456): In function `g_call1_1':
@@ -583,6 +554,35 @@
 #else
   #define XEN_APPLY_ARG_LIST_END            scm_listofnull
 #endif
+
+#if USE_SND
+  /* take advantage of Snd's elaborate error handling */
+  #define XEN_CALL_0(Func, Caller)                   g_call0(Func, Caller)
+  #define XEN_CALL_1(Func, Arg1, Caller)             g_call1(Func, Arg1, Caller)
+  #define XEN_CALL_2(Func, Arg1, Arg2, Caller)       g_call2(Func, Arg1, Arg2, Caller)
+  #define XEN_CALL_3(Func, Arg1, Arg2, Arg3, Caller) g_call3(Func, Arg1, Arg2, Arg3, Caller)
+  #define XEN_APPLY(Func, Args, Caller)              g_call_any(Func, Args, Caller)
+  #define XEN_CALL_4(Func, Arg1, Arg2, Arg3, Arg4, Caller) g_call_any(Func, XEN_LIST_4(Arg1, Arg2, Arg3, Arg4), Caller) 
+  #define XEN_CALL_5(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Caller) g_call_any(Func, XEN_LIST_5(Arg1, Arg2, Arg3, Arg4, Arg5), Caller) 
+  #define XEN_CALL_6(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Caller) g_call_any(Func, XEN_LIST_6(Arg1, Arg2, Arg3, Arg4, Arg5, Arg6), Caller) 
+#else
+  #define XEN_CALL_0(Func, Caller)                   scm_apply(Func, XEN_EMPTY_LIST, XEN_EMPTY_LIST)
+  #define XEN_CALL_1(Func, Arg1, Caller)             scm_apply(Func, Arg1, XEN_APPLY_ARG_LIST_END)
+  #define XEN_CALL_2(Func, Arg1, Arg2, Caller)       scm_apply(Func, Arg1, scm_cons(Arg2, XEN_APPLY_ARG_LIST_END))
+  #define XEN_CALL_3(Func, Arg1, Arg2, Arg3, Caller) scm_apply(Func, Arg1, scm_cons2(Arg2, Arg3, XEN_APPLY_ARG_LIST_END))
+  #define XEN_APPLY(Func, Args, Caller)              scm_apply(Func, Args, XEN_EMPTY_LIST)
+  #define XEN_CALL_4(Func, Arg1, Arg2, Arg3, Arg4, Caller) \
+     scm_apply(Func, Arg1, scm_cons2(Arg2, Arg3, scm_cons(Arg4, XEN_APPLY_ARG_LIST_END)))
+  #define XEN_CALL_5(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Caller) \
+     scm_apply(Func, Arg1, scm_cons2(Arg2, Arg3, scm_cons2(Arg4, Arg5, XEN_APPLY_ARG_LIST_END)))
+  #define XEN_CALL_6(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Caller) \
+     scm_apply(Func, Arg1, scm_cons2(Arg2, Arg3, scm_cons2(Arg4, Arg5, scm_cons(Arg6, XEN_APPLY_ARG_LIST_END))))
+#endif
+#define XEN_APPLY_NO_CATCH(Func, Args, Caller)              scm_apply(Func, Args, XEN_EMPTY_LIST)
+#define XEN_CALL_0_NO_CATCH(Func, Caller)                   scm_apply(Func, XEN_EMPTY_LIST, XEN_EMPTY_LIST)
+#define XEN_CALL_1_NO_CATCH(Func, Arg1, Caller)             scm_apply(Func, Arg1, XEN_APPLY_ARG_LIST_END)
+#define XEN_CALL_2_NO_CATCH(Func, Arg1, Arg2, Caller)       scm_apply(Func, Arg1, scm_cons(Arg2, XEN_APPLY_ARG_LIST_END))
+#define XEN_CALL_3_NO_CATCH(Func, Arg1, Arg2, Arg3, Caller) scm_apply(Func, Arg1, scm_cons2(Arg2, Arg3, XEN_APPLY_ARG_LIST_END))
 
 #define XEN_PUTS(Str, Port)      scm_puts(Str, Port)
 #define XEN_DISPLAY(Val, Port)   scm_display(Val, Port)
