@@ -1385,7 +1385,7 @@ static void dac_error(dac_state *dacp, char *file, int line, char *function)
   snd_error("can't play %s\n  (%s)\n  [%s[%d] %s]",
 	    describe_dac(dacp,0),
 	    (last_print) ? last_print : "reason not known",
-	    __FILE__,__LINE__,__FUNCTION__);
+	    file,line,function);
 }
 
 

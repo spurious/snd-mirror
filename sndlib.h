@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 11
-#define SNDLIB_REVISION 3
-#define SNDLIB_DATE "25-Sep-00"
+#define SNDLIB_REVISION 4
+#define SNDLIB_DATE "26-Sep-00"
 
 #ifndef HAVE_SNDLIB
   #define HAVE_SNDLIB 1
@@ -185,8 +185,8 @@
   #define MUS_SAMPLE_TO_FLOAT(n) ((float)((n) * MUS_FIX_TO_FLOAT))
   #define MUS_DOUBLE_TO_SAMPLE(n) ((int)((n) * MUS_FLOAT_TO_FIX))
   #define MUS_SAMPLE_TO_DOUBLE(n) ((double)((n) * MUS_FIX_TO_FLOAT))
-  #define MUS_SAMPLE_MAX (MUS_FLOAT_TO_FIX - 1)
-  #define MUS_SAMPLE_MIN (-(MUS_FLOAT_TO_FIX))
+  #define MUS_SAMPLE_MAX ((MUS_SAMPLE_BITS < 32) ? (MUS_FLOAT_TO_FIX - 1) : 0x7fffffff)
+  #define MUS_SAMPLE_MIN ((MUS_SAMPLE_BITS < 32) ? (-(MUS_FLOAT_TO_FIX)) : -0x7fffffff)
   #define MUS_MIX_MAX (1 << 30)
   #define MUS_MIX_MIN (-(MUS_MIX_MAX))
 #else

@@ -1499,11 +1499,12 @@ sets its value to val.
                                   If <i>callback</i> is specified it should be either #f or a function of 
                                   two arguments [<em class=error>no-such-sound</em>].
 <small>
-                                    (define prompt-callback (lambda (func snd) (set! (sample 0) (func (sample 0)))))
+                                    (<em class=red>prompt-in-minibuffer</em> "sample 0 via func:"
+                                      (lambda (func snd) 
+                                        (set! (sample 0) (func (sample 0)))))
                                     ;; here we're assuming the user will type a function in response to the prompt
                                     ;;   the value returned by the function will be the new sample 0 value
                                     ;;   the function should take one argument, the current sample 0 value
-                                    (<em class=red>prompt-in-minibuffer</em> "sample 0 via func:" prompt-callback)
                                     ;; now if the user responds: (lambda (y) (+ y .5))
                                     ;; sample 0 will be set to itself + .5
 
@@ -2082,7 +2083,7 @@ At the end, we flush out all the remaining samples awaiting output in <i>buffer<
 <p>If the editing action is not mapping something over the current sound, it is
 safest to write a temp file with the new data, then pass that to set-samples
 with the trunc argument set to #t.  This way you don't assume the new sound
-will fit in memory (as in using vct->samples for example), nor that the
+will fit in memory (as in using vct-&gt;samples for example), nor that the
 lengths will be more or less the same (as in the mapping operations).
 Use snd-tempnam to get a temporary filename that reflects the current
 temp-dir setting (if any).  The env-sound-interp function in examp.scm

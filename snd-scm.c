@@ -580,7 +580,9 @@ void snd_load_file(char *filename)
       /* try tacking on .scm */
       str1 = (char *)CALLOC(snd_strlen(str) + 5,sizeof(char));
       sprintf(str1,"%s.scm",str);
-      snd_internal_stack_catch(SCM_BOOL_T,eval_file_wrapper,str1,snd_catch_scm_error,NULL);
+      if (!mus_file_probe(str1))
+	snd_error("can't load %s: %s",filename,strerror(errno));
+      else snd_internal_stack_catch(SCM_BOOL_T,eval_file_wrapper,str1,snd_catch_scm_error,NULL);
       FREE(str1);
     }
   else snd_internal_stack_catch(SCM_BOOL_T,eval_file_wrapper,str,snd_catch_scm_error,NULL);

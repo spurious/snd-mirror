@@ -4,8 +4,11 @@
 ;;;      normalize (normalization)
 ;;;      gain (gain-amount)
 ;;;      invert
+;;;      chordalize
+;;;      flange (increase speed and amount to get phasing)
 ;;;      compand
 ;;;      reverberate (reverb-amount)
+;;;      intensify (contrast-amount)
 ;;;      echo (echo-length, echo-amount)
 ;;;      trim front and trim back (to/from marks)
 ;;;      crop (first and last marks)
@@ -18,30 +21,55 @@
 ;;;      filters & EQs
 ;;;      distortion fx -- is this compand?
 ;;;      chorus
-;;;      flange
-;;;      phaser
 ;;;      noise reduction -- how?
 ;;;      cut/copy to new: save-selection cut open-sound
 ;;;      increase/decrease file length -- meaning src or expand?
 ;;;      append (selection?)
 ;;;      mix/crossfade
+;;;      add silence at start/end or at mark
+;;;
+;;; get the args from the minibuffer (with defaults), also report somewhere
 
 
 (define effects-menu (add-to-main-menu "Effects"))
 
+
+;;; -------- reverse
 (add-to-menu effects-menu "reverse" (lambda () (reverse-sound)))
 
+
+;;; -------- normalize (peak set by normalize-amount)
 (define normalization 1.0)
 (add-to-menu effects-menu "normalize" (lambda () (scale-to normalization)))
 
+
+;;; -------- invert
 (add-to-menu effects-menu "invert" (lambda () (scale-by -1)))
 
+
+;;; -------- gain (gain set by gain-amount)
 (define gain-amount 1.0)
 (add-to-menu effects-menu "gain" (lambda () (scale-by gain-amount)))
 
 
-;;; next functions are taken from examp.scm
+;;; -------- chordalize (comb filters to make a chord using chordalize-amount and chordalize-base)
+(define chordalize-amount .95)
+(define chordalize-base 100)
+(define chordalize-chord '(1 3/4 5/4))
 
+(define (chordalize)
+  ;; chord is a list of members of chord such as '(1 5/4 3/2)
+  (let ((combs (map (lambda (interval)
+		      (make-comb chordalize-amount (* chordalize-base interval)))
+		    chordalize-chord))
+	(scaler (/ 0.5 (length chordalize-chord)))) ; just a guess -- maybe this should rescale to old maxamp
+    (lambda (x)
+      (* scaler (apply + (map (lambda (c) (comb c x)) combs))))))
+
+(add-to-menu effects-menu "chordalize" (lambda () (map-chan-with-sync (chordalize) "chordalize")))
+
+
+;;; -------- compand
 (define vct (lambda args (list->vct args)))
 
 (define (compand)
@@ -78,7 +106,9 @@
 
 (add-to-menu effects-menu "compand" (lambda () (map-chan-with-sync (compand) "compand")))
 
-(define reverb-amount .1)
+
+;;; -------- reverberate (reverberation set by reverb-amount)
+(define reverb-amount .05)
 
 (define (reverberate)
   "reverberate adds reverberation scaled by reverb-amount"
@@ -91,7 +121,26 @@
 
 (add-to-menu effects-menu "reverberate" reverberate)
 
-(define echo-length .5)
+
+;;; -------- intensify (contrast-enhancement set by contrast-amount)
+(define contrast-amount 1.0)
+
+(define (intensify)
+  (let ((peak (maxamp)))
+    (save-control-panel)
+    (reset-control-panel)
+    (set! (contrasting) #t)
+    (set! (contrast) contrast-amount)
+    (set! (contrast-amp) (/ 1.0 peak))
+    (set! (amp) peak)
+    (call-apply)
+    (restore-control-panel)))
+
+(add-to-menu effects-menu "intensify" intensify)
+
+
+;;; -------- echo (controlled by echo-length and echo-amount)
+(define echo-length .5) ; i.e. delay between echoes
 (define echo-amount .2)
 
 (define (echo)
@@ -103,6 +152,25 @@
 (add-to-menu effects-menu "echo" (lambda () (map-chan-with-sync (echo) "echo")))
 
 
+;;; -------- flange (and phasing)
+(define flange-speed 2.0)
+(define flange-amount 5.0)
+(define flange-time 0.001)
+
+(define (flange) ; increase speed and amount to get phaser
+  (let* ((ri (make-rand-interp :frequency flange-speed :amplitude flange-amount))
+	 (len (round (* flange-time (srate))))
+	 (del (make-delay len :max-size (+ len flange-amount 1))))
+    (lambda (inval)
+      (* .75 (+ inval 
+	       (delay del 
+		      inval
+		      (rand-interp ri)))))))
+
+(add-to-menu effects-menu "flange" (lambda () (map-chan-with-sync (flange) "flange")))
+
+
+;;; -------- trim from and back (goes by first or last mark)
 (define (trim-front)
   "trim-front finds the first mark in each of the syncd channels and removes all samples before it"
   (let ((snc (syncing)))
@@ -138,6 +206,8 @@
 
 (add-to-menu effects-menu "trim back" trim-back)
 
+
+;;; -------- crop (trims front and back)
 (define (crop)
   "crop finds the first and last marks in each of the syncd channels and removes all samples outside them"
   (let ((snc (syncing)))
@@ -160,37 +230,62 @@
 (add-to-menu effects-menu "crop" crop)
 
 
-(define map-silence
-  (lambda (silence replacement)
-    (let ((sum-of-squares 0.0)
-          (buffer (make-vector 128 0.0))
-          (position 0)
-          (current-sample 0)
-          (chan-samples (frames)))
-      (lambda (y)
-	(let ((old-y (vector-ref buffer position)))
-	  (set! sum-of-squares (- (+ sum-of-squares (* y y)) (* old-y old-y)))
-	  (vector-set! buffer position y)
-	  (set! position (1+ position))
-	  (if (= position 128) (set! position 0))
-	  (set! current-sample (1+ current-sample))
-	  (if (> sum-of-squares silence)
-	      (if (= current-sample chan-samples)
-		  ;; at end return trailing samples as long as it looks like sound
-		  (let ((temp-buffer (make-vector 128 0.0)))
-		    (do ((i 0 (1+ i)))
-			((= i 128) temp-buffer)
-		      (let ((final-y (vector-ref buffer position)))
-			(vector-set! temp-buffer i (if (> sum-of-squares silence) final-y 0.0))
-			(set! sum-of-squares (- sum-of-squares (* final-y final-y)))
-			(set! position (1+ position))
-			(if (= position 128) (set! position 0)))))
-		  old-y)
-	      replacement))))))
+;;; squelch (silencer set by squelch-amount -- this is a kind of "gate" in music-dsp-jargon)
+(define (squelch-one-channel silence snd chn)
+  (let* ((buffer-size 128)
+	 (buffer0 #f)
+	 (tmp #f)
+	 (sum0 0.0)
+	 (buffer1 (make-vct buffer-size))
+	 (chan-samples (frames snd chn))
+	 (pad-samples (+ chan-samples buffer-size))
+	 (tempfilename (snd-tempnam))
+	 (new-file (open-sound-file tempfilename 1 (srate snd)))
+	 (reader (make-sample-reader 0 snd chn)))
+    (do ((i 0 (+ i buffer-size)))
+	((>= i pad-samples))
+      (let ((sum 0.0))
+	(do ((j 0 (+ j 1)))
+	    ((= j buffer-size))
+	  (let ((val (next-sample reader)))
+	    (vct-set! buffer1 j val)
+	    (set! sum (+ sum (* val val)))))
+	(if buffer0
+	    (begin
+	      (if (> sum silence)
+		  (if (<= sum0 silence)
+		      (do ((j 0 (+ j 1))
+			   (incr 0.0 (+ incr (/ 1.0 buffer-size))))
+			  ((= j buffer-size))
+			(vct-set! buffer0 j (* (vct-ref buffer0 j) incr))))
+		  (if (<= sum0 silence)
+		      (vct-fill! buffer0 0.0)
+		      (do ((j 0 (+ j 1))
+			   (incr 1.0 (- incr (/ 1.0 buffer-size))))
+			  ((= j buffer-size))
+			(vct-set! buffer0 j (* (vct-ref buffer0 j) incr)))))
+	      (vct->sound-file new-file buffer0 buffer-size))
+	    (set! buffer0 (make-vct buffer-size)))
+	(set! tmp buffer0)
+	(set! buffer0 buffer1)
+	(set! buffer1 tmp)
+	(set! sum0 sum)))
+    (free-sample-reader reader)
+    (close-sound-file new-file (* chan-samples 4))
+    (set! (samples 0 chan-samples snd chn) tempfilename)))
 
-(define squelch-amount .003)
-(add-to-menu effects-menu "squelch" (lambda () (map-chan-with-sync (map-silence squelch-amount 0.0) "squelch")))
+(define squelch-amount .07)
 
+(define (squelch)
+  (let ((snc (syncing)))
+    (if (> snc 0)
+	(apply map
+	       (lambda (snd chn)
+		 (if (= (syncing snd) snc)
+		     (squelch-one-channel squelch-amount snd chn)))
+	       (all-chans))
+	(squelch-one-channel squelch-amount (selected-sound) (selected-channel)))))
 
-(define trim-amount .01) ;looks for this as sign of sound
+(add-to-menu effects-menu "squelch" squelch)
+
 

@@ -1527,17 +1527,21 @@ char *mus_file_full_name(char *tok)
   return(file_name_buf);
 }
 
+#define MUS_FORMAT_STRING_MAX 256
+
 char *mus_format(const char *format, ...)
 {
+  /* this is primarily intended for error messages */
+  /* caller should free result */
   char *buf;
 #if HAVE_VPRINTF
   va_list ap;
-  buf = (char *)CALLOC(256,sizeof(char));
+  buf = (char *)CALLOC(MUS_FORMAT_STRING_MAX,sizeof(char));
   va_start(ap,format);
   vsprintf(buf,format,ap);
   va_end(ap);
 #else
-  buf = (char *)CALLOC(256,sizeof(char));
+  buf = (char *)CALLOC(MUS_FORMAT_STRING_MAX,sizeof(char));
   sprintf(buf,"%s...[you need vprintf]",format);
 #endif
   return(buf);

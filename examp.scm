@@ -46,9 +46,9 @@
 ;;; convolution (convolve)
 ;;; reverb (all-pass etc)
 ;;; scissor-tailed flycatcher (waveshaping)
-;;; fm-violin (FM and various other generators, #&key args)
+;;; fm-violin (FM and various other generators, #:key args)
 ;;; digital zipper "crossfade" (file->sample)
-;;; FOF voice synthesis (wave-train, #&optional args)
+;;; FOF voice synthesis (wave-train, #:optional args)
 ;;; phase vocoder
 ;;; mix with envelope
 ;;; time varying FIR filter, notch filter, frequency-response -> FIR coeffs
@@ -1711,7 +1711,7 @@
 ;;; CLM version is v.ins, C version is in sndlib.html
 ;;; a version treating the entire violin as a generator is in fmv.scm.
 
-;;; recently (guile 1.4.1), the #& syntax was changed to use #: instead (i.e. #:key etc)
+;;; recently (guile 1.4.1), the # syntax was changed to use #: instead (i.e. #:key etc)
 
 (define pi 3.141592653589793)
 
