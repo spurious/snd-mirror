@@ -1316,6 +1316,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 ;;; this is the inverse integration function used by CLM to turn a distribution function into a weighting function
 
+(if (not (defined? 'envelope-interp)) (load-from-path "env.scm"))
+
 (define* (inverse-integrate dist #:optional (data-size 512) (e-size 50))
   (let* ((e '())
 	 (sum (exact->inexact (cadr dist)))

@@ -242,8 +242,7 @@ file_info *make_file_info(const char *fullname)
 	  if ((fallback_srate > 0) && ((sr <= 0) || (sr > 100000000))) sr = fallback_srate;
 	  if ((fallback_chans > 0) && ((ch >= 256) || (ch <= 0))) ch = fallback_chans;
 	  if ((sr <= 0) || (sr > 100000000) ||
-	      (ch >= 256) || (ch <= 0) ||
-	      (!(MUS_DATA_FORMAT_OK(mus_sound_data_format(fullname)))))
+	      (ch >= 256) || (ch <= 0))
 	    {
 	      if ((XEN_HOOKED(bad_header_hook)) &&
 		  (XEN_TRUE_P(run_or_hook(bad_header_hook,
@@ -355,7 +354,7 @@ file_info *make_file_info(const char *fullname)
 	  if (MUS_HEADER_TYPE_OK(type))
 	    {
 	      format = mus_sound_data_format(fullname);
-	      if ((MUS_DATA_FORMAT_OK(format)) || (fallback_format != MUS_UNKNOWN))
+	      if (MUS_DATA_FORMAT_OK(format))
 		hdr = make_file_info_1(fullname);
 	      else hdr = translate_file(fullname, type);
 	    }

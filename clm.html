@@ -961,10 +961,11 @@ use this for VOSIM and other related techniques.</p>
   <a class=def name="make-rand">make-rand</a> <a href="#optional-key">&amp;optional-key</a> 
         (<i>frequency</i> 440.0)          ;freq at which new random numbers occur
         (<i>amplitude</i> 1.0)            ;numbers are between -amplitude and amplitude
-        (<i>envelope</i> '(-1 1 1 1)) ;distribution function (uniform distribution between -1 and 1 is default)
+        (<i>envelope</i> '(-1 1 1 1))     ;distribution envelope (uniform distribution between -1 and 1 is default)
+        <i>distribution</i>               ;pre-computed distribution
   <a class=def name="rand">rand</a> <i>r</i> &amp;optional (<i>sweep</i> 0.0)
   <a class=def name="rand?">rand?</a> <i>r</i>
-  <a class=def name="make-rand-interp">make-rand-interp</a> <a href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>amplitude</i> 1.0) (<i>envelope</i> '(-1 1 1 1))
+  <a class=def name="make-rand-interp">make-rand-interp</a> <a href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>amplitude</i> 1.0) (<i>envelope</i> '(-1 1 1 1) <i>distribution</i>)
   <a class=def name="rand-interp">rand-interp</a> <i>r</i> &amp;optional (<i>sweep</i> 0.0)
   <a class=def name="rand-interp?">rand-interp?</a> <i>r</i>
   <em class=emdef>centered-random</em> <i>amp</i> 
@@ -1036,6 +1037,8 @@ the y axis sets the relative weight of the corresponding x axis value.
 So, the default is <code>'(-1 1 1 1)</code> which says "output numbers between -1 and 1,
 each number having the same chance of being chosen".
 An envelope of <code>'(0 1 1 0)</code> outputs values between 0 and 1, denser toward 0.
+If you already have the distribution table (the result of <code>(inverse-integrate envelope))</code>,
+you can pass it through the <i>distribution</i> argument.
 </p>
 
 <p>

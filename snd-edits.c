@@ -6281,7 +6281,18 @@ static void previous_sound_1 (snd_fd *sf)
 	  if (prev_snd->type == SND_DATA_FILE)
 	    {
 	      if (prev_snd->inuse) 
-		prev_snd = copy_snd_data(prev_snd, MIX_FILE_BUFFER_SIZE);
+		{
+		  prev_snd = copy_snd_data(prev_snd, MIX_FILE_BUFFER_SIZE);
+		  if (prev_snd == NULL)
+		    {
+		      /* too many files open or something of that sort */
+		      reader_out_of_data(sf);
+#if DEBUGGING
+		      fprintf(stderr, "previous_sound reader closed");
+#endif
+		      return;
+		    }
+		}
 	      sf->data = prev_snd->buffered_data;
 	      prev_snd->inuse = true;
 	      sf->current_sound = prev_snd;
@@ -6368,7 +6379,17 @@ static void next_sound_1(snd_fd *sf)
 	  if (nxt_snd->type == SND_DATA_FILE)
 	    {
 	      if (nxt_snd->inuse)
-		nxt_snd = copy_snd_data(nxt_snd, MIX_FILE_BUFFER_SIZE);
+		{
+		  nxt_snd = copy_snd_data(nxt_snd, MIX_FILE_BUFFER_SIZE);
+		  if (nxt_snd == NULL)
+		    {
+		      reader_out_of_data(sf);
+#if DEBUGGING
+		      fprintf(stderr, "next_sound reader closed");
+#endif
+		      return;
+		    }
+		}
 	      sf->data = nxt_snd->buffered_data;
 	      nxt_snd->inuse = true;
 	      sf->current_sound = nxt_snd;

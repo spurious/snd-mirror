@@ -133,11 +133,12 @@ int mus_optkey_unscramble(const char *caller, int nkeys, XEN *keys, XEN *args, i
   return(rtn_ctr);
 }
 
-/* backwards compatibility */
+#ifndef CLM_DISABLE_DEPRECATED
 int mus_decode_keywords(const char *caller, int nkeys, XEN *keys, int nargs, XEN *args, int *orig) 
 {
   return(mus_optkey_unscramble(caller, nkeys, keys, args, orig));
 }
+#endif
 
 Float mus_optkey_to_float(XEN key, const char *caller, int n, Float def)
 {
@@ -215,7 +216,8 @@ static XEN kw_frequency, kw_initial_phase, kw_wave, kw_cosines, kw_amplitude,
   kw_direction, kw_degree, kw_distance, kw_reverb, kw_output, kw_fft_size,
   kw_expansion, kw_length, kw_hop, kw_ramp, kw_jitter,
   kw_type, kw_format, kw_comment, kw_channels, kw_filter, kw_revout, kw_width,
-  kw_edit, kw_synthesize, kw_analyze, kw_interp, kw_overlap, kw_pitch, kw_dur, kw_sines;
+  kw_edit, kw_synthesize, kw_analyze, kw_interp, kw_overlap, kw_pitch, kw_dur, kw_sines,
+  kw_distribution;
 
 static void init_keywords(void)
 {
@@ -284,6 +286,7 @@ static void init_keywords(void)
   kw_pitch = XEN_MAKE_KEYWORD("pitch");
   kw_dur = XEN_MAKE_KEYWORD("dur");
   kw_sines = XEN_MAKE_KEYWORD("sines");
+  kw_distribution = XEN_MAKE_KEYWORD("distribution");
 }
 
 
@@ -1627,35 +1630,61 @@ static Float *inverse_integrate(XEN dist, int data_size)
   return(data);
 }
 
-static XEN g_make_noi(bool rand_case, XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
+static XEN g_make_noi(bool rand_case, const char *caller, XEN arglist)
 {
   mus_xen *gn;
   mus_any *ge = NULL;
-  XEN args[6]; 
-  XEN keys[3];
-  int orig_arg[3] = {0, 0, 0};
-  int vals;
+  XEN args[MAX_ARGLIST_LEN]; 
+  XEN keys[5];
+  int orig_arg[5] = {0, 0, 0, 0, 0};
+  int i, vals, arglist_len;
   Float freq = 440.0;
   Float base = 1.0;
   Float *distribution = NULL;
+  vct *v = NULL;
   int distribution_size = RANDOM_DISTRIBUTION_TABLE_SIZE;
   keys[0] = kw_frequency;
   keys[1] = kw_amplitude;
   keys[2] = kw_envelope;
-  args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6;
-  vals = mus_optkey_unscramble((rand_case) ? S_make_rand : S_make_rand_interp, 3, keys, args, orig_arg);
+  keys[3] = kw_distribution;
+  keys[4] = kw_size;
+  arglist_len = XEN_LIST_LENGTH(arglist);
+  if (arglist_len > MAX_ARGLIST_LEN)
+    XEN_ERROR(MUS_MISC_ERROR,
+	      XEN_LIST_3(C_TO_XEN_STRING(caller), 
+			 C_TO_XEN_STRING("too many args!"),
+			 arglist));
+  for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
+  for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = XEN_UNDEFINED;
+  vals = mus_optkey_unscramble(caller, 5, keys, args, orig_arg);
   if (vals > 0)
     {
-      freq = mus_optkey_to_float(keys[0], (rand_case) ? S_make_rand : S_make_rand_interp, orig_arg[0], freq);
-      base = mus_optkey_to_float(keys[1], (rand_case) ? S_make_rand : S_make_rand_interp, orig_arg[1], base);
+      freq = mus_optkey_to_float(keys[0], caller, orig_arg[0], freq);
+      base = mus_optkey_to_float(keys[1], caller, orig_arg[1], base);
       if (!(XEN_KEYWORD_P(keys[2]))) /* i.e. envelope arg was specified */
         {
 	  int len;
-	  XEN_ASSERT_TYPE(XEN_LIST_P(keys[2]), keys[2], orig_arg[2], (rand_case) ? S_make_rand : S_make_rand_interp, "an envelope");
+	  XEN_ASSERT_TYPE(XEN_LIST_P(keys[2]), keys[2], orig_arg[2], caller, "an envelope");
 	  len = XEN_LIST_LENGTH(keys[2]);
 	  if ((len < 4) || (len & 1))
-	    mus_misc_error((rand_case) ? S_make_rand : S_make_rand_interp, "bad distribution envelope", keys[2]);
+	    mus_misc_error(caller, "bad distribution envelope", keys[2]);
+	  /* envelope and distribution are incompatible */
+	  if (!(XEN_KEYWORD_P(keys[3])))
+	    mus_misc_error(caller, ":envelope and :distribution in same call?", keys[3]);
 	  distribution = inverse_integrate(keys[2], distribution_size);
+	}
+      else
+	{
+	  if (!(XEN_KEYWORD_P(keys[3]))) /* i.e. distribution arg was specified */
+	    {
+	      v = mus_optkey_to_vct(keys[3], caller, orig_arg[3], NULL);
+	      distribution_size = v->length;
+	      if (distribution_size <= 0)
+		XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[3], keys[3], "distribution size ~A <= 0?");
+	      if (distribution_size > MAX_TABLE_SIZE)
+		XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[3], keys[3], "distribution size ~A too large");
+	      distribution = copy_vct_data(v);
+	    }
 	}
     }
   if (!distribution)
@@ -1685,22 +1714,22 @@ static XEN g_make_noi(bool rand_case, XEN arg1, XEN arg2, XEN arg3, XEN arg4, XE
   return(XEN_FALSE);
 }
 
-static XEN g_make_rand_interp(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
+static XEN g_make_rand_interp(XEN arglist)
 {
-  #define H_make_rand_interp "(" S_make_rand_interp " (:frequency 440.0) (:amplitude 1.0) envelope): \
+  #define H_make_rand_interp "(" S_make_rand_interp " (:frequency 440.0) (:amplitude 1.0) :envelope :distribution): \
 return a new " S_rand_interp " generator, producing linearly interpolated random numbers. \
 frequency is the rate at which new end-points are chosen."
 
-  return(g_make_noi(false, arg1, arg2, arg3, arg4, arg5, arg6));
+  return(g_make_noi(false, S_make_rand_interp, arglist));
 }
 
-static XEN g_make_rand(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
+static XEN g_make_rand(XEN arglist)
 {
-  #define H_make_rand "(" S_make_rand " (:frequency 440.0) (:amplitude 1.0) envelope): \
+  #define H_make_rand "(" S_make_rand " (:frequency 440.0) (:amplitude 1.0) :envelope :distribution): \
 return a new " S_rand " generator, producing a sequence of random numbers (a step  function). \
 frequency is the rate at which new numbers are chosen."
 
-  return(g_make_noi(true, arg1, arg2, arg3, arg4, arg5, arg6));
+  return(g_make_noi(true, S_make_rand, arglist));
 }
 
 static XEN g_rand(XEN obj, XEN fm)
@@ -5110,8 +5139,8 @@ XEN_NARGIFY_1(g_sum_of_cosines_p_w, g_sum_of_cosines_p)
 XEN_ARGIFY_6(g_make_sum_of_sines_w, g_make_sum_of_sines)
 XEN_ARGIFY_2(g_sum_of_sines_w, g_sum_of_sines)
 XEN_NARGIFY_1(g_sum_of_sines_p_w, g_sum_of_sines_p)
-XEN_ARGIFY_6(g_make_rand_w, g_make_rand)
-XEN_ARGIFY_6(g_make_rand_interp_w, g_make_rand_interp)
+XEN_VARGIFY(g_make_rand_w, g_make_rand)
+XEN_VARGIFY(g_make_rand_interp_w, g_make_rand_interp)
 XEN_ARGIFY_2(g_rand_w, g_rand)
 XEN_ARGIFY_2(g_rand_interp_w, g_rand_interp)
 XEN_NARGIFY_1(g_rand_p_w, g_rand_p)
@@ -5739,8 +5768,8 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_feedback, g_mus_increment_w, H_mus_feedback, S_setB S_mus_feedback, g_mus_set_increment_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_feedforward, g_mus_scaler_w, H_mus_feedforward, S_setB S_mus_feedforward, g_mus_set_scaler_w,  1, 0, 2, 0);
 
-  XEN_DEFINE_PROCEDURE(S_make_rand,        g_make_rand_w,        0, 6, 0, H_make_rand);
-  XEN_DEFINE_PROCEDURE(S_make_rand_interp, g_make_rand_interp_w, 0, 6, 0, H_make_rand_interp);
+  XEN_DEFINE_PROCEDURE(S_make_rand,        g_make_rand_w,        0, 0, 1, H_make_rand);
+  XEN_DEFINE_PROCEDURE(S_make_rand_interp, g_make_rand_interp_w, 0, 0, 1, H_make_rand_interp);
 #if HAVE_RUBY
   rb_define_alias(rb_mKernel, "kernel_rand", "rand");
 #endif

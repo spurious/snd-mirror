@@ -6,7 +6,7 @@
 ;; Many changes.
 ;;
 ;; Changes 8.8.2003 -> 9.8.2003
-;; -Added some workaround code for vst plugins. Previously, applying didnt work.
+;; -Added some workaround code for vst plugins. Previously, applying didn't work.
 ;; -Possible to use plugins without input audio ports.
 ;; -Channels were reversed. Fixed
 ;; -Applying to a single channel allways made the script apply to channel 0. Fixed.
@@ -222,32 +222,37 @@
 
 
   ;; This one always return #f because it can be used as a hook.
-  (define (apply-soundobject sdobj)
-    (let* ((len (sound-data-length sdobj))
-	   (num_chans (sound-data-chans sdobj)))
-      (if (> len ladspa-maxbuf)
-	  (begin 
-	    (display "Ladspa buffer to small. Can't use ladspa plugin in realtime.")
-	    (display "You can try to reduce the dac-size to fix the problem.")
-	    (newline))
-	  (let ((chan 0))
-	    (-> handles for-each (lambda (handlenum handle)
-				   (if (not no_audio_inputs)
-				       (c-for 0 < min_num_audios 1
-					      (lambda (n)
-						(if (< (+ chan n) num_chans)
-						    (sound-data->vct sdobj
-								     (+ chan n)
-								     (get-input-audio-port n))))))
-				   (ladspa-run this->descriptor handle len)
-				   (c-for 0 < min_num_audios 1
-					  (lambda (n)
-					    (if (< (+ chan n) num_chans)
-						(vct->sound-data (get-output-audio-port n)
-								 sdobj
-								 (+ chan n)))))
-				   (set! chan (+ chan min_num_audios)))))))
-    #f)
+  (define apply-soundobject
+    (let ((len #f)
+	  (num_chans #f)
+	  (chan #f))
+      (lambda (sdobj)
+	(set! len (sound-data-length sdobj))
+	(set! num_chans (sound-data-chans sdobj))
+	(if (> len ladspa-maxbuf)
+	    (begin 
+	      (display "Ladspa buffer to small. Can't use ladspa plugin in realtime.")
+	      (display "You can try to reduce the dac-size to fix the problem.")
+	      (newline))
+	    (begin
+	      (set! chan 0)
+	      (-> handles for-each (lambda (handlenum handle)
+				     (if (not no_audio_inputs)
+					 (c-for 0 < min_num_audios 1
+						(lambda (n)
+						  (if (< (+ chan n) num_chans)
+						      (sound-data->vct sdobj
+								       (+ chan n)
+								       (get-input-audio-port n))))))
+				     (ladspa-run this->descriptor handle len)
+				     (c-for 0 < min_num_audios 1
+					    (lambda (n)
+					      (if (< (+ chan n) num_chans)
+						  (vct->sound-data (get-output-audio-port n)
+								   sdobj
+								   (+ chan n)))))
+				     (set! chan (+ chan min_num_audios))))))
+	#f)))
 
 
   (define-method (apply!)
@@ -258,10 +263,10 @@
     (if (not (selection-member? (selected-sound)))
 	(select-all (selected-sound)))
     (let* ((snd (selected-sound))
-	   (start (selection-position))
-	   (length (selection-frames))
-	   (end (+ (selection-position) (selection-frames)))
-	   (chans (selection-chans))
+	   (start (selection-position snd))
+	   (length (selection-frames snd))
+	   (end (+ start length))
+	   (chans (selection-chans snd))
 	   (startchan (get-startchan snd 0))
 	   (tempfilenames '())
 	   (new-files '())
@@ -476,7 +481,7 @@
 			 (string-append (if dashelp
 					    (caddr dashelp)
 					    lisense)
-					(string #\newline) (string #\newline)
+					(string #\newline #\newline)
 					"Processing can be stopped by pressing C-g"))))
 	  
 	(define (OK)
@@ -539,7 +544,10 @@
 				"Apply" OK
 				"Play" MyPlay
 				"Stop" MyStop
-				"Help" Help))
+				(if (assoc (string-append libraryname effectname) ladspa-help-assoclist)
+				    "Help"
+				    "Not much help")
+				Help))
 		
 		;; Add sliders.
 		(if (not (null? (-> ladspa input-controls)))
@@ -613,16 +621,16 @@
 	(if ladspa
 	    (ladspa-add-effect-menuitem name ShowDialog)
 	    #t)))
-      
+
     (for-each (lambda (x)
-		(make-ladspadialog (caddr x) (car x) (cadr x)))
-	      (sort (map (lambda (listpart) (list (car listpart)
-						  (cadr listpart)
-						  (analyse-ladspa (car listpart) (cadr listpart))))
+		(make-ladspadialog (x 2) (x 0) (x 1)))
+	      (sort (map (lambda (listpart) (<array> (car listpart)
+						     (cadr listpart)
+						     (analyse-ladspa (car listpart) (cadr listpart))))
 			 (list-ladspa))
 		    (lambda (x y)
-		      (string<? (car (caddr x))
-				(car (caddr y))))))))
+		      (string<? (car (x 2))
+				(car (y 2))))))))
 				     
 
 

@@ -113,7 +113,8 @@
     (if (c-g?)
 	(remove-hook! stop-playing-hook play-once)
 	(play 0 snd)))
-  (add-hook! stop-playing-hook play-once)
+  (if (not (member play-once (hook->list stop-playing-hook)))
+      (add-hook! stop-playing-hook play-once))
   (play))
 
 

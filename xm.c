@@ -383,24 +383,24 @@ static void define_xm_obj(void)
 #define XM_TYPE(Name, XType) \
   static XEN C_TO_XEN_ ## Name (XType val) {return(WRAP_FOR_XEN(#Name, val));} \
   static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
-  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} \
+  static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} \
   static XEN XEN_ ## Name ## _p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P(#Name, val)));}
 
 #define XM_TYPE_NO_p(Name, XType) \
   static XEN C_TO_XEN_ ## Name (XType val) {return(WRAP_FOR_XEN(#Name, val));} \
   static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
-  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}
+  static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}
 
 #define XM_TYPE_PTR(Name, XType) \
   static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);} \
   static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return((XType)NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
-  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} \
+  static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} \
   static XEN XEN_ ## Name ## _p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P(#Name, val)));}
 
 #define XM_TYPE_PTR_NO_p(Name, XType) \
   static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);} \
   static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return((XType)NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
-  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}
+  static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}
 
 #define XM_TYPE_PTR_NO_p_NO_P(Name, XType) \
   static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);} \
@@ -408,17 +408,17 @@ static void define_xm_obj(void)
 
 #define XM_TYPE_PTR_NO_C2X(Name, XType) \
   static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return((XType)NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
-  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} \
+  static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} \
   static XEN XEN_ ## Name ## _p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P(#Name, val)));}
 
 #define XM_TYPE_PTR_NO_C2X_NO_p(Name, XType) \
   static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return((XType)NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
-  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}
+  static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}
 
 #define XM_TYPE_PTR_OBJ(Name, XType) \
   static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN_OBJ(#Name, val)); return(XEN_FALSE);} \
   static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
-  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} \
+  static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} \
   static XEN XEN_ ## Name ## _p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P(#Name, val)));}
 
 
@@ -1057,9 +1057,6 @@ static XEN c_to_xen_string(XEN str)
 {
   char *tmp;
   tmp = (char *)XEN_TO_C_ULONG(str);
-#if DEBUGGING
-  if ((tmp) && (strlen(tmp) == 0)) fprintf(stderr, "c_to_xen_string: empty string");
-#endif
   if (tmp)
     return(C_TO_XEN_STRING(tmp));
   return(XEN_FALSE);
@@ -12583,10 +12580,7 @@ WM_PROTOCOLS property on the specified window."
   for (i = len - 1; i >= 0; i--)
     lst = XEN_CONS(C_TO_XEN_Atom(ats[i]), lst);
   xm_unprotect_at(loc);
-#if DEBUGGING
-  /* should I free the atom list? */
   XFree((void *)ats);
-#endif
   return(lst);
 }
 

@@ -2,66 +2,130 @@
 ;; My config file for snd.
 ;; -Kjetil S. Matheussen.
 
-
-;; This config-file is primarly made for use with gtk, so by
-;; using motif you will get less functionality. (things change)
-
-
-;; Set various variables. See Snd documentation.
+;; Should work for both gtk and motif.
 
 
 
+
+;;##############################################################
+;; c-define is used instead of define when theres a variable the
+;; user might want to define before loading this file.
+;;##############################################################
+
+(define-macro (c-define name val)
+  (if (not (defined? name))
+      `(define ,name ,val)))
+
+
+
+
+
+;;##############################################################
+;; Various settings.
+;; (ladspa-dir), %load-path, (temp-dir) and (save-dir) are
+;; variables you might want to set in your .snd file.
+;;##############################################################
 
 (if (defined? 'notam-settings)
     ;; This is the settings used at Notam/Oslo. May not suite your setup.
     (begin
       (set! (ladspa-dir) "/usr/lib/ladspa")
-      
       (set! %load-path (cons "/hom/kjetism/snd/snd-7" %load-path))
-      
       (set! (temp-dir) "/lyd/local/tmp")
       (set! (save-dir) "/lyd/local/tmp")))
-
-
-
 
 (if (defined? 'kjetil-settings)
     ;; This is for my personal computers settings. May not suite your setup.
     (begin
-      (set! %load-path (append (if (or #t (provided? 'snd-gtk))
-				   '("/home/kjetil/snd-7" "/home/kjetil/snd-7/dlp")
-				   '("/home/kjetil/snd-7-motif" "/home/kjetil/snd-7-motif/dlp"))
-			       %load-path))
+      (set! %load-path (cons "/hom/kjetil/snd-7" %load-path))
       (set! (temp-dir) "/lyd/local/tmp")
       (set! (save-dir) "/lyd/local/tmp")))
 
 
+
+
+
+
+;;##############################################################
+;; Load various files
+;;##############################################################
+
+(if (not (defined? 'use-gtk))
+    (load-from-path "gui.scm"))
+(if (not (defined? 'green))
+    (load-from-path "rgb.scm"))
+
+
+
+
+;;##############################################################
+;; Set various variables
+;;##############################################################
 
 ;;(set! snd-remember-paths #t)
 
 (set! (just-sounds) #t)
 
-(set! (default-output-srate) 44100)
-(set! (default-output-type) mus-riff)
-(set! (default-output-chans) 2)
-(set! (default-output-format) mus-lfloat)
+(c-define c-default-output-srate 44100)
+(set! (default-output-srate) c-default-output-srate)
 
-(set! (show-backtrace) #t)
-(set! (show-indices) #t)
+(c-define c-default-output-type mus-riff)
+(set! (default-output-type) c-default-output-type)
+
+(c-define c-default-output-chans 2)
+(set! (default-output-chans) c-default-output-chans)
+
+(c-define c-default-output-format mus-lfloat)
+(set! (default-output-format) c-default-output-format)
+
+(c-define c-show-backtrace #t)
+(set! (show-backtrace) c-show-backtrace)
+
+(c-define c-show-indices #t)
+(set! (show-indices) c-show-indices)
 
 ;;(set! (auto-resize) #f)
 
 ; Regions are created when needed when using the ctrl+y and ctrl+w keybindings.
 (set! (selection-creates-region) #f)
 
-
 ;; Less than 64 seems to be very unreliable.
-(if (< (dac-size) 1024)
-    (set! (dac-size) 1024))
+(c-define c-minimum-dac-size 1024)
+(if (< (dac-size) c-minimum-dac-size)
+    (set! (dac-size) c-minimum-dac-size))
+
+
+;; Set graph-style to filled.
+(set! (graph-style) graph-filled)
+
+;; This is the value for the loop-button.
+(c-define c-islooping #t)
+
+(c-define c-backgroundcolor (make-color 0.8 0.8 0.78))
+(c-define c-selectioncolor white)
+
+(c-define c-restore-previous-session #t)
+
+(c-define c-cursor-color blue)
+
+(c-define c-zoomfactor 1.2)
+
+;; Time forward/backward to move the cursor using which keys, in seconds.
+(c-define c-cursormovetime-rightleft 2)
+(c-define c-cursormovetime-updown 10)
+(c-define c-cursormovetime-pageupdown 30)
+
+;; Hopefully this will change.
+(define c-setting-cursor-color-cause-redraw #t)
 
 
 
+
+
+;;##############################################################
 ;; Documentation for this configuration file.
+;;##############################################################
+
 (add-to-menu 4 "--------------------------------" (lambda ()(newline)) 0)
 (add-to-menu 4 "But! How do I..."
 	     (lambda ()
@@ -83,7 +147,7 @@
 							 "Pause playing:"
 							 "     p"
 							 ""
-							 "Play starting from mousepointer:"
+							 "Play starting from mousepointer position:"
 							 "     <Mouse Scroll Up/Down>"
 							 ""
 							 "Cut:"
@@ -93,10 +157,10 @@
 							 "      <Ctrl>+y"
 							 ""
 							 "Zoom in:"
-							 "      <Cursor down>"
+							 "      +"
 							 ""
 							 "Zoom out:"
-							 "      <Cursor up>"
+							 "      -"
 							 ""
 							 "Show all:"
 							 "      a"
@@ -109,6 +173,24 @@
 							 ""
 							 "Make mark"
 							 "      m"
+							 ""
+							 "Move cursor 2 seconds forward"
+							 "      <Cursor right>"
+							 ""
+							 "Move cursor 2 seconds backward"
+							 "      <Cursor left>"
+							 ""
+							 "Move cursor 10 seconds forward"
+							 "      <Cursor up>"
+							 ""
+							 "Move cursor 10 seconds backward"
+							 "      <Cursor down>"
+							 ""
+							 "Move cursor 30 seconds forward"
+							 "      <Page Up>"
+							 ""
+							 "Move cursor 30 seconds backward"
+							 "      <Page Down>"
 							 ""
 							 "Set cursor at beginning:"
 							 "      <"
@@ -128,8 +210,13 @@
 
 
 
-;; Various general functions
 
+
+
+
+;;##############################################################
+;; Various more or less general functions
+;;##############################################################
 
 (define (c-get-nameform snd)
   (if use-gtk
@@ -171,8 +258,6 @@
 		text))))
   
 
-;; This is the value for the loop-button.
-(define c-islooping #t)
 
 ;; Selection-position and selection-frames doesnt allways work properly.
 (define (c-selection-position)
@@ -191,76 +276,89 @@
 			(sounds))))
 
 
-(load-from-path "rgb.scm")
-
-;; Set different color on the cursor for playing and not playing.
+;; Set color and cursor-style.
 (define c-set-sound-cursor
   (lambda (snd shape)
     (do ((j 0 (1+ j)))
         ((= j (channels snd)) #f)
       (set! (cursor-style snd j) shape))))
 
-#!
 
-Setting the cursor-color cause a redraw. Should be fixed. Commented out in the meantime.
-
-(add-hook! start-playing-hook 
-	   (lambda (snd) 
-	     (set! (cursor-color) yellow)
-	     #f))
-!#
-
-(set! (cursor-color) blue)
-
-#!
-(add-hook! stop-playing-hook
-	   (lambda (snd) 
-	     (set! (cursor-color) blue)
-	     ;;(gc)
-	     #f))
-!#
-
-#!
-(add-hook! stop-dac-hook
-	   (lambda ()
-	     (gc)
-	     #f))
-!#
+;; Like (set! (cursor) pos), but legalize pos and
+;; calls c-show-times as well. Also works when playing.
+(define (c-set-cursor-pos pos)
+  (let ((isplaying (dac-is-running))
+	(legalpos (min (frames) (max 0 pos))))
+    (if isplaying 
+	(stop-playing)
+	(c-show-times legalpos))
+    (set! (cursor) legalpos)
+    (if isplaying
+	(c-play legalpos))))
 
 
-#!
+
+
+
+;;##############################################################
+;; Customize the cursor look
+;;##############################################################
+
+(if (not c-setting-cursor-color-cause-redraw)
+    (add-hook! start-playing-hook 
+	       (lambda (snd) 
+		 (set! (cursor-color) yellow)
+		 #f)))
+
+(set! (cursor-color) c-cursor-color)
+
+(if (not c-setting-cursor-color-cause-redraw)
+    (add-hook! stop-playing-hook
+	       (lambda (snd) 
+		 (set! (cursor-color) blue)
+		 ;;(gc)
+		 #f)))
+
+
 ;; Set different color on the cursor when playing selection.
-(add-hook! start-playing-selection-hook
-	   (lambda ()
-	     ;;(display "Start playing selection")(newline)
-	     (set! (cursor-color) green)
-	     #f))
+(if (not c-setting-cursor-color-cause-redraw)
+    (add-hook! start-playing-selection-hook
+	       (lambda ()
+		 ;;(display "Start playing selection")(newline)
+		 (set! (cursor-color) green)
+		 #f)))
 
 
-(add-hook! stop-playing-selection-hook
-	   (lambda ()
-	     ;;(display "Stop playing selection")(newline)
-	     (set! (cursor-color) blue)
-	     #f))
-!#
+(if (not c-setting-cursor-color-cause-redraw)
+    (add-hook! stop-playing-selection-hook
+	       (lambda ()
+		 ;;(display "Stop playing selection")(newline)
+		 (set! (cursor-color) blue)
+		 #f)))
 
 
-;; Let the cursor move when playing.
 
+;; Let the cursor move when playing. (copied from the manual)
 (add-hook! after-open-hook 
 	   (lambda (snd)
 	     (c-for 0 < (channels snd) 1
 		    (lambda (i)
-		      ;;(set! (cursor-color) blue)
 		      (set! (cursor snd i) 0)))
 	     (set! (cursor-follows-play snd) #t)
 	     (c-set-sound-cursor snd cursor-line)
 	     #f))
 
+;(set! (cursor-follows-play) #t)
 
-;; Set graph-style to filled.
-(set! (graph-style) graph-filled)
 
+
+
+
+
+
+;;##############################################################
+;; Various mouse handling
+;;##############################################################
 
 
 ;; Removes default mouse-click-hook handling. The possibility to paste with
@@ -269,12 +367,10 @@ Setting the cursor-color cause a redraw. Should be fixed. Commented out in the m
 			      #t))
 
 
-
-
 ;; Moves the playing position when clicking in the editor if clicking button 1 or 4.
 ;; Moves cursor and stops playing if clicking buttton 5. (wheel down)
 ;; Moves cursor and starts playing if clicking button 4. (wheel up)
-; -Kjetil.
+
 
 (if #t
     (if #t
@@ -325,10 +421,19 @@ Setting the cursor-color cause a redraw. Should be fixed. Commented out in the m
 
 
 
+
+
+
+
+;;##############################################################
+;; Playing
+;;##############################################################
+
 ;(define (play-selection-with-play)
 ;  (play (c-selection-position) #f #f #f (+ (c-selection-position) (c-selection-frames))))
 
 (define (c-play-selection2)
+  ;;(c-display "gakk")
   (if c-islooping
       (play-selection)
       (remove-hook! stop-playing-selection-hook c-play-selection2))
@@ -355,7 +460,7 @@ Setting the cursor-color cause a redraw. Should be fixed. Commented out in the m
 
 
 ;; Replace the old space binding with one that starts playing from the current cursor position,
-;; all channels. And stops playing if allready playing. -Kjetil.
+;; all channels. And stops playing if allready playing.
 (bind-key (char->integer #\ ) 0 
 	  (lambda ()
 	    (if (dac-is-running)
@@ -369,8 +474,8 @@ Setting the cursor-color cause a redraw. Should be fixed. Commented out in the m
 ;		    (play-selection-with-play)
 ;		    (play (cursor))))))
 
-;; Makes the P key a pause button. If playing, stops playing, but doesnt reset the cursor pos.
-;; If not playing, starts playing from cursor. -Kjetil.
+;; Makes the P key a pause button. If playing, stops playing, but doesn't reset the cursor pos.
+;; If not playing, starts playing from cursor.
 (bind-key (char->integer #\p) 0 
 	  (lambda ()
 	    (let ((cursor-pos (cursor)))
@@ -385,6 +490,14 @@ Setting the cursor-color cause a redraw. Should be fixed. Commented out in the m
 		  (play (cursor))))))
 
 
+
+
+
+
+;;##############################################################
+;; View
+;;##############################################################
+
 ;; Let the "a" key be a "show-all" key.
 (bind-key (char->integer #\a) 0
 	  (lambda ()
@@ -398,6 +511,113 @@ Setting the cursor-color cause a redraw. Should be fixed. Commented out in the m
 				   (/ (+ (c-selection-position) (c-selection-frames)) (srate))))))
 
 
+(define (c-set-x-bounds x1 x2)
+  (let* ((all (/ (frames) (srate)))
+	 (n-x1 (max 0 x1))
+	 (n-x2 (min all (+ (- n-x1 x1) x2))))
+    (if (> x2 all)
+	(set! n-x1 (max 0 (- n-x1 (- x2 all)))))
+    (if (and (or (>= (* (abs (- n-x1 (car (x-bounds)))) (srate)) 1)
+		 (>= (* (abs (- n-x2 (cadr (x-bounds)))) (srate)) 1))
+	     (>= (* (srate) (- n-x2 n-x1)) (if (< (- (frames) (cursor)) 10) 10 1)))
+	(set! (x-bounds) (list n-x1 n-x2)))))
+
+(define (c-zoom zoomfactor)
+  (let* ((cursor (/ (cursor) (srate)))
+	 (all (/ (frames) (srate)))
+	 (x1 (car (x-bounds)))
+	 (x2 (cadr (x-bounds)))
+	 (length (- x2 x1))
+	 (n-length (* zoomfactor length))
+	 (n-x2 (/ (+ (* 2 cursor) n-length) 2))
+	 (n-x1 (- n-x2 n-length)))
+    (c-set-x-bounds n-x1 n-x2)))
+
+;; -: Zoom out
+(bind-key (char->integer #\-) 0
+	  (lambda ()
+	    (c-zoom c-zoomfactor)))
+
+;; +: Zoom in
+(bind-key (char->integer #\+) 0
+	  (lambda ()
+	    (c-zoom (/ 1 c-zoomfactor))))
+
+;; Shows the full sound after opening.
+(add-hook! initial-graph-hook
+	   (lambda (snd chn dur)
+	     (list 0.0 dur)))
+
+
+
+
+
+
+;;##############################################################
+;; Cursor position
+;;##############################################################
+
+
+;; Page Up/Down: +/- 30 seconds
+;; Up/down:      +/- 10 seconds
+;; Right/left:   +/-  2 seconds
+
+
+(bind-key #xFF56 0
+	  (lambda ()
+	    (c-set-cursor-pos (- (cursor) (* (srate) c-cursormovetime-pageupdown)))))
+
+(bind-key #xFF55 0
+	  (lambda ()
+	    (c-set-cursor-pos (+ (cursor) (* (srate) c-cursormovetime-pageupdown)))))
+
+(bind-key #xFF52 0
+	  (lambda ()
+	    (c-set-cursor-pos (+ (cursor) (* (srate) c-cursormovetime-updown)))))
+
+(bind-key #xFF54 0
+	  (lambda ()
+	    (c-set-cursor-pos (- (cursor) (* (srate) c-cursormovetime-updown)))))
+
+(bind-key #xFF51 0
+	  (lambda ()
+	    (c-set-cursor-pos (- (cursor) (* (srate) c-cursormovetime-rightleft)))))
+
+(bind-key #xFF53 0
+	  (lambda ()
+	    (c-set-cursor-pos (+ (cursor) (* (srate) c-cursormovetime-rightleft)))))
+
+(bind-key #xFF57 0
+	  (lambda ()
+	    (c-set-cursor-pos 0)))
+
+(bind-key (char->integer #\<) 0
+	  (lambda ()
+	    (c-set-cursor-pos 0)))
+
+#!
+Does not work.
+(bind-key (char->integer #\>) 0
+	  (lambda ()
+	    (c-set-cursor-pos (frames))))
+!#
+
+
+
+
+
+
+;;##############################################################
+;; Various key-bindings
+;;##############################################################
+
+;; Make snd quit when pressing C-x-c, just like emacs.
+(bind-key (char->integer #\c) 4
+	  (lambda ()
+	    (exit))
+	  #t)
+
+
 ;; Let "c" turn on/off controls
 (bind-key (char->integer #\c) 0
 	  (lambda ()
@@ -406,74 +626,16 @@ Setting the cursor-color cause a redraw. Should be fixed. Commented out in the m
 		      #f
 		      #t))))
 
-(define (c-set-cursor-pos pos)
-  (let ((isplaying (dac-is-running))
-	(legalpos (min (frames) (max 0 pos))))
-    (if isplaying 
-	(stop-playing)
-	(c-show-times legalpos))
-    (set! (cursor) legalpos)
-    (if isplaying (c-play legalpos))))
-
-;; Replace the default up-key handler. This one does nothing when all data is shown.
-(bind-key #xFF52 0
-	  (lambda ()
-	    (if #t
-		
-		(c-set-cursor-pos (+ (cursor) (* (srate) 10)))
-
-		(let* ((x (car (x-bounds)))
-		       (y (cadr (x-bounds)))
-		       (i (* 0.2 (- y x)))
-		       (newx (max 0 (- x i)))
-		       (newy (min (/ (frames) (srate))
-				  (+ y i))))
-		  (if (or (> x 0)
-			  (< y (/ (frames) (srate))))
-		      (set! (x-bounds) (list newx newy)))))))
-
-
 #!
 (add-hook! key-press-hook 
 	   (lambda (snd chn key state)
 	     (c-display "key: " key)))
 !#
 
-(bind-key #xFF54 0
-	  (lambda ()
-	    (c-set-cursor-pos (- (cursor) (* (srate) 10)))))
 
 
 
-; If playing, make arrow left change play-position 10 seconds earlier. Arrow right, 10 seconds later.
-(bind-key #xFF51 0
-	  (lambda ()
-	    (c-set-cursor-pos (- (cursor) (* (srate) 2)))))
-;;	    (display "left")(newline)))
-
-(bind-key #xFF53 0
-	  (lambda ()
-	    (c-set-cursor-pos (+ (cursor) (* (srate) 2)))))
-;;	    (display "right")(newline)))
-
-
-(bind-key (char->integer #\<) 0
-	  (lambda ()
-	    (c-set-cursor-pos 0)))
-
-#!
-Does not work.
-(bind-key (char->integer #\>)
-	  (lambda ()
-	    (c-set-cursor-pos (frames))))
-!#
-
-;; Make snd quit when pressing C-x-c, just like emacs.
-(bind-key (char->integer #\c) 4
-	  (lambda ()
-	    (exit))
-	  #t)
-
+;; Key-bindings to have fun.
 
 (bind-key (char->integer #\z) 0
 	  (lambda ()
@@ -495,9 +657,28 @@ Does not work.
 
 
 
+					
+
+;;##############################################################
+;; Set some colors
+;;##############################################################
+
+;; Bacground
+(set! (selected-graph-color) c-backgroundcolor)
+(set! (graph-color) c-backgroundcolor)
+
+;; Selection
+(set! (selection-color) c-selectioncolor)
 
 
-; Let the m-key make a named mark, and sync it if the current sound is synced.
+
+
+
+;;##############################################################
+;; Marks
+;;##############################################################
+
+; Let m make a named mark, and sync it if the current sound is synced.
 (bind-key (char->integer #\m) 0
 	  (lambda ()
 	    (define (my-add-mark sample snd ch syncnum name)
@@ -520,35 +701,61 @@ Does not work.
 				  (selected-sound)
 				  #t)))
 					      
-					
-
-;;(load-from-path "draw.scm")
 
 
-;; ;;; Set some colors
-
-;; Bacground
-(define c-backgroundcolor  (make-color 0.8 0.8 0.78))
-(set! (selected-graph-color) c-backgroundcolor)
-(set! (graph-color) c-backgroundcolor)
-
-;;(set! (selected-graph-color) (make-color 0.86 0.86 0.84))
-
-;; Selection
-;;(set! (selection-color) (make-color 0.5 0.6 0.4))
-;;(set! (selection-color) (make-color 0.78 0.87 0.85))
-(set! (selection-color) white)
-
-;(set! (cursor-color) green)
-
-;(set! (basic-color) (make-color 0.95 0.95 0.92))
+(load-from-path "marks.scm")
 
 
+;; The following mark-related lines are copied from marks.scm. For some reason the functions was commented away.
 
-(load-from-path "gui.scm")
+(define (eval-header sndf)
+  (and (string? (comment sndf))
+       (catch #t
+	      (lambda ()
+		(eval-string (comment sndf)))
+	      (lambda args #f))))
+
+(define (marks->string sndf)
+  (let ((str (format #f "(if (not (defined? 'mark-property)) (load \"marks.scm\"))~%(let ((m #f))~%"))
+	(chan 0))
+    (for-each
+     (lambda (chan-marks)
+       (for-each 
+	(lambda (m)
+	  (set! str 
+		(string-append str 
+			       (format #f
+				       "  (set! m (add-mark ~A #f ~D))~%" 
+				       (mark-sample m)
+				       chan)))
+	  (if (and (string? (mark-name m))
+		   (> (string-length (mark-name m)) 0))
+	      (set! str 
+		    (string-append str 
+				   (format #f
+					   "  (set! (mark-name m) ~S)~%"
+					   (mark-name m)))))
+	  (if (not (null? (mark-properties m)))
+	      (set! str
+		    (string-append str 
+				   (format #f
+					   "  (set! (mark-properties m) '~A)~%"
+					   (mark-properties m))))))
+	  chan-marks)
+       (set! chan (1+ chan)))
+     (marks sndf))
+    (string-append str (format #f "  m)~%"))))
+		   
+(add-hook! output-comment-hook (lambda (str) (marks->string (selected-sound))))
+(add-hook! after-open-hook (lambda (snd) (eval-header snd)))
 
 
+
+
+
+;;##############################################################
 ;; Fix mouse-selection handling.
+;;##############################################################
 
 (define c-region-generation 0)
 
@@ -693,57 +900,16 @@ Does not work.
 
 
 
-(load-from-path "marks.scm")
-;;(save-mark-properties)
 
 
-(define (eval-header sndf)
-  (and (string? (comment sndf))
-       (catch #t
-	      (lambda ()
-		(eval-string (comment sndf)))
-	      (lambda args #f))))
-
-(define (marks->string sndf)
-  (let ((str (format #f "(if (not (defined? 'mark-property)) (load \"marks.scm\"))~%(let ((m #f))~%"))
-	(chan 0))
-    (for-each
-     (lambda (chan-marks)
-       (for-each 
-	(lambda (m)
-	  (set! str 
-		(string-append str 
-			       (format #f
-				       "  (set! m (add-mark ~A #f ~D))~%" 
-				       (mark-sample m)
-				       chan)))
-	  (if (and (string? (mark-name m))
-		   (> (string-length (mark-name m)) 0))
-	      (set! str 
-		    (string-append str 
-				   (format #f
-					   "  (set! (mark-name m) ~S)~%"
-					   (mark-name m)))))
-	  (if (not (null? (mark-properties m)))
-	      (set! str
-		    (string-append str 
-				   (format #f
-					   "  (set! (mark-properties m) '~A)~%"
-					   (mark-properties m))))))
-	  chan-marks)
-       (set! chan (1+ chan)))
-     (marks sndf))
-    (string-append str (format #f "  m)~%"))))
-		   
-(add-hook! output-comment-hook (lambda (str) (marks->string (selected-sound))))
-(add-hook! after-open-hook (lambda (snd) (eval-header snd)))
-
+;;##############################################################
+;; Cut and Paste
+;;##############################################################
 
 
 ;; Replace the C-y and C-w keybindings. These are equal, but writes
 ;; "Please wait" to the window bar, colorize the inserted region and
-;; automaticly creates regions when needed if (selection-crates-region) is false.
-
+;; automaticly creates regions when needed if (selection-creates-region) is false.
 
 (define c-iscolorized #f)
 
@@ -796,7 +962,6 @@ Does not work.
 	  c-paste)
 
 
-
 (define (c-cut)
   (if (c-selection?)
       (let ((curspos (c-selection-position)))
@@ -811,6 +976,14 @@ Does not work.
 (bind-key (char->integer #\w) 4
 	  c-cut)
 
+
+
+
+
+
+;;##############################################################
+;; Progress reporting (graphic)
+;;##############################################################
 
 (define c-last-report-value 0.0)
 
@@ -844,6 +1017,12 @@ Does not work.
 
 
 
+
+
+
+;;##############################################################
+;; Show times
+;;##############################################################
 
 ;; Show cursor and selection position in minutes, seconds and 1/10th seconds.
 ;; This function is often called when playing, so I have tried as much as possible to avoid triggering a garbage collection.
@@ -986,9 +1165,7 @@ Does not work.
 
 
 
-
 ;; Show the time in the minibuffer when playing
-
 
 (let ((samplecount 0))
   (add-hook! play-hook
@@ -1006,11 +1183,13 @@ Does not work.
 	     #f))
 
 
-;; Shows the full sound after opening.
-(add-hook! initial-graph-hook
-	   (lambda (snd chn dur)
-	     (list 0.0 dur)))
 
+
+
+
+;;##############################################################
+;; The Sync and Loop buttons
+;;##############################################################
 
 ;; Doing several things after opening a file.
 ;; -Sync and Unite newly loaded files by default.
@@ -1087,28 +1266,23 @@ Does not work.
 
 
 
-;;"various generally useful Snd extensions". See source.
-(load-from-path "extensions.scm")
+;;##############################################################
+;; Buffer-menu
+;;##############################################################
 
-;; When exiting.
-(check-for-unsaved-edits #t)
-
-
-(load-from-path "edit-menu.scm")
+;; Makes the buffer-menu a bit more pleasent to use. This is code
+;; copied from examp.scm and modified.
 
 (load-from-path "examp.scm")
 
 
-
-;;;;;;;;;;;;;;;;;
-;; Makes the buffer-menu a bit more pleasent to use. -Kjetil.
 ;;;;;;;;;;;;;;;;
 ;;(set! last-height 500)
 ;;(set! last-width 700)
 
 
 ;; For gtk, the -notebook switch doesn't seem to work very well.
-;; For motif, the -notebook switch doesn't seem to work very well.
+;; For motif, the -notebook switch doesn't seem to work very well either.
 (if (or (not use-gtk)
 	(not (string=? "GtkNotebook" (gtk_widget_get_name (list-ref (main-widgets) 5)))))
     (begin
@@ -1168,12 +1342,30 @@ Does not work.
       
 
 
+
+
+
+;;##############################################################
+;; Various
+;;##############################################################
+
+;;"various generally useful Snd extensions". See source.
+(load-from-path "extensions.scm")
+
+;; When exiting.
+(check-for-unsaved-edits #t)
+
+
+(load-from-path "edit-menu.scm")
+
+
 ;;Show the little picture of the whole sound in the upper right corner.
 (load-from-path "draw.scm")
 (make-current-window-display)
 
+
 ;; The background-process slows things down when the little picture is active and loading large files.
-;; Better turn off the background-process when loading. -Kjetil.
+;; Better turn off the background-process when loading.
 (add-hook! open-hook (lambda (filename) (if (c-isloaded? filename)
 					    #t
 					    (begin
@@ -1187,10 +1379,7 @@ Does not work.
 
 
 
-
-;; Adds a lot of things when pressing the right mouse button. Very nice. -Kjetil.
-
-
+;; Adds a lot of things when pressing the right mouse button. Very nice.
 (load-from-path (if use-gtk
 		    "gtk-popup.scm"
 		    "popup.scm"))
@@ -1207,7 +1396,7 @@ Does not work.
 
 
 ;; Stores the peak information for sounds in the ~/peaks/ directory. Seems to work correctly. I have tried
-;; to fool it in many ways, but it seems to be very intelligent. Extremely nice. -Kjetil.
+;; to fool it in many ways, but it seems to be very intelligent. Extremely nice.
 ;; The point is to decrease the loading time.
 ; First make sure the peaks directory is present
 (system (string-append "mkdir " (getenv "HOME") "/peaks >/dev/null 2>/dev/null"))
@@ -1215,19 +1404,17 @@ Does not work.
 (load-from-path "peak-env.scm")
 
 
-
-
 (load-from-path (if use-gtk
 		    "snd-gtk.scm"
 		    "snd-motif.scm"))
 
-;; Shows diskspace for the partition the opened sound was placed on. -Kjetil.
+;; Shows diskspace for the partition the opened sound was placed on.
 ;(add-hook! after-open-hook show-disk-space)
 
-;; Add extra control for the controls dialog. -Kjetil.
+;; Add extra control for the controls dialog.
 (make-hidden-controls-dialog)
 
-;; Add rename option to the file menu. -Kjetil.
+;; Add rename option to the file menu.
 (if (not use-gtk)
     (add-rename-option))
 
@@ -1251,6 +1438,13 @@ Does not work.
 
 
 
+
+
+
+;;##############################################################
+;; Store and restore list of used sound-files
+;;##############################################################
+
 (define (c-open-sounds-filename)
   (string-append (getenv "HOME") "/.snd_soundfilelist"))
 
@@ -1273,27 +1467,30 @@ Does not work.
 
 ;; Load files from previous session.
 
-(system (string-append "touch " (c-open-sounds-filename) " >/dev/null 2>/dev/null"))
-(let ((fd (open-file (c-open-sounds-filename) "r")))
-  (define (myread)
-    (let ((line (read-line fd)))
-      (if (not (eof-object? line))
-	  (begin
-	    (catch #t
-		   (lambda ()
-		     (open-sound line))
-		   (lambda (key . args)
-		     (c-display "File \"" line  "\" not found.")
-		     #f))
-	    (myread))
-	  (begin
-	    ;;(set! (auto-resize) #f)
-	    (in (if use-gtk 0 2000)
-		(lambda ()
-		  (set! (window-width) 800)
-		  (set! (window-height) 600)))))))
-  ;;(set! (auto-resize) #t)
-  (myread))
+(if c-restore-previous-session
+    (begin
+      (system (string-append "touch " (c-open-sounds-filename) " >/dev/null 2>/dev/null"))
+      (let ((fd (open-file (c-open-sounds-filename) "r")))
+	(define (myread)
+	  (let ((line (read-line fd)))
+	    (if (not (eof-object? line))
+		(begin
+		  (catch #t
+			 (lambda ()
+			   (open-sound line))
+			 (lambda (key . args)
+			   (c-display "File \"" line  "\" not found.")
+			   #f))
+		  (myread))
+		(begin
+		  ;;(set! (auto-resize) #f)
+		  (close fd)
+		  (in (if use-gtk 0 2000)
+		      (lambda ()
+			(set! (window-width) 800)
+			(set! (window-height) 600)))))))
+	;;(set! (auto-resize) #t)
+	(myread))))
 
 
 

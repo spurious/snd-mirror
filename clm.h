@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 48
-#define MUS_DATE "11-May-04"
+#define MUS_REVISION 49
+#define MUS_DATE "24-May-04"
 
 /*
+ * 24-May:     distribution arg to make-rand, make-rand-interp.
  * 11-May:     type arg to mus_make_table_lookup|wave_train, MUS_INTERP_NONE, MUS_INTERP_HERMITE.
  *             mus-interp-type.
  * 10-May:     changed MUS_LINEAR and MUS_SINUSOIDAL to MUS_INTERP_LINEAR and MUS_INTERP_SINUSOIDAL.

@@ -1129,7 +1129,7 @@ void control_g(snd_info *sp)
   counting = false; 
   dot_seen = false; 
   extended_mode = false;
-  deactivate_selection();
+  if (selection_is_active()) deactivate_selection();
   defining_macro = false;
   clear_stdin();
   if ((ss->checking_explicitly) || (play_in_progress())) ss->stopped_explicitly = true; 

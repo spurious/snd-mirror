@@ -8,9 +8,7 @@
 
 (use-modules (ice-9 optargs)
 	     (ice-9 format)
-	     (ice-9 rdelim)
 	     (srfi srfi-1))
-
 
 
 ;;(use-modules (oop goops))
@@ -43,6 +41,11 @@
 	 (let* ((methods (make-hash-table 256))
 		(supers '())
 		(super #f)
+		(dispatch-preds '())
+		(dispatch-funcs '())
+		(add-dispatcher (lambda (pred func)
+				  (set! dispatch-preds (append dispatch-preds (list pred)))
+				  (set! dispatch-funcs (append dispatch-funcs (list func)))))
 		(add-method-do (lambda (name func)
 				 (hashq-set! methods name func))))
 	   (var class-name ',(car def))
@@ -60,13 +63,35 @@
 	     (or (eq? class-name this->class-name)
 		 (any (lambda (super) (-> super instance? class-name))
 		      supers)))
-	   (define (this m . rest)
-	     (let ((func (this->get-method m)))
-	       (if func
-		   (apply func rest)
-		   (format #t (string-append "No such method: \"~A\" in class \"~A\"." (string #\newline)) m ',(car def)))))
+
+	   (define (this name . rest)
+	     (apply (or (hashq-ref methods name)
+			(any (lambda (super) (-> super get-method name))
+			     supers)
+			(lambda x (format #t "No such method: \"~A\" in class \"~A\".~%" name ',(car def))))
+		    rest))
+
+	   (define (this-with-custom-dispatchers m . rest)
+	     (call-with-current-continuation
+	      (lambda (return)
+		(for-each (lambda (pred func)
+			    (if (pred m rest)
+				(return (func m rest))))
+			  dispatch-preds
+			  dispatch-funcs)
+		(apply (or (hashq-ref methods m)
+			   (any (lambda (super) (-> super get-method m))
+				supers)
+			   (lambda x (format #t "No such method: \"~A\" in class \"~A\".~%" m ',(car def))))
+		       rest))))
+		
 	   ,@body
+
+	   (if (and this (not (null? dispatch-preds)))
+	       (set! this this-with-custom-dispatchers))
+
 	   this))))
+
 
 (define-macro (add-method nameandvars . body)
   `(add-method-do ',(car nameandvars) (lambda ,(cdr nameandvars) ,@body)))
@@ -83,13 +108,11 @@
      (add-method* ,nameandvars ,@body)))
 
 (define-macro (var name initial)
-  `(define ,(symbol-append 'this-> name)
-     (let ((inited #f))
-       (if (not inited)
-	   (begin
-	     (add-method (,name . rest) (if (null? rest) ,(symbol-append 'this-> name) (set! ,(symbol-append 'this-> name) (car rest))))
-	     (set! inited #t)))
-       ,initial)))
+  (let ((thisname (symbol-append 'this-> name)))
+    `(define ,thisname
+       (begin
+	 (add-method (,name . rest) (if (null? rest) ,thisname (set! ,thisname (car rest))))
+	 ,initial))))
 
 (define (object? o)
   (and (procedure? o)
@@ -209,15 +232,28 @@
   (define-method (length)
     (vector-length dasarray))
 
-  ;; Need our own dispatcher.
-  (set! this 
-	(let ((oldthis this))
-	  (lambda (n . rest)
-	    (if (integer? n)
-		(if (null? rest)
-		    (vector-ref dasarray n)
-		    (vector-set! dasarray n (car rest)))
-		(apply oldthis (cons n rest)))))))
+  ;; Python-like list-selector (not complete, or optimized, or very useful in the current form.)
+  (define-method (p sel)
+    (let* ((split (string-split sel #\:))
+	   (intsplit (apply <array> (map string->number split))))
+      (cond ((= 1 (length split)) (vector-ref dasarray (intsplit 0)))
+	    ((= 2 (length split)) (sublist (this->get-list) (intsplit 0) (intsplit 1)))
+	    (else split))))
+
+
+  (add-dispatcher (lambda (n rest)
+		    (integer? n))
+		  (lambda (n rest)
+		    (if (null? rest)
+			(vector-ref dasarray n)
+			(vector-set! dasarray n (car rest)))))
+
+  (add-dispatcher (lambda (s rest)
+		    (string? s))
+		  (lambda (s rest)
+		    (this->p s))))
+
+  
 
 
 ;; Some additional constructors
@@ -239,12 +275,14 @@
 
 #!
 (define a (<array> 0 1 2 3 4 5 6 7 8))
+(begin a)
 (-> a get-list)
 (a 0 10)
 (a 1 11)
 (a 0)
 (a 1)
 (-> a get-list)
+(a "2:6")
 (-> a set! 9 8 7 6 5)
 (-> a get-list)
 (-> a set!! 9 8 7 6 5)
@@ -252,6 +290,7 @@
 (-> a map list)
 (-> a reset!)
 (-> a get-list)
+
 (define a (<array-multidimensional> '(5 4)))
 (-> a for-each (lambda (n1 el1) (-> el1 map! (lambda (n2 el2) (+ n1 (/ n2 10))))))
 (-> a map (lambda (n el) (-> el get-list)))
@@ -325,13 +364,16 @@
     (lambda (f s)
       (append! f (cons element s)))))
 
+(define (sublist l start end)
+  (take (drop l start) (- end start)))
+
+;;(sublist '(0 1 2 3 4 5 6 7 8 9) 2 5)
+
 
 (define (c-display . args)
-  (if (not (null? args))
-      (begin
-	(display (car args))
-	(apply c-display (cdr args)))
-      (newline)))
+  (for-each (lambda (arg) (display arg)(display " "))
+	    args)
+  (newline))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

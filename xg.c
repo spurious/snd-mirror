@@ -166,11 +166,11 @@ static void define_xm_obj(void)
 #define XM_TYPE(Name, XType) \
   static XEN C_TO_XEN_ ## Name (XType val) {return(WRAP_FOR_XEN(#Name, val));} \
   static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
-  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}
+  static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}
 
 #define XM_TYPE_1(Name, XType) \
   static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
-  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}
+  static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}
 
 #define XM_TYPE_NO_P(Name, XType) \
   static XEN C_TO_XEN_ ## Name (XType val) {return(WRAP_FOR_XEN(#Name, val));} \
@@ -179,7 +179,7 @@ static void define_xm_obj(void)
 #define XM_TYPE_PTR(Name, XType) \
   static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);} \
   static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
-  static int XEN_ ## Name ## _P(XEN val) {return(XEN_FALSE_P(val) || (WRAP_P(#Name, val)));} /* if NULL ok, should be explicit? */
+  static bool XEN_ ## Name ## _P(XEN val) {return(XEN_FALSE_P(val) || (WRAP_P(#Name, val)));} /* if NULL ok, should be explicit? */
 
 #define XM_TYPE_PTR_NO_P(Name, XType) \
   static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);} \
@@ -187,7 +187,7 @@ static void define_xm_obj(void)
 
 #define XM_TYPE_PTR_1(Name, XType) \
   static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
-  static int XEN_ ## Name ## _P(XEN val) {return(XEN_FALSE_P(val) || (WRAP_P(#Name, val)));} /* if NULL ok, should be explicit? */
+  static bool XEN_ ## Name ## _P(XEN val) {return(XEN_FALSE_P(val) || (WRAP_P(#Name, val)));} /* if NULL ok, should be explicit? */
 
 #define XM_TYPE_PTR_2(Name, XType) \
   static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);} \
@@ -274,11 +274,11 @@ static void define_xm_obj(void)
 
 #ifdef GTK_CELL_RENDERER_FOCUSED
   static GdkDrawable* XEN_TO_C_DRAWABLE_WAS_WINDOW (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((GdkDrawable *)XEN_TO_C_ULONG(XEN_CADR(val)));}
-  static int XEN_DRAWABLE_WAS_WINDOW_P(XEN val) {return(XEN_FALSE_P(val) || (WRAP_P("GdkDrawable_", val)));}
+  static bool XEN_DRAWABLE_WAS_WINDOW_P(XEN val) {return(XEN_FALSE_P(val) || (WRAP_P("GdkDrawable_", val)));}
   #define Drawable_was_Window GdkDrawable
 #else
   static GdkWindow* XEN_TO_C_DRAWABLE_WAS_WINDOW (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((GdkWindow *)XEN_TO_C_ULONG(XEN_CADR(val)));}
-  static int XEN_DRAWABLE_WAS_WINDOW_P(XEN val) {return(XEN_FALSE_P(val) || (WRAP_P("GdkWindow_", val)));}
+  static bool XEN_DRAWABLE_WAS_WINDOW_P(XEN val) {return(XEN_FALSE_P(val) || (WRAP_P("GdkWindow_", val)));}
   #define Drawable_was_Window GdkWindow
 #endif
 
@@ -29698,10 +29698,10 @@ static bool xg_already_inited = false;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"28-Apr-04\")");
+      XEN_EVAL_C_STRING("(define xm-version \"23-May-04\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("28-Apr-04"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("23-May-04"));
 #endif
       xg_already_inited = true;
 #if WITH_GTK_AND_X11

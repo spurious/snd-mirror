@@ -2063,7 +2063,7 @@ thing.  If you want to refer to the currently selected sound, either use #f
 as the sound index or <a href="#selectedsound">selected-sound</a>.
 </p>
 
-<p>Some functions take <a href="clm.html#optional-key">optional-key</a> arguments, as in CLM.
+<p>Some functions take <a class=quiet href="clm.html#optional-key">optional-key</a> arguments, as in CLM.
 These are marked "&amp;optional-key" below, followed by the keywords themselves. As in CLM,
 the keywords can be omitted.
 </p>
@@ -3154,7 +3154,7 @@ sets mix 123's channel 0 amplitude scaler to .5.
 
 <!-- copy-mix -->
 <tr><td colspan=2><code><a class=def name="copymix">copy-mix</a> (mix <i>beg</i>)</code></td></tr>
-<tr><td></td><td>copy <i>mix</i>, placing the copy at <i>beg</i> which defaults to the copied mix's position.  The new mix's track is set to 0.
+<tr><td width=50></td><td>copy <i>mix</i>, placing the copy at <i>beg</i> which defaults to the copied mix's position.  The new mix's track is set to 0.
 </td></tr>
 
 <!-- delete-mix -->
@@ -3665,10 +3665,10 @@ deleted.
 </td></tr>
 
 <!-- save-region -->
-<tr><td colspan=2><code><a class=def name="saveregion">save-region</a> (reg <a href="clm.html#optional-key">&amp;optional-key</a> :file (:header-type mus-next) :data-format :comment) </code></td></tr>
+<tr><td colspan=2><code><a class=def name="saveregion">save-region</a> (reg <a class=quiet href="clm.html#optional-key">&amp;optional-key</a> :file (:header-type mus-next) :data-format :comment) </code></td></tr>
 <tr><td></td><td>
 save region <i>reg</i> in <i>file</i> in data format (default is mus-bshort), header type (default
-is mus-next), and comment.  Return the output filename.  The arguments after <i>reg</i> are <a href="clm.html#optional-key">optional-key</a>
+is mus-next), and comment.  Return the output filename.  The arguments after <i>reg</i> are <a class=quiet href="clm.html#optional-key">optional-key</a>
 args (that is, they are normal keyword arguments, but the keywords are optional).  The following calls are equivalent:
 <pre>
 (save-region 2 "reg0.snd")
@@ -3762,7 +3762,7 @@ reverse the selection.
 </td></tr>
 
 <!-- save-selection -->
-<tr><td colspan=2><code><a class=def name="saveselection">save-selection</a> (<a href="clm.html#optional-key">&amp;optional-key</a> :file (:header-type mus-next) :data-format :srate :comment :channel)</code></td></tr>
+<tr><td colspan=2><code><a class=def name="saveselection">save-selection</a> (<a class=quiet href="clm.html#optional-key">&amp;optional-key</a> :file (:header-type mus-next) :data-format :srate :comment :channel)</code></td></tr>
 <tr><td></td><td>
 save the selection in <i>file</i>.  If <i>channel</i> is given, save only that channel.
 See popup.scm for an example.
@@ -4407,7 +4407,7 @@ cursor-follows-play is #t:
 The <i>cursor-style</i> can also be a procedure of three arguments, the
 sound index, channel number, and graph (always time-graph).  The procedure
 should draw the cursor at the current cursor position using the
-cursor-context whenever it is called.  The following 
+<a href="#cursorcontext">cursor-context</a> whenever it is called.  The following 
 replaces the normal "+" cursor with an "x":
 </td></tr>
 
@@ -5388,7 +5388,7 @@ actual dB value calculated to -140.0 or -180.0 (depending on which function is c
 
 <!-- new-sound -->
 <tr><td colspan=2>
-<code><a class=def name="newsound">new-sound</a> (<a href="clm.html#optional-key">&amp;optional-key</a> :file :header-type :data-format :srate :channels :comment :size)</code>
+<code><a class=def name="newsound">new-sound</a> (<a class=quiet href="clm.html#optional-key">&amp;optional-key</a> :file :header-type :data-format :srate :channels :comment :size)</code>
 </td></tr>
 <tr><td></td><td>
 create a new sound named <i>file</i>.  The following function opens a new sound,
@@ -5419,7 +5419,7 @@ To be informed whenever a new sound is created, use <a href="#newsoundhook">new-
 
 <!-- open-raw-sound -->
 <tr><td colspan=2>
-<code><a class=def name="openrawsound">open-raw-sound</a> (<a href="clm.html#optional-key">&amp;optional-key</a> :file :channels :srate :data-format)</code>
+<code><a class=def name="openrawsound">open-raw-sound</a> (<a class=quiet href="clm.html#optional-key">&amp;optional-key</a> :file :channels :srate :data-format)</code>
 </td></tr>
 <tr><td></td><td>
 open <i>file</i> as a raw (no header) sound in the layout specified.
@@ -6352,7 +6352,7 @@ save the current fft peak info: <a href="#peaks">peaks</a><br>
 
 <!-- save-sound-as -->
 <tr><td colspan=2>
-<code><a class=def name="savesoundas">save-sound-as</a> (<a href="clm.html#optional-key">&amp;optional-key</a> :file :sound :header-type :data-format :srate :channel :edit-position)</code>
+<code><a class=def name="savesoundas">save-sound-as</a> (<a class=quiet href="clm.html#optional-key">&amp;optional-key</a> :file :sound :header-type :data-format :srate :channel :edit-position)</code>
 </td></tr>
 <tr><td></td><td>
 save <i>sound</i> as <i>file</i> (same as File Save as option).  If channel is specified,
@@ -9536,7 +9536,7 @@ There are other fancier ways to do this (e.g. <a href="extsnd.html#exremembersou
 
 <!-- open-sound-file -->
 <tr><td colspan=2>
-<code><a class=def name="opensoundfile">open-sound-file</a> (<a href="clm.html#optional-key">&amp;optional-key</a> :file :channels :srate :comment)</code></td></tr>
+<code><a class=def name="opensoundfile">open-sound-file</a> (<a class=quiet href="clm.html#optional-key">&amp;optional-key</a> :file :channels :srate :comment)</code></td></tr>
 <tr><td></td><td>
 Open (create) a sound file <i>file</i> (file name defaults to "test.snd" or "test.wav").  
 It is assumed that the data will be floats in the native format (written by 
@@ -10532,7 +10532,7 @@ musglyphs.scm has some elaborate examples that use fill-polygon to draw music no
 return the current foreground color (also settable).
 The following gives us a green cursor:
 <pre>
-  (set! (<em class=red>foreground-color</em> 0 0 cursor-context) (<a class=quiet href="#makecolor">make-color</a> 1 0 1))
+  (set! (<em class=red>foreground-color</em> 0 0 <a class=quiet href="#cursorcontext">cursor-context</a>) (<a class=quiet href="#makecolor">make-color</a> 1 0 1))
 </pre>
 We can goof around with colors and fonts:
 </td></tr>
