@@ -7,18 +7,16 @@ w98 sound input (adc) support; this is almost written (audio.c); it mostly
   audio.c.
 
 w98 gtk port -- all the pieces for this apparently exist, but every time
-I try to run Windows, my machine hangs.
-
-BeOS audio support (disabled currently).
+  I try to run Windows, my machine hangs.
 
 Alpha port: I'm told there are lingering long int problems in this
-port, but I don't have access to an Alpha -- all I need is the
-gcc printout during compilation.
+  port, but I don't have access to an Alpha -- all I need is the
+  gcc printout during compilation.
 
 Libool-ize sndlib.  Parallel support in Snd's configuration process.
 
 Snd name completion tied into the Emacs-Snd subjob connection (this
-apparently will require "raw" mode in ilisp).
+  apparently will require "raw" mode in ilisp).
 
 Snd's help and apropos merged with Guile's.
 
@@ -47,28 +45,26 @@ Noise reduction.
 
 dB display in VU meters (in the record dialog).  A nicer VU meter background.
 
-loop syntax filled in (loop.scm)
-
-finish the with-sound translation so Snd's is basically the same as CLM's.
+loop syntax filled in (loop.scm) (something is wrong with the CVS Guile Goops support).
 
 Translate more CLM instruments to Scheme: 
-  singer piano flute prc-toolkit fade
+  singer piano flute fade
 
 More effects (see list of suggestions in effects.scm)
 
 Add Gnome tie-ins.  (The main useful one, I think, is the "save-yourself"
-signal).
+  signal).
 
 
 Gettext support, if there's interest. (How does gettext handle Scheme-style
-string formatting as in scm_misc_error?). The main drawback of gettext, besides problems like
-how to handle help strings and the completion array, is that it seems to
-require that we drag around an infinite number of ancillary files; surely
-there's a way to do the same thing in a less intrusive manner?
-Here's an example of the scm problem: in vct.c we have
+  string formatting as in scm_misc_error?). The main drawback of gettext, besides problems like
+  how to handle help strings and the completion array, is that it seems to
+  require that we drag around an infinite number of ancillary files; surely
+  there's a way to do the same thing in a less intrusive manner?
+  Here's an example of the scm problem: in vct.c we have
 
-scm_misc_error(S_vct_ref,"index: ~A but vct length: ~A?",SCM_LIST2(pos,gh_int2scm(v->length)));
+    scm_misc_error(S_vct_ref,"index: ~A but vct length: ~A?",SCM_LIST2(pos,gh_int2scm(v->length)));
 
-but if translation requires that the args be reversed (as in the %2$d msgfmt business),
-does msgfmt know about things like ~A and SCM_LIST2?
+  but if translation requires that the args be reversed (as in the %2$d msgfmt business),
+  does msgfmt know about things like ~A and SCM_LIST2?
 

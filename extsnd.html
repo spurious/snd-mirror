@@ -131,6 +131,7 @@ marks.scm         functions related to marks
 mix.scm           functions related to mixes and tracks
 moog.scm          Moog filter (from CLM)
 pqwvox.scm        phase-quadrature waveshaping (from CLM)
+prc95.scm         Perry Cook's physical model examples (from CLM)
 pvoc.scm          phase-vocoder examples
 rgb.scm           color definitions
 snd-gtk.scm       various Guile-Gtk examples
@@ -2983,6 +2984,8 @@ Axis choice:
                                          (graph hv1)))
                                      (add-hook! graph-hook hgrf)
 </small>
+                                    The explicit (slow) form of this transform is dht in examp.scm.
+
   <b><a name="lfind">find</a></b>              (expr <i>sample snd chn</i>) 
                                   find the sample that satisfies the Scheme function <i>expr</i>. <i>sample</i>
                                   determines where to start the search. 

@@ -82,6 +82,7 @@ marks.scm         functions related to marks
 mix.scm           functions related to mixes and tracks
 moog.scm          Moog filter (from CLM)
 pqwvox.scm        phase-quadrature waveshaping (from CLM)
+prc95.scm         Perry Cook's physical model examples (from CLM)
 pvoc.scm          phase-vocoder examples
 rgb.scm           color definitions
 snd-gtk.scm       various Guile-Gtk examples
@@ -2816,6 +2817,8 @@ These functions don't seem to fit anywhere else:
                                                               (/ (sqrt 2.0) size))))
                                          (graph hv1)))
                                      (add-hook! graph-hook hgrf)
+
+                                    The explicit (slow) form of this transform is dht in examp.scm.
 
   find              (expr sample snd chn)
                                   find the sample that satisfies the Scheme function expr. sample

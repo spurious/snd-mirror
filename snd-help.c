@@ -256,6 +256,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+13-Dec:  prc95.scm (Perry Cook's physical modelling examples).\n\
 12-Dec:  ws.scm (more elaborate with-sound implementation).\n\
          save-listener.\n\
          play-syncd-marks (marks.scm)\n\
@@ -267,9 +268,6 @@ void news_help(snd_state *ss)
 24-Nov:  fht (Hartley transform).\n\
 21-Nov:  abort? -> C-g?.  edit-tree and display-edits documented.\n\
 17-Nov:  esd support thanks to Nick Bailey.\n\
-14-Nov:  un-normalized fft display bugfix.\n\
-13-Nov:  mark-drag-hook.\n\
-11-Nov:  insert-silence.\n\
 ",
 NULL);
   FREE(info);

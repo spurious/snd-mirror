@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 11
-#define SNDLIB_REVISION 20
-#define SNDLIB_DATE "4-Dec-00"
+#define SNDLIB_REVISION 21
+#define SNDLIB_DATE "13-Dec-00"
 
 #ifndef HAVE_SNDLIB
   #define HAVE_SNDLIB 1

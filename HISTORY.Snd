@@ -1,5 +1,8 @@
 snd change log
 
+2001 ----------------------------------------------------------------
+
+  13-Dec:    prc95.scm (Perry Cook's physical modelling examples).
   12-Dec:    ws.scm (more elaborate with-sound implementation).
              save-listener.
              play-syncd-marks (marks.scm).

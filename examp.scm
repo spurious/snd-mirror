@@ -69,10 +69,12 @@
 ;;; pluck instrument (physical modelling)
 ;;; voice instrument (formants via FM)
 ;;; filtered-env (low-pass and amplitude follow envelope)
+;;; multi-colored rxvt printout
+;;; dht -- slow Hartley transform 
 
 ;;; TODO: pitch tracker
 ;;;       adaptive notch filter
-;;;       ins: singer piano flute prc-toolkit fade
+;;;       ins: singer piano flute fade
 ;;;       data-file rw case for pvoc.scm
 
 
@@ -2994,3 +2996,51 @@
 	 (set! (mus-a0 flt) env-val)
 	 (set! (mus-b1 flt) (- env-val 1.0))
 	 (one-pole flt (* env-val val)))))))
+
+
+;;; -------- multi-colored rxvt printout
+;;;
+;;; if you're using display to write to rxvt, you can use the latter's escape sequences
+;;;   for things like multi-colored text:
+
+(define red-text (format #f "~C[31m" #\esc))
+(define normal-text (format #f "~C[0m" #\esc))
+;(display (format #f "~Athis is red!~Abut this is not" red-text normal-text))
+
+;;; there are a bunch of these:
+
+(define black-on-red-text (format #f "~C[30m~C[41m" #\esc #\esc))
+
+;;; or perhaps more convenient:
+
+(define black-fg (format #f "~C[30m" #\esc))  (define black-bg (format #f "~C[40m" #\esc))
+(define red-fg (format #f "~C[31m" #\esc))    (define red-bg (format #f "~C[41m" #\esc))
+(define green-fg (format #f "~C[32m" #\esc))  (define green-bg (format #f "~C[42m" #\esc))
+(define yellow-fg (format #f "~C[33m" #\esc)) (define yellow-bg (format #f "~C[43m" #\esc))
+(define blue-fg (format #f "~C[34m" #\esc))   (define blue-bg (format #f "~C[44m" #\esc))
+;;; etc (magenta: 35 cyan: 36 white: 37 default: 39)
+
+(define bold-text (format #f "~C[1m" #\esc))       (define unbold-text (format #f "~C[22m" #\esc))  
+(define underline-text (format #f "~C[4m" #\esc))  (define ununderline-text (format #f "~C[24m" #\esc))  
+(define blink-text (format #f "~C[5m" #\esc))      (define unblink-text (format #f "~C[25m" #\esc))  
+
+;(display (format #f "~A~Ahiho~Ahiho" yellow-bg red-fg normal-text))
+
+
+;;; -------- slow Hartley transform 
+
+(define (dht data) 
+  ;; taken from Perry Cook's SignalProcessor.m (the slow version of the Hartley transform)
+  ;; the built-in function fht is the fast form of this transform
+  (let* ((len (vct-length data)) 
+	 (arr (make-vct len))
+	 (w (/ (* 2.0 pi) len)))
+    (do ((i 0 (1+ i)))
+	((= i len))
+      (do ((j 0 (1+ j)))
+	  ((= j len))
+	(vct-set! arr i (+ (vct-ref arr i) 
+			   (* (vct-ref data j) 
+			      (+ (cos (* i j w)) 
+				 (sin (* i j w))))))))
+    arr))

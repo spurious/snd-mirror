@@ -4626,8 +4626,10 @@ static int alsa_mus_audio_open_output(int ur_dev, int srate, int chans, int form
     params.format.channels=chans;
 
     if ((err=alsa_params (handles[id].playback_device->handle, &params))!=0) {
-	mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, "%s: alsa_params: %s", 
-		  __FUNCTION__,snd_strerror(err));
+	mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, "%s (dev: %d, srate: %d, chans: %d, format: %d (%d)): alsa_params: %s", 
+		  __FUNCTION__,
+		  ur_dev,srate,chans,format,alsa_format,
+		  snd_strerror(err));
 	return(MUS_ERROR);
     }
     /* FIXME: we are not checking that the buffer size actually

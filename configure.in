@@ -62,6 +62,8 @@ if test $audio_system = unknown && test x$use_alsa = x ; then
 	use_alsa=no)
 fi
 
+dnl if user gives both --with-alsa and --with-esd, we need to issue a warning
+
 XMHTML_LIB=""
 GTKHTML_LIB=""
 AC_ARG_WITH(html,

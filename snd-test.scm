@@ -25,7 +25,7 @@
 
 (define tests 1)
 (define snd-test -1)
-(define full-test #t)
+(define full-test (< snd-test 0))
 
 (define include-clm #f)
 (define original-prompt (listener-prompt))
@@ -1480,6 +1480,9 @@
 
 
 ;;; ---------------- test 6: vcts ----------------
+
+(load "prc95.scm")
+
 (if (or full-test (= snd-test 6))
     (let ((v0 (make-vct 10))
 	  (v1 (make-vct 10))
@@ -1550,7 +1553,13 @@
 	  (let ((v3 (make-vct 40)))
 	    (file->array "hiho.snd" 0 0 10 v3)
 	    (if (fneq (vct-ref v3 5) (vct-ref v2 5))
-		(snd-display (format #f ";vct->sound-file: ~A ~A?" v2 v3)))))))
+		(snd-display (format #f ";vct->sound-file: ~A ~A?" v2 v3))))))
+      (let ((nind (new-sound "tmp.snd" mus-next mus-bshort 22050 1 "hiho a comment")))
+	(test-prc95)
+	(play-and-wait 0 nind)
+	(close-sound nind)
+	(delete-file "tmp.snd"))
+      )
     )
 
 
