@@ -807,25 +807,27 @@ static XEN rb_vct_scale_cp(XEN obj, XEN scl)
   return vct_scale(copy_vct(obj), scl);
 }
 
+#if 0
 static XEN rb_vct_fill_cp(XEN obj, XEN scl)
 {
   return vct_fill(copy_vct(obj), scl);
 }
+#endif
 
 /* destructive */
 static XEN rb_vct_move(int argc, XEN *argv, XEN obj)
 {
-  XEN new, old, backward;
-  rb_scan_args(argc, argv, "21", &new, &old, &backward);
-  return vct_move(obj, new, old, (argc == 3) ? backward : XEN_UNDEFINED);
+  XEN vnew, old, backward;
+  rb_scan_args(argc, argv, "21", &vnew, &old, &backward);
+  return vct_move(obj, vnew, old, (argc == 3) ? backward : XEN_UNDEFINED);
 }
 
 /* returns new vct */
 static XEN rb_vct_move_cp(int argc, XEN *argv, XEN obj)
 {
-  XEN new, old, backward;
-  rb_scan_args(argc, argv, "21", &new, &old, &backward);
-  return vct_move(copy_vct(obj), new, old, (argc == 3) ? backward : XEN_UNDEFINED);
+  XEN vnew, old, backward;
+  rb_scan_args(argc, argv, "21", &vnew, &old, &backward);
+  return vct_move(copy_vct(obj), vnew, old, (argc == 3) ? backward : XEN_UNDEFINED);
 }
 
 static XEN rb_vct_subseq(int argc, XEN *argv, XEN obj)

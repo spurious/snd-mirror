@@ -121,8 +121,6 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
 
 #if HAVE_GFCDN
 
-#define SND_FILER(Widget) GTK_FILE_CHOOSER_DIALOG(Widget)
-
 static char *snd_filer_get_filename(GtkWidget *dialog)
 {
   return((char *)gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog)));

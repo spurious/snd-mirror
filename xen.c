@@ -325,11 +325,6 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str)
 
 #if HAVE_RUBY
 
-static char **xr_help_names = NULL;
-static char **xr_help_data = NULL;
-static int help_size = 0;
-static int help_top = 0;
-
 #define S_add_help "add_help"
 #define S_get_help "get_help"
 

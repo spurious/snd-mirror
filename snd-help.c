@@ -398,6 +398,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+30-Mar:  marks.rb (Mike Scholz).\n\
 25-Mar:  mixer.scm with various matrix/vector related functions (determinant, inverse,\n\
            solve simultaneous linear equations, etc) as applied to mixers/frames.\n\
          invert-filter in dsp.scm.\n\

@@ -12355,9 +12355,9 @@ EDITS: 5
 			 (polynomial v0 2.0))))
       (if (fneq (polynomial (vct 2.0) 0.5) 1.0) 
 	  (snd-display ";polynomial 2.0 * 0.5: ~A" (polynomial (vct 2.0) 0.5)))
-	(let ((var (catch #t (lambda () (polynomial #f 1.0)) (lambda args args))))
-	  (if (not (eq? (car var) 'wrong-type-arg))
-	      (snd-display ";polynomial empty coeffs: ~A" var))))
+      (let ((var (catch #t (lambda () (polynomial #f 1.0)) (lambda args args))))
+	(if (not (eq? (car var) 'wrong-type-arg))
+	    (snd-display ";polynomial empty coeffs: ~A" var)))
       
       (let ((v0 (make-vct 10)))
 	(do ((i 0 (1+ i))) ((= i 10))

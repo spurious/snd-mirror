@@ -2,7 +2,7 @@
 
 /* enved-in-dB should be enved-in-dB? (similarly filter-control-in-dB?),
    also ask-before-overwrite, auto-resize, data-clipped, dac-is-running,
-   dac-combines-channels, cursor-follows-play, emacs-style-save-as,
+   dac-combines-channels, cursor-follows-play, 
    filter-control-in-hz, selection-creates-region, squelch-update,
    verbose-cursor, with-background-processes, with-mix-tags,
    with-relative-panes, with-gl, mus-file-data-clipped -- too many!
@@ -12,15 +12,20 @@
 
 XEN envelope_base_sym;
 #if HAVE_GUILE
-  #define XEN_VARIABLE_PROPERTY(Obj, Prop)          scm_object_property(Obj, Prop)
-  #define XEN_SET_VARIABLE_PROPERTY(Obj, Prop, Val) scm_set_object_property_x(XEN_VARIABLE_REF(Obj), Prop, Val)
-  #define XEN_OBJECT_PROPERTY(Obj, Prop)            scm_object_property(Obj, Prop)
-  #define XEN_SET_OBJECT_PROPERTY(Obj, Prop, Val)   scm_set_object_property_x(Obj, Prop, Val)
+    #define XEN_VARIABLE_PROPERTY(Obj, Prop)          scm_object_property(Obj, Prop)
+    #define XEN_SET_VARIABLE_PROPERTY(Obj, Prop, Val) scm_set_object_property_x(XEN_VARIABLE_REF(Obj), Prop, Val)
+    #define XEN_OBJECT_PROPERTY(Obj, Prop)            scm_object_property(Obj, Prop)
+    #define XEN_SET_OBJECT_PROPERTY(Obj, Prop, Val)   scm_set_object_property_x(Obj, Prop, Val)
 #else
-  #define XEN_VARIABLE_PROPERTY(Obj, Prop)          rb_property(rb_obj_id(Obj), Prop)
-  #define XEN_SET_VARIABLE_PROPERTY(Obj, Prop, Val) rb_set_property(rb_obj_id(Obj), Prop, Val)
-  #define XEN_OBJECT_PROPERTY(Obj, Prop)            rb_property(rb_obj_id(Obj), Prop)
-  #define XEN_SET_OBJECT_PROPERTY(Obj, Prop, Val)   rb_set_property(rb_obj_id(Obj), Prop, Val)
+  #if HAVE_RUBY
+    #define XEN_VARIABLE_PROPERTY(Obj, Prop)          rb_property(rb_obj_id(Obj), Prop)
+    #define XEN_SET_VARIABLE_PROPERTY(Obj, Prop, Val) rb_set_property(rb_obj_id(Obj), Prop, Val)
+    #define XEN_OBJECT_PROPERTY(Obj, Prop)            rb_property(rb_obj_id(Obj), Prop)
+    #define XEN_SET_OBJECT_PROPERTY(Obj, Prop, Val)   rb_set_property(rb_obj_id(Obj), Prop, Val)
+  #else
+    #define XEN_VARIABLE_PROPERTY(Obj, Prop)          0
+    #define XEN_SET_VARIABLE_PROPERTY(Obj, Prop, Val)
+  #endif
 #endif
 
 
@@ -1496,7 +1501,6 @@ static int env_index = -1;
 static XEN g_define_envelope(XEN name, XEN data, XEN base)
 {
   /* defines 'name' and attaches various 'envelope-* properties */
-  XEN temp;
   env *e;
   char *ename;
   #define H_define_envelope "(" S_define_envelope " name data (base 1.0)): load 'name' with associated 'data', a list of breakpoints \
@@ -1519,16 +1523,21 @@ and 'base' into the envelope editor."
   XEN_SET_VARIABLE_PROPERTY(snd_env_array[env_index], envelope_base_sym, C_TO_XEN_DOUBLE(e->base));
   return(snd_env_array[env_index]);
 #else
-  alert_envelope_editor(ename, e);
-  XEN_DEFINE_VARIABLE(ename, temp, data); /* already gc protected */
-  /* add property */
-  XEN_SET_VARIABLE_PROPERTY(temp, envelope_base_sym, C_TO_XEN_DOUBLE(e->base));
-  return(temp);
+  {
+    XEN temp;
+    alert_envelope_editor(ename, e);
+    XEN_DEFINE_VARIABLE(ename, temp, data); /* already gc protected */
+    /* add property */
+    XEN_SET_VARIABLE_PROPERTY(temp, envelope_base_sym, C_TO_XEN_DOUBLE(e->base));
+    return(temp);
+  }
 #endif
 }
 
 XEN envelope_base(XEN obj) {return(XEN_VARIABLE_PROPERTY(obj, envelope_base_sym));}
+#if HAVE_GUILE
 static XEN set_envelope_base(XEN obj, XEN base) {XEN_SET_VARIABLE_PROPERTY(obj, envelope_base_sym, base); return(base);}
+#endif
 
 XEN env_to_xen(env *e)
 {

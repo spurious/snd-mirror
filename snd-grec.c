@@ -6,7 +6,6 @@
 
 #define SMALL_FONT "Monospace 10"
 #define SMALLER_FONT "Monospace 8"
-#define SMALL_FONT_CUTOFF .85
 #define SMALLER_FONT_CUTOFF .7
 
 typedef struct {

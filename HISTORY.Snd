@@ -1,5 +1,6 @@
 Snd change log
 
+  30-Mar:    marks.rb (Mike Scholz).
   25-Mar:    mixer.scm with various matrix/vector related functions (determinant, inverse,
                solve simultaneous linear equations, etc) as applied to mixers/frames.
              invert-filter in dsp.scm.

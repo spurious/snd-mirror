@@ -262,9 +262,6 @@ void unlock_recording_audio(void) {}
 widget_t snd_record_file(void) {return(0);}
 bool record_dialog_is_active(void) {return(false);}
 void recorder_error(char *msg) {}
-void reflect_record_size(int val) {}
-void unsensitize_control_buttons(void) {}
-void reflect_recorder_duration(Float new_dur) {}
 widget_t make_open_file_dialog(bool read_only, bool managed) {return(0);}
 widget_t make_mix_file_dialog(bool managed) {return(0);}
 void clear_listener(void) {}
@@ -300,9 +297,6 @@ void set_revscl(snd_info *sp, Float val) {sp->reverb_control_scale = val;}
 void set_filter_order(snd_info *sp, int val) {sp->filter_control_order = val;}
 void set_filter_in_dB(snd_info *sp, bool val) {sp->filter_control_in_dB = val;}
 void set_filter_in_hz(snd_info *sp, bool val) {sp->filter_control_in_hz = val;}
-void reflect_recorder_mixer_gain(int ind, Float val) {}
-void reflect_recorder_out_amp(int ind, Float val) {}
-void reflect_recorder_in_amp(int in, int out, Float val) {}
 
 void auto_update_restart(void) {}
 

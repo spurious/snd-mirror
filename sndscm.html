@@ -1333,8 +1333,8 @@ that actually calls <a href="extsnd.html#sndprint">snd-print</a> instead:
 (define snd-out
   (make-soft-port
    (vector                      ;soft port is a vector of procedures:
-    (lambda (c) (<a class=quiet href="extsnd.html#sndprint">snd-print</a> c))  ;  procedure accepting one character for output 
-    (lambda (s) (<a class=quiet href="extsnd.html#sndprint">snd-print</a> s))  ;  procedure accepting a string for output 
+    (lambda (c) (<a class=quiet href="extsnd.html#sndprint"><em class=red>snd-print</em></a> c))  ;  procedure accepting one character for output 
+    (lambda (s) (<a class=quiet href="extsnd.html#sndprint"><em class=red>snd-print</em></a> s))  ;  procedure accepting a string for output 
     (lambda () #f)              ;  thunk for flushing output (not needed here)
     #f                          ;  thunk for getting one character (also not needed)
     (lambda () #f))             ;  thunk for closing port -- hmm should this go back to the previous?
@@ -1741,7 +1741,7 @@ The code:
 (<a class=quiet href="extsnd.html#bindkey">bind-key</a> (char-&gt;integer #\x) 4
 	  (lambda () "eval over selection"
 	    (if (<a class=quiet href="extsnd.html#selectionok">selection?</a>)
-		(<a class=quiet href="extsnd.html#promptinminibuffer">prompt-in-minibuffer</a> "selection eval:" eval-over-selection)
+		(<a class=quiet href="extsnd.html#promptinminibuffer">prompt-in-minibuffer</a> "selection eval:" <em class=red>eval-over-selection</em>)
 		(<a class=quiet href="extsnd.html#reportinminibuffer">report-in-minibuffer</a> "no selection")))
 	  #t)
 </pre></td></tr></table>
@@ -1764,7 +1764,7 @@ The <i>func</i> is passed one argument, the sound file name.
   (lambda (n) 
     (if (&gt; (<a class=quiet href="extsnd.html#soundduration">mus-sound-duration</a> n) 10.0) 
       (<a class=quiet href="extsnd.html#sndprint">snd-print</a> n)))
-  (<a class=quiet href="extsnd.html#soundfilesindirectory">sound-files-in-directory</a> "."))
+  (<a class=quiet href="extsnd.html#soundfilesindirectory"><em class=red>sound-files-in-directory</em></a> "."))
 </pre></td></tr></table>
 
 <p>We can use Guile's regexp support here to search for all .snd and .wav files:
@@ -1931,7 +1931,7 @@ in fmv.scm, the simpler one being:
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define test-v 
   (lambda (beg dur freq amp amp-env)
-    (let ((v (make-fm-violin 
+    (let ((v (<em class=red>make-fm-violin</em>
 	      freq amp 
 	      :amp-env (let ((e (<a class=quiet href="clm.html#make-env">make-env</a> :envelope (or amp-env '(0 0 1 1 2 0)) 
 					  :scaler amp 
@@ -1941,7 +1941,7 @@ in fmv.scm, the simpler one being:
       (do ((i 0 (1+ i)))
 	  ((= i dur))
 	(<a class=quiet href="extsnd.html#vctset">vct-set!</a> data i (+ (<a class=quiet href="extsnd.html#vctref">vct-ref</a> data i)
-			    (v))))
+			    (<em class=red>v</em>))))
       (<a class=quiet href="extsnd.html#setsamples">set-samples</a> beg dur data))))
 </pre></td></tr></table>
 
@@ -2990,7 +2990,7 @@ These can be edited to move the mark, or deleted to delete the mark.
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
  (<a class=quiet href="extsnd.html#addtomenu">add-to-menu</a> 0 "Insert File" 
    (lambda () 
-     (select-file 
+     (<em class=red>select-file</em>
        (lambda (filename)
          (<a class=quiet href="extsnd.html#insertsound">insert-sound</a> filename))
        "Insert File" "." "*" "file will be inserted at cursor")))
@@ -3007,7 +3007,7 @@ mouse location in that channel.
 </p>
 
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-(make-sound-box "sounds"
+(<em class=red>make-sound-box</em> "sounds"
 		(list-ref (<a class=quiet href="extsnd.html#mainwidgets">main-widgets</a>) 3)
 		(lambda (file) 
                   (<a class=quiet href="extsnd.html#sndprint">snd-print</a> file))
@@ -4071,13 +4071,13 @@ resource argument list is <i>args</i>.  The editor's current envelope is accessi
 
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define outer (add-main-pane "hiho" xmFormWidgetClass '()))
-(define editor (xe-create-enved "a name" outer 
+(define editor (<em class=red>xe-create-enved</em> "a name" outer 
 			     (list XmNleftAttachment   XmATTACH_FORM
 				   XmNtopAttachment    XmATTACH_FORM
 				   XmNbottomAttachment XmATTACH_FORM
 				   XmNrightAttachment  XmATTACH_FORM)
 			     '(0.0 1.0 0.0 1.0)))
-(set! (xe-envelope editor) (list 0.0 1.0 1.0 0.5))
+(set! (<em class=red>xe-envelope</em> editor) (list 0.0 1.0 1.0 0.5))
 </pre></td></tr></table>
 <br>
 

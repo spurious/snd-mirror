@@ -2072,4 +2072,12 @@ void g_init_recorder(void)
   void finish_recording(recorder_info *rp) {}
   void sensitize_control_buttons(void) {}
   void recorder_fill_wd(struct Wdesc *wd, int chan, int field, int device) {}
+
+  void reflect_record_size(int val) {}
+  void unsensitize_control_buttons(void) {}
+  void reflect_recorder_duration(Float new_dur) {}
+  void reflect_recorder_mixer_gain(int ind, Float val) {}
+  void reflect_recorder_out_amp(int ind, Float val) {}
+  void reflect_recorder_in_amp(int in, int out, Float val) {}
 #endif
+
