@@ -7,6 +7,9 @@
  * returned to old wavelet code 18-Apr-01, and finally wrote the snd-test.scm tests.
  */
 
+/* TODO: if gsl dht, size=2048, move x-pos slider, system freezes until dht returns?
+ */
+
 #define FFT_IN_BACKGROUND_SIZE 4096
 /* this fft size decides when to use a background process rather than a single fft call */
 

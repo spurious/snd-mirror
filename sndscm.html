@@ -1934,6 +1934,7 @@ that were removed from or renamed in Snd-5.
   <em class=def><a name="sndclockicon">snd-clock-icon</a></em> snd hour
   <em class=def><a name="makesoundbox">make-sound-box</a></em> name parent select-func peak-func sounds args
   <em class=def><a name="showsmptelabel">show-smpte-label</a></em> on-or-off
+  <em class=def><a name="makelevelmeter">make-level-meter</a></em> parent width height
 </pre>
 
 <p>snd-motif.scm has procedures that rely on the Motif module (xm.c).
@@ -1983,7 +1984,15 @@ is up to the caller-supplied procedure.
 		'())
 </pre>
 <p><b>(show-smpte-label)</b> shows the current SMPTE frame number in a box
-in the upper right corner of the graph
+in the upper right corner of the graph.
+<b>make-level-meter</b> creates A VU meter of any width and height, returning
+a list of information associated with that meter.  Pass that list to 
+<b>display-level</b> to move the needle and the red bubble.  This meter
+assumes you'll call it periodically so that the momentum needle and viscosity of
+the bubble will appear to behave naturally.  <b>with-level-meters</b> adds
+any number of these meters to the topmost pane in the Snd main window,
+then adds a dac-hook function to display the current playback volume
+in the respective meter.
 </p>
 
 

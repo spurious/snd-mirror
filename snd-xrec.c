@@ -709,7 +709,7 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
   for (i = 0; i < 5; i++)
     {
       rdeg = mus_degrees2radians(45 - i * 22.5);
-      x0 = (int)(120 * size + 120 * size * sin(rdeg));
+      x0 = (int)(120 * size * (1.0 + sin(rdeg)));
       y0 = (int)(160 * size - 120 * size * cos(rdeg));
       x1 = (int)(120 * size + 130 * size * sin(rdeg));
       y1 = (int)(160 * size - 130 * size * cos(rdeg));
@@ -723,7 +723,7 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
 	for (j = 1; j < 6; j++)
 	  {
 	    rdeg = mus_degrees2radians(45 - i * 22.5 - j * (90.0 / 20.0));
-	    x0 = (int)(120 * (size + sin(rdeg)));
+	    x0 = (int)(120 * size * (1.0 + sin(rdeg)));
 	    y0 = (int)(160 * size - 120 * size * cos(rdeg));
 	    x1 = (int)(120 * size + 126 * size * sin(rdeg));
 	    y1 = (int)(160 * size - 126 * size * cos(rdeg));

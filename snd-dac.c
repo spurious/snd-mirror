@@ -2,6 +2,8 @@
  *         set up line_size in mus_make_comb to 5.0*srate/25641, then
  *         then as running, at each block reset to initial - new scaled
  *         (negative pm = longer delay)
+ *
+ * TODO: cursor_follows_play seems to be flakey
  */
 
 /* this was sound-oriented; changed to be channel-oriented 31-Aug-00 */
@@ -1033,6 +1035,7 @@ static int dac_running = 0;
 
 #define MAX_DEVICES 8
 static int dev_fd[MAX_DEVICES];
+static void cleanup_dac_hook(void);
 
 void cleanup_dac(void)
 {
@@ -1045,6 +1048,7 @@ void cleanup_dac(void)
 	  dev_fd[i] = -1;
 	}
   for (i = 0; i < MAX_DEVICES; i++) dev_fd[i] = -1;
+  cleanup_dac_hook();
   dac_running = 0;
 }
 
@@ -1526,6 +1530,17 @@ static MUS_SAMPLE_TYPE local_next_sample_unscaled(snd_fd *sf)
   else return(*sf->view_buffered_data++);
 }
 
+static XEN dac_hook;
+static XEN sdobj = XEN_FALSE;
+static void cleanup_dac_hook(void)
+{
+  if (!(XEN_FALSE_P(sdobj)))
+    {
+      snd_unprotect(sdobj);
+      sdobj = XEN_FALSE;
+    }
+}
+
 static int fill_dac_buffers(dac_state *dacp, int write_ok)
 {
   int i, j, cursor_change;
@@ -1756,6 +1771,19 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
     }
 
   /* now parcel these buffers out to the available devices */
+
+  if (XEN_HOOKED(dac_hook))
+    {
+      if (XEN_FALSE_P(sdobj))
+	{
+	  sdobj = wrap_sound_data(dacp->channels, dacp->frames, dac_buffers);
+	  snd_protect(sdobj);
+	}
+    g_c_run_progn_hook(dac_hook, 
+		       XEN_LIST_1(sdobj),
+		       S_dac_hook);
+    }
+
 #if (HAVE_OSS || HAVE_ALSA)
   if (write_ok == WRITE_TO_DAC) 
     {
@@ -1764,7 +1792,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 	if (dev_fd[i] != -1)
 	  {
 	    mus_file_write_buffer(dacp->out_format,
-				  0, frames-1,
+				  0, frames - 1,
 				  dacp->chans_per_device[i],
 				  dev_bufs,
 				  (char *)(audio_bytes[i]),
@@ -2160,6 +2188,7 @@ static int start_audio_output_1 (dac_state *dacp)
 		}
 	      dac_error(__FILE__, __LINE__, __FUNCTION__);
 	      dac_running = 0;
+	      cleanup_dac_hook();
 	      unlock_recording_audio();
 	      if (global_rev) free_reverb(global_rev);
 	      max_active_slot = -1;
@@ -2356,6 +2385,7 @@ static void stop_audio_output (dac_state *dacp)
 	 dev_fd[i] = -1;
        }
    dac_running = 0;
+   cleanup_dac_hook();
    unlock_recording_audio();
    dac_pausing = 0;
    if (global_rev) free_reverb(global_rev);
@@ -2450,6 +2480,7 @@ void finalize_apply(snd_info *sp)
   play_list_members = 0;
   sp->playing = 0;
   dac_running = 0;
+  cleanup_dac_hook();
   if (snd_dacp) free_dac_state();
   if (global_rev) free_reverb(global_rev);
 }
@@ -2876,12 +2907,14 @@ void g_init_dac(void)
   #define H_play_hook S_play_hook " (samps) is called each time a buffer is sent to the DAC."
   #define H_start_playing_hook S_start_playing_hook " (snd) is called when a play request is triggered. \
 If it returns #t, the sound is not played."
+  #define H_dac_hook S_dac_hook " (sdobj) called just before data is sent to DAC passing data as sound-data object"
 
   XEN_DEFINE_HOOK(stop_playing_hook, S_stop_playing_hook, 1, H_stop_playing_hook);                         /* arg = sound */
   XEN_DEFINE_HOOK(stop_playing_channel_hook, S_stop_playing_channel_hook, 2, H_stop_playing_channel_hook); /* args = sound channel */
   XEN_DEFINE_HOOK(stop_playing_region_hook, S_stop_playing_region_hook, 1, H_stop_playing_region_hook);    /* arg = region number */
   XEN_DEFINE_HOOK(start_playing_hook, S_start_playing_hook, 1, H_start_playing_hook);                      /* arg = sound */
   XEN_DEFINE_HOOK(play_hook, S_play_hook, 1, H_play_hook);                                                 /* args = size */
+  XEN_DEFINE_HOOK(dac_hook, S_dac_hook, 1, H_dac_hook);                                                    /* args = data as sound_data obj */
 
   g_make_reverb = XEN_FALSE;
   g_reverb = XEN_FALSE;

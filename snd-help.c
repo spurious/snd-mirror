@@ -253,6 +253,8 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+10-Aug:  make-level-meter, with-level-meters in snd-motif.scm.\n\
+         added dac-hook, sound-data-maxamp.\n\
 9-Aug:   show-smpte-label in snd-motif.scm.\n\
          added region-graph-style.\n\
 7-Aug:   snd-print locale bugfix (thanks to Ludger Brummer).\n\

@@ -14,6 +14,7 @@
 ;;; (snd-clock-icon snd hour) show an animated clock icon
 ;;; (make-sound-box name parent select-func peak-func sounds args) makes a box of sound icons
 ;;; (show-smpte-label on-or-off) shows the current SMPTE frame number
+;;; (make-level-meter parent width height args), (display-level data), (with-level-meters n) -- VU meters
 
 (use-modules (ice-9 common-list))
 
@@ -1460,6 +1461,165 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 
 
+;;; -------- make-level-meter, display-level
+
+(define red-pixel
+  (let ((pix #f))
+    (lambda ()
+      (if (not pix)
+	  (let* ((shell (|Widget (cadr (main-widgets))))
+		 (dpy (|XtDisplay shell))
+		 (scr (|DefaultScreen dpy))
+		 (cmap (|DefaultColormap dpy scr))
+		 (col (|XColor)))
+	       (if (= (|XAllocNamedColor dpy cmap "red" col col) 0)
+		   (snd-error "can't allocate red!")
+		   (set! pix (|pixel col)))))
+      pix)))
+
+(define (make-level-meter parent width height args)
+  (let* ((frame (|XtCreateManagedWidget "meter-frame" |xmFrameWidgetClass parent
+		  (append (list |XmNshadowType       |XmSHADOW_ETCHED_IN
+				|XmNwidth            width
+				|XmNheight           height
+				|XmNshadowThickness  (if (> width 500) 6 3))
+			  args)))
+	 (meter (|XtCreateManagedWidget "meter" |xmDrawingAreaWidgetClass frame
+		  (list |XmNbackground       (white-pixel)
+			|XmNforeground       (black-pixel)
+			|XmNtopAttachment    |XmATTACH_FORM
+			|XmNbottomAttachment |XmATTACH_FORM
+			|XmNleftAttachment   |XmATTACH_FORM
+			|XmNrightAttachment  |XmATTACH_FORM)))
+	 (context (list meter 0.0 1.0 0.0 0.0 width height)))
+    (|XtAddCallback meter |XmNexposeCallback 
+		    (lambda (w c i) 
+		      (display-level c)) 
+		    context)
+    (|XtAddCallback meter |XmNresizeCallback 
+		    (lambda (w c i) 
+		      (list-set! c 5 (cadr (|XtGetValues w (list |XmNwidth 0))))
+		      (list-set! c 6 (cadr (|XtGetValues w (list |XmNheight 0))))
+		      (display-level c))
+		    context)
+    context))
+
+(define (display-level meter-data)
+  (let* ((meter (car meter-data))
+	 (level (list-ref meter-data 1))
+	 (last-level (list-ref meter-data 3))
+	 (red-deg (list-ref meter-data 4))
+	 (width (list-ref meter-data 5))
+	 (height (list-ref meter-data 6))
+	 (size (list-ref meter-data 2))
+	 (dpy (|XtDisplay meter))
+	 (win (|XtWindow meter))
+	 (major-tick (inexact->exact (/ width 24)))
+	 (minor-tick (inexact->exact (* major-tick .6)))
+	 (ang0 (* 45 64))
+	 (ang1 (* 90 64))
+	 (wid2 (inexact->exact (/ width 2)))
+	 (gc (|GC (car (snd-gcs))))
+	 (top (inexact->exact (/ height 3.2)))) ; distance of label from top of meter
+    (|XSetForeground dpy gc (white-pixel))
+    (|XFillRectangle dpy win gc 0 0 width height)
+    (|XSetForeground dpy gc (black-pixel))
+    (|XDrawArc dpy win gc 0 top width width ang0 ang1)
+    (|XDrawArc dpy win gc 0 (- top 1) width width ang0 ang1)
+    (if (> width 100)
+	(|XDrawArc dpy win gc 0 (- top 2) width width ang0 ang1))
+    (|XDrawArc dpy win gc 4 (+ top 4) (- width 8) (- width 8) ang0 ang1)
+    (do ((i 0 (1+ i)))
+	((= i 5))
+      (let* ((rdeg (degrees->radians (- 45 (* i 22.5))))
+	     (sinr (sin rdeg))
+	     (cosr (cos rdeg))
+	     (x0 (inexact->exact (+ wid2 (* wid2 sinr))))
+	     (y0 (inexact->exact (- (+ wid2 top) (* wid2 cosr))))
+	     (x1 (inexact->exact (+ wid2 (* (+ wid2 major-tick) sinr))))
+	     (y1 (inexact->exact (- (+ wid2 top) (* (+ wid2 major-tick) cosr)))))
+	(|XDrawLine dpy win gc x0 y0 x1 y1)
+	(|XDrawLine dpy win gc (+ x0 1) y0 (+ x1 1) y1)
+	(if (< i 4)
+	    (do ((j 1 (1+ j)))
+		((= j 6))
+	      (let* ((rdeg (degrees->radians (- 45 (* i 22.5) (* j (/ 90.0 20.0)))))
+		     (sinr (sin rdeg))
+		     (cosr (cos rdeg))
+		     (x0 (inexact->exact (* wid2 (+ 1.0 sinr))))
+		     (y0 (inexact->exact (- (+ wid2 top) (* wid2 cosr))))
+		     (x1 (inexact->exact (+ wid2 (* (+ wid2 minor-tick) sinr))))
+		     (y1 (inexact->exact (- (+ wid2 top) (* (+ wid2 minor-tick) cosr)))))
+		(|XDrawLine dpy win gc x0 y0 x1 y1))))))
+    (let* ((needle-speed 0.25)
+	   (bubble-speed 0.025)
+	   (bubble-size (* 15 64))
+	   (val (+ (* level needle-speed) (* last-level (- 1.0 needle-speed))))
+	   (deg (- (* val 90.0) 45.0))
+	   (rdeg (degrees->radians deg))
+	   (nx1 (inexact->exact (+ wid2 (* (+ wid2 major-tick) (sin rdeg)))))
+	   (ny1 (inexact->exact (- (+ wid2 top) (* (+ wid2 major-tick) (cos rdeg))))))
+      (|XDrawLine dpy win gc wid2 wid2 nx1 ny1)
+      (list-set! meter-data 3 val)
+      (if (> val red-deg)
+	  (list-set! meter-data 4 val)
+	  (list-set! meter-data 4 (+ (* val bubble-speed) (* red-deg (- 1.0 bubble-speed)))))
+      (if (> (list-ref meter-data 4) .01)
+	  (begin
+	    (|XSetForeground dpy gc (red-pixel))
+	    (let* ((redx (inexact->exact (* (list-ref meter-data 4) 90 64)))
+		   (redy (min redx bubble-size)))
+	      (do ((i 0 (1+ i)))
+		  ((= i 4))
+		(|XDrawArc dpy win gc i (+ top i) (- width (* i 2)) (- width (* i 2)) (- (* 135 64) redx) redy))
+	      (|XSetForeground dpy gc (black-pixel))))))))
+
+(define (with-level-meters n)
+  ;; add n level meters to a pane at the top of the Snd window
+  (let* ((parent (|Widget (list-ref (main-widgets) 3)))
+	 (height 70)
+	 (width (inexact->exact (/ (cadr (|XtGetValues parent (list |XmNwidth 0))) n)))
+	 (meters (|XtCreateManagedWidget "meters" |xmFormWidgetClass parent
+	 	   (list |XmNpositionIndex 0  ; top pane
+			 |XmNbackground    (|Pixel (snd-pixel (basic-color)))
+			 |XmNfractionBase  (* n 10)
+			 |XmNpaneMinimum   height)))
+	 (meter-list '()))
+    (do ((i 0 (1+ i)))
+	((= i n))
+      (set! meter-list 
+	 (cons (make-level-meter meters width height
+				 (list |XmNtopAttachment    |XmATTACH_FORM
+				       |XmNbottomAttachment |XmATTACH_FORM
+				       |XmNleftAttachment   |XmATTACH_POSITION
+				       |XmNleftPosition     (* i 10)
+				       |XmNrightAttachment  |XmATTACH_POSITION
+				       |XmNrightPosition    (* (+ 1 i) 10))) 
+	       meter-list)))
+    (add-hook! dac-hook 
+	       (lambda (sdobj)
+		 (let* ((maxes (sound-data-maxamp sdobj)))
+		   (for-each
+		    (lambda (meter)
+		      (if (null? maxes)
+			  (list-set! meter 1 0.0)
+			  (begin
+			    (list-set! meter 1 (car maxes))
+			    (set! maxes (cdr maxes))))
+		      (display-level meter))
+		    (reverse meter-list)))))
+    ;; TODO: need trailing timed calls to clear bubble
+    ;; TODO: retrofit the xrec junk
+    ;; TODO: test this on a slow machine
+    (|XtSetValues meters (list |XmNpaneMinimum 1))))
+
+
+
+
+
+
+
+
 ;;; drawnbutton+workproc sound-button example
 ;;; spectral editing in new window
 ;;; panel of effects-buttons[icons] on right? (normalize, reverse, etc)
@@ -1472,5 +1632,5 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ;;; cue-list as mix set?
 ;;; midi trigger
 ;;; save/restore -separate window details
-;;; playback level meters, chan-grf, enved
+;;; chan-grf, enved
 ;;; marks menu

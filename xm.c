@@ -13,7 +13,6 @@
  *       autoconf support (see snd tarball and 'make xm')
  *       XEvent fields should be settable
  *       check for memory leaks etc
- *       rest of help strings?
  */
 
 /* HISTORY: 
@@ -1874,6 +1873,7 @@ static XEN gxm_XmIsTraversable(XEN arg1)
 
 static XEN gxm_XmGetDestination(XEN arg1)
 {
+  #define H_XmGetDestination "Widget XmGetDestination(Display *display)"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmGetDestination", "Display*");
   return(C_TO_XEN_Widget(XmGetDestination(XEN_TO_C_Display(arg1))));
 }
@@ -1881,6 +1881,8 @@ static XEN gxm_XmGetDestination(XEN arg1)
 #if MOTIF_2
 static XEN gxm_XmRenderTableAddRenditions(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
+  #define H_XmRenderTableAddRenditions "XmRenderTable XmRenderTableAddRenditions(XmRenderTable oldtable, \
+XmRendition *renditions, Cardinal rendition_count, XmMergeMode merge_mode)"
   /* DIFF: XmRenderTableAddRenditions arg2 is list of Renditions
    */
   Cardinal len;
@@ -3259,6 +3261,7 @@ static XEN gxm_XmSetColorCalculation(XEN arg1)
 
 static XEN gxm_XmTrackingLocate(XEN arg1, XEN arg2, XEN arg3)
 {
+  #define H_XmTrackingLocate "Widget XmTrackingLocate(Widget widget, Cursor cursor, Boolean confine_to)"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTrackingLocate", "Widget");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XmTrackingLocate", "Cursor");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmTrackingLocate", "int");
@@ -3267,6 +3270,7 @@ static XEN gxm_XmTrackingLocate(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XmTrackingEvent(XEN arg1, XEN arg2, XEN arg3)
 {
+  #define H_XmTrackingEvent "Widget XmTrackingEvent(Widget widget, Cursor cursor, Boolean confine_to, XEvent *event_return)"
   /* DIFF: XmTrackingEvent widget cursor confine [event] -> (list widget event)
    */
   XEvent *e; /* do we need to allocate? */
@@ -3443,6 +3447,7 @@ static XEN gxm_XmVaCreateSimpleMenuBar(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XmCreateSimpleCheckBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
+  #define H_XmCreateSimpleCheckBox "Widget XmCreateSimpleCheckBox(Widget parent, String name, ArgList arglist, Cardinal argcount)"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateSimpleCheckBox", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateSimpleCheckBox", "String");
@@ -3463,6 +3468,7 @@ static XEN gxm_XmCreateSimpleCheckBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 
 static XEN gxm_XmCreateSimpleRadioBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
+  #define H_XmCreateSimpleRadioBox "Widget XmCreateSimpleRadioBox(Widget parent, String name, ArgList arglist, Cardinal argcount)"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateSimpleRadioBox", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateSimpleRadioBox", "String");
@@ -3483,6 +3489,7 @@ static XEN gxm_XmCreateSimpleRadioBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 
 static XEN gxm_XmCreateSimpleOptionMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
+  #define H_XmCreateSimpleOptionMenu "Widget XmCreateSimpleOptionMenu(Widget parent, String name, ArgList arglist, Cardinal argcount)"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateSimpleOptionMenu", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateSimpleOptionMenu", "String");
@@ -3503,6 +3510,7 @@ static XEN gxm_XmCreateSimpleOptionMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 
 static XEN gxm_XmCreateSimplePulldownMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
+  #define H_XmCreateSimplePulldownMenu "Widget XmCreateSimplePulldownMenu(Widget parent, String name, ArgList arglist, Cardinal argcount)"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateSimplePulldownMenu", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateSimplePulldownMenu", "String");
@@ -3523,6 +3531,7 @@ static XEN gxm_XmCreateSimplePulldownMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4
 
 static XEN gxm_XmCreateSimplePopupMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
+  #define H_XmCreateSimplePopupMenu "Widget XmCreateSimplePopupMenu(Widget parent, String name, ArgList arglist, Cardinal argcount)"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateSimplePopupMenu", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateSimplePopupMenu", "String");
@@ -3543,6 +3552,7 @@ static XEN gxm_XmCreateSimplePopupMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 
 static XEN gxm_XmCreateSimpleMenuBar(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
+  #define H_XmCreateSimpleMenuBar "Widget XmCreateSimpleMenuBar(Widget parent, String name, ArgList arglist, Cardinal argcount)"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateSimpleMenuBar", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateSimpleMenuBar", "String");
@@ -7694,6 +7704,7 @@ static XEN gxm_XmIsPrimitive(XEN arg)
 #if MOTIF_2 && HAVE_XP
 static XEN gxm_XmIsPrintShell(XEN arg)
 {
+  #define H_XmIsPrintShell "Boolean XmIsPrintShell(Widget)"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsPrintShell", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsPrintShell(XEN_TO_C_Widget(arg))));
 }
@@ -7959,32 +7970,6 @@ static XEN gxm_XmIsMenuShell(XEN arg)
   return(C_TO_XEN_BOOLEAN(XmIsMenuShell(XEN_TO_C_Widget(arg))));
 }
 
-/*
-void XmActivateWMProtocol(Widget shell, Atom protocol)
-void XmAddWMProtocolCallback(Widget shell, Atom protocol, XtCallbackProc callback, XtPointer closure)
-void XmAddWMProtocols(Widget shell, Atom *protocols, Cardinal num_protocols)
-Widget XmCreateSimpleCheckBox(Widget parent, String name, ArgList arglist, Cardinal argcount)
-Widget XmCreateSimpleMenuBar(Widget parent, String name, ArgList arglist, Cardinal argcount)
-Widget XmCreateSimpleOptionMenu(Widget parent, String name, ArgList arglist, Cardinal argcount)
-Widget XmCreateSimplePopupMenu(Widget parent, String name, ArgList arglist, Cardinal argcount)
-Widget XmCreateSimplePulldownMenu(Widget parent, String name, ArgList arglist, Cardinal argcount)
-Widget XmCreateSimpleRadioBox(Widget parent, String name, ArgList arglist, Cardinal argcount)
-void XmDeactivateWMProtocol(Widget shell, Atom protocol)
-Boolean XmDirectionMatch (d1, d2)
-Boolean XmDirectionMatchPartial (d1, d2, dmask)
-Widget XmGetDestination(Display *display)
-XtEnum XmGetScaledPixmap(Widget widget, String image_name, Pixel foreground, Pixel background, int depth, Double scaling_ratio)
-Cardinal XmGetSecondaryResourceData(WidgetClass widget_class, XmSecondaryResourceData **secondary_data_return)
-Boolean XmIsPrintShell(Widget)
-void XmRemoveWMProtocolCallback(Widget shell, Atom protocol, XtCallbackProc callback, XtPointer closure)
-void XmRemoveWMProtocols(Widget shell, Atom * protocols, Cardinal num_protocols)
-XmRenderTableAddRenditions(XmRenderTable oldtable, XmRendition *renditions, Cardinal rendition_count, XmMergeMode merge_mode)
-void XmSetWMProtocolHooks(Widget shell, Atom protocol, XtCallbackProc prehook, XtPointer pre_closure, XtCallbackProc posthook, XtPointer post_closure)
-void XmTabListFree(XmTabList tablist)
-Cardinal XmTabListTabCount(XmTabList tablist)
-Widget XmTrackingEvent(Widget widget, Cursor cursor, Boolean confine_to, XEvent *event_return)
-Widget XmTrackingLocate(Widget widget, Cursor cursor, Boolean confine_to)
-*/
 
 #endif
 /* end HAVE_MOTIF */
@@ -8365,7 +8350,7 @@ static XEN gxm_XDefaultString(void)
 
 static XEN gxm_XCreateRegion(void)
 {
-  /* Region XCreateRegion() */
+  #define H_XCreateRegion "Region XCreateRegion()"
   return(C_TO_XEN_Region(XCreateRegion()));
 }
 
@@ -8401,7 +8386,7 @@ static XEN gxm_XAllocIconSize(void)
 
 static XEN gxm_XFilterEvent(XEN arg1, XEN arg2)
 {
-  /* Bool XFilterEvent(event, w) */
+  #define H_XFilterEvent "Bool XFilterEvent(event, w)"
   XEN_ASSERT_TYPE(XEN_XEvent_P(arg1), arg1, 1, "XFilterEvent", "XEvent*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XFilterEvent", "Window");
   return(C_TO_XEN_BOOLEAN(XFilterEvent(XEN_TO_C_XEvent(arg1), XEN_TO_C_Window(arg2))));
@@ -8560,7 +8545,7 @@ static XEN gxm_XWidthMMOfScreen(XEN arg1)
 
 static XEN gxm_XWarpPointer(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8, XEN arg9)
 {
-  /* XWarpPointer(display, src_w, dest_w, src_x, src_y, src_width, src_height, dest_x, dest_y) */
+  #define H_XWarpPointer "XWarpPointer(display, src_w, dest_w, src_x, src_y, src_width, src_height, dest_x, dest_y)"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XWarpPointer", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XWarpPointer", "Window");
   XEN_ASSERT_TYPE(XEN_Window_P(arg3), arg3, 3, "XWarpPointer", "Window");
@@ -8806,7 +8791,7 @@ of the XColor structure."
 
 static XEN gxm_XStoreBytes(XEN arg1, XEN arg2, XEN arg3)
 {
-  /* XStoreBytes(display, bytes, nbytes) */
+  #define H_XStoreBytes "XStoreBytes(display, bytes, nbytes)"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XStoreBytes", "Display*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XStoreBytes", "char*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XStoreBytes", "int");
@@ -8815,7 +8800,7 @@ static XEN gxm_XStoreBytes(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XStoreBuffer(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  /* XStoreBuffer(display, bytes, nbytes, buffer) */
+  #define H_XStoreBuffer "XStoreBuffer(display, bytes, nbytes, buffer)"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XStoreBuffer", "Display*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XStoreBuffer", "char*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XStoreBuffer", "int");
@@ -9192,7 +9177,7 @@ static XEN gxm_XSetBackground(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XSetArcMode(XEN arg1, XEN arg2, XEN arg3)
 {
-  /* XSetArcMode(display, gc, arc_mode) */
+  #define H_XSetArcMode "XSetArcMode(display, gc, arc_mode)"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XSetArcMode", "Display*");
   XEN_ASSERT_TYPE(XEN_GC_P(arg2), arg2, 2, "XSetArcMode", "GC");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XSetArcMode", "int");
@@ -9301,7 +9286,7 @@ static XEN gxm_XResetScreenSaver(XEN arg1)
 
 static XEN gxm_XReparentWindow(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
-  /* XReparentWindow(display, w, parent, x, y) */
+  #define H_XReparentWindow "XReparentWindow(display, w, parent, x, y)"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XReparentWindow", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XReparentWindow", "Window");
   XEN_ASSERT_TYPE(XEN_Window_P(arg3), arg3, 3, "XReparentWindow", "Window");
@@ -9429,7 +9414,7 @@ in a file containing a bitmap."
 
 static XEN gxm_XRaiseWindow(XEN arg1, XEN arg2)
 {
-  /* XRaiseWindow(display, w) */
+  #define H_XRaiseWindow "XRaiseWindow(display, w)"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XRaiseWindow", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XRaiseWindow", "Window");
   return(C_TO_XEN_INT(XRaiseWindow(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2))));
@@ -9541,7 +9526,7 @@ static XEN gxm_XQueryExtension(XEN arg1, XEN arg2)
 
 static XEN gxm_XQueryColors(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  /* XQueryColors(display, colormap, defs_in_out, ncolors) */
+  #define H_XQueryColors "XQueryColors(display, colormap, defs_in_out, ncolors)"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XQueryColors", "Display*");
   XEN_ASSERT_TYPE(XEN_Colormap_P(arg2), arg2, 2, "XQueryColors", "Colormap");
   XEN_ASSERT_TYPE(XEN_XColor_P(arg3), arg3, 3, "XQueryColors", "XColor");
@@ -9909,7 +9894,7 @@ static XEN gxm_XKillClient(XEN arg1, XEN arg2)
 
 static XEN gxm_XKeysymToKeycode(XEN arg1, XEN arg2)
 {
-  /* KeyCode XKeysymToKeycode(display, keysym) */
+  #define H_XKeysymToKeycode "KeyCode XKeysymToKeycode(display, keysym)"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XKeysymToKeycode", "Display*");
   XEN_ASSERT_TYPE(XEN_KeySym_P(arg2), arg2, 2, "XKeysymToKeycode", "KeySym");
   return(C_TO_XEN_KeyCode(XKeysymToKeycode(XEN_TO_C_Display(arg1), XEN_TO_C_KeySym(arg2))));
@@ -10502,15 +10487,10 @@ static XEN gxm_XFlush(XEN arg1)
   return(C_TO_XEN_INT(XFlush(XEN_TO_C_Display(arg1))));
 }
 
-/*
-XFillRectangle(display, d, gc, x, y, width, height)
-XFillRectangles(display, d, gc, rectangles, nrectangles)
-XFillPolygon(display, d, gc, points, npoints, shape, mode)
-XFillArcs(display, d, gc, arcs, narcs)
-*/
 
 static XEN gxm_XFillRectangles(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
+  #define H_XFillRectangles "XFillRectangles(display, d, gc, rectangles, nrectangles)"
   /* DIFF: XFillRectangles XRectangle* arg (arg 4) is list of XRectangles
    */
   XRectangle *pt, *pt1;
@@ -10540,6 +10520,7 @@ static XEN gxm_XFillRectangles(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 
 static XEN gxm_XFillRectangle(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
 {
+  #define H_XFillRectangle "XFillRectangle(display, d, gc, x, y, width, height)"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XFillRectangle", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XFillRectangle", "Drawable");
   XEN_ASSERT_TYPE(XEN_GC_P(arg3), arg3, 3, "XFillRectangle", "GC");
@@ -10554,6 +10535,7 @@ static XEN gxm_XFillRectangle(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, 
 
 static XEN gxm_XFillPolygon(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
 {
+  #define H_XFillPolygon "XFillPolygon(display, d, gc, points, npoints, shape, mode)"
   /* DIFF: XFillPolygon Point* arg (arg 4) is list of XPoint
    */
   XPoint *pt, *pt1;
@@ -10585,6 +10567,7 @@ static XEN gxm_XFillPolygon(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XE
 
 static XEN gxm_XFillArcs(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
+  #define H_XFillArcs "XFillArcs(display, d, gc, arcs, narcs)"
   /* DIFF: XFillArcs Arc* arg (arg 4) is list of XArcs
    */
   XArc *arc;
@@ -10647,7 +10630,7 @@ static XEN gxm_XFetchName(XEN arg1, XEN arg2)
 
 static XEN gxm_XEventsQueued(XEN arg1, XEN arg2)
 {
-  /* int XEventsQueued(display, mode) */
+  #define H_XEventsQueued "int XEventsQueued(display, mode)"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XEventsQueued", "Display*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XEventsQueued", "int");
   return(C_TO_XEN_INT(XEventsQueued(XEN_TO_C_Display(arg1), XEN_TO_C_INT(arg2))));
@@ -10679,7 +10662,7 @@ static XEN gxm_XDrawText(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN a
 
 static XEN gxm_XDrawString(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
 {
-  /* XDrawString(display, d, gc, x, y, string, length) */
+  #define H_XDrawString "XDrawString(display, d, gc, x, y, string, length)"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XDrawString", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XDrawString", "Drawable");
   XEN_ASSERT_TYPE(XEN_GC_P(arg3), arg3, 3, "XDrawString", "GC");
@@ -11122,7 +11105,7 @@ window and causes the X server to generate a PropertyNotify event on the window 
 
 static XEN gxm_XDefineCursor(XEN arg1, XEN arg2, XEN arg3)
 {
-  /* XDefineCursor(display, w, cursor) */
+  #define H_XDefineCursor "XDefineCursor(display, w, cursor)"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XDefineCursor", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XDefineCursor", "Window");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg3), arg3, 3, "XDefineCursor", "Cursor");
@@ -11131,7 +11114,7 @@ static XEN gxm_XDefineCursor(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XDefaultScreen(XEN arg1)
 {
-  /* DefaultScreen(display) */
+  #define H_XDefaultScreen "XDefaultScreen(display)"
   #define H_DefaultScreenOfDisplay "returns the default screen of the specified display."
   #define H_XDefaultScreenOfDisplay "returns the default screen of the specified display."
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XDefaultScreen", "Display*");
@@ -11236,6 +11219,7 @@ with the specified rectangle of dest."
 
 static XEN gxm_XConvertSelection(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
 {
+  #define H_XConvertSelection "void XConvertSelection(display, selection, target, property, requestor, time)"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XConvertSelection", "Display*");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XConvertSelection", "Atom");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg3), arg3, 3, "XConvertSelection", "Atom");
@@ -11391,7 +11375,7 @@ the server connection for the first event that matches the specified mask."
 
 static XEN gxm_XCheckIfEvent(XEN arg1, XEN arg2, XEN arg3)
 {
-  /* Bool XCheckIfEvent(display, event_return, predicate, arg) */
+  #define H_XCheckIfEvent "Bool XCheckIfEvent(display, event_return, predicate, arg)"
   /* DIFF: XCheckIfEvent dpy [ev] proc ptr -> (list val ev)
    */
   XEvent *e;
@@ -11575,7 +11559,7 @@ static XEN gxm_XAutoRepeatOff(XEN arg1)
 
 static XEN gxm_XAllowEvents(XEN arg1, XEN arg2, XEN arg3)
 {
-  /* XAllowEvents(display, event_mode, time) */
+  #define H_XAllowEvents "XAllowEvents(display, event_mode, time)"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XAllowEvents", "Display*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XAllowEvents", "int");
   XEN_ASSERT_TYPE(XEN_Time_P(arg3), arg3, 3, "XAllowEvents", "Time");
@@ -11599,7 +11583,7 @@ named color with respect to the screen that is associated with the specified col
 
 static XEN gxm_XAllocColorPlanes(XEN args)
 {
-  /* Status XAllocColorPlanes(display, colormap, contig, pixels_return, ncolors, nreds, ngreens, nblues, rmask_return, gmask_return, bmask_return) */
+  #define H_XAllocColorPlanes "Status XAllocColorPlanes(display, colormap, contig, pixels_return, ncolors, nreds, ngreens, nblues, rmask_return, gmask_return, bmask_return)"
   /* DIFF: XAllocColorPlanes omits pixel array (arg4) and trailing 3 args, returns them and embedded list of pixels
    */
   unsigned long r,g,b;
@@ -12152,7 +12136,7 @@ static XEN gxm_XVisualIDFromVisual(XEN arg1)
 
 static XEN gxm_XDisplayMotionBufferSize(XEN arg1)
 {
-  /* unsigned long XDisplayMotionBufferSize(display) */
+  #define H_XDisplayMotionBufferSize "unsigned long XDisplayMotionBufferSize(display)"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XDisplayMotionBufferSize", "Display*");
   return(C_TO_XEN_ULONG(XDisplayMotionBufferSize(XEN_TO_C_Display(arg1))));
 }
@@ -12190,7 +12174,7 @@ without using an extended-length protocol encoding."
 
 static XEN gxm_XStringToKeysym(XEN arg1)
 {
-  /* KeySym XStringToKeysym(string) */
+  #define H_XStringToKeysym "KeySym XStringToKeysym(string)"
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XStringToKeysym", "char*");
   return(C_TO_XEN_KeySym(XStringToKeysym(XEN_TO_C_STRING(arg1))));
 }
@@ -12490,7 +12474,7 @@ program a bitmap file that was written out by XWriteBitmapFile"
 
 static XEN gxm_XCreatePixmap(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
-  /* Pixmap XCreatePixmap(display, d, width, height, depth) */
+  #define H_XCreatePixmap "Pixmap XCreatePixmap(display, d, width, height, depth)"
   #define H_XCreatePixmapCursor "Cursor XCreatePixmapCursor(display, source, mask, foreground_color, background_color, x, y) creates \
 a cursor and returns the cursor ID associated with it."
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XCreatePixmap", "Display*");
@@ -12530,7 +12514,7 @@ static XEN gxm_XLoadFont(XEN arg1, XEN arg2)
 
 static XEN gxm_XCreateFontCursor(XEN arg1, XEN arg2)
 {
-  /* Cursor XCreateFontCursor(display, shape) */
+  #define H_XCreateFontCursor "Cursor XCreateFontCursor(display, shape)"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XCreateFontCursor", "Display*");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XCreateFontCursor", "unsigned int");
   return(C_TO_XEN_ULONG(XCreateFontCursor(XEN_TO_C_Display(arg1), XEN_TO_C_ULONG(arg2))));
@@ -12630,7 +12614,7 @@ static XEN gxm_XSynchronize(XEN arg1, XEN arg2)
 
 static XEN gxm_XKeysymToString(XEN arg1)
 {
-  /* char *XKeysymToString(keysym) */
+  #define H_XKeysymToString "char *XKeysymToString(keysym)"
   XEN_ASSERT_TYPE(XEN_KeySym_P(arg1), arg1, 1, "XKeysymToString", "KeySym");
   return(C_TO_XEN_STRING(XKeysymToString(XEN_TO_C_KeySym(arg1))));
 }
@@ -13237,7 +13221,7 @@ static XEN gxm_IsMiscFunctionKey(XEN arg)
 
 static XEN gxm_IsModifierKey(XEN arg)
 {
-  #define H_IsModiferKey "IsModifierKey(keysym) returns #t if the specified KeySym is a modifier key."
+  #define H_IsModifierKey "IsModifierKey(keysym) returns #t if the specified KeySym is a modifier key."
   XEN_ASSERT_TYPE(XEN_KeySym_P(arg), arg, 0, "IsModifierKey", "KeySym");
   return(C_TO_XEN_BOOLEAN(IsModifierKey(XEN_TO_C_KeySym(arg))));
 }
@@ -13352,11 +13336,13 @@ static XEN gxm_XtAppSetExitFlag(XEN arg1)
 
 static XEN gxm_XtToolkitThreadInitialize(void)
 {
+  #define H_XtToolkitThreadInitialize "Boolean XtToolkitThreadInitialize()"
   return(C_TO_XEN_BOOLEAN(XtToolkitThreadInitialize()));
 }
 
 static XEN gxm_XtGetDisplays(XEN arg1)
 {
+  #define H_XtGetDisplays "void XtGetDisplays(app_context, dpy_return, num_dpy_return)"
   /* DIFF: XtGetDisplays not arg2 arg3 returns list
    */
   unsigned int x;
@@ -13372,6 +13358,7 @@ static XEN gxm_XtGetDisplays(XEN arg1)
 
 static XEN gxm_XtHooksOfDisplay(XEN arg1)
 {
+  #define H_XtHooksOfDisplay "Widget XtHooksOfDisplay(display)"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XtHooksOfDisplay", "Display*");
   return(C_TO_XEN_Widget(XtHooksOfDisplay(XEN_TO_C_Display(arg1))));
 }
@@ -13478,6 +13465,7 @@ static XEN gxm_XtUngrabKeyboard(XEN arg1, XEN arg2)
 
 static XEN gxm_XtGrabKeyboard(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
+  #define H_XtGrabKeyboard "int XtGrabKeyboard(widget, owner_events, pointer_mode, keyboard_mode, time)"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtGrabKeyboard", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XtGrabKeyboard", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XtGrabKeyboard", "int");
@@ -13529,6 +13517,7 @@ conversion requests from widget w. "
 
 static XEN gxm_XtCancelSelectionRequest(XEN arg1, XEN arg2)
 {
+  #define H_XtCancelSelectionRequest "void XtCancelSelectionRequest(requestor, selection)"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtCancelSelectionRequest", "Widget");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XtCancelSelectionRequest", "Atom");
   XtCancelSelectionRequest(XEN_TO_C_Widget(arg1), XEN_TO_C_Atom(arg2));
@@ -13537,6 +13526,7 @@ static XEN gxm_XtCancelSelectionRequest(XEN arg1, XEN arg2)
 
 static XEN gxm_XtSendSelectionRequest(XEN arg1, XEN arg2, XEN arg3)
 {
+  #define H_XtSendSelectionRequest "void XtSendSelectionRequest(requestor, selection, time)"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtSendSelectionRequest", "Widget");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XtSendSelectionRequest", "Atom");
   XEN_ASSERT_TYPE(XEN_Time_P(arg3), arg3, 3, "XtSendSelectionRequest", "Time");
@@ -13546,6 +13536,7 @@ static XEN gxm_XtSendSelectionRequest(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XtCreateSelectionRequest(XEN arg1, XEN arg2)
 {
+  #define H_XtCreateSelectionRequest "void XtCreateSelectionRequest(requestor, selection)"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtCreateSelectionRequest", "Widget");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XtCreateSelectionRequest", "Atom");
   XtCreateSelectionRequest(XEN_TO_C_Widget(arg1), XEN_TO_C_Atom(arg2));
@@ -13594,6 +13585,7 @@ to XtGetSelectionValue except that the selection_callback procedure will be call
 
 static XEN gxm_XtGetSelectionRequest(XEN arg1, XEN arg2, XEN arg3)
 {
+  #define H_XtGetSelectionRequest "XSelectionRequestEvent* XtGetSelectionRequest(w, selection, request_id)"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtGetSelectionRequest", "Widget");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XtGetSelectionRequest", "Atom");
   XEN_ASSERT_TYPE(XEN_XtRequestId_P(arg3), arg3, 3, "XtGetSelectionRequest", "XtRequestId");
@@ -13697,6 +13689,7 @@ static Boolean gxm_XtFilePredicate(String filename)
 
 static XEN gxm_XtResolvePathname(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
 {
+  #define H_XtResolvePathname "String XtResolvePathname(display, type, filename, suffix, path, substitutions, num_substitutions, predicate)"
   /* DIFF: XtResolvePathname args use #f for NULL
    */
   char *str;
@@ -13747,6 +13740,7 @@ static XEN gxm_XtFindFile(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 
 static XEN gxm_XtSetWMColormapWindows(XEN arg1, XEN arg2, XEN arg3)
 {
+  #define H_XtSetWMColormapWindows "void XtSetWMColormapWindows(widget, list, count)"
   /* minor diff: arg2 is a true lisp list */
   Widget *ws;
   int i, len;
@@ -13916,6 +13910,7 @@ static XEN gxm_XtMalloc(XEN arg1)
 
 static XEN gxm_XtWarning(XEN arg1)
 {
+  #define H_XtWarning "void XtWarning(message)"
   #define H_XtAppSetWarningHandler "void XtAppSetWarningHandler(app_context, handler) registers the specified procedure, which is called \
 when a nonfatal error condition occurs."
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XtWarning", "char*");
@@ -13934,6 +13929,7 @@ static XEN gxm_XtAppWarning(XEN arg1, XEN arg2)
 
 static XEN gxm_XtError(XEN arg1)
 {
+  #define H_XtError "void XtError(message)"
   #define H_XtAppError "void XtAppError(app_context, message) calls the installed error procedure and passes the specified message."
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XtError", "char*");
   XtError(XEN_TO_C_STRING(arg1));
@@ -14002,7 +13998,7 @@ handler and passes the specified information."
 
 static XEN gxm_XtWarningMsg(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
 {
-  /* void XtWarningMsg(name, type, class, default, params, num_params) */
+  #define H_XtWarningMsg "void XtWarningMsg(name, type, class, default, params, num_params)"
   #define H_XtAppSetWarningMsgHandler "void XtAppSetWarningMsgHandler(app_context, msg_handler) registers the specified procedure, which \
 is called when a nonfatal error condition occurs."
   /* DIFF: XtWarningMsg takes final int not int*, arg5 is list of strings
@@ -14180,6 +14176,7 @@ static XEN gxm_XtGetValues(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XtVaGetValues(XEN arg1, XEN arg2)
 {
+  #define H_XtVaGetValues "void XtVaGetValues(w, ...)"
   /* DIFF: XtVaGetValues -> returns original list with vals in place 
    */
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtVaGetValues", "Widget");
@@ -14189,6 +14186,7 @@ static XEN gxm_XtVaGetValues(XEN arg1, XEN arg2)
 
 static XEN gxm_XtVaSetValues(XEN arg1, XEN arg2)
 {
+  #define H_XtVaSetValues "void XtVaSetValues(w, ...)"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtVaSetValues", "Widget");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XtVaSetValues", "List");
   {
@@ -14246,6 +14244,7 @@ static XEN gxm_XtWidgetToApplicationContext(XEN arg1)
 
 static XEN gxm_XtInitializeWidgetClass(XEN arg1)
 {
+  #define H_XtInitializeWidgetClass "void XtInitializeWidgetClass(object_class)"
   XEN_ASSERT_TYPE(XEN_WidgetClass_P(arg1), arg1, 1, "XtInitializeWidgetClass", "WidgetClass");
   XtInitializeWidgetClass(XEN_TO_C_WidgetClass(arg1));
   return(XEN_FALSE);
@@ -14261,7 +14260,7 @@ static XEN gxm_XtDestroyApplicationContext(XEN arg1)
 
 static XEN gxm_XtCreateApplicationContext(void)
 {
-  /* XtAppContext XtCreateApplicationContext() */
+  #define H_XtCreateApplicationContext "XtAppContext XtCreateApplicationContext()"
   #define H_XtAppInitialize "Widget XtAppInitialize(app_context_return, application_class, options, num_options, argc_in_out, argv_in_out, \
 fallback_resources, args, num_args) calls XtToolkitInitialize followed by XtCreateApplicationContext ,then calls XtOpenDisplay with \
 display_string NULL and application_name NULL, and finally calls XtAppCreateShell with appcation_name NULL, widget_class applicationShellWidgetClass , \
@@ -14328,7 +14327,7 @@ routine has been replaced by XtAppCreateShell."
 
 static XEN gxm_XtVaAppInitialize(XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
 {
-  /* Widget XtVaAppInitialize(app_context_return, application_class, options, num_options, argc_in_out, argv_in_out, fallback_resources, ...) */
+  #define H_XtVaAppInitialize "Widget XtVaAppInitialize(app_context_return, application_class, options, num_options, argc_in_out, argv_in_out, fallback_resources, ...)"
   /* DIFF: XtVaAppInitialize [app] class {options numopts} {argc} argv resources -> (list widget app (new argv)), argc is int not int* fallback/options/num ignored
      Arg *args;
      app is returned not passed (list widget app) 
@@ -14407,7 +14406,7 @@ static XEN gxm_XtAppInitialize(XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6,
 
 static XEN gxm_XtVaOpenApplication(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
 {
-  /* Widget XtVaOpenApplication(app_context_return, application_class, options, num_options, argc_in_out, argv_in_out, fallback_resources, widget_class, ...) */
+  #define H_XtVaOpenApplication "Widget XtVaOpenApplication(app_context_return, application_class, options, num_options, argc_in_out, argv_in_out, fallback_resources, widget_class, ...)"
   /* DIFF: XtVaOpenApplication [app] name {options numopts} {argc} argv resources class args -> (list widget app), argc is int not int* options/num ignored
      Arg *args;
      app is returned not passed (list widget app) 
@@ -14530,6 +14529,7 @@ static String gxm_XtLanguageProc(Display* d, String s, XtPointer context)
 
 static XEN gxm_XtSetLanguageProc(XEN arg1, XEN arg2, XEN arg3)
 {
+  #define H_XtSetLanguageProc "Widget XtSetLanguageProc(app_context, proc, client_data)"
   /* arg can be null -> use default */
   /* DIFF: XtSetLanguageProc args1 and 2 use #f for NULL, return of #f means none was set
    */
@@ -14562,7 +14562,7 @@ static XEN gxm_XtSetLanguageProc(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XtToolkitInitialize(void)
 {
-  /* void XtToolkitInitialize() */
+  #define H_XtToolkitInitialize "void XtToolkitInitialize()"
   #define H_XtInitialize "Widget XtInitialize(shell_name, application_class, options, num_options, argc, argv) calls XtToolkitInitialize \
 followed by XtOpenDisplay with display_string NULL and application_name NULL, and finally calls XtAppCreateShell with appcation_name NULL, \
 widget_class applicationShellWidgetClass , and the specified args and num_args and returns the created shell. "
@@ -14572,7 +14572,7 @@ widget_class applicationShellWidgetClass , and the specified args and num_args a
 
 static XEN gxm_XtVaAppCreateShell(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
-  /* Widget XtVaAppCreateShell(application_name, application_class, widget_class, display, ...) */
+  #define H_XtVaAppCreateShell "Widget XtVaAppCreateShell(application_name, application_class, widget_class, display, ...)"
   Arg *args;
   Widget w;
   int arglen;
@@ -14638,7 +14638,7 @@ static XEN gxm_XtCreateApplicationShell(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 
 static XEN gxm_XtVaCreateManagedWidget(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  /* Widget XtVaCreateManagedWidget(name, widget_class, parent, ...) */
+  #define H_XtVaCreateManagedWidget "Widget XtVaCreateManagedWidget(name, widget_class, parent, ...)"
   Arg *args;
   Widget w;
   int arglen;
@@ -14659,7 +14659,7 @@ static XEN gxm_XtVaCreateManagedWidget(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 
 static XEN gxm_XtVaCreateWidget(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  /* Widget XtVaCreateWidget(name, widget_class, parent, ...) */
+  #define H_XtVaCreateWidget "Widget XtVaCreateWidget(name, widget_class, parent, ...)"
   Arg *args;
   int arglen;
   Widget w;
@@ -14732,6 +14732,7 @@ calls XtSetSensitive to resensitize the enable_widget."
 
 static XEN gxm_XtPopdown(XEN arg1)
 {
+  #define H_XtPopdown "void XtPopdown(popup_shell)"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtPopdown", "Widget");
   XtPopdown(XEN_TO_C_Widget(arg1));
   return(XEN_FALSE);
@@ -14739,6 +14740,7 @@ static XEN gxm_XtPopdown(XEN arg1)
 
 static XEN gxm_XtCallbackExclusive(XEN arg1, XEN arg2, XEN arg3)
 {
+  #define H_XtCallbackExclusive "void XtCallbackExclusive(w, client_data, call_data)"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtCallbackExclusive", "Widget");
   XtCallbackExclusive(XEN_TO_C_Widget(arg1), (XtPointer)arg2, (XtPointer)arg3);
   return(XEN_FALSE);
@@ -14746,6 +14748,7 @@ static XEN gxm_XtCallbackExclusive(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XtCallbackNonexclusive(XEN arg1, XEN arg2, XEN arg3)
 {
+  #define H_XtCallbackNonexclusive "void XtCallbackNonexclusive(w, client_data, call_data)"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtCallbackNonexclusive", "Widget");
   XtCallbackNonexclusive(XEN_TO_C_Widget(arg1), (XtPointer)arg2, (XtPointer)arg3);
   return(XEN_FALSE);
@@ -14753,6 +14756,7 @@ static XEN gxm_XtCallbackNonexclusive(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XtCallbackNone(XEN arg1, XEN arg2, XEN arg3)
 {
+  #define H_XtCallbackNone "void XtCallbackNone(w, client_data, call_data)"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtCallbackNone", "Widget");
   XtCallbackNone(XEN_TO_C_Widget(arg1), (XtPointer)arg2, (XtPointer)arg3);
   return(XEN_FALSE);
@@ -14760,6 +14764,7 @@ static XEN gxm_XtCallbackNone(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XtPopupSpringLoaded(XEN arg1)
 {
+  #define H_XtPopupSpringLoaded "void XtPopupSpringLoaded(popup_shell)"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtPopupSpringLoaded", "Widget");
   XtPopupSpringLoaded(XEN_TO_C_Widget(arg1));
   return(XEN_FALSE);
@@ -14767,6 +14772,7 @@ static XEN gxm_XtPopupSpringLoaded(XEN arg1)
 
 static XEN gxm_XtPopup(XEN arg1, XEN arg2)
 {
+  #define H_XtPopup "void XtPopup(popup_shell, grab_kind)"
   #define H_XtCreatePopupShell "Widget XtCreatePopupShell(name, widget_class, parent, args, num_args) ensures that the specified \
 class is a subclass of Shell and, rather than using insert_child to attach the widget to the parent's children list, attaches the shell \
 to the parent's pop-ups list directly."
@@ -14778,7 +14784,7 @@ to the parent's pop-ups list directly."
 
 static XEN gxm_XtVaCreatePopupShell(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  /* Widget XtVaCreatePopupShell(name, widget_class, parent, ...) */
+  #define H_XtVaCreatePopupShell "Widget XtVaCreatePopupShell(name, widget_class, parent, ...)"
   Arg *args;
   int arglen;
   Widget w;
@@ -15062,6 +15068,7 @@ static XEN gxm_XtParent(XEN arg1)
 
 static XEN gxm_XtClass(XEN arg1)
 {
+  #define H_XtClass "WidgetClass XtClass(w)"
   #define H_XtSuperclass "WidgetClass XtSuperclass(w) returns a pointer to the widget's superclass class structure."
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtClass", "Widget");
   return(C_TO_XEN_WidgetClass(XtClass(XEN_TO_C_Widget(arg1))));
@@ -15103,7 +15110,7 @@ static XEN gxm_XtScreenOfObject(XEN arg1)
 
 static XEN gxm_XtScreen(XEN arg1)
 {
-  #define H_XtScreen "XrmDatabase XtScreenDatabase(screen) returns the screen pointer for the specified widget."
+  #define H_XtScreen "Screen* XtScreen(w) returns the screen pointer for the specified widget."
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtScreen", "Widget");
   return(C_TO_XEN_Screen(XtScreen(XEN_TO_C_Widget(arg1))));
 }
@@ -15117,6 +15124,7 @@ static XEN gxm_XtDisplayOfObject(XEN arg1)
 
 static XEN gxm_XtDisplay(XEN arg1)
 {
+  #define H_XtDisplay "Display* XtDisplay(w)"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtDisplay", "Widget");
   return(C_TO_XEN_Display(XtDisplay(XEN_TO_C_Widget(arg1))));
 }
@@ -15158,6 +15166,7 @@ static XEN gxm_XtNameToWidget(XEN arg1, XEN arg2)
 
 static XEN gxm_XtSetSensitive(XEN arg1, XEN arg2)
 {
+  #define H_XtSetSensitive "void XtSetSensitive(w, sensitive)"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtSetSensitive", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XtSetSensitive", "int");
   XtSetSensitive(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2));
@@ -15733,6 +15742,7 @@ static XEN gxm_XtTranslateKeycode(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XtGetActionKeysym(XEN arg1)
 {
+  #define H_XtGetActionKeysym "KeySym XtGetActionKeysym(event, modifiers_return)"
   /* DIFF: XtGetActionKeysym omit and rtn last arg
    */
   Modifiers m;
@@ -15798,6 +15808,7 @@ and parameters."
 
 static XEN gxm_XtGetActionList(XEN arg1)
 {
+  #define H_XtGetActionList "void XtGetActionList(widget_class, actions_return, num_actions_return)"
   /* DIFF: XtGetActionList omit arg2 and 3, return list of lists
    */
   unsigned int len;
@@ -15937,6 +15948,7 @@ static XEN gxm_XtUninstallTranslations(XEN arg1)
 
 static XEN gxm_XtInstallAllAccelerators(XEN arg1, XEN arg2)
 {
+  #define H_XtInstallAllAccelerators "void XtInstallAllAccelerators(destination, source)"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtInstallAllAccelerators", "Widget");
   XEN_ASSERT_TYPE(XEN_Widget_P(arg2), arg2, 2, "XtInstallAllAccelerators", "Widget");
   XtInstallAllAccelerators(XEN_TO_C_Widget(arg1), XEN_TO_C_Widget(arg2));
@@ -16030,6 +16042,7 @@ KeyCodes that have keysym in their entry for the keyboard mapping table associat
 
 static XEN gxm_XtTranslateCoords(XEN arg1, XEN arg2, XEN arg3)
 {
+  #define H_XtTranslateCoords "void XtTranslateCoords(w, x, y, rootx_return, rooty_return)"
   /* DIFF: XtTranslateCoords omits and returns last 2 args
    */
   Position x, y;
@@ -16043,6 +16056,7 @@ static XEN gxm_XtTranslateCoords(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XtMakeResizeRequest(XEN arg1, XEN arg2, XEN arg3)
 {
+  #define H_XtMakeResizeRequest "XtGeometryResult XtMakeResizeRequest(w, width, height, width_return, height_return)"
   /* DIFF: XtMakeResizeRequest w wid hgt [rtnw rtn] -> (list res w h)
    */
   Dimension w, h;
@@ -16062,7 +16076,8 @@ static XEN gxm_XtMakeResizeRequest(XEN arg1, XEN arg2, XEN arg3)
 /* TODO: tie in the procs */
 static XEN gxm_XtOwnSelectionIncremental(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
 {
-  /* Boolean XtOwnSelectionIncremental(w, selection, time, convert_callback, lose_callback, done_callback, cancel_callback, client_data) */
+  #define H_XtOwnSelectionIncremental "Boolean XtOwnSelectionIncremental(w, selection, time, convert_callback, lose_callback, \
+done_callback, cancel_callback, client_data)"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtOwnSelectionIncremental", "Widget");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XtOwnSelectionIncremental", "Atom");
   XEN_ASSERT_TYPE(XEN_Time_P(arg3), arg3, 3, "XtOwnSelectionIncremental", "Time");
@@ -16121,6 +16136,7 @@ static XEN gxm_XtIsManaged(XEN arg1)
 
 static XEN gxm_XtIsObject(XEN arg1)
 {
+  #define H_XtIsObject "Boolean XtIsObject(w)"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtIsObject", "Widget");
   return(C_TO_XEN_BOOLEAN(XtIsObject(XEN_TO_C_Widget(arg1))));
 }
@@ -16237,72 +16253,84 @@ static XEN gxm_XtManageChildren(XEN arg1, XEN arg2)
 
 static XEN gxm_XtIsRectObj(XEN arg)
 {
+  #define H_XtIsRectObj "Boolean XtIsRectObj(w)"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XtIsRectObj", "Widget");
   return(C_TO_XEN_BOOLEAN(XtIsRectObj(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XtIsWidget(XEN arg)
 {
+  #define H_XtIsWidget "Boolean XtIsWidget(w)"
   return(C_TO_XEN_BOOLEAN(WRAP_P("Widget", arg) && 
 			  C_TO_XEN_BOOLEAN(XtIsWidget(XEN_TO_C_Widget(arg)))));
 }
 
 static XEN gxm_XtIsComposite(XEN arg)
 {
+  #define H_XtIsComposite "Boolean XtIsComposite(w)"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XtIsComposite", "Widget");
   return(C_TO_XEN_BOOLEAN(XtIsComposite(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XtIsConstraint(XEN arg)
 {
+  #define H_XtIsConstraint "Boolean XtIsConstraint(w)"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XtIsConstraint", "Widget");
   return(C_TO_XEN_BOOLEAN(XtIsConstraint(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XtIsShell(XEN arg)
 {
+  #define H_XtIsShell "Boolean XtIsShell(w)"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XtIsShell", "Widget");
   return(C_TO_XEN_BOOLEAN(XtIsShell(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XtIsOverrideShell(XEN arg)
 {
+  #define H_XtIsOverrideShell "Boolean XtIsOverrideShell(w)"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XtIsOverrideShell", "Widget");
   return(C_TO_XEN_BOOLEAN(XtIsOverrideShell(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XtIsWMShell(XEN arg)
 {
+  #define H_XtIsWMShell "Boolean XtIsWMShell(w)"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XtIsWMShell", "Widget");
   return(C_TO_XEN_BOOLEAN(XtIsWMShell(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XtIsVendorShell(XEN arg)
 {
+  #define H_XtIsVendorShell "Boolean XtIsVendorShell(w)"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XtIsVendorShell", "Widget");
   return(C_TO_XEN_BOOLEAN(XtIsVendorShell(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XtIsTransientShell(XEN arg)
 {
+  #define H_XtIsTransientShell "Boolean XtIsTransientShell(w)"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XtIsTransientShell", "Widget");
   return(C_TO_XEN_BOOLEAN(XtIsTransientShell(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XtIsTopLevelShell(XEN arg)
 {
+  #define H_XtIsTopLevelShell "Boolean XtIsTopLevelShell(w)"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XtIsTopLevelShell", "Widget");
   return(C_TO_XEN_BOOLEAN(XtIsTopLevelShell(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XtIsApplicationShell(XEN arg)
 {
+  #define H_XtIsApplicationShell "Boolean XtIsApplicationShell(w)"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XtIsApplicationShell", "Widget");
   return(C_TO_XEN_BOOLEAN(XtIsApplicationShell(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XtIsSessionShell(XEN arg)
 {
+  #define H_XtIsSessionShell "Boolean XtIsSessionShell(w)"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XtIsSessionShell", "Widget");
   return(C_TO_XEN_BOOLEAN(XtIsSessionShell(XEN_TO_C_Widget(arg))));
 }
@@ -16317,6 +16345,7 @@ static XEN gxm_XtMapWidget(XEN arg)
 
 static XEN gxm_XtUnmapWidget(XEN arg)
 {
+  #define H_XtUnmapWidget "XtUnmapWidget(w)"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XtUnmapWidget", "Widget");
   XtUnmapWidget(XEN_TO_C_Widget(arg));
   return(XEN_FALSE);
@@ -16327,112 +16356,6 @@ static XEN gxm_XtSetArg(XEN arg1, XEN arg2, XEN arg3)
   return(XEN_CONS_2(arg2, arg3, arg1));
 }
 
-/*
-ConnectionNumber(display)
-ImageByteOrder(display)
-Status XGetAtomNames(display, atoms, count, names_return)
-XConvertSelection(display, selection, target, property, requestor, time)
-Status XGetTextProperty(display, w, text_prop_return, property)
-XSelectInput(display, w, event_mask)
-Status XStringListToTextProperty(list, count, text_prop_return)
-Status XTextPropertyToStringList(text_prop, list_return, count_return)
-int (*XSetAfterFunction(display, procedure))()
-XVaNestedList XVaCreateNestedList(dummy, ...)
-void XtAppAddConverter(app_context, from_type, to_type, converter, convert_args, num_args)
-void XtAddConverter(from_type, to_type, converter, convert_args, num_args)
-XtSignalId XtAppAddSignal(app_context, proc, client_data)
-void XtRemoveSignal(id)
-void XtNoticeSignal(id)
-void XtAppGetErrorDatabaseText(app_context, name, type, class, default, buffer_return, nbytes, database)
-void XtAppReleaseCacheRefs(app_context, refs)
-void XtAppSetFallbackResources(app_context, specification_list)
-void XtAppSetTypeConverter(app_context, from_type, to_type, converter, convert_args, num_args, cache_type, destructor)
-void XtSetTypeConverter(from_type, to_type, converter, convert_args, num_args, cache_type, destructor)
-WidgetClass XtClass(w)
-Boolean XtIsObject(w)
-Boolean XtIsRectObj(w)
-Boolean XtIsWidget(w)
-Boolean XtIsComposite(w)
-Boolean XtIsConstraint(w)
-Boolean XtIsShell(w)
-Boolean XtIsOverrideShell(w)
-Boolean XtIsWMShell(w)
-Boolean XtIsVendorShell(w)
-Boolean XtIsTransientShell(w)
-Boolean XtIsTopLevelShell(w)
-Boolean XtIsApplicationShell(w)
-Boolean XtIsSessionShell(w)
-void XtResizeWindow(w)
-void XtConvert(w, from_type, from, to_type, to_return)
-void XtDirectConvert(converter, args, num_args, from, to_return)
-Boolean XtConvertAndStore(widget, from_type, from, to_type, to_in_out)
-void XtCallConverter(dpy, converter, args, num_args, from, to_in_out, cache_ref_return)
-void XtCreateSelectionRequest(requestor, selection)
-void XtSendSelectionRequest(requestor, selection, time)
-void XtCancelSelectionRequest(requestor, selection)
-Display *XtDisplay(w)
-Screen *XtScreen(w)
-void XtError(message)
-void XtWarning(message)
-void XtInsertEventTypeHandler(widget, event_type, select_data, proc, client_data, position)
-void XtRemoveEventTypeHandler(widget, event_type, select_data, proc, client_data)
-void XtRegisterExtensionSelector(display, min_event_type, max_event_type, proc, client_data)
-XtEventDispatchProc XtSetEventDispatcher(display, event_type, proc)
-void XtGetErrorDatabaseText(name, type, class, default, buffer_return, nbytes, database)
-KeySym XtGetActionKeysym(event, modifiers_return)
-void XtGetActionList(widget_class, actions_return, num_actions_return)
-void XtGetApplicationResources(w, base, resources, num_resources, args, num_args)
-void XtVaGetApplicationResources(w, base, resources, num_resources,...)
-XtPointer XtGetClassExtension(object_class, byte_offset type, version, record_size)
-void XtGetDisplays(app_context, dpy_return, num_dpy_return)
-void XtGetResourceList(class, resources_return, num_resources_return)
-void XtGetConstraintResourceList(class, resources_return, num_resources_return)
-void XtGetSelectionParameters(owner, selection, request_id, type_return, value_return, length_return, format_return)
-void XtGetSubresources(w, base, name, class, resources, num_resources, args, num_args)
-void XtVaGetSubresources(w, base, name, class, resources, num_resources, ...)
-XSelectionRequestEvent* XtGetSelectionRequest(w, selection, request_id)
-int XtGrabKeyboard(widget, owner_events, pointer_mode, keyboard_mode, time)
-Widget XtHooksOfDisplay(display)
-void XtInitializeWidgetClass(object_class)
-Keysym* XtGetKeysymTable(display, min_keycode_return, keysyms_per_keycode_return)
-XtGeometryResult XtMakeGeometryRequest(w, request, reply_return)
-XtGeometryResult XtMakeResizeRequest(w, width, height, width_return, height_return)
-type *XtNew(type)
-String XtNewString(string)
-XtUnmapWidget(w)
-XtAccelerators XtParseAcceleratorTable(source)
-void XtInstallAllAccelerators(destination, source)
-void XtPopdown(popup_shell)
-void MenuPopdown(shell_name)
-void XtPopup(popup_shell, grab_kind)
-void XtPopupSpringLoaded(popup_shell)
-void XtCallbackNone(w, client_data, call_data)
-void XtCallbackNonexclusive(w, client_data, call_data)
-void XtCallbackExclusive(w, client_data, call_data)
-void MenuPopup(shell_name)
-void XtProcessLock()
-void XtProcessUnlock()
-XtGeometryResult XtQueryGeometry(w, intended, preferred_return)
-void XtReleasePropertyAtome(w, atom)
-String XtResolvePathname(display, type, filename, suffix, path, substitutions, num_substitutions, predicate)
-XtCheckpointToken XtSessionGetToken(w, type)
-void XtSessionReturntoken(token)
-XtSetArg(arg, name, value)
-Widget XtSetLanguageProc(app_context, proc, client_data)
-void XtSetSensitive(w, sensitive)
-void XtSetSelectionParameters(requestor, selection, type, value, length, format)
-void XtSetValues(w, args, num_args)
-void XtVaSetValues(w, ...)
-void XtSetSubvalues(base, resources, num_resources, args, num_args)
-void XtVaSetSubvalues(base, resources, num_resources, ...)
-void XtGetValues(w, args, num_args)
-void XtVaGetValues(w, ...)
-void XtGetSubvalues(base, resources, num_resources, args, num_args)
-void XtVaGetSubvalues(base, resources, num_resources, ...)
-void XtSetWMColormapWindows(widget, list, count)
-Boolean XtToolkitThreadInitialize()
-void XtTranslateCoords(w, x, y, rootx_return, rooty_return)
-*/
 
 #endif
 /* end HAVE_MOTIF */
@@ -16780,14 +16703,14 @@ static void define_procedures(void)
 #if MOTIF_2
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtIsSubclass" XM_POSTFIX, gxm_XtIsSubclass, 2, 0, 0, H_XtIsSubclass);
 #endif
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtIsObject" XM_POSTFIX, gxm_XtIsObject, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtIsObject" XM_POSTFIX, gxm_XtIsObject, 1, 0, 0, H_XtIsObject);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtIsManaged" XM_POSTFIX, gxm_XtIsManaged, 1, 0, 0, H_XtIsManaged);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtIsRealized" XM_POSTFIX, gxm_XtIsRealized, 1, 0, 0, H_XtIsRealized);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtIsSensitive" XM_POSTFIX, gxm_XtIsSensitive, 1, 0, 0, H_XtIsSensitive);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtOwnSelection" XM_POSTFIX, gxm_XtOwnSelection, 6, 0, 0, H_XtOwnSelection);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtOwnSelectionIncremental" XM_POSTFIX, gxm_XtOwnSelectionIncremental, 8, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtMakeResizeRequest" XM_POSTFIX, gxm_XtMakeResizeRequest, 3, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtTranslateCoords" XM_POSTFIX, gxm_XtTranslateCoords, 3, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtOwnSelectionIncremental" XM_POSTFIX, gxm_XtOwnSelectionIncremental, 8, 0, 0, H_XtOwnSelectionIncremental);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtMakeResizeRequest" XM_POSTFIX, gxm_XtMakeResizeRequest, 3, 0, 0, H_XtMakeResizeRequest);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtTranslateCoords" XM_POSTFIX, gxm_XtTranslateCoords, 3, 0, 0, H_XtTranslateCoords);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtKeysymToKeycodeList" XM_POSTFIX, gxm_XtKeysymToKeycodeList, 2, 0, 0, H_XtKeysymToKeycodeList);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtStringConversionWarning" XM_POSTFIX, gxm_XtStringConversionWarning, 2, 0, 0, H_XtStringConversionWarning);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtDisplayStringConversionWarning" XM_POSTFIX, gxm_XtDisplayStringConversionWarning, 3, 0, 0, H_XtDisplayStringConversionWarning);
@@ -16796,18 +16719,18 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtOverrideTranslations" XM_POSTFIX, gxm_XtOverrideTranslations, 2, 0, 0, H_XtOverrideTranslations);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAugmentTranslations" XM_POSTFIX, gxm_XtAugmentTranslations, 2, 0, 0, H_XtAugmentTranslations);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtInstallAccelerators" XM_POSTFIX, gxm_XtInstallAccelerators, 2, 0, 0, H_XtInstallAccelerators);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtInstallAllAccelerators" XM_POSTFIX, gxm_XtInstallAllAccelerators, 2, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtInstallAllAccelerators" XM_POSTFIX, gxm_XtInstallAllAccelerators, 2, 0, 0, H_XtInstallAllAccelerators);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtUninstallTranslations" XM_POSTFIX, gxm_XtUninstallTranslations, 1, 0, 0, H_XtUninstallTranslations);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppAddActions" XM_POSTFIX, gxm_XtAppAddActions, 2, 0, 0, H_XtAppAddActions);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAddActions" XM_POSTFIX, gxm_XtAddActions, 1, 0, 0, H_XtAddActions);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppAddActionHook" XM_POSTFIX, gxm_XtAppAddActionHook, 2, 1, 0, H_XtAppAddActionHook);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRemoveActionHook" XM_POSTFIX, gxm_XtRemoveActionHook, 1, 0, 0, H_XtRemoveActionHook);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetActionList" XM_POSTFIX, gxm_XtGetActionList, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetActionList" XM_POSTFIX, gxm_XtGetActionList, 1, 0, 0, H_XtGetActionList);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCallActionProc" XM_POSTFIX, gxm_XtCallActionProc, 5, 0, 0, H_XtCallActionProc);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRegisterGrabAction" XM_POSTFIX, gxm_XtRegisterGrabAction, 5, 0, 0, H_XtRegisterGrabAction);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetMultiClickTime" XM_POSTFIX, gxm_XtSetMultiClickTime, 2, 0, 0, H_XtSetMultiClickTime);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetMultiClickTime" XM_POSTFIX, gxm_XtGetMultiClickTime, 1, 0, 0, H_XtGetMultiClickTime);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetActionKeysym" XM_POSTFIX, gxm_XtGetActionKeysym, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetActionKeysym" XM_POSTFIX, gxm_XtGetActionKeysym, 1, 0, 0, H_XtGetActionKeysym);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtTranslateKeycode" XM_POSTFIX, gxm_XtTranslateKeycode, 3, 0, 0, H_XtTranslateKeycode);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtTranslateKey" XM_POSTFIX, gxm_XtTranslateKey, 3, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetKeyTranslator" XM_POSTFIX, gxm_XtSetKeyTranslator, 2, 0, 0, H_XtSetKeyTranslator);
@@ -16845,12 +16768,12 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRealizeWidget" XM_POSTFIX, gxm_XtRealizeWidget, 1, 0, 0, H_XtRealizeWidget);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtUnrealizeWidget" XM_POSTFIX, gxm_XtUnrealizeWidget, 1, 0, 0, H_XtUnrealizeWidget);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtDestroyWidget" XM_POSTFIX, gxm_XtDestroyWidget, 1, 0, 0, H_XtDestroyWidget);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetSensitive" XM_POSTFIX, gxm_XtSetSensitive, 2, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetSensitive" XM_POSTFIX, gxm_XtSetSensitive, 2, 0, 0, H_XtSetSensitive);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtNameToWidget" XM_POSTFIX, gxm_XtNameToWidget, 2, 0, 0, H_XtNameToWidget);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtWindowToWidget" XM_POSTFIX, gxm_XtWindowToWidget, 2, 0, 0, H_XtWindowToWidget);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtMergeArgLists" XM_POSTFIX, gxm_XtMergeArgLists, 4, 0, 0, H_XtMergeArgLists);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtVaCreateArgsList" XM_POSTFIX, gxm_XtVaCreateArgsList, 2, 0, 0, H_XtVaCreateArgsList);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtDisplay" XM_POSTFIX, gxm_XtDisplay, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtDisplay" XM_POSTFIX, gxm_XtDisplay, 1, 0, 0, H_XtDisplay);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtDisplayOfObject" XM_POSTFIX, gxm_XtDisplayOfObject, 1, 0, 0, H_XtDisplayOfObject);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtScreen" XM_POSTFIX, gxm_XtScreen, 1, 0, 0, H_XtScreen);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtScreenOfObject" XM_POSTFIX, gxm_XtScreenOfObject, 1, 0, 0, H_XtScreenOfObject);
@@ -16858,7 +16781,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtWindowOfObject" XM_POSTFIX, gxm_XtWindowOfObject, 1, 0, 0, H_XtWindowOfObject);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtName" XM_POSTFIX, gxm_XtName, 1, 0, 0, H_XtName);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSuperclass" XM_POSTFIX, gxm_XtSuperclass, 1, 0, 0, H_XtSuperclass);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtClass" XM_POSTFIX, gxm_XtClass, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtClass" XM_POSTFIX, gxm_XtClass, 1, 0, 0, H_XtClass);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtParent" XM_POSTFIX, gxm_XtParent, 1, 0, 0, H_XtParent);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAddCallback" XM_POSTFIX, gxm_XtAddCallback, 3, 1, 0, H_XtAddCallback);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRemoveCallback" XM_POSTFIX, gxm_XtRemoveCallback, 3, 0, 0, H_XtRemoveCallback);
@@ -16869,40 +16792,40 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCallCallbackList" XM_POSTFIX, gxm_XtCallCallbackList, 3, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtHasCallbacks" XM_POSTFIX, gxm_XtHasCallbacks, 2, 0, 0, H_XtHasCallbacks);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCreatePopupShell" XM_POSTFIX, gxm_XtCreatePopupShell, 4, 1, 0, H_XtCreatePopupShell);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtVaCreatePopupShell" XM_POSTFIX, gxm_XtVaCreatePopupShell, 4, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtPopup" XM_POSTFIX, gxm_XtPopup, 2, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtPopupSpringLoaded" XM_POSTFIX, gxm_XtPopupSpringLoaded, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCallbackNone" XM_POSTFIX, gxm_XtCallbackNone, 3, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCallbackNonexclusive" XM_POSTFIX, gxm_XtCallbackNonexclusive, 3, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCallbackExclusive" XM_POSTFIX, gxm_XtCallbackExclusive, 3, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtPopdown" XM_POSTFIX, gxm_XtPopdown, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtVaCreatePopupShell" XM_POSTFIX, gxm_XtVaCreatePopupShell, 4, 0, 0, H_XtVaCreatePopupShell);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtPopup" XM_POSTFIX, gxm_XtPopup, 2, 0, 0, H_XtPopup);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtPopupSpringLoaded" XM_POSTFIX, gxm_XtPopupSpringLoaded, 1, 0, 0, H_XtPopupSpringLoaded);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCallbackNone" XM_POSTFIX, gxm_XtCallbackNone, 3, 0, 0, H_XtCallbackNone);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCallbackNonexclusive" XM_POSTFIX, gxm_XtCallbackNonexclusive, 3, 0, 0, H_XtCallbackNonexclusive);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCallbackExclusive" XM_POSTFIX, gxm_XtCallbackExclusive, 3, 0, 0, H_XtCallbackExclusive);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtPopdown" XM_POSTFIX, gxm_XtPopdown, 1, 0, 0, H_XtPopdown);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCallbackPopdown" XM_POSTFIX, gxm_XtCallbackPopdown, 3, 0, 0, H_XtCallbackPopdown);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCreateWidget" XM_POSTFIX, gxm_XtCreateWidget, 4, 1, 0, H_XtCreateWidget);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCreateManagedWidget" XM_POSTFIX, gxm_XtCreateManagedWidget, 4, 1, 0, H_XtCreateManagedWidget);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtVaCreateWidget" XM_POSTFIX, gxm_XtVaCreateWidget, 4, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtVaCreateManagedWidget" XM_POSTFIX, gxm_XtVaCreateManagedWidget, 4, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtVaCreateWidget" XM_POSTFIX, gxm_XtVaCreateWidget, 4, 0, 0, H_XtVaCreateWidget);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtVaCreateManagedWidget" XM_POSTFIX, gxm_XtVaCreateManagedWidget, 4, 0, 0, H_XtVaCreateManagedWidget);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCreateApplicationShell" XM_POSTFIX, gxm_XtCreateApplicationShell, 3, 1, 0, H_XtCreateApplicationShell);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppCreateShell" XM_POSTFIX, gxm_XtAppCreateShell, 5, 1, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtVaAppCreateShell" XM_POSTFIX, gxm_XtVaAppCreateShell, 5, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtToolkitInitialize" XM_POSTFIX, gxm_XtToolkitInitialize, 0, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetLanguageProc" XM_POSTFIX, gxm_XtSetLanguageProc, 3, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppCreateShell" XM_POSTFIX, gxm_XtAppCreateShell, 5, 1, 0, H_XtAppCreateShell);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtVaAppCreateShell" XM_POSTFIX, gxm_XtVaAppCreateShell, 5, 0, 0, H_XtVaAppCreateShell);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtToolkitInitialize" XM_POSTFIX, gxm_XtToolkitInitialize, 0, 0, 0, H_XtToolkitInitialize);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetLanguageProc" XM_POSTFIX, gxm_XtSetLanguageProc, 3, 0, 0, H_XtSetLanguageProc);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtDisplayInitialize" XM_POSTFIX, gxm_XtDisplayInitialize, 8, 0, 0, H_XtDisplayInitialize);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtOpenApplication" XM_POSTFIX, gxm_XtOpenApplication, 9, 0, 0, H_XtOpenApplication);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtVaOpenApplication" XM_POSTFIX, gxm_XtVaOpenApplication, 8, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtVaOpenApplication" XM_POSTFIX, gxm_XtVaOpenApplication, 8, 0, 0, H_XtVaOpenApplication);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppInitialize" XM_POSTFIX, gxm_XtAppInitialize, 8, 0, 0, H_XtAppInitialize);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtVaAppInitialize" XM_POSTFIX, gxm_XtVaAppInitialize, 7, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtVaAppInitialize" XM_POSTFIX, gxm_XtVaAppInitialize, 7, 0, 0, H_XtVaAppInitialize);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtInitialize" XM_POSTFIX, gxm_XtInitialize, 6, 0, 0, H_XtInitialize);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtOpenDisplay" XM_POSTFIX, gxm_XtOpenDisplay, 8, 0, 0, H_XtOpenDisplay);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCreateApplicationContext" XM_POSTFIX, gxm_XtCreateApplicationContext, 0, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCreateApplicationContext" XM_POSTFIX, gxm_XtCreateApplicationContext, 0, 0, 0, H_XtCreateApplicationContext);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtDestroyApplicationContext" XM_POSTFIX, gxm_XtDestroyApplicationContext, 1, 0, 0, H_XtDestroyApplicationContext);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtInitializeWidgetClass" XM_POSTFIX, gxm_XtInitializeWidgetClass, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtInitializeWidgetClass" XM_POSTFIX, gxm_XtInitializeWidgetClass, 1, 0, 0, H_XtInitializeWidgetClass);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtWidgetToApplicationContext" XM_POSTFIX, gxm_XtWidgetToApplicationContext, 1, 0, 0, H_XtWidgetToApplicationContext);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtDisplayToApplicationContext" XM_POSTFIX, gxm_XtDisplayToApplicationContext, 1, 0, 0, H_XtDisplayToApplicationContext);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCloseDisplay" XM_POSTFIX, gxm_XtCloseDisplay, 1, 0, 0, H_XtCloseDisplay);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetValues" XM_POSTFIX, gxm_XtSetValues, 2, 1, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtVaSetValues" XM_POSTFIX, gxm_XtVaSetValues, 2, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtVaSetValues" XM_POSTFIX, gxm_XtVaSetValues, 2, 0, 0, H_XtVaSetValues);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetValues" XM_POSTFIX, gxm_XtGetValues, 2, 1, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtVaGetValues" XM_POSTFIX, gxm_XtVaGetValues, 2, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtVaGetValues" XM_POSTFIX, gxm_XtVaGetValues, 2, 0, 0, H_XtVaGetValues);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppSetErrorMsgHandler" XM_POSTFIX, gxm_XtAppSetErrorMsgHandler, 2, 0, 0, H_XtAppSetErrorMsgHandler);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetErrorMsgHandler" XM_POSTFIX, gxm_XtSetErrorMsgHandler, 1, 0, 0, H_XtSetErrorMsgHandler);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppSetWarningMsgHandler" XM_POSTFIX, gxm_XtAppSetWarningMsgHandler, 2, 0, 0, H_XtAppSetWarningMsgHandler);
@@ -16910,15 +16833,15 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppErrorMsg" XM_POSTFIX, gxm_XtAppErrorMsg, 7, 0, 0, H_XtAppErrorMsg);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtErrorMsg" XM_POSTFIX, gxm_XtErrorMsg, 6, 0, 0, H_XtErrorMsg);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppWarningMsg" XM_POSTFIX, gxm_XtAppWarningMsg, 7, 0, 0, H_XtAppWarningMsg);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtWarningMsg" XM_POSTFIX, gxm_XtWarningMsg, 6, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtWarningMsg" XM_POSTFIX, gxm_XtWarningMsg, 6, 0, 0, H_XtWarningMsg);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppSetErrorHandler" XM_POSTFIX, gxm_XtAppSetErrorHandler, 2, 0, 0, H_XtAppSetErrorHandler);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetErrorHandler" XM_POSTFIX, gxm_XtSetErrorHandler, 1, 0, 0, H_XtSetErrorHandler);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppSetWarningHandler" XM_POSTFIX, gxm_XtAppSetWarningHandler, 2, 0, 0, H_XtAppSetWarningHandler);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetWarningHandler" XM_POSTFIX, gxm_XtSetWarningHandler, 1, 0, 0, H_XtSetWarningHandler);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppError" XM_POSTFIX, gxm_XtAppError, 2, 0, 0, H_XtAppError);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtError" XM_POSTFIX, gxm_XtError, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtError" XM_POSTFIX, gxm_XtError, 1, 0, 0, H_XtError);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppWarning" XM_POSTFIX, gxm_XtAppWarning, 2, 0, 0, H_XtAppWarning);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtWarning" XM_POSTFIX, gxm_XtWarning, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtWarning" XM_POSTFIX, gxm_XtWarning, 1, 0, 0, H_XtWarning);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtMalloc" XM_POSTFIX, gxm_XtMalloc, 1, 0, 0, H_XtMalloc);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCalloc" XM_POSTFIX, gxm_XtCalloc, 2, 0, 0, H_XtCalloc);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRealloc" XM_POSTFIX, gxm_XtRealloc, 2, 0, 0, H_XtRealloc);
@@ -16930,9 +16853,9 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAllocateGC" XM_POSTFIX, gxm_XtAllocateGC, 6, 0, 0, H_XtAllocateGC);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtDestroyGC" XM_POSTFIX, gxm_XtDestroyGC, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtReleaseGC" XM_POSTFIX, gxm_XtReleaseGC, 2, 0, 0, H_XtReleaseGC);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetWMColormapWindows" XM_POSTFIX, gxm_XtSetWMColormapWindows, 3, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetWMColormapWindows" XM_POSTFIX, gxm_XtSetWMColormapWindows, 3, 0, 0, H_XtSetWMColormapWindows);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtFindFile" XM_POSTFIX, gxm_XtFindFile, 4, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtResolvePathname" XM_POSTFIX, gxm_XtResolvePathname, 8, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtResolvePathname" XM_POSTFIX, gxm_XtResolvePathname, 8, 0, 0, H_XtResolvePathname);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtDisownSelection" XM_POSTFIX, gxm_XtDisownSelection, 3, 0, 0, H_XtDisownSelection);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetSelectionValue" XM_POSTFIX, gxm_XtGetSelectionValue, 6, 0, 0, H_XtGetSelectionValue);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetSelectionValues" XM_POSTFIX, gxm_XtGetSelectionValues, 7, 0, 0, H_XtGetSelectionValues);
@@ -16940,17 +16863,17 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetSelectionTimeout" XM_POSTFIX, gxm_XtSetSelectionTimeout, 1, 0, 0, H_XtSetSelectionTimeout);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppGetSelectionTimeout" XM_POSTFIX, gxm_XtAppGetSelectionTimeout, 1, 0, 0, H_XtAppGetSelectionTimeout);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetSelectionTimeout" XM_POSTFIX, gxm_XtGetSelectionTimeout, 0, 0, 0, H_XtGetSelectionTimeout);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetSelectionRequest" XM_POSTFIX, gxm_XtGetSelectionRequest, 3, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetSelectionRequest" XM_POSTFIX, gxm_XtGetSelectionRequest, 3, 0, 0, H_XtGetSelectionRequest);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetSelectionValueIncremental" XM_POSTFIX, gxm_XtGetSelectionValueIncremental, 6, 0, 0, H_XtGetSelectionValueIncremental);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetSelectionValuesIncremental" XM_POSTFIX, gxm_XtGetSelectionValuesIncremental, 7, 0, 0, H_XtGetSelectionValuesIncremental);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCreateSelectionRequest" XM_POSTFIX, gxm_XtCreateSelectionRequest, 2, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSendSelectionRequest" XM_POSTFIX, gxm_XtSendSelectionRequest, 3, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCancelSelectionRequest" XM_POSTFIX, gxm_XtCancelSelectionRequest, 2, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCreateSelectionRequest" XM_POSTFIX, gxm_XtCreateSelectionRequest, 2, 0, 0, H_XtCreateSelectionRequest);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSendSelectionRequest" XM_POSTFIX, gxm_XtSendSelectionRequest, 3, 0, 0, H_XtSendSelectionRequest);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCancelSelectionRequest" XM_POSTFIX, gxm_XtCancelSelectionRequest, 2, 0, 0, H_XtCancelSelectionRequest);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtReservePropertyAtom" XM_POSTFIX, gxm_XtReservePropertyAtom, 1, 0, 0, H_XtReservePropertyAtom);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtReleasePropertyAtom" XM_POSTFIX, gxm_XtReleasePropertyAtom, 2, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGrabKey" XM_POSTFIX, gxm_XtGrabKey, 6, 0, 0, H_XtGrabKey);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtUngrabKey" XM_POSTFIX, gxm_XtUngrabKey, 3, 0, 0, H_XtUngrabKey);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGrabKeyboard" XM_POSTFIX, gxm_XtGrabKeyboard, 5, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGrabKeyboard" XM_POSTFIX, gxm_XtGrabKeyboard, 5, 0, 0, H_XtGrabKeyboard);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtUngrabKeyboard" XM_POSTFIX, gxm_XtUngrabKeyboard, 2, 0, 0, H_XtUngrabKeyboard);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGrabButton" XM_POSTFIX, gxm_XtGrabButton, 9, 0, 0, H_XtGrabButton);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtUngrabButton" XM_POSTFIX, gxm_XtUngrabButton, 3, 0, 0, H_XtUngrabButton);
@@ -16959,27 +16882,27 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetApplicationNameAndClass" XM_POSTFIX, gxm_XtGetApplicationNameAndClass, 1, 0, 0, H_XtGetApplicationNameAndClass);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRegisterDrawable" XM_POSTFIX, gxm_XtRegisterDrawable, 3, 0, 0, H_XtRegisterDrawable);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtUnregisterDrawable" XM_POSTFIX, gxm_XtUnregisterDrawable, 2, 0, 0, H_XtUnregisterDrawable);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtHooksOfDisplay" XM_POSTFIX, gxm_XtHooksOfDisplay, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetDisplays" XM_POSTFIX, gxm_XtGetDisplays, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtToolkitThreadInitialize" XM_POSTFIX, gxm_XtToolkitThreadInitialize, 0, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtHooksOfDisplay" XM_POSTFIX, gxm_XtHooksOfDisplay, 1, 0, 0, H_XtHooksOfDisplay);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetDisplays" XM_POSTFIX, gxm_XtGetDisplays, 1, 0, 0, H_XtGetDisplays);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtToolkitThreadInitialize" XM_POSTFIX, gxm_XtToolkitThreadInitialize, 0, 0, 0, H_XtToolkitThreadInitialize);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppSetExitFlag" XM_POSTFIX, gxm_XtAppSetExitFlag, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppGetExitFlag" XM_POSTFIX, gxm_XtAppGetExitFlag, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppLock" XM_POSTFIX, gxm_XtAppLock, 1, 0, 0, H_XtAppLock);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppUnlock" XM_POSTFIX, gxm_XtAppUnlock, 1, 0, 0, H_XtAppUnlock);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtIsRectObj" XM_POSTFIX, gxm_XtIsRectObj, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtIsWidget" XM_POSTFIX, gxm_XtIsWidget, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtIsComposite" XM_POSTFIX, gxm_XtIsComposite, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtIsConstraint" XM_POSTFIX, gxm_XtIsConstraint, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtIsShell" XM_POSTFIX, gxm_XtIsShell, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtIsOverrideShell" XM_POSTFIX, gxm_XtIsOverrideShell, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtIsWMShell" XM_POSTFIX, gxm_XtIsWMShell, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtIsVendorShell" XM_POSTFIX, gxm_XtIsVendorShell, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtIsTransientShell" XM_POSTFIX, gxm_XtIsTransientShell, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtIsTopLevelShell" XM_POSTFIX, gxm_XtIsTopLevelShell, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtIsApplicationShell" XM_POSTFIX, gxm_XtIsApplicationShell, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtIsSessionShell" XM_POSTFIX, gxm_XtIsSessionShell, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtIsRectObj" XM_POSTFIX, gxm_XtIsRectObj, 1, 0, 0, H_XtIsRectObj);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtIsWidget" XM_POSTFIX, gxm_XtIsWidget, 1, 0, 0, H_XtIsWidget);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtIsComposite" XM_POSTFIX, gxm_XtIsComposite, 1, 0, 0, H_XtIsComposite);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtIsConstraint" XM_POSTFIX, gxm_XtIsConstraint, 1, 0, 0, H_XtIsConstraint);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtIsShell" XM_POSTFIX, gxm_XtIsShell, 1, 0, 0, H_XtIsShell);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtIsOverrideShell" XM_POSTFIX, gxm_XtIsOverrideShell, 1, 0, 0, H_XtIsOverrideShell);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtIsWMShell" XM_POSTFIX, gxm_XtIsWMShell, 1, 0, 0, H_XtIsWMShell);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtIsVendorShell" XM_POSTFIX, gxm_XtIsVendorShell, 1, 0, 0, H_XtIsVendorShell);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtIsTransientShell" XM_POSTFIX, gxm_XtIsTransientShell, 1, 0, 0, H_XtIsTransientShell);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtIsTopLevelShell" XM_POSTFIX, gxm_XtIsTopLevelShell, 1, 0, 0, H_XtIsTopLevelShell);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtIsApplicationShell" XM_POSTFIX, gxm_XtIsApplicationShell, 1, 0, 0, H_XtIsApplicationShell);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtIsSessionShell" XM_POSTFIX, gxm_XtIsSessionShell, 1, 0, 0, H_XtIsSessionShell);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtMapWidget" XM_POSTFIX, gxm_XtMapWidget, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtUnmapWidget" XM_POSTFIX, gxm_XtUnmapWidget, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtUnmapWidget" XM_POSTFIX, gxm_XtUnmapWidget, 1, 0, 0, H_XtUnmapWidget);
    XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppContext" XM_POSTFIX, gxm_XtAppContext, 1, 0, 0, NULL);
 #endif
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XLoadQueryFont" XM_POSTFIX, gxm_XLoadQueryFont, 2, 0, 0, H_XLoadQueryFont);
@@ -16999,7 +16922,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XGetAtomName" XM_POSTFIX, gxm_XGetAtomName, 2, 0, 0, H_XGetAtomName);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XGetDefault" XM_POSTFIX, gxm_XGetDefault, 3, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDisplayName" XM_POSTFIX, gxm_XDisplayName, 1, 0, 0, H_XDisplayName);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XKeysymToString" XM_POSTFIX, gxm_XKeysymToString, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XKeysymToString" XM_POSTFIX, gxm_XKeysymToString, 1, 0, 0, H_XKeysymToString);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSynchronize" XM_POSTFIX, gxm_XSynchronize, 2, 0, 0, H_XSynchronize);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetAfterFunction" XM_POSTFIX, gxm_XSetAfterFunction, 2, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XInternAtom" XM_POSTFIX, gxm_XInternAtom, 3, 0, 0, H_XInternAtom);
@@ -17007,11 +16930,11 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XCreateColormap" XM_POSTFIX, gxm_XCreateColormap, 4, 0, 0, H_XCreateColormap);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XCreatePixmapCursor" XM_POSTFIX, gxm_XCreatePixmapCursor, 7, 0, 0, H_XCreatePixmapCursor);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XCreateGlyphCursor" XM_POSTFIX, gxm_XCreateGlyphCursor, 7, 0, 0, H_XCreateGlyphCursor);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XCreateFontCursor" XM_POSTFIX, gxm_XCreateFontCursor, 2, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XCreateFontCursor" XM_POSTFIX, gxm_XCreateFontCursor, 2, 0, 0, H_XCreateFontCursor);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XLoadFont" XM_POSTFIX, gxm_XLoadFont, 2, 0, 0, H_XLoadFont);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XCreateGC" XM_POSTFIX, gxm_XCreateGC, 4, 0, 0, H_XCreateGC);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XFlushGC" XM_POSTFIX, gxm_XFlushGC, 2, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XCreatePixmap" XM_POSTFIX, gxm_XCreatePixmap, 5, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XCreatePixmap" XM_POSTFIX, gxm_XCreatePixmap, 5, 0, 0, H_XCreatePixmap);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XCreateBitmapFromData" XM_POSTFIX, gxm_XCreateBitmapFromData, 5, 0, 0, H_XCreateBitmapFromData);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XCreatePixmapFromBitmapData" XM_POSTFIX, gxm_XCreatePixmapFromBitmapData, 8, 0, 0, H_XCreatePixmapFromBitmapData);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XCreateSimpleWindow" XM_POSTFIX, gxm_XCreateSimpleWindow, 9, 0, 0, H_XCreateSimpleWindow);
@@ -17027,12 +16950,12 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XKeycodeToKeysym" XM_POSTFIX, gxm_XKeycodeToKeysym, 3, 0, 0, H_XKeycodeToKeysym);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XLookupKeysym" XM_POSTFIX, gxm_XLookupKeysym, 2, 0, 0, H_XLookupKeysym);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XGetKeyboardMapping" XM_POSTFIX, gxm_XGetKeyboardMapping, 3, 0, 0, H_XGetKeyboardMapping);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XStringToKeysym" XM_POSTFIX, gxm_XStringToKeysym, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XStringToKeysym" XM_POSTFIX, gxm_XStringToKeysym, 1, 0, 0, H_XStringToKeysym);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XMaxRequestSize" XM_POSTFIX, gxm_XMaxRequestSize, 1, 0, 0, H_XMaxRequestSize);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XExtendedMaxRequestSize" XM_POSTFIX, gxm_XExtendedMaxRequestSize, 1, 0, 0, H_XExtendedMaxRequestSize);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XResourceManagerString" XM_POSTFIX, gxm_XResourceManagerString, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XScreenResourceString" XM_POSTFIX, gxm_XScreenResourceString, 1, 0, 0, H_XScreenResourceString);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XDisplayMotionBufferSize" XM_POSTFIX, gxm_XDisplayMotionBufferSize, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XDisplayMotionBufferSize" XM_POSTFIX, gxm_XDisplayMotionBufferSize, 1, 0, 0, H_XDisplayMotionBufferSize);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XVisualIDFromVisual" XM_POSTFIX, gxm_XVisualIDFromVisual, 1, 0, 0, H_XVisualIDFromVisual);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XInitThreads" XM_POSTFIX, gxm_XInitThreads, 0, 0, 0, H_XInitThreads);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XLockDisplay" XM_POSTFIX, gxm_XLockDisplay, 1, 0, 0, H_XLockDisplay);
@@ -17059,7 +16982,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XScreenOfDisplay" XM_POSTFIX, gxm_XScreenOfDisplay, 2, 0, 0, H_ScreenOfDisplay);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDefaultScreenOfDisplay" XM_POSTFIX, gxm_XDefaultScreenOfDisplay, 1, 0, 0, H_DefaultScreenOfDisplay);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XEventMaskOfScreen" XM_POSTFIX, gxm_XEventMaskOfScreen, 1, 0, 0, H_EventMaskOfScreen);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XScreenNumberOfScreen" XM_POSTFIX, gxm_XScreenNumberOfScreen, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XScreenNumberOfScreen" XM_POSTFIX, gxm_XScreenNumberOfScreen, 1, 0, 0, H_XScreenNumberOfScreen);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetErrorHandler" XM_POSTFIX, gxm_XSetErrorHandler, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetIOErrorHandler" XM_POSTFIX, gxm_XSetIOErrorHandler, 1, 0, 0, H_XSetIOErrorHandler);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XListPixmapFormats" XM_POSTFIX, gxm_XListPixmapFormats, 1, 0, 0, H_XListPixmapFormats);
@@ -17083,16 +17006,16 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XAddToSaveSet" XM_POSTFIX, gxm_XAddToSaveSet, 2, 0, 0, H_XAddToSaveSet);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XAllocColor" XM_POSTFIX, gxm_XAllocColor, 3, 0, 0, H_XAllocColor);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XAllocColorCells" XM_POSTFIX, gxm_XAllocColorCells, 5, 0, 0, H_XAllocColorCells);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XAllocColorPlanes" XM_POSTFIX, gxm_XAllocColorPlanes, 0, 0, 1, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XAllocColorPlanes" XM_POSTFIX, gxm_XAllocColorPlanes, 0, 0, 1, H_XAllocColorPlanes);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XAllocNamedColor" XM_POSTFIX, gxm_XAllocNamedColor, 5, 0, 0, H_XAllocNamedColor);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XAllowEvents" XM_POSTFIX, gxm_XAllowEvents, 3, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XAllowEvents" XM_POSTFIX, gxm_XAllowEvents, 3, 0, 0, H_XAllowEvents);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XAutoRepeatOff" XM_POSTFIX, gxm_XAutoRepeatOff, 1, 0, 0, H_XAutoRepeatOff);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XAutoRepeatOn" XM_POSTFIX, gxm_XAutoRepeatOn, 1, 0, 0, H_XAutoRepeatOn);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XBell" XM_POSTFIX, gxm_XBell, 2, 0, 0, H_XBell);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XBitmapBitOrder" XM_POSTFIX, gxm_XBitmapBitOrder, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XBitmapPad" XM_POSTFIX, gxm_XBitmapPad, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XBitmapUnit" XM_POSTFIX, gxm_XBitmapUnit, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XCellsOfScreen" XM_POSTFIX, gxm_XCellsOfScreen, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XBitmapBitOrder" XM_POSTFIX, gxm_XBitmapBitOrder, 1, 0, 0, H_BitmapBitOrder);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XBitmapPad" XM_POSTFIX, gxm_XBitmapPad, 1, 0, 0, H_BitmapPad);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XBitmapUnit" XM_POSTFIX, gxm_XBitmapUnit, 1, 0, 0, H_BitmapUnit);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XCellsOfScreen" XM_POSTFIX, gxm_XCellsOfScreen, 1, 0, 0, H_CellsOfScreen);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XChangeActivePointerGrab" XM_POSTFIX, gxm_XChangeActivePointerGrab, 4, 0, 0, H_XChangeActivePointerGrab);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XChangeGC" XM_POSTFIX, gxm_XChangeGC, 4, 0, 0, H_XChangeGC);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XChangeKeyboardControl" XM_POSTFIX, gxm_XChangeKeyboardControl, 3, 0, 0, H_XChangeKeyboardControl);
@@ -17101,7 +17024,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XChangeProperty" XM_POSTFIX, gxm_XChangeProperty, 8, 0, 0, H_XChangeProperty);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XChangeSaveSet" XM_POSTFIX, gxm_XChangeSaveSet, 3, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XChangeWindowAttributes" XM_POSTFIX, gxm_XChangeWindowAttributes, 4, 0, 0, H_XChangeWindowAttributes);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XCheckIfEvent" XM_POSTFIX, gxm_XCheckIfEvent, 3, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XCheckIfEvent" XM_POSTFIX, gxm_XCheckIfEvent, 3, 0, 0, H_XCheckIfEvent);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XCheckMaskEvent" XM_POSTFIX, gxm_XCheckMaskEvent, 3, 0, 0, H_XCheckMaskEvent);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XCheckTypedEvent" XM_POSTFIX, gxm_XCheckTypedEvent, 2, 0, 0, H_XCheckTypedEvent);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XCheckTypedWindowEvent" XM_POSTFIX, gxm_XCheckTypedWindowEvent, 3, 0, 0, H_XCheckTypedWindowEvent);
@@ -17114,14 +17037,14 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XCloseDisplay" XM_POSTFIX, gxm_XCloseDisplay, 1, 0, 0, H_XCloseDisplay);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XConfigureWindow" XM_POSTFIX, gxm_XConfigureWindow, 4, 0, 0, H_XConfigureWindow);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XConnectionNumber" XM_POSTFIX, gxm_XConnectionNumber, 1, 0, 0, H_XConnectionNumber);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XConvertSelection" XM_POSTFIX, gxm_XConvertSelection, 6, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XConvertSelection" XM_POSTFIX, gxm_XConvertSelection, 6, 0, 0, H_XConvertSelection);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XCopyArea" XM_POSTFIX, gxm_XCopyArea, 0, 0, 1, H_XCopyArea);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XCopyGC" XM_POSTFIX, gxm_XCopyGC, 4, 0, 0, H_XCopyGC);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XCopyPlane" XM_POSTFIX, gxm_XCopyPlane, 0, 0, 1, H_XCopyPlane);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDefaultDepth" XM_POSTFIX, gxm_XDefaultDepth, 2, 0, 0, H_DefaultDepth);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDefaultDepthOfScreen" XM_POSTFIX, gxm_XDefaultDepthOfScreen, 1, 0, 0, H_DefaultDepthOfScreen);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDefaultScreen" XM_POSTFIX, gxm_XDefaultScreen, 1, 0, 0, H_DefaultScreen);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XDefineCursor" XM_POSTFIX, gxm_XDefineCursor, 3, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XDefineCursor" XM_POSTFIX, gxm_XDefineCursor, 3, 0, 0, H_XDefineCursor);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDeleteProperty" XM_POSTFIX, gxm_XDeleteProperty, 3, 0, 0, H_XDeleteProperty);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDestroyWindow" XM_POSTFIX, gxm_XDestroyWindow, 2, 0, 0, H_XDestroyWindow);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDestroySubwindows" XM_POSTFIX, gxm_XDestroySubwindows, 2, 0, 0, H_XDestroySubwindows);
@@ -17149,16 +17072,16 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDrawRectangle" XM_POSTFIX, gxm_XDrawRectangle, 7, 0, 0, H_XDrawRectangle);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDrawRectangles" XM_POSTFIX, gxm_XDrawRectangles, 5, 0, 0, H_XDrawRectangles);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDrawSegments" XM_POSTFIX, gxm_XDrawSegments, 5, 0, 0, H_XDrawSegments);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XDrawString" XM_POSTFIX, gxm_XDrawString, 7, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XDrawString" XM_POSTFIX, gxm_XDrawString, 7, 0, 0, H_XDrawString);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDrawText" XM_POSTFIX, gxm_XDrawText, 7, 0, 0, H_XDrawText);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XEnableAccessControl" XM_POSTFIX, gxm_XEnableAccessControl, 1, 0, 0, H_XEnableAccessControl);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XEventsQueued" XM_POSTFIX, gxm_XEventsQueued, 2, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XEventsQueued" XM_POSTFIX, gxm_XEventsQueued, 2, 0, 0, H_XEventsQueued);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XFetchName" XM_POSTFIX, gxm_XFetchName, 2, 0, 0, H_XFetchName);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XFillArc" XM_POSTFIX, gxm_XFillArc, 9, 0, 0, H_XFillArc);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XFillArcs" XM_POSTFIX, gxm_XFillArcs, 5, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XFillPolygon" XM_POSTFIX, gxm_XFillPolygon, 7, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XFillRectangle" XM_POSTFIX, gxm_XFillRectangle, 7, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XFillRectangles" XM_POSTFIX, gxm_XFillRectangles, 5, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XFillArcs" XM_POSTFIX, gxm_XFillArcs, 5, 0, 0, H_XFillArcs);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XFillPolygon" XM_POSTFIX, gxm_XFillPolygon, 7, 0, 0, H_XFillPolygon);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XFillRectangle" XM_POSTFIX, gxm_XFillRectangle, 7, 0, 0, H_XFillRectangle);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XFillRectangles" XM_POSTFIX, gxm_XFillRectangles, 5, 0, 0, H_XFillRectangles);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XFlush" XM_POSTFIX, gxm_XFlush, 1, 0, 0, H_XFlush);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XForceScreenSaver" XM_POSTFIX, gxm_XForceScreenSaver, 2, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XFree" XM_POSTFIX, gxm_XFree, 1, 0, 0, H_XFree);
@@ -17198,9 +17121,9 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XHeightMMOfScreen" XM_POSTFIX, gxm_XHeightMMOfScreen, 1, 0, 0, H_HeightMMOfScreen);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XHeightOfScreen" XM_POSTFIX, gxm_XHeightOfScreen, 1, 0, 0, H_HeightOfScreen);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XIfEvent" XM_POSTFIX, gxm_XIfEvent, 3, 0, 0, H_XIfEvent);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XImageByteOrder" XM_POSTFIX, gxm_XImageByteOrder, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XImageByteOrder" XM_POSTFIX, gxm_XImageByteOrder, 1, 0, 0, H_ImageByteOrder);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XInstallColormap" XM_POSTFIX, gxm_XInstallColormap, 2, 0, 0, H_XInstallColormap);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XKeysymToKeycode" XM_POSTFIX, gxm_XKeysymToKeycode, 2, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XKeysymToKeycode" XM_POSTFIX, gxm_XKeysymToKeycode, 2, 0, 0, H_XKeysymToKeycode);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XKillClient" XM_POSTFIX, gxm_XKillClient, 2, 0, 0, H_XKillClient);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XLookupColor" XM_POSTFIX, gxm_XLookupColor, 5, 0, 0, H_XLookupColor);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XLowerWindow" XM_POSTFIX, gxm_XLowerWindow, 2, 0, 0, H_XLowerWindow);
@@ -17208,8 +17131,8 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XMapSubwindows" XM_POSTFIX, gxm_XMapSubwindows, 2, 0, 0, H_XMapSubwindows);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XMapWindow" XM_POSTFIX, gxm_XMapWindow, 2, 0, 0, H_XMapWindow);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XMaskEvent" XM_POSTFIX, gxm_XMaskEvent, 2, 0, 0, H_XMaskEvent);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XMaxCmapsOfScreen" XM_POSTFIX, gxm_XMaxCmapsOfScreen, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XMinCmapsOfScreen" XM_POSTFIX, gxm_XMinCmapsOfScreen, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XMaxCmapsOfScreen" XM_POSTFIX, gxm_XMaxCmapsOfScreen, 1, 0, 0, H_MaxCmapsOfScreen);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XMinCmapsOfScreen" XM_POSTFIX, gxm_XMinCmapsOfScreen, 1, 0, 0, H_MinCmapsOfScreen);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XMoveResizeWindow" XM_POSTFIX, gxm_XMoveResizeWindow, 6, 0, 0, H_XMoveResizeWindow);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XMoveWindow" XM_POSTFIX, gxm_XMoveWindow, 4, 0, 0, H_XMoveWindow);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XNextEvent" XM_POSTFIX, gxm_XNextEvent, 1, 0, 0, H_XNextEvent);
@@ -17230,13 +17153,13 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XQueryBestStipple" XM_POSTFIX, gxm_XQueryBestStipple, 4, 0, 0, H_XQueryBestStipple);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XQueryBestTile" XM_POSTFIX, gxm_XQueryBestTile, 4, 0, 0, H_XQueryBestTile);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XQueryColor" XM_POSTFIX, gxm_XQueryColor, 3, 0, 0, H_XQueryColor);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XQueryColors" XM_POSTFIX, gxm_XQueryColors, 4, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XQueryColors" XM_POSTFIX, gxm_XQueryColors, 4, 0, 0, H_XQueryColors);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XQueryExtension" XM_POSTFIX, gxm_XQueryExtension, 2, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XQueryKeymap" XM_POSTFIX, gxm_XQueryKeymap, 1, 0, 0, H_XQueryKeymap);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XQueryPointer" XM_POSTFIX, gxm_XQueryPointer, 2, 0, 0, H_XQueryPointer);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XQueryTextExtents" XM_POSTFIX, gxm_XQueryTextExtents, 3, 0, 0, H_XQueryTextExtents);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XQueryTree" XM_POSTFIX, gxm_XQueryTree, 2, 0, 0, H_XQueryTree);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XRaiseWindow" XM_POSTFIX, gxm_XRaiseWindow, 2, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XRaiseWindow" XM_POSTFIX, gxm_XRaiseWindow, 2, 0, 0, H_XRaiseWindow);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XReadBitmapFile" XM_POSTFIX, gxm_XReadBitmapFile, 3, 0, 0, H_XReadBitmapFile);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XReadBitmapFileData" XM_POSTFIX, gxm_XReadBitmapFileData, 1, 0, 0, H_XReadBitmapFileData);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XRebindKeysym" XM_POSTFIX, gxm_XRebindKeysym, 6, 0, 0, H_XRebindKeysym);
@@ -17245,7 +17168,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XRemoveFromSaveSet" XM_POSTFIX, gxm_XRemoveFromSaveSet, 2, 0, 0, H_XRemoveFromSaveSet);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XRemoveHost" XM_POSTFIX, gxm_XRemoveHost, 2, 0, 0, H_XRemoveHost);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XRemoveHosts" XM_POSTFIX, gxm_XRemoveHosts, 3, 0, 0, H_XRemoveHosts);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XReparentWindow" XM_POSTFIX, gxm_XReparentWindow, 5, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XReparentWindow" XM_POSTFIX, gxm_XReparentWindow, 5, 0, 0, H_XReparentWindow);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XResetScreenSaver" XM_POSTFIX, gxm_XResetScreenSaver, 1, 0, 0, H_XResetScreenSaver);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XResizeWindow" XM_POSTFIX, gxm_XResizeWindow, 4, 0, 0, H_XResizeWindow);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XRestackWindows" XM_POSTFIX, gxm_XRestackWindows, 3, 0, 0, H_XRestackWindows);
@@ -17255,7 +17178,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSelectInput" XM_POSTFIX, gxm_XSelectInput, 3, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSendEvent" XM_POSTFIX, gxm_XSendEvent, 5, 0, 0, H_XSendEvent);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetAccessControl" XM_POSTFIX, gxm_XSetAccessControl, 2, 0, 0, H_XSetAccessControl);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetArcMode" XM_POSTFIX, gxm_XSetArcMode, 3, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetArcMode" XM_POSTFIX, gxm_XSetArcMode, 3, 0, 0, H_XSetArcMode);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetBackground" XM_POSTFIX, gxm_XSetBackground, 3, 0, 0, H_XSetBackground);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetClipMask" XM_POSTFIX, gxm_XSetClipMask, 3, 0, 0, H_XSetClipMask);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetClipOrigin" XM_POSTFIX, gxm_XSetClipOrigin, 4, 0, 0, H_XSetClipOrigin);
@@ -17289,8 +17212,8 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetWindowBorderPixmap" XM_POSTFIX, gxm_XSetWindowBorderPixmap, 3, 0, 0, H_XSetWindowBorderPixmap);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetWindowBorderWidth" XM_POSTFIX, gxm_XSetWindowBorderWidth, 3, 0, 0, H_XSetWindowBorderWidth);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetWindowColormap" XM_POSTFIX, gxm_XSetWindowColormap, 3, 0, 0, H_XSetWindowColormap);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XStoreBuffer" XM_POSTFIX, gxm_XStoreBuffer, 4, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XStoreBytes" XM_POSTFIX, gxm_XStoreBytes, 3, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XStoreBuffer" XM_POSTFIX, gxm_XStoreBuffer, 4, 0, 0, H_XStoreBuffer);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XStoreBytes" XM_POSTFIX, gxm_XStoreBytes, 3, 0, 0, H_XStoreBytes);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XStoreColor" XM_POSTFIX, gxm_XStoreColor, 3, 0, 0, H_XStoreColor);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XStoreColors" XM_POSTFIX, gxm_XStoreColors, 4, 0, 0, H_XStoreColors);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XStoreName" XM_POSTFIX, gxm_XStoreName, 3, 0, 0, H_XStoreName);
@@ -17310,7 +17233,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XUnmapSubwindows" XM_POSTFIX, gxm_XUnmapSubwindows, 2, 0, 0, H_XUnmapSubwindows);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XUnmapWindow" XM_POSTFIX, gxm_XUnmapWindow, 2, 0, 0, H_XUnmapWindow);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XVendorRelease" XM_POSTFIX, gxm_XVendorRelease, 1, 0, 0, H_VendorRelease);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XWarpPointer" XM_POSTFIX, gxm_XWarpPointer, 9, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XWarpPointer" XM_POSTFIX, gxm_XWarpPointer, 9, 0, 0, H_XWarpPointer);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XWidthMMOfScreen" XM_POSTFIX, gxm_XWidthMMOfScreen, 1, 0, 0, H_WidthMMOfScreen);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XWidthOfScreen" XM_POSTFIX, gxm_XWidthOfScreen, 1, 0, 0, H_WidthOfScreen);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XWindowEvent" XM_POSTFIX, gxm_XWindowEvent, 3, 0, 0, H_XWindowEvent);
@@ -17326,12 +17249,12 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDirectionalDependentDrawing" XM_POSTFIX, gxm_XDirectionalDependentDrawing, 1, 0, 0, H_XDirectionalDependentDrawing);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XContextualDrawing" XM_POSTFIX, gxm_XContextualDrawing, 1, 0, 0, H_XContextualDrawing);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XExtentsOfFontSet" XM_POSTFIX, gxm_XExtentsOfFontSet, 1, 0, 0, H_XExtentsOfFontSet);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XFilterEvent" XM_POSTFIX, gxm_XFilterEvent, 2, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XFilterEvent" XM_POSTFIX, gxm_XFilterEvent, 2, 0, 0, H_XFilterEvent);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XAllocIconSize" XM_POSTFIX, gxm_XAllocIconSize, 0, 0, 0, H_XAllocIconSize);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XAllocStandardColormap" XM_POSTFIX, gxm_XAllocStandardColormap, 0, 0, 0, H_XAllocStandardColormap);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XAllocWMHints" XM_POSTFIX, gxm_XAllocWMHints, 0, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XClipBox" XM_POSTFIX, gxm_XClipBox, 1, 0, 0, H_XClipBox);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XCreateRegion" XM_POSTFIX, gxm_XCreateRegion, 0, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XCreateRegion" XM_POSTFIX, gxm_XCreateRegion, 0, 0, 0, H_XCreateRegion);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDefaultString" XM_POSTFIX, gxm_XDefaultString, 0, 0, 0, H_XDefaultString);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDeleteContext" XM_POSTFIX, gxm_XDeleteContext, 3, 0, 0, H_XDeleteContext);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDestroyRegion" XM_POSTFIX, gxm_XDestroyRegion, 1, 0, 0, H_XDestroyRegion);
@@ -17418,7 +17341,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "IsPFKey" XM_POSTFIX, gxm_IsPFKey, 1, 0, 0, H_IsPFKey);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "IsFunctionKey" XM_POSTFIX, gxm_IsFunctionKey, 1, 0, 0, H_IsFunctionKey);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "IsMiscFunctionKey" XM_POSTFIX, gxm_IsMiscFunctionKey, 1, 0, 0, H_IsMiscFunctionKey);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "IsModifierKey" XM_POSTFIX, gxm_IsModifierKey, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "IsModifierKey" XM_POSTFIX, gxm_IsModifierKey, 1, 0, 0, H_IsModifierKey);
 
 #if HAVE_MOTIF
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateMessageBox" XM_POSTFIX, gxm_XmCreateMessageBox, 3, 1, 0, H_XmCreateMessageBox);
@@ -17727,20 +17650,20 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmSetFontUnit" XM_POSTFIX, gxm_XmSetFontUnit, 2, 0, 0, H_XmSetFontUnit);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmSetMenuCursor" XM_POSTFIX, gxm_XmSetMenuCursor, 2, 0, 0, H_XmSetMenuCursor);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmGetMenuCursor" XM_POSTFIX, gxm_XmGetMenuCursor, 1, 0, 0, H_XmGetMenuCursor);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateSimpleMenuBar" XM_POSTFIX, gxm_XmCreateSimpleMenuBar, 3, 1, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateSimplePopupMenu" XM_POSTFIX, gxm_XmCreateSimplePopupMenu, 3, 1, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateSimplePulldownMenu" XM_POSTFIX, gxm_XmCreateSimplePulldownMenu, 3, 1, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateSimpleOptionMenu" XM_POSTFIX, gxm_XmCreateSimpleOptionMenu, 3, 1, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateSimpleRadioBox" XM_POSTFIX, gxm_XmCreateSimpleRadioBox, 3, 1, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateSimpleCheckBox" XM_POSTFIX, gxm_XmCreateSimpleCheckBox, 3, 1, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateSimpleMenuBar" XM_POSTFIX, gxm_XmCreateSimpleMenuBar, 3, 1, 0, H_XmCreateSimpleMenuBar);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateSimplePopupMenu" XM_POSTFIX, gxm_XmCreateSimplePopupMenu, 3, 1, 0, H_XmCreateSimplePopupMenu);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateSimplePulldownMenu" XM_POSTFIX, gxm_XmCreateSimplePulldownMenu, 3, 1, 0, H_XmCreateSimplePulldownMenu);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateSimpleOptionMenu" XM_POSTFIX, gxm_XmCreateSimpleOptionMenu, 3, 1, 0, H_XmCreateSimpleOptionMenu);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateSimpleRadioBox" XM_POSTFIX, gxm_XmCreateSimpleRadioBox, 3, 1, 0, H_XmCreateSimpleRadioBox);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateSimpleCheckBox" XM_POSTFIX, gxm_XmCreateSimpleCheckBox, 3, 1, 0, H_XmCreateSimpleCheckBox);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmVaCreateSimpleMenuBar" XM_POSTFIX, gxm_XmVaCreateSimpleMenuBar, 3, 0, 0, H_XmVaCreateSimpleMenuBar);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmVaCreateSimplePopupMenu" XM_POSTFIX, gxm_XmVaCreateSimplePopupMenu, 4, 0, 0, H_XmVaCreateSimplePopupMenu);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmVaCreateSimplePulldownMenu" XM_POSTFIX, gxm_XmVaCreateSimplePulldownMenu, 5, 0, 0, H_XmVaCreateSimplePulldownMenu);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmVaCreateSimpleOptionMenu" XM_POSTFIX, gxm_XmVaCreateSimpleOptionMenu, 7, 0, 0, H_XmVaCreateSimpleOptionMenu);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmVaCreateSimpleRadioBox" XM_POSTFIX, gxm_XmVaCreateSimpleRadioBox, 5, 0, 0, H_XmVaCreateSimpleRadioBox);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmVaCreateSimpleCheckBox" XM_POSTFIX, gxm_XmVaCreateSimpleCheckBox, 4, 0, 0, H_XmVaCreateSimpleCheckBox);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTrackingEvent" XM_POSTFIX, gxm_XmTrackingEvent, 3, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTrackingLocate" XM_POSTFIX, gxm_XmTrackingLocate, 3, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTrackingEvent" XM_POSTFIX, gxm_XmTrackingEvent, 3, 0, 0, H_XmTrackingEvent);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTrackingLocate" XM_POSTFIX, gxm_XmTrackingLocate, 3, 0, 0, H_XmTrackingLocate);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmSetColorCalculation" XM_POSTFIX, gxm_XmSetColorCalculation, 1, 0, 0, H_XmSetColorCalculation);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmGetColorCalculation" XM_POSTFIX, gxm_XmGetColorCalculation, 0, 0, 0, H_XmGetColorCalculation);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmGetColors" XM_POSTFIX, gxm_XmGetColors, 3, 0, 0, H_XmGetColors);
@@ -17810,7 +17733,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRenderTableFree" XM_POSTFIX, gxm_XmRenderTableFree, 1, 0, 0, H_XmRenderTableFree);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRenderTableCopy" XM_POSTFIX, gxm_XmRenderTableCopy, 3, 0, 0, H_XmRenderTableCopy);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRenderTableRemoveRenditions" XM_POSTFIX, gxm_XmRenderTableRemoveRenditions, 3, 0, 0, H_XmRenderTableRemoveRenditions);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRenderTableAddRenditions" XM_POSTFIX, gxm_XmRenderTableAddRenditions, 4, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRenderTableAddRenditions" XM_POSTFIX, gxm_XmRenderTableAddRenditions, 4, 0, 0, H_XmRenderTableAddRenditions);
 #endif
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryFree" XM_POSTFIX, gxm_XmFontListEntryFree, 1, 0, 0, H_XmFontListEntryFree);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryGetFont" XM_POSTFIX, gxm_XmFontListEntryGetFont, 2, 0, 0, H_XmFontListEntryGetFont);
@@ -17845,7 +17768,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringDraw" XM_POSTFIX, gxm_XmStringDraw, 0, 0, 1, H_XmStringDraw);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringDrawImage" XM_POSTFIX, gxm_XmStringDrawImage, 0, 0, 1, H_XmStringDrawImage);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringDrawUnderline" XM_POSTFIX, gxm_XmStringDrawUnderline, 0, 0, 1, H_XmStringDrawUnderline);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmGetDestination" XM_POSTFIX, gxm_XmGetDestination, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmGetDestination" XM_POSTFIX, gxm_XmGetDestination, 1, 0, 0, H_XmGetDestination);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsTraversable" XM_POSTFIX, gxm_XmIsTraversable, 1, 0, 0, H_XmIsTraversable);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmGetVisibility" XM_POSTFIX, gxm_XmGetVisibility, 1, 0, 0, H_XmGetVisibility);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmGetTabGroup" XM_POSTFIX, gxm_XmGetTabGroup, 1, 0, 0, H_XmGetTabGroup);
@@ -21480,6 +21403,7 @@ static void define_strings(void)
     DEFINE_STRING(Name, Value); \
     hash_resource(Value, Type)
 
+#if 0
   /* aren't these redundant? */
   DEFINE_STRING(XM_PREFIX "XtNaccelerators" XM_POSTFIX, XtNaccelerators);
   DEFINE_STRING(XM_PREFIX "XtNallowHoriz" XM_POSTFIX, XtNallowHoriz);
@@ -21696,6 +21620,7 @@ static void define_strings(void)
   DEFINE_STRING(XM_PREFIX "XtNshutdownCommand" XM_POSTFIX, XtNshutdownCommand);
   DEFINE_STRING(XM_PREFIX "XtCShutdownCommand" XM_POSTFIX, XtCShutdownCommand);
   DEFINE_STRING(XM_PREFIX "XtNerrorCallback" XM_POSTFIX, XtNerrorCallback);
+#endif
 
   DEFINE_STRING(XM_PREFIX "XmSTRING_DEFAULT_CHARSET" XM_POSTFIX, XmSTRING_DEFAULT_CHARSET);
   DEFINE_STRING(XM_PREFIX "XmSTRING_ISO8859_1" XM_POSTFIX, XmSTRING_ISO8859_1);

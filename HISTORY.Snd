@@ -1,5 +1,7 @@
 snd change log
 
+  10-Aug:    make-level-meter, with-level-meters in snd-motif.scm.
+             added dac-hook, sound-data-maxamp.
   9-Aug:     show-smpte-label in snd-motif.scm.
              added region-graph-style.
   7-Aug:     snd-print locale bugfix (thanks to Ludger Brummer).

@@ -349,6 +349,7 @@
 #define S_cursor_style                  "cursor-style"
 #define S_cursor_update_display         "cursor-update-display"
 #define S_dac_combines_channels         "dac-combines-channels"
+#define S_dac_hook                      "dac-hook"
 #define S_dac_size                      "dac-size"
 #define S_data_clipped                  "data-clipped"
 #define S_data_color                    "data-col" STR_OR

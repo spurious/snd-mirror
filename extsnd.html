@@ -1337,6 +1337,15 @@ the hook.
 <!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
+<!-- dac-hook -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="dachook">dac-hook</a></em> (data) </code></span><td align=right><b>progn</b></td>
+<!-- --></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td colspan=2>
+<!-- -->called just before data is sent to DAC passing data as sound-data object.
+<!-- --><tr><td colspan=3></td></tr>
+<!-- -->
 <!-- drop-hook -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="drophook">drop-hook</a></em> (filename) </code></span><td align=right><b>or</b></td>
@@ -2659,6 +2668,9 @@ an oscil or a sawtooth-wave:
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def>sound-data-length</em> (obj)</code></span></td>
 <!-- --><td>length of each channel of data in <i>obj</i></td></tr>
+<!-- -->
+<!-- --><tr><td><span class=defbox><code><em class=def>sound-data-maxamp</em> (obj)</code></span></td>
+<!-- --><td>list of maxamps of data in <i>obj</i></td></tr>
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def>sound-data-chans</em> (obj)</code></span></td>
 <!-- --><td>number of channels of data in <i>obj</i></td></tr>

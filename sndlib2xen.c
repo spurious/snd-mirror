@@ -334,7 +334,7 @@ static void sound_data_free(sound_data *v)
   int i;
   if (v)
     {
-      if (v->data) 
+      if ((v->data) && (v->wrapped == 0))
 	{
 	  for (i = 0; i < v->chans; i++) if (v->data[i]) FREE(v->data[i]);
 	  FREE(v->data);
@@ -414,9 +414,21 @@ XEN make_sound_data(int chans, int frames)
   new_sound_data = (sound_data *)xen_malloc(sizeof(sound_data));
   new_sound_data->length = frames;
   new_sound_data->chans = chans;
+  new_sound_data->wrapped = 0;
   new_sound_data->data = (MUS_SAMPLE_TYPE **)CALLOC(chans, sizeof(MUS_SAMPLE_TYPE *));
   for (i = 0; i < chans; i++)
     new_sound_data->data[i] = (MUS_SAMPLE_TYPE *)CALLOC(frames, sizeof(MUS_SAMPLE_TYPE));
+  XEN_MAKE_AND_RETURN_OBJECT(sound_data_tag, new_sound_data, 0, free_snd_data);
+}
+
+XEN wrap_sound_data(int chans, int frames, MUS_SAMPLE_TYPE **data)
+{
+  sound_data *new_sound_data;
+  new_sound_data = (sound_data *)xen_malloc(sizeof(sound_data));
+  new_sound_data->length = frames;
+  new_sound_data->chans = chans;
+  new_sound_data->wrapped = 1;
+  new_sound_data->data = data;
   XEN_MAKE_AND_RETURN_OBJECT(sound_data_tag, new_sound_data, 0, free_snd_data);
 }
 
@@ -457,6 +469,38 @@ static XEN sound_data_ref(XEN obj, XEN chan, XEN frame_num)
   else mus_misc_error(S_sound_data_ref, "nil sound-data?", XEN_EMPTY_LIST);
   return(C_TO_XEN_DOUBLE(0.0));
 }
+
+static XEN g_sound_data_maxamp(XEN obj)
+{
+  sound_data *v;
+  int i, j, chans, len;
+  MUS_SAMPLE_TYPE mx;
+  MUS_SAMPLE_TYPE *buf;
+  XEN lst = XEN_EMPTY_LIST;
+  XEN_ASSERT_TYPE(SOUND_DATA_P(obj), obj, XEN_ARG_1, "sound-data-maxamp", "a sound-data object");
+  v = (sound_data *)XEN_OBJECT_REF(obj);
+  if (v)
+    {
+      chans = v->chans;
+      len = v->length;
+      for (i = chans - 1; i >= 0; i--)
+	{
+	  mx = MUS_SAMPLE_MIN;
+	  buf = v->data[i];
+	  for (j = 0; j < len; j++)
+	    {
+	      if (buf[j] > mx)
+		mx = buf[j];
+	      else
+		if (-buf[j] > mx)
+		  mx = -buf[j];
+	    }
+	  lst = XEN_CONS(C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_DOUBLE(mx)), lst);
+	}
+    }
+  return(lst);
+}
+
 
 #if HAVE_APPLICABLE_SMOB
 static XEN sound_data_apply(XEN obj, XEN chan, XEN i)
@@ -1005,6 +1049,7 @@ XEN_NARGIFY_3(sound_data_ref_w, sound_data_ref)
 XEN_NARGIFY_4(sound_data_set_w, sound_data_set)
 XEN_NARGIFY_2(g_make_sound_data_w, g_make_sound_data)
 XEN_NARGIFY_1(g_sound_data_p_w, g_sound_data_p)
+XEN_NARGIFY_1(g_sound_data_maxamp_w, g_sound_data_maxamp)
 XEN_ARGIFY_3(sound_data2vct_w, sound_data2vct)
 XEN_ARGIFY_3(vct2sound_data_w, vct2sound_data)
 XEN_NARGIFY_1(g_sound_samples_w, g_sound_samples)
@@ -1060,6 +1105,7 @@ XEN_ARGIFY_1(g_mus_sound_report_cache_w, g_mus_sound_report_cache)
 #define sound_data_set_w sound_data_set
 #define g_make_sound_data_w g_make_sound_data
 #define g_sound_data_p_w g_sound_data_p
+#define g_sound_data_maxamp_w g_sound_data_maxamp
 #define sound_data2vct_w sound_data2vct
 #define vct2sound_data_w vct2sound_data
 #define g_sound_samples_w g_sound_samples
@@ -1250,6 +1296,7 @@ void mus_sndlib2xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_sound_data_setB,          sound_data_set_w, 4, 0, 0,          H_sound_data_setB);
   XEN_DEFINE_PROCEDURE(S_make_sound_data,          g_make_sound_data_w, 2, 0, 0,       H_make_sound_data);
   XEN_DEFINE_PROCEDURE(S_sound_data_p,             g_sound_data_p_w, 1, 0, 0,          H_sound_data_p);
+  XEN_DEFINE_PROCEDURE("sound-data-maxamp",        g_sound_data_maxamp_w, 1, 0, 0,     "TODO: add help for sound_data_maxamp");
   XEN_DEFINE_PROCEDURE(S_sound_data2vct,           sound_data2vct_w, 1, 2, 0,          H_sound_data2vct);
   XEN_DEFINE_PROCEDURE(S_vct2sound_data,           vct2sound_data_w, 1, 2, 0,          H_vct2sound_data);
   XEN_DEFINE_PROCEDURE(S_mus_sound_samples,        g_sound_samples_w, 1, 0, 0,         H_mus_sound_samples);
