@@ -177,9 +177,7 @@ typedef enum {FILE_SAVE_AS, EDIT_SAVE_AS} save_dialog_t;
 #define INVALID_MIX_CHANNEL -2
 #define SAVE_ALL_CHANS -1
 
-#define NOT_IN_BACKGROUND false
-#define IN_BACKGROUND true
-
+typedef enum {NOT_IN_BACKGROUND, IN_BACKGROUND} play_process_t;
 typedef enum {WITHOUT_VIRTUAL_CHANNELS, WITH_VIRTUAL_CHANNELS} virtual_channels_t;
 typedef enum {WITH_FW_BUTTONS, WITH_ARROWS} fw_button_t;
 
@@ -228,25 +226,19 @@ typedef enum {DONT_FOLLOW, FOLLOW_ALWAYS, FOLLOW_ONCE} tracking_cursor_t;
 typedef enum {DONT_UPDATE_DISPLAY, UPDATE_DISPLAY} cut_selection_regraph_t;
 typedef enum {NOT_FROM_ENVED, FROM_ENVED} enved_progress_t;
 typedef enum {SEARCH_OK, SEARCH_FAILED} search_result_t;
-
-#define REMOVE_FROM_CACHE true
-#define IGNORE_CACHE false
-
+typedef enum {IGNORE_CACHE, REMOVE_FROM_CACHE} cache_remove_t;
 typedef enum {FFT_UNCHANGED, FFT_CHANGED, FFT_CHANGE_LOCKED} fft_change_t;
 typedef enum {WITHOUT_GRAPH, WITH_GRAPH, WITHOUT_INITIAL_GRAPH_HOOK} channel_graph_t;
 
 #define IS_PLAYER(snd) ((snd) && (snd->index < 0))
 #define PLAYER(snd) (-(snd->index))
-#define NO_PLAYERS false
-#define PLAYERS_OK true
+typedef enum {NO_PLAYERS, PLAYERS_OK} sp_sound_t;
 
 #define AT_CURRENT_EDIT_POSITION -1
 
 typedef enum {X_AXIS_IN_SECONDS, X_AXIS_IN_SAMPLES, X_AXIS_AS_PERCENTAGE, X_AXIS_IN_BEATS} x_axis_style_t;
 typedef enum {SPEED_CONTROL_AS_FLOAT, SPEED_CONTROL_AS_RATIO, SPEED_CONTROL_AS_SEMITONE} speed_style_t;
-
 typedef enum {CURSOR_IN_VIEW, CURSOR_ON_LEFT, CURSOR_ON_RIGHT, CURSOR_IN_MIDDLE, KEYBOARD_NO_ACTION} kbd_cursor_t;
-
 typedef enum {CHANNELS_SEPARATE, CHANNELS_COMBINED, CHANNELS_SUPERIMPOSED} channel_style_t;
 typedef enum {FD_CLOSED, FD_OPEN} fd_open_t;
 typedef enum {PRINT_SND, PRINT_ENV} print_choice_t;
@@ -261,9 +253,7 @@ enum {FOURIER, WAVELET, WALSH, AUTOCORRELATION, CEPSTRUM, HADAMARD, HAAR}; /* no
 
 typedef enum {APPLY_TO_SOUND, APPLY_TO_CHANNEL, APPLY_TO_SELECTION} snd_apply_t;
 typedef enum {FCP_X_ANGLE, FCP_X_SCALE, FCP_Y_ANGLE, FCP_Y_SCALE, FCP_Z_ANGLE, FCP_Z_SCALE, FCP_CUTOFF, FCP_START, FCP_BETA, FCP_BEATS} fcp_t;
-
-enum {TIME_AXIS_INFO, TRANSFORM_AXIS_INFO, LISP_AXIS_INFO};
-
+typedef enum {TIME_AXIS_INFO, TRANSFORM_AXIS_INFO, LISP_AXIS_INFO} axis_info_t;
 typedef enum {COLOR_POSITION, COLOR_ZOOM} slider_choice_t;
 typedef enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER} minibuffer_choice_t;
 

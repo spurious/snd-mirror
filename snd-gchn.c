@@ -51,7 +51,7 @@ static Float cube (Float a) {return(a * a * a);}
 bool channel_open_pane(chan_info *cp, void *ptr)
 {
   gtk_widget_show(channel_main_pane(cp));
-  return(0);
+  return(false);
 }
 
 static void sy_changed(float value, chan_info *cp)

@@ -738,8 +738,8 @@ void set_fft_window(mus_fft_window_t val)
   if (!(ss->graph_hook_active)) for_each_chan(calculate_fft);
   if ((transform_dialog) && (graph_drawer))
     {
-      sg_list_select(window_list, val);
-      sg_list_moveto(window_list, val);
+      sg_list_select(window_list, (int)val);
+      sg_list_moveto(window_list, (int)val);
       if (graph_frame) 
 	gtk_frame_set_label(GTK_FRAME(graph_frame),
 			    FFT_WINDOWS[val]);

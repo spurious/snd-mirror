@@ -588,7 +588,7 @@ int sg_cursor_position(GtkWidget *w)
   return(gtk_text_iter_get_offset(&pos));
 }
 
-GtkWidget *make_scrolled_text(GtkWidget *parent, int editable, GtkWidget *boxer, GtkWidget *paner)
+GtkWidget *make_scrolled_text(GtkWidget *parent, bool editable, GtkWidget *boxer, GtkWidget *paner)
 {
   /* returns new text widget */
   GtkWidget *sw, *new_text;

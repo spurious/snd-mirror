@@ -7,10 +7,11 @@
   #include <config.h>
 #endif
 
-#define XM_DATE "23-Aug-03"
+#define XM_DATE "3-Sep-03"
 
 
 /* HISTORY: 
+ *   3-Sep:     XmRenderTableGetRenditions was incorrectly freeing the XmRenditions.
  *   20-Aug:    XtEventHandler *flag set to false if handler returns 'done.
  *   11-Aug:    int -> bool.
  *   17-July:   XpmAttributes .colorsymbols is a list.
@@ -2646,10 +2647,7 @@ matches rendition tags"
   rs = XmRenderTableGetRenditions(XEN_TO_C_XmRenderTable(arg1), tags, (Cardinal)len);
   FREE(tags);
   for (i = len - 1; i >= 0; i--)
-    {
-      lst = XEN_CONS(C_TO_XEN_XmRendition(rs[i]), lst);
-      XmRenditionFree(rs[i]);
-    }
+    lst = XEN_CONS(C_TO_XEN_XmRendition(rs[i]), lst);
   free(rs);
   xm_unprotect_at(loc);
   return(lst);

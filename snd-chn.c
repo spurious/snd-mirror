@@ -3253,7 +3253,7 @@ static void draw_cursor(chan_info *cp)
       XEN_CALL_3(cp->cursor_proc,
 		 C_TO_XEN_INT(cp->sound->index),
 		 C_TO_XEN_INT(cp->chan),
-		 C_TO_XEN_INT(TIME_AXIS_INFO),
+		 C_TO_XEN_INT((int)TIME_AXIS_INFO),
 		 "cursor-style procedure");
       break;
     }
@@ -3861,8 +3861,8 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	      else 
 		{
 		  if (key_state & snd_ControlMask)
-		    play_sound(sp, play_mark->samp, NO_END_SPECIFIED, true, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "play button", 0);
-		  else play_channel(cp, play_mark->samp, NO_END_SPECIFIED, true, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "play button", 0);
+		    play_sound(sp, play_mark->samp, NO_END_SPECIFIED, IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "play button", 0);
+		  else play_channel(cp, play_mark->samp, NO_END_SPECIFIED, IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "play button", 0);
 		}
 	      sp->playing_mark = play_mark;
 	    }
@@ -3881,9 +3881,9 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 						 C_TO_XEN_INT(key_state),
 						 C_TO_XEN_INT(x),
 						 C_TO_XEN_INT(y),
-						 C_TO_XEN_INT((actax == WAVE) ? 
-							      TIME_AXIS_INFO : ((actax == LISP) ? 
-										LISP_AXIS_INFO : TRANSFORM_AXIS_INFO))),
+						 C_TO_XEN_INT((int)((actax == WAVE) ? 
+								    TIME_AXIS_INFO : ((actax == LISP) ? 
+										      LISP_AXIS_INFO : TRANSFORM_AXIS_INFO)))),
 				      S_mouse_click_hook))))
 	    return;
 
@@ -4064,7 +4064,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time, Temp
 	      if (!(XEN_TRUE_P(drag_res)))
 		{
 		  sp->speed_control = 0.0;
-		  play_channel(cp, play_mark->samp, NO_END_SPECIFIED, true, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "drag playing mark", 0);
+		  play_channel(cp, play_mark->samp, NO_END_SPECIFIED, IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "drag playing mark", 0);
 		}
 	    }
 	  else
@@ -4330,7 +4330,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, char *caller)
 		  
 		  ss->checking_explicitly = true;  /* do not allow UI events to intervene here! */
 		  if (cp->transform_graph_type == GRAPH_ONCE)
-		    single_fft(cp, 0);
+		    single_fft(cp, false);
 		  else
 		    {
 		      val = (void *)make_sonogram_state(cp);

@@ -450,7 +450,7 @@ bool snd_overwrite_ok(const char *ofile);
 snd_io *make_file_state(int fd, file_info *hdr, int chan, int suggested_bufsize);
 void file_buffers_forward(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_data *cur_snd);
 void file_buffers_back(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_data *cur_snd);
-int snd_remove(const char *name, bool forget);
+int snd_remove(const char *name, cache_remove_t forget);
 int snd_close(int fd, const char *name);
 int snd_fclose(FILE *fd, const char *name);
 void remember_temp(const char *filename, int chans);
@@ -806,7 +806,7 @@ XEN eval_form_wrapper(void *data);
 XEN string_to_form(void *data);
 char *g_print_1(XEN obj);
 chan_info *get_cp(XEN snd_n, XEN chn_n, const char *caller);
-snd_info *get_sp(XEN snd_n, bool accept_player);
+snd_info *get_sp(XEN snd_n, sp_sound_t accept_player);
 XEN g_c_make_sample_reader(snd_fd *fd);
 XEN g_call0(XEN proc, const char *caller);
 XEN g_call1(XEN proc, XEN arg, const char *caller);
@@ -968,11 +968,12 @@ void stop_playing_sound(snd_info *sp);
 void stop_playing_sound_no_toggle(snd_info *sp);
 void stop_playing_all_sounds(void);
 void stop_playing_region(int n);
-void play_region(int n, bool background);
-void play_channel(chan_info *cp, off_t start, off_t end, bool background, XEN edpos, const char *caller, int arg_pos);
-void play_sound(snd_info *sp, off_t start, off_t end, bool background, XEN edpos, const char *caller, int arg_pos);
-void play_channels(chan_info **cps, int chans, off_t *starts, off_t *ends, bool background, XEN edpos, const char *caller, int arg_pos, bool selection);
-void play_selection(bool background, XEN edpos, const char *caller, int arg_pos);
+void play_region(int n, play_process_t background);
+void play_channel(chan_info *cp, off_t start, off_t end, play_process_t background, XEN edpos, const char *caller, int arg_pos);
+void play_sound(snd_info *sp, off_t start, off_t end, play_process_t background, XEN edpos, const char *caller, int arg_pos);
+void play_channels(chan_info **cps, int chans, off_t *starts, off_t *ends, play_process_t background, 
+		   XEN edpos, const char *caller, int arg_pos, bool selection);
+void play_selection(play_process_t background, XEN edpos, const char *caller, int arg_pos);
 void toggle_dac_pausing(void); /* snd-dac.c */
 bool play_in_progress(void);
 void initialize_apply(snd_info *sp, int chans, off_t beg, off_t frames);
@@ -1405,7 +1406,7 @@ Float evaluate_ptreec(void *upt, Float arg, vct *v, bool dir);
 /* -------- snd-draw.c -------- */
 
 #if (!USE_NO_GUI)
-  axis_info *get_ap(chan_info *cp, int ap_id, const char *caller);
+  axis_info *get_ap(chan_info *cp, axis_info_t ap_id, const char *caller);
   void g_init_draw(void);
   void set_dialog_widget(snd_dialog_t which, widget_t wid);
   void run_new_widget_hook(widget_t w);

@@ -220,7 +220,7 @@ static void minibuffer_activate_callback(GtkWidget *w, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
   ss->mx_sp = sp; 
-  snd_minibuffer_activate(sp, 0, 0);
+  snd_minibuffer_activate(sp, 0, false);
   (sp->sgx)->mini_active = true;
 }
 
@@ -372,7 +372,7 @@ void syncb(snd_info *sp, int on)
   if (!(IS_PLAYER(sp)))
     {
       set_sync_color(sp);
-      set_toggle_button(SYNC_BUTTON(sp), on, false, (void *)sp);
+      set_toggle_button(SYNC_BUTTON(sp), (bool)on, false, (void *)sp);
     }
 }
 
@@ -1253,7 +1253,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
   char *old_name = NULL, *title;
   int app_y, app_dy, screen_y, chan_min_y;
   /* these dimensions are used to try to get a reasonable channel graph size without falling off the screen bottom */
-  int samples_per_channel;
+  off_t samples_per_channel;
   snd_context *sx;
   errno = 0;
   hdr = make_file_info(filename);

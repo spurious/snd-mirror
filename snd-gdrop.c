@@ -74,7 +74,7 @@ static void clear_minibuffer_of(GtkWidget *w)
 }
 
 static bool have_drag_title = false;
-void drag_leave(GtkWidget *widget, GdkDragContext *context, guint time)
+static void drag_leave(GtkWidget *widget, GdkDragContext *context, guint time)
 {
   if (GTK_IS_DRAWING_AREA(widget))
     clear_minibuffer_of(widget);
@@ -85,7 +85,7 @@ void drag_leave(GtkWidget *widget, GdkDragContext *context, guint time)
     }
 }
 
-gboolean drag_motion(GtkWidget *widget, GdkDragContext *context, gint x, gint y, guint time)
+static gboolean drag_motion(GtkWidget *widget, GdkDragContext *context, gint x, gint y, guint time)
 {
   if (GTK_IS_DRAWING_AREA(widget))
     report_mouse_position_as_seconds(widget, x, y);

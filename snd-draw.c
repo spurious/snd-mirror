@@ -6,7 +6,7 @@
 #define NO_SUCH_WIDGET       XEN_ERROR_TYPE("no-such-widget")
 #define NO_SUCH_AXIS_CONTEXT XEN_ERROR_TYPE("no-such-graphics-context")
 #define AXIS_CONTEXT_ID_OK(Id) ((Id >= CHAN_GC) && (Id <= CHAN_SELMXGC))
-#define AXIS_INFO_ID_OK(Id)    ((Id >= TIME_AXIS_INFO) && ((Id <= LISP_AXIS_INFO)))
+#define AXIS_INFO_ID_OK(Id)    ((Id >= (int)TIME_AXIS_INFO) && ((Id <= (int)LISP_AXIS_INFO)))
 
 
 static axis_context *get_ax(chan_info *cp, int ax_id, const char *caller)
@@ -28,7 +28,7 @@ static axis_context *get_ax(chan_info *cp, int ax_id, const char *caller)
          XEN_TO_C_INT_OR_ELSE(Ax, CHAN_GC), \
          Caller)
 
-axis_info *get_ap(chan_info *cp, int ap_id, const char *caller)
+axis_info *get_ap(chan_info *cp, axis_info_t ap_id, const char *caller)
 {
   if ((cp) && (AXIS_INFO_ID_OK(ap_id)))
     switch (ap_id)
@@ -40,7 +40,7 @@ axis_info *get_ap(chan_info *cp, int ap_id, const char *caller)
   XEN_ERROR(NO_SUCH_AXIS_INFO,
 	    XEN_LIST_3(C_TO_XEN_STRING(caller),
 		       C_TO_XEN_STRING("axis: ~A, sound index: ~A (~A), chan: ~A (axis should be one of " S_time_graph ", " S_lisp_graph ", or " S_transform_graph ")"),
-		       XEN_LIST_4(C_TO_SMALL_XEN_INT(ap_id),
+		       XEN_LIST_4(C_TO_SMALL_XEN_INT((int)(ap_id)),
 				  C_TO_SMALL_XEN_INT(cp->sound->index),
 				  C_TO_XEN_STRING(cp->sound->short_filename),
 				  C_TO_SMALL_XEN_INT(cp->chan))));

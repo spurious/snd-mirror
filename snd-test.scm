@@ -34812,6 +34812,45 @@ EDITS: 2
 	      (if (or (not (string? str)) (not (string=? str "name"))) (snd-display ";XtAppErrorMsg: ~A" str))
 	      )
 	    
+#!
+(define (make-atom name) (XInternAtom (XtDisplay (cadr (main-widgets))) name #f))
+
+(let* ((button-render-table (cadr (XtVaGetValues (cadr (main-widgets)) (list XmNbuttonRenderTable 0))))
+       (default-rendition (and button-render-table 
+			       (XmRenderTableGetRendition button-render-table XmFONTLIST_DEFAULT_TAG)))
+       (default-font-info (and default-rendition
+			       (XmRenditionRetrieve default-rendition (list XmNfont 0 XmNfontType 0)))))
+  (if (and default-font-info
+	   (= (list-ref default-font-info 3) XmFONT_IS_FONT))
+      (let* ((font (cadr default-font-info))
+	     ;(props (.properties font))
+	     (data '()))
+	(for-each (lambda (name atom?)
+		    (let ((val (XGetFontProperty font name)))
+		      (if (car val)
+			  (set! data (cons (list (XGetAtomName (XtDisplay (cadr (main-widgets))) name)
+						 (if atom? 
+						     (XGetAtomName (XtDisplay (cadr (main-widgets))) (list 'Atom (cadr val)))
+						     (cadr val)))
+					   data)))))
+		  (list XA_POINT_SIZE XA_FONT XA_FULL_NAME (make-atom "XA_SLANT") (make-atom "XA_WEIGHT_NAME") 
+			XA_FAMILY_NAME (make-atom "XA_FOUNDRY") XA_CAP_HEIGHT)
+		  (list #f #t #t #t #t #t #t #f))
+	data)))
+
+(let* ((label-render-table (cadr (XtVaGetValues (cadr (main-widgets)) (list XmNlabelRenderTable 0))))
+       (renditions (and label-render-table 
+			(XmRenderTableGetRenditions label-render-table (XmRenderTableGetTags label-render-table))))
+       (default-font-name (and renditions
+			       (cadr (XmRenditionRetrieve (car renditions) (list XmNfontName 0)))))
+       (default-font-info (and renditions
+			       (XmRenditionRetrieve (car renditions) (list XmNfont 0 XmNfontType 0))))
+       )
+  (list default-font-name default-font-info XmFONT_IS_FONT))
+
+;;; TODO: incorporate xmrendertable tests
+!#
+
 	    ;; ---------------- XM tests ----------------
 	    (let ((dpy (XtDisplay (cadr (main-widgets))))
 		  (win (XtWindow (cadr (main-widgets)))))

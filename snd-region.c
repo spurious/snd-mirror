@@ -1207,7 +1207,7 @@ static XEN g_play_region (XEN n, XEN wait)
   rg = XEN_REGION_TO_C_INT(n);
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_play_region, n));
-  play_region(rg, !wt);
+  play_region(rg, (wt) ? NOT_IN_BACKGROUND : IN_BACKGROUND);
   return(n);
 }
 

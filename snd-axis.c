@@ -959,7 +959,7 @@ axis_info *make_axis_info (chan_info *cp, double xmin, double xmax, Float ymin, 
 
 #define TO_C_AXIS_INFO(Snd, Chn, Ap, Caller) \
   get_ap(get_cp(Snd, Chn, Caller), \
-         XEN_TO_C_INT_OR_ELSE(Ap, TIME_AXIS_INFO), \
+         (axis_info_t)XEN_TO_C_INT_OR_ELSE(Ap, (int)TIME_AXIS_INFO), \
          Caller)
 
 
@@ -1180,7 +1180,7 @@ static XEN g_set_x_axis_label(XEN label, XEN snd, XEN chn, XEN ax)
   ap = TO_C_AXIS_INFO(snd, chn, ax, S_x_axis_label);
   if (ap->xlabel) FREE(ap->xlabel);
   ap->xlabel = copy_string(XEN_TO_C_STRING(label));
-  if ((XEN_TO_C_INT(ax)) == TRANSFORM_AXIS_INFO)
+  if ((XEN_TO_C_INT(ax)) == (int)TRANSFORM_AXIS_INFO)
     set_fft_info_xlabel(ap->cp, ap->xlabel);
   update_graph(ap->cp);
   return(label);

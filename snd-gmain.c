@@ -52,7 +52,7 @@
 #define CHANNEL_MIN_HEIGHT 150
 #define SASH_SIZE 14
 #define SASH_INDENT -6
-#define AUTO_RESIZE_DEFAULT 1
+#define AUTO_RESIZE_DEFAULT true
 
 #ifndef SND_AS_WIDGET
 static gint window_close(GtkWidget *w, GdkEvent *event, gpointer context)

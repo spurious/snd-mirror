@@ -137,7 +137,9 @@ bool recorder_input_device(int dev)
     case MUS_AUDIO_MIXER:
     case MUS_AUDIO_DAC_FILTER:
     case MUS_AUDIO_AUX_OUTPUT:
-    case MUS_AUDIO_DAC_OUT: return(0); break;
+    case MUS_AUDIO_DAC_OUT: 
+      return(false); 
+      break;
     case MUS_AUDIO_DUPLEX_DEFAULT: 
     case MUS_AUDIO_ADAT_IN: 
     case MUS_AUDIO_AES_IN:
@@ -146,7 +148,9 @@ bool recorder_input_device(int dev)
     case MUS_AUDIO_MICROPHONE: 
     case MUS_AUDIO_DIGITAL_IN: 
     case MUS_AUDIO_CD:
-    default: return(true); break;
+    default: 
+      return(true); 
+      break;
     }
   snd_error(_("unknown audio device: %d"), dev);
   return(false);

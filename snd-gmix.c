@@ -320,7 +320,7 @@ static void beg_activated(GtkWidget *w, gpointer context)
     {
       mix_id = current_mix_id();
       cp = mix_channel_from_id(mix_id);
-      set_mix_position(mix_id, (int)(string2Float(val) * SND_SRATE(cp->sound)));
+      set_mix_position(mix_id, (off_t)(string2Float(val) * SND_SRATE(cp->sound)));
       update_mix_panel(mix_id);
     }
 }

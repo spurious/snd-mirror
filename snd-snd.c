@@ -1339,7 +1339,7 @@ void reset_controls(snd_info *sp)
   toggle_contrast_button(sp, DEFAULT_CONTRAST_CONTROL_P);
   toggle_reverb_button(sp, DEFAULT_REVERB_CONTROL_P);
   toggle_filter_button(sp, DEFAULT_FILTER_CONTROL_P);
-  toggle_direction_arrow(sp, 0);
+  toggle_direction_arrow(sp, false);
   set_snd_amp(sp, DEFAULT_AMP_CONTROL);
   set_snd_srate(sp, DEFAULT_SPEED_CONTROL);
   set_snd_contrast(sp, DEFAULT_CONTRAST_CONTROL);

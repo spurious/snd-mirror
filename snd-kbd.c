@@ -1154,7 +1154,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      cursor_move(cp, -count * 128); 
 	      break;
 	    case snd_K_Q: case snd_K_q: 
-	      play_channel(cp, CURSOR(cp), NO_END_SPECIFIED, true, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "C-q", 0);
+	      play_channel(cp, CURSOR(cp), NO_END_SPECIFIED, IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "C-q", 0);
 	      break;
 #if HAVE_EXTENSION_LANGUAGE
 	    case snd_K_R: case snd_K_r: 
@@ -1201,7 +1201,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      break;
 	    case snd_K_Z: case snd_K_z: 
 	      cp->cursor_on = true; 
-	      cursor_zeros(cp, count, 0); 
+	      cursor_zeros(cp, count, false); 
 	      break;
 	    case snd_K_Right: 
 	      sx_incremented(cp, state_amount(state)); 

@@ -36,7 +36,6 @@ void erase_rectangle (chan_info *cp, axis_context *ax, int x0, int y0, int width
 void fill_polygon(axis_context *ax, int points, ...);
 void draw_polygon(axis_context *ax, int points, ...);
 void draw_string (axis_context *ax, int x0, int y0, char *str, int len);
-void draw_lines (axis_context *ax, GdkPoint *points, int num);
 void draw_arc(axis_context *ax, int x, int y, int size);
 void set_grf_points(Locus xi, int j, Locus ymin, Locus ymax);
 void set_grf_point(Locus xi, int j, Locus yi);
@@ -376,7 +375,7 @@ void sg_list_insert(GtkWidget *w, int row, char *val);
 void sg_list_select(GtkWidget *lst, int row);
 void sg_list_moveto(GtkWidget *lst, int row);
 
-GtkWidget *make_scrolled_text(GtkWidget *parent, int editable, GtkWidget *boxer, GtkWidget *paner);
+GtkWidget *make_scrolled_text(GtkWidget *parent, bool editable, GtkWidget *boxer, GtkWidget *paner);
 GtkWidget *sg_make_list(const char *title, GtkWidget *parent, int paned, gpointer gp, int num_items, char **items, GtkSignalFunc callback, int t1, int t2, int t3, int t4);
 void sg_text_delete(GtkWidget *w, int start, int end);
 void sg_make_resizable(GtkWidget *w);

@@ -73,12 +73,11 @@ a built-in default value, so you can ignore any that are already acceptable:</p>
 <tr><td>autoResize</td>                       <td>1</td></tr>
 <tr><td>horizontalPanes</td>                  <td>0</td></tr>
 <tr><td><br></td><td><br></td></tr>
-<tr><td>boldbuttonFont</td>                   <td>-*-times-bold-r-*-*-14-*-*-*-*-*-*-*</td></tr>
 <tr><td>peaksFont</td>                        <td>-*-times-medium-r-*-*-14-*-*-*-*-*-*-*</td></tr>
 <tr><td>boldpeaksFont</td>                    <td>-*-times-bold-r-*-*-14-*-*-*-*-*-*-*</td></tr>
 <tr><td>axisLabelFont</td>                    <td>-*-times-medium-r-normal-*-20-*-*-*-*-*-*-*</td></tr>
 <tr><td>axisNumbersFont</td>                  <td>-*-courier-medium-r-normal-*-14-*-*-*-*-*-*-*</td></tr>
-<tr><td>listenerFont</td>                     <td>default</td></tr>
+<tr><td>listenerFont</td>                     <td>default font (fixed 7x13, I think)</td></tr>
 <tr><td><br></td><td><br></td></tr>
 <tr><td>useSchemes</td>                       <td>none</td></tr>
 <tr><td>highlightcolor</td>                   <td>ivory1</td></tr>
@@ -115,6 +114,8 @@ using the -xrm switch:</p>
   snd -xrm '*mixwaveformcolor: red' oboe.snd -notebook
   snd oboe.snd pistol.snd -xrm '*selectedgraphcolor: black' -xrm '*selecteddatacolor: white'
   snd oboe.snd -title hiho -display hummer.hiho:0.0 -xrm '*chn-graph*backgroundPixmap: text.xpm'
+  snd -xrm '*fontList: -*-times-medium-r-*-*-14-*-*-*-*-*-*-*'
+  snd -xrm '*fontList: -*-symbol-*-*-*-*-18-*-*-*-*-*-*-*'
 </pre>
 <p>Perhaps this is most useful when your window manager assumes white text for labels (menus);
 since Snd defaults to an off-white background, this makes everything unreadable. You can get
@@ -143,11 +144,15 @@ to work, set the autoResize resource to 0:</p>
 
 <p>These resources can be set in Snd.ad or in your .Xdefaults file:</p>
 <pre>
-snd*boldbuttonFont:     -*-times-bold-r-*-*-14-*-*-*-*-*-*-*
 snd*axisLabelFont:      -*-times-medium-r-normal-*-18-*-*-*-*-*-*-*
 snd*axisNumbersFont:    9x15
-snd*fontList:           9x15
+snd*fontList:           -*-times-bold-r-*-*-14-*-*-*-*-*-*-*
 </pre>
+
+<p>To find what fonts are available, and what they look like, I use xfontsel.
+I think other toolkits use helvetica where Motif defaults to a small fixed font --
+it looks like 7x13 on my machine.
+</p>
 
 <p>
 The <A NAME="xautoresize">autoResize resource</a> determines how Snd acts when files

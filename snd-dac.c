@@ -535,7 +535,7 @@ static void reflect_play_stop (snd_info *sp)
 #endif
   if (sp->short_filename)
     set_file_browser_play_button(sp->short_filename, 0);
-  set_open_file_play_button(0);
+  set_open_file_play_button(false);
   reflect_play_stop_in_popup_menu();
 }
 
@@ -742,7 +742,7 @@ static bool disable_play = false;
 static XEN g_disable_play(void) {disable_play = true; return(XEN_FALSE);}
 static XEN g_enable_play(void) {disable_play = false; return(XEN_TRUE);}
 
-static void start_dac(int srate, int channels, bool background)
+static void start_dac(int srate, int channels, play_process_t background)
 {
   dac_info *dp;
   int i;
@@ -862,7 +862,7 @@ static dac_info *add_region_channel_to_play_list(int region, int chan, off_t beg
   return(NULL);
 }
 
-void play_region(int region, bool background)
+void play_region(int region, play_process_t background)
 {
   /* just plays region (not current selection) -- no control panel etc */
   int chans, i;
@@ -902,7 +902,7 @@ static bool call_start_playing_selection_hook(void)
 				 S_start_playing_selection_hook))));
 }
 
-void play_channel(chan_info *cp, off_t start, off_t end, bool background, XEN edpos, const char *caller, int arg_pos)
+void play_channel(chan_info *cp, off_t start, off_t end, play_process_t background, XEN edpos, const char *caller, int arg_pos)
 {
   /* just plays one channel (ignores possible sync), includes start-hook */
   snd_info *sp = NULL;
@@ -919,7 +919,7 @@ void play_channel(chan_info *cp, off_t start, off_t end, bool background, XEN ed
     }
 }
 
-void play_sound(snd_info *sp, off_t start, off_t end, bool background, XEN edpos, const char *caller, int arg_pos)
+void play_sound(snd_info *sp, off_t start, off_t end, play_process_t background, XEN edpos, const char *caller, int arg_pos)
 {
   /* just plays one sound (ignores possible sync) */
   int i;
@@ -938,7 +938,8 @@ void play_sound(snd_info *sp, off_t start, off_t end, bool background, XEN edpos
     }
 }
 
-void play_channels(chan_info **cps, int chans, off_t *starts, off_t *ur_ends, bool background, XEN edpos, const char *caller, int arg_pos, bool selection)
+void play_channels(chan_info **cps, int chans, off_t *starts, off_t *ur_ends, play_process_t background, 
+		   XEN edpos, const char *caller, int arg_pos, bool selection)
 {
   /* ends can be NULL */
   int i;
@@ -979,7 +980,7 @@ void play_channels(chan_info **cps, int chans, off_t *starts, off_t *ur_ends, bo
     }
 }
 
-void play_selection(bool background, XEN edpos, const char *caller, int arg_pos)
+void play_selection(play_process_t background, XEN edpos, const char *caller, int arg_pos)
 {
   /* just plays the current selection */
   int i;
@@ -2008,7 +2009,7 @@ int run_apply(int ofd)
 
 /* -------------------------------- scheme connection -------------------------------- */
 
-static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool background, bool syncd, XEN end_n, XEN edpos, const char *caller, int arg_pos) 
+static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool back, bool syncd, XEN end_n, XEN edpos, const char *caller, int arg_pos) 
 {
   /* all chans if chn_n omitted, arbitrary file if snd_n is name */
   snd_info *sp;
@@ -2019,9 +2020,12 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool background, bool sync
   off_t samp = 0;
   off_t end = NO_END_SPECIFIED;
   off_t *ends = NULL;
+  play_process_t background;
   if (XEN_OFF_T_P(end_n)) end = XEN_TO_C_OFF_T(end_n);
 #if USE_NO_GUI
-  background = 0;
+  background = NOT_IN_BACKGROUND;
+#else
+  if (back) background = IN_BACKGROUND; else background = NOT_IN_BACKGROUND;
 #endif
 
   /* if even samp_n is XEN_UNDEFINED, start_dac? */
@@ -2125,10 +2129,12 @@ static XEN g_play_selection(XEN wait, XEN edpos)
   #define H_play_selection "(" S_play_selection " (wait #f) (pos -1)): play the selection. 'pos' refers \
 to the edit position, 'wait', if #t, causes " S_play_selection " to wait until the playing is finished \
 before returning."
+  bool back;
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(wait), wait, XEN_ARG_1, S_play_selection, "a boolean");
+  back = (!(TO_C_BOOLEAN_OR_FALSE(wait)));
   if (selection_is_active())
     {
-      play_selection(!(TO_C_BOOLEAN_OR_FALSE(wait)), edpos, S_play_selection, 2);
+      play_selection((back) ? IN_BACKGROUND : NOT_IN_BACKGROUND, edpos, S_play_selection, 2);
       return(XEN_TRUE);
     }
   return(snd_no_active_selection_error(S_play_selection));
@@ -2346,6 +2352,7 @@ static XEN g_start_playing(XEN Chans, XEN Srate, XEN In_Background)
 If a play-list is waiting, start it."
 
   int chans, srate;
+  bool back;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(Chans), Chans, XEN_ARG_1, S_start_playing, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(Srate), Srate, XEN_ARG_2, S_start_playing, "a number");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(In_Background), In_Background, XEN_ARG_3, S_start_playing, "a boolean");
@@ -2355,7 +2362,8 @@ If a play-list is waiting, start it."
   srate = XEN_TO_C_INT_OR_ELSE(Srate, 44100);
   if (srate <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_start_playing, 2, Srate, "srate ~A <= 0?");
-  start_dac(srate, chans, XEN_TO_C_BOOLEAN_OR_TRUE(In_Background));
+  back = XEN_TO_C_BOOLEAN_OR_TRUE(In_Background);
+  start_dac(srate, chans, (back) ? IN_BACKGROUND : NOT_IN_BACKGROUND);
   return(XEN_FALSE);
 }
 

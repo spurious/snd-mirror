@@ -1,5 +1,7 @@
 #include "snd.h"
 
+/* TODO: this dialog is needlessly ugly -- fix the button box */
+
 /* envelope editor and viewer */
 
 static GtkWidget *enved_dialog = NULL;
@@ -802,7 +804,7 @@ static void reflect_changed_base(Float val)
 {
   Float ival;
   if (val <= 0.0) 
-    ival = 0;
+    ival = 0.0;
   else
     {
       if (val == 1.0)

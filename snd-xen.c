@@ -1717,7 +1717,7 @@ static XEN g_abortq(void)
   return(XEN_FALSE);
 }
 
-snd_info *get_sp(XEN x_snd_n, bool accept_player)
+snd_info *get_sp(XEN x_snd_n, sp_sound_t accept_player)
 {
   int snd_n, len;
   /* if x_snd_n is a number, it is sp->index
@@ -1734,7 +1734,7 @@ snd_info *get_sp(XEN x_snd_n, bool accept_player)
 	}
       else
 	{
-	  if (accept_player)
+	  if (accept_player == PLAYERS_OK)
 	    return(player(snd_n));
 	}
       return(NULL);

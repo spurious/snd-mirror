@@ -182,7 +182,7 @@ void delete_region_and_update_browser(int pos)
 	}
       else 
 	current_region = -1;
-      update_region_browser(1);
+      update_region_browser(true);
     }
 }
 
@@ -351,7 +351,7 @@ static void make_region_dialog(void)
       r->parent = REGION_VIEWER;
     }
 
-  update_region_browser(0);
+  update_region_browser(false);
 
   /* in Gtk, apparently, labels are just the text, not the background (i.e. they're transparent) */
   /* we need a button simply to get the background color, then a vbox to put four labels on the button */

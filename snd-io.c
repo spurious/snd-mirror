@@ -268,7 +268,7 @@ int snd_write_header(const char *name, int type, int srate, int chans, off_t loc
   return(err);
 }
 
-int snd_remove(const char *name, bool forget)
+int snd_remove(const char *name, cache_remove_t forget)
 {
   int err = 0;
   if (forget == REMOVE_FROM_CACHE) mus_sound_forget(name); /* no error here if not in sound tables */

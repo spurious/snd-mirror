@@ -3050,8 +3050,8 @@ static int read_esps_header(int chan)
 {
   char str[80];
   bool happy = true;
-  off_t curbase;
-  int k, hend, j, n, chars, floats, shorts, doubles, bytes;
+  off_t curbase, hend;
+  int k, j, n, chars, floats, shorts, doubles, bytes;
   bool little;
   little = (hdrbuf[18] == 0);
   if (little)

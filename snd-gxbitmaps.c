@@ -1,5 +1,7 @@
 #include "snd.h"
 
+/* TODO: need transparent backgrounds */
+
 #if (HAVE_XPM) || (USE_GTK)
 
 /* -------------------------------- SOUND ICONS (lock, bomb) -------------------------------- */

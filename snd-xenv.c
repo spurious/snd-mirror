@@ -1,5 +1,7 @@
 #include "snd.h"
 
+/* TODO: if font is 6x10 or 5x8, formd goes berserk */
+
 /* envelope editor and viewer */
 
 static Widget enved_dialog = NULL;
@@ -93,7 +95,8 @@ void make_scrolled_env_list (void)
   XmString *strs;
   int n, size;
   size = enved_all_envs_top();
-  if (!(ss->using_schemes)) XtVaSetValues(screnvlst, XmNbackground, (ss->sgx)->highlight_color, NULL); 
+  if (!(ss->using_schemes)) 
+    XtVaSetValues(screnvlst, XmNbackground, (ss->sgx)->highlight_color, NULL); 
   strs = (XmString *)CALLOC(size, sizeof(XmString)); 
   for (n = 0; n < size; n++) 
     strs[n] = XmStringCreate(enved_all_names(n), XmFONTLIST_DEFAULT_TAG);
@@ -565,12 +568,15 @@ static void selection_button_pressed(Widget s, XtPointer context, XtPointer info
   if (apply_to_selection) 
     {
       if (apply_to_mix) 
-	XmChangeColor(mixB, ((Pixel)(ss->sgx)->highlight_color));
+	{
+	  if (!(ss->using_schemes))
+	    XmChangeColor(mixB, ((Pixel)(ss->sgx)->highlight_color));
+	}
       apply_to_mix = false;
     }
-  XmChangeColor(selectionB, 
-		(apply_to_selection) ? ((Pixel)(ss->sgx)->yellow) : 
-                                       ((Pixel)(ss->sgx)->highlight_color));
+  if (!(ss->using_schemes))
+    XmChangeColor(selectionB, 
+		  (apply_to_selection) ? ((Pixel)(ss->sgx)->yellow) : ((Pixel)(ss->sgx)->highlight_color));
   set_sensitive(apply2B, (!apply_to_mix));
   if ((enved_target(ss) != ENVED_SPECTRUM) && 
       (enved_wave_p(ss)) && 
@@ -586,7 +592,10 @@ static void mix_button_pressed(Widget w, XtPointer context, XtPointer info)
   if (apply_to_mix) 
     {
       if (apply_to_selection) 
-	XmChangeColor(selectionB, ((Pixel)(ss->sgx)->highlight_color));
+	{
+	  if (!(ss->using_schemes))
+	    XmChangeColor(selectionB, ((Pixel)(ss->sgx)->highlight_color));
+	}
       apply_to_selection = false;
       if (ss->selected_mix != INVALID_MIX_ID) 
 	mix_id = ss->selected_mix; 
@@ -613,9 +622,9 @@ static void mix_button_pressed(Widget w, XtPointer context, XtPointer info)
 	    }
 	}
     }
-  XmChangeColor(mixB, 
-		(apply_to_mix) ? ((Pixel)(ss->sgx)->yellow) : 
-                                 ((Pixel)(ss->sgx)->highlight_color));
+  if (!(ss->using_schemes))
+    XmChangeColor(mixB, 
+		  (apply_to_mix) ? ((Pixel)(ss->sgx)->yellow) : ((Pixel)(ss->sgx)->highlight_color));
   set_sensitive(apply2B, (!apply_to_mix));
   if ((enved_target(ss) == ENVED_AMPLITUDE) && 
       (enved_wave_p(ss)) && 
@@ -670,15 +679,15 @@ static void redo_button_pressed(Widget w, XtPointer context, XtPointer info)
 static void reflect_apply_state (void)
 {
   set_label(nameL, _(env_names[enved_target(ss)]));
-  XmChangeColor(ampB, 
-		(enved_target(ss) == ENVED_AMPLITUDE) ? ((Pixel)(ss->sgx)->green) : 
-                                                      ((Pixel)(ss->sgx)->highlight_color));
-  XmChangeColor(fltB, 
-		(enved_target(ss) == ENVED_SPECTRUM) ? ((Pixel)(ss->sgx)->green) : 
-                                                     ((Pixel)(ss->sgx)->highlight_color));
-  XmChangeColor(srcB, 
-		(enved_target(ss) == ENVED_SRATE) ? ((Pixel)(ss->sgx)->green) : 
-                                                  ((Pixel)(ss->sgx)->highlight_color));
+  if (!(ss->using_schemes))
+    {
+      XmChangeColor(ampB, 
+		    (enved_target(ss) == ENVED_AMPLITUDE) ? ((Pixel)(ss->sgx)->green) : ((Pixel)(ss->sgx)->highlight_color));
+      XmChangeColor(fltB, 
+		    (enved_target(ss) == ENVED_SPECTRUM) ? ((Pixel)(ss->sgx)->green) : ((Pixel)(ss->sgx)->highlight_color));
+      XmChangeColor(srcB, 
+		    (enved_target(ss) == ENVED_SRATE) ? ((Pixel)(ss->sgx)->green) : ((Pixel)(ss->sgx)->highlight_color));
+    }
   if ((!showing_all_envs) && 
       (enved_wave_p(ss))) 
     env_redisplay();
@@ -1480,7 +1489,7 @@ Widget create_envelope_editor(void)
       screnvlst = XmCreateScrolledList(colD, "scrolled-env-list", args, n);
       XtManageChild(screnvlst); 
       XtAddCallback(screnvlst, XmNbrowseSelectionCallback, env_browse_callback, NULL);
-      map_over_children(screnvlst, set_main_color_of_widget, NULL);
+      if (!(ss->using_schemes)) map_over_children(screnvlst, set_main_color_of_widget, NULL);
       if (enved_all_envs_top() > 0) make_scrolled_env_list();
 
       /* -------- MAIN GRAPH -------- */
@@ -1619,7 +1628,8 @@ void enved_reflect_selection(bool on)
       if ((apply_to_selection) && (!on))
 	{
 	  apply_to_selection = false;
-	  XmChangeColor(selectionB, (Pixel)(ss->sgx)->highlight_color);
+	  if (!(ss->using_schemes))
+	    XmChangeColor(selectionB, (Pixel)(ss->sgx)->highlight_color);
 	}
       if ((enved_target(ss) != ENVED_SPECTRUM) && 
 	  (enved_wave_p(ss)) && 

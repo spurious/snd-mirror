@@ -18,7 +18,7 @@ static XEN mark_hook; /* add, delete, move */
 #define MARK_ID_MASK   0x0fffffff
 #define MARK_VISIBLE   0x10000000
 
-static mark *map_over_marks(chan_info *cp, mark_map_func *func, void *m, int direction)
+static mark *map_over_marks(chan_info *cp, mark_map_func *func, void *m, read_direction_t direction)
 {
   int i, marks, pos;
   mark *mp;
@@ -2201,7 +2201,7 @@ static bool find_any_marks (chan_info *cp, void *ptr)
 {
   if (cp->marks) 
     return(cp->mark_ctr[cp->edit_ctr] >= 0); /* initialized to -1 -- 0 is first mark */
-  return(0);
+  return(false);
 }
 
 static XEN g_save_marks(XEN snd_n)
