@@ -1,5 +1,5 @@
 
-;; Ladspa2.scm
+;; ladspa.scm
 ;; Use ladspa plugins with the help of a mouse. -Kjetil S. Matheussen.
 
 
@@ -43,19 +43,40 @@
 ;; -In some resize-positions, some widgets becomes invisible.
 ;; -Realtime preview wont work if number of frames sent to the
 ;;  dac-hook is more than 8192. (minor problem probably, and is solved
-;;  by increasing "maxbuf" in the script to something larger than 8192).
+;;  by increasing "ladspa-maxbuf" to something larger than 8192).
 
 
+
+
+
+
+
+;; Increase this number if you can't preview sound because of large latency in the system.
+;; Note, this is not the latency, just the maximum buffer size. The only bad consequence about
+;; increasing this number, is the increased use of memory.
+
+(define ladspa-maxbuf 8192)
+
+
+
+(define use-gtk (if (provided? 'snd-gtk)
+		    #t
+		    #f))
 
 ;; This should take care of all the functions we need.
-(load-from-path "new-effects.scm")
+(if (not (defined? 'add-sliders))
+    (load-from-path (if use-gtk
+			"gtk-effects.scm"
+			"new-effects.scm")))
 
 
-;(load "/usr/lib/snd/scheme/new-effects.scm")
+;; Using submenues
+(if (not (defined? 'add-submenu))
+    (load-from-path "menues.scm"))
 
 
 ;; Organize help texts.
-(load "ladspa-help.scm")
+(load-from-path "ladspa-help.scm")
 
 
 (define ladspa-help-assoclist '())
@@ -96,7 +117,7 @@
 
 
 
-(define (ladspa-class libname plugname maxbuf)
+(define (ladspa-class libname plugname)
   (define descriptor #f)
   
   ;; List of ladspa plugin handles.
@@ -128,7 +149,7 @@
   (define* (open #:optional (num_handles 1))
     (set! ports (map (lambda (port) (if port
 					port
-					(make-vct maxbuf)))
+					(make-vct ladspa-maxbuf)))
 		     ports))
     (if (= 0 num_handles)
 	#t
@@ -201,7 +222,7 @@
     descriptor)
 
 
-  ;; Warning, len must not be larger than maxbuf.
+  ;; Warning, len must not be larger than ladspa-maxbuf.
   (define (run len)
     (for-each (lambda (handle) (ladspa-run descriptor handle len))
 	      handles))
@@ -212,9 +233,6 @@
 
   (define (get-input-control num)
     (vct-ref (list-ref ports num) 0))
-
-;(((x) & LADSPA_HINT_DEFAULT_MASK)   \
-;                                           == LADSPA_HINT_DEFAULT_0)
 
 
 
@@ -261,7 +279,7 @@
   (define (apply-soundobject sdobj)
     (let* ((len (sound-data-length sdobj))
 	   (num_chans (sound-data-chans sdobj)))
-      (if (> len maxbuf)
+      (if (> len ladspa-maxbuf)
 	  (begin 
 	    (display "Ladspa buffer to small. Can't use ladspa plugin in realtime.")
 	    (display "You can try to reduce the dac-size to fix the problem.")
@@ -297,7 +315,7 @@
 	  chan
 	  (get-startchan snd (+ chan 1))))
     (if (not (selection-member? (selected-sound)))
-	(select-all graph-popup-snd graph-popup-chn))
+	(select-all (selected-sound)))
     (let* ((snd (selected-sound))
 	   (start (selection-position))
 	   (length (selection-frames))
@@ -306,8 +324,8 @@
 	   (startchan (get-startchan snd 0))
 	   (tempfilenames '())
 	   (new-files '())
-	   (vct-out (make-vct maxbuf))
-	   (sdobj (make-sound-data chans maxbuf))
+	   (vct-out (make-vct ladspa-maxbuf))
+	   (sdobj (make-sound-data chans ladspa-maxbuf))
 	   (isbreaked #f)
 	   (readers '()))
       
@@ -341,11 +359,11 @@
 	    (start-progress-report)
 
 	    ;; Do the ladspa.
-	    (c-for 0 < (+ maxbuf length) maxbuf
+	    (c-for 0 < (+ ladspa-maxbuf length) ladspa-maxbuf
 		   (lambda (n)
 		     (if (< n length)
 			 (let ((len (min (- length n)
-					 maxbuf)))
+					 ladspa-maxbuf)))
 			   
 			   ;;(display "N: ")(display n)
 			   ;;(display " len: ")(display len)
@@ -360,7 +378,7 @@
 				 
 				 
 				 ;; Only happens at last iteration.
-				 (if (< len maxbuf)
+				 (if (< len ladspa-maxbuf)
 				     (set! sdobj (make-sound-data chans len))
 				     (set! vct-out (make-vct len)))
 
@@ -453,17 +471,13 @@
 	    (for-each (lambda (x)
 			(if (> (logand x LADSPA_PORT_CONTROL) 0)
 			    (if (> (logand x LADSPA_PORT_INPUT) 0)
-				(set! input-controls (cons n input-controls))
-				(set! output-controls (cons n output-controls)))
+				(set! input-controls (append input-controls (list n)))
+				(set! output-controls (append output-controls (list n))))
 			    (if (> (logand x LADSPA_PORT_INPUT) 0)
-				(set! input-audios (cons n input-audios))
-				(set! output-audios (cons n output-audios))))
+				(set! input-audios (append input-audios (list n)))
+				(set! output-audios (append output-audios (list n)))))
 			(set! n (+ n 1)))
 		      (.PortDescriptors descriptor)))
-	  (set! input-controls (reverse input-controls))
-	  (set! output-controls (reverse output-controls))
-	  (set! input-audios (reverse input-audios))
-	  (set! output-audios (reverse output-audios))
 	  (if (= (length input-audios) 0)
 	      (begin
 		(set! min_num_audios (length output-audios))
@@ -519,6 +533,46 @@
 
   dispatcher)
 
+
+
+(define (make-ladspa-dialog-gtkstuff  label play-callback stop-callback ok-callback cancel-callback help-callback)
+  ;; Based on make-effect-dialog from gtk-effects.scm
+  (let* ((dismiss-button (gtk_button_new_with_label "Close"))
+	 (help-button (gtk_button_new_with_label "Help"))
+	 (ok-button (gtk_button_new_with_label "Apply"))
+	 (play-button (gtk_button_new_with_label "Play"))
+	 (stop-button (gtk_button_new_with_label "Stop"))
+	 (new-dialog (gtk_dialog_new)))
+    (gtk_widget_set_name dismiss-button "quit_button")
+    (gtk_widget_set_name help-button "help_button")
+    (gtk_widget_set_name ok-button "doit_button")
+    (gtk_window_set_title (GTK_WINDOW new-dialog) label)
+    (gtk_container_set_border_width (GTK_CONTAINER new-dialog) 10)
+    (gtk_window_set_default_size (GTK_WINDOW new-dialog) -1 -1)
+    (gtk_window_set_resizable (GTK_WINDOW new-dialog) #t)
+    (gtk_widget_realize new-dialog)
+
+    (g_signal_connect_closure_by_id (GPOINTER new-dialog)
+				    (g_signal_lookup "delete_event" (G_OBJECT_TYPE (GTK_OBJECT new-dialog)))
+				    0 (g_cclosure_new (lambda (w ev data)
+							(cancel-callback)
+							(gtk_widget_hide new-dialog)) 
+						      #f #f) #f)
+
+    (for-each
+     (lambda (button func)
+       (gtk_box_pack_start (GTK_BOX (.action_area (GTK_DIALOG new-dialog))) button #t #t 20)
+       (g_signal_connect_closure_by_id (GPOINTER button)
+				       (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT button)))
+				       0 (g_cclosure_new (lambda (w data) 
+							   (func))
+							 #f #f) #f)
+       (gtk_widget_show button))
+     (list ok-button play-button stop-button dismiss-button help-button)
+     (list ok-callback play-callback stop-callback (lambda () (gtk_widget_hide new-dialog)(cancel-callback)) help-callback))
+
+    ;; build rest in (.vbox (GTK_DIALOG new-dialog))
+    new-dialog))
 
 
 (define (make-ladspa-dialog-motifstuff label play-callback stop-callback ok-callback cancel-callback help-callback)
@@ -582,19 +636,10 @@
 
 
 
+
 (define (install-ladspa-menues)  
 
-  ;; Increase this number if you can't preview sound because of large latency in the system.
-  ;; Note, this is not the latency, just the maximum buffer size. The only bad consequence about
-  ;; increasing this number, is the increased use of memory.
 
-  ;; Note, because of a bug in the vstserver,
-  ;; 1024 is used as maximimum buffer size for vst plugins, no matter what maxbuf is.
-
-  (define maxbuf 8192)
-
-
-  
   (let* ((ladspa-effects-menu (add-to-main-menu "Ladspa" (lambda () (update-label '()))))
 	 (num-effects-per-submenu 12)
 	 (ladspa-effect-num num-effects-per-submenu)
@@ -603,19 +648,9 @@
     (define (ladspa-add-effect-menuitem name proc)
       (if (= num-effects-per-submenu ladspa-effect-num)
 	  (begin
-	    (set! curr-submenu (XmCreatePulldownMenu (main-menu ladspa-effects-menu) (substring name 0 2)
-						     (list XmNbackground (basic-color))))
-	    (XtCreateManagedWidget (string-append (substring name 0 (min (string-length name) 20)) " ... ")
-				   xmCascadeButtonWidgetClass (main-menu ladspa-effects-menu)
-				   (list XmNsubMenuId curr-submenu
-					 XmNbackground (basic-color)))
+	    (set! curr-submenu (add-submenu ladspa-effects-menu (string-append (substring name 0 (min (string-length name) 20)) " ... ")))
 	    (set! ladspa-effect-num -1)))
-      
-      (let ((child (XtCreateManagedWidget name xmPushButtonWidgetClass curr-submenu
-					  (list XmNbackground (basic-color)))))
-	(XtAddCallback child XmNactivateCallback
-		       (lambda (w c i)
-			 (proc))))
+      (add-to-menu curr-submenu name proc)
       (set! ladspa-effect-num (+ 1 ladspa-effect-num)))
     
     
@@ -623,6 +658,8 @@
       (define ladspa-object #f)
       (define ladspa-dialog #f)
       (define slider-funcs '())
+      (define seperator #f)
+      (define hbox #f)
       
       (let ((name (car ladspa-analysed))
 	    (author (cadr ladspa-analysed))
@@ -636,7 +673,9 @@
 
 	(define (ShowDialog)
 	  (activate-dialog ladspa-dialog)
-	  (XtSetValues onoffbutton (list XmNset #t))
+	  (if use-gtk
+	      (gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON onoffbutton) #t)
+	      (XtSetValues onoffbutton (list XmNset #t)))
 	  (let ((num_inputs (+ 1 (length ((ladspa-object 'input-control-ports))))))
 	    (set! (widget-size ladspa-dialog) (list (min 800 (max 400 (* num_inputs 20)))
 						    (min 800 (max 120 (* num_inputs 70))))))
@@ -653,19 +692,23 @@
 	(define (OK)
 	  (MyStop)
 	  (disableplugin)
-	  (XtSetValues onoffbutton (list XmNset #f))
+	  (if use-gtk
+	      (gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON onoffbutton) #f)
+	      (XtSetValues onoffbutton (list XmNset #f)))
 	  ((ladspa-object 'apply!)))
 
 	(define (Cancel)
 	  (disableplugin)
 	  (if (string=? "vst" libraryname)
 	      ((ladspa-object 'close)))
-	  (XtSetValues onoffbutton (list XmNset #f)))
+	  (if use-gtk
+	      (gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON onoffbutton) #f)
+	      (XtSetValues onoffbutton (list XmNset #f))))
 
 
 	(define (MyPlay)
 	  (if (not (selection-member? (selected-sound)))
-	      (select-all graph-popup-snd graph-popup-chn))
+	      (select-all (selected-sound)))
 	  (add-hook! stop-playing-selection-hook play-selection)
 	  (play-selection))
 
@@ -691,9 +734,8 @@
 	(define (ishint dashint dashint2)
 	  (not (= (logand dashint dashint2 ) 0)))
 
-	(set! ladspa-object (ladspa-class libraryname effectname (if (string=? "vst" libraryname)
-								     1024
-								     maxbuf)))
+	(set! ladspa-object (ladspa-class libraryname effectname))
+
 	(if ((ladspa-object 'constructor))
 	    (let ((descriptor ((ladspa-object 'descriptor))))
 
@@ -704,16 +746,20 @@
 				     (if (string=? "vst" libraryname)
 					 ((ladspa-object 'close)))
 				     #f))
+	
 
-	      
 	      ;; Make dialog
 	      (set! ladspa-dialog 
-		    (make-ladspa-dialog-motifstuff name
-						   MyPlay
-						   MyStop
-						   OK
-						   Cancel
-						   Help))
+		    ((if
+		      (not use-gtk)
+		      make-ladspa-dialog-motifstuff 
+		      make-ladspa-dialog-gtkstuff
+		      )	name
+			MyPlay
+			MyStop
+			OK
+			Cancel
+			Help))
 
 	      ;; Add sliders.
 	      (if (not (null? ((ladspa-object 'input-control-ports))))
@@ -726,8 +772,14 @@
 						   (hint (car (list-ref (.PortRangeHints descriptor) portnum)))
 						   (scale (if (ishint hint LADSPA_HINT_INTEGER)
 							      1
-							      100.0))
+							      (if use-gtk 1000.0 100.0)))
 						   (islog (ishint hint LADSPA_HINT_LOGARITHMIC)))
+					      
+					      ;;(if (and (string=? "cmt" libraryname) (string=? "grain_scatter" effectname))
+						;;  (begin
+						 ;;   (display (list-ref (.PortNames descriptor) portnum))(display " ")(display hint)(display " ")
+						  ;;  (display lo)(display " ")(display init)(display " ")(display hi)(newline)))
+
 					      (if (and #f islog (>= hi 0) (> hi lo) (not (= lo 0)) (not (= (log (max lo 1.0)) (log hi))))
 						  ;; Doesnt work very well for this purpose.
 						  (list (list-ref (.PortNames descriptor) portnum)
@@ -742,10 +794,14 @@
 							scale
 							'log)
 						  (begin
-						    (set! slider-funcs (cons (lambda (w c info)
-									       ((ladspa-object 'input-control-set!) portnum (/ (.value info)
-															       scale)))
-									     slider-funcs))
+						    (if use-gtk
+							(set! slider-funcs (cons (lambda (w data)
+										   ((ladspa-object 'input-control-set!) portnum (.value (GTK_ADJUSTMENT w))))
+										 slider-funcs))
+							(set! slider-funcs (cons (lambda (w c info)
+										   ((ladspa-object 'input-control-set!) portnum (/ (.value info)
+																   scale)))
+										 slider-funcs)))
 						    (list (list-ref (.PortNames descriptor) portnum)
 							  lo
 							  init
@@ -754,44 +810,82 @@
 							  scale)))))
 					  (my-filter (lambda (portnum) (not (ishint (car (list-ref (.PortRangeHints descriptor) portnum))  LADSPA_HINT_TOGGLED)))
 						     ((ladspa-object 'input-control-ports))))
-				     #f)))
+				     )))
 	      
-
-	      ;; Fix the sliders
+	      ;; Fix the sliders (only necesarry for motif)
 	      (set! slider-funcs (reverse slider-funcs))
-	      
-	      (for-each (lambda (slider slider-func)
-			  (XtAddCallback slider XmNdragCallback slider-func))
-			sliders
-			slider-funcs)
 
+	      (if (not use-gtk)
+		  (for-each (lambda (slider slider-func)
+			      (XtAddCallback slider XmNdragCallback slider-func))
+			    sliders
+			    slider-funcs))
+
+	      (if use-gtk
+		  (begin
+		    (set! seperator (gtk_hseparator_new))
+		    (set! hbox (gtk_hbox_new #f 0))
+		    (gtk_box_pack_start (GTK_BOX (.vbox (GTK_DIALOG ladspa-dialog))) hbox #f #f 4)
+		    (gtk_widget_show hbox)
+		    (gtk_box_pack_start (GTK_BOX hbox) seperator #t #t 4)
+		    (gtk_widget_show seperator)))
+		    
 	      
 	      ;; Add toggle buttons.
 	      (for-each (lambda (portnum)
 			  (let* ((hint (car (list-ref (.PortRangeHints descriptor) portnum)))
 				 (hi (caddr (list-ref (.PortRangeHints descriptor) portnum)))
 				 (lo (cadr (list-ref (.PortRangeHints descriptor) portnum)))
-				 (toggle (XtCreateManagedWidget (list-ref (.PortNames descriptor) portnum)
-								xmToggleButtonWidgetClass
-								(if (null? sliders) ladspa-dialog (XtParent (car sliders)))
-								(list XmNbackground       (basic-color)
-								      XmNset              (> ((ladspa-object 'get-input-control) portnum) 0)
-								      XmNselectColor      (yellow-pixel)))))
-			    (XtAddCallback toggle XmNvalueChangedCallback (lambda (w c i)
-									    ((ladspa-object 'input-control-set!) portnum (if (.set i) hi lo))))))
-
+				 (portname (list-ref (.PortNames descriptor) portnum))
+				 (onofffunc (ladspa-object 'input-control-set!))
+				 (ison (> ((ladspa-object 'get-input-control) portnum) 0)))
+			    (if use-gtk
+				(let ((button (gtk_check_button_new_with_label portname)))
+				  (gtk_box_pack_start (GTK_BOX hbox) button #t #t 4)
+				  (gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON button) ison)
+				  (gtk_widget_show button)
+				  (g_signal_connect_closure_by_id 
+				   (GPOINTER button)
+				   (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT button))) 0
+				   (g_cclosure_new (lambda (w d) 
+						     (onofffunc portnum (if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON w)) hi lo)))
+						   #f #f)
+				   #f))
+				(let ((toggle (XtCreateManagedWidget portname
+								     xmToggleButtonWidgetClass
+								     (if (null? sliders) ladspa-dialog (XtParent (car sliders)))
+								     (list XmNbackground       (basic-color)
+									   XmNset              ison
+									   XmNselectColor      (yellow-pixel)))))
+				  (XtAddCallback toggle XmNvalueChangedCallback (lambda (w c i)
+										  (onofffunc portnum (if (.set i) hi lo))))))))
+			
 			(my-filter (lambda (portnum) (ishint (car (list-ref (.PortRangeHints descriptor) portnum))  LADSPA_HINT_TOGGLED))
 				   ((ladspa-object 'input-control-ports))))
 
 
 
 	      ;; Add on/off button.
-	      (set! onoffbutton (XtCreateManagedWidget "On/off" xmToggleButtonWidgetClass (if (null? sliders) ladspa-dialog (XtParent (car sliders)))
-						       (list XmNbackground       (basic-color)
-							     XmNset              #f
-							     XmNselectColor      (yellow-pixel))))
-	      (XtAddCallback onoffbutton XmNvalueChangedCallback (lambda (w c i) (onoff (.set i))))
-
+	      (if use-gtk
+		  (begin
+		    (set! onoffbutton (gtk_check_button_new_with_label "On/off"))
+		    (gtk_box_pack_start (GTK_BOX hbox) onoffbutton #t #t 4)
+		    (gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON onoffbutton) #t)
+		    (gtk_widget_show onoffbutton)
+		    (g_signal_connect_closure_by_id 
+		     (GPOINTER onoffbutton)
+		     (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT onoffbutton))) 0
+		     (g_cclosure_new (lambda (w d) 
+				       (onoff (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON w))))
+				     #f #f)
+		     #f)
+		    )
+		  (begin
+		    (set! onoffbutton (XtCreateManagedWidget "On/off" xmToggleButtonWidgetClass (if (null? sliders) ladspa-dialog (XtParent (car sliders)))
+							     (list XmNbackground       (basic-color)
+								   XmNset              #f
+								   XmNselectColor      (yellow-pixel))))
+		    (XtAddCallback onoffbutton XmNvalueChangedCallback (lambda (w c i) (onoff (.set i))))))
 
 
 	      (ladspa-add-effect-menuitem name (lambda () (ShowDialog)))

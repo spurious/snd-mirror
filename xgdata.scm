@@ -5290,3 +5290,6 @@
 (CFNC-232 "GtkToggleAction* gtk_toggle_action_new gchar* name gchar* label gchar* tooltip gchar* stock_id")
 (CFNC-232 "void gtk_window_set_accept_focus GtkWindow* window gboolean setting")
 (CFNC-232 "gboolean gtk_window_get_accept_focus GtkWindow* window")
+
+(CFNC "gpointer g_list_nth_data GList* list guint n")
+

@@ -528,6 +528,9 @@ void snd_doit(int argc, char **argv)
       (!(set_bold_peaks_font(FALLBACK_FONT))))
     fprintf(stderr, _("can't find font: %s"), DEFAULT_BOLD_PEAKS_FONT);
 
+  if (!(set_listener_font(FALLBACK_FONT)))
+    fprintf(stderr, _("can't find font: %s"), FALLBACK_FONT);
+
   ss->init_file = copy_string(getenv(SND_INIT_FILE_ENVIRONMENT_NAME));
   if (ss->init_file == NULL)
     ss->init_file = INIT_FILE_NAME;

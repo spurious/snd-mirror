@@ -141,7 +141,8 @@
 
 ;;; -------- add these to the Edit menu, if possible
 
-(if (provided? 'xm)
+(if (and (not (provided? 'snd-gtk))
+	 (provided? 'xm))
     (let* ((edit-cascade (list-ref (menu-widgets) 2))
 	   (edit-menu (cadr (XtGetValues edit-cascade (list XmNsubMenuId 0)))))
 

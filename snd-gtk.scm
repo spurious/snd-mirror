@@ -611,9 +611,7 @@ Reverb-feedback sets the scaler on the feedback.
 	(add-to-menu 3 "Hidden controls" 
 		     (lambda () 
 		       (gtk_widget_show hidden-controls-dialog)))
-	))
-  (gtk_widget_show hidden-controls-dialog))
-
+	)))
 
 
 ;;; -------- show-disk-space

@@ -2010,7 +2010,6 @@ void snd_info_cleanup(snd_info *sp)
 
       if (SYNC_BUTTON(sp))
 	{
-
 	  set_toggle_button(SYNC_BUTTON(sp), false, false, (void *)sp);
 	  set_sync_color(sp);
 	  set_toggle_button(EXPAND_BUTTON(sp), false, false, (void *)sp);

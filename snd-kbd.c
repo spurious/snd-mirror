@@ -1,6 +1,5 @@
 #include "snd.h"
 
-/* TODO: C-x w -> mus-next no matter what?? -- need snd-test for this */
 /* TODO: resurrect lpc */
 
 #define NO_SUCH_KEY XEN_ERROR_TYPE("no-such-key")

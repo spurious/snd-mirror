@@ -1,4 +1,5 @@
 #include "snd.h"
+#include "clm2xen.h"
 
 /* SOMEDAY: if superimposed and 2chn cursor set, 1chan is xor'd, subsequent click sets both (and chan1 cursor takes precedence?) */
 /*    cursor redraw can check for this, but it gloms up code */
@@ -1871,10 +1872,11 @@ static int display_transform_peaks(chan_info *ucp, char *filename)
 		    {
 		      fprintf(fd, sp->short_filename);
 		      if (sp->nchans > 1) fprintf(fd, _(": chan %d"), cp->chan);
-		      fprintf(fd, _(", fft %d points beginning at sample " PRId64 " (%.3f secs)\n\n"),
+		      fprintf(fd, _(", fft %d points beginning at sample " PRId64 " (%.3f secs), %s\n\n"),
 			      fp->current_size, 
 			      ap->losamp, 
-			      (float)((double)(ap->losamp) / (double)srate));
+			      (float)((double)(ap->losamp) / (double)srate),
+			      mus_fft_window_name(cp->fft_window));
 		      for (i = 0; i < num_peaks; i++)
 			fprintf(fd, "  %.*f  %.5f\n",
 				tens, 

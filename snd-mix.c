@@ -2498,6 +2498,7 @@ void finish_moving_mix_tag(int mix_tag, int x)
       watch_mix_proc = 0;
     }
   md = md_from_id(mix_tag);
+  cs = md->active_mix_state;
   mix_dragged = false;
   if (XEN_HOOKED(mix_release_hook))
     res = run_progn_hook(mix_release_hook,
@@ -2507,7 +2508,6 @@ void finish_moving_mix_tag(int mix_tag, int x)
   if (md->active_mix_state->track == 0)
     {
       md->x = x;
-      cs = md->active_mix_state;
       ms = md->wg;
       ms->lastpj = 0;
       if (cs->beg == cs->orig) return;

@@ -3,31 +3,28 @@
 ;; -Kjetil S. Matheussen.
 
 
-
-;; This config-file is primarly made for use with motif, so by
-;; using gtk you will get less functionality.
+;; This config-file is primarly made for use with gtk, so by
+;; using motif you will get less functionality. (things change)
 (define use-gtk (if (provided? 'snd-gtk)
 		    #t
 		    #f))
 
 
+
 ;; Set various variables. See Snd documentation.
 
-
-#!
 (set! %load-path (append (if use-gtk
 			     '("/home/kjetil/snd-7-gtk" "/home/kjetil/snd-7-gtk/dlp")
 			     '("/home/kjetil/snd-7" "/home/kjetil/snd-7/dlp"))
 			 %load-path))
-!#
 
 
 ;;(set! snd-remember-paths #t)
 
 (set! (just-sounds) #t)
 
-;;(set! (temp-dir) "/lyd/local/tmp")
-;;(set! (save-dir) "/lyd/local/tmp")
+(set! (temp-dir) "/lyd/local/tmp")
+(set! (save-dir) "/lyd/local/tmp")
 
 (set! (default-output-srate) 44100)
 (set! (default-output-type) mus-riff)
@@ -37,12 +34,117 @@
 (set! (show-backtrace) #t)
 (set! (show-indices) #t)
 
-;(set! (auto-resize) #f)
+;;(set! (auto-resize) #f)
 
 ; Regions are created when needed when using the ctrl+y and ctrl+w keybindings.
 (set! (selection-creates-region) #f)
 
 
+;; Less than 2048 seems to be very unreliable.
+(if (< (dac-size) 2048)
+    (set! (dac-size) 2048))
+
+
+
+;; Documentation for this configuration file.
+(add-to-menu 4 "--------------------------------" (lambda ()(newline)) 0)
+(add-to-menu 4 "But! How do I..."
+	     (lambda ()
+	       (help-dialog  "How do I..."
+			     (apply string-append (map (lambda (s) (string-append s "\n"))
+						       '(
+							 "Play:"
+							 "     <Space>"
+							 ""
+							 "Play selection:"
+							 "     <Space>"
+							 ""
+							 "Stop playing:"
+							 "     <Space>"
+							 ""
+							 "Play from cursor:"
+							 "     p"
+							 ""
+							 "Pause playing:"
+							 "     p"
+							 ""
+							 "Play starting from mousepointer:"
+							 "     <Mouse Scroll Up/Down>"
+							 ""
+							 "Cut:"
+							 "      <Ctrl>+w"
+							 ""
+							 "Paste:"
+							 "      <Ctrl>+y"
+							 ""
+							 "Zoom in:"
+							 "      <Cursor down>"
+							 ""
+							 "Zoom out:"
+							 "      <Cursor up>"
+							 ""
+							 "Show all:"
+							 "      a"
+							 ""
+							 "Show selection:"
+							 "      s"
+							 ""
+							 "Undo:"
+							 "      <Ctrl>+_"
+							 ""
+							 "Make mark"
+							 "      m"
+							 ""
+							 "Set cursor at beginning:"
+							 "      <"
+							 ""
+							 "Set cursor at end:"
+							 "      >"
+							 ""
+							 "Change selection without destroying the old one:"
+							 "      <Ctrl> + <Mouse>"
+							 ""
+							 "Move selected area:"
+							 "      <Shift> + <Mouse>"
+							 ))))
+	       )
+	     0)
+
+
+
+;; Various general functions
+
+(define (c-for init pred least add proc)
+  (if (pred init least)
+      (begin
+        (proc init)
+        (c-for (+ add init) pred least add proc))))
+
+(define (g-list-foreach glist func)
+  (c-for 0 < (g_list_length glist) 1
+	 (lambda (n)
+	   (func (g_list_nth_data glist n)))))
+
+(define (gtk-get-nameform-button snd name)
+  (call-with-current-continuation
+   (lambda (exit)
+     (g-list-foreach (gtk_container_get_children (GTK_CONTAINER (GTK_BOX (list-ref (sound-widgets snd) 10))))
+		     (lambda (w)
+		       (if (and (GTK_IS_BUTTON w)
+				(string=? name (.label_text (GTK_BUTTON w))))
+			   (exit (GTK_BUTTON w))))))))
+
+
+(define (my-report text)
+  (change-window-property "SND_VERSION" "WM_NAME"
+			  (if (string=? " " text)
+			      (string-append "snd: "
+					     (apply string-append (map (lambda (snd) (string-append (short-file-name snd) ", "))
+								       (reverse (cdr (sounds)))))
+					     (short-file-name (car (sounds))))
+			      text)))
+
+  
 
 ;; This is the value for the loop-button.
 (define islooping #t)
@@ -105,6 +207,15 @@
 (set! (graph-style) graph-filled)
 
 
+;(add-hook! graph-hook
+;	   (lambda (snd chn y0 y1)
+;	     (display "graph-hook ")(display y0)(display " ")(display y1)(newline)
+;	     #f))
+
+;;(add-hook! initial-graph-hook
+;;	   (lambda (snd chn dur)
+;;	     (list 0.0 dur)))
+
 ;; Removes default mouse-click-hook handling. The possibility to paste with
 ;; mouse-button 2 is really annoying when using a wheel mouse.
 (add-hook! mouse-click-hook (lambda (snd chn button state x y axis)
@@ -118,55 +229,52 @@
 ;; Moves cursor and starts playing if clicking button 4. (wheel up)
 ; -Kjetil.
 
-
 (if #t
-
-    (add-hook! mouse-click-hook
-	       (lambda (snd chn button state x y axis)
-		 (define myplay play)
+    (if #t
+	
+	(add-hook! mouse-click-hook
+		   (lambda (snd chn button state x y axis)
+		     (define myplay play)
 #!
-		 (define (myplay samp)
-		   (let ((chans (chans snd)))
-		     (do ((chan 0 (1+ chan)))
-			 ((= chan chans))
-		       (let ((player (make-player snd chan)))
-			 (add-player player samp)))
-		     (start-playing chans (srate snd))))
+		     (define (myplay samp)
+		       (let ((chans (chans snd)))
+			 (do ((chan 0 (1+ chan)))
+			     ((= chan chans))
+			   (let ((player (make-player snd chan)))
+			     (add-player player samp)))
+			 (start-playing chans (srate snd))))
 !#
-
-		   (if (= axis time-graph)
-		     (let ((samp (inexact->exact (* (srate snd) (position->x x snd chn))))
-			   (dasspeed (speed-control)))
-		       (if (< samp 0) (set! samp 0))
-		       (stop-playing)
-		       (set! (cursor) samp)
-		       (cond ((= button 4)
-			      (if (< dasspeed 0)
-				  (set! (speed-control) (* -1 dasspeed)))
-			      (myplay samp))
-			     ((= button 5)
-			      (if (> dasspeed 0)
-				  (set! (speed-control) (* -1 dasspeed)))
-			      (play samp)))))
-		 #f))
-
-    (add-hook! mouse-click-hook
-	       (lambda (snd chn button state x y axis)
-		 (if (= axis time-graph)
-		     (let ((samp (inexact->exact (* (srate snd) (position->x x snd chn)))))
-		       (if (< samp 0) (set! samp 0))
-		       (if initfile-isplaying
-			   (if (or (= button 1) (= button 4) (= button 5))
-			       (begin
-				 (stop-playing)
-				 (if (not (= button 5))
-				     (play samp))))
+		     (if (= axis time-graph)
+			 (let ((samp (inexact->exact (* (srate snd) (position->x x snd chn))))
+			       (dasspeed (speed-control)))
+			   (if (< samp 0) (set! samp 0))
+			   (stop-playing)
+			   (set! (cursor) samp)
+			   (cond ((= button 4)
+				  (if (< dasspeed 0)
+				      (set! (speed-control) (* -1 dasspeed)))
+				  (myplay samp))
+				 ((= button 5)
+				  (if (> dasspeed 0)
+				      (set! (speed-control) (* -1 dasspeed)))
+				  (play samp)))))
+		     #f))
+	
+	(add-hook! mouse-click-hook
+		   (lambda (snd chn button state x y axis)
+		     (if (= axis time-graph)
+			 (let ((samp (inexact->exact (* (srate snd) (position->x x snd chn)))))
+			   (if (< samp 0) (set! samp 0))
+			   (if initfile-isplaying
+			       (if (or (= button 1) (= button 4) (= button 5))
+				   (begin
+				     (stop-playing)
+				     (if (not (= button 5))
+					 (play samp))))
 			   (if (= button 4)
 			       (begin
 				 (play samp))))))
-		 #f)))
-
-
+		     #f))))
 
 
 
@@ -208,7 +316,7 @@
 		  (remove-hook! stop-playing-selection-hook my-play-selection2)
 		  (remove-hook! stop-playing-hook my-play2)
 		  (stop-playing))
-		(if (selection-member? (selected-sound))
+		(if (my-selection?)
 		    (my-play-selection)
 		    (my-play (cursor))))))
 ;		    (play-selection-with-play)
@@ -355,62 +463,91 @@
 
 
 (begin
+  (define about-to-move #f)
   (define selection-starting-point #f)
   (define stop-handling #f)
 
-  (define (mouse-press-callback w context ev flag)
+  (define (mouse-press-callback x state)
     (if (not stop-handling)
-	(let* ((x (.x ev))
-	       (snd (selected-sound))
+	(let* ((snd (selected-sound))
 	       (chn (selected-channel))
 	       (samp (inexact->exact (* (srate snd) (position->x x snd chn)))))
 	  (if (< samp 0) (set! samp 0))
 	  (show-times (cursor) #t)
-	  (set! selection-starting-point samp))))
-  
-  (define (mouse-release-callback w context ev flag)
-    (if (and (not stop-handling)
-	     selection-starting-point)
-	(let* ((x (.x ev))
-	       (snd (selected-sound))
-	       (chn (selected-channel))
-	       (samp (max 0 (inexact->exact (* (srate snd) (position->x x snd chn))))))
-	  (if (not (= samp selection-starting-point))
-	      (if (< samp selection-starting-point)
+	  (if (= state 4)
+	      (if (my-selection?)
 		  (begin
-		    (set! (selection-position) samp)
-		    (set! (selection-frames) (- selection-starting-point samp)))
+		    (if (< samp (+ (/ (my-selection-frames) 2) (my-selection-position)))
+			(set! selection-starting-point (+ (my-selection-position) (my-selection-frames)))
+			(set! selection-starting-point (my-selection-position)))
+		    (mouse-motion-callback x state)))
+	      (if (and (= state 1) (my-selection?))
 		  (begin
-		    (set! (selection-position) selection-starting-point)
-		    (set! (selection-frames) (- samp selection-starting-point)))))
-	  (show-times (cursor) #t)
-	  (set! selection-starting-point #f))))
+		    (color-samples-allchans (channels) green (my-selection-position) (my-selection-frames))
+		    (set! about-to-move (list (my-selection-position) (my-selection-frames))))
+		  (set! selection-starting-point samp))))))
+
+  (define (mouse-motion-callback x state)
+    (let* ((snd (selected-sound))
+	   (chn (selected-channel))
+	   (samp (max 0 (inexact->exact (* (srate snd) (position->x x snd chn))))))
+      (if about-to-move
+	  (begin
+	    (set! (selection-position) samp)
+	    (set! (selection-frames) (cadr about-to-move)))
+	  (if (and (not stop-handling)
+		   (my-selection?))
+	      (let* ((selstart (my-selection-position))
+		     (selframes (my-selection-frames))
+		     (newselstart (if (< samp selection-starting-point)
+				      samp
+				      selection-starting-point))
+		     (newselframes (if (< samp selection-starting-point)
+				       (- selection-starting-point samp)
+				       (1+ (- samp selection-starting-point)))))
+		(if (and (or (not (= selstart newselstart))
+			     (not (= selframes newselframes)))
+			 (not (= samp selection-starting-point)))
+		    (begin
+		      ;;(display selstart)(display "->")(display newselstart)(newline)
+		      ;;(display selframes)(display "->")(display newselframes)(newline)
+		      (set! region-generation (+ region-generation 1))
+		      (set! (selection-position) newselstart)
+		      (set! (selection-frames) newselframes)))
+		(show-times (cursor) #t))))))
+    
+  (define (mouse-release-callback x state)
+    (define (nofunc . x)
+      #t)
+    (let* ((snd (selected-sound))
+	   (chn (selected-channel))
+	   (samp (max 0 (inexact->exact (* (srate snd) (position->x x snd chn))))))
+      (if about-to-move
+	  (begin
+	    (add-hook! graph-hook nofunc)
+	    (set! (selection-position) (car about-to-move))
+	    (set! (selection-frames) (cadr about-to-move))
+	    (my-cut)
+	    (set! (cursor) samp)
+	    (remove-hook! graph-hook nofunc)
+	    (my-paste)
+	    (set! (selection-position) samp)
+	    (set! (selection-frames) (cadr about-to-move))
+	    (set! about-to-move #f))
+	  (begin
+	    (if (and (not stop-handling)
+		     selection-starting-point)
+		(if (not (= samp selection-starting-point))
+		    (if (< samp selection-starting-point)
+			(begin
+			  (set! (selection-position) samp)
+			  (set! (selection-frames) (- selection-starting-point samp)))
+			(begin
+			  (set! (selection-position) selection-starting-point)
+			  (set! (selection-frames) (- samp selection-starting-point))))))
+	    (show-times (cursor) #t)
+	    (set! selection-starting-point #f)))))
   
-  (define (mouse-motion-callback w context ev flag)
-    (if (and (not stop-handling)
-	     (my-selection?))
-	(let* ((x (.x ev))
-	       (snd (selected-sound))
-	       (chn (selected-channel))
-	       (samp (max 0 (inexact->exact (* (srate snd) (position->x x snd chn)))))
-	       (selstart (my-selection-position))
-	       (selframes (my-selection-frames))
-	       (newselstart (if (< samp selection-starting-point)
-				samp
-				selection-starting-point))
-	       (newselframes (if (< samp selection-starting-point)
-				 (- selection-starting-point samp)
-				 (1+ (- samp selection-starting-point)))))
-	  (if (and (or (not (= selstart newselstart))
-		       (not (= selframes newselframes)))
-		   (not (= samp selection-starting-point)))
-	      (begin
-		;;(display selstart)(display "->")(display newselstart)(newline)
-		;;(display selframes)(display "->")(display newselframes)(newline)
-		(set! region-generation (+ region-generation 1))
-		(set! (selection-position) newselstart)
-		(set! (selection-frames) newselframes)))
-	  (show-times (cursor) #t))))
 
   (add-hook! mix-drag-hook
 	     (lambda (n) 
@@ -435,24 +572,41 @@
 	       (set! stop-handling #t)
 	       #f))
 
-  (if (not use-gtk)	     
-      (add-hook! after-open-hook
-		 (lambda (snd)
-		   (XtAddEventHandler (list-ref (channel-widgets snd 0) 0) ButtonPressMask #f 
-				      mouse-press-callback)
-		   (XtAddEventHandler (list-ref (channel-widgets snd 0) 0) ButtonMotionMask #f 
-				      mouse-motion-callback)
-		   (XtAddEventHandler (list-ref (channel-widgets snd 0) 0) ButtonReleaseMask #f 
-				      mouse-release-callback)
-		   #f))))
-  
 
+  (add-hook! after-open-hook
+	     (lambda (snd)
+	       (let ((w (list-ref (channel-widgets snd 0) 0)))
+		 (if (not use-gtk)	     
+		     (begin
+		       (XtAddEventHandler w ButtonPressMask #f 
+					  (lambda (w c e f)
+					    (mouse-press-callback (.x e) (.state e))))
+		       (XtAddEventHandler w ButtonMotionMask #f 
+					  (lambda (w c e f)
+					    (mouse-motion-callback (.x e) (.state e))))
+		       (XtAddEventHandler w ButtonReleaseMask #f 
+					  (lambda (w c e f)
+					    (mouse-release-callback (.x e) (.state e)))))
+		     (let ((ispressed #f))
+		       (g_signal_connect w "button_press_event"
+					 (lambda (w e i)
+					   (set! ispressed #t)
+					   (mouse-press-callback (.x (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e)))))
+		       (g_signal_connect w "motion_notify_event"
+					 (lambda (w e i)
+					   (if ispressed
+					       (mouse-motion-callback (.x (GDK_EVENT_MOTION e)) (.state (GDK_EVENT_BUTTON e))))))
+		       (g_signal_connect w "button_release_event"
+					 (lambda (w e i)
+					   (set! ispressed #f)
+					   (mouse-release-callback (.x (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e))))))))
+	       #f)))
 
 
 
 
 ;; Replace the C-y and C-w keybindings. These are equal, but writes
-;; "Please wait" to the minibuffer, colorize the inserted region and
+;; "Please wait" to the window bar, colorize the inserted region and
 ;; automaticly creates regions when needed if (selection-crates-region) is false.
 
 
@@ -471,51 +625,56 @@
       (if (> region-generation 0)
 	  (begin
 	    (set! region-generation 0)
-	    (make-region)))))
+	    (my-report "Please wait, making region...")
+	    (make-region)
+	    (my-report " ")))))
 
 
 (bind-key (char->integer #\r) 0
 	  my-make-region)
 
+(define (my-paste)
+  (if (my-selection?)
+      (my-make-region))
+  (if (> (length (regions)) 0)
+      (begin
+	(my-report "Please wait, inserting region...")
+	(color-samples-allchans (channels) 'black 0 0)
+	(let ((length (region-frames))
+	      (curspos (cursor)))
+	  (if (> length 5000000)
+	      (begin
+		(set! (with-background-processes) #f) ;; To prevent using horrible long time, and the little picture not to update properly.
+		(insert-region curspos)
+		(set! (with-background-processes) #t))
+	      (insert-region curspos)) ;; The little picture might not update properly. But turning off background-processes slows down pasting of small regions a lot.
+	  (if (> (sync) 0)
+	      (color-samples-allchans (channels) green curspos (region-frames))
+	      (color-samples green curspos (region-frames)))
+	  (set! iscolorized #t)
+	  (my-report "Please wait, updating time graph...")
+	  (update-time-graph)
+	  (my-report " ")))))
+
+
 (bind-key (char->integer #\y) 4
-	  (lambda ()
-	    (if (selection-member? (selected-sound))
-		(begin
-		  (my-make-region)))
-	    (if (> (length (regions)) 0)
-		(begin
-		  (report-in-minibuffer "Please wait...")
-		  (color-samples-allchans (channels) 'black 0 0)
-		  (let ((length (region-frames))
-			(curspos (cursor)))
-		    (if (> length 5000000)
-			(begin
-			  (set! (with-background-processes) #f) ;; To prevent using horrible long time, and the little picture not to update properly.
-			  (insert-region curspos)
-			  (set! (with-background-processes) #t))
-			(insert-region curspos)) ;; The little picture might not update properly. But turning off background-processes slows down pasting of small regions a lot.
-		    (if (> (sync) 0)
-			(color-samples-allchans (channels) green curspos (region-frames))
-			(color-samples green curspos (region-frames)))
-		    (set! iscolorized #t)
-		    (update-time-graph)
-		    (report-in-minibuffer " "))))))
+	  my-paste)
 
 
 
-
+(define (my-cut)
+  (if (my-selection?)
+      (let ((curspos (my-selection-position)))
+	(color-samples-allchans (channels) 'black 0 0)
+	(set! (cursor #t #t) curspos)
+	(my-make-region)
+	(my-report "Please wait, deleting selection...")
+	(delete-selection)
+	(set! iscolorized #f)
+	(my-report " "))))
 
 (bind-key (char->integer #\w) 4
-	  (lambda ()
-	    (if (my-selection?)
-		(let ((curspos (my-selection-position)))
-		  (report-in-minibuffer "Please wait...")
-		  (color-samples-allchans (channels) 'black 0 0)
-		  (set! (cursor #t #t) curspos)
-		  (my-make-region)
-		  (delete-selection)
-		  (set! iscolorized #f)
-		  (report-in-minibuffer " ")))))
+	  my-cut)
 
 
 (define last-report-value 0.0)
@@ -562,15 +721,17 @@
       (let* ((old-color (foreground-color))
 	     (height (cadr (widget-size sound-widget)))
 	     (fontheight 12)
-	     (y (+ (* fontheight level)
-		   (- (/ (- height fontheight) 2) (* fontheight 2))))
-	     (newdim (list x y stringlen)))
+	     (y (+ (- (* fontheight level) fontheight)
+		   (- (/ (- height fontheight) 2) (* fontheight 1))))
+	     (newdim (list x y stringlen string)))
 	(if olddim
 	    (begin
 	      (set! (foreground-color) backgroundcolor)
+	      ;;(set! (foreground-color) green)
 	      (if #f
 		  (draw-string (cadddr olddim) (car olddim) (cadr olddim))
-		  (fill-rectangle (car olddim) (cadr olddim) (caddr olddim) fontheight))))
+		  (fill-rectangle (car olddim) (cadr olddim) (caddr olddim) (1+ fontheight)))))
+	;;(display string)(newline)
 	(set! (foreground-color) color)
 	(draw-string string x y)
 	(case level
@@ -585,7 +746,7 @@
 	(reallydodasprint))))
 
 
-;; Show cursor and selection position in minutes and seconds and 1/10th seconds. -Kjetil.
+;; Show cursor and selection position in minutes, seconds and 1/10th seconds. -Kjetil.
 (define last-time-showed 0)
 (define* (show-times dastime #:optional (force #f))
 
@@ -691,34 +852,65 @@
 								     (list XmNset islooping))))
 						  (sounds))
 					(focus-widget (list-ref (channel-widgets snd 0) 0)))))
-		     (XtUnmanageChild oldplay))))
-	     
+		     (XtUnmanageChild oldplay)))
+		 (let ((nameform (GTK_BOX (list-ref (sound-widgets snd) 10)))
+		       (loop (gtk_check_button_new_with_label "loop")))
+		   (gtk_box_pack_end nameform
+				     loop
+				     #f #f 0)
+		   (gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON loop) #t)
+		   (g_signal_connect loop "button_press_event"
+				     (lambda (w e i)
+				       (set! islooping (if islooping #f #t))
+				       (for-each (lambda (s)
+						   (gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (gtk-get-nameform-button s "loop")) islooping)
+						   (focus-widget (list-ref (channel-widgets snd 0) 0)))
+						 (sounds))))
+		   (gtk_widget_show loop)
+		   (hide-widget (GTK_WIDGET (gtk-get-nameform-button snd "play")))))
+
 	     (if (> (channels snd) 1)
 		 (set! (channel-style snd) channels-combined))
 	     (set! (sync snd) (get-unique-sync-num))
 	     
 	     (if (not use-gtk)
+		 (let* ((oldsync (find-child (list-ref (sound-widgets snd) 2) "sync"))
+			(syncpos (widget-position oldsync))
+			(newsync (XtCreateManagedWidget "sync" xmToggleButtonWidgetClass (XtParent oldsync)
+							(list XmNbackground       (basic-color)
+							      XmNset              #t
+							      XmNx                (car syncpos)
+							      XmNselectColor      (yellow-pixel)))))
+		   (XtAddCallback newsync
+				  XmNvalueChangedCallback
+				  (lambda (w c i)
+				    (if (.set i)
+					(begin
+					  (set! (sync snd) (get-unique-sync-num)))
+					(begin 
+					  (set! (sync snd) 0)))
+				    (focus-widget (list-ref (channel-widgets snd 0) 0))))
+		   (XtUnmanageChild oldsync))
 		 (begin
-		   (let* ((oldsync (find-child (list-ref (sound-widgets snd) 2) "sync"))
-			  (syncpos (widget-position oldsync)))
-		     
-		     (let ((newsync (XtCreateManagedWidget "sync" xmToggleButtonWidgetClass (XtParent oldsync)
-							   (list XmNbackground       (basic-color)
-								 XmNset              #t
-								 XmNx                (car syncpos)
-								 XmNselectColor      (yellow-pixel)))))
-		       (XtAddCallback newsync
-				      XmNvalueChangedCallback
-				      (lambda (w c i)
-					(if (.set i)
-					    (begin
-					      (set! (sync snd) (get-unique-sync-num)))
-					    (begin 
-					      (set! (sync snd) 0)))
-					(focus-widget (list-ref (channel-widgets snd 0) 0)))))
-		     (XtUnmanageChild oldsync))))
+		   (hide-widget (GTK_WIDGET (gtk-get-nameform-button snd "sync")))
+		   (let ((newsync (gtk_check_button_new_with_label "sync")))
+		     (gtk_box_pack_end (GTK_BOX (list-ref (sound-widgets snd) 10))
+				       newsync
+				       #f #f 0)
+		     (gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON newsync) #t)
+		     (g_signal_connect newsync "button_press_event"
+				       (lambda (w e i)
+					 (if (> (sync snd) 0)
+					     (begin
+					       (set! (sync snd) 0)
+					       (gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON newsync) #f))
+					     (begin
+					       (set! (sync snd) (get-unique-sync-num))
+					       (gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON newsync) #t)))
+					 (focus-widget (list-ref (channel-widgets snd 0) 0))))
+		     (gtk_widget_show newsync))))
+	  
 	     #f))
-
 
 
 
@@ -731,17 +923,16 @@
 (check-for-unsaved-edits #t)
 
 
-(if (not use-gtk)
-    (load-from-path "edit-menu.scm"))
-
+(load-from-path "edit-menu.scm")
 
 (load-from-path "examp.scm")
+
 
 ;;;;;;;;;;;;;;;;;
 ;; Makes the buffer-menu a bit more pleasent to use. -Kjetil.
 ;;;;;;;;;;;;;;;;
-;(set! last-height 800)
-;(set! last-width 800)
+;;(set! last-height 500)
+;;(set! last-width 700)
 
 (define (my-switch-to-buf filename)
   (let* ((width (car (widget-size (car (sound-widgets (car current-buffer))))))
@@ -766,6 +957,7 @@
        (report-in-minibuffer "")
        (open-current-buffer width height)))))
 
+;;(set! (widget-size (car (sound-widgets (car current-buffer)))) (list 1000 1000) )
 
 (define (my-open-buffer filename)
   "(open-buffer filename) adds a menu item that will select filename (use with open-hook)"
@@ -818,11 +1010,11 @@
 		    "popup.scm"))
 
 
-
 (load-from-path  (if use-gtk
 		     "gtk-effects.scm"
-		     "ladspa.scm"))
+		     "new-effects.scm"))
 
+(load-from-path "ladspa.scm")
 
 
 ;; Stores the peak information for sounds in the ~/peaks/ directory. Seems to work correctly. I have tried
@@ -852,8 +1044,8 @@
 
 
 
-;; Dave Phillips fft-menu. (Loads an incompatible make-effect-dialog function)
-;(load-from-path "dlp/fft-menu.scm")
+;; Dave Phillips fft-menu.
+(load-from-path "dlp/fft-menu.scm")
 
 ;; Dave Phillips panic-menu
 (load-from-path "dlp/panic.scm")
@@ -902,11 +1094,11 @@
 	    (myread))
 	  (begin
 	    ;;(set! (auto-resize) #f)
-	    (in 2000
+	    (in (if use-gtk 0 2000)
 		(lambda ()
 		  (set! (window-width) 800)
 		  (set! (window-height) 600)))))))
-  ;:(set! (auto-resize) #t)
+  ;;(set! (auto-resize) #t)
   (myread))
 
 

@@ -376,6 +376,16 @@ guint16 widget_width(GtkWidget *w)
   return(x);
 }
 
+void set_widget_height(GtkWidget *w, guint16 height)
+{
+  set_widget_size(w, widget_width(w), height);
+}
+
+void set_widget_width(GtkWidget *w, guint16 width)
+{
+  set_widget_size(w, width, widget_height(w));
+}
+
 gint16 widget_x(GtkWidget *w)
 {
   gint x, y;
@@ -402,7 +412,20 @@ void set_widget_y(GtkWidget *w, gint16 y)
 
 void set_widget_size(GtkWidget *w, guint16 width, guint16 height)
 {
+#if 1
+  /* This one resize the window. */
+  gdk_window_resize(w->window, width, height);
+#else
+  /* This one doesn't seem to do anything, but the function name seems at least to be quite similar to set_widget_size. */
+  GtkRequisition r;
+  r.width = width;
+  r.height = height;
+  gtk_widget_size_request(w, &r);
+#endif
+#if 0
+  /* This one doesn't do anything, and prints out errors. */
   gtk_window_resize(GTK_WINDOW(w), width, height);
+#endif
 }
 
 void set_widget_position(GtkWidget *w, gint16 x, gint16 y)

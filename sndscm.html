@@ -1148,7 +1148,7 @@ of using graph-hook to set the fft size based on the current time domain window
 size.  The simpler one is:
 </p>
 <pre>
-(add-hook! graph-hook 
+(add-hook! <a class=quiet href="extsnd.html#graphhook">graph-hook</a> 
 	   (lambda (snd chn y0 y1)
 	     (if (and (<a class=quiet href="extsnd.html#sndffting">transform-graph?</a> snd chn) 
                       (= (<a class=quiet href="extsnd.html#lfftstyle">transform-graph-type</a> snd chn) <a class=quiet href="extsnd.html#lfftstyle">graph-once</a>))
@@ -1183,8 +1183,8 @@ To activate this, we need
 to:
 </p>
 <pre>
-(add-hook! open-hook open-buffer)
-(add-hook! close-hook close-buffer)
+(add-hook! <a class=quiet href="extsnd.html#openhook">open-hook</a> open-buffer)
+(add-hook! <a class=quiet href="extsnd.html#closehook">close-hook</a> close-buffer)
 </pre>
 
 <p>A similar menu is the "reopen menu"; it presents a list of previously
@@ -1226,7 +1226,7 @@ number of samples in the graph:
 <pre>
   <em class=emdef>auto-dot</em> snd chn y0 y1
 
-(add-hook! graph-hook auto-dot)
+(add-hook! <a class=quiet href="extsnd.html#graphhook">graph-hook</a> auto-dot)
 </pre>
 <p>There are also examples tying the channel graph sliders to the fft display.
 Finally there are several somewhat frivolous examples:
@@ -1433,7 +1433,7 @@ format sound file to a headerless ("raw") file containing 16-bit samples.
 </p>
 <pre>
 (shell "df")
-(add-hook! close-hook (lambda (snd) (shell \"sndplay wood16.wav\")))
+(add-hook! <a class=quiet href="extsnd.html#closehook">close-hook</a> (lambda (snd) (shell \"sndplay wood16.wav\")))
 (mpg "mpeg.mpg" "mpeg.raw")
 </pre>
 <p>
@@ -4571,7 +4571,7 @@ So I bound a few keys:
   ;; patterned after pfc in extsnd.html
   (let ((old-tracking (<a class=quiet href="extsnd.html#sndcursorfollowsplay">cursor-follows-play</a>)))
     (set! (<a class=quiet href="extsnd.html#sndcursorfollowsplay">cursor-follows-play</a>) #t)
-    (add-hook! stop-playing-hook 
+    (add-hook! <a class=quiet href="extsnd.html#stopplayinghook">stop-playing-hook</a> 
 	       (lambda (snd)
 		 (set! (<a class=quiet href="extsnd.html#sndcursorfollowsplay">cursor-follows-play</a>) old-tracking)))
     (<a class=quiet href="extsnd.html#sndplay">play</a> (<a class=quiet href="extsnd.html#sndcursor">cursor</a>) #f #f #f #f (if current #f (1- (<a class=quiet href="extsnd.html#sndeditposition">edit-position</a>))))))

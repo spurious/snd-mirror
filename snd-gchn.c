@@ -567,7 +567,7 @@ gboolean graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer data)
 static gboolean graph_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   chan_info *cp = (chan_info *)data;
-  if ((ev->type == GDK_BUTTON_PRESS) && (ev->button == POPUP_BUTTON))
+  if ((ev->state == 0) && (ev->type == GDK_BUTTON_PRESS) && (ev->button == POPUP_BUTTON))
     {
       int pdata;
       pdata = get_user_int_data(G_OBJECT(w));
@@ -587,6 +587,12 @@ static gboolean graph_button_press(GtkWidget *w, GdkEventButton *ev, gpointer da
 static gboolean graph_button_release(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   graph_button_release_callback((chan_info *)data, (int)(ev->x), (int)(ev->y), ev->state, ev->button);
+  return(false);
+}
+
+static gboolean graph_scroll(GtkWidget *w, GdkEventScroll *ev, gpointer data)
+{
+  graph_button_release_callback((chan_info *)data, (int)(ev->x), (int)(ev->y), ev->state, ev->direction + 4);
   return(false);
 }
 
@@ -721,6 +727,11 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 					 g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(cw[W_graph]))),
 					 0,
 					 g_cclosure_new(GTK_SIGNAL_FUNC(real_graph_key_press), (gpointer)cp, 0),
+					 0);
+ 	  g_signal_connect_closure_by_id(GTK_OBJECT(cw[W_graph]),
+					 g_signal_lookup("scroll_event", G_OBJECT_TYPE(GTK_OBJECT(cw[W_graph]))),
+					 0,
+					 g_cclosure_new(GTK_SIGNAL_FUNC(graph_scroll), (gpointer)cp, 0),
 					 0);
 	  g_signal_connect_closure_by_id(GTK_OBJECT(cw[W_graph]),
 					 g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(cw[W_graph]))),

@@ -170,14 +170,14 @@ Here's a more elaborate initialization file:
 (set! (<a class=quiet href="extsnd.html#selectedgraphcolor">selected-graph-color</a>) beige) ;selected graph background is beige
 (set! (<a class=quiet href="extsnd.html#selecteddatacolor">selected-data-color</a>) blue)   ;selected graph data is blue
 
-(add-hook! mouse-enter-graph-hook   ;automatically focus on (activate) the widget under the mouse
+(add-hook! <a class=quiet href="extsnd.html#mouseentergraphhook">mouse-enter-graph-hook</a>  ;automatically focus on (activate) the widget under the mouse
   (lambda (snd chn) 
     (<a class=quiet href="extsnd.html#focuswidget">focus-widget</a> (car (<a class=quiet href="extsnd.html#channelwidgets">channel-widgets</a> snd chn)))))
-(add-hook! mouse-enter-listener-hook 
+(add-hook! <a class=quiet href="extsnd.html#mouseenterlistenerhook">mouse-enter-listener-hook</a>
   (lambda (widget) 
     (<a class=quiet href="extsnd.html#focuswidget">focus-widget</a> widget)))
-(add-hook! mouse-enter-text-hook
-  (lambda (w)
+(add-hook! <a class=quiet href="extsnd.html#mouseentertexthook">mouse-enter-text-hook
+</a> (lambda (w)
     (<a class=quiet href="extsnd.html#focuswidget">focus-widget</a> w)))
 
 (set! (<a class=quiet href="extsnd.html#savedir">save-dir</a>) "/zap/snd")        ;save-state files are placed in /zap/snd
@@ -197,7 +197,7 @@ Here's a more elaborate initialization file:
     (if (provided? 'snd-gtk)
         (load "/home/bil/cl/gtk-popup.scm")))
 
-(add-hook! after-open-hook          ;if sound has many chans, use just one pane for all
+(add-hook! <a class=quiet href="extsnd.html#afteropenhook">after-open-hook</a>         ;if sound has many chans, use just one pane for all
   (lambda (snd)
     (if (&gt; (<a class=quiet href="extsnd.html#chans">chans</a> snd) 4)
         (set! (<a class=quiet href="extsnd.html#channelstyle">channel-style</a> snd) <a class=quiet href="extsnd.html#channelstyle">channels-combined</a>))))
@@ -592,7 +592,7 @@ lisp listener, and using the graph and spectrum functions.  Say we have
 these declarations in ~/.snd:
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define data-size 1024)
 (define data (<a class=quiet href="extsnd.html#makevct">make-vct</a> data-size))
 
@@ -621,7 +621,7 @@ these declarations in ~/.snd:
 <p>Obviously, any CLM instrument or function can be used in this way 
 to edit sounds.  Say we want an echo effect:</p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define echo 
   (lambda (scaler secs)
     (let ((del (<a class=quiet href="clm.html#make-delay">make-delay</a> (round (* secs (<a class=quiet href="extsnd.html#sndsrate">srate</a>))))))
@@ -653,7 +653,7 @@ which returns the function that actually runs the delay line,
 producing the echo.  
 The CLM (common lisp) version might be something like:</p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (<a class=quiet href="clm.html#definstrument">definstrument</a> echo (beg dur scaler secs file)
   (let ((del (<a class=quiet href="clm.html#make-delay">make-delay</a> (round (* secs *srate*))))
 	(inf (<a class=quiet href="clm.html#open-input">open-input</a> file))
@@ -1817,7 +1817,7 @@ than one input is required, the first argument to apply-ladspa should be a list 
 </pre>
 <p><a name="ladspachannel"></a>The "regularized" version of apply-ladspa could be defined:
 </p>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define* (ladspa-channel ladspa-data #:optional nbeg ndur nsnd nchn nedpos)
   (let* ((beg (or nbeg 0)) 
 	 (snd (or nsnd (<a class=quiet href="extsnd.html#selectedsound">selected-sound</a>) (car (<a class=quiet href="extsnd.html#sounds">sounds</a>))))
@@ -1857,7 +1857,7 @@ than one input is required, the first argument to apply-ladspa should be a list 
 </pre>
 <p>See ladspa.h for full details. We could replace analyse-ladspa using these functions:
 </p>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (analyze-ladspa library label)
   (let* ((descriptor (<em class=red>ladspa-descriptor</em> library label))
 	 (data '())
@@ -1895,7 +1895,7 @@ than one input is required, the first argument to apply-ladspa should be a list 
 <p>Here's a function that processes a channel of data through a plugin, sending the 
 data directly to the DAC:
 </p>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define* (ladspa-it library label #:rest plugin-parameters)
   ;; (ladspa-it "cmt" "delay_5s" .3 .5)
   (init-ladspa)
@@ -1979,7 +1979,7 @@ Any of the Snd drawing area widgets (or your own) can receive GL graphics
 commands.  Here is a translation of the SGI/xjournal glxmotif
 program:
 </p>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (draw-it)
   (glXMakeCurrent (XtDisplay (cadr (<a class=quiet href="extsnd.html#mainwidgets">main-widgets</a>))) 
 		  (XtWindow (car (<a class=quiet href="extsnd.html#channelwidgets">channel-widgets</a>)))

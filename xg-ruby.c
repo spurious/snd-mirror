@@ -2200,6 +2200,7 @@ XEN_NARGIFY_1(gxg_g_free_w, gxg_g_free)
 XEN_NARGIFY_2(gxg_g_list_remove_link_w, gxg_g_list_remove_link)
 XEN_NARGIFY_2(gxg_g_object_get_data_w, gxg_g_object_get_data)
 XEN_NARGIFY_3(gxg_g_object_set_data_w, gxg_g_object_set_data)
+XEN_NARGIFY_2(gxg_g_list_nth_data_w, gxg_g_list_nth_data)
 #if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND
 XEN_NARGIFY_5(gxg_pango_default_break_w, gxg_pango_default_break)
 XEN_NARGIFY_0(gxg_pango_context_new_w, gxg_pango_context_new)
@@ -5919,6 +5920,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(g_list_remove_link, gxg_g_list_remove_link_w, 2, 0, 0, H_g_list_remove_link);
   XG_DEFINE_PROCEDURE(g_object_get_data, gxg_g_object_get_data_w, 2, 0, 0, H_g_object_get_data);
   XG_DEFINE_PROCEDURE(g_object_set_data, gxg_g_object_set_data_w, 3, 0, 0, H_g_object_set_data);
+  XG_DEFINE_PROCEDURE(g_list_nth_data, gxg_g_list_nth_data_w, 2, 0, 0, H_g_list_nth_data);
 #if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND
   XG_DEFINE_PROCEDURE(pango_default_break, gxg_pango_default_break_w, 5, 0, 0, H_pango_default_break);
   XG_DEFINE_PROCEDURE(pango_context_new, gxg_pango_context_new_w, 0, 0, 0, H_pango_context_new);

@@ -1950,7 +1950,6 @@ GtkWidget *make_track_dialog(void)
       gtk_widget_show(w_track_amp_form);
 
 
-
       lo_hbox = gtk_hbox_new(false, 0);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(track_dialog)->vbox), lo_hbox, true, true, 5);
       gtk_widget_show(lo_hbox);
@@ -2097,7 +2096,7 @@ static void update_track_dialog(int track_id)
 	{
 	  gtk_entry_set_text(GTK_ENTRY(w_track_id), "0");
 	  gtk_entry_set_text(GTK_ENTRY(w_track_track), "0");
-	  gtk_entry_set_text(GTK_ENTRY(w_track_beg), "no active track");
+	  gtk_entry_set_text(GTK_ENTRY(w_track_beg), _("no active track"));
 	  set_sensitive(apply_button, false);
 	}
     }

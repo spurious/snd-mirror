@@ -38,6 +38,7 @@
  * TODO: test suite (snd-test 24)
  *
  * HISTORY:
+ *     12-Feb:    added g_list_nth_data (Kjetil S. Matheussen).
  *     6-Feb:     gtk 2.3.2 changes.
  *     --------
  *     16-Dec:    gtk 2.3.1 changes.
@@ -19233,6 +19234,13 @@ static XEN gxg_g_object_set_data(XEN object, XEN key, XEN data)
   g_object_set_data(XEN_TO_C_GObject_(object), (const gchar*)XEN_TO_C_gchar_(key), XEN_TO_C_gpointer(data));
   return(XEN_FALSE);
 }
+static XEN gxg_g_list_nth_data(XEN list, XEN n)
+{
+  #define H_g_list_nth_data "gpointer g_list_nth_data(GList* list, guint n)"
+  XEN_ASSERT_TYPE(XEN_GList__P(list), list, 1, "g_list_nth_data", "GList*");
+  XEN_ASSERT_TYPE(XEN_guint_P(n), n, 2, "g_list_nth_data", "guint");
+  return(C_TO_XEN_gpointer(g_list_nth_data(XEN_TO_C_GList_(list), XEN_TO_C_guint(n))));
+}
 #if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND
 static XEN gxg_pango_default_break(XEN text, XEN length, XEN analysis, XEN attrs, XEN attrs_len)
 {
@@ -25288,6 +25296,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(g_list_remove_link, gxg_g_list_remove_link, 2, 0, 0, H_g_list_remove_link);
   XG_DEFINE_PROCEDURE(g_object_get_data, gxg_g_object_get_data, 2, 0, 0, H_g_object_get_data);
   XG_DEFINE_PROCEDURE(g_object_set_data, gxg_g_object_set_data, 3, 0, 0, H_g_object_set_data);
+  XG_DEFINE_PROCEDURE(g_list_nth_data, gxg_g_list_nth_data, 2, 0, 0, H_g_list_nth_data);
 #if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND
   XG_DEFINE_PROCEDURE(pango_default_break, gxg_pango_default_break, 5, 0, 0, H_pango_default_break);
   XG_DEFINE_PROCEDURE(pango_context_new, gxg_pango_context_new, 0, 0, 0, H_pango_context_new);
@@ -32834,10 +32843,10 @@ static bool xg_already_inited = false;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"05-Feb-04\")");
+      XEN_EVAL_C_STRING("(define xm-version \"11-Feb-04\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("05-Feb-04"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("11-Feb-04"));
 #endif
       xg_already_inited = true;
 #if WITH_GTK_AND_X11

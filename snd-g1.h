@@ -353,6 +353,8 @@ bool is_sensitive(GtkWidget *wid);
 void set_toggle_button(GtkWidget *wid, bool val, bool passed, void *data);
 guint16 widget_height(GtkWidget *w);
 guint16 widget_width(GtkWidget *w);
+void set_widget_height(GtkWidget *w, guint16 height);
+void set_widget_width(GtkWidget *w, guint16 width);
 gint16 widget_x(GtkWidget *w);
 gint16 widget_y(GtkWidget *w);
 void set_widget_x(GtkWidget *w, gint16 x);

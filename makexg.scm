@@ -1121,6 +1121,7 @@
 (hey " * ~A: test suite (snd-test 24)~%" (string-append "T" "ODO"))
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     12-Feb:    added g_list_nth_data (Kjetil S. Matheussen).~%")
 (hey " *     6-Feb:     gtk 2.3.2 changes.~%")
 (hey " *     --------~%")
 (hey " *     16-Dec:    gtk 2.3.1 changes.~%")

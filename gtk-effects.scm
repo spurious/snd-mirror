@@ -215,7 +215,7 @@
 			      (format #f "~A" title)))))
 	      (adj (if use-log 
 		       (gtk_adjustment_new (scale-log->linear low initial high) 0 log-scale-ticks 1 10 1)
-		       (gtk_adjustment_new initial low high .1 1.0 .1)))
+		       (gtk_adjustment_new initial low high 0.0 0.0 0.0)))
 	      (scale (gtk_hscale_new (GTK_ADJUSTMENT adj))))
 	 (if use-hbox
 	     (begin

@@ -223,7 +223,7 @@ event happens.  When Snd exits, for example, any functions found
 on the <a href="#exithook">exit-hook</a> list are evaluated; if any of them returns #t,
 Snd does not exit.</p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define <A NAME="unsavededitsp">unsaved-edits?</A>
   (lambda (lst)
     (if (not (null? lst))
@@ -407,7 +407,7 @@ an inch is 2.54 cm:
 </td></tr>
 
 <tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (inches-to-ps inches) 
   (* inches 72))
 
@@ -730,7 +730,7 @@ together but are independent of any other sound), united channels,
 and filled graphs:
 </td></tr>
 <tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <em class=red>after-open-hook</em>
   (lambda (snd)
     (if (&gt; (<a class=quiet href="#channels">channels</a> snd) 1)
@@ -794,7 +794,7 @@ the fft starts from the left window edge.  To have it start at mid-window:
 </td></tr>
 
 <tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! before-transform-hook 
   (lambda (s c) 
     (inexact-&gt;exact 
@@ -808,10 +808,10 @@ of a moving mark:
 </td></tr>
 
 <tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define fft-position #f)
 (add-hook! <em class=red>before-transform-hook</em> (lambda (snd chn) fft-position))
-(add-hook! mark-drag-hook (lambda (id)
+(add-hook! <a class=quiet href="#markdraghook">mark-drag-hook</a> (lambda (id)
                             (set! fft-position (<a class=quiet href="#sndmarksample">mark-sample</a> id))
                             (<a class=quiet href="#sndupdatefft">update-transform-graph</a>)))
 </pre></td></tr></table></td></tr>
@@ -828,7 +828,7 @@ If it returns #t, the file is not closed.
 </td></tr>
 
 <tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <em class=red>close-hook</em>
   (lambda (snd) 
     (system \"sndplay wood16.wav\")
@@ -896,7 +896,7 @@ This provides an opportunity to set sndlib prescaling values:
 </td></tr>
 
 <tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <em class=red>during-open-hook</em>
   (lambda (fd name reason)
     (if (= (<a class=quiet href="#soundheadertype">mus-sound-header-type</a> name) <a class=quiet href="#sndheadertype">mus-raw</a>)
@@ -925,7 +925,7 @@ stretch-envelope from env.scm:
 </td></tr>
 
 <tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <em class=red>enved-hook</em>
   (lambda (env pt x y reason)
     (if (= reason enved-move-point)
@@ -970,7 +970,7 @@ If it returns #t, the display is not updated.
 See examp.scm for many examples.
 </td></tr>
 <tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <em class=red>graph-hook</em>
   (lambda (snd chn y0 y1)
     "set the dot size depending on the number of samples being displayed"
@@ -1017,7 +1017,7 @@ To get the data limits (rather than the default -1.0 to 1.0 as above), you can u
 but if that sound's maxamp isn't already known, it can require a long process of reading the file. The following hook procedure
 uses the maxamp data only if it is already available:
 </td></tr><tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <em class=red>initial-graph-hook</em>
   (lambda (snd chn dur)
     (if (<a class=quiet href="#mussoundmaxampexists">mus-sound-maxamp-exists?</a> (<a class=quiet href="#sndfilename">file-name</a> snd))
@@ -1045,7 +1045,7 @@ called on each file (after the sound file extension check) if the
 just-sounds button is set. Return #f to filter out <i>filename</i>.
 </td></tr>
 <tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <em class=red>just-sounds-hook</em>
   (lambda (name) ;display only stereo files in file selection dialog
     (and (not (= (<a class=quiet href="#soundheadertype">mus-sound-header-type</a> name) <a class=quiet href="#sndheadertype">mus-raw</a>))
@@ -1082,7 +1082,7 @@ If it returns a function (of no arguments), that function is called rather than 
 
 </td></tr>
 <tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <em class=red>lisp-graph-hook</em>
 	   (lambda (snd chn)
 	     (lambda ()
@@ -1112,7 +1112,7 @@ called when a mark is clicked; return #t to squelch default minibuffer mark iden
 hook function is used in with-marked-sound in ws.scm to display arbitrary info about a note.
 </td></tr>
 <tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <em class=red>mark-click-hook</em>
   (lambda (n) 
     (if (not (defined? 'mark-properties)) (load "marks.scm"))
@@ -1145,7 +1145,7 @@ hook function is used in with-marked-sound in ws.scm to display arbitrary info a
 called when a mark is dragged.
 </td></tr>
 <tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (report-mark-location id)
   ;; print current mark location in minibuffer
   (let ((samp (<a class=quiet href="#sndmarksample">mark-sample</a> id))
@@ -1175,7 +1175,7 @@ Snd takes no further action.  To set up to play, then interpret the motion yours
 and #t thereafter:
 </td></tr>
 <tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (let ((first-x 0))
   (add-hook! <em class=red>mark-drag-triangle-hook</em>
     (lambda (id x time dragged-before)
@@ -1198,7 +1198,7 @@ In the "release" case, the hook is called upon button release before any edits (
 and if the mark-sync is active, the hook is called on each syncd mark.
 </td></tr>
 <tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (<A NAME="snpmark">snap-mark-to-beat</a>)
   ;; when a mark is dragged, its end position is always on a beat
   (let ((mark-release 4))
@@ -1228,7 +1228,7 @@ the minibuffer.  Here's an example that sets the mix amps to 0 if you click it (
 in mix.scm for a fancier version):
 </td></tr>
 <tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <em class=red>mix-click-hook</em>
   (lambda (n)
     (do ((i 0 (1+ i)))
@@ -1247,7 +1247,7 @@ in mix.scm for a fancier version):
 called when a mix is dragged.
 </td></tr>
 <tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <em class=red>mix-drag-hook</em>
   (lambda (n) 
     (<a class=quiet href="#sndreportinminibuffer">report-in-minibuffer</a> 
@@ -1274,7 +1274,7 @@ hook's responsibility.
 called upon a mouse button release or click (with various exceptions).  If it returns #t, the click is ignored by Snd.
 See the <i>current-window-location</i> procedures in draw.scm.  Here's a simpler example:</td></tr>
 <tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (click-to-center snd chn button state x y axis)
   ;; if mouse click in time domain graph, set cursor as normally, but also center the window
   (if (= axis <a class=quiet href="#y2position">time-graph</a>)
@@ -1312,7 +1312,7 @@ called when the mouse is dragged within the lisp graph (see enved.scm or rtio.sc
 called when the mouse enters a channel's drawing area (graph pane).
 </td></tr>
 <tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <em class=red>mouse-enter-graph-hook</em>
   (lambda (snd chn) 
     (<a class=quiet href="#sndprint">snd-print</a> (format #f "~A[~A]" (<a class=quiet href="#shortfilename">short-file-name</a> snd) chn))))
@@ -1331,7 +1331,7 @@ The label itself is 'label'. We could use the <i>finfo</i> procedure in examp.sc
 to popup file info as follows:
 </td></tr>
 <tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <em class=red>mouse-enter-label-hook</em>
   (lambda (type position name)
     (if (not (= type 2))
@@ -1352,7 +1352,7 @@ hook procedures:
 </td></tr>
 <tr><td colspan=3></td></tr>
 <tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <em class=red>mouse-enter-graph-hook</em>
   (lambda (snd chn)
     (if (<a class=quiet href="#sndok">sound?</a> snd) (<a class=quiet href="#focuswidget">focus-widget</a> (car (<a class=quiet href="#channelwidgets">channel-widgets</a> snd chn))))))
@@ -1373,7 +1373,7 @@ I much prefer this style of operation.
 <tr><td></td><td colspan=2>
 called when the mouse enters a text widget (this is the third of the pointer-focus hooks).
 </td></tr><tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <em class=red>mouse-enter-text-hook</em>
   (lambda (w)
     (<a class=quiet href="#focuswidget">focus-widget</a> w)))
@@ -1458,7 +1458,7 @@ called when the sound name is clicked.
 If it returns #t, the usual informative minibuffer babbling is squelched.
 </td></tr>
 <tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <em class=red>name-click-hook</em>
   (lambda (snd) ; toggle read-only
     (set! (<a class=quiet href="#sndreadonly">read-only</a> snd) (not (<a class=quiet href="#sndreadonly">read-only</a> snd)))
@@ -1496,7 +1496,7 @@ If it returns #t, the file is not opened.
 If it returns a string (a filename), that file is opened instead of the original one.
 </td></tr>
 <tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <em class=red>open-hook</em>
   (lambda (filename)
     (if (= (<a class=quiet href="#soundheadertype">mus-sound-header-type</a> filename) <a class=quiet href="#sndheadertype">mus-raw</a>)
@@ -1568,7 +1568,7 @@ called in the Save-As dialog. <i>str</i> is the current sound's comment.
 If there is more than one hook function, each function's result is passed as input to the next function in the list.
 </td></tr>
 <tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <em class=red>output-comment-hook</em>
   (lambda (str) 
     (string-append str ": written " 
@@ -1585,7 +1585,7 @@ If there is more than one hook function, each function's result is passed as inp
 called in the New File dialog, setting the file name in the associated text widget.
 </td></tr>
 <tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (let ((file-ctr -1))
   (add-hook! <em class=red>output-name-hook</em>
     (lambda ()
@@ -1618,7 +1618,7 @@ Say we want to click a file to have it mixed into the currently selected sound a
 the cursor:
 </td></tr>
 <tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <em class=red>previous-files-select-hook</em>
   (lambda (file)
     (<a class=quiet href="#sndmix">mix</a> file (<a class=quiet href="#sndcursor">cursor</a>))
@@ -1640,7 +1640,7 @@ This is intended to make it possible to
 distinguish Snd responses from user-typing, or add arbitrarily fancy prompts, etc.
 </td></tr>
 <tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <em class=red>print-hook</em>
   (lambda (msg) 
     (if (char=? (string-ref msg 0) #\newline)
@@ -1662,7 +1662,7 @@ If it returns #t, Snd assumes you've dealt the text yourself, and does not try t
 This is intended to make it possible to read user-typing in the listener.
 </td></tr>
 <tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (read-listener-line prompt)
   "(read-listener-line prompt) prompts for input and returns it in Snd's listener"
   (let ((res #f))
@@ -1741,7 +1741,7 @@ If it returns #t, Snd flushes the error (it assumes you've
 reported it via the hook).
 </td></tr>
 <tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <em class=red>snd-error-hook</em>
   (lambda (msg) 
     (<a class=quiet href="#sndplay">play</a> "bong.snd") ; or if xm is loaded, (XBell (XtDisplay (cadr (<a class=quiet href="#mainwidgets">main-widgets</a>))) 10)
@@ -1760,7 +1760,7 @@ If it returns #t, Snd flushes the warning (it assumes you've
 reported it via the hook).
 </td></tr>
 <tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define without-warnings
   (lambda (thunk)
     (define no-warning (lambda (msg) #t))
@@ -1782,7 +1782,7 @@ Snd to exit back to the shell if its file argument is not
 found (this code obviously has to be in the ~/.snd init file):
 </td></tr>
 <tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <em class=red>start-hook</em>
   (lambda (file)
     (if (not (file-exists? file))
@@ -1839,7 +1839,7 @@ called when a sound finishes playing.
 The following code plays a sound over and over until you type C-g:
 </td></tr>
 <tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (play-until-c-g)
   (define (play-once snd)
     (if (<a class=quiet href="#sndabort">c-g?</a>)
@@ -1851,7 +1851,7 @@ The following code plays a sound over and over until you type C-g:
 <tr><td></td><td colspan=2>
 Here's somewhat brute-force code to play a sound a given number of times.
 </td></tr><tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (play-often n) 
   (let ((plays (- n 1)))
     (define (play-once snd)
@@ -1894,7 +1894,7 @@ called just after an FFT (or spectrum) is calculated.
 </td></tr>
 
 <tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (fft-peak snd chn scale)
   (if (and (<a class=quiet href="#sndffting">transform-graph?</a>) 
            (= (<a class=quiet href="#lfftstyle">transform-graph-type</a>) <a class=quiet href="#lfftstyle">graph-once</a>))
@@ -1923,7 +1923,7 @@ the returned procedure to make sure the mark pane is reactivated right away when
 </td></tr>
 
 <tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <em class=red>update-hook</em>
   (lambda (snd-about-to-be-udpated)
     ;; this function called just before update
@@ -1973,7 +1973,7 @@ You can use edit-hook to set
 up protected portions of the edit history:
 </td></tr></table>
 <br>
-<center><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<center><table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define protect
   "(protect #:optional snd chn) disallows any edits before the current one"
   (lambda args
@@ -2000,7 +2000,7 @@ See also autosave.scm.  <small>It is possible for after-edit-hook to be called m
 You can find out what's on a given hook with the following (which is mostly adding carriage returns to the
 printout from hook-&gt;list):
 </p>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (describe-hook hook)
   (for-each 
     (lambda (n) 
@@ -2392,7 +2392,7 @@ See play.scm and rtio.scm. The most important Sndlib functions for Snd are:</p>
 <td>set state of <i>device</i>'s <i>field</i>.
 </td></tr>
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 ;;; here we get the microphone volume, then set it to .5
 (define vals (make-vector 32))
 (<em class=red>mus-audio-mixer-read</em> mus-audio-microphone mus-audio-amp 0 vals)
@@ -2623,7 +2623,7 @@ throw 'mus-error upon encountering an error, rather than returning -1 like the u
 </p>
 <p>The following function uses the sndlib functions to mimic the 'info' popup menu option (see <a href="sndscm.html#exampdoc">examp.scm</a> for a version that uses format):</p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 <A NAME="sndinfo"></a>
 (define info 
   (lambda (file)
@@ -2755,7 +2755,7 @@ between two edits:
 </td></tr>
 
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define snd-diff
   (lambda () ;assume mono, get diff between current state and previous
     (let* ((index (<a class=quiet href="#selectedsound">selected-sound</a>))
@@ -2807,7 +2807,7 @@ can read external sounds without going to the trouble of loading them into Snd.
 </td></tr>
 
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 <A NAME="region2vct"></a>
 (define* (region-&gt;vct reg #:optional (chn 0))
   (if (<a class=quiet href="#regionok">region?</a> reg)
@@ -3001,7 +3001,7 @@ channel; the inverse function is <b>marks</b>.
 <tr><td></td><td>name of mark <i>id</i>.
 </td></tr>
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define* (add-named-mark samp name #:optional snd chn)
   (let ((m (<a class=quiet href="#sndaddmark">add-mark</a> samp snd chn)))
     (set! (<em class=red>mark-name</em> m) name)
@@ -3031,12 +3031,12 @@ for each of the marks you want in the group.  The following uses the mark-clicke
 instead; you type (start-sync), then click the set of marks to sync, then (stop-sync).
 </td></tr>
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define mark-sync-number 0)
 (define (start-sync) (set! mark-sync-number (+ (<a class=quiet href="#sndmarksyncmax">mark-sync-max</a>) 1)))
 (define (stop-sync) (set! mark-sync-number 0))
 (define (click-to-sync id) (set! (<em class=red>mark-sync</em> id) mark-sync-number) #f)
-(add-hook! mark-click-hook click-to-sync)
+(add-hook! <a class=quiet href="#markclickhook">mark-click-hook</a> click-to-sync)
 </pre></td></tr></table>
 </td></tr>
 <tr><td></td><td>
@@ -3059,7 +3059,7 @@ also omitted, a list of lists of lists is returned, representing
 each sound and its channels.
 </td></tr>
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (how-many-marks-in-channel snd chn)
   (length (<em class=red>marks</em> snd chn)))
 
@@ -3098,7 +3098,7 @@ the list of ids reflects the mark list at that time in the edit history.  See de
 <tr><td></td><td>a list of marks (the mark id's) that share the mark-sync value <i>sync</i>.
 </td></tr>
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (move-syncd-marks sync diff)
   (for-each 
     (lambda (m) 
@@ -3644,7 +3644,7 @@ channel <i>chn</i>. If v (a vct) is provided, it is filled,
 rather than creating a new vct.
 </td></tr>
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (region-rms n)
   (let* ((data (<em class=red>region-samples-&gt;vct</em> 0 0 n)) ; len=0 =&gt; entire region
 	 (len (<a class=quiet href="#vctlength">vct-length</a> data)))
@@ -3768,7 +3768,7 @@ save the selection in <i>file</i>.  If <i>chan</i> is given, save only that chan
 See popup.scm for an example.
 </td></tr>
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (brksnd dur base)
   "(brksnd dur base) divides the current sound into dur-sized pieces, \
 saving them in files named 'base'.n: (brksnd 1.0 \"sec\")"
@@ -3902,7 +3902,7 @@ hook called when selection created or deleted.: <a href="#selectionchangedhook">
 <p>The selected portion can be chosen, independent of any region, by setting selection-position and selection-frames.
 It's easy to extend the notion of a selection to an arbitrary list of sound portions:
 </p>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (make-section . members)
   ;; each member is '(beg dur snd chn)
   (append (list 'Section) members))
@@ -4076,7 +4076,7 @@ restarting the sequence whenever it reaches the end.
 </td></tr>
 
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define show-bomb 
   (lambda (n speed) 
     (if (&gt; n 0) 
@@ -4151,8 +4151,8 @@ The following code sets the 'unite' button if the current sound has more than 4 
 </td></tr>
 
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(add-hook! after-open-hook 
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+(add-hook! <a class=quiet href="#afteropenhook">after-open-hook</a> 
   (lambda (snd)
     (if (&gt; (<a class=quiet href="#chans">chans</a> snd) 4)
         (set! (<em class=red>channel-style</em> snd) <a class=quiet href="#channelstyle">channels-combined</a>))))
@@ -4170,7 +4170,7 @@ The following code sets the 'unite' button if the current sound has more than 4 
 </td></tr>
 
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 <A NAME="selection2vct"></a>
 (define* (selection-&gt;vct #:optional snd chn)
   (if (<a class=quiet href="#selectionmember">selection-member?</a> snd chn)
@@ -4211,7 +4211,7 @@ This is used by some of the <a class=quiet href="#regularizedargs">regularized</
 </td></tr>
 
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define* (convolve-channel kernel #:optional nbeg ndur nsnd nchn nedpos)
   (let* ((beg (or nbeg 0)) 
 	 (snd (or nsnd (<a class=quiet href="#selectedsound">selected-sound</a>) (car (<a class=quiet href="#sounds">sounds</a>))))
@@ -4269,7 +4269,7 @@ Convolve-with in conjunction with mix can provide high-quality reverb:
 </td></tr>
 
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define conrev
   (lambda (impulse amp)
     (<em class=red>convolve-with</em> impulse amp)
@@ -4295,7 +4295,7 @@ This function is obviously modelled on Emacs. It could be defined along these li
 </td></tr>
 
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (count-matches proc)
   (let ((count 0))
     (<a class=quiet href="#scanchannel">scan-channel</a> 
@@ -4399,19 +4399,19 @@ cursor-follows-play is #t:
 </td></tr>
 
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define set-sound-cursor
   (lambda (snd shape)
     (do ((j 0 (1+ j)))
         ((= j (<a class=quiet href="#channels">channels</a> snd)) #f)
       (set! (<em class=red>cursor-style</em> snd j) shape))))
 
-(add-hook! start-playing-hook 
+(add-hook! <a class=quiet href="#startplayinghook">start-playing-hook</a> 
   (lambda (snd) 
     (if (<a class=quiet href="#sndcursorfollowsplay">cursor-follows-play</a> snd) 
         (set-sound-cursor snd <em class=red>cursor-line</em>))))
 
-(add-hook! stop-playing-hook 
+(add-hook! <a class=quiet href="#stopplayinghook">stop-playing-hook</a> 
   (lambda (snd) 
     (set-sound-cursor snd <em class=red>cursor-cross</em>)))
 </pre></td></tr></table>
@@ -4425,7 +4425,7 @@ replaces the normal "+" cursor with an "x":
 </td></tr>
 
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (<A NAME="xcursor">x-cursor</a> snd chn ax)
   (let* ((point (<em class=red>cursor-position</em>))
          (x (car point))
@@ -4465,8 +4465,8 @@ these files automatically in Snd.  Perhaps the simplest is to use one of the ope
 </td></tr>
 
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(add-hook! after-open-hook 
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+(add-hook! <a class=quiet href="#afteropenhook">after-open-hook</a> 
   (lambda (snd) 
     ;; this could also (alternatively) set the y-bounds as above
     (if (= (<em class=red>data-format</em> snd) mus-lint)
@@ -4478,8 +4478,8 @@ or (an alternative that sets the underlying database entry, rather than the curr
 </td></tr>
 
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(add-hook! open-hook 
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+(add-hook! <a class=quiet href="#openhook">open-hook</a> 
   (lambda (name)
     (if (= (<a class=quiet href="#sounddataformat">mus-sound-data-format</a> name) mus-lint)
         (set! (<a class=quiet href="#sounddataformat">mus-sound-data-format</a> name) mus-lintn))
@@ -4643,7 +4643,7 @@ curve's exponent and <i>env-base</i>.  Here's a brief restatement:
 </td></tr>
 
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (compare-exp k)
    (let ((e (<a class=quiet href="clm.html#make-env">make-env</a> (list 0 1 1 (exp (- k))) :base (exp k) :end 10)))
       (do ((i 0 (1+ i )))
@@ -4742,7 +4742,7 @@ CLM filtering to a sound. (The regularized version of this is <a href="#clmchann
 </td></tr>
 
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (<em class=red>filter-sound</em> '(0 1 1 0) 1024)                       ;FIR filter given frequency response
 (<em class=red>filter-sound</em> (<a class=quiet href="#sndlist2vct">list-&gt;vct</a> '(.1 .2 .3 .3 .2 .1)) 6)    ;FIR filter given actual coefficients
 (<em class=red>filter-sound</em> (<a class=quiet href="clm.html#make-fir-filter">make-fir-filter</a> 6 (<a class=quiet href="#sndlist2vct">list-&gt;vct</a> '(.1 .2 .3 .3 .2 .1)))) ;CLM FIR filter
@@ -4843,7 +4843,7 @@ open with the given filename, the 'nth' parameter (which defaults to 0) chooses 
 Leaving aside the 'nth' parameter, find-sound could be defined as:
 </td></tr>
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (find-sound name)
   (call-with-current-continuation
    (lambda (return)
@@ -4912,7 +4912,7 @@ explicitly drawn; this is useful when you're calling graph from
 the lisp-graph-hook, where the redisplay is automatic.
 </td></tr>
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define display-energy
   ;; y-zoom-slider controls the graph amp
   (lambda (snd chn)
@@ -5069,7 +5069,7 @@ waveform for <i>snd</i>'s channel <i>chn</i>.
 To get the data currently displayed in the time domain window:
 </td></tr>
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (<a class=quiet href="sndscm.html#exwindowsamples">window-samples</a>)
   (let ((wl (<em class=red>left-sample</em>))
 	(wr (<a href="#rightsample">right-sample</a>)))
@@ -5141,7 +5141,7 @@ sound with individual amplitudes for the channels:
 </td></tr>
 
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define play-with-amps
   (lambda (sound . amps)
     (let ((chans (<a class=quiet href="#chans">chans</a> sound)))
@@ -5215,7 +5215,7 @@ Here's a slightly more involved example;
 we define a function that finds silences and replaces them with
 something:<br><br>
 
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define <A NAME="mapsilence">map-silence</a>
   ;; see squelch in <a href="sndscm.html#effectsdoc">new-effects.scm</a> for a better version
   (lambda (silence replacement)
@@ -5257,7 +5257,7 @@ At the end, we flush out all the remaining samples awaiting output in <i>buffer<
 <br><br>
 It is possible to break out of a map, flushing any edits, via call-with-current-continuation:
 <br><br>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define ctr 0)
 (call-with-current-continuation 
   (lambda (return)
@@ -5269,7 +5269,7 @@ It is possible to break out of a map, flushing any edits, via call-with-current-
 </pre></td></tr></table>
 <br>
 It is also possible to stop, then continue map-chan:<br><br>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define go-on #f)
 (<em class=red>map-chan</em> (lambda (y) 
             (call-with-current-continuation 
@@ -5294,7 +5294,7 @@ temp-dir setting (if any).  The env-sound-interp function in <a href="sndscm.htm
 is an example of this.  snd4.scm has Snd-4 style mapping functions such as
 map-sound-chans, map-all-chans, etc. 
 <br><br>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define* (map-sound-chans proc #:optional (beg 0) end edname snd edpos)
   (do ((i 0 (1+ i)))
       ((= i (<a class=quiet href="#chans">chans</a> snd)))
@@ -5328,7 +5328,7 @@ the preceding edit in the list will be the <code>(set! (<a class=quiet href="#sn
 <tr><td></td><td>
 <b>map-channel</b> is the <a class=quiet href="#regularizedargs">regularized</a> version of <a href="#mapchan">map-chan</a>.
 <br><br>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define* (<A NAME="cosinechannel">cosine-channel</a> #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
   (<em class=red>map-channel</em>
    (let* ((samps (or dur (<a class=quiet href="#frames">frames</a> snd chn)))
@@ -5351,7 +5351,7 @@ the preceding edit in the list will be the <code>(set! (<a class=quiet href="#sn
 <tr><td></td><td>
 max amp of <i>snd</i>'s channel <i>chn</i>.  Used with set!, this is equivalent to scale-to.
 <br><br>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (maxamp-all)
   "(maxamp-all) returns the current maxamp of all currently open sounds"
   (apply max (map (lambda (snd) (apply max (<em class=red>maxamp</em> snd #t))) (<a class=quiet href="#sounds">sounds</a>))))
@@ -5443,7 +5443,7 @@ open <i>name</i> as a raw (no header) sound in the layout specified.
 If the file has a header, it is not ignored (use (set! (<a class=quiet href="#snddataformat">data-format</a> ...))
 and friends if you want to ignore the header).
 <br><br>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define mpg
   (lambda (mpgfile rawfile chans)
     "(<a class=quiet href="sndscm.html#exmpg">mpg</a> file tmpname chans) converts file from MPEG-3 to raw 16-bit samples using mpg123"
@@ -5486,7 +5486,7 @@ version of <a href="#sndinsertsilence">insert-silence</a>.  To set a block of sa
 <a href="#scalechannel">scale-channel</a> with a scaler of 0.0.
 To insert a block of arbitrary-valued samples:
 <br><br>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define* (<A NAME="blockchannel">block-channel</a> value #:optional beg dur snd chn edpos)
   (let ((val value)) ; this for the run macro's benefit
     (<em class=red>pad-channel</em> beg dur snd chn edpos)
@@ -5546,7 +5546,7 @@ The <i>pos</i> argument makes it easier to try "A:B" comparisons.<br>
 <br><br>
 This code binds the "p" key to play all channels of the current sound from the cursor, and
 the "P" key to play the previous version of the current sound:<br><br>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (play-from-cursor current)
   (<em class=red>play</em> (<a class=quiet href="#sndcursor">cursor</a>) #f #f #f #f (if current #f (1- (<a class=quiet href="#sndeditposition">edit-position</a>)))))
 
@@ -5554,11 +5554,11 @@ the "P" key to play the previous version of the current sound:<br><br>
 (<a class=quiet href="#sndbindkey">bind-key</a> (char-&gt;integer #\P) 1 (lambda () (play-from-cursor #f) keyboard-no-action))
 </pre></td></tr></table><br>
 The following code plays from the cursor with a moving ("tracking") cursor:<br><br>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (<A NAME="pfc">pfc</a>)
   (let ((old-tracking (<a class=quiet href="#sndcursorfollowsplay">cursor-follows-play</a>)))
     (set! (<a class=quiet href="#sndcursorfollowsplay">cursor-follows-play</a>) #t)
-    (add-hook! stop-playing-hook 
+    (add-hook! <a class=quiet href="#stopplayinghook">stop-playing-hook</a> 
 	       (lambda (snd)
 		 (set! (<a class=quiet href="#sndcursorfollowsplay">cursor-follows-play</a>) old-tracking)))
     (<em class=red>play</em> (<a class=quiet href="#sndcursor">cursor</a>))))
@@ -5691,7 +5691,7 @@ one argument.  If 'raw' is #t, the response is returned as a string; otherwise i
 </td></tr>
 
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (<em class=red>prompt-in-minibuffer</em> "sample 0 via func:"
   (lambda (func) 
     (set! (<a class=quiet href="#sndsample">sample</a> 0) (func (<a class=quiet href="#sndsample">sample</a> 0)))))
@@ -5708,7 +5708,7 @@ We could also use a continuation here:
 </td></tr>
 
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (prompt msg default)
   (call-with-current-continuation
    (lambda (rsvp)
@@ -5724,7 +5724,7 @@ more like Emacs (which prompts for confirmation first):
 </td></tr>
 
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (<a class=quiet href="#sndbindkey">bind-key</a> (char-&gt;integer #\k) 0 
   (lambda ()
     (<em class=red>prompt-in-minibuffer</em>
@@ -5813,7 +5813,7 @@ Here is an example that mixes a sine wave into the current channel:
 </td></tr>
 
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define* (sine-channel freq amp #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
   (<em class=red>ptree-channel</em>
    (lambda (y data forward)
@@ -5856,7 +5856,7 @@ version of cosine-channel given under
 <a href="#mapchannel">map-channel</a> that can handle peak-envs:
 </td></tr>
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define* (<A NAME="cosinechannelviaptree">cosine-channel-via-ptree</a> #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
   ;; vct: angle increment
   (<em class=red>ptree-channel</em>
@@ -5966,7 +5966,7 @@ depend on the run macro) will work only in Guile.  We could define xen-channel:
 Here are a couple more examples:
 </td></tr>
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define* (ptree-scale scl #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
   "ptree-channel version of scale-channel"
   (let ((local-scl scl)) ; needed by the run macro -- it can't find define* args
@@ -6015,7 +6015,7 @@ calls.  It also uses <a href="#asoneedit">as-one-edit</a> to make the
 result appear to be one operation in the edit history list.
 </td></tr>
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 <A NAME="powenvchannel"></a>(define* (powenv-channel envelope #:optional (beg 0) dur snd chn edpos)
   ;; envelope with a separate base for each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))
   (let* ((curbeg beg)
@@ -6374,7 +6374,7 @@ is scaled (defaults to the currently selected channel).  <code>(scale-by 2.0)</c
 <tr><td></td><td>
 <b>scale-channel</b> is the <a class=quiet href="#regularizedargs">regularized</a> version of <a href="#sndscalesoundby">scale-sound-by</a>.
 There are approximately a bazillion ways to scale samples in Snd; here's a potpourri of increasingly silly choices:<br><br>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (<a class=quiet href="#sndscaleby">scale-by</a> 2.0)
 (scale-channel 2.0)
 (<a class=quiet href="#mapchan">map-chan</a> (lambda (val) (* val 2.0)))
@@ -6493,7 +6493,7 @@ In this case, we found such a sample at position 4423.<br>
 <em class=listener>#t</em>
 </pre>
 <i>scan-chan</i> could be defined in terms of make-sample-reader:<br><br>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (scan-chan . args)
   (let* ((func (car args))
 	 (len (length args))
@@ -6513,7 +6513,7 @@ In this case, we found such a sample at position 4423.<br>
       (set! result (func (<a class=quiet href="#readsample">read-sample</a> reader))))))
 </pre></td></tr></table>
 <br>snd4.scm has Snd-4 style scanning functions:<br><br>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define* (scan-all-chans proc #:optional (beg 0) end edpos)
   (catch 'done
 	 (lambda ()
@@ -6536,7 +6536,7 @@ In this case, we found such a sample at position 4423.<br>
 <b>scan-channel</b> is the <a class=quiet href="#regularizedargs">regularized</a> version of <a href="#scanchan">scan-chan</a>.
 In scan-chan, scan-channel, find, and count-matches (all the same underlying procedure), an attempt to jump back
 into a previous call will not work.  That is,<br><br>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (let ((not-a-good-idea #f))
   (<em class=red>scan-channel</em> (lambda (y)
                   (call-with-current-continuation
@@ -6547,7 +6547,7 @@ into a previous call will not work.  That is,<br><br>
 </pre></td></tr></table>
 <br>will die with a segfault (this is fixable, with much effort and grumbling).  If you want a continuable search, use a sample-reader:
 <br><br>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define reader #f)
 (define last-proc #f)
 (define (<A NAME="scanagain">scan-again</a>)
@@ -6744,7 +6744,7 @@ the end points:</td></tr>
 <tr><td></td><td>
 <table border=0><tr><td>
 
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (smoother y0 y1 num)
    "go sinusoidally from y0 to y1 over num samps"
    (let ((v (<a class=quiet href="#makevct">make-vct</a> (1+ num))) 
@@ -6784,7 +6784,7 @@ at the loop points:
 </td></tr>
 
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (mark-sf2)
   (letrec ((sf2it (lambda (lst)
                     (if (not (null? lst))
@@ -6835,7 +6835,7 @@ take the "snd chn" arguments):
 </td></tr>
 
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (all-chans)
   (let ((sndlist '())
         (chnlist '()))
@@ -7023,7 +7023,7 @@ be the same as the original sound).  The following function can be used to predi
 how long the resultant note will be given an src envelope:
 </td></tr>
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 
 ;;; find new duration of sound after using env as srate.
 ;;; the envelope gives the per-sample increment, so the "tempo"
@@ -7507,7 +7507,7 @@ To set all channels at once using the selected sound's maxamp:
 </td></tr>
 
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (let ((maxval (apply max (<a class=quiet href="#sndmaxamp">maxamp</a> #f #t)))) 
   (do ((i 0 (1+ i))) 
       ((= i (<a class=quiet href="#chans">chans</a>))) 
@@ -7519,7 +7519,7 @@ Or to set each channel to its own maxamp:
 </td></tr>
 
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (do ((i 0 (1+ i))) 
     ((= i (<a class=quiet href="#chans">chans</a>)))
   (let ((maxval (<a class=quiet href="#sndmaxamp">maxamp</a> #f i))) 
@@ -7572,7 +7572,7 @@ of the fft points, making the display smoother.
 </td></tr>
 
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (<a class=quiet href="#sndbindkey">bind-key</a> (char-&gt;integer #\p) 0 
   (lambda () 
     (set! (zero-pad) (+ (<em class=red>zero-pad</em>) 1)) 
@@ -7640,7 +7640,7 @@ The  'apply' button.
 apply-controls can be used in conjunction with the various control panel variables:
 </td></tr>
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define expnd 
   (lambda (amt) 
     (set! (<a class=quiet href="#sndexpanding">expand-control?</a>) #t) 
@@ -8015,7 +8015,7 @@ Returns result of 'func'.
 </td></tr>
 
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (<em class=red>as-one-edit</em> 
   (lambda () 
     (set! (<a class=quiet href="#sndsample">sample</a> 100) .1) 
@@ -8092,7 +8092,7 @@ this information to highlight the changed portions of a given sound.
 </td></tr>
 
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (<A NAME="showoriginal">show-original</a> snd chn)
   ;; draw a bar above unchanged portions of a sound
   (define (check-fragment tree ls rs)
@@ -8114,7 +8114,7 @@ this information to highlight the changed portions of a given sound.
    (check-fragment (<em class=red>edit-tree</em> snd chn)
                    (<a class=quiet href="#leftsample">left-sample</a> snd chn)
                    (<a class=quiet href="#rightsample">right-sample</a> snd chn)))
-(add-hook! after-graph-hook show-original)
+(add-hook! <a class=quiet href="#aftergraphhook">after-graph-hook</a> show-original)
 </pre></td></tr></table></td></tr>
 <tr><td></td><td></td></tr>
 
@@ -8137,7 +8137,7 @@ is to copy the complete edit state into a new sound so that two or more
 edit sequences can be compared.
 </td></tr>
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define sfile 0)
 
 (define* (<a name="clonesoundas">clone-sound-as</a> new-name #:optional snd)
@@ -8168,7 +8168,7 @@ should go, and we have religious objections to using a
 graphical user interface.  So we create myfile.scm, and
 put in it something like:</p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (let ((myfile (<a href="#sndnew">new-sound</a> "mysound.snd" mus-aifc-sound-file mus-bshort 44100 2 "this is my sound")))
 	;; this is equivalent to the New file menu option
   (<a href="#sndmix">mix</a> "oboe.snd" 0 0 myfile 0)
@@ -8236,7 +8236,7 @@ Here's an example that displays a histogram of the current values in 16 bins:
 </td></tr>
 
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (<em class=red>add-transform</em> "histogram" "bins" 0.0 1.0 
   (lambda (len fd)
     (let ((v (<a class=quiet href="#makevct">make-vct</a> len))
@@ -8258,7 +8258,7 @@ And an example that ties the Hilbert transform in dsp.scm into the user-interfac
 </td></tr>
 
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (<em class=red>add-transform</em> "Hilbert" "Hilbert" 0.0 1.0
   (lambda (len fd)
     (let ((flt (<a class=quiet href="sndscm.html#makehilberttransform">make-hilbert-transform</a> 40)))
@@ -8384,7 +8384,7 @@ sound files (see <a href="#addsoundfileextension">add-sound-file-extension</a> a
 should return that list, sorted as it pleases.  The following sorts the list by decreasing max amp:
 </td></tr>
 
-<tr><td></td><td><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<tr><td></td><td><table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (set! (<em class=red>previous-files-sort-procedure</em>)
   (lambda (lst)
     (sort lst 
@@ -8443,12 +8443,12 @@ Add an envelope to the envelope editor's list, under the name 'name', using the 
 as the default:
 </td></tr>
 
-<tr><td></td><td><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<tr><td></td><td><table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (enved-fft)
   (set! (<em class=red>enved-filter)</em> #f)
   (set! (<a class=quiet href="#envedwaving">enved-wave?</a>) #t)
   (set! (<a class=quiet href="#envedtarget">enved-target</a>) <a class=quiet href="#envedtarget">enved-spectrum</a>)
-  (add-hook! after-open-hook (lambda (snd)
+  (add-hook! <a class=quiet href="#afteropenhook">after-open-hook</a> (lambda (snd)
 			       (set! (<a class=quiet href="#lfftsize">transform-size</a> snd) 
 				     (expt 2 (ceiling (/ (log (max 1 (<a class=quiet href="#frames">frames</a> snd)))
 							 (log 2.0))))))))
@@ -8499,7 +8499,7 @@ list of urls.
 <br><br>There are many examples in new-effects.scm.
 </td></tr>
 <tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (defmacro with-snd-help (form)
   ;; if an error occurs while evaluating form, try to start the help dialog with some relevant help
   `(catch #t 
@@ -8625,7 +8625,7 @@ default: 4.
 If it returns a string, that becomes the output filename.
 </td></tr>
 <tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <em class=red>recorder-file-hook</em>
   (lambda (name)
     (let* ((header (<a class=quiet href="#recorderouttype">recorder-out-type</a>))
@@ -8739,7 +8739,7 @@ yes-or-no? to step through the samples one at a time, breaking out of the comput
 mark code omissions -- see the original for details):
 </td></tr>
 
-<tr><td></td><td><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<tr><td></td><td><table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
     (call-with-current-continuation
      (lambda (return)
        (do ((ctr loc (1+ ctr)))
@@ -8759,7 +8759,7 @@ mark code omissions -- see the original for details):
 But this is kinda dumb; we really should use a continuation here:
 </td></tr>
 
-<tr><td></td><td><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<tr><td></td><td><table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
     (call-with-current-continuation
      (lambda (return)
        (do ((ctr loc (1+ ctr)))
@@ -8821,7 +8821,7 @@ Snd menus are numbered from 0 ('File') to 5 ('Popup'); 'Help' is menu 4.  If the
 As a slightly more elaborate example, the following adds a Delete option to the File menu:
 </td></tr>
 
-<tr><td></td><td><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<tr><td></td><td><table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (<em class=red>add-to-menu</em> 0 "Delete" ; add Delete option to File menu
 	     (lambda ()
 	       ;; close current sound and delete it (after requesting confirmation)
@@ -8895,7 +8895,7 @@ force it to take the focus.
 If <i>origin</i> is included, it is the name reported if an error occurs.  The ugly default is "user key func".
 
 </td></tr><tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (<em class=red>bind-key</em> (char-&gt;integer #\a) 4 
           (lambda () 
             "C-a prints hi in listener"
@@ -8934,7 +8934,7 @@ setting how how many samples to jump for the C-p and C-n keys.  We can implement
 </td></tr>
 
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define line-size 128)
 (<em class=red>bind-key</em> (char-&gt;integer #\n) 4 (lambda (arg) (set! (<a class=quiet href="#sndcursor">cursor</a>) (+ (<a class=quiet href="#sndcursor">cursor</a>) (* line-size arg)))))
 (<em class=red>bind-key</em> (char-&gt;integer #\p) 4 (lambda (arg) (set! (<a class=quiet href="#sndcursor">cursor</a>) (- (<a class=quiet href="#sndcursor">cursor</a>) (* line-size arg)))))
@@ -8945,7 +8945,7 @@ setting how how many samples to jump for the C-p and C-n keys.  We can implement
 </td></tr>
 
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (<em class=red>bind-key</em> (char-&gt;integer #\o) 0 
   (lambda () 
     (<a class=quiet href="#sndplay">play</a> "oboe.snd") 
@@ -8963,7 +8963,7 @@ forward two samples in the graph each time we type "l":
 </td></tr>
 
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (<em class=red>bind-key</em> (char-&gt;integer #\l) 0 
   (lambda () 
     (set! (<a class=quiet href="#leftsample">left-sample</a> 0 0) (+ 2 (<a class=quiet href="#leftsample">left-sample</a> 0 0))) 
@@ -8975,7 +8975,7 @@ Or, more useful perhaps, have C-c set the cursor at a particular sample:
 </td></tr>
 
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (<em class=red>bind-key</em> (char-&gt;integer #\c) 4
   (lambda (arg)
     (set! (<a class=quiet href="#sndcursor">cursor</a>) arg) 
@@ -8991,7 +8991,7 @@ The End key if #xff57, so we could bind it to cause the full sound to be display
 A similar set rebinds the arrow keys to give much more precise window position and size control:
 </td></tr>
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (<a NAME="moveonepixel">move-one-pixel</a> s c right)
   (let* ((ax (<a class=quiet href="#axisinfo">axis-info</a> s c time-graph))
 	 (lo (list-ref ax 0))
@@ -9037,7 +9037,7 @@ In the next example, we rebind them to treat same-sense zero-crossings as line m
 </td></tr>
 
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (<A NAME="newcp">find-zero</a> forwards)
   (let* ((loc (<a class=quiet href="#sndcursor">cursor</a>))
 	 (twice #f)
@@ -9089,7 +9089,7 @@ The key bindings set by bind-key are active only when the active widget is a gra
 key strokes, the underlying text widget interprets them itself.  You can change the listener's interpretation
 in the following manner (this assumes you're using Motif and have the xm module loaded):
 </td></tr><tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (XtAppAddActions (car (<a class=quiet href="#mainwidgets">main-widgets</a>)) (list (list "hiho" (lambda args (<a class=quiet href="#sndprint">snd-print</a> "hiho")))))
 (XtOverrideTranslations (list-ref (<a class=quiet href="#mainwidgets">main-widgets</a>) 4) (XtParseTranslationTable "Ctrl &lt;Key&gt;i: hiho()\n"))
 </pre></td></tr></table><br></td></tr>
@@ -9127,7 +9127,7 @@ events through.  <i>c-g?</i> is especially useful in loops; we could define our 
 (this is a slight revision of Guile's while macro from ice-9/boot-9.scm):
 </td></tr>
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (defmacro safe-while (cond . body)
   `(letrec ((break (lambda val (apply throw 'break val)))
 	    (continue (lambda () (if (<em class=red>c-g?</em>) 
@@ -9177,8 +9177,8 @@ equalize Snd panes as in the View menu <a href="snd.html#equalizepanes">Equalize
 If the <i>snd</i> argument is given, only that sound's panes are affected.
 </td></tr>
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(add-hook! after-open-hook 
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+(add-hook! <a class=quiet href="#afteropenhook">after-open-hook</a> 
   (lambda (n) (if (&gt; (<a class=quiet href="#channels">channels</a> n) 3) (<em class=red>equalize-panes</em>))))
 </pre></td></tr></table></td></tr>
 
@@ -9206,7 +9206,7 @@ is named "<a name="callin">call_in</a>".
 <pre><code>(in 5000 (lambda () (<a class=quiet href="#sndprint">snd-print</a> "boo!")))</code></pre>
 </td></tr>
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (at hour minute func)
   (let* ((cur-time (localtime (current-time)))
 	 (cur-minute (vector-ref cur-time 1))
@@ -9484,7 +9484,7 @@ prints the names of all the stereo AIFC files it finds:
 </td></tr>
 
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (for-each
   (lambda (filename)
     (if (and (= (<a class=quiet href="#soundheadertype">mus-sound-header-type</a> filename) <a class=quiet href="#sndheadertype">mus-aifc</a>)
@@ -9926,7 +9926,7 @@ The font variables are:
 <tr><td><code><a class=def name="tinyfont">tiny-font</a></code></td><td>smallest font used</td></tr>
 </table>
 <br>
-<center><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<center><table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (set! (<a class=quiet href="#listenerfont">listener-font</a>) "9x15")
 (set! (<a class=quiet href="#axislabelfont">axis-label-font</a>) "-*-times-medium-r-normal-*-18-*-*-*-*-*-*-*")
 (set! (<a class=quiet href="#axisnumbersfont">axis-numbers-font</a>) "9x15")
@@ -10033,7 +10033,7 @@ time-graph; the other choices are transform-graph and lisp-graph.  The procedure
 could be defined as:
 </td></tr>
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (x-&gt;position-1 x snd chn)
   (let* ((axinfo (<em class=red>axis-info</em> snd chn <a class=quiet href="#y2position">time-graph</a>))
 	 (x0 (list-ref axinfo 2))
@@ -10148,7 +10148,7 @@ of sample-oriented comments, displaying a given comment if its associated sample
 currently in the time-domain graph:
 </td></tr>
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define* (<a name="addcomment">add-comment</a> sample comment #:optional snd1 chn1)
   (let* ((snd (or snd1 (<a class=quiet href="#selectedsound">selected-sound</a>)))
 	 (chn (or chn1 (<a class=quiet href="#selectedchannel">selected-channel</a>)))
@@ -10174,7 +10174,7 @@ currently in the time-domain graph:
 	       (<em class=red>draw-string</em> text (- xpos (/ text-width 2)) 18)))))
      comments)))
 
-(add-hook! after-graph-hook show-comments)
+(add-hook! <a class=quiet href="#aftergraphhook">after-graph-hook</a> show-comments)
 </pre></td></tr></table>
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -10195,7 +10195,7 @@ See draw.scm, snd-motif.scm, or <a href="#showoriginal">show-original</a>.
 <tr><td></td><td>
 draws a filled polygon whose vertices are in the vector <i>points</i>.</td></tr>
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (-&gt; x0 y0 size snd chn)
   "draw an arrow pointing (from the left) at the point (x0 y0)"
   (let ((points (make-vector 8)))
@@ -10233,7 +10233,7 @@ The following gives us a green cursor:
 We can goof around with colors and fonts:
 </td></tr>
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define new-font (<a class=quiet href="#loadfont">load-font</a> "-*-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*"))
 
 (define show-hiho
@@ -10276,7 +10276,7 @@ overlay different versions of the same sound, place a portion of a
 sound over another at an arbitrary point, and so on (see draw.scm):
 </td></tr>
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (<A NAME="displaysampsinred">display-samps-in-red</A> snd chn)
   "display samples 1000 to 2000 in red whenever they're in the current view"
   (let ((left (<a class=quiet href="#leftsample">left-sample</a> snd chn))
@@ -10312,7 +10312,7 @@ sound over another at an arbitrary point, and so on (see draw.scm):
                   (list new-low-data new-high-data) snd chn copy-context left-bin right-bin)
 		(set! (<a class=quiet href="#foregroundcolor">foreground-color</a> snd chn) old-color)))))))
 
-(add-hook! after-graph-hook display-samps-in-red)
+(add-hook! <a class=quiet href="#aftergraphhook">after-graph-hook</a> display-samps-in-red)
 </pre></td></tr></table></td></tr>
 <tr><td></td><td align=center>
 </td></tr>
@@ -10329,7 +10329,7 @@ load the font <i>font-name</i> (an X-style font spec), and return a handle for i
 load-font could be (should have been!) defined using the xm module as:
 </td></tr>
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (load-font name)
   (let ((fs (XLoadQueryFont (XtDisplay (cadr (<a class=quiet href="#mainwidgets">main-widgets</a>))) name)))
     (and (XFontStruct? fs) (.fid fs))))
@@ -10353,7 +10353,7 @@ list of two vcts (the two sides of the peak envelope graph).
 The result can be used in the lisp graph:
 </td></tr>
 <tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define <A NAME="displaydb">display-db</A>
   (lambda (snd chn)
     "(display-db snd chn) is a lisp-graph-hook function to display the time domain data in dB"
@@ -10371,7 +10371,7 @@ The result can be used in the lisp graph:
 	     0.0 60.0
 	     snd chn))))
 
-(add-hook! lisp-graph-hook display-db)
+(add-hook! <a class=quiet href="#lispgraphhook">lisp-graph-hook</a> display-db)
 </pre></td></tr></table>
 </td></tr>
 <tr><td></td><td>
