@@ -2089,17 +2089,12 @@ In the following code, we use the edit function to reverse every other grain:
 				           (set! forward #f)
 					   (begin
 					     (set! forward #t)
-					     (<a class=quiet href="extsnd.html#vctreverse">vct-reverse!</a> grain)))
+					     (<a class=quiet href="extsnd.html#vctreverse">vct-reverse!</a> grain len)))
 				       len))))
 	(rd (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a> 0)))
     (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (lambda (y) (<em class=red>granulate</em> grn (lambda (dir) (rd)))))))
 </pre>
 </td></tr></table>
-
-<p>With some minor revisions, this could also work in the CL CLM -- use aref in place of
-vct-ref, nil for #f, and put the edit function as a run-time argument to the granulate
-generator, rather than using the :edit argument to make-granulate.
-</p>
 <br>
 
 
@@ -2733,8 +2728,8 @@ Here is an example of move-locsig:
 <table border=2 bordercolor="tan" hspace=40 cellpadding=8 cellspacing=3><tr><td>
 <pre>
 (<a class=quiet href="#definstrument">definstrument</a> move-osc (start dur freq amp &amp;key (degree 0) (dist 1.0) (reverb 0))
-  (let* ((beg (floor (* start *clm-srate*)))
-         (end (+ beg (floor (* dur *clm-srate*))) )
+  (let* ((beg (floor (* start *srate*)))
+         (end (+ beg (floor (* dur *srate*))) )
          (car (<a class=quiet href="#make-oscil">make-oscil</a> :frequency freq))
          (loc (<a class=quiet href="#make-locsig">make-locsig</a> :degree degree :distance dist :channels 2))
 	 (pan-env (<a class=quiet href="#make-env">make-env</a> '(0 0 1 90) :duration dur)))
@@ -3560,6 +3555,17 @@ set it to the correct value for your audio system. play's <i>start</i> and <i>en
 and default to playing the entire sound.  The <i>wait</i> argument in some cases causes
 the play call to wait until the complete sound has been played before returning to the listener.
 </p>
+
+<p>In both Scheme and CL, the *clm-* variables (like *clm-srate*) set the default values.
+In CL the corresponding un-clm'd versions (*srate*) hold the current values.  So, if
+with-sound doesn't include the :srate argument, *srate* is the same as *clm-srate*;
+otherwise it reflects the :srate value for the duration of the with-sound call.
+The local variables (in CL) that are currently exported are:
+*srate*, *safety*, and *debug*.  Unexported, but available in the clm package
+are *channels*, *data-format*, *header-type*, *notehook*, *clipped*, *verbose*,
+and *statistics*.
+</p>
+<br>
 
 
 <!-- INDEX mix-and-with-mix:Checkpoints -->

@@ -6294,20 +6294,19 @@ typedef struct {
   int s50;
   int rmp;
   Float amp;
-  int len;
   int cur_out;
-  int cur_in;
   int input_hop;
   int ctr;
   int output_hop;
-  Float *data;
-  Float *in_data;
-  int block_len;
+  Float *out_data;    /* output buffer */
+  int out_data_len;
+  Float *in_data;     /* input buffer */
   int in_data_len;
-  int in_data_start;
   void *closure;
   int (*edit)(void *closure);
-  Float *grain;
+  Float *grain;       /* grain data */
+  int grain_len;
+  bool first_samp;
 } grn_info;
 
 bool mus_granulate_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_GRANULATE));}
@@ -6322,7 +6321,7 @@ static char *describe_granulate(mus_any *ptr)
 	       (Float)(gen->output_hop) / (Float)(gen->input_hop),
 	       gen->input_hop, gen->output_hop,
 	       gen->amp,
-	       (Float)(gen->len) / (Float)sampling_rate, gen->len,
+	       (Float)(gen->grain_len) / (Float)sampling_rate, gen->grain_len,
 	       (Float)(gen->rmp) / (Float)sampling_rate);
   return(describe_buffer);
 }
@@ -6332,7 +6331,7 @@ static int free_granulate(mus_any *ptr)
   grn_info *gen = (grn_info *)ptr;
   if (gen)
     {
-      if (gen->data) FREE(gen->data);
+      if (gen->out_data) FREE(gen->out_data);
       if (gen->in_data) FREE(gen->in_data);
       if (gen->grain) FREE(gen->grain);
       FREE(gen);
@@ -6340,12 +6339,12 @@ static int free_granulate(mus_any *ptr)
   return(0);
 }
 
-static off_t grn_length(mus_any *ptr) {return(((grn_info *)ptr)->len);}
+static off_t grn_length(mus_any *ptr) {return(((grn_info *)ptr)->grain_len);}
 static off_t grn_set_length(mus_any *ptr, off_t val) 
 {
   grn_info *gen = ((grn_info *)ptr);
-  if (val < gen->block_len) gen->len = (int)val; /* larger -> segfault */
-  return(gen->len);
+  if (val < gen->out_data_len) gen->grain_len = (int)val; /* larger -> segfault */
+  return(gen->grain_len);
 }
 static Float grn_scaler(mus_any *ptr) {return(((grn_info *)ptr)->amp);}
 static Float grn_set_scaler(mus_any *ptr, Float val) {((grn_info *)ptr)->amp = val; return(val);}
@@ -6360,7 +6359,7 @@ static off_t grn_ramp(mus_any *ptr) {return(((grn_info *)ptr)->rmp);}
 static off_t grn_set_ramp(mus_any *ptr, off_t val)
 {
   grn_info *gen = (grn_info *)ptr; 
-  if (val < (gen->len * .5))
+  if (val < (gen->grain_len * .5))
     gen->rmp = (int)val;
   return(val);
 }
@@ -6420,9 +6419,9 @@ mus_any *mus_make_granulate(Float (*input)(void *arg, int direction),
   spd = (grn_info *)clm_calloc(1, sizeof(grn_info), S_make_granulate);
   spd->core = &GRANULATE_CLASS;
   spd->cur_out = 0;
-  spd->cur_in = 0;
-  spd->len = (int)(ceil(length * sampling_rate));
-  spd->rmp = (int)(ramp * spd->len);
+  spd->ctr = 0;
+  spd->grain_len = (int)(ceil(length * sampling_rate));
+  spd->rmp = (int)(ramp * spd->grain_len);
   spd->amp = scaler;
   spd->output_hop = (int)(hop * sampling_rate);
   spd->input_hop = (int)((Float)(spd->output_hop) / expansion);
@@ -6436,18 +6435,15 @@ mus_any *mus_make_granulate(Float (*input)(void *arg, int direction),
       spd->s20 = (int)(jitter * hop);
       spd->s50 = (int)(jitter * hop * .4);
     }
-  spd->ctr = 0;
-  spd->block_len = outlen;
-  spd->data = (Float *)clm_calloc(outlen, sizeof(Float), "granulate out data");
+  spd->out_data_len = outlen;
+  spd->out_data = (Float *)clm_calloc(spd->out_data_len, sizeof(Float), "granulate out data");
   spd->in_data_len = outlen + spd->s20 + 1;
   spd->in_data = (Float *)clm_calloc(spd->in_data_len, sizeof(Float), "granulate in data");
-  spd->in_data_start = spd->in_data_len;
   spd->rd = input;
   spd->closure = closure;
   spd->edit = edit;
-  if (edit) /* grain needs to exist from the beginning so that the Scheme caller can wrap it for mus-data */
-    spd->grain = (Float *)clm_calloc(spd->in_data_len, sizeof(Float), "granulate grain");
-  else spd->grain = NULL;
+  spd->grain = (Float *)clm_calloc(spd->in_data_len, sizeof(Float), "granulate grain");
+  spd->first_samp = true;
   return((mus_any *)spd);
 }
 
@@ -6461,87 +6457,134 @@ void mus_granulate_set_edit_function(mus_any *ptr, int (*edit)(void *closure))
 
 Float mus_granulate_with_editor(mus_any *ptr, Float (*input)(void *arg, int direction), int (*edit)(void *closure))
 { 
+  /* in_data_len is the max grain size (:maxsize arg), not the current grain size
+   * out_data_len is the size of the output buffer
+   * grain_len is the current grain size
+   * cur_out is the out_data buffer location where we need to add in the next grain
+   * ctr is where we are now in out_data
+   */
   grn_info *spd = (grn_info *)ptr;
-  int start, end, len, extra, i, j, k, steady_end, curstart;
-  Float amp, incr, result = 0.0;
-  Float *out_data;
-  if (spd->ctr < spd->block_len)
-    result = spd->data[spd->ctr];
+  Float result = 0.0;
+
+  if (spd->ctr < spd->out_data_len)
+    result = spd->out_data[spd->ctr]; /* else return 0.0 */
   spd->ctr++;
-  if (spd->ctr >= spd->cur_out)
+
+  if (spd->ctr >= spd->cur_out)       /* time for next grain */
     {
+      int i;
+
+      /* set up edit/input functions and possible outside-accessible grain array */
       Float (*spd_input)(void *arg, int direction) = input;
-      int (*spd_edit)(void *closure);
+      int (*spd_edit)(void *closure) = edit;
       if (spd_input == NULL) spd_input = spd->rd;
-      spd_edit = edit;
       if (spd_edit == NULL) spd_edit = spd->edit;
-      start = spd->cur_out;
-      end = spd->len - start;
-      if (end < 0) end = 0;
-      if (end > 0) 
-	for (i = 0, j = start; i < end; i++, j++) 
-	  {
-	    if (j < spd->block_len)
-	      spd->data[i] = spd->data[j];
-	    else spd->data[i] = 0.0;
-	  }
-      if (end < spd->block_len)
-	memset((void *)(spd->data + end), 0, (spd->block_len - end) * sizeof(Float));
-      start = spd->in_data_start;
-      len = spd->in_data_len;
-      if (start > len)
+
+      if (spd->first_samp)
 	{
-	  extra = start - len;
-	  for (i = 0; i < extra; i++) (*spd_input)(spd->closure, 1);
-	  start = len;
+	  /* fill up in_data, out_data is already cleared */
+	  for (i = 0; i < spd->in_data_len; i++)
+	    spd->in_data[i] = (*spd_input)(spd->closure, 1);
 	}
-      if (start < len)
-	for (i = 0, k = start; k < len; i++, k++)
-	  spd->in_data[i] = spd->in_data[k];
-      for (i = (len - start); i < len; i++) 
-	spd->in_data[i] = (*spd_input)(spd->closure, 1);
-      spd->in_data_start = spd->input_hop;
-      amp = 0.0;
-      incr = (Float)(spd->amp) / (Float)(spd->rmp);
-      steady_end = (spd->len - spd->rmp);
-      curstart = irandom(spd->s20);
-      if (spd_edit)
+
+      else
 	{
-	  if (!(spd->grain))
-	    spd->grain = (Float *)clm_calloc(spd->in_data_len, sizeof(Float), "run-time granulate grain");
-	  memset((void *)(spd->grain), 0, spd->in_data_len * sizeof(Float));
-	  out_data = spd->grain;
-	}
-      else out_data = spd->data;
-      for (i = 0, j = curstart; i < spd->len; i++, j++)
-	{
-	  if (j < spd->in_data_len)
-	    out_data[i] += (amp * spd->in_data[j]);
-	  else out_data[i] = 0.0;
-	  if (i < spd->rmp) 
-	    amp += incr; 
+
+	  /* align output buffer to flush the data we've already output, and zero out new trailing portion */
+	  if (spd->cur_out >= spd->out_data_len)
+	    {
+	      /* entire buffer has been output, and in fact we've been sending 0's for awhile to fill out hop */
+	      memset((void *)(spd->out_data), 0, spd->out_data_len * sizeof(Float)); /* so zero the entire thing (it's all old) */
+	    }
 	  else 
-	    if (i > steady_end) 
-	      amp -= incr;
-	}
-      if (spd_edit)
-	{
-	  int new_len;
-	  new_len = (*spd_edit)(spd->closure);
-	  if (new_len <= 0) 
-	    new_len = spd->len;
+	    {
+	      /* move yet-un-output data to 0, zero trailers */
+	      int good_samps;
+	      good_samps = (spd->out_data_len - spd->cur_out);
+	      memmove((void *)(spd->out_data), (void *)(spd->out_data + spd->cur_out), good_samps * sizeof(Float));
+	      memset((void *)(spd->out_data + good_samps), 0, spd->cur_out * sizeof(Float)); /* must be cur_out trailing samples to 0 */
+	    }
+
+	  /* align input buffer */
+	  if (spd->input_hop > spd->in_data_len)
+	    {
+	      /* need to flush enough samples to accomodate the fact that the hop is bigger than our data buffer */
+	      for (i = spd->in_data_len; i < spd->input_hop; i++) (*spd_input)(spd->closure, 1);
+	      /* then get a full input buffer */
+	      for (i = 0; i < spd->in_data_len; i++)
+		spd->in_data[i] = (*spd_input)(spd->closure, 1);
+	    }
 	  else
 	    {
-	      if (new_len > spd->in_data_len)
-		new_len = spd->in_data_len;
+	      /* align input buffer with current input hop location */
+	      int good_samps;
+	      good_samps = (spd->in_data_len - spd->input_hop);
+	      memmove((void *)(spd->in_data), (void *)(spd->in_data + spd->input_hop), good_samps * sizeof(Float));
+	      for (i = good_samps; i < spd->in_data_len; i++)
+		spd->in_data[i] = (*spd_input)(spd->closure, 1);
 	    }
-	  for (i = 0; i < new_len; i++)
-	    spd->data[i] += out_data[i];
 	}
-      spd->ctr -= spd->cur_out;
-      /* spd->cur_out = spd->output_hop + irandom(spd->s50); */             /* this was the original form */
+
+      /* create current grain */
+      {
+	int lim, steady_end, curstart, j;
+	lim = spd->grain_len;
+	curstart = irandom(spd->s20); /* start location in input buffer */
+	if ((curstart + spd->grain_len) > spd->in_data_len)
+	  lim = (spd->in_data_len - curstart);
+	memset((void *)(spd->grain), 0, spd->grain_len * sizeof(Float));
+	if (spd->rmp > 0)
+	  {
+	    Float amp = 0.0, incr;
+	    steady_end = (spd->grain_len - spd->rmp);
+	    incr = (Float)(spd->amp) / (Float)(spd->rmp);
+	    for (i = 0, j = curstart; i < lim; i++, j++)
+	      {
+		spd->grain[i] = (amp * spd->in_data[j]);
+		if (i < spd->rmp) 
+		  amp += incr; 
+		else 
+		  if (i >= steady_end) /* was >, but that truncates the envelope */
+		    amp -= incr;
+	      }
+	  }
+	else
+	  {
+	    /* ramp is 0.0, so just copy the input buffer */
+	    memcpy((void *)(spd->grain), (void *)(spd->in_data + curstart), lim * sizeof(Float));
+	  }
+      }
+
+      /* add new grain into output buffer */
+      {
+	int new_len;
+	if (spd_edit)
+	  {
+	    new_len = (*spd_edit)(spd->closure);
+	    if (new_len <= 0)
+	      new_len = spd->grain_len;
+	    else
+	      {
+		if (new_len > spd->out_data_len)
+		  new_len = spd->out_data_len;
+	      }
+	  }
+	else new_len = spd->grain_len;
+	for (i = 0; i < new_len; i++)
+	  spd->out_data[i] += spd->grain[i];
+      }
+      
+      /* set location of next grain calculation */
+      spd->ctr = 0;
       spd->cur_out = spd->output_hop + irandom(spd->s50) - (spd->s50 >> 1); /* this form suggested by Marc Lehmann */
       if (spd->cur_out < 0) spd->cur_out = 0;
+
+      if (spd->first_samp)
+	{
+	  spd->first_samp = false;
+	  spd->ctr = 1;
+	  return(spd->out_data[0]);
+	}
     }
   return(result);
 }

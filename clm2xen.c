@@ -4368,7 +4368,6 @@ static XEN g_granulate(XEN obj, XEN func, XEN edit_func)
 		{
 		  mus_granulate_set_edit_function(gn->gen, grnedit);
 		  gn->vcts[MUS_EDIT_FUNCTION] = edit_func;
-		  gn->vcts[MUS_DATA_WRAPPER] = make_vct_wrapper(mus_granulate_grain_max_length(gn->gen), mus_data(gn->gen));
 		}
 	    }
 	  else XEN_BAD_ARITY_ERROR(S_granulate, 3, edit_func, "granulate edit function wants 1 arg");
@@ -4463,8 +4462,7 @@ The edit function, if any, should return the length in samples of the grain, or 
     {
       gn->nvcts = MAX_VCTS;
       gn->vcts = make_vcts(gn->nvcts);
-      if (XEN_BOUND_P(edit_obj)) 
-	gn->vcts[MUS_DATA_WRAPPER] = make_vct_wrapper(mus_granulate_grain_max_length(ge), mus_data(ge));
+      gn->vcts[MUS_DATA_WRAPPER] = make_vct_wrapper(mus_granulate_grain_max_length(ge), mus_data(ge));
       gn->vcts[MUS_INPUT_FUNCTION] = in_obj;
       gn->vcts[MUS_EDIT_FUNCTION] = edit_obj;
       gn->gen = ge;

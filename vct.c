@@ -34,6 +34,7 @@
  *   (vct->vector v)                  return vector of vct contents
  *   (vct-move! v new old)            v[new++] = v[old++] -> v
  *   (vct-subseq v start end vnew)    vnew = v[start..end]
+ *   (vct-reverse v (len #f))         reverse contents (using len as end point if given)
  *
  * The intended use is a sort of latter-day array-processing system that handles huge
  * one-dimensional vectors -- fft's, etc.  Some of these functions can be found in
@@ -578,15 +579,19 @@ static XEN vct_to_vector(XEN vobj)
   return(xen_return_first(new_vect, vobj));
 }
 
-static XEN vct_reverse(XEN vobj)
+static XEN vct_reverse(XEN vobj, XEN size)
 {
-  #define H_vct_reverse "(" S_vct_reverse " vct): in-place reversal of vct contents"
+  #define H_vct_reverse "(" S_vct_reverse " vct len): in-place reversal of vct contents"
   vct *v;
-  int i, j, len;
+  int i, j, len = -1;
   Float temp;
-  XEN_ASSERT_TYPE(VCT_P(vobj), vobj, XEN_ONLY_ARG, S_vct_to_vector, "a vct");
+  XEN_ASSERT_TYPE(VCT_P(vobj), vobj, XEN_ARG_1, S_vct_to_vector, "a vct");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(size), size, XEN_ARG_2, S_vct_to_vector, "an integer");
   v = TO_VCT(vobj);
-  len = v->length;
+  if (XEN_INTEGER_P(size))
+    len = XEN_TO_C_INT(size);
+  if ((len <= 0) || (len > v->length))
+    len = v->length;
   if (len == 1) return(vobj);
   for (i = 0, j = len - 1; i < j; i++, j--)
     {
@@ -619,7 +624,7 @@ XEN_NARGIFY_1(vct_peak_w, vct_peak)
 XEN_ARGIFY_4(vct_move_w, vct_move)
 XEN_ARGIFY_4(vct_subseq_w, vct_subseq)
 XEN_VARGIFY(g_vct_w, g_vct)
-XEN_NARGIFY_1(vct_reverse_w, vct_reverse)
+XEN_ARGIFY_2(vct_reverse_w, vct_reverse)
 #else
 #define g_make_vct_w g_make_vct
 #define copy_vct_w copy_vct
@@ -728,7 +733,7 @@ void vct_init(void)
   XEN_DEFINE_PROCEDURE(S_vct_moveB,     vct_move_w,     3, 1, 0, H_vct_moveB);
   XEN_DEFINE_PROCEDURE(S_vct_subseq,    vct_subseq_w,   2, 2, 0, H_vct_subseq);
   XEN_DEFINE_PROCEDURE(S_vct,           g_vct_w,        0, 0, 1, H_vct);
-  XEN_DEFINE_PROCEDURE(S_vct_reverse,   vct_reverse_w,  1, 0, 0, H_vct_reverse);
+  XEN_DEFINE_PROCEDURE(S_vct_reverse,   vct_reverse_w,  1, 1, 0, H_vct_reverse);
 #if WITH_RUN && USE_SND
   XEN_DEFINE_PROCEDURE("vct-map-1",     vct_mapB_w,     2, 0, 0, H_vct_mapB);
   XEN_EVAL_C_STRING("(defmacro vct-map! (v form) `(vct-map-1 ,v (list ',form ,form)))");

@@ -10825,6 +10825,10 @@ EDITS: 5
 	  (if (not (vequal (vct 3 2 1) (vct-reverse! (vct 1 2 3)))) (snd-display ";vct-reverse: ~A" (vct-reverse! (vct 1 2 3))))
 	  (if (not (vequal (vct 2 1) (vct-reverse! (vct 1 2)))) (snd-display ";vct-reverse: ~A" (vct-reverse! (vct 1 2))))
 	  (if (not (vequal (vct 1) (vct-reverse! (vct 1)))) (snd-display ";vct-reverse: ~A" (vct-reverse! (vct 1))))
+	  (if (not (vequal (vct 4 3 2 1) (vct-reverse! (vct 1 2 3 4) 4))) (snd-display ";vct-reverse: ~A" (vct-reverse! (vct 1 2 3 4))))
+	  (if (not (vequal (vct 3 2 1) (vct-reverse! (vct 1 2 3) 3))) (snd-display ";vct-reverse: ~A" (vct-reverse! (vct 1 2 3))))
+	  (if (not (vequal (vct 2 1) (vct-reverse! (vct 1 2) 2))) (snd-display ";vct-reverse: ~A" (vct-reverse! (vct 1 2))))
+	  (if (not (vequal (vct 1) (vct-reverse! (vct 1) 1))) (snd-display ";vct-reverse: ~A" (vct-reverse! (vct 1))))
 
 	  (let ((v0 (make-vct 3)))
 	    (let ((var (catch #t (lambda () (vct-ref v0 10)) (lambda args args))))
@@ -16562,6 +16566,269 @@ EDITS: 5
 	    (undo)))
 	(close-sound ind))
 
+      (let ((ind (new-sound :size 1000)))
+	(let ((gen (make-granulate :jitter 0.0 :hop .004 :length .001)))
+	  (map-channel (lambda (y) (granulate gen (lambda (dir) .1))))
+	  (let ((mx (maxamp)))
+	    (if (fneq mx 0.06) (snd-display "gran 0 max: ~A" mx)))
+	  (if (not (vequal (channel->vct 0 30) 
+			   (vct 0.000 0.007 0.013 0.020 0.027 0.033 0.040 0.047 0.053 0.060 0.060 0.060 0.060 0.060 0.060 0.053 
+				0.047 0.040 0.033 0.027 0.020 0.013 0.007 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+	      (snd-display ";gran 0 data: ~A" (channel->vct 0 30)))
+	  (if (not (vequal (channel->vct 85 30) 
+			   (vct 0.000 0.000 0.000 0.000 0.007 0.013 0.020 0.027 0.033 0.040 0.047 0.053 0.060 0.060 0.060 0.060
+				0.060 0.060 0.053 0.047 0.040 0.033 0.027 0.020 0.013 0.007 0.000 0.000 0.000 0.000)))
+	      (snd-display ";gran 0 data 85: ~A" (channel->vct 85 30)))
+	  (undo))
+	
+	(let ((gen (make-granulate :jitter 0.0 :hop .002 :length .001)))
+	  (map-channel (lambda (y) (granulate gen (lambda (dir) .1))))
+	  (let ((mx (maxamp)))
+	    (if (fneq mx 0.06) (snd-display "gran 1 max: ~A" mx)))
+	  (if (not (vequal (channel->vct 0 30) 
+			   (vct 0.000 0.007 0.013 0.020 0.027 0.033 0.040 0.047 0.053 0.060 0.060 0.060 0.060 0.060 0.060 0.053 
+				0.047 0.040 0.033 0.027 0.020 0.013 0.007 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+	      (snd-display ";gran 1 data: ~A" (channel->vct 0 30)))
+	  (if (not (vequal (channel->vct 40 30) 
+			   (vct 0.000 0.000 0.000 0.000 0.000 0.007 0.013 0.020 0.027 0.033 0.040 0.047 0.053 0.060 0.060 0.060 
+				0.060 0.060 0.060 0.053 0.047 0.040 0.033 0.027 0.020 0.013 0.007 0.000 0.000 0.000)))
+	      (snd-display ";gran 1 data 40: ~A" (channel->vct 85 30)))
+	  (undo))
+	
+	(let ((gen (make-granulate :jitter 0.0 :hop .002 :length .001 :ramp .1)))
+	  (map-channel (lambda (y) (granulate gen (lambda (dir) .1))))
+	  (let ((mx (maxamp)))
+	    (if (fneq mx 0.06) (snd-display "gran 2 max: ~A" mx)))
+	  (if (not (vequal (channel->vct 0 30) 
+			   (vct 0.000 0.030 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 
+				0.060 0.060 0.060 0.060 0.060 0.060 0.030 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+	      (snd-display ";gran 2 data: ~A" (channel->vct 0 30)))
+	  (if (not (vequal (channel->vct 40 30) 
+			   (vct 0.000 0.000 0.000 0.000 0.000 0.030 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060
+				0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.030 0.000 0.000 0.000)))
+	      (snd-display ";gran 2 data 40: ~A" (channel->vct 40 30)))
+	  (undo))
+	
+	(let ((gen (make-granulate :jitter 0.0 :hop .002 :length .001 :ramp .5)))
+	  (map-channel (lambda (y) (granulate gen (lambda (dir) .1))))
+	  (let ((mx (maxamp)))
+	    (if (fneq mx 0.06) (snd-display "gran 3 max: ~A" mx)))
+	  (if (not (vequal (channel->vct 0 30) 
+			   (vct 0.000 0.005 0.011 0.016 0.022 0.027 0.033 0.038 0.044 0.049 0.055 0.060 0.060 0.055 0.049 0.044 
+				0.038 0.033 0.027 0.022 0.016 0.011 0.005 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+	      (snd-display ";gran 3 data: ~A" (channel->vct 0 30)))
+	  (if (not (vequal (channel->vct 85 30) 
+			   (vct 0.000 0.000 0.000 0.000 0.005 0.011 0.016 0.022 0.027 0.033 0.038 0.044 0.049 0.055 0.060 0.060 
+				0.055 0.049 0.044 0.038 0.033 0.027 0.022 0.016 0.011 0.005 0.000 0.000 0.000 0.000)))
+	      (snd-display ";gran 3 data 85: ~A" (channel->vct 85 30)))
+	  (undo))
+	
+	(let ((gen (make-granulate :jitter 0.0 :hop .001 :length .001 :ramp .5)))
+	  (map-channel (lambda (y) (granulate gen (lambda (dir) .1))))
+	  (let ((mx (maxamp)))
+	    (if (fneq mx 0.06) (snd-display "gran 4 max: ~A" mx)))
+	  (if (not (vequal (channel->vct 0 30) 
+			   (vct 0.000 0.005 0.011 0.016 0.022 0.027 0.033 0.038 0.044 0.049 0.055 0.060 0.060 0.055 0.049 0.044 
+				0.038 0.033 0.027 0.022 0.016 0.011 0.005 0.005 0.011 0.016 0.022 0.027 0.033 0.038)))
+	      (snd-display ";gran 4 data: ~A" (channel->vct 0 30)))
+	  (if (not (vequal (channel->vct 85 30) 
+			   (vct 0.022 0.016 0.011 0.005 0.005 0.011 0.016 0.022 0.027 0.033 0.038 0.044 0.049 0.055 0.060 0.060 
+				0.055 0.049 0.044 0.038 0.033 0.027 0.022 0.016 0.011 0.005 0.005 0.011 0.016 0.022)))
+	      (snd-display ";gran 4 data 85: ~A" (channel->vct 85 30)))
+	  (undo))
+	
+	(let ((gen (make-granulate :jitter 0.0 :hop .001 :length .001 :ramp .25 :scaler 1.0)))
+	  (map-channel (lambda (y) (granulate gen (lambda (dir) .1))))
+	  (let ((mx (maxamp)))
+	    (if (fneq mx 0.1) (snd-display "gran 5 max: ~A" mx)))
+	  (if (not (vequal (channel->vct 0 30) 
+			   (vct 0.000 0.020 0.040 0.060 0.080 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 
+				0.100 0.100 0.100 0.080 0.060 0.040 0.020 0.020 0.040 0.060 0.080 0.100 0.100 0.100)))
+	      (snd-display ";gran 5 data: ~A" (channel->vct 0 30)))
+	  (if (not (vequal (channel->vct 85 30) 
+			   (vct 0.080 0.060 0.040 0.020 0.020 0.040 0.060 0.080 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 
+				0.100 0.100 0.100 0.100 0.100 0.100 0.080 0.060 0.040 0.020 0.020 0.040 0.060 0.080)))
+	      (snd-display ";gran 5 data 85: ~A" (channel->vct 85 30)))
+	  (undo))
+	
+	(let ((gen (make-granulate :jitter 0.0 :hop .001 :length .002 :ramp .5 :scaler 1.0)))
+	  (map-channel (lambda (y) (granulate gen (lambda (dir) .1))))
+	  (let ((mx (maxamp)))
+	    (if (fneq mx 0.105) (snd-display "gran 6 max: ~A" mx)))
+	  (if (not (vequal (channel->vct 0 30) 
+			   (vct 0.000 0.005 0.009 0.014 0.018 0.023 0.027 0.032 0.036 0.041 0.045 0.050 0.055 0.059 0.064 0.068 
+				0.073 0.077 0.082 0.086 0.091 0.095 0.100 0.105 0.105 0.105 0.105 0.105 0.105 0.105)))
+	      (snd-display ";gran 6 data: ~A" (channel->vct 0 30)))
+	  (if (not (vequal (channel->vct 85 30) 
+			   (vct 0.105 0.105 0.105 0.105 0.105 0.105 0.105 0.105 0.105 0.105 0.105 0.105 0.105 0.105 0.105 0.105 
+				0.105 0.105 0.105 0.105 0.105 0.105 0.105 0.105 0.105 0.105 0.105 0.105 0.105 0.105)))
+	      (snd-display ";gran 6 data 85: ~A" (channel->vct 85 30)))
+	  (undo))
+	
+	(let ((gen (make-granulate :jitter 0.0 :hop .001 :length .005 :ramp .5 :scaler 1.0)))
+	  (map-channel (lambda (y) (granulate gen (lambda (dir) .1))))
+	  (let ((mx (maxamp)))
+	    (if (fneq mx 0.264) (snd-display "gran 7 max: ~A" mx)))
+	  (if (not (vequal (channel->vct 0 30) 
+			   (vct 0.000 0.002 0.004 0.005 0.007 0.009 0.011 0.013 0.015 0.016 0.018 0.020 0.022 0.024 0.025 0.027 
+				0.029 0.031 0.033 0.035 0.036 0.038 0.040 0.044 0.047 0.051 0.055 0.058 0.062 0.065)))
+	      (snd-display ";gran 7 data: ~A" (channel->vct 0 30)))
+	  (if (not (vequal (channel->vct 85 30) 
+			   (vct 0.244 0.244 0.244 0.244 0.245 0.247 0.249 0.251 0.253 0.255 0.256 0.258 0.260 0.262 0.264 0.264 
+				0.262 0.260 0.258 0.256 0.255 0.253 0.251 0.249 0.247 0.245 0.245 0.247 0.249 0.251)))
+	      (snd-display ";gran 7 data 85: ~A" (channel->vct 85 30)))
+	  (undo))
+	
+	(let ((gen (make-granulate :jitter 0.0 :hop .01 :length .001 :ramp .5 :scaler 1.0 :expansion 2.0)))
+	  (map-channel (lambda (y) (granulate gen (lambda (dir) .1))))
+	  (let ((mx (maxamp)))
+	    (if (fneq mx 0.1) (snd-display "gran 8 max: ~A" mx)))
+	  (if (not (vequal (channel->vct 0 30) 
+			   (vct 0.000 0.009 0.018 0.027 0.036 0.045 0.055 0.064 0.073 0.082 0.091 0.100 0.100 0.091 0.082 0.073 
+				0.064 0.055 0.045 0.036 0.027 0.018 0.009 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+	      (snd-display ";gran 8 data: ~A" (channel->vct 0 30)))
+	  (if (not (vequal (channel->vct 220 30) 
+			   (vct 0.000 0.009 0.018 0.027 0.036 0.045 0.055 0.064 0.073 0.082 0.091 0.100 0.100 0.091 0.082 0.073 
+				0.064 0.055 0.045 0.036 0.027 0.018 0.009 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+	      (snd-display ";gran 8 data 220: ~A" (channel->vct 220 30)))
+	  (undo))
+	
+	(let ((gen (make-granulate :jitter 0.0 :hop .01 :length .001 :ramp .5 :scaler 1.0 :expansion 0.5)))
+	  (map-channel (lambda (y) (granulate gen (lambda (dir) .1))))
+	  (let ((mx (maxamp)))
+	    (if (fneq mx 0.1) (snd-display "gran 9 max: ~A" mx))) ; same as 8 because expansion hits the input counter
+	  (if (not (vequal (channel->vct 0 30) 
+			   (vct 0.000 0.009 0.018 0.027 0.036 0.045 0.055 0.064 0.073 0.082 0.091 0.100 0.100 0.091 0.082 0.073 
+				0.064 0.055 0.045 0.036 0.027 0.018 0.009 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+	      (snd-display ";gran 9 data: ~A" (channel->vct 0 30)))
+	  (if (not (vequal (channel->vct 220 30) 
+			   (vct 0.000 0.009 0.018 0.027 0.036 0.045 0.055 0.064 0.073 0.082 0.091 0.100 0.100 0.091 0.082 0.073 
+				0.064 0.055 0.045 0.036 0.027 0.018 0.009 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+	      (snd-display ";gran 9 data 220: ~A" (channel->vct 220 30)))
+	  (undo))
+	
+	(let ((gen (make-granulate :jitter 0.0 :hop .001 :length .005 :ramp .5 :scaler 1.0)))
+	  (map-channel (lambda (y) (granulate gen 
+					      (lambda (dir) .1)
+					      (lambda (g)
+						(declare (g clm))
+						(let ((grain (mus-data g))  ; current grain
+						      (len (mus-length g))) ; current grain length
+						  (do ((i 0 (1+ i)))
+						      ((= i len) len)       ; grain length unchanged in this case
+						    (vct-set! grain i (* 2 (vct-ref grain i)))))
+						0))))
+	  (let ((mx (maxamp)))
+	    (if (fneq mx (* 2 0.264)) (snd-display "gran 10 max: ~A" mx)))
+	  (if (not (vequal (vct-scale! (channel->vct 0 30) 0.5)
+			   (vct 0.000 0.002 0.004 0.005 0.007 0.009 0.011 0.013 0.015 0.016 0.018 0.020 0.022 0.024 0.025 0.027 
+				0.029 0.031 0.033 0.035 0.036 0.038 0.040 0.044 0.047 0.051 0.055 0.058 0.062 0.065)))
+	      (snd-display ";gran 10 data: ~A" (channel->vct 0 30)))
+	  (if (not (vequal (vct-scale! (channel->vct 85 30) 0.5)
+			   (vct 0.244 0.244 0.244 0.244 0.245 0.247 0.249 0.251 0.253 0.255 0.256 0.258 0.260 0.262 0.264 0.264 
+				0.262 0.260 0.258 0.256 0.255 0.253 0.251 0.249 0.247 0.245 0.245 0.247 0.249 0.251)))
+	      (snd-display ";gran 10 data 85: ~A" (channel->vct 85 30)))
+	  (undo))
+	
+	(let ((gen (make-granulate :jitter 0.0 :hop .005 :length .002 :ramp 0.0 :scaler 1.0))
+	      (forward #t)
+	      (ctr -0.5)
+	      (incr .001))
+	  (map-channel (lambda (y) (granulate gen 
+					      (lambda (dir) (set! ctr (+ ctr incr)) ctr)
+					      (lambda (g)
+						(declare (g clm))
+						(let ((grain (mus-data g))
+						      (len (mus-length g)))
+						  (if forward ; no change to data
+						      (set! forward #f)
+						      (begin
+							(set! forward #t)
+							(vct-reverse! grain len))) ; should get ramps going up then down across overall rising ramp
+						  len)))))
+	  (let ((mx (maxamp)))
+	    (if (> mx 0.6) (snd-display "gran 11 max: ~A" mx)))
+	  (if (not (vequal (channel->vct 0 30)
+			   (vct -0.499 -0.498 -0.497 -0.496 -0.495 -0.494 -0.493 -0.492 -0.491 -0.490 -0.489 -0.488 -0.487 -0.486 
+				-0.485 -0.484 -0.483 -0.482 -0.481 -0.480 -0.479 -0.478 -0.477 -0.476 -0.475 -0.474 -0.473 -0.472 -0.471 -0.470)))
+	      (snd-display ";gran 11 data: ~A" (channel->vct 0 30)))
+	  (if (not (vequal (channel->vct 100 30)
+			   (vct 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 -0.345 -0.346 -0.347 -0.348 -0.349 
+				-0.350 -0.351 -0.352 -0.353 -0.354 -0.355 -0.356 -0.357 -0.358 -0.359 -0.360 -0.361 -0.362 -0.363 -0.364)))
+	      (snd-display ";gran 11 data 100: ~A" (channel->vct 100 30)))
+	  (undo))
+	
+	(let* ((forward #t)
+	       (ctr -0.5)
+	       (incr .001)
+	       (gen (make-granulate :jitter 0.0 :hop .005 :length .002 :ramp 0.0 :scaler 1.0
+				    :input (lambda (dir) (set! ctr (+ ctr incr)) ctr))))
+	  (map-channel (lambda (y) (granulate gen)))
+	  (let ((mx (maxamp)))
+	    (if (> mx 0.6) (snd-display "gran 12 max: ~A" mx)))
+	  (if (not (vequal (channel->vct 0 30)
+			   (vct -0.499 -0.498 -0.497 -0.496 -0.495 -0.494 -0.493 -0.492 -0.491 -0.490 -0.489 -0.488 -0.487 -0.486 
+				-0.485 -0.484 -0.483 -0.482 -0.481 -0.480 -0.479 -0.478 -0.477 -0.476 -0.475 -0.474 -0.473 -0.472 -0.471 -0.470)))
+	      (snd-display ";gran 12 data: ~A" (channel->vct 0 30)))
+	  (if (not (vequal (channel->vct 100 30)
+			   (vct 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 -0.389 -0.388 -0.387 -0.386 -0.385 
+				-0.384 -0.383 -0.382 -0.381 -0.380 -0.379 -0.378 -0.377 -0.376 -0.375 -0.374 -0.373 -0.372 -0.371 -0.370)))
+	      (snd-display ";gran 12 data 100: ~A" (channel->vct 100 30)))
+	  (undo))
+	
+	(let ((gen (make-granulate :jitter 0.0 :hop .001 :length .005 :ramp .5 :scaler 1.0
+				   :input (lambda (dir) .1)
+				   :edit (lambda (g)
+					   (declare (g clm))
+					   (let ((grain (mus-data g))  ; current grain
+						 (len (mus-length g))) ; current grain length
+					     (do ((i 0 (1+ i)))
+						 ((= i len) len)       ; grain length unchanged in this case
+					       (vct-set! grain i (* 2 (vct-ref grain i)))))
+					   0))))
+	  (map-channel (lambda (y) (granulate gen)))
+	  (let ((mx (maxamp)))
+	    (if (> mx .6) (snd-display "gran 13 max: ~A" mx)))
+	  (if (not (vequal (vct-scale! (channel->vct 0 30) 0.5)
+			   (vct 0.000 0.002 0.004 0.005 0.007 0.009 0.011 0.013 0.015 0.016 0.018 0.020 0.022 0.024 0.025 0.027 
+				0.029 0.031 0.033 0.035 0.036 0.038 0.040 0.044 0.047 0.051 0.055 0.058 0.062 0.065)))
+	      (snd-display ";gran 13 data: ~A" (channel->vct 0 30)))
+	  (if (not (vequal (vct-scale! (channel->vct 85 30) 0.5)
+			   (vct 0.244 0.244 0.244 0.244 0.245 0.247 0.249 0.251 0.253 0.255 0.256 0.258 0.260 0.262 0.264 0.264 
+				0.262 0.260 0.258 0.256 0.255 0.253 0.251 0.249 0.247 0.245 0.245 0.247 0.249 0.251)))
+	      (snd-display ";gran 13 data 85: ~A" (channel->vct 85 30)))
+	  (undo))
+	
+	(let* ((forward #t)
+	       (ctr -0.5)
+	       (incr .001)
+	       (gen (make-granulate :jitter 0.0 :hop .005 :length .002 :ramp 0.0 :scaler 1.0
+				    :input (lambda (dir) (set! ctr (+ ctr incr)) ctr)
+				    :edit (lambda (g)
+					    (declare (g clm))
+					    (let ((grain (mus-data g))
+						  (len (mus-length g)))
+					      (if forward
+						  (set! forward #f)
+						  (begin
+						    (set! forward #t)
+						    (vct-reverse! grain len)))
+					      len)))))
+	  (map-channel (lambda (y) (granulate gen)))
+	  (let ((mx (maxamp)))
+	    (if (> mx 0.6) (snd-display "gran 14 max: ~A" mx)))
+	  (if (not (vequal (channel->vct 0 30)
+			   (vct -0.499 -0.498 -0.497 -0.496 -0.495 -0.494 -0.493 -0.492 -0.491 -0.490 -0.489 -0.488 -0.487 -0.486 
+				-0.485 -0.484 -0.483 -0.482 -0.481 -0.480 -0.479 -0.478 -0.477 -0.476 -0.475 -0.474 -0.473 -0.472 -0.471 -0.470)))
+	      (snd-display ";gran 14 data: ~A" (channel->vct 0 30)))
+	  (if (not (vequal (channel->vct 100 30)
+			   (vct 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 -0.345 -0.346 -0.347 -0.348 -0.349 
+				-0.350 -0.351 -0.352 -0.353 -0.354 -0.355 -0.356 -0.357 -0.358 -0.359 -0.360 -0.361 -0.362 -0.363 -0.364)))
+	      (snd-display ";gran 14 data 100: ~A" (channel->vct 100 30)))
+	  (undo))
+	
+	(close-sound ind))
+      
       (let* ((v0 (make-vct 32))
 	     (v1 (make-vct 256))
 	     (v2 (make-vct 256))

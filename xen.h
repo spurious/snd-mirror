@@ -14,8 +14,7 @@
  *   Python doesn't strike me as very different from Ruby.
  *   SCM, like MIT_Scheme, isn't really oriented toward extending C programs.
  *   I've also looked briefly at Haskell (FFI too primitive), Lua (looks ok, though minimal, but lots of
- *     work to fit into the Xen model), ocaml (FFI in flux, apparently, and I think it
- *     insists on being the main program).
+ *     work to fit into the Xen model), and ocaml (FFI in flux, apparently).
  *
  * "xen" from Greek xenos (guest, foreigner)
  */
