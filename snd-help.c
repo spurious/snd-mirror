@@ -369,6 +369,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+5-Oct:   snd 7.7.\n\
 4-Oct:   moved vct->samples and samples->vct to snd7.scm.\n\
          added edit-list->function\n\
          changed transform-samples->vct to transform->vct, region-samples->vct to region->vct,\n\
@@ -381,11 +382,6 @@ void about_snd_help(void)
          log-freq-start.\n\
 9-Sep:   vct-reverse!\n\
 8-Sep:   create-ssb-dialog in snd-motif.scm.\n\
-6-Sep:   removed vct-convolve! (see snd7.scm).\n\
-         removed float vector as possible arg to formant-bank (use vct) (see snd7.scm).\n\
-         removed oscil-bank, mus-bank (snd7.scm)\n\
-2-Sep:   vct|channel|spectral-polynomial in dsp.scm\n\
-23-Aug:  snd 7.6\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

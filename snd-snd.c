@@ -4938,6 +4938,6 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
   XEN_DEFINE_PROCEDURE(S_channel_amp_envs,         g_channel_amp_envs_w,         0, 5, 0, H_channel_amp_envs);
   XEN_DEFINE_PROCEDURE(S_open_sound_file,          g_open_sound_file_w,          0, 0, 1, H_open_sound_file);
   XEN_DEFINE_PROCEDURE(S_close_sound_file,         g_close_sound_file_w,         2, 0, 0, H_close_sound_file);
-  XEN_DEFINE_PROCEDURE(S_vct_to_sound_file,           g_vct2soundfile_w,            3, 0, 0, H_vct_to_sound_file);
+  XEN_DEFINE_PROCEDURE(S_vct_to_sound_file,        g_vct2soundfile_w,            3, 0, 0, H_vct_to_sound_file);
   XEN_DEFINE_PROCEDURE(S_equalize_panes,           g_equalize_panes_w,           0, 1, 0, H_equalize_panes);
 }

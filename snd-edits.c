@@ -4542,6 +4542,20 @@ static char *edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
   return(NULL);
 }
 
+static void fprintf_with_possible_embedded_string(FILE *fd, const char *str)
+{
+  int i, len;
+  len = snd_strlen(str);
+  fputc('"', fd);
+  for (i = 0; i < len; i++)
+    {
+      if (str[i] == '"')
+	fputc('\\', fd);
+      fputc(str[i], fd);
+    }
+  fputc('"', fd);
+}
+
 void edit_history_to_file(FILE *fd, chan_info *cp)
 {
   /* write edit list as a guile|ruby program to fd (open for writing) for subsequent load */
@@ -4601,12 +4615,14 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 		{
 		case INSERTION_EDIT: 
 		  /* samp data snd chn */
-		  fprintf(fd, "%s" PROC_OPEN OFF_TD PROC_SEP OFF_TD PROC_SEP "\"%s\" ",
+		  fprintf(fd, "%s" PROC_OPEN OFF_TD PROC_SEP OFF_TD PROC_SEP,
 			  TO_PROC_NAME(S_insert_samples_with_origin),
 			  ed->beg,
-			  ed->len,
-			  S_insert_samples);
-		  /* was origin here ^, but there can be embedded file names, so \\\ is needed upon output */
+			  ed->len);
+		  if (ed->origin)
+		    fprintf_with_possible_embedded_string(fd, ed->origin);
+		  else fprintf(fd, "\"%s\"", S_insert_samples);
+		  fprintf(fd, PROC_SEP);
 		  nfile = edit_data_to_file(fd, ed, cp);
 		  fprintf(fd, PROC_SEP "sfile" PROC_SEP "%d", cp->chan);
 		  break;
@@ -4620,11 +4636,14 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 			  cp->chan);
 		  break;
 		case CHANGE_EDIT:
-		  fprintf(fd, "%s" PROC_OPEN OFF_TD PROC_SEP  OFF_TD PROC_SEP "\"%s\"" PROC_SEP,
+		  fprintf(fd, "%s" PROC_OPEN OFF_TD PROC_SEP  OFF_TD PROC_SEP,
 			  TO_PROC_NAME(S_change_samples_with_origin),
 			  ed->beg,
-			  ed->len,
-			  (ed->origin) ? ed->origin : "");
+			  ed->len);
+		  if (ed->origin)
+		    fprintf_with_possible_embedded_string(fd, ed->origin);
+		  else fprintf(fd, "\"\"");
+		  fprintf(fd, PROC_SEP);
 		  nfile = edit_data_to_file(fd, ed, cp);
 		  fprintf(fd, PROC_SEP "sfile" PROC_SEP "%d", cp->chan);
 		  break;
@@ -4773,9 +4792,6 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 		case CHANGE_EDIT:
 		  /* similar to insertion, but worse -- src etc */
 		  function = mus_format("%s (%s snd chn)", function, ed->origin);
-
-		  /* if smooth-selection, it doesn't take the snd chn trailers */
-
 		  break;
 		case DELETION_EDIT:
 		  function = mus_format("%s (%s " OFF_TD " " OFF_TD " snd chn)", function, S_delete_samples, ed->beg, ed->len);
@@ -4803,6 +4819,7 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 		  function = mus_format("%s (%s snd chn)", function, ed->origin);
 		  break;
 		case ZERO_EDIT:
+		  /* origin here is useless (see extend_with_zeros cases) */
 		  function = mus_format("%s (%s " OFF_TD " " OFF_TD " snd chn)", function, S_pad_channel, ed->beg, ed->len);
 		  break;
 		}
@@ -5835,7 +5852,7 @@ static ed_list *copy_and_split_list(off_t beg, off_t num, ed_list *current_state
 bool scale_channel(chan_info *cp, Float scl, off_t beg, off_t num, int pos, bool in_as_one_edit)
 {
   /* copy current ed-list and reset scalers */
-  off_t len;
+  off_t len = 0;
   int i;
   ed_list *new_ed, *old_ed;
   if ((beg < 0) || 
@@ -5890,11 +5907,33 @@ bool scale_channel(chan_info *cp, Float scl, off_t beg, off_t num, int pos, bool
     }
   new_ed->edit_type = SCALED_EDIT;
   new_ed->sound_location = 0;
+  if (num == len)
+    {
 #if HAVE_RUBY
-  new_ed->origin = mus_format("%s(%.3f, " OFF_TD ", " OFF_TD, TO_PROC_NAME(S_scale_channel), scl, beg, num);
+      new_ed->origin = mus_format("%s(%.3f, " OFF_TD ", false", TO_PROC_NAME(S_scale_channel), scl, beg);
 #else
-  new_ed->origin = mus_format("%s %.3f " OFF_TD " " OFF_TD, S_scale_channel, scl, beg, num);
+      new_ed->origin = mus_format("%s %.3f " OFF_TD " #f", S_scale_channel, scl, beg);
 #endif
+    }
+  else
+    {
+      if (len == num)
+	{
+#if HAVE_RUBY
+	  new_ed->origin = mus_format("%s(%.3f, " OFF_TD ", false", TO_PROC_NAME(S_scale_channel), scl, beg);
+#else
+	  new_ed->origin = mus_format("%s %.3f " OFF_TD " #f", S_scale_channel, scl, beg);
+#endif
+	}
+      else
+	{
+#if HAVE_RUBY
+	  new_ed->origin = mus_format("%s(%.3f, " OFF_TD ", " OFF_TD, TO_PROC_NAME(S_scale_channel), scl, beg, num);
+#else
+	  new_ed->origin = mus_format("%s %.3f " OFF_TD " " OFF_TD, S_scale_channel, scl, beg, num);
+#endif
+	}
+    }
   new_ed->edpos = pos;
   new_ed->selection_beg = old_ed->selection_beg;
   new_ed->selection_end = old_ed->selection_end;
@@ -5981,7 +6020,7 @@ static bool all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler
 			     off_t beg, off_t num, int pos, bool in_as_one_edit, const char *origin, 
 			     bool is_x, mus_any *e, int e_pos)
 {
-  off_t len;
+  off_t len = 0;
   int i;
   ed_list *new_ed, *old_ed;
   Float seg0, seg1;
@@ -6037,29 +6076,47 @@ static bool all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler
   new_ed->sound_location = 0;
   if (!is_x)
     {
+      if (num == len)
+	{
 #if HAVE_RUBY
-  new_ed->origin = mus_format("%s(%.3f, %.3f, " OFF_TD ", " OFF_TD, TO_PROC_NAME(origin), rmp0, rmp1, beg, num);
+	  new_ed->origin = mus_format("%s(%.3f, %.3f, " OFF_TD ", false", TO_PROC_NAME(origin), rmp0, rmp1, beg);
 #else
-  new_ed->origin = mus_format("%s %.3f %.3f " OFF_TD " " OFF_TD, origin, rmp0, rmp1, beg, num);
+	  new_ed->origin = mus_format("%s %.3f %.3f " OFF_TD " #f", origin, rmp0, rmp1, beg);
 #endif
+	}
+      else
+	{
+#if HAVE_RUBY
+	  new_ed->origin = mus_format("%s(%.3f, %.3f, " OFF_TD ", " OFF_TD, TO_PROC_NAME(origin), rmp0, rmp1, beg, num);
+#else
+	  new_ed->origin = mus_format("%s %.3f %.3f " OFF_TD " " OFF_TD, origin, rmp0, rmp1, beg, num);
+#endif
+	}
     }
   else
     {
       Float *data;
       data = mus_data(e);
+      if (num == len)
+	{
 #if HAVE_RUBY
-  new_ed->origin = mus_format("%s(%.3f, %.3f, %.3f, " OFF_TD ", " OFF_TD, 
-			      TO_PROC_NAME(origin), 
-			      data[e_pos * 2 + 1], data[e_pos * 2 + 3],
-			      mus_increment(e),
-			      beg, num);
+	  new_ed->origin = mus_format("%s(%.3f, %.3f, %.3f, " OFF_TD ", false", 
+				      TO_PROC_NAME(origin), data[e_pos * 2 + 1], data[e_pos * 2 + 3], mus_increment(e), beg);
 #else
-  new_ed->origin = mus_format("%s %.3f %.3f %.3f " OFF_TD " " OFF_TD, 
-			      origin, 
-			      data[e_pos * 2 + 1], data[e_pos * 2 + 3],
-			      mus_increment(e),
-			      beg, num);
+	  new_ed->origin = mus_format("%s %.3f %.3f %.3f " OFF_TD " #f", 
+				      origin, data[e_pos * 2 + 1], data[e_pos * 2 + 3], mus_increment(e), beg);
 #endif
+	}
+      else
+	{
+#if HAVE_RUBY
+	  new_ed->origin = mus_format("%s(%.3f, %.3f, %.3f, " OFF_TD ", " OFF_TD, 
+				      TO_PROC_NAME(origin), data[e_pos * 2 + 1], data[e_pos * 2 + 3], mus_increment(e), beg, num);
+#else
+	  new_ed->origin = mus_format("%s %.3f %.3f %.3f " OFF_TD " " OFF_TD, 
+				      origin, data[e_pos * 2 + 1], data[e_pos * 2 + 3], mus_increment(e), beg, num);
+#endif
+	}
     }
   new_ed->edpos = pos;
   new_ed->selection_beg = old_ed->selection_beg;
@@ -6182,11 +6239,22 @@ bool ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, bo
   new_ed->edit_type = (is_xen) ? XEN_EDIT : PTREE_EDIT;
   new_ed->sound_location = 0;
   new_ed->ptree_location = ptree_loc;
+  if (num == len)
+    {
 #if HAVE_RUBY
-  new_ed->origin = mus_format("%s(%d, " OFF_TD ", " OFF_TD, (is_xen) ? "xen" : "ptree", ptree_loc, beg, num);
+      new_ed->origin = mus_format("%s(%d, " OFF_TD ", false", (is_xen) ? "xen" : "ptree", ptree_loc, beg);
 #else
-  new_ed->origin = mus_format("%s %d " OFF_TD " " OFF_TD, (is_xen) ? "xen" : "ptree", ptree_loc, beg, num);
+      new_ed->origin = mus_format("%s %d " OFF_TD " #f", (is_xen) ? "xen" : "ptree", ptree_loc, beg);
 #endif
+    }
+  else
+    {
+#if HAVE_RUBY
+      new_ed->origin = mus_format("%s(%d, " OFF_TD ", " OFF_TD, (is_xen) ? "xen" : "ptree", ptree_loc, beg, num);
+#else
+      new_ed->origin = mus_format("%s %d " OFF_TD " " OFF_TD, (is_xen) ? "xen" : "ptree", ptree_loc, beg, num);
+#endif
+    }
   new_ed->edpos = pos;
   new_ed->ptree_env_too = env_it;
   new_ed->selection_beg = old_ed->selection_beg;
@@ -7883,7 +7951,7 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
 
 static XEN g_scale_sound_by(XEN scl, XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
 {
-  #define H_scale_sound_by "(" S_scale_sound_by " scaler (beg 0) (num len) (snd #f) (chn #f) (edpos #f)): \
+  #define H_scale_sound_by "(" S_scale_sound_by " scaler (beg 0) (dur len) (snd #f) (chn #f) (edpos #f)): \
 scale samples in the given sound/channel \
 between beg and beg + num by scaler.  If channel is omitted, the scaling applies to the entire sound (and edpos is ignored)."
 

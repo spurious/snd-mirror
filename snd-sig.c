@@ -1658,6 +1658,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XE
   int i, j, ofd = 0, datumb = 0, err = 0, edpos = 0;
   bool section = false, temp_file;
   off_t k;
+  char *origin = NULL;
   mus_sample_t **data;
   mus_sample_t *idata;
   char *ofile = NULL;
@@ -1711,6 +1712,9 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XE
   data = (mus_sample_t **)MALLOC(sizeof(mus_sample_t *));
   data[0] = (mus_sample_t *)CALLOC(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
   idata = data[0];
+  if (dur == cp->samples[edpos])
+    origin = mus_format("%s " OFF_TD " #f", S_reverse_channel, beg);
+  else origin = mus_format("%s " OFF_TD " " OFF_TD, S_reverse_channel, beg, dur);
   if (temp_file)
     {
       j = 0;
@@ -1727,7 +1731,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XE
       if (j > 0) mus_file_write(ofd, 0, j - 1, 1, data);
       close_temp_file(ofile, ofd, hdr->type, dur * datumb, sp);
       hdr = free_file_info(hdr);
-      file_change_samples(beg, dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, caller, cp->edit_ctr);
+      file_change_samples(beg, dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, origin, cp->edit_ctr);
       if (ofile) 
 	{
 	  FREE(ofile); 
@@ -1738,13 +1742,14 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XE
     {
       for (k = 0; k < dur; k++)
 	idata[k] = read_sample(sf);
-      change_samples(beg, dur, idata, cp, LOCK_MIXES, caller, cp->edit_ctr);
+      change_samples(beg, dur, idata, cp, LOCK_MIXES, origin, cp->edit_ctr);
     }
   if (ep) cp->amp_envs[cp->edit_ctr] = ep;
   reverse_marks(cp, (section) ? beg : -1, dur);
   update_graph(cp); 
   FREE(data[0]);
   FREE(data);
+  if (origin) FREE(origin);
   cp->edit_hook_checked = false;	  
   return(NULL);
 }
@@ -1813,6 +1818,34 @@ static void reverse_sound(chan_info *ncp, bool over_selection, XEN edpos, int ar
   free_sync_state(sc);
 }
 
+static char *edit_list_envelope(mus_any *egen, off_t beg, off_t env_dur, off_t called_dur, off_t chan_dur, Float base)
+{
+  /* TODO: what about Ruby syntax for origin? */
+  char *new_origin, *envstr;
+  env *newe;
+  newe = make_envelope_with_offset_and_scaler(mus_data(egen), mus_env_breakpoints(egen) * 2, mus_offset(egen), mus_scaler(egen));
+  /* mus_env_offset|scaler are the fixed up versions, the originals are mus_offset|scaler.  mus_data is the original data */
+  envstr = env_to_string(newe);
+  if (((env_dur == chan_dur) || (env_dur == (chan_dur - 1))) &&
+      (called_dur == chan_dur))
+    {
+      if (base == 1.0)
+	new_origin = mus_format("env-channel %s " OFF_TD " #f", envstr, beg);
+      else new_origin = mus_format("env-channel-with-base %s %.4f " OFF_TD " #f", envstr, base, beg);
+    }
+  else 
+    {
+      int len;
+      /* env dur was apparently not chan dur, or called dur was not full sound? */
+      len = mus_env_breakpoints(egen);
+      new_origin = mus_format("env-channel (make-env %s :base %.4f :end " OFF_TD ") " OFF_TD " " OFF_TD,
+			      envstr, base, env_dur, beg, called_dur);
+    }
+  if (envstr) FREE(envstr);
+  free_env(newe);
+  return(new_origin);
+}
+
 void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection, 
 	       enved_progress_t from_enved, const char *origin, mus_any *gen, XEN edpos, int arg_pos)
 {
@@ -1828,12 +1861,12 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
   int i, j, err = 0, k, len;
   bool scalable = true, rampable = true;
   Float val[1];
-  char *tmpstr = NULL;
   mus_any *egen;
   off_t *passes;
   double *rates;
   Float egen_val, base;
   double scaler, offset;
+  char *new_origin;
   if ((!e) && (!gen)) return;
   if (over_selection) dur = selection_len();
   if (dur <= 0) return;
@@ -1885,7 +1918,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
   len = mus_env_breakpoints(egen);
   passes = mus_env_passes(egen);
   rates = mus_env_rates(egen);
-  scaler = mus_env_scaler(egen);
+  scaler = mus_env_scaler(egen); /* fixed-up versions if base != 1.0 */
   offset = mus_env_offset(egen);
   base = mus_increment(egen);
 
@@ -1894,11 +1927,6 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
       /* ---------------- step env -- handled as sequence of scalings ---------------- */
       int local_edpos, pos;
       off_t segbeg, segnum, segend;
-      env *newe;
-      char *new_origin; /* need a complete origin since this appears as a scaled-edit in 
-			 *   the edit history lists, save_edit_history needs something
-			 *   that can actually recreate the original.
-			 */
       /* base == 0 originally, so it's a step env */
       sc = get_sync_state_without_snd_fds(sp, cp, beg, over_selection);
       if (sc == NULL) 
@@ -1932,15 +1960,10 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 	      if (segbeg >= segend) break;
 	      segnum = passes[k + 1] - passes[k];
 	    }
-	  newe = make_envelope_with_offset_and_scaler(mus_data(egen), mus_env_breakpoints(egen) * 2, offset, scaler);
-	  new_origin = mus_format("env-channel (make-env %s :base 0 :end " OFF_TD ") " OFF_TD " " OFF_TD,
-				  tmpstr = env_to_string(newe), 
-				  (len > 1) ? (passes[len - 2]) : dur,
-				  si->begs[i], dur);
-	  if (tmpstr) FREE(tmpstr);
-	  free_env(newe);
+	  new_origin = edit_list_envelope(egen, si->begs[i], (len > 1) ? (passes[len - 2]) : dur, dur, CURRENT_SAMPLES(si->cps[i]), base);
 	  as_one_edit(si->cps[i], local_edpos + 1, new_origin);
 	  FREE(new_origin);
+	  update_graph(si->cps[i]);
 	  si->cps[i]->edit_hook_checked = false;	  
 	}
       free_sync_state(sc);
@@ -2084,13 +2107,14 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 	    remember_temp(ofile, si->chans);
 	  for (i = 0; i < si->chans; i++)
 	    {
+	      new_origin = edit_list_envelope(egen, si->begs[i], (len > 1) ? (passes[len - 2]) : dur, dur, CURRENT_SAMPLES(si->cps[i]), base);
 	      if (temp_file)
 		{
 		  int pos;
 		  pos = to_c_edit_position(si->cps[i], edpos, origin, arg_pos);
 		  file_change_samples(si->begs[i], dur, ofile, si->cps[i], i, 
 				      (si->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME, 
-				      LOCK_MIXES, origin, si->cps[i]->edit_ctr);
+				      LOCK_MIXES, new_origin, si->cps[i]->edit_ctr);
 		  if ((si->begs[i] == 0) && (dur == si->cps[i]->samples[pos]))
 		    amp_env_env(si->cps[i], mus_data(egen), len, pos, base, scaler, offset);
 		  else 
@@ -2100,7 +2124,8 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 		    }
 
 		}
-	      else change_samples(si->begs[i], dur, data[i], si->cps[i], LOCK_MIXES, origin, si->cps[i]->edit_ctr);
+	      else change_samples(si->begs[i], dur, data[i], si->cps[i], LOCK_MIXES, new_origin, si->cps[i]->edit_ctr);
+	      FREE(new_origin);
 	      update_graph(si->cps[i]);
 	    }
 	}
@@ -2118,13 +2143,8 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
       int local_edpos, m, pos, env_pos;
       bool need_xramp = false;
       off_t segbeg, segnum, segend;
-      env *newe;
       double power = 0.0;
       Float *data;
-      char *new_origin; /* need a complete origin since this appears as a scaled-edit in 
-			 *   the edit history lists, save_edit_history needs something
-			 *   that can actually recreate the original.
-			 */
       data = mus_data(egen);
       if (base != 1.0) need_xramp = true;
       sc = get_sync_state_without_snd_fds(sp, cp, beg, over_selection);
@@ -2198,16 +2218,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 	      if ((len < 2) || (snd_abs_off_t(dur - passes[len - 2]) < 2))
 		amp_env_env_selection_by(si->cps[i], egen, si->begs[i], dur, env_pos);
 	    }
-	  /* TODO: what about Ruby syntax for origin? */
-	  newe = make_envelope_with_offset_and_scaler(mus_data(egen), mus_env_breakpoints(egen) * 2, offset, scaler);
-	  /* TODO: egen might have end + stick? */
-	  new_origin = mus_format("env-channel (make-env %s :base %.4f :end " OFF_TD ") " OFF_TD " " OFF_TD,
-				  tmpstr = env_to_string(newe), 
-				  base,
-				  (len > 1) ? (passes[len - 2]) : dur,
-				  si->begs[i], dur);
-	  if (tmpstr) FREE(tmpstr);
-	  free_env(newe);
+	  new_origin = edit_list_envelope(egen, si->begs[i], (len > 1) ? (passes[len - 2]) : dur, dur, CURRENT_SAMPLES(si->cps[i]), base);
 	  as_one_edit(si->cps[i], local_edpos + 1, new_origin);
 	  update_graph(si->cps[i]);
 	  si->cps[i]->edit_hook_checked = false;	  
@@ -2358,10 +2369,11 @@ void cursor_zeros(chan_info *cp, off_t count, bool over_selection)
   si = free_sync_info(si);
 }
 
-static void smooth_channel(chan_info *cp, off_t beg, off_t dur, int edpos, const char *origin)
+static void smooth_channel(chan_info *cp, off_t beg, off_t dur, int edpos)
 {
   mus_sample_t *data = NULL;
   off_t k;
+  char *origin = NULL;
   Float y0, y1, angle, incr, off, scale;
   if ((beg < 0) || (dur <= 0)) return;
   if (!(editable_p(cp))) return;
@@ -2379,13 +2391,15 @@ static void smooth_channel(chan_info *cp, off_t beg, off_t dur, int edpos, const
   data = (mus_sample_t *)CALLOC(dur, sizeof(mus_sample_t));
   for (k = 0; k < dur; k++, angle += incr) 
     data[k] = MUS_FLOAT_TO_SAMPLE(off + scale * cos(angle));
+  origin = mus_format("%s " OFF_TD " " OFF_TD, S_smooth_channel, beg, dur);
   change_samples(beg, dur, data, cp, LOCK_MIXES, origin, cp->edit_ctr);
+  if (origin) FREE(origin);
   update_graph(cp);
   cp->edit_hook_checked = false;
   FREE(data);
 }
 
-void cos_smooth(chan_info *cp, off_t beg, off_t num, bool over_selection, const char *origin)
+void cos_smooth(chan_info *cp, off_t beg, off_t num, bool over_selection)
 {
   /* verbatim, so to speak from Dpysnd */
   /* start at beg, apply a cosine for num samples, matching endpoints */
@@ -2399,7 +2413,7 @@ void cos_smooth(chan_info *cp, off_t beg, off_t num, bool over_selection, const 
   si = sc->si;
   if (over_selection) num = sc->dur;
   for (i = 0; i < si->chans; i++)
-    smooth_channel(si->cps[i], si->begs[i], num, si->cps[i]->edit_ctr, origin);
+    smooth_channel(si->cps[i], si->begs[i], num, si->cps[i]->edit_ctr);
   free_sync_state(sc);
 }
 
@@ -3167,16 +3181,13 @@ static XEN g_smooth_sound(XEN beg, XEN num, XEN snd_n, XEN chn_n)
 data from start-samp for samps in snd's channel chn"
   chan_info *cp;
   off_t start, samps;
-  char *buf;
   ASSERT_SAMPLE_TYPE(S_smooth_sound, beg, XEN_ARG_1);
   ASSERT_SAMPLE_TYPE(S_smooth_sound, num, XEN_ARG_2);
   ASSERT_CHANNEL(S_smooth_sound, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_smooth_sound);
   start = beg_to_sample(beg, S_smooth_sound);
   samps = dur_to_samples(num, start, cp, cp->edit_ctr, 2, S_smooth_sound);
-  buf = mus_format("%s " OFF_TD " " OFF_TD, S_smooth_sound, start, samps);
-  cos_smooth(cp, start, samps, OVER_SOUND, buf); 
-  FREE(buf);
+  cos_smooth(cp, start, samps, OVER_SOUND); 
   return(beg);
 }
 
@@ -3196,12 +3207,7 @@ smooth data from beg for dur in snd's channel chn"
   num = dur_to_samples(dur, start, cp, pos, 2, S_smooth_channel);
   if ((start < cp->samples[pos]) &&
       (num > 0))
-    {
-      char *buf;
-      buf = mus_format("%s " OFF_TD " " OFF_TD, S_smooth_channel, start, num);
-      smooth_channel(cp, start, num, pos, buf);
-      FREE(buf);
-    }
+    smooth_channel(cp, start, num, pos);
   return(beg);
 }
 
@@ -3212,7 +3218,7 @@ static XEN g_smooth_selection(void)
   if (!(selection_is_active())) 
     return(snd_no_active_selection_error(S_smooth_selection));
   cp = get_cp(XEN_FALSE, XEN_FALSE, S_smooth_selection);
-  cos_smooth(cp, 0, 0, OVER_SELECTION, S_smooth_selection);
+  cos_smooth(cp, 0, 0, OVER_SELECTION);
   return(XEN_TRUE);
 }
 
@@ -3638,6 +3644,32 @@ apply amplitude envelope to snd's channel chn starting at beg for dur samples."
   old_sync = sp->sync;
   sp->sync = 0;
   val = g_env_1(gen, beg, dur, XEN_FALSE, cp, edpos, S_env_channel, OVER_SOUND);
+  sp->sync = old_sync;
+  return(val);
+}
+
+#define S_env_channel_with_base "env-channel-with-base"
+static XEN g_env_channel_with_base(XEN gen, XEN base, XEN samp_n, XEN samps, XEN snd_n, XEN chn_n, XEN edpos)
+{
+  /* internal func for edit lists */
+  chan_info *cp;
+  snd_info *sp;
+  off_t beg = 0, dur;
+  int old_sync = 0, pos;
+  XEN val;
+  ASSERT_SAMPLE_TYPE(S_env_channel, samp_n, XEN_ARG_2);
+  ASSERT_SAMPLE_TYPE(S_env_channel, samps, XEN_ARG_3);
+  ASSERT_CHANNEL(S_env_channel, snd_n, chn_n, 4);
+  cp = get_cp(snd_n, chn_n, S_env_channel);
+  beg = beg_to_sample(samp_n, S_env_channel);
+  pos = to_c_edit_position(cp, edpos, S_env_channel, 6);
+  dur = dur_to_samples(samps, beg, cp, pos, 3, S_env_channel);
+  if (dur == 0) return(XEN_FALSE);
+  if (beg > cp->samples[pos]) return(XEN_FALSE); /* not redundant */
+  sp = cp->sound;
+  old_sync = sp->sync;
+  sp->sync = 0;
+  val = g_env_1(gen, beg, dur, base, cp, edpos, S_env_channel, OVER_SOUND);
   sp->sync = old_sync;
   return(val);
 }
@@ -4266,6 +4298,7 @@ XEN_ARGIFY_3(g_scale_by_w, g_scale_by)
 XEN_ARGIFY_2(g_env_selection_w, g_env_selection)
 XEN_ARGIFY_7(g_env_sound_w, g_env_sound)
 XEN_ARGIFY_6(g_env_channel_w, g_env_channel)
+XEN_ARGIFY_7(g_env_channel_with_base_w, g_env_channel_with_base)
 XEN_ARGIFY_7(g_ramp_channel_w, g_ramp_channel)
 XEN_ARGIFY_8(g_xramp_channel_w, g_xramp_channel)
 XEN_ARGIFY_3(g_fft_w, g_fft)
@@ -4305,6 +4338,7 @@ XEN_ARGIFY_9(g_ptree_channel_w, g_ptree_channel)
 #define g_env_selection_w g_env_selection
 #define g_env_sound_w g_env_sound
 #define g_env_channel_w g_env_channel
+#define g_env_channel_with_base_w g_env_channel_with_base
 #define g_ramp_channel_w g_ramp_channel
 #define g_xramp_channel_w g_xramp_channel
 #define g_fft_w g_fft
@@ -4386,6 +4420,7 @@ void g_init_sig(void)
   XEN_DEFINE_PROCEDURE(S_reverse_channel,         g_reverse_channel_w,         0, 5, 0, H_reverse_channel);
   XEN_DEFINE_PROCEDURE(S_clm_channel,             g_clm_channel_w,             1, 6, 0, H_clm_channel);
   XEN_DEFINE_PROCEDURE(S_env_channel,             g_env_channel_w,             1, 5, 0, H_env_channel);
+  XEN_DEFINE_PROCEDURE(S_env_channel_with_base,   g_env_channel_with_base_w,   1, 6, 0, H_env_channel);
   XEN_DEFINE_PROCEDURE(S_ramp_channel,            g_ramp_channel_w,            2, 5, 0, H_ramp_channel);
   XEN_DEFINE_PROCEDURE(S_xramp_channel,           g_xramp_channel_w,           2, 6, 0, H_xramp_channel);
   XEN_DEFINE_PROCEDURE(S_smooth_channel,          g_smooth_channel_w,          0, 5, 0, H_smooth_channel);

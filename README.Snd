@@ -132,7 +132,7 @@ switch.
 
 
 There are RPM packages of Snd available at the ccrma-ftp site
-mentioned above: snd-7-6.i386.rpm and snd-7-6.src.rpm.  These RPM
+mentioned above: snd-7-7.i386.rpm and snd-7-7.src.rpm.  These RPM
 files have been superseded by Fernando Lopez-Lezcano's set available
 at http://ccrma.stanford.edu/planetccrma/software/
 
@@ -143,6 +143,8 @@ be of interest: sndplay, sndrecord, sndinfo, sndsine, and audinfo:
 
   make sndplay
 
+sndsine is slightly special: the makefile assumes it has been
+configured --without-guile --without-ruby.
 
 
 ----------------------------------------------------------------

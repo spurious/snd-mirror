@@ -1,37 +1,60 @@
-Snd 7.6
+Snd 7.7
 
-Most of the work in this period went into clm-3, but there were some
-changes to Snd:
+new version of sndins and other bugfixes thanks to Mike Scholz
 
-  numerous improvements and bugfixes from Kjetil Matheussen, including the
-    snd-ls package.
+in clm: autoc.ins, scentroid.ins, rmsenv.ins, and sndwarp.ins thanks to Bret Battey
 
-  added mixer-scale, mixer+, make-scalar-mixer, continue-frame->file
-    run-safety, clm-table-size (filling in a few CLM gaps, making the
-    Scheme version of with-sound the same as the CL version)
+clm: configuration and signum bugfixes thanks to Anders Vinjar
 
-  new run-time function args to phase-vocoder and granulate (and run support)
 
-  channel-distance in dsp.scm
+added: smart-line-cursor in draw.scm
+	  (a line cursor that ducks under the top right thumbnail graph)
 
-  configure switches: 
-    --with-midi            include midi.o (sndlib midi module), default: no
-    --with-hobbit          include arity check support for hobbit, default: no
-    --with-builtin-gtkrc   include built-in fallback gtkrc, default: yes
+       vct|channel|spectral-polynomial (dsp.scm)
 
-  out-chan argument to add-player so that channel data can be sent to any audio channel
-    (also play, play-and-wait, play-channel, play-mono-as-stereo example in extsnd.html)
-    added players (a list of currently active players)
+       create-ssb-dialog in snd-motif.scm 
 
-  new tools directory with various Snd development scripts
-   
-  forward/back buttons on the help dialog
+       vct-reverse! (mostly to experiment with fancy granulate edit funcs)
 
-  removed built-in Hadamard transform
+       log-freq-start (with more transform dialog widgetry and axis improvements)
 
-Checked: Fedora Core 2, gsl 1.5, gtk 2.4.4/2.5.0/2.5.1, Ruby 1.8.2, sbcl 0.8.12/0.8.13
-  also many changes reflecting those in recent versions of Guile
+       show-sonogram-cursor (tracking cursor in sonogram)
 
-With much help from: Cris Ewing, Kjetil S. Matheussen, Mike Scholz,
-  Anders Vinjar, Robert Jonsson, Guillaume Germain, Oded Ben Tal
+       do? (examp.scm -- do that can be interrupted and continued)
 
+       grid-density (controls axis tick spacing)
+
+       edit-list->function (1st step toward a "sound spreadsheet")
+
+
+removed: mus-inspect, buffer generator.
+           (mus-inspect duplicates the functionality of mus-describe, and given
+	   a decent debbuger, the extra info it provides is unneeded).
+
+         vct-convolve! (see snd7.scm -- was same as convolution function)
+
+         vct->samples and samples->vct (see snd7.scm)
+	   (These were redundant given vct->channel->vct and inconsistent with others)
+
+         list and vector return value choices from map-chan and map-channel (see snd7.scm).
+           float vector as possible arg to formant-bank, fft, or scale-* (use vct) (see snd7.scm).
+           list of vectors as possible arg to graph (use list of vcts)
+           mus-audio-mixer-read|write vector arg is now a vct
+           (I'm trying to reduce the use of vectors as much as possible)
+
+         oscil-bank, mus-bank (see snd7.scm)
+
+         support for gtkglext 0.1 through 0.4
+
+
+changed transform-samples->vct to transform->vct, region-samples->vct to region->vct,
+	transform-samples-size to transform-frames. (Old forms are in snd7.scm).
+
+checked: gtk 2.5.2|3, Mesa 6.1, sbcl 0.8.14|5
+
+with much help from: Michael Klingbeil, Anthony Kozar, Bret Battey, Anders Vinjar, 
+     Mike Scholz, Paul Winkler, Marv Smoak
+
+
+(Snd has lumbered over the 400,000 line mark -- 250000 C, 110000 Scheme,
+30000 Ruby, and a few thousand of m4, lisp, emacs-lisp etc)

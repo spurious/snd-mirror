@@ -1,5 +1,6 @@
 Snd change log
 
+  5-Oct:     snd 7.7.
   4-Oct:     moved vct->samples and samples->vct to snd7.scm.
              added edit-list->function
              changed transform-samples->vct to transform->vct, region-samples->vct to region->vct,
