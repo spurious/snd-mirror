@@ -2,7 +2,6 @@
 
 /* TODO:   add minihistory support in listener
  * TODO    bubble args help if tab at end of name? (or click name?)
- * TODO    split this (and snd-glistener) out to non-Snd-specific module for Guile users
  */
 
 
@@ -155,7 +154,9 @@ static void Activate_channel (Widget w, XEvent *ev, char **str, Cardinal *num)
   snd_state *ss;
   ss = get_global_state();
   clear_listener();
-  if ((ss->checking_explicitly) || (play_in_progress())) ss->stopped_explicitly = 1; 
+  if ((ss->checking_explicitly) || 
+      (play_in_progress())) 
+    ss->stopped_explicitly = 1; 
   cp = current_channel(ss);
   if (cp) goto_graph(cp);
 }
@@ -194,16 +195,30 @@ static void Yank(Widget w, XEvent *ev, char **str, Cardinal *num)
     }
 }
 
-static int last_prompt;
+static int last_prompt = 0;
 
-static void Begin_of_line(Widget w, XEvent *ev, char **str, Cardinal *num) 
+static void Begin_of_line(Widget w, XEvent *ev, char **ustr, Cardinal *num) 
 {
   /* don't back up before listener prompt */
   XmTextPosition curpos,loc;
+  int prompt_len;
+  char *str = NULL;
+  snd_state *ss;
   Boolean found;
   curpos = XmTextGetCursorPosition(w) - 1;
   found = XmTextFindString(w,curpos,"\n",XmTEXT_BACKWARD,&loc);
-  XmTextSetCursorPosition(w,((found) && (loc>last_prompt)) ? (loc+1) : (last_prompt+1));
+  if (found) 
+    {
+      ss = get_global_state();
+      prompt_len = snd_strlen(listener_prompt(ss));
+      str = (char *)CALLOC(prompt_len+3,sizeof(char));
+      XmTextGetSubstring(w,loc+1,prompt_len,prompt_len+2,str);
+      if (strncmp(listener_prompt(ss),str,prompt_len) == 0)
+	XmTextSetCursorPosition(w,loc+prompt_len+1);
+      else XmTextSetCursorPosition(w,loc+1);
+      FREE(str);
+    }
+  else XmTextSetCursorPosition(w,1);
 }
 
 static void Delete_region(Widget w, XEvent *ev, char **str, Cardinal *num) 
@@ -221,9 +236,11 @@ static void B1_press(Widget w, XEvent *event, char **str, Cardinal *num)
   ss = get_global_state();
   XmProcessTraversal(w,XmTRAVERSE_CURRENT);
   /* we're replacing the built-in take_focus action here, so do it by hand, but leave listener blue, so to speak */
-  if ((!(ss->using_schemes)) && (w != listener_text))
+  if ((!(ss->using_schemes)) && 
+      (w != listener_text))
     XtVaSetValues(w,XmNbackground,(ss->sgx)->white,NULL);
-  if (w == listener_text) XmTextClearSelection(listener_text,CurrentTime); /* should this happen in other windows as well? */
+  if (w == listener_text) 
+    XmTextClearSelection(listener_text,CurrentTime); /* should this happen in other windows as well? */
   pos = XmTextXYToPos(w,ev->x,ev->y);
   XmTextSetCursorPosition(w,pos);
   down_pos = pos;
@@ -235,7 +252,7 @@ static void B1_move(Widget w, XEvent *event, char **str, Cardinal *num)
   XmTextPosition pos;
   XButtonEvent *ev = (XButtonEvent *)event;
   pos = XmTextXYToPos(w,ev->x,ev->y);
-  if (last_pos > pos) /* must have backed up the cursor */
+  if (last_pos > pos)                                 /* must have backed up the cursor */
     XmTextSetHighlight(w,pos,last_pos,XmHIGHLIGHT_NORMAL);
   if (down_pos != pos)
     XmTextSetHighlight(w,down_pos,pos,XmHIGHLIGHT_SELECTED);
@@ -449,22 +466,33 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
   /* now old_text is the stuff typed since the last prompt */
   if (old_text)
     {
-      new_text = complete_listener_text(old_text, end,&try_completion,&file_text);
+      new_text = complete_listener_text(old_text,end,&try_completion,&file_text);
       if (try_completion == 0)
 	{
 	  FREE(old_text);
 	  return;
 	}
-      if (strcmp(old_text,new_text) == 0) matches = get_completion_matches();
+      if (strcmp(old_text,new_text) == 0) 
+	matches = get_completion_matches();
       XmTextReplace(w,beg,end,new_text);
       XmTextSetCursorPosition(w,XmTextGetLastPosition(w));
-      if (new_text) {FREE(new_text); new_text = NULL;}
+      if (new_text) 
+	{
+	  FREE(new_text); 
+	  new_text = NULL;
+	}
       if (matches > 1)
 	{
 	  clear_possible_completions();
 	  set_save_completions(TRUE);
-	  if (file_text) new_text = filename_completer(file_text); else new_text = command_completer(old_text);
-	  if (new_text) {FREE(new_text); new_text = NULL;}
+	  if (file_text) 
+	    new_text = filename_completer(file_text);
+	  else new_text = command_completer(old_text);
+	  if (new_text) 
+	    {
+	      FREE(new_text); 
+	      new_text = NULL;
+	    }
 	  need_position = (completion_help_dialog == NULL);
 	  display_completions(ss);
 	  set_save_completions(FALSE);
@@ -728,13 +756,6 @@ void snd_append_char(snd_state *ss, char *msg)
  
 static Widget listener_pane = NULL; 
 
-static char listener_prompt_buffer[64];
-static char *listener_prompt_with_cr(snd_state *ss)
-{
-  sprintf(listener_prompt_buffer,"\n%s",listener_prompt(ss));
-  return(listener_prompt_buffer);
-}
- 
 void snd_append_command(snd_state *ss, char *msg)
 {
   int cmd_eot;
@@ -756,100 +777,7 @@ void snd_append_command(snd_state *ss, char *msg)
 
 static void Command_Return_Callback(Widget w,XtPointer clientData,XtPointer callData)
 {
-  /* try to find complete form either enclosing current cursor, or just before it */
-  XmTextPosition new_eot=0,cmd_eot=0;
-  char *str = NULL,*full_str = NULL,*prompt;
-  int i,j,slen;
-  snd_state *ss = (snd_state *)clientData;
-  int end_of_text,start_of_text,last_position,current_position,parens;
-  full_str = XmTextGetString(w);
-  current_position = XmTextGetInsertionPosition(w);
-  start_of_text = current_position;
-  end_of_text = current_position;
-  last_position = XmTextGetLastPosition(w);
-  prompt = listener_prompt(ss);
-  if (last_position > end_of_text)
-    {
-      for (i=current_position;i<last_position;i++)
-	if ((full_str[i+1] == prompt[0]) && (full_str[i] == '\n'))
-	  {
-	    end_of_text = i-1;
-	    break;
-	  }
-    }
-  if (start_of_text > 0)
-    {
-      for (i=end_of_text;i>=0;i--)
-	if ((full_str[i] == prompt[0]) && ((i == 0) || (full_str[i-1] == '\n')))
-	  {
-	    start_of_text = i+1;
-	    break;
-	  }
-    }
-  str = NULL;
-#if 0
-  fprintf(stderr,"eot: %d, sot: %d, curpos: %d, lastpos: %d\n",end_of_text,start_of_text,current_position,last_position);
-#endif
-  if (end_of_text > start_of_text)
-    {
-      parens = 0;
-      slen = end_of_text - start_of_text + 2;
-      str = (char *)CALLOC(slen,sizeof(char));
-      for (i=start_of_text,j=0;i<=end_of_text;j++,i++) {str[j] = full_str[i]; if (str[j] == '(') parens++;}
-      str[end_of_text-start_of_text+1] = 0;
-      end_of_text = snd_strlen(str);
-      if (parens)
-	{
-	  end_of_text = check_balance(str,0,end_of_text);
-#if 0
-	  fprintf(stderr,"eot: %d [%d], str: %s\n",end_of_text,slen,str);
-#endif
-	  if ((end_of_text > 0) && (end_of_text < (slen-1)))
-	    {
-	      str[end_of_text+1] = 0;
-	      if (str[end_of_text] == '\n') str[end_of_text]=0;
-	    }
-	  else
-	    {
-	      FREE(str);
-	      str = NULL;
-	      new_eot = XmTextGetLastPosition(w);
-	      XmTextInsert(w,new_eot,"\n");
-	      return;
-	    }
-	}
-      if (str)
-	{
-	  if (current_position < (last_position-2))
-	    {
-	      XmTextInsert(listener_text,XmTextGetLastPosition(listener_text),str);
-	    }
-	  XDefineCursor(XtDisplay(listener_text),XtWindow(listener_text),(ss->sgx)->wait_cursor);
-	  XmUpdateDisplay(listener_text); /* not sure about this... */
-#if 0
-	  fprintf(stderr,"eval: %s\n",str);
-#endif
-	  snd_eval_listener_str(ss,str);
-	  XUndefineCursor(XtDisplay(listener_text),XtWindow(listener_text));
-	  FREE(str);
-	  str = NULL;
-	}
-      else
-	{
-	  new_eot = XmTextGetLastPosition(w);
-	  XmTextInsert(w,new_eot,listener_prompt_with_cr(ss));
-	}
-      last_prompt = XmTextGetLastPosition(w) - 1;
-    }
-  else 
-    {
-      new_eot = XmTextGetLastPosition(w);
-      XmTextInsert(w,new_eot,"\n");
-    }
-  cmd_eot = XmTextGetLastPosition(w);
-  XmTextShowPosition(w,cmd_eot-1);
-  XmTextSetInsertionPosition(w,cmd_eot+1);
-  if (full_str) XtFree(full_str);
+  command_return(w,(snd_state *)clientData,last_prompt);
 }
 
 static int last_highlight_position = -1;

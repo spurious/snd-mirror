@@ -1142,7 +1142,6 @@ char *shorter_tempnam(char *dir,char *prefix);
 char *snd_tempnam(snd_state *ss);
 void fill_number(char *fs, char *ps);
 void snd_exit(int val);
-int check_balance(char *expr, int start, int end);
 char *kmg (int num);
 #ifdef DEBUG_MEMORY
   void set_encloser(char *name);
@@ -1151,6 +1150,14 @@ char *kmg (int num);
   void start_timing(void);
   void stop_timing(void);
 #endif
+
+
+/* -------- snd-listener -------- */
+
+void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt);
+char *listener_prompt_with_cr(snd_state *ss);
+int check_balance(char *expr, int start, int end);
+void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form);
 
 
 /* -------- snd-mix.c -------- */

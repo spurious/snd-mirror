@@ -692,7 +692,7 @@ void init_vct(void)
   DEFINE_PROC(gh_new_procedure(S_vcts_doB, SCM_FNC vcts_do,0,0,1), H_vcts_doB);
   DEFINE_PROC(gh_new_procedure(S_vct_moveB,SCM_FNC vct_move,3,1,0),H_vct_moveB);
   DEFINE_PROC(gh_new_procedure2_2(S_vct_subseq,    vct_subseq),    H_vct_subseq);
-  DEFINE_PROC(gh_new_procedure(S_vct,              g_vct,0,0,1),   H_vct);
+  DEFINE_PROC(gh_new_procedure(S_vct,      SCM_FNC g_vct,0,0,1),   H_vct);
 
 #if USE_SND
   define_procedure_with_setter(S_vct_ref,SCM_FNC vct_ref,H_vct_ref,

@@ -13,7 +13,7 @@ Alpha port: I'm told there are lingering long int problems in this
   port, but I don't have access to an Alpha -- all I need is the
   gcc printout during compilation.
 
-add modules to tie sndlib into CL, Python, Octave, etc (via SWIG?).
+add modules to tie sndlib into Python, Octave, etc (via SWIG?).
 
 Snd name completion tied into the Emacs-Snd subjob connection (this
   apparently will require "raw" mode in ilisp).
@@ -123,7 +123,7 @@ A graphic-EQ effect (effects.scm) -- this could use guile-gtk and the
   some sort of dialog to set the various variables, and ideally a
   C module (effects.c -> effects.so) autoloaded by the effects module.
 
-A pitch tracker.
+A better pitch tracker than spot-freq in examp.scm.
 
 Noise reduction.
 
@@ -163,7 +163,3 @@ cmucl, and a Scheme binding in xscm; perhaps the latter can be ported
 to Guile.
 
 Mac-OSX Snd port (since gtk and guile have been ported, Snd shouldn't be difficult).
-
-There's a Scheme to C translator in Jaffer's schlep.scm -- perhaps this
-can be used as a stopgap until Guile's compiler is ready?  (I've edited
-a version of this so it runs in Guile).

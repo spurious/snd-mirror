@@ -17,6 +17,7 @@
 #define BACKGROUND_ADD(ss,func,data) func(data)
 
 #define GUI_POINTER void *
+#define GUI_WIDGET int
 
 #define BUTTON_1 0
 #define BUTTON_2 1

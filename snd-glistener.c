@@ -134,13 +134,6 @@ void snd_append_char(snd_state *ss, char *msg)
     }
 }
 
-static char listener_prompt_buffer[64];
-static char *listener_prompt_with_cr(snd_state *ss)
-{
-  sprintf(listener_prompt_buffer,"\n%s",listener_prompt(ss));
-  return(listener_prompt_buffer);
-}
- 
 void snd_append_command(snd_state *ss, char *msg)
 {
   int cmd_eot;
@@ -160,102 +153,7 @@ void snd_append_command(snd_state *ss, char *msg)
 
 static void command_return_callback(snd_state *ss)
 {
-  /* try to find complete form either enclosing current cursor, or just before it */
-  gint new_eot=0,cmd_eot=0;
-  char *str = NULL,*full_str = NULL,*prompt;
-  int i,j,slen;
-  int end_of_text,start_of_text,last_position,current_position,parens;
-  full_str = gtk_editable_get_chars(GTK_EDITABLE(listener_text),0,-1);
-  current_position = gtk_editable_get_position(GTK_EDITABLE(listener_text));
-  start_of_text = current_position;
-  end_of_text = current_position;
-  last_position = gtk_text_get_length(GTK_TEXT(listener_text));
-  prompt = listener_prompt(ss);
-  if (last_position > end_of_text)
-    {
-      for (i=current_position;i<last_position;i++)
-	if ((full_str[i+1] == prompt[0]) && 
-	    (full_str[i] == '\n'))
-	  {
-	    end_of_text = i-1;
-	    break;
-	  }
-    }
-  if (start_of_text > 0)
-    {
-      for (i=current_position;i>=0;i--)
-	if ((full_str[i] == prompt[0]) && 
-	    ((i == 0) || (full_str[i-1] == '\n')))
-	  {
-	    start_of_text = i+1;
-	    break;
-	  }
-      if (start_of_text == end_of_text)
-	start_of_text = 0; /* user erased prompt? */
-    }
-  str = NULL;
-  if (end_of_text > start_of_text)
-    {
-      parens = 0;
-      slen = end_of_text - start_of_text + 2;
-      str = (char *)CALLOC(slen,sizeof(char));
-      for (i=start_of_text,j=0;i<=end_of_text;j++,i++) 
-	{
-	  str[j] = full_str[i]; 
-	  if (str[j] == '(') parens++;
-	}
-      str[end_of_text-start_of_text+1] = 0;
-      end_of_text = snd_strlen(str);
-      if (parens)
-	{
-	  end_of_text = check_balance(str,0,end_of_text);
-	  if ((end_of_text > 0) && 
-	      (end_of_text < (slen-1)))
-	    {
-	      str[end_of_text+1] = 0;
-	      if (str[end_of_text] == '\n') str[end_of_text]=0;
-	    }
-	  else
-	    {
-	      FREE(str);
-	      str = NULL;
-	      new_eot = gtk_text_get_length(GTK_TEXT(listener_text));
-	      append_listener_text(0,"\n");
-	      /* gtk_text_set_point(GTK_TEXT(listener_text),gtk_text_get_length(GTK_TEXT(listener_text))); */
-	      gtk_editable_set_position(GTK_EDITABLE(listener_text),
-					gtk_text_get_length(GTK_TEXT(listener_text)));
-	      if (full_str) g_free(full_str);
-	      return;
-	    }
-	}
-      if (str)
-	{
-	  if (current_position < (last_position-2))
-	    {
-	      append_listener_text(0,str);
-	    }
-	  gdk_window_set_cursor(listener_text->window,(ss->sgx)->wait_cursor);
-	  snd_eval_listener_str(ss,str);
-	  gdk_window_set_cursor(listener_text->window,(ss->sgx)->arrow_cursor);
-	  FREE(str);
-	  str = NULL;
-	}
-      else
-	{
-	  new_eot = gtk_text_get_length(GTK_TEXT(listener_text));
-	  append_listener_text(0,listener_prompt_with_cr(ss));
-	}
-      last_prompt = gtk_text_get_length(GTK_TEXT(listener_text)) - 1;
-    }
-  else 
-    {
-      new_eot = gtk_text_get_length(GTK_TEXT(listener_text));
-      append_listener_text(0,"\n");
-    }
-  cmd_eot = gtk_text_get_length(GTK_TEXT(listener_text));
-  /* gtk_text_set_point(GTK_TEXT(listener_text),cmd_eot); */
-  gtk_editable_set_position(GTK_EDITABLE(listener_text),cmd_eot); 
-  if (full_str) g_free(full_str);
+  command_return(listener_text,ss,last_prompt);
 }
 
 static char *C_k_str = NULL;
@@ -315,6 +213,7 @@ static gint listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
   snd_state *ss = (snd_state *)data;
   chan_info *cp;
+  int end;
   if ((ss->sgx)->graph_is_active) 
     {
       cp = current_channel(ss);
@@ -375,7 +274,24 @@ static gint listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 				      g_free(fstr);
 				    }
 				}
-			      else return(TRUE);
+			      else
+				{
+				  if ((event->keyval == snd_K_greater) && (event->state & snd_MetaMask))
+				    {
+				      end = gtk_text_get_length(GTK_TEXT(listener_text));
+				      gtk_text_set_point(GTK_TEXT(listener_text),end);
+				      gtk_editable_set_position(GTK_EDITABLE(listener_text),end);
+				    }
+				  else
+				    {
+				      if ((event->keyval == snd_K_less) && (event->state & snd_MetaMask))
+					{
+					  gtk_text_set_point(GTK_TEXT(listener_text),1);
+					  gtk_editable_set_position(GTK_EDITABLE(listener_text),1);
+					}
+				      else return(TRUE);
+				    }
+				}
 			    }
 			}
 		    }

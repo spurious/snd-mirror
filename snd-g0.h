@@ -43,6 +43,7 @@
 #define BACKGROUND_ADD(ss,func,data) gtk_idle_add(func,(gpointer)data)
 
 #define GUI_POINTER gpointer
+#define GUI_WIDGET GtkWidget*
 
 typedef struct {
   GdkGC *gc;

@@ -115,6 +115,7 @@
 #define BACKGROUND_ADD(ss,func,data) XtAppAddWorkProc(MAIN_APP(ss),func,(XtPointer)data)
 
 #define GUI_POINTER XtPointer
+#define GUI_WIDGET Widget
 
 #define TIME_TYPE Time
 #define BUTTON_1 Button1

@@ -14,7 +14,7 @@ SND_X_HEADERS = snd-x0.h snd-x1.h
 SND_G_HEADERS = snd-g0.h snd-g1.h
 SNDLIB_O_FILES = headers.obj audio.obj io.obj sound.obj clm.obj vct.obj sndlib2scm.obj clm2scm.obj
 
-O_FILES = snd-io.obj snd-utils.obj snd-error.obj snd-noscm.obj snd-completion.obj snd-menu.obj snd-axis.obj snd-data.obj snd-fft.obj snd-marks.obj snd-file.obj snd-edits.obj snd-chn.obj snd-dac.obj snd-region.obj snd-select.obj snd-find.obj snd-snd.obj snd-help.obj snd-main.obj snd-print.obj snd-trans.obj snd-mix.obj snd.obj snd-env.obj snd-scm.obj snd-ladspa.obj snd-rec.obj
+O_FILES = snd-io.obj snd-utils.obj snd-listener.obj snd-error.obj snd-noscm.obj snd-completion.obj snd-menu.obj snd-axis.obj snd-data.obj snd-fft.obj snd-marks.obj snd-file.obj snd-edits.obj snd-chn.obj snd-dac.obj snd-region.obj snd-select.obj snd-find.obj snd-snd.obj snd-help.obj snd-main.obj snd-print.obj snd-trans.obj snd-mix.obj snd.obj snd-env.obj snd-scm.obj snd-ladspa.obj snd-rec.obj
 
 X_O_FILES = snd-xutils.obj snd-xerror.obj snd-xhelp.obj snd-xfind.obj snd-xmenu.obj snd-xdraw.obj snd-xlistener.obj snd-xchn.obj snd-xsnd.obj snd-xregion.obj snd-xdrop.obj snd-xmain.obj snd-xmix.obj snd-xrec.obj snd-xenv.obj snd-gxbitmaps.obj snd-gxcolormaps.obj snd-xfft.obj snd-xprint.obj snd-xfile.obj snd-xstats.obj snd-xscm.obj
 

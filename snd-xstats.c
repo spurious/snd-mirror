@@ -2,10 +2,6 @@
 
 /* -------- STATS WINDOW -------- */
 
-#if HAVE_MALLINFO
-  #include <malloc.h>
-#endif
-
 static Widget stats_window = NULL;
 
 static void stats_help_Callback(Widget w,XtPointer clientData,XtPointer callData) 
@@ -27,73 +23,7 @@ static void stats_update_Callback(Widget w,XtPointer clientData,XtPointer callDa
 
 static Widget stats_form;
 
-
-#ifdef DEBUG_MEMORY
-  char *mem_stats(snd_state *ss,int ub);
-#endif
-
-void update_stats(snd_state *ss)
-{
-  int i,j,pos,regs,used_bytes=0;
-  int vals[2];
-  snd_info *sp;
-  chan_info *cp;
-  char *str,*r0 = NULL,*r1 = NULL;
-  XmTextSetString(stats_form,"file chn: mem(#bufs), main, temp(#files), amp envs\n\n");
-  for (i=0;i<ss->max_sounds;i++)
-    {
-      if ((sp=((snd_info *)(ss->sounds[i]))))
-	{
-	  if (sp->inuse)
-	    {
-	      for (j=0;j<(sp->nchans);j++)
-		{
-		  if ((cp=((chan_info *)(sp->chans[j]))))
-		    {
-		      if (cp->stats)
-			{
-			  pos = XmTextGetLastPosition(stats_form);
-			  str = update_chan_stats(cp);
-			  XmTextInsert(stats_form,pos,str);
-			  FREE(str);
-			}}}}}}
-  regs = snd_regions();
-  if (regs > 0)
-    {
-      region_stats(vals);
-      str = (char *)CALLOC(256,sizeof(char));
-      sprintf(str,"\nregions (%d): %s + %s\n",regs,r0=kmg(vals[0]),r1=kmg(vals[1]));
-      pos = XmTextGetLastPosition(stats_form);
-      XmTextInsert(stats_form,pos,str);
-      if (r0) free(r0);
-      if (r1) free(r1);
-      FREE(str);
-    }
-#if HAVE_MALLINFO
-  {
-    struct mallinfo mall;
-    char *m0=NULL,*m1=NULL,*m2=NULL,*m3=NULL;
-    mall = mallinfo();
-    str = (char *)CALLOC(256,sizeof(char));
-    sprintf(str,"\nmalloc: %s + %s (in use: %s, freed: %s)\n",
-	    m0=kmg(mall.arena),m1=kmg(mall.hblkhd),
-	    m2=kmg(used_bytes=mall.uordblks),m3=kmg(mall.fordblks));
-    pos = XmTextGetLastPosition(stats_form);
-    XmTextInsert(stats_form,pos,str);
-    if (m0) free(m0);
-    if (m1) free(m1);
-    if (m2) free(m2);
-    if (m3) free(m3);
-    FREE(str);
-  }
-#endif
-#ifdef DEBUG_MEMORY
-  str = mem_stats(ss,used_bytes);
-  pos = XmTextGetLastPosition(stats_form);
-  XmTextInsert(stats_form,pos,str);
-  free(str);
-#endif
-}
+void update_stats(snd_state *ss) {update_stats_with_widget(ss,stats_form);}
 
 void update_stats_display(snd_state *ss, int all)
 {

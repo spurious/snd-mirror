@@ -2,10 +2,6 @@
 
 /* -------- STATS WINDOW -------- */
 
-#if HAVE_MALLINFO
-  #include <malloc.h>
-#endif
-
 static GtkWidget *stats_window = NULL;
 
 static void stats_help(GtkWidget *w,gpointer clientData) 
@@ -32,71 +28,13 @@ static void stats_update(GtkWidget *w,gpointer clientData)
 
 static GtkWidget *stats_form;
 
-#ifdef DEBUG_MEMORY
-  char *mem_stats(snd_state *ss,int ub);
-#endif
-
 void update_stats(snd_state *ss)
 {
-  int i,j,regs,used_bytes=0,chars;
-  int vals[2];
-  snd_info *sp;
-  chan_info *cp;
-  char *str,*r0 = NULL,*r1 = NULL;
+  int chars;
   chars = gtk_text_get_length(GTK_TEXT(stats_form));
   if (chars > 0) gtk_editable_delete_text(GTK_EDITABLE(stats_form),0,-1);
   gtk_text_freeze(GTK_TEXT(stats_form));
-  gtk_text_insert(GTK_TEXT(stats_form), (ss->sgx)->help_text_fnt, (ss->sgx)->black, (ss->sgx)->white, 
-		  "file chn: mem(#bufs), main, temp(#files), amp envs\n\n",-1);
-  for (i=0;i<ss->max_sounds;i++)
-    {
-      if ((sp=((snd_info *)(ss->sounds[i]))))
-	{
-	  if (sp->inuse)
-	    {
-	      for (j=0;j<(sp->nchans);j++)
-		{
-		  if ((cp=((chan_info *)(sp->chans[j]))))
-		    {
-		      if (cp->stats)
-			{
-			  str = update_chan_stats(cp);
-			  gtk_text_insert(GTK_TEXT(stats_form),(ss->sgx)->help_text_fnt, (ss->sgx)->black, (ss->sgx)->white,str,-1);
-			  FREE(str);
-			}}}}}}
-  regs = snd_regions();
-  if (regs > 0)
-    {
-      region_stats(vals);
-      str = (char *)CALLOC(256,sizeof(char));
-      sprintf(str,"\nregions (%d): %s + %s\n",regs,r0=kmg(vals[0]),r1=kmg(vals[1]));
-      gtk_text_insert(GTK_TEXT(stats_form),(ss->sgx)->help_text_fnt, (ss->sgx)->black, (ss->sgx)->white,str,-1);
-      if (r0) free(r0);
-      if (r1) free(r1);
-      FREE(str);
-    }
-#if HAVE_MALLINFO
-  {
-    struct mallinfo mall;
-    char *m0=NULL,*m1=NULL,*m2=NULL,*m3=NULL;
-    mall = mallinfo();
-    str = (char *)CALLOC(256,sizeof(char));
-    sprintf(str,"\nmalloc: %s + %s (in use: %s, freed: %s)\n",
-	    m0=kmg(mall.arena),m1=kmg(mall.hblkhd),
-	    m2=kmg(used_bytes=mall.uordblks),m3=kmg(mall.fordblks));
-    gtk_text_insert(GTK_TEXT(stats_form),(ss->sgx)->help_text_fnt, (ss->sgx)->black, (ss->sgx)->white,str,-1);
-    if (m0) free(m0);
-    if (m1) free(m1);
-    if (m2) free(m2);
-    if (m3) free(m3);
-    FREE(str);
-  }
-#endif
-#ifdef DEBUG_MEMORY
-  str = mem_stats(ss,used_bytes);
-  gtk_text_insert(GTK_TEXT(stats_form),(ss->sgx)->help_text_fnt, (ss->sgx)->black, (ss->sgx)->white,str,-1);
-  free(str);
-#endif
+  update_stats_with_widget(ss,stats_form);
   gtk_text_thaw(GTK_TEXT(stats_form));
 }
 
