@@ -704,9 +704,10 @@ void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int
   free_sync_info(si);
 }
 
-static void swap_channels(snd_state *ss, off_t beg, off_t dur, snd_fd *c0, snd_fd *c1)
+static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur)
 {
-  chan_info *cp0, *cp1;
+  snd_state *ss;
+  snd_fd *c0, *c1;
   snd_info *sp0;
   file_info *hdr0 = NULL, *hdr1 = NULL;
   int j, ofd0 = 0, ofd1 = 0, datumb = 0, temp_file, err = 0;
@@ -716,9 +717,8 @@ static void swap_channels(snd_state *ss, off_t beg, off_t dur, snd_fd *c0, snd_f
   int reporting = 0;
   char *ofile0 = NULL, *ofile1 = NULL;
   if (dur <= 0) return;
-  cp0 = c0->cp;
   sp0 = cp0->sound;
-  cp1 = c1->cp;
+  ss = cp0->state;
   reporting = ((sp0) && (dur > (MAX_BUFFER_SIZE * 10)));
   if (reporting) start_progress_report(sp0, NOT_FROM_ENVED);
   if (dur > MAX_BUFFER_SIZE)
@@ -754,6 +754,8 @@ static void swap_channels(snd_state *ss, off_t beg, off_t dur, snd_fd *c0, snd_f
   data1[0] = (mus_sample_t *)CALLOC(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
   idata0 = data0[0];
   idata1 = data1[0];
+  c0 = init_sample_read(beg, cp0, READ_FORWARD);
+  c1 = init_sample_read(beg, cp1, READ_FORWARD);
   if (temp_file)
     {
       j = 0;
@@ -805,6 +807,8 @@ static void swap_channels(snd_state *ss, off_t beg, off_t dur, snd_fd *c0, snd_f
   FREE(data0);
   FREE(data1[0]);
   FREE(data1);
+  free_snd_fd(c0);
+  free_snd_fd(c1);
 }
 
 /* -------- src -------- */
@@ -3141,9 +3145,8 @@ static XEN g_pad_channel(XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
 
 static XEN g_swap_channels(XEN snd0, XEN chn0, XEN snd1, XEN chn1, XEN beg, XEN dur)
 {
-  #define H_swap_channels "(" S_swap_channels " snd0 chn0 snd1 chn1 beg dur) swaps the indicated channels"
+  #define H_swap_channels "(" S_swap_channels " &optional snd0 chn0 snd1 chn1 beg dur) swaps the indicated channels"
   chan_info *cp0 = NULL, *cp1 = NULL;
-  snd_fd *c0, *c1;
   off_t dur0 = 0, dur1 = 0, beg0 = 0, num;
   int old_squelch0, old_squelch1;
   snd_info *sp = NULL;
@@ -3174,44 +3177,58 @@ static XEN g_swap_channels(XEN snd0, XEN chn0, XEN snd1, XEN chn1, XEN beg, XEN 
     {
       if (XEN_NUMBER_P(beg)) 
 	beg0 = XEN_TO_C_OFF_T(beg);
+      dur0 = CURRENT_SAMPLES(cp0);
+      dur1 = CURRENT_SAMPLES(cp1);
       if (XEN_NUMBER_P(dur)) 
 	num = XEN_TO_C_OFF_T(dur);
       else
 	{
-	  dur0 = CURRENT_SAMPLES(cp0);
-	  dur1 = CURRENT_SAMPLES(cp1);
-	  if (dur0 > dur1) num = dur1; else num = dur0;
+	  if (dur0 > dur1) 
+	    num = dur0; 
+	  else num = dur1; /* was min here 13-Dec-02 */
 	}
-      if ((beg0 == 0) && ((num == dur0) || (num == dur1)) &&
-	  (cp0->edit_ctr == 0) && (cp1->edit_ctr == 0))
-	{
-	  /* common special case -- just setup a new ed-list entry with the channels/sounds swapped */
-	  old_squelch0 = cp0->squelch_update;
-	  old_squelch1 = cp1->squelch_update;
-	  e0 = amp_env_copy(cp0, FALSE, cp0->edit_ctr);
-	  e1 = amp_env_copy(cp1, FALSE, cp1->edit_ctr);
-	  cp0->squelch_update = 1;
-	  cp1->squelch_update = 1;
-	  file_override_samples(dur1, cp1->sound->filename, cp0, cp1->chan, DONT_DELETE_ME, LOCK_MIXES, S_swap_channels);
-	  file_override_samples(dur0, cp0->sound->filename, cp1, cp0->chan, DONT_DELETE_ME, LOCK_MIXES, S_swap_channels);
-	  if ((e0) && (e1))
-	    {
-	      cp0->amp_envs[cp0->edit_ctr] = e1;
-	      cp1->amp_envs[cp1->edit_ctr] = e0;
-	    }
-	  cp0->squelch_update = old_squelch0;
-	  cp1->squelch_update = old_squelch1;
-	  swap_marks(cp0, cp1);
-	  update_graph(cp0);
-	  update_graph(cp1);
-	}
+      if ((beg0 != 0) ||
+	  ((num != dur0) && (num != dur1))) /* if just a section being swapped, use readers */
+	swap_channels(cp0, cp1, beg0, num);
       else
 	{
-	  c0 = init_sample_read(beg0, cp0, READ_FORWARD);
-	  c1 = init_sample_read(beg0, cp1, READ_FORWARD);
-	  swap_channels(cp0->state, beg0, num, c0, c1);
-	  free_snd_fd(c0);
-	  free_snd_fd(c1);
+	  if ((cp0->edit_ctr == 0) && 
+	      (cp1->edit_ctr == 0))         /* no edits, so we can safely swap underlying file ref */
+	    {
+	      /* common special case -- just setup a new ed-list entry with the channels/sounds swapped */
+	      old_squelch0 = cp0->squelch_update;
+	      old_squelch1 = cp1->squelch_update;
+	      e0 = amp_env_copy(cp0, FALSE, cp0->edit_ctr);
+	      e1 = amp_env_copy(cp1, FALSE, cp1->edit_ctr);
+	      cp0->squelch_update = 1;
+	      cp1->squelch_update = 1;
+	      file_override_samples(dur1, cp1->sound->filename, cp0, cp1->chan, DONT_DELETE_ME, LOCK_MIXES, S_swap_channels);
+	      file_override_samples(dur0, cp0->sound->filename, cp1, cp0->chan, DONT_DELETE_ME, LOCK_MIXES, S_swap_channels);
+	      if ((e0) && (e1))
+		{
+		  cp0->amp_envs[cp0->edit_ctr] = e1;
+		  cp1->amp_envs[cp1->edit_ctr] = e0;
+		}
+	      cp0->squelch_update = old_squelch0;
+	      cp1->squelch_update = old_squelch1;
+	      swap_marks(cp0, cp1);
+	      update_graph(cp0);
+	      update_graph(cp1);
+	    }
+	  else
+	    {
+	      /* look for simple cases where copying the current edit tree entry is not too hard */
+	      if ((ptree_or_sound_fragments_in_use(cp0, cp0->edit_ctr)) ||
+		  (ptree_or_sound_fragments_in_use(cp1, cp1->edit_ctr)) ||
+#if DEBUGGING
+		  (num < 0)
+#else
+		  (num < FILE_BUFFER_SIZE)
+#endif
+		  )
+		swap_channels(cp0, cp1, beg0, num);
+	      else copy_then_swap_channels(cp0, cp1, beg0, num); /* snd-edits.c */
+	    }
 	}
     }
   return(XEN_FALSE);

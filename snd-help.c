@@ -268,6 +268,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+16-Dec:  snd 6.4\n\
 11-Dec:  --with-shared-sndlib configure switch.\n\
 10-Dec:  contrib/inf-snd.el from Michael Scholz.\n\
 9-Dec:   init-func arg to ptree-channel.\n\

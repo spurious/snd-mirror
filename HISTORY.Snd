@@ -1,5 +1,6 @@
 Snd change log
 
+  16-Dec:    snd 6.4.
   11-Dec:    --with-shared-sndlib configure switch.
   10-Dec:    contrib/inf-snd.el from Michael Scholz.
   9-Dec:     init-func arg to ptree-channel.

@@ -25,34 +25,6 @@
       if closures in use:
       (let ((arg ((lambda (y data dir) [...]) y ydata ydir)))
         ((lambda (x data dir) <...>) arg xdata xdir))
- *
- * swap chans if no sounds (i.e. other edits implicit)
- *   all FRAGMENT_SOUND indices are either 0 or EDIT_LIST_END|ZERO_MARK (see ptree_or_sound_fragments_in_use below)
- *   if its a data buffer, we could fix up the index and make a new (copy) buffer, but that's getting complicated
- *   does this require copying the base sound accessors as well?
- *     change all 0's to add_sound_file_to_edit_list results:
- *
-       hdr = copy_current_header
-       fd = snd_open_read(ss, inserted_file);
-       mus_file_open_descriptors(fd,
-				file name
-				hdr->format,
-				mus_data_format_to_bytes_per_sample(hdr->format),
-				hdr->data_location,
-				hdr->chans,
-				hdr->type);
-       io = make_file_state(fd, hdr, chan, FILE_BUFFER_SIZE);
-       new0 = add_sound_file_to_edit_list(cp, inserted_file, io, hdr, auto_delete, chan);
-       then copy current other chan edlist
-       prepare_edit_list(cp, len, pos, S_swap_channel);
-       new_ed = make_ed_list(cp->edits[pos]->size);
-       cp->edits[cp->edit_ctr] = new_ed;
-       for (i = 0; i < new_ed->size; i++) 
-         {
-           copy_ed_fragment(FRAGMENT(new_ed, i), FRAGMENT(old_ed, i));
-	   if (FRAGMENT_SOUND(new_ed, i) == 0) FRAGMENT_SOUND(new_ed, i) = new0;
-         }
-       amp_env_scale_by(cp, 1.0, pos); 
  */
 /* TODO: preliminary tests for ramp|ptree on ramp|ptree, xen on all, swap in simple cases */
 
@@ -1184,7 +1156,6 @@ void file_insert_samples(off_t beg, off_t num, char *inserted_file, chan_info *c
   off_t len;
   ed_fragment *cb;
   int fd;
-  snd_io *io;
   ed_list *ed;
   file_info *hdr;
   snd_state *ss;
@@ -1219,8 +1190,9 @@ void file_insert_samples(off_t beg, off_t num, char *inserted_file, chan_info *c
 				hdr->chans,
 				hdr->type);
       during_open(fd, inserted_file, SND_INSERT_FILE);
-      io = make_file_state(fd, hdr, chan, FILE_BUFFER_SIZE);
-      cb->snd = add_sound_file_to_edit_list(cp, inserted_file, io, hdr, auto_delete, chan);
+      cb->snd = add_sound_file_to_edit_list(cp, inserted_file, 
+					    make_file_state(fd, hdr, chan, FILE_BUFFER_SIZE),
+					    hdr, auto_delete, chan);
       ed = cp->edits[cp->edit_ctr];
       ed->edit_type = INSERTION_EDIT;
       ed->sound_location = cb->snd;
@@ -1456,7 +1428,6 @@ void file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, in
   off_t prev_len, new_len;
   ed_fragment *cb;
   int fd;
-  snd_io *io;
   ed_list *ed;
   file_info *hdr;
   snd_state *ss;
@@ -1494,8 +1465,9 @@ void file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, in
 				hdr->chans,
 				hdr->type);
       during_open(fd, tempfile, SND_CHANGE_FILE);
-      io = make_file_state(fd, hdr, chan, FILE_BUFFER_SIZE);
-      cb->snd = add_sound_file_to_edit_list(cp, tempfile, io, hdr, auto_delete, chan);
+      cb->snd = add_sound_file_to_edit_list(cp, tempfile, 
+					    make_file_state(fd, hdr, chan, FILE_BUFFER_SIZE),
+					    hdr, auto_delete, chan);
       ed = cp->edits[cp->edit_ctr];
       ed->edit_type = CHANGE_EDIT;
       ed->sound_location = cb->snd;
@@ -1515,7 +1487,6 @@ void file_override_samples(off_t num, char *tempfile, chan_info *cp, int chan, i
 {
   int fd;
   ed_list *e;
-  snd_io *io;
   file_info *hdr;
   snd_state *ss;
   if (num == 0) /* not sure this can happen */
@@ -1541,12 +1512,13 @@ void file_override_samples(off_t num, char *tempfile, chan_info *cp, int chan, i
 				hdr->chans,
 				hdr->type);
       during_open(fd, tempfile, SND_OVERRIDE_FILE);
-      io = make_file_state(fd, hdr, chan, FILE_BUFFER_SIZE);
       e = initial_ed_list(0, num - 1);
       if (origin) e->origin = copy_string(origin);
       cp->edits[cp->edit_ctr] = e;
       if (lock == LOCK_MIXES) lock_affected_mixes(cp, 0, num);
-      FRAGMENT_SOUND(e, 0) = add_sound_file_to_edit_list(cp, tempfile, io, hdr, auto_delete, chan);
+      FRAGMENT_SOUND(e, 0) = add_sound_file_to_edit_list(cp, tempfile, 
+							 make_file_state(fd, hdr, chan, FILE_BUFFER_SIZE),
+							 hdr, auto_delete, chan);
       e->edit_type = CHANGE_EDIT;
       e->sound_location = FRAGMENT_SOUND(e, 0);
       e->edpos = cp->edit_ctr - 1;
@@ -2871,6 +2843,95 @@ mus_sample_t next_sound (snd_fd *sf)
       file_buffers_forward(ind0, ind1, indx, sf, sf->current_sound);
     }
   return(read_sample(sf));
+}
+
+void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, off_t beg0, off_t num)
+{
+  int i, fd, new0, new1, pos0, pos1;
+  char *name;
+  ed_list *new_ed, *old_ed;
+  file_info *hdr0, *hdr1;
+  snd_state *ss;
+  env_info *e0, *e1;
+  Float maxamp0, maxamp1;
+  ss = cp0->state;
+  name = cp0->sound->filename;
+  hdr0 = copy_header(name, cp0->sound->hdr);
+  fd = snd_open_read(ss, name);
+  mus_file_open_descriptors(fd,
+			    name,
+			    hdr0->format,
+			    mus_data_format_to_bytes_per_sample(hdr0->format),
+			    hdr0->data_location,
+			    hdr0->chans,
+			    hdr0->type);
+  new0 = add_sound_file_to_edit_list(cp1, name,
+				     make_file_state(fd, hdr0, cp0->chan, FILE_BUFFER_SIZE),
+				     hdr0, DONT_DELETE_ME, cp0->chan);
+  name = cp1->sound->filename;
+  hdr1 = copy_header(name, cp1->sound->hdr);
+  fd = snd_open_read(ss, name);
+  mus_file_open_descriptors(fd,
+			    name,
+			    hdr1->format,
+			    mus_data_format_to_bytes_per_sample(hdr1->format),
+			    hdr1->data_location,
+			    hdr1->chans,
+			    hdr1->type);
+  new1 = add_sound_file_to_edit_list(cp0, name,
+				     make_file_state(fd, hdr1, cp1->chan, FILE_BUFFER_SIZE),
+				     hdr1, DONT_DELETE_ME, cp1->chan);
+  pos0 = cp0->edit_ctr;
+  pos1 = cp1->edit_ctr;
+  e0 = amp_env_copy(cp0, FALSE, cp0->edit_ctr);
+  e1 = amp_env_copy(cp1, FALSE, cp1->edit_ctr);
+
+  old_ed = cp1->edits[pos1];
+  maxamp1 = old_ed->maxamp;
+  prepare_edit_list(cp0, cp1->samples[pos1], AT_CURRENT_EDIT_POSITION, S_swap_channels);
+  new_ed = make_ed_list(old_ed->size);
+  new_ed->edit_type = CHANGE_EDIT;
+  new_ed->sound_location = new1;
+  new_ed->edpos = cp0->edit_ctr - 1;
+  new_ed->maxamp = maxamp1;
+  new_ed->beg = 0;
+  new_ed->len = num;
+  new_ed->origin = copy_string(S_swap_channels);
+  cp0->edits[cp0->edit_ctr] = new_ed;
+  for (i = 0; i < new_ed->size; i++) 
+    {
+      copy_ed_fragment(FRAGMENT(new_ed, i), FRAGMENT(old_ed, i));
+      if (FRAGMENT_SOUND(new_ed, i) == 0) FRAGMENT_SOUND(new_ed, i) = new1;
+    }
+  old_ed = cp0->edits[pos0];
+  maxamp0 = old_ed->maxamp;
+  prepare_edit_list(cp1, cp0->samples[pos0], AT_CURRENT_EDIT_POSITION, S_swap_channels);
+  new_ed = make_ed_list(old_ed->size);
+  new_ed->edit_type = CHANGE_EDIT;
+  new_ed->sound_location = new0;
+  new_ed->edpos = cp1->edit_ctr - 1;
+  new_ed->maxamp = maxamp0;
+  new_ed->beg = 0;
+  new_ed->len = num;
+  new_ed->origin = copy_string(S_swap_channels);
+  cp1->edits[cp1->edit_ctr] = new_ed;
+  for (i = 0; i < new_ed->size; i++) 
+    {
+      copy_ed_fragment(FRAGMENT(new_ed, i), FRAGMENT(old_ed, i));
+      if (FRAGMENT_SOUND(new_ed, i) == 0) FRAGMENT_SOUND(new_ed, i) = new0;
+    }
+  if ((e0) && (e1))
+    {
+      cp0->amp_envs[cp0->edit_ctr] = e1;
+      cp1->amp_envs[cp1->edit_ctr] = e0;
+    }
+  ripple_marks(cp0, 0, 0);
+  ripple_marks(cp1, 0, 0);
+  swap_marks(cp0, cp1);
+  reflect_edit_history_change(cp0);
+  reflect_edit_history_change(cp1);
+  update_graph(cp0);
+  update_graph(cp1);
 }
 
 static int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, off_t length, snd_state *ss)

@@ -731,6 +731,7 @@ void set_ed_maxamp(chan_info *cp, int edpos, Float val);
 Float ed_maxamp(chan_info *cp, int edpos);
 void set_ed_selection_maxamp(chan_info *cp, Float val);
 Float ed_selection_maxamp(chan_info *cp);
+void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, off_t beg0, off_t num);
 
 
 /* -------- snd-fft.c -------- */
