@@ -420,7 +420,9 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   ss = snd_main(argc, argv);
 #else
   gtk_init(&argc, &argv);
+#ifndef MAC_OSX
   gdk_set_locale();
+#endif
 #endif
 
   ss->ctrls_height = CLOSED_CTRLS_HEIGHT;
