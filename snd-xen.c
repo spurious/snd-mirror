@@ -2904,7 +2904,11 @@ void g_initialize_gh(void)
 #endif
 #endif
 
-  mus_sndlib2xen_initialize();
+#if HAVE_RUBY
+  Init_sndlib();
+#else
+  init_sndlib();
+#endif
 
 #if HAVE_EXTENSION_LANGUAGE
   mus_midi_init();
@@ -3193,8 +3197,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   g_init_regions();
   g_init_selection();
   g_init_dac();
-  init_vct();
-  mus_xen_init();
   g_init_mix();
   g_init_chn();
   g_init_kbd();
@@ -3216,8 +3218,8 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   g_init_run();
 #if (!USE_NO_GUI)
   g_init_gxutils();
-  g_initialize_xgh();
-  g_initialize_xgfile();
+  g_initialize_gxen();
+  g_initialize_gxfile();
   g_init_gxenv();
   g_init_gxmenu();
   g_init_axis();

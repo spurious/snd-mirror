@@ -2440,7 +2440,7 @@ static XEN g_new_file_dialog(void)
 }
 #endif
 
-void g_initialize_xgfile(void)
+void g_initialize_gxfile(void)
 {
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_just_sounds, g_just_sounds_w, H_just_sounds,
 				   "set-" S_just_sounds, g_set_just_sounds_w,  0, 0, 0, 1);

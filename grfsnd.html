@@ -1176,8 +1176,7 @@ sampling rate <i>srate</i>, and <i>len</i> samples (not frames).
 <tr><td><a href="clm.html#degrees-&gt;radians">degrees-&gt;radians</a></td><td>(deg)</td><td>translate degrees to radians</td></tr>
 <tr><td><a href="clm.html#delay">delay</a></td><td>(gen input <i>pm</i>)</td><td>delay line</td></tr>
 <tr><td></td><td colspan=2><br>
-<b>delay</b> is a built-in syntactic form. The name <b>%delay</b> is bound
-to the original meaning of <b>delay</b> in case you need to use it.
+In Scheme <b>delay</b> is a built-in syntactic form; it is renamed <b>%delay</b> here.
 </td></tr>
 <tr><td colspan=3><br></td></tr>
 <tr><td><a href="clm.html#delay?">delay?</a></td><td>(gen)</td><td>#t if gen is delay line</td></tr>
@@ -1211,6 +1210,10 @@ load <i>len</i> samples of <i>filename</i> into <i>vct</i> starting at frame <i>
 <tr><td><a href="clm.html#frame-&gt;sample">frame-&gt;sample</a></td><td>(frmix frame)</td><td>pass frame through frame or mixer to produce sample</td></tr>
 <tr><td><a href="clm.html#frame-set!">frame-set!</a></td><td>(frame chan val)</td><td>frame[chan]=val</td></tr>
 <tr><td><a href="clm.html#frame?">frame?</a></td><td>(gen)</td><td>#t if gen is frame object</td></tr>
+<tr><td></td><td colspan=2><br>
+In Guile <b>frame?</b> is part of the debugger; it is renamed <b>%frame?</b> here.
+</td></tr>
+<tr><td colspan=3><br></td></tr>
 <tr><td><a href="clm.html#granulate">granulate</a></td><td>(gen <i>input-function</i>)</td><td>granular synthesis generator</td></tr>
 <tr><td><a href="clm.html#granulate?">granulate?</a></td><td>(gen)</td><td>#t if gen is granulate generator</td></tr>
 <tr><td><a href="clm.html#hz-&gt;radians">hz-&gt;radians</a></td><td>(freq)</td><td>translate freq to radians/sample</td></tr>
@@ -1347,6 +1350,10 @@ it in conjunction with <i>mixer</i>to scale/envelope all the various ins and out
 <tr><td><a href="clm.html#radians-&gt;degrees">radians-&gt;degrees</a></td><td>(rads)</td><td>convert radians to degrees</td></tr>
 <tr><td><a href="clm.html#radians-&gt;hz">radians-&gt;hz</a></td><td>(rads)</td><td>convert radians/sample to Hz</td></tr>
 <tr><td><a href="clm.html#rand">rand</a></td><td>(gen <i>fm</i>)</td><td>random number generator</td></tr>
+<tr><td></td><td colspan=2><br>
+In Ruby <b>rand</b> is a built-in method; it is aliased to <b>kernel_rand</b> here.
+</td></tr>
+<tr><td colspan=3><br></td></tr>
 <tr><td><a href="clm.html#rand-interp">rand-interp</a></td><td>(gen <i>fm</i>)</td><td>interpolating random number generator</td></tr>
 <tr><td><a href="clm.html#rand-interp?">rand-interp?</a></td><td>(gen)</td><td>#t if gen is interpolating random number generator</td></tr>
 <tr><td><a href="clm.html#rand?">rand?</a></td><td>(gen)</td><td>#t if gen is random number generator</td></tr>

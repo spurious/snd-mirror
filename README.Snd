@@ -322,6 +322,11 @@ If you configure Snd --with-html as well as --with-gtk, and
 get an error in snd-ghelp about gtkmozembed.h, it probably
 means you don't have the mozilla-devel package installed.
 
+In RedHat 8.0, there's some undefined identifier problem
+triggered by gtkmozembed -- I don't know what to do to 
+fix this beyond complaining to someone.
+
+
 
 ---- XmHTML: ----
 src/images.c line 3955 comment out this block:
@@ -428,7 +433,7 @@ try to catch and report consistency problems.
 If you want to keep several Guile versions around, but use a
 particular one for Snd, use the configure variable GUILE_CONFIG_path:
 
-./configure GUILE_CONFIG_path=/home/bil/test/bin/
+./configure GUILE_CONFIG_path=/home/bil/test/bin
 
 In this case, the configure script looks for /home/bil/test/bin/guile-config
 and uses the paths it returns to build Snd.  See also the PATH business below.
@@ -480,6 +485,19 @@ as it goes, so you need to make sure you have enough memory.  I
 think the default heap size is 45Kwords which means Snd starts
 faster, but runs slightly slower.  I can't decide if it's worth
 fooling with this variable or not.
+
+
+If you're using the CVS Guile (1.7.0) and get some complaint about
+lt_dlopen (or some name like that), you need to add -lltdl to the
+library list.  If that doesn't fix it, add -lguile-ltdl -- this part
+of the CVS guile is in flux, so the load sequence is tricky.
+
+
+If you get endless stupid warnings about system headers,
+add "-w" to the compiler flags.  This is a bug in gcc 3.2 --
+there shouldn't be a warning to begin with, but at least
+it should be killable via -Wno-system-headers.
+
 
 
 ---- SGI/OpenGL ----

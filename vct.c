@@ -335,8 +335,11 @@ static XEN vct_add(XEN obj1, XEN obj2, XEN offs)
   v2 = TO_VCT(obj2);
   lim = MIN(v1->length, v2->length);
   if (XEN_INTEGER_P(offs))
-    for (i = 0, j = XEN_TO_C_INT(offs); i < lim; i++, j++) 
-      v1->data[j] += v2->data[i];
+    {
+      j = XEN_TO_C_INT(offs); /* needed by g++ 3.2 -- otherwise segfault from the compiler! */
+      for (i = 0; i < lim; i++, j++) 
+	v1->data[j] += v2->data[i];
+    }
   else
     for (i = 0; i < lim; i++) 
       v1->data[i] += v2->data[i];

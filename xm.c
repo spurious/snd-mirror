@@ -403,7 +403,7 @@ XM_TYPE(XtWorkProcId, XtWorkProcId)
 XM_TYPE(XtInputId, XtInputId)
 XM_TYPE(XtIntervalId, XtIntervalId)
 XM_TYPE(XtActionHookId, XtActionHookId)
-XM_TYPE(XtTranslations, XtTranslations)
+  XM_TYPE(XtTranslations, XtTranslations) /* opaque */
 XM_TYPE_PTR(XmString, XmString)
 XM_TYPE_PTR_NO_p(XmAnyCallbackStruct, XmAnyCallbackStruct *)
 XM_TYPE_PTR_NO_p(XmArrowButtonCallbackStruct, XmArrowButtonCallbackStruct *)
@@ -421,7 +421,7 @@ XM_TYPE_PTR_NO_p(XmDropStartCallbackStruct, XmDropStartCallbackStruct *)
 XM_TYPE_PTR_NO_p(XmFileSelectionBoxCallbackStruct, XmFileSelectionBoxCallbackStruct *)
 XM_TYPE_PTR_NO_p(XmListCallbackStruct, XmListCallbackStruct *)
 #if MOTIF_2
-XM_TYPE(XmTab, XmTab) /*opaque */
+XM_TYPE(XmTab, XmTab) /* opaque */
 XM_TYPE_PTR_NO_p(XmDragStartCallbackStruct, XmDragStartCallbackStruct *)
 XM_TYPE_PTR_NO_p(XmDisplayCallbackStruct, XmDisplayCallbackStruct *)
 XM_TYPE_PTR_NO_p(XmDestinationCallbackStruct, XmDestinationCallbackStruct *)

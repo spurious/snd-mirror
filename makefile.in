@@ -54,18 +54,18 @@ main_target: @MAKE_TARGET@
 snd: $(SNDLIB_HEADERS) $(SND_HEADERS) $(GX_HEADERS) $(SNDLIB_O_FILES) $(O_FILES) $(GX_FILES) $(GL_FILES)
 	$(CC) $(LDFLAGS) $(CFLAGS) $(SNDLIB_O_FILES) $(O_FILES) $(GX_FILES) $(GL_FILES) -o snd $(GUILE_LIBS) $(GTK_LIBS) $(GL_LIBS) $(MOTIF_LIBS) $(AUDIO_LIB) $(FFTW_LIBS) $(GSL_LIBS) $(XMHTML_LIB) $(GTKHTML_LIB) $(LIBS)
 
-xm: 	xen.h xen.o
+xm: 	xen.h xen.o xm-ruby.c
 	$(CC) -c xm.c -DUNDEF_USE_SND $(DEFS) $(GTK_CFLAGS) $(CFLAGS) $(GUILE_CFLAGS) $(MOTIF_FLAGS) $(GSL_FLAGS) $(GTKHTML_FLAGS) $(GL_FLAGS)
 	$(SO_LD) xen.o $(GM_FILES) -o $(GM_SO_FILE) $(LDSO_FLAGS) $(XM_LIBS) $(GL_LIBS) $(MOTIF_LIBS) $(LIBS)
 
-xg: 	xen.h xen.o
+xg: 	xen.h xen.o xg-ruby.c
 	$(CC) -c xg.c -DUNDEF_USE_SND $(DEFS) $(GTK_CFLAGS) $(CFLAGS) $(GUILE_CFLAGS) $(MOTIF_FLAGS) $(GSL_FLAGS) $(GTKHTML_FLAGS) $(GL_FLAGS)
 	$(SO_LD) xen.o $(GG_FILES) -o $(GG_SO_FILE) $(LDSO_FLAGS) $(GTK_LIBS) $(LIBS)
 
 widget: snd_widget.o
 
 snd_widget.o: $(SNDLIB_HEADERS) $(SND_HEADERS) $(GX_HEADERS) $(SNDLIB_O_FILES) $(O_FILES) $(GX_FILES) $(GL_FILES)
-	$(LD) -r $(LDFLAGS) $(CFLAGS) $(SNDLIB_O_FILES) $(O_FILES) $(GX_FILES) $(GL_FILES) -o snd_widget.o
+	$(LD) -r $(LDFLAGS) $(SNDLIB_O_FILES) $(O_FILES) $(GX_FILES) $(GL_FILES) -o snd_widget.o
 
 include $(srcdir)/makesnd.back
 

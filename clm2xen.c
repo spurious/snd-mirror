@@ -5231,7 +5231,6 @@ void mus_xen_init(void)
   rb_define_method(mus_xen_tag, "a2", XEN_PROCEDURE_CAST g_a2, 0);
   rb_define_method(mus_xen_tag, "b1", XEN_PROCEDURE_CAST g_increment, 0);
   rb_define_method(mus_xen_tag, "b2", XEN_PROCEDURE_CAST g_b2, 0);
-  /* TODO: protect Ruby's rand from clm's */
 #endif  
 
   init_keywords();
@@ -5356,6 +5355,9 @@ void mus_xen_init(void)
 
   XEN_DEFINE_PROCEDURE(S_make_rand,        g_make_rand_w, 0, 4, 0,        H_make_rand);
   XEN_DEFINE_PROCEDURE(S_make_rand_interp, g_make_rand_interp_w, 0, 4, 0, H_make_rand_interp);
+#if HAVE_RUBY
+  rb_define_alias(rb_mKernel, "kernel_rand", "rand");
+#endif
   XEN_DEFINE_PROCEDURE(S_rand,             g_rand_w, 1, 1, 0,             H_rand);
   XEN_DEFINE_PROCEDURE(S_rand_interp,      g_rand_interp_w, 1, 1, 0,      H_rand_interp);
   XEN_DEFINE_PROCEDURE(S_rand_p,           g_rand_p_w, 1, 0, 0,           H_rand_p);
@@ -5869,19 +5871,21 @@ the closer the radius is to 1.0, the narrower the resonance."
 #endif
 }
 
-
-#if HAVE_RUBY
-XEN Init_sndlib(void);
-XEN Init_sndlib(void)
-{
-  mus_sndlib2xen_initialize();
-  mus_xen_init();
-}
-#endif
-
 #if WITH_MODULES
 void mus_xen_init(void)
 {
   scm_c_define_module("snd clm", clm_init, NULL);
 }
 #endif
+
+
+#if HAVE_RUBY
+XEN Init_sndlib(void)
+#else
+XEN init_sndlib(void)
+#endif
+{
+  mus_sndlib2xen_initialize();
+  init_vct();
+  mus_xen_init();
+}

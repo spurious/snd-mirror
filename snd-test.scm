@@ -6315,7 +6315,11 @@
 	(IF (not (vequal v0 v1)) (snd-display ";map asymmetric-fm: ~A ~A" v0 v1))
 	(IF (not (asymmetric-fm? gen)) (snd-display ";~A not asymmetric-fm?" gen))
 	(IF (fneq (mus-phase gen) 1.253787) (snd-display ";asymmetric-fm phase: ~F?" (mus-phase gen)))
+	(set! (mus-phase gen) 1.0)
+	(IF (fneq (mus-phase gen) 1.0) (snd-display ";set! asymmetric-fm phase: ~F?" (mus-phase gen)))
 	(IF (fneq (mus-frequency gen) 440.0) (snd-display ";asymmetric-fm frequency: ~F?" (mus-frequency gen)))
+	(set! (mus-frequency gen) 100.0)
+	(IF (fneq (mus-frequency gen) 100.0) (snd-display ";set! asymmetric-fm frequency: ~F?" (mus-frequency gen)))
 	(IF (or (fneq (vct-ref v0 2) 0.248) (fneq (vct-ref v0 8) .843)) (snd-display ";asymmetric-fm output: ~A" v0))
 	(IF (fneq (mus-scaler gen) 1.0) (snd-display ";mus-scaler (r) asymmetric-fm: ~A" (mus-scaler gen)))
 	(set! (mus-scaler gen) 0.5)
@@ -6531,7 +6535,11 @@
 	(IF (not (sawtooth-wave? gen)) (snd-display ";~A not sawtooth-wave?" gen))
 	(IF (fneq (mus-phase gen) 4.39538) (snd-display ";sawtooth-wave phase: ~F?" (mus-phase gen))) ;starts at pi
 	(IF (fneq (mus-frequency gen) 440.0) (snd-display ";sawtooth-wave frequency: ~F?" (mus-frequency gen)))
+	(set! (mus-frequency gen) 100.0)
+	(IF (fneq (mus-frequency gen) 100.0) (snd-display ";set! sawtooth-wave frequency: ~F?" (mus-frequency gen)))
 	(IF (fneq (mus-scaler gen) 1.0) (snd-display ";sawtooth-wave scaler: ~F?" (mus-scaler gen)))
+	(set! (mus-scaler gen) 0.5)
+	(IF (fneq (mus-scaler gen) 0.5) (snd-display ";set! sawtooth-wave scaler: ~F?" (mus-scaler gen)))
 	(IF (or (fneq (vct-ref v0 1) 0.04) (fneq (vct-ref v0 8) .319)) (snd-display ";sawtooth-wave output: ~A" v0)))
 
       (test-gen-equal (make-sawtooth-wave 440.0) (make-sawtooth-wave 440.0) (make-sawtooth-wave 120.0))
@@ -6555,6 +6563,8 @@
 	(IF (fneq (mus-phase gen) 1.253787) (snd-display ";square-wave phase: ~F?" (mus-phase gen)))
 	(IF (fneq (mus-frequency gen) 440.0) (snd-display ";square-wave frequency: ~F?" (mus-frequency gen)))
 	(IF (fneq (mus-scaler gen) 1.0) (snd-display ";square-wave scaler: ~F?" (mus-scaler gen)))
+	(set! (mus-scaler gen) 0.5)
+	(IF (fneq (mus-scaler gen) 0.5) (snd-display ";set! square-wave scaler: ~F?" (mus-scaler gen)))
 	(IF (or (fneq (vct-ref v0 1) 1.0) (fneq (vct-ref v0 8) 1.0)) (snd-display ";square-wave output: ~A" v0)))
 
       (test-gen-equal (make-square-wave 440.0) (make-square-wave 440.0) (make-square-wave 120.0))
@@ -6580,6 +6590,8 @@
 	(IF (fneq (mus-phase gen1) pi) (snd-display ";init triangle-wave phase: ~F?" (mus-phase gen1)))
 	(IF (fneq (mus-frequency gen) 440.0) (snd-display ";triangle-wave frequency: ~F?" (mus-frequency gen)))
 	(IF (fneq (mus-scaler gen) 1.0) (snd-display ";triangle-wave scaler: ~F?" (mus-scaler gen)))
+	(set! (mus-scaler gen) 0.5)
+	(IF (fneq (mus-scaler gen) 0.5) (snd-display ";set! triangle-wave scaler: ~F?" (mus-scaler gen)))
 	(IF (or (fneq (vct-ref v0 1) 0.080) (fneq (vct-ref v0 8) 0.639)) (snd-display ";triangle-wave output: ~A" v0)))
 
       (test-gen-equal (make-triangle-wave 440.0) (make-triangle-wave 440.0) (make-triangle-wave 120.0))
@@ -6603,6 +6615,8 @@
 	(IF (fneq (mus-phase gen) 1.253787) (snd-display ";pulse-train phase: ~F?" (mus-phase gen)))
 	(IF (fneq (mus-frequency gen) 440.0) (snd-display ";pulse-train frequency: ~F?" (mus-frequency gen)))
 	(IF (fneq (mus-scaler gen) 1.0) (snd-display ";pulse-train scaler: ~F?" (mus-scaler gen)))
+	(set! (mus-scaler gen) 0.5)
+	(IF (fneq (mus-scaler gen) 0.5) (snd-display ";set! pulse-train scaler: ~F?" (mus-scaler gen)))
 	(IF (or (fneq (vct-ref v0 0) 1.0) (fneq (vct-ref v0 8) 0.0)) (snd-display ";pulse-train output: ~A" v0)))
 
       (test-gen-equal (make-pulse-train 440.0) (make-pulse-train 440.0) (make-pulse-train 120.0))
@@ -7164,9 +7178,17 @@
 	  (vct-set! v1 i (mus-apply gen1 0.0)))
 	(vct-map! v2 (lambda () (if (table-lookup? gen4) (table-lookup gen4 0.0) -1.0)))
 	(IF (not (vequal v0 v2)) (snd-display ";map table-lookup: ~A ~A" v0 v2))
+	(set! gen4 (make-table-lookup 440.0 :wave (partials->wave '(1 1 2 1))))
+	(vct-map! v2 (lambda () (table-lookup gen4)))
+	(IF (not (vequal v0 v2)) (snd-display ";map table-lookup (no fm): ~A ~A" v0 v2))
 	(IF (not (table-lookup? gen)) (snd-display ";~A not table-lookup?" gen))
+	(IF (not (vct? (mus-data gen))) (snd-display ";mus-data table-lookup: ~A" (mus-data gen)))
 	(IF (fneq (mus-phase gen) 1.253787) (snd-display ";table-lookup phase: ~F?" (mus-phase gen)))
+	(set! (mus-phase gen) 1.0)
+	(IF (fneq (mus-phase gen) 1.0) (snd-display ";set! table-lookup phase: ~F?" (mus-phase gen)))
 	(IF (fneq (mus-frequency gen) 440.0) (snd-display ";table-lookup frequency: ~F?" (mus-frequency gen)))
+	(set! (mus-frequency gen) 100.0)
+	(IF (fneq (mus-frequency gen) 100.0) (snd-display ";set! table-lookup frequency: ~F?" (mus-frequency gen)))
 	(IF (or (fneq (vct-ref v0 1) 0.373) (fneq (vct-ref v0 8) 1.75)) (snd-display ";table-lookup output: ~A" v0))
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
@@ -7208,9 +7230,17 @@
 	    (vct-set! v0 i val)))
 	(vct-map! v1 (lambda () (if (waveshape? gen1) (waveshape gen1 1.0 0.0) -1.0)))
 	(IF (not (vequal v0 v1)) (snd-display ";map waveshape: ~A ~A" v0 v1))
+	(set! gen1 (make-waveshape 440.0 :wave (partials->waveshape '(1 1))))
+	(vct-map! v1 (lambda () (waveshape gen1 1.0)))
+	(IF (not (vequal v0 v1)) (snd-display ";1 map waveshape: ~A ~A" v0 v1))
 	(IF (not (waveshape? gen)) (snd-display ";~A not waveshape?" gen))
 	(IF (fneq (mus-phase gen) 1.253787) (snd-display ";waveshape phase: ~F?" (mus-phase gen)))
+	(set! (mus-phase gen) 1.0)
+	(IF (fneq (mus-phase gen) 1.0) (snd-display ";set! waveshape phase: ~F?" (mus-phase gen)))
 	(IF (fneq (mus-frequency gen) 440.0) (snd-display ";waveshape frequency: ~F?" (mus-frequency gen)))
+	(set! (mus-frequency gen) 100.0)
+	(IF (fneq (mus-frequency gen) 100.0) (snd-display ";waveshape frequency: ~F?" (mus-frequency gen)))
+	(IF (not (vct? (mus-data gen))) (snd-display ";mus-data waveshape: ~A" (mus-data gen)))
 	(IF (or (fneq (vct-ref v0 1) 0.125) (fneq (vct-ref v0 8) .843)) (snd-display ";waveshape output: ~A" v0))
 	(set! (mus-data gen0) (make-vct 512)))
 
@@ -7520,6 +7550,8 @@
 	(IF (not (rand? gen)) (snd-display ";~A not rand?" gen))
 	(IF (fneq (mus-phase gen) 3.3624296) (snd-display ";rand phase: ~F?" (mus-phase gen)))
 	(IF (fneq (mus-frequency gen) 10000.0) (snd-display ";rand frequency: ~F?" (mus-frequency gen)))
+	(set! (mus-scaler gen) 0.5)
+	(IF (fneq (mus-scaler gen) 0.5) (snd-display ";set! mus-scaler rand: ~A" (mus-scaler gen)))
 	(IF (= (vct-ref v0 1) (vct-ref v0 8)) (snd-display ";rand output: ~A" v0)))
 
       (test-gen-equal (make-rand 1000) (make-rand 1000) (make-rand 500))
@@ -7537,6 +7569,8 @@
 	(IF (not (rand-interp? gen)) (snd-display ";~A not rand-interp?" gen))
 	(IF (fneq (mus-phase gen) 5.114882) (snd-display ";rand-interp phase: ~F?" (mus-phase gen)))
 	(IF (fneq (mus-frequency gen) 4000.0) (snd-display ";rand-interp frequency: ~F?" (mus-frequency gen)))
+	(set! (mus-scaler gen) 0.5)
+	(IF (fneq (mus-scaler gen) 0.5) (snd-display ";set! mus-scaler rand-interp: ~A" (mus-scaler gen)))
 	(IF (= (vct-ref v0 1) (vct-ref v0 8)) (snd-display ";rand-interp output: ~A" v0)))
 
       (set! (locsig-type) mus-linear)
@@ -7954,6 +7988,8 @@
 			   "convolve: size: 64"
 			   "conv fftsize: 64, fftsize2: 32, filtersize: 32, ctr: 32, rl1: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], rl2: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], buf: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], filter: [0.000 1.000 0.500 0.333 0.250 0.200 0.167 0.143...]")
 	  (IF (not (convolve? gen)) (snd-display ";~A not convolve?" gen))
+	  (let ((genx gen1))
+	    (if (not (equal? genx gen1)) (snd-display "convolve equal?: ~A ~A ~A" genx gen1 (equal? genx gen1))))
 	  (IF (not (= (mus-length gen) 64)) (snd-display ";convolve fft len: ~D?" (mus-length gen)))
 	  (do ((i 0 (1+ i)))
 	      ((= i 128))
@@ -26513,22 +26549,22 @@ EDITS: 2
 		         XmIsMenuShell XpmCreatePixmapFromData XpmCreateDataFromPixmap XpmReadFileToPixmap
 		         XpmReadPixmapFile XpmWriteFileFromPixmap XpmWritePixmapFile XpmCreatePixmapFromXpmImage
 		         XpmCreateXpmImageFromPixmap XGetPixel XDestroyImage XPutPixel XSubImage XAddPixel
-		         XtAppContext? XtRequestId?  XtWorkProcId? XtInputId?  XtIntervalId? Screen?  XEvent?
-		         XRectangle? XArc? XPoint?  XSegment?  XColor? Atom? Colormap?
-		         XModifierKeymap? Depth?  Display? Drawable?  Font? GC?  KeySym? Pixel?  Pixmap? Region?
-		         Time? Visual? Window?  XFontProp? XFontSet?  XFontStruct? XGCValues?  XImage?  XVisualInfo?
-		         XWMHints? XWindowAttributes? XWindowChanges?  KeyCode? XContext?  XCharStruct? XTextItem?
-		         XStandardColormap?  Substitution?  XPContext?  Widget?  XmStringContext? WidgetClass? XmString?
-		         XmToggleButton?  XmDrawingArea? XmPushButton?  XmTextField?  XmFileSelectionBox?  XmText?
-		         XmFrame? XmLabel? XmList?  XmArrowButton?  XmScrollBar? XmCommand? XmScale?  XmRowColumn?
-		         XmTab? XmNotebook?  XmPrintShell?  XmComboBox? XmContainer? XmIconHeader?
-		         XmGrabShell? XmRendition? XmRenderTable?  XmIconGadget?  XmTabList? XmParseMapping?
-		         XmPanedWindow?  XmScrolledWindow? XmCascadeButton?  XmForm?  XmBulletinBoard? XmScreen?
-		         XmDialogShell? XmDisplay?  XmSelectionBox?  XmDragContext?  XmDragIconObjectClass?  XmSeparator?
-		         XmDropSiteManager? XmDropTransfer?  XmVendorShell?  XmMainWindow? XmMessageBox?  XmManager?
-		         XmMenuShell?  XmLabelGadget?  XmPushButtonGadget?  XmSeparatorGadget?  XmArrowButtonGadget?
-		         XmCascadeButtonGadget?  XmToggleButtonGadget?  XmDrawnButton?  XmPrimitive? XmFontList?
-		         XmFontContext?  XmFontListEntry? XmTextSource?  XpmAttributes?  XpmImage?  XpmColorSymbol?
+		         XtAppContext? XtRequestId? XtWorkProcId? XtInputId? XtIntervalId? Screen? XEvent?
+		         XRectangle? XArc? XPoint? XSegment? XColor? Atom? Colormap?
+		         XModifierKeymap? Depth? Display? Drawable? Font? GC? KeySym? Pixel? Pixmap? Region?
+		         Time? Visual? Window? XFontProp? XFontSet? XFontStruct? XGCValues? XImage? XVisualInfo?
+		         XWMHints? XWindowAttributes? XWindowChanges? KeyCode? XContext? XCharStruct? XTextItem?
+		         XStandardColormap? XPContext? Widget? XmStringContext? WidgetClass? XmString?
+		         XmToggleButton? XmDrawingArea? XmPushButton? XmTextField? XmFileSelectionBox? XmText?
+		         XmFrame? XmLabel? XmList? XmArrowButton? XmScrollBar? XmCommand? XmScale? XmRowColumn?
+		         XmTab? XmNotebook? XmPrintShell? XmComboBox? XmContainer? XmIconHeader?
+		         XmGrabShell? XmRendition? XmRenderTable? XmIconGadget? XmTabList? XmParseMapping?
+		         XmPanedWindow? XmScrolledWindow? XmCascadeButton? XmForm? XmBulletinBoard? XmScreen?
+		         XmDialogShell? XmDisplay? XmSelectionBox? XmDragContext? XmDragIconObjectClass? XmSeparator?
+		         XmDropSiteManager? XmDropTransfer? XmVendorShell? XmMainWindow? XmMessageBox? XmManager?
+		         XmMenuShell? XmLabelGadget? XmPushButtonGadget? XmSeparatorGadget? XmArrowButtonGadget?
+		         XmCascadeButtonGadget? XmToggleButtonGadget? XmDrawnButton? XmPrimitive? XmFontList?
+		         XmFontContext? XmFontListEntry? XmTextSource? XpmAttributes? XpmImage? XpmColorSymbol?
 			  ))
 		   (xm-procs0 (remove-if (lambda (n) (not (arity-ok n 0))) xm-procs))
 		   (xm-procs1 (remove-if (lambda (n) (not (arity-ok n 1))) xm-procs))

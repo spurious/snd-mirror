@@ -3085,6 +3085,8 @@ _ACEOF
 #define DEBUG_MEMORY 1
 _ACEOF
 
+    CFLAGS="$CFLAGS -w -Wall"
+# crazy looking switches to turn off the goddamn system header warning in gcc 3.2: -Wno-system-headers is a no-op
   fi
 fi;
 
@@ -11511,8 +11513,8 @@ cat conftest.$ac_ext >&5
 echo "${ECHO_T}no" >&6
 		echo "$as_me:$LINENO: checking for /usr/include/mozilla-1.0.1/gtkembedmoz/gtkmozembed.h" >&5
 echo $ECHO_N "checking for /usr/include/mozilla-1.0.1/gtkembedmoz/gtkmozembed.h... $ECHO_C" >&6
-    		CFLAGS="$OLD_CFLAGS $GTK_CFLAGS -I/usr/include/mozilla-1.0.1"
-		cat >conftest.$ac_ext <<_ACEOF
+    			CFLAGS="$OLD_CFLAGS $GTK_CFLAGS -I/usr/include/mozilla-1.0.1"
+			cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
 #include <gtkembedmoz/gtkmozembed.h>
@@ -11543,14 +11545,14 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
 
-		echo "$as_me:$LINENO: result: yes" >&5
+			echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
-  	        cat >>confdefs.h <<\_ACEOF
+  	        	cat >>confdefs.h <<\_ACEOF
 #define HAVE_HTML 1
 _ACEOF
 
-		GTKHTML_LIB="-lgtkembedmoz"
-		GTKHTML_FLAGS="-I/usr/include/mozilla-1.0.1"
+			GTKHTML_LIB="-lgtkembedmoz"
+			GTKHTML_FLAGS="-I/usr/include/mozilla-1.0.1"
 
 else
   echo "$as_me: failed program was:" >&5
@@ -11831,7 +11833,6 @@ _ACEOF
 
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
-
       fi
       GL_LIBS="-lGLU -lGL"
       if test "$with_gtk" = yes; then
@@ -12148,6 +12149,12 @@ fi
 
   echo "$as_me:$LINENO: checking for Guile" >&5
 echo $ECHO_N "checking for Guile... $ECHO_C" >&6
+  if test "$GUILE_CONFIG_path" != "" ; then
+    if ! test -x "${GUILE_CONFIG_path}guile-config" ; then
+      # try adding the "/" to the path
+      GUILE_CONFIG_path="${GUILE_CONFIG_path}/"
+    fi
+  fi
   if (${GUILE_CONFIG_path}guile-config link > /dev/null) 2>&1; then
     GUILE_CONFIG_works=yes
   else

@@ -1223,7 +1223,6 @@
   XEN_NARGIFY_1(XEN_XCharStruct_p_w, XEN_XCharStruct_p)
   XEN_NARGIFY_1(XEN_XTextItem_p_w, XEN_XTextItem_p)
   XEN_NARGIFY_1(XEN_XStandardColormap_p_w, XEN_XStandardColormap_p)
-  XEN_NARGIFY_1(XEN_Substitution_p_w, XEN_Substitution_p)
   XEN_NARGIFY_1(XEN_Cursor_p_w, XEN_Cursor_p)
 #if HAVE_XM_XP
   XEN_NARGIFY_1(XEN_XPContext_p_w, XEN_XPContext_p)
@@ -2481,7 +2480,6 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XCharStruct?, XEN_XCharStruct_p_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XTextItem?, XEN_XTextItem_p_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XStandardColormap?, XEN_XStandardColormap_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(Substitution?, XEN_Substitution_p_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(Cursor?, XEN_Cursor_p_w, 1, 0, 0, NULL);
 #if HAVE_XM_XP
   XM_DEFINE_PROCEDURE(XPContext?, XEN_XPContext_p_w, 1, 0, 0, NULL);

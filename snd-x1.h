@@ -467,7 +467,7 @@ Widget edit_header(snd_info *sp);
 void set_open_file_play_button(int val);
 void make_mix_file_dialog(snd_state *ss, int managed);
 
-void g_initialize_xgfile(void);
+void g_initialize_gxfile(void);
 
 
 
@@ -538,7 +538,7 @@ void recolor_button(GUI_WIDGET w, void *ptr);
 void color_chan_components(COLOR_TYPE color, int which_component);
 void color_unselected_graphs(COLOR_TYPE color);
 void recolor_everything(GUI_WIDGET w, void *ptr);
-void g_initialize_xgh(void);
+void g_initialize_gxen(void);
 
 #endif
 

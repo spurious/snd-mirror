@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 16
-#define SNDLIB_REVISION 18
-#define SNDLIB_DATE "4-Oct-02"
+#define SNDLIB_REVISION 19
+#define SNDLIB_DATE "18-Oct-02"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 

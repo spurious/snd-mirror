@@ -233,6 +233,8 @@ AC_ARG_ENABLE(snd-debug,
   if test "$enable_snd_debug" = yes ; then
     AC_DEFINE(DEBUGGING)
     AC_DEFINE(DEBUG_MEMORY)
+    CFLAGS="$CFLAGS -w -Wall"
+# crazy looking switches to turn off the goddamn system header warning in gcc 3.2: -Wno-system-headers is a no-op
   fi)
 
 
@@ -502,16 +504,16 @@ else
 		[
 		AC_MSG_RESULT(no)
 		AC_MSG_CHECKING([for /usr/include/mozilla-1.0.1/gtkembedmoz/gtkmozembed.h])
-    		CFLAGS="$OLD_CFLAGS $GTK_CFLAGS -I/usr/include/mozilla-1.0.1"
-		AC_TRY_COMPILE([#include <gtkembedmoz/gtkmozembed.h>],
-		[int g; g = (int)gtk_moz_embed_get_type()],
-		[
-		AC_MSG_RESULT(yes)
-  	        AC_DEFINE(HAVE_HTML)
-		GTKHTML_LIB="-lgtkembedmoz"
-		GTKHTML_FLAGS="-I/usr/include/mozilla-1.0.1"
-		],
-		[AC_MSG_RESULT(no)])
+    			CFLAGS="$OLD_CFLAGS $GTK_CFLAGS -I/usr/include/mozilla-1.0.1"
+			AC_TRY_COMPILE([#include <gtkembedmoz/gtkmozembed.h>],
+			[int g; g = (int)gtk_moz_embed_get_type()],
+			[
+			AC_MSG_RESULT(yes)
+  	        	AC_DEFINE(HAVE_HTML)
+			GTKHTML_LIB="-lgtkembedmoz"
+			GTKHTML_FLAGS="-I/usr/include/mozilla-1.0.1"
+			],
+			[AC_MSG_RESULT(no)])
 		]
 		)
             CFLAGS="$OLD_CFLAGS"
@@ -590,7 +592,6 @@ if test "$with_gl" = yes || test "$with_just_gl" = yes ; then
 	 	       [int i; i = GL_TEXTURE_BINDING_3D;],
 		       [GL_FILES="gl.o"],
 		       [AC_DEFINE(JUST_GL)])
-
       fi   
       GL_LIBS="-lGLU -lGL"
       if test "$with_gtk" = yes; then
@@ -635,6 +636,12 @@ else
 	])
 
   AC_MSG_CHECKING(for Guile)
+  if test "$GUILE_CONFIG_path" != "" ; then
+    if ! test -x "${GUILE_CONFIG_path}guile-config" ; then
+      # try adding the "/" to the path    
+      GUILE_CONFIG_path="${GUILE_CONFIG_path}/"
+    fi
+  fi
   if (${GUILE_CONFIG_path}guile-config link > /dev/null) 2>&1; then
     GUILE_CONFIG_works=yes
   else
