@@ -1111,7 +1111,7 @@ Widget create_envelope_editor (snd_state *ss)
   int n;
   Arg args[32];
   Widget spacer, spacer1, aform;
-  XmString xhelp, xdismiss, xapply, titlestr, s1, xreset;
+  XmString xhelp, xdismiss, xapply, titlestr, s1;
   XGCValues gv;
   XtCallbackList n1, n2;
   char str[LABEL_BUFFER_SIZE];
@@ -1124,7 +1124,7 @@ Widget create_envelope_editor (snd_state *ss)
       xhelp = XmStringCreate(STR_Help, XmFONTLIST_DEFAULT_TAG);
       titlestr = XmStringCreate(STR_Edit_Envelope, XmFONTLIST_DEFAULT_TAG);
       xapply = XmStringCreate(STR_Apply, XmFONTLIST_DEFAULT_TAG);
-      xreset = XmStringCreate(STR_Reset, XmFONTLIST_DEFAULT_TAG);
+      /* xreset = XmStringCreate(STR_Reset, XmFONTLIST_DEFAULT_TAG); */
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}

@@ -29,14 +29,7 @@ GnomeClient *client = gnome_master_client();
 gtk_signal_connect(GTK_OBJECT(client),"save_yourself",GTK_SIGNAL_FUNC(save_snd_state),"snd");
 gtk_signal_connect(GTK_OBJECT(client),"die",GTK_SIGNAL_FUNC(exit_cleanly),NULL);
 
-Gettext support, if there's interest. How does gettext handle Scheme-style
-  string formatting as in scm_misc_error?  Say we have 
-
-    scm_misc_error(S_vct_ref,"index: ~A but vct length: ~A?", scm_list_2(pos, gh_int2scm(v->length)));
-
-  but if translation requires that the args be reversed (as in the %2$d msgfmt business),
-  does msgfmt know about things like ~A and scm_list_2?  Gnucash uses guile and gettext --
-  maybe they've solved this problem.
+Gettext support, if there's interest. 
 
 A "master volume" control in the recorder.  Also a running spectrogram display --
 see snd-motif.scm for an ugly first pass.
@@ -49,7 +42,7 @@ A sndinfo script?
 A Gtk module paralleling the Motif version in xm.c. (I intend to write this
 once gtk2 comes out).
 
-See snd-motif.scm for other user-interface extension projects.
+See the end of snd-motif.scm for other user-interface extension projects.
 
 Finish the glfft tie-in to openGL or figure out how to deal with it
 via the xm module and shared objects (my first try at the latter 

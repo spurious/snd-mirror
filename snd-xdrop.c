@@ -76,8 +76,6 @@ void handle_drop(Widget w, XtPointer context, XtPointer info)
   int n, i, num_targets, k;
   Atom *targets;
   XmDropTransferEntryRec entries[2];
-  snd_state *ss;
-  ss = get_global_state();
   if ((cb->dropAction != XmDROP) || 
       (cb->operation != XmDROP_COPY))
     {
@@ -99,7 +97,7 @@ void handle_drop(Widget w, XtPointer context, XtPointer info)
       fprintf(stderr, "failed drop attempt:\n");
       for (i = 0; i < num_targets; i++) 
 	fprintf(stderr, "  target %d = %s\n", i, 
-		XGetAtomName(MAIN_DISPLAY(((snd_state *)ss)), 
+		XGetAtomName(MAIN_DISPLAY(get_global_state()),
 			     targets[i]));
 #endif
       cb->dropSiteStatus = XmINVALID_DROP_SITE;

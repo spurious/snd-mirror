@@ -1936,7 +1936,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
   /* returns 0 if new file not opened, 1 if opened (same name as old), -1 if cancelled or error of some sort */
   same_name_info *collision = NULL;
   char *fullname, *ofile;
-  int err, result = 0, opened = 0;
+  int result = 0, opened = 0;
   if (sp) clear_minibuffer(sp);
   alert_new_file();
   /* now check in-core files -- need to close any of same name -- if edited what to do? */
@@ -1968,7 +1968,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
       else result = save_selection(ss, ofile, type, format, srate, comment, SAVE_ALL_CHANS);
       if (result != MUS_NO_ERROR)
 	report_in_minibuffer(sp, "save as temp: %s: %s", ofile, strerror(errno));
-      else err = move_file(ofile, sp->filename);
+      else move_file(ofile, sp->filename);
       snd_update(ss, sp);
       opened = 1;
       FREE(ofile);

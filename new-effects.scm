@@ -56,26 +56,6 @@
 			  (centered-points (cdr points))))))
 	      (centered-points ms))))))
 
-(define (map-chan-over-target func target decay)
-  (let* ((ms (and (eq? target 'marks)
-		 (plausible-mark-samples)))
-	 (beg (if (eq? target 'sound)
-		  0
-		  (if (eq? target 'selection)
-		      (selection-position)
-		      (car ms))))
-	 (dur (if (eq? target 'sound)
-		  (1- (frames))
-		  (if (eq? target 'selection)
-		      (+ (selection-position) (selection-length))
-		      (cadr ms))))
-	 (overlap (if decay
-		      (inexact->exact (* (srate) decay))
-		      0)))
-    (map-chan (func dur)
-	      beg 
-	      (+ dur overlap))))
-
 (define map-chan-over-target-with-sync
   (lambda (func target origin decay)
     (let* ((snc (sync))
@@ -717,10 +697,11 @@
 		  (fir-filter flt (* scaler (+ (tap del) (if (<= samp input-samps) inval 0.0))))))))))
 
 (define (cp-flecho)
- (map-chan-over-target 
+ (map-chan-over-target-with-sync
   (lambda (input-samps) 
     (flecho-1 flecho-scaler flecho-delay input-samps))
   flecho-target 
+  "flecho"
   (and (not flecho-truncate) 
        (* 4 flecho-delay))))
 
@@ -810,9 +791,11 @@
 		  (* amp (oscil os))))))))
 
 (define (cp-zecho)
- (map-chan-over-target 
-  (lambda (input-samps) (zecho-1 zecho-scaler zecho-delay zecho-freq zecho-amp input-samps)) 
+ (map-chan-over-target-with-sync
+  (lambda (input-samps)
+    (zecho-1 zecho-scaler zecho-delay zecho-freq zecho-amp input-samps)) 
   zecho-target
+  "zecho"
   (and (not zecho-truncate)
        (* 4 zecho-delay))))
 
@@ -1270,7 +1253,10 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
               (set! comb-dialog 
 		    (make-effect-dialog comb-label
 					(lambda (w context info) 
-					  (map-chan-over-target (lambda (ignored) (comb-filter comb-scaler comb-size)) comb-target #f))
+					  (map-chan-over-target-with-sync
+					   (lambda (ignored) 
+					     (comb-filter comb-scaler comb-size)) 
+					   comb-target "comb-filter" #f))
 					(lambda (w context info) (|XtUnmanageChild comb-dialog))
 					(lambda (w context info)
 					  (help-dialog "Comb filter"
@@ -1303,7 +1289,10 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 
     (add-to-menu effects-menu comb-label 
                (lambda () 
-                (map-chan-over-target (lambda (ignored) (comb-filter comb-scaler comb-size)) comb-target #f))))
+                (map-chan-over-target-with-sync
+		 (lambda (ignored) 
+		   (comb-filter comb-scaler comb-size)) 
+		 comb-target "comb-filter" #f))))
 
 (define (change-label widget new-label)
   (let ((str (|XmStringCreateLocalized new-label)))
@@ -1445,7 +1434,9 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
         (moog-filter gen inval))))
 
 (define (cp-moog)
-  (map-chan-over-target (lambda (ignored) (moog moog-cutoff-frequency moog-resonance)) moog-target #f))
+  (map-chan-over-target-with-sync
+   (lambda (ignored) (moog moog-cutoff-frequency moog-resonance)) 
+   moog-target "moog-filter" #f))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -1535,7 +1526,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 
 (define (cp-adsat)
   "adsat does weird stuff by adsat size"
-  (map-chan-over-target
+  (map-chan-over-target-with-sync
    (lambda (ignored)
      (let ((mn 0.0)
            (mx 0.0)
@@ -1559,7 +1550,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
                (if (< val mn) (set! mn val))
                (set! n (1+ n))
                #f)))))
-   adsat-target #f))
+   adsat-target "adsat" #f))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -1823,7 +1814,10 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 
 (define (cp-am-effect)
   "amplitude modulation"
-  (map-chan-over-target (lambda (ignored) (am-effect am-effect-amount)) am-effect-target #f))
+  (map-chan-over-target-with-sync
+   (lambda (ignored) 
+     (am-effect am-effect-amount)) 
+   am-effect-target "am" #f))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -1912,7 +1906,10 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
            (* inval (oscil os)))))))
 
 (define (cp-rm)
-  (map-chan-over-target (lambda (ignored) (rm-effect rm-frequency (list 0 0 1 (hz->radians rm-radians)))) rm-target #f))
+  (map-chan-over-target-with-sync
+   (lambda (ignored) 
+     (rm-effect rm-frequency (list 0 0 1 (hz->radians rm-radians)))) 
+   rm-target "ring-modulation" #f))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -2166,7 +2163,8 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
               (set! jc-reverb-dialog
                     (make-effect-dialog jc-reverb-label
                                         (lambda (w context info) 
-					  (map-chan-over-target jc-reverb-1 jc-reverb-target (and (not jc-reverb-truncate) jc-reverb-decay)))
+					  (map-chan-over-target-with-sync
+					   jc-reverb-1 jc-reverb-target "jc-reverb" (and (not jc-reverb-truncate) jc-reverb-decay)))
                                         (lambda (w context info) (|XtUnmanageChild jc-reverb-dialog))
                                         (lambda (w context info)
                                           (help-dialog "Chowning reverb"
@@ -2201,7 +2199,8 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 
     (add-to-menu effects-menu jc-reverb-label
                 (lambda()
-                  (map-chan-over-target jc-reverb-1 jc-reverb-target (and (not jc-reverb-truncate) jc-reverb-decay)))))
+                  (map-chan-over-target-with-sync
+		   jc-reverb-1 jc-reverb-target "jc-reverb" (and (not jc-reverb-truncate) jc-reverb-decay)))))
 
 (define (change-label widget new-label)
   (let ((str (|XmStringCreateLocalized new-label)))

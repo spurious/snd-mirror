@@ -1449,11 +1449,13 @@ selected sound: (map-chan (cross-synthesis 1 .5 128 6.0))"
 
 ;;; -------- FOF example
 
-(define two-pi (* 2 3.141592653589793))
+(define* (fofins beg dur frq amp vib f0 a0 f1 a1 f2 a2 #:optional (ae '(0 0 25 1 75 1 100 0)))
 
-(define fofins 
-  (lambda* (beg dur frq amp vib f0 a0 f1 a1 f2 a2 #:optional (ae '(0 0 25 1 75 1 100 0)))
-    (let* ((start (floor (* beg (srate))))
+  "(fofins beg dur frq amp vib f0 a0 f1 a1 f2 a2 #:optional (ae '(0 0 25 1 75 1 100 0))) produces FOF \
+synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
+
+    (let* ((two-pi (* 2 3.141592653589793))
+	   (start (floor (* beg (srate))))
 	   (len (floor (* dur (srate))))
 	   (ampf (make-env :envelope ae :scaler amp :duration dur))
 	   (frq0 (hz->radians f0))
@@ -1478,32 +1480,29 @@ selected sound: (map-chan (cross-synthesis 1 .5 128 6.0))"
 		     (* (env ampf) 
 			(wave-train wt0 (* vib (oscil vibr)))))))
       (free-sample-reader sf)
-      (vct->samples start len out-data))))
-
-; (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)
+      (vct->samples start len out-data)))
 
 
 
+#!
 ;;; -------- time varying FIR filter
 
-(define fltit
-  (lambda () 
-    (let* ((coeffs (list .1 .2 .3 .4 .4 .3 .2 .1))
-	   (flt (make-fir-filter 8 (list->vct coeffs)))
-	   (es (make-vector 8)))
-      (do ((i 0 (1+ i)))
-	  ((= i 8))
-	(vector-set! es i (make-env (list 0 (list-ref coeffs i) 1 0) :end 100)))
-      (vector-set! es 5 (make-env '(0 .4 1 1) :duration 1.0))
-      (lambda (x)
-	(let ((val (fir-filter flt x))
-	      (xcof (mus-data flt)))
-	  (do ((i 0 (1+ i)))
-	      ((= i 8))
-	    (vct-set! xcof i (env (vector-ref es i))))
-	  val)))))
-
-;(map-chan (fltit))
+(define (fltit)
+  "(fltit) returns a time-varying filter: (map-chan (fltit))"
+  (let* ((coeffs (list .1 .2 .3 .4 .4 .3 .2 .1))
+	 (flt (make-fir-filter 8 (list->vct coeffs)))
+	 (es (make-vector 8)))
+    (do ((i 0 (1+ i)))
+	((= i 8))
+      (vector-set! es i (make-env (list 0 (list-ref coeffs i) 1 0) :end 100)))
+    (vector-set! es 5 (make-env '(0 .4 1 1) :duration 1.0))
+    (lambda (x)
+      (let ((val (fir-filter flt x))
+	    (xcof (mus-data flt)))
+	(do ((i 0 (1+ i)))
+	    ((= i 8))
+	  (vct-set! xcof i (env (vector-ref es i))))
+	val))))
 
 ;;; for something this simple (like a notch filter), we can use a two-zero filter:
 ;
@@ -1515,7 +1514,7 @@ selected sound: (map-chan (cross-synthesis 1 .5 128 6.0))"
 ;
 ;;; similarly make-ppolar/two-pole (or better, make-formant)
 ;;; can be used for resonances.
-
+!#
 
 
 
@@ -1764,6 +1763,9 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0. \
 ;;; this version translated (and simplified slightly) from CLM's mlbvoi.ins
 
 (define (vox beg dur freq amp ampfun freqfun freqscl voxfun index vibscl)
+  "(vox beg dur freq amp ampfun freqfun freqscl voxfun index vibscl) is a version of the waveshaping \
+voice: (vox 0 2 110 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 UH 25 UH 35 ER 65 ER 75 UH 100 UH) .025 .1)"
+
   (let ((formants
 	 '((I 390 1990 2550)  (E 530 1840 2480)  (AE 660 1720 2410)
 	   (UH 520 1190 2390) (A 730 1090 2440)  (OW 570 840 2410)
@@ -1881,7 +1883,6 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0. \
 	(mix-vct out-data beg #f 0 #f)
 	(update-time-graph)))))
   
-;;; (vox 0 2 110 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 UH 25 UH 35 ER 65 ER 75 UH 100 UH) .025 .1)
 ;;; (vox 0 2 170 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 E 25 AE 35 ER 65 ER 75 I 100 UH) .05 .1)
 ;;; (vox 0 2 300 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 I 5 OW 10 I 50 AE 100 OO) .02 .1)
 ;;; (vox 0 5 600 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 I 5 OW 10 I 50 AE 100 OO) .01 .1)
@@ -1890,8 +1891,8 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0. \
 ;;; -------- filtered-env 
 
 (define (filtered-env e)
-  ;; amplitude and low-pass amount move together
-  ;; when env is at 1.0, no filtering, as env moves to 0.0, low-pass gets more severe
+  "(filtered-env env) is a time-varying one-pole filter: when env is at 1.0, no filtering, \
+as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount move together"
   (let* ((samps (frames))
 	 (flt (make-one-pole 1.0 0.0))
 	 (amp-env (make-env e :end (1- samps))))
@@ -1908,6 +1909,7 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0. \
 ;;; if you're using display to write to rxvt, you can use the latter's escape sequences
 ;;;   for things like multi-colored text:
 
+#!
 (define red-text (format #f "~C[31m" #\esc))
 (define normal-text (format #f "~C[0m" #\esc))
 ;(display (format #f "~Athis is red!~Abut this is not" red-text normal-text))
@@ -1930,13 +1932,14 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0. \
 (define blink-text (format #f "~C[5m" #\esc))      (define unblink-text (format #f "~C[25m" #\esc))  
 
 ;(display (format #f "~A~Ahiho~Ahiho" yellow-bg red-fg normal-text))
-
-
+!#
 
 ;;; -------- locsig using fancier placement choice
 ;;;
 
 (define (make-cpp-locsig . args)
+  "(make-cpp-locsig .args) is a slightly fancier locsig -- it uses sin and cos to set respective amplitude. \
+Arguments are the same as in make-locsig."
   (define (get-cpp-scalers degree)
     (let* ((magic (/ (sqrt 2) 2))
 	   ;; although we (in clm) specify the degree from 0 - 90, for the sake
@@ -1968,26 +1971,23 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0. \
 (define mouse-pos 0.0)
 (define x1 1.0)
 
-(define (show-draggable-graph)
-  (let* ((pts (inexact->exact (* 100 x1)))
-	 (data (make-vct pts)))
-    (do ((i 0 (1+ i)))
-	((= i pts))
-      (vct-set! data i (* i .01)))
-    (graph data "ramp" 0.0 x1)))
-
-(define (mouse-press chn snd button state x y)
+(define (dl-mouse-press chn snd button state x y)
   (set! mouse-pos (/ x x1))
   (set! mouse-down x1))
 
-(define (mouse-drag snd chn button state x y)
+(define (dl-mouse-drag snd chn button state x y)
   (let* ((xnew (/ x x1))
 	 (lim (min 1.0 (max 0.1 (+ mouse-down (- mouse-pos xnew))))))
     (set! x1 lim)
-    (show-draggable-graph)))
+    (let* ((pts (inexact->exact (* 100 x1)))
+	   (data (make-vct pts)))
+      (do ((i 0 (1+ i)))
+	  ((= i pts))
+	(vct-set! data i (* i .01)))
+      (graph data "ramp" 0.0 x1))))
 
-;(add-hook! mouse-drag-hook mouse-drag)
-;(add-hook! mouse-press-hook mouse-press)
+;(add-hook! mouse-drag-hook dl-mouse-drag)
+;(add-hook! mouse-press-hook dl-mouse-press)
 
 
 ;;; -------- pointer focus within Snd
@@ -2079,40 +2079,38 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0. \
 	  (report-in-minibuffer "")
 	  (open-current-buffer width height)))))))
 
-(define xb-close
-  (lambda (snd) 
-    (if (and current-buffer
-	     (= snd (car current-buffer)))
-	(let ((closer (car current-buffer)))
-	  (close-all-buffers)
-	  (if last-buffer
-	      (set! current-buffer last-buffer)
-	      (if (sounds)
-		  (set! current-buffer (list (car (sounds)) 0))
-		  (set! current-buffer #f)))
-	  (set! last-buffer
-		(call-with-current-continuation
-		 (lambda (return)
-		   (for-each
-		    (lambda (n)
-		      (if (and (not (= n closer))
-			       (or (not current-buffer)
-				   (not (= n (car current-buffer)))))
-			  (return (list n 0))))
-		    (sounds))
-		   #f)))
-	  (if current-buffer
-	      (open-current-buffer last-width last-height))))
-    #f))
+(define (xb-close snd)
+  (if (and current-buffer
+	   (= snd (car current-buffer)))
+      (let ((closer (car current-buffer)))
+	(close-all-buffers)
+	(if last-buffer
+	    (set! current-buffer last-buffer)
+	    (if (sounds)
+		(set! current-buffer (list (car (sounds)) 0))
+		(set! current-buffer #f)))
+	(set! last-buffer
+	      (call-with-current-continuation
+	       (lambda (return)
+		 (for-each
+		  (lambda (n)
+		    (if (and (not (= n closer))
+			     (or (not current-buffer)
+				 (not (= n (car current-buffer)))))
+			(return (list n 0))))
+		  (sounds))
+		 #f)))
+	(if current-buffer
+	    (open-current-buffer last-width last-height))))
+  #f)
 
-(define xb-open
-  (lambda (snd)
-    (close-all-buffers)
-    (set! last-buffer current-buffer)
-    (set! current-buffer (list snd 0))
-    (open-current-buffer (if (= last-width 0) (window-width) last-width)
-			 (if (= last-height 0) (- (window-height) 10) last-height))
-    #f))
+(define (xb-open snd)
+  (close-all-buffers)
+  (set! last-buffer current-buffer)
+  (set! current-buffer (list snd 0))
+  (open-current-buffer (if (= last-width 0) (window-width) last-width)
+		       (if (= last-height 0) (- (window-height) 10) last-height))
+  #f)
 
 ;(bind-key (char->integer #\b) 0 switch-to-buf #t)
 ;(add-hook! close-hook xb-close)

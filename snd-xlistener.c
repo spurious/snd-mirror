@@ -15,10 +15,10 @@ If you select one, it will be used to complete the current name.\n\
 
 static void completion_help_browse_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  int choice, i, j, old_len, new_len;
+  int i, j, old_len, new_len;
   char *text = NULL, *old_text = NULL;
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
-  choice = cbs->item_position - 1;
+  /* choice = cbs->item_position - 1; */
   XmStringGetLtoR(cbs->item, XmFONTLIST_DEFAULT_TAG, &text);
   old_text = XmTextGetString(listener_text);
   old_len = snd_strlen(old_text);

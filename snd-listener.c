@@ -433,7 +433,9 @@ void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
 {
 #if (!USE_NO_GUI)
   int i, j, regs;
+#if HAVE_MALLINFO
   int used_bytes = 0;
+#endif
   GUI_TEXT_POSITION_TYPE pos;
   int vals[2];
   snd_info *sp;
@@ -507,7 +509,7 @@ void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
       }
   }
 #endif
-#ifdef DEBUG_MEMORY
+#if DEBUG_MEMORY && HAVE_MALLINFO
   str = mem_stats(ss, used_bytes);
   pos = GUI_TEXT_END(stats_form);
   GUI_STATS_TEXT_INSERT(stats_form, pos, str);

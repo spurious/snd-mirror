@@ -247,7 +247,7 @@ graph y axis.  The other procedures in draw.scm are intended for use with the
 after-graph-hook.  
 <b>display-colored-samples</b> (color beg dur snd chn) displays samples from beg for dur in color
 whenever they're in the current view. This is intended for use with <b>color-samples</b>. 
-(color-samples color &optional beg dur snd chn) causes samples from beg to beg+dur to be displayed in color;
+(<a name="colorsamples">color-samples</a> color &amp;optional beg dur snd chn) causes samples from beg to beg+dur to be displayed in color;
 to undo this, use <b>uncolor-samples</b>.
 <b>display-previous-edits</b> displays all edits of the current sound, with older versions gradually fading away.
 <b>overlay-sounds</b> overlays onto its first argument all subsequent arguments: (overlay-sounds 1 0 3).
@@ -1821,7 +1821,7 @@ fill up the audio buffer with data.
 <p>scales sound 0's samples by 2 and sends them to the DAC. (These three functions are now obsolete).
 More useful is:</p>
 <pre>
-  <em class=def><A NAME="exloop-between-marks">loop-it</a></em> mark1 mark2 buffer-size
+  <em class=def><A NAME="exloopbetweenmarks">loop-it</a></em> mark1 mark2 buffer-size
 </pre>
 <p>which loops continuously between the two specified marks.
 The marks can be moved as the sound is played; C-g stops loop-between-marks.

@@ -1328,7 +1328,9 @@ static XEN g_menu_widgets(void)
 
 static XEN g_test_menus(void) 
 {
+#ifndef SGI
   int i;
+#endif
   snd_state *ss;
   ss = get_global_state();
 #ifndef SGI

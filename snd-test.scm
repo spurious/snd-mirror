@@ -4491,6 +4491,23 @@
 
 ;;; ---------------- test 8: clm ----------------
 
+(define (fltit)
+  "(fltit) returns a time-varying filter: (map-chan (fltit))"
+  (let* ((coeffs (list .1 .2 .3 .4 .4 .3 .2 .1))
+	 (flt (make-fir-filter 8 (list->vct coeffs)))
+	 (es (make-vector 8)))
+    (do ((i 0 (1+ i)))
+	((= i 8))
+      (vector-set! es i (make-env (list 0 (list-ref coeffs i) 1 0) :end 100)))
+    (vector-set! es 5 (make-env '(0 .4 1 1) :duration 1.0))
+    (lambda (x)
+      (let ((val (fir-filter flt x))
+	    (xcof (mus-data flt)))
+	(do ((i 0 (1+ i)))
+	    ((= i 8))
+	  (vct-set! xcof i (env (vector-ref es i))))
+	val))))
+
 (define (print-and-check gen name desc insp)
   (if (not (string=? (mus-name gen) name))
       (snd-display ";mus-name ~A: ~A?" name (mus-name gen)))
@@ -15365,7 +15382,7 @@ EDITS: 3
 (snd-display ";all done!~%~A" original-prompt)
 
 (let ((gc-lst (gc-stats)))
-  (snd-display "timings:~%  ~A: total~%  GC: ~A~%~{    ~A~%~})" 
+  (snd-display "timings:~%  ~A: total~%  GC: ~A~%~{    ~A ~})" 
 	       (/ (- (get-internal-real-time) overall-start-time) internal-time-units-per-second) 
 	       (/ (cdr (list-ref gc-lst 0)) 1000)
 	       (list (list-ref gc-lst 1) 

@@ -11,7 +11,7 @@ snd change log
   7-Jan:     mix-channel, insert-channel in extensions.scm.
              event.scm.
              the Snd widget lists now return objects compatible with the xm module,
-               so the various "cast" functions such as |Widget are now no-ops.
+               so the various "cast" functions such as |Widget are no-ops.
   4-Jan:     removed loop.scm.
 
 2002 ----------------------------------------------------------------
