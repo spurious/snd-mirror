@@ -174,6 +174,8 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 #define NO_SUCH_AXIS_CONTEXT TO_SCM_SYMBOL("no-such-graphics-context")
 #define BAD_ARITY            TO_SCM_SYMBOL("bad-arity")
 
+#define ERROR(Type, Info) scm_throw(Type, Info)
+
 #ifdef SCM_ASSERT_TYPE
   #define WRONG_TYPE_ERROR(Caller, Position, Arg, Correct_Type) scm_wrong_type_arg_msg(Caller, Position, Arg, Correct_Type)
   #define ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) SCM_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type)
@@ -276,5 +278,7 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 #ifndef USE_OPT_APPLY
   #define USE_OPT_APPLY 1
 #endif
+
+#define WRITE_STRING(Str, Prt) scm_puts(Str, Prt)
 
 #endif

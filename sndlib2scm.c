@@ -48,14 +48,14 @@ static int to_c_int_or_else(SCM obj, int fallback, char *origin)
 void mus_misc_error(const char *caller, char *msg, SCM val)
 {
   if (msg)
-    scm_throw(MUS_MISC_ERROR,
-	      SCM_LIST3(TO_SCM_STRING(caller),
-			TO_SCM_STRING(msg),
-			val));
+    ERROR(MUS_MISC_ERROR,
+	  SCM_LIST3(TO_SCM_STRING(caller),
+		    TO_SCM_STRING(msg),
+		    val));
   else
-    scm_throw(MUS_MISC_ERROR,
-	      SCM_LIST2(TO_SCM_STRING(caller),
-			val));
+    ERROR(MUS_MISC_ERROR,
+	  SCM_LIST2(TO_SCM_STRING(caller),
+		    val));
 }
 
 static SCM g_sound_loop_info(SCM filename)
@@ -327,7 +327,7 @@ static SCM g_sound_set_max_amp(SCM file, SCM vals)
       for (i = 0; i < chans * 2; i += 2)
 	{
 	  mvals[i] = MUS_INT_TO_SAMPLE(TO_C_INT_OR_ELSE(vdata[i], 0));
-	  mvals[i + 1] = MUS_DOUBLE_TO_SAMPLE(TO_C_DOUBLE(vdata[i]));
+	  mvals[i + 1] = MUS_DOUBLE_TO_SAMPLE(TO_C_DOUBLE(vdata[i + 1]));
 	}
       mus_sound_set_max_amp(filename, mvals);
     }
@@ -385,14 +385,14 @@ static int print_sound_data(SCM obj, SCM port, scm_print_state *pstate)
   char *buf;
   sound_data *v = (sound_data *)SND_VALUE_OF(obj);
   if (v == NULL)
-    scm_puts("<null>", port);
+    WRITE_STRING("<null>", port);
   else
     {
       buf = (char *)CALLOC(64, sizeof(char));
       mus_snprintf(buf, 64, "#<sound-data: %d chan%s, %d frame%s>",
 		   v->chans, (v->chans == 1) ? "" : "s",
 		   v->length, (v->length == 1) ? "" : "s");
-      scm_puts(buf, port);
+      WRITE_STRING(buf, port);
       FREE(buf);
     }
   return(scm_return_first(1, obj));

@@ -1319,9 +1319,9 @@ void set_speed_style(snd_state *ss, int val)
 
 void snd_no_such_sound_error(const char *caller, SCM n)
 {
-  scm_throw(NO_SUCH_SOUND,
-	    SCM_LIST2(TO_SCM_STRING(caller),
-		      n));
+  ERROR(NO_SUCH_SOUND,
+	SCM_LIST2(TO_SCM_STRING(caller),
+		  n));
 }
 
 static SCM g_soundQ(SCM snd_n)
@@ -2072,9 +2072,9 @@ static mus_error_handler_t *old_mus_error;
 static void mus_local_error(int type, char *msg)
 {
   mus_error_set_handler(old_mus_error);           /* make sure subsequent errors are handled by the default handler */
-  scm_throw(CANNOT_SAVE,
-	    SCM_LIST2(TO_SCM_STRING(S_save_sound_as),
-		      TO_SCM_STRING(msg)));
+  ERROR(CANNOT_SAVE,
+	SCM_LIST2(TO_SCM_STRING(S_save_sound_as),
+		  TO_SCM_STRING(msg)));
 }
 
 static SCM g_save_sound_as(SCM newfile, SCM index, SCM type, SCM format, SCM srate, SCM channel)
@@ -2703,10 +2703,10 @@ static SCM g_write_peak_env_info_file(SCM snd, SCM chn, SCM name)
 	{
 	  errstr = TO_SCM_STRING(fullname);
 	  if (fullname) FREE(fullname);
-	  scm_throw(CANNOT_SAVE,
-		    SCM_LIST3(TO_SCM_STRING(S_write_peak_env_info_file),
-			      errstr,
-			      TO_SCM_STRING(strerror(errno))));
+	  ERROR(CANNOT_SAVE,
+		SCM_LIST3(TO_SCM_STRING(S_write_peak_env_info_file),
+			  errstr,
+			  TO_SCM_STRING(strerror(errno))));
 	}
       if (fullname) FREE(fullname);
       ep = cp->amp_envs[0];
@@ -2724,10 +2724,10 @@ static SCM g_write_peak_env_info_file(SCM snd, SCM chn, SCM name)
       close(fd);
       return(name);
     }
-  scm_throw(NO_SUCH_ENVELOPE,
-	    SCM_LIST3(TO_SCM_STRING(S_write_peak_env_info_file),
-		      snd,
-		      chn));
+  ERROR(NO_SUCH_ENVELOPE,
+	SCM_LIST3(TO_SCM_STRING(S_write_peak_env_info_file),
+		  snd,
+		  chn));
   return(snd);
 }
 

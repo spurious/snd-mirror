@@ -2,7 +2,7 @@
 
 CC = cc
 CFLAGS = -g -b elf -Bdynamic -DSCO5 -I/usr/lib/oss -DXPM \
-  -DBYTE_ORDER=LITTLE_ENDIAN -DHAVE_GUILE=0
+  -DBYTE_ORDER=LITTLE_ENDIAN -DHAVE_EXTENSION_LANGUAGE=0
 
 LIBS =  -L/usr/local/lib -lXpm -lXext -lXm -lXt -lX11 -lm -lsocket
 

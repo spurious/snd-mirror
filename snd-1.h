@@ -775,7 +775,6 @@ void clear_listener(void);
 #if HAVE_LIBREP
   void librep_new_procedure(const char *name, repv (*func)(), int reqargs, int optargs, int rstargs, const char *doc);
   void librep_new_variable(const char *name, int val, const char *doc);
-  char *scm_version(void);
   SCM librep_eval_string(char *data);
 #endif
 

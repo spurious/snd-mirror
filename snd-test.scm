@@ -1,4 +1,4 @@
-;;; Snd test suite
+;;; Snd tests
 ;;;
 ;;; test 0: constants 
 ;;; test 1: default values
@@ -407,6 +407,22 @@
 							 (list-ref testf 0)
 							 (mus-sound-duration file) 
 							 (list-ref testf 3))))
+				  (if (and (not (= (mus-sound-data-format file) -1))
+					   (not (= (mus-sound-header-type file) 33)) ; bogus header on test case
+					   (< (+ (mus-sound-length file) 1)
+					      (* (mus-sound-datum-size file) (mus-sound-duration file) (mus-sound-srate file) (mus-sound-chans file))))
+				      (snd-display (format #f ";mus-sound-length ~A: ~A (~A)" file
+							   (mus-sound-length file)
+							   (* (mus-sound-duration file) (mus-sound-srate file) (mus-sound-chans file) (mus-sound-datum-size file)))))
+				  (if (fneq (/ (mus-sound-frames file) (mus-sound-srate file)) (mus-sound-duration file))
+				      (snd-display (format #f ";mus-sound-frames ~A: ~A (~A ~A)" file
+							   (mus-sound-frames file)
+							   (mus-sound-duration file)
+							   (/ (mus-sound-frames file) (mus-sound-srate file)))))
+				  (if (> (abs (- (mus-sound-frames file) (/ (mus-sound-samples file) (mus-sound-chans file)))) 1)
+				      (snd-display (format #f ";mus-sound-samples ~A: ~A ~A" file
+							   (mus-sound-samples file)
+							   (* (mus-sound-frames file) (mus-sound-chans file)))))
 				  (if (not (equal? (mus-header-type-name (mus-sound-header-type file)) (list-ref testf 4)))
 				      (snd-display (format #f ";~A: type ~A /= ~A" 
 							 (list-ref testf 0) 
@@ -508,7 +524,7 @@
 	    (list "nasahal.voc" 1 11025 9.89941024780273 "VOC" "unsigned byte (8 bits)")
 	    (list "nasahal.vox" 2 44100 0.224444448947906 "raw (no header)" "big endian short (16 bits)")
 	    (list "nasahal8.wav" 1 11025 9.89841270446777 "RIFF" "unsigned byte (8 bits)")
-	    (list "nasahalad.smp" 1 11025 9.89841270446777 "Goldwave sample" "little endian short (16 bits)")
+	    (list "nasahalad.smp" 1 11025 4.94920635223389 "Goldwave sample" "little endian short (16 bits)")
 	    (list "next-16.snd" 1 22050 1.00004529953003 "Sun" "big endian short (16 bits)")
 	    (list "next-8.snd" 1 22050 0.226757362484932 "Sun" "signed byte (8 bits)")
 	    (list "next-dbl.snd" 1 22050 0.226757362484932 "Sun" "big endian double (64 bits)")
@@ -561,9 +577,9 @@
 	    (list "si654.adc" 1 16000 6.71362495422363 "ADC/OGI" "big endian short (16 bits)")
 	    (list "smp-16.snd" 1 8000 5.2028751373291 "SMP" "little endian short (16 bits)")
 	    (list "sound.pat" 1 8000 1.95050001144409 "Gravis Ultrasound patch" "unsigned little endian short (16 bits)")
-	    (list "sound.sap" 1 8000 3.90100002288818 "Goldwave sample" "little endian short (16 bits)")
+	    (list "sound.sap" 1 8000 1.95050001144409 "Goldwave sample" "little endian short (16 bits)")
 	    (list "sound.sds" 1 8000 1.95050001144409 "MIDI sample dump" "unsupported")
-	    (list "sound.sfr" 1 8000 3.90100002288818 "SRFS" "little endian short (16 bits)")
+	    (list "sound.sfr" 1 8000 1.95050001144409 "SRFS" "little endian short (16 bits)")
 	    (list "sound.v8" 1 8000 1.95050001144409 "Covox V8" "unsigned byte (8 bits)")
 	    (list "sound.vox" 2 44100 0.044217687100172 "raw (no header)" "big endian short (16 bits)")
 	    (list "step.omf" 1 11025 8.70666694641113 "OMF" "signed byte (8 bits)")
@@ -1022,6 +1038,18 @@
       
       (if (fneq (vector-ref ma 1) .14724) (snd-display (format #f ";oboe: mus-sound-max-amp ~F?" (vector-ref ma 1))))
       (if (not (= (vector-ref ma 0) 24971)) (snd-display (format #f ";oboe: mus-sound-max-amp at ~D?" (vector-ref ma 0))))
+      (mus-sound-set-max-amp "oboe.snd" #(1234 .5))
+      (set! ma (mus-sound-max-amp "oboe.snd"))
+      (if (fneq (vector-ref ma 1) .5) (snd-display (format #f ";oboe: mus-sound-set-max-amp ~F?" (vector-ref ma 1))))
+      (if (not (= (vector-ref ma 0) 1234)) (snd-display (format #f ";oboe: mus-sound-set-max-amp at ~D?" (vector-ref ma 0))))
+      (set! ma (vector->list (mus-sound-max-amp "4.aiff")))
+      (if (not (feql ma (list 810071 0.245 810071 0.490 810071 0.735 810071 0.980)))
+	  (snd-display (format #f ";mus-sound-max-amp 4.aiff: ~A?" ma)))
+      (mus-sound-set-max-amp "4.aiff" #(12345 .5 54321 .2 0 .1 9999 .01))
+      (set! ma (vector->list (mus-sound-max-amp "4.aiff")))
+      (if (not (feql ma (list 12345 .5 54321 .2 0 .1 9999 .01)))
+	  (snd-display (format #f ";mus-sound-set-max-amp 4.aiff: ~A?" ma)))
+
       (if (and (not (= (mus-sound-type-specifier "oboe.snd") #x646e732e))  ;little endian reader
 	       (not (= (mus-sound-type-specifier "oboe.snd") #x2e736e64))) ;big endian reader
 	  (snd-display (format #f ";oboe: mus-sound-type-specifier: ~X?" (mus-sound-type-specifier "oboe.snd"))))
@@ -1194,14 +1222,29 @@
 	  (if (fneq (vct-ref v0 10) .1) (snd-display (format #f ";sound-data->vct: ~A?" v0)))
 	  (vct->sound-data v0 sdata 0) 
 	  (if (fneq (sound-data-ref sdata 0 10) .1) (snd-display (format #f ";vct->sound-data: ~A?" (sound-data-ref sdata 0 10)))))
-	(if (rs .5) (gc))
+	(let ((v0 (make-vct 10))
+	      (sdata2 (make-sound-data 2 10)))
+	  (do ((i 0 (1+ i)))
+	      ((= i 10))
+	    (sound-data-set! sdata2 0 i 0.1)
+	    (sound-data-set! sdata2 1 i 0.2))
+	  (sound-data->vct sdata2 0 v0) 
+	  (if (fneq (vct-ref v0 1) .1) (snd-display (format #f ";sound-data->vct[1]: ~A?" v0)))
+	  (sound-data->vct sdata2 1 v0) 
+	  (if (fneq (vct-ref v0 1) .2) (snd-display (format #f ";sound-data->vct[2]: ~A?" v0)))
+	  (vct->sound-data v0 sdata2 0) 
+	  (if (fneq (sound-data-ref sdata2 0 1) .2) 
+	      (snd-display (format #f ";vct->sound-data[2]: ~A?" (sound-data-ref sdata2 0 1))))
+	  (vct-fill! v0 .3)
+	  (vct->sound-data v0 sdata2 1) 
+	  (if (fneq (sound-data-ref sdata2 1 1) .3) 
+	      (snd-display (format #f ";vct->sound-data[3]: ~A?" (sound-data-ref sdata2 1 1)))))
 	(mus-sound-write fd 0 99 1 sdata)
 	(mus-sound-close-output fd 200)
 	(set! fd (mus-sound-reopen-output "fmv5.snd" 1 mus-bshort mus-aiff (mus-sound-data-location "fmv5.snd")))
 	(mus-sound-close-output fd 200)
 	(set! fd (mus-sound-open-input "fmv5.snd"))
 	(mus-sound-read fd 0 99 1 sdata)
-	(if (rs .5) (gc))
 	(if (fneq (sound-data-ref sdata 0 10) .1) (snd-display (format #f ";mus-sound-write: ~A?" (sound-data-ref sdata 0 10))))
 	(mus-sound-seek-frame fd 20)
 	(mus-sound-read fd 0 10 1 sdata)
@@ -1435,7 +1478,6 @@
 	  (snd-display (format #f ";insert-sample: ~A ~A?" (sample 100) (frames index))))
       (let ((v0 (make-vector 3))
 	    (v1 (make-vct 3)))
-	(if (rs .5) (gc))
 	(vct-fill! v1 .75)
 	(do ((i 0 (1+ i))) ((= i 3)) (vector-set! v0 i .25))
 	(insert-samples 200 3 v0 index) 
@@ -1495,7 +1537,6 @@
 		((= i 100))
 	      (let ((rval (next-sample rread))
 		    (sval (next-sample sread)))
-		(if (rs .5) (gc))
 		(if (fneq rval sval) (snd-display (format #f ";sample-read: ~A ~A?" rval sval)))
 		(if (fneq rval (vector-ref rvect i)) (snd-display (format #f ";region-samples: ~A ~A?" rval (vector-ref rvect i))))
 		(if (fneq sval (vector-ref svect i)) (snd-display (format #f ";samples: ~A ~A?" sval (vector-ref svect i))))))
@@ -2285,7 +2326,6 @@
 	      ((= i 8)) ;should all be 1.0 (impulse in)
 	    (if (fneq (vct-ref v0 i) (vct-ref v1 i))
 		(snd-display (format #f ";spectra not equal: ~A ~A" v0 v1))))))
-      (if (rs .5) (gc))
       
       (let ((rdat (make-vct 16))
 	    (idat (make-vct 16))
@@ -3032,7 +3072,6 @@
 	(if (fneq (mus-scaler gen) 0.5) (snd-display (format #f ";env scaler ~F?" (mus-scaler gen))))
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
-	  (if (rs .1) (gc))
 	  (vct-set! v0 i (env gen)))
 	(if (or (fneq (vct-ref v0 0) 0.0) (fneq (vct-ref v0 1) .1) (fneq (vct-ref v0 6) .4))
 	    (snd-display (format #f ";~A output: ~A" gen v0)))
@@ -3109,7 +3148,6 @@
 	(if (not (= (mus-length gen) 512)) (snd-display (format #f ";table-lookup length: ~A?" (mus-length gen))))
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
-	  (if (rs .1) (gc))
 	  (vct-set! v0 i (table-lookup gen 0.0))
 	  (vct-set! v1 i (mus-apply gen1 0.0)))
 	(if (not (table-lookup? gen)) (snd-display (format #f ";~A not table-lookup?" gen)))
@@ -3143,7 +3181,6 @@
 	  (let ((val0 (waveshape gen0 1.0 0.0))
 		(val (waveshape gen 1.0 0.0)))
 	    (if (fneq val val0) (snd-display (format #f ";waveshape: ~A /= ~F?" val val0)))
-	    (if (rs .1) (gc))
 	    (vct-set! v0 i val)))
 	(if (not (waveshape? gen)) (snd-display (format #f ";~A not waveshape?" gen)))
 	(if (fneq (mus-phase gen) 1.253787) (snd-display (format #f ";waveshape phase: ~F?" (mus-phase gen))))
@@ -3177,7 +3214,6 @@
 			 "rdin chan: 0, dir: 1, loc: 1490, chans: 1, data_start: 0, data_end: -1, file_end: 50828, file_name: oboe.snd")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
-	  (if (rs .1) (gc))
 	  (vct-set! v0 i (readin gen)))
 	(if (not (readin? gen)) (snd-display (format #f ";~A not readin?" gen)))
 	(if (not (mus-input? gen)) (snd-display (format #f ";~A not input?" gen)))
@@ -3450,7 +3486,6 @@
 	  (if (not (= (mus-length gen) 64)) (snd-display (format #f ";convolve fft len: ~D?" (mus-length gen))))
 	  (do ((i 0 (1+ i)))
 	      ((= i 128))
-	    (if (rs .01) (gc))
 	    (vct-set! v2 i (convolve gen (lambda (dir) (set! n (+ n 1)) (vct-ref v1 n)))))
 	  (if (or (fneq (vct-ref v2 0) 0.0)
 		  (fneq (vct-ref v2 1) 1.0)
@@ -3840,7 +3875,6 @@
 		    ((= i 50828))
 		  (if (not (= (vr) (samps1 i)))
 		      (snd-display (format #f ";(mix) readers disagree at ~D" i))))
-		(if (rs .5) (gc))
 		(free-sample-reader vr)))
 	  (insert-sample 100 .5 (list mix-id)) 
 	  (if (or (fneq (sample 100 (list mix-id)) .5)
@@ -4631,7 +4665,6 @@
 		(if (fneq (vector-ref vc i) (vct-ref v0 i)) 
 		    (snd-display (format #f ";transform-samples[~D]: ~A ~A?" i (vector-ref vc i) (vct-ref v0 i))))))
 	    (snd-display (format #f ";fft not ready yet: ~A ~A" v0 vc))))
-      ;; TODO: much more complete checks here!
 
       (close-sound fd)
       (set! fd (open-sound "obtest.snd"))
@@ -8228,11 +8261,11 @@ EDITS: 3
 (reset-hook! before-fft-hook)
 (reset-hook! fft-hook)
 
-(if (defined? 'report-times) (report-times))
-
 (save-listener "test.output")
 (set! (listener-prompt) original-prompt)
 (update-usage-stats)
+
+(if (defined? 'report-times) (report-times))
 
 (snd-display (format #f ";all done!~%~A" original-prompt))
 (if (provided? 'snd-new-smob)
@@ -8259,7 +8292,7 @@ EDITS: 3
 
 
 ;;; TODO: these aren't tested at all yet (except as bare error checks in a few cases):
-;;;   mus-sound-set-max-amp mus-audio-read mus-audio-open-input mus-sound-print-cache stop-player send-netscape
+;;;   mus-audio-read mus-audio-open-input mus-sound-print-cache stop-player
 ;;;   sound-to-temp selection-to-temp temp-to-sound temp-to-selection scan-all-chans map-all-chans map-across-sound-chans
 ;;;   loop-samples save-listener draw-dots fill-polygon hide-widget show-widget focus-widget graph-data
 ;;;   add-input remove-input dlopen dlclose dlerror dlinit
@@ -8267,9 +8300,9 @@ EDITS: 3
 ;;; only touched upon:
 ;;;   convolve-files map-across-all-chans map-chans scan-across-chans map-sound-chans scan-sound-chans scan-chans
 ;;;   selection-to-temps samples->sound-data forward-mix smooth-selection convolve-selection-with save-state open-alternate-sound
-;;;   sound-data->vct vct->sound-data mus-sound-reopen-output mus-sound-seek mus-sound-seek-frame close-sound-file vct->sound-file
+;;;   mus-sound-reopen-output mus-sound-seek mus-sound-seek-frame close-sound-file vct->sound-file
 ;;;   save-marks save-region delete-selection insert-selection mix-selection save-selection vct-do! vcts-map!
-;;;   mus-set-rand-seed buffer->frame frame->buffer mixer* mixer-set! frame->frame restart-env locsig-set! locsig-reverb-set!
+;;;   buffer->frame frame->buffer mixer* mixer-set! frame->frame restart-env locsig-set! locsig-reverb-set!
 ;;;   ina inb outc outd mus-channel make-track-sample-reader free-track-sample-reader mix-sound-channel mix-sound-index
 ;;;   backward-mix peaks forward-sample backward-sample cursor-position prompt-in-minibuffer
 ;;;   append-to-minibuffer scan-across-sound-chans change-menu-label update-sound erase-rectangle load-font

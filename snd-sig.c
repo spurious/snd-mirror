@@ -1,5 +1,10 @@
 #include "snd.h"
 
+/* TODO:  map|scan-any-chans = (for-each (map|scan-chan ... ) chans)
+ *        map|scan-across-any-chans the same
+ *        so all the map|scan funcs are specialized calls of these two
+ */
+
 /* collect syncd chans */
 typedef struct {
   sync_info *si;
@@ -231,8 +236,8 @@ void eval_expression(chan_info *cp, snd_info *sp, int count, int regexpr)
 			  for (j = chan; j < si->chans; j++) 
 			    free_snd_fd(sfs[j]);
 			  free_sync_state(sc);
-			  scm_throw(res,
-				    SCM_LIST1(TO_SCM_STRING("eval expression")));
+			  ERROR(res,
+				SCM_LIST1(TO_SCM_STRING("eval expression")));
 			  return;
 			}
 		    }
@@ -549,8 +554,8 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
   else
     {
       if (SYMBOL_P(res))
-	scm_throw(res,
-		  SCM_LIST1(TO_SCM_STRING(origin)));
+	ERROR(res,
+	      SCM_LIST1(TO_SCM_STRING(origin)));
       else
 	{
 	  if (NOT_FALSE_P(res))

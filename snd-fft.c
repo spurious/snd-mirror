@@ -2323,10 +2323,10 @@ returns the current transform sample at bin and slice in snd channel chn (assumi
 		  (fbin < si->target_bins) && 
 		  (fslice < si->active_slices))
 		return(TO_SCM_DOUBLE(si->data[fslice][fbin]));
-	      else  scm_throw(NO_SUCH_SAMPLE,
-			      SCM_LIST5(TO_SCM_STRING(S_transform_sample),
-					bin, slice,
-					snd_n, chn_n));
+	      else  ERROR(NO_SUCH_SAMPLE,
+			  SCM_LIST5(TO_SCM_STRING(S_transform_sample),
+				    bin, slice,
+				    snd_n, chn_n));
 	    }
 	}
     }

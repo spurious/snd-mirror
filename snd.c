@@ -23,10 +23,10 @@ static void mus_error2snd(int type, char *msg)
       if (ss->catch_exists) /* damned thing aborts main program if throw to tag is not caught! */
 	{
 	  if (msg == NULL)
-	    scm_throw(MUS_MISC_ERROR,
-		      SCM_LIST1(TO_SCM_STRING((char *)mus_error_to_string(type))));
-	  else scm_throw(MUS_MISC_ERROR,
-			 SCM_LIST1(TO_SCM_STRING(msg)));
+	    ERROR(MUS_MISC_ERROR,
+		  SCM_LIST1(TO_SCM_STRING((char *)mus_error_to_string(type))));
+	  else ERROR(MUS_MISC_ERROR,
+		     SCM_LIST1(TO_SCM_STRING(msg)));
 	}
       /* else we're not called from guile? */
     }
@@ -119,7 +119,7 @@ static repv snd_rep_main(repv arg)
 	if (strcmp(argv[i], "--help") == 0)
 	  {
 	    fprintf(stdout, "Snd is a sound editor.");
-#if HAVE_GUILE || HAVE_LIBREP
+#if HAVE_EXTENSION_LANGUAGE
 #if USE_NO_GUI
 	    fprintf(stdout, "  Try the snd-help function for more help.\n");
 #else

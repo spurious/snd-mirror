@@ -2694,9 +2694,9 @@ static void free_player(snd_info *sp)
 
 static void snd_no_such_player_error(const char *caller, SCM index)
 {
-  scm_throw(NO_SUCH_PLAYER,
-	    SCM_LIST2(TO_SCM_STRING(caller),
-		      index));
+  ERROR(NO_SUCH_PLAYER,
+	SCM_LIST2(TO_SCM_STRING(caller),
+		  index));
 }
 
 static SCM g_make_player(SCM snd, SCM chn)

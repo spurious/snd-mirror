@@ -3,7 +3,7 @@
 CPP = ../test/clisp/utils/gcc-cccp/cccp.exe
 # cccp.exe is from Clisp
 CC = cl -G5 -O1
-CFLAGS = -DWINDOZE -DHAVE_GUILE=0 -I../X11R6.4/include
+CFLAGS = -DWINDOZE -DHAVE_EXTENSION_LANGUAGE=0 -I../X11R6.4/include
 # it is assumed here that you have lesstif's include (Xm etc) in X11R6.4/include
 
 LIBS = user32.lib gdi32.lib kernel32.lib comctl32.lib comdlg32.lib winmm.lib advapi32.lib

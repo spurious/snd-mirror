@@ -1167,7 +1167,7 @@ static env *find_named_env(SCM name)
 	return(enved_all_envs(i));
       }
   free(env_name);
-  scm_throw(NO_SUCH_ENVELOPE, SCM_LIST1(name));
+  ERROR(NO_SUCH_ENVELOPE, SCM_LIST1(name));
   return(NULL);
 }
 

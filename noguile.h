@@ -29,19 +29,8 @@
 #define scm_print_state int
 #define scm_sizet int
 
-#define scm_puts(a, b)
-#define scm_throw(a, b) exit(a)
 #define scm_apply(a, b, c) 0
-
-#if HAVE_MACRO_VARARGS
-#ifdef __GNUC__
-  #define scm_return_first(a, ...) a
-#else
-  SCM scm_return_first(SCM a, ...)
-#endif
-#else
-  SCM scm_return_first(SCM a, ...);
-#endif
+SCM scm_return_first(SCM a, ...);
 
 #define SCM_EQ_P(a, b) 0
 #define SCM_LIST0 0
@@ -183,5 +172,7 @@
 #define REVERSE_LIST(a) a
 #define MAKE_PERMANENT(a) 0
 #define LOAD_SCM_FILE(a) 0
+#define ERROR(Type, Info) fprintf(stderr, Info)
+#define WRITE_STRING(a, b) fprintf(stdout, a)
 
 #endif

@@ -77,7 +77,7 @@ static int print_snd_color(SCM obj, SCM port, scm_print_state *pstate)
 	  (float)(v->color->red) / 65535.0,
 	  (float)(v->color->green) / 65535.0,
 	  (float)(v->color->blue) / 65535.0);
-  scm_puts(buf, port);
+  WRITE_STRING(buf, port);
   FREE(buf);
   return(scm_return_first(1, obj));
 }

@@ -15,10 +15,13 @@
  *                 see http://www.gnu.org/software/guile (this is now a standard part of the Gnu distribution)
  *                 if you have Guile 1.3.4, include -DHAVE_GUILE_1_3,
  *                 (The default is Guile 1.4, versions before 1.3.4 are no longer supported).
- *                 To get a version of Snd without Guile (and without Librep), -DHAVE_GUILE=0.
+ *                 To get a version of Snd without any extension language, -DHAVE_EXTENSION_LANGUAGE=0
  *
- *   HAVE_LIBREP   define to use Librep instead of Guile as the extension language.
- *                 This option is currently on hold.
+ *                 HAVE_LIBREP to use Librep instead of Guile as the extension language.
+ *                     This option is currently on hold.
+ * 
+ *                 HAVE_MZSCHEME to use mzscheme instead of Guile as the extension language.
+ *                     This option is not fully implemented yet.
  * 
  *   HAVE_GUILE_GTK
  *                 define if you're using Gtk+ and have libguilegtk.  The configure script
@@ -123,10 +126,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#ifndef HAVE_GUILE
-  #ifndef HAVE_LIBREP
-    #define HAVE_GUILE 1
-  #endif
+#ifndef HAVE_EXTENSION_LANGUAGE
+  #define HAVE_EXTENSION_LANGUAGE 1
+  #define HAVE_GUILE 1
 #endif
 
 #if HAVE_GUILE
@@ -134,6 +136,9 @@
 #endif
 #if HAVE_LIBREP
   #include <rep.h>
+#endif
+#if HAVE_MZSCHEME
+  #include <scheme.h>
 #endif
 
 #ifndef USE_NO_GUI
@@ -150,12 +155,15 @@
 
 #if HAVE_GUILE
   #include "sg.h"
-#else
-  #if HAVE_LIBREP 
-    #include "sl.h"
-  #else
-    #include "noguile.h"
-  #endif
+#endif
+#if HAVE_LIBREP 
+  #include "sl.h"
+#endif
+#if HAVE_MZSCHEME
+  #include "sz.h"
+#endif
+#if (!HAVE_EXTENSION_LANGUAGE)
+  #include "noguile.h"
 #endif
 
 #include "sndlib2scm.h"
@@ -181,7 +189,7 @@
 #endif
 #include "snd-strings.h"
 
-#define SND_VERSION "26-Apr-01"
+#define SND_VERSION "27-Apr-01"
 #define SND_RPM_VERSION "4.13"
 #define SND_MAJOR_VERSION 4
 #define SND_MINOR_VERSION 13

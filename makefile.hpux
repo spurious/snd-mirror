@@ -2,13 +2,13 @@
 # 
 # edit the include and library paths below (or omit XPM altogether) before calling make
 # XPM is used only to make some optional cute icons
-# if you have the Guile library, include -DHAVE_GUILE in CFLAGS and -lguile in LIBS
+# if you have the Guile library, include -DHAVE_GUILE in CFLAGS (omitting HAVE_EXTENSION_LANGUAGE) and -lguile in LIBS
 
 #XPM_INCLUDE = -I(add include path here)
 #XPM_LIB     = -L(add library path here)
 
 CC          = gcc
-CFLAGS      = -g -O2 -DXPM -DHPUX -DHAVE_GUILE=0 $(XPM_INCLUDE)
+CFLAGS      = -g -O2 -DXPM -DHPUX -DHAVE_EXTENSION_LANGUAGE=0 $(XPM_INCLUDE)
 LIBS        = -lMrm -lXm -lXpm -lXt -lXext -lX11 -lm $(XPM_LIB)
 
 include makesnd.files

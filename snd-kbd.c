@@ -1931,10 +1931,10 @@ static SCM g_save_macros(void)
   fd = open_snd_init_file(ss);
   if (fd) save_macro_state(fd);
   if ((!fd) || (fclose(fd) != 0))
-    scm_throw(CANNOT_SAVE,
-	      SCM_LIST3(TO_SCM_STRING(S_save_macros),
-			TO_SCM_STRING(ss->init_file),
-			TO_SCM_STRING(strerror(errno))));
+    ERROR(CANNOT_SAVE,
+	  SCM_LIST3(TO_SCM_STRING(S_save_macros),
+		    TO_SCM_STRING(ss->init_file),
+		    TO_SCM_STRING(strerror(errno))));
   return(TO_SCM_STRING(ss->init_file));
 }
 

@@ -465,10 +465,10 @@ static SCM g_save_listener(SCM filename)
   fp = fopen(TO_C_STRING(filename), "w");
   if (fp) save_listener_text(fp);
   if ((!fp) || (fclose(fp) != 0))
-    scm_throw(CANNOT_SAVE,
-	      SCM_LIST3(TO_SCM_STRING(S_save_listener),
-			filename,
-			TO_SCM_STRING(strerror(errno))));
+    ERROR(CANNOT_SAVE,
+	  SCM_LIST3(TO_SCM_STRING(S_save_listener),
+		    filename,
+		    TO_SCM_STRING(strerror(errno))));
   return(filename);
 }
 

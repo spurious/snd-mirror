@@ -3212,9 +3212,9 @@ void display_mix_amp_envs(snd_state *ss, chan_info *axis_cp, axis_context *ax, i
 
 static void snd_no_such_mix_error(const char *caller, SCM n)
 {
-  scm_throw(NO_SUCH_MIX,
-	    SCM_LIST2(TO_SCM_STRING(caller),
-		      n));
+  ERROR(NO_SUCH_MIX,
+	SCM_LIST2(TO_SCM_STRING(caller),
+		  n));
 }
 
 static SCM g_mix_position(SCM n) 
@@ -3821,7 +3821,7 @@ static int print_mf(SCM obj, SCM port, scm_print_state *pstate)
   char *desc;
   fd = get_mf(obj);
   if (fd == NULL)
-    scm_puts("<null>", port);
+    WRITE_STRING("<null>", port);
   else
     {
       md = fd->md;
@@ -3830,7 +3830,7 @@ static int print_mf(SCM obj, SCM port, scm_print_state *pstate)
 	      fd,
 	      md->in_filename,
 	      md->id);
-      scm_puts(desc, port); 
+      WRITE_STRING(desc, port); 
       FREE(desc);
     }
   return(scm_return_first(1, obj));
@@ -3906,7 +3906,7 @@ static int print_tf(SCM obj, SCM port, scm_print_state *pstate)
   int i, len;
   fd = get_tf(obj);
   if (fd == NULL)
-    scm_puts("<null>", port);
+    WRITE_STRING("<null>", port);
   else
     {
       desc = (char *)CALLOC(128, sizeof(char));
@@ -3916,7 +3916,7 @@ static int print_tf(SCM obj, SCM port, scm_print_state *pstate)
 	      fd,
 	      md->in_filename,
 	      (md->cp)->chan);
-      scm_puts(desc, port); 
+      WRITE_STRING(desc, port); 
       len = fd->mixes;
       if (len > 0)
 	{
@@ -3924,13 +3924,13 @@ static int print_tf(SCM obj, SCM port, scm_print_state *pstate)
 	    {
 	      mf = fd->fds[i];
 	      mus_snprintf(desc, 128, "%d ", (mf->md)->id);
-	      scm_puts(desc, port); 
+	      WRITE_STRING(desc, port); 
 	    }
 	  mf = fd->fds[len - 1];
 	  mus_snprintf(desc, 128, "%d)>",(mf->md)->id);
 	}
       else sprintf(desc, ")>");
-      scm_puts(desc, port); 
+      WRITE_STRING(desc, port); 
       FREE(desc);
     }
   return(scm_return_first(1, obj));
@@ -3960,9 +3960,9 @@ returns a reader ready to access track's data associated with snd's channel chn 
     {
       SND_RETURN_NEWSMOB(tf_tag, (SCM)tf);
     }
-  scm_throw(NO_SUCH_TRACK,
-	    SCM_LIST2(TO_SCM_STRING(S_make_track_sample_reader),
-		      track_id));
+  ERROR(NO_SUCH_TRACK,
+	SCM_LIST2(TO_SCM_STRING(S_make_track_sample_reader),
+		  track_id));
   return(track_id);
 }
 

@@ -5,7 +5,7 @@ CC = cc
 
 # Compiler must find "xpm.h" and "soundcard.h".
 CFLAGS = -g -DUW2 -DXPM -I/usr/X/include -I/usr/lib/oss \
-  -DBYTE_ORDER=LITTLE_ENDIAN -DHAVE_GUILE=0
+  -DBYTE_ORDER=LITTLE_ENDIAN -DHAVE_EXTENSION_LANGUAGE=0
 
 # dynamic link of Xpm.
 #LIBS = -lXpm -lXext -lXm -lXt -lSM -lICE -lX11 -lm -lsocket

@@ -912,9 +912,9 @@ void save_region_backpointer(snd_info *sp)
 
 static void snd_no_such_region_error(const char *caller, SCM n)
 {
-  scm_throw(NO_SUCH_REGION,
-	    SCM_LIST2(TO_SCM_STRING(caller),
-		      n));
+  ERROR(NO_SUCH_REGION,
+	SCM_LIST2(TO_SCM_STRING(caller),
+		  n));
 }
 
 static SCM g_restore_region(SCM n, SCM chans, SCM len, SCM srate, SCM maxamp, SCM name, SCM start, SCM end, SCM data)
@@ -1169,10 +1169,10 @@ static SCM g_make_region (SCM beg, SCM end, SCM snd_n, SCM chn_n)
       if (current_ed_samples(cp) - 1 < ends[0]) 
 	ends[0] = current_ed_samples(cp) - 1;
       if (ends[0] < ibeg) 
-	scm_throw(IMPOSSIBLE_BOUNDS,
-		  SCM_LIST5(TO_SCM_STRING(S_make_region),
-			    beg, end,
-			    snd_n, chn_n));
+	ERROR(IMPOSSIBLE_BOUNDS,
+	      SCM_LIST5(TO_SCM_STRING(S_make_region),
+			beg, end,
+			snd_n, chn_n));
       si = make_simple_sync(cp, ibeg);
       define_region(si, ends);
       reactivate_selection(si->cps[0], si->begs[0], ends[0]); /* ??? */
@@ -1186,9 +1186,9 @@ static mus_error_handler_t *old_mus_error;
 static void mus_local_error(int type, char *msg)
 {
   mus_error_set_handler(old_mus_error);           /* make sure subsequent errors are handled by the default handler */
-  scm_throw(CANNOT_SAVE,
-	    SCM_LIST2(TO_SCM_STRING(S_save_sound_as),
-		      TO_SCM_STRING(msg)));
+  ERROR(CANNOT_SAVE,
+	SCM_LIST2(TO_SCM_STRING(S_save_sound_as),
+		  TO_SCM_STRING(msg)));
 }
 
 static SCM g_save_region (SCM n, SCM filename, SCM format) 
@@ -1210,8 +1210,8 @@ static SCM g_save_region (SCM n, SCM filename, SCM format)
     }
   else snd_no_such_region_error(S_save_region, n);
   if (res != MUS_NO_ERROR)
-    scm_throw(CANNOT_SAVE,
-	      SCM_LIST1(TO_SCM_STRING(S_save_region)));
+    ERROR(CANNOT_SAVE,
+	  SCM_LIST1(TO_SCM_STRING(S_save_region)));
   return(n);
 }
 

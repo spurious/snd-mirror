@@ -1465,9 +1465,9 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int
 
 static void snd_no_such_mark_error(const char *caller, int id)
 {
-  scm_throw(NO_SUCH_MARK,
-	    SCM_LIST2(TO_SCM_STRING(caller),
-		      id));
+  ERROR(NO_SUCH_MARK,
+	SCM_LIST2(TO_SCM_STRING(caller),
+		  id));
 }
 
 static SCM g_restore_marks(SCM size, SCM snd, SCM chn, SCM marklist)

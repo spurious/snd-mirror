@@ -9,7 +9,7 @@
 #   was unable to get it to work.
 
 CC = gcc
-CFLAGS = -O2 -DWINDOZE -I/usr/X11R6.3/include -DHAVE_GUILE=0
+CFLAGS = -O2 -DWINDOZE -I/usr/X11R6.3/include -DHAVE_EXTENSION_LANGUAGE=0
 
 LIBS = -L/usr/X11R6.3/lib -lXm -lXpm -lXt -lSM -lICE -lX11 -lm
 

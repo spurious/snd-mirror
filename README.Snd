@@ -12,6 +12,7 @@ Motif.  To build Snd, get the sources from
   cd snd-4
   ./configure
   make
+  make install
 
 The configure program has several Snd-related arguments:
 
@@ -36,6 +37,7 @@ The configure program has several Snd-related arguments:
    --with-sndlib         use libsndlib.so if possible (under development)
    --with-esd            use the enlightened sound daemon, if possible
    --with-no-gui         make Snd without any graphics support
+   --with-no-guile       make Snd without an extension language (only user-interface stuff will work)
 
 If the configure/make process fails, please send me
 (bil@ccrma.stanford.edu) the files config.h, config.log, and makefile,
@@ -63,13 +65,10 @@ Snd with no interface: makefile.nogui
 In HPUX, fixup the makefile.hpux include and library paths, then:
   make -f makefile.hpux
 
-It is not impossible that the 'make' targets clean, install and
-uninstall will also work -- they didn't destroy my disk, but I'm no
-make expert.
-
 If you have Guile 1.3.4 add -DHAVE_GUILE_1_3.  (The default is now
 Guile 1.4).  If you don't have guile, Snd can still be built, but it's
-severely limited in what it can do.
+severely limited in what it can do (there is a configure switch
+--with-no-guile, and there's the compiler switch HAVE_EXTENSION_LANGUAGE).
 
 
 Snd builds in Mac OS-X, but is not very useful yet,

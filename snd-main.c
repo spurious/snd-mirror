@@ -640,10 +640,10 @@ static SCM g_save_state(SCM filename)
     {
       result = TO_SCM_STRING(error);
       FREE(error);
-      scm_throw(CANNOT_SAVE,
-		SCM_LIST3(TO_SCM_STRING(S_save_state),
-			  filename,
-			  result));
+      ERROR(CANNOT_SAVE,
+	    SCM_LIST3(TO_SCM_STRING(S_save_state),
+		      filename,
+		      result));
     }
   return(filename);
 }
@@ -661,10 +661,10 @@ static SCM g_save_options(SCM filename)
     save_snd_state_options(get_global_state(), fd);
   if ((!fd) || 
       (fclose(fd) != 0))
-    scm_throw(CANNOT_SAVE, 
-	      SCM_LIST3(TO_SCM_STRING(S_save_options),
-			filename,
-			TO_SCM_STRING(strerror(errno))));
+    ERROR(CANNOT_SAVE, 
+	  SCM_LIST3(TO_SCM_STRING(S_save_options),
+		    filename,
+		    TO_SCM_STRING(strerror(errno))));
   return(filename);
 }
 

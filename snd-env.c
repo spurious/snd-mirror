@@ -1273,8 +1273,8 @@ static SCM g_env_base(SCM name)
   i = find_env(urn);
   if ((i != -1) && (all_envs[i]))
     return(TO_SCM_DOUBLE(all_envs[i]->base));
-  else scm_throw(NO_SUCH_ENVELOPE, 
-		 SCM_LIST1(name));
+  else ERROR(NO_SUCH_ENVELOPE, 
+	     SCM_LIST1(name));
   return(TO_SCM_DOUBLE(0.0));
 }
 
@@ -1290,8 +1290,8 @@ static SCM g_set_env_base(SCM name, SCM val)
   i = find_env(urn);
   if ((i != -1) && (all_envs[i]))
     all_envs[i]->base = TO_C_DOUBLE(val);
-  else scm_throw(NO_SUCH_ENVELOPE, 
-		 SCM_LIST1(name));
+  else ERROR(NO_SUCH_ENVELOPE, 
+	     SCM_LIST1(name));
   return(val);
 }
 
@@ -1377,10 +1377,10 @@ static SCM g_save_envelopes(SCM filename)
   if (fd) save_envelope_editor_state(fd);
   if (name) FREE(name);
   if ((!fd) || (fclose(fd) != 0))
-    scm_throw(CANNOT_SAVE,
-	      SCM_LIST3(TO_SCM_STRING(S_save_envelopes),
-			filename,
-			TO_SCM_STRING(strerror(errno))));
+    ERROR(CANNOT_SAVE,
+	  SCM_LIST3(TO_SCM_STRING(S_save_envelopes),
+		    filename,
+		    TO_SCM_STRING(strerror(errno))));
   return(filename);
 }
 

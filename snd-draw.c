@@ -19,11 +19,11 @@ static axis_context *get_ax(chan_info *cp, int ax_id, const char *caller)
 {
   if ((cp) && (AXIS_CONTEXT_ID_OK(ax_id)))
     return(set_context(cp, ax_id));
-  scm_throw(NO_SUCH_AXIS_CONTEXT,
-	    SCM_LIST4(TO_SCM_STRING(caller),
-		      TO_SMALL_SCM_INT(cp->sound->index),
-		      TO_SMALL_SCM_INT(cp->chan),
-		      TO_SMALL_SCM_INT(ax_id)));
+  ERROR(NO_SUCH_AXIS_CONTEXT,
+	SCM_LIST4(TO_SCM_STRING(caller),
+		  TO_SMALL_SCM_INT(cp->sound->index),
+		  TO_SMALL_SCM_INT(cp->chan),
+		  TO_SMALL_SCM_INT(ax_id)));
   return(NULL);
 }
 
@@ -47,11 +47,11 @@ axis_info *get_ap(chan_info *cp, int ap_id, const char *caller)
 	if (cp->lisp_info) return(cp->lisp_info->axis); 
 	break;
       }
-  scm_throw(NO_SUCH_AXIS_INFO,
-	    SCM_LIST4(TO_SCM_STRING(caller),
-		      TO_SMALL_SCM_INT(cp->sound->index),
-		      TO_SMALL_SCM_INT(cp->chan),
-		      TO_SMALL_SCM_INT(ap_id)));
+  ERROR(NO_SUCH_AXIS_INFO,
+	SCM_LIST4(TO_SCM_STRING(caller),
+		  TO_SMALL_SCM_INT(cp->sound->index),
+		  TO_SMALL_SCM_INT(cp->chan),
+		  TO_SMALL_SCM_INT(ap_id)));
   return(NULL);
 }
 

@@ -187,7 +187,7 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
 			  SCM_OPN | SCM_WRTNG,
 			  __FUNCTION__);
     scm_display(tag, lport);
-    scm_puts(": ", lport);
+    WRITE_STRING(": ", lport);
     scm_display(throw_args, lport);
     scm_force_output(lport);
     ans = scm_strport_to_string(lport);
@@ -202,15 +202,15 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
       (LIST_LENGTH(throw_args) > 0))
     {
       scm_display(SCM_CAR(throw_args), port);
-      scm_puts(": ", port);
+      WRITE_STRING(": ", port);
       if (LIST_LENGTH(throw_args) > 1)
 	{
 	  if (SCM_EQ_P(tag, NO_SUCH_FILE))
 	    {
 	      scm_display(tag, port);
-	      scm_puts(" \"", port);
+	      WRITE_STRING(" \"", port);
 	      scm_display(SCM_CADR(throw_args), port);
-	      scm_puts("\" ", port);
+	      WRITE_STRING("\" ", port);
 	      if (LIST_LENGTH(throw_args) > 2)
 		scm_display(SCM_CDDR(throw_args), port);
 	    }
@@ -224,7 +224,7 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
 		  (SCM_EQ_P(tag, IMPOSSIBLE_BOUNDS)) || (SCM_EQ_P(tag, NO_SUCH_SAMPLE)))
 		{
 		  scm_display(tag, port);
-		  scm_puts(" ", port);
+		  WRITE_STRING(" ", port);
 		  scm_display(SCM_CDR(throw_args), port);
 		}
 	      else
@@ -250,7 +250,7 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
   else 
     {
       scm_display(tag, port);
-      scm_puts(": ", port);
+      WRITE_STRING(": ", port);
       scm_display(throw_args, port);
     }
   possible_code = (char *)data;
@@ -258,15 +258,15 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
       (snd_strlen(possible_code) < MAX_ERROR_STRING_LENGTH / 2))
     {
       /* not actually sure if this is always safe */
-      scm_puts("\n; ", port);
-      scm_puts(possible_code, port);
+      WRITE_STRING("\n; ", port);
+      WRITE_STRING(possible_code, port);
     }
   if (last_file_loaded)
     {
       /* sigh -- scm_current_load_port is #f so can't use scm_port_filename etc */
-      scm_puts("\n(while loading \"", port);
-      scm_puts(last_file_loaded, port);
-      scm_puts("\")", port);
+      WRITE_STRING("\n(while loading \"", port);
+      WRITE_STRING(last_file_loaded, port);
+      WRITE_STRING("\")", port);
       last_file_loaded = NULL;
     }
   scm_force_output(port); /* needed to get rid of trailing garbage chars?? -- might be pointless now */
@@ -381,32 +381,32 @@ int procedure_ok_with_error(SCM proc, int req_args, int opt_args, const char *ca
 
 void snd_no_such_file_error(const char *caller, SCM filename)
 {
-  scm_throw(NO_SUCH_FILE,
-	    SCM_LIST3(TO_SCM_STRING(caller),
-		      filename,
-		      TO_SCM_STRING(strerror(errno))));
+  ERROR(NO_SUCH_FILE,
+	SCM_LIST3(TO_SCM_STRING(caller),
+		  filename,
+		  TO_SCM_STRING(strerror(errno))));
 }
 
 void snd_no_such_channel_error(const char *caller, SCM snd, SCM chn)
 {
-  scm_throw(NO_SUCH_CHANNEL,
-	    SCM_LIST3(TO_SCM_STRING(caller),
-		      snd,
-		      chn));
+  ERROR(NO_SUCH_CHANNEL,
+	SCM_LIST3(TO_SCM_STRING(caller),
+		  snd,
+		  chn));
 }
 
 void snd_no_active_selection_error(const char *caller)
 {
-  scm_throw(NO_ACTIVE_SELECTION,
-	    SCM_LIST1(TO_SCM_STRING(caller)));
+  ERROR(NO_ACTIVE_SELECTION,
+	SCM_LIST1(TO_SCM_STRING(caller)));
 }
 
 void snd_bad_arity_error(const char *caller, SCM errstr, SCM proc)
 {
-  scm_throw(BAD_ARITY,
-	    SCM_LIST3(TO_SCM_STRING(caller),
-		      errstr,
-		      proc));
+  ERROR(BAD_ARITY,
+	SCM_LIST3(TO_SCM_STRING(caller),
+		  errstr,
+		  proc));
 }
 
 
@@ -1794,9 +1794,9 @@ static void mus_local_error(int type, char *msg)
 {
   if (open_hdr) open_hdr = free_file_info(open_hdr);
   mus_error_set_handler(old_mus_error);           /* make sure subsequent errors are handled by the default handler */
-  scm_throw(CANNOT_SAVE,
-	    SCM_LIST2(TO_SCM_STRING(S_save_sound_as),
-		      TO_SCM_STRING(msg)));
+  ERROR(CANNOT_SAVE,
+	SCM_LIST2(TO_SCM_STRING(S_save_sound_as),
+		  TO_SCM_STRING(msg)));
 }
 
 static SCM g_open_sound_file(SCM g_name, SCM g_chans, SCM g_srate, SCM g_comment)
@@ -1946,9 +1946,9 @@ reading edit version edit-position (defaulting to the current version)"
   cp = get_cp(snd_n, chn_n, S_samples2sound_data);
   edpos = TO_C_INT_OR_ELSE(pos, cp->edit_ctr);
   if (edpos >= cp->edit_size) 
-    scm_throw(NO_SUCH_EDIT,
-	      SCM_LIST4(TO_SCM_STRING(S_samples2sound_data),
-			snd_n, chn_n, pos));
+    ERROR(NO_SUCH_EDIT,
+	  SCM_LIST4(TO_SCM_STRING(S_samples2sound_data),
+		    snd_n, chn_n, pos));
   beg = TO_C_INT_OR_ELSE(samp_0, 0);
   len = TO_C_INT_OR_ELSE(samps, cp->samples[edpos] - beg);
   if (len > 0)
@@ -3544,13 +3544,11 @@ If more than one hook function, results are concatenated. If none, the current c
   YES_WE_HAVE("snd");
 }
 
-#ifndef __GNUC__
-#if (!HAVE_GUILE) && (!HAVE_LIBREP)
+#if (!HAVE_GUILE)
 SCM scm_return_first(SCM a, ...)
 {
   return(a);
 }
-#endif
 #endif
 
 #if HAVE_LIBREP
@@ -3635,8 +3633,6 @@ void librep_new_variable(const char *name, int val, const char *doc)
   Fset((*q), TO_SCM_INT(val));
 }
 
-char *scm_version(void) {return(rep_VERSION);}
-
 SCM librep_eval_string(char *data)
 {
   int c;
@@ -3649,10 +3645,26 @@ SCM librep_eval_string(char *data)
 
 #endif
 
-#if (!HAVE_MACRO_VARARGS) && (!HAVE_GUILE) && (!HAVE_LIBREP)
-SCM scm_return_first(SCM a, ...)
-{
-  return(a);
-}
-#endif
+#if HAVE_MZSCHEME
+  
+/* need a way to turn DEFINE_PROC into a tie into a call on C proc */
 
+static Scheme_Object *snd_inner(void *closure_data, int argc, Scheme_Object **argv)
+{
+  SCM_FNC func = (SCM_FNC *)closure_data;
+  switch (argc)
+    {
+    case 0: return((*func)()); break;
+    case 1: return((*func)(argv[0])); break;
+      /* etc */
+    }
+}
+
+/*
+  return scheme_make_closed_prim_w_arity(snd_inner,
+					 argv[0], <-??
+					 funcname,
+					 0, 10);
+
+*/
+#endif

@@ -11,7 +11,6 @@
 #define SCM_BOOL_F rep_FALSE
 #define SCM_BOOL_T rep_TRUE
 #define SCM_EOL rep_NULL
-
 #define SCM_UNDEFINED rep_NULL
 
 #define scm_catch_body_t void *
@@ -19,10 +18,8 @@
 #define scm_print_state int
 #define scm_sizet int
 
-#define scm_puts(a, b) rep_princ_val(Qstandard_output, TO_SCM_STRING(a))
-#define scm_throw(a, b) Fthrow(a, b)
 #define scm_apply(a, b, c) rep_apply(a, b)
-#define scm_return_first(a, ...) a
+SCM scm_return_first(SCM a, ...);
 
 #define SCM_EQ_P(a, b) ((a) == (b))
 #define SCM_LIST0 Qnil
@@ -127,6 +124,7 @@
 #define NO_SUCH_AXIS_CONTEXT TO_SCM_SYMBOL("no-such-graphics-context")
 #define BAD_ARITY            TO_SCM_SYMBOL("bad-arity")
 
+#define ERROR(a, b) Fthrow(a, b)
 #define WRONG_TYPE_ERROR(Caller, Position, Arg, Correct_Type) rep_signal_arg_error(Arg, Position)
 
 #define BOOLEAN_P(Arg) (((Arg) == Qt) || ((Arg) == Qnil))
@@ -175,5 +173,6 @@
 #define REVERSE_LIST(a) Freverse(a)
 #define MAKE_PERMANENT(a) a
 #define LOAD_SCM_FILE(a) Fload(TO_SCM_STRING(a), Qnil, Qnil, Qnil, Qnil)
+#define WRITE_STRING(a, b) rep_princ_val(Qstandard_output, TO_SCM_STRING(a))
 
 #endif

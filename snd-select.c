@@ -888,9 +888,9 @@ static mus_error_handler_t *old_mus_error;
 static void mus_local_error(int type, char *msg)
 {
   mus_error_set_handler(old_mus_error);           /* make sure subsequent errors are handled by the default handler */
-  scm_throw(CANNOT_SAVE,
-	    SCM_LIST2(TO_SCM_STRING(S_save_sound_as),
-		      TO_SCM_STRING(msg)));
+  ERROR(CANNOT_SAVE,
+	SCM_LIST2(TO_SCM_STRING(S_save_sound_as),
+		  TO_SCM_STRING(msg)));
 }
 
 static SCM g_save_selection(SCM filename, SCM header_type, SCM data_format, SCM srate, SCM comment)

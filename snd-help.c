@@ -84,11 +84,6 @@ static char *snd_itoa(int n)
   #endif
 #endif
 
-static char *guile_version(void) 
-{ 
-  return(TO_NEW_C_STRING(scm_version()));
-}
-
 static char *sndlib_consistency_check(void)
 {
 #if SNDLIB_USE_FLOATS
@@ -146,13 +141,16 @@ char *version_info(void)
 	  "\n    (compiled as a widget)",
 #endif
 #if HAVE_GUILE
-	  "\n    Guile ", guile_version(),
+	  "\n    Guile ",  TO_C_STRING(scm_version()),
   #ifdef LIBGUILE_VERSION
 	  " libguile.so.", itoa[18] = snd_itoa(LIBGUILE_VERSION),
   #endif
 #endif
 #if HAVE_LIBREP
 	  "\n    Librep ", rep_VERSION,
+#endif
+#if HAVE_MZSCHEME
+	  "\n    mzscheme ", scheme_version(),
 #endif
 	  "\n    CLM ", itoa[0] = snd_itoa(MUS_VERSION), ".", 
 	                itoa[1] = snd_itoa(MUS_REVISION), " (", 

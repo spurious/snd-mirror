@@ -527,9 +527,9 @@ void set_channel_style(snd_state *ss, int val)
 
 static void snd_no_such_menu_error(const char *caller, int id)
 {
-  scm_throw(NO_SUCH_MENU,
-	    SCM_LIST2(TO_SCM_STRING(caller),
-		      id));
+  ERROR(NO_SUCH_MENU,
+	SCM_LIST2(TO_SCM_STRING(caller),
+		  id));
 }
 
 static SCM output_name_hook;

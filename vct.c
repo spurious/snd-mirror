@@ -137,7 +137,7 @@ static int print_vct(SCM obj, SCM port, scm_print_state *pstate)
   vct *v = (vct *)SND_VALUE_OF(obj);
   buf = (char *)CALLOC(64, sizeof(char));
   sprintf(buf, "#<vct[len=%d]:", v->length);
-  scm_puts(buf, port);
+  WRITE_STRING(buf, port);
   len = vct_print_length;
   if (len > v->length) len = v->length;
   if (len > 0)
@@ -145,13 +145,13 @@ static int print_vct(SCM obj, SCM port, scm_print_state *pstate)
       for (i = 0; i < len; i++)
 	{
 	  sprintf(buf, " %.3f", v->data[i]);
-	  scm_puts(buf, port);
+	  WRITE_STRING(buf, port);
 	}
       if (v->length > vct_print_length)
-	scm_puts(" ...", port);
+	WRITE_STRING(" ...", port);
     }
   FREE(buf);
-  scm_puts(">", port);
+  WRITE_STRING(">", port);
   return(scm_return_first(1, obj));
 }
 

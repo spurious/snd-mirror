@@ -2223,6 +2223,7 @@ static int read_nist_header (int chan)
     }
   data_size = mus_bytes_to_samples(data_format, data_size);
   header_distributed = 1;
+  true_file_length = SEEK_FILE_LENGTH(chan);
   return(MUS_NO_ERROR);
 }
 
@@ -2514,6 +2515,7 @@ static int read_8svx_header (int chan)
   srate = 0;
   chans = 1;
   happy = 1;
+  true_file_length = SEEK_FILE_LENGTH(chan);
   update_form_size = mus_char_to_bint((unsigned char *)(hdrbuf + 4));
   while (happy)
     {
@@ -3118,6 +3120,7 @@ static int read_inrs_header (int chan, int loc)
   srate = loc;
   chans = 1;
   data_location = 512;
+  true_file_length = SEEK_FILE_LENGTH(chan);
   data_size = mus_bytes_to_samples(data_format, true_file_length - 512);
   return(MUS_NO_ERROR);
 }
@@ -3208,6 +3211,7 @@ static int read_maud_header (int chan)
       chunkloc = (8 + chunksize);
       if (chunksize & 1) chunkloc++; /* extra null appended to odd-length chunks */
     }
+  true_file_length = SEEK_FILE_LENGTH(chan);
   data_size = mus_bytes_to_samples(data_format, data_size);
   return(MUS_NO_ERROR);
 }
@@ -3580,7 +3584,9 @@ static int read_goldwave_header(int chan)
   data_location = 28;
   data_size = mus_char_to_lint((unsigned char *)(hdrbuf + 22));
   true_file_length = SEEK_FILE_LENGTH(chan);
-  if (data_size <= 24) data_size = (true_file_length-data_location);
+  if (data_size <= 24) 
+    data_size = (true_file_length - data_location) / 2;
+  else data_size /= 2;
   srate = mus_char_to_lint((unsigned char *)(hdrbuf + 18));
   data_format = MUS_LSHORT;
   return(MUS_NO_ERROR);
@@ -3599,7 +3605,7 @@ static int read_srfs_header(int chan)
   header_distributed = 0;
   data_location = 32;
   true_file_length = SEEK_FILE_LENGTH(chan);
-  data_size = (true_file_length-data_location);
+  data_size = (true_file_length - data_location) / 2;
   srate = mus_char_to_lint((unsigned char *)(hdrbuf + 6));
   data_format = MUS_LSHORT;
   return(MUS_NO_ERROR);
@@ -3618,7 +3624,7 @@ static int read_qt_header(int chan)
   header_distributed = 0;
   data_location = 12;
   true_file_length = SEEK_FILE_LENGTH(chan);
-  data_size = (true_file_length-data_location);
+  data_size = (true_file_length - data_location);
   srate = 11025; /* ?? */
   data_format = MUS_UBYTE;
   return(MUS_NO_ERROR);
@@ -3711,7 +3717,7 @@ static int read_delusion_header(int chan)
   header_distributed = 0;
   data_location = 55;
   true_file_length = SEEK_FILE_LENGTH(chan);
-  data_size = (true_file_length-data_location);
+  data_size = (true_file_length - data_location);
   srate = 8000;
   data_format = MUS_LSHORT;
   data_size = mus_bytes_to_samples(data_format, data_size);

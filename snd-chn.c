@@ -5181,9 +5181,9 @@ static SCM g_set_x_bounds(SCM bounds, SCM snd_n, SCM chn_n)
   x1 = TO_C_DOUBLE(SCM_CADR(bounds));
   if (x1 > x0)
     set_x_axis_x0x1(cp, x0, x1);
-  else scm_throw(IMPOSSIBLE_BOUNDS,
-		 SCM_LIST2(TO_SCM_STRING("set-" S_x_bounds),
-			   bounds));
+  else ERROR(IMPOSSIBLE_BOUNDS,
+	     SCM_LIST2(TO_SCM_STRING("set-" S_x_bounds),
+		       bounds));
   return(SCM_BOOL_F);
 }
 
@@ -5229,9 +5229,9 @@ static SCM g_set_y_bounds(SCM bounds, SCM snd_n, SCM chn_n)
     }
   if (hi > low)
     set_y_axis_y0y1(cp, low, hi);
-  else scm_throw(IMPOSSIBLE_BOUNDS,
-		 SCM_LIST2(TO_SCM_STRING("set-" S_y_bounds),
-			   bounds));
+  else ERROR(IMPOSSIBLE_BOUNDS,
+	     SCM_LIST2(TO_SCM_STRING("set-" S_y_bounds),
+		       bounds));
   return(SCM_BOOL_F);
 }
 

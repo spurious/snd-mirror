@@ -773,7 +773,7 @@ static int print_mus_scm(SCM obj, SCM port, scm_print_state *pstate)
   buf = mus_describe(TO_CLM(obj));
   if (buf)
     {
-      scm_puts(buf, port);
+      WRITE_STRING(buf, port);
       FREE(buf);
     }
   return(1);
@@ -3691,10 +3691,10 @@ static SCM g_make_file2sample(SCM name)
   mus_scm *gn;
   ASSERT_TYPE(STRING_P(name), name, SCM_ARGn, S_make_file2sample, "a string");
   if (!(mus_file_probe(TO_C_STRING(name))))
-    scm_throw(NO_SUCH_FILE,
-	      SCM_LIST3(TO_SCM_STRING(S_make_file2sample),
-			name,
-			TO_SCM_STRING(strerror(errno))));
+    ERROR(NO_SUCH_FILE,
+	  SCM_LIST3(TO_SCM_STRING(S_make_file2sample),
+		    name,
+		    TO_SCM_STRING(strerror(errno))));
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   gn->gen = mus_make_file2sample(TO_C_STRING(name));
   gn->nvcts = 0;
@@ -3780,10 +3780,10 @@ static SCM g_make_file2frame(SCM name)
   mus_scm *gn;
   ASSERT_TYPE(STRING_P(name), name, SCM_ARGn, S_make_file2frame, "a string");
   if (!(mus_file_probe(TO_C_STRING(name))))
-    scm_throw(NO_SUCH_FILE,
-	      SCM_LIST3(TO_SCM_STRING(S_make_file2frame),
-			name,
-			TO_SCM_STRING(strerror(errno))));
+    ERROR(NO_SUCH_FILE,
+	  SCM_LIST3(TO_SCM_STRING(S_make_file2frame),
+		    name,
+		    TO_SCM_STRING(strerror(errno))));
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   gn->gen = mus_make_file2frame(TO_C_STRING(name));
   gn->nvcts = 0;
@@ -3882,10 +3882,10 @@ at frame 'start' and reading 'samples' samples altogether."
   ASSERT_TYPE(STRING_P(filename), filename, SCM_ARG1, S_file2array, "a string");
   name = TO_C_STRING(filename);
   if (!(mus_file_probe(name)))
-    scm_throw(NO_SUCH_FILE,
-	      SCM_LIST3(TO_SCM_STRING(S_file2array),
-			filename,
-			TO_SCM_STRING(strerror(errno))));
+    ERROR(NO_SUCH_FILE,
+	  SCM_LIST3(TO_SCM_STRING(S_file2array),
+		    filename,
+		    TO_SCM_STRING(strerror(errno))));
   ASSERT_TYPE(INTEGER_P(chan), chan, SCM_ARG2, S_file2array, "an integer");
   ASSERT_TYPE(NUMBER_P(start), start, SCM_ARG3, S_file2array, "a number");
   ASSERT_TYPE(NUMBER_P(samples), samples, SCM_ARG4, S_file2array, "a number");
@@ -3896,10 +3896,10 @@ at frame 'start' and reading 'samples' samples altogether."
     mus_misc_error(S_file2array, "samples <= 0?", samples);
   chn = TO_C_INT(chan);
   if ((chn < 0) || (chn > mus_sound_chans(name)))
-    scm_throw(NO_SUCH_CHANNEL,
-	      SCM_LIST3(TO_SCM_STRING(S_file2array),
-			TO_SCM_STRING("invalid chan"),
-			chn));
+    ERROR(NO_SUCH_CHANNEL,
+	  SCM_LIST3(TO_SCM_STRING(S_file2array),
+		    TO_SCM_STRING("invalid chan"),
+		    chn));
   if (samps > v->length)
     samps = v->length;
   err = mus_file2fltarray(name,
@@ -4014,10 +4014,10 @@ returns a new readin (file input) generator reading the sound file 'file' starti
   if (channel < 0)
     mus_misc_error(S_make_readin, "channel < 0?", keys[1]);
   if (!(mus_file_probe(file)))
-    scm_throw(NO_SUCH_FILE,
-	      SCM_LIST3(TO_SCM_STRING(S_make_readin),
-			TO_SCM_STRING(file),
-			TO_SCM_STRING(strerror(errno))));
+    ERROR(NO_SUCH_FILE,
+	  SCM_LIST3(TO_SCM_STRING(S_make_readin),
+		    TO_SCM_STRING(file),
+		    TO_SCM_STRING(strerror(errno))));
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   gn->gen = mus_make_readin(file, channel, start, direction);
   return(mus_scm_to_smob(gn));

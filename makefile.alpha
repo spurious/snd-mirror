@@ -1,7 +1,7 @@
 # Snd make file for DEC Alpha
 
 CC = gcc
-CFLAGS = -O2 -DALPHA -DHAVE_GUILE=0
+CFLAGS = -O2 -DALPHA -DHAVE_EXTENSION_LANGUAGE=0
 LIBS = -lMrm -lXm -lXt -lXext -lX11 -lm
 
 include makesnd.files

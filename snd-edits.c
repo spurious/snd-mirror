@@ -2599,10 +2599,10 @@ static SCM g_display_edits(SCM snd, SCM chn)
   tmp = fopen(name, "w");
   if (tmp) display_edits(get_cp(snd, chn, S_display_edits), tmp);
   if ((!tmp) || (fclose(tmp) != 0))
-    scm_throw(CANNOT_SAVE,
-	      SCM_LIST3(TO_SCM_STRING(S_display_edits),
-			TO_SCM_STRING(name),
-			TO_SCM_STRING(strerror(errno))));
+    ERROR(CANNOT_SAVE,
+	  SCM_LIST3(TO_SCM_STRING(S_display_edits),
+		    TO_SCM_STRING(name),
+		    TO_SCM_STRING(strerror(errno))));
   fd = mus_file_open_read(name);
   len = lseek(fd, 0L, SEEK_END);
   buf = (char *)CALLOC(len + 1, sizeof(char));
@@ -2639,10 +2639,10 @@ associated with snd's channel chn; this is a list (origin type start-sample samp
 			 TO_SCM_INT(ed->beg),
 			 TO_SCM_INT(ed->len)));
     }
-  scm_throw(NO_SUCH_EDIT,
-	    SCM_LIST4(TO_SCM_STRING(S_edit_fragment),
-		      snd, chn,
-		      uctr));
+  ERROR(NO_SUCH_EDIT,
+	SCM_LIST4(TO_SCM_STRING(S_edit_fragment),
+		  snd, chn,
+		  uctr));
   return(uctr);
 }
 
@@ -2703,7 +2703,7 @@ static int print_sf(SCM obj, SCM port, scm_print_state *pstate)
   snd_fd *fd;
   fd = get_sf(obj);
   if (fd == NULL)
-    scm_puts("<null>", port);
+    WRITE_STRING("<null>", port);
   else
     {
       cp = fd->cp;
@@ -2723,7 +2723,7 @@ static int print_sf(SCM obj, SCM port, scm_print_state *pstate)
 	      current_location(fd),
 	      UNWRAP_SAMPLE(MUS_SAMPLE_TO_FLOAT(*fd->view_buffered_data),
 			    fd->cb[ED_SCL]));
-      scm_puts(desc, port); 
+      WRITE_STRING(desc, port); 
       FREE(desc);
     }
   return(1);
@@ -2824,9 +2824,9 @@ returns a reader ready to access region's channel chn data starting at 'start-sa
 
   reg_n = TO_C_INT_OR_ELSE(reg, 0);
   if (!(region_ok(reg_n))) 
-    scm_throw(NO_SUCH_REGION,
-	      SCM_LIST2(TO_SCM_STRING(S_make_region_sample_reader),
-			reg));
+    ERROR(NO_SUCH_REGION,
+	  SCM_LIST2(TO_SCM_STRING(S_make_region_sample_reader),
+		    reg));
   chn_n = TO_C_INT_OR_ELSE(chn, 0);
   if (chn_n >= region_chans(reg_n)) 
     snd_no_such_channel_error(S_make_region_sample_reader, SCM_LIST1(reg), chn);
@@ -3005,10 +3005,10 @@ static SCM g_save_edit_history(SCM filename, SCM snd, SCM chn)
 	}
     }
   if ((!fd) || (fclose(fd) != 0))
-    scm_throw(CANNOT_SAVE,
-	      SCM_LIST3(TO_SCM_STRING(S_save_edit_history),
-			filename,
-			TO_SCM_STRING(strerror(errno))));
+    ERROR(CANNOT_SAVE,
+	  SCM_LIST3(TO_SCM_STRING(S_save_edit_history),
+		    filename,
+		    TO_SCM_STRING(strerror(errno))));
   return(filename);
 }
 
@@ -3395,10 +3395,10 @@ static SCM g_delete_sample(SCM samp_n, SCM snd_n, SCM chn_n)
       update_graph(cp, NULL);
       return(SCM_BOOL_T);
     }
-  scm_throw(NO_SUCH_SAMPLE,
-	    SCM_LIST4(TO_SCM_STRING(S_delete_sample),
-		      samp_n,
-		      snd_n, chn_n));
+  ERROR(NO_SUCH_SAMPLE,
+	SCM_LIST4(TO_SCM_STRING(S_delete_sample),
+		  samp_n,
+		  snd_n, chn_n));
   return(samp_n);
 }
 
@@ -3444,10 +3444,10 @@ static SCM g_insert_sample(SCM samp_n, SCM val, SCM snd_n, SCM chn_n)
   cp = get_cp(snd_n, chn_n, S_insert_sample);
   beg = TO_C_INT_OR_ELSE(samp_n, 0);
   if (beg < 0) 
-    scm_throw(NO_SUCH_SAMPLE,
-	      SCM_LIST4(TO_SCM_STRING(S_insert_sample),
-			samp_n,
-			snd_n, chn_n));
+    ERROR(NO_SUCH_SAMPLE,
+	  SCM_LIST4(TO_SCM_STRING(S_insert_sample),
+		    samp_n,
+		    snd_n, chn_n));
   ival[0] = MUS_FLOAT_TO_SAMPLE(TO_C_DOUBLE(val));
   insert_samples(TO_C_INT_OR_ELSE(samp_n, 0), 1, ival, cp, S_insert_sample);
   update_graph(cp, NULL);
