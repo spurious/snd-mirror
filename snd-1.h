@@ -1406,7 +1406,6 @@ int snd_translate(const char *oldname, const char *newname, int type);
 /* -------- snd-rec.c -------- */
 
 bool record_in_progress(void);
-void init_recorder(void);
 void save_recorder_state(FILE *fd);
 void close_recorder_audio(void);
 void g_init_recorder(void);

@@ -245,7 +245,9 @@
 (define overall-start-time (get-internal-real-time))
 (snd-display "~%~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
 
-(define (log-mem tst) (if (and (> tests 50) (= (modulo tst 10) 0))  (mem-report)))
+(define (log-mem tst) 
+  (if (> tests 1) (snd-display ";test ~D " tst))
+  (if (and (> tests 50) (= (modulo tst 10) 0))  (mem-report)))
 
 (defmacro without-errors (func)
   `(catch #t 
@@ -1721,7 +1723,7 @@
     (begin
       (run-hook before-test-hook 4)
       (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests)) 
-	(if (> tests 1) (begin (snd-display ";test ~D " clmtest) (mus-sound-prune)))
+	(log-mem clmtest)
 	(clear-listener)
 	(let ((chns (mus-sound-chans "oboe.snd"))
 	      (dl (mus-sound-data-location "oboe.snd"))
@@ -9396,7 +9398,7 @@ EDITS: 5
     (begin 
       (run-hook before-test-hook 6)
       (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests)) 
-	(if (> tests 1) (snd-display ";test ~D " clmtest))
+	(log-mem clmtest)
 	(let ((v0 (make-vct 10))
 	      (v1 (make-vct 10))
 	      (vlst (make-vct 3)))
@@ -10016,7 +10018,6 @@ EDITS: 5
     (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests))
       (run-hook before-test-hook 8)
       (log-mem clmtest)
-      (if (> tests 1) (snd-display ";clm test ~D " clmtest))
       (set! (mus-srate) 22050)
       (if (not (= (mus-file-buffer-size) 8192)) (snd-display ";mus-file-buffer-size: ~D?" (mus-file-buffer-size)))
       (let ((var (catch #t (lambda () (set! (mus-file-buffer-size) #f)) (lambda args args))))
@@ -16931,7 +16932,6 @@ EDITS: 5
       (run-hook before-test-hook 10)
       (do ((test-ctr 0 (1+ test-ctr)))
 	  ((= test-ctr tests))
-	(if (> tests 1) (snd-display ";test ~D" test-ctr))
 	(let ((ind0 (view-sound "oboe.snd"))
 	      (ind1 (view-sound "pistol.snd"))
 	      (v0 (make-vct 100))
@@ -19512,9 +19512,6 @@ EDITS: 5
 		(set! open-files (cons fd open-files))))
 	  
 	  (let ((choose-fd (lambda () (list-ref (sounds) (my-random (length (sounds)))))))
-	    
-	    (if (> tests 1) (begin (snd-display ";main test ~D " test-ctr) (mus-sound-prune)))
-	    
 	    (let* ((frame-list (map frames open-files))
 		   (curloc (max 0 (min 1200 (1- (list-ref frame-list 0))))) ; max 0 since z.snd has 0 frames
 		   (curfd (choose-fd))
@@ -22168,7 +22165,7 @@ EDITS: 5
       (do ((test-16 0 (1+ test-16)))
 	  ((= test-16 tests))
       (let ((oboe (open-sound "oboe.snd")))
-	
+	(log-mem test-16)
 	(for-each
 	 (lambda (func name)
 	   (func)
@@ -26951,7 +26948,8 @@ EDITS: 2
 		   sym2 sym3 sym4 sym5 sym6))
       
       (run-hook before-test-hook 20)
-      (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests)) (if (> tests 1) (snd-display ";test ~D " clmtest))
+      (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests))
+	(log-mem clmtest)
 	  (let ((d0 #f) (d1 #f) (fn #f))
 	    
 	    (let ((index (open-sound "oboe.snd")))
@@ -30502,6 +30500,7 @@ EDITS: 2
 	    
 	    (let ((vect (make-vector 3))
 		  (v (make-vct 3))
+		  (zero 0.0)
 		  (gen (make-oscil 440)))
 	      (vector-set! vect 0 (make-oscil 440))
 	      (vector-set! vect 1 (make-oscil 440))
@@ -30509,7 +30508,11 @@ EDITS: 2
 	      (vct-map! v (lambda ()
 			    (let ((val (vector-ref vect 0)))
 			      (oscil val 0.0))))
-	      (if (not (vequal v (vct 0.0 0.125 0.248))) (snd-display ";vect gen vct-map 1.0: ~A" v)))
+	      (if (not (vequal v (vct 0.0 0.125 0.248))) (snd-display ";vect gen vct-map 1.0: ~A" v))
+	      (vct-map! v (lambda ()
+			    (let ((val (vector-ref vect 0)))
+			      (oscil val zero))))
+	      (if (not (vequal v (vct 0.367 0.481 0.587))) (snd-display ";vect gen vct-map 1.0 (phase): ~A" v)))
 	    
 	    (define clm_vector (make-vector 2))
 	    (vector-set! clm_vector 0 (make-oscil))
@@ -31179,6 +31182,18 @@ EDITS: 2
 		(if (fneq (vct-ref rdat i) 1.0)
 		    (snd-display ";run impulse->flat (2)? ~A" rdat))))
 	    
+	    (let ((rdat (make-vct 16))
+		  (idat (make-vct 16))
+		  (v (make-vct 1)))
+	      (vct-set! rdat 0 1.0)
+	      (vct-map! v (lambda ()
+			    (spectrum rdat idat)
+			    0.0))
+	      (do ((i 0 (1+ i)))
+		  ((= i 8)) 
+		(if (fneq (vct-ref rdat i) 1.0)
+		    (snd-display ";run impulse->flat (3)? ~A" rdat))))
+	    
 	    (let ((mx1 (make-mixer 2))
 		  (mx2 (make-mixer 2))
 		  (v (make-vct 1)))
@@ -31661,6 +31676,74 @@ EDITS: 2
 	      
 	      (close-sound ind))
 	    
+	    (let ((val (catch 'oops
+			      (lambda ()
+				(run (lambda ()
+				       (let ((inner 0))
+					 (do ((i 0 (1+ i)))
+					     ((= i 10) inner)
+					   (if (= inner 3)
+					       (throw 'oops))
+					   (set! inner i))))))
+			      (lambda args (car args)))))
+	      (if (not (eq? val 'oops)) (snd-display ";run throw: ~A" val)))
+	    
+	    (let ((outer 0))
+	      (let ((val (catch 'oops
+				(lambda ()
+				  (run (lambda ()
+					 (let ((inner 0))
+					   (do ((i 0 (1+ i)))
+					       ((= i 10) inner)
+					     (set! outer i)
+					     (if (= inner 3)
+						 (throw 'oops))
+					     (set! inner i))))))
+				(lambda args (car args)))))
+		(if (not (eq? val 'oops)) (snd-display ";run throw: ~A" val))
+		(if (not (= outer 4)) (snd-display ";run throw reset outer: ~A" outer))))
+
+	    (let ((val (run (lambda () (let ((v (make-vct 2 .1))) (define (ho xv) (declare (xv vct)) (vct-ref xv 1)) (ho v))))))
+	      (if (fneq val 0.1) (snd-display ";run embedded lambda arg vct: ~A" val)))
+	    (let ((val (run (lambda () (let ((v (make-vct 2 .1))) (define (ho) (make-vct 3 .5)) (vct-ref (ho) 0))))))
+	      (if (fneq val 0.5) (snd-display ";run embedded lambda rtn vct: ~A" val)))
+	    (let ((val (run (lambda () (let ((v (make-sound-data 2 3))) (define (ho xv) (declare (xv sound-data)) (sound-data-chans xv)) (ho v))))))
+	      (if (not (= val 2)) (snd-display ";run embedded lambda arg sound-data: ~A" val)))
+	    (let ((val (run (lambda () (let ((v (make-sound-data 2 3))) (define (ho) (make-sound-data 3 5)) (sound-data-length (ho)))))))
+	      (if (not (= val 5)) (snd-display ";run embedded lambda rtn sound-data: ~A" val)))
+	    (let ((ind (open-sound "oboe.snd")))
+	      (let ((val (run (lambda () 
+				(let ((r (make-sample-reader 1000 ind 0))) 
+				  (define (ho rd) (declare (rd sample-reader)) (next-sample rd)) 
+				  (ho r))))))
+		(if (fneq val (sample 1000)) (snd-display ";run embedded lambda arg sample-reader: ~A ~A" (sample 1000) val)))
+	      (let ((val (run (lambda ()
+				(define (ho) (make-sample-reader 1000 ind 0))
+				(read-sample (ho))))))
+		(if (fneq val (sample 1000)) (snd-display ";run embedded lambda rtn sample-reader: ~A ~A" (sample 1000) val)))
+	      (let ((mix1 (mix-vct (make-vct 3 .1))))
+		(let ((val (run (lambda () 
+				  (let ((r (make-mix-sample-reader mix1))) 
+				    (define (ho rd) (declare (rd mix-sample-reader)) (read-mix-sample rd)) 
+				    (ho r))))))
+		  (if (fneq val .1) (snd-display ";run embedded lambda arg mix-sample-reader: ~A" val)))
+		(let ((val (run (lambda ()
+				  (define (ho) (make-mix-sample-reader mix1))
+				  (read-mix-sample (ho))))))
+		  (if (fneq val .1) (snd-display ";run embedded lambda rtn mix-sample-reader: ~A" val)))
+		(let ((trk (make-track)))
+		  (set! (mix-track mix1) trk)
+		  (let ((val (run (lambda () 
+				    (let ((r (make-track-sample-reader trk))) 
+				      (define (ho rd) (declare (rd track-sample-reader)) (read-track-sample rd))
+				      (ho r))))))
+		    (if (fneq val .1) (snd-display ";run embedded lambda arg track-sample-reader: ~A" val)))
+		  (let ((val (run (lambda ()
+				    (define (ho) (make-track-sample-reader trk))
+				    (read-track-sample (ho))))))
+		    (if (fneq val .1) (snd-display ";run embedded lambda rtn track-sample-reader: ~A" val))))
+		(close-sound ind)))
+
 	    (let ((ind (open-sound "oboe.snd")))
 	      (let ((val (run (lambda () (samples->vct 1000 10 ind 0 (make-vct 10))))))
 		(if (not (vequal val (vct 0.033 0.035 0.034 0.031 0.026 0.020 0.013 0.009 0.005 0.004)))
@@ -40072,6 +40155,7 @@ EDITS: 2
 	    (run-hook before-test-hook 28)
 	    (do ((test-28 0 (1+ test-28)))
 		((= test-28 tests))
+	      (log-mem test-28)
 	    (for-each (lambda (n)
 			(let ((tag
 			       (catch #t

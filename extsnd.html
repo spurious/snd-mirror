@@ -2654,7 +2654,7 @@ copy sample reader: <a href="#copysamplereader">copy-sample-reader</a><br>
 copy (clone) current sound edit state: <a href="#clonesoundas">clone-sound-as</a><br>
 copy channel data: <a href="#channel2vct">channel-&gt;vct</a> or <a href="#sndsaveas">save-sound-as</a><br>
 copy selection data: <a href="#selection2vct">selection-&gt;vct</a> or <a href="#sndsaveselection">save-selection</a><br>
-copy region data: <a href="#region2vct">region-&gt;vct</a>, <a href="#sndregionsamples2vct">region-samples-&gt;vct, or <a href="#sndsaveregion">save-region</a><br>
+copy region data: <a href="#region2vct">region-&gt;vct</a>, <a href="#sndregionsamples2vct">region-samples-&gt;vct</a>, or <a href="#sndsaveregion">save-region</a><br>
 copy transform data: <a href="#transformsamples2vct">transform-samples-&gt;vct</a><br>
 copy sound-data: <a href="#sounddata2vct">sound-data-&gt;vct</a><br>
 <br>
@@ -3611,7 +3611,7 @@ deleted.
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndsaveregion">save-region</a></em> (reg filename <i>type format comment</i>) </code></span></td></tr>
 <tr><td></td><td>
 save region <i>reg</i> in <i>filename</i> in data format <i>format</i> (default is mus-bshort), header type <i>type</i> (default
-is mus-next), with header comment <i>comment</i>.
+is mus-next), with header comment <i>comment</i>.  Return filename.
 </td></tr>
 
 </table>
@@ -5879,7 +5879,7 @@ is not 0, which sometimes means that the channel arg is simply ignored.  The fol
 (define* (<a name="redochannel">redo-channel</a> #:optional (edits 1) snd chn)
   (if (and snd (not (= (sync snd) 0)) chn)
       (set! (edit-position snd chn) (+ (edit-position snd chn) edits))
-      (redo edits snd)))
+      (<em class=red>redo</em> edits snd)))
 </pre>  
 <br>
 <i>redo</i> simply moves forward in the edit history list, whereas 
@@ -5972,10 +5972,10 @@ position (samples) of right edge of time domain waveform.  See <a href="sndlefts
 block of code, and the result will usually run 10 to 20 times faster.  In the context of with-sound, run is used
 to speed up instrument bodies.  My timing tests indicate that Snd+Run instruments are within a factor of two to four
 of the speed of CL+run+C in CLM.
-<br><br><pre>
+<br><pre>
 (define (ws-sine freq)
   (let ((o (make-oscil freq)))
-    (run
+    (<em class=red>run</em>
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 100))
@@ -5983,6 +5983,23 @@ of the speed of CL+run+C in CLM.
 </pre></td></tr>
 
 <tr><td></td><td>
+Functions embedded within run (leaving aside the "thunk" argument itself) need to declare the type of their arguments (the type defaults to integer, and
+<b>run</b> assumes each variable has one type throughout its life).  So, the following code
+displays "0", rather than "3.14":
+<br>
+<pre>
+  (<em class=red>run</em> (lambda () (let ((x 3.14)) (<em class=red>define</em> (a b) (display b)) (a x))))
+</pre>
+The "b" argument to "a" is assumed to be an integer, and passing in a float 
+causes nothing but confusion.  To get this code to work right:
+<br>
+<pre>
+  (<em class=red>run</em> (lambda () (let ((x 3.14)) (<em class=red>define</em> (a b) (<em class=red>declare</em> (b real)) (display b)) (a x))))
+</pre>
+<b>declare</b> is modelled after Common Lisp's declare; it is specific to run.
+For more examples see <a href="#ptreechannel">Virtual Edits</a> and, in
+particular, <a href="#cosinechannelviaptree">cosine-channel-via-ptree</a>.
+<br><br>
 This optimization is also hidden in many contexts (map-channel, find, etc).  Internally the Snd run macro
 uses 64-bit ints and doubles, so large sounds should not present any numerical problems.
 See <a href="#optimization">optimization</a>
@@ -6233,7 +6250,7 @@ In this case, we found such a sample at position 4423.<br>
 <pre>
 (define every-sample?
   (lambda (proc)
-    (let ((baddy (scan-chan (lambda (y) 
+    (let ((baddy (<em class=red>scan-chan</em> (lambda (y) 
 			      (not (proc y))))))
       (if baddy (set! (cursor) (cadr baddy)))
       (not baddy))))
@@ -8173,7 +8190,7 @@ list of urls.
 				(substring (cadr args) 5)
 				(cadr args)))
 		       (help (snd-help func)))
-		  (if help (help-dialog func help))))
+		  (if help (<em class=red>help-dialog</em> func help))))
 	    args)))
 </pre></td></tr></table>
 </td></tr>

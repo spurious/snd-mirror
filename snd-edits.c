@@ -9762,7 +9762,7 @@ static int snd2sample_free(mus_any *ptr)
 	{
 	  for (i = 0; i < spl->chans; i++)
 	    if (spl->sfs[i])
-	      spl->sfs[i] = free_snd_fd_almost(spl->sfs[i]); /* mimic free-sample-reader */
+	      spl->sfs[i] = free_snd_fd(spl->sfs[i]);
 	  FREE(spl->sfs);
 	  spl->sfs = NULL;
 	}
@@ -10262,21 +10262,6 @@ into some arbitrary place in the tree again?  Would pasting it in
 be analogous to take a certain stage of the edit-history and
 append the rest?
 */
-
-/* 
- * Another possibility: mix as virtual op, ED_MIX would have two readers etc.
- *  this could be done perhaps with ptree-channel: channel-amp-envs for mixed data peaks,
- *    init pos: set up reader for mixed data (or peak-envs)
- *    need mix-amp etc (mix-speed is problematic)
- *    release of mix sample-reader needs to know when closure is unprotected (snd-unprotect-hook? a guardian? snd-protect|unprotect?)
- *    if the last, how to know when to unprotect -- need to know that a given edit list (ptree loc?) is being flushed.
- *    for "small-enough" mixes, the data could be stored in the vct along with a current-loc ptr
- *    how to tie into existing mix-tag support?
- */
-
-/* and ED_REVERSE -- split using pos, no higher cases, peak-env needs check of trailing junk at end
- *  this is implemented via xen-channel in extsnd.html (does that code work for sections?)
- */
 
 /* 
       ramp4, ramp5, ramp6 (these require rmp beg/end in fragment, cur/incr in snd_fd)

@@ -3450,11 +3450,12 @@ static char *Vcts_xrefs[] = {
   "copy vct: {vct-copy}",
   "copy mix: {copy-mix}",
   "copy track: {copy-track}",
-  "copy sample reader: see above",
+  "copy sample reader: {copy-sample-reader}",
   "copy (clone) current sound edit state: {clone-sound-as}",
   "copy channel data: {channel->ct} or {save-sound-as}",
   "copy selection data: {selection->ct} or {save-selection}",
-  "copy region data: {region->ct} or {save-region}",
+  "copy region data: {region->ct}, {region-samples->ct}, or {save-region}",
+  "copy transform data: {transform-samples->ct}",
   "copy sound-data: {sound-data->ct}",
   NULL};
 
@@ -3465,11 +3466,12 @@ static char *Vcts_urls[] = {
   "extsnd.html#vctcopy",
   "extsnd.html#copymix",
   "extsnd.html#copytrack",
-  NULL,
+  "extsnd.html#copysamplereader",
   "extsnd.html#clonesoundas",
   "extsnd.html#channel2vct",
   "extsnd.html#selection2vct",
   "extsnd.html#region2vct",
+  "extsnd.html#transformsamples2vct",
   "extsnd.html#sounddata2vct",
   NULL};
 

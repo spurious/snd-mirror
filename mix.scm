@@ -79,13 +79,15 @@
 
 ;;; -------- pan-mix --------
 
-(define* (pan-mix name #:optional (beg 0) (envelope 1.0) snd (chn 0))
-  "(pan-mix file (start 0) (envelope 1.0) snd chn) mixes 'file' into the sound 'snd' \
+(define* (pan-mix name #:optional (beg 0) (envelope 1.0) snd (chn 0) (auto-delete #f))
+  "(pan-mix file (start 0) (envelope 1.0) snd (chn 0) (auto-delete #f)) mixes 'file' into the sound 'snd' \
 starting at start (in samples) using 'envelope' to pan (0: all chan 0, 1: all chan 1).\
 So, (pan-mix \"oboe.snd\" .1 '(0 0 1 1)) goes from all chan 0 to all chan 1.  If\
 the variable with-tags is #t, the resultant mixes are placed in their own track, and \
 the track envelope controls the panning. \
-If 'envelope' is a scaler, it is turned into an evelope at that value."
+If 'envelope' is a scaler, it is turned into an evelope at that value. 'auto-delete' determines
+whether the in-coming file should be treated as a temporary file and deleted when the mix
+is no longer accessible."
 
   (let ((index (or snd (selected-sound) (and (sounds) (car (sounds)))))
 	(old-with-mix-tags (with-mix-tags)))
@@ -103,7 +105,7 @@ If 'envelope' is a scaler, it is turned into an evelope at that value."
 		    (track-func (if (list? envelope) envelope (list 0 envelope 1 envelope))))
 		(if (= receiving-chans 1)
 		    (if (= incoming-chans 1)
-			(let ((id (mix name beg 0 index 0)))
+			(let ((id (mix name beg 0 index 0 #t auto-delete)))
 			  (if (list? envelope)
 			      (set! (mix-amp-env id 0) envelope)
 			      (set! (mix-amp id 0) envelope))
@@ -111,11 +113,9 @@ If 'envelope' is a scaler, it is turned into an evelope at that value."
 			(as-one-edit
 			 ;; incoming chans > 2 ignored
 			 (lambda ()
-			   (let* ((mix0 (mix name beg 0 index 0))
-				  (mix1 (mix name beg 1 index 0))
-				  (trk (make-track)))
-			     (set! (mix-track mix0) trk)
-			     (set! (mix-track mix1) trk)
+			   (let* ((trk (make-track))
+				  (mix0 (mix name beg 0 index 0 #t auto-delete trk))
+				  (mix1 (mix name beg 1 index 0 #t auto-delete trk)))
 			     (set! (mix-inverted? mix1) #t)
 			     (set! (track-amp-env trk) track-func)
 			     mix0))))
@@ -130,8 +130,8 @@ If 'envelope' is a scaler, it is turned into an evelope at that value."
 			     (as-one-edit
 			      (lambda ()
 				(let* ((trk (make-track))
-				       (mix0 (mix name beg 0 index chan0 (with-mix-tags) #f trk))
-				       (mix1 (mix name beg 0 index chan1 (with-mix-tags) #f trk)))
+				       (mix0 (mix name beg 0 index chan0 #t auto-delete trk))
+				       (mix1 (mix name beg 0 index chan1 #t auto-delete trk)))
 				  (set! (mix-inverted? mix1) #t)
 				  (set! (track-amp-env trk) track-func)
 				  mix0))))
@@ -147,8 +147,8 @@ If 'envelope' is a scaler, it is turned into an evelope at that value."
 			       (as-one-edit
 				(lambda ()
 				  (let* ((trk (make-track))
-					 (mix0 (mix name beg 0 index chan0 (with-mix-tags) #f trk))
-					 (mix1 (mix name beg 1 index chan1 (with-mix-tags) #f trk)))
+					 (mix0 (mix name beg 0 index chan0 #t auto-delete trk))
+					 (mix1 (mix name beg 1 index chan1 #t auto-delete trk)))
 				    (set! (mix-inverted? mix1) #t)
 				    (set! (track-amp-env trk) track-func)
 				    mix0))))
@@ -165,31 +165,20 @@ If 'envelope' is a scaler, it is turned into an evelope at that value."
 
 (define* (pan-mix-selection #:optional (beg 0) (envelope 1.0) snd (chn 0))
   (if (not (selection?))
-      (throw 'no-active-selection (list "pan-mix-selection")))
-  (let ((temp-file (snd-tempnam)))
-    (save-selection temp-file)
-    (let ((new-mix (pan-mix temp-file beg envelope snd chn)))
-      (delete-file temp-file)
-      new-mix)))
+      (throw 'no-active-selection (list "pan-mix-selection"))
+      (pan-mix (save-selection (snd-tempnam)) beg envelope snd chn #t)))
 
 (define* (pan-mix-region reg #:optional (beg 0) (envelope 1.0) snd (chn 0))
   (if (not (region? reg))
-      (throw 'no-such-region (list "pan-mix-region" reg)))
-  (let ((temp-file (snd-tempnam)))
-    (save-region reg temp-file)
-    (let ((new-mix (pan-mix temp-file beg envelope snd chn)))
-      (delete-file temp-file)
-      new-mix)))
+      (throw 'no-such-region (list "pan-mix-region" reg))
+      (pan-mix (save-region reg (snd-tempnam)) beg envelope snd chn #t)))
 
 (define* (pan-mix-vct v #:optional (beg 0) (envelope 1.0) snd (chn 0))
   (let* ((temp-file (snd-tempnam))
 	 (fd (open-sound-file temp-file 1 (srate snd) "")))
     (vct->sound-file fd v (vct-length v))
     (close-sound-file fd (* 4 (vct-length v)))
-    (let ((new-mix (pan-mix temp-file beg envelope snd chn)))
-      (delete-file temp-file)
-      new-mix)))
-
+    (pan-mix temp-file beg envelope snd chn #t)))
 
 (define (mix->vct id)
   "(mix->vct id) returns mix's data in vct"

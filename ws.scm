@@ -1,7 +1,5 @@
 ;;; with-sound and friends
 
-;;; SOMEDAY: mix/track output through outn (perhaps via with-mix?)
-
 (use-modules (ice-9 optargs) (ice-9 format))
 (if (not (defined? 'local-variables)) (load-from-path "debug.scm"))
 
@@ -707,3 +705,12 @@ returning you to the true top-level."
   
 ;;; a test case for ws-debug
 ;;; (with-sound () (fm-violin 0 1 440 .1) (sleep 1) (fm-violin 1 1 440 .1) (sleep 1) (fm-violin 2 1 440 .1) (sleep 1))
+
+;;; SOMEDAY: mix/track output through outn (perhaps via with-mix fixed to use mix?)
+;;;   need a pre-edit/post-edit sequence to fixup reverb each time a mix/track is changed
+;;;   edit-hook after-edit-hook with flag to protect from "normal" editing 
+;;;     need edit-categories?
+;;;   so with-tagged-mix: write data, add mix to postprocess list
+;;;      with-sound mixes before reverb pass
+;;;   or add reverb to mixed data (so reverb moves with it -- affected incorrectly by speed change)
+

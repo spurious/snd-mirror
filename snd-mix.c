@@ -6965,9 +6965,12 @@ static XEN g_track_amp_env(XEN id)
 static XEN g_set_track_amp_env(XEN id, XEN e)
 {
   int track_id;
+  env *new_e;
   track_id = xen_to_c_track(id, S_setB S_track_amp_env);
   XEN_ASSERT_TYPE(XEN_LIST_P(e) || XEN_FALSE_P(e), e, XEN_ARG_2, S_setB S_track_amp_env, "an envelope (a list of breakpoints) or #f");
-  set_track_amp_env(track_id, xen_to_env(e));
+  new_e = xen_to_env(e);
+  set_track_amp_env(track_id, new_e); /* copies env */
+  new_e = free_env(new_e);
   return(e);
 }
 

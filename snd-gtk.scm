@@ -18,6 +18,9 @@
 ;;; make-pixmap
 ;;; notebook-with-top-tabs
 
+;;; TODO: add font selection dialog to view menu and tie choice to various fonts
+;;; TODO: add color selection dialog and so forth
+
 (use-modules (ice-9 format))
 
 (if (not (provided? 'xg))

@@ -66,9 +66,8 @@
  * SOMEDAY: split Scheme from Snd/Clm here and do the latter via an FFI of some sort
  * SOMEDAY: save ptree somehow (local runs make this problematic) -- perhaps definstrument here
  * PERHAPS: xen2sample and make-snd2sample (requires support for snd2sample structs)
+ * SOMEDAY PERHAPS: complex numbers and ratios
  * SOMEDAY: throw with 2nd arg
- * TODO:  (run (lambda () (let ((x 3.14)) (define (a b) (display b)) (a x)))) -> "0" with no warning
- *  also: (run (lambda () (let ((x 3.14)) ((lambda (a) (display a)) x))))
  *
  * LIMITATIONS: <insert anxious lucubration here about DSP context and so on>
  *      variables can have only one type, the type has to be ascertainable somehow (similarly for vector elements)
@@ -6215,15 +6214,19 @@ static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) \
 {return(package(prog, R_INT, CName ## _i, descr_ ##CName ## _i, args, 1));}
 
 /*
+  bool from 1: sound? mix? mark? mix-inverted? mix-locked? track? region?
+  bool from 0: selection?
+  int from 0: selection-position selection-chans selection-frames select-all selected-channel selected-sound mark-sync-max
+  int from 1: mark-sample mark-sync mix-track mix-chans mix-frames mix-position region-chans region-frames region-srate track-track track-chans
+  int from 1/2: track-position track-frames 
+  flt from 1: track-speed track-tempo region-maxamp track-amp
+  flt from 1/2: selection-maxamp mix-amp
+  str from 1: mark-name short-file-name file-name snd-tempnam
+  str from 0: temp-dir save-dir
+  int/bool from 1: sync
+
      current-edit-position
-     mark-sample mark-name mark? mark-sync mark-sync-max
-     mix-chans mix-frames mix-inverted? mix-locked? mix? mix-amp(?) mix-position mix-track
-     region-chans region-frames region-maxamp(?) region? region-srate
-     selected-channel selected-sound select-channel select-sound
-     select-all(?) selection-chans selection-frames selection-maxamp(?) selection? selection-position selection?
-     short-file-name file-name
-     snd-tempnam sound? sync temp-dir save-dir
-     track? track-amp(?) track-chans track-position(?) track-frames(?) track-speed track-tempo track-track
+     select-channel select-sound
 */
 
 INT_OP(mus_data_format_to_bytes_per_sample)
@@ -9009,7 +9012,12 @@ static char *descr_throw_s_1(int *args, ptree *pt)
 }
 static void throw_s_1(int *args, ptree *pt) 
 {
-  XEN_THROW(pt->xens[args[1]], XEN_FALSE);
+  XEN res;
+  res = pt->xens[args[1]];
+  free_ptree(pt);
+  /* free_ptree handles cleanup/global resets -- can we safely call it here? (i.e. no possible catch within run itself) */
+  pt = NULL;
+  XEN_THROW(res, XEN_FALSE);
 }
 static xen_value *throw_1(ptree *prog, xen_value **args, int num_args)
 {
@@ -9936,7 +9944,7 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 	case R_STRING:  return(make_xen_value(R_STRING, add_string_to_ptree(prog, copy_string(XEN_TO_C_STRING(form))), R_CONSTANT)); break;
 	case R_CHAR:    return(make_xen_value(R_CHAR, add_int_to_ptree(prog, (Int)(XEN_TO_C_CHAR(form))), R_CONSTANT)); break;
 	case R_BOOL:    return(make_xen_value(R_BOOL, add_int_to_ptree(prog, (XEN_FALSE_P(form)) ? 0 : 1), R_CONSTANT)); break;
-	case R_LIST:    return(make_xen_value(R_LIST, add_xen_to_ptree(prog, form), R_CONSTANT)); break;
+	  /* case R_LIST:    can't happen */
 	case R_PAIR:    return(make_xen_value(R_PAIR, add_xen_to_ptree(prog, form), R_CONSTANT)); break;
 	case R_KEYWORD: return(make_xen_value(R_KEYWORD, add_xen_to_ptree(prog, form), R_CONSTANT)); break;
 	default:

@@ -1356,7 +1356,7 @@ using data format (default depends on machine), header type (" S_mus_next " by d
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_save_region),
 			 C_TO_XEN_STRING(ss->catch_message)));
-  return(n);
+  return(filename); /* parallel save-selection */
 }
 
 static XEN g_mix_region(XEN chn_samp_n, XEN reg_n, XEN snd_n, XEN chn_n, XEN tid)
