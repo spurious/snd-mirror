@@ -88,6 +88,11 @@
  *   args to same type (i.e. int->float done just once, if possible)
  */
 
+/* TODO: couldn't run symbol handlers be preset as symbol properties rather than
+ *         using strcmp on the symbol name?  Then walk just looks for the
+ *         snd-walk property and evals if found.
+ */
+
 #include "snd.h"
 #include "clm2xen.h"
 
@@ -1850,6 +1855,8 @@ static char *sequential_binds(ptree *prog, XEN old_lets, const char *name)
   return(NULL);
 }
 
+/* TODO: xen-channel with real error (undefined var) -> segfault */
+
 static char *declare_args(ptree *prog, XEN form, int default_arg_type, int separate)
 {
   XEN arg, args, declarations, declaration;
@@ -1863,7 +1870,8 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, int separ
   declarations = XEN_CADDR(form);
   if ((XEN_LIST_P(declarations)) && 
       (XEN_NOT_NULL_P(declarations)) &&
-      (strcmp("declare", XEN_AS_STRING(XEN_CAR(declarations))) == 0))
+      (XEN_SYMBOL_P(XEN_CAR(declarations))) &&
+      (strcmp(XEN_SYMBOL_TO_C_STRING(XEN_CAR(declarations)), "declare") == 0))
     declarations = XEN_CDR(declarations);
   else declarations = XEN_FALSE;
   arg_num = XEN_LIST_LENGTH(args);
@@ -1881,9 +1889,10 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, int separ
 	    {
 	      declaration = XEN_CAR(declarations);
 	      declarations = XEN_CDR(declarations);
-	      if (XEN_EQ_P(XEN_CAR(declaration), arg))
+	      if ((XEN_EQ_P(XEN_CAR(declaration), arg)) &&
+		  (XEN_SYMBOL_P(XEN_CADR(declaration))))
 		{
-		  type = XEN_AS_STRING(XEN_CADR(declaration));
+		  type = XEN_SYMBOL_TO_C_STRING(XEN_CADR(declaration));
 		  if (strcmp(type, "integer") == 0) arg_type = R_INT; else
 		  if (strcmp(type, "string") == 0) arg_type = R_STRING; else
 		  if (strcmp(type, "real") == 0) arg_type = R_FLOAT; else
@@ -2114,7 +2123,8 @@ static xen_value *cond_form(ptree *prog, XEN form, int need_result)
     {
       clause = XEN_CAR(clauses);
       /* check car -- if #t evaluate rest */
-      if (strcmp("else", XEN_AS_STRING(XEN_CAR(clause))) == 0)
+      if ((XEN_SYMBOL_P(XEN_CAR(clause))) &&
+	  (strcmp("else", XEN_SYMBOL_TO_C_STRING(XEN_CAR(clause))) == 0))
 	test_value = make_xen_value(R_BOOL, add_int_to_ptree(prog, TRUE), R_CONSTANT);
       else test_value = walk(prog, XEN_CAR(clause), TRUE);
       if ((test_value == NULL) || (test_value->type != R_BOOL))
@@ -2238,7 +2248,8 @@ static xen_value *case_form(ptree *prog, XEN form, int need_result)
       keys = XEN_CAAR(body);
       if (XEN_SYMBOL_P(keys))
 	{
-	  if (strcmp(XEN_AS_STRING(keys), "else") == 0)
+	  if ((XEN_SYMBOL_P(keys)) &&
+	      (strcmp(XEN_SYMBOL_TO_C_STRING(keys), "else") == 0))
 	    elseval = make_xen_value(R_INT, i, R_CONSTANT);
 	  else 
 	    {
@@ -7278,6 +7289,18 @@ static xen_value *unwrap_xen_object(ptree *prog, XEN form, const char *origin)
   return(run_warn("%s: non-simple arg: %s", origin, XEN_AS_STRING(form)));
 }
 
+#if DEBUGGING
+typedef struct {
+  xen_value *(*walker)(ptree *prog, xen_value **args, int num_args);
+  xen_value *(*special_walker)(ptree *prog, XEN form, int need_result);
+  xen_value *(*set_walker)(ptree *prog, xen_value **args, int num_args); /* doesn't currently fit all cases */
+  int required_args, max_args, result_type, need_int_result;
+  int *arg_types;
+} walk_info;
+
+static XEN walk_sym = XEN_FALSE;
+#endif
+
 static xen_value *walk(ptree *prog, XEN form, int need_result)
 {
   /* walk form, storing vars, making program entries for operators etc */
@@ -7288,14 +7311,29 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
   if (XEN_LIST_P(form))
     {
       XEN function, all_args;
-      char funcname[256];
+      char *funcname = "not-a-function";
       xen_value **args = NULL;
       int i, num_args, float_result = FALSE, constants = 0, booleans = 0, vcts = 0;
       int readers = 0, clms = 0, chars = 0, strings = 0, pairs = 0, lists = 0;
       xen_var *var;
       xen_value *v = NULL;
       function = XEN_CAR(form);
-      mus_snprintf(funcname, 256, "%s", XEN_AS_STRING(function)); /* protect from gc... */
+      /* mus_snprintf(funcname, 256, "%s", XEN_AS_STRING(function)); */ /* protect from gc... */
+      if (XEN_SYMBOL_P(function))
+	funcname = XEN_SYMBOL_TO_C_STRING(function);
+#if DEBUGGING
+      {
+	XEN walker;
+	wlk_info *w;
+	walker = scm_object_property(function, walk_sym);
+	if (XEN_ULONG_P(walker))
+	  {
+	    w = (walk_info *)(XEN_TO_C_ULONG(walker));
+	    fprintf(stderr," found %s (%p): %p (%p), %d %d %s %d\n",
+		    funcname, w, w->walker, oscil_1, w->required_args, w->max_args, type_name(w->result_type), w->need_int_result);
+	  }
+      }
+#endif
 
       switch (funcname[0])
 	{
@@ -7375,6 +7413,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	    if (XEN_LIST_P(function))
 	      v = walk(prog, function, NEED_ANY_RESULT);
 	  /* trying to support stuff like ((vector-ref gens 0) 0.0) here */
+	  /* TODO: check ((vector-ref gens 0) 0.0) */
 	  /*
 	  if (v)
 	    fprintf(stderr, "func: %s %d %s\n", funcname, v->type, type_name(v->type));
@@ -8303,7 +8342,6 @@ int evaluate_ptree_1f2b(void *upt, Float arg)
   return(pt->ints[pt->result->addr]);
 }
 
-Float evaluate_ptreec(void *upt, Float arg, vct *v, int dir);
 Float evaluate_ptreec(void *upt, Float arg, vct *v, int dir)
 {
   ptree *pt = (ptree *)upt;
@@ -8374,6 +8412,7 @@ Float evaluate_ptree_1f2f(void *upt, Float arg) {return(0.0);}
 int evaluate_ptree_1f2b(void *upt, Float arg) {return(0);}
 void *free_ptree(void *upt) {return(NULL);}
 XEN ptree_code(void *p) {return(XEN_FALSE);}
+Float evaluate_ptreec(void *upt, Float arg, vct *v, int dir) {return(0.0);}
 #endif
 /* end with_run && have_guile and so on */
 
@@ -8564,6 +8603,49 @@ XEN_NARGIFY_2(g_vct_map_w, g_vct_map)
 #define g_vct_map_w g_vct_map
 #endif
 
+#if DEBUGGING && WITH_RUN
+static walk_info *make_walker(xen_value *(*walker)(ptree *prog, xen_value **args, int num_args),
+			      xen_value *(*special_walker)(ptree *prog, XEN form, int need_result),
+			      xen_value *(*set_walker)(ptree *prog, xen_value **args, int num_args),
+			      int required_args, 
+			      int max_args, 
+			      int result_type, 
+			      int need_int_result,
+			      int num_arg_types,
+			      ...) /* arg type list, R_NUMBER=int or float, R_ANY=unchecked */
+{
+  walk_info *w;
+  va_list ap;
+  int i;
+  w = (walk_info *)CALLOC(1, sizeof(walk_info));
+  w->walker = walker;
+  w->special_walker = special_walker;
+  w->set_walker = set_walker;
+  w->required_args = required_args;
+  w->max_args = max_args;
+  w->result_type = result_type;
+  w->need_int_result = need_int_result;
+  if (num_arg_types > 0)
+    {
+      va_start(ap, num_arg_types);
+      w->arg_types = (int *)CALLOC(num_arg_types, sizeof(int));
+      for (i = 0; i < num_arg_types; i++)
+	w->arg_types[i] = (int)(va_arg(ap, int));
+      va_end(ap);
+    }
+  return(w);
+}
+
+#define INIT_WALKER(Name, Val) scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL(Name), walk_sym, C_TO_XEN_ULONG(Val))
+
+static void init_walkers(void)
+{
+  walk_sym = scm_string_to_symbol(C_TO_XEN_STRING("snd-walk"));
+  snd_protect(walk_sym);
+  INIT_WALKER("oscil", make_walker(oscil_1, NULL, NULL, 1, 3, R_FLOAT, FALSE, 3, R_CLM, R_NUMBER, R_NUMBER));
+}
+
+#endif
 
 void g_init_run(void)
 {
@@ -8590,4 +8672,8 @@ something it couldn't optimize.  'msg' is a string description of the offending 
 You can often slightly rewrite the form to make run happy."
 
   XEN_DEFINE_HOOK(optimization_hook, S_optimization_hook, 1, H_optimization_hook);      /* arg = message */
+
+#if DEBUGGING && WITH_RUN 
+  init_walkers();
+#endif
 }

@@ -435,6 +435,7 @@ void reflect_edit_history_change(chan_info *cp)
   snd_info *sp;
   int i, eds;
   char *str;
+  if (cp->squelch_update) return;
   ss = cp->state;
   cx = cp->cgx;
   if (cx)

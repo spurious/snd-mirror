@@ -15,6 +15,19 @@ static int gc_protection_size = 0;
 static int gc_last_cleared = -1;
 static int gc_last_set = -1;
 
+#if 0
+void dump_protection(void);
+void dump_protection(void)
+{
+  XEN *gcdata;
+  int i;
+  gcdata = XEN_VECTOR_ELEMENTS(gc_protection);
+  for (i = 0; i < gc_protection_size; i++)
+    if (!(XEN_EQ_P(gcdata[i], DEFAULT_GC_VALUE)))
+      fprintf(stderr,"protect[%i] %p\n",i, gcdata[i]);
+}
+#endif
+
 void snd_protect(XEN obj)
 {
   int i, old_size;
@@ -881,6 +894,7 @@ static XEN g_snd_print(XEN msg)
   listener_append(str);
   if (str) FREE(str);
 #if (!USE_GTK)
+  /* fprintf(stderr,"Q: %d ",XQLength(MAIN_DISPLAY(get_global_state()))); */
   check_for_event(get_global_state());
 #endif
   return(msg);

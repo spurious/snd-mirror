@@ -2891,7 +2891,13 @@ void snd_info_cleanup(snd_info *sp)
 
 void set_sound_pane_file_label(snd_info *sp, char *str)
 {
-  set_button_label(w_snd_name(sp), str);
+  
+  if ((sp->name_string == NULL) || (strcmp(sp->name_string, str) != 0))
+    {
+      if (sp->name_string) FREE(sp->name_string);
+      sp->name_string = copy_string(str);
+      set_button_label(w_snd_name(sp), str); /* this causes an expose event, so it's worth minimizing */
+    }
 }
 
 void set_apply_button(snd_info *sp, int val) 

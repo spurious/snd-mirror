@@ -628,7 +628,7 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 	  return(MUS_WRITE_ERROR);
 	}
     }
-  reporting = ((sp) && (dur > 1000000));
+  reporting = ((sp) && (dur > REPORTING_SIZE));
   if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
   ends = (off_t *)CALLOC(chans, sizeof(off_t));
   sfs = (snd_fd **)CALLOC(chans, sizeof(snd_fd *));

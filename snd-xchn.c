@@ -680,6 +680,7 @@ void reflect_edit_history_change(chan_info *cp)
   int i, eds, items = 0;
   XmString *edits;
   XmString edit;
+  if (cp->squelch_update) return;
 #if (XmVERSION == 1)
   if (0)
 #endif
@@ -687,6 +688,7 @@ void reflect_edit_history_change(chan_info *cp)
       cx = cp->cgx;
       if (cx)
 	{
+
 	  lst = EDIT_HISTORY_LIST(cp);
 	  if (lst)
 	    {

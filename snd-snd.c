@@ -1516,7 +1516,7 @@ Cessate apply_controls(Indicium ptr)
 	  lock_apply(ss, sp);
 	  sp->apply_ok = TRUE;
 	  initialize_apply(sp, ap->hdr->chans, apply_beg, apply_dur); /* snd-dac.c, called only here */
-	  apply_reporting = (apply_dur > (MAX_BUFFER_SIZE * 4));
+	  apply_reporting = (apply_dur > REPORTING_SIZE);
 	  if (apply_reporting) 
 	    start_progress_report(sp, NOT_FROM_ENVED);
 	  ap->i = 0;

@@ -313,6 +313,7 @@ typedef struct snd__info {
   /* moved from global to channel-local 4-Aug-00 */
   void *minibuffer_history, *filter_history;
   int active;
+  char *name_string;
 } snd_info;
 
 #define SND_SRATE(sp) (((sp)->hdr)->srate)
@@ -730,6 +731,7 @@ Float ed_maxamp(chan_info *cp, int edpos);
 void set_ed_selection_maxamp(chan_info *cp, Float val);
 Float ed_selection_maxamp(chan_info *cp);
 void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, off_t num, int pos0, int pos1);
+void reflect_file_change_in_label(chan_info *cp);
 
 
 /* -------- snd-fft.c -------- */
@@ -1360,6 +1362,7 @@ void g_init_run(void);
 XEN ptree_code(void *p);
 Float evaluate_ptree_1f1v1b2f(void *upt, Float arg, vct *v, int dir);
 void *form_to_ptree_3_f(XEN code);
+Float evaluate_ptreec(void *upt, Float arg, vct *v, int dir);
 
 
 /* -------- snd-draw.c -------- */

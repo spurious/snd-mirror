@@ -4348,6 +4348,14 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
       break;
     case CP_SQUELCH_UPDATE:
       cp->squelch_update = XEN_TO_C_BOOLEAN_OR_TRUE(on);
+      if (!(cp->squelch_update))
+	{
+	  /* make sure everything that was squelched before is now correct */
+	  reflect_edit_history_change(cp);
+	  if (cp->edit_ctr == 0)
+	    reflect_file_revert_in_label(cp->sound);
+	  else reflect_file_change_in_label(cp);
+	}
       break;
     case CP_CURSOR_SIZE:
       cp->cursor_size = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, DEFAULT_CURSOR_SIZE, caller);

@@ -1093,7 +1093,6 @@ void mix_complete_file_at_cursor(snd_info *sp, char *str, const char *origin, in
   if ((sp) && (str) && (*str))
     {
       fullname = mus_expand_filename(str);
-      clear_minibuffer(sp);
       cp = any_selected_channel(sp);
       err = mix_complete_file(sp, CURSOR(cp), fullname, origin, with_tag);
       if (err == -2) 

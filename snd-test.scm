@@ -4889,6 +4889,20 @@ EDITS: 5
 	    (snd-display ";xramp+ramp2 0: ~A" (display-edits ind 0 4)))
 	(if (not (vequal case1 (channel->vct)))
 	    (snd-display ";xramp+ramp2 (1): ~A" (channel->vct)))
+
+	(revert-sound ind)
+	(map-channel (lambda (y) 1.0) 0 100)
+	(scale-channel 0.75)
+	(ramp-channel .5 1)
+	(ptree-channel (lambda (y) (* y (/ 1.0 0.75))))
+	(scale-channel 2.0)
+	(ramp-channel 1 .5)
+	(ptree-channel (lambda (y) (* y .25)))
+	(scale-channel 4.0)
+	(ramp-channel 0 1)
+	(if (fneq (maxamp) 1.0)
+	    (snd-display ";rprpr max: ~A" (maxamp)))
+
 	(close-sound ind))
 
       (let ((ind (new-sound "test.snd"))

@@ -718,12 +718,12 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, 
   off_t k;
   mus_sample_t **data0, **data1;
   mus_sample_t *idata0, *idata1;
-  int reporting = 0;
+  int reporting = FALSE;
   char *ofile0 = NULL, *ofile1 = NULL;
   if (dur <= 0) return;
   sp0 = cp0->sound;
   ss = cp0->state;
-  reporting = ((sp0) && (dur > (MAX_BUFFER_SIZE * 10)));
+  reporting = ((sp0) && (dur > REPORTING_SIZE));
   if (reporting) start_progress_report(sp0, NOT_FROM_ENVED);
   if (dur > MAX_BUFFER_SIZE)
     {
@@ -868,7 +868,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 {
   snd_info *sp = NULL;
   snd_state *ss;
-  int reporting = 0;
+  int reporting = FALSE;
   int idiff, jj, full_chan;
   mus_sample_t **data;
   file_info *hdr = NULL;
@@ -891,7 +891,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
   full_chan = ((beg == 0) && (dur == CURRENT_SAMPLES(cp)));
   cur_marks = 0;
   new_marks = NULL;
-  reporting = ((sp) && (dur > (MAX_BUFFER_SIZE * 4)));
+  reporting = ((sp) && (dur > REPORTING_SIZE));
   if (reporting) start_progress_report(sp, from_enved);
   ofile = snd_tempnam(ss);
   hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, (char *)origin);
@@ -1365,7 +1365,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
   sync_info *si;
   snd_state *ss;
   snd_info *sp;
-  int reporting = 0;
+  int reporting = FALSE;
   int i, m, stop_point = 0;
   off_t prebeg = 0;
   off_t scdur, dur, offk;
@@ -1520,7 +1520,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 		  continue;
 		}
 	      dur += order;
-	      reporting = ((sp) && (dur > (MAX_BUFFER_SIZE * 4)));
+	      reporting = ((sp) && (dur > REPORTING_SIZE));
 	      if (reporting) start_progress_report(sp, from_enved);
 	      if (dur > MAX_BUFFER_SIZE)
 		{
@@ -1969,7 +1969,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, int regexpr,
       off_t ioff;
       mus_sample_t **data;
       mus_sample_t *idata;
-      int reporting = 0;
+      int reporting = FALSE;
       int ofd = 0, datumb = 0, temp_file = FALSE;
       file_info *hdr = NULL;
       char *ofile = NULL;
@@ -2013,7 +2013,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, int regexpr,
 	  else data[i] = (mus_sample_t *)CALLOC(dur, sizeof(mus_sample_t)); 
 	}
       j = 0;
-      reporting = (dur > (MAX_BUFFER_SIZE * 4));
+      reporting = (dur > REPORTING_SIZE);
       if (reporting) start_progress_report(sp, from_enved);
       if (si->chans > 1)
 	{
@@ -2470,7 +2470,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
   snd_fd *sf = NULL;
   XEN errstr;
   off_t kp, len, j = 0, num;
-  int reporting = 0, rpt = 0, rpt4, i, cured, pos;
+  int reporting = FALSE, rpt = 0, rpt4, i, cured, pos;
   XEN res = XEN_FALSE;
   char *errmsg;
   char *filename;
@@ -2532,7 +2532,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 	    }
 	}
       sp = cp->sound;
-      reporting = (num > MAX_BUFFER_SIZE);
+      reporting = (num > REPORTING_SIZE);
       if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
       sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
       if (sf == NULL) return(XEN_TRUE);
@@ -2770,7 +2770,6 @@ for the gory details."
 			 s_beg));
   dur = dur_to_samples(s_dur, beg, cp, pos, 3, S_ptree_channel);
   if (dur <= 0) return(XEN_FALSE);
-  clear_minibuffer(cp->sound);
   ptrees_present = ptree_fragments_in_use(cp, beg, dur, pos, XEN_FALSE_P(use_map_channel_fallback));
   if (XEN_PROCEDURE_P(init_func))
     {
@@ -2856,7 +2855,7 @@ static XEN scan_body(void *context)
   int counts = 0, rpt = 0, rpt4 = 0;
   XEN res = XEN_FALSE;
   scan_context *sc = (scan_context *)context;
-  sc->reporting = (sc->num > MAX_BUFFER_SIZE);
+  sc->reporting = (sc->num > REPORTING_SIZE);
   rpt4 = MAX_BUFFER_SIZE / 4;
   ss = get_global_state();
   if (sc->reporting) start_progress_report(sc->sp, NOT_FROM_ENVED);
@@ -2917,7 +2916,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
   XEN errstr;
   off_t kp, num;
 #if (!HAVE_DYNAMIC_WIND)
-  int reporting = 0, rpt = 0, rpt4;
+  int reporting = FALSE, rpt = 0, rpt4;
   XEN res;
 #endif
   int counts = 0, pos;
@@ -3000,7 +2999,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 				     (void *)sc));
   }
 #else
-  reporting = (num > MAX_BUFFER_SIZE);
+  reporting = (num > REPORTING_SIZE);
   if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
   rpt4 = MAX_BUFFER_SIZE / 4;
   ss->stopped_explicitly = FALSE;

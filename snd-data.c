@@ -323,6 +323,7 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
   sp->search_proc = XEN_UNDEFINED;
   sp->prompt_callback = XEN_UNDEFINED;
   sp->delete_me = NULL;
+  sp->name_string = NULL;
   sp->active = TRUE;
   return(sp);
 }
@@ -393,6 +394,8 @@ void free_snd_info(snd_info *sp)
   if (sp->filter_control_env) sp->filter_control_env = free_env(sp->filter_control_env);
   if (sp->saved_controls) free_controls(sp);
   sp->delete_me = NULL;
+  if (sp->name_string) FREE(sp->name_string);
+  sp->name_string = NULL;
   sp->lacp = NULL;
   if (sp->hdr) sp->hdr = free_file_info(sp->hdr);
   if (sp->edited_region) clear_region_backpointer(sp);

@@ -115,17 +115,18 @@ for example"
 
 static XEN g_change_property(XEN winat, XEN name, XEN command)
 {
-  char *c;
+  char *c = NULL;
   /* winat arg needed as well as command arg because we need an atom that is guaranteed to have a value */
   /*   Supposedly WM_STATE is just such an atom */
   XEN_ASSERT_TYPE(XEN_STRING_P(winat), name, XEN_ARG_1, S_change_property, "a string");
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_2, S_change_property, "a string");
   if (XEN_STRING_P(command))
-    c = XEN_TO_C_STRING(command);
-  else c = g_print_1(command);
+    c = copy_string(XEN_TO_C_STRING(command));
+  else c = copy_string(g_print_1(command));
   change_property(get_global_state(), 
 		  XEN_TO_C_STRING(winat), 
 		  XEN_TO_C_STRING(name), c);
+  if (c) FREE(c);
   return(XEN_FALSE);
 }
 

@@ -2004,7 +2004,12 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 
 void set_sound_pane_file_label(snd_info *sp, char *str)
 {
-  set_label(w_snd_name(sp), str);
+  if ((sp->name_string == NULL) || (strcmp(sp->name_string, str) != 0))
+    {
+      if (sp->name_string) FREE(sp->name_string);
+      sp->name_string = copy_string(str);
+      set_label(w_snd_name(sp), str);
+    }
 }
 
 void snd_info_cleanup(snd_info *sp)
