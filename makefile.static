@@ -1,4 +1,4 @@
-# make file for snd in Linux with Motif 2.1 but no Guile
+# make file for snd in Linux with Motif but no Guile
 
 CC = cc
 CFLAGS = -O3 -DHAVE_GUILE=0 -DLINUX -DUSR_LIB_OSS=1 -I/usr/X11R6/include

@@ -610,6 +610,7 @@ static void update_mix_panel(int mix_id)
       gtk_entry_set_text(GTK_ENTRY(w_beg),lab);
 
       chans = mix_input_chans_from_id(mix_id);
+      if (chans > 4) chans = 4; /* TODO: fix this! */
 
       for (i=0;i<chans;i++)
 	{

@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 1
-#define MUS_REVISION 35
-#define MUS_DATE "28-Nov-00"
+#define MUS_REVISION 36
+#define MUS_DATE "28-Dec-00"
 
 /* 
+ * 28-Dec:     added mus_clear_filter_state and other minor tweaks for Snd.
  * 28-Nov:     added Dolph-Chebyshev window (under HAVE_GSL flag -- needs complex trig support).
  * 8-Nov:      added mus_clear_sinc_tables.
  * 12-Oct:     mus_formant_bank takes one input (can't remember why I had an array here)
@@ -345,6 +346,7 @@ Float *mus_make_fir_coeffs      PROTO((int order, Float *env, Float *aa));
 Float *mus_xcoeffs              PROTO((mus_any *ptr));
 Float *mus_ycoeffs              PROTO((mus_any *ptr));
 int mus_order                   PROTO((mus_any *ptr));
+void mus_clear_filter_state     PROTO((mus_any *gen));
 
 Float mus_wave_train            PROTO((mus_any *gen, Float fm));
 mus_any *mus_make_wave_train    PROTO((Float freq, Float phase, Float *wave, int wsize));

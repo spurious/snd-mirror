@@ -4485,10 +4485,10 @@ static void fht(int powerOfFour, Float *array)
 
 #define USE_MUS_FFT 0
 
-void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origin, int over_selection, Float *ur_a)
+void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origin, int over_selection, Float *ur_a, mus_any *gen)
 {
   /* interpret e as frequency response and apply as filter to all sync'd chans */
-  Float *a,*d;
+  Float *a = NULL,*d = NULL;
   Float x;
   sync_state *sc;
   sync_info *si;
@@ -4513,8 +4513,39 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
 #else
   int pow4;
 #endif
+  Float (*filter_body)(mus_any *gen, Float input);
+  Float (*filter_body_2)(mus_any *gen, Float input, Float pm);
+  int arg2 = 0;
 
-  if ((!e) && (!ur_a)) return;
+  if ((!e) && (!ur_a) && (!gen)) return;
+  if (gen)
+    {
+      switch (mus_type(gen))
+	{
+	case MUS_FIR_FILTER: filter_body = mus_fir_filter; break;
+	case MUS_FILTER:     filter_body = mus_filter;     break;
+	case MUS_IIR_FILTER: filter_body = mus_iir_filter; break;
+	case MUS_ONE_ZERO:   filter_body = mus_one_zero;   break;
+	case MUS_ONE_POLE:   filter_body = mus_one_pole;   break;
+	case MUS_TWO_ZERO:   filter_body = mus_two_zero;   break;
+	case MUS_TWO_POLE:   filter_body = mus_two_pole;   break;
+	case MUS_FORMANT:    filter_body = mus_formant;    break;
+
+	case MUS_DELAY:      filter_body_2 = mus_delay;    arg2 = 1; break;
+	case MUS_COMB:       filter_body_2 = mus_comb;     arg2 = 1; break;
+	case MUS_NOTCH:      filter_body_2 = mus_notch;    arg2 = 1; break;
+	case MUS_ALL_PASS:   filter_body_2 = mus_all_pass; arg2 = 1; break;
+
+	default: 
+	  snd_error("%s can't handle %s generators [%s[%d]: %s]",
+		    origin,
+		    mus_name(gen),
+		    __FILE__,__LINE__,__FUNCTION__);
+	  return;
+	  break;
+	  /* MUS_CONVOLVE? MUS_GRANULATE? MUS_SRC? (etc -- clearing/input may be problematic) */
+	}
+    }
   ss = ncp->state;
   sp = ncp->sound;
   sc = get_sync_state_1(ss,sp,ncp,0,over_selection,READ_FORWARD,(over_selection) ? (order-1) : 0);
@@ -4523,7 +4554,7 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
   sfs = sc->sfs;
   scdur = sc->dur;
 
-  if ((!ur_a) && (!over_selection) && (order >= 256) && ((int)((current_ed_samples(ncp)+order)/128) < ss->memory_available))
+  if ((!ur_a) && (!gen) && (!over_selection) && (order >= 256) && ((int)((current_ed_samples(ncp)+order)/128) < ss->memory_available))
     {
       /* use convolution if order is large and there's memory available (and not over_selection) */
       /*   probably faster here would be overlap-add */
@@ -4622,15 +4653,18 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
     }
   else
     {
-      if (ur_a)
-	a = ur_a;
-      else 
+      if (!gen)
 	{
-	  if (order&1) order++;
-	  a = get_filter_coeffs(order,e);
+	  if (ur_a)
+	    a = ur_a;
+	  else 
+	    {
+	      if (order&1) order++;
+	      a = get_filter_coeffs(order,e);
+	    }
+	  if (!a) return;
+	  d = (Float *)CALLOC(order,sizeof(Float));
 	}
-      if (!a) return;
-      d = (Float *)CALLOC(order,sizeof(Float));
       /* now filter all currently sync'd chans (one by one) */
       /* for each decide whether a file or internal array is needed, scale, update edit tree */
       data = (MUS_SAMPLE_TYPE **)CALLOC(1,sizeof(MUS_SAMPLE_TYPE *));
@@ -4663,28 +4697,44 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
 	      else temp_file = 0;
 	      sf = sfs[i];
 	      idata = data[0];
-	      for (m=0;m<order;m++) d[m] = 0.0;
-	      if (over_selection)
+	      if (gen)
 		{
-		  /* see if there's data to pre-load the filter */
-		  if (si->begs[i] >= order)
-		    prebeg = order-1;
-		  else prebeg = si->begs[i];
-		  if (prebeg > 0)
-		    for (m=prebeg;m>0;m--)
-		      d[m] = next_sample_to_float(sf);
+		  mus_clear_filter_state(gen);
+		}
+	      else
+		{
+		  for (m=0;m<order;m++) d[m] = 0.0;
+		  if (over_selection)
+		    {
+		      /* see if there's data to pre-load the filter */
+		      if (si->begs[i] >= order)
+			prebeg = order-1;
+		      else prebeg = si->begs[i];
+		      if (prebeg > 0)
+			for (m=prebeg;m>0;m--)
+			  d[m] = next_sample_to_float(sf);
+		    }
 		}
 	      j = 0;
 	      for (k=0;k<dur;k++)
 		{
-		  x=0.0; 
-		  d[0] = next_sample_to_float(sf);
-		  for (m=order-1;m>0;m--) 
+		  if (gen)
 		    {
-		      x+=d[m]*a[m]; 
-		      d[m]=d[m-1];
-		    } 
-		  x+=d[0]*a[0]; 
+		      if (arg2)
+			x = filter_body_2(gen,next_sample_to_float(sf),0.0);
+		      else x = filter_body(gen,next_sample_to_float(sf));
+		    }
+		  else
+		    {
+		      x=0.0; 
+		      d[0] = next_sample_to_float(sf);
+		      for (m=order-1;m>0;m--) 
+			{
+			  x+=d[m]*a[m]; 
+			  d[m]=d[m-1];
+			} 
+		      x+=d[0]*a[0]; 
+		    }
 		  idata[j] = MUS_FLOAT_TO_SAMPLE(x);
 		  j++;
 		  if (temp_file)
@@ -4735,8 +4785,8 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
 	}
       FREE(data[0]);
       FREE(data);
-      if (!ur_a) FREE(a);
-      FREE(d);
+      if ((a) && (!ur_a)) FREE(a);
+      if (d) FREE(d);
     }
   free_sync_state(sc);
 }
@@ -5027,6 +5077,88 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
   if (e) mus_free(egen);
   free_sync_state(sc);
 }
+
+
+#if 0
+/* this could be used for fast filtering etc */
+void apply_gen(chan_info *cp, mus_any *gen, int beg, int dur, char *origin)
+{
+  snd_fd *sf;
+  file_info *hdr;
+  int i,j,k,ofd = 0,datumb = 0,temp_file,err=0;
+  MUS_SAMPLE_TYPE **data;
+  MUS_SAMPLE_TYPE *idata;
+  int reporting = 0;
+  Float val[1];
+  char *ofile = NULL;
+  snd_state *ss;
+  snd_info *sp;
+  
+  ss = cp->state;
+  sp = cp->sound;
+  hdr = sp->hdr;
+
+  if (dur > MAX_BUFFER_SIZE) /* if smaller than this, we don't gain anything by using a temp file (its buffers are this large) */
+    {
+      temp_file = 1; 
+      ofile = snd_tempnam(ss); /* see warning below -- don't use tmpnam without deleting free */
+      ofd = open_temp_file(ofile,1,hdr,ss);
+      datumb = mus_data_format_to_bytes_per_sample(hdr->format);
+    }
+  else temp_file = 0;
+
+  data = (MUS_SAMPLE_TYPE **)CALLOC(1,sizeof(MUS_SAMPLE_TYPE *));
+  if (temp_file)
+    data[0] = (MUS_SAMPLE_TYPE *)CALLOC(FILE_BUFFER_SIZE,sizeof(MUS_SAMPLE_TYPE)); 
+  else data[0] = (MUS_SAMPLE_TYPE *)CALLOC(dur,sizeof(MUS_SAMPLE_TYPE)); 
+  idata = data[0];
+
+  j=0;
+  reporting = (dur > (MAX_BUFFER_SIZE * 4));
+  if (reporting) start_progress_report(sp,from_enved);
+  sf = init_sample_read(beg,cp,READ_FORWARD);
+
+  for (i=0;i<dur;i++)
+    {
+      /* idata[j] = MUS_FLOAT_TO_SAMPLE(next_sample_to_float(sf)*mus_env(egen)); */
+      j++;
+      if (temp_file)
+	{
+	  if (j == FILE_BUFFER_SIZE)
+	    {
+	      progress_report(sp,S_env_sound,0,0,(Float)i/((Float)dur),from_enved);
+	      err = mus_file_write(ofd,0,j-1,1,data);
+	      j=0;
+	      if (err == -1) break;
+	      if (ss->stopped_explicitly) break;
+	    }
+	}
+    }
+
+  if (temp_file)
+    {
+      if (j>0) mus_file_write(ofd,0,j-1,1,data);
+      close_temp_file(ofd,hdr,dur*datumb,sp);
+    }
+  if (reporting) finish_progress_report(sp,from_enved);
+  if (ss->stopped_explicitly)
+    {
+      ss->stopped_explicitly = 0;
+      if (temp_file) {mus_sound_forget(ofile); remove(ofile);}
+    }
+  else
+    {
+      if (temp_file)
+	file_change_samples(beg,dur,ofile,cp,i,DELETE_ME,LOCK_MIXES,origin);
+      else change_samples(beg,dur,idata,cp,LOCK_MIXES,origin);
+      update_graph(cp,NULL);
+    }
+  sf = free_snd_fd(sf);
+  FREE(data[0]);
+  if ((temp_file) && (ofile)) {free(ofile); ofile=NULL;} /* safe only if snd_tempnam, not tmpnam used */
+  if (data) FREE(data);
+}
+#endif
 
 
 /* various simple editing ops */

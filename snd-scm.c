@@ -2664,7 +2664,7 @@ static SCM g_env_selection(SCM edata, SCM base, SCM snd_n, SCM chn_n)
 static SCM g_env_sound(SCM edata, SCM samp_n, SCM samps, SCM base, SCM snd_n, SCM chn_n)
 {
   #define H_env_sound "(" S_env_sound " env &optional (start-samp 0) samps (env-base 1.0) snd chn) applies\n\
-   amplitude envelope 'env' (a list of breakpoints) to snd's channel chn starting at start-samp, going\n\
+   amplitude envelope 'env' (a list of breakpoints or a CLM env) to snd's channel chn starting at start-samp, going\n\
    either to the end of the sound or for 'samps' samples, with segments interpolating according to 'env-base'"
 
   chan_info *cp;
@@ -2838,7 +2838,7 @@ static SCM g_convolve_with(SCM file, SCM new_amp, SCM snd_n, SCM chn_n)
 
 static SCM g_snd_spectrum(SCM data, SCM win, SCM len, SCM linear_or_dB)
 {
-  #define H_snd_spectrum "(" S_snd_spectrum " data window len linear-or-dB) return spectrum of data (vct) in data\n\
+  #define H_snd_spectrum "(" S_snd_spectrum " data window len linear-or-dB) return magnitude spectrum of data (vct) in data\n\
    using fft-window win and fft length len"
 
   int i,n,linear;
@@ -2995,32 +2995,39 @@ static SCM g_src_selection(SCM ratio_or_env, SCM base)
 static SCM g_filter_sound(SCM e, SCM order, SCM snd_n, SCM chn_n)
 {
   #define H_filter_sound "(" S_filter_sound " filter order &optional snd chn) applies FIR filter to snd's channel chn\n\
-   'filter' is either the frequency response envelope or a vct object with the actual coefficients"
+   'filter' is either the frequency response envelope, a CLM filter, or a vct object with the actual coefficients"
 
   chan_info *cp;
   vct *v;
   int len;
   env *ne = NULL;
-  SCM_ASSERT((gh_vector_p(e)) || (gh_list_p(e)) || (vct_p(e)),e,SCM_ARG1,S_filter_sound);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(order)),order,SCM_ARG2,S_filter_sound);
   ERRCP(S_filter_sound,snd_n,chn_n,3);
   cp = get_cp(snd_n,chn_n,S_filter_sound);
-  len = g_scm2int(order);
-#if HAVE_GUILE_1_4
-  if (len <= 0) scm_out_of_range_pos(S_filter_sound,order,SCM_MAKINUM(2));
-#endif
-  if (vct_p(e)) /* the filter coefficients direct */
+  if (mus_scm_p(e))
+    apply_filter(cp,0,NULL,NOT_FROM_ENVED,S_filter_sound,FALSE,NULL,mus_scm_to_clm(e));
+  else
     {
-      v = get_vct(e);
+      len = g_scm2int(order);
 #if HAVE_GUILE_1_4
-      if (len > v->length) scm_out_of_range_pos(S_filter_sound,order,SCM_MAKINUM(2));
+      if (len <= 0) scm_out_of_range_pos(S_filter_sound,order,SCM_MAKINUM(2));
 #endif
-      apply_filter(cp,len,NULL,NOT_FROM_ENVED,S_filter_sound,FALSE,v->data);
-    }
-  else 
-    {
-      apply_filter(cp,len,ne = get_env(e,gh_double2scm(1.0),S_filter_sound),NOT_FROM_ENVED,S_filter_sound,FALSE,NULL);
-      if (ne) free_env(ne); 
+      if (vct_p(e)) /* the filter coefficients direct */
+	{
+	  v = get_vct(e);
+#if HAVE_GUILE_1_4
+	  if (len > v->length) scm_out_of_range_pos(S_filter_sound,order,SCM_MAKINUM(2));
+#endif
+	  apply_filter(cp,len,NULL,NOT_FROM_ENVED,S_filter_sound,FALSE,v->data,NULL);
+	}
+      else 
+	{
+	  if (gh_vector_p(e) || (gh_list_p(e)))
+	    {
+	      apply_filter(cp,len,ne = get_env(e,gh_double2scm(1.0),S_filter_sound),NOT_FROM_ENVED,S_filter_sound,FALSE,NULL,NULL);
+	      if (ne) free_env(ne); 
+	    }
+	  else scm_wrong_type_arg(S_filter_sound,1,e);
+	}
     }
   return(scm_return_first(SCM_BOOL_T,e));
 }
@@ -3032,26 +3039,33 @@ static SCM g_filter_selection(SCM e, SCM order)
   vct *v;
   int len;
   env *ne = NULL;
-  SCM_ASSERT((gh_vector_p(e)) || (gh_list_p(e)) || (vct_p(e)),e,SCM_ARG1,S_filter_selection);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(order)),order,SCM_ARG2,S_filter_selection);
   if (selection_is_active() == 0) return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_filter_selection))));
   cp = get_cp(SCM_BOOL_F,SCM_BOOL_F,S_filter_selection);
-  len = g_scm2int(order);
-#if HAVE_GUILE_1_4
-  if (len <= 0) scm_out_of_range_pos(S_filter_selection,order,SCM_MAKINUM(2));
-#endif
-  if (vct_p(e)) /* the filter coefficients direct */
+  if (mus_scm_p(e))
+    apply_filter(cp,0,NULL,NOT_FROM_ENVED,S_filter_selection,TRUE,NULL,mus_scm_to_clm(e));
+  else
     {
-      v = get_vct(e);
+      len = g_scm2int(order);
 #if HAVE_GUILE_1_4
-      if (len > v->length) scm_out_of_range_pos(S_filter_sound,order,SCM_MAKINUM(2));
+      if (len <= 0) scm_out_of_range_pos(S_filter_selection,order,SCM_MAKINUM(2));
 #endif
-      apply_filter(cp,len,NULL,NOT_FROM_ENVED,S_filter_selection,TRUE,v->data);
-    }
-  else 
-    {
-      apply_filter(cp,len,ne = get_env(e,gh_double2scm(1.0),S_filter_selection),NOT_FROM_ENVED,S_filter_selection,TRUE,NULL); 
-      if (ne) free_env(ne);
+      if (vct_p(e)) /* the filter coefficients direct */
+	{
+	  v = get_vct(e);
+#if HAVE_GUILE_1_4
+	  if (len > v->length) scm_out_of_range_pos(S_filter_selection,order,SCM_MAKINUM(2));
+#endif
+	  apply_filter(cp,len,NULL,NOT_FROM_ENVED,S_filter_selection,TRUE,v->data,NULL);
+	}
+      else 
+	{
+	  if (gh_vector_p(e) || (gh_list_p(e)))
+	    {
+	      apply_filter(cp,len,ne = get_env(e,gh_double2scm(1.0),S_filter_selection),NOT_FROM_ENVED,S_filter_selection,TRUE,NULL,NULL); 
+	      if (ne) free_env(ne);
+	    }
+	  else scm_wrong_type_arg(S_filter_selection,1,e);
+	}
     }
   return(scm_return_first(SCM_BOOL_T,e));
 }
@@ -3686,8 +3700,8 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure(S_convolve_selection_with,SCM_FNC g_convolve_selection_with,1,1,0),H_convolve_selection_with);
   DEFINE_PROC(gh_new_procedure(S_src_sound,SCM_FNC g_src_sound,1,3,0),H_src_sound);
   DEFINE_PROC(gh_new_procedure(S_src_selection,SCM_FNC g_src_selection,1,1,0),H_src_selection);
-  DEFINE_PROC(gh_new_procedure(S_filter_sound,SCM_FNC g_filter_sound,2,2,0),H_filter_sound);
-  DEFINE_PROC(gh_new_procedure(S_filter_selection,SCM_FNC g_filter_selection,2,0,0),H_filter_selection);
+  DEFINE_PROC(gh_new_procedure(S_filter_sound,SCM_FNC g_filter_sound,1,3,0),H_filter_sound);
+  DEFINE_PROC(gh_new_procedure(S_filter_selection,SCM_FNC g_filter_selection,1,1,0),H_filter_selection);
   DEFINE_PROC(gh_new_procedure(S_graph,SCM_FNC g_graph,1,7,0),H_graph);
 #if HAVE_GUILE_1_3_0
   DEFINE_PROC(gh_new_procedure(S_string_length,SCM_FNC g_string_length,1,0,0),H_string_length);

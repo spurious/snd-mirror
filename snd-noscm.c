@@ -744,7 +744,7 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,S_filter_sound) == 0) 
 	{
 	  cp = get_cp(ss,str[3],str[4]); 
-	  if (cp) apply_filter(cp,istr(str[2]),scan_envelope(str[1]),NOT_FROM_ENVED,S_filter_sound,FALSE,NULL); 
+	  if (cp) apply_filter(cp,istr(str[2]),scan_envelope(str[1]),NOT_FROM_ENVED,S_filter_sound,FALSE,NULL,NULL); 
 	  isym(ss,0); 
 	  return(0);
 	}
@@ -756,7 +756,7 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,S_filter_selection) == 0) 
 	{
 	  cp = get_cp(ss,str[3],str[4]); 
-	  if (cp) apply_filter(cp,istr(str[2]),scan_envelope(str[1]),NOT_FROM_ENVED,S_filter_selection,TRUE,NULL); 
+	  if (cp) apply_filter(cp,istr(str[2]),scan_envelope(str[1]),NOT_FROM_ENVED,S_filter_selection,TRUE,NULL,NULL); 
 	  isym(ss,0); 
 	  return(0);
 	}

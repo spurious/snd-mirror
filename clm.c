@@ -804,7 +804,7 @@ static int free_delay(void *gen)
 static char *inspect_delay(void *ptr)
 {
   dly *gen = (dly *)ptr;
-  char *desc;
+  char *desc,*arr = NULL;
   desc = make_big_desc_buf(ptr,FALSE);
   if (desc) 
     sprintf(desc,"dly line[%d,%d at %d,%d (%s)]: %s, xscl: %f, yscl: %f",
@@ -813,9 +813,10 @@ static char *inspect_delay(void *ptr)
 	  gen->loc,
 	  gen->zloc,
 	  (gen->line_allocated) ? "local" : "external",
-	  print_array(gen->line,gen->size,(gen->zdly) ? gen->zloc : gen->loc),
+	  arr = print_array(gen->line,gen->size,(gen->zdly) ? gen->zloc : gen->loc),
 	  gen->xscl,
 	  gen->yscl);
+  if (arr) FREE(arr);
   return(desc);
 }
 
@@ -2439,14 +2440,17 @@ typedef struct {
 static char *inspect_flt(void *ptr)
 {
   flt *gen = (flt *)ptr;
-  char *desc;
+  char *desc,*arr1 = NULL,*arr2 = NULL,*arr3 = NULL;
   desc = make_big_desc_buf(ptr,FALSE);
   if (desc) sprintf(desc,"flt order: %d, state (%s): %s, x: %s, y: %s",
 		    gen->order,
 		    (gen->state_allocated) ? "local" : "external",
-		    print_array(gen->state,gen->order,0),
-		    print_array(gen->x,gen->order,0),
-		    print_array(gen->y,gen->order,0));
+		    arr1 = print_array(gen->state,gen->order,0),
+		    arr2 = print_array(gen->x,gen->order,0),
+		    arr3 = print_array(gen->y,gen->order,0));
+  if (arr1) FREE(arr1);
+  if (arr2) FREE(arr2);
+  if (arr3) FREE(arr3);
   return(desc);
 }
 
@@ -2497,6 +2501,7 @@ Float mus_iir_filter (mus_any *ptr, Float input)
 int mus_filter_p (mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_FILTER));}
 int mus_fir_filter_p (mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_FIR_FILTER));}
 int mus_iir_filter_p (mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_IIR_FILTER));}
+static Float *filter_data(void *ptr) {return(((flt *)ptr)->state);}
 
 static int free_filter(void *ptr)
 {
@@ -2528,7 +2533,7 @@ static mus_any_class FILTER_CLASS = {
   &describe_filter,
   &inspect_flt,
   &filter_equalp,
-  0,0,
+  &filter_data,0,
   &filter_length,
   0,
   0,0,0,0,
@@ -2542,7 +2547,7 @@ static mus_any_class FIR_FILTER_CLASS = {
   &describe_filter,
   &inspect_flt,
   &filter_equalp,
-  0,0,
+  &filter_data,0,
   &filter_length,
   0,
   0,0,0,0,
@@ -2556,7 +2561,7 @@ static mus_any_class IIR_FILTER_CLASS = {
   &describe_filter,
   &inspect_flt,
   &filter_equalp,
-  0,0,
+  &filter_data,0,
   &filter_length,
   0,
   0,0,0,0,
@@ -2661,6 +2666,38 @@ Float *mus_make_fir_coeffs(int order, Float *env, Float *aa)
 }
 
 
+void mus_clear_filter_state(mus_any *gen)
+{
+  int i,len;
+  Float *state;
+  smpflt *ptr;
+  switch (mus_type(gen))
+    {
+    case MUS_FIR_FILTER:
+    case MUS_FILTER:
+    case MUS_IIR_FILTER:
+    case MUS_DELAY:
+    case MUS_COMB:
+    case MUS_NOTCH:
+    case MUS_ALL_PASS:
+      state = mus_data(gen);
+      len = mus_length(gen);
+      for (i=0;i<len;i++) state[i]=0.0;
+      break;
+    case MUS_ONE_ZERO:
+    case MUS_ONE_POLE:
+    case MUS_TWO_ZERO:
+    case MUS_TWO_POLE:
+    case MUS_FORMANT:
+      ptr = (smpflt *)gen;
+      ptr->x1 = 0.0;
+      ptr->x2 = 0.0;
+      ptr->y1 = 0.0;
+      ptr->y2 = 0.0;
+      break;
+    }
+}
+
 
 /* ---------------- waveshape ---------------- */
 
@@ -2677,12 +2714,13 @@ typedef struct {
 static char *inspect_ws(void *ptr)
 {
   ws *gen = (ws *)ptr;
-  char *desc;
+  char *desc,*arr = NULL;
   desc = make_big_desc_buf(ptr,FALSE);
   if (desc) sprintf(desc,"ws freq: %f, phase: %f, offset: %f, table[%d (%s)]: %s",
 		    gen->freq,gen->phase,gen->offset,gen->table_size,
 		    (gen->table_allocated) ? "local" : "external",
-		    print_array(gen->table,gen->table_size,0));
+		    arr = print_array(gen->table,gen->table_size,0));
+  if (arr) FREE(arr);
   return(desc);
 }
 
@@ -2936,14 +2974,20 @@ enum {ENV_SEG,ENV_STEP,ENV_EXP};
 static char *inspect_seg(void *ptr)
 {
   seg *gen = (seg *)ptr;
-  char *desc;
+  char *desc,*arr = NULL,*str1 = NULL,*str2 = NULL;
   desc = make_big_desc_buf(ptr,FALSE);
   if (desc) sprintf(desc,"seg rate: %f, current_value: %f, base: %f, offset: %f, scaler: %f, power: %f, init_y: %f, init_power: %f, b1: %f, pass: %d, end: %d, style: %d, index: %d, size: %d, original_data[%d]: %s, rates[%d]: %s, passes[%d]: %s",
 		    gen->rate,gen->current_value,gen->base,gen->offset,gen->scaler,gen->power,gen->init_y,gen->init_power,gen->b1,
 		    gen->pass,gen->end,gen->style,gen->index,gen->size,
-		    gen->size * 2,print_array(gen->original_data,gen->size*2,0),
-		    gen->size,print_double_array(gen->rates,gen->size,0),
-		    gen->size,print_int_array(gen->passes,gen->size,0));
+		    gen->size * 2,
+		    arr = print_array(gen->original_data,gen->size*2,0),
+		    gen->size,
+		    str1 = print_double_array(gen->rates,gen->size,0),
+		    gen->size,
+		    str2 = print_int_array(gen->passes,gen->size,0));
+  if (arr) FREE(arr);
+  if (str1) FREE(str1);
+  if (str2) FREE(str2);
   return(desc);
 }
 
@@ -3646,12 +3690,13 @@ typedef struct {
 static char *inspect_rblk(void *ptr)
 {
   rblk *gen = (rblk *)ptr;
-  char *desc;
+  char *desc,*arr = NULL;
   desc = make_big_desc_buf(ptr,FALSE);
   if (desc) sprintf(desc,"rblk buf[%d (%s)]: %s, loc: %d, fill_time: %f, empty: %d",
 		    gen->size,(gen->buf_allocated) ? "local" : "external",
-		    print_array(gen->buf,gen->size,0),
+		    arr = print_array(gen->buf,gen->size,0),
 		    gen->loc,gen->fill_time,gen->empty);
+  if (arr) FREE(arr);
   return(desc);
 }
 
@@ -3848,16 +3893,17 @@ typedef struct {
 static char *inspect_wt(void *ptr)
 {
   wt *gen = (wt *)ptr;
-  char *desc,*rdesc;
+  char *desc,*rdesc,*arr;
   desc = make_big_desc_buf(ptr,FALSE);
   if (desc) 
     {
       sprintf(desc,"wt freq: %f, phase: %f, wave[%d (%s)]: %s, b:",
 	      gen->freq,gen->phase,gen->wsize,(gen->wave_allocated) ? "local" : "external",
-	      print_array(gen->wave,gen->wsize,0));
+	      arr = print_array(gen->wave,gen->wsize,0));
       rdesc = inspect_rblk((void *)(gen->b));
       strcat(desc,rdesc);
       FREE(rdesc);
+      if (arr) FREE(arr);
     }
   return(desc);
 }
@@ -4704,11 +4750,15 @@ typedef struct {
 static char *inspect_locs(void *ptr)
 {
   locs *gen = (locs *)ptr;
-  char *desc;
+  char *desc,*arr1 = NULL,*arr2 = NULL;
   desc = make_desc_buf(ptr,FALSE);
   if (desc) sprintf(desc,"locs outn[%d]: %s, revn[%d]: %s",
-		    gen->chans,print_array(gen->outn,gen->chans,0),
-		    gen->rev_chans,print_array(gen->revn,gen->rev_chans,0));
+		    gen->chans,
+		    arr1 = print_array(gen->outn,gen->chans,0),
+		    gen->rev_chans,
+		    arr2 = print_array(gen->revn,gen->rev_chans,0));
+  if (arr1) FREE(arr1);
+  if (arr2) FREE(arr2);
   return(desc);
 }
 
@@ -4981,11 +5031,12 @@ typedef struct {
 static char *inspect_sr(void *ptr)
 {
   sr *gen = (sr *)ptr;
-  char *desc;
+  char *desc,*arr = NULL;
   desc = make_big_desc_buf(ptr,FALSE);
   if (desc) sprintf(desc,"sr x: %f, incr: %f, width: %d, len: %d, data[%d]: %s",
 		    gen->x,gen->incr,gen->width,gen->len,gen->width * 2 + 1,
-		    print_array(gen->data,gen->width * 2 + 1,0));
+		    arr = print_array(gen->data,gen->width * 2 + 1,0));
+  if (arr) FREE(arr);
   return(desc);
 }
 
@@ -5226,13 +5277,17 @@ typedef struct {
 static char *inspect_spd_info(void *ptr)
 {
   spd_info *gen = (spd_info *)ptr;
-  char *desc;
+  char *desc,*arr1 = NULL,*arr2 = NULL;
   desc = make_big_desc_buf(ptr,FALSE);
   if (desc) sprintf(desc,"spd_info s20: %d, s50: %d, rmp: %d, amp: %f, len: %d, cur_out: %d, cur_in: %d, input_hop: %d, ctr: %d, output_hop: %d, in_data_start: %d, in_data[%d]: %s, data[%d]: %s",
 		    gen->s20,gen->s50,gen->rmp,gen->amp,gen->len,gen->cur_out,gen->cur_in,gen->input_hop,
 		    gen->ctr,gen->output_hop,gen->in_data_start,
-		    gen->in_data_len,print_array(gen->in_data,gen->in_data_len,0),
-		    gen->block_len,print_array(gen->data,gen->block_len,0));
+		    gen->in_data_len,
+		    arr1 = print_array(gen->in_data,gen->in_data_len,0),
+		    gen->block_len,
+		    arr2 = print_array(gen->data,gen->block_len,0));
+  if (arr1) FREE(arr1);
+  if (arr2) FREE(arr2);
   return(desc);
 }
 
@@ -5790,14 +5845,18 @@ typedef struct {
 static char *inspect_conv(void *ptr)
 {
   conv *gen = (conv *)ptr;
-  char *desc;
+  char *desc,*arr1 = NULL,*arr2 = NULL,*arr3 = NULL,*arr4 = NULL;
   desc = make_big_desc_buf(ptr,FALSE);
   if (desc) sprintf(desc,"conv fftsize: %d, fftsize2: %d, filtersize: %d, ctr: %d, rl1: %s, rl2: %s, buf: %s, filter: %s",
 		    gen->fftsize,gen->fftsize2,gen->filtersize,gen->ctr,
-		    print_array(gen->rl1,gen->fftsize,0),
-		    print_array(gen->rl2,gen->fftsize,0),
-		    print_array(gen->buf,gen->fftsize,0),
-		    print_array(gen->filter,gen->filtersize,0));
+		    arr1 = print_array(gen->rl1,gen->fftsize,0),
+		    arr2 = print_array(gen->rl2,gen->fftsize,0),
+		    arr3 = print_array(gen->buf,gen->fftsize,0),
+		    arr4 = print_array(gen->filter,gen->filtersize,0));
+  if (arr1) FREE(arr1);
+  if (arr2) FREE(arr2);
+  if (arr3) FREE(arr3);
+  if (arr4) FREE(arr4);
   return(desc);
 }
 
@@ -6305,13 +6364,16 @@ typedef struct {
 static char *inspect_pv_info(void *ptr)
 {
   pv_info *gen = (pv_info *)ptr;
-  char *desc;
+  char *desc,*arr1 = NULL,*arr2 = NULL,*arr3 = NULL;
   desc = make_big_desc_buf(ptr,FALSE);
   if (desc) sprintf(desc,"pv_info outctr: %d, interp: %d, filptr: %d, N: %d, D: %d, in_data: %s, amps: %s, freqs: %s",
 		    gen->outctr,gen->interp,gen->filptr,gen->N,gen->D,
-		    print_array(gen->in_data,gen->N,0),
-		    print_array(gen->amps,gen->N/2,0),
-		    print_array(gen->freqs,gen->N,0));
+		    arr1 = print_array(gen->in_data,gen->N,0),
+		    arr2 = print_array(gen->amps,gen->N/2,0),
+		    arr3 = print_array(gen->freqs,gen->N,0));
+  if (arr1) FREE(arr1);
+  if (arr2) FREE(arr2);
+  if (arr3) FREE(arr3);
   return(desc);
 }
 
@@ -6321,7 +6383,7 @@ static int phase_vocoder_equalp(void *p1, void *p2) {return(p1 == p2);}
 
 static char *describe_phase_vocoder(void *ptr)
 {
-  char *desc;
+  char *desc,*arr = NULL;
   pv_info *gen = (pv_info *)ptr;
   desc = make_big_desc_buf(ptr,TRUE);
   if (desc)
@@ -6330,7 +6392,8 @@ static char *describe_phase_vocoder(void *ptr)
 	{
 	  sprintf(desc,"phase_vocoder: outctr: %d, interp: %d, filptr: %d, N: %d, D: %d, in_data: %s",
 		    gen->outctr,gen->interp,gen->filptr,gen->N,gen->D,
-		    print_array(gen->in_data,gen->N,0));
+		    arr = print_array(gen->in_data,gen->N,0));
+	  if (arr) FREE(arr);
 	}
       else describe_bad_gen(ptr,desc,"phase_vocoder","a");
     }

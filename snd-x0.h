@@ -58,12 +58,6 @@
   #endif
 #endif
 
-#if ((XmVERSION >= 2) && (XmREVISION >= 1))
-  #define HAVE_PRINT_SHELL 1
-#else
-  #define HAVE_PRINT_SHELL 0
-#endif
-
 #ifdef SGI
   #define CLOSED_CTRLS_HEIGHT 22
 #else

@@ -1383,9 +1383,10 @@ these are indicated as <em class=targ>reg</em> below.
                                   <i>envelope</i> can also be a CLM env generator (in this case, <i>env-base</i> 
                                   is ignored).
 
-  <b><a name="sndfilterselection">filter-selection</a></b>  (env order)   apply an FIR filter of order <i>order</i> and frequency response <i>env</i>
-                                  to the current selection.  <i>env</i> can also be the filter coefficients
-                                  themselves, in a vct object with at least order elements 
+  <b><a name="sndfilterselection">filter-selection</a></b>  (env <i>order</i>)   apply an FIR filter of order <i>order</i> and frequency response <i>env</i>
+                                  to the current selection.  <i>env</i> can be the filter coefficients
+                                  themselves in a vct object with at least order elements, or 
+                                  a CLM filtering generator (see <a href="filtersound">filter-sound</a>).
 
   <b><a name="sndinsertselection">insert-selection</a></b>  (<i>beg snd chn</i>) insert (paste) selection starting at beg in snd's channel chn.
 
@@ -1620,11 +1621,21 @@ sets its value to val.
 
   <b><a name="sndfilterorder">filter-order</a></b>      (<em class=targ>snd</em>)         <i>snd</i>'s <a href="snd.html#filter">filter</a> order (control panel).
 
-  <b><a name="sndfilter">filter-sound</a></b>      (env order <i>snd chn</i>)
+  <b><a name="sndfilter">filter-sound</a></b>      (env <i>order snd chn</i>)
                                   apply an FIR filter of order <i>order</i> and frequency response <i>env</i>
-                                  to <i>snd</i>'s channel <i>chn</i>.  <i>env</i> can also be the filter coefficients
-                                  themselves, in a vct object with at least order elements (see <a href="grfsnd.html#gmeteor">gmeteor</a>).
-
+                                  to <i>snd</i>'s channel <i>chn</i>.  <i>env</i> can be the filter coefficients
+                                  themselves, in a vct object with at least order elements 
+                                  (see <a href="grfsnd.html#gmeteor">gmeteor</a>).  It can also be any CLM filtering generator 
+                                  (e.g. comb, formant, one-pole, iir-filter, etc). The generator 
+                                  is called in C, not Scheme, so this is the fastest way to apply 
+                                  CLM filtering to a sound.
+<small>
+                                  (filter-sound '(0 1 1 0) 1024)                                        ;FIR filter given frequency response
+                                  (filter-sound (list->vct '(.1 .2 .3 .3 .2 .1)) 6)                     ;FIR filter given actual coefficients
+	                          (filter-sound (make-fir-filter 6 (list->vct '(.1 .2 .3 .3 .2 .1))))   ;CLM FIR filter (same as above)
+	                          (filter-sound (make-delay 120))                                       ;CLM delay (same as insert-silence)
+	                          (filter-sound (make-formant .99 1200))                                ;CLM formant
+</small>
   <b><a name="sndfiltering">filtering</a></b>         (<em class=targ>snd</em>)         #t if <i>snd</i> is filtering (control panel filter button).
 
   <b><a name="sndfindsound">find-sound</a></b>        (filename)    returns the index of <i>filename</i> (used as <i>snd</i> throughout).

@@ -164,7 +164,7 @@ static void apply_enved(snd_state *ss)
 	      if (enved_waving(ss)) env_redisplay(ss);
 	      break;
 	    case SPECTRUM_ENV: 
-	      apply_filter(active_channel,filter_env_order(ss),active_env,FROM_ENVED,"Enved: flt",apply_to_selection,NULL);
+	      apply_filter(active_channel,filter_env_order(ss),active_env,FROM_ENVED,"Enved: flt",apply_to_selection,NULL,NULL);
 	      break;
 	    case SRATE_ENV:
 	      max_env = copy_env(active_env);

@@ -583,6 +583,9 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
 	audio_system=SGI
 	AUDIO_LIB="-laudio"
 	AC_SUBST(AUDIO_LIB)
+        if test $GUILE_CONFIG_works = no; then
+ 	  LIBS="-lc -lm"
+        fi
         ;;
     alpha*) 
         AC_DEFINE(ALPHA)

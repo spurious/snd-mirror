@@ -72,6 +72,7 @@
 ;;; multi-colored rxvt printout
 ;;; dht -- slow Hartley transform 
 ;;; accessors for graph-style fields
+;;; Butterworth filters
 
 
 ;;; TODO: pitch tracker
@@ -1231,6 +1232,10 @@
 	(formant frm x)))))
 
 ; (map-chan (formant-filter .99 2400))
+
+;;; in cases this simple (involving just a straight call on a single filtering generator),
+;;;   it is much faster to use filter-sound:
+;;;   (filter-sound (make-formant .99 2400))
 
 ;;; to impose several formants, just add them in parallel:
 
@@ -3096,4 +3101,65 @@
 		   (ash (+ val 1) 16))))))
 
 
+;;; -------- Butterworth filters
+;;;
+;; translated from CLM butterworth.cl:
+;;
+;;   Sam Heisz, January 1998
+;;   inspired by some unit generators written for Csound by Paris Smaragdis
+;;   who based his work on formulas from 
+;;   Charles Doge, Computer music: synthesis, composition, and performance.
 
+(define root-2 (sqrt 2.0))
+
+(define (butter b sig) (filter b sig))
+
+(define (make-butter-high-pass fq)
+  (let* ((r (tan (/ (* pi fq) (srate))))
+	 (r2 (* r r))
+	 (c1 (/ 1.0 (+ 1.0 (* r root-2) r2)))
+	 (c2  (* -2.0 c1))
+	 (c3 c1)
+	 (c4 (* 2.0 (- r2 1.0) c1))
+	 (c5 (* (+ (- 1.0 (* r root-2)) r2) c1)))
+    (make-filter 3
+		 (list->vct (list c1 c2 c3))
+		 (list->vct (list 0.0 c4 c5)))))
+
+(define (make-butter-low-pass fq)
+  (let* ((r (/ 1.0 (tan (/ (* pi fq) (srate)))))
+	 (r2 (* r r))
+	 (c1 (/ 1.0 (+ 1.0 (* r root-2) r2)))
+	 (c2 (* 2.0 c1))
+	 (c3 c1)
+	 (c4 (* 2.0 (- 1.0 r2) c1))
+	 (c5  (* (+ (- 1.0 (* r root-2)) r2) c1)))
+    (make-filter 3
+		 (list->vct (list c1 c2 c3))
+		 (list->vct (list 0.0 c4 c5)))))
+
+(define (make-butter-band-pass fq bw)
+  (let* ((d (* 2.0 (cos (/ (* 2.0 pi fq) (srate)))))
+	 (c (/ 1.0 (tan (/ (* pi bw) (srate)))))
+	 (c1 (/ 1.0 (+ 1.0 c)))
+	 (c2 0.0)
+	 (c3 (- c1))
+	 (c4 (* (- c) d c1))
+	 (c5 (* (- c 1.0) c1)))
+    (make-filter 3
+		 (list->vct (list c1 c2 c3))
+		 (list->vct (list 0.0 c4 c5)))))
+
+(define (make-butter-band-reject fq bw)
+  (let* ((d  (* 2.0 (cos (/ (* 2.0 pi fq) (srate)))))
+	 (c (tan (/ (* pi bw) (srate))))
+	 (c1 (/ 1.0 (+ 1.0 c)))
+	 (c2 (* (- d) c1))
+	 (c3 c1)
+	 (c4 c2)
+	 (c5 (* (- 1.0 c) c1)))
+    (make-filter 3
+		 (list->vct (list c1 c2 c3))
+		 (list->vct (list 0.0 c4 c5)))))
+
+;;; simplest use is (filter-sound (make-butter-low-pass 500.0))

@@ -154,9 +154,6 @@ char *version_info(void)
 #if SND_AS_WIDGET
 	  "\n    (compiled as a widget)",
 #endif
-#if WITH_PARSE_TREES
-	  "\n    (with embedded parse trees)",
-#endif
 #if HAVE_GUILE
 	  "\n    Guile ",guile_version(),
 #ifdef LIBGUILE_VERSION
@@ -256,6 +253,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+28-Dec:  filter-sound|selection can be passed any CLM filtering gen (Butterworth in examp.scm).\n\
 21-Dec:  env|src-sound|selection can be passed CLM env.\n\
 18-Dec:  enved.scm (suggested by Anders Vinjar).\n\
          play-hook, player?.\n\

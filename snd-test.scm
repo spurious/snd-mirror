@@ -24,18 +24,10 @@
 
 (use-modules (ice-9 format) (ice-9 debug))
 
-
-;;; TODO:
-;;; oscil-bank, formant-bank, sound-seek, parallel-map, syncd cursor (move, delete)
-;;; convolve-files with multichan output, mix with envs and multichan in-out, env mix,
-;;; set-edit-position, various hooks, play-selection, loop-samples
-;;; 36300 52242
-
-
 (if (file-exists? "sndlib.gdbm") (delete-file "sndlib.gdbm"))
 
 (define tests 1)
-(define snd-test 10)
+(define snd-test -1)
 (define full-test (< snd-test 0))
 
 (define include-clm #f)
@@ -1126,6 +1118,7 @@
 	(mus-sound-seek-frame fd 20)
 	(mus-sound-read fd 0 10 1 sdata)
 	(if (fneq (sound-data-ref sdata 0 0) .2) (snd-display (format #f ";mus-sound-seek: ~A?" (sound-data-ref sdata 0 0))))
+	(mus-sound-seek fd 20 0)
 	(mus-sound-close-input fd)))
     )
 
@@ -3066,6 +3059,9 @@
 	      (snd-display (format #f ";edits(6): ~A?" eds)))
 	  (if (not (= (edit-position) (car eds)))
 	      (snd-display (format #f ";edit-position(6): ~A ~A?" (edit-position) eds))))
+	(set! (edit-position) 1)
+	(if (not (= (edit-position) 1))
+	    (snd-display (format #f ";set edit-position(1): ~A ~A?" (edit-position))))
 	(revert-sound nind)
 	(mix "pistol.snd") 
 	(map-chan (zecho .5 .75 6 10.0) 0 65000) 
@@ -3524,6 +3520,12 @@
 	      (snd-display (format #f ";filter-sound env: ~A?" (samples 0 8))))
 	  (undo)
 	  (filter-sound '(0 1 1 0) 1024)
+	  (undo)
+	  (filter-sound (make-fir-filter 6 (list->vct '(.1 .2 .3 .3 .2 .1))))
+	  (undo)
+	  (filter-sound (make-delay 120))
+	  (undo)
+	  (filter-sound (make-formant .99 1200))
 	  (undo)
 	  (let ((vc0 (make-vct 4)))
 	    (vct-set! vc0 0 .125) (vct-set! vc0 1 .25) (vct-set! vc0 2 .25) (vct-set! vc0 3 .125) 

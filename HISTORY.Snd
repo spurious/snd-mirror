@@ -2,6 +2,7 @@ snd change log
 
 2001 ----------------------------------------------------------------
 
+  28-Dec:    filter-sound|selection can be passed any CLM filtering gen (Butterworth in examp.scm).
   21-Dec:    env|src-sound|selection can be passed CLM env.
   18-Dec:    enved.scm (suggested by Anders Vinjar).
              play-hook, player?.

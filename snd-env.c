@@ -2,6 +2,7 @@
 
 /* TODO  enved mix flt and src undo&apply cases need more testing (also clean undo of selection src)
  * TODO  edit of mix sound doesn't follow undo chains?
+ * TODO  fold all of this into CLM (using its envs, not these things)
  */
 
 Float un_dB(snd_state *ss, Float py)

@@ -1267,8 +1267,9 @@ These are specific to the current selection (these can return the error
                                   is ignored).
 
   filter-selection  (env order)   apply an FIR filter of order order and frequency response env
-                                  to the current selection.  env can also be the filter coefficients
-                                  themselves, in a vct object with at least order elements
+                                  to the current selection.  env can be the filter coefficients
+                                  themselves in a vct object with at least order elements, or
+                                  a CLM filtering generator (see filter-sound).
 
   insert-selection  (beg snd chn) insert (paste) selection starting at beg in snd's channel chn.
 
@@ -1498,8 +1499,18 @@ value to val.
 
   filter-sound      (env order snd chn)
                                   apply an FIR filter of order order and frequency response env
-                                  to snd's channel chn.  env can also be the filter coefficients
-                                  themselves, in a vct object with at least order elements (see gmeteor).
+                                  to snd's channel chn.  env can be the filter coefficients
+                                  themselves, in a vct object with at least order elements
+                                  (see gmeteor).  It can also be any CLM filtering generator
+                                  (e.g. comb, formant, one-pole, iir-filter, etc). The generator
+                                  is called in C, not Scheme, so this is the fastest way to apply
+                                  CLM filtering to a sound.
+
+                                  (filter-sound '(0 1 1 0) 1024)                                        ;FIR filter given frequency response
+                                  (filter-sound (list->vct '(.1 .2 .3 .3 .2 .1)) 6)                     ;FIR filter given actual coefficients
+                                  (filter-sound (make-fir-filter 6 (list->vct '(.1 .2 .3 .3 .2 .1))))   ;CLM FIR filter (same as above)
+                                  (filter-sound (make-delay 120))                                       ;CLM delay (same as insert-silence)
+                                  (filter-sound (make-formant .99 1200))                                ;CLM formant
 
   filtering         (snd)         #t if snd is filtering (control panel filter button).
 

@@ -25,6 +25,7 @@
 ;;; TODO filters & EQs
 ;;;      ISO center freqs for a ten band EQ are (reported to be) (16), 31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000
 ;;;      this is kinda pointless -- the filter display in the control panel can have any number of "bands" which can be changed in "real-time".
+;;;      use (filter-sound (make-...)) for normal stuff like notches
 ;;; TODO chorus (see below -- it works on some files)
 ;;; TODO noise reduction -- how?
 ;;; TODO mix/crossfade

@@ -714,6 +714,8 @@ static void update_mix_panel(int mix_id)
       XmTextSetString(w_beg,lab);
 
       chans = mix_input_chans_from_id(mix_id);
+      if (chans > 8) chans = 8; /* TODO: fix this! */
+
       for (i=0;i<chans;i++)
 	{
 	  if (!(XtIsManaged(w_amp_labels[i]))) XtManageChild(w_amp_labels[i]);
