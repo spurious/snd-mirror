@@ -1001,7 +1001,7 @@ static void glbutton_callback(GtkWidget *w, gpointer context)
   sgl_save_currents(ss);
   in_set_with_gl(ss, GTK_TOGGLE_BUTTON(w)->active);
   sgl_set_currents(ss);
-  for_each_chan(ss, update_graph);
+  /* for_each_chan(ss, update_graph); */
 }
 #endif
 

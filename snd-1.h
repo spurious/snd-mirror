@@ -782,10 +782,11 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
 int procedure_ok_with_error(XEN proc, int req_args, const char *caller, const char *arg_name, int argn);
 void snd_protect(XEN obj);
 void snd_unprotect(XEN obj);
-XEN g_c_run_or_hook (XEN hook, XEN args, const char *caller);
-XEN g_c_run_and_hook (XEN hook, XEN args, const char *caller);
-XEN g_c_run_progn_hook (XEN hook, XEN args, const char *caller);
-char *g_c_run_concat_hook(XEN hook, const char *caller, char *initial_string, char *subject);
+XEN run_or_hook (XEN hook, XEN args, const char *caller);
+XEN run_and_hook (XEN hook, XEN args, const char *caller);
+XEN run_progn_hook (XEN hook, XEN args, const char *caller);
+XEN run_hook(XEN hook, XEN args, const char *caller);
+char *run_concat_hook(XEN hook, const char *caller, char *initial_string, char *subject);
 void during_open(int fd, char *file, int reason);
 void after_open(int index);
 int listener_print_p(char *msg);

@@ -197,9 +197,9 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
       XEN result;
       str = (char *)CALLOC(last_position - last_prompt + 1, sizeof(char));
       for (i = last_prompt + 1, j = 0; i < last_position; i++, j++) str[j] = full_str[i];
-      result = g_c_run_or_hook(read_hook, 
-			       XEN_LIST_1(C_TO_XEN_STRING(str)),
-			       S_read_hook);
+      result = run_or_hook(read_hook, 
+			   XEN_LIST_1(C_TO_XEN_STRING(str)),
+			   S_read_hook);
       FREE(str);
       if (XEN_TRUE_P(result)) return;
     }

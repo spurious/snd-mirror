@@ -657,7 +657,7 @@ the hook.
 <!-- -->
 <!-- after-apply-hook -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="afterapplyhook">after-apply-hook</a></em> (snd)</code></span><td align=right><b>progn</b></td>
+<!-- --><span class=defbox><code><em class=def><a name="afterapplyhook">after-apply-hook</a></em> (snd)</code></span><td></td>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called when 'Apply' finishes.
@@ -666,7 +666,7 @@ the hook.
 <!-- -->
 <!-- after-graph-hook -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="aftergraphhook">after-graph-hook</a></em> (snd chn)</code></span><td align=right><b>progn</b></td>
+<!-- --><span class=defbox><code><em class=def><a name="aftergraphhook">after-graph-hook</a></em> (snd chn)</code></span><td></td>
 <!-- --></td></tr>
 <!-- --><tr><td width=150></td><td colspan=2>
 <!-- -->called after a graph is updated or redisplayed (see, for example, <a href="#displaysampsinred">display-samps-in-red</a>).
@@ -675,7 +675,7 @@ the hook.
 <!-- -->
 <!-- after-open-hook -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="afteropenhook">after-open-hook</a></em> (snd)</code></span><td align=right><b>progn</b></td>
+<!-- --><span class=defbox><code><em class=def><a name="afteropenhook">after-open-hook</a></em> (snd)</code></span><td></td>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called just before the new file's window is displayed.
@@ -788,7 +788,7 @@ the hook.
 <!-- -->
 <!-- during-open-hook -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="duringopenhook">during-open-hook</a></em> (fd name reason)</code></span><td align=right><b>progn</b></td>
+<!-- --><span class=defbox><code><em class=def><a name="duringopenhook">during-open-hook</a></em> (fd name reason)</code></span><td></td>
 <!-- --></td></tr>
 <!-- -->
 <!-- --><tr><td></td><td colspan=2>
@@ -1075,9 +1075,50 @@ the hook.
 <!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
+<!-- mark-click-hook -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="markclickhook">mark-click-hook</a></em> (id)</code></span><td align=right><b>progn</b></td>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td colspan=2>
+<!-- -->called when a mark is clicked, return #t to squelch message.
+<!-- --></td></tr>
+<!-- --><tr><td></td><td colspan=2>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(add-hook! <em class=red>mark-click-hook</em>
+  (lambda (n) 
+    (help-dialog "Mark Help" (number-&gt;string (mark-sample n))) 
+    #t))
+<!-- --></pre></td></tr></table></td></tr>
+<!-- --><tr><td colspan=3></td></tr>
+<!-- -->
+<!-- mark-drag-hook -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="markdraghook">mark-drag-hook</a></em> (id)</code></span><td></td>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td colspan=2>
+<!-- -->called when mark id is dragged.
+<!-- --></td></tr>
+<!-- --><tr><td></td><td colspan=2>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(define (report-mark-location id)
+  ;; print current mark location in minibuffer
+  (let ((samp (mark-sample id))
+        (sndchn (mark-home id)))
+
+    (report-in-minibuffer 
+      (format #f "~D (~,3F) ~A[~D]"
+              samp 
+              (/ samp (srate (car sndchn))) 
+              (short-file-name (car sndchn))
+              (cadr sndchn)))))
+
+(add-hook! <em class=red>mark-drag-hook</em> report-mark-location)
+<!-- --></pre></td></tr></table></td></tr>
+<!-- --><tr><td colspan=3></td></tr>
+<!-- -->
 <!-- mark-hook -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="markhook">mark-hook</a></em> (id snd chn reason)</code></span><td align=right><b>progn</b></td>
+<!-- --><span class=defbox><code><em class=def><a name="markhook">mark-hook</a></em> (id snd chn reason)</code></span><td></td>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called when a mark is added, deleted, or moved (but not while moving). 'id' can be -1 (i.e. no specific mark).
@@ -1103,47 +1144,6 @@ the hook.
 			     (if (&lt; (- samp lower) (- higher samp))
 				 lower
 				 higher))))))))
-<!-- --></pre></td></tr></table></td></tr>
-<!-- --><tr><td colspan=3></td></tr>
-<!-- -->
-<!-- mark-click-hook -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="markclickhook">mark-click-hook</a></em> (id)</code></span><td align=right><b>progn</b></td>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td colspan=2>
-<!-- -->called when a mark is clicked, return #t to squelch message.
-<!-- --></td></tr>
-<!-- --><tr><td></td><td colspan=2>
-<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(add-hook! <em class=red>mark-click-hook</em>
-  (lambda (n) 
-    (help-dialog "Mark Help" (number-&gt;string (mark-sample n))) 
-    #t))
-<!-- --></pre></td></tr></table></td></tr>
-<!-- --><tr><td colspan=3></td></tr>
-<!-- -->
-<!-- mark-drag-hook -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="markdraghook">mark-drag-hook</a></em> (id)</code></span><td align=right><b>progn</b></td>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td colspan=2>
-<!-- -->called when mark id is dragged.
-<!-- --></td></tr>
-<!-- --><tr><td></td><td colspan=2>
-<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define (report-mark-location id)
-  ;; print current mark location in minibuffer
-  (let ((samp (mark-sample id))
-        (sndchn (mark-home id)))
-
-    (report-in-minibuffer 
-      (format #f "~D (~,3F) ~A[~D]"
-              samp 
-              (/ samp (srate (car sndchn))) 
-              (short-file-name (car sndchn))
-              (cadr sndchn)))))
-
-(add-hook! <em class=red>mark-drag-hook</em> report-mark-location)
 <!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
@@ -1204,7 +1204,7 @@ the hook.
 <!-- -->
 <!-- mouse-drag-hook -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="mousedraghook">mouse-drag-hook</a></em> (snd chn button state x y) </code></span><td align=right><b>progn</b></td>
+<!-- --><span class=defbox><code><em class=def><a name="mousedraghook">mouse-drag-hook</a></em> (snd chn button state x y) </code></span><td></td>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called upon mouse motion (with button pressed) within lisp graph (see, for example, enved.scm).
@@ -1213,7 +1213,7 @@ the hook.
 <!-- -->
 <!-- mouse-enter-graph-hook -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="mouseentergraphhook">mouse-enter-graph-hook</a></em> (snd chn) </code></span><td align=right><b>progn</b></td>
+<!-- --><span class=defbox><code><em class=def><a name="mouseentergraphhook">mouse-enter-graph-hook</a></em> (snd chn) </code></span><td></td>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called when the mouse enters a channel's drawing area (graph pane).
@@ -1228,7 +1228,7 @@ the hook.
 <!-- -->
 <!-- mouse-enter-label-hook -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="mouseenterlabelhook">mouse-enter-label-hook</a></em> (type position name) </code></span><td align=right><b>progn</b></td>
+<!-- --><span class=defbox><code><em class=def><a name="mouseenterlabelhook">mouse-enter-label-hook</a></em> (type position name) </code></span><td></td>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called when a file viewer or region label 
@@ -1249,7 +1249,7 @@ the hook.
 <!-- -->
 <!-- mouse-enter-listener-hook -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="mouseenterlistenerhook">mouse-enter-listener-hook</a></em> (widget) </code></span><td align=right><b>progn</b></td>
+<!-- --><span class=defbox><code><em class=def><a name="mouseenterlistenerhook">mouse-enter-listener-hook</a></em> (widget) </code></span><td></td>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called when the mouse enters the lisp listener pane. This hook, along with the parallel graph hook
@@ -1275,7 +1275,7 @@ the hook.
 <!-- -->
 <!-- mouse-enter-text-hook -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="mouseentertexthook">mouse-enter-text-hook</a></em> (widget) </code></span><td align=right><b>progn</b></td>
+<!-- --><span class=defbox><code><em class=def><a name="mouseentertexthook">mouse-enter-text-hook</a></em> (widget) </code></span><td></td>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called when the mouse enters a text widget (this is the third of the pointer-focus hooks).
@@ -1290,7 +1290,7 @@ the hook.
 <!-- -->
 <!-- mouse-leave-graph-hook -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="mouseleavegraphhook">mouse-leave-graph-hook</a></em> (snd chn) </code></span><td align=right><b>progn</b></td>
+<!-- --><span class=defbox><code><em class=def><a name="mouseleavegraphhook">mouse-leave-graph-hook</a></em> (snd chn) </code></span><td></td>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called when the mouse leaves a channel's drawing area (graph pane). 
@@ -1299,7 +1299,7 @@ the hook.
 <!-- -->
 <!-- mouse-leave-label-hook -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="mouseleavelabelhook">mouse-leave-label-hook</a></em> (type position name) </code></span><td align=right><b>progn</b></td>
+<!-- --><span class=defbox><code><em class=def><a name="mouseleavelabelhook">mouse-leave-label-hook</a></em> (type position name) </code></span><td></td>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called when the mouse exits one of the labels covered by mouse-enter-label-hook. (See nb.scm)
@@ -1308,7 +1308,7 @@ the hook.
 <!-- -->
 <!-- mouse-leave-listener-hook -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="mousleavelistenerhook">mouse-leave-listener-hook</a></em> (widget) </code></span><td align=right><b>progn</b></td>
+<!-- --><span class=defbox><code><em class=def><a name="mousleavelistenerhook">mouse-leave-listener-hook</a></em> (widget) </code></span><td></td>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called when the mouse leaves the lisp listener pane.
@@ -1317,7 +1317,7 @@ the hook.
 <!-- -->
 <!-- mouse-leave-text-hook -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="mousleavetexthook">mouse-leave-text-hook</a></em> (widget) </code></span><td align=right><b>progn</b></td>
+<!-- --><span class=defbox><code><em class=def><a name="mousleavetexthook">mouse-leave-text-hook</a></em> (widget) </code></span><td></td>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called when the mouse leaves a text widget.
@@ -1326,7 +1326,7 @@ the hook.
 <!-- -->
 <!-- mouse-press-hook -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="mousepresshook">mouse-press-hook</a></em> (snd chn button state x y) </code></span><td align=right><b>progn</b></td>
+<!-- --><span class=defbox><code><em class=def><a name="mousepresshook">mouse-press-hook</a></em> (snd chn button state x y) </code></span><td></td>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called upon mouse button press within lisp graph (see, for example, enved.scm).
@@ -1335,7 +1335,7 @@ the hook.
 <!-- -->
 <!-- mouse-release-hook -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="mousereleasehook">mouse-release-hook</a></em> (snd chn button state x y) </code></span><td align=right><b>progn</b></td>
+<!-- --><span class=defbox><code><em class=def><a name="mousereleasehook">mouse-release-hook</a></em> (snd chn button state x y) </code></span><td></td>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called upon mouse button release within lisp graph (see, for example, enved.scm).
@@ -1344,7 +1344,7 @@ the hook.
 <!-- -->
 <!-- multichannel-mix-hook -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="multichannelmixhook">multichannel-mix-hook</a></em> (ids)</code></span><td align=right><b>progn</b></td>
+<!-- --><span class=defbox><code><em class=def><a name="multichannelmixhook">multichannel-mix-hook</a></em> (ids)</code></span><td></td>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called when a multichannel mix happens in a sync'd sound.
@@ -1381,7 +1381,7 @@ the hook.
 <!-- -->
 <!-- new-widget-hook -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="newwidgethook">new-widget-hook</a></em> (widget)</code></span><td align=right><b>progn</b></td>
+<!-- --><span class=defbox><code><em class=def><a name="newwidgethook">new-widget-hook</a></em> (widget)</code></span><td></td>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called each time a dialog or a new set of channel or sound widgets is created.
@@ -1436,7 +1436,7 @@ the hook.
 <!-- -->
 <!-- optimization-hook -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="optimizationhook">optimization-hook</a></em> (message)</code></span><td align=right><b>progn</b></td>
+<!-- --><span class=defbox><code><em class=def><a name="optimizationhook">optimization-hook</a></em> (message)</code></span><td></td>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called each time the optimizer hits something it can't handle; <i>message</i> tries to give some information about the situation.
@@ -1590,7 +1590,7 @@ the hook.
 <!-- -->
 <!-- select-channel-hook -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="selectchannelhook">select-channel-hook</a></em> (snd chn)</code></span><td align=right><b>progn</b></td>
+<!-- --><span class=defbox><code><em class=def><a name="selectchannelhook">select-channel-hook</a></em> (snd chn)</code></span><td></td>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called when a channel is selected (after the sound has been selected). The arguments are the sound's index and the channel number.
@@ -1599,7 +1599,7 @@ the hook.
 <!-- -->
 <!-- select-mix-hook -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="selectmixhook">select-mix-hook</a></em> (id)</code></span><td align=right><b>progn</b></td>
+<!-- --><span class=defbox><code><em class=def><a name="selectmixhook">select-mix-hook</a></em> (id)</code></span><td></td>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called when a mix is selected. The argument is the newly selected mix's id.
@@ -1608,7 +1608,7 @@ the hook.
 <!-- -->
 <!-- select-sound-hook -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="selectsoundhook">select-sound-hook</a></em> (snd)</code></span><td align=right><b>progn</b></td>
+<!-- --><span class=defbox><code><em class=def><a name="selectsoundhook">select-sound-hook</a></em> (snd)</code></span><td></td>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called when a sound is selected. The argument is the about-to-be-selected sound's index.
@@ -1687,7 +1687,7 @@ the hook.
 <!-- -->
 <!-- stop-dac-hook -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="stopdachook">stop-dac-hook</a></em>()</code></span><td align=right><b>progn</b></td>
+<!-- --><span class=defbox><code><em class=def><a name="stopdachook">stop-dac-hook</a></em>()</code></span><td></td>
 <!-- --></td></tr>
 <!-- -->
 <!-- --><tr><td></td><td colspan=2>
@@ -1696,7 +1696,7 @@ the hook.
 <!-- -->
 <!-- stop-playing-channel-hook -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="stopplayingchannelhook">stop-playing-channel-hook</a></em> (snd chn)</code></span><td align=right><b>progn</b></td>
+<!-- --><span class=defbox><code><em class=def><a name="stopplayingchannelhook">stop-playing-channel-hook</a></em> (snd chn)</code></span><td></td>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called when a sound finishes playing.
@@ -1705,7 +1705,7 @@ the hook.
 <!-- -->
 <!-- stop-playing-hook -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="stopplayinghook">stop-playing-hook</a></em> (snd)</code></span><td align=right><b>progn</b></td>
+<!-- --><span class=defbox><code><em class=def><a name="stopplayinghook">stop-playing-hook</a></em> (snd)</code></span><td></td>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called when a sound finishes playing.
@@ -1743,7 +1743,7 @@ the hook.
 <!-- -->
 <!-- stop-playing-region-hook -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="stopplayingregionhook">stop-playing-region-hook</a></em> (n)</code></span><td align=right><b>progn</b></td>
+<!-- --><span class=defbox><code><em class=def><a name="stopplayingregionhook">stop-playing-region-hook</a></em> (n)</code></span><td></td>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called when a region finishes playing.
@@ -1759,7 +1759,7 @@ the hook.
 <!-- -->
 <!-- transform-hook -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="ffthook">transform-hook</a></em> (snd chn scaler)</code></span><td align=right><b>progn</b></td>
+<!-- --><span class=defbox><code><em class=def><a name="ffthook">transform-hook</a></em> (snd chn scaler)</code></span><td></td>
 <!-- --></td></tr>
 <!-- -->
 <!-- --><tr><td></td><td colspan=2>

@@ -1014,9 +1014,9 @@ void sp_name_click(snd_info *sp)
     {
       /* call name-click-hook (if any) return #t = don't print info in minibuffer */
       if ((XEN_HOOKED(name_click_hook)) &&
-	  (XEN_TRUE_P(g_c_run_or_hook(name_click_hook, 
-				      XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
-				      S_name_click_hook))))
+	  (XEN_TRUE_P(run_or_hook(name_click_hook, 
+				  XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
+				  S_name_click_hook))))
 	return;
       hdr = sp->hdr;
       if (hdr)
@@ -1303,9 +1303,9 @@ static void *make_apply_state(void *xp)
   snd_info *sp = (snd_info *)xp;
   /* call apply-hook (if any) return #t = don't apply */
   if ((XEN_HOOKED(before_apply_hook)) &&
-      (XEN_TRUE_P(g_c_run_or_hook(before_apply_hook, 
-				  XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
-				  S_before_apply_hook))))
+      (XEN_TRUE_P(run_or_hook(before_apply_hook, 
+			      XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
+			      S_before_apply_hook))))
     return(NULL);
   ap = (apply_state *)CALLOC(1, sizeof(apply_state));
   ap->slice = 0;
@@ -1591,9 +1591,9 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
   sgx = sp->sgx;
   if (sgx->apply_in_progress) sgx->apply_in_progress = 0;
   if (XEN_HOOKED(after_apply_hook))
-    g_c_run_progn_hook(after_apply_hook, 
-		       XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
-		       S_after_apply_hook);
+    run_hook(after_apply_hook, 
+	     XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
+	     S_after_apply_hook);
   FREE(ap);
   return(BACKGROUND_QUIT);
 }

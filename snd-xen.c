@@ -831,9 +831,9 @@ int listener_print_p(char *msg)
   if ((msg) && (print_depth == 0) && (strlen(msg) > 0) && (XEN_HOOKED(print_hook)))
     {
       print_depth++;
-      res = g_c_run_or_hook(print_hook, 
-			    XEN_LIST_1(C_TO_XEN_STRING(msg)),
-			    S_print_hook);
+      res = run_or_hook(print_hook, 
+			XEN_LIST_1(C_TO_XEN_STRING(msg)),
+			S_print_hook);
       print_depth--;
     }
  return(XEN_FALSE_P(res));
@@ -1351,6 +1351,7 @@ static XEN g_set_with_gl(XEN val)
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, "set-" S_with_gl, "a boolean");
 #if HAVE_GL
   set_with_gl(ss, XEN_TO_C_BOOLEAN_OR_TRUE(val));
+  for_each_chan(ss, update_graph);
 #endif
   return(C_TO_XEN_BOOLEAN(with_gl(ss)));
 }
@@ -2595,7 +2596,7 @@ static XEN during_open_hook;
 static XEN after_open_hook;
 static XEN output_comment_hook;
 
-XEN g_c_run_progn_hook(XEN hook, XEN args, const char *caller)
+XEN run_progn_hook(XEN hook, XEN args, const char *caller)
 {
 #if HAVE_GUILE
   /* Guile built-in scm_c_run_hook doesn't return the value of the hook procedure(s) and exits on error */
@@ -2616,7 +2617,27 @@ XEN g_c_run_progn_hook(XEN hook, XEN args, const char *caller)
 #endif
 }
 
-XEN g_c_run_or_hook (XEN hook, XEN args, const char *caller)
+XEN run_hook(XEN hook, XEN args, const char *caller)
+{
+#if HAVE_GUILE
+  XEN procs = XEN_HOOK_PROCEDURES(hook);
+  while (XEN_NOT_NULL_P(procs))
+    {
+      if (!(XEN_EQ_P(args, XEN_EMPTY_LIST)))
+	XEN_APPLY(XEN_CAR(procs), args, caller);
+      else XEN_CALL_0(XEN_CAR(procs), caller);
+      procs = XEN_CDR (procs);
+    }
+  return(xen_return_first(XEN_FALSE, args));
+#else
+  if (!(XEN_EQ_P(args, XEN_EMPTY_LIST)))
+    XEN_APPLY(hook, args, caller);
+  else XEN_CALL_0(hook, caller);
+  return(XEN_FALSE);
+#endif
+}
+
+XEN run_or_hook (XEN hook, XEN args, const char *caller)
 {
 #if HAVE_GUILE
   /* Guile built-in scm_c_run_hook doesn't return the value of the hook procedure(s) and calls everything on the list */
@@ -2638,7 +2659,7 @@ XEN g_c_run_or_hook (XEN hook, XEN args, const char *caller)
 #endif
 }
 
-XEN g_c_run_and_hook(XEN hook, XEN args, const char *caller)
+XEN run_and_hook(XEN hook, XEN args, const char *caller)
 {
 #if HAVE_GUILE
   XEN result = XEN_TRUE; /* (and) -> #t */
@@ -2662,22 +2683,22 @@ XEN g_c_run_and_hook(XEN hook, XEN args, const char *caller)
 void during_open(int fd, char *file, int reason)
 {
   if (XEN_HOOKED(during_open_hook))
-    g_c_run_progn_hook(during_open_hook,
-		       XEN_LIST_3(C_TO_XEN_INT(fd),
-				  C_TO_XEN_STRING(file),
-				  C_TO_XEN_INT(reason)),
-		       S_during_open_hook);
+    run_hook(during_open_hook,
+	     XEN_LIST_3(C_TO_XEN_INT(fd),
+			C_TO_XEN_STRING(file),
+			C_TO_XEN_INT(reason)),
+	     S_during_open_hook);
 }
 
 void after_open(int index)
 {
   if (XEN_HOOKED(after_open_hook))
-    g_c_run_progn_hook(after_open_hook,
-		       XEN_LIST_1(C_TO_SMALL_XEN_INT(index)),
-		       S_after_open_hook);
+    run_hook(after_open_hook,
+	     XEN_LIST_1(C_TO_SMALL_XEN_INT(index)),
+	     S_after_open_hook);
 }
 
-char *g_c_run_concat_hook(XEN hook, const char *caller, char *initial_string, char *subject)
+char *run_concat_hook(XEN hook, const char *caller, char *initial_string, char *subject)
 {
   char *newstr = NULL, *tmpstr = NULL;
   if (initial_string) 
@@ -2731,7 +2752,7 @@ char *g_c_run_concat_hook(XEN hook, const char *caller, char *initial_string, ch
 
 char *output_comment(file_info *hdr)
 {
-  return(g_c_run_concat_hook(output_comment_hook, S_output_comment_hook, (hdr) ? hdr->comment : NULL, NULL));
+  return(run_concat_hook(output_comment_hook, S_output_comment_hook, (hdr) ? hdr->comment : NULL, NULL));
 }
 
 #if HAVE_LADSPA

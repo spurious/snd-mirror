@@ -16,11 +16,11 @@ static XEN after_graph_hook;
 static void after_fft(chan_info *cp, Float scaler)
 {
   if (XEN_HOOKED(transform_hook))
-    g_c_run_progn_hook(transform_hook,
-		       XEN_LIST_3(C_TO_SMALL_XEN_INT((cp->sound)->index),
-				  C_TO_SMALL_XEN_INT(cp->chan),
-				  C_TO_XEN_DOUBLE(scaler)),
-		       S_transform_hook);
+    run_hook(transform_hook,
+	     XEN_LIST_3(C_TO_SMALL_XEN_INT((cp->sound)->index),
+			C_TO_SMALL_XEN_INT(cp->chan),
+			C_TO_XEN_DOUBLE(scaler)),
+	     S_transform_hook);
 }
 
 
@@ -423,11 +423,11 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, int graphed)
     {
       XEN res;
       int len;
-      res = g_c_run_or_hook(initial_graph_hook,
-			    XEN_LIST_3(C_TO_SMALL_XEN_INT(sp->index),
-				       C_TO_SMALL_XEN_INT(cp->chan),
-				       C_TO_XEN_DOUBLE(dur)),
-			    S_initial_graph_hook);
+      res = run_or_hook(initial_graph_hook,
+			XEN_LIST_3(C_TO_SMALL_XEN_INT(sp->index),
+				   C_TO_SMALL_XEN_INT(cp->chan),
+				   C_TO_XEN_DOUBLE(dur)),
+			S_initial_graph_hook);
       if (XEN_LIST_P_WITH_LENGTH(res, len))
 	{
 	  if (len > 0) x0 = XEN_TO_C_DOUBLE(XEN_CAR(res));
@@ -2034,6 +2034,24 @@ void reset_spectro(snd_state *ss)
 static void display_channel_time_data(chan_info *cp, snd_info *sp, snd_state *ss);
 static void display_channel_lisp_data(chan_info *cp, snd_info *sp, snd_state *ss);
 static void make_axes(chan_info *cp, axis_info *ap, int x_style, int erase_first);
+#define DONT_CLEAR_GRAPH FALSE
+#define CLEAR_GRAPH TRUE
+
+#if HAVE_GL && HAVE_GTK2
+#if HAVE_GTK_WIDGET_GL_MAKE_CURRENT
+  #define GL_MAKE_CURRENT(Cp) gtk_widget_gl_make_current(channel_graph(Cp))
+  #define GL_SWAP_BUFFERS(Cp) if (gtk_widget_gl_is_double_buffer(channel_graph(Cp))) \
+	                        gtk_widget_gl_swap_buffers(channel_graph(Cp)); \
+                              else glFlush()
+#else
+  #define GL_MAKE_CURRENT(Cp) gdk_gl_drawable_make_current(gtk_widget_get_gl_drawable(channel_graph(Cp)), \
+		                                           gtk_widget_get_gl_context(channel_graph(Cp)))
+  #define GL_SWAP_BUFFERS(Cp) if (gdk_gl_drawable_is_double_buffered(gtk_widget_get_gl_drawable(channel_graph(Cp)))) \
+	                        gdk_gl_drawable_swap_buffers(gtk_widget_get_gl_drawable(channel_graph(Cp))); \
+                              else glFlush()
+#endif
+#endif
+
 static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 {
   sono_info *si;
@@ -2045,7 +2063,7 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
   Float xyz[3];
   Float xoff, yoff, x, y, xincr, yincr, x0, y0, binval, scl = 1.0;
   Float fwidth, fheight, zscl, yval, xval;
-  int bins = 0, slice, i, j, xx, yy;
+  int bins = 0, slice, i, j, xx, yy, old_with_gl = FALSE;
   if (chan_fft_in_progress(cp)) return(FALSE);
   si = (sono_info *)(cp->sonogram_data);
   if ((si) && (si->scale > 0.0))
@@ -2063,6 +2081,7 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	        glReadPixels(fap->graph_x0, 0, fap->width, fap->height, GL_RGB, GL_UNSIGNED_SHORT, array_for_pixels)
 		then PS colorimage op [see gtkplotps.c, ps doc p 225]
 	 TODO: glLightfv needed in gl.c (and others -- is there a max size?)
+	 TODO: multichannel resize: one chan ends up messed up until expose event; can't see why
       */
       if (((sp->nchans == 1) || (sp->channel_style == CHANNELS_SEPARATE)) &&
 	  (color_map(ss) != BLACK_AND_WHITE) &&
@@ -2085,12 +2104,7 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 #if USE_MOTIF
 	  glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)), ss->sgx->cx);
 #else
-  #if HAVE_GTK_WIDGET_GL_MAKE_CURRENT
-	  gtk_widget_gl_make_current(channel_graph(cp));
-  #else
-          gdk_gl_drawable_make_current(gtk_widget_get_gl_drawable(channel_graph(cp)),
-				       gtk_widget_get_gl_context(channel_graph(cp)));
-  #endif
+	  GL_MAKE_CURRENT(cp);
 	  gdk_gl_drawable_wait_gdk(gtk_widget_get_gl_drawable(channel_graph(cp)));
 #endif
 	  if (cp->gl_fft_list == NO_LIST) 
@@ -2239,21 +2253,14 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 			 cp->axis->x0, cp->axis->x1,
 			 SND_SRATE(sp) * cp->spectro_start / 2.0, SND_SRATE(sp) * cp->spectro_cutoff / 2.0,
 			 fap);
-	  make_axes(cp, fap, X_AXIS_IN_SECONDS, FALSE);
+	  make_axes(cp, fap, X_AXIS_IN_SECONDS, DONT_CLEAR_GRAPH);
 	  fap->use_gl = FALSE;
 #if USE_MOTIF
 	  if (ss->gl_has_double_buffer)
 	    glXSwapBuffers(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)));
 	  else glFlush();
 #else
-  #if HAVE_GTK_WIDGET_GL_MAKE_CURRENT
-	  if (gtk_widget_gl_is_double_buffer(channel_graph(cp)))
-	    gtk_widget_gl_swap_buffers(channel_graph(cp));
-  #else
-	  if (gdk_gl_drawable_is_double_buffered(gtk_widget_get_gl_drawable(channel_graph(cp))))
-	    gdk_gl_drawable_swap_buffers(gtk_widget_get_gl_drawable(channel_graph(cp)));
-  #endif
-	  else glFlush();
+	  GL_SWAP_BUFFERS(cp);
 	  gdk_gl_drawable_wait_gl(gtk_widget_get_gl_drawable(channel_graph(cp)));
 #endif
 #if DEBUGGING
@@ -2278,6 +2285,8 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 #endif
 	}
 #endif
+      old_with_gl = with_gl(ss);
+      if (old_with_gl) set_with_gl(ss, FALSE); /* needed to fixup spectro angles/scales etc */
       if (cp->printing) ps_allocate_grf_points();
       scl = si->scale; /* unnormalized fft doesn't make much sense here (just washes out the graph) */
       fp = cp->fft;
@@ -2397,6 +2406,7 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	  if (cp->printing) ps_reset_color();
 	}
       if (cp->hookable) after_fft(cp, 1.0 / scl);
+      if (old_with_gl) set_with_gl(ss, TRUE);
     }
   return(FALSE);
 }
@@ -2444,12 +2454,7 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
 #if USE_MOTIF
       glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)), ss->sgx->cx);
 #else
-  #if HAVE_GTK_WIDGET_GL_MAKE_CURRENT
-      gtk_widget_gl_make_current(channel_graph(cp));
-  #else
-      gdk_gl_drawable_make_current(gtk_widget_get_gl_drawable(channel_graph(cp)),
-				       gtk_widget_get_gl_context(channel_graph(cp)));
-  #endif
+      GL_MAKE_CURRENT(cp);
       gdk_gl_drawable_wait_gdk(gtk_widget_get_gl_drawable(channel_graph(cp)));
 #endif
       glEnable(GL_DEPTH_TEST);
@@ -2497,14 +2502,7 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	glXSwapBuffers(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)));
       else glFlush();
 #else
-  #if HAVE_GTK_WIDGET_GL_MAKE_CURRENT
-      if (gtk_widget_gl_is_double_buffer(channel_graph(cp)))
-	gtk_widget_gl_swap_buffers(channel_graph(cp));
-  #else
-      if (gdk_gl_drawable_is_double_buffered(gtk_widget_get_gl_drawable(channel_graph(cp))))
-	gdk_gl_drawable_swap_buffers(gtk_widget_get_gl_drawable(channel_graph(cp)));
-  #endif
-      else glFlush();
+      GL_SWAP_BUFFERS(cp);
       gdk_gl_drawable_wait_gl(gtk_widget_get_gl_drawable(channel_graph(cp)));
 #endif
 #if DEBUGGING
@@ -2760,7 +2758,8 @@ static void make_axes(chan_info *cp, axis_info *ap, int x_style, int erase_first
   else ax = ap->ax;
   sp = cp->sound;
   setup_axis_context(cp, ax);
-  if (erase_first)
+  /* here is where the graph is cleared(!) -- only use of erase_rectangle */
+  if (erase_first == CLEAR_GRAPH)
     erase_rectangle(cp, ap->ax, ap->graph_x0, ap->y_offset, ap->width, ap->height); 
   make_axes_1(ap, x_style, SND_SRATE(sp), cp->show_axes, cp->printing,
 	      ((sp->channel_style != CHANNELS_COMBINED) || 
@@ -2787,12 +2786,12 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
       (XEN_HOOKED(graph_hook)))
     {
       ss->graph_hook_active = TRUE;
-      res = g_c_run_progn_hook(graph_hook,
-			       XEN_LIST_4(C_TO_SMALL_XEN_INT((cp->sound)->index),
-					  C_TO_SMALL_XEN_INT(cp->chan),
-					  C_TO_XEN_DOUBLE((cp->axis)->y0),
-					  C_TO_XEN_DOUBLE((cp->axis)->y1)),
-			       S_graph_hook);
+      res = run_progn_hook(graph_hook,
+			   XEN_LIST_4(C_TO_SMALL_XEN_INT((cp->sound)->index),
+				      C_TO_SMALL_XEN_INT(cp->chan),
+				      C_TO_XEN_DOUBLE((cp->axis)->y0),
+				      C_TO_XEN_DOUBLE((cp->axis)->y1)),
+			   S_graph_hook);
       /* (add-hook! graph-hook (lambda (a b c d) (snd-print (format #f "~A ~A ~A ~A" a b c d)))) */
       ss->graph_hook_active = FALSE;
       if (XEN_TRUE_P(res)) return;
@@ -2907,15 +2906,18 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	  if (cp->time_graph_type == GRAPH_TIME_AS_WAVOGRAM)
 	    {
 	      if (ap->y_axis_y0 == ap->y_axis_y1) 
-		make_axes(cp, ap, cp->x_axis_style, FALSE); /* first time needs setup */
+		make_axes(cp, ap, cp->x_axis_style, DONT_CLEAR_GRAPH); /* first time needs setup */
 	      ap->y0 = ap->x0;
 	      ap->y1 = ap->y0 + (Float)(cp->wavo_trace * (ap->y_axis_y0 - ap->y_axis_y1)) / ((Float)(cp->wavo_hop) * SND_SRATE(sp));
 	      ap->x1 = ap->x0 + (double)(cp->wavo_trace) / (double)SND_SRATE(sp);
 	    }
-	  if ((with_gl(ss) == FALSE) || (cp->time_graph_type != GRAPH_TIME_AS_WAVOGRAM))
+	  if ((with_gl(ss) == FALSE) || 
+	      (cp->time_graph_type != GRAPH_TIME_AS_WAVOGRAM) ||
+	      (color_map(ss) == BLACK_AND_WHITE) ||
+	      ((sp->nchans > 1) && (sp->channel_style != CHANNELS_SEPARATE)))
 	    make_axes(cp, ap,
 		      cp->x_axis_style,
-		      ((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)));
+		      (((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)) ? CLEAR_GRAPH : DONT_CLEAR_GRAPH));
 	  cp->cursor_visible = 0;
 	  cp->selection_visible = 0;
 	  points = make_graph(cp, sp, ss);
@@ -2930,12 +2932,15 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
   if ((with_fft) && 
       (!just_lisp) && (!just_time))
     {
-      if ((with_gl(ss) == FALSE) || (cp->transform_graph_type != GRAPH_TRANSFORM_AS_SPECTROGRAM))
+      if ((with_gl(ss) == FALSE) || 
+	  (cp->transform_graph_type != GRAPH_TRANSFORM_AS_SPECTROGRAM) ||
+	  (color_map(ss) == BLACK_AND_WHITE) ||
+	  ((sp->nchans > 1) && (sp->channel_style != CHANNELS_SEPARATE)))
 	make_axes(cp, fap,
 		  ((cp->x_axis_style == X_AXIS_IN_SAMPLES) || 
 		   (cp->x_axis_style == X_AXIS_IN_BEATS)) ? X_AXIS_IN_SECONDS : (cp->x_axis_style),
 #if USE_MOTIF
-		  ((cp->chan == (sp->nchans - 1)) || (sp->channel_style != CHANNELS_SUPERIMPOSED))
+		  (((cp->chan == (sp->nchans - 1)) || (sp->channel_style != CHANNELS_SUPERIMPOSED)) ? CLEAR_GRAPH : DONT_CLEAR_GRAPH)
 		  /* Xt documentation says the most recently added work proc runs first, but we're
 		   *   adding fft work procs in channel order, normally, so the channel background
 		   *   clear for the superimposed case needs to happen on the highest-numbered 
@@ -2943,7 +2948,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 		   *   selected background, if any of the current sound's channels is selected.
 		   */
 #else
-		  ((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED))
+		  (((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)) ? CLEAR_GRAPH : DONT_CLEAR_GRAPH)
 		  /* In Gtk+ (apparently) the first proc added is run, not the most recent */
 #endif
 		  );
@@ -2990,10 +2995,10 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	{
 	  ss->lisp_graph_hook_active = TRUE;
 	  /* inadvertent recursive call here can hang entire computer */
-	  pixel_list = g_c_run_progn_hook(lisp_graph_hook,
-					  XEN_LIST_2(C_TO_SMALL_XEN_INT((cp->sound)->index),
-						     C_TO_SMALL_XEN_INT(cp->chan)),
-					  S_lisp_graph_hook);
+	  pixel_list = run_progn_hook(lisp_graph_hook,
+				      XEN_LIST_2(C_TO_SMALL_XEN_INT((cp->sound)->index),
+						 C_TO_SMALL_XEN_INT(cp->chan)),
+				      S_lisp_graph_hook);
 	  ss->lisp_graph_hook_active = FALSE;
 	  if (!(XEN_FALSE_P(pixel_list))) snd_protect(pixel_list);
 	}
@@ -3004,7 +3009,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
       /* if these were changed in the hook function, the old fields should have been saved across the change (g_graph below) */
       make_axes(cp, uap, /* defined in this file l 2293 */
 		X_AXIS_IN_LENGTH,
-		((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)));
+		(((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)) ? CLEAR_GRAPH : DONT_CLEAR_GRAPH));
       if (XEN_PROCEDURE_P(pixel_list))
 	XEN_CALL_0(pixel_list, "lisp-graph");
       else make_lisp_graph(cp, sp, ss, pixel_list);
@@ -3024,10 +3029,10 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	display_channel_id(cp, height + offset, sp->nchans);
       if ((cp->hookable) &&
 	  (XEN_HOOKED(after_graph_hook)))
-	g_c_run_progn_hook(after_graph_hook,
-			   XEN_LIST_2(C_TO_SMALL_XEN_INT((cp->sound)->index),
-				      C_TO_SMALL_XEN_INT(cp->chan)),
-			   S_after_graph_hook);
+	run_hook(after_graph_hook,
+		 XEN_LIST_2(C_TO_SMALL_XEN_INT((cp->sound)->index),
+			    C_TO_SMALL_XEN_INT(cp->chan)),
+		 S_after_graph_hook);
       /* (add-hook! after-graph-hook (lambda (a b) (snd-print (format #f "~A ~A" a b)))) */
     } 
 }
@@ -3609,12 +3614,12 @@ int key_press_callback(chan_info *ncp, int x, int y, int key_state, int keysym)
     {
       /* return TRUE to keep this key press from being passed to keyboard_command */
       XEN res = XEN_FALSE;
-      res = g_c_run_or_hook(key_press_hook,
-			    XEN_LIST_4(C_TO_SMALL_XEN_INT(sp->index),
-				       C_TO_SMALL_XEN_INT(cp->chan),
-				       C_TO_XEN_INT(keysym),
-				       C_TO_XEN_INT(key_state)),
-			    S_key_press_hook);
+      res = run_or_hook(key_press_hook,
+			XEN_LIST_4(C_TO_SMALL_XEN_INT(sp->index),
+				   C_TO_SMALL_XEN_INT(cp->chan),
+				   C_TO_XEN_INT(keysym),
+				   C_TO_XEN_INT(key_state)),
+			S_key_press_hook);
       if (XEN_TRUE_P(res))
 	return(FALSE);
     }
@@ -3706,14 +3711,14 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
       if (click_within_graph == LISP)
 	{
 	  if (XEN_HOOKED(mouse_press_hook))
-	    g_c_run_progn_hook(mouse_press_hook,
-			       XEN_LIST_6(C_TO_SMALL_XEN_INT(sp->index),
-					  C_TO_SMALL_XEN_INT(cp->chan),
-					  C_TO_XEN_INT(button),
-					  C_TO_XEN_INT(key_state),
-					  C_TO_XEN_DOUBLE(ungrf_x((cp->lisp_info)->axis, x)),
-					  C_TO_XEN_DOUBLE(ungrf_y((cp->lisp_info)->axis, y))),
-			       S_mouse_press_hook);
+	    run_hook(mouse_press_hook,
+		     XEN_LIST_6(C_TO_SMALL_XEN_INT(sp->index),
+				C_TO_SMALL_XEN_INT(cp->chan),
+				C_TO_XEN_INT(button),
+				C_TO_XEN_INT(key_state),
+				C_TO_XEN_DOUBLE(ungrf_x((cp->lisp_info)->axis, x)),
+				C_TO_XEN_DOUBLE(ungrf_y((cp->lisp_info)->axis, y))),
+		     S_mouse_press_hook);
 	}
       else
 	{
@@ -3768,7 +3773,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	  actax = within_graph(cp, x, y);
 
 	  if ((XEN_HOOKED(mouse_click_hook)) &&
-	      (XEN_TRUE_P(g_c_run_or_hook(mouse_click_hook,
+	      (XEN_TRUE_P(run_or_hook(mouse_click_hook,
 				      XEN_LIST_7(C_TO_SMALL_XEN_INT(sp->index),
 						 C_TO_SMALL_XEN_INT(cp->chan),
 						 C_TO_XEN_INT(button),
@@ -3823,9 +3828,9 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 			{
 			  XEN res = XEN_FALSE;
 			  if (XEN_HOOKED(mark_click_hook))
-			    res = g_c_run_progn_hook(mark_click_hook,
-						     XEN_LIST_1(C_TO_SMALL_XEN_INT(mark_id(mouse_mark))),
-						     S_mark_click_hook);
+			    res = run_progn_hook(mark_click_hook,
+						 XEN_LIST_1(C_TO_SMALL_XEN_INT(mark_id(mouse_mark))),
+						 S_mark_click_hook);
 			  if (!(XEN_TRUE_P(res)))
 			    report_in_minibuffer(sp, "mark %d at sample " OFF_TD, 
 						 mark_id(mouse_mark), 
@@ -3850,14 +3855,14 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	      else
 		if ((actax == LISP) && 
 		    (XEN_HOOKED(mouse_release_hook)))
-		  g_c_run_progn_hook(mouse_release_hook,
-				     XEN_LIST_6(C_TO_SMALL_XEN_INT(sp->index),
-						C_TO_SMALL_XEN_INT(cp->chan),
-						C_TO_XEN_INT(button),
-						C_TO_XEN_INT(key_state),
-						C_TO_XEN_DOUBLE(ungrf_x((cp->lisp_info)->axis, x)),
-						C_TO_XEN_DOUBLE(ungrf_y((cp->lisp_info)->axis, y))),
-				     S_mouse_release_hook);
+		  run_hook(mouse_release_hook,
+			   XEN_LIST_6(C_TO_SMALL_XEN_INT(sp->index),
+				      C_TO_SMALL_XEN_INT(cp->chan),
+				      C_TO_XEN_INT(button),
+				      C_TO_XEN_INT(key_state),
+				      C_TO_XEN_DOUBLE(ungrf_x((cp->lisp_info)->axis, x)),
+				      C_TO_XEN_DOUBLE(ungrf_y((cp->lisp_info)->axis, y))),
+			   S_mouse_release_hook);
 	    }
 	}
     }
@@ -3953,7 +3958,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, TIME_TYPE time, T
 	      first_time = mouse_time;
 	      samps = move_play_mark(cp, &mouse_cursor, (Locus)x);
 	      if (time_interval != 0)
-		sp->speed_control = (Float)(samps * 1000) / (Float)(time_interval * SND_SRATE(sp));
+		sp->speed_control = (Float)((double)(samps * 1000) / (double)(time_interval * SND_SRATE(sp)));
 	      else sp->speed_control = 0.0;
 	    }
 	}
@@ -4018,14 +4023,14 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, TIME_TYPE time, T
 		  if (click_within_graph == LISP)
 		    {
 		      if (XEN_HOOKED(mouse_drag_hook))
-			  g_c_run_progn_hook(mouse_drag_hook,
-					     XEN_LIST_6(C_TO_SMALL_XEN_INT(cp->sound->index),
-							C_TO_SMALL_XEN_INT(cp->chan),
-							C_TO_XEN_INT(-1),
-							C_TO_XEN_INT(-1),
-							C_TO_XEN_DOUBLE(ungrf_x((cp->lisp_info)->axis, x)),
-							C_TO_XEN_DOUBLE(ungrf_y((cp->lisp_info)->axis, y))),
-					     S_mouse_drag_hook);
+			  run_hook(mouse_drag_hook,
+				   XEN_LIST_6(C_TO_SMALL_XEN_INT(cp->sound->index),
+					      C_TO_SMALL_XEN_INT(cp->chan),
+					      C_TO_XEN_INT(-1),
+					      C_TO_XEN_INT(-1),
+					      C_TO_XEN_DOUBLE(ungrf_x((cp->lisp_info)->axis, x)),
+					      C_TO_XEN_DOUBLE(ungrf_y((cp->lisp_info)->axis, y))),
+				   S_mouse_drag_hook);
 		      return;
 		    }
 		  if ((cp->verbose_cursor) && (within_graph(cp, x, y) == FFT_MAIN))

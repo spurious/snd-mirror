@@ -4,7 +4,7 @@ static int dont_edit(chan_info *cp)
 {
   XEN res = XEN_FALSE;
   if (XEN_HOOKED(cp->edit_hook))
-    res = g_c_run_or_hook(cp->edit_hook, XEN_EMPTY_LIST, S_edit_hook);
+    res = run_or_hook(cp->edit_hook, XEN_EMPTY_LIST, S_edit_hook);
   return(XEN_TRUE_P(res));
 }
 
@@ -13,17 +13,17 @@ static int dont_save(snd_info *sp, char *newname)
 {
   XEN res = XEN_FALSE;
   if (XEN_HOOKED(save_hook))
-    res = g_c_run_or_hook(save_hook,
-			  XEN_LIST_2(C_TO_SMALL_XEN_INT(sp->index),
-				     (newname) ? C_TO_XEN_STRING(newname) : XEN_FALSE),
-			  S_save_hook);
+    res = run_or_hook(save_hook,
+		      XEN_LIST_2(C_TO_SMALL_XEN_INT(sp->index),
+				 (newname) ? C_TO_XEN_STRING(newname) : XEN_FALSE),
+		      S_save_hook);
   return(XEN_TRUE_P(res));
 }
 
 static void after_edit(chan_info *cp)
 {
   if (XEN_HOOKED(cp->after_edit_hook))
-    g_c_run_progn_hook(cp->after_edit_hook, XEN_EMPTY_LIST, S_after_edit_hook);
+    run_hook(cp->after_edit_hook, XEN_EMPTY_LIST, S_after_edit_hook);
 }
 
 
@@ -2758,7 +2758,7 @@ void revert_edits(chan_info *cp, void *ptr)
   reflect_mix_in_menu();
   reflect_mix_in_enved();
   if (XEN_HOOKED(cp->undo_hook))
-    g_c_run_progn_hook(cp->undo_hook, XEN_EMPTY_LIST, S_undo_hook);
+    run_hook(cp->undo_hook, XEN_EMPTY_LIST, S_undo_hook);
 }
 
 void undo_edit(chan_info *cp, int count)
@@ -2785,7 +2785,7 @@ void undo_edit(chan_info *cp, int count)
       reflect_mix_in_menu();
       reflect_mix_in_enved();
       if (XEN_HOOKED(cp->undo_hook))
-	g_c_run_progn_hook(cp->undo_hook, XEN_EMPTY_LIST, S_undo_hook);
+	run_hook(cp->undo_hook, XEN_EMPTY_LIST, S_undo_hook);
     }
 }
 
@@ -2839,7 +2839,7 @@ void redo_edit(chan_info *cp, int count)
 	  reflect_mix_in_enved();
 	}
       if (XEN_HOOKED(cp->undo_hook))
-	g_c_run_progn_hook(cp->undo_hook, XEN_EMPTY_LIST, S_undo_hook);
+	run_hook(cp->undo_hook, XEN_EMPTY_LIST, S_undo_hook);
     }
 }
 

@@ -371,9 +371,9 @@ static void select_mix(mix_info *md)
 	draw_mix_waveform(md);
       reflect_mix_in_mix_panel(md->id);
       if (XEN_HOOKED(select_mix_hook))
-	g_c_run_progn_hook(select_mix_hook,
-			   XEN_LIST_1(C_TO_XEN_INT(md->id)),
-			   S_select_mix_hook);
+	run_hook(select_mix_hook,
+		 XEN_LIST_1(C_TO_XEN_INT(md->id)),
+		 S_select_mix_hook);
     }
   else ss->selected_mix = INVALID_MIX_ID;
 }
@@ -4272,9 +4272,9 @@ static void call_multichannel_mix_hook(int *ids, int n)
     {
       for (i = n - 1; i >= 0; i--)
 	lst = XEN_CONS(C_TO_SMALL_XEN_INT(ids[i]), lst);
-      g_c_run_progn_hook(multichannel_mix_hook,
-			 XEN_LIST_1(lst),
-			 S_multichannel_mix_hook);
+      run_hook(multichannel_mix_hook,
+	       XEN_LIST_1(lst),
+	       S_multichannel_mix_hook);
     }
 }
 
@@ -4283,9 +4283,9 @@ static int call_mix_speed_changed_hook(mix_info *md)
   XEN res = XEN_FALSE;
   if ((md) && 
       (XEN_HOOKED(mix_speed_changed_hook)))
-    res = g_c_run_progn_hook(mix_speed_changed_hook,
-			     XEN_LIST_1(C_TO_SMALL_XEN_INT(md->id)),
-			     S_mix_speed_changed_hook);
+    res = run_progn_hook(mix_speed_changed_hook,
+			 XEN_LIST_1(C_TO_SMALL_XEN_INT(md->id)),
+			 S_mix_speed_changed_hook);
   return(XEN_TRUE_P(res));
 }
 
@@ -4294,9 +4294,9 @@ static int call_mix_amp_changed_hook(mix_info *md)
   XEN res = XEN_FALSE;
   if ((md) && 
       (XEN_HOOKED(mix_amp_changed_hook)))
-    res = g_c_run_progn_hook(mix_amp_changed_hook,
-			     XEN_LIST_1(C_TO_SMALL_XEN_INT(md->id)),
-			     S_mix_amp_changed_hook);
+    res = run_progn_hook(mix_amp_changed_hook,
+			 XEN_LIST_1(C_TO_SMALL_XEN_INT(md->id)),
+			 S_mix_amp_changed_hook);
   return(XEN_TRUE_P(res));
 }
 
@@ -4305,10 +4305,10 @@ static int call_mix_position_changed_hook(mix_info *md, off_t samps)
   XEN res = XEN_FALSE;
   if ((md) && 
       (XEN_HOOKED(mix_position_changed_hook)))
-    res = g_c_run_progn_hook(mix_position_changed_hook,
-			     XEN_LIST_2(C_TO_SMALL_XEN_INT(md->id),
-					C_TO_XEN_OFF_T(samps)),
-			     S_mix_position_changed_hook);
+    res = run_progn_hook(mix_position_changed_hook,
+			 XEN_LIST_2(C_TO_SMALL_XEN_INT(md->id),
+				    C_TO_XEN_OFF_T(samps)),
+			 S_mix_position_changed_hook);
   return(XEN_TRUE_P(res));
 }
 

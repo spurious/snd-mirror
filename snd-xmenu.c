@@ -111,10 +111,10 @@ static int call_menu_hook(char *name, char *option)
 {
   XEN res = XEN_TRUE;
   if ((name) && (XEN_HOOKED(menu_hook)))
-    res = g_c_run_and_hook(menu_hook, 
-			   XEN_LIST_2(C_TO_XEN_STRING(name), 
-				      C_TO_XEN_STRING(option)),
-			   S_menu_hook);
+    res = run_and_hook(menu_hook, 
+		       XEN_LIST_2(C_TO_XEN_STRING(name), 
+				  C_TO_XEN_STRING(option)),
+		       S_menu_hook);
   return(XEN_TRUE_P(res));
 }
 

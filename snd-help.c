@@ -2143,7 +2143,7 @@ and its value is returned."
 		  (XEN_LIST_LENGTH(loc_val) == 3))
 		{ 
 		  if (subject) 
-		    new_str = g_c_run_concat_hook(help_hook, S_help_hook, XEN_TO_C_STRING(help_text), subject);
+		    new_str = run_concat_hook(help_hook, S_help_hook, XEN_TO_C_STRING(help_text), subject);
 		  else new_str = copy_string(XEN_TO_C_STRING(help_text));
 		  str = word_wrap(new_str, widget_wid);
 		  if (new_str) FREE(new_str);
@@ -2179,7 +2179,7 @@ and its value is returned."
   if (str)
     {
       if (subject)
-	new_str = g_c_run_concat_hook(help_hook, S_help_hook, str, subject);
+	new_str = run_concat_hook(help_hook, S_help_hook, str, subject);
       else new_str = copy_string(str);
       str = word_wrap(new_str, widget_wid);
       if (new_str) FREE(new_str);

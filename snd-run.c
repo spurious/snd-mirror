@@ -301,9 +301,9 @@ static xen_value *run_warn(char *format, ...)
 #endif
   va_end(ap);
   if (XEN_HOOKED(optimization_hook))
-    g_c_run_progn_hook(optimization_hook, 
-		       XEN_LIST_1(C_TO_XEN_STRING(optimizer_warning_buffer)),
-		       S_optimization_hook);
+    run_hook(optimization_hook, 
+	     XEN_LIST_1(C_TO_XEN_STRING(optimizer_warning_buffer)),
+	     S_optimization_hook);
 #endif
   return(NULL); /* this is so we can insert the call into the error return call chain */
 }
@@ -315,9 +315,9 @@ static xen_value *run_warn_with_free(char *str)
   msg = C_TO_XEN_STRING(str);
   FREE(str);
   if (XEN_HOOKED(optimization_hook))
-    g_c_run_progn_hook(optimization_hook, 
-		       XEN_LIST_1(msg),
-		       S_optimization_hook);
+    run_hook(optimization_hook, 
+	     XEN_LIST_1(msg),
+	     S_optimization_hook);
   return(NULL);
 }
 

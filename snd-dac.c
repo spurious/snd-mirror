@@ -598,9 +598,9 @@ static void stop_playing_with_toggle(dac_info *dp, int toggle)
   if (dp->region >= 0)
     {
       if (XEN_HOOKED(stop_playing_region_hook))
-	g_c_run_progn_hook(stop_playing_region_hook,
-			   XEN_LIST_1(C_TO_SMALL_XEN_INT(dp->region)),
-			   S_stop_playing_region_hook);
+	run_hook(stop_playing_region_hook,
+		 XEN_LIST_1(C_TO_SMALL_XEN_INT(dp->region)),
+		 S_stop_playing_region_hook);
     }
   else
     {
@@ -608,21 +608,21 @@ static void stop_playing_with_toggle(dac_info *dp, int toggle)
 	{
 	  reflect_play_selection_stop();
 	  if (XEN_HOOKED(stop_playing_selection_hook))
-	    g_c_run_progn_hook(stop_playing_selection_hook, 
-			       XEN_EMPTY_LIST, 
-			       S_stop_playing_selection_hook);
+	    run_hook(stop_playing_selection_hook, 
+		     XEN_EMPTY_LIST, 
+		     S_stop_playing_selection_hook);
 	}
       else
 	{
 	  if ((sp_stopping) && (XEN_HOOKED(stop_playing_hook)))
-	    g_c_run_progn_hook(stop_playing_hook,
-			       XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
-			       S_stop_playing_hook);
+	    run_hook(stop_playing_hook,
+		     XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
+		     S_stop_playing_hook);
 	  if (XEN_HOOKED(stop_playing_channel_hook))
-	    g_c_run_progn_hook(stop_playing_channel_hook,
-			       XEN_LIST_2(C_TO_SMALL_XEN_INT(sp->index),
-					  C_TO_SMALL_XEN_INT(cp->chan)),
-			       S_stop_playing_channel_hook);
+	    run_hook(stop_playing_channel_hook,
+		     XEN_LIST_2(C_TO_SMALL_XEN_INT(sp->index),
+				C_TO_SMALL_XEN_INT(cp->chan)),
+		     S_stop_playing_channel_hook);
 	  if (sp->index < 0) {free_player(sp); sp = NULL;}
 	}
     }
@@ -920,9 +920,9 @@ void play_sound(snd_info *sp, off_t start, off_t end, int background, XEN edpos,
     return;
   if (!(sp->inuse)) return;
   if ((XEN_HOOKED(start_playing_hook)) &&
-      (XEN_TRUE_P(g_c_run_or_hook(start_playing_hook,
-				  XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
-				  S_start_playing_hook))))
+      (XEN_TRUE_P(run_or_hook(start_playing_hook,
+			      XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
+			      S_start_playing_hook))))
     {
       reflect_play_stop(sp);           /* turns off buttons */
       if (sp->delete_me) 
@@ -1056,9 +1056,9 @@ static XEN sdobj = XEN_FALSE;
 static void cleanup_dac_hook(void)
 {
   if (XEN_HOOKED(stop_dac_hook))
-    g_c_run_progn_hook(stop_dac_hook, 
-		       XEN_EMPTY_LIST,
-		       S_stop_dac_hook);
+    run_hook(stop_dac_hook, 
+	     XEN_EMPTY_LIST,
+	     S_stop_dac_hook);
   if (!(XEN_FALSE_P(sdobj)))
     {
       snd_unprotect(sdobj);
@@ -1094,9 +1094,9 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
   else
     {
       if (XEN_HOOKED(play_hook))
-	g_c_run_progn_hook(play_hook, 
-			   XEN_LIST_1(C_TO_XEN_INT(frames)),
-			   S_play_hook);
+	run_hook(play_hook, 
+		 XEN_LIST_1(C_TO_XEN_INT(frames)),
+		 S_play_hook);
       cursor_time += frames;
       cursor_change = (cursor_time >= CURSOR_UPDATE_INTERVAL);
       for (i = 0; i <= max_active_slot; i++)
@@ -1318,9 +1318,9 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 	  sdobj = wrap_sound_data(dacp->channels, dacp->frames, dac_buffers);
 	  snd_protect(sdobj);
 	}
-    g_c_run_progn_hook(dac_hook, 
-		       XEN_LIST_1(sdobj),
-		       S_dac_hook);
+    run_hook(dac_hook, 
+	     XEN_LIST_1(sdobj),
+	     S_dac_hook);
     }
 
 #if (HAVE_OSS || HAVE_ALSA)

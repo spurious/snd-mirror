@@ -627,9 +627,9 @@ static void select_sound (snd_state *ss, snd_info *sp)
 {
   snd_info *osp = NULL;
   if (XEN_HOOKED(select_sound_hook))
-    g_c_run_progn_hook(select_sound_hook,
-		       XEN_LIST_1(C_TO_XEN_INT(sp->index)),
-		       S_select_sound_hook);
+    run_hook(select_sound_hook,
+	     XEN_LIST_1(C_TO_XEN_INT(sp->index)),
+	     S_select_sound_hook);
   if (ss->selected_sound != sp->index)
     {
       if (!ss->using_schemes)
@@ -676,10 +676,10 @@ void select_channel(snd_info *sp, int chan)
 	  update_graph(cp);
 	}
   if (XEN_HOOKED(select_channel_hook))
-    g_c_run_progn_hook(select_channel_hook,
-		       XEN_LIST_2(C_TO_XEN_INT(sp->index),
-				  C_TO_XEN_INT(chan)),
-		       S_select_channel_hook);
+    run_hook(select_channel_hook,
+	     XEN_LIST_2(C_TO_XEN_INT(sp->index),
+			C_TO_XEN_INT(chan)),
+	     S_select_channel_hook);
       ncp = sp->chans[chan];
       reflect_undo_or_redo_in_menu(ncp);
       recolor_graph(ncp, TRUE);

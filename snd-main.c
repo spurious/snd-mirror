@@ -30,9 +30,9 @@ int snd_exit_cleanly(snd_state *ss, int force_exit)
 {  
   XEN res = XEN_FALSE;
   if (XEN_HOOKED(exit_hook))
-    res = g_c_run_or_hook(exit_hook, 
-			  XEN_EMPTY_LIST,
-			  S_exit_hook);
+    res = run_or_hook(exit_hook, 
+		      XEN_EMPTY_LIST,
+		      S_exit_hook);
   if ((XEN_TRUE_P(res)) && (!force_exit)) return(0);
   mus_sound_finalize();
   cleanup_dac();
@@ -608,9 +608,9 @@ static int dont_start(char *filename)
 {
   XEN res = XEN_FALSE;
   if (XEN_HOOKED(start_hook))
-    res = g_c_run_or_hook(start_hook,
-			  XEN_LIST_1(C_TO_XEN_STRING(filename)),
-			  S_start_hook);
+    res = run_or_hook(start_hook,
+		      XEN_LIST_1(C_TO_XEN_STRING(filename)),
+		      S_start_hook);
   return(XEN_TRUE_P(res));
 }
 

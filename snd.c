@@ -16,10 +16,10 @@ static int ignore_mus_error(int type, char *msg)
 {
   XEN result = XEN_FALSE;
   if (XEN_HOOKED(mus_error_hook))
-    result = g_c_run_or_hook(mus_error_hook, 
-			     XEN_LIST_2(C_TO_XEN_INT(type), 
-					C_TO_XEN_STRING(msg)),
-			     S_mus_error_hook);
+    result = run_or_hook(mus_error_hook, 
+			 XEN_LIST_2(C_TO_XEN_INT(type), 
+				    C_TO_XEN_STRING(msg)),
+			 S_mus_error_hook);
   return(XEN_NOT_FALSE_P(result));
 }
 

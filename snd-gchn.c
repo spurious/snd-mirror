@@ -364,10 +364,10 @@ static gboolean graph_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer d
   int pdata;
   pdata = (int)get_user_data(GTK_OBJECT(w));
   if (XEN_HOOKED(mouse_enter_graph_hook))
-    g_c_run_progn_hook(mouse_enter_graph_hook,
-		       XEN_LIST_2(C_TO_SMALL_XEN_INT(UNPACK_SOUND(pdata)),
-				  C_TO_SMALL_XEN_INT(UNPACK_CHANNEL(pdata))),
-		       S_mouse_enter_graph_hook);
+    run_hook(mouse_enter_graph_hook,
+	     XEN_LIST_2(C_TO_SMALL_XEN_INT(UNPACK_SOUND(pdata)),
+			C_TO_SMALL_XEN_INT(UNPACK_CHANNEL(pdata))),
+	     S_mouse_enter_graph_hook);
   gdk_window_set_cursor(w->window, (((snd_state *)data)->sgx)->graph_cursor);
   return(FALSE);
 }
@@ -377,10 +377,10 @@ static gboolean graph_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpointer d
   int pdata;
   pdata = (int)get_user_data(GTK_OBJECT(w));
   if (XEN_HOOKED(mouse_leave_graph_hook))
-    g_c_run_progn_hook(mouse_leave_graph_hook,
-		       XEN_LIST_2(C_TO_SMALL_XEN_INT(UNPACK_SOUND(pdata)),
-				  C_TO_SMALL_XEN_INT(UNPACK_CHANNEL(pdata))),
-		       S_mouse_leave_graph_hook);
+    run_hook(mouse_leave_graph_hook,
+	     XEN_LIST_2(C_TO_SMALL_XEN_INT(UNPACK_SOUND(pdata)),
+			C_TO_SMALL_XEN_INT(UNPACK_CHANNEL(pdata))),
+	     S_mouse_leave_graph_hook);
   gdk_window_set_cursor(w->window, (((snd_state *)data)->sgx)->arrow_cursor);
   return(FALSE);
 }

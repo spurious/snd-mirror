@@ -189,9 +189,9 @@ static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, int show)
   ax = mark_context(cp);
   if (XEN_HOOKED(draw_mark_hook))
     {
-      res = g_c_run_progn_hook(draw_mark_hook,
-			       XEN_LIST_1(C_TO_SMALL_XEN_INT(mark_id(mp))),
-			       S_draw_mark_hook);
+      res = run_progn_hook(draw_mark_hook,
+			   XEN_LIST_1(C_TO_SMALL_XEN_INT(mark_id(mp))),
+			   S_draw_mark_hook);
       if (XEN_TRUE_P(res))
 	{
 	  if (show) mp->id |= MARK_VISIBLE; else mp->id &= (~MARK_VISIBLE);
@@ -377,9 +377,9 @@ static int move_mark_1(chan_info *cp, mark *mp, int x)
   samps = current_ed_samples(cp);
   if (mp->samp > samps) mp->samp = samps;
   if (XEN_HOOKED(mark_drag_hook))
-    g_c_run_progn_hook(mark_drag_hook,
-		       XEN_LIST_1(C_TO_SMALL_XEN_INT(mark_id(mp))),
-		       S_mark_drag_hook);
+    run_hook(mark_drag_hook,
+	     XEN_LIST_1(C_TO_SMALL_XEN_INT(mark_id(mp))),
+	     S_mark_drag_hook);
   return(redraw);
 }
 
@@ -433,12 +433,12 @@ static void run_mark_hook(chan_info *cp, int id, int reason)
 {
   /* called after the mark list has been made consistent */
   if (XEN_HOOKED(mark_hook))
-    g_c_run_progn_hook(mark_hook,
-		       XEN_LIST_4(C_TO_SMALL_XEN_INT(id),
-				  C_TO_SMALL_XEN_INT(cp->sound->index),
-				  C_TO_SMALL_XEN_INT(cp->chan),
-				  C_TO_SMALL_XEN_INT(reason)),
-		       S_mark_hook);
+    run_hook(mark_hook,
+	     XEN_LIST_4(C_TO_SMALL_XEN_INT(id),
+			C_TO_SMALL_XEN_INT(cp->sound->index),
+			C_TO_SMALL_XEN_INT(cp->chan),
+			C_TO_SMALL_XEN_INT(reason)),
+	     S_mark_hook);
 }
 
 static void allocate_marks(chan_info *cp, int edit_ctr)

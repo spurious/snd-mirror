@@ -31,9 +31,9 @@ static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom
 	}
       str[*length] = '\0';
       if ((!(XEN_HOOKED(drop_hook))) || 
-	  (!(XEN_TRUE_P(g_c_run_or_hook(drop_hook,
-					XEN_LIST_1(C_TO_XEN_STRING(str)),
-					"drop")))))
+	  (!(XEN_TRUE_P(run_or_hook(drop_hook,
+				    XEN_LIST_1(C_TO_XEN_STRING(str)),
+				    "drop")))))
 	{
 	  caller = (Widget)((XmDropTransferEntry)context)->client_data;
 	  if (strcmp(XtName(caller), "menuBar") == 0)

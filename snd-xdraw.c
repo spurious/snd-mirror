@@ -1163,7 +1163,7 @@ int set_with_gl(snd_state *ss, int val)
 #if HAVE_GL
   sgl_set_currents(ss);
   if (oid) XmToggleButtonSetState(oid->glbutton, val, FALSE);
-  for_each_chan(ss, update_graph);
+  /* for_each_chan(ss, update_graph); */
 #endif
   return(with_gl(ss));
 } 

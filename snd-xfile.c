@@ -1358,11 +1358,11 @@ static void mouse_leave_label_or_enter(regrow *r, XEN hook, const char *caller)
 	    }
 	}
       if (label)
-	g_c_run_progn_hook(hook,
-			   XEN_LIST_3(C_TO_SMALL_XEN_INT(r->parent),
-				      C_TO_SMALL_XEN_INT(r->pos),
-				      C_TO_XEN_STRING(label)),
-			   caller);
+	run_hook(hook,
+		 XEN_LIST_3(C_TO_SMALL_XEN_INT(r->parent),
+			    C_TO_SMALL_XEN_INT(r->pos),
+			    C_TO_XEN_STRING(label)),
+		 caller);
     }
 }
 

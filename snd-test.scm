@@ -18235,6 +18235,7 @@ EDITS: 5
     (begin
       (if (procedure? test-hook) (test-hook 23))
       (set! (mus-srate) 22050)
+      (set! (default-output-srate) 22050)
 
       (with-sound (:srate 22050) (fm-violin 0 .1 440 .1))
       (let ((ind (find-sound "test.snd")))
@@ -18253,7 +18254,7 @@ EDITS: 5
 	  (if (fneq mx .25) (snd-display ";with-sound continued max: ~A" (maxamp)))
 	  (if (not (= (srate ind) 22050)) (snd-display ";with-sound continued srate: ~A (~A, ~A)" 
 						       (srate ind) (mus-srate) (mus-sound-srate "test.snd")))
-	  (if (not (= (frames ind) (* 3 2205))) (snd-display ";with-sound continued frames: ~A" (frames ind))))
+	  (if (not (= (frames ind) (* 3 2205))) (snd-display ";with-sound continued frames: ~A (~A)" (frames ind) (srate ind))))
 	(close-sound ind))
 
       (with-sound (:srate 22050 :channels 2 :output "test1.snd") (fm-violin 0 .1 440 .1 :degree 45.0))
@@ -19483,6 +19484,8 @@ EDITS: 5
 		(close-sound ind2))
 	      (delete-file "fmv1.snd")
 	      (mus-sound-forget "fmv1.snd")
+	      (select-sound ind)
+	      (select-channel 1)
 	      (set! (selection-member? #t) #f)
 	      (let* ((rid (car (regions)))
 		     (ridstr (number->string rid)))
@@ -24247,7 +24250,8 @@ EDITS: 5
 
 (define set-procs (list 
 		   amp-control ask-before-overwrite audio-input-device audio-output-device audio-state-file auto-resize
-		   auto-update axis-label-font axis-numbers-font basic-color bold-button-font button-font channel-style
+		   auto-update axis-label-font axis-numbers-font ;basic-color 
+		   bold-button-font button-font channel-style
 		   color-cutoff color-inverted color-scale contrast-control contrast-control-amp
 		   contrast-control? auto-update-interval current-font cursor cursor-color channel-properties
 		   cursor-follows-play cursor-size cursor-style dac-combines-channels dac-size data-clipped data-color

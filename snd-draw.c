@@ -462,7 +462,7 @@ static XEN new_widget_hook;
 void run_new_widget_hook(GUI_WIDGET w)
 {
   if (XEN_HOOKED(new_widget_hook))
-    g_c_run_progn_hook(new_widget_hook, XEN_LIST_1(XEN_WRAP_WIDGET(w)), S_new_widget_hook);
+    run_hook(new_widget_hook, XEN_LIST_1(XEN_WRAP_WIDGET(w)), S_new_widget_hook);
 }
 
 static void check_dialog_widget_table(void)

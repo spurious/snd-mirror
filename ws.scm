@@ -35,6 +35,7 @@
        (if continue-old-file
 	   (begin
 	     (set! *output* (continue-sample->file output))
+	     (set! (mus-srate) (mus-sound-srate output))
 	     (if reverb (set! *reverb* (continue-sample->file revfile)))
 	     (let ((ind (find-sound output)))
 	       (if ind (close-sound ind))))

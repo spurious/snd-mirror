@@ -219,9 +219,9 @@ file_info *make_file_info(char *fullname, snd_state *ss)
 	      (mus_sound_chans(fullname) >= 256) || (mus_sound_chans(fullname) <= 0))
 	    {
 	      if ((XEN_HOOKED(bad_header_hook)) &&
-		  (XEN_TRUE_P(g_c_run_or_hook(bad_header_hook,
-					      XEN_LIST_1(C_TO_XEN_STRING(fullname)),
-					      S_bad_header_hook))))
+		  (XEN_TRUE_P(run_or_hook(bad_header_hook,
+					  XEN_LIST_1(C_TO_XEN_STRING(fullname)),
+					  S_bad_header_hook))))
 		return(NULL);
 	      
 	      type = mus_header_type();
@@ -519,9 +519,9 @@ dir *find_sound_files_in_dir (char *name)
 		  {
 		    XEN res = XEN_TRUE;
 		    if (XEN_HOOKED(just_sounds_hook))
-		      res = g_c_run_or_hook(just_sounds_hook,
-					    XEN_LIST_1(C_TO_XEN_STRING(dirp->d_name)),
-					    S_just_sounds_hook);
+		      res = run_or_hook(just_sounds_hook,
+					XEN_LIST_1(C_TO_XEN_STRING(dirp->d_name)),
+					S_just_sounds_hook);
 		    if (XEN_TRUE_P(res))
 		      add_snd_file_to_dir_list(dp, dirp->d_name);
 		    break;
@@ -669,9 +669,9 @@ static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select, int
   if (XEN_HOOKED(open_hook))
     {
       fstr = C_TO_XEN_STRING(mcf);
-      res = g_c_run_or_hook(open_hook,
-			    XEN_LIST_1(fstr),
-			    S_open_hook);
+      res = run_or_hook(open_hook,
+			XEN_LIST_1(fstr),
+			S_open_hook);
       if (XEN_TRUE_P(res))
 	{
 	  if (mcf) FREE(mcf);
@@ -731,9 +731,9 @@ void snd_close_file(snd_info *sp, snd_state *ss)
   int files;
   XEN res = XEN_FALSE;
   if (XEN_HOOKED(close_hook))
-    res = g_c_run_or_hook(close_hook,
-			  XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
-			  S_close_hook);
+    res = run_or_hook(close_hook,
+		      XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
+		      S_close_hook);
   if (XEN_TRUE_P(res)) return;
   sp->inuse = 0;
   add_to_previous_files(ss, sp->short_filename, sp->filename);
@@ -1156,9 +1156,9 @@ static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
   if (XEN_HOOKED(update_hook))
     {
       /* #t => return without updating (not recommended!!), proc of 1 arg will be evaluated after update is complete */
-      update_hook_result = g_c_run_or_hook(update_hook, 
-					   XEN_LIST_1(C_TO_XEN_INT(sp->index)),
-					   S_update_hook);
+      update_hook_result = run_or_hook(update_hook, 
+				       XEN_LIST_1(C_TO_XEN_INT(sp->index)),
+				       S_update_hook);
       if (XEN_TRUE_P(update_hook_result)) return(sp);
       if (XEN_PROCEDURE_P(update_hook_result))
 	{
@@ -1340,9 +1340,9 @@ void view_prevfiles_select(snd_state *ss, int pos)
   snd_info *sp;
   XEN res = XEN_FALSE;
   if (XEN_HOOKED(previous_files_select_hook))
-    res = g_c_run_or_hook(previous_files_select_hook,
-			  XEN_LIST_1(C_TO_XEN_STRING(prevfullnames[pos])),
-			  S_previous_files_select_hook);
+    res = run_or_hook(previous_files_select_hook,
+		      XEN_LIST_1(C_TO_XEN_STRING(prevfullnames[pos])),
+		      S_previous_files_select_hook);
   if (XEN_NOT_TRUE_P(res))
     {
       sp = snd_open_file(prevfullnames[pos], ss, FALSE);
