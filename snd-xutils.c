@@ -595,3 +595,16 @@ Pixmap make_pixmap(snd_state *ss, unsigned char *bits, int width, int height, in
   XFreePixmap(MAIN_DISPLAY(ss), rb);
   return(nr);
 }
+
+BACKGROUND_FUNCTION_TYPE add_work_proc(snd_state *ss, XtWorkProc func, XtPointer data)
+{
+  /* during auto-testing I need to force the background procs to run to completion */
+  if (with_background_processes(ss))
+    return(XtAppAddWorkProc(MAIN_APP(ss), func, data));
+  else
+    {
+      while (((*func)(data)) == BACKGROUND_CONTINUE);
+      return(0);
+    }
+}
+

@@ -339,7 +339,7 @@ typedef struct snd__state {
   int Print_Length, Dac_Size, Dac_Combines_Channels, Previous_Files_Sort, Show_Selection_Transform, With_Mix_Tags, Selection_Creates_Region;
   char *Save_State_File, *Listener_Prompt;
   Float Enved_Base, Enved_Power, Auto_Update_Interval;
-  int Enved_Clip_p, Enved_Exp_p, Enved_Target, Enved_Wave_p, Enved_in_dB, Graphs_Horizontal;
+  int Enved_Clip_p, Enved_Exp_p, Enved_Target, Enved_Wave_p, Enved_in_dB, Graphs_Horizontal, With_Background_Processes;
   int Graph_Cursor, Use_Sinc_Interp, Data_Clipped, Show_Indices, Mix_Tag_Width, Mix_Tag_Height, Minibuffer_History_Length;
   Float min_dB, lin_dB, Hankel_Jn;
 #if HAVE_HTML

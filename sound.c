@@ -348,7 +348,7 @@ static sound_file *check_write_date(const char *name, sound_file *sf)
 	return(sf);
       else 
 	{
-	  if (sf->header_type == MUS_RAW)
+	  if ((sf->header_type == MUS_RAW) && (mus_header_no_header(name)))
 	    {
 	      /* sound has changed since we last read it, but it has no header, so
 	       * the only sensible thing to check is the new length (i.e. caller

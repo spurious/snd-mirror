@@ -80,7 +80,8 @@
 #define BACKGROUND_CONTINUE FALSE
 #define BACKGROUND_FUNCTION_TYPE XtWorkProcId
 #define BACKGROUND_REMOVE(func) XtRemoveWorkProc(func)
-#define BACKGROUND_ADD(ss, func, data) XtAppAddWorkProc(MAIN_APP(ss), func, (XtPointer)data)
+/* #define BACKGROUND_ADD(ss, func, data) XtAppAddWorkProc(MAIN_APP(ss), func, (XtPointer)data) */
+#define BACKGROUND_ADD(ss, func, data) add_work_proc(ss, func, (XtPointer)data)
 
 #define GUI_POINTER XtPointer
 #define GUI_WIDGET Widget

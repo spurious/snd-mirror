@@ -175,6 +175,7 @@ static void mus_print2snd(char *msg)
   ss->Transform_Type = DEFAULT_TRANSFORM_TYPE;
   ss->Show_Selection_Transform = DEFAULT_SHOW_SELECTION_TRANSFORM;
   ss->With_Mix_Tags = DEFAULT_WITH_MIX_TAGS;
+  ss->With_Background_Processes = DEFAULT_WITH_BACKGROUND_PROCESSES;
   ss->Dot_Size = DEFAULT_DOT_SIZE;
   ss->Vu_Size = DEFAULT_VU_SIZE;
   ss->Vu_Font_Size = DEFAULT_VU_FONT_SIZE;

@@ -330,7 +330,7 @@ void set_widget_size(Widget w, Dimension width, Dimension height);
 void set_widget_position(Widget w, Position x, Position y);
 void fixup_axis_context(axis_context *ax, Widget w, GC gc);
 Pixmap make_pixmap(snd_state *ss, unsigned char *bits, int width, int height, int depth, GC gc);
-
+BACKGROUND_FUNCTION_TYPE add_work_proc(snd_state *ss, XtWorkProc func, XtPointer data);
 
 
 /* -------- snd-xchn.c -------- */

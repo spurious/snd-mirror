@@ -13255,6 +13255,7 @@ static XEN gxm_XtResolvePathname(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg
 {
   #define H_XtResolvePathname "String XtResolvePathname(display, type, filename, suffix, path, substitutions, num_substitutions, predicate)"
   /* DIFF: XtResolvePathname args use #f for NULL
+   *       (|XtResolvePathname (|XtDisplay (|Widget (cadr (main-widgets)))) "app-defaults" #f #f #f #f 0 #f)
    */
   char *str;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XtResolvePathname", "Display*");

@@ -27,7 +27,7 @@
 
 
 #define SNDLIB_VERSION 14
-#define SNDLIB_REVISION 4
+#define SNDLIB_REVISION 5
 #define SNDLIB_DATE "29-Oct-01"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
@@ -609,6 +609,7 @@ int mus_header_sf2_end              PROTO((int n));
 int mus_header_sf2_loop_start       PROTO((int n));
 int mus_header_sf2_loop_end         PROTO((int n));
 const char *mus_header_original_format_name PROTO((int format, int type));
+int mus_header_no_header            PROTO((const char *name));
 
 void mus_header_set_aifc            PROTO((int val)); /* backwards compatibility, sort of */
 char *mus_header_riff_aux_comment   PROTO((const char *name, int *starts, int *ends));

@@ -371,7 +371,11 @@
 
 #define XEN_ARITY(Func)               scm_i_procedure_arity(Func)
 #define XEN_REQUIRED_ARGS(Func)       XEN_TO_SMALL_C_INT(XEN_CAR(XEN_ARITY(Func)))
-#define XEN_KEYWORD_P(Obj)            (SCM_KEYWORDP(Obj))
+#ifdef SCM_CHARP
+  #define XEN_KEYWORD_P(Obj)          (SCM_KEYWORDP(Obj))
+#else
+  #define XEN_KEYWORD_P(Obj)          XEN_TRUE_P(scm_keyword_p(Obj))
+#endif
 #define XEN_KEYWORD_EQ_P(k1, k2)      XEN_EQ_P(k1, k2)
 #define XEN_MAKE_KEYWORD(Arg)         scm_c_make_keyword(Arg)
 #define XEN_YES_WE_HAVE(Feature)      scm_add_feature(Feature)

@@ -5753,3 +5753,66 @@ const char *mus_header_original_format_name(int format, int type)
 /* ogg vorbis file may start with OggS
  */
 /* I've also seen sounds that start with @!sound then (probably) signed byte data */
+
+int mus_header_no_header(const char *filename)
+{
+  int chan, bytes, ok = 0;
+  chan = mus_file_open_read(filename);
+  if (chan == -1) 
+    {
+      mus_error(MUS_CANT_OPEN_FILE,
+		"can't read header of %s: %s\n  [%s[%d] %s]",
+		filename, strerror(errno),
+		__FILE__, __LINE__, __FUNCTION__); 
+      return(MUS_ERROR);
+    }
+  bytes = read(chan, hdrbuf, INITIAL_READ_SIZE);
+  if (bytes > 4) 
+    ok = ((match_four_chars((unsigned char *)hdrbuf, I_DSND)) || 
+	  (match_four_chars((unsigned char *)hdrbuf, I_DECN)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_FORM)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_RIFF)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_RIFX)) ||
+	  (equal_big_or_little_endian((unsigned char *)hdrbuf, I_IRCAM_VAX)) || 
+	  (equal_big_or_little_endian((unsigned char *)hdrbuf, I_IRCAM_SUN)) ||
+	  (equal_big_or_little_endian((unsigned char *)hdrbuf, I_IRCAM_MIPS)) || 
+	  (equal_big_or_little_endian((unsigned char *)hdrbuf, I_IRCAM_NEXT)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_NIST)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_SOUN)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_VOC0)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_AVR_)) ||
+	  (mus_char_to_bshort((unsigned char *)hdrbuf) == 1336) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_ALaw)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_GF1P)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_DSIG)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_GOLD)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_Diam)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_SRFS)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_CSRE)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_file)) ||
+	  ((hdrbuf[0] == 0xf0) && (hdrbuf[1] == 0x7e) && (hdrbuf[3] == 0x01)) ||
+	  (equal_big_or_little_endian((unsigned char *)(hdrbuf + 16), 0x00006a1a)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_SPIB)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_S___)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_DVSM)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_riff)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_PVF1)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_PVF2)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_Drat)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_MThd)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_Esig)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_SND_)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_FSMt)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_DDSF)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_LM89)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_SY85)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_SY80)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_PRAM)) ||
+	  (match_four_chars((unsigned char *)(hdrbuf + 35), I_UWFD)) ||
+	  (match_four_chars((unsigned char *)(hdrbuf + 76), I_SCRS)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_covox)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I__PAF)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_FAP_)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_DSPL)));
+  return(!ok);
+}

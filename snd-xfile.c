@@ -901,7 +901,7 @@ file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *i
   XtSetArg(args[n], XmNleftWidget, sep3); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
-  stext = make_textfield_widget(ss, "text", form, args, n, NOT_ACTIVATABLE, add_completer_func(srate_completer));
+  stext = make_textfield_widget(ss, "srate-text", form, args, n, NOT_ACTIVATABLE, add_completer_func(srate_completer));
   XtAddCallback(stext, XmNhelpCallback, file_srate_help_callback, ss);
   fdat->srate_text = stext;
 
@@ -926,7 +926,7 @@ file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *i
       XtSetArg(args[n], XmNleftWidget, sep3); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
-      ctext = make_textfield_widget(ss, "text", form, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
+      ctext = make_textfield_widget(ss, "chans-text", form, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
       XtAddCallback(ctext, XmNhelpCallback, file_chans_help_callback, ss);
       fdat->chans_text = ctext;
 
@@ -951,7 +951,7 @@ file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *i
 	  XtSetArg(args[n], XmNleftWidget, sep3); n++;
 	  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
 	  XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
-	  loctext = make_textfield_widget(ss, "text", form, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
+	  loctext = make_textfield_widget(ss, "location-text", form, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
 	  XtAddCallback(loctext, XmNhelpCallback, file_data_location_help_callback, ss);
 	  fdat->location_text = loctext;
 	}
@@ -989,7 +989,7 @@ file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *i
   XtSetArg(args[n], XmNcolumns, 40); n++;
   /* this pushes the right boundary over a ways -- otherwise the button holder box takes up all available space */
 #endif
-  comment_text = make_text_widget(ss, "comment", mainform, args, n);
+  comment_text = make_text_widget(ss, "comment-text", mainform, args, n);
   XtAddCallback(comment_text, XmNhelpCallback, file_comment_label_help_callback, ss);
   fdat->comment_text = comment_text;
 
@@ -1620,14 +1620,16 @@ void make_curfiles_list (snd_state *ss)
 	  r->ss = ss;
 	  r->parent = CURRENT_FILE_VIEWER;
 	}
+      XtUnmanageChild(r->nm); /* order matters here */
       XtUnmanageChild(r->rw);
       str = view_curfiles_name(r->pos);
       set_button_label_bold(r->nm, str);
-      FREE(str);
       XmToggleButtonSetState(r->sv, FALSE, FALSE);
       XmToggleButtonSetState(r->pl, FALSE, FALSE);
       XtManageChild(r->rw);
+      XtManageChild(r->nm);
       last_row = r->rw;
+      FREE(str);
     }
   lim = get_max_curfile_end();
   for (i = get_curfile_end(); i < lim; i++)

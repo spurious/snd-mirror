@@ -535,6 +535,10 @@ enum {COLOR_POSITION, COLOR_ZOOM};
 #define set_with_mix_tags(ss, a) ss->With_Mix_Tags = a
 #define DEFAULT_WITH_MIX_TAGS 1
 
+#define with_background_processes(ss) ss->With_Background_Processes
+#define set_with_background_processes(ss, a) ss->With_Background_Processes = a
+#define DEFAULT_WITH_BACKGROUND_PROCESSES TRUE
+
 #define wavo_hop(ss) ss->Wavo_Hop
 #define in_set_wavo_hop(ss, a) ss->Wavo_Hop = a
 #define DEFAULT_WAVO_HOP 3

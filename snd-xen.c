@@ -1255,6 +1255,15 @@ static XEN g_set_with_mix_tags(XEN val)
   return(C_TO_XEN_BOOLEAN(with_mix_tags(state)));
 }
 
+static XEN g_with_background_processes(void) {return(C_TO_XEN_BOOLEAN(with_background_processes(state)));}
+static XEN g_set_with_background_processes(XEN val) 
+{
+  #define H_with_background_processes "(" S_with_background_processes ") -> #t if Snd should use background (idle time) processing"
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, "set-" S_with_background_processes, "a boolean");
+  set_with_background_processes(state, XEN_TO_C_BOOLEAN_OR_TRUE(val));
+  return(C_TO_XEN_BOOLEAN(with_background_processes(state)));
+}
+
 static XEN g_use_sinc_interp(void) {return(C_TO_XEN_BOOLEAN(use_sinc_interp(state)));}
 static XEN g_set_use_sinc_interp(XEN val) 
 {
@@ -1933,7 +1942,7 @@ static XEN g_transform_dialog(XEN managed)
 
 static XEN g_file_dialog(void) 
 {
-  #define H_file_dialog "(" S_file_dialog ") fires up the File dialog"
+  #define H_file_dialog "(" S_file_dialog ") fires up the View Current/Previous File dialog"
   return(XEN_WRAP_C_POINTER(start_file_dialog(get_global_state(), 0, 0)));
 }
 
@@ -2902,6 +2911,8 @@ XEN_NARGIFY_0(g_show_selection_transform_w, g_show_selection_transform)
 XEN_ARGIFY_1(g_set_show_selection_transform_w, g_set_show_selection_transform)
 XEN_NARGIFY_0(g_with_mix_tags_w, g_with_mix_tags)
 XEN_ARGIFY_1(g_set_with_mix_tags_w, g_set_with_mix_tags)
+XEN_NARGIFY_0(g_with_background_processes_w, g_with_background_processes)
+XEN_ARGIFY_1(g_set_with_background_processes_w, g_set_with_background_processes)
 XEN_NARGIFY_0(g_use_sinc_interp_w, g_use_sinc_interp)
 XEN_ARGIFY_1(g_set_use_sinc_interp_w, g_set_use_sinc_interp)
 XEN_NARGIFY_0(g_data_clipped_w, g_data_clipped)
@@ -3110,6 +3121,8 @@ XEN_NARGIFY_0(g_gc_on_w, g_gc_on)
 #define g_set_show_selection_transform_w g_set_show_selection_transform
 #define g_with_mix_tags_w g_with_mix_tags
 #define g_set_with_mix_tags_w g_set_with_mix_tags
+#define g_with_background_processes_w g_with_background_processes
+#define g_set_with_background_processes_w g_set_with_background_processes
 #define g_use_sinc_interp_w g_use_sinc_interp
 #define g_set_use_sinc_interp_w g_set_use_sinc_interp
 #define g_data_clipped_w g_data_clipped
@@ -3471,6 +3484,9 @@ void g_initialize_gh(snd_state *ss)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_mix_tags, g_with_mix_tags_w, H_with_mix_tags,
 				   "set-" S_with_mix_tags, g_set_with_mix_tags_w,  0, 0, 0, 1);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_background_processes, g_with_background_processes_w, H_with_background_processes,
+				   "set-" S_with_background_processes, g_set_with_background_processes_w,  0, 0, 0, 1);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_use_sinc_interp, g_use_sinc_interp_w, H_use_sinc_interp,
 				   "set-" S_use_sinc_interp, g_set_use_sinc_interp_w,  0, 0, 0, 1);

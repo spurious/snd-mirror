@@ -311,7 +311,7 @@ file_info *make_file_info(char *fullname, snd_state *ss)
     }
   else
     {
-      snd_error("can't find %s: %s", fullname, strerror(errno));
+      snd_error("make_file_info: can't find %s: %s", fullname, strerror(errno));
       return(NULL);
     }
   return(hdr);
@@ -1182,17 +1182,17 @@ int view_prevfiles_play(snd_state *ss, int pos, int play)
       if (play_sp)
 	{
 	  if (play_sp->playing) return(1); /* can't play two of these at once */
-	  if (strcmp(play_sp->short_filename, prevnames[pos]) != 0)
+	  if ((prevnames[pos] == NULL) || (strcmp(play_sp->short_filename, prevnames[pos]) != 0))
 	    {
 	      completely_free_snd_info(play_sp);
 	      play_sp = NULL;
 	    }
 	}
-      if (!play_sp) 
+      if ((!play_sp) && (prevfullnames[pos]))
 	{
 	  if (mus_file_probe(prevfullnames[pos]))
 	    play_sp = make_sound_readable(ss, prevfullnames[pos], FALSE);
-	  else snd_error("can't find %s: %s ", prevfullnames[pos], strerror(errno));
+	  else snd_error("play previous file: can't find %s: %s ", prevfullnames[pos], strerror(errno));
 	}
       if (play_sp)
 	{
@@ -2000,6 +2000,8 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
 	    }
 	  snd_close_file(collision->sp, ss);
 	}
+      mus_sound_forget(str);
+      mus_sound_forget(fullname);
       if (save_type == FILE_SAVE_AS)
 	result = save_edits_without_display(sp, str, type, format, srate, comment, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "file save as", 0);
       else result = save_selection(ss, str, type, format, srate, comment, SAVE_ALL_CHANS);
