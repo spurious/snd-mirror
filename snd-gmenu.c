@@ -704,7 +704,6 @@ GtkWidget *add_menu(snd_state *ss)
   set_background(mw[v_listener_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[v_listener_menu]);
   gtk_signal_connect(GTK_OBJECT(mw[v_listener_menu]), "activate", GTK_SIGNAL_FUNC(View_Listener_Callback), (gpointer)ss);
-  set_sensitive(mw[v_listener_menu], FALSE);
 
   mw[v_mix_panel_menu] = gtk_menu_item_new_with_label(STR_Mix_Panel);
   gtk_menu_append(GTK_MENU(mw[v_cascade_menu]), mw[v_mix_panel_menu]);

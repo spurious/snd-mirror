@@ -3,7 +3,6 @@
 /* TODO:  map|scan-any-chans = (for-each (map|scan-chan ... ) chans)
  *        map|scan-across-any-chans the same
  *        so all the map|scan funcs are specialized calls of these two
- * TODO: doc and test edpos 
  * TODO: shouldn't temp(s)-to-sound etc use "->"?
  */
 
@@ -75,8 +74,8 @@ static sync_state *get_sync_state_1(snd_state *ss, snd_info *sp, chan_info *cp, 
       for (i = 0; i < si->chans; i++) 
 	{
 	  ncp = si->cps[i];
-	  pos = to_c_edit_position(ncp, edpos, caller);
 	  si->begs[i] = beg;
+	  pos = to_c_edit_position(ncp, edpos, caller);
 	  if (forwards == READ_FORWARD)
 	    sfs[i] = init_sample_read_any(beg, ncp, READ_FORWARD, pos);
 	  else sfs[i] = init_sample_read_any(cp->samples[pos] - 1, ncp, READ_BACKWARD, pos);
@@ -130,6 +129,43 @@ static sync_state *get_sync_state_1(snd_state *ss, snd_info *sp, chan_info *cp, 
 static sync_state *get_sync_state(snd_state *ss, snd_info *sp, chan_info *cp, int beg, int regexpr, int forwards, SCM edpos, const char *caller)
 {
   return(get_sync_state_1(ss, sp, cp, beg, regexpr, forwards, 0, edpos, caller));
+}
+
+static sync_state *get_sync_state_without_snd_fds(snd_state *ss, snd_info *sp, chan_info *cp, int beg, int regexpr)
+{
+  sync_info *si = NULL;
+  int dur, i;
+  sync_state *sc;
+  dur = 0;
+  if ((sp->sync != 0) && (!regexpr))
+    {
+      si = snd_sync(ss, sp->sync);
+      for (i = 0; i < si->chans; i++) 
+	si->begs[i] = beg;
+    }
+  else
+    {
+      if (regexpr)
+	{
+	  if (selection_is_active())
+	    {
+	      si = selection_sync();
+	      dur = selection_len();
+	    }
+	  else
+	    {
+	      snd_warning("no current selection");
+	      return(NULL);
+	    }
+	}
+    }
+  if (si == NULL) 
+    si = make_simple_sync(cp, beg);
+  sc = (sync_state *)CALLOC(1, sizeof(sync_state));
+  sc->dur = dur;
+  sc->si = si;
+  sc->sfs = NULL;
+  return(sc);
 }
 
 /* support for scan and map functions */
@@ -985,7 +1021,6 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, SC
   snd_state *ss;
   snd_info *sp = NULL, *gsp = NULL;
   int ip, stop_point = 0, err, impulse_chan = 0, filter_chans, ok = 0;
-  snd_fd **sfs;
   file_info *hdr;
   int scfd, fltfd, fftsize, ipow, filtersize = 0, filesize = 0, dataloc, dataformat;
   char *ofile = NULL, *saved_chan_file;
@@ -1004,12 +1039,9 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, SC
       sp = any_selected_sound(ss);
       ncp = any_selected_channel(sp);
     }
-  sc = get_sync_state(ss, sp, ncp, 0, (cp == NULL), READ_FORWARD, 
-		      edpos,
-		      (cp == NULL) ? S_convolve_selection_with : S_convolve_with);
+  sc = get_sync_state_without_snd_fds(ss, sp, ncp, 0, (cp == NULL));
   if (sc == NULL) return(NULL);
   si = sc->si;
-  sfs = sc->sfs;
 
   origin = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   mus_snprintf(origin, PRINT_BUFFER_SIZE,
@@ -1125,7 +1157,6 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, SC
 	      else file_override_samples(filtersize + filesize, ofile, ucp, 0, DELETE_ME, LOCK_MIXES, origin);
 	    }
 	  if (ofile) FREE(ofile);
-	  sfs[ip] = free_snd_fd(sfs[ip]);
 	  check_for_event(ss);
 	  if (ss->stopped_explicitly) 
 	    {
@@ -2489,10 +2520,10 @@ static void reverse_sound(chan_info *ncp, int over_selection, SCM edpos)
   char *caller;
   ss = ncp->state;
   sp = ncp->sound;
-  caller = ((over_selection) ? S_reverse_selection : S_reverse_sound);
+  caller = (char *)((over_selection) ? S_reverse_selection : S_reverse_sound);
   sc = get_sync_state(ss, sp, ncp, 0, over_selection, READ_BACKWARD, 
 		      edpos,
-		      caller);
+		      (const char *)caller);
   if (sc == NULL) return;
   si = sc->si;
   sfs = sc->sfs;
@@ -2912,43 +2943,6 @@ int cursor_zeros(chan_info *cp, int count, int regexpr)
     }
   si = free_sync_info(si);
   return(CURSOR_IN_VIEW);
-}
-
-static sync_state *get_sync_state_without_snd_fds(snd_state *ss, snd_info *sp, chan_info *cp, int beg, int regexpr)
-{
-  sync_info *si = NULL;
-  int dur, i;
-  sync_state *sc;
-  dur = 0;
-  if ((sp->sync != 0) && (!regexpr))
-    {
-      si = snd_sync(ss, sp->sync);
-      for (i = 0; i < si->chans; i++) 
-	si->begs[i] = beg;
-    }
-  else
-    {
-      if (regexpr)
-	{
-	  if (selection_is_active())
-	    {
-	      si = selection_sync();
-	      dur = selection_len();
-	    }
-	  else
-	    {
-	      snd_warning("no current selection");
-	      return(NULL);
-	    }
-	}
-    }
-  if (si == NULL) 
-    si = make_simple_sync(cp, beg);
-  sc = (sync_state *)CALLOC(1, sizeof(sync_state));
-  sc->dur = dur;
-  sc->si = si;
-  sc->sfs = NULL;
-  return(sc);
 }
 
 void cos_smooth(chan_info *cp, int beg, int num, int regexpr, const char *origin)
@@ -3419,7 +3413,7 @@ static SCM g_swap_channels(SCM snd0, SCM chn0, SCM snd1, SCM chn1, SCM beg, SCM 
       if (INTEGER_P(snd1))
 	sp = get_sp(snd1);
       else sp = cp0->sound;
-      if (TO_C_INT(snd0) == TO_C_INT(snd1))
+      if (cp0->sound == sp)
 	{
 	  if ((cp0->chan + 1) < sp->nchans)
 	    cp1 = sp->chans[cp0->chan + 1];

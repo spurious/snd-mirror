@@ -1,5 +1,7 @@
 snd change log
 
+  21-May:    snd 4.14.
+  18-May:    Gtk+ version was forgetting to make the listener menu active! (thanks to Dave Phillips)
   14-May:    continuable errors -- deleted the next day (gc troubles).
   11-May:    selection-to-temp was writing files that Sox et al can't read (thanks to Matti Koskinen).
   9-May:     support for GSL 0.7+.

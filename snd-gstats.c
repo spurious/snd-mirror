@@ -30,6 +30,7 @@ static void stats_update(GtkWidget *w, gpointer context)
 void update_stats(snd_state *ss)
 {
   int chars;
+  if (stats_form == NULL) return;
   chars = gtk_text_get_length(GTK_TEXT(stats_form));
   if (chars > 0) gtk_editable_delete_text(GTK_EDITABLE(stats_form), 0, -1);
   gtk_text_freeze(GTK_TEXT(stats_form));

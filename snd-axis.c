@@ -176,8 +176,7 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
   int num_ticks, majy, miny, majx, minx, x, y, tx, ty, x0, y0;
   double fy, fx;
   tick_descriptor *tdx = NULL, *tdy = NULL;
-  Locus curx, cury;
-  int curdy;
+  Locus curx, cury, curdy;
   axis_context *ax;
   snd_info *sp;
   sp = cp->sound;
@@ -538,8 +537,8 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
     {
       /* start ticks at flo, go to fhi by step, major ticks at mlo mhi and intervals of tenstep surrounding */
       x0 = ap->y_axis_x0;
-      majx = x0-tdy->maj_tick_len;
-      minx = x0-tdy->min_tick_len;
+      majx = x0 - tdy->maj_tick_len;
+      minx = x0 - tdy->min_tick_len;
       fy = tdy->mlo;
       ty = grf_y(fy, ap);
       draw_line(ax, majx, ty, x0, ty);
@@ -727,7 +726,7 @@ void g_init_axis(SCM local_doc)
   DEFINE_PROC(S_position2x, g_ungrf_x, 1, 3, 0,   "(" S_position2x " val snd chn ax)");
   DEFINE_PROC(S_position2y, g_ungrf_y, 1, 3, 0,   "(" S_position2y " val snd chn ax)");
 
-  DEFINE_PROC(S_axis_info, g_axis_info, 0, 3, 0, "(" S_axis_info " snd chn grf)");
+  DEFINE_PROC(S_axis_info,  g_axis_info, 0, 3, 0, "(" S_axis_info " snd chn grf)");
 
 }
 #endif

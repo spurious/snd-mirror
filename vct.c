@@ -270,7 +270,7 @@ static SCM vct_move(SCM obj, SCM newi, SCM oldi, SCM backwards)
 
 static SCM vct_length(SCM obj)
 {
-  #define H_vct_length     "(" S_vct_length " v) -> length of vct v"
+  #define H_vct_length "(" S_vct_length " v) -> length of vct v"
   vct *v;
   ASSERT_TYPE(VCT_P(obj), obj, SCM_ARGn, S_vct_length, "a vct");
   v = TO_VCT(obj);

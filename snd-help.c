@@ -264,6 +264,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+21-May:  snd 4.14.\n\
 9-May:   support for GSL 0.7+\n\
 7-May:   added edit-position arg to various play functions, save-sound-as,\n\
            scan/map/find funcs, frames and maxamps.\n\
@@ -370,8 +371,8 @@ static char help_menu_help_string[] =
 ";
 
 static char about_snd_help_string[] = 
-"Snd is a sound editor. See snd.html or snd.txt for\n\
-full details.  Please send bug reports or suggestions to\n\
+"Snd is a sound editor. See snd.html for full\n\
+details.  Please send bug reports or suggestions to\n\
 bil@ccrma.stanford.edu.\n\
 \n\
 To get started, go to the File menu, and\n\

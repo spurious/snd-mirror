@@ -12,6 +12,9 @@ Sawfish connection: it should be possible to send commands to sawfish,
   current theme.
 
 gtk-html support (and the XmHTML stuff needs to be updated -- it segfaults on extsnd.html).
+Perhaps a better alternative would be the mozilla library -- TestGetEmbed.cpp is
+buildable in Redhat 7 and appears to have everything we need.  Need to check
+their license and so on.
 
 A more direct connection to gmeteor (perhaps using the control-panel filter
   text widget).  use (filter-sound(make-filter ...)).

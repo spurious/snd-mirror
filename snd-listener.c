@@ -461,7 +461,7 @@ void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
 	gc_heap = scm_num2long_long(SCM_CDR(LIST_REF(stats, 2)), (char *)SCM_ARG1, __FUNCTION__);
 	gc_cells = scm_num2long_long(SCM_CDR(LIST_REF(stats, 1)), (char *)SCM_ARG1, __FUNCTION__);
 #endif
-	gc_time = (float)TO_C_INT(SCM_CDR(LIST_REF(stats, 0))) * (1000.0 / (float)CLOCKS_PER_SEC);
+	gc_time = (float)(TO_C_INT(SCM_CDR(LIST_REF(stats, 0)))) * (1000.0 / (float)CLOCKS_PER_SEC);
 	str = (char *)CALLOC(STATS_BUFFER_SIZE,sizeof(char));
 	if (len > 7)
 	  mus_snprintf(str, STATS_BUFFER_SIZE,

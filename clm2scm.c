@@ -1297,7 +1297,7 @@ static SCM g_make_delay_1(int choice, SCM arglist)
       mus_misc_error(caller, "size < 0?", keys[size_key]);
     }
   if (max_size == -1) max_size = size;
-  if (max_size <= 0)
+  if ((max_size <= 0) || (max_size < size))
     {
       if (line) FREE(line);
       mus_misc_error(caller, "invalid delay length", TO_SCM_INT(max_size));

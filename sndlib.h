@@ -27,11 +27,10 @@
 
 
 #define SNDLIB_VERSION 12
-#define SNDLIB_REVISION 27
-#define SNDLIB_DATE "12-May-01"
+#define SNDLIB_REVISION 28
+#define SNDLIB_DATE "19-May-01"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
-/* gcc has various compile-time macros like #cpu, but we're hoping to run in Metroworks C, Watcom C, MSC, MPW, etc */
 
 #if defined(HAVE_CONFIG_H)
   #include "config.h"

@@ -2859,9 +2859,43 @@ In CLM-in-Scheme, the first (simpler) fcomb above might be:
       (dly (+ input (* (flt (tap dly)) feedback))))))
 </pre>
 <p>(Here we're returning a closure that packages up the generator's state). 
-We could probably use Guile's object system to conjure up fcomb
-classes and methods in Scheme.
-But, leaving that for a rainy day, our more immediate interest is how to do the same thing in CLM-in-C (clm.c).
+We could use Guile's object system to conjure up fcomb
+classes and methods in Scheme:
+</p>
+<pre>
+(use-modules (oop goops))
+
+(define-class fcmb ()
+  (dly :accessor fcomb-delay)
+  (flt :accessor fcomb-filter)
+  (fdb :accessor fcomb-feedback))
+
+(define (fcomb gen input)
+  ((fcomb-delay gen) 
+   (+ input (* ((fcomb-filter gen) 
+		(tap (fcomb-delay gen)))
+	       (fcomb-feedback gen)))))
+
+(define-method (initialize (obj fcmb) initargs)
+  (next-method)
+  (let* ((len (get-keyword :length initargs 0))
+	 (feedback (get-keyword :feedback initargs 0.5))
+	 (a0 (get-keyword :a0 initargs 0.5))
+	 (a1 (get-keyword :a1 initargs 0.5)))
+    (set! (fcomb-delay obj) (make-delay len))
+    (set! (fcomb-filter obj) (make-one-zero a0 a1))
+    (set! (fcomb-feedback obj) feedback)
+    obj))
+
+(define-method (write (obj fcmb) port)
+  (display (format #f "#&lt;fcomb: delay: ~A, filter: ~A, feedback: ~A&gt;"
+		   (fcomb-delay obj)
+		   (fcomb-filter obj)
+		   (fcomb-feedback obj))
+	   port))
+</pre>
+<p>
+But our real interest here is how to do the same thing in CLM-in-C (clm.c).
 The following is extracted from snd-dac.c's translation of Fernando's
 translation of Wakefield's freeverb.  It implements fcomb and ties it
 into CLM so it can be treated just like oscil or comb or whatever.

@@ -442,6 +442,9 @@ void snd_doit(snd_state *ss, int argc, char **argv)
                (define " S_cursor_context " 3)\
                (define (" S_axis_info " . args) #f)\
                (define (" S_change_property " . args) #f)\
+               (define (" S_dialog_widgets ") #f)\
+               (define (" S_channel_widgets ") #f)\
+               (define (" S_current_font ") #f)\
                (define " S_basic_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_zoom_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_position_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\

@@ -2,9 +2,6 @@
 #include "vct.h"
 #include "sndlib-strings.h"
 
-/* TODO  completion activated in emacs (snd-as-subjob)
- */
-
 static char *current_match = NULL;
 
 #ifdef SCM_MODULE_OBARRAY

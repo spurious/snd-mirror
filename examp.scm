@@ -3090,6 +3090,7 @@
 
 ;(add-hook! mouse-enter-graph-hook (lambda (snd chn) (focus-widget (car (channel-widgets snd chn)))))
 ;(add-hook! mouse-enter-listener-hook (lambda (widget) (focus-widget widget)))
+;(add-hook! mouse-enter-text-hook (lambda (w) (focus-widget w)))
 
 
 ;;; -------- View: Files dialog chooses which sound is displayed
@@ -3113,7 +3114,7 @@
 		(list width height))
 	  (select-sound snd)))))
 
-(add-hook! mouse-enter-label-hook files-popup-buffer)
+;(add-hook! mouse-enter-label-hook files-popup-buffer)
 
 ;;; TODO: add C-x b support here using select-sound-hook
 

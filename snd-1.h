@@ -81,11 +81,11 @@ typedef struct {
   Float y_scale, y_base, y_ambit;
   double x_scale, x_base, x_ambit;
   char *xlabel;
-  int x_label_x, x_label_y;
   Locus y_axis_x0, x_axis_x0,
         y_axis_y0, x_axis_y0,
         x_axis_x1,
-        y_axis_y1;
+        y_axis_y1,
+        x_label_x, x_label_y;
   int graph_active;
   int losamp, hisamp;                   /* displayed x-axis bounds in terms of sound sample numbers */
   Locus graph_x0;                       /* x axis offset relative to window (for double graphs) */

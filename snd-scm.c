@@ -3569,9 +3569,6 @@ If more than one hook function, results are concatenated. If none, the current c
 #if USE_NO_GUI
   YES_WE_HAVE("snd-nogui");
 #endif
-#if HAVE_APPLICABLE_SMOB
-  YES_WE_HAVE("snd-new-smob"); /* needed for backwards compatibility in the test suite */
-#endif
 
   YES_WE_HAVE("snd");
 }

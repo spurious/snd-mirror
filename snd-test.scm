@@ -16,12 +16,13 @@
 ;;; test 13: menus, edit lists, hooks, etc
 ;;; test 14: all functions
 ;;; test 15: chan-local vars 
-;;; test 16: define-syntax 
+;;; test 16: define-syntax
 ;;; test 17: guile-gtk dialogs and graphics
 ;;; test 18: enved
 ;;; test 19: save and restore
 ;;; test 20: errors
 ;;; test 21: transforms
+;;; test 22: goops
 
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs))
@@ -30,7 +31,7 @@
 (define snd-test -1)
 (define keep-going #f)
 (define full-test (< snd-test 0))
-(define total-tests 21)
+(define total-tests 22)
 
 (if (provided? 'gcing) (set! g-gc-step 100))
 
@@ -1307,6 +1308,35 @@
 	(mus-sound-seek fd 20 0)
 	(mus-sound-close-input fd))
 
+      (let* ((ind (open-sound "2.snd"))
+	     (sd1 (samples->sound-data 12000 10 ind 0))
+	     (vc1 (sound-data->vct sd1))
+	     (vc2 (samples->vct 12000 10 ind 0))
+	     (sd2 (vct->sound-data vc2)))
+	(if (not (equal? vc1 vc2)) (snd-display (format #f ";samples->sound-data->vct: ~A ~A" vc1 vc2)))
+	(if (not (equal? sd1 sd2)) (snd-display (format #f ";sound-data->vct->sound-data: ~A ~A" sd1 sd2)))
+	(scale-by 2.0 ind 0)
+	(set! sd1 (samples->sound-data 12000 10 ind 0 #f 0))
+	(set! vc1 (sound-data->vct sd1))
+	(set! vc2 (samples->vct 12000 10 ind 0 #f 0))
+	(set! sd2 (vct->sound-data vc2))
+	(if (not (equal? vc1 vc2)) (snd-display (format #f ";edpos samples->sound-data->vct: ~A ~A" vc1 vc2)))
+	(if (not (equal? sd1 sd2)) (snd-display (format #f ";edpos sound-data->vct->sound-data: ~A ~A" sd1 sd2)))
+	(set! sd1 (samples->sound-data 12000 10 ind 1))
+	(set! vc1 (sound-data->vct sd1))
+	(set! vc2 (samples->vct 12000 10 ind 1))
+	(set! sd2 (vct->sound-data vc2))
+	(if (not (equal? vc1 vc2)) (snd-display (format #f ";1 samples->sound-data->vct: ~A ~A" vc1 vc2)))
+	(if (not (equal? sd1 sd2)) (snd-display (format #f ";1 sound-data->vct->sound-data: ~A ~A" sd1 sd2)))
+	(scale-by 2.0 ind 1)
+	(set! sd1 (samples->sound-data 12000 10 ind 1))
+	(set! vc1 (sound-data->vct sd1))
+	(set! vc2 (samples->vct 12000 10 ind 1))
+	(set! sd2 (vct->sound-data vc2))
+	(if (not (equal? vc1 vc2)) (snd-display (format #f ";1 scaled samples->sound-data->vct: ~A ~A" vc1 vc2)))
+	(if (not (equal? sd1 sd2)) (snd-display (format #f ";1 scaled sound-data->vct->sound-data: ~A ~A" sd1 sd2)))
+	(close-sound ind))
+
       (if (provided? 'gcing) (set! g-gc-step 0))
       (for-each 
        (lambda (chans)
@@ -1416,6 +1446,28 @@
 	  (set! v1 (samples->vct 12000 10 ind1 0))
 	  (if (not (vequal v1 v2))
 	      (snd-display (format #f ";~A (3) ~A ~A" func-name v1 v2))))))
+    (revert-sound ind1)))
+
+(define (vfequal v0 v1)
+  (define (dequal ctr len)
+    (if (= ctr len)
+	#t
+	(and (< (abs (- (vct-ref v0 ctr) (vct-ref v1 ctr))) .01)
+	     (dequal (1+ ctr) len))))
+  (let ((len (vct-length v0)))
+    (and (= len (vct-length v1))
+	 (dequal 0 len))))
+
+(define (test-orig func0 func1 func-name ind1)
+  (let ((v0 (samples->vct 12000 10 ind1 0)))
+    (func0 ind1)
+    (let ((v1 (samples->vct 12000 10 ind1 0)))
+      (if (vfequal v0 v1)
+	  (snd-display (format #f ";~A (orig: 0) no change! ~A ~A" func-name v0 v1)))
+      (func1 ind1)
+      (let ((v2 (samples->vct 12000 10 ind1 0)))
+	(if (not (vfequal v0 v2))
+	    (snd-display (format #f ";~A (orig: 1) ~A ~A" func-name v0 v2)))))
     (revert-sound ind1)))
 
 
@@ -1960,6 +2012,8 @@
 	      (snd-display (format #f ";apply selection amp:~%  ~A ->~%  ~A?" amps newamps)))
 	  (if (not (provided? 'snd-nogui))
 	      (let* ((axinfo (axis-info obind 0 time-graph))
+		     (losamp (car axinfo))
+		     (hisamp (cadr axinfo))
 		     (x0 (list-ref axinfo 2))
 		     (y0 (list-ref axinfo 3))
 		     (x1 (list-ref axinfo 4))
@@ -1974,8 +2028,92 @@
 		    (snd-display (format #f ";x<->position: ~A ~A?" (position->x (x->position xpos)) xpos)))
 		(if (> (abs (- (position->y (y->position ypos)) ypos)) .5)
 		    (snd-display (format #f ";y<->position: ~A ~A?" (position->y (y->position ypos)) ypos)))
+		(if (not (= losamp (left-sample obind 0)))
+		    (snd-display (format #f ";axis-info[0 losamp]: ~A ~A?" losamp (left-sample obind 0))))
+		(if (not (= hisamp (right-sample obind 0)))
+		    (snd-display (format #f ";axis-info[1 hisamp]: ~A ~A?" hisamp (right-sample obind 0))))
+		(if (fneq (list-ref axinfo 6) 0.0)
+		    (snd-display (format #f ";axis-info[6 xmin]: ~A?" (list-ref axinfo 6))))
+		(if (fneq (list-ref axinfo 7) -1.0)
+		    (snd-display (format #f ";axis-info[7 ymin]: ~A?" (list-ref axinfo 7))))
+		(if (fneq (list-ref axinfo 9) 1.0)
+		    (snd-display (format #f ";axis-info[9 ymax]: ~A?" (list-ref axinfo 9))))
+
+		(set! (left-sample obind 0) 1234)
+		(if (not (= 1234 (car (axis-info obind 0))))
+		    (snd-display (format #f ";axis-info[0 losamp at 1234]: ~A ~A?" (car (axis-info obind 0)) (left-sample obind 0))))
+		(set! (y-bounds obind 0) (list -2.0 3.0))
+		(if (fneq (list-ref (axis-info obind 0) 7) -2.0)
+		    (snd-display (format #f ";axis-info[7 ymin -2.0]: ~A?" (list-ref (axis-info obind 0) 7))))
+		(if (fneq (list-ref (axis-info obind 0) 9) 3.0)
+		    (snd-display (format #f ";axis-info[9 ymax 3.0]: ~A?" (list-ref (axis-info obind 0) 9))))
+		
 		))
 	  (close-sound obind)))
+
+      (let ((ind1 (open-sound "oboe.snd")))
+	(test-orig (lambda (snd) (src-sound 2.0 ind1)) (lambda (snd) (src-sound 0.5 ind1)) 'src-sound ind1)
+	(test-orig (lambda (snd) (scale-by 2.0 ind1)) (lambda (snd) (scale-by 0.5 ind1)) 'scale-by ind1)
+	(test-orig (lambda (snd) (reverse-sound ind1)) (lambda (snd) (reverse-sound ind1)) 'reverse-sound ind1)
+	(test-orig (lambda (snd) (env-sound '(0 1.0 1 2.0) ind1)) (lambda (snd) (env-sound '(0 1.0 1 0.5) ind1)) 'env-sound ind1)
+	(test-orig (lambda (snd) (env-sound '(0 1.0 1 2.0 2 1.0) ind1)) (lambda (snd) (env-sound '(0 1.0 1 0.5 2 1.0) ind1)) 'env-sound ind1)
+  
+	(scale-to 1.0 ind1)
+	(let ((v0 (make-vct 10))
+	      (v1 (samples->vct 12000 10 ind1 0)))
+	  (vct-set! v0 0 1.0)
+	  (array->file "fmv3.snd" v0 10 22050 1)
+	  (convolve-with "fmv3.snd" 1.0 ind1)
+	  (let ((v2 (samples->vct 12000 10 ind1 0)))
+	    (if (not (vfequal v1 v2))
+		(snd-display (format #f ";~A (orig: 0) ~A ~A" 'convolve-with v1 v2))))
+	  (delete-file "fmv3.snd"))
+	(revert-sound ind1)
+	
+	(scale-to 1.0 ind1)
+	(let ((v0 (make-vct 10))
+	      (v1 (samples->vct 12000 10 ind1 0)))
+	  (vct-set! v0 5 1.0)
+	  (array->file "fmv3.snd" v0 10 22050 1)
+	  (convolve-with "fmv3.snd" 1.0 ind1)
+	  (let ((v2 (samples->vct 12005 10 ind1 0)))
+	    (if (not (vfequal v1 v2))
+		(snd-display (format #f ";~A (orig: 2) ~A ~A" 'convolve-with v1 v2))))
+	  (delete-file "fmv3.snd"))
+	(close-sound ind1))
+
+      (let ((ind1 (open-sound "2.snd")))
+	(let ((v0 (samples->vct 12000 10 ind1 0))
+	      (v1 (samples->vct 12000 10 ind1 1)))
+	  (swap-channels ind1)
+	  (let ((v2 (samples->vct 12000 10 ind1 0))
+		(v3 (samples->vct 12000 10 ind1 1)))
+	    (if (or (vequal v0 v2)
+		    (vequal v1 v3))
+		(snd-display (format #f ";swap-channels 0: no change! ~A ~A ~A ~A" v0 v2 v1 v3))))
+	  (swap-channels ind1)
+	  (let ((v2 (samples->vct 12000 10 ind1 0))
+		(v3 (samples->vct 12000 10 ind1 1)))
+	    (if (or (not (vequal v0 v2))
+		    (not (vequal v1 v3)))
+		(snd-display (format #f ";swap-channels 1: ~A ~A ~A ~A" v0 v2 v1 v3))))
+	  ;; as long as we're here...
+	  (set! (cursor ind1 0) 100)
+	  (set! (cursor ind1 1) 200)
+	  (if (or (not (= (cursor ind1 0) 100)) 
+		  (not (= (cursor ind1 1) 200)))
+	      (snd-display (format #f ";cursor: ~A ~A?" (cursor ind1 0) (cursor ind1 1))))
+	  (forward-sample 10 ind1 0)
+	  (forward-sample -10 ind1 1)
+	  (if (or (not (= (cursor ind1 0) 110)) 
+		  (not (= (cursor ind1 1) 190)))
+	      (snd-display (format #f ";cursor (1): ~A ~A?" (cursor ind1 0) (cursor ind1 1))))
+	  (backward-sample -10 ind1 0)
+	  (backward-sample 10 ind1 1)
+	  (if (or (not (= (cursor ind1 0) 120)) 
+		  (not (= (cursor ind1 1) 180)))
+	      (snd-display (format #f ";cursor (2): ~A ~A?" (cursor ind1 0) (cursor ind1 1))))
+	  (close-sound ind1)))
 
       (let ((ind1 (open-sound "oboe.snd"))
 	    (ind2 (open-sound "2.snd")))
@@ -2402,13 +2540,11 @@
 	    (file->array "hiho.snd" 0 0 10 v3)
 	    (if (fneq (vct-ref v3 5) (vct-ref v2 5))
 		(snd-display (format #f ";vct->sound-file: ~A ~A?" v2 v3))))))
-      (if (provided? 'snd-new-smob)
-	  (begin
-	    (if (fneq ((vct 1.0 2.0 3.0) 1) 2.0)
-		(snd-display (format #f ";(vct...) = ~A?" ((vct 1.0 2.0 3.0) 1))))
-	    (let ((v1 (vct 1 2 3 4)))
-	      (if (fneq (v1 1) 2.0)
-		  (snd-display (format #f ";(v1 1) = ~A?" (v1 1)))))))
+      (if (fneq ((vct 1.0 2.0 3.0) 1) 2.0)
+	  (snd-display (format #f ";(vct...) = ~A?" ((vct 1.0 2.0 3.0) 1))))
+      (let ((v1 (vct 1 2 3 4)))
+	(if (fneq (v1 1) 2.0)
+	    (snd-display (format #f ";(v1 1) = ~A?" (v1 1)))))
       (let ((nind (new-sound "tmp.snd" mus-next mus-bshort 22050 1 "hiho a comment")))
 	(test-prc95)
 	(play-and-wait 0 nind)
@@ -2526,19 +2662,17 @@
 	(snd-display (format #f ";~A not equal? ~A ~A" (mus-name g0) g0 g2)))
     (if (equal? g0 gad)
 	(snd-display (format #f ";~A equal frame? ~A ~A" (mus-name g0) g0 gad)))
-    (if (provided? 'snd-new-smob)
-	(begin
-	  (g0)
-	  (g3)
-	  (g3)
-	  (if (not (eq? g0 g3))
-	      (snd-display (format #f ";run let ~A eq? ~A ~A" (mus-name g0) g0 g3)))
-	  (if (eq? g0 g1)
-	      (snd-display (format #f ";arg ~A eq? ~A ~A" (mus-name g0) g0 g1)))
-	  (if (equal? g0 g1)
-	      (snd-display (format #f ";run ~A equal? ~A ~A" (mus-name g0) g0 g1)))
-	  (if (equal? g0 g2)
-	      (snd-display (format #f ";run ~A not equal? ~A ~A" (mus-name g0) g0 g2)))))))
+    (g0)
+    (g3)
+    (g3)
+    (if (not (eq? g0 g3))
+	(snd-display (format #f ";run let ~A eq? ~A ~A" (mus-name g0) g0 g3)))
+    (if (eq? g0 g1)
+	(snd-display (format #f ";arg ~A eq? ~A ~A" (mus-name g0) g0 g1)))
+    (if (equal? g0 g1)
+	(snd-display (format #f ";run ~A equal? ~A ~A" (mus-name g0) g0 g1)))
+    (if (equal? g0 g2)
+	(snd-display (format #f ";run ~A not equal? ~A ~A" (mus-name g0) g0 g2)))))
     
 (if (or full-test (= snd-test 8) (and keep-going (<= snd-test 8)))
     (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests))
@@ -2959,16 +3093,15 @@
       (test-gen-equal (make-oscil 440.0) (make-oscil 440.0) (make-oscil 100.0))
       (test-gen-equal (make-oscil 440.0) (make-oscil 440.0) (make-oscil 440.0 1.0))
       
-      (if (provided? 'snd-new-smob)
-	  (let ((gen (make-oscil 440.0))
-		(gen1 (make-oscil 440.0))
-		(pm-index 2.0)
-		(v0 (make-vct 10)))
-	    (do ((i 0 (1+ i)))
-		((= i 10))
-	      (vct-set! v0 i (gen 0.0 (* pm-index (gen1 0.0)))))
-	    (if (or (fneq (vct-ref v0 1) 0.367) (fneq (vct-ref v0 6) 0.854) (fneq (vct-ref v0 8) 0.437))
-		(snd-display (format #f ";oscil pm output: ~A" v0)))))
+      (let ((gen (make-oscil 440.0))
+	    (gen1 (make-oscil 440.0))
+	    (pm-index 2.0)
+	    (v0 (make-vct 10)))
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (vct-set! v0 i (gen 0.0 (* pm-index (gen1 0.0)))))
+	(if (or (fneq (vct-ref v0 1) 0.367) (fneq (vct-ref v0 6) 0.854) (fneq (vct-ref v0 8) 0.437))
+	    (snd-display (format #f ";oscil pm output: ~A" v0))))
 
       (let ((amps (make-vector 3))
 	    (oscils (make-vector 3))
@@ -3424,6 +3557,45 @@
 	    (sample->frame mx2 1.0 frout)
 	    (if (not (equal? frout fr0)) (snd-display (format #f ";sample->frame via frout: ~A ~A?" frout fr0))))))
 
+      (for-each 
+       (lambda (chans)
+	 (let ((m1 (make-mixer chans)))
+	   (if (or (not (= (mus-channels m1) chans))
+		   (not (= (mus-length m1) chans)))
+	       (snd-display (format #f ";mixer ~A chans but: ~A ~A" chans (mus-channels m1) (mus-length m1))))
+	   (do ((i 0 (1+ i)))
+	       ((= i chans))
+	     (do ((j 0 (1+ j)))
+		 ((= j chans))
+	       (mixer-set! m1 i j (+ (* i .01) (* j .1)))))
+	   (do ((i 0 (1+ i)))
+	       ((= i chans))
+	     (do ((j 0 (1+ j)))
+		 ((= j chans))
+	       (if (fneq (mixer-ref m1 i j) (+ (* i .01) (* j .1)))
+		   (snd-display (format #f ";mixer[~A ~A] = ~A (~A)?" i j (mixer-ref m1 i j) (+ (* i .01) (* j .1)))))))
+	   (let ((mempty (make-mixer chans))
+		 (midentity (make-mixer chans))
+		 (mpick (make-mixer chans)))
+	     (do ((i 0 (1+ i)))
+		 ((= i chans))
+	       (mixer-set! midentity i i 1.0))
+	     (mixer-set! mpick (1- chans) (1- chans) 1.0)
+	     (let ((mzero (mixer* m1 mempty))
+		   (msame (mixer* m1 midentity))
+		   (mone (mixer* m1 mpick)))
+	       (do ((i 0 (1+ i)))
+		   ((= i chans))
+		 (do ((j 0 (1+ j)))
+		     ((= j chans))
+		   (if (fneq (mixer-ref mzero i j) 0.0) (snd-display (format #f ";mzero ~A ~A = ~A?" i j (mixer-ref mzero i j))))
+		   (if (fneq (mixer-ref m1 i j) (mixer-ref msame i j)) (snd-display (format #f ";msame ~A ~A?" (mixer-ref msame i j) (mixer-ref m1 i j))))
+		   (if (and (fneq (mixer-ref mone i j) 0.0)
+			    (not (= i (1- chans)))
+			    (not (= j (1- chans))))
+		       (snd-display (format #f ";mone ~A ~A = ~A?" i j (mixer-ref mone i j))))))))))
+       (list 1 2 4 8))
+
       (let ((gen (make-fft-window hamming-window 16)))
 	(if (not (vequal gen (vct 0.080 0.115 0.215 0.364 0.540 0.716 0.865 1.000 1.000 0.865 0.716 0.540 0.364 0.215 0.115 0.080)))
 	    (snd-display (format #f ";hamming window: ~A" gen))))
@@ -3873,6 +4045,21 @@
 	(set! fr0 (locsig gen 0 1.0))
 	(if (or (fneq (frame-ref fr0 3) .333) (fneq (frame-ref fr0 0) .167)) (snd-display (format #f ";300 locsig quad output: ~A" fr0))))
 
+      (for-each 
+       (lambda (chans)
+	 (let ((m1 (make-locsig :channels chans)))
+	   (if (or (not (= (mus-channels m1) chans))
+		   (not (= (mus-length m1) chans)))
+	       (snd-display (format #f ";locsig ~A chans but: ~A ~A" chans (mus-channels m1) (mus-length m1))))
+	   (do ((i 0 (1+ i)))
+	       ((= i chans))
+	     (locsig-set! m1 i (* i .1)))
+	   (do ((i 0 (1+ i)))
+	       ((= i chans))
+	     (if (fneq (locsig-ref m1 i) (* i .1))
+		 (snd-display (format #f ";locsig[~A] = ~A (~A)?" i (locsig-ref m1 i) (* i .1)))))))
+       (list 1 2 4 8))
+
       (if (file-exists? "fmv4.snd") (delete-file "fmv4.snd"))
       (if (file-exists? "fmv4.reverb") (delete-file "fmv4.reverb"))
       (let* ((gen (make-frame->file "fmv4.snd" 2 mus-bshort mus-next))
@@ -4203,15 +4390,13 @@
 					 #f))
 				     #f ; no change to synthesis
 				     ))
-	(if (provided? 'snd-new-smob)
-	    (begin
-	      (set! reader (make-sample-reader 0))
-	      (map-chan (lambda (val)
-			  (phase-vocoder pv (lambda (dir) 
-					      (reader)))
-			  #f))
-	      (undo 1)
-	      (free-sample-reader reader)))
+	(set! reader (make-sample-reader 0))
+	(map-chan (lambda (val)
+		    (phase-vocoder pv (lambda (dir) 
+					(reader)))
+		    #f))
+	(undo 1)
+	(free-sample-reader reader)
 	(set! pv (make-phase-vocoder #f
 				     512 4 (inexact->exact (* 128 2.0)) 1.0
 				     #f ;no change to analysis
@@ -4266,10 +4451,9 @@
 	      (let ((mx (next-mix-sample mr))
 		    (sx (sample (+ 100 i))))
 		(if (fneq mx sx) (snd-display (format #f ";next-mix-sample: ~A ~A?" mx sx)))))
-	    (if (provided? 'snd-new-smob)
-		(let ((mx (mr))
-		      (sx (sample 199)))
-		  (if (fneq mx sx) (snd-display (format #f ";mix-sample 100: ~A ~A?" mx sx)))))
+	    (let ((mx (mr))
+		  (sx (sample 199)))
+	      (if (fneq mx sx) (snd-display (format #f ";mix-sample 100: ~A ~A?" mx sx))))
 	    (free-mix-sample-reader mr)
 	    (if (not (= pos 100)) (snd-display (format #f ";mix-position: ~A?" pos)))
 	    (if (not (= len 41623)) (snd-display (format #f ";mix-length: ~A?" len)))
@@ -4335,15 +4519,14 @@
 		(snd-display (format #f ";mix edits: ~A?" eds)))
 	    (if (not (= (edit-position (list mix-id)) (car eds)))
 		(snd-display (format #f ";mix edit-position: ~A ~A?" (edit-position (list mix-id)) eds))))
-	  (if (provided? 'snd-new-smob)
-	      (let ((samps1 (samples->vct 0 50828 (list mix-id) 0))
-		    (vr (make-sample-reader 0 (list mix-id) 0 1)))
-		(if (not (sample-reader? vr)) (snd-display (format #f ";(mix) ~A not sample-reader?" vr)))
-		(do ((i 0 (1+ i)))
-		    ((= i 50828))
-		  (if (not (= (vr) (samps1 i)))
-		      (snd-display (format #f ";(mix) readers disagree at ~D" i))))
-		(free-sample-reader vr)))
+	  (let ((samps1 (samples->vct 0 50828 (list mix-id) 0))
+		(vr (make-sample-reader 0 (list mix-id) 0 1)))
+	    (if (not (sample-reader? vr)) (snd-display (format #f ";(mix) ~A not sample-reader?" vr)))
+	    (do ((i 0 (1+ i)))
+		((= i 50828))
+	      (if (not (= (vr) (samps1 i)))
+		  (snd-display (format #f ";(mix) readers disagree at ~D" i))))
+	    (free-sample-reader vr))
 	  (insert-sample 100 .5 (list mix-id)) 
 	  (if (or (fneq (sample 100 (list mix-id)) .5)
 		  (not (= (frames (list mix-id)) 50829)))
@@ -4717,8 +4900,10 @@
 
 
 ;;; ---------------- test 11: dialogs ----------------
+
 (define env1 '(0 0 1 1))
-(if (or full-test (= snd-test 11) (and keep-going (<= snd-test 11)))
+(if (and (not (provided? 'snd-nogui))
+	 (or full-test (= snd-test 11) (and keep-going (<= snd-test 11))))
     (begin
       (if (procedure? trace-hook) (trace-hook 11))
      (without-errors (peaks))
@@ -4880,7 +5065,7 @@
 			 (df (mus-sound-data-format name))
 			 (fd (if (or (= ht mus-raw) (= df -1)) 
 				 -1 
-				 (view-sound name))))
+				 (or (view-sound name) -1))))
 		    (if (not (= fd -1))
 			(begin
 			  (set! open-ctr (+ open-ctr 1))
@@ -6477,7 +6662,7 @@
 	       (new-reader (make-sample-reader beg ind 0 1 pos)))
 	  (do ((i 0 (1+ i)))
 	      ((= i len))
-	    (let* ((ov (* scaler (if (provided? 'snd-new-smob) (old-reader) (next-sample old-reader))))
+	    (let* ((ov (* scaler (old-reader)))
 		   (nv (next-sample new-reader))
 		   (val (abs (- ov nv))))
 	      (set! diff (+ diff val))))
@@ -7122,6 +7307,7 @@
       ))
 
 ;;; ---------------- test 16: define-syntax ----------------
+
 (if (or full-test (= snd-test 16) (and keep-going (<= snd-test 16)))
     (let ((hi 32)
 	  (ho 0))
@@ -7132,8 +7318,7 @@
       (loop for k from 0 to 12 do (set! ho (+ ho 1)))
       (if (not (= ho 16)) (snd-display (format #f ";loop: ~A?" ho)))
       (set! hi (prog1 (+ 2 ho) (set! ho 3)))
-      (if (not (= hi 18)) (snd-display (format #f ";prog1: ~A?" hi)))
-      (if (provided? 'snd-new-smob) (load "goopsnd.scm"))))
+      (if (not (= hi 18)) (snd-display (format #f ";prog1: ~A?" hi)))))
 
 
 ;;; ---------------- test 17: guile-gtk dialogs and graphics ----------------
@@ -8300,6 +8485,7 @@ EDITS: 3
 	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :order -1 0 1))
 	    (gc)
 	    ))
+
       ))
 
 (set! (window-y) 10)
@@ -8883,6 +9069,34 @@ EDITS: 3
       ))
 
 
+
+;;; ---------------- test 22: goops ----------------
+
+(define (gcomb gen input)
+  (gen input))	
+
+(define (make-gcomb length feedback a0 a1)
+  (let ((dly (make-delay length))
+        (flt (make-one-zero a0 a1)))
+    (lambda (input)
+      (dly (+ input (* (flt (tap dly)) feedback))))))
+
+(if (or full-test (= snd-test 22) (and keep-going (<= snd-test 22)))
+    (begin
+      (if (procedure? trace-hook) (trace-hook 22))
+      (load "goopsnd.scm")
+      (let ((f0 (make fcmb :length 4 :feedback 0.7))
+	    (g0 (make-gcomb 4 0.7 0.5 0.5)))
+	(fcomb f0 1.0)
+	(gcomb g0 1.0)
+	(do ((i 0 (1+ i)))
+	    ((= i 20))
+	  (let ((fval (fcomb f0 0.0))
+		(gval (gcomb g0 0.0)))
+	    (if (fneq fval gval)
+		(snd-display (format #f ";fcomb at ~A: ~A ~A?" i fval gval))))))))
+
+
 ;;; -------------------------------- clean up and quit -------------------------------- 
 
 (if include-clm 
@@ -8908,14 +9122,13 @@ EDITS: 3
 (if (defined? 'report-times) (report-times))
 
 (snd-display (format #f ";all done!~%~A" original-prompt))
-(if (provided? 'snd-new-smob)
-    (snd-display (format #f "timings:~%  ~A: total~%  GC: ~A~%~{    ~A~%~})~%" 
-			 (/ (- (get-internal-real-time) overall-start-time) 100) 
-			 (* (cdar (gc-stats)) .001)
-			 (let ((lst (gc-stats)))
-			   (list (list-ref lst 1) 
-				 (list-ref lst 5) 
-				 (list-ref lst 9))))))
+(let ((gc-lst (gc-stats)))
+  (snd-display (format #f "timings:~%  ~A: total~%  GC: ~A~%~{    ~A~%~})~%" 
+		       (/ (- (get-internal-real-time) overall-start-time) 100) 
+		       (* (cdr (list-ref gc-lst 0)) .001)
+		       (list (list-ref gc-lst 1) 
+			     (list-ref gc-lst 5) 
+			     (list-ref gc-lst 9)))))
 (if (not (null? times))
     (for-each (lambda (n)
 		(snd-display (format #f "  ~A: ~A~%" (cadr n) (car n))))
@@ -8927,26 +9140,22 @@ EDITS: 3
     ((= i (+ total-tests 1)))
   (if (number? (vector-ref timings i))
       (snd-display (format #f "  [~D: ~A]" i (/ (vector-ref timings i) 100)))))
+	
 (if (string? test14-file)
     (snd-display (format #f "~%~A(~D)" test14-file (mus-sound-samples test14-file))))
 
 (if (= snd-test -1) (exit))
 
 
-;;; TODO: these aren't tested at all yet (except as bare error checks in a few cases):
-;;;   stop-player add-input remove-input loop-samples focus-widget graph-data
-;;;
-;;;   edpos args: sound->temp cases
-;;; only touched upon:
 ;;;   convolve-files map-across-all-chans map-chans scan-across-chans map-sound-chans scan-sound-chans scan-chans
-;;;   samples->sound-data forward-mix smooth-selection convolve-selection-with save-state
+;;;   forward-mix smooth-selection convolve-selection-with save-state locsig-reverb-set!
 ;;;   mus-sound-reopen-output mus-sound-seek mus-sound-seek-frame close-sound-file vct->sound-file
-;;;   save-marks save-region save-selection vcts-map!
-;;;   buffer->frame frame->buffer mixer* mixer-set! frame->frame restart-env locsig-set! locsig-reverb-set!
+;;;   save-marks save-region save-selection vcts-map! buffer->frame frame->buffer frame->frame restart-env 
 ;;;   ina inb outc outd make-track-sample-reader free-track-sample-reader mix-sound-channel mix-sound-index
-;;;   backward-mix peaks forward-sample backward-sample cursor-position prompt-in-minibuffer
+;;;   backward-mix peaks cursor-position draw-string fill-rectangle
 ;;;   append-to-minibuffer scan-across-sound-chans change-menu-label update-sound erase-rectangle load-font
-;;;   soundfont-info menu-widgets x->position y->position position->y axis-info listener-selection draw-line draw-string fill-rectangle
+;;;   soundfont-info menu-widgets x->position y->position position->y listener-selection draw-line 
+;;;   edpos in sound->temp graph-data
 
 ;;; need to know before calling this if libguile.so was loaded
 ;;; (system "cc gsl-ex.c -c")

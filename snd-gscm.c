@@ -96,14 +96,36 @@ static SCM g_make_snd_color(SCM r, SCM g, SCM b)
   #define H_make_color "(" S_make_color " r g b) -> a col" STR_OR " object with the indicated rgb values"
   snd_color *new_color;
   GdkColor gcolor;
+  Float rf, gf, bf;
   ASSERT_TYPE(NUMBER_P(r), r, SCM_ARG1, S_make_color, "a number");
   /* someday accept a list as r */
   ASSERT_TYPE(NUMBER_P(g), g, SCM_ARG2, S_make_color, "a number");
   ASSERT_TYPE(NUMBER_P(b), b, SCM_ARG3, S_make_color, "a number");
+
+  rf = TO_C_DOUBLE(r);
+  if ((rf > 1.0) || (rf < 0.0)) 
+    ERROR(TO_SCM_SYMBOL("out-of-range"), 
+	  SCM_LIST3(TO_SCM_STRING(S_make_color),
+		    TO_SCM_STRING("make-color: red value must be between 0.0 and 1.0: ~S"),
+		    SCM_LIST1(r)));
+
+  gf = TO_C_DOUBLE(g);
+  if ((gf > 1.0) || (gf < 0.0)) 
+    ERROR(TO_SCM_SYMBOL("out-of-range"), 
+	  SCM_LIST3(TO_SCM_STRING(S_make_color),
+		    TO_SCM_STRING("green value must be between 0.0 and 1.0: ~S"),
+		    SCM_LIST1(g)));
+  bf = TO_C_DOUBLE(b);
+  if ((bf > 1.0) || (bf < 0.0)) 
+    ERROR(TO_SCM_SYMBOL("out-of-range"), 
+	  SCM_LIST3(TO_SCM_STRING(S_make_color),
+		    TO_SCM_STRING("blue value must be between 0.0 and 1.0: ~S"),
+		    SCM_LIST1(b)));
+
   new_color = (snd_color *)scm_must_malloc(sizeof(snd_color), S_make_color);
-  gcolor.red = (unsigned short)(65535 * TO_C_DOUBLE(r));
-  gcolor.green = (unsigned short)(65535 * TO_C_DOUBLE(g));
-  gcolor.blue = (unsigned short)(65535 * TO_C_DOUBLE(b));
+  gcolor.red = (unsigned short)(65535 * rf);
+  gcolor.green = (unsigned short)(65535 * gf);
+  gcolor.blue = (unsigned short)(65535 * bf);
   new_color->color = gdk_color_copy(&gcolor);
   gdk_color_alloc(gdk_colormap_get_system(), new_color->color);
   SND_RETURN_NEWSMOB(snd_color_tag, new_color);

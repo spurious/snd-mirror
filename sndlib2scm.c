@@ -540,11 +540,12 @@ static SCM sound_data2vct(SCM sdobj, SCM chan, SCM vobj)
   sound_data *sd;
   int len, i, chn;
   ASSERT_TYPE(SOUND_DATA_P(sdobj), sdobj, SCM_ARG1, S_sound_data2vct, "a sound-data object");
-  ASSERT_TYPE(INTEGER_P(chan), chan, SCM_ARG2, S_sound_data2vct, "an integer");
-  ASSERT_TYPE(VCT_P(vobj), vobj, SCM_ARG3, S_sound_data2vct, "a vct");
-  v = TO_VCT(vobj);
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(chan), chan, SCM_ARG2, S_sound_data2vct, "an integer");
+  ASSERT_TYPE(NOT_BOUND_P(vobj) || VCT_P(vobj), vobj, SCM_ARG3, S_sound_data2vct, "a vct");
   sd = (sound_data *)SND_VALUE_OF(sdobj);
-  chn = TO_C_INT(chan);
+  if (!(VCT_P(vobj))) vobj = make_vct(sd->length, (Float *)CALLOC(sd->length, sizeof(Float)));
+  v = TO_VCT(vobj);
+  chn = TO_C_INT_OR_ELSE(chan, 0);
   if (chn >= sd->chans)
     mus_misc_error(S_sound_data2vct, "invalid channel", SCM_LIST3(sdobj, chan, vobj));
   if (sd->length < v->length) 
@@ -562,11 +563,12 @@ static SCM vct2sound_data(SCM vobj, SCM sdobj, SCM chan)
   sound_data *sd;
   int len, i, chn;
   ASSERT_TYPE(VCT_P(vobj), vobj, SCM_ARG1, S_vct2sound_data, "a vct");
-  ASSERT_TYPE(SOUND_DATA_P(sdobj), sdobj, SCM_ARG2, S_vct2sound_data, "a sound-data object");
-  ASSERT_TYPE(INTEGER_P(chan), chan, SCM_ARG3, S_vct2sound_data, "an integer");
+  ASSERT_TYPE(NOT_BOUND_P(sdobj) || SOUND_DATA_P(sdobj), sdobj, SCM_ARG2, S_vct2sound_data, "a sound-data object");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(chan), chan, SCM_ARG3, S_vct2sound_data, "an integer");
   v = TO_VCT(vobj);
+  if (!(SOUND_DATA_P(sdobj))) sdobj = make_sound_data(1, v->length);
   sd = (sound_data *)SND_VALUE_OF(sdobj);
-  chn = TO_C_INT(chan);
+  chn = TO_C_INT_OR_ELSE(chan, 0);
   if (chn >= sd->chans)
     mus_misc_error(S_vct2sound_data, "invalid channel", SCM_LIST3(vobj, chan, sdobj));
   if (sd->length < v->length) 
@@ -574,7 +576,7 @@ static SCM vct2sound_data(SCM vobj, SCM sdobj, SCM chan)
   else len = v->length;
   for (i = 0; i < len; i++) 
     sd->data[chn][i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
-  return(vobj);
+  return(sdobj);
 }
 
 
@@ -1126,8 +1128,8 @@ void mus_sndlib2scm_initialize(void)
   DEFINE_PROC(S_sound_data_setB,          sound_data_set, 4, 0, 0,          H_sound_data_setB);
   DEFINE_PROC(S_make_sound_data,          g_make_sound_data, 2, 0, 0,       H_make_sound_data);
   DEFINE_PROC(S_sound_data_p,             g_sound_data_p, 1, 0, 0,          H_sound_data_p);
-  DEFINE_PROC(S_sound_data2vct,           sound_data2vct, 3, 0, 0,          H_sound_data2vct);
-  DEFINE_PROC(S_vct2sound_data,           vct2sound_data, 3, 0, 0,          H_vct2sound_data);
+  DEFINE_PROC(S_sound_data2vct,           sound_data2vct, 1, 2, 0,          H_sound_data2vct);
+  DEFINE_PROC(S_vct2sound_data,           vct2sound_data, 1, 2, 0,          H_vct2sound_data);
   DEFINE_PROC(S_mus_sound_samples,        g_sound_samples, 1, 0, 0,         H_mus_sound_samples);
   DEFINE_PROC(S_mus_sound_frames,         g_sound_frames, 1, 0, 0,          H_mus_sound_frames);
   DEFINE_PROC(S_mus_sound_duration,       g_sound_duration, 1, 0, 0,        H_mus_sound_duration);
