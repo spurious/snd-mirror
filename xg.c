@@ -44,6 +44,7 @@
  *     win32-specific functions
  *
  * HISTORY:
+ *     2-Jun:     gdk_atom_name needs to free return value
  *     28-May:    GtkFileSelection struct support put back in -- need ok_button et al.
  *     14-Apr:    make-target-entry.
  *     4-Apr:     various additions, deletions, and bugfixes for snd-test 26
@@ -3376,7 +3377,14 @@ static XEN gxg_gdk_atom_name(XEN atom)
 {
   #define H_gdk_atom_name "gchar* gdk_atom_name(GdkAtom atom)"
   XEN_ASSERT_TYPE(XEN_GdkAtom_P(atom), atom, 1, "gdk_atom_name", "GdkAtom");
-  return(C_TO_XEN_gchar_(gdk_atom_name(XEN_TO_C_GdkAtom(atom))));
+  {
+   gchar* result;
+   XEN rtn;
+   result = gdk_atom_name(XEN_TO_C_GdkAtom(atom));
+   rtn = C_TO_XEN_gchar_(result);
+   g_free(result);
+   return(rtn);
+  }
 }
 static XEN gxg_gdk_property_get(XEN arglist)
 {
@@ -29809,10 +29817,10 @@ static bool xg_already_inited = false;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"27-May-04\")");
+      XEN_EVAL_C_STRING("(define xm-version \"28-May-04\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("27-May-04"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("28-May-04"));
 #endif
       xg_already_inited = true;
 #if WITH_GTK_AND_X11

@@ -6865,7 +6865,6 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 	    im[i] = GSL_IMAG(val); /* always essentially 0.0 */
 	  }
 	mus_fft(rl, im, size, -1);    /* can be 1 here */
-	rl[size / 2] = 0.0;
 	pk = 0.0;
 	for (i = 0; i < size; i++) 
 	  if (pk < rl[i]) 
@@ -6897,7 +6896,6 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 	    im[i] = cimag(val);
 	  }
 	mus_fft(rl, im, size, -1);    /* can be 1 here */
-	rl[size / 2] = 0.0;
 	pk = 0.0;
 	for (i = 0; i < size; i++) 
 	  if (pk < rl[i]) 

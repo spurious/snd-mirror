@@ -1677,13 +1677,17 @@ static XEN g_make_noi(bool rand_case, const char *caller, XEN arglist)
 	{
 	  if (!(XEN_KEYWORD_P(keys[3]))) /* i.e. distribution arg was specified */
 	    {
-	      v = mus_optkey_to_vct(keys[3], caller, orig_arg[3], NULL);
-	      distribution_size = v->length;
-	      if (distribution_size <= 0)
-		XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[3], keys[3], "distribution size ~A <= 0?");
-	      if (distribution_size > MAX_TABLE_SIZE)
-		XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[3], keys[3], "distribution size ~A too large");
-	      distribution = copy_vct_data(v);
+	      XEN_ASSERT_TYPE(VCT_P(keys[3]) || XEN_FALSE_P(keys[3]), keys[3], orig_arg[3], caller, "a vct");
+	      if (VCT_P(keys[3]))
+		{
+		  v = mus_optkey_to_vct(keys[3], caller, orig_arg[3], NULL);
+		  distribution_size = v->length;
+		  if (distribution_size <= 0)
+		    XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[3], keys[3], "distribution size ~A <= 0?");
+		  if (distribution_size > MAX_TABLE_SIZE)
+		    XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[3], keys[3], "distribution size ~A too large");
+		  distribution = copy_vct_data(v);
+		}
 	    }
 	}
     }

@@ -17575,10 +17575,25 @@ echo "$as_me:$LINENO: result: $ac_cv_type_scm_t_guard" >&5
 echo "${ECHO_T}$ac_cv_type_scm_t_guard" >&6
 if test $ac_cv_type_scm_t_guard = yes; then
   cat >>confdefs.h <<\_ACEOF
-#define HAVE_DYNAMIC_WIND 1
+#define HAVE_GUILE_DYNAMIC_WIND 1
 _ACEOF
 
 fi
+
+
+    echo "$as_me:$LINENO: checking for call/cc" >&5
+echo $ECHO_N "checking for call/cc... $ECHO_C" >&6
+    if test "`${GUILE_CONFIG_path}guile -c '(display (defined? (quote call/cc)))'`" = "#t"; then
+      cat >>confdefs.h <<\_ACEOF
+#define HAVE_GUILE_CALL_CC 1
+_ACEOF
+
+      echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+    else
+      echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+    fi
 
     LIBS="$OLD_LIBS"
     CFLAGS="$OLD_CFLAGS"

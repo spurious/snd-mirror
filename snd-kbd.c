@@ -2023,7 +2023,7 @@ returned as a string; otherwise it is evaluated first as Scheme code"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(raw), raw, XEN_ARG_4, S_prompt_in_minibuffer, "a boolean");
   ASSERT_SOUND(S_prompt_in_minibuffer, snd_n, 3);
   sp = get_sp(snd_n, NO_PLAYERS);
-  if (sp == NULL)
+  if ((sp == NULL) || (sp->inuse != SOUND_NORMAL))
     return(snd_no_such_sound_error(S_prompt_in_minibuffer, snd_n));
   if (XEN_PROCEDURE_P(sp->prompt_callback))
     snd_unprotect(sp->prompt_callback);
@@ -2057,7 +2057,7 @@ static XEN g_report_in_minibuffer(XEN msg, XEN snd_n)
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_1, S_report_in_minibuffer, "a string");
   ASSERT_SOUND(S_report_in_minibuffer, snd_n, 2);
   sp = get_sp(snd_n, NO_PLAYERS);
-  if (sp == NULL)
+  if ((sp == NULL) || (sp->inuse != SOUND_NORMAL))
     return(snd_no_such_sound_error(S_report_in_minibuffer, snd_n));
   report_in_minibuffer(sp, XEN_TO_C_STRING(msg));
   return(msg);

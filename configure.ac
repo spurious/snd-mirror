@@ -970,7 +970,16 @@ if test $GUILE_CONFIG_works = yes; then
 						   AC_DEFINE(WITH_MODULES)
 						 fi])
     AC_CHECK_TYPE(scm_t_catch_body,             [AC_DEFINE(HAVE_SCM_T_CATCH_BODY)], , [#include <guile/gh.h>])
-    AC_CHECK_TYPE(scm_t_guard,                  [AC_DEFINE(HAVE_DYNAMIC_WIND)], , [#include <guile/gh.h>])
+    AC_CHECK_TYPE(scm_t_guard,                  [AC_DEFINE(HAVE_GUILE_DYNAMIC_WIND)], , [#include <guile/gh.h>])
+
+    AC_MSG_CHECKING([for call/cc])
+    if test "`${GUILE_CONFIG_path}guile -c '(display (defined? (quote call/cc)))'`" = "#t"; then
+      AC_DEFINE(HAVE_GUILE_CALL_CC)
+      AC_MSG_RESULT(yes)
+    else
+      AC_MSG_RESULT(no)
+    fi
+
     LIBS="$OLD_LIBS"
     CFLAGS="$OLD_CFLAGS"
 

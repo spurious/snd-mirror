@@ -668,7 +668,7 @@ static XEN close_hook;
 static void add_to_current_files(const char *shortname);
 static void add_to_previous_files(const char *shortname, const char *fullname);
 
-#if HAVE_DYNAMIC_WIND
+#if HAVE_GUILE_DYNAMIC_WIND
 /* cleanup even if error in file lookup process */
 typedef struct {
   char *filename;
@@ -720,7 +720,7 @@ static snd_info *snd_open_file_1 (const char *filename, bool select, bool read_o
 	    }
 	}
     }
-#if HAVE_DYNAMIC_WIND
+#if HAVE_GUILE_DYNAMIC_WIND
   {
     open_file_context *ofc;
     ofc = (open_file_context *)CALLOC(1, sizeof(open_file_context));

@@ -125,7 +125,7 @@
 		  (let ((samp1 (next-sample sr0)))
 		    (if (and (<= samp0 0.0)
 			     (> samp1 0.0)
-			     (> (- i last-cross) 4)
+			     (> (- i last-cross) 40)
 			     (> sum silence))
 			(begin
 			  (set! last-cross i)

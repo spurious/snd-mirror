@@ -7052,7 +7052,7 @@ char *sf_to_string(snd_fd *fd)
 		      case SOUND_NORMAL: name = "unknown source";   break;
 		      case SOUND_WRAPPER: name = "wrapped source";  break;
 		      case SOUND_REGION: name = "region as source"; break;
-		      case SOUND_READER: name = "reader source";    break;
+		      case SOUND_READER: name = "readable source";    break;
 		      }
 		}
 	      else name = "region as source";
@@ -7622,7 +7622,7 @@ static void finish_as_one_edit(chan_info *cp, void *ptr)
   chan_ctr++; 
 }
 
-#if HAVE_DYNAMIC_WIND
+#if HAVE_GUILE_DYNAMIC_WIND
 /* protect against errors within as-one-edit */
 typedef struct {
   XEN proc;
@@ -7659,7 +7659,7 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
 {
   #define H_as_one_edit "(" S_as_one_edit " thunk (origin #f)): evaluate thunk, collecting all edits into one from the edit historys' point of view"
   int chans;
-#if (!HAVE_DYNAMIC_WIND)
+#if (!HAVE_GUILE_DYNAMIC_WIND)
   int *cur_edits;
 #endif
   XEN result = XEN_FALSE;
@@ -7680,7 +7680,7 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
       if (XEN_STRING_P(origin))
 	as_one_edit_origin = XEN_TO_C_STRING(origin);
       else as_one_edit_origin = NULL;
-#if HAVE_DYNAMIC_WIND
+#if HAVE_GUILE_DYNAMIC_WIND
       {
 	as_one_edit_context *sc;
 	sc = (as_one_edit_context *)CALLOC(1, sizeof(as_one_edit_context));

@@ -1262,7 +1262,7 @@ int mix_file(off_t beg, off_t num, int chans, chan_info **cps, char *mixinfile, 
   return(id);
 }
 
-#if HAVE_DYNAMIC_WIND
+#if HAVE_GUILE_DYNAMIC_WIND
 typedef struct {
   off_t beg, len;
   int chans, track_id;
@@ -1341,7 +1341,7 @@ static int mix_complete_file(snd_info *sp, off_t beg, char *fullname, const char
       cps[0] = cp;
       chans = 1;
     }
-#if HAVE_DYNAMIC_WIND
+#if HAVE_GUILE_DYNAMIC_WIND
   {
     mix_file_context *mx;
     XEN result;

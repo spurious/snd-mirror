@@ -366,7 +366,7 @@ void calculate_fft(chan_info *cp)
 
 static bool updating = false;
 
-#if HAVE_DYNAMIC_WIND
+#if HAVE_GUILE_DYNAMIC_WIND
 static void before_dpy(void *ignore) {}
 static void after_dpy(void *context) {updating = false;}
 static XEN dpy_body(void *context)
@@ -417,7 +417,7 @@ void update_graph(chan_info *cp)
   if (!(((cp->cgx)->ax)->wn)) 
     if (!(fixup_cp_cgx_ax_wn(cp))) 
       return;
-#if HAVE_DYNAMIC_WIND
+#if HAVE_GUILE_DYNAMIC_WIND
   scm_internal_dynamic_wind((scm_t_guard)before_dpy, 
 			    (scm_t_inner)dpy_body, 
 			    (scm_t_guard)after_dpy, 

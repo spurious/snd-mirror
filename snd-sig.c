@@ -2880,7 +2880,7 @@ at run-time.  See extsnd.html for the gory details."
 }
 
 
-#if HAVE_DYNAMIC_WIND
+#if HAVE_GUILE_DYNAMIC_WIND
 typedef struct {
   XEN proc;
   off_t beg, num;
@@ -2976,7 +2976,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
   snd_fd *sf;
   XEN errstr;
   off_t kp, num;
-#if (!HAVE_DYNAMIC_WIND)
+#if (!HAVE_GUILE_DYNAMIC_WIND)
   int rpt = 0, rpt4;
   bool reporting = false;
   XEN res;
@@ -3047,7 +3047,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 	  return(XEN_FALSE);
 	}
     }
-#if HAVE_DYNAMIC_WIND
+#if HAVE_GUILE_DYNAMIC_WIND
   /* package up context and try to protect against errors/throws in the user's code */
   {
     scan_context *sc;

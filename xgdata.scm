@@ -810,7 +810,7 @@
 (CINT "GDK_PROP_MODE_PREPEND" "GdkPropMode")
 (CINT "GDK_PROP_MODE_APPEND" "GdkPropMode")
 (CFNC "GdkAtom gdk_atom_intern gchar* atom_name gboolean only_if_exists")
-(CFNC "gchar* gdk_atom_name GdkAtom atom")
+(CFNC "gchar* gdk_atom_name GdkAtom atom" 'free)
 (CFNC "gboolean gdk_property_get GdkWindow* window GdkAtom property GdkAtom type gulong offset gulong length gint pdelete GdkAtom* [actual_property_type] gint* [actual_format] gint* [actual_length] guchar** [data]") 
 (CFNC "void gdk_property_change GdkWindow* window GdkAtom property GdkAtom type gint format GdkPropMode mode guchar* data gint nelements")
 (CFNC "void gdk_property_delete GdkWindow* window GdkAtom property")

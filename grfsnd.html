@@ -312,6 +312,13 @@ I think other toolkits use helvetica where Motif defaults to a small fixed font 
 it looks like 7x13 on my machine.
 </p>
 
+<p>If you have the xg module loaded into the Gtk+ version of Snd, you can load
+snd-gtk.scm, and call <a href="sndscm.html#makefontselectordialog">make-font-selector-dialog</a>
+or <a href="sndscm.html#makecolorselectordialog">make-color-selector-dialog</a> to
+goof around
+with the fonts and colors.
+</p>
+
 <p>
 The <A class=def NAME="xautoresize">autoResize</a> resource determines how Snd acts when files
 are added to or removed from its overall display.  The default (1)
@@ -826,6 +833,15 @@ load <i>len</i> samples of <i>filename</i> into <i>vct</i> starting at frame <i>
 <tr><td><a href="clm.html#file-&gt;sample">file-&gt;sample</a></td><td>(gen loc <i>(chan 0)</i>)</td><td>return sample from file at loc</td></tr>
 <tr><td><a href="clm.html#file-&gt;sample?">file-&gt;sample?</a></td><td>(gen)</td><td>#t if gen is file-&gt;sample generator</td></tr>
 <tr><td><a href="clm.html#filter">filter</a></td><td>(gen input)</td><td>filter</td></tr>
+
+<tr><td></td><td colspan=2><br>
+<small>
+In Guile an unrelated function named <b>filter</b> is defined in and exported from oop/goops/util.scm.
+No attempt is made to protect it.
+</small>
+</td></tr>
+<tr><td colspan=3><br></td></tr>
+
 <tr><td><a href="clm.html#filter?">filter?</a></td><td>(gen)</td><td>#t if gen is filter</td></tr>
 <tr><td><a href="clm.html#fir-filter">fir-filter</a></td><td>(gen input)</td><td>FIR filter</td></tr>
 <tr><td><a href="clm.html#fir-filter?">fir-filter?</a></td><td>(gen)</td><td>#t if gen is fir filter</td></tr>

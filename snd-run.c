@@ -10548,7 +10548,9 @@ static void init_walkers(void)
   XEN do_star, declare, call_cc;
   XEN_DEFINE_VARIABLE("do*", do_star, XEN_FALSE);
   XEN_DEFINE_VARIABLE("declare", declare, XEN_FALSE);
+#if (!HAVE_GUILE_CALL_CC)
   XEN_DEFINE_VARIABLE("call/cc", call_cc, XEN_FALSE);
+#endif
   walk_sym = C_STRING_TO_XEN_SYMBOL("snd-walk");
   XEN_PROTECT_FROM_GC(walk_sym);
 

@@ -952,6 +952,7 @@ I like the latter.
 called upon exit.
 If it returns #t, Snd does not exit.  This can be used to check 
 for unsaved edits, or to perform cleanup activities (see autosave.scm, extensions.scm, or <a href="#unsavededitsp">unsaved-edits?</a>).
+Guile's exit-hook is shadowed by this variable.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -9411,7 +9412,7 @@ This function is specific to the Motif version of Snd.
 <tr><td colspan=2>
 <code><a class=def name="exit">exit</a> (<i>exit-value</i>)</code></td></tr>
 <tr><td></td><td>
-exit Snd. 
+exit Snd.  Guile has a function named exit that is shadowed by Snd's version.
 </td></tr>
 
 <!-- goto-listener-end -->

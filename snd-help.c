@@ -1974,8 +1974,6 @@ char *output_comment(file_info *hdr)
   return(run_string_hook(output_comment_hook, S_output_comment_hook, (hdr) ? hdr->comment : NULL, NULL));
 }
 
-/* TODO: should snd-help use the string-distance trick if it can't find what the user provides? */
-
 XEN g_snd_help(XEN text, int widget_wid)
 {
   #define H_snd_help "(" S_snd_help " (arg 'snd-help) (formatted #t)): return the documentation \
@@ -1990,6 +1988,7 @@ and its value is returned."
 
   XEN help_text = XEN_FALSE; 
   char *str = NULL, *new_str, *subject = NULL;
+  bool already_looped = false;
 
 #if HAVE_GUILE
   XEN value = XEN_FALSE, sym = XEN_FALSE;
@@ -2020,6 +2019,7 @@ and its value is returned."
 	      help_text = XEN_OBJECT_HELP(text);
 	    }
 	}
+    HELP_LOOP:
       if (XEN_FALSE_P(help_text))
 	{
 #if HAVE_SCM_C_DEFINE
@@ -2038,6 +2038,28 @@ and its value is returned."
 	      help_text = XEN_PROCEDURE_HELP(value);  /* (procedure-property ...) */
 	      if (XEN_FALSE_P(help_text))
 		help_text = XEN_PROCEDURE_SOURCE_HELP(value);      /* (procedure-documentation ...) -- this is the first line of source if string */
+	    }
+	  if ((XEN_FALSE_P(help_text)) && (!already_looped))
+	    {
+	      /* we're getting desperate! */
+	      int i, min_diff = 1000, min_loc = 0, this_diff;
+	      already_looped = true;
+	      for (i = 0; i < HELP_NAMES_SIZE; i++)
+		{
+		  this_diff = levenstein(subject, help_names[i]);
+		  if (this_diff < min_diff)
+		    {
+		      min_diff = this_diff;
+		      min_loc = i;
+		    }
+		}
+	      if (min_diff < (snd_strlen(subject) / 2))
+		{
+		  subject = help_names[min_loc];
+		  sym = C_STRING_TO_XEN_SYMBOL(subject);
+		  help_text = XEN_OBJECT_HELP(sym);
+		  goto HELP_LOOP;
+		}
 	    }
 	}
     }

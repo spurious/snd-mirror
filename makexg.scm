@@ -754,7 +754,7 @@
 (define (no-way str arg)
   (display (format #f str arg)))
 
-(define* (CFNC data #:optional spec spec-data)
+(define* (CFNC data #:optional spec spec-data) ; 'const -> const for arg cast, 'etc for ... args, 'free -> must free C val before return
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
@@ -1313,6 +1313,7 @@
 (hey " *     win32-specific functions~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     2-Jun:     gdk_atom_name needs to free return value~%")
 (hey " *     28-May:    GtkFileSelection struct support put back in -- need ok_button et al.~%")
 (hey " *     14-Apr:    make-target-entry.~%")
 (hey " *     4-Apr:     various additions, deletions, and bugfixes for snd-test 26~%")
@@ -1933,7 +1934,9 @@
 	     (if (not (eq? spec 'etc))
 		 (if (not (string=? return-type "void"))
 		     (if (= refargs 0)
-			 (hey-on "  return(C_TO_XEN_~A(" (no-stars return-type))
+			 (if (eq? spec 'free)
+			     (hey-on "  {~%   ~A result;~%   XEN rtn;~%   result = " return-type)
+			     (hey-on "  return(C_TO_XEN_~A(" (no-stars return-type)))
 			 (hey-on "    result = C_TO_XEN_~A(" (no-stars return-type)))
 		     (hey-on "  ")))))
        ;; pass args
@@ -2040,7 +2043,7 @@
 			   (heyc ")"))
 		       (if (not (string=? return-type "void"))
 			   (if (= refargs 0)
-			       (heyc "))")
+			       (if (not (eq? spec 'free)) (heyc "))"))
 			       (heyc ")"))))
 		   (hey ");~%")
 		   (if (not (eq? lambda-type 'fnc))
@@ -2145,8 +2148,10 @@
 		       (hey ")));~%"))
 		   (hey "  }~%")) ;'lambda
 		 ))) ; 'begin
-	   (hey "}~%")
-	   ))))
+       (if (eq? spec 'free)
+	   (hey "   rtn = C_TO_XEN_~A(result);~%   g_free(result);~%   return(rtn);~%  }~%" (no-stars return-type)))
+       (hey "}~%")
+       ))))
 
 (for-each handle-func (reverse funcs))
 (if (not (null? extra-funcs)) (with-extra hey (lambda () (for-each handle-func (reverse extra-funcs)))))
@@ -2880,4 +2885,3 @@
 ;       (display (format #f "~A " (car v)))))
 ; direct-types)
 
-;;; TODO: gdk_atom_name free (strdup)

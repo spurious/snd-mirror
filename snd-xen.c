@@ -1913,7 +1913,7 @@ static XEN g_edit_header_dialog(XEN snd_n)
   #define H_edit_header_dialog "(" S_edit_header_dialog " snd): start the Edit Header dialog on sound snd"
   snd_info *sp; 
   sp = get_sp(snd_n, NO_PLAYERS);
-  if (sp == NULL)
+  if ((sp == NULL) || (sp->inuse != SOUND_NORMAL))
     return(snd_no_such_sound_error(S_edit_header_dialog, snd_n));
   w = edit_header(sp);
   return(XEN_WRAP_WIDGET(w));

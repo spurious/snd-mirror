@@ -1318,7 +1318,9 @@
     (let ((ind #f))
       (run-hook before-test-hook 3)
       (set! ind (open-sound "oboe.snd"))
-      (if (file-exists? "funcs.cl") (load "funcs.cl"))
+      (if (and (file-exists? "funcs.cl") 
+	       (not (defined? 'swellf)))
+	  (load "funcs.cl"))
       (let ((td (temp-dir)))
 	(catch #t
 	       (lambda ()
@@ -20044,6 +20046,8 @@ EDITS: 5
 	(if (or (not (string? str1)) ; can happen if we're running -DTIMING
 		(not (string-equal-ignoring-white-space str2 str3)))
 	    (snd-display ";snd-help open-sound: ~A ~A ~A" str1 str2 str3)))
+      (if (not (string? (snd-help 'open-soud)))
+	  (snd-display ";snd-help open-soud (misspelled on purpose) failed"))
       (if (not (string-equal-ignoring-white-space (snd-help enved-base) "(enved-base): envelope editor exponential base value (1.0)"))
 	  (snd-display ";snd-help enved-base: ~A?" (snd-help enved-base)))
       (if (not (string-equal-ignoring-white-space (snd-help vu-font) "(vu-font): name of font used to make VU meter labels (courier)"))
@@ -21040,6 +21044,11 @@ EDITS: 5
 	    (snd-display ";C-x C-z samps: ~A" (samples->vct 2010 10)))
 	(set! (cursor) 0)
 	(select-all)
+	(key (char->integer #\x) 4 ind)
+	(key (char->integer #\o) 0 ind)
+	(key (char->integer #\-) 4 ind)
+	(key (char->integer #\x) 4 ind)
+	(key (char->integer #\o) 0 ind)
 	(key (char->integer #\x) 4 ind)
 	(key (char->integer #\o) 0 ind)
 	(key (char->integer #\x) 4 ind)
@@ -37004,7 +37013,7 @@ EDITS: 2
 		    (widget-string lst "(char->integer (string-ref \"01\\\";#\" 2))" #f)
 		    (key-event lst snd-return-key 0) (force-event)
 		    (key-event lst snd-tab-key 0) (force-event)
-		    (widget-string lst "(vector-ref #(1 2) 0)" #f)
+		    (widget-string lst "(vector-ref '#(1 2) 0)" #f)
 		    (key-event lst snd-return-key 0) (force-event)
 		    (key-event lst snd-tab-key 0) (force-event)
 		    (widget-string lst "(char->integer #\\))" #f)
@@ -46820,6 +46829,7 @@ EDITS: 2
 			  make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
 			  make-sine-summation make-square-wave make-src make-sum-of-cosines make-sum-of-sines make-table-lookup make-triangle-wave
 			  make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar make-phase-vocoder
+			  make-color make-player make-track make-region make-snd->sample make-xen->sample 
 			  ))
       
       (define keyargs
@@ -46829,7 +46839,7 @@ EDITS: 2
 	 :max-size :radius :gain :partials :r :a :n :fill-time :order :xcoeffs :ycoeffs :envelope 
 	 :base :duration :offset :end :direction :degree :distance :reverb :output :fft-size :expansion 
 	 :length :hop :ramp :jitter :type :format :comment :channels :filter :revout :width :edit 
-	 :synthesize :analyze :interp :overlap :pitch))
+	 :synthesize :analyze :interp :overlap :pitch :distribution :sines :dur))
       
       (define procs0 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 0)))) procs))
       (define set-procs0 (remove-if (lambda (n) (or (not (procedure? n)) (not (set-arity-ok n 1)))) set-procs))
@@ -47695,6 +47705,9 @@ EDITS: 2
 	      (check-error-tag 'cannot-save (lambda () (save-sound-as "test.snd" ind mus-voc mus-bshort)))
 	      (check-error-tag 'cannot-save (lambda () (save-selection "test.snd" mus-riff mus-bshort)))
 	      (check-error-tag 'cannot-save (lambda () (save-selection "test.snd" mus-voc mus-bshort)))
+	      (check-error-tag 'wrong-type-arg (lambda () (play-selection 0 #f (lambda () #f))))
+	      (check-error-tag 'wrong-type-arg (lambda () (play-selection 0 #f 0)))
+	      (check-error-tag 'wrong-type-arg (lambda () (play-selection 0 #f (lambda (a b) #f))))
 	      (check-error-tag 'no-data (lambda () (draw-lines '#())))
 	      (check-error-tag 'out-of-range (lambda () (src-channel (make-env '(0 0 1 1) :end 10))))
 	      (check-error-tag 'out-of-range (lambda () (src-channel (make-env '(0 1 1 0) :end 10))))
@@ -47765,6 +47778,7 @@ EDITS: 2
 	      (check-error-tag 'no-such-channel (lambda () (samples->sound-data 0 100 ind 1234)))
 	      (check-error-tag 'no-such-sound (lambda () (graph '#(0 1) "hi" 0 1 0 1 1234)))
 	      (check-error-tag 'no-such-channel (lambda () (graph '#(0 1) "hi" 0 1 0 1 ind 1234)))
+	      (check-error-tag 'wrong-type-arg (lambda () (play-region (car (regions)) #f (lambda () #f))))
 	      (set! (selection-member? #t) #f)
 	      (check-error-tag 'no-active-selection (lambda () (filter-selection (vct 0 0 1 1) 4)))
 	      (check-error-tag 'no-active-selection (lambda () (save-selection "/bad/baddy.snd")))
@@ -47817,6 +47831,7 @@ EDITS: 2
 	      (check-error-tag 'wrong-type-arg (lambda () (filter-channel (vct 0 0 1 1) 4 #f #f ind 1)))
 	      (check-error-tag 'out-of-range (lambda () (filter-sound (vct 0 0 1 1) 0)))
 	      (check-error-tag 'out-of-range (lambda () (filter-sound (vct 0 0 1 1) 10)))
+	      (check-error-tag 'wrong-type-arg (lambda () (play 0 #f #f #f #f #f (lambda () #f))))
 	      (close-sound ind))
 	    (check-error-tag 'bad-arity (lambda () (add-transform "hiho" "time" 0 1 (lambda () 1.0))))
 	    (check-error-tag 'cannot-save (lambda () (save-options "/bad/baddy")))
@@ -47862,8 +47877,7 @@ EDITS: 2
 			 (snd-display ";~A of null widget -> ~A" name tag))))
 		 (list widget-position widget-size widget-text hide-widget show-widget focus-widget)
 		 (list 'widget-position 'widget-size 'widget-text 'hide-widget 'show-widget 'focus-widget)))
-	    
-	    
+
 	    ;; now try everything! (all we care about here is that Snd keeps running)
 	    
 	    ;; ---------------- key args
@@ -47879,7 +47893,7 @@ EDITS: 2
 		   make-procs))
 		(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) :wave -1 0 1 #f #t '() (make-vector 0) 12345678901234567890)))
 	     keyargs)
-	    
+
 	    (if all-args
 		(begin
 		  (for-each
@@ -47909,13 +47923,14 @@ EDITS: 2
 			      (for-each 
 			       (lambda (n)
 				 (catch #t
-					(lambda () (n arg1 arg2 arg3))
+					(lambda () (n arg1 arg2 arg3 arg4))
 					(lambda args (car args))))
 			       make-procs))
-			    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) :wave -1 0 1 #f #t '() (make-vector 0) 12345678901234567890)))
-			 keyargs))
-		      (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) :wave -1 0 1 #f #t '() (make-vector 0) 12345678901234567890)))
-		   keyargs)))
+			    keyargs))
+			 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) :wave -1 0 1 #f #t '() (make-vector 0) 12345678901234567890)))
+		      keyargs))
+		   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) :wave -1 0 1 #f #t '() (make-vector 0) 12345678901234567890))))
+
 	    (gc)
 	    
 	    ;; ---------------- 0 Args

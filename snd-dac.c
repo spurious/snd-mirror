@@ -2132,8 +2132,6 @@ int run_apply(int ofd)
 
 /* -------------------------------- scheme connection -------------------------------- */
 
-/* TODO: need optkey args for play etc */
-
 static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool back, bool syncd, XEN end_n, XEN edpos, const char *caller, int arg_pos, XEN stop_proc)
 {
   /* all chans if chn_n omitted, arbitrary file if snd_n is name */
