@@ -90,7 +90,7 @@
     (dotimes (i 1024)
       (setf (aref generals i) nil))
     (loop for file in file-names and file-ctr from 0 do
-      (with-open-file (f file)
+      (with-open-file (f file :if-does-not-exist nil)
 	(let ((line t))
 	  (loop while line do
 	    (setf line (read-line f nil nil)) ;nil upon EOF with no error msg
@@ -266,7 +266,7 @@
   (let ((outf nil)
 	(state :reading)
 	(topic nil))
-    (with-open-file (htf html-file) 
+    (with-open-file (htf html-file :if-does-not-exist nil)
       (with-open-file (lspf lisp-file)
 	(let ((happy t))
 	  (loop while happy do
@@ -377,7 +377,7 @@
 	;(tds (make-array 128 :initial-element 0))
 	)
     (loop for file in files do
-      (with-open-file (f file)
+      (with-open-file (f file :if-does-not-exist nil)
 	(let ((line t)
 	      (linectr 0)
 	      (openctr 0)

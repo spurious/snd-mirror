@@ -24958,6 +24958,14 @@ EDITS: 2
 	(if (fneq val 4.14) (snd-display ";typed hiho1-xx+xx: ~A" val)))
       (let ((val (run-eval '(lambda (y) (declare (y hiho1)) y) hi1)))
 	(if (not (hiho1? val)) (snd-display ";clm-struct return: ~A" val)))
+      
+      (def-clm-struct hiho2 i x (v #f :type vct) (s "hiho") (ii 3 :type int) (xx 1.0 :type float))
+      (define hi2 (make-hiho2 :v (make-vct 3 .1)))
+      (let ((val (run-eval '(lambda (y) (declare (y hiho2)) (vct-ref (hiho2-v y) 1)) hi2)))
+	(if (fneq val .1) (snd-display ";typed hiho2-v: ~A" val))
+	(run-eval '(lambda (y) (declare (y hiho2)) (vct-set! (hiho2-v y) 2 3.14)) hi2)
+	(if (fneq (vct-ref (hiho2-v hi2) 2) 3.14)
+	    (snd-display ";vct-set hiho2-v: ~A" (vct-ref (hiho2-v hi2) 2))))
 
       (let ((lst (list 1 2 (vct-fill! (make-vct 4) 3.14) 3))
 	    (k 123.0))

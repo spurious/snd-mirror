@@ -8195,10 +8195,14 @@ static void clm_struct_restore(ptree *prog, xen_var *var)
 	  case R_FLOAT:  XEN_LIST_SET(lst, loc, C_TO_XEN_DOUBLE(prog->dbls[addr])); break;
 	  case R_CHAR:   XEN_LIST_SET(lst, loc, C_TO_XEN_CHAR(prog->ints[addr])); break;
 	  case R_STRING: XEN_LIST_SET(lst, loc, C_TO_XEN_STRING((char *)(prog->ints[addr]))); break;
-	    /* TODO: restore clm_def_struct field vectors -> originals? */
-	    /* 	     case R_FLOAT_VECTOR: vct_into_vector((vct *)(prog->ints[var->v->addr]), val);
-	     *       case R_INT_VECTOR: int_vct_into_vector((int_vct *)(prog->ints[var->v->addr]), val);
-	     */
+	  case R_FLOAT_VECTOR:
+	    if (XEN_VECTOR_P(XEN_LIST_REF(lst, loc)))
+	      vct_into_vector((vct *)(prog->ints[var->v->addr]), XEN_LIST_REF(lst, loc));
+	    break;
+	  case R_INT_VECTOR: 
+	    if (XEN_VECTOR_P(XEN_LIST_REF(lst, loc)))
+	      int_vct_into_vector((int_vct *)(prog->ints[var->v->addr]), XEN_LIST_REF(lst, loc));
+	    break;
 	  }
       }
 }
