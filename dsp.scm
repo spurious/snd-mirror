@@ -1162,8 +1162,9 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 (define* (notch-selection freqs #:optional (filter-order #f) (notch-width 2))
   "(notch-selection freqs #:optional (filter-order #f) (notch-width 2)) -> notch filter removing freqs"
-  (filter-selection (make-notch-frequency-response (exact->inexact (selection-srate)) freqs notch-width)
-		    (or filter-order (inexact->exact (expt 2 (ceiling (/ (log (/ (selection-srate) notch-width)) (log 2.0))))))))
+  (if (selection?)
+      (filter-selection (make-notch-frequency-response (exact->inexact (selection-srate)) freqs notch-width)
+			(or filter-order (inexact->exact (expt 2 (ceiling (/ (log (/ (selection-srate) notch-width)) (log 2.0)))))))))
 
 
 ;;; -------- fractional Fourier Transform, z transform

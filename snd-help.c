@@ -223,12 +223,13 @@ char *version_info(void)
 {
   char *result, *xversion = NULL;
   snd_itoa_ctr = 0;
+  xversion = xen_version();
   result = vstrcat(
 	  _("This is Snd version "),
 	  SND_VERSION,
 	  " of ",
 	  SND_DATE,
-	  ":\n    ", xversion = xen_version(),
+	  ":\n    ", xversion,
 	  "\n    ", mus_audio_moniker(),
 	  "\n    Sndlib ", snd_itoa(SNDLIB_VERSION), ".", 
                            snd_itoa(SNDLIB_REVISION), 

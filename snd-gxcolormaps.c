@@ -19,6 +19,22 @@ bool is_colormap(int n)
 	 (cmaps[n]));
 }
 
+char *colormap_name(int n) 
+{
+  if (is_colormap(n))
+    return(cmaps[n]->name); 
+  return(NULL);
+}
+
+int num_colormaps(void)
+{
+  int i;
+  for (i = cmaps_size - 1; i >= 0; i--)
+    if (cmaps[i])
+      return(i + 1);
+  return(0);
+}
+
 static cmap *delete_cmap(int index)
 {
   cmap *c;
@@ -35,22 +51,6 @@ static cmap *delete_cmap(int index)
       cmaps[index] = NULL;
     }
   return(NULL);
-}
-
-char *colormap_name(int n) 
-{
-  if (is_colormap(n))
-    return(cmaps[n]->name); 
-  return(NULL);
-}
-
-int num_colormaps(void)
-{
-  int i;
-  for (i = cmaps_size - 1; i >= 0; i--)
-    if (cmaps[i])
-      return(i + 1);
-  return(0);
 }
 
 static unsigned short *Floats_to_ushorts(int size, Float *data)
@@ -531,7 +531,7 @@ spring, summer, rainbow, and flag.  These names are defined in rgb.scm."
     XEN_ERROR(NO_SUCH_COLORMAP,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_colormap),
 			 val));
-  set_color_map(index); /* this redisplays and so on */
+  set_color_map(index); /* this normally redisplays */
   return(C_TO_XEN_INT(color_map(ss)));
 }
 
@@ -541,6 +541,7 @@ static XEN g_set_colormap_size(XEN val)
   #define H_colormap_size "(" S_colormap_size "): current colormap size; default is 512."
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_colormap_size, "an integer"); 
   set_color_map_size(XEN_TO_C_INT(val));
+  check_colormap_sizes(color_map_size(ss));
   return(C_TO_XEN_INT(color_map_size(ss)));
 }
 

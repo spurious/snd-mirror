@@ -197,8 +197,6 @@
 #define S_mus_set_formant_radius_and_frequency "mus-set-formant-radius-and-frequency"
 #define S_mus_srate                  "mus-srate"
 #define S_mus_width                  "mus-width"
-#define S_mus_x1                     "mus-x1"
-#define S_mus_x2                     "mus-x2"
 #define S_mus_xcoeffs                "mus-xcoeffs"
 #define S_mus_y1                     "mus-y1"
 #define S_mus_y2                     "mus-y2"

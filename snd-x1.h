@@ -54,6 +54,7 @@ void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int j);
 void setup_axis_context(chan_info *cp, axis_context *ax);
 void draw_spectro_line(axis_context *ax, int color, int x0, int y0, int x1, int y1);
 void allocate_color_map(int colormap);
+void check_colormap_sizes(int size);
 void initialize_colormap(void);
 void reflect_color_list(bool setup_time);
 void allocate_sono_rects(int size);

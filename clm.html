@@ -1138,8 +1138,6 @@ averager has the same period (length) as the rand.
 <tr><td><em class=gen>mus-a2</em></td><td>a2 in equations</td></tr>
 <tr><td><em class=gen>mus-b1</em></td><td>b1 in equations</td></tr>
 <tr><td><em class=gen>mus-b2</em></td><td>b2 in equations</td></tr>
-<tr><td><em class=gen>mus-x1</em></td><td>x(n-1) in equations</td></tr>
-<tr><td><em class=gen>mus-x2</em></td><td>x(n-2) in equations</td></tr>
 <tr><td><em class=gen>mus-y1</em></td><td>y(n-1) in equations</td></tr>
 <tr><td><em class=gen>mus-y2</em></td><td>y(n-2) in equations</td></tr>
 <tr><td><em class=gen>mus-order</em></td><td>1 or 2 (no setf)</td></tr>
@@ -1183,8 +1181,6 @@ in conjunction with make-ppolar.</p>
 <tr><td><em class=gen>mus-a2</em></td><td>a2 in equations</td></tr>
 <tr><td><em class=gen>mus-b1</em></td><td>b1 in equations</td></tr>
 <tr><td><em class=gen>mus-b2</em></td><td>b2 in equations</td></tr>
-<tr><td><em class=gen>mus-x1</em></td><td>x(n-1) in equations</td></tr>
-<tr><td><em class=gen>mus-x2</em></td><td>x(n-2) in equations</td></tr>
 <tr><td><em class=gen>mus-y1</em></td><td>y(n-1) in equations</td></tr>
 <tr><td><em class=gen>mus-y2</em></td><td>y(n-2) in equations</td></tr>
 <tr><td><em class=gen>mus-formant-radius</em></td><td>formant radius</td></tr>
@@ -1948,6 +1944,7 @@ set these fields, use these functions (they are described in conjunction with th
   <a class=def name="mus-a0">mus-a0</a>         <a class=def name="mus-feedforward">mus-feedforward</a>     <a class=def name="mus-a1">mus-a1</a>        <a class=def name="mus-hop">mus-hop</a>
   <a class=def name="mus-a2">mus-a2</a>         <a class=def name="mus-b1">mus-b1</a>              <a class=def name="mus-b2">mus-b2</a>        <a class=def name="mus-run">mus-run</a>
   <a class=def name="mus-file-name">mus-file-name</a>  <a class=def name="mus-offset">mus-offset</a>          <a class=def name="mus-width">mus-width</a>     <a class=def name="mus-interp-type">mus-interp-type</a>
+  <a class=def name="mus-y1">mus-y1</a>         <a class=def name="mus-y2">mus-y2</a>              <a class=def name="mus-name">mus-name</a>
 </pre>
 <p>
 <code>(setf (mus-frequency osc1) 440.0)</code>
@@ -2029,6 +2026,12 @@ function.</p>
   sum)
 </pre>
 <p>An example is oscil-bank.</p>
+
+<p>In Scheme/Ruby, there are two generic debugging functions: <a class=def name="mus-describe">mus-describe</a> and
+<a class=def name="mus-inspect">mus-inspect</a>.  Both return a description of the
+generator passed as their argument, but mus-inspect is focussed on internal names
+and state, whereas mus-describe is more user-oriented.
+</p>
 
 <br>
 
@@ -2235,6 +2238,7 @@ readin and <a href="#env">env</a> (see also the fullmix instrument in fullmix.in
  <a class=def name="locsig-reverb-ref">locsig-reverb-ref</a> <i>loc chan</i>
  <a class=def name="locsig-reverb-set!">locsig-reverb-set!</a> <i>loc chan val</i>
  <a class=def name="move-locsig">move-locsig</a> loc degree distance
+ <a class=def name="locsig-type">locsig-type</a> ()
 </pre>
 
 <table border cellpadding=4>
@@ -2253,7 +2257,7 @@ the direct signal gets sent to the reverberator.  <i>Distance</i> tries to
 imitate a distance cue by fooling with the relative amounts of direct and
 reverberated signal (independent of <i>reverb</i>).  <i>Distance</i> should
 be greater than or equal to 1.0.  
-<i>type</i> can be <i>mus-interp-linear</i> (the default) or <i>mus-interp-sinusoidal</i>.
+<i>type</i> (returned by the function <b>locsig-type</b>) can be <i>mus-interp-linear</i> (the default) or <i>mus-interp-sinusoidal</i>.
 This parameter can be set globally via <i>*clm-locsig-type*</i>.  The mus-interp-sinusoidal
 case uses sin and cos to set the respective channel amplitudes (this is reported to
 help with the "hole-in-the-middle" problem).
@@ -2348,7 +2352,7 @@ a few that look for all the world like generators.</p>
   <a class=def name="seconds-&gt;samples">seconds-&gt;samples</a> <i>secs</i>          convert <i>secs</i> to samples
   <a class=def name="degrees-&gt;radians">degrees-&gt;radians</a> <i>degs</i>          convert <i>degs</i> to radians
   <a class=def name="radians-&gt;degrees">radians-&gt;degrees</a> <i>rads</i>          convert <i>rads</i> to degrees
-  <a class=def NAME="clear-array">clear-array</a> <i>arr</i>                set all values in <i>arr</i> to 0.0
+  <a class=def name="clear-array">clear-array</a> <i>arr</i>                set all values in <i>arr</i> to 0.0
   <a class=def Name="sound-samples">sound-samples</a> filename         samples of sound according to header (can be incorrect)
   <a class=def Name="sound-frames">sound-frames</a> filename          samples per channel
   <a class=def Name="sound-datum-size">sound-datum-size</a> filename      bytes per sample

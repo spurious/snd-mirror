@@ -465,13 +465,46 @@ void setup_axis_context(chan_info *cp, axis_context *ax)
 
 /* colormaps */
 
-static int sono_size = -1;
+static int sono_bins = 0;             /* tracks total_bins -- each sono_data[i] is an array of total_bins rectangles */
 static Pixel *grays = NULL;
 static int grays_size = 0;
-static int grays_allocated = -1;
-static XRectangle **sono_data = NULL;
-static int sono_data_size = 0;
+static int grays_allocated = 0;       /* colormap number */
+static XRectangle **sono_data = NULL; /* each entry in sono_data is an array of colormap_size arrays: sono_data[colormap_size][total_bins] */
+static int sono_colors = 0;           /* tracks colormap_size */
 static GC colormap_GC;
+
+void check_colormap_sizes(int colors)
+{
+  int i, old_size;
+  if (grays_size > 0)
+    {
+      if (grays_allocated != 0)
+	{
+	  int scr;
+	  Colormap cmap;
+	  Display *dpy;
+	  dpy = XtDisplay(MAIN_SHELL(ss));
+	  scr = DefaultScreen(dpy);
+	  cmap = DefaultColormap(dpy, scr);
+	  XFreeColors(dpy, cmap, grays, grays_size, 0);
+	  grays_allocated = 0;
+	}
+      if ((grays) && (grays_size < colors))
+	{
+	  old_size = grays_size;
+	  grays_size = colors;
+	  grays = (Pixel *)REALLOC(grays, grays_size * sizeof(Pixel));
+	  for (i = old_size; i < grays_size; i++) grays[i] = 0;
+	}
+    }
+  if ((sono_data) && (sono_colors < colors) && (sono_bins > 0))
+    {
+      old_size = sono_colors;
+      sono_colors = colors;
+      sono_data = (XRectangle **)REALLOC(sono_data, sono_colors * sizeof(XRectangle *));
+      for (i = old_size; i < sono_colors; i++) sono_data[i] = (XRectangle *)CALLOC(sono_bins, sizeof(XRectangle));
+    }
+}
 
 void initialize_colormap(void)
 {
@@ -481,8 +514,8 @@ void initialize_colormap(void)
   gv.background = sx->white;
   gv.foreground = sx->data_color;
   colormap_GC = XCreateGC(MAIN_DISPLAY(ss), XtWindow(MAIN_SHELL(ss)), GCForeground | GCBackground, &gv);
-  sono_data_size = color_map_size(ss);
-  sono_data = (XRectangle **)CALLOC(sono_data_size, sizeof(XRectangle *));
+  sono_colors = color_map_size(ss);
+  sono_data = (XRectangle **)CALLOC(sono_colors, sizeof(XRectangle *));
   grays_size = color_map_size(ss);
   grays = (Pixel *)CALLOC(grays_size, sizeof(Pixel));
 }
@@ -509,21 +542,18 @@ void set_sono_rectangle(int j, int color, Locus x, Locus y, Latus width, Latus h
   r[j].height = height;
 }
 
-/* TODO: realloc all size if needed */ 
-void allocate_sono_rects(int size)
+void allocate_sono_rects(int bins)
 {
   int i;
-  if (size != sono_size)
+  if (bins != sono_bins)
     {
-      for (i = 0; i < sono_data_size; i++)
+      for (i = 0; i < sono_colors; i++)
 	{
-	  if ((sono_size > 0) && (sono_data[i])) 
-	    FREE(sono_data[i]); 
-	  sono_data[i] = NULL;
+	  if ((sono_bins > 0) && (sono_data[i]))
+	    FREE(sono_data[i]); /* each is array of XRectangle structs, but it's the wrong size */
+	  sono_data[i] = (XRectangle *)CALLOC(bins, sizeof(XRectangle));
 	}
-      for (i = 0; i < sono_data_size; i++)
-	sono_data[i] = (XRectangle *)CALLOC(size, sizeof(XRectangle));
-      sono_size = size;
+      sono_bins = bins;
     }
 }
 
@@ -542,7 +572,7 @@ void allocate_color_map(int colormap)
       scr = DefaultScreen(dpy);
       cmap = DefaultColormap(dpy, scr);
       /* 8-bit color displays can't handle all these colors, apparently, so we have to check status */
-      if (grays_allocated != -1) XFreeColors(dpy, cmap, grays, grays_size, 0);
+      if (grays_allocated != 0) XFreeColors(dpy, cmap, grays, grays_size, 0);
       for (i = 0; i < grays_size; i++)
 	{
 	  get_current_color(colormap, i, &(tmp_color.red), &(tmp_color.green), &(tmp_color.blue));

@@ -20,6 +20,7 @@
 #define XEN_UNWRAP_GC(Value) 0
 #define XEN_UNWRAP_PIXEL(Value) 0
 #define XEN_WIDGET_P(Value) 0
+#define LOTSA_PIXELS 10000
 
 #define Cessator int
 #define Cessate int

@@ -4257,9 +4257,9 @@ along the lines of:
 		 :a0 a0 :a1 a1 :x1 0.0))
 
 (defmethod print-object ((d fcomb) stream)
-  (format stream "#&lt;(fcomb: size: ~A, loc: ~A, feedback: ~A, a0: ~A, a1: ~A, x1: ~A, line: ~A&gt;"
+  (format stream "#&lt;(fcomb: size: ~A, loc: ~A, feedback: ~A, a0: ~A, a1: ~A, line: ~A&gt;"
 	  (dly-size d) (dly-loc d) (dly-xscl d)
-	  (<a class=quiet href="clm.html#mus-a0">mus-a0</a> d) (<a class=quiet href="clm.html#mus-a1">mus-a1</a> d) (mus-x1 d)
+	  (<a class=quiet href="clm.html#mus-a0">mus-a0</a> d) (<a class=quiet href="clm.html#mus-a1">mus-a1</a> d)
 	  (prettified-array (dly-line d)))))
 </pre>
 <p>And to get the

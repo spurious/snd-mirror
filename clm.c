@@ -3304,40 +3304,6 @@ void mus_clear_filter_state(mus_any *gen)
     }
 }
 
-Float mus_x1(mus_any *gen)
-{
-  if ((gen) &&
-      ((gen->core)->extended_type == MUS_SIMPLE_FILTER))
-    return(((smpflt *)gen)->x1);
-  return((Float)mus_error(MUS_NO_X1, "can't get %s's x1", mus_name(gen)));
-}
-
-Float mus_set_x1(mus_any *gen, Float val)
-{
-  if ((gen) &&
-      ((gen->core)->extended_type == MUS_SIMPLE_FILTER))
-    ((smpflt *)gen)->x1 = val;
-  else mus_error(MUS_NO_X1, "can't set %s's x1", mus_name(gen));
-  return(val);
-}
-
-Float mus_x2(mus_any *gen)
-{
-  if ((gen) &&
-      ((gen->core)->extended_type == MUS_SIMPLE_FILTER))
-    return(((smpflt *)gen)->x2);
-  return((Float)mus_error(MUS_NO_X2, "can't get %s's x2", mus_name(gen)));
-}
-
-Float mus_set_x2(mus_any *gen, Float val)
-{
-  if ((gen) &&
-      ((gen->core)->extended_type == MUS_SIMPLE_FILTER))
-    ((smpflt *)gen)->x2 = val;
-  else mus_error(MUS_NO_X2, "can't set %s's x2", mus_name(gen));
-  return(val);
-}
-
 Float mus_y1(mus_any *gen)
 {
   if ((gen) &&
@@ -4159,9 +4125,33 @@ mus_any *mus_frame_multiply(mus_any *uf1, mus_any *uf2, mus_any *ures)
   return((mus_any *)res);
 }
 
-Float mus_frame_ref(mus_any *f, int chan) {return(((mus_frame *)f)->vals[chan]);}
-Float mus_frame_set(mus_any *f, int chan, Float val) {((mus_frame *)f)->vals[chan] = val; return(val);}
-Float *mus_frame_data(mus_any *f) {return(((mus_frame *)f)->vals);}
+Float *mus_frame_data(mus_any *f) 
+{
+  return(((mus_frame *)f)->vals);
+}
+
+Float mus_frame_ref(mus_any *uf, int chan) 
+{
+  mus_frame *f = (mus_frame *)uf;
+  if ((chan >= 0) && (chan < f->chans))
+    return(f->vals[chan]);
+  return((Float)mus_error(MUS_ARG_OUT_OF_RANGE, 
+			  S_frame_ref ": invalid chan: %d (frame has %d chan%s)",
+			  chan, f->chans, (f->chans == 1) ? "" : "s"));
+}
+
+Float mus_frame_set(mus_any *uf, int chan, Float val) 
+{
+  mus_frame *f = (mus_frame *)uf;
+  if ((chan >= 0) && (chan < f->chans))
+    f->vals[chan] = val; 
+  else mus_error(MUS_ARG_OUT_OF_RANGE, 
+		 S_frame_set ": invalid chan: %d (frame has %d chan%s)",
+		 chan, f->chans, (f->chans == 1) ? "" : "s");
+  return(val);
+}
+
+
 
 
 
@@ -4303,9 +4293,37 @@ mus_any *mus_make_mixer(int chans, ...)
   return((mus_any *)mx);
 }
 
-Float **mus_mixer_data(mus_any *f) {return(((mus_mixer *)f)->vals);}
-Float mus_mixer_ref(mus_any *f, int in, int out) {return(((mus_mixer *)f)->vals[in][out]);}
-Float mus_mixer_set(mus_any *f, int in, int out, Float val) {((mus_mixer *)f)->vals[in][out] = val; return(val);}
+Float **mus_mixer_data(mus_any *f) 
+{
+  return(((mus_mixer *)f)->vals);
+}
+
+Float mus_mixer_ref(mus_any *uf, int in, int out) 
+{
+  mus_mixer *f = (mus_mixer *)uf;
+  if ((in >= 0) && (in < f->chans) &&
+      (out >= 0) && (out < f->chans))
+    return(f->vals[in][out]);
+  return((Float)mus_error(MUS_ARG_OUT_OF_RANGE, 
+			  S_mixer_ref ": invalid chan: %d (mixer has %d chan%s)",
+			  ((in < 0) || (in >= f->chans)) ? in : out,
+			  f->chans,
+			  (f->chans == 1) ? "" : "s"));
+}
+
+Float mus_mixer_set(mus_any *uf, int in, int out, Float val) 
+{
+  mus_mixer *f = (mus_mixer *)uf;
+  if ((in >= 0) && (in < f->chans) &&
+      (out >= 0) && (out < f->chans))
+    f->vals[in][out] = val; 
+  else mus_error(MUS_ARG_OUT_OF_RANGE, 
+		 S_mixer_set ": invalid chan: %d (mixer has %d chan%s)",
+		 ((in < 0) || (in >= f->chans)) ? in : out,
+		 f->chans,
+		 (f->chans == 1) ? "" : "s");
+  return(val);
+}
 
 mus_any *mus_frame_to_frame(mus_any *uf, mus_any *uin, mus_any *uout)
 {

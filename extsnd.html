@@ -2376,12 +2376,19 @@ mus_sample_t) by mus-audio-read.</td></tr>
 <tr><td colspan=2><code><a class=def name="musaudiorestore">mus-audio-restore</a> ()</code></td></tr>
 <tr><td></td><td>restore a previously saved audio hardware state (unimplemented in many cases)</td></tr>
 
+<!-- mus-audio-report -->
+<tr><td colspan=2><code><a class=def name="musaudioreport">mus-audio-report</a> ()</code></td></tr>
+<tr><td></td><td>
+return a string describing the current audio hardware state. <a href="#musaudiodescribe">mus-audio-describe</a>
+prints out the same string.
+</td></tr>
+
 <!-- mus-audio-save -->
 <tr><td colspan=2><code><a class=def name="musaudiosave">mus-audio-save</a> ()</code></td></tr>
 <tr><td></td><td>save the current audio hardware state (unimplemented in many cases)</td></tr>
 
 <!-- mus-audio-sun-outputs -->
-<tr><td colspan=2><code>musclass=def -audio-sun-outputs (speakers headphones line-out)</code></td></tr>
+<tr><td colspan=2><code><a class=def name="musaudiosunoutputs">mus-audio-sun-outputs</a> (speakers headphones line-out)</code></td></tr>
 <tr><td></td>
 <td>(Sun only)
 set the current Sun audio outputs.
@@ -2394,6 +2401,12 @@ Each entry should be either 0 (turn off device) or 1 (turn it on).
 the out-going data format is set by mus-audio-open-output, and the sound-data's data is translated to that
 format by mus-audio-write.</td></tr>
 
+<!-- mus-bytes-per-sample -->
+<tr><td colspan=2><code><a class=def name="musbytespersample">mus-bytes-per-sample</a> (data-format)</code></td></tr>
+<tr><td></td><td>
+number of bytes in each sample of <i>data-format</i>.
+</td></tr>
+
 <!-- mus-data-format-name -->
 <tr><td colspan=2><code><a class=def name="soundformatname">mus-data-format-name</a> (format)</code></td></tr>
 <tr><td></td><td>convert <i>format</i> from an integer to a string, e.g. "16-bit big endian linear".  The sndlib data formats are:</td></tr>
@@ -2405,10 +2418,22 @@ format by mus-audio-write.</td></tr>
   mus-ldouble  mus-unknown
 </pre></td></tr>
 
+<!-- mus-error-to-string -->
+<tr><td colspan=2><code><a class=def name="muserrortostring">mus-error-to-string</a> (error)</code></td></tr>
+<tr><td></td><td>
+return a brief string description of <i>error</i> (a mus-error return type).
+</td></tr>
+
 <!-- mus-expand-filename -->
 <tr><td colspan=2><code><a class=def name="musexpandfilename">mus-expand-filename</a> (name)</code></td></tr>
 <tr><td></td><td>expand <i>name</i> into its 'absolute' pathname; that is, replace '~' with the current home directory,
 and whatever else seems appropriate.</td></tr>
+
+<!-- mus-file-data-clipped -->
+<tr><td colspan=2><code><a class=def name="musfiledataclipped">mus-file-data-clipped</a> (fd)</code></td></tr>
+<tr><td></td><td>The low-level clipping choice while reading the file associated with <i>fd</i>.
+The default is #f which makes clipping very obvious (it will cause wrap-around).
+</td></tr>
 
 <!-- mus-file-prescaler -->
 <tr><td colspan=2><code><a class=def name="musfileprescaler">mus-file-prescaler</a> (fd)</code></td></tr>
@@ -2419,7 +2444,6 @@ to be lost, resulting in hiss.  In this case set the prescaler for
 the file to 1000.0 or so to get the data into a more normal
 range.  Since the set of mus-file-prescaler should come just after opening
 the sound file, but before trying to read any data, you need to use it in the context of <a href="#duringopenhook">during-open-hook</a>.
-A similar low-level sndlib function is <em class=emdef>mus-file-data-clipped</em>.
 </td></tr>
 
 <!-- mus-header-type-name -->
@@ -2457,6 +2481,10 @@ A similar low-level sndlib function is <em class=emdef>mus-file-data-clipped</em
 <!-- mus-sound-data-location -->
 <tr><td colspan=2><code><a class=def name="sounddatalocation">mus-sound-data-location</a> (filename)</code></td></tr>
 <tr><td></td><td>location of first sample (bytes) (settable)</td></tr>
+
+<!-- mus-sound-datum-size -->
+<tr><td colspan=2><code><a class=def name="sounddatumsize">mus-sound-datum-size</a> (filename)</code></td></tr>
+<tr><td></td><td>size in bytes of each sample in <i>filename</i>.</td></tr>
 
 <!-- mus-sound-duration -->
 <tr><td colspan=2><code><a class=def name="soundduration">mus-sound-duration</a> (filename)</code></td></tr>
@@ -2534,6 +2562,10 @@ accommodate the read</td></tr>
 <!-- mus-sound-srate -->
 <tr><td colspan=2><code><a class=def name="soundsrate">mus-sound-srate</a> (filename)</code></td></tr>
 <tr><td></td><td>sampling rate (settable)</td></tr>
+
+<!-- mus-sound-type-specifier -->
+<tr><td colspan=2><code><a class=def name="soundtypespecifier">mus-sound-type-specifier</a> (filename)</code></td></tr>
+<tr><td></td><td>original type indication of <i>filename</i>.</td></tr>
 
 <!-- mus-sound-write -->
 <tr><td colspan=2><code><a class=def name="mussoundwrite">mus-sound-write</a> (fd beg end chans sdata)</code></td></tr>
@@ -9550,6 +9582,13 @@ and click-for-listener-help (draw.scm).
 </p>
 </td></tr>
 
+<!-- little-endian? -->
+<tr><td colspan=2>
+<code><a class=def name="littleendianp">little-endian?</a> () </code></td></tr>
+<tr><td></td><td>
+return #t if underlying machine is little endian.
+</td></tr>
+
 <!-- memo-sound -->
 <tr><td colspan=2>
 <code><a class=def name="memosound">memo-sound</a></code></td></tr>
@@ -10438,7 +10477,7 @@ of FractInt's royal colormap):
     (let ((r (make-vct size))
 	  (g (make-vct size))
 	  (b (make-vct size))
-	  (incr (exact-&gt;inexact (/ (* 2 3.14159) size))))
+	  (incr (exact-&gt;inexact (/ 3.14159 size))))
       (do ((i 0 (1+ i))
 	   (x 0.0 (+ x incr)))
 	  ((= i size))

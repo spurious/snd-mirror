@@ -2470,16 +2470,21 @@ static void create_post_it_monolog(void)
 widget_t post_it(const char *subject, const char *str)
 {
   /* place string in scrollable help window */
-  XmString xstr1;
+  XmString xstr1, xstr2;
   if (!(post_it_dialog)) 
     create_post_it_monolog(); 
   else raise_dialog(post_it_dialog);
   xstr1 = XmStringCreate((char *)subject, XmFONTLIST_DEFAULT_TAG);
-  XtVaSetValues(post_it_dialog, XmNmessageString, xstr1, NULL);
+  xstr2 = XmStringCreate((char *)subject, XmFONTLIST_DEFAULT_TAG);
+  XtVaSetValues(post_it_dialog, 
+		XmNmessageString, xstr1, 
+		XmNdialogTitle, xstr2,
+		NULL);
   XmTextSetString(post_it_text, (char *)str);
   if (!XtIsManaged(post_it_dialog)) 
     XtManageChild(post_it_dialog);
   XmStringFree(xstr1);
+  XmStringFree(xstr2);
   return(post_it_dialog);
 }
 

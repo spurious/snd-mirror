@@ -11346,57 +11346,74 @@ EDITS: 5
       (if (not (string=? (colormap-name rainbow-colormap) "rainbow"))
 	  (snd-display ";rainbow: ~A" (colormap-name rainbow-colormap)))
       
-      (add-colormap "purple" 
-		    (lambda (size) 
-		      (let ((r (make-vct size))
-			    (g (make-vct size))
-			    (b (make-vct size))
-			    (incr (exact->inexact (/ 256.0 size)))
-			    (er (list 0 60 60 116 128 252 192 252 256 60))
-			    (eg (list 0 0  64 0   128 252 192 252 256 0))
-			    (eb (list 0 80        128 252 192 0   256 80)))
-			(do ((i 0 (1+ i))
-			     (x 0.0 (+ x incr)))
-			    ((= i size))
-			  (vct-set! r i (exact->inexact (/ (envelope-interp x er) 256.0)))
-			  (vct-set! g i (exact->inexact (/ (envelope-interp x eg) 256.0)))
-			  (vct-set! b i (exact->inexact (/ (envelope-interp x eb) 256.0))))
-			(list r g b))))
-      
-      (add-colormap "sin" 
-		    (lambda (size) 
-		      (let ((r (make-vct size))
-			    (g (make-vct size))
-			    (b (make-vct size))
-			    (incr (exact->inexact (/ (* 2 3.14159) size))))
-			(do ((i 0 (1+ i))
-			     (x 0.0 (+ x incr)))
-			    ((= i size))
-			  (vct-set! r i (abs (sin (* 1.5 x))))
-			  (vct-set! g i (abs (sin (* 3.5 x))))
-			  (vct-set! b i (abs (sin (* 2.5 x)))))
-			(list r g b))))
-      
-      (add-colormap "another-sin" 
-		    (lambda (size) 
-		      (let ((r (make-vct size))
-			    (g (make-vct size))
-			    (b (make-vct size))
-			    (incr (exact->inexact (/ (* 2 3.14159) size))))
-			(do ((i 0 (1+ i))
-			     (x 0.0 (+ x incr)))
-			    ((= i size))
-			  (vct-set! r i (abs (sin (* 2.5 x))))
-			  (vct-set! g i (abs (sin (* 3.5 x))))
-			  (vct-set! b i (abs (sin (* 4.5 x)))))
-			(list r g b))))
-      
-      (delete-colormap pink-colormap)
-      (let ((tag (catch #t (lambda () (set! (colormap) pink-colormap)) (lambda args args))))
-	(if (or (not (eq? (car tag) 'no-such-colormap))
-		(= (colormap) pink-colormap))
-	    (snd-display ";delete pink colormap: ~A ~A ~A" tag pink-colormap (colormap))))
-      
+      (let ((purple-cmap (add-colormap "purple" 
+				       (lambda (size) 
+					 (let ((r (make-vct size))
+					       (g (make-vct size))
+					       (b (make-vct size))
+					       (incr (exact->inexact (/ 256.0 size)))
+					       (er (list 0 60 60 116 128 252 192 252 256 60))
+					       (eg (list 0 0  64 0   128 252 192 252 256 0))
+					       (eb (list 0 80        128 252 192 0   256 80)))
+					   (do ((i 0 (1+ i))
+						(x 0.0 (+ x incr)))
+					       ((= i size))
+					     (vct-set! r i (exact->inexact (/ (envelope-interp x er) 256.0)))
+					     (vct-set! g i (exact->inexact (/ (envelope-interp x eg) 256.0)))
+					     (vct-set! b i (exact->inexact (/ (envelope-interp x eb) 256.0))))
+					   (list r g b)))))
+	    (sin-cmap (add-colormap "sin" 
+				    (lambda (size) 
+				      (let ((r (make-vct size))
+					    (g (make-vct size))
+					    (b (make-vct size))
+					    (incr (exact->inexact (/ (* 2 3.14159) size))))
+					(do ((i 0 (1+ i))
+					     (x 0.0 (+ x incr)))
+					    ((= i size))
+					  (vct-set! r i (abs (sin (* 1.5 x))))
+					  (vct-set! g i (abs (sin (* 3.5 x))))
+					  (vct-set! b i (abs (sin (* 2.5 x)))))
+					(list r g b)))))
+	    (another-sin-cmap (add-colormap "another-sin" 
+					    (lambda (size) 
+					      (let ((r (make-vct size))
+						    (g (make-vct size))
+						    (b (make-vct size))
+						    (incr (exact->inexact (/ (* 2 3.14159) size))))
+						(do ((i 0 (1+ i))
+						     (x 0.0 (+ x incr)))
+						    ((= i size))
+						  (vct-set! r i (abs (sin (* 2.5 x))))
+						  (vct-set! g i (abs (sin (* 3.5 x))))
+						  (vct-set! b i (abs (sin (* 4.5 x)))))
+					   (list r g b))))))
+	(delete-colormap pink-colormap)
+	(let ((tag (catch #t (lambda () (set! (colormap) pink-colormap)) (lambda args args))))
+	  (if (or (not (eq? (car tag) 'no-such-colormap))
+		  (= (colormap) pink-colormap))
+	      (snd-display ";delete pink colormap: ~A ~A ~A" tag pink-colormap (colormap))))
+
+	(for-each
+	 (lambda (n)
+	   (set! (colormap-size) n)
+	   (let ((x 0.0))
+	     (do ((i 0 (1+ i))) ((= i 10))
+	       (let* ((x (random 1.0))
+		      (r (if (< x 4/5) (* 5/4 x) 1.0))
+		      (g (* 4/5 x))
+		      (b (* 1/2 x))
+		      (rgb (colormap-ref copper-colormap x))
+		      (r1 (list-ref rgb 0))
+		      (g1 (list-ref rgb 1))
+		      (b1 (list-ref rgb 2)))
+		 (if (and (> n 2) (< x (- 1.0 (/ 1.0 n))) (or (cfneq r r1) (cfneq g g1) (cfneq b b1)))
+		     (snd-display ";copper size reset ~A: ~,3F (~,3F): ~{~,3F ~} ~{~,3F ~}" 
+				  n x (max (abs (- r r1)) (abs (- g g1)) (abs (- b b1))) (list r g b) (list r1 g1 b1)))))))
+	 (list 1024 256 2 512))
+	(set! (colormap-size) 512))
+
+
       (run-hook after-test-hook 7)
       ))
 
@@ -12710,18 +12727,10 @@ EDITS: 5
       (let ((gen (make-two-zero .4 .7 .3)))
 	(let ((val (gen 1.0)))
 	  (if (fneq val .4) (snd-display ";2zero->0.4: ~A" val))
-	  (if (fneq (mus-x1 gen) 1.0) (snd-display ";2zero x1(1.0): ~A" (mus-x1 gen)))
-	  (if (fneq (mus-x2 gen) 0.0) (snd-display ";2zero x2(0.0): ~A" (mus-x2 gen)))
 	  (set! val (gen 0.5))
 	  (if (fneq val .9) (snd-display ";2zero->0.9: ~A" val))
-	  (if (fneq (mus-x1 gen) 0.5) (snd-display ";2zero x1(0.5): ~A" (mus-x1 gen)))
-	  (if (fneq (mus-x2 gen) 1.0) (snd-display ";2zero x2(1.0): ~A" (mus-x2 gen)))
-	  (set! (mus-x1 gen) .1)
-	  (set! (mus-x2 gen) .2)
-	  (if (fneq (mus-x1 gen) 0.1) (snd-display ";2zero set x1(0.1): ~A" (mus-x1 gen)))
-	  (if (fneq (mus-x2 gen) 0.2) (snd-display ";2zero set x2(0.2): ~A" (mus-x2 gen)))
 	  (set! val (gen 1.0))
-	  (if (fneq val .53) (snd-display ";2zero->0.53: ~A" val))))
+	  (if (fneq val 1.05) (snd-display ";2zero->1.05: ~A" val))))
       
       (let ((gen (make-two-pole .4 .7 .3))
 	    (v0 (make-vct 10))
@@ -12944,13 +12953,13 @@ EDITS: 5
 	 (let ((var (catch #t (lambda () (func (make-oscil))) (lambda args args))))
 	   (if (not (eq? (car var) 'mus-error))
 	       (snd-display ";~A should be bad gen: ~A" func var))))
-       (list mus-x1 mus-x2 mus-y1 mus-y2))
+       (list mus-y1 mus-y2))
       (for-each
        (lambda (func)
 	 (let ((var (catch #t (lambda () (let ((gen (make-oscil))) (set! (func gen) 1.0))) (lambda args args))))
 	   (if (not (eq? (car var) 'mus-error))
 	       (snd-display ";set ~A should be bad gen: ~A" func var))))
-       (list mus-x1 mus-x2 mus-y1 mus-y2))
+       (list mus-y1 mus-y2))
       
       (let ((amps (make-vector 3))
 	    (oscils (make-vector 3))
@@ -14189,6 +14198,28 @@ EDITS: 5
       (let ((var (catch #t (lambda () (let ((fr1 (make-frame 2 1.0 0.0))) (frame->sample (make-oscil) fr1))) (lambda args args))))
 	(if (not (eq? (car var) 'mus-error))
 	    (snd-display ";frame->sample bad arg: ~A" var)))
+      (let* ((hi (make-mixer 1 1))
+	     (tag (catch #t (lambda () (mixer-set! hi 1 1 1.0)) (lambda args (car args)))))
+	(if (not (eq? tag 'mus-error)) (snd-display ";mixer-set! 1 1 of 0: ~A (~A)" tag hi)))
+      (let* ((hi (make-mixer 1 1))
+	     (tag (catch #t (lambda () (set! (mixer-ref hi 1 1) 1.0)) (lambda args (car args)))))
+	(if (not (eq? tag 'mus-error)) (snd-display ";set! mixer-ref 1 1 of 0: ~A (~A)" tag hi)))
+      (let* ((hi (make-mixer 1))
+	     (tag (catch #t (lambda () (mixer-set! hi 1 0 1.0)) (lambda args (car args)))))
+	(if (not (eq? tag 'mus-error)) (snd-display ";mixer-set! 1 0 of 0: ~A (~A)" tag hi)))
+      (let* ((hi (make-mixer 1))
+	     (tag (catch #t (lambda () (mixer-set! hi 0 1 1.0)) (lambda args (car args)))))
+	(if (not (eq? tag 'mus-error)) (snd-display ";mixer-set! 0 1 of 0: ~A (~A)" tag hi)))
+      (let* ((hi (make-frame 1))
+	     (tag (catch #t (lambda () (frame-set! hi 1 1.0)) (lambda args (car args)))))
+	(if (not (eq? tag 'mus-error)) (snd-display ";frame-set! 1 of 0: ~A (~A)" tag hi)))
+      (let* ((hi (make-frame 1))
+	     (tag (catch #t (lambda () (set! (frame-ref hi 1) 1.0)) (lambda args (car args)))))
+	(if (not (eq? tag 'mus-error)) (snd-display ";set! frame-ref 1 of 0: ~A (~A)" tag hi)))
+      (let* ((tag (catch #t (lambda () (make-frame 0)) (lambda args (car args)))))
+	(if (not (eq? tag 'out-of-range)) (snd-display ";make-frame 0: ~A" tag)))
+      (let* ((tag (catch #t (lambda () (make-mixer 0)) (lambda args (car args)))))
+	(if (not (eq? tag 'out-of-range)) (snd-display ";make-mixer 0: ~A" tag)))
       
       (let ((fr1 (make-frame 1 1))
 	    (fr2 (make-frame 2 1 2))
@@ -16571,11 +16602,11 @@ EDITS: 5
 			    0.0 0.0 (lambda (dir) 0.0) 0.0 0.0 0.0 0.0
 			    0.0 0.0 0.0 0.0 0.0 (lambda (dir) 0.0)
 			    0.0 0.0))
-	    (generic-procs (list mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-x1 mus-x2 mus-y1 mus-y2 mus-bank mus-channel mus-channels mus-cosines mus-data
+	    (generic-procs (list mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-y1 mus-y2 mus-bank mus-channel mus-channels mus-cosines mus-data
 				 mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop mus-increment mus-length
 				 mus-location mus-mix mus-order mus-phase mus-ramp mus-random mus-run mus-scaler mus-xcoeffs
 				 mus-ycoeffs))
-	    (generic-names (list 'mus-a0 'mus-a1 'mus-a2 'mus-b1 'mus-b2 'mus-x1 'mus-x2 'mus-y1 'mus-y2 'mus-bank 'mus-channel 
+	    (generic-names (list 'mus-a0 'mus-a1 'mus-a2 'mus-b1 'mus-b2 'mus-y1 'mus-y2 'mus-bank 'mus-channel 
 				 'mus-channels 'mus-cosines 'mus-data
 				 'mus-feedback 'mus-feedforward 'mus-formant-radius 'mus-frequency 'mus-hop 'mus-increment 'mus-length
 				 'mus-location 'mus-mix 'mus-order 'mus-phase 'mus-ramp 'mus-random 'mus-run 'mus-scaler 'mus-xcoeffs
@@ -30393,6 +30424,7 @@ EDITS: 2
 	    
 	    
 	    ;; -------- hadamard (assuming blindly here that it should be its own inverse)
+	    ;; TODO: still need independent Hadamard tests
 	    
 	    (set! d0 (make-vct 8))
 	    (vct-set! d0 2 1.0)
@@ -31544,10 +31576,6 @@ EDITS: 2
        (if (fneq (mus-b1 fr) .5) (display ";b1 messed up"))
        (set! (mus-b2 fr) .5)
        (if (fneq (mus-b2 fr) .5) (display ";b2 messed up"))
-       (set! (mus-x1 fr) .5)
-       (if (fneq (mus-x1 fr) .5) (display ";x1 messed up"))
-       (set! (mus-x2 fr) .5)
-       (if (fneq (mus-x2 fr) .5) (display ";x2 messed up"))
        (set! (mus-y1 fr) .5)
        (if (fneq (mus-y1 fr) .5) (display ";y1 messed up"))
        (set! (mus-y2 fr) .5)
@@ -34701,25 +34729,14 @@ EDITS: 2
 		  (pf (make-two-pole .4 .7 .3))
 		  (z1 0.0) (z2 0.0) (z3 0.0)
 		  (p1 0.0) (p2 0.0) (p3 0.0)
-		  (x11 0.0) (x12 0.0) (x13 0.0)
-		  (x21 0.0) (x22 0.0) (x23 0.0)
 		  (y11 0.0) (y12 0.0) (y13 0.0)
 		  (y21 0.0) (y22 0.0) (y23 0.0)
 		  (v (make-vct 1)))
 	      (vct-map! v 
 			(lambda ()
 			  (set! z1 (two-zero zf 1.0))
-			  (set! x11 (mus-x1 zf))
-			  (set! x21 (mus-x2 zf))
 			  (set! z2 (two-zero zf 0.5))
-			  (set! x12 (mus-x1 zf))
-			  (set! x22 (mus-x2 zf))
-			  (set! (mus-x1 zf) .1)
-			  (set! (mus-x2 zf) .2)
-			  (set! x13 (mus-x1 zf))
-			  (set! x23 (mus-x2 zf))
 			  (set! z3 (two-zero zf 1.0))
-			  
 			  (set! p1 (two-pole pf 1.0))
 			  (set! y11 (mus-y1 pf))
 			  (set! y21 (mus-y2 pf))
@@ -34734,15 +34751,8 @@ EDITS: 2
 			  
 			  0.0))
 	      (if (fneq z1 .4) (snd-display ";run 2zero->0.4: ~A" z1))
-	      (if (fneq x11 1.0) (snd-display ";run 2zero x1(1.0): ~A" x11))
-	      (if (fneq x21 0.0) (snd-display ";run 2zero x2(0.0): ~A" x21))
 	      (if (fneq z2 .9) (snd-display ";run 2zero->0.9: ~A" z2))
-	      (if (fneq x12 0.5) (snd-display ";run 2zero x1(0.5): ~A" x12))
-	      (if (fneq x22 1.0) (snd-display ";run 2zero x2(1.0): ~A" x22))
-	      (if (fneq x13 0.1) (snd-display ";run 2zero set x1(0.1): ~A" x13))
-	      (if (fneq x23 0.2) (snd-display ";run 2zero set x2(0.2): ~A" x23))
-	      (if (fneq z3 .53) (snd-display ";run 2zero->0.53: ~A" z3))
-	      
+	      (if (fneq z3 1.05) (snd-display ";run 2zero->1.05: ~A" z3))
 	      (if (fneq p1 .4) (snd-display ";run a0->out 2pole: ~A" p1))
 	      (if (fneq y11 .4) (snd-display ";run a0->out 2pole y1 (0.4): ~A" y11))
 	      (if (fneq y21 0.0) (snd-display ";run a0->out 2pole y2 (0.0): ~A" y21))
@@ -36502,8 +36512,10 @@ EDITS: 2
 
 ;;; ---------------- test 24: user-interface ----------------
 
-(if (not (provided? 'snd-peak-env.scm)) (load "peak-env.scm"))
-(if (hook-empty? initial-graph-hook) (snd-display ";restore peaks failed?"))
+(if (not (provided? 'snd-peak-env.scm)) 
+    (begin
+      (load "peak-env.scm")
+      (if (hook-empty? initial-graph-hook) (snd-display ";restore peaks failed?"))))
 
 (define (enved-x ux) 
   (let* ((axis (enved-axis-info))
@@ -47024,6 +47036,69 @@ EDITS: 2
 (if (not (provided? 'snd-debug.scm)) (load "debug.scm"))
 (define (traced a) (+ 2 a))
 
+(define (make-identity-mixer chans)
+  (let ((m1 (make-mixer chans)))
+    (if (mixer? m1)
+	(do ((i 0 (1+ i)))
+	    ((= i chans))
+	  (mixer-set! m1 i i 1.0)))
+    m1))
+
+(define (extract-channel filename snd chn)
+  (save-sound-as filename snd #f #f #f chn))
+
+(define* (extract-channels #:rest chans)
+  ;; extract a list of channels from the current sound and save as test.snd: (extract-channels 0 2)
+  (let ((snd (or (selected-sound) (car (sounds)))))
+    (if (sound? snd)
+	(begin
+	  (for-each
+	   (lambda (chan)
+	     (set! (selection-member? snd chan) #t)
+	     (set! (selection-position snd chan) 0)
+	     (set! (selection-frames snd chan) (frames snd chan)))
+	   chans)
+	  (save-selection "test.snd")))))
+
+(define* (notch-out-rumble-and-hiss #:optional (snd #f) (chn #f))
+  "(notch-out-rumble-and-hiss s c) applies a bandpass filter with cutoffs at 40 Hz and 3500 Hz"
+  (let* ((cur-srate (exact->inexact (srate snd))))
+    (filter-sound
+     (list 0.0 0.0                    ; get rid of DC
+	   (/ 80.0 cur-srate) 0.0     ; get rid of anything under 40 Hz (1.0=srate/2 here)
+	   (/ 90.0 cur-srate) 1.0     ; now the passband
+	   (/ 7000.0 cur-srate) 1.0 
+	   (/ 8000.0 cur-srate) 0.0   ; end passband (40..4000)
+	   1.0 0.0)                   ; get rid of some of the hiss
+     ;; since I'm the minimum band is 10 Hz here, 
+     ;;   cur-srate/10 rounded up to next power of 2 seems a safe filter size
+     ;;   filter-sound will actually use overlap-add convolution in this case
+     (inexact->exact (expt 2 (ceiling (/ (log (/ cur-srate 10.0)) (log 2.0)))))
+     snd chn)))
+
+(define* (reverse-channels #:optional snd)
+  (let* ((ind (or snd (selected-sound) (car (sounds))))
+	 (chns (chans ind)))
+    (let ((swaps (inexact->exact (floor (/ chns 2)))))
+      (as-one-edit
+       (lambda ()
+	 (do ((i 0 (1+ i))
+	      (j (1- chns) (1- j)))
+	     ((= i swaps))
+	   (swap-channels ind i ind j)))))))
+
+(define* (rotate-channel #:optional (samps 1) snd chn)
+  (let* ((ind (or snd (selected-sound) (car (sounds))))
+	 (chan (or chn (selected-channel) 0)))
+    (let ((reg (make-region 0 (1- samps) ind chan)))
+      (as-one-edit
+       (lambda ()
+	 (delete-samples 0 samps ind chan)
+	 (insert-region (frames ind chan) reg)))
+      (forget-region reg))))
+
+
+
 (gc)
 (if (defined? 'mem-report) (mem-report))
 (if (file-exists? "memlog")
@@ -47139,7 +47214,7 @@ EDITS: 2
 		     make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
 		     make-sine-summation make-square-wave make-src make-sum-of-cosines make-sum-of-sines make-table-lookup make-triangle-wave
 		     make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar mixer* mixer-ref mixer-set! mixer?
-		     multiply-arrays mus-a0 mus-a1 mus-a2 mus-array-print-length mus-b1 mus-b2 mus-x1 mus-x2 mus-y1 mus-y2 mus-channel mus-channels
+		     multiply-arrays mus-a0 mus-a1 mus-a2 mus-array-print-length mus-b1 mus-b2 mus-y1 mus-y2 mus-channel mus-channels
 		     mus-close mus-cosines mus-data mus-feedback mus-feedforward mus-fft mus-formant-radius mus-frequency
 		     mus-hop mus-increment mus-input? mus-file-name mus-length mus-location mus-mix mus-order mus-output?  mus-phase
 		     mus-ramp mus-random mus-scaler mus-srate mus-xcoeffs mus-ycoeffs notch notch? one-pole one-pole?
@@ -47160,16 +47235,43 @@ EDITS: 2
 		     beats-per-minute buffer-full? channel-amp-envs convolve-files filter-control-coeffs 
 		     locsig-type make-phase-vocoder mus-audio-mixer-read mus-bank 
 		     mus-describe mus-inspect mus-error-to-string mus-file-buffer-size mus-name mus-offset mus-out-format
-		     mus-rand-seed mus-width mus-x1 mus-x2 mus-y1 mus-y2 phase-vocoder?
+		     mus-rand-seed mus-width phase-vocoder?
 		     polar->rectangular previous-files-sort-procedure 
 		     pv-amp-increments pv-amps pv-freqs pv-outctr pv-phase-increments pv-phases 
 		     read-sample reset-listener-cursor goto-listener-end sample-reader-home selection-chans selection-srate snd-gcs
 		     snd-warning sine-bank vct-map make-variable-graph channel-data x-axis-label
-		     snd-url snd-urls
+		     snd-url snd-urls tempo-control-bounds
 		     quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
 
 		     track tracks track? make-track track-amp track-position track-frames track-speed track-tempo track-amp-env
 		     track-track delete-track delete-mix track-color free-track
+
+		     delay-tick dac-is-running draw-axes copy-mix copy-track copy-sample-reader html-dir html-program
+		     lock-track make-fir-coeffs make-identity-mixer mus-interp-type mus-make-error mus-run phase-vocoder
+		     player-home redo-edit undo-edit widget-position widget-size window-property focus-widget
+
+		     ;;add-amp-controls analyse-ladspa any-env-channel append-sound apply-ladspa 
+		     ;;backward-graph backward-mark backward-mix channel-envelope channel-property
+		     ;;channel-sync channels-equal? channels=? clone-sound-as color-samples
+		     ;;compand-channel concatenate-envelopes contrast-channel cross-synthesis
+		     ;;define-selection-via-marks delete-selection-and-smooth describe-mark
+		     ;;dither-channel env-expt-channel env-sound-interp envelope-interp enveloped-mix
+		     ;;eval-between-marks eval-over-selection every-sample? explode-sf2 extract-channel
+		     ;;extract-channels fft-edit fft-squelch filter-track find-dialog find-mix
+		     ;;forward-graph forward-mark forward-mix fractional-fourier-transform ;hide-widget
+		     ;;insert-channel ladspa-descriptor list-ladspa main-menu make-bandpass make-bandstop
+		     ;;make-biquad make-differentiator make-highpass make-hilbert-transform make-lowpass
+		     ;;make-selection mark-explode mark-loops mark-name->id mark-property match-sound-files
+		     ;;max-envelope mix->vct mix-channel mix-property mono->stereo moog-filter mpg
+		     ;;normalized-mix notch-channel notch-out-rumble-and-hiss notch-selection notch-sound
+		     ;;offset-channel pad-marks pan-mix power-env read-region-sample redo-channel reverse-channels
+		     ;;reverse-envelope reverse-track rotate-channel scale-envelope selection-members
+		     ;;sine-env-channel sine-ramp snap-mark-to-beat snap-mix-to-beat snd-apropos snd-help
+		     ;;snd-trace sound-interp sound-property superimpose-ffts swap-selection-channels
+		     ;;track->vct track-chans track-property transpose-track undo-channel vct-map!
+		     ;;voiced->unvoiced window-samples with-background-processes with-mix xen-channel
+		     ;;z-transform zip-sound zipper 
+
 		     ))
       
       (define set-procs (list 
@@ -47210,15 +47312,18 @@ EDITS: 2
 			 channels chans colormap comment data-format data-location data-size edit-position frames header-type maxamp
 			 minibuffer-history-length read-only right-sample sample samples selected-channel colormap-size
 			 selected-sound selection-position selection-frames selection-member? sound-loop-info
-			 srate time-graph-type x-position-slider x-zoom-slider 
-			 y-position-slider y-zoom-slider sound-data-ref mus-a0 mus-a1 mus-a2 mus-x1 mus-x2 mus-y1 mus-y2 mus-array-print-length 
+			 srate time-graph-type x-position-slider x-zoom-slider tempo-control-bounds
+			 y-position-slider y-zoom-slider sound-data-ref mus-a0 mus-a1 mus-a2 mus-y1 mus-y2 mus-array-print-length 
 			 mus-b1 mus-b2 mus-cosines mus-data mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop
 			 mus-increment mus-length mus-location mus-phase mus-ramp mus-scaler vct-ref x-axis-label
 			 beats-per-minute filter-control-coeffs locsig-type mus-file-buffer-size 
-			 mus-rand-seed mus-width mus-x1 mus-x2 mus-y1 mus-y2 
+			 mus-rand-seed mus-width
 			 previous-files-sort-procedure pv-amp-increments pv-amps pv-freqs pv-outctr pv-phase-increments pv-phases 
 			 quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
 			 track-amp track-position track-speed track-tempo track-amp-env track-color
+
+			 html-dir html-program mus-interp-type widget-position widget-size window-property
+			 mixer-ref frame-ref locsig-ref locsig-reverb-ref
 			 ))
       
       (define make-procs (list
@@ -47505,7 +47610,7 @@ EDITS: 2
 					  make-oscil make-ppolar make-pulse-train make-rand make-rand-interp make-readin
 					  make-sawtooth-wave make-sine-summation make-square-wave make-src make-sum-of-cosines make-sum-of-sines 
 					  make-table-lookup make-triangle-wave make-two-pole make-two-zero make-wave-train
-					  make-waveshape make-zpolar mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-x1 mus-x2 mus-y1 mus-y2 mus-channel mus-channels
+					  make-waveshape make-zpolar mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-y1 mus-y2 mus-channel mus-channels
 					  mus-cosines mus-data mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop
 					  mus-increment mus-length mus-file-name mus-location mus-order mus-phase mus-ramp mus-random mus-run
 					  mus-scaler mus-xcoeffs mus-ycoeffs notch one-pole one-zero make-average seconds->samples samples->seconds
@@ -47548,7 +47653,7 @@ EDITS: 2
 				      (lambda args (car args)))))
 			  (if (not (eq? tag 'wrong-type-arg))
 			      (snd-display ";mus-gen ~A: ~A" n tag))))
-		      (list mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-x1 mus-x2 mus-y1 mus-y2 mus-bank mus-channel mus-channels mus-cosines mus-data
+		      (list mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-y1 mus-y2 mus-bank mus-channel mus-channels mus-cosines mus-data
 			    mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop mus-increment mus-length
 			    mus-location mus-mix mus-order mus-phase mus-ramp mus-random mus-run mus-scaler mus-xcoeffs
 			    mus-ycoeffs))
@@ -48054,6 +48159,9 @@ EDITS: 2
 	    (check-error-tag 'out-of-range (lambda () (set! (enved-style) 12)))
 	    (check-error-tag 'out-of-range (lambda () (make-color 1.5 0.0 0.0)))
 	    (check-error-tag 'out-of-range (lambda () (make-color -0.5 0.0 0.0)))
+	    (check-error-tag 'out-of-range (lambda () (set! (tempo-control-bounds) (list 9.0 0.0))))
+	    (check-error-tag 'wrong-type-arg (lambda () (set! (tempo-control-bounds) (list 0.0))))
+	    (check-error-tag 'wrong-type-arg (lambda () (set! (tempo-control-bounds) (list 0.0 "hiho"))))
 	    (check-error-tag 'cannot-print (lambda () (graph->ps)))
 	    (let ((ind (open-sound "oboe.snd"))) 
 	      (set! (selection-creates-region) #t)
@@ -48928,6 +49036,7 @@ EDITS: 2
   "test3.snd"
   "tmp.snd"
   "with-mix.snd"
+  "1"
 
   (string-append sf-dir "mus10.snd.snd")
   (string-append sf-dir "ieee-text-16.snd.snd")

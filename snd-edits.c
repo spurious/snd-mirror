@@ -485,8 +485,13 @@ static int snd_make_file(const char *ofile, int chans, file_info *hdr, snd_fd **
   mus_sample_t **obufs;
   err = MUS_NO_ERROR;
   ofd = open_temp_file(ofile, chans, hdr);
+  if (ofd == -1) 
+    {
+      if (errno)
+	ss->catch_message = strerror(errno);
+      return(MUS_CANT_OPEN_TEMP_FILE);
+    }
   mus_file_set_data_clipped(ofd, data_clipped(ss));
-  if (ofd == -1) return(MUS_CANT_OPEN_TEMP_FILE);
   datumb = mus_bytes_per_sample(hdr->format);
   obufs = (mus_sample_t **)MALLOC(chans * sizeof(mus_sample_t *));
   ss->stopped_explicitly = false;
@@ -6638,8 +6643,7 @@ int save_edits_without_display(snd_info *sp, char *new_name, int type, int forma
   off_t frames = 0;
   snd_fd **sf;
   chan_info *cp;
-  if (((sp->read_only) && (strcmp(new_name, sp->filename) == 0)) ||
-      (mus_file_create(new_name) == -1)) /* can't use access here since file might not exist */
+  if ((sp->read_only) && (strcmp(new_name, sp->filename) == 0))
     {
       if (strcmp(caller, "file save as") == 0)
 	snd_error(_("%s is write-protected"), sp->filename);

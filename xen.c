@@ -88,7 +88,11 @@ char *xen_version(void)
 {
   char *buf;
   buf = (char *)calloc(64, sizeof(char));
+#if HAVE_SNPRINTF
+  snprintf(buf, 64, "Xen: %s, Guile: %s", XEN_VERSION, XEN_TO_C_STRING(scm_version()));
+#else
   sprintf(buf, "Xen: %s, Guile: %s", XEN_VERSION, XEN_TO_C_STRING(scm_version()));
+#endif
   return(buf);
 }
 
@@ -430,7 +434,11 @@ char *xen_version(void)
 {
   char *buf;
   buf = (char *)calloc(128, sizeof(char));
+#if HAVE_SNPRINTF
+  snprintf(buf, 128, "Xen: %s, Ruby: %s (%s)", 
+#else
   sprintf(buf, "Xen: %s, Ruby: %s (%s)", 
+#endif
 	  XEN_VERSION,
 #ifdef RUBY_VERSION
 	  RUBY_VERSION,
@@ -938,7 +946,18 @@ void Init_Hook(void)
 
 char *xen_version(void)
 {
-  return("no embedded language");
+#if HAVE_STRDUP
+  return(strdup("no embedded language"));
+#else
+  char *buf;
+  buf = (char *)calloc(64, sizeof(char));
+#if HAVE_SNPRINTF
+  snprintf(buf, 64, "no embedded language");
+#else
+  sprintf(buf, "no embedded language");
+#endif
+  return(buf);
+#endif
 }
 
 void xen_repl(int argc, char **argv)

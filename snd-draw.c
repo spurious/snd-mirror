@@ -537,8 +537,8 @@ static XEN g_set_widget_position(XEN wid, XEN xy)
   w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
   if (w)
     set_widget_position(w,
-			XEN_TO_C_INT(XEN_CAR(xy)),
-			XEN_TO_C_INT(XEN_CADR(xy)));
+			mus_iclamp(0, XEN_TO_C_INT(XEN_CAR(xy)), LOTSA_PIXELS),
+			mus_iclamp(0, XEN_TO_C_INT(XEN_CADR(xy)), LOTSA_PIXELS));
   else XEN_ERROR(NO_SUCH_WIDGET,
 		 XEN_LIST_3(C_TO_XEN_STRING(S_setB S_widget_position),
 			    wid,
@@ -568,8 +568,8 @@ static XEN g_set_widget_size(XEN wid, XEN wh)
   w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
   if (w)
     set_widget_size(w,
-		    XEN_TO_C_INT(XEN_CAR(wh)),
-		    XEN_TO_C_INT(XEN_CADR(wh)));
+		    mus_iclamp(1, XEN_TO_C_INT(XEN_CAR(wh)), LOTSA_PIXELS),
+		    mus_iclamp(1, XEN_TO_C_INT(XEN_CADR(wh)), LOTSA_PIXELS));
   else XEN_ERROR(NO_SUCH_WIDGET,
 		 XEN_LIST_3(C_TO_XEN_STRING(S_setB S_widget_size),
 			    wid,

@@ -7598,8 +7598,6 @@ GEN0(a1)
 GEN0(a2)
 GEN0(b1)
 GEN0(b2)
-GEN0(x1)
-GEN0(x2)
 GEN0(y1)
 GEN0(y2)
 GEN0(feedforward)
@@ -7781,8 +7779,6 @@ SET_DBL_GEN0(a1)
 SET_DBL_GEN0(a2)
 SET_DBL_GEN0(b1)
 SET_DBL_GEN0(b2)
-SET_DBL_GEN0(x1)
-SET_DBL_GEN0(x2)
 SET_DBL_GEN0(y1)
 SET_DBL_GEN0(y2)
 SET_DBL_GEN0(phase)
@@ -10778,8 +10774,6 @@ static void init_walkers(void)
   INIT_WALKER(S_mus_a2, make_walker(mus_a2_0, NULL, mus_set_a2_1, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_mus_b1, make_walker(mus_b1_0, NULL, mus_set_b1_1, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_mus_b2, make_walker(mus_b2_0, NULL, mus_set_b2_1, 1, 1, R_FLOAT, false, 1, R_CLM));
-  INIT_WALKER(S_mus_x1, make_walker(mus_x1_0, NULL, mus_set_x1_1, 1, 1, R_FLOAT, false, 1, R_CLM));
-  INIT_WALKER(S_mus_x2, make_walker(mus_x2_0, NULL, mus_set_x2_1, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_mus_y1, make_walker(mus_y1_0, NULL, mus_set_y1_1, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_mus_y2, make_walker(mus_y2_0, NULL, mus_set_y2_1, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_mus_data, make_walker(mus_data_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_XCLM));

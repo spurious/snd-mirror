@@ -406,13 +406,44 @@ void setup_axis_context(chan_info *cp, axis_context *ax)
 /* colormaps */
 /* should I use the RGB stuff in gdk rather than colormaps? */
 
-static int sono_size = -1;
+static int sono_bins = 0; /* total_bins */
 static GdkColor **grays = NULL;
 static int grays_size = 0;
-static int grays_allocated = -1;
+static int grays_allocated = -1; /* colormap index */
 static GdkRectangle **sono_data = NULL;
-static int sono_data_size = 0;
+static int sono_colors = 0; /* colormap_size */
 static GdkGC *colormap_GC;
+
+void check_colormap_sizes(int size)
+{
+  int i, old_size;
+  if (grays_size > 0)
+    {
+      if ((grays) && (grays_size < size))
+	{
+	  old_size = grays_size;
+	  grays_size = size;
+	  if (grays_allocated != -1) 
+	    {
+	      for (i = 0; i < old_size; i++) 
+		{
+		  gdk_color_free(grays[i]);
+		  grays[i] = NULL;
+		}
+	      grays_allocated = -1;
+	    }
+	  FREE(grays);
+	  grays = (GdkColor **)CALLOC(grays_size, sizeof(GdkColor *));
+	}
+    }
+  if ((sono_data) && (sono_colors < size) && (sono_bins > 0))
+    {
+      old_size = sono_colors;
+      sono_colors = size;
+      sono_data = (GdkRectangle **)REALLOC(sono_data, sono_colors * sizeof(GdkRectangle *));
+      for (i = old_size; i < sono_colors; i++) sono_data[i] = (GdkRectangle *)CALLOC(sono_bins, sizeof(GdkRectangle));
+    }
+}
 
 void initialize_colormap(void)
 {
@@ -421,8 +452,8 @@ void initialize_colormap(void)
   colormap_GC = gdk_gc_new(MAIN_WINDOW(ss));
   gdk_gc_set_background(sx->basic_gc, sx->graph_color);
   gdk_gc_set_foreground(sx->basic_gc, sx->data_color);
-  sono_data_size = color_map_size(ss);
-  sono_data = (GdkRectangle **)CALLOC(sono_data_size, sizeof(GdkRectangle *));
+  sono_colors = color_map_size(ss);
+  sono_data = (GdkRectangle **)CALLOC(sono_colors, sizeof(GdkRectangle *));
   grays_size = color_map_size(ss);
   grays = (GdkColor **)CALLOC(grays_size, sizeof(GdkColor *));
 }
@@ -458,17 +489,15 @@ void set_sono_rectangle(int j, int color, Locus x, Locus y, Latus width, Latus h
 void allocate_sono_rects(int size)
 {
   int i;
-  if (size != sono_size)
+  if (size != sono_bins)
     {
-      for (i = 0; i < sono_data_size; i++)
+      for (i = 0; i < sono_colors; i++)
 	{
-	  if ((sono_size > 0) && (sono_data[i])) 
+	  if ((sono_bins > 0) && (sono_data[i])) 
 	    FREE(sono_data[i]); 
-	  sono_data[i] = NULL;
+	  sono_data[i] = (GdkRectangle *)CALLOC(size, sizeof(GdkRectangle));
 	}
-      for (i = 0; i < sono_data_size; i++)
-	sono_data[i] = (GdkRectangle *)CALLOC(size, sizeof(GdkRectangle));
-      sono_size = size;
+      sono_bins = size;
     }
 }
 

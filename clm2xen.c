@@ -2411,34 +2411,6 @@ static XEN g_mus_set_b2(XEN obj, XEN val)
   return(C_TO_XEN_DOUBLE(mus_set_b2(XEN_TO_MUS_ANY(obj), XEN_TO_C_DOUBLE(val))));
 }
 
-static XEN g_mus_x1(XEN obj)
-{
-  #define H_mus_x1 "(" S_mus_x1 " gen): gen's " S_mus_x1 " value"
-  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ONLY_ARG, S_mus_x1, "a generator");
-  return(C_TO_XEN_DOUBLE(mus_x1(XEN_TO_MUS_ANY(obj))));
-}
-
-static XEN g_mus_set_x1(XEN obj, XEN val)
-{
-  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_setB S_mus_x1, "a generator");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_x1, "a number");
-  return(C_TO_XEN_DOUBLE(mus_set_x1(XEN_TO_MUS_ANY(obj), XEN_TO_C_DOUBLE(val))));
-}
-
-static XEN g_mus_x2(XEN obj)
-{
-  #define H_mus_x2 "(" S_mus_x2 " gen): gen's " S_mus_x2 " value"
-  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ONLY_ARG, S_mus_x2, "a generator");
-  return(C_TO_XEN_DOUBLE(mus_x2(XEN_TO_MUS_ANY(obj))));
-}
-
-static XEN g_mus_set_x2(XEN obj, XEN val)
-{
-  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_setB S_mus_x2, "a generator");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_x2, "a number");
-  return(C_TO_XEN_DOUBLE(mus_set_x2(XEN_TO_MUS_ANY(obj), XEN_TO_C_DOUBLE(val))));
-}
-
 static XEN g_mus_y1(XEN obj)
 {
   #define H_mus_y1 "(" S_mus_y1 " gen): gen's " S_mus_y1 " value"
@@ -5192,10 +5164,6 @@ XEN_NARGIFY_1(g_mus_b2_w, g_mus_b2)
 XEN_NARGIFY_2(g_mus_set_b2_w, g_mus_set_b2)
 XEN_NARGIFY_1(g_mus_a2_w, g_mus_a2)
 XEN_NARGIFY_2(g_mus_set_a2_w, g_mus_set_a2)
-XEN_NARGIFY_1(g_mus_x1_w, g_mus_x1)
-XEN_NARGIFY_2(g_mus_set_x1_w, g_mus_set_x1)
-XEN_NARGIFY_1(g_mus_x2_w, g_mus_x2)
-XEN_NARGIFY_2(g_mus_set_x2_w, g_mus_set_x2)
 XEN_NARGIFY_1(g_mus_y1_w, g_mus_y1)
 XEN_NARGIFY_2(g_mus_set_y1_w, g_mus_set_y1)
 XEN_NARGIFY_1(g_mus_y2_w, g_mus_y2)
@@ -5454,10 +5422,6 @@ XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 #define g_mus_set_b2_w g_mus_set_b2
 #define g_mus_a2_w g_mus_a2
 #define g_mus_set_a2_w g_mus_set_a2
-#define g_mus_x1_w g_mus_x1
-#define g_mus_set_x1_w g_mus_set_x1
-#define g_mus_x2_w g_mus_x2
-#define g_mus_set_x2_w g_mus_set_x2
 #define g_mus_y1_w g_mus_y1
 #define g_mus_set_y1_w g_mus_set_y1
 #define g_mus_y2_w g_mus_y2
@@ -5846,8 +5810,6 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_b2, g_mus_b2_w, H_mus_b2, S_setB S_mus_b2, g_mus_set_b2_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_a2, g_mus_a2_w, H_mus_a2, S_setB S_mus_a2, g_mus_set_a2_w,  1, 0, 2, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_x1, g_mus_x1_w, H_mus_x1, S_setB S_mus_x1, g_mus_set_x1_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_x2, g_mus_x2_w, H_mus_x2, S_setB S_mus_x2, g_mus_set_x2_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_y1, g_mus_y1_w, H_mus_y1, S_setB S_mus_y1, g_mus_set_y1_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_y2, g_mus_y2_w, H_mus_y2, S_setB S_mus_y2, g_mus_set_y2_w,  1, 0, 2, 0);
 
@@ -6227,8 +6189,6 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_mus_set_formant_radius_and_frequency,
 	       S_mus_srate,
 	       S_mus_width,
-	       S_mus_x1,
-	       S_mus_x2,
 	       S_mus_xcoeffs,
 	       S_mus_y1,
 	       S_mus_y2,
