@@ -130,7 +130,7 @@
 				    (let ((handle (ladspa-instantiate this->descriptor (srate) )))
 				      (if (not handle)
 					  (begin
-					    (display "Error: Could not make ladspa handle.\n")
+					    (c-display "Error: Could not make ladspa handle.")
 					    (this->close)
 					    (return #f))
 					  (begin
@@ -384,7 +384,7 @@
 	      #t)))
       (if (= 0 min_num_audios)
 	  (begin
-	    (display "Ladspa plugin have no output audio ports.\n")
+	    (c-display "Ladspa plugin have no output audio ports.")
 	    #f)
 	  (if (not (string=? "vst" libname))
 	      (init-dac-hook-stuff)
@@ -476,7 +476,8 @@
 			 (string-append (if dashelp
 					    (caddr dashelp)
 					    lisense)
-					"\n\nProcessing can be stopped by pressing C-g"))))
+					(string #\newline) (string #\newline)
+					"Processing can be stopped by pressing C-g"))))
 	  
 	(define (OK)
 	  (MyStop)

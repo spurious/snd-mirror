@@ -10,8 +10,6 @@
 ;; Set various variables. See Snd documentation.
 
 
-(use-modules (ice-9 rdelim))
-
 
 
 (if (defined? 'notam-settings)

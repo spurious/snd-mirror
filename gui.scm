@@ -8,7 +8,9 @@
 
 (use-modules (ice-9 optargs)
 	     (ice-9 format)
+	     (ice-9 rdelim)
 	     (srfi srfi-1))
+
 
 
 ;;(use-modules (oop goops))
@@ -62,7 +64,7 @@
 	     (let ((func (this->get-method m)))
 	       (if func
 		   (apply func rest)
-		   (format #t "No such method: \"~A\" in class \"~A\".\n" m ',(car def)))))
+		   (format #t (string-append "No such method: \"~A\" in class \"~A\"." (string #\newline)) m ',(car def)))))
 	   ,@body
 	   this))))
 
@@ -324,6 +326,14 @@
       (append! f (cons element s)))))
 
 
+(define (c-display . args)
+  (if (not (null? args))
+      (begin
+	(display (car args))
+	(apply c-display (cdr args)))
+      (newline)))
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Paint (not usable yet)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -450,7 +460,7 @@
 
 (define (menu-set-label menu label)
   (if use-gtk
-      (gtk_label_set_text (GTK_LABEL (.child (GTK_BIN menu))) label)
+      (gtk_label_set_text (GTK_LABEL (gtk_bin_get_child (GTK_BIN menu))) label)
       (let ((str (XmStringCreateLocalized label)))
 	(XtSetValues menu (list XmNlabelString str))
 	(XmStringFree str))))
@@ -518,7 +528,7 @@
 (define (checkbutton-get button)
   (if use-gtk
       (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON button))
-      (display "checkbutton-get not implemented for motif.\n")))
+      (c-display "checkbutton-get not implemented for motif.")))
 
 (define (checkbutton-set button to)
   (if use-gtk
