@@ -1,5 +1,4 @@
 /* TODO  buttons that choose which devices to display are no-ops
- * TODO  vertical slider labels aren't centered correctly (horizontally)
  */
 
 #include "snd.h"
@@ -1550,27 +1549,27 @@ static void make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE *p
       gtk_widget_show(sbox);
 
 #if (HAVE_OSS || HAVE_ALSA)
-      if (last_device != this_device)
+      if ((wd->device == MUS_AUDIO_MICROPHONE) ||
+	  (wd->device == MUS_AUDIO_LINE_IN) ||
+	  (wd->device == MUS_AUDIO_SPEAKERS) ||
+	  (wd->device == MUS_AUDIO_DAC_OUT) ||
+	  (wd->device == MUS_AUDIO_CD))
 	{
-	  if ((wd->device == MUS_AUDIO_MICROPHONE) ||
-	      (wd->device == MUS_AUDIO_LINE_IN) ||
-	      (wd->device == MUS_AUDIO_SPEAKERS) ||
-	      (wd->device == MUS_AUDIO_DAC_OUT) ||
-	      (wd->device == MUS_AUDIO_CD))
-	    {
-	      spix = gtk_drawing_area_new();
-	      gtk_widget_set_events(spix, GDK_EXPOSURE_MASK);
-	      set_background(spix, (ss->sgx)->basic_color);
-	      gtk_widget_set_size_request(spix, 16, 16);
-	      gtk_box_pack_start(GTK_BOX(sbox), spix, FALSE, FALSE, 0);
-	      gtk_widget_show(spix);
-	      g_signal_connect_closure_by_id(GTK_OBJECT(spix),
-					     g_signal_lookup("expose_event", G_OBJECT_TYPE(GTK_OBJECT(spix))),
-					     0,
-					     g_cclosure_new(GTK_SIGNAL_FUNC(spix_expose), (gpointer)wd, 0),
-					     0);
-	    }
-	  else
+	  spix = gtk_drawing_area_new();
+	  gtk_widget_set_events(spix, GDK_EXPOSURE_MASK);
+	  set_background(spix, (ss->sgx)->basic_color);
+	  gtk_widget_set_size_request(spix, 16, 16);
+	  gtk_box_pack_start(GTK_BOX(sbox), spix, FALSE, FALSE, 0);
+	  gtk_widget_show(spix);
+	  g_signal_connect_closure_by_id(GTK_OBJECT(spix),
+					 g_signal_lookup("expose_event", G_OBJECT_TYPE(GTK_OBJECT(spix))),
+					 0,
+					 g_cclosure_new(GTK_SIGNAL_FUNC(spix_expose), (gpointer)wd, 0),
+					 0);
+	}
+      else
+	{
+	  if (last_device == this_device)
 	    {
 	      if ((!input) && (this_device == MUS_AUDIO_DAC_FILTER))
 		slabel = gtk_label_new("ton");
@@ -1578,12 +1577,12 @@ static void make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE *p
 	      gtk_box_pack_start(GTK_BOX(sbox), slabel, FALSE, FALSE, 0);
 	      gtk_widget_show(slabel);
 	    }
-	}
-      else
-	{
-	  slabel = gtk_label_new(" ");
-	  gtk_box_pack_start(GTK_BOX(sbox), slabel, FALSE, FALSE, 0);
-	  gtk_widget_show(slabel);
+	  else
+	    {
+	      slabel = gtk_label_new("---");
+	      gtk_box_pack_start(GTK_BOX(sbox), slabel, FALSE, FALSE, 0);
+	      gtk_widget_show(slabel);
+	    }
 	}
 #endif
       wd->adj = gtk_adjustment_new(1.0 - vol, 0.0, 1.01, 0.001, 0.01, .01);

@@ -500,13 +500,12 @@ static XEN g_widget_position(XEN wid)
   GUI_WIDGET w;
   XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ONLY_ARG, S_widget_position, "a Widget");  
   w = (GUI_WIDGET)(XEN_UNWRAP_WIDGET(wid));
-  if (w)
-    return(XEN_LIST_2(C_TO_XEN_INT(widget_x(w)),
-		      C_TO_XEN_INT(widget_y(w))));
-  XEN_ERROR(NO_SUCH_WIDGET,
-	    XEN_LIST_2(C_TO_XEN_STRING(S_widget_position),
-		       wid));
-  return(XEN_EMPTY_LIST);
+  if (!w)
+    XEN_ERROR(NO_SUCH_WIDGET,
+	      XEN_LIST_2(C_TO_XEN_STRING(S_widget_position),
+			 wid));
+  return(XEN_LIST_2(C_TO_XEN_INT(widget_x(w)),
+		    C_TO_XEN_INT(widget_y(w))));
 }
 
 static XEN g_set_widget_position(XEN wid, XEN xy)
@@ -532,13 +531,12 @@ static XEN g_widget_size(XEN wid)
   GUI_WIDGET w;
   XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ONLY_ARG, S_widget_size, "a Widget"); 
   w = (GUI_WIDGET)(XEN_UNWRAP_WIDGET(wid));
-  if (w)
-    return(XEN_LIST_2(C_TO_XEN_INT(widget_width(w)),
-		      C_TO_XEN_INT(widget_height(w))));
-  XEN_ERROR(NO_SUCH_WIDGET,
-	    XEN_LIST_2(C_TO_XEN_STRING(S_widget_size),
-		       wid));
-  return(XEN_EMPTY_LIST);
+  if (!w)
+    XEN_ERROR(NO_SUCH_WIDGET,
+	      XEN_LIST_2(C_TO_XEN_STRING(S_widget_size),
+			 wid));
+  return(XEN_LIST_2(C_TO_XEN_INT(widget_width(w)),
+		    C_TO_XEN_INT(widget_height(w))));
 }
 
 static XEN g_set_widget_size(XEN wid, XEN wh)

@@ -3221,8 +3221,7 @@ static XEN g_scale_selection_to(XEN scalers)
       FREE(scls);
       return(scalers);
     }
-  snd_no_active_selection_error(S_scale_selection_to);
-  return(scalers);
+  return(snd_no_active_selection_error(S_scale_selection_to));
 }
 
 static XEN g_scale_selection_by(XEN scalers)
@@ -3237,8 +3236,7 @@ static XEN g_scale_selection_by(XEN scalers)
       FREE(scls);
       return(scalers);
     }
-  snd_no_active_selection_error(S_scale_selection_by);
-  return(scalers);
+  return(snd_no_active_selection_error(S_scale_selection_by));
 }
 
 static XEN g_clm_channel(XEN gen, XEN samp_n, XEN samps, XEN snd_n, XEN chn_n, XEN edpos, XEN overlap)

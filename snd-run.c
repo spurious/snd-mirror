@@ -69,7 +69,7 @@
  *              procedure-property? -- this has name and arity
  *         would also need an initialization process(?)
  *         timing tests indicate that the walk portion is either lost in the noise (i.e. 0), or less than 10% (singer.scm being the bad case)
- * TODO: possible Snd additions: cursor(settable) sample samples(2vct) add-mark maxamp sample-reader-position
+ * TODO: possible Snd additions: set-cursor sample samples(2vct) add-mark maxamp sample-reader-position
  * TODO: split Scheme from Snd/Clm here and do the latter via an FFI of some sort
  *
  * LIMITATIONS: <insert anxious lucubration here about DSP context and so on>
@@ -4371,6 +4371,30 @@ static xen_value *expt_1(ptree *prog, xen_value **args, int constants)
 }
 
 
+#if DEBUGGING
+/* ---------------- fneq ---------------- */
+
+static void fneq_f(int *args, int *ints, Float *dbls) {BOOL_RESULT = (fabs(FLOAT_ARG_1 - FLOAT_ARG_2) > .001);}
+static char *descr_fneq_f(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format( FLT_PT " = fneq(" FLT_PT ", " FLT_PT ")", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1, args[2], FLOAT_ARG_2));
+}
+static xen_value *fneq_1(ptree *prog, xen_value **args, int constants)
+{
+  Float f1, f2;
+  if (constants == 2)
+    {
+      if (args[1]->type == R_INT) f1 = (Float)(prog->ints[args[1]->addr]); else f1 = prog->dbls[args[1]->addr];
+      if (args[2]->type == R_INT) f2 = (Float)(prog->ints[args[2]->addr]); else f2 = prog->dbls[args[2]->addr];
+      return(make_xen_value(R_BOOL, add_dbl_to_ptree(prog, (fabs(f1 - f2) > .001)), R_CONSTANT));
+    }
+  if (args[1]->type == R_INT) single_to_float(prog, args, 1);
+  if (args[2]->type == R_INT) single_to_float(prog, args, 2);
+  return(package(prog, R_BOOL, fneq_f, descr_fneq_f, args, 2));
+}
+#endif
+
+
 /* ---------------- abs ---------------- */
 
 static void abs_f(int *args, int *ints, Float *dbls) {FLOAT_RESULT = fabs(FLOAT_ARG_1);}
@@ -5155,6 +5179,37 @@ static xen_value *edit_position_1(ptree *pt, xen_value **args, int num_args)
   return(rtn);
 }
 
+/* ---------------- cursor ---------------- */
+
+static void cursor_i(int *args, int *ints, Float *dbls) 
+{
+  chan_info *cp; 
+  cp = run_get_cp(1, args, ints);
+  if (cp) INT_RESULT = cp->cursor;
+}
+
+static char *descr_cursor_i(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format( INT_PT " = cursor(" INT_PT ", " INT_PT ")", args[0], INT_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2));
+}
+
+static xen_value *cursor_1(ptree *pt, xen_value **args, int num_args)
+{
+  xen_value *true_args[3];
+  xen_value *rtn;
+  int k;
+  if (num_args > 2) 
+    return(run_warn("cursor: too many args"));
+  run_opt_arg(pt, args, num_args, 1, true_args);
+  run_opt_arg(pt, args, num_args, 2, true_args);
+  true_args[0] = args[0];
+  rtn = package(pt, R_INT, cursor_i, descr_cursor_i, true_args, 2);
+  for (k = num_args + 1; k <= 2; k++) FREE(true_args[k]);
+  return(rtn);
+}
+
+/* add-mark: return mark_id(add_mark(samp, NULL, cp))
+ */
 
 /* ---------------- frames ---------------- */
 
@@ -7580,6 +7635,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
       /* both of these can be applicable objects, but those are not counted in the arg scan */
       /* no readers or CLM gens from here on */
       if (strcmp(funcname, "edit-position") == 0) return(clean_up(edit_position_1(prog, args, num_args), args, num_args));
+      if (strcmp(funcname, "cursor") == 0) return(clean_up(cursor_1(prog, args, num_args), args, num_args));
       if (strcmp(funcname, "frames") == 0) return(clean_up(frames_1(prog, args, num_args), args, num_args));
 
       if (vcts > 0)
@@ -7632,6 +7688,9 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	      if (strcmp(funcname, "logxor") == 0) return(clean_up(logxor_1(prog, args, constants), args, num_args));
 	      if (strcmp(funcname, "logior") == 0) return(clean_up(logior_1(prog, args, constants), args, num_args));
 	      if (strcmp(funcname, "ash") == 0) return(clean_up(ash_1(prog, args, constants), args, num_args));
+#if DEBUGGING
+	      if (strcmp(funcname, "fneq") == 0) return(clean_up(fneq_1(prog, args, constants), args, num_args));
+#endif
 	      if (current_optimization > 1) 
 		{
 		  if (strcmp(funcname, "expt") == 0) return(clean_up(expt_1(prog, args, constants), args, num_args));
@@ -8163,9 +8222,10 @@ void g_init_run(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_optimization, g_optimization_w, H_optimization,
 				   "set-" S_optimization, g_set_optimization_w,  0, 0, 1, 0);
 
-  #define H_optimization_hook S_optimization_hook " (msg) is called possibly several times \
-during optimization to indicate where the optimizer ran into trouble:\n\
-  (add-hook! optimization-hook (lambda (msg) (snd-print msg)))"
+  #define H_optimization_hook S_optimization_hook " (msg) is called if the run macro encountered \
+something it couldn't optimize.  'msg' is a string description of the offending form:\n\
+  (add-hook! optimization-hook (lambda (msg) (snd-print msg)))\n\
+You can often slightly rewrite the form to make run happy."
 
   XEN_DEFINE_HOOK(optimization_hook, S_optimization_hook, 1, H_optimization_hook);      /* arg = message */
 }

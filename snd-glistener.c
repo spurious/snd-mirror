@@ -1,6 +1,11 @@
 #include "snd.h"
 
-/* SOMEDAY: show matching paren in listener, but how to underline or highlight in gtk 2 text widgets? */
+/* SOMEDAY: show matching paren in listener, but how to underline or highlight in gtk 2 text widgets?
+ *            tag = gtk_text_buffer_create_tag(buffer, "underline", "underline", PANGO_UNDERLINE_SINGLE, NULL);
+ *          followed by
+ *            gtk_text_buffer_apply_tag(GtkTextBuffer *buffer, GtkTextTag *tag, const GtkTextIter *start, const GtkTextIter *end);
+ *          perhaps
+ */
 
 static GtkWidget *completion_dialog = NULL;
 static int first_time = TRUE;
@@ -491,12 +496,6 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
 							}}}}}}}}}}}}}}
   g_signal_stop_emission(GTK_OBJECT(w), g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(w))), 0);
   return(FALSE);
-}
-
-static gint clear_paren_check(gpointer nada)
-{
-  /* major gtk bug here -- their own internal iterator gets fatally screwed up */
-  return(0);
 }
 
 static gboolean listener_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)

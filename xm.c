@@ -3,7 +3,7 @@
  *   for tests and examples see snd-motif.scm, bess.scm, bess.rb, and snd-test.scm
  */
 
-/* TODO: some way to access XtGetApplicationResources */
+/* SOMEDAY: some way to access XtGetApplicationResources */
 
 /* HISTORY: 
  *   6-Nov:     Ruby XmWMProtocols bugfixes thanks to Michael Scholz.
@@ -19016,6 +19016,7 @@ static XEN gxm_pad(XEN ptr)
 static XEN gxm_set_pad(XEN ptr, XEN val)
 {
   XEN_ASSERT_TYPE(XEN_XColor_P(ptr), ptr, XEN_ARG_1, "set_pad", "XColor");
+  XEN_ASSERT_TYPE(XEN_char_P(val), val, 2, "set_pad", "char");
   (XEN_TO_C_XColor(ptr))->pad = XEN_TO_C_char(val);
   return(val);
 }

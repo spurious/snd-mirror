@@ -1822,11 +1822,6 @@ static int oss_mus_audio_initialize(void)
 	  /* can't change volume yet of Sonorus, so the method above won't work --
 	   * try to catch this case via the mixer's name
 	   */
-
-	  /* SOMEDAY: apparently this is also the case for delta cards in OSS:
-	   * /dev/mixer0 (M Audio Delta 66) (no reported devices)/dev/dsp0:
-	   */
-
 	  status = ioctl(md, SOUND_MIXER_INFO, &mixinfo);
 	  if ((status == 0) && 
 	      (mixinfo.name) && 
