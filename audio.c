@@ -4105,6 +4105,10 @@ static void alsa_dump_configuration(char *name, snd_pcm_hw_params_t *hw_params, 
     char *str;
     size_t len;
     snd_output_t *buf;
+
+    return;
+    /* FIXME: there is a bug in Alsa 1.0.6 (it tries to free its output string twice) which causes a segfault here */
+
     err = snd_output_buffer_open(&buf);
     if (err < 0) {
 	mus_print("%s: could not open dump buffer: %s", 
@@ -4542,6 +4546,10 @@ static void alsa_describe_audio_state_1(void)
     size_t len;
     snd_config_t *conf;
     snd_output_t *buf;
+
+    return;
+    /* FIXME: there is a bug in Alsa 1.0.6 (it tries to free its output string twice) which causes a segfault here */
+
     err = snd_config_update();
     if (err < 0) {
 	mus_print("%s: snd_config_update: %s", 

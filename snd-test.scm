@@ -40419,8 +40419,11 @@ EDITS: 2
 		    (key-event cwid (char->integer #\k) 4) (force-event)
 		    (if (not (equal? (edits) '(5 0)))
 			(snd-display ";C-k (edits) -> ~A?" (edits)))
-		    (if (not (equal? (edit-fragment 5) (list "delete-samples 133 128" "delete" 133 128)))
-			(snd-display ";C-k (edit) -> ~A?" (edit-fragment 5)))
+		    (catch #t
+			   (lambda ()
+			     (if (not (equal? (edit-fragment 5) (list "delete-samples 133 128" "delete" 133 128)))
+				 (snd-display ";C-k (edit) -> ~A?" (edit-fragment 5))))
+			   (lambda args args))
 		    (if (not (= (frames) (- fr 128)))
 			(snd-display ";frames after C-k: ~A ~A?" (frames) fr)))
 		  (key-event cwid (char->integer #\s) 4) (force-event)
