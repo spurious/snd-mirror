@@ -21,7 +21,7 @@
 ;;; test 18: enved
 ;;; test 19: save and restore
 ;;; test 20: errors
-;;; test 21: transforms
+;;; test 21: transforms (in progress...)
 
 (use-modules (ice-9 format) (ice-9 debug))
 
@@ -141,6 +141,7 @@
 	'graph-lines graph-lines 0 
 	'graph-lollipops graph-lollipops 4
 	'hadamard-transform hadamard-transform 7 
+	'haar-transform haar-transform 8
 	'hamming-window hamming-window 5
 	'hankel-transform hankel-transform 2 
 	'hanning-window hanning-window 1
@@ -2299,13 +2300,35 @@
 	(let ((v2 (rectangular->polar v0 v1)))
 	  (if (fneq (vct-ref v2 0) 1.118) (snd-display (format #f ";rectangular->polar: ~A?" v2)))))
 
-      (let ((rdat (make-vct 16)))
-	(vct-set! rdat 3 1.0)
-	(autocorrelate rdat)
-	(if (fneq (vct-ref rdat 0) 2.0) (snd-display (format #f ";autocorrelate: ~A?" rdat)))
-	(do ((i 1 (1+ i)))
-	    ((= i 8))
-	  (if (fneq (vct-ref rdat i) 0.0) (snd-display (format #f ";autocorrelate[~D]: ~A?" i (vct-ref rdat i))))))
+      (for-each 
+       (lambda (size)
+	 (for-each
+	  (lambda (loc)
+	    (let ((rdat (make-vct size)))
+	      (vct-set! rdat loc 1.0)
+	      (autocorrelate rdat)
+	      (if (fneq (vct-ref rdat 0) 2.0) (snd-display (format #f ";autocorrelate ~D:~D: ~A?" size loc rdat)))
+	      (do ((i 1 (1+ i)))
+		  ((= i (/ size 2)))
+		(if (fneq (vct-ref rdat i) 0.0) (snd-display (format #f ";autocorrelate ~D:~D[~D]: ~A?" size loc i (vct-ref rdat i)))))))
+	  (list 0 1 2 3)))
+       (list 8 16 128 256))
+
+      (for-each 
+       (lambda (size)
+	 (for-each
+	  (lambda (loc)
+	    (let ((rdat (make-vct size)))
+	      (vct-set! rdat loc 1.0)
+	      (vct-set! rdat (+ loc 1) 1.0)
+	      (autocorrelate rdat)
+	      (if (fneq (vct-ref rdat 0) 4.0) (snd-display (format #f ";autocorrelate(4) ~D:~D: ~A?" size loc rdat)))
+	      (if (fneq (vct-ref rdat 1) 2.0) (snd-display (format #f ";autocorrelate(4:1) ~D:~D: ~A?" size loc rdat)))
+	      (do ((i 2 (1+ i)))
+		  ((= i (/ size 2)))
+		(if (fneq (vct-ref rdat i) 0.0) (snd-display (format #f ";autocorrelate(4) ~D:~D[~D]: ~A?" size loc i (vct-ref rdat i)))))))
+	  (list 0 1 2 3)))
+       (list 8 16 128 256))
 
       (let ((v0 (make-vct 3)))
 	(vct-set! v0 0 1.0)
@@ -4352,15 +4375,6 @@
 			     ((= j steps))
 			   (vct-set! v (+ j bin) (+ step (vct-ref v (+ j bin)))))))))))
 
-(define (test-hooks)
-  (define (arg0) 32)
-  (define (arg1 n) (+ n 32))
-  (define (arg2 n m) (+ n m 32))
-  (define (arg3 a b c) (+ a b c 32))
-  (define (arg4 a b c d) (+ a b c d 32))
-  (define (arg5 a b c d e) (list 0 0 1 1))
-  (define (arg6 a b c d e f) (+ a b c d e f 32))
-
   (defmacro carg0 (hook)
     `(let ((str (with-output-to-string (lambda () (display (hook->list ,hook))))))
        (if (not (string=? str "(#<procedure arg0 () 32>)"))
@@ -4395,6 +4409,15 @@
     `(let ((str (with-output-to-string (lambda () (display (hook->list ,hook))))))
        (if (not (string=? str "(#<procedure arg6 (a b c d e f) (+ a b c d e f 32)>)"))
 	   (snd-display (format #f ";~A: ~A?" ',hook str)))))
+
+(define (test-hooks)
+  (define (arg0) 32)
+  (define (arg1 n) (+ n 32))
+  (define (arg2 n m) (+ n m 32))
+  (define (arg3 a b c) (+ a b c 32))
+  (define (arg4 a b c d) (+ a b c d 32))
+  (define (arg5 a b c d e) (list 0 0 1 1))
+  (define (arg6 a b c d e f) (+ a b c d e f 32))
 
   (reset-hook! after-graph-hook) (add-hook! after-graph-hook arg2) (carg2 after-graph-hook) (reset-hook! after-graph-hook)
   (reset-hook! lisp-graph-hook) (add-hook! lisp-graph-hook arg2) (carg2 lisp-graph-hook) (reset-hook! lisp-graph-hook)
@@ -7420,97 +7443,16 @@
       ))
 
 
-;;; a horrible kludge to force the transforms to be testable...
-;;;   (I haven't actually checked the numbers returned)
+;;; TODO: make some real transform tests!  -- use snd-transform here
+;;; TODO: test data windows also
 
-(define vals #f)
+(if (or full-test (= snd-test 21))
+    (begin
+      (if (procedure? trace-hook) (trace-hook 21))
+      
+      ))
 
-(define (try-again)
-  (define (test-transform name pk four)
-    (if (fneq pk (vct-peak vals)) (snd-display (format #f ";~A vct-peak: ~A ~A?" name pk (vct-peak vals))))
-    (if (fneq (vct-ref vals 4) four) (snd-display (format #f ";~A vct[4]: ~A ~A?" name four (vct-ref vals 4))))
-    (if (fneq (transform-sample 4) four) (snd-display (format #f ";~A sample[4]: ~A ~A?" name four (transform-sample 4))))
-    (let ((vect (transform-samples)))
-      (if (fneq (vector-ref vect 4) four) (snd-display (format #f ";~A vector[4]: ~A ~A?" name four (vector-ref vect 4))))))
-  (set! vals (transform-samples->vct))
-  (if (not (vct? vals))
-      (in 100 try-again)
-      (if (= (transform-type) fourier-transform)
-	  (begin
-	    (if (= (fft-style) normal-fft)
-		(begin
-		  (test-transform "fft" 2.3430 .04949)
-		  (set! (fft-style) sonogram)
-		  (in 200 try-again))
-		(if (= (fft-style) sonogram)
-		    (begin
-		      (set! (fft-style) spectrogram)
-		      (in 200 try-again))
-		    (begin
-		      (set! (fft-style) normal-fft)
-		      (set! (wavelet-type) 0)
-		      (set! (transform-type) wavelet-transform)
-		      (in 100 try-again)))))
-	  (if (= (transform-type) wavelet-transform)
-	      (begin
-		(test-transform "wavelet" .2071 .0947)
-		(set! (transform-type) hankel-transform)
-		(in 100 try-again))
-	      (if (= (transform-type) hankel-transform)
-		  (begin
-		    (test-transform "hankel" 28.2796 -11.2443)
-		    (set! (transform-type) chebyshev-transform)
-		    (in 100 try-again))
-		  (if (= (transform-type) chebyshev-transform)
-		      (begin
-			(test-transform "walsh" 6.7719 2.3012)
-			(set! (transform-type) autocorrelation)
-			(in 100 try-again))
-		      (if (= (transform-type) autocorrelation)
-			  (begin
-			    (test-transform "autocorrelation" 0.9692 0.4835)
-			    (set! (transform-type) walsh-transform)
-			    (in 100 try-again))
-			  (if (= (transform-type) walsh-transform)
-			      (begin
-				(test-transform "walsh" 4.2729 -0.2749)
-				(set! (transform-type) hadamard-transform)
-				(in 100 try-again))
-			      (if (= (transform-type) hadamard-transform)
-				  (begin
-				    (test-transform "hadamard" 4.2729 -1.1212)
-				    (set! (transform-type) cepstrum)
-				    (in 100 try-again))
-				  (if (= (transform-type) cepstrum)
-				      (begin
-					(test-transform "cepstrum" 1.0 0.01729)
-					(set! (transform-type) histogram)
-					(in 100 try-again))
-				      (if (= (transform-type) histogram)
-					  (begin
-					    (test-transform "histogram" 1.0 1.0)
-					    (close-sound (find-sound "oboe.snd"))
-					    (all-done)
-					    ))))))))))))
-
-(define (all-done)
-  (save-listener "test.output")
-  (set! (listener-prompt) original-prompt)
-  (update-usage-stats)
-  (snd-display (format #f ";all done!~%~A" original-prompt))
-  (snd-display (format #f "timings:~%  ~A: total~%  GC: ~A~%~{    ~A~%~})~%" 
-		       (/ (- (get-internal-real-time) overall-start-time) 100) 
-		       (* (cdar (gc-stats)) .001)
-		       (let ((lst (gc-stats)))
-			 (list (list-ref lst 1) 
-			       (list-ref lst 5) 
-			       (list-ref lst 9)))))
-  (if (not (null? times))
-      (for-each (lambda (n)
-		  (snd-display (format #f "  ~A: ~A~%" (cadr n) (car n))))
-		times))
-  (if (= snd-test -1) (exit)))
-
+;;; -------------------------------- clean up and quit -------------------------------- 
 (if include-clm 
     (begin
       (set! (save-dir) "/home/bil/snd-4")
@@ -7529,29 +7471,20 @@
 
 (if (defined? 'report-times) (report-times))
 
-(if #f ;(or full-test (= snd-test 21))
-    (begin
-      (if (procedure? trace-hook)  (trace-hook 21))
-      (open-sound "oboe.snd")
-      (set! (zero-pad) 0)
-      (set! (fft-size) 256)
-      (set! (show-fft-peaks) #t)
-      (set! (transform-type) fourier-transform)
-      (set! (fft-window) blackman2-window)
-      (set! (fft-style) normal-fft)
-      (set! (ffting) #t)
-      (set! (left-sample) 3150)
-      (try-again))
-    (all-done))
+(save-listener "test.output")
+(set! (listener-prompt) original-prompt)
+(update-usage-stats)
+(snd-display (format #f ";all done!~%~A" original-prompt))
+(snd-display (format #f "timings:~%  ~A: total~%  GC: ~A~%~{    ~A~%~})~%" 
+		     (/ (- (get-internal-real-time) overall-start-time) 100) 
+		     (* (cdar (gc-stats)) .001)
+		     (let ((lst (gc-stats)))
+		       (list (list-ref lst 1) 
+			     (list-ref lst 5) 
+			     (list-ref lst 9)))))
+(if (not (null? times))
+    (for-each (lambda (n)
+		(snd-display (format #f "  ~A: ~A~%" (cadr n) (car n))))
+	      times))
 
-;;; these are just the right size to hit a bug in 4.4's amp-env subsampling
-; (with-sound (:channels 4 :output "/zap/sounds/big4.snd" :play nil) 
-;  (loop for i from 0 to 10 do (fm-violin (* i 12) 1 440 .5 :degrees 0)) 
-;  (loop for i from 0 to 10 do (fm-violin (+ 120 (* i 12)) 1 440 .25 :degrees 90)) 
-;  (loop for i from 0 to 10 do (fm-violin (+ 240 (* i 12)) 1 440 .125 :degrees 180)) 
-;  (loop for i from 0 to 10 do (fm-violin (+ 360 (* i 12)) 1 440 .95 :degrees 270)))
-;
-; (with-sound (:channels 2 :output "/zap/sounds/big2.snd" :play nil) 
-;  (loop for i from 0 to 10 do (fm-violin (* i 22) 1 440 .5 :degrees 0)) 
-;  (loop for i from 0 to 10 do (fm-violin (+ 220 (* i 22)) 1 440 .25 :degrees 90)))
-
+(if (= snd-test -1) (exit)))

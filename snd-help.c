@@ -266,7 +266,8 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
-16-Apr:  mus-out-format.\n\
+17-Apr:  Haar transform.\n\
+16-Apr:  mus-out-format, listener-selection.\n\
 9-Apr:   noguile.h, sl.h (moving toward librep support).\n\
 29-Mar:  drop-hook.\n\
 23-Mar:  removed syncing (use sync), and abort? (use c-g?).\n\
@@ -1223,6 +1224,7 @@ all refer to the same thing.\n\
   " S_key "               (key state)\n\
   " S_key_binding "       (key state)\n\
   " S_left_sample "       (snd chn)\n\
+  " S_listener_selection "()\n\
   " S_list2vct "         (lst)\n\
   " S_loop_samples "      (reader function calls origin environ)\n\
   " S_mus_sound_length "      (snd chn)\n\

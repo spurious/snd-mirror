@@ -1312,6 +1312,7 @@ int cursor_delete(chan_info *cp, int count, const char *origin);
 int cursor_delete_previous(chan_info *cp, int count, const char *origin);
 int cursor_zeros(chan_info *cp, int count, int regexpr);
 int cursor_insert(chan_info *cp, int beg, int count, const char *origin);
+void fht(int powerOfFour, Float *array);
 
 void g_init_sig(SCM local_doc);
 

@@ -1202,6 +1202,6 @@ leaves the lisp listener pane"
   mouse_enter_listener_hook = MAKE_HOOK(S_mouse_enter_listener_hook, 1, H_mouse_enter_listener_hook);    /* arg = listener_text widget */
   mouse_leave_listener_hook = MAKE_HOOK(S_mouse_leave_listener_hook, 1, H_mouse_leave_listener_hook);    /* arg = listener_text widget */
 
-  DEFINE_PROC("listener-selection", g_listener_selected_text, 0, 0, 0, "returns current selection in listener or #f");
+  DEFINE_PROC(S_listener_selection, g_listener_selected_text, 0, 0, 0, "returns current selection in listener or #f");
 }
 

@@ -613,12 +613,23 @@ static void add_callback(int slot, SCM callback)
 static SCM gl_add_to_main_menu(SCM label, SCM callback)
 {
   #define H_add_to_main_menu "(" S_add_to_main_menu " label &optional callback) adds label to the main (top-level) menu, returning its index"
-  int val = -1, slot=-1;
+  int val = -1, slot = -1;
+  char *err;
+  SCM errm;
   SCM_ASSERT(STRING_P(label), label, SCM_ARG1, S_add_to_main_menu);
   slot = make_callback_slot();
-  if ((BOUND_P(callback)) &&
-      (procedure_ok_with_error(callback, 0, 0, S_add_to_main_menu, "menu callback", 2)))
-    add_callback(slot, callback);
+  if (BOUND_P(callback))
+    {
+      err = procedure_ok(callback, 0, 0, S_add_to_main_menu, "menu callback", 2);
+      if (err == NULL)
+	add_callback(slot, callback);
+      else 
+	{
+	  errm = TO_SCM_STRING(err);
+	  FREE(err);
+	  snd_bad_arity_error(S_add_to_main_menu, errm, callback);
+	}
+    }
   val = g_add_to_main_menu(get_global_state(), 
 			   TO_C_STRING(label), 
 			   slot);
@@ -631,10 +642,13 @@ static SCM gl_add_to_menu(SCM menu, SCM label, SCM callback)
 menu is the index returned by add-to-main-menu, func should be a function of no arguments"
 
   int err = 0, slot, m;
+  char *errmsg;
+  SCM errm;
   SCM_ASSERT(STRING_P(label), label, SCM_ARG2, S_add_to_menu);
   SCM_ASSERT(INTEGER_P(menu), menu, SCM_ARG1, S_add_to_menu);
   SCM_ASSERT(PROCEDURE_P(callback), callback, SCM_ARG3, S_add_to_menu);
-  if (procedure_ok_with_error(callback, 0, 0, S_add_to_menu, "menu callback", 3))
+  errmsg = procedure_ok(callback, 0, 0, S_add_to_menu, "menu callback", 3);
+  if (errmsg == NULL)
     {
       m = TO_C_INT(menu);
       if (m < 0)
@@ -647,6 +661,12 @@ menu is the index returned by add-to-main-menu, func should be a function of no 
       if (err == -1) 
 	snd_no_such_menu_error(S_add_to_menu, menu);
       add_callback(slot, callback);
+    }
+  else 
+    {
+      errm = TO_SCM_STRING(errmsg);
+      FREE(errmsg);
+      snd_bad_arity_error(S_add_to_menu, errm, callback);
     }
   return(label);
 }

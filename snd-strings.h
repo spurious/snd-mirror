@@ -473,6 +473,7 @@
 #define S_graph_style                   "graph-style"
 #define S_graphing                      "graphing"
 #define S_graphs_horizontal             "graphs-horizontal"
+#define S_haar_transform                "haar-transform"
 #define S_hadamard_transform            "hadamard-transform"
 #define S_hankel_transform              "hankel-transform"
 #define S_header_type                   "header-type"
@@ -505,6 +506,7 @@
 #define S_listener_color                "listener-col" STR_OR
 #define S_listener_font                 "listener-font"
 #define S_listener_prompt               "listener-prompt"
+#define S_listener_selection            "listener-selection"
 #define S_listener_text_color           "listener-text-col" STR_OR
 #define S_load_colormap                 "load-col" STR_OR "map"
 #define S_load_font                     "load-font"

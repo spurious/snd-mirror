@@ -220,7 +220,8 @@ void eval_expression(chan_info *cp, snd_info *sp, int count, int regexpr)
 	      for (k = 0; k < chan_dur; k++)
 		{
 		  res = CALL1(sp->eval_proc,
-				TO_SCM_DOUBLE((double)next_sample_to_float(sf)), __FUNCTION__);
+			      TO_SCM_DOUBLE((double)next_sample_to_float(sf)), 
+			      __FUNCTION__);
 		  if (NUMBER_P(res)) 
 		    val = TO_C_DOUBLE(res);
 		  else
@@ -1677,8 +1678,8 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 		{
 		  mps = cp->marks[cp->edit_ctr];
 		  cur_marks = cp->mark_ctr[cp->edit_ctr] + 1;
-		  new_marks = (int *)CALLOC(cur_marks, sizeof(int));
-		  old_marks = (int *)CALLOC(cur_marks, sizeof(int));
+		  new_marks = (int *)MALLOC(cur_marks * sizeof(int));
+		  old_marks = (int *)MALLOC(cur_marks * sizeof(int));
 		  for (m = 0; m < cur_marks; m++)
 		    {
 		      new_marks[m] = -1;
@@ -1925,7 +1926,7 @@ static void make_sines(int length)
     }
 }
 
-static void fht(int powerOfFour, Float *array)
+void fht(int powerOfFour, Float *array)
 {
   /*  In place Fast Hartley Transform of floating point data in array.
       Size of data array must be power of four. Lots of sets of four 
@@ -3714,6 +3715,7 @@ return magnitude spectrum of data (vct) in data using fft-window win and fft len
   make_fft_window_1(window, n, wtype, 0.0);
   for (i = 0; i < n; i++) rdat[i] *= window[i];
   FREE(window);
+  /* TODO: this could be optimized (see autocorrelate in snd-fft.c) */
   mus_fft(rdat, idat, n, 1);
   lowest = 0.00000001;
   maxa = 0.0;

@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <stddef.h>
 
 #if (defined(NEXT) || (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H))))
   #include <libc.h>
@@ -23,9 +24,6 @@
     #include <string.h>
   #endif
 #endif
-
-#include <ctype.h>
-#include <stddef.h>
 
 #include "sndlib.h"
 

@@ -381,6 +381,40 @@ static Float *wavelet_data[] ={daub4, daub6, daub8, daub10, daub12, daub14, daub
 
 /* tested with pulse train and oboe.snd */
 
+
+/* -------------------------------- HAAR TRANSFORM -------------------------------- */
+/*
+ * from fxt/haar/haar.cc
+ */
+
+static void haar_transform(Float *f, int n)
+{
+  int ldn;
+  unsigned int m, mh, i, j, k;
+  Float s2;
+  Float v = 1.0;
+  Float x, y;
+  Float *g;
+  s2 = sqrt(0.5);
+  ldn = (int)(log(n) / log(2));
+  g = (Float *)CALLOC(n, sizeof(Float));
+  for (m = n; m > 1; m >>= 1)
+    {
+      v *= s2;
+      mh = (m >> 1);
+      for (j = 0, k = 0; j < m; j += 2, k++)
+        {
+	  x = f[j];
+	  y = f[j + 1];
+	  g[k] = x + y;
+	  g[mh + k] = (x - y) * v;
+        }
+      for (i = m; i > 0; i--) f[i] = g[i];
+    }
+  f[0] *= v;
+}
+
+
 /* -------------------------------- CHEBYSHEV TRANSFORM -------------------------------- */
 
 /* saving the polynomials speeds up the transform by a factor of 2 (added 15-Oct-98) */
@@ -528,22 +562,47 @@ static void walsh_transform(Float *data, int n)
 
 static void autocorrelation(Float *data, int n)
 {
-  /* TODO: surely this can be handled by the fht in some cases? */
   Float *rl, *im;
   Float fscl;
-  int i;
+  int i, j, p, n2;
   fscl = 2.0 / (Float)n;
   rl = (Float *)MALLOC(n * sizeof(Float));
   im = (Float *)CALLOC(n, sizeof(Float));
   for (i = 0; i < n; i++) rl[i] = data[i];
-  mus_fft(rl, im, n, 1);
-  for (i = 0; i < n; i++)
+
+  p = (int)(log(n) / log(4.0));
+  if (n == (int)pow(4, p))
     {
-      rl[i] = rl[i] * rl[i] + im[i] * im[i];
-      im[i] = 0.0;
+      fht(p, rl);
+      rl[0] *= rl[0];
+      n2 = n / 2;
+      rl[n2] *= rl[n2];
+      for (i = 1, j = n - 1; i < n2; i++, j--)
+	{
+	  rl[i] = 0.5 * ((rl[i] * rl[i]) + (rl[j] * rl[j]));
+	  rl[j] = rl[i];
+	}
     }
+  else
+    {
+      mus_fft(rl, im, n, 1);
+      rl[0] *= rl[0];
+      n2 = n / 2;
+      rl[n2] *= rl[n2];
+      for (i = 1, j = n - 1; i < n2; i++, j--)
+	{
+	  rl[i] = rl[i] * rl[i] + im[i] * im[i];
+	  rl[j] = rl[i];
+	}
+    }
+#if HAVE_MEMSET
+  memset((void *)im, 0, n * sizeof(Float));
+#else
+  for (i = 0; i < n; i++) im[i] = 0.0;
+#endif
   mus_fft(rl, im, n, -1);
   for (i = 0; i <= n / 2; i++) data[i] = fscl * rl[i];
+
   FREE(rl);
   FREE(im);
 }
@@ -557,21 +616,29 @@ static void cepstrum(Float *data, int n)
 {
   Float *rl, *im;
   Float fscl = 0.0, lowest;
-  int i;
+  int i, j, n2;
   lowest = 0.00000001;
   fscl = 2.0 / (Float)n;
   rl = (Float *)MALLOC(n * sizeof(Float));
   im = (Float *)CALLOC(n, sizeof(Float));
   for (i = 0; i < n; i++) rl[i] = data[i];
   mus_fft(rl, im, n, 1);
-  for (i = 0; i < n; i++)
+  rl[0] *= rl[0];
+  n2 = n / 2;
+  rl[n2] *= rl[n2];
+  for (i = 1, j = n - 1; i < n2; i++, j--)
     {
       rl[i] = rl[i] * rl[i] + im[i] * im[i];
       if (rl[i] < lowest)
 	rl[i] = log(lowest);
       else rl[i] = log(sqrt(rl[i]));
-      im[i] = 0.0;
+      rl[j] = rl[i];
     }
+#if HAVE_MEMSET
+  memset((void *)im, 0, n * sizeof(Float));
+#else
+  for (i = 0; i < n; i++) im[i] = 0.0;
+#endif
   mus_fft(rl, im, n, -1);
   for (i = 0; i < n; i++)
     if (fabs(rl[i]) > fscl) 
@@ -1139,6 +1206,7 @@ static char *spectro_xlabel(chan_info *cp)
       else return(STR_frequency);
       break;
     case WAVELET:         return(wavelet_names[cp->wavelet_type]); break;
+    case HAAR:            return("Haar spectrum");                 break;
     case HANKEL:          return("Hankel spectrum");               break;
     case CHEBYSHEV:       return("Chebyshev spectrum");            break;
     case CEPSTRUM:        return("cepstrum");                      break;
@@ -1251,12 +1319,13 @@ static void make_sonogram_axes(chan_info *cp)
 static int apply_fft_window(fft_state *fs)
 {
   /* apply the window, reading data if necessary, resetting IO blocks to former state */
-  int i, ind0, result = 5;
+  int i, j, ind0, result = 5, p, use_fht = 0;
   Float *window, *fft_data;
   int data_len, pad = 0;
   snd_fd *sf;
   chan_info *cp;
   snd_state *ss;
+  Float scaler;
   ss = fs->ss;
   cp = (chan_info *)(fs->chan);
   fft_data = fs->data;
@@ -1293,14 +1362,37 @@ static int apply_fft_window(fft_state *fs)
     {
     case FOURIER:
       window = (Float *)((fft_window_state *)(fs->wp))->window;
-      for (i = 1; i < data_len; i++)  /* 22-Nov-00 was starting at 0, but I think XJS's version of the fft is 1-based */
-	fft_data[i] = window[i] * next_sample_to_float(sf);
+      if (fs->size <= 4096)
+	{
+	  /* to my surprise, it's smoother even on an old SGI to just do the fft in place */
+	  p = (int)(log(fs->size) / log(4.0));
+	  use_fht = (fs->size == (int)pow(4, p));
+	}
+      if (use_fht)
+	for (i = 0; i < data_len; i++)
+	  fft_data[i] = window[i] * next_sample_to_float(sf);
+	else
+	  {
+	    fft_data[0] = 0.0;
+	    for (i = 1; i < data_len; i++)  /* 22-Nov-00 was starting at 0, but I think XJS's version of the fft is 1-based */
+	      fft_data[i] = window[i - 1] * next_sample_to_float(sf);
+	  }
       /* my timing tests indicate this change to float (i.e. scaling) costs nothing in the larger scheme of things */
       if (data_len < fs->size) 
 	for (i = data_len; i < fs->size; i++) 
 	  fft_data[i] = 0.0;
       decrement_fft_window_use(fs);
       result = 1;
+      if (use_fht)
+	{
+	  fht(p, fft_data);
+	  scaler = 1.0 / sqrt(2.0);
+	  fft_data[0] *= scaler;
+	  fft_data[fs->size / 2] *= scaler;
+	  for (i = 1, j = fs->size - 1; i < fs->size / 2; i++, j--) 
+	    fft_data[i] = scaler * sqrt((fft_data[i] * fft_data[i]) + (fft_data[j] * fft_data[j]));
+	  result = 5;
+	}
       break;
     case HANKEL:
       for (i = 0; i < data_len; i++) fs->hwin[i] = next_sample_to_float(sf);
@@ -1322,6 +1414,13 @@ static int apply_fft_window(fft_state *fs)
 	for (i = data_len; i < fs->size; i++) 
 	  fft_data[i] = 0.0;
       wavelet_transform(fft_data, fs->size, wavelet_data[cp->wavelet_type], wavelet_sizes[cp->wavelet_type]);
+      break;
+    case HAAR:
+      for (i = 0; i < data_len; i++) fft_data[i] = next_sample_to_float(sf);
+      if (data_len < fs->size) 
+	for (i = data_len; i < fs->size; i++) 
+	  fft_data[i] = 0.0;
+      haar_transform(fft_data, fs->size);
       break;
     case CHEBYSHEV:
       for (i = 0; i < data_len; i++) fft_data[i] = next_sample_to_float(sf);
@@ -1423,7 +1522,7 @@ static int display_snd_fft(fft_state *fs)
 	      min_freq = ((Float)(SND_SRATE(sp)) * 0.5 * cp->spectro_start);
 	    }
 	  break;
-	case WAVELET: case HANKEL: case CHEBYSHEV: case HADAMARD: case WALSH:
+	case WAVELET: case HANKEL: case CHEBYSHEV: case HADAMARD: case WALSH: case HAAR:
 	  max_freq = fs->size * cp->spectro_cutoff; 
 	  min_freq = fs->size * cp->spectro_start; 
 	  break;
@@ -2364,6 +2463,67 @@ returns a vct object (vct-obj if passed), with the current transform data from s
   return(SCM_BOOL_F);
 }  
 
+static SCM g_snd_transform(SCM type, SCM data, SCM hint)
+{
+  int trf, i, j, hnt, n2;
+  vct *v;
+  Float *dat;
+  SCM_ASSERT(INTEGER_P(type), type, SCM_ARG1, "snd-transform");
+  SCM_ASSERT(VCT_P(data), data, SCM_ARG2, "snd-transform");
+  trf = TO_SMALL_C_INT(type);
+  if ((trf < 0) || (trf > HAAR))
+    mus_misc_error("snd-transform", "invalid transform choice", type);
+  v = TO_VCT(data);
+  switch (trf)
+    {
+    case FOURIER: 
+      if ((BOUND_P(hint)) && (TO_C_INT(hint) == 1))
+	fht((int)(log(v->length) / log(4.0)), v->data);
+      else
+	{
+	  dat = (Float *)CALLOC(v->length, sizeof(Float));
+	  mus_fft(v->data, dat, v->length, 1);
+	  v->data[0] *= v->data[0];
+	  n2 = v->length / 2;
+	  v->data[n2] *= v->data[n2];
+	  for (i = 1, j = v->length - 1; i < n2; i++, j--)
+	    {
+	      v->data[i] = v->data[i] * v->data[i] + dat[i] * dat[i];
+	      v->data[j] = v->data[i];
+	    }
+	  FREE(dat);
+	}
+      break;
+    case HANKEL:
+#if HAVE_GSL
+      dat = (Float *)CALLOC(v->length, sizeof(Float));
+      hankel_transform(v->length, v->data, dat);
+      for (i = 0; i < v->length; i++) v->data[i] = dat[i];
+      FREE(dat);
+#endif
+      break;
+    case WAVELET:
+      hnt = TO_SMALL_C_INT(hint);
+      wavelet_transform(v->data, v->length, wavelet_data[hnt], wavelet_sizes[hnt]);
+      break;
+    case HAAR:
+      haar_transform(v->data, v->length);
+      break;
+    case CHEBYSHEV:
+      chebyshev_transform(v->data, v->length);
+      break;
+    case CEPSTRUM:
+      cepstrum(v->data, v->length);
+      break;
+    case WALSH:
+      walsh_transform(v->data, v->length);
+      break;
+    case AUTOCORRELATION:
+      autocorrelation(v->data, v->length);
+      break;
+    }
+  return(data);
+}
 
 void g_init_fft(SCM local_doc)
 {
@@ -2385,6 +2545,7 @@ of a moving mark:\n\
   #define H_wavelet_transform   S_transform_type " value for wavelet transform (" S_wavelet_type " chooses wavelet)"
   #define H_hankel_transform    S_transform_type " value for Hankel transform (Bessel function basis)"
   #define H_chebyshev_transform S_transform_type " value for Chebyshev transform (Chebyshev polynomial basis)"
+  #define H_haar_transform      S_transform_type " value for Haar transform"
   #define H_cepstrum            S_transform_type " value for cepstrum (log of power spectrum)"
   #define H_hadamard_transform  S_transform_type " value for Hadamard transform"
   #define H_walsh_transform     S_transform_type " value for Walsh transform (step function basis)"
@@ -2394,6 +2555,7 @@ of a moving mark:\n\
   DEFINE_VAR(S_wavelet_transform,   WAVELET,         H_wavelet_transform);
   DEFINE_VAR(S_hankel_transform,    HANKEL,          H_hankel_transform);
   DEFINE_VAR(S_chebyshev_transform, CHEBYSHEV,       H_chebyshev_transform);
+  DEFINE_VAR(S_haar_transform,      HAAR,            H_haar_transform);
   DEFINE_VAR(S_cepstrum,            CEPSTRUM,        H_cepstrum);
   DEFINE_VAR(S_hadamard_transform,  HADAMARD,        H_hadamard_transform);
   DEFINE_VAR(S_walsh_transform,     WALSH,           H_walsh_transform);
@@ -2413,5 +2575,7 @@ of a moving mark:\n\
   DEFINE_PROC(S_transform_samples_vct, transform_samples2vct, 0, 3, 0, H_transform_samples2vct);
   DEFINE_PROC(S_autocorrelate,         g_autocorrelate, 1, 0, 0,       H_autocorrelate);
   DEFINE_PROC(S_add_transform,         g_add_transform, 5, 0, 0,       H_add_transform);
+
+  DEFINE_PROC("snd-transform",         g_snd_transform, 2, 1, 0,       "call transform code directly");
 }
 

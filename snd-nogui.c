@@ -291,8 +291,10 @@ void update_stats_display(snd_state *ss, int all) {}
 void check_stats_window(snd_state *ss, int val) {}
 void get_current_color(int colormap, int j, int *r, int *g, int *b) {}
 
-#define NUM_TRANSFORM_TYPES 8
-static char *TRANSFORM_TYPE_CONSTANTS[NUM_TRANSFORM_TYPES] ={S_fourier_transform, S_wavelet_transform, S_hankel_transform, S_walsh_transform, S_autocorrelation, S_chebyshev_transform, S_cepstrum, S_hadamard_transform};
+#define NUM_TRANSFORM_TYPES 9
+static char *TRANSFORM_TYPE_CONSTANTS[NUM_TRANSFORM_TYPES] =
+  {S_fourier_transform, S_wavelet_transform, S_hankel_transform, S_walsh_transform, 
+   S_autocorrelation, S_chebyshev_transform, S_cepstrum, S_hadamard_transform, S_haar_transform};
 char *transform_type_name(int choice) {return(TRANSFORM_TYPE_CONSTANTS[choice]);}
 
 int add_transform_to_list(char *name) {return(0);}
