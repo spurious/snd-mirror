@@ -5,6 +5,7 @@ typedef struct {
   mus_any *gen;
   XEN *vcts; /* one for each accessible Float array (wrapped up here in a vct object) */
   int nvcts;
+  void *input_ptree; /* added 24-Apr-02 for snd-run.c optimizer */
 } mus_xen;
 
 #define CLM_TO_MUS_XEN(arg) ((mus_xen *)XEN_OBJECT_REF(arg))

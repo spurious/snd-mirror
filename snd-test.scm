@@ -11683,7 +11683,6 @@
 	    (time (env-sound '(0 0 1 1 2 0)))
 	    (time (filter-sound '(0 1 .2 0 .5 1 1 0) 20))      ; FIR direct form
 	    (time (filter-sound '(0 0 .1 0 .11 1 .12 0 1 0) 2048)) ; convolution
-	    (time (map-chan (map-silence .01 #f)))
 	    (close-sound ind)))
       (if (file-exists? "1a.snd")
 	  (let ((ind1 (open-sound "1a.snd")))
@@ -14017,7 +14016,7 @@ EDITS: 5
 (defmacro time-it (a) 
   `(let ((start (get-internal-real-time))) 
    ,a 
-   (/ (- (get-internal-real-time) start) 100)))
+   (- (get-internal-real-time) start)))
 
 (define fm-violin-opt
   (lambda* (startime dur frequency amplitude #:key
@@ -15181,6 +15180,13 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
       (itsta '(let* ((a 1) (b a)) (lambda (y) (+ (inexact->exact y) b))) 2.0 3)
       (itsta '(let ((a 32)) (let* ((a 1) (b a)) (lambda (y) (+ (inexact->exact y) b)))) 2.0 3)
       (itsta '(let ((a 32)) (let ((a 1) (b a)) (lambda (y) (+ (inexact->exact y) b)))) 2.0 34)
+
+      (itst '(let* ((a 1)) (define b 2) (+ a b)) 3)
+      (itst '(let* ((a 1)) (define b 2) (define c 3) (+ a b c)) 6)
+      (itst '(let* ((a 1) (b 3)) (begin (define b 2) (set! a b)) (+ a b)) 5)
+      (itst '(begin (define b 2) (let ((a 1)) (+ a b))) 3)
+      (itst '(begin (define b 2) (let ((a 1)) (define b 12) (+ a b))) 13)
+      (ftsta '(lambda (y) (define a 3) (+ y a)) 1.0 4.0)
 
       (itst '(let ((a 0)) (do ((i 0 (1+ i))) ((= i 3) a) (set! a (1+ a)))) 3)
       (itst '(let ((a 0)) (do ((i 0 (1+ i)) (j 1 (* j 2))) ((= i 3) a) (set! a j))) 4)

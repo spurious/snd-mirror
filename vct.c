@@ -14,7 +14,7 @@
  *   XEN vct_to_vector(XEN vct)            return vector of vct contents
  *
  * Scheme side:
- *   (make-vct len)                        make new vct
+ *   (make-vct len &opt (filler 0.0))      make new vct
  *   (vct? obj)                            is obj a vct
  *   (vct-ref v index)                     return v[index]
  *   (vct-set! v index val)                v[index] = val
@@ -194,14 +194,18 @@ XEN make_vct_wrapper(int len, Float *data)
   XEN_MAKE_AND_RETURN_OBJECT(vct_tag, new_vct, 0, free_vct);
 }
 
-static XEN g_make_vct(XEN len)
+static XEN vct_fill(XEN obj1, XEN obj2);
+
+static XEN g_make_vct(XEN len, XEN filler)
 {
-  #define H_make_vct "(" S_make_vct " len) -> a new vct object of length len"
+  #define H_make_vct "(" S_make_vct " len &optional initial-element) -> a new vct object of length len"
   int size;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(len), len, XEN_ONLY_ARG, S_make_vct, "an integer");
   size = XEN_TO_C_INT(len);
   if (size <= 0) 
     mus_misc_error(S_make_vct, "len <= 0?", len);
+  if (XEN_NUMBER_P(filler))
+    return(vct_fill(make_vct(size, (Float *)CALLOC(size, sizeof(Float))), filler));
   return(make_vct(size, (Float *)CALLOC(size, sizeof(Float))));
 }
 
@@ -792,7 +796,7 @@ void init_vct(void)
   /* many more could be added */
 #endif
 
-  XEN_DEFINE_PROCEDURE(S_make_vct,      g_make_vct_w, 1, 0, 0,    H_make_vct);
+  XEN_DEFINE_PROCEDURE(S_make_vct,      g_make_vct_w, 1, 1, 0,    H_make_vct);
   XEN_DEFINE_PROCEDURE(S_vct_copy,      copy_vct_w, 1, 0, 0,      H_vct_copy);
   XEN_DEFINE_PROCEDURE(S_vct_p,         g_vct_p_w, 1, 0, 0,       H_vct_p);
   XEN_DEFINE_PROCEDURE(S_list2vct,      list2vct_w, 1, 0, 0,      H_list2vct);
