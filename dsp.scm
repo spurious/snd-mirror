@@ -1702,14 +1702,10 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	 (rl2 (make-vct fft-len 0.0))
 	 (new-sound (make-vct fft-len)))
     (if (> (vct-ref coeffs 0) 0.0)
-	(let ((dither (vct-ref coeffs 0))
-	      (two-pi (* 2 3.141592653589793)))
+	(let ((dither (vct-ref coeffs 0)))
 	  (do ((i 0 (1+ i)))
 	      ((= i fft-len))
-	    ;; treat coeff 0 as dithering amount
-	    (vct-set! new-sound i dither)     ; noise magnitude
-	    (vct-set! rl1 i (random two-pi))) ; random phase
-	  (polar->rectangular new-sound rl1)))
+	    (vct-set! new-sound i (mus-random dither)))))
     (if (> num-coeffs 1)
 	(begin
 	  (vct-add! new-sound (vct-scale! (vct-copy sound) (vct-ref coeffs 1)))
