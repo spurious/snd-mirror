@@ -375,18 +375,13 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
-25-May:  removed stop-playing-region-hook, stop-playing-channel-hook\n\
+25-May:  removed stop-playing-region-hook, stop-playing-channel-hook, before-apply-hook\n\
          added stop-function arg to play, play-and-wait, play-selection, play-region, add-player\n\
 21-May:  --with-doc-dir configuration switch.\n\
 16-May:  snd 7.4\n\
 6-May:   mono->stereo, mono-files->stereo, stereo->mono (extensions.scm).\n\
          channel-variance etc in dsp.scm, taken from J Smith \"Mathematics of the DFT\"\n\
 5-May:   reverse-channels, scramble-channels, rotate-channel, scramble-channel (extsnd.html, examp.scm)\n\
-22-Apr:  complexify in snd-gl.scm.\n\
-19-Apr:  add-to-menu now returns the new menu label widget.\n\
-13-Apr:  removed forward|backward-graph|mix|mark -- see snd7.scm for Scheme versions.\n\
-12-Apr:  dither-channel.\n\
-         goertzel in dsp.scm (faster version of find-sine)\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

@@ -1560,7 +1560,6 @@ typedef struct {
   file_info *hdr;
 } apply_state;
 
-static XEN before_apply_hook;
 static XEN after_apply_hook;
 
 static void *make_apply_state(void *xp)
@@ -1568,12 +1567,6 @@ static void *make_apply_state(void *xp)
   /* set up initial state for apply_controls */
   apply_state *ap = NULL;
   snd_info *sp = (snd_info *)xp;
-  /* call apply-hook (if any) return #t = don't apply */
-  if ((XEN_HOOKED(before_apply_hook)) &&
-      (XEN_TRUE_P(run_or_hook(before_apply_hook, 
-			      XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
-			      S_before_apply_hook))))
-    return(NULL);
   ap = (apply_state *)CALLOC(1, sizeof(apply_state));
   ap->slice = 0;
   ap->hdr = NULL;
@@ -3964,6 +3957,7 @@ static XEN g_read_peak_env_info_file(XEN snd, XEN chn, XEN name)
 static XEN g_env_info_to_vcts(env_info *ep, int len)
 {
   /* changed 5-Jan-03 to return vcts (Guile vector printer is stupid) */
+  /* in snd-test this causes unfreed memory because the sound-icon-box saves all the data for each icon */
   XEN res;
   int i, j, lim;
   vct *vmax, *vmin;
@@ -4019,6 +4013,7 @@ typedef struct {
   int len;
   XEN filename;
   XEN func;
+  int func_gc_loc;
 } env_tick;
 
 static Cessate tick_it(Indicium pet)
@@ -4036,15 +4031,18 @@ static Cessate tick_it(Indicium pet)
     {
       if (es->sf) free_snd_fd(es->sf);
       FREE(es);
-      peak = g_env_info_to_vcts(cp->amp_envs[0], et->len);
-      loc = snd_protect(peak);
-      XEN_CALL_3(et->func,
-		 et->filename,
-		 C_TO_XEN_INT(cp->chan),
-		 peak,
-		 "amp env tick");
-      snd_unprotect(et->func);
-      snd_unprotect_at(loc);
+      if (XEN_PROCEDURE_P(et->func))
+	{
+	  peak = g_env_info_to_vcts(cp->amp_envs[0], et->len);
+	  loc = snd_protect(peak);
+	  XEN_CALL_3(et->func,
+		     et->filename,
+		     C_TO_XEN_INT(cp->chan),
+		     peak,
+		     "amp env tick");
+	  snd_unprotect_at(et->func_gc_loc);
+	  snd_unprotect_at(loc);
+	}
       completely_free_snd_info(cp->sound);
       FREE(et);
       return(BACKGROUND_QUIT);
@@ -4073,7 +4071,6 @@ If 'filename' is a sound index (an integer), 'size' is an edit-position, and the
   env_info *ep;
   int id;
   peak_env_error_t err = PEAK_ENV_NO_ERROR;
-  env_tick *et;
   XEN_ASSERT_TYPE(XEN_STRING_P(filename) || XEN_INTEGER_P(filename) || XEN_NOT_BOUND_P(filename), 
 		  filename, XEN_ARG_1, S_channel_amp_envs, "a string or sound index");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_2, S_channel_amp_envs, "an integer");
@@ -4169,13 +4166,14 @@ If 'filename' is a sound index (an integer), 'size' is an edit-position, and the
 	{
 	  if (XEN_PROCEDURE_P(done_func))
 	    {
+	      env_tick *et;
 	      et = (env_tick *)CALLOC(1, sizeof(env_tick));
 	      et->cp = cp;
 	      et->es = es;
 	      et->func = done_func;
+	      et->func_gc_loc = snd_protect(done_func);
 	      et->len = len;
 	      et->filename = filename;
-	      snd_protect(done_func);
 	      id = (int)BACKGROUND_ADD(tick_it, (Indicium)et);
 	      if (fullname) FREE(fullname);
 	      return(C_TO_XEN_INT(id));
@@ -4716,13 +4714,9 @@ void g_init_snd(void)
   #define H_name_click_hook S_name_click_hook " (snd): called when sound name clicked. \
 If it returns #t, the usual informative minibuffer babbling is squelched."
 
-  #define H_before_apply_hook S_before_apply_hook " (snd): called when 'Apply' is clicked or " S_apply_controls " is called. \
-If it returns #t, the apply is aborted."
-
   #define H_after_apply_hook S_after_apply_hook " (snd): called when 'Apply' finishes."
 
   XEN_DEFINE_HOOK(name_click_hook,   S_name_click_hook,   1, H_name_click_hook);       /* args = snd-index */
-  XEN_DEFINE_HOOK(before_apply_hook, S_before_apply_hook, 1, H_before_apply_hook);     /* args = snd-index */
   XEN_DEFINE_HOOK(after_apply_hook,  S_after_apply_hook,  1, H_after_apply_hook);      /* args = snd-index */
 
   #define H_channels_separate "The value for " S_channel_style " that causes channel graphs to occupy separate panes"

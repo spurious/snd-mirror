@@ -185,7 +185,6 @@
 	    (e (make-env (channel-envelope sound chan) 
 			 :end (inexact->exact (floor (exact->inexact (/ (frames sound chan) (dac-size))))))))
 	(add-player player 0 -1 -1 (lambda (reason) (reset-hook! play-hook)))
-	(set! (amp-control player) .5) ; force amp check
 	(add-hook! play-hook (lambda (fr)
 			       ;; if fr (dac buffer size in frames) is not dac-size, we should do something debonair
 			       (set! (amp-control player) (env e))))))

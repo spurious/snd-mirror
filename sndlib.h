@@ -47,7 +47,7 @@
   #include <unistd.h>
 #endif
 
-#if defined(macosx)
+#if defined(macosx) || (defined(__APPLE__) && defined(__MACH__))
   #define MAC_OSX 1
 #endif
 

@@ -2156,6 +2156,11 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool back, bool syncd, XEN
 #else
   if (back) background = IN_BACKGROUND; else background = NOT_IN_BACKGROUND;
 #endif
+  XEN_ASSERT_TYPE(((XEN_PROCEDURE_P(stop_proc)) && 
+		   (XEN_TO_C_INT(XEN_CAR(XEN_ARITY(stop_proc))) == 1)) ||
+		  (XEN_NOT_BOUND_P(stop_proc)) || 
+		  (XEN_FALSE_P(stop_proc)), 
+		  stop_proc, arg_pos + 1, caller, "a procedure of 1 arg");
 
   /* if even samp_n is XEN_UNDEFINED, start_dac? */
 
@@ -2262,6 +2267,11 @@ before returning."
   bool back;
   dac_info *dp = NULL;
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(wait), wait, XEN_ARG_1, S_play_selection, "a boolean");
+  XEN_ASSERT_TYPE(((XEN_PROCEDURE_P(stop_proc)) && 
+		   (XEN_TO_C_INT(XEN_CAR(XEN_ARITY(stop_proc))) == 1)) ||
+		  (XEN_NOT_BOUND_P(stop_proc)) || 
+		  (XEN_FALSE_P(stop_proc)), 
+		  stop_proc, XEN_ARG_3, S_play_selection, "a procedure of 1 arg");
   back = (!(TO_C_BOOLEAN_OR_FALSE(wait)));
   if (selection_is_active())
     {
@@ -2452,6 +2462,11 @@ The start, end, and edit-position of the portion played can be specified."
   XEN_ASSERT_TYPE(XEN_INTEGER_P(snd_chn), snd_chn, XEN_ARG_1, S_add_player, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(start), start, XEN_ARG_2, S_add_player, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(end), end, XEN_ARG_3, S_add_player, "a number");
+  XEN_ASSERT_TYPE(((XEN_PROCEDURE_P(stop_proc)) && 
+		   (XEN_TO_C_INT(XEN_CAR(XEN_ARITY(stop_proc))) == 1)) ||
+		  (XEN_NOT_BOUND_P(stop_proc)) || 
+		  (XEN_FALSE_P(stop_proc)), 
+		  stop_proc, XEN_ARG_5, S_add_player, "a procedure of 1 arg");
   index = -XEN_TO_C_INT(snd_chn);
   if ((index > 0) && (index < players_size)) sp = players[index];
   if (sp)
@@ -2528,6 +2543,9 @@ static XEN g_player_p(XEN snd_chn)
 			  (index < players_size) && 
 			  (players[index])));
 }
+
+/* player-position? -- need quick way from index to dp to its sample-reader, then C_TO_XEN_OFF_T(current_location(fd)) */
+/* players? -- run through players array looking for active players, return list */
 
 static XEN g_dac_size(void) {return(C_TO_XEN_INT(dac_size(ss)));}
 static XEN g_set_dac_size(XEN val) 

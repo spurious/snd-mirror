@@ -1257,6 +1257,11 @@ static XEN g_play_region(XEN n, XEN wait, XEN stop_proc)
   bool wt = false;
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ARG_1, S_play_region, "a region id");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(wait), wait, XEN_ARG_2, S_play_region, "a boolean");
+  XEN_ASSERT_TYPE(((XEN_PROCEDURE_P(stop_proc)) && 
+		   (XEN_TO_C_INT(XEN_CAR(XEN_ARITY(stop_proc))) == 1)) ||
+		  (XEN_NOT_BOUND_P(stop_proc)) || 
+		  (XEN_FALSE_P(stop_proc)), 
+		  stop_proc, XEN_ARG_3, S_play_region, "a procedure of 1 arg");
   if (XEN_TRUE_P(wait)) wt = true;
   rg = XEN_REGION_TO_C_INT(n);
   if (!(region_ok(rg)))
