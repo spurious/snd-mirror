@@ -328,6 +328,7 @@
 ;;; write out each section of a file between marks as a separate file
 
 (define (mark-explode)
+  "(mark-explode) splits a sound into a bunch of sounds based on mark placements"
   (let ((start 0)
 	(file-ctr 0))
     (for-each

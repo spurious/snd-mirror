@@ -199,14 +199,14 @@ static void amp_valuechanged_callback(Widget w, XtPointer context, XtPointer inf
 
 /* ---------------- SPEED-CONTROL ---------------- */
 
-XmString initial_speed_label(void)
+XmString initial_speed_label(speed_style_t style)
 {
   /* used also in snd-xmix.c */
-  switch (speed_control_style(ss))
+  switch (style)
     {
-    case SPEED_CONTROL_AS_RATIO:    return(XmStringCreate("  1/1", XmFONTLIST_DEFAULT_TAG));    break;
+    case SPEED_CONTROL_AS_RATIO:    return(XmStringCreate("  1/1", XmFONTLIST_DEFAULT_TAG)); break;
     case SPEED_CONTROL_AS_SEMITONE: return(XmStringCreate("    0", XmFONTLIST_DEFAULT_TAG)); break;
-    default:                        return(XmStringCreate(" 1.00", XmFONTLIST_DEFAULT_TAG));   break;
+    default:                        return(XmStringCreate(" 1.00", XmFONTLIST_DEFAULT_TAG)); break;
     }
 }
 
@@ -1943,7 +1943,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
       XmStringFree(s1);
 
       n = 0;
-      s1 = initial_speed_label();
+      s1 = initial_speed_label(sp->speed_control_style);
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;

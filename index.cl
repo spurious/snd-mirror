@@ -6,9 +6,9 @@
 
 (require :loop)
 
-;;; (index '("clm.html") t "test.html" 5 '("XmHTML" "AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") nil nil)
+;;; (index '("clm.html") t "test.html" 5 '("XmHTML" "AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") nil nil t)
 
-;;; (index '("cmn.html") nil "test.html" 4 nil nil nil)
+;;; (index '("cmn.html") nil "test.html" 4 nil nil nil t)
 
 ;;; (index '("extsnd.html" "grfsnd.html" "sndscm.html" "sndlib.html" "clm.html") nil "test.html" 5 '("XmHTML" "AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") t t)
 ;;;   use (make-index)
@@ -239,7 +239,7 @@
     (if (char= (char str i) #\space)
 	(setf (char str i) #\_))))
 	   
-(defun index (file-names make-help &optional (output "test.html") (cols 3) (capitalized nil) no-bold with-scm)
+(defun index (file-names make-help &optional (output "test.html") (cols 3) (capitalized nil) no-bold with-scm with-clm-locals)
   ;; read html file, gather all names, create index (in lower-case, *=space in sort)
   (let ((n 0)
 	(g 0)
@@ -265,8 +265,10 @@
 		       (compos (search "<!-- INDEX" dline))
 		       (xpos (search "<TABLE " dline))
 		       (unxpos (search "</TABLE>" dline))
-		       (pos-simple (and (not compos) (search "<a name=" dline :test #'string=)))
-		       (pos-def (and (not compos) (search "<a class=def name=" dline :test #'string=)))
+		       (pos-simple (and (not compos) (or (search "<a name=" dline :test #'string=)
+							 (and with-clm-locals (search "<a Name=" dline :test #'string=)))))
+		       (pos-def (and (not compos) (or (search "<a class=def name=" dline :test #'string=)
+						      (and with-clm-locals (search "<a class=def Name=" dline :test #'string=)))))
 		       (pos (or pos-simple pos-def))
 		       (tpos (and (not pos) (search "<!-- TOPIC " line))))
 		  (if unxpos (setf xrefing nil))
@@ -300,8 +302,10 @@
 				(setf (aref topics n) topic)
 				(incf n)
 				(setf dline (subseq dline (+ epos 4)))
-				(setf pos-simple (search "<a name=" dline :test #'string=))
-				(setf pos-def (search "<a class=def name=" dline :test #'string=))
+				(setf pos-simple (or (search "<a name=" dline :test #'string=)
+						     (and with-clm-locals (search "<a Name=" dline :test #'string=))))
+				(setf pos-def (or (search "<a class=def name=" dline :test #'string=)
+						  (and with-clm-locals (search "<a class=def Name=" dline :test #'string=))))
 				(setf pos (or pos-simple pos-def))
 				)))))))
 		  (if (and xrefing

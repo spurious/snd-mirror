@@ -3360,7 +3360,7 @@ static int set_mix_speed(int mix_id, Float val, bool from_gui, bool remix)
       if (val != 0.0)
 	{
 	  cs = md->active_mix_state;
-	  new_speed = speed_changed(val, srcbuf, speed_control_style(ss), speed_control_tones(ss), 16); 
+	  new_speed = speed_changed(val, srcbuf, md->cp->sound->speed_control_style, md->cp->sound->speed_control_tones, 16); 
 	  trk_speed = gather_track_speed(cs->track);
 	  new_final_speed = new_speed * trk_speed;
 	  if ((!from_gui) &&

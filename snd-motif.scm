@@ -1306,8 +1306,6 @@ Reverb-feedback sets the scaler on the feedback.
 	(set! ly y)))))
 
 (define make-sound-box 
-  ;; make box of sound file icons
-
   ;; graphics stuff (fonts etc)
   (let*  ((gv (XGCValues))
 	  (shell (list-ref (main-widgets) 1))
@@ -1397,6 +1395,7 @@ Reverb-feedback sets the scaler on the feedback.
 	;; peak-func (if any) tells icon where to find peak-env-info-file (if any)
 	;; sounds is list of sound file names
 	;; args is list of resource settings for each icon
+	"(make-sound-box name parent select-func peak-func sounds args) makes a box of sound icons"
 	(let ((container (XtCreateManagedWidget name xmContainerWidgetClass parent
 			   (list XmNlayoutType         XmSPATIAL
 				 XmNspatialResizeModel XmGROW_BALANCED
@@ -1422,6 +1421,7 @@ Reverb-feedback sets the scaler on the feedback.
 	  container)))))
 
 (define* (show-sounds-in-directory #:optional (dir "."))
+  "(show-sounds-in-directory #:optional (dir \".\")) calls make-sound-box with the given directory"
   (make-sound-box
    "sounds"
    (XtCreateManagedWidget "scrolled-window" xmScrolledWindowWidgetClass (list-ref (main-widgets) 3)
@@ -1495,17 +1495,17 @@ Reverb-feedback sets the scaler on the feedback.
 			(.fid fs))
 	      (draw-string smpte (+ x 4) (+ y 4) snd chn)))))))
 
-(define show-smpte-label
-  (lambda arg
-    (if (or (null? arg)
-	    (car arg))
+(define (show-smpte-label . arg)
+  "(show-smpte-label #:optional on-or-off) turns on/off a label in the time-domain graph showing the current smpte frame of the leftmost sample"
+  (if (or (null? arg)
+	  (car arg))
       (if (not (member draw-smpte-label (hook->list after-graph-hook)))
 	  (begin
 	    (add-hook! after-graph-hook draw-smpte-label)
 	    (update-time-graph #t #t)))
       (begin
 	(remove-hook! after-graph-hook draw-smpte-label)
-	(update-time-graph #t #t)))))
+	(update-time-graph #t #t))))
 
 
 
@@ -1854,6 +1854,7 @@ Reverb-feedback sets the scaler on the feedback.
 ;;; use control-button to move all at once
 
 (define (add-amp-controls)
+  "(add-amp-controls) adds amplitude sliders to the control panel for each channel in multi-channel sounds"
 
   (define (label-name chan) (if (= chan 0) "amp-label" (format #f "amp-label-~D" chan)))
   (define (number-name chan) (if (= chan 0) "amp-number" (format #f "amp-number-~D" chan)))
@@ -2281,7 +2282,7 @@ Reverb-feedback sets the scaler on the feedback.
     (XtAddEventHandler widget LeaveWindowMask #f (lambda (w c ev flag) (stop-tooltip)))))
 
 (define (menu-option name)
-  "(menu-option name) finds the widget associated with a given menu item name -- (menu-option \"Print\") for example)"
+  "(menu-option name) finds the widget associated with a given menu item name"
   (call-with-current-continuation
    (lambda (return)
      (for-each

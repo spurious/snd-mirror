@@ -5027,7 +5027,7 @@ static XEN g_set_cursor_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 
 static XEN g_cursor_style(XEN snd_n, XEN chn_n) 
 {
-  #define H_cursor_style "(" S_cursor_style " (snd #t) (chn #t)): current cursor style in snd's channel chn. \
+  #define H_cursor_style "(" S_cursor_style " (snd #f) (chn #f)): current cursor style in snd's channel chn. \
 Possible values are " S_cursor_cross " (default), " S_cursor_line " (a vertical line), or a procedure of three arguments, the \
 sound index, channel number, and graph (always " S_time_graph ").  The procedure \
 should draw the cursor at the current cursor position using the \
@@ -5083,7 +5083,7 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_cursor_style_reversed, g_set_cursor_style)
 
 static XEN g_cursor_size(XEN snd_n, XEN chn_n) 
 {
-  #define H_cursor_size "(" S_cursor_size " (snd #t) (chn #t)): current cursor size in snd's channel chn"
+  #define H_cursor_size "(" S_cursor_size " (snd #f) (chn #f)): current cursor size in snd's channel chn"
   if (XEN_BOUND_P(snd_n))
     return(channel_get(snd_n, chn_n, CP_CURSOR_SIZE, S_cursor_size));
   return(C_TO_XEN_INT(cursor_size(ss)));
@@ -5264,7 +5264,7 @@ arguments. " S_undo_hook " is called just after any undo, redo, or revert that a
 
 static XEN g_show_y_zero(XEN snd, XEN chn)
 {
-  #define H_show_y_zero "(" S_show_y_zero " (snd #t) (chn #t)): #t if Snd should include a line at y = 0.0"
+  #define H_show_y_zero "(" S_show_y_zero " (snd #f) (chn #f)): #t if Snd should include a line at y = 0.0"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_SHOW_Y_ZERO, S_show_y_zero));
   return(C_TO_XEN_BOOLEAN(show_y_zero(ss)));
@@ -5286,7 +5286,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_show_y_zero_reversed, g_set_show_y_zero
 
 static XEN g_min_dB(XEN snd, XEN chn) 
 {
-  #define H_min_dB "(" S_min_dB " (snd #t) (chn #t)): min dB value displayed in fft graphs using dB scales (default: -60)"
+  #define H_min_dB "(" S_min_dB " (snd #f) (chn #f)): min dB value displayed in fft graphs using dB scales (default: -60)"
 
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_MIN_DB, S_min_dB));
@@ -5318,7 +5318,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_min_dB_reversed, g_set_min_dB)
 
 static XEN g_fft_window_beta(XEN snd, XEN chn) 
 {
-  #define H_fft_window_beta "(" S_fft_window_beta " *optional (snd #t) (chn #t)): fft window beta parameter value"
+  #define H_fft_window_beta "(" S_fft_window_beta " (snd #f) (chn #f)): fft window beta parameter value"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_FFT_WINDOW_BETA, S_fft_window_beta));
   return(C_TO_XEN_DOUBLE(fft_window_beta(ss)));
@@ -5344,7 +5344,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_fft_window_beta_reversed, g_set_fft_win
 
 static XEN g_spectro_cutoff(XEN snd, XEN chn) 
 {
-  #define H_spectro_cutoff "(" S_spectro_cutoff " *optional (snd #t) (chn #t)): max frequency shown in spectra (1.0 = srate/2)"
+  #define H_spectro_cutoff "(" S_spectro_cutoff " (snd #f) (chn #f)): max frequency shown in spectra (1.0 = srate/2)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_SPECTRO_CUTOFF, S_spectro_cutoff));
   return(C_TO_XEN_DOUBLE(spectro_cutoff(ss)));
@@ -5370,7 +5370,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_spectro_cutoff_reversed, g_set_spectro_
 
 static XEN g_spectro_start(XEN snd, XEN chn) 
 {
-  #define H_spectro_start "(" S_spectro_start " *optional (snd #t) (chn #t)): lower bound of frequency in spectral displays (0.0)"
+  #define H_spectro_start "(" S_spectro_start " (snd #f) (chn #f)): lower bound of frequency in spectral displays (0.0)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_SPECTRO_START, S_spectro_start));
   return(C_TO_XEN_DOUBLE(spectro_start(ss)));
@@ -5396,7 +5396,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_spectro_start_reversed, g_set_spectro_s
 
 static XEN g_spectro_x_angle(XEN snd, XEN chn) 
 {
-  #define H_spectro_x_angle "(" S_spectro_x_angle " *optional (snd #t) (chn #t)): spectrogram x-axis viewing angle (90.0)"
+  #define H_spectro_x_angle "(" S_spectro_x_angle " (snd #f) (chn #f)): spectrogram x-axis viewing angle (90.0)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_SPECTRO_X_ANGLE, S_spectro_x_angle));
   return(C_TO_XEN_DOUBLE(spectro_x_angle(ss)));
@@ -5418,7 +5418,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_spectro_x_angle_reversed, g_set_spectro
 
 static XEN g_spectro_x_scale(XEN snd, XEN chn) 
 {
-  #define H_spectro_x_scale "(" S_spectro_x_scale " *optional (snd #t) (chn #t)): scaler (stretch) along the spectrogram x axis (1.0)"
+  #define H_spectro_x_scale "(" S_spectro_x_scale " (snd #f) (chn #f)): scaler (stretch) along the spectrogram x axis (1.0)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_SPECTRO_X_SCALE, S_spectro_x_scale));
   return(C_TO_XEN_DOUBLE(spectro_x_scale(ss)));
@@ -5440,7 +5440,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_spectro_x_scale_reversed, g_set_spectro
 
 static XEN g_spectro_y_angle(XEN snd, XEN chn) 
 {
-  #define H_spectro_y_angle "(" S_spectro_y_angle " *optional (snd #t) (chn #t)): spectrogram y-axis viewing angle (0.0)"
+  #define H_spectro_y_angle "(" S_spectro_y_angle " (snd #f) (chn #f)): spectrogram y-axis viewing angle (0.0)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_SPECTRO_Y_ANGLE, S_spectro_y_angle));
   return(C_TO_XEN_DOUBLE(spectro_y_angle(ss)));
@@ -5462,7 +5462,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_spectro_y_angle_reversed, g_set_spectro
 
 static XEN g_spectro_y_scale(XEN snd, XEN chn) 
 {
-  #define H_spectro_y_scale "(" S_spectro_y_scale " *optional (snd #t) (chn #t)): scaler (stretch) along the spectrogram y axis (1.0)"
+  #define H_spectro_y_scale "(" S_spectro_y_scale " (snd #f) (chn #f)): scaler (stretch) along the spectrogram y axis (1.0)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_SPECTRO_Y_SCALE, S_spectro_y_scale));
   return(C_TO_XEN_DOUBLE(spectro_y_scale(ss)));
@@ -5484,7 +5484,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_spectro_y_scale_reversed, g_set_spectro
 
 static XEN g_spectro_z_angle(XEN snd, XEN chn) 
 {
-  #define H_spectro_z_angle "(" S_spectro_z_angle " *optional (snd #t) (chn #t)): spectrogram z-axis viewing angle (-2.0)"
+  #define H_spectro_z_angle "(" S_spectro_z_angle " (snd #f) (chn #f)): spectrogram z-axis viewing angle (-2.0)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_SPECTRO_Z_ANGLE, S_spectro_z_angle));
   return(C_TO_XEN_DOUBLE(spectro_z_angle(ss)));
@@ -5506,7 +5506,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_spectro_z_angle_reversed, g_set_spectro
 
 static XEN g_spectro_z_scale(XEN snd, XEN chn) 
 {
-  #define H_spectro_z_scale "(" S_spectro_z_scale " *optional (snd #t) (chn #t)): scaler (stretch) along the spectrogram z axis (0.1)"
+  #define H_spectro_z_scale "(" S_spectro_z_scale " (snd #f) (chn #f)): scaler (stretch) along the spectrogram z axis (0.1)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_SPECTRO_Z_SCALE, S_spectro_z_scale));
   return(C_TO_XEN_DOUBLE(spectro_z_scale(ss)));
@@ -5528,7 +5528,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_spectro_z_scale_reversed, g_set_spectro
 
 static XEN g_spectro_hop(XEN snd, XEN chn)
 {
-  #define H_spectro_hop "(" S_spectro_hop " (snd #t) (chn #t)): hop amount (pixels) in spectral displays"
+  #define H_spectro_hop "(" S_spectro_hop " (snd #f) (chn #f)): hop amount (pixels) in spectral displays"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_SPECTRO_HOP, S_spectro_hop));
   return(C_TO_XEN_INT(spectro_hop(ss)));
@@ -5551,7 +5551,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_spectro_hop_reversed, g_set_spectro_hop
 
 static XEN g_show_marks(XEN snd, XEN chn)
 {
-  #define H_show_marks "(" S_show_marks " (snd #t) (chn #t)): #t if Snd should show marks"
+  #define H_show_marks "(" S_show_marks " (snd #f) (chn #f)): #t if Snd should show marks"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_SHOW_MARKS, S_show_marks));
   return(C_TO_XEN_BOOLEAN(show_marks(ss)));
@@ -5573,7 +5573,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_show_marks_reversed, g_set_show_marks)
 
 static XEN g_show_transform_peaks(XEN snd, XEN chn)
 {
-  #define H_show_transform_peaks "(" S_show_transform_peaks " (snd #t) (chn #t)): #t if fft display should include peak list"
+  #define H_show_transform_peaks "(" S_show_transform_peaks " (snd #f) (chn #f)): #t if fft display should include peak list"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_SHOW_TRANSFORM_PEAKS, S_show_transform_peaks));
   return(C_TO_XEN_BOOLEAN(show_transform_peaks(ss)));
@@ -5595,7 +5595,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_show_transform_peaks_reversed, g_set_sh
 
 static XEN g_zero_pad(XEN snd, XEN chn)
 {
-  #define H_zero_pad "(" S_zero_pad " (snd #t) (chn #t)): zero padding used in fft as a multiple of fft size (0)"
+  #define H_zero_pad "(" S_zero_pad " (snd #f) (chn #f)): zero padding used in fft as a multiple of fft size (0)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_ZERO_PAD, S_zero_pad));
   return(C_TO_XEN_INT(zero_pad(ss)));
@@ -5617,7 +5617,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_zero_pad_reversed, g_set_zero_pad)
 
 static XEN g_wavelet_type(XEN snd, XEN chn)
 {
-  #define H_wavelet_type "(" S_wavelet_type " (snd #t) (chn #t)): wavelet used in wavelet-transform (0)"
+  #define H_wavelet_type "(" S_wavelet_type " (snd #f) (chn #f)): wavelet used in wavelet-transform (0)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_WAVELET_TYPE, S_wavelet_type));
   return(C_TO_XEN_INT(wavelet_type(ss)));
@@ -5643,7 +5643,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_wavelet_type_reversed, g_set_wavelet_ty
 
 static XEN g_fft_log_frequency(XEN snd, XEN chn)
 {
-  #define H_fft_log_frequency "(" S_fft_log_frequency " (snd #t) (chn #t)): #t if fft displays use log on the frequency axis (#f)"
+  #define H_fft_log_frequency "(" S_fft_log_frequency " (snd #f) (chn #f)): #t if fft displays use log on the frequency axis (#f)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_FFT_LOG_FREQUENCY, S_fft_log_frequency));
   return(C_TO_XEN_BOOLEAN(fft_log_frequency(ss)));
@@ -5665,7 +5665,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_fft_log_frequency_reversed, g_set_fft_l
 
 static XEN g_fft_log_magnitude(XEN snd, XEN chn)
 {
-  #define H_fft_log_magnitude "(" S_fft_log_magnitude " (snd #t) (chn #t)): #t if fft displays use dB (#f)"
+  #define H_fft_log_magnitude "(" S_fft_log_magnitude " (snd #f) (chn #f)): #t if fft displays use dB (#f)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_FFT_LOG_MAGNITUDE, S_fft_log_magnitude));
   return(C_TO_XEN_BOOLEAN(fft_log_magnitude(ss)));
@@ -5687,7 +5687,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_fft_log_magnitude_reversed, g_set_fft_l
 
 static XEN g_show_mix_waveforms(XEN snd, XEN chn)
 {
-  #define H_show_mix_waveforms "(" S_show_mix_waveforms " (snd #t) (chn #t)): #t if Snd should display mix waveforms (above the main waveform)"
+  #define H_show_mix_waveforms "(" S_show_mix_waveforms " (snd #f) (chn #f)): #t if Snd should display mix waveforms (above the main waveform)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_SHOW_MIX_WAVEFORMS, S_show_mix_waveforms));
   return(C_TO_XEN_BOOLEAN(show_mix_waveforms(ss)));
@@ -5709,7 +5709,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_show_mix_waveforms_reversed, g_set_show
 
 static XEN g_verbose_cursor(XEN snd, XEN chn)
 {
-  #define H_verbose_cursor "(" S_verbose_cursor " (snd #t) (chn #t)): #t if the cursor's position and so on is displayed in the minibuffer"
+  #define H_verbose_cursor "(" S_verbose_cursor " (snd #f) (chn #f)): #t if the cursor's position and so on is displayed in the minibuffer"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_VERBOSE_CURSOR, S_verbose_cursor));
   return(C_TO_XEN_BOOLEAN(verbose_cursor(ss)));
@@ -5732,7 +5732,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_verbose_cursor_reversed, g_set_verbose_
 
 static XEN g_time_graph_type(XEN snd, XEN chn)
 {
-  #define H_time_graph_type "(" S_time_graph_type " (snd #t) (chn #t)): " S_graph_as_wavogram " if Snd's time domain display is a 'wavogram',\
+  #define H_time_graph_type "(" S_time_graph_type " (snd #f) (chn #f)): " S_graph_as_wavogram " if Snd's time domain display is a 'wavogram',\
 otherwise " S_graph_once "."
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_TIME_GRAPH_TYPE, S_time_graph_type));
@@ -5759,7 +5759,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_time_graph_type_reversed, g_set_time_gr
 
 static XEN g_wavo_hop(XEN snd, XEN chn)
 {
-  #define H_wavo_hop "(" S_wavo_hop " (snd #t) (chn #t)): wavogram spacing between successive traces"
+  #define H_wavo_hop "(" S_wavo_hop " (snd #f) (chn #f)): wavogram spacing between successive traces"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_WAVO_HOP, S_wavo_hop));
   return(C_TO_XEN_INT(wavo_hop(ss)));
@@ -5781,7 +5781,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_wavo_hop_reversed, g_set_wavo_hop)
 
 static XEN g_wavo_trace(XEN snd, XEN chn)
 {
-  #define H_wavo_trace "(" S_wavo_trace " (snd #t) (chn #t)): length (samples) of each trace in the wavogram (64)"
+  #define H_wavo_trace "(" S_wavo_trace " (snd #f) (chn #f)): length (samples) of each trace in the wavogram (64)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_WAVO_TRACE, S_wavo_trace));
   return(C_TO_XEN_INT(wavo_trace(ss)));
@@ -5803,7 +5803,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_wavo_trace_reversed, g_set_wavo_trace)
 
 static XEN g_transform_size(XEN snd, XEN chn)
 {
-  #define H_transform_size "(" S_transform_size " (snd #t) (chn #t)): current fft size (256)"
+  #define H_transform_size "(" S_transform_size " (snd #f) (chn #f)): current fft size (512)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_TRANSFORM_SIZE, S_transform_size));
   return(C_TO_XEN_INT(transform_size(ss)));
@@ -5830,7 +5830,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_transform_size_reversed, g_set_transfor
 
 static XEN g_transform_graph_type(XEN snd, XEN chn)
 {
-  #define H_transform_graph_type "(" S_transform_graph_type " (snd #t) (chn #t)) can \
+  #define H_transform_graph_type "(" S_transform_graph_type " (snd #f) (chn #f)) can \
 be " S_graph_once ", " S_graph_as_sonogram ", or " S_graph_as_spectrogram "."
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_TRANSFORM_GRAPH_TYPE, S_transform_graph_type));
@@ -5857,7 +5857,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_transform_graph_type_reversed, g_set_tr
 
 static XEN g_fft_window(XEN snd, XEN chn)
 {
-  #define H_fft_window "(" S_fft_window " (snd #t) (chn #t)): fft data window choice (e.g. blackman2-window).  The \
+  #define H_fft_window "(" S_fft_window " (snd #f) (chn #f)): fft data window choice (e.g. blackman2-window).  The \
 choices are: rectangular-window, hann(ing)-window, welch-window, parzen-window, \
 bartlett-window, hamming-window, blackman2-window, blackman3-window, \
 blackman4-window, exponential-window, riemann-window, kaiser-window, \
@@ -5889,7 +5889,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_fft_window_reversed, g_set_fft_window)
 
 static XEN g_transform_type(XEN snd, XEN chn)
 {
-  #define H_transform_type "(" S_transform_type " (snd #t) (chn #t)): transform type; can be one of fourier-transform, \
+  #define H_transform_type "(" S_transform_type " (snd #f) (chn #f)): transform type; can be one of fourier-transform, \
 wavelet-transform, haar-transform, autocorrelation, walsh-transform, hadamard-transform, cepstrum, or an index corresponding \
 to an added transform."
 
@@ -5918,7 +5918,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_transform_type_reversed, g_set_transfor
 
 static XEN g_transform_normalization(XEN snd, XEN chn)
 {
-  #define H_transform_normalization "(" S_transform_normalization " (snd #t) (chn #t)): one of " S_dont_normalize ", " S_normalize_by_channel \
+  #define H_transform_normalization "(" S_transform_normalization " (snd #f) (chn #f)): one of " S_dont_normalize ", " S_normalize_by_channel \
 ", " S_normalize_by_sound ", or " S_normalize_globally ". \
 decides whether spectral data is normalized before display (default: " S_normalize_by_channel ")"
 
@@ -5948,7 +5948,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_transform_normalization_reversed, g_set
 
 static XEN g_max_transform_peaks(XEN snd, XEN chn)
 {
-  #define H_max_transform_peaks "(" S_max_transform_peaks " (snd #t) (chn #t)): max number of fft peaks reported in fft display"
+  #define H_max_transform_peaks "(" S_max_transform_peaks " (snd #f) (chn #f)): max number of fft peaks reported in fft display"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_MAX_TRANSFORM_PEAKS, S_max_transform_peaks));
   return(C_TO_XEN_INT(max_transform_peaks(ss)));
@@ -5974,7 +5974,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_max_transform_peaks_reversed, g_set_max
 
 static XEN g_graph_style(XEN snd, XEN chn)
 {
-  #define H_graph_style "(" S_graph_style " (snd #t) (chn #t)): graph style, one \
+  #define H_graph_style "(" S_graph_style " (snd #f) (chn #f)): graph style, one \
 of '(" S_graph_lines " " S_graph_dots " " S_graph_dots_and_lines " " S_graph_lollipops " " S_graph_filled ")"
 
   if (XEN_BOUND_P(snd))
@@ -6071,7 +6071,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_transform_graph_style_reversed, g_set_t
 
 static XEN g_dot_size(XEN snd, XEN chn)
 {
-  #define H_dot_size "(" S_dot_size " (snd #t) (chn #t)): size in pixels of dots when graphing with dots (1)"
+  #define H_dot_size "(" S_dot_size " (snd #f) (chn #f)): size in pixels of dots when graphing with dots (1)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_DOT_SIZE, S_dot_size));
   return(C_TO_XEN_INT(dot_size(ss)));
@@ -6093,7 +6093,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_dot_size_reversed, g_set_dot_size)
 
 static XEN g_x_axis_style(XEN snd, XEN chn)
 {
-  #define H_x_axis_style "(" S_x_axis_style " (snd #t) (chn #t)) \
+  #define H_x_axis_style "(" S_x_axis_style " (snd #f) (chn #f)) \
 The x axis labelling of the time domain waveform can be in seconds (" S_x_axis_in_seconds "), in samples (" S_x_axis_in_samples "), expressed as a \
 percentage of the overall duration (" S_x_axis_as_percentage "), or as a beat number (" S_x_axis_in_beats ")."
 
@@ -6124,7 +6124,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_x_axis_style_reversed, g_set_x_axis_sty
 
 static XEN g_beats_per_minute(XEN snd, XEN chn)
 {
-  #define H_beats_per_minute "(" S_beats_per_minute " (snd #t) (chn #t)): beats per minute if " S_x_axis_style " is " S_x_axis_in_beats
+  #define H_beats_per_minute "(" S_beats_per_minute " (snd #f) (chn #f)): beats per minute if " S_x_axis_style " is " S_x_axis_in_beats
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_BEATS_PER_MINUTE, S_beats_per_minute));
   return(C_TO_XEN_DOUBLE(beats_per_minute(ss)));
@@ -6149,7 +6149,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_beats_per_minute_reversed, g_set_beats_
 
 static XEN g_show_axes(XEN snd, XEN chn)
 {
-  #define H_show_axes "(" S_show_axes "(snd #t) (chn #t)) \
+  #define H_show_axes "(" S_show_axes "(snd #f) (chn #f)) \
 If " S_show_all_axes ", display x and y axes; if " S_show_x_axis ", just one axis (the x axis) is displayed. \
 The other choice is " S_show_no_axes "."
 
@@ -6178,7 +6178,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_show_axes_reversed, g_set_show_axes)
 
 static XEN g_graphs_horizontal(XEN snd, XEN chn)
 {
-  #define H_graphs_horizontal "(" S_graphs_horizontal " (snd #t) (chn #t)): #t if the time domain, fft, and lisp graphs are layed out horizontally (#t)"
+  #define H_graphs_horizontal "(" S_graphs_horizontal " (snd #f) (chn #f)): #t if the time domain, fft, and lisp graphs are layed out horizontally (#t)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_GRAPHS_HORIZONTAL, S_graphs_horizontal));
   return(C_TO_XEN_BOOLEAN(graphs_horizontal(ss)));

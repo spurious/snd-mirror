@@ -783,7 +783,7 @@ Widget make_mix_dialog(void)
       XmStringFree(s1);
 
       n = 0;
-      s1 = initial_speed_label();
+      s1 = initial_speed_label(DEFAULT_SPEED_CONTROL_STYLE);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
@@ -1113,8 +1113,8 @@ static void change_track_speed(int track_id, Float val)
   track_dialog_set_speed(track_id,
 			 speed_changed(val,
 				       sfs,
-				       (cp) ? cp->sound->speed_control_style : speed_control_style(ss),
-				       (cp) ? cp->sound->speed_control_tones : speed_control_tones(ss),
+				       (cp) ? cp->sound->speed_control_style : DEFAULT_SPEED_CONTROL_STYLE,
+				       (cp) ? cp->sound->speed_control_tones : DEFAULT_SPEED_CONTROL_TONES,
 				       6),
 			 track_dialog_slider_dragging);
   set_label(w_track_speed_number, sfs);
@@ -1884,7 +1884,7 @@ Widget make_track_dialog(void)
       XmStringFree(s1);
 
       n = 0;
-      s1 = initial_speed_label();
+      s1 = initial_speed_label(DEFAULT_SPEED_CONTROL_STYLE);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;

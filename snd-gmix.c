@@ -793,7 +793,7 @@ GtkWidget *make_mix_dialog(void)
       gtk_container_add(GTK_CONTAINER(w_speed_event), w_speed_label);
       gtk_widget_show(w_speed_label);
 
-      switch (speed_control_style(ss))
+      switch (DEFAULT_SPEED_CONTROL_STYLE)
 	{
 	case SPEED_CONTROL_AS_RATIO: w_speed_number = gtk_label_new("1/1"); break;
 	case SPEED_CONTROL_AS_SEMITONE: w_speed_number = gtk_label_new("1"); break;
@@ -1081,8 +1081,8 @@ static Float reflect_track_speed(Float uval)
   cp = track_channel(track_dialog_id, 0);
   val = speed_changed(uval,
 		      sfs,
-		      (cp) ? cp->sound->speed_control_style : speed_control_style(ss),
-		      (cp) ? cp->sound->speed_control_tones : speed_control_tones(ss),
+		      (cp) ? cp->sound->speed_control_style : DEFAULT_SPEED_CONTROL_STYLE,
+		      (cp) ? cp->sound->speed_control_tones : DEFAULT_SPEED_CONTROL_TONES,
 		      6);
   gtk_label_set_text(GTK_LABEL(w_track_speed_number), sfs);
   if (val > 0.0)
@@ -1819,7 +1819,7 @@ GtkWidget *make_track_dialog(void)
       gtk_container_add(GTK_CONTAINER(w_track_speed_event), w_track_speed_label);
       gtk_widget_show(w_track_speed_label);
 
-      switch (speed_control_style(ss))
+      switch (DEFAULT_SPEED_CONTROL_STYLE)
 	{
 	case SPEED_CONTROL_AS_RATIO: w_track_speed_number = gtk_label_new("1/1"); break;
 	case SPEED_CONTROL_AS_SEMITONE: w_track_speed_number = gtk_label_new("1"); break;

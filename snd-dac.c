@@ -795,7 +795,7 @@ static bool disable_play = false;
 static XEN g_disable_play(void) {disable_play = true; return(XEN_FALSE);}
 static XEN g_enable_play(void) {disable_play = false; return(XEN_TRUE);}
 
-static void start_dac(int srate, int channels, play_process_t background)
+static void start_dac(int srate, int channels, play_process_t background, Float decay)
 {
   dac_info *dp;
   int i;
@@ -835,7 +835,7 @@ static void start_dac(int srate, int channels, play_process_t background)
 	snd_dacp->frames = dac_size(ss);
       else snd_dacp->frames = 256;
       snd_dacp->devices = 1;  /* just a first guess */
-      snd_dacp->reverb_ring_frames = (off_t)(srate * reverb_control_decay(ss));
+      snd_dacp->reverb_ring_frames = (off_t)(srate * decay);
       if (disable_play) 
 	{
 	  stop_playing_all_sounds();
@@ -937,7 +937,7 @@ void play_region(int region, play_process_t background)
       dp = add_region_channel_to_play_list(region, i, 0, NO_END_SPECIFIED);
       if (dp) dp->region = region;
     }
-  if (dp) start_dac(region_srate(region), chans, background);
+  if (dp) start_dac(region_srate(region), chans, background, DEFAULT_REVERB_CONTROL_DECAY);
 }
 
 static bool call_start_playing_hook(snd_info *sp)
@@ -976,7 +976,7 @@ void play_channel(chan_info *cp, off_t start, off_t end, play_process_t backgrou
   if (dp) 
     {
       set_play_button(sp, true);
-      start_dac(SND_SRATE(sp), 1, background);
+      start_dac(SND_SRATE(sp), 1, background, sp->reverb_control_decay);
     }
 }
 
@@ -995,7 +995,7 @@ void play_sound(snd_info *sp, off_t start, off_t end, play_process_t background,
   if (dp)
     {
       set_play_button(sp, true);
-      start_dac(SND_SRATE(sp), sp->nchans, background);
+      start_dac(SND_SRATE(sp), sp->nchans, background, sp->reverb_control_decay);
     }
 }
 
@@ -1037,7 +1037,7 @@ void play_channels(chan_info **cps, int chans, off_t *starts, off_t *ur_ends, pl
   if ((sp) && (dp)) 
     {
       set_play_button(sp, true);
-      start_dac(SND_SRATE(sp), chans, background);
+      start_dac(SND_SRATE(sp), chans, background, sp->reverb_control_decay);
     }
 }
 
@@ -2036,7 +2036,7 @@ void initialize_apply(snd_info *sp, int chans, off_t beg, off_t dur)
   snd_dacp->devices = 1;
   snd_dacp->chans_per_device = (int *)CALLOC(1, sizeof(int));
   snd_dacp->chans_per_device[0] = chans;
-  snd_dacp->reverb_ring_frames = (off_t)(snd_dacp->srate * reverb_control_decay(ss));
+  snd_dacp->reverb_ring_frames = (off_t)(snd_dacp->srate * sp->reverb_control_decay);
   make_dac_buffers(snd_dacp);
   switch (ss->apply_choice)
     {
@@ -2436,7 +2436,7 @@ If a play-list is waiting, start it."
   if (srate <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_start_playing, 2, Srate, "srate ~A <= 0?");
   back = XEN_TO_C_BOOLEAN_OR_TRUE(In_Background);
-  start_dac(srate, chans, (back) ? IN_BACKGROUND : NOT_IN_BACKGROUND);
+  start_dac(srate, chans, (back) ? IN_BACKGROUND : NOT_IN_BACKGROUND, DEFAULT_REVERB_CONTROL_DECAY);
   return(XEN_FALSE);
 }
 

@@ -303,16 +303,15 @@ typedef enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_U
 #define DEFAULT_SPEED_CONTROL 1.0
 #define DEFAULT_SPEED_CONTROL_MIN 0.05
 #define DEFAULT_SPEED_CONTROL_MAX 20.0
+#define DEFAULT_REVERB_CONTROL_DECAY 1.0
+#define DEFAULT_SPEED_CONTROL_TONES 12
+#define DEFAULT_SPEED_CONTROL_STYLE SPEED_CONTROL_AS_FLOAT
 
 #define DEFAULT_SYNC 0
 #define DEFAULT_INIT_WINDOW_X -1
 #define DEFAULT_INIT_WINDOW_Y -1
 #define DEFAULT_INIT_WINDOW_WIDTH 0
 #define DEFAULT_INIT_WINDOW_HEIGHT 0
-
-#define reverb_control_decay(ss) ss->Reverb_Control_Decay
-#define in_set_reverb_control_decay(a) ss->Reverb_Control_Decay = a
-#define DEFAULT_REVERB_CONTROL_DECAY 1.0
 
 #define default_output_type(ss) ss->Default_Output_Type
 #define set_default_output_type(a) ss->Default_Output_Type = a
@@ -500,14 +499,6 @@ typedef enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_U
 #else
   #define DEFAULT_COLOR_MAP BLACK_AND_WHITE
 #endif
-
-#define speed_control_tones(ss) ss->Speed_Control_Tones
-#define in_set_speed_control_tones(a) ss->Speed_Control_Tones = a
-#define DEFAULT_SPEED_CONTROL_TONES 12
-
-#define speed_control_style(ss) ss->Speed_Control_Style
-#define in_set_speed_control_style(a) ss->Speed_Control_Style = a
-#define DEFAULT_SPEED_CONTROL_STYLE SPEED_CONTROL_AS_FLOAT
 
 #define graph_style(ss) ss->Graph_Style
 #define in_set_graph_style(a) ss->Graph_Style = a

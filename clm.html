@@ -23,6 +23,9 @@
      The index at the end is generated automatically by index.cl which notices all names, and
      special comments labelled INDEX.  Similarly, the TOPIC comments are for the clm-help facility.
 -->
+<!-- I'm using A NAME (i.e caps) where the entity should be ignored by the indexer (index.cl)
+     and a Name (cap first) for stuff local to the CL version of CLM
+-->
 
 <body bgcolor=white>
 <h1>COMMON LISP MUSIC</h1>
@@ -287,7 +290,7 @@ difference is that "run" takes a "thunk":
 run-time code which actually generates the samples.
 The run-time code can contain any of the lisp functions, generators, or other
 special functions described in the next several sections.  Since life is short,
-not every feature of lisp is supported by the <a class=def name="run">run</a> macro; if you want to use
+not every feature of lisp is supported by the <a class=def Name="run">run</a> macro; if you want to use
 the Lisp-to-C translation feature, only the following 
 <A class=def NAME="lisp-functions"></a>
 <!-- TOPIC lisp-functions -->
@@ -306,7 +309,7 @@ Lisp functions can occur within the body of the run macro:</p>
     aref elt svref array-total-size array-in-bounds-p array-rank array-dimension
     integerp numberp floatp realp eq eql arrayp
 </pre>
-<p>The function <a class=def name="clm-print">clm-print</a> stands in for Lisp's
+<p>The function <a class=def Name="clm-print">clm-print</a> stands in for Lisp's
 <i>format</i> -- we don't support all of format's
 options, but enough to be useful, I hope.  clm-print's syntax is (<i>clm-print</i>
 <i>format-string</i> &amp;rest <i>args</i>). If the first argument is an
@@ -403,7 +406,7 @@ two-pi, you can always use hz-&gt;radians to convert the frequency change (or fm
 argument from a more easily interpreted value.</p>
 
 <p>Finally, one special aspect of the make-&lt;gen&gt; functions is the way they
-read their arguments.  I use the word <a class=def name="optional-key">optional-key</a>
+read their arguments.  I use the word <a class=def Name="optional-key">optional-key</a>
 in the function definitions in this document to indicate that the arguments are
 keywords, but the keywords themselves are optional.
 Take the make-oscil call, defined as:</p>
@@ -611,11 +614,11 @@ Say we want 40% .5, and 60% 1.0,
   <em class=emdef>envelope-simplify</em> <i>e</i> &amp;optional <i>yg xg</i>        simplify an evelope
   <em class=emdef>meld-envelopes</em> <i>e0 e1</i>                       meld two envelopes together
   <em class=emdef>map-across-envelopes</em> <i>func es</i>               map a function across any number of envelopes
-  <a class=def name="envelope-exp">envelope-exp</a>  <i>e</i> &amp;optional <i>pow xg</i>           create exponential segments of envelopes
-  <a class=def name="window-envelope">window-envelope</a> <i>beg end e</i>                  return portion of e between two x values
-  <a class=def name="stretch-envelope">stretch-envelope</a> <i>e a0 a1</i> &amp;optional <i>d0 d1</i>   attack and decay portions
-  <a class=def name="scale-envelope">scale-envelope</a> <i>e scale</i> &amp;optional <i>offset</i>    scale e
-  <a class=def name="normalize-envelope">normalize-envelope</a> <i>e</i> &amp;optional <i>norm</i>        normalize e
+  <a class=def Name="envelope-exp">envelope-exp</a>  <i>e</i> &amp;optional <i>pow xg</i>           create exponential segments of envelopes
+  <a class=def Name="window-envelope">window-envelope</a> <i>beg end e</i>                  return portion of e between two x values
+  <a class=def Name="stretch-envelope">stretch-envelope</a> <i>e a0 a1</i> &amp;optional <i>d0 d1</i>   attack and decay portions
+  <a class=def Name="scale-envelope">scale-envelope</a> <i>e scale</i> &amp;optional <i>offset</i>    scale e
+  <a class=def Name="normalize-envelope">normalize-envelope</a> <i>e</i> &amp;optional <i>norm</i>        normalize e
 </pre>
 <p>See env.lisp for more such functions.  To copy an existing envelope while changing one aspect (say
 duration), it's simplest to use make-env:
@@ -898,9 +901,9 @@ use this for VOSIM and other related techniques.</p>
   <a class=def name="rand-interp">rand-interp</a> <i>r</i> &amp;optional (<i>sweep</i> 0.0)
   <a class=def name="rand-interp?">rand-interp?</a> <i>r</i>
   <em class=emdef>centered-random</em> <i>amp</i> 
-  <a class=def name="clm-random">clm-random</a> <i>amp</i>
+  <a class=def Name="clm-random">clm-random</a> <i>amp</i>
   <a class=def name="mus-random">mus-random</a> <i>amp</i> ;same as centered-random (for C-side compatibility)
-  <a class=def name="mus-set-rand-seed">mus-set-rand-seed</a> <i>seed</i>
+  <a class=def Name="mus-set-rand-seed">mus-set-rand-seed</a> <i>seed</i>
 </pre>
 <p><b>Rand</b> returns a sequence of random numbers between -amplitude and
 amplitude (it produces a sort of step function).
@@ -1201,7 +1204,7 @@ See also the noi-attempt, filter-white-noise, and testR instruments in <a href="
    <a class=def name="iir-filter">iir-filter</a> <i>fl</i> <i>inp</i> 
    <a class=def name="iir-filter?">iir-filter?</a> <i>fl</i>
 
-   <a class=def name="envelope-&gt;coeffs">envelope-&gt;coeffs</a> &amp;key <i>order envelope dc</i>
+   <a class=def Name="envelope-&gt;coeffs">envelope-&gt;coeffs</a> &amp;key <i>order envelope dc</i>
 </pre>
 <p>These are the general FIR/IIR filters of arbitrary order.
 See <a href="fltdes.lisp">fltdes.lisp</a> and dsp.scm for functions compatible with these filters that provide the
@@ -1962,11 +1965,11 @@ run-time memory management).
   <a class=def name="array-&gt;file">array-&gt;file</a> <i>file data srate channels</i>
   ;; these two read and write entire files to or from float arrays
 
-  <a class=def name="mus-open-write">mus-open-write</a> <i>filename</i>       ;low-level open call (O_RDRW), returning file id
-  <a class=def name="mus-reopen-write">mus-reopen-write</a> <i>filename</i>     ;low-level open call (O_RDRW), returning file id
-  <a class=def name="mus-open-read">mus-open-read</a> <i>filename</i>        ;low-level open call (O_RDONLY), returning file id
-  <a class=def name="mus-create">mus-create</a> <i>filename</i>           ;low-level creat call (make new file), returning file id
-  <a class=def name="mus-close">mus-close</a> <i>fd</i>                  ;low-level close call (fd can be int or IO struct)
+  <a class=def Name="mus-open-write">mus-open-write</a> <i>filename</i>       ;low-level open call (O_RDRW), returning file id
+  <a class=def Name="mus-reopen-write">mus-reopen-write</a> <i>filename</i>     ;low-level open call (O_RDRW), returning file id
+  <a class=def Name="mus-open-read">mus-open-read</a> <i>filename</i>        ;low-level open call (O_RDONLY), returning file id
+  <a class=def Name="mus-create">mus-create</a> <i>filename</i>           ;low-level creat call (make new file), returning file id
+  <a class=def Name="mus-close">mus-close</a> <i>fd</i>                  ;low-level close call (fd can be int or IO struct)
 
   <a class=def name="continue-sample-&gt;file">continue-sample-&gt;file</a> <i>file</i>    ;reopen <i>file</i> for more output (C/Scheme, not CL yet)
 </pre>
@@ -2011,7 +2014,7 @@ See the digital zipper instrument <a href="zipper.ins">zipper.ins</a>.
 <!-- TOPIC rec-any -->
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>REC-ANY</h4></td></tr></table>
 <pre>
-  <a class=def name="rec-any">rec-any</a> <i>chan</i>
+  <a class=def Name="rec-any">rec-any</a> <i>chan</i>
 </pre>
 <p>Within <a href="#defpinstrument">defpinstrument</a> and <a href="#with-psound">with-psound</a>, access to the current
 real-time input is through <b>rec-any</b>.  The <i>chan</i> argument refers to
@@ -2173,27 +2176,27 @@ a few that look for all the world like generators.</p>
   <a class=def name="radians-&gt;hz">radians-&gt;hz</a> <i>rads</i>               convert <i>rads</i> to Hz
   <a class=def name="db-&gt;linear">db-&gt;linear</a> <i>dB</i>                  convert <i>dB</i> to linear value
   <a class=def name="linear-&gt;db">linear-&gt;db</a> <i>val</i>                 convert <i>val</i> to dB
-  <a class=def name="times-&gt;samples">times-&gt;samples</a> <i>start</i> <i>duration</i>  convert <i>start</i> and <i>duration</i> from seconds to samples (beg+dur in latter case)
+  <a class=def Name="times-&gt;samples">times-&gt;samples</a> <i>start</i> <i>duration</i>  convert <i>start</i> and <i>duration</i> from seconds to samples (beg+dur in latter case)
   <a class=def name="seconds-&gt;samples">seconds-&gt;samples</a> <i>secs</i>          convert <i>secs</i> to samples
   <a class=def name="degrees-&gt;radians">degrees-&gt;radians</a> <i>degs</i>          convert <i>degs</i> to radians
   <a class=def name="radians-&gt;degrees">radians-&gt;degrees</a> <i>rads</i>          convert <i>rads</i> to degrees
   <a class=def NAME="clear-array">clear-array</a> <i>arr</i>                set all values in <i>arr</i> to 0.0
-  <a class=def name="sound-samples">sound-samples</a> filename         samples of sound according to header (can be incorrect)
-  <a class=def name="sound-frames">sound-frames</a> filename          samples per channel
-  <a class=def name="sound-datum-size">sound-datum-size</a> filename      bytes per sample
-  <a class=def name="sound-data-location">sound-data-location</a> filename   location of first sample (bytes)
-  <a class=def name="sound-chans">sound-chans</a> filename           number of channels (samples are interleaved)
-  <a class=def name="sound-srate">sound-srate</a> filename           sampling rate
-  <a class=def name="sound-header-type">sound-header-type</a> filename     header type (aiff etc)
-  <a class=def name="sound-data-format">sound-data-format</a> filename     data format (alaw etc)
-  <a class=def name="sound-length">sound-length</a> filename          true file length (for error checks)
-  <a class=def name="sound-duration">sound-duration</a> filename        file length in seconds
-  <a class=def name="mus-set-raw-header-defaults">mus-set-raw-header-defaults</a> srate chans data-format
-  <a class=def name="sound-maxamp">sound-maxamp</a> name vals         get max amp vals and times of file name
-  <a class=def name="sound-loop-info">sound-loop-info</a> name vals      get loop info of file name in vals (make-integer-array 6)
-  <a class=def name="sound-set-loop-info">sound-set-loop-info</a> name vals  set loop info of file name to vals
-  <a class=def name="sound-format-name">sound-format-name</a> format       format name as string
-  <a class=def name="sound-type-name">sound-type-name</a> type           type name as string
+  <a class=def Name="sound-samples">sound-samples</a> filename         samples of sound according to header (can be incorrect)
+  <a class=def Name="sound-frames">sound-frames</a> filename          samples per channel
+  <a class=def Name="sound-datum-size">sound-datum-size</a> filename      bytes per sample
+  <a class=def Name="sound-data-location">sound-data-location</a> filename   location of first sample (bytes)
+  <a class=def Name="sound-chans">sound-chans</a> filename           number of channels (samples are interleaved)
+  <a class=def Name="sound-srate">sound-srate</a> filename           sampling rate
+  <a class=def Name="sound-header-type">sound-header-type</a> filename     header type (aiff etc)
+  <a class=def Name="sound-data-format">sound-data-format</a> filename     data format (alaw etc)
+  <a class=def Name="sound-length">sound-length</a> filename          true file length (for error checks)
+  <a class=def Name="sound-duration">sound-duration</a> filename        file length in seconds
+  <a class=def Name="mus-set-raw-header-defaults">mus-set-raw-header-defaults</a> srate chans data-format
+  <a class=def Name="sound-maxamp">sound-maxamp</a> name vals         get max amp vals and times of file name
+  <a class=def Name="sound-loop-info">sound-loop-info</a> name vals      get loop info of file name in vals (make-integer-array 6)
+  <a class=def Name="sound-set-loop-info">sound-set-loop-info</a> name vals  set loop info of file name to vals
+  <a class=def Name="sound-format-name">sound-format-name</a> format       format name as string
+  <a class=def Name="sound-type-name">sound-type-name</a> type           type name as string
 </pre>
 
 <!-- <p>Also add-mark, marks, mark-channel, and mark-sample.</p>
@@ -2376,7 +2379,7 @@ translated up and down by w/two-pi Hz.  The simplest case is: </p>
 <!-- INDEX fft:Fourier transforms  -->
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3>FFT</h3></td></tr></table>
 <pre>
-  <a class=def name="fft">fft</a> <i>rdat idat fftsize</i> &amp;optional <i>sign</i>
+  <a class=def Name="fft">fft</a> <i>rdat idat fftsize</i> &amp;optional <i>sign</i>
   <a class=def name="make-fft-window">make-fft-window</a> <a href="#optional-key">&amp;optional-key</a> <i>type size</i> (<i>beta</i> 2.5)
   <a class=def name="multiply-arrays">multiply-arrays</a> <i>rdat</i> <i>window</i>
   <a class=def name="rectangular-&gt;polar">rectangular-&gt;polar</a> <i>rdat</i> <i>idat</i>
@@ -2554,7 +2557,7 @@ flags, </p>
    ...)
 </pre>
 
-<p><a class=def name="defpinstrument">Defpinstrument</a> produces
+<p><a class=def Name="defpinstrument">Defpinstrument</a> produces
 an instrument that is handled by a special scheduler that runs
 it one sample at a time, in parallel with all other p-instruments that want to
 run on that sample.
@@ -2923,7 +2926,7 @@ except output, comment, scaled-to, and scaled-by.</p>
 
 <p>Other options that might need explanation are :notehook and :continue-old-file.</p>
 
-<p><a name="notehook">Notehook</a> declares a function that is evaluated each time any instrument is called.
+<p><a Name="notehook">Notehook</a> declares a function that is evaluated each time any instrument is called.
 The arguments passed to the notehook function are the current instrument name (a string) and all its
 arguments.  The following prints out the instrument arguments for any
 calls on simp that are encountered:</p>
@@ -2964,7 +2967,7 @@ along with the headers CLM knows about.</p>
      filename))
 </pre>
  
-<p><a class=def name="clm-load">clm-load</a> is the same as with-sound, but its first argument is the name
+<p><a class=def Name="clm-load">clm-load</a> is the same as with-sound, but its first argument is the name
 of a file containing clm instrument calls (i.e. the body of
 with-sound), the reverb argument is the name of the reverb function,
 and the reverb-data argument is the list; that is, clm-load's arguments
@@ -2980,10 +2983,10 @@ Global amplitude envelopes can be handled with eref, and so on.</p>
 <p>The with-sound output is normally sent to the speakers via the <b>dac</b> function.
 There are several associated functions:</p>
 <pre>
-  <a class=def name="dac">dac</a> &amp;optional <i>file</i>
-  <a class=def name="sldac">sl-dac</a> file &amp;optional (<i>output-device</i> mus-audio-default)
-  <a class=def name="stop-dac">stop-dac</a>
-  <a class=def name="volume">volume</a> &amp;optional (<i>device</i> mus-audio-default) <i>channel</i>
+  <a class=def Name="dac">dac</a> &amp;optional <i>file</i>
+  <a class=def Name="sldac">sl-dac</a> file &amp;optional (<i>output-device</i> mus-audio-default)
+  <a class=def Name="stop-dac">stop-dac</a>
+  <a class=def Name="volume">volume</a> &amp;optional (<i>device</i> mus-audio-default) <i>channel</i>
 </pre>
 <p><b>dac</b> starts playing <i>file</i> (or the last file played, if no
 argument is given); in some cases (MCL and ACL) it then returns to the lisp listener;
@@ -3000,7 +3003,7 @@ set it to the correct value for your audio system.
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>Direct to DAC and Realtime Controls</h4></td></tr></table>
 <!-- INDEX with-psound:Direct to DAC  -->
 <pre>
-  <a class=def name="with-psound">with-psound</a> (&amp;key
+  <a class=def Name="with-psound">with-psound</a> (&amp;key
     (<i>srate</i> *clm-srate*) 
     (<i>channels</i> *clm-channels*) 
     (<i>rec-chans</i> 0) (<i>rec-line</i> 0)
@@ -3039,7 +3042,7 @@ This kind of time management is not always (i.e. almost never) what you want in 
 situations.  The alternative is:</p>
 
 <pre>
-  <a class=def name="with-dac">with-dac</a> &amp;key
+  <a class=def Name="with-dac">with-dac</a> &amp;key
     (<i>srate</i> *clm-srate*) 
     (<i>channels</i> *clm-channels*) 
     (<i>rec-chans</i> 0)
@@ -3213,7 +3216,7 @@ it does not recompute its body, leaving the resultant amplitude at .1.
 
 <p>The fastest way to mix sound files is with <b>mix</b>:</p>
 <pre>
-  <a class=def name="mix">mix</a> &amp;optional-key <i>filename</i> (<i>input-frame</i> 0) (<i>output-frame</i> 0) <i>frames</i> 
+  <a class=def Name="mix">mix</a> &amp;optional-key <i>filename</i> (<i>input-frame</i> 0) (<i>output-frame</i> 0) <i>frames</i> 
                        (<i>amplitude</i> 1.0) output (<i>prescaler</i> 1.0)
 </pre>
 <hr>
@@ -3221,13 +3224,13 @@ it does not recompute its body, leaving the resultant amplitude at .1.
 <!-- TOPIC sound-file-io -->
 <!-- INDEX open-input:Sound file IO -->
 <pre>
-  <a class=def name="open-input">open-input</a> &amp;optional <i>name</i> &amp;key <i>verbose if-does-not-exist element-type mix-at  
+  <a class=def Name="open-input">open-input</a> &amp;optional <i>name</i> &amp;key <i>verbose if-does-not-exist element-type mix-at  
              mix-duration force-recomputation start channel end bufsize prescaler</i>
-  <a class=def name="open-output">open-output</a> &amp;optional (<i>name</i> *clm-file-name*)
-  <a class=def name="close-input">close-input</a> &amp;optional (<i>i-stream</i> *input*)
-  <a class=def name="close-output">close-output</a> &amp;optional (<i>o-stream</i> *output*)
-  <a class=def name="reopen-output">reopen-output</a> &amp;optional (<i>o-stream</i> *clm-file-name*)
-  <a class=def name="open-input*">open-input*</a> <i>name</i> &amp;key <i>start channel restartable</i>
+  <a class=def Name="open-output">open-output</a> &amp;optional (<i>name</i> *clm-file-name*)
+  <a class=def Name="close-input">close-input</a> &amp;optional (<i>i-stream</i> *input*)
+  <a class=def Name="close-output">close-output</a> &amp;optional (<i>o-stream</i> *output*)
+  <a class=def Name="reopen-output">reopen-output</a> &amp;optional (<i>o-stream</i> *clm-file-name*)
+  <a class=def Name="open-input*">open-input*</a> <i>name</i> &amp;key <i>start channel restartable</i>
 </pre>
 <p>These functions open and close input and output sound files.  <b>Open-input</b>
 and <b>open-output</b> take either strings or pathnames and return an IO object
@@ -3267,15 +3270,15 @@ If you are reading only a small portion of a file many times, you can save some
 time by setting explicitly the bounds of the initial read via <i>start</i> and <i>end</i>.
 The implicit load triggered by open-input with a non-specific file name
 sets 
-<a class=def name="*open-input-pathname*">*open-input-pathname*</a> and 
-<a class=def name="*open-input-truename*">*open-input-truename*</a> and notices
-<a class=def name="*open-input-verbose*">*open-input-verbose*</a> (if t, print out informational
+<a class=def Name="*open-input-pathname*">*open-input-pathname*</a> and 
+<a class=def Name="*open-input-truename*">*open-input-truename*</a> and notices
+<a class=def Name="*open-input-verbose*">*open-input-verbose*</a> (if t, print out informational
 messages).</p>
 
 <br>
 
 <!-- TOPIC instrument-let -->
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><a name="instrument-let">Instrument-let</a></h3></td></tr></table>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><a Name="instrument-let">Instrument-let</a></h3></td></tr></table>
 
 <p><b>Instrument-let</b> is like Lisp's <i>flet</i> -- it can be used to
 define local instruments:</p>
@@ -3338,31 +3341,31 @@ current dynamic value of that variable is *&lt;var&gt;*.
 </p>
 
 <pre>
-  <a class=def name="*clm-file-name*">*clm-file-name*</a>          default sound file name
-  <a class=def name="*clm-header-type*">*clm-header-type*</a>        default output sound file header type
-  <a class=def name="*clm-data-format*">*clm-data-format*</a>        default output sound file data format
-  <a class=def name="*clm-table-size*">*clm-table-size*</a>         default table-lookup table size
-  <a class=def name="*clm-srate*">*clm-srate*</a>              default sampling rate (22050)
-  <a class=def name="*clm-channels*">*clm-channels*</a>           default output channels (1)
-  <a class=def name="*clm-delete-reverb*">*clm-delete-reverb*</a>      should with-sound delete the temporary reverb output (default nil)
-  <a class=def name="*clm-play*">*clm-play*</a>               default for play arg in with-sound
-  <a class=def name="*clm-clipped*">*clm-clipped*</a>            default for clipped arg in with-sound
-  <a class=def name="*clm-notehook*">*clm-notehook*</a>           default for notehook arg in with-sound
-  <a class=def name="*clm-init*">*clm-init*</a>               name of site-specific initializations (see <a href="#clm-init.lisp">clm-init.lisp</a>)
-  <a class=def name="*clm-array-print-length*">*clm-array-print-length*</a> number of IO data buffer elements printed
-  <a class=def name="*clm-player*">*clm-player*</a>             user-supplied DAC funtion
-  <a class=def name="*clm-file-buffer-size*">*clm-file-buffer-size*</a>   IO buffer sizes 
-  <a class=def name="*clm-search-list*">*clm-search-list*</a>        pathname list for file searches (open-input*)
-  <a class=def name="*clm-instruments*">*clm-instruments*</a>        list of the currently loaded clm instruments
-  <a class=def name="*clm-news*">*clm-news*</a>               brief list of recent changes (HISTORY.clm)
-  <a class=def name="*clm-version*">*clm-version*</a>            version identifier (a number -- also *clm-revision*)
-  <a class=def name="*clm-date*">*clm-date*</a>               creation date of the current version
-  <a class=def name="*clm-safety*">*clm-safety*</a>             default safety setting (run loop debugging choices)
-  <a class=def name="*clm-locsig-type*">*clm-locsig-type*</a>        locsig interpolation choice (mus-linear or mus-sinusoidal)
-  <a class=def name="*output*">*output*</a>                 current output stream (for outa and friends)
-  <a class=def name="*input*">*input*</a>                  current input stream (for ina and friends)
-  <a class=def name="*reverb*">*reverb*</a>                 current reverb stream
-  <a class=def name="two-pi">two-pi</a>                   2*pi
+  <a class=def Name="*clm-file-name*">*clm-file-name*</a>          default sound file name
+  <a class=def Name="*clm-header-type*">*clm-header-type*</a>        default output sound file header type
+  <a class=def Name="*clm-data-format*">*clm-data-format*</a>        default output sound file data format
+  <a class=def Name="*clm-table-size*">*clm-table-size*</a>         default table-lookup table size
+  <a class=def Name="*clm-srate*">*clm-srate*</a>              default sampling rate (22050)
+  <a class=def Name="*clm-channels*">*clm-channels*</a>           default output channels (1)
+  <a class=def Name="*clm-delete-reverb*">*clm-delete-reverb*</a>      should with-sound delete the temporary reverb output (default nil)
+  <a class=def Name="*clm-play*">*clm-play*</a>               default for play arg in with-sound
+  <a class=def Name="*clm-clipped*">*clm-clipped*</a>            default for clipped arg in with-sound
+  <a class=def Name="*clm-notehook*">*clm-notehook*</a>           default for notehook arg in with-sound
+  <a class=def Name="*clm-init*">*clm-init*</a>               name of site-specific initializations (see <a href="#clm-init.lisp">clm-init.lisp</a>)
+  <a class=def Name="*clm-array-print-length*">*clm-array-print-length*</a> number of IO data buffer elements printed
+  <a class=def Name="*clm-player*">*clm-player*</a>             user-supplied DAC funtion
+  <a class=def Name="*clm-file-buffer-size*">*clm-file-buffer-size*</a>   IO buffer sizes 
+  <a class=def Name="*clm-search-list*">*clm-search-list*</a>        pathname list for file searches (open-input*)
+  <a class=def Name="*clm-instruments*">*clm-instruments*</a>        list of the currently loaded clm instruments
+  <a class=def Name="*clm-news*">*clm-news*</a>               brief list of recent changes (HISTORY.clm)
+  <a class=def Name="*clm-version*">*clm-version*</a>            version identifier (a number -- also *clm-revision*)
+  <a class=def Name="*clm-date*">*clm-date*</a>               creation date of the current version
+  <a class=def Name="*clm-safety*">*clm-safety*</a>             default safety setting (run loop debugging choices)
+  <a class=def Name="*clm-locsig-type*">*clm-locsig-type*</a>        locsig interpolation choice (mus-linear or mus-sinusoidal)
+  <a class=def Name="*output*">*output*</a>                 current output stream (for outa and friends)
+  <a class=def Name="*input*">*input*</a>                  current input stream (for ina and friends)
+  <a class=def Name="*reverb*">*reverb*</a>                 current reverb stream
+  <a class=def Name="two-pi">two-pi</a>                   2*pi
 </pre>
 
 <p><b>*clm-player*</b> can be used to override CLM's normal DAC routine (which
@@ -3385,7 +3388,7 @@ if you use:</p>
   (let ((*clm-file-buffer-size* (* 1024 1024))) (<a class=quiet href="#with-sound">with-sound</a> ...) <!-- ) -->
 </pre>
 
-<p>The macro <a class=def name="with-offset">with-offset</a> can be used to set local
+<p>The macro <a class=def Name="with-offset">with-offset</a> can be used to set local
 begin time offsets.  Its argument is in seconds:</p>
 <pre>
   (<a class=quiet href="#with-sound">with-sound</a> () 
@@ -3407,7 +3410,7 @@ provides the standard pitch names as lisp variables (a4 = 440.0 and so on).
 <br>
 
 <!-- TOPIC run-star -->
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><a name="run*">Run*</a></h3></td></tr></table>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><a Name="run*">Run*</a></h3></td></tr></table>
 
 <p><b>Run*</b> takes two arguments, a list of variables, and the usual
 run macro body.  The run body is executed (in C normally) and then
@@ -3558,11 +3561,11 @@ the reverb output file, or the locsig generator:</p>
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>Help</h4></td></tr></table>
 <!-- INDEX clm-help:Help  -->
 <p>To get help for some topic,
-call <a class=def name="clm-help">clm-help</a>. Its argument can be
+call <a class=def Name="clm-help">clm-help</a>. Its argument can be
 either a (quoted) symbol or a string. 
 In most cases, Netscape will be used to display
 the documentation; on the Mac, the variable
-<a class=def name="*clm-help-browser*">*clm-help-browser*</a>
+<a class=def Name="*clm-help-browser*">*clm-help-browser*</a>
 can be set to :cyberdog to choose that browser instead of Netscape.
 Another possibility is <a NAME="linux-help">linux-help</a> with
 the same arguments -- it is smarter about which browser is used.
@@ -3570,8 +3573,8 @@ the same arguments -- it is smarter about which browser is used.
 
 <p>To find out the current state of an instrument, use</p>
 <pre>
-  <a class=def name="describe-instrument">describe-instrument</a>               show the state of current instrument locals
-  <a class=def name="ins-var">ins-var</a> (var &amp;optional ins-name)  return value of var in instrument ins-name
+  <a class=def Name="describe-instrument">describe-instrument</a>               show the state of current instrument locals
+  <a class=def Name="ins-var">ins-var</a> (var &amp;optional ins-name)  return value of var in instrument ins-name
 </pre>
 
 <p>Each instrument has a variety of properties
@@ -3597,26 +3600,26 @@ CLM and Snd to talk to each other.  This portion of CLM has changed drastically 
 it is only for good sports.  Currently,
 the most useful of the functions are:</p>
 <pre>
-  <a class=def name="start-snd">start-snd</a>
-  <a class=def name="send-snd">send-snd</a> <i>code</i>
-  <a class=def name="receive-snd">receive-snd</a> 
-  <a class=def name="send-and-receive-snd">send-and-receive-snd</a> <i>code</i> &amp;optional <i>with-eval</i>
+  <a class=def Name="start-snd">start-snd</a>
+  <a class=def Name="send-snd">send-snd</a> <i>code</i>
+  <a class=def Name="receive-snd">receive-snd</a> 
+  <a class=def Name="send-and-receive-snd">send-and-receive-snd</a> <i>code</i> &amp;optional <i>with-eval</i>
 
-  <a class=def name="snd-memo">snd-memo</a> <i>file format-string</i> &amp;rest <i>args</i>
-  <a class=def name="add-mark">add-mark</a> <i>sample channel</i>
-  <a class=def name="add-region">add-region</a> <i>beg end</i>
-  <a class=def name="save-signal">save-signal</a> <i>value format-string</i> &amp;rest <i>args</i>
+  <a class=def Name="snd-memo">snd-memo</a> <i>file format-string</i> &amp;rest <i>args</i>
+  <a class=def Name="add-mark">add-mark</a> <i>sample channel</i>
+  <a class=def Name="add-region">add-region</a> <i>beg end</i>
+  <a class=def Name="save-signal">save-signal</a> <i>value format-string</i> &amp;rest <i>args</i>
 
-  <a class=def name="snd-sound">snd-sound</a> &amp;optional <i>file-name</i>
-  <a class=def name="snd-region">snd-region</a> &amp;optional (<i>reg</i> 0)
-  <a class=def name="snd-cleanup">snd-cleanup</a> &amp;body <i>body</i>
+  <a class=def Name="snd-sound">snd-sound</a> &amp;optional <i>file-name</i>
+  <a class=def Name="snd-region">snd-region</a> &amp;optional (<i>reg</i> 0)
+  <a class=def Name="snd-cleanup">snd-cleanup</a> &amp;body <i>body</i>
 
-  <a class=def name="to-snd">to-snd</a> (&amp;rest <i>args</i>) &amp;body <i>body</i>
-  <a class=def name="snd-edit-sound">snd-edit-sound</a> <i>new-name</i> &amp;optional <i>old-name</i>
-  <a class=def name="snd-edit">snd-edit</a> (&amp;optional <i>file</i>) &amp;body <i>body</i>
+  <a class=def Name="to-snd">to-snd</a> (&amp;rest <i>args</i>) &amp;body <i>body</i>
+  <a class=def Name="snd-edit-sound">snd-edit-sound</a> <i>new-name</i> &amp;optional <i>old-name</i>
+  <a class=def Name="snd-edit">snd-edit</a> (&amp;optional <i>file</i>) &amp;body <i>body</i>
 
-  <a class=def name="sndenv">snd-envelope</a> <i>env</i>
-  <a class=def name="clmenv">clm-envelope</a> <i>env</i>
+  <a class=def Name="sndenv">snd-envelope</a> <i>env</i>
+  <a class=def Name="clmenv">clm-envelope</a> <i>env</i>
 </pre>
 <p><b>snd-memo</b> provides access to the ".scm" file that can be associated with any sound
 in Snd; the memo file can contain any Snd-related Scheme code you want; it will be loaded
@@ -3998,7 +4001,7 @@ that averages its arguments:
     (lc (second result)) (lc-num-ref a) (lc-num-ref b))
   nil)
 </small></pre>
-<p><a class=def name="def-clm-fun">def-clm-fun</a> tells the run macro how to handle the function <i>average</i> -- actual
+<p><a class=def Name="def-clm-fun">def-clm-fun</a> tells the run macro how to handle the function <i>average</i> -- actual
 C output needs to be deferred until the entire tree has been examined, so in this case, when "average" is encountered
 in an instrument's run section, the macro "c-average" is queued up with its arguments in an internal form;
 The macro <i>c-average</i>
@@ -4035,7 +4038,7 @@ should work without problem.  Once clm-initialize-links has been called,
 the C modules assume they have been initialized; if the saved version of
 modules is then executed, the arrays associated with these modules will
 not exist, but the modules won't know that.  In this case, you need to call the
-function <a class=def name="restart-clm">restart-clm</a> before doing anything in the newly executed image.
+function <a class=def Name="restart-clm">restart-clm</a> before doing anything in the newly executed image.
 In Linux, I use the Scheme window manager (scwm), and have the
 following as a top-level menu item:</p>
 <pre>
@@ -4118,10 +4121,10 @@ I haven't had time to check it out), so currently rc is rebuilt from scratch
 each time the instrument list changes.  To accomplish this, CLM needs
 continuous access to various header files, the libmus.a library built
 at CLM build time, and the instrument code.  The variables
-clm::<a name="*clm-source-directory*">*clm-source-directory*</a> and 
-clm::<a name="*clm-binary-directory*">*clm-binary-directory*</a> tell CLM
-where to look for the library files; <a name="*rc-directory*">*rc-directory*</a> tells CLM where
-to write the <a name="rc">rc</a> program and its various header files and modules. 
+clm::<a Name="*clm-source-directory*">*clm-source-directory*</a> and 
+clm::<a Name="*clm-binary-directory*">*clm-binary-directory*</a> tell CLM
+where to look for the library files; <a Name="*rc-directory*">*rc-directory*</a> tells CLM where
+to write the <a Name="rc">rc</a> program and its various header files and modules. 
 See <a href="rc.lisp">rc.lisp</a> for more details.</p>
 
 <h4>Instruments as generators</h4>
@@ -4166,79 +4169,79 @@ replace the current intermediate C file.
 <br>
 <!-- created 29-Jan-04 -->
 <table cellspacing=0 cellpadding=1>
-  <tr><td><em class=tab><a href="clm.html#add-mark">add-mark</a></em></td><td><em class=tab><a href="clm.html#env-interp">env-interp</a></em></td><td><em class=tab><a href="clm.html#make-identity-mixer">make-identity-mixer</a></em></td><td><em class=tab><a href="clm.html#mus-set-rand-seed">mus-set-rand-seed</a></em></td><td><em class=tab><a href="clm.html#sawtooth-wave">sawtooth-wave</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#add-region">add-region</a></em></td><td><em class=tab><a href="clm.html#env?">env?</a></em></td><td><em class=tab><a href="clm.html#make-iir-filter">make-iir-filter</a></em></td><td><em class=tab><a href="clm.html#mus-set-raw-header-defaults">mus-set-raw-header-defaults</a></em></td><td><em class=tab><a href="clm.html#sawtooth-wave?">sawtooth-wave?</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#all-pass">all-pass</a></em></td><td><em class=tab><a href="clm.html#envelope-&gt;coeffs">envelope-&gt;coeffs</a></em></td><td><em class=tab><a href="clm.html#make-locsig">make-locsig</a></em></td><td><em class=tab><a href="clm.html#mus-sun">mus-sun</a></em></td><td><em class=tab><a href="clm.html#scale-envelope">scale-envelope</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#all-pass?">all-pass?</a></em></td><td><em class=tab><a href="clm.html#envelope-exp">envelope-exp</a></em></td><td><em class=tab><a href="clm.html#make-mixer">make-mixer</a></em></td><td><em class=tab><a href="clm.html#mus-width">mus-width</a></em></td><td><em class=tab><a href="clm.html#seconds-&gt;samples">seconds-&gt;samples</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#amplitude-modulate">amplitude-modulate</a></em></td><td><em class=tab><a href="clm.html#envelope-interp">envelope-interp</a></em></td><td><em class=tab><a href="clm.html#make-notch">make-notch</a></em></td><td><em class=tab><a href="clm.html#mus-xcoeffs">mus-xcoeffs</a></em></td><td><em class=tab><a href="clm.html#send-and-receive-snd">send-and-receive-snd</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#array-&gt;file">array-&gt;file</a></em></td><td><em class=tab><a href="clm.html#envelopes"><b>Envelopes</b></a></em></td><td><em class=tab><a href="clm.html#make-one-pole">make-one-pole</a></em></td><td><em class=tab><a href="clm.html#mus-ycoeffs">mus-ycoeffs</a></em></td><td><em class=tab><a href="clm.html#send-snd">send-snd</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#array-interp">array-interp</a></em></td><td><em class=tab><a href="clm.html#fft">fft</a></em></td><td><em class=tab><a href="clm.html#make-one-zero">make-one-zero</a></em></td><td><em class=tab><a href="clm.html#normalize-envelope">normalize-envelope</a></em></td><td><em class=tab><a href="clm.html#sine-summation">sine-summation</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#asymmetric-fm">asymmetric-fm</a></em></td><td><em class=tab><a href="clm.html#file-&gt;array">file-&gt;array</a></em></td><td><em class=tab><a href="clm.html#make-oscil">make-oscil</a></em></td><td><em class=tab><a href="clm.html#notch">notch</a></em></td><td><em class=tab><a href="clm.html#sine-summation?">sine-summation?</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#asymmetric-fm?">asymmetric-fm?</a></em></td><td><em class=tab><a href="clm.html#file-&gt;frame">file-&gt;frame</a></em></td><td><em class=tab><a href="clm.html#make-phase-vocoder">make-phase-vocoder</a></em></td><td><em class=tab><a href="clm.html#notch?">notch?</a></em></td><td><em class=tab><a href="clm.html#sldac">sl-dac</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#buffer-&gt;frame">buffer-&gt;frame</a></em></td><td><em class=tab><a href="clm.html#file-&gt;frame?">file-&gt;frame?</a></em></td><td><em class=tab><a href="clm.html#make-ppolar">make-ppolar</a></em></td><td><em class=tab><a href="clm.html#note-lists"><b>Note lists </b></a></em></td><td><em class=tab><a href="clm.html#snd-cleanup">snd-cleanup</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#buffer-&gt;sample">buffer-&gt;sample</a></em></td><td><em class=tab><a href="clm.html#file-&gt;sample">file-&gt;sample</a></em></td><td><em class=tab><a href="clm.html#make-pulse-train">make-pulse-train</a></em></td><td><em class=tab><a href="clm.html#notehook">notehook</a></em></td><td><em class=tab><a href="clm.html#snd-edit">snd-edit</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#buffer-empty?">buffer-empty?</a></em></td><td><em class=tab><a href="clm.html#file-&gt;sample?">file-&gt;sample?</a></em></td><td><em class=tab><a href="clm.html#make-rand">make-rand</a></em></td><td><em class=tab><a href="clm.html#one-pole">one-pole</a></em></td><td><em class=tab><a href="clm.html#snd-edit-sound">snd-edit-sound</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#buffer-full?">buffer-full?</a></em></td><td><em class=tab><a href="clm.html#filter">filter</a></em></td><td><em class=tab><a href="clm.html#make-rand-interp">make-rand-interp</a></em></td><td><em class=tab><a href="clm.html#one-pole?">one-pole?</a></em></td><td><em class=tab><a href="clm.html#sndenv">snd-envelope</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#buffer?">buffer?</a></em></td><td><em class=tab><a href="clm.html#filter?">filter?</a></em></td><td><em class=tab><a href="clm.html#make-readin">make-readin</a></em></td><td><em class=tab><a href="clm.html#one-zero">one-zero</a></em></td><td><em class=tab><a href="clm.html#snd-memo">snd-memo</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#mix-and-with-mix"><b>Checkpoints</b></a></em></td><td><em class=tab><a href="clm.html#filters"><b>Filters</b></a></em></td><td><em class=tab><a href="clm.html#make-sample-&gt;file">make-sample-&gt;file</a></em></td><td><em class=tab><a href="clm.html#one-zero?">one-zero?</a></em></td><td><em class=tab><a href="clm.html#snd-region">snd-region</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#clm-init.lisp"><b>CLM Initialization </b></a></em></td><td><em class=tab><a href="clm.html#fir-filter">fir-filter</a></em></td><td><em class=tab><a href="clm.html#make-sawtooth-wave">make-sawtooth-wave</a></em></td><td><em class=tab><a href="clm.html#open-input">open-input</a></em></td><td><em class=tab><a href="clm.html#snd-sound">snd-sound</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#*clm-array-print-length*">*clm-array-print-length*</a></em></td><td><em class=tab><a href="clm.html#fir-filter?">fir-filter?</a></em></td><td><em class=tab><a href="clm.html#make-sine-summation">make-sine-summation</a></em></td><td><em class=tab><a href="clm.html#open-input*">open-input*</a></em></td><td><em class=tab><a href="clm.html#header-types"><b>Sound file formats </b></a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#*clm-binary-directory*">*clm-binary-directory*</a></em></td><td><em class=tab><a href="clm.html#formant">formant</a></em></td><td><em class=tab><a href="clm.html#make-square-wave">make-square-wave</a></em></td><td><em class=tab><a href="clm.html#*open-input-pathname*">*open-input-pathname*</a></em></td><td><em class=tab><a href="clm.html#open-input"><b>Sound file IO</b></a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#*clm-channels*">*clm-channels*</a></em></td><td><em class=tab><a href="clm.html#formant?">formant?</a></em></td><td><em class=tab><a href="clm.html#make-src">make-src</a></em></td><td><em class=tab><a href="clm.html#*open-input-truename*">*open-input-truename*</a></em></td><td><em class=tab><a href="clm.html#make-locsig"><b>Sound placement</b></a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#*clm-clipped*">*clm-clipped*</a></em></td><td><em class=tab><a href="clm.html#fft"><b>Fourier transforms </b></a></em></td><td><em class=tab><a href="clm.html#make-sum-of-cosines">make-sum-of-cosines</a></em></td><td><em class=tab><a href="clm.html#*open-input-verbose*">*open-input-verbose*</a></em></td><td><em class=tab><a href="clm.html#sound-chans">sound-chans</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#*clm-data-format*">*clm-data-format*</a></em></td><td><em class=tab><a href="clm.html#frame*">frame*</a></em></td><td><em class=tab><a href="clm.html#make-table-lookup">make-table-lookup</a></em></td><td><em class=tab><a href="clm.html#open-output">open-output</a></em></td><td><em class=tab><a href="clm.html#sound-data-format">sound-data-format</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#*clm-date*">*clm-date*</a></em></td><td><em class=tab><a href="clm.html#frame+">frame+</a></em></td><td><em class=tab><a href="clm.html#make-triangle-wave">make-triangle-wave</a></em></td><td><em class=tab><a href="clm.html#optional-key">optional-key</a></em></td><td><em class=tab><a href="clm.html#sound-data-location">sound-data-location</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#*clm-delete-reverb*">*clm-delete-reverb*</a></em></td><td><em class=tab><a href="clm.html#frame-&gt;buffer">frame-&gt;buffer</a></em></td><td><em class=tab><a href="clm.html#make-two-pole">make-two-pole</a></em></td><td><em class=tab><a href="clm.html#oscil">oscil</a></em></td><td><em class=tab><a href="clm.html#sound-datum-size">sound-datum-size</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#clmenv">clm-envelope</a></em></td><td><em class=tab><a href="clm.html#frame-&gt;file">frame-&gt;file</a></em></td><td><em class=tab><a href="clm.html#make-two-zero">make-two-zero</a></em></td><td><em class=tab><a href="clm.html#oscilbank">oscil-bank</a></em></td><td><em class=tab><a href="clm.html#sound-duration">sound-duration</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#*clm-file-buffer-size*">*clm-file-buffer-size*</a></em></td><td><em class=tab><a href="clm.html#frame-&gt;file?">frame-&gt;file?</a></em></td><td><em class=tab><a href="clm.html#make-wave-train">make-wave-train</a></em></td><td><em class=tab><a href="clm.html#oscil?">oscil?</a></em></td><td><em class=tab><a href="clm.html#sound-format-name">sound-format-name</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#*clm-file-name*">*clm-file-name*</a></em></td><td><em class=tab><a href="clm.html#frame-&gt;frame">frame-&gt;frame</a></em></td><td><em class=tab><a href="clm.html#make-waveshape">make-waveshape</a></em></td><td><em class=tab><a href="clm.html#out-any">out-any</a></em></td><td><em class=tab><a href="clm.html#sound-frames">sound-frames</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#*clm-header-type*">*clm-header-type*</a></em></td><td><em class=tab><a href="clm.html#frame-&gt;list">frame-&gt;list</a></em></td><td><em class=tab><a href="clm.html#make-zpolar">make-zpolar</a></em></td><td><em class=tab><a href="clm.html#outa">outa</a></em></td><td><em class=tab><a href="clm.html#sound-header-type">sound-header-type</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#clm-help">clm-help</a></em></td><td><em class=tab><a href="clm.html#frame-&gt;sample">frame-&gt;sample</a></em></td><td><em class=tab><a href="clm.html#mix">mix</a></em></td><td><em class=tab><a href="clm.html#outb">outb</a></em></td><td><em class=tab><a href="clm.html#sound-length">sound-length</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#*clm-help-browser*">*clm-help-browser*</a></em></td><td><em class=tab><a href="clm.html#frame-ref">frame-ref</a></em></td><td><em class=tab><a href="clm.html#mixer*">mixer*</a></em></td><td><em class=tab><a href="clm.html#outc">outc</a></em></td><td><em class=tab><a href="clm.html#sound-let">sound-let</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#*clm-init*">*clm-init*</a></em></td><td><em class=tab><a href="clm.html#frame-set!">frame-set!</a></em></td><td><em class=tab><a href="clm.html#mixer-ref">mixer-ref</a></em></td><td><em class=tab><a href="clm.html#outd">outd</a></em></td><td><em class=tab><a href="clm.html#sound-loop-info">sound-loop-info</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#*clm-instruments*">*clm-instruments*</a></em></td><td><em class=tab><a href="clm.html#frame?">frame?</a></em></td><td><em class=tab><a href="clm.html#mixer-set!">mixer-set!</a></em></td><td><em class=tab><a href="clm.html#*output*">*output*</a></em></td><td><em class=tab><a href="clm.html#sound-maxamp">sound-maxamp</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#clm-load">clm-load</a></em></td><td><em class=tab><a href="clm.html#generators"><b>Generators</b></a></em></td><td><em class=tab><a href="clm.html#mixer?">mixer?</a></em></td><td><em class=tab><a href="clm.html#partials-&gt;polynomial">partials-&gt;polynomial</a></em></td><td><em class=tab><a href="clm.html#sound-samples">sound-samples</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#*clm-locsig-type*">*clm-locsig-type*</a></em></td><td><em class=tab><a href="clm.html#grains"><b>Granular synthesis</b></a></em></td><td><em class=tab><a href="clm.html#move-locsig">move-locsig</a></em></td><td><em class=tab><a href="clm.html#partials-&gt;wave">partials-&gt;wave</a></em></td><td><em class=tab><a href="clm.html#sound-set-loop-info">sound-set-loop-info</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#*clm-news*">*clm-news*</a></em></td><td><em class=tab><a href="clm.html#granulate">granulate</a></em></td><td><em class=tab><a href="clm.html#multiply-arrays">multiply-arrays</a></em></td><td><em class=tab><a href="clm.html#partials-&gt;waveshape">partials-&gt;waveshape</a></em></td><td><em class=tab><a href="clm.html#sound-srate">sound-srate</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#*clm-notehook*">*clm-notehook*</a></em></td><td><em class=tab><a href="clm.html#granulate?">granulate?</a></em></td><td><em class=tab><a href="clm.html#mus-a0">mus-a0</a></em></td><td><em class=tab><a href="clm.html#phase-partials-&gt;wave">phase-partials-&gt;wave</a></em></td><td><em class=tab><a href="clm.html#sound-type-name">sound-type-name</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#*clm-play*">*clm-play*</a></em></td><td><em class=tab><a href="clm.html#header-types"><b>Headers </b></a></em></td><td><em class=tab><a href="clm.html#mus-a1">mus-a1</a></em></td><td><em class=tab><a href="clm.html#phase-vocoder">phase-vocoder</a></em></td><td><em class=tab><a href="clm.html#spectrum">spectrum</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#*clm-player*">*clm-player*</a></em></td><td><em class=tab><a href="clm.html#clm-help"><b>Help </b></a></em></td><td><em class=tab><a href="clm.html#mus-a2">mus-a2</a></em></td><td><em class=tab><a href="clm.html#phase-vocoder?">phase-vocoder?</a></em></td><td><em class=tab><a href="clm.html#square-wave">square-wave</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#clm-print">clm-print</a></em></td><td><em class=tab><a href="clm.html#hz-&gt;radians">hz-&gt;radians</a></em></td><td><em class=tab><a href="clm.html#mus-aifc">mus-aifc</a></em></td><td><em class=tab><a href="clm.html#polar-&gt;rectangular">polar-&gt;rectangular</a></em></td><td><em class=tab><a href="clm.html#square-wave?">square-wave?</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#clm-random">clm-random</a></em></td><td><em class=tab><a href="clm.html#iir-filter">iir-filter</a></em></td><td><em class=tab><a href="clm.html#mus-aiff">mus-aiff</a></em></td><td><em class=tab><a href="clm.html#polynomial">polynomial</a></em></td><td><em class=tab><a href="clm.html#src">src</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#*clm-safety*">*clm-safety*</a></em></td><td><em class=tab><a href="clm.html#iir-filter?">iir-filter?</a></em></td><td><em class=tab><a href="clm.html#mus-b1">mus-b1</a></em></td><td><em class=tab><a href="clm.html#pulse-train">pulse-train</a></em></td><td><em class=tab><a href="clm.html#src?">src?</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#*clm-search-list*">*clm-search-list*</a></em></td><td><em class=tab><a href="clm.html#in-any">in-any</a></em></td><td><em class=tab><a href="clm.html#mus-b2">mus-b2</a></em></td><td><em class=tab><a href="clm.html#pulse-train?">pulse-train?</a></em></td><td><em class=tab><a href="clm.html#start-snd">start-snd</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#*clm-source-directory*">*clm-source-directory*</a></em></td><td><em class=tab><a href="clm.html#ina">ina</a></em></td><td><em class=tab><a href="clm.html#musbank">mus-bank</a></em></td><td><em class=tab><a href="clm.html#radians-&gt;degrees">radians-&gt;degrees</a></em></td><td><em class=tab><a href="clm.html#stop-dac">stop-dac</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#*clm-srate*">*clm-srate*</a></em></td><td><em class=tab><a href="clm.html#inb">inb</a></em></td><td><em class=tab><a href="clm.html#mus-bshort">mus-bshort</a></em></td><td><em class=tab><a href="clm.html#radians-&gt;hz">radians-&gt;hz</a></em></td><td><em class=tab><a href="clm.html#stretch-envelope">stretch-envelope</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#*clm-table-size*">*clm-table-size*</a></em></td><td><em class=tab><a href="clm.html#*input*">*input*</a></em></td><td><em class=tab><a href="clm.html#mus-channel">mus-channel</a></em></td><td><em class=tab><a href="clm.html#rand">rand</a></em></td><td><em class=tab><a href="clm.html#sum-of-cosines">sum-of-cosines</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#*clm-version*">*clm-version*</a></em></td><td><em class=tab><a href="clm.html#ina-outa"><b>Input and output</b></a></em></td><td><em class=tab><a href="clm.html#mus-channels">mus-channels</a></em></td><td><em class=tab><a href="clm.html#rand-interp">rand-interp</a></em></td><td><em class=tab><a href="clm.html#sum-of-cosines?">sum-of-cosines?</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#close-input">close-input</a></em></td><td><em class=tab><a href="clm.html#ins-var">ins-var</a></em></td><td><em class=tab><a href="clm.html#mus-close">mus-close</a></em></td><td><em class=tab><a href="clm.html#rand-interp?">rand-interp?</a></em></td><td><em class=tab><a href="clm.html#sum-of-sines">sum-of-sines</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#close-output">close-output</a></em></td><td><em class=tab><a href="clm.html#instrument-let">instrument-let</a></em></td><td><em class=tab><a href="clm.html#mus-cosines">mus-cosines</a></em></td><td><em class=tab><a href="clm.html#rand?">rand?</a></em></td><td><em class=tab><a href="clm.html#table-lookup">table-lookup</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#comb">comb</a></em></td><td><em class=tab><a href="clm.html#ins-files"><b>Instruments</b></a></em></td><td><em class=tab><a href="clm.html#mus-create">mus-create</a></em></td><td><em class=tab><a href="clm.html#random-numbers"><b>Random numbers</b></a></em></td><td><em class=tab><a href="clm.html#table-lookup?">table-lookup?</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#comb?">comb?</a></em></td><td><em class=tab><a href="clm.html#linear-&gt;db">linear-&gt;db</a></em></td><td><em class=tab><a href="clm.html#mus-data">mus-data</a></em></td><td><em class=tab><a href="clm.html#raw-data"><b>raw data </b></a></em></td><td><em class=tab><a href="clm.html#tap">tap</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#continue-sample-&gt;file">continue-sample-&gt;file</a></em></td><td><em class=tab><a href="clm.html#linux-help">linux-help</a></em></td><td><em class=tab><a href="clm.html#mus-feedback">mus-feedback</a></em></td><td><em class=tab><a href="clm.html#rc">rc</a></em></td><td><em class=tab><a href="clm.html#times-&gt;samples">times-&gt;samples</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#contrast-enhancement">contrast-enhancement</a></em></td><td><em class=tab><a href="clm.html#locsig">locsig</a></em></td><td><em class=tab><a href="clm.html#mus-feedforward">mus-feedforward</a></em></td><td><em class=tab><a href="clm.html#*rc-directory*">*rc-directory*</a></em></td><td><em class=tab><a href="clm.html#to-snd">to-snd</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#convolution">convolution</a></em></td><td><em class=tab><a href="clm.html#locsig-ref">locsig-ref</a></em></td><td><em class=tab><a href="clm.html#mus-file-name">mus-file-name</a></em></td><td><em class=tab><a href="clm.html#readin">readin</a></em></td><td><em class=tab><a href="clm.html#triangle-wave">triangle-wave</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#convolve">convolve</a></em></td><td><em class=tab><a href="clm.html#locsig-reverb-ref">locsig-reverb-ref</a></em></td><td><em class=tab><a href="clm.html#mus-formant-radius">mus-formant-radius</a></em></td><td><em class=tab><a href="clm.html#readin?">readin?</a></em></td><td><em class=tab><a href="clm.html#triangle-wave?">triangle-wave?</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#convolvefiles">convolve-files</a></em></td><td><em class=tab><a href="clm.html#locsig-reverb-set!">locsig-reverb-set!</a></em></td><td><em class=tab><a href="clm.html#mus-frequency">mus-frequency</a></em></td><td><em class=tab><a href="clm.html#realtimecontrols"><b>Realtime Controls</b></a></em></td><td><em class=tab><a href="clm.html#two-pi">two-pi</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#convolve?">convolve?</a></em></td><td><em class=tab><a href="clm.html#locsig-set!">locsig-set!</a></em></td><td><em class=tab><a href="clm.html#mus-hop">mus-hop</a></em></td><td><em class=tab><a href="clm.html#rec-any">rec-any</a></em></td><td><em class=tab><a href="clm.html#two-pole">two-pole</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#cross-synthesis"><b>cross synthesis</b></a></em></td><td><em class=tab><a href="clm.html#locsig?">locsig?</a></em></td><td><em class=tab><a href="clm.html#mus-increment">mus-increment</a></em></td><td><em class=tab><a href="clm.html#receive-snd">receive-snd</a></em></td><td><em class=tab><a href="clm.html#two-pole?">two-pole?</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#dac">dac</a></em></td><td><em class=tab><a href="clm.html#make-all-pass">make-all-pass</a></em></td><td><em class=tab><a href="clm.html#mus-input?">mus-input?</a></em></td><td><em class=tab><a href="clm.html#rectangular-&gt;polar">rectangular-&gt;polar</a></em></td><td><em class=tab><a href="clm.html#two-zero">two-zero</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#header-types"><b>Data formats </b></a></em></td><td><em class=tab><a href="clm.html#make-asymmetric-fm">make-asymmetric-fm</a></em></td><td><em class=tab><a href="clm.html#mus-ircam">mus-ircam</a></em></td><td><em class=tab><a href="clm.html#reopen-output">reopen-output</a></em></td><td><em class=tab><a href="clm.html#two-zero?">two-zero?</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#db-&gt;linear">db-&gt;linear</a></em></td><td><em class=tab><a href="clm.html#make-buffer">make-buffer</a></em></td><td><em class=tab><a href="clm.html#mus-length">mus-length</a></em></td><td><em class=tab><a href="clm.html#restart-clm">restart-clm</a></em></td><td><em class=tab><a href="clm.html#user-defined-ugs"><b>User-defined generators </b></a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#debugging-aids"><b>Debugging </b></a></em></td><td><em class=tab><a href="clm.html#make-comb">make-comb</a></em></td><td><em class=tab><a href="clm.html#mus-location">mus-location</a></em></td><td><em class=tab><a href="clm.html#restart-env">restart-env</a></em></td><td><em class=tab><a href="clm.html#volume">volume</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#def-clm-fun">def-clm-fun</a></em></td><td><em class=tab><a href="clm.html#make-convolve">make-convolve</a></em></td><td><em class=tab><a href="clm.html#mus-offset">mus-offset</a></em></td><td><em class=tab><a href="clm.html#*reverb*">*reverb*</a></em></td><td><em class=tab><a href="clm.html#wave-train">wave-train</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#def-clm-struct">def-clm-struct</a></em></td><td><em class=tab><a href="clm.html#make-delay">make-delay</a></em></td><td><em class=tab><a href="clm.html#mus-open-read">mus-open-read</a></em></td><td><em class=tab><a href="clm.html#ring-modulate">ring-modulate</a></em></td><td><em class=tab><a href="clm.html#wave-train?">wave-train?</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#definstrument">definstrument</a></em></td><td><em class=tab><a href="clm.html#make-env">make-env</a></em></td><td><em class=tab><a href="clm.html#mus-open-write">mus-open-write</a></em></td><td><em class=tab><a href="clm.html#run">run</a></em></td><td><em class=tab><a href="clm.html#waveshape">waveshape</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#defpinstrument">defpinstrument</a></em></td><td><em class=tab><a href="clm.html#make-fft-window">make-fft-window</a></em></td><td><em class=tab><a href="clm.html#mus-order">mus-order</a></em></td><td><em class=tab><a href="clm.html#run*">run*</a></em></td><td><em class=tab><a href="clm.html#waveshape?">waveshape?</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#degrees-&gt;radians">degrees-&gt;radians</a></em></td><td><em class=tab><a href="clm.html#make-file-&gt;frame">make-file-&gt;frame</a></em></td><td><em class=tab><a href="clm.html#mus-output?">mus-output?</a></em></td><td><em class=tab><a href="clm.html#lisp-functions"><b>Run support for Lisp</b></a></em></td><td><em class=tab><a href="clm.html#window-envelope">window-envelope</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#delay">delay</a></em></td><td><em class=tab><a href="clm.html#make-file-&gt;sample">make-file-&gt;sample</a></em></td><td><em class=tab><a href="clm.html#mus-phase">mus-phase</a></em></td><td><em class=tab><a href="clm.html#sample-&gt;buffer">sample-&gt;buffer</a></em></td><td><em class=tab><a href="clm.html#with-dac">with-dac</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#delay?">delay?</a></em></td><td><em class=tab><a href="clm.html#make-filter">make-filter</a></em></td><td><em class=tab><a href="clm.html#mus-ramp">mus-ramp</a></em></td><td><em class=tab><a href="clm.html#sample-&gt;file">sample-&gt;file</a></em></td><td><em class=tab><a href="clm.html#with-mix">with-mix</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#describe-instrument">describe-instrument</a></em></td><td><em class=tab><a href="clm.html#make-fir-filter">make-fir-filter</a></em></td><td><em class=tab><a href="clm.html#mus-random">mus-random</a></em></td><td><em class=tab><a href="clm.html#sample-&gt;file?">sample-&gt;file?</a></em></td><td><em class=tab><a href="clm.html#with-offset">with-offset</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#with-psound"><b>Direct to DAC </b></a></em></td><td><em class=tab><a href="clm.html#make-formant">make-formant</a></em></td><td><em class=tab><a href="clm.html#mus-reopen-write">mus-reopen-write</a></em></td><td><em class=tab><a href="clm.html#sample-&gt;frame">sample-&gt;frame</a></em></td><td><em class=tab><a href="clm.html#with-psound">with-psound</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#dlocsig">dlocsig</a></em></td><td><em class=tab><a href="clm.html#make-frame">make-frame</a></em></td><td><em class=tab><a href="clm.html#mus-riff">mus-riff</a></em></td><td><em class=tab><a href="clm.html#make-src"><b>sampling-rate conversion</b></a></em></td><td><em class=tab><a href="clm.html#with-sound">with-sound</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#dot-product">dot-product</a></em></td><td><em class=tab><a href="clm.html#make-frame-&gt;file">make-frame-&gt;file</a></em></td><td><em class=tab><a href="clm.html#mus-run">mus-run</a></em></td><td><em class=tab><a href="clm.html#save-signal">save-signal</a></em></td>
+  <tr><td><em class=tab><a href="#add-mark">add-mark</a></em></td><td><em class=tab><a href="#env-interp">env-interp</a></em></td><td><em class=tab><a href="#make-identity-mixer">make-identity-mixer</a></em></td><td><em class=tab><a href="#mus-set-rand-seed">mus-set-rand-seed</a></em></td><td><em class=tab><a href="#sawtooth-wave">sawtooth-wave</a></em></td></tr>
+  <tr><td><em class=tab><a href="#add-region">add-region</a></em></td><td><em class=tab><a href="#env?">env?</a></em></td><td><em class=tab><a href="#make-iir-filter">make-iir-filter</a></em></td><td><em class=tab><a href="#mus-set-raw-header-defaults">mus-set-raw-header-defaults</a></em></td><td><em class=tab><a href="#sawtooth-wave?">sawtooth-wave?</a></em></td></tr>
+  <tr><td><em class=tab><a href="#all-pass">all-pass</a></em></td><td><em class=tab><a href="#envelope-&gt;coeffs">envelope-&gt;coeffs</a></em></td><td><em class=tab><a href="#make-locsig">make-locsig</a></em></td><td><em class=tab><a href="#mus-sun">mus-sun</a></em></td><td><em class=tab><a href="#scale-envelope">scale-envelope</a></em></td></tr>
+  <tr><td><em class=tab><a href="#all-pass?">all-pass?</a></em></td><td><em class=tab><a href="#envelope-exp">envelope-exp</a></em></td><td><em class=tab><a href="#make-mixer">make-mixer</a></em></td><td><em class=tab><a href="#mus-width">mus-width</a></em></td><td><em class=tab><a href="#seconds-&gt;samples">seconds-&gt;samples</a></em></td></tr>
+  <tr><td><em class=tab><a href="#amplitude-modulate">amplitude-modulate</a></em></td><td><em class=tab><a href="#envelope-interp">envelope-interp</a></em></td><td><em class=tab><a href="#make-notch">make-notch</a></em></td><td><em class=tab><a href="#mus-xcoeffs">mus-xcoeffs</a></em></td><td><em class=tab><a href="#send-and-receive-snd">send-and-receive-snd</a></em></td></tr>
+  <tr><td><em class=tab><a href="#array-&gt;file">array-&gt;file</a></em></td><td><em class=tab><a href="#envelopes"><b>Envelopes</b></a></em></td><td><em class=tab><a href="#make-one-pole">make-one-pole</a></em></td><td><em class=tab><a href="#mus-ycoeffs">mus-ycoeffs</a></em></td><td><em class=tab><a href="#send-snd">send-snd</a></em></td></tr>
+  <tr><td><em class=tab><a href="#array-interp">array-interp</a></em></td><td><em class=tab><a href="#fft">fft</a></em></td><td><em class=tab><a href="#make-one-zero">make-one-zero</a></em></td><td><em class=tab><a href="#normalize-envelope">normalize-envelope</a></em></td><td><em class=tab><a href="#sine-summation">sine-summation</a></em></td></tr>
+  <tr><td><em class=tab><a href="#asymmetric-fm">asymmetric-fm</a></em></td><td><em class=tab><a href="#file-&gt;array">file-&gt;array</a></em></td><td><em class=tab><a href="#make-oscil">make-oscil</a></em></td><td><em class=tab><a href="#notch">notch</a></em></td><td><em class=tab><a href="#sine-summation?">sine-summation?</a></em></td></tr>
+  <tr><td><em class=tab><a href="#asymmetric-fm?">asymmetric-fm?</a></em></td><td><em class=tab><a href="#file-&gt;frame">file-&gt;frame</a></em></td><td><em class=tab><a href="#make-phase-vocoder">make-phase-vocoder</a></em></td><td><em class=tab><a href="#notch?">notch?</a></em></td><td><em class=tab><a href="#sldac">sl-dac</a></em></td></tr>
+  <tr><td><em class=tab><a href="#buffer-&gt;frame">buffer-&gt;frame</a></em></td><td><em class=tab><a href="#file-&gt;frame?">file-&gt;frame?</a></em></td><td><em class=tab><a href="#make-ppolar">make-ppolar</a></em></td><td><em class=tab><a href="#note-lists"><b>Note lists </b></a></em></td><td><em class=tab><a href="#snd-cleanup">snd-cleanup</a></em></td></tr>
+  <tr><td><em class=tab><a href="#buffer-&gt;sample">buffer-&gt;sample</a></em></td><td><em class=tab><a href="#file-&gt;sample">file-&gt;sample</a></em></td><td><em class=tab><a href="#make-pulse-train">make-pulse-train</a></em></td><td><em class=tab><a href="#notehook">notehook</a></em></td><td><em class=tab><a href="#snd-edit">snd-edit</a></em></td></tr>
+  <tr><td><em class=tab><a href="#buffer-empty?">buffer-empty?</a></em></td><td><em class=tab><a href="#file-&gt;sample?">file-&gt;sample?</a></em></td><td><em class=tab><a href="#make-rand">make-rand</a></em></td><td><em class=tab><a href="#one-pole">one-pole</a></em></td><td><em class=tab><a href="#snd-edit-sound">snd-edit-sound</a></em></td></tr>
+  <tr><td><em class=tab><a href="#buffer-full?">buffer-full?</a></em></td><td><em class=tab><a href="#filter">filter</a></em></td><td><em class=tab><a href="#make-rand-interp">make-rand-interp</a></em></td><td><em class=tab><a href="#one-pole?">one-pole?</a></em></td><td><em class=tab><a href="#sndenv">snd-envelope</a></em></td></tr>
+  <tr><td><em class=tab><a href="#buffer?">buffer?</a></em></td><td><em class=tab><a href="#filter?">filter?</a></em></td><td><em class=tab><a href="#make-readin">make-readin</a></em></td><td><em class=tab><a href="#one-zero">one-zero</a></em></td><td><em class=tab><a href="#snd-memo">snd-memo</a></em></td></tr>
+  <tr><td><em class=tab><a href="#mix-and-with-mix"><b>Checkpoints</b></a></em></td><td><em class=tab><a href="#filters"><b>Filters</b></a></em></td><td><em class=tab><a href="#make-sample-&gt;file">make-sample-&gt;file</a></em></td><td><em class=tab><a href="#one-zero?">one-zero?</a></em></td><td><em class=tab><a href="#snd-region">snd-region</a></em></td></tr>
+  <tr><td><em class=tab><a href="#clm-init.lisp"><b>CLM Initialization </b></a></em></td><td><em class=tab><a href="#fir-filter">fir-filter</a></em></td><td><em class=tab><a href="#make-sawtooth-wave">make-sawtooth-wave</a></em></td><td><em class=tab><a href="#open-input">open-input</a></em></td><td><em class=tab><a href="#snd-sound">snd-sound</a></em></td></tr>
+  <tr><td><em class=tab><a href="#*clm-array-print-length*">*clm-array-print-length*</a></em></td><td><em class=tab><a href="#fir-filter?">fir-filter?</a></em></td><td><em class=tab><a href="#make-sine-summation">make-sine-summation</a></em></td><td><em class=tab><a href="#open-input*">open-input*</a></em></td><td><em class=tab><a href="#header-types"><b>Sound file formats </b></a></em></td></tr>
+  <tr><td><em class=tab><a href="#*clm-binary-directory*">*clm-binary-directory*</a></em></td><td><em class=tab><a href="#formant">formant</a></em></td><td><em class=tab><a href="#make-square-wave">make-square-wave</a></em></td><td><em class=tab><a href="#*open-input-pathname*">*open-input-pathname*</a></em></td><td><em class=tab><a href="#open-input"><b>Sound file IO</b></a></em></td></tr>
+  <tr><td><em class=tab><a href="#*clm-channels*">*clm-channels*</a></em></td><td><em class=tab><a href="#formant?">formant?</a></em></td><td><em class=tab><a href="#make-src">make-src</a></em></td><td><em class=tab><a href="#*open-input-truename*">*open-input-truename*</a></em></td><td><em class=tab><a href="#make-locsig"><b>Sound placement</b></a></em></td></tr>
+  <tr><td><em class=tab><a href="#*clm-clipped*">*clm-clipped*</a></em></td><td><em class=tab><a href="#fft"><b>Fourier transforms </b></a></em></td><td><em class=tab><a href="#make-sum-of-cosines">make-sum-of-cosines</a></em></td><td><em class=tab><a href="#*open-input-verbose*">*open-input-verbose*</a></em></td><td><em class=tab><a href="#sound-chans">sound-chans</a></em></td></tr>
+  <tr><td><em class=tab><a href="#*clm-data-format*">*clm-data-format*</a></em></td><td><em class=tab><a href="#frame*">frame*</a></em></td><td><em class=tab><a href="#make-table-lookup">make-table-lookup</a></em></td><td><em class=tab><a href="#open-output">open-output</a></em></td><td><em class=tab><a href="#sound-data-format">sound-data-format</a></em></td></tr>
+  <tr><td><em class=tab><a href="#*clm-date*">*clm-date*</a></em></td><td><em class=tab><a href="#frame+">frame+</a></em></td><td><em class=tab><a href="#make-triangle-wave">make-triangle-wave</a></em></td><td><em class=tab><a href="#optional-key">optional-key</a></em></td><td><em class=tab><a href="#sound-data-location">sound-data-location</a></em></td></tr>
+  <tr><td><em class=tab><a href="#*clm-delete-reverb*">*clm-delete-reverb*</a></em></td><td><em class=tab><a href="#frame-&gt;buffer">frame-&gt;buffer</a></em></td><td><em class=tab><a href="#make-two-pole">make-two-pole</a></em></td><td><em class=tab><a href="#oscil">oscil</a></em></td><td><em class=tab><a href="#sound-datum-size">sound-datum-size</a></em></td></tr>
+  <tr><td><em class=tab><a href="#clmenv">clm-envelope</a></em></td><td><em class=tab><a href="#frame-&gt;file">frame-&gt;file</a></em></td><td><em class=tab><a href="#make-two-zero">make-two-zero</a></em></td><td><em class=tab><a href="#oscilbank">oscil-bank</a></em></td><td><em class=tab><a href="#sound-duration">sound-duration</a></em></td></tr>
+  <tr><td><em class=tab><a href="#*clm-file-buffer-size*">*clm-file-buffer-size*</a></em></td><td><em class=tab><a href="#frame-&gt;file?">frame-&gt;file?</a></em></td><td><em class=tab><a href="#make-wave-train">make-wave-train</a></em></td><td><em class=tab><a href="#oscil?">oscil?</a></em></td><td><em class=tab><a href="#sound-format-name">sound-format-name</a></em></td></tr>
+  <tr><td><em class=tab><a href="#*clm-file-name*">*clm-file-name*</a></em></td><td><em class=tab><a href="#frame-&gt;frame">frame-&gt;frame</a></em></td><td><em class=tab><a href="#make-waveshape">make-waveshape</a></em></td><td><em class=tab><a href="#out-any">out-any</a></em></td><td><em class=tab><a href="#sound-frames">sound-frames</a></em></td></tr>
+  <tr><td><em class=tab><a href="#*clm-header-type*">*clm-header-type*</a></em></td><td><em class=tab><a href="#frame-&gt;list">frame-&gt;list</a></em></td><td><em class=tab><a href="#make-zpolar">make-zpolar</a></em></td><td><em class=tab><a href="#outa">outa</a></em></td><td><em class=tab><a href="#sound-header-type">sound-header-type</a></em></td></tr>
+  <tr><td><em class=tab><a href="#clm-help">clm-help</a></em></td><td><em class=tab><a href="#frame-&gt;sample">frame-&gt;sample</a></em></td><td><em class=tab><a href="#mix">mix</a></em></td><td><em class=tab><a href="#outb">outb</a></em></td><td><em class=tab><a href="#sound-length">sound-length</a></em></td></tr>
+  <tr><td><em class=tab><a href="#*clm-help-browser*">*clm-help-browser*</a></em></td><td><em class=tab><a href="#frame-ref">frame-ref</a></em></td><td><em class=tab><a href="#mixer*">mixer*</a></em></td><td><em class=tab><a href="#outc">outc</a></em></td><td><em class=tab><a href="#sound-let">sound-let</a></em></td></tr>
+  <tr><td><em class=tab><a href="#*clm-init*">*clm-init*</a></em></td><td><em class=tab><a href="#frame-set!">frame-set!</a></em></td><td><em class=tab><a href="#mixer-ref">mixer-ref</a></em></td><td><em class=tab><a href="#outd">outd</a></em></td><td><em class=tab><a href="#sound-loop-info">sound-loop-info</a></em></td></tr>
+  <tr><td><em class=tab><a href="#*clm-instruments*">*clm-instruments*</a></em></td><td><em class=tab><a href="#frame?">frame?</a></em></td><td><em class=tab><a href="#mixer-set!">mixer-set!</a></em></td><td><em class=tab><a href="#*output*">*output*</a></em></td><td><em class=tab><a href="#sound-maxamp">sound-maxamp</a></em></td></tr>
+  <tr><td><em class=tab><a href="#clm-load">clm-load</a></em></td><td><em class=tab><a href="#generators"><b>Generators</b></a></em></td><td><em class=tab><a href="#mixer?">mixer?</a></em></td><td><em class=tab><a href="#partials-&gt;polynomial">partials-&gt;polynomial</a></em></td><td><em class=tab><a href="#sound-samples">sound-samples</a></em></td></tr>
+  <tr><td><em class=tab><a href="#*clm-locsig-type*">*clm-locsig-type*</a></em></td><td><em class=tab><a href="#grains"><b>Granular synthesis</b></a></em></td><td><em class=tab><a href="#move-locsig">move-locsig</a></em></td><td><em class=tab><a href="#partials-&gt;wave">partials-&gt;wave</a></em></td><td><em class=tab><a href="#sound-set-loop-info">sound-set-loop-info</a></em></td></tr>
+  <tr><td><em class=tab><a href="#*clm-news*">*clm-news*</a></em></td><td><em class=tab><a href="#granulate">granulate</a></em></td><td><em class=tab><a href="#multiply-arrays">multiply-arrays</a></em></td><td><em class=tab><a href="#partials-&gt;waveshape">partials-&gt;waveshape</a></em></td><td><em class=tab><a href="#sound-srate">sound-srate</a></em></td></tr>
+  <tr><td><em class=tab><a href="#*clm-notehook*">*clm-notehook*</a></em></td><td><em class=tab><a href="#granulate?">granulate?</a></em></td><td><em class=tab><a href="#mus-a0">mus-a0</a></em></td><td><em class=tab><a href="#phase-partials-&gt;wave">phase-partials-&gt;wave</a></em></td><td><em class=tab><a href="#sound-type-name">sound-type-name</a></em></td></tr>
+  <tr><td><em class=tab><a href="#*clm-play*">*clm-play*</a></em></td><td><em class=tab><a href="#header-types"><b>Headers </b></a></em></td><td><em class=tab><a href="#mus-a1">mus-a1</a></em></td><td><em class=tab><a href="#phase-vocoder">phase-vocoder</a></em></td><td><em class=tab><a href="#spectrum">spectrum</a></em></td></tr>
+  <tr><td><em class=tab><a href="#*clm-player*">*clm-player*</a></em></td><td><em class=tab><a href="#clm-help"><b>Help </b></a></em></td><td><em class=tab><a href="#mus-a2">mus-a2</a></em></td><td><em class=tab><a href="#phase-vocoder?">phase-vocoder?</a></em></td><td><em class=tab><a href="#square-wave">square-wave</a></em></td></tr>
+  <tr><td><em class=tab><a href="#clm-print">clm-print</a></em></td><td><em class=tab><a href="#hz-&gt;radians">hz-&gt;radians</a></em></td><td><em class=tab><a href="#mus-aifc">mus-aifc</a></em></td><td><em class=tab><a href="#polar-&gt;rectangular">polar-&gt;rectangular</a></em></td><td><em class=tab><a href="#square-wave?">square-wave?</a></em></td></tr>
+  <tr><td><em class=tab><a href="#clm-random">clm-random</a></em></td><td><em class=tab><a href="#iir-filter">iir-filter</a></em></td><td><em class=tab><a href="#mus-aiff">mus-aiff</a></em></td><td><em class=tab><a href="#polynomial">polynomial</a></em></td><td><em class=tab><a href="#src">src</a></em></td></tr>
+  <tr><td><em class=tab><a href="#*clm-safety*">*clm-safety*</a></em></td><td><em class=tab><a href="#iir-filter?">iir-filter?</a></em></td><td><em class=tab><a href="#mus-b1">mus-b1</a></em></td><td><em class=tab><a href="#pulse-train">pulse-train</a></em></td><td><em class=tab><a href="#src?">src?</a></em></td></tr>
+  <tr><td><em class=tab><a href="#*clm-search-list*">*clm-search-list*</a></em></td><td><em class=tab><a href="#in-any">in-any</a></em></td><td><em class=tab><a href="#mus-b2">mus-b2</a></em></td><td><em class=tab><a href="#pulse-train?">pulse-train?</a></em></td><td><em class=tab><a href="#start-snd">start-snd</a></em></td></tr>
+  <tr><td><em class=tab><a href="#*clm-source-directory*">*clm-source-directory*</a></em></td><td><em class=tab><a href="#ina">ina</a></em></td><td><em class=tab><a href="#musbank">mus-bank</a></em></td><td><em class=tab><a href="#radians-&gt;degrees">radians-&gt;degrees</a></em></td><td><em class=tab><a href="#stop-dac">stop-dac</a></em></td></tr>
+  <tr><td><em class=tab><a href="#*clm-srate*">*clm-srate*</a></em></td><td><em class=tab><a href="#inb">inb</a></em></td><td><em class=tab><a href="#mus-bshort">mus-bshort</a></em></td><td><em class=tab><a href="#radians-&gt;hz">radians-&gt;hz</a></em></td><td><em class=tab><a href="#stretch-envelope">stretch-envelope</a></em></td></tr>
+  <tr><td><em class=tab><a href="#*clm-table-size*">*clm-table-size*</a></em></td><td><em class=tab><a href="#*input*">*input*</a></em></td><td><em class=tab><a href="#mus-channel">mus-channel</a></em></td><td><em class=tab><a href="#rand">rand</a></em></td><td><em class=tab><a href="#sum-of-cosines">sum-of-cosines</a></em></td></tr>
+  <tr><td><em class=tab><a href="#*clm-version*">*clm-version*</a></em></td><td><em class=tab><a href="#ina-outa"><b>Input and output</b></a></em></td><td><em class=tab><a href="#mus-channels">mus-channels</a></em></td><td><em class=tab><a href="#rand-interp">rand-interp</a></em></td><td><em class=tab><a href="#sum-of-cosines?">sum-of-cosines?</a></em></td></tr>
+  <tr><td><em class=tab><a href="#close-input">close-input</a></em></td><td><em class=tab><a href="#ins-var">ins-var</a></em></td><td><em class=tab><a href="#mus-close">mus-close</a></em></td><td><em class=tab><a href="#rand-interp?">rand-interp?</a></em></td><td><em class=tab><a href="#sum-of-sines">sum-of-sines</a></em></td></tr>
+  <tr><td><em class=tab><a href="#close-output">close-output</a></em></td><td><em class=tab><a href="#instrument-let">instrument-let</a></em></td><td><em class=tab><a href="#mus-cosines">mus-cosines</a></em></td><td><em class=tab><a href="#rand?">rand?</a></em></td><td><em class=tab><a href="#table-lookup">table-lookup</a></em></td></tr>
+  <tr><td><em class=tab><a href="#comb">comb</a></em></td><td><em class=tab><a href="#ins-files"><b>Instruments</b></a></em></td><td><em class=tab><a href="#mus-create">mus-create</a></em></td><td><em class=tab><a href="#random-numbers"><b>Random numbers</b></a></em></td><td><em class=tab><a href="#table-lookup?">table-lookup?</a></em></td></tr>
+  <tr><td><em class=tab><a href="#comb?">comb?</a></em></td><td><em class=tab><a href="#linear-&gt;db">linear-&gt;db</a></em></td><td><em class=tab><a href="#mus-data">mus-data</a></em></td><td><em class=tab><a href="#raw-data"><b>raw data </b></a></em></td><td><em class=tab><a href="#tap">tap</a></em></td></tr>
+  <tr><td><em class=tab><a href="#continue-sample-&gt;file">continue-sample-&gt;file</a></em></td><td><em class=tab><a href="#linux-help">linux-help</a></em></td><td><em class=tab><a href="#mus-feedback">mus-feedback</a></em></td><td><em class=tab><a href="#rc">rc</a></em></td><td><em class=tab><a href="#times-&gt;samples">times-&gt;samples</a></em></td></tr>
+  <tr><td><em class=tab><a href="#contrast-enhancement">contrast-enhancement</a></em></td><td><em class=tab><a href="#locsig">locsig</a></em></td><td><em class=tab><a href="#mus-feedforward">mus-feedforward</a></em></td><td><em class=tab><a href="#*rc-directory*">*rc-directory*</a></em></td><td><em class=tab><a href="#to-snd">to-snd</a></em></td></tr>
+  <tr><td><em class=tab><a href="#convolution">convolution</a></em></td><td><em class=tab><a href="#locsig-ref">locsig-ref</a></em></td><td><em class=tab><a href="#mus-file-name">mus-file-name</a></em></td><td><em class=tab><a href="#readin">readin</a></em></td><td><em class=tab><a href="#triangle-wave">triangle-wave</a></em></td></tr>
+  <tr><td><em class=tab><a href="#convolve">convolve</a></em></td><td><em class=tab><a href="#locsig-reverb-ref">locsig-reverb-ref</a></em></td><td><em class=tab><a href="#mus-formant-radius">mus-formant-radius</a></em></td><td><em class=tab><a href="#readin?">readin?</a></em></td><td><em class=tab><a href="#triangle-wave?">triangle-wave?</a></em></td></tr>
+  <tr><td><em class=tab><a href="#convolvefiles">convolve-files</a></em></td><td><em class=tab><a href="#locsig-reverb-set!">locsig-reverb-set!</a></em></td><td><em class=tab><a href="#mus-frequency">mus-frequency</a></em></td><td><em class=tab><a href="#realtimecontrols"><b>Realtime Controls</b></a></em></td><td><em class=tab><a href="#two-pi">two-pi</a></em></td></tr>
+  <tr><td><em class=tab><a href="#convolve?">convolve?</a></em></td><td><em class=tab><a href="#locsig-set!">locsig-set!</a></em></td><td><em class=tab><a href="#mus-hop">mus-hop</a></em></td><td><em class=tab><a href="#rec-any">rec-any</a></em></td><td><em class=tab><a href="#two-pole">two-pole</a></em></td></tr>
+  <tr><td><em class=tab><a href="#cross-synthesis"><b>cross synthesis</b></a></em></td><td><em class=tab><a href="#locsig?">locsig?</a></em></td><td><em class=tab><a href="#mus-increment">mus-increment</a></em></td><td><em class=tab><a href="#receive-snd">receive-snd</a></em></td><td><em class=tab><a href="#two-pole?">two-pole?</a></em></td></tr>
+  <tr><td><em class=tab><a href="#dac">dac</a></em></td><td><em class=tab><a href="#make-all-pass">make-all-pass</a></em></td><td><em class=tab><a href="#mus-input?">mus-input?</a></em></td><td><em class=tab><a href="#rectangular-&gt;polar">rectangular-&gt;polar</a></em></td><td><em class=tab><a href="#two-zero">two-zero</a></em></td></tr>
+  <tr><td><em class=tab><a href="#header-types"><b>Data formats </b></a></em></td><td><em class=tab><a href="#make-asymmetric-fm">make-asymmetric-fm</a></em></td><td><em class=tab><a href="#mus-ircam">mus-ircam</a></em></td><td><em class=tab><a href="#reopen-output">reopen-output</a></em></td><td><em class=tab><a href="#two-zero?">two-zero?</a></em></td></tr>
+  <tr><td><em class=tab><a href="#db-&gt;linear">db-&gt;linear</a></em></td><td><em class=tab><a href="#make-buffer">make-buffer</a></em></td><td><em class=tab><a href="#mus-length">mus-length</a></em></td><td><em class=tab><a href="#restart-clm">restart-clm</a></em></td><td><em class=tab><a href="#user-defined-ugs"><b>User-defined generators </b></a></em></td></tr>
+  <tr><td><em class=tab><a href="#debugging-aids"><b>Debugging </b></a></em></td><td><em class=tab><a href="#make-comb">make-comb</a></em></td><td><em class=tab><a href="#mus-location">mus-location</a></em></td><td><em class=tab><a href="#restart-env">restart-env</a></em></td><td><em class=tab><a href="#volume">volume</a></em></td></tr>
+  <tr><td><em class=tab><a href="#def-clm-fun">def-clm-fun</a></em></td><td><em class=tab><a href="#make-convolve">make-convolve</a></em></td><td><em class=tab><a href="#mus-offset">mus-offset</a></em></td><td><em class=tab><a href="#*reverb*">*reverb*</a></em></td><td><em class=tab><a href="#wave-train">wave-train</a></em></td></tr>
+  <tr><td><em class=tab><a href="#def-clm-struct">def-clm-struct</a></em></td><td><em class=tab><a href="#make-delay">make-delay</a></em></td><td><em class=tab><a href="#mus-open-read">mus-open-read</a></em></td><td><em class=tab><a href="#ring-modulate">ring-modulate</a></em></td><td><em class=tab><a href="#wave-train?">wave-train?</a></em></td></tr>
+  <tr><td><em class=tab><a href="#definstrument">definstrument</a></em></td><td><em class=tab><a href="#make-env">make-env</a></em></td><td><em class=tab><a href="#mus-open-write">mus-open-write</a></em></td><td><em class=tab><a href="#run">run</a></em></td><td><em class=tab><a href="#waveshape">waveshape</a></em></td></tr>
+  <tr><td><em class=tab><a href="#defpinstrument">defpinstrument</a></em></td><td><em class=tab><a href="#make-fft-window">make-fft-window</a></em></td><td><em class=tab><a href="#mus-order">mus-order</a></em></td><td><em class=tab><a href="#run*">run*</a></em></td><td><em class=tab><a href="#waveshape?">waveshape?</a></em></td></tr>
+  <tr><td><em class=tab><a href="#degrees-&gt;radians">degrees-&gt;radians</a></em></td><td><em class=tab><a href="#make-file-&gt;frame">make-file-&gt;frame</a></em></td><td><em class=tab><a href="#mus-output?">mus-output?</a></em></td><td><em class=tab><a href="#lisp-functions"><b>Run support for Lisp</b></a></em></td><td><em class=tab><a href="#window-envelope">window-envelope</a></em></td></tr>
+  <tr><td><em class=tab><a href="#delay">delay</a></em></td><td><em class=tab><a href="#make-file-&gt;sample">make-file-&gt;sample</a></em></td><td><em class=tab><a href="#mus-phase">mus-phase</a></em></td><td><em class=tab><a href="#sample-&gt;buffer">sample-&gt;buffer</a></em></td><td><em class=tab><a href="#with-dac">with-dac</a></em></td></tr>
+  <tr><td><em class=tab><a href="#delay?">delay?</a></em></td><td><em class=tab><a href="#make-filter">make-filter</a></em></td><td><em class=tab><a href="#mus-ramp">mus-ramp</a></em></td><td><em class=tab><a href="#sample-&gt;file">sample-&gt;file</a></em></td><td><em class=tab><a href="#with-mix">with-mix</a></em></td></tr>
+  <tr><td><em class=tab><a href="#describe-instrument">describe-instrument</a></em></td><td><em class=tab><a href="#make-fir-filter">make-fir-filter</a></em></td><td><em class=tab><a href="#mus-random">mus-random</a></em></td><td><em class=tab><a href="#sample-&gt;file?">sample-&gt;file?</a></em></td><td><em class=tab><a href="#with-offset">with-offset</a></em></td></tr>
+  <tr><td><em class=tab><a href="#with-psound"><b>Direct to DAC </b></a></em></td><td><em class=tab><a href="#make-formant">make-formant</a></em></td><td><em class=tab><a href="#mus-reopen-write">mus-reopen-write</a></em></td><td><em class=tab><a href="#sample-&gt;frame">sample-&gt;frame</a></em></td><td><em class=tab><a href="#with-psound">with-psound</a></em></td></tr>
+  <tr><td><em class=tab><a href="#dlocsig">dlocsig</a></em></td><td><em class=tab><a href="#make-frame">make-frame</a></em></td><td><em class=tab><a href="#mus-riff">mus-riff</a></em></td><td><em class=tab><a href="#make-src"><b>sampling-rate conversion</b></a></em></td><td><em class=tab><a href="#with-sound">with-sound</a></em></td></tr>
+  <tr><td><em class=tab><a href="#dot-product">dot-product</a></em></td><td><em class=tab><a href="#make-frame-&gt;file">make-frame-&gt;file</a></em></td><td><em class=tab><a href="#mus-run">mus-run</a></em></td><td><em class=tab><a href="#save-signal">save-signal</a></em></td>
 </tr>
-  <tr><td><em class=tab><a href="clm.html#env">env</a></em></td><td><em class=tab><a href="clm.html#make-granulate">make-granulate</a></em></td><td><em class=tab><a href="clm.html#mus-scaler">mus-scaler</a></em></td><td><em class=tab><a href="clm.html#savedimages"><b>saved images</b></a></em></td>
+  <tr><td><em class=tab><a href="#env">env</a></em></td><td><em class=tab><a href="#make-granulate">make-granulate</a></em></td><td><em class=tab><a href="#mus-scaler">mus-scaler</a></em></td><td><em class=tab><a href="#savedimages"><b>saved images</b></a></em></td>
 </tr>
 
 </table>

@@ -1212,15 +1212,15 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
 #define MAX_SINGLE_FFT_SIZE 1048576
 /* TODO: can't max filter fft size be dependent on available memory? */
 
-static Float convolve_next_sample(void *ptr, int dir)
-{
-  return(read_sample_to_float(((snd_fd *)ptr)));
-}
-
 /* TODO: perhaps save filter coeffs and re-use? */
 
 #if HAVE_FFTW || HAVE_FFTW3
 #define TWO_30 1073741824
+
+static Float convolve_next_sample(void *ptr, int dir)
+{
+  return(read_sample_to_float(((snd_fd *)ptr)));
+}
 
 static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t beg, off_t dur, 
 				const char *origin, enved_progress_t from_enved, Float *precalculated_coeffs)

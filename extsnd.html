@@ -5,8 +5,7 @@
 <!-- 
 	EM.red {color:red; font-style: normal}
         EM.error {color:chocolate; font-style: normal}
-        EM.narg {color:chocolate; font-style: normal}
-        EM.targ {color:darkgreen; font-style: normal}
+        EM.narg {color:darkgreen; font-style: normal}
         EM.typing {color:maroon; font-style: normal}
         EM.listener {color:darkblue; font-style: normal}
 	H1 {text-align: center}
@@ -1422,17 +1421,6 @@ called when the mouse leaves a text widget.
 called upon a mouse button press within the lisp graph (see enved.scm).  The x and y values are 
 relative to the lisp graph axis (as if the raw mouse pixel position was passed through
 <a href="#position2x">position-&gt;x</a> and <a href="#position2y">position-&gt;y</a>).
-</td></tr>
-<tr><td colspan=3></td></tr>
-
-<!-- multichannel-mix-hook -->
-<tr><td colspan=2>
-<code><a class=def name="multichannelmixhook">multichannel-mix-hook</a> (track-id)</code></td><td align=right><b>progn</b></td>
-</tr>
-<tr><td></td><td colspan=2>
-called when a multichannel sound is mixed.
-<i>track-id</i> is the default track id (usually 0).  The hook function returns the (possibly different) track id used
-by all the mixes.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -3920,36 +3908,12 @@ It's easy to extend the notion of a selection to an arbitrary list of sound port
 
 <p>This is the heart of Snd; we've waded through all the ancillary junk, and we've
 finally reached the functions that actually edit sounds!  Most of these functions
-take both a sound index and a channel number.  To make global operations simpler to achieve,
-some of the <i>snd</i> and <i>chan</i> arguments can be #t, referring to all current sounds or all channels of a sound; 
-of these, some default to the currently selected sound if no argument is given, whereas others
-(mainly for historical reasons) default to all sounds and channels;
-the former are indicated as <em class=targ>snd</em> or <em class=targ>snd chn</em> below,
-and the latter as <em class=narg>snd</em> or <em class=narg>snd chn</em>.
-Also, in most of the signal-processing functions, the <i>snd</i> argument can also be
-a list; in this case it refers to a mix.  For example, the <b>cursor</b> function,
-which refers to the current cursor location, is listed here as:
-</p>
-<pre>
-  cursor           (<em class=targ>snd chn</em>)     cursor location
-</pre>
-<p>which indicates that <code>(<a class=quiet href="#cursor">cursor</a> 0 0)</code> returns the cursor location in sound 0, channel 0,
-<code>(<a class=quiet href="#cursor">cursor</a>)</code> returns the location in the currently selected sound, <code>(<a class=quiet href="#cursor">cursor</a> #t #t)</code>
-returns a list of lists of all the cursor locations, and <code>(set! (<a class=quiet href="#cursor">cursor</a>) 0)</code> sets (just) the
-cursor in the currently selected channel;
-on the other hand, the <b>transform-size</b> function
-is listed as:</p>
-<pre>
-  transform-size         (<em class=narg>snd chn</em>)     FFT size.
-</pre>
-<p>which means that <code>(<a class=quiet href="#lfftsize">transform-size</a> 0 0)</code> returns the fft size used in sound 0, channel 0,
-<code>(<a class=quiet href="#lfftsize">transform-size</a>)</code> returns the globally effective fft size, <code>(<a class=quiet href="#lfftsize">transform-size</a> #t #t)</code>
-returns a list of lists of all the fft sizes, and <code>(set! (<a class=quiet href="#lfftsize">transform-size</a>) 512)</code> sets all
-fft sizes to 512.</p>
-
-<p>The variables are local to each sound or each channel.
-That is, <code>(<a class=quiet href="#ampcontrol">amp-control</a> snd)</code> returns the control-panel amp setting, and <code>(set! (<a class=quiet href="#ampcontrol">amp-control</a> snd) val)</code>
-sets its value to val.  
+take both a sound index and a channel number.  When the function refers to a variable
+that can be set locally on a sound (zero-pad, for example), 
+the <i>snd</i> and <i>chn</i> arguments can be #t, referring to all current sounds or all channels of a sound;
+this possibility is identified below by marking the arguments as
+<em class=narg>snd</em> or <em class=narg>snd chn</em>;
+in such a case, if the <i>snd</i> argument is #t, the channel defaults to the selected channel.
 </p>
 
 <p>Many of the procedures also have an <i>edpos</i> argument (standing for "edit position").
@@ -4118,7 +4082,7 @@ by make-variable-display.  See <b>make-variable-display</b> in snd-motif.scm.
 
 <!-- channel-properties -->
 <tr><td colspan=2>
-<code><a class=def name="channelproperties">channel-properties</a> (<em class=targ>snd chn</em>)</code>
+<code><a class=def name="channelproperties">channel-properties</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
 A property list associated with the given channel.  It is set to '() at the time a sound is opened.  The accessor
@@ -4186,8 +4150,8 @@ See also <i>mark-explode</i> in marks.scm.
 
 <!-- channels -->
 <tr><td colspan=2>
-<code><a class=def name="channels">channels</a> (<em class=targ>snd</em>)</code> 
-<br><code><a class=def name="chans">chans</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="channels">channels</a> (<em class=narg>snd</em>)</code> 
+<br><code><a class=def name="chans">chans</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 number of channels in <i>snd</i>.
@@ -4231,17 +4195,18 @@ This is used by some of the <a class=quiet href="#regularizedargs">regularized</
 
 <!-- close-sound -->
 <tr><td colspan=2>
-<code><a class=def name="closesound">close-sound</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="closesound">close-sound</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-close <i>snd</i> (same as File menu Close). To close all: <code>(for-each close-sound (<a class=quiet href="#sounds">sounds</a>))</code>.
+close <i>snd</i> (same as File menu Close). To close all: <code>(close-sound #t)</code>
+which is the same as <code>(for-each close-sound (<a class=quiet href="#sounds">sounds</a>))</code>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
 
 <!-- comment -->
 <tr><td colspan=2>
-<code><a class=def name="comment">comment</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="comment">comment</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 <i>snd</i>'s comment, if any (this refers initially to the file's header which can often contain a comment, identical
@@ -4305,7 +4270,7 @@ This function is obviously modelled on Emacs. It could be defined along these li
 
 <!-- cursor -->
 <tr><td colspan=2>
-<code><a class=def name="cursor">cursor</a> (<em class=targ>snd chn edpos</em>)</code>
+<code><a class=def name="cursor">cursor</a> (<em class=narg>snd chn</em> <i>edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
 cursor location (as a sample number, first sample is numbered 0) in channel <i>chn</i> of <i>snd</i>.
@@ -4332,7 +4297,7 @@ Display data about sample under cursor: <a href="#verbosecursor">verbose cursor<
 
 <!-- cursor-follows-play -->
 <tr><td colspan=2>
-<code><a class=def name="cursorfollowsplay">cursor-follows-play</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="cursorfollowsplay">cursor-follows-play</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 #t if cursor is following along in the sound as it plays.  To make this the default:<br><br>
@@ -4359,7 +4324,7 @@ leave the cursor at the final position after tracking play: if-cursor-follows-pl
 
 <!-- cursor-position -->
 <tr><td colspan=2>
-<code><a class=def name="cursorposition">cursor-position</a> (<em class=targ>snd chn</em>)</code>
+<code><a class=def name="cursorposition">cursor-position</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
 current cursor position as a list (x y).
@@ -4435,7 +4400,7 @@ replaces the normal "+" cursor with an "x":
 
 <!-- data-format -->
 <tr><td colspan=2>
-<code><a class=def name="dataformat">data-format</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="dataformat">data-format</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 <i>snd</i>'s data format (e.g. mus-bshort).  <br><br>If you encounter a file
@@ -4495,7 +4460,7 @@ The default output (new-sound, save-sound-as) data-format is <a href="#defaultou
 
 <!-- data-location -->
 <tr><td colspan=2>
-<code><a class=def name="datalocation">data-location</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="datalocation">data-location</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 The location of the sound samples (an offset in bytes) in the file represented by <i>snd</i>.  In a raw (headerless) file,
@@ -4508,7 +4473,7 @@ If you set this field (you don't want to do this!), the underlying file is immed
 
 <!-- data-size -->
 <tr><td colspan=2>
-<code><a class=def name="datasize">data-size</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="datasize">data-size</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 The size of the sound data in bytes in the file represented by <i>snd</i>.
@@ -4711,7 +4676,7 @@ its value here should fall between 0.0 and 1.0.
 
 <!-- file-name -->
 <tr><td colspan=2>
-<code><a class=def name="filename">file-name</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="filename">file-name</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 <i>snd</i>'s complete (or "absolute") file name (that is, the directory is included; see <a href="#shortfilename">short-file-name</a>
@@ -4889,7 +4854,7 @@ move the selected channel forward (down or right) <i>count</i> graphs (C-x C-o),
 
 <!-- frames -->
 <tr><td colspan=2>
-<code><a class=def name="frames">frames</a> (<em class=targ>snd chn</em> <i>edpos</i>)</code>
+<code><a class=def name="frames">frames</a> (<em class=narg>snd chn</em> <i>edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
 <i>chn</i>'s current length in samples.  Used with set!, this either truncates 
@@ -4970,7 +4935,7 @@ are arranged vertically or horizontally.
 
 <!-- header-type -->
 <tr><td colspan=2>
-<code><a class=def name="headertype">header-type</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="headertype">header-type</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 The header type (e.g. mus-aiff) of the file that underlies <i>snd</i>.  Snd can read about 60 header types, and write 7 or so.
@@ -5067,7 +5032,7 @@ channels are inserted. To append a sound to another, padding at the end with som
 
 <!-- left-sample -->
 <tr><td colspan=2>
-<code><a class=def name="leftsample">left-sample</a> (<em class=targ>snd chn</em>)</code>
+<code><a class=def name="leftsample">left-sample</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
 return the position in samples of the left edge of the time domain
@@ -5108,7 +5073,7 @@ Axis description: <a href="#axisinfo">axis-info</a><br>
 
 <!-- lisp-graph? -->
 <tr><td colspan=2>
-<code><a class=def name="lispgraphp">lisp-graph?</a> (<em class=targ>snd chn</em>)</code>
+<code><a class=def name="lispgraphp">lisp-graph?</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
 #t if lisp-generated graph is currently displayed.  This graph section is also active if there's an active function
@@ -5132,7 +5097,7 @@ graph-lines  graph-dots  graph-filled  graph-lollipops  graph-dots-and-lines
 
 <!-- make-player -->
 <tr><td colspan=2>
-<code><a class=def name="makeplayer">make-player</a> (<em class=narg>snd chn</em>)</code>
+<code><a class=def name="makeplayer">make-player</a> (snd chn)</code>
 </td></tr>
 <tr><td></td><td>
 make a new player associated with <i>snd</i>'s channel <i>chn</i>.
@@ -5353,7 +5318,7 @@ the preceding edit in the list will be the <code>(set! (<a class=quiet href="#sa
 
 <!-- maxamp -->
 <tr><td colspan=2>
-<code><a class=def name="maxamp">maxamp</a> (<em class=targ>snd chn</em> <i>edpos</i>)</code>
+<code><a class=def name="maxamp">maxamp</a> (<em class=narg>snd chn</em> <i>edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
 max amp of <i>snd</i>'s channel <i>chn</i>.  Used with set!, this is equivalent to scale-to.
@@ -6084,7 +6049,7 @@ between beg and beg + dur by a ramp going from rmp0 to rmp1. (<b>ramp-channel</b
 
 <!-- read-only -->
 <tr><td colspan=2>
-<code><a class=def name="readonly">read-only</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="readonly">read-only</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 #t if <i>snd</i> is read-only, #f otherwise.  <a href="#viewsound">view-sound</a> sets this field to #t.
@@ -6191,7 +6156,7 @@ revert <i>snd</i> to saved state (<a class=quiet href="#undo">undo</a> all edits
 
 <!-- right-sample -->
 <tr><td colspan=2>
-<code><a class=def name="rightsample">right-sample</a> (<em class=targ>snd chn</em>)</code>
+<code><a class=def name="rightsample">right-sample</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
 position (in samples) of right edge of time domain waveform.  See <a href="#leftsample">left-sample</a>, many examples in examp.scm,
@@ -6299,7 +6264,7 @@ There are many examples in examp.scm and dsp.scm.
 
 <!-- save-sound -->
 <tr><td colspan=2>
-<code><a class=def name="savesound">save-sound</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="savesound">save-sound</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 save <i>snd</i>; same as File menu's Save option. <a href="#savehook">save-hook</a> is invoked upon save-sound.
@@ -6652,7 +6617,7 @@ The form (set! (<a class=quiet href="#samples">samples</a> samp samps <i>snd chn
 
 <!-- short-file-name -->
 <tr><td colspan=2>
-<code><a class=def name="shortfilename">short-file-name</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="shortfilename">short-file-name</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 return the brief (no directory) form of <i>snd</i>'s filename.
@@ -6958,7 +6923,7 @@ Same for z-axis (default 0.1, in GL: 1.0).
 
 <!-- squelch-update -->
 <tr><td colspan=2>
-<code><a class=def name="squelchupdate">squelch-update</a> (<em class=targ>snd chn</em>)</code>
+<code><a class=def name="squelchupdate">squelch-update</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
 #t if graphic updates squelched (turned off).  If you're doing a sequence of edits where intermediate
@@ -6969,7 +6934,7 @@ states aren't of great interest, you can save time by turning off redisplays.
 
 <!-- srate -->
 <tr><td colspan=2>
-<code><a class=def name="srate">srate</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="srate">srate</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 <i>snd</i>'s sampling rate.  There are several srates floating around in Snd.  <code>(srate snd)</code> returns the
@@ -7137,7 +7102,7 @@ In simple cases, this is a virtual operation.
 
 <!-- sync -->
 <tr><td colspan=2>
-<code><a class=def name="sync">sync</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="sync">sync</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 <i>snd</i>'s 'sync' value (an integer, 0=none). Several functions (scale-by, for example), apply to the
@@ -7151,7 +7116,7 @@ move together when you drag an x-axis slider and so on.
 
 <!-- time-graph? -->
 <tr><td colspan=2>
-<code><a class=def name="timegraphp">time-graph?</a> (<em class=targ>snd chn</em>)</code>
+<code><a class=def name="timegraphp">time-graph?</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
 #t if the time domain graph is being displayed (the 'w' button).
@@ -7185,7 +7150,7 @@ The default is <code>graph-once</code>.  See also <a href="#wavohop">wavo-hop</a
 
 <!-- transform-graph? -->
 <tr><td colspan=2>
-<code><a class=def name="transformgraphp">transform-graph?</a> (<em class=targ>snd chn</em>)</code>
+<code><a class=def name="transformgraphp">transform-graph?</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
 #t if <i>snd</i>'s channel <i>chn</i> is displaying a spectrum (the 'f' button).
@@ -7473,7 +7438,7 @@ return the graph position that corresponds to the X axis value <i>x</i>. <i>axis
 
 <!-- x-position-slider -->
 <tr><td colspan=2>
-<code><a class=def name="xpositionslider">x-position-slider</a> (<em class=targ>snd chn</em>)</code>
+<code><a class=def name="xpositionslider">x-position-slider</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
 value of x axis position slider.  See <i>zoom-fft</i> in examp.scm.
@@ -7483,7 +7448,7 @@ value of x axis position slider.  See <i>zoom-fft</i> in examp.scm.
 
 <!-- x-zoom-slider -->
 <tr><td colspan=2>
-<code><a class=def name="xzoomslider">x-zoom-slider</a> (<em class=targ>snd chn</em>)</code>
+<code><a class=def name="xzoomslider">x-zoom-slider</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
 value of x axis zoom slider.  See <a href="#zoomonepixel">zoom-one-pixel</a>.
@@ -7549,7 +7514,7 @@ This is used in <i>samples-via-colormap</i> in draw.scm to draw the time domain 
 
 <!-- y-position-slider -->
 <tr><td colspan=2>
-<code><a class=def name="ypositionslider">y-position-slider</a> (<em class=targ>snd chn</em>)</code>
+<code><a class=def name="ypositionslider">y-position-slider</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
 value of y axis position slider.  See <i>zync</i> in snd-motif.scm.
@@ -7559,7 +7524,7 @@ value of y axis position slider.  See <i>zync</i> in snd-motif.scm.
 
 <!-- y-zoom-slider -->
 <tr><td colspan=2>
-<code><a class=def name="yzoomslider">y-zoom-slider</a> (<em class=targ>snd chn</em>)</code>
+<code><a class=def name="yzoomslider">y-zoom-slider</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
 value of y axis zoom slider.
@@ -7621,7 +7586,7 @@ The control panel procedures are:
 
 <!-- amp-control -->
 <tr><td colspan=2>
-<code><a class=def name="ampcontrol">amp-control</a> (<em class=targ>snd chn</em>)</code>
+<code><a class=def name="ampcontrol">amp-control</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td width=50><br></td><td>
 The current amp value.
@@ -7637,7 +7602,7 @@ apply button (<a class=quiet href="#applycontrols">apply-controls</a>) and playb
 
 <!-- amp-control-bounds -->
 <tr><td colspan=2>
-<code><a class=def name="ampcontrolbounds">amp-control-bounds</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="ampcontrolbounds">amp-control-bounds</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 The amp-control min and max amounts as a list.  The default is
@@ -7672,7 +7637,7 @@ For many examples see new-effects.scm.
 
 <!-- contrast-control -->
 <tr><td colspan=2>
-<code><a class=def name="contrastcontrol">contrast-control</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="contrastcontrol">contrast-control</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 The <a class=quiet href="snd.html#contrast">contrast</a> amount.
@@ -7685,7 +7650,7 @@ whereas <i>contrast-control-amp</i> below prescales the in-coming signal to be c
 
 <!-- contrast-control-amp -->
 <tr><td colspan=2>
-<code><a class=def name="contrastcontrolamp">contrast-control-amp</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="contrastcontrolamp">contrast-control-amp</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 The <a class=quiet href="snd.html#contrast">contrast-control-amp</a> (a prescaler on the contrast-enhancement to get the
@@ -7696,7 +7661,7 @@ full effect of the compander).
 
 <!-- contrast-control-bounds -->
 <tr><td colspan=2>
-<code><a class=def name="contrastcontrolbounds">contrast-control-bounds</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="contrastcontrolbounds">contrast-control-bounds</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 The contrast-control min and max amounts as a list.  The default is
@@ -7707,7 +7672,7 @@ The contrast-control min and max amounts as a list.  The default is
 
 <!-- contrast-control? -->
 <tr><td colspan=2>
-<code><a class=def name="contrastcontrolp">contrast-control?</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="contrastcontrolp">contrast-control?</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 #t if the <a class=quiet href="snd.html#contrast">contrast</a> button is set (i.e. the contrast compander is active).
@@ -7717,7 +7682,7 @@ The contrast-control min and max amounts as a list.  The default is
 
 <!-- expand-control -->
 <tr><td colspan=2>
-<code><a class=def name="expandcontrol">expand-control</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="expandcontrol">expand-control</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 The <a class=quiet href="snd.html#expand">expansion</a> amount.  This sets the ratio between the
@@ -7728,7 +7693,7 @@ output and input grain spacing.  If it is greater than 1.0, the result is longer
 
 <!-- expand-control-bounds -->
 <tr><td colspan=2>
-<code><a class=def name="expandcontrolbounds">expand-control-bounds</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="expandcontrolbounds">expand-control-bounds</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 The expand-control min and max amounts as a list.  The default is
@@ -7739,7 +7704,7 @@ The expand-control min and max amounts as a list.  The default is
 
 <!-- expand-control-hop -->
 <tr><td colspan=2>
-<code><a class=def name="expandcontrolhop">expand-control-hop</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="expandcontrolhop">expand-control-hop</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 The <a class=quiet href="snd.html#expand">expansion</a> hop amount in seconds (the distance between successive grains).
@@ -7749,7 +7714,7 @@ The <a class=quiet href="snd.html#expand">expansion</a> hop amount in seconds (t
 
 <!-- expand-control-jitter -->
 <tr><td colspan=2>
-<code><a class=def name="expandcontroljitter">expand-control-jitter</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="expandcontroljitter">expand-control-jitter</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 The <a class=quiet href="snd.html#expand">expansion</a> grain timing jitter.  This defaults to .1; if you set it
@@ -7760,7 +7725,7 @@ to too small a number (0.0 for example), you'll probably notice (unwanted) notch
 
 <!-- expand-control-length -->
 <tr><td colspan=2>
-<code><a class=def name="expandcontrollength">expand-control-length</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="expandcontrollength">expand-control-length</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 The <a class=quiet href="snd.html#expand">expansion</a> segment (grain) length in seconds.  The longer the grain,
@@ -7771,7 +7736,7 @@ the more reverberated or slurred the effect.
 
 <!-- expand-control-ramp -->
 <tr><td colspan=2>
-<code><a class=def name="expandcontrolramp">expand-control-ramp</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="expandcontrolramp">expand-control-ramp</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 The <a class=quiet href="snd.html#expand">expansion</a> ramp amount (between 0 and .5).
@@ -7783,7 +7748,7 @@ rattling effect.
 
 <!-- expand-control? -->
 <tr><td colspan=2>
-<code><a class=def name="expandcontrolp">expand-control?</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="expandcontrolp">expand-control?</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 #t if the expand button is set (i.e. the expansion effect is active).
@@ -7793,7 +7758,7 @@ rattling effect.
 
 <!-- filter-control-coeffs -->
 <tr><td colspan=2>
-<code><a class=def name="filtercontrolcoeffs">filter-control-coeffs</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="filtercontrolcoeffs">filter-control-coeffs</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 The <a class=quiet href="snd.html#filtercontrol">filter</a> coefficients (read-only currently).  It is
@@ -7805,7 +7770,7 @@ a vct suitable for use with the <a href="clm.html#filter">filter generator</a> o
 
 <!-- filter-control-envelope -->
 <tr><td colspan=2>
-<code><a class=def name="filtercontrolenvelope">filter-control-envelope</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="filtercontrolenvelope">filter-control-envelope</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 The <a class=quiet href="snd.html#filtercontrol">filter</a> (frequency reponse) envelope (a list of breakpoints).
@@ -7815,7 +7780,7 @@ The <a class=quiet href="snd.html#filtercontrol">filter</a> (frequency reponse) 
 
 <!-- filter-control-in-dB -->
 <tr><td colspan=2>
-<code><a class=def name="filtercontrolindB">filter-control-in-dB</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="filtercontrolindB">filter-control-in-dB</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 The <a class=quiet href="snd.html#filtercontrol">filter</a> dB button.  If #t, the filter (frequency) envelope
@@ -7826,7 +7791,7 @@ graph is displayed in dB.
 
 <!-- filter-control-in-hz -->
 <tr><td colspan=2>
-<code><a class=def name="filtercontrolinhz">filter-control-in-hz</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="filtercontrolinhz">filter-control-in-hz</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 If #t, filter frequency response envelope (sound control panel) x axis is in Hz, otherwise 0 to 1.0 (where 1.0 corresponds to srate/2).
@@ -7836,7 +7801,7 @@ If #t, filter frequency response envelope (sound control panel) x axis is in Hz,
 
 <!-- filter-control-order -->
 <tr><td colspan=2>
-<code><a class=def name="filtercontrolorder">filter-control-order</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="filtercontrolorder">filter-control-order</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 The <a class=quiet href="snd.html#filtercontrol">filter</a> order.  This affects how much computing
@@ -7857,7 +7822,7 @@ The filter frequency response waveform color.
 
 <!-- filter-control? -->
 <tr><td colspan=2>
-<code><a class=def name="filtercontrolp">filter-control?</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="filtercontrolp">filter-control?</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 #t if the filter button is set (i.e. the filter is active).
@@ -7867,7 +7832,7 @@ The filter frequency response waveform color.
 
 <!-- reset-controls -->
 <tr><td colspan=2>
-<code><a class=def name="resetcontrols">reset-controls</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="resetcontrols">reset-controls</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 The 'Reset' button.  This sets all the controls to their default state.
@@ -7877,7 +7842,7 @@ The 'Reset' button.  This sets all the controls to their default state.
 
 <!-- restore-controls -->
 <tr><td colspan=2>
-<code><a class=def name="restorecontrols">restore-controls</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="restorecontrols">restore-controls</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 The '<a href="snd.html#savcontrols">Restore</a>' button. This sets all the
@@ -7898,7 +7863,7 @@ finished (default: 1.0).
 
 <!-- reverb-control-feedback -->
 <tr><td colspan=2>
-<code><a class=def name="reverbcontrolfeedback">reverb-control-feedback</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="reverbcontrolfeedback">reverb-control-feedback</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 The reverb feedback coefficient.  The more feedback, the happier Elvis.
@@ -7908,7 +7873,7 @@ The reverb feedback coefficient.  The more feedback, the happier Elvis.
 
 <!-- reverb-control-length -->
 <tr><td colspan=2>
-<code><a class=def name="reverbcontrollength">reverb-control-length</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="reverbcontrollength">reverb-control-length</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 The <a class=quiet href="snd.html#reverb">reverb</a> delay line length scaler. Longer reverb simulates, to some
@@ -7919,7 +7884,7 @@ extent, a bigger hall.
 
 <!-- reverb-control-length-bounds -->
 <tr><td colspan=2>
-<code><a class=def name="reverbcontrollengthbounds">reverb-control-length-bounds</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="reverbcontrollengthbounds">reverb-control-length-bounds</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 The reverb-control-length min and max amounts as a list.  The default is
@@ -7930,7 +7895,7 @@ The reverb-control-length min and max amounts as a list.  The default is
 
 <!-- reverb-control-lowpass -->
 <tr><td colspan=2>
-<code><a class=def name="reverbcontrollowpass">reverb-control-lowpass</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="reverbcontrollowpass">reverb-control-lowpass</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 The reverb low pass filter coefficient.  (This filter is in the feedback loop).
@@ -7940,7 +7905,7 @@ The reverb low pass filter coefficient.  (This filter is in the feedback loop).
 
 <!-- reverb-control-scale -->
 <tr><td colspan=2>
-<code><a class=def name="reverbcontrolscale">reverb-control-scale</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="reverbcontrolscale">reverb-control-scale</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 The <a class=quiet href="snd.html#reverb">reverb</a> amount (the amount of the direct signal sent to the reverb).
@@ -7951,7 +7916,7 @@ You can never have enough reverb.
 
 <!-- reverb-control-scale-bounds -->
 <tr><td colspan=2>
-<code><a class=def name="reverbcontrolscalebounds">reverb-control-scale-bounds</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="reverbcontrolscalebounds">reverb-control-scale-bounds</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 The reverb-control-scale min and max amounts as a list.  The default is
@@ -7962,7 +7927,7 @@ The reverb-control-scale min and max amounts as a list.  The default is
 
 <!-- reverb-control? -->
 <tr><td colspan=2>
-<code><a class=def name="reverbcontrolp">reverb-control?</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="reverbcontrolp">reverb-control?</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 #t if the reverb button is set (i.e. the reverberator is active).
@@ -7972,7 +7937,7 @@ The reverb-control-scale min and max amounts as a list.  The default is
 
 <!-- save-controls -->
 <tr><td colspan=2>
-<code><a class=def name="savecontrols">save-controls</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="savecontrols">save-controls</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 The <a href="snd.html#savcontrols">Remember</a> button.  This remembers the current
@@ -7991,7 +7956,7 @@ internally (post-expsrc-dialog, for example) can save and restore the current st
 
 <!-- show-controls -->
 <tr><td colspan=2>
-<code><a class=def name="showcontrols">show-controls</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="showcontrols">show-controls</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>#t if <i>snd</i>'s control panel is currently open.
 If set to #t, <i>snd</i>'s control panel is opened, else it is closed. 
@@ -8001,7 +7966,7 @@ If set to #t, <i>snd</i>'s control panel is opened, else it is closed.
 
 <!-- speed-control -->
 <tr><td colspan=2>
-<code><a class=def name="speedcontrol">speed-control</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="speedcontrol">speed-control</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 current <a class=quiet href="snd.html#speed">speed</a>.  A speed of 2 plays the sound twice as fast.
@@ -8011,7 +7976,7 @@ current <a class=quiet href="snd.html#speed">speed</a>.  A speed of 2 plays the 
 
 <!-- speed-control-bounds -->
 <tr><td colspan=2>
-<code><a class=def name="speedcontrolbounds">speed-control-bounds</a> (<em class=targ>snd</em>)</code>
+<code><a class=def name="speedcontrolbounds">speed-control-bounds</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 The speed-control min and max amounts as a list.  The default is
@@ -8115,7 +8080,7 @@ return the current edit list contents as a string.  If <i>edpos</i> is specified
 <!-- edit-fragment -->
 
 <tr><td colspan=2>
-<code><a class=def name="editfragment">edit-fragment</a> (<i>num</i> <em class=targ>snd chn</em>)</code>
+<code><a class=def name="editfragment">edit-fragment</a> (<i>num</i> snd chn)</code>
 </td></tr>
 <tr><td></td><td>
 return a list similar to that displayed in the edit history window giving 
@@ -8129,7 +8094,7 @@ edit.
 <!-- edit-position -->
 
 <tr><td colspan=2>
-<code><a class=def name="editposition">edit-position</a> (<em class=targ>snd chn</em>)</code>
+<code><a class=def name="editposition">edit-position</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
 current position in the edit history list; can be set.  <code>(set! (edit-position) 0)</code> is equivalent
@@ -8141,7 +8106,7 @@ See <a href="#makesamplereader">make-sample-reader</a>.
 <!-- edits -->
 
 <tr><td colspan=2>
-<code><a class=def name="edits">edits</a> (<em class=targ>snd chn</em>)</code>
+<code><a class=def name="edits">edits</a> (snd chn)</code>
 </td></tr>
 <tr><td></td><td>
 return a list with the number of undo-able edits and redo-able edits.  That is, if we have 2 undo-able edits and
@@ -9442,9 +9407,9 @@ startup arguments as a list of strings. See <a href="grfsnd.html#sndwithnogui">S
 return possible completions of <i>name</i>, a string or a symbol.
 <pre>
 :<em class=typing>(snd-apropos "mouse-enter")</em>
-<em class=listener>(guile): mouse-enter-graph-hook
+"<em class=listener>(guile): mouse-enter-graph-hook
 (guile): mouse-enter-label-hook
-(guile): mouse-enter-listener-hook
+(guile): mouse-enter-listener-hook"
 </em></pre>
 </td></tr>
 

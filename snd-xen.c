@@ -1476,8 +1476,8 @@ output data format's maximum. The default (#f) allows them to wrap-around which 
 static XEN g_zoom_focus_style(void) {return(C_TO_XEN_INT((int)zoom_focus_style(ss)));}
 static XEN g_set_zoom_focus_style(XEN focus) 
 {
-  #define H_zoom_focus_style "(" S_zoom_focus_style "): one of '(" S_zoom_focus_left ", " S_zoom_focus_right ", " S_zoom_focus_middle \
-", or " S_zoom_focus_active "). This determines what zooming centers on (default: " S_zoom_focus_active ")"
+  #define H_zoom_focus_style "(" S_zoom_focus_style "): one of " S_zoom_focus_left ", " S_zoom_focus_right ", " S_zoom_focus_middle \
+", or " S_zoom_focus_active ". This determines what zooming centers on (default: " S_zoom_focus_active ")"
   zoom_focus_t choice;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(focus), focus, XEN_ONLY_ARG, S_setB S_zoom_focus_style, "an integer"); 
   choice = (zoom_focus_t)XEN_TO_C_INT(focus);
@@ -3403,9 +3403,9 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 #if HAVE_GUILE
   XEN_EVAL_C_STRING("(define (clm-print . args) (snd-print (apply format #f args)))");
   XEN_EVAL_C_STRING("(define (" S_snd_apropos " val)\
-                       (snd-print (with-output-to-string\
-                                    (lambda ()\
-                                      (apropos (if (string? val) val (object->string val)))))))");
+                       (with-output-to-string\
+                         (lambda ()\
+                           (apropos (if (string? val) val (object->string val))))))");
   XEN_EVAL_C_STRING("(read-set! keywords 'prefix)");
   XEN_EVAL_C_STRING("(print-enable 'source)");
   XEN_EVAL_C_STRING("(defmacro declare args #f)");     /* for optimizer */

@@ -383,6 +383,9 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+23-Feb:  speed-control-tones, speed-control-style, reverb-control-decay\n\
+           now handled like other control settings\n\
+         removed Options:Speed Style menu\n\
 20-Feb:  snd 7.2\n\
 19-Feb:  filter-channel (regularized filter-sound)\n\
 18-Feb:  an enormous number of improvements to the Ruby code and snd-inf.el thanks to Michael Scholz.\n\
@@ -398,9 +401,6 @@ void about_snd_help(void)
 26-Jan:  changed filter-control-env to filter-control-envelope, \n\
            filter-waveform-color to filter-control-waveform-color,\n\
            also filter-env-in-hz to filter-control-in-hz as a sound-local variable\n\
-13-Jan:  Motif version of draw-string now adds in the font height to y0 (to mimic Gtk version).\n\
-12-Jan:  removed enved-selected-env, changed enved-active-env to enved-envelope.\n\
-9-Jan:   snd 7.1\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
@@ -579,9 +579,7 @@ The controls are: amp, speed, expand, contrast, reverb, and filter. \
 'Speed' here refers to the rate at which the sound data is consumed during playback. \
 Another term might be 'srate'.  The arrow button on the right determines \
 the direction Snd moves through the data. The scroll bar position is normally interpreted \
-as a float between .05 and 20.  The Options Speed Style menu (or the speed-control-style variable) \
-can change this to use semitones (actually microtones) or just-intonation ratios.  The number of equal \
-divisions to the octave in the semitone case is set by the variable speed-control-tones (normally 12). \
+as a float between .05 and 20. \
 \n\n\
 'Expand' refers to granular synthesis used to change the tempo of events \
 in the sound without changing pitch.  Successive short slices of the file are overlapped with \
@@ -1350,7 +1348,15 @@ static void copy_help(void)
 static void region_help(void)
 {
   snd_help_with_xrefs("Region",
-		      "A region is a portion of the sound data.",
+"A region is a portion of the sound data. When a sound portion is selected, it is (by default) saved \
+as the new region; subsequent edits will not affect the region data. You can disable the region creation \
+by setting the variable selection-creates-region to #f (its default is #t which can slow down editing \
+of very large sounds). Regions can be defined by make-region, by dragging the mouse through a portion \
+of the data, or via the Select All menu option. If the mouse drags off the end of the graph, the x axis \
+moves, in a sense dragging the data along to try to keep up with the mouse; the further away the mouse \
+is from the display, the faster the axis moves. A region can also be defined with keyboard commands, \
+much as in Emacs. C-[space] starts the region definition and the various cursor moving commands \
+continue the definition.",
 		      true,
 		      snd_xrefs("Region"),
 		      snd_xref_urls("Region"));
@@ -1426,7 +1432,42 @@ static void noise_reduction_help(void)
 static void colors_help(void)
 {
   snd_help_with_xrefs("Colors",
-		      "",
+"A color in Snd is an object with three fields representing the rgb (red green blue) settings \
+as numbers between 0.0 and 1.0. A color object is created via make-color:\n\
+\n\
+>(define blue (make-color 0 0 1))\n\
+\n\
+This declares the Scheme variable \"blue\" and gives it the value of the color whose rgb components \
+include only blue in full force. The X11 color names are defined in rgb.scm. The overall widget background color is basic-color.\n\
+\n\
+>(set! (basic-color) blue)\n\
+\n\
+The color variables are:\n\
+basic-color:  main Snd color.\n\
+cursor-color:  cursor color.\n\
+data-color:  color of data in unselected graph.\n\
+doit-button-color:  color of Ok and Apply buttons.\n\
+doit-again-button-color:  color of Undo&Apply buttons.\n\
+enved-waveform-color:  color of waveform displayed in envelope editor.\n\
+filter-control-waveform-color:  color of control panel filter waveform.\n\
+graph-color:  background color of unselected graph.\n\
+help-button-color:  color of Help buttons.\n\
+highlight-color:  highlighting color.\n\
+listener-color:  background color of lisp listener.\n\
+listener-text-color:  text color in lisp listener.\n\
+mark-color:  color of mark indicator.\n\
+mix-color:  color of mix waveforms.\n\
+position-color:  position slider color\n\
+pushed-button-color:  color of pushed button.\n\
+quit-button-color:  color of Dismiss and Cancel buttons.\n\
+reset-button-color:  color of Reset buttons.\n\
+sash-color:  color of paned window sashes.\n\
+selected-data-color:  color of data in currently selected graph.\n\
+selected-graph-color:  background color of currently selected graph.\n\
+selection-color:  color of selected portion of graph.\n\
+text-focus-color:  color of text field when it has focus.\n\
+zoom-color:  zoom slider color.\n\
+",
 		      true,
 		      snd_xrefs("Colors"),
 		      snd_xref_urls("Colors"));
@@ -2061,3 +2102,5 @@ If more than one hook function, each function gets the previous function's outpu
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_html_dir, g_html_dir_w, H_html_dir, S_setB S_html_dir, g_set_html_dir_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_html_program, g_html_program_w, H_html_program, S_setB S_html_program, g_set_html_program_w,  0, 0, 1, 0);
 }
+
+/* (for-each (lambda (n) (snd-display "~A: ~A~%~%" (car n) (snd-help (car n)))) (snd-urls)) */

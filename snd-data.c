@@ -249,9 +249,9 @@ void initialize_control_panel(snd_info *sp)
   sp->reverb_control_scale = DEFAULT_REVERB_CONTROL_SCALE;
   sp->reverb_control_scale_min = DEFAULT_REVERB_CONTROL_SCALE_MIN;
   sp->reverb_control_scale_max = DEFAULT_REVERB_CONTROL_SCALE_MAX;
-  sp->reverb_control_decay = reverb_control_decay(ss);
-  sp->speed_control_tones = speed_control_tones(ss);
-  sp->speed_control_style = speed_control_style(ss);
+  sp->reverb_control_decay = DEFAULT_REVERB_CONTROL_DECAY;
+  sp->speed_control_tones = DEFAULT_SPEED_CONTROL_TONES;
+  sp->speed_control_style = DEFAULT_SPEED_CONTROL_STYLE;
   sp->speed_control_numerator = 1;
   sp->speed_control_denominator = 1;
   sp->last_reverb_control_scale = 0.0;

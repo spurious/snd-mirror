@@ -1149,6 +1149,7 @@ formants: (map-chan (osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3)))
 			   0.000 0.250 0.450 0.600 0.720 0.820 0.900 0.960 1.000))
 
 (define* (compand-channel #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+  "(compand-channel #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f)) applies a standard compander to sound"
   ;; this is the "regularized version of the compander using ptree-channel
   (ptree-channel (lambda (inval)
 		   (let ((index (+ 8.0 (* 8.0 inval))))

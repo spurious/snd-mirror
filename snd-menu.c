@@ -429,29 +429,6 @@ void activate_focus_menu(zoom_focus_t new_focus)
     }
 }  
 
-void activate_speed_in_menu(speed_style_t newval)
-{
-  if (options_speed_ratio_menu())
-    {
-      switch (speed_control_style(ss))
-	{
-	case SPEED_CONTROL_AS_RATIO:    set_sensitive(options_speed_ratio_menu(), true);    break;
-	case SPEED_CONTROL_AS_SEMITONE: set_sensitive(options_speed_semitone_menu(), true); break;
-	default:                        set_sensitive(options_speed_float_menu(), true);    break;
-	}
-    }
-  set_speed_style(newval);
-  if (options_speed_ratio_menu())
-    {
-      switch (speed_control_style(ss))
-	{
-	case SPEED_CONTROL_AS_RATIO:    set_sensitive(options_speed_ratio_menu(), false);    break;
-	case SPEED_CONTROL_AS_SEMITONE: set_sensitive(options_speed_semitone_menu(), false); break;
-	default:                        set_sensitive(options_speed_float_menu(), false);    break;
-	}
-    }
-}
-
 void chans_x_axis_style(chan_info *cp, void *ptr)
 {
   axis_info *ap;

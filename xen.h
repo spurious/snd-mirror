@@ -21,11 +21,12 @@
  */
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 10
-#define XEN_VERSION "1.10"
+#define XEN_MINOR_VERSION 11
+#define XEN_VERSION "1.11"
 
 /* HISTORY:
- *  
+ *
+ *   23-Feb-04: changed DEBUGGING to XEN_DEBUGGING, added redefinition checks under that switch.
  *   2-Feb-04:  C_TO_XEN_CHAR, ratio support (Guile), XEN_CONS_P, XEN_PAIR_P, etc
  *   6-Jan-04:  XEN_VARIABLE_REF in Guile changed to support 1.4 and older versions.
  *   5-Jan-04:  hook support in Ruby thanks to Michael Scholz.
@@ -137,7 +138,7 @@
 #if HAVE_SCM_DEFINED_P
   #define XEN_DEFINED_P(Name) XEN_TRUE_P(scm_defined_p(C_STRING_TO_XEN_SYMBOL(Name), XEN_UNDEFINED))
 #else
-  #define XEN_DEFINED_P(Name) XEN_TRUE_P(scm_definedp(C_STRING_TO_XEN_SYMBOL(name), XEN_UNDEFINED))
+  #define XEN_DEFINED_P(Name) XEN_TRUE_P(scm_definedp(C_STRING_TO_XEN_SYMBOL(Name), XEN_UNDEFINED))
 #endif
 #else
   #define XEN_DEFINED_P(Name) false
@@ -320,19 +321,16 @@
 
 #define XEN_SET_DOCUMENTATION(Func, Help) scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL(Func), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(Help))
 
+#if XEN_DEBUGGING
+  #define XEN_NEW_PROCEDURE(Name, Func, Req, Opt, Rst) xen_guile_dbg_new_procedure(Name, XEN_PROCEDURE_CAST Func, Req, Opt, Rst)
+#else
 #if HAVE_SCM_C_DEFINE_GSUBR
   #define XEN_NEW_PROCEDURE(Name, Func, Req, Opt, Rst) scm_c_define_gsubr(Name, Req, Opt, Rst, XEN_PROCEDURE_CAST Func)
 #else
   #define XEN_NEW_PROCEDURE(Name, Func, Req, Opt, Rst) gh_new_procedure(Name, XEN_PROCEDURE_CAST Func, Req, Opt, Rst)
 #endif
+#endif
 
-/*  
-    #if HAVE_SCM_DEFINED_P
-    if ((DEBUGGING) && (XEN_TRUE_P(scm_defined_p(C_STRING_TO_XEN_SYMBOL(Name), XEN_UNDEFINED)))) fprintf(stderr, "%s is defined\n", Name); 
-    #else
-    if ((DEBUGGING) && (XEN_TRUE_P(scm_definedp(C_STRING_TO_XEN_SYMBOL(Name), XEN_UNDEFINED)))) fprintf(stderr, "%s is defined\n", Name); 
-    #endif
-*/
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
   if (Doc != (char *)NULL) \
     scm_set_procedure_property_x(XEN_NEW_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(Doc)); \
@@ -349,11 +347,20 @@
                                                   XEN_DOCUMENTATION_SYMBOL, Get_Req, Get_Opt, Set_Req, Set_Opt)
 
 #if HAVE_SCM_C_DEFINE
+#if XEN_DEBUGGING
+#define XEN_DEFINE_CONSTANT(Name, Value, Help) \
+  { \
+    if (XEN_DEFINED_P(Name)) fprintf(stderr, "%s is defined\n", Name); \
+    scm_c_define(Name, C_TO_SMALL_XEN_INT(Value)); \
+    XEN_SET_DOCUMENTATION(Name, Help); \
+  }
+#else
 #define XEN_DEFINE_CONSTANT(Name, Value, Help) \
   { \
     scm_c_define(Name, C_TO_SMALL_XEN_INT(Value)); \
     XEN_SET_DOCUMENTATION(Name, Help); \
   }
+#endif
 #else
 #define XEN_DEFINE_CONSTANT(Name, Value, Help) \
   { \
@@ -368,7 +375,15 @@
 #define XEN_PROCEDURE_SOURCE_HELP(Name) scm_procedure_documentation(Name)
 
 #if HAVE_SCM_C_DEFINE
-  #define XEN_DEFINE_VARIABLE(Name, Var, Value) Var = scm_permanent_object(scm_c_define(Name, Value))
+  #if XEN_DEBUGGING
+    #define XEN_DEFINE_VARIABLE(Name, Var, Value) \
+      { \
+        if (XEN_DEFINED_P(Name)) fprintf(stderr, "%s is defined\n", Name); \
+        Var = scm_permanent_object(scm_c_define(Name, Value)); \
+      }
+  #else
+    #define XEN_DEFINE_VARIABLE(Name, Var, Value) Var = scm_permanent_object(scm_c_define(Name, Value))
+  #endif
 #else
   #define XEN_DEFINE_VARIABLE(Name, Var, Value) Var = gh_define(Name, Value)
 #endif
@@ -604,6 +619,9 @@ double xen_to_c_double_or_else(XEN a, double b);
 int xen_to_c_int(XEN a);
 bool xen_to_c_boolean_or_true(XEN a);
 bool xen_integer_p(XEN a);
+#if XEN_DEBUGGING
+XEN xen_guile_dbg_new_procedure(const char *name, XEN (*func)(), int req, int opt, int rst);
+#endif
 #endif
 /* end HAVE_GUILE */
 
@@ -738,7 +756,7 @@ bool xen_integer_p(XEN a);
 #define XEN_UNWRAP_C_POINTER(a)           DATA_PTR(a)
 #define XEN_WRAPPED_C_POINTER_P(a)        (TYPE(a) == T_DATA)
 
-#if DEBUGGING
+#if XEN_DEBUGGING
 /* the otiose casts to int here are required by g++ */
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
   do { \
@@ -923,9 +941,9 @@ bool xen_integer_p(XEN a);
 #endif
 #define XEN_THROW(Type, Info)           xen_rb_raise(Type, Info)
 
-#if DEBUGGING
+#if XEN_DEBUGGING
 
-/* -------------------------------- DEBUGGING (arg checks in XEN_DEFINE_PROCEDURE) -------------------------------- */
+/* -------------------------------- XEN_DEBUGGING (arg checks in XEN_DEFINE_PROCEDURE) -------------------------------- */
 #define XEN_ARGIFY_1(OutName, InName) \
   static int OutName ## _Req = 0; \
   static int OutName ## _Opt = 1; \
@@ -1125,7 +1143,7 @@ bool xen_integer_p(XEN a);
 
 #else
 
-/* -------------------------------- not DEBUGGING -------------------------------- */
+/* -------------------------------- not XEN_DEBUGGING -------------------------------- */
 #define XEN_ARGIFY_1(OutName, InName) \
   static XEN OutName(int argc, XEN *argv, XEN self) \
   { \

@@ -383,7 +383,6 @@ typedef struct snd_state {
   char *Listener_Font, *Axis_Label_Font, *Axis_Numbers_Font, *Tiny_Font, *Peaks_Font, *Bold_Peaks_Font;
   bool Verbose_Cursor, Trap_Segfault;
   int Enved_Filter_Order;
-  bool Filter_Control_In_Hz;  /* for spectral envelopes from the envelope editor */
   Float Vu_Size, Vu_Font_Size, Eps_Left_Margin, Eps_Bottom_Margin, Eps_Size;
   char *Vu_Font;
   Float Spectro_X_Scale, Spectro_Y_Scale, Spectro_Z_Scale, Spectro_Z_Angle, Spectro_X_Angle, Spectro_Y_Angle, Spectro_Cutoff, Spectro_Start;
@@ -394,13 +393,12 @@ typedef struct snd_state {
   mus_fft_window_t Fft_Window;
   graph_type_t Transform_Graph_Type, Time_Graph_Type;
   bool Ask_Before_Overwrite;
-  Float Fft_Window_Beta, Reverb_Control_Decay;
+  Float Fft_Window_Beta;
   Float Color_Scale, Color_Cutoff, Beats_Per_Minute;
   bool Color_Inverted, Show_Mix_Waveforms;
-  speed_style_t Speed_Control_Style;
   int Mix_Waveform_Height;
   fft_normalize_t Transform_Normalization;
-  int Speed_Control_Tones, Sinc_Width;
+  int Sinc_Width;
   x_axis_style_t X_Axis_Style;
   zoom_focus_t Zoom_Focus_Style;
   graph_style_t Graph_Style, Region_Graph_Style;
@@ -573,7 +571,6 @@ void set_verbose_cursor(bool val);
 void set_view_ctrls_label(const char *lab);
 void set_view_listener_label(const char *lab);
 void activate_focus_menu(zoom_focus_t new_focus);
-void activate_speed_in_menu(speed_style_t newval);
 void set_x_axis_style(x_axis_style_t val);
 void set_channel_style(channel_style_t val);
 void chans_x_axis_style(chan_info *cp, void *ptr);
@@ -737,6 +734,7 @@ void g_init_data(void);
 
 void allocate_ed_list(chan_info *cp);
 ed_list *initial_ed_list(off_t beg, off_t end);
+snd_info *sound_is_silence(snd_info *sp);
 off_t edit_changes_begin_at(chan_info *cp, int edpos);
 off_t edit_changes_end_at(chan_info *cp, int edpos);
 char *run_save_state_hook(char *filename);

@@ -173,9 +173,11 @@
 
   
 (define* (start-waterfall #:optional (scl 1.0) (pc-spectrum 0.2) (fft-size 512))
+  "(start-waterfall (scl 1.0) (pc-spectrum 0.2) (fft-size 512)) starts a 'waterfall' spectrum display of the incoming audio data"
   (waterfall #t scl pc-spectrum fft-size))
 
 (define (stop-waterfall)
+  "(stop-waterfall) stops a waterfall display"
   (waterfall #f))
 
 

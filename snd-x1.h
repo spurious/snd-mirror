@@ -154,9 +154,6 @@ Widget options_focus_left_menu(void);
 Widget options_focus_right_menu(void);
 Widget options_focus_middle_menu(void);
 Widget options_focus_active_menu(void);
-Widget options_speed_ratio_menu(void);
-Widget options_speed_float_menu(void);
-Widget options_speed_semitone_menu(void);
 Widget popup_play_menu(void);
 Widget popup_undo_menu(void);
 Widget popup_redo_menu(void);
@@ -270,6 +267,7 @@ void get_current_color(int colormap, int j, unsigned short *r, unsigned short *g
 /* -------- snd-xfind.c -------- */
 
 void edit_find_callback(Widget w, XtPointer context, XtPointer info);
+void set_find_dialog_label(const char *str);
 #if DEBUGGING
   void g_init_gxfind(void);
 #endif
@@ -427,7 +425,7 @@ void hide_controls(void);
 void start_progress_report(snd_info *sp, enved_progress_t from_enved);
 void finish_progress_report(snd_info *sp, enved_progress_t from_enved);
 void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, enved_progress_t from_enved);
-XmString initial_speed_label(void);
+XmString initial_speed_label(speed_style_t style);
 void g_init_gxsnd(void);
 void make_sound_icons_transparent_again(Pixel old_color, Pixel new_color);
 

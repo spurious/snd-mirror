@@ -211,28 +211,28 @@ and a CVS <a href="http://snd.sourceforge.net">repository</a>.
 <td><a href="#closefile">Close</a></td>
 <td><a href="#undoredo">Redo</a></td>
 <td><a href="extsnd.html#lisplistener">Open listener</a></td>
-<td><a href="extsnd.html#lspeedstyle">Speed style</a></td>
+<td><a href="#zoomoption">Zoom focus</a></td>
 <td><a href="extsnd.html#appearance">Customization</a></td>
 </tr>
 <tr>
 <td><a href="#savefile">Save</a></td>
 <td><a href="#find">Find</a></td>
 <td><a href="#mixdialog">Mix Dialog</a></td>
-<td><a href="#zoomoption">Focus style</a></td>
+<td><a href="#saveoptions">Save options</a></td>
 <td><a href="#controls">Control panel</a></td>
 </tr>
 <tr>
 <td><a href="#savefile">Save as</a></td>
 <td><a href="#editcut">Cut</a></td>
 <td><a href="#regionbrowser">Regions</a></td>
-<td><a href="#saveoptions">Save options</a></td>
+<td><a href="#savedstate">Save state</a></td>
 <td><a href="#builtinkeys">Key bindings</a></td>
 </tr>
 <tr>
 <td><a href="#revertfile">Revert</a></td>
 <td><a href="#editcut">Paste</a></td>
 <td><a href="#prevfiles">Files</a></td>
-<td><a href="#savedstate">Save State</a></td>
+<td></td>
 <td><a href="#recordfile">Record</a></td>
 </tr>
 <tr>
@@ -786,8 +786,7 @@ posted during the current run of Snd.  If some error gets erased too quickly fro
 <table border=8 bordercolor="lightgreen">
 <tr><th></th><th>Options Menu</th><th></th></tr>
 <tr><td width=160><a href="#viewfft">Transform options</a></td><td>various transform (FFT, etc) choices</td></tr>
-<tr><td><a href="extsnd.html#lspeedstyle">Speed style</a></td><td>control panel speed scrollbar interpretation</td></tr>
-<tr><td><a href="#zoomoption">Zoom style</a></td><td>where to focus during zooms</td></tr>
+<tr><td><a href="#zoomoption">Zoom focus</a></td><td>where to focus during zooms</td></tr>
 <tr><td><a href="#saveoptions">Save options</a></td><td>save current state of options</td></tr>
 <tr><td><a href="#savedstate">Save state</a></td><td>save current state</td></tr>
 </table>
@@ -805,7 +804,7 @@ posted during the current run of Snd.  If some error gets erased too quickly fro
         <!-- I(fft window):A(fftwindow) --><!-- I(fft window parameter):M(Options: Transform)(Xfftbeta) -->
         <!-- I(fft window parameter):A(Xfftbeta) --><!-- I(zoom focus):M(Options: Zoom style)(zoomoption) -->
 	<!-- I(save options):M(Options: Save options)(saveoptions) -->
-        <!-- I(save state):M(Options: Save State)(savedstate) --><!-- I(speed units):M(Options: Speed style)(lspeedstyle) -->
+        <!-- I(save state):M(Options: Save State)(savedstate) -->
         <!-- I(speed units):A(lspeedstyle) -->
 	<!-- I(wavelets):A(transformtype) --><!-- I(wavelets):M(Options: Transform)(transformtype) -->
 
@@ -2186,12 +2185,7 @@ Another term might be 'srate'.
 The arrow button on the right determines
 the direction Snd moves through the data.
 The scroll bar position is normally interpreted
-as a float between .05 and 20.  The Options
-Speed Style menu (or the <a href="extsnd.html#lspeedstyle">speed-control-style</a> variable)
-can change this to use semitones (actually microtones)
-or just-intonation ratios.  The number of equal
-divisions to the octave in the semitone case is
-set by the variable <a href="extsnd.html#speedtones">speed-control-tones</a> (normally 12).
+as a float between .05 and 20. 
         <!-- I(change pitch):O(see 'speed' control)(speed) --><!-- I(change pitch):A(speed) -->
         <!-- I(change srate):O(see 'speed' control)(speed) --><!-- I(change srate):A(speed) -->
         <!-- I(change srate):M(Edit: Edit Env)(editenvelope) --><!-- I(change pitch):M(Edit: Edit Env)(editenvelope) -->
@@ -2415,7 +2409,7 @@ panel are:</p>
   <tr><td><a href="#cxz">smooth selection</a></td><td><br></td><td><a href="#cxz"><small>Cx z</small></a></td><td><a href="extsnd.html#smoothselection"><small>smooth-selection</small></a></td><td><br></td></tr>
   <tr><td><a href="#fftstyle">sonogram</a></td><td><small>Options: <a href="#fftstyle">Transform</a></small></td><td><br></td><td><a href="extsnd.html#transformgraphtype"><small>transform-graph-type</small></a></td><td><a href="extsnd.html#colormap"><small>colormap</small></a></td></tr>
   <tr><td><a href="#fftstyle">spectrogram</a></td><td><small>Options: <a href="#fftstyle">Transform</a></small></td><td><br></td><td><a href="extsnd.html#transformgraphtype"><small>transform-graph-type</small></a></td><td><a href="extsnd.html#spectrocutoff"><small>orientation, scaling</small></a></td></tr>
-  <tr><td><a href="extsnd.html#lspeedstyle">speed units</a></td><td><small>Options: <a href="extsnd.html#lspeedstyle">Speed style</a></small></td><td><br></td><td><a href="extsnd.html#lspeedstyle"><small>speed-control-style</small></a></td><td><a href="extsnd.html#speedtones"><small>speed-control-tones</small></a></td></tr>
+  <tr><td><a href="extsnd.html#lspeedstyle">speed units</a></td><td></td><td><br></td><td><a href="extsnd.html#lspeedstyle"><small>speed-control-style</small></a></td><td><a href="extsnd.html#speedtones"><small>speed-control-tones</small></a></td></tr>
   <tr><td><a href="extsnd.html#srcsound">srate conversion</a></td><td><small>Edit: <a href="#editenvelope">Edit Env</a></small></td><td><br></td><td><a href="extsnd.html#srcsound"><small>src-sound</small></a></td><td><a href="extsnd.html#srcsoundselection"><small>src-selection</small></a></td></tr>
   <tr><td><a href="extsnd.html#swapchannels">swap channels</a></td><td><br></td><td><br></td><td><a href="extsnd.html#swapchannels"><small>swap-channels</small></a></td><td><br></td></tr>
   <tr><td><a href="#ktempdir">temp directory</a></td><td><br></td><td><a href="#ktempdir"><small>Cx d</small></a></td><td><a href="extsnd.html#tempdir"><small>temp-dir</small></a></td><td><small>TMPDIR or /var/tmp</small></td></tr>

@@ -66,6 +66,7 @@
 
 
 (define* (find-mix sample #:optional (snd #f) (chn #f))
+  "(find-mix sample snd chn) returns the id of the mix at the given sample, or #f"
   (let ((mix-list (mixes (or snd (selected-sound) (car (sounds))) (or chn (selected-channel snd) 0))))
     (call-with-current-continuation
      (lambda (found-it)
@@ -397,7 +398,7 @@ starting at 'start' (in samples) using 'envelope' to pan (0: all chan 0, 1: all 
       (throw 'no-such-track (list "track-maxamp" id))))
 	  
 (define (transpose-track trk semitones)
-  "(transpose-track track semitones) transposes each mix in track  by semitones"
+  "(transpose-track track semitones) transposes each mix in track by semitones"
   (let ((mult (expt 2.0 (/ semitones 12.0))))
     (set! (track-speed trk) (* (track-speed trk) mult))))
 

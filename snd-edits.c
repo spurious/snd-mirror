@@ -4861,6 +4861,21 @@ ed_list *initial_ed_list(off_t beg, off_t end)
   return(ed);
 }
 
+snd_info *sound_is_silence(snd_info *sp)
+{
+  int i;
+  chan_info *cp;
+  ed_list *ed;
+  for (i = 0; i < sp->nchans; i++)
+    {
+      cp = sp->chans[i];
+      ed = cp->edits[0];
+      FRAGMENT_SCALER(ed, 0) = 0.0;
+      FRAGMENT_TYPE(ed, 0) = ED_ZERO;
+    }
+  return(sp);
+}
+
 void allocate_ed_list(chan_info *cp) 
 {
   cp->edits = (ed_list **)CALLOC(cp->edit_size, sizeof(ed_list *));

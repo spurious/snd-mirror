@@ -564,6 +564,7 @@ If 'check' is #f, the hooks are removed."
 (if (not (defined? 'pi)) (define pi 3.141592653589793))
 
 (define* (sine-ramp rmp0 rmp1 #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+  "(sine-ramp rmp0 rmp1 #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f)) produces a sinsusoidal connection from rmp0 to rmp1"
   ;; vct: angle incr off scl
   (ptree-channel
    (lambda (y data forward)
@@ -585,6 +586,7 @@ If 'check' is #f, the hooks are removed."
 	    (- rmp1 rmp0))))))
 
 (define* (sine-env-channel env #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+  "(sine-env-channel env #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f)) connects env's dots with sinusoids"
   (any-env-channel env sine-ramp beg dur snd chn edpos))
 
 ;;; (sine-env-channel '(0 0 1 1 2 -.5 3 1))
@@ -630,6 +632,7 @@ If 'check' is #f, the hooks are removed."
 ;;; -------- ramp-squared, env-squared-channel
 
 (define* (ramp-squared rmp0 rmp1 #:optional (symmetric #t) (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+  "(ramp-squared rmp0 rmp1 #:optional (symmetric #t) (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f)) connects rmp0 and rmp1 with an x^2 curve"
   ;; vct: start incr off scl
   (ptree-channel
    (lambda (y data forward)
@@ -650,6 +653,7 @@ If 'check' is #f, the hooks are removed."
 	   (vct (* frag-beg incr) incr rmp0 (- rmp1 rmp0)))))))
 
 (define* (env-squared-channel env #:optional (symmetric #t) (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+  "(env-squared-channel env #:optional (symmetric #t) (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f)) connects env's dots with x^2 curves"
   (any-env-channel env 
 		   (lambda (r0 r1 b d s c e)
 		     (ramp-squared r0 r1 symmetric b d s c e))
@@ -660,6 +664,7 @@ If 'check' is #f, the hooks are removed."
 ;;; -------- ramp-expt, env-expt-channel
 
 (define* (ramp-expt rmp0 rmp1 exponent #:optional (symmetric #t) (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+  "(ramp-expt rmp0 rmp1 exponent #:optional (symmetric #t) (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f)) connects rmp0 and rmp1 with an x^exponent curve"
   ;; vct: start incr off scl exponent
   ;; a^x = exp(x * log(a))
   (ptree-channel
@@ -681,6 +686,7 @@ If 'check' is #f, the hooks are removed."
 	   (vct (* frag-beg incr) incr rmp0 (- rmp1 rmp0) exponent))))))
 
 (define* (env-expt-channel env exponent #:optional (symmetric #t) (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+  "(env-expt-channel env exponent #:optional (symmetric #t) (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f)) connects env'e dots with x^exponent curves"
   (if (= exponent 1.0)
       (env-channel env beg dur snd chn edpos)
       (any-env-channel env 
@@ -692,6 +698,7 @@ If 'check' is #f, the hooks are removed."
 ;;; -------- offset-channel 
 
 (define* (offset-channel amount #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+  "(offset-channel amount #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f)) adds amount to each sample"
   (let ((dc amount))
     (ptree-channel (lambda (y) (+ y dc)) beg dur snd chn edpos #t)))
 
@@ -699,6 +706,7 @@ If 'check' is #f, the hooks are removed."
 ;;; -------- contrast-channel
 
 (define* (contrast-channel index #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+  "(contrast-channel index #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f)) applies contrast enhancement to the sound"
   (let ((ind index))
     (ptree-channel
      (lambda (y)
@@ -740,6 +748,8 @@ If 'check' is #f, the hooks are removed."
 !#
 
 ;;; -------- channels-equal
+;;;
+;;; TODO: should channels=? ignore initial 0's too?
 
 (define* (channels=? snd1 chn1 snd2 chn2 #:optional (allowable-difference 0.0))
   "(channels=? s1 c1 s2 c2 (diff 0.0)) -> #t if the two channels are the same (within diff) modulo trailing 0's"

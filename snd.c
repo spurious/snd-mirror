@@ -167,7 +167,6 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->Fft_Window_Beta = DEFAULT_FFT_WINDOW_BETA;
   ss->Transform_Graph_Type = DEFAULT_TRANSFORM_GRAPH_TYPE;
   ss->Sinc_Width = DEFAULT_SINC_WIDTH;
-  ss->Speed_Control_Tones = DEFAULT_SPEED_CONTROL_TONES;
   ss->Default_Output_Chans = DEFAULT_OUTPUT_CHANS;
   ss->Default_Output_Srate = DEFAULT_OUTPUT_SRATE;
   ss->Default_Output_Type = DEFAULT_OUTPUT_TYPE;
@@ -210,14 +209,12 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->Vu_Size = DEFAULT_VU_SIZE;
   ss->Vu_Font_Size = DEFAULT_VU_FONT_SIZE;
   if (DEFAULT_VU_FONT != (char *)NULL) ss->Vu_Font = copy_string(DEFAULT_VU_FONT); else ss->Vu_Font = NULL;
-  ss->Speed_Control_Style = DEFAULT_SPEED_CONTROL_STYLE;
   ss->Selection_Creates_Region = DEFAULT_SELECTION_CREATES_REGION;
   ss->Transform_Normalization = DEFAULT_TRANSFORM_NORMALIZATION;
   ss->Zoom_Focus_Style = DEFAULT_ZOOM_FOCUS_STYLE;
   ss->Graph_Style = DEFAULT_GRAPH_STYLE;
   ss->Region_Graph_Style = DEFAULT_GRAPH_STYLE;
   ss->Enved_Filter_Order = DEFAULT_ENVED_FILTER_ORDER;
-  ss->Filter_Control_In_Hz = DEFAULT_FILTER_CONTROL_IN_HZ;
   ss->Verbose_Cursor = DEFAULT_VERBOSE_CURSOR;
   if (DEFAULT_TEMP_DIR != (char *)NULL) ss->Temp_Dir = copy_string(DEFAULT_TEMP_DIR); else ss->Temp_Dir = NULL;
   if (DEFAULT_SAVE_DIR != (char *)NULL) ss->Save_Dir = copy_string(DEFAULT_SAVE_DIR); else ss->Save_Dir = NULL;
@@ -265,7 +262,6 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->Auto_Update_Interval = DEFAULT_AUTO_UPDATE_INTERVAL;
   ss->Max_Regions = DEFAULT_MAX_REGIONS;
   ss->Max_Transform_Peaks = DEFAULT_MAX_TRANSFORM_PEAKS;
-  ss->Reverb_Control_Decay = DEFAULT_REVERB_CONTROL_DECAY;
   allocate_regions(max_regions(ss));
   ss->HTML_Dir = NULL;
   ss->HTML_Program = copy_string(DEFAULT_HTML_PROGRAM);

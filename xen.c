@@ -122,6 +122,9 @@ void xen_guile_define_procedure_with_setter(char *get_name, XEN (*get_func)(), c
 {
 #if HAVE_SCM_C_DEFINE
   XEN str = XEN_FALSE;
+#if XEN_DEBUGGING
+  if (XEN_DEFINED_P(get_name)) fprintf(stderr, "%s is defined\n", get_name);
+#endif
   if (get_help) str = C_TO_XEN_STRING(get_help);
   scm_permanent_object(
     scm_c_define(get_name,
@@ -153,6 +156,9 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 {
 #if HAVE_SCM_C_DEFINE
   XEN str = XEN_FALSE;
+#if XEN_DEBUGGING
+  if (XEN_DEFINED_P(get_name)) fprintf(stderr, "%s is defined\n", get_name);
+#endif
   if (get_help) str = C_TO_XEN_STRING(get_help);
   scm_permanent_object(
     scm_c_define(get_name,
@@ -187,6 +193,9 @@ XEN xen_guile_create_hook(const char *name, int args, const char *help, XEN loca
       hook = scm_permanent_object(scm_make_hook(C_TO_SMALL_XEN_INT(args)));
       scm_set_object_property_x(hook, local_doc, C_TO_XEN_STRING(help));
 #if HAVE_SCM_C_DEFINE
+#if XEN_DEBUGGING
+      if (XEN_DEFINED_P(name)) fprintf(stderr, "%s is defined\n", name);
+#endif
       scm_c_define(name, hook);
 #else
   #if HAVE_SCM_MAKE_REAL
@@ -200,6 +209,14 @@ XEN xen_guile_create_hook(const char *name, int args, const char *help, XEN loca
 #endif
   return(hook);
 }
+
+#if XEN_DEBUGGING
+XEN xen_guile_dbg_new_procedure(const char *name, XEN (*func)(), int req, int opt, int rst)
+{
+  if ((name) && (strlen(name) > 0) && XEN_DEFINED_P(name)) fprintf(stderr, "%s is defined\n", name);
+  return(scm_c_define_gsubr(name, req, opt, rst, func));
+}
+#endif
 
 #endif
 

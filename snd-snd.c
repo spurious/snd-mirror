@@ -27,7 +27,7 @@ snd_info *snd_new_file(char *newname, int header_type, int data_format, int srat
 	      write(chan, buf, size);
 	      snd_close(chan, newname);
 	      FREE(buf);
-	      return(snd_open_file(newname, false));
+	      return(sound_is_silence(snd_open_file(newname, false)));
 	    }
 	}
       else 
@@ -1612,7 +1612,7 @@ Cessate apply_controls(Indicium ptr)
   if (sp->filter_control_p) added_dur = sp->filter_control_order;
   mult_dur = 1.0 / fabs(sp->speed_control);
   if (sp->expand_control_p) mult_dur *= sp->expand_control;
-  if (sp->reverb_control_p) added_dur += (int)((SND_SRATE(sp) * reverb_control_decay(ss)));
+  if (sp->reverb_control_p) added_dur += (int)((SND_SRATE(sp) * sp->reverb_control_decay));
   if ((ss->apply_choice != APPLY_TO_SELECTION) &&
       (sp->speed_control == 1.0) && (apply_beg == 0) &&
       (sp->speed_control_direction == 1) &&
@@ -1867,47 +1867,6 @@ void remove_apply(snd_info *sp)
       sgx->apply_in_progress = 0;
     }
 }
-
-static void set_reverb_decay(Float val) 
-{
-  int i;
-  snd_info *sp;
-  in_set_reverb_control_decay(val);
-  for (i = 0; i < ss->max_sounds; i++)
-    {
-      sp = ss->sounds[i];
-      if ((sp) && (sp->inuse == SOUND_NORMAL))
-	sp->reverb_control_decay = val;
-    }
-}
-
-static void map_sounds_speed_tones(snd_info *sp, void *val) 
-{
-  sp->speed_control_tones = (*((int *)val)); 
-}
-
-static void set_speed_tones(int val) 
-{
-  in_set_speed_control_tones(val); 
-  for_each_sound(map_sounds_speed_tones, (void *)(&val));
-}      
-
-static void map_sounds_speed_style(snd_info *sp, void *val) 
-{
-  sp->speed_control_style = (*((speed_style_t *)val)); 
-#if HAVE_SCM_MAKE_RATIO
-  if (sp->speed_control_style == SPEED_CONTROL_AS_RATIO)
-    snd_rationalize(sp->speed_control, &(sp->speed_control_numerator), &(sp->speed_control_denominator));
-#endif
-  if (control_panel_open(sp))
-    set_speed(sp, sp->speed_control);
-}
-
-void set_speed_style(speed_style_t val) 
-{
-  in_set_speed_control_style(val); 
-  for_each_sound(map_sounds_speed_style, (void *)(&val));
-}      
 
 #define NO_SUCH_SOUND    XEN_ERROR_TYPE("no-such-sound")
 
@@ -3142,7 +3101,7 @@ The 'initial-length' argument sets the number of samples (zeros) in the newly cr
 		  write(chan, buf, size);
 		  snd_close(chan, str);
 		  FREE(buf);
-		  sp = snd_open_file(str, false);
+		  sp = sound_is_silence(snd_open_file(str, false));
 		}
 	      else 
 		{
@@ -3169,10 +3128,8 @@ The 'initial-length' argument sets the number of samples (zeros) in the newly cr
 
 static XEN g_speed_control_style(XEN snd)
 {
-  #define H_speed_control_style "(" S_speed_control_style " (snd #t)): speed control panel interpretation choice (" S_speed_control_as_float ")"
-  if (XEN_BOUND_P(snd))
-    return(sound_get(snd, SP_SPEED_STYLE, S_speed_control_style));
-  return(C_TO_XEN_INT((int)speed_control_style(ss)));
+  #define H_speed_control_style "(" S_speed_control_style " (snd #f)): speed control panel interpretation choice (" S_speed_control_as_float ")"
+  return(sound_get(snd, SP_SPEED_STYLE, S_speed_control_style));
 }
 
 static XEN g_set_speed_control_style(XEN speed, XEN snd) 
@@ -3184,36 +3141,21 @@ static XEN g_set_speed_control_style(XEN speed, XEN snd)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_speed_control_style, 
 			   1, speed, 
 			   "~A, but must be " S_speed_control_as_float ", " S_speed_control_as_ratio ", or " S_speed_control_as_semitone);
-  if (XEN_BOUND_P(snd))
-    return(sound_set(snd, speed, SP_SPEED_STYLE, S_setB S_speed_control_style));
-  else
-    {
-      activate_speed_in_menu(spd);
-      return(C_TO_XEN_INT((int)speed_control_style(ss)));
-    }
+  return(sound_set(snd, speed, SP_SPEED_STYLE, S_setB S_speed_control_style));
 }
 
 WITH_REVERSED_ARGS(g_set_speed_control_style_reversed, g_set_speed_control_style)
 
 static XEN g_speed_control_tones(XEN snd)
 {
-  #define H_speed_control_tones "(" S_speed_control_tones " (snd #t)): if " S_speed_control_style " is " S_speed_control_as_semitone ", this chooses the octave divisions (12)"
-  if (XEN_BOUND_P(snd))
-    return(sound_get(snd, SP_SPEED_TONES, S_speed_control_tones));
-  return(C_TO_XEN_INT(speed_control_tones(ss)));
+  #define H_speed_control_tones "(" S_speed_control_tones " (snd #f)): if " S_speed_control_style " is " S_speed_control_as_semitone ", this chooses the octave divisions (12)"
+  return(sound_get(snd, SP_SPEED_TONES, S_speed_control_tones));
 }
 
 static XEN g_set_speed_control_tones(XEN val, XEN snd)
 {
-
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_setB S_speed_control_tones, "a number"); 
-  if (XEN_BOUND_P(snd))
-    return(sound_set(snd, val, SP_SPEED_TONES, S_setB S_speed_control_tones));
-  else
-    {
-      set_speed_tones(XEN_TO_C_INT_OR_ELSE(val, 0));
-      return(C_TO_XEN_INT(speed_control_tones(ss)));
-    }
+  return(sound_set(snd, val, SP_SPEED_TONES, S_setB S_speed_control_tones));
 }
 
 WITH_REVERSED_ARGS(g_set_speed_control_tones_reversed, g_set_speed_control_tones)
@@ -3547,22 +3489,14 @@ WITH_REVERSED_ARGS(g_set_reverb_control_lowpass_reversed, g_set_reverb_control_l
 
 static XEN g_reverb_control_decay(XEN snd)
 {
-  #define H_reverb_control_decay "(" S_reverb_control_decay " (snd #t)): 'Apply' button reverb decay time (1.0 seconds)"
-  if (XEN_BOUND_P(snd))
-    return(sound_get(snd, SP_REVERB_DECAY, S_reverb_control_decay));
-  return(C_TO_XEN_DOUBLE(reverb_control_decay(ss)));
+  #define H_reverb_control_decay "(" S_reverb_control_decay " (snd #f)): 'Apply' button reverb decay time (1.0 seconds)"
+  return(sound_get(snd, SP_REVERB_DECAY, S_reverb_control_decay));
 }
 
 static XEN g_set_reverb_control_decay(XEN val, XEN snd)
 {
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_setB S_reverb_control_decay, "a number"); 
-  if (XEN_BOUND_P(snd))
-    return(sound_set(snd, val, SP_REVERB_DECAY, S_setB S_reverb_control_decay));
-  else
-    {
-      set_reverb_decay(XEN_TO_C_DOUBLE(val));
-      return(C_TO_XEN_DOUBLE(reverb_control_decay(ss)));
-    }
+  return(sound_set(snd, val, SP_REVERB_DECAY, S_setB S_reverb_control_decay));
 }
 
 WITH_REVERSED_ARGS(g_set_reverb_control_decay_reversed, g_set_reverb_control_decay)

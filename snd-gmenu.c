@@ -20,8 +20,6 @@ enum {menu_menu,
           o_focus_style_menu, o_focus_cascade_menu,
             o_focus_right_menu, o_focus_left_menu, o_focus_middle_menu, o_focus_active_menu,
           o_save_menu, o_save_state_menu,
-          o_speed_menu, o_speed_cascade_menu,
-            o_speed_float_menu, o_speed_ratio_menu, o_speed_semitone_menu,
         view_menu, v_cascade_menu,
           v_graph_style_menu, v_graph_style_cascade_menu,
             v_lines_menu, v_dots_menu, v_filled_menu, v_dots_and_lines_menu, v_lollipops_menu,
@@ -37,7 +35,7 @@ enum {menu_menu,
           v_sep2_menu
 };
 
-#define NUM_MENU_WIDGETS 103
+#define NUM_MENU_WIDGETS 98
 static GtkWidget *mw[NUM_MENU_WIDGETS];
 static const char *ml[NUM_MENU_WIDGETS];
 
@@ -94,9 +92,6 @@ GtkWidget *options_focus_left_menu(void) {return(mw[o_focus_left_menu]);}
 GtkWidget *options_focus_right_menu(void) {return(mw[o_focus_right_menu]);}
 GtkWidget *options_focus_middle_menu(void) {return(mw[o_focus_middle_menu]);}
 GtkWidget *options_focus_active_menu(void) {return(mw[o_focus_active_menu]);}
-GtkWidget *options_speed_ratio_menu(void) {return(mw[o_speed_ratio_menu]);}
-GtkWidget *options_speed_float_menu(void) {return(mw[o_speed_float_menu]);}
-GtkWidget *options_speed_semitone_menu(void) {return(mw[o_speed_semitone_menu]);}
 
 GtkWidget *popup_play_menu(void) {return(popup_children[W_pop_play]);}
 GtkWidget *popup_undo_menu(void) {return(popup_children[W_pop_undo]);}
@@ -217,9 +212,6 @@ static void options_focus_right_callback(GtkWidget *w, gpointer info, gpointer D
 static void options_focus_left_callback(GtkWidget *w, gpointer info, gpointer Data) {activate_focus_menu(ZOOM_FOCUS_LEFT);}
 static void options_focus_middle_callback(GtkWidget *w, gpointer info, gpointer Data) {activate_focus_menu(ZOOM_FOCUS_MIDDLE);}
 static void options_focus_active_callback(GtkWidget *w, gpointer info, gpointer Data) {activate_focus_menu(ZOOM_FOCUS_ACTIVE);}
-static void options_speed_float_callback(GtkWidget *w, gpointer info, gpointer Data) {activate_speed_in_menu(SPEED_CONTROL_AS_FLOAT);}
-static void options_speed_ratio_callback(GtkWidget *w, gpointer info, gpointer Data) {activate_speed_in_menu(SPEED_CONTROL_AS_RATIO);}
-static void options_speed_semitone_callback(GtkWidget *w, gpointer info, gpointer Data) {activate_speed_in_menu(SPEED_CONTROL_AS_SEMITONE);}
 static void options_x_axis_seconds_callback(GtkWidget *w, gpointer info) {set_x_axis_style(X_AXIS_IN_SECONDS);}
 static void options_x_axis_beats_callback(GtkWidget *w, gpointer info) {set_x_axis_style(X_AXIS_IN_BEATS);}
 static void options_x_axis_samples_callback(GtkWidget *w, gpointer info) {set_x_axis_style(X_AXIS_IN_SAMPLES);}
@@ -870,46 +862,6 @@ GtkWidget *add_menu(void)
 				 0,
 				 g_cclosure_new(GTK_SIGNAL_FUNC(options_transform_callback), NULL, 0),
 				 0);
-
-  mw[o_speed_menu] = gtk_menu_item_new_with_label(_("Speed style"));
-  ml[o_speed_menu] = _("Speed style");
-  gtk_menu_shell_append(GTK_MENU_SHELL(mw[o_cascade_menu]), mw[o_speed_menu]);
-  gtk_widget_show(mw[o_speed_menu]);
-
-  mw[o_speed_cascade_menu] = gtk_menu_new();
-  ml[o_speed_cascade_menu] = NULL;
-  gtk_menu_item_set_submenu(GTK_MENU_ITEM(mw[o_speed_menu]), mw[o_speed_cascade_menu]);
-
-  mw[o_speed_float_menu] = gtk_menu_item_new_with_label(_("float"));
-  ml[o_speed_float_menu] = _("float");
-  gtk_menu_shell_append(GTK_MENU_SHELL(mw[o_speed_cascade_menu]), mw[o_speed_float_menu]);
-  gtk_widget_show(mw[o_speed_float_menu]);
-  g_signal_connect_closure_by_id(GTK_OBJECT(mw[o_speed_float_menu]),
-				 g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(mw[o_speed_float_menu]))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(options_speed_float_callback), NULL, 0),
-				 0);
-
-  mw[o_speed_semitone_menu] = gtk_menu_item_new_with_label(_("semitones"));
-  ml[o_speed_semitone_menu] = _("semitones");
-  gtk_menu_shell_append(GTK_MENU_SHELL(mw[o_speed_cascade_menu]), mw[o_speed_semitone_menu]);
-  gtk_widget_show(mw[o_speed_semitone_menu]);
-  g_signal_connect_closure_by_id(GTK_OBJECT(mw[o_speed_semitone_menu]),
-				 g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(mw[o_speed_semitone_menu]))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(options_speed_semitone_callback), NULL, 0),
-				 0);
-
-  mw[o_speed_ratio_menu] = gtk_menu_item_new_with_label(_("ratio"));
-  ml[o_speed_ratio_menu] = _("ratio");
-  gtk_menu_shell_append(GTK_MENU_SHELL(mw[o_speed_cascade_menu]), mw[o_speed_ratio_menu]);
-  gtk_widget_show(mw[o_speed_ratio_menu]);
-  g_signal_connect_closure_by_id(GTK_OBJECT(mw[o_speed_ratio_menu]),
-				 g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(mw[o_speed_ratio_menu]))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(options_speed_ratio_callback), NULL, 0),
-				 0);
-
 
   mw[o_focus_style_menu] = gtk_menu_item_new_with_label(_("Zoom focus"));
   ml[o_focus_style_menu] = _("Zoom focus");

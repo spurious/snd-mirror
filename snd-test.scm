@@ -693,9 +693,6 @@
       (set! (recorder-trigger) (recorder-trigger))
       (if (fneq (recorder-trigger)  0.0)
 	  (snd-display ";recorder-trigger set def: ~A" (recorder-trigger)))
-      (set! (reverb-control-decay) (reverb-control-decay))
-      (if (fneq (reverb-control-decay)  1.0 )
-	  (snd-display ";reverb-control-decay set def: ~A" (reverb-control-decay)))
       (set! (save-state-file) (save-state-file))
       (if (not (equal? (save-state-file)  "saved-snd.scm" )) 
 	  (snd-display ";save-state-file set def: ~A" (save-state-file)))
@@ -753,12 +750,6 @@
       (set! (spectro-z-scale) (spectro-z-scale))
       (if (fneq (spectro-z-scale) (if (provided? 'gl) 1.0 0.1))
 	  (snd-display ";spectro-z-scale set def: ~A" (spectro-z-scale)))
-      (set! (speed-control-style) (speed-control-style))
-      (if (not (equal? (speed-control-style)  0 )) 
-	  (snd-display ";speed-control-style set def: ~A" (speed-control-style)))
-      (set! (speed-control-tones) (speed-control-tones))
-      (if (not (equal? (speed-control-tones)  12)) 
-	  (snd-display ";speed-control-tones set def: ~A" (speed-control-tones)))
       (set! (temp-dir) (temp-dir))
       (if (not (equal? (temp-dir)  #f )) 
 	  (snd-display ";temp-dir set def: ~A" (temp-dir)))
@@ -813,6 +804,8 @@
       (set! (zero-pad) -123)
       (if (not (equal? (zero-pad)  0)) 
 	  (snd-display ";zero-pad set -123: ~A" (zero-pad)))
+      (if (not (equal? (zero-pad #t #t) '()))
+	  (snd-display ";zero-pad #t: ~A" (zero-pad #t #t)))
       (set! (zoom-focus-style) (zoom-focus-style))
       (if (not (equal? (zoom-focus-style)  2 )) 
 	  (snd-display ";zoom-focus-style set def: ~A" (zoom-focus-style)))
@@ -947,7 +940,6 @@
 	'recorder-srate (recorder-srate) 22050 
 	'recorder-trigger (recorder-trigger) 0.0
 	'region-graph-style (region-graph-style) graph-lines
-	'reverb-control-decay (reverb-control-decay) 1.0 
 	'reverb-control-feedback (without-errors (reverb-control-feedback)) 'no-such-sound
 	'reverb-control-length (without-errors (reverb-control-length)) 'no-such-sound
 	'reverb-control-length-bounds (without-errors (reverb-control-length-bounds)) 'no-such-sound
@@ -977,8 +969,6 @@
 	'spectro-z-scale (spectro-z-scale) (if (provided? 'gl) 1.0 0.1)
 	'speed-control (without-errors (speed-control)) 'no-such-sound
 	'speed-control-bounds (without-errors (speed-control-bounds)) 'no-such-sound
-	'speed-control-style (speed-control-style) 0 
-	'speed-control-tones (speed-control-tones) 12
 	'sync (without-errors (sync)) 'no-such-sound
 	'temp-dir (temp-dir) #f 
 	'ladspa-dir (ladspa-dir) #f 
@@ -1660,6 +1650,7 @@
 	    (if (not (feql (enved-envelope) zero_to_one)) (snd-display ";set symbol enved-envelope: ~A ~A" (enved-envelope) zero_to_one))
 	    (set! (enved-envelope) "mod_down")
 	    (if (not (feql (enved-envelope) mod_down)) (snd-display ";set string enved-envelope: ~A ~A" (enved-envelope) mod_down))))
+
       (close-sound ind) 
       (dismiss-all-dialogs)
       
@@ -3200,7 +3191,7 @@
 EDITS: 0
 
  (begin) [0:2]:
-   (at 0, cp->sounds[0][0:0, 1.000]) [file: " cwd "test.snd[0]]
+   (at 0, cp->sounds[0][0:0, 0.000]) [file: " cwd "test.snd[0]]
    (at 1, end_mark)
 ")))
 	    (snd-display ";new 0: ~A" (display-edits)))
@@ -3209,16 +3200,16 @@ EDITS: 0
 EDITS: 2
 
  (begin) [0:2]:
-   (at 0, cp->sounds[0][0:0, 1.000]) [file: " cwd "test.snd[0]]
+   (at 0, cp->sounds[0][0:0, 0.000]) [file: " cwd "test.snd[0]]
    (at 1, end_mark)
 
  (silence 1 9) ; (insert-extend) [1:3]:
-   (at 0, cp->sounds[0][0:0, 1.000]) [file: " cwd "test.snd[0]]
+   (at 0, cp->sounds[0][0:0, 0.000]) [file: " cwd "test.snd[0]]
    (at 1, cp->sounds[-1][0:8, 0.000])
    (at 10, end_mark)
 
  (insert 10 10) ; insert-samples [2:4]:
-   (at 0, cp->sounds[0][0:0, 1.000]) [file: " cwd "test.snd[0]]
+   (at 0, cp->sounds[0][0:0, 0.000]) [file: " cwd "test.snd[0]]
    (at 1, cp->sounds[-1][0:8, 0.000])
    (at 10, cp->sounds[1][0:9, 1.000]) [buf: 10] 
    (at 20, end_mark)
@@ -3230,17 +3221,17 @@ EDITS: 2
 EDITS: 2
 
  (begin) [0:2]:
-   (at 0, cp->sounds[0][0:0, 1.000]) [file: " cwd "test.snd[0]]
+   (at 0, cp->sounds[0][0:0, 0.000]) [file: " cwd "test.snd[0]]
    (at 1, end_mark)
 
  (silence 1 9) ; (insert-extend) [1:3]:
-   (at 0, cp->sounds[0][0:0, 1.000]) [file: " cwd "test.snd[0]]
+   (at 0, cp->sounds[0][0:0, 0.000]) [file: " cwd "test.snd[0]]
    (at 1, cp->sounds[-1][0:8, 0.000])
    (at 10, end_mark)
 
  (insert 0 10) ; insert-samples [2:4]:
    (at 0, cp->sounds[1][0:9, 1.000]) [buf: 10] 
-   (at 10, cp->sounds[0][0:0, 1.000]) [file: " cwd "test.snd[0]]
+   (at 10, cp->sounds[0][0:0, 0.000]) [file: " cwd "test.snd[0]]
    (at 11, cp->sounds[-1][0:8, 0.000])
    (at 20, end_mark)
 ")))
@@ -3251,12 +3242,12 @@ EDITS: 2
 EDITS: 1
 
  (begin) [0:2]:
-   (at 0, cp->sounds[0][0:0, 1.000]) [file: " cwd "test.snd[0]]
+   (at 0, cp->sounds[0][0:0, 0.000]) [file: " cwd "test.snd[0]]
    (at 1, end_mark)
 
  (insert 0 10) ; insert-samples [1:3]:
    (at 0, cp->sounds[1][0:9, 1.000]) [buf: 10] 
-   (at 10, cp->sounds[0][0:0, 1.000]) [file: " cwd "test.snd[0]]
+   (at 10, cp->sounds[0][0:0, 0.000]) [file: " cwd "test.snd[0]]
    (at 11, end_mark)
 ")))
 	    (snd-display ";new 3: ~A" (display-edits)))
@@ -3266,7 +3257,7 @@ EDITS: 1
 EDITS: 1
 
  (begin) [0:2]:
-   (at 0, cp->sounds[0][0:0, 1.000]) [file: " cwd "test.snd[0]]
+   (at 0, cp->sounds[0][0:0, 0.000]) [file: " cwd "test.snd[0]]
    (at 1, end_mark)
 
  (set 0 1) ; set! sample [1:2]:
@@ -3280,7 +3271,7 @@ EDITS: 1
 EDITS: 1
 
  (begin) [0:2]:
-   (at 0, cp->sounds[0][0:0, 1.000]) [file: " cwd "test.snd[0]]
+   (at 0, cp->sounds[0][0:0, 0.000]) [file: " cwd "test.snd[0]]
    (at 1, end_mark)
 
  (set 0 10) ; set-samples [1:2]:
@@ -3314,7 +3305,7 @@ EDITS: 1
 EDITS: 5
 
  (begin) [0:2]:
-   (at 0, cp->sounds[0][0:0, 1.000]) [file: " cwd "test.snd[0]]
+   (at 0, cp->sounds[0][0:0, 0.000]) [file: " cwd "test.snd[0]]
    (at 1, end_mark)
 
  (set 0 10) ; set-samples [1:2]:
@@ -9903,7 +9894,7 @@ EDITS: 5
 	    (sine-ramp 1.0 0.0)
 	    (if (not (vequal (channel->vct) (vct 1.000 0.976 0.905 0.794 0.655 0.500 0.345 0.206 0.095 0.024)))
 		(snd-display ";sine-ramp 1 0: ~A" (channel->vct)))
-	    (if (not (string=? (edit-fragment-type-name (list-ref (car (edit-tree)) 7)) "ed_ptree2"))
+	    (if (not (string=? (edit-fragment-type-name (list-ref (car (edit-tree)) 7)) "ed_ptree2_zero"))
 		(snd-display ";sine-ramp tree op: ~A ~A" (edit-fragment-type-name (list-ref (car (edit-tree)) 7)) (edit-tree)))
 	    (revert-sound ind)
 	    (as-one-edit
@@ -24580,12 +24571,12 @@ EDITS: 5
 EDITS: 6
 
  (begin) [0:2]:
-   (at 0, cp->sounds[0][0:0, 1.000]) [file: " cwd "test.snd[0]]
+   (at 0, cp->sounds[0][0:0, 0.000]) [file: " cwd "test.snd[0]]
    (at 1, end_mark)
 
  (silence 0 100) ; insert-silence from 0 for 100 [1:3]:
    (at 0, cp->sounds[-1][0:99, 0.000])
-   (at 100, cp->sounds[0][0:0, 1.000]) [file: " cwd "test.snd[0]]
+   (at 100, cp->sounds[0][0:0, 0.000]) [file: " cwd "test.snd[0]]
    (at 101, end_mark)
 
  (set 0 101) ; map-channel [2:2]:
@@ -24964,7 +24955,7 @@ EDITS: 3
 	      (vals (make-vct 100)))
 	  (select-sound ind)
 	  (select-channel 0)
-	  (check-edit-tree '((0 0 0 0 1.0 0.0 0.0 0) (1 -2 0 0 0.0 0.0 0.0 0)) (make-vct 1) "initial new-sound")
+	  (check-edit-tree '((0 0 0 0 0.0 0.0 0.0 1) (1 -2 0 0 0.0 0.0 0.0 0)) (make-vct 1) "initial new-sound")
 	  (vct-fill! vals 1.0)
 	  (set! (samples 0 100) vals)
 	  (check-edit-tree '((0 1 0 99 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0)) vals "set first samps to one")
@@ -25418,7 +25409,7 @@ EDITS: 3
 	      (vals (make-vct 10000)))
 	  (select-sound ind)
 	  (select-channel 0)
-	  (check-edit-tree '((0 0 0 0 1.0 0.0 0.0 0) (1 -2 0 0 0.0 0.0 0.0 0)) (make-vct 1) "initial new-sound")
+	  (check-edit-tree '((0 0 0 0 0.0 0.0 0.0 1) (1 -2 0 0 0.0 0.0 0.0 0)) (make-vct 1) "initial new-sound")
 	  (vct-fill! vals 1.0)
 	  (set! (samples 0 10000) vals)
 	  (check-edit-tree '((0 1 0 9999 1.0 0.0 0.0 0) (10000 -2 0 0 0.0 0.0 0.0 0)) vals "envd set first samps to one")
@@ -28761,7 +28752,140 @@ EDITS: 2
 	(if (fneq (sample 10) .992) (snd-display ";scale-to 1.0 byte (10): ~A" (sample 10)))
 	(if (fneq (sample 20) -.992) (snd-display ";scale-to 1.0 byte (20): ~A" (sample 10)))
 	(close-sound ind))
+
+      (if (not (string? (snd-help 'transpose-track))) (snd-display ";help string for transpose-track: ~A" (snd-help 'transpose-track)))
       
+      (letrec ((test-sound-func 
+		(lambda (func name ind-1 ind-2 new-val eq-func leq-func settable)
+		  (let* ((old-val (func))
+			 (old-vals (func #t))
+			 (old-default (func #f))
+			 (old-1 (func ind-1))
+			 (old-2 (func ind-2))
+			 (sel-snd (selected-sound))
+			 (unsel-snd (if (= sel-snd ind-1) ind-2 ind-1)))
+		    (if (not (eq-func old-val old-default))
+			(snd-display ";~A sound-func: no arg: ~A, #f: ~A" name old-val old-default))
+		    (if (not (or (leq-func old-vals (list old-1 old-2))
+				 (leq-func old-vals (list old-2 old-1))))
+			(snd-display ";~A sound-func #t: ~A, sep: ~A" name old-vals (list old-1 old-2)))
+		    (if settable
+			(begin
+			  (set! (func) new-val)
+			  (if (not (eq-func (func) new-val))
+			      (snd-display ";~A set no arg: ~A ~A" name (func) new-val))
+			  (if (not (eq-func (func) (func sel-snd)))
+			      (snd-display ";~A set no arg sel: ~A ~A" name (func) (func sel-snd)))
+			  (if (eq-func (func) (func unsel-snd))
+			      (snd-display ";~A set no arg unsel: ~A ~A (sel: ~A)" name (func) (func unsel-snd) (func sel-snd)))
+			  (if (not (or (leq-func (func #t) (list (func sel-snd) (func unsel-snd)))
+				       (leq-func (func #t) (list (func unsel-snd) (func sel-snd)))))
+			      (snd-display ";~A sound-func #t set: ~A, sep: ~A" name (func #t) (list (func sel-snd) (func unsel-snd))))
+			  (set! (func) old-val)
+			  (set! (func ind-1) new-val)
+			  (if (not (eq-func (func ind-1) new-val))
+			      (snd-display ";~A set arg: ~A ~A" name (func ind-1) new-val))
+			  (if (eq-func (func ind-2) new-val)
+			      (snd-display ";~A set arg (2): ~A ~A" name (func ind-2) new-val))
+			  (if (not (or (leq-func (func #t) (list (func ind-1) (func ind-2)))
+				       (leq-func (func #t) (list (func ind-2) (func ind-1)))))
+			      (snd-display ";~A sound-func arg set: ~A, sep: ~A" name (func #t) (list (func ind-1) (func ind-2))))
+			  (set! (func ind-1) old-1)
+			  (set! (func #t) new-val)
+			  (if (not (leq-func (func #t) (list new-val new-val)))
+			      (snd-display ";~A sound-func arg set #t: ~A, sep: ~A" name (func #t) (list new-val new-val)))
+			  (if (not (eq-func (func ind-1) new-val))
+			      (snd-display ";~A set arg #t: ~A ~A" name (func ind-1) new-val))
+			  (if (not (eq-func (func ind-2) new-val))
+			      (snd-display ";~A set arg #t (2): ~A ~A" name (func ind-2) new-val))
+			  (set! (func ind-1) old-1)
+			  (set! (func ind-2) old-2)
+			  (if (not (eq-func (func ind-1) old-1))
+			      (snd-display ";~A set arg #t old: ~A ~A" name (func ind-1) old-1))
+			  (if (not (eq-func (func ind-2) old-2))
+			      (snd-display ";~A set arg #t (2): ~A ~A" name (func ind-2) old-2))))))))
+	(let ((ind-1 (new-sound "test-1.snd" mus-next mus-bfloat 22050 1 "mono testing" 100))
+	      (ind-2 (new-sound "test-2.snd" mus-aifc mus-bshort 44100 2 "stereo testing" 300)))
+	  
+	  (for-each
+	   (lambda (data)
+	     (apply test-sound-func data))
+	   (list
+	    (list srate 'srate ind-1 ind-2 48000 = equal? #t)
+	    (list data-format 'data-format ind-1 ind-2 mus-byte = equal? #t)
+	    (list data-location 'data-location ind-1 ind-2 123 = equal? #t)
+	    (list data-size 'data-size ind-1 ind-2 12348 = equal? #t)
+	    (list frames 'frames ind-1 ind-2 12348 = equal? #t)
+	    (list sync 'sync ind-1 ind-2 2 = equal? #t)
+	    (list data-format 'data-format ind-1 ind-2 mus-byte = equal? #t)
+	    (list channels 'channels ind-1 ind-2 0 = equal? #f)
+	    (list chans 'chans ind-1 ind-2 0 = equal? #f)
+	    (list header-type 'header-type ind-1 ind-2 0 = equal? #f)
+	    (list filter-control-order 'filter-control-order ind-1 ind-2 64 = equal? #t)
+	    (list speed-control-style 'speed-control-style ind-1 ind-2 speed-control-as-ratio = equal? #t)
+	    (list speed-control-tones 'speed-control-tones ind-1 ind-2 14 = equal? #t)
+	    
+	    (list amp-control 'amp-control ind-1 ind-2 .5 (lambda (a b) (< (abs (- a b)) .01)) feql #t)
+	    (list contrast-control 'contrast-control ind-1 ind-2 .5 (lambda (a b) (< (abs (- a b)) .01)) feql #t)
+	    (list contrast-control-amp 'contrast-control-amp ind-1 ind-2 .5 (lambda (a b) (< (abs (- a b)) .01)) feql #t)
+	    (list expand-control 'expand-control ind-1 ind-2 .5 (lambda (a b) (< (abs (- a b)) .01)) feql #t)
+	    (list expand-control-hop 'expand-control-hop ind-1 ind-2 .5 (lambda (a b) (< (abs (- a b)) .01)) feql #t)
+	    (list expand-control-jitter 'expand-control-jitter ind-1 ind-2 .15 (lambda (a b) (< (abs (- a b)) .01)) feql #t)
+	    (list expand-control-length 'expand-control-length ind-1 ind-2 .05 (lambda (a b) (< (abs (- a b)) .01)) feql #t)
+	    (list expand-control-ramp 'expand-control-ramp ind-1 ind-2 .05 (lambda (a b) (< (abs (- a b)) .01)) feql #t)
+	    (list speed-control 'speed-control ind-1 ind-2 .5 (lambda (a b) (< (abs (- a b)) .01)) feql #t)
+	    (list reverb-control-decay 'reverb-control-decay ind-1 ind-2 .5 (lambda (a b) (< (abs (- a b)) .01)) feql #t)
+	    (list reverb-control-feedback 'reverb-control-feedback ind-1 ind-2 .5 (lambda (a b) (< (abs (- a b)) .01)) feql #t)
+	    (list reverb-control-length 'reverb-control-length ind-1 ind-2 .5 (lambda (a b) (< (abs (- a b)) .01)) feql #t)
+	    (list reverb-control-scale 'reverb-control-scale ind-1 ind-2 .5 (lambda (a b) (< (abs (- a b)) .01)) feql #t)
+	    (list reverb-control-lowpass 'reverb-control-lowpass ind-1 ind-2 .5 (lambda (a b) (< (abs (- a b)) .01)) feql #t)
+	    
+	    (list contrast-control? 'contrast-control? ind-1 ind-2 #t equal? equal? #t)
+	    (list expand-control? 'expand-control? ind-1 ind-2 #t equal? equal? #t)
+	    (list filter-control? 'filter-control? ind-1 ind-2 #t equal? equal? #t)
+	    (list reverb-control? 'reverb-control? ind-1 ind-2 #t equal? equal? #t)
+	    (list show-controls 'show-controls ind-1 ind-2 #t equal? equal? #t)
+	    (list read-only 'read-only ind-1 ind-2 #t equal? equal? #t)
+	    (list cursor-follows-play 'cursor-follows-play ind-1 ind-2 #t equal? equal? #t)
+	    (list filter-control-in-dB 'filter-control-in-dB ind-1 ind-2 #t equal? equal? #t)
+	    (list filter-control-in-hz 'filter-control-in-hz ind-1 ind-2 #t equal? equal? #t)
+	    
+	    (list file-name 'file-name ind-1 ind-2 #f string=? equal? #f)
+	    (list short-file-name 'short-file-name ind-1 ind-2 #f string=? equal? #f)
+	    (list comment 'comment ind-1 ind-2 #f string=? equal? #f)
+	    
+	    (list amp-control-bounds 'amp-control-bounds ind-1 ind-2 (list 0.5 1.5) feql 
+		  (lambda (a b) (and (list? a) (list? b) (list? (car a)) (list? (cadr a)) (list? (car b)) (list? (cadr b))
+				     (feql (car a) (car b)) (feql (cadr a) (cadr b)))) #t)
+	    (list speed-control-bounds 'speed-control-bounds ind-1 ind-2 (list 0.5 1.5) feql 
+		  (lambda (a b) (and (list? a) (list? b) (list? (car a)) (list? (cadr a)) (list? (car b)) (list? (cadr b))
+				     (feql (car a) (car b)) (feql (cadr a) (cadr b)))) #t)
+	    (list expand-control-bounds 'expand-control-bounds ind-1 ind-2 (list 0.5 1.5) feql 
+		  (lambda (a b) (and (list? a) (list? b) (list? (car a)) (list? (cadr a)) (list? (car b)) (list? (cadr b))
+				     (feql (car a) (car b)) (feql (cadr a) (cadr b)))) #t)
+	    (list contrast-control-bounds 'contrast-control-bounds ind-1 ind-2 (list 0.0 1.5) feql 
+		  (lambda (a b) (and (list? a) (list? b) (list? (car a)) (list? (cadr a)) (list? (car b)) (list? (cadr b))
+				     (feql (car a) (car b)) (feql (cadr a) (cadr b)))) #t)
+	    (list reverb-control-scale-bounds 'reverb-control-scale-bounds ind-1 ind-2 (list 0.5 1.5) feql 
+		  (lambda (a b) (and (list? a) (list? b) (list? (car a)) (list? (cadr a)) (list? (car b)) (list? (cadr b))
+				     (feql (car a) (car b)) (feql (cadr a) (cadr b)))) #t)
+	    (list reverb-control-length-bounds 'reverb-control-length-bounds ind-1 ind-2 (list 0.5 1.5) feql 
+		  (lambda (a b) (and (list? a) (list? b) (list? (car a)) (list? (cadr a)) (list? (car b)) (list? (cadr b))
+				     (feql (car a) (car b)) (feql (cadr a) (cadr b)))) #t)
+	    (list filter-control-envelope 'filter-control-envelope ind-1 ind-2 (list 0.0 1.0 1.0 0.0) feql
+		  (lambda (a b) (and (list? a) (list? b) (list? (car a)) (list? (cadr a)) (list? (car b)) (list? (cadr b))
+				     (feql (car a) (car b)) (feql (cadr a) (cadr b)))) #t)
+	    
+	    (list filter-control-coeffs 'filter-control-coeffs ind-1 ind-2 (let ((val (make-vct (filter-control-order)))) (vct-set! val 0 1.0) val) vequal
+		  (lambda (a b) (and (list? a) (list? b) (vct? (car a)) (vct? (cadr a)) (vct? (car b)) (vct? (cadr b))
+				     (vequal (car a) (car b)) (vequal (cadr a) (cadr b)))) #f)))
+	  
+	  (save-controls #t)
+	  (restore-controls #t)
+	  (reset-controls #t)
+	  (close-sound #t)
+	  (if (not (equal? (sounds) '())) (snd-display ";sounds after close-sound #t: ~A" (sounds)))))
+
       (run-hook after-test-hook 21)
       ))
 
@@ -35186,12 +35310,6 @@ EDITS: 2
 			 (if (not (= (x-axis-style) style)) (snd-display ";x-axis style ~A: ~A" name (x-axis-style))))
 		       (list "samples" "percentage" "beats" "seconds")
 		       (list x-axis-in-samples x-axis-as-percentage x-axis-in-beats x-axis-in-seconds))
-		      (for-each
-		       (lambda (name style)
-			 (XtCallCallbacks (menu-option name) XmNactivateCallback (snd-global-state))
-			 (if (not (= (speed-control-style) style)) (snd-display ";speed-control style ~A: ~A" name (speed-control-style))))
-		       (list "semitones" "ratio" "float")
-		       (list speed-control-as-semitone speed-control-as-ratio speed-control-as-float))
 		      (set! (cursor) 50)
 		      (for-each
 		       (lambda (name style)
@@ -42205,6 +42323,7 @@ EDITS: 2
 	    (check-error-tag 'wrong-type-arg (lambda () (make-iir-filter :order 32 :ycoeffs (make-vct 4))))
 	    (check-error-tag 'out-of-range (lambda () (make-table-lookup :size 123456789)))
 	    (check-error-tag 'out-of-range (lambda () (make-src :srate -0.5)))
+	    (check-error-tag 'out-of-range (lambda () (new-sound "test.snd" #f #f #f 0)))
 	    (check-error-tag 'mus-error (lambda () (mus-sound-chans (string-append sf-dir "bad_location.nist"))))
 	    (check-error-tag 'mus-error (lambda () (mus-sound-chans (string-append sf-dir "bad_field.nist"))))
 	    (if (provided? 'snd-motif)

@@ -101,9 +101,6 @@ int options_focus_left_menu(void) {return(0);}
 int options_focus_right_menu(void) {return(0);}
 int options_focus_middle_menu(void) {return(0);}
 int options_focus_active_menu(void) {return(0);}
-int options_speed_ratio_menu(void) {return(0);}
-int options_speed_float_menu(void) {return(0);}
-int options_speed_semitone_menu(void) {return(0);}
 int popup_play_menu(void) {return(0);}
 int popup_undo_menu(void) {return(0);}
 int popup_redo_menu(void) {return(0);}

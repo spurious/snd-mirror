@@ -1570,7 +1570,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
       gtk_container_add(GTK_CONTAINER(sw[W_speed_event]), sw[W_speed_label]);
       gtk_widget_show(sw[W_speed_label]);
       
-      switch (speed_control_style(ss))
+      switch (sp->speed_control_style)
 	{
 	case SPEED_CONTROL_AS_RATIO: sw[W_speed_number] = gtk_label_new("  1/1"); break;
 	case SPEED_CONTROL_AS_SEMITONE: sw[W_speed_number] = gtk_label_new("    0"); break;

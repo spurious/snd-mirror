@@ -678,7 +678,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;; -------- brighten-slightly
 
 (define (brighten-slightly amount)
-  ;; a slightly simplified form of contrast-enhancement ('amount' between ca .1 and 1)
+  "(brighten-slightly amount) is a form of contrast-enhancement ('amount' between ca .1 and 1)"
   (let* ((mx (maxamp))
 	 (brt (/ (* 2 pi amount) mx)))
     (map-channel (lambda (y)
@@ -690,6 +690,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;; -------- Hilbert transform
 
 (define* (make-hilbert-transform #:optional (len 30))
+  "(make-hilbert-transform #:optional (len 30) makes a Hilbert transform filter"
   (let* ((arrlen (1+ (* 2 len)))
 	 (arr (make-vct arrlen)))
     (do ((i (- len) (1+ i)))
@@ -719,6 +720,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;; -------- highpass filter 
 
 (define* (make-highpass fc #:optional (len 30))
+  "(make-highpass fc #:optional (len 30)) makes an FIR highpass filter"
   (let* ((arrlen (1+ (* 2 len)))
 	 (arr (make-vct arrlen)))
     (do ((i (- len) (1+ i)))
@@ -745,6 +747,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;; -------- lowpass filter
 
 (define* (make-lowpass fc #:optional (len 30))
+  "(make-lowpass fc #:optional (len 30)) makes an FIR lowpass filter"
   (let* ((arrlen (1+ (* 2 len)))
 	 (arr (make-vct arrlen)))
     (do ((i (- len) (1+ i)))
@@ -770,6 +773,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;; -------- bandpass filter
 
 (define* (make-bandpass flo fhi #:optional (len 30))
+  "(make-bandpass flo fhi #:optional (len 30)) makes an FIR bandpass filter"
   (let* ((arrlen (1+ (* 2 len)))
 	 (arr (make-vct arrlen)))
     (do ((i (- len) (1+ i)))
@@ -810,6 +814,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;; -------- bandstop filter
 
 (define* (make-bandstop flo fhi #:optional (len 30))
+  "(make-bandstop flo fhi #:optional (len 30)) makes an FIR bandstop (notch) filter"
   (let* ((arrlen (1+ (* 2 len)))
 	 (arr (make-vct arrlen)))
     (do ((i (- len) (1+ i)))
@@ -835,6 +840,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;; -------- differentiator
 
 (define* (make-differentiator #:optional (len 30))
+  "(make-differentiator #:optional (len 30)) makes an FIR differentiator (highpass) filter"
   (let* ((arrlen (1+ (* 2 len)))
 	 (arr (make-vct arrlen)))
     (do ((i (- len) (1+ i)))
@@ -866,6 +872,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;;   etc
 
 (define (make-biquad a0 a1 a2 b1 b2)
+  "(make-biquad a0 a1 a2 b1 b2) returns a biquad filter (use with the CLM filter gen)"
   (make-filter 3 
 	       (vct a0 a1 a2) 
 	       (vct 0.0 b1 b2)))
@@ -1130,15 +1137,18 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
     (reverse freq-response)))
 
 (define* (notch-channel freqs #:optional (filter-order #f) beg dur (snd #f) (chn #f) edpos (truncate #t) (notch-width 2))
+  "(notch-channel freqs #:optional (filter-order #f) beg dur (snd #f) (chn #f) edpos (truncate #t) (notch-width 2)) -> notch filter removing freqs"
   (filter-channel (make-notch-frequency-response (exact->inexact (srate snd)) freqs notch-width)
 		  (or filter-order (inexact->exact (expt 2 (ceiling (/ (log (/ (srate snd) notch-width)) (log 2.0))))))
 		  beg dur snd chn edpos truncate))
 
 (define* (notch-sound freqs #:optional (filter-order #f) (snd #f) (chn #f) (notch-width 2))
+  "(notch-sound freqs #:optional (filter-order #f) (snd #f) (chn #f) (notch-width 2)) -> notch filter removing freqs"
   (filter-sound (make-notch-frequency-response (exact->inexact (srate snd)) freqs notch-width)
 		(or filter-order (inexact->exact (expt 2 (ceiling (/ (log (/ (srate snd) notch-width)) (log 2.0))))))
 		snd chn))
 
 (define* (notch-selection freqs #:optional (filter-order #f) (notch-width 2))
+  "(notch-selection freqs #:optional (filter-order #f) (notch-width 2)) -> notch filter removing freqs"
   (filter-selection (make-notch-frequency-response (exact->inexact (selection-srate)) freqs notch-width)
 		    (or filter-order (inexact->exact (expt 2 (ceiling (/ (log (/ (selection-srate) notch-width)) (log 2.0))))))))

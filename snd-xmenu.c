@@ -20,8 +20,6 @@ enum {menu_menu,
           o_focus_style_menu, o_focus_cascade_menu,
             o_focus_right_menu, o_focus_left_menu, o_focus_middle_menu, o_focus_active_menu,
           o_save_menu, o_save_state_menu,
-          o_speed_menu, o_speed_cascade_menu,
-            o_speed_float_menu, o_speed_ratio_menu, o_speed_semitone_menu,
         view_menu, v_cascade_menu,
           v_equalize_panes_menu, 
           v_graph_style_menu, v_graph_style_cascade_menu,
@@ -38,7 +36,7 @@ enum {menu_menu,
           v_sep2_menu
 };
 
-#define NUM_MENU_WIDGETS 104
+#define NUM_MENU_WIDGETS 99
 static Widget mw[NUM_MENU_WIDGETS];
 
 enum {W_pop_menu, W_pop_sep, W_pop_play, W_pop_undo, W_pop_redo, W_pop_save, W_pop_equalize_panes, W_pop_info};
@@ -94,9 +92,6 @@ Widget options_focus_left_menu(void) {return(mw[o_focus_left_menu]);}
 Widget options_focus_right_menu(void) {return(mw[o_focus_right_menu]);}
 Widget options_focus_middle_menu(void) {return(mw[o_focus_middle_menu]);}
 Widget options_focus_active_menu(void) {return(mw[o_focus_active_menu]);}
-Widget options_speed_ratio_menu(void) {return(mw[o_speed_ratio_menu]);}
-Widget options_speed_float_menu(void) {return(mw[o_speed_float_menu]);}
-Widget options_speed_semitone_menu(void) {return(mw[o_speed_semitone_menu]);}
 
 Widget popup_play_menu(void) {return(popup_children[W_pop_play]);}
 Widget popup_undo_menu(void) {return(popup_children[W_pop_undo]);}
@@ -223,9 +218,6 @@ static void options_focus_right_callback(Widget w, XtPointer info, XtPointer Dat
 static void options_focus_left_callback(Widget w, XtPointer info, XtPointer Data) {activate_focus_menu(ZOOM_FOCUS_LEFT);}
 static void options_focus_middle_callback(Widget w, XtPointer info, XtPointer Data) {activate_focus_menu(ZOOM_FOCUS_MIDDLE);}
 static void options_focus_active_callback(Widget w, XtPointer info, XtPointer Data) {activate_focus_menu(ZOOM_FOCUS_ACTIVE);}
-static void options_speed_float_callback(Widget w, XtPointer info, XtPointer Data) {activate_speed_in_menu(SPEED_CONTROL_AS_FLOAT);}
-static void options_speed_ratio_callback(Widget w, XtPointer info, XtPointer Data) {activate_speed_in_menu(SPEED_CONTROL_AS_RATIO);}
-static void options_speed_semitone_callback(Widget w, XtPointer info, XtPointer Data) {activate_speed_in_menu(SPEED_CONTROL_AS_SEMITONE);}
 static void options_x_axis_seconds_callback(Widget w, XtPointer info, XtPointer context) {set_x_axis_style(X_AXIS_IN_SECONDS);}
 static void options_x_axis_beats_callback(Widget w, XtPointer info, XtPointer context) {set_x_axis_style(X_AXIS_IN_BEATS);}
 static void options_x_axis_samples_callback(Widget w, XtPointer info, XtPointer context) {set_x_axis_style(X_AXIS_IN_SAMPLES);}
@@ -583,22 +575,6 @@ Widget add_menu(void)
   mw[o_transform_menu] = XtCreateManagedWidget(_("Transform Options"), xmPushButtonWidgetClass, mw[option_menu], main_args, main_n);
   XtAddCallback(mw[o_transform_menu], XmNactivateCallback, options_transform_callback, NULL);
   XtVaSetValues(mw[o_transform_menu], XmNmnemonic, 't', NULL);
-
-
-  mw[o_speed_menu] = XmCreatePulldownMenu(mw[option_menu], "speedstyle", main_args, main_n);
-
-  k = main_n;
-  XtSetArg(main_args[k], XmNsubMenuId, mw[o_speed_menu]); k++;
-  mw[o_speed_cascade_menu] = XtCreateManagedWidget(_("Speed style"), xmCascadeButtonWidgetClass, mw[option_menu], main_args, k);
-
-  mw[o_speed_float_menu] = XtCreateManagedWidget(_("float"), xmPushButtonWidgetClass, mw[o_speed_menu], in_args, in_n);
-  XtAddCallback(mw[o_speed_float_menu], XmNactivateCallback, options_speed_float_callback, NULL);  
-
-  mw[o_speed_semitone_menu] = XtCreateManagedWidget(_("semitones"), xmPushButtonWidgetClass, mw[o_speed_menu], main_args, main_n);
-  XtAddCallback(mw[o_speed_semitone_menu], XmNactivateCallback, options_speed_semitone_callback, NULL);  
-
-  mw[o_speed_ratio_menu] = XtCreateManagedWidget(_("ratio"), xmPushButtonWidgetClass, mw[o_speed_menu], main_args, main_n);
-  XtAddCallback(mw[o_speed_ratio_menu], XmNactivateCallback, options_speed_ratio_callback, NULL);  
 
 
   mw[o_focus_style_menu] = XmCreatePulldownMenu(mw[option_menu], "focusstyle", main_args, main_n);
