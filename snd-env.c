@@ -1875,6 +1875,8 @@ and decay portions in the envelope editor."
   XEN_DEFINE_HOOK(enved_hook, S_enved_hook, 5, H_enved_hook);
 
   ss->enved = new_env_editor();
+  FREE(ss->enved->axis);
+  ss->enved->axis = NULL;
   ss->enved->in_dB = DEFAULT_ENVED_IN_DB;
   ss->enved->clip_p = DEFAULT_ENVED_CLIP_P;
 

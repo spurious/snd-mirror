@@ -946,6 +946,7 @@ void cleanup_region_temp_files(void)
 	  (r->filename))
 	{
 	  snd_remove(r->filename, REMOVE_FROM_CACHE);
+	  FREE(r->filename);
 	  r->filename = NULL;
 	}
     }

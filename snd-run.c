@@ -10790,21 +10790,39 @@ static XEN g_run_eval(XEN code, XEN arg, XEN arg1, XEN arg2)
 #endif
       if (pt->args)
 	{
-	  if (pt->arity > 0)
+	  bool arity_err = false;
+	  if (pt->arity > 3)
+	    arity_err = true;
+	  else
 	    {
-	      if (!(XEN_BOUND_P(arg))) {free_ptree((void *)pt); XEN_ERROR(XEN_ERROR_TYPE("wrong-number-of-args"), code); return(XEN_FALSE);}
-	      xen_to_addr(pt, arg, pt->arg_types[0], pt->args[0]);
-	      if (pt->arity > 1)
+	      if (pt->arity > 0)
 		{
-		  if (!(XEN_BOUND_P(arg1))) {free_ptree((void *)pt); XEN_ERROR(XEN_ERROR_TYPE("wrong-number-of-args"), code); return(XEN_FALSE);}
-		  xen_to_addr(pt, arg1, pt->arg_types[1], pt->args[1]);
-		  if (pt->arity > 2)
+		  if (XEN_BOUND_P(arg))
 		    {
-		      if (!(XEN_BOUND_P(arg2))) {free_ptree((void *)pt); XEN_ERROR(XEN_ERROR_TYPE("wrong-number-of-args"), code); return(XEN_FALSE);}
-		      xen_to_addr(pt, arg2, pt->arg_types[2], pt->args[2]);
-		      if (pt->arity > 3) {free_ptree((void *)pt); XEN_ERROR(XEN_ERROR_TYPE("wrong-number-of-args"), code); return(XEN_FALSE);}
+		      xen_to_addr(pt, arg, pt->arg_types[0], pt->args[0]);
+		      if (pt->arity > 1)
+			{
+			  if (XEN_BOUND_P(arg1))
+			    {
+			      xen_to_addr(pt, arg1, pt->arg_types[1], pt->args[1]);
+			      if (pt->arity > 2)
+				{
+				  if (XEN_BOUND_P(arg2))
+				    xen_to_addr(pt, arg2, pt->arg_types[2], pt->args[2]);
+				  else arity_err = true;
+				}
+			    }
+			  else arity_err = true;
+			}
 		    }
+		  else arity_err = true;
 		}
+	    }
+	  if (arity_err) 
+	    {
+	      free_ptree((void *)pt); 
+	      XEN_ERROR(XEN_ERROR_TYPE("wrong-number-of-args"), code); 
+	      return(XEN_FALSE);
 	    }
 	}
       eval_ptree(pt);

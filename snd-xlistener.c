@@ -603,8 +603,8 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
 	      wy += yoff;
 	      XtVaSetValues(completion_help_dialog, XmNx, wx, XmNy, wy + 140, NULL);
 	    }
-	  if (file_text) FREE(file_text);
 	}
+      if (file_text) FREE(file_text);
       if (old_text) FREE(old_text);
     }
 }

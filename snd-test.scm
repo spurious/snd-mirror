@@ -21986,7 +21986,13 @@ EDITS: 5
 		    (if (not m11) (snd-display ";can't find 11th mark")
 			(if (not (= (mark-sample m11 1) 23)) (snd-display ";mark 11th: ~A" (mark-sample m11 1))))
 		    (if (mark? m12) (snd-display ";found 12th mark: ~A ~A ~A" m12 (mark-sample m12 2) (mark-name m12 2)))))))
-	    (close-sound ind))
+	    (close-sound ind))      
+	  (if (provided? 'snd-debug)
+	      (let ((ind (open-sound "oboe.snd")))
+		(let ((m0 (add-mark 1223 ind 0)))
+		  (internal-test-control-drag-mark ind 0 m0)
+		  (if (not (= (edit-position ind 0) 1)) (snd-display ";test C-drag mark failed?")))
+		(close-sound ind)))
 	  (if (string? sf-dir)
 	      (let ((ind (open-sound (string-append sf-dir "forest.aiff"))))
 		(mark-loops)
@@ -43321,6 +43327,7 @@ EDITS: 2
 			(key-event trktxt snd-return-key 0) (force-event)
 			(widget-string idtxt "2") (force-event)
 			(key-event idtxt snd-return-key 0) (force-event)
+			(if (provided? 'snd-debug) (internal-xmix-tests))
 			(XtSetKeyboardFocus trackd (XmMessageBoxGetChild trackd XmDIALOG_OK_BUTTON))
 			(click-button (XmMessageBoxGetChild trackd XmDIALOG_OK_BUTTON)) (force-event)     ;dismiss
 			(if (XtIsManaged trackd)
@@ -52081,8 +52088,8 @@ EDITS: 2
 
 (if (and with-gui
 	 (or full-test (= snd-test 25) (= snd-test 26) (and keep-going (<= snd-test 28))))
-    (load "misc.scm"))
-
+    (if (file-exists? "misc.scm")
+	(load "misc.scm")))
 
 
 ;;; ---------------- test 28: errors ----------------

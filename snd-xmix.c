@@ -2173,3 +2173,27 @@ int mix_dialog_mix(void) {return(mix_dialog_id);}
 int mix_dialog_set_mix(int id) {mix_dialog_id = id; update_mix_dialog(mix_dialog_id); return(id);}
 int track_dialog_track(void) {return(track_dialog_id);}
 int track_dialog_set_track(int id) {track_dialog_id = id; update_track_dialog(track_dialog_id); return(id);}
+
+
+#if DEBUGGING && HAVE_GUILE
+static XEN g_internal_xmix_tests(void)
+{
+  if (w_env)
+    {
+      with_mix_background_wave = true;
+      mix_amp_env_resize(w_env, NULL, NULL);
+    }
+  if (w_track_env)
+    {
+      with_track_background_wave = true;
+      track_amp_env_resize(w_track_env, NULL, NULL);
+    }
+  return(XEN_FALSE);
+}
+
+void g_init_xmix(void);
+void g_init_xmix(void)
+{
+  XEN_DEFINE_PROCEDURE("internal-xmix-tests", g_internal_xmix_tests, 0, 0, 0, "internal testing func");
+}
+#endif

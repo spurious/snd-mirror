@@ -369,6 +369,8 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+17-Jan:  gfm improvements (see gfm/README)\n\
+14-Jan:  moved makesnd.* into makefile.in.\n\
 10-Jan:  colormap?\n\
          moved sndsine.c to documentation\n\
 5-Jan:   snd 7.9.\n\

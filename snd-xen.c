@@ -3000,6 +3000,10 @@ XEN_NARGIFY_0(g_gc_on_w, g_gc_on)
 #endif
 #endif
 
+#if DEBUGGING && HAVE_GUILE
+void g_init_xmix(void);
+#endif
+
 void g_initialize_gh(void)
 {
   XEN_DEFINE_PROCEDURE(S_mus_audio_describe, g_mus_audio_describe_w, 0, 0, 0, H_mus_audio_describe);
@@ -3362,6 +3366,9 @@ If it returns some non-false result, Snd assumes you've sent the text out yourse
   g_init_gxfind();
 #endif
   g_init_run();
+#if DEBUGGING && HAVE_GUILE
+  g_init_xmix();
+#endif
 
 #if HAVE_GUILE && HAVE_DLFCN_H
   XEN_DEFINE_PROCEDURE("dlopen", g_dlopen_w, 1, 0 ,0, "");

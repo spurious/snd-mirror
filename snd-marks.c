@@ -1789,7 +1789,6 @@ static void make_mark_graph(chan_info *cp, off_t initial_sample, off_t current_s
   if (sf) {free_snd_fd(sf); sf = NULL;}
 }
 
-
 static XEN snd_no_such_mark_error(const char *caller, XEN id)
 {
   XEN_ERROR(NO_SUCH_MARK,
@@ -1797,6 +1796,41 @@ static XEN snd_no_such_mark_error(const char *caller, XEN id)
 		       id));
   return(XEN_FALSE);
 }
+
+#if DEBUGGING && HAVE_GUILE
+/* too hard to do this via mouse events in snd-test, so do it by hand here */
+static XEN g_test_control_drag_mark(XEN snd, XEN chn, XEN mid)
+{
+  int x, y;
+  off_t cx;
+  chan_info *cp;
+  chan_info *ncp[1];
+  mark *m = NULL, *m1 = NULL;
+  cp = get_cp(snd, chn, "test-C-mark");
+  m = find_mark_from_id(XEN_TO_C_INT(mid), ncp, -1);
+  if (m == NULL) 
+    return(snd_no_such_mark_error("test-C-mark", mid));
+  y = cp->axis->y_axis_y1;
+  if (m->name) y += 10;
+  x = grf_x((double)(m->samp) / (double)SND_SRATE(cp->sound), cp->axis);
+  m1 = hit_mark(cp, x, y + 1, snd_ControlMask);
+  if (m != m1)
+    {
+      fprintf(stderr, "ah rats! ");
+      abort();
+    }
+  move_mark(cp, m, x - 50);
+  finish_moving_mark(cp, m);
+  x = grf_x((double)(m->samp) / (double)SND_SRATE(cp->sound), cp->axis);
+  y = cp->axis->y_axis_y0 + 2;
+  hit_triangle(cp, x, y);
+  cx = m->samp + 50;
+  move_play_mark(cp, &cx, x + 50);
+  finish_moving_play_mark(cp);
+  return(mid);
+}
+#endif
+
 
 static XEN g_restore_marks(XEN size, XEN snd, XEN chn, XEN marklist)
 {
@@ -2432,6 +2466,10 @@ void g_init_marks(void)
 If the hook returns #t, the mark is not drawn."
 
   XEN_DEFINE_HOOK(draw_mark_hook, S_draw_mark_hook, 1, H_draw_mark_hook);  /* arg = mark-id */
+
+#if DEBUGGING && HAVE_GUILE
+  XEN_DEFINE_PROCEDURE("internal-test-control-drag-mark", g_test_control_drag_mark, 3, 0, 0, "internal testing func");
+#endif
 }
 
 

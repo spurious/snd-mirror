@@ -1,6 +1,7 @@
 # Snd valgrind suppressions file
 # valgrind --error-limit=no -v --gen-suppressions=yes --suppressions=/home/bil/cl/snd.supp snd
-# valgrind --error-limit=no -v --gen-suppressions=no --suppressions=/home/bil/cl/snd.supp --leak-check=yes --show-reachable=no --num-callers=8 snd
+# valgrind --error-limit=no -v --freelist-vol=100000000 --gen-suppressions=no --suppressions=/home/bil/cl/snd.supp --leak-check=yes --leak-resolution=high --show-reachable=no --num-callers=12 snd
+#
 # first section copied (unnecessarily) from default: /usr/local/lib/valgrind/default.supp
 
 # This is a generated file, composed of the following suppression rules:
@@ -679,6 +680,21 @@
    fun:scm_igc
    fun:scm_gc_for_newcell
    fun:scm_cons
+}
+
+{
+   scm-40
+   Memcheck:Cond
+   fun:scm_from_int32
+   fun:*
+}
+
+{
+   scm-41
+   Memcheck:Cond
+   fun:__gmpz_init_set_si
+   fun:scm_from_int32
+   fun:*
 }
 
 {
@@ -1463,3 +1479,31 @@
    fun:rb_gc_mark
    fun:*
 }
+
+
+# addcheck
+
+{
+   addr1
+   Addrcheck:Overlap
+   fun:memcpy
+   obj:/usr/X11R6/lib/libXt.so.6.0
+   fun:_XtGetResources
+}
+
+{
+   addr2
+   Addrcheck:Overlap
+   fun:memcpy
+   obj:/usr/X11R6/lib/libXt.so.6.0
+   fun:_XtGetSubresources
+   fun:XtGetSubresources
+}
+
+{
+   addr3
+   Addrcheck:Addr4
+   fun:scm_make_continuation
+   fun:*
+}
+

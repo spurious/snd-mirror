@@ -459,6 +459,7 @@ char *info_completer(char *text)
 		  new_text = (char *)CALLOC(len, sizeof(char));
 		  strncpy(new_text, text, beg);
 		  strcat(new_text, new_file);
+		  if (new_file) FREE(new_file);
 		  return(new_text);
 		}
 	      else return(new_text);
@@ -547,6 +548,7 @@ char *complete_listener_text(char *old_text, int end, bool *try_completion, char
 	      file_text[spaces + 1] = 0;
 	      append_listener_text(end - 1, file_text);
 	      FREE(file_text);
+	      file_text = NULL;
 	    }
 	  (*try_completion) = false;
 	  return(NULL);

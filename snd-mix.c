@@ -6916,6 +6916,9 @@ static void free_track_list(int id)
 	  FREE(tl->states);
 	  tl->states = NULL;
 	}
+      if (tl->dialog_env) 
+	tl->dialog_env = free_env(tl->dialog_env);
+      /* tl->beg and dur are freed already */
       FREE(tl);
       tracks[id] = NULL;
     }

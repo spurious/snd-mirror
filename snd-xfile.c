@@ -250,12 +250,16 @@ static void play_selected_callback(Widget w, XtPointer context, XtPointer info)
       if (!wtmp) 
 	wtmp = XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_TEXT);
       filename = XmTextGetString(wtmp);
-      if ((filename) && (mus_file_probe(filename)))
+      if (filename)
 	{
-	  fd->file_play_sp = make_sound_readable(filename, false);
-	  fd->file_play_sp->delete_me = (void *)fd;
-	  if (fd->file_play_sp)
-	    play_sound(fd->file_play_sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
+	  if (mus_file_probe(filename))
+	    {
+	      fd->file_play_sp = make_sound_readable(filename, false);
+	      fd->file_play_sp->delete_me = (void *)fd;
+	      if (fd->file_play_sp)
+		play_sound(fd->file_play_sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
+	    }
+	  XtFree(filename);
 	}
     }
   else file_dialog_stop_playing(fd);
@@ -715,7 +719,10 @@ static void save_as_ok_callback(Widget w, XtPointer context, XtPointer info)
   str = XmTextGetString(file_save_as_file_name);
   sp = any_selected_sound();
   if ((str) && (*str))
-    need_update = saved_file_needs_update(sp, str, save_as_dialog_type, srate, type, format, comment);
+    {
+      need_update = saved_file_needs_update(sp, str, save_as_dialog_type, srate, type, format, comment);
+      force_directory_reread(save_as_dialog);
+    }
   else 
     if (sp) 
       report_in_minibuffer(sp, _("not saved (no file name given)"));

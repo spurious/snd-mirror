@@ -707,7 +707,18 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
   bool s_or_r = false;
   int err;
   chan_info *active_chan;
-  char *str = NULL;
+  static char *str = NULL;
+  if (str) /* leftover from previous call */
+    {
+#if USE_MOTIF
+      XtFree(str);
+#else
+#if USE_GTK
+      FREE(str);
+#endif
+#endif
+      str = NULL;
+    }
   if ((keysym == snd_K_s) || (keysym == snd_K_r)) s_or_r = true;
   if (sp != selected_sound()) select_channel(sp, 0);
   active_chan = any_selected_channel(sp);
@@ -729,7 +740,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
     }
 
   str = get_minibuffer_string(sp);
-  if ((str) && (*str)) 
+  if ((str) && (*str))
     remember_mini_string(sp, str);
 
 #if HAVE_EXTENSION_LANGUAGE
@@ -757,7 +768,6 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 		  sp->search_proc = proc;
 		  snd_protect(proc);
  		}
-	      free(str);
 	      if (active_chan) active_chan->last_search_result = SEARCH_OK;
 	    }
 	}
@@ -786,7 +796,6 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	  goto_named_mark(active_chan, str);
 	  sp->finding_mark = false;
 	}
-      if (str) free(str);
       return;
     }
   if (snd_strlen(str) != 0)
@@ -796,7 +805,6 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	  snd_print(str);
 	  sp->printing = NOT_PRINTING;
 	  clear_minibuffer(sp);
-	  free(str);
 	  return;
 	}
       if (sp->loading)
@@ -804,14 +812,12 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	  snd_load_file(str);
 	  sp->loading = false;
 	  clear_minibuffer(sp);
-	  free(str);
 	  return;
 	}
       if (sp->filing != NOT_FILING)
 	{
 	  switch (sp->filing)
 	    {
-	      /* don't free(str) locally in this switch statement without setting it to null as well */
 	    case INPUT_FILING:
 	      {
 		snd_info *nsp;
@@ -829,7 +835,6 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 		filename = mus_expand_filename(str);
 		if (!(snd_overwrite_ok(filename))) 
 		  {
-		    free(str); 
 		    FREE(filename); 
 		    return;
 		  }
@@ -872,6 +877,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 		if (dp) 
 		  {
 		    closedir(dp);
+		    if (temp_dir(ss)) FREE(temp_dir(ss));
 		    set_temp_dir(newdir);
 		  }
 		else 
@@ -933,7 +939,6 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	      break;
 	    }
 	  sp->filing = NOT_FILING;
-	  if (str) free(str);
 	  return;
 	}
       if (sp->amping)
@@ -957,7 +962,6 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	  sp->selectioning = false;
 	  sp->amping = 0;
 	  clear_minibuffer(sp);
-	  if (str) free(str);
 	  return;
 	}
 #if HAVE_EXTENSION_LANGUAGE
@@ -970,7 +974,6 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	  ss->mx_sp = NULL;
 	  if (sp == NULL) return;
 	  sp->macroing = 0;
-	  if (str) free(str);
 	  return;
 	}
 #endif
@@ -992,7 +995,6 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	      XEN_CALL_1(sp->prompt_callback, proc, "prompt callback func");
 	      snd_unprotect_at(loc);
 	    }
-	  free(str);
 	}
       sp->prompting = false;
       clear_minibuffer(sp);

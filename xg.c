@@ -2896,7 +2896,14 @@ static XEN gxg_gdk_error_trap_pop(void)
 static XEN gxg_gdk_get_display(void)
 {
   #define H_gdk_get_display "gchar* gdk_get_display( void)"
-  return(C_TO_XEN_gchar_(gdk_get_display()));
+  {
+   gchar* result;
+   XEN rtn;
+   result = gdk_get_display();
+   rtn = C_TO_XEN_gchar_(result);
+   g_free(result);
+   return(rtn);
+  }
 }
 static XEN gxg_gdk_pointer_grab(XEN window, XEN owner_events, XEN event_mask, XEN confine_to, XEN cursor, XEN time)
 {
@@ -3490,7 +3497,14 @@ static XEN gxg_gdk_utf8_to_string_target(XEN str)
 {
   #define H_gdk_utf8_to_string_target "gchar* gdk_utf8_to_string_target(gchar* str)"
   XEN_ASSERT_TYPE(XEN_gchar__P(str), str, 1, "gdk_utf8_to_string_target", "gchar*");
-  return(C_TO_XEN_gchar_(gdk_utf8_to_string_target(XEN_TO_C_gchar_(str))));
+  {
+   gchar* result;
+   XEN rtn;
+   result = gdk_utf8_to_string_target(XEN_TO_C_gchar_(str));
+   rtn = C_TO_XEN_gchar_(result);
+   g_free(result);
+   return(rtn);
+  }
 }
 static XEN gxg_gdk_region_new(void)
 {
@@ -6664,7 +6678,14 @@ static XEN gxg_gtk_color_selection_palette_to_string(XEN colors, XEN n_colors)
 gint n_colors)"
   XEN_ASSERT_TYPE(XEN_GdkColor__P(colors), colors, 1, "gtk_color_selection_palette_to_string", "GdkColor*");
   XEN_ASSERT_TYPE(XEN_gint_P(n_colors), n_colors, 2, "gtk_color_selection_palette_to_string", "gint");
-  return(C_TO_XEN_gchar_(gtk_color_selection_palette_to_string(XEN_TO_C_GdkColor_(colors), XEN_TO_C_gint(n_colors))));
+  {
+   gchar* result;
+   XEN rtn;
+   result = gtk_color_selection_palette_to_string(XEN_TO_C_GdkColor_(colors), XEN_TO_C_gint(n_colors));
+   rtn = C_TO_XEN_gchar_(result);
+   g_free(result);
+   return(rtn);
+  }
 }
 static XEN gxg_GTK_IS_RESIZE_CONTAINER(XEN widget)
 {
@@ -7240,7 +7261,15 @@ gint end_pos)"
   XEN_ASSERT_TYPE(XEN_GtkEditable__P(editable), editable, 1, "gtk_editable_get_chars", "GtkEditable*");
   XEN_ASSERT_TYPE(XEN_gint_P(start_pos), start_pos, 2, "gtk_editable_get_chars", "gint");
   XEN_ASSERT_TYPE(XEN_gint_P(end_pos), end_pos, 3, "gtk_editable_get_chars", "gint");
-  return(C_TO_XEN_gchar_(gtk_editable_get_chars(XEN_TO_C_GtkEditable_(editable), XEN_TO_C_gint(start_pos), XEN_TO_C_gint(end_pos))));
+  {
+   gchar* result;
+   XEN rtn;
+   result = gtk_editable_get_chars(XEN_TO_C_GtkEditable_(editable), XEN_TO_C_gint(start_pos), 
+                                                                     XEN_TO_C_gint(end_pos));
+   rtn = C_TO_XEN_gchar_(result);
+   g_free(result);
+   return(rtn);
+  }
 }
 static XEN gxg_gtk_editable_cut_clipboard(XEN editable)
 {
@@ -7600,7 +7629,14 @@ static XEN gxg_gtk_font_selection_get_font_name(XEN fontsel)
 {
   #define H_gtk_font_selection_get_font_name "gchar* gtk_font_selection_get_font_name(GtkFontSelection* fontsel)"
   XEN_ASSERT_TYPE(XEN_GtkFontSelection__P(fontsel), fontsel, 1, "gtk_font_selection_get_font_name", "GtkFontSelection*");
-  return(C_TO_XEN_gchar_(gtk_font_selection_get_font_name(XEN_TO_C_GtkFontSelection_(fontsel))));
+  {
+   gchar* result;
+   XEN rtn;
+   result = gtk_font_selection_get_font_name(XEN_TO_C_GtkFontSelection_(fontsel));
+   rtn = C_TO_XEN_gchar_(result);
+   g_free(result);
+   return(rtn);
+  }
 }
 static XEN gxg_gtk_font_selection_set_font_name(XEN fontsel, XEN fontname)
 {
@@ -7640,7 +7676,14 @@ static XEN gxg_gtk_font_selection_dialog_get_font_name(XEN fsd)
 {
   #define H_gtk_font_selection_dialog_get_font_name "gchar* gtk_font_selection_dialog_get_font_name(GtkFontSelectionDialog* fsd)"
   XEN_ASSERT_TYPE(XEN_GtkFontSelectionDialog__P(fsd), fsd, 1, "gtk_font_selection_dialog_get_font_name", "GtkFontSelectionDialog*");
-  return(C_TO_XEN_gchar_(gtk_font_selection_dialog_get_font_name(XEN_TO_C_GtkFontSelectionDialog_(fsd))));
+  {
+   gchar* result;
+   XEN rtn;
+   result = gtk_font_selection_dialog_get_font_name(XEN_TO_C_GtkFontSelectionDialog_(fsd));
+   rtn = C_TO_XEN_gchar_(result);
+   g_free(result);
+   return(rtn);
+  }
 }
 static XEN gxg_gtk_font_selection_dialog_set_font_name(XEN fsd, XEN fontname)
 {
@@ -12309,8 +12352,15 @@ GtkTextIter* end, gboolean include_hidden_chars)"
   XEN_ASSERT_TYPE(XEN_GtkTextIter__P(start), start, 2, "gtk_text_buffer_get_slice", "GtkTextIter*");
   XEN_ASSERT_TYPE(XEN_GtkTextIter__P(end), end, 3, "gtk_text_buffer_get_slice", "GtkTextIter*");
   XEN_ASSERT_TYPE(XEN_gboolean_P(include_hidden_chars), include_hidden_chars, 4, "gtk_text_buffer_get_slice", "gboolean");
-  return(C_TO_XEN_gchar_(gtk_text_buffer_get_slice(XEN_TO_C_GtkTextBuffer_(buffer), XEN_TO_C_GtkTextIter_(start), XEN_TO_C_GtkTextIter_(end), 
-                                                   XEN_TO_C_gboolean(include_hidden_chars))));
+  {
+   gchar* result;
+   XEN rtn;
+   result = gtk_text_buffer_get_slice(XEN_TO_C_GtkTextBuffer_(buffer), XEN_TO_C_GtkTextIter_(start), 
+                                                                        XEN_TO_C_GtkTextIter_(end), XEN_TO_C_gboolean(include_hidden_chars));
+   rtn = C_TO_XEN_gchar_(result);
+   g_free(result);
+   return(rtn);
+  }
 }
 static XEN gxg_gtk_text_buffer_insert_pixbuf(XEN buffer, XEN iter, XEN pixbuf)
 {
@@ -12777,14 +12827,28 @@ static XEN gxg_gtk_text_iter_get_slice(XEN start, XEN end)
   #define H_gtk_text_iter_get_slice "gchar* gtk_text_iter_get_slice(GtkTextIter* start, GtkTextIter* end)"
   XEN_ASSERT_TYPE(XEN_GtkTextIter__P(start), start, 1, "gtk_text_iter_get_slice", "GtkTextIter*");
   XEN_ASSERT_TYPE(XEN_GtkTextIter__P(end), end, 2, "gtk_text_iter_get_slice", "GtkTextIter*");
-  return(C_TO_XEN_gchar_(gtk_text_iter_get_slice(XEN_TO_C_GtkTextIter_(start), XEN_TO_C_GtkTextIter_(end))));
+  {
+   gchar* result;
+   XEN rtn;
+   result = gtk_text_iter_get_slice(XEN_TO_C_GtkTextIter_(start), XEN_TO_C_GtkTextIter_(end));
+   rtn = C_TO_XEN_gchar_(result);
+   g_free(result);
+   return(rtn);
+  }
 }
 static XEN gxg_gtk_text_iter_get_text(XEN start, XEN end)
 {
   #define H_gtk_text_iter_get_text "gchar* gtk_text_iter_get_text(GtkTextIter* start, GtkTextIter* end)"
   XEN_ASSERT_TYPE(XEN_GtkTextIter__P(start), start, 1, "gtk_text_iter_get_text", "GtkTextIter*");
   XEN_ASSERT_TYPE(XEN_GtkTextIter__P(end), end, 2, "gtk_text_iter_get_text", "GtkTextIter*");
-  return(C_TO_XEN_gchar_(gtk_text_iter_get_text(XEN_TO_C_GtkTextIter_(start), XEN_TO_C_GtkTextIter_(end))));
+  {
+   gchar* result;
+   XEN rtn;
+   result = gtk_text_iter_get_text(XEN_TO_C_GtkTextIter_(start), XEN_TO_C_GtkTextIter_(end));
+   rtn = C_TO_XEN_gchar_(result);
+   g_free(result);
+   return(rtn);
+  }
 }
 static XEN gxg_gtk_text_iter_get_visible_slice(XEN start, XEN end)
 {
@@ -12792,7 +12856,14 @@ static XEN gxg_gtk_text_iter_get_visible_slice(XEN start, XEN end)
 GtkTextIter* end)"
   XEN_ASSERT_TYPE(XEN_GtkTextIter__P(start), start, 1, "gtk_text_iter_get_visible_slice", "GtkTextIter*");
   XEN_ASSERT_TYPE(XEN_GtkTextIter__P(end), end, 2, "gtk_text_iter_get_visible_slice", "GtkTextIter*");
-  return(C_TO_XEN_gchar_(gtk_text_iter_get_visible_slice(XEN_TO_C_GtkTextIter_(start), XEN_TO_C_GtkTextIter_(end))));
+  {
+   gchar* result;
+   XEN rtn;
+   result = gtk_text_iter_get_visible_slice(XEN_TO_C_GtkTextIter_(start), XEN_TO_C_GtkTextIter_(end));
+   rtn = C_TO_XEN_gchar_(result);
+   g_free(result);
+   return(rtn);
+  }
 }
 static XEN gxg_gtk_text_iter_get_visible_text(XEN start, XEN end)
 {
@@ -12800,7 +12871,14 @@ static XEN gxg_gtk_text_iter_get_visible_text(XEN start, XEN end)
 GtkTextIter* end)"
   XEN_ASSERT_TYPE(XEN_GtkTextIter__P(start), start, 1, "gtk_text_iter_get_visible_text", "GtkTextIter*");
   XEN_ASSERT_TYPE(XEN_GtkTextIter__P(end), end, 2, "gtk_text_iter_get_visible_text", "GtkTextIter*");
-  return(C_TO_XEN_gchar_(gtk_text_iter_get_visible_text(XEN_TO_C_GtkTextIter_(start), XEN_TO_C_GtkTextIter_(end))));
+  {
+   gchar* result;
+   XEN rtn;
+   result = gtk_text_iter_get_visible_text(XEN_TO_C_GtkTextIter_(start), XEN_TO_C_GtkTextIter_(end));
+   rtn = C_TO_XEN_gchar_(result);
+   g_free(result);
+   return(rtn);
+  }
 }
 static XEN gxg_gtk_text_iter_get_pixbuf(XEN iter)
 {
@@ -18343,13 +18421,27 @@ static XEN gxg_pango_font_description_to_string(XEN desc)
 {
   #define H_pango_font_description_to_string "char* pango_font_description_to_string(PangoFontDescription* desc)"
   XEN_ASSERT_TYPE(XEN_PangoFontDescription__P(desc), desc, 1, "pango_font_description_to_string", "PangoFontDescription*");
-  return(C_TO_XEN_char_(pango_font_description_to_string(XEN_TO_C_PangoFontDescription_(desc))));
+  {
+   char* result;
+   XEN rtn;
+   result = pango_font_description_to_string(XEN_TO_C_PangoFontDescription_(desc));
+   rtn = C_TO_XEN_char_(result);
+   g_free(result);
+   return(rtn);
+  }
 }
 static XEN gxg_pango_font_description_to_filename(XEN desc)
 {
   #define H_pango_font_description_to_filename "char* pango_font_description_to_filename(PangoFontDescription* desc)"
   XEN_ASSERT_TYPE(XEN_PangoFontDescription__P(desc), desc, 1, "pango_font_description_to_filename", "PangoFontDescription*");
-  return(C_TO_XEN_char_(pango_font_description_to_filename(XEN_TO_C_PangoFontDescription_(desc))));
+  {
+   char* result;
+   XEN rtn;
+   result = pango_font_description_to_filename(XEN_TO_C_PangoFontDescription_(desc));
+   rtn = C_TO_XEN_char_(result);
+   g_free(result);
+   return(rtn);
+  }
 }
 static XEN gxg_pango_font_metrics_get_type(void)
 {
@@ -19332,7 +19424,14 @@ static XEN gxg_gtk_tree_model_get_string_from_iter(XEN tree_model, XEN iter)
 GtkTreeIter* iter)"
   XEN_ASSERT_TYPE(XEN_GtkTreeModel__P(tree_model), tree_model, 1, "gtk_tree_model_get_string_from_iter", "GtkTreeModel*");
   XEN_ASSERT_TYPE(XEN_GtkTreeIter__P(iter), iter, 2, "gtk_tree_model_get_string_from_iter", "GtkTreeIter*");
-  return(C_TO_XEN_gchar_(gtk_tree_model_get_string_from_iter(XEN_TO_C_GtkTreeModel_(tree_model), XEN_TO_C_GtkTreeIter_(iter))));
+  {
+   gchar* result;
+   XEN rtn;
+   result = gtk_tree_model_get_string_from_iter(XEN_TO_C_GtkTreeModel_(tree_model), XEN_TO_C_GtkTreeIter_(iter));
+   rtn = C_TO_XEN_gchar_(result);
+   g_free(result);
+   return(rtn);
+  }
 }
 static XEN gxg_gtk_tree_model_sort_iter_is_valid(XEN tree_model_sort, XEN iter)
 {
@@ -21203,7 +21302,14 @@ static XEN gxg_gtk_ui_manager_get_ui(XEN self)
 {
   #define H_gtk_ui_manager_get_ui "gchar* gtk_ui_manager_get_ui(GtkUIManager* self)"
   XEN_ASSERT_TYPE(XEN_GtkUIManager__P(self), self, 1, "gtk_ui_manager_get_ui", "GtkUIManager*");
-  return(C_TO_XEN_gchar_(gtk_ui_manager_get_ui(XEN_TO_C_GtkUIManager_(self))));
+  {
+   gchar* result;
+   XEN rtn;
+   result = gtk_ui_manager_get_ui(XEN_TO_C_GtkUIManager_(self));
+   rtn = C_TO_XEN_gchar_(result);
+   g_free(result);
+   return(rtn);
+  }
 }
 static XEN gxg_gtk_ui_manager_ensure_update(XEN self)
 {
@@ -21685,7 +21791,14 @@ static XEN gxg_gtk_file_chooser_get_filename(XEN chooser)
 {
   #define H_gtk_file_chooser_get_filename "gchar* gtk_file_chooser_get_filename(GtkFileChooser* chooser)"
   XEN_ASSERT_TYPE(XEN_GtkFileChooser__P(chooser), chooser, 1, "gtk_file_chooser_get_filename", "GtkFileChooser*");
-  return(C_TO_XEN_gchar_(gtk_file_chooser_get_filename(XEN_TO_C_GtkFileChooser_(chooser))));
+  {
+   gchar* result;
+   XEN rtn;
+   result = gtk_file_chooser_get_filename(XEN_TO_C_GtkFileChooser_(chooser));
+   rtn = C_TO_XEN_gchar_(result);
+   g_free(result);
+   return(rtn);
+  }
 }
 static XEN gxg_gtk_file_chooser_unselect_filename(XEN chooser, XEN filename)
 {
@@ -21720,13 +21833,27 @@ static XEN gxg_gtk_file_chooser_get_current_folder(XEN chooser)
 {
   #define H_gtk_file_chooser_get_current_folder "gchar* gtk_file_chooser_get_current_folder(GtkFileChooser* chooser)"
   XEN_ASSERT_TYPE(XEN_GtkFileChooser__P(chooser), chooser, 1, "gtk_file_chooser_get_current_folder", "GtkFileChooser*");
-  return(C_TO_XEN_gchar_(gtk_file_chooser_get_current_folder(XEN_TO_C_GtkFileChooser_(chooser))));
+  {
+   gchar* result;
+   XEN rtn;
+   result = gtk_file_chooser_get_current_folder(XEN_TO_C_GtkFileChooser_(chooser));
+   rtn = C_TO_XEN_gchar_(result);
+   g_free(result);
+   return(rtn);
+  }
 }
 static XEN gxg_gtk_file_chooser_get_uri(XEN chooser)
 {
   #define H_gtk_file_chooser_get_uri "gchar* gtk_file_chooser_get_uri(GtkFileChooser* chooser)"
   XEN_ASSERT_TYPE(XEN_GtkFileChooser__P(chooser), chooser, 1, "gtk_file_chooser_get_uri", "GtkFileChooser*");
-  return(C_TO_XEN_gchar_(gtk_file_chooser_get_uri(XEN_TO_C_GtkFileChooser_(chooser))));
+  {
+   gchar* result;
+   XEN rtn;
+   result = gtk_file_chooser_get_uri(XEN_TO_C_GtkFileChooser_(chooser));
+   rtn = C_TO_XEN_gchar_(result);
+   g_free(result);
+   return(rtn);
+  }
 }
 static XEN gxg_gtk_file_chooser_unselect_uri(XEN chooser, XEN uri)
 {
@@ -21747,7 +21874,14 @@ static XEN gxg_gtk_file_chooser_get_current_folder_uri(XEN chooser)
 {
   #define H_gtk_file_chooser_get_current_folder_uri "gchar* gtk_file_chooser_get_current_folder_uri(GtkFileChooser* chooser)"
   XEN_ASSERT_TYPE(XEN_GtkFileChooser__P(chooser), chooser, 1, "gtk_file_chooser_get_current_folder_uri", "GtkFileChooser*");
-  return(C_TO_XEN_gchar_(gtk_file_chooser_get_current_folder_uri(XEN_TO_C_GtkFileChooser_(chooser))));
+  {
+   gchar* result;
+   XEN rtn;
+   result = gtk_file_chooser_get_current_folder_uri(XEN_TO_C_GtkFileChooser_(chooser));
+   rtn = C_TO_XEN_gchar_(result);
+   g_free(result);
+   return(rtn);
+  }
 }
 static XEN gxg_gtk_file_chooser_set_preview_widget(XEN chooser, XEN preview_widget)
 {
@@ -21783,13 +21917,27 @@ static XEN gxg_gtk_file_chooser_get_preview_filename(XEN file_chooser)
 {
   #define H_gtk_file_chooser_get_preview_filename "char* gtk_file_chooser_get_preview_filename(GtkFileChooser* file_chooser)"
   XEN_ASSERT_TYPE(XEN_GtkFileChooser__P(file_chooser), file_chooser, 1, "gtk_file_chooser_get_preview_filename", "GtkFileChooser*");
-  return(C_TO_XEN_char_(gtk_file_chooser_get_preview_filename(XEN_TO_C_GtkFileChooser_(file_chooser))));
+  {
+   char* result;
+   XEN rtn;
+   result = gtk_file_chooser_get_preview_filename(XEN_TO_C_GtkFileChooser_(file_chooser));
+   rtn = C_TO_XEN_char_(result);
+   g_free(result);
+   return(rtn);
+  }
 }
 static XEN gxg_gtk_file_chooser_get_preview_uri(XEN file_chooser)
 {
   #define H_gtk_file_chooser_get_preview_uri "char* gtk_file_chooser_get_preview_uri(GtkFileChooser* file_chooser)"
   XEN_ASSERT_TYPE(XEN_GtkFileChooser__P(file_chooser), file_chooser, 1, "gtk_file_chooser_get_preview_uri", "GtkFileChooser*");
-  return(C_TO_XEN_char_(gtk_file_chooser_get_preview_uri(XEN_TO_C_GtkFileChooser_(file_chooser))));
+  {
+   char* result;
+   XEN rtn;
+   result = gtk_file_chooser_get_preview_uri(XEN_TO_C_GtkFileChooser_(file_chooser));
+   rtn = C_TO_XEN_char_(result);
+   g_free(result);
+   return(rtn);
+  }
 }
 static XEN gxg_gtk_file_chooser_set_extra_widget(XEN chooser, XEN extra_widget)
 {
@@ -23179,7 +23327,14 @@ static XEN gxg_gtk_combo_box_get_active_text(XEN combo_box)
 {
   #define H_gtk_combo_box_get_active_text "gchar* gtk_combo_box_get_active_text(GtkComboBox* combo_box)"
   XEN_ASSERT_TYPE(XEN_GtkComboBox__P(combo_box), combo_box, 1, "gtk_combo_box_get_active_text", "GtkComboBox*");
-  return(C_TO_XEN_gchar_(gtk_combo_box_get_active_text(XEN_TO_C_GtkComboBox_(combo_box))));
+  {
+   gchar* result;
+   XEN rtn;
+   result = gtk_combo_box_get_active_text(XEN_TO_C_GtkComboBox_(combo_box));
+   rtn = C_TO_XEN_gchar_(result);
+   g_free(result);
+   return(rtn);
+  }
 }
 static XEN gxg_gtk_drag_dest_add_text_targets(XEN widget)
 {
@@ -32207,10 +32362,10 @@ static bool xg_already_inited = false;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"08-Jan-05\")");
+      XEN_EVAL_C_STRING("(define xm-version \"15-Jan-05\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("08-Jan-05"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("15-Jan-05"));
 #endif
       xg_already_inited = true;
 #if WITH_GTK_AND_X11

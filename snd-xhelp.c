@@ -326,8 +326,11 @@ static void text_release_callback(Widget w, XtPointer context, XEvent *event, Bo
 
 static void help_search_callback(Widget w, XtPointer context, XtPointer info)
 {
-  if (new_help(XmTextFieldGetString(w)))
+  char *pattern = NULL;
+  pattern = XmTextFieldGetString(w);
+  if (new_help(pattern))
     XmTextFieldSetString(w, "");
+  if (pattern) XtFree(pattern);
 }
 
 static Widget help_next_button = NULL, help_previous_button = NULL;

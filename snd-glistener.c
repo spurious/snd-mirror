@@ -184,8 +184,8 @@ static void listener_completion(int end)
 	    }
 	  display_completions();
 	  set_save_completions(false);
-	  if (file_text) FREE(file_text);
 	}
+      if (file_text) FREE(file_text);
       if (old_text) g_free(old_text);
     }
 }
