@@ -7,6 +7,10 @@ static GtkTargetEntry target_table[] = {
   {"COMPOUND_TEXT", 0, 0}
 };
 
+/* SOMEDAY: from gtk we might see UTF8_STRING -- glib has conversions for this: g_filename_from_utf8 in glib/glib/gconvert.h,
+ *          but how can this be tested? 
+ */
+
 static XEN drop_hook;
 
 static void drag_data_received (GtkWidget *widget, GdkDragContext *context, gint x, gint y, 
@@ -24,37 +28,7 @@ static void drag_data_received (GtkWidget *widget, GdkDragContext *context, gint
 				    "drop")))))
 	{
 	  if (GTK_IS_DRAWING_AREA(widget))
-	    {
-	      /* mix at mouse */
-	      /* TODO: complete drop split */
-	      int pdata, snd, chn;
-	      char *origin;
-	      pdata = get_user_int_data(G_OBJECT(widget));
-	      chn = UNPACK_CHANNEL(pdata);
-	      snd = UNPACK_SOUND(pdata);
-	      if ((snd >= 0) &&
-		  (snd < ss->max_sounds) && 
-		  (snd_ok(ss->sounds[snd])) &&
-		  (chn >= 0) &&
-		  (chn < ss->sounds[snd]->nchans) &&
-		  (mus_file_probe((char *)(data->data))))
-		{
-		  off_t sample;
-		  char *fullname = NULL;
-		  chan_info *cp;
-		  sp = ss->sounds[snd];
-		  cp = sp->chans[chn];
-		  select_channel(sp, chn);
-		  origin = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-		  sample = snd_round_off_t(ungrf_x(cp->axis, x) * (double)(SND_SRATE(sp)));
-		  if (sample < 0) sample = 0;
-		  mus_snprintf(origin, PRINT_BUFFER_SIZE, "drop mix %s " OFF_TD, (char *)(data->data), sample);
-		  fullname = mus_expand_filename((char *)(data->data));
-		  mix_complete_file(sp, sample, fullname, origin, with_mix_tags(ss));
-		  if (fullname) FREE(fullname);
-		  FREE(origin);
-		}
-	    }
+	    mix_at_x(ss, get_user_int_data(G_OBJECT(widget)), (char *)(data->data), x);
 	  else
 	    {
 	      sp = snd_open_file((char *)(data->data), ss, FALSE);

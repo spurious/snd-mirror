@@ -876,6 +876,8 @@ Optional Packages:
   --with-editres	  include editres in xm
   --with-ladspa  	  include support for LADSPA plugins
   --with-x11		  include X funcs from xm.c with xg.c
+  --with-gsl             use GSL, default=yes
+  --with-fftw            use fftw, default=yes
   --with-float-samples	  use floats as the internal sample respresentation
   --with-sample-width=N   use N bits of samples
   --with-motif-prefix=PFX where Motif is installed
@@ -2806,6 +2808,10 @@ _ACEOF
 #   --with-x11            if gtk, this also includes X funcs from xm.c
 #   GUILE_CONFIG_path     where to look for guile-config
 #   SNDLIB_CONFIG_path    where to look for sndlib-config
+#   --without-gsl --without-fftw
+#
+# SOMEDAY: --with-static-libraries --with-static-guile
+
 #--------------------------------------------------------------------------------
 
 
@@ -2908,6 +2914,19 @@ fi;
 # Check whether --with-x11 or --without-x11 was given.
 if test "${with_x11+set}" = set; then
   withval="$with_x11"
+
+fi;
+
+
+# Check whether --with-gsl or --without-gsl was given.
+if test "${with_gsl+set}" = set; then
+  withval="$with_gsl"
+
+fi;
+
+# Check whether --with-fftw or --without-fftw was given.
+if test "${with_fftw+set}" = set; then
+  withval="$with_fftw"
 
 fi;
 
@@ -3262,6 +3281,7 @@ fi;
 # -------- GSL --------
 GSL_LIBS=""
 GSL_CFLAGS=""
+if test "$with_gsl" != no; then
 # Extract the first word of "gsl-config", so it can be a program name with args.
 set dummy gsl-config; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
@@ -3360,6 +3380,7 @@ _ACEOF
 _ACEOF
 
   fi
+fi
 fi
 
 
@@ -9348,6 +9369,7 @@ done
 
 SAVELIBS=$LIBS
 FFTW_LIBS=""
+if test "$with_fftw" != no; then
 LIBS="$LIBS -lfftw3 -lm"
 echo "$as_me:$LINENO: checking for fftw-3" >&5
 echo $ECHO_N "checking for fftw-3... $ECHO_C" >&6
@@ -9442,6 +9464,7 @@ rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+fi
 
 LIBS=$SAVELIBS
 

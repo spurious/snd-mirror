@@ -1254,6 +1254,7 @@ void set_mix_position_from_id(int mix_id, off_t beg);
 int mix_ok(int n);
 env **mix_panel_envs(int n);
 env *mix_panel_env(int n, int chan);
+void mix_at_x(snd_state *ss, int data, char *filename, int x);
 
 
 

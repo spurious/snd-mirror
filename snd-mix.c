@@ -3409,6 +3409,38 @@ int mix_selected_channel(int id)
   return(NO_SELECTION);
 }
 
+void mix_at_x(snd_state *ss, int data, char *filename, int x)
+{
+  int chn, snd;
+  snd_info *sp = NULL;
+  chan_info *cp;
+  char *origin;
+  off_t sample;
+  char *fullname = NULL;
+  chn = UNPACK_CHANNEL(data);
+  snd = UNPACK_SOUND(data);
+  if ((snd >= 0) &&
+      (snd < ss->max_sounds) && 
+      (snd_ok(ss->sounds[snd])) &&
+      (chn >= 0) &&
+      (chn < ss->sounds[snd]->nchans) &&
+      (mus_file_probe(filename)))
+    {
+      sp = ss->sounds[snd];
+      cp = sp->chans[chn];
+      select_channel(sp, chn);
+      origin = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+      sample = snd_round_off_t(ungrf_x(cp->axis, x) * (double)(SND_SRATE(sp)));
+      if (sample < 0) sample = 0;
+      mus_snprintf(origin, PRINT_BUFFER_SIZE, "drop mix %s " OFF_TD, filename, sample);
+      fullname = mus_expand_filename(filename);
+      mix_complete_file(sp, sample, fullname, origin, with_mix_tags(ss));
+      if (fullname) FREE(fullname);
+      FREE(origin);
+    }
+}
+
+
 static XEN snd_no_such_mix_error(const char *caller, XEN n)
 {
   XEN_ERROR(NO_SUCH_MIX,

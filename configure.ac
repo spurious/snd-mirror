@@ -51,6 +51,10 @@ AC_SUBST(VERSION)
 #   --with-x11            if gtk, this also includes X funcs from xm.c
 #   GUILE_CONFIG_path     where to look for guile-config
 #   SNDLIB_CONFIG_path    where to look for sndlib-config
+#   --without-gsl --without-fftw 
+#
+# SOMEDAY: --with-static-libraries --with-static-guile
+
 #--------------------------------------------------------------------------------
 
 AC_ARG_WITH(esd,        [  --with-esd		  use ESD])
@@ -70,6 +74,9 @@ AC_ARG_WITH(modules,    [  --with-modules	  use if sndlib uses modules])
 AC_ARG_WITH(editres,    [  --with-editres	  include editres in xm])
 AC_ARG_WITH(ladspa,	[  --with-ladspa  	  include support for LADSPA plugins])
 AC_ARG_WITH(x11,	[  --with-x11		  include X funcs from xm.c with xg.c])
+
+AC_ARG_WITH(gsl,        [  --with-gsl		  use GSL, default=yes])
+AC_ARG_WITH(fftw,       [  --with-fftw		  use fftw, default=yes])
 
 if test "$with_doubles" = yes; then
   AC_DEFINE(Float,double)
@@ -168,6 +175,7 @@ AC_ARG_WITH(ruby,
 # -------- GSL --------
 GSL_LIBS=""
 GSL_CFLAGS=""
+if test "$with_gsl" != no; then
 AC_PATH_PROG(GSL_CONFIG, gsl-config, no)
 AC_MSG_CHECKING(for GSL)
 if test "$GSL_CONFIG" = "no" ; then
@@ -195,6 +203,7 @@ else
     AC_DEFINE(HAVE_GSL)
     AC_DEFINE_UNQUOTED(GSL_VERSION,"${gsl_version}")
   fi
+fi
 fi
 AC_SUBST(GSL_LIBS)
 AC_SUBST(GSL_CFLAGS)
@@ -279,6 +288,7 @@ AC_CHECK_FUNCS(isnan, ,[
 
 SAVELIBS=$LIBS
 FFTW_LIBS=""
+if test "$with_fftw" != no; then
 LIBS="$LIBS -lfftw3 -lm"
 AC_MSG_CHECKING([for fftw-3])
 AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <fftw3.h>],
@@ -297,6 +307,7 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <fftw3.h>],
 		   		 FFTW_LIBS="-lrfftw -lfftw"],
 		  		[AC_MSG_RESULT(no)])
 		])
+fi
 AC_SUBST(FFTW_LIBS)
 LIBS=$SAVELIBS
 

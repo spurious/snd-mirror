@@ -71,6 +71,10 @@ The configure program has several Snd-related arguments:
    --disable-nls         the gettext (internationalization) support is on
                            by default; this turns it off.
 
+   --without-gsl, --without-fftw 
+                         these turn off the default inclusion of GSL and FFTW,
+                         saving about 2.5 MBytes in Snd's image size.
+
 If the configure/make process fails, please send me
 (bil@ccrma.stanford.edu) the files config.h, config.log, and makefile,
 created (or updated) by configure.

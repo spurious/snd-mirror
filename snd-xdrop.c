@@ -1,6 +1,7 @@
 #include "snd.h"
 
-/* TODO: drag axes if past end etc (also auto-extend in normal mix case) */
+/* can't move axes if icon dragged to end of graph because the entire system freezes! */
+
 /* TODO: multichan mix/target: autosync, autoscale, etc */
 /* SOMEDAY: figure out how to include the incoming filename in the drag report */
 
@@ -8,18 +9,6 @@ static Atom FILE_NAME;               /* Sun uses this, SGI uses STRING */
 static Atom COMPOUND_TEXT;           /* various Motif widgets use this and the next */
 static Atom _MOTIF_COMPOUND_STRING;
 static Atom text_plain;              /* gtk uses this */
-
-/* another is _NETSCAPE_URL -- would be worth a look */
-/* TODO: from gtk we might see UTF8_STRING -- glib has conversions for this, but not Motif */
-/* API mentioning "UTF8" or "utf8" is an XFree86 extension, introduced in
-   November 2000. Its presence is indicated through the following macro.
-   #define X_HAVE_UTF8_STRING 1
-   gchar* g_locale_from_utf8 (const gchar  *utf8string,
-			   gssize        len,            
-			   gsize        *bytes_read,     
-			   gsize        *bytes_written,  
-			   GError      **error);
-*/
 
 static XEN drop_hook;
 
@@ -63,8 +52,7 @@ static Position mx, my;
 
 static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom *type, XtPointer value, unsigned long *length, int *format)
 {
-  int data, snd, chn;
-  char *str = NULL, *origin;
+  char *str = NULL;
   snd_state *ss;
   snd_info *sp = NULL;
   Widget caller;
@@ -76,42 +64,20 @@ static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom
 				    XEN_LIST_1(C_TO_XEN_STRING(str)),
 				    "drop")))))
 	{
+	  ss = get_global_state();
 	  caller = (Widget)((XmDropTransferEntry)context)->client_data;
 	  if (XmIsRowColumn(caller)) /* top menuBar widget or top level menu */
 	    {
-	      sp = snd_open_file(str, get_global_state(), FALSE);
+	      sp = snd_open_file(str, ss, FALSE);
 	      if (sp) select_channel(sp, 0);
 	    }
 	  else
 	    {
 	      if (XmIsDrawingArea(caller)) /* channel graph */
 		{
+		  int data;
 		  XtVaGetValues(caller, XmNuserData, &data, NULL);
-		  chn = UNPACK_CHANNEL(data);
-		  snd = UNPACK_SOUND(data);
-		  ss = get_global_state();
-		  if ((snd >= 0) &&
-		      (snd < ss->max_sounds) && 
-		      (snd_ok(ss->sounds[snd])) &&
-		      (chn >= 0) &&
-		      (chn < ss->sounds[snd]->nchans) &&
-		      (mus_file_probe(str)))
-		    {
-		      off_t sample;
-		      char *fullname = NULL;
-		      chan_info *cp;
-		      sp = ss->sounds[snd];
-		      cp = sp->chans[chn];
-		      select_channel(sp, chn);
-		      origin = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-		      sample = snd_round_off_t(ungrf_x(cp->axis, mx) * (double)(SND_SRATE(sp)));
-		      if (sample < 0) sample = 0;
-		      mus_snprintf(origin, PRINT_BUFFER_SIZE, "drop mix %s " OFF_TD, str, sample);
-		      fullname = mus_expand_filename(str);
-		      mix_complete_file(sp, sample, fullname, origin, with_mix_tags(ss));
-		      if (fullname) FREE(fullname);
-		      FREE(origin);
-		    }
+		  mix_at_x(ss, data, str, mx);
 		}
 	    }
 	  /* value is the file name if dropped icon from filer */
@@ -208,7 +174,6 @@ static void clear_minibuffer_of(Widget w)
 static void handle_drag(Widget w, XtPointer context, XtPointer info)
 {
   XmDragProcCallbackStruct *cb = (XmDragProcCallbackStruct *)info;
-  /* cb->x|y = mouse pos, dragContext, dropSiteStatus, operation, operations, animate */
   int is_menubar;
   snd_state *ss;
   is_menubar = XmIsRowColumn(w);
