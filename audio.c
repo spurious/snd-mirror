@@ -9335,7 +9335,7 @@ static int sndjack_read(void *buf,int bytes,int chs){
       case MUS_COMP_FLOAT:
 	buf_f[i*chs+ch]=sndjack_read_channels[ch].buffer[sj_r_readplace];
 	break;
-    }
+      }}
     sj_r_unread--;
     sj_r_readplace++;
     if(sj_r_readplace==sj_r_buffersize)
