@@ -137,11 +137,7 @@ typedef enum {WITHOUT_WORD_WRAP, WITH_WORD_WRAP} with_word_wrap_t;
 typedef enum {ENVED_AMPLITUDE, ENVED_SPECTRUM, ENVED_SRATE} enved_target_t;
 typedef enum {ENVELOPE_LINEAR, ENVELOPE_EXPONENTIAL} env_type_t;
 typedef enum {GRAPH_LINES, GRAPH_DOTS, GRAPH_FILLED, GRAPH_DOTS_AND_LINES, GRAPH_LOLLIPOPS} graph_style_t;
-#if defined(__GNUC__) && (!(defined(__cplusplus)))
-  #define GRAPH_STYLE_OK(Grf) ({ graph_style_t _snd_0_h_0 = Grf; ((_snd_0_h_0 >= GRAPH_LINES) && (_snd_0_h_0 <= GRAPH_LOLLIPOPS)); })
-#else
-  #define GRAPH_STYLE_OK(Grf) ((Grf >= GRAPH_LINES) && (Grf <= GRAPH_LOLLIPOPS))
-#endif
+#define GRAPH_STYLE_OK(Grf) (Grf <= GRAPH_LOLLIPOPS)
 typedef enum {APPLY_TO_SOUND, APPLY_TO_CHANNEL, APPLY_TO_SELECTION} snd_apply_t;
 typedef enum {GRAPH_ONCE, GRAPH_AS_SONOGRAM, GRAPH_AS_SPECTROGRAM, GRAPH_AS_WAVOGRAM} graph_type_t;
 typedef enum {ZOOM_FOCUS_LEFT, ZOOM_FOCUS_RIGHT, ZOOM_FOCUS_ACTIVE, ZOOM_FOCUS_MIDDLE} zoom_focus_t;

@@ -198,7 +198,6 @@ static void allocate_meter_2(GtkWidget *w, vu_label *vu)
 #define CENTER_X 120
 #define CENTER_Y 160
 #define VU_COLORS 11
-#define VU_NUMBERS 15
 /* these are for the highly optimized size = 1.0 case */
 
 static GdkColor *yellows[VU_COLORS];

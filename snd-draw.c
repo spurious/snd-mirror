@@ -3,7 +3,7 @@
 #if (!USE_NO_GUI)
 
 #define AXIS_CONTEXT_ID_OK(Id) ((Id >= CHAN_GC) && (Id <= CHAN_TMPGC))
-#define AXIS_INFO_ID_OK(Id)    ((Id >= (int)TIME_AXIS_INFO) && ((Id <= (int)LISP_AXIS_INFO)))
+#define AXIS_INFO_ID_OK(Id)    (Id <= (int)LISP_AXIS_INFO)
 
 static axis_context *get_ax(chan_info *cp, int ax_id, const char *caller)
 {

@@ -160,6 +160,13 @@
 	"GtkCellView*" "GValue*" "GtkAboutDialog*" "PangoAttrFilterFunc" "PangoScript*" "GtkMenuToolButton*"
 	"GtkClipboardImageReceivedFunc" "PangoMatrix*" "GdkTrapezoid*" "GdkPangoRenderer*" "PangoRenderPart"
 	"GLogFunc"
+
+	"GConnectFlags" "GSignalFlags" "GSignalMatchType" "GdkAxisUse" "GdkFillRule" "GdkGCValuesMask"
+	"GdkPropMode" "GdkRgbDither" "GdkWMFunction" "GdkWindowEdge" "GdkWindowHints" "GtkAccelFlags" "GtkArrowType"
+	"GtkAttachOptions" "GtkCellRendererState" "GtkCurveType" "GtkDestDefaults" "GtkDestroyNotify" "GtkDialogFlags"
+	"GtkDirectionType" "GtkExpanderStyle" "GtkIconLookupFlags" "GtkMenuPositionFunc" "GtkPathType" "GtkSpinType"
+	"GtkTextSearchFlags" "GtkTreeIterCompareFunc" "GtkTreeSelectionFunc" "GtkUIManagerItemType" "GtkWindowPosition"
+	"GtkWindowType" "PangoGlyph" "PangoUnderline" "double" "gsize" "gssize" 
 	))
 
 (define no-xen-p 
@@ -168,6 +175,10 @@
 	"GdkDeviceKey*" "GtkWidget**" "GtkLabelSelectionInfo*" "GtkItemFactoryCallback" "GtkNotebookPage*" "GtkRangeLayout*"
 	"GData*" "GtkRangeStepTimer*" "GtkRcContext*" "GdkGC**" "GdkPixmap**" "GArray*" "GtkTextBTree*" "GtkTextLogAttrCache*"
 	"GtkTableRowCol*" "GtkAccelMap*" "GtkTooltipsData*" "GdkAtom*" "PangoScript" "PangoFontFace**"
+
+	"GValue*" "GdkByteOrder" "GdkCrossingMode" "GdkEventType" "GdkGrabStatus" "GdkNotifyType"
+	"GdkOverlapType" "GdkScrollDirection" "GdkSettingAction" "GdkVisibilityState" "GdkWindowState" "GdkWindowType"
+	"GtkImageType" "GtkTreeModelFlags" "gint16" "gint8" "gshort" "guint8" "lambda" 
 	))
 
 (define no-xen-to-c 
@@ -176,6 +187,10 @@
 	"GdkDeviceKey*" "GtkWidget**" "GtkItemFactoryCallback" "GtkLabelSelectionInfo*" "GtkNotebookPage*" "GtkRangeLayout*" 
 	"GtkRangeStepTimer*" "GData*" "GtkRcContext*" "GdkGC**" "GdkPixmap**" "GArray*" "GtkTableRowCol*" "GtkTextBTree*" 
 	"GtkTextLogAttrCache*" "GtkAccelMap*" "GtkTooltipsData*" "GdkAtom*" "PangoScript" "PangoFontFace**"
+
+	"GValue*" "GdkByteOrder" "GdkCrossingMode" "GdkEventType" "GdkGrabStatus" "GdkNotifyType"
+	"GdkOverlapType" "GdkScrollDirection" "GdkSettingAction" "GdkVisibilityState" "GdkWindowState" "GdkWindowType"
+	"GtkImageType" "GtkTreeModelFlags" "etc" "gint16" "gshort"
 	))
 
 (define (cadr-str data)
@@ -490,11 +505,6 @@
 ;			      (parse-args "GtkWidget* attach_widget GtkMenu* menu" 'callback)
 ;			      'permanent)
 ;;; detach func is not passed user-data, so it would have to be implemented by hand
-			(list 'GtkMenuPositionFunc
-			      "void"
-			      "menu_position_func"
-			      (parse-args "GtkMenu* menu gint* x gint* y gboolean* push_in lambda_data func_data" 'callback)
-			      'permanent)
 			(list 'GtkTextCharPredicate
 			      "gboolean"
 			      "text_char_predicate"
@@ -759,28 +769,36 @@
 	    (begin
 	      (if (string? (cdr typ))
 		  (begin
-		    (hey "#define C_TO_XEN_~A(Arg) C_TO_XEN_~A(Arg)~%" (no-stars (car typ)) (cdr typ))
-		    (hey "#define XEN_TO_C_~A(Arg) (~A)(XEN_TO_C_~A(Arg))~%" (no-stars (car typ)) (car typ) (cdr typ))
-		    (hey "#define XEN_~A_P(Arg) XEN_~A_P(Arg)~%" 
-			 (no-stars (car typ))
-			 (if (string=? (cdr typ) "INT") 
-			     "INTEGER" 
-			     (if (string=? (cdr typ) "DOUBLE")
-				 "NUMBER"
-				 (cdr typ)))))
+		    (if (not (member type no-c-to-xen))
+			(hey "#define C_TO_XEN_~A(Arg) C_TO_XEN_~A(Arg)~%" (no-stars (car typ)) (cdr typ)))
+		    (if (not (member type no-xen-to-c))
+			(hey "#define XEN_TO_C_~A(Arg) (~A)(XEN_TO_C_~A(Arg))~%" (no-stars (car typ)) (car typ) (cdr typ)))
+		    (if (not (member type no-xen-p))
+			(hey "#define XEN_~A_P(Arg) XEN_~A_P(Arg)~%" 
+			     (no-stars (car typ))
+			     (if (string=? (cdr typ) "INT") 
+				 "INTEGER" 
+				 (if (string=? (cdr typ) "DOUBLE")
+				     "NUMBER"
+				     (cdr typ))))))
 		  (begin
 		    (if (not (cdr typ)) ; void special case
 			(begin
-			  (hey "#define XEN_~A_P(Arg) 1~%" (no-stars (car typ)))
-			  (hey "#define XEN_TO_C_~A(Arg) ((gpointer)Arg)~%" (no-stars (car typ))))
+			  (if (not (member type no-xen-p))
+			      (hey "#define XEN_~A_P(Arg) 1~%" (no-stars (car typ))))
+			  (if (not (member type no-xen-to-c))
+			      (hey "#define XEN_TO_C_~A(Arg) ((gpointer)Arg)~%" (no-stars (car typ)))))
 			(begin          ; xen special case
 			  (if (string=? type "etc")
 			      (begin
-				(hey "#define XEN_etc_P(Arg) (XEN_LIST_P(Arg))~%")
+				(if (not (member type no-xen-p))
+				    (hey "#define XEN_etc_P(Arg) (XEN_LIST_P(Arg))~%"))
 				(hey "#define XEN_TO_C_etc(Arg) ((gpointer)Arg)~%"))
 			      (begin
-				(hey "#define XEN_~A_P(Arg) ((XEN_LIST_P(Arg)) && (XEN_LIST_LENGTH(Arg) > 2))~%" (no-stars (car typ)))
-				(hey "#define XEN_TO_C_~A(Arg) ((gpointer)Arg)~%" (no-stars (car typ)))))))))))
+				(if (not (member type no-xen-p))
+				    (hey "#define XEN_~A_P(Arg) ((XEN_LIST_P(Arg)) && (XEN_LIST_LENGTH(Arg) > 2))~%" (no-stars (car typ))))
+				(if (not (member type no-xen-to-c))
+				    (hey "#define XEN_TO_C_~A(Arg) ((gpointer)Arg)~%" (no-stars (car typ))))))))))))
 	(if (and (not (string=? type "lambda"))
 		 (not (string=? type "lambda_data"))
 		 (not (find-callback 

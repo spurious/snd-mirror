@@ -82,7 +82,7 @@ enum {MUS_OSCIL, MUS_SUM_OF_COSINES, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PAS
       MUS_FILTER, MUS_FIR_FILTER, MUS_IIR_FILTER, MUS_CONVOLVE, MUS_ENV, MUS_LOCSIG,
       MUS_FRAME, MUS_READIN, MUS_FILE_TO_SAMPLE, MUS_FILE_TO_FRAME,
       MUS_SAMPLE_TO_FILE, MUS_FRAME_TO_FILE, MUS_MIXER, MUS_PHASE_VOCODER,
-      MUS_AVERAGE, MUS_SUM_OF_SINES, MUS_SSB_AM,
+      MUS_AVERAGE, MUS_SUM_OF_SINES, MUS_SSB_AM,                            /* MUS_POLYSHAPE, MUS_SSB_POLYSHAPE, */
       MUS_INITIAL_GEN_TAG};
 
 static char *interp_name[] = {"step", "linear", "sinusoidal", "all-pass", "lagrange", "bezier", "hermite"};
@@ -1711,25 +1711,6 @@ static mus_any_class WAVESHAPE_CLASS = {
 
 bool mus_waveshape_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_WAVESHAPE));}
 
-/* PERHAPS: waveshape via polynomial as gen or built-in choice?  polyshape?
-   make-polyshape coeffs partials
-   polyshape gen x
-   make-ssb-polyshape partials
-   ssb-polyshape gen x
-
-   in v.ins
-    (polynomial coeffs (oscil fmosc1 vib))
-   becomes
-    (polyshape poly (oscil fmosc1 vib))
-   with earlier
-     (poly (make-polyshape :coeffs (partials->polynomial (list fm1-rat index1
-	 		                         (floor fm2-rat fm1-rat) index2
-	 		                         (floor fm3-rat fm1-rat) index3))))
-
-   if the oscil is embedded, we need both fm and index args as in waveshape,
-   plus opt for index=1.0 etc
- */
-
 mus_any *mus_make_waveshape(Float frequency, Float phase, Float *table, int size)
 {
   ws *gen;
@@ -1756,6 +1737,14 @@ Float mus_waveshape(mus_any *ptr, Float index, Float fm)
   ws *gen = (ws *)ptr;
   Float table_index;
   table_index = gen->offset * (1.0 + (mus_oscil_1(gen->o, fm) * index));
+  return(mus_array_interp(gen->table, table_index, gen->table_size));
+}
+
+Float mus_waveshape_2(mus_any *ptr, Float fm)
+{
+  ws *gen = (ws *)ptr;
+  Float table_index;
+  table_index = gen->offset * (1.0 + mus_oscil_1(gen->o, fm));
   return(mus_array_interp(gen->table, table_index, gen->table_size));
 }
 
@@ -1859,6 +1848,36 @@ Float *mus_partials_to_polynomial(int npartials, Float *partials, int kind)
   FREE(Cc1);
   return(partials);
 }
+
+/* PERHAPS: waveshape via polynomial -- polyshape?
+   make-polyshape coeffs partials
+   polyshape gen ind fm
+   make-ssb-polyshape partials
+   ssb-polyshape gen ind fm
+
+   in v.ins
+    (polynomial coeffs (oscil fmosc1 vib))
+   becomes
+    (polyshape poly 1.0 vib) -- some way to unexpose index?
+   with earlier
+     (poly (make-polyshape :coeffs (partials->polynomial (list fm1-rat index1 (floor fm2-rat fm1-rat) index2 (floor fm3-rat fm1-rat) index3))))
+   or 
+     (poly (make-polyshape :partialss (list fm1-rat index1 (floor fm2-rat fm1-rat) index2 (floor fm3-rat fm1-rat) index3)))
+
+   ssb version
+     pqw-vox is actually saving computation by re-using the polyshape outputs
+
+   def here
+   clm2xen.c
+   clm-strings.h/clm.h
+   snd-run.c
+   clm.html
+   grfsnd.html
+   snd-test.scm
+   mus.lisp
+   export.lisp
+   run.lisp
+ */
 
 
 
@@ -8182,5 +8201,5 @@ void mus_set_local_frequency_method(mus_any *gen, Float (*frequency)(mus_any *pt
  *          this is used in vox.ins, pqw.ins, pqw-vox.ins -- what name?
  * PERHAPS: gen to mix two sigs via amp and 1-amp -- what name? -- these two are related
  *
- * PERHAPS: ramp gen as in examp.scm -- need better name
+ * PERHAPS: ramp gen as in examp.scm -- need better name: leaper and flapper
  */

@@ -1554,7 +1554,7 @@ static XEN g_set_zoom_focus_style(XEN focus)
   zoom_focus_t choice;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(focus), focus, XEN_ONLY_ARG, S_setB S_zoom_focus_style, "an integer"); 
   choice = (zoom_focus_t)XEN_TO_C_INT(focus);
-  if ((choice < ZOOM_FOCUS_LEFT) || (choice > ZOOM_FOCUS_MIDDLE))
+  if (choice > ZOOM_FOCUS_MIDDLE)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_zoom_focus_style, 
 			   1, focus, 
 			   "~A, but must be " S_zoom_focus_left ", " S_zoom_focus_right ", " S_zoom_focus_middle ", or " S_zoom_focus_active);
@@ -1691,7 +1691,6 @@ static int snd_screen_width(void)
 
 static XEN g_set_window_height(XEN height) 
 {
-  #define H_set_window_height "(" S_setB S_window_height " val) sets the Snd window height in pixels"
   Latus val;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(height), height, XEN_ONLY_ARG, S_setB S_window_height, "a number"); 
   val = (Latus)XEN_TO_C_INT_OR_ELSE(height, 0);
@@ -1707,7 +1706,6 @@ static XEN g_set_window_height(XEN height)
 
 static XEN g_set_window_width(XEN width) 
 {
-  #define H_set_window_width "(" S_setB S_window_width " val) sets the Snd window width in pixels"
   Latus val;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(width), width, XEN_ONLY_ARG, S_setB S_window_width, "a number"); 
   val = (Latus)XEN_TO_C_INT_OR_ELSE(width, 0);

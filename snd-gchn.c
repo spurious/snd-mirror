@@ -18,7 +18,6 @@ enum {W_zy_adj, W_zx_adj, W_sy_adj, W_sx_adj, W_gzy_adj, W_gsy_adj};
 
 #define NUM_CHAN_WIDGETS 16
 #define NUM_CHAN_ADJS 6
-#define DEFAULT_EDIT_HISTORY_WIDTH 1
 
 #define START_JUST_TIME(cp) ss->just_time = true
 #define END_JUST_TIME(cp) ss->just_time = false
@@ -328,8 +327,6 @@ static void w_toggle_click_callback(GtkWidget *w, gpointer data)
 
 #define MIN_REGRAPH_X 12
 #define MIN_REGRAPH_Y 7
-#define MIN_MIX_REGRAPH_X 30
-#define MIN_MIX_REGRAPH_Y 30
 
 static gboolean channel_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {

@@ -5244,7 +5244,7 @@ static XEN g_set_cursor_style(XEN on, XEN snd_n, XEN chn_n)
   if (XEN_INTEGER_P(on))
     {
       val = (cursor_style_t)XEN_TO_C_INT(on);
-      if ((val < CURSOR_CROSS) || (val > CURSOR_LINE))
+      if (val > CURSOR_LINE)
 	XEN_OUT_OF_RANGE_ERROR(S_setB S_cursor_style, 1, on, "~A, but must be " S_cursor_cross " or " S_cursor_line ", or a procedure");
     }
   if (XEN_BOUND_P(snd_n))
@@ -6129,7 +6129,7 @@ static XEN g_set_transform_graph_type(XEN val, XEN snd, XEN chn)
   graph_type_t style;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, S_setB S_transform_graph_type, "an integer"); 
   style = (graph_type_t)XEN_TO_C_INT(val);
-  if ((style < GRAPH_ONCE) || (style > GRAPH_AS_SPECTROGRAM))
+  if (style > GRAPH_AS_SPECTROGRAM)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_transform_graph_type, 1, val, "~A, but must be " S_graph_once ", " S_graph_as_sonogram ", or " S_graph_as_spectrogram);
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_TRANSFORM_GRAPH_TYPE, S_setB S_transform_graph_type));
@@ -6219,7 +6219,7 @@ static XEN g_set_transform_normalization(XEN val, XEN snd, XEN chn)
   fft_normalize_t norm;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, S_setB S_transform_normalization, "an integer");
   norm = (fft_normalize_t)XEN_TO_C_INT(val);
-  if ((norm < DONT_NORMALIZE) || (norm > NORMALIZE_GLOBALLY))
+  if (norm > NORMALIZE_GLOBALLY)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_transform_normalization, 1, val, 
 			   "~A, but must be " S_dont_normalize ", " S_normalize_by_channel ", " S_normalize_by_sound ", or " S_normalize_globally);
   if (XEN_BOUND_P(snd))
@@ -6397,7 +6397,7 @@ static XEN g_set_x_axis_style(XEN style, XEN snd, XEN chn)
   x_axis_style_t val;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(style), style, XEN_ARG_1, S_setB S_x_axis_style, "an integer"); 
   val = (x_axis_style_t)XEN_TO_C_INT(style);
-  if ((val < X_AXIS_IN_SECONDS) || (val > X_AXIS_IN_BEATS))
+  if (val > X_AXIS_IN_BEATS)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_x_axis_style, 1, style, 
 			   "~A, but must be " S_x_axis_in_seconds ", " S_x_axis_in_samples ", " S_x_axis_as_percentage ", or " S_x_axis_in_beats);
   if (XEN_BOUND_P(snd))
@@ -6453,7 +6453,7 @@ static XEN g_set_show_axes(XEN on, XEN snd, XEN chn)
   show_axes_t val;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(on), on, XEN_ARG_1, S_setB S_show_axes, "an integer");
   val = (show_axes_t)XEN_TO_C_INT(on);
-  if ((val < SHOW_NO_AXES) || (val > SHOW_X_AXIS_UNLABELLED))
+  if (val > SHOW_X_AXIS_UNLABELLED)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_show_axes, 1, on, "~A, but must be " S_show_all_axes ", " S_show_x_axis ", or " S_show_no_axes ", or *-unlabelled");
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, on, CP_SHOW_AXES, S_setB S_show_axes));

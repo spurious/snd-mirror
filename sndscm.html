@@ -66,7 +66,7 @@
   <li><a href="#maracadoc">maraca.scm</a>: Perry Cook's maraca physical model
   <li><a href="#marksdoc">marks.scm</a>: functions related to marks
   <li><a href="#maxfdoc">maxf.scm, maxf.rb</a>: Max Mathews resonator
-  <li><a href="#mixdoc">mix.scm</a>: functions related to mixes and tracks
+  <li><a href="#mixdoc">mix.scm, mix.rb</a>: functions related to mixes and tracks
   <li><a href="#moogdoc">moog.scm</a>: Moog filter
   <li><a href="#musglyphs">musglyphs.scm</a>: Music notation symbols (from CMN)
   <li><a href="#nbdoc">nb.scm, nb.rb</a>: Popup File info etc
@@ -87,7 +87,7 @@
   <li><a href="#snd4doc">snd4|5|6|7.scm</a>: Backwards compatibility
   <li><a href="#sndgldoc">snd-gl.scm</a>: OpenGL examples (gl.c)
   <li><a href="#sndmotifdoc">snd-motif.scm, snd-gtk.scm, snd-xm.rb</a>: Motif/Gtk module (xm.c, xg.c)
-  <li><a href="#sndtestdoc">snd-test.scm, snd_test.rb, and event.scm</a>: Snd regression tests
+  <li><a href="#sndtestdoc">snd-test.scm, snd-test.rb, and event.scm</a>: Snd regression tests
   <li><a href="#spectrdoc">spectr.scm, spectr.rb</a>: instrument steady state spectra
   <li><a href="#straddoc">strad.scm, strad.rb</a>: string physical model (from CLM)
   <li><a href="#vdoc">v.scm, v.rb</a>: fm-violin
@@ -1458,7 +1458,7 @@ is the currently selected sound) into a bunch of files of the form sample-name.a
 <!-- -------------------------------- MIXES -------------------------------- -->
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="ssmixes">mixes</a></h3></td></tr></table>
 
-<p><a href="#mixdoc">mix.scm</a> has mix and track related functions.
+<p><a href="#mixdoc">mix.scm and mix.rb</a> have mix and track related functions.
 </p>
 <pre>
   <A class=def NAME="placesound">place-sound</a> mono-snd stereo-snd panning-envelope-or-degree
@@ -2163,7 +2163,7 @@ Max Mathews.
 </p>
 
 
-<A NAME="mixdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>mix.scm</h2></td></tr></table>
+<A NAME="mixdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>mix.scm, mix.rb</h2></td></tr></table>
 
 <p>mix.scm provides various mix and track related utilities. 
 
@@ -3120,8 +3120,8 @@ snd -l snd-test
 </pre>
 <p>
 which will run all the tests, assuming you have the various sound files it is expecting to find.
-event.scm has some XEvent-related functions used by snd-test.scm.  The Ruby version (very incomplete) is
-snd_test.rb.
+event.scm has some XEvent-related functions used by snd-test.scm.  The Ruby version is
+snd-test.rb.
 </p>
 
 <A NAME="straddoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>strad.scm, strad.rb</h2></td></tr></table>

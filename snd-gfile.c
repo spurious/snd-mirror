@@ -6,8 +6,6 @@
 
 /* most of these dialogs present a view of the various file header possibilities */
 
-#define NUM_VISIBLE_HEADERS 4
-
 char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples)
 {
   char *str;
@@ -124,7 +122,6 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
 #if HAVE_GFCDN
 
 #define SND_FILER(Widget) GTK_FILE_CHOOSER_DIALOG(Widget)
-#define SndFiler GtkFileChooser
 
 static char *snd_filer_get_filename(GtkWidget *dialog)
 {
@@ -194,7 +191,6 @@ static void unpad(gpointer w, gpointer data)
 }
 
 #define SND_FILER(Widget) GTK_FILE_SELECTION(Widget)
-#define SndFiler GtkFileSelection
 
 static char *snd_filer_get_filename(GtkWidget *dialog)
 {
@@ -482,8 +478,8 @@ static void file_open_dialog_ok(GtkWidget *w, gpointer data)
 {
   snd_info *sp;
   char *filename;
-  filename = snd_filer_get_filename(open_dialog->dialog);
   gpointer hide_me = 0;
+  filename = snd_filer_get_filename(open_dialog->dialog);
   hide_me = g_object_get_data(G_OBJECT(w), "hide-me"); /* see snd-gtk.scm where this is set */
   if (hide_me == 0)
     gtk_widget_hide(open_dialog->dialog);

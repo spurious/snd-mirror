@@ -1327,12 +1327,10 @@ enum {CALLBACK_TYPE, CALLBACK_FUNC, CALLBACK_DATA, CALLBACK_STRUCT_TYPE, CALLBAC
 
 #define C_TO_XEN_XM_XtCallback(Code, Context) \
   XEN_LIST_5(C_STRING_TO_XEN_SYMBOL("XtCallback"), Code, Context, XEN_ZERO, XEN_ZERO)
-#define XM_XtCallback_P(Arg) WRAP_P("XtCallback", Arg)
 
 static void gxm_XtCallbackProc(Widget w, XtPointer context, XtPointer info)
 {
   XEN descr = (XEN)context;
-  /* XEN_ASSERT_TYPE(XM_XtCallback_P(descr) && (XEN_LIST_LENGTH(descr) == 5), descr, XEN_ONLY_ARG, "XtCallback", "list of 5 elements"); */
   XEN_CALL_3(XEN_LIST_REF(descr, CALLBACK_FUNC),    /* descr: (list "XtCallback" func user-data struct-type gc-loc) */
 	     C_TO_XEN_Widget(w),
 	     XEN_LIST_REF(descr, CALLBACK_DATA),

@@ -52946,7 +52946,7 @@ EDITS: 2
 
 ;;; ---------------- test 27: GL --------------------
 
-(if (and with-gui (or full-test (= snd-test 27) (and keep-going (<= snd-test 27))))
+(if (and (provided? 'snd-motif) (or full-test (= snd-test 27) (and keep-going (<= snd-test 27))))
     (begin
       (run-hook before-test-hook 27)
       (if (and (provided? 'gl)

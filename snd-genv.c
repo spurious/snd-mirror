@@ -663,10 +663,6 @@ static void lin_button_pressed(GtkWidget *w, gpointer context)
   reflect_segment_state();
 }
 
-#define BASE_MAX 400
-#define BASE_MID 200
-/* these two just set the granularity of the scale widget, not the user-visible bounds */
-
 static void make_base_label(Float bval)
 {
   char *sfs, *buf;

@@ -228,16 +228,12 @@ typedef enum {MUS_RECTANGULAR_WINDOW, MUS_HANN_WINDOW, MUS_WELCH_WINDOW, MUS_PAR
 	      MUS_GAUSSIAN_WINDOW, MUS_TUKEY_WINDOW, MUS_DOLPH_CHEBYSHEV_WINDOW, MUS_HANN_POISSON_WINDOW, MUS_CONNES_WINDOW
 } mus_fft_window_t;
 
+#define MUS_INTERP_TYPE_OK(Interp) ((Interp) <= MUS_INTERP_HERMITE)
+#define MUS_FFT_WINDOW_OK(Window) ((Window) <= MUS_CONNES_WINDOW)
 #if defined(__GNUC__) && (!(defined(__cplusplus)))
-  #define MUS_INTERP_TYPE_OK(Interp) ({ mus_interp_t _clm_h_2 = Interp; \
-                                       ((_clm_h_2 >= MUS_INTERP_NONE) && (_clm_h_2 <= MUS_INTERP_HERMITE)); })
-  #define MUS_FFT_WINDOW_OK(Window) ({ mus_fft_window_t _clm_h_0 = Window; \
-                                       ((_clm_h_0 >= MUS_RECTANGULAR_WINDOW) && (_clm_h_0 <= MUS_CONNES_WINDOW)); })
   #define MUS_RUN(GEN, ARG_1, ARG_2) ({ mus_any *_clm_h_1 = (mus_any *)(GEN); \
                                        ((*((_clm_h_1->core)->run))(_clm_h_1, ARG_1, ARG_2)); })
 #else
-  #define MUS_INTERP_TYPE_OK(Interp) (((Interp) >= MUS_INTERP_NONE) && ((Interp) <= MUS_INTERP_HERMITE))
-  #define MUS_FFT_WINDOW_OK(Window) (((Window) >= MUS_RECTANGULAR_WINDOW) && ((Window) <= MUS_CONNES_WINDOW))
   #define MUS_RUN(GEN, ARG_1, ARG_2) ((*(((GEN)->core)->run))(GEN, ARG_1, ARG_2))
 #endif
 #define MUS_RUN_P(GEN) (((GEN)->core)->run)
@@ -458,6 +454,7 @@ bool mus_wave_train_p(mus_any *gen);
 
 mus_any *mus_make_waveshape(Float frequency, Float phase, Float *table, int size);
 Float mus_waveshape(mus_any *ptr, Float index, Float fm);
+Float mus_waveshape_2(mus_any *ptr, Float fm);
 Float mus_waveshape_1(mus_any *ptr, Float index);
 Float mus_waveshape_0(mus_any *ptr);
 bool mus_waveshape_p(mus_any *ptr);

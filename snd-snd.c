@@ -2838,7 +2838,7 @@ As a global (if the 'snd' arg is omitted), it is the default setting for each so
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(style), style, XEN_ARG_1, S_setB S_channel_style, "an integer or boolean"); 
   new_style = (channel_style_t)XEN_TO_C_INT(style);
-  if ((new_style < CHANNELS_SEPARATE) || (new_style > CHANNELS_SUPERIMPOSED))
+  if (new_style > CHANNELS_SUPERIMPOSED)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_channel_style, 1, style, "~A, but must be " S_channels_separate ", " S_channels_combined ", or " S_channels_superimposed);
   if (XEN_NOT_BOUND_P(snd))
     {
@@ -3444,7 +3444,7 @@ static XEN g_set_speed_control_style(XEN speed, XEN snd)
   speed_style_t spd;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(speed), speed, XEN_ARG_1, S_setB S_speed_control_style, "an integer"); 
   spd = (speed_style_t)XEN_TO_C_INT(speed);
-  if ((spd < SPEED_CONTROL_AS_FLOAT) || (spd > SPEED_CONTROL_AS_SEMITONE))
+  if (spd > SPEED_CONTROL_AS_SEMITONE)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_speed_control_style, 
 			   1, speed, 
 			   "~A, but must be " S_speed_control_as_float ", " S_speed_control_as_ratio ", or " S_speed_control_as_semitone);
@@ -4006,7 +4006,7 @@ The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to sele
       if (XEN_OFF_T_P(beg)) apply_beg = XEN_TO_C_OFF_T(beg); else apply_beg = 0;
       if (XEN_OFF_T_P(dur)) apply_dur = XEN_TO_C_OFF_T(dur); else apply_dur = 0;
       cur_choice = (snd_apply_t)XEN_TO_C_INT_OR_ELSE(choice, APPLY_TO_SOUND);
-      if ((cur_choice < APPLY_TO_SOUND) || (cur_choice > APPLY_TO_SELECTION))
+      if (cur_choice > APPLY_TO_SELECTION)
 	XEN_OUT_OF_RANGE_ERROR(S_apply_controls, 2, choice, "~A, but must be 0=sound, 1=channel, or 2=selection");
       ss->apply_choice = cur_choice;
       sp->applying = true;
