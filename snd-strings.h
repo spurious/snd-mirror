@@ -318,6 +318,7 @@
 #define S_chans                         "chans"
 #define S_chebyshev_transform           "chebyshev-transform"
 #define S_clear_audio_inputs            "clear-audio-inputs"
+#define S_clm_channel                   "clm-channel"
 #define S_close_hook                    "close-hook"
 #define S_close_sound                   "close-sound"
 #define S_close_sound_file              "close-sound-file"

@@ -2935,9 +2935,16 @@
       (let ((ind1 (open-sound "oboe.snd")))
 	(test-orig (lambda (snd) (src-sound 2.0 ind1)) (lambda (snd) (src-sound 0.5 ind1)) 'src-sound ind1)
 	(test-orig (lambda (snd) (scale-by 2.0 ind1)) (lambda (snd) (scale-by 0.5 ind1)) 'scale-by ind1)
+	(test-orig (lambda (snd) (scale-sound-by 2.0 ind1)) (lambda (snd) (scale-sound-by 0.5 ind1)) 'scale-sound-by ind1)
+	(test-orig (lambda (snd) (scale-channel 2.0)) (lambda (snd) (scale-channel 0.5)) 'scale-channel ind1)
 	(test-orig (lambda (snd) (reverse-sound ind1)) (lambda (snd) (reverse-sound ind1)) 'reverse-sound ind1)
+	(test-orig (lambda (snd) (reverse-channel)) (lambda (snd) (reverse-channel)) 'reverse-channel ind1)
 	(test-orig (lambda (snd) (env-sound '(0 1.0 1 2.0) ind1)) (lambda (snd) (env-sound '(0 1.0 1 0.5) ind1)) 'env-sound ind1)
 	(test-orig (lambda (snd) (env-sound '(0 1.0 1 2.0 2 1.0) ind1)) (lambda (snd) (env-sound '(0 1.0 1 0.5 2 1.0) ind1)) 'env-sound ind1)
+	(test-orig (lambda (snd) (env-channel (make-env :envelope '(0 1.0 1 2.0) :end (frames))))
+		   (lambda (snd) (env-channel (make-env :envelope '(0 1.0 1 0.5) :end (frames)))) 'env-channel ind1)
+	(test-orig (lambda (snd) (map-channel (lambda (n) (* n 2)))) (lambda (snd) (map-channel (lambda (n) (* n 0.5)))) 'map-channel ind1)
+	(test-orig (lambda (snd) (map-chan (lambda (n) (* n 2)))) (lambda (snd) (map-chan (lambda (n) (* n 0.5)))) 'map-chan ind1)
   
 	(scale-to 1.0 ind1)
 	(let ((v0 (make-vct 10))
@@ -11519,7 +11526,9 @@ EDITS: 3
 	       sum-of-cosines? table-lookup table-lookup? tap triangle-wave triangle-wave? two-pole two-pole? two-zero
 	       two-zero? wave-train wave-train?  waveshape waveshape?  make-vct vct-add! vct-subtract!  vct-copy
 	       vct-length vct-multiply! vct-offset! vct-ref vct-scale! vct-fill! vct-set! mus-audio-describe vct-peak
-	       vct? list->vct vct->list vector->vct vct-move!  vct-subseq vct little-endian?))
+	       vct? list->vct vct->list vector->vct vct-move!  vct-subseq vct little-endian?
+	       clm-channel env-channel map-channel scan-channel play-channel reverse-channel smooth-channel vct->channel channel->vct
+	       ))
 
 (define set-procs (list 
 		   amp-control ask-before-overwrite audio-input-device audio-output-device audio-state-file auto-resize

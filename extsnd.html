@@ -2918,8 +2918,8 @@ The most important Sndlib functions for Snd are:</p>
 <!-- --><td>returns a list of max amps and locations thereof.  The corresponding set! procedure is mus-sound-set-maxamp (this
 <!-- -->affects only the sndlib table of sound file info, not the sound file itself).</td></tr>
 <!-- -->
-<!-- mus-sound-maxamp-exists -->
-<!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="mussoundmaxampexists">mus-sound-maxamp-exists</a></em> (filename)</code></span></td>
+<!-- mus-sound-maxamp-exists? -->
+<!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="mussoundmaxampexists">mus-sound-maxamp-exists?</a></em> (filename)</code></span></td>
 <!-- --></tr><tr><td></td><td>returns #t if the sound's max amps are already available.</td></tr>
 <!-- -->
 <!-- mus-sound-open-input -->
@@ -3963,22 +3963,22 @@ desired edit history position.
 <hr>
 <p>
 <small><A NAME="regularizedargs"></a>
-For not-very-good historical reasons, some of the procedures here are unnecessarily inconsistent in
+For not-very-good historical reasons (it took me awhile to decide how to organize things), some of the procedures here are unnecessarily inconsistent in
 what arguments they accept, whether a channel of #f signals application to all channels or just the
 selected one, whether the sync field is followed, and so on.  Rather than make a bunch of backwards
 incompatible changes, I decided to add a bunch of more-or-less synonymous functions that regularize
 these calls. The replacements always take arguments in the order begin time, duration (not end sample),
 sound index, channel number, and edit position, possibly preceded by one argument, and sometimes followed by 
-an edit history name.  The sync field is ignored, an unspecified sound argument applied only to the
+an edit history name or 'ring time' (overlap).  The sync field is ignored, an unspecified sound argument applies only to the
 current sound, and an unspecified channel argument applies only to the current channel. 
 The following substitutions can be made:
 </small>
 </p>
 <small>
 <pre>
-<a href="#sndconvolvewith">convolve-with</a> file amp s c e                <b>convolve-channel</b> v beg dur s c e overlap
-<a href="#sndenv">env-sound</a> env beg dur s c e                 <b>env-channel</b> env beg dur s c e
-<a href="#sndfilter">filter-sound</a> env order s c e                <b>filter-channel</b> flt beg dur s c e overlap
+<a href="#sndconvolvewith">convolve-with</a> file amp s c e                <a href="#clmchannel">clm-channel</a> clm-convolve-gen beg dur s c e overlap
+<a href="#sndenv">env-sound</a> env beg dur s c e                 <a href="#envchannel">env-channel</a> clm-env-gen beg dur s c e
+<a href="#sndfilter">filter-sound</a> env order s c e                <a href="#clmchannel">clm-channel</a> clm-filter-gen beg dur s c e overlap
 <a href="#mapchan">map-chan</a> func beg end origin s c e          <a href="#mapchannel">map-channel</a> func beg dur s c e origin
 <a href="#scanchan">scan-chan</a> func beg end s c e                <a href="#scanchannel">scan-channel</a> func beg dur s c e
 <a href="#sndplay">play</a> beg s c sync end e                     <a href="#playchannel">play-channel</a> beg dur s c e
@@ -3986,7 +3986,6 @@ The following substitutions can be made:
 <a href="#sndscalesoundby">scale-sound-by</a> scl beg dur s c e            <a href="#scalechannel">scale-channel</a> scl beg dur s c e
 <a href="#sndsetsamples">set-samples</a> beg dur data s c trunc fchan    <a href="#vct2channel">vct-&gt;channel</a> vct beg dur s c [edpos doesn't apply here]
 <a href="#sndsmooth">smooth-sound</a> beg dur s c                    <a href="#smoothchannel">smooth-channel</a> beg dur s c e
-<a href="#sndsrc">src-sound</a> num base s c e                    <b>src-channel</b> beg dur s c e
 <a href="#samples2vct">samples-&gt;vct</a> beg dur snd chn v e            <a href="#channel2vct">channel-&gt;vct</a> beg dur s c e
 <a href="#vct2samples">vct-&gt;samples</a> beg dur vct s c                <a href="#vct2channel">vct-&gt;channel</a> vct beg dur s c [edpos doesn't apply here]
 </pre>
@@ -4138,6 +4137,18 @@ The following substitutions can be made:
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->number of channels in <i>snd</i>.  <a name="sndchans">chans</a> is another name for this procedure.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- clm-channel -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="clmchannel">clm-channel</a></em> (clm-gen <i>beg dur snd chn edpos overlap</i>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->apply <i>clm-gen</i> to <i>snd</i>'s channel <i>chn</i> starting
+<!-- -->at sample <i>beg</i> for <i>dur</i> samples, and <i>overlap</i> samples of 'ring time'.
+<!-- -->This is used by some of the <a href="#regularizedargs">regularized</a> functions, but can also be used directly.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4353,6 +4364,17 @@ The following substitutions can be made:
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->size in pixels of dots when graphing with dots (default: 1)
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- env-channel -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="envchannel">env-channel</a></em> (clm-env-gen <i>beg dur snd chn edpos</i>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- --><b>env-channel</b> is the <a href="#regularizedargs">regularized</a> version of <a href="#sndenv">env-sound</a>.  <i>clm-env-gen</i>
+<!-- -->must be a CLM envelope generator.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

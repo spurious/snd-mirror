@@ -508,7 +508,12 @@ int main(int argc, char *argv[])
 	      curframes = frames - i;
 	      for (d = 0; d < allocated; d++)
 		{
-		  int dev = out_devs[d];
+		  int f, dev = out_devs[d];
+#if 1
+		  /* try to kludge around an ALSA bug... */
+		  for (f = 0; f < chans; f++) 
+		    memset(read_bufs[f], 0, samples_per_chan * sizeof(MUS_SAMPLE_TYPE));
+#endif
 		  out_bytes[dev] = curframes * out_chans[d] * mus_data_format_to_bytes_per_sample(out_format[dev]);
 		}
 	    }

@@ -1,16 +1,8 @@
 #include "snd.h"
 
 /* TODO:
- *  env-channel env beg dur s c e (assume gen)                     maps as is 
- *  filter-channel flt beg dur s c e [overlap #t] (assume gen)     needs beg dur (if gen, isn't order accessible?)
- *  src-channel beg dur s c e (new len changes)                    needs beg??
- *  convolve-channel vct beg dur s c e [overlap #t]                needs beg dur + in vct 
- *  fft-channel -> fft vct (spectrum-channel?)                     needs all+pad
-
- (define* (env-channel env #:optional (beg 0) dur snd chn (edpos current-edit-position) (edname "env-channel"))
-   (let* ((samps (or dur (- (frames snd chn edpos) beg)))
-          (egen (if (env? env) env (make-env :envelope env :end samps))))
-     (gen-channel egen beg samps snd chn edpos edname)))
+ *  src-channel beg dur s c e (new len changes)
+ *  fft-channel -> fft vct (spectrum-channel?)
  */
 
 
@@ -39,7 +31,8 @@ int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos
   XEN errstr;
   char *errmsg = NULL;
   /* need to allow #f here for optargs */
-  XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(edpos) || XEN_INTEGER_P(edpos) || XEN_PROCEDURE_P(edpos) || XEN_BOOLEAN_P(edpos), edpos, arg_pos, caller, "an integer or a procedure");
+  XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(edpos) || XEN_INTEGER_P(edpos) || XEN_PROCEDURE_P(edpos) || XEN_BOOLEAN_P(edpos), 
+		  edpos, arg_pos, caller, "an integer or a procedure");
   if (XEN_PROCEDURE_P(edpos))
     {
       errmsg = procedure_ok(edpos, 2, caller, "edit position", arg_pos);
@@ -1163,8 +1156,83 @@ void fht(int powerOfFour, Float *array)
     }
 }
 
+static char *clm_channel(chan_info *cp, mus_any *gen, int beg, int dur, XEN edp, char *caller, int arg_pos, int overlap)
+{
+  /* calls gen over cp[beg for dur] data, replacing. */
+  snd_state *ss;
+  snd_info *sp;
+  file_info *hdr = NULL;
+  int j, k, ofd = 0, datumb = 0, temp_file, err = 0, edpos = 0;
+  MUS_SAMPLE_TYPE **data;
+  MUS_SAMPLE_TYPE *idata;
+  char *ofile = NULL;
+  snd_fd *sf;
+  ss = cp->state;
+  sp = cp->sound;
+  if (!(MUS_RUN_P(gen)))
+    return(mus_format("%s can't handle %s generators [%s[%d]: %s]",
+		      caller,
+		      mus_name(gen),
+		      __FILE__, __LINE__, __FUNCTION__));
+  edpos = to_c_edit_position(cp, edp, caller, arg_pos);
+  sf = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
+  if (sf == NULL) return(mus_format("can't read %s[%d] channel data!", sp->short_filename, cp->chan));
+  if ((dur + overlap) > MAX_BUFFER_SIZE)
+    {
+      temp_file = 1; 
+      ofile = snd_tempnam(ss);
+      hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur + overlap, caller);
+      ofd = open_temp_file(ofile, 1, hdr, ss);
+      if (ofd == -1)
+	return(mus_format("can't open reverse-sound temp file %s: %s\n", ofile, strerror(errno)));
+      datumb = mus_data_format_to_bytes_per_sample(hdr->format);
+    }
+  else temp_file = 0;
+  data = (MUS_SAMPLE_TYPE **)MALLOC(sizeof(MUS_SAMPLE_TYPE *));
+  data[0] = (MUS_SAMPLE_TYPE *)CALLOC(MAX_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE)); 
+  idata = data[0];
+  j = 0;
+  for (k = 0; k < dur; k++)
+    {
+      idata[j++] = MUS_FLOAT_TO_SAMPLE(MUS_RUN(gen, next_sample_to_float(sf), 0.0));
+      if ((temp_file) && (j == MAX_BUFFER_SIZE))
+	{
+	  err = mus_file_write(ofd, 0, j - 1, 1, data);
+	  j = 0;
+	  if (err == -1) break;
+	}
+    }
+  for (k = 0; k < overlap; k++)
+    {
+      idata[j++] = MUS_FLOAT_TO_SAMPLE(MUS_RUN(gen, 0.0, 0.0) + next_sample_to_float(sf));
+      if ((temp_file) && (j == MAX_BUFFER_SIZE))
+	{
+	  err = mus_file_write(ofd, 0, j - 1, 1, data);
+	  j = 0;
+	  if (err == -1) break;
+	}
+    }
+  dur += overlap;
+  if (temp_file)
+    {
+      if (j > 0) mus_file_write(ofd, 0, j - 1, 1, data);
+      close_temp_file(ofd, hdr, dur * datumb, sp);
+      hdr = free_file_info(hdr);
+      file_change_samples(beg, dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, caller);
+      if (ofile) 
+	{
+	  FREE(ofile); 
+	  ofile = NULL;
+	}
+    }
+  else change_samples(beg, dur, idata, cp, LOCK_MIXES, caller);
+  update_graph(cp, NULL); 
+  FREE(data[0]);
+  FREE(data);
+  return(NULL);
+}
+
 /* TODO: non-fht(fft) case is centered but straight case is not! */
-/* TODO: apply_filter should take beg/dur */
 
 static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_enved, 
 				   const char *origin, int over_selection, Float *ur_a, mus_any *gen, XEN edpos, int arg_pos)
@@ -1194,6 +1262,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 
   if ((!e) && (!ur_a) && (!gen)) 
     return(NULL);
+
   if ((gen) && (!(MUS_RUN_P(gen))))
     return(mus_format("%s can't handle %s generators [%s[%d]: %s]",
 		      origin,
@@ -2560,6 +2629,38 @@ static XEN g_scale_selection_by(XEN scalers)
   return(scalers);
 }
 
+static XEN g_clm_channel(XEN gen, XEN samp_n, XEN samps, XEN snd_n, XEN chn_n, XEN edpos, XEN overlap)
+{
+  #define H_clm_channel "(" S_clm_channel " gen &optional beg dur snd chn edpos overlap)\n\
+applies gen to snd's channel chn starting at beg for dur samples. overlap is the 'ring' time, if any."
+
+  chan_info *cp;
+  int beg = 0, dur;
+  mus_any *egen;
+  char *errmsg = NULL;
+  XEN str;
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_2, S_clm_channel, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samps), samps, XEN_ARG_3, S_clm_channel, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(overlap), overlap, XEN_ARG_7, S_clm_channel, "a number");
+  ASSERT_CHANNEL(S_clm_channel, snd_n, chn_n, 4);
+  cp = get_cp(snd_n, chn_n, S_clm_channel);
+  beg = XEN_TO_C_INT_OR_ELSE(samp_n, 0);
+  dur = XEN_TO_C_INT_OR_ELSE(samps, 0);
+  if (dur == 0) dur = (to_c_edit_samples(cp, edpos, S_clm_channel, 6) - beg);
+  XEN_ASSERT_TYPE(mus_xen_p(gen), gen, XEN_ARG_1, S_clm_channel, "a clm generator");
+  egen = mus_xen_to_clm(gen);
+  errmsg = clm_channel(cp, egen, beg, dur, edpos, S_clm_channel, 6, XEN_TO_C_INT_OR_ELSE(overlap, 0));
+  if (errmsg)
+    {
+      str = C_TO_XEN_STRING(errmsg);
+      FREE(errmsg);
+      mus_misc_error(S_clm_channel, NULL, str);
+    }
+  return(gen);
+}
+
+/* TODO: in these and following there is much code duplication between the sound/selection cases */
+
 static XEN g_env_selection(XEN edata, XEN base, XEN snd_n, XEN chn_n)
 {
   #define H_env_selection "(" S_env_selection " env &optional (env-base 1.0) snd chn)\n\
@@ -2609,7 +2710,7 @@ either to the end of the sound or for 'samps' samples, with segments interpolati
   cp = get_cp(snd_n, chn_n, S_env_sound);
   beg = XEN_TO_C_INT_OR_ELSE(samp_n, 0);
   dur = XEN_TO_C_INT_OR_ELSE(samps, 0);
-  if (dur == 0) dur = to_c_edit_samples(cp, edpos, S_env_sound, 7);
+  if (dur == 0) dur = (to_c_edit_samples(cp, edpos, S_env_sound, 7) - beg);
   if (XEN_LIST_P(edata))
     {
       e = get_env(edata, S_env_sound);
@@ -2627,6 +2728,31 @@ either to the end of the sound or for 'samps' samples, with segments interpolati
       return(edata);
     }
   return(XEN_FALSE);
+}
+
+static XEN g_env_channel(XEN gen, XEN samp_n, XEN samps, XEN snd_n, XEN chn_n, XEN edpos)
+{
+  #define H_env_channel "(" S_env_channel " clm-env-gen &optional beg dur snd chn edpos)\n\
+applies amplitude envelope 'clm-env-gen' to snd's channel chn starting at beg for dur samples."
+
+  chan_info *cp;
+  snd_info *sp;
+  int beg = 0, dur, old_sync = 0;
+  mus_any *egen;
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_2, S_env_channel, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samps), samps, XEN_ARG_3, S_env_channel, "a number");
+  ASSERT_CHANNEL(S_env_channel, snd_n, chn_n, 4);
+  XEN_ASSERT_TYPE((mus_xen_p(gen)) && (mus_env_p(egen = mus_xen_to_clm(gen))), gen, XEN_ARG_1, S_env_channel, "a CLM env generator");
+  cp = get_cp(snd_n, chn_n, S_env_channel);
+  beg = XEN_TO_C_INT_OR_ELSE(samp_n, 0);
+  dur = XEN_TO_C_INT_OR_ELSE(samps, 0);
+  if (dur == 0) dur = (to_c_edit_samples(cp, edpos, S_env_channel, 6) - beg);
+  sp = cp->sound;
+  old_sync = sp->sync;
+  sp->sync = 0;
+  apply_env(cp, NULL, beg, dur, 1.0, FALSE, NOT_FROM_ENVED, S_env_channel, egen, edpos, 6, 1.0);
+  sp->sync = old_sync;
+  return(gen);
 }
 
 static XEN g_fft_1(XEN reals, XEN imag, XEN sign, int use_fft)
@@ -2984,7 +3110,7 @@ sampling-rate converts snd's channel chn by ratio, or following an envelope. Neg
       else
 	{
 	  XEN_ASSERT_TYPE((mus_xen_p(ratio_or_env)) && (mus_env_p(egen = mus_xen_to_clm(ratio_or_env))), 
-		      ratio_or_env, XEN_ARG_1, S_src_sound, "a number, list, or env generator");
+			  ratio_or_env, XEN_ARG_1, S_src_sound, "a number, list, or env generator");
 	  src_env_or_num(cp->state, cp, NULL, 
 			 (mus_phase(egen) >= 0.0) ? 1.0 : -1.0,
 			 FALSE, NOT_FROM_ENVED, S_src_sound, 
@@ -3160,6 +3286,7 @@ XEN_ARGIFY_3(g_scale_to_w, g_scale_to)
 XEN_ARGIFY_3(g_scale_by_w, g_scale_by)
 XEN_ARGIFY_4(g_env_selection_w, g_env_selection)
 XEN_ARGIFY_7(g_env_sound_w, g_env_sound)
+XEN_ARGIFY_6(g_env_channel_w, g_env_channel)
 XEN_ARGIFY_3(g_fft_w, g_fft)
 XEN_ARGIFY_4(g_snd_spectrum_w, g_snd_spectrum)
 XEN_ARGIFY_2(g_convolve_w, g_convolve)
@@ -3169,6 +3296,7 @@ XEN_ARGIFY_5(g_src_sound_w, g_src_sound)
 XEN_ARGIFY_2(g_src_selection_w, g_src_selection)
 XEN_ARGIFY_5(g_filter_sound_w, g_filter_sound)
 XEN_ARGIFY_2(g_filter_selection_w, g_filter_selection)
+XEN_ARGIFY_7(g_clm_channel_w, g_clm_channel)
 #else
 #define g_scan_chan_w g_scan_chan
 #define g_map_chan_w g_map_chan
@@ -3191,6 +3319,7 @@ XEN_ARGIFY_2(g_filter_selection_w, g_filter_selection)
 #define g_scale_by_w g_scale_by
 #define g_env_selection_w g_env_selection
 #define g_env_sound_w g_env_sound
+#define g_env_channel_w g_env_channel
 #define g_fft_w g_fft
 #define g_snd_spectrum_w g_snd_spectrum
 #define g_convolve_w g_convolve
@@ -3200,6 +3329,7 @@ XEN_ARGIFY_2(g_filter_selection_w, g_filter_selection)
 #define g_src_selection_w g_src_selection
 #define g_filter_sound_w g_filter_sound
 #define g_filter_selection_w g_filter_selection
+#define g_clm_channel_w g_clm_channel
 #endif
 
 void g_init_sig(void)
@@ -3210,7 +3340,6 @@ void g_init_sig(void)
   XEN_DEFINE_PROCEDURE(S_count_matches,           g_count_matches_w, 1, 4, 0,           H_count_matches);
 
   XEN_DEFINE_PROCEDURE(S_smooth_sound,            g_smooth_sound_w, 2, 2, 0,            H_smooth_sound);
-  XEN_DEFINE_PROCEDURE(S_smooth_channel,          g_smooth_channel_w, 0, 5, 0,          H_smooth_channel);
   XEN_DEFINE_PROCEDURE(S_smooth_selection,        g_smooth_selection_w, 0, 0, 0,        H_smooth_selection);
   XEN_DEFINE_PROCEDURE(S_reverse_sound,           g_reverse_sound_w, 0, 3, 0,           H_reverse_sound);
   XEN_DEFINE_PROCEDURE(S_reverse_selection,       g_reverse_selection_w, 0, 0, 0,       H_reverse_selection);
@@ -3237,6 +3366,9 @@ void g_init_sig(void)
   XEN_DEFINE_PROCEDURE(S_scan_channel,            g_scan_channel_w, 1, 5, 0,            H_scan_channel);
   XEN_DEFINE_PROCEDURE(S_map_channel,             g_map_channel_w, 1, 6, 0,             H_map_channel);
   XEN_DEFINE_PROCEDURE(S_reverse_channel,         g_reverse_channel_w, 0, 5, 0,         H_reverse_channel);
+  XEN_DEFINE_PROCEDURE(S_clm_channel,             g_clm_channel_w, 1, 6, 0,             H_clm_channel);
+  XEN_DEFINE_PROCEDURE(S_env_channel,             g_env_channel_w, 1, 5, 0,             H_env_channel);
+  XEN_DEFINE_PROCEDURE(S_smooth_channel,          g_smooth_channel_w, 0, 5, 0,          H_smooth_channel);
 
 }
 
