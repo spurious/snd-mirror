@@ -339,7 +339,7 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
 						}
 					      else 
 						{
-						  if ((event->keyval == snd_K_question) && (event->state & snd_ControlMask))
+						  if ((event->keyval == GDK_question) && (event->state & snd_ControlMask))
 						    {
 						      listener_help(ss);
 						    }
@@ -627,11 +627,11 @@ void handle_listener(snd_state *ss, int open)
       if (!listener_text)
 	make_command_widget(ss, 100);
       else gtk_widget_show(listener_text);
-      set_view_listener_label(STR_Hide_listener);
+      set_view_listener_label("Hide listener");
     }
   else
     {
-      set_view_listener_label(STR_Show_listener);
+      set_view_listener_label("Show listener");
       gtk_widget_hide(listener_text);
     }
 }

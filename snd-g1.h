@@ -1,5 +1,5 @@
-#ifndef SND_G1_H_LOADED
-#define SND_G1_H_LOADED
+#ifndef SND_G1_H
+#define SND_G1_H
 
 typedef struct {
   GtkWidget *rw, *nm, *pl, *sv;
@@ -11,7 +11,6 @@ typedef struct {
 
 GtkWidget *snd_help(snd_state *ss, char *subject, char *help);
 GtkWidget *snd_help_with_wrap(snd_state *ss, char *subject, char *help);
-int help_dialog_is_active(void);
 
 
 /* -------- snd-gerror.c -------- */
@@ -380,7 +379,6 @@ char *sg_get_text(GtkWidget *w, int start, int end);
 void sg_set_cursor(GtkWidget *w, int position);
 void sg_text_insert(GtkWidget *w, char *text);
 int sg_cursor_position(GtkWidget *w);
-void sg_select_text(GtkWidget *w, int s0, int s1);
 void sg_unselect_text(GtkWidget *w);
 void sg_list_append(GtkWidget *w, char *val);
 void sg_list_insert(GtkWidget *w, int row, char *val);

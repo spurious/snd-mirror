@@ -338,7 +338,6 @@ int mus_data_format_to_bytes_per_sample (int format)
     }
 }
 
-int mus_header_data_format_to_bytes_per_sample (void) {return(mus_data_format_to_bytes_per_sample(data_format));}
 off_t mus_samples_to_bytes (int format, off_t size) {return(size * (mus_data_format_to_bytes_per_sample(format)));}
 off_t mus_bytes_to_samples (int format, off_t size) {return((off_t)(size / (mus_data_format_to_bytes_per_sample(format))));}
 

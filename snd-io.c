@@ -103,7 +103,7 @@ snd_io *make_file_state(int fd, file_info *hdr, int chan, int suggested_bufsize)
   return(io);
 }
 
-snd_io *free_file_state(snd_io *io)
+static snd_io *free_file_state(snd_io *io)
 {
   /* gotta free the IO buffers as well as the descriptor buffer */
   int i, chans;

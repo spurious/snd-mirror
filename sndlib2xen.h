@@ -34,10 +34,6 @@
   #define SND_GSL_ERROR      XEN_ERROR_TYPE("gsl-error")
 #endif
 
-#if HAVE_GL
-  #define SND_GL_ERROR       XEN_ERROR_TYPE("gl-error")
-#endif
-
 #if HAVE_LADSPA
   #define NO_SUCH_PLUGIN     XEN_ERROR_TYPE("no-such-plugin")
   #define PLUGIN_ERROR       XEN_ERROR_TYPE("plugin-error")

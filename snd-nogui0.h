@@ -1,5 +1,5 @@
-#ifndef SND_NOGUI0_H_LOADED
-#define SND_NOGUI0_H_LOADED
+#ifndef SND_NOGUI0_H
+#define SND_NOGUI0_H
 
 #if defined(HAVE_CONFIG_H)
   #include <config.h>
@@ -26,10 +26,6 @@
 #define XEN_UNWRAP_GC(Value) 0
 #define XEN_UNWRAP_PIXEL(Value) 0
 #define XEN_WIDGET_P(Value) 0
-
-#define BUTTON_1 0
-#define BUTTON_2 1
-#define BUTTON_3 2
 #define NUM_COLORMAPS 0
 
 #define Locus int

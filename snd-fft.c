@@ -859,8 +859,8 @@ static char *spectro_xlabel(chan_info *cp)
     {
     case FOURIER: 
       if (cp->fft_log_frequency)
-	return(STR_log_freq);
-      else return(STR_frequency);
+	return("log freq");
+      else return("frequency");
       break;
     case WAVELET:         return(wavelet_names[cp->wavelet_type]); break;
     case HAAR:            return("Haar spectrum");                 break;
@@ -936,7 +936,7 @@ static void make_sonogram_axes(chan_info *cp)
 	fp->axis = make_axis_info(cp,
 				  ap->x0, ap->x1,
 				  min_freq, max_freq,
-				  STR_time,
+				  "time",
 				  ap->x0, ap->x1,
 				  min_freq, max_freq,
 				  fp->axis);
@@ -2181,6 +2181,18 @@ static XEN g_snd_transform(XEN type, XEN data, XEN hint)
   return(data);
 }
 
+static XEN g_hankel_jn(void) {return(C_TO_XEN_DOUBLE(hankel_jn(get_global_state())));}
+static XEN g_set_hankel_jn(XEN val) 
+{
+  #define H_hankel_jn "(" S_hankel_jn ") -> Bessel function used in Hankel transform."
+  snd_state *ss;
+  ss = get_global_state();
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set-" S_hankel_jn, "a number"); 
+  set_hankel_jn(ss, XEN_TO_C_DOUBLE_WITH_CALLER(val, S_hankel_jn));
+  return(val);
+}
+
+
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_2(g_transform_samples_size_w, g_transform_samples_size)
 XEN_ARGIFY_2(g_transform_samples_w, g_transform_samples)
@@ -2189,6 +2201,8 @@ XEN_ARGIFY_3(transform_samples2vct_w, transform_samples2vct)
 XEN_NARGIFY_1(g_autocorrelate_w, g_autocorrelate)
 XEN_NARGIFY_5(g_add_transform_w, g_add_transform)
 XEN_ARGIFY_3(g_snd_transform_w, g_snd_transform)
+XEN_NARGIFY_0(g_hankel_jn_w, g_hankel_jn)
+XEN_ARGIFY_1(g_set_hankel_jn_w, g_set_hankel_jn)
 #else
 #define g_transform_samples_size_w g_transform_samples_size
 #define g_transform_samples_w g_transform_samples
@@ -2197,6 +2211,8 @@ XEN_ARGIFY_3(g_snd_transform_w, g_snd_transform)
 #define g_autocorrelate_w g_autocorrelate
 #define g_add_transform_w g_add_transform
 #define g_snd_transform_w g_snd_transform
+#define g_hankel_jn_w g_hankel_jn
+#define g_set_hankel_jn_w g_set_hankel_jn
 #endif
 
 void g_init_fft(void)
@@ -2253,5 +2269,6 @@ of a moving mark:\n\
   XEN_DEFINE_PROCEDURE(S_add_transform,         g_add_transform_w, 5, 0, 0,       H_add_transform);
 
   XEN_DEFINE_PROCEDURE("snd-transform",         g_snd_transform_w, 2, 1, 0,       "call transform code directly");
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_hankel_jn, g_hankel_jn_w, H_hankel_jn, "set-" S_hankel_jn, g_set_hankel_jn_w,  0, 0, 1, 0);
 }
 

@@ -1,5 +1,5 @@
-#ifndef SND_1_H_LOADED
-#define SND_1_H_LOADED
+#ifndef SND_1_H
+#define SND_1_H
 
 #define ASSERT_SOUND(Origin, Snd, Offset) \
   if (!((XEN_INTEGER_P(Snd)) || (XEN_FALSE_P(Snd)) || (XEN_NOT_BOUND_P(Snd)) || (XEN_LIST_P(Snd)))) \
@@ -418,7 +418,6 @@ int snd_reopen_write(snd_state *ss, const char *arg);
 int snd_write_header(snd_state *ss, const char *name, int type, int srate, int chans, off_t loc, off_t samples, int format, const char *comment, int len, int *loops);
 int snd_overwrite_ok(snd_state *ss, const char *ofile);
 snd_io *make_file_state(int fd, file_info *hdr, int chan, int suggested_bufsize);
-snd_io *free_file_state(snd_io *io);
 void file_buffers_forward(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_data *cur_snd);
 void file_buffers_back(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_data *cur_snd);
 int snd_remove(const char *name, int forget);
@@ -789,7 +788,6 @@ XEN run_or_hook (XEN hook, XEN args, const char *caller);
 XEN run_and_hook (XEN hook, XEN args, const char *caller);
 XEN run_progn_hook (XEN hook, XEN args, const char *caller);
 XEN run_hook(XEN hook, XEN args, const char *caller);
-char *run_concat_hook(XEN hook, const char *caller, char *initial_string, char *subject);
 void during_open(int fd, char *file, int reason);
 void after_open(int index);
 int listener_print_p(char *msg);
@@ -1151,7 +1149,6 @@ void update_prevlist(void);
 void init_curfiles(int size);
 void init_prevfiles(int size);
 void file_unprevlist(char *filename);
-void update_prevfiles(snd_state *ss);
 void add_directory_to_prevlist(snd_state *ss, char *dirname);
 void make_prevfiles_list_1(snd_state *ss);
 char **set_header_and_data_positions(file_data *fdat, int type, int format);
@@ -1235,8 +1232,6 @@ int set_mix_amp_env_without_edit(int n, int chan, env *val);
 env *mix_amp_env_from_id(int n, int chan);
 void reflect_mix_edit(chan_info *input_cp, const char *origin);
 void g_init_mix(void);
-void color_one_mix_from_id(int mix_id, COLOR_TYPE color);
-COLOR_TYPE mix_to_color_from_id(int ix_id);
 snd_info *make_mix_readable_from_id(int id);
 int mix_selected_channel(int id);
 void clear_mix_tags(chan_info *cp);

@@ -369,7 +369,7 @@ void set_show_y_zero(snd_state *ss, int val)
   if (view_zero_menu())
     {
       set_menu_label(view_zero_menu(), 
-		     (val) ? STR_Hide_Y0 : STR_Show_Y0);
+		     (val) ? "Hide Y = 0" : "Show Y = 0");
       for_each_chan_1(ss, chans_zero, (void *)(&val));
     }
 }
@@ -384,7 +384,7 @@ void set_verbose_cursor(snd_state *ss, int val)
   for_each_chan_1(ss, chans_verbose_cursor, (void *)(&val));
   if (view_cursor_menu())
     set_menu_label(view_cursor_menu(), 
-		   (val) ? STR_Silent_cursor : STR_Verbose_cursor);
+		   (val) ? "Silent cursor" : "Verbose cursor");
 }
 
 void set_view_ctrls_label(const char *lab)
@@ -456,10 +456,10 @@ void chans_x_axis_style(chan_info *cp, void *ptr)
       if (ap->xlabel) FREE(ap->xlabel);
       switch (new_style)
 	{
-	case X_AXIS_IN_BEATS:      ap->xlabel = copy_string(STR_time_beats); break;
-	case X_AXIS_IN_SAMPLES:    ap->xlabel = copy_string(STR_time_samples); break;
-	case X_AXIS_AS_PERCENTAGE: ap->xlabel = copy_string(STR_time_percent); break;
-	default:                   ap->xlabel = copy_string(STR_time);         break;
+	case X_AXIS_IN_BEATS:      ap->xlabel = copy_string("time (beats)"); break;
+	case X_AXIS_IN_SAMPLES:    ap->xlabel = copy_string("time (samples)"); break;
+	case X_AXIS_AS_PERCENTAGE: ap->xlabel = copy_string("time (%)"); break;
+	default:                   ap->xlabel = copy_string("time");         break;
 	}
       update_graph(cp);
     }

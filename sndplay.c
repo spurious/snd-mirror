@@ -46,7 +46,7 @@
   #define OutSample short
 #endif
 
-#if defined(LINUX) || defined(__bsdi__)
+#if (HAVE_OSS || HAVE_ALSA)
 static char x_string[2] = {'x','\0'};
 static void set_buffers(char *bufs)
 {

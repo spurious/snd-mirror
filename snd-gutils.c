@@ -728,6 +728,7 @@ int sg_cursor_position(GtkWidget *w)
   return(gtk_text_iter_get_offset(&pos));
 }
 
+#if 0
 void sg_select_text(GtkWidget *w, int s0, int s1)
 {
   /* The currently-selected text in @buffer is the region between the
@@ -742,6 +743,7 @@ void sg_select_text(GtkWidget *w, int s0, int s1)
   gtk_text_buffer_move_mark_by_name(buf, "selection_bound", &start);
   gtk_text_buffer_move_mark_by_name(buf, "insert", &end);
 }
+#endif
 
 void sg_unselect_text(GtkWidget *w)
 {

@@ -48,11 +48,11 @@ static void edit_find_ok_callback(int direction, Widget w, XtPointer context, Xt
     }
   if ((XEN_PROCEDURE_P(ss->search_proc)) || (ss->search_tree))
     {
-      s1 = XmStringCreate(STR_Stop, XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreate("Stop", XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(cancelB, XmNlabelString, s1, NULL);
       XmStringFree(s1);
       str = global_search(ss, direction);
-      s1 = XmStringCreate(STR_Dismiss, XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreate("Dismiss", XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(cancelB, XmNlabelString, s1, NULL);
       XmStringFree(s1);
       if ((str) && (*str)) set_label(edit_find_label, str);
@@ -84,10 +84,10 @@ static void make_edit_find_dialog(snd_state *ss)
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-  xmstr1 = XmStringCreate(STR_Dismiss, XmFONTLIST_DEFAULT_TAG);
-  xmstr2 = XmStringCreate(STR_Next, XmFONTLIST_DEFAULT_TAG);
-  xmstr3 = XmStringCreate(STR_Previous, XmFONTLIST_DEFAULT_TAG);
-  titlestr = XmStringCreate(STR_Find, XmFONTLIST_DEFAULT_TAG);
+  xmstr1 = XmStringCreate("Dismiss", XmFONTLIST_DEFAULT_TAG);
+  xmstr2 = XmStringCreate("Next", XmFONTLIST_DEFAULT_TAG);
+  xmstr3 = XmStringCreate("Previous", XmFONTLIST_DEFAULT_TAG);
+  titlestr = XmStringCreate("Find", XmFONTLIST_DEFAULT_TAG);
   XtSetArg(args[n], XmNokLabelString, xmstr1); n++;
   XtSetArg(args[n], XmNcancelLabelString, xmstr3); n++;
   XtSetArg(args[n], XmNautoUnmanage, FALSE); n++;
@@ -114,7 +114,7 @@ static void make_edit_find_dialog(snd_state *ss)
       XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;
       XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
     }
-  findnextB = XtCreateManagedWidget(STR_Next, xmPushButtonWidgetClass, edit_find_dialog, args, n);
+  findnextB = XtCreateManagedWidget("Next", xmPushButtonWidgetClass, edit_find_dialog, args, n);
   XtAddCallback(findnextB, XmNactivateCallback, edit_find_next_callback, ss);
 
   rc = XtCreateManagedWidget("row", xmFormWidgetClass, edit_find_dialog, NULL, 0);
@@ -140,7 +140,7 @@ static void make_edit_find_dialog(snd_state *ss)
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, edit_find_text); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-  edit_find_label = XtCreateManagedWidget(STR_global_search, xmLabelWidgetClass, rc, args, n);
+  edit_find_label = XtCreateManagedWidget("global search", xmLabelWidgetClass, rc, args, n);
   set_dialog_widget(ss, FIND_DIALOG, edit_find_dialog);
 }
 

@@ -33,6 +33,7 @@
 <ul>
   <li><a href="#autosavedoc">autosave.scm: auto-save support</a>
   <li><a href="#belldoc">bell.scm: the fm-bell from CLM</a>
+  <li><a href="#bessdoc">bess.scm: FM demo</a>
   <li><a href="#birddoc">bird.scm and bird.rb: North-American birds</a>
   <li><a href="#drawdoc">draw.scm: graphics additions</a>
   <li><a href="#dspdoc">dsp.scm: various DSP-related procedures</a>
@@ -131,6 +132,15 @@ at random), and car3+mod3 putting a sort of formant at the minor third
   (define abell '(0 0 .1000 1 10 .6000 25 .3000 50 .1500 90 .1000 100 0 ))
   (fm-bell 0.0 1.0 220.0 .5 abell fbell 1.0)
 </pre>
+
+<A NAME="bessdoc"></a><span class=box><h2>bess.scm</h2></span>
+
+<p>bess.scm is a Guile script (independent of Snd) that loads sndlib and xmlib into Guile,
+opens the DAC, puts up a bunch of scale widgets, and starts two CLM oscils doing
+frequency modulation in semi-real-time (how "real-time" it is depends on how your
+audio setup).  This is a translation to the Sndlib/Libxm system of bess.cl in CLM.
+</p>
+
 
 <A NAME="birddoc"></a><span class=box><h2>bird.scm</h2></span>
 <pre>

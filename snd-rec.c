@@ -78,23 +78,23 @@ char *recorder_device_name(int dev)
   /* format label at top of pane */
   switch (dev)
     {
-    case MUS_AUDIO_DIGITAL_OUT: return(STR_Digital_Out); break;
-    case MUS_AUDIO_LINE_OUT:    return(STR_Line_Out);    break;
+    case MUS_AUDIO_DIGITAL_OUT: return("Digital Out"); break;
+    case MUS_AUDIO_LINE_OUT:    return("Line Out");    break;
     case MUS_AUDIO_DEFAULT: 
-    case MUS_AUDIO_DAC_OUT:     return(STR_Output);      break; /* default here means that linuxppc reports "Output" as analog-in pane name */
+    case MUS_AUDIO_DAC_OUT:     return("Output");      break; /* default here means that linuxppc reports "Output" as analog-in pane name */
     case MUS_AUDIO_DUPLEX_DEFAULT: 
-    case MUS_AUDIO_SPEAKERS:    return(STR_Speakers);    break;
-    case MUS_AUDIO_ADAT_IN:     return(STR_Adat_In);     break;
-    case MUS_AUDIO_AES_IN:      return(STR_Aes_In);      break;
+    case MUS_AUDIO_SPEAKERS:    return("Speakers");    break;
+    case MUS_AUDIO_ADAT_IN:     return("Adat In");     break;
+    case MUS_AUDIO_AES_IN:      return("Aes In");      break;
 #if (HAVE_OSS || HAVE_ALSA)
-    case MUS_AUDIO_LINE_IN:     return(STR_Analog_In);   break;
+    case MUS_AUDIO_LINE_IN:     return("Analog In");   break;
 #else
-    case MUS_AUDIO_LINE_IN:     return(STR_Line_In);     break;
+    case MUS_AUDIO_LINE_IN:     return("Line In");     break;
 #endif
-    case MUS_AUDIO_MICROPHONE:  return(STR_Microphone);  break;
-    case MUS_AUDIO_DIGITAL_IN:  return(STR_Digital_In);  break;
-    case MUS_AUDIO_ADAT_OUT:    return(STR_Adat_Out);    break;
-    case MUS_AUDIO_AES_OUT:     return(STR_Aes_Out);     break;
+    case MUS_AUDIO_MICROPHONE:  return("Microphone");  break;
+    case MUS_AUDIO_DIGITAL_IN:  return("Digital In");  break;
+    case MUS_AUDIO_ADAT_OUT:    return("Adat Out");    break;
+    case MUS_AUDIO_AES_OUT:     return("Aes Out");     break;
     case MUS_AUDIO_DAC_FILTER:  return("Tone");          break;
     case MUS_AUDIO_MIXER:       return("Mixer");         break;
     case MUS_AUDIO_AUX_INPUT:   return("Aux Input");     break;
@@ -106,7 +106,7 @@ char *recorder_device_name(int dev)
       snd_error("%s[%d] %s: unknown device: %d", 
 		__FILE__, __LINE__, __FUNCTION__, 
 		dev); 
-      return(STR_Input); 
+      return("Input"); 
       break;
     }
 }

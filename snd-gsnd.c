@@ -1510,7 +1510,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
       
       /* now fill from other end */
       
-      sw[W_play] = gtk_check_button_new_with_label(STR_play);
+      sw[W_play] = gtk_check_button_new_with_label("play");
       gtk_box_pack_end(GTK_BOX(sw[W_name_form]), sw[W_play], FALSE, FALSE, 0);
       set_pushed_button_colors(sw[W_play], ss);
       g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_play]),
@@ -1530,7 +1530,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 				     0);
       gtk_widget_show(sw[W_play]);
       
-      sw[W_sync] = gtk_check_button_new_with_label(STR_sync);
+      sw[W_sync] = gtk_check_button_new_with_label("sync");
       gtk_box_pack_end(GTK_BOX(sw[W_name_form]), sw[W_sync], FALSE, FALSE, 0);
       g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_sync]),
 				     g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(sw[W_sync]))),
@@ -1549,7 +1549,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 				     0);
       gtk_widget_show(sw[W_sync]);
       
-      sw[W_unite] = gtk_check_button_new_with_label(STR_unite);
+      sw[W_unite] = gtk_check_button_new_with_label("unite");
       gtk_box_pack_end(GTK_BOX(sw[W_name_form]), sw[W_unite], FALSE, FALSE, 0);
       set_pushed_button_colors(sw[W_unite], ss);
       g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_unite]),
@@ -1598,7 +1598,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 				     0);
       set_background(sw[W_amp_event], (ss->sgx)->basic_color);
       
-      sw[W_amp_label] = gtk_label_new(STR_amp_p);
+      sw[W_amp_label] = gtk_label_new("amp:");
       gtk_container_add(GTK_CONTAINER(sw[W_amp_event]), sw[W_amp_label]);
       gtk_widget_show(sw[W_amp_label]);
       
@@ -1645,7 +1645,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 				     0);
       set_background(sw[W_srate_event], (ss->sgx)->basic_color);
       
-      sw[W_srate_label] = gtk_label_new(STR_speed);
+      sw[W_srate_label] = gtk_label_new("speed:");
       gtk_container_add(GTK_CONTAINER(sw[W_srate_event]), sw[W_srate_label]);
       gtk_widget_show(sw[W_srate_label]);
       
@@ -1717,7 +1717,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 				     0);
       set_background(sw[W_expand_event], (ss->sgx)->basic_color);
       
-      sw[W_expand_label] = gtk_label_new(STR_expand);
+      sw[W_expand_label] = gtk_label_new("expand:");
       gtk_container_add(GTK_CONTAINER(sw[W_expand_event]), sw[W_expand_label]);
       gtk_widget_show(sw[W_expand_label]);
       
@@ -1779,7 +1779,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 				     0);
       set_background(sw[W_contrast_event], (ss->sgx)->basic_color);
       
-      sw[W_contrast_label] = gtk_label_new(STR_contrast);
+      sw[W_contrast_label] = gtk_label_new("contrast:");
       gtk_container_add(GTK_CONTAINER(sw[W_contrast_event]), sw[W_contrast_label]);
       gtk_widget_show(sw[W_contrast_label]);
       
@@ -1841,7 +1841,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 				     0);
       set_background(sw[W_revscl_event], (ss->sgx)->basic_color);
       
-      sw[W_revscl_label] = gtk_label_new(STR_reverb);
+      sw[W_revscl_label] = gtk_label_new("reverb:");
       gtk_container_add(GTK_CONTAINER(sw[W_revscl_event]), sw[W_revscl_label]);
       gtk_widget_show(sw[W_revscl_label]);
       
@@ -1879,7 +1879,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 				     0);
       set_background(sw[W_revlen_event], (ss->sgx)->basic_color);
       
-      sw[W_revlen_label] = gtk_label_new(STR_len);
+      sw[W_revlen_label] = gtk_label_new("len:");
       gtk_container_add(GTK_CONTAINER(sw[W_revlen_event]), sw[W_revlen_label]);
       gtk_widget_show(sw[W_revlen_label]);
       
@@ -1926,7 +1926,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
       gtk_box_pack_start(GTK_BOX(sw[W_control_panel]), sw[W_filter_form], FALSE, FALSE, 0);
       set_background(sw[W_filter_form], (ss->sgx)->basic_color);
       
-      sw[W_filter_label] = gtk_label_new(STR_filter);
+      sw[W_filter_label] = gtk_label_new("filter:");
       gtk_box_pack_start(GTK_BOX(sw[W_filter_form]), sw[W_filter_label], FALSE, FALSE, 4);
       gtk_widget_show(sw[W_filter_label]);
       
@@ -1948,7 +1948,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 				     g_cclosure_new(GTK_SIGNAL_FUNC(filter_activate_callback), (gpointer)sp, 0),
 				     0);
 
-      sw[W_filter_dB] = gtk_check_button_new_with_label(STR_dB);
+      sw[W_filter_dB] = gtk_check_button_new_with_label("dB");
       gtk_box_pack_start(GTK_BOX(sw[W_filter_form]), sw[W_filter_dB], FALSE, FALSE, 2);
       g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_filter_dB]),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(sw[W_filter_dB]))),
@@ -1982,7 +1982,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
       gtk_box_pack_start(GTK_BOX(sw[W_control_panel]), sw[W_apply_form], FALSE, FALSE, 0);
       set_background(sw[W_apply_form], (ss->sgx)->basic_color);
       
-      sw[W_apply] = gtk_button_new_with_label(STR_Apply);
+      sw[W_apply] = gtk_button_new_with_label("Apply");
       gtk_box_pack_start(GTK_BOX(sw[W_apply_form]), sw[W_apply], TRUE, TRUE, 0);
       g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_apply]),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(sw[W_apply]))),
@@ -2002,7 +2002,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
       set_pushed_button_colors(sw[W_apply], ss);
       gtk_widget_show(sw[W_apply]);
       
-      sw[W_remember] = gtk_button_new_with_label(STR_Remember);
+      sw[W_remember] = gtk_button_new_with_label("Remember");
       gtk_box_pack_start(GTK_BOX(sw[W_apply_form]), sw[W_remember], TRUE, TRUE, 0);
       g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_remember]),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(sw[W_remember]))),
@@ -2017,7 +2017,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
       set_pushed_button_colors(sw[W_remember], ss);
       gtk_widget_show(sw[W_remember]);
       
-      sw[W_restore] = gtk_button_new_with_label(STR_Restore);
+      sw[W_restore] = gtk_button_new_with_label("Restore");
       gtk_box_pack_start(GTK_BOX(sw[W_apply_form]), sw[W_restore], TRUE, TRUE, 0);
       g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_restore]),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(sw[W_restore]))),
@@ -2032,7 +2032,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
       set_pushed_button_colors(sw[W_restore], ss);
       gtk_widget_show(sw[W_restore]);
       
-      sw[W_reset] = gtk_button_new_with_label(STR_Reset);
+      sw[W_reset] = gtk_button_new_with_label("Reset");
       gtk_box_pack_start(GTK_BOX(sw[W_apply_form]), sw[W_reset], TRUE, TRUE, 0);
       g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_reset]),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(sw[W_reset]))),
@@ -2214,7 +2214,7 @@ void show_controls(snd_state *ss)
   snd_info *sp;
   int i;
   ss->ctrls_height = ss->open_ctrls_height;
-  set_view_ctrls_label(STR_Hide_controls);
+  set_view_ctrls_label("Hide controls");
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
@@ -2228,7 +2228,7 @@ void hide_controls(snd_state *ss)
   snd_info *sp;
   int i;
   ss->ctrls_height = CLOSED_CTRLS_HEIGHT;
-  set_view_ctrls_label(STR_Show_controls);
+  set_view_ctrls_label("Show controls");
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];

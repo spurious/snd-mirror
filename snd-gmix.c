@@ -476,13 +476,13 @@ GtkWidget *make_mix_panel(snd_state *ss)
 	 0,
 	 g_cclosure_new((GtkSignalFunc)dismiss_mix_panel, (gpointer)ss, 0),
       0);*/
-      gtk_window_set_title(GTK_WINDOW(mix_panel), STR_Mix_Panel);
+      gtk_window_set_title(GTK_WINDOW(mix_panel), "Mix Panel");
       sg_make_resizable(mix_panel);
       set_background(mix_panel, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(mix_panel), 6);
       gtk_widget_realize(mix_panel);
       
-      dismiss_button = gtk_button_new_with_label(STR_Dismiss);
+      dismiss_button = gtk_button_new_with_label("Dismiss");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(mix_panel)->action_area), dismiss_button, FALSE, TRUE, 10);
       g_signal_connect_closure_by_id(GTK_OBJECT(dismiss_button),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(dismiss_button))),
@@ -502,7 +502,7 @@ GtkWidget *make_mix_panel(snd_state *ss)
       set_pushed_button_colors(apply_button, ss);
       gtk_widget_show(apply_button);
 
-      help_button = gtk_button_new_with_label(STR_Help);
+      help_button = gtk_button_new_with_label("Help");
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(mix_panel)->action_area), help_button, TRUE, TRUE, 10);
       g_signal_connect_closure_by_id(GTK_OBJECT(help_button),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(help_button))),
@@ -586,7 +586,7 @@ GtkWidget *make_mix_panel(snd_state *ss)
 				     0);
       set_background(w_speed_event, (ss->sgx)->basic_color);
       
-      w_speed_label = gtk_label_new(STR_speed);
+      w_speed_label = gtk_label_new("speed:");
       gtk_container_add(GTK_CONTAINER(w_speed_event), w_speed_label);
       gtk_widget_show(w_speed_label);
 

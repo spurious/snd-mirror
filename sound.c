@@ -124,7 +124,7 @@ void mus_print(const char *format, ...)
 }
 
 static const char *mus_initial_error_names[] = {
-  "no error", "no frequency method", "no phase method", "no gen method", "no length method",
+  "no error", "no frequency method", "no phase method", "null gen arg to method", "no length method",
   "no free method", "no describe method", "no data method", "no scaler method",
   "memory allocation failed", "unstable two pole error",
   "can't open file", "no sample input", "no sample output",
@@ -132,11 +132,10 @@ static const char *mus_initial_error_names[] = {
   "no such fft window", "unsupported data format", "header read failed",
   "unsupported header type", "file descriptors not initialized", "not a sound file", "file closed", "write error",
   "bogus free", "buffer overflow", "buffer underflow", "file overflow", "exponent overflow",
-  "header write failed", "cant open temp file", "interrupted",
+  "header write failed", "can't open temp file", "interrupted",
 
   "audio channels not available", "audio srate not available", "audio format not available",
-  "no audio input available", "no audio output available", "audio input busy", "audio output busy",
-  "audio configuration not available", "audio input closed", "audio output closed", "audio io interrupted",
+  "no audio input available", "audio configuration not available", 
   "no audio lines available", "audio write error", "audio size not available", "audio device not available",
   "can't close audio", "can't open audio", "audio read error", "audio amp not available",
   "can't write audio", "can't read audio", "no audio read permission", 

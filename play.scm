@@ -3,7 +3,6 @@
 ;;; play-sound #:optional func -- play current sound, calling (func data) on each buffer if func is passed
 ;;; play-often, play-until-c-g -- play sound n times or until c-g
 ;;; play-region-forever -- play region over and over until C-g typed
-;;; play samples created on-the-fly
 ;;; loop-between-marks -- play while looping continuously between two movable marks
 ;;; start-dac -- hold DAC open and play sounds via keyboard
 ;;; "vector synthesis"

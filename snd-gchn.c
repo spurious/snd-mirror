@@ -775,7 +775,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       
       if (button_style == WITH_FW_BUTTONS)
 	{
-	  cw[W_f] = gtk_check_button_new_with_label(STR_f);
+	  cw[W_f] = gtk_check_button_new_with_label("f");
 	  gtk_box_pack_start(GTK_BOX(cw[W_wf_buttons]), cw[W_f], TRUE, TRUE, 0);
 	  gtk_widget_show(cw[W_f]);
 	  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(cw[W_f]), FALSE);
@@ -791,7 +791,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 					 g_cclosure_new(GTK_SIGNAL_FUNC(f_toggle_click_callback), (gpointer)cp, 0),
 					 0);
   
-	  cw[W_w] = gtk_check_button_new_with_label(STR_w);
+	  cw[W_w] = gtk_check_button_new_with_label("w");
 	  gtk_box_pack_start(GTK_BOX(cw[W_wf_buttons]), cw[W_w], TRUE, TRUE, 0);
 	  gtk_widget_show(cw[W_w]);
 	  set_pushed_button_colors(cw[W_w], ss);

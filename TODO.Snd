@@ -19,12 +19,7 @@ Gettext support, if there's interest.
 
 A "master volume" control in the recorder.
 
-A data file mechanism for the phase vocoder (i.e. save/reuse analysis pass).
-
-A "sox-script" -- use Snd script as sox replacement.
-A sndinfo script?
-
-See the end of snd-motif.scm for other user-interface extension projects.
+See the end of snd-motif.scm for user-interface extension projects.
 
 More Ruby examples, translations, etc. (snd.rb is snd-test.scm 
   translation in-progress).

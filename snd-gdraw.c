@@ -641,15 +641,15 @@ void view_color_callback(GtkWidget *w, gpointer context)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(delete_color_dialog), (gpointer)ss, 0),
 				     0);
-      gtk_window_set_title(GTK_WINDOW(ccd->dialog), STR_Color_Editor);
+      gtk_window_set_title(GTK_WINDOW(ccd->dialog), "Color Editor");
       sg_make_resizable(ccd->dialog);
       set_background(ccd->dialog, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(ccd->dialog), 4);
       gtk_widget_realize(ccd->dialog);
       gtk_window_resize(GTK_WINDOW(ccd->dialog), 260, 200);
 
-      help_button = gtk_button_new_with_label(STR_Help);
-      dismiss_button = gtk_button_new_with_label(STR_Dismiss);
+      help_button = gtk_button_new_with_label("Help");
+      dismiss_button = gtk_button_new_with_label("Dismiss");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(ccd->dialog)->action_area), dismiss_button, FALSE, TRUE, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(ccd->dialog)->action_area), help_button, FALSE, TRUE, 10);
       g_signal_connect_closure_by_id(GTK_OBJECT(dismiss_button),
@@ -688,10 +688,10 @@ void view_color_callback(GtkWidget *w, gpointer context)
 				     g_cclosure_new(GTK_SIGNAL_FUNC(scale_color_callback), (gpointer)ss, 0),
 				     0);
 
-      light_label = gtk_label_new(STR_light);
+      light_label = gtk_label_new("light");
       gtk_misc_set_alignment(GTK_MISC (light_label), 0.05, 0.0);
       gtk_table_attach_defaults(GTK_TABLE(scale_box), light_label, 0, 1, 1, 2);
-      dark_label = gtk_label_new(STR_dark);
+      dark_label = gtk_label_new("dark");
       gtk_misc_set_alignment(GTK_MISC(dark_label), 0.95, 0.0);
       gtk_table_attach_defaults(GTK_TABLE(scale_box), dark_label, 1, 2, 1, 2);
 
@@ -717,7 +717,7 @@ void view_color_callback(GtkWidget *w, gpointer context)
 				     g_cclosure_new(GTK_SIGNAL_FUNC(cutoff_color_callback), (gpointer)ss, 0),
 				     0);
 
-      cutoff_label = gtk_label_new(STR_cutoff);
+      cutoff_label = gtk_label_new("data cutoff");
       gtk_misc_set_alignment(GTK_MISC (cutoff_label), 0.1, 0.0);
       gtk_table_attach_defaults(GTK_TABLE(cutoff_box), cutoff_label, 0, 2, 1, 2);
 
@@ -725,7 +725,7 @@ void view_color_callback(GtkWidget *w, gpointer context)
       gtk_widget_show(cutoff_label);
       gtk_widget_show(cutoff_box);
 
-      ccd->invert = gtk_check_button_new_with_label(STR_invert);
+      ccd->invert = gtk_check_button_new_with_label("invert");
       gtk_table_attach(GTK_TABLE(outer_table), ccd->invert, 0, 1, 2, 3, (GtkAttachOptions)0, (GtkAttachOptions)0, 0, 4);
       g_signal_connect_closure_by_id(GTK_OBJECT(ccd->invert),
 				     g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(ccd->invert))),
@@ -1033,16 +1033,16 @@ void view_orientation_callback(GtkWidget *w, gpointer context)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(delete_orientation_dialog), (gpointer)ss, 0),
 				     0);
-      gtk_window_set_title(GTK_WINDOW(oid->dialog), STR_Spectrogram_Orientation);
+      gtk_window_set_title(GTK_WINDOW(oid->dialog), "Spectrogram Orientation");
       sg_make_resizable(oid->dialog);
       set_background(oid->dialog, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(oid->dialog), 4);
       gtk_widget_realize(oid->dialog);
       gtk_window_resize(GTK_WINDOW(oid->dialog), 260, 300);
 
-      help_button = gtk_button_new_with_label(STR_Help);
-      dismiss_button = gtk_button_new_with_label(STR_Dismiss);
-      reset_button = gtk_button_new_with_label(STR_Reset);
+      help_button = gtk_button_new_with_label("Help");
+      dismiss_button = gtk_button_new_with_label("Dismiss");
+      reset_button = gtk_button_new_with_label("Reset");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(oid->dialog)->action_area), reset_button, FALSE, TRUE, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(oid->dialog)->action_area), dismiss_button, FALSE, TRUE, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(oid->dialog)->action_area), help_button, FALSE, TRUE, 10);
@@ -1093,7 +1093,7 @@ void view_orientation_callback(GtkWidget *w, gpointer context)
 				     g_cclosure_new(GTK_SIGNAL_FUNC(ax_orientation_callback), (gpointer)oid, 0),
 				     0);
 
-      ax_label = gtk_label_new(STR_x_angle);
+      ax_label = gtk_label_new("x angle");
       gtk_misc_set_alignment(GTK_MISC (ax_label), 0.1, 0.0);
       gtk_table_attach_defaults(GTK_TABLE(ax_box), ax_label, 0, 1, 1, 2);
 
@@ -1119,7 +1119,7 @@ void view_orientation_callback(GtkWidget *w, gpointer context)
 				     g_cclosure_new(GTK_SIGNAL_FUNC(ay_orientation_callback), (gpointer)oid, 0),
 				     0);
 
-      ay_label = gtk_label_new(STR_y_angle);
+      ay_label = gtk_label_new("y angle");
       gtk_misc_set_alignment(GTK_MISC(ay_label), 0.1, 0.0);
       gtk_table_attach_defaults(GTK_TABLE(ay_box), ay_label, 0, 1, 1, 2);
 
@@ -1145,7 +1145,7 @@ void view_orientation_callback(GtkWidget *w, gpointer context)
 				     g_cclosure_new(GTK_SIGNAL_FUNC(az_orientation_callback), (gpointer)oid, 0),
 				     0);
 
-      az_label = gtk_label_new(STR_z_angle);
+      az_label = gtk_label_new("z angle");
       gtk_misc_set_alignment(GTK_MISC (az_label), 0.1, 0.0);
       gtk_table_attach_defaults(GTK_TABLE(az_box), az_label, 0, 1, 1, 2);
 
@@ -1171,7 +1171,7 @@ void view_orientation_callback(GtkWidget *w, gpointer context)
 				     g_cclosure_new(GTK_SIGNAL_FUNC(hop_orientation_callback), (gpointer)oid, 0),
 				     0);
 
-      hop_label = gtk_label_new(STR_hop);
+      hop_label = gtk_label_new("hop");
       gtk_misc_set_alignment(GTK_MISC (hop_label), 0.1, 0.0);
       gtk_table_attach_defaults(GTK_TABLE(hop_box), hop_label, 0, 1, 1, 2);
 
@@ -1197,7 +1197,7 @@ void view_orientation_callback(GtkWidget *w, gpointer context)
 				     g_cclosure_new(GTK_SIGNAL_FUNC(sx_orientation_callback), (gpointer)oid, 0),
 				     0);
 
-      sx_label = gtk_label_new(STR_x_scale);
+      sx_label = gtk_label_new("x scale");
       gtk_misc_set_alignment(GTK_MISC (sx_label), 0.1, 0.0);
       gtk_table_attach_defaults(GTK_TABLE(sx_box), sx_label, 0, 1, 1, 2);
 
@@ -1223,7 +1223,7 @@ void view_orientation_callback(GtkWidget *w, gpointer context)
 				     g_cclosure_new(GTK_SIGNAL_FUNC(sy_orientation_callback), (gpointer)oid, 0),
 				     0);
 
-      sy_label = gtk_label_new(STR_y_scale);
+      sy_label = gtk_label_new("y scale");
       gtk_misc_set_alignment(GTK_MISC (sy_label), 0.1, 0.0);
       gtk_table_attach_defaults(GTK_TABLE(sy_box), sy_label, 0, 1, 1, 2);
 
@@ -1249,7 +1249,7 @@ void view_orientation_callback(GtkWidget *w, gpointer context)
 				     g_cclosure_new(GTK_SIGNAL_FUNC(sz_orientation_callback), (gpointer)oid, 0),
 				     0);
 
-      sz_label = gtk_label_new(STR_z_scale);
+      sz_label = gtk_label_new("z scale");
       gtk_misc_set_alignment(GTK_MISC (sz_label), 0.1, 0.0);
       gtk_table_attach_defaults(GTK_TABLE(sz_box), sz_label, 0, 1, 1, 2);
 
@@ -1275,7 +1275,7 @@ void view_orientation_callback(GtkWidget *w, gpointer context)
 				     g_cclosure_new(GTK_SIGNAL_FUNC(cut_orientation_callback), (gpointer)oid, 0),
 				     0);
 
-      cut_label = gtk_label_new(STR_percent_of_spectrum);
+      cut_label = gtk_label_new("% of spectrum");
       gtk_misc_set_alignment(GTK_MISC (cut_label), 0.1, 0.0);
       gtk_table_attach_defaults(GTK_TABLE(cut_box), cut_label, 0, 1, 1, 2);
 

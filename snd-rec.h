@@ -1,25 +1,6 @@
 #ifndef SND_REC_H
 #define SND_REC_H
 
-#define STR_Adat_In                      "Adat In"
-#define STR_Adat_Out                     "Adat Out"
-#define STR_Aes_In                       "Aes In"
-#define STR_Aes_Out                      "Aes Out"
-#define STR_Analog_In                    "Analog In"
-#define STR_Autoload_Recording           "Autoload Recording"
-#define STR_Digital_In                   "Digital In"
-#define STR_Digital_Out                  "Digital Out"
-#define STR_Done			 "Done"
-#define STR_Input                        "Input"
-#define STR_Line_In                      "Line In"
-#define STR_Line_Out                     "Line Out"
-#define STR_Microphone                   "Microphone"
-#define STR_Output                       "Output"
-#define STR_Restart		         "Restart"
-#define STR_Speakers                     "Speakers"
-#define STR_Save_Audio_Settings		 "Save Audio Settings"
-#define STR_Triggered_Record		 "Triggered Record"
-
 #ifdef SGI
   #include <audio.h>
   #ifdef AL_RESOURCE

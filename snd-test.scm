@@ -2450,6 +2450,32 @@
 	(test-data (string-append sf-dir "PCM_48_8bit_m.w64") 1000 10 (vct 0.062 0.070 0.070 0.086 0.086 0.102 0.102 0.109 0.109 0.117))
 	(test-data (string-append sf-dir "oki.wav") 100 10 (vct 0.396 0.564 0.677 0.779 0.761 0.540 0.209 -0.100 -0.301 -0.265))
 	)
+
+      (let ((errs (list "no error" "no frequency method" "no phase method" "null gen arg to method" "no length method"
+			"no free method" "no describe method" "no data method" "no scaler method"
+			"memory allocation failed" "unstable two pole error"
+			"can't open file" "no sample input" "no sample output"
+			"no such channel" "no file name provided" "no location method" "no channel method"
+			"no such fft window" "unsupported data format" "header read failed"
+			"unsupported header type" "file descriptors not initialized" "not a sound file" "file closed" "write error"
+			"bogus free" "buffer overflow" "buffer underflow" "file overflow" "exponent overflow"
+			"header write failed" "can't open temp file" "interrupted"
+			"audio channels not available" "audio srate not available" "audio format not available"
+			"no audio input available" "audio configuration not available" 
+			"no audio lines available" "audio write error" "audio size not available" "audio device not available"
+			"can't close audio" "can't open audio" "audio read error" "audio amp not available"
+			"can't write audio" "can't read audio" "no audio read permission" 
+			"can't close file" "arg out of range"
+			"midi open error" "midi read error" "midi write error" "midi close error" "midi init error" "midi misc error")))
+	(call-with-current-continuation
+	 (lambda (quit)
+	   (do ((i 0 (1+ i)))
+	       ((= i 58))
+	     (if (not (string=? (list-ref errs i) (mus-error-to-string i)))
+		 (begin
+		   (snd-display ";mus-error-to-string ~D: ~A ~A" i (list-ref errs i) (mus-error-to-string i))
+		   (quit #f)))))))
+
       (let ((cur-srate (mus-sound-srate "oboe.snd"))
 	    (cur-chans (mus-sound-chans "oboe.snd"))
 	    (cur-format (mus-sound-data-format "oboe.snd"))
@@ -13883,13 +13909,13 @@
 			       (close-sound ind)
 			       times))))
 		     (list "1a.snd" "oboe.snd" "storm.snd" "/home/bil/test/sound/away.snd"))))
-	  (snd-display "timings:  scl   rev   env   map   ptree  scn  pad   wrt   clm   mix   src   del")
-	  (snd-display "1a:     ~{~6,F~}" (car data))  
-	  (snd-display "oboe:   ~{~6,F~}" (cadr data))  
-	  (snd-display "storm:  ~{~6,F~}" (caddr data))
+	  (snd-display "       scl   rev   env   map   ptree  scn  pad   wrt   clm   mix   src   del")
+	  (snd-display "1a:   ~{~6,F~}" (car data))  
+	  (snd-display "oboe: ~{~6,F~}" (cadr data))  
+	  (snd-display "storm:~{~6,F~}" (caddr data))
 	  (if (and (list? (cadddr data))
 		   (not (null? (cadddr data))))
-	      (snd-display "away:   ~{~6,F~}" (cadddr data))))
+	      (snd-display "away: ~{~6,F~}" (cadddr data))))
 	
 ;;; timings:  scl   rev   env   map   scn   pad   wrt   clm   mix   src   del  
 ;;; 1a:        0.0   0.0  0.01   0.0  0.01   0.0   0.0  0.01  0.01  0.01   0.0
@@ -13898,10 +13924,10 @@
 ;;; away:      0.0  1.53  8.09 24.54 13.58  0.02  0.01  2.95  0.04  8.34  0.02
 ;;;
 ;;; after run scan/map opt:
-;;; 1a:       0.01  0.01   0.0  0.01   0.0  0.01   0.0  0.01  0.01  0.01  0.01   0.0
-;;; oboe:     0.01  0.01   0.0  0.02   0.0  0.01   0.0  0.01  0.02  0.02  0.01  0.01
-;;; storm:    0.01  0.14  0.01  0.25  0.23  0.01   0.0  0.18  0.01   0.7  0.01   0.3
-;;; away:     0.01  1.62  0.03  3.02  4.33  0.03  0.01  1.79  0.04  7.82  0.02  3.13
+;;; 1a:       0.01  0.01   0.0  0.01   0.0  0.01   0.0  0.01  0.01  0.01  0.01
+;;; oboe:     0.01  0.01   0.0  0.02   0.0  0.01   0.0  0.01  0.02  0.02  0.01
+;;; storm:    0.01  0.14  0.01  0.25  0.23  0.01   0.0  0.18  0.01   0.7  0.01
+;;; away:     0.01  1.62  0.03  3.02  4.33  0.03  0.01  1.79  0.04  7.82  0.02
 	
 	(if (and with-big-file (file-exists? "/zap/sounds/bigger.snd"))
 	    (begin

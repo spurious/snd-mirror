@@ -489,11 +489,11 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
 	    size_pos = i + 1;
 	    break;
 	  }
-      xdismiss = XmStringCreate(STR_Dismiss, XmFONTLIST_DEFAULT_TAG); /* needed by template dialog */
-      xhelp = XmStringCreate(STR_Help, XmFONTLIST_DEFAULT_TAG);
-      xtitle = XmStringCreate(STR_Transform_Options, XmFONTLIST_DEFAULT_TAG);
-      xorient = XmStringCreate(STR_Orientation, XmFONTLIST_DEFAULT_TAG);
-      xcolor = XmStringCreate(STR_Color, XmFONTLIST_DEFAULT_TAG);
+      xdismiss = XmStringCreate("Dismiss", XmFONTLIST_DEFAULT_TAG); /* needed by template dialog */
+      xhelp = XmStringCreate("Help", XmFONTLIST_DEFAULT_TAG);
+      xtitle = XmStringCreate("Transform Options", XmFONTLIST_DEFAULT_TAG);
+      xorient = XmStringCreate("Orientation", XmFONTLIST_DEFAULT_TAG);
+      xcolor = XmStringCreate("Color", XmFONTLIST_DEFAULT_TAG);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -505,7 +505,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       XtSetArg(args[n], XmNtransient, FALSE); n++;
-      transform_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Transform_Options, args, n);
+      transform_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), "Transform Options", args, n);
 
       XtAddCallback(transform_dialog, XmNcancelCallback, orient_transform_callback, ss);
       XtAddCallback(transform_dialog, XmNokCallback, dismiss_transform_callback, ss);
@@ -527,7 +527,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;
 	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
 	}
-      color_button = XtCreateManagedWidget(STR_Color, xmPushButtonWidgetClass, transform_dialog, args, n);
+      color_button = XtCreateManagedWidget("Color", xmPushButtonWidgetClass, transform_dialog, args, n);
       XtAddCallback(color_button, XmNactivateCallback, color_transform_callback, ss);
 
       n = 0;
@@ -575,7 +575,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;
-      type_label = XtCreateManagedWidget(STR_type, xmLabelWidgetClass, type_form, args, n);
+      type_label = XtCreateManagedWidget("type", xmLabelWidgetClass, type_form, args, n);
       XtAddCallback(type_label, XmNhelpCallback, transform_type_help_callback, ss);
 
       n = 0;
@@ -632,7 +632,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;
-      size_label = XtCreateManagedWidget(STR_size, xmLabelWidgetClass, size_form, args, n);
+      size_label = XtCreateManagedWidget("size", xmLabelWidgetClass, size_form, args, n);
       XtAddCallback(size_label, XmNhelpCallback, size_help_callback, ss);
 
       n = 0;
@@ -683,7 +683,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;
-      display_label = XtCreateManagedWidget(STR_display, xmLabelWidgetClass, display_form, args, n);
+      display_label = XtCreateManagedWidget("display", xmLabelWidgetClass, display_form, args, n);
 
       n = 0;
       if (!(ss->using_schemes)) 
@@ -691,7 +691,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->lighter_blue); n++;
 	  XtSetArg(args[n], XmNselectColor, (ss->sgx)->red); n++;
 	}
-      bstr = XmStringCreate(STR_single_transform, XmFONTLIST_DEFAULT_TAG);
+      bstr = XmStringCreate("single transform", XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -710,7 +710,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->lighter_blue); n++;
 	  XtSetArg(args[n], XmNselectColor, (ss->sgx)->red); n++;
 	}
-      bstr = XmStringCreate(STR_sonogram, XmFONTLIST_DEFAULT_TAG);
+      bstr = XmStringCreate("sonogram", XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -729,7 +729,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->lighter_blue); n++;
 	  XtSetArg(args[n], XmNselectColor, (ss->sgx)->red); n++;
 	}
-      bstr = XmStringCreate(STR_spectrogram, XmFONTLIST_DEFAULT_TAG);
+      bstr = XmStringCreate("spectrogram", XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -748,7 +748,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->lighter_blue); n++;
 	  XtSetArg(args[n], XmNselectColor, (ss->sgx)->red); n++;
 	}
-      bstr = XmStringCreate(STR_peaks, XmFONTLIST_DEFAULT_TAG);
+      bstr = XmStringCreate("peaks", XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -766,7 +766,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->lighter_blue); n++;
 	  XtSetArg(args[n], XmNselectColor, (ss->sgx)->red); n++;
 	}
-      bstr = XmStringCreate(STR_dB, XmFONTLIST_DEFAULT_TAG);
+      bstr = XmStringCreate("dB", XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -784,7 +784,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->lighter_blue); n++;
 	  XtSetArg(args[n], XmNselectColor, (ss->sgx)->red); n++;
 	}
-      bstr = XmStringCreate(STR_log_freq, XmFONTLIST_DEFAULT_TAG);
+      bstr = XmStringCreate("log freq", XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -802,7 +802,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->lighter_blue); n++;
 	  XtSetArg(args[n], XmNselectColor, (ss->sgx)->red); n++;
 	}
-      bstr = XmStringCreate(STR_normalize, XmFONTLIST_DEFAULT_TAG);
+      bstr = XmStringCreate("normalize", XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -820,7 +820,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->lighter_blue); n++;
 	  XtSetArg(args[n], XmNselectColor, (ss->sgx)->red); n++;
 	}
-      bstr = XmStringCreate(STR_selection, XmFONTLIST_DEFAULT_TAG);
+      bstr = XmStringCreate("selection", XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -861,7 +861,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;
-      wavelet_label = XtCreateManagedWidget(STR_wavelet, xmLabelWidgetClass, wavelet_form, args, n);
+      wavelet_label = XtCreateManagedWidget("wavelet", xmLabelWidgetClass, wavelet_form, args, n);
       XtAddCallback(wavelet_label, XmNhelpCallback, wavelet_help_callback, ss);
 
       n = 0;
@@ -930,7 +930,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;
-      window_label = XtCreateManagedWidget(STR_window, xmLabelWidgetClass, window_form, args, n);
+      window_label = XtCreateManagedWidget("window", xmLabelWidgetClass, window_form, args, n);
       XtAddCallback(window_label, XmNhelpCallback, window_help_callback, ss);
 
       n = 0;
@@ -984,7 +984,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;
-      graph_label = XtCreateManagedWidget(STR_window, xmLabelWidgetClass, graph_form, args, n);
+      graph_label = XtCreateManagedWidget("window", xmLabelWidgetClass, graph_form, args, n);
       /* label should change according to what is being displayed */
 
       n = 0;

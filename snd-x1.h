@@ -1,5 +1,5 @@
-#ifndef SND_X1_H_LOADED
-#define SND_X1_H_LOADED
+#ifndef SND_X1_H
+#define SND_X1_H
 
 typedef struct {
   Widget rw, nm, pl, sv;

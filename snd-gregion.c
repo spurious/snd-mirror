@@ -80,10 +80,10 @@ static void unhighlight_region(snd_state *ss)
 
 static void unmake_region_labels (void)
 {
-  set_label(srate_text, STR_srate_p);
-  set_label(chans_text, STR_chans_p);
-  set_label(length_text, STR_length_p);
-  set_label(maxamp_text, STR_maxamp_p);
+  set_label(srate_text, "srate:");
+  set_label(chans_text, "chans:");
+  set_label(length_text, "length:");
+  set_label(maxamp_text, "maxamp:");
 }
 
 static void highlight_region(snd_state *ss)
@@ -102,13 +102,13 @@ static void make_region_labels(file_info *hdr)
   char *str;
   if (hdr == NULL) return;
   str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-  mus_snprintf(str, PRINT_BUFFER_SIZE, STR_srate, hdr->srate);
+  mus_snprintf(str, PRINT_BUFFER_SIZE, "srate: %d", hdr->srate);
   set_label(srate_text, str);
-  mus_snprintf(str, PRINT_BUFFER_SIZE, STR_chans, hdr->chans);
+  mus_snprintf(str, PRINT_BUFFER_SIZE, "chans: %d", hdr->chans);
   set_label(chans_text, str);
-  mus_snprintf(str, PRINT_BUFFER_SIZE, STR_length, (float)((double)(hdr->samples) / (float)(hdr->chans * hdr->srate)));
+  mus_snprintf(str, PRINT_BUFFER_SIZE, "length: %.3f", (float)((double)(hdr->samples) / (float)(hdr->chans * hdr->srate)));
   set_label(length_text, str);
-  mus_snprintf(str, PRINT_BUFFER_SIZE, STR_maxamp, region_maxamp(stack_position_to_id(current_region)));
+  mus_snprintf(str, PRINT_BUFFER_SIZE, "maxamp: %.3f", region_maxamp(stack_position_to_id(current_region)));
   set_label(maxamp_text, str);
   FREE(str);
 }
@@ -335,16 +335,16 @@ static void make_region_dialog(snd_state *ss)
 				 0,
 				 g_cclosure_new(GTK_SIGNAL_FUNC(region_browser_delete_callback), (gpointer)ss, 0),
 				 0);
-  gtk_window_set_title(GTK_WINDOW(region_dialog), STR_Regions);
+  gtk_window_set_title(GTK_WINDOW(region_dialog), "Regions");
   sg_make_resizable(region_dialog);
   set_backgrounds(region_dialog, (ss->sgx)->basic_color);
   gtk_container_set_border_width(GTK_CONTAINER(region_dialog), 10);
   gtk_window_resize(GTK_WINDOW(region_dialog), 400, 400);
   gtk_widget_realize(region_dialog);
 
-  help_button = gtk_button_new_with_label(STR_Help);
-  dismiss_button = gtk_button_new_with_label(STR_Dismiss);
-  delete_button = gtk_button_new_with_label(STR_Delete);
+  help_button = gtk_button_new_with_label("Help");
+  dismiss_button = gtk_button_new_with_label("Dismiss");
+  delete_button = gtk_button_new_with_label("Delete");
 
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(region_dialog)->action_area), dismiss_button, TRUE, TRUE, 4);
   gtk_box_pack_end(GTK_BOX(GTK_DIALOG(region_dialog)->action_area), help_button, TRUE, TRUE, 4);
@@ -374,7 +374,7 @@ static void make_region_dialog(snd_state *ss)
   gtk_widget_show(help_button);
   gtk_widget_show(dismiss_button);
 
-  wwl = make_title_row(ss, GTK_DIALOG(region_dialog)->vbox, STR_save, STR_play, STR_regions, DONT_PAD_TITLE, WITHOUT_SORT_BUTTON, WITH_PANED_WINDOW);
+  wwl = make_title_row(ss, GTK_DIALOG(region_dialog)->vbox, "save", "play", "regions", DONT_PAD_TITLE, WITHOUT_SORT_BUTTON, WITH_PANED_WINDOW);
   region_list = wwl->list;
 
   infobox = gtk_vbox_new(FALSE, 0);
@@ -418,27 +418,27 @@ static void make_region_dialog(snd_state *ss)
   gtk_container_add(GTK_CONTAINER(labels), labbox);
   gtk_widget_show(labbox);
   
-  srate_text = gtk_label_new(STR_srate_p);
+  srate_text = gtk_label_new("srate:");
   gtk_label_set_justify(GTK_LABEL(srate_text), GTK_JUSTIFY_LEFT);  /* these appear to be no-ops! */
   gtk_box_pack_start(GTK_BOX(labbox), srate_text, FALSE, FALSE, 2);
   gtk_widget_show(srate_text);
 
-  chans_text = gtk_label_new(STR_chans_p);
+  chans_text = gtk_label_new("chans:");
   gtk_label_set_justify(GTK_LABEL(chans_text), GTK_JUSTIFY_LEFT);
   gtk_box_pack_start(GTK_BOX(labbox), chans_text, FALSE, FALSE, 2);
   gtk_widget_show(chans_text);
 
-  length_text = gtk_label_new(STR_length_p);
+  length_text = gtk_label_new("length:");
   gtk_label_set_justify(GTK_LABEL(length_text), GTK_JUSTIFY_LEFT);
   gtk_box_pack_start(GTK_BOX(labbox), length_text, FALSE, FALSE, 2);
   gtk_widget_show(length_text);
 
-  maxamp_text = gtk_label_new(STR_maxamp_p);
+  maxamp_text = gtk_label_new("maxamp:");
   gtk_label_set_justify(GTK_LABEL(maxamp_text), GTK_JUSTIFY_LEFT);
   gtk_box_pack_start(GTK_BOX(labbox), maxamp_text, FALSE, FALSE, 2);
   gtk_widget_show(maxamp_text);
 
-  edit_button = gtk_button_new_with_label(STR_edit);
+  edit_button = gtk_button_new_with_label("edit");
   set_pushed_button_colors(edit_button, ss);
   g_signal_connect_closure_by_id(GTK_OBJECT(edit_button),
 				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(edit_button))),
@@ -448,7 +448,7 @@ static void make_region_dialog(snd_state *ss)
   gtk_box_pack_start(GTK_BOX(infobox), edit_button, TRUE, TRUE, 2);
   gtk_widget_show(edit_button);
 
-  print_button = gtk_button_new_with_label(STR_print);
+  print_button = gtk_button_new_with_label("print");
   set_pushed_button_colors(print_button, ss);
   g_signal_connect_closure_by_id(GTK_OBJECT(print_button),
 				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(print_button))),

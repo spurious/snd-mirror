@@ -10,7 +10,7 @@ static void create_snd_error_dialog(snd_state *ss, int popup)
   Arg args[32];
   int n;
   XmString titlestr;
-  titlestr = XmStringCreate(STR_Error, XmFONTLIST_DEFAULT_TAG);
+  titlestr = XmStringCreate("Error", XmFONTLIST_DEFAULT_TAG);
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
@@ -31,7 +31,7 @@ static void create_snd_error_dialog(snd_state *ss, int popup)
   XtSetArg(args[n], XmNscrollingPolicy, XmAUTOMATIC); n++;
   XtSetArg(args[n], XmNheight,200); n++;
   XtSetArg(args[n], XmNwidth, 400); n++;
-  snd_error_history = XmCreateScrolledText(snd_error_dialog, STR_Error_History, args, n);
+  snd_error_history = XmCreateScrolledText(snd_error_dialog, "Error History", args, n);
   XtManageChild(snd_error_history);
 
   if (popup) 
@@ -145,9 +145,9 @@ int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
   yes_or_no = 0;
   if (!yes_or_no_dialog)
     {
-      titlestr = XmStringCreate(STR_Big_Trouble, XmFONTLIST_DEFAULT_TAG);
-      xmstr1 = XmStringCreate(STR_Yes, XmFONTLIST_DEFAULT_TAG);
-      xmstr2 = XmStringCreate(STR_No, XmFONTLIST_DEFAULT_TAG);
+      titlestr = XmStringCreate("Yow!", XmFONTLIST_DEFAULT_TAG);
+      xmstr1 = XmStringCreate("Yes", XmFONTLIST_DEFAULT_TAG);
+      xmstr2 = XmStringCreate("No", XmFONTLIST_DEFAULT_TAG);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}

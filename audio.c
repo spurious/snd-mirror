@@ -11,7 +11,7 @@
  *    Mac (Mac OS 8.1) (apparently there are important differences in subsequent versions)
  *    HPUX
  *    W95/98
- *    AIX, AF, NetBSD etc -- untested and incomplete
+ *    NetBSD etc -- untested and incomplete
  *    Mac OSX
  *    ESD
  *    audio describers
@@ -8648,112 +8648,6 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
 
 
 
-/* ------------------------------- AIX ----------------------------------------- */
-
-#ifdef AIX
-#define AUDIO_OK
-
-/* this code taken from Xanim, esound, and MikMod */
-#include <sys/audio.h>
-#include <stropts.h>
-#include <sys/types.h>
-#include <sys/file.h>
-#include <sys/stat.h>
-#include <sys/param.h>
-
-/* Some AIX machines have "/dev/acpa0/1" instead. */
-/* Some AIX machines have "/dev/baud0/1" instead. UltiMedia Sound system */
-#define DAC_NAME   "/dev/paud0/1"
-
-int audio_started = 0;
-
-int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
-{
-  audio_init init;
-  audio_control control;
-  audio_change change;
-  int line, err;
-  audio_started = 0;
-  line = open(DAC_NAME, O_WRONLY | O_NDELAY);
-  if (line == -1) 
-    mus_error(MUS_AUDIO_CANT_OPEN, NULL);
-  else
-    {
-      memset(&init, '\0', sizeof(init));
-      init.srate = srate;
-      init.channels = chans;
-      init.mode = PCM;
-      init.operation = PLAY;
-      init.flags = FIXED | BIG_ENDIAN | TWOS_COMPLEMENT;
-      init.bits_per_sample = 16;
-      init.bsize = AUDIO_IGNORE;
-      err = ioctl(line, AUDIO_INIT, &init);
-      if (err == -1)
-	{mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, NULL); return(MUS_ERROR);}
-      else
-	{
-	  memset (&control, '\0', sizeof(control));
-	  memset (&change, '\0', sizeof(change));
-	  change.output = EXTERNAL_SPEAKER | INTERNAL_SPEAKER | OUTPUT_1;
-	  change.balance       = 0x3fff0000;
-	  change.balance_delay = 0;
-	  change.volume        = (long)(0x7fff << 16);
-	  change.volume_delay  = 0;
-	  change.input         = AUDIO_IGNORE;
-	  change.monitor       = AUDIO_IGNORE;
-	  change.dev_info      = (char *)NULL;
-	  control.ioctl_request = AUDIO_CHANGE; /* AUDIO_STOP AUDIO_WAIT AUDIO_START */
-	  control.position =      0;
-	  control.request_info =  (char *)&change;
-	  err = ioctl(line, AUDIO_CONTROL, &control);
-	  if (err == -1) {mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, NULL); return(MUS_ERROR);}
-	}
-    }
-  return(line);
-}
-
-int mus_audio_write(int line, char *buf, int bytes) 
-{
-  audio_control control;
-  int err;
-  if (audio_started == 0)
-    {
-      audio_started = 1;
-      memset(&control, '\0', sizeof(control));
-      control.ioctl_request = AUDIO_START;
-      control.request_info  = NULL;
-      control.position      = 0;
-      err = ioctl(line, AUDIO_CONTROL, &control);
-      if (err == -1) {mus_error(MUS_AUDIO_WRITE_ERROR, NULL); return(MUS_ERROR);}
-    }
-  err = write(line, buf, bytes);
-  return(MUS_NO_ERROR);
-}
-
-int mus_audio_close(int line) 
-{
-  close(line); 
-  audio_started = 0;
-  return(MUS_NO_ERROR);
-}
-
-static void describe_audio_state_1(void) {pprint("audio stubbed out");}
-int mus_audio_open_input(int dev, int srate, int chans, int format, int size) {return(MUS_ERROR);} /* no input */
-int mus_audio_read(int line, char *buf, int bytes) {return(MUS_ERROR);}
-int mus_audio_mixer_read(int dev, int field, int chan, float *val) {return(MUS_ERROR);}
-int mus_audio_mixer_write(int dev, int field, int chan, float *val) {return(MUS_ERROR);}
-void mus_audio_save(void) {}
-void mus_audio_restore(void) {}
-int mus_audio_initialize(void) {return(MUS_NO_ERROR);}
-int mus_audio_systems(void) {return(1);}
-char *mus_audio_system_name(int system) {return("aix");}
-void mus_audio_set_oss_buffers(int num, int size) {}
-char *mus_audio_moniker(void) {return("aix audio");}
-
-#endif
-
-
-
 /* ------------------------------- NETBSD ----------------------------------------- */
 
 #if defined(NETBSD) && (!(defined(AUDIO_OK)))
@@ -8830,7 +8724,6 @@ void mus_audio_restore(void) {}
 int mus_audio_initialize(void) {return(MUS_ERROR);}
 int mus_audio_systems(void) {return(1);}
 char *mus_audio_system_name(int system) {return("NetBSD");}
-void mus_audio_set_oss_buffers(int num, int size) {}
 char *mus_audio_moniker(void) {return("NetBSD audio");}
 
 #endif
@@ -8937,7 +8830,6 @@ void mus_audio_restore(void) {}
 int mus_audio_initialize(void) {return(MUS_ERROR);}
 int mus_audio_systems(void) {return(1);}
 char *mus_audio_system_name(int system) {return("AudioFile");}
-void mus_audio_set_oss_buffers(int num, int size) {}
 char *mus_audio_moniker(void) {return("AudioFile audio");}
 
 #endif
@@ -9341,7 +9233,6 @@ void mus_audio_restore(void) {}
 int mus_audio_initialize(void) {return(MUS_NO_ERROR);}
 int mus_audio_systems(void) {return(1);}
 char *mus_audio_system_name(int system) {return("Mac OS-X");}
-void mus_audio_set_oss_buffers(int num, int size) {}
 
 char *mus_audio_moniker(void) {return("Mac OS-X audio");}
 #endif
@@ -9641,10 +9532,6 @@ void mus_audio_clear_soundcard_inputs(void)
 {
 }
 
-void mus_audio_set_oss_buffers(int num, int size)
-{
-}
-
 #endif
 
 
@@ -9709,7 +9596,6 @@ void mus_audio_restore(void) {}
 int mus_audio_initialize(void) {return(MUS_ERROR);}
 int mus_audio_systems(void) {return(1);}
 char *mus_audio_system_name(int system) {return("linux jack");}
-void mus_audio_set_oss_buffers(int num, int size) {}
 char *mus_audio_moniker(void) {return("jack");}
 #endif
 
@@ -9731,7 +9617,6 @@ void mus_audio_restore(void) {}
 int mus_audio_initialize(void) {return(MUS_ERROR);}
 int mus_audio_systems(void) {return(0);}
 char *mus_audio_system_name(int system) {return("unknown");}
-void mus_audio_set_oss_buffers(int num, int size) {}
 char *mus_audio_moniker(void) {return("unknown audio");}
 #endif
 

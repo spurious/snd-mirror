@@ -303,6 +303,9 @@ void reflect_no_mix_in_mix_panel(void) {}
 int make_mix_panel(snd_state *ss) {return(0);}
 int mix_play_stopped(void) {return(0);}
 void reflect_mix_play_stop(void) {}
+void set_mix_color(snd_state *ss, int color) {}
+void set_selected_mix_color(snd_state *ss, int color) {}
+
 void set_fft_window_beta(snd_state *ss, Float val) {in_set_fft_window_beta(ss, val);}
 void set_transform_size(snd_state *ss, int val) {in_set_transform_size(ss, val);}
 void set_fft_window(snd_state *ss, int val) {in_set_fft_window(ss, val);}

@@ -728,7 +728,7 @@ static void internal_trigger_set(Float val)
   rp->triggering = (val > 0.0);
   rp->triggered = (!rp->triggering);
   if (!(rp->recording)) /* else wait for current session to end (via click) */
-    set_button_label(record_button, (rp->triggering) ? STR_Triggered_Record : STR_Record);
+    set_button_label(record_button, (rp->triggering) ? "Triggered Record" : "Record");
 }
 
 static void change_trigger_callback(GtkAdjustment *adj, gpointer context)
@@ -938,7 +938,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
   gtk_box_pack_start(GTK_BOX(left_form), filebox, FALSE, FALSE, 0);
   gtk_widget_show(filebox);
 
-  file_label = gtk_label_new(STR_file_p);
+  file_label = gtk_label_new("file:");
   gtk_box_pack_start(GTK_BOX(filebox), file_label, FALSE, FALSE, 0);
   gtk_widget_show(file_label);
 
@@ -968,7 +968,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
   gtk_box_pack_start(GTK_BOX(right_form), durbox, FALSE, FALSE, 0);
   gtk_widget_show(durbox);
 
-  duration_label = gtk_label_new(STR_duration_p);
+  duration_label = gtk_label_new("duration:");
   gtk_box_pack_start(GTK_BOX(durbox), duration_label, FALSE, FALSE, 0);
   gtk_widget_show(duration_label);
 
@@ -1042,7 +1042,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
       set_toggle_button(device_buttons[i], TRUE, FALSE, (void *)(all_panes[i]));
     }
 
-  autoload_file = gtk_check_button_new_with_label(STR_Autoload_Recording);
+  autoload_file = gtk_check_button_new_with_label("Autoload Recording");
   gtk_box_pack_start(GTK_BOX(button_holder), autoload_file, TRUE, TRUE, 0);
   gtk_widget_show(autoload_file);
   device_buttons[ndevs] = autoload_file;
@@ -1055,7 +1055,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
 				 0);
   set_toggle_button(autoload_file, rp->autoload, FALSE, (void *)ss); 
 #if (HAVE_OSS || HAVE_ALSA)
-  save_audio_settings = gtk_check_button_new_with_label(STR_Save_Audio_Settings);
+  save_audio_settings = gtk_check_button_new_with_label("Save Audio Settings");
   gtk_box_pack_start(GTK_BOX(button_holder), save_audio_settings, TRUE, TRUE, 0);
   gtk_widget_show(save_audio_settings);
   g_signal_connect_closure_by_id(GTK_OBJECT(save_audio_settings),
@@ -1088,7 +1088,7 @@ void unlock_recording_audio(void)
     {
       set_sensitive(record_button, TRUE);
       set_sensitive(reset_button, TRUE);
-      set_button_label(reset_button, STR_Restart);
+      set_button_label(reset_button, "Restart");
     }
 }
 
@@ -1729,7 +1729,7 @@ static GtkWidget *make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Flo
 
 static void make_reset_button(snd_state *ss, PANE *p, GtkWidget *btab)
 {
-  p->reset_button = gtk_button_new_with_label(STR_Reset);
+  p->reset_button = gtk_button_new_with_label("Reset");
   set_background(p->reset_button, (ss->sgx)->basic_color);
   gtk_box_pack_start(GTK_BOX(btab), p->reset_button, TRUE, TRUE, 0);
   gtk_widget_show(p->reset_button);
@@ -1849,9 +1849,9 @@ static void reset_record_callback(GtkWidget *w, gpointer context)
       rp->recording = 0;
       rp->triggered = (!rp->triggering);
       sensitize_control_buttons();
-      set_button_label(reset_button, STR_Reset);
+      set_button_label(reset_button, "Reset");
       set_backgrounds(record_button, (ss->sgx)->basic_color);
-      set_button_label(record_button, (rp->triggering) ? STR_Triggered_Record : STR_Record);
+      set_button_label(record_button, (rp->triggering) ? "Triggered Record" : "Record");
       mus_file_close(rp->output_file_descriptor);
       rp->output_file_descriptor = -1;
       str = just_filename(rp->output_file);
@@ -1875,7 +1875,7 @@ static void reset_record_callback(GtkWidget *w, gpointer context)
       if (!(rp->taking_input))            /* restart */
 	{
 	  fire_up_recorder(ss);
-	  set_button_label(reset_button, STR_Reset);
+	  set_button_label(reset_button, "Reset");
 	}
     }
 }
@@ -1902,8 +1902,8 @@ void finish_recording(snd_state *ss, recorder_info *rp)
   Float duration;
   sensitize_control_buttons();
   set_backgrounds(record_button, (ss->sgx)->basic_color);
-  set_button_label(reset_button, STR_Reset);
-  set_button_label(record_button, (rp->triggering) ? STR_Triggered_Record : STR_Record);
+  set_button_label(reset_button, "Reset");
+  set_button_label(record_button, (rp->triggering) ? "Triggered Record" : "Record");
   mus_file_close(rp->output_file_descriptor);
   rp->output_file_descriptor = mus_file_reopen_write(rp->output_file);
   mus_header_update_with_fd(rp->output_file_descriptor,
@@ -2003,8 +2003,8 @@ static void record_button_callback(GtkWidget *w, gpointer context)
 	      return;
 	    }
 	  set_backgrounds(record_button, (ss->sgx)->red);
-	  set_button_label(reset_button, STR_Cancel);
-	  set_button_label(record_button, STR_Done);
+	  set_button_label(reset_button, "Cancel");
+	  set_button_label(record_button, "Done");
 
 	  if (recorder_start_output_file(ss, comment)) return; /* true = error */
 	}
@@ -2080,16 +2080,16 @@ void snd_record_file(snd_state *ss)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(recorder_delete), (gpointer)ss, 0),
 				     0);
-      gtk_window_set_title(GTK_WINDOW(recorder), STR_Record);
+      gtk_window_set_title(GTK_WINDOW(recorder), "Record");
       sg_make_resizable(recorder);
       set_background(recorder, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(recorder), 10);
       gtk_widget_realize(recorder);
 
-      help_button = gtk_button_new_with_label(STR_Help);
-      dismiss_button = gtk_button_new_with_label(STR_Dismiss);
-      reset_button = gtk_button_new_with_label(STR_Reset);
-      record_button = gtk_button_new_with_label(STR_Record);
+      help_button = gtk_button_new_with_label("Help");
+      dismiss_button = gtk_button_new_with_label("Dismiss");
+      reset_button = gtk_button_new_with_label("Reset");
+      record_button = gtk_button_new_with_label("Record");
       set_backgrounds(record_button, (ss->sgx)->basic_color);
 
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(recorder)->action_area), dismiss_button, TRUE, TRUE, 10);

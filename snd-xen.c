@@ -1137,21 +1137,6 @@ static XEN g_set_print_length(XEN val)
   return(C_TO_XEN_INT(print_length(ss)));
 }
 
-static XEN g_previous_files_sort(void) {return(C_TO_XEN_INT(previous_files_sort(get_global_state())));}
-static XEN g_set_previous_files_sort(XEN val) 
-{
-  #define H_previous_files_sort "(" S_previous_files_sort ") -> sort choice in view files (0 = unsorted, 1 = by name, etc)"
-  snd_state *ss;
-  ss = get_global_state();
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set-" S_previous_files_sort, "an integer"); 
-  update_prevlist();
-  set_previous_files_sort(ss, mus_iclamp(0,
-					    XEN_TO_C_INT(val),
-					    5));
-  update_prevfiles(ss);
-  return(C_TO_XEN_INT(previous_files_sort(ss)));
-}
-
 static XEN g_show_indices(void) {return(C_TO_XEN_BOOLEAN(show_indices(get_global_state())));}
 static XEN g_set_show_indices(XEN val) 
 {
@@ -1190,17 +1175,6 @@ frequency whistles leaking through."
   if (len >= 0)
     set_sinc_width(ss, len);
   return(C_TO_XEN_INT(sinc_width(ss)));
-}
-
-static XEN g_hankel_jn(void) {return(C_TO_XEN_DOUBLE(hankel_jn(get_global_state())));}
-static XEN g_set_hankel_jn(XEN val) 
-{
-  #define H_hankel_jn "(" S_hankel_jn ") -> Bessel function used in Hankel transform."
-  snd_state *ss;
-  ss = get_global_state();
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set-" S_hankel_jn, "a number"); 
-  set_hankel_jn(ss, XEN_TO_C_DOUBLE_WITH_CALLER(val, S_hankel_jn));
-  return(val);
 }
 
 static XEN g_color_map(void) {return(C_TO_XEN_INT(color_map(get_global_state())));}
@@ -2164,18 +2138,6 @@ static XEN g_clear_audio_inputs (void)
   return(XEN_FALSE);
 }
 
-static XEN g_set_oss_buffers(XEN num, XEN size)
-{
-  #define H_set_oss_buffers "(" "set-" S_oss_buffers " num size) sets Linux OSS 'fragment' number and size"
-#if (HAVE_OSS || HAVE_ALSA)
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(num), num, XEN_ARG_1, "set-" S_oss_buffers, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(size), size, XEN_ARG_2, "set-" S_oss_buffers, "an integer");
-  mus_audio_set_oss_buffers(XEN_TO_C_INT(num),
-			    XEN_TO_C_INT(size));
-#endif
-  return(XEN_FALSE);
-}
-
 /* this needs to be in Snd (rather than sndlib2xen.c) because it calls snd_help */
 #define S_mus_audio_describe            "mus-audio-describe"
 static XEN g_mus_audio_describe(void) 
@@ -2381,55 +2343,6 @@ static XEN g_selection_color(void)
   return(XEN_WRAP_PIXEL((ss->sgx)->selection_color));
 }
 
-static XEN g_set_mix_color (XEN arg1, XEN arg2)
-{
-  XEN color; 
-  XEN mix_id = XEN_UNDEFINED;
-  snd_state *ss;
-  ss = get_global_state();
-  if (XEN_NOT_BOUND_P(arg2))
-    color = arg1;
-  else
-    {
-      color = arg2;
-      mix_id = arg1;
-    }
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, "set-" S_mix_color, "a color"); 
-  if (XEN_INTEGER_P(mix_id))
-    color_one_mix_from_id(XEN_TO_SMALL_C_INT(mix_id), XEN_UNWRAP_PIXEL(color));
-  else set_mix_color(ss, XEN_UNWRAP_PIXEL(color));
-  for_each_chan(ss, update_graph);
-  return(color);
-}
-
-static XEN g_mix_color(XEN mix_id) 
-{
-  #define H_mix_color "(" S_mix_color ") -> color of mix consoles"
-  snd_state *ss;
-  ss = get_global_state();
-  if (XEN_INTEGER_P(mix_id))
-    return(XEN_WRAP_PIXEL(mix_to_color_from_id(XEN_TO_SMALL_C_INT(mix_id))));
-  return(XEN_WRAP_PIXEL((ss->sgx)->mix_color));
-}
-
-static XEN g_set_selected_mix_color (XEN color) 
-{
-  snd_state *ss;
-  ss = get_global_state();
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, "set-" S_selected_mix_color, "a color"); 
-  set_selected_mix_color(ss, XEN_UNWRAP_PIXEL(color));
-  for_each_chan(ss, update_graph);
-  return(color);
-}
-
-static XEN g_selected_mix_color(void) 
-{
-  #define H_selected_mix_color "(" S_selected_mix_color ") -> color of the currently selected mix"
-  snd_state *ss;
-  ss = get_global_state();
-  return(XEN_WRAP_PIXEL((ss->sgx)->selected_mix_color));
-}
-
 static XEN g_set_text_focus_color (XEN color) 
 {
   snd_state *ss;
@@ -2597,7 +2510,6 @@ static XEN g_set_basic_color(XEN color)
 
 static XEN during_open_hook;
 static XEN after_open_hook;
-static XEN output_comment_hook;
 
 XEN run_progn_hook(XEN hook, XEN args, const char *caller)
 {
@@ -2699,62 +2611,6 @@ void after_open(int index)
     run_hook(after_open_hook,
 	     XEN_LIST_1(C_TO_SMALL_XEN_INT(index)),
 	     S_after_open_hook);
-}
-
-char *run_concat_hook(XEN hook, const char *caller, char *initial_string, char *subject)
-{
-  char *newstr = NULL, *tmpstr = NULL;
-  if (initial_string) 
-    newstr = copy_string(initial_string); /* will be accumulating stuff in loop through hook */
-  if (XEN_HOOKED(hook))
-    {
-      XEN result;
-      XEN procs = XEN_HOOK_PROCEDURES(hook);
-      int size = 0;
-#if HAVE_GUILE
-      while (XEN_NOT_NULL_P(procs))
-	{
-	  if (subject)
-	    result = XEN_CALL_2(XEN_CAR(procs),
-				C_TO_XEN_STRING(subject),
-				C_TO_XEN_STRING(newstr),
-				caller);
-	  else result = XEN_CALL_1(XEN_CAR(procs),
-				   C_TO_XEN_STRING(newstr),
-				   caller);
-#else
-	  if (subject)
-	    result = XEN_CALL_2(procs,
-				C_TO_XEN_STRING(subject),
-				C_TO_XEN_STRING(newstr),
-				caller);
-	  else result = XEN_CALL_1(procs,
-				   C_TO_XEN_STRING(newstr),
-				   caller);
-#endif
-	  if (XEN_STRING_P(result))
-	    tmpstr = XEN_TO_C_STRING(result);
-	  else tmpstr = NULL;
-	  if (tmpstr)
-	    {
-	      if ((snd_strlen(tmpstr) + snd_strlen(newstr)) >= size)
-		size = ((snd_strlen(tmpstr) + snd_strlen(newstr)) * 2);
-	      if (newstr == NULL)
-		newstr = (char *)CALLOC(size, sizeof(char));
-	      else newstr = (char *)REALLOC(newstr, size * sizeof(char));
-	      strcat(newstr, tmpstr);
-	    }
-#if HAVE_GUILE
-	  procs = XEN_CDR(procs);
-	}
-#endif
-    }
-  return(newstr);
-}
-
-char *output_comment(file_info *hdr)
-{
-  return(run_concat_hook(output_comment_hook, S_output_comment_hook, (hdr) ? hdr->comment : NULL, NULL));
 }
 
 #if HAVE_LADSPA
@@ -2868,8 +2724,6 @@ XEN_NARGIFY_0(g_selection_creates_region_w, g_selection_creates_region)
 XEN_ARGIFY_1(g_set_selection_creates_region_w, g_set_selection_creates_region)
 XEN_NARGIFY_0(g_print_length_w, g_print_length)
 XEN_ARGIFY_1(g_set_print_length_w, g_set_print_length)
-XEN_NARGIFY_0(g_previous_files_sort_w, g_previous_files_sort)
-XEN_ARGIFY_1(g_set_previous_files_sort_w, g_set_previous_files_sort)
 XEN_NARGIFY_0(g_show_listener_w, g_show_listener)
 XEN_ARGIFY_1(g_set_show_listener_w, g_set_show_listener)
 XEN_NARGIFY_0(g_show_indices_w, g_show_indices)
@@ -2878,8 +2732,6 @@ XEN_NARGIFY_0(g_show_backtrace_w, g_show_backtrace)
 XEN_ARGIFY_1(g_set_show_backtrace_w, g_set_show_backtrace)
 XEN_NARGIFY_0(g_sinc_width_w, g_sinc_width)
 XEN_ARGIFY_1(g_set_sinc_width_w, g_set_sinc_width)
-XEN_NARGIFY_0(g_hankel_jn_w, g_hankel_jn)
-XEN_ARGIFY_1(g_set_hankel_jn_w, g_set_hankel_jn)
 XEN_NARGIFY_0(g_color_map_w, g_color_map)
 XEN_ARGIFY_1(g_set_color_map_w, g_set_color_map)
 XEN_NARGIFY_0(g_temp_dir_w, g_temp_dir)
@@ -2957,10 +2809,6 @@ XEN_NARGIFY_0(g_highlight_color_w, g_highlight_color)
 XEN_NARGIFY_1(g_set_highlight_color_w, g_set_highlight_color)
 XEN_NARGIFY_0(g_cursor_color_w, g_cursor_color)
 XEN_NARGIFY_1(g_set_cursor_color_w, g_set_cursor_color)
-XEN_ARGIFY_1(g_mix_color_w, g_mix_color)
-XEN_ARGIFY_2(g_set_mix_color_w, g_set_mix_color)
-XEN_NARGIFY_0(g_selected_mix_color_w, g_selected_mix_color)
-XEN_ARGIFY_1(g_set_selected_mix_color_w, g_set_selected_mix_color)
 XEN_NARGIFY_0(g_text_focus_color_w, g_text_focus_color)
 XEN_NARGIFY_1(g_set_text_focus_color_w, g_set_text_focus_color)
 XEN_NARGIFY_0(g_sash_color_w, g_sash_color)
@@ -2980,7 +2828,6 @@ XEN_NARGIFY_1(g_set_pushed_button_color_w, g_set_pushed_button_color)
 XEN_NARGIFY_1(g_color_p_w, g_color_p)
 #endif
 XEN_NARGIFY_0(g_snd_tempnam_w, g_snd_tempnam)
-XEN_NARGIFY_2(g_set_oss_buffers_w, g_set_oss_buffers)
 XEN_NARGIFY_0(g_clear_audio_inputs_w, g_clear_audio_inputs)
 XEN_NARGIFY_0(g_color_dialog_w, g_color_dialog)
 XEN_NARGIFY_0(g_orientation_dialog_w, g_orientation_dialog)
@@ -3060,8 +2907,6 @@ XEN_NARGIFY_1(g_snd_completion_w, g_snd_completion)
 #define g_set_selection_creates_region_w g_set_selection_creates_region
 #define g_print_length_w g_print_length
 #define g_set_print_length_w g_set_print_length
-#define g_previous_files_sort_w g_previous_files_sort
-#define g_set_previous_files_sort_w g_set_previous_files_sort
 #define g_show_listener_w g_show_listener
 #define g_set_show_listener_w g_set_show_listener
 #define g_show_indices_w g_show_indices
@@ -3070,8 +2915,6 @@ XEN_NARGIFY_1(g_snd_completion_w, g_snd_completion)
 #define g_set_show_backtrace_w g_set_show_backtrace
 #define g_sinc_width_w g_sinc_width
 #define g_set_sinc_width_w g_set_sinc_width
-#define g_hankel_jn_w g_hankel_jn
-#define g_set_hankel_jn_w g_set_hankel_jn
 #define g_color_map_w g_color_map
 #define g_set_color_map_w g_set_color_map
 #define g_temp_dir_w g_temp_dir
@@ -3149,10 +2992,6 @@ XEN_NARGIFY_1(g_snd_completion_w, g_snd_completion)
 #define g_set_highlight_color_w g_set_highlight_color
 #define g_cursor_color_w g_cursor_color
 #define g_set_cursor_color_w g_set_cursor_color
-#define g_mix_color_w g_mix_color
-#define g_set_mix_color_w g_set_mix_color
-#define g_selected_mix_color_w g_selected_mix_color
-#define g_set_selected_mix_color_w g_set_selected_mix_color
 #define g_text_focus_color_w g_text_focus_color
 #define g_set_text_focus_color_w g_set_text_focus_color
 #define g_sash_color_w g_sash_color
@@ -3172,7 +3011,6 @@ XEN_NARGIFY_1(g_snd_completion_w, g_snd_completion)
 #define g_color_p_w g_color_p
 #endif
 #define g_snd_tempnam_w g_snd_tempnam
-#define g_set_oss_buffers_w g_set_oss_buffers
 #define g_clear_audio_inputs_w g_clear_audio_inputs
 #define g_color_dialog_w g_color_dialog
 #define g_orientation_dialog_w g_orientation_dialog
@@ -3261,8 +3099,6 @@ void g_initialize_gh(void)
   mus_midi_init();
 #endif
 
-  /* ---------------- CONSTANTS ---------------- */
-
   #define H_zoom_focus_left "The value for " S_zoom_focus_style " that causes zooming to maintain the left edge steady"
   #define H_zoom_focus_right "The value for " S_zoom_focus_style " that causes zooming to maintain the right edge steady"
   #define H_zoom_focus_middle "The value for " S_zoom_focus_style " that causes zooming to focus on the middle sample"
@@ -3290,7 +3126,6 @@ void g_initialize_gh(void)
   XEN_DEFINE_CONSTANT(S_lisp_graph,            LISP_AXIS_INFO,        "lisp graph");
 
 
-  /* ---------------- VARIABLES ---------------- */
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_region_graph_style, g_region_graph_style_w, H_region_graph_style,
 				   "set-" S_region_graph_style, g_set_region_graph_style_w,  0, 0, 1, 0);
 
@@ -3360,9 +3195,6 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_print_length, g_print_length_w, H_print_length,
 				   "set-" S_print_length, g_set_print_length_w,  0, 0, 0, 1);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_previous_files_sort, g_previous_files_sort_w, H_previous_files_sort,
-				   "set-" S_previous_files_sort, g_set_previous_files_sort_w,  0, 0, 0, 1);
-
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_listener, g_show_listener_w, H_show_listener,
 				   "set-" S_show_listener, g_set_show_listener_w,  0, 0, 1, 0);
 
@@ -3374,9 +3206,6 @@ void g_initialize_gh(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sinc_width, g_sinc_width_w, H_sinc_width,
 				   "set-" S_sinc_width, g_set_sinc_width_w,  0, 0, 0, 1);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_hankel_jn, g_hankel_jn_w, H_hankel_jn,
-				   "set-" S_hankel_jn, g_set_hankel_jn_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_colormap, g_color_map_w, H_colormap,
 				   "set-" S_colormap, g_set_color_map_w,  0, 0, 0, 1);
@@ -3494,12 +3323,6 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_cursor_color, g_cursor_color_w, H_cursor_color,
 				   "set-" S_cursor_color, g_set_cursor_color_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_color, g_mix_color_w, H_mix_color,
-				   "set-" S_mix_color, g_set_mix_color_w,  0, 1, 1, 1);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selected_mix_color, g_selected_mix_color_w, H_selected_mix_color,
-				   "set-" S_selected_mix_color, g_set_selected_mix_color_w,  0, 0, 1, 0);
-
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_text_focus_color, g_text_focus_color_w, H_text_focus_color,
 				   "set-" S_text_focus_color, g_set_text_focus_color_w,  0, 0, 1, 0);
 
@@ -3528,10 +3351,7 @@ void g_initialize_gh(void)
 #endif
 
 
-  /* ---------------- FUNCTIONS ---------------- */
-
   XEN_DEFINE_PROCEDURE(S_snd_tempnam,         g_snd_tempnam_w, 0, 0, 0,         H_snd_tempnam);
-  XEN_DEFINE_PROCEDURE("set-" S_oss_buffers,  g_set_oss_buffers_w, 2, 0, 0,     H_set_oss_buffers);
   XEN_DEFINE_PROCEDURE(S_clear_audio_inputs,  g_clear_audio_inputs_w, 0, 0, 0,  H_clear_audio_inputs);
   XEN_DEFINE_PROCEDURE(S_color_dialog,        g_color_dialog_w, 0, 0, 0,        H_color_dialog);
   XEN_DEFINE_PROCEDURE(S_orientation_dialog,  g_orientation_dialog_w, 0, 0, 0,  H_orientation_dialog);
@@ -3572,17 +3392,8 @@ This provides a way to set various sound-specific defaults. \n\
     (if (> (channels snd) 1) \n\
         (set! (channel-style snd) channels-combined))))"
 
-  #define H_output_comment_hook S_output_comment_hook " (str) is called in Save-As dialog, passed current sound's comment, if any. \
-If more than one hook function, results are concatenated. If none, the current comment is used.\n\
-  (add-hook! output-comment-hook\n\
-    (lambda (str)\n\
-      (string-append \"written \"\n\
-        (strftime \"%a %d-%b-%Y %H:%M %Z\"\n\
-          (localtime (current-time))))))"
-
   XEN_DEFINE_HOOK(during_open_hook,    S_during_open_hook, 3,    H_during_open_hook);    /* args = fd filename reason */
   XEN_DEFINE_HOOK(after_open_hook,     S_after_open_hook, 1,     H_after_open_hook);     /* args = sound */
-  XEN_DEFINE_HOOK(output_comment_hook, S_output_comment_hook, 1, H_output_comment_hook); /* arg = current mus_sound_comment(hdr) if any */
 
   #define H_print_hook S_print_hook " (text) is called each time some Snd-generated response (text) is about to be appended to the listener. \
 If it returns some non-#f result, Snd assumes you've sent the text out yourself, as well as any needed prompt. \n\
@@ -3652,6 +3463,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 #endif
 
 #if HAVE_GUILE
+
   XEN_EVAL_C_STRING("(defmacro defvar (a b)\
                        `(begin\
                           (define , a , b)\
@@ -3678,6 +3490,9 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(define normalize-transform-by-channel 1)");
   XEN_EVAL_C_STRING("(define normalize-transform-by-sound 2)");
   XEN_EVAL_C_STRING("(define normalize-transform-globally 3)");
+  #if (HAVE_OSS || HAVE_ALSA)
+  XEN_EVAL_C_STRING("(define set-oss-buffers mus-audio-set-oss-buffers)");
+  #endif
 
   /* from ice-9/r4rs.scm but with output to snd listener */
   XEN_EVAL_C_STRING("(define snd-remember-paths #f)");

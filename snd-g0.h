@@ -1,5 +1,5 @@
-#ifndef SND_G0_H_LOADED
-#define SND_G0_H_LOADED
+#ifndef SND_G0_H
+#define SND_G0_H
 
 #if defined(HAVE_CONFIG_H)
   #include <config.h>
@@ -160,9 +160,6 @@ typedef struct {
 #endif
 
 #define TIME_TYPE guint32
-#define BUTTON_1 1
-#define BUTTON_2 2
-#define BUTTON_3 3
 
 #define MAIN_SHELL(a) (a->sgx)->mainshell
 #define MAIN_WINDOW(a) (a->sgx)->mainwindow
@@ -256,7 +253,6 @@ typedef struct {
 #define snd_K_Up GDK_Up		 
 #define snd_K_Right GDK_Right	 
 #define snd_K_Down GDK_Down
-#define snd_K_question GDK_question		 
 
 #define snd_keypad_PageUp GDK_KP_Page_Up
 #define snd_keypad_PageDown GDK_KP_Page_Down

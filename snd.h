@@ -12,8 +12,7 @@
  *                   driven by input from stdin -- use the flag USE_NO_GUI for this).
  *
  *   HAVE_GUILE    define if the guile library is available (adds lisp extension/customization language)
- *                 see http://www.gnu.org/software/guile. If you have Guile 1.3.4, include -DHAVE_GUILE_1_3,
- *                 (The default is Guile 1.4, versions before 1.3.4 are no longer supported).
+ *                 see http://www.gnu.org/software/guile. 
  *                 To get a version of Snd without any extension language, -DHAVE_EXTENSION_LANGUAGE=0
  *
  *   HAVE_RUBY     define if you would rather use Ruby as the extension language.
@@ -139,7 +138,7 @@
 
 #include "snd-strings.h"
 
-#define SND_VERSION "5-Sep-02"
+#define SND_VERSION "9-Sep-02"
 #define SND_RPM_VERSION "6.1"
 #define SND_MAJOR_VERSION 6
 #define SND_MINOR_VERSION 1

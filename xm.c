@@ -4,6 +4,7 @@
  */
 
 /* HISTORY: 
+ *   9-Sep:     added Motif WMProtocol convenience macros.
  *   30-Aug:    added add-resource for user-defined extensions to the resources.
  *   29-Aug:    added ten resources accidentally omitted earlier (thanks to Michael Scholz).
  *   2-Aug:     some Lesstif-related compile-time switches.
@@ -81,6 +82,7 @@
   #define CALLOC(a, b)  calloc((size_t)(a), (size_t)(b))
   #define MALLOC(a)     malloc((size_t)(a))
   #define FREE(a)       free(a)
+  #define REALLOC(a, b) realloc(a, (size_t)(b))
 #endif
 
 #if HAVE_XPM
@@ -7009,6 +7011,8 @@ to be executed when a protocol message is received from MWM"
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg6) && (XEN_REQUIRED_ARGS(arg6) == 3), arg6, 6, "XmSetProtocolHooks", "(XtCallbackProc widget data callb)");
   descr1 = C_TO_XEN_XM_ProtocolHook(arg4, arg5, arg2, arg3);
   descr2 = C_TO_XEN_XM_ProtocolHook(arg6, arg7, arg2, arg3);
+  xm_protect(descr1);
+  xm_protect(descr2);
   XmSetProtocolHooks(XEN_TO_C_Widget(arg1), XEN_TO_C_Atom(arg2), XEN_TO_C_Atom(arg3),
 		     gxm_ProtocolProc, (XtPointer)descr1,
 		     gxm_ProtocolProc, (XtPointer)descr2);
@@ -7082,6 +7086,7 @@ XtPointer closure) adds client callbacks for a protocol"
   XEN_ASSERT_TYPE(XEN_Atom_P(arg3), arg3, 3, "XmAddProtocolCallback", "Atom");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 3), arg4, 4, "XmAddProtocolCallback", "(XtCallbackProc widget data callb)");
   descr = C_TO_XEN_XM_ProtocolProc(arg4, arg5, arg2, arg3);
+  xm_protect(descr);
   XmAddProtocolCallback(XEN_TO_C_Widget(arg1), 
 			XEN_TO_C_Atom(arg2),
 			XEN_TO_C_Atom(arg3),
@@ -23702,6 +23707,9 @@ static void define_integers(void)
   DEFINE_INTEGER(MWM_DECOR_MENU);
   DEFINE_INTEGER(MWM_DECOR_MINIMIZE);
   DEFINE_INTEGER(MWM_DECOR_MAXIMIZE);
+#ifdef XmCR_WM_PROTOCOLS
+  DEFINE_INTEGER(XmCR_WM_PROTOCOLS);
+#endif
 #if MOTIF_2
 #ifdef INVALID
   DEFINE_INTEGER(INVALID);
@@ -24671,10 +24679,26 @@ static int xm_already_inited = 0;
       define_pointers();
       define_procedures();
       define_structs();
+#if HAVE_MOTIF
+      XEN_EVAL_C_STRING("(define (XmAddWMProtocols s p n) \
+                           (XmAddProtocols s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p n))");
+      XEN_EVAL_C_STRING("(define (XmRemoveWMProtocols s p n) \
+                           (XmRemoveProtocols s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p n))");
+      XEN_EVAL_C_STRING("(define (XmAddWMProtocolCallback s p call close) \
+                           (XmAddProtocolCallback s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p call close))");
+      XEN_EVAL_C_STRING("(define (XmRemoveWMProtocolCallback s p call close) \
+                           (XmRemoveProtocolCallback s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p call close))");
+      XEN_EVAL_C_STRING("(define (XmActivateWMProtocol s p) \
+                           (XmActivateProtocol s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p))");
+      XEN_EVAL_C_STRING("(define (XmDeactivateWMProtocol s p) \
+                           (XmDeactivateProtocol s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p))");
+      XEN_EVAL_C_STRING("(define (XmSetWMProtocolHooks s p preh prec posth postc) \
+                           (XmSetProtocolHooks s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p preh prec posth postc))");
+#endif
       XEN_DEFINE_PROCEDURE(S_add_resource, g_add_resource_w, 2, 0, 0, H_add_resource);
       XEN_YES_WE_HAVE("xm");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"30-Aug-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"9-Sep-02\")");
 #endif
       xm_already_inited = 1;
     }

@@ -41,7 +41,7 @@ static void file_print_ok_callback(Widget w, XtPointer context, XtPointer info)
     {
       if (ss->print_choice == PRINT_SND)
 	{
-	  plab = XmStringCreate(STR_Stop, XmFONTLIST_DEFAULT_TAG);
+	  plab = XmStringCreate("Stop", XmFONTLIST_DEFAULT_TAG);
 	  nsp = any_selected_sound(ss);
 	  mus_snprintf(print_string, PRINT_BUFFER_SIZE, "printing %s", nsp->short_filename);
 	  slab = XmStringCreate(print_string, XmFONTLIST_DEFAULT_TAG);
@@ -82,7 +82,7 @@ static void file_print_ok_callback(Widget w, XtPointer context, XtPointer info)
   printing = 0;
   if (ss->print_choice == PRINT_SND)
     {
-      plab = XmStringCreate(STR_Print, XmFONTLIST_DEFAULT_TAG);
+      plab = XmStringCreate("Print", XmFONTLIST_DEFAULT_TAG);
       mus_snprintf(print_string, PRINT_BUFFER_SIZE, "print %s", nsp->short_filename);
       slab = XmStringCreate(print_string, XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(file_print_dialog, 
@@ -112,16 +112,16 @@ void file_print_callback(Widget w, XtPointer context, XtPointer info)
       mus_snprintf(print_string, PRINT_BUFFER_SIZE, "print %s", nsp->short_filename);
       xmstr4 = XmStringCreate(print_string, XmFONTLIST_DEFAULT_TAG);
     }
-  else xmstr4 = XmStringCreate(STR_print_env, XmFONTLIST_DEFAULT_TAG);
+  else xmstr4 = XmStringCreate("print env", XmFONTLIST_DEFAULT_TAG);
 
   if (!file_print_dialog)
     {
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-      xmstr1 = XmStringCreate(STR_Print, XmFONTLIST_DEFAULT_TAG);  /* "ok" here is confusing -- might mean, ok I'm done */
-      xmstr2 = XmStringCreate(STR_Help, XmFONTLIST_DEFAULT_TAG);
-      xmstr3 = XmStringCreate(STR_Dismiss, XmFONTLIST_DEFAULT_TAG);
-      titlestr = XmStringCreate(STR_Print, XmFONTLIST_DEFAULT_TAG);
+      xmstr1 = XmStringCreate("Print", XmFONTLIST_DEFAULT_TAG);  /* "ok" here is confusing -- might mean, ok I'm done */
+      xmstr2 = XmStringCreate("Help", XmFONTLIST_DEFAULT_TAG);
+      xmstr3 = XmStringCreate("Dismiss", XmFONTLIST_DEFAULT_TAG);
+      titlestr = XmStringCreate("Print", XmFONTLIST_DEFAULT_TAG);
 
       XtSetArg(args[n], XmNmessageString, xmstr4); n++;
       XtSetArg(args[n], XmNokLabelString, xmstr1); n++;
@@ -131,7 +131,7 @@ void file_print_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
-      file_print_dialog = XmCreateMessageDialog(w, STR_eps_file_p, args, n);
+      file_print_dialog = XmCreateMessageDialog(w, "eps file:", args, n);
 
       XmStringFree(xmstr1);
       XmStringFree(xmstr2);
@@ -150,7 +150,7 @@ void file_print_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-      dl = XtCreateManagedWidget(STR_eps_file_p, xmLabelWidgetClass, rc, args, n);
+      dl = XtCreateManagedWidget("eps file:", xmLabelWidgetClass, rc, args, n);
 
       n = 0;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
@@ -167,7 +167,7 @@ void file_print_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, file_print_name); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-      file_print_eps_or_lpr = make_togglebutton_widget(STR_direct_to_printer, rc, args, n);
+      file_print_eps_or_lpr = make_togglebutton_widget("direct to printer", rc, args, n);
 
       XtManageChild(file_print_dialog);
 

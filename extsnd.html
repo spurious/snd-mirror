@@ -128,6 +128,7 @@ various examples of and extensions to Snd can be found in the contrib directory,
 <table border=8 bordercolor="lightsteelblue">
 <tr><td width=140><a href="sndscm.html#autosavedoc">autosave.scm</a></td><td>auto-save (edit backup) support</td></tr>
 <tr><td><a href="sndscm.html#belldoc">bell.scm</a></td>      <td>the fm-bell from CLM</td></tr>
+<tr><td><a href="sndscm.html#bessdoc">bess.scm</a></td><td>FM demo (from bess.cl in CLM)</td></tr>
 <tr><td><a href="sndscm.html#birddoc">bird.scm, bird.rb</a></td><td>various North-American birds (from bird.clm)</td></tr>
 <tr><td><a href="sndscm.html#drawdoc">draw.scm</a></td>      <td>graphics additions</td></tr>
 <tr><td><a href="sndscm.html#dspdoc">dsp.scm</a></td>        <td>various DSP-related procedures</td></tr>
@@ -2465,14 +2466,14 @@ See play.scm and rtio.scm for example code. The most important Sndlib functions 
 <!-- -->    <em class=listener>"18-Oct 06:56 PDT"</em>
 <!-- --></pre></td></tr>
 <!-- -->
-<!-- set-oss-buffers -->
-<!-- --><tr><td valign=top><span class=defbox><code><em class=def><a name="setossbuffers">set-oss-buffers</a></em> (num size)</code></span></td>
+<!-- mus-audio-set-oss-buffers -->
+<!-- --><tr><td valign=top><span class=defbox><code><em class=def><a name="setossbuffers">mus-audio-set-oss-buffers</a></em> (num size)</code></span></td>
 <!-- --><td>in Linux (OSS), this sets the number and size of the OSS "fragments".
 <!-- -->The default (as of 21-May-01) is to accept whatever OSS chooses: I believe this is normally
-<!-- -->equivalent to <code>(set-oss-buffers 16 12)</code>.  This default makes the control panel controls very sluggish.  
-<!-- -->Snd used to call <code>(set-oss-buffers 4 12)</code> as its default, 
+<!-- -->equivalent to <code>(mus-audio-set-oss-buffers 16 12)</code>.  This default makes the control panel controls very sluggish.  
+<!-- -->Snd used to call <code>(mus-audio-set-oss-buffers 4 12)</code> as its default, 
 <!-- -->but this seems to cause trouble for a variety of new sound cards.
-<!-- -->My initialization file includes <code>(set-oss-buffers 2 12)</code>.</td></tr>
+<!-- -->My initialization file includes <code>(mus-audio-set-oss-buffers 2 12)</code>.</td></tr>
 <!-- -->
 <!-- --></table>
 
@@ -3501,7 +3502,23 @@ Most of the region number arguments default to the current region (the first in 
 
 <p>The selected portion can be set, independent of any region, by setting selection-position and selection-frames.
 See make-selection in extensions.scm.
+It's easy to extend the notion of a selection to an arbitrary list of sound portions:
 </p>
+<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(define (make-section . members)
+  ;; each member is '(beg dur snd chn)
+  (append (list 'Section) members))
+
+(define (section-for-each func section)
+  ;; call func on each member of the section
+  (as-one-edit (lambda () (for-each func (cdr section)))))
+
+;; an example that scales each member of the section by .5
+(section-for-each 
+ (lambda (sect)
+   (apply scale-channel (append (list .5) sect)))
+ (make-section (list 0 10000 0 0) (list 30000 10000 0 0)))
+</pre></td></tr></table>
 
 
 <br>

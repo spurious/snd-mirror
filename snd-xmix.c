@@ -474,10 +474,10 @@ Widget make_mix_panel(snd_state *ss)
   char amplab[LABEL_BUFFER_SIZE];
   if (mix_panel == NULL)
     {
-      xdismiss = XmStringCreate(STR_Dismiss, XmFONTLIST_DEFAULT_TAG);
+      xdismiss = XmStringCreate("Dismiss", XmFONTLIST_DEFAULT_TAG);
       xapply = XmStringCreate("Apply Env", XmFONTLIST_DEFAULT_TAG);
-      xhelp = XmStringCreate(STR_Help, XmFONTLIST_DEFAULT_TAG);
-      xtitle = XmStringCreate(STR_Mix_Panel, XmFONTLIST_DEFAULT_TAG);
+      xhelp = XmStringCreate("Help", XmFONTLIST_DEFAULT_TAG);
+      xtitle = XmStringCreate("Mix Panel", XmFONTLIST_DEFAULT_TAG);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -489,7 +489,7 @@ Widget make_mix_panel(snd_state *ss)
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       XtSetArg(args[n], XmNtransient, FALSE); n++;
-      mix_panel = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Mix_Panel, args, n);
+      mix_panel = XmCreateTemplateDialog(MAIN_SHELL(ss), "Mix Panel", args, n);
 
       XtAddCallback(mix_panel, XmNokCallback, dismiss_mix_panel_callback, ss);
       XtAddCallback(mix_panel, XmNcancelCallback, apply_mix_panel_callback, ss);
@@ -574,7 +574,7 @@ Widget make_mix_panel(snd_state *ss)
 
       /* SRATE */
       n = 0;
-      s1 = XmStringCreate(STR_speed, XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreate("speed:", XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;

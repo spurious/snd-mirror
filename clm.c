@@ -107,7 +107,7 @@ Float mus_sin(Float phase)
   index = (int)mag_phase;
   frac = mag_phase - index;
   index = index % SINE_SIZE;
-  if (frac == 0.0)
+  if (frac < 0.0001)
     return(sine_table[index]);
   else return(sine_table[index] + 
 	      (frac * (sine_table[index + 1] - sine_table[index])));

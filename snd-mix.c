@@ -50,14 +50,14 @@ chan_info *mix_channel_from_id(int mix_id)
 }
 
 
-void color_one_mix_from_id(int mix_id, COLOR_TYPE color)
+static void color_one_mix_from_id(int mix_id, COLOR_TYPE color)
 {
   mix_info *md;
   md = md_from_id(mix_id);
   if (md) md->wg->color = color;
 }
 
-COLOR_TYPE mix_to_color_from_id(int mix_id)
+static COLOR_TYPE mix_to_color_from_id(int mix_id)
 {
   mix_info *md;
   snd_state *ss;
@@ -4383,6 +4383,57 @@ finds the mix in snd's channel chn at samp, returning the mix id; returns #f if 
   return(C_TO_XEN_INT(id));
 }
 
+static XEN g_set_mix_color (XEN arg1, XEN arg2)
+{
+  XEN color; 
+  XEN mix_id = XEN_UNDEFINED;
+  snd_state *ss;
+  ss = get_global_state();
+  if (XEN_NOT_BOUND_P(arg2))
+    color = arg1;
+  else
+    {
+      color = arg2;
+      mix_id = arg1;
+    }
+  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, "set-" S_mix_color, "a color"); 
+  if (XEN_INTEGER_P(mix_id))
+    color_one_mix_from_id(XEN_TO_SMALL_C_INT(mix_id), XEN_UNWRAP_PIXEL(color));
+  else set_mix_color(ss, XEN_UNWRAP_PIXEL(color));
+  for_each_chan(ss, update_graph);
+  return(color);
+}
+
+static XEN g_mix_color(XEN mix_id) 
+{
+  #define H_mix_color "(" S_mix_color ") -> color of mix consoles"
+  snd_state *ss;
+  ss = get_global_state();
+  if (XEN_INTEGER_P(mix_id))
+    return(XEN_WRAP_PIXEL(mix_to_color_from_id(XEN_TO_SMALL_C_INT(mix_id))));
+  return(XEN_WRAP_PIXEL((ss->sgx)->mix_color));
+}
+
+static XEN g_set_selected_mix_color (XEN color) 
+{
+  snd_state *ss;
+  ss = get_global_state();
+  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, "set-" S_selected_mix_color, "a color"); 
+  set_selected_mix_color(ss, XEN_UNWRAP_PIXEL(color));
+  for_each_chan(ss, update_graph);
+  return(color);
+}
+
+static XEN g_selected_mix_color(void) 
+{
+  #define H_selected_mix_color "(" S_selected_mix_color ") -> color of the currently selected mix"
+  snd_state *ss;
+  ss = get_global_state();
+  return(XEN_WRAP_PIXEL((ss->sgx)->selected_mix_color));
+}
+
+
+
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_1(g_make_mix_sample_reader_w, g_make_mix_sample_reader)
 XEN_NARGIFY_1(g_read_mix_sample_w, g_read_mix_sample)
@@ -4435,6 +4486,10 @@ XEN_ARGIFY_3(g_forward_mix_w, g_forward_mix)
 XEN_ARGIFY_3(g_backward_mix_w, g_backward_mix)
 XEN_ARGIFY_6(g_mix_w, g_mix)
 XEN_ARGIFY_6(mix_vct_w, mix_vct)
+XEN_ARGIFY_1(g_mix_color_w, g_mix_color)
+XEN_ARGIFY_2(g_set_mix_color_w, g_set_mix_color)
+XEN_NARGIFY_0(g_selected_mix_color_w, g_selected_mix_color)
+XEN_ARGIFY_1(g_set_selected_mix_color_w, g_set_selected_mix_color)
 #else
 #define g_make_mix_sample_reader_w g_make_mix_sample_reader
 #define g_next_mix_sample_w g_next_mix_sample
@@ -4487,6 +4542,10 @@ XEN_ARGIFY_6(mix_vct_w, mix_vct)
 #define g_backward_mix_w g_backward_mix
 #define g_mix_w g_mix
 #define mix_vct_w mix_vct
+#define g_mix_color_w g_mix_color
+#define g_set_mix_color_w g_set_mix_color
+#define g_selected_mix_color_w g_selected_mix_color
+#define g_set_selected_mix_color_w g_set_selected_mix_color
 #endif
 
 void g_init_mix(void)
@@ -4545,6 +4604,12 @@ void g_init_mix(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_tag_height, g_mix_tag_height_w, H_mix_tag_height,
 				   "set-" S_mix_tag_height, g_set_mix_tag_height_w, 0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_color, g_mix_color_w, H_mix_color,
+				   "set-" S_mix_color, g_set_mix_color_w,  0, 1, 1, 1);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selected_mix_color, g_selected_mix_color_w, H_selected_mix_color,
+				   "set-" S_selected_mix_color, g_set_selected_mix_color_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_amp, g_mix_amp_w, H_mix_amp, "set-" S_mix_amp, g_set_mix_amp_w, 0, 2, 2, 1);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_amp_env, g_mix_amp_env_w, H_mix_amp_env, "set-" S_mix_amp_env, g_set_mix_amp_env_w, 0, 2, 2, 1);

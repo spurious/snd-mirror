@@ -1113,7 +1113,7 @@ static void internal_trigger_set(Float val)
   make_trigger_label(val);
   if (!(rp->recording)) /* else wait for current session to end (via click) */
     {
-      s1 = XmStringCreate((char *)((rp->triggering) ? STR_Triggered_Record : STR_Record), XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreate((char *)((rp->triggering) ? "Triggered Record" : "Record"), XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(record_button, XmNlabelString, s1, NULL);
       XmStringFree(s1);
     }
@@ -1382,7 +1382,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   /* XtSetArg(args[n], XmNheight, 34); n++; */
   XtSetArg(args[n], XmNmarginTop, 8); n++;
   XtSetArg(args[n], XmNmarginBottom, 8); n++;
-  file_label = XtCreateManagedWidget(STR_file_p, xmLabelWidgetClass, ff_form, args, n);
+  file_label = XtCreateManagedWidget("file:", xmLabelWidgetClass, ff_form, args, n);
   XtAddCallback(file_label, XmNhelpCallback, file_label_help_callback, ss);
 
   n = 0;
@@ -1456,7 +1456,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNmarginTop, 8); n++;
   XtSetArg(args[n], XmNmarginBottom, 8); n++;
-  duration_label = XtCreateManagedWidget(STR_duration_p, xmLabelWidgetClass, file_form, args, n);
+  duration_label = XtCreateManagedWidget("duration:", xmLabelWidgetClass, file_form, args, n);
   XtAddCallback(duration_label, XmNhelpCallback, duration_label_help_callback, ss);
 
   n = 0;
@@ -1593,7 +1593,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
       XtAddCallback(device_buttons[i], XmNvalueChangedCallback, device_button_callback, (XtPointer)all_panes[i]);
       XmToggleButtonSetState(device_buttons[i], TRUE, FALSE); 
     }
-  autoload_file = make_togglebutton_widget(STR_Autoload_Recording, button_holder, args, init_n);
+  autoload_file = make_togglebutton_widget("Autoload Recording", button_holder, args, init_n);
   device_buttons[ndevs] = autoload_file;
   /* we assume this is last in the device_buttons list in sensitize_control_buttons */
   rp->autoload_button = ndevs;
@@ -1601,7 +1601,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtAddCallback(autoload_file, XmNvalueChangedCallback, autoload_file_callback, ss);
   XmToggleButtonSetState(autoload_file, rp->autoload, FALSE); 
 #if (HAVE_OSS || HAVE_ALSA)
-  save_audio_settings = make_togglebutton_widget(STR_Save_Audio_Settings, button_holder, args, n);
+  save_audio_settings = make_togglebutton_widget("Save Audio Settings", button_holder, args, n);
   XtAddCallback(save_audio_settings, XmNvalueChangedCallback, save_audio_settings_callback, NULL);
   XtAddCallback(save_audio_settings, XmNhelpCallback, save_audio_settings_help_callback, ss);
 #endif
@@ -1634,7 +1634,7 @@ void unlock_recording_audio(void)
       set_sensitive(record_button, TRUE);
       set_sensitive(reset_button, TRUE);
       XmProcessTraversal(reset_button, XmTRAVERSE_CURRENT);
-      s1 = XmStringCreate(STR_Restart, XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreate("Restart", XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(reset_button, XmNlabelString, s1, NULL);
       XmStringFree(s1);
     }
@@ -2893,8 +2893,8 @@ static void make_reset_button(snd_state *ss, PANE *p, Float meter_size, Widget b
   Arg args[32];
 
   if (meter_size < SMALL_FONT_CUTOFF)
-    labelstr = XmStringCreate(STR_Reset, "small_font");
-  else labelstr = XmStringCreate(STR_Reset, XmFONTLIST_DEFAULT_TAG);
+    labelstr = XmStringCreate("Reset", "small_font");
+  else labelstr = XmStringCreate("Reset", XmFONTLIST_DEFAULT_TAG);
   n = 0;
   if (!(ss->using_schemes)) 
     {
@@ -3046,10 +3046,10 @@ static void reset_record_callback(Widget w, XtPointer context, XtPointer info)
       rp->triggered = (!rp->triggering);
       sensitize_control_buttons();
       XmChangeColor(record_button, (Pixel)(ss->sgx)->basic_color);
-      s1 = XmStringCreate(STR_Reset, XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreate("Reset", XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(reset_button, XmNlabelString, s1, NULL);
       XmStringFree(s1);
-      s1 = XmStringCreate((char *)((rp->triggering) ? STR_Triggered_Record : STR_Record), XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreate((char *)((rp->triggering) ? "Triggered Record" : "Record"), XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(record_button, XmNlabelString, s1, NULL);
       XmStringFree(s1);
       if (mus_file_close(rp->output_file_descriptor) != 0)
@@ -3078,7 +3078,7 @@ static void reset_record_callback(Widget w, XtPointer context, XtPointer info)
       if (!(rp->taking_input))            /* restart */
 	{
 	  fire_up_recorder(ss);
-	  s1 = XmStringCreate(STR_Reset, XmFONTLIST_DEFAULT_TAG);
+	  s1 = XmStringCreate("Reset", XmFONTLIST_DEFAULT_TAG);
 	  XtVaSetValues(reset_button, XmNlabelString, s1, NULL);
 	  XmStringFree(s1);
 	}
@@ -3112,10 +3112,10 @@ void finish_recording(snd_state *ss, recorder_info *rp)
   Float duration;
   sensitize_control_buttons();
   XmChangeColor(record_button, (Pixel)(ss->sgx)->basic_color);
-  s1 = XmStringCreate(STR_Reset, XmFONTLIST_DEFAULT_TAG);
+  s1 = XmStringCreate("Reset", XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(reset_button, XmNlabelString, s1, NULL);
   XmStringFree(s1);
-  s2 = XmStringCreate((char *)((rp->triggering) ? STR_Triggered_Record : STR_Record), XmFONTLIST_DEFAULT_TAG);
+  s2 = XmStringCreate((char *)((rp->triggering) ? "Triggered Record" : "Record"), XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(record_button, XmNlabelString, s2, NULL);
   XmStringFree(s2);
   if (mus_file_close(rp->output_file_descriptor) != 0)
@@ -3227,10 +3227,10 @@ static void record_button_callback(Widget w, XtPointer context, XtPointer info)
 	      return;
 	    }
 	  XmChangeColor(w, (Pixel)(ss->sgx)->red);
-	  s1 = XmStringCreate(STR_Cancel, XmFONTLIST_DEFAULT_TAG);
+	  s1 = XmStringCreate("Cancel", XmFONTLIST_DEFAULT_TAG);
 	  XtVaSetValues(reset_button, XmNlabelString, s1, NULL);
 	  XmStringFree(s1);
-	  s2 = XmStringCreate(STR_Done, XmFONTLIST_DEFAULT_TAG);
+	  s2 = XmStringCreate("Done", XmFONTLIST_DEFAULT_TAG);
 	  XtVaSetValues(record_button, XmNlabelString, s2, NULL);
 	  XmStringFree(s2);
 
@@ -3323,10 +3323,10 @@ void snd_record_file(snd_state *ss)
 	  XmFontListEntryCreate("small_font", XmFONT_IS_FONT, (XtPointer)PEAK_NUMBERS_FONT(ss));
 	}
 #endif
-      xdismiss = XmStringCreate(STR_Dismiss, XmFONTLIST_DEFAULT_TAG);
-      xhelp = XmStringCreate(STR_Help, XmFONTLIST_DEFAULT_TAG);
-      xreset = XmStringCreate(STR_Reset, XmFONTLIST_DEFAULT_TAG);
-      titlestr = XmStringCreate(STR_Record, XmFONTLIST_DEFAULT_TAG);
+      xdismiss = XmStringCreate("Dismiss", XmFONTLIST_DEFAULT_TAG);
+      xhelp = XmStringCreate("Help", XmFONTLIST_DEFAULT_TAG);
+      xreset = XmStringCreate("Reset", XmFONTLIST_DEFAULT_TAG);
+      titlestr = XmStringCreate("Record", XmFONTLIST_DEFAULT_TAG);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -3339,7 +3339,7 @@ void snd_record_file(snd_state *ss)
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_ANY); n++;
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       XtSetArg(args[n], XmNtransient, FALSE); n++;
-      recorder = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Record, args, n);
+      recorder = XmCreateTemplateDialog(MAIN_SHELL(ss), "Record", args, n);
 
       XtAddCallback(recorder, XmNcancelCallback, reset_record_callback, ss);
       XtAddCallback(recorder, XmNhelpCallback, help_record_callback, ss);

@@ -894,13 +894,13 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  XtSetArg(args[n], XM_FONT_RESOURCE, BUTTON_FONT(ss)); n++;
 	  XtSetArg(args[n], XmNspacing, 1); n++;
 	  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, sx->pushed_button_color); n++;}
-	  cw[W_f] = make_togglebutton_widget(STR_f, cw[W_wf_buttons], args, n);
+	  cw[W_f] = make_togglebutton_widget("f", cw[W_wf_buttons], args, n);
 	  XtAddCallback(cw[W_f], XmNvalueChangedCallback, f_toggle_callback, cp);
 	  XtAddCallback(cw[W_f], XmNhelpCallback, f_button_help_callback, ss);
 	  XtAddEventHandler(cw[W_f], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 	  
 	  XtSetArg(args[n], XmNset, TRUE); n++;
-	  cw[W_w] = make_togglebutton_widget(STR_w, cw[W_wf_buttons], args, n);
+	  cw[W_w] = make_togglebutton_widget("w", cw[W_wf_buttons], args, n);
 	  XtAddCallback(cw[W_w], XmNvalueChangedCallback, w_toggle_callback, cp);
 	  XtAddCallback(cw[W_w], XmNhelpCallback, w_button_help_callback, ss);
 	  XtAddEventHandler(cw[W_w], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);

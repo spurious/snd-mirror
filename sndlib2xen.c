@@ -281,6 +281,23 @@ static XEN g_audio_outputs(XEN speakers, XEN headphones, XEN line_out)
   return(XEN_FALSE);
 }
 
+static XEN g_mus_audio_set_oss_buffers(XEN num, XEN size)
+{
+  #define H_mus_audio_set_oss_buffers "(" S_mus_audio_set_oss_buffers " num size) sets Linux OSS 'fragment' number and size. \
+If Snd's controls seem sluggish, try (mus-audio-set-oss-buffers 4 12) or even (mus-audio-set-oss-buffers 2 12). \
+This reduces the on-card buffering, but may introduce clicks."
+
+#if (HAVE_OSS || HAVE_ALSA)
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(num), num, XEN_ARG_1, S_mus_audio_set_oss_buffers, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(size), size, XEN_ARG_2, S_mus_audio_set_oss_buffers, "an integer");
+  mus_audio_set_oss_buffers(XEN_TO_C_INT(num),
+			    XEN_TO_C_INT(size));
+#endif
+  return(XEN_FALSE);
+}
+
+
+
 static XEN g_sound_maxamp_exists(XEN file)
 {
   #define H_mus_sound_maxamp_exists "(" S_mus_sound_maxamp_exists " filename) -> #t if max amps available for sound"
@@ -1114,6 +1131,14 @@ header data table to the file given or stdout if none"
   return(res);
 }
 
+static XEN g_mus_error_to_string(XEN err)
+{
+  #define H_mus_error_to_string "(" S_mus_error_to_string " err) -> string description of err"
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(err), err, XEN_ONLY_ARG, S_mus_error_to_string, "an integer");
+  return(C_TO_XEN_STRING((char *)mus_error_to_string(XEN_TO_C_INT(err))));
+}
+
+
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_1(sound_data_length_w, sound_data_length)
 XEN_NARGIFY_1(sound_data_chans_w, sound_data_chans)
@@ -1178,6 +1203,8 @@ XEN_NARGIFY_5(g_open_audio_input_w, g_open_audio_input)
 XEN_ARGIFY_1(g_mus_sound_report_cache_w, g_mus_sound_report_cache)
 XEN_NARGIFY_1(g_sound_forget_w, g_sound_forget)
 XEN_NARGIFY_0(g_sound_prune_w, g_sound_prune)
+XEN_NARGIFY_1(g_mus_error_to_string_w, g_mus_error_to_string)
+XEN_NARGIFY_2(g_mus_audio_set_oss_buffers_w, g_mus_audio_set_oss_buffers)
 #else
 #define sound_data_length_w sound_data_length
 #define sound_data_chans_w sound_data_chans
@@ -1242,6 +1269,8 @@ XEN_NARGIFY_0(g_sound_prune_w, g_sound_prune)
 #define g_mus_sound_report_cache_w g_mus_sound_report_cache
 #define g_sound_forget_w g_sound_forget
 #define g_sound_prune_w g_sound_prune
+#define g_mus_error_to_string_w g_mus_error_to_string
+#define g_mus_audio_set_oss_buffers_w g_mus_audio_set_oss_buffers
 #endif
 
 #if HAVE_RUBY
@@ -1505,6 +1534,8 @@ void mus_sndlib2xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_mus_audio_open_output,    g_open_audio_output_w, 5, 0, 0,     H_mus_audio_open_output);
   XEN_DEFINE_PROCEDURE(S_mus_audio_open_input,     g_open_audio_input_w, 5, 0, 0,      H_mus_audio_open_input);
   XEN_DEFINE_PROCEDURE(S_mus_sound_report_cache,   g_mus_sound_report_cache_w, 0, 1, 0,H_mus_sound_report_cache);
+  XEN_DEFINE_PROCEDURE(S_mus_error_to_string,      g_mus_error_to_string_w, 1, 0, 0,   H_mus_error_to_string);
+  XEN_DEFINE_PROCEDURE(S_mus_audio_set_oss_buffers, g_mus_audio_set_oss_buffers_w, 2, 0, 0, H_mus_audio_set_oss_buffers);
 
 #if HAVE_GUILE
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sound_data_ref, sound_data_ref_w, H_sound_data_ref,
@@ -1521,141 +1552,144 @@ void mus_sndlib2xen_initialize(void)
   XEN_YES_WE_HAVE("sndlib");
 
 #if WITH_MODULES
-  scm_c_export(S_mus_out_format,
-	       S_mus_next,
+  scm_c_export(
+	       S_make_sound_data,
 	       S_mus_aifc,
-	       S_mus_riff,
-	       S_mus_nist,
-	       S_mus_raw,
-	       S_mus_ircam,
 	       S_mus_aiff,
-	       S_mus_bicsf,
-	       S_mus_voc,
-	       S_mus_svx,
-	       S_mus_soundfont,
-	       S_mus_bshort,
-	       S_mus_lshort,
-	       S_mus_mulaw,
 	       S_mus_alaw,
-	       S_mus_byte,
-	       S_mus_ubyte,
-	       S_mus_bfloat,
-	       S_mus_lfloat,
-	       S_mus_bint,
-	       S_mus_lint,
-	       S_mus_bintn,
-	       S_mus_lintn,
-	       S_mus_b24int,
-	       S_mus_l24int,
-	       S_mus_bdouble,
-	       S_mus_ldouble,
-	       S_mus_ubshort,
-	       S_mus_ulshort,
-	       S_mus_bdouble_unscaled,
-	       S_mus_ldouble_unscaled,
-	       S_mus_bfloat_unscaled,
-	       S_mus_lfloat_unscaled,
-	       S_mus_audio_default,
-	       S_mus_audio_duplex_default,
-	       S_mus_audio_line_out,
-	       S_mus_audio_line_in,
-	       S_mus_audio_microphone,
-	       S_mus_audio_speakers,
-	       S_mus_audio_dac_out,
 	       S_mus_audio_adat_in,
+	       S_mus_audio_adat_out,
 	       S_mus_audio_aes_in,
+	       S_mus_audio_aes_out,
+	       S_mus_audio_amp,
+	       S_mus_audio_aux_input,
+	       S_mus_audio_aux_output,
+	       S_mus_audio_bass,
+	       S_mus_audio_cd,
+	       S_mus_audio_channel,
+	       S_mus_audio_close,
+	       S_mus_audio_dac_filter,
+	       S_mus_audio_dac_out,
+	       S_mus_audio_default,
 	       S_mus_audio_digital_in,
 	       S_mus_audio_digital_out,
-	       S_mus_audio_adat_out,
-	       S_mus_audio_aes_out,
-	       S_mus_audio_dac_filter,
-	       S_mus_audio_mixer,
+	       S_mus_audio_direction,
+	       S_mus_audio_duplex_default,
+	       S_mus_audio_format,
+	       S_mus_audio_igain,
+	       S_mus_audio_imix,
+	       S_mus_audio_line,
 	       S_mus_audio_line1,
 	       S_mus_audio_line2,
 	       S_mus_audio_line3,
-	       S_mus_audio_aux_input,
-	       S_mus_audio_cd,
-	       S_mus_audio_aux_output,
-	       S_mus_audio_spdif_in,
-	       S_mus_audio_spdif_out,
-	       S_mus_audio_direction,
-	       S_mus_audio_samples_per_channel,
-	       S_mus_audio_amp,
-	       S_mus_audio_srate,
-	       S_mus_audio_channel,
-	       S_mus_audio_format,
-	       S_mus_audio_port,
-	       S_mus_audio_imix,
-	       S_mus_audio_igain,
-	       S_mus_audio_reclev,
-	       S_mus_audio_pcm,
-	       S_mus_audio_pcm2,
-	       S_mus_audio_ogain,
-	       S_mus_audio_line,
-	       S_mus_audio_synth,
-	       S_mus_audio_bass,
-	       S_mus_audio_treble,
-	       S_mus_sound_samples,
-	       S_mus_sound_data_location,
-	       S_mus_sound_chans,
-	       S_mus_sound_srate,
-	       S_mus_sound_header_type,
-	       S_mus_sound_data_format,
-	       S_sound_data_length,
-	       S_sound_data_chans,
-	       S_make_sound_data,
-	       S_sound_data_p,
-	       S_sound_data_maxamp,
-	       S_sound_data2vct,
-	       S_vct2sound_data,
-	       S_mus_sound_frames,
-	       S_mus_sound_duration,
-	       S_mus_sound_datum_size,
-	       S_mus_sound_length,
-	       S_mus_sound_type_specifier,
-	       S_mus_header_type_name,
-	       S_mus_data_format_name,
-	       S_mus_sound_comment,
-	       S_mus_sound_write_date,
-	       S_mus_data_format_bytes_per_sample,
-	       S_mus_sound_loop_info,
-	       S_mus_sound_maxamp,
-	       S_mus_sound_set_maxamp,
-	       S_mus_sound_maxamp_exists,
-	       S_mus_sound_forget,
-	       S_mus_sound_prune,
-	       S_mus_audio_report,
-	       S_mus_audio_sun_outputs,
-	       S_mus_sound_open_input,
-	       S_mus_sound_close_input,
-	       S_mus_audio_close,
-	       S_mus_audio_save,
-	       S_mus_audio_restore,
-	       S_mus_audio_systems,
+	       S_mus_audio_line_in,
+	       S_mus_audio_line_out,
+	       S_mus_audio_microphone,
+	       S_mus_audio_mixer,
 	       S_mus_audio_mixer_read,
 	       S_mus_audio_mixer_write,
-	       S_mus_file_set_data_clipped,
-	       S_mus_file_prescaler,
-	       S_mus_file_set_prescaler,
-	       S_mus_expand_filename,
-	       S_mus_audio_write,
-	       S_mus_audio_read,
-	       S_mus_sound_open_output,
-	       S_mus_sound_reopen_output,
-	       S_mus_sound_close_output,
-	       S_mus_sound_read,
-	       S_mus_sound_write,
-	       S_mus_sound_seek,
-	       S_mus_sound_seek_frame,
-	       S_mus_audio_open_output,
+	       S_mus_audio_ogain,
 	       S_mus_audio_open_input,
-	       S_mus_sound_report_cache,
-	       S_sound_data_ref,
-	       S_sound_data_ref,
-	       S_sound_data_setB,
+	       S_mus_audio_open_output,
+	       S_mus_audio_pcm,
+	       S_mus_audio_pcm2,
+	       S_mus_audio_port,
+	       S_mus_audio_read,
+	       S_mus_audio_reclev,
 #if HAVE_OSS
 	       S_mus_audio_reinitialize,
 #endif
+	       S_mus_audio_report,
+	       S_mus_audio_restore,
+	       S_mus_audio_samples_per_channel,
+	       S_mus_audio_save,
+	       S_mus_audio_set_oss_buffers,
+	       S_mus_audio_spdif_in,
+	       S_mus_audio_spdif_out,
+	       S_mus_audio_speakers,
+	       S_mus_audio_srate,
+	       S_mus_audio_sun_outputs,
+	       S_mus_audio_synth,
+	       S_mus_audio_systems,
+	       S_mus_audio_treble,
+	       S_mus_audio_write,
+	       S_mus_b24int,
+	       S_mus_bdouble,
+	       S_mus_bdouble_unscaled,
+	       S_mus_bfloat,
+	       S_mus_bfloat_unscaled,
+	       S_mus_bicsf,
+	       S_mus_bint,
+	       S_mus_bintn,
+	       S_mus_bshort,
+	       S_mus_byte,
+	       S_mus_data_format_bytes_per_sample,
+	       S_mus_data_format_name,
+	       S_mus_error_to_string,
+	       S_mus_expand_filename,
+	       S_mus_file_prescaler,
+	       S_mus_file_set_data_clipped,
+	       S_mus_file_set_prescaler,
+	       S_mus_header_type_name,
+	       S_mus_ircam,
+	       S_mus_l24int,
+	       S_mus_ldouble,
+	       S_mus_ldouble_unscaled,
+	       S_mus_lfloat,
+	       S_mus_lfloat_unscaled,
+	       S_mus_lint,
+	       S_mus_lintn,
+	       S_mus_lshort,
+	       S_mus_mulaw,
+	       S_mus_next,
+	       S_mus_nist,
+	       S_mus_out_format,
+	       S_mus_raw,
+	       S_mus_riff,
+	       S_mus_sound_chans,
+	       S_mus_sound_close_input,
+	       S_mus_sound_close_output,
+	       S_mus_sound_comment,
+	       S_mus_sound_data_format,
+	       S_mus_sound_data_location,
+	       S_mus_sound_datum_size,
+	       S_mus_sound_duration,
+	       S_mus_sound_forget,
+	       S_mus_sound_frames,
+	       S_mus_sound_header_type,
+	       S_mus_sound_length,
+	       S_mus_sound_loop_info,
+	       S_mus_sound_maxamp,
+	       S_mus_sound_maxamp_exists,
+	       S_mus_sound_open_input,
+	       S_mus_sound_open_output,
+	       S_mus_sound_prune,
+	       S_mus_sound_read,
+	       S_mus_sound_reopen_output,
+	       S_mus_sound_report_cache,
+	       S_mus_sound_samples,
+	       S_mus_sound_seek,
+	       S_mus_sound_seek_frame,
+	       S_mus_sound_set_maxamp,
+	       S_mus_sound_srate,
+	       S_mus_sound_type_specifier,
+	       S_mus_sound_write,
+	       S_mus_sound_write_date,
+	       S_mus_soundfont,
+	       S_mus_svx,
+	       S_mus_ubshort,
+	       S_mus_ubyte,
+	       S_mus_ulshort,
+	       S_mus_voc,
+	       S_sound_data2vct,
+	       S_sound_data_chans,
+	       S_sound_data_length,
+	       S_sound_data_maxamp,
+	       S_sound_data_p,
+	       S_sound_data_ref,
+	       S_sound_data_ref,
+	       S_sound_data_setB,
+	       S_vct2sound_data,
 	       NULL);
 #endif
 }

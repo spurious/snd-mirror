@@ -340,11 +340,11 @@ char *filename_completer(char *text)
 		    }
 	      }
 	  }
-#if defined(CLOSEDIR_VOID)
+#if CLOSEDIR_VOID
       closedir(dpos);
 #else
       if (closedir(dpos) != 0) 
-	snd_error("filename_completer: closedir %s failed!", dir_name);
+	snd_error("filename_completer: closedir %s failed (%s)!", dir_name, strerror(errno));
 #endif
     }
   if (dir_name) FREE(dir_name);
@@ -506,9 +506,10 @@ char *complete_listener_text(char *old_text, int end, int *try_completion, char 
 	{
 	  file_text = copy_string((char *)(old_text + i + 1));
 	  new_file = filename_completer(file_text);
-	  if (snd_strlen(new_file) > 0)
+	  len = snd_strlen(new_file);
+	  if (len > 0)
 	    {
-	      len = i + 2 + snd_strlen(new_file);
+	      len += i + 2;
 	      new_text = (char *)CALLOC(len, sizeof(char));
 	      strncpy(new_text, old_text, i + 1);
 	      strcat(new_text, new_file);

@@ -385,10 +385,10 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, int graphed)
   y1 = 1.0;
   switch (cp->x_axis_style)
     {
-    case X_AXIS_IN_BEATS:      label = STR_time_beats;   break;
-    case X_AXIS_IN_SAMPLES:    label = STR_time_samples; break;
-    case X_AXIS_AS_PERCENTAGE: label = STR_time_percent; break;
-    default:                   label = STR_time;         break;
+    case X_AXIS_IN_BEATS:      label = "time (beats)";   break;
+    case X_AXIS_IN_SAMPLES:    label = "time (samples)"; break;
+    case X_AXIS_AS_PERCENTAGE: label = "time (%)"; break;
+    default:                   label = "time";         break;
     }
   dur = (double)samples_per_channel / (double)(hdr->srate);
 
@@ -446,7 +446,7 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, int graphed)
   if (dur <= 0.0)
     {
       /* empty sound */
-      label = STR_no_data;
+      label = "(no data)";
       xmax = .001;
     }
   else
@@ -913,9 +913,9 @@ static void display_channel_id(chan_info *cp, int height, int chans)
 	    {
 	      if (cp->edit_ctr == 0)
 		mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, "[%s%d]", 
-			     STR_channel_id, (cp->chan + 1));                    /* cp chan numbers are 0 based to index sp->chans array */
+			     "chn", (cp->chan + 1));                    /* cp chan numbers are 0 based to index sp->chans array */
 	      else mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, "[%s%d: (%d)]", 
-				STR_channel_id, (cp->chan + 1), cp->edit_ctr);
+				"chn", (cp->chan + 1), cp->edit_ctr);
 	    }
 	  else mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, "[%d]", cp->edit_ctr);
 	}
@@ -925,9 +925,9 @@ static void display_channel_id(chan_info *cp, int height, int chans)
 	    {
 	      if (cp->edit_ctr == 0)
 		mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, "%s%d", 
-			     STR_channel_id, (cp->chan + 1));
+			     "chn", (cp->chan + 1));
 	      else mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, "%s%d:(%d)", 
-				STR_channel_id, (cp->chan + 1), cp->edit_ctr);
+				"chn", (cp->chan + 1), cp->edit_ctr);
 	    }
 	  else mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, "(%d)", cp->edit_ctr);
 	}
@@ -2221,7 +2221,7 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	  make_axis_info(cp,
 			 cp->axis->x0, cp->axis->x1,
 			 SND_SRATE(sp) * cp->spectro_start / 2.0, SND_SRATE(sp) * cp->spectro_cutoff / 2.0,
-			 STR_time,
+			 "time",
 			 cp->axis->x0, cp->axis->x1,
 			 SND_SRATE(sp) * cp->spectro_start / 2.0, SND_SRATE(sp) * cp->spectro_cutoff / 2.0,
 			 fap);
@@ -3689,6 +3689,12 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
 	}
     }
 }
+
+#if USE_MOTIF
+  #define BUTTON_2 Button2
+#else
+  #define BUTTON_2 2
+#endif
 
 void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, int button)
 {

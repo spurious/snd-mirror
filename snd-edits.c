@@ -201,8 +201,8 @@ static void reflect_sample_change_in_axis(chan_info *cp)
 	  ap->no_data = (samps == 0);
 	  if (ap->xlabel) FREE(ap->xlabel);
 	  if (samps == 0) 
-	    ap->xlabel = copy_string(STR_no_data); 
-	  else ap->xlabel = copy_string(STR_time);
+	    ap->xlabel = copy_string("(no data)"); 
+	  else ap->xlabel = copy_string("time");
 	}
       set_x_bounds(ap);
     }

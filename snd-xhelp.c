@@ -202,10 +202,10 @@ static void create_help_monolog(snd_state *ss)
   XmString forwardstr, backstr;
 #endif
 
-  titlestr = XmStringCreate(STR_Help, XmFONTLIST_DEFAULT_TAG);
+  titlestr = XmStringCreate("Help", XmFONTLIST_DEFAULT_TAG);
 #if HAVE_HTML
-  backstr = XmStringCreate(STR_Back, XmFONTLIST_DEFAULT_TAG);
-  forwardstr = XmStringCreate(STR_Forward, XmFONTLIST_DEFAULT_TAG);
+  backstr = XmStringCreate("Back", XmFONTLIST_DEFAULT_TAG);
+  forwardstr = XmStringCreate("Forward", XmFONTLIST_DEFAULT_TAG);
 #endif
 
   n = 0;
@@ -225,10 +225,10 @@ static void create_help_monolog(snd_state *ss)
   }
 #if HAVE_HTML
   for (i = 0; i < MAX_HTML_HISTORY; i++) anchors[i] = NULL;
-  back_button = XtCreateManagedWidget(STR_Back, xmPushButtonWidgetClass, help_dialog, args, n);
+  back_button = XtCreateManagedWidget("Back", xmPushButtonWidgetClass, help_dialog, args, n);
   XtAddCallback(back_button, XmNactivateCallback, back_anchor_callback, ss);
   XtSetSensitive(back_button, FALSE);
-  forward_button = XtCreateManagedWidget(STR_Forward, xmPushButtonWidgetClass, help_dialog, args, n);
+  forward_button = XtCreateManagedWidget("Forward", xmPushButtonWidgetClass, help_dialog, args, n);
   XtAddCallback(forward_button, XmNactivateCallback, forward_anchor_callback, ss);
   XtSetSensitive(forward_button, FALSE);
 #endif

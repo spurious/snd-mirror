@@ -331,7 +331,7 @@ void make_open_file_dialog(snd_state *ss, int read_only, int managed)
 {
   if (!open_dialog)
     {
-      open_dialog = make_file_dialog(ss, read_only, STR_File, FILE_OPEN_DIALOG,
+      open_dialog = make_file_dialog(ss, read_only, "File", FILE_OPEN_DIALOG,
 				     (GtkSignalFunc)file_open_dialog_ok,				     
 				     (GtkSignalFunc)file_open_dialog_delete,
 				     (GtkSignalFunc)file_open_dialog_dismiss);
@@ -368,7 +368,7 @@ void make_mix_file_dialog(snd_state *ss, int managed)
   {
   if (mix_dialog == NULL)
     {
-      mix_dialog = make_file_dialog(ss, FALSE, STR_mix_file_p, FILE_MIX_DIALOG,
+      mix_dialog = make_file_dialog(ss, FALSE, "mix file:", FILE_MIX_DIALOG,
 				    (GtkSignalFunc)file_mix_ok_callback,
 				    (GtkSignalFunc)file_mix_delete_callback,
 				    (GtkSignalFunc)file_mix_cancel_callback);
@@ -450,7 +450,7 @@ file_data *make_file_data_panel(snd_state *ss, GtkWidget *parent, char *name,
   gtk_box_pack_start(GTK_BOX(parent), form, FALSE, FALSE, 4); /* ??? */
   gtk_widget_show(form);
 
-  hlab = gtk_frame_new(STR_header);
+  hlab = gtk_frame_new("header");
   gtk_box_pack_start(GTK_BOX(form), hlab, TRUE, TRUE, 2);
   gtk_frame_set_label_align(GTK_FRAME(hlab), 0.5, 0.0);
   gtk_frame_set_shadow_type(GTK_FRAME(hlab), GTK_SHADOW_ETCHED_IN);
@@ -461,7 +461,7 @@ file_data *make_file_data_panel(snd_state *ss, GtkWidget *parent, char *name,
   gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(hscroll), fdat->header_list);
   gtk_container_add(GTK_CONTAINER(hlab), hscroll);
 
-  dlab = gtk_frame_new(STR_data);
+  dlab = gtk_frame_new("data");
   gtk_box_pack_start(GTK_BOX(form), dlab, TRUE, TRUE, 2);
   gtk_frame_set_label_align(GTK_FRAME(dlab), 0.5, 0.0);
   gtk_frame_set_shadow_type(GTK_FRAME(dlab), GTK_SHADOW_ETCHED_IN);
@@ -487,7 +487,7 @@ file_data *make_file_data_panel(snd_state *ss, GtkWidget *parent, char *name,
   gtk_box_pack_start(GTK_BOX(form), scbox, FALSE, FALSE, 4);
   gtk_widget_show(scbox);
 
-  slab = gtk_label_new(STR_srate_p);
+  slab = gtk_label_new("srate:");
   gtk_box_pack_start(GTK_BOX(scbox), slab, FALSE, FALSE, 0);
   gtk_widget_show(slab);
 
@@ -495,7 +495,7 @@ file_data *make_file_data_panel(snd_state *ss, GtkWidget *parent, char *name,
 
   if (with_chan)
     {
-      clab = gtk_label_new(STR_chans_p);
+      clab = gtk_label_new("chans:");
       gtk_box_pack_start(GTK_BOX(scbox), clab, FALSE, FALSE, 0);
       gtk_widget_show(clab);
 
@@ -503,7 +503,7 @@ file_data *make_file_data_panel(snd_state *ss, GtkWidget *parent, char *name,
       
       if (with_loc)
 	{
-	  loclab = gtk_label_new(STR_location_p);
+	  loclab = gtk_label_new("location:");
 	  gtk_box_pack_start(GTK_BOX(scbox), loclab, FALSE, FALSE, 0);
 	  gtk_widget_show(loclab);
 
@@ -515,7 +515,7 @@ file_data *make_file_data_panel(snd_state *ss, GtkWidget *parent, char *name,
   gtk_box_pack_start(GTK_BOX(parent), combox, TRUE, TRUE, 4);
   gtk_widget_show(combox);
 
-  comment_label = gtk_label_new(STR_comment_p);
+  comment_label = gtk_label_new("comment:");
   gtk_box_pack_start(GTK_BOX(combox), comment_label, FALSE, FALSE, 0);
   gtk_widget_show(comment_label);
 
@@ -589,7 +589,7 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int save_type, 
   GtkWidget *fbox;
   if (!save_as_dialog)
     {
-      save_as_dialog = gtk_file_selection_new(STR_save_as_p);
+      save_as_dialog = gtk_file_selection_new("save as:");
       set_background(save_as_dialog, (ss->sgx)->basic_color);
       g_signal_connect_closure_by_id(GTK_OBJECT(save_as_dialog),
 				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(save_as_dialog))),
@@ -649,7 +649,7 @@ void make_file_save_as_dialog(snd_state *ss)
 void make_edit_save_as_dialog(snd_state *ss)
 {
   save_as_dialog_type = EDIT_SAVE_AS;
-  make_save_as_dialog(ss, STR_current_selection, EDIT_SAVE_AS, -1, -1);
+  make_save_as_dialog(ss, "current selection", EDIT_SAVE_AS, -1, -1);
   load_header_and_data_lists(save_as_file_data,
 			     save_as_file_data->current_type,
 			     save_as_file_data->current_format,
@@ -731,13 +731,13 @@ ww_info *make_title_row(snd_state *ss, GtkWidget *formw, char *first_str, char *
       gtk_widget_show(sbar);
 
       smenu = gtk_menu_new();
-      wwi->byname = gtk_menu_item_new_with_label(STR_name);
+      wwi->byname = gtk_menu_item_new_with_label("name");
       set_background(wwi->byname, (ss->sgx)->basic_color);
-      wwi->bydate = gtk_menu_item_new_with_label(STR_date);
+      wwi->bydate = gtk_menu_item_new_with_label("date");
       set_background(wwi->bydate, (ss->sgx)->basic_color);
-      wwi->bysize = gtk_menu_item_new_with_label(STR_size);
+      wwi->bysize = gtk_menu_item_new_with_label("size");
       set_background(wwi->bysize, (ss->sgx)->basic_color);
-      wwi->byentry = gtk_menu_item_new_with_label(STR_entry);
+      wwi->byentry = gtk_menu_item_new_with_label("entry");
       set_background(wwi->byentry, (ss->sgx)->basic_color);
       wwi->byproc = gtk_menu_item_new_with_label("proc");
       set_background(wwi->byproc, (ss->sgx)->basic_color);
@@ -755,7 +755,7 @@ ww_info *make_title_row(snd_state *ss, GtkWidget *formw, char *first_str, char *
       gtk_widget_show(wwi->byproc);
       byproc = wwi->byproc;
 
-      sitem = gtk_menu_item_new_with_label(STR_sort);
+      sitem = gtk_menu_item_new_with_label("sort");
       set_background(sitem, (ss->sgx)->basic_color);
       gtk_widget_show(sitem);
       gtk_menu_item_set_submenu(GTK_MENU_ITEM(sitem), smenu);
@@ -1189,17 +1189,17 @@ void view_files_callback(GtkWidget *w, gpointer context)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(view_files_delete_callback), (gpointer)ss, 0),
 				     0);
-      gtk_window_set_title(GTK_WINDOW(view_files_dialog), STR_Files);
+      gtk_window_set_title(GTK_WINDOW(view_files_dialog), "Files");
       sg_make_resizable(view_files_dialog);
       set_backgrounds(view_files_dialog, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(view_files_dialog), 10);
       gtk_window_resize(GTK_WINDOW(view_files_dialog), 400, 200);
       gtk_widget_realize(view_files_dialog);
 
-      helpB = gtk_button_new_with_label(STR_Help);
-      dismissB = gtk_button_new_with_label(STR_Dismiss);
-      updateB = gtk_button_new_with_label(STR_Update);
-      clearB = gtk_button_new_with_label(STR_Clear);
+      helpB = gtk_button_new_with_label("Help");
+      dismissB = gtk_button_new_with_label("Dismiss");
+      updateB = gtk_button_new_with_label("Update");
+      clearB = gtk_button_new_with_label("Clear");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(view_files_dialog)->action_area), dismissB, TRUE, TRUE, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(view_files_dialog)->action_area), updateB, TRUE, TRUE, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(view_files_dialog)->action_area), clearB, TRUE, TRUE, 10);
@@ -1250,7 +1250,7 @@ void view_files_callback(GtkWidget *w, gpointer context)
       gtk_widget_show(prevform);
 
       /* current files section: save play current files | files */
-      wwl = make_title_row(ss, curform, STR_save, STR_play, STR_current_files, PAD_TITLE_ON_RIGHT, WITHOUT_SORT_BUTTON, WITHOUT_PANED_WINDOW);
+      wwl = make_title_row(ss, curform, "save", "play", "current files", PAD_TITLE_ON_RIGHT, WITHOUT_SORT_BUTTON, WITHOUT_PANED_WINDOW);
       fs1 = wwl->tophbox;
       vf_curww = wwl->list; /* different from Motif */
       vf_curlst = wwl->list;
@@ -1258,7 +1258,7 @@ void view_files_callback(GtkWidget *w, gpointer context)
       wwl = NULL;
 
       /* previous files section: unlist play previous files | files */
-      wwl = make_title_row(ss, prevform, STR_unlist, STR_play, STR_previous_files, PAD_TITLE_ON_LEFT, WITH_SORT_BUTTON, WITHOUT_PANED_WINDOW);
+      wwl = make_title_row(ss, prevform, "unlist", "play", "previous files", PAD_TITLE_ON_LEFT, WITH_SORT_BUTTON, WITHOUT_PANED_WINDOW);
       fs3 = wwl->tophbox;
 
       g_signal_connect_closure_by_id(GTK_OBJECT(wwl->byname), 
@@ -1387,17 +1387,17 @@ static void make_raw_data_dialog(snd_state *ss)
 				 0,
 				 g_cclosure_new(GTK_SIGNAL_FUNC(raw_data_delete_callback), (gpointer)ss, 0),
 				 0);
-  gtk_window_set_title(GTK_WINDOW(raw_data_dialog), STR_No_Header_on_File);
+  gtk_window_set_title(GTK_WINDOW(raw_data_dialog), "No Header on File");
   sg_make_resizable(raw_data_dialog);
   set_background(raw_data_dialog, (ss->sgx)->basic_color);
   gtk_container_set_border_width(GTK_CONTAINER(raw_data_dialog), 10);
   gtk_window_resize(GTK_WINDOW(raw_data_dialog), 350, 260);
   gtk_widget_realize(raw_data_dialog);
 
-  helpB = gtk_button_new_with_label(STR_Help);
-  cancelB = gtk_button_new_with_label(STR_Cancel);
-  defaultB = gtk_button_new_with_label(STR_Default);
-  okB = gtk_button_new_with_label(STR_Ok);
+  helpB = gtk_button_new_with_label("Help");
+  cancelB = gtk_button_new_with_label("Cancel");
+  defaultB = gtk_button_new_with_label("Default");
+  okB = gtk_button_new_with_label("Ok");
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(raw_data_dialog)->action_area), okB, TRUE, TRUE, 10);
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(raw_data_dialog)->action_area), defaultB, TRUE, TRUE, 10);
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(raw_data_dialog)->action_area), cancelB, TRUE, TRUE, 10);
@@ -1439,7 +1439,7 @@ static void make_raw_data_dialog(snd_state *ss)
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(raw_data_dialog)->vbox), sratehbox, FALSE, FALSE, 6);
   gtk_widget_show(sratehbox);
 
-  dls = gtk_label_new(STR_srate_p);
+  dls = gtk_label_new("srate:");
   gtk_box_pack_start(GTK_BOX(sratehbox), dls, FALSE, FALSE, 4);
   gtk_widget_show(dls);
 
@@ -1447,7 +1447,7 @@ static void make_raw_data_dialog(snd_state *ss)
   mus_snprintf(dfs_str, LABEL_BUFFER_SIZE, "%d", sr);
   gtk_entry_set_text(GTK_ENTRY(raw_srate_text), dfs_str);
 
-  chnlab = gtk_label_new(STR_chans_p);
+  chnlab = gtk_label_new("chans:");
   gtk_box_pack_start(GTK_BOX(sratehbox), chnlab, FALSE, FALSE, 4);
   gtk_widget_show(chnlab);
 
@@ -1459,14 +1459,14 @@ static void make_raw_data_dialog(snd_state *ss)
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(raw_data_dialog)->vbox), lochbox, FALSE, FALSE, 6);
   gtk_widget_show(lochbox);
 
-  dloclab = gtk_label_new(STR_data_location_p);
+  dloclab = gtk_label_new("data location:");
   gtk_box_pack_start(GTK_BOX(lochbox), dloclab, FALSE, FALSE, 4);
   gtk_widget_show(dloclab);
 
   raw_location_text = snd_entry_new(ss, lochbox, TRUE);
   gtk_entry_set_text(GTK_ENTRY(raw_location_text), "0");
 
-  dlab = gtk_label_new(STR_data_format_p);
+  dlab = gtk_label_new("data format:");
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(raw_data_dialog)->vbox), dlab, FALSE, FALSE, 6);
   gtk_widget_show(dlab);
 
@@ -1574,9 +1574,9 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
       gtk_window_resize(GTK_WINDOW(new_dialog), 400, 250);
       gtk_widget_realize(new_dialog);
 
-      help_button = gtk_button_new_with_label(STR_Help);
-      cancel_button = gtk_button_new_with_label(STR_Cancel);
-      ok_button = gtk_button_new_with_label(STR_Ok);
+      help_button = gtk_button_new_with_label("Help");
+      cancel_button = gtk_button_new_with_label("Cancel");
+      ok_button = gtk_button_new_with_label("Ok");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(new_dialog)->action_area), ok_button, TRUE, TRUE, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(new_dialog)->action_area), cancel_button, TRUE, TRUE, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(new_dialog)->action_area), help_button, TRUE, TRUE, 10);
@@ -1696,16 +1696,16 @@ GtkWidget *edit_header(snd_info *sp)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(edit_header_delete_callback), (gpointer)ss, 0),
 				     0);
-      /* gtk_window_set_title(GTK_WINDOW(edit_header_dialog), STR_Edit_Header); */
+      /* gtk_window_set_title(GTK_WINDOW(edit_header_dialog), "Edit Header"); */
       sg_make_resizable(edit_header_dialog);
       set_background(edit_header_dialog, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(edit_header_dialog), 10);
       gtk_window_resize(GTK_WINDOW(edit_header_dialog), 360, 250);
       gtk_widget_realize(edit_header_dialog);
 
-      help_button = gtk_button_new_with_label(STR_Help);
-      cancel_button = gtk_button_new_with_label(STR_Cancel);
-      save_button = gtk_button_new_with_label(STR_Save);
+      help_button = gtk_button_new_with_label("Help");
+      cancel_button = gtk_button_new_with_label("Cancel");
+      save_button = gtk_button_new_with_label("Save");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_header_dialog)->action_area), cancel_button, TRUE, TRUE, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_header_dialog)->action_area), save_button, TRUE, TRUE, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(edit_header_dialog)->action_area), help_button, TRUE, TRUE, 10);
@@ -1731,13 +1731,13 @@ GtkWidget *edit_header(snd_info *sp)
       gtk_widget_show(save_button);
       gtk_widget_show(help_button);
 
-      edit_header_data = make_file_data_panel(ss, GTK_DIALOG(edit_header_dialog)->vbox, STR_Edit_Header, TRUE, 
+      edit_header_data = make_file_data_panel(ss, GTK_DIALOG(edit_header_dialog)->vbox, "Edit Header", TRUE, 
 					      hdr->type, hdr->format, TRUE, FALSE);
       set_dialog_widget(ss, EDIT_HEADER_DIALOG, edit_header_dialog);
     }
 
   str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-  mus_snprintf(str, PRINT_BUFFER_SIZE, STR_Edit_header_of, sp->short_filename);
+  mus_snprintf(str, PRINT_BUFFER_SIZE, "Edit header of %s", sp->short_filename);
   gtk_window_set_title(GTK_WINDOW(edit_header_dialog), str);
   FREE(str);
   load_header_and_data_lists(edit_header_data, hdr->type, hdr->format, hdr->srate, hdr->chans, hdr->data_location, hdr->comment);

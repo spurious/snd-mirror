@@ -188,16 +188,22 @@ char *version_info(void)
 	  "\n    OpenGL", glx_version(),
   #if USE_GTK
 	  ", gtkglext ",
-    #if HAVE_GTK_GL_EXT_0_1
-	  "0.1",
+    #ifdef GTKGLEXT_MAJOR_VERSION
+	  snd_itoa(GTKGLEXT_MAJOR_VERSION), ".",
+	  snd_itoa(GTKGLEXT_MINOR_VERSION), ".",
+	  snd_itoa(GTKGLEXT_MICRO_VERSION),
     #else
-      #if HAVE_GDK_GL_FONT_USE_GDK_FONT
-	  "0.2",
+      #if HAVE_GTK_GL_EXT_0_1
+	  "0.1",
       #else
-        #if HAVE_GDK_GL_CONTEXT_COPY
-	  "0.4 or later",
+        #if HAVE_GDK_GL_FONT_USE_GDK_FONT
+	  "0.2",
         #else
+          #if HAVE_GDK_GL_CONTEXT_COPY
+	  "0.4",
+          #else
 	  "0.3",
+          #endif
         #endif
       #endif
     #endif
@@ -224,7 +230,7 @@ char *version_info(void)
 	  "\n    LADSPA",
   #ifdef LADSPA_HINT_DEFAULT_MASK
 	  " 1.1",
-  #else
+ #else
 	  " 1.0",
   #endif
 #endif
@@ -258,10 +264,12 @@ void news_help(snd_state *ss)
   char *info = NULL, *features = NULL;
   info = version_info();
   features = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING("*features*")), 600);
-  ssnd_help(ss, STR_News,
+  ssnd_help(ss, "News",
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+9-Sep:   bess.scm.\n\
+         set-oss-buffers -> mus-audio-set-oss-buffers\n\
 4-Sep:   --with-modules for modularized sndlib.\n\
 2-Sep:   removed gtk-1 and gtkextra support.\n\
 1-Sep:   if no extension language, edit position can get confused (fixed).\n\
@@ -684,7 +692,7 @@ Chebyshev transforms, and perhaps others.\n\
 
 void find_help(snd_state *ss) 
 {
-  snd_help_with_url_and_wrap(ss, STR_Find, "#find", 
+  snd_help_with_url_and_wrap(ss, "Find", "#find", 
 "Searches in Snd refer to the sound data, and are in general patterned after Emacs.  When you type \
 c-s or c-r, the minibuffer below the graph is activated and you are asked for the search function. \
 The expression is a Scheme function of one argument, the current sample value.  It should return #t when the \
@@ -697,7 +705,7 @@ Normally, the search applies only to the current channel. To search all current 
 
 void undo_help(snd_state *ss) 
 {
-  snd_help_with_url_and_wrap(ss, STR_Undo, "#undoredo",
+  snd_help_with_url_and_wrap(ss, "Undo", "#undoredo",
 "Snd supports unlimited undo in the sense that you can backup through all \
 the edits since the last save, and at any point redo those edits.  Certain \
 operations require that temporary files be written, so disk space may eventually \
@@ -708,7 +716,7 @@ In addition, eight or so of the previous selections are saved on a stack accessi
 
 void sync_help(snd_state *ss) 
 {
-  snd_help_with_url_and_wrap(ss, STR_Sync, "#multichannel",
+  snd_help_with_url_and_wrap(ss, "Sync", "#multichannel",
 "The sync button causes certain operations to apply to all channels simultaneously.  In mono \
 sounds, the sync button has a similar effect, but applied across multiple sounds. \
 \n\n\
@@ -756,7 +764,7 @@ The reverb is on only if the reverb button is set.\
 
 void contrast_help(snd_state *ss) 
 {
-  snd_help_with_url_and_wrap(ss, STR_Contrast, "#contrast",
+  snd_help_with_url_and_wrap(ss, "Contrast", "#contrast",
 "'Contrast enhancement' is my name for this somewhat weird waveshaper or compander.  It \
 phase-modulates a sound, which can in some cases make it sound sharper or brighter. \
 For softer sounds, it causes only an amplitude change.  Contrast is on only if the contrast button is set.");
@@ -764,7 +772,7 @@ For softer sounds, it causes only an amplitude change.  Contrast is on only if t
 
 void env_help(snd_state *ss) 
 {
-  snd_help_with_url_and_wrap(ss, STR_Envelope, "#editenvelope",
+  snd_help_with_url_and_wrap(ss, "Envelope", "#editenvelope",
 "An envelope in Snd is a list of x y break-point pairs. The x axis range is \
 arbitrary. For example, to define a triangle curve: '(0 0 1 1 2 0). There is no (obvious) limit \
 on the number of breakpoints. \
@@ -1676,7 +1684,7 @@ NULL);
 void fft_help(snd_state *ss)
 {
   ssnd_help_with_url(ss,
-		     STR_FFT,
+		     "FFT",
 		     "#viewfft",
 fft_help_string,
 "\n\
@@ -1685,14 +1693,14 @@ fft_keypad_help_string,
 NULL);
 }
 
-void speed_help(snd_state *ss) {snd_help_with_url_and_wrap(ss, STR_Speed, "#speed", speed_help_string);}
-void expand_help(snd_state *ss) {snd_help_with_url_and_wrap(ss, STR_Expand, "#expand", expand_help_string);}
-void reverb_help(snd_state *ss) {snd_help_with_url_and_wrap(ss, STR_Reverb, "#reverb", reverb_help_string);}
-void marks_help(snd_state *ss) {snd_help_with_url(ss, STR_Marks, "#marks", mark_help_string);}
-void mix_help(snd_state *ss) {snd_help_with_url_and_wrap(ss, STR_Mixing, "#mixingfiles", mix_help_string);}
-void sound_files_help(snd_state *ss) {snd_help_with_url(ss, STR_Format, "#formats", sound_files_help_string);}
-void recording_help(snd_state *ss) {snd_help_with_url_and_wrap(ss, STR_Recording, "#recordfile", recording_help_string);}
-void init_file_help(snd_state *ss) {ssnd_help_with_url(ss, STR_Customization, "grfsnd.html", init_file_help_string, "\n", resource_help_string, NULL);}
+void speed_help(snd_state *ss) {snd_help_with_url_and_wrap(ss, "Speed", "#speed", speed_help_string);}
+void expand_help(snd_state *ss) {snd_help_with_url_and_wrap(ss, "Expand", "#expand", expand_help_string);}
+void reverb_help(snd_state *ss) {snd_help_with_url_and_wrap(ss, "Reverb", "#reverb", reverb_help_string);}
+void marks_help(snd_state *ss) {snd_help_with_url(ss, "Marks", "#marks", mark_help_string);}
+void mix_help(snd_state *ss) {snd_help_with_url_and_wrap(ss, "Mixing", "#mixingfiles", mix_help_string);}
+void sound_files_help(snd_state *ss) {snd_help_with_url(ss, "Format", "#formats", sound_files_help_string);}
+void recording_help(snd_state *ss) {snd_help_with_url_and_wrap(ss, "Recording", "#recordfile", recording_help_string);}
+void init_file_help(snd_state *ss) {ssnd_help_with_url(ss, "Customization", "grfsnd.html", init_file_help_string, "\n", resource_help_string, NULL);}
 
 
 /* -------- dialog help button -------- */
@@ -1755,7 +1763,7 @@ void orientation_dialog_help(snd_state *ss)
 
 void region_dialog_help(snd_state *ss)
 {
-  snd_help_with_url_and_wrap(ss, STR_Region_Browser, "#regionbrowser",
+  snd_help_with_url_and_wrap(ss, "Region Browser", "#regionbrowser",
 "This is the 'region browser'.  The scrolled window contains the list of current regions \
 with a brief title to indicate the provenance thereof, and two buttons.  The 'save' button \
 protects or unprotects the region from deletion. The 'play' button plays the associated region. \
@@ -1770,7 +1778,7 @@ the file, the region is updated to reflect any edits you made.");
 void raw_data_dialog_help(snd_state *ss)
 {
   snd_help_with_wrap(ss,
-		     STR_Raw_Data,
+		     "Raw Data",
 "To display and edit sound data, Snd needs to know how the data's sampling rate, number \
 of channels, and numerical format.  This dialog gives you a chance to set those fields. \
 To make the current settings the default for any future headerless files, click the \
@@ -1787,7 +1795,7 @@ void new_file_dialog_help(snd_state *ss)
 void edit_header_dialog_help(snd_state *ss)
 {
   snd_help_with_wrap(ss,
-		     STR_Edit_Header,
+		     "Edit Header",
 "This dialog edits the header of a sound file. No change is made to the actual sound data; the \
 new header is blindly written, any unsaved edits are ignored. If you specify 'raw' as the type, \
 any existing header is removed.  This dialog is aimed at adding or removing an entire header,  \
@@ -2057,7 +2065,7 @@ static char CLM_help_string[] = "";
 #endif
 
 static char *CLM_help(void) {return(CLM_help_string);}
-void clm_help(snd_state *ss) {snd_help_with_url(ss, STR_CLM, "grfsnd.html#sndwithclm", CLM_help());}
+void clm_help(snd_state *ss) {snd_help_with_url(ss, "CLM", "grfsnd.html#sndwithclm", CLM_help());}
 
 
 #define GLYPH_WIDTH 11
@@ -2090,6 +2098,64 @@ char* word_wrap(char *text, int widget_len)
 }
 
 static XEN help_hook = XEN_FALSE;
+static XEN output_comment_hook = XEN_FALSE;
+
+static char *run_concat_hook(XEN hook, const char *caller, char *initial_string, char *subject)
+{
+  char *newstr = NULL, *tmpstr = NULL;
+  if (initial_string) 
+    newstr = copy_string(initial_string); /* will be accumulating stuff in loop through hook */
+  if (XEN_HOOKED(hook))
+    {
+      XEN result;
+      XEN procs = XEN_HOOK_PROCEDURES(hook);
+      int size = 0;
+#if HAVE_GUILE
+      while (XEN_NOT_NULL_P(procs))
+	{
+	  if (subject)
+	    result = XEN_CALL_2(XEN_CAR(procs),
+				C_TO_XEN_STRING(subject),
+				C_TO_XEN_STRING(newstr),
+				caller);
+	  else result = XEN_CALL_1(XEN_CAR(procs),
+				   C_TO_XEN_STRING(newstr),
+				   caller);
+#else
+	  if (subject)
+	    result = XEN_CALL_2(procs,
+				C_TO_XEN_STRING(subject),
+				C_TO_XEN_STRING(newstr),
+				caller);
+	  else result = XEN_CALL_1(procs,
+				   C_TO_XEN_STRING(newstr),
+				   caller);
+#endif
+	  if (XEN_STRING_P(result))
+	    tmpstr = XEN_TO_C_STRING(result);
+	  else tmpstr = NULL;
+	  if (tmpstr)
+	    {
+	      if ((snd_strlen(tmpstr) + snd_strlen(newstr)) >= size)
+		size = ((snd_strlen(tmpstr) + snd_strlen(newstr)) * 2);
+	      if (newstr == NULL)
+		newstr = (char *)CALLOC(size, sizeof(char));
+	      else newstr = (char *)REALLOC(newstr, size * sizeof(char));
+	      strcat(newstr, tmpstr);
+	    }
+#if HAVE_GUILE
+	  procs = XEN_CDR(procs);
+	}
+#endif
+    }
+  return(newstr);
+}
+
+char *output_comment(file_info *hdr)
+{
+  return(run_concat_hook(output_comment_hook, S_output_comment_hook, (hdr) ? hdr->comment : NULL, NULL));
+}
+
 
 XEN g_snd_help(XEN text, int widget_wid)
 {
@@ -2246,6 +2312,16 @@ void g_init_help(void)
 if returns a string, it replaces 'help-string' (the default help)"
 
   XEN_DEFINE_HOOK(help_hook, S_help_hook, 2, H_help_hook);    /* args = subject help-string */
+
+  #define H_output_comment_hook S_output_comment_hook " (str) is called in Save-As dialog, passed current sound's comment, if any. \
+If more than one hook function, results are concatenated. If none, the current comment is used.\n\
+  (add-hook! output-comment-hook\n\
+    (lambda (str)\n\
+      (string-append \"written \"\n\
+        (strftime \"%a %d-%b-%Y %H:%M %Z\"\n\
+          (localtime (current-time))))))"
+
+  XEN_DEFINE_HOOK(output_comment_hook, S_output_comment_hook, 1, H_output_comment_hook); /* arg = current mus_sound_comment(hdr) if any */
 
 #if HAVE_HTML && (!USE_NO_GUI)
   XEN_YES_WE_HAVE("snd-html");

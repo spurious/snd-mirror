@@ -1,5 +1,5 @@
-#ifndef SND_0_H_LOADED
-#define SND_0_H_LOADED
+#ifndef SND_0_H
+#define SND_0_H
 
 #if (!defined(HAVE_CONFIG_H))
   /* we need statfs -- need its header and how many args it takes */
@@ -23,7 +23,7 @@
     #endif
   #endif
   #ifdef __CYGWIN__
-    #define CLOSEDIR_VOID
+    #define CLOSEDIR_VOID 1
     /* apparently we can't trust the return value */
   #endif
   #define HAVE_VPRINTF 1
@@ -63,9 +63,6 @@
     #define HAVE_ISNAN 1
   #endif
   #define HAVE_X 1
-  #if (!HAVE_GUILE_1_3)
-    #define HAVE_SCM_MAKE_REAL 1
-  #endif
 #endif
 
 #if defined(__bsdi__) && (!HAVE_ISNAN)
@@ -132,6 +129,12 @@ enum {ENVED_AMPLITUDE, ENVED_SPECTRUM, ENVED_SRATE};
 
 enum {GRAPH_LINES, GRAPH_DOTS, GRAPH_FILLED, GRAPH_DOTS_AND_LINES, GRAPH_LOLLIPOPS};
 #define GRAPH_STYLE_OK(Grf) ((Grf >= GRAPH_LINES) && (Grf <= GRAPH_LOLLIPOPS))
+ /* using lollipop rather than the suggested popsicle because 
+  *   popsicle is a (capitalized) trade-name in the USA and I want lowercase,
+  *   lollipop is about 200 years older as an English word (1724 vs 1923),
+  *   and I think lollipop is more accurate -- in my experience lollipops have
+  *     circular candies whereas popsicles have a sort of squared-off bottom.
+  */
 enum {GRAPH_ONCE, GRAPH_AS_SONOGRAM, GRAPH_AS_SPECTROGRAM, GRAPH_AS_WAVOGRAM};
 enum {ZOOM_FOCUS_LEFT, ZOOM_FOCUS_RIGHT, ZOOM_FOCUS_ACTIVE, ZOOM_FOCUS_MIDDLE};
 enum {DONT_LOCK_MIXES, LOCK_MIXES};
@@ -210,8 +213,8 @@ enum {COLOR_POSITION, COLOR_ZOOM};
 enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 
 #define DEFAULT_MIN_DB -60.0
-#define BLACK_AND_WHITE -1
 #define NO_LIST -1
+#define BLACK_AND_WHITE -1
 
 #define DEFAULT_AMP_CONTROL 1.0
 #define DEFAULT_CONTRAST_CONTROL 0.0

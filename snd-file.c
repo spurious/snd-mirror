@@ -492,13 +492,12 @@ dir *find_sound_files_in_dir (char *name)
 		    break;
 		  }
 	  }
-#if defined(CLOSEDIR_VOID)
+#if CLOSEDIR_VOID
       closedir(dpos);
 #else
       if (closedir(dpos) != 0) 
-	snd_error("%s[%d] %s: closedir %s failed!",
-		  __FILE__, __LINE__, __FUNCTION__,
-		  name);
+	snd_error("find_sound_files_in_dir: closedir %s failed (%s)!",
+		  name, strerror(errno));
 #endif
     }
   return(dp);
@@ -1413,12 +1412,6 @@ static void file_prevlist(char *filename, char *fullname)
   prevtimes[0] = prevtime++;
   if (max_prevfile_end < prevfile_end) 
     max_prevfile_end = prevfile_end;
-}
-
-void update_prevfiles(snd_state *ss)
-{
-  if (file_dialog_is_active()) 
-    make_prevfiles_list(ss);
 }
 
 void add_directory_to_prevlist(snd_state *ss, char *dirname)
@@ -2538,6 +2531,22 @@ static XEN g_mix_file_dialog(XEN managed)
   return(managed);
 }
 
+static XEN g_previous_files_sort(void) {return(C_TO_XEN_INT(previous_files_sort(get_global_state())));}
+static XEN g_set_previous_files_sort(XEN val) 
+{
+  #define H_previous_files_sort "(" S_previous_files_sort ") -> sort choice in view files (0 = unsorted, 1 = by name, etc)"
+  snd_state *ss;
+  ss = get_global_state();
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set-" S_previous_files_sort, "an integer"); 
+  update_prevlist();
+  set_previous_files_sort(ss, mus_iclamp(0,
+					    XEN_TO_C_INT(val),
+					    5));
+  if (file_dialog_is_active()) 
+    make_prevfiles_list(ss);
+  return(C_TO_XEN_INT(previous_files_sort(ss)));
+}
+
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_1(g_add_sound_file_extension_w, g_add_sound_file_extension)
 XEN_NARGIFY_1(g_file_write_date_w, g_file_write_date)
@@ -2552,6 +2561,8 @@ XEN_NARGIFY_1(g_set_previous_files_sort_procedure_w, g_set_previous_files_sort_p
 XEN_NARGIFY_1(g_disk_kspace_w, g_disk_kspace)
 XEN_ARGIFY_1(g_open_file_dialog_w, g_open_file_dialog)
 XEN_ARGIFY_1(g_mix_file_dialog_w, g_mix_file_dialog)
+XEN_NARGIFY_0(g_previous_files_sort_w, g_previous_files_sort)
+XEN_ARGIFY_1(g_set_previous_files_sort_w, g_set_previous_files_sort)
 #else
 #define g_add_sound_file_extension_w g_add_sound_file_extension
 #define g_file_write_date_w g_file_write_date
@@ -2566,6 +2577,8 @@ XEN_ARGIFY_1(g_mix_file_dialog_w, g_mix_file_dialog)
 #define g_disk_kspace_w g_disk_kspace
 #define g_open_file_dialog_w g_open_file_dialog
 #define g_mix_file_dialog_w g_mix_file_dialog
+#define g_previous_files_sort_w g_previous_files_sort
+#define g_set_previous_files_sort_w g_set_previous_files_sort
 #endif
 
 void g_init_file(void)
@@ -2581,6 +2594,9 @@ void g_init_file(void)
   XEN_DEFINE_PROCEDURE(S_disk_kspace,                 g_disk_kspace_w, 1, 0, 0,               H_disk_kspace);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sound_loop_info, g_sound_loop_info_w, H_sound_loop_info,
 				   "set-" S_sound_loop_info, g_set_sound_loop_info_w,  0, 1, 1, 1);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_previous_files_sort, g_previous_files_sort_w, H_previous_files_sort,
+				   "set-" S_previous_files_sort, g_set_previous_files_sort_w,  0, 0, 0, 1);
 
   XEN_DEFINE_VARIABLE(S_memo_sound, memo_sound, XEN_FALSE);
 

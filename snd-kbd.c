@@ -1359,7 +1359,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      set_window_size(cp, ext_count); 
 	      break;
 	    case snd_K_Q: case snd_K_q: 
-	      prompt(sp, STR_mix_file_p, NULL); 
+	      prompt(sp, "mix file:", NULL); 
 	      sp->filing = CHANGE_FILING; 
 	      searching = 1; 
 	      break;
@@ -1379,7 +1379,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      set_window_percentage(cp, ext_count);
 	      break;
 	    case snd_K_W: case snd_K_w: 
-	      prompt(sp, STR_file_p, NULL); 
+	      prompt(sp, "file:", NULL); 
 	      sp->filing = CHANNEL_FILING; 
 	      searching = 1; 
 	      break;
@@ -1649,7 +1649,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 	    case snd_K_W: case snd_K_w:
 	      region_count = ((ext_count == NO_CX_ARG_SPECIFIED) ? 0 : ext_count);
-	      prompt(sp, STR_file_p, NULL); 
+	      prompt(sp, "file:", NULL); 
 	      sp->filing = REGION_FILING; 
 	      searching = 1;
 	      break;

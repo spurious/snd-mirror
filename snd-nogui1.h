@@ -1,5 +1,5 @@
-#ifndef SND_NOGUI1_H_LOADED
-#define SND_NOGUI1_H_LOADED
+#ifndef SND_NOGUI1_H
+#define SND_NOGUI1_H
 
 /* -------- snd-xhelp.c -------- */
 
@@ -380,6 +380,9 @@ int make_mix_panel(snd_state *ss);
 int mix_play_stopped(void);
 void reflect_mix_play_stop(void);
 void reflect_no_mix_in_mix_panel(void);
+void set_mix_color(snd_state *ss, int color);
+void set_selected_mix_color(snd_state *ss, int color);
+
 
 
 /* -------- snd-xrec.c -------- */

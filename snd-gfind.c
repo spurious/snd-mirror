@@ -58,9 +58,9 @@ static void edit_find_find(int direction, GtkWidget *w, gpointer context)
     }
   if ((XEN_PROCEDURE_P(ss->search_proc)) || (ss->search_tree))
     {
-      set_button_label(cancelB, STR_Stop);
+      set_button_label(cancelB, "Stop");
       str = global_search(ss, direction);
-      set_button_label(cancelB, STR_Dismiss);
+      set_button_label(cancelB, "Dismiss");
       if ((str) && (*str)) set_label(edit_find_label, str);
     }
 } 
@@ -81,17 +81,17 @@ void edit_find_callback(GtkWidget *w, gpointer context)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(edit_find_delete), (gpointer)ss, 0),
 				     0);
-      gtk_window_set_title(GTK_WINDOW(edit_find_dialog), STR_Find);
+      gtk_window_set_title(GTK_WINDOW(edit_find_dialog), "Find");
       sg_make_resizable(edit_find_dialog);
       set_background(edit_find_dialog, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(edit_find_dialog), 10);
       gtk_window_resize(GTK_WINDOW(edit_find_dialog), 350, 120);
       gtk_widget_realize(edit_find_dialog);
 
-      help_button = gtk_button_new_with_label(STR_Help);
-      cancelB = gtk_button_new_with_label(STR_Dismiss);
-      next_button = gtk_button_new_with_label(STR_Next);
-      previous_button = gtk_button_new_with_label(STR_Previous);
+      help_button = gtk_button_new_with_label("Help");
+      cancelB = gtk_button_new_with_label("Dismiss");
+      next_button = gtk_button_new_with_label("Next");
+      previous_button = gtk_button_new_with_label("Previous");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_find_dialog)->action_area), cancelB, TRUE, TRUE, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_find_dialog)->action_area), next_button, TRUE, TRUE, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_find_dialog)->action_area), previous_button, TRUE, TRUE, 10);
@@ -140,7 +140,7 @@ void edit_find_callback(GtkWidget *w, gpointer context)
 				     g_cclosure_new(GTK_SIGNAL_FUNC(edit_find_next), (gpointer)ss, 0),
 				     0);
       
-      edit_find_label = gtk_label_new(STR_global_search);
+      edit_find_label = gtk_label_new("global search");
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(edit_find_dialog)->vbox), edit_find_label, FALSE, FALSE, 4);
       gtk_widget_show(edit_find_label);
       gtk_widget_show(edit_find_dialog);

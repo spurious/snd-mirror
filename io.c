@@ -10,7 +10,6 @@
  * int mus_file_reopen_write(const char *arg)
  * int mus_file_close(int fd)
  * int mus_file_probe(const char *arg)
- * char *mus_file_full_name(char *tok)
  * char *mus_format(const char *format, ...)
  * --------------------------------
  */
@@ -480,17 +479,6 @@ int mus_file_set_descriptors (int tfd, const char *name, int format, int size /*
   return(MUS_NO_ERROR);
 }
 
-int mus_file_close_descriptors(int tfd)
-{
-  io_fd *fd;
-  if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL)) return(MUS_ERROR);
-  fd = io_fds[tfd];
-  if (fd->name) {FREE(fd->name); fd->name = NULL;}
-  FREE(fd);
-  io_fds[tfd] = NULL;
-  return(MUS_NO_ERROR);
-}
-
 int mus_file_set_data_clipped (int tfd, int clipped)
 {
   io_fd *fd;
@@ -609,9 +597,13 @@ int mus_file_reopen_write(const char *arg)
 
 int mus_file_close(int fd)
 {
-  if (mus_file_close_descriptors(fd) == MUS_NO_ERROR)
-    return(CLOSE(fd));
-  return(MUS_ERROR);
+  io_fd *fdp;
+  if ((io_fds == NULL) || (fd >= io_fd_size) || (fd < 0) || (io_fds[fd] == NULL)) return(MUS_ERROR);
+  fdp = io_fds[fd];
+  if (fdp->name) {FREE(fdp->name); fdp->name = NULL;}
+  FREE(fdp);
+  io_fds[fd] = NULL;
+  return(CLOSE(fd));
 }
 
 

@@ -1,7 +1,5 @@
-/* X-specific type/macro declarations */
-
-#ifndef SND_X0_H_LOADED
-#define SND_X0_H_LOADED
+#ifndef SND_X0_H
+#define SND_X0_H
 
 #if defined(HAVE_CONFIG_H)
   #include <config.h>
@@ -86,12 +84,7 @@
 
 #define GUI_POINTER XtPointer
 #define GUI_WIDGET Widget
-
 #define TIME_TYPE Time
-#define BUTTON_1 Button1
-#define BUTTON_2 Button2
-#define BUTTON_3 Button3
-
 #define NUM_COLORMAPS 16
 
 #if DEBUGGING

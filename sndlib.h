@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 16
-#define SNDLIB_REVISION 10
-#define SNDLIB_DATE "3-Sep-02"
+#define SNDLIB_REVISION 11
+#define SNDLIB_DATE "9-Sep-02"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -287,7 +287,6 @@ enum {MUS_AUDIO_DEFAULT, MUS_AUDIO_DUPLEX_DEFAULT, MUS_AUDIO_ADAT_IN, MUS_AUDIO_
 
 #define MUS_AUDIO_DEVICE_OK(a) (((a) >= MUS_AUDIO_DEFAULT) && ((a) <= MUS_AUDIO_DIRECTION))
 
-#define MUS_ERROR_TYPE int
 #define MUS_ERROR -1
 
 enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
@@ -302,8 +301,7 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
       MUS_HEADER_WRITE_FAILED, MUS_CANT_OPEN_TEMP_FILE, MUS_INTERRUPTED,
 
       MUS_AUDIO_CHANNELS_NOT_AVAILABLE, MUS_AUDIO_SRATE_NOT_AVAILABLE, MUS_AUDIO_FORMAT_NOT_AVAILABLE,
-      MUS_AUDIO_NO_INPUT_AVAILABLE, MUS_AUDIO_NO_OUTPUT_AVAILABLE, MUS_AUDIO_INPUT_BUSY, MUS_AUDIO_OUTPUT_BUSY,
-      MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, MUS_AUDIO_INPUT_CLOSED, MUS_AUDIO_OUTPUT_CLOSED, MUS_AUDIO_IO_INTERRUPTED,
+      MUS_AUDIO_NO_INPUT_AVAILABLE, MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
       MUS_AUDIO_NO_LINES_AVAILABLE, MUS_AUDIO_WRITE_ERROR, MUS_AUDIO_SIZE_NOT_AVAILABLE, MUS_AUDIO_DEVICE_NOT_AVAILABLE,
       MUS_AUDIO_CANT_CLOSE, MUS_AUDIO_CANT_OPEN, MUS_AUDIO_READ_ERROR, MUS_AUDIO_AMP_NOT_AVAILABLE,
       MUS_AUDIO_CANT_WRITE, MUS_AUDIO_CANT_READ, MUS_AUDIO_NO_READ_PERMISSION,
@@ -503,7 +501,6 @@ int mus_audio_compatible_format   PROTO((int dev));
 
 int mus_file_set_descriptors        PROTO((int tfd, const char *arg, int df, int ds, off_t dl, int dc, int dt));
 #define mus_file_open_descriptors(Tfd, Arg, Df, Ds, Dl, Dc, Dt) mus_file_set_descriptors(Tfd, Arg, Df, Ds, Dl, Dc, Dt)
-int mus_file_close_descriptors      PROTO((int tfd)); /* deprecated -- please don't use this function */
 int mus_file_open_read              PROTO((const char *arg));
 int mus_file_probe                  PROTO((const char *arg));
 int mus_file_open_write             PROTO((const char *arg));
@@ -594,7 +591,6 @@ void mus_header_set_raw_defaults    PROTO((int sr, int chn, int frm));
 void mus_header_raw_defaults        PROTO((int *sr, int *chn, int *frm));
 off_t mus_header_true_length        PROTO((void));
 int mus_header_original_format      PROTO((void));
-int mus_header_data_format_to_bytes_per_sample PROTO((void));
 off_t mus_samples_to_bytes          PROTO((int format, off_t size));
 off_t mus_bytes_to_samples          PROTO((int format, off_t size));
 int mus_header_write_next_header    PROTO((int chan, int srate, int chans, int loc, int siz, int format, const char *comment, int len));

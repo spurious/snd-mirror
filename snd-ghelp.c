@@ -37,15 +37,15 @@ static void create_help_monolog(snd_state *ss)
 				 0,
 				 g_cclosure_new(GTK_SIGNAL_FUNC(delete_help), (gpointer)ss, 0),
 				 0);
-  gtk_window_set_title(GTK_WINDOW(help_dialog), STR_Help);
+  gtk_window_set_title(GTK_WINDOW(help_dialog), "Help");
   sg_make_resizable(help_dialog);
   set_background(help_dialog, (ss->sgx)->basic_color);
   gtk_container_set_border_width (GTK_CONTAINER(help_dialog), 10);
   gtk_window_resize(GTK_WINDOW(help_dialog), HELP_COLUMNS * 9, HELP_ROWS * 20);
   gtk_widget_realize(help_dialog);
 
-  help_button = gtk_button_new_with_label(STR_Help);
-  ok_button = gtk_button_new_with_label(STR_Ok);
+  help_button = gtk_button_new_with_label("Help");
+  ok_button = gtk_button_new_with_label("Ok");
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), ok_button, FALSE, TRUE, 20);
   gtk_box_pack_end(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), help_button, FALSE, TRUE, 20);
   g_signal_connect_closure_by_id(GTK_OBJECT(ok_button),
@@ -109,17 +109,17 @@ static void create_help_monolog(snd_state *ss)
 				 0,
 				 g_cclosure_new(GTK_SIGNAL_FUNC(delete_help), (gpointer)ss, 0),
 				 0);
-  gtk_window_set_title(GTK_WINDOW(help_dialog), STR_Help);
+  gtk_window_set_title(GTK_WINDOW(help_dialog), "Help");
   sg_make_resizable(help_dialog);
   set_background(help_dialog, (ss->sgx)->basic_color);
   gtk_container_set_border_width (GTK_CONTAINER(help_dialog), 10);
   gtk_window_resize(GTK_WINDOW(help_dialog), 500, 500);
   gtk_widget_realize(help_dialog);
 
-  help_button = gtk_button_new_with_label(STR_Help);
-  ok_button = gtk_button_new_with_label(STR_Ok);
-  back_button = gtk_button_new_with_label(STR_Back);
-  forward_button = gtk_button_new_with_label(STR_Forward);
+  help_button = gtk_button_new_with_label("Help");
+  ok_button = gtk_button_new_with_label("Ok");
+  back_button = gtk_button_new_with_label("Back");
+  forward_button = gtk_button_new_with_label("Forward");
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), ok_button, FALSE, TRUE, 20);
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), back_button, FALSE, TRUE, 20);
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), forward_button, FALSE, TRUE, 20);
@@ -207,10 +207,5 @@ GtkWidget *snd_help(snd_state *ss, char *subject, char *helpstr)
 GtkWidget *snd_help_with_wrap(snd_state *ss, char *subject, char *helpstr)
 {
   return(snd_help_1(ss, subject, helpstr, TRUE));
-}
-
-int help_dialog_is_active(void)
-{
-  return((help_dialog != NULL) && (GTK_WIDGET_VISIBLE(help_dialog)));
 }
 

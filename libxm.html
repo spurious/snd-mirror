@@ -44,7 +44,7 @@ XmScaleSetValue becomes XmScaleSetValue.
 There are several differences between the C versions and the libxm
 versions; these are listed in detail at the start of xm.c and xg.c.  Briefly,
 an Arg list is lisp list of name/value pairs and the "len" arg associated with it is optional;
-ref args are usually returned by proc, and not passed in unless init val is needed;
+ref args are usually returned by proc, and not passed in unless an initial value is needed;
 array args are passed as lists, and returned as lists;
 pointers to structs are '(type val) where val is opaque except via accessors  
 (that is, all non-simple types are lists in xm where the first element is a symbol describing the type
@@ -58,10 +58,16 @@ structs are accessed by the field name and the lisp variable (which contains the
 (.pixel color) for example, or (.foreground gcvalue);
 blank structs, where needed, can be created via (Name) -- (XColor) or (XGCValues) for example.
 </p>
-
-For example, load this into guile after loading libxm.so:
+<p>
+You can use libxm directly in guile.  Here is an example script:
 </p>
 <pre>
+#!/usr/local/bin/guile -s
+!#
+
+(let ((libxm (dynamic-link "libxm.so")))
+  (dynamic-call (dynamic-func "init_xm" libxm) #f))
+
 (let* ((shell-app (XtVaOpenApplication 
 		    "Test" 0 0 0 '() 0 applicationShellWidgetClass
 		    (list XmNallowShellResize #t)))

@@ -686,9 +686,9 @@ void view_color_callback(Widget w, XtPointer context, XtPointer info)
       ccd = (color_chooser_info *)CALLOC(1, sizeof(color_chooser_info));
       ccd->state = ss;
 
-      xdismiss = XmStringCreate(STR_Dismiss, XmFONTLIST_DEFAULT_TAG); /* needed by template dialog */
-      xhelp = XmStringCreate(STR_Help, XmFONTLIST_DEFAULT_TAG);
-      titlestr = XmStringCreate(STR_Color_Editor, XmFONTLIST_DEFAULT_TAG);
+      xdismiss = XmStringCreate("Dismiss", XmFONTLIST_DEFAULT_TAG); /* needed by template dialog */
+      xhelp = XmStringCreate("Help", XmFONTLIST_DEFAULT_TAG);
+      titlestr = XmStringCreate("Color Editor", XmFONTLIST_DEFAULT_TAG);
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNcancelLabelString, xdismiss); n++;
@@ -698,7 +698,7 @@ void view_color_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       XtSetArg(args[n], XmNtransient, FALSE); n++;
-      ccd->dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Color, args, n);
+      ccd->dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), "Color", args, n);
 
       XtAddCallback(ccd->dialog, XmNcancelCallback, dismiss_color_callback, ccd);
       XtAddCallback(ccd->dialog, XmNhelpCallback, help_color_callback, ss);
@@ -805,7 +805,7 @@ void view_color_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, ccd->scale); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-      light_label = XtCreateManagedWidget(STR_light, xmLabelWidgetClass, mainform, args, n);
+      light_label = XtCreateManagedWidget("light", xmLabelWidgetClass, mainform, args, n);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -815,7 +815,7 @@ void view_color_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, ccd->scale); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-      XtCreateManagedWidget(STR_dark, xmLabelWidgetClass, mainform, args, n);
+      XtCreateManagedWidget("dark", xmLabelWidgetClass, mainform, args, n);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -829,7 +829,7 @@ void view_color_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNshowValue, TRUE); n++;
       XtSetArg(args[n], XmNmaximum, 250); n++;
       XtSetArg(args[n], XmNdecimalPoints, 3); n++;
-      xcutoff = XmStringCreate(STR_cutoff, XmFONTLIST_DEFAULT_TAG);
+      xcutoff = XmStringCreate("data cutoff", XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNtitleString, xcutoff); n++;
       XtSetArg(args[n], XmNvalue, (int)(color_cutoff(ss) * 1000)); n++;
       ccd->cutoff = XtCreateManagedWidget("cutoff", xmScaleWidgetClass, mainform, args, n);
@@ -846,9 +846,9 @@ void view_color_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNtopWidget, ccd->cutoff); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNset, color_inverted(ss)); n++;
-      xinvert = XmStringCreate(STR_invert, XmFONTLIST_DEFAULT_TAG);
+      xinvert = XmStringCreate("invert", XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNlabelString, xinvert); n++;
-      ccd->invert = make_togglebutton_widget(STR_invert, mainform, args, n);
+      ccd->invert = make_togglebutton_widget("invert", mainform, args, n);
       XtAddCallback(ccd->invert, XmNvalueChangedCallback, invert_color_callback, ccd);
       XmStringFree(xinvert);
       if (color_scale(ss) != 1.0)
@@ -1229,10 +1229,10 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       oid = (orientation_info *)CALLOC(1, sizeof(orientation_info));
       oid->state = ss;
 
-      xdismiss = XmStringCreate(STR_Dismiss, XmFONTLIST_DEFAULT_TAG); /* needed by template dialog */
-      xhelp = XmStringCreate(STR_Help, XmFONTLIST_DEFAULT_TAG);
-      xreset = XmStringCreate(STR_Reset, XmFONTLIST_DEFAULT_TAG);
-      titlestr = XmStringCreate(STR_Spectrogram_Orientation, XmFONTLIST_DEFAULT_TAG);
+      xdismiss = XmStringCreate("Dismiss", XmFONTLIST_DEFAULT_TAG); /* needed by template dialog */
+      xhelp = XmStringCreate("Help", XmFONTLIST_DEFAULT_TAG);
+      xreset = XmStringCreate("Reset", XmFONTLIST_DEFAULT_TAG);
+      titlestr = XmStringCreate("Spectrogram Orientation", XmFONTLIST_DEFAULT_TAG);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -1244,7 +1244,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       XtSetArg(args[n], XmNtransient, FALSE); n++;
-      oid->dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Orientation, args, n);
+      oid->dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), "Orientation", args, n);
 
       XtAddCallback(oid->dialog, XmNcancelCallback, dismiss_orientation_callback, oid);
       XtAddCallback(oid->dialog, XmNhelpCallback, help_orientation_callback, ss);
@@ -1292,7 +1292,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       
       /* left box */
       n = 0;
-      xstr = XmStringCreate(STR_x_angle, XmFONTLIST_DEFAULT_TAG);
+      xstr = XmStringCreate("x angle", XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, TRUE); n++;
@@ -1306,7 +1306,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       XmStringFree(xstr);
 
       n = 0;
-      xstr = XmStringCreate(STR_y_angle, XmFONTLIST_DEFAULT_TAG);
+      xstr = XmStringCreate("y angle", XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, TRUE); n++;
@@ -1320,7 +1320,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       XmStringFree(xstr);
 
       n = 0;
-      xstr = XmStringCreate(STR_z_angle, XmFONTLIST_DEFAULT_TAG);
+      xstr = XmStringCreate("z angle", XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, TRUE); n++;
@@ -1334,7 +1334,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       XmStringFree(xstr);
 
       n = 0;
-      xstr = XmStringCreate(STR_hop, XmFONTLIST_DEFAULT_TAG);
+      xstr = XmStringCreate("hop", XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, TRUE); n++;
@@ -1349,7 +1349,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
 
       /* right box */
       n = 0;
-      xstr = XmStringCreate(STR_x_scale, XmFONTLIST_DEFAULT_TAG);
+      xstr = XmStringCreate("x scale", XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, TRUE); n++;
@@ -1364,7 +1364,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       XmStringFree(xstr);
 
       n = 0;
-      xstr = XmStringCreate(STR_y_scale, XmFONTLIST_DEFAULT_TAG);
+      xstr = XmStringCreate("y scale", XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, TRUE); n++;
@@ -1379,7 +1379,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       XmStringFree(xstr);
 
       n = 0;
-      xstr = XmStringCreate(STR_z_scale, XmFONTLIST_DEFAULT_TAG);
+      xstr = XmStringCreate("z scale", XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, TRUE); n++;
@@ -1394,7 +1394,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       XmStringFree(xstr);
 
       n = 0;
-      xstr = XmStringCreate(STR_percent_of_spectrum, XmFONTLIST_DEFAULT_TAG);
+      xstr = XmStringCreate("% of spectrum", XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, TRUE); n++;
