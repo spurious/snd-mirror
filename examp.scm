@@ -62,7 +62,7 @@
 ;;; remove-clicks
 ;;; searching examples (zero+, next-peak, find-pitch)
 ;;; sound-data->list
-;;; file->vct and a sort of cue-list, I think
+;;; file->vct and a sort of cue-list, I think, and region-play-list
 
 ;;; TODO: decide how to handle the CLM examples
 ;;; TODO: robust pitch tracker
@@ -2767,3 +2767,16 @@ read, even if not playing.  'files' is a list of files to be played."
 
 ;(add-notes '(("oboe.snd") ("pistol.snd" 1.0 2.0)))
 
+;;; or maybe "cue-list" means something like this:
+
+(define (region-play-list data)
+  ;; data is list of lists (list (list time reg)...), time in secs
+  (for-each
+   (lambda (tone)
+     (let ((time (* 1000 (car tone)))
+	   (region (cadr tone)))
+       (if (region? region)
+	   (in time (lambda () (play-region region))))))
+   data))
+
+;(region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0 2) (list 1.0 0)))

@@ -1966,3 +1966,4 @@ void start_progress_report(snd_info *sp, int from_enved)
     snd_file_glasses_icon(sp, TRUE, 0);
 }
 
+void g_init_gxsnd(void) {}

@@ -441,7 +441,7 @@ void start_progress_report(snd_info *sp, int from_enved);
 void finish_progress_report(snd_info *sp, int from_enved);
 void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, int from_enved);
 void set_apply_button(snd_info *sp, int val);
-
+void g_init_gxsnd(void);
 
 
 /* -------- snd-gmix.c -------- */

@@ -262,6 +262,7 @@ static int ikeyarg (XEN key, char *caller, int n, int def)
 #define S_spectrum               "spectrum"
 #define S_convolution            "convolution"
 #define S_rectangular2polar      "rectangular->polar"
+#define S_polar2rectangular      "polar->rectangular"
 #define S_array_interp           "array-interp"
 #define S_sum_of_sines           "sum-of-sines"
 
@@ -393,6 +394,8 @@ static XEN g_sum_of_sines(XEN amps, XEN phases)
 			  phases));
 }
 
+enum {G_MULTIPLY_ARRAYS, G_RECTANGULAR_POLAR, G_POLAR_RECTANGULAR};
+
 static XEN g_fft_window_1(char *caller, int choice, XEN val1, XEN val2, XEN ulen) 
 {
   vct *v1, *v2;
@@ -411,16 +414,19 @@ static XEN g_fft_window_1(char *caller, int choice, XEN val1, XEN val2, XEN ulen
       len = v1->length;
       if (v2->length < len) len = v2->length;
     }
-  if (choice)
-    mus_multiply_arrays(v1->data, v2->data, len);
-  else mus_rectangular2polar(v1->data, v2->data, len);
+  switch (choice)
+    {
+    case G_MULTIPLY_ARRAYS: mus_multiply_arrays(v1->data, v2->data, len); break;
+    case G_RECTANGULAR_POLAR: mus_rectangular2polar(v1->data, v2->data, len); break;
+    case G_POLAR_RECTANGULAR: mus_polar2rectangular(v1->data, v2->data, len); break;
+    }
   return(xen_return_first(val1, val2));
 }
 
 static XEN g_multiply_arrays(XEN val1, XEN val2, XEN len) 
 {
   #define H_multiply_arrays "(" S_multiply_arrays " v1 v2 &optional len) -> (vcts) v1[i] *= v2[i]"
-  return(g_fft_window_1(S_multiply_arrays, TRUE, val1, val2, len));
+  return(g_fft_window_1(S_multiply_arrays, G_MULTIPLY_ARRAYS, val1, val2, len));
 }
 
 static XEN g_rectangular2polar(XEN val1, XEN val2) 
@@ -428,7 +434,15 @@ static XEN g_rectangular2polar(XEN val1, XEN val2)
   #define H_rectangular2polar "(" S_rectangular2polar " rl im) converts real/imaginary \
 data in (vcts) rl and im from rectangular form (fft output) to polar form (a spectrum)"
 
-  return(g_fft_window_1(S_rectangular2polar, FALSE, val1, val2, XEN_UNDEFINED));
+  return(g_fft_window_1(S_rectangular2polar, G_RECTANGULAR_POLAR, val1, val2, XEN_UNDEFINED));
+}
+
+static XEN g_polar2rectangular(XEN val1, XEN val2) 
+{
+  #define H_polar2rectangular "(" S_polar2rectangular " rl im) converts real/imaginary \
+data in (vcts) rl and im from polar form (spectrum) to rectangular form (fft-style)"
+
+  return(g_fft_window_1(S_polar2rectangular, G_POLAR_RECTANGULAR, val1, val2, XEN_UNDEFINED));
 }
 
 static XEN g_mus_fft(XEN url, XEN uim, XEN len, XEN usign)
@@ -4558,6 +4572,7 @@ XEN_ARGIFY_4(g_mus_fft_w, g_mus_fft)
 XEN_ARGIFY_5(g_spectrum_w, g_spectrum)
 XEN_ARGIFY_3(g_convolution_w, g_convolution)
 XEN_NARGIFY_2(g_rectangular2polar_w, g_rectangular2polar)
+XEN_NARGIFY_2(g_polar2rectangular_w, g_polar2rectangular)
 XEN_ARGIFY_3(g_array_interp_w, g_array_interp)
 XEN_NARGIFY_2(g_sum_of_sines_w, g_sum_of_sines)
 XEN_NARGIFY_1(g_inspect_w, g_inspect)
@@ -4815,6 +4830,7 @@ XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 #define g_spectrum_w g_spectrum
 #define g_convolution_w g_convolution
 #define g_rectangular2polar_w g_rectangular2polar
+#define g_polar2rectangular_w g_polar2rectangular
 #define g_array_interp_w g_array_interp
 #define g_sum_of_sines_w g_sum_of_sines
 #define g_inspect_w g_inspect
@@ -5104,6 +5120,7 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_spectrum,             g_spectrum_w, 3, 2, 0,             H_mus_spectrum); 
   XEN_DEFINE_PROCEDURE(S_convolution,          g_convolution_w, 2, 1, 0,          H_mus_convolution);
   XEN_DEFINE_PROCEDURE(S_rectangular2polar,    g_rectangular2polar_w, 2, 0, 0,    H_rectangular2polar);
+  XEN_DEFINE_PROCEDURE(S_polar2rectangular,    g_polar2rectangular_w, 2, 0, 0,    H_polar2rectangular);
   XEN_DEFINE_PROCEDURE(S_array_interp,         g_array_interp_w, 2, 1, 0,         H_array_interp);
   XEN_DEFINE_PROCEDURE(S_sum_of_sines,         g_sum_of_sines_w, 2, 0, 0,         H_sum_of_sines);
 

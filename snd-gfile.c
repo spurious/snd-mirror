@@ -1448,6 +1448,8 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
 
 /* -------- mix file dialog -------- */
 
+/* TODO: merge mix dialog with open as in motif */
+
 static GtkWidget *file_mix_dialog = NULL;
 
 static void file_mix_cancel_callback(GtkWidget *w, gpointer context)

@@ -434,4 +434,51 @@
       (* scaler (apply + (map (lambda (c) (comb c x)) combs))))))
 
 
+;;; -------- zero-phase, rotate-phase
+;;; fft games (from the "phazor" package of Scott McNab 
+
+(define (zero-phase)
+  (let* ((len (frames))
+	 (pow2 (ceiling (/ (log len) (log 2))))
+	 (fftlen (inexact->exact (expt 2 pow2)))
+	 (fftscale (/ 1.0 fftlen))
+	 (rl (samples->vct 0 fftlen))
+	 (old-pk (vct-peak rl))
+	 (im (make-vct fftlen)))
+    (fft rl im 1)
+    (rectangular->polar rl im)
+    (vct-scale! rl fftscale)
+    (vct-scale! im 0.0)
+    (fft rl im -1)
+    (let ((pk (vct-peak rl)))
+      (vct->samples 0 len (vct-scale! rl (/ old-pk pk))))))
+
+(define (rotate-phase func)
+  (let* ((len (frames))
+	 (pow2 (ceiling (/ (log len) (log 2))))
+	 (fftlen (inexact->exact (expt 2 pow2)))
+	 (fftlen2 (inexact->exact (/ fftlen 2)))
+	 (fftscale (/ 1.0 fftlen))
+	 (rl (samples->vct 0 fftlen))
+	 (old-pk (vct-peak rl))
+	 (im (make-vct fftlen)))
+    (fft rl im 1)
+    (rectangular->polar rl im)
+    (vct-scale! rl fftscale)
+    (vct-set! im 0 0.0)
+    (do ((i 1 (1+ i))
+	 (j (1- fftlen) (1- j)))
+	((= i fftlen2))
+      ;; rotate the fft vector by func, keeping imaginary part complex conjgate of real
+      (vct-set! im i (func (vct-ref im i)))
+      (vct-set! im j (- (vct-ref im i))))
+    (polar->rectangular rl im)
+    (fft rl im -1)
+    (let ((pk (vct-peak rl)))
+      (vct->samples 0 len (vct-scale! rl (/ old-pk pk))))))
+
+;(rotate-phase (lambda (x) 0.0)) is the same as (zero-phase)
+;(rotate-phase (lambda (x) (random 3.1415))) randomizes phases
+;(rotate-phase (lambda (x) x) returns original
+;(rotate-phase (lambda (x) (- x))) reverses original (might want to write fftlen samps here)
 

@@ -1367,7 +1367,7 @@ static void Close_Sound_Dialog(Widget w, XtPointer context, XtPointer info)
   if (sp) snd_close_file(sp, sp->state);
 } 
 
-snd_info *add_sound_window (char *filename, snd_state *ss, int read_only)
+static snd_info *add_sound_window_with_parent (Widget parent, char *filename, snd_state *ss, int read_only)
 {  
   snd_info *sp = NULL, *osp;
   file_info *hdr = NULL;
@@ -1440,7 +1440,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss, int read_only)
     {
       need_colors = (!(ss->using_schemes));
 
-      if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
+      if ((parent == NULL) && (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS))
 	{
 	  title = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
 	  mus_snprintf(title, PRINT_BUFFER_SIZE, "%d: %s", snd_slot, sp->short_filename);
@@ -1482,15 +1482,20 @@ snd_info *add_sound_window (char *filename, snd_state *ss, int read_only)
       /* this doesn't work yet because the control panel is screwed up when trying to display itself horizontally */
       /* Perhaps another layer of panes? */
 
-      if (sound_style(ss) == SOUNDS_VERTICAL)
-	if (ss->listening) 
-	  {
-	    XtSetArg(args[n], XmNpositionIndex, snd_slot); n++;
-	  }
+      if ((sound_style(ss) == SOUNDS_VERTICAL) &&
+	  (ss->listening))
+	{
+	  XtSetArg(args[n], XmNpositionIndex, snd_slot); n++;
+	}
 
-      if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
-	sw[W_pane] = sndCreatePanedWindowWidget("snd-pane", sx->dialog, args, n);
-      else sw[W_pane] = sndCreatePanedWindowWidget("snd-pane", SOUND_PANE(ss), args, n);
+      if (parent)
+	sw[W_pane] = sndCreatePanedWindowWidget("snd-pane", parent, args, n);
+      else
+	{
+	  if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
+	    sw[W_pane] = sndCreatePanedWindowWidget("snd-pane", sx->dialog, args, n);
+	  else sw[W_pane] = sndCreatePanedWindowWidget("snd-pane", SOUND_PANE(ss), args, n);
+	}
       /* it would be better if we could set a paned window to keep its children relative
        *   amounts the same upon outside resize, but the Paned Window widget doesn't
        *   have a resize callback, and no obvious way to advise the resize mechanism.
@@ -2541,6 +2546,11 @@ snd_info *add_sound_window (char *filename, snd_state *ss, int read_only)
   return(sp);
 }
 
+snd_info *add_sound_window (char *filename, snd_state *ss, int read_only)
+{
+  return(add_sound_window_with_parent(NULL, filename, ss, read_only));
+}
+
 void snd_info_cleanup(snd_info *sp)
 {
   snd_context *sx;
@@ -2962,4 +2972,29 @@ void start_progress_report(snd_info *sp, int from_enved)
       FREE(expr_str);
     }
 #endif
+}
+
+static XEN g_add_sound_window (XEN parent, XEN filename, XEN read_only)
+{
+  /* an experiment via snd-motif.scm / xm.c */
+  snd_info *sp;
+  snd_state *ss;
+  ss = get_global_state();
+  sp = add_sound_window_with_parent((Widget)(XEN_TO_C_ULONG(parent)), 
+				    XEN_TO_C_STRING(filename), 
+				    ss,
+				    XEN_TO_C_BOOLEAN_OR_TRUE(read_only));
+  if (sp)
+    {
+      sp->write_date = file_write_date(sp->filename);
+      sp->need_update = 0;
+      ss->active_sounds++; /* ?? */
+      return(C_TO_XEN_INT(sp->index));
+    }
+  else return(XEN_FALSE);
+}
+
+void g_init_gxsnd(void)
+{
+  XEN_DEFINE_PROCEDURE("create-sound-window", g_add_sound_window, 2, 1, 0, "add a sound window to a widget");
 }

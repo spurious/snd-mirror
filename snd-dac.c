@@ -1244,24 +1244,6 @@ static void free_dac_state(void)
     }
 }
 
-static char *describe_dac(int error_type)
-{
-  /* TODO: pass back the relevant dac state given the error indication */
-  int players = 0, i;
-  dac_info *ptr = NULL;
-  for (i = 0; i < dac_max_sounds; i++) 
-    if (play_list[i]) 
-      {
-	ptr = play_list[i]; 
-	players++;
-      }
-  if ((players == 1) && 
-      (ptr->sp))
-    return(ptr->sp->short_filename);
-  return("");
-}
-
-
 static BACKGROUND_TYPE dac_in_background(GUI_POINTER ptr);
 
 static void start_dac(snd_state *ss, int srate, int channels, int background)
@@ -1463,7 +1445,8 @@ void play_selection(int background, XEN edpos, const char *caller, int arg_pos)
 	    {
 	      sp = si->cps[i]->sound;
 	      if ((sp) && (sp->speed_control != 1.0) && (sp->speed_control > 0.0))
-		ends[i] = si->begs[i] + (int)(((Float)selection_len() / (Float)(sp->speed_control))); /* TODO this should use the src->sample counter instead */
+		ends[i] = si->begs[i] + (int)(((Float)selection_len() / (Float)(sp->speed_control)));
+	      /* user might move speed control while playing selection, so ideally we'd watch dp->chn_fd here */
 	      else ends[i] = si->begs[i] + selection_len();
 	    }
 	  play_channels(si->cps, si->chans, si->begs, ends, background, edpos, caller, arg_pos, TRUE);
@@ -1859,6 +1842,23 @@ static void set_dac_print(void)
 static void unset_dac_print(void)
 {
   mus_print_set_handler(old_dac_printer);
+}
+
+static char *describe_dac(int error_type)
+{
+  /* this is only called in dac_error and only then upon a failed mus_audio_open_output */
+  int players = 0, i;
+  dac_info *ptr = NULL;
+  for (i = 0; i < dac_max_sounds; i++) 
+    if (play_list[i]) 
+      {
+	ptr = play_list[i]; 
+	players++;
+      }
+  if ((players == 1) && 
+      (ptr->sp))
+    return(ptr->sp->short_filename);
+  return("");
 }
 
 static void dac_error(const char *file, int line, const char *function)

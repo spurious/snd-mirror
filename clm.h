@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 1
-#define MUS_REVISION 51
-#define MUS_DATE "6-July-01"
+#define MUS_REVISION 52
+#define MUS_DATE "1-Sep-01"
 
 /* 
+ * 1-Sep:      mus_polar2rectangular.
  * 6-July:     scm -> xen.
  * 26-May:     mus_rand_seed.
  * 22-May:     locsig reverb distance calc was upside down.
@@ -220,6 +221,7 @@ void mus_clear_array            PROTO((Float *arr, int size));
 Float mus_polynomial            PROTO((Float *coeffs, Float x, int ncoeffs));
 void mus_multiply_arrays        PROTO((Float *data, Float *window, int len));
 void mus_rectangular2polar      PROTO((Float *rl, Float *im, int size));
+void mus_polar2rectangular      PROTO((Float *rl, Float *im, int size));
 Float mus_array_interp          PROTO((Float *wave, Float phase, int size));
 
 int mus_free                    PROTO((mus_any *ptr));

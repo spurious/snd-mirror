@@ -316,6 +316,9 @@
   (let* ((every-menu (list |XmNbackground (|Pixel (snd-pixel (highlight-color)))))
 	 (fft-popup (|XmCreatePopupMenu (|Widget (caddr (main-widgets))) "fft-popup"
 		       (append (list |XmNpopupEnabled #t) every-menu))))
+
+    (define (choose-chan)
+      (if (= (channel-style graph-popup-snd) channels-separate) graph-popup-chn #t))
     
     (|XtCreateManagedWidget "Transform" |xmLabelWidgetClass fft-popup every-menu)
     (|XtCreateManagedWidget "sep" |xmSeparatorWidgetClass fft-popup every-menu)
@@ -323,31 +326,31 @@
     (let ((peaks (|XtCreateManagedWidget "Peaks" |xmPushButtonWidgetClass fft-popup every-menu)))
       (|XtAddCallback peaks |XmNactivateCallback
          (lambda (w c i)
-	   (set! (show-transform-peaks graph-popup-snd graph-popup-chn) (not (show-transform-peaks graph-popup-snd graph-popup-chn))))))
+	   (set! (show-transform-peaks graph-popup-snd (choose-chan)) (not (show-transform-peaks graph-popup-snd graph-popup-chn))))))
 
     (let ((db (|XtCreateManagedWidget "dB" |xmPushButtonWidgetClass fft-popup every-menu)))
       (|XtAddCallback db |XmNactivateCallback
          (lambda (w c i)
-	   (set! (fft-log-magnitude graph-popup-snd graph-popup-chn) (not (fft-log-magnitude graph-popup-snd graph-popup-chn))))))
+	   (set! (fft-log-magnitude graph-popup-snd (choose-chan)) (not (fft-log-magnitude graph-popup-snd graph-popup-chn))))))
 
     (let ((logfreq (|XtCreateManagedWidget "Log freq" |xmPushButtonWidgetClass fft-popup every-menu)))
       (|XtAddCallback logfreq |XmNactivateCallback
          (lambda (w c i)
-	   (set! (fft-log-frequency graph-popup-snd graph-popup-chn) (not (fft-log-frequency graph-popup-snd graph-popup-chn))))))
+	   (set! (fft-log-frequency graph-popup-snd (choose-chan)) (not (fft-log-frequency graph-popup-snd graph-popup-chn))))))
 
     (let ((norm (|XtCreateManagedWidget "Normalize" |xmPushButtonWidgetClass fft-popup every-menu)))
       (|XtAddCallback norm |XmNactivateCallback
          (lambda (w c i)
 	   (if (= (transform-normalization graph-popup-snd graph-popup-chn) dont-normalize-transform)
-	       (set! (transform-normalization graph-popup-snd graph-popup-chn) normalize-transform-by-channel)
-	       (set! (transform-normalization graph-popup-snd graph-popup-chn) dont-normalize-transform)))))
+	       (set! (transform-normalization graph-popup-snd (choose-chan)) normalize-transform-by-channel)
+	       (set! (transform-normalization graph-popup-snd (choose-chan)) dont-normalize-transform)))))
 
     (make-simple-popdown-menu 
      "Graph type" 
      (map (lambda (name val)
 		  (list name
 			(lambda (w c i) 
-			  (set! (transform-graph-type graph-popup-snd graph-popup-chn) val))))
+			  (set! (transform-graph-type graph-popup-snd (choose-chan)) val))))
 		(list "once" "sonogram" "spectrogram")
 		(list graph-transform-once graph-transform-as-sonogram graph-transform-as-spectrogram))
      fft-popup 
@@ -366,7 +369,7 @@
        (map (lambda (name val)
 	      (list name
 		    (lambda (w c i) 
-		      (set! (transform-size graph-popup-snd graph-popup-chn) val))))
+		      (set! (transform-size graph-popup-snd (choose-chan)) val))))
 	    (map (lambda (n) (number->string n)) sizes)
 	    sizes)
      fft-popup
@@ -385,7 +388,7 @@
        (map (lambda (name val)
 	      (list name
 		    (lambda (w c i) 
-		      (set! (fft-window graph-popup-snd graph-popup-chn) val))))
+		      (set! (fft-window graph-popup-snd (choose-chan)) val))))
 	    (list "Rectangular" "Hann" "Welch" "Parzen" "Bartlett" "Hamming" "Blackman2" "Blackman3" "Blackman4"
 		  "Exponential" "Riemann" "Kaiser" "Cauchy" "Poisson" "Gaussian" "Tukey" "Dolph-Chebyshev")
 	    windows)
@@ -404,7 +407,7 @@
        (map (lambda (name val)
 	      (list name 
 		    (lambda (w c i)
-		      (set! (transform-type graph-popup-snd graph-popup-chn) val))))
+		      (set! (transform-type graph-popup-snd (choose-chan)) val))))
 	    (list "Fourier" "Wavelet" "Autocorrelate" "Cepstrum" "Hankel" "Walsh" "Chebychev" "Hadamard" "Haar")
 	    types)
        fft-popup 
@@ -422,7 +425,7 @@
 	      (set! ctr (+ ctr 1))
 	      (list name 
 		    (lambda (w c i)
-		      (set! (wavelet-type graph-popup-snd graph-popup-chn) ctr))))
+		      (set! (wavelet-type graph-popup-snd (choose-chan)) ctr))))
 	    (list "daub4" "daub6" "daub8" "daub10" "daub12" "daub14" "daub16" "daub18" "daub20" "battle_lemarie" 
 		  "burt_adelson" "beylkin" "coif2" "coif4" "coif6" "sym2" "sym3" "sym4" "sym5" "sym6")))
      fft-popup 

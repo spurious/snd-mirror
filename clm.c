@@ -496,10 +496,22 @@ void mus_rectangular2polar(Float *rl, Float *im, int size)
   for (i = 0; i < size; i++)
     {
       temp = rl[i] * rl[i] + im[i] * im[i];
-      im[i] = -atan2(im[i], rl[i]);
+      im[i] = -atan2(im[i], rl[i]); /* "-" here so that clockwise is positive? */
       if (temp < .0000001) 
 	rl[i] = 0.0;
       else rl[i] = sqrt(temp);
+    }
+}
+
+void mus_polar2rectangular(Float *rl, Float *im, int size) 
+{
+  int i; 
+  Float temp;
+  for (i = 0; i < size; i++)
+    {
+      temp = rl[i] * sin(-im[i]); /* minus to match sense of above */
+      rl[i] *= cos(-im[i]);
+      im[i] = temp;
     }
 }
 

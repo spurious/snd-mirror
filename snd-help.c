@@ -255,6 +255,8 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+1-Sep:   zero-phase, rotate-phase in dsp.scm (Scott McNab).\n\
+         region-play-list in examp.scm.\n\
 31-Aug:  Snd 5.2.\n\
 29-Aug:  added edit-menu.scm and merged in Dave Phillips changes for effects.scm.\n\
 28-Aug:  after-apply-hook, before-apply-hook.\n\
@@ -281,11 +283,6 @@ void news_help(snd_state *ss)
 2-Aug:   mark-hook and add-mark-pane in snd-motif.scm.\n\
 1-Aug:   region browser display bugfix (thanks to Dave Phillips).\n\
          check-for-unsaved-edits in extensions.scm.\n\
-28-Jul:  removed set-pixmap, make-pixmap (see snd-motif.scm replacement).\n\
-27-Jul:  zync/unzync, make-hidden-controls-dialog in snd-motif.scm.\n\
-26-Jul:  added 'play selected sound' button to open file dialog.\n\
-         previous-files-select-hook, open-file-dialog, install-searcher (grfsnd.html).\n\
-         snd-motif.scm.\n\
 ",
 NULL);
   FREE(info);

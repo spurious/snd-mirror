@@ -251,6 +251,7 @@ the cursor is moved to the clicked point.
     <li>"adaptive saturation"
     <li>spike effect
     <li>easily-fooled autocorrelation-based pitch tracker 
+    <li>zero-phase, rotate-phase
   </ul>
 
 <p>These are DSP-related procedures that aren't closely tied to CLM.
@@ -272,6 +273,7 @@ the cursor is moved to the clicked point.
   <em class=def><a name="excomputeuniformcircularstring">compute-uniform-circular-string</a></em> size x0 x1 x2 mass xspring damp
   <em class=def><A NAME="excomputestring">compute-string</a></em>size x0 x1 x2 masses xsprings esprings damps haptics
   <em class=def><A NAME="exppitcher">spot-freq</a></em>
+  <em class=def><A NAME="zerophase">zero-phase, rotate-phase</a></em>
 </pre>
 
 <p><i>dolph</i> is the Dolph-Chebychev fft data window, taken
@@ -324,6 +326,10 @@ The code:
 <p>is using Xavier Serra's interpolation technique to find the "true" location
 of the autocorrelation peak.  The <i>cor-peak</i> business is making sure the
 log10 arguments fall between 0.0 and 1.0.
+</p>
+
+<p><i>zero-phase</i> and <i>rotate-phase</i> are fft-manipulators taken from
+the phazor package of Scott McNab.
 </p>
 
 

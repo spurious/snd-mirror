@@ -160,6 +160,7 @@ The LADSPA support is thanks to Richard W.E. Furse.
 The ESD support is thanks to Nick Bailey.
 The BSD port is thanks to Steven Schultz.
 The Mac-OSX port is thanks to Ludger Brummer.
+effects.scm is largely thanks to Dave Phillips.
 
 
 ----------------------------------------------------------------
@@ -446,6 +447,7 @@ Snd:
 
 Motif:
   http://www.opengroup.org/openmotif/
+  http://www.motifzone.com
 
 Gtk+:
   http://www.gtk.org

@@ -442,6 +442,7 @@ void start_progress_report(snd_info *sp, int from_enved);
 void finish_progress_report(snd_info *sp, int from_enved);
 void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, int from_enved);
 XmString initial_speed_label(snd_state *ss);
+void g_init_gxsnd(void);
 
 
 /* -------- snd-xfile.c -------- */
