@@ -1,19 +1,16 @@
 #include "snd.h"
 
-/* TODO: need transparent backgrounds */
-
 #if (HAVE_XPM) || (USE_GTK)
 
 /* -------------------------------- SOUND ICONS (lock, bomb) -------------------------------- */
 
 static char *mini_lock_xpm[] = {
-"16 14 6 1",
-" 	c None s None",
+"16 14 5 1",
+"-      c None s None",
 ".	c gray50",
 "X	c black",
 "o	c white",
 "O	c yellow",
-"-      c ivory2 s basiccolor",
 "------.XXX.-----",
 "-----X.ooo.X----",
 "----..oXXXo..---",
@@ -32,13 +29,12 @@ static char *mini_lock_xpm[] = {
 char **mini_lock_bits(void) {return(mini_lock_xpm);}
 
 static char *blank_xpm[] = {
-"16 14 6 1",
-" 	c None s None",
+"16 14 5 1",
+"-      c None s None",
 ".	c gray50",
 "X	c black",
 "o	c white",
 "O	c yellow",
-"-      c ivory2 s basiccolor",
 "----------------",
 "----------------",
 "----------------",
@@ -57,13 +53,12 @@ static char *blank_xpm[] = {
 char **blank_bits(void) {return(blank_xpm);}
 
 static char *speed_l_xpm[] = {
-"16 12 6 1",
-" 	c None s None",
+"16 12 5 1",
+"-      c None s None",
 ".	c gray50",
 "X	c black",
 "o	c white",
 "O	c yellow",
-"-      c ivory2 s basiccolor",
 "-----X------------",
 "----X----X--------",
 "---X--------------",
@@ -80,13 +75,12 @@ static char *speed_l_xpm[] = {
 char **speed_l_bits(void) {return(speed_l_xpm);}
 
 static char * speed_r_xpm[] = {
-"16 12 6 1",
-" 	c None s None",
+"16 12 5 1",
+"-      c None s None",
 ".	c gray50",
 "X	c black",
 "o	c white",
 "O	c yellow",
-"-      c ivory2 s basiccolor",
 "--------X---------",
 "----X----X--------",
 "----------X-------",
@@ -105,77 +99,77 @@ char **speed_r_bits(void) {return(speed_r_xpm);}
 /* bomb for out-of-date in-core data fuse shortens with sparks flying off; */
 
 static char * mini_bomb0_xpm[] = {
-"16 14 8 1"," 	c None s None",".	c black","X	c gray50","o	c gray85","O	c red","#	c white","-      c ivory2 s basiccolor","Y      c yellow",
+"16 14 7 1","-      c None s None",".	c black","X	c gray50","o	c gray85","O	c red","#	c white","Y      c yellow",
 "-------...------","------.---.-----","-----.-----.----","----...-----.---","---.....----.---","--.X#o...----.--","-X.#X....X---.--",
 "-..oX.....---O-O","-.......O.-O-OO-","-......Xo.--OOO-","-X.....X.X--O---","--.......-------","---X...X--------","----------------"};
 
 static char * mini_bomb1_xpm[] = {
-"16 14 8 1"," 	c None s None",".	c black","X	c gray50","o	c gray85","O	c red","#	c white","-      c ivory2 s basiccolor","Y      c yellow",
+"16 14 7 1","-      c None s None",".	c black","X	c gray50","o	c gray85","O	c red","#	c white","Y      c yellow",
 "-------...------","------.---.-----","-----.-----.----","----...-----.---","---.....----.---","--.X#o...----.--","-X.#X....X---Y--",
 "-..oX.....---YYY","-.......O.-YYOOY","-......Xo.--OOY-","-X.....X.X--Y---","--.......-------","---X...X--------","----------------"};
 
 static char * mini_bomb2_xpm[] = {
-"16 14 8 1"," 	c None s None",".	c black","X	c gray50","o	c gray85","O	c red","#	c white","-      c ivory2 s basiccolor","Y      c yellow",
+"16 14 7 1","-      c None s None",".	c black","X	c gray50","o	c gray85","O	c red","#	c white","Y      c yellow",
 "-------...------","------.---.-----","-----.-----.----","----...-----.---","---.....----.---","--.X#o...----Y--","-X.#X....X---YY-",
 "-..oX.....---OYO","-.......O.--O-OO","-......Xo.--Y-Y-","-X.....X.X------","--.......----Y--","---X...X--------","----------------"};
 
 static char * mini_bomb3_xpm[] = {
-"16 14 8 1"," 	c None s None",".	c black","X	c gray50","o	c gray85","O	c red","#	c white","-      c ivory2 s basiccolor","Y      c yellow",
+"16 14 7 1","-      c None s None",".	c black","X	c gray50","o	c gray85","O	c red","#	c white","Y      c yellow",
 "-------...------","------.---.-----","-----.-----.----","----...-----.---","---.....----.---","--.X#o...----Y--","-X.#X....X---OO-",
 "-..oX.....-YYYYO","-.......O.----O-","-......Xo.----O-","-X.....X.X----Y-","--.......-------","---X...X--------","------------YY--"};
 
 static char * mini_bomb4_xpm[] = {
-"16 14 8 1"," 	c None s None",".	c black","X	c gray50","o	c gray85","O	c red","#	c white","-      c ivory2 s basiccolor","Y      c yellow",
+"16 14 7 1","-      c None s None",".	c black","X	c gray50","o	c gray85","O	c red","#	c white","Y      c yellow",
 "-------...------","------.---.-----","-----.-----.--Y-","----...-----.---","---.....----O---","--.X#o...---OO--","-X.#X....X-YOYO-",
 "-..oX.....--OYY-","-.......O.------","-......Xo.-Y----","-X.....X.X------","--.......-------","---X...X--------","----------------"};
 
 static char * mini_bomb5_xpm[] = {
-"16 14 8 1"," 	c None s None",".	c black","X	c gray50","o	c gray85","O	c red","#	c white","-      c ivory2 s basiccolor","Y      c yellow",
+"16 14 7 1","-      c None s None",".	c black","X	c gray50","o	c gray85","O	c red","#	c white","Y      c yellow",
 "-------...------","------.---.-----","-----.-----.----","----...-----Y---","---.....----OO--","--.X#o...--OOO--","-X.#X....X---YO-",
 "-..oX.....---YY-","-.......O.-----Y","-......Xo.-----O","-X.....X.X------","--.......-------","---X...X--------","----------------"};
 
 static char * mini_bomb6_xpm[] = {
-"16 14 8 1"," 	c None s None",".	c black","X	c gray50","o	c gray85","O	c red","#	c white","-      c ivory2 s basiccolor","Y      c yellow",
+"16 14 7 1","-      c None s None",".	c black","X	c gray50","o	c gray85","O	c red","#	c white","Y      c yellow",
 "-------...------","------.---.-----","-----.-----OO-O-","----...-----YO--","---.....----O---","--.X#o...-YY-OO-","-X.#X....X--Y---",
 "-..oX.....------","-.......O.------","-......Xo.------","-X.....X.X------","--.......-----OO","---X...X------Y-","----------------"};
 
 static char * mini_bomb7_xpm[] = {
-"16 14 8 1"," 	c None s None",".	c black","X	c gray50","o	c gray85","O	c red","#	c white","-      c ivory2 s basiccolor","Y      c yellow",
+"16 14 7 1","-      c None s None",".	c black","X	c gray50","o	c gray85","O	c red","#	c white","Y      c yellow",
 "-------...----OO","------.---O-----","-----.-----OOYY-","----...-----YOO-","---.....-YY-O---","--.X#o...-------","-X.#X....X--YO--",
 "-..oX.....---Y--","-.......O.------","-......Xo.------","-X.....X.X------","--.......-------","---X...X--------","--------------YY"};
 
 static char * mini_bomb8_xpm[] = {
-"16 14 8 1"," 	c None s None",".	c black","X	c gray50","o	c gray85","O	c red","#	c white","-      c ivory2 s basiccolor","Y      c yellow",
+"16 14 7 1","-      c None s None",".	c black","X	c gray50","o	c gray85","O	c red","#	c white","Y      c yellow",
 "-------..Y------","------.--OO-----","-----.----OOO-Y-","----...---OO--O-","---.....-YY----O","--.X#o...-------","-X.#X....X------",
 "-..oX.....--YO--","-.......O.---O--","-......Xo.------","-X.....X.X------","--.......-------","---X...X--------","----------------"};
 
 static char * mini_bomb9_xpm[] = {
-"16 14 8 1"," 	c None s None",".	c black","X	c gray50","o	c gray85","O	c red","#	c white","-      c ivory2 s basiccolor","Y      c yellow",
+"16 14 7 1","-      c None s None",".	c black","X	c gray50","o	c gray85","O	c red","#	c white","Y      c yellow",
 "-------YOY--O---","------.---YO----","-----.----OYY---","----...---------","---.....----YY--","--.X#o...-------","-X.#X....X------",
 "-..oX.....------","-.......O.--YO--","-......Xo.---Y--","-X.....X.X------","--.......-------","---X...X--------","----------------"};
 
 static char * mini_bomb10_xpm[] = {
-"16 14 8 1"," 	c None s None",".	c black","X	c gray50","o	c gray85","O	c red","#	c white","-      c ivory2 s basiccolor","Y      c yellow",
+"16 14 7 1","-      c None s None",".	c black","X	c gray50","o	c gray85","O	c red","#	c white","Y      c yellow",
 "-----OYYOYOO----","-----YOO--YO----","-----.-----YY---","----...---------","---.....--------","--.X#o...----OO-","-X.#X....X---Y--",
 "-..oX.....------","-.......O.------","-......Xo.------","-X.....X.X------","--.......-------","---X...X--------","----------------"};
 
 static char * mini_bomb11_xpm[] = {
-"16 14 8 1"," 	c None s None",".	c black","X	c gray50","o	c gray85","O	c red","#	c white","-      c ivory2 s basiccolor","Y      c yellow",
+"16 14 7 1","-      c None s None",".	c black","X	c gray50","o	c gray85","O	c red","#	c white","Y      c yellow",
 "-----OOYOO--O---","----OOY----O----","---OOOO---------","----...---------","---.....--------","--.X#o...-------","-X.#X....X------",
 "-..oX.....------","-.......O.------","-......Xo.------","-X.....X.X------","--.......---OO--","---X...X--------","----------------"};
 
 static char * mini_bomb12_xpm[] = {
-"16 14 8 1"," 	c None s None",".	c black","X	c gray50","o	c gray85","O	c red","#	c white","-      c ivory2 s basiccolor","Y      c yellow",
+"16 14 7 1","-      c None s None",".	c black","X	c gray50","o	c gray85","O	c red","#	c white","Y      c yellow",
 "-----OO---------","--YYOOYYY-------","YYOOOOYYYY------","--OOOOO---------","---.....--------","--.X#o...-------","-X.#X....X------",
 "-..oX.....------","-.......O.------","-......Xo.------","-X.....X.X------","--.......-------","---X...X--------","------------YY--"};
 
 static char * mini_bomb13_xpm[] = {
-"16 14 8 1"," 	c None s None",".	c black","X	c gray50","o	c gray85","O	c red","#	c white","-      c ivory2 s basiccolor","Y      c yellow",
+"16 14 7 1","-      c None s None",".	c black","X	c gray50","o	c gray85","O	c red","#	c white","Y      c yellow",
 "----------------","----OOY---------","--YYYYY-Y-------","--Y-OOO---------","---.YOY.--------","--.X#o...-------","-X.#X....X------",
 "-..oX.....------","-.......O.------","-......Xo.------","-X.....X.X------","--.......-------","---X...X--------","----------------"};
 
 static char * mini_bomb14_xpm[] = {
-"16 14 8 1"," 	c None s None",".	c black","X	c gray50","o	c gray85","O	c red","#	c white","-      c ivory2 s basiccolor","Y      c yellow",
+"16 14 7 1","-      c None s None",".	c black","X	c gray50","o	c gray85","O	c red","#	c white","Y      c yellow",
 "----------------","----------------","----------------","----------------","---.....--------","--.X#o...-------","-X.#X....X------",
 "-..oX.....------","-.......O.------","-......Xo.------","-X.....X.X------","--.......-------","---X...X--------","----------------"};
 
@@ -203,63 +197,63 @@ char **mini_bomb_bits(int n)
 }
 
 
-static char * mini_glass0_xpm[] = {"16 14 6 1",". 	c ivory4","c	c gray50","X	c black","o	c white","O	c tan","-      c ivory2 s basiccolor",
+static char * mini_glass0_xpm[] = {"16 14 6 1","-      c None s None",". 	c ivory4","c	c gray50","X	c black","o	c white","O	c tan",
 "-XXXXXXXXXXXXXX-","-c.OOOOOOOOOO.c-","-.cOOOOOOOOOOc.-","--cOOOOOOOOOOc--","----cOOOOOOc----","-----.cOOc.-----","-------cc-------",
 "-----.cooc.-----","----cooooooc----","---cooooooooc---","--cooooooooooc--","-.cooooooooooc.-","-cooooooooooooc-","-XXXXXXXXXXXXXX-"};
 
-static char * mini_glass1_xpm[] = {"16 14 6 1",". 	c ivory4","c	c gray50","X	c black","o	c white","O	c tan","-      c ivory2 s basiccolor",
+static char * mini_glass1_xpm[] = {"16 14 6 1","-      c None s None",". 	c ivory4","c	c gray50","X	c black","o	c white","O	c tan",
 "-XXXXXXXXXXXXXX-","-c.OOOOoOOOOO.c-","-.cOOOOOOOOOOc.-","--cOOOOOOOOOOc--","----cOOOOOOc----","-----.coOc.-----","-------cc-------",
 "-----.cooc.-----","----cooooooc----","---coooOooooc---","--cooooooooooc--","-.cooooooooooc.-","-coooooOooooooc-","-XXXXXXXXXXXXXX-"};
 
-static char * mini_glass2_xpm[] = {"16 14 6 1",". 	c ivory4","c	c gray50","X	c black","o	c white","O	c tan","-      c ivory2 s basiccolor",
+static char * mini_glass2_xpm[] = {"16 14 6 1","-      c None s None",". 	c ivory4","c	c gray50","X	c black","o	c white","O	c tan",
 "-XXXXXXXXXXXXXX-","-c.OOOOoooOOO.c-","-.cOOOOOOOOOOc.-","--cOOOOOOOOOOc--","----cOOOOOOc----","-----.cOoc.-----","-------cc-------",
 "-----.cooc.-----","----cooooooc----","---cooooooooc---","--cooooooooooc--","-.cooooOoooooc.-","-cooooOOOoooooc-","-XXXXXXXXXXXXXX-"};
 
-static char * mini_glass3_xpm[] = {"16 14 6 1",". 	c ivory4","c	c gray50","X	c black","o	c white","O	c tan","-      c ivory2 s basiccolor",
+static char * mini_glass3_xpm[] = {"16 14 6 1","-      c None s None",". 	c ivory4","c	c gray50","X	c black","o	c white","O	c tan",
 "-XXXXXXXXXXXXXX-","-c.OOOoooOOOO.c-","-.cOOOOooOOOOc.-","--cOOOOOOOOOOc--","----cOOOOOOc----","-----.coOc.-----","-------cc-------",
 "-----.cOoc.-----","----cooooooc----","---cooooooooc---","--cooooooooooc--","-.coooOooooooc.-","-coooOOOOoooooc-","-XXXXXXXXXXXXXX-"};
 
-static char * mini_glass4_xpm[] = {"16 14 6 1",". 	c ivory4","c	c gray50","X	c black","o	c white","O	c tan","-      c ivory2 s basiccolor",
+static char * mini_glass4_xpm[] = {"16 14 6 1","-      c None s None",". 	c ivory4","c	c gray50","X	c black","o	c white","O	c tan",
 "-XXXXXXXXXXXXXX-","-c.OOOooooOOO.c-","-.cOOOOoooOOOc.-","--cOOOOOoOOOOc--","----cOOoOOOc----","-----.cOOc.-----","-------cc-------",
 "-----.coOc.-----","----cooooooc----","---cooooooooc---","--cooooooooooc--","-.coooOOOooooc.-","-coooOOOOoooooc-","-XXXXXXXXXXXXXX-"};
 
-static char * mini_glass5_xpm[] = {"16 14 6 1",". 	c ivory4","c	c gray50","X	c black","o	c white","O	c tan","-      c ivory2 s basiccolor",
+static char * mini_glass5_xpm[] = {"16 14 6 1","-      c None s None",". 	c ivory4","c	c gray50","X	c black","o	c white","O	c tan",
 "-XXXXXXXXXXXXXX-","-c.OOOoooooOO.c-","-.cOOOOooooOOc.-","--cOOOOOoOOOOc--","----cOOOOOOc----","-----.cOOc.-----","-------cc-------",
 "-----.cooc.-----","----cooooooc----","---cooooooooc---","--coooOooooooc--","-.coooOOOOoooc.-","-coooOOOOOooooc-","-XXXXXXXXXXXXXX-"};
 
-static char * mini_glass6_xpm[] = {"16 14 6 1",". 	c ivory4","c	c gray50","X	c black","o	c white","O	c tan","-      c ivory2 s basiccolor",
+static char * mini_glass6_xpm[] = {"16 14 6 1","-      c None s None",". 	c ivory4","c	c gray50","X	c black","o	c white","O	c tan",
 "-XXXXXXXXXXXXXX-","-c.OOOoooooOO.c-","-.cOOOOooooOOc.-","--cOOOOoooOOOc--","----cOOOOoOc----","-----.cOOc.-----","-------cc-------",
 "-----.cOoc.-----","----coooOooc----","---cooooooooc---","--cooooooooooc--","-.coooOOOOoooc.-","-coooOOOOOOoooc-","-XXXXXXXXXXXXXX-"};
 
-static char * mini_glass7_xpm[] = {"16 14 6 1",". 	c ivory4","c	c gray50","X	c black","o	c white","O	c tan","-      c ivory2 s basiccolor",
+static char * mini_glass7_xpm[] = {"16 14 6 1","-      c None s None",". 	c ivory4","c	c gray50","X	c black","o	c white","O	c tan",
 "-XXXXXXXXXXXXXX-","-c.OOooooooOO.c-","-.cOOOoooooOOc.-","--cOOOOoOoOOOc--","----cOOoOOOc----","-----.cOOc.-----","-------cc-------",
 "-----.cooc.-----","----cooooooc----","---cooooOoooc---","--coooOOoooooc--","-.cooOOOOOoooc.-","-cooOOOOOOOoooc-","-XXXXXXXXXXXXXX-"};
 
-static char * mini_glass8_xpm[] = {"16 14 6 1",". 	c ivory4","c	c gray50","X	c black","o	c white","O	c tan","-      c ivory2 s basiccolor",
+static char * mini_glass8_xpm[] = {"16 14 6 1","-      c None s None",". 	c ivory4","c	c gray50","X	c black","o	c white","O	c tan",
 "-XXXXXXXXXXXXXX-","-c.OoooooooOO.c-","-.cOOooooooOOc.-","--cOOOooooOOOc--","----cOOOOOOc----","-----.cOOc.-----","-------cc-------",
 "-----.cooc.-----","----cooooooc----","---cooooooooc---","--coooOOOooooc--","-.cooOOOOOoooc.-","-cooOOOOOOOOOoc-","-XXXXXXXXXXXXXX-"};
 
-static char * mini_glass9_xpm[] = {"16 14 6 1",". 	c ivory4","c	c gray50","X	c black","o	c white","O	c tan","-      c ivory2 s basiccolor",
+static char * mini_glass9_xpm[] = {"16 14 6 1","-      c None s None",". 	c ivory4","c	c gray50","X	c black","o	c white","O	c tan",
 "-XXXXXXXXXXXXXX-","-c.ooooooooOO.c-","-.cOoooooooOOc.-","--cOOoooooOOOc--","----cOOoOOOc----","-----.cOOc.-----","-------cc-------",
 "-----.cooc.-----","----cooOoooc----","---cooooooooc---","--cooOOOOOOOoc--","-.coOOOOOOOOooc.-","-coOOOOOOOOOOOoc-","-XXXXXXXXXXXXXX-"};
 
-static char * mini_glass10_xpm[] = {"16 14 6 1",". 	c ivory4","c	c gray50","X	c black","o	c white","O	c tan","-      c ivory2 s basiccolor",
+static char * mini_glass10_xpm[] = {"16 14 6 1","-      c None s None",". 	c ivory4","c	c gray50","X	c black","o	c white","O	c tan",
 "-XXXXXXXXXXXXXX-","-c.oooooooooo.c-","-.cOoooooooooc.-","--cOOooooooOOc--","----cOOooOOc----","-----.coOc.-----","-------cc-------",
 "-----.cooc.-----","----cooooooc----","---cooOOOOooc---","--cooOOOOOOooc--","-.coOOOOOOOOoc.-","-cOOOOOOOOOOOoc-","-XXXXXXXXXXXXXX-"};
 
-static char * mini_glass11_xpm[] = {"16 14 6 1",". 	c ivory4","c	c gray50","X	c black","o	c white","O	c tan","-      c ivory2 s basiccolor",
+static char * mini_glass11_xpm[] = {"16 14 6 1","-      c None s None",". 	c ivory4","c	c gray50","X	c black","o	c white","O	c tan",
 "-XXXXXXXXXXXXXX-","-c.oooooooooo.c-","-.cooooooooooc.-","--cOOooooooooc--","----cOOooOOc----","-----.coOc.-----","-------cc-------",
 "-----.cooc.-----","----cooOoooc----","---cooOOOOooc---","--coOOOOOOOooc--","-.cOOOOOOOOOoc.-","-cOOOOOOOOOOOoc-","-XXXXXXXXXXXXXX-"};
 
-static char * mini_glass12_xpm[] = {"16 14 6 1",". 	c ivory4","c	c gray50","X	c black","o	c white","O	c tan","-      c ivory2 s basiccolor",
+static char * mini_glass12_xpm[] = {"16 14 6 1","-      c None s None",". 	c ivory4","c	c gray50","X	c black","o	c white","O	c tan",
 "-XXXXXXXXXXXXXX-","-c.oooooooooo.c-","-.cooooooooooc.-","--cooooooooooc--","----cOoooOOc----","-----.cOOc.-----","-------cc-------",
 "-----.cooc.-----","----cooOOooc----","---coOOOOOooc---","--cOOOOOOOOOoc--","-.cOOOOOOOOOOc.-","-cOOOOOOOOOOOOc-","-XXXXXXXXXXXXXX-"};
 
-static char * mini_glass13_xpm[] = {"16 14 6 1",". 	c ivory4","c	c gray50","X	c black","o	c white","O	c tan","-      c ivory2 s basiccolor",
+static char * mini_glass13_xpm[] = {"16 14 6 1","-      c None s None",". 	c ivory4","c	c gray50","X	c black","o	c white","O	c tan",
 "-XXXXXXXXXXXXXX-","-c.oooooooooo.c-","-.cooooooooooc.-","--cooooooooooc--","----cooooooc----","-----.cOOc.-----","-------cc-------",
 "-----.cooc.-----","----cooOOooc----","---cOOOOOOOOc---","--cOOOOOOOOOOc--","-.cOOOOOOOOOOc.-","-cOOOOOOOOOOOOc-","-XXXXXXXXXXXXXX-"};
 
-static char * mini_glass14_xpm[] = {"16 14 6 1",". 	c ivory4","c	c gray50","X	c black","o	c white","O	c tan","-      c ivory2 s basiccolor",
+static char * mini_glass14_xpm[] = {"16 14 6 1","-      c None s None",". 	c ivory4","c	c gray50","X	c black","o	c white","O	c tan",
 "-XXXXXXXXXXXXXX-","-c.oooooooooo.c-","-.cooooooooooc.-","--cooooooooooc--","----cooooooc----","-----.cooc.-----","-------cc-------",
 "-----.cOOc.-----","----cOOOOOOc----","---cOOOOOOOOc---","--cOOOOOOOOOOc--","-.cOOOOOOOOOOc.-","-cOOOOOOOOOOOOc-","-XXXXXXXXXXXXXX-"};
 
@@ -907,8 +901,8 @@ unsigned char *snd_plain_icon_bits(void) {return(snd_plain_bits);}
 #if USE_GTK
 static char *speaker_xpm[] = {
 "12 12 2 1",
+"-      c None s None",
 "X	c black",
-"-      c ivory2 s basiccolor",
 "--------XXX-",
 "------XX--X-",
 "----XX----X-",
@@ -926,8 +920,8 @@ char **speaker_bits(void) {return(speaker_xpm);}
 
 static char * mic_xpm[] = {
 "12 12 2 1",
+"-      c None s None",
 "X	c black",
-"-      c ivory2 s basiccolor",
 "----XXXX----",
 "---XX-X-X---",
 "---X-X-XX---",
@@ -945,8 +939,8 @@ char **mic_bits(void) {return(mic_xpm);}
 
 static char *cd_xpm[] = {
 "12 12 2 1",
+"-      c None s None",
 "X	c black",
-"-      c ivory2 s basiccolor",
 "---XXXXX----",
 "-XX-----XX--",
 "-X--XXX--X--",
@@ -964,8 +958,8 @@ char **cd_bits(void) {return(cd_xpm);}
 
 static char *line_in_xpm[] = {
 "12 12 2 1",
+"-      c None s None",
 "X	c black",
-"-      c ivory2 s basiccolor",
 "----------X-",
 "------X--X--",
 "-----X---X--",
@@ -981,3 +975,34 @@ static char *line_in_xpm[] = {
 
 char **line_in_bits(void) {return(line_in_xpm);}
 #endif
+
+
+static char bg_line[32];
+void make_icons_transparent(char *color)
+{
+  int i;
+  char **tmp;
+  sprintf(bg_line, "-      c %s s %s", color, color); /* the background color isn't known at compile time */
+#if (HAVE_XPM) || (USE_GTK)
+  mini_lock_xpm[1] = bg_line;
+  blank_xpm[1] = bg_line;
+  speed_l_xpm[1] = bg_line;
+  speed_r_xpm[1] = bg_line;
+  for (i = 0; i < NUM_BOMBS; i++)
+    {
+      tmp = mini_bomb_bits(i);
+      tmp[1] = bg_line;
+    }
+  for (i = 0; i < NUM_GLASSES; i++)
+    {
+      tmp = mini_glass_bits(i);
+      tmp[1] = bg_line;
+    }
+#endif 
+#if USE_GTK
+  speaker_xpm[1] = bg_line;
+  mic_xpm[1] = bg_line;
+  cd_xpm[1] = bg_line;
+  line_in_xpm[1] = bg_line;
+#endif
+}

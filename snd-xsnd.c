@@ -1,5 +1,7 @@
 #include "snd.h"
 
+/* TODO: gtk side of transparent icons */
+
 #if HAVE_XPM
   #include <X11/xpm.h>
 #endif
@@ -1302,9 +1304,6 @@ static unsigned char speed_l_bits1[] = {
 
 #if HAVE_XPM
 
-#define NUM_GLASSES 15
-#define NUM_BOMBS 15
-
 static Pixmap mini_lock = 0;
 static Pixmap blank_pixmap = 0;
 static bool mini_lock_allocated = false;
@@ -1415,7 +1414,117 @@ static void snd_file_glasses_icon(snd_info *sp, bool on, int glass)
     }
 }
 
+#if HAVE_XPM
+static char *bits_to_string(char **icon)
+{
+  /* show first few lines */
+  char *buf;
+  buf = (char *)CALLOC(128, sizeof(char));
+  snprintf(buf, 128, "\n%s\n%s\n%s...", icon[0], icon[1], icon[2]);
+  return(buf);
+}
+#endif
+
+static void allocate_icons(Widget w)
+{ 
+  Pixmap shape1, shape2, shape3; 
+  XpmAttributes attributes; 
+  XpmColorSymbol symbols[1];
+  int scr, pixerr = XpmSuccess, k;
+  Display *dp;
+  Drawable wn;
+  dp = XtDisplay(w);
+  wn = XtWindow(w);
+  scr = DefaultScreen(dp);
+  XtVaGetValues(w, XmNdepth, &attributes.depth, XmNcolormap, &attributes.colormap, NULL);
+  attributes.visual = DefaultVisual(dp, scr);
+  symbols[0].name = "basiccolor";
+  symbols[0].value = NULL;
+  symbols[0].pixel = (ss->sgx)->basic_color;
+  attributes.colorsymbols = symbols;
+  attributes.numsymbols = 1;
+  attributes.valuemask = XpmColorSymbols | XpmDepth | XpmColormap | XpmVisual;
+  pixerr = XpmCreatePixmapFromData(dp, wn, mini_lock_bits(), &mini_lock, &shape1, &attributes);
+  if (pixerr != XpmSuccess) 
+    snd_error("lock pixmap trouble: %s from %s\n", XpmGetErrorString(pixerr), bits_to_string(mini_lock_bits()));
+  else
+    {
+#if 0
+      Pixmap bgpx = 0;
+      XtVaGetValues(w, XmNbackgroundPixmap, &bgpx, NULL);
+      if (bgpx) blank_pixmap = bgpx;
+      /* this appears to work, but is not compatible with the pixmap changes when basic-color is set. */
+#endif
+      pixerr = XpmCreatePixmapFromData(dp, wn, blank_bits(), &blank_pixmap, &shape1, &attributes);
+      if (pixerr != XpmSuccess) 
+	snd_error("blank pixmap trouble: %s from %s\n", XpmGetErrorString(pixerr), bits_to_string(blank_bits()));
+      else
+	{
+	  for (k = 0; k < NUM_BOMBS; k++)
+	    {
+	      pixerr = XpmCreatePixmapFromData(dp, wn, mini_bomb_bits(k), &(mini_bombs[k]), &shape2, &attributes);
+	      if (pixerr != XpmSuccess) 
+		{
+		  snd_error("bomb pixmap trouble: %s from %s\n", XpmGetErrorString(pixerr), bits_to_string(mini_bomb_bits(k)));
+		  break;
+		}
+	      pixerr = XpmCreatePixmapFromData(dp, wn, mini_glass_bits(k), &(mini_glasses[k]), &shape3, &attributes);
+	      if (pixerr != XpmSuccess) 
+		{
+		  snd_error("glass pixmap trouble: %s from %s\n", XpmGetErrorString(pixerr), bits_to_string(mini_glass_bits(k))); 
+		  break;
+		}
+	    }
+	}
+    }
+  mini_lock_allocated = true;
+}
+
+static Pixmap change_pixmap_background(Widget w, Pixmap orig, Pixel old_color, Pixel new_color, int width, int height)
+{
+  XImage *before;
+  Display *dp;
+  Drawable wn;
+  Visual *vis;
+  XGCValues v;
+  GC draw_gc;
+  int depth, depth_bytes, x, y;
+  char *data;
+  dp = XtDisplay(w);
+  wn = XtWindow(w);
+  vis = DefaultVisual(dp, DefaultScreen(dp));
+  XtVaGetValues(w, XmNdepth, &depth, NULL);
+  depth_bytes = (depth >> 3);
+  data = (char *)calloc(width * height * depth_bytes, sizeof(char)); /* not CALLOC since X will free this */
+  before = XCreateImage(dp, vis, depth, XYPixmap, 0, data, width, height, 8, 0);
+  XGetSubImage(dp, orig, 0, 0, width, height, AllPlanes, XYPixmap, before, 0, 0);
+  v.background = new_color;
+  draw_gc = XCreateGC(dp, wn, GCBackground, &v);
+  XSetBackground(dp, draw_gc, new_color); 
+  for (x = 0; x < width; x++) 
+    for (y = 0; y < height; y++) 
+      if (XGetPixel(before, x, y) == old_color)
+	XPutPixel(before, x, y, new_color);
+  XPutImage(dp, orig, draw_gc, before, 0, 0, 0, 0, width, height);
+  XDestroyImage(before);  /* frees data as well, or so claims the documentation */
+  XFreeGC(dp, draw_gc);
+  return(orig);
+}
+
+void make_sound_icons_transparent_again(Pixel old_color, Pixel new_color)
+{
+  int i;
+  if (!mini_lock_allocated) allocate_icons(MAIN_SHELL(ss));
+  change_pixmap_background(MAIN_SHELL(ss), mini_lock, old_color, new_color, 16, 14);
+  change_pixmap_background(MAIN_SHELL(ss), blank_pixmap, old_color, new_color, 16, 14);
+  for (i = 0; i < NUM_BOMBS; i++)
+    change_pixmap_background(MAIN_SHELL(ss), mini_bombs[i], old_color, new_color, 16, 14);
+  for (i = 0; i < NUM_GLASSES; i++)
+    change_pixmap_background(MAIN_SHELL(ss), mini_glasses[i], old_color, new_color, 16, 14);
+}
+
 #else
+void make_icons_transparent_again(Pixel old_color, Pixel new_color) {}
 void snd_file_lock_icon(snd_info *sp, bool on) {}
 void snd_file_bomb_icon(snd_info *sp, bool on) 
 {
@@ -1426,14 +1535,14 @@ void snd_file_bomb_icon(snd_info *sp, bool on)
 void x_bomb(snd_info *sp, bool on) {}
 #endif
 
+static Pixmap spd_r, spd_l;
+static bool spd_ok = false;
+
 static void close_sound_dialog(Widget w, XtPointer context, XtPointer info) 
 {
   snd_info *sp = (snd_info *)context;
   if (sp) snd_close_file(sp);
 }
-
-static Pixmap spd_r, spd_l;
-static bool spd_ok = false;
 
 snd_info *add_sound_window(char *filename, bool read_only)
 {  
@@ -1602,54 +1711,16 @@ snd_info *add_sound_window(char *filename, bool read_only)
       XmStringFree(s1);
 
 #if HAVE_XPM
-      if (!mini_lock_allocated)
-	{ 
-	  Pixmap shape1, shape2, shape3; 
-	  XpmAttributes attributes; 
-	  XpmColorSymbol symbols[1];
-	  int scr, pixerr, k;
-	  Display *dp;
-	  Drawable wn;
-	  dp = XtDisplay(sw[W_name]);
-	  wn = XtWindow(sw[W_name]);
-	  scr = DefaultScreen(dp);
-	  XtVaGetValues(sw[W_name], XmNdepth, &attributes.depth, XmNcolormap, &attributes.colormap, NULL);
-	  attributes.visual = DefaultVisual(dp, scr);
-	  symbols[0].name = "basiccolor";
-	  symbols[0].value = NULL;
-	  symbols[0].pixel = (ss->sgx)->basic_color;
-	  attributes.colorsymbols = symbols;
-	  attributes.numsymbols = 1;
-	  attributes.valuemask = XpmColorSymbols | XpmDepth | XpmColormap | XpmVisual;
-	  pixerr = XpmCreatePixmapFromData(dp, wn, mini_lock_bits(), &mini_lock, &shape1, &attributes);
-	  if (pixerr != XpmSuccess) 
-	    snd_error("lock pixmap trouble: %s\n", XpmGetErrorString(pixerr));
-	  else
+      if (!mini_lock_allocated) 
+	{
+	  allocate_icons(sw[W_name]);
+	  if (ss->using_schemes) 
 	    {
-	      pixerr = XpmCreatePixmapFromData(dp, wn, blank_bits(), &blank_pixmap, &shape1, &attributes);
-	      if (pixerr != XpmSuccess) 
-		snd_error("blank pixmap trouble: %s\n", XpmGetErrorString(pixerr));
-	      else
-		{
-		  for (k = 0; k < NUM_BOMBS; k++)
-		    {
-		      pixerr = XpmCreatePixmapFromData(dp, wn, mini_bomb_bits(k), &(mini_bombs[k]), &shape2, &attributes);
-		      if (pixerr != XpmSuccess) 
-			{
-			  snd_error("bomb pixmap trouble: %s\n", XpmGetErrorString(pixerr)); 
-			  break;
-			}
-		      pixerr = XpmCreatePixmapFromData(dp, wn, mini_glass_bits(k), &(mini_glasses[k]), &shape3, &attributes);
-		      if (pixerr != XpmSuccess) 
-			{
-			  snd_error("glass pixmap trouble: %s\n", XpmGetErrorString(pixerr)); 
-			  break;
-			}
-		    }
-		}
+	      Pixel new_color;
+	      XtVaGetValues(sw[W_name], XmNbackground, &new_color, NULL);
+	      make_sound_icons_transparent_again(ss->sgx->basic_color, new_color);
 	    }
-	  mini_lock_allocated = true;
-      }
+	}
 #endif
       n = 0;      
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}

@@ -907,6 +907,7 @@ void snd_doit(int argc, char **argv)
   sx->fltenv_data_gc = XCreateGC(dpy, wn, GCBackground | GCForeground | GCFunction, &gv);
 
   initialize_colormap();
+  make_icons_transparent(snd_rs.basic_color);
 
   BACKGROUND_ADD(startup_funcs, NULL);
   /* this complication seems necessary because we might be loading Scheme code files

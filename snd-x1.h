@@ -253,6 +253,7 @@ unsigned char *snd_plain_icon_bits(void);
 char **blank_bits(void);
 char **speed_l_bits(void);
 char **speed_r_bits(void);
+void make_icons_transparent(char *basic_color);
 
 
 /* -------- snd-gxcolormaps.c -------- */
@@ -425,6 +426,7 @@ void finish_progress_report(snd_info *sp, enved_progress_t from_enved);
 void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, enved_progress_t from_enved);
 XmString initial_speed_label(void);
 void g_init_gxsnd(void);
+void make_sound_icons_transparent_again(Pixel old_color, Pixel new_color);
 
 
 /* -------- snd-xfile.c -------- */
@@ -503,7 +505,7 @@ Widget make_mix_panel(void);
 bool mix_play_stopped(void);
 void reflect_mix_play_stop(void);
 void reflect_no_mix_in_mix_panel(void);
-
+void make_mixer_icons_transparent_again(Pixel old_color, Pixel new_color);
 
 
 /* -------- snd-xrec.c -------- */
@@ -513,6 +515,7 @@ void unlock_recording_audio(void);
 void cleanup_recording (void);
 void snd_record_file(void);
 bool record_dialog_is_active(void);
+void make_recorder_icons_transparent_again(Pixel old_color, Pixel new_color);
 
 
 /* -------- snd-xprint.c -------- */

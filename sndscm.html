@@ -2514,7 +2514,7 @@ waterfall spectrum display of the incoming audio data.  <b>stop-waterfall</b> tu
   <em class=def>make-channel-drop-site</em> snd chn
   <em class=def>set-channel-drop</em> drop snd chn
   <em class=def>show-font-name</em> font
-  <em class=def>show-minibuffer-font</em>
+  <em class=def>show-widget-font</em>
   <em class=def>add-find-to-listener</em>
   <em class=def><A NAME="uponsaveyourself">upon-save-yourself, upon-take-focus</a></em>
   <em class=def>add-text-to-status-area</em>
@@ -2608,7 +2608,7 @@ function of 3 arguments, the dropped filename (a string) and the current sound i
 channel number.
 </p><p><b>show-font-name</b> shows the Snd-related name and the X-related name of each font in a font list
 (it searches for the XA_FULL_NAME associated with an XFontStruct).
-<b>show-minibuffer-font</b> uses that function to show what fonts are associated with the minibuffer.
+<b>show-widget-font</b> uses that function to show what fonts are associated with a widget.
 </p><p><b>add-find-to-listener</b> activates C-s and C-r in the listener via a separate dialog.
 </p><p><b>upon-save-yourself</b> causes a thunk (a function of no args) to be called if the window
 manager sends a SAVE_YOURSELF message; similarly <b>upon-take-focus</b> causes a thunk to be called

@@ -64,9 +64,6 @@ GtkWidget *w_snd_name(snd_info *sp)     {return((sp->sgx)->snd_widgets[W_name]);
 
 /* -------- PIXMAPS -------- */
 
-#define NUM_GLASSES 15
-#define NUM_BOMBS 15
-
 static GdkPixmap *mini_lock, *speed_r, *speed_l, *blank;
 static bool mini_lock_allocated = false;
 static GdkPixmap *mini_bombs[NUM_BOMBS];

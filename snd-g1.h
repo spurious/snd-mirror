@@ -248,6 +248,7 @@ char **line_in_bits(void);
 char **cd_bits(void);
 char **mic_bits(void);
 char **speaker_bits(void);
+void make_icons_transparent(char *basic_color);
 
 
 /* -------- snd-gxcolormaps.c -------- */

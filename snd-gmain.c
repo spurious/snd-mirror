@@ -576,6 +576,7 @@ void snd_doit(int argc, char **argv)
 #endif
 
   setup_gcs();
+  make_icons_transparent(BASIC_COLOR);
 
   if (batch) gtk_widget_hide(MAIN_SHELL(ss));
   BACKGROUND_ADD(startup_funcs, NULL);

@@ -77,9 +77,7 @@ void recolor_everything(widget_t w, void *ptr)
     {
       XtVaGetValues(w, XmNbackground, &curcol, NULL);
       if (curcol == (Pixel)ptr)
-	{
-	  XtVaSetValues(w, XmNbackground, (ss->sgx)->basic_color, NULL);
-	}
+	XmChangeColor(w, (ss->sgx)->basic_color);
     }
 }
 

@@ -2436,6 +2436,13 @@ static XEN g_set_basic_color(XEN color)
 #if USE_MOTIF
   map_over_children(MAIN_SHELL(ss), recolor_everything, (void *)old_color);
 #endif
+
+#if HAVE_XPM && USE_MOTIF
+  make_sound_icons_transparent_again(old_color, ss->sgx->basic_color);
+  make_recorder_icons_transparent_again(old_color, ss->sgx->basic_color);
+  make_mixer_icons_transparent_again(old_color, ss->sgx->basic_color);
+#endif
+
   return(color);
 }
 #endif

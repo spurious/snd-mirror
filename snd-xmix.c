@@ -432,18 +432,30 @@ static unsigned char p_speaker_bits[] = {
    0x00, 0x07, 0xc0, 0x04, 0x30, 0x04, 0x0e, 0x04, 0x06, 0x04, 0x06, 0x04,
    0x06, 0x04, 0x06, 0x04, 0x0e, 0x04, 0x30, 0x04, 0xc0, 0x04, 0x00, 0x07};
 
+static int mixer_depth;
+static GC gc;
+static Pixmap speaker_r;
+void make_mixer_icons_transparent_again(Pixel old_color, Pixel new_color)
+{
+  if (mix_panel)
+    {
+      XFreePixmap(XtDisplay(mix_panel), speaker_r);
+      XSetBackground(XtDisplay(mix_panel), gc, new_color);
+      speaker_r = make_pixmap(p_speaker_bits, p_speaker_width, p_speaker_height, mixer_depth, gc);
+      XtVaSetValues(mix_play, XmNlabelPixmap, speaker_r, NULL);
+      XtVaSetValues(track_play, XmNlabelPixmap, speaker_r, NULL);
+    }
+}
+
 static Widget w_sep1;
 
 Widget make_mix_panel(void) 
 {
   Widget mainform, mix_row, track_row, last_label, last_number, mix_frame, track_frame, sep;
-  Pixmap speaker_r;
   XmString xdismiss, xhelp, xtitle, s1, xapply;
   int n, i;
   Arg args[20];
   XtCallbackList n1, n2;
-  GC gc;
-  int depth;
   XGCValues v;
   char amplab[LABEL_BUFFER_SIZE];
   if (mix_panel == NULL)
@@ -542,9 +554,9 @@ Widget make_mix_panel(void)
       w_beg = make_textfield_widget("mix-times", mix_row, args, n, ACTIVATABLE, NO_COMPLETER);
       XmTextSetString(w_beg, "0.000 : 1.000");
 
-      XtVaGetValues(mix_row, XmNforeground, &v.foreground, XmNbackground, &v.background, XmNdepth, &depth, NULL);
+      XtVaGetValues(mix_row, XmNforeground, &v.foreground, XmNbackground, &v.background, XmNdepth, &mixer_depth, NULL);
       gc = XtGetGC(mix_row, GCForeground | GCBackground, &v);
-      speaker_r = make_pixmap(p_speaker_bits, p_speaker_width, p_speaker_height, depth, gc);
+      speaker_r = make_pixmap(p_speaker_bits, p_speaker_width, p_speaker_height, mixer_depth, gc);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}

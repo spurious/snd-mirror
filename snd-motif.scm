@@ -27,7 +27,7 @@
 ;;; (menu-option name) to access menu items
 ;;; (show-all-atoms) shows all X atoms
 ;;; show-font-name shows the Snd-related name and the X-related name of a font
-;;; show-minibuffer-font shows what font is associated with the minibuffer
+;;; show-widget-font shows what fonts are associated with a widget
 ;;; add-find-to-listener enables C-s and C-r in the listener
 ;;; add a function to be called when the window manager sends us a "save yourself" message
 ;;; add-text-to-status-area puts a text widget in the notebook status area
@@ -2315,24 +2315,27 @@ Reverb-feedback sets the scaler on the feedback.\n\
       (if (car next-font)
 	  (begin
 	    (if (XFontStruct? (caddr next-font))
-		(snd-print 
-		 (format #f "~A: ~A~%"
-			 (cadr next-font)
-			 (XGetAtomName 
-			  (XtDisplay (cadr (main-widgets)))
-			  (list 'Atom 
-				(cadr (XGetFontProperty (caddr next-font) 
-							XA_FULL_NAME))))))
+		(let ((name (XGetFontProperty (caddr next-font) XA_FULL_NAME)))
+		  (if (not (car name))
+		      (set! name (XGetFontProperty (caddr next-font) XA_FAMILY_NAME)))
+		  (snd-print 
+		   (format #f "~A: ~A~%"
+			   (cadr next-font)
+			   (XGetAtomName 
+			    (XtDisplay (cadr (main-widgets)))
+			    (list 'Atom (cadr name))))))
 		(snd-print (format #f "no font found!~%")))
 	    (show-next-font context)))))
   (let ((context (XmFontListInitFontContext font)))
-    (show-next-font context)
-    (XmFontListFreeFontContext context)))
+    (if context
+	(begin
+	  (show-next-font context)
+	  (XmFontListFreeFontContext context))
+	"no fonts?")))
 
-(define (show-minibuffer-font)
-  "(show-minibuffer-font) shows what fonts are associated with the minibuffer"
-  (show-font-name (cadr (XtVaGetValues (list-ref (sound-widgets) 3) 
-				       (list XmNfontList 0)))))
+(define (show-widget-font widget)
+  "(show-widget-font) shows what fonts are associated with a widget"
+  (show-font-name (cadr (XtVaGetValues widget (list XmNfontList 0)))))
 
 
 ;;; -------- enable C-s and C-r in listener

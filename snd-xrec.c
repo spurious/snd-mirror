@@ -308,17 +308,24 @@ static unsigned char cd_bits[] = {
 
 static Pixmap speaker_icon, line_in_icon, mic_icon, aes_icon, adat_icon, digital_in_icon, cd_icon;
 
+
+static bool pixmaps_allocated = false;
+
 static void make_record_icons(Widget w)
 {
   int depth;
-  XtVaGetValues(w, XmNdepth, &depth, NULL);
-  speaker_icon = make_pixmap(speaker_bits, 12, 12, depth, draw_gc);
-  mic_icon = make_pixmap(mic_bits, 12, 12, depth, draw_gc);
-  line_in_icon = make_pixmap(line_in_bits, 12, 12, depth, draw_gc);
-  digital_in_icon = make_pixmap(digin_bits, 12, 12, depth, draw_gc);
-  aes_icon = make_pixmap(aes_bits, 14, 9, depth, draw_gc);
-  adat_icon = make_pixmap(adat_bits, 14, 8, depth, draw_gc);
-  cd_icon = make_pixmap(cd_bits, 12, 12, depth, draw_gc);
+  if (!pixmaps_allocated)
+    {
+      XtVaGetValues(w, XmNdepth, &depth, NULL);
+      speaker_icon = make_pixmap(speaker_bits, 12, 12, depth, draw_gc);
+      mic_icon = make_pixmap(mic_bits, 12, 12, depth, draw_gc);
+      line_in_icon = make_pixmap(line_in_bits, 12, 12, depth, draw_gc);
+      digital_in_icon = make_pixmap(digin_bits, 12, 12, depth, draw_gc);
+      aes_icon = make_pixmap(aes_bits, 14, 9, depth, draw_gc);
+      adat_icon = make_pixmap(adat_bits, 14, 8, depth, draw_gc);
+      cd_icon = make_pixmap(cd_bits, 12, 12, depth, draw_gc);
+      pixmaps_allocated = true;
+    }
 }
 
 static Pixmap device_icon(int device)
@@ -343,7 +350,60 @@ static Pixmap device_icon(int device)
     case MUS_AUDIO_MICROPHONE: 
     default:                   return(mic_icon);        break;
     }
+}
 
+typedef struct {
+  int device;
+  Widget w;
+} widcon;
+
+static int widcon_size = 0;
+static int widcon_ctr = 0;
+static widcon **widcons = NULL;
+
+static void remember_widcon(Widget w, int dev)
+{
+  if (widcon_ctr >= widcon_size)
+    {
+      if (widcon_size == 0)
+	{
+	  widcon_size += 8;
+	  widcons = (widcon **)CALLOC(widcon_size, sizeof(widcon *));
+	}
+      else
+	{
+	  int i, old;
+	  old = widcon_size;
+	  widcon_size += 8;
+	  widcons = (widcon **)REALLOC(widcons, widcon_size * sizeof(widcon *));
+	  for (i = old; i < widcon_size; i++) widcons[i] = NULL;
+	}
+    }
+  widcons[widcon_ctr] = (widcon *)CALLOC(1, sizeof(widcon));
+  widcons[widcon_ctr]->device = dev;
+  widcons[widcon_ctr++]->w = w;
+}
+
+void make_recorder_icons_transparent_again(Pixel old_color, Pixel new_color)
+{
+  Display *dp;
+  int i;
+  if (pixmaps_allocated)
+    {
+      dp = XtDisplay(recorder);
+      XFreePixmap(dp, speaker_icon);
+      XFreePixmap(dp, mic_icon);
+      XFreePixmap(dp, line_in_icon);
+      XFreePixmap(dp, digital_in_icon);
+      XFreePixmap(dp, aes_icon);
+      XFreePixmap(dp, adat_icon);
+      XFreePixmap(dp, cd_icon);
+      pixmaps_allocated = false; /* force re-make */
+      XSetBackground(dp, draw_gc, new_color);
+      make_record_icons(recorder);
+      for (i = 0; i < widcon_ctr; i++)
+	XtVaSetValues(widcons[i]->w, XmNlabelPixmap, device_icon(widcons[i]->device), NULL);
+    }
 }
 
 
@@ -2234,7 +2294,7 @@ void recorder_fill_wd(void *uwd, int chan, int field, int device)
 static Widget make_vertical_gain_sliders(recorder_info *rp, PANE *p, int num_gains, int gain_ctr, int *mixflds, bool input)
 {
   /* vertical scalers on the right (with icon) */
-  int n, i, chan, this_device = 0;
+  int n, i, chan, this_device = 0, devcon;
   Arg args[32];
   Widget icon_label, last_slider;
   Wdesc *wd;
@@ -2254,10 +2314,12 @@ static Widget make_vertical_gain_sliders(recorder_info *rp, PANE *p, int num_gai
 #if (HAVE_OSS || HAVE_ALSA)
   if (input)
     {
-      XtSetArg(args[n], XmNlabelPixmap, device_icon((mixflds[MUS_AUDIO_MICROPHONE]>0) ? MUS_AUDIO_MICROPHONE : MUS_AUDIO_LINE_IN)); n++;
+      devcon = (mixflds[MUS_AUDIO_MICROPHONE] > 0) ? MUS_AUDIO_MICROPHONE : MUS_AUDIO_LINE_IN;
+      XtSetArg(args[n], XmNlabelPixmap, device_icon(devcon)); n++;
     }
   else 
     {
+      devcon = p->device;
       XtSetArg(args[n], XmNlabelPixmap, device_icon(p->device)); n++;
     }
   if (input)
@@ -2267,6 +2329,7 @@ static Widget make_vertical_gain_sliders(recorder_info *rp, PANE *p, int num_gai
     }
   else last_device = MUS_AUDIO_DAC_OUT;
 #else
+  devcon = p->device;
   XtSetArg(args[n], XmNlabelPixmap, device_icon(p->device)); n++;
 #endif
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -2289,6 +2352,7 @@ static Widget make_vertical_gain_sliders(recorder_info *rp, PANE *p, int num_gai
   XtSetArg(args[n], XmNwidth, 30); n++;
 #endif
   icon_label = XtCreateManagedWidget("icon", xmLabelWidgetClass, p->pane, args, n);
+  remember_widcon(icon_label, devcon);
       
   last_slider = NULL;
   for (i = 0, chan = num_gains - 1; i < num_gains; i++, chan--)
@@ -2337,7 +2401,16 @@ static Widget make_vertical_gain_sliders(recorder_info *rp, PANE *p, int num_gai
 	    {XtSetArg(args[n], XmNwidth, (mixflds[this_device] == 1) ? 30 : 15); n++;} /* 1 because we subtracted one already above */
 	  else {XtSetArg(args[n], XmNwidth, 30); n++;}
 	  icon_label = XtCreateManagedWidget("icon", xmLabelWidgetClass, p->pane, args, n);
-	  if ((this_device != MUS_AUDIO_LINE_IN) && (slabel)) {XmStringFree(slabel); slabel = NULL;}
+	  if (this_device == MUS_AUDIO_LINE_IN)
+	    remember_widcon(icon_label, MUS_AUDIO_LINE_IN);
+	  else
+	    {
+	      if (slabel) 
+		{
+		  XmStringFree(slabel); 
+		  slabel = NULL;
+		}
+	    }
 	}
 #endif
       n = 0;

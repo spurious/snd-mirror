@@ -159,6 +159,8 @@
 #define LABEL_BUFFER_SIZE 64
 #define REPORTING_SIZE (FILE_BUFFER_SIZE * 20)
 /* progress bar (hourglass icon) is displayed if more than this many samples are being processed */
+#define NUM_GLASSES 15
+#define NUM_BOMBS 15
 
 #define AMP_ENV_CUTOFF 50000
 
