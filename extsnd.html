@@ -4683,6 +4683,7 @@ bartlett-window      hamming-window       blackman2-window    blackman3-window
 blackman4-window     exponential-window   riemann-window      kaiser-window
 cauchy-window        poisson-window       gaussian-window     tukey-window
 dolph-chebyshev-window (only if your C supports complex trig functions (cacos etc), or GSL is loaded)
+hann-poisson-window  connes-window
 </pre>
 <p>The Hann window is sometimes called Hanning in the DSP literature, apparently
 as a sort of in-joke.  
@@ -9838,11 +9839,11 @@ to put the date and time in the Snd title bar.
 
 <p><b>FFT Window</b> type (<a href="#fftwindow">fft-window</a>):</p>
 <pre>
-  rectangular-window    hann(ing)-window      welch-window         parzen-window
-  bartlett-window       hamming-window        blackman2-window     blackman3-window
-  blackman4-window      exponential-window    riemann-window       kaiser-window
-  cauchy-window         poisson-window        gaussian-window      tukey-window
-  dolph-chebyshev-window
+  rectangular-window     hann(ing)-window      welch-window         parzen-window
+  bartlett-window        hamming-window        blackman2-window     blackman3-window
+  blackman4-window       exponential-window    riemann-window       kaiser-window
+  cauchy-window          poisson-window        gaussian-window      tukey-window
+  dolph-chebyshev-window hann-poisson-window   connes-window
 </pre><br>
 
 <p><b>Zoom Focus</b> style (<a href="#zoomfocusstyle">zoom-focus-style</a>):</p>

@@ -257,17 +257,17 @@ static rev_info *make_nrev(snd_info *sp, int chans)
   for (i = 0; i < r->num_combs; i++) 
     {
       comb_factors[i] = nrev_comb_factors[i];
-      r->combs[i] = mus_make_comb(comb_factors[i] * sp->reverb_control_feedback, dly_len[i], NULL, dly_len[i]);
+      r->combs[i] = mus_make_comb(comb_factors[i] * sp->reverb_control_feedback, dly_len[i], NULL, dly_len[i], MUS_INTERP_LINEAR);
     }
   r->onep = mus_make_one_pole(sp->reverb_control_lowpass, sp->reverb_control_lowpass - 1.0);
   for (i = 0, j = r->num_combs; i < 4; i++, j++) 
-    r->allpasses[i] = mus_make_all_pass(-0.700, 0.700, dly_len[j], NULL, dly_len[j]);
+    r->allpasses[i] = mus_make_all_pass(-0.700, 0.700, dly_len[j], NULL, dly_len[j], MUS_INTERP_LINEAR);
   for (i = 0, j = 10; i < chans; i++)
     {
       if (j < BASE_DLY_LEN) 
 	len = dly_len[j]; 
       else len = get_prime((int)(40 + mus_random(20.0)));
-      r->allpasses[i + 4] = mus_make_all_pass(-0.700, 0.700, len, NULL, len);
+      r->allpasses[i + 4] = mus_make_all_pass(-0.700, 0.700, len, NULL, len, MUS_INTERP_LINEAR);
     }
   return(r);
 }

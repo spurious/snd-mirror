@@ -8510,7 +8510,7 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
     {
       if (incoming_out_srate == dac_out_srate)
 	{
-	  if ((dac_out_chans == 2) &&(incoming_out_chans == 1)) /* the usual case */
+	  if ((dac_out_chans == 2) && (incoming_out_chans == 1)) /* the usual case */
 	    {
 	      conversion_choice = CONVERT_SKIP;
 	      conversion_multiplier = 2.0;
@@ -8523,7 +8523,7 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
 	}
       else 
 	{
-	  if ((dac_out_chans == 2) &&(incoming_out_chans == 1)) /* the usual case */
+	  if ((dac_out_chans == 2) && (incoming_out_chans == 1)) /* the usual case */
 	    {
 	      conversion_choice = CONVERT_COPY_AND_SKIP;
 	      conversion_multiplier = 4.0;

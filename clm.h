@@ -2,10 +2,14 @@
 #define CLM_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 46
-#define MUS_DATE "3-May-04"
+#define MUS_REVISION 47
+#define MUS_DATE "10-May-04"
 
 /*
+ * 10-May:     changed MUS_LINEAR and MUS_SINUSOIDAL to MUS_INTERP_LINEAR and MUS_INTERP_SINUSOIDAL.
+ *             mus-linear renamed mus-interp-linear, mus-sinusoidal renamed mus-interp-sinusoidal.
+ *             added type arg to mus_make_delay|all_pass|comb|notch.
+ *             added mus_delay_tick, all-pass delay line interpolation.
  * 3-May:      envelope arg to make-rand and make-rand-interp to give any arbitrary random number distribution.
  *             added mus_make_rand_with_distribution and mus_make_rand_interp_with_distribution.
  *             rand/rand-interp mus-data returns distribution (weight) function, mus-length its length.
@@ -192,24 +196,31 @@ typedef struct mus_any_class {
   int (*channel)(mus_any *ptr);
 } mus_any_class;
 
-typedef enum {MUS_LINEAR, MUS_SINUSOIDAL} mus_locsig_interp_t;
+#ifndef CLM_DISABLE_DEPRECATED
+  #define MUS_LINEAR 0
+  #define MUS_SINUSOIDAL 1
+#endif
+typedef enum {MUS_INTERP_LINEAR, MUS_INTERP_SINUSOIDAL, MUS_INTERP_ALL_PASS, MUS_INTERP_LAGRANGE, MUS_INTERP_BEZIER} mus_interp_t;
 
 typedef enum {MUS_RECTANGULAR_WINDOW, MUS_HANN_WINDOW, MUS_WELCH_WINDOW, MUS_PARZEN_WINDOW, MUS_BARTLETT_WINDOW,
 	      MUS_HAMMING_WINDOW, MUS_BLACKMAN2_WINDOW, MUS_BLACKMAN3_WINDOW, MUS_BLACKMAN4_WINDOW,
 	      MUS_EXPONENTIAL_WINDOW, MUS_RIEMANN_WINDOW, MUS_KAISER_WINDOW, MUS_CAUCHY_WINDOW, MUS_POISSON_WINDOW,
-	      MUS_GAUSSIAN_WINDOW, MUS_TUKEY_WINDOW, MUS_DOLPH_CHEBYSHEV_WINDOW
+	      MUS_GAUSSIAN_WINDOW, MUS_TUKEY_WINDOW, MUS_DOLPH_CHEBYSHEV_WINDOW, MUS_HANN_POISSON_WINDOW, MUS_CONNES_WINDOW
 } mus_fft_window_t;
 
 #if defined(__GNUC__) && (!(defined(__cplusplus)))
+  #define MUS_INTERP_TYPE_OK(Interp) ({ mus_interp_t _clm_h_2 = Interp; \
+                                       ((_clm_h_2 >= MUS_INTERP_LINEAR) && (_clm_h_2 <= MUS_INTERP_BEZIER)); })
   #define MUS_FFT_WINDOW_OK(Window) ({ mus_fft_window_t _clm_h_0 = Window; \
-                                       ((_clm_h_0 >= MUS_RECTANGULAR_WINDOW) &&(_clm_h_0 <= MUS_DOLPH_CHEBYSHEV_WINDOW)); })
-  #define MUS_RUN(GEN, ARG_1, ARG_2) ({ mus_any *_clm_h_1 = (mus_any *)(GEN); ((*((_clm_h_1->core)->run))(_clm_h_1, ARG_1, ARG_2)); })
-  #define MUS_RUN_P(GEN) (((GEN)->core)->run)
+                                       ((_clm_h_0 >= MUS_RECTANGULAR_WINDOW) && (_clm_h_0 <= MUS_CONNES_WINDOW)); })
+  #define MUS_RUN(GEN, ARG_1, ARG_2) ({ mus_any *_clm_h_1 = (mus_any *)(GEN); \
+                                       ((*((_clm_h_1->core)->run))(_clm_h_1, ARG_1, ARG_2)); })
 #else
-  #define MUS_FFT_WINDOW_OK(Window) (((Window) >= MUS_RECTANGULAR_WINDOW) &&((Window) <= MUS_DOLPH_CHEBYSHEV_WINDOW))
+  #define MUS_INTERP_TYPE_OK(Interp) (((Interp) >= MUS_INTERP_LINEAR) && ((Interp) <= MUS_INTERP_BEZIER))
+  #define MUS_FFT_WINDOW_OK(Window) (((Window) >= MUS_RECTANGULAR_WINDOW) && ((Window) <= MUS_CONNES_WINDOW))
   #define MUS_RUN(GEN, ARG_1, ARG_2) ((*(((GEN)->core)->run))(GEN, ARG_1, ARG_2))
-  #define MUS_RUN_P(GEN) (((GEN)->core)->run)
 #endif
+#define MUS_RUN_P(GEN) (((GEN)->core)->run)
 
 #ifdef __cplusplus
 extern "C" {
@@ -286,23 +297,24 @@ Float mus_delay(mus_any *gen, Float input, Float pm);
 Float mus_delay_1(mus_any *ptr, Float input);
 Float mus_tap(mus_any *gen, Float loc);
 Float mus_tap_1(mus_any *gen);
-mus_any *mus_make_delay(int size, Float *line, int line_size);
+mus_any *mus_make_delay(int size, Float *line, int line_size, mus_interp_t type);
 bool mus_delay_p(mus_any *ptr);
 bool mus_delay_line_p(mus_any *gen); /* added 2-Mar-03 for tap error checks */
+Float mus_delay_tick(mus_any *ptr, Float input);
 
 Float mus_comb(mus_any *gen, Float input, Float pm);
 Float mus_comb_1(mus_any *gen, Float input);
-mus_any *mus_make_comb(Float scaler, int size, Float *line, int line_size);
+mus_any *mus_make_comb(Float scaler, int size, Float *line, int line_size, mus_interp_t type);
 bool mus_comb_p(mus_any *ptr);
 
 Float mus_notch(mus_any *gen, Float input, Float pm);
 Float mus_notch_1(mus_any *gen, Float input);
-mus_any *mus_make_notch(Float scaler, int size, Float *line, int line_size);
+mus_any *mus_make_notch(Float scaler, int size, Float *line, int line_size, mus_interp_t type);
 bool mus_notch_p(mus_any *ptr);
 
 Float mus_all_pass(mus_any *gen, Float input, Float pm);
 Float mus_all_pass_1(mus_any *gen, Float input);
-mus_any *mus_make_all_pass(Float backward, Float forward, int size, Float *line, int line_size);
+mus_any *mus_make_all_pass(Float backward, Float forward, int size, Float *line, int line_size, mus_interp_t type);
 bool mus_all_pass_p(mus_any *ptr);
 
 mus_any *mus_make_average(int size, Float *line);
@@ -522,7 +534,7 @@ bool mus_frame_to_file_p(mus_any *ptr);
 mus_any *mus_frame_to_file(mus_any *ptr, off_t samp, mus_any *data);
 
 mus_any *mus_locsig(mus_any *ptr, off_t loc, Float val);
-mus_any *mus_make_locsig(Float degree, Float distance, Float reverb, int chans, mus_any *output, mus_any *revput, mus_locsig_interp_t type);
+mus_any *mus_make_locsig(Float degree, Float distance, Float reverb, int chans, mus_any *output, mus_any *revput, mus_interp_t type);
 bool mus_locsig_p(mus_any *ptr);
 int mus_channels(mus_any *ptr);
 Float mus_locsig_ref(mus_any *ptr, int chan);
@@ -530,7 +542,7 @@ Float mus_locsig_set(mus_any *ptr, int chan, Float val);
 Float mus_locsig_reverb_ref(mus_any *ptr, int chan);
 Float mus_locsig_reverb_set(mus_any *ptr, int chan, Float val);
 void mus_move_locsig(mus_any *ptr, Float degree, Float distance);
-void mus_fill_locsig(Float *arr, int chans, Float degree, Float scaler, mus_locsig_interp_t type);
+void mus_fill_locsig(Float *arr, int chans, Float degree, Float scaler, mus_interp_t type);
 
 mus_any *mus_make_src(Float(*input)(void *arg, int direction), Float srate, int width, void *closure);
 Float mus_src(mus_any *srptr, Float sr_change, Float(*input)(void *arg, int direction));

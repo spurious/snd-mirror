@@ -1,5 +1,6 @@
 #include "snd.h"
 #include "clm2xen.h"
+#include "clm-strings.h"
 
 /* SOMEDAY: if superimposed and 2chn cursor set, 1chan is xor'd, subsequent click sets both (and chan1 cursor takes precedence?) */
 /*    cursor redraw can check for this, but it gloms up code */
@@ -5894,12 +5895,12 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_transform_graph_type_reversed, g_set_tr
 
 static XEN g_fft_window(XEN snd, XEN chn)
 {
-  #define H_fft_window "(" S_fft_window " (snd #f) (chn #f)): fft data window choice (e.g. blackman2-window).  The \
-choices are: rectangular-window, hann(ing)-window, welch-window, parzen-window, \
-bartlett-window, hamming-window, blackman2-window, blackman3-window, \
-blackman4-window, exponential-window, riemann-window, kaiser-window, \
-cauchy-window, poisson-window, gaussian-window, tukey-window, \
-dolph-chebyshev-window (if GSL is loaded)"
+  #define H_fft_window "(" S_fft_window " (snd #f) (chn #f)): fft data window choice (e.g. " S_blackman2_window ").  The \
+choices are: " S_rectangular_window ", " S_hann_window ", " S_welch_window ", " S_parzen_window ", \
+" S_bartlett_window ", " S_hamming_window ", " S_blackman2_window ", " S_blackman3_window ", \
+" S_blackman4_window ", " S_exponential_window ", " S_riemann_window ", " S_kaiser_window ", \
+" S_cauchy_window ", " S_poisson_window ", " S_gaussian_window ", " S_tukey_window ", \
+" S_dolph_chebyshev_window " (if GSL is loaded), " S_hann_poisson_window ", " S_connes_window "."
 
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_FFT_WINDOW, S_fft_window));

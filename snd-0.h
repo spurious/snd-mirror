@@ -269,7 +269,7 @@ typedef enum {PRINT_SND, PRINT_ENV} print_choice_t;
 typedef enum {SND_DATA_NO_DATA, SND_DATA_FILE, SND_DATA_BUFFER} snd_data_file_t;
 typedef enum {SOUNDS_VERTICAL, SOUNDS_HORIZONTAL, SOUNDS_IN_NOTEBOOK, SOUNDS_IN_SEPARATE_WINDOWS} sound_style_t;
 enum {FOURIER, WAVELET, WALSH, AUTOCORRELATION, CEPSTRUM, HADAMARD, HAAR}; /* not typedef'd -- grows as new ones are added */
-#define NUM_FFT_WINDOWS 17
+#define NUM_FFT_WINDOWS 19
 #define NUM_WAVELETS 48
 
 typedef enum {APPLY_TO_SOUND, APPLY_TO_CHANNEL, APPLY_TO_SELECTION} snd_apply_t;

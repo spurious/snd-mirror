@@ -354,6 +354,7 @@
 	'channels-combined channels-combined 1 
 	'channels-separate channels-separate 0 
 	'channels-superimposed channels-superimposed 2
+	'connes-window connes-window 18
 	'cursor-in-middle cursor-in-middle 3
 	'cursor-in-view cursor-in-view 0 
 	'cursor-on-left cursor-on-left 1 
@@ -375,6 +376,7 @@
 	'haar-transform haar-transform 6
 	'hamming-window hamming-window 5
 	'hann-window hann-window 1
+	'hann-poisson-window hann-poisson-window 17
 	'kaiser-window kaiser-window 11 
 	'keyboard-no-action keyboard-no-action 4
 	'cepstrum cepstrum 4
@@ -437,6 +439,10 @@
 	'mus-voc mus-voc 9
 	'mus-svx mus-svx 8
 	'mus-soundfont mus-soundfont 25
+
+	'mus-interp-linear mus-interp-linear 0
+	'mus-interp-sinusoidal mus-interp-sinusoidal 1
+	'mus-interp-all-pass mus-interp-all-pass 2
 
 	'mus-unknown mus-unknown 0
 	'mus-bshort mus-bshort 1
@@ -14975,7 +14981,7 @@ EDITS: 5
 	    (if (> (/ sum 32768.0) 200.0)
 		(snd-display ";random autocorrelate average: ~A" (/ sum 32768.0))))))
       
-      (set! (locsig-type) mus-linear)
+      (set! (locsig-type) mus-interp-linear)
       (let* ((gen (make-locsig 30.0 :channels 2))
 	     (gen1 (make-locsig 60.0 :channels 2))
 	     (gen2 (make-locsig 60.0 :channels 4))
@@ -15223,7 +15229,7 @@ EDITS: 5
 		      (right (modulo (+ left 1) chans))
 		      (frac (- pos left))
 		      (v (make-vct chans)))
-		 (if (= type mus-linear)
+		 (if (= type mus-interp-linear)
 		     (begin
 		       (vct-set! v left (- 1.0 frac))
 		       (vct-set! v right frac))
@@ -15275,7 +15281,7 @@ EDITS: 5
 			 (if (not (= (mus-channels gen) 1)) (snd-display ";locsig ~A: ~A" deg gen))
 			 (if (fneq (locsig-ref gen 0) 1.0) (snd-display ";locsig[~A] scaler ~A: ~A" ltype deg (locsig-ref gen 0)))))
 		     (list 0.0 45.0 90.0 1234.0)))
-		  (list mus-linear mus-sinusoidal))
+		  (list mus-interp-linear mus-interp-sinusoidal))
 		 
 		 (for-each
 		  (lambda (chans)
@@ -15331,10 +15337,10 @@ EDITS: 5
 						       (* .1 (vct-ref revs i)))
 					  (quit))))))))
 			(list 0.0 45.0 90.0 120.0 180.0 275.0 315.0 300.0 15.0 1234.0)))
-		     (list mus-linear mus-sinusoidal)))
+		     (list mus-interp-linear mus-interp-sinusoidal)))
 		  (list 2 3 4 5 8 12 16 24))
 		 )))
-	    (list mus-linear mus-sinusoidal))
+	    (list mus-interp-linear mus-interp-sinusoidal))
 	   (if revfile (mus-close revfile))))
        (list 0 1 2 4))
       
@@ -33807,7 +33813,7 @@ EDITS: 2
 		      (not (vequal v1 (vct 0.5 0.5 0.5))))
 		  (snd-display ";vct-map 1.0 0.5: ~A ~A" v0 v1)))
 	    
-	    (set! (locsig-type) mus-linear)
+	    (set! (locsig-type) mus-interp-linear)
 	    (let ((v0 (make-vct 3))
 		  (v1 (make-vct 3))
 		  (l (make-locsig 30.0 :channels 2)))
@@ -33945,6 +33951,26 @@ EDITS: 2
 	      (let ((off (vct-ref v 0)))
 		(vct-offset! v (- off))
 		(if (> (vct-peak v) 0.002) (snd-display ";gen+gen-pi 1.0(2): ~A ~A" (vct-peak v) v))))
+
+	    (let ((v (make-vct 1000))
+		  (gen1 (make-oscil 1.0))
+		  (gen2 (make-oscil 1.0 :initial-phase pi)))
+	      (vct-map! v (lambda () (+ (gen1 0.0) (gen2 0.0 0.0))))
+	      (if (fneq (vct-peak v) 0.0) (snd-display ";gen+gen-pi+args 1.0: ~A" v)))
+	    
+	    (let ((v1 (make-vct 10))
+		  (v2 (make-vct 10))
+		  (gen1 (make-oscil 100.0))
+		  (gen2 (make-oscil 100.0))
+		  (gen3 (make-oscil 100.0))
+		  (gen4 (make-oscil 100.0))
+		  (vr (make-vct 10)))
+	      (do ((i 0 (1+ i))) ((= i 10)) (vct-set! vr i (random 1.0)))
+	      (let ((i 0)) 
+		(vct-map! v1 (lambda () (let ((val (+ (gen1 (vct-ref vr i)) (gen2 (vct-ref vr i) (vct-ref vr i))))) (set! i (1+ i)) val))))
+	      (let ((i 0)) 
+		(vct-map! v2 (lambda () (let ((val (+ (oscil gen3 (vct-ref vr i)) (oscil gen4 (vct-ref vr i) (vct-ref vr i))))) (set! i (1+ i)) val))))
+	      (if (not (vequal v1 v2)) (snd-display ";gen+gen+vr args: ~A ~A" v1 v2)))
 
 	    (let ((osc (make-sum-of-cosines 3 440.0))
 		  (v (make-vct 1))
@@ -34101,7 +34127,7 @@ EDITS: 2
 				  res)))))
 	      (if (not (vequal v (vct .1 2.0 .1))) (snd-display ";run make-vct: ~A" v)))
 	    
-	    (set! (locsig-type) mus-linear)
+	    (set! (locsig-type) mus-interp-linear)
 	    (let* ((rev (make-frame->file "fmv4.reverb" 1 mus-bshort mus-next))
 		   (loc (make-locsig 30.0 :channels 2 :reverb .1 :revout rev))
 		   (d0 123.0)

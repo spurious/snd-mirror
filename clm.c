@@ -5,10 +5,6 @@
  *   or add-to-existing would need access to current
  */
 
-/* TODO: fractional sample (0) zdelay: if type given assume 0-based?
- * TODO: all-pass interpolation type for zdelay: MUS_ALL_PASS exists, but MUS_LINEAR [MUS_LAGRANGE, MUS_ALLPASS?, MUS_STEP?]
- */
-
 #if defined(HAVE_CONFIG_H)
   #include <config.h>
 #endif
@@ -575,7 +571,7 @@ Float mus_array_interp(Float *wave, Float phase, int size)
     }
   int_part = (int)floor(phase);
   frac_part = phase - int_part;
-  if (int_part == size) int_part = 0; /* this can actually happen! */
+  if (int_part == size) int_part = 0;
   if (frac_part == 0.0) 
     return(wave[int_part]);
   else
@@ -970,16 +966,14 @@ typedef struct {
   bool zdly, line_allocated;
   Float *line;
   int zloc, zsize;
-  Float xscl, yscl;
+  Float xscl, yscl, yn1;
+  mus_interp_t type;
 } dly;
 
 
-Float mus_delay(mus_any *ptr, Float input, Float pm)
+Float mus_delay_tick(mus_any *ptr, Float input)
 {
-  /* changed 26-Sep-00 to match mus.lisp */
   dly *gen = (dly *)ptr;
-  Float result;
-  result = mus_tap(ptr, pm);
   gen->line[gen->loc] = input;
   gen->loc++;
   if (gen->zdly)
@@ -992,6 +986,14 @@ Float mus_delay(mus_any *ptr, Float input, Float pm)
     {
       if (gen->loc >= gen->size) gen->loc = 0;
     }
+  return(input);
+}
+
+Float mus_delay(mus_any *ptr, Float input, Float pm)
+{
+  Float result;
+  result = mus_tap(ptr, pm);
+  mus_delay_tick(ptr, input);
   return(result);
 }
 
@@ -1006,15 +1008,46 @@ Float mus_delay_1(mus_any *ptr, Float input)
   return(result);
 }
 
+static Float mus_array_all_pass_interp(Float *wave, Float phase, int size, Float yn1)
+{
+  int int_part, inx;
+  Float frac_part;
+  if ((phase < 0.0) || (phase > size))
+    {
+      phase = fmod((double)phase, (double)size);
+      if (phase < 0.0) phase += size;
+    }
+  int_part = (int)floor(phase);
+  frac_part = phase - int_part;
+  if (int_part == size) int_part = 0;
+  inx = int_part +1;
+  if (inx >= size) inx -= size;
+  if (frac_part == 0.0) 
+    return(wave[int_part] + wave[inx] - yn1);
+  else return(wave[int_part] + ((1.0 - frac_part) / (1 + frac_part)) * (wave[inx] - yn1));
+}
+
+/* TODO: table-lookup type [waveshaping, wave-train]? 
+   TODO: tests for delay-tick and all-pass interp
+*/
+
 Float mus_tap(mus_any *ptr, Float loc)
 {
   dly *gen = (dly *)ptr;
   int taploc;
   if (gen->zdly)
     {
-      if (loc == 0.0) 
-	return(gen->line[gen->zloc]);
-      else return(mus_array_interp(gen->line, gen->zloc - loc, gen->zsize));
+      if (gen->type == MUS_INTERP_LINEAR)
+	{
+	  if (loc == 0.0) 
+	    return(gen->line[gen->zloc]);
+	  else return(mus_array_interp(gen->line, gen->zloc - loc, gen->zsize));
+	}
+      else 
+	{
+	  gen->yn1 = mus_array_all_pass_interp(gen->line, gen->zloc - loc, gen->zsize, gen->yn1);
+	  return(gen->yn1);
+	}
     }
   else
     {
@@ -1155,7 +1188,9 @@ static bool delay_equalp(mus_any *p1, mus_any *p2)
       (d1->zloc == d2->zloc) &&
       (d1->zsize == d2->zsize) &&
       (d1->xscl == d2->xscl) &&
-      (d1->yscl == d2->yscl))
+      (d1->yscl == d2->yscl) &&
+      (d1->yn1 == d2->yn1) &&
+      (d1->type == d2->type))
     {
       for (i = 0; i < d1->size; i++)
 	if (d1->line[i] != d2->line[i])
@@ -1206,7 +1241,7 @@ static mus_any_class DELAY_CLASS = {
   0, 0, 0, 0, 0, 0, 0
 };
 
-mus_any *mus_make_delay(int size, Float *preloaded_line, int line_size) 
+mus_any *mus_make_delay(int size, Float *preloaded_line, int line_size, mus_interp_t type) 
 {
   /* if preloaded_line null, allocated locally */
   /* if size == line_size, normal (non-interpolating) delay */
@@ -1217,6 +1252,7 @@ mus_any *mus_make_delay(int size, Float *preloaded_line, int line_size)
   gen->size = size;
   gen->zsize = line_size;
   gen->zdly = (line_size != size);
+  gen->type = type;
   if (preloaded_line)
     {
       gen->line = preloaded_line;
@@ -1277,10 +1313,10 @@ static mus_any_class COMB_CLASS = {
   0, 0, 0, 0, 0, 0, 0
 };
 
-mus_any *mus_make_comb (Float scaler, int size, Float *line, int line_size)
+mus_any *mus_make_comb (Float scaler, int size, Float *line, int line_size, mus_interp_t type)
 {
   dly *gen;
-  gen = (dly *)mus_make_delay(size, line, line_size);
+  gen = (dly *)mus_make_delay(size, line, line_size, type);
   if (gen)
     {
       gen->core = &COMB_CLASS;
@@ -1327,10 +1363,10 @@ Float mus_notch_1(mus_any *ptr, Float input)
 
 bool mus_notch_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_NOTCH));}
 
-mus_any *mus_make_notch (Float scaler, int size, Float *line, int line_size)
+mus_any *mus_make_notch (Float scaler, int size, Float *line, int line_size, mus_interp_t type)
 {
   dly *gen;
-  gen = (dly *)mus_make_delay(size, line, line_size);
+  gen = (dly *)mus_make_delay(size, line, line_size, type);
   if (gen)
     {
       gen->core = &NOTCH_CLASS;
@@ -1383,10 +1419,10 @@ static mus_any_class ALL_PASS_CLASS = {
   0, 0, 0, 0, 0, 0, 0
 };
 
-mus_any *mus_make_all_pass (Float backward, Float forward, int size, Float *line, int line_size)
+mus_any *mus_make_all_pass (Float backward, Float forward, int size, Float *line, int line_size, mus_interp_t type)
 {
   dly *gen;
-  gen = (dly *)mus_make_delay(size, line, line_size);
+  gen = (dly *)mus_make_delay(size, line, line_size, type);
   if (gen)
     {
       gen->core = &ALL_PASS_CLASS;
@@ -1434,7 +1470,7 @@ static mus_any_class AVERAGE_CLASS = {
 mus_any *mus_make_average(int size, Float *line)
 {
   dly *gen;
-  gen = (dly *)mus_make_delay(size, line, size);
+  gen = (dly *)mus_make_delay(size, line, size, MUS_INTERP_LINEAR);
   if (gen)
     {
       int i;
@@ -5450,7 +5486,7 @@ typedef struct {
   Float *outn;
   Float *revn;
   int chans, rev_chans;
-  mus_locsig_interp_t type;
+  mus_interp_t type;
   Float reverb;
 } locs;
 
@@ -5639,7 +5675,7 @@ static mus_any_class LOCSIG_CLASS = {
 
 bool mus_locsig_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_LOCSIG));}
 
-void mus_fill_locsig(Float *arr, int chans, Float degree, Float scaler, mus_locsig_interp_t type)
+void mus_fill_locsig(Float *arr, int chans, Float degree, Float scaler, mus_interp_t type)
 {
   Float deg, pos, frac, degs_per_chan, ldeg, c, s;
   int left, right;
@@ -5676,7 +5712,7 @@ void mus_fill_locsig(Float *arr, int chans, Float degree, Float scaler, mus_locs
       right = left + 1;
       if (right == chans) right = 0;
       frac = pos - left;
-      if (type == MUS_LINEAR)
+      if (type == MUS_INTERP_LINEAR)
 	{
 	  arr[left] = scaler * (1.0 - frac);
 	  arr[right] = scaler * frac;
@@ -5693,7 +5729,7 @@ void mus_fill_locsig(Float *arr, int chans, Float degree, Float scaler, mus_locs
     }
 }
 
-mus_any *mus_make_locsig(Float degree, Float distance, Float reverb, int chans, mus_any *output, mus_any *revput, mus_locsig_interp_t type)
+mus_any *mus_make_locsig(Float degree, Float distance, Float reverb, int chans, mus_any *output, mus_any *revput, mus_interp_t type)
 {
   locs *gen;
   Float dist;
@@ -6590,7 +6626,7 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
    * JOS had slightly different numbers for the Blackman-Harris windows.
    */
   int i, j, midn, midp1;
-  Float freq, rate, sr1, angle, expn, expsum, I0beta, cx;
+  Float freq, rate, sr1, angle, expn, expsum, I0beta, cx, angle1;
 #if HAVE_GSL || HAVE_COMPLEX_TRIG
   Float *rl, *im;
   Float pk;
@@ -6612,8 +6648,10 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
       for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) window[j] = (window[i] = 0.5 - 0.5 * cos(angle));
       break; 
     case MUS_WELCH_WINDOW:
-      /* "Connes" window is this window squared */
       for (i = 0, j = size - 1; i <= midn; i++, j--) window[j] = (window[i] = 1.0 - sqr((Float)(i - midn) / (Float)midp1));
+      break; 
+    case MUS_CONNES_WINDOW:
+      for (i = 0, j = size - 1; i <= midn; i++, j--) window[j] = (window[i] = sqr(1.0 - sqr((Float)(i - midn) / (Float)midp1)));
       break; 
     case MUS_PARZEN_WINDOW:
       for (i = 0, j = size - 1; i <= midn; i++, j--) window[j] = (window[i] = 1.0 - fabs((Float)(i - midn) / (Float)midp1));
@@ -6660,6 +6698,11 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
       break;
     case MUS_POISSON_WINDOW:
       for (i = 0, j = size - 1, angle = 1.0; i <= midn; i++, j--, angle -= rate) window[j] = (window[i] = exp((-beta) * angle));
+      break;
+    case MUS_HANN_POISSON_WINDOW:
+      /* Hann * Poisson -- from JOS */
+      for (i = 0, j = size - 1, angle = 1.0, angle1 = 0.0; i <= midn; i++, j--, angle -= rate, angle1 += freq) 
+	window[j] = (window[i] = (exp((-beta) * angle) * (0.5 - 0.5 * cos(angle1))));
       break;
     case MUS_RIEMANN_WINDOW:
       sr1 = TWO_PI / (Float)size;

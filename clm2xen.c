@@ -288,10 +288,11 @@ static void init_keywords(void)
 
 /* ---------------- AM and simple stuff ---------------- */
 
-static char *FFT_WINDOW_CONSTANTS[17] = {S_rectangular_window, S_hann_window, S_welch_window, S_parzen_window, S_bartlett_window,
+static char *FFT_WINDOW_CONSTANTS[19] = {S_rectangular_window, S_hann_window, S_welch_window, S_parzen_window, S_bartlett_window,
 					 S_hamming_window, S_blackman2_window, S_blackman3_window, S_blackman4_window,
 					 S_exponential_window, S_riemann_window, S_kaiser_window, S_cauchy_window,
-					 S_poisson_window, S_gaussian_window, S_tukey_window, S_dolph_chebyshev_window
+					 S_poisson_window, S_gaussian_window, S_tukey_window, S_dolph_chebyshev_window,
+					 S_connes_window, S_hann_poisson_window
 };
 
 char *mus_fft_window_name(mus_fft_window_t i) {return(FFT_WINDOW_CONSTANTS[(int)i]);}
@@ -1091,10 +1092,11 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
   mus_xen *gn;
   mus_any *ge = NULL;
   char *caller = NULL;
-  XEN args[14]; 
-  XEN keys[7];
-  int orig_arg[7] = {0, 0, 0, 0, 0, 0, 0};
+  XEN args[16]; 
+  XEN keys[8];
+  int orig_arg[8] = {0, 0, 0, 0, 0, 0, 0, (int)MUS_INTERP_LINEAR};
   int vals, i, argn = 0, len = 0, arglist_len, keyn, max_size = -1;
+  mus_interp_t interp_type = MUS_INTERP_LINEAR;
   int size = 1;
   Float *line = NULL;
   Float scaler = 0.0, feedback = 0.0, feedforward = 0.0;
@@ -1113,7 +1115,8 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
   keys[argn++] = kw_initial_contents;
   keys[argn++] = kw_initial_element;
   keys[argn++] = kw_max_size;
-  for (i = 0; i < 14; i++) args[i] = XEN_UNDEFINED;
+  keys[argn++] = kw_type;
+  for (i = 0; i < 16; i++) args[i] = XEN_UNDEFINED;
   arglist_len = XEN_LIST_LENGTH(arglist);
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
   vals = mus_optkey_unscramble(caller, argn, keys, args, orig_arg);
@@ -1204,6 +1207,21 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 	      XEN_ASSERT_TYPE(XEN_NUMBER_P(keys[keyn]), keys[keyn], orig_arg[keyn], caller, "a number");
 	    }
 	}
+      keyn++;
+      if (XEN_KEYWORD_P(keys[keyn]))
+	interp_type = MUS_INTERP_LINEAR;
+      else
+	{
+	  if (XEN_NUMBER_P(keys[keyn]))
+	    {
+	      interp_type = (mus_interp_t)XEN_TO_C_INT_OR_ELSE_WITH_CALLER(keys[keyn], MUS_INTERP_LINEAR, caller);
+	      if (!(MUS_INTERP_TYPE_OK(interp_type)))
+		{
+		  if (line) FREE(line);
+		  XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[keyn], keys[keyn], "no such interp-type: ~A");
+		}
+	    }
+	}
     }
   if (max_size == -1) max_size = size;
   if ((max_size <= 0) || (max_size < size))
@@ -1228,11 +1246,11 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
   old_error_handler = mus_error_set_handler(local_mus_error);
   switch (choice)
     {
-    case G_DELAY: ge = mus_make_delay(size, line, max_size); break;
+    case G_DELAY: ge = mus_make_delay(size, line, max_size, interp_type); break;
     case G_AVERAGE: ge = mus_make_average(size, line); break;
-    case G_COMB: ge = mus_make_comb(scaler, size, line, max_size); break;
-    case G_NOTCH: ge = mus_make_notch(scaler, size, line, max_size); break;
-    case G_ALL_PASS: ge = mus_make_all_pass(feedback, feedforward, size, line, max_size); break;
+    case G_COMB: ge = mus_make_comb(scaler, size, line, max_size, interp_type); break;
+    case G_NOTCH: ge = mus_make_notch(scaler, size, line, max_size, interp_type); break;
+    case G_ALL_PASS: ge = mus_make_all_pass(feedback, feedforward, size, line, max_size, interp_type); break;
     }
   mus_error_set_handler(old_error_handler);
   if (ge)
@@ -1249,7 +1267,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 
 static XEN g_make_delay(XEN args) 
 {
-  #define H_make_delay "(" S_make_delay " :size :initial-contents (:initial-element 0.0) (:max-size)): \
+  #define H_make_delay "(" S_make_delay " :size :initial-contents (:initial-element 0.0) (:max-size) (:type mus-interp-linear)): \
 return a new delay line of size elements. \
 If the delay length will be changing at run-time, max-size sets its maximum length, so\n\
    (" S_make_delay " len :max-size (+ len 10))\n\
@@ -1261,7 +1279,7 @@ initial-contents can be either a list or a vct."
 
 static XEN g_make_comb(XEN args) 
 {
-  #define H_make_comb "(" S_make_comb " :scaler :size :initial-contents (:initial-element 0.0) :max-size): \
+  #define H_make_comb "(" S_make_comb " :scaler :size :initial-contents (:initial-element 0.0) :max-size (:type mus-interp-linear)): \
 return a new comb filter (a delay line with a scaler on the feedback) of size elements. \
 If the comb length will be changing at run-time, max-size sets its maximum length. \
 initial-contents can be either a list or a vct."
@@ -1271,7 +1289,7 @@ initial-contents can be either a list or a vct."
 
 static XEN g_make_notch(XEN args) 
 {
-  #define H_make_notch "(" S_make_notch " :scaler :size :initial-contents (:initial-element 0.0) :max-size): \
+  #define H_make_notch "(" S_make_notch " :scaler :size :initial-contents (:initial-element 0.0) :max-size (:type mus-interp-linear)): \
 return a new notch filter (a delay line with a scaler on the feedforward) of size elements. \
 If the notch length will be changing at run-time, max-size sets its maximum length. \
 initial-contents can be either a list or a vct."
@@ -1281,7 +1299,7 @@ initial-contents can be either a list or a vct."
 
 static XEN g_make_all_pass(XEN args) 
 {
-  #define H_make_all_pass "(" S_make_all_pass " :feedback :feedforward :size :initial-contents (:initial-element 0.0) :max-size): \
+  #define H_make_all_pass "(" S_make_all_pass " :feedback :feedforward :size :initial-contents (:initial-element 0.0) :max-size (:type mus-interp-linear)): \
 return a new allpass filter (a delay line with a scalers on both the feedback and the feedforward). \
 If the all-pass length will be changing at run-time, max-size sets its maximum length. \
 initial-contents can be either a list or a vct."
@@ -1309,6 +1327,18 @@ Scheme function delay is available as %delay)"
   if (XEN_NUMBER_P(input)) in1 = XEN_TO_C_DOUBLE(input); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(input), input, XEN_ARG_2, S_delay, "a number");
   if (XEN_NUMBER_P(pm)) pm1 = XEN_TO_C_DOUBLE(pm); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(pm), pm, XEN_ARG_3, S_delay, "a number");
   return(C_TO_XEN_DOUBLE(mus_delay(XEN_TO_MUS_ANY(obj), in1, pm1)));
+}
+
+static XEN g_delay_tick(XEN obj, XEN input)
+{
+  #define H_delay_tick "(" S_delay_tick " gen (val 0.0)): \
+delay val according to the delay line's length. This merely 'ticks' the delay line forward.\
+The argument 'val' is returned."
+
+  Float in1 = 0.0;
+  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_delay_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_delay_tick, "a delay line");
+  if (XEN_NUMBER_P(input)) in1 = XEN_TO_C_DOUBLE(input); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(input), input, XEN_ARG_2, S_delay_tick, "a number");
+  return(C_TO_XEN_DOUBLE(mus_delay_tick(XEN_TO_MUS_ANY(obj), in1)));
 }
 
 static XEN g_notch(XEN obj, XEN input, XEN pm)
@@ -4090,27 +4120,27 @@ static XEN g_locsig(XEN obj, XEN loc, XEN val)
 		      true));
 }
 
-static mus_locsig_interp_t clm_locsig_type = MUS_LINEAR;
+static mus_interp_t clm_locsig_type = MUS_INTERP_LINEAR;
 
 static XEN g_locsig_type()
 {
-  #define H_locsig_type "(" S_locsig_type "): locsig interpolation type, either " S_mus_linear " or " S_mus_sinusoidal "."
+  #define H_locsig_type "(" S_locsig_type "): locsig interpolation type, either " S_mus_interp_linear " or " S_mus_interp_sinusoidal "."
   return(C_TO_XEN_INT((int)clm_locsig_type));
 }
 
 static XEN g_set_locsig_type(XEN val)
 {
-  mus_locsig_interp_t newval;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_locsig_type, S_mus_linear " or " S_mus_sinusoidal);
-  newval = (mus_locsig_interp_t)XEN_TO_C_INT(val);
-  if ((newval == MUS_LINEAR) || (newval == MUS_SINUSOIDAL))
+  mus_interp_t newval;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_locsig_type, S_mus_interp_linear " or " S_mus_interp_sinusoidal);
+  newval = (mus_interp_t)XEN_TO_C_INT(val);
+  if ((newval == MUS_INTERP_LINEAR) || (newval == MUS_INTERP_SINUSOIDAL))
     clm_locsig_type = newval;
   return(C_TO_XEN_INT((int)clm_locsig_type));
 }
 
 static XEN g_make_locsig(XEN arglist)
 {
-  #define H_make_locsig "(" S_make_locsig " (:degree 0.0) (:distance 1.0) (:reverb 0.0) :output :revout (:channels 1) (:type " S_mus_linear ")): \
+  #define H_make_locsig "(" S_make_locsig " (:degree 0.0) (:distance 1.0) (:reverb 0.0) :output :revout (:channels 1) (:type " S_mus_interp_linear ")): \
 return a new generator for signal placement in n channels.  Channel 0 corresponds to 0 degrees."
 
   XEN out_obj = XEN_UNDEFINED, rev_obj = XEN_UNDEFINED;
@@ -4121,7 +4151,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
   XEN keys[7];
   int orig_arg[7] = {0, 0, 0, 0, 0, 0, 0};
   int vals, i, arglist_len, vlen = 0, out_chans = 1;
-  mus_locsig_interp_t type;
+  mus_interp_t type;
   Float degree = 0.0, distance = 1.0, reverb = 0.0;
   type = clm_locsig_type;
   keys[0] = kw_degree;
@@ -4172,9 +4202,9 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
       if (out_chans < 0) XEN_OUT_OF_RANGE_ERROR(S_make_locsig, orig_arg[5], keys[5], "chans ~A < 0.0?");
       if (out_chans > MAX_TABLE_SIZE) XEN_OUT_OF_RANGE_ERROR(S_make_locsig, orig_arg[5], keys[5], "chans = ~A?");
       if (out_chans > 0) vlen++;
-      type = (mus_locsig_interp_t)mus_optkey_to_int(keys[6], S_make_locsig, orig_arg[6], type);
-      if ((type != MUS_LINEAR) && (type != MUS_SINUSOIDAL))
-	XEN_OUT_OF_RANGE_ERROR(S_make_locsig, orig_arg[6], keys[6], "type ~A must be " S_mus_linear " or " S_mus_sinusoidal ".");
+      type = (mus_interp_t)mus_optkey_to_int(keys[6], S_make_locsig, orig_arg[6], type);
+      if ((type != MUS_INTERP_LINEAR) && (type != MUS_INTERP_SINUSOIDAL))
+	XEN_OUT_OF_RANGE_ERROR(S_make_locsig, orig_arg[6], keys[6], "type ~A must be " S_mus_interp_linear " or " S_mus_interp_sinusoidal ".");
     }
   ge = mus_make_locsig(degree, distance, reverb, out_chans, outp, revp, type);
   if (ge)
@@ -4987,6 +5017,7 @@ XEN_VARGIFY(g_make_notch_w, g_make_notch)
 XEN_VARGIFY(g_make_all_pass_w, g_make_all_pass)
 XEN_VARGIFY(g_make_average_w, g_make_average)
 XEN_ARGIFY_3(g_delay_w, g_delay)
+XEN_ARGIFY_2(g_delay_tick_w, g_delay_tick)
 XEN_ARGIFY_2(g_tap_w, g_tap)
 XEN_ARGIFY_3(g_notch_w, g_notch)
 XEN_ARGIFY_3(g_comb_w, g_comb)
@@ -5247,6 +5278,7 @@ XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 #define g_make_all_pass_w g_make_all_pass
 #define g_make_average_w g_make_average
 #define g_delay_w g_delay
+#define g_delay_tick_w g_delay_tick
 #define g_tap_w g_tap
 #define g_notch_w g_notch
 #define g_comb_w g_comb
@@ -5549,6 +5581,8 @@ void mus_xen_init(void)
   #define H_gaussian_window        "window based on exp(-sqr(angle))"
   #define H_tukey_window           "window based on truncated cosine"
   #define H_dolph_chebyshev_window "window from inverse fft"
+  #define H_connes_window          "triangle window squared twice"
+  #define H_hann_poisson_window    "poisson window * hann window"
 
   XEN_DEFINE_CONSTANT(S_rectangular_window,     MUS_RECTANGULAR_WINDOW,     H_rectangular_window);
   XEN_DEFINE_CONSTANT(S_hann_window,            MUS_HANN_WINDOW,            H_hann_window);
@@ -5567,9 +5601,12 @@ void mus_xen_init(void)
   XEN_DEFINE_CONSTANT(S_gaussian_window,        MUS_GAUSSIAN_WINDOW,        H_gaussian_window);
   XEN_DEFINE_CONSTANT(S_tukey_window,           MUS_TUKEY_WINDOW,           H_tukey_window);
   XEN_DEFINE_CONSTANT(S_dolph_chebyshev_window, MUS_DOLPH_CHEBYSHEV_WINDOW, H_dolph_chebyshev_window);
+  XEN_DEFINE_CONSTANT(S_connes_window,          MUS_CONNES_WINDOW,          H_connes_window);
+  XEN_DEFINE_CONSTANT(S_hann_poisson_window,    MUS_HANN_POISSON_WINDOW,    H_hann_poisson_window);
 
-  XEN_DEFINE_CONSTANT(S_mus_linear,             MUS_LINEAR,                 "locsig linear interpolation");
-  XEN_DEFINE_CONSTANT(S_mus_sinusoidal,         MUS_SINUSOIDAL,             "locsig sinusoidal interpolation");
+  XEN_DEFINE_CONSTANT(S_mus_interp_linear,      MUS_INTERP_LINEAR,          "locsig/delay linear interpolation");
+  XEN_DEFINE_CONSTANT(S_mus_interp_sinusoidal,  MUS_INTERP_SINUSOIDAL,      "locsig sinusoidal interpolation");
+  XEN_DEFINE_CONSTANT(S_mus_interp_all_pass,    MUS_INTERP_ALL_PASS,        "delay interpolation");
 
   XEN_DEFINE_PROCEDURE(S_mus_inspect,   g_mus_inspect_w, 1, 0, 0,   H_mus_inspect);
   XEN_DEFINE_PROCEDURE(S_mus_describe,  g_mus_describe_w, 1, 0, 0,  H_mus_describe);
@@ -5602,6 +5639,7 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_make_all_pass, g_make_all_pass_w, 0, 0, 1, H_make_all_pass);
   XEN_DEFINE_PROCEDURE(S_make_average,  g_make_average_w,  0, 0, 1, H_make_average);
   XEN_DEFINE_PROCEDURE(S_delay,         g_delay_w,         1, 2, 0, H_delay); 
+  XEN_DEFINE_PROCEDURE(S_delay_tick,    g_delay_tick_w,    1, 1, 0, H_delay_tick); 
   XEN_DEFINE_PROCEDURE(S_tap,           g_tap_w,           1, 1, 0, H_tap);
   XEN_DEFINE_PROCEDURE(S_notch,         g_notch_w,         1, 2, 0, H_notch);
   XEN_DEFINE_PROCEDURE(S_comb,          g_comb_w,          1, 2, 0, H_comb);
@@ -5910,6 +5948,7 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_clear_sincs,
 	       S_comb,
 	       S_comb_p,
+	       S_connes_window,
 	       S_continue_sample_to_file,
 	       S_contrast_enhancement,
 	       S_convolution,
@@ -5954,6 +5993,7 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_granulate_p,
 	       S_hamming_window,
 	       S_hann_window,
+	       S_hann_poisson_window,
 	       S_hz_to_radians,
 	       S_iir_filter,
 	       S_iir_filter_p,
@@ -6047,7 +6087,9 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_mus_input_p,
 	       S_mus_inspect,
 	       S_mus_length,
-	       S_mus_linear,
+	       S_mus_interp_all_pass,
+	       S_mus_interp_linear,
+	       S_mus_interp_sinusoidal,
 	       S_mus_location,
 	       S_mus_mix,
 	       S_mus_name,
@@ -6061,7 +6103,6 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_mus_run,
 	       S_mus_scaler,
 	       S_mus_set_formant_radius_and_frequency,
-	       S_mus_sinusoidal,
 	       S_mus_srate,
 	       S_mus_width,
 	       S_mus_x1,

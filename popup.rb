@@ -845,7 +845,9 @@ written: %s\n", channels(snd), srate(snd), frames(snd) / srate(snd).to_f,
                      ["Poisson", Poisson_window],
                      ["Gaussian", Gaussian_window],
                      ["Tukey", Tukey_window],
-                     ["Dolph-Chebyshev", Dolph_chebyshev_window]]) do |snd, chn, val|
+                     ["Dolph-Chebyshev", Dolph_chebyshev_window],
+		     ["Hann-Poisson", Hann_poisson_window],
+		     ["Connes", Connes_window]]) do |snd, chn, val|
         set_fft_window(val, snd, choose_chan.call(snd, chn))
       end
     end

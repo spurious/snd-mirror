@@ -1347,8 +1347,9 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 (define* (channel-norm #:optional snd chn)
   (sqrt (channel-total-energy snd chn)))
 
-(define* (channel-lp p #:optional snd chn)
+(define* (channel-lp u-p #:optional snd chn)
   (let ((sum 0.0)
+	(p u-p) ; for the optimizer's benefit -- it can't find define* args
 	(N (frames snd chn)))
     (scan-channel (lambda (y) (set! sum (+ sum (expt (abs y) p))) #f) 0 N snd chn)
     (expt sum (/ 1.0 p))))

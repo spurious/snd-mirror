@@ -1368,10 +1368,11 @@ get to the envelope.</p>
 <!-- TOPIC delay -->
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>DELAY, TAP</h4></td></tr></table>
 <pre>
-  <a class=def name="make-delay">make-delay</a> <a href="#optional-key">&amp;optional-key</a> <i>size</i> <i>initial-contents initial-element max-size</i>
+  <a class=def name="make-delay">make-delay</a> <a href="#optional-key">&amp;optional-key</a> <i>size</i> <i>initial-contents initial-element max-size type</i>
   <a class=def name="delay">delay</a> <i>d</i> <i>input</i> &amp;optional (<i>pm</i> 0.0)
   <a class=def name="delay?">delay?</a> <i>d</i>
   <a class=def name="tap">tap</a> <i>d</i> &amp;optional (<i>offset</i> 0)
+  <a class=def name="delaytick">delay-tick</a> <i>d</i> <i>input</i>
 </pre>
 <p><b>delay</b> is a delay line.  <i>Size</i> is in samples.
 Input fed into a delay line reappears at the output <i>size</i> samples
@@ -1388,7 +1389,11 @@ delay requested at run-time.
 The <i>pm</i> argument is difference between the nominal
 delay length (<i>size</i>) and the current actual delay length (<i>size</i>
 + <i>pm</i>) -- a positive <i>pm</i> corresponds to a longer
-delay line. </p>
+delay line.  The <i>type</i> argument sets the interpolation type:
+mus-interp-linear or mus-interp-all-pass.
+<b>delay-tick</b> just puts a sample in the delay line and 'ticks' it forward.
+The value returned is the 'input' argument.
+</p>
 
 <table border align=left hspace=20 cellpadding=4>
 <tr><td colspan=2><center>delay methods</center></td></tr>
@@ -2235,8 +2240,8 @@ the direct signal gets sent to the reverberator.  <i>Distance</i> tries to
 imitate a distance cue by fooling with the relative amounts of direct and
 reverberated signal (independent of <i>reverb</i>).  <i>Distance</i> should
 be greater than or equal to 1.0.  
-<i>type</i> can be <i>mus-linear</i> (the default) or <i>mus-sinusoidal</i>.
-This parameter can be set globally via <i>*clm-locsig-type*</i>.  The mus-sinusoidal
+<i>type</i> can be <i>mus-interp-linear</i> (the default) or <i>mus-interp-sinusoidal</i>.
+This parameter can be set globally via <i>*clm-locsig-type*</i>.  The mus-interp-sinusoidal
 case uses sin and cos to set the respective channel amplitudes (this is reported to
 help with the "hole-in-the-middle" problem).
 </p>
@@ -3513,7 +3518,7 @@ current dynamic value of that variable is *&lt;var&gt;*.
   <a class=def Name="*clm-version*">*clm-version*</a>            version identifier (a number -- also *clm-revision*)
   <a class=def Name="*clm-date*">*clm-date*</a>               creation date of the current version
   <a class=def Name="*clm-safety*">*clm-safety*</a>             default safety setting (run loop debugging choices)
-  <a class=def Name="*clm-locsig-type*">*clm-locsig-type*</a>        locsig interpolation choice (mus-linear or mus-sinusoidal)
+  <a class=def Name="*clm-locsig-type*">*clm-locsig-type*</a>        locsig interpolation choice (mus-interp-linear or mus-interp-sinusoidal)
   <a class=def Name="*output*">*output*</a>                 current output stream (for outa and friends)
   <a class=def Name="*input*">*input*</a>                  current input stream (for ina and friends)
   <a class=def Name="*reverb*">*reverb*</a>                 current reverb stream
