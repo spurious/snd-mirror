@@ -2,8 +2,6 @@
 
 #if defined(HAVE_CONFIG_H)
   #include <config.h>
-#else
-  #define _FILE_OFFSET_BITS 64
 #endif
 
 #include <math.h>
@@ -173,7 +171,7 @@ int main(int argc, char *argv[])
       out_chans = chans;
 #endif
       srate = mus_sound_srate(name);
-      frames = mus_sound_samples(name) / chans;
+      frames = mus_sound_frames(name);
       sample_size = mus_bytes_per_sample(MUS_COMPATIBLE_FORMAT);
       if (!use_multi_card_code)
 	{
@@ -541,7 +539,7 @@ int main(int argc, char *argv[])
 	    }
 	}
       srate = mus_sound_srate(name);
-      frames = mus_sound_samples(name) / chans;
+      frames = mus_sound_frames(name);
       base = 0;
       /* allocate the list of read buffers, each buffer will hold one channel
 	 of the input soundfile, each sample is going to be mus_sample_t

@@ -24547,6 +24547,15 @@ EDITS: 2
       (ststa '(lambda (y) (caddr list-var)) 0.0 "hiho")
       (btsta '(lambda (y) (cadddr list-var)) 0.0 #t)
 
+;;; TOOO: get quoted list/vector constants to work
+;      (itst '(car '(1 . 2)) 1)
+;      (itst '(cdr '(1 . 2)) 2)
+;      (itst '(cadr '(3 4)) 4)
+;      (btst '(null? '()) #t)
+;      (btst '(null? '(1)) #f)
+;      (itst '(vector-ref '#(0 1 2) 2) 2)
+;      (ftst '(vector-ref '#(0.1 1.1 2.1) 1) 1.1)
+
       (let ((val (run-eval '(lambda (v) (declare (v char)) (char->integer v)) #\b)))
 	(IF (not (= val 98)) (snd-display ";char as arg to run: ~A" val)))
       (let ((val (run-eval '(lambda (v) (declare (v integer)) (1+ v)) 32)))

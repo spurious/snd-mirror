@@ -429,8 +429,10 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
 	      sp->search_proc = XEN_UNDEFINED;
 	      if (sp->search_tree)
 		sp->search_tree = free_ptree(sp->search_tree);
+#if HAVE_GUILE
 	      if (optimization(ss) > 0)
-		sp->search_tree = form_to_ptree_1_b_without_env(proc);
+		sp->search_tree = form_to_ptree_1_b_without_env(scm_procedure_source(proc));
+#endif
 	      sp->search_proc = proc;
 	      snd_protect(proc);
 	      if (sp->search_expr) FREE(sp->search_expr);
@@ -458,8 +460,10 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
 	  if (ss->search_expr) FREE(ss->search_expr);
 	  ss->search_expr = NULL;
 	  if (ss->search_tree) ss->search_tree = free_ptree(ss->search_tree);
+#if HAVE_GUILE
 	  if (optimization(ss) > 0)
-	    ss->search_tree = form_to_ptree_1_b_without_env(snd);
+	    ss->search_tree = form_to_ptree_1_b_without_env(scm_procedure_source(snd));
+#endif
 	  ss->search_proc = snd;
 	  snd_protect(snd);
 	  /* ss->search_expr = copy_string(XEN_AS_STRING(snd)); */
