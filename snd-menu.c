@@ -610,7 +610,6 @@ static XEN gl_add_to_main_menu(XEN label, XEN callback)
     {
       char *err;
       err = procedure_ok(callback, 0, S_add_to_main_menu, "menu callback", 2);
-      /* TODO: make sure this isn't fooled by CLM gens and so on -- insist on no args */
       if (err == NULL)
 	add_callback(slot, callback);
       else 

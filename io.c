@@ -1543,8 +1543,8 @@ char *mus_format(const char *format, ...)
   sprintf(buf, "%s...[you need vprintf]", format);
 #endif
 #endif
-#if DEBUG_MEMORY
-  rtn = copy_string(buf);
+#if DEBUGGING
+  rtn = copy_string_1(buf, __FUNCTION__, __LINE__);
 #else
   rtn = strdup(buf);
 #endif

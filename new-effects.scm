@@ -3103,7 +3103,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 
 (add-to-menu effects-menu "Remove DC" (lambda () (effects-remove-dc)))
 
-(add-to-menu effects-menu "Spiker" spike)
+(add-to-menu effects-menu "Spiker" (lambda () (spike)))
 
 (define* (effects-compand #:optional snd chn)
   (map-channel 

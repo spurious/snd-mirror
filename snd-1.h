@@ -272,7 +272,7 @@ typedef struct chan_info {
   Locus old_x0, old_x1;
   Float *amp_control; /* local amp controls in snd-dac; should it be extended to other controls? */
   search_result_t last_search_result;
-  bool just_zero, new_peaks;
+  bool just_zero, new_peaks, editable;
   track_info **tracks;
 #if HAVE_GL
   int gl_fft_list;
@@ -479,7 +479,7 @@ typedef struct {
 
 /* -------- snd-io.c -------- */
 
-#if DEBUGGING && DEBUG_MEMORY
+#if DEBUGGING
 int snd_open_read_1(const char *arg, const char *caller);
 #define snd_open_read(File) snd_open_read_1(File, __FUNCTION__)
 #else
@@ -1309,9 +1309,9 @@ off_t snd_abs_off_t(off_t val);
 int snd_ipow2(int n);
 int snd_2pow2(int n);
 Float in_dB(Float min_dB, Float lin_dB, Float py);
-#if DEBUGGING && DEBUG_MEMORY
-char *copy_string_1(const char *str, const char *caller);
-#define copy_string(Str) copy_string_1(Str, __FUNCTION__)
+#if DEBUGGING
+char *copy_string_1(const char *str, const char *caller, int line);
+#define copy_string(Str) copy_string_1(Str, __FUNCTION__, __LINE__)
 #else
 char *copy_string(const char *str);
 #endif
@@ -1325,7 +1325,7 @@ char *shorter_tempnam(const char *dir, const char *prefix);
 char *snd_tempnam(void);
 void snd_exit(int val);
 void g_init_utils(void);
-#ifdef DEBUG_MEMORY
+#ifdef DEBUGGING
   void set_encloser(char *name);
 #endif
 #if DEBUGGING && HAVE_CLOCK

@@ -46,6 +46,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
   cp->fft_cursor_visible = false;
   cp->show_sonogram_cursor = show_sonogram_cursor(ss);
   cp->selection_visible = false;
+  cp->editable = true; /* must be unset (region display, variable display, etc) */
   cp->cursor_style = cursor_style(ss);
   cp->cursor_size = cursor_size(ss);
   cp->cursor_proc = XEN_UNDEFINED;

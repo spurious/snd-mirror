@@ -189,14 +189,14 @@ static int too_many_files_cleanup(void)
   return(rtn);
 }
 
-#if DEBUGGING && DEBUG_MEMORY
+#if DEBUGGING
 int snd_open_read_1(const char *arg, const char* caller)
 #else
 int snd_open_read(const char *arg) 
 #endif
 {
   int fd;
-#if DEBUGGING && DEBUG_MEMORY
+#if DEBUGGING
   /* try to track down a weird lost file problem in full arg snd-test 28 */
   fd = io_open(arg, O_RDONLY, 0, caller, "snd_open_read in snd-io.c", 195);
 #else

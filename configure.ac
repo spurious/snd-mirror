@@ -1355,7 +1355,6 @@ AC_ARG_ENABLE(snd-debug,
   [  --enable-snd-debug      include internal Snd debugging functions],
   if test "$enable_snd_debug" = yes ; then
     AC_DEFINE(DEBUGGING)
-    AC_DEFINE(DEBUG_MEMORY)
     VL_PROG_CC_WARNINGS()
   fi)
 

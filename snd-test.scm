@@ -41,7 +41,7 @@
 
 (define tests 1)
 (define keep-going #t)
-(define all-args #f) ; huge arg testing
+(define all-args #t) ; huge arg testing
 (define with-big-file #t)
 
 (define (snd-display . args)
@@ -10549,6 +10549,16 @@ EDITS: 5
 	    (if (not (= (edit-position ind 0) 1)) (snd-display ";as-one-edit env+ptree pos: ~A" (edit-position ind 0)))
 	    (if (fneq (maxamp ind 0) .1825) (snd-display ";as-one-edit env+ptree max: ~A" (maxamp ind 0)))
 	    (undo)
+	    (let ((tag (catch #t
+			      (lambda () (as-one-edit (lambda (oops) #f)))
+			      (lambda args (car args)))))
+	      (if (not (eq? tag 'bad-arity))
+		  (snd-display ";as-one-edit arg? ~A" tag)))
+	    (let ((tag (catch #t
+			      (lambda () (as-one-edit (lambda* (#:optional oops) #f)))
+			      (lambda args (car args)))))
+	      (if (not (eq? tag 'bad-arity))
+		  (snd-display ";as-one-edit arg? ~A" tag)))
 	    (as-one-edit
 	     (lambda ()
 	       (ptree-channel (lambda (y) (* y 2)))
@@ -12317,9 +12327,11 @@ EDITS: 5
 	    (snd-display ";tap with low pass: ~A" v)))
       
       (let ((dly (make-delay 3 :initial-element 32.0)))
-	(if (not (vct? (mus-data dly))) (snd-display ";delay data not vct?"))
-	(if (fneq (vct-ref (mus-data dly) 1) 32.0) (snd-display ";delay [1] 32: ~A" (vct-ref (mus-data dly) 1)))
-	(if (not (= (vct-length (mus-data dly)) 3)) (snd-display ";delay data len(3): ~A" (vct-length (mus-data dly))))
+	(if (not (vct? (mus-data dly))) 
+	    (snd-display ";delay data not vct?")
+	    (if (not (= (vct-length (mus-data dly)) 3))
+		(snd-display ";delay data len not 3: ~A (~A)" (vct-length (mus-data dly)) (mus-data dly))
+		(if (fneq (vct-ref (mus-data dly) 1) 32.0) (snd-display ";delay [1] 32: ~A" (vct-ref (mus-data dly) 1)))))
 	(let ((tag (catch #t (lambda () (set! (mus-length dly) -1)) (lambda args (car args)))))
 	  (if (not (equal? tag 'out-of-range)) (snd-display ";len to -1 -> ~A" tag)))
 	(let ((tag (catch #t (lambda () (set! (mus-length dly) 0)) (lambda args (car args)))))
@@ -22436,6 +22448,15 @@ EDITS: 5
       (let ((var (catch #t (lambda () (add-to-menu -1 "fm-violin" (lambda () #f))) (lambda args args))))
 	(if (not (eq? (car var) 'no-such-menu))
 	    (snd-display ";add-to-menu bad menu: ~A" var)))
+
+      (let ((tag (catch #t (lambda () (add-to-main-menu "oops" (make-delay 11)))
+			(lambda args (car args)))))
+	(if (not (eq? tag 'bad-arity))
+	    (snd-display ";add-to-main-menu non-thunk: ~A" tag)))
+      (let ((tag (catch #t (lambda () (add-to-menu 3 "oops" (make-delay 12)))
+			(lambda args (car args)))))
+	(if (not (eq? tag 'bad-arity))
+	    (snd-display ";add-to-menu non-thunk: ~A" tag)))
       
       (set! (cursor fd) 2000)
       (set! (transform-graph-type) graph-once)
@@ -30318,7 +30339,7 @@ EDITS: 1
 				 (set! (squelch-update ind 0) #f)
 				 (close-sound ind)
 				 (let ((end-time (real-time)))
-				   (snd-display ";~A:~12T~A~17T~A~26T~A~31T~A~40T~A~45T~A~52T(~,2F, ~,2F)" 
+				   (snd-display ";~A:~12T~A~18T~A~28T~A~34T~A~44T~A~50T~A~56T(~,2F, ~,2F)" 
 						name 
 						
 						(hundred (- mid-time-1 start-time-1)) (hundred (- end-time-1 mid-time-1))
@@ -39715,6 +39736,8 @@ EDITS: 2
 	    (do ((i 0 (1+ i)))
 		((= i 1000))
 	      (variable-display (variable-display (* (variable-display (sin (* (variable-display i wid1) .1)) wid3) .5) wid2) wid4))
+	    (let ((tag (catch #t (lambda () (set! (sample 0 (car wid3) 0) .5)) (lambda args (car args)))))
+	      (if (> (edit-position (car wid3) 0) 0) (snd-display ";edited variable graph? ~A ~A" tag (edit-position (car wid3) 0))))
 	    (XtUnmanageChild variables-dialog)))
 
       (if (not (= *clm-srate* (default-output-srate))) (snd-display ";*clm-srate*: ~A ~A" *clm-srate* (default-output-srate)))
@@ -53433,10 +53456,11 @@ EDITS: 2
 		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95 '#(0 1) 3/4 
 		       (sqrt -1.0) delay-32 :frequency -1 0 #f #t '() vector-0 12345678901234567890 (log 0) (nan))))
 	    (gc)
-	    
+
 	    (if all-args
 		;; these can take awhile...
 		(begin
+
 		  ;; ---------------- 3 Args
 		  (for-each 
 		   (lambda (arg1)
@@ -53460,7 +53484,7 @@ EDITS: 2
 		   (list 1.5 "/hiho" (list 0 1) 1234 vct-3 '#(0 1) (sqrt -1.0) delay-32 3/4 -1.0
 			 :channels -1 0 3 #f #t '() vector-0 12345678901234567890 (log 0) (nan)))
 		  (gc)
-		  
+
 		  ;; ---------------- set! 3 Args
 		  (for-each 
 		   (lambda (arg1)
@@ -53486,8 +53510,7 @@ EDITS: 2
 			    :srate -1 0 3 16 #f #t '() vector-0 12345678901234567890 (log 0) (nan))))
 		   (list 1.5 "/hiho" (list 0 1) 1234 vct-3 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
 			 :input -1 0 3 16 #f #t '() vector-0 12345678901234567890 (log 0) (nan)))
-		  
-		  
+
 		  ;; ---------------- 4 Args
 		  (for-each 
 		   (lambda (arg1)
@@ -53514,7 +53537,7 @@ EDITS: 2
 			      :srate -1 0 #f #t '() vector-0 12345678901234567890 (log 0) (nan)))))
 		   (list 1.5 "/hiho" (list 0 1) 1234 vct-3 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
 			 :input -1 0 #f #t '() vector-0 12345678901234567890 (log 0) (nan)))
-		  
+
 		  ;; ---------------- set! 4 Args
 		  (for-each 
 		   (lambda (arg1)
@@ -53672,8 +53695,9 @@ EDITS: 2
 			 (list 1.5 "/hiho")))
 		      (list 1.5 -1)))
 		   (list #f 1234))
-		  (gc))))
-	    
+		  (gc)
+		  )))
+
 	    (if (defined? 'mus-audio-reinitialize) (mus-audio-reinitialize))
 	    (set! (window-y) 10)
 	    (dismiss-all-dialogs)
@@ -53756,6 +53780,14 @@ EDITS: 2
 	    (run-hook after-test-hook 28)
 	    ))
       ))
+
+(set! env3 #f)
+(set! delay-32 #f)
+(set! color-95 #f)
+(set! vector-0 #f)
+(set! vct-3 #f)
+(set! sound-data-23 #f)
+
 
 ;;; ---------------- test all done
 

@@ -47,18 +47,19 @@ Float in_dB(Float min_dB, Float lin_dB, Float py)
   return((py <= lin_dB) ? min_dB : (20.0 * log10(py)));
 }
 
-#if DEBUGGING && DEBUG_MEMORY
-char *copy_string_1(const char *str, const char *caller)
+#if DEBUGGING
+char *copy_string_1(const char *str, const char *caller, int line)
 #else
 char *copy_string(const char *str)
 #endif
 {
-#if DEBUG_MEMORY
+#if DEBUGGING
   char *newstr = NULL;
   if (str)
     {
-      set_encloser(caller);
-      newstr = (char *)MALLOC((strlen(str) + 1) * sizeof(char));
+      set_encloser((char *)caller);
+      /* newstr = (char *)MALLOC((strlen(str) + 1) * sizeof(char)); */
+      newstr = mem_malloc((size_t)((strlen(str) + 1) * sizeof(char)), __FUNCTION__, "copy-string caller", line);
       set_encloser(NULL);
       strcpy(newstr, str);
     }
@@ -302,7 +303,7 @@ void snd_exit(int val)
 #endif
 }
 
-#ifdef DEBUG_MEMORY
+#if DEBUGGING
 
 /* mtrace-style malloc hooks are not very useful here since I don't care
  * about X allocations (of which there are millions), and I need readable
@@ -554,10 +555,10 @@ static void remember_pointer(void *ptr, void *true_ptr, size_t len, const char *
 
 #define MAX_MALLOC (1 << 28)
 
-void *mem_calloc(size_t len, size_t size, const char *func, const char *file, int line)
+void *mem_calloc(int len, int size, const char *func, const char *file, int line)
 {
   char *ptr, *true_ptr;
-  if ((len == 0) || (len > MAX_MALLOC))
+  if ((len <= 0) || ((len * size) > MAX_MALLOC) || (size <= 0))
     {
       fprintf(stderr, "%s:%s[%d] attempt to calloc %d bytes", func, file, line, len * size);
       mem_report(); abort();
@@ -570,10 +571,10 @@ void *mem_calloc(size_t len, size_t size, const char *func, const char *file, in
   return((void *)ptr);
 }
 
-void *mem_malloc(size_t len, const char *func, const char *file, int line)
+void *mem_malloc(int len, const char *func, const char *file, int line)
 {
   char *ptr, *true_ptr;
-  if ((len == 0) || (len > MAX_MALLOC))
+  if ((len <= 0) || (len > MAX_MALLOC))
     {
       fprintf(stderr, "%s:%s[%d] attempt to malloc %d bytes", func, file, line, len);
       mem_report(); abort();
@@ -594,10 +595,10 @@ void mem_free(void *ptr, const char *func, const char *file, int line)
   ptr = (void *)FREED_POINTER;
 }
 
-void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, int line)
+void *mem_realloc(void *ptr, int size, const char *func, const char *file, int line)
 {
   char *new_ptr, *true_ptr, *new_true_ptr;
-  if ((size == 0) || (size > MAX_MALLOC))
+  if ((size <= 0) || (size > MAX_MALLOC))
     {
       fprintf(stderr, "%s:%s[%d] attempt to realloc %d bytes", func, file, line, size);
       mem_report(); abort();
@@ -820,53 +821,24 @@ void mem_report(void)
 	  }
       if (sum > 0)
 	{
-	  fprintf(Fp, "%s[%d]:%s:  %d (%d)", files[ptr], lines[ptr], functions[ptr], sums[ptr], ptrs[ptr]);
-	  if (0)
-	    {
-	      int fd, k, line, bytes;
-	      bool happy = true;
-	      char buf[8192];
-	      fd = open(files[ptr], O_RDONLY, 0);
-	      line = 1;
-	      while (happy)
-		{
-		  bytes = read(fd, buf, 8192);
-		  if (bytes <= 0) 
-		    {
-		      fprintf(Fp, "where is %s[%d]?\n", files[ptr], lines[ptr]);
-		      happy = false;
-		      break;
-		    }
-		  for (k = 0; k < bytes; k++)
-		    {
-		      if (buf[k] == '\n')
-			{
-			  line++;
-			  if (line == lines[ptr]) fprintf(Fp, ":   ");
-			  if (line > lines[ptr]) 
-			    {
-			      fprintf(Fp, "\n");
-			      happy = false;
-			      break;
-			    }
-			}
-		      else
-			{
-			  if (line == lines[ptr]) fprintf(Fp, "%c", buf[k]);
-			}
-		    }
-		}
-	      close(fd);
-	    }
-	  else fprintf(Fp, "\n");
+	  fprintf(Fp, "%s[%d]:%s:  %d (%d)\n", files[ptr], lines[ptr], functions[ptr], sums[ptr], ptrs[ptr]);
 	  sums[ptr] = 0;
 	  if (have_stacks)
 	    for (j = 0; j < mem_size; j++)
 	      if ((stacks[j]) && (locations[j] == ptr) && (pointers[j]))
-		fprintf(Fp, "    %s    %p\n", stacks[j], (void *)(pointers[j]));
+		{
+		  fprintf(Fp, "    %s    %p", stacks[j], (void *)(pointers[j]));
+		  if ((strcmp("copy_string", functions[ptr]) == 0) ||
+		      (strcmp("copy_string_1", functions[ptr]) == 0))
+		    fprintf(Fp, " [%s]", (char *)(pointers[j]));
+		  fprintf(Fp, "\n");
+		}
 	  if ((strcmp("mus_format", functions[ptr]) == 0) ||
-	      (strcmp("copy_string", functions[ptr]) == 0))
+	      (strcmp("copy_string", functions[ptr]) == 0) ||
+	      (strcmp("copy_string_1", functions[ptr]) == 0))
 	    {
+	      if (have_stacks)
+		fprintf(Fp, "                          ");
 	      for (j = 0; j < mem_size; j++)
 		if ((locations[j] == ptr) && (pointers[j]))
 		  fprintf(Fp, "[%s] ", (char *)(pointers[j]));
@@ -933,7 +905,7 @@ static XEN g_file_to_string(XEN name)
 }
 #endif
 
-#if DEBUG_MEMORY
+#if DEBUGGING
 static XEN g_mem_report(void) 
 {
   mem_report(); 
@@ -941,7 +913,7 @@ static XEN g_mem_report(void)
 }
 #endif
 
-#if DEBUG_MEMORY
+#if DEBUGGING
 #ifdef XEN_ARGIFY_1
   XEN_NARGIFY_0(g_mem_report_w, g_mem_report)
 #else
@@ -956,7 +928,7 @@ void g_init_utils(void)
   XEN_DEFINE_PROCEDURE(S_file2string, g_file_to_string, 1, 0, 0, "file contents as string");
 #endif
 
-#if DEBUG_MEMORY
+#if DEBUGGING
   XEN_DEFINE_PROCEDURE("mem-report",   g_mem_report_w, 0, 0, 0, "(mem-report) writes memory usage stats to memlog");
 #endif
 }

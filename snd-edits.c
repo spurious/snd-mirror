@@ -192,6 +192,7 @@ static void prune_edits(chan_info *cp, int edpt)
 
 bool editable_p(chan_info *cp)
 {
+  if (!(cp->editable)) return(false);
   if ((!(cp->edit_hook_checked)) &&
       (XEN_HOOK_P(cp->edit_hook)) &&
       (XEN_HOOKED(cp->edit_hook)))
@@ -212,6 +213,7 @@ static bool prepare_edit_list(chan_info *cp, off_t len, int pos, const char *cal
    *   that will be clobbered by prune_edits below
    */
   snd_info *sp;
+  if (!(cp->editable)) return(false);
   if (pos > cp->edit_ctr)
     {
       cp->edit_hook_checked = false;
@@ -4909,7 +4911,7 @@ static ed_list *free_ed_list(ed_list *ed, chan_info *cp)
 	  for (i = 0; i < ed->allocated_size; i++)
 	    if (FRAGMENT(ed, i))
 	      free(FRAGMENT(ed, i));
-#if (!DEBUG_MEMORY) || (defined(__GNUC__))
+#if (!DEBUGGING) || (defined(__GNUC__))
 	  FREE(FRAGMENTS(ed));
 #else
 	  FREE(((void *)(ed->fragments))); /* SGI compiler won't accept the assignment in the FREE macro (if debugging) */

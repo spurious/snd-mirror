@@ -341,6 +341,7 @@ static void make_region_readable(region *r)
     {
       chan_info *cp;
       cp = make_chan_info(NULL, i, regsp);
+      cp->editable = false;
       regsp->chans[i] = cp;
       add_channel_data_1(cp, r->srate, r->frames, WITHOUT_GRAPH);
       cp->edits[0] = initial_ed_list(0, r->frames - 1);
@@ -1512,6 +1513,8 @@ write region's samples starting at beg for samps in channel chan to vct v; retur
   if ((chn < 0) || (chn >= region_chans(reg)))
     return(snd_no_such_channel_error(S_region_to_vct, XEN_LIST_1(reg_n), chn_n));
   len = XEN_TO_C_OFF_T_OR_ELSE(num, 0);
+  if (len < 0)
+    XEN_OUT_OF_RANGE_ERROR(S_region_to_vct, 2, num, "length ~A < 0?");
   if (len == 0) len = region_len(reg);
   if (len > 0)
     {

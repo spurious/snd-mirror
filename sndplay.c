@@ -55,7 +55,7 @@ static char x_string[2] = {'x','\0'};
 
 /* special case multicard quad code split out for clarity (it could be folded into the main branches) */
 
-#ifdef DEBUG_MEMORY
+#if DEBUGGING
 void *mem_calloc(size_t len, size_t size, const char *func, const char *file, int line) {return(calloc(len, size));}
 void *mem_malloc(size_t len, const char *func, const char *file, int line) {return(malloc(len));}
 void mem_free(void *ptr, const char *func, const char *file, int line) {free(ptr);}

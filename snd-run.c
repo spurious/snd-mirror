@@ -9681,7 +9681,7 @@ static xen_value *set_up_format(ptree *prog, xen_value **args, int num_args, boo
 	    char *xv;
 	    xv = describe_xen_value(args[i], prog);
 	    run_warn("can't handle %s as arg %d to %s", xv, i, (is_format) ? "format" : "clm-print");
-	    FREE(xv);
+	    if (xv) FREE(xv);
 	    return(NULL);
 	  }
       /* no cleanup because it is handled in walk */
@@ -9979,10 +9979,14 @@ static int find_clm_var(ptree *prog, XEN lst, XEN lst_ref, int offset, int run_t
 
 static char *descr_clm_struct_ref_r(int *args, ptree *pt)
 {
-  return(mus_format("%s = %s(%s)",
-		    describe_xen_value_1(pt->ints[args[3]], args[0], pt),
-		    clm_struct_names[pt->ints[args[4]]],
-		    (pt->ints[args[1]] == 0) ? "null" : XEN_AS_STRING(pt->xens[args[1]])));
+  char *temp, *result;
+  temp = describe_xen_value_1(pt->ints[args[3]], args[0], pt);
+  result = mus_format("%s = %s(%s)",
+		      temp,
+		      clm_struct_names[pt->ints[args[4]]],
+		      (pt->ints[args[1]] == 0) ? "null" : XEN_AS_STRING(pt->xens[args[1]]));
+  if (temp) FREE(temp);
+  return(result);
 }
 
 static void clm_struct_ref_r(int *args, ptree *pt)
@@ -10001,10 +10005,14 @@ static void clm_struct_ref_r(int *args, ptree *pt)
 
 static char *descr_clm_struct_set_r(int *args, ptree *pt)
 {
-  return(mus_format("%s(%s) = %s",
-		    clm_struct_names[pt->ints[args[4]]],
-		    (XEN_BOUND_P(pt->xens[args[1]])) ? XEN_AS_STRING(pt->xens[args[1]]) : "null",
-		    describe_xen_value_1(pt->ints[args[3]], pt->ints[args[5]], pt)));
+  char *temp, *result;
+  temp = describe_xen_value_1(pt->ints[args[3]], pt->ints[args[5]], pt);
+  result = mus_format("%s(%s) = %s",
+		      clm_struct_names[pt->ints[args[4]]],
+		      (XEN_BOUND_P(pt->xens[args[1]])) ? XEN_AS_STRING(pt->xens[args[1]]) : "null",
+		      temp);
+  if (temp) FREE(temp);
+  return(result);
 }
 
 static void clm_struct_set_r(int *args, ptree *pt)
@@ -10862,7 +10870,13 @@ in multi-channel situations where you want the optimization that vct-map! provid
   for (i = 0; i < len; i++, arglist = XEN_CDR(arglist))
     {
       obj = XEN_CAR(arglist);
-      XEN_ASSERT_TYPE(VCT_P(obj), obj, i + 2, S_vct_map, "a vct");
+      if (!(VCT_P(obj)))
+	{
+	  FREE(vs);
+	  vs = NULL;
+	  XEN_ASSERT_TYPE(false, obj, i + 2, S_vct_map, "a vct"); /* i.e. throw the error */
+	  return(XEN_FALSE); /* won't happen, I hope */
+	}
       vs[i] = TO_VCT(obj);
       if (min_len == 0)
 	min_len = vs[i]->length;

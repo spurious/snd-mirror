@@ -7,7 +7,7 @@ static void remove_temp_files(chan_info *cp)
   free_mix_list(cp);
 }
 
-#ifdef DEBUG_MEMORY
+#if DEBUGGING
   void mem_report(void);
 #endif
 
@@ -27,7 +27,7 @@ int snd_exit_cleanly(bool force_exit)
   cleanup_region_temp_files();
   cleanup_recording();
   forget_temps();
-#ifdef DEBUG_MEMORY
+#if DEBUGGING
   mem_report();
 #endif
   return(1);

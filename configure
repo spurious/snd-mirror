@@ -17194,10 +17194,6 @@ if test "${enable_snd_debug+set}" = set; then
 #define DEBUGGING 1
 _ACEOF
 
-    cat >>confdefs.h <<\_ACEOF
-#define DEBUG_MEMORY 1
-_ACEOF
-
 
   ansi=
   if test -z "$ansi"; then

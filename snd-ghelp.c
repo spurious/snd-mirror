@@ -130,10 +130,13 @@ static void add_pattern_to_help_history(const char *pattern)
       if (help_history_pos >= help_history_size)
 	{
 	  int i;
-	  help_history_pos = help_history_size;
-	  help_history_size += 8;
-	  help_history = (char **)REALLOC(help_history, help_history_size * sizeof(char *));
-	  for (i = help_history_pos; i < help_history_size; i++) help_history[i] = NULL;
+	  for (i = 0; i < 8; i++) 
+	    {
+	      if (help_history[i]) FREE(help_history[i]);
+	      help_history[i] = help_history[i + 8];
+	      help_history[i + 8] = NULL;
+	    }
+	  help_history_pos = 8;
 	}
     }
   if (help_history[help_history_pos]) FREE(help_history[help_history_pos]);

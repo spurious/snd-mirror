@@ -17,9 +17,6 @@ static int gc_last_set = -1;
 
 #if DEBUGGING
 static char **snd_protect_callers = NULL; /* static char* const *callers? no thanks... */
-#endif
-
-#if DEBUG_MEMORY
 static int max_gc_index = 0;
 void dump_protection(FILE *Fp);
 void dump_protection(FILE *Fp)
@@ -33,22 +30,12 @@ void dump_protection(FILE *Fp)
       for (i = 0; i < gc_protection_size; i++)
 	if (!(XEN_EQ_P(gcdata[i], DEFAULT_GC_VALUE)))
 	  {
-#if DEBUGGING
-  #if HAVE_GUILE
+#if HAVE_GUILE
 	    fprintf(Fp,"  %s:%d %s", snd_protect_callers[i], i, XEN_AS_STRING(gcdata[i]));
 	    if (XEN_HOOK_P(gcdata[i]))
 	      fprintf(Fp, " -> %s", XEN_AS_STRING(scm_hook_to_list(gcdata[i])));
-  #else
-	    fprintf(Fp,"  %s:%d %d %s", snd_protect_callers[i], i, (int)gcdata[i], XEN_AS_STRING(gcdata[i]));
-  #endif
 #else
-  #if HAVE_GUILE
-	    fprintf(Fp,"  %d %s", i, XEN_AS_STRING(gcdata[i]));
-	    if (XEN_HOOK_P(gcdata[i]))
-	      fprintf(Fp, " -> %s", XEN_AS_STRING(scm_hook_to_list(gcdata[i])));
-  #else
-	    fprintf(Fp,"  %d %d %s", i, (int)gcdata[i], XEN_AS_STRING(gcdata[i]));
-  #endif
+	    fprintf(Fp,"  %s:%d %d %s", snd_protect_callers[i], i, (int)gcdata[i], XEN_AS_STRING(gcdata[i]));
 #endif
 	    fprintf(Fp, "\n");
 	  }
@@ -105,7 +92,7 @@ int snd_protect(XEN obj)
 	    snd_protect_callers[i] = (char *)caller;
 #endif
 	    gc_last_set = i;
-#if DEBUG_MEMORY
+#if DEBUGGING
 	    if (i > max_gc_index) max_gc_index = i;
 #endif
 	    return(gc_last_set);
@@ -133,7 +120,7 @@ int snd_protect(XEN obj)
 #endif
       gc_last_set = old_size;
     }
-#if DEBUG_MEMORY
+#if DEBUGGING
   if (gc_last_set > max_gc_index) max_gc_index = gc_last_set;
 #endif
   return(gc_last_set);
@@ -619,6 +606,7 @@ bool procedure_arity_ok(XEN proc, int args)
 char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name, int argn)
 {
   /* if string returned, needs to be freed */
+  /* 0 args is special => "thunk" meaning in this case that optional args are not ok (applies to as-one-edit and two menu callbacks) */
   XEN arity;
   int rargs;
 #if (!HAVE_RUBY)
@@ -640,6 +628,9 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
 	  ((rargs < 0) && (-rargs > args)))
 	return(mus_format(_("%s function (%s arg %d) should take %d args, not %d"), 
 			  arg_name, caller, argn, args, (rargs < 0) ? (-rargs) : rargs));
+      if ((args == 0) && (rargs != 0))
+	return(mus_format(_("%s function (%s arg %d) should take no args, not %d"), 
+			  arg_name, caller, argn, (rargs < 0) ? (-rargs) : rargs));
 #else
       loc = snd_protect(arity);
       rargs = XEN_TO_C_INT(XEN_CAR(arity));
@@ -652,6 +643,10 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
       if ((restargs == 0) && ((rargs + oargs) < args))
 	return(mus_format(_("%s function (%s arg %d) should accept at least %d argument%s, but instead accepts only %d"),
 			  arg_name, caller, argn, args, (args != 1) ? "s" : "", rargs + oargs));
+      if ((args == 0) &&
+	  ((rargs != 0) || (oargs != 0) || (restargs != 0)))
+	return(mus_format(_("%s function (%s arg %d) should take no args, not %d"), 
+			  arg_name, caller, argn, rargs + oargs + restargs));
 #endif
     }
   return(NULL);

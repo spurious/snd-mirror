@@ -2974,9 +2974,10 @@ at run-time.  See extsnd.html for the gory details."
 			 s_beg));
   dur = dur_to_samples(s_dur, beg, cp, pos, 3, S_ptree_channel);
   if (dur <= 0) return(XEN_FALSE);
-  if (XEN_STRING_P(origin)) caller = copy_string(XEN_TO_C_STRING(origin)); else caller = copy_string(S_ptree_channel);
 #if HAVE_RUBY
+  if (XEN_STRING_P(origin)) caller = copy_string(XEN_TO_C_STRING(origin)); else caller = copy_string(S_ptree_channel);
   g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos, caller);
+  if (caller) {FREE(caller); caller = NULL;}
 #else
   ptrees_present = ptree_fragments_in_use(cp, beg, dur, pos, XEN_FALSE_P(use_map_channel_fallback));
   if (XEN_PROCEDURE_P(init_func))
@@ -2985,30 +2986,32 @@ at run-time.  See extsnd.html for the gory details."
 	XEN_BAD_ARITY_ERROR(S_ptree_channel, 8, init_func, "init-func must take 2 args");
       if (!(XEN_REQUIRED_ARGS_OK(proc, 3)))
 	XEN_BAD_ARITY_ERROR(S_ptree_channel, 1, proc, "main func must take 3 args if the init-func is present");
+      if (XEN_STRING_P(origin)) caller = copy_string(XEN_TO_C_STRING(origin)); else caller = copy_string(S_ptree_channel);
       if (!ptrees_present)
 	{
 	  pt = form_to_ptree_3_f(proc_and_list);
 	  if (pt)
 	    {
 	      ptree_channel(cp, pt, beg, dur, pos, XEN_TRUE_P(env_too), init_func, false, XEN_FALSE, caller);
-	      if (caller) FREE(caller);
+	      if (caller) {FREE(caller); caller = NULL;}
 	      return(proc_and_list);
 	    }
 	  /* ptree not ok -- use map chan? */
 	  if (XEN_FALSE_P(use_map_channel_fallback))
 	    {
 	      ptree_channel(cp, NULL, beg, dur, pos, XEN_TRUE_P(env_too), init_func, true, proc, caller);
-	      if (caller) FREE(caller);
+	      if (caller) {FREE(caller); caller = NULL;}
 	      return(proc_and_list);
 	    }
 	}
       /* fallback on map chan */
       g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos, caller);
-      if (caller) FREE(caller);
+      if (caller) {FREE(caller); caller = NULL;}
       return(proc_and_list);
     }
   if (XEN_REQUIRED_ARGS_OK(proc, 1))
     pt = form_to_ptree_1_f(proc_and_list);
+  if (XEN_STRING_P(origin)) caller = copy_string(XEN_TO_C_STRING(origin)); else caller = copy_string(S_ptree_channel);
   if (pt)
     {
       if (ptrees_present)
@@ -3031,8 +3034,8 @@ at run-time.  See extsnd.html for the gory details."
 	}
       else g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos, caller);
     }
+  if (caller) {FREE(caller); caller = NULL;}
 #endif
-  if (caller) FREE(caller);
   return(proc_and_list);
 }
 

@@ -253,11 +253,11 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
     #define CREAT(File, Flags) creat((File), 0)
   #endif
 #else
-  #ifdef DEBUG_MEMORY
-    #define CALLOC(a, b)  mem_calloc((size_t)(a), (size_t)(b), c__FUNCTION__, __FILE__, __LINE__)
-    #define MALLOC(a)     mem_malloc((size_t)(a), c__FUNCTION__, __FILE__, __LINE__)
+  #if DEBUGGING
+    #define CALLOC(a, b)  mem_calloc((a), (b), c__FUNCTION__, __FILE__, __LINE__)
+    #define MALLOC(a)     mem_malloc((a), c__FUNCTION__, __FILE__, __LINE__)
     #define FREE(a)       mem_free(a, c__FUNCTION__, __FILE__, __LINE__)
-    #define REALLOC(a, b) mem_realloc(a, (size_t)(b), c__FUNCTION__, __FILE__, __LINE__)
+    #define REALLOC(a, b) mem_realloc(a, (b), c__FUNCTION__, __FILE__, __LINE__)
 
     #define OPEN(File, Flags, Mode) io_open((File), (Flags), (Mode), c__FUNCTION__, __FILE__, __LINE__)
     #define FOPEN(File, Flags) io_fopen((File), (Flags), c__FUNCTION__, __FILE__, __LINE__)
@@ -571,12 +571,12 @@ char *mus_midi_describe(void);
 #endif
 
 
-#if DEBUG_MEMORY
+#if DEBUGGING
   /* snd-utils.c (only used in conjunction with Snd's memory tracking functions) */
-  void *mem_calloc(size_t len, size_t size, const char *func, const char *file, int line);
-  void *mem_malloc(size_t len, const char *func, const char *file, int line);
+  void *mem_calloc(int len, int size, const char *func, const char *file, int line);
+  void *mem_malloc(int len, const char *func, const char *file, int line);
   void mem_free(void *ptr, const char *func, const char *file, int line);
-  void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, int line);
+  void *mem_realloc(void *ptr, int size, const char *func, const char *file, int line);
   int io_open(const char *pathname, int flags, mode_t mode, const char *func, const char *file, int line);
   int io_creat(const char *pathname, mode_t mode, const char *func, const char *file, int line);
   int io_close(int fd, const char *func, const char *file, int line);

@@ -101,7 +101,7 @@ int mus_set_file_buffer_size(int size) {clm_file_buffer_size = size; return(size
 static char describe_buffer[DESCRIBE_BUFFER_SIZE];
 #define STR_SIZE 128
 
-#if DEBUG_MEMORY
+#if DEBUGGING
 #define clm_calloc(Num, Size, What) clm_calloc_1(Num, Size, What, __FILE__, __LINE__)
 static void *clm_calloc_1(int num, int size, const char* what, const char *file, int line)
 #else
@@ -109,7 +109,7 @@ static void *clm_calloc(int num, int size, const char* what)
 #endif
 {
   register void *mem;
-#if DEBUG_MEMORY
+#if DEBUGGING
   mem = mem_calloc(num, size, what, file, line);
 #else
   mem = CALLOC(num, size);
@@ -529,25 +529,60 @@ void *_mus_wrap_no_vcts(mus_any *ge)
   return((void *)gn);
 }
 
+static int data_length(mus_any *ge)
+{
+  if (mus_env_p(ge))
+    return(mus_env_breakpoints(ge) * 2);
+  return(mus_length(ge));
+}
+
 void *_mus_wrap_one_vct(mus_any *ge)
 {
   mus_xen *gn;
+  Float *data;
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
   gn->gen = ge;
-  gn->nvcts = 1;
-  gn->vcts = make_vcts(gn->nvcts);
-  gn->vcts[MUS_DATA_WRAPPER] = make_vct(mus_length(ge), mus_data(ge));
+  /* can't use mus_length here because some gens (env) don't return the data array length in that method */
+  data = mus_data(ge);
+  if (data)
+    {
+      gn->nvcts = 1;
+      gn->vcts = make_vcts(gn->nvcts);
+      gn->vcts[MUS_DATA_WRAPPER] = make_vct(data_length(ge), data);
+#if DEBUGGING
+      if (XEN_FALSE_P(gn->vcts[MUS_DATA_WRAPPER]))
+	{
+	  fprintf(stderr,"no vct? %d %p\n", data_length(ge), data);
+	  abort();
+	}
+#endif
+    }
+  else
+    {
+      gn->nvcts = 0;
+      gn->vcts = NULL;
+    }
   return((void *)gn);
 }
 
 void *_mus_wrap_one_vct_wrapped(mus_any *ge)
 {
   mus_xen *gn;
+  Float *data;
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
   gn->gen = ge;
-  gn->nvcts = 1;
-  gn->vcts = make_vcts(gn->nvcts);
-  gn->vcts[MUS_DATA_WRAPPER] = make_vct_wrapper(mus_length(ge), mus_data(ge));
+  data = mus_data(ge);
+  if (data)
+    {
+      gn->nvcts = 1;
+      gn->vcts = make_vcts(gn->nvcts);
+      gn->vcts[MUS_DATA_WRAPPER] = make_vct_wrapper(data_length(ge), data);
+    }
+  else
+    {
+      gn->nvcts = 0;
+      gn->vcts = NULL;
+    }
   return((void *)gn);
 }
 static void *wrap_filter(mus_any *gen)
@@ -1306,7 +1341,14 @@ static bool delay_equalp(mus_any *p1, mus_any *p2)
   return(false);
 }
 
-static off_t delay_length(mus_any *ptr) {return(((dly *)ptr)->size);}
+static off_t delay_length(mus_any *ptr) 
+{
+  dly *d = (dly *)ptr;
+  if (d->size > 0) /* this is possible (not sure it's a good idea...) */
+    return(d->size);
+  return(d->zsize); /* maybe always use this? */
+}
+
 static Float *delay_data(mus_any *ptr) {return(((dly *)ptr)->line);}
 static Float delay_scaler(mus_any *ptr) {return(((dly *)ptr)->xscl);}
 static Float set_delay_scaler(mus_any *ptr, Float val) {((dly *)ptr)->xscl = val; return(val);}

@@ -1216,7 +1216,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 	  keyn++;
 	  break;
 	}
-      size = mus_optkey_to_int(keys[keyn], caller, orig_arg[keyn], size);
+      size = mus_optkey_to_int(keys[keyn], caller, orig_arg[keyn], size); /* size can  be 0? -- surely we need a line in any case? */
       if (size < 0)
 	XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[keyn], keys[keyn], "size ~A < 0?");
       if (size > MAX_TABLE_SIZE)
@@ -1229,8 +1229,13 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 	    {
 	      vct *v;
 	      v = TO_VCT(initial_contents);
-	      if (size > v->length)
-		XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[keyn], keys[keyn], "size ~A too large for data");
+	      if (size < v->length)
+		size = v->length;
+	      else
+		{
+		  if (size > v->length)
+		    XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[keyn], keys[keyn], "size ~A too large for data");
+		}
 	      line = copy_vct_data(v);
 	    }
 	  else
@@ -1242,7 +1247,8 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 			      XEN_LIST_3(C_TO_XEN_STRING(caller), 
 					 C_TO_XEN_STRING("initial-contents empty?"), 
 					 initial_contents));
-		  line = (Float *)CALLOC((size < len) ? len : size, sizeof(Float));
+		  if (size < len) size = len;
+		  line = (Float *)CALLOC(size, sizeof(Float));
 		  if (line == NULL)
 		    return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate delay line"));
 		  for (i = 0, lst = XEN_COPY_ARG(initial_contents); (i < len) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
@@ -1260,7 +1266,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 	  else 
 	    {
 	      if (line) FREE(line);
-	      XEN_ASSERT_TYPE(XEN_NUMBER_P(keys[keyn]), keys[keyn], orig_arg[keyn], caller, "a number");
+	      XEN_ASSERT_TYPE(false, keys[keyn], orig_arg[keyn], caller, "a number");
 	    }
 	}
       keyn++;
@@ -1281,7 +1287,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 	  else
 	    {
 	      if (line) FREE(line);
-	      XEN_ASSERT_TYPE(XEN_NUMBER_P(keys[keyn]), keys[keyn], orig_arg[keyn], caller, "a number");
+	      XEN_ASSERT_TYPE(false, keys[keyn], orig_arg[keyn], caller, "a number");
 	    }
 	}
       keyn++;
@@ -1304,12 +1310,21 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 		}
 	    }
 	}
-    }
-  if (max_size == -1) max_size = size;
-  if ((max_size <= 0) || (max_size < size))
+    } 
+  /* here size can be (user-set to) 0 */
+  if (max_size == -1)
     {
-      if (line) FREE(line);
-      XEN_OUT_OF_RANGE_ERROR(caller, 0, C_TO_XEN_INT(max_size), "~A: invalid delay length");
+      if (size == 0)
+	max_size = 1;
+      else max_size = size; /* i.e. if max-size not passed as arg, assume size */
+    }
+  else
+    {
+      if ((max_size <= 0) || (max_size < size))
+	{
+	  if (line) FREE(line);
+	  XEN_OUT_OF_RANGE_ERROR(caller, 0, C_TO_XEN_INT(max_size), "~A: invalid delay length");
+	}
     }
   if ((choice == G_AVERAGE) && (max_size != size))
     {

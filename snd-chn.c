@@ -1119,6 +1119,7 @@ snd_info *make_simple_channel_display(int srate, int initial_length,
       return(NULL);
     }
   cp = sp->chans[0];
+  cp->editable = false;
   cp->sound = sp;
   cp->hookable = WITHOUT_HOOK;
   add_channel_data_1(cp, srate, initial_length, WITH_GRAPH);
@@ -4740,10 +4741,13 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *calle
   switch (fld)
     {
     case CP_EDIT_CTR:
-      val = XEN_TO_C_INT_OR_ELSE(on, 0);
-      if (cp->edit_ctr < val)
-	redo_edit(cp, val - cp->edit_ctr);
-      else undo_edit(cp, cp->edit_ctr - val);
+      if (cp->editable)
+	{
+	  val = XEN_TO_C_INT_OR_ELSE(on, 0);
+	  if (cp->edit_ctr < val)
+	    redo_edit(cp, val - cp->edit_ctr);
+	  else undo_edit(cp, cp->edit_ctr - val);
+	}
       return(C_TO_XEN_INT(cp->edit_ctr));
       break;
     case CP_GRAPH_TRANSFORM_P:
@@ -4988,23 +4992,26 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *calle
       return(C_TO_XEN_BOOLEAN(cp->graphs_horizontal));
       break;
     case CP_FRAMES:
-      /* if less than current, delete, else zero pad */
-      curlen = CURRENT_SAMPLES(cp);
-      newlen = XEN_TO_C_OFF_T_OR_ELSE(on, curlen);
-      if (newlen < 0)
-	XEN_OUT_OF_RANGE_ERROR(S_setB S_frames, 1, on, "frames (~A) < 0?");
-      if (curlen > newlen)
+      if (cp->editable)
 	{
-	  if (newlen > 0)
-	    delete_samples(newlen - 1, curlen - newlen, cp, cp->edit_ctr);
-	  else delete_samples(0, curlen, cp, cp->edit_ctr);
+	  /* if less than current, delete, else zero pad */
+	  curlen = CURRENT_SAMPLES(cp);
+	  newlen = XEN_TO_C_OFF_T_OR_ELSE(on, curlen);
+	  if (newlen < 0)
+	    XEN_OUT_OF_RANGE_ERROR(S_setB S_frames, 1, on, "frames (~A) < 0?");
+	  if (curlen > newlen)
+	    {
+	      if (newlen > 0)
+		delete_samples(newlen - 1, curlen - newlen, cp, cp->edit_ctr);
+	      else delete_samples(0, curlen, cp, cp->edit_ctr);
+	    }
+	  else
+	    {
+	      if (newlen > curlen)
+		extend_with_zeros(cp, curlen, newlen - curlen, cp->edit_ctr);
+	    }
+	  update_graph(cp);
 	}
-      else
-	{
-	  if (newlen > curlen)
-	    extend_with_zeros(cp, curlen, newlen - curlen, cp->edit_ctr);
-	}
-      update_graph(cp);
       break;
     case CP_PROPERTIES:
       if (!(XEN_VECTOR_P(cp->properties)))
@@ -5061,12 +5068,15 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *calle
       return(C_TO_XEN_DOUBLE(cp->fft_window_beta));             
       break;
     case CP_MAXAMP:
-      curamp = channel_maxamp(cp, AT_CURRENT_EDIT_POSITION);
-      newamp[0] = XEN_TO_C_DOUBLE(on);
-      if (curamp != newamp[0])
+      if (cp->editable)
 	{
-	  if (scale_to(cp->sound, cp, newamp, 1, false))
-	    update_graph(cp);
+	  curamp = channel_maxamp(cp, AT_CURRENT_EDIT_POSITION);
+	  newamp[0] = XEN_TO_C_DOUBLE(on);
+	  if (curamp != newamp[0])
+	    {
+	      if (scale_to(cp->sound, cp, newamp, 1, false))
+		update_graph(cp);
+	    }
 	}
       break;
     case CP_BEATS_PER_MINUTE:
