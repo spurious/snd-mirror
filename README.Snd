@@ -504,7 +504,7 @@ it should be killable via -Wno-system-headers.
 
 OpenGL comes with the SGI, but its drawing area widget seems to be less
 than adequate -- I use Mesa on Linux where X drawing commands can be mixed
-with OpenGL.  On the SGI, the colors all messed up.
+with OpenGL.  On the SGI, the colors are all messed up.
 
 
 ---- Gtk/OpenGL ----

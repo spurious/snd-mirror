@@ -1596,10 +1596,6 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, int *ints, Float 
 #define STRING_ARG_2 ((char *)(ints[args[2]]))
 #define CHAR_ARG_1 ((char)(ints[args[1]]))
 #define CHAR_ARG_2 ((char)(ints[args[2]]))
-/* #define PAIR_ARG_1 ((XEN)(ints[args[1]]))
-   #define LIST_ARG_1 ((XEN)(ints[args[1]]))
-   TODO: these could work (via run-time list-ref etc) if we check all the list contents beforehand (so we know the type)
-*/
 
 static void quit(int *args, int *ints, Float *dbls) {ALL_DONE = TRUE;}
 static char *descr_quit(int *args, int *ints, Float *dbls) {return(copy_string("quit"));}
@@ -6994,7 +6990,6 @@ static xen_value *mus_set_srate_1(ptree *prog, xen_value *v)
 }
 
 /* def-clm-struct support */
-/* TODO: tie setter from def-clm-struct into run (needs list-set!) */
 
 static int clm_structs = 0;
 static int clm_struct_top = 0;
@@ -7064,6 +7059,109 @@ static int check_clm_type(XEN sym, char *type)
   return(strcmp(type, XEN_SYMBOL_TO_C_STRING(sym)) == 0);
 }
 
+/* to avoid GC complications and take advantage of the type decisions,
+ *   def_clm_struct lists are allocated space as local variable of the
+ *   initial type, and refs/sets become local variable refs/sets.
+ *   local addr is saved/hashed/restored by XEN var/offset.
+ */
+
+static int *clm_ref_offsets = NULL, *clm_ref_types = NULL, *clm_ref_addrs = NULL;
+static XEN *clm_ref_vars = NULL;
+static int clm_ref_size = 0, clm_ref_top = 0;
+
+static int find_clm_var(ptree *prog, XEN lst, XEN lst_ref, int offset, int run_type)
+{
+  int i, addr = -1;
+  for (i = 0; i < clm_ref_top; i++)
+    if ((clm_ref_offsets[i] == offset) && (lst == clm_ref_vars[i]))
+      {
+	if (run_type != clm_ref_types[i]) return(-1);
+	addr = clm_ref_addrs[i];
+	break;
+      }
+  if (addr == -1)
+    {
+      /* we get here if this ref hasn't been registered yet */
+      if (clm_ref_top == clm_ref_size)
+	{
+	  /* the usual list (re)allocation junk... */
+	  if (clm_ref_size == 0)
+	    {
+	      clm_ref_size = 8;
+	      clm_ref_offsets = (int *)CALLOC(clm_ref_size, sizeof(int));
+	      clm_ref_types = (int *)CALLOC(clm_ref_size, sizeof(int));
+	      clm_ref_addrs = (int *)CALLOC(clm_ref_size, sizeof(int));
+	      clm_ref_vars = (XEN *)CALLOC(clm_ref_size, sizeof(XEN));
+	    }
+	  else
+	    {
+	      clm_ref_size += 8;
+	      clm_ref_offsets = (int *)REALLOC(clm_ref_offsets, clm_ref_size * sizeof(int));
+	      clm_ref_types = (int *)REALLOC(clm_ref_types, clm_ref_size * sizeof(int));
+	      clm_ref_addrs = (int *)REALLOC(clm_ref_addrs, clm_ref_size * sizeof(int));
+	      clm_ref_vars = (XEN *)REALLOC(clm_ref_vars, clm_ref_size * sizeof(XEN));
+	    }
+	}
+      /* first decide if we can handle this variable */
+      if ((run_type == R_BOOL) || 
+	  (run_type == R_INT) ||
+	  (run_type == R_CHAR) ||
+	  (run_type == R_VCT))
+	addr = add_int_to_ptree(prog, 0);
+      else
+	{
+	  if (run_type == R_FLOAT)
+	    addr = add_dbl_to_ptree(prog, 0.0);
+	  else
+	    {
+	      if (run_type == R_STRING)
+		addr = add_string_to_ptree(prog, "");
+	    }
+	}
+      if (addr >= 0)
+	{
+	  i = clm_ref_top++;
+	  clm_ref_offsets[i] = offset;
+	  clm_ref_types[i] = run_type;
+	  clm_ref_vars[i] = lst;
+	  clm_ref_addrs[i] = addr;
+	}
+    }
+  /* now set the (initial) value */
+  if (addr >= 0)
+    {
+      switch (run_type)
+	{
+	case R_BOOL:   prog->ints[addr] = ((XEN_FALSE_P(lst_ref)) ? 0 : 1); break;
+	case R_INT:    prog->ints[addr] = XEN_TO_C_INT(lst_ref); break;
+	case R_FLOAT:  prog->dbls[addr] = XEN_TO_C_DOUBLE(lst_ref); break;
+	case R_CHAR:   prog->ints[addr] = (int)(XEN_TO_C_CHAR(lst_ref)); break;
+	case R_STRING: prog->ints[addr] = (int)copy_string(XEN_TO_C_STRING(lst_ref)); break;
+	case R_VCT:    prog->ints[addr] = (int)(get_vct(lst_ref)); break;
+	}
+    }
+  return(addr);
+}
+
+static xen_value *clm_struct_ref(ptree *prog, xen_value *v, int struct_loc)
+{
+  /* types can't change within run */
+  int run_type, addr, offset;
+  XEN lst, lst_ref;
+  offset = clm_struct_offsets[struct_loc];
+  lst = (XEN)(prog->ints[v->addr]);
+  lst_ref = XEN_LIST_REF(lst, offset); /* get type at parse time */
+  run_type = xen_to_run_type(lst_ref);
+  addr = find_clm_var(prog, lst, lst_ref, offset, run_type); /* if doesn't exist add to tables, else return holder */
+  if (addr < 0) 
+    return(run_warn("problem with %s (def-clm-struct) value: %s from %s", 
+		    clm_struct_names[struct_loc], 
+		    XEN_AS_STRING(lst_ref),
+		    XEN_AS_STRING(lst)));
+  return(make_xen_value(run_type, addr, R_VARIABLE));
+}
+
+
 
 /* ---------------- the code walker ---------------- */
 
@@ -7100,7 +7198,6 @@ static xen_value *unwrap_xen_object(ptree *prog, XEN form, const char *origin)
     case R_STRING: return(make_xen_value(R_STRING, add_string_to_ptree(prog, copy_string(XEN_TO_C_STRING(form))), R_CONSTANT)); break;
     case R_VCT:    return(make_xen_value(R_VCT, add_int_to_ptree(prog, (int)(get_vct(form))), R_CONSTANT)); break;
     }
-  /* TODO: list here? (list-ref (car ...)) vector? gen/sf-reader? */
   return(run_warn("%s: non-simple arg: %s", origin, XEN_AS_STRING(form)));
 }
 
@@ -7292,10 +7389,6 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	  lst = (XEN)(prog->ints[args[1]->addr]);
 	  if ((num_args == 2) && (strcmp(funcname, "list-ref") == 0) && (XEN_EXACT_P(XEN_CADDR(form))))
 	    return(clean_up(unwrap_xen_object(prog, XEN_LIST_REF_WRAPPED(lst, XEN_CADDR(form)), funcname), args, num_args));
-	  /* TODO: if loc arg is not constant, we could check the list, get its contents types (all the same...)
-	   *       then set up a list-ref run-time accessor with that type built in.
-	   *       this way run-time (list-ref data i) would work
-	   */
 	  if (num_args == 1)
 	    {
 	      int k;
@@ -7321,7 +7414,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 
 	      for (k = 0; k < clm_struct_top; k++)
 		if (strcmp(funcname, clm_struct_names[k]) == 0)
-		  return(clean_up(unwrap_xen_object(prog, XEN_LIST_REF(lst, clm_struct_offsets[k]), funcname), args, num_args));
+		  return(clean_up(clm_struct_ref(prog, args[1], k), args, num_args));
 	      for (k = 0; k < clm_types_top; k++)
 		if (strcmp(funcname, clm_qtypes[k]) == 0)
 		  return(clean_up(make_xen_value(R_BOOL, 
@@ -7785,6 +7878,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 static xen_value *lookup_generalized_set(ptree *prog, char *accessor, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v)
 {
   xen_value *sv = NULL;
+  int k;
   if (in_v1 == NULL)
     {
       if (v->type == R_FLOAT)
@@ -7832,7 +7926,7 @@ static xen_value *lookup_generalized_set(ptree *prog, char *accessor, xen_value 
       if (strcmp(accessor, "locsig-reverb-ref") == 0) sv = locsig_reverb_set_0(prog, args, 3);
       FREE(args);
     }
-
+ 
   if (strcmp(accessor, "mixer-ref") == 0)
     {
       xen_value **args;
@@ -7844,31 +7938,33 @@ static xen_value *lookup_generalized_set(ptree *prog, char *accessor, xen_value 
       sv = mixer_set_1(prog, args, 4);
       FREE(args);
     }
-#if 0
-  if (in_v)
-    {
-      XEN lst;
-      int k;
-      fprintf(stderr,"set! %s %s %s\n", 
-	      accessor, 
-	      describe_xen_value(in_v, prog->ints, prog->dbls),
-	      describe_xen_value(v, prog->ints, prog->dbls));
-      lst = (XEN)(prog->ints[in_v->addr]);
-      for (k = 0; k < clm_struct_top; k++)
-	{
-	  if (strcmp(accessor, clm_struct_names[k]) == 0)
-	    {
-	      if (xen_to_run_type(XEN_LIST_REF(lst, clm_struct_offsets[k])) == v->type)
-		{
-		  fprintf(stderr, "types match");
-		  /* return(clean_up(unwrap_xen_object(prog, 
-		     runtime_XEN_LIST_SET(lst, clm_struct_offsets[k], c_to_xen(v)), accessor), args, num_args)); */
-		}
-	      break;
-	    }
-	}
-    }
-#endif
+  for (k = 0; k < clm_struct_top; k++)
+    if (strcmp(accessor, clm_struct_names[k]) == 0)
+      {
+	sv = clm_struct_ref(prog, in_v, k);
+	if (sv)
+	  {
+	    if (v->type == sv->type)
+	      {
+		if ((v->type == R_BOOL) || 
+		    (v->type == R_INT) ||
+		    (v->type == R_CHAR) ||
+		    (v->type == R_VCT))
+		  add_triple_to_ptree(prog, va_make_triple(store_i, descr_store_i, 2, sv, v));
+		else
+		  {
+		    if (v->type == R_FLOAT)
+		      add_triple_to_ptree(prog, va_make_triple(store_f, descr_store_f, 2, sv, v));
+		    else add_triple_to_ptree(prog, va_make_triple(store_s, descr_store_s, 2, sv, v));
+		  }
+	      }
+	    else sv = NULL;
+	  }
+	/* TODO: need to set flag to export the new values to the outer environment
+	 *       add snd-test cases for sets (all types)
+	 */
+	break;
+      }
   if (sv == NULL) 
     {
       if (v) 
