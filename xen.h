@@ -19,15 +19,15 @@
  * "xen" from Greek xenos (guest, foreigner)
  */
 
-/* TODO: get rid of "WITH_CALLER" versions -- they no longer do anything useful */
 /* TODO: decide how to handle NaNs and infs in double translations */
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 18
-#define XEN_VERSION "1.18"
+#define XEN_MINOR_VERSION 19
+#define XEN_VERSION "1.19"
 
 /* HISTORY:
  *
+ *  28-Sep-04: deprecated *_WITH_CALLER -- these no longer do anything useful in Guile.
  *  23-Aug-04: more Guile name changes.
  *  12-Aug-04: more Guile name changes, C_TO_XEN_STRINGN (Guile)
  *  3-Aug-04:  xen_to_c_int bugfix thanks to Kjetil S. Matheussen.
@@ -164,7 +164,7 @@
   #else
     #define XEN_OBJECT_TYPE            scm_bits_t
   #endif
-  /* TODO: SCM_SMOB_PREDICATE -> scm_assert_smob_type? */
+  /* SCM_SMOB_PREDICATE -> scm_assert_smob_type? -- don't want an error here */
   #define XEN_OBJECT_TYPE_P(Obj, Type) ((SCM_NIMP(Obj)) && (SCM_SMOB_PREDICATE(Type, Obj)))
 #else
   #define XEN_OBJECT_TYPE              long
@@ -201,13 +201,16 @@
 
 #define XEN_TRUE_P(a)                XEN_EQ_P(a, XEN_TRUE)
 #define XEN_FALSE_P(a)               XEN_EQ_P(a, XEN_FALSE)
-/* TODO: NULLP -> scm_is_null */
-#define XEN_NULL_P(a)                SCM_NULLP(a)
+#if HAVE_SCM_CAR
+  #define XEN_NULL_P(a)              scm_is_null(a)
+#else
+  #define XEN_NULL_P(a)              SCM_NULLP(a)
+#endif
 #define XEN_BOUND_P(Arg)             (!(SCM_UNBNDP(Arg)))
 #define XEN_NOT_BOUND_P(Arg)         SCM_UNBNDP(Arg)
 #define XEN_ZERO                     SCM_INUM0
 
-/* TODO: should SCM_CAR -> scm_car? (snd-run also) */
+/* should SCM_CAR -> scm_car? (snd-run also) -- this appears to be a pointless change */
 #define XEN_CAR(a)                   SCM_CAR(a)
 #define XEN_CADR(a)                  SCM_CADR(a)
 #define XEN_CADDR(a)                 SCM_CADDR(a)
@@ -219,8 +222,7 @@
 #define XEN_EQUAL_P(A, B)            XEN_TO_C_BOOLEAN(scm_equal_p(A, B))
 
 #define XEN_TO_C_INT(a)                 xen_to_c_int(a)
-#define XEN_TO_C_INT_OR_ELSE(a, b)      xen_to_c_int_or_else(a, b, c__FUNCTION__)
-#define XEN_TO_C_INT_OR_ELSE_WITH_CALLER(a, b, c) xen_to_c_int_or_else(a, b, c)
+#define XEN_TO_C_INT_OR_ELSE(a, b)      xen_to_c_int_or_else(a, b)
 #define XEN_INTEGER_P(Arg)              xen_integer_p(Arg)
 
 /* all the number handlers changed (names...) in 1.7 */
@@ -231,7 +233,6 @@
   #else
     #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) xen_to_c_double_or_else(a, b)
   #endif
-  #define XEN_TO_C_DOUBLE_WITH_CALLER(a, b) scm_to_double(a)
   #define C_TO_XEN_DOUBLE(a)            scm_from_double(a)
   #define C_TO_XEN_INT(a)               scm_from_int(a)
   #define XEN_TO_C_ULONG(a)             scm_to_ulong(a)
@@ -251,7 +252,6 @@
   #else
     #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) xen_to_c_double_or_else(a, b)
   #endif
-  #define XEN_TO_C_DOUBLE_WITH_CALLER(a, b) scm_num2dbl(a, b)
   #if HAVE_SCM_MAKE_REAL
     #define C_TO_XEN_DOUBLE(a)          scm_make_real(a)
   #else
@@ -546,9 +546,13 @@
   #endif
 #endif
 
-/* TODO: SCM_CONSP -> scm_is_pair */
-#define XEN_CONS_P(Arg)               SCM_CONSP(Arg)
-#define XEN_PAIR_P(a)                 XEN_TRUE_P(scm_pair_p(a))
+#if HAVE_SCM_CAR
+  #define XEN_CONS_P(Arg)             scm_is_pair(Arg)
+  #define XEN_PAIR_P(Arg)             scm_is_pair(Arg)
+#else
+  #define XEN_CONS_P(Arg)             SCM_CONSP(Arg)
+  #define XEN_PAIR_P(Arg)             XEN_TRUE_P(scm_pair_p(Arg))
+#endif
 
 #define XEN_ARITY(Func)               scm_i_procedure_arity(Func)
 
@@ -754,16 +758,13 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #else
   #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) xen_rb_to_c_double_or_else(a, b)
 #endif
-#define XEN_TO_C_DOUBLE_WITH_CALLER(a, b) NUM2DBL(a)
 #define C_TO_XEN_DOUBLE(a)                rb_float_new(a)
 
 #define XEN_TO_C_INT(a)                   rb_num2long(a)
 #if defined(__GNUC__) && (!(defined(__cplusplus)))
   #define XEN_TO_C_INT_OR_ELSE(a, b) ({ XEN _xen_h_5_ = a; (XEN_INTEGER_P(_xen_h_5_) ? FIX2INT(_xen_h_5_) : b); })
-  #define XEN_TO_C_INT_OR_ELSE_WITH_CALLER(a, b, c) ({ XEN _xen_h_6_ = a; (XEN_INTEGER_P(_xen_h_6_) ? FIX2INT(_xen_h_6_) : b); })
 #else
   #define XEN_TO_C_INT_OR_ELSE(a, b) xen_rb_to_c_int_or_else(a, b)
-  #define XEN_TO_C_INT_OR_ELSE_WITH_CALLER(a, b, c) xen_rb_to_c_int_or_else(a, b)
 #endif
 
 #define C_TO_XEN_INT(a)                   INT2NUM(a)
@@ -1405,10 +1406,8 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 
 #define XEN_TO_C_DOUBLE(a) 0.0
 #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) b
-#define XEN_TO_C_DOUBLE_WITH_CALLER(a, b) 0.0
 #define XEN_TO_C_INT(a) 0
 #define XEN_TO_C_INT_OR_ELSE(a, b) b
-#define XEN_TO_C_INT_OR_ELSE_WITH_CALLER(a, b, c) b
 #define XEN_TO_C_STRING(STR) NULL
 #define C_TO_XEN_DOUBLE(a) 0
 #define C_TO_XEN_INT(a) a
@@ -1538,7 +1537,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_ARG_8    8
 #define XEN_ARG_9    9
 
-#define XEN_TO_C_OFF_T_OR_ELSE(a, b)  xen_to_c_off_t_or_else(a, b, c__FUNCTION__)
+#define XEN_TO_C_OFF_T_OR_ELSE(a, b)  xen_to_c_off_t_or_else(a, b)
 #define C_TO_XEN_OFF_T(a)             c_to_xen_off_t(a)
 #define XEN_TO_C_OFF_T(a)             xen_to_c_off_t(a)
 #define XEN_AS_STRING(form)           XEN_TO_C_STRING(XEN_TO_STRING(form))
@@ -1561,8 +1560,8 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #endif
 
 XEN xen_return_first(XEN a, ...);
-int xen_to_c_int_or_else(XEN obj, int fallback, const char *origin);
-off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback, const char *origin);
+int xen_to_c_int_or_else(XEN obj, int fallback);
+off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback);
 off_t xen_to_c_off_t(XEN obj);
 XEN c_to_xen_off_t(off_t val);
 char *xen_version(void);
@@ -1574,5 +1573,7 @@ void xen_gc_mark(XEN val);
   #define C_TO_SMALL_XEN_INT(a) C_TO_XEN_INT(a)
   #define XEN_TO_SMALL_C_INT(a) XEN_TO_C_INT(a)
   #define XEN_TO_C_BOOLEAN_OR_TRUE(a) (!(XEN_FALSE_P(a)))
+  #define XEN_TO_C_INT_OR_ELSE_WITH_CALLER(a, b, c) XEN_TO_C_INT_OR_ELSE(a, b)
+  #define XEN_TO_C_DOUBLE_WITH_CALLER(a, b) XEN_TO_C_DOUBLE(a)
 #endif
 #endif

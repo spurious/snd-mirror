@@ -1884,8 +1884,8 @@ static XEN mark_get(XEN n, mark_field_t fld, XEN pos_n, char *caller)
   int pos;
   chan_info *ncp[1];
   mark *m = NULL;
-  pos = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(pos_n, -1, caller);
-  m = find_mark_from_id(XEN_TO_C_INT_OR_ELSE_WITH_CALLER(n, 0, caller), 
+  pos = XEN_TO_C_INT_OR_ELSE(pos_n, -1);
+  m = find_mark_from_id(XEN_TO_C_INT_OR_ELSE(n, 0), 
 			ncp, pos);
   if (m == NULL) 
     return(snd_no_such_mark_error(caller, n));

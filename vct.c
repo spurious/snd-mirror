@@ -506,7 +506,7 @@ static XEN list_to_vct(XEN lst)
   scv = make_vct(len, (Float *)CALLOC(len, sizeof(Float)));
   v = TO_VCT(scv);
   for (i = 0, lst1 = XEN_COPY_ARG(lst); i < len; i++, lst1 = XEN_CDR(lst1)) 
-    v->data[i] = (Float)XEN_TO_C_DOUBLE_WITH_CALLER(XEN_CAR(lst1), S_list_to_vct);
+    v->data[i] = (Float)XEN_TO_C_DOUBLE(XEN_CAR(lst1));
   return(xen_return_first(scv, lst));
 }
 

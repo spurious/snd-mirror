@@ -3028,7 +3028,7 @@ mus_any *mus_make_formant(Float radius, Float frequency, Float gain)
 
 typedef struct {
   mus_any_class *core;
-  int order;
+  int order, allocated_size;
   bool state_allocated;
   Float *x, *y, *state;
 } flt;
@@ -3097,13 +3097,22 @@ bool mus_filter_p(mus_any *ptr)
 	  ((ptr->core)->type == MUS_FIR_FILTER) ||
 	  ((ptr->core)->type == MUS_IIR_FILTER)));
 }
+
 bool mus_fir_filter_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_FIR_FILTER));}
 bool mus_iir_filter_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_IIR_FILTER));}
+
 static Float *filter_data(mus_any *ptr) {return(((flt *)ptr)->state);}
 static off_t filter_length(mus_any *ptr) {return(((flt *)ptr)->order);}
-static off_t set_filter_length(mus_any *ptr, off_t val) {if (val > 0) ((flt *)ptr)->order = (int)val; return((off_t)(((flt *)ptr)->order));}
 static Float *filter_xcoeffs(mus_any *ptr) {return(((flt *)ptr)->x);}
 static Float *filter_ycoeffs(mus_any *ptr) {return(((flt *)ptr)->y);}
+
+static off_t set_filter_length(mus_any *ptr, off_t val) 
+{
+  flt *gen = (flt *)ptr;
+  if ((val > 0) && (val <= gen->allocated_size))
+    gen->order = (int)val;
+  return((off_t)(gen->order));
+}
 
 static Float filter_xcoeff(mus_any *ptr, int index) 
 {
@@ -3275,6 +3284,7 @@ static mus_any *make_filter(mus_any_class *cls, const char *name, int order, Flo
 	}
       gen->core = cls;
       gen->order = order;
+      gen->allocated_size = order;
       gen->x = xcoeffs;
       gen->y = ycoeffs;
       return((mus_any *)gen);
@@ -6001,7 +6011,7 @@ Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int dir
     {
       Float (*sr_input)(void *arg, int direction) = input;
       if (sr_input == NULL) sr_input = srp->feeder;
-      fsx = (int)(srp->x);
+      fsx = (int)(srp->x); /* TODO: possible overflow here */
       srp->x -= fsx;
       /* realign data, reset srp->x */
       if (fsx > lim)

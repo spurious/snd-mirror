@@ -50,13 +50,13 @@ int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos
 	  snd_bad_arity_error(caller, errstr, edpos);
 	  return(AT_CURRENT_EDIT_POSITION);
 	}
-      pos = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(XEN_CALL_2(edpos, 
-							C_TO_XEN_INT(cp->sound->index), 
-							C_TO_XEN_INT(cp->chan),
-							caller),
-					     AT_CURRENT_EDIT_POSITION, caller);
+      pos = XEN_TO_C_INT_OR_ELSE(XEN_CALL_2(edpos, 
+					    C_TO_XEN_INT(cp->sound->index), 
+					    C_TO_XEN_INT(cp->chan),
+					    caller),
+				 AT_CURRENT_EDIT_POSITION);
     }
-  else pos = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(edpos, AT_CURRENT_EDIT_POSITION, caller);
+  else pos = XEN_TO_C_INT_OR_ELSE(edpos, AT_CURRENT_EDIT_POSITION);
   if (pos == AT_CURRENT_EDIT_POSITION)
     return(cp->edit_ctr);
   if ((pos < 0) || 
@@ -3399,6 +3399,7 @@ swap the indicated channels"
 }
 
 /* TODO: scale-by takes a vector/list(or any random garbage) but not a vct!!?? */
+/* TODO: get rid of vectors from Snd/Clm! */
 
 static Float *load_Floats(XEN scalers, int *result_len, const char *caller)
 {

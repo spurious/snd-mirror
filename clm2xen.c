@@ -147,7 +147,7 @@ Float mus_optkey_to_float(XEN key, const char *caller, int n, Float def)
   if (!(XEN_KEYWORD_P(key)))
     {
       XEN_ASSERT_TYPE(XEN_NUMBER_P(key), key, n, caller, "a number");
-      return(XEN_TO_C_DOUBLE_WITH_CALLER(key, caller));
+      return(XEN_TO_C_DOUBLE(key));
     }
   return(def);
 }
@@ -157,7 +157,7 @@ int mus_optkey_to_int(XEN key, const char *caller, int n, int def)
   if (!(XEN_KEYWORD_P(key)))
     {
       XEN_ASSERT_TYPE(XEN_NUMBER_P(key), key, n, caller, "an integer");
-      return(XEN_TO_C_INT_OR_ELSE_WITH_CALLER(key, def, caller));
+      return(XEN_TO_C_INT_OR_ELSE(key, def));
     }
   return(def);
 }
@@ -527,7 +527,7 @@ static XEN g_sine_bank(XEN amps, XEN phases, XEN size)
 
 typedef enum {G_MULTIPLY_ARRAYS, G_RECTANGULAR_POLAR, G_POLAR_RECTANGULAR} xclm_window_t;
 
-static XEN g_fft_window_1(char *caller, xclm_window_t choice, XEN val1, XEN val2, XEN ulen) 
+static XEN g_fft_window_1(xclm_window_t choice, XEN val1, XEN val2, XEN ulen, const char *caller) 
 {
   vct *v1, *v2;
   int len;
@@ -537,7 +537,7 @@ static XEN g_fft_window_1(char *caller, xclm_window_t choice, XEN val1, XEN val2
   v2 = TO_VCT(val2);
   if (XEN_NUMBER_P(ulen)) 
     {
-      len = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(ulen, 0, caller); 
+      len = XEN_TO_C_INT_OR_ELSE(ulen, 0); 
       if (len > v1->length) len = v1->length;
     }
   else 
@@ -557,7 +557,7 @@ static XEN g_fft_window_1(char *caller, xclm_window_t choice, XEN val1, XEN val2
 static XEN g_multiply_arrays(XEN val1, XEN val2, XEN len) 
 {
   #define H_multiply_arrays "(" S_multiply_arrays " v1 v2 (len)): (vcts) v1[i] *= v2[i]"
-  return(g_fft_window_1(S_multiply_arrays, G_MULTIPLY_ARRAYS, val1, val2, len));
+  return(g_fft_window_1(G_MULTIPLY_ARRAYS, val1, val2, len, S_multiply_arrays));
 }
 
 static XEN g_rectangular_to_polar(XEN val1, XEN val2) 
@@ -565,7 +565,7 @@ static XEN g_rectangular_to_polar(XEN val1, XEN val2)
   #define H_rectangular_to_polar "(" S_rectangular_to_polar " rl im): convert real/imaginary \
 data in (vcts) rl and im from rectangular form (fft output) to polar form (a spectrum)"
 
-  return(g_fft_window_1(S_rectangular_to_polar, G_RECTANGULAR_POLAR, val1, val2, XEN_UNDEFINED));
+  return(g_fft_window_1(G_RECTANGULAR_POLAR, val1, val2, XEN_UNDEFINED, S_rectangular_to_polar));
 }
 
 static XEN g_polar_to_rectangular(XEN val1, XEN val2) 
@@ -573,7 +573,7 @@ static XEN g_polar_to_rectangular(XEN val1, XEN val2)
   #define H_polar_to_rectangular "(" S_polar_to_rectangular " rl im): convert real/imaginary \
 data in (vcts) rl and im from polar form (spectrum) to rectangular form (fft-style)"
 
-  return(g_fft_window_1(S_polar_to_rectangular, G_POLAR_RECTANGULAR, val1, val2, XEN_UNDEFINED));
+  return(g_fft_window_1(G_POLAR_RECTANGULAR, val1, val2, XEN_UNDEFINED, S_polar_to_rectangular));
 }
 
 static XEN g_mus_fft(XEN url, XEN uim, XEN len, XEN usign)
@@ -969,8 +969,7 @@ static XEN g_mus_set_length(XEN gen, XEN val)
 	      if ((v) && (len > v->length))
 		XEN_OUT_OF_RANGE_ERROR(S_setB S_mus_length, XEN_ONLY_ARG, val, "must be <= current data size");
 	      /* set_offset refers only to env, set_width only to square_wave et al, set_location only readin */
-
-	      /* TODO: can this mess up in filter case if state not big enough? */
+	      /* filters are protected by keeping allocated_size and not allowing arrays to be set */
 	    }
 	}
     }
@@ -1257,7 +1256,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
       else
 	{
 	  if (XEN_NUMBER_P(keys[keyn]))
-	    initial_element = XEN_TO_C_DOUBLE_WITH_CALLER(keys[keyn], caller);
+	    initial_element = XEN_TO_C_DOUBLE(keys[keyn]);
 	  else 
 	    {
 	      if (line) FREE(line);
@@ -1272,7 +1271,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 	{
 	  if (XEN_NUMBER_P(keys[keyn]))
 	    {
-	      max_size = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(keys[keyn], 0, caller);
+	      max_size = XEN_TO_C_INT_OR_ELSE(keys[keyn], 0);
 	      if (max_size > MAX_TABLE_SIZE)
 		{
 		  if (line) FREE(line);
@@ -1297,7 +1296,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 	{
 	  if (XEN_NUMBER_P(keys[keyn]))
 	    {
-	      interp_type = (mus_interp_t)XEN_TO_C_INT_OR_ELSE_WITH_CALLER(keys[keyn], MUS_INTERP_LINEAR, caller);
+	      interp_type = (mus_interp_t)XEN_TO_C_INT_OR_ELSE(keys[keyn], MUS_INTERP_LINEAR);
 	      if (!(MUS_INTERP_TYPE_OK(interp_type)))
 		{
 		  if (line) FREE(line);
@@ -4190,6 +4189,8 @@ static XEN g_src_p(XEN obj)
   #define H_src_p "(" S_src_p " gen): #t if gen is an " S_src
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_src_p(XEN_TO_MUS_ANY(obj)))));
 }
+
+/* TODO: src "pm" can be inf/nan/bignum etc -- need range check */
 
 static XEN g_src(XEN obj, XEN pm, XEN func) 
 {

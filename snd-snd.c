@@ -2339,7 +2339,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
 	}
       break;
     case SP_AMP:           
-      fval = XEN_TO_C_DOUBLE_WITH_CALLER(val, caller);
+      fval = XEN_TO_C_DOUBLE(val);
       if (fval >= 0.0) set_amp(sp, fval); 
       return(C_TO_XEN_DOUBLE(sp->amp_control)); 
       break;
@@ -2350,7 +2350,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
       return(val);
       break;
     case SP_CONTRAST:      
-      set_contrast(sp, XEN_TO_C_DOUBLE_WITH_CALLER(val, caller));
+      set_contrast(sp, XEN_TO_C_DOUBLE(val));
       return(C_TO_XEN_DOUBLE(sp->contrast_control)); 
       break;
     case SP_CONTRAST_BOUNDS:
@@ -2360,11 +2360,11 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
       return(val);
       break;
     case SP_CONTRAST_AMP:  
-      sp->contrast_control_amp = XEN_TO_C_DOUBLE_WITH_CALLER(val, caller);
+      sp->contrast_control_amp = XEN_TO_C_DOUBLE(val);
       if (sp->playing) dac_set_contrast_amp(sp, sp->contrast_control_amp);
       break;
     case SP_EXPAND:        
-      fval = XEN_TO_C_DOUBLE_WITH_CALLER(val, caller);
+      fval = XEN_TO_C_DOUBLE(val);
       if (fval > 0.0) set_expand(sp, fval); 
       return(C_TO_XEN_DOUBLE(sp->expand_control)); 
       break;
@@ -2375,7 +2375,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
       return(val);
       break;
     case SP_EXPAND_LENGTH: 
-      fval = XEN_TO_C_DOUBLE_WITH_CALLER(val, caller);
+      fval = XEN_TO_C_DOUBLE(val);
       if (fval > 0.0) 
 	{
 	  sp->expand_control_length = fval; 
@@ -2384,7 +2384,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
       return(C_TO_XEN_DOUBLE(sp->expand_control_length));
       break;
     case SP_EXPAND_RAMP:   
-      fval = XEN_TO_C_DOUBLE_WITH_CALLER(val, caller);
+      fval = XEN_TO_C_DOUBLE(val);
       if ((fval >= 0.0) && (fval < 0.5)) 
 	{
 	  sp->expand_control_ramp = fval; 
@@ -2393,7 +2393,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
       return(C_TO_XEN_DOUBLE(sp->expand_control_ramp));
       break;
     case SP_EXPAND_HOP:    
-      fval = XEN_TO_C_DOUBLE_WITH_CALLER(val, caller);
+      fval = XEN_TO_C_DOUBLE(val);
       if (fval > 0.0) 
 	{
 	  sp->expand_control_hop = fval; 
@@ -2402,7 +2402,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
       return(C_TO_XEN_DOUBLE(sp->expand_control_hop));
       break;
     case SP_EXPAND_JITTER:    
-      fval = mus_fclamp(0.0, XEN_TO_C_DOUBLE_WITH_CALLER(val, caller), 100.0);
+      fval = mus_fclamp(0.0, XEN_TO_C_DOUBLE(val), 100.0);
       sp->expand_control_jitter = fval; 
       return(C_TO_XEN_DOUBLE(sp->expand_control_jitter));
       break;
@@ -2426,7 +2426,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
 	  return(val);
 	}
 #endif
-      fval = XEN_TO_C_DOUBLE_WITH_CALLER(val, caller);
+      fval = XEN_TO_C_DOUBLE(val);
       if (fval != 0.0)
 	{
 	  int direction;
@@ -2449,7 +2449,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
       return(val);
       break;
     case SP_REVERB_LENGTH:    
-      fval = XEN_TO_C_DOUBLE_WITH_CALLER(val, caller);
+      fval = XEN_TO_C_DOUBLE(val);
       if (fval >= 0.0) set_revlen(sp, fval); 
       return(C_TO_XEN_DOUBLE(sp->reverb_control_length)); 
       break;
@@ -2460,11 +2460,11 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
       return(val);
       break;
     case SP_REVERB_FEEDBACK:  
-      sp->reverb_control_feedback = mus_fclamp(0.0, XEN_TO_C_DOUBLE_WITH_CALLER(val, caller), 100.0);
+      sp->reverb_control_feedback = mus_fclamp(0.0, XEN_TO_C_DOUBLE(val), 100.0);
       if (sp->playing) dac_set_reverb_feedback(sp, sp->reverb_control_feedback);
       break;
     case SP_REVERB_SCALE:     
-      set_revscl(sp, XEN_TO_C_DOUBLE_WITH_CALLER(val, caller));
+      set_revscl(sp, XEN_TO_C_DOUBLE(val));
       return(C_TO_XEN_DOUBLE(sp->reverb_control_scale)); 
       break;
     case SP_REVERB_SCALE_BOUNDS:
@@ -2474,11 +2474,11 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
       return(val);
       break;
     case SP_REVERB_LOW_PASS:  
-      sp->reverb_control_lowpass = mus_fclamp(0.0, XEN_TO_C_DOUBLE_WITH_CALLER(val, caller), 1.0);
+      sp->reverb_control_lowpass = mus_fclamp(0.0, XEN_TO_C_DOUBLE(val), 1.0);
       if (sp->playing) dac_set_reverb_lowpass(sp, sp->reverb_control_lowpass);
       break;
     case SP_REVERB_DECAY:     
-      sp->reverb_control_decay = XEN_TO_C_DOUBLE_WITH_CALLER(val, caller);
+      sp->reverb_control_decay = XEN_TO_C_DOUBLE(val);
       break;
     case SP_FILTER_ENVELOPE:
       {
@@ -2556,7 +2556,7 @@ static XEN sound_set_global(XEN snd_n, XEN val, sp_field_t fld, char *caller)
 	return(sound_set(XEN_TRUE, val, fld, caller));
 	break;
       case SP_CONTRAST_AMP:  
-	in_set_contrast_control_amp(ss, XEN_TO_C_DOUBLE_WITH_CALLER(val, caller));
+	in_set_contrast_control_amp(ss, XEN_TO_C_DOUBLE(val));
 	return(sound_set(XEN_TRUE, val, fld, caller));
 	break;
       case SP_EXPAND_BOUNDS:
@@ -2565,25 +2565,25 @@ static XEN sound_set_global(XEN snd_n, XEN val, sp_field_t fld, char *caller)
 	return(sound_set(XEN_TRUE, val, fld, caller));
 	break;
       case SP_EXPAND_LENGTH: 
-	fval = XEN_TO_C_DOUBLE_WITH_CALLER(val, caller);
+	fval = XEN_TO_C_DOUBLE(val);
 	if (fval > 0.0)
 	  in_set_expand_control_length(ss, fval);
 	return(sound_set(XEN_TRUE, val, fld, caller));
 	break;
       case SP_EXPAND_RAMP:
-	fval = XEN_TO_C_DOUBLE_WITH_CALLER(val, caller);
+	fval = XEN_TO_C_DOUBLE(val);
 	if ((fval >= 0.0) && (fval < 0.5)) 
 	  in_set_expand_control_ramp(ss, fval);
 	return(sound_set(XEN_TRUE, val, fld, caller));
 	break;
       case SP_EXPAND_HOP:
-	fval = XEN_TO_C_DOUBLE_WITH_CALLER(val, caller);
+	fval = XEN_TO_C_DOUBLE(val);
 	if (fval > 0.0)
 	  in_set_expand_control_hop(ss, fval);
 	return(sound_set(XEN_TRUE, val, fld, caller));
 	break;
       case SP_EXPAND_JITTER:    
-	in_set_expand_control_jitter(ss, XEN_TO_C_DOUBLE_WITH_CALLER(val, caller));
+	in_set_expand_control_jitter(ss, XEN_TO_C_DOUBLE(val));
 	return(sound_set(XEN_TRUE, val, fld, caller));
 	break;
       case SP_SPEED_BOUNDS:
@@ -2598,7 +2598,7 @@ static XEN sound_set_global(XEN snd_n, XEN val, sp_field_t fld, char *caller)
 	return(sound_set(XEN_TRUE, val, fld, caller));
 	break;
       case SP_REVERB_FEEDBACK:  
-	in_set_reverb_control_feedback(ss, XEN_TO_C_DOUBLE_WITH_CALLER(val, caller));
+	in_set_reverb_control_feedback(ss, XEN_TO_C_DOUBLE(val));
 	return(sound_set(XEN_TRUE, val, fld, caller));
 	break;
       case SP_REVERB_SCALE_BOUNDS:
@@ -2607,11 +2607,11 @@ static XEN sound_set_global(XEN snd_n, XEN val, sp_field_t fld, char *caller)
 	return(sound_set(XEN_TRUE, val, fld, caller));
 	break;
       case SP_REVERB_LOW_PASS:  
-	in_set_reverb_control_lowpass(ss, XEN_TO_C_DOUBLE_WITH_CALLER(val, caller));
+	in_set_reverb_control_lowpass(ss, XEN_TO_C_DOUBLE(val));
 	return(sound_set(XEN_TRUE, val, fld, caller));
 	break;
       case SP_REVERB_DECAY:     
-	in_set_reverb_control_decay(ss, XEN_TO_C_DOUBLE_WITH_CALLER(val, caller));
+	in_set_reverb_control_decay(ss, XEN_TO_C_DOUBLE(val));
 	return(sound_set(XEN_TRUE, val, fld, caller));
 	break;
       default: break;
@@ -3430,7 +3430,7 @@ static XEN g_set_amp_control(XEN on, XEN snd_n, XEN chn_n)
       cp = get_cp(snd_n, chn_n, S_amp_control);
       if (cp->amp_control == NULL)
 	cp->amp_control = (Float *)CALLOC(1, sizeof(Float));
-      cp->amp_control[0] = (Float)XEN_TO_C_DOUBLE_WITH_CALLER(on, S_setB S_amp_control);
+      cp->amp_control[0] = (Float)XEN_TO_C_DOUBLE(on);
       return(on);
     }
   return(sound_set(snd_n, on, SP_AMP, S_setB S_amp_control));

@@ -21,7 +21,7 @@ XEN xen_return_first(XEN a, ...)
   return(a);
 }
 
-off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback, const char *origin)
+off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback)
 {
 #if HAVE_GUILE
   if ((XEN_NOT_FALSE_P(scm_integer_p(obj))) && XEN_EXACT_P(obj))
@@ -35,7 +35,7 @@ off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback, const char *origin)
 #endif
   else
     if (XEN_NUMBER_P(obj))
-      return((off_t)XEN_TO_C_DOUBLE_WITH_CALLER(obj, origin));
+      return((off_t)XEN_TO_C_DOUBLE(obj));
   return(fallback);
 }
 
@@ -143,7 +143,7 @@ int xen_to_c_int(XEN a)
 #endif
 }
 
-int xen_to_c_int_or_else(XEN obj, int fallback, const char *origin)
+int xen_to_c_int_or_else(XEN obj, int fallback)
 {
   /* don't want errors about floats with non-zero fractions etc */
   if (XEN_NUMBER_P(obj))
@@ -356,14 +356,14 @@ void xen_initialize(void)
   Init_Hook();
 }
 
-int xen_to_c_int_or_else(XEN obj, int fallback, const char *origin)
+int xen_to_c_int_or_else(XEN obj, int fallback)
 {
   /* don't want errors about floats with non-zero fractions etc */
   if (XEN_INTEGER_P(obj))
     return(XEN_TO_C_INT(obj));
   else
     if (XEN_NUMBER_P(obj))
-      return((int)XEN_TO_C_DOUBLE_WITH_CALLER(obj, origin));
+      return((int)XEN_TO_C_DOUBLE(obj));
   return(fallback);
 }
 
@@ -1027,7 +1027,7 @@ char *xen_version(void)
 #endif
 }
 
-int xen_to_c_int_or_else(XEN obj, int fallback, const char *origin)
+int xen_to_c_int_or_else(XEN obj, int fallback)
 {
   return(fallback);
 }

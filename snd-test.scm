@@ -36,6 +36,8 @@
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
+;;; TODO: explicit fm/pm inf/bignum tests (negative too) for gens 
+
 (define tests 1)
 (define keep-going #f)
 (define all-args #f) ; huge arg testing
@@ -7074,12 +7076,12 @@ EDITS: 5
 	(if (not (string=? (x-axis-label index 0 lisp-graph) "no lisp")) (snd-display ";lisp x-axis-label: ~A" (x-axis-label index 0 lisp-graph)))
 	(graph-data (make-vct 4))
 	(update-lisp-graph)
-	(graph '#(0 0 1 1 2 0))
+	(graph (vct 0 0 1 1 2 0))
 	(do ((i 0 (1+ i))) 
 	    ((= i 32)) 
-	  (graph '#(0 1 2)) 
-	  (graph (list '#(0 1 2) '#(3 2 1) '#(1 2 3)))
-	  (graph (list '#(0 1 2) '#(3 2 1))))
+	  (graph (vct 0 1 2)) 
+	  (graph (list (vct 0 1 2) (vct 3 2 1) (vct 1 2 3)))
+	  (graph (list (vct 0 1 2) (vct 3 2 1))))
 	(set! (x-bounds) (list 0.0 0.01))
 	(let ((data (make-graph-data)))
 	  (if (vct? data)
@@ -8334,7 +8336,6 @@ EDITS: 5
 	    (set! (sync ind1) 1)
 	    (scale-by (list .5 .25) ind1)
 	    (scale-by '#(2.0 4.0) ind1)
-	    (scale-by #f ind1)
 	    (revert-sound ind1)
 	    (let ((amps (maxamp ind1 #t)))
 	      (swap-channels ind1 0 ind1)
@@ -24151,8 +24152,8 @@ EDITS: 5
 	    (add-hook! lisp-graph-hook 
 		       (lambda (snd chn) 
 			 (if (> (random 1.0) .5) 
-			     (graph '#(0 1 2)) 
-			     (graph (list '#(0 1 2) '#(3 2 0))))))
+			     (graph (vct 0 1 2)) 
+			     (graph (list (vct 0 1 2) (vct 3 2 0))))))
 	    
 	    (for-each
 	     (lambda (snd)
@@ -49727,7 +49728,7 @@ EDITS: 2
 		     expected-tag (procedure-source thunk) tag))))
 
 (defvar env3 '(0 0 1 1))
-(define delay-32 (make-delay 32)) ; TODO: make this dependent on test # or randomness
+(define delay-32 (make-delay 32))
 (define color-95 (make-color .95 .95 .95))
 (define vector-0 (make-vector 0))
 (define vct-3 (make-vct 3))
@@ -50773,8 +50774,6 @@ EDITS: 2
 			    (list start-playing-selection-hook 'start-playing-selection-hook)
 			    (list selection-changed-hook 'selection-changed-hook)))
 	    
-;;; TODO: :(scale-by (make-mixer 2 .1 .1 .2 .2)) -> #<mixer: chans: 2, vals: [(0.100 0.100) (0.200 0.200)]>!
-
 	    (if (= test-28 0) (begin
 	    (check-error-tag 'no-such-envelope (lambda () (set! (enved-envelope) "not-an-env")))
 	    (check-error-tag 'cannot-save (lambda () (save-envelopes "/bad/baddy")))
@@ -50969,8 +50968,8 @@ EDITS: 2
 	      (check-error-tag 'no-such-channel (lambda () (samples->vct 0 100 ind 1234)))
 	      (check-error-tag 'no-such-sound (lambda () (samples->sound-data 0 100 1234)))
 	      (check-error-tag 'no-such-channel (lambda () (samples->sound-data 0 100 ind 1234)))
-	      (check-error-tag 'no-such-sound (lambda () (graph '#(0 1) "hi" 0 1 0 1 1234)))
-	      (check-error-tag 'no-such-channel (lambda () (graph '#(0 1) "hi" 0 1 0 1 ind 1234)))
+	      (check-error-tag 'no-such-sound (lambda () (graph (vct 0 1) "hi" 0 1 0 1 1234)))
+	      (check-error-tag 'no-such-channel (lambda () (graph (vct 0 1) "hi" 0 1 0 1 ind 1234)))
 	      (check-error-tag 'wrong-type-arg (lambda () (play-region (car (regions)) #f (lambda () #f))))
 	      (set! (selection-member? #t) #f)
 	      (check-error-tag 'no-active-selection (lambda () (filter-selection (vct 0 0 1 1) 4)))
@@ -51032,6 +51031,8 @@ EDITS: 2
 	      (let ((eds (edits)))
 		(catch #t (lambda () (undo (log 0))) (lambda args args))
 		(if (not (equal? (edits) eds)) (snd-display ";undo -inf): ~A" (edits))))
+	      (check-error-tag 'wrong-type-arg (lambda () (scale-by #f)))
+	      (check-error-tag 'wrong-type-arg (lambda () (scale-by (make-mixer 2 .1 .1 .2 .2))))
 	      (close-sound ind))
 	    (check-error-tag 'bad-arity (lambda () (add-transform "hiho" "time" 0 1 (lambda () 1.0))))
 	    (check-error-tag 'cannot-save (lambda () (save-options "/bad/baddy")))

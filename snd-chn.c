@@ -4708,7 +4708,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *calle
   switch (fld)
     {
     case CP_EDIT_CTR:
-      val = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, 0, caller);
+      val = XEN_TO_C_INT_OR_ELSE(on, 0);
       if (cp->edit_ctr < val)
 	redo_edit(cp, val - cp->edit_ctr);
       else undo_edit(cp, cp->edit_ctr - val);
@@ -4772,7 +4772,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *calle
 	}
       break;
     case CP_CURSOR_SIZE:
-      cp->cursor_size = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, DEFAULT_CURSOR_SIZE, caller);
+      cp->cursor_size = XEN_TO_C_INT_OR_ELSE(on, DEFAULT_CURSOR_SIZE);
       update_graph(cp); 
       return(C_TO_XEN_INT(cp->cursor_size));
       break;
@@ -4916,17 +4916,17 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *calle
       return(C_TO_XEN_BOOLEAN(cp->show_mix_waveforms));
       break;
     case CP_TIME_GRAPH_STYLE:
-      cp->time_graph_style = (graph_style_t)XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, DEFAULT_GRAPH_STYLE, caller);
+      cp->time_graph_style = (graph_style_t)XEN_TO_C_INT_OR_ELSE(on, DEFAULT_GRAPH_STYLE);
       if (call_update_graph) update_graph(cp);
       return(C_TO_XEN_INT((int)(cp->time_graph_style)));
       break;
     case CP_LISP_GRAPH_STYLE:
-      cp->lisp_graph_style = (graph_style_t)XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, DEFAULT_GRAPH_STYLE, caller);
+      cp->lisp_graph_style = (graph_style_t)XEN_TO_C_INT_OR_ELSE(on, DEFAULT_GRAPH_STYLE);
       if (call_update_graph) update_graph(cp);
       return(C_TO_XEN_INT((int)(cp->lisp_graph_style)));
       break;
     case CP_TRANSFORM_GRAPH_STYLE:
-      cp->transform_graph_style = (graph_style_t)XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, DEFAULT_GRAPH_STYLE, caller);
+      cp->transform_graph_style = (graph_style_t)XEN_TO_C_INT_OR_ELSE(on, DEFAULT_GRAPH_STYLE);
       if (call_update_graph) update_graph(cp);
       return(C_TO_XEN_INT((int)(cp->transform_graph_style)));
       break;
@@ -6620,7 +6620,7 @@ static XEN g_y_bounds(XEN snd_n, XEN chn_n)
 static XEN g_graph(XEN ldata, XEN xlabel, XEN x0, XEN x1, XEN y0, XEN y1, XEN snd_n, XEN chn_n, XEN force_display)
 {
   #define H_graph "(" S_graph " data (xlabel #f) (x0 0.0) (x1 1.0) (y0 #f) (y1 #f) (snd #f) (chn #f) (force-display #t)): \
-displays 'data' as a graph with x axis label 'xlabel', axis units going from x0 to x1 and y0 to y1; 'data' can be a list, vct, or vector. \
+displays 'data' as a graph with x axis label 'xlabel', axis units going from x0 to x1 and y0 to y1; 'data' can be a list or a vct. \
 If 'data' is a list of numbers, it is treated as an envelope."
 
   chan_info *cp;
@@ -6636,12 +6636,11 @@ If 'data' is a list of numbers, it is treated as an envelope."
   Latus h = 0, w = 0, ww = 0;
   Locus o = 0, gx0 = 0;
   axis_info *uap = NULL;
-  /* ldata can be a vct, a vector, or a list of either */
+  /* ldata can be a vct or a list of numbers or vcts */
   XEN_ASSERT_TYPE(((VCT_P(ldata)) || 
-		   (XEN_VECTOR_P(ldata) && (XEN_VECTOR_LENGTH(ldata) > 0)) ||
 		   ((XEN_LIST_P(ldata)) && (XEN_LIST_LENGTH(ldata) > 0) && 
-		    ((XEN_NUMBER_P(XEN_CAR(ldata))) || (XEN_VECTOR_P(XEN_CAR(ldata))) || (VCT_P(XEN_CAR(ldata)))))),
-		  ldata, XEN_ARG_1, S_graph, "a vct, vector, or list");
+		    ((XEN_NUMBER_P(XEN_CAR(ldata))) || (VCT_P(XEN_CAR(ldata)))))),
+		  ldata, XEN_ARG_1, S_graph, "a vct or a list");
   ASSERT_CHANNEL(S_graph, snd_n, chn_n, 7);
   cp = get_cp(snd_n, chn_n, S_graph);
   ymin = 32768.0;
@@ -6720,27 +6719,15 @@ If 'data' is a list of numbers, it is treated as an envelope."
 	  if (XEN_LIST_P(ldata))
 	    data = XEN_LIST_REF(ldata, graph);
 	  else data = ldata;
-	  if (VCT_P(data))
-	    {
-	      v = (vct *)XEN_OBJECT_REF(data);
-	      len = v->length;
-	    }
-	  else len = XEN_VECTOR_LENGTH(data);
+	  v = (vct *)XEN_OBJECT_REF(data);
+	  len = v->length;
 	  if (lg->len[graph] != len)
 	    {
 	      if (lg->data[graph]) FREE(lg->data[graph]);
 	      lg->data[graph] = (Float *)CALLOC(len, sizeof(Float));
 	      lg->len[graph] = len;
 	    }
-	  if (v)
-	    memcpy((void *)(lg->data[graph]), (void *)(v->data), len * sizeof(Float));
-	  else 
-	    {
-	      XEN *vdata;
-	      vdata = XEN_VECTOR_ELEMENTS(data);
-	      for (i = 0; i < len; i++) 
-		lg->data[graph][i] = XEN_TO_C_DOUBLE(vdata[i]);
-	    }
+	  memcpy((void *)(lg->data[graph]), (void *)(v->data), len * sizeof(Float));
 	  if ((!XEN_NUMBER_P(y0)) || 
 	      (!XEN_NUMBER_P(y1)))
 	    {

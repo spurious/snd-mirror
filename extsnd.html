@@ -5046,10 +5046,9 @@ Display a graph of <i>data</i> in a separate display per channel.  The x axis
 is labelled <i>xlabel</i>, the x axis units go from x0 to x1 (default 0 to 1.0),
 the y axis goes from y0 to y1 (default fits the data), and the display is 
 associated with channel <i>chn</i> in <i>snd</i>.
-<code>(graph '#(0 .1 .2 .3 .4 .3 .2 .1 0) "roof")</code>
+<code>(graph (vct 0 .1 .2 .3 .4 .3 .2 .1 0) "roof")</code>
 The current slider values can be read from <a href="#xpositionslider">x-position-slider</a>, 
-<a href="#xzoomslider">x-zoom-slider</a>, etc.  The <i>data</i> argument can be a list of vectors or
-vcts; each is graphed at the same time, following the sequence of
+<a href="#xzoomslider">x-zoom-slider</a>, etc.  The <i>data</i> argument can be a list of vcts; each is graphed at the same time, following the sequence of
 colors used when channels are superimposed.  See <a href="sndscm.html#exampdoc">examp.scm</a>.  If <i>data</i>
 is a list of numbers, it is assumed to be an envelope (a list of breakpoints).
 If <i>force-display</i> is #f (default is #t), the graph is not
