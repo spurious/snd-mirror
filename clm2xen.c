@@ -4520,16 +4520,22 @@ it in conjunction with mixer to scale/envelope all the various ins and outs."
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(ost), ost, XEN_ARG_3, S_mus_mix, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(olen), olen, XEN_ARG_4, S_mus_mix, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(ist), ist, XEN_ARG_5, S_mus_mix, "a number");
-  XEN_ASSERT_TYPE((XEN_NOT_BOUND_P(mx)) || ((MUS_XEN_P(mx)) && (mus_mixer_p(MUS_XEN_TO_CLM(mx)))), mx, XEN_ARG_6, S_mus_mix, "a mixer");
+  XEN_ASSERT_TYPE((XEN_NOT_BOUND_P(mx)) || (XEN_FALSE_P(mx)) || ((MUS_XEN_P(mx)) && (mus_mixer_p(MUS_XEN_TO_CLM(mx)))), mx, XEN_ARG_6, S_mus_mix, "a mixer");
   XEN_ASSERT_TYPE((XEN_NOT_BOUND_P(envs)) || (XEN_VECTOR_P(envs)), envs, XEN_ARG_7, S_mus_mix, "an env gen or vector of envs");
   if (XEN_BOUND_P(ost)) ostart = XEN_TO_C_INT_OR_ELSE(ost, 0);
   if (XEN_BOUND_P(ist)) istart = XEN_TO_C_INT_OR_ELSE(ist, 0);
-  if (XEN_BOUND_P(mx)) mx1 = (mus_mixer *)MUS_XEN_TO_CLM(mx);
+  if ((XEN_BOUND_P(mx)) && (MUS_XEN_P(mx))) mx1 = (mus_mixer *)MUS_XEN_TO_CLM(mx);
   if (XEN_BOUND_P(envs))
     {
       /* pack into a C-style array of arrays of env pointers */
       in_len = XEN_VECTOR_LENGTH(envs);
       vdata0 = XEN_VECTOR_ELEMENTS(envs);
+      for (i = 0; i < in_len; i++)
+	if (!(XEN_VECTOR_P(vdata0[i])))
+	  XEN_ERROR(MUS_MISC_ERROR,
+		    XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
+			       vdata0[i],
+			       C_TO_XEN_STRING("each element of env vector must be a vector of envelopes")));
       out_len = XEN_VECTOR_LENGTH(vdata0[0]);
       envs1 = (mus_any ***)CALLOC(in_len, sizeof(mus_any **));
       for (i = 0; i < in_len; i++)
@@ -4537,7 +4543,8 @@ it in conjunction with mixer to scale/envelope all the various ins and outs."
 	  vdata1 = XEN_VECTOR_ELEMENTS(vdata0[i]);
 	  envs1[i] = (mus_any **)CALLOC(out_len, sizeof(mus_any *));
 	  for (j = 0; j < out_len; j++) 
-	    envs1[i][j] = MUS_XEN_TO_CLM(vdata1[j]);
+	    if (MUS_XEN_P(vdata1[j]))
+	      envs1[i][j] = MUS_XEN_TO_CLM(vdata1[j]);
 	}
     }
   outfile = XEN_TO_C_STRING(out);

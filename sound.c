@@ -322,18 +322,34 @@ static sound_file *add_to_sound_table(const char *name)
 
 int mus_sound_forget(const char *name)
 {
-  int i;
+  int i, len, free_name = 0;
+  char *short_name = NULL;
+  if (name == NULL) return(MUS_ERROR);
+  if (name[0] == '/')
+    {
+      len = strlen(name);
+      for (i = 0; i < len; i++)
+	if (name[i] == '/')
+	  short_name = (char *)(name + i + 1);
+    }
+  else
+    {
+      short_name = mus_expand_filename((char *)name);
+      free_name = 1;
+    }
   previous_sf = NULL;
   if (name)
     for (i = 0; i < sound_table_size; i++)
       if ((sound_table[i]) &&
-	  (strcmp(name, sound_table[i]->file_name) == 0))
+	  ((strcmp(name, sound_table[i]->file_name) == 0) ||
+	   ((short_name) && 
+	    (strcmp(short_name, sound_table[i]->file_name) == 0))))
 	{
 	  free_sound_file(sound_table[i]);
 	  sound_table[i] = NULL;
-	  return(MUS_NO_ERROR);
 	}
-  return(MUS_ERROR);
+  if (free_name) FREE(short_name);
+  return(MUS_NO_ERROR);
 }
 
 static sound_file *check_write_date(const char *name, sound_file *sf)
@@ -778,9 +794,15 @@ int mus_sound_close_input (int fd)
 
 int mus_sound_close_output (int fd, int bytes_of_data) 
 {
-  mus_sound_forget(mus_file_fd_name(fd));
-  mus_header_update_with_fd(fd, mus_file_header_type(fd), bytes_of_data);
-  return(mus_file_close(fd));
+  char *name;
+  name = mus_file_fd_name(fd);
+  if (name)
+    {
+      mus_sound_forget(name);
+      mus_header_update_with_fd(fd, mus_file_header_type(fd), bytes_of_data);
+      return(mus_file_close(fd));
+    }
+  return(MUS_ERROR);
 }
 
 int mus_sound_read (int fd, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs) 

@@ -570,7 +570,7 @@ static int read_bicsf_header (int chan);
  *   internal Snd(lib)-only formats: 
  *     30: mus_lint, 31: mus_lfloat, 
  *     32: mus_bintn, 33: mus_lintn,
- *     34: mus_ldouble
+ *     34: mus_ldouble and others... (added by me for Snd internal use)
  */
 
 /* according to the file /usr/share/magic, the DECN versions were little endian */
@@ -597,17 +597,17 @@ static int read_next_header (int chan)
     case 18: data_format = MUS_BSHORT;      break; 
       /* "emphasized": Xavier Serra's de-emphasis filter: y(n) = x(n) + .9 y(n-1) */
     case 27: data_format = MUS_ALAW;        break;
-    case 30: data_format = MUS_LINT;        break; /* this is for Snd's internal benefit -- it is not used elsewhere */
-    case 31: data_format = MUS_LFLOAT;      break; /* ditto */
-    case 32: data_format = MUS_BINTN;       break; /* ditto */
-    case 33: data_format = MUS_LINTN;       break; /* ditto */
-    case 34: data_format = MUS_LDOUBLE;     break; /* ditto */
-    case 35: data_format = MUS_ULSHORT;     break; /* ditto */
-    case 36: data_format = MUS_UBSHORT;     break; /* ditto */
-    case 37: data_format = MUS_LFLOAT_UNSCALED; break; /* ditto */
-    case 38: data_format = MUS_BFLOAT_UNSCALED; break; /* ditto */
-    case 39: data_format = MUS_LDOUBLE_UNSCALED; break; /* ditto */
-    case 40: data_format = MUS_BDOUBLE_UNSCALED; break; /* ditto */
+    case 30: data_format = MUS_LINT;        break; /* from here on, for Snd's internal benefit -- it is not used elsewhere */
+    case 31: data_format = MUS_LFLOAT;      break; 
+    case 32: data_format = MUS_BINTN;       break; 
+    case 33: data_format = MUS_LINTN;       break; 
+    case 34: data_format = MUS_LDOUBLE;     break; 
+    case 35: data_format = MUS_ULSHORT;     break; 
+    case 36: data_format = MUS_UBSHORT;     break; 
+    case 37: data_format = MUS_LFLOAT_UNSCALED; break;
+    case 38: data_format = MUS_BFLOAT_UNSCALED; break;
+    case 39: data_format = MUS_LDOUBLE_UNSCALED; break;
+    case 40: data_format = MUS_BDOUBLE_UNSCALED; break;
     default: data_format = MUS_UNSUPPORTED; break;
     }
   srate = mus_char_to_bint((unsigned char *)(hdrbuf + 16));
@@ -655,13 +655,13 @@ int mus_header_write_next_header (int chan, int wsrate, int wchans, int loc, int
     case MUS_BFLOAT:  mus_bint_to_char((unsigned char *)(hdrbuf + 12), 6);  break;
     case MUS_BDOUBLE: mus_bint_to_char((unsigned char *)(hdrbuf + 12), 7);  break;
     case MUS_LINT:    mus_bint_to_char((unsigned char *)(hdrbuf + 12), 30); break; /* see above */
-    case MUS_LFLOAT:  mus_bint_to_char((unsigned char *)(hdrbuf + 12), 31); break; /* see above */
-    case MUS_BINTN:   mus_bint_to_char((unsigned char *)(hdrbuf + 12), 32); break; /* see above */
-    case MUS_LINTN:   mus_bint_to_char((unsigned char *)(hdrbuf + 12), 33); break; /* see above */
-    case MUS_LDOUBLE: mus_bint_to_char((unsigned char *)(hdrbuf + 12), 34); break; /* see above */
+    case MUS_LFLOAT:  mus_bint_to_char((unsigned char *)(hdrbuf + 12), 31); break; 
+    case MUS_BINTN:   mus_bint_to_char((unsigned char *)(hdrbuf + 12), 32); break; 
+    case MUS_LINTN:   mus_bint_to_char((unsigned char *)(hdrbuf + 12), 33); break; 
+    case MUS_LDOUBLE: mus_bint_to_char((unsigned char *)(hdrbuf + 12), 34); break; 
     case MUS_ALAW:    mus_bint_to_char((unsigned char *)(hdrbuf + 12), 27); break;
       
-    case MUS_ULSHORT: mus_bint_to_char((unsigned char *)(hdrbuf + 12), 35); break; /* etc */
+    case MUS_ULSHORT: mus_bint_to_char((unsigned char *)(hdrbuf + 12), 35); break; 
     case MUS_UBSHORT: mus_bint_to_char((unsigned char *)(hdrbuf + 12), 36); break;
     case MUS_LFLOAT_UNSCALED: mus_bint_to_char((unsigned char *)(hdrbuf + 12), 37); break;
     case MUS_BFLOAT_UNSCALED: mus_bint_to_char((unsigned char *)(hdrbuf + 12), 38); break;
@@ -1510,7 +1510,20 @@ static int wave_to_sndlib_format(int osf, int bps, int little)
 	default: return(MUS_UBYTE); break;
 	}
       break;
-    case 3: if (little) return(MUS_LFLOAT); else return(MUS_BFLOAT); break;
+    case 3: 
+      if (little) 
+	{
+	  if (bps == 64)
+	    return(MUS_LDOUBLE);
+	  else return(MUS_LFLOAT); 
+	  }
+      else 
+	{
+	  if (bps == 64)
+	    return(MUS_BDOUBLE);
+	  else return(MUS_BFLOAT); 
+	  }
+      break;
     case 6: if (bps == 8) return(MUS_ALAW); break;
     case 7: if (bps == 8) return(MUS_MULAW); break;
       /* IBM mulaw follows G711 specs like other versions (this info direct from IBM) */
@@ -1669,6 +1682,10 @@ static int write_riff_header (int chan, int wsrate, int wchans, int siz, int for
     case MUS_LFLOAT: 
       mus_lshort_to_char((unsigned char *)(hdrbuf + 20), 3); 
       mus_lshort_to_char((unsigned char *)(hdrbuf + 34), 32); 
+      break;
+    case MUS_LDOUBLE: 
+      mus_lshort_to_char((unsigned char *)(hdrbuf + 20), 3); 
+      mus_lshort_to_char((unsigned char *)(hdrbuf + 34), 64); 
       break;
     default: 
       mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
@@ -5268,9 +5285,10 @@ int mus_header_writable(int type, int format) /* -2 to ignore format for this ca
   switch (type)
     {
     case MUS_NEXT:
+      if (format == -2) return(TRUE);
       switch (format)
 	{
-	case MUS_UBYTE: MUS_L12INT: return(FALSE); break;
+	case MUS_UBYTE: case MUS_L12INT: return(FALSE); break;
 	}
       return(TRUE);
       break;
@@ -5317,7 +5335,7 @@ int mus_header_writable(int type, int format) /* -2 to ignore format for this ca
       switch (format)
 	{
 	case MUS_MULAW: case MUS_ALAW: case MUS_UBYTE: case MUS_LFLOAT:
-	case MUS_LSHORT: case MUS_L24INT: case MUS_LINT:
+	case MUS_LSHORT: case MUS_L24INT: case MUS_LINT: case MUS_LDOUBLE:
 	  return(TRUE);
 	  break;
 	default: 

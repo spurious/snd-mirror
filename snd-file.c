@@ -1489,13 +1489,14 @@ void update_prevlist(snd_state *ss)
 	    if (i != j) 
 	      {
 		prevnames[j] = prevnames[i]; 
+		prevnames[i] = NULL;
 		prevfullnames[j] = prevfullnames[i];
+		prevfullnames[i] = NULL;
 		prevtimes[j] = prevtimes[i];
 	      }
 	    j++;
 	  }
       prevfile_end = j - 1;
-      if (file_dialog_is_active()) make_prevfiles_list(ss);
     }
 }
 
@@ -1545,7 +1546,8 @@ static int less_compare(const void *a, const void *b)
 void make_prevfiles_list_1(snd_state *ss)
 {
   heapdata **data;
-  int i, len;
+  int i, j, len;
+  update_prevlist(ss);
   if (prevfile_end >= 0)
     {
       len = prevfile_end + 1;
@@ -1660,7 +1662,7 @@ static XEN g_set_previous_files_sort_procedure(XEN proc)
 #define NUM_HEADER_TYPES 7
 #define NUM_NEXT_FORMATS 8
 #define NUM_IRCAM_FORMATS 5
-#define NUM_WAVE_FORMATS 7
+#define NUM_WAVE_FORMATS 8
 #define NUM_AIFC_FORMATS 13
 #define NUM_AIFF_FORMATS 4
 #define NUM_NIST_FORMATS 7
@@ -1688,7 +1690,7 @@ char *header_short_name(int i)
 
 static char *next_data_formats[NUM_NEXT_FORMATS] = {"short", "mulaw", "signed byte  ", "float", "long", "alaw", "24-bit", "double"};
 static char *ircam_data_formats[NUM_IRCAM_FORMATS] = {"short", "mulaw", "float        ", "long", "alaw"};
-static char *wave_data_formats[NUM_WAVE_FORMATS] = {"mulaw", "alaw", "unsigned byte", "short", "long", "float", "24-bit"};
+static char *wave_data_formats[NUM_WAVE_FORMATS] = {"mulaw", "alaw", "unsigned byte", "short", "long", "float", "double", "24-bit"};
 static char *aifc_data_formats[NUM_AIFC_FORMATS] = {"short", "mulaw", "signed byte  ", "long", "alaw", "24 bit",
 						    "float", "double", "unsigned byte", "short swapped",
 						    "long swapped", "24-bit swapped", "unsigned short"};
@@ -1702,7 +1704,7 @@ static int next_dfs[NUM_NEXT_FORMATS] = {MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BF
 					 MUS_B24INT, MUS_BDOUBLE};
 static int ircam_dfs[NUM_IRCAM_FORMATS] = {MUS_BSHORT, MUS_MULAW, MUS_BFLOAT, MUS_BINT, MUS_ALAW};
 static int wave_dfs[NUM_WAVE_FORMATS] = {MUS_MULAW, MUS_ALAW, MUS_UBYTE, MUS_LSHORT,
-					 MUS_LINT, MUS_LFLOAT, MUS_L24INT};
+					 MUS_LINT, MUS_LFLOAT, MUS_LDOUBLE, MUS_L24INT};
 static int aifc_dfs[NUM_AIFC_FORMATS] = {MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BINT, MUS_ALAW, MUS_B24INT,
 					 MUS_BFLOAT, MUS_BDOUBLE, MUS_UBYTE, MUS_LSHORT,
 					 MUS_LINT, MUS_L24INT, MUS_UBSHORT};
@@ -2000,7 +2002,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
 	    }
 	  snd_close_file(collision->sp, ss);
 	}
-      mus_sound_forget(str);
+      /* mus_sound_forget(str); */
       mus_sound_forget(fullname);
       if (save_type == FILE_SAVE_AS)
 	result = save_edits_without_display(sp, str, type, format, srate, comment, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "file save as", 0);

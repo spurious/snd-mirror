@@ -55,6 +55,7 @@ DEC Alpha:             makefile.alpha
 LinuxPPC:              makefile.ppcrpm
 Windoze/Cygwin:        makefile.cygwin
 Windoze/MSVC:          makefile.msv (this file assumes you have clisp's cccp, etc)
+Mac-OSX:               makefile.osx and config.osx
 
 In HPUX, fixup the makefile.hpux include and library paths, then:
   make -f makefile.hpux
@@ -383,6 +384,17 @@ Fernando Lopez-Lezcano mentioned this possibility:
 
     PATH=/usr/marco/nicepath/bin:$PATH make
 
+
+
+Mac OS-X: currently you need to install Guile 1.4 (at least, I haven't
+managed to compile 1.5), GSL 0.9 (using --disable-shared), and the
+prebuilt Glib/Gtk 1.2.8 tarballs that contain the headers (the package
+at osxgnu is just the libraries -- I think I got my version from
+gnu-darwin or some such address).  These should be installed by hand
+in /usr/local/include.  Next, the Snd configure process is confused by
+the lack of gtk-config, so you need to rename config.osx to config.h,
+and make -f makefile.osx.  I haven't written "native" OSX audio support
+yet, but perhaps the ESD package will work.
 
 
 

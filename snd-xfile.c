@@ -1494,6 +1494,7 @@ static void view_files_update_callback(Widget w, XtPointer context, XtPointer in
 {
   /* run through previous files list looking for any that have been deleted behind our back */
   update_prevlist((snd_state *)context);
+  if (file_dialog_is_active()) make_prevfiles_list((snd_state *)context);
 }
 
 static void view_curfiles_save_callback(Widget w, XtPointer context, XtPointer info) 

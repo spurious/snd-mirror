@@ -206,7 +206,7 @@
   #define MUS_SAMPLE_0 0.0
   #define MUS_BYTE_TO_SAMPLE(n) ((float)(n) / (float)(1 << 7))
   #define MUS_SHORT_TO_SAMPLE(n) ((float)(n) / (float)(1 << 15))
-  #define MUS_INT_TO_SAMPLE(n) ((float)(n) / (float)(1 << (MUS_SAMPLE_BITS-1)))
+  #define MUS_INT_TO_SAMPLE(n) ((float)(n) / (float)(1 << (MUS_SAMPLE_BITS - 1)))
   #define MUS_INT24_TO_SAMPLE(n) ((float)(n) / (float)(1 << 23))
   #define MUS_FLOAT_TO_FIX 1.0
   #define MUS_FIX_TO_FLOAT 1.0
@@ -214,7 +214,7 @@
   #define MUS_DOUBLE_TO_SAMPLE(n) (n)
   #define MUS_SAMPLE_TO_FLOAT(n) (n)
   #define MUS_SAMPLE_TO_DOUBLE(n) (n)
-  #define MUS_SAMPLE_TO_INT(n) ((int)((n) * (1 << (MUS_SAMPLE_BITS-1))))
+  #define MUS_SAMPLE_TO_INT(n) ((int)((n) * (1 << (MUS_SAMPLE_BITS - 1))))
   #define MUS_SAMPLE_TO_INT24(n) ((int)((n) * (1 << 23)))
   #define MUS_SAMPLE_TO_SHORT(n) ((short)((n) * (1 << 15)))
   #define MUS_SAMPLE_TO_BYTE(n) ((char)((n) * (1 << 7)))

@@ -2134,7 +2134,8 @@ static int run_all_ffts(sonogram_state *sg)
       fs = sg->fs;
       cp = sg->cp;
       si = (sono_info *)(cp->sonogram_data);
-      si->begs[si->active_slices] = sg->beg + fs->beg;
+      if (si->active_slices < si->total_slices) 
+	si->begs[si->active_slices] = sg->beg + fs->beg;
       sg->msg_ctr--;
       if (sg->msg_ctr == 0)
 	{
@@ -2147,26 +2148,29 @@ static int run_all_ffts(sonogram_state *sg)
 	  sg->msg_ctr = 8;
 	  if (cp->graph_transform_p == 0) return(1);
 	}
-      if (cp->transform_type == FOURIER)
+      if (si->active_slices < si->total_slices)
 	{
-	  for (i = 0; i < sg->spectrum_size; i++) 
+	  if (cp->transform_type == FOURIER)
 	    {
-	      val = fs->data[i];
-	      if (val > si->scale) si->scale = val;
-	      si->data[si->active_slices][i] = val;
+	      for (i = 0; i < sg->spectrum_size; i++) 
+		{
+		  val = fs->data[i];
+		  if (val > si->scale) si->scale = val;
+		  si->data[si->active_slices][i] = val;
+		}
 	    }
-	}
-      else
-	{
-	  for (i = 0; i < sg->spectrum_size; i++) 
+	  else
 	    {
-	      val = fs->data[i];
-	      if (val < 0.0) val = -val;  /* kinda dubious but I can't think of a good alternative */
-	      if (val > si->scale) si->scale = val;
-	      si->data[si->active_slices][i] = val;
+	      for (i = 0; i < sg->spectrum_size; i++) 
+		{
+		  val = fs->data[i];
+		  if (val < 0.0) val = -val;  /* kinda dubious but I can't think of a good alternative */
+		  if (val > si->scale) si->scale = val;
+		  si->data[si->active_slices][i] = val;
+		}
 	    }
+	  si->active_slices++;
 	}
-      si->active_slices++;
       sg->outer++;
       if ((sg->outer == sg->outlim) || (cp->graph_transform_p == 0) || (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE)) return(1);
       fs->beg += sg->hop;
