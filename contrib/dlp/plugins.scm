@@ -1,0 +1,16 @@
+
+;(load "plugins/plugin-.scm") 
+(load "plugins/plugin-chorus.scm") 
+(load "plugins/plugin-decimator.scm") 
+(load "plugins/plugin-delay5s.scm") 
+(load "plugins/plugin-fbdelay5s.scm") 
+(load "plugins/plugin-freeverb3.scm") 
+(load "plugins/plugin-granular-scatter.scm") 
+(load "plugins/plugin-gsm-simulator.scm") 
+(load "plugins/plugin-lfo-phaser.scm") 
+(load "plugins/plugin-pitch-scale-hq.scm") 
+(load "plugins/plugin-ringmod.scm") 
+(load "plugins/plugin-sifter.scm") 
+(load "plugins/plugin-transient.scm") 
+(load "plugins/plugin-vcf303.scm") 
+
