@@ -191,7 +191,13 @@ typedef struct chan__info {
   int hookable;
   int selection_transform_size;
   int *stats;
-  int squelch_update,waiting_to_make_graph,show_y_zero,show_marks;
+  int squelch_update,waiting_to_make_graph;
+  /* moved from global to channel-local 4-Aug-00 */
+  Float spectro_x_scale,spectro_y_scale,spectro_z_scale,spectro_z_angle,spectro_x_angle,spectro_y_angle,spectro_cutoff,spectro_start;
+  Float lin_dB,min_dB,fft_beta;
+  int show_y_zero,show_marks,wavo,wavo_hop,wavo_trace,zero_pad,x_axis_style,wavelet_type,verbose_cursor,max_fft_peaks;
+  int show_fft_peaks,show_axes,line_size,graph_style,fft_log_frequency,fft_log_magnitude,fft_size,fft_style,fft_window;
+  int dot_size,normalize_fft,transform_type,show_mix_consoles,show_mix_waveforms,spectro_hop;
   void *mix_md;
 #if FILE_PER_CHAN
   char *filename;
@@ -217,9 +223,9 @@ typedef struct snd__info {
   Float srate;                  /* playback srate, not original */
   Float last_srate,last_amp,last_expand,last_contrast,last_revlen,last_revscl;
   Float saved_srate,saved_amp,saved_expand,saved_contrast,saved_revlen,saved_revscl;
-  Float expand,local_explen,local_exprmp,local_exphop;
+  Float expand,expand_length,expand_ramp,expand_hop;
   Float contrast;
-  Float revlen,revscl,local_revfb,local_revlp;
+  Float revlen,revscl,revfb,revlp;
   int filter_order,filter_changed;
   env *filter_env;
   int play_direction;
@@ -258,6 +264,9 @@ typedef struct snd__info {
   char **channel_filenames;
   int chan_type;
 #endif
+  /* moved from global to channel-local 4-Aug-00 */
+  int speed_style,speed_tones,auto_update,ask_before_overwrite;
+  Float reverb_decay;
 } snd_info;
 
 #define SND_SRATE(sp) (((sp)->hdr)->srate)
@@ -789,7 +798,6 @@ char *added_transform_name(int type);
   SCM env2scm (env *e);
   SCM g_c_run_or_hook (SCM hook, SCM args);
   SCM g_c_run_progn_hook (SCM hook, SCM args);
-  SCM array_to_list(Float *arr, int i, int len);
 #endif
 env *string2env(char *str);
 /* Float string2Float(char *str); */
@@ -870,6 +878,7 @@ void save_region_backpointer(snd_info *sp);
 
 /* -------- snd-env.c -------- */
 
+Float un_dB(snd_state *ss, Float py);
 env *copy_env(env *e);
 env *free_env(env *e);
 char *env_to_string(env *e);
@@ -947,6 +956,7 @@ void dac_set_reverb_lowpass(snd_state *ss, snd_info *sp, Float newval);
 
 /* -------- snd-chn.c -------- */
 
+void map_chans_field(snd_state *ss, int field, Float val);
 void report_in_minibuffer(snd_info *sp, char *message);
 void clear_minibuffer(snd_info *sp);
 void clear_minibuffer_prompt(snd_info *sp);
@@ -1044,7 +1054,9 @@ multifile_info *sort_multifile_channels(snd_state *ss, char *filename);
 #endif
 #if HAVE_GUILE
   void g_init_snd(SCM local_doc);
+  SCM array_to_list(Float *arr, int i, int len);
 #endif
+
 
 
 /* -------- snd-file -------- */
@@ -1129,6 +1141,8 @@ char **set_header_positions_from_type(file_data *fdat, int header_type, int data
 /* -------- snd-utils -------- */
 
 int round(Float x);
+int iclamp(int lo, int val, int hi);
+Float fclamp(Float lo, Float val, Float hi);
 char *copy_string(char *str);
 int snd_strlen(char *str);
 char *filename_without_home_directory(char *name);
@@ -1144,8 +1158,6 @@ char *snd_tempnam(snd_state *ss);
 int disk_space_p(snd_info *sp, int fd, int bytes, int other_bytes);
 int snd_checked_write(snd_state *ss, int fd, unsigned char *buf, int bytes);
 void fill_number(char *fs, char *ps);
-Float dB(snd_state *ss, Float py);
-Float un_dB(snd_state *ss, Float py);
 void snd_exit(int val);
 int check_balance(char *expr, int start, int end);
 char *kmg (int num);

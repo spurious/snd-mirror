@@ -440,11 +440,13 @@ void set_show_y_zero(snd_state *ss, int val)
 }
 
 static int clrmini(snd_info *sp, void *ignore) {clear_minibuffer(sp); return(0);}
+static int map_chans_verbose_cursor(chan_info *cp, void *ptr) {cp->zero_pad = (int)ptr; return(0);}
 
 void set_verbose_cursor(snd_state *ss, int val)
 {
   in_set_verbose_cursor(ss,val);
   if (val == 0) map_over_sounds(ss,clrmini,NULL);
+  map_over_chans(ss,map_chans_verbose_cursor,(void *)val);
   if (view_cursor_menu())
     set_menu_label(view_cursor_menu(),(val) ? STR_Silent_cursor : STR_Verbose_cursor);
 }

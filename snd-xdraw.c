@@ -928,6 +928,7 @@ static void AX_Orientation_Callback(Widget w,XtPointer clientData,XtPointer call
   orientation_info *od = (orientation_info *)clientData;
   ss = od->state;
   in_set_spectro_x_angle(ss,(Float)(cbs->value));
+  map_chans_field(ss,F_X_ANGLE,(Float)(cbs->value));
   map_over_chans(ss,update_graph,NULL);
 }
 
@@ -935,6 +936,7 @@ void set_spectro_x_angle(snd_state *ss, Float val)
 {
   in_set_spectro_x_angle(ss,val);
   if (oid) XmScaleSetValue(oid->ax,(int)val);
+  map_chans_field(ss,F_X_ANGLE,val);
   if (!(ss->graph_hook_active)) map_over_chans(ss,update_graph,NULL);
 }
 
@@ -950,6 +952,7 @@ static void AY_Orientation_Callback(Widget w,XtPointer clientData,XtPointer call
   orientation_info *od = (orientation_info *)clientData;
   ss = od->state;
   in_set_spectro_y_angle(ss,(Float)(cbs->value));
+  map_chans_field(ss,F_Y_ANGLE,(Float)(cbs->value));
   map_over_chans(ss,update_graph,NULL);
 }
 
@@ -957,6 +960,7 @@ void set_spectro_y_angle(snd_state *ss, Float val)
 {
   in_set_spectro_y_angle(ss,val);
   if (oid) XmScaleSetValue(oid->ay,(int)val);
+  map_chans_field(ss,F_Y_ANGLE,val);
   if (!(ss->graph_hook_active)) map_over_chans(ss,update_graph,NULL);
 }
 
@@ -972,6 +976,7 @@ static void AZ_Orientation_Callback(Widget w,XtPointer clientData,XtPointer call
   orientation_info *od = (orientation_info *)clientData;
   ss = od->state;
   in_set_spectro_z_angle(ss,(Float)(cbs->value));
+  map_chans_field(ss,F_Z_ANGLE,(Float)(cbs->value));
   map_over_chans(ss,update_graph,NULL);
 }
 
@@ -979,6 +984,7 @@ void set_spectro_z_angle(snd_state *ss, Float val)
 {
   in_set_spectro_z_angle(ss,val);
   if (oid) XmScaleSetValue(oid->az,(int)val);
+  map_chans_field(ss,F_Z_ANGLE,val);
   if (!(ss->graph_hook_active)) map_over_chans(ss,update_graph,NULL);
 }
 
@@ -994,6 +1000,7 @@ static void SX_Orientation_Callback(Widget w,XtPointer clientData,XtPointer call
   orientation_info *od = (orientation_info *)clientData;
   ss = od->state;
   in_set_spectro_x_scale(ss,(Float)(cbs->value)*0.01);
+  map_chans_field(ss,F_X_SCALE,(Float)(cbs->value)*0.01);
   map_over_chans(ss,update_graph,NULL);
 }
 
@@ -1001,6 +1008,7 @@ void set_spectro_x_scale(snd_state *ss, Float val)
 {
   in_set_spectro_x_scale(ss,val);
   if (oid) XmScaleSetValue(oid->sx,(int)(val*100));
+  map_chans_field(ss,F_X_SCALE,val);
   if (!(ss->graph_hook_active)) map_over_chans(ss,update_graph,NULL);
 }
 
@@ -1016,6 +1024,7 @@ static void SY_Orientation_Callback(Widget w,XtPointer clientData,XtPointer call
   orientation_info *od = (orientation_info *)clientData;
   ss = od->state;
   in_set_spectro_y_scale(ss,(Float)(cbs->value)*0.01);
+  map_chans_field(ss,F_Y_SCALE,(Float)(cbs->value)*0.01);
   map_over_chans(ss,update_graph,NULL);
 }
 
@@ -1023,6 +1032,7 @@ void set_spectro_y_scale(snd_state *ss, Float val)
 {
   in_set_spectro_y_scale(ss,val);
   if (oid) XmScaleSetValue(oid->sy,(int)(val*100));
+  map_chans_field(ss,F_Y_SCALE,val);
   if (!(ss->graph_hook_active)) map_over_chans(ss,update_graph,NULL);
 }
 
@@ -1038,6 +1048,7 @@ static void SZ_Orientation_Callback(Widget w,XtPointer clientData,XtPointer call
   orientation_info *od = (orientation_info *)clientData;
   ss = od->state;
   in_set_spectro_z_scale(ss,(Float)(cbs->value)*0.01);
+  map_chans_field(ss,F_Z_SCALE,(Float)(cbs->value)*0.01);
   map_over_chans(ss,update_graph,NULL);
 }
 
@@ -1045,6 +1056,7 @@ void set_spectro_z_scale(snd_state *ss, Float val)
 {
   in_set_spectro_z_scale(ss,val);
   if (oid) XmScaleSetValue(oid->sz,(int)(val*100));
+  map_chans_field(ss,F_Z_SCALE,val);
   if (!(ss->graph_hook_active)) map_over_chans(ss,update_graph,NULL);
 }
 
@@ -1053,20 +1065,18 @@ static void SZ_Help_Callback(Widget w,XtPointer clientData,XtPointer callData)
   snd_help((snd_state *)clientData,"z scale slider","This slider causes the graph to expand or\ncontract along the z axis.\n");
 }
 
+static int map_chans_spectro_hop(chan_info *cp, void *ptr) {cp->spectro_hop = (int)ptr; return(0);}
+
 static void Hop_Orientation_Callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
   snd_state *ss;
+  int val;
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)callData;
   orientation_info *od = (orientation_info *)clientData;
   ss = od->state;
-  if (cbs->value <= 0) 
-    in_set_spectro_hop(ss,1);
-  else 
-    {
-      if (cbs->value <= 20)
-	in_set_spectro_hop(ss,cbs->value);
-      else in_set_spectro_hop(ss,20);
-    }
+  val = iclamp(1,cbs->value,20);
+  in_set_spectro_hop(ss,val);
+  map_over_chans(ss,map_chans_spectro_hop,(void *)val);
   map_over_chans(ss,update_graph,NULL);
 }
 
@@ -1076,6 +1086,7 @@ void set_spectro_hop(snd_state *ss, int val)
     {
       in_set_spectro_hop(ss,val);
       if (oid) XmScaleSetValue(oid->hop,val);
+      map_over_chans(ss,map_chans_spectro_hop,(void *)val);
       if (!(ss->graph_hook_active)) map_over_chans(ss,update_graph,NULL);
     }
 }
@@ -1092,6 +1103,7 @@ static void Cut_Orientation_Callback(Widget w,XtPointer clientData,XtPointer cal
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)callData;
   orientation_info *od = (orientation_info *)clientData;
   ss = od->state;
+  map_chans_field(ss,F_CUTOFF,(Float)(cbs->value)*0.01);
   set_spectro_cutoff_and_redisplay(ss,(Float)(cbs->value)*0.01); /* calls in_set... */
 } 
 
@@ -1099,6 +1111,7 @@ void set_spectro_cutoff(snd_state *ss, Float val)
 {
   in_set_spectro_cutoff(ss,val);
   if (oid) XmScaleSetValue(oid->cut,(int)(val*100));
+  map_chans_field(ss,F_CUTOFF,val);
   if (!(ss->graph_hook_active)) map_over_chans(ss,update_graph,NULL);
 }
 

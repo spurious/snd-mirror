@@ -1,5 +1,11 @@
 snd change log
 
+  7-Aug:     extsnd.html re-organized.
+             wavo,wavo-hop,wavo-trace,line-size,max-fft-peaks,show-fft-peaks,zero-pad,
+               verbose-cursor,fft-log-frequency,fft-log-magnitude,min-dB,wavelet-type,
+               spectro-x|y|z-angle|scale,spectro-hop,spectro-cutoff,spectro-start can be treated as channel-local.
+             reverb-decay can be treated as sound-local.
+             Snd builds and runs in Mac OS-X.
   3-Aug:     C-q with moving cursor bug, extended normalize-fft choices (Daniel Aronovitch).
              show-y-zero, show-marks can be local to a given sound or channel.
   2-Aug:     compute-uniform-circular-string in examp.scm.

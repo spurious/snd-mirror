@@ -2525,7 +2525,7 @@ SCM g_c_make_sample_reader(snd_fd *fd)
 #endif
 }
 
-static SCM g_make_sample_reader(SCM samp_n, SCM snd, SCM chn, SCM dir, SCM pos)
+static SCM g_make_sample_reader(SCM samp_n, SCM snd, SCM chn, SCM dir1, SCM pos) /* "dir" confuses Mac OS-X Objective-C! */
 {
   #define H_make_sample_reader "(" S_make_sample_reader " &optional (start-samp 0) snd chn (dir 1) edit-position)\n\
    returns a reader ready to access snd's channel chn's data starting at 'start-samp', going in direction 'dir'\n\
@@ -2542,7 +2542,7 @@ static SCM g_make_sample_reader(SCM samp_n, SCM snd, SCM chn, SCM dir, SCM pos)
   SCM new_sf;
 #endif
   ERRB1(samp_n,S_make_sample_reader);
-  ERRB4(dir,S_make_sample_reader);
+  ERRB4(dir1,S_make_sample_reader);
   ss = get_global_state();
   if (gh_string_p(snd))
     {
@@ -2565,7 +2565,7 @@ static SCM g_make_sample_reader(SCM samp_n, SCM snd, SCM chn, SCM dir, SCM pos)
       cp = get_cp(snd,chn,S_make_sample_reader);
     }
   edpos = g_scm2intdef(pos,cp->edit_ctr);
-  fd = init_sample_read_any(g_scm2intdef(samp_n,0),cp,g_scm2intdef(dir,1),edpos);
+  fd = init_sample_read_any(g_scm2intdef(samp_n,0),cp,g_scm2intdef(dir1,1),edpos);
   fd->local_sp = loc_sp;
 #if (!HAVE_GUILE_1_3_0)
   SCM_RETURN_NEWSMOB(sf_tag,(SCM)fd);
@@ -2578,7 +2578,7 @@ static SCM g_make_sample_reader(SCM samp_n, SCM snd, SCM chn, SCM dir, SCM pos)
   return(SCM_BOOL_F);
 }
 
-static SCM g_make_region_sample_reader(SCM samp_n, SCM reg, SCM chn, SCM dir)
+static SCM g_make_region_sample_reader(SCM samp_n, SCM reg, SCM chn, SCM dir1)
 {
   #define H_make_region_sample_reader "(" S_make_region_sample_reader " &optional (start-samp 0) (region 0) chn (dir 1))\n\
    returns a reader ready to access region's channel chn data starting at 'start-samp' going in direction 'dir'"
@@ -2590,8 +2590,8 @@ static SCM g_make_region_sample_reader(SCM samp_n, SCM reg, SCM chn, SCM dir)
   ERRB1(samp_n,S_make_sample_reader);
   ERRB2(reg,S_make_sample_reader);
   ERRB3(chn,S_make_sample_reader);
-  ERRB4(dir,S_make_sample_reader);
-  fd = init_region_read(get_global_state(),g_scm2intdef(samp_n,0),g_scm2intdef(reg,0),g_scm2intdef(chn,0),g_scm2intdef(dir,1));
+  ERRB4(dir1,S_make_sample_reader);
+  fd = init_region_read(get_global_state(),g_scm2intdef(samp_n,0),g_scm2intdef(reg,0),g_scm2intdef(chn,0),g_scm2intdef(dir1,1));
   if (fd)
     {
 #if (!HAVE_GUILE_1_3_0)

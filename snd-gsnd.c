@@ -1,6 +1,7 @@
 /* TODO: 
  *       slider trough color?
  *       if controls close, drag main sash should keep it closed
+ *       speed_tones not tied into speed calc
  */
 
 #include "snd.h"
@@ -603,6 +604,7 @@ void set_snd_srate(snd_info *sp, Float amp) {set_snd_srate_1(sp,amp,TRUE);}
 static Float get_snd_srate(Float scrollval)
 {
   return(exp((scrollval - .45)/.15));
+  /* return(srate_changed(exp((Float)(ival-450)/150.0),srcbuf,style,tones)); */
 }
 
 static void srate_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)

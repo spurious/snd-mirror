@@ -43,7 +43,7 @@
 
 <p>The sound library is a collection of sound file and audio hardware
 handlers written in C and running currently on SGI (either
-audio library), NeXT, Sun, Be, OSS or ALSA (Linux and others), Mac, HPUX, LinuxPPC, and Windoze systems.  
+audio library), NeXT, Sun, Be, OSS or ALSA (Linux and others), Mac, Mac OS-X, HPUX, LinuxPPC, and Windoze systems.  
 It provides relatively straightforward access to many sound file headers and data
 types, and most of the features of the audio hardware. </p>
 
@@ -579,7 +579,7 @@ int main(int argc, char *argv[])
 <p>This code records a couple seconds of sound from a microphone.
 Input formats and sampling rates are dependent on available
 hardware, so in a "real" program, you'd use <a href="#readaudiostate">mus_audio_mixer_read</a>
-to find out what was available, then <a href="#floatsound">float-sound</a> to
+to find out what was available, then mus_file_read_buffer to
 turn that data into a stream of floats.
 You'd also provide, no doubt,
 some whizzy user interface to turn the thing off. (sndrecord.c)</p>
@@ -933,6 +933,7 @@ ld -shared io.o headers.o audio.o sound.o clm.o -o sndlib.so
   <tr><td>HPUX<td>untested<td>untested<td>untested<td>untested<td>untested<td>untried
   <tr><td>LinuxPPC<td>ok<td>ok<td>ok<td>ok<td>untested (**)<td>ok
   <tr><td>ALSA<td>ok<td>ok<td>ok<td>ok<td>ok<td>ok
+  <tr><td>Mac OS-X<td>ok<td>ok<td>not written<td>not written<td>not written<td>ok
 </table>
 <br>
 <pre>

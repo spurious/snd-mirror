@@ -3440,12 +3440,12 @@ static SCM g_make_env(SCM arglist)
   return(mus_scm_to_smob_with_vct(gn,make_vct(len,odata)));
 }
 
-static SCM g_env_interp(SCM x, SCM env)
+static SCM g_env_interp(SCM x, SCM env1) /* "env" causes trouble in Objective-C!! */
 {
   #define H_env_interp "(" S_env_interp " gen x) -> value of envelope at x"
   SCM_ASSERT((SCM_NFALSEP(scm_real_p(x))),x,SCM_ARG1,S_env_interp);
-  SCM_ASSERT(((mus_scm_p(env)) && (mus_env_p(mus_get_any(env)))),env,SCM_ARG2,S_env_interp);
-  return(gh_double2scm(mus_env_interp(gh_scm2double(x),mus_get_any(env))));
+  SCM_ASSERT(((mus_scm_p(env1)) && (mus_env_p(mus_get_any(env1)))),env1,SCM_ARG2,S_env_interp);
+  return(gh_double2scm(mus_env_interp(gh_scm2double(x),mus_get_any(env1))));
 }
 
 static void init_env(void)

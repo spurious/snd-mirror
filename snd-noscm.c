@@ -398,9 +398,9 @@ static int handle_set(snd_state *ss, char *tok, char **str)
       isym(ss,0); 
       return(0);
     }
-  if (strcmp(tok,S_set_expand_hop) == 0) {sp = get_sp(ss,str[2]); if (sp) sp->local_exphop = fstr(str[1]); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_expand_length) == 0) {sp = get_sp(ss,str[2]); if (sp) sp->local_explen = fstr(str[1]); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_expand_ramp) == 0) {sp = get_sp(ss,str[2]); if (sp) sp->local_exprmp = fstr(str[1]); isym(ss,0); return(0);}
+  if (strcmp(tok,S_set_expand_hop) == 0) {sp = get_sp(ss,str[2]); if (sp) sp->expand_hop = fstr(str[1]); isym(ss,0); return(0);}
+  if (strcmp(tok,S_set_expand_length) == 0) {sp = get_sp(ss,str[2]); if (sp) sp->expand_length = fstr(str[1]); isym(ss,0); return(0);}
+  if (strcmp(tok,S_set_expand_ramp) == 0) {sp = get_sp(ss,str[2]); if (sp) sp->expand_ramp = fstr(str[1]); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_expanding) == 0) {sp = get_sp(ss,str[2]); if (sp) toggle_expand_button(sp,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_fft_beta) == 0) {set_fft_beta(ss,fstr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_fft_log_frequency) == 0) {set_fft_log_frequency(ss,istr(str[1])); isym(ss,0); return(0);}
@@ -428,7 +428,6 @@ static int handle_set(snd_state *ss, char *tok, char **str)
   if (strcmp(tok,S_set_initial_y0) == 0) {set_initial_y0(ss,fstr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_initial_y1) == 0) {set_initial_y1(ss,fstr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_just_sounds) == 0) {toggle_just_sounds(istr(str[1])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_line_size) == 0) {set_line_size(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_movies) == 0) {set_movies(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_normalize_fft) == 0) {set_normalize_fft(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_normalize_on_open) == 0) {set_normalize_on_open(ss,istr(str[1])); isym(ss,0); return(0);}
@@ -459,8 +458,7 @@ static int handle_set(snd_state *ss, char *tok, char **str)
   if (strcmp(tok,S_set_recorder_srate) == 0) {set_recorder_srate(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_recorder_trigger) == 0) {set_recorder_trigger(ss,fstr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_recorder_max_duration) == 0) {set_recorder_max_duration(ss,fstr(str[1])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_reverb_decay) == 0) {set_reverb_decay(ss,fstr(str[1])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_reverb_feedback) == 0) {sp = get_sp(ss,str[2]); if (sp) sp->local_revfb = fstr(str[1]); isym(ss,0); return(0);}
+  if (strcmp(tok,S_set_reverb_feedback) == 0) {sp = get_sp(ss,str[2]); if (sp) sp->revfb = fstr(str[1]); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_reverb_length) == 0) 
     {
       sp = get_sp(ss,str[2]); 
@@ -468,7 +466,7 @@ static int handle_set(snd_state *ss, char *tok, char **str)
       isym(ss,0); 
       return(0);
     }
-  if (strcmp(tok,S_set_reverb_lowpass) == 0) {sp = get_sp(ss,str[2]); if (sp) sp->local_revlp = fstr(str[1]); isym(ss,0); return(0);}
+  if (strcmp(tok,S_set_reverb_lowpass) == 0) {sp = get_sp(ss,str[2]); if (sp) sp->revlp = fstr(str[1]); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_reverb_scale) == 0) 
     {
       sp = get_sp(ss,str[2]); 
@@ -487,7 +485,6 @@ static int handle_set(snd_state *ss, char *tok, char **str)
     {sp = get_sp(ss,str[2]); if (sp) {if (istr(str[1])) sound_show_ctrls(sp); else sound_hide_ctrls(sp);} isym(ss,0); return(0);}
   if (strcmp(tok,S_set_sinc_width) == 0) {set_sinc_width(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_spectro_cutoff) == 0) {set_spectro_cutoff_and_redisplay(ss,fstr(str[1])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_spectro_start) == 0) {set_spectro_start(ss,fstr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_spectro_hop) == 0) {set_spectro_hop(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_spectro_x_angle) == 0) {set_spectro_x_angle(ss,fstr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_spectro_x_scale) == 0) {set_spectro_x_scale(ss,fstr(str[1])); isym(ss,0); return(0);}
@@ -518,8 +515,6 @@ static int handle_set(snd_state *ss, char *tok, char **str)
   if (strcmp(tok,S_set_vu_size) == 0) {set_vu_size(ss,fstr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_wavelet_type) == 0) {set_wavelet_type(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_waving) == 0) {cp = get_cp(ss,str[2],str[3]); if (cp) waveb(cp,istr(str[1])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_wavo_hop) == 0) {set_wavo_hop(ss,istr(str[1])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_wavo_trace) == 0) {set_wavo_trace(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_window_height) == 0) 
     {
       ival = istr(str[1]);
@@ -554,7 +549,6 @@ static int handle_set(snd_state *ss, char *tok, char **str)
     }
   if (strcmp(tok,S_set_with_mix_consoles) == 0) {set_with_mix_consoles(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_x_axis_style) == 0) {in_set_x_axis_style(ss,istr(str[1])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_zero_pad) == 0) {set_zero_pad(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_zoom_focus_style) == 0) {activate_focus_menu(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_amp) == 0) 
     {
@@ -772,9 +766,9 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,S_eps_file) == 0) {ssym(ss,eps_file(ss)); return(0);}
       if (strcmp(tok,S_exit) == 0) {snd_exit_cleanly(ss); snd_exit(1);}
       if (strcmp(tok,S_expand) == 0) {sp = get_sp(ss,str[1]); if (sp) fsym(ss,sp->expand); else isym(ss,0); return(0);}
-      if (strcmp(tok,S_expand_hop) == 0) {sp = get_sp(ss,str[1]); if (sp) fsym(ss,sp->local_exphop); else isym(ss,0); return(0);}
-      if (strcmp(tok,S_expand_length) == 0) {sp = get_sp(ss,str[1]); if (sp) fsym(ss,sp->local_explen); else isym(ss,0); return(0);}
-      if (strcmp(tok,S_expand_ramp) == 0) {sp = get_sp(ss,str[1]); if (sp) fsym(ss,sp->local_exprmp); else isym(ss,0); return(0);}
+      if (strcmp(tok,S_expand_hop) == 0) {sp = get_sp(ss,str[1]); if (sp) fsym(ss,sp->expand_hop); else isym(ss,0); return(0);}
+      if (strcmp(tok,S_expand_length) == 0) {sp = get_sp(ss,str[1]); if (sp) fsym(ss,sp->expand_length); else isym(ss,0); return(0);}
+      if (strcmp(tok,S_expand_ramp) == 0) {sp = get_sp(ss,str[1]); if (sp) fsym(ss,sp->expand_ramp); else isym(ss,0); return(0);}
       if (strcmp(tok,S_expanding) == 0) {sp = get_sp(ss,str[1]); if (sp) isym(ss,sp->expanding); else isym(ss,0); return(0);}
       if (strcmp(tok,S_env_selection) == 0)
 	{
@@ -1022,9 +1016,9 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,S_report_in_minibuffer) == 0) {sp = get_sp(ss,str[2]); if (sp) report_in_minibuffer(sp,str[1]); isym(ss,0); return(0);}
       if (strcmp(tok,S_restore_control_panel) == 0) {sp = get_sp(ss,str[1]); if (sp) restore_control_panel(sp); isym(ss,0); return(0);}
       if (strcmp(tok,S_reverb_decay) == 0) {fsym(ss,reverb_decay(ss)); return(0);}
-      if (strcmp(tok,S_reverb_feedback) == 0) {sp = get_sp(ss,str[1]); if (sp) fsym(ss,sp->local_revfb); else isym(ss,0); return(0);}
+      if (strcmp(tok,S_reverb_feedback) == 0) {sp = get_sp(ss,str[1]); if (sp) fsym(ss,sp->revfb); else isym(ss,0); return(0);}
       if (strcmp(tok,S_reverb_length) == 0) {sp = get_sp(ss,str[1]); if (sp) fsym(ss,sp->revlen); else isym(ss,0); return(0);}
-      if (strcmp(tok,S_reverb_lowpass) == 0) {sp = get_sp(ss,str[1]); if (sp) fsym(ss,sp->local_revlp); else isym(ss,0); return(0);}
+      if (strcmp(tok,S_reverb_lowpass) == 0) {sp = get_sp(ss,str[1]); if (sp) fsym(ss,sp->revlp); else isym(ss,0); return(0);}
       if (strcmp(tok,S_reverb_scale) == 0) {sp = get_sp(ss,str[1]); if (sp) fsym(ss,sp->revscl); else isym(ss,0); return(0);}
       if (strcmp(tok,S_reverbing) == 0) {sp = get_sp(ss,str[1]); if (sp) isym(ss,sp->reverbing); else isym(ss,0); return(0);}
       if (strcmp(tok,S_right_sample) == 0) 

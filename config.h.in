@@ -76,6 +76,7 @@
 #undef AIX
 #undef HAVE_ALSA
 #undef HAVE_SAM_9407
+#undef MAC_OSX
 
 #undef HAVE_GUILE
 #undef HAVE_XPM

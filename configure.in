@@ -447,7 +447,10 @@ fi
         AC_DEFINE(AIX)
 	audio_system=aix
         ;;
-
+    *-apple-*)
+	AC_DEFINE(MAC_OSX)
+	audio_system=Mac
+	;;
 esac
 AC_MSG_CHECKING([for audio system])
 AC_MSG_RESULT($audio_system)

@@ -48,22 +48,29 @@ Contents
    * Customization and Extension
         o Introduction
         o Snd Programming
-             + An Alphabetical View
-                  + Constants
-                  + Variables
-                  + Functions
+             + Customizing Snd's appearance
+                  + Colors
+                  + Fonts
+                  + Other appearance-related stuff
+             + Customizing Snd's behavior
+                  + Global variables
                   + Hooks
-             + A Topical View
-                  + Customizing Snd's appearance
-                  + Customizing Snd's behavior
-                  + Customizing the control panel
+             + Snd's objects
+                  + Vcts
+                  + Sample-readers
+                  + Sound-data and Sndlib
+                  + Marks
+                  + Mixes
+                  + Regions
+                  + Sounds
+                  + Channels
                   + Edit Lists
                   + Scanning Data
-                       + Sample-readers
-                       + Vcts
-                       + Marks
-                  + Writing Sound Files
-                  + Sndlib
+                  + Transforms
+                  + Dialogs
+                  + Errors
+                  + Constants
+                  + Miscellaneous functions
              + Examples
         o Snd Startup
              + Snd resources
@@ -1595,9 +1602,6 @@ Index
  edit header         Edit: Edit               edit-header-dialog
                      Header
 
- evaluate expression              Cx Cx, Cx                        over region: Cx x, Cx n
-                                  Cn
-
  examine regions     View:                    region-dialog
                      Regions
 
@@ -1746,3 +1750,5 @@ Index
  zoom focus          Options:                 set-zoom-focus-style
                      Zoom style
  zoom window                      [Up],[Down] set-x-bounds         control keys intensify
+
+                extsnd.html grfsnd.html clm.html sndlib.html

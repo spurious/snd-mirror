@@ -86,10 +86,14 @@
   #define MACOS 1
 #endif
 
+#if defined(__APPLE__)
+  #define MAC_OSX 1
+#endif
+
 /* due to project builder stupidity, we can't always depend on -D flags here (maybe we need a SNDLIB_OS macro?) */
 /* these wouldn't work with autoconf anyway, so we'll do it by hand */
 
-#if (!defined(SGI)) && (!defined(NEXT)) && (!defined(LINUX)) && (!defined(MACOS)) && (!defined(BEOS)) && (!defined(SUN)) && (!defined(UW2)) && (!defined(SCO5)) && (!defined(ALPHA)) && (!defined(WINDOZE))
+#if (!defined(SGI)) && (!defined(NEXT)) && (!defined(LINUX)) && (!defined(MACOS)) && (!defined(BEOS)) && (!defined(SUN)) && (!defined(UW2)) && (!defined(SCO5)) && (!defined(ALPHA)) && (!defined(WINDOZE)) && (!defined(MAC_OSX))
   #if defined(__BEOS__)
     #define BEOS 1
   #else

@@ -1,6 +1,7 @@
 SndLib
 
                  Bill Schottstaedt (bil@ccrma.stanford.edu)
+
                   snd.html extsnd.html grfsnd.html clm.html
 
 Contents
@@ -27,9 +28,9 @@ Introduction
 
 The sound library is a collection of sound file and audio hardware handlers
 written in C and running currently on SGI (either audio library), NeXT, Sun,
-Be, OSS or ALSA (Linux and others), Mac, HPUX, LinuxPPC, and Windoze
-systems. It provides relatively straightforward access to many sound file
-headers and data types, and most of the features of the audio hardware.
+Be, OSS or ALSA (Linux and others), Mac, Mac OS-X, HPUX, LinuxPPC, and
+Windoze systems. It provides relatively straightforward access to many sound
+file headers and data types, and most of the features of the audio hardware.
 
 The following files make up sndlib:
 
@@ -533,8 +534,9 @@ SndRecord
 This code records a couple seconds of sound from a microphone. Input formats
 and sampling rates are dependent on available hardware, so in a "real"
 program, you'd use mus_audio_mixer_read to find out what was available, then
-float-sound to turn that data into a stream of floats. You'd also provide,
-no doubt, some whizzy user interface to turn the thing off. (sndrecord.c)
+mus_file_read_buffer to turn that data into a stream of floats. You'd also
+provide, no doubt, some whizzy user interface to turn the thing off.
+(sndrecord.c)
 
 int main(int argc, char *argv[])
 {
@@ -875,6 +877,9 @@ Current Status
  LinuxPPC   ok       ok       ok        ok            untested (**)ok
  ALSA       ok       ok       ok        ok            ok           ok
 
+ Mac OS-X   ok       ok       not       not written   not written  ok
+                              written
+
 (*) I can't find a microphone.
 (**) Last I looked, recording was still not supported in this OS.
 
@@ -1150,3 +1155,5 @@ translations of the constants and functions described above into Scheme.
           (mus-sound-read sound-fd 0 (1- bufsize) chans data))
         (mus-sound-close-input sound-fd)
         (mus-audio-close audio-fd)))))
+
+                  snd.html extsnd.html grfsnd.html clm.html

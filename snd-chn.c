@@ -32,6 +32,54 @@ static void handle_mouse_drag(snd_info *sp, chan_info *cp, Float x, Float y) {}
 static int handle_key_press(chan_info *cp, int key, int state) {return(0);}
 #endif
 
+static int map_chans_wavo(chan_info *cp, void *ptr) {cp->wavo = (int)ptr; if (cp->wavo == 0) set_xy_bounds(cp,cp->axis); update_graph(cp,NULL); return(0);}
+static void set_wavo(snd_state *ss, int val) {in_set_wavo(ss,val); map_over_chans(ss,map_chans_wavo,(void *)val);}
+
+static int map_chans_wavo_hop(chan_info *cp, void *ptr) {cp->wavo_hop = (int)ptr; update_graph(cp,NULL); return(0);}
+static void set_wavo_hop(snd_state *ss, int val) {in_set_wavo_hop(ss,val); map_over_chans(ss,map_chans_wavo_hop,(void *)val);}
+
+static int map_chans_wavo_trace(chan_info *cp, void *ptr) {cp->wavo_trace = (int)ptr; update_graph(cp,NULL); return(0);}
+static void set_wavo_trace(snd_state *ss, int val) {in_set_wavo_trace(ss,val); map_over_chans(ss,map_chans_wavo_trace,(void *)val);}
+
+static int map_chans_line_size(chan_info *cp, void *ptr) {cp->line_size = (int)ptr; return(0);}
+static void set_line_size(snd_state *ss, int val) {in_set_line_size(ss,val); map_over_chans(ss,map_chans_line_size,(void *)val);}
+
+static int map_chans_max_fft_peaks(chan_info *cp, void *ptr) {cp->max_fft_peaks = (int)ptr; return(0);}
+static void set_max_fft_peaks(snd_state *ss, int val) {in_set_max_fft_peaks(ss,val); map_over_chans(ss,map_chans_max_fft_peaks,(void *)val);}
+
+static int map_chans_zero_pad(chan_info *cp, void *ptr) {cp->zero_pad = (int)ptr; return(0);}
+static void set_zero_pad(snd_state *ss, int val) {in_set_zero_pad(ss,val); map_over_chans(ss,map_chans_zero_pad,(void *)val);}
+
+static int map_chans_spectro_start(chan_info *cp, void *ptr) {cp->spectro_start = (int)ptr; return(0);}
+static void set_spectro_start(snd_state *ss, int val) {in_set_spectro_start(ss,val); map_over_chans(ss,map_chans_spectro_start,(void *)val);}
+
+void map_chans_field(snd_state *ss, int field, Float val)
+{
+  int i,j;
+  snd_info *sp;
+  for (i=0;i<ss->max_sounds;i++)
+    {
+      sp = ss->sounds[i];
+      if ((sp) && (sp->inuse))
+	{
+	  for (j=0;j<sp->nchans;j++)
+	    {
+	      switch (field)
+		{
+		case F_X_ANGLE: sp->chans[j]->spectro_x_angle = val; break;
+		case F_X_SCALE: sp->chans[j]->spectro_x_scale = val; break;
+		case F_Y_ANGLE: sp->chans[j]->spectro_y_angle = val; break;
+		case F_Y_SCALE: sp->chans[j]->spectro_y_scale = val; break;
+		case F_Z_ANGLE: sp->chans[j]->spectro_z_angle = val; break;
+		case F_Z_SCALE: sp->chans[j]->spectro_z_scale = val; break;
+		case F_CUTOFF:  sp->chans[j]->spectro_cutoff = val; break;
+		}
+	    }
+	}
+    }
+}
+
+
 static char expr_str[256];
 
 void report_in_minibuffer(snd_info *sp, char *message)
@@ -840,7 +888,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   axis_context *ax=NULL;
   chan_context *cgx;
   env_info *ep;
-  if (wavo(ss)) {make_wavogram(cp,sp,ss); return(0);}
+  if (cp->wavo) {make_wavogram(cp,sp,ss); return(0);}
   ap = cp->axis;
   /* check for no graph */
   if ((!ap) || (!(ap->graph_active)) || (ap->x0 == ap->x1)) return(0);
@@ -983,45 +1031,11 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   return(j);
 }
 
-static fft_peak *peak_freqs = NULL;
-static fft_peak *peak_amps = NULL;
-
-static void set_max_fft_peaks(snd_state *ss, int n)
-{
-  if ((peak_freqs != NULL) && (max_fft_peaks(ss) < n))
-    {
-      peak_freqs = (fft_peak *)REALLOC(peak_freqs,n * sizeof(fft_peak));
-      peak_amps = (fft_peak *)REALLOC(peak_amps,n * sizeof(fft_peak));
-    }
-  in_set_max_fft_peaks(ss,n);
-}
-
 static int compare_peak_amps(const void *pk1, const void *pk2)
 {
   if (((fft_peak *)pk1)->amp > ((fft_peak *)pk2)->amp) return(-1);
   else if (((fft_peak *)pk1)->amp == ((fft_peak *)pk2)->amp) return(0);
   return(1);
-}
-
-static short linear_or_log_x(Float x, Float scaler, axis_info *fap, snd_state *ss)
-{
-  if (fft_log_frequency(ss)) return(grf_x(log(x+1.0)*scaler,fap)); else return(grf_x(x,fap));
-}
-
-static short linear_or_log_y(Float py, axis_info *fap, snd_state *ss)
-{
-  if (fft_log_magnitude(ss)) py = dB(ss,py);
-  return(grf_y(py,fap));
-}
-
-static Float ps_linear_or_log_x(Float x, Float scaler, snd_state *ss)
-{
-  if (fft_log_frequency(ss)) return(log(x+1.0)*scaler); else return(x);
-}
-
-static Float ps_linear_or_log_y(Float py, snd_state *ss)
-{
-  if (fft_log_magnitude(ss)) return(dB(ss,py)); else return(py);
 }
 
 static char ampstr[8];
@@ -1031,23 +1045,30 @@ static char ampstr[8];
 #define LOG_FACTOR 25.0
 /* determines how we view the log -- the higher the factor, the more we emphasize the lower octaves (not sure this is a good idea) */
 
+static Float cp_dB(chan_info *cp, Float py)
+{
+  return((py <= cp->lin_dB) ? cp->min_dB : (20.0*(log10(py))));
+}
+
 static void display_peaks(chan_info *cp,axis_info *fap,Float *data,int scaler,int samps,Float samps_per_pixel,int fft_data, Float fft_scale)
 {
   snd_state *ss;
   int num_peaks,row,col,tens,i,with_amps,acol,acols;
   Float amp0,px;
   char *fstr;
+  fft_peak *peak_freqs = NULL;
+  fft_peak *peak_amps = NULL;
   ss = cp->state;
-  if (peak_freqs == NULL) peak_freqs = (fft_peak *)CALLOC(max_fft_peaks(ss),sizeof(fft_peak));
-  if (peak_amps == NULL) peak_amps = (fft_peak *)CALLOC(max_fft_peaks(ss),sizeof(fft_peak));
   if (samps > (scaler*10)) tens = 2; else if (samps > scaler) tens = 1; else if (samps > (scaler/10)) tens = 0; else tens = -1;
   num_peaks = (fap->y_axis_y0-fap->y_axis_y1) / 20;
   if (num_peaks <= 0) return;
-  if (num_peaks > max_fft_peaks(ss)) num_peaks = max_fft_peaks(ss);
+  peak_freqs = (fft_peak *)CALLOC(cp->max_fft_peaks,sizeof(fft_peak));
+  peak_amps = (fft_peak *)CALLOC(cp->max_fft_peaks,sizeof(fft_peak));
+  if (num_peaks > cp->max_fft_peaks) num_peaks = cp->max_fft_peaks;
   if (fft_data)
     num_peaks = find_and_sort_fft_peaks(data,peak_freqs,num_peaks,samps,1,samps_per_pixel,fft_scale); /* srate 1.0=>freqs between 0 and 1.0 */
   else num_peaks = find_and_sort_peaks(data,peak_freqs,num_peaks,samps);
-  if ((num_peaks == 1) && (peak_freqs[0].freq == 0.0)) return;
+  if ((num_peaks == 1) && (peak_freqs[0].freq == 0.0)) {FREE(peak_freqs); FREE(peak_amps); return;}
   with_amps = (fap->width > ((30+5*tens+AMP_ROOM)*AMP_ROOM_CUTOFF));
   acols = 3;
   col = fap->x_axis_x1 - 30 - tens*5; 
@@ -1083,8 +1104,8 @@ static void display_peaks(chan_info *cp,axis_info *fap,Float *data,int scaler,in
 	      fstr=NULL;
 	      if (with_amps)
 		{
-		  if ((fft_data) && (fft_log_magnitude(ss)))
-		    sprintf(ampstr,"%.1f",dB(ss,peak_freqs[i].amp));
+		  if ((fft_data) && (cp->fft_log_magnitude))
+		    sprintf(ampstr,"%.1f",cp_dB(cp,peak_freqs[i].amp));
 		  else sprintf(ampstr,"%.*f",acols,peak_freqs[i].amp);
 		  draw_string(copy_context(cp),acol,row,ampstr,strlen(ampstr));
 		  if (cp->printing) ps_draw_string(cp,acol,row,ampstr);
@@ -1110,8 +1131,8 @@ static void display_peaks(chan_info *cp,axis_info *fap,Float *data,int scaler,in
 	  fstr=NULL;
 	  if (with_amps)
 	    {
-	      if ((fft_data) && (fft_log_magnitude(ss)))
-		sprintf(ampstr,"%.1f",dB(ss,peak_freqs[i].amp));
+	      if ((fft_data) && (cp->fft_log_magnitude))
+		sprintf(ampstr,"%.1f",cp_dB(cp,peak_freqs[i].amp));
 	      else sprintf(ampstr,"%.*f",acols,peak_freqs[i].amp);
 	      draw_string(copy_context(cp),acol,row,ampstr,strlen(ampstr));
 	      if (cp->printing) ps_draw_string(cp,acol,row,ampstr);
@@ -1119,6 +1140,8 @@ static void display_peaks(chan_info *cp,axis_info *fap,Float *data,int scaler,in
 	}
       row+=15;
     }
+  if (peak_freqs) FREE(peak_freqs); 
+  if (peak_amps) FREE(peak_amps);
 }
 
 static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
@@ -1133,6 +1156,8 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   Float incr,x,scale;
   int i,j,xi,samps,losamp=0,di;
   Float samples_per_pixel,xf,ina,ymax,scaler,data_max;
+  short logx,logy;
+  Float pslogx,pslogy;
   fp = cp->fft;
   if (chan_fft_in_progress(cp)) return;
   fap = fp->axis;
@@ -1140,15 +1165,15 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   data = fp->data;
   if (transform_type(ss) == FOURIER)
     {
-      samps = (int)(fp->current_size*spectro_cutoff(ss)/2);
-      losamp = (int)(fp->current_size*spectro_start(ss)/2);
+      samps = (int)(fp->current_size*cp->spectro_cutoff/2);
+      losamp = (int)(fp->current_size*cp->spectro_start/2);
       incr = (Float)SND_SRATE(sp)/(Float)(fp->current_size);
     }
   else
     {
       /* samps here is in terms of transform values, not original sampled data values */
-      samps = (int)(fp->current_size * spectro_cutoff(ss));
-      losamp = (int)(fp->current_size * spectro_start(ss));
+      samps = (int)(fp->current_size * cp->spectro_cutoff);
+      losamp = (int)(fp->current_size * cp->spectro_start);
       incr = 1.0;
     }
 
@@ -1224,7 +1249,7 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   else ax = copy_context(cp);
   if (samples_per_pixel < 4.0)
     {
-      if ((!fft_log_magnitude(ss)) && (!fft_log_frequency(ss)))
+      if ((!(cp->fft_log_magnitude)) && (!(cp->fft_log_frequency)))
 	{
 	  if (losamp == 0)
 	    {
@@ -1245,7 +1270,7 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	}
       else
 	{
-	  if (fft_log_frequency(ss)) 
+	  if (cp->fft_log_frequency) 
 	    {
 	      ymax = LOG_FACTOR;
 	      incr = ymax/(Float)(samps - losamp);
@@ -1254,8 +1279,15 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	  else scaler = 0.0;
 	  for (i=losamp,x=fap->x0;i<samps;i++,x+=incr)
 	    {
-	      set_grf_point(linear_or_log_x(x,scaler,fap,ss),i-losamp,linear_or_log_y(data[i]*scale,fap,ss));
-	      if (cp->printing) ps_set_grf_point(ps_linear_or_log_x(x,scaler,ss),i-losamp,ps_linear_or_log_y(data[i]*scale,ss));
+	      if (cp->fft_log_frequency) logx = grf_x(log(x+1.0)*scaler,fap); else logx = grf_x(x,fap);
+	      if (cp->fft_log_magnitude) logy = grf_y(cp_dB(cp,data[i]*scale),fap); else logy = grf_y(data[i]*scale,fap);
+	      set_grf_point(logx,i-losamp,logy);
+	      if (cp->printing) 
+		{
+		  if (cp->fft_log_frequency) pslogx = log(x+1.0)*scaler; else pslogx = x;
+		  if (cp->fft_log_magnitude) pslogy = cp_dB(cp,data[i]*scale); else pslogy = data[i]*scale;
+		  ps_set_grf_point(pslogx,i-losamp,pslogy);
+		}
 	    }
 	}
       draw_grf_points(ss,ax,i-losamp,fap,0.0);
@@ -1269,7 +1301,7 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
       if (losamp == 0) x = 0.0; else x = fap->x0;
       xi=grf_x(x,fap);
       xf=0.0;     /* samples per pixel counter */
-      if (fft_log_frequency(ss)) 
+      if (cp->fft_log_frequency) 
 	{
 	  ymax = LOG_FACTOR;
 	  incr = ymax/(Float)(samps - losamp);
@@ -1277,7 +1309,7 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	}
       else scaler = 0.0;
       ymax=-1.0;
-      if ((!fft_log_magnitude(ss)) && (!fft_log_frequency(ss)))
+      if ((!(cp->fft_log_magnitude)) && (!(cp->fft_log_frequency)))
 	{
 	  while (i<samps)
 	    {
@@ -1306,8 +1338,15 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	      i++;
 	      if (xf>samples_per_pixel)
 		{
-		  set_grf_point(linear_or_log_x(x,scaler,fap,ss),j,linear_or_log_y(ymax*scale,fap,ss));
-		  if (cp->printing) ps_set_grf_point(ps_linear_or_log_x(x,scaler,ss),j,ps_linear_or_log_y(ymax*scale,ss));
+		  if (cp->fft_log_frequency) logx = grf_x(log(x+1.0)*scaler,fap); else logx = grf_x(x,fap);
+		  if (cp->fft_log_magnitude) logy = grf_y(cp_dB(cp,ymax*scale),fap); else logy = grf_y(ymax*scale,fap);
+		  set_grf_point(logx,j,logy);
+		  if (cp->printing) 
+		    {
+		      if (cp->fft_log_frequency) pslogx = log(x+1.0)*scaler; else pslogx = x;
+		      if (cp->fft_log_magnitude) pslogy = cp_dB(cp,ymax*scale); else pslogy = ymax*scale;
+		      ps_set_grf_point(pslogx,j,pslogy);
+		    }
 		  x+=(incr*samples_per_pixel);
 		  j++;
 		  xf -= samples_per_pixel;
@@ -1323,11 +1362,11 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
       copy_context(cp); /* reset for axes etc */
       if (cp->printing) ps_reset_color(cp);
     }
-  if (show_fft_peaks(ss)) 
+  if (cp->show_fft_peaks) 
     {
       if (transform_type(ss) == FOURIER)
-	display_peaks(cp,fap,data,(int)(SND_SRATE(sp)*spectro_cutoff(ss)/2),samps,samples_per_pixel,1,scale);
-      else display_peaks(cp,fap,data,(int)(fp->current_size*spectro_cutoff(ss)),samps,samples_per_pixel,1,0.0);
+	display_peaks(cp,fap,data,(int)(SND_SRATE(sp)*cp->spectro_cutoff/2),samps,samples_per_pixel,1,scale);
+      else display_peaks(cp,fap,data,(int)(fp->current_size*cp->spectro_cutoff),samps,samples_per_pixel,1,0.0);
     }
   if (cp->selection_transform_size != 0) display_selection_fft_size(cp,fap);
   if (cp->hookable) after_fft(ss,cp,scale);
@@ -1345,6 +1384,8 @@ static int display_fft_peaks(chan_info *ucp, char *filename)
   Float srate2;
   time_t ts;
   char *timbuf;
+  fft_peak *peak_freqs = NULL;
+  fft_peak *peak_amps = NULL;
   FILE *fd = NULL;
   int i,chn,samps,num_peaks,tens,srate,err = 0,tmp_file = 1,chars;
   Float samples_per_pixel;
@@ -1355,8 +1396,6 @@ static int display_fft_peaks(chan_info *ucp, char *filename)
   if (sp->syncing != 0)
     si = snd_sync(ss,sp->syncing);
   else si = make_simple_sync(ucp,0);
-  if (peak_freqs == NULL) peak_freqs = (fft_peak *)CALLOC(max_fft_peaks(ss),sizeof(fft_peak));
-  if (peak_amps == NULL) peak_amps = (fft_peak *)CALLOC(max_fft_peaks(ss),sizeof(fft_peak));
   if ((filename) && (snd_strlen(filename) > 0))
     {
       fd = fopen(mcf = mus_file_full_name(filename),"w");
@@ -1405,7 +1444,9 @@ static int display_fft_peaks(chan_info *ucp, char *filename)
 		  srate = SND_SRATE(sp);
 		  srate2 = (Float)srate * .5;
 		  if (samps > (5*srate)) tens = 2; else if (samps > (int)srate2) tens = 1; else if (samps > (srate/20)) tens = 0; else tens = -1;
-		  num_peaks = find_and_sort_fft_peaks(data,peak_freqs,max_fft_peaks(ss),samps,1,samples_per_pixel,fp->scale);
+		  peak_freqs = (fft_peak *)CALLOC(cp->max_fft_peaks,sizeof(fft_peak));
+		  peak_amps = (fft_peak *)CALLOC(cp->max_fft_peaks,sizeof(fft_peak));
+		  num_peaks = find_and_sort_fft_peaks(data,peak_freqs,cp->max_fft_peaks,samps,1,samples_per_pixel,fp->scale);
 		  if ((num_peaks != 1) || (peak_freqs[0].freq != 0.0))
 		    {
 		      fprintf(fd,sp->shortname);
@@ -1415,6 +1456,8 @@ static int display_fft_peaks(chan_info *ucp, char *filename)
 			fprintf(fd,"  %.*f  %.5f\n",tens,peak_freqs[i].freq * srate2,peak_freqs[i].amp); 
 		      fprintf(fd,"\n");
 		    }
+		  if (peak_freqs) {FREE(peak_freqs); peak_freqs = NULL;}
+		  if (peak_amps) {FREE(peak_amps); peak_amps = NULL;}
 		}
 	    }
 	}
@@ -1459,10 +1502,10 @@ static void make_sonogram(chan_info *cp, snd_info *sp, snd_state *ss)
   si = (sono_info *)(cp->sonogram_data);
   if ((si) && (si->scale > 0.0))
     {
-      bins = (int)(si->target_bins * spectro_cutoff(ss));
+      bins = (int)(si->target_bins * cp->spectro_cutoff);
       allocate_grf_points();
       if (cp->printing) ps_allocate_grf_points();
-      if (fft_log_frequency(ss)) scaler = 1.0/log(LOG_FACTOR+1.0);
+      if (cp->fft_log_frequency) scaler = 1.0/log(LOG_FACTOR+1.0);
       scl = si->scale; 
       fp = cp->fft;
       fap = fp->axis;
@@ -1479,12 +1522,12 @@ static void make_sonogram(chan_info *cp, snd_info *sp, snd_state *ss)
       hidata = (int *)CALLOC(bins+1,sizeof(int));
       if (transform_type(ss) == FOURIER)
 	{
-	  if (fft_log_frequency(ss))
-	      yfincr = (spectro_cutoff(ss) * LOG_FACTOR)/(Float)bins;
-	  else yfincr = spectro_cutoff(ss) * (Float)SND_SRATE(cp->sound) * 0.5 / (Float)bins;
+	  if (cp->fft_log_frequency)
+	      yfincr = (cp->spectro_cutoff * LOG_FACTOR)/(Float)bins;
+	  else yfincr = cp->spectro_cutoff * (Float)SND_SRATE(cp->sound) * 0.5 / (Float)bins;
 	}
       else yfincr = 1.0;
-      if (fft_log_frequency(ss))
+      if (cp->fft_log_frequency)
 	{
 	  for (yf=0.0,i=0;i<=bins;i++,yf+=yfincr)
 	    {
@@ -1510,19 +1553,19 @@ static void make_sonogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	    {
 	      /* above is fdata[i-1], left is si->data[slice-1][i] */
 	      binval = fdata[i]/scl;
-	      if (fft_log_magnitude(ss)) binval = 1.0 - (dB(ss,binval))/ss->min_dB;
+	      if (cp->fft_log_magnitude) binval = 1.0 - (cp_dB(cp,binval))/cp->min_dB;
 	      if (binval >= color_cutoff(ss))
 		{
 		  if (color_inverted(ss)) 
 		    j = (int)(skew_color((1.0 - binval),color_scale(ss))*GRAY_SCALES); 
 		  else j = (int)(skew_color(binval,color_scale(ss))*GRAY_SCALES);
 		  if (j>0) j--; else j=0;
-		  if (fft_log_frequency(ss))
+		  if (cp->fft_log_frequency)
 		    set_sono_rectangle(js[j],j,(int)xf,hidata[i+1],rectw,hidata[i]-hidata[i+1]);
 		  else set_sono_rectangle(js[j],j,(int)xf,hidata[i+1],rectw,recth);
 		  if (cp->printing)
 		    {
-		      if (fft_log_frequency(ss)) 
+		      if (cp->fft_log_frequency) 
 			ps_draw_sono_rectangle(cp,fap,j,fap->x0 + xscl*slice,hfdata[i+1],frectw,hfdata[i]-hfdata[i+1]);
 		      else ps_draw_sono_rectangle(cp,fap,j,fap->x0 + xscl*slice,hfdata[i+1],frectw,frecth);
 		    }
@@ -1623,18 +1666,18 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
       scl = si->scale; /* unnormalized fft doesn't make much sense here (just washes out the graph) */
       fp = cp->fft;
       fap = fp->axis;
-      bins = (int)(si->target_bins * spectro_cutoff(ss));
+      bins = (int)(si->target_bins * cp->spectro_cutoff);
       fwidth = (fap->x_axis_x1 - fap->x_axis_x0);
       fheight = (fap->y_axis_y1 - fap->y_axis_y0); /* negative! */
       xincr = fwidth/(Float)bins;
       yincr = fheight/(Float)si->active_slices;
       x0 = (fap->x_axis_x0+fap->x_axis_x1)*0.5;
       y0 = (fap->y_axis_y0+fap->y_axis_y1)*0.5;
-      if (!(fft_log_magnitude(ss)))
-	zscl = -(spectro_z_scale(ss)*fheight/scl);
-      else zscl = -(spectro_z_scale(ss)*fheight);
-      rotate_matrix(spectro_x_angle(ss),spectro_y_angle(ss),spectro_z_angle(ss),
-		    spectro_x_scale(ss),spectro_y_scale(ss),zscl,
+      if (!(cp->fft_log_magnitude))
+	zscl = -(cp->spectro_z_scale*fheight/scl);
+      else zscl = -(cp->spectro_z_scale*fheight);
+      rotate_matrix(cp->spectro_x_angle,cp->spectro_y_angle,cp->spectro_z_angle,
+		    cp->spectro_x_scale,cp->spectro_y_scale,zscl,
 		    matrix);
       if (color_map(ss) == -1)
 	{
@@ -1647,9 +1690,9 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		{
 		  xyz[0]=x-x0; 
 		  xyz[1]=y-y0; 
-		  if (!(fft_log_magnitude(ss))) 
+		  if (!(cp->fft_log_magnitude))
 		    xyz[2]=fdata[i];
-		  else {binval = fdata[i]/scl; xyz[2] = 1.0 - (dB(ss,binval))/ss->min_dB;}
+		  else {binval = fdata[i]/scl; xyz[2] = 1.0 - (cp_dB(cp,binval))/cp->min_dB;}
 		  rotate(xyz,matrix);
 		  yval = xyz[1]+xyz[2];
 		  xval = xyz[0];
@@ -1684,9 +1727,9 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		{
 		  xyz[0]=x-x0; xyz[1]=y-y0;
 		  binval = fdata[i]/scl;
-		  if (!(fft_log_magnitude(ss))) 		  
+		  if (!(cp->fft_log_magnitude)) 		  
 		    xyz[2]=fdata[i];
-		  else {xyz[2] = 1.0 - (dB(ss,binval))/ss->min_dB; binval = xyz[2];}
+		  else {xyz[2] = 1.0 - (cp_dB(cp,binval))/cp->min_dB; binval = xyz[2];}
 		  rotate(xyz,matrix);
 		  yval = xyz[1]+xyz[2];
 		  xval = xyz[0];
@@ -1736,15 +1779,15 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
   if (cp->printing) ps_allocate_grf_points();
   width = (ap->x_axis_x1 - ap->x_axis_x0);
   height = (ap->y_axis_y1 - ap->y_axis_y0); /* negative! */
-  xincr = width/(Float)wavo_trace(ss);
-  yincr = -(wavo_hop(ss));
+  xincr = width/(Float)(cp->wavo_trace);
+  yincr = -(cp->wavo_hop);
   if (yincr > 0) yincr = -yincr;
   if (yincr == 0) yincr = -1;
   x0 = (ap->x_axis_x0+ap->x_axis_x1)*0.5;
   y0 = (ap->y_axis_y0+ap->y_axis_y1)*0.5;
-  zscl = -(spectro_z_scale(ss)*height);
-  rotate_matrix(spectro_x_angle(ss),spectro_y_angle(ss),spectro_z_angle(ss),
-		spectro_x_scale(ss),spectro_y_scale(ss),zscl,
+  zscl = -(cp->spectro_z_scale*height);
+  rotate_matrix(cp->spectro_x_angle,cp->spectro_y_angle,cp->spectro_z_angle,
+		cp->spectro_x_scale,cp->spectro_y_scale,zscl,
 		matrix);
   if (color_map(ss) == -1)
     {
@@ -1752,7 +1795,7 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	{
 	  x=xoff;
 	  y=yoff;
-	  for (i=0;i<wavo_trace(ss);i++,x+=xincr)
+	  for (i=0;i<cp->wavo_trace;i++,x+=xincr)
 	    {
 	      NEXT_SAMPLE(ina,sf);
 	      xyz[0]=x-x0; xyz[1]=y-y0; xyz[2]=MUS_SAMPLE_TO_FLOAT(ina);
@@ -1762,8 +1805,8 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	      set_grf_point((int)(xval+x0),i,(int)(yval+y0));
 	      if (cp->printing) ps_set_grf_point(ungrf_x(ap,(int)(xval+x0)),i,ungrf_y(ap,(int)(y0+yval)));
 	    }
-	  draw_grf_points(ss,copy_context(cp),wavo_trace(ss),ap,0.0);
-	  if (cp->printing) ps_draw_grf_points(ss,cp,ap,wavo_trace(ss),0.0);
+	  draw_grf_points(ss,copy_context(cp),cp->wavo_trace,ap,0.0);
+	  if (cp->printing) ps_draw_grf_points(ss,cp,ap,cp->wavo_trace,0.0);
 	}
     }
   else
@@ -1775,7 +1818,7 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	  x=xoff;
 	  y=yoff;
 	  yy = (int)y0; /* ? */
-	  for (i=0;i<wavo_trace(ss);i++,x+=xincr)
+	  for (i=0;i<cp->wavo_trace;i++,x+=xincr)
 	    {
 	      NEXT_SAMPLE(ina,sf);
 	      binval = MUS_SAMPLE_TO_FLOAT(ina);
@@ -1890,7 +1933,7 @@ static void make_lisp_graph(chan_info *cp, snd_info *sp, snd_state *ss)
       copy_context(cp); /* reset for axes etc */
       if (cp->printing) ps_reset_color(cp);
     }
-  if (show_fft_peaks(ss)) display_peaks(cp,uap,up->data[0],1,up->len[0]-1,samples_per_pixel,0,0.0);
+  if (cp->show_fft_peaks) display_peaks(cp,uap,up->data[0],1,up->len[0]-1,samples_per_pixel,0,0.0);
 }
 
 static void draw_graph_cursor(chan_info *cp);
@@ -1991,12 +2034,12 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
   selection_off(cp);
   if (cp->waving)
     {
-      if (wavo(ss))
+      if (cp->wavo)
 	{
 	  if (ap->y_axis_y0 == ap->y_axis_y1) make_axes(cp,ap,x_axis_style(ss)); /* first time needs setup */
 	  ap->y0 = ap->x0;
-	  ap->y1 = ap->y0+(Float)(wavo_trace(ss) * (ap->y_axis_y0 - ap->y_axis_y1)) / ((Float)(wavo_hop(ss))*SND_SRATE(sp));
-	  ap->x1 = ap->x0 + (Float)(wavo_trace(ss))/(Float)SND_SRATE(sp);
+	  ap->y1 = ap->y0+(Float)(cp->wavo_trace * (ap->y_axis_y0 - ap->y_axis_y1)) / ((Float)(cp->wavo_hop)*SND_SRATE(sp));
+	  ap->x1 = ap->x0 + (Float)(cp->wavo_trace)/(Float)SND_SRATE(sp);
 	}
       make_axes(cp,ap,x_axis_style(ss));
       cp->cursor_visible = 0;
@@ -2363,7 +2406,7 @@ void handle_cursor(chan_info *cp, int redisplay)
     {
       ss = cp->state;
       sp = cp->sound;
-      if ((verbose_cursor(ss)) && (sp->minibuffer_on == 0)) /* don't overwrite M-X results with cursor garbage! */
+      if ((cp->verbose_cursor) && (sp->minibuffer_on == 0)) /* don't overwrite M-X results with cursor garbage! */
 	{
 	  show_cursor_info(cp); 
 	  sp->minibuffer_on = 0;
@@ -5743,7 +5786,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_H: case snd_K_h: cp->cursor_on = 1; cks(); redisplay = cursor_delete_previous(cp,count,"C-h"); break; 
 	    case snd_K_I: case snd_K_i: show_cursor_info(cp); searching = 1; break;
 	    case snd_K_J: case snd_K_j: cp->cursor_on = 1; redisplay = goto_mark(cp,count); break;
-	    case snd_K_K: case snd_K_k: cp->cursor_on = 1; cks(); redisplay = cursor_delete(cp,count*line_size(ss),"C-k"); break;
+	    case snd_K_K: case snd_K_k: cp->cursor_on = 1; cks(); redisplay = cursor_delete(cp,count*cp->line_size,"C-k"); break;
 	    case snd_K_L: case snd_K_l: cp->cursor_on = 1; redisplay = CURSOR_IN_MIDDLE; break;
 	    case snd_K_M: case snd_K_m:
 	      if (count > 0) 
@@ -5778,9 +5821,9 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 		  free_sync_info(si);
 		}
 	      break;
-	    case snd_K_N: case snd_K_n: cp->cursor_on = 1; redisplay = cursor_move(cp,count*line_size(ss)); break;
+	    case snd_K_N: case snd_K_n: cp->cursor_on = 1; redisplay = cursor_move(cp,count*cp->line_size); break;
 	    case snd_K_O: case snd_K_o: cp->cursor_on = 1; cks(); redisplay = cursor_insert(cp,count); break;
-	    case snd_K_P: case snd_K_p: cp->cursor_on = 1; redisplay = cursor_move(cp,-count*line_size(ss)); break;
+	    case snd_K_P: case snd_K_p: cp->cursor_on = 1; redisplay = cursor_move(cp,-count*cp->line_size); break;
 	    case snd_K_Q: case snd_K_q: 
 	      start_playing(cp,cp->cursor,NO_END_SPECIFIED); 
 	      set_play_button(sp,1); 
@@ -6289,8 +6332,8 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
   ss = cp->state;
   if (x < ap->x_axis_x0) x = ap->x_axis_x0; else if (x > ap->x_axis_x1) x = ap->x_axis_x1;
   xf = ap->x0 + (ap->x1 - ap->x0) * (Float)(x - ap->x_axis_x0)/(Float)(ap->x_axis_x1 - ap->x_axis_x0);
-  if (fft_log_frequency(ss))
-    xf = ((exp(xf*log(LOG_FACTOR+1.0)) - 1.0)/LOG_FACTOR) * SND_SRATE(cp->sound) * 0.5 * spectro_cutoff(ss);
+  if (cp->fft_log_frequency)
+    xf = ((exp(xf*log(LOG_FACTOR+1.0)) - 1.0)/LOG_FACTOR) * SND_SRATE(cp->sound) * 0.5 * cp->spectro_cutoff;
   if (fft_style(ss) == NORMAL_FFT)        /* fp->data[bins] */
     {
       if (transform_type(ss) == FOURIER)
@@ -6299,7 +6342,7 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
       sprintf(fftdes,"(%.1f%s, transform val: %.3f%s (raw: %.3f)",
 	      xf,
 	      ((transform_type(ss) == AUTOCORRELATION) ? " samps" : " Hz"),
-	      fp->data[ind]*fp->scale,(fft_log_magnitude(ss)) ? "dB" : "",fp->data[ind]);
+	      fp->data[ind]*fp->scale,(cp->fft_log_magnitude) ? "dB" : "",fp->data[ind]);
     }
   else 
     {
@@ -6782,15 +6825,15 @@ void graph_button_motion_callback(chan_info *cp,int x, int y, TIME_TYPE time, TI
 	      if (click_within_graph == FFT)
 		{
 		  /* change spectro_cutoff(ss) and redisplay fft */
-		  old_cutoff = spectro_cutoff(ss);
+		  old_cutoff = cp->spectro_cutoff;
 		  if (fft_style(ss) != SONOGRAM)
 		    {
-		      set_spectro_cutoff(ss,spectro_cutoff(ss) + ((Float)(fft_axis_start - x)/fft_axis_extent(cp)));
+		      set_spectro_cutoff(ss,cp->spectro_cutoff + ((Float)(fft_axis_start - x)/fft_axis_extent(cp)));
 		      fft_axis_start = x;
 		    }
 		  else 
 		    {
-		      set_spectro_cutoff(ss,spectro_cutoff(ss) + ((Float)(y - fft_axis_start)/fft_axis_extent(cp)));
+		      set_spectro_cutoff(ss,cp->spectro_cutoff + ((Float)(y - fft_axis_start)/fft_axis_extent(cp)));
 		      fft_axis_start = y;
 		    }
 		  if (spectro_cutoff(ss) > 1.0) set_spectro_cutoff(ss,1.0);
@@ -6812,7 +6855,7 @@ void graph_button_motion_callback(chan_info *cp,int x, int y, TIME_TYPE time, TI
 					ungrf_y((cp->lisp_info)->axis,y));
 		      return;
 		    }
-		  if ((verbose_cursor(ss)) && (within_graph(cp,x,y) == FFT_MAIN))
+		  if ((cp->verbose_cursor) && (within_graph(cp,x,y) == FFT_MAIN))
 		    {
 		      des = describe_fft_point(cp,x,y);
 		      report_in_minibuffer(cp->sound,des);
@@ -6830,6 +6873,8 @@ void display_frequency_response(snd_state *ss, env *e, axis_info *ap, axis_conte
   Float *coeffs = NULL;
   int height,width,i,pts,x0,y0,x1,y1;
   Float samps_per_pixel,invpts,resp,frq,pix;
+  chan_info *cp;
+  cp = ap->cp;
   coeffs = get_filter_coeffs(order,e);
   if (!coeffs) return;
   height = (ap->y_axis_y1 - ap->y_axis_y0);
@@ -6842,7 +6887,7 @@ void display_frequency_response(snd_state *ss, env *e, axis_info *ap, axis_conte
   x1 = ap->x_axis_x0;
   resp = frequency_response(coeffs,order,0.0);
   if (dBing)
-    y1 = (int)(ap->y_axis_y0 + (ss->min_dB - dB(ss,resp)) * height / ss->min_dB);
+    y1 = (int)(ap->y_axis_y0 + (cp->min_dB - cp_dB(cp,resp)) * height / cp->min_dB);
   else y1 = (int)(ap->y_axis_y0 + resp * height);
   for (i=1,pix=x1,frq=invpts;i<pts;i++,pix+=samps_per_pixel,frq+=invpts)
     {
@@ -6851,12 +6896,13 @@ void display_frequency_response(snd_state *ss, env *e, axis_info *ap, axis_conte
       y0 = y1;
       resp = frequency_response(coeffs,order,frq);
       if (dBing)
-	y1 = (int)(ap->y_axis_y0 + (ss->min_dB - dB(ss,resp)) * height / ss->min_dB);
+	y1 = (int)(ap->y_axis_y0 + (cp->min_dB - cp_dB(cp,resp)) * height / cp->min_dB);
       else y1 = (int)(ap->y_axis_y0 + resp * height);
       draw_line(gax,x0,y0,x1,y1);
     }
   FREE(coeffs);
 }
+
 
 #if HAVE_GUILE
 #include "sg.h"
@@ -7319,7 +7365,10 @@ static SCM g_backward_graph(SCM count, SCM snd, SCM chn)
 
 enum {FFTF,WAVEF,LENGTHF,CURSORF,MAXAMPF,GRAPHINGF,LOSAMPF,HISAMPF,SQUELCH_UPDATE,
       AP_SX,AP_SY,AP_ZX,AP_ZY,EDITF,CURSOR_STYLE,EDIT_HOOK,UNDO_HOOK,
-      SHOW_Y_ZERO,SHOW_MARKS};
+      SHOW_Y_ZERO,SHOW_MARKS,CP_WAVO,CP_WAVO_HOP,CP_WAVO_TRACE,CP_MAX_FFT_PEAKS,CP_LINE_SIZE,
+      CP_SHOW_FFT_PEAKS,CP_ZERO_PAD,CP_VERBOSE_CURSOR,CP_FFT_LOG_FREQUENCY,CP_FFT_LOG_MAGNITUDE,
+      CP_WAVELET_TYPE,CP_SPECTRO_HOP
+};
 
 static SCM cp_iread(SCM snd_n, SCM chn_n, int fld, char *caller)
 {
@@ -7373,6 +7422,18 @@ static SCM cp_iread(SCM snd_n, SCM chn_n, int fld, char *caller)
 	    case UNDO_HOOK: return(cp->undo_hook); break;
 	    case SHOW_Y_ZERO: RTNBOOL(cp->show_y_zero); break;
 	    case SHOW_MARKS: RTNBOOL(cp->show_marks); break;
+	    case CP_WAVO: RTNBOOL(cp->wavo); break;
+	    case CP_WAVO_HOP: RTNINT(cp->wavo_hop); break;
+	    case CP_WAVO_TRACE: RTNINT(cp->wavo_trace); break;
+	    case CP_LINE_SIZE: RTNINT(cp->line_size); break;
+	    case CP_MAX_FFT_PEAKS: RTNINT(cp->max_fft_peaks); break;
+	    case CP_ZERO_PAD: RTNINT(cp->zero_pad); break;
+	    case CP_WAVELET_TYPE: RTNINT(cp->wavelet_type); break;
+	    case CP_SHOW_FFT_PEAKS: RTNBOOL(cp->show_fft_peaks); break;
+	    case CP_VERBOSE_CURSOR: RTNBOOL(cp->verbose_cursor); break;
+	    case CP_FFT_LOG_FREQUENCY: RTNBOOL(cp->fft_log_frequency); break;
+	    case CP_FFT_LOG_MAGNITUDE: RTNBOOL(cp->fft_log_magnitude); break;
+	    case CP_SPECTRO_HOP: RTNINT(cp->spectro_hop); break;
 	    }
 	}
     }
@@ -7424,14 +7485,129 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
 	    case LOSAMPF: set_x_axis_x0(cp,val = g_scm2intdef(on,0)); return(on); break;
 	    case HISAMPF: set_x_axis_x1(cp,val = g_scm2intdef(on,1)); return(on); break;
 	    case SQUELCH_UPDATE: cp->squelch_update = bool_int_or_one(on); break;
-	    case CURSOR_STYLE: cp->cursor_style = g_scm2intdef(on,0); update_graph(cp,NULL); return(on); break;
-	    case SHOW_Y_ZERO: cp->show_y_zero = bool_int_or_one(on); update_graph(cp,NULL); return(on); break;
-	    case SHOW_MARKS: cp->show_marks = bool_int_or_one(on); update_graph(cp,NULL); return(on); break;
+	    case CURSOR_STYLE: cp->cursor_style = g_scm2intdef(on,0); update_graph(cp,NULL); RTNINT(cp->cursor_style); break;
+	    case SHOW_Y_ZERO: cp->show_y_zero = bool_int_or_one(on); update_graph(cp,NULL); RTNBOOL(cp->show_y_zero); break;
+	    case SHOW_MARKS: cp->show_marks = bool_int_or_one(on); update_graph(cp,NULL); RTNBOOL(cp->show_marks); break;
+	    case CP_WAVO: cp->wavo = bool_int_or_one(on); update_graph(cp,NULL); RTNBOOL(cp->wavo); break;
+	    case CP_WAVO_HOP: cp->wavo_hop = g_scm2intdef(on,DEFAULT_WAVO_HOP); update_graph(cp,NULL); RTNINT(cp->wavo_hop); break;
+	    case CP_WAVO_TRACE: cp->wavo_trace = g_scm2intdef(on,DEFAULT_WAVO_TRACE); update_graph(cp,NULL); RTNINT(cp->wavo_trace); break;
+	    case CP_LINE_SIZE: cp->line_size = g_scm2intdef(on,DEFAULT_LINE_SIZE); RTNINT(cp->line_size); break;
+	    case CP_MAX_FFT_PEAKS: cp->max_fft_peaks = g_scm2intdef(on,DEFAULT_MAX_FFT_PEAKS); RTNINT(cp->max_fft_peaks); break;
+	    case CP_ZERO_PAD: cp->zero_pad = g_scm2intdef(on,DEFAULT_ZERO_PAD); update_graph(cp,NULL); RTNINT(cp->zero_pad); break;
+	    case CP_WAVELET_TYPE: cp->wavelet_type = g_scm2intdef(on,DEFAULT_WAVELET_TYPE); update_graph(cp,NULL); RTNINT(cp->wavelet_type); break;
+	    case CP_SHOW_FFT_PEAKS: cp->show_fft_peaks = bool_int_or_one(on); update_graph(cp,NULL); RTNBOOL(cp->show_fft_peaks); break;
+	    case CP_VERBOSE_CURSOR: cp->verbose_cursor = bool_int_or_one(on); RTNBOOL(cp->verbose_cursor); break;
+	    case CP_FFT_LOG_FREQUENCY: cp->fft_log_frequency = bool_int_or_one(on); if (cp->ffting) calculate_fft(cp,NULL); RTNBOOL(cp->fft_log_frequency); break;
+	    case CP_FFT_LOG_MAGNITUDE: cp->fft_log_magnitude = bool_int_or_one(on); if (cp->ffting) calculate_fft(cp,NULL); RTNBOOL(cp->fft_log_magnitude); break;
+	    case CP_SPECTRO_HOP: cp->spectro_hop = g_scm2intdef(on,DEFAULT_SPECTRO_HOP); if (cp->ffting) calculate_fft(cp,NULL); RTNINT(cp->spectro_hop); break;
 	    }
 	}
     }
   RTNBOOL(val);
 }
+
+enum {CP_MIN_DB,CP_SPECTRO_X_ANGLE,CP_SPECTRO_Y_ANGLE,CP_SPECTRO_Z_ANGLE,CP_SPECTRO_X_SCALE,CP_SPECTRO_Y_SCALE,CP_SPECTRO_Z_SCALE,
+      CP_SPECTRO_CUTOFF,CP_SPECTRO_START,CP_FFT_BETA
+};
+
+static SCM cp_fread(SCM snd_n, SCM chn_n, int fld, char *caller)
+{
+  chan_info *cp;
+  snd_info *sp;
+  snd_state *ss;
+  int i;
+  SCM res = SCM_EOL;
+  if (SCM_EQ_P(snd_n,SCM_BOOL_T))
+    {
+      ss = get_global_state();
+      for (i=0;i<ss->max_sounds;i++)
+	{
+	  sp = ss->sounds[i];
+	  if ((sp) && (sp->inuse))
+	    res = gh_cons(cp_fread(gh_int2scm(i),chn_n,fld,caller),res);
+	}
+      return(scm_reverse(res));
+    }
+  else
+    {
+      if (SCM_EQ_P(chn_n,SCM_BOOL_T))
+	{
+	  sp = get_sp(snd_n);
+	  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(caller),snd_n)));
+	  for (i=0;i<sp->nchans;i++)
+	    res = gh_cons(cp_fread(snd_n,gh_int2scm(i),fld,caller),res);
+	  return(scm_reverse(res));
+	}
+      else
+	{
+	  cp = get_cp(snd_n,chn_n,caller);
+	  switch(fld)
+	    {
+	    case CP_MIN_DB: RTNFLT(cp->min_dB); break;
+	    case CP_SPECTRO_X_ANGLE: RTNFLT(cp->spectro_x_angle); break;
+	    case CP_SPECTRO_Y_ANGLE: RTNFLT(cp->spectro_y_angle); break;
+	    case CP_SPECTRO_Z_ANGLE: RTNFLT(cp->spectro_z_angle); break;
+	    case CP_SPECTRO_X_SCALE: RTNFLT(cp->spectro_x_scale); break;
+	    case CP_SPECTRO_Y_SCALE: RTNFLT(cp->spectro_y_scale); break;
+	    case CP_SPECTRO_Z_SCALE: RTNFLT(cp->spectro_z_scale); break;
+	    case CP_SPECTRO_CUTOFF: RTNFLT(cp->spectro_cutoff); break;
+	    case CP_SPECTRO_START: RTNFLT(cp->spectro_start); break;
+	    case CP_FFT_BETA: RTNFLT(cp->fft_beta); break;
+	    }
+	}
+    }
+  return(SCM_BOOL_F);
+}
+
+static SCM cp_fwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
+{
+  chan_info *cp;
+  snd_info *sp;
+  snd_state *ss;
+  int i;
+  SCM res = SCM_EOL;
+  if (SCM_EQ_P(snd_n,SCM_BOOL_T))
+    {
+      ss = get_global_state();
+      for (i=0;i<ss->max_sounds;i++)
+	{
+	  sp = ss->sounds[i];
+	  if ((sp) && (sp->inuse))
+	    res = gh_cons(cp_fwrite(gh_int2scm(i),chn_n,on,fld,caller),res);
+	}
+      return(scm_reverse(res));
+    }
+  else
+    {
+      if (SCM_EQ_P(chn_n,SCM_BOOL_T))
+	{
+	  sp = get_sp(snd_n);
+	  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(caller),snd_n)));
+	  for (i=0;i<sp->nchans;i++)
+	    res = gh_cons(cp_fwrite(snd_n,gh_int2scm(i),on,fld,caller),res);
+	  return(scm_reverse(res));
+	}
+      else
+	{
+	  cp = get_cp(snd_n,chn_n,caller);
+	  switch (fld)
+	    {
+	    case CP_MIN_DB: cp->min_dB = gh_scm2double(on); cp->lin_dB = pow(10.0,cp->min_dB * 0.05); calculate_fft(cp,NULL); break;
+	    case CP_SPECTRO_X_ANGLE: cp->spectro_x_angle = gh_scm2double(on); calculate_fft(cp,NULL); break;
+	    case CP_SPECTRO_Y_ANGLE: cp->spectro_y_angle = gh_scm2double(on); calculate_fft(cp,NULL); break;
+	    case CP_SPECTRO_Z_ANGLE: cp->spectro_z_angle = gh_scm2double(on); calculate_fft(cp,NULL); break;
+	    case CP_SPECTRO_X_SCALE: cp->spectro_x_scale = gh_scm2double(on); calculate_fft(cp,NULL); break;
+	    case CP_SPECTRO_Y_SCALE: cp->spectro_y_scale = gh_scm2double(on); calculate_fft(cp,NULL); break;
+	    case CP_SPECTRO_Z_SCALE: cp->spectro_z_scale = gh_scm2double(on); calculate_fft(cp,NULL); break;
+	    case CP_SPECTRO_CUTOFF: cp->spectro_cutoff = gh_scm2double(on); calculate_fft(cp,NULL); break;
+	    case CP_SPECTRO_START: cp->spectro_start = gh_scm2double(on); calculate_fft(cp,NULL); break;
+	    case CP_FFT_BETA: cp->fft_beta = gh_scm2double(on); calculate_fft(cp,NULL); break;
+	    }
+	}
+    }
+  return(on);
+}
+
 
 #define ERRCPT(caller,snd,chn,argn) if ((!(SCM_EQ_P(snd,SCM_BOOL_T))) && (!(SCM_EQ_P(chn,SCM_BOOL_T)))) ERRCP(caller,snd,chn,argn)
 
@@ -7593,7 +7769,8 @@ static SCM g_show_y_zero(SCM snd, SCM chn)
   #define H_show_y_zero "(" S_show_y_zero " &optional (snd #t) (chn #t)) -> #t if Snd should include a line at y=0.0"
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iread(snd,chn,SHOW_Y_ZERO,S_show_y_zero));
-  else RTNBOOL(show_y_zero(get_global_state()));
+  SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_show_y_zero);
+  RTNBOOL(show_y_zero(get_global_state()));
 }
 
 static SCM g_set_show_y_zero(SCM on, SCM snd, SCM chn) 
@@ -7605,18 +7782,302 @@ static SCM g_set_show_y_zero(SCM on, SCM snd, SCM chn)
     return(cp_iwrite(snd,chn,on,SHOW_Y_ZERO,S_set_show_y_zero));
   else
     {
+      SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,S_set_show_y_zero);
       ss = get_global_state();
       set_show_y_zero(ss,bool_int_or_one(on));
       RTNBOOL(show_y_zero(ss));
     }
 }
 
+static SCM g_min_dB(SCM snd, SCM chn) 
+{
+  #define H_min_dB "(" S_min_dB " &optional (snd #t) (chn #t)) -> min dB value displayed in fft graphs using dB scales"
+  snd_state *ss;
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_fread(snd,chn,CP_MIN_DB,S_min_dB));
+  SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_min_dB);
+  ss = get_global_state();
+  RTNFLT(ss->min_dB);
+}
+
+static SCM g_set_min_dB(SCM val, SCM snd, SCM chn) 
+{
+  #define H_set_min_dB "(" S_set_min_dB " val &optional (snd #t) (chn #t)) sets " S_min_dB
+  Float db;
+  snd_state *ss;
+  ERRN1(val,S_set_min_dB); 
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_fwrite(snd,chn,val,CP_MIN_DB,S_set_min_dB));
+  else
+    {
+      SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,S_set_min_dB);
+      db = gh_scm2double(val);
+      ss = get_global_state();
+      ss->min_dB = db;
+      ss->lin_dB = pow(10.0,db*0.05);
+      cp_fwrite(SCM_BOOL_T,SCM_BOOL_T,val,CP_MIN_DB,S_set_min_dB);
+      RTNFLT(ss->min_dB);
+    }
+}
+
+static SCM g_fft_beta(SCM snd, SCM chn) 
+{
+  #define H_fft_beta "(" S_fft_beta " *optional (snd #t) (chn #t)) -> 'beta' fft data window parameter value (0.0)"
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_fread(snd,chn,CP_FFT_BETA,S_fft_beta));
+  SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_fft_beta);
+  RTNFLT(fft_beta(get_global_state()));
+}
+
+static SCM g_set_fft_beta(SCM val, SCM snd, SCM chn) 
+{
+  #define H_set_fft_beta "(" S_set_fft_beta " val &optional (snd #t) (chn #t)) sets " S_fft_beta
+  snd_state *ss;
+  ERRN1(val,S_set_fft_beta); 
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_fwrite(snd,chn,val,CP_FFT_BETA,S_set_fft_beta));
+  else
+    {
+      SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,S_set_fft_beta);
+      ss = get_global_state();
+      set_fft_beta(ss,fclamp(0.0,gh_scm2double(val),1.0));
+      RTNFLT(fft_beta(ss));
+    }
+}
+
+static SCM g_spectro_cutoff(SCM snd, SCM chn) 
+{
+  #define H_spectro_cutoff "(" S_spectro_cutoff " *optional (snd #t) (chn #t)) -> amount of frequency shown in spectra (1.0)"
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_fread(snd,chn,CP_SPECTRO_CUTOFF,S_spectro_cutoff));
+  SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_spectro_cutoff);
+  RTNFLT(spectro_cutoff(get_global_state()));
+}
+
+static SCM g_set_spectro_cutoff(SCM val, SCM snd, SCM chn) 
+{
+  #define H_set_spectro_cutoff "(" S_set_spectro_cutoff " val &optional (snd #t) (chn #t)) sets " S_spectro_cutoff
+  snd_state *ss;
+  ERRN1(val,S_set_spectro_cutoff); 
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_fwrite(snd,chn,val,CP_SPECTRO_CUTOFF,S_set_spectro_cutoff));
+  else
+    {
+      SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,S_set_spectro_cutoff);
+      ss = get_global_state();
+      set_spectro_cutoff(ss,fclamp(0.0,gh_scm2double(val),1.0));
+      RTNFLT(spectro_cutoff(ss));
+    }
+}
+
+static SCM g_spectro_start(SCM snd, SCM chn) 
+{
+  #define H_spectro_start "(" S_spectro_start " *optional (snd #t) (chn #t)) -> lower bound of frequency in spectral displays (0.0)"
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_fread(snd,chn,CP_SPECTRO_START,S_spectro_start));
+  SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_spectro_start);
+  RTNFLT(spectro_start(get_global_state()));
+}
+
+static SCM g_set_spectro_start(SCM val, SCM snd, SCM chn) 
+{
+  #define H_set_spectro_start "(" S_set_spectro_start " val &optional (snd #t) (chn #t)) sets " S_spectro_start
+  snd_state *ss;
+  ERRN1(val,S_set_spectro_start); 
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_fwrite(snd,chn,val,CP_SPECTRO_START,S_set_spectro_start));
+  else
+    {
+      SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,S_set_spectro_start);
+      ss = get_global_state();
+      set_spectro_start(ss,fclamp(0.0,gh_scm2double(val),1.0));
+      RTNFLT(spectro_start(ss));
+    }
+}
+
+static SCM g_spectro_x_angle(SCM snd, SCM chn) 
+{
+  #define H_spectro_x_angle "(" S_spectro_x_angle " *optional (snd #t) (chn #t)) -> spectrogram x-axis viewing angle (90.0)"
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_fread(snd,chn,CP_SPECTRO_X_ANGLE,S_spectro_x_angle));
+  SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_spectro_x_angle);
+  RTNFLT(spectro_x_angle(get_global_state()));
+}
+
+static SCM g_set_spectro_x_angle(SCM val, SCM snd, SCM chn) 
+{
+  #define H_set_spectro_x_angle "(" S_set_spectro_x_angle " val &optional (snd #t) (chn #t)) sets " S_spectro_x_angle
+  snd_state *ss;
+  ERRN1(val,S_set_spectro_x_angle); 
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_fwrite(snd,chn,val,CP_SPECTRO_X_ANGLE,S_set_spectro_x_angle));
+  else
+    {
+      SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,S_set_spectro_x_angle);
+      ss = get_global_state();
+      set_spectro_x_angle(ss,gh_scm2double(val));
+      RTNFLT(spectro_x_angle(ss));
+    }
+}
+
+static SCM g_spectro_x_scale(SCM snd, SCM chn) 
+{
+  #define H_spectro_x_scale "(" S_spectro_x_scale " *optional (snd #t) (chn #t)) -> scaler (stretch) along the spectrogram x axis (1.0)"
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_fread(snd,chn,CP_SPECTRO_X_SCALE,S_spectro_x_scale));
+  SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_spectro_x_scale);
+  RTNFLT(spectro_x_scale(get_global_state()));
+}
+
+static SCM g_set_spectro_x_scale(SCM val, SCM snd, SCM chn) 
+{
+  #define H_set_spectro_x_scale "(" S_set_spectro_x_scale " val &optional (snd #t) (chn #t)) sets " S_spectro_x_scale
+  snd_state *ss;
+  ERRN1(val,S_set_spectro_x_scale); 
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_fwrite(snd,chn,val,CP_SPECTRO_X_SCALE,S_set_spectro_x_scale));
+  else
+    {
+      SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,S_set_spectro_x_scale);
+      ss = get_global_state();
+      set_spectro_x_scale(ss,gh_scm2double(val));
+      RTNFLT(spectro_x_scale(ss));
+    }
+}
+
+static SCM g_spectro_y_angle(SCM snd, SCM chn) 
+{
+  #define H_spectro_y_angle "(" S_spectro_y_angle " *optional (snd #t) (chn #t)) -> spectrogram y-axis viewing angle (0.0)"
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_fread(snd,chn,CP_SPECTRO_Y_ANGLE,S_spectro_y_angle));
+  SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_spectro_y_angle);
+  RTNFLT(spectro_y_angle(get_global_state()));
+}
+
+static SCM g_set_spectro_y_angle(SCM val, SCM snd, SCM chn) 
+{
+  #define H_set_spectro_y_angle "(" S_set_spectro_y_angle " val &optional (snd #t) (chn #t)) sets " S_spectro_y_angle
+  snd_state *ss;
+  ERRN1(val,S_set_spectro_y_angle); 
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_fwrite(snd,chn,val,CP_SPECTRO_Y_ANGLE,S_set_spectro_y_angle));
+  else
+    {
+      SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,S_set_spectro_y_angle);
+      ss = get_global_state();
+      set_spectro_y_angle(ss,gh_scm2double(val));
+      RTNFLT(spectro_y_angle(ss));
+    }
+}
+
+static SCM g_spectro_y_scale(SCM snd, SCM chn) 
+{
+  #define H_spectro_y_scale "(" S_spectro_y_scale " *optional (snd #t) (chn #t)) -> scaler (stretch) along the spectrogram y axis (1.0)"
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_fread(snd,chn,CP_SPECTRO_Y_SCALE,S_spectro_y_scale));
+  SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_spectro_y_scale);
+  RTNFLT(spectro_y_scale(get_global_state()));
+}
+
+static SCM g_set_spectro_y_scale(SCM val, SCM snd, SCM chn) 
+{
+  #define H_set_spectro_y_scale "(" S_set_spectro_y_scale " val &optional (snd #t) (chn #t)) sets " S_spectro_y_scale
+  snd_state *ss;
+  ERRN1(val,S_set_spectro_y_scale); 
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_fwrite(snd,chn,val,CP_SPECTRO_Y_SCALE,S_set_spectro_y_scale));
+  else
+    {
+      SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,S_set_spectro_y_scale);
+      ss = get_global_state();
+      set_spectro_y_scale(ss,gh_scm2double(val));
+      RTNFLT(spectro_y_scale(ss));
+    }
+}
+
+static SCM g_spectro_z_angle(SCM snd, SCM chn) 
+{
+  #define H_spectro_z_angle "(" S_spectro_z_angle " *optional (snd #t) (chn #t)) -> spectrogram z-axis viewing angle (-2.0)"
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_fread(snd,chn,CP_SPECTRO_Z_ANGLE,S_spectro_z_angle));
+  SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_spectro_z_angle);
+  RTNFLT(spectro_z_angle(get_global_state()));
+}
+
+static SCM g_set_spectro_z_angle(SCM val, SCM snd, SCM chn) 
+{
+  #define H_set_spectro_z_angle "(" S_set_spectro_z_angle " val &optional (snd #t) (chn #t)) sets " S_spectro_z_angle
+  snd_state *ss;
+  ERRN1(val,S_set_spectro_z_angle); 
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_fwrite(snd,chn,val,CP_SPECTRO_Z_ANGLE,S_set_spectro_z_angle));
+  else
+    {
+      SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,S_set_spectro_z_angle);
+      ss = get_global_state();
+      set_spectro_z_angle(ss,gh_scm2double(val));
+      RTNFLT(spectro_z_angle(ss));
+    }
+}
+
+static SCM g_spectro_z_scale(SCM snd, SCM chn) 
+{
+  #define H_spectro_z_scale "(" S_spectro_z_scale " *optional (snd #t) (chn #t)) -> scaler (stretch) along the spectrogram z axis (0.1)"
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_fread(snd,chn,CP_SPECTRO_Z_SCALE,S_spectro_z_scale));
+  SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_spectro_z_scale);
+  RTNFLT(spectro_z_scale(get_global_state()));
+}
+
+static SCM g_set_spectro_z_scale(SCM val, SCM snd, SCM chn) 
+{
+  #define H_set_spectro_z_scale "(" S_set_spectro_z_scale " val &optional (snd #t) (chn #t)) sets " S_spectro_z_scale
+  snd_state *ss;
+  ERRN1(val,S_set_spectro_z_scale); 
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_fwrite(snd,chn,val,CP_SPECTRO_Z_SCALE,S_set_spectro_z_scale));
+  else
+    {
+      SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,S_set_spectro_z_scale);
+      ss = get_global_state();
+      set_spectro_z_scale(ss,gh_scm2double(val));
+      RTNFLT(spectro_z_scale(ss));
+    }
+}
+
+static SCM g_spectro_hop(SCM snd, SCM chn)
+{
+  #define H_spectro_hop "(" S_spectro_hop " &optional (snd #t) (chn #t)) -> hop amount (pixels) in spectral displays"
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_iread(snd,chn,CP_SPECTRO_HOP,S_spectro_hop));
+  SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_spectro_hop);
+  RTNINT(spectro_hop(get_global_state()));
+}
+
+static SCM g_set_spectro_hop(SCM val, SCM snd, SCM chn)
+{
+  #define H_set_spectro_hop "(" S_set_spectro_hop " val &optional (snd #t) (chn #t)) sets " S_spectro_hop
+  snd_state *ss;
+  ERRN1(val,S_set_spectro_hop); 
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_iwrite(snd,chn,val,CP_SPECTRO_HOP,S_set_spectro_hop));
+  else
+    {
+      SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,S_set_spectro_hop);
+      ss = get_global_state();
+      set_spectro_hop(ss,g_scm2int(val));
+      RTNINT(spectro_hop(ss));
+    }
+}
+
+
 static SCM g_show_marks(SCM snd, SCM chn)
 {
   #define H_show_marks "(" S_show_marks " &optional (snd #t) (chn #t)) -> #t if Snd should show marks"
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iread(snd,chn,SHOW_MARKS,S_show_marks));
-  else RTNBOOL(show_marks(get_global_state()));
+  SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_show_marks);
+  RTNBOOL(show_marks(get_global_state()));
 }
 
 static SCM g_set_show_marks(SCM on, SCM snd, SCM chn)
@@ -7628,11 +8089,295 @@ static SCM g_set_show_marks(SCM on, SCM snd, SCM chn)
     return(cp_iwrite(snd,chn,on,SHOW_MARKS,S_set_show_marks));
   else
     {
+      SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,S_set_show_marks);
       ss = get_global_state();
       set_show_marks(ss,bool_int_or_one(on));
       RTNBOOL(show_marks(ss));
     }
 }
+
+static SCM g_show_fft_peaks(SCM snd, SCM chn)
+{
+  #define H_show_fft_peaks "(" S_show_fft_peaks " &optional (snd #t) (chn #t)) -> #t if fft display should include peak list"
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_iread(snd,chn,CP_SHOW_FFT_PEAKS,S_show_fft_peaks));
+  SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_show_fft_peaks);
+  RTNBOOL(show_fft_peaks(get_global_state()));
+}
+
+static SCM g_set_show_fft_peaks(SCM val, SCM snd, SCM chn)
+{
+  #define H_set_show_fft_peaks "(" S_set_show_fft_peaks " &optional (val #t) (snd #t) (chn #t)) sets " S_show_fft_peaks
+  snd_state *ss;
+  ERRB1(val,S_set_show_fft_peaks); 
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_iwrite(snd,chn,val,CP_SHOW_FFT_PEAKS,S_set_show_fft_peaks));
+  else
+    {
+      SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,S_set_show_fft_peaks);
+      ss = get_global_state();
+      set_show_fft_peaks(ss,bool_int_or_one(val));
+      RTNBOOL(show_fft_peaks(ss));
+    }
+}
+
+static SCM g_zero_pad(SCM snd, SCM chn)
+{
+  #define H_zero_pad "(" S_zero_pad " &optional (snd #t) (chn #t)) -> zero padding used in fft as a multiple of fft size (0)"
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_iread(snd,chn,CP_ZERO_PAD,S_zero_pad));
+  SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_zero_pad);
+  RTNINT(zero_pad(get_global_state()));
+}
+
+static SCM g_set_zero_pad(SCM val, SCM snd, SCM chn)
+{
+  #define H_set_zero_pad "(" S_set_zero_pad " val &optional (snd #t) (chn #t)) sets " S_zero_pad
+  snd_state *ss;
+  ERRN1(val,S_set_zero_pad); 
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_iwrite(snd,chn,val,CP_ZERO_PAD,S_set_zero_pad));
+  else
+    {
+      SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,S_set_zero_pad);
+      ss = get_global_state();
+      set_zero_pad(ss,bool_int_or_one(val)); 
+      RTNINT(zero_pad(ss));
+    }
+}
+
+static SCM g_wavelet_type(SCM snd, SCM chn)
+{
+  #define H_wavelet_type "(" S_wavelet_type " &optional (snd #t) (chn #t)) -> wavelet used in wavelet-transform (0)"
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_iread(snd,chn,CP_WAVELET_TYPE,S_wavelet_type));
+  SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_wavelet_type);
+  RTNINT(wavelet_type(get_global_state()));
+}
+
+static SCM g_set_wavelet_type(SCM val, SCM snd, SCM chn)
+{
+  #define H_set_wavelet_type "(" S_set_wavelet_type " val &optional (snd #t) (chn #t)) sets " S_wavelet_type
+  snd_state *ss;
+  ERRN1(val,S_set_wavelet_type); 
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_iwrite(snd,chn,val,CP_WAVELET_TYPE,S_set_wavelet_type));
+  else
+    {
+      SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,S_set_wavelet_type);
+      ss = get_global_state();
+      set_wavelet_type(ss,iclamp(0,g_scm2int(val),NUM_WAVELETS-1));
+      RTNINT(wavelet_type(ss));
+    }
+}
+
+static SCM g_fft_log_frequency(SCM snd, SCM chn)
+{
+  #define H_fft_log_frequency "(" S_fft_log_frequency " &optional (snd #t) (chn #t)) -> #t if fft displays use log on the frequency axis (#f)"
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_iread(snd,chn,CP_FFT_LOG_FREQUENCY,S_fft_log_frequency));
+  SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_fft_log_frequency);
+  RTNBOOL(fft_log_frequency(get_global_state()));
+}
+
+static SCM g_set_fft_log_frequency(SCM on, SCM snd, SCM chn)
+{
+  #define H_set_fft_log_frequency "(" S_set_fft_log_frequency " &optional (val #t) (snd #t) (chn #t)) sets " S_fft_log_frequency
+  snd_state *ss;
+  ERRB1(on,S_set_fft_log_frequency); 
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_iwrite(snd,chn,on,CP_FFT_LOG_FREQUENCY,S_set_fft_log_frequency));
+  else
+    {
+      SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,S_set_fft_log_frequency);
+      ss = get_global_state();
+      set_fft_log_frequency(ss,bool_int_or_one(on)); 
+      RTNBOOL(fft_log_frequency(ss));
+    }
+}
+
+static SCM g_fft_log_magnitude(SCM snd, SCM chn)
+{
+  #define H_fft_log_magnitude "(" S_fft_log_magnitude " &optional (snd #t) (chn #t)) -> #t if fft displays use dB (#f)"
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_iread(snd,chn,CP_FFT_LOG_MAGNITUDE,S_fft_log_magnitude));
+  SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_fft_log_magnitude);
+  RTNBOOL(fft_log_magnitude(get_global_state()));
+}
+
+static SCM g_set_fft_log_magnitude(SCM on, SCM snd, SCM chn)
+{
+  #define H_set_fft_log_magnitude "(" S_set_fft_log_magnitude " &optional (val #t) (snd #t) (chn #t)) sets " S_fft_log_magnitude
+  snd_state *ss;
+  ERRB1(on,S_set_fft_log_magnitude); 
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_iwrite(snd,chn,on,CP_FFT_LOG_MAGNITUDE,S_set_fft_log_magnitude));
+  else
+    {
+      SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,S_set_fft_log_magnitude);
+      ss = get_global_state();
+      set_fft_log_magnitude(ss,bool_int_or_one(on)); 
+      RTNBOOL(fft_log_magnitude(ss));
+    }
+}
+
+static SCM g_verbose_cursor(SCM snd, SCM chn)
+{
+  #define H_verbose_cursor "(" S_verbose_cursor " &optional (snd #t) (chn #t)) -> #t if the cursor's position and so on is displayed in the minibuffer"
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_iread(snd,chn,CP_VERBOSE_CURSOR,S_verbose_cursor));
+  SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_verbose_cursor);
+  RTNBOOL(verbose_cursor(get_global_state()));
+}
+
+static SCM g_set_verbose_cursor(SCM on, SCM snd, SCM chn)
+{
+  #define H_set_verbose_cursor "(" S_set_verbose_cursor " &optional (val #t) (snd #t) (chn #t)) sets " S_verbose_cursor
+  snd_state *ss;
+  ERRB1(on,S_set_verbose_cursor); 
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_iwrite(snd,chn,on,CP_VERBOSE_CURSOR,S_set_verbose_cursor));
+  else
+    {
+      SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,S_set_verbose_cursor);
+      ss = get_global_state();
+      set_verbose_cursor(ss,bool_int_or_one(on));
+      RTNBOOL(verbose_cursor(ss));
+    }
+}
+
+
+static SCM g_wavo(SCM snd, SCM chn)
+{
+  #define H_wavo "(" S_wavo " &optional (snd #t) (chn #t)) -> #t if Snd's time domain display is a 'wavogram'"
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_iread(snd,chn,CP_WAVO,S_wavo));
+  SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_wavo);
+  RTNBOOL(wavo(get_global_state()));
+}
+
+static SCM g_set_wavo(SCM val, SCM snd, SCM chn) 
+{
+  int on;
+  snd_state *ss;
+  #define H_set_wavo "(" S_set_wavo " &optional (val #t) (snd #t) (chn #t)) sets " S_wavo
+  ERRB1(val,S_set_wavo); 
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_iwrite(snd,chn,val,CP_WAVO,S_set_wavo));
+  else
+    {
+      SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,S_set_wavo);
+      ss = get_global_state();
+      on = bool_int_or_one(val);
+      set_wavo(ss,on);
+      RTNBOOL(wavo(ss));
+    }
+}
+
+static SCM g_wavo_hop(SCM snd, SCM chn)
+{
+  #define H_wavo_hop "(" S_wavo_hop " &optional (snd #t) (chn #t)) -> wavogram spacing between successive traces"
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_iread(snd,chn,CP_WAVO_HOP,S_wavo_hop));
+  SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_wavo_hop);
+  RTNINT(wavo_hop(get_global_state()));
+}
+
+static SCM g_set_wavo_hop(SCM val, SCM snd, SCM chn) 
+{
+  #define H_set_wavo_hop "(" S_set_wavo_hop " val &optional (snd #t) (chn #t)) sets " S_wavo_hop
+  snd_state *ss;
+  ERRN1(val,S_set_wavo_hop); 
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_iwrite(snd,chn,val,CP_WAVO_HOP,S_set_wavo_hop));
+  else
+    {
+      SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,S_set_wavo_hop);
+      ss = get_global_state();
+      set_wavo_hop(ss,g_scm2int(val));
+      RTNINT(wavo_hop(ss));
+    }
+}
+
+static SCM g_wavo_trace(SCM snd, SCM chn)
+{
+  #define H_wavo_trace "(" S_wavo_trace " &optional (snd #t) (chn #t)) -> length (samples) of each trace in the wavogram (64)"
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_iread(snd,chn,CP_WAVO_TRACE,S_wavo_trace));
+  SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_wavo_trace);
+  RTNINT(wavo_trace(get_global_state()));
+}
+
+static SCM g_set_wavo_trace(SCM val, SCM snd, SCM chn)
+{
+  #define H_set_wavo_trace "(" S_set_wavo_trace " val &optional (snd #t) (chn #t)) sets " S_wavo_trace
+  snd_state *ss;
+  ERRN1(val,S_set_wavo_trace); 
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_iwrite(snd,chn,val,CP_WAVO_TRACE,S_set_wavo_trace));
+  else
+    {
+      SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,S_set_wavo_trace);
+      ss = get_global_state();
+      set_wavo_trace(ss,g_scm2int(val));
+      RTNINT(wavo_trace(ss));
+    }
+}
+
+static SCM g_line_size(SCM snd, SCM chn)
+{
+  #define H_line_size "(" S_line_size " &optional (snd #t) (chn #t)) -> number of samples in a 'line' (C-n and C-p) (128)"
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_iread(snd,chn,CP_LINE_SIZE,S_line_size));
+  SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_line_size);
+  RTNINT(line_size(get_global_state()));
+}
+
+static SCM g_set_line_size(SCM val, SCM snd, SCM chn)
+{
+  #define H_set_line_size "(" S_set_line_size " val &optional (snd #t) (chn #t)) sets " S_line_size
+  snd_state *ss;
+  ERRN1(val,S_set_line_size); 
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_iwrite(snd,chn,val,CP_LINE_SIZE,S_set_line_size));
+  else
+    {
+      SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,S_set_line_size);
+      ss = get_global_state();
+      set_line_size(ss,g_scm2int(val));
+      RTNINT(line_size(ss));
+    }
+}
+
+static SCM g_max_fft_peaks(SCM snd, SCM chn)
+{
+  #define H_max_fft_peaks "(" S_max_fft_peaks " &optional (snd #t) (chn #t)) -> max number of fft peaks reported in fft display"
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_iread(snd,chn,CP_MAX_FFT_PEAKS,S_max_fft_peaks));
+  SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_max_fft_peaks);
+  RTNINT(max_fft_peaks(get_global_state()));
+}
+
+static SCM g_set_max_fft_peaks(SCM n, SCM snd, SCM chn)
+{
+  #define H_set_max_fft_peaks "(" S_set_max_fft_peaks " val &optional (snd #t) (chn #t)) sets " S_max_fft_peaks
+  int lim;
+  snd_state *ss;
+  ERRN1(n,S_set_max_fft_peaks); 
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_iwrite(snd,chn,n,CP_MAX_FFT_PEAKS,S_set_max_fft_peaks));
+  else
+    {
+      SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,S_set_max_fft_peaks);
+      lim = g_scm2int(n);
+      ss = get_global_state();
+      if (lim >= 0)
+	set_max_fft_peaks(ss,lim);
+      RTNINT(max_fft_peaks(ss));
+    }
+}
+
+
 
 static SCM g_peaks(SCM filename, SCM snd_n, SCM chn_n)
 {
@@ -7790,25 +8535,6 @@ static SCM g_set_dot_size(SCM size)
   ss = get_global_state();
   set_dot_size(ss,g_scm2int(size));
   RTNINT(dot_size(ss));
-}
-
-static SCM g_max_fft_peaks(void) 
-{
-  #define H_max_fft_peaks "(" S_max_fft_peaks ") -> max number of fft peaks reported in fft display"
-  RTNINT(max_fft_peaks(get_global_state()));
-}
-
-static SCM g_set_max_fft_peaks(SCM n) 
-{
-  #define H_set_max_fft_peaks "(" S_set_max_fft_peaks " val) sets " S_max_fft_peaks
-  int lim;
-  snd_state *ss;
-  ERRN1(n,S_set_max_fft_peaks); 
-  lim = g_scm2int(n);
-  ss = get_global_state();
-  if (lim >= 0)
-    set_max_fft_peaks(ss,lim);
-  RTNINT(max_fft_peaks(ss));
 }
 
 static SCM g_forward_sample(SCM count, SCM snd, SCM chn) 
@@ -8110,12 +8836,54 @@ void g_init_chn(SCM local_doc)
   DEFINE_PROC(gh_new_procedure(S_smooth_selection,SCM_FNC g_smooth_selection,0,0,0),H_smooth_selection);
   DEFINE_PROC(gh_new_procedure(S_reverse_sound,SCM_FNC g_reverse_sound,0,2,0),H_reverse_sound);
   DEFINE_PROC(gh_new_procedure(S_reverse_selection,SCM_FNC g_reverse_selection,0,0,0),H_reverse_selection);
-  DEFINE_PROC(gh_new_procedure(S_max_fft_peaks,g_max_fft_peaks,0,0,0),H_max_fft_peaks);
-  DEFINE_PROC(gh_new_procedure(S_set_max_fft_peaks,g_set_max_fft_peaks,1,0,0),H_set_max_fft_peaks);
-  DEFINE_PROC(gh_new_procedure(S_show_y_zero,g_show_y_zero,0,2,0),H_show_y_zero);
-  DEFINE_PROC(gh_new_procedure(S_set_show_y_zero,g_set_show_y_zero,0,3,0),H_set_show_y_zero);
-  DEFINE_PROC(gh_new_procedure(S_show_marks,g_show_marks,0,2,0),H_show_marks);
-  DEFINE_PROC(gh_new_procedure(S_set_show_marks,g_set_show_marks,0,3,0),H_set_show_marks);
+  DEFINE_PROC(gh_new_procedure(S_max_fft_peaks,SCM_FNC g_max_fft_peaks,0,2,0),H_max_fft_peaks);
+  DEFINE_PROC(gh_new_procedure(S_set_max_fft_peaks,SCM_FNC g_set_max_fft_peaks,0,3,0),H_set_max_fft_peaks);
+  DEFINE_PROC(gh_new_procedure(S_show_y_zero,SCM_FNC g_show_y_zero,0,2,0),H_show_y_zero);
+  DEFINE_PROC(gh_new_procedure(S_set_show_y_zero,SCM_FNC g_set_show_y_zero,0,3,0),H_set_show_y_zero);
+  DEFINE_PROC(gh_new_procedure(S_show_marks,SCM_FNC g_show_marks,0,2,0),H_show_marks);
+  DEFINE_PROC(gh_new_procedure(S_set_show_marks,SCM_FNC g_set_show_marks,0,3,0),H_set_show_marks);
+  DEFINE_PROC(gh_new_procedure(S_wavo,SCM_FNC g_wavo,0,2,0),H_wavo);
+  DEFINE_PROC(gh_new_procedure(S_set_wavo,SCM_FNC g_set_wavo,0,3,0),H_set_wavo);
+  DEFINE_PROC(gh_new_procedure(S_wavo_hop,SCM_FNC g_wavo_hop,0,2,0),H_wavo_hop);
+  DEFINE_PROC(gh_new_procedure(S_set_wavo_hop,SCM_FNC g_set_wavo_hop,0,3,0),H_set_wavo_hop);
+  DEFINE_PROC(gh_new_procedure(S_wavo_trace,SCM_FNC g_wavo_trace,0,2,0),H_wavo_trace);
+  DEFINE_PROC(gh_new_procedure(S_set_wavo_trace,SCM_FNC g_set_wavo_trace,0,3,0),H_set_wavo_trace);
+  DEFINE_PROC(gh_new_procedure(S_line_size,SCM_FNC g_line_size,0,2,0),H_line_size);
+  DEFINE_PROC(gh_new_procedure(S_set_line_size,SCM_FNC g_set_line_size,0,3,0),H_set_line_size);
+  DEFINE_PROC(gh_new_procedure(S_show_fft_peaks,SCM_FNC g_show_fft_peaks,0,2,0),H_show_fft_peaks);
+  DEFINE_PROC(gh_new_procedure(S_set_show_fft_peaks,SCM_FNC g_set_show_fft_peaks,0,3,0),H_set_show_fft_peaks);
+  DEFINE_PROC(gh_new_procedure(S_zero_pad,SCM_FNC g_zero_pad,0,2,0),H_zero_pad);
+  DEFINE_PROC(gh_new_procedure(S_set_zero_pad,SCM_FNC g_set_zero_pad,0,3,0),H_set_zero_pad);
+  DEFINE_PROC(gh_new_procedure(S_verbose_cursor,SCM_FNC g_verbose_cursor,0,2,0),H_verbose_cursor);
+  DEFINE_PROC(gh_new_procedure(S_set_verbose_cursor,SCM_FNC g_set_verbose_cursor,0,3,0),H_set_verbose_cursor);
+  DEFINE_PROC(gh_new_procedure(S_fft_log_frequency,SCM_FNC g_fft_log_frequency,0,2,0),H_fft_log_frequency);
+  DEFINE_PROC(gh_new_procedure(S_set_fft_log_frequency,SCM_FNC g_set_fft_log_frequency,0,3,0),H_set_fft_log_frequency);
+  DEFINE_PROC(gh_new_procedure(S_fft_log_magnitude,SCM_FNC g_fft_log_magnitude,0,2,0),H_fft_log_magnitude);
+  DEFINE_PROC(gh_new_procedure(S_set_fft_log_magnitude,SCM_FNC g_set_fft_log_magnitude,0,3,0),H_set_fft_log_magnitude);
+  DEFINE_PROC(gh_new_procedure(S_min_dB,SCM_FNC g_min_dB,0,2,0),H_min_dB);
+  DEFINE_PROC(gh_new_procedure(S_set_min_dB,SCM_FNC g_set_min_dB,0,3,0),H_set_min_dB);
+  DEFINE_PROC(gh_new_procedure(S_wavelet_type,SCM_FNC g_wavelet_type,0,2,0),H_wavelet_type);
+  DEFINE_PROC(gh_new_procedure(S_set_wavelet_type,SCM_FNC g_set_wavelet_type,0,3,0),H_set_wavelet_type);
+  DEFINE_PROC(gh_new_procedure(S_spectro_cutoff,SCM_FNC g_spectro_cutoff,0,2,0),H_spectro_cutoff);
+  DEFINE_PROC(gh_new_procedure(S_set_spectro_cutoff,SCM_FNC g_set_spectro_cutoff,0,3,0),H_set_spectro_cutoff);
+  DEFINE_PROC(gh_new_procedure(S_spectro_start,SCM_FNC g_spectro_start,0,2,0),H_spectro_start);
+  DEFINE_PROC(gh_new_procedure(S_set_spectro_start,SCM_FNC g_set_spectro_start,0,3,0),H_set_spectro_start);
+  DEFINE_PROC(gh_new_procedure(S_spectro_x_angle,SCM_FNC g_spectro_x_angle,0,2,0),H_spectro_x_angle);
+  DEFINE_PROC(gh_new_procedure(S_set_spectro_x_angle,SCM_FNC g_set_spectro_x_angle,0,3,0),H_set_spectro_x_angle);
+  DEFINE_PROC(gh_new_procedure(S_spectro_x_scale,SCM_FNC g_spectro_x_scale,0,2,0),H_spectro_x_scale);
+  DEFINE_PROC(gh_new_procedure(S_set_spectro_x_scale,SCM_FNC g_set_spectro_x_scale,0,3,0),H_set_spectro_x_scale);
+  DEFINE_PROC(gh_new_procedure(S_spectro_y_angle,SCM_FNC g_spectro_y_angle,0,2,0),H_spectro_y_angle);
+  DEFINE_PROC(gh_new_procedure(S_set_spectro_y_angle,SCM_FNC g_set_spectro_y_angle,0,3,0),H_set_spectro_y_angle);
+  DEFINE_PROC(gh_new_procedure(S_spectro_y_scale,SCM_FNC g_spectro_y_scale,0,2,0),H_spectro_y_scale);
+  DEFINE_PROC(gh_new_procedure(S_set_spectro_y_scale,SCM_FNC g_set_spectro_y_scale,0,3,0),H_set_spectro_y_scale);
+  DEFINE_PROC(gh_new_procedure(S_spectro_z_angle,SCM_FNC g_spectro_z_angle,0,2,0),H_spectro_z_angle);
+  DEFINE_PROC(gh_new_procedure(S_set_spectro_z_angle,SCM_FNC g_set_spectro_z_angle,0,3,0),H_set_spectro_z_angle);
+  DEFINE_PROC(gh_new_procedure(S_spectro_z_scale,SCM_FNC g_spectro_z_scale,0,2,0),H_spectro_z_scale);
+  DEFINE_PROC(gh_new_procedure(S_set_spectro_z_scale,SCM_FNC g_set_spectro_z_scale,0,3,0),H_set_spectro_z_scale);
+  DEFINE_PROC(gh_new_procedure(S_fft_beta,SCM_FNC g_fft_beta,0,2,0),H_fft_beta);
+  DEFINE_PROC(gh_new_procedure(S_set_fft_beta,SCM_FNC g_set_fft_beta,0,3,0),H_set_fft_beta);
+  DEFINE_PROC(gh_new_procedure(S_spectro_hop,SCM_FNC g_spectro_hop,0,2,0),H_spectro_hop);
+  DEFINE_PROC(gh_new_procedure(S_set_spectro_hop,SCM_FNC g_set_spectro_hop,0,3,0),H_set_spectro_hop);
 
   DEFINE_PROC(gh_new_procedure("swap-channels",SCM_FNC g_swap_channels,0,6,0),H_swap_channels);
 
@@ -8141,3 +8909,4 @@ void g_init_chn(SCM local_doc)
 }
 
 #endif
+

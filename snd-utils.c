@@ -8,6 +8,9 @@ int round(Float x)
   return(i);
 }
 
+Float fclamp(Float lo, Float val, Float hi) {if (val>hi) return(hi); else if (val<lo) return(lo); else return(val);}
+int iclamp(int lo, int val, int hi) {if (val>hi) return(hi); else if (val<lo) return(lo); else return(val);}
+
 char *copy_string (char *str)
 {
   char *newstr = NULL;
@@ -233,16 +236,6 @@ char *snd_tempnam(snd_state *ss)
   if ((udir) && (*udir))
     return(tempnam(udir,"snd_"));
   return(tempnam(NULL,"snd_"));
-}
-
-Float dB(snd_state *ss, Float py)
-{
-  return((py <= ss->lin_dB) ? ss->min_dB : (20.0*(log10(py))));
-}
-
-Float un_dB(snd_state *ss, Float py)
-{
-  return((py <= ss->min_dB) ? 0.0 : pow(10.0,py*.05));
 }
 
 void snd_exit(int val)

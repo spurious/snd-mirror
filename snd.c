@@ -203,7 +203,7 @@ static void mus_error2snd(int type, char *msg)
   allocate_regions(ss,max_regions(ss));
 
   ss->min_dB = DEFAULT_MIN_DB;
-  ss->lin_dB = 0.001;
+  ss->lin_dB = pow(10.0,DEFAULT_MIN_DB*0.05);
   ss->init_window_x = -1; 
   ss->init_window_y = -1; 
   ss->init_window_width = -1; 

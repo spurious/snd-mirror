@@ -61,7 +61,7 @@ ccrma-ftp.stanford.edu; the Snd editor is <a href="ftp://ccrma-ftp.stanford.edu/
 <li><small><a href="#generic-functions">Generic Functions</a></small>
 <li><small><a href="#sound IO">Frames, Mixers, Sound IO</a></small>
 <li><small><a href="#functions">Useful functions</a></small>
-<li><small><a href="#structs">def-clm-struct</a></small>
+<li><small><a href="#def-clm-struct">def-clm-struct</a></small>
 <li><small><a href="#definstrument">Definstrument</a></small>
 </ul>
 <li><a href="#note-lists">Note Lists</a>
@@ -340,7 +340,7 @@ Frequencies are always in cycles per
 second (also known as Hz), internal table size is two pi.  The
 fm (or frequency change) argument is assumed to be a phase change in radians,
 applied on each sample.  Normally composers would rather think in terms of
-Hz, so the function <a href="#hz2radians">hz-&gt;radians</a> can be used to convert from units of cycles
+Hz, so the function <a href="#hz-&gt;radians">hz-&gt;radians</a> can be used to convert from units of cycles
 per second to radians per sample.  Since all the generators agree that their internal period length is
 two-pi, you can always use hz-&gt;radians to convert the frequency change (or fm)
 argument from a more easily interpreted value.</p>
@@ -807,6 +807,7 @@ use this for VOSIM and other related techniques.</p>
   <a name="rand-interp?"><em class=def>rand-interp?</em></a> <i>r</i>
   <a name="centered-random"><em class=def>centered-random</em></a> <i>amp</i> 
   <a name="clm-random"><em class=def>clm-random</em></a> <i>amp</i>
+  <a name="mus-random"><em class=def>mus-random</em></a> <i>amp</i> ;same as centered-random (for C-side compatibility)
   <a name="mus-set-rand-seed"><em class=def>mus-set-rand-seed</em></a> <i>seed</i>
 </pre>
 <p><b>Rand</b> returns a sequence of random numbers between -amplitude and
@@ -2025,6 +2026,8 @@ a few that look for all the world like generators.</p>
 <pre>
   <a name="hz-&gt;radians"><em class=def>hz-&gt;radians</em></a> <i>freq</i>               convert <i>freq</i> to radians per sample
   <a name="radians-&gt;hz"><em class=def>radians-&gt;hz</em></a> <i>rads</i>               convert <i>rads</i> to Hz
+  <a name="db-&gt;linear"><em class=def>db-&gt;linear</em></a> <i>dB</i>               convert <i>dB</i> to linear value
+  <a name="linear-&gt;db"><em class=def>linear-&gt;db</em></a> <i>val</i>               convert <i>val</i> to dB
   <a name="times-&gt;samples"><em class=def>times-&gt;samples</em></a> <i>start</i> <i>duration</i>  convert <i>start</i> and <i>duration</i> from seconds to samples
   <a name="seconds-&gt;samples"><em class=def>seconds-&gt;samples</em></a> <i>secs</i>          convert <i>secs</i> to samples
   <a name="degrees-&gt;radians"><em class=def>degrees-&gt;radians</em></a> <i>degs</i>          convert <i>degs</i> to radians
@@ -2352,7 +2355,7 @@ flux; currently they are:</p>
   c-options  "-c -O"    ; C compiler switches
   parallel nil          ; a "sample-synchronous" instrument -- defpinstrument
   type                  ; can be :parallel or nil -- will replace the "parallel" argument
-  print-function        ; see <a href="#print-function">print-function</a>
+  print-function
 </pre>
 <p>The output language is chosen based on the kind of CLM you load.  In most cases,
 it defaults to :c.
@@ -3217,7 +3220,7 @@ use all of Lisp's debugging features to see what is going wrong.  To run in Lisp
 (definstrument (simp :language :lisp) (args) ...), and then recompile and reload
 the instrument.  </p>
 
-<p>The optimize <a href="#safety">safety</a> option can be used to check for array index and null
+<p>The optimize <a name="safety">safety</a> option can be used to check for array index and null
 generator problems (these will be reported as bus errors and segmentation
 faults).</p>
 
@@ -3412,7 +3415,7 @@ appropriate Snd code through the function <b>send-snd</b> and friends.
 <p>fires up Snd, opens "oboe.snd", edits it by adding a fm-violin note, and
 saves the result under the same name, exiting Snd.  All of this is
 compatible with the debugging and display uses of Snd.  For example,
-<a href="#display">display</a> starts Snd itself if one isn't started yet,
+'display' starts Snd itself if one isn't started yet,
 and that same Snd process can handle the editing operations described above.
 Similarly, <b>to-snd</b> fires up Snd unless it is already running, then
 calls with-sound on its arguments, passing the result to Snd.

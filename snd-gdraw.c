@@ -831,6 +831,7 @@ static void AX_Orientation_Callback(GtkAdjustment *adj, gpointer clientData)
   orientation_info *od = (orientation_info *)clientData;
   ss = od->state;
   in_set_spectro_x_angle(ss,(Float)(adj->value));
+  map_chans_field(ss,F_X_ANGLE,(Float)(adj->value));
   map_over_chans(ss,update_graph,NULL);
 }
 
@@ -838,6 +839,7 @@ void set_spectro_x_angle(snd_state *ss, Float val)
 {
   in_set_spectro_x_angle(ss,val);
   if (oid) gtk_adjustment_set_value(GTK_ADJUSTMENT(oid->ax_adj),val);
+  map_chans_field(ss,F_X_ANGLE,val);
   if (!(ss->graph_hook_active)) map_over_chans(ss,update_graph,NULL);
 }
 
@@ -847,6 +849,7 @@ static void AY_Orientation_Callback(GtkAdjustment *adj, gpointer clientData)
   orientation_info *od = (orientation_info *)clientData;
   ss = od->state;
   in_set_spectro_y_angle(ss,(Float)(adj->value));
+  map_chans_field(ss,F_Y_ANGLE,(Float)(adj->value));
   map_over_chans(ss,update_graph,NULL);
 }
 
@@ -854,6 +857,7 @@ void set_spectro_y_angle(snd_state *ss, Float val)
 {
   in_set_spectro_y_angle(ss,val);
   if (oid) gtk_adjustment_set_value(GTK_ADJUSTMENT(oid->ay_adj),val);
+  map_chans_field(ss,F_Y_ANGLE,val);
   if (!(ss->graph_hook_active)) map_over_chans(ss,update_graph,NULL);
 }
 
@@ -863,6 +867,7 @@ static void AZ_Orientation_Callback(GtkAdjustment *adj, gpointer clientData)
   orientation_info *od = (orientation_info *)clientData;
   ss = od->state;
   in_set_spectro_z_angle(ss,(Float)(adj->value));
+  map_chans_field(ss,F_Z_ANGLE,(Float)(adj->value));
   map_over_chans(ss,update_graph,NULL);
 }
 
@@ -870,6 +875,7 @@ void set_spectro_z_angle(snd_state *ss, Float val)
 {
   in_set_spectro_z_angle(ss,val);
   if (oid) gtk_adjustment_set_value(GTK_ADJUSTMENT(oid->az_adj),val);
+  map_chans_field(ss,F_Z_ANGLE,val);
   if (!(ss->graph_hook_active)) map_over_chans(ss,update_graph,NULL);
 }
 
@@ -879,6 +885,7 @@ static void SX_Orientation_Callback(GtkAdjustment *adj, gpointer clientData)
   orientation_info *od = (orientation_info *)clientData;
   ss = od->state;
   in_set_spectro_x_scale(ss,(Float)(adj->value));
+  map_chans_field(ss,F_X_SCALE,(Float)(adj->value));
   map_over_chans(ss,update_graph,NULL);
 }
 
@@ -886,6 +893,7 @@ void set_spectro_x_scale(snd_state *ss, Float val)
 {
   in_set_spectro_x_scale(ss,val);
   if (oid) gtk_adjustment_set_value(GTK_ADJUSTMENT(oid->sx_adj),val);
+  map_chans_field(ss,F_X_SCALE,val);
   if (!(ss->graph_hook_active)) map_over_chans(ss,update_graph,NULL);
 }
 
@@ -895,6 +903,7 @@ static void SY_Orientation_Callback(GtkAdjustment *adj, gpointer clientData)
   orientation_info *od = (orientation_info *)clientData;
   ss = od->state;
   in_set_spectro_y_scale(ss,(Float)(adj->value));
+  map_chans_field(ss,F_Y_SCALE,(Float)(adj->value));
   map_over_chans(ss,update_graph,NULL);
 }
 
@@ -902,6 +911,7 @@ void set_spectro_y_scale(snd_state *ss, Float val)
 {
   in_set_spectro_y_scale(ss,val);
   if (oid) gtk_adjustment_set_value(GTK_ADJUSTMENT(oid->sy_adj),val);
+  map_chans_field(ss,F_Y_SCALE,val);
   if (!(ss->graph_hook_active)) map_over_chans(ss,update_graph,NULL);
 }
 
@@ -911,6 +921,7 @@ static void SZ_Orientation_Callback(GtkAdjustment *adj, gpointer clientData)
   orientation_info *od = (orientation_info *)clientData;
   ss = od->state;
   in_set_spectro_z_scale(ss,(Float)(adj->value));
+  map_chans_field(ss,F_Z_SCALE,(Float)(adj->value));
   map_over_chans(ss,update_graph,NULL);
 }
 
@@ -918,22 +929,21 @@ void set_spectro_z_scale(snd_state *ss, Float val)
 {
   in_set_spectro_z_scale(ss,val);
   if (oid) gtk_adjustment_set_value(GTK_ADJUSTMENT(oid->sz_adj),val);
+  map_chans_field(ss,F_Z_SCALE,val);
   if (!(ss->graph_hook_active)) map_over_chans(ss,update_graph,NULL);
 }
+
+static int map_chans_spectro_hop(chan_info *cp, void *ptr) {cp->spectro_hop = (int)ptr; return(0);}
 
 static void Hop_Orientation_Callback(GtkAdjustment *adj, gpointer clientData) 
 {
   snd_state *ss;
+  int val;
   orientation_info *od = (orientation_info *)clientData;
   ss = od->state;
-  if (adj->value <= 0) 
-    in_set_spectro_hop(ss,1);
-  else 
-    {
-      if (adj->value <= 20)
-	in_set_spectro_hop(ss,(int)(adj->value));
-      else in_set_spectro_hop(ss,20);
-    }
+  val = iclamp(1,adj->value,20);
+  in_set_spectro_hop(ss,val);
+  map_over_chans(ss,map_chans_spectro_hop,(void *)val);
   map_over_chans(ss,update_graph,NULL);
 }
 
@@ -943,6 +953,7 @@ void set_spectro_hop(snd_state *ss, int val)
     {
       in_set_spectro_hop(ss,val);
       if (oid) gtk_adjustment_set_value(GTK_ADJUSTMENT(oid->hop_adj),val);
+      map_over_chans(ss,map_chans_spectro_hop,(void *)val);
       if (!(ss->graph_hook_active)) map_over_chans(ss,update_graph,NULL);
     }
 }
@@ -953,6 +964,7 @@ static void Cut_Orientation_Callback(GtkAdjustment *adj, gpointer clientData)
   snd_state *ss;
   orientation_info *od = (orientation_info *)clientData;
   ss = od->state;
+  map_chans_field(ss,F_CUTOFF,(Float)(adj->value));
   set_spectro_cutoff_and_redisplay(ss,(Float)(adj->value)); /* calls in_set... */
 } 
 
@@ -960,6 +972,7 @@ void set_spectro_cutoff(snd_state *ss, Float val)
 {
   in_set_spectro_cutoff(ss,val);
   if (oid) gtk_adjustment_set_value(GTK_ADJUSTMENT(oid->cut_adj),val);
+  map_chans_field(ss,F_CUTOFF,val);
   if (!(ss->graph_hook_active)) map_over_chans(ss,update_graph,NULL);
 }
 

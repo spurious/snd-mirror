@@ -2528,7 +2528,8 @@
 			       (if (null? names)
 				   ""
 				   (format #f ":~{~A~^, ~}" names))))
-      (in retitle-time title-with-date))))
+      (if (> retitle-time 0)
+	  (in retitle-time title-with-date)))))
 
 ;(title-with-date)
-;  -- this line starts the new window title handler which runs until Snd is exited
+;  -- this line starts the new window title handler which runs until Snd is exited or retitle-time is set to 0

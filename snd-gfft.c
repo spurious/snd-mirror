@@ -207,10 +207,13 @@ static void size_browse_Callback(GtkWidget *w, gint row, gint column, GdkEventBu
   graph_redisplay(ss);
 }
 
+static int map_chans_wavelet_type(chan_info *cp, void *ptr) {cp->wavelet_type = (int)ptr; return(0);}
+
 static void wavelet_browse_Callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer clientData)
 {
   snd_state *ss = (snd_state *)clientData;
   in_set_wavelet_type(ss,row);
+  map_over_chans(ss,map_chans_wavelet_type,(void *)row);
   if (transform_type(ss) == WAVELET)
     map_over_chans(ss,calculate_fft,NULL);
 }
@@ -268,24 +271,36 @@ static void spectrogram_Callback(GtkWidget *w, gpointer clientData)
   map_over_chans(ss,calculate_fft,NULL);
 }
 
+static int map_show_fft_peaks(chan_info *cp, void *ptr) {cp->show_fft_peaks = (int)ptr; return(0);}
+
 static void peaks_Callback(GtkWidget *w, gpointer clientData)
 {
+  int val=0;
   snd_state *ss = (snd_state *)clientData;
-  in_set_show_fft_peaks(ss,GTK_TOGGLE_BUTTON(w)->active);
+  in_set_show_fft_peaks(ss,val = (GTK_TOGGLE_BUTTON(w)->active));
+  map_over_chans(ss,map_show_fft_peaks,(void *)val);
   map_over_chans(ss,calculate_fft,NULL);
 }
+
+static int map_chans_fft_log_magnitude(chan_info *cp, void *ptr) {cp->fft_log_magnitude = (int)ptr; return(0);}
 
 static void db_Callback(GtkWidget *w, gpointer clientData)
 {
   snd_state *ss = (snd_state *)clientData;
-  in_set_fft_log_magnitude(ss,GTK_TOGGLE_BUTTON(w)->active);
+  int val;
+  in_set_fft_log_magnitude(ss,val = (GTK_TOGGLE_BUTTON(w)->active));
+  map_over_chans(ss,map_chans_fft_log_magnitude,(void *)val);
   map_over_chans(ss,calculate_fft,NULL);
 }
+
+static int map_chans_fft_log_frequency(chan_info *cp, void *ptr) {cp->fft_log_frequency = (int)ptr; return(0);}
 
 static void logfreq_Callback(GtkWidget *w, gpointer clientData)
 {
   snd_state *ss = (snd_state *)clientData;
-  in_set_fft_log_frequency(ss,GTK_TOGGLE_BUTTON(w)->active);
+  int val;
+  in_set_fft_log_frequency(ss,val = (GTK_TOGGLE_BUTTON(w)->active));
+  map_over_chans(ss,map_chans_fft_log_frequency,(void *)val);
   map_over_chans(ss,calculate_fft,NULL);
 }
 
@@ -718,6 +733,7 @@ void set_wavelet_type(snd_state *ss, int val)
       gtk_clist_moveto(GTK_CLIST(wavelet_list),val,0,0.5,0.5);
     }
   in_set_wavelet_type(ss,val);
+  map_over_chans(ss,map_chans_wavelet_type,(void *)val);
   if ((transform_type(ss) == WAVELET) && (!(ss->graph_hook_active))) map_over_chans(ss,calculate_fft,NULL);
 }
 
@@ -725,6 +741,7 @@ void set_wavelet_type(snd_state *ss, int val)
 void set_show_fft_peaks(snd_state *ss, int val)
 {
   in_set_show_fft_peaks(ss,val);
+  map_over_chans(ss,map_show_fft_peaks,(void *)val);
   if (transform_dialog) 
     set_toggle_button(peaks_button,val,FALSE,(void *)ss);
   if (!(ss->graph_hook_active)) map_over_chans(ss,calculate_fft,NULL);
@@ -733,6 +750,7 @@ void set_show_fft_peaks(snd_state *ss, int val)
 void set_fft_log_frequency(snd_state *ss, int val)
 {
   in_set_fft_log_frequency(ss,val);
+  map_over_chans(ss,map_chans_fft_log_frequency,(void *)val);
   if (transform_dialog)
     set_toggle_button(logfreq_button,val,FALSE,(void *)ss);
   if (!(ss->graph_hook_active)) map_over_chans(ss,calculate_fft,NULL);
@@ -741,6 +759,7 @@ void set_fft_log_frequency(snd_state *ss, int val)
 void set_fft_log_magnitude(snd_state *ss, int val)
 {
   in_set_fft_log_magnitude(ss,val);
+  map_over_chans(ss,map_chans_fft_log_magnitude,(void *)val);
   if (transform_dialog) 
     set_toggle_button(db_button,val,FALSE,(void *)ss);
   if (!(ss->graph_hook_active)) map_over_chans(ss,calculate_fft,NULL);

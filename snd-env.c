@@ -2,6 +2,18 @@
 
 static char expr_buf[128];
 
+Float un_dB(snd_state *ss, Float py)
+{
+  /* used only by envelope editor (snd-xenv etc) */
+  return((py <= ss->min_dB) ? 0.0 : pow(10.0,py*.05));
+}
+
+static Float dB(snd_state *ss, Float py)
+{
+  return((py <= ss->lin_dB) ? ss->min_dB : (20.0*(log10(py))));
+}
+
+
 env *free_env(env *e)
 {
   if (e)

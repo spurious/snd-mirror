@@ -100,28 +100,33 @@ href="ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-4.tar.gz">snd-4.tar.gz</a>.</p>
   <li><a href="extsnd.html#lisplistener">Introduction</a>
   <li><a href="extsnd.html#etc">Snd Programming</a>
     <ul>
-    <li><a href="extsnd.html#alphabet">An Alphabetical View</a>
+    <li><a href="extsnd.html#appearance">Customizing Snd's appearance</a>
       <ul>
-      <li><a href="extsnd.html#sndconstants">Constants</a>
-      <li><a href="extsnd.html#sndvariables">Variables</a>
-      <li><a href="extsnd.html#sndfunctions">Functions</a>
-      <li><a href="extsnd.html#sndhooks">Hooks</a>
-      <li><a href="extsnd.html#snderrors">Errors</a>
+      <li><a href="extsnd.html#colors">Colors</a>
+      <li><a href="extsnd.html#fonts">Fonts</a>
+      <li><a href="extsnd.html#otherappearance">Other appearance-related stuff</a>
       </ul>
-    <li><a href="extsnd.html#topics">A Topical View</a>	
+    <li><a href="extsnd.html#behavior">Customizing Snd's behavior</a>
       <ul>
-      <li><a href="extsnd.html#appearance">Customizing Snd's appearance</a>
-      <li><a href="extsnd.html#behavior">Customizing Snd's behavior</a>
-      <li><a href="extsnd.html#customcontrols">Customizing the control panel</a>
+      <li><a href="extsnd.html#sndglobalvars">Global variables</a>
+      <li><a href="extsnd.html#sndhooks">Hooks</a>
+      </ul>
+    <li><a href="extsnd.html#sndobjects">Snd's objects</a>
+      <ul>
+      <li><a href="extsnd.html#Vcts">Vcts</a>
+      <li><a href="extsnd.html#samplereaders">Sample-readers</a>
+      <li><a href="extsnd.html#sndsndlib">Sound-data and Sndlib</a>
+      <li><a href="extsnd.html#sndmarks">Marks</a>
+      <li><a href="extsnd.html#sndmixes">Mixes</a>
+      <li><a href="extsnd.html#sndregions">Regions</a>
+      <li><a href="extsnd.html#sndsounds">Sounds and Channels</a>
       <li><a href="extsnd.html#editlists">Edit Lists</a>
       <li><a href="extsnd.html#scanning">Scanning Data</a>
-        <ul>
-        <li><a href="extsnd.html#samplereaders">Sample-readers</a>
-        <li><a href="extsnd.html#Vcts">Vcts</a>
-        <li><a href="extsnd.html#marks">Marks</a>
-        </ul>
-      <li><a href="extsnd.html#writing">Writing Sound Files</a>
-      <li><a href="extsnd.html#sndsndlib">Sndlib</a>
+      <li><a href="extsnd.html#sndtransforms">Transforms</a>
+      <li><a href="extsnd.html#snddialogs">Dialogs</a>
+      <li><a href="extsnd.html#snderrors">Errors</a>
+      <li><a href="extsnd.html#sndconstants">Constants</a>
+      <li><a href="extsnd.html#sndmisc">Miscellaneous functions</a>
       </ul>
     <li><a href="extsnd.html#sndexamples">Examples</a>
     </ul>
@@ -346,7 +351,7 @@ listener available under the View:Open Listener menu option.
 <td></td>
 <td><small><a href="#errorhistory">Error History</a></small></td>
 <td></td>
-<td><small><a href="extsnd.html#customization">Customization</a></small></td>
+<td><small><a href="extsnd.html#appearance">Customization</a></small></td>
 </tr>
 <tr>
 <td></td>
@@ -432,7 +437,7 @@ scrollbars.  </small></p>
 displayed.
 <a name="verticalpane"></a>
 To position sounds horizontally (adding on the right), use the "-h" (or "-horizontal") flag,
-or the <a href="extsnd.html#horizontalpanes">horizontalPanes</a> resource.
+or the <a href="grfsnd.html#horizontalpanes">horizontalPanes</a> resource.
 (This only works on systems with Motif 2.0 or later).  Other overall layout
 choices include the Notebook widget (horizontalPanes: 2, -notebook), an outer scroller
 widget (horizontalPanes: 3, or -scroller), and separate windows for each sound (-separate).  
@@ -462,7 +467,7 @@ you're editing the same file in two separate panes).
 
 <a name="soundsonlybutton"></a><p>In the file selection dialog, there's a button marked
 'Sound files only'.  This can be set by default (see
-<a href="extsnd.html#customization">Customization</a>).  If it is set, only files that appear
+<a href="extsnd.html#sndsetjustsounds">Dialogs</a>).  If it is set, only files that appear
 to be sound files are included in the directory listing.
 Currently Snd uses the file extension to decide whether
 it is a sound file -- the initial extensions are
@@ -861,8 +866,8 @@ or the numeric keypad + and - keys.
         <!-- I(wavogram):A(wavogram) --><!-- I(wavogram):L(wavo)(wavogram) --><!-- I(wavogram):O(wavo-trace, wavo-hop)(wavohop) -->
 
 <a name="saveoptions"></a><p>The Save options menu option is best explained as a part
-of the <a href="extsnd.html#customization">customization</a> process.  It basically
-sets up (or adds to) an <a href="extsnd.html#sndinitfile">initialization file</a> for Snd that sets all
+of the <a href="extsnd.html#appearance">customization</a> process.  It basically
+sets up (or adds to) an <a href="grfsnd.html#sndinitfile">initialization file</a> for Snd that sets all
 the options to their current settings; 
 this is intended to be similar to the ~/.emacs file (its default name is ~/.snd).
 </p>
@@ -1043,7 +1048,7 @@ above the horizontal tab at the top of the window. As with
 sounds and mixes, marks can be grouped together through
 the "sync" field; marks sharing the same sync value (other
 than 0) will move together when one is moved, and so on.
-See the <a href="extsnd.html#marks">marks</a> chapter 
+See the <a href="extsnd.html#sndmarks">marks</a> chapter 
 for a further discussion of synced marks.
 The following keyboard commands relate to marks:</p>
 <pre>
@@ -1624,7 +1629,7 @@ Emacs, C-x C-e prompts for a name for the last defined
 macro; M-x name invokes the macro "name", the
 function save-macros saves all current named macros, and
 save-macro saves one (named) macro
-in the <a href="extsnd.html#sndinitfile">initialization file</a>
+in the <a href="grfsnd.html#sndinitfile">initialization file</a>
 ~/.snd. See the <a href="extsnd.html#lisplistener">lisp</a> section for
 more details.</p>
 
@@ -1780,7 +1785,7 @@ printed with 'print'.</p>
 
 <p>Envelopes can be defined
 using defvar, and loaded from a separate file of envelope
-definitions via <a href="extsnd.html#lload">load</a>.  For example,
+definitions via load.  For example,
 the file:</p>
 <pre>
   (defvar ramp '(0 0 1 1))
@@ -1864,7 +1869,7 @@ associated sound.
 state of Snd by calling <code>(save-state name)</code> where <i>name</i>
 is a file name.  You can start in this state by calling Snd
 with this file name and the "-l" switch: snd -l name.
-This file is in exactly the same format as the <a href="extsnd.html#sndinitfile">initialization
+This file is in exactly the same format as the <a href="grfsnd.html#sndinitfile">initialization
 file</a>, and can be edited, renamed, or
 whatever. To load such a file after startup, <code>(load name)</code> (C-x C-l). 
 Currently, mix consoles are not saved,
@@ -2070,7 +2075,6 @@ all the samples between the cursor and the next mark.</p>
         <!-- I(amp env):K(C-x C-a, C-x a)(cxca) --><!-- I(print file):K(C-x C-d)(cxcd) --><!-- I(insert file):K(C-x C-i)(cxci) -->
         <!-- I(insert file):A(cxci) --><!-- I(mix file):K(C-x C-q)(cxcq) -->
         <!-- I(smooth samples):K(C-x C-z)(cxcz) --><!-- I(smooth samples):A(cxcz) -->
-        <!-- I(evaluate expression):K(C-x C-x, C-x C-n)(cxcx) --><!-- I(evaluate expression):O(over region: C-x x, C-x n)(cxcn) -->
 	<!-- I(continue session):K(C-x C-l)(cxcl) -->
 	<!-- I(smooth samples):L(smooth)(sndsmooth) -->
 <hr>
@@ -2129,7 +2133,7 @@ button is set.
 <p><a name="reverb"></a>The reverberator is a version of Michael
 McNabb's Nrev.  In addition to the controls
 in the control pane, you can set the reverb
-<a href="extsnd.html#sndsetreverbfeedback">feedback</a> gain and the coefficient of the <a href="extsnd.html#sndsetreverblowpass">lowpass</a>
+<a href="extsnd.html#sndreverbfeedback">feedback</a> gain and the coefficient of the <a href="extsnd.html#sndreverblowpass">lowpass</a>
 filter in the allpass bank (see below).
 The reverb is on only
 if the reverb button is set.  The reverb length
@@ -2214,13 +2218,13 @@ panel are:</p>
 <hr>
 
 <h2><a name="index">Index</a></h2>
-<table border rows=118>
+<table border rows=117>
   <caption>Index</caption>
   <!-- created whenever -->
   <tr><th>Action<th>Menu<th>Keyboard<th>Lisp<th>Other</tr>
   <tr><td><a href="#kgc">abort command</a></td><td><br></td><td><a href="#kgc"><small>Cg</small></a></td><td><a href="extsnd.html#sndabort"><small>abort?</small></a></td><td><small>mouse click</small></td></tr>
   <tr><td><a href="#ampenvs">amp env</a></td><td><small>Edit: <a href="#editenvelope">Edit Env</a></small></td><td><a href="#cxca"><small>Cx Ca, Cx a</small></a></td><td><a href="extsnd.html#sndenv"><small>env-sound</small></a></td><td><a href="extsnd.html#sndscaleto"><small>scale-to, scale-by</small></a></td></tr>
-  <tr><td><a href="extsnd.html#autosave">auto-save</a></td><td><br></td><td><br></td><td><br></td><td><small>examp.scm</small></td></tr>
+  <tr><td>auto-save</td><td><br></td><td><br></td><td><br></td><td><small>examp.scm</small></td></tr>
   <tr><td><a href="#autocorrelation">autocorrelation</a></td><td><small>Options: <a href="#viewfft">Transform</a></small></td><td><br></td><td><a href="extsnd.html#sndautocorrelate"><small>autocorrelate</small></a></td><td><br></td></tr>
   <tr><td><a href="#cxcb">axis bounds</a></td><td><br></td><td><a href="#cxcb"><small>Cx Cb, Cx Cp</small></a></td><td><a href="extsnd.html#sndxbounds"><small>[xy]-bounds</small></a></td><td><a href="#minuss"><small>-s switch to Snd</small></a></td></tr>
   <tr><td><a href="extsnd.html#fitdataonopen">axis fits data</a></td><td><br></td><td><br></td><td><a href="extsnd.html#fitdataonopen"><small>fit-data-on-open</small></a></td><td><a href="extsnd.html#sndsetybounds"><small>set-y-bounds</small></a></td></tr>
@@ -2234,12 +2238,12 @@ panel are:</p>
   <tr><td><a href="#speed">change pitch</a></td><td><small>Edit: <a href="#editenvelope">Edit Env</a></small></td><td><br></td><td><a href="extsnd.html#sndsrc"><small>src-sound</small></a></td><td><a href="#speed"><small>see 'speed' control</small></a></td></tr>
   <tr><td><a href="#changesamples">change samples</a></td><td><br></td><td><a href="#cz"><small>Cz, Cx Cz</small></a></td><td><a href="extsnd.html#sndsetsamples"><small>set-samples</small></a></td><td><br></td></tr>
   <tr><td><a href="#speed">change srate</a></td><td><small>Edit: <a href="#editenvelope">Edit Env</a></small></td><td><br></td><td><a href="extsnd.html#sndsrc"><small>src-sound</small></a></td><td><a href="#speed"><small>see 'speed' control</small></a></td></tr>
-  <tr><td><a href="#expand">change tempo</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sndsetexpand"><small>set-expand</small></a></td><td><a href="#expand"><small>see 'expand' control</small></a></td></tr>
+  <tr><td><a href="#expand">change tempo</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sndexpand"><small>set-expand</small></a></td><td><a href="#expand"><small>see 'expand' control</small></a></td></tr>
   <tr><td><a href="#closefile">close file</a></td><td><small>File: <a href="#closefile">Close</a></small></td><td><a href="#cxk"><small>Cx k</small></a></td><td><a href="extsnd.html#sndclose"><small>close-sound</small></a></td><td><br></td></tr>
   <tr><td><a href="#colorbrowser">color</a></td><td><small>View: <a href="#colorbrowser">Color</a></small></td><td><br></td><td><a href="extsnd.html#sndcolordialog"><small>color-dialog</small></a></td><td><a href="extsnd.html#colorscale"><small>color-scale,color-cutoff</small></a></td></tr>
   <tr><td><a href="#unitebutton">combine channels</a></td><td><small>View: <a href="#unitebutton">Channel style</a></small></td><td><br></td><td><a href="extsnd.html#channelstyle"><small>channel-style</small></a></td><td><br></td></tr>
-  <tr><td><a href="#savedstate">continue session</a></td><td><br></td><td><a href="#cxcl"><small>Cx Cl</small></a></td><td><a href="extsnd.html#lload"><small>load</small></a></td><td><a href="#minusl"><small>-l switch to Snd</small></a></td></tr>
-  <tr><td><a href="#controls">control panel</a></td><td><small>View: <a href="#controls">Show controls</a></small></td><td><a href="#cxco"><small>Cx Co, Cx Cc</small></a></td><td><a href="extsnd.html#sndsetshowingcontrols"><small>set-showing-controls</small></a></td><td><a href="#panecontrol"><small>drag pane sash</small></a></td></tr>
+  <tr><td><a href="#savedstate">continue session</a></td><td><br></td><td><a href="#cxcl"><small>Cx Cl</small></a></td><td><small>load</small></td><td><a href="#minusl"><small>-l switch to Snd</small></a></td></tr>
+  <tr><td><a href="#controls">control panel</a></td><td><small>View: <a href="#controls">Show controls</a></small></td><td><a href="#cxco"><small>Cx Co, Cx Cc</small></a></td><td><a href="extsnd.html#sndshowingcontrols"><small>set-showing-controls</small></a></td><td><a href="#panecontrol"><small>drag pane sash</small></a></td></tr>
   <tr><td><a href="extsnd.html#sndconvolve">convolution</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sndconvolve"><small>convolve</small></a></td><td><a href="extsnd.html#sndconvolvewith"><small>convolve-with</small></a></td></tr>
   <tr><td><a href="extsnd.html#lcountmatches">count matches</a></td><td><br></td><td><br></td><td><a href="extsnd.html#lcountmatches"><small>count-matches</small></a></td><td><br></td></tr>
   <tr><td><a href="#newfile">create new file</a></td><td><small>File: <a href="#newfile">New</a></small></td><td><br></td><td><a href="extsnd.html#sndnew"><small>new-sound</small></a></td><td><a href="extsnd.html#defaultoutputsrate"><small>default-output-srate</small></a></td></tr>
@@ -2254,7 +2258,6 @@ panel are:</p>
   <tr><td><a href="#viewdots">dots or lines</a></td><td><small>View: <a href="#viewdots">Dots</a></small></td><td><br></td><td><a href="extsnd.html#graphstyle"><small>graph-style</small></a></td><td><a href="extsnd.html#dotsize"><small>dot-size: numberpad '.', '0'</small></a></td></tr>
   <tr><td><a href="#editenvelope">edit env</a></td><td><small>Edit: <a href="#editenvelope">Edit Env</a></small></td><td><br></td><td><a href="extsnd.html#sndenveddialog"><small>enved-dialog</small></a></td><td><br></td></tr>
   <tr><td><a href="#editheader">edit header</a></td><td><small>Edit: <a href="#editheader">Edit Header</a></small></td><td><br></td><td><a href="extsnd.html#sndeditheaderdialog"><small>edit-header-dialog</small></a></td><td><br></td></tr>
-  <tr><td><a href="#cexpression">evaluate expression</a></td><td><br></td><td><a href="#cxcx"><small>Cx Cx, Cx Cn</small></a></td><td><br></td><td><a href="#cxcn"><small>over region: Cx x, Cx n</small></a></td></tr>
   <tr><td><a href="#regions">examine regions</a></td><td><small>View: <a href="#regionbrowser">Regions</a></small></td><td><br></td><td><a href="extsnd.html#sndregiondialog"><small>region-dialog</small></a></td><td><br></td></tr>
   <tr><td><a href="#exitfile">exit Snd</a></td><td><small>File: <a href="#exitfile">Exit</a></small></td><td><br></td><td><a href="extsnd.html#sndexit"><small>exit</small></a></td><td><small>window menu: close or exit</small></td></tr>
   <tr><td><a href="#extendfile">extend file</a></td><td><br></td><td><a href="#co"><small>Co</small></a></td><td><br></td><td><br></td></tr>
@@ -2283,11 +2286,11 @@ panel are:</p>
   <tr><td><a href="#editcut">mix selection</a></td><td><small>Edit: <a href="#editcut">Mix</a></small></td><td><a href="#cxq"><small>Cx q</small></a></td><td><a href="extsnd.html#sndmixregion"><small>mix-region</small></a></td><td><br></td></tr>
   <tr><td><a href="#thecursor">move cursor ahead</a></td><td><br></td><td><a href="#ce"><small>Cf, Cn, Ce</small></a></td><td><a href="extsnd.html#sndforwardsample"><small>forward-sample</small></a></td><td><small>also &gt;</small></td></tr>
   <tr><td><a href="#thecursor">move cursor back</a></td><td><br></td><td><a href="#ca"><small>Cb, Cp, Ca</small></a></td><td><a href="extsnd.html#sndbackwardsample"><small>backward-sample</small></a></td><td><small>also &lt;</small></td></tr>
-  <tr><td><a href="#movemixedfile">move mixed file</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sndsetmixposition"><small>set-mix-position</small></a></td><td><a href="#movemixedfile"><small>see mix doc</small></a></td></tr>
+  <tr><td><a href="#movemixedfile">move mixed file</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sndmixposition"><small>set-mix-position</small></a></td><td><a href="#movemixedfile"><small>see mix doc</small></a></td></tr>
   <tr><td><a href="#cj">move to mark</a></td><td><br></td><td><a href="#cj"><small>Cj, Cx j</small></a></td><td><a href="extsnd.html#sndforwardmark"><small>forward-mark</small></a></td><td><a href="#cxj"><small>Cx j -&gt; named mark</small></a></td></tr>
   <tr><td><a href="#gotomix">move to mix</a></td><td><br></td><td><a href="#cxcj"><small>Cx Cj</small></a></td><td><a href="extsnd.html#sndforwardmix"><small>forward-mix</small></a></td><td><br></td></tr>
-  <tr><td><a href="#movingwindow">move window ahead</a></td><td><br></td><td><a href="#cxf"><small>[Left], Cx f</small></a></td><td><a href="extsnd.html#sndsetrightsample"><small>set-right-sample</small></a></td><td><small>scroll bars</small></td></tr>
-  <tr><td><a href="#movingwindow">move window back</a></td><td><br></td><td><a href="#movewindow"><small>[Right], Cx b</small></a></td><td><a href="extsnd.html#sndsetleftsample"><small>set-left-sample</small></a></td><td><small>scroll bars</small></td></tr>
+  <tr><td><a href="#movingwindow">move window ahead</a></td><td><br></td><td><a href="#cxf"><small>[Left], Cx f</small></a></td><td><a href="extsnd.html#sndrightsample"><small>set-right-sample</small></a></td><td><small>scroll bars</small></td></tr>
+  <tr><td><a href="#movingwindow">move window back</a></td><td><br></td><td><a href="#movewindow"><small>[Right], Cx b</small></a></td><td><a href="extsnd.html#sndleftsample"><small>set-left-sample</small></a></td><td><small>scroll bars</small></td></tr>
   <tr><td><a href="#multichannel">multichannel ops</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sndsyncing"><small>syncing</small></a></td><td><a href="#syncbutton"><small>sync button</small></a></td></tr>
   <tr><td><a href="#viewnormalize">normalize display</a></td><td><small>View: <a href="#viewnormalize">Normalize</a></small></td><td><br></td><td><a href="extsnd.html#sndnormalizeview"><small>normalize-view</small></a></td><td><small>Popup: Normalize</small></td></tr>
   <tr><td><a href="#cu">numeric arguments</a></td><td><br></td><td><a href="#kcu"><small>Cu</small></a></td><td><a href="extsnd.html#prefixarg"><small>prefix-arg</small></a></td><td><a href="#kcu"><small>see marks as args</small></a></td></tr>
@@ -2317,7 +2320,7 @@ panel are:</p>
   <tr><td><a href="#savedstate">save state</a></td><td><small>Options: <a href="#savedstate">Save State</a></small></td><td><br></td><td><a href="extsnd.html#sndsavestate"><small>save-state</small></a></td><td><a href="extsnd.html#savestateonexit"><small>save-state-on-exit</small></a></td></tr>
   <tr><td><a href="#prevfiles">select sound</a></td><td><br></td><td><a href="#cxo"><small>Cx o</small></a></td><td><a href="extsnd.html#sndselectsound"><small>select-sound</small></a></td><td><small>File dialog: click file</small></td></tr>
   <tr><td><a href="#fw">show freq domain</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sndffting"><small>ffting</small></a></td><td><a href="#fw"><small>'f' button</small></a></td></tr>
-  <tr><td><a href="#marks">show marks</a></td><td><small>View: <a href="#marks">Show marks</a></small></td><td><br></td><td><a href="extsnd.html#setshowmarks"><small>set-show-marks</small></a></td><td><br></td></tr>
+  <tr><td><a href="#marks">show marks</a></td><td><small>View: <a href="#marks">Show marks</a></small></td><td><br></td><td><a href="extsnd.html#showmarks"><small>set-show-marks</small></a></td><td><br></td></tr>
   <tr><td><a href="#fw">show time domain</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sndwaving"><small>waving</small></a></td><td><a href="#fw"><small>'w' button</small></a></td></tr>
   <tr><td><a href="#cxcz">smooth samples</a></td><td><br></td><td><a href="#cxcz"><small>Cx Cz</small></a></td><td><a href="extsnd.html#sndsmooth"><small>smooth</small></a></td><td><br></td></tr>
   <tr><td><a href="#cxz">smooth selection</a></td><td><br></td><td><a href="#cxz"><small>Cx z</small></a></td><td><a href="extsnd.html#sndsmoothselection"><small>smooth-selection</small></a></td><td><br></td></tr>

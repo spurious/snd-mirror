@@ -11,7 +11,7 @@
       #define HAVE_SYS_VFS_H
       #define FSTATFS_ARGS 2
     #else
-      #if defined(ALPHA)
+      #if (defined(ALPHA) || defined(__APPLE__))
         #define HAVE_SYS_MOUNT_H
         #define FSTATFS_ARGS 2
       #else
@@ -190,6 +190,7 @@ enum {SND_NO_ERROR,SND_CANNOT_WRITE_HEADER,SND_CANNOT_OPEN_TEMP_FILE,
 enum {ALPHABET,VALS_GREATER,VALS_LESS};
 
 enum {FILE_PER_SOUND,FILE_PER_CHANNEL};
+enum {F_X_ANGLE,F_X_SCALE,F_Y_ANGLE,F_Y_SCALE,F_Z_ANGLE,F_Z_SCALE,F_CUTOFF};
 
 enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 #define AUDIO_STATE_FILE ".snd-mixer"
@@ -214,9 +215,10 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 #define DEFAULT_REVERB_LOWPASS 0.7
 #define DEFAULT_REVERB_SCALE 0.0
 #define DEFAULT_SPEED 1.0
+#define DEFAULT_SYNCING 0
 
 #define reverb_decay(ss) ss->Reverb_Decay
-#define set_reverb_decay(ss,a) ss->Reverb_Decay = a
+#define in_set_reverb_decay(ss,a) ss->Reverb_Decay = a
 #define DEFAULT_REVERB_DECAY 1.0
 
 #define default_output_type(ss) ss->Default_Output_Type
@@ -319,7 +321,7 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 #define DEFAULT_INITIAL_Y1 1.0
 
 #define line_size(ss) ss->Line_Size
-#define set_line_size(ss,a) ss->Line_Size = a
+#define in_set_line_size(ss,a) ss->Line_Size = a
 #define DEFAULT_LINE_SIZE 128
 
 #define dot_size(ss) ss->Dot_Size
@@ -339,7 +341,7 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 #define DEFAULT_SPECTRO_CUTOFF 1.0
 
 #define spectro_start(ss) ss->Spectro_Start
-#define set_spectro_start(ss,a) ss->Spectro_Start = a
+#define in_set_spectro_start(ss,a) ss->Spectro_Start = a
 #define DEFAULT_SPECTRO_START 0.0
 
 #define spectro_x_angle(ss) ss->Spectro_X_Angle
@@ -486,15 +488,15 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 #define DEFAULT_WITH_MIX_CONSOLES 1
 
 #define wavo_hop(ss) ss->Wavo_Hop
-#define set_wavo_hop(ss,a) ss->Wavo_Hop = a
+#define in_set_wavo_hop(ss,a) ss->Wavo_Hop = a
 #define DEFAULT_WAVO_HOP 3
 
 #define wavo(ss) ss->Wavo
-#define set_wavo(ss,a) ss->Wavo = a
+#define in_set_wavo(ss,a) ss->Wavo = a
 #define DEFAULT_WAVO 0
 
 #define wavo_trace(ss) ss->Wavo_Trace
-#define set_wavo_trace(ss,a) ss->Wavo_Trace = a
+#define in_set_wavo_trace(ss,a) ss->Wavo_Trace = a
 #define DEFAULT_WAVO_TRACE 64
 
 #define x_axis_style(ss) ss->X_Axis_Style
@@ -502,7 +504,7 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 #define DEFAULT_AXIS_STYLE X_IN_SECONDS
 
 #define zero_pad(ss) ss->Zero_Pad
-#define set_zero_pad(ss,a) ss->Zero_Pad = a
+#define in_set_zero_pad(ss,a) ss->Zero_Pad = a
 #define DEFAULT_ZERO_PAD 0
 
 #define show_fft_peaks(ss) ss->Show_Fft_Peaks

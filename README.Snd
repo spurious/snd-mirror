@@ -1,9 +1,10 @@
 Snd
 
 Snd is a sound editor.  It currently runs on the SGI, Sun, UnixWare,
-OpenServer, HPUX, DEC Alpha, Linux, LinuxPPC, FreeBSD, and in Windoze using
-either Cygwin with Lesstif, or MS C with a commercial Motif.  To build
-Snd, get the sources from
+OpenServer, HPUX, DEC Alpha, Linux, LinuxPPC, FreeBSD, BeOS (no GUI
+yet), Mac OS-X (also no GUI), and in Windoze using either Cygwin with
+Lesstif, or MS C with a commercial Motif.  To build Snd, get the
+sources from
 
   ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-4.tar.gz
 
@@ -71,6 +72,13 @@ If you're using guile-1.3, and not going through the configure process
 (i.e. you're using one of the pre-built makefiles), add the switch
 -DHAVE_GUILE_1_3_0 to CFLAGS.  If you have Guile 1.3.4 add
 -DHAVE_GUILE_1_3.  (The default is now Guile 1.4).
+
+
+Snd builds in Mac OS-X (you need to use /usr/libexec/config.sub
+and /usr/libexec.config.guess -- the versions I have from
+Gnu don't work).  This version of Snd is not very useful yet,
+since there's no GUI (but Guile works), but it's a start.
+
 
 
 ----------------------------------------------------------------

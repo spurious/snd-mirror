@@ -18,7 +18,7 @@
 #if defined(HAVE_SYS_VFS_H)
   #include <sys/vfs.h>
 #endif
-#if defined(HAVE_SYS_MOUNT_H)
+#if (defined(HAVE_SYS_MOUNT_H) || defined(__APPLE__))
   #include <sys/mount.h>
 #endif
 

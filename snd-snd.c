@@ -885,6 +885,19 @@ multifile_info *sort_multifile_channels(snd_state *ss, char *filename)
 }
 #endif
 
+static void set_reverb_decay(snd_state *ss, Float val) 
+{
+  int i;
+  snd_info *sp;
+  in_set_reverb_decay(ss,val);
+  for (i=0;i<ss->max_sounds;i++)
+    {
+      sp = ss->sounds[i];
+      if ((sp) && (sp->inuse))
+	sp->reverb_decay = val;
+    }
+}
+      
 
 
 #if HAVE_GUILE
@@ -980,7 +993,8 @@ static SCM g_bomb(SCM snd, SCM on)
 enum {SYNCF,UNITEF,READONLYF,NCHANSF,CONTRASTINGF,EXPANDINGF,REVERBINGF,FILTERINGF,FILTERORDERF,
       SRATEF,DATAFORMATF,DATALOCATIONF,HEADERTYPEF,CONTROLPANELSAVEF,CONTROLPANELRESTOREF,SELECTEDCHANNELF,
       COMMENTF,FILENAMEF,SHORTFILENAMEF,CLOSEF,UPDATEF,SAVEF,CURSORFOLLOWSPLAYF,SHOWCONTROLSF,
-      FILTERDBING};
+      FILTERDBING
+};
 
 static SCM sp_iread(SCM snd_n, int fld, char *caller)
 {
@@ -1288,6 +1302,7 @@ static SCM g_short_file_name(SCM snd_n)
   return(sp_iread(snd_n,SHORTFILENAMEF,S_short_file_name));
 }
 
+
 #if FILE_PER_CHAN
 static SCM string_array_to_list(char **arr, int i, int len)
 {
@@ -1587,7 +1602,9 @@ static SCM g_set_showing_controls(SCM on, SCM snd_n)
 }
 
 enum {AMPF,CONTRASTF,CONTRASTAMPF,EXPANDF,EXPANDLENGTHF,EXPANDRAMPF,EXPANDHOPF,
-      SPEEDF,REVERBLENGTHF,REVERBFEEDBACKF,REVERBSCALEF,REVERBLOWPASSF};
+      SPEEDF,REVERBLENGTHF,REVERBFEEDBACKF,REVERBSCALEF,REVERBLOWPASSF,
+      SP_REVERB_DECAY
+};
 
 static SCM sp_fread(SCM snd_n, int fld, char *caller)
 {
@@ -1616,14 +1633,15 @@ static SCM sp_fread(SCM snd_n, int fld, char *caller)
 	case CONTRASTF: RTNFLT(sp->contrast); break;
 	case CONTRASTAMPF: RTNFLT(sp->contrast_amp); break;
 	case EXPANDF: RTNFLT(sp->expand); break;
-	case EXPANDLENGTHF: RTNFLT(sp->local_explen); break;
-	case EXPANDRAMPF: RTNFLT(sp->local_exprmp); break;
-	case EXPANDHOPF: RTNFLT(sp->local_exphop); break;
+	case EXPANDLENGTHF: RTNFLT(sp->expand_length); break;
+	case EXPANDRAMPF: RTNFLT(sp->expand_ramp); break;
+	case EXPANDHOPF: RTNFLT(sp->expand_hop); break;
 	case SPEEDF: if (sp->play_direction == -1) RTNFLT((-(sp->srate))); else RTNFLT(sp->srate); break;
 	case REVERBLENGTHF: RTNFLT(sp->revlen); break;
-	case REVERBFEEDBACKF: RTNFLT(sp->local_revfb); break;
+	case REVERBFEEDBACKF: RTNFLT(sp->revfb); break;
 	case REVERBSCALEF: RTNFLT(sp->revscl); break;
-	case REVERBLOWPASSF: RTNFLT(sp->local_revlp); break;
+	case REVERBLOWPASSF: RTNFLT(sp->revlp); break;
+	case SP_REVERB_DECAY: RTNFLT(sp->reverb_decay); break;
 	}
     }
   return(SCM_BOOL_F);
@@ -1633,7 +1651,7 @@ static SCM sp_fwrite(SCM snd_n, SCM val, int fld, char *caller)
 {
   snd_info *sp;
   Float fval;
-  int dir,i;
+  int direction,i;
   snd_state *ss;
   if (SCM_EQ_P(snd_n,SCM_BOOL_T))
     {
@@ -1656,21 +1674,22 @@ static SCM sp_fwrite(SCM snd_n, SCM val, int fld, char *caller)
 	case CONTRASTF: set_snd_contrast(sp,fval); break;
 	case CONTRASTAMPF: sp->contrast_amp = fval; if (sp->playing) dac_set_contrast_amp(sp->state,sp,fval); break;
 	case EXPANDF: if (fval > 0.0) set_snd_expand(sp,fval); break;
-	case EXPANDLENGTHF: if (fval > 0.0) sp->local_explen = fval; if (sp->playing) dac_set_expand_length(sp->state,sp,fval); break;
-	case EXPANDRAMPF: if ((fval >= 0.0) && (fval < 0.5)) sp->local_exprmp = fval; if (sp->playing) dac_set_expand_ramp(sp->state,sp,fval); break;
-	case EXPANDHOPF: if (fval > 0.0) sp->local_exphop = fval; if (sp->playing) dac_set_expand_hop(sp->state,sp,fval); break;
+	case EXPANDLENGTHF: if (fval > 0.0) sp->expand_length = fval; if (sp->playing) dac_set_expand_length(sp->state,sp,fval); break;
+	case EXPANDRAMPF: if ((fval >= 0.0) && (fval < 0.5)) sp->expand_ramp = fval; if (sp->playing) dac_set_expand_ramp(sp->state,sp,fval); break;
+	case EXPANDHOPF: if (fval > 0.0) sp->expand_hop = fval; if (sp->playing) dac_set_expand_hop(sp->state,sp,fval); break;
 	case SPEEDF: 
 	  if (fval != 0.0)
 	    {
-	      if (fval > 0.0) dir=1; else dir=-1;
-	      set_snd_srate(sp,dir*fval); 
-	      toggle_direction_arrow(sp,(dir == -1));
+	      if (fval > 0.0) direction=1; else direction=-1;
+	      set_snd_srate(sp,direction*fval); 
+	      toggle_direction_arrow(sp,(direction == -1));
 	    }
 	  break;
 	case REVERBLENGTHF: if (fval >= 0.0) set_snd_revlen(sp,fval); break;
-	case REVERBFEEDBACKF: sp->local_revfb = fval; if (sp->playing) dac_set_reverb_feedback(sp->state,sp,fval); break;
+	case REVERBFEEDBACKF: sp->revfb = fval; if (sp->playing) dac_set_reverb_feedback(sp->state,sp,fval); break;
 	case REVERBSCALEF: set_snd_revscl(sp,fval); break;
-	case REVERBLOWPASSF: sp->local_revlp = fval; if (sp->playing) dac_set_reverb_lowpass(sp->state,sp,fval); break;
+	case REVERBLOWPASSF: sp->revlp = fval; if (sp->playing) dac_set_reverb_lowpass(sp->state,sp,fval); break;
+	case SP_REVERB_DECAY: sp->reverb_decay = fval; break;
 	}
     }
   return(val);
@@ -1858,6 +1877,31 @@ static SCM g_set_reverb_lowpass(SCM on, SCM snd_n)
   return(sp_fwrite(snd_n,on,REVERBLOWPASSF,S_set_reverb_lowpass));
 }
 
+static SCM g_reverb_decay(SCM snd)
+{
+  #define H_reverb_decay "(" S_reverb_decay " &optional (snd #t)) -> 'Apply' button reverb decay time (1.0 seconds)"
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(sp_fread(snd,SP_REVERB_DECAY,S_reverb_decay));
+  SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_reverb_decay);
+  RTNFLT(reverb_decay(get_global_state()));
+}
+
+static SCM g_set_reverb_decay(SCM val, SCM snd)
+{
+  #define H_set_reverb_decay "(" S_set_reverb_decay " val &optional (snd #t)) sets " S_reverb_decay
+  snd_state *ss;
+  ERRN1(val,S_set_reverb_decay); 
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(sp_fwrite(snd,val,SP_REVERB_DECAY,S_set_reverb_decay));
+  else
+    {
+      SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,S_set_reverb_decay);
+      ss = get_global_state();
+      set_reverb_decay(ss,gh_scm2double(val));
+      RTNFLT(reverb_decay(ss));
+    }
+}
+
 
 static SCM g_set_filter_env(SCM edata, SCM snd_n)
 {
@@ -2007,6 +2051,9 @@ void g_init_snd(SCM local_doc)
   DEFINE_PROC(gh_new_procedure0_1(S_amp,SCM_FNC g_amp),H_amp);
   DEFINE_PROC(gh_new_procedure1_1(S_set_amp,SCM_FNC g_set_amp),H_set_amp);
   DEFINE_PROC(gh_new_procedure0_1(S_call_apply,SCM_FNC g_call_apply),H_call_apply);
+
+  DEFINE_PROC(gh_new_procedure(S_reverb_decay,SCM_FNC g_reverb_decay,0,1,0),H_reverb_decay);
+  DEFINE_PROC(gh_new_procedure(S_set_reverb_decay,SCM_FNC g_set_reverb_decay,0,2,0),H_set_reverb_decay);
 }
 
 #endif

@@ -1131,16 +1131,16 @@ fft_info *free_fft_info(fft_info *fp)
 
 static void make_sonogram_axes(chan_info *cp);
 
-static char *spectro_xlabel(snd_state *ss)
+static char *spectro_xlabel(snd_state *ss, chan_info *cp)
 {
   switch (transform_type(ss))
     {
     case FOURIER: 
-      if (fft_log_frequency(ss))
+      if (cp->fft_log_frequency)
 	return(STR_log_freq);
       else return(STR_frequency);
       break;
-    case WAVELET:         return(wavelet_names[wavelet_type(ss)]); break;
+    case WAVELET:         return(wavelet_names[cp->wavelet_type]); break;
     case HANKEL:          return("Hankel spectrum"); break;
     case CHEBYSHEV:       return("Chebyshev spectrum"); break;
     case CEPSTRUM:        return("cepstrum"); break;
@@ -1195,31 +1195,31 @@ static void make_sonogram_axes(chan_info *cp)
       ss = cp->state;
       if (transform_type(ss) == FOURIER)
 	{
-	  if ((fft_log_frequency(ss)) || (fft_style(ss) == SPECTROGRAM))
+	  if ((cp->fft_log_frequency) || (fft_style(ss) == SPECTROGRAM))
 	    {
-	      max_freq = spectro_cutoff(ss);
-	      min_freq = spectro_start(ss);
+	      max_freq = cp->spectro_cutoff;
+	      min_freq = cp->spectro_start;
 	    }
 	  else 
 	    {
-	      max_freq = spectro_cutoff(ss) * (Float)SND_SRATE(cp->sound) * 0.5;
-	      min_freq = spectro_start(ss) * (Float)SND_SRATE(cp->sound) * 0.5;
+	      max_freq = cp->spectro_cutoff * (Float)SND_SRATE(cp->sound) * 0.5;
+	      min_freq = cp->spectro_start * (Float)SND_SRATE(cp->sound) * 0.5;
 	    }
 	}
       else 
 	{
 	  if (transform_type(ss) == AUTOCORRELATION)
 	    {
-	      max_freq = fp->current_size * spectro_cutoff(ss) / 2;
-	      min_freq = fp->current_size * spectro_start(ss) / 2;
+	      max_freq = fp->current_size * cp->spectro_cutoff / 2;
+	      min_freq = fp->current_size * cp->spectro_start / 2;
 	    }
 	  else 
 	    {
-	      max_freq = fp->current_size * spectro_cutoff(ss);
-	      min_freq = fp->current_size * spectro_start(ss);
+	      max_freq = fp->current_size * cp->spectro_cutoff;
+	      min_freq = fp->current_size * cp->spectro_start;
 	    }
 	}
-      yang = fmod(spectro_y_angle(ss),360.0);
+      yang = fmod(cp->spectro_y_angle,360.0);
       if (yang < 0.0) yang += 360.0;
       if (fft_style(ss) == SPECTROGRAM)
 	{
@@ -1231,7 +1231,7 @@ static void make_sonogram_axes(chan_info *cp)
 	      else if (yang < 315.0) xlabel = "emit";
 	      else xlabel = "frequency";
 	    }
-	  else xlabel = spectro_xlabel(ss);
+	  else xlabel = spectro_xlabel(ss,cp);
 	}
       else xlabel = STR_time;
       fp->axis = make_axis_info(cp,ap->x0,ap->x1,min_freq,max_freq,xlabel,ap->x0,ap->x1,min_freq,max_freq,fp->axis);
@@ -1290,7 +1290,7 @@ static int apply_fft_window(fft_state *fs)
     case WAVELET:
       for (i=0;i<data_len;i++) fft_data[i] = next_sample(sf);
       if (data_len < fs->size) for (i=data_len;i<fs->size;i++) fft_data[i] = 0.0;
-      wavelet_transform(fft_data,fs->size,wavelet_data[wavelet_type(ss)],wavelet_sizes[wavelet_type(ss)]);
+      wavelet_transform(fft_data,fs->size,wavelet_data[cp->wavelet_type],wavelet_sizes[cp->wavelet_type]);
       break;
     case CHEBYSHEV:
       for (i=0;i<data_len;i++) fft_data[i] = next_sample(sf);
@@ -1358,47 +1358,47 @@ static int display_snd_fft(fft_state *fs)
   if (fft_style(ss) == NORMAL_FFT)
     {
       fp = cp->fft;
-      xlabel = spectro_xlabel(ss);
+      xlabel = spectro_xlabel(ss,cp);
       switch (transform_type(ss))
 	{
 	case FOURIER: 
-	  if (fft_log_frequency(ss))
+	  if (cp->fft_log_frequency)
 	    {
 	      /* max_freq = 1.0; */
-	      max_freq = spectro_cutoff(ss);
+	      max_freq = cp->spectro_cutoff;
 	      /* min_freq = 0.0; */
-	      min_freq = spectro_start(ss);
+	      min_freq = cp->spectro_start;
 	    }
 	  else
 	    {
-	      max_freq = ((Float)(SND_SRATE(cp->sound)) * 0.5 * spectro_cutoff(ss));
-	      min_freq = ((Float)(SND_SRATE(cp->sound)) * 0.5 * spectro_start(ss));
+	      max_freq = ((Float)(SND_SRATE(cp->sound)) * 0.5 * cp->spectro_cutoff);
+	      min_freq = ((Float)(SND_SRATE(cp->sound)) * 0.5 * cp->spectro_start);
 	    }
 	  break;
 	case WAVELET: case HANKEL: case CHEBYSHEV: case HADAMARD: case WALSH:
-	  max_freq = fs->size * spectro_cutoff(ss); 
-	  min_freq = fs->size * spectro_start(ss); 
+	  max_freq = fs->size * cp->spectro_cutoff; 
+	  min_freq = fs->size * cp->spectro_start; 
 	  break;
 	case AUTOCORRELATION: case CEPSTRUM:
-	  max_freq = fs->size * spectro_cutoff(ss) / 2; 
-	  min_freq = fs->size * spectro_start(ss) / 2; 
+	  max_freq = fs->size * cp->spectro_cutoff / 2; 
+	  min_freq = fs->size * cp->spectro_start / 2; 
 	  break;
 #if HAVE_GUILE
 	default:
-	  min_freq = added_transform_lo(transform_type(ss)) * fs->size * spectro_cutoff(ss); 
-	  max_freq = added_transform_hi(transform_type(ss)) * fs->size * spectro_cutoff(ss); 
+	  min_freq = added_transform_lo(transform_type(ss)) * fs->size * cp->spectro_cutoff; 
+	  max_freq = added_transform_hi(transform_type(ss)) * fs->size * cp->spectro_cutoff; 
 	  break;
 #endif
 	}
       fap = fp->axis;
-      if (fft_log_magnitude(ss)) 
+      if (cp->fft_log_magnitude) 
 	{
 	  max_val = 0.0; 
-	  min_val = ss->min_dB;
+	  min_val = cp->min_dB;
 	}
       else 
 	{
-	  if ((normalize_fft(ss) == DONT_NORMALIZE) && (fap) && ((fap->ymin > ss->min_dB) || (fap->ymax <= 1.0)))
+	  if ((normalize_fft(ss) == DONT_NORMALIZE) && (fap) && ((fap->ymin > cp->min_dB) || (fap->ymax <= 1.0)))
 	    {
 	      max_val = fap->ymax; 
 	      min_val = fap->ymin;
@@ -1440,7 +1440,7 @@ void *make_fft_state(chan_info *cp, int simple)
       dlen = region_len(0);
       /* these need to be handled at the same time, and not re-examined until the next call */
       /* if we're sweeping the mouse defining the selection, by the time we get to apply_fft_window, region_len(0) can change */
-      fftsize = (int)pow(2.0,(int)(ceil(log((Float)(dlen*(1+zero_pad(ss))))/log(2.0))));
+      fftsize = (int)pow(2.0,(int)(ceil(log((Float)(dlen*(1+cp->zero_pad)))/log(2.0))));
       if (fftsize < 2) fftsize = 2;
       cp->selection_transform_size = fftsize;
     }
@@ -1457,13 +1457,13 @@ void *make_fft_state(chan_info *cp, int simple)
 	  (fs->size == fftsize) &&
 	  (fs->wintype == fft_window(ss)) &&
 	  ((!(fft_window_beta_in_use(fs->wintype))) || (fs->beta == fft_beta(ss))) &&
-	  (fs->dBing == fft_log_magnitude(ss)) &&
-	  (fs->lfreq == fft_log_frequency(ss)) &&
-	  (fs->pad_zero == zero_pad(ss)) &&
-	  (fs->cutoff == spectro_cutoff(ss)) &&
+	  (fs->dBing == cp->fft_log_magnitude) &&
+	  (fs->lfreq == cp->fft_log_frequency) &&
+	  (fs->pad_zero == cp->zero_pad) &&
+	  (fs->cutoff == cp->spectro_cutoff) &&
 	  (fs->t_type == transform_type(ss)) &&
 	  (fs->old_style == fft_style(ss)) &&
-	  (fs->wavelet_choice == wavelet_type(ss)) &&
+	  (fs->wavelet_choice == cp->wavelet_type) &&
 	  (fs->edit_ctr == cp->edit_ctr))
 	reuse_old = 1;
     }
@@ -1475,19 +1475,19 @@ void *make_fft_state(chan_info *cp, int simple)
       fs = (fft_state *)CALLOC(1,sizeof(fft_state));
       fs->slice = 0;
       fs->chan = cp;
-      fs->cutoff = spectro_cutoff(ss);
+      fs->cutoff = cp->spectro_cutoff;
       fs->size = fftsize;
-      fs->pad_zero = zero_pad(ss);
+      fs->pad_zero = cp->zero_pad;
       fs->wintype = fft_window(ss);
-      fs->dBing = fft_log_magnitude(ss);
-      fs->lfreq = fft_log_frequency(ss);
+      fs->dBing = cp->fft_log_magnitude;
+      fs->lfreq = cp->fft_log_frequency;
       fs->wp = NULL;
       fs->losamp = ap->losamp;
       fs->edit_ctr = cp->edit_ctr;
       fs->ss = ss;
       fs->hwin_size = 0;
       fs->hwin = NULL;
-      fs->wavelet_choice = wavelet_type(ss);
+      fs->wavelet_choice = cp->wavelet_type;
       fs->t_type = transform_type(ss);
       fs->old_style = fft_style(ss);
     }
@@ -1607,7 +1607,7 @@ void *make_sonogram_state(chan_info *cp)
   sg->fs = fs;
   sg->msg_ctr = 8;
   sg->t_type = transform_type(ss);
-  sg->w_choice = wavelet_type(ss);
+  sg->w_choice = cp->wavelet_type;
   sg->minibuffer_needs_to_be_cleared = 0;
   return((void *)sg);
 }
@@ -1656,7 +1656,7 @@ static int set_up_sonogram(sonogram_state *sg)
   if (cp->waving) dpys++; 
   if (cp->lisp_graphing) dpys++; 
   if (fft_style(ss) == SPECTROGRAM)
-    sg->outlim = ap->height / spectro_hop(ss); /* this was window_width?? */
+    sg->outlim = ap->height / cp->spectro_hop; /* this was window_width?? */
   else sg->outlim = ap->window_width/dpys;
   if (sg->outlim <= 1) return(2);
   sg->hop = (int)(ceil((Float)(ap->hisamp - ap->losamp+1)/(Float)(sg->outlim)));
@@ -1715,10 +1715,10 @@ static int set_up_sonogram(sonogram_state *sg)
 	  sg->old_scale = lsg->old_scale;
 	  si->scale = sg->old_scale;
 	  if ((lsg->old_style != fft_style(ss)) ||
-	      (lsg->old_logxing != fft_log_frequency(ss)))
+	      (lsg->old_logxing != cp->fft_log_frequency))
 	    make_sonogram_axes(cp);                    /* may need to fixup frequency axis labels */
 	  sg->old_style = fft_style(ss);
-	  sg->old_logxing = fft_log_frequency(ss);
+	  sg->old_logxing = cp->fft_log_frequency;
 	  return(2);                                   /* so skip the ffts! */
 	}
     }

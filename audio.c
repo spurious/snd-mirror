@@ -1,4 +1,4 @@
-/* Audio hardware handlers (SGI, OSS, ALSA, Sun, NeXT, Mac, Windows, Be, HPUX, AIX) */
+/* Audio hardware handlers (SGI, OSS, ALSA, Sun, NeXT, Mac, Windows, Be, HPUX, Mac OS-X) */
 /*
  * layout of this file:
  *    error handlers
@@ -13,6 +13,7 @@
  *    W95/98 ("- WI")
  *    AIX, NEC EWS, SONY NEWS, OS2, AF, NetBSD etc -- untested and incomplete
  *    ARDOUR audio (find "- Ardour") (i/o routed via the ardour API)
+ *    Mac OS-X ("- OSX")
  *    audio describers
  */
 
@@ -9031,6 +9032,29 @@ char *mus_audio_moniker(void)
  
 
 /* and DEC using MMSYSTEM?? #include <mme/mmsystem.h> -- see xanim */
+
+/* ------------------------------- MAC_OSX ----------------------------------------- */
+
+#ifdef MAC_OSX
+#define AUDIO_OK 1
+
+static void describe_audio_state_1(void) {pprint("audio stubbed out");}
+int mus_audio_open_output(int dev, int srate, int chans, int format, int size) {return(-1);}
+int mus_audio_open_input(int dev, int srate, int chans, int format, int size) {return(-1);}
+int mus_audio_write(int line, char *buf, int bytes) {return(-1);}
+int mus_audio_close(int line) {return(-1);}
+int mus_audio_read(int line, char *buf, int bytes) {return(-1);}
+int mus_audio_mixer_read(int dev, int field, int chan, float *val) {return(-1);}
+int mus_audio_mixer_write(int dev, int field, int chan, float *val) {return(-1);}
+void mus_audio_save(void) {}
+void mus_audio_restore(void) {}
+int mus_audio_initialize(void) {return(-1);}
+char *mus_audio_error_name(int err) {return(audio_error_name_1(err));}
+int mus_audio_systems(void) {return(0);}
+char *mus_audio_system_name(int system) {return("unknown");}
+void mus_audio_set_oss_buffers(int num,int size) {}
+char *mus_audio_moniker(void) {return("Mac OS-X audio");}
+#endif
 
 /* ------------------------------- STUBS ----------------------------------------- */
 

@@ -333,42 +333,69 @@ static int save_sound_state (snd_info *sp, void *ptr)
 	  sp->shortname,
 	  (sp->read_only) ? S_view_sound : S_open_sound,
 	  sp->fullname);
-  fprintf(fd,"%s(%s %d sfile)\n",white_space,S_set_syncing,sp->syncing);
-  fprintf(fd,"%s(%s %s sfile)\n",white_space,S_set_contrasting,b2s(sp->contrasting));
-  fprintf(fd,"%s(%s %.4f sfile)\n",white_space,S_set_contrast,sp->contrast);
-  fprintf(fd,"%s(%s %s sfile)\n",white_space,S_set_expanding,b2s(sp->expanding));
-  fprintf(fd,"%s(%s %.4f sfile)\n",white_space,S_set_expand,sp->expand);
-  fprintf(fd,"%s(%s %.4f sfile)\n",white_space,S_set_expand_ramp,sp->local_exprmp);
-  fprintf(fd,"%s(%s %.4f sfile)\n",white_space,S_set_expand_hop,sp->local_exphop);
-  fprintf(fd,"%s(%s %.4f sfile)\n",white_space,S_set_expand_length,sp->local_explen);
-  fprintf(fd,"%s(%s %.4f sfile)\n",white_space,S_set_speed,sp->srate);
-  fprintf(fd,"%s(%s %s sfile)\n",white_space,S_set_reverbing,b2s(sp->reverbing));
-  fprintf(fd,"%s(%s %.4f sfile)\n",white_space,S_set_reverb_scale,sp->revscl);
-  fprintf(fd,"%s(%s %.4f sfile)\n",white_space,S_set_reverb_length,sp->revlen);
-  fprintf(fd,"%s(%s %.4f sfile)\n",white_space,S_set_reverb_feedback,sp->local_revfb);
-  fprintf(fd,"%s(%s %.4f sfile)\n",white_space,S_set_reverb_lowpass,sp->local_revlp);
-  fprintf(fd,"%s(%s %.4f sfile)\n",white_space,S_set_amp,sp->amp);
-  fprintf(fd,"%s(%s %s sfile)\n",white_space,S_set_filtering,b2s(sp->filtering));
-  fprintf(fd,"%s(%s %d sfile)\n",white_space,S_set_filter_order,sp->filter_order);
-  fprintf(fd,"%s(%s %s sfile)\n",white_space,S_set_filter_dBing,b2s(sp->filter_dBing));
+  if (sp->syncing != DEFAULT_SYNCING) fprintf(fd,"%s(%s %d sfile)\n",white_space,S_set_syncing,sp->syncing);
+  if (sp->contrasting != DEFAULT_CONTRASTING) fprintf(fd,"%s(%s %s sfile)\n",white_space,S_set_contrasting,b2s(sp->contrasting));
+  if (sp->contrast != DEFAULT_CONTRAST) fprintf(fd,"%s(%s %.4f sfile)\n",white_space,S_set_contrast,sp->contrast);
+  if (sp->expanding != DEFAULT_EXPANDING) fprintf(fd,"%s(%s %s sfile)\n",white_space,S_set_expanding,b2s(sp->expanding));
+  if (sp->expand != DEFAULT_EXPAND) fprintf(fd,"%s(%s %.4f sfile)\n",white_space,S_set_expand,sp->expand);
+  if (sp->expand_ramp != DEFAULT_EXPAND_RAMP) fprintf(fd,"%s(%s %.4f sfile)\n",white_space,S_set_expand_ramp,sp->expand_ramp);
+  if (sp->expand_hop != DEFAULT_EXPAND_HOP) fprintf(fd,"%s(%s %.4f sfile)\n",white_space,S_set_expand_hop,sp->expand_hop);
+  if (sp->expand_length != DEFAULT_EXPAND_LENGTH) fprintf(fd,"%s(%s %.4f sfile)\n",white_space,S_set_expand_length,sp->expand_length);
+  if (sp->srate != DEFAULT_SPEED) fprintf(fd,"%s(%s %.4f sfile)\n",white_space,S_set_speed,sp->srate);
+  if (sp->reverbing != DEFAULT_REVERBING) fprintf(fd,"%s(%s %s sfile)\n",white_space,S_set_reverbing,b2s(sp->reverbing));
+  if (sp->revscl != DEFAULT_REVERB_SCALE) fprintf(fd,"%s(%s %.4f sfile)\n",white_space,S_set_reverb_scale,sp->revscl);
+  if (sp->revlen != DEFAULT_REVERB_LENGTH) fprintf(fd,"%s(%s %.4f sfile)\n",white_space,S_set_reverb_length,sp->revlen);
+  if (sp->revfb != DEFAULT_REVERB_FEEDBACK) fprintf(fd,"%s(%s %.4f sfile)\n",white_space,S_set_reverb_feedback,sp->revfb);
+  if (sp->revlp != DEFAULT_REVERB_LOWPASS) fprintf(fd,"%s(%s %.4f sfile)\n",white_space,S_set_reverb_lowpass,sp->revlp);
+  if (sp->reverb_decay != DEFAULT_REVERB_DECAY) fprintf(fd,"%s(%s %.4f sfile)\n",white_space,S_set_reverb_decay,sp->reverb_decay);
+  if (sp->amp != DEFAULT_AMP) fprintf(fd,"%s(%s %.4f sfile)\n",white_space,S_set_amp,sp->amp);
+  if (sp->filtering != DEFAULT_FILTERING) fprintf(fd,"%s(%s %s sfile)\n",white_space,S_set_filtering,b2s(sp->filtering));
+  if (sp->filter_order != DEFAULT_FILTER_ORDER) fprintf(fd,"%s(%s %d sfile)\n",white_space,S_set_filter_order,sp->filter_order);
+  if (sp->filter_dBing != DEFAULT_FILTER_DBING) fprintf(fd,"%s(%s %s sfile)\n",white_space,S_set_filter_dBing,b2s(sp->filter_dBing));
   if (sp->filter_env) 
     {
       fprintf(fd,"%s(%s %s sfile)\n",white_space,S_set_filter_env,tmpstr=env_to_string(sp->filter_env));
       if (tmpstr) FREE(tmpstr);
     }
-  fprintf(fd,"%s(%s %s sfile)\n",white_space,S_set_cursor_follows_play,b2s(sp->cursor_follows_play));
+  if (sp->cursor_follows_play) fprintf(fd,"%s(%s %s sfile)\n",white_space,S_set_cursor_follows_play,b2s(sp->cursor_follows_play));
   for (chan=0;chan<sp->nchans;chan++)
     {
       cp = sp->chans[chan];
       ap = cp->axis;
-      fprintf(fd,"%s(%s %s sfile %d)\n",white_space,S_set_waving,b2s(cp->waving),chan);
-      fprintf(fd,"%s(%s %s sfile %d)\n",white_space,S_set_ffting,b2s(cp->ffting),chan);
-      fprintf(fd,"%s(%s %s sfile %d)\n",white_space,S_set_graphing,b2s(cp->lisp_graphing),chan);
-      fprintf(fd,"%s(%s %.4f %.4f sfile %d)\n",white_space,S_set_x_bounds,ap->x0,ap->x1,chan);
-      fprintf(fd,"%s(%s %.4f %.4f sfile %d)\n",white_space,S_set_y_bounds,ap->y0,ap->y1,chan);
-      fprintf(fd,"%s(%s %d sfile %d)\n",white_space,S_set_cursor,cp->cursor,chan);
-      fprintf(fd,"%s(%s %d sfile %d)\n",white_space,S_set_cursor_style,cp->cursor_style,chan);
-      edit_history_to_file(fd,cp);
+      if (!(cp->waving)) fprintf(fd,"%s(%s %s sfile %d)\n",white_space,S_set_waving,b2s(cp->waving),chan);
+      if (cp->ffting) fprintf(fd,"%s(%s %s sfile %d)\n",white_space,S_set_ffting,b2s(cp->ffting),chan);
+      if (cp->lisp_graphing) fprintf(fd,"%s(%s %s sfile %d)\n",white_space,S_set_graphing,b2s(cp->lisp_graphing),chan);
+      if ((ap->x0 != 0.0) || (ap->x1 != 0.1))
+	fprintf(fd,"%s(%s %.4f %.4f sfile %d)\n",white_space,S_set_x_bounds,ap->x0,ap->x1,chan);
+      if ((ap->y0 != -1.0) || (ap->y1 != 1.0))
+	fprintf(fd,"%s(%s %.4f %.4f sfile %d)\n",white_space,S_set_y_bounds,ap->y0,ap->y1,chan);
+      if (cp->cursor != 0) fprintf(fd,"%s(%s %d sfile %d)\n",white_space,S_set_cursor,cp->cursor,chan);
+      if (cp->cursor_style != CURSOR_CROSS) fprintf(fd,"%s(%s %d sfile %d)\n",white_space,S_set_cursor_style,cp->cursor_style,chan);
+      if (cp->show_marks != DEFAULT_SHOW_MARKS) fprintf(fd,"%s(%s %s sfile %d)\n",white_space,S_set_show_marks,b2s(cp->show_marks),chan);
+      if (cp->show_y_zero != DEFAULT_SHOW_Y_ZERO) fprintf(fd,"%s(%s %s sfile %d)\n",white_space,S_set_show_y_zero,b2s(cp->show_y_zero),chan);
+      if (cp->wavo != DEFAULT_WAVO) fprintf(fd,"%s(%s %s sfile %d)\n",white_space,S_set_wavo,b2s(cp->wavo),chan);
+      if (cp->wavo_hop != DEFAULT_WAVO_HOP) fprintf(fd,"%s(%s %d sfile %d)\n",white_space,S_set_wavo_hop,cp->wavo_hop,chan);
+      if (cp->wavo_trace != DEFAULT_WAVO_TRACE) fprintf(fd,"%s(%s %d sfile %d)\n",white_space,S_set_wavo_trace,cp->wavo_trace,chan);
+      if (cp->line_size != DEFAULT_LINE_SIZE) fprintf(fd,"%s(%s %d sfile %d)\n",white_space,S_set_line_size,cp->line_size,chan);
+      if (cp->max_fft_peaks != DEFAULT_MAX_FFT_PEAKS) fprintf(fd,"%s(%s %d sfile %d)\n",white_space,S_set_max_fft_peaks,cp->max_fft_peaks,chan);
+      if (cp->show_fft_peaks != DEFAULT_SHOW_FFT_PEAKS) fprintf(fd,"%s(%s %s sfile %d)\n",white_space,S_set_show_fft_peaks,b2s(cp->show_fft_peaks),chan);
+      if (cp->fft_log_frequency != DEFAULT_FFT_LOG_FREQUENCY) fprintf(fd,"%s(%s %s sfile %d)\n",white_space,S_set_fft_log_frequency,b2s(cp->fft_log_frequency),chan);
+      if (cp->fft_log_magnitude != DEFAULT_FFT_LOG_MAGNITUDE) fprintf(fd,"%s(%s %s sfile %d)\n",white_space,S_set_fft_log_magnitude,b2s(cp->fft_log_magnitude),chan);
+      if (cp->verbose_cursor != DEFAULT_VERBOSE_CURSOR) fprintf(fd,"%s(%s %s sfile %d)\n",white_space,S_set_verbose_cursor,b2s(cp->verbose_cursor),chan);
+      if (cp->zero_pad != DEFAULT_ZERO_PAD) fprintf(fd,"%s(%s %d sfile %d)\n",white_space,S_set_zero_pad,cp->zero_pad,chan);
+      if (cp->wavelet_type != DEFAULT_WAVELET_TYPE) fprintf(fd,"%s(%s %d sfile %d)\n",white_space,S_set_wavelet_type,cp->wavelet_type,chan);
+      if (fneq(cp->min_dB,DEFAULT_MIN_DB)) fprintf(fd,"%s(%s %.4f sfile %d)\n",white_space,S_set_min_dB,cp->min_dB,chan);
+      if (fneq(cp->spectro_x_angle,DEFAULT_SPECTRO_X_ANGLE)) fprintf(fd,"%s(%s %.4f sfile %d)\n",white_space,S_set_spectro_x_angle,cp->spectro_x_angle,chan);
+      if (fneq(cp->spectro_y_angle,DEFAULT_SPECTRO_Y_ANGLE)) fprintf(fd,"%s(%s %.4f sfile %d)\n",white_space,S_set_spectro_y_angle,cp->spectro_y_angle,chan);
+      if (fneq(cp->spectro_z_angle,DEFAULT_SPECTRO_Z_ANGLE)) fprintf(fd,"%s(%s %.4f sfile %d)\n",white_space,S_set_spectro_z_angle,cp->spectro_z_angle,chan);
+      if (fneq(cp->spectro_x_scale,DEFAULT_SPECTRO_X_SCALE)) fprintf(fd,"%s(%s %.4f sfile %d)\n",white_space,S_set_spectro_x_scale,cp->spectro_x_scale,chan);
+      if (fneq(cp->spectro_y_scale,DEFAULT_SPECTRO_Y_SCALE)) fprintf(fd,"%s(%s %.4f sfile %d)\n",white_space,S_set_spectro_y_scale,cp->spectro_y_scale,chan);
+      if (fneq(cp->spectro_z_scale,DEFAULT_SPECTRO_Z_SCALE)) fprintf(fd,"%s(%s %.4f sfile %d)\n",white_space,S_set_spectro_z_scale,cp->spectro_z_scale,chan);
+      if (fneq(cp->spectro_cutoff,DEFAULT_SPECTRO_CUTOFF)) fprintf(fd,"%s(%s %.4f sfile %d)\n",white_space,S_set_spectro_cutoff,cp->spectro_cutoff,chan);
+      if (fneq(cp->spectro_start,DEFAULT_SPECTRO_START)) fprintf(fd,"%s(%s %.4f sfile %d)\n",white_space,S_set_spectro_start,cp->spectro_start,chan);
+      if (fneq(cp->fft_beta,DEFAULT_FFT_BETA)) fprintf(fd,"%s(%s %.4f sfile %d)\n",white_space,S_set_fft_beta,cp->fft_beta,chan);
+      if (cp->spectro_hop != DEFAULT_SPECTRO_HOP) fprintf(fd,"%s(%s %d sfile %d)\n",white_space,S_set_spectro_hop,cp->spectro_hop,chan);
+      if (cp->edit_ctr > 0) edit_history_to_file(fd,cp);
     }
   fprintf(fd,"      )))\n");
   return(0);

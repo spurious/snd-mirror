@@ -279,7 +279,7 @@ static Float expand_input_as_needed(void *arg, int dir)
 
 static int max_expand_len(snd_info *sp)
 {
-  if (sp->local_explen > .5)
+  if (sp->expand_length > .5)
     return(0);
   return((int)(SND_SRATE(sp) * .5));
 }
@@ -293,8 +293,8 @@ static void *make_expand(snd_info *sp,Float sampling_rate,Float initial_ex, dac_
 #endif
   spd = (spd_info *)CALLOC(1,sizeof(spd_info));
   spd->gen = mus_make_granulate(&expand_input_as_needed,
-				initial_ex,sp->local_explen,
-				.6,sp->local_exphop,sp->local_exprmp,.1,
+				initial_ex,sp->expand_length,
+				.6,sp->expand_hop,sp->expand_ramp,.1,
 				max_expand_len(sp),(void *)spd);
   spd->dp = dp;
   spd->chan = chan;
@@ -417,8 +417,8 @@ static void *make_reverb(snd_info *sp, Float sampling_rate, int chans)
     return((void *)g_call3(g_make_reverb,gh_double2scm(reverb_length),gh_double2scm(sampling_rate),gh_int2scm(chans)));
 #endif
 
-  reverb_factor = sp->local_revfb;
-  lp_coeff = sp->local_revlp;
+  reverb_factor = sp->revfb;
+  lp_coeff = sp->revlp;
   srscale = reverb_length*sampling_rate/25641.0;
   for (i=0;i<BASE_DLY_LEN;i++) dly_len[i] = get_prime((int)(srscale*base_dly_len[i]));
   r=(rev_info *)CALLOC(1,sizeof(rev_info));
@@ -828,11 +828,11 @@ static void dac_set_field(snd_state *ss, snd_info *sp, Float newval, int field)
 			    for (j=0;j<dp->chans;j++) 
 			      {
 				mus_set_length(((spd_info *)dp->spds[j])->gen,val);
-				mus_set_ramp(((spd_info *)dp->spds[j])->gen,(int)(val * sp->local_exprmp));
+				mus_set_ramp(((spd_info *)dp->spds[j])->gen,(int)(val * sp->expand_ramp));
 			      }
 			  break;
 			case DAC_EXPAND_RAMP: 
-			  val = (int)(newval * sp->local_explen * SND_SRATE(sp));
+			  val = (int)(newval * sp->expand_length * SND_SRATE(sp));
 			  if (dp->spds)
 			    for (j=0;j<dp->chans;j++) 
 			      mus_set_ramp(((spd_info *)dp->spds[j])->gen,val); 
@@ -1050,7 +1050,9 @@ static void start_playing_1(void *ptr, int start, int background, int paused, in
 	    if (sp) dac_m->srate = SND_SRATE(sp);
 	  }
       if (dac_m->srate <= 0) dac_m->srate = 44100;
-      dac_decay = (int)(reverb_decay(ss) * dac_m->srate);
+      if (sp)
+	dac_decay = (int)(sp->reverb_decay * dac_m->srate);
+      else dac_decay = (int)(reverb_decay(ss) * dac_m->srate);
       dac_m->channels = channels;
       if (!paused)
 	{
@@ -1936,7 +1938,7 @@ void initialize_apply(snd_info *sp)
   else dp->end = NO_END_SPECIFIED;
   apply_dac_op = choose_dac_op(dp,sp);
   dac_chans = chans;
-  dac_decay = (int)(reverb_decay(ss) * SND_SRATE(sp));
+  dac_decay = (int)(sp->reverb_decay * SND_SRATE(sp));
   apply_reporting = (apply_dur > (MAX_BUFFER_SIZE * 4));
   if (apply_reporting) 
     {
