@@ -14224,6 +14224,40 @@ EDITS: 4
 	      (if (not (= (|XImageByteOrder dpy) 0)) (snd-display ";XImageByteOrder: ~A" (|XImageByteOrder dpy)))
 	      (if (not (= (|XDefaultScreen dpy) 0)) (snd-display ";XDefaultScreen: ~A" (|XDefaultScreen dpy)))
 	      (if (|XGetIconSizes dpy win) (snd-display ";XGetIconSizes: ~A" (|XGetIconSizes dpy win)))
+	      (if (|XGetStandardColormap dpy win |XA_RGB_DEFAULT_MAP)
+		  (snd-display "XGetStandardColormap: ~A!" (|XGetStandardColormap dpy win |XA_RGB_DEFAULT_MAP)))
+	      (if (|XGetRGBColormaps dpy win |XA_RGB_DEFAULT_MAP)
+		  (snd-display "XGetRGBColormaps: ~A!" (|XGetRGBColormaps dpy win |XA_RGB_DEFAULT_MAP)))
+	      (let ((fs (|XCreateFontSet dpy "*-*-*-*-Normal-*-180-100-100-*-*")))
+		(if (or (not (|XFontSet? fs))
+			(= (cadr fs) 0))
+		    (snd-display ";XCreateFontSet: ~A" fs)
+		    (let* ((fnts (|XFontsOfFontSet fs))
+			   (fnt (caar fnts)))
+		      (if (not (|XFontStruct? fnt))
+			  (snd-display ";XFontsOfFontSet: ~A" fnts))
+		      (if (|XContextualDrawing fs)
+			  (snd-display ";XContextualDrawing: ~A" (|XContextualDrawing fs)))
+		      (if (|XContextDependentDrawing fs)
+			  (snd-display ";XContextDependentDrawing: ~A" (|XContextDependentDrawing fs)))
+		      (if (|XDirectionalDependentDrawing fs)
+			  (snd-display ";XDirectionalDependentDrawing: ~A" (|XDirectionalDependentDrawing fs)))
+		      (if (not (string=? (|XLocaleOfFontSet fs) "en_US"))
+			  (snd-display ";XLocaleOfFontSet: ~A" (|XLocaleOfFontSet fs)))
+		      (if (not (string=? (|XBaseFontNameListOfFontSet fs) "*-*-*-*-Normal-*-180-100-100-*-*"))
+			  (snd-display ";XBaseFontNameListOfFontSet: ~A" (|XBaseFontNameListOfFontSet fs)))
+		      (let ((wgt (|XGetFontProperty fnt |XA_WEIGHT))
+			    (siz (|XGetFontProperty fnt |XA_POINT_SIZE)))
+			(if (or (not (= (cadr wgt) 10))
+				(not (= (cadr siz) 180)))
+			    (snd-display ";XGetFontProperty: ~A ~A" wgt siz)))
+		      (if (not (= (|descent fnt) 5)) (snd-display ";descent: ~A" (|descent fnt)))
+		      (if (not (= (|ascent fnt) 18)) (snd-display ";ascent: ~A" (|ascent fnt)))
+		      (if (not (|XCharStruct? (|per_char fnt))) (snd-display ";per_char: ~A" (|per_char fnt)))
+		      (if (not (|XCharStruct? (|max_bounds fnt))) (snd-display ";max_bounds: ~A" (|max_bounds fnt)))
+		      (if (not (|XCharStruct? (|min_bounds fnt))) (snd-display ";min_bounds: ~A" (|min_bounds fnt)))
+		      (if (not (|XFontProp? (|properties fnt))) (snd-display ";properties ~A" (|properties fnt)))
+		      (|XFreeFontSet dpy fs))))
 	      (let ((hints (|XGetWMHints dpy win)))
 		(if (or (not hints) (not (|XWMHints? hints))) (snd-display ";XGetWMHints?"))
 		(if (not (= (|flags hints) 7)) (snd-display ";flags wmhints: ~A" (|flags hints)))
@@ -14310,6 +14344,8 @@ EDITS: 4
 	      (set! (|dash_offset val) 1)
 	      (if (not (equal? (|dash_offset val) 1))
 		  (snd-display ";dash_offset: ~A ~A" (|dash_offset val) 1))
+	      (if (not (number? (|XConnectionNumber dpy)))
+		  (snd-display ";XConnectionNumber: ~A" (|XConnectionNumber dpy)))
 	      
 	      (let ((gc (|XCreateGC dpy wn (+ |GCFunction |GCForeground |GCBackground |GCLineWidth |GCLineStyle 
 					      |GCCapStyle |GCJoinStyle |GCFillStyle |GCFillRule |GCTileStipXOrigin
@@ -14329,14 +14365,10 @@ EDITS: 4
 		(|XSetBackground dpy gc (|BlackPixelOfScreen (current-screen)))
 		(|XSetGraphicsExposures dpy gc #t)
 		(|XSetSubwindowMode dpy gc |IncludeInferiors)
-		(if (not (|XHostAddress? (car (|XListHosts dpy))))
-		    (snd-display ";XListHosts: ~A" (|XListHosts dpy)))
 		(if (not (string=? "unix/:7100" (car (|XGetFontPath dpy))))
 		    (snd-display ";XGetFontPath: ~A" (|XGetFontPath dpy)))
 		(if (not (|Window? (|XGetSelectionOwner dpy |XA_PRIMARY)))
 		    (snd-display ";XGetSelectionOwner: ~A" (|XGetSelectionOwner dpy |XA_PRIMARY)))
-		(if (|XGetDefault dpy "Snd" "basiccolor")
-		    (snd-display ";XGetDefault found ~A!" (|XGetDefault dpy "Snd" "basiccolor")))
 		(let ((mods (|XGetModifierMapping dpy)))
 		  (if (not (|XModifierKeymap? mods))
 		      (snd-display ";XGetModifierMapping: A~" mods)))
@@ -14545,14 +14577,65 @@ EDITS: 4
 	      (|XOffsetRegion reg 1 2)
 	      (if (not (|XPointInRegion reg 4 9)) (snd-display ";t XOffsetRegion"))
 	      (if (|XPointInRegion reg 1 9) (snd-display ";f XOffsetRegion"))
-	      (let ((reg1 (|XPolygonRegion (list (|XPoint 0 0) (|XPoint 10 0) (|XPoint 10 10) (|XPoint 0 10)) 4 |WindingRule)))
+	      (let ((reg2 (|XCreateRegion))
+		    (reg1 (|XPolygonRegion (list (|XPoint 2 2) (|XPoint 10 2) (|XPoint 10 10) (|XPoint 2 10)) 4 |WindingRule)))
 		(if (|XEqualRegion reg reg1) (snd-display ";f XEqualRegion"))
-		(set! reg (|XPolygonRegion (list (|XPoint 0 0) (|XPoint 10 0) (|XPoint 10 10) (|XPoint 0 10)) 4 |WindingRule))
-		(if (not (|XEqualRegion reg reg1)) (snd-display ";t XEqualRegion"))
 		(if (|XEmptyRegion reg) (snd-display ";f XEmptyRegion"))
-
+		(|XXorRegion reg reg1 reg2)
+		(let ((box (|XClipBox reg2)))
+		  (if (or (not (= (|x (cadr box)) 2))
+			  (not (= (|y (cadr box)) 2))
+			  (not (= (|width (cadr box)) 8))
+			  (not (= (|height (cadr box)) 2)))
+		      (snd-display ";XXorRegion: ~A ~A ~A ~A" (|x (cadr box)) (|y (cadr box)) (|width (cadr box)) (|height (cadr box)))))
+		(|XUnionRegion reg reg1 reg2)
+		(let ((box (|XClipBox reg2)))
+		  (if (or (not (= (|x (cadr box)) 2))
+			  (not (= (|y (cadr box)) 2))
+			  (not (= (|width (cadr box)) 8))
+			  (not (= (|height (cadr box)) 8)))
+		      (snd-display ";XUnionRegion: ~A ~A ~A ~A" (|x (cadr box)) (|y (cadr box)) (|width (cadr box)) (|height (cadr box)))))
+		(|XSubtractRegion reg reg1 reg2)
+		(let ((box (|XClipBox reg2)))
+		  (if (or (not (= (|x (cadr box)) 0))
+			  (not (= (|y (cadr box)) 0))
+			  (not (= (|width (cadr box)) 0))
+			  (not (= (|height (cadr box)) 0)))
+		      (snd-display ";XSubtractRegion: ~A ~A ~A ~A" (|x (cadr box)) (|y (cadr box)) (|width (cadr box)) (|height (cadr box)))))
+		(|XIntersectRegion reg reg1 reg2)
+		(let ((box (|XClipBox reg2)))
+		  (if (or (not (= (|x (cadr box)) 2))
+			  (not (= (|y (cadr box)) 4))
+			  (not (= (|width (cadr box)) 8))
+			  (not (= (|height (cadr box)) 6)))
+		  (snd-display ";XIntersectRegion: ~A ~A ~A ~A" (|x (cadr box)) (|y (cadr box)) (|width (cadr box)) (|height (cadr box)))))
+		(|XUnionRectWithRegion (|XRectangle 1 3 100 100) reg1 reg2)
+		(let ((box (|XClipBox reg2)))
+		  (if (or (not (= (|x (cadr box)) 1))
+			  (not (= (|y (cadr box)) 2))
+			  (not (= (|width (cadr box)) 100))
+			  (not (= (|height (cadr box)) 101)))
+		      (snd-display ";XUnionRectWithRegion: ~A ~A ~A ~A" (|x (cadr box)) (|y (cadr box)) (|width (cadr box)) (|height (cadr box)))))
+		(|XRectInRegion reg 0 0 100 100)
+		(let ((box (|XClipBox reg1)))
+		  (if (or (not (= (|x (cadr box)) 2))
+			  (not (= (|y (cadr box)) 2))
+			  (not (= (|width (cadr box)) 8))
+			  (not (= (|height (cadr box)) 8)))
+		      (snd-display ";XClipBox: ~A ~A ~A ~A" (|x (cadr box)) (|y (cadr box)) (|width (cadr box)) (|height (cadr box)))))
 		(|XDestroyRegion reg1)
 		))
+
+	    (let ((xid (|XUniqueContext))
+		  (dpy (|XtDisplay (cadr (main-widgets)))))
+	      (if (not (eq? (car xid) 'XContext))
+		  (snd-display "XUniqueContext: ~A" xid))
+	      (|XSaveContext dpy  123 xid "hiho")
+	      (let ((val (|XFindContext dpy 123 xid)))
+		(if (or (not (= 0 (car val)))
+			(not (string=? (cadr val) "hiho")))
+		    (snd-display "XFindContext: ~A" val)))
+	      (|XDeleteContext dpy 123 xid))
 
 
 	    ;; ---------------- Xt tests ----------------
@@ -15009,12 +15092,12 @@ EDITS: 4
 		  |XtIsTransientShell |XtIsTopLevelShell |XtIsApplicationShell |XtIsSessionShell |XtMapWidget
 		  |XtUnmapWidget |XLoadQueryFont |XQueryFont |XGetMotionEvents |XDeleteModifiermapEntry
 		  |XGetModifierMapping |XInsertModifiermapEntry |XNewModifiermap |XCreateImage |XInitImage |XGetImage
-		  |XGetSubImage |XOpenDisplay |XFetchBytes |XFetchBuffer |XGetAtomName |XGetDefault |XDisplayName
+		  |XGetSubImage |XOpenDisplay |XFetchBytes |XFetchBuffer |XGetAtomName |XDisplayName |XUniqueContext
 		  |XKeysymToString |XSynchronize |XSetAfterFunction |XInternAtom |XCopyColormapAndFree |XCreateColormap
 		  |XCreatePixmapCursor |XCreateGlyphCursor |XCreateFontCursor |XLoadFont |XCreateGC |XFlushGC
 		  |XCreatePixmap |XCreateBitmapFromData |XCreatePixmapFromBitmapData |XCreateSimpleWindow
 		  |XGetSelectionOwner |XCreateWindow |XListInstalledColormaps |XListFonts |XListFontsWithInfo
-		  |XGetFontPath |XListExtensions |XListProperties |XListHosts |XKeycodeToKeysym |XLookupKeysym
+		  |XGetFontPath |XListExtensions |XListProperties |XKeycodeToKeysym |XLookupKeysym
 		  |XGetKeyboardMapping |XStringToKeysym |XMaxRequestSize |XExtendedMaxRequestSize
 		  |XResourceManagerString |XScreenResourceString |XDisplayMotionBufferSize |XVisualIDFromVisual
 		  |XInitThreads |XLockDisplay |XUnlockDisplay |XRootWindow |XDefaultRootWindow |XRootWindowOfScreen
@@ -15024,11 +15107,11 @@ EDITS: 4
 		  |XScreenOfDisplay |XDefaultScreenOfDisplay |XEventMaskOfScreen |XScreenNumberOfScreen
 		  |XSetErrorHandler |XSetIOErrorHandler |XListPixmapFormats |XListDepths |XReconfigureWMWindow
 		  |XGetWMProtocols |XSetWMProtocols |XIconifyWindow |XWithdrawWindow |XGetCommand |XGetWMColormapWindows
-		  |XSetWMColormapWindows |XFreeStringList |XSetTransientForHint |XActivateScreenSaver |XAddHost
-		  |XAddHosts |XAddToSaveSet |XAllocColor |XAllocColorCells |XAllocColorPlanes |XAllocNamedColor
+		  |XSetWMColormapWindows |XFreeStringList |XSetTransientForHint |XActivateScreenSaver
+		  |XAllocColor |XAllocColorCells |XAllocColorPlanes |XAllocNamedColor
 		  |XAllowEvents |XAutoRepeatOff |XAutoRepeatOn |XBell |XBitmapBitOrder |XBitmapPad |XBitmapUnit
 		  |XCellsOfScreen |XChangeActivePointerGrab |XChangeGC |XChangeKeyboardControl |XChangeKeyboardMapping
-		  |XChangePointerControl |XChangeProperty |XChangeSaveSet |XChangeWindowAttributes |XCheckIfEvent
+		  |XChangePointerControl |XChangeProperty |XChangeWindowAttributes |XCheckIfEvent
 		  |XCheckMaskEvent |XCheckTypedEvent |XCheckTypedWindowEvent |XCheckWindowEvent |XCirculateSubwindows
 		  |XCirculateSubwindowsDown |XCirculateSubwindowsUp |XClearArea |XClearWindow |XCloseDisplay
 		  |XConfigureWindow |XConnectionNumber |XConvertSelection |XCopyArea |XCopyGC |XCopyPlane |XDefaultDepth
@@ -15040,7 +15123,7 @@ EDITS: 4
 		  |XEnableAccessControl |XEventsQueued |XFetchName |XFillArc |XFillArcs |XFillPolygon |XFillRectangle
 		  |XFillRectangles |XFlush |XForceScreenSaver |XFreeColormap |XFreeColors |XFreeCursor
 		  |XFreeExtensionList |XFreeFont |XFreeFontInfo |XFreeFontNames |XFreeFontPath |XFreeGC
-		  |XFreeModifiermap |XFreePixmap |XGeometry |XGetErrorDatabaseText |XGetErrorText |XGetFontProperty
+		  |XFreeModifiermap |XFreePixmap |XGeometry |XGetErrorText |XGetFontProperty
 		  |XGetGCValues |XGCValues |XEvent |XGetGeometry |XGetIconName |XGetInputFocus |XGetKeyboardControl
 		  |XGetPointerControl |XGetPointerMapping |XGetScreenSaver |XGetTransientForHint |XGetWindowProperty
 		  |XGetWindowAttributes |XGrabButton |XGrabKey |XGrabKeyboard |XGrabPointer |XGrabServer
@@ -15051,7 +15134,7 @@ EDITS: 4
 		  |XProtocolVersion |XPutImage |XQLength |XQueryBestCursor |XQueryBestSize |XQueryBestStipple
 		  |XQueryBestTile |XQueryColor |XQueryColors |XQueryExtension |XQueryKeymap |XQueryPointer
 		  |XQueryTextExtents |XQueryTree |XRaiseWindow |XRebindKeysym |XRecolorCursor |XRefreshKeyboardMapping
-		  |XRemoveFromSaveSet |XRemoveHost |XRemoveHosts |XReparentWindow |XResetScreenSaver |XResizeWindow
+		  |XReparentWindow |XResetScreenSaver |XResizeWindow
 		  |XRestackWindows |XRotateBuffers |XRotateWindowProperties |XScreenCount |XSelectInput |XSendEvent
 		  |XSetAccessControl |XSetArcMode |XSetBackground |XSetClipMask |XSetClipOrigin |XSetClipRectangles
 		  |XSetCloseDownMode |XSetCommand |XSetDashes |XSetFillRule |XSetFillStyle |XSetFont |XSetFontPath
@@ -15065,7 +15148,7 @@ EDITS: 4
 		  |XUnloadFont |XUnmapSubwindows |XUnmapWindow |XVendorRelease |XWarpPointer |XWidthMMOfScreen
 		  |XWidthOfScreen |XWindowEvent |XWriteBitmapFile |XSupportsLocale |XSetLocaleModifiers |XCreateFontSet
 		  |XFreeFontSet |XFontsOfFontSet |XBaseFontNameListOfFontSet |XLocaleOfFontSet |XContextDependentDrawing
-		  |XDirectionalDependentDrawing |XContextualDrawing |XExtentsOfFontSet |XFilterEvent |XAllocIconSize
+		  |XDirectionalDependentDrawing |XContextualDrawing |XFilterEvent |XAllocIconSize
 		  |XAllocStandardColormap |XAllocWMHints |XClipBox |XCreateRegion |XDefaultString |XDeleteContext
 		  |XDestroyRegion |XEmptyRegion |XEqualRegion |XFindContext |XGetIconSizes |XGetRGBColormaps
 		  |XGetStandardColormap |XGetVisualInfo |XGetWMHints |XIntersectRegion |XConvertCase |XLookupString
@@ -15192,7 +15275,7 @@ EDITS: 4
 		  |XpmCreateBufferFromImage |XpmCreateBufferFromPixmap |XpmCreatePixmapFromXpmImage
 		  |XpmCreateXpmImageFromPixmap |XGetPixel |XDestroyImage |XPutPixel |XSubImage |XAddPixel
 		  |XtAppContext? |XtRequestId?  |XtWorkProcId? |XtInputId?  |XtIntervalId? |Screen?  |XEvent?
-		  |XRectangle? |XArc? |XPoint?  |XSegment?  |XColor? |XHostAddress?  |Atom? |Colormap?
+		  |XRectangle? |XArc? |XPoint?  |XSegment?  |XColor? |Atom? |Colormap?
 		  |XModifierKeymap? |Depth?  |Display? |Drawable?  |Font? |GC?  |KeySym? |Pixel?  |Pixmap? |Region?
 		  |Time? |Visual? |Window?  |XFontProp? |XFontSet?  |XFontStruct? |XGCValues?  |XImage?  |XVisualInfo?
 		  |XWMHints? |XWindowAttributes? |XWindowChanges?  |KeyCode? |XContext?  |XCharStruct? |XTextItem?
@@ -15306,7 +15389,7 @@ EDITS: 4
 				|backing_pixel |save_under |event_mask |do_not_propagate_mask |cursor |map_installed |map_state |all_event_masks
 				|your_event_mask |screen |xoffset |byte_order |bitmap_unit |bitmap_bit_order |bitmap_pad |bytes_per_line
 				|obdata |sibling |stack_mode |red_max |red_mult |green_max |green_mult |blue_max |blue_mult |base_pixel
-				|killid |family |address |data |min_height |max_height |min_width |max_width |height_inc |width_inc |page_number
+				|killid |data |min_height |max_height |min_width |max_width |height_inc |width_inc |page_number
 				|page_widget |status_area_widget |major_tab_widget |minor_tab_widget |source_data |location_data |parm
 				|parm_format |parm_length |parm_type |transfer_id |destination_data |remaining |item_or_text |auto_selection_type
 				|new_outline_state |prev_page_number |prev_page_widget |rendition |render_table |last_page |crossed_boundary
@@ -15336,7 +15419,7 @@ EDITS: 4
 				'|backing_pixel '|save_under '|event_mask '|do_not_propagate_mask '|cursor '|map_installed '|map_state '|all_event_masks
 				'|your_event_mask '|screen '|xoffset '|byte_order '|bitmap_unit '|bitmap_bit_order '|bitmap_pad '|bytes_per_line
 				'|obdata '|sibling '|stack_mode '|red_max '|red_mult '|green_max '|green_mult '|blue_max '|blue_mult '|base_pixel
-				'|killid '|family '|address '|data '|min_height '|max_height '|min_width '|max_width '|height_inc '|width_inc '|page_number
+				'|killid '|data '|min_height '|max_height '|min_width '|max_width '|height_inc '|width_inc '|page_number
 				'|page_widget '|status_area_widget '|major_tab_widget '|minor_tab_widget '|source_data '|location_data '|parm
 				'|parm_format '|parm_length '|parm_type '|transfer_id '|destination_data '|remaining '|item_or_text '|auto_selection_type
 				'|new_outline_state '|prev_page_number '|prev_page_widget '|rendition '|render_table '|last_page '|crossed_boundary

@@ -9,6 +9,8 @@
  */
 
 /* HISTORY: 
+ *   14-Feb:    XUniqueContext added, XExtentsOfFontSet and XGetErrorDatabaseText deleted.
+ *              X save-set and X host-address stuff deleted.
  *   1-Feb:     Motif 2.2 additions (tooltip).
  *   21-Jan:    Ruby fixups (XEN_COPY_ARGS to protect lists)
  *   7-Jan-02:  XEvent fields settable. added XtCallCallbacks-raw.
@@ -284,7 +286,6 @@
  *    XGetFontProperty omits and rtns last arg
  *    XGetGCValues omits and returns last arg
  *    XGetErrorText ignores arg3, returns text
- *    XGetErrorDatabaseText ignores arg5, returns text
  *    XGetGeometry omits trailing 4 args and returns them
  *    XFreeFontPath is no-op
  *    XFreeFontNames is no-op
@@ -321,7 +322,6 @@
  *    XListDepths omits last arg, returns list of depths
  *    XListPixmapFormats omits arg2, rtns list of lists, each holding XPixmapFormatValues data
  *    XGetKeyboardMapping omits last arg, returns list of keys
- *    XListHosts omits and returns last 2 args
  *    XListProperties returns list, no arg3
  *    XListExtensions omits arg2, returns list
  *    XGetFontPath omits arg2, returns list
@@ -429,7 +429,7 @@
  *    XmLabelGadget? XmPushButtonGadget? XmSeparatorGadget? XmArrowButtonGadget? XmCascadeButtonGadget? XmToggleButtonGadget? XmDrawnButton?
  *    XmPrimitive? XmTabList? XmParseMapping? XmFontList? XmFontListEntry? XmTextSource? XmStringContext?
  *    XStandardColormap? WidgetClass? Widget? XTextItem? XCharStruct? XmParseTable? XmFontContext? XFontSet?
- *    XHostAddress? XpmAttributes? XpmImage? XmRendition? XmParseTable? XmRenderTable? XModifierKeymap? XPContext?
+ *    XpmAttributes? XpmImage? XmRendition? XmParseTable? XmRenderTable? XModifierKeymap? XPContext?
  *
  * Structs are accessed by the field name and the lisp variable (which contains the struct type)
  *   (|pixel color) for example, or (|foreground gcvalue)
@@ -563,7 +563,6 @@ XM_TYPE(XFocusChangeEvent, XFocusChangeEvent *)
 XM_TYPE(XFontProp, XFontProp *)
 XM_TYPE(XFontSet, XFontSet)
 XM_TYPE(XFontStruct, XFontStruct *)
-XM_TYPE(XHostAddress, XHostAddress *)
 XM_TYPE(XGCValues, XGCValues *)
 XM_TYPE(XTextItem, XTextItem *)
 XM_TYPE(XModifierKeymap, XModifierKeymap *) /* opaque in this implementation */
@@ -7676,15 +7675,19 @@ specified property on the named window."
   return(XEN_FALSE);
 }
 
+static XEN gxm_XUniqueContext(void)
+{
+  #define H_XUniqueContext "XContext XUniqueContext() creates a unique context type that may be used in subsequent calls to XSaveContext."
+  return(C_TO_XEN_XContext(XUniqueContext()));
+}
+
 static XEN gxm_XSaveContext(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XSaveContext "XSaveContext(dpy, rid, context) saves a context"
-  #define H_XUniqueContext "XContext XUniqueContext() creates a unique context type that may be used in subsequent calls to XSaveContext."
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XSaveContext", "Display*");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XSaveContext", "XID");
   XEN_ASSERT_TYPE(XEN_XContext_P(arg3), arg3, 3, "XSaveContext", "XContext");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg4), arg4, 4, "XSaveContext", "char*");
-  return(C_TO_XEN_INT(XSaveContext(XEN_TO_C_Display(arg1), XEN_TO_C_ULONG(arg2), XEN_TO_C_XContext(arg3), XEN_TO_C_STRING(arg4))));
+  return(C_TO_XEN_INT(XSaveContext(XEN_TO_C_Display(arg1), XEN_TO_C_ULONG(arg2), XEN_TO_C_XContext(arg3), (caddr_t)arg4)));
 }
 
 static XEN gxm_XRectInRegion(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
@@ -7908,14 +7911,14 @@ static XEN gxm_XFindContext(XEN arg1, XEN arg2, XEN arg3)
   #define H_XFindContext "XFindContext(dpy, rid, context) gets data from the context manager"
   /* DIFF: XFindContext last arg omitted, val returned
    */
-  XPointer x;
+  caddr_t x;
   int val;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XFindContext", "Display*");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XFindContext", "XID");
   XEN_ASSERT_TYPE(XEN_XContext_P(arg3), arg3, 3, "XFindContext", "XContext");
   val = XFindContext(XEN_TO_C_Display(arg1), XEN_TO_C_ULONG(arg2), XEN_TO_C_XContext(arg3), &x);
   return(XEN_LIST_2(C_TO_XEN_INT(val),
-		    C_TO_XEN_ULONG(x)));
+		    (XEN)x));
 }
 
 static XEN gxm_XEqualRegion(XEN arg1, XEN arg2)
@@ -7998,14 +8001,6 @@ static XEN gxm_XFilterEvent(XEN arg1, XEN arg2)
   XEN_ASSERT_TYPE(XEN_XEvent_P(arg1), arg1, 1, "XFilterEvent", "XEvent*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XFilterEvent", "Window");
   return(C_TO_XEN_BOOLEAN(XFilterEvent(XEN_TO_C_XEvent(arg1), XEN_TO_C_Window(arg2))));
-}
-
-static XEN gxm_XExtentsOfFontSet(XEN arg1)
-{
-  #define H_XExtentsOfFontSet "XFontSetExtents *XExtentsOfFontSet(font_set) returns an XFontSetExtents structure for the fonts used \
-by the Xmb and Xwc layers, for the given font set."
-  XEN_ASSERT_TYPE(XEN_XFontSet_P(arg1), arg1, 1, "XExtentsOfFontSet", "XFontSet");
-  return(C_TO_XEN_ULONG(XExtentsOfFontSet(XEN_TO_C_XFontSet(arg1))));
 }
 
 static XEN gxm_XContextualDrawing(XEN arg1)
@@ -8916,31 +8911,6 @@ static XEN gxm_XReparentWindow(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 				      XEN_TO_C_Window(arg2), 
 				      XEN_TO_C_Window(arg3), 
 				      XEN_TO_C_INT(arg4), XEN_TO_C_INT(arg5))));
-}
-
-static XEN gxm_XRemoveHosts(XEN arg1, XEN arg2, XEN arg3)
-{
-  #define H_XRemoveHosts "XRemoveHosts(display, hosts, num_hosts) removes each specified host from the access control list for that display. "
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XRemoveHosts", "Display*");
-  XEN_ASSERT_TYPE(XEN_XHostAddress_P(arg2), arg2, 2, "XRemoveHosts", "XHostAddress*");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XRemoveHosts", "int");
-  return(C_TO_XEN_INT(XRemoveHosts(XEN_TO_C_Display(arg1), XEN_TO_C_XHostAddress(arg2), XEN_TO_C_INT(arg3))));
-}
-
-static XEN gxm_XRemoveHost(XEN arg1, XEN arg2)
-{
-  #define H_XRemoveHost "XRemoveHost(display, host) removes the specified host from the access control list for that display."
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XRemoveHost", "Display*");
-  XEN_ASSERT_TYPE(XEN_XHostAddress_P(arg2), arg2, 2, "XRemoveHost", "XHostAddress*");
-  return(C_TO_XEN_INT(XRemoveHost(XEN_TO_C_Display(arg1), XEN_TO_C_XHostAddress(arg2))));
-}
-
-static XEN gxm_XRemoveFromSaveSet(XEN arg1, XEN arg2)
-{
-  #define H_XRemoveFromSaveSet "XRemoveFromSaveSet(display, w) removes the specified window from the client's save-set."
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XRemoveFromSaveSet", "Display*");
-  XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XRemoveFromSaveSet", "Window");
-  return(C_TO_XEN_INT(XRemoveFromSaveSet(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2))));
 }
 
 static XEN gxm_XRefreshKeyboardMapping(XEN arg1)
@@ -9915,34 +9885,6 @@ code into the specified buffer."
   if (len <= 0) XEN_ASSERT_TYPE(0, arg4, 4, "XGetErrorText", "positive integer");
   buf = (char *)CALLOC(len, sizeof(char));
   val = XGetErrorText(XEN_TO_C_Display(arg1), XEN_TO_C_INT(arg2), buf, len);
-  str = C_TO_XEN_STRING(buf);
-  FREE(buf);
-  return(XEN_LIST_2(C_TO_XEN_INT(val),
-		    str));
-}
-
-static XEN gxm_XGetErrorDatabaseText(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
-{
-  #define H_XGetErrorDatabaseText "XGetErrorDatabaseText(display, name, message, default_string, buffer_return, length) returns a null-terminated \
-message (or the default message) from the error message database."
-  /* DIFF: XGetErrorText ignores arg5, returns text
-   */
-  char *buf;
-  int len, val;
-  XEN str;
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XGetErrorDatabaseText", "Display*");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XGetErrorDatabaseText", "char*");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg3), arg3, 3, "XGetErrorDatabaseText", "char*");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg4), arg4, 4, "XGetErrorDatabaseText", "char*");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XGetErrorDatabaseText", "int");
-  len = XEN_TO_C_INT(arg6);
-  if (len <= 0) XEN_ASSERT_TYPE(0, arg6, 6, "XGetErrorDatabaseText", "positive integer");
-  buf = (char *)CALLOC(len, sizeof(char));
-  val = XGetErrorDatabaseText(XEN_TO_C_Display(arg1), 
-			      XEN_TO_C_STRING(arg2), 
-			      XEN_TO_C_STRING(arg3), 
-			      XEN_TO_C_STRING(arg4),
-			      buf, len);
   str = C_TO_XEN_STRING(buf);
   FREE(buf);
   return(XEN_LIST_2(C_TO_XEN_INT(val),
@@ -11058,15 +11000,6 @@ structure to change the specified window attributes."
 					      XEN_TO_C_XSetWindowAttributes(arg4))));
 }
 
-static XEN gxm_XChangeSaveSet(XEN arg1, XEN arg2, XEN arg3)
-{
-  #define H_XChangeSaveSet "XChangeSaveSet(spy, window, int) either inserts or deletes the specified window from the client's save-set."
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XChangeSaveSet", "Display*");
-  XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XChangeSaveSet", "Window");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XChangeSaveSet", "mode");
-  return(C_TO_XEN_INT(XChangeSaveSet(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), XEN_TO_C_INT(arg3))));
-}
-
 static XEN gxm_XChangeProperty(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
 {
   #define H_XChangeProperty "XChangeProperty(display, w, property, type, format, mode, data, nelements) alters the property for the specified \
@@ -11336,31 +11269,6 @@ closest RGB value supported by the hardware."
   XEN_ASSERT_TYPE(XEN_Colormap_P(arg2), arg2, 2, "XAllocColor", "Colormap");
   XEN_ASSERT_TYPE(XEN_XColor_P(arg3), arg3, 3, "XAllocColor", "XColor"); 
   return(C_TO_XEN_INT(XAllocColor(XEN_TO_C_Display(arg1), XEN_TO_C_Colormap(arg2), XEN_TO_C_XColor(arg3))));
-}
-
-static XEN gxm_XAddToSaveSet(XEN arg1, XEN arg2)
-{
-  #define H_XAddToSaveSet "XAddToSaveSet(display, w) adds the specified window to the client's save-set."
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XAddToSaveSet", "Display*");
-  XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XAddToSaveSet", "Window");
-  return(C_TO_XEN_INT(XAddToSaveSet(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2))));
-}
-
-static XEN gxm_XAddHosts(XEN arg1, XEN arg2, XEN arg3)
-{
-  #define H_XAddHosts "XAddHosts(display, hosts, num_hosts) adds each specified host to the access control list for that display."
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XAddHosts", "Display*");
-  XEN_ASSERT_TYPE(XEN_XHostAddress_P(arg2), arg2, 2, "XAddHosts", "XHostAddress*");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XAddHosts", "int");
-  return(C_TO_XEN_INT(XAddHosts(XEN_TO_C_Display(arg1), XEN_TO_C_XHostAddress(arg2), XEN_TO_C_INT(arg3))));
-}
-
-static XEN gxm_XAddHost(XEN arg1, XEN arg2)
-{
-  #define H_XAddHost "XAddHost(display, host) adds the specified host to the access control list for that display."
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XAddHost", "Display*");
-  XEN_ASSERT_TYPE(XEN_XHostAddress_P(arg2), arg2, 2, "XAddHost", "XHostAddress*");
-  return(C_TO_XEN_INT(XAddHost(XEN_TO_C_Display(arg1), XEN_TO_C_XHostAddress(arg2))));
 }
 
 static XEN gxm_XActivateScreenSaver(XEN arg1)
@@ -11903,20 +11811,6 @@ for the specified KeyCode and the element of the KeyCode vector."
   return(C_TO_XEN_KeySym(XKeycodeToKeysym(XEN_TO_C_Display(arg1), XEN_TO_C_ULONG(arg2), XEN_TO_C_INT(arg3))));
 }
 
-static XEN gxm_XListHosts(XEN arg1)
-{
-  #define H_XListHosts "XHostAddress *XListHosts(display) returns the current access control list as well \
-as whether the use of the list at connection setup was enabled or disabled."
-  /* DIFF: XListHosts omits and returns last 2 args
-   */
-  int arg2;
-  Bool arg3;
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XListHosts", "Display*");
-  return(XEN_LIST_3(C_TO_XEN_XHostAddress(XListHosts(XEN_TO_C_Display(arg1), &arg2, &arg3)),
-		    C_TO_XEN_INT(arg2),
-		    C_TO_XEN_BOOLEAN(arg3)));
-}
-
 static XEN gxm_XListProperties(XEN arg1, XEN arg2)
 {
   #define H_XListProperties "Atom *XListProperties(display, w) returns a pointer to an array of atom properties that \
@@ -12323,15 +12217,6 @@ static XEN gxm_XDisplayName(XEN arg1)
   #define H_XDisplayName "char *XDisplayName(string) returns the name of the display that  XOpenDisplay would attempt to use."
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XDisplayName", "char*");
   return(C_TO_XEN_STRING(XDisplayName(XEN_TO_C_STRING(arg1))));
-}
-
-static XEN gxm_XGetDefault(XEN arg1, XEN arg2, XEN arg3)
-{
-  #define H_XGetDefault "char *XGetDefault(display, program, option) extracts option value from resource database"
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XGetDefault", "Display*");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XGetDefault", "char*");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg3), arg3, 3, "XGetDefault", "char*");
-  return(C_TO_XEN_STRING(XGetDefault(XEN_TO_C_Display(arg1), XEN_TO_C_STRING(arg2), XEN_TO_C_STRING(arg3))));
 }
 
 static XEN gxm_XGetAtomName(XEN arg1, XEN arg2)
@@ -17313,7 +17198,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XFetchBytes" XM_POSTFIX, gxm_XFetchBytes, 1, 0, 0, H_XFetchBytes);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XFetchBuffer" XM_POSTFIX, gxm_XFetchBuffer, 2, 0, 0, H_XFetchBuffer);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XGetAtomName" XM_POSTFIX, gxm_XGetAtomName, 2, 0, 0, H_XGetAtomName);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XGetDefault" XM_POSTFIX, gxm_XGetDefault, 3, 0, 0, H_XGetDefault);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDisplayName" XM_POSTFIX, gxm_XDisplayName, 1, 0, 0, H_XDisplayName);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XKeysymToString" XM_POSTFIX, gxm_XKeysymToString, 1, 0, 0, H_XKeysymToString);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSynchronize" XM_POSTFIX, gxm_XSynchronize, 2, 0, 0, H_XSynchronize);
@@ -17339,7 +17223,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XGetFontPath" XM_POSTFIX, gxm_XGetFontPath, 1, 0, 0, H_XGetFontPath);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XListExtensions" XM_POSTFIX, gxm_XListExtensions, 1, 0, 0, H_XListExtensions);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XListProperties" XM_POSTFIX, gxm_XListProperties, 2, 0, 0, H_XListProperties);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XListHosts" XM_POSTFIX, gxm_XListHosts, 1, 0, 0, H_XListHosts);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XKeycodeToKeysym" XM_POSTFIX, gxm_XKeycodeToKeysym, 3, 0, 0, H_XKeycodeToKeysym);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XLookupKeysym" XM_POSTFIX, gxm_XLookupKeysym, 2, 0, 0, H_XLookupKeysym);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XGetKeyboardMapping" XM_POSTFIX, gxm_XGetKeyboardMapping, 3, 0, 0, H_XGetKeyboardMapping);
@@ -17391,9 +17274,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XFreeStringList" XM_POSTFIX, gxm_XFreeStringList, 1, 0, 0, H_XFreeStringList);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetTransientForHint" XM_POSTFIX, gxm_XSetTransientForHint, 3, 0, 0, H_XSetTransientForHint);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XActivateScreenSaver" XM_POSTFIX, gxm_XActivateScreenSaver, 1, 0, 0, H_XActivateScreenSaver);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XAddHost" XM_POSTFIX, gxm_XAddHost, 2, 0, 0, H_XAddHost);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XAddHosts" XM_POSTFIX, gxm_XAddHosts, 3, 0, 0, H_XAddHosts);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XAddToSaveSet" XM_POSTFIX, gxm_XAddToSaveSet, 2, 0, 0, H_XAddToSaveSet);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XAllocColor" XM_POSTFIX, gxm_XAllocColor, 3, 0, 0, H_XAllocColor);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XAllocColorCells" XM_POSTFIX, gxm_XAllocColorCells, 5, 0, 0, H_XAllocColorCells);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XAllocColorPlanes" XM_POSTFIX, gxm_XAllocColorPlanes, 0, 0, 1, H_XAllocColorPlanes);
@@ -17412,7 +17292,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XChangeKeyboardMapping" XM_POSTFIX, gxm_XChangeKeyboardMapping, 5, 0, 0, H_XChangeKeyboardMapping);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XChangePointerControl" XM_POSTFIX, gxm_XChangePointerControl, 6, 0, 0, H_XChangePointerControl);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XChangeProperty" XM_POSTFIX, gxm_XChangeProperty, 8, 0, 0, H_XChangeProperty);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XChangeSaveSet" XM_POSTFIX, gxm_XChangeSaveSet, 3, 0, 0, H_XChangeSaveSet);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XChangeWindowAttributes" XM_POSTFIX, gxm_XChangeWindowAttributes, 4, 0, 0, H_XChangeWindowAttributes);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XCheckIfEvent" XM_POSTFIX, gxm_XCheckIfEvent, 3, 0, 0, H_XCheckIfEvent);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XCheckMaskEvent" XM_POSTFIX, gxm_XCheckMaskEvent, 3, 0, 0, H_XCheckMaskEvent);
@@ -17487,7 +17366,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XFreeModifiermap" XM_POSTFIX, gxm_XFreeModifiermap, 1, 0, 0, H_XFreeModifiermap);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XFreePixmap" XM_POSTFIX, gxm_XFreePixmap, 2, 0, 0, H_XFreePixmap);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XGeometry" XM_POSTFIX, gxm_XGeometry, 0, 0, 1, H_XGeometry);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XGetErrorDatabaseText" XM_POSTFIX, gxm_XGetErrorDatabaseText, 6, 0, 0, H_XGetErrorDatabaseText);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XGetErrorText" XM_POSTFIX, gxm_XGetErrorText, 4, 0, 0, H_XGetErrorText);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XGetFontProperty" XM_POSTFIX, gxm_XGetFontProperty, 2, 0, 0, H_XGetFontProperty);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XGetGCValues" XM_POSTFIX, gxm_XGetGCValues, 3, 0, 0, H_XGetGCValues);
@@ -17555,9 +17433,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XRebindKeysym" XM_POSTFIX, gxm_XRebindKeysym, 6, 0, 0, H_XRebindKeysym);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XRecolorCursor" XM_POSTFIX, gxm_XRecolorCursor, 4, 0, 0, H_XRecolorCursor);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XRefreshKeyboardMapping" XM_POSTFIX, gxm_XRefreshKeyboardMapping, 1, 0, 0, H_XRefreshKeyboardMapping);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XRemoveFromSaveSet" XM_POSTFIX, gxm_XRemoveFromSaveSet, 2, 0, 0, H_XRemoveFromSaveSet);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XRemoveHost" XM_POSTFIX, gxm_XRemoveHost, 2, 0, 0, H_XRemoveHost);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XRemoveHosts" XM_POSTFIX, gxm_XRemoveHosts, 3, 0, 0, H_XRemoveHosts);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XReparentWindow" XM_POSTFIX, gxm_XReparentWindow, 5, 0, 0, H_XReparentWindow);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XResetScreenSaver" XM_POSTFIX, gxm_XResetScreenSaver, 1, 0, 0, H_XResetScreenSaver);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XResizeWindow" XM_POSTFIX, gxm_XResizeWindow, 4, 0, 0, H_XResizeWindow);
@@ -17638,7 +17513,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XContextDependentDrawing" XM_POSTFIX, gxm_XContextDependentDrawing, 1, 0, 0, H_XContextDependentDrawing);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDirectionalDependentDrawing" XM_POSTFIX, gxm_XDirectionalDependentDrawing, 1, 0, 0, H_XDirectionalDependentDrawing);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XContextualDrawing" XM_POSTFIX, gxm_XContextualDrawing, 1, 0, 0, H_XContextualDrawing);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XExtentsOfFontSet" XM_POSTFIX, gxm_XExtentsOfFontSet, 1, 0, 0, H_XExtentsOfFontSet);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XFilterEvent" XM_POSTFIX, gxm_XFilterEvent, 2, 0, 0, H_XFilterEvent);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XAllocIconSize" XM_POSTFIX, gxm_XAllocIconSize, 0, 0, 0, H_XAllocIconSize);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XAllocStandardColormap" XM_POSTFIX, gxm_XAllocStandardColormap, 0, 0, 0, H_XAllocStandardColormap);
@@ -17665,6 +17539,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XPolygonRegion" XM_POSTFIX, gxm_XPolygonRegion, 3, 0, 0, H_XPolygonRegion);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XRectInRegion" XM_POSTFIX, gxm_XRectInRegion, 5, 0, 0, H_XRectInRegion);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSaveContext" XM_POSTFIX, gxm_XSaveContext, 4, 0, 0, H_XSaveContext);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XUniqueContext" XM_POSTFIX, gxm_XUniqueContext, 0, 0, 0, H_XUniqueContext);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetRGBColormaps" XM_POSTFIX, gxm_XSetRGBColormaps, 5, 0, 0, H_XSetRGBColormaps);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetWMHints" XM_POSTFIX, gxm_XSetWMHints, 3, 0, 0, H_XSetWMHints);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetRegion" XM_POSTFIX, gxm_XSetRegion, 3, 0, 0, H_XSetRegion);
@@ -18258,7 +18133,7 @@ static void define_procedures(void)
       ADD: XmLabelGadget? XmPushButtonGadget? XmSeparatorGadget? XmArrowButtonGadget? XmCascadeButtonGadget? XmToggleButtonGadget? XmDrawnButton?
       ADD: XmPrimitive? XmTabList? XmParseMapping? XmFontList? XmFontListEntry? XmTextSource? XmStringContext?
       ADD: XStandardColormap? WidgetClass? Widget? XTextItem? XCharStruct? XmParseTable? XmFontContext? XFontSet?
-      ADD: XHostAddress? XpmAttributes? XpmImage? XmRendition? XmRenderTable? XModifierKeymap? XPContext?
+      ADD: XpmAttributes? XpmImage? XmRendition? XmRenderTable? XModifierKeymap? XPContext?
   */
 #if HAVE_MOTIF
   XEN_DEFINE_PROCEDURE(XM_PREFIX "Pixel" XM_POSTFIX, gxm_Pixel, 1, 0, 0, NULL);
@@ -18277,7 +18152,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XPoint?" XM_POSTFIX, XEN_XPoint_p, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSegment?" XM_POSTFIX, XEN_XSegment_p, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XColor?" XM_POSTFIX, XEN_XColor_p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XHostAddress?" XM_POSTFIX, XEN_XHostAddress_p, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "Atom?" XM_POSTFIX, XEN_Atom_p, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "Colormap?" XM_POSTFIX, XEN_Colormap_p, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XModifierKeymap?" XM_POSTFIX, XEN_XModifierKeymap_p, 1, 0, 0, NULL);
@@ -20707,18 +20581,6 @@ static XEN gxm_set_dashes(XEN ptr, XEN val)
 }
 
 
-static XEN gxm_address(XEN ptr)
-{
-  XEN_ASSERT_TYPE(XEN_XHostAddress_P(ptr), ptr, XEN_ONLY_ARG, "address", "XHostAddress");
-  return(C_TO_XEN_STRING((char *)((XEN_TO_C_XHostAddress(ptr))->address)));
-}
-
-static XEN gxm_family(XEN ptr)
-{
-  XEN_ASSERT_TYPE(XEN_XHostAddress_P(ptr), ptr, XEN_ONLY_ARG, "family", "XHostAddress");
-  return(C_TO_XEN_INT((int)((XEN_TO_C_XHostAddress(ptr))->family)));
-}
-
 static XEN gxm_killid(XEN ptr)
 {
   XEN_ASSERT_TYPE(XEN_XStandardColormap_P(ptr), ptr, XEN_ONLY_ARG, "killid", "XStandardColormap");
@@ -21183,7 +21045,6 @@ static XEN gxm_length(XEN ptr)
   if (XEN_XmSelectionCallbackStruct_P(ptr)) return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XmSelectionCallbackStruct(ptr))->length)));
   if (XEN_XmConvertCallbackStruct_P(ptr)) return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XmConvertCallbackStruct(ptr))->length)));
 #endif
-  if (XEN_XHostAddress_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XHostAddress(ptr))->length)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "length", "a struct with a length field");
   return(XEN_FALSE);
 }
@@ -21737,8 +21598,6 @@ static void define_structs(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "blue_mult" XM_POSTFIX, gxm_blue_mult, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "base_pixel" XM_POSTFIX, gxm_base_pixel, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "killid" XM_POSTFIX, gxm_killid, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "family" XM_POSTFIX, gxm_family, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "address" XM_POSTFIX, gxm_address, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "data" XM_POSTFIX, gxm_data, 1, 0, 0, NULL);
 
   XEN_DEFINE_PROCEDURE(XM_PREFIX "min_height" XM_POSTFIX, gxm_min_height, 1, 0, 0, NULL);
@@ -24715,7 +24574,7 @@ static int xm_already_inited = 0;
       define_structs();
       XEN_YES_WE_HAVE("xm");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"12-Feb-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"14-Feb-02\")");
 #endif
       xm_already_inited = 1;
     }

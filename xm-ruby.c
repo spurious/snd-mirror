@@ -230,9 +230,6 @@
   XEN_NARGIFY_8(gxm_XtGrabPointer_w, gxm_XtGrabPointer)
   XEN_NARGIFY_2(gxm_XtUngrabPointer_w, gxm_XtUngrabPointer)
   XEN_NARGIFY_1(gxm_XtGetApplicationNameAndClass_w, gxm_XtGetApplicationNameAndClass)
-  XEN_NARGIFY_3(gxm_XtRegisterDrawable_w, gxm_XtRegisterDrawable)
-  XEN_NARGIFY_2(gxm_XtUnregisterDrawable_w, gxm_XtUnregisterDrawable)
-  XEN_NARGIFY_1(gxm_XtHooksOfDisplay_w, gxm_XtHooksOfDisplay)
   XEN_NARGIFY_1(gxm_XtGetDisplays_w, gxm_XtGetDisplays)
   XEN_NARGIFY_0(gxm_XtToolkitThreadInitialize_w, gxm_XtToolkitThreadInitialize)
   XEN_NARGIFY_1(gxm_XtAppLock_w, gxm_XtAppLock)
@@ -294,7 +291,6 @@
   XEN_NARGIFY_1(gxm_XGetFontPath_w, gxm_XGetFontPath)
   XEN_NARGIFY_1(gxm_XListExtensions_w, gxm_XListExtensions)
   XEN_NARGIFY_2(gxm_XListProperties_w, gxm_XListProperties)
-  XEN_NARGIFY_1(gxm_XListHosts_w, gxm_XListHosts)
   XEN_NARGIFY_3(gxm_XKeycodeToKeysym_w, gxm_XKeycodeToKeysym)
   XEN_NARGIFY_2(gxm_XLookupKeysym_w, gxm_XLookupKeysym)
   XEN_NARGIFY_3(gxm_XGetKeyboardMapping_w, gxm_XGetKeyboardMapping)
@@ -346,9 +342,6 @@
   XEN_NARGIFY_1(gxm_XFreeStringList_w, gxm_XFreeStringList)
   XEN_NARGIFY_3(gxm_XSetTransientForHint_w, gxm_XSetTransientForHint)
   XEN_NARGIFY_1(gxm_XActivateScreenSaver_w, gxm_XActivateScreenSaver)
-  XEN_NARGIFY_2(gxm_XAddHost_w, gxm_XAddHost)
-  XEN_NARGIFY_3(gxm_XAddHosts_w, gxm_XAddHosts)
-  XEN_NARGIFY_2(gxm_XAddToSaveSet_w, gxm_XAddToSaveSet)
   XEN_NARGIFY_3(gxm_XAllocColor_w, gxm_XAllocColor)
   XEN_NARGIFY_5(gxm_XAllocColorCells_w, gxm_XAllocColorCells)
   XEN_VARGIFY(gxm_XAllocColorPlanes_w, gxm_XAllocColorPlanes)
@@ -442,7 +435,6 @@
   XEN_NARGIFY_1(gxm_XFreeModifiermap_w, gxm_XFreeModifiermap)
   XEN_NARGIFY_2(gxm_XFreePixmap_w, gxm_XFreePixmap)
   XEN_VARGIFY(gxm_XGeometry_w, gxm_XGeometry)
-  XEN_NARGIFY_6(gxm_XGetErrorDatabaseText_w, gxm_XGetErrorDatabaseText)
   XEN_NARGIFY_4(gxm_XGetErrorText_w, gxm_XGetErrorText)
   XEN_NARGIFY_2(gxm_XGetFontProperty_w, gxm_XGetFontProperty)
   XEN_NARGIFY_3(gxm_XGetGCValues_w, gxm_XGetGCValues)
@@ -510,9 +502,6 @@
   XEN_NARGIFY_6(gxm_XRebindKeysym_w, gxm_XRebindKeysym)
   XEN_NARGIFY_4(gxm_XRecolorCursor_w, gxm_XRecolorCursor)
   XEN_NARGIFY_1(gxm_XRefreshKeyboardMapping_w, gxm_XRefreshKeyboardMapping)
-  XEN_NARGIFY_2(gxm_XRemoveFromSaveSet_w, gxm_XRemoveFromSaveSet)
-  XEN_NARGIFY_2(gxm_XRemoveHost_w, gxm_XRemoveHost)
-  XEN_NARGIFY_3(gxm_XRemoveHosts_w, gxm_XRemoveHosts)
   XEN_NARGIFY_5(gxm_XReparentWindow_w, gxm_XReparentWindow)
   XEN_NARGIFY_1(gxm_XResetScreenSaver_w, gxm_XResetScreenSaver)
   XEN_NARGIFY_4(gxm_XResizeWindow_w, gxm_XResizeWindow)
@@ -593,7 +582,6 @@
   XEN_NARGIFY_1(gxm_XContextDependentDrawing_w, gxm_XContextDependentDrawing)
   XEN_NARGIFY_1(gxm_XDirectionalDependentDrawing_w, gxm_XDirectionalDependentDrawing)
   XEN_NARGIFY_1(gxm_XContextualDrawing_w, gxm_XContextualDrawing)
-  XEN_NARGIFY_1(gxm_XExtentsOfFontSet_w, gxm_XExtentsOfFontSet)
   XEN_NARGIFY_2(gxm_XFilterEvent_w, gxm_XFilterEvent)
   XEN_NARGIFY_0(gxm_XAllocIconSize_w, gxm_XAllocIconSize)
   XEN_NARGIFY_0(gxm_XAllocStandardColormap_w, gxm_XAllocStandardColormap)
@@ -1519,9 +1507,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGrabPointer" XM_POSTFIX, gxm_XtGrabPointer_w, 8, 0, 0, H_XtGrabPointer);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtUngrabPointer" XM_POSTFIX, gxm_XtUngrabPointer_w, 2, 0, 0, H_XtUngrabPointer);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetApplicationNameAndClass" XM_POSTFIX, gxm_XtGetApplicationNameAndClass_w, 1, 0, 0, H_XtGetApplicationNameAndClass);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRegisterDrawable" XM_POSTFIX, gxm_XtRegisterDrawable_w, 3, 0, 0, H_XtRegisterDrawable);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtUnregisterDrawable" XM_POSTFIX, gxm_XtUnregisterDrawable_w, 2, 0, 0, H_XtUnregisterDrawable);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtHooksOfDisplay" XM_POSTFIX, gxm_XtHooksOfDisplay_w, 1, 0, 0, H_XtHooksOfDisplay);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetDisplays" XM_POSTFIX, gxm_XtGetDisplays_w, 1, 0, 0, H_XtGetDisplays);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtToolkitThreadInitialize" XM_POSTFIX, gxm_XtToolkitThreadInitialize_w, 0, 0, 0, H_XtToolkitThreadInitialize);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppLock" XM_POSTFIX, gxm_XtAppLock_w, 1, 0, 0, H_XtAppLock);
@@ -1635,9 +1620,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XFreeStringList" XM_POSTFIX, gxm_XFreeStringList_w, 1, 0, 0, H_XFreeStringList);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetTransientForHint" XM_POSTFIX, gxm_XSetTransientForHint_w, 3, 0, 0, H_XSetTransientForHint);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XActivateScreenSaver" XM_POSTFIX, gxm_XActivateScreenSaver_w, 1, 0, 0, H_XActivateScreenSaver);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XAddHost" XM_POSTFIX, gxm_XAddHost_w, 2, 0, 0, H_XAddHost);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XAddHosts" XM_POSTFIX, gxm_XAddHosts_w, 3, 0, 0, H_XAddHosts);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XAddToSaveSet" XM_POSTFIX, gxm_XAddToSaveSet_w, 2, 0, 0, H_XAddToSaveSet);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XAllocColor" XM_POSTFIX, gxm_XAllocColor_w, 3, 0, 0, H_XAllocColor);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XAllocColorCells" XM_POSTFIX, gxm_XAllocColorCells_w, 5, 0, 0, H_XAllocColorCells);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XAllocColorPlanes" XM_POSTFIX, gxm_XAllocColorPlanes_w, 0, 0, 1, H_XAllocColorPlanes);
@@ -1799,9 +1781,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XRebindKeysym" XM_POSTFIX, gxm_XRebindKeysym_w, 6, 0, 0, H_XRebindKeysym);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XRecolorCursor" XM_POSTFIX, gxm_XRecolorCursor_w, 4, 0, 0, H_XRecolorCursor);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XRefreshKeyboardMapping" XM_POSTFIX, gxm_XRefreshKeyboardMapping_w, 1, 0, 0, H_XRefreshKeyboardMapping);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XRemoveFromSaveSet" XM_POSTFIX, gxm_XRemoveFromSaveSet_w, 2, 0, 0, H_XRemoveFromSaveSet);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XRemoveHost" XM_POSTFIX, gxm_XRemoveHost_w, 2, 0, 0, H_XRemoveHost);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XRemoveHosts" XM_POSTFIX, gxm_XRemoveHosts_w, 3, 0, 0, H_XRemoveHosts);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XReparentWindow" XM_POSTFIX, gxm_XReparentWindow_w, 5, 0, 0, H_XReparentWindow);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XResetScreenSaver" XM_POSTFIX, gxm_XResetScreenSaver_w, 1, 0, 0, H_XResetScreenSaver);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XResizeWindow" XM_POSTFIX, gxm_XResizeWindow_w, 4, 0, 0, H_XResizeWindow);
@@ -1882,7 +1861,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XContextDependentDrawing" XM_POSTFIX, gxm_XContextDependentDrawing_w, 1, 0, 0, H_XContextDependentDrawing);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDirectionalDependentDrawing" XM_POSTFIX, gxm_XDirectionalDependentDrawing_w, 1, 0, 0, H_XDirectionalDependentDrawing);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XContextualDrawing" XM_POSTFIX, gxm_XContextualDrawing_w, 1, 0, 0, H_XContextualDrawing);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XExtentsOfFontSet" XM_POSTFIX, gxm_XExtentsOfFontSet_w, 1, 0, 0, H_XExtentsOfFontSet);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XFilterEvent" XM_POSTFIX, gxm_XFilterEvent_w, 2, 0, 0, H_XFilterEvent);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XAllocIconSize" XM_POSTFIX, gxm_XAllocIconSize_w, 0, 0, 0, H_XAllocIconSize);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XAllocStandardColormap" XM_POSTFIX, gxm_XAllocStandardColormap_w, 0, 0, 0, H_XAllocStandardColormap);

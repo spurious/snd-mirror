@@ -394,6 +394,7 @@ typedef struct {
   #define SG_PIXMAP_SET(Holder, Map, Mask)   gtk_pixmap_set(GTK_PIXMAP(Holder), Map, Mask)
   #define SG_FONT_LOAD(Font)                 pango_font_description_from_string(Font)
   #define SG_SET_FONT(Gc, Font)              gdk_gc_set_font(Gc, gdk_font_from_description(Font))
+  /* should be gtk_widget_modify_font(Widget, Font) or pango_layout_set_font_description */
   #define SG_TEXT_WIDTH(Txt, Font)           gdk_text_width(gdk_font_from_description(Font), (gchar *)Txt, (gint)strlen(Txt))
   #define SG_DRAW_STRING(Ax, Fn, Gc, X, Y, Str) gdk_draw_string(Ax, gdk_font_from_description(Fn), Gc, (gint)X, (gint)Y, (const gchar *)Str)
 

@@ -11,6 +11,7 @@
 ;;; TODO: event casts?
 ;;;   GdkColor|GC|GCValues|Event* make?
 ;;; TODO: add gdk-pixbuf? (has GDK_PIXBUF_DISABLE_DEPRECATED)
+;;; TODO: add unicode handlers from glib
 ;;; TODO: unprotect *_remove?
 
 (use-modules (ice-9 debug))
@@ -332,6 +333,7 @@
 	   (not (string=? type "int"))
 	   (not (string=? type "gint"))
 	   (not (string=? type "guint32"))
+	   (not (string=? type "gunichar")) ; guint32
 	   (not (string=? type "gulong"))
 	   (not (string=? type "glong"))
 	   (not (string=? type "gboolean"))
@@ -713,6 +715,7 @@
 (hey " *     struct print, more struct instance creators(?)~%")
 (hey " *     tie into libxm (configure.ac etc), Snd (snd-motif translation)~%")
 (hey " *     add gdk-pixbuf? (has GDK_PIXBUF_DISABLE_DEPRECATED)~%")
+(hey " *     add unicode handlers from glib -- anything else?~%")
 (hey " *     unprotect *_remove, unprotect old upon reset callback~%")
 (hey " *     document/test (libxm|grfsnd.html, snd-test.scm)~%")
 (hey " *     add Ruby linkages~%")
@@ -787,6 +790,7 @@
 (hey "#define C_TO_XEN_char(Arg) C_TO_XEN_CHAR(Arg)~%")
 (hey "#define C_TO_XEN_gchar(Arg) C_TO_XEN_CHAR(Arg)~%")
 (hey "#define C_TO_XEN_guint32(Arg) C_TO_XEN_ULONG(Arg)~%")
+(hey "#define C_TO_XEN_gunichar(Arg) C_TO_XEN_ULONG(Arg)~%")
 (hey "#define C_TO_XEN_gulong(Arg) C_TO_XEN_ULONG(Arg)~%~%")
 
 (hey "/* short -> int, byte -> int, etc */~%")
@@ -810,6 +814,7 @@
 (hey "#define XEN_char_P(Arg) XEN_CHAR_P(Arg)~%")
 (hey "#define XEN_gchar_P(Arg) XEN_CHAR_P(Arg)~%")
 (hey "#define XEN_guint32_P(Arg) XEN_ULONG_P(Arg)~%")
+(hey "#define XEN_gunichar_P(Arg) XEN_ULONG_P(Arg)~%")
 (hey "#define XEN_gulong_P(Arg) XEN_ULONG_P(Arg)~%")
 (hey "#define XEN_xen_P(Arg) 1~%~%")
 
@@ -833,6 +838,7 @@
 (hey "#define XEN_TO_C_char(Arg) XEN_TO_C_CHAR(Arg)~%")
 (hey "#define XEN_TO_C_gchar(Arg) XEN_TO_C_CHAR(Arg)~%")
 (hey "#define XEN_TO_C_guint32(Arg) XEN_TO_C_ULONG(Arg)~%")
+(hey "#define XEN_TO_C_gunichar(Arg) XEN_TO_C_ULONG(Arg)~%")
 (hey "#define XEN_TO_C_gulong(Arg) XEN_TO_C_ULONG(Arg)~%")
 (hey "#define XEN_TO_C_xen(Arg) ((gpointer)Arg)~%~%")
 
