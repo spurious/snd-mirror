@@ -1131,7 +1131,7 @@ static void device_button_callback(Widget w, XtPointer context, XtPointer info)
 	  else
 	    {
 	      rp->taking_input = true;
-	      set_read_in_progress(ss);
+	      set_read_in_progress();
 	    }
 	}
   #ifndef SUN
