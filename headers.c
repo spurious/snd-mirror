@@ -1140,7 +1140,8 @@ static int write_aif_header (int chan, int wsrate, int wchans, int siz, int form
     mus_bint_to_char((unsigned char *)(hdrbuf + 16), 18 + 10); 
   else mus_bint_to_char((unsigned char *)(hdrbuf + 16), 18);
   mus_bshort_to_char((unsigned char *)(hdrbuf + 20), (short)wchans);
-  mus_bint_to_char((unsigned char *)(hdrbuf + 22), siz / (wchans * mus_bytes_per_sample(format)));
+  if (wchans > 0)
+    mus_bint_to_char((unsigned char *)(hdrbuf + 22), siz / (wchans * mus_bytes_per_sample(format)));
   mus_bshort_to_char((unsigned char *)(hdrbuf + 26), sndlib_format_to_aiff_bits(format));
   double_to_ieee_80((double)wsrate, (unsigned char *)(hdrbuf + 28));
   if (aifc_header)

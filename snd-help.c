@@ -1352,7 +1352,7 @@ all refer to the same thing.\n\
   " S_sounds "            ()\n\
   " S_snd_apropos "       (name)\n\
   " S_snd_error "         (str)\n\
-  " S_snd_help "          (name)\n\
+  " S_snd_help "          (name formatted)\n\
   " S_snd_print "         (str)\n\
   " S_snd_spectrum "      (data window length linear)\n\
   " S_snd_tempnam "       ()\n\
@@ -2176,8 +2176,8 @@ char *output_comment(file_info *hdr)
 
 XEN g_snd_help(XEN text, int widget_wid)
 {
-  #define H_snd_help "(" S_snd_help " (arg 'snd-help)): return the documentation associated with its argument. (snd-help 'make-vct) \
-for example, prints out a brief description of make-vct. \
+  #define H_snd_help "(" S_snd_help " (arg 'snd-help) (formatted #t)): return the documentation \
+associated with its argument. (snd-help 'make-vct) for example, prints out a brief description of make-vct. \
 The argument can be a string, a symbol, or the object itself.  In some cases, only the symbol has the documentation. \
 In the help descriptions, optional arguments are in parens with the default value (if any) as the 2nd entry. \
 A ':' as the start of the argument name marks a CLM-style optional keyword argument.  If you load index.scm \
@@ -2239,16 +2239,23 @@ and its value is returned."
       if (subject)
 	new_str = run_concat_hook(help_hook, S_help_hook, str, subject);
       else new_str = copy_string(str);
-      str = word_wrap(new_str, widget_wid);
-      if (new_str) FREE(new_str);
+      if (widget_wid > 0)
+	{
+	  str = word_wrap(new_str, widget_wid);
+	  if (new_str) FREE(new_str);
+	}
+      else str = new_str;
       help_text = C_TO_XEN_STRING(str);
       if (str) FREE(str);
     }
   return(help_text);
 }
 
-static XEN g_listener_help(XEN arg)
+static XEN g_listener_help(XEN arg, XEN formatted)
 {
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(formatted), formatted, XEN_ARG_2, S_snd_help, "a boolean");
+  if (XEN_FALSE_P(formatted))
+    return(g_snd_help(arg, 0));
   return(g_snd_help(arg, listener_width()));
 }
 
@@ -2277,7 +2284,7 @@ static XEN g_set_html_dir(XEN val)
 
 
 #ifdef XEN_ARGIFY_1
-XEN_ARGIFY_1(g_listener_help_w, g_listener_help)
+XEN_ARGIFY_2(g_listener_help_w, g_listener_help)
 #if HAVE_HTML && (!USE_NO_GUI)
 XEN_NARGIFY_0(g_html_dir_w, g_html_dir)
 XEN_NARGIFY_1(g_set_html_dir_w, g_set_html_dir)
@@ -2292,7 +2299,7 @@ XEN_NARGIFY_1(g_set_html_dir_w, g_set_html_dir)
 
 void g_init_help(void)
 {
-  XEN_DEFINE_PROCEDURE(S_snd_help, g_listener_help_w, 0, 1, 0, H_snd_help);
+  XEN_DEFINE_PROCEDURE(S_snd_help, g_listener_help_w, 0, 2, 0, H_snd_help);
 
   #define H_help_hook S_help_hook "(subject help-string): called from snd-help.  If \
 if returns a string, it replaces 'help-string' (the default help)"

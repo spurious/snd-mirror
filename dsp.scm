@@ -54,6 +54,21 @@
 				 (sin (* i j w))))))))
     arr))
 
+(define (find-sine freq beg dur)
+  "(find-sine freq beg dur) returns the amplitude and initial-phase (for sin) at freq between beg and dur"
+  (let ((incr (hz->radians freq))
+	(sw 0.0)
+	(cw 0.0)
+	(reader (make-sample-reader beg)))
+    (do ((i 0 (1+ i)))
+	((= i dur))
+      (let ((samp (next-sample reader)))
+	(set! sw (+ sw (* samp (sin (* i incr)))))
+	(set! cw (+ cw (* samp (cos (* i incr)))))))
+    (list (* 2 (/ (sqrt (+ (* sw sw) (* cw cw))) dur))
+	  (atan cw sw))))
+
+
 
 ;;; -------- Butterworth filters
 ;;;

@@ -189,8 +189,6 @@ static void make_current_console(mix_info *md)
 	if (cs->amp_envs)
 	  cur->amp_envs[i] = copy_env(cs->amp_envs[i]);
       }
-  /* reflect_mix_in_mix_panel(md->id); */ /* ??? */
-  /* TODO: figure out why this gets an infinite recursion */
 }
 
 static console_state *free_console_state(console_state *cs)
@@ -3952,6 +3950,12 @@ If file_chn is omitted, file's channels are mixed until snd runs out of channels
   else
     {
       chans = mus_sound_chans(name);
+      if (chans <= 0)
+	XEN_ERROR(BAD_HEADER,
+		  XEN_LIST_4(C_TO_XEN_STRING(S_mix),
+			     file,
+			     C_TO_XEN_STRING("chans <= 0"),
+			     C_TO_XEN_INT(chans)));
       file_channel = XEN_TO_C_INT(file_chn);
       if (file_channel >= chans)
 	XEN_ERROR(NO_SUCH_CHANNEL,

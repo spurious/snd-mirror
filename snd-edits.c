@@ -1682,25 +1682,21 @@ void delete_samples(off_t beg, off_t num, chan_info *cp, const char *origin, int
 
 static ed_list *change_samples_in_list(off_t beg, off_t num, int pos, chan_info *cp, ed_fragment **rtn, const char *origin)
 {
-  /* delete + insert */
+  /* delete + insert -- already checked that beg < cur end */
   ed_list *new_state, *old_state;
+  ed_list *del_state;
   off_t del_num, cur_end;
   ed_fragment *changed_f;
   if (num <= 0) return(NULL);
   cur_end = cp->samples[pos];
-  if (beg < cur_end)
-    {
-      ed_list *del_state;
-      del_num = cur_end - beg;
-      if (num < del_num) del_num = num;
-      del_state = delete_section_from_list(beg, del_num, cp->edits[pos], NULL);
-      new_state = insert_section_into_list(beg, num, del_state, &changed_f, origin, 1.0);
-      del_state = free_ed_list(del_state, cp);
-    }
-  else 
-    {
-      new_state = insert_section_into_list(beg, num, cp->edits[pos], &changed_f, origin, 1.0);
-    }
+#if DEBUGGING
+  if (beg > cur_end) {fprintf(stderr,"unextended change?"); abort();}
+#endif
+  del_num = cur_end - beg;
+  if (num < del_num) del_num = num;
+  del_state = delete_section_from_list(beg, del_num, cp->edits[pos], NULL);
+  new_state = insert_section_into_list(beg, num, del_state, &changed_f, origin, 1.0);
+  del_state = free_ed_list(del_state, cp);
   (*rtn) = changed_f;
   if ((cp->edits) && (cp->edit_ctr > 0))
     {
@@ -9150,13 +9146,17 @@ inserts all of oboe.snd starting at sample 1000."
   cp = get_cp(snd_n, chn_n, S_insert_sound);
   filename = mus_expand_filename(XEN_TO_C_STRING(file));
   nc = mus_sound_chans(filename);
-  if (nc == -1)
+  if (nc <= 0)
     {
       if (filename) FREE(filename);
-      return(snd_no_such_file_error(S_insert_sound, file));
+      XEN_ERROR(BAD_HEADER,
+		XEN_LIST_4(C_TO_XEN_STRING(S_insert_sound),
+			   file,
+			   C_TO_XEN_STRING("chans <= 0"),
+			   C_TO_XEN_INT(nc)));
     }
-  len = mus_sound_samples(filename) / nc;
-  if (len == 0) 
+  len = mus_sound_frames(filename);
+  if (len <= 0) 
     {
       if (filename) FREE(filename);
       return(C_TO_XEN_OFF_T(len));

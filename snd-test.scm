@@ -2088,6 +2088,67 @@
 	  (IF (not (= ab (find-sound "test.snd"))) (set! ab (find-sound "test.snd")))
 	  (IF (not (= (srate) 12345)) (snd-display ";set srate: ~A?" (srate)))
 	  (close-sound ab)))
+
+      (for-each (lambda (n vals)
+		  (let ((val (catch #t (lambda () 
+					 (list (mus-sound-chans n)
+					       (mus-sound-srate n)
+					       (mus-sound-frames n)))
+				    (lambda args (car args)))))
+		    (if (not (equal? val vals))
+			(snd-display ";~A: ~A ~A" n val vals))))
+		(list (string-append sf-dir "bad_chans.snd")
+		      (string-append sf-dir "bad_srate.snd")
+		      (string-append sf-dir "bad_chans.aifc")
+		      (string-append sf-dir "bad_srate.aifc")
+		      (string-append sf-dir "bad_length.aifc")
+		      (string-append sf-dir "bad_chans.riff")
+		      (string-append sf-dir "bad_srate.riff")
+		      (string-append sf-dir "bad_chans.nist")
+		      (string-append sf-dir "bad_srate.nist")
+		      (string-append sf-dir "bad_length.nist"))
+		(list (list 0 22050 0)
+		      (list 1 0 0)
+		      (list 0 22050 0)
+		      (list 1 0 0)
+		      (list 1 22050 -10)
+		      (list 0 22050 0)
+		      (list 1 0 0)
+		      (list 0 22050 0)
+		      (list 1 0 0)
+		      (list 1 22050 -10)))
+      
+      (let ((ind (open-sound "oboe.snd")))
+	(add-hook! bad-header-hook (lambda (n) #t))
+	(for-each (lambda (n)
+		    (begin
+		      (catch #t (lambda () 
+				  (insert-sound n))
+			     (lambda args (car args)))
+		      (catch #t (lambda () 
+				  (convolve-with n))
+			     (lambda args (car args)))
+		      (catch #t (lambda () 
+				  (mix n))
+			     (lambda args (car args)))
+		      (catch #t (lambda () 
+				  (let ((ind (open-sound n)))
+				    (if (and (number? ind)
+					     (sound? ind))
+					(close-sound ind))))
+			     (lambda args (car args)))))
+		  (list "/home/bil/sf1/bad_chans.snd"
+			"/home/bil/sf1/bad_srate.snd"
+			"/home/bil/sf1/bad_chans.aifc"
+			"/home/bil/sf1/bad_srate.aifc"
+			"/home/bil/sf1/bad_length.aifc"
+			"/home/bil/sf1/bad_chans.riff"
+			"/home/bil/sf1/bad_srate.riff"
+			"/home/bil/sf1/bad_chans.nist"
+			"/home/bil/sf1/bad_srate.nist"
+			"/home/bil/sf1/bad_length.nist"))
+	(close-sound ind))
+
       (let* ((ob (open-sound "oboe.snd"))
 	     (sd (samples->sound-data))
 	     (mx (sound-data-maxamp sd)))
@@ -8567,6 +8628,10 @@ EDITS: 5
 	    (scan-again))
 	  (let ((ind (open-sound "oboe.snd"))
 		(val #f))
+	    (let ((samp (sample 1000)))
+	      (set! (cursor ind 0) 1000)
+	      (if (fneq (sample) samp)
+		  (snd-display ";sample no args: ~A ~A" (sample) samp)))
 	    (set! val (my-scan-chan (lambda (y) (> y .1))))
 	    (IF (not (equal? val (list #t 4423)))
 		(snd-display ";my-scan-chan: ~A" val))
@@ -8582,6 +8647,10 @@ EDITS: 5
 			       (count-matches (lambda (y) (> y .1)))))))
 	      (IF (not (equal? val (list 2851 0)))
 		  (snd-display ";find+count: ~A" val)))
+	    (set! (cursor) 1000)
+	    (set! (sample) .5)
+	    (if (fneq (sample 1000) .5)
+		(snd-display ";set sample no arg: ~A ~A" (sample 1000) (sample 0)))
 	    (close-sound ind)))
 
 	;; edit-menu.scm tests
@@ -34228,6 +34297,8 @@ EDITS: 2
 	  (check-error-tag 'out-of-range (lambda () (set! (data-location ind) -1)))
 	  (check-error-tag 'no-such-sample (lambda () (set! (sample -1) -1)))
 	  (check-error-tag 'no-such-sample (lambda () ((sample -1))))
+	  (check-error-tag 'bad-header (lambda () (insert-sound (string-append sf-dir "bad_chans.snd"))))
+	  (check-error-tag 'mus-error (lambda () (convolve-with (string-append sf-dir "bad_chans.snd"))))
 	  (check-error-tag 'cannot-save (lambda () (save-sound-as "hiho.snd" ind -1)))
 	  (check-error-tag 'cannot-save (lambda () (save-sound-as "hiho.snd" ind mus-next -1)))
 	  (check-error-tag 'cannot-save (lambda () (save-sound-as "test.snd" ind mus-nist mus-bdouble)))

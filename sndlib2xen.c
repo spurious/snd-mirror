@@ -334,6 +334,9 @@ static XEN g_sound_maxamp(XEN file)
       FREE(vals);
       FREE(times);
     }
+  else XEN_ERROR(BAD_HEADER,
+		 XEN_LIST_2(C_TO_XEN_STRING(S_mus_sound_maxamp),
+			    C_TO_XEN_STRING("chans <= 0")));
   return(res);
 }
 
@@ -366,6 +369,9 @@ static XEN g_sound_set_maxamp(XEN file, XEN vals)
       FREE(mvals);
       FREE(times);
     }
+  else XEN_ERROR(BAD_HEADER,
+		 XEN_LIST_2(C_TO_XEN_STRING(S_mus_sound_set_maxamp),
+			    C_TO_XEN_STRING("chans <= 0")));
   return(vals);
 }
 

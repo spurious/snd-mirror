@@ -3613,6 +3613,11 @@ at frame 'start' and reading 'samples' samples altogether."
 	      XEN_LIST_3(C_TO_XEN_STRING(S_file2array),
 			 C_TO_XEN_STRING("invalid chan"),
 			 chan));
+  if (mus_sound_chans(name) <= 0)
+    XEN_ERROR(BAD_HEADER,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_file2array),
+			 filename,
+			 C_TO_XEN_STRING("chans <= 0")));
   if (samps > v->length)
     samps = v->length;
   err = mus_file2fltarray(name,
@@ -3692,6 +3697,11 @@ return a new readin (file input) generator reading the sound file 'file' startin
 	      XEN_LIST_3(C_TO_XEN_STRING(S_make_readin),
 			 C_TO_XEN_STRING(file),
 			 C_TO_XEN_STRING(strerror(errno))));
+  if (mus_sound_chans(file) <= 0)
+    XEN_ERROR(BAD_HEADER,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_make_readin),
+			 C_TO_XEN_STRING(file),
+			 C_TO_XEN_STRING("chans <= 0")));
   if (channel >= mus_sound_chans(file))
     XEN_OUT_OF_RANGE_ERROR(S_make_readin, 2, keys[1], "channel > available chans?");
   ge = mus_make_readin(file, channel, start, direction);
@@ -4541,7 +4551,17 @@ it in conjunction with mixer to scale/envelope all the various ins and outs."
   if ((XEN_BOUND_P(mx)) && (MUS_XEN_P(mx))) mx1 = (mus_any *)XEN_TO_MUS_ANY(mx);
   outfile = XEN_TO_C_STRING(out);
   infile = XEN_TO_C_STRING(in);
-  if (XEN_BOUND_P(olen)) osamps = XEN_TO_C_OFF_T_OR_ELSE(olen, 0); else osamps = mus_sound_frames(infile);
+  if (XEN_BOUND_P(olen)) 
+    osamps = XEN_TO_C_OFF_T_OR_ELSE(olen, 0); 
+  else 
+    {
+      osamps = mus_sound_frames(infile);
+      if (osamps < 0)
+	XEN_ERROR(BAD_HEADER,
+		  XEN_LIST_3(C_TO_XEN_STRING(S_file2array),
+			     C_TO_XEN_STRING(infile),
+			     C_TO_XEN_STRING("frames < 0")));
+    }
   if (XEN_BOUND_P(envs))
     {
       /* pack into a C-style array of arrays of env pointers */
@@ -4560,7 +4580,17 @@ it in conjunction with mixer to scale/envelope all the various ins and outs."
 			       C_TO_XEN_STRING("each element of env vector must be a vector (of envelopes)")));
       out_len = XEN_VECTOR_LENGTH(vdata0[0]);
       in_chans = mus_sound_chans(infile);
+      if (in_chans <= 0)
+	XEN_ERROR(BAD_HEADER,
+		  XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
+			     C_TO_XEN_STRING(infile),
+			     C_TO_XEN_STRING("chans <= 0")));
       out_chans = mus_sound_chans(outfile);
+      if (out_chans <= 0)
+	XEN_ERROR(BAD_HEADER,
+		  XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
+			     C_TO_XEN_STRING(outfile),
+			     C_TO_XEN_STRING("chans <= 0")));
       if (in_len < in_chans) in_size = in_chans; else in_size = in_len;
       if (out_len < out_chans) out_size = out_chans; else out_size = out_len;
       envs1 = (mus_any ***)CALLOC(in_size, sizeof(mus_any **));

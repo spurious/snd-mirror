@@ -1,5 +1,7 @@
 #include "snd.h"
 
+/* TODO: multichan case can get in state where initial expose updates are ignored in chan>0 */
+
 enum {NOGRAPH, WAVE, FFT_AXIS, LISP, FFT_MAIN};    /* for marks, regions, mouse click detection */
 
 static XEN lisp_graph_hook;
@@ -1975,6 +1977,7 @@ static void rotate(Float *xyz, Float *mat)
 }
 
 #if HAVE_GL
+
 void reset_spectro(snd_state *ss)
 {
   set_spectro_cutoff(ss, DEFAULT_SPECTRO_CUTOFF);
@@ -5919,7 +5922,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_beats_per_minute_reversed, g_set_beats_
 static XEN g_show_axes(XEN snd, XEN chn)
 {
   #define H_show_axes "(" S_show_axes "(snd #t) (chn #t)) \
-If " S_show_all_axes ", display x and y axes; if " S_show_x_axis ", just one (bottom) axis is displayed. \
+If " S_show_all_axes ", display x and y axes; if " S_show_x_axis ", just one axis (the x axis) is displayed. \
 The other choice is " S_show_no_axes "."
 
   if (XEN_BOUND_P(snd))

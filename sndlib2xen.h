@@ -30,6 +30,7 @@
 #define NO_SUCH_DIRECTION    XEN_ERROR_TYPE("no-such-direction")
 #define BAD_TYPE             XEN_ERROR_TYPE("bad-type")
 #define NO_DATA              XEN_ERROR_TYPE("no-data")
+#define BAD_HEADER           XEN_ERROR_TYPE("bad-header")
 
 #if HAVE_GSL
   #define SND_GSL_ERROR      XEN_ERROR_TYPE("gsl-error")

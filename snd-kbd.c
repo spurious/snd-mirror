@@ -743,7 +743,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	    case INSERT_FILING:
 	      str1 = mus_expand_filename(str);
 	      nc = mus_sound_chans(str1);
-	      if (nc != -1)
+	      if (nc > 0)
 		{
 		  len = mus_sound_frames(str1);
 		  if (len == 0)

@@ -334,7 +334,8 @@ the y-zoom-slider controls the graph amp"
 	(or (char-whitespace? ch)
 	    (char=? ch #\()
 	    (char=? ch #\))
-	    (char=? ch #\')))
+	    (char=? ch #\')
+	    (char=? ch #\")))
 
       ;; find nearest name
       ;; scan back and forth for non-alphanumeric
@@ -393,9 +394,11 @@ the y-zoom-slider controls the graph amp"
 				   (> end start))
 			      ;; got a name -- look for snd-help, if any
 			      (let* ((name (substring text start end))
-				     (help (snd-help name)))
+				     (help (snd-help name #f)))
+				(if (string=? name help)
+				    (set! help (snd-help (string->symbol name))))
 				(if (not (string=? name help))
-				    (let ((dialog (help-dialog name (snd-help name))))
+				    (let ((dialog (help-dialog name help)))
 				      (if (not help-moved)
 					  ;; if this is the first call, try to position help dialog out of the way
 					  ;;   this is clunky -- perhaps better would be a tooltip window at the bottom of the listener?

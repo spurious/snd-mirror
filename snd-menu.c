@@ -60,7 +60,15 @@ void reflect_file_lack_in_menu (void)
 
 void reflect_mix_in_menu(void)
 {
+  snd_state *ss;
   set_sensitive(view_mix_panel_menu(), (any_mix_id() != INVALID_MIX_ID));
+  ss = get_global_state();
+  if ((ss->selected_mix != INVALID_MIX_ID) &&
+      (!(mix_ok(ss->selected_mix))))
+    {
+      ss->selected_mix = INVALID_MIX_ID;
+      reflect_mix_in_mix_panel(any_mix_id());
+    }
 }
 
 void reflect_equalize_panes_in_menu(int on)

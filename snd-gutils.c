@@ -638,6 +638,7 @@ GtkWidget *make_scrolled_text(snd_state *ss, GtkWidget *parent, int editable, Gt
   gtk_text_view_set_editable(GTK_TEXT_VIEW(new_text), editable);
   gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(new_text), GTK_WRAP_NONE);
   gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(new_text), editable);
+  gtk_text_view_set_left_margin(GTK_TEXT_VIEW(new_text), 4);
   gtk_container_add(GTK_CONTAINER (sw), new_text);
   gtk_widget_show(new_text);
   set_background((GTK_SCROLLED_WINDOW(sw))->hscrollbar, (ss->sgx)->position_color);

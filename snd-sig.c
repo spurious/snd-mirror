@@ -414,6 +414,8 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
     }
 
   filter_chans = mus_sound_chans(filename);
+  if (filter_chans <= 0)
+    return(mus_format(_("convolve: impulse response file %s chans: %d"), filename, filter_chans));
   filtersize = mus_sound_samples(filename) / filter_chans;
   if (filtersize <= 0) 
     return(mus_format(_("convolve: impulse response file %s is empty"), filename));

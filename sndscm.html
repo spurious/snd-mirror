@@ -319,6 +319,7 @@ the listener?
   <ul>
     <li>Dolph-Chebyshev fft data window
     <li>dht -- slow Hartley transform 
+    <li>find-sine -- DFT at a particular frequency
     <li>Butterworth filters
     <li>frequency-response -&gt; FIR coeffs
     <li>move sound down 8ve using fft
@@ -339,6 +340,7 @@ the listener?
 <pre>
   <em class=def><A NAME="exdolph">dolph</a></em> n gamma
   <em class=def><A NAME="exdht">dht</a></em> data
+  <em class=def><A NAME="exfindsine">find-sine</a></em> freq beg dur
   <em class=def><A NAME="exbutter">butter</a></em> gen
   <em class=def><A NAME="exmakebutterhighpass">make-butter-high-pass</a></em> freq
   <em class=def><A NAME="exmakebutterlowpass">make-butter-low-pass</a></em> freq
@@ -371,6 +373,8 @@ from Richard Lyons, "Understanding DSP".
 <i>dht</i> is the slow form of the Hartley transform, 
 taken from Perry Cook's SignalProcessor.m.
 The Hartley transform is a kind of Fourier transform.
+A similar function, using the DFT, is <i>find-sine</i>.
+It returns the amplitude and initial-phase (for sin) at freq between beg and dur.
 The Butterworth filters are taken from Sam Heisz's CLM version
 of Paris Smaragdis's Csound version of Charles Dodge's code from "Computer Music: synthesis, composition, and performance".
 See also the notch filter in new-effects.scm.
@@ -759,6 +763,7 @@ I'm slowly dividing out related groups of procedures to separate files.
     <li>superimpose spectra of sycn'd sounds
     <li>fft-edit, fft-env-interp, fft-env-edit -- FFT based editing
     <li>fft-squelch -- noise reduction 
+    <li>fft-cancel -- fft as very narrow notch filter
     <li>squelch-vowels -- remove steady-state (or the reverse)
     <li>fft-smoother -- fft-based smoothing
   </ul>
@@ -920,6 +925,7 @@ is at 1.0, no filtering takes place.
   <em class=def><a name="exfftenvedit">fft-env-edit</a></em> env
   <em class=def><A NAME="exfftenvinterp">fft-env-interp</a></em> env1 env2 interp
   <em class=def><a name="exfftsquelch">fft-squelch</a></em> squelch
+  <em class=def><A NAME="exfftcancel">fft-cancel</a></em> lo-freq hi-freq
   <em class=def><a name="exsquelchvowels">squelch-vowels</a></em>
   <em class=def><A NAME="exfftsmoother">fft-smoother</a></em> cutoff start samps snd chn
 </pre>
@@ -936,6 +942,8 @@ envelope. Another similar function is <i>fft-smoother</i> that uses fft-filterin
 smooth a portion of a sound.
 <i>fft-squelch</i> is similar, but removes all energy below the squelch amount (normalized to
 be between 0.0 and 1.0).  This is sometimes useful for noise-reduction.
+<i>fft-cancel</i> ffts an entire sound, sets the bin(s) representing lo-freq to hi-freq to 0.0, then inverse ffts,
+giving a high quality notch filter.
 <i>squelch-vowels</i> uses fft data to distinguish the steady state portion (a vowel in speech) from
 noise (a consonant, sometimes), and does whatever you want based on that (remove vowels, remove
 consonants, make consonants louder, etc).

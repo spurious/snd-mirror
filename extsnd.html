@@ -2587,26 +2587,30 @@ throw 'mus-error upon encountering an error, rather than returning -1 like the u
 <br>
 <span class=cbox><h3><A NAME="samplereaders">Sample-readers</a></h3></span>
 <p>
-The simplest data access function is <i>sample</i>, returning the sample at
+The simplest data access function is <a href="#sndsample">sample</a> which returns the sample at
 a given position in a sound's channel.  This simplicity, however, comes at
 a price in computation:  if the desired sample is not in Snd's
-in-core (already loaded) view of the data, it has to access the sample,
-which can sometimes involve opening, reading, and closing a sound file.
-The result is that in some cases, <i>sample</i> will bring your code
+in-core (already loaded) view of the data, it has to go get the sample,
+which can sometimes require that it open, read, and close a sound file.
+The result is that <i>sample</i> will bring your code
 to a grinding halt.  There are two alternatives, leaving aside the scanning
 and mapping functions mentioned below.  One involves keeping the buffer of
 data around explicitly (<i>samples-&gt;vct</i>), and the other involves the
-use of a special object known as a <i>sample-reader</i>.  The former is
-better if you're jumping around in the data, the latter if you're treating
-it generally as a stream of samples, read in order.  The <a href="grfsnd.html#expsrc">expsrc</a>
-function below shows how to use <i>samples-&gt;vct</i>; there are numerous
-examples of <i>sample-readers</i> in <a href="sndscm.html#exampdoc">examp.scm</a>. 
-You create a reader (via <i>make-sample-reader</i> or <i>make-region-sample-reader</i>) giving it the start position, the sound and channel
+use of a special object known as a <i>sample-reader</i>.  The sample-reader
+returns the next sample in its sound each time it is called; this kind
+of access is sometimes called an "enumerator".
+The buffer approach (<i>samples-&gt;vct</i> in <a href="grfsnd.html#expsrc">expsrc</a> for example)
+is better if you're jumping around in the data, the sample-by-sample approach (examp.scm has examples) if you're treating
+the data as a sequence of samples.
+To get a sample reader,
+you create a reader (via <i>make-sample-reader</i>) giving it the start position, the sound and channel
 to read, and the initial read direction, then get data via <i>read-sample</i> (which remembers the
 read direction passed to make-sample-reader), or <i>next-sample</i> (read forward) and
-<i>previous-sample</i> (read backward), finally closing the reader with <i>free-sample-reader</i>.
-It is not necessary to call <i>free-sample-reader</i> yourself; the
+<i>previous-sample</i> (read backward); when done, you can close the reader with <i>free-sample-reader</i>, 
+but it's not necessary; the
 garbage collector will take care of it if you forget to.
+</p>
+<p>
 A standard way to add something to the current
 data is:</p>
 <pre>
@@ -8738,7 +8742,7 @@ and returns <i>str</i>.  See also <a href="#muserrorhook">mus-error-hook</a> and
 
 <!-- snd-help -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="sndhelp">snd-help</a></em> (obj)</code></span></td></tr>
+<span class=defbox><code><em class=def><a name="sndhelp">snd-help</a></em> (obj (formatted #t))</code></span></td></tr>
 <tr><td></td><td>
 return (as a string) the help text associated with <i>obj</i>,
 for example: <br><br>
@@ -8752,6 +8756,11 @@ HTML documentation for a given object, load <a href="sndscm.html#indexdoc">index
 To get a more global help function (i.e. one that knows about Scheme built-ins and so forth), 
 <code>(use-modules (ice-9 session))</code>.  This loads Guile's
 help (and apropos) support which uses 'regexps' and so forth.
+<br><br>
+Normally snd-help adds carriage-returns to fit the current size of the listener; to
+get the raw string instead, set the argument <i>formatted</i> to #f.  <i>click-for-listener-help</i>
+in draw.scm uses this to put off formatting the help string until the help dialog (rather than
+the listener) gets it.
 </td></tr>
 
 <!-- snd-print -->

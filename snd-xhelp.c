@@ -190,6 +190,55 @@ static void help_help_callback(Widget w, XtPointer context, XtPointer info)
   help_dialog_help((snd_state *)context);
 }
 
+#if (!HAVE_HTML)
+static char *cr_to_space(char *val)
+{
+  int i, len;
+  if (val)
+    {
+      len = strlen(val);
+      for (i = 0; i < len; i++)
+	if (val[i] == '\n')
+	  val[i] = ' ';
+    }
+  return(val);
+}
+static int no_cr(char *val)
+{
+  int i, len;
+  if (val)
+    {
+      len = strlen(val);
+      for (i = 0; i < len; i++)
+	if (val[i] == '\n')
+	  return(FALSE);
+    }
+  return(TRUE);
+}
+static int help_text_width = 0, outer_with_wrap = FALSE;
+static void help_expose(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
+{
+  int curwid;
+  curwid = widget_width(help_text);
+  if (help_text_width == 0)
+    help_text_width = curwid;
+  else
+    {
+      if ((outer_with_wrap) && (abs(curwid - help_text_width) > 10))
+	{
+	  char *cur_help;
+	  char *new_help = NULL;
+	  cur_help = cr_to_space(XmTextGetString(help_text));
+	  new_help = word_wrap(cur_help, curwid);
+	  XmTextSetString(help_text, new_help);
+	  if (new_help) FREE(new_help);
+	  if (cur_help) XtFree(cur_help);
+	  help_text_width = curwid;
+	}
+    }
+}
+#endif
+
 static void create_help_monolog(snd_state *ss)
 {
   /* create scrollable but not editable text window */
@@ -216,6 +265,9 @@ static void create_help_monolog(snd_state *ss)
   XtSetArg(args[n], XmNnoResize, FALSE); n++;
   XtSetArg(args[n], XmNtransient, FALSE); n++;
   help_dialog = XmCreateMessageDialog(MAIN_PANE(ss), "snd-help", args, n);
+#if (!HAVE_HTML)
+  XtAddEventHandler(help_dialog, ExposureMask, FALSE, help_expose, NULL);
+#endif
 
   n = 0;
   if (!(ss->using_schemes)) 
@@ -293,6 +345,8 @@ static Widget snd_help_1(snd_state *ss, char *subject, char *helpstr, int with_w
   XmString xstr1;
 #if HAVE_HTML
   char *newhelp;
+#else
+  outer_with_wrap = ((with_wrap) && (no_cr(helpstr)));
 #endif
   if (!(help_dialog)) 
     create_help_monolog(ss); 

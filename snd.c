@@ -237,7 +237,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->Audio_Input_Device = DEFAULT_AUDIO_INPUT_DEVICE;
   ss->Audio_Output_Device = DEFAULT_AUDIO_OUTPUT_DEVICE;
 #if DEBUGGING
-  ss->Trap_Segfault = 0;
+  ss->Trap_Segfault = FALSE;
 #else
   ss->Trap_Segfault = DEFAULT_TRAP_SEGFAULT;
 #endif
@@ -294,7 +294,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->error_lock = FALSE;
   ss->deferred_regions = 0;
 
-#if HAVE_LLONGS
+#if HAVE_LLONGS && (!MAC_OSX)
   md = FOPEN("/proc/meminfo", "r");
   if (md)
     {

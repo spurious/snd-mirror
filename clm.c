@@ -4842,7 +4842,9 @@ mus_any *mus_make_file2sample(const char *filename)
       strcpy(gen->file_name, filename);
       gen->data_end = -1; /* force initial read */
       gen->chans = mus_sound_chans(gen->file_name);
+      if (gen->chans <= 0) mus_error(MUS_NO_CHANNELS, "%s chans: %d", filename, gen->chans);
       gen->file_end = mus_sound_frames(gen->file_name);
+      if (gen->file_end < 0) mus_error(MUS_NO_LENGTH, "%s frames: " OFF_TD, filename, gen->file_end);
       return((mus_any *)gen);
     }
   return(NULL);
@@ -6852,7 +6854,9 @@ void mus_convolve_files(const char *file1, const char *file2, Float maxamp, cons
   file2_len = mus_sound_frames(file2);
   if ((file1_len <= 0) || (file2_len <= 0)) return;
   file1_chans = mus_sound_chans(file1);
+  if (file1_chans <= 0) mus_error(MUS_NO_CHANNELS, "%s chans: %d", file1, file1_chans);
   file2_chans = mus_sound_chans(file2);
+  if (file2_chans <= 0) mus_error(MUS_NO_CHANNELS, "%s chans: %d", file2, file2_chans);
   output_chans = file1_chans; 
   if (file2_chans > output_chans) output_chans = file2_chans;
   fftlen = (int)(pow(2.0, (int)ceil(log(file1_len + file2_len + 1) / log(2.0))));
@@ -6945,7 +6949,9 @@ void mus_mix(const char *outfile, const char *infile, off_t out_start, off_t out
   Float scaler;
   mus_any *e;
   out_chans = mus_sound_chans(outfile);
+  if (out_chans <= 0) mus_error(MUS_NO_CHANNELS, "%s chans: %d", outfile, out_chans);
   in_chans = mus_sound_chans(infile);
+  if (in_chans <= 0) mus_error(MUS_NO_CHANNELS, "%s chans: %d", infile, in_chans);
   if (out_chans > in_chans) mix_chans = out_chans; else mix_chans = in_chans;
   if (out_chans > in_chans) min_chans = in_chans; else min_chans = out_chans;
   if ((mx) && (envs) && ((in_chans > 1) || (out_chans > 1)))

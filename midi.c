@@ -16,7 +16,7 @@
  *
  *    not implemented (not sure it's needed): int mus_midi_flush(line)
  *
- * currently OSS, ALSA, SGI (both libraries), some of OSX
+ * currently OSX, ALSA, SGI (both libraries), OSS
  */
 
 #if defined(HAVE_CONFIG_H)

@@ -772,6 +772,30 @@ then inverse ffts."
     (vct-scale! rdata (/ 1.0 fsize))
     (vct->channel rdata 0 (1- len))
     scaler))
+
+(define (fft-cancel lo-freq hi-freq)
+  "(fft-cancel lo-freq hi-freq) ffts an entire sound, sets the bin(s) representing lo-freq to hi-freq to 0.0, then inverse ffts"
+  (let* ((sr (srate))
+	 (len (frames))
+	 (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
+	 (rdata (samples->vct 0 fsize))
+	 (idata (make-vct fsize))
+	 (fsize2 (/ fsize 2))
+	 (scaler 1.0))
+    (fft rdata idata 1)
+    (let* ((hz-bin (/ sr fsize))
+	   (lo-bin (inexact->exact (round (/ lo-freq hz-bin))))
+	   (hi-bin (inexact->exact (round (/ hi-freq hz-bin)))))
+      (do ((i lo-bin (1+ i))
+	   (j (- fsize lo-bin 1) (1- j)))
+	  ((> i hi-bin))
+	(vct-set! rdata i 0.0) ; ignoring window side lobes for now
+	(vct-set! idata i 0.0)
+	(vct-set! rdata j 0.0)
+	(vct-set! idata j 0.0)))
+    (fft rdata idata -1)
+    (vct-scale! rdata (/ 1.0 fsize))
+    (vct->channel rdata 0 (1- len))))
     
 
 ;;; same idea but used to distinguish vowels (steady-state) from consonants
