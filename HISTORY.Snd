@@ -3,6 +3,7 @@ snd change log
 
 2002 ----------------------------------------------------------------
 
+  26-Dec:    explode-sf2 in examp.scm.
   14-Dec:    removed icons.scm and backgrounds.scm (replaced by contrib/dlp code).
              removed reverb-control-procedures and contrast-control-procedure.
   10-Dec:    midi.c.

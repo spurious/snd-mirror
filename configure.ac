@@ -31,7 +31,7 @@ dnl Process this file with autoconf 2.50 to produce a configure script.
 #
 #--------------------------------------------------------------------------------
 
-AC_INIT(snd, 5.3, bil@ccrma.stanford.edu)
+AC_INIT(snd, 5.6, bil@ccrma.stanford.edu)
 AC_CONFIG_SRCDIR(snd.c)
 AC_CANONICAL_HOST
 AC_CONFIG_HEADER(config.h)

@@ -59,6 +59,8 @@
 ;;; sound-data->list
 ;;; file->vct and a sort of cue-list, I think, and region-play-list, region-play-sequence
 ;;; replace-with-selection
+;;; explode-sf2 -- turn soundfont file into a bunch of files of the form sample-name.aif
+
 
 ;;; TODO: decide how to handle the CLM examples
 ;;; TODO: robust pitch tracker
@@ -69,6 +71,7 @@
 ;;; TODO: triggered record
 ;;; TODO: notation following location (as in display-current-window-location)
 ;;;       but this requires some way to converse with cmn that does not require sleep
+
 
 (use-modules (ice-9 debug))
 (use-modules (ice-9 format))
@@ -2614,3 +2617,33 @@
 	(len (selection-length)))
     (delete-samples beg len)
     (insert-selection beg)))
+
+
+;;; -------- explode-sf2
+
+(define (explode-sf2)
+  ;; turn soundfont file into a bunch of files of the form sample-name.aif
+  (letrec ((sf2it 
+	    (lambda (lst)
+	      (if (not (null? lst))
+		  (let* ((vals (car lst))
+			 ;; each inner list is: '(name start loop-start loop-end)
+			 (name (car vals))
+			 (start (cadr vals))
+			 (end (if (null? (cdr lst))
+				  (frames)
+				  (cadr (cadr lst))))
+			 (loop-start (- (caddr vals) start))
+			 (loop-end (- (cadddr vals) start))
+			 (filename (string-append name ".aif")))
+		    (if (selection?)
+			(set! (selection-member? #t) #f)) ; clear entire current selection, if any
+		    (set! (selection-member?) #t)
+		    (set! (selection-position) start)
+		    (set! (selection-length) (- end start))
+		    (save-selection filename mus-aifc)
+		    (let ((temp (open-sound filename)))
+		      (set! (sound-loop-info temp) (list loop-start loop-end))
+		      (close-sound temp))
+		    (sf2it (cdr lst)))))))
+    (sf2it (soundfont-info))))

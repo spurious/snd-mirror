@@ -642,6 +642,7 @@ I'm slowly dividing out related groups of procedures to separate files.
   <ul>
     <li>swap selection chans
     <li>replace with selection
+    <li>explode soundfont file
   </ul>
 </small>
 <li><a href="#ssmixes">mixes</a>
@@ -940,6 +941,7 @@ a sound as a key is held down).
   <em class=def><A NAME="exregionrms1">region-rms-1</a></em> region
   <em class=def><a name="exregionrms">region-rms</a></em> region
   <em class=def><A NAME="exreplacewithselection">replace-with-selection</a></em>
+  <em class=def><a name="exexplodesf2">explode-sf2</a></em>
 </pre>
 <p>
 <i>swap-selection-channels</i> swaps the currently selected data's channels.
@@ -955,7 +957,8 @@ of ways. The fastest and simplest uses CLM's dot-product function:
       (throw 'no-such-region (list "region-rms" n))))
 </pre>
 <p><i>replace-with-selection</i> replaces data at the cursor with the
-current selection.
+current selection.  <i>explode-sf2</i> turns a soundfont file (assuming it
+is the currently selected sound) into a bunch of files of the form sample-name.aif.
 </p>
 
 
