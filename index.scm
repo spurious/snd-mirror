@@ -606,8 +606,6 @@ and if one is found, and the Snd documentation can be found, calls (html-program
     (list "mix-frames" "extsnd.html#sndmixframes" "snd-mix.c")
     (list "mix-home" "extsnd.html#sndmixhome" "snd-mix.c")
     (list "mix-locked" "extsnd.html#sndmixlocked" "snd-mix.c")
-    (list "mix-name" "extsnd.html#sndmixname" "snd-mix.c")
-    (list "mix-name->id" "sndscm.html#mixname2id" "mix.scm")
     (list "mix-panel" "extsnd.html#sndmixpanel" "snd-xen.c")
     (list "mix-position" "extsnd.html#sndmixposition" "snd-mix.c")
     (list "mix-property" "sndscm.html#mixproperty" "mix.scm")

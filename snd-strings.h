@@ -312,7 +312,6 @@
 #define S_mix_frames                    "mix-frames"
 #define S_mix_home                      "mix-home"
 #define S_mix_locked                    "mix-locked"
-#define S_mix_name                      "mix-name"
 #define S_mix_p                         "mix?"
 #define S_mix_panel                     "mix-panel"
 #define S_mix_position                  "mix-position"

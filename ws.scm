@@ -166,6 +166,12 @@ returning you to the true top-level."
 (define *clm-data-format* (default-output-format))
 (define *clm-header-type* (default-output-type))
 (define *clm-verbose* #f)
+(define *clm-play* #f)
+(define *clm-statistics* #f)
+(define *clm-reverb* #f)
+(define *clm-reverb-channels* 1)
+(define *clm-reverb-data* '())
+
 (define *to-snd* #t)
 
 (define *reverb* #f) ; these are sample->file (outa) gens
@@ -184,13 +190,15 @@ returning you to the true top-level."
 				  (header-type *clm-header-type*)
 				  (data-format *clm-data-format*)
 				  (comment #f)
-				  (reverb #f)
+				  ;(verbose *clm-verbose*)
+				  (reverb *clm-reverb*)
 				  (revfile "test.rev")
-				  (reverb-data #f)
+				  (reverb-data *clm-reverb-data*)
+				  (reverb-channels *clm-reverb-channels*)
 				  (continue-old-file #f)
-				  (statistics #f)
+				  (statistics *clm-statistics*)
 				  (scaled-to #f)
-				  (play #f)
+				  (play *clm-play*)
 				  (to-snd *to-snd*)
 				  (scaled-by #f))
   (let ((old-srate (mus-srate))
@@ -216,7 +224,7 @@ returning you to the true top-level."
 	     (if (file-exists? output-1) (delete-file output-1))
 	     (if (and reverb (file-exists? revfile)) (delete-file revfile))
 	     (set! *output* (make-sample->file output-1 channels data-format header-type comment))
-	     (if reverb (set! *reverb* (make-sample->file revfile 1 data-format header-type)))))
+	     (if reverb (set! *reverb* (make-sample->file revfile reverb-channels data-format header-type)))))
        (let ((start (if statistics (get-internal-real-time)))
 	     (flush-reverb #f)
 	     (cycles 0))
@@ -255,7 +263,7 @@ returning you to the true top-level."
 	     (begin
 	       (mus-close *reverb*)
 	       (set! *reverb* (make-file->sample revfile))
-	       (reverb)
+	       (apply reverb reverb-data)
 	       (mus-close *reverb*)
 	       (if *clm-delete-reverb* (delete-file revfile))))
 	 (mus-close *output*)
@@ -389,22 +397,24 @@ returning you to the true top-level."
 
 ;;; -------- Common Music --------
 
-(define* (init-with-sound #:key 
-			  (srate *clm-srate*) 
-			  (output *clm-file-name*) 
-			  (channels *clm-channels*)
-			  (header-type *clm-header-type*)
-			  (data-format *clm-data-format*)
-			  (comment #f)
-			  (reverb #f)
-			  (revfile "test.rev")
-			  (reverb-data #f)
-			  (continue-old-file #f)
-			  (statistics #f)
-			  (scaled-to #f)
-			  (play #f)
-			  (to-snd *to-snd*)
-			  (scaled-by #f))
+(define* (init-with-sound
+	  #:key (srate *clm-srate*) 
+	  (output *clm-file-name*) 
+	  (channels *clm-channels*)
+	  (header-type *clm-header-type*)
+	  (data-format *clm-data-format*)
+	  (comment #f)
+	  ;(verbose *clm-verbose*)
+	  (reverb *clm-reverb*)
+	  (revfile "test.rev")
+	  (reverb-data *clm-reverb-data*)
+	  (reverb-channels *clm-reverb-channels*)
+	  (continue-old-file #f)
+	  (statistics *clm-statistics*)
+	  (scaled-to #f)
+	  (play *clm-play*)
+	  (to-snd *to-snd*)
+	  (scaled-by #f))
   (let ((old-srate (mus-srate))
 	(start (if statistics (get-internal-real-time))))
     (if continue-old-file
@@ -418,7 +428,7 @@ returning you to the true top-level."
 	  (if (file-exists? output) (delete-file output))
 	  (if (and reverb (file-exists? revfile)) (delete-file revfile))
 	  (set! *output* (make-sample->file output channels data-format header-type comment))
-	  (if reverb (set! *reverb* (make-sample->file revfile 1 data-format header-type)))))
+	  (if reverb (set! *reverb* (make-sample->file revfile reverb-channels data-format header-type)))))
     (list 'with-sound-data
 	  output
 	  reverb
@@ -428,7 +438,8 @@ returning you to the true top-level."
 	  to-snd
 	  scaled-to
 	  scaled-by
-	  play)))
+	  play
+	  reverb-data)))
 
 (define (finish-with-sound wsd)
   (if (eq? (car wsd) 'with-sound-data)
@@ -441,12 +452,13 @@ returning you to the true top-level."
 	    (to-snd (list-ref wsd 6))
 	    (scaled-to (list-ref wsd 7))
 	    (scaled-by (list-ref wsd 8))
-	    (play (list-ref wsd 9)))
+	    (play (list-ref wsd 9))
+	    (reverb-data (list-ref wsd 10)))
 	(if reverb
 	    (begin
 	      (mus-close *reverb*)
 	      (set! *reverb* (make-file->sample revfile))
-	      (reverb)
+	      (apply reverb reverb-data)
 	      (mus-close *reverb*)))
 	(mus-close *output*)
 	(if statistics
@@ -486,6 +498,7 @@ returning you to the true top-level."
 (define (wsdat-file w) (list-ref w 1))
 (define (wsdat-channels w) #f)
 (define (wsdat-scaled-by w) (list-ref w 8))
+(define (wsdat-reverb-data w) (list-ref w 10))
 !#
 (define wsdat-play
   (make-procedure-with-setter

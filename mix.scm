@@ -1,6 +1,5 @@
 ;;; support for "tracks" in Snd and various mix-related utilities
 ;;;
-;;; (mix-name->id name) given name of mix return id
 ;;; (pan-mix file frame envelope) mixes file into current sound starting at frame using envelope to pan (0: all chan 0, 1: all chan 1)
 ;;; (mix->vct id) return mix data in vct
 ;;; (snap-mix-to-beat (at-anchor)) forces dragged mix to end up on a beat
@@ -98,19 +97,6 @@
         (lambda (id)
           (delete-mix id))
         (mixes)))))
-
-
-(define (mix-name->id name)
-  "(mix-name->id name) -> id of named mix"
-  ;; (intended for regex-style track creation)
-  (call-with-current-continuation
-   (lambda (return-name)
-     (tree-for-each
-      (lambda (n)
-	(if (string=? name (mix-name n))
-	    (return-name n)))
-      (mixes))
-     (throw 'no-such-mix (list "mix-name->id" name)))))
 
 
 

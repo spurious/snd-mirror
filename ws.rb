@@ -4,8 +4,7 @@
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Apr 08 17:05:03 CEST 2003
-# Last: Tue Apr 22 05:01:00 CEST 2003
-# Version: $Revision: 1.12 $
+# Last: Sat Jun 21 20:19:15 CEST 2003
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -22,36 +21,69 @@
 # Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307 USA
 
-# Functions:
+# Commentary:
 #
 # module WS
 #
 # user methods
-#  with_sound(*args) { |start| ... }
-#  rbm_load(rbm_file_name, *args)
-#  sound_let(fname, *args) { |tmp_fname| ... }
-#  with_current_sound(*args) { ... }
-#  scaled_to(scale) { ... }
-#  scaled_by(scale) { ... }
-#  with_offset(secs) { ... }
-#  with_mix(*args)
-#  rbm_mix(filename, *args)
-#  with_snd(*args) { |len| ... } alias fm_play
+#   with_sound(*args) { |start| ... }
+#   rbm_load(rbm_file_name, *args)
+#   sound_let(fname, *args) { |tmp_fname| ... }
+#   with_current_sound(*args) { ... }
+#   scaled_to(scale) { ... }
+#   scaled_by(scale) { ... }
+#   with_offset(secs) { ... }
+#   with_mix(*args)
+#   rbm_mix(filename, *args)
+#   with_snd(*args) { |len| ... } alias fm_play
 #
 # help methods
-#  ws_error(*args)
-#  play_sound(output, play)
-#  statistics(output, beg, reverb, revfile)
-#  make_reverb_file_name(snd_name)
-#  make_default_comment()
-#  sample2filename(fgen)
-#  remove_file(file)
-#  tempnam()
+#   ws_error(*args)
+#   play_sound(output, play)
+#   statistics(output, beg, reverb, revfile)
+#   make_reverb_file_name(snd_name)
+#   make_default_comment()
+#   sample2filename(fgen)
+#   remove_file(file)
+#   tempnam()
+#   get_notehook_instrument(body, func)
+#
+# class Proc
+#   to_str
+#   to_body
+
+# new options to with_sound:
+#   :notehook    takes a notehook function of one argument,
+#                the current instrument
+#   :save_body   adds body to comment
+# see also class Proc
+#
+# with_sound(*args) { ... }
+#       :output,            $rbm_file_name
+#       :channels,          $rbm_channels
+#       :srate,             $rbm_srate
+#       :continue_old_file, false
+#       :reverb,            $rbm_reverb_func
+#       :reverb_data,       $rbm_reverb_data
+#       :reverb_channels,   $rbm_reverb_channels
+#       :revfile,           $rbm_reverb_file_name
+#       :play,              $rbm_play
+#       :notehook,          $rbm_notehook
+#       :statistics,        $rbm_statistics
+#       :decay_time,        1.0
+#       :comment,           $rbm_comment
+#       :header_type,       $rbm_header_type
+#       :data_format,       $rbm_data_format
+#       :save_body,         false
+#       :scaled_to,         false
+#       :scaled_by,         false
+#       :verbose,           $rbm_verbose
+#       :player,            $rbm_player
 
 # Usage:
 #
 # Global variables can be set in ~/.snd-ruby.rb or in other scripts
-# before loading ws.rb.
+# before or after loading ws.rb.
 #
 # with_sound(:play, 3, :statistics, true, :reverb, :jc_reverb) do
 #   fm_violin(0, 1, 440, 0.3)
@@ -64,6 +96,8 @@
 # &body), and with_mix(*args) are callable within with_sound() and
 # rbm_load().  with_mix() doesn't use a block but a string as "body":
 #
+# WITH_SOUND
+# 
 # with_sound() do
 #   fm_violin(0, 0.1, 440, 0.1)
 #   with_mix "sec1", 0.5, %Q{
@@ -77,14 +111,17 @@
 #   fm_violin(2, 0.1, 220, 0.1)
 # end
 #
-# sound_let(): sound_let(fname = tempnam(), *args) do |temp_file_name|
-#                  ...
-#              end
-#           or sound_let([[fname1 = tempnam(), *args, lambda do ... end],
-#                         [fname2 = tempnam(), *args, lambda do ... end],
-#                         ...]) do |temp_file_array|
-#                  ...
-#              end
+# SOUND_LET
+#
+# sound_let(fname = tempnam(), *args) do |temp_file_name|
+#   ...
+# end
+#
+# sound_let([[fname1 = tempnam(), *args, lambda do ... end],
+#            [fname2 = tempnam(), *args, lambda do ... end],
+#               ...]) do |temp_file_array|
+#   ...
+# end
 #
 # sound_let([["tmp", lambda do fm_violin(0, 1, 440, 0.1) end],
 #            ["tmp1", :reverb, :nrev, lambda do rbm_mix("oboe.snd") end]]) do
@@ -175,32 +212,37 @@ end
 
 # Code:
 
-$IN_SND = true unless defined? $IN_SND
-$HAVE_SNDLIB_SO = false unless defined? $HAVE_SNDLIB_SO
+RBM_WS_VERSION = "21-Jun-2003 (RCS 1.19)"
 
-require "sndlib" unless $HAVE_SNDLIB_SO
+$IN_SND = defined? sound_open
+
+require "English"
+require "sndlib" unless $LOADED_FEATURES.detect do |x| x == "sndlib" end
 require "examp"
 require "etc"
 require "socket"
 
-$rbm_version = "22-Apr-03"
+$rbm_version = "21-Jun-03"
 $rbm_output = nil
 $rbm_reverb = nil
-$rbm_file_name = "test.snd"         unless defined? $rbm_file_name
-$rbm_srate = 22050                  unless defined? $rbm_srate
-$rbm_channels = 1                   unless defined? $rbm_channels
-$rbm_header_type = Mus_next         unless defined? $rbm_header_type
-$rbm_data_format = Mus_bshort       unless defined? $rbm_data_format
-$rbm_comment = nil                  unless defined? $rbm_comment
-$rbm_statistics = false             unless defined? $rbm_statistics
-$rbm_play = 0                       unless defined? $rbm_play
-$rbm_player = "sndplay"             unless defined? $rbm_player
-$rbm_reverb_file_name = nil         unless defined? $rbm_reverb_file_name
-$rbm_reverb_channels = 1            unless defined? $rbm_reverb_channels
-$rbm_reverb_func = nil              unless defined? $rbm_reverb_func
-$rbm_locsig_type = Mus_sinusoidal   unless defined? $rbm_locsig_type
-$rbm_delete_reverb = false          unless defined? $rbm_delete_reverb
-$rbm_verbose = ($VERBOSE or $DEBUG) unless defined? $rbm_verbose
+$rbm_file_name        ||= "test.snd"
+$rbm_srate            ||= 22050
+$rbm_channels         ||= 1
+$rbm_header_type      ||= Mus_next
+$rbm_data_format      ||= Mus_bshort
+$rbm_comment          ||= nil
+$rbm_statistics       ||= false
+$rbm_play             ||= 0
+$rbm_player           ||= "sndplay"
+$rbm_reverb_file_name ||= nil
+$rbm_reverb_channels  ||= 1
+$rbm_reverb_func      ||= nil
+$rbm_reverb_data      ||= []
+$rbm_locsig_type      ||= Mus_linear
+$rbm_delete_reverb    ||= false
+$rbm_verbose          ||= ($VERBOSE or $DEBUG)
+$rbm_notehook         ||= nil
+$rbm_rt_bufsize       ||= 128
 
 module WS
   @@file_nr = 0
@@ -214,44 +256,48 @@ module WS
   
   def with_sound(*args, &body)
   doc("with_sound(*args) { |start| ... }
-	:output,            $rbm_file_name (#$rbm_file_name)
-	:continue_old_file, false
+	:output,            $rbm_file_name (#{$rbm_file_name.inspect})
 	:channels,          $rbm_channels (#$rbm_channels)
-	:statistics,        $rbm_statistics (#$rbm_statistics)
-	:play,              $rbm_play (#$rbm_play)
-	:player,            $rbm_player (#$rbm_player)
 	:srate,             $rbm_srate (#$rbm_srate)
+	:continue_old_file, false
+	:reverb,            $rbm_reverb_func (#{$rbm_reverb_func.inspect})
+	:reverb_data,       $rbm_reverb_data (#{$rbm_reverb_data.inspect})
+	:reverb_channels,   $rbm_reverb_channels (#$rbm_reverb_channels)
+	:revfile,           $rbm_reverb_file_name (#{$rbm_reverb_file_name.inspect})
+	:play,              $rbm_play (#$rbm_play)
+        :notehook,          $rbm_notehook (#{$rbm_notehook.inspect})
+	:statistics,        $rbm_statistics (#$rbm_statistics)
+        :decay_time,        1.0
+	:comment,           $rbm_comment (#{$rbm_comment.inspect})
 	:header_type,       $rbm_header_type (#$rbm_header_type)
 	:data_format,       $rbm_data_format (#$rbm_data_format)
-	:comment,           $rbm_comment (#$rbm_comment)
-	:reverb,            $rbm_reverb_func (#$rbm_reverb_func)
-	:revfile,           $rbm_reverb_file_name (#$rbm_reverb_file_name)
-        :decay_time,        1.0
-	:reverb_channels,   $rbm_reverb_channels (#$rbm_reverb_channels)
-	:reverb_data,       []
+        :save_body,         false
 	:scaled_to,         false
 	:scaled_by,         false
         :verbose,           $rbm_verbose (#$rbm_verbose)
+	:player,            $rbm_player (#{$rbm_player.inspect})
 
 Usage: with_sound(:play, 1, :statistics, true) { fm_violin }\n") if get_args(args, :help, false)
     output            = get_args(args, :output, $rbm_file_name)
-    continue_old_file = get_args(args, :continue_old_file, false)
     channels          = get_args(args, :channels, $rbm_channels)
-    statistics        = get_args(args, :statistics, $rbm_statistics)
-    play              = get_args(args, :play, $rbm_play)
-    player            = get_args(args, :player, $rbm_player)
     srate             = get_args(args, :srate, $rbm_srate)
+    continue_old_file = get_args(args, :continue_old_file, false)
+    reverb            = get_args(args, :reverb, $rbm_reverb_func)
+    reverb_data       = get_args(args, :reverb_data, $rbm_reverb_data)
+    reverb_channels   = get_args(args, :reverb_channels, $rbm_reverb_channels)
+    revfile           = get_args(args, :revfile, $rbm_reverb_file_name)
+    play              = get_args(args, :play, $rbm_play)
+    notehook          = get_args(args, :notehook, $rbm_notehook)
+    statistics        = get_args(args, :statistics, $rbm_statistics)
+    decay_time        = get_args(args, :decay_time, 1.0)
+    comment           = get_args(args, :comment, $rbm_comment)
     header_type       = get_args(args, :header_type, $rbm_header_type)
     data_format       = get_args(args, :data_format, $rbm_data_format)
-    comment           = get_args(args, :comment, $rbm_comment)
-    reverb            = get_args(args, :reverb, $rbm_reverb_func)
-    revfile           = get_args(args, :revfile, $rbm_reverb_file_name)
-    decay_time        = get_args(args, :decay_time, 1.0)
-    reverb_channels   = get_args(args, :reverb_channels, $rbm_reverb_channels)
-    reverb_data       = get_args(args, :reverb_data, [])
+    save_body         = get_args(args, :save_body, false)
     scaled_to         = get_args(args, :scaled_to, false)
     scaled_by         = get_args(args, :scaled_by, false)
     verbose           = get_args(args, :verbose, $rbm_verbose)
+    player            = get_args(args, :player, $rbm_player)
     play = case play
            when true
              1
@@ -262,7 +308,10 @@ Usage: with_sound(:play, 1, :statistics, true) { fm_violin }\n") if get_args(arg
            end
     play, statistics = 0, false if continue_old_file
     reverb = $rbm_reverb = false if $rbm_reverb_channels.zero?
-    comment = make_default_comment() unless comment
+    comment = make_default_comment() unless comment.kind_of?(String)
+    comment = format("%s%s%s", comment,
+                     ((comment.kind_of?(String) and comment.empty?) ? "" : "\n"),
+                     body.to_proc.to_body.chomp) if save_body
     revfile = make_reverb_file_name(output) unless revfile
     old_file_name = $rbm_file_name
     old_channels = $rbm_channels
@@ -273,8 +322,7 @@ Usage: with_sound(:play, 1, :statistics, true) { fm_violin }\n") if get_args(arg
     $rbm_reverb_channels = reverb_channels
     $rbm_channels = channels
     $rbm_file_name = output
-    $rbm_srate = srate
-    set_mus_srate(srate)
+    $rbm_srate = set_mus_srate(srate).to_i
     if $IN_SND and (snd = find_sound(output))
       close_sound(snd)
     end
@@ -294,46 +342,14 @@ Usage: with_sound(:play, 1, :statistics, true) { fm_violin }\n") if get_args(arg
     mus_close($rbm_output) if $rbm_output
     startime = mus_sound_duration(output)
     $rbm_output = continue_sample2file(output)
+    get_notehook_instrument(body, notehook) if notehook
     beg = Time.now
-    body.call(startime)
+    catch(:with_sound_interrupt) do body.call(startime) end
   rescue
     ws_error("error in %s", get_func_name())
   else
     mus_close($rbm_output) if $rbm_output
     dur = mus_sound_duration(output) - startime
-    if scaled_to
-      if $IN_SND
-        snd = open_sound(output)
-        scale_sound_to(scaled_to)
-        save_sound(snd)
-        close_sound(snd)
-      else
-        amax = mus_sound_maxamp(output)
-        tmpa = []
-        1.step(amax.length - 1, 2) do |i| tmpa << amax[i] end
-        scaled_to = 1.0 if scaled_to > 1
-        scaled_to = 0.0 if scaled_to < 0
-        scale = (scaled_to / tmpa.max) - 1
-        mus_mix(output, output, seconds2samples(startime),
-                seconds2samples(dur),
-                seconds2samples(startime),
-                make_mixer(channels, *(1..channels * channels).map do scale end))
-      end
-    end
-    if scaled_by
-      if $IN_SND
-        snd = open_sound(output)
-        scale_sound_by(scaled_by)
-        save_sound(snd)
-        close_sound(snd)
-      else
-        scale = scaled_by - 1
-        mus_mix(output, output, seconds2samples(startime),
-                seconds2samples(dur),
-                seconds2samples(startime),
-                make_mixer(channels, *(1..channels * channels).map do scale end))
-      end
-    end
     $rbm_output = continue_sample2file(output)
     if reverb
       begin
@@ -349,9 +365,45 @@ Usage: with_sound(:play, 1, :statistics, true) { fm_violin }\n") if get_args(arg
         ws_error("%s: reverb error", get_func_name())
       end
     end
+    if scaled_to
+      if $IN_SND
+        unless (snd = find_sound(output))
+          snd = open_sound(output)
+        end
+        scale_sound_to(scaled_to)
+        save_sound(snd)
+        update_sound(snd)
+      else
+        amax = mus_sound_maxamp(output)
+        tmpa = []
+        1.step(amax.length - 1, 2) do |i| tmpa << amax[i] end
+        scaled_to = 1.0 if scaled_to > 1
+        scaled_to = 0.0 if scaled_to < 0
+        scale = (scaled_to / tmpa.max) - 1
+        mus_mix(output, output, seconds2samples(startime),
+                seconds2samples(dur),
+                seconds2samples(startime),
+                make_mixer(channels, *(1..channels * channels).map do scale end))
+      end
+    end
+    if scaled_by
+      if $IN_SND
+        unless (snd = find_sound(output))
+          snd = open_sound(output)
+        end
+        scale_sound_by(scaled_by)
+        save_sound(snd)
+        update_sound(snd)
+      else
+        scale = scaled_by - 1
+        mus_mix(output, output, seconds2samples(startime),
+                seconds2samples(dur),
+                seconds2samples(startime),
+                make_mixer(channels, *(1..channels * channels).map do scale end))
+      end
+    end
     if $IN_SND and (snd = find_sound(output))
-      save_sound(snd)
-      close_sound(snd)
+      update_sound(snd)
     end
     statistics(output, beg, reverb, revfile) if statistics
     play_sound(output, play)
@@ -649,7 +701,7 @@ with_snd(:output, \"bell.snd\") {
     1.upto(play) do |i| play(0, snd) end
     output
   rescue
-    die get_func_name
+    ws_error get_func_name
   end
   alias fm_play with_snd
 
@@ -665,8 +717,9 @@ with_snd(:output, \"bell.snd\") {
     if $IN_SND
       unless (snd = find_sound(output))
         snd = open_sound(output)
+        update_sound(snd)
       end
-      1.upto(play) do |i| play_and_wait(snd) end
+      1.upto(play) do |i| play(0, snd) end
     else
       1.upto(play) do |i| system("#{$rbm_player} #{output}") end
     end
@@ -701,7 +754,10 @@ with_snd(:output, \"bell.snd\") {
   end
 
   def make_reverb_file_name(snd_name)
-    File.split(snd_name)[1].split('.')[0] + ".reverb"
+    path = File.split(snd_name).first
+    file = File.basename(snd_name, ".*") + ".reverb"
+    file = path + "/" + file unless path == "."
+    file
   end
 
   def make_default_comment
@@ -741,8 +797,137 @@ with_snd(:output, \"bell.snd\") {
   rescue
     warn get_func_name
   end
+  
+  def get_notehook_instrument(body, func)
+    str = ""
+    brck = 0
+    body.to_proc.to_body.each_line do |s|
+      s.each_byte do |c|        # instrument takes more than one line?
+        case c
+        when ?(
+          brck += 1
+        when ?)
+          brck -= 1
+        end
+      end
+      str << s.strip << " "
+      if brck.zero?
+        str.sub!(/^.*(?:\s+do\s+|\s*\{\s*)(?:\|.*\|)?(.*)\s+(?:end|\})/, '\1')
+        str.strip!
+        if func.kind_of?(Proc)
+          func.call(str)
+        else
+          send(func, str)
+        end
+        str = ""
+      end
+    end
+  end
 end
 
 include WS
+
+class Proc
+  # Functions to_str and to_body try to search the procedure source
+  # code in a file determined by to_s.  It is only a simple scanner
+  # which doesn't look for the whole Ruby syntax. ;-)
+  # 
+  # It doesn't work if no source file exist, i.e, if the code is
+  # eval'ed by the Snd listener (or in Emacs).  You must load the file
+  # instead.
+  # 
+  # with_sound(:notehook, lambda do |name| clm_print(name) if name =~ /viol/ end) do
+  #   fm_violin(0, 1, 440, 0.3)
+  # end
+  # 
+  # $rbm_notehook = lambda do |name| clm_print(name) if name =~ /viol/ end
+  # 
+  # with_sound do
+  #   fm_violin(0, 1, 440, 0.3)
+  # end
+  # 
+  # with_sound(:save_body, true) do
+  #  ...
+  # end
+  
+  # returns something like 'lambda do ... end'
+  def to_str
+    file, line = self.to_s.sub(/>/, "").split(/@/).last.split(/:/)
+    return "no file found for procedure #{self.inspect}" if file == "(eval)"
+    line = line.to_i
+    body = String.new
+    brck = i = 0
+    blck = -1
+    first_line = true
+    File.foreach(file) do |f|
+      i += 1
+      next if i < line
+      body << f
+      if first_line
+        ary = f.split(/ /)
+        blck += ary.grep(/\bdo\b|\{/).length
+        blck -= ary.grep(/\bend\b|\}/).length
+        brck += ary.grep(/\(/).length
+        brck -= ary.grep(/\)/).length
+        if blck.zero? and brck.zero?
+          first_line = false
+          blck = 1
+        else
+          break if (ary.grep(/\bdo\b|\{/).length == ary.grep(/\bend\b|\}/).length) and
+            (ary.grep(/\(/).length == ary.grep(/\)/).length)
+        end
+        next
+      end
+      next if /^\s*\S+\s+(if|unless|while|until)\s+/ =~ f
+      f.split(/\W+/).each do |s|
+        case s
+        when "{", "do", "while", "until", "if", "unless", "case", "begin"
+          blck += 1
+        when "}", "end"
+          blck -= 1
+        end
+      end
+      break if blck.zero?
+    end
+    body
+  rescue
+    warn get_func_name()
+  end
+
+  # returns the inner body without 'lambda' etc.
+  def to_body
+    body = self.to_str
+    return body if body =~ /no file found for procedure/
+    if body.split(/\n/).length == 1
+      body.chomp!.sub!(/^(?:\s*\w+(?:\(.*\))??\s*(?:do\s+|\{\s*))(.*)\s*(?:end|\})$/, '\1')
+    else
+      brck = 0
+      ws = true
+      body = String.new
+      self.to_str.each_line do |s|
+        if ws
+          s.each_byte do |c|
+            case c
+            when ?(
+              brck += 1
+            when ?)
+              brck -= 1
+            end
+          end
+          ws = false if brck.zero?
+        else
+          body << s
+        end
+      end
+      body = body.split(/\n/)
+      str = (body.last.split(/\W+/)[0..-2]).join
+      body[-1] = (str.strip.empty? ? "" : str)
+      body = body.join("\n")
+    end
+    body
+  rescue
+    warn get_func_name()
+  end
+end
 
 # ws.rb ends here

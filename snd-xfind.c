@@ -91,12 +91,11 @@ static void make_edit_find_dialog(snd_state *ss)
   Widget dl, rc;
   Arg args[20];
   int n;
-  XmString xmstr1, xmstr2, xmstr3, titlestr;
+  XmString xmstr1, xmstr3, titlestr;
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   xmstr1 = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
-  xmstr2 = XmStringCreate(_("Next"), XmFONTLIST_DEFAULT_TAG);
   xmstr3 = XmStringCreate(_("Previous"), XmFONTLIST_DEFAULT_TAG);
   titlestr = XmStringCreate(_("Find"), XmFONTLIST_DEFAULT_TAG);
   XtSetArg(args[n], XmNokLabelString, xmstr1); n++;
@@ -109,7 +108,7 @@ static void make_edit_find_dialog(snd_state *ss)
   edit_find_dialog = XmCreateMessageDialog(MAIN_SHELL(ss), _("find"), args, n);
 
   XmStringFree(xmstr1);
-  XmStringFree(xmstr2);
+  XmStringFree(xmstr3);
   XmStringFree(titlestr);
 
   XtUnmanageChild(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_SYMBOL_LABEL));

@@ -4,8 +4,8 @@
 
 ;; Author: Michael Scholz <scholz-micha@gmx.de>
 ;; Created: Wed Nov 27 20:52:54 CET 2002
-;; Last: Fri May 16 05:19:36 CEST 2003
-;; Version: $Revision: 1.6 $
+;; Last: Fri Jun 20 18:24:26 CEST 2003
+;; Version: $Revision: 1.8 $
 ;; Keywords: processes, snd, ruby, guile
 
 ;; This file is not part of GNU Emacs.
@@ -91,7 +91,7 @@
 ;; (setq inf-snd-index-path "~/Snd/snd-6/")
 
 ;; The hook-variables may be used to set new key bindings and menu
-;; entries etc. in your .emacs file, e.g.:
+;; entries etc in your .emacs file, e.g.:
 ;;
 ;; (defun foo ()
 ;;   (interactive)
@@ -183,7 +183,7 @@
 (require 'inf-ruby)
 (require 'cmuscheme)
 
-(defconst inf-snd-rcsid "$Id: inf-snd.el,v 1.6 2003/05/16 03:22:36 mike Exp $")
+(defconst inf-snd-rcsid "$Id: inf-snd.el,v 1.8 2003/06/20 16:25:54 mike Exp $")
 
 (defconst inf-snd-version
   (progn
@@ -377,15 +377,19 @@ and index.scm."
 	(unless html-help
 	  (while (string-match " " str)
 	    (setq str (replace-match "" t nil str))))
-	(let ((func (if html-help "html" "snd-help")))
+	(let ((inf-str (if html-help
+			   (format "(html \"%s\")" str)
+			 (if inf-snd-ruby-flag
+			     (format "puts snd-help(\"%s\")" str)
+			   (format "(snd-help \"%s\")" str)))))
 	  (with-current-buffer (inf-snd-proc-buffer)
 	    (goto-char (point-max))
 	    (if (and (string= (char-to-string (preceding-char)) inf-snd-prompt-char)
 		     (eobp))
-		(inf-snd-send-string (format "(%s \"%s\")" func str))
+		(inf-snd-send-string inf-str)
 	      (beginning-of-line)
 	      (kill-region (point) (point-max))
-	      (inf-snd-send-string (format "(%s \"%s\")" func str))
+	      (inf-snd-send-string inf-str)
 	      (yank))))))))
 
 (defun inf-snd-help-html ()
@@ -734,13 +738,16 @@ Non-nil EOB-P means to position cursor at end of buffer."
 	   (goto-char (point-max))))))
   
 (defun snd-load-file (filename)
-  "Load a Snd script FILENAME into the inferior Snd process."
+  "Load a Snd script FILENAME into the inferior Snd process.
+In `snd-ruby-mode' the script will be loaded in an anonymous
+module, thus protecting the namespace."
   (interactive (comint-get-source "Load Snd script file: "
 				  snd-prev-l/c-dir/file snd-source-modes t))
   (comint-check-source filename)
   (setq snd-prev-l/c-dir/file (cons (file-name-directory filename)
 				     (file-name-nondirectory filename)))
-  (comint-send-string (snd-proc) (concat "(load \"" filename "\"\)\n")))
+  (let ((opts (if snd-inf-ruby-flag ", true" "")))
+    (comint-send-string (snd-proc) (concat "(load \"" filename"\"" opts "\)\n"))))
 
 (defun snd-run-snd ()
   "Start inferior Snd-Ruby or Snd-Guile process.

@@ -1,7 +1,5 @@
 #include "snd.h"
 
-/* TODO: amp label fixup */
-
 static GtkWidget *mix_panel = NULL;
 static int dragging = FALSE;
 static void update_mix_panel(int mix_id);
@@ -346,7 +344,7 @@ static gboolean mix_amp_env_resize_callback(GtkWidget *w, GdkEventConfigure *ev,
 
 /* ---------------- MIX PANEL ---------------- */
 
-static GtkWidget *w_id = NULL, *w_name = NULL, *w_beg = NULL, *w_track = NULL, *w_play = NULL, *w_id_label = NULL, *w_track_label = NULL, *w_play_pix = NULL;
+static GtkWidget *w_id = NULL, *w_beg = NULL, *w_track = NULL, *w_play = NULL, *w_id_label = NULL, *w_track_label = NULL, *w_play_pix = NULL;
 static GdkPixmap *speaker_pix;
 
 static void id_activated(GtkWidget *w, gpointer context)
@@ -360,19 +358,10 @@ static void id_activated(GtkWidget *w, gpointer context)
       id = string2int(val);
       if (mix_ok(id))
 	{
-	  ss->selected_mix = id;
+ 	  select_mix_from_id(id);
 	  update_mix_panel(ss->selected_mix);
 	}
     }
-}
-
-static void name_activated(GtkWidget *w, gpointer context) 
-{
-  char *val;
-  snd_state *ss = (snd_state *)context;
-  val = (char *)gtk_entry_get_text(GTK_ENTRY(w_name));
-  if (val)
-    set_mix_name_from_id(current_mix_id(ss), val);
 }
 
 static void beg_activated(GtkWidget *w, gpointer context) 
@@ -464,15 +453,45 @@ static gboolean delete_mix_panel(GtkWidget *w, GdkEvent *event, gpointer context
   return(FALSE);
 }
 
+static GtkWidget *nextb, *previousb;
+
+static void mix_next_callback(GtkWidget *w, gpointer context)
+{
+  snd_state *ss = (snd_state *)context;
+  int id;
+  id = next_mix_id(current_mix_id(ss));
+  if (id != INVALID_MIX_ID)
+    {
+      select_mix_from_id(id);
+      update_mix_panel(ss->selected_mix);
+      if (next_mix_id(id) == INVALID_MIX_ID) 
+	set_sensitive(nextb, FALSE);
+    }
+}
+
+static void mix_previous_callback(GtkWidget *w, gpointer context)
+{
+  snd_state *ss = (snd_state *)context;
+  int id;
+  id = previous_mix_id(current_mix_id(ss));
+  if (id != INVALID_MIX_ID)
+    {
+      select_mix_from_id(id);
+      update_mix_panel(ss->selected_mix);
+      if (previous_mix_id(id) == INVALID_MIX_ID) 
+	set_sensitive(previousb, FALSE);
+    }
+}
+
 static void mix_panel_help(GtkWidget *w, gpointer context) 
 {
   snd_help((snd_state *)context,
 	   _("Mix Panel"),
 "This dialog provides various commonly-used controls on the currently \
-selected mix.  At the top are the mix id, name, begin and end times, \
+selected mix.  At the top are the mix id, begin and end times, \
 track number, and a play button.  Beneath that are various sliders \
 controlling the speed (sampling rate) of the mix, and the amplitude of each \
-input channel; and finally, an editor for the mix's (input) channels. \
+input channel; and finally, an envelope editor for the mix's (input) channels. \
 The current mix amp env is not actually changed until you click 'Apply Env'.\
 The editor envelope is drawn in black with dots whereas the current \
 mix amp env (if any) is drawn in blue.",
@@ -494,11 +513,6 @@ GtkWidget *make_mix_panel(snd_state *ss)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(delete_mix_panel), (gpointer)ss, 0),
 				     0);
-      /* g_signal_connect_closure_by_id(GTK_OBJECT(mix_panel),
-	 g_signal_lookup("destroy", G_OBJECT_TYPE(GTK_OBJECT(mix_panel))),
-	 0,
-	 g_cclosure_new((GtkSignalFunc)dismiss_mix_panel, (gpointer)ss, 0),
-      0);*/
       gtk_window_set_title(GTK_WINDOW(mix_panel), _("Mix Panel"));
       sg_make_resizable(mix_panel);
       set_background(mix_panel, (ss->sgx)->basic_color);
@@ -513,6 +527,24 @@ GtkWidget *make_mix_panel(snd_state *ss)
 				     g_cclosure_new(GTK_SIGNAL_FUNC(dismiss_mix_panel), (gpointer)ss, 0),
 				     0);
       gtk_widget_show(dismiss_button);
+
+      previousb = gtk_button_new_with_label(_("Previous"));
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(mix_panel)->action_area), previousb, FALSE, TRUE, 10);
+      g_signal_connect_closure_by_id(GTK_OBJECT(previousb),
+				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(previousb))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_previous_callback), (gpointer)ss, 0),
+				     0);
+      gtk_widget_show(previousb);
+
+      nextb = gtk_button_new_with_label(_("Next"));
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(mix_panel)->action_area), nextb, FALSE, TRUE, 10);
+      g_signal_connect_closure_by_id(GTK_OBJECT(nextb),
+				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(nextb))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_next_callback), (gpointer)ss, 0),
+				     0);
+      gtk_widget_show(nextb);
 
       apply_button = gtk_button_new_with_label(_("Apply Env"));
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(mix_panel)->action_area), apply_button, FALSE, TRUE, 10);
@@ -539,7 +571,7 @@ GtkWidget *make_mix_panel(snd_state *ss)
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(mix_panel)->vbox), rc, FALSE, FALSE, 4);
       gtk_widget_show(rc);
 
-      w_id_label = gtk_label_new(_("mix id:"));
+      w_id_label = gtk_label_new(_("mix:"));
       gtk_box_pack_start(GTK_BOX(rc), w_id_label, FALSE, FALSE, 4);
       gtk_widget_show(w_id_label);
 
@@ -548,13 +580,6 @@ GtkWidget *make_mix_panel(snd_state *ss)
 				     g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(w_id))),
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(id_activated), (gpointer)ss, 0),
-				     0);
-
-      w_name = snd_entry_new(ss, rc, FALSE);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_name),
-				     g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(w_name))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(name_activated), (gpointer)ss, 0),
 				     0);
 
       w_beg = snd_entry_new(ss, rc, FALSE);
@@ -753,6 +778,11 @@ static void update_mix_panel(int mix_id)
     {
       if (mix_panel == NULL) 
 	make_mix_panel(get_global_state());
+      else
+	{
+	  set_sensitive(nextb, (next_mix_id(mix_id) != INVALID_MIX_ID));
+	  set_sensitive(previousb, (previous_mix_id(mix_id) != INVALID_MIX_ID));
+	}
       
       /* now reflect current mix state in mix panel controls */
       cp = mix_channel_from_id(mix_id);
@@ -770,8 +800,6 @@ static void update_mix_panel(int mix_id)
       mus_snprintf(lab, LABEL_BUFFER_SIZE, "%d", mix_id);
       gtk_entry_set_text(GTK_ENTRY(w_id), lab);
 
-      gtk_entry_set_text(GTK_ENTRY(w_name), mix_name_from_id(mix_id));
-
       beg = mix_position_from_id(mix_id);
       len = mix_frames(mix_id);
       mus_snprintf(lab, LABEL_BUFFER_SIZE, "%.3f : %.3f",
@@ -782,6 +810,7 @@ static void update_mix_panel(int mix_id)
       chans = mix_input_chans_from_id(mix_id);
       if (chans > 8) chans = 8;
 
+      set_label(w_amp_labels[0], (chans == 1) ? "amp:" : "amp 0:");
       for (i = 0; i < chans; i++)
 	{
 	  gtk_widget_show(w_amp_labels[i]);	  
@@ -814,10 +843,19 @@ static void update_mix_panel(int mix_id)
 
 void reflect_mix_in_mix_panel(int mix_id)
 {
+  snd_state *ss;
   if ((mix_panel) &&
-      (GTK_WIDGET_VISIBLE(mix_panel)) &&
-      (current_mix_id(get_global_state()) == mix_id))
-    update_mix_panel(mix_id);
+      (GTK_WIDGET_VISIBLE(mix_panel)))
+    {
+      ss = get_global_state();
+      if (current_mix_id(ss) == mix_id)
+	update_mix_panel(mix_id);
+      if (mix_id != INVALID_MIX_ID)
+	{
+	  set_sensitive(nextb, (next_mix_id(current_mix_id(ss)) != INVALID_MIX_ID));
+	  set_sensitive(previousb, (previous_mix_id(current_mix_id(ss)) != INVALID_MIX_ID));
+	}
+    }
 }
 
 void reflect_no_mix_in_mix_panel(void)

@@ -33,6 +33,7 @@
 ;;; TODO: mouse-drag in time/fft graph hook?
 ;;; TODO: find/"fix" clipping
 ;;; TODO: xemacs style top list of sounds, current takes whole screen [make-top-row snd-motif.scm, files-popup-buffer in examp.scm]
+;;; TODO: coverage tests for next/previous mix-panel buttons, mix-play and track-play buttons
 
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 
@@ -13538,7 +13539,6 @@ EDITS: 5
 		     (lambda () (play-mix mix-id))
 		     (lambda args (snd-display ";can't play mix")))
 	      (set! (mix-position mix-id) 200) 
-	      (set! (mix-name mix-id) "asdf") 
 	      (set! (mix-amp mix-id 0) 0.5) 
 	      (set! (mix-speed mix-id) 2.0) 
 	      (set! (mix-track mix-id) 3) 
@@ -13562,7 +13562,6 @@ EDITS: 5
 		    (spd (mix-speed mix-id))
 		    (trk (mix-track mix-id))
 		    (amp (mix-amp mix-id 0))
-		    (nam (mix-name mix-id))
 		    (my (mix-tag-y mix-id))
 		    (anc (mix-anchor mix-id)))
 		(if (not (= pos 200)) (snd-display ";set-mix-position: ~A?" pos))
@@ -13572,7 +13571,6 @@ EDITS: 5
 		(if (fneq spd 2.0) (snd-display ";set-mix-speed: ~A?" spd))
 		(if (not (= anc 30)) (snd-display ";set-mix-anchor: ~A?" anc))
 		(if (not (equal? (mix-amp-env mix-id 0) '(0.0 0.0 1.0 1.0))) (snd-display ";set-mix-amp-env: ~A?" (mix-amp-env mix-id 0)))
-		(if (not (string=? nam "asdf")) (snd-display ";set-mix-name: ~A?" nam))
 		(if (and (selected-mix) (= mix-id (selected-mix))) (snd-display ";selected-mix: ~A?" mix-id))
 		(set! (selected-mix) mix-id)
 		(if (not (= mix-id (selected-mix))) (snd-display ";set! select-mix: ~A ~A?" mix-id (selected-mix)))
@@ -13585,7 +13583,7 @@ EDITS: 5
 		(select-mix m0)
 		(set! (selected-mix) m1)
 		(select-mix mix-id))
-	      (if (not (= (mix-name->id "asdf") mix-id)) (snd-display ";mix-name->id: ~A?" (mix-name->id "asdf")))))
+	      ))
 	  (set! (cursor) 0)
 	  (let ((nid (forward-mix)))
 	    (if (or (not (mix? nid))
@@ -16162,9 +16160,9 @@ EDITS: 5
 					 (lambda args (car args)))))
 			 (if (not (eq? tag 'no-such-mix))
 			     (snd-display ";~A: ~A" b tag))))
-		     (list mix-amp mix-anchor mix-chans mix-track mix-frames mix-locked mix-name
+		     (list mix-amp mix-anchor mix-chans mix-track mix-frames mix-locked
 			   mix-position mix-home mix-speed mix-tag-y)
-		     (list 'mix-amp 'mix-anchor 'mix-chans 'mix-track 'mix-frames 'mix-locked 'mix-name
+		     (list 'mix-amp 'mix-anchor 'mix-chans 'mix-track 'mix-frames 'mix-locked
 			   'mix-position 'mix-home 'mix-speed 'mix-tag-y)))
 		  ))))
 	  (reset-hook! mix-click-hook)
@@ -32017,7 +32015,6 @@ EDITS: 2
 		      (mix-panel)
 		      (let* ((mixd (list-ref (dialog-widgets) 16))
 			     (idtxt (find-child mixd "mix-id"))
-			     (nametxt (find-child mixd "mix-name"))
 			     (begtxt (find-child mixd "mix-times"))
 			     (trktxt (find-child mixd "mix-track"))
 			     (playb (find-child mixd "play"))
@@ -32079,8 +32076,6 @@ EDITS: 2
 			(key-event trktxt snd-return-key 0) (force-event)
 			(if (not (= (mix-track id1) 2))
 			    (snd-display ";mix panel set track: ~A ~A" id1 (mix-track id1)))
-			(widget-string nametxt "3") (force-event)
-			(key-event nametxt snd-return-key 0) (force-event)
 			(widget-string idtxt "2") (force-event)
 			(key-event idtxt snd-return-key 0) (force-event)
 			(click-button (XmMessageBoxGetChild mixd XmDIALOG_OK_BUTTON)) (force-event)     ;dismiss
@@ -36469,7 +36464,7 @@ EDITS: 2
 		     make-region-sample-reader make-sample-reader make-track-sample-reader map-chan mark-color mark-name
 		     mark-sample mark-sync mark-sync-max mark-home marks mark?  max-transform-peaks max-regions
 		     maxamp menu-sensitive menu-widgets minibuffer-history-length min-dB mix mixes mix-amp mix-amp-env
-		     mix-anchor mix-chans mix-color mix-track mix-frames mix-locked mix-name mix? mix-panel mix-position
+		     mix-anchor mix-chans mix-color mix-track mix-frames mix-locked mix? mix-panel mix-position
 		     mix-region mix-sample-reader?  mix-selection mix-sound mix-home mix-speed mix-tag-height mix-tag-width
 		     mix-tag-y mix-vct mix-waveform-height time-graph-style lisp-graph-style transform-graph-style
 					;new-sound 
@@ -36574,7 +36569,7 @@ EDITS: 2
 			 graph-color graph-cursor graph-style lisp-graph? graphs-horizontal help-text-font highlight-color
 			 just-sounds left-sample listener-color listener-font listener-prompt listener-text-color mark-color
 			 mark-name mark-sample mark-sync max-transform-peaks max-regions menu-sensitive min-dB mix-amp
-			 mix-amp-env mix-anchor mix-chans mix-color mix-track mix-frames mix-locked mix-name mix-position
+			 mix-amp-env mix-anchor mix-chans mix-color mix-track mix-frames mix-locked mix-position
 			 mix-speed mix-tag-height mix-tag-width mix-tag-y mix-waveform-height transform-normalization
 			 equalize-panes position-color recorder-in-device previous-files-sort print-length pushed-button-color
 			 recorder-autoload recorder-buffer-size recorder-dialog recorder-file recorder-gain recorder-in-amp
@@ -37109,7 +37104,7 @@ EDITS: 2
 			    (if (not (eq? tag 'wrong-type-arg))
 				(snd-display ";~D: mix procs ~A: ~A" ctr n tag))
 			    (set! ctr (+ ctr 1))))
-			(list backward-mix mix-amp mix-amp-env mix-anchor mix-chans mix-track mix-frames mix-locked mix-name
+			(list backward-mix mix-amp mix-amp-env mix-anchor mix-chans mix-track mix-frames mix-locked
 			      mix-position mix-home mix-speed mix-tag-y))) 
 	    
 	    (let ((ctr 0))
@@ -37122,7 +37117,7 @@ EDITS: 2
 			    (if (not (eq? tag 'no-such-mix))
 				(snd-display ";~D: mix procs ~A: ~A" ctr n tag))
 			    (set! ctr (+ ctr 1))))
-			(list mix-amp mix-anchor mix-chans mix-track mix-frames mix-locked mix-name
+			(list mix-amp mix-anchor mix-chans mix-track mix-frames mix-locked
 			      mix-position mix-home mix-speed mix-tag-y)))
 	    
 	    (let ((ctr 0))
@@ -37135,7 +37130,7 @@ EDITS: 2
 			    (if (not (eq? tag 'wrong-type-arg))
 				(snd-display ";~D: mix procs ~A: ~A" ctr n tag))
 			    (set! ctr (+ ctr 1))))
-			(list mix-anchor mix-chans mix-track mix-frames mix-locked mix-name
+			(list mix-anchor mix-chans mix-track mix-frames mix-locked
 			      mix-position mix-home mix-speed mix-tag-y))) 
 	    
 	    (let* ((ctr 0)
@@ -37150,7 +37145,7 @@ EDITS: 2
 			    (if (not (eq? tag 'wrong-type-arg))
 				(snd-display ";~D: mix procs ~A: ~A" ctr n tag))
 			    (set! ctr (+ ctr 1))))
-			(list mix-anchor mix-chans mix-track mix-frames mix-locked mix-name
+			(list mix-anchor mix-chans mix-track mix-frames mix-locked
 			      mix-position mix-home mix-speed mix-tag-y))
 	      (close-sound index))
 	    

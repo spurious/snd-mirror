@@ -149,10 +149,23 @@
 (if (defined? 'env-track)
     (define set-track-amp-env env-track))
 
+(if (not (defined? 'mix-property)) (load "mix.scm"))
 
+(define mix-name
+  (make-procedure-with-setter
+   (lambda (id)
+     (mix-property 'name id))
+   (lambda (id val)
+     (set! (mix-property 'name id) val))))
 
-
-
-
-
+(define (mix-name->id name)
+  "(mix-name->id name) -> id of named mix"
+  (call-with-current-continuation
+   (lambda (return-name)
+     (tree-for-each
+      (lambda (n)
+	(if (string=? name (mix-name n))
+	    (return-name n)))
+      (mixes))
+     (throw 'no-such-mix (list "mix-name->id" name)))))
 

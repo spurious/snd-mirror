@@ -1824,7 +1824,6 @@ which I assume are groups of related mixes.
   <em class=def><a name="mixsound">mix-sound</a></em> file start
   <em class=def><a name="mixproperty">mix-property</a></em> key id
   <em class=def><A NAME="mixclicksetsamp">mix-click-sets-amp</A></em>
-  <em class=def><a name="mixname2id">mix-name-&gt;id</a></em> name
   <em class=def><a name="mix2vct">mix-&gt;vct</a></em> id
   <em class=def><a name="panmix">pan-mix</a></em> file (frame 0) (env 1.0) snd
   <em class=def><a name="snapmixtobeat">snap-mix-to-beat</a></em> (at-anchor)
@@ -1836,8 +1835,7 @@ which I assume are groups of related mixes.
 </pre>
 <p>These are the mix utilities in mix.scm (unrelated to tracks). 
 <b>mix-sound</b> mixes <i>file</i> (all chans) into the currently selected sound at <i>start</i>.
-<b>mix-name-&gt;id</b>
-returns the id of a given (named) mix. <b>mix-&gt;vct</b> returns the current samples
+<b>mix-&gt;vct</b> returns the current samples
 of mix <i>id</i> (taking into account its current amplitude an so on). <b>pan-mix</b>
 mixes <i>file</i> into the current sound starting at <i>frame</i> using the envelope <i>env</i>
 to pan the mixed samples (0: all chan 0, 1: all chan 1).
@@ -2400,6 +2398,8 @@ appends <i>msg</i> to whatever is in <i>snd</i>'s minibuffer.
 <b>dismiss-all-dialogs</b> deactivates all active dialogs.
 <b>with-html</b> sets up Help menu callbacks to send netscape 
 a url to open, rather than opening Snd's help dialog.
+<b>mix-name</b> asociates a name with a mix, and
+<b>mix-name-&gt;id</b> returns the id given a mix name.
 </p>
 
 
@@ -3318,20 +3318,30 @@ The global variables that parallel CLM's *clm-...* are:
   <em class=def>*clm-data-format*</em> (default-output-format) ; default output data format
   <em class=def>*clm-header-type*</em> (default-output-type)   ; default output header type
   <em class=def>*clm-delete-reverb*</em> #f                    ; should reverb stream be deleted?
+  <em class=def>*clm-verbose*</em> #f                          ; currently unused
+  <em class=def>*clm-play*</em> #f                             ; should the output be played at the end
+  <em class=def>*clm-statistics*</em> #f                       ; should stats be printed out at the end
+  <em class=def>*clm-reverb*</em> #f                           ; reverb function, if any
+  <em class=def>*clm-reverb-channels*</em> 1                   ; reverb stream chans
+  <em class=def>*clm-reverb-data*</em> '()                     ; args pass to reverb function
 
   <em class=def>with-sound</em>
-    #:key (srate *clm-srate*) 
-          (output *clm-file-name*)   ; default="test.snd"
+    #:key (srate *clm-srate*)
+          (output *clm-file-name*)
 	  (channels *clm-channels*)
 	  (header-type *clm-header-type*)
 	  (data-format *clm-data-format*)
 	  (comment #f)
+	  ;(verbose *clm-verbose*)
+	  (reverb *clm-reverb*)
+	  (revfile "test.rev")
+	  (reverb-data *clm-reverb-data*)
+	  (reverb-channels *clm-reverb-channels*)
 	  (continue-old-file #f)
-	  (play #f)
-  	  (reverb #f)
-  	  (revfile "test.rev")
-	  (statistics #f)
+	  (statistics *clm-statistics*)
 	  (scaled-to #f)
+	  (play *clm-play*)
+	  (to-snd *to-snd*)
 	  (scaled-by #f)
 </pre>
 <p>As far as possible, this parallels CLM's <a href="clm.html#with-sound">with-sound</a>.</p>

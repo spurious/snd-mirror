@@ -1243,6 +1243,7 @@ int hit_mix(chan_info *cp, int x, int y);
 void select_mix_from_id(int mix_id);
 chan_info *mix_channel_from_id(int mix_id);
 void mix_play_from_id(int mix_id);
+void track_play_from_id(int mix_id);
 int current_mix_id(snd_state *ss);
 void start_mix_drag(int mix_id);
 int set_mix_speed_from_id(int mix_id, Float val, int dragging);
@@ -1252,14 +1253,14 @@ int mix_track_from_id(int mix_id);
 Float mix_speed_from_id(int mix_id);
 Float mix_amp_from_id(int mix_id, int chan);
 off_t mix_position_from_id(int mix_id);
-char *mix_name_from_id(int mix_id);
 int mix_input_chans_from_id(int mix_id);
-void set_mix_name_from_id(int mix_id, char *name);
 int set_mix_position(int mix_id, off_t beg);
 int mix_ok(int n);
 env **mix_panel_envs(int n);
 env *mix_panel_env(int n, int chan);
 void mix_at_x_y(snd_state *ss, int data, char *filename, int x, int y);
+int next_mix_id(int id);
+int previous_mix_id(int id);
 
 
 

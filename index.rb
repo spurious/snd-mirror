@@ -508,7 +508,6 @@ Snd_names_and_urls =
     ["mix_frames", "extsnd.html#sndmixframes", "snd-mix.c"],
     ["mix_home", "extsnd.html#sndmixhome", "snd-mix.c"],
     ["mix_locked", "extsnd.html#sndmixlocked", "snd-mix.c"],
-    ["mix_name", "extsnd.html#sndmixname", "snd-mix.c"],
     ["mix_panel", "extsnd.html#sndmixpanel", "snd-xen.c"],
     ["mix_position", "extsnd.html#sndmixposition", "snd-mix.c"],
     ["mix_region", "extsnd.html#sndmixregion", "snd-region.c"],

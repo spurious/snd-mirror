@@ -1,19 +1,31 @@
 # examp.rb -- Guile -> Ruby translation
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Sat Apr 12 04:41:50 CEST 2003
-# Version: $Revision: 1.56 $
+# Last: Sat Jun 21 20:17:06 CEST 2003
 
+# Commentary:
 #
 # Utilities
 #
+# Module Kernel
+#  doc(str)
+#  Kernel.doc(func)
+#  putd(func)
+#
+# snd_putd(func)
+#
 # Class Hook
 #  initialize(name) { |*args| ... }
+#  Hook.all
+#  Hook.make_hook(var, name) { |*args| ... }
 #  add_hook!(name) { |*args| ... }
 #  remove_hook!(name)
 #  call(*args)
+#  yield(*args)
 #  to_s
 #  inspect
+#
+# make_hook(var, name) { |*args| ... }
 #
 # extensions to Class Integer
 #  even?
@@ -23,18 +35,24 @@
 # extension to Module Enumerable
 #  map_with_index { |x, i| ... }
 #
+# get_func_name(n)
 # times2samples(start, dur)
 # seconds2samples(sec)
-# get_func_name(n)
-# doc(str), putd(func), snd_putd(func)
+# rbm_random(n)
+# glog(r, b)
 # remove_if(func, lst)
 # car(v), cadr(v), caddr(v), cdr(v)
 # warn(*args), die(*args), message(*args)
+# thunk?(thunk)
+# c_g?() (if not in Snd)
 # let { ... }
+# progn { ... }
+# gloop(*args) { |args| ... }
 # array?(ary)
 # to_rary(ary)
 # shell(*cmd)
 # get_args(args, key, val)
+# get_shift_args(args, key, val)
 # load_init_file(file)
 #
 # Buffers
@@ -49,7 +67,6 @@
 # fm_bell(start, dur, freq, amp, *args)
 # fm_violin_rb(start, dur, freq, amp, *args)
 # jc_reverb_rb(startime, dur, *args)
-#
 # fm_bell_snd(start, dur, freq, amp, amp_env, index_env, index)
 # n_rev(*args)
 # hello_dentist(frq, amp)
@@ -69,6 +86,7 @@
 #  spike(h)
 #  zero_phase(h)
 #  rotate_phase(func)
+#  spot_freq(samp, snd, chn)
 #
 # Module Env (see env.scm)
 #  envelope_interp(*args)
@@ -78,16 +96,14 @@
 #  make_moog_filter(freq, q)
 #  moog_filter(m, sig)
 
-$IN_SND = true unless defined? $IN_SND
+# Code:
+
+RBM_EXAMP_VERSION = "21-Jun-2003 (RCS 1.67)"
+
+$IN_SND = defined? sound_open
 
 include Math
 require "ws"
-
-def get_func_name(n = 1)
-  doc("get_func_name([n=1])
-returns function name string\n") if n == :help
-  caller(n)[0].scan(/^.*:in `(.*)'/)[0][0]
-end
 
 #
 # Lisp-like documentation for Modules, Classes, and Methods.
@@ -179,59 +195,82 @@ class Hook
 To set, add, remove, and show named hooks (see popup.rb).
 
 Example:
-
-  if $after_open_hook
-    old_after = $after_open_hook
-    $after_open_hook = Hook.new(\"original\") do |snd|
-      old_after.call(snd) if old_after
-    end
-  else
-    $after_open_hook = Hook.new
-  end
-
-  $after_open_hook.add_hook!(\"my_hook\") do |snd|
+  make_hook(:$after_open_hook, \"my_hook\") do |snd|
     set_cursor_follows_play(true, snd)
     set_channel_style(Channels_combined, snd)
   end
 
-  $after_open_hook.to_s -> \"Hook name: my_hook (|*a|)\"
+  $after_open_hook.to_s -> Hook name: \"[$after_open_hook] my_hook\", Hook arity: |*a|
 
-  $after_open_hook.remove_hook!(\"my_hook\")\n"
+  $after_open_hook.remove_hook!(\"my_hook\")
+
+  Hook.all shows all hooks\n"
   
-  def initialize(name = nil)
+  @@all_hooks = Array.new
+  
+  def initialize(name = nil, &body)
     @hooks = Hash.new
-    add_hook!(name) do |*args|
-      yield(*args)
-    end if name and block_given?
+    add_hook!(name, &body) if name and block_given?
   rescue
-    warn get_func_name
+    die get_func_name
+  end
+
+  def Hook.all
+    message(@@all_hooks.sort.map_with_index do |x, i| format("Hook %2d: %s\n", i + 1, x) end.to_s)
   end
   
-  def add_hook!(name, &func)
-    @hooks.store(name, func)
+  def Hook.make_hook(var, name, &body)
+    varsym = var.to_sym
+    name = format("[%s] %s", varsym, name)
+    var = instance_eval("#{varsym}")
+    if var.nil?
+      var = Hook.new
+    elsif var.kind_of?(Proc)
+      old_var = var
+      var = Hook.new("[#{varsym}] preserved by #{self.class} #{self.name}", &old_var)
+    end
+    var.add_hook!(name, &body)
+    instance_eval("#{varsym} = var")
+  end
+  
+  def add_hook!(name, &body)
+    name = make_name(name)
+    @@all_hooks << name
+    @hooks.store(name, body)
     set_hook
   end
 
   def remove_hook!(name)
+    name = make_name(name)
+    @@all_hooks.delete(name)
     @hooks.delete(name)
     @hooks.rehash
     set_hook
   end
 
   def call(*args)
-    @hooks.each_value do |f|
-      f.call(*args)
-    end
+    @hooks.each_value do |f| f.call(*args) end
   rescue
-    warn get_func_name
+    die get_func_name
   end
 
-  def set_hook
-    lambda do |*args|
-      @hooks.each_value do |f|
-        f.call(*args)
-      end
+  def yield(*args)
+    @hooks.each_value do |f| f.call(*args) end
+  rescue
+    die get_func_name
+  end
+
+  def make_name(name)
+    unless /\[\$.*\]/ =~ name
+      m = /\[\$.*\]/.match(self.to_s)
+      name = format("%s %s", m[0], name) if m
     end
+    format("%s", name.inspect)
+  end
+  private :make_name
+  
+  def set_hook
+    lambda do |*args| @hooks.each_value do |f| f.call(*args) end end
   end
   private :set_hook
 
@@ -252,16 +291,19 @@ Example:
   private :hook_arity
 
   def to_s
-    str = ""
-    @hooks.each do |k, v|
-      str << "Hook name: " << k << " (" + hook_arity(v) + ")\n"
-    end
-    str
+    @hooks.map do |k, v|
+      format("%s name: %s, %s arity: %s\n", self.class, k, self.class, hook_arity(v))
+    end.to_s
   end
 
-  def inspect
-    to_s
-  end
+  alias inspect to_s
+end
+
+def make_hook(var, name = nil, &body)
+  doc("make_hook(:var, name) { |*args| ... }
+Global variable VAR must be of class Symbol or String!
+Usage: make_hook(:$after_open_hook, \"name for hook\") do |snd| ... end\n") if var == :help
+  Hook.make_hook(var, name, &body)
 end
 
 class Integer
@@ -306,6 +348,12 @@ end
 ## Utilities
 ##
 
+def get_func_name(n = 1)
+  doc("get_func_name([n=1])
+returns function name string\n") if n == :help
+  caller(n)[0].scan(/^.*:in `(.*)'/)[0][0]
+end
+
 def times2samples(start, dur = nil)
   doc("times2samples(start, dur)
 START and DUR are in seconds;
@@ -321,6 +369,16 @@ returns SEC in samples.\n") if sec == :help
   (sec * sr).round
 end
 
+def rbm_random(n)
+  mus_random(n).abs
+end
+
+def glog(r, b = nil)
+  raise "r must be > 0 (r = #{r})" if r <= 0
+  raise "b must be > 0 (b = #{b})" if b and b <= 0
+  b ? (log(r) / log(b)) : log(r)
+end
+  
 def remove_if(func, lst)
   if lst.empty?
     []
@@ -374,15 +432,107 @@ def message(*args)
   end
 end
 
+def thunk?(thunk)
+  thunk.kind_of?(Proc) and thunk.arity.zero?
+end
+
+def c_g?()
+  false
+end unless defined? c_g?
+
 #
 # let { ... }
+# progn { ... }
 # a local environment
 #
 
-def let
-  yield
+def progn(&body)
+  body.call
 rescue
-  warn get_func_name
+  die get_func_name
+end
+
+alias let progn
+
+# general purpose loop
+
+def gloop(*args, &body)
+  doc("gloop(*args) { |args| ... }
+        :step,    1
+        :before,  nil (thunk)
+        :after,   nil (thunk)
+
+args[0]: Range    (each)
+         Hash(s)  (each)
+         Array(s) (each_with_index) [args.last == Fixnum --> step]
+         Fixnum   (times)
+         Fixnum   [args[1] == Fixnum --> step]
+A general purpose loop, handling Range, Hash, Array or Arrays, both
+with optional step, Fixnum, also with optional step, and a simple body
+call, all with its own local variable scope.  Returns the result of
+body as array like map.
+Examples:
+  Range
+    gloop(0..3) do |i| puts i end
+  Hash               (loops over all Hashs consecutively)
+    gloop({1, :a, 2, :b}, {11, :aa, 22, :bb}) do |k, v|
+      print('key: ', k, ' value: ', v)
+      puts
+    end
+  Array
+    gloop([0, 1]) do |x, i|
+      print(i, ': ', x)
+      puts end
+  Arrays with step   (mixes all Arrays)
+    gloop([0, 1, 2, 3], [:a, :b, :c, :d], [55, 66, 77, 88, 99], 2) do |x, i|
+      print(i, ': ', x.inspect)
+      puts
+    end
+  Fixnum (like times)
+    gloop(3) do |i| puts i end
+  Fixnum with step (like step)
+    gloop(6, 2) do |i| puts i end
+  a simple body call
+    gloop do puts 'empty' end\n") if args.member?(:help)
+  step   = get_shift_args(args, :step, 1)
+  before = get_shift_args(args, :before, nil)
+  after  = get_shift_args(args, :after, nil)
+  do_extra = lambda do |thunk| thunk.kind_of?(Proc) ? thunk.call : send(thunk) end
+  result = []
+  case args[0]
+  when Range
+    args[0].each do |i|
+      do_extra.call(before) if before
+      result << body.yield(i)
+      do_extra.call(after) if after
+    end
+  when Array
+    lmax = args.map do |x| x.length end.max
+    0.step(lmax - 1, step) do |i|
+      do_extra.call(before) if before
+      *arg = args.map do |x| x[i] end << i
+      result << body.yield(*arg)
+      do_extra.call(after) if after
+    end
+  when Hash
+    args.each do |x| x.each do |k, v|
+        do_extra.call(before) if before
+        result << body.yield(k, v)
+        do_extra.call(after) if after
+      end
+    end
+  when Fixnum
+    0.step(args[0], step) do |i|
+      do_extra.call(before) if before
+      result << body.yield(i)
+      do_extra.call(after) if after
+    end
+  else
+    do_extra.call(before) if before
+    result << body.yield
+    do_extra.call(after) if after
+  end
+  result
 end
 
 def array?(ary)
@@ -424,6 +574,15 @@ def get_args(args, key, val)
     val = ((x == nil) ? val : x)
   elsif(args.assoc(key))
     val = (args.assoc(key)[1] rescue val)
+  end
+  val
+end
+
+def get_shift_args(args, key, val)
+  val = get_args(args, key, val)
+  if args.member?(key)
+    i = args.index(key)
+    2.times do args.delete_at(i) end
   end
   val
 end
@@ -1110,6 +1269,41 @@ calls fft, applies FUNC to each phase, then un-ffts\n") if func == :help
     pk = vct_peak(rl)
     vct2samples(0, len, vct_scale!(rl, old_pk / pk))
   end
+
+  def spot_freq(samp, snd = false, chn = false)
+    doc("spot_freq(samp, [snd[, chn]])
+tries to determine the current pitch: spot_freq(left_sample())\n") if samp == :help
+    pow2 = (log(srate(snd) / 20.0) / log(2)).ceil
+    fftlen = (2 ** pow2).round
+    data = autocorrelate(samples2vct(samp, fftlen, snd, chn))
+    cor_peak = vct_peak(data)
+    callcc do |ret|
+      (1...fftlen - 2).each do |i|
+        if data[i] < data[i + 1] and data[i + 1] > data[i + 2]
+          logla = log10((cor_peak + data[i]) / (2.0 * cor_peak))
+          logca = log10((cor_peak + data[i + 1]) / (2.0 * cor_peak))
+          logra = log10((cor_peak + data[i + 2]) / (2.0 * cor_peak))
+          offset = (0.5 * (logla - logra)) / (logla + logra + -2.0 * logca)
+          ret.call(srate(snd) / (2 * (i + 1 + offset)))
+        else
+          0
+        end
+      end
+    end
+  end
+
+  # make_hook(:$graph_hook, "examp_left_sample_hook") do |snd, chn, y0, y1|
+  #   report_in_minibuffer(format("(freq: %.3f)", spot_freq(left_sample(snd, chn))))
+  # end
+  #
+  # or
+  #
+  # make_hook(:$mouse_click_hook, "examp_cursor_hook") do |snd, chn, button, state, x, y, axis|
+  #   if axis == Time_graph
+  #     report_in_minibuffer(format("(freq: %.3f)", spot_freq(cursor(snd, chn))))
+  #   end
+  # end
+
 end
 
 module Env
