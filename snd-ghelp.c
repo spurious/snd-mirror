@@ -69,10 +69,10 @@ static void create_help_monolog(snd_state *ss)
   help_dialog = gtk_dialog_new();
   gtk_signal_connect(GTK_OBJECT(help_dialog), "delete_event", GTK_SIGNAL_FUNC(delete_help), (gpointer)ss);
   gtk_window_set_title(GTK_WINDOW(help_dialog), STR_Help);
-  ALLOW_SHRINK_GROW(GTK_WINDOW(help_dialog));
+  SG_MAKE_RESIZABLE(help_dialog);
   set_background(help_dialog, (ss->sgx)->basic_color);
   gtk_container_set_border_width (GTK_CONTAINER(help_dialog), 10);
-  SET_USIZE (GTK_WIDGET(help_dialog), HELP_COLUMNS * 9, HELP_ROWS * 20);
+  SG_SET_SIZE (GTK_WIDGET(help_dialog), HELP_COLUMNS * 9, HELP_ROWS * 20);
   gtk_widget_realize(help_dialog);
 
   help_button = gtk_button_new_with_label(STR_Help);
@@ -133,10 +133,10 @@ static void create_help_monolog(snd_state *ss)
   help_dialog = gtk_dialog_new();
   gtk_signal_connect(GTK_OBJECT(help_dialog), "delete_event", GTK_SIGNAL_FUNC(delete_help), (gpointer)ss);
   gtk_window_set_title(GTK_WINDOW(help_dialog), STR_Help);
-  ALLOW_SHRINK_GROW(GTK_WINDOW(help_dialog));
+  SG_MAKE_RESIZABLE(help_dialog);
   set_background(help_dialog, (ss->sgx)->basic_color);
   gtk_container_set_border_width (GTK_CONTAINER(help_dialog), 10);
-  SET_USIZE (GTK_WIDGET(help_dialog), 500, 500);
+  SG_SET_SIZE (GTK_WIDGET(help_dialog), 500, 500);
   gtk_widget_realize(help_dialog);
 
   help_button = gtk_button_new_with_label(STR_Help);

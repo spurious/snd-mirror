@@ -78,10 +78,10 @@ static void file_print_ok_callback(GtkWidget *w, gpointer context)
 	  switch (ss->print_choice)
 	    {
 	    case PRINT_SND: 
-	      snd_print(ss, gtk_entry_get_text(GTK_ENTRY(file_print_name))); 
+	      snd_print(ss, (char *)gtk_entry_get_text(GTK_ENTRY(file_print_name))); 
 	      break;
 	    case PRINT_ENV: 
-	      enved_print(gtk_entry_get_text(GTK_ENTRY(file_print_name))); 
+	      enved_print((char *)gtk_entry_get_text(GTK_ENTRY(file_print_name))); 
 	      break;
 	    }
 	}
@@ -107,10 +107,10 @@ void file_print_callback(GtkWidget *w, gpointer context)
       file_print_dialog = gtk_dialog_new();
       gtk_signal_connect(GTK_OBJECT(file_print_dialog), "delete_event", GTK_SIGNAL_FUNC(file_print_delete_callback), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(file_print_dialog), STR_Print);
-      ALLOW_SHRINK_GROW(GTK_WINDOW(file_print_dialog));
+      SG_MAKE_RESIZABLE(file_print_dialog);
       set_background(file_print_dialog, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(file_print_dialog), 10);
-      SET_USIZE(GTK_WIDGET(file_print_dialog), 220, 160);
+      SG_SET_SIZE(GTK_WIDGET(file_print_dialog), 220, 160);
       gtk_widget_realize(file_print_dialog);
 
       help_button = gtk_button_new_with_label(STR_Help);

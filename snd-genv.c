@@ -211,7 +211,7 @@ void env_redisplay(snd_state *ss)
 	view_envs(ss, env_window_width, env_window_height);
       else 
 	{
-	  name = gtk_entry_get_text(GTK_ENTRY(textL));
+	  name = (char *)gtk_entry_get_text(GTK_ENTRY(textL));
 	  if (!name) name = "noname";
 	  display_env(ss, active_env, name, gc, 0, 0, env_window_width, env_window_height, 1, active_env_base);
 	  if (enved_wave_p(ss))
@@ -249,7 +249,7 @@ static void text_field_activated(GtkWidget *w, gpointer context)
   snd_state *ss = (snd_state *)context;
   char *name = NULL, *str;
   env *e = NULL;
-  name = gtk_entry_get_text(GTK_ENTRY(w));
+  name = (char *)gtk_entry_get_text(GTK_ENTRY(w));
   if ((name) && (*name))
     {
       str = name;
@@ -283,7 +283,7 @@ static void save_button_pressed(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   char *name = NULL;
-  name = gtk_entry_get_text(GTK_ENTRY(textL));
+  name = (char *)gtk_entry_get_text(GTK_ENTRY(textL));
   if ((!name) || (!(*name))) 
     name = "unnamed";
   alert_envelope_editor(ss, name, copy_env(active_env));
@@ -822,11 +822,11 @@ GtkWidget *create_envelope_editor (snd_state *ss)
       enved_dialog = gtk_dialog_new();
       gtk_signal_connect(GTK_OBJECT(enved_dialog), "delete_event", GTK_SIGNAL_FUNC(delete_enved_dialog), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(enved_dialog), STR_Edit_Envelope);
-      ALLOW_SHRINK_GROW(GTK_WINDOW(enved_dialog));
+      SG_MAKE_RESIZABLE(enved_dialog);
       set_background(enved_dialog, (ss->sgx)->basic_color);
       gtk_container_set_border_width(GTK_CONTAINER(enved_dialog), 4);
       gtk_widget_realize(enved_dialog);
-      SET_USIZE(GTK_WIDGET(enved_dialog), 500, 500);
+      SG_SET_SIZE(GTK_WIDGET(enved_dialog), 500, 500);
 
       gc = gdk_gc_new(MAIN_WINDOW(ss));
       gdk_gc_set_background(gc, (ss->sgx)->white);

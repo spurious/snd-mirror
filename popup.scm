@@ -167,6 +167,7 @@
 	       (selection-members))))
       (list "Unselect"  |xmPushButtonWidgetClass every-menu (lambda (w c i) (set! (selection-member? #t) #f)))
       (list "Reverse"   |xmPushButtonWidgetClass every-menu (lambda (w c i) (reverse-selection)))
+      (list "Mix"       |xmPushButtonWidgetClass every-menu (lambda (w c i) (mix-selection (cursor))))
       (list "Invert"    |xmPushButtonWidgetClass every-menu (lambda (w c i) (scale-selection-by -1)))))))
 
 

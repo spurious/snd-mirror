@@ -1119,7 +1119,7 @@ static void filter_activate_callback(GtkWidget *w, gpointer context)
   /* make an envelope out of the data */
   snd_info *sp = (snd_info *)context;
   char *str = NULL;
-  str = gtk_entry_get_text(GTK_ENTRY(w));
+  str = (char *)gtk_entry_get_text(GTK_ENTRY(w));
   if (sp->filter_control_env) sp->filter_control_env = free_env(sp->filter_control_env);
   sp->filter_control_env = string2env(str);
   if (!(sp->filter_control_env)) /* maybe user cleared text field? */
@@ -1364,16 +1364,14 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
     {
       sw[W_pane] = gtk_vpaned_new();
       set_backgrounds(sw[W_pane], (ss->sgx)->sash_color);
-#if HAVE_GTK_1_2
-      gtk_paned_set_gutter_size(GTK_PANED(sw[W_pane]), 8);
-#endif
-      gtk_paned_set_handle_size(GTK_PANED(sw[W_pane]), ss->sash_size);
+      SG_SET_GUTTER_SIZE(GTK_PANED(sw[W_pane]), 8);
+      SG_SET_HANDLE_SIZE(GTK_PANED(sw[W_pane]), ss->sash_size);
       gtk_container_set_border_width(GTK_CONTAINER(sw[W_pane]), 0);
       if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
 	{
 	  sx->dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	  set_background(sx->dialog, (ss->sgx)->basic_color);
-	  ALLOW_SHRINK_GROW(GTK_WINDOW(sx->dialog));
+	  SG_MAKE_RESIZABLE(sx->dialog);
 	  gtk_container_add(GTK_CONTAINER(sx->dialog), sw[W_pane]);
 	  gtk_widget_show(sx->dialog);
 	  gtk_signal_connect(GTK_OBJECT(sx->dialog), "delete_event", GTK_SIGNAL_FUNC(close_sound_dialog), (gpointer)sp);

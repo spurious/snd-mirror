@@ -8,8 +8,10 @@
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
 
-#if (GTK_MAJOR_VERSION == 1) && (GTK_MINOR_VERSION < 3)
-  #define HAVE_GTK_1_2 1
+#ifndef HAVE_GTK2
+  #if (GTK_MAJOR_VERSION != 1) || (GTK_MINOR_VERSION > 2)
+    #define HAVE_GTK2 1
+  #endif
 #endif
 
 #define HAVE_XPM 1
@@ -300,26 +302,47 @@ typedef struct {
 #define snd_keypad_8 GDK_KP_8
 #define snd_keypad_9 GDK_KP_9
 
-/* now gtk 2.0 compatibility stuff */
+/* now gtk 2.0 compatibility stuff (work in progress)
+ *
+ *   besides the usual pointless name changes:
+ *    GtkText, pixmap, clist support gone, GdkFont
+ *    Text -> TextView and TextBuffer
+ *    CList -> TreeView?
+ *    gtk_pixmap -> gdk_pixmap?
+ *    gdkfont -> pango? 
+ *
+ *    gtk_entry_set_text changed res type
+ *    gtk_paned_set_handle_size and gtk_paned_set_gutter_size removed
+ *    gtk_drawing_area_size? 
+ */
 
 #if HAVE_GTK2
 
-  #define ALLOW_SHRINK_GROW(Window) do {gtk_window_set_size_request(Window, 0, 0); gtk_window_set_resizable(Window, TRUE); } while (0)
-  #define SET_RESIZABLE(Window, Val) gtk_window_set_resizable(Window, Val)
-  #define SET_USIZE(Widget, Width, Height) gtk_widget_set_size_request(Widget, Width, Height)
-  #define SET_UPOSITION(Widget, X, Y) gtk_window_move(GTK_WINDOW(Widget), X, Y)
+  #define SG_MAKE_RESIZABLE(Widget) gtk_widget_set_size_request(Widget, 0, 0); gtk_window_set_resizable(GTK_WINDOW(Widget), TRUE)
+  #define SG_SET_RESIZABLE(Window, Val) gtk_window_set_resizable(Window, Val)
+  #define SG_SET_SIZE(Widget, Width, Height) gtk_widget_set_size_request(Widget, Width, Height)
+  #define SG_SET_POSITION(Widget, X, Y) gtk_window_move(GTK_WINDOW(Widget), X, Y)
   #ifndef gdk_window_get_size
     #define gdk_window_get_size gdk_drawable_get_size
   #endif
-  #define LABEL_TEXT(Widget) gtk_label_get_text(Widget)
+  #define SG_LABEL_TEXT(Widget) gtk_label_get_text(Widget)
+  #define SG_SET_GUTTER_SIZE(Widget, Size)
+  #define SG_SET_HANDLE_SIZE(Widget, Size)
+  #define SG_SET_DRAWING_AREA_SIZE(Widget, Width, Height)
+  #ifndef gdk_draw_pixmap
+    #define gdk_draw_pixmap gdk_draw_drawable
+  #endif
 
 #else
 
-  #define ALLOW_SHRINK_GROW(Window)  gtk_window_set_policy(Window, TRUE, TRUE, FALSE)
-  #define SET_RESIZABLE(Window, Val) gtk_window_set_policy(Window, TRUE, TRUE, Val)
-  #define SET_USIZE(Widget, Width, Height) gtk_widget_set_usize(Widget, Width, Height)
-  #define SET_UPOSITION(Widget, X, Y) gtk_widget_set_uposition(Widget, X, Y)
-  #define LABEL_TEXT(Widget) sg_label_text(Widget)
+  #define SG_MAKE_RESIZABLE(Widget)  gtk_window_set_policy(GTK_WINDOW(Widget), TRUE, TRUE, FALSE)
+  #define SG_SET_RESIZABLE(Window, Val) gtk_window_set_policy(Window, TRUE, TRUE, Val)
+  #define SG_SET_SIZE(Widget, Width, Height) gtk_widget_set_usize(Widget, Width, Height)
+  #define SG_SET_POSITION(Widget, X, Y) gtk_widget_set_uposition(Widget, X, Y)
+  #define SG_LABEL_TEXT(Widget) sg_label_text(Widget)
+  #define SG_SET_GUTTER_SIZE(Widget, Size) gtk_paned_set_gutter_size(Widget,Size)
+  #define SG_SET_HANDLE_SIZE(Widget, Size) gtk_paned_set_handle_size(Widget,Size)
+  #define SG_SET_DRAWING_AREA_SIZE(Widget, Width, Height) gtk_drawing_area_size(Widget, Width, Height)
 
 #endif
 

@@ -50,6 +50,7 @@
 	      (centered-points ms))))))
 
 (define (map-chan-over-target func target decay)
+  ;; "dur" below should be named "end"
   (let* ((ms (and (eq? target 'marks)
 		 (plausible-mark-samples)))
 	 (beg (if (eq? target 'sound)
@@ -98,6 +99,13 @@
 		 (all-chans) 
 		 (list (list (selected-sound)) 
 		       (list (selected-channel))))))))
+
+(define (effect-frames target)
+  (if (eq? target 'sound)
+      (1- (frames))
+      (if (eq? target 'selection)
+	  (selection-length)
+	  (+ 1 (abs (apply - (plausible-mark-samples)))))))
 
 (define (make-effect-dialog label ok-callback dismiss-callback help-callback reset-callback)
   ;; make a standard dialog

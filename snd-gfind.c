@@ -31,7 +31,7 @@ static void edit_find_find(int direction, GtkWidget *w, gpointer context)
   char *str, *buf = NULL;
   snd_state *ss = (snd_state *)context;
   XEN proc;
-  str = gtk_entry_get_text(GTK_ENTRY(edit_find_text));
+  str = (char *)gtk_entry_get_text(GTK_ENTRY(edit_find_text));
   if ((str) && (*str))
     {
       ss->search_expr = copy_string(str);
@@ -48,7 +48,6 @@ static void edit_find_find(int direction, GtkWidget *w, gpointer context)
       set_label(edit_find_label, buf);
       gtk_entry_set_text(GTK_ENTRY(edit_find_text), "");
       FREE(buf);
-      if (str) free(str);
     }
   if (XEN_PROCEDURE_P(ss->search_proc))
     {
@@ -72,10 +71,10 @@ void edit_find_callback(GtkWidget *w, gpointer context)
       edit_find_dialog = gtk_dialog_new();
       gtk_signal_connect(GTK_OBJECT(edit_find_dialog), "delete_event", GTK_SIGNAL_FUNC(edit_find_delete), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(edit_find_dialog), STR_Find);
-      ALLOW_SHRINK_GROW(GTK_WINDOW(edit_find_dialog));
+      SG_MAKE_RESIZABLE(edit_find_dialog);
       set_background(edit_find_dialog, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(edit_find_dialog), 10);
-      SET_USIZE(GTK_WIDGET(edit_find_dialog), 350, 120);
+      SG_SET_SIZE(GTK_WIDGET(edit_find_dialog), 350, 120);
       gtk_widget_realize(edit_find_dialog);
 
       help_button = gtk_button_new_with_label(STR_Help);

@@ -494,12 +494,7 @@ static void display_vu_meter(VU *vu)
       break;
     }
 
-#if HAVE_GTK_1_2
   if (label) gdk_draw_pixmap(vu->wn, vu_gc, label, 0, 0, 0, 0, vu->center_x * 2, vu->center_y);
-#else
-  if (label) gdk_draw_drawable(vu->wn, vu_gc, label, 0, 0, 0, 0, vu->center_x * 2, vu->center_y);
-#endif
-
   val = vu->current_val * VU_NEEDLE_SPEED + (vu->last_val * (1.0 - VU_NEEDLE_SPEED));
   vu->last_val = val;
   deg = -45.0 + val * 90.0;
@@ -904,7 +899,7 @@ static void srate_changed_callback(GtkWidget *w, gpointer context)
   snd_state *ss = (snd_state *)context;
   recorder_info *rp;
   rp = get_recorder_info();
-  str = gtk_entry_get_text(GTK_ENTRY(recdat->srate_text)); /* w here gets segfault!! */
+  str = (char *)gtk_entry_get_text(GTK_ENTRY(recdat->srate_text)); /* w here gets segfault!! */
   if (str) 
     {
       n = string2int(str);
@@ -922,7 +917,7 @@ static void rec_size_changed_callback(GtkWidget *w, gpointer context)
   int n;
   recorder_info *rp;
   rp = get_recorder_info();
-  str = gtk_entry_get_text(GTK_ENTRY(rec_size_text));  /* w here gets segfault!! */
+  str = (char *)gtk_entry_get_text(GTK_ENTRY(rec_size_text));  /* w here gets segfault!! */
   if (str) 
     {
       n = string2int(str);
@@ -1144,7 +1139,7 @@ static void meter_button_callback(GtkWidget *w, gpointer context)
   if (recorder_output_device(p->device))
     {
       rp->chan_out_active[wd->chan] = val;
-      str = gtk_entry_get_text(GTK_ENTRY(recdat->chans_text)); 
+      str = (char *)gtk_entry_get_text(GTK_ENTRY(recdat->chans_text)); 
       if (str) 
 	n = string2int(str);
       else n = 0;
@@ -1510,7 +1505,7 @@ static void make_vu_meters(snd_state *ss, PANE *p, int vu_meters,
 
       meter = gtk_drawing_area_new();
       gtk_container_add(GTK_CONTAINER(frame), meter);
-      gtk_drawing_area_size(GTK_DRAWING_AREA(meter), (int)(240 * meter_size), (int)(100 * meter_size));
+      SG_SET_DRAWING_AREA_SIZE(GTK_DRAWING_AREA(meter), (int)(240 * meter_size), (int)(100 * meter_size));
       gtk_widget_show(meter);
 
       p->meters[i] = make_vu_meter(meter, LIGHT_X, LIGHT_Y, CENTER_X, CENTER_Y, ss, meter_size);
@@ -1904,7 +1899,7 @@ static void record_button_callback(GtkWidget *w, gpointer context)
   if (rp->recording)
     {
       if (!(rp->taking_input)) fire_up_recorder(ss);
-      str = gtk_entry_get_text(GTK_ENTRY(file_text));
+      str = (char *)gtk_entry_get_text(GTK_ENTRY(file_text));
       if ((str) && (*str))
 	{
 	  if (rp->output_file) FREE(rp->output_file);
@@ -2037,7 +2032,7 @@ void snd_record_file(snd_state *ss)
       recorder = gtk_dialog_new();
       gtk_signal_connect(GTK_OBJECT(recorder), "delete_event", GTK_SIGNAL_FUNC(recorder_delete), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(recorder), STR_Record);
-      ALLOW_SHRINK_GROW(GTK_WINDOW(recorder));
+      SG_MAKE_RESIZABLE(recorder);
       set_background(recorder, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(recorder), 10);
       gtk_widget_realize(recorder);

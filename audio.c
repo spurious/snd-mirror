@@ -1168,7 +1168,7 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
   switch (field)
     {
     case MUS_AUDIO_CHANNEL:
-      val[0] = 2;
+      val[0] = 4;
       break;
     case MUS_AUDIO_FORMAT:  
       val[0] = 1; 

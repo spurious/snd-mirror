@@ -327,10 +327,10 @@ static void make_region_dialog(snd_state *ss)
   region_dialog = gtk_dialog_new();
   gtk_signal_connect(GTK_OBJECT(region_dialog), "delete_event", GTK_SIGNAL_FUNC(region_browser_delete_callback), (gpointer)ss);
   gtk_window_set_title(GTK_WINDOW(region_dialog), STR_Regions);
-  ALLOW_SHRINK_GROW(GTK_WINDOW(region_dialog));
+  SG_MAKE_RESIZABLE(region_dialog);
   set_backgrounds(region_dialog, (ss->sgx)->basic_color);
   gtk_container_set_border_width(GTK_CONTAINER(region_dialog), 10);
-  SET_USIZE(GTK_WIDGET(region_dialog), 400, 400);
+  SG_SET_SIZE(GTK_WIDGET(region_dialog), 400, 400);
   gtk_widget_realize(region_dialog);
 
   help_button = gtk_button_new_with_label(STR_Help);

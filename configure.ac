@@ -475,6 +475,7 @@ else
          AC_MSG_RESULT(no)
 	 AC_MSG_WARN([can't find the Motif library! -- will look for Gtk])
          with_gtk=yes
+	 with_motif=no
         ])
     LIBS=$SAVELIBS
     CFLAGS=$SAVEFLAGS
@@ -484,6 +485,12 @@ else
   fi
 
   if test "$with_gtk" = yes ; then
+
+# new gtk 2.0 macro (aclocal.m4 from gtk+-1.3.11/m4macros/gtk-2.0.m4)
+#   AM_PATH_GTK_2_0(1.3.0,
+#      with_gtk=yes
+#      ],
+#      [
 
     AM_PATH_GTK(1.2.6,
       [
@@ -511,7 +518,27 @@ else
       ],
       [
       AC_MSG_WARN([trouble with gtk -- will try to make Snd without any GUI])
+      with_gtk=no
       ])
+
+# ]) gtk 2.0
+#  if test "$with_gtk" = yes;
+#      GX_FILES="G_O_FILES"
+#      GX_HEADERS="SND_G_HEADERS"
+#      AC_SUBST(GTK_LIBS)
+#      AC_SUBST(GTK_CFLAGS)
+#      AC_DEFINE(USE_GTK)
+#      AC_SUBST(GTKHTML_LIB)
+#      AC_SUBST(GTKHTML_FLAGS)
+#      with_gtk=yes
+#      XLIBS=""
+#      XFLAGS=""
+#      XMHTML_LIB=""
+#      AC_SUBST(XLIBS)
+#      AC_SUBST(XFLAGS)
+#  fi
+
+
   fi
 
   if test "$with_gtk" != yes && test "$with_motif" != yes ; then
@@ -655,7 +682,9 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
           AC_CHECK_LIB(asound,main,[ 
 	    AC_CHECK_HEADER(sys/asoundlib.h,
                 [audio_system=ALSA],
-   	        [AC_MSG_WARN(can't find the ALSA header files)])], 
+		[AC_CHECK_HEADER(alsa/asoundlib.h,
+                    [audio_system=ALSA],
+   	            [AC_MSG_WARN(can't find the ALSA header files)])])],
           [AC_MSG_WARN(can't find the ALSA library)])
         fi
 
@@ -680,7 +709,7 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
                 snd_config_get_id_args=1
                 AC_MSG_CHECKING([snd_config_get_id args])
                 AC_TRY_COMPILE(
-                 [#include <sys/asoundlib.h>],
+                 [#include <alsa/asoundlib.h>],
 	         [snd_config_t *c;
   	          const char *id;
 	          snd_config_get_id(c, &id)

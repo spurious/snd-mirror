@@ -594,8 +594,8 @@ static XEN g_widget_text(XEN wid)
       return(res);
 #else
       if (GTK_IS_ENTRY(w))
-	return(C_TO_XEN_STRING(gtk_entry_get_text(GTK_ENTRY(w))));
-      else return(C_TO_XEN_STRING(LABEL_TEXT(GTK_LABEL(GTK_BIN(w)->child))));
+	return(C_TO_XEN_STRING((char *)gtk_entry_get_text(GTK_ENTRY(w))));
+      else return(C_TO_XEN_STRING(SG_LABEL_TEXT(GTK_LABEL(GTK_BIN(w)->child))));
 #endif
     }
   else XEN_ERROR(NO_SUCH_WIDGET,

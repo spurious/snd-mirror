@@ -24,10 +24,10 @@ static void create_snd_error_dialog(snd_state *ss, int popup)
   snd_error_dialog = gtk_dialog_new();
   gtk_signal_connect(GTK_OBJECT(snd_error_dialog), "delete_event", GTK_SIGNAL_FUNC(delete_snd_error), (gpointer)ss);
   gtk_window_set_title(GTK_WINDOW(snd_error_dialog), STR_Error);
-  ALLOW_SHRINK_GROW(GTK_WINDOW(snd_error_dialog));
+  SG_MAKE_RESIZABLE(snd_error_dialog);
   set_background(snd_error_dialog, (ss->sgx)->basic_color);
   gtk_container_set_border_width (GTK_CONTAINER(snd_error_dialog), 10);
-  SET_USIZE (GTK_WIDGET(snd_error_dialog), 400, 300);
+  SG_SET_SIZE (GTK_WIDGET(snd_error_dialog), 400, 300);
   gtk_widget_realize(snd_error_dialog);
 
   ok_button = gtk_button_new_with_label(STR_Ok);
@@ -36,6 +36,31 @@ static void create_snd_error_dialog(snd_state *ss, int popup)
   set_pushed_button_colors(ok_button, ss);
   gtk_widget_show(ok_button);
 
+#if HAVE_GTK2
+  table = gtk_table_new (2, 2, FALSE);
+  snd_error_history = gtk_text_view_new();
+  gtk_table_attach(GTK_TABLE(table), snd_error_history, 0, 1, 0, 1, 
+		   (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
+		   (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
+		   0, 0);
+  gtk_text_view_set_editable(GTK_TEXT_VIEW(snd_error_history), FALSE);
+  gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(snd_error_history), GTK_WRAP_NONE);
+  gtk_widget_show (snd_error_history);
+  hscrollbar = gtk_hscrollbar_new(GTK_TEXT_VIEW(snd_error_history)->hadjustment);
+  set_background(hscrollbar, (ss->sgx)->position_color);
+  gtk_table_attach(GTK_TABLE(table), hscrollbar, 0, 1, 1, 2, 
+		   (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), 
+		   (GtkAttachOptions)(GTK_FILL), 
+		   0, 0);
+  gtk_widget_show (hscrollbar);
+  vscrollbar = gtk_vscrollbar_new(GTK_TEXT_VIEW(snd_error_history)->vadjustment);
+  set_background(vscrollbar, (ss->sgx)->position_color);
+  gtk_table_attach(GTK_TABLE(table), vscrollbar, 1, 2, 0, 1,
+		   (GtkAttachOptions)(GTK_FILL), 
+		   (GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 
+		   0, 0);
+  gtk_widget_show (vscrollbar);
+#else
   table = gtk_table_new (2, 2, FALSE);
   snd_error_history = gtk_text_new (NULL, NULL);
   gtk_table_attach(GTK_TABLE(table), snd_error_history, 0, 1, 0, 1, 
@@ -59,6 +84,7 @@ static void create_snd_error_dialog(snd_state *ss, int popup)
 		   (GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 
 		   0, 0);
   gtk_widget_show (vscrollbar);
+#endif
 
   gtk_container_add(GTK_CONTAINER(GTK_DIALOG(snd_error_dialog)->vbox), table);
   gtk_widget_show(table);
@@ -152,11 +178,11 @@ int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
       yes_or_no_dialog = gtk_dialog_new();
       gtk_signal_connect(GTK_OBJECT(yes_or_no_dialog), "delete_event", GTK_SIGNAL_FUNC(delete_yes_or_no_dialog), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(yes_or_no_dialog), STR_Big_Trouble);
-      ALLOW_SHRINK_GROW(GTK_WINDOW(yes_or_no_dialog));
+      SG_MAKE_RESIZABLE(yes_or_no_dialog);
       set_background(yes_or_no_dialog, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(yes_or_no_dialog), 4);
       gtk_widget_realize(yes_or_no_dialog);
-      SET_USIZE(GTK_WIDGET(yes_or_no_dialog), 180, 100);
+      SG_SET_SIZE(GTK_WIDGET(yes_or_no_dialog), 180, 100);
 
       yes_button = gtk_button_new_with_label(STR_Yes);
       no_button = gtk_button_new_with_label(STR_No);

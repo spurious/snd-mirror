@@ -3,6 +3,7 @@ snd change log
 
 2002 ----------------------------------------------------------------
 
+  28-Nov:    add-tooltip in snd-motif.scm.
   23-Nov:    draw-mark-hook.
   20-Nov:    xm-enved.scm.
   19-Nov:    reopen menu example in examp.scm.

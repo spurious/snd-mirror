@@ -254,7 +254,7 @@ static void id_activated(GtkWidget *w, gpointer context)
   char *val;
   int id;
   snd_state *ss = (snd_state *)context;
-  val = gtk_entry_get_text(GTK_ENTRY(w_id));
+  val = (char *)gtk_entry_get_text(GTK_ENTRY(w_id));
   if (val)
     {
       id = string2int(val);
@@ -270,7 +270,7 @@ static void name_activated(GtkWidget *w, gpointer context)
 {
   char *val;
   snd_state *ss = (snd_state *)context;
-  val = gtk_entry_get_text(GTK_ENTRY(w_name));
+  val = (char *)gtk_entry_get_text(GTK_ENTRY(w_name));
   if (val)
     set_mix_name_from_id(current_mix_id(ss), val);
 }
@@ -281,7 +281,7 @@ static void beg_activated(GtkWidget *w, gpointer context)
   chan_info *cp;
   int mix_id;
   snd_state *ss = (snd_state *)context;
-  val = gtk_entry_get_text(GTK_ENTRY(w_beg));
+  val = (char *)gtk_entry_get_text(GTK_ENTRY(w_beg));
   if (val)
     {
       mix_id = current_mix_id(ss);
@@ -295,7 +295,7 @@ static void track_activated(GtkWidget *w, gpointer context)
 {
   char *val;
   snd_state *ss = (snd_state *)context;
-  val = gtk_entry_get_text(GTK_ENTRY(w_track));
+  val = (char *)gtk_entry_get_text(GTK_ENTRY(w_track));
   if (val)
     set_mix_track_from_id(current_mix_id(ss), string2int(val));
 }
@@ -360,10 +360,10 @@ GtkWidget *make_mix_panel(snd_state *ss)
       gtk_signal_connect(GTK_OBJECT(mix_panel), "delete_event", GTK_SIGNAL_FUNC(delete_mix_panel), (gpointer)ss);
       /* gtk_signal_connect(GTK_OBJECT(mix_panel), "destroy", (GtkSignalFunc)dismiss_mix_panel, (gpointer)ss); */
       gtk_window_set_title(GTK_WINDOW(mix_panel), STR_Mix_Panel);
-      ALLOW_SHRINK_GROW(GTK_WINDOW(mix_panel));
+      SG_MAKE_RESIZABLE(mix_panel);
       set_background(mix_panel, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(mix_panel), 6);
-      /* SET_USIZE (GTK_WIDGET(mix_panel), 200, 300); */
+      /* SG_SET_SIZE (GTK_WIDGET(mix_panel), 200, 300); */
       gtk_widget_realize(mix_panel);
       
       dismiss_button = gtk_button_new_with_label(STR_Dismiss);
