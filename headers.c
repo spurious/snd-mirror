@@ -313,25 +313,29 @@ int mus_data_format_to_bytes_per_sample (int format)
 {
   switch (format)
     {
-    case MUS_BYTE:    return(1); break;
-    case MUS_BSHORT:  return(2); break;
-    case MUS_UBYTE:   return(1); break;
-    case MUS_MULAW:   return(1); break;
-    case MUS_ALAW:    return(1); break;
-    case MUS_BINT:    return(4); break;
-    case MUS_BFLOAT:  return(4); break;
-    case MUS_B24INT:  return(3); break;
-    case MUS_BDOUBLE: return(8); break;
-    case MUS_LSHORT:  return(2); break;
-    case MUS_LINT:    return(4); break;
-    case MUS_LFLOAT:  return(4); break;
-    case MUS_LDOUBLE: return(8); break;
-    case MUS_L24INT:  return(3); break;
-    case MUS_UBSHORT: return(2); break;
-    case MUS_ULSHORT: return(2); break;
-    case MUS_BINTN:   return(4); break;
-    case MUS_LINTN:   return(4); break;
-    default:          return(1); break; /* we divide by this number, so 0 is not safe */
+    case MUS_BYTE:             return(1); break;
+    case MUS_BSHORT:           return(2); break;
+    case MUS_UBYTE:            return(1); break;
+    case MUS_MULAW:            return(1); break;
+    case MUS_ALAW:             return(1); break;
+    case MUS_BINT:             return(4); break;
+    case MUS_BFLOAT:           return(4); break;
+    case MUS_BFLOAT_UNSCALED:  return(4); break;
+    case MUS_B24INT:           return(3); break;
+    case MUS_BDOUBLE:          return(8); break;
+    case MUS_BDOUBLE_UNSCALED: return(8); break;
+    case MUS_LSHORT:           return(2); break;
+    case MUS_LINT:             return(4); break;
+    case MUS_LFLOAT:           return(4); break;
+    case MUS_LDOUBLE:          return(8); break;
+    case MUS_LFLOAT_UNSCALED:  return(4); break;
+    case MUS_LDOUBLE_UNSCALED: return(8); break;
+    case MUS_L24INT:           return(3); break;
+    case MUS_UBSHORT:          return(2); break;
+    case MUS_ULSHORT:          return(2); break;
+    case MUS_BINTN:            return(4); break;
+    case MUS_LINTN:            return(4); break;
+    default:                   return(1); break; /* we divide by this number, so 0 is not safe */
     }
 }
 
@@ -468,28 +472,32 @@ const char *mus_data_format_name(int format)
 {
   switch (format)
     {
-    case MUS_UNSUPPORTED: return("unsupported");                            break;
-    case MUS_UNKNOWN:     return("no_snd");                                 break;
-    case MUS_BSHORT:      return("big endian short (16 bits)");             break;
-    case MUS_MULAW:       return("mulaw (8 bits)");                         break;
-    case MUS_BYTE:        return("signed byte (8 bits)");                   break;
-    case MUS_BFLOAT:      return("big endian float (32 bits)");             break;
-    case MUS_BINT:        return("big endian int (32 bits)");               break;
-    case MUS_ALAW:        return("alaw (8 bits)");                          break;
-    case MUS_UBYTE:       return("unsigned byte (8 bits)");                 break;
-    case MUS_B24INT:      return("big endian int (24 bits)");               break;
-    case MUS_BDOUBLE:     return("big endian double (64 bits)");            break;
-    case MUS_LSHORT:      return("little endian short (16 bits)");          break;
-    case MUS_LINT:        return("little endian int (32 bits)");            break;
-    case MUS_LFLOAT:      return("little endian float (32 bits)");          break;
-    case MUS_LDOUBLE:     return("little endian double (64 bits)");         break;
-    case MUS_UBSHORT:     return("unsigned big endian short (16 bits)");    break;
-    case MUS_ULSHORT:     return("unsigned little endian short (16 bits)"); break;
-    case MUS_L12INT:      return("little endian int (12 bits)");            break;
-    case MUS_L24INT:      return("little endian int (24 bits)");            break;
-    case MUS_BINTN:       return("normalized big endian int (32 bits)");    break;
-    case MUS_LINTN:       return("normalized little endian int (32 bits)"); break;
-    default:              return("unknown");                                break;
+    case MUS_UNSUPPORTED:      return("unsupported");                              break;
+    case MUS_UNKNOWN:          return("no_snd");                                   break;
+    case MUS_BSHORT:           return("big endian short (16 bits)");               break;
+    case MUS_MULAW:            return("mulaw (8 bits)");                           break;
+    case MUS_BYTE:             return("signed byte (8 bits)");                     break;
+    case MUS_BFLOAT:           return("big endian float (32 bits)");               break;
+    case MUS_BFLOAT_UNSCALED:  return("big endian float (32 bits, unscaled)");     break;
+    case MUS_BINT:             return("big endian int (32 bits)");                 break;
+    case MUS_ALAW:             return("alaw (8 bits)");                            break;
+    case MUS_UBYTE:            return("unsigned byte (8 bits)");                   break;
+    case MUS_B24INT:           return("big endian int (24 bits)");                 break;
+    case MUS_BDOUBLE:          return("big endian double (64 bits)");              break;
+    case MUS_BDOUBLE_UNSCALED: return("big endian double (64 bits, unscaled)");    break;
+    case MUS_LSHORT:           return("little endian short (16 bits)");            break;
+    case MUS_LINT:             return("little endian int (32 bits)");              break;
+    case MUS_LFLOAT:           return("little endian float (32 bits)");            break;
+    case MUS_LDOUBLE:          return("little endian double (64 bits)");           break;
+    case MUS_LFLOAT_UNSCALED:  return("little endian float (32 bits, unscaled)");  break;
+    case MUS_LDOUBLE_UNSCALED: return("little endian double (64 bits, unscaled)"); break;
+    case MUS_UBSHORT:          return("unsigned big endian short (16 bits)");      break;
+    case MUS_ULSHORT:          return("unsigned little endian short (16 bits)");   break;
+    case MUS_L12INT:           return("little endian int (12 bits)");              break;
+    case MUS_L24INT:           return("little endian int (24 bits)");              break;
+    case MUS_BINTN:            return("normalized big endian int (32 bits)");      break;
+    case MUS_LINTN:            return("normalized little endian int (32 bits)");   break;
+    default:                   return("unknown");                                  break;
     }
 }
 
@@ -497,25 +505,29 @@ const char *mus_short_data_format_name(int format)
 {
   switch (format)
     {
-    case MUS_BSHORT:  return("bshort");         break;
-    case MUS_MULAW:   return("mulaw");          break;
-    case MUS_BYTE:    return("byte");           break;
-    case MUS_BFLOAT:  return("bfloat");         break;
-    case MUS_BINT:    return("bint");           break;
-    case MUS_ALAW:    return("alaw");           break;
-    case MUS_UBYTE:   return("char");           break;
-    case MUS_B24INT:  return("bint24");         break;
-    case MUS_BDOUBLE: return("bdouble");        break;
-    case MUS_LSHORT:  return("lshort");         break;
-    case MUS_LINT:    return("lint");           break;
-    case MUS_LFLOAT:  return("lfloat");         break;
-    case MUS_LDOUBLE: return("ldouble");        break;
-    case MUS_UBSHORT: return("ubshort");        break;
-    case MUS_ULSHORT: return("ulshort");        break;
-    case MUS_L24INT:  return("lint24");         break;
-    case MUS_BINTN:   return("bint");           break;
-    case MUS_LINTN:   return("lint");           break;
-    default:          return("unknown format"); break;
+    case MUS_BSHORT:           return("bshort");         break;
+    case MUS_MULAW:            return("mulaw");          break;
+    case MUS_BYTE:             return("byte");           break;
+    case MUS_BFLOAT:           return("bfloat");         break;
+    case MUS_BFLOAT_UNSCALED:  return("bfloatu");        break;
+    case MUS_BINT:             return("bint");           break;
+    case MUS_ALAW:             return("alaw");           break;
+    case MUS_UBYTE:            return("char");           break;
+    case MUS_B24INT:           return("bint24");         break;
+    case MUS_BDOUBLE:          return("bdouble");        break;
+    case MUS_BDOUBLE_UNSCALED: return("bdoubleu");       break;
+    case MUS_LSHORT:           return("lshort");         break;
+    case MUS_LINT:             return("lint");           break;
+    case MUS_LFLOAT_UNSCALED:  return("lfloatu");        break;
+    case MUS_LDOUBLE_UNSCALED: return("ldoubleu");       break;
+    case MUS_LFLOAT:           return("lfloat");         break;
+    case MUS_LDOUBLE:          return("ldouble");        break;
+    case MUS_UBSHORT:          return("ubshort");        break;
+    case MUS_ULSHORT:          return("ulshort");        break;
+    case MUS_L24INT:           return("lint24");         break;
+    case MUS_BINTN:            return("bint");           break;
+    case MUS_LINTN:            return("lint");           break;
+    default:                   return("unknown format"); break;
     }
 }
 
@@ -2285,6 +2297,8 @@ static void update_nist_header (int chan, int siz)
  *   COMM size comment
  *   MAXA size {max amps (up to 4)} (frame offsets) time-tag unix msec counter
  *   CUE, PRNT, ENV etc 
+ *
+ * except in Paul Lansky's "hybrid" headers, according to MixViews.
  */
 
 static int read_bicsf_header (int chan)
@@ -2311,7 +2325,8 @@ static int read_bicsf_header (int chan)
   happy = 1;
   while (happy)
     {
-      if ((offset + chunkloc) >= data_location) 
+      if (((offset + chunkloc) >= data_location) ||
+	  ((offset + chunkloc) < 40))
 	happy = 0;
       else
 	{
@@ -2334,7 +2349,7 @@ static int read_bicsf_header (int chan)
 	    }
 	  else
 	    {
-	      if ((chunkname == 0) || (chunksize == 0)) 
+	      if ((chunkname == 0) || (chunksize <= 0)) 
 		happy = 0;
 	    }
 	  chunkloc = (8 + chunksize);
@@ -2363,7 +2378,8 @@ static int read_bicsf_header (int chan)
  * 
  * apparently the byte order depends on the machine.
  * and yet... convert 1.4 makes a .sf file with little endian header, the VAX id, and big endian data?
- *            Csound also uses the VAX magic number!  Argh. 
+ *            Csound also uses the VAX magic number with little-endian unscaled floats!  Argh. 
+ *            even worse, Paul Lansky plops some version of this at the end of a NeXT header!  Complete chaos...
  */
 
 static int read_ircam_header (int chan)
@@ -2391,7 +2407,7 @@ static int read_ircam_header (int chan)
       if (little) 
 	{
 	  if (mus_char_to_lint((unsigned char *)hdrbuf) == I_IRCAM_VAX)
-	    data_format = MUS_BFLOAT; /* MUS_VAX_FLOAT; */
+	    data_format = MUS_LFLOAT_UNSCALED; /* Csound and MixViews */
 	  else data_format = MUS_LFLOAT;
 	}
       else data_format = MUS_BFLOAT;

@@ -711,6 +711,8 @@ static char *short_sound_format (int format, int type)
     case MUS_ALAW:    return("alaw"); break;
     case MUS_BFLOAT:  if (type == MUS_RIFF) return("float swapped"); else return("float"); break;
     case MUS_LFLOAT:  if (type == MUS_AIFC) return("float swapped"); else return("float"); break;
+    case MUS_BFLOAT_UNSCALED: 
+    case MUS_LFLOAT_UNSCALED: return("unscaled float");
     case MUS_BINT:    if (type == MUS_RIFF) return("int swapped"); else return("int"); break;
     case MUS_LINT:    if (type == MUS_AIFC) return("int swapped"); else return("int"); break;
     case MUS_BINTN:   if (type == MUS_RIFF) return("normalized int swapped"); else return("normalized int"); break;
@@ -720,6 +722,8 @@ static char *short_sound_format (int format, int type)
     case MUS_L24INT:  if (type == MUS_AIFC) return("24-bit swapped"); else return("24-bit"); break;
     case MUS_BDOUBLE: 
     case MUS_LDOUBLE: return("double"); break;
+    case MUS_BDOUBLE_UNSCALED: 
+    case MUS_LDOUBLE_UNSCALED: return("unscaled double"); break;
     case MUS_L12INT:  return("12-bit"); break;
     default:          return("unknown"); break;
     }

@@ -33,6 +33,8 @@
 #define S_mus_ubyte                     "mus-ubyte"
 #define S_mus_bfloat                    "mus-bfloat"
 #define S_mus_lfloat                    "mus-lfloat"
+#define S_mus_bfloat_unscaled           "mus-bfloat-unscaled"
+#define S_mus_lfloat_unscaled           "mus-lfloat-unscaled"
 #define S_mus_bint                      "mus-bint"
 #define S_mus_lint                      "mus-lint"
 #define S_mus_bintn                     "mus-bintn"
@@ -41,6 +43,8 @@
 #define S_mus_l24int                    "mus-l24int"
 #define S_mus_bdouble                   "mus-bdouble"
 #define S_mus_ldouble                   "mus-ldouble"
+#define S_mus_bdouble_unscaled          "mus-bdouble-unscaled"
+#define S_mus_ldouble_unscaled          "mus-ldouble-unscaled"
 #define S_mus_ubshort                   "mus-ubshort"
 #define S_mus_ulshort                   "mus-ulshort"
 

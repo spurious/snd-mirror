@@ -27,7 +27,7 @@
 
 
 #define SNDLIB_VERSION 13
-#define SNDLIB_REVISION 9
+#define SNDLIB_REVISION 10
 #define SNDLIB_DATE "12-Sep-01"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
@@ -238,11 +238,12 @@ enum {MUS_NEXT, MUS_AIFC, MUS_RIFF, MUS_BICSF, MUS_NIST, MUS_INRS, MUS_ESPS, MUS
 
 enum {MUS_UNKNOWN, MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BFLOAT, MUS_BINT, MUS_ALAW, MUS_UBYTE, MUS_B24INT,
       MUS_BDOUBLE, MUS_LSHORT, MUS_LINT, MUS_LFLOAT, MUS_LDOUBLE, MUS_UBSHORT, MUS_ULSHORT, MUS_L24INT,
-      MUS_BINTN, MUS_LINTN, MUS_L12INT, MUS_VAX_FLOAT};
+      MUS_BINTN, MUS_LINTN, MUS_L12INT, MUS_BFLOAT_UNSCALED, MUS_LFLOAT_UNSCALED, MUS_BDOUBLE_UNSCALED, MUS_LDOUBLE_UNSCALED};
 
 /* MUS_LINTN and MUS_BINTN refer to 32 bit ints with 31 bits of "fraction" -- the data is "left justified" */
+/* "unscaled" means the float value is used directly (i.e. not as -1.0 to 1.0, but (probably) -32768.0 to 32768.0) */
 
-#define MUS_DATA_FORMAT_OK(n) (((n) > MUS_UNKNOWN) && ((n) <= MUS_VAX_FLOAT))
+#define MUS_DATA_FORMAT_OK(n) (((n) > MUS_UNKNOWN) && ((n) <= MUS_LDOUBLE_UNSCALED))
 
 #if MUS_LITTLE_ENDIAN
   #define MUS_COMPATIBLE_FORMAT MUS_LSHORT

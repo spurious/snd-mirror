@@ -285,6 +285,10 @@
 	'mus-ldouble mus-ldouble 13
 	'mus-ubshort mus-ubshort 14
 	'mus-ulshort mus-ulshort 15
+	'mus-bfloat-unscaled mus-bfloat-unscaled 20
+	'mus-lfloat-unscaled mus-lfloat-unscaled 21
+	'mus-bdouble-unscaled mus-bdouble-unscaled 22
+	'mus-ldouble-unscaled mus-ldouble-unscaled 23
 	'mus-audio-default mus-audio-default 0
 	'mus-audio-duplex-default mus-audio-duplex-default 1
 	'mus-audio-line-out mus-audio-line-out 4
@@ -866,13 +870,13 @@
 				  (if (not (equal? (mus-header-type-name (mus-sound-header-type file)) (list-ref testf 4)))
 				      (snd-display ";~A: type ~A /= ~A" 
 							 (list-ref testf 0) 
-							 (mus-header-type-name (mus-sound-header-type file) 
-							 (list-ref testf 4))))
+							 (mus-header-type-name (mus-sound-header-type file))
+							 (list-ref testf 4)))
 				  (if (not (equal? (mus-data-format-name (mus-sound-data-format file)) (list-ref testf 5)))
 				      (snd-display ";~A: type ~A /= ~A"
 							 (list-ref testf 0) 
-							 (mus-data-format-name (mus-sound-data-format file) 
-							 (list-ref testf 5))))
+							 (mus-data-format-name (mus-sound-data-format file)) 
+							 (list-ref testf 5)))
 				  (let ((lst (mus-sound-loop-info file)))
 				    (if (> (length testf) 6)
 					(begin
@@ -1068,7 +1072,7 @@
 	    (list "woodblock.aiff" 1 44100 0.0367800444364548 "AIFF" "big endian short (16 bits)")
 	    (list "woodflt.snd" 1 44100 0.0367800444364548 "Sun" "big endian float (32 bits)")
 	    (list "RealDrums.sf2" 1 44100 6.39725637435913 "SoundFont" "little endian short (16 bits)")
-	    (list "32bit.sf" 1 44100 4.6 "IRCAM" "big endian float (32 bits)")
+	    (list "32bit.sf" 1 44100 4.6 "IRCAM" "little endian float (32 bits, unscaled)")
 	    (list "zulu_a4.w11" 1 33000 1.21987879276276 "TX-16" "unsupported")))))
     )
 
@@ -1931,6 +1935,10 @@
 		  (fneq (sound-data-ref sdata i 6) 0.0))
 	      (snd-display ";re-read/write[~A]: ~A?" i (sound-data-channel->list sdata i))))
 	(mus-sound-close-input fd))
+
+      (let ((ind (open-sound "/home/bil/sf1/32bit.sf")))
+	(if (fneq (maxamp ind 0) .228) (snd-display ";32bit max: ~A" (maxamp ind 0)))
+	(close-sound ind))
 
       ))
       ))
@@ -3206,20 +3214,20 @@
 			 (if (ffneq mx (max (abs (vector-ref (car e) e-bin))
 					    (abs (vector-ref (cadr e) e-bin))))
 			     (begin
-			       (snd-print (format #f "peak-env-equal? ~D (~A, ~A): ~A ~A ~A" 
+			       (snd-display "peak-env-equal? ~D (~A, ~A): ~A ~A ~A" 
 						  e-bin samp samps-per-bin mx 
 						  (vector-ref (car e) e-bin) 
-						  (vector-ref (cadr e) e-bin)))
+						  (vector-ref (cadr e) e-bin))
 			       (return #f)))
 			 (set! mx 0.0)
 			 (set! e-bin (+ e-bin 1))))))))))
 	
 	(if (null? e0)
-	    (snd-print ";no amp env data")
+	    (snd-display ";no amp env data")
 	    (let ((mx1 (vector-peak (car e0)))
 		  (mx2 (vector-peak (cadr e0))))
 	      (if (fneq mx (max mx1 mx2))
-		  (snd-print (format #f "amp env max: ~A ~A ~A" mx mx1 mx2)))
+		  (snd-display "amp env max: ~A ~A ~A" mx mx1 mx2))
 	      (peak-env-equal? ind e0)
 	      (scale-by 3.0)
 	      (let* ((e1 (channel-amp-envs ind 0 1))
@@ -3227,9 +3235,9 @@
 		     (mx4 (vector-peak (cadr e1))))
 		(if (or (fneq (* 3.0 mx1) mx3)
 			(fneq (* 3.0 mx2) mx4))
-		    (snd-print (format #f "3.0 amp env max: ~A ~A ~A ~A" mx1 mx2 mx3 mx4))))
+		    (snd-display "3.0 amp env max: ~A ~A ~A ~A" mx1 mx2 mx3 mx4)))
 	      (if (fneq (maxamp ind 0) (* 3 mx)) 
-		  (snd-print (format #f "maxamp after scale: ~A ~A" mx (maxamp ind 0))))
+		  (snd-display "maxamp after scale: ~A ~A" mx (maxamp ind 0)))
 	      (undo)
 	      (set! (selection-member? #t) #f)
 	      (set! (selection-member? ind 0) #t)
@@ -3241,37 +3249,37 @@
 		     (mx4 (vector-peak (cadr e1))))
 		(if (or (fneq (* 3.0 mx1) mx3)
 			(fneq (* 3.0 mx2) mx4))
-		    (snd-print (format #f "selection 3.0 amp env max: ~A ~A ~A ~A" mx1 mx2 mx3 mx4)))
+		    (snd-display "selection 3.0 amp env max: ~A ~A ~A ~A" mx1 mx2 mx3 mx4))
 		(if (fneq (maxamp ind 0) (* 3 mx)) 
-		    (snd-print (format #f "maxamp after selection scale: ~A ~A" mx (maxamp ind 0)))))
+		    (snd-display "maxamp after selection scale: ~A ~A" mx (maxamp ind 0))))
 	      (map-chan abs ind 0)
 	      (let* ((e1 (channel-amp-envs ind 0 2))
 		     (mx3 (vector-peak (car e1)))
 		     (mx4 (vector-peak (cadr e1))))
 		(if (fneq (* 3.0 mx2) mx4)
-		    (snd-print (format #f "abs selection 3.0 amp env max: ~A ~A ~A ~A" mx1 mx2 mx3 mx4)))
+		    (snd-display "abs selection 3.0 amp env max: ~A ~A ~A ~A" mx1 mx2 mx3 mx4))
 		(if (fneq (maxamp ind 0) (* 3 mx)) 
-		    (snd-print (format #f "maxamp after abs selection scale: ~A ~A" mx (maxamp ind 0))))
+		    (snd-display "maxamp after abs selection scale: ~A ~A" mx (maxamp ind 0)))
 		(if (ffneq mx3 0.03)
-		    (snd-print (format #f "abs max: ~A ~A" mx3 mx4))))
+		    (snd-display "abs max: ~A ~A" mx3 mx4)))
 	      (delete-samples 10000 5000)
 	      (let* ((e1 (channel-amp-envs ind 0 3))
 		     (mx3 (vector-peak (car e1)))
 		     (mx4 (vector-peak (cadr e1))))
 		(if (fneq (* 3.0 mx2) mx4)
-		    (snd-print (format #f "abs selection 3.0 amp env max: ~A ~A ~A ~A" mx1 mx2 mx3 mx4)))
+		    (snd-display "abs selection 3.0 amp env max: ~A ~A ~A ~A" mx1 mx2 mx3 mx4))
 		(if (fneq (maxamp ind 0) (* 3 mx)) 
-		    (snd-print (format #f "maxamp after abs selection scale: ~A ~A" mx (maxamp ind 0))))
+		    (snd-display "maxamp after abs selection scale: ~A ~A" mx (maxamp ind 0)))
 		(if (ffneq mx3 0.03)
-		    (snd-print (format #f "abs max: ~A ~A" mx3 mx4))))
+		    (snd-display "abs max: ~A ~A" mx3 mx4)))
 	      (scale-selection-by -.333)
 	      (let* ((e1 (channel-amp-envs ind 0 4))
 		     (mx3 (vector-peak (car e1)))
 		     (mx4 (vector-peak (cadr e1))))
 		(if (fneq (maxamp ind 0) mx)
-		    (snd-print (format #f "maxamp after minus abs selection scale: ~A ~A" mx (maxamp ind 0))))
+		    (snd-display "maxamp after minus abs selection scale: ~A ~A" mx (maxamp ind 0)))
 		(if (fneq (maxamp ind 0) mx3)
-		    (snd-print (format #f "mx3 maxamp after minus abs selection scale: ~A ~A" mx mx3))))))
+		    (snd-display "mx3 maxamp after minus abs selection scale: ~A ~A" mx mx3)))))
 	(close-sound ind))
 
 

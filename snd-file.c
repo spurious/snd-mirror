@@ -1639,7 +1639,7 @@ static int raw_dfs[NUM_RAW_FORMATS] = {MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BFLO
 				       MUS_LFLOAT, MUS_LDOUBLE, MUS_UBSHORT, MUS_ULSHORT,
 				       MUS_L24INT, MUS_BINTN, MUS_LINTN};
 
-#define NUM_DATA_FORMATS 19
+#define NUM_DATA_FORMATS 23
 static char *data_formats[NUM_DATA_FORMATS] = {
   "no sound",
   "16 bit big-endian int",
@@ -1659,7 +1659,12 @@ static char *data_formats[NUM_DATA_FORMATS] = {
   "16 bit little-endian unsigned int",
   "24 bit little-endian int",
   "32 bit big-endian normalized int",
-  "32 bit little-endian normalized int"};
+  "32 bit little-endian normalized int"
+  "32 bit big-endian unscaled float",
+  "32 bit little-endian unscaled float",
+  "32 bit big-endian unscaled double",
+  "32 bit little-endian unscaled double",
+};
 
 int num_data_formats(void) {return(NUM_DATA_FORMATS);}
 char *data_format_name(int i)

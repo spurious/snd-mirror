@@ -1260,6 +1260,10 @@ void mus_sndlib2xen_initialize(void)
   XEN_DEFINE_CONSTANT(S_mus_ldouble, MUS_LDOUBLE, "little-endian double data format id");
   XEN_DEFINE_CONSTANT(S_mus_ubshort, MUS_UBSHORT, "unsigned big-endian short data format id");
   XEN_DEFINE_CONSTANT(S_mus_ulshort, MUS_ULSHORT, "unsigned little-endian short data format id");
+  XEN_DEFINE_CONSTANT(S_mus_bdouble_unscaled, MUS_BDOUBLE_UNSCALED, "unscaled big-endian double data format id");
+  XEN_DEFINE_CONSTANT(S_mus_ldouble_unscaled, MUS_LDOUBLE_UNSCALED, "unscaled little-endian double data format id");
+  XEN_DEFINE_CONSTANT(S_mus_bfloat_unscaled,  MUS_BFLOAT_UNSCALED,  "unscaled big-endian float data format id");
+  XEN_DEFINE_CONSTANT(S_mus_lfloat_unscaled,  MUS_LFLOAT_UNSCALED,  "unscaled little-endian float data format id");
 
   XEN_DEFINE_CONSTANT(S_mus_audio_default,        MUS_AUDIO_DEFAULT,        "default audio device");
   XEN_DEFINE_CONSTANT(S_mus_audio_duplex_default, MUS_AUDIO_DUPLEX_DEFAULT, "default duplex device");

@@ -812,7 +812,6 @@ void set_axes(chan_info *cp, double x0, double x1, Float y0, Float y1)
 }
 
 
-
 /* ---------------- CHANNEL GRAPHICS ---------------- */
 
 

@@ -1019,6 +1019,12 @@ static int checked_write(int tfd, char *buf, int chars)
 
 /* ---------------- read ---------------- */
 
+#if SNDLIB_USE_FLOATS
+  #define MUS_SAMPLE_UNSCALED(n) ((n) / 32768.0)
+#else
+  #define MUS_SAMPLE_UNSCALED(n) ((n) * (1 << (32 - MUS_SAMPLE_BITS)))
+#endif
+
 static int mus_read_any_1(int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYPE **bufs, MUS_SAMPLE_TYPE *cm, char *inbuf)
 {
   int loclim;
@@ -1205,9 +1211,17 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYP
 			    buffer[loc] = (MUS_SAMPLE_TYPE) (prescaling * (m_big_endian_float(jchar)));
 			}
 		      break;
+		    case MUS_BFLOAT_UNSCALED:
+		      for (; loc < loclim; loc++, jchar += siz_chans) 
+			buffer[loc] = (MUS_SAMPLE_TYPE) (MUS_SAMPLE_UNSCALED(m_big_endian_float(jchar)));
+		      break;
 		    case MUS_BDOUBLE:   
 		      for (; loc < loclim; loc++, jchar += siz_chans)
 			buffer[loc] = (MUS_SAMPLE_TYPE) (prescaling * (m_big_endian_double(jchar)));
+		      break;
+		    case MUS_BDOUBLE_UNSCALED:   
+		      for (; loc < loclim; loc++, jchar += siz_chans)
+			buffer[loc] = (MUS_SAMPLE_TYPE) (MUS_SAMPLE_UNSCALED(m_big_endian_double(jchar)));
 		      break;
 		    case MUS_LFLOAT:    
 		      if (prescaling == 1.0)
@@ -1221,15 +1235,17 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYP
 			    buffer[loc] = (MUS_SAMPLE_TYPE) (prescaling * (m_little_endian_float(jchar)));
 			}
 		      break;
-#if 0
-		    case MUS_VAX_FLOAT:
+		    case MUS_LFLOAT_UNSCALED:    
 		      for (; loc < loclim; loc++, jchar += siz_chans) 
-			buffer[loc] = MUS_FLOAT_TO_SAMPLE(mus_vax_float_to_float(jchar));
+			buffer[loc] = (MUS_SAMPLE_TYPE) (MUS_SAMPLE_UNSCALED(m_little_endian_float(jchar)));
 		      break;
-#endif
 		    case MUS_LDOUBLE:   
 		      for (; loc < loclim; loc++, jchar += siz_chans) 
 			buffer[loc] = (MUS_SAMPLE_TYPE) (prescaling * (m_little_endian_double(jchar)));
+		      break;
+		    case MUS_LDOUBLE_UNSCALED:   
+		      for (; loc < loclim; loc++, jchar += siz_chans) 
+			buffer[loc] = (MUS_SAMPLE_TYPE) (MUS_SAMPLE_UNSCALED(m_little_endian_double(jchar)));
 		      break;
 		    case MUS_UBSHORT:   
 		      for (; loc < loclim; loc++, jchar += siz_chans) 
