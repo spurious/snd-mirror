@@ -73,6 +73,7 @@ void view_color_callback(Widget w, XtPointer clientData, XtPointer callData);
 int color_dialog_is_active(void);
 int orientation_dialog_is_active(void);
 void reflect_spectro(snd_state *ss);
+int set_with_gl(snd_state *ss, int val);
 
 
 
@@ -279,8 +280,8 @@ int set_button_font(snd_state *ss, char *font);
 int set_bold_button_font(snd_state *ss, char *font);
 int set_axis_label_font(snd_state *ss, char *font);
 int set_axis_numbers_font(snd_state *ss, char *font);
-void activate_numbers_font(axis_context *ax);
-void activate_label_font(axis_context *ax);
+void activate_numbers_font(axis_context *ax, snd_state *ss);
+void activate_label_font(axis_context *ax, snd_state *ss);
 void activate_button_font(axis_context *ax, snd_state *ss);
 int label_width(snd_state *ss, char *txt);
 int number_width(snd_state *ss, char *num);

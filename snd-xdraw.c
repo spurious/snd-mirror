@@ -870,12 +870,24 @@ int color_dialog_is_active(void)
   return((ccd) && (ccd->dialog) && (XtIsManaged(ccd->dialog)));
 }
 
+Widget start_color_dialog(snd_state *ss, int width, int height)
+{
+  view_color_callback(NULL, (XtPointer)ss, NULL);
+  if (width != 0) 
+    XtVaSetValues(ccd->dialog, 
+		  XmNwidth, (Dimension)width, 
+		  XmNheight, (Dimension)height, 
+		  NULL);
+  return(ccd->dialog);
+}
+
+
 
 /* -------- orientation browser -------- */
 
 typedef struct {
   Widget dialog;
-  Widget ax, ay, az, sx, sy, sz, hop, cut; 
+  Widget ax, ay, az, sx, sy, sz, hop, cut, glbutton; 
   snd_state *state;
 } orientation_info;
 
@@ -1116,17 +1128,6 @@ static void cut_help_callback(Widget w, XtPointer context, XtPointer info)
 "This slider determines how much of the spectrum is displayed");
 }
 
-static void help_orientation_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  orientation_dialog_help((snd_state *)context);
-}
-
-static void dismiss_orientation_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  orientation_info *od = (orientation_info *)context;
-  XtUnmanageChild(od->dialog);
-}
-
 static int fixup_angle(Float ang)
 {
   int na;
@@ -1158,6 +1159,89 @@ void reflect_spectro(snd_state *ss)
     }
 }
 
+#if HAVE_GL
+static Float gl_currents[6] = {DEFAULT_SPECTRO_X_ANGLE, DEFAULT_SPECTRO_Y_ANGLE, DEFAULT_SPECTRO_Z_ANGLE, 
+			       DEFAULT_SPECTRO_X_SCALE, DEFAULT_SPECTRO_Y_SCALE, DEFAULT_SPECTRO_Z_SCALE};
+static Float x_currents[6] = {90.0, 0.0, 358.0, 1.0, 1.0, 0.1};
+
+static void save_currents(snd_state *ss)
+{
+  Float *vals;
+  if (with_gl(ss)) vals = gl_currents; else vals = x_currents;
+  vals[0] = spectro_x_angle(ss);
+  vals[1] = spectro_y_angle(ss);
+  vals[2] = spectro_z_angle(ss);
+  vals[3] = spectro_x_scale(ss);
+  vals[4] = spectro_y_scale(ss);
+  vals[5] = spectro_z_scale(ss);
+}
+
+static void set_currents(snd_state *ss)
+{
+  Float *vals;
+  if (with_gl(ss)) vals = gl_currents; else vals = x_currents;
+  in_set_spectro_x_angle(ss, vals[0]);
+  in_set_spectro_y_angle(ss, vals[1]);
+  in_set_spectro_z_angle(ss, vals[2]);
+  in_set_spectro_x_scale(ss, vals[3]);
+  in_set_spectro_y_scale(ss, vals[4]);
+  in_set_spectro_z_scale(ss, vals[5]);
+  reflect_spectro(ss);
+  map_chans_field(ss, FCP_X_ANGLE, vals[0]);
+  map_chans_field(ss, FCP_Y_ANGLE, vals[1]);
+  map_chans_field(ss, FCP_Z_ANGLE, vals[2]);
+  map_chans_field(ss, FCP_X_SCALE, vals[3]);
+  map_chans_field(ss, FCP_Y_SCALE, vals[4]);
+  map_chans_field(ss, FCP_Z_SCALE, vals[5]);
+}
+#endif
+
+int set_with_gl(snd_state *ss, int val)
+{
+#if HAVE_GL
+  save_currents(ss);
+#endif
+  in_set_with_gl(ss, val);
+#if HAVE_GL
+  set_currents(ss);
+  if (oid) XmToggleButtonSetState(oid->glbutton, val, FALSE);
+  map_over_chans(ss, update_graph, NULL);
+#endif
+  return(with_gl(ss));
+} 
+
+#if HAVE_GL
+static void with_gl_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  snd_state *ss;
+  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
+  ss = get_global_state();
+  save_currents(ss);
+  in_set_with_gl(ss, cb->set);
+  set_currents(ss);
+  map_over_chans(ss, update_graph, NULL);
+}
+
+static void with_gl_help_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  snd_help_with_wrap((snd_state *)context, 
+		     "with-gl button", 
+"This buttons determines whether OpenGL is used for various displays");
+}
+#endif
+
+static void help_orientation_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  orientation_dialog_help((snd_state *)context);
+}
+
+static void dismiss_orientation_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  orientation_info *od = (orientation_info *)context;
+  XtUnmanageChild(od->dialog);
+}
+
 static void reset_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss;
@@ -1174,6 +1258,9 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
   snd_state *ss = (snd_state *)context;
   Widget mainform, rightbox, leftbox;
   XmString xdismiss, xhelp, xstr, xreset, titlestr;
+#if HAVE_GL
+  XmString glstr;
+#endif
   int n;
   Arg args[20];
   if (!oid)
@@ -1358,6 +1445,20 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       XtAddCallback(oid->cut, XmNdragCallback, cut_orientation_callback, oid);
       XtAddCallback(oid->cut, XmNhelpCallback, cut_help_callback, ss);
       XmStringFree(xstr);
+
+#if HAVE_GL
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, (ss->sgx)->pushed_button_color); n++;}
+      XtSetArg(args[n], XmNset, with_gl(ss)); n++;
+      glstr = XmStringCreate("use OpenGL", XmFONTLIST_DEFAULT_TAG);
+      XtSetArg(args[n], XmNlabelString, glstr); n++;
+      oid->glbutton = make_togglebutton_widget("use OpenGL", leftbox, args, n);
+      XtAddCallback(oid->glbutton, XmNvalueChangedCallback, with_gl_callback, oid);
+      XtAddCallback(oid->glbutton, XmNhelpCallback, with_gl_help_callback, oid);
+      XmStringFree(glstr);
+#endif
+
       set_dialog_widget(ss, ORIENTATION_DIALOG, oid->dialog);
     }
   else raise_dialog(oid->dialog);
@@ -1367,17 +1468,6 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
 int orientation_dialog_is_active(void)
 {
   return((oid) && (oid->dialog) && (XtIsManaged(oid->dialog)));
-}
-
-Widget start_color_dialog(snd_state *ss, int width, int height)
-{
-  view_color_callback(NULL, (XtPointer)ss, NULL);
-  if (width != 0) 
-    XtVaSetValues(ccd->dialog, 
-		  XmNwidth, (Dimension)width, 
-		  XmNheight, (Dimension)height, 
-		  NULL);
-  return(ccd->dialog);
 }
 
 Widget start_orientation_dialog(snd_state *ss, int width, int height)

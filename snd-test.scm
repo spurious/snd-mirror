@@ -48,6 +48,7 @@
     ((IF <form1> <form2>) (if <form1> <form2>))
     ((IF <form1> <form2> <form3>) (if <form1> <form2> <form3>))))
 
+(system "cp /home/bil/.snd /home/bil/dot-snd")
 (define tests 1)
 (define snd-test -1)
 (if (provided? 'snd-debug) (disable-play))

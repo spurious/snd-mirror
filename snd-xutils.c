@@ -150,10 +150,8 @@ int set_axis_numbers_font(snd_state *ss, char *font)
 }
 
 
-void activate_numbers_font(axis_context *ax)
+void activate_numbers_font(axis_context *ax, snd_state *ss)
 {
-  snd_state *ss;
-  ss = get_global_state();
   ax->current_font = ((XFontStruct *)(AXIS_NUMBERS_FONT(ss)))->fid;
   XSetFont(ax->dp, ax->gc, ((XFontStruct *)(AXIS_NUMBERS_FONT(ss)))->fid);
 }
@@ -166,10 +164,8 @@ void activate_button_font(axis_context *ax, snd_state *ss)
   XSetFont(ax->dp, ax->gc, (sgx->button_fontstruct)->fid);
 }
 
-void activate_label_font(axis_context *ax)
+void activate_label_font(axis_context *ax, snd_state *ss)
 {
-  snd_state *ss;
-  ss = get_global_state();
   ax->current_font = ((XFontStruct *)(AXIS_LABEL_FONT(ss)))->fid;
   XSetFont(ax->dp, ax->gc, ((XFontStruct *)(AXIS_LABEL_FONT(ss)))->fid);
 }

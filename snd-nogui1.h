@@ -65,7 +65,7 @@ void reflect_recorder_duration(Float new_dur);
 void reflect_recorder_mixer_gain(int ind, Float val);
 void reflect_recorder_out_amp(int ind, Float val);
 void reflect_recorder_in_amp(int in, int out, Float val);
-
+int set_with_gl(snd_state *ss, int val);
 
 
 
@@ -209,8 +209,8 @@ int set_button_font(snd_state *ss, char *font);
 int set_bold_button_font(snd_state *ss, char *font);
 int set_axis_label_font(snd_state *ss, char *font);
 int set_axis_numbers_font(snd_state *ss, char *font);
-void activate_numbers_font(axis_context *ax);
-void activate_label_font(axis_context *ax);
+void activate_numbers_font(axis_context *ax, snd_state *ss);
+void activate_label_font(axis_context *ax, snd_state *ss);
 void activate_button_font(axis_context *ax, snd_state *ss);
 int label_width(snd_state *ss, char *txt);
 int number_width(snd_state *ss, char *num);

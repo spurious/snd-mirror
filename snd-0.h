@@ -417,7 +417,7 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 #define spectro_y_scale(ss) ss->Spectro_Y_Scale
 #define in_set_spectro_y_scale(ss, a) ss->Spectro_Y_Scale = a
 #if HAVE_GL
-  #define DEFAULT_SPECTRO_Y_SCALE 1.5
+  #define DEFAULT_SPECTRO_Y_SCALE 1.0
   #define SPECTRO_Y_SCALE_MAX 4.0
 #else
   #define DEFAULT_SPECTRO_Y_SCALE 1.0
@@ -573,7 +573,7 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 #define DEFAULT_WITH_MIX_TAGS TRUE
 
 #define with_gl(ss) ss->With_GL
-#define set_with_gl(ss, a) ss->With_GL = a
+#define in_set_with_gl(ss, a) ss->With_GL = a
 #if HAVE_GL
   #define DEFAULT_WITH_GL TRUE
 #else

@@ -75,6 +75,7 @@ void draw_sono_rectangles(axis_context *ax, int color, int jmax);
 void draw_spectro_line(axis_context *ax, int color, int x0, int y0, int x1, int y1);
 void allocate_color_map(snd_state *ss, int colormap);
 void initialize_colormap(snd_state *ss);
+int set_with_gl(snd_state *ss, int val);
 
 
 
@@ -320,8 +321,8 @@ int set_button_font(snd_state *ss, char *font);
 int set_bold_button_font(snd_state *ss, char *font);
 int set_axis_label_font(snd_state *ss, char *font);
 int set_axis_numbers_font(snd_state *ss, char *font);
-void activate_numbers_font(axis_context *ax);
-void activate_label_font(axis_context *ax);
+void activate_numbers_font(axis_context *ax, snd_state *ss);
+void activate_label_font(axis_context *ax, snd_state *ss);
 void activate_button_font(axis_context *ax, snd_state *ss);
 int label_width(snd_state *ss, char *txt);
 int number_width(snd_state *ss, char *num);

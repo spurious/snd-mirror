@@ -9595,6 +9595,10 @@ done
 GL_LIBS=""
 GL_FILES=""
 if test "$with_gl" = yes ; then
+  if test "$with_gtk" = yes ; then
+    { echo "$as_me:$LINENO: WARNING: GL support not available in Gtk yet" >&5
+echo "$as_me: WARNING: GL support not available in Gtk yet" >&2;}
+  fi
   if test "${ac_cv_header_GL_gl_h+set}" = set; then
   echo "$as_me:$LINENO: checking for GL/gl.h" >&5
 echo $ECHO_N "checking for GL/gl.h... $ECHO_C" >&6
@@ -9710,8 +9714,11 @@ fi
 
 
 fi
-# TODO: if with-gl but not GL_COLOR_TABLE_SCALE, try just_gl case
 if test "$with_just_gl" = yes ; then
+  if test "$with_gtk" = yes ; then
+    { echo "$as_me:$LINENO: WARNING: GL support not available in Gtk yet" >&5
+echo "$as_me: WARNING: GL support not available in Gtk yet" >&2;}
+  fi
   if test "${ac_cv_header_GL_gl_h+set}" = set; then
   echo "$as_me:$LINENO: checking for GL/gl.h" >&5
 echo $ECHO_N "checking for GL/gl.h... $ECHO_C" >&6

@@ -135,7 +135,10 @@ typedef struct {
   double sx, zx;
   Locus y_offset;
   Latus window_width;
-  int no_data, changed, use_gl;
+  int no_data, changed;
+#if HAVE_GL
+  int use_gl, used_gl;
+#endif
 } axis_info;
 
 typedef struct {
@@ -253,7 +256,7 @@ typedef struct chan__info {
   Float *amp_control; /* local amp controls in snd-dac; should it be extended to other controls? */
   int last_search_result;
 #if HAVE_GL
-  int gl_time_list, gl_fft_list;
+  int gl_fft_list;
 #endif
 } chan_info;
 

@@ -395,19 +395,22 @@ AC_FUNC_VPRINTF
 
 
 # -------- OpenGL --------
-#
-# TODO: this should be dependent on Motif (i.e. GtkGLArea widget appears to be dead and/or inaccessible -- goddamn Gnome!)
 GL_LIBS=""
 GL_FILES=""
 if test "$with_gl" = yes ; then
+  if test "$with_gtk" = yes ; then
+    AC_MSG_WARN([GL support not available in Gtk yet])
+  fi
   AC_CHECK_HEADER(GL/gl.h,
 	[AC_DEFINE(HAVE_GL)
 	 GL_FILES="gl.o"
 	 GL_LIBS="-lGLU -lGL"],
 	[AC_MSG_WARN(can't find GL headers)])
 fi
-# TODO: if with-gl but not GL_COLOR_TABLE_SCALE, try just_gl case
 if test "$with_just_gl" = yes ; then
+  if test "$with_gtk" = yes ; then
+    AC_MSG_WARN([GL support not available in Gtk yet])
+  fi
   AC_CHECK_HEADER(GL/gl.h,
 	[AC_DEFINE(HAVE_GL)
 	 AC_DEFINE(JUST_GL)

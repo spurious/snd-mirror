@@ -141,6 +141,8 @@ or
 The documentation is in snd.html, extsnd.html, grfsnd.html, sndscm.html,
 sndlib.html, and clm.html.  There's also a fancier wrapper for the
 documentation: snd1.html.  A brief change log is in HISTORY.Snd.
+Dave Phillips has written a tutorial; see contrib/tutorial.
+
 
 The mailing list for Snd is the same as that for Common Music:
 cmdist@ccrma.stanford.edu.  To subscribe, visit
@@ -248,10 +250,48 @@ Only versions from 0.9 of ALSA are supported. If you get a compile-time
 complaint about snd_pcm_hw_params (ALSA 0.9beta4) you need to get
 a newer version of ALSA.
 
+On recording, here's a note from Fernando from cmdist:
+
+    > Recently I installed a sound card with digital in (with cmi8738 chip)
+    > in my linux system with alsa. With 'arecord -D hw:0.2' I can succesfully record
+    > from my digital input. How can I do the same with with Snd? The
+    > digital inputs do not appear on the record window. I compiled Snd with alsa support.
+    
+    You could try to set up an environment variable before starting snd to 
+    point to that particular device. This is the way snd reacts to env 
+    variables:
+    
+    - searched for in the following order:
+      SNDLIB_ALSA_PLAYBACK_DEVICE
+         defines the name of the playback device
+      SNDLIB_ALSA_CAPTURE_DEVICE
+         defines the name of the capture device
+      SNDLIB_ALSA_DEVICE
+         defines the name of the playback and capture device
+      use the first two if the playback and capture devices are different or the
+      third if they are the same.
+    
+    So you could try:
+      SNDLIB_ALSA_DEVICE="hw:0,2" snd
+    if you are using bash as your shell
+    
+    This should use the digital i/o as the input output device.  It would also
+    be possible to concatenate several devices using a definition in the
+    .asoundrc file but that would involve understanding its arcane
+    configuration language, which I don't. The current snd alss 0.9 code only
+    looks at the first device it finds (normally hw:0,0).
+    
+    -- Fernando
+
+
 
 ---- Gtk+: ----
 Gtk+ is not as sophisticated as Motif, and the port is still somewhat new, so
 there are a number of differences and rough-edges in that version of Snd.
+(Actually, at this point the port is not new, but Gtk has changed so much,
+that the port should probably be considered broken -- someday I'll tackle
+this again).
+
 The primary differences are 1) Gtk+ paned-window widget only accepts two
 panes.  This means that simple boxes are used throughout rather than
 panes. 2) Gtk+ colors are a bottomless pit; colors may or may not work
@@ -471,6 +511,10 @@ some complaint about undefined xmNotebook class. So:
   rpm -i openmotif-<whatever the number is>
   rpm -i openmotif-devel-<whatever the number is>
 In RedHat 7.3, you can choose to install openmotif, rather than lesstif.
+
+There appears to be a similar problem in Yellow Dog Linux for the PPC.
+You'll need to uninstall Lesstif and install OpenMotif.
+
 
 
 So to sum up: 

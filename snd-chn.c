@@ -1940,21 +1940,20 @@ static void rotate(Float *xyz, Float *mat)
   xyz[2] = mat[6] * x + mat[7] * y + mat[8] * z;
 }
 
-void reset_spectro(snd_state *state)
+#if HAVE_GL
+void reset_spectro(snd_state *ss)
 {
-  set_spectro_cutoff(state, DEFAULT_SPECTRO_CUTOFF);
-  set_spectro_hop(state, DEFAULT_SPECTRO_HOP);
-  set_spectro_x_scale(state, DEFAULT_SPECTRO_X_SCALE);
-  set_spectro_y_scale(state, DEFAULT_SPECTRO_Y_SCALE);
-  set_spectro_z_scale(state, DEFAULT_SPECTRO_Z_SCALE);
-  set_spectro_z_angle(state, DEFAULT_SPECTRO_Z_ANGLE);
-  set_spectro_x_angle(state, DEFAULT_SPECTRO_X_ANGLE);
-  set_spectro_y_angle(state, DEFAULT_SPECTRO_Y_ANGLE);
+  set_spectro_cutoff(ss, DEFAULT_SPECTRO_CUTOFF);
+  set_spectro_hop(ss, DEFAULT_SPECTRO_HOP);
+  set_spectro_x_angle(ss, (with_gl(ss)) ? DEFAULT_SPECTRO_X_ANGLE : 90.0);
+  set_spectro_y_angle(ss, (with_gl(ss)) ? DEFAULT_SPECTRO_Y_ANGLE : 0.0);
+  set_spectro_z_angle(ss, (with_gl(ss)) ? DEFAULT_SPECTRO_Z_ANGLE : 358.0);
+  set_spectro_x_scale(ss, (with_gl(ss)) ? DEFAULT_SPECTRO_X_SCALE : 1.0);
+  set_spectro_y_scale(ss, (with_gl(ss)) ? DEFAULT_SPECTRO_Y_SCALE : 1.0);
+  set_spectro_z_scale(ss, (with_gl(ss)) ? DEFAULT_SPECTRO_Z_SCALE : 0.1);
 }
 
-#if HAVE_GL
-#if 0
-static void unproject(int x, int y)
+static GLdouble unproject(int x, int y)
 {
   /* taken from GL doc p152 */
   GLint viewport[4];
@@ -1966,11 +1965,20 @@ static void unproject(int x, int y)
   glGetDoublev(GL_PROJECTION_MATRIX, proj);
   realy = viewport[3] - (GLint)y - 1;
   gluUnProject((GLdouble)x, (GLdouble)realy, 0.0, mv, proj, viewport, &wx, &wy, &wz);
-  fprintf(stderr,"z0: %f %f %f\n", wx, wy, wz);
-  gluUnProject((GLdouble)x, (GLdouble)realy, 1.0, mv, proj, viewport, &wx, &wy, &wz);
-  fprintf(stderr,"z1: %f %f %f\n", wx, wy, wz);
+  return(wx);
 }
-#endif
+#else
+void reset_spectro(snd_state *ss)
+{
+  set_spectro_cutoff(ss, DEFAULT_SPECTRO_CUTOFF);
+  set_spectro_hop(ss, DEFAULT_SPECTRO_HOP);
+  set_spectro_x_angle(ss, DEFAULT_SPECTRO_X_ANGLE);
+  set_spectro_y_angle(ss, DEFAULT_SPECTRO_Y_ANGLE);
+  set_spectro_z_angle(ss, DEFAULT_SPECTRO_Z_ANGLE);
+  set_spectro_x_scale(ss, DEFAULT_SPECTRO_X_SCALE);
+  set_spectro_y_scale(ss, DEFAULT_SPECTRO_Y_SCALE);
+  set_spectro_z_scale(ss, DEFAULT_SPECTRO_Z_SCALE);
+}
 #endif
 
 static void display_channel_time_data(chan_info *cp, snd_info *sp, snd_state *ss);
@@ -1992,22 +2000,19 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
   if ((si) && (si->scale > 0.0))
     {
 #if HAVE_GL
-      /* experiments with lighting were a bust -- does not improve things (ditto fog) */
+      /* experiments with lighting were a bust -- does not improve things (ditto fog, translucency, grid) */
       /* TODO: draggable y axis (within_graph below depends on x_axis_x0 et al set in make_axes_1 in snd-axis.c)
-	 TODO: axis ticks and labels
+	 TODO: finish axis ticks and labels spacing and placement based on window width/height
 	 TODO: multi-channel (combined) gl spectros (interaction with lisp graphs?)
-	 TODO: wavogram display list? [time-changed flag]
 	 TODO: gl xrec labels
 	 SOMEDAY: editable spectrogram (select, apply any selection-proc)
-	 TODO: fix the regraph problem (glClear of partial window?)
+	 TODO: fix the regraph problem (glClear of partial window? clear_window->glClear with fill_rectangle thereafter. or glScissor?)
 	 TODO: printing support (doesn't GL->ps already exist?)
-	 TODO: BUTTON or SCALE: semi-transparent coloring for spectrogram -- make this an option
-	 TODO: BUTTON to toggle with-gl
-	 TODO: BUTTONS: two[four-wavo too] sets of spectro-defaults (currently toggling with-gl = silly output)
 	 TODO: glLightfv needed in gl.c (and others -- is there a max size?)
-	 TODO: y axis is clipped in front
-	 TODO: with-gl in configure only if have-motif
-	 TODO: texture as topographic grid?
+	 TODO: check out bottom lit gray case
+	 TODO: if label/number font changes, re-make callists?
+	 TODO: clean up axis stuff in snd-axis.c
+	 TODO: if 2nd pass, glDrawBuffer?
       */
       if (((sp->nchans == 1) || (sp->channel_style == CHANNELS_SEPARATE)) &&
 	  (color_map(ss) != BLACK_AND_WHITE) &&
@@ -2020,11 +2025,10 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	  fp = cp->fft;
 	  fap = fp->axis;
 
+	  glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)), ss->sgx->cx);
+
 	  if (cp->gl_fft_list == NO_LIST) 
 	    cp->gl_fft_list = (int)glGenLists(1);
-	  /* 0 is possible list id! In Mesa these are simply keys into a hash table --
-	   *   they appear to grow until 2^32-1 then start hashlist free key searches(?)
-	   */
 	  else
 	    {
 	      if (cp->fft_changed == FFT_CHANGED)
@@ -2033,6 +2037,7 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		  cp->gl_fft_list = (int)glGenLists(1);
 		}
 	    }
+
 	  if (cp->fft_changed == FFT_CHANGED)
 	    {
 	      bins = (int)(si->target_bins * cp->spectro_cutoff);
@@ -2053,15 +2058,10 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		    }
 		}
 	    }
-	  glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)), ss->sgx->cx);
 	  glEnable(GL_DEPTH_TEST);
 	  /* glDepthFunc(GL_LEQUAL); */
 	  glShadeModel(GL_SMOOTH);
 	  glClearDepth(1.0);
-#if 0
-	  glEnable(GL_BLEND);
-	  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-#endif
 
 	  {
 	    /* a kludge for the background color */
@@ -2091,6 +2091,7 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 
 	      xincr = 1.0 / (float)(si->active_slices);
 	      yincr = 1.0 / (float)bins;
+
 	      for (x0 = -0.5, slice = 0; slice < si->active_slices - 1; slice++, x0 += xincr)
 		{
 		  for (i = 0, y0 = -0.5; i < bins - 1; i++, y0 += yincr)
@@ -2113,7 +2114,6 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 			  val10 = 1.0 - (cp_dB(cp, val10)) / cp->min_dB;
 			  val11 = 1.0 - (cp_dB(cp, val11)) / cp->min_dB;
 			}
-#if 1
 		      if (js[slice][i] != NO_COLOR)
 			{
 			  get_current_color(color_map(ss), js[slice][i], &r, &g, &b);
@@ -2145,42 +2145,13 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 			}
 		      else glColor3us(br, bg, bb);
 		      glVertex3f(x0, val01, y1);
-#else
-		      if (js[slice][i] != NO_COLOR)
-			{
-			  get_current_color(color_map(ss), js[slice][i], &r, &g, &b);
-			  glColor4us(r, g, b, 32000);
-			}
-		      else glColor3us(br, bg, bb);
-		      glVertex3f(x0, val00, y0);
-		      
-		      if (js[slice + 1][i] != NO_COLOR)
-			{
-			  get_current_color(color_map(ss), js[slice + 1][i], &r, &g, &b);
-			  glColor4us(r, g, b, 32000);
-			}
-		      else glColor3us(br, bg, bb);
-		      glVertex3f(x1, val10, y0);
-		  
-		      if (js[slice + 1][i + 1] != NO_COLOR)
-			{
-			  get_current_color(color_map(ss), js[slice + 1][i + 1], &r, &g, &b);
-			  glColor4us(r, g, b, 32000);
-			}
-		      else glColor3us(br, bg, bb);
-		      glVertex3f(x1, val11, y1);
-		  
-		      if (js[slice][i + 1] != NO_COLOR)
-			{
-			  get_current_color(color_map(ss), js[slice][i + 1], &r, &g, &b);
-			  glColor4us(r, g, b, 32000);
-			}
-		      else glColor3us(br, bg, bb);
-		      glVertex3f(x0, val01, y1);
-#endif		      
+
 		      glEnd();
 		    }
 		}
+	      for (i = 0; i < si->active_slices; i++) FREE(js[i]);
+	      FREE(js);
+	      js = NULL;
 	      glEndList();
 	    }
 	  glViewport(fap->graph_x0, 0, fap->width, fap->height);
@@ -2193,24 +2164,16 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	  glScalef(cp->spectro_x_scale, cp->spectro_y_scale, cp->spectro_z_scale);
 	  glCallList((GLuint)(cp->gl_fft_list));
 
-	      /* a kludge for some axes */
-	      glBegin(GL_POLYGON);
-	      glColor3f(0.0, 0.0, 0.0);
-	      glVertex3f(-0.52, 0.0, -0.51);
-	      glVertex3f(0.51, 0.0, -0.51);
-	      glVertex3f(0.51, 0.0, -0.52);
-	      glVertex3f(-0.52, 0.0, -0.52);
-	      glEnd();
-	      glBegin(GL_POLYGON);
-	      glColor3f(0.0, 0.0, 0.0);
-	      glVertex3f(-0.51, 0.0, -0.51);
-	      glVertex3f(-0.51, 0.0, 0.51);
-	      glVertex3f(-0.52, 0.0, 0.51);
-	      glVertex3f(-0.52, 0.0, -0.51);
-	      glEnd();
-	      /* fap->use_gl = TRUE; */
-	      /* make_axes(cp, fap, X_AXIS_IN_SECONDS, FALSE); */
-	      /* fap->use_gl = FALSE; */
+	  fap->use_gl = TRUE;
+	  make_axis_info(cp,
+			 cp->axis->x0, cp->axis->x1,
+			 SND_SRATE(sp) * cp->spectro_start / 2.0, SND_SRATE(sp) * cp->spectro_cutoff / 2.0,
+			 STR_time,
+			 cp->axis->x0, cp->axis->x1,
+			 SND_SRATE(sp) * cp->spectro_start / 2.0, SND_SRATE(sp) * cp->spectro_cutoff / 2.0,
+			 fap);
+	  make_axes(cp, fap, X_AXIS_IN_SECONDS, FALSE);
+	  fap->use_gl = FALSE;
 
 	  if (ss->gl_has_double_buffer)
 	    glXSwapBuffers(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)));
@@ -2221,11 +2184,6 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	  /* a kludge to get the normal graph drawn (again...) */
 	  if (cp->graph_time_p)
 	    display_channel_time_data(cp, cp->sound, cp->state); 
-	  if (cp->fft_changed == FFT_CHANGED)
-	    {
-	      for (i = 0; i < si->active_slices; i++) FREE(js[i]);
-	      FREE(js);
-	    }
 	  return(XtAppPending(MAIN_APP(ss)) == 0); /* return true if there are no pending events to force current buffer to be displayed */
 	}
 #endif
@@ -2393,33 +2351,20 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	    }
 	}
       glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)), ss->sgx->cx);
-#if 0
-      if (cp->gl_time_list == NO_LIST) 
-	cp->gl_time_list = (int)glGenLists(1);
-      else
-	{
-	  glDeleteLists((GLuint)(cp->gl_time_list), 1);
-	  cp->gl_time_list = (int)glGenLists(1);
-	}
-#endif
       glEnable(GL_DEPTH_TEST);
       glDepthFunc(GL_LEQUAL); 
       glClearDepth(1.0);
       glClearColor(1.0, 1.0, 1.0, 0.0);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-#if 1
       glViewport(ap->graph_x0, 0, ap->width, ap->height);
       glMatrixMode(GL_PROJECTION);
       glLoadIdentity();
-      /* glOrtho(-1.0, 1.0, -1.0, 1.0, 1.0, -1.0); */ /* this appears to be the default */
       glRotatef(cp->spectro_x_angle, 1.0, 0.0, 0.0);
       glRotatef(cp->spectro_y_angle, 0.0, 1.0, 0.0);
       glRotatef(cp->spectro_z_angle, 0.0, 0.0, 1.0);
       glScalef(cp->spectro_x_scale, cp->spectro_y_scale, cp->spectro_z_scale);
-#endif
       xinc = 2.0 / (float)len;
       yinc = 2.0 / (float)lines;
-      /* glNewList((GLuint)(cp->gl_time_list), GL_COMPILE); */
       for (j = 0, y0 = -1.0; j < lines - 1; j++, y0 += yinc)
 	for (x0 = -1.0, i = 0; i < len - 1; i++, x0 += xinc)
 	  {
@@ -2446,19 +2391,6 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		      
 	    glEnd();
 	  }
-      /* glEndList(); */
-#if 0
-      glViewport(ap->graph_x0, 0, ap->width, ap->height);
-      glMatrixMode(GL_PROJECTION);
-      glLoadIdentity();
-      /* glOrtho(-1.0, 1.0, -1.0, 1.0, 1.0, -1.0); */ /* this appears to be the default */
-      glRotatef(cp->spectro_x_angle, 1.0, 0.0, 0.0);
-      glRotatef(cp->spectro_y_angle, 0.0, 1.0, 0.0);
-      glRotatef(cp->spectro_z_angle, 0.0, 0.0, 1.0);
-      glScalef(cp->spectro_x_scale, cp->spectro_y_scale, cp->spectro_z_scale);
-#endif
-      /* glCallList((GLuint)(cp->gl_time_list)); */
-
       if (ss->gl_has_double_buffer)
 	glXSwapBuffers(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)));
       else glFlush();
@@ -2883,7 +2815,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 		      ((cp->x_axis_style == X_AXIS_IN_SAMPLES) || 
 		       (cp->x_axis_style == X_AXIS_IN_BEATS)) ? X_AXIS_IN_SECONDS : (cp->x_axis_style),
 #if USE_MOTIF
-		      ((cp->chan == (sp->nchans - 1)) || (sp->channel_style != CHANNELS_SUPERIMPOSED)));
+		      ((cp->chan == (sp->nchans - 1)) || (sp->channel_style != CHANNELS_SUPERIMPOSED))
 	              /* Xt documentation says the most recently added work proc runs first, but we're
 		       *   adding fft work procs in channel order, normally, so the channel background
 		       *   clear for the superimposed case needs to happen on the highest-numbered 
@@ -2891,11 +2823,12 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 		       *   selected background, if any of the current sound's channels is selected.
 		       */
 #else
-	              ((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)));
+	              ((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED))
                       /* In Gtk+ (apparently) the first proc added is run, not the most recent */
 #endif
+		      );
 
-        if ((!cp->graph_time_p) || (just_fft))
+	  if ((!cp->graph_time_p) || (just_fft))
 	    { /* make_graph does this -- sets losamp needed by fft to find its starting point */
 	      ap->losamp = (off_t)(ap->x0 * (double)SND_SRATE(sp));
 	      ap->hisamp = (off_t)(ap->x1 * (double)SND_SRATE(sp));
@@ -3319,6 +3252,15 @@ static int within_graph(chan_info *cp, int x, int y)
       fp = cp->fft;
       ap = fp->axis;
       /* look first for on-axis (axis drag) mouse */
+#if HAVE_GL
+      if ((cp->transform_graph_type == GRAPH_TRANSFORM_AS_SPECTROGRAM) && (ap->used_gl))
+	{
+	  GLdouble xx;
+	  xx = unproject(x, y);
+	  if ((xx > -0.7) && (xx < -0.49))
+	    return(FFT_AXIS);
+	}
+#endif
       if (cp->transform_graph_type != GRAPH_TRANSFORM_AS_SONOGRAM)
 	{
 	  if (((x >= ap->x_axis_x0) && (x <= ap->x_axis_x1)) && 

@@ -110,10 +110,8 @@ int set_axis_numbers_font(snd_state *ss, char *font)
 }
 
 
-void activate_numbers_font(axis_context *ax)
+void activate_numbers_font(axis_context *ax, snd_state *ss)
 {
-  snd_state *ss;
-  ss = get_global_state();
   SG_SET_FONT(ax->gc, AXIS_NUMBERS_FONT(ss));
   ax->current_font = AXIS_NUMBERS_FONT(ss);
 }
@@ -124,10 +122,8 @@ void activate_button_font(axis_context *ax, snd_state *ss)
   ax->current_font = (ss->sgx)->button_fnt;
 }
 
-void activate_label_font(axis_context *ax)
+void activate_label_font(axis_context *ax, snd_state *ss)
 {
-  snd_state *ss;
-  ss = get_global_state();
   SG_SET_FONT(ax->gc, AXIS_LABEL_FONT(ss));
   ax->current_font = AXIS_LABEL_FONT(ss);
 }

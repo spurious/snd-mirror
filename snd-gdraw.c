@@ -1210,3 +1210,8 @@ GtkWidget *start_orientation_dialog(snd_state *ss, int width, int height)
   return(oid->dialog);
 }
 
+int set_with_gl(snd_state *ss, int val)
+{
+  in_set_with_gl(ss, val);
+  return(with_gl(ss));
+}

@@ -1466,7 +1466,7 @@ static int apply_fft_window(fft_state *fs)
     {
     case FOURIER:
       window = (Float *)((fft_window_state *)(fs->wp))->window;
-      if (fs->size <= FFT_IN_BACKGROUND_SIZE)
+      if ((fs->size <= FFT_IN_BACKGROUND_SIZE) && (fs->size > 2))
 	{
 	  /* to my surprise, it's smoother even on an old SGI to just do the fft in place */
 	  /*   hooray for micro-optimization! */

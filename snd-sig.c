@@ -1234,7 +1234,7 @@ void fht(int powerOfFour, Float *array)
  * Bill says:
  *   this is slightly (15-20%) faster than the fht above for small ffts (smaller than 16384 samples)
  *   it slows down radically (factor of 2) on big arrays, and returns bogus results -- perhaps real sin/cos would fix it
- *   it is not restricted to powers of 4 (hence its use in snd-fft.c)
+ *   it is not restricted to powers of 4 (hence its use in snd-fft.c), but len must be > 4
  */
 
 static Float halsec[20]=

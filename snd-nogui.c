@@ -26,6 +26,7 @@ void setup_axis_context(chan_info *cp, axis_context *ax) {}
 void draw_spectro_line(axis_context *ax, int color, int x0, int y0, int x1, int y1) {}
 void allocate_color_map(snd_state *ss, int colormap) {}
 void allocate_sono_rects(int size) {}
+int set_with_gl(snd_state *ss, int val) {return(0);}
 void set_sono_rectangle(int j, int color, Locus x, Locus y, Latus width, Latus height) {}
 void draw_sono_rectangles(axis_context *ax, int color, int jmax) {}
 int start_color_dialog(snd_state *ss, int width, int height) {return(0);}
@@ -144,8 +145,8 @@ int set_button_font(snd_state *ss, char *font) {ss->Button_Font = font; return(0
 int set_bold_button_font(snd_state *ss, char *font) {ss->Bold_Button_Font = font; return(0);}
 int set_axis_label_font(snd_state *ss, char *font) {ss->Axis_Label_Font = font; return(0);}
 int set_axis_numbers_font(snd_state *ss, char *font) {ss->Axis_Numbers_Font = font; return(0);}
-void activate_numbers_font(axis_context *ax) {}
-void activate_label_font(axis_context *ax) {}
+void activate_numbers_font(axis_context *ax, snd_state *ss) {}
+void activate_label_font(axis_context *ax, snd_state *ss) {}
 void activate_button_font(axis_context *ax, snd_state *ss) {}
 int label_width(snd_state *ss, char *txt) {return(0);}
 int number_width(snd_state *ss, char *num) {return(0);}

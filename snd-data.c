@@ -49,7 +49,6 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
       cp->last_sonogram = NULL;
       cp->temp_sonogram = NULL;
 #if HAVE_GL
-      cp->gl_time_list = NO_LIST;
       cp->gl_fft_list = NO_LIST;
 #endif
       XEN_DEFINE_SIMPLE_HOOK(cp->edit_hook, 0);
