@@ -1,9 +1,9 @@
 ;;; Snd-4 compatibility stuff
 
-(use-modules (ice-9 format))
-(use-modules (ice-9 optargs))
+(use-modules (ice-9 format) (ice-9 optargs))
 
 (if #f
+    ;; these are the Snd-4 names 
     (begin
       (define smooth            smooth-sound)
       (define cut               delete-selection)
@@ -103,6 +103,7 @@
 ;;; Snd-4 map/scan/temp functions
 
 (define* (scan-sound-chans proc #:optional (beg 0) end snd edpos)
+  "(scan-sound-chans proc #:optional (beg 0) end snd edpos) applies scan-chan with proc to each channel in a sound"
   (let ((result #f))
     (do ((i 0 (1+ i)))
 	((or (= i (chans snd))
@@ -113,12 +114,14 @@
 	    (set! result (append val (list (or snd (selected-sound)) i))))))))
 
 (define* (map-sound-chans proc #:optional (beg 0) end edname snd edpos)
+  "(map-sound-chans proc #:optional (beg 0) end edname snd edpos) applies map-chan with proc to each channel in a sound"
   (do ((i 0 (1+ i)))
       ((= i (chans snd)))
     (map-chan proc beg end edname snd i edpos)))
 
 
 (define* (scan-all-chans proc #:optional (beg 0) end edpos)
+  "(scan-all-chans proc #:optional (beg 0) end snd edpos) applies scan-chan with proc to all channels (all sounds)"
   (catch 'done
 	 (lambda ()
 	   (apply for-each 
@@ -129,6 +132,7 @@
 	 (lambda args (cadr args))))
 
 (define* (map-all-chans proc #:optional (beg 0) end edname edpos)
+  "(map-all-chans proc #:optional (beg 0) end edname snd edpos) applies map-chan with proc to all channels (all sounds)"
   (apply for-each 
 	 (lambda (snd chn)
 	   (map-chan proc beg end edname snd chn edpos))
@@ -136,6 +140,7 @@
 
 
 (define* (scan-chans proc #:optional (beg 0) end edpos)
+  "(scan-chans proc #:optional (beg 0) end snd edpos) applies scan-chan with proc to all channels sharing current sound's sync"
   (let ((current-sync (sync (selected-sound))))
     (define (check-one-chan proc beg end snd chn edpos)
       (let ((val (scan-chan proc beg end snd chn edpos)))
@@ -156,6 +161,7 @@
        #f))))
 
 (define* (map-chans proc #:optional (beg 0) end edname edpos)
+  "(map-chans proc #:optional (beg 0) end edname snd edpos) applies map-chan with proc to all channels sharing current sound's sync"
   (let ((current-sync (sync (selected-sound))))
     (for-each 
      (lambda (snd)
@@ -167,6 +173,7 @@
 
 
 (define* (map-across-all-chans proc #:optional (beg 0) end edname snd edpos)
+  "(map-across-all-chans proc #:optional (beg 0) end edname snd edpos) applies map-chan with proc to all channels in parallel"
   (let* ((chans (all-chans))
 	 (chan-num (length (car chans)))
 	 (maxlen (apply max (apply map frames chans)))
@@ -210,6 +217,7 @@
 	    (set! (samples beg outsamp (car s) (car c) #t edname) (vector-ref filenames j)))))))
 
 (define* (scan-across-all-chans proc #:optional (beg 0) end snd edpos)
+  "(scan-across-all-chans proc #:optional (beg 0) end edname snd edpos) applies scan-chan with proc to all channels in parallel"
   (let* ((chans (all-chans))
 	 (chan-num (length (car chans)))
 	 (maxlen (apply max (apply map frames chans)))
@@ -236,6 +244,7 @@
 	   (lambda args (cadr args)))))
 
 (define* (map-across-sound-chans proc #:optional (beg 0) end edname snd edpos)
+  "(map-across-sound-chans proc #:optional (beg 0) end edname snd edpos) applies map-chan with proc to all channels or sound in parallel"
   (let* ((chan-num (chans snd))
 	 (len (- (min end (frames snd 0)) beg))
 	 (data (make-vector chan-num))
@@ -274,6 +283,7 @@
 ;;; Snd-4 external program support stuff
 
 (define* (selection-to-temp #:optional (type mus-next) (format mus-out-format))
+  "(selection-to-temp #:optional (type mus-next) (format mus-out-format)) writes selection data as (multichannel) file (for external program)"
   (let ((data (make-vector 1)))
     (vector-set! data 0 (snd-tempnam))
     (save-selection (vector-ref data 0) type format)
@@ -289,6 +299,7 @@
     ctr))
 
 (define* (sound-to-temp #:optional (type mus-next) (format mus-out-format) edpos)
+  "(sound-to-temp #:optional (type mus-next) (format mus-out-format) edpos) writes sound data as (multichannel) file (for external program)"
   (let* ((cursnd (selected-sound))
 	 (cursync (sync cursnd)))
     (if (or (= cursync 0)
@@ -300,6 +311,7 @@
 	(snd-error "re-implemented sound-to-temp doesn't handle sync bit correctly yet."))))
 
 (define* (selection-to-temps #:optional (type mus-next) (format mus-out-format))
+  "(selection-to-temps #:optional (type mus-next) (format mus-out-format)) writes selection data as mono files (for external program)"
   (let* ((chns (selection-chans))
 	 (data (make-vector chns)))
     (do ((i 0 (1+ i))) 
@@ -310,6 +322,7 @@
 
   
 (define* (sound-to-temps #:optional (type mus-next) (format mus-out-format) edpos)
+  "(sound-to-temps #:optional (type mus-next) (format mus-out-format) edpos) writes sound data as mono files (for external program)"
   (let* ((cursnd (selected-sound))
 	 (cursync (sync cursnd)))
     (if (or (= cursync 0)
@@ -326,6 +339,7 @@
 (define (temp-filenames data) data)
 
 (define* (temp-to-sound data filename #:optional origin)
+  "(temp-to-sound data filename #:optional origin) reads (multichannel) file as new sound data (from external program)"
   (let ((cursnd (selected-sound)))
     (do ((i 0 (1+ i)))
 	((= i (vector-length data)))
@@ -338,6 +352,7 @@
       (set! (samples 0 (mus-sound-frames filename)  cursnd i #t origin i) filename))))
 
 (define* (temps-to-sound data filenames #:optional origin)
+  "(temps-to-sound data filenames #:optional origin) reads mono files as new sound data (from external program)"
   (let ((cursnd (selected-sound)))
     (do ((i 0 (1+ i)))
 	((= i (vector-length data)))
@@ -350,6 +365,7 @@
       (set! (samples 0 (mus-sound-frames (vector-ref filenames i)) cursnd i #t origin) (vector-ref filenames i)))))
 
 (define* (temp-to-selection data filename #:optional origin)
+  "(temp-to-selection data filename #:optional origin) sets selection from (multichannel) file (from external program)"
   (let ((chan 0)
 	(len (mus-sound-frames filename)))
     (do ((i 0 (1+ i)))
@@ -369,6 +385,7 @@
      (sounds))))
 
 (define* (temps-to-selection data filenames #:optional origin)
+  "(temps-to-selection data filenames #:optional origin) sets selection from mono files (from external program)"
   (let ((chan 0))
     (do ((i 0 (1+ i)))
 	((= i (vector-length data)))

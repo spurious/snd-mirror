@@ -268,6 +268,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+23-Jan:  color-samples (draw.scm).\n\
 21-Jan:  bird.rb.\n\
          channel-properties, sound-properties (accessors in extensions.scm).\n\
 18-Jan:  zip-channel (zip.scm).\n\

@@ -38,12 +38,10 @@
 ;;; scissor-tailed flycatcher (waveshaping)
 ;;; fm-violin (FM and various other generators, #:key args)
 ;;; FOF voice synthesis (wave-train, #:optional args)
-;;; phase vocoder
 ;;; time varying FIR filter, notch filter
 ;;; swap selection chans
 ;;; sound-interp, env-sound-interp
 ;;; add date and time to title bar
-;;; with-sound for Snd
 ;;; how to get 'display' to write to Snd's listener
 ;;; pluck instrument (physical modelling)
 ;;; voice instrument (formants via FM)
@@ -578,7 +576,6 @@ this can be confusing if fft normalization is on (the default)"
 
 
 ;;; -------- flash selected data red and green
-;;;
 
 (define flash-selected-data
   (let ((data-red? #t)
@@ -673,78 +670,74 @@ otherwise it moves the cursor to the first offending sample"
 
 ;;; -------- mix mono sound into stereo sound panning according to env
 
-(define place
-  (lambda (mono-snd stereo-snd pan-env)
-    (let* ((len (frames mono-snd))
-	   (msf (make-sample-reader 0 mono-snd 0))
-	   (out-data0 (make-vct len))
-	   (out-data1 (make-vct len))
-	   (e (make-env pan-env :end (1- len))))
-      (vcts-do! out-data0 out-data1
-		 (lambda (num i)
-		   (let ((panval (env e))
-			 (val (next-sample msf)))
-		     (list (* val (- 1.0 panval)) (* val panval)))))
-      (free-sample-reader msf)
-      (vct-add! out-data0 (samples->vct 0 len stereo-snd 0))
-      (vct-add! out-data1 (samples->vct 0 len stereo-snd 1))
-      (vct->samples 0 len out-data0 stereo-snd 0)
-      (vct->samples 0 len out-data1 stereo-snd 1))))
+(define (place-sound mono-snd stereo-snd pan-env)
+  "(place-sound mono-snd stereo-snd pan-env) mixes a mono sound into a stereo sound, splitting \
+it into two copies whose amplitudes depend on the envelope 'pan-env'.  If 'pan-env' is \
+a number, the sound is split such that 0 is all in channel 0 and 90 is all in channel 1."
+  (let ((len (frames mono-snd)))
+    (if (number? pan-env)
+	(let* ((pos (/ pan-env 90.0))
+	       (in-data0 (samples->vct 0 len mono-snd))
+	       (in-data1 (samples->vct 0 len mono-snd))
+	       (out-data0 (samples->vct 0 len stereo-snd 0))
+	       (out-data1 (samples->vct 0 len stereo-snd 1)))
+	  (vct-scale! in-data0 (- 1.0 pos))
+	  (vct-scale! in-data1 pos)
+	  (vct-add! out-data0 in-data0)
+	  (vct-add! out-data1 in-data1)
+	  (vct->samples 0 len out-data0 stereo-snd 0)
+	  (vct->samples 0 len out-data1 stereo-snd 1))
+	(let* ((msf (make-sample-reader 0 mono-snd 0))
+	       (out-data0 (make-vct len))
+	       (out-data1 (make-vct len))
+	       (e (make-env pan-env :end (1- len))))
+	  (vcts-do! out-data0 out-data1
+		    (lambda (num i)
+		      (let ((panval (env e))
+			    (val (next-sample msf)))
+			(list (* val (- 1.0 panval)) (* val panval)))))
+	  (free-sample-reader msf)
+	  (vct-add! out-data0 (samples->vct 0 len stereo-snd 0))
+	  (vct-add! out-data1 (samples->vct 0 len stereo-snd 1))
+	  (vct->samples 0 len out-data0 stereo-snd 0)
+	  (vct->samples 0 len out-data1 stereo-snd 1)))))
 
-;;; if there's no envelope (just a position):
-(define place1
-  (lambda (mono-snd stereo-snd deg)
-    (let* ((len (frames mono-snd))
-	   (pos (/ deg 90.0))
-	   (in-data0 (samples->vct 0 len mono-snd))
-	   (in-data1 (samples->vct 0 len mono-snd))
-	   (out-data0 (samples->vct 0 len stereo-snd 0))
-	   (out-data1 (samples->vct 0 len stereo-snd 1)))
-      (vct-scale! in-data0 (- 1.0 pos))
-      (vct-scale! in-data1 pos)
-      (vct-add! out-data0 in-data0)
-      (vct-add! out-data1 in-data1)
-      (vct->samples 0 len out-data0 stereo-snd 0)
-      (vct->samples 0 len out-data1 stereo-snd 1))))
 
 
 ;;; -------- FFT-based editing
 ;;;
 
-(define fft-edit
-  ;; fft entire sound, remove all energy below 'bottom' Hz and all above 'top' Hz,
-  ;; then unfft.  We're assuming we can fit the entire fft into memory (we could
-  ;; easily reduce this by a factor of 2 by repacking the data in and out).
-  (lambda (bottom top)
-    "(fft-edit lo-bin hi-bin) removes all energy below lo-bin and above hi-bin"
-    (let* ((sr (srate))
-	   (len (frames))
-	   (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
-	   (rdata (samples->vct 0 fsize))
-	   (idata (make-vct fsize))
-	   (lo (round (/ bottom (/ sr fsize))))
-	   (hi (round (/ top (/ sr fsize)))))
-      (fft rdata idata 1)
-      (do ((i 0 (1+ i))
-	   (j (- fsize 1) (1- j)))
-	  ((= i lo))
-	(vct-set! rdata i 0.0)
-	(vct-set! rdata j 0.0)
-	(vct-set! idata i 0.0)
-	(vct-set! idata j 0.0))
-      (do ((i hi (1+ i))
-	   (j (- fsize hi) (1- j)))
-	  ((= i (/ fsize 2)))
-	(vct-set! rdata i 0.0)
-	(vct-set! rdata j 0.0)
-	(vct-set! idata i 0.0)
-	(vct-set! idata j 0.0))
-      (fft rdata idata -1)
-      (vct-scale! rdata (/ 1.0 fsize))
-      (vct->channel rdata 0 (1- len)))))
+(define (fft-edit bottom top)
+  "(fft-edit low-Hz high-Hz) ffts an entire sound, removes all energy below low-Hz and all above high-Hz, \
+then inverse ffts."
+  (let* ((sr (srate))
+	 (len (frames))
+	 (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
+	 (rdata (samples->vct 0 fsize))
+	 (idata (make-vct fsize))
+	 (lo (round (/ bottom (/ sr fsize))))
+	 (hi (round (/ top (/ sr fsize)))))
+    (fft rdata idata 1)
+    (do ((i 0 (1+ i))
+	 (j (- fsize 1) (1- j)))
+	((= i lo))
+      (vct-set! rdata i 0.0)
+      (vct-set! rdata j 0.0)
+      (vct-set! idata i 0.0)
+      (vct-set! idata j 0.0))
+    (do ((i hi (1+ i))
+	 (j (- fsize hi) (1- j)))
+	((= i (/ fsize 2)))
+      (vct-set! rdata i 0.0)
+      (vct-set! rdata j 0.0)
+      (vct-set! idata i 0.0)
+      (vct-set! idata j 0.0))
+    (fft rdata idata -1)
+    (vct-scale! rdata (/ 1.0 fsize))
+    (vct->channel rdata 0 (1- len))))
 
 (define (fft-squelch squelch)
-  ;; fft entire sound, remove all energy below squelch, unfft
+  "(fft-squelch squelch) ffts an entire sound, sets all bins to 0.0 whose energy is below squelch, then inverse ffts"
   (let* ((sr (srate))
 	 (len (frames))
 	 (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
@@ -774,7 +767,7 @@ otherwise it moves the cursor to the first offending sample"
     scaler))
     
 (define (fft-env-data fft-env)
-  ;; apply fft-env as spectral env to current sound, returning vct of new data
+  "(fft-env-data fft-env) applies fft-env as spectral env to current sound, returning vct of new data"
   (let* ((sr (srate))
 	 (len (frames))
 	 (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
@@ -795,11 +788,12 @@ otherwise it moves the cursor to the first offending sample"
     (vct-scale! rdata (/ 1.0 fsize))))
 
 (define (fft-env-edit fft-env)
-  ;; edit current chan using fft-env
+  "(fft-env-edit fft-env) edits (filters) current chan using fft-env"
   (vct->channel (fft-env-data fft-env) 0 (1- (frames))))
 
 (define (fft-env-interp env1 env2 interp)
-  ;; interpolate between two fft-filtered versions (env1 and env2 are the spectral envelopes) following interp (an env between 0 and 1)
+  "(fft-env-interp env1 env2 interp) interpolates between two fft-filtered versions (env1 and env2 are the \
+spectral envelopes) following interp (an env between 0 and 1)"
   (let* ((data1 (fft-env-data env1))
 	 (data2 (fft-env-data env2))
 	 (len (frames))
@@ -814,7 +808,8 @@ otherwise it moves the cursor to the first offending sample"
     (vct->channel new-data 0 (1- len))))
 
 (define (fft-smoother cutoff start samps snd chn)
-  "use fft-filtering to smooth a section"
+  "(fft-smoother cutoff start samps snd chn) uses fft-filtering to smooth a \
+section: (vct->samples (cursor) 400 (fft-smoother .1 (cursor) 400 0 0))"
   (let* ((fftpts (inexact->exact (expt 2 (ceiling (/ (log (1+ samps)) (log 2.0))))))
 	 (rl (make-vct fftpts))
 	 (im (make-vct fftpts))
@@ -847,267 +842,217 @@ otherwise it moves the cursor to the first offending sample"
 		  (vct-set! rl i (+ (vct-ref rl i) trend)))
 		rl)))))))
 
-; (vct->samples (cursor) 400 (fft-smoother .1 (cursor) 400 0 0))
 
 
 ;;; -------- comb-filter
 
-(define comb-filter
-  (lambda (scaler size)
-    (let ((delay-line (make-vector size 0.0))
-	  (delay-loc 0))
-      (lambda (x)
-	(let ((result (vector-ref delay-line delay-loc)))
-	  (vector-set! delay-line delay-loc (+ x (* scaler result)))
-	  (set! delay-loc (1+ delay-loc))
-	  (if (= delay-loc size) (set! delay-loc 0))
-	  result)))))
-
-; (map-chan (comb-filter .8 32))
+(define (comb-filter-1 scaler size)
+  "(comb-filter-1 scaler size) returns a comb-filter ready for map-chan etc: (map-chan (comb-filter-1 .8 32))"
+  (let ((delay-line (make-vector size 0.0))
+	(delay-loc 0))
+    (lambda (x)
+      (let ((result (vector-ref delay-line delay-loc)))
+	(vector-set! delay-line delay-loc (+ x (* scaler result)))
+	(set! delay-loc (1+ delay-loc))
+	(if (= delay-loc size) (set! delay-loc 0))
+	result))))
 
 ;;; the same thing using the CLM module is:
 
-(define comb-filter 
-  (lambda (scaler size)
-    (let ((cmb (make-comb scaler size)))
-      (lambda (x) 
-	(comb cmb x)))))
-
-;;; or much faster:
-;;; (clm-channel (make-comb .8 32))
+(define (comb-filter scaler size)
+  "(comb-filter scaler size) returns a comb-filter ready for map-chan etc: (map-chan (comb-filter .8 32)).  If you're \
+in a hurry use: (clm-channel (make-comb .8 32)) instead"
+  (let ((cmb (make-comb scaler size)))
+    (lambda (x) 
+      (comb cmb x))))
 
 ;;; by using filters at harmonically related sizes, we can get chords:
 
-(define comb-chord
-  (lambda (scaler size amp)
-    (let ((c1 (make-comb scaler size))
-	  (c2 (make-comb scaler (* size .75)))
-	  (c3 (make-comb scaler (* size 1.2))))
-      (lambda (x) 
-	(* amp (+ (comb c1 x) (comb c2 x) (comb c3 x)))))))
-
-; (map-chan (comb-chord .95 100 .3))
-; (map-chan (comb-chord .95 60 .3))
+(define (comb-chord scaler size amp)
+  "(comb-chord scaler size amp) returns a set of harmonically-related comb filters: (map-chan (comb-chord .95 100 .3))"
+  (let ((c1 (make-comb scaler size))
+	(c2 (make-comb scaler (* size .75)))
+	(c3 (make-comb scaler (* size 1.2))))
+    (lambda (x) 
+      (* amp (+ (comb c1 x) (comb c2 x) (comb c3 x))))))
 
 ;;; or change the comb length via an envelope:
 
-(define max-envelope
-  (lambda (e mx)
+(define (zcomb scaler size pm)
+  "(zcomb scaler size pm) returns a comb filter whose length varies according to an \
+envelope: (map-chan (zcomb .8 32 '(0 0 1 10)))"
+  (define (max-envelope-1 e mx)
     (if (null? e)
 	mx
-      (max-envelope (cddr e) (max mx (abs (cadr e)))))))
+	(max-envelope-1 (cddr e) (max mx (abs (cadr e))))))
 
-(define zcomb
-  (lambda (scaler size pm)
-    (let ((cmb (make-comb scaler size :max-size (+ size 1 (max-envelope pm 0))))
-	  (penv (make-env :envelope pm :end (frames))))
-      (lambda (x)
-	(comb cmb x (env penv))))))
+  (let ((cmb (make-comb scaler size :max-size (+ size 1 (max-envelope-1 pm 0.0))))
+	(penv (make-env :envelope pm :end (frames))))
+    (lambda (x)
+      (comb cmb x (env penv)))))
 
-; (map-chan (zcomb .8 32 '(0 0 1 10)))
+(define (notch-filter scaler size)
+  "(notch-filter scaler size) returns a notch-filter: (map-chan (notch-filter .8 32))"
+  (let ((cmb (make-notch scaler size)))
+    (lambda (x) 
+      (notch cmb x))))
 
-;;; or notch: 
-
-(define notch-filter 
-  (lambda (scaler size)
-    (let ((cmb (make-notch scaler size)))
-      (lambda (x) 
-	(notch cmb x)))))
-
-; (map-chan (notch-filter .8 32))
-
-;;; or formant:
-
-(define formant-filter
-  (lambda (radius frequency)
-    (let ((frm (make-formant radius frequency)))
-      (lambda (x) 
-	(formant frm x)))))
-
-; (map-chan (formant-filter .99 2400))
-
-;;; in cases this simple (involving just a straight call on a single filtering generator),
-;;;   it is much faster to use filter-sound or clm-channel:
-;;;   (filter-sound (make-formant .99 2400))
+(define (formant-filter radius frequency)
+  "(formant-filter radius frequency) returns a formant generator: (map-chan (formant-filter .99 2400)). Faster \
+is: (filter-sound (make-formant .99 2400))"
+  (let ((frm (make-formant radius frequency)))
+    (lambda (x) 
+      (formant frm x))))
 
 ;;; to impose several formants, just add them in parallel:
 
-(define formants
-  (lambda (r1 f1 r2 f2 r3 f3)
-    (let ((fr1 (make-formant r1 f1))
-	  (fr2 (make-formant r2 f2))
-	  (fr3 (make-formant r3 f3)))
-      (lambda (x)
-	(+ (formant fr1 x)
-	   (formant fr2 x)
-	   (formant fr3 x))))))
+(define (formants r1 f1 r2 f2 r3 f3)
+  "(formants r1 f1 r2 f2 r3 f3) returns 3 formant filters in parallel: (map-chan (formants .99 900 .98 1800 .99 2700))"
+  (let ((fr1 (make-formant r1 f1))
+	(fr2 (make-formant r2 f2))
+	(fr3 (make-formant r3 f3)))
+    (lambda (x)
+      (+ (formant fr1 x)
+	 (formant fr2 x)
+	 (formant fr3 x)))))
 
-; (map-chan (formants .99 900 .98 1800 .99 2700))
+(define (moving-formant radius move)
+  "(moving-formant radius move) returns a time-varying (in frequency) formant filter: (map-chan (moving-formant .99 '(0 1200 1 2400)))"
+  (let ((frm (make-formant radius (cadr move)))
+	(menv (make-env :envelope move :end (frames))))
+    (lambda (x)
+      (let ((val (formant frm x)))
+	(set! (mus-frequency frm) (env menv))
+	val))))
 
-;;; to get a moving formant:
-
-(define moving-formant
-  (lambda (radius move)
-    (let ((frm (make-formant radius (cadr move)))
-	  (menv (make-env :envelope move :end (frames))))
-      (lambda (x)
-	(let ((val (formant frm x)))
-	  (set! (mus-frequency frm) (env menv))
-	  val)))))
-
-; (map-chan (moving-formant .99 '(0 1200 1 2400)))
-
-(define osc-formants
-  ;; set up any number of independently oscillating formants
-  (lambda (radius bases amounts freqs)
-    (let* ((len (length bases))
-	   (frms (make-vector len))
-	   (oscs (make-vector len)))
-      (do ((i 0 (1+ i)))
-	  ((= i len))
-	(vector-set! frms i (make-formant radius (list-ref bases i)))
-	(vector-set! oscs i (make-oscil (list-ref freqs i))))
-      (lambda (x)
-	(let ((val 0.0))
-	  (do ((i 0 (1+ i)))
-	      ((= i len))
-	    (let ((frm (vector-ref frms i)))
-	      (set! val (+ val (formant frm x)))
-	      (set! (mus-frequency frm) 
-		    (+ (list-ref bases i) ;(this is not optimized for speed!)
-		       (* (list-ref amounts i) 
-			  (oscil (vector-ref oscs i)))))))
-	  val)))))
-
-;(map-chan (osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3)))
+(define (osc-formants radius bases amounts freqs)
+  "(osc-formants radius bases amounts freqs) set up any number of independently oscillating \
+formants: (map-chan (osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3)))"
+  (let* ((len (length bases))
+	 (frms (make-vector len))
+	 (oscs (make-vector len)))
+    (do ((i 0 (1+ i)))
+	((= i len))
+      (vector-set! frms i (make-formant radius (list-ref bases i)))
+      (vector-set! oscs i (make-oscil (list-ref freqs i))))
+    (lambda (x)
+      (let ((val 0.0))
+	(do ((i 0 (1+ i)))
+	    ((= i len))
+	  (let ((frm (vector-ref frms i)))
+	    (set! val (+ val (formant frm x)))
+	    (set! (mus-frequency frm) 
+		  (+ (list-ref bases i) ;(this is not optimized for speed!)
+		     (* (list-ref amounts i) 
+			(oscil (vector-ref oscs i)))))))
+	val))))
 
 
 ;;; -------- echo
 
-(define echo 
-  (lambda (scaler secs)
-    (let ((del (make-delay (round (* secs (srate))))))
-      (lambda (inval)
-	(+ inval (delay del (* scaler (+ (tap del) inval))))))))
+(define (echo scaler secs)
+  "(echo scaler secs) returns an echo maker: (map-chan (echo .5 .5) 0 44100)"
+  (let ((del (make-delay (round (* secs (srate))))))
+    (lambda (inval)
+      (+ inval (delay del (* scaler (+ (tap del) inval)))))))
 
-; (map-chan (echo .5 .5) 0 44100)
+(define (zecho scaler secs frq amp)
+  "(zecho scaler secs freq amp) returns a modulated echo maker: (map-chan (zecho .5 .75 6 10.0) 0 65000)"
+  (let* ((os (make-oscil frq))
+	 (len (round (* secs (srate))))
+	 (del (make-delay len :max-size (+ len amp 1))))
+    (lambda (inval)
+      (+ inval 
+	 (delay del 
+		(* scaler (+ (tap del) inval))
+		(* amp (oscil os)))))))
 
-;;; here is a version that modulates the echos:
-
-(define zecho 
-  (lambda (scaler secs frq amp)
-    (let* ((os (make-oscil frq))
-	   (len (round (* secs (srate))))
-	   (del (make-delay len :max-size (+ len amp 1))))
-      (lambda (inval)
-	(+ inval 
-	   (delay del 
-		  (* scaler (+ (tap del) inval))
-		  (* amp (oscil os))))))))
-
-; (map-chan (zecho .5 .75 6 10.0) 0 65000)
-
-;;; or low-pass filter the echoes:
-
-(define flecho 
-  (lambda (scaler secs)
-    (let* ((flt (make-fir-filter :order 4 :xcoeffs (list->vct '(.125 .25 .25 .125))))
-	   (del (make-delay  (round (* secs (srate))))))
-      (lambda (inval)
-	(+ inval 
-	   (delay del 
-		  (fir-filter flt (* scaler (+ (tap del) inval)))))))))
-
-; (map-chan (flecho .5 .9) 0 75000)
+(define (flecho scaler secs)
+  "(flecho scaler secs) returns a low-pass filtered echo maker: (map-chan (flecho .5 .9) 0 75000)"
+  (let* ((flt (make-fir-filter :order 4 :xcoeffs (list->vct '(.125 .25 .25 .125))))
+	 (del (make-delay  (round (* secs (srate))))))
+    (lambda (inval)
+      (+ inval 
+	 (delay del 
+		(fir-filter flt (* scaler (+ (tap del) inval))))))))
 
 
 ;;; -------- ring-mod and am
 ;;;
 ;;; CLM instrument is ring-modulate.ins
 
-(define ring-mod
-  (lambda (freq gliss-env)
-    (let* ((os (make-oscil :frequency freq))
-	   (len (frames))
-	   (genv (make-env :envelope gliss-env :end len)))
-      (lambda (inval)
-	(* (oscil os (env genv)) inval)))))
+(define (ring-mod freq gliss-env)
+  "(ring-mod freq gliss-env) returns a time-varying ring-modulation filter: (map-chan (ring-mod 10 (list 0 0 1 (hz->radians 100))))"
+  (let* ((os (make-oscil :frequency freq))
+	 (len (frames))
+	 (genv (make-env :envelope gliss-env :end len)))
+    (lambda (inval)
+      (* (oscil os (env genv)) inval))))
 
-; (map-chan (ring-mod 100 '(0 0 1 0)))
-; (map-chan (ring-mod 10 (list 0 0 1 (hz->radians 100))))
-
-(define am 
-  (lambda (freq) 
-    (let ((os (make-oscil freq))) 
-      (lambda (inval) 
-	(amplitude-modulate 1.0 inval (oscil os))))))
-
-; (map-chan (am 440))
+(define (am freq)
+  "(am freq)returns an amplitude-modulator: (map-chan (am 440))"
+  (let ((os (make-oscil freq))) 
+    (lambda (inval) 
+      (amplitude-modulate 1.0 inval (oscil os)))))
 
 
 ;;; -------- hello-dentist
 ;;;
 ;;; CLM instrument version is in clm.html
 
-(define hello-dentist 
-  (lambda (frq amp)
-    (let* ((rn (make-rand-interp :frequency frq :amplitude amp))
-	   (i 0)
-	   (j 0)
-	   (len (frames))
-	   (in-data (samples->vct 0 len))
-	   (out-len (inexact->exact (round (* len (+ 1.0 (* 2 amp))))))
-	   (out-data (make-vct out-len))
-	   (rd (make-src :srate 1.0 
-			 :input (lambda (dir) 
-				  (let ((val (if (and (>= i 0) (< i len)) 
-						 (vct-ref in-data i) 
-						 0.0)))
-				    (set! i (+ i dir)) 
-				    val)))))
-      (do ()
-	  ((or (= i len) (= j out-len)))
-	(vct-set! out-data j (src rd (rand-interp rn)))
-	(set! j (+ j 1)))
-      (vct->samples 0 j out-data))))
-
-; (hello-dentist 40.0 .1)
+(define (hello-dentist frq amp)
+  "(hello-dentist frq amp) varies the sampling rate randomly, making a voice sound quavery: (hello-dentist 40.0 .1)"
+  (let* ((rn (make-rand-interp :frequency frq :amplitude amp))
+	 (i 0)
+	 (j 0)
+	 (len (frames))
+	 (in-data (samples->vct 0 len))
+	 (out-len (inexact->exact (round (* len (+ 1.0 (* 2 amp))))))
+	 (out-data (make-vct out-len))
+	 (rd (make-src :srate 1.0 
+		       :input (lambda (dir) 
+				(let ((val (if (and (>= i 0) (< i len)) 
+					       (vct-ref in-data i) 
+					       0.0)))
+				  (set! i (+ i dir)) 
+				  val)))))
+    (do ()
+	((or (= i len) (= j out-len)))
+      (vct-set! out-data j (src rd (rand-interp rn)))
+      (set! j (+ j 1)))
+    (vct->samples 0 j out-data)))
 
 ;;; a very similar function uses oscil instead of rand-interp, giving
 ;;; various "Forbidden Planet" sound effects:
 
-(define fp
-  (lambda (sr osamp osfrq)
-    (let* ((os (make-oscil osfrq))
-	   (sr (make-src :srate sr))
-	   (len (frames))
-	   (sf (make-sample-reader))
-	   (out-data (make-vct len)))
-      (vct-map! out-data
-		  (lambda () 
-		    (src sr (* osamp (oscil os))
-			 (lambda (dir)
-			   (if (> dir 0)
-			       (next-sample sf)
-			       (previous-sample sf))))))
-      (free-sample-reader sf)
-      (vct->samples 0 len out-data))))
-
-; (fp 1.0 .3 20)
+(define (fp sr osamp osfrq)
+  "(fp sr osamp osfrq) varies the sampling rate via an oscil: (fp 1.0 .3 20)"
+  (let* ((os (make-oscil osfrq))
+	 (sr (make-src :srate sr))
+	 (len (frames))
+	 (sf (make-sample-reader))
+	 (out-data (make-vct len)))
+    (vct-map! out-data
+	      (lambda () 
+		(src sr (* osamp (oscil os))
+		     (lambda (dir)
+		       (if (> dir 0)
+			   (next-sample sf)
+			   (previous-sample sf))))))
+    (free-sample-reader sf)
+    (vct->samples 0 len out-data)))
 	    
 
 ;;; -------- compand
 
-(define compand
-  (lambda ()
-    (let* ((tbl (vct -1.000 -0.960 -0.900 -0.820 -0.720 -0.600 -0.450 -0.250 
-		     0.000 0.250 0.450 0.600 0.720 0.820 0.900 0.960 1.000)))
-      ;; (we're eye-balling the curve on p55 of Steiglitz's "a DSP Primer")
-      (lambda (inval)
-	(let ((index (+ 8.0 (* 8.0 inval))))
-	  (array-interp tbl index 17))))))
-
-; (map-chan (compand))
+(define (compand)
+  "(compand) returns a compander: (map-chan (compand))"
+  (let* ((tbl (vct -1.000 -0.960 -0.900 -0.820 -0.720 -0.600 -0.450 -0.250 
+		   0.000 0.250 0.450 0.600 0.720 0.820 0.900 0.960 1.000)))
+    ;; (we're eye-balling the curve on p55 of Steiglitz's "a DSP Primer")
+    (lambda (inval)
+      (let ((index (+ 8.0 (* 8.0 inval))))
+	(array-interp tbl index 17)))))
 
 ;;; since there's no state in this function, it can be used without change
 ;;; in any of the mapping functions (unlike echo, for example)
@@ -1132,219 +1077,207 @@ otherwise it moves the cursor to the first offending sample"
 ;;; in this case, src calls granulate which reads the currently selected file.
 ;;; CLM version is in expsrc.ins
 
-(define expsrc
-  (lambda (rate . rest)
-    (let* ((gr (make-granulate :expansion rate))
-	   ;; this can be improved by messing with make-granulate's hop and length args
-	   (sr (make-src :srate rate))
-	   (vsize 1024)
-	   (vbeg 0)
-	   (v (samples->vct 0 vsize))
-	   (snd (if (> (length rest) 0) (car rest) 0))
-	   (chn (if (> (length rest) 1) (cadr rest) 0))
-	   (inctr 0))
-      (lambda (inval)
-	(src sr 0.0
-	     (lambda (dir)
-	       (granulate gr
-			  (lambda (dir)
-			    (let ((val (vct-ref v inctr)))
-			      (set! inctr (+ inctr dir))
-			      (if (>= inctr vsize)
-				  (begin
-				    (set! vbeg (+ vbeg inctr))
-				    (set! inctr 0)
-				    (samples->vct vbeg vsize snd chn v)))
-			      val)))))))))
+(define* (expsrc rate #:optional snd chn)
+  "(expsrc rate #:optional snd chn) uses sampling-rate conversion and granular synthesis \
+to produce a sound at a new pitch but at the original tempo.  It returns a function for map-chan."
+  (let* ((gr (make-granulate :expansion rate))
+	 ;; this can be improved by messing with make-granulate's hop and length args
+	 (sr (make-src :srate rate))
+	 (vsize 1024)
+	 (vbeg 0)
+	 (v (samples->vct 0 vsize))
+	 (inctr 0))
+    (lambda (inval)
+      (src sr 0.0
+	   (lambda (dir)
+	     (granulate gr
+			(lambda (dir)
+			  (let ((val (vct-ref v inctr)))
+			    (set! inctr (+ inctr dir))
+			    (if (>= inctr vsize)
+				(begin
+				  (set! vbeg (+ vbeg inctr))
+				  (set! inctr 0)
+				  (samples->vct vbeg vsize snd chn v)))
+			    val))))))))
 
 ;;; the next (expsnd) changes the tempo according to an envelope; the new duration
 ;;; will depend on the expansion envelope -- we integrate it to get
 ;;; the overall expansion, then use that to decide the new length.
 
-(define expsnd
-  (lambda (gr-env)
-    (define integrate-envelope
-      (lambda (e sum)
-	(if (or (null? e) (null? (cddr e)))
-	    sum
-	    (integrate-envelope (cddr e) (+ sum (* (+ (cadr e) (cadddr e)) .5 (- (caddr e) (car e))))))))
-    (define max-x
-      (lambda (e)
-	(if (null? (cddr e))
-	    (car e)
-	    (max-x (cddr e)))))
-    (let* ((dur (/ (* (/ (frames) (srate)) (integrate-envelope gr-env 0.0)) (max-x gr-env)))
-	   (gr (make-granulate :expansion (cadr gr-env) :jitter 0))
-	   (ge (make-env :envelope gr-env :duration dur))
-	   (sound-len (round (* (srate) dur)))
-	   (len (max sound-len (frames)))
-	   (out-data (make-vct len))
-	   (sf (make-sample-reader)))
-      (vct-map! out-data (lambda ()
-			   (let ((val (granulate gr (lambda (dir) (next-sample sf)))))
-			     (set! (mus-increment gr) (env ge))
-			     val)))
-      (free-sample-reader sf)
-      (vct->samples 0 len out-data))))
+(define (expsnd gr-env)
+  "(expsnd gr-env) uses the granulate generator to change tempo according to an envelope: (expsnd '(0 .5 2 2.0))"
 
-; (expsnd '(0 1 2 .4))
-; (expsnd '(0 .5 2 2.0))
+  (define (integrate-envelope e sum)
+    (if (or (null? e) (null? (cddr e)))
+	sum
+	(integrate-envelope (cddr e) (+ sum (* (+ (cadr e) (cadddr e)) .5 (- (caddr e) (car e)))))))
+  
+  (define (max-x e)
+    (if (null? (cddr e))
+	(car e)
+	(max-x (cddr e))))
+
+  (let* ((dur (/ (* (/ (frames) (srate)) (integrate-envelope gr-env 0.0)) (max-x gr-env)))
+	 (gr (make-granulate :expansion (cadr gr-env) :jitter 0))
+	 (ge (make-env :envelope gr-env :duration dur))
+	 (sound-len (round (* (srate) dur)))
+	 (len (max sound-len (frames)))
+	 (out-data (make-vct len))
+	 (sf (make-sample-reader)))
+    (vct-map! out-data (lambda ()
+			 (let ((val (granulate gr (lambda (dir) (next-sample sf)))))
+			   (set! (mus-increment gr) (env ge))
+			   val)))
+    (free-sample-reader sf)
+    (vct->samples 0 len out-data)))
 
 
 ;;; -------- cross-synthesis
 ;;;
 ;;; CLM version is in clm.html
 
-(define cross-synthesis
-  (lambda (cross-snd amp fftsize r)
-    ;; cross-snd is the index of the other sound (as opposed to the map-chan sound)
-    (let* ((freq-inc (/ fftsize 2))
-	   (fdr (make-vct fftsize))
-	   (fdi (make-vct fftsize))
-	   (spectr (make-vct freq-inc))
-	   (inctr 0)
-	   (ctr freq-inc)
-	   (radius (- 1.0 (/ r fftsize)))
-	   (bin (/ (srate) fftsize))
-	   (formants (make-vector freq-inc)))
-      (do ((i 0 (1+ i)))
-	  ((= i freq-inc))
-	(vector-set! formants i (make-formant radius (* i bin))))
-      (lambda (inval)
-	(let ((outval 0.0))
-	  (if (= ctr freq-inc)
-	      (begin
-		(samples->vct inctr fftsize cross-snd 0 fdr)
-		(set! inctr (+ inctr freq-inc))
-		(spectrum fdr fdi #f fftsize 2)
-		(vct-subtract! fdr spectr)
-		(vct-scale! fdr (/ 1.0 freq-inc))
-		(set! ctr 0)))
-	  (set! ctr (+ ctr 1))
-	  (vct-add! spectr fdr)
-	  (* amp (formant-bank spectr formants inval)))))))
-
-; (map-chan (cross-synthesis 1 .5 128 6.0))
+(define (cross-synthesis cross-snd amp fftsize r)
+  "(cross-synthesis cross-snd amp fftsize r) does cross-synthesis between 'cross-snd' (a sound index) and the currently \
+selected sound: (map-chan (cross-synthesis 1 .5 128 6.0))"
+  (let* ((freq-inc (/ fftsize 2))
+	 (fdr (make-vct fftsize))
+	 (fdi (make-vct fftsize))
+	 (spectr (make-vct freq-inc))
+	 (inctr 0)
+	 (ctr freq-inc)
+	 (radius (- 1.0 (/ r fftsize)))
+	 (bin (/ (srate) fftsize))
+	 (formants (make-vector freq-inc)))
+    (do ((i 0 (1+ i)))
+	((= i freq-inc))
+      (vector-set! formants i (make-formant radius (* i bin))))
+    (lambda (inval)
+      (let ((outval 0.0))
+	(if (= ctr freq-inc)
+	    (begin
+	      (samples->vct inctr fftsize cross-snd 0 fdr)
+	      (set! inctr (+ inctr freq-inc))
+	      (spectrum fdr fdi #f fftsize 2)
+	      (vct-subtract! fdr spectr)
+	      (vct-scale! fdr (/ 1.0 freq-inc))
+	      (set! ctr 0)))
+	(set! ctr (+ ctr 1))
+	(vct-add! spectr fdr)
+	(* amp (formant-bank spectr formants inval))))))
 
 ;;; similar ideas can be used for spectral cross-fades, etc -- for example:
 
-(define voiced->unvoiced
-  (lambda (amp fftsize r tempo)
-    (let* ((freq-inc (/ fftsize 2))
-	   (fdr (make-vct fftsize))
-	   (fdi (make-vct fftsize))
-	   (spectr (make-vct freq-inc))
-	   (noi (make-rand (/ (srate) 3)))
-	   (inctr 0)
-	   (ctr freq-inc)
-	   (radius (- 1.0 (/ r fftsize)))
-	   (bin (/ (srate) fftsize))
-	   (len (frames))
-	   (outlen (inexact->exact (/ len tempo)))
-	   (hop (inexact->exact (* freq-inc tempo)))
-	   (out-data (make-vct (max len outlen)))
-	   (formants (make-vector freq-inc))
-	   (old-peak-amp 0.0)
-	   (new-peak-amp 0.0))
-      (do ((i 0 (1+ i)))
-	  ((= i freq-inc))
-	(vector-set! formants i (make-formant radius (* i bin))))
-      (call-with-current-continuation ; setup non-local exit (for C-g interrupt)
-       (lambda (break)                ;   now (break value) will exit the call/cc returning value
-	 (do ((k 0 (1+ k)))           ; this is our actual loop 
-	     ((= k outlen))
-	   (let ((outval 0.0))
-	     (if (= ctr freq-inc)
-		 (begin
-		  (if (c-g?)               ; let interface run
-		      (break "interrupted")) ;   if C-g exit the loop returning the string "interrupted"
-		  (samples->vct inctr fftsize 0 0 fdr)
-		  (let ((pk (vct-peak fdr)))
-		    (if (> pk old-peak-amp) (set! old-peak-amp pk)))
-		  (spectrum fdr fdi #f fftsize 2)
-		  (set! inctr (+ hop inctr))
-		  (vct-subtract! fdr spectr)
-		  (vct-scale! fdr (/ 1.0 freq-inc))
-		  (set! ctr 0)))
-	     (set! ctr (+ ctr 1))
-	     (vct-add! spectr fdr)
-	     (set! outval (formant-bank spectr formants (rand noi)))
-	     (if (> (abs outval) new-peak-amp) (set! new-peak-amp (abs outval)))
-	     (vct-set! out-data k outval)))
-	 (vct-scale! out-data (* amp (/ old-peak-amp new-peak-amp)))
-	 (vct->samples 0 (max len outlen) out-data)
-	 (play-and-wait))))))
+(define (voiced->unvoiced amp fftsize r tempo)
+  "(voiced->unvoiced amp fftsize r tempo) turns a vocal sound into whispering: (voiced->unvoiced 1.0 256 2.0 2.0)"
+  (let* ((freq-inc (/ fftsize 2))
+	 (fdr (make-vct fftsize))
+	 (fdi (make-vct fftsize))
+	 (spectr (make-vct freq-inc))
+	 (noi (make-rand (/ (srate) 3)))
+	 (inctr 0)
+	 (ctr freq-inc)
+	 (radius (- 1.0 (/ r fftsize)))
+	 (bin (/ (srate) fftsize))
+	 (len (frames))
+	 (outlen (inexact->exact (/ len tempo)))
+	 (hop (inexact->exact (* freq-inc tempo)))
+	 (out-data (make-vct (max len outlen)))
+	 (formants (make-vector freq-inc))
+	 (old-peak-amp 0.0)
+	 (new-peak-amp 0.0))
+    (do ((i 0 (1+ i)))
+	((= i freq-inc))
+      (vector-set! formants i (make-formant radius (* i bin))))
+    (call-with-current-continuation ; setup non-local exit (for C-g interrupt)
+     (lambda (break)                ;   now (break value) will exit the call/cc returning value
+       (do ((k 0 (1+ k)))           ; this is our actual loop 
+	   ((= k outlen))
+	 (let ((outval 0.0))
+	   (if (= ctr freq-inc)
+	       (begin
+		 (if (c-g?)               ; let interface run
+		     (break "interrupted")) ;   if C-g exit the loop returning the string "interrupted"
+		 (samples->vct inctr fftsize 0 0 fdr)
+		 (let ((pk (vct-peak fdr)))
+		   (if (> pk old-peak-amp) (set! old-peak-amp pk)))
+		 (spectrum fdr fdi #f fftsize 2)
+		 (set! inctr (+ hop inctr))
+		 (vct-subtract! fdr spectr)
+		 (vct-scale! fdr (/ 1.0 freq-inc))
+		 (set! ctr 0)))
+	   (set! ctr (+ ctr 1))
+	   (vct-add! spectr fdr)
+	   (set! outval (formant-bank spectr formants (rand noi)))
+	   (if (> (abs outval) new-peak-amp) (set! new-peak-amp (abs outval)))
+	   (vct-set! out-data k outval)))
+       (vct-scale! out-data (* amp (/ old-peak-amp new-peak-amp)))
+       (vct->samples 0 (max len outlen) out-data)
+       (play-and-wait)))))
 
-;;; this example also shows how to let the rest of Snd run during a long computation,
-;;;  and a simple way to jump out of a loop if C-g is typed.
-; (voiced->unvoiced 1.0 256 2.0 2.0)
 
 
 
 ;;; -------- convolution example
 
-(define cnvtest
-  ;; returns new max sample
-  (lambda (snd0 snd1 amp)
-    (let* ((flt-len (frames snd0))
-	   (total-len (+ flt-len (frames snd1)))
-	   (cnv (make-convolve :filter (samples->vct 0 flt-len snd0)))
-	   (sf (make-sample-reader 0 snd1))
-	   (out-data (make-vct total-len)))
-      (vct-map! out-data (lambda () (convolve cnv (lambda (dir) (next-sample sf)))))
-      (free-sample-reader sf)
-      (vct-scale! out-data amp)
-      (let ((max-samp (vct-peak out-data)))
-	(vct->samples 0 total-len out-data snd1)
-	(if (> max-samp 1.0) (set! (y-bounds snd1) (list (- max-samp) max-samp)))
-	max-samp))))
-
-; (cnvtest 0 1 .1)
+(define (cnvtest snd0 snd1 amp)
+  "(cnvtest snd0 snd1 amp) convolves snd0 and snd1, scaling by amp, returns new max amp: (cnvtest 0 1 .1)"
+  (let* ((flt-len (frames snd0))
+	 (total-len (+ flt-len (frames snd1)))
+	 (cnv (make-convolve :filter (samples->vct 0 flt-len snd0)))
+	 (sf (make-sample-reader 0 snd1))
+	 (out-data (make-vct total-len)))
+    (vct-map! out-data (lambda () (convolve cnv (lambda (dir) (next-sample sf)))))
+    (free-sample-reader sf)
+    (vct-scale! out-data amp)
+    (let ((max-samp (vct-peak out-data)))
+      (vct->samples 0 total-len out-data snd1)
+      (if (> max-samp 1.0) (set! (y-bounds snd1) (list (- max-samp) max-samp)))
+      max-samp)))
 
 
 ;;; -------- reverb (1-channel in this example)
 ;;;
 ;;; CLM version is jcrev.ins
 
-(define jc-reverb
-  (lambda (decay-dur low-pass volume amp-env)
-    (let* ((allpass1 (make-all-pass -0.700 0.700 1051))
-	   (allpass2 (make-all-pass -0.700 0.700  337))
-	   (allpass3 (make-all-pass -0.700 0.700  113))
-	   (comb1 (make-comb 0.742 4799))
-	   (comb2 (make-comb 0.733 4999))
-	   (comb3 (make-comb 0.715 5399))
-	   (comb4 (make-comb 0.697 5801))
-	   (outdel1 (make-delay (round (* .013 (srate)))))
-	   (comb-sum 0.0)
-	   (comb-sum-1 0.0)
-	   (comb-sum-2 0.0)
-	   (all-sums 0.0)
-	   (delA 0.0)
-	   (delB 0.0)
-	   (dur (+ decay-dur (/ (frames) (srate))))
-	   (envA (if amp-env (make-env :envelope amp-env :scaler volume :duration dur) #f))
-	   (len (round (* dur (srate)))))
-      (map-chan
-       (lambda (inval)
-	 (let ((allpass-sum (all-pass allpass3 (all-pass allpass2 (all-pass allpass1 inval)))))
-	   (set! comb-sum-2 comb-sum-1)
-	   (set! comb-sum-1 comb-sum)
-	   (set! comb-sum 
-		 (+ (comb comb1 allpass-sum)
-		    (comb comb2 allpass-sum)
-		    (comb comb3 allpass-sum)
-		    (comb comb4 allpass-sum)))
-	   (if low-pass
-	       (set! all-sums (+ (* .25 (+ comb-sum comb-sum-2)) (* .5 comb-sum-1)))
-	       (set! all-sums comb-sum))
-	   (+ inval
-	      (if envA
-		  (* (env envA) (delay outdel1 all-sums))
-		  (* volume (delay outdel1 all-sums))))))
-       0 (round (* dur (srate)))))))
+(define (jc-reverb decay-dur low-pass volume amp-env)
+  "(jc-reverb decay-dur low-pass volume amp-env) is the old Chowning reverberator: (jc-reverb 2.0 #f .1 #f)"
+  (let* ((allpass1 (make-all-pass -0.700 0.700 1051))
+	 (allpass2 (make-all-pass -0.700 0.700  337))
+	 (allpass3 (make-all-pass -0.700 0.700  113))
+	 (comb1 (make-comb 0.742 4799))
+	 (comb2 (make-comb 0.733 4999))
+	 (comb3 (make-comb 0.715 5399))
+	 (comb4 (make-comb 0.697 5801))
+	 (outdel1 (make-delay (round (* .013 (srate)))))
+	 (comb-sum 0.0)
+	 (comb-sum-1 0.0)
+	 (comb-sum-2 0.0)
+	 (all-sums 0.0)
+	 (delA 0.0)
+	 (delB 0.0)
+	 (dur (+ decay-dur (/ (frames) (srate))))
+	 (envA (if amp-env (make-env :envelope amp-env :scaler volume :duration dur) #f))
+	 (len (round (* dur (srate)))))
+    (map-chan
+     (lambda (inval)
+       (let ((allpass-sum (all-pass allpass3 (all-pass allpass2 (all-pass allpass1 inval)))))
+	 (set! comb-sum-2 comb-sum-1)
+	 (set! comb-sum-1 comb-sum)
+	 (set! comb-sum 
+	       (+ (comb comb1 allpass-sum)
+		  (comb comb2 allpass-sum)
+		  (comb comb3 allpass-sum)
+		  (comb comb4 allpass-sum)))
+	 (if low-pass
+	     (set! all-sums (+ (* .25 (+ comb-sum comb-sum-2)) (* .5 comb-sum-1)))
+	     (set! all-sums comb-sum))
+	 (+ inval
+	    (if envA
+		(* (env envA) (delay outdel1 all-sums))
+		(* volume (delay outdel1 all-sums))))))
+     0 (round (* dur (srate))))))
 
-; (jc-reverb 2.0 #f .1 #f)
 
 
 ;;; -------- scissor-tailed flycatcher
@@ -1352,54 +1285,51 @@ otherwise it moves the cursor to the first offending sample"
 ;;; mix a scissor-tailed flycatcher call into the current sound
 ;;; see bird.scm for lots more birds
 
-(define bigbird
-  (lambda (start dur frequency freqskew amplitude
+(define (bigbird start dur frequency freqskew amplitude
 		 freq-envelope amp-envelope partials
 		 lpcoeff)
-    (define sum-partials
-      (lambda (lst sum)
-	(if (null? lst)
-	    sum
-	    (sum-partials (cddr lst) (+ sum (cadr lst))))))
+  (define sum-partials
+    (lambda (lst sum)
+      (if (null? lst)
+	  sum
+	  (sum-partials (cddr lst) (+ sum (cadr lst))))))
+  
+  (define scale-partials
+    (lambda (lst scl newlst)
+      (if (null? lst)
+	  newlst
+	  (scale-partials (cddr lst) scl (append newlst (list (car lst) (* scl (cadr lst))))))))
+  
+  (define normalize-partials
+    (lambda (lst)
+      (scale-partials lst (/ 1.0 (sum-partials lst 0.0)) '())))
+  
+  (let* ((gls-env (make-env freq-envelope (hz->radians freqskew) dur))
+	 (os (make-oscil :frequency frequency))
+	 (fil (make-one-pole lpcoeff (- 1.0 lpcoeff)))
+	 (coeffs (partials->polynomial (normalize-partials partials)))
+	 (amp-env (make-env amp-envelope amplitude dur))
+	 (len (round (* (srate) dur)))
+	 (beg (round (* (srate) start)))
+	 (sf (make-sample-reader beg))
+	 (out-data (make-vct len)))
+    (vct-map! out-data
+	      (lambda ()
+		(+ (next-sample sf)
+		   (one-pole fil (* (env amp-env)
+				    (polynomial coeffs
+						(oscil os (env gls-env))))))))
+    (free-sample-reader sf)
+    (vct->samples beg len out-data)))
 
-    (define scale-partials
-      (lambda (lst scl newlst)
-	(if (null? lst)
-	    newlst
-	    (scale-partials (cddr lst) scl (append newlst (list (car lst) (* scl (cadr lst))))))))
-
-    (define normalize-partials
-      (lambda (lst)
-	(scale-partials lst (/ 1.0 (sum-partials lst 0.0)) '())))
-
-    (let* ((gls-env (make-env freq-envelope (hz->radians freqskew) dur))
-	   (os (make-oscil :frequency frequency))
-	   (fil (make-one-pole lpcoeff (- 1.0 lpcoeff)))
-	   (coeffs (partials->polynomial (normalize-partials partials)))
-	   (amp-env (make-env amp-envelope amplitude dur))
-	   (len (round (* (srate) dur)))
-	   (beg (round (* (srate) start)))
-	   (sf (make-sample-reader beg))
-	   (out-data (make-vct len)))
-      (vct-map! out-data
-		(lambda ()
-		  (+ (next-sample sf)
-		     (one-pole fil (* (env amp-env)
-				      (polynomial coeffs
-						  (oscil os (env gls-env))))))))
-      (free-sample-reader sf)
-      (vct->samples beg len out-data))))
-
-(define scissor
-  (lambda (begin-time)
-    (let ((scissorf '(0 0  40 1  60 1  100 0)))
-      (bigbird begin-time 0.05 1800 1800 .2 
-	       scissorf 
-	       '(0 0  25 1  75 1  100 0) 
-	       '(1 .5  2 1  3 .5  4 .1  5 .01)
-	       1.0))))
-
-; (scissor 2.0)
+(define (scissor begin-time)
+  "(scissor beg) is the scissor-tailed flycatcher"
+  (let ((scissorf '(0 0  40 1  60 1  100 0)))
+    (bigbird begin-time 0.05 1800 1800 .2 
+	     scissorf 
+	     '(0 0  25 1  75 1  100 0) 
+	     '(1 .5  2 1  3 .5  4 .1  5 .01)
+	     1.0)))
 
 
 ;;; -------- fm-violin
@@ -1553,133 +1483,6 @@ otherwise it moves the cursor to the first offending sample"
 ; (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)
 
 
-;;; -------- phase vocoder --------
-;;;
-;;; this is a translation of Michael Klingbeil's pvoc.ins in CLM
-;;;   see pvoc.scm for a generator-oriented version
-
-(define ifloor (lambda (n) (inexact->exact (floor n))))
-(define pi 3.141592653589793)
-
-(define pvoc
-  (lambda* (#:key
-	   (fftsize 512) (overlap 4) (time 1.0)
-	   (pitch 1.0) (gate 0.0) (hoffset 0.0)
-	   (snd 0) (chn 0))
-    "(pvoc &key fftsize overlap time pitch gate hoffset) applies the phase vocoder
-  algorithm to the current sound (i.e. fft analysis, oscil bank resynthesis). 'pitch'
-  specifies the pitch transposition ratio, 'time' - specifies the time dilation ratio,
-  'gate' specifies a resynthesis gate in dB (partials with amplitudes lower than
-  the gate value will not be synthesized), 'hoffset is a pitch offset in Hz."
-    (let* ((len (frames))
-	   (filptr 0)           ; index into the file
-	   (pi2 (* 2 pi))       ; handy constant
-	   (sr (srate))
-	   (N fftsize)          ; fft size
-	   (N2 (ifloor (/ N 2)))  ;; half the fft size
-	   (Nw fftsize) ;; window size -- currently restricted to the fftsize
-	   (D (ifloor (/ fftsize overlap))) ; decimation factor (how often do we take an fft)
-	   (interp (* (ifloor (/ fftsize overlap)) time)) ; interpolation factor how often do we synthesize
-	   ;; take a resynthesis gate specificed in dB, convert to linear amplitude
-	   (syngate (if (= 0.0 gate) 0.0 (expt 10 (/ (- (abs gate)) 20))))
-	   (poffset (hz->radians hoffset))
-	   (window (make-fft-window hamming-window fftsize))
-	   (fdr (make-vct N))     ; buffer for real fft data
-	   (fdi (make-vct N))     ; buffer for imaginary fft data
-	   (lastphase (make-vct N2)) ;; last phase change
-	   (lastamp (make-vct N2)) ;; last sampled amplitude
-	   (lastfreq (make-vct N2)) ;; last sampled frequency
-	   (ampinc (make-vct N2)) ;; amplitude interpolation increment
-	   (freqinc (make-vct N2)) ;; frequency interpolation increments
-	   ;; expresses the fundamental in terms of radians per output sample
-	   (fundamental (/ pi2 N))
-	   (output interp)      ; count of samples that have been output
-	   (resynth-oscils (make-vector N2))  ; synthesis oscillators
-	   (nextpct 10.0)       ; how often to print out the percentage complete message
-	   (outlen (ifloor (* time len)))
-	   (out-data (make-vct (max len outlen)))
-	   (in-data (samples->vct 0 (* N 2) snd chn))
-	   (in-data-beg 0))
-      ;; setup oscillators
-      (do ((i 0 (1+ i)))
-	  ((= i N2))
-	(vector-set! resynth-oscils i (make-oscil :frequency 0)))
-      (vct-scale! window (/ 2.0 (* 0.54 fftsize))) ;den = hamming window integrated
-      (call-with-current-continuation
-       (lambda (break)
-	 (do ((i 0 (1+ i)))
-	     ((>= i outlen))
-	   ;; begin the master run loop
-	   (if (>= output interp) ;; if all the samples have been output then do the next frame
-	       (let ((buffix (modulo filptr N)))
-					; buffix is the index into the input buffer
-					; it wraps around circularly as time increases in the input
-		 (if (c-g?) (break "interrupted"))
-		 (set! output 0)       ; reset the output sample counter
-		 ;; save the old amplitudes and frequencies
-		 (vct-fill! lastamp 0.0)
-		 (vct-fill! lastfreq 0.0)
-		 (vct-add! lastamp fdr)
-		 (vct-add! lastfreq fdi)
-		 (do ((k 0 (1+ k)))
-		     ((= k N))
-		   ;; apply the window and then stuff into the input array
-		   (vct-set! fdr buffix (* (vct-ref window k) (vct-ref in-data (- filptr in-data-beg))))
-		   (set! filptr (1+ filptr))
-		   ;; increment the buffer index with wrap around
-		   (set! buffix (1+ buffix))
-		   (if (>= buffix N) (set! buffix 0)))
-		 ;; rewind the file for the next hop
-		 (set! filptr (- filptr (- N D)))
-		 (if (> filptr (+ in-data-beg N))
-		     (begin
-		       (set! in-data-beg filptr)
-		       (samples->vct in-data-beg (* N 2) snd chn in-data)))
-		 ;; no imaginary component input so zero out fdi
-		 (vct-fill! fdi 0.0)
-		 ;; compute the fft
-		 (mus-fft fdr fdi N 1)
-		 ;; now convert into magnitude and interpolated frequency
-		 (do ((k 0 (1+ k)))
-		     ((= k N2))
-		   (let* ((a (vct-ref fdr k))
-			  (b (vct-ref fdi k))
-			  (mag (* (sqrt (+ (* a a) (* b b)))))
-			  (phase 0)
-			  (phasediff 0))
-		     (vct-set! fdr k mag)    ;; current amp stored in fdr
-		     ;; mag is always positive
-		     ;; if it is zero then the phase difference is zero
-		     (if (> mag 0)
-			 (begin
-			  (set! phase (- (atan b a)))
-			  (set! phasediff (- phase (vct-ref lastphase k)))
-			  (vct-set! lastphase k phase)
-			  ;; frequency wrapping from Moore p. 254
-			  (if (> phasediff pi) (do () ((<= phasediff pi)) (set! phasediff (- phasediff pi2))))
-			  (if (< phasediff (- pi)) (do () ((>= phasediff (- pi))) (set! phasediff (+ phasediff pi2))))))
-		     ;; current frequency stored in fdi
-		     ;; scale by the pitch transposition
-		     (vct-set! fdi k 
-			       (* pitch (+ (/ (* phasediff sr) (* D sr))
-					   (* k fundamental)
-					   poffset)))
-		     ;; resynthesis gating
-		     (if (< (vct-ref fdr k) syngate) (vct-set! fdr k 0.0))
-		     ;; take (vct-ref lastamp k) and count up to (vct-ref fdr k)
-		     ;; interpolating by ampinc
-		     (vct-set! ampinc k (/ (- (vct-ref fdr k) (vct-ref lastamp k)) interp))
-		     ;; take (vct-ref lastfreq k) and count up to (vct-ref fdi k)
-		     ;; interpolating by freqinc
-		     (vct-set! freqinc k (/ (- (vct-ref fdi k) (vct-ref lastfreq k)) interp))))))
-	   ;; loop over the partials interpolate frequency and amplitude
-	   (vct-add! lastamp ampinc)
-	   (vct-add! lastfreq freqinc)
-	   (vct-set! out-data i (oscil-bank lastamp resynth-oscils lastfreq))
-	   (set! output (1+ output)))
-	 (vct->samples 0 (max len outlen) out-data))))))
-
-
 
 ;;; -------- time varying FIR filter
 
@@ -1716,35 +1519,33 @@ otherwise it moves the cursor to the first offending sample"
 
 
 
-
 ;;; -------- swap selection chans
 
-(define swap-selection-channels 
-  (lambda ()
-    "(swap-selection-channels) swaps the currently selected data's channels"
-    (define find-selection-sound 
-      (lambda (not-this)
-	(catch 'return ; could also use call-with-current-continuation
-	  (lambda ()
-	    (apply map (lambda (snd chn)
-			 (if (and (selection-member? snd chn)
-				  (or (null? not-this)
-				      (not (= snd (car not-this)))
-				      (not (= chn (cadr not-this)))))
-			     (throw 'return (list snd chn))))
-		  (all-chans)))
-	  (lambda (tag val) val))))
-    (if (selection?)
-	(if (= (selection-chans) 2)
-	    (let* ((beg (selection-position))
-		   (len (selection-length))
-		   (snd-chn0 (find-selection-sound '()))
-		   (snd-chn1 (find-selection-sound snd-chn0)))
-	      (if snd-chn1
-		  (swap-channels (car snd-chn0) (cadr snd-chn0) (car snd-chn1) (cadr snd-chn1) beg len)
-		  (report-in-minubuffer "swap-selection-channels needs two channels two swap")))
-	    (report-in-minibuffer "swap-selection-channels needs a stereo selection"))
-	(report-in-minibuffer "no active selection"))))
+(define (swap-selection-channels)
+  "(swap-selection-channels) swaps the currently selected data's channels"
+  (define find-selection-sound 
+    (lambda (not-this)
+      (catch 'return ; could also use call-with-current-continuation
+	     (lambda ()
+	       (apply map (lambda (snd chn)
+			    (if (and (selection-member? snd chn)
+				     (or (null? not-this)
+					 (not (= snd (car not-this)))
+					 (not (= chn (cadr not-this)))))
+				(throw 'return (list snd chn))))
+		      (all-chans)))
+	     (lambda (tag val) val))))
+  (if (selection?)
+      (if (= (selection-chans) 2)
+	  (let* ((beg (selection-position))
+		 (len (selection-length))
+		 (snd-chn0 (find-selection-sound '()))
+		 (snd-chn1 (find-selection-sound snd-chn0)))
+	    (if snd-chn1
+		(swap-channels (car snd-chn0) (cadr snd-chn0) (car snd-chn1) (cadr snd-chn1) beg len)
+		(throw 'wrong-number-of-channels (list "swap-selection-channels" "needs two channels to swap"))))
+	  (throw 'wrong-number-of-channels (list "swap-selection-channels" "needs a stereo selection")))
+      (throw 'no-active-selection (list "swap-selection-channels"))))
 
 
 ;;; -------- sound interp
@@ -1782,6 +1583,7 @@ otherwise it moves the cursor to the first offending sample"
     "(sound-interp func loc) -> sample at loc (interpolated if necessary) from func created by make-sound-interp"
     (func loc)))
 
+#!
 (define test-interp
   (lambda (freq)
     ;; use a sine wave to lookup the current sound
@@ -1792,6 +1594,7 @@ otherwise it moves the cursor to the first offending sample"
 		  (sound-interp reader (* len (+ 0.5 (* 0.5 (oscil osc))))))))))
 
 ;;; (test-interp 0.5)
+!#
 
 ;; env-sound-interp takes an envelope that goes between 0 and 1 (y-axis), and a time-scaler
 ;;   (1.0 = original length) and returns a new version of the data in the specified channel
@@ -1845,69 +1648,19 @@ otherwise it moves the cursor to the first offending sample"
 
 (define retitle-time (* 60 1000)) ;once a minute
 
-(define title-with-date
-  (lambda ()
-    (let ((names (short-file-name #t)))
-      (change-property "SND_VERSION" "WM_NAME"
-		       (format #f "snd (~A)~A"
-			       (strftime "%d-%b %H:%M %Z" (localtime (current-time)))
-			       (if (null? names)
-				   ""
-				   (format #f ":~{~A~^, ~}" names))))
-      (if (> retitle-time 0)
-	  (in retitle-time title-with-date)))))
+(define (title-with-date)
+  "(title-with-date) causes Snd's main window to display the time of day.  To turn off \
+this clock, set retitle-time to 0"
+  (let ((names (short-file-name #t)))
+    (change-property "SND_VERSION" "WM_NAME"
+		     (format #f "snd (~A)~A"
+			     (strftime "%d-%b %H:%M %Z" (localtime (current-time)))
+			     (if (null? names)
+				 ""
+				 (format #f ":~{~A~^, ~}" names))))
+    (if (> retitle-time 0)
+	(in retitle-time title-with-date))))
 
-;(title-with-date)
-;  -- this line starts the new window title handler which runs until Snd is exited or retitle-time is set to 0
-
-
-;;; -------- with-sound for Snd!
-;;;
-;;; this is just a bare beginning, but it's the basic idea...
-;;;
-;;; in Common Lisp this is essentially
-;;;    (defmacro with-sound ((&key (srate 22050) ...) &body body) (let (...) ,.body))
-;;; so that a call looks like 
-;;;    (with-sound (:srate 44100) (fm-violin 0 1 440 .1))
-
-(defmacro with-sound (args . body) 
-  `((lambda* (#:key (srate 22050)
-		    (output "test.snd")
-		    (channels 1)
-		    (explode #f))
-      (let ((old-srate (mus-srate)))
-	(dynamic-wind
-	 (lambda ()
-	   (set! (mus-srate) srate))
-	 (lambda () 
-	   (if (find-sound output) (close-sound (find-sound output)))
-	   (new-sound output (default-output-type) (default-output-format) srate channels)
-	   ,@body)
-	 (lambda ()
-	   (set! (mus-srate) old-srate)))))
-    ,@args))
-
-;;; now instrument calls (outa etc) need to write (mix) to the currently selected sounds,
-;;;   or to a newly opened sound
-
-;;; here's a better version courtesy of Kalle Olavi Niemitalo
-;;; but it doesn't seem to work in Guile 1.4 (it needs 1.4.1)
-;;;
-;;;(define* (with-sound-helper thunk #:key (srate 22050) (explode #f))
-;;;  (let ((old-srate (mus-srate)))
-;;;    (dynamic-wind (lambda () (set! (mus-srate) srate))
-;;;                  thunk
-;;;                  (lambda () (set! (mus-srate) old-srate)))))
-;;;
-;;;(defmacro with-sound (args . body)
-;;;  `(with-sound-helper (lambda () ,@body)
-;;;                      ,@args))
-;;;
-;;; see ws.scm for an elaboration of this version.
-;;;
-;;; this could save (current-load-port) somewhere, and if it's not #f, report
-;;;   port-filename and port-line on it in case of error (since backtrace sometimes
-;;;   seems to get confused)
 
 
 ;;; -------- how to get 'display' to write to Snd's listener
@@ -1941,11 +1694,10 @@ otherwise it moves the cursor to the first offending sample"
 ;;;  translated from CLM's pluck.ins
 
 (define (pluck start dur freq amp weighting lossfact)
-
-  ;; DAJ explains weighting and lossfact as follows:
-  ;; weighting is the ratio of the once-delayed to the twice-delayed samples.  It defaults to .5=shortest decay.
-  ;;     anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
-  ;; lossfact can be used to shorten decays.  Most useful values are between .8 and 1.0.
+  "(pluck start dur freq amp weighting lossfact) implements the Jaffe-Smith plucked string physical model. \
+'weighting' is the ratio of the once-delayed to the twice-delayed samples.  It defaults to .5=shortest decay. \
+Anything other than .5 = longer decay.  Must be between 0 and less than 1.0. \
+'lossfact' can be used to shorten decays.  Most useful values are between .8 and 1.0. (pluck .01 1 330 .3 .96 0 0 0)"
 
   (define (getOptimumC S o p)
     (let* ((pa (* (/ 1.0 o) (atan (* S (sin o)) (+ (- 1.0 S) (* S (cos o))))))
@@ -2004,7 +1756,6 @@ otherwise it moves the cursor to the first offending sample"
     (mix-vct out-data beg #f 0 #f)
     (update-time-graph)))
 
-;(pluck .01 1 330 .3 .96 0 0 0)
 
 
 ;;; -------- mlbvoi
@@ -2249,10 +2000,9 @@ otherwise it moves the cursor to the first offending sample"
 ;;; -------- View: Files dialog chooses which sound is displayed
 ;;;
 ;;; by Anders Vinjar
-;;;
-;;; this hides all sounds but the one the mouse touched in the current files list
 
 (define (files-popup-buffer type position name)
+  "(files-popup-buffer type position name) hides all sounds but the one the mouse touched in the current files list. Use with mouse-enter-label-hook"
   (let ((snd (find-sound name)))
     (if snd
 	(let* ((curr-buffer (max 0 (selected-sound)))
@@ -2372,6 +2122,7 @@ otherwise it moves the cursor to the first offending sample"
 ;;; -------- remove-clicks 
 
 (define (find-click loc)
+  "(find-click loc) finds the next click starting at 'loc'"
   (let ((reader (make-sample-reader loc))
 	(samp0 0.0)
 	(samp1 0.0)
@@ -2411,7 +2162,7 @@ otherwise it moves the cursor to the first offending sample"
 ;;; -------- searching examples (zero+, next-peak)
 
 (define (search-for-click)
-  ;; basically the same as find-click, but set up for C-s
+  "(search-for-click) looks for the next click (for use with C-s)"
   (let ((samp0 0.0)
 	(samp1 0.0)
 	(samp2 0.0)
@@ -2432,7 +2183,7 @@ otherwise it moves the cursor to the first offending sample"
 	    #f)))))
 
 (define (zero+)
-  ;; find next positive-going zero crossing (if searching forward)
+  "(zero+) finds the next positive-going zero crossing (if searching forward) (for use with C-s)"
   (let ((lastn 0.0))
     (lambda (n)
       (let ((rtn (and (< lastn 0.0)
@@ -2442,7 +2193,7 @@ otherwise it moves the cursor to the first offending sample"
 	rtn))))
 
 (define (next-peak)
-  ;; find next max or min
+  "(next-peak) finds the next max or min point in the time-domain waveform (for use with C-s)"
   (let ((last0 #f)
 	(last1 #f))
     (lambda (n)
@@ -2455,8 +2206,8 @@ otherwise it moves the cursor to the first offending sample"
 	rtn))))
 
 (define (find-pitch pitch)
-  ;; find point in sound where pitch (in Hz) predominates -- C-s (find-pitch 300)
-  ;;   in most cases, this will be slightly offset from the true beginning of the note
+  "(find-pitch pitch) finds the point in the current sound where 'pitch' (in Hz) predominates -- C-s (find-pitch 300) \
+In most cases, this will be slightly offset from the true beginning of the note"
   (define (interpolated-peak-offset la ca ra)
     (let* ((pk (+ .001 (max la ca ra)))
 	   (logla (/ (log (/ (max la .0000001) pk)) (log 10)))
@@ -2521,7 +2272,6 @@ otherwise it moves the cursor to the first offending sample"
 
 (define (file->vct file)
   "(file->vct file) returns a vct with file's data"
-  ;; should probably save these somewhere
   (let* ((len (mus-sound-frames file))
 	 (reader (make-sample-reader 0 file))
 	 (data (make-vct len)))
@@ -2532,9 +2282,8 @@ otherwise it moves the cursor to the first offending sample"
     data))
 
 (define (add-notes notes)
-  ;; adds (mixes) notes which is a list of lists of the form
-  ;;   file &optional (offset 0.0) (amp 1.0)
-  ;; starting at the cursor in the currently selected channel
+  "(add-notes notes) adds (mixes) 'notes' which is a list of lists of the form: file &optional (offset 0.0) (amp 1.0) \
+starting at the cursor in the currently selected channel: (add-notes '(("oboe.snd") ("pistol.snd" 1.0 2.0)))"
   (let* ((snd (selected-sound))
 	 (chn (selected-channel))
 	 (start (cursor snd chn)))
@@ -2552,12 +2301,9 @@ otherwise it moves the cursor to the first offending sample"
 		(mix file beg 0 snd chn #f))))
 	notes)))))
 
-;(add-notes '(("oboe.snd") ("pistol.snd" 1.0 2.0)))
-
-;;; or maybe "cue-list" means something like this:
-
 (define (region-play-list data)
-  ;; data is list of lists (list (list time reg)...), time in secs
+  "(region-play-list data): 'data' is list of lists (list (list time reg)...), time in secs, setting up \
+a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0 2) (list 1.0 0)))"
   (for-each
    (lambda (tone)
      (let ((time (inexact->exact (* 1000 (car tone))))
@@ -2566,11 +2312,8 @@ otherwise it moves the cursor to the first offending sample"
 	   (in time (lambda () (play-region region))))))
    data))
 
-;(region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0 2) (list 1.0 0)))
-
 (define (region-play-sequence data)
-  ;; data is list of region ids which will be played one after the other
-  ;; (region-play-sequence '(0 2 1))
+  "(region-play-sequence data): 'data' is list of region ids which will be played one after the other: (region-play-sequence '(0 2 1))"
   (region-play-list
    (let ((time 0.0))
      (map 

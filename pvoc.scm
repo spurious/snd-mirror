@@ -222,3 +222,130 @@
 				      (next-sample reader)))))
       (free-sample-reader reader))))
 !#
+
+
+;;; -------- another version of the phase vocoder --------
+
+(define pvoc
+  (lambda* (#:key
+	   (fftsize 512) (overlap 4) (time 1.0)
+	   (pitch 1.0) (gate 0.0) (hoffset 0.0)
+	   (snd 0) (chn 0))
+    "(pvoc &key fftsize overlap time pitch gate hoffset) applies the phase vocoder
+  algorithm to the current sound (i.e. fft analysis, oscil bank resynthesis). 'pitch'
+  specifies the pitch transposition ratio, 'time' - specifies the time dilation ratio,
+  'gate' specifies a resynthesis gate in dB (partials with amplitudes lower than
+  the gate value will not be synthesized), 'hoffset is a pitch offset in Hz."
+
+    (define ifloor (lambda (n) (inexact->exact (floor n))))
+
+    (let* ((pi 3.141592653589793)
+	   (len (frames))
+	   (filptr 0)           ; index into the file
+	   (pi2 (* 2 pi))       ; handy constant
+	   (sr (srate))
+	   (N fftsize)          ; fft size
+	   (N2 (ifloor (/ N 2)))  ;; half the fft size
+	   (Nw fftsize) ;; window size -- currently restricted to the fftsize
+	   (D (ifloor (/ fftsize overlap))) ; decimation factor (how often do we take an fft)
+	   (interp (* (ifloor (/ fftsize overlap)) time)) ; interpolation factor how often do we synthesize
+	   ;; take a resynthesis gate specificed in dB, convert to linear amplitude
+	   (syngate (if (= 0.0 gate) 0.0 (expt 10 (/ (- (abs gate)) 20))))
+	   (poffset (hz->radians hoffset))
+	   (window (make-fft-window hamming-window fftsize))
+	   (fdr (make-vct N))     ; buffer for real fft data
+	   (fdi (make-vct N))     ; buffer for imaginary fft data
+	   (lastphase (make-vct N2)) ;; last phase change
+	   (lastamp (make-vct N2)) ;; last sampled amplitude
+	   (lastfreq (make-vct N2)) ;; last sampled frequency
+	   (ampinc (make-vct N2)) ;; amplitude interpolation increment
+	   (freqinc (make-vct N2)) ;; frequency interpolation increments
+	   ;; expresses the fundamental in terms of radians per output sample
+	   (fundamental (/ pi2 N))
+	   (output interp)      ; count of samples that have been output
+	   (resynth-oscils (make-vector N2))  ; synthesis oscillators
+	   (nextpct 10.0)       ; how often to print out the percentage complete message
+	   (outlen (ifloor (* time len)))
+	   (out-data (make-vct (max len outlen)))
+	   (in-data (samples->vct 0 (* N 2) snd chn))
+	   (in-data-beg 0))
+      ;; setup oscillators
+      (do ((i 0 (1+ i)))
+	  ((= i N2))
+	(vector-set! resynth-oscils i (make-oscil :frequency 0)))
+      (vct-scale! window (/ 2.0 (* 0.54 fftsize))) ;den = hamming window integrated
+      (call-with-current-continuation
+       (lambda (break)
+	 (do ((i 0 (1+ i)))
+	     ((>= i outlen))
+	   ;; begin the master run loop
+	   (if (>= output interp) ;; if all the samples have been output then do the next frame
+	       (let ((buffix (modulo filptr N)))
+					; buffix is the index into the input buffer
+					; it wraps around circularly as time increases in the input
+		 (if (c-g?) (break "interrupted"))
+		 (set! output 0)       ; reset the output sample counter
+		 ;; save the old amplitudes and frequencies
+		 (vct-fill! lastamp 0.0)
+		 (vct-fill! lastfreq 0.0)
+		 (vct-add! lastamp fdr)
+		 (vct-add! lastfreq fdi)
+		 (do ((k 0 (1+ k)))
+		     ((= k N))
+		   ;; apply the window and then stuff into the input array
+		   (vct-set! fdr buffix (* (vct-ref window k) (vct-ref in-data (- filptr in-data-beg))))
+		   (set! filptr (1+ filptr))
+		   ;; increment the buffer index with wrap around
+		   (set! buffix (1+ buffix))
+		   (if (>= buffix N) (set! buffix 0)))
+		 ;; rewind the file for the next hop
+		 (set! filptr (- filptr (- N D)))
+		 (if (> filptr (+ in-data-beg N))
+		     (begin
+		       (set! in-data-beg filptr)
+		       (samples->vct in-data-beg (* N 2) snd chn in-data)))
+		 ;; no imaginary component input so zero out fdi
+		 (vct-fill! fdi 0.0)
+		 ;; compute the fft
+		 (mus-fft fdr fdi N 1)
+		 ;; now convert into magnitude and interpolated frequency
+		 (do ((k 0 (1+ k)))
+		     ((= k N2))
+		   (let* ((a (vct-ref fdr k))
+			  (b (vct-ref fdi k))
+			  (mag (* (sqrt (+ (* a a) (* b b)))))
+			  (phase 0)
+			  (phasediff 0))
+		     (vct-set! fdr k mag)    ;; current amp stored in fdr
+		     ;; mag is always positive
+		     ;; if it is zero then the phase difference is zero
+		     (if (> mag 0)
+			 (begin
+			  (set! phase (- (atan b a)))
+			  (set! phasediff (- phase (vct-ref lastphase k)))
+			  (vct-set! lastphase k phase)
+			  ;; frequency wrapping from Moore p. 254
+			  (if (> phasediff pi) (do () ((<= phasediff pi)) (set! phasediff (- phasediff pi2))))
+			  (if (< phasediff (- pi)) (do () ((>= phasediff (- pi))) (set! phasediff (+ phasediff pi2))))))
+		     ;; current frequency stored in fdi
+		     ;; scale by the pitch transposition
+		     (vct-set! fdi k 
+			       (* pitch (+ (/ (* phasediff sr) (* D sr))
+					   (* k fundamental)
+					   poffset)))
+		     ;; resynthesis gating
+		     (if (< (vct-ref fdr k) syngate) (vct-set! fdr k 0.0))
+		     ;; take (vct-ref lastamp k) and count up to (vct-ref fdr k)
+		     ;; interpolating by ampinc
+		     (vct-set! ampinc k (/ (- (vct-ref fdr k) (vct-ref lastamp k)) interp))
+		     ;; take (vct-ref lastfreq k) and count up to (vct-ref fdi k)
+		     ;; interpolating by freqinc
+		     (vct-set! freqinc k (/ (- (vct-ref fdi k) (vct-ref lastfreq k)) interp))))))
+	   ;; loop over the partials interpolate frequency and amplitude
+	   (vct-add! lastamp ampinc)
+	   (vct-add! lastfreq freqinc)
+	   (vct-set! out-data i (oscil-bank lastamp resynth-oscils lastfreq))
+	   (set! output (1+ output)))
+	 (vct->samples 0 (max len outlen) out-data))))))
+
+

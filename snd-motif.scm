@@ -38,12 +38,14 @@
 
 
 (define (current-screen)
+  "(current-screen) returns the current X screen number of the current display"
   (|DefaultScreenOfDisplay 
     (|XtDisplay (cadr (main-widgets)))))
 
 (define (white-pixel)  (|WhitePixelOfScreen (current-screen)))
 (define (black-pixel)  (|BlackPixelOfScreen (current-screen)))
 (define (screen-depth) (|DefaultDepthOfScreen (current-screen)))
+
 
 ;;; -------- apply func to every widget belonging to w (and w) --------
 
@@ -57,6 +59,7 @@
        (cadr (|XtGetValues w (list |XmNchildren 0) 1)))))
 
 (define (find-child widget name)
+  "(find-child widget name) returns a widget named 'name', if one can be found in the widget hierarchy beneath 'widget'"
   (call-with-current-continuation
    (lambda (return)
      (for-each-child
@@ -66,6 +69,7 @@
 	    (return child)))))))
 
 (define (set-main-color-of-widget w)
+  "(set-main-color-of-widget w) sets the background color of widget 'w'"
   (for-each-child 
    w
    (lambda (n)
@@ -75,6 +79,7 @@
 	     (|XmChangeColor n (snd-pixel (basic-color))))))))
 
 (define (x->snd-color color-name)
+  "(x->snd-color color-name) returns a Snd color object corresponding to the X11 color name 'color-name'"
   (let* ((col (|XColor))
 	 (dpy (|XtDisplay (cadr (main-widgets))))
 	 (scr (|DefaultScreen dpy))
@@ -249,61 +254,53 @@
 ;;; (i.e. when one y-zoom-slider changes position, all other channels in the sound change in parallel)
 ;;; (zync) to start and (unzync) to stop
 
-(define (sync-y-zooms snd)
-  (let ((calls '()))
-    (do ((chn 0 (1+ chn)))
-	((= chn (chans snd)))
-      (let* ((zy (list-ref (channel-widgets snd chn) 6))
-	     (zy-div (- 100.0 (cadr (|XtGetValues zy (list |XmNsliderSize 0))))))
-	(set! calls
-	      (cons (|XtAddCallback zy
-		       |XmNdragCallback 
-		         (lambda (w data info)
-			   (let ((v (/ (|value info) zy-div)))
-			     (do ((i 0 (1+ i)))
-				 ((= i (chans snd)))
-			       (if (not (= i chn))
-				   (begin
-				     (set! (y-zoom-slider snd i) (* v v))
-				     (set! (y-position-slider snd i) (y-position-slider snd chn))))))))
-		    calls))))
-    (reverse calls)))
-
-(define (unsync-y-zooms snd calls)
-  (do ((chn 0 (1+ chn)))
-      ((= chn (chans snd)))
-    (let ((zy (list-ref (channel-widgets snd chn) 6)))
-      (|XtRemoveCallback zy |XmNdragCallback (car calls))
-      (set! calls (cdr calls)))))
-
-(define draggers '())
-
-(define (dragger snd)
-  (find-if (lambda (n) (= (car n) snd)) draggers))
-
 (define (remove-dragger snd)
-  (if (dragger snd) (apply unsync-y-zooms (dragger snd)))
-  (set! draggers (remove-if (lambda (n) (= (car n) snd)) draggers))
+  (let ((calls (sound-property 'dragger snd)))
+    (if calls
+	(do ((chn 0 (1+ chn)))
+	    ((= chn (chans snd)))
+	  (let ((zy (list-ref (channel-widgets snd chn) 6)))
+	    (|XtRemoveCallback zy |XmNdragCallback (car calls))
+	    (set! calls (cdr calls))))))
+  (set! (sound-property 'dragger snd) #f)
   #f)
 
 (define (add-dragger snd)
-  (set! draggers (cons (list snd (sync-y-zooms snd)) draggers)))
-
-(add-hook! close-hook remove-dragger)
+  (set! (sound-property 'dragger snd)
+	(let ((calls '()))
+	  (do ((chn 0 (1+ chn)))
+	      ((= chn (chans snd)))
+	    (let* ((zy (list-ref (channel-widgets snd chn) 6))
+		   (zy-div (- 100.0 (cadr (|XtGetValues zy (list |XmNsliderSize 0))))))
+	      (set! calls
+		    (cons (|XtAddCallback zy
+					  |XmNdragCallback 
+					   (lambda (w data info)
+					     (let ((v (/ (|value info) zy-div)))
+					       (do ((i 0 (1+ i)))
+						   ((= i (chans snd)))
+						 (if (not (= i chn))
+						     (begin
+						       (set! (y-zoom-slider snd i) (* v v))
+						       (set! (y-position-slider snd i) (y-position-slider snd chn))))))))
+			  calls))))
+	  (reverse calls))))
 
 (define (zync)
+  "(zync) ties each sound's y-zoom sliders together so that all change in paralle if one changes"
   (add-hook! after-open-hook add-dragger)
   (for-each
    (lambda (n)
-     (if (not (dragger n))
+     (if (not (sound-property 'dragger n))
 	 (add-dragger n)))
    (sounds)))
 
 (define (unzync)
+  "(unzync) undoes a previous (zync) -- subsequently each sound's y-zoom sliders are independent"
   (remove-hook! after-open-hook add-dragger)
   (for-each
    (lambda (n)
-     (if (dragger n)
+     (if (sound-property 'dragger n)
 	 (remove-dragger n)))
    (sounds)))
 
@@ -998,6 +995,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ;;;
 ;;; adds a pane to each channel giving the current mark locations (sample values)
 ;;;   these can be edited to move the mark, or deleted to delete the mark
+;;;   can't use channel-property here because the widget lists are permanent (just unmanaged)
 
 (define (add-mark-pane)
 
@@ -1723,6 +1721,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	    (|XmStringFree str)
 	    (|XtAppAddTimeOut (caddr data) 10000 show-label data))))
     (lambda (snd)
+      "(show-disk-space) adds a label to the minibuffer area showing the current free space (for use with after-open-hook)"
       (let ((previous-label (find-if (lambda (n) (= (car n) snd)) labelled-snds)))
 	(if (not previous-label)
 	    (let* ((app (car (main-widgets)))
@@ -1803,167 +1802,150 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ;;; TODO: some way to synchronize sliders (needs to be installable into existing set)
 
 (define (add-amp-controls)
-  (let ((current-amp-controls '()))
 
-    (define amp-controls
-      (make-procedure-with-setter
-       (lambda (snd)
-	 (define (find-controls snd lst)
-	   (if (null? lst)
-	       1
-	       (if (= (car (car lst)) snd)
-		   (cadr (car lst))
-		   (find-controls snd (cdr lst)))))
-	 (find-controls snd current-amp-controls))
-       (lambda (snd val)
-	 (let ((vals (find-if (lambda (n) (= (car n) snd)) current-amp-controls)))
-	   (if (not vals)
-	       (set! current-amp-controls (cons (list snd val) current-amp-controls))
-	       (list-set! vals 1 val))))))
-
-    (define (amp-scroller->amp val)
-      ;; same as Snd's built-in amp scroller callbacks
-      (if (= val 0)
-	  0.0
-	  (if (< val 15)
-	      (* val 0.011584929) ; linear section
-	      (exp (/ (- val 50) 20.0)))))
-
-    (define (amp-callback w c i)
-      ;; c is (list number-widget snd chan)
-      (let* ((amp (amp-scroller->amp (|value i)))
-	     (ampstr (|XmStringCreateLocalized (format #f "~,2F" amp)))
-	     (snd (cadr c))
-	     (top-chn (- (chans snd) 1))
-	     (chn (- top-chn (caddr c))))
-	(|XtSetValues (car c) (list |XmNlabelString ampstr))
-	(|XmStringFree ampstr)
-	(if (> (caddr c) 0)
-	    (set! (amp-control snd chn) amp))))
-
-    (define (label-name chan) (if (= chan 0) "amp-label" (format #f "amp-label-~D" chan)))
-    (define (number-name chan) (if (= chan 0) "amp-number" (format #f "amp-number-~D" chan)))
-    (define (scroller-name chan) (if (= chan 0) "amp" (format #f "amp-~D" chan)))
-
-    (define (reset-to-one scroller number)
-      (|XtSetValues scroller (list |XmNvalue 50))
-      (let ((ampstr (|XmStringCreateLocalized "1.00")))
-	(|XtSetValues number (list |XmNlabelString ampstr))
-	(|XmStringFree ampstr)))
-
-    (define (make-amp-control snd chan parent)
-      (let* ((s1 (|XmStringCreateLocalized "amp:"))
-	     (label (|XtCreateManagedWidget (label-name chan) |xmPushButtonWidgetClass parent
-		      (list |XmNbackground       (snd-pixel (basic-color))
-			    |XmNalignment        |XmALIGNMENT_BEGINNING
-			    |XmNtopAttachment    |XmATTACH_FORM
-			    |XmNbottomAttachment |XmATTACH_NONE
-			    |XmNleftAttachment   |XmATTACH_FORM
-			    |XmNrightAttachment  |XmATTACH_NONE
-			    |XmNlabelString      s1
-			    |XmNmarginHeight     1
-			    |XmNrecomputeSize    #f
-			    |XmNshadowThickness  0
-			    |XmNhighlightThickness 0
-			    |XmNfillOnArm        #f)))
-	     (s2 (|XmStringCreateLocalized "1.00"))
-	     (number (|XtCreateManagedWidget (number-name chan) |xmLabelWidgetClass parent
-	 	      (list |XmNbackground       (snd-pixel (basic-color))
-			    |XmNalignment        |XmALIGNMENT_BEGINNING
-			    |XmNtopAttachment    |XmATTACH_OPPOSITE_WIDGET
-			    |XmNtopWidget        label
-			    |XmNbottomAttachment |XmATTACH_NONE
-			    |XmNleftAttachment   |XmATTACH_WIDGET
-			    |XmNleftWidget       label
-			    |XmNrightAttachment  |XmATTACH_NONE
-			    |XmNlabelString      s2
-			    |XmNmarginHeight     1
-			    |XmNrecomputeSize    #f)))
-	     (scroll (|XtCreateManagedWidget (scroller-name chan) |xmScrollBarWidgetClass parent
-	 	      (list |XmNbackground       (snd-pixel (position-color))
-			    |XmNtopAttachment    |XmATTACH_OPPOSITE_WIDGET
-			    |XmNtopWidget        label
-			    |XmNbottomAttachment |XmATTACH_NONE
-			    |XmNheight           16
-			    |XmNleftAttachment   |XmATTACH_WIDGET
-			    |XmNleftWidget       number
-			    |XmNrightAttachment  |XmATTACH_FORM
-			    |XmNorientation      |XmHORIZONTAL
-			    |XmNmaximum          100
-			    |XmNvalue            50
-			    |XmNdragCallback     (list amp-callback (list number snd chan))
-			    |XmNvalueChangedCallback (list amp-callback (list number snd chan))))))
-	(|XtAddCallback label |XmNactivateCallback (lambda (w c i)
-						     (reset-to-one scroll number)))
-	(|XmStringFree s1)
-	(|XmStringFree s2)
-	label))
-
-      (define (amp-controls-reflect-chans snd)
+  (define (amp-scroller->amp val)
+    ;; same as Snd's built-in amp scroller callbacks
+    (if (= val 0)
+	0.0
+	(if (< val 15)
+	    (* val 0.011584929) ; linear section
+	    (exp (/ (- val 50) 20.0)))))
+  
+  (define (amp-callback w c i)
+    ;; c is (list number-widget snd chan)
+    (let* ((amp (amp-scroller->amp (|value i)))
+	   (ampstr (|XmStringCreateLocalized (format #f "~,2F" amp)))
+	   (snd (cadr c))
+	   (top-chn (- (chans snd) 1))
+	   (chn (- top-chn (caddr c))))
+      (|XtSetValues (car c) (list |XmNlabelString ampstr))
+      (|XmStringFree ampstr)
+      (if (> (caddr c) 0)
+	  (set! (amp-control snd chn) amp))))
+  
+  (define (label-name chan) (if (= chan 0) "amp-label" (format #f "amp-label-~D" chan)))
+  (define (number-name chan) (if (= chan 0) "amp-number" (format #f "amp-number-~D" chan)))
+  (define (scroller-name chan) (if (= chan 0) "amp" (format #f "amp-~D" chan)))
+  
+  (define (reset-to-one scroller number)
+    (|XtSetValues scroller (list |XmNvalue 50))
+    (let ((ampstr (|XmStringCreateLocalized "1.00")))
+      (|XtSetValues number (list |XmNlabelString ampstr))
+      (|XmStringFree ampstr)))
+  
+  (define (make-amp-control snd chan parent)
+    (let* ((s1 (|XmStringCreateLocalized "amp:"))
+	   (label (|XtCreateManagedWidget (label-name chan) |xmPushButtonWidgetClass parent
+					  (list |XmNbackground       (snd-pixel (basic-color))
+						|XmNalignment        |XmALIGNMENT_BEGINNING
+						|XmNtopAttachment    |XmATTACH_FORM
+						|XmNbottomAttachment |XmATTACH_NONE
+						|XmNleftAttachment   |XmATTACH_FORM
+						|XmNrightAttachment  |XmATTACH_NONE
+					        |XmNlabelString      s1
+						|XmNmarginHeight     1
+						|XmNrecomputeSize    #f
+						|XmNshadowThickness  0
+						|XmNhighlightThickness 0
+						|XmNfillOnArm        #f)))
+	   (s2 (|XmStringCreateLocalized "1.00"))
+	   (number (|XtCreateManagedWidget (number-name chan) |xmLabelWidgetClass parent
+					   (list |XmNbackground       (snd-pixel (basic-color))
+						 |XmNalignment        |XmALIGNMENT_BEGINNING
+						 |XmNtopAttachment    |XmATTACH_OPPOSITE_WIDGET
+						 |XmNtopWidget        label
+						 |XmNbottomAttachment |XmATTACH_NONE
+						 |XmNleftAttachment   |XmATTACH_WIDGET
+						 |XmNleftWidget       label
+						 |XmNrightAttachment  |XmATTACH_NONE
+						 |XmNlabelString      s2
+						 |XmNmarginHeight     1
+						 |XmNrecomputeSize    #f)))
+	   (scroll (|XtCreateManagedWidget (scroller-name chan) |xmScrollBarWidgetClass parent
+					   (list |XmNbackground       (snd-pixel (position-color))
+						 |XmNtopAttachment    |XmATTACH_OPPOSITE_WIDGET
+						 |XmNtopWidget        label
+						 |XmNbottomAttachment |XmATTACH_NONE
+						 |XmNheight           16
+						 |XmNleftAttachment   |XmATTACH_WIDGET
+						 |XmNleftWidget       number
+						 |XmNrightAttachment  |XmATTACH_FORM
+						 |XmNorientation      |XmHORIZONTAL
+						 |XmNmaximum          100
+						 |XmNvalue            50
+						 |XmNdragCallback     (list amp-callback (list number snd chan))
+						 |XmNvalueChangedCallback (list amp-callback (list number snd chan))))))
+      (|XtAddCallback label |XmNactivateCallback (lambda (w c i)
+						   (reset-to-one scroll number)))
+      (|XmStringFree s1)
+      (|XmStringFree s2)
+      label))
+  
+  (define (amp-controls-reflect-chans snd)
+    (let* ((wids (sound-widgets snd))
+	   (ctrls (list-ref wids 2))
+	   (snd-amp (find-child ctrls "snd-amp"))
+	   (chns (chans snd)))
+      
+      (if (|Widget? snd-amp)
+	  (let ((height (cadr (|XtGetValues ctrls (list |XmNheight 0))))
+		(panemin (cadr (|XtGetValues ctrls (list |XmNpaneMinimum 0))))
+		(panemax (cadr (|XtGetValues ctrls (list |XmNpaneMaximum 0)))))
+	    (|XtUnmanageChild ctrls)
+	    (let ((existing-controls (or (sound-property 'amp-controls snd) 1)))
+	      (if (< existing-controls chns)
+		  (begin
+		    (if (> height 20)
+			(set! height (+ height (* 18 (- chns existing-controls)))))
+		    (do ((i existing-controls (1+ i)))
+			((= i chns))
+		      (make-amp-control snd i snd-amp))
+		    (set! (sound-property 'amp-controls snd) chns)
+		    (set! existing-controls chns)))
+	      (do ((i 0 (1+ i)))
+		  ((= i existing-controls))
+		(let ((ampc (find-child snd-amp (label-name i)))
+		      (ampn (find-child snd-amp (number-name i)))
+		      (amp (find-child snd-amp (scroller-name i))))
+		  (|XtUnmanageChild ampc)
+		  (|XtUnmanageChild ampn)
+		  (|XtUnmanageChild amp)))
+	      (do ((i 0 (1+ i)))
+		  ((= i chns))
+		(let ((ampc (find-child snd-amp (label-name i)))
+		      (ampn (find-child snd-amp (number-name i)))
+		      (amp (find-child snd-amp (scroller-name i)))
+		      (next-amp (if (< i (1- chns))
+				    (find-child snd-amp (label-name (1+ i)))
+				    #f)))
+		  (reset-to-one amp ampn)
+		  (if next-amp
+		      (|XtSetValues ampc (list |XmNtopAttachment |XmATTACH_WIDGET
+						|XmNtopWidget     next-amp))
+		      (|XtSetValues ampc (list |XmNtopAttachment |XmATTACH_FORM)))
+		  (|XtManageChild ampc)
+		  (|XtManageChild ampn)
+		  (|XtManageChild amp))))
+	    
+	    (|XtSetValues ctrls (list |XmNpaneMinimum height |XmNpaneMaximum height))
+	    (|XtManageChild ctrls)
+	    (|XtSetValues ctrls (list |XmNpaneMinimum panemin |XmNpaneMaximum panemax))))))
+  
+  (define (amp-controls-clear snd)
+    (if (> (chans snd) 1)
 	(let* ((wids (sound-widgets snd))
 	       (ctrls (list-ref wids 2))
 	       (snd-amp (find-child ctrls "snd-amp"))
-	       (chns (chans snd)))
-
-	  (if (|Widget? snd-amp)
-	      (let ((height (cadr (|XtGetValues ctrls (list |XmNheight 0))))
-		    (panemin (cadr (|XtGetValues ctrls (list |XmNpaneMinimum 0))))
-		    (panemax (cadr (|XtGetValues ctrls (list |XmNpaneMaximum 0)))))
-		(|XtUnmanageChild ctrls)
-		(let ((existing-controls (amp-controls snd)))
-		  (if (< existing-controls chns)
-		      (begin
-			(if (> height 20)
-			    (set! height (+ height (* 18 (- chns existing-controls)))))
-			(do ((i existing-controls (1+ i)))
-			    ((= i chns))
-			  (make-amp-control snd i snd-amp))
-			(set! (amp-controls snd) chns)
-			(set! existing-controls chns)))
-		  (do ((i 0 (1+ i)))
-		      ((= i existing-controls))
-		    (let ((ampc (find-child snd-amp (label-name i)))
-			  (ampn (find-child snd-amp (number-name i)))
-			  (amp (find-child snd-amp (scroller-name i))))
-		      (|XtUnmanageChild ampc)
-		      (|XtUnmanageChild ampn)
-		      (|XtUnmanageChild amp)))
-		  (do ((i 0 (1+ i)))
-		      ((= i chns))
-		    (let ((ampc (find-child snd-amp (label-name i)))
-			  (ampn (find-child snd-amp (number-name i)))
-			  (amp (find-child snd-amp (scroller-name i)))
-			  (next-amp (if (< i (1- chns))
-					(find-child snd-amp (label-name (1+ i)))
-					#f)))
-		      (reset-to-one amp ampn)
-		      (if next-amp
-			  (|XtSetValues ampc (list |XmNtopAttachment |XmATTACH_WIDGET
-						   |XmNtopWidget     next-amp))
-			  (|XtSetValues ampc (list |XmNtopAttachment |XmATTACH_FORM)))
-		      (|XtManageChild ampc)
-		      (|XtManageChild ampn)
-		      (|XtManageChild amp))))
-
-		(|XtSetValues ctrls (list |XmNpaneMinimum height |XmNpaneMaximum height))
-		(|XtManageChild ctrls)
-		(|XtSetValues ctrls (list |XmNpaneMinimum panemin |XmNpaneMaximum panemax))))))
-
-      (define (amp-controls-clear snd)
-	(if (> (chans snd) 1)
-	    (let* ((wids (sound-widgets snd))
-		   (ctrls (list-ref wids 2))
-		   (snd-amp (find-child ctrls "snd-amp"))
-		   (top (1- (chans snd))))
-	      (do ((i 1 (1+ i)))
-		  ((= i (chans snd)))
-		(let ((ampn (find-child snd-amp (number-name i)))
-		      (amp (find-child snd-amp (scroller-name i))))
-		  (reset-to-one amp ampn)
-		  (set! (amp-control snd (- top i)) 1.0))))))
-
-      (add-hook! after-open-hook amp-controls-reflect-chans)
-      (add-hook! after-apply-hook amp-controls-clear)))
+	       (top (1- (chans snd))))
+	  (do ((i 1 (1+ i)))
+	      ((= i (chans snd)))
+	    (let ((ampn (find-child snd-amp (number-name i)))
+		  (amp (find-child snd-amp (scroller-name i))))
+	      (reset-to-one amp ampn)
+	      (set! (amp-control snd (- top i)) 1.0))))))
+  
+  (add-hook! after-open-hook amp-controls-reflect-chans)
+  (add-hook! after-apply-hook amp-controls-clear))
 
 ;(add-amp-controls)
 
@@ -2206,3 +2188,4 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ;;; TODO: mix-panning via enved (or as part of mix file dialog?)
 ;;; TODO: spatial envelope dialog
 ;;; TODO: spectral edit dialog
+

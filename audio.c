@@ -4836,6 +4836,10 @@ snd_pcm_sw_params_t * alsa_allocate_software_params(void)
 
 /* probe a device name against the list of available pcm devices */
 
+#ifndef SND_CONFIG_GET_ID_ARGS
+  #define SND_CONFIG_GET_ID_ARGS 1
+#endif
+
 int alsa_probe_device_name(char *name)
 {
     snd_config_t *conf;
@@ -4937,6 +4941,8 @@ static int alsa_mus_audio_initialize(void)
     char *cname;
     char *string;
     int value; 
+    int dir;
+    snd_pcm_uframes_t min_periods, max_periods, min_buffer_size, max_buffer_size;
     if (audio_initialized) {
 	return(0);
     }
@@ -4985,14 +4991,6 @@ static int alsa_mus_audio_initialize(void)
     if (alsa_capture_device_name == NULL) {
 	alsa_capture_device_name = alsa_default_capture_device_name;
     }
-    /* get buffer size from environment */
-    if (alsa_get_int_from_env("SNDLIB_ALSA_BUFFER_SIZE", &value, 0, 65536) == MUS_NO_ERROR) {
-	alsa_samples_per_channel = value;
-    }
-    /* get number of buffers from environment */
-    if (alsa_get_int_from_env("SNDLIB_ALSA_BUFFERS", &value, 2, 65536) == MUS_NO_ERROR) {
-	alsa_periods = value;
-    }
     /* playback stream parameters */
     alsa_hw_params[SND_PCM_STREAM_PLAYBACK] = 
 	alsa_get_hardware_params(alsa_playback_device_name, SND_PCM_STREAM_PLAYBACK, alsa_open_mode);
@@ -5008,6 +5006,40 @@ static int alsa_mus_audio_initialize(void)
 	alsa_sw_params[SND_PCM_STREAM_CAPTURE] = 
 	    alsa_allocate_software_params();
 	sound_cards = 1;
+    }
+    /* check validity of default periods and buffer size, adjust if necessary 
+     *
+     * this might not always work because periods and buffer size are checked
+     * separately, and they might interact when being set, but it is better
+     * than not checking at all anything 
+     */
+    min_periods = snd_pcm_hw_params_get_period_size_min(alsa_hw_params[SND_PCM_STREAM_PLAYBACK], &dir);
+    max_periods = snd_pcm_hw_params_get_period_size_max(alsa_hw_params[SND_PCM_STREAM_PLAYBACK], &dir);
+    if (alsa_periods > max_periods) {
+        alsa_periods = max_periods;
+    }
+    if (alsa_periods < min_periods) {
+        alsa_periods = min_periods;
+    }
+    /* get number of buffers from environment, override if possible */
+    if (alsa_get_int_from_env("SNDLIB_ALSA_BUFFERS", &value, 
+			      min_periods, 
+			      max_periods) == MUS_NO_ERROR) {
+	alsa_periods = value;
+    }
+    min_buffer_size = snd_pcm_hw_params_get_buffer_size_min(alsa_hw_params[SND_PCM_STREAM_PLAYBACK]);
+    max_buffer_size = snd_pcm_hw_params_get_buffer_size_max(alsa_hw_params[SND_PCM_STREAM_PLAYBACK]);
+    if (alsa_samples_per_channel*alsa_periods > max_buffer_size) {
+        alsa_samples_per_channel = max_buffer_size/alsa_periods;
+    }
+    if (alsa_samples_per_channel*alsa_periods < min_buffer_size) {
+        alsa_samples_per_channel = min_buffer_size/alsa_periods;
+    }
+    /* get buffer size from environment, override if possible */
+    if (alsa_get_int_from_env("SNDLIB_ALSA_BUFFER_SIZE", &value, 
+			      min_buffer_size/alsa_periods, 
+			      max_buffer_size/alsa_periods) == MUS_NO_ERROR) {
+	alsa_samples_per_channel = value;
     }
     audio_initialized = 1;
     return 0;
@@ -5116,6 +5148,20 @@ static int alsa_audio_open(int ur_dev, int srate, int chans, int format, int siz
 	return(MUS_ERROR);
     }
     periods = alsa_periods;
+    err = snd_pcm_hw_params_set_periods(handle, hw_params, periods, 0);
+    if (err < 0) {
+	int dir;
+	snd_pcm_uframes_t min, max;
+	min = snd_pcm_hw_params_get_period_size_min(hw_params, &dir);
+	max = snd_pcm_hw_params_get_period_size_max(hw_params, &dir);
+	snd_pcm_close(handle);
+	handles[alsa_stream] = NULL;
+	alsa_dump_configuration(alsa_name, hw_params, sw_params);
+	mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
+		  "%s: %s: cannot set number of periods to %d, min is %d, max is %d", 
+		  __FUNCTION__, alsa_name, periods, min, max);
+	return(MUS_ERROR);
+    }
     frames = size/chans/mus_data_format_to_bytes_per_sample(format);
     err = snd_pcm_hw_params_set_buffer_size(handle, hw_params, frames*periods);
     if (err < 0) {
@@ -5129,20 +5175,6 @@ static int alsa_audio_open(int ur_dev, int srate, int chans, int format, int siz
 		  "%s: %s: cannot set buffer size to %d periods of %d frames;
 total requested buffer size is %d frames, minimum allowed is %d, maximum is %d", 
 		  __FUNCTION__, alsa_name, periods, frames, periods*frames, min, max);
-	return(MUS_ERROR);
-    }
-    err = snd_pcm_hw_params_set_periods(handle, hw_params, periods, 0);
-    if (err < 0) {
-	int dir;
-	snd_pcm_uframes_t min, max;
-	min = snd_pcm_hw_params_get_period_size_min(hw_params, &dir);
-	max = snd_pcm_hw_params_get_period_size_max(hw_params, &dir);
-	snd_pcm_close(handle);
-	handles[alsa_stream] = NULL;
-	alsa_dump_configuration(alsa_name, hw_params, sw_params);
-	mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
-		  "%s: %s: cannot set number of periods to %d, min is %d, max is %d", 
-		  __FUNCTION__, alsa_name, periods, min, max);
 	return(MUS_ERROR);
     }
     err = snd_pcm_hw_params_set_format(handle, hw_params, alsa_format);

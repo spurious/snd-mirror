@@ -2367,6 +2367,7 @@
 (load "examp.scm")
 (load "snd4.scm") ; needed for various scan/map extensions, external program testers etc
 (load "dsp.scm")
+(load "pvoc.scm")
 
 (define (our-x->position ind x) 
   (let ((ax (axis-info ind)))
@@ -9925,11 +9926,11 @@
 	       (o1 (sample half-way obi 0))
 	       (s1 (sample half-way s2i 0))
 	       (s2 (sample half-way s2i 1)))
-	  (place obi s2i '(0 .5 1 .5))
+	  (place-sound obi s2i '(0 .5 1 .5))
 	  (let ((s21 (sample half-way s2i 0))
 		(s22 (sample half-way s2i 1)))
 	    (revert-sound s2i)
-	    (place1 obi s2i 45.0)
+	    (place-sound obi s2i 45.0)
 	    (let ((s31 (sample half-way s2i 0))
 		  (s32 (sample half-way s2i 1)))
 	      (if (or (fneq (+ s1 (* 0.5 o1)) s21)
@@ -15398,6 +15399,12 @@ EDITS: 3
       (snd-display (format #f "ls ~A/snd_* | wc~%" original-temp-dir))
       (system (format #f "ls ~A/snd_* | wc" original-temp-dir))
       (system (format #f "rm ~A/snd_*" original-temp-dir))))
+
+(if (file-exists? "/tmp")
+    (begin ; -noinit possibly
+      (snd-display (format #f "ls /tmp/snd_* | wc~%"))
+      (system "ls /tmp/snd_* | wc")
+      (system "rm /tmp/snd_*")))
 
 (if with-exit (exit))
 

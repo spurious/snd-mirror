@@ -244,8 +244,11 @@ end
 <b>display-energy</b> is a lisp-graph-hook procedure that displays the current time
 domain data as energy, not amplitude, using the y zoom slider to control the lisp
 graph y axis.  The other procedures in draw.scm are intended for use with the
-after-graph-hook.  <b>display-samps-in-red</b> (see <a href="extsnd.html#displaysampsinred">picture</a>)
-displays samples 1000 to 2000 in red whenever they're in the current view.
+after-graph-hook.  
+<b>display-colored-samples</b> (color beg dur snd chn) displays samples from beg for dur in color
+whenever they're in the current view. This is intended for use with <b>color-samples</b>. 
+(color-samples color &optional beg dur snd chn) causes samples from beg to beg+dur to be displayed in color;
+to undo this, use <b>uncolor-samples</b>.
 <b>display-previous-edits</b> displays all edits of the current sound, with older versions gradually fading away.
 <b>overlay-sounds</b> overlays onto its first argument all subsequent arguments: (overlay-sounds 1 0 3).
 <b>make-current-window-display</b>
@@ -626,7 +629,6 @@ I'm slowly dividing out related groups of procedures to separate files.
     <li>fft-edit, fft-env-interp, fft-env-edit -- FFT based editing
     <li>fft-squelch -- noise reduction 
     <li>fft-smoother -- fft-based smoothing
-    <li>phase vocoder
   </ul>
 </small>
 <li><a href="#ssuserinterface">user-interface</a>
@@ -783,7 +785,6 @@ is at 1.0, no filtering takes place.
   <em class=def><A NAME="exfftenvinterp">fft-env-interp</a></em> env1 env2 interp
   <em class=def><a name="exfftsquelch">fft-squelch</a></em> squelch
   <em class=def><A NAME="exfftsmoother">fft-smoother</a></em> cutoff start samps snd chn
-  <em class=def><A NAME="expvoc">pvoc</a></em> #:key (fftsize 512) (overlap 4) (time 1.0) (pitch 1.0) (gate 0.0) (hoffset 0.0) (snd 0) (chn 0)
 </pre>
 <p><i>correlate</i> graphs the correlation of <i>snd</i>'s 2 channels.
 To make this happen automatically as you move the time domain position
@@ -798,12 +799,6 @@ envelope. Another similar function is <i>fft-smoother</i> that uses fft-filterin
 smooth a portion of a sound.
 <i>fft-squelch</i> is similar, but removes all energy below the squelch amount (normalized to
 be between 0.0 and 1.0).  This is sometimes useful for noise-reduction.
-<i>pvoc</i> is a phase-vocoder.  
-pvoc applies the phase-vocoder (i.e. fft analysis, oscil bank resynthesis).
-to the current sound; <i>pitch</i> specifies the pitch transposition ratio, 
-<i>time</i> specifies the time dilation ratio,
-<i>gate</i> specifies a resynthesis gate in dB (partials with amplitudes lower than
-the gate value will not be synthesized), <i>hoffset</i> is a pitch offset in Hz.
 Finally there are two examples
 of using graph-hook to set the fft size based on the current time domain window
 size.  The simpler one is:
@@ -984,15 +979,15 @@ is the currently selected sound) into a bunch of files of the form sample-name.a
 <p><a href="#mixdoc">mix.scm</a> has mix and track related functions.
 </p>
 <pre>
-  <em class=def><A NAME="explace">place</a></em> mono-snd stereo-snd panning-envelope
-  <em class=def><A NAME="explace1">place1</a></em> mono-snd stereo-snd degree
+  <em class=def><A NAME="explacesound">place-sound</A></em> mono-snd stereo-snd panning-envelope-or-degree
 </pre>
-<p>The <i>place1</i> function has the same effect as using
+<p>If <i>panning-envelope-or-degree</i> is a number (in degrees),
+the <i>place-sound</i> function has the same effect as using
 CLM's locate generator; it mixes a mono sound into a stereo sound, splitting 
-it into two copies whose amplitudes depend on the desired <i>degree</i>.
+it into two copies whose amplitudes depend on the desired location.
 0 degrees: all in channel 0, 90: all in channel 1.
-The <i>place</i> function does the same thing, but the split depends on
-a panning envelope.
+If <i>panning-envelope-or-degree</i> is an envelope,
+the split depends on the panning envelope (0 = all in chan 0, etc).
 </p>
 
 <!-- -------------------------------- SOUND EFFECTS -------------------------------- -->
@@ -1941,6 +1936,7 @@ is in mus.lisp, and the C version is in clm.c.
 <pre>
   <em class=def><A NAME="makepvocoder">make-pvocoder</a></em> fftsize overlap interp analyze edit synthesize
   <em class=def><A NAME="pvocoder">pvocoder</a></em> gen input
+  <em class=def><A NAME="expvoc">pvoc</a></em> #:key (fftsize 512) (overlap 4) (time 1.0) (pitch 1.0) (gate 0.0) (hoffset 0.0) (snd 0) (chn 0)
 </pre>
 <p>The <i>analyze</i>, <i>edit</i>, and <i>synthesize</i> arguments to make-pvocoder are
 functions that are applied as needed during pvocoder processing; similarly, the <i>input</i>
@@ -1972,6 +1968,12 @@ For example:
 In this case, the input function is reading the currently selected channel.  The fastest
 way to try out this generator is to use it as the argument to filter-sound.  I can't think
 of good names for the internal arrays (such as <i>pv-ampinc</i> above).
+<i>pvoc</i> is yet another a phase-vocoder;
+it applies the phase-vocoder (i.e. fft analysis, oscil bank resynthesis)
+to the current sound; <i>pitch</i> specifies the pitch transposition ratio, 
+<i>time</i> specifies the time dilation ratio,
+<i>gate</i> specifies a resynthesis gate in dB (partials with amplitudes lower than
+the gate value will not be synthesized), <i>hoffset</i> is a pitch offset in Hz.
 </p>
 
 <A NAME="rgbdoc"></a><span class=box><h2>rgb.scm</h2></span>
