@@ -60,8 +60,8 @@
     <ul>
     <li><a href="#colors">Colors</a>
     <li><a href="#fonts">Fonts</a>
-    <li><a href="#sndgraphics">Graphics</a>
     <li><a href="#sndwidgets">Widgets</a>
+    <li><a href="#sndgraphics">Graphics</a>
     </ul>
   <li><a href="grfsnd.html#grfsndcontents">Customization Part 2</a>
   </ul>
@@ -3134,6 +3134,11 @@ red; but <code>(set! (mix-color 3) red)</code> sets only mix #3 to be red.
 <!-- mix-home-->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixhome">mix-home</a></em> (mix)</code></span></td></tr>
 <tr><td></td><td>a list of the sound index and channel number affected by <i>mix</i>.
+</td></tr>
+
+<!-- mix-inverted? -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixinverted">mix-inverted?</a></em> (mix)</code></span></td></tr>
+<tr><td></td><td>#t if <i>mix</i> should invert track amp-env values (for panning).
 </td></tr>
 
 <!-- mix-locked? -->
@@ -8147,6 +8152,10 @@ See <i>html</i> in index.scm.
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixdialog">mix-dialog</a></em> ()</code></span></td></tr>
 <tr><td></td><td>create the Mix Dialog, if necessary, activate it, and return the dialog widget.</td></tr>
 
+<!-- mix-dialog-mix -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixdialogmix">mix-dialog-mix</a></em> ()</code></span></td></tr>
+<tr><td></td><td>return or set the id of the mix displayed by the mix dialog</td></tr>
+
 <!-- orientation-dialog -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndorientationdialog">orientation-dialog</a></em> ()</code></span></td></tr>
 <tr><td></td><td>Create the <a href="snd.html#orientationbrowser">Orientation</a> dialog, if necessary, activate it, and return the dialog widget.</td></tr>
@@ -8286,6 +8295,10 @@ If it returns a string, that becomes the output filename.
 <!-- track-dialog -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndtrackdialog">track-dialog</a></em> ()</code></span></td></tr>
 <tr><td></td><td>create the Track Dialog, if necessary, activate it, and return the dialog widget.</td></tr>
+
+<!-- track-dialog-track -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndtrackdialogtrack">track-dialog-track</a></em> ()</code></span></td></tr>
+<tr><td></td><td>return or set the id of the track currently displayed by the track dialog.</td></tr>
 
 <!-- vu-font -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="vufont">vu-font</a></em> ()</code></span></td></tr>

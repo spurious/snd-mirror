@@ -994,6 +994,45 @@ static char *line_in_xpm[] = {
 "------------"};
 
 char **line_in_bits(void) {return(line_in_xpm);}
+
+static char *pan_xpm[] = {
+"14 12 2 1",
+"-      c None s None",
+"X	c black",
+"--------------",
+"--------------",
+"--------------",
+"XXXXXXXXXXXXXX",
+"XXXXXX------XX",
+"----XX------XX",
+"----XX------XX",
+"----XXXXXXXXXX",
+"----XXXXXXXXXX",
+"--------------",
+"--------------",
+"--------------"};
+
+char **pan_bits(void) {return(pan_xpm);}
+
+static char *yellow_pan_xpm[] = {
+"14 12 2 1",
+"-      c yellow",
+"X	c black",
+"--------------",
+"--------------",
+"--------------",
+"XXXXXXXXXXXXXX",
+"XXXXXX------XX",
+"----XX------XX",
+"----XX------XX",
+"----XXXXXXXXXX",
+"----XXXXXXXXXX",
+"--------------",
+"--------------",
+"--------------"};
+
+char **yellow_pan_bits(void) {return(yellow_pan_xpm);}
+
 #endif
 
 
@@ -1025,5 +1064,6 @@ void make_icons_transparent(char *color)
   mic_xpm[1] = bg_line;
   cd_xpm[1] = bg_line;
   line_in_xpm[1] = bg_line;
+  pan_xpm[1] = bg_line;
 #endif
 }

@@ -378,6 +378,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+17-Nov:  mix-dialog-mix, track-dialog-track, mix-inverted?\n\
 10-Nov:  removed next-mix-sample, next-track-sample.\n\
          renamed mix-panel to mix-dialog, added track-dialog.\n\
 5-Nov:   Jack audio support thanks to Kjetil S. Matheussen.\n\
@@ -397,15 +398,6 @@ void about_snd_help(void)
            delete-mix, track-color, lock-track, track-chans.\n\
          env-track is now track-amp-env, unused-track and new-track are now make-track.\n\
          mix-frames is no longer settable.\n\
-13-Oct:  recorder-file-hook to set or modify recorder output file name, recorder-out-type.\n\
-         changed multichannel-mix-hook.\n\
-10-Oct:  removed mix-sync (use mix-track).\n\
-9-Oct:   removed the mix-id in list option for various functions.\n\
-8-Oct:   optional filename arg for save-marks (and Ruby case implemented).\n\
-6-Oct:   cursor-style and cursor-size can be set globally.\n\
-24-Sep:  snd 6.12.\n\
-22-Sep:  env.rb, spectr.rb, and spectr.scm thanks to Michael Scholz.\n\
-19-Sep:  clm-ins.rb thanks to Michael Scholz.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

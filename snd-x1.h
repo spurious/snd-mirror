@@ -510,7 +510,10 @@ bool track_play_stopped(void);
 void reflect_mix_play_stop(void);
 void reflect_track_play_stop(void);
 void make_mixer_icons_transparent_again(Pixel old_color, Pixel new_color);
-void g_init_gxmix(void);
+int mix_dialog_mix(void);
+int mix_dialog_set_mix(int id);
+int track_dialog_track(void);
+int track_dialog_set_track(int id);
 
 
 

@@ -85,24 +85,13 @@
 
 ;;; -------- pan-mix --------
 
-(define (invert-envelope env)
-  (if (null? env) 
-      '()
-      (cons (car env) 
-	    (cons (- 1.0 (cadr env)) 
-		  (invert-envelope (cddr env))))))
-
-;;; TODO: fix pan-mix or automate 
 (define* (pan-mix name #:optional (beg 0) (envelope 1.0) snd (chn 0))
   "(pan-mix file (start 0) (envelope 1.0) snd chn) mixes 'file' into the sound 'snd' \
 starting at start (in samples) using 'envelope' to pan (0: all chan 0, 1: all chan 1).\
 So, (pan-mix \"oboe.snd\" .1 '(0 0 1 1)) goes from all chan 0 to all chan 1.  If\
-the variable with-tags is #t, the resultant mixes are syncd together, and \
-the envelope is reflected in each channel's mix-amp-env; if you subsequently \
-change one channel's envelope, the other is automatically reset as well.\
-If 'envelope' is a scaler, it represents the channel 0 scaler; 1.0 - amp is\
-the channel 1 scaler, and a subsquent set! of either mix-amp is reflected\
-in the other channel. 'chn' is the start channel for all this (logical channel 0)."
+the variable with-tags is #t, the resultant mixes are placed in their own track, and \
+the track envelope controls the panning. \
+If 'envelope' is a scaler, it is turned into an evelope at that value."
 
   (let ((index (or snd (selected-sound) (and (sounds) (car (sounds))))))
     (if (not (sound? index))
@@ -112,11 +101,7 @@ in the other channel. 'chn' is the start channel for all this (logical channel 0
     (let ((incoming-chans (mus-sound-chans name))
 	  (receiving-chans (chans index))
 	  (old-sync (sync index))
-	  (inverted-envelope
-	   (if (list? envelope)
-	       (invert-envelope envelope)
-	       (- 1.0 envelope)))
-	  (mix-func (if (list? envelope) mix-amp-env mix-amp)))
+	  (track-func (if (list? envelope) envelope (list 0 envelope 1 envelope))))
       (if (= receiving-chans 1)
 	  (if (= incoming-chans 1)
 	      (let ((id (mix name beg 0 index 0)))
@@ -127,11 +112,13 @@ in the other channel. 'chn' is the start channel for all this (logical channel 0
 	      (as-one-edit
 	       ;; incoming chans > 2 ignored
 	       (lambda ()
-		 (let ((mix0 (mix name beg 0 index)))
-		   (set! (mix-func mix0 0) envelope)
-		   (set! (mix-func mix0 1) inverted-envelope)
-		   (if (with-mix-tags)
-		       (set! (mix-property 'pan-mix mix0) (list mix0 0)))
+		 (let* ((mix0 (mix name beg 0 index 0))
+			(mix1 (mix name beg 1 index 0))
+			(trk (make-track)))
+		   (set! (mix-track mix0) trk)
+		   (set! (mix-track mix1) trk)
+		   (set! (mix-inverted? mix1) #t)
+		   (set! (track-amp-env trk) track-func)
 		   mix0))))
 	  (let* ((chan0 chn)
 		 (chan1 (modulo (1+ chn) receiving-chans)))
@@ -143,17 +130,12 @@ in the other channel. 'chn' is the start channel for all this (logical channel 0
 		 (lambda ()
 		   (as-one-edit
 		    (lambda ()
-		      (let ((mix0 (mix name beg 0 index chan0))
-			    (mix1 (mix name beg 0 index chan1)))
-			  (set! (mix-func mix0 0) envelope)
-			  (set! (mix-func mix1 0) inverted-envelope)
-			  (if (with-mix-tags)
-			      (let ((trk (make-track))) ; needed for position and speed changes
-				(set! (mix-track mix0) trk)
-				(set! (mix-track mix1) trk)
-				(set! (mix-property 'pan-mix mix0) (list mix1 0))
-				(set! (mix-property 'pan-mix mix1) (list mix0 0))))
-			  mix0))))
+		      (let* ((trk (make-track))
+			     (mix0 (mix name beg 0 index chan0 (with-mix-tags) #f trk))
+			     (mix1 (mix name beg 0 index chan1 (with-mix-tags) #f trk)))
+			(set! (mix-inverted? mix1) #t)
+			(set! (track-amp-env trk) track-func)
+			mix0))))
 		   (lambda ()
 		     (set! (sync index) old-sync)))
 		(let ((new-sync 0))
@@ -166,16 +148,9 @@ in the other channel. 'chn' is the start channel for all this (logical channel 0
 		     (as-one-edit
 		      (lambda ()
 			(let* ((mix0 (mix name beg #f index chan0))
-			       (mix1 (1+ mix0)))
-			  (set! (mix-func mix0 0) envelope)
-			  (set! (mix-func mix1 1) inverted-envelope)
-			  (if (with-mix-tags)
-			      (let ((trk (make-track)))
-				(set! (mix-track mix0) trk)
-				(set! (mix-track mix1) trk)
-				(set! (mix-property 'pan-mix mix0) (list mix1 1))
-				(set! (mix-property 'pan-mix mix1) (list mix0 0))))
-			  mix0))))
+			       (mix1 (1+ mix0))
+			       (trk (mix-track mix0)))
+			  (set! (track-amp-env trk) track-func)))))
 		   (lambda ()
 		     (set! (sync index) old-sync))))))))))
 

@@ -271,7 +271,7 @@ static void mix_drawer_button_release(Widget w, XtPointer context, XEvent *event
   mix_amp_env_resize(w, NULL, NULL);
 }
 
-static Widget w_id = NULL, w_beg = NULL, w_track = NULL, mix_play = NULL, mix_track_play = NULL;
+static Widget w_id = NULL, w_beg = NULL, w_track = NULL, mix_play = NULL, mix_track_play = NULL, w_mix_pan = NULL;
 
 static void track_activated(void)
 {
@@ -428,6 +428,22 @@ static void mix_previous_callback(Widget w, XtPointer context, XtPointer info)
     }
 }
 
+static void mix_dialog_pan_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  bool inverted;
+  if (!(mix_ok(mix_dialog_id))) return;
+  inverted = (!(mix_dialog_mix_inverted(mix_dialog_id)));
+  if (!(ss->using_schemes))
+    XmChangeColor(w_mix_pan, (inverted) ? (ss->sgx)->yellow : (ss->sgx)->highlight_color);
+  mix_dialog_set_mix_inverted(mix_dialog_id, inverted);
+}
+
+#define pan_width 14
+#define pan_height 12
+static unsigned char pan_bits[] = {
+   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0x3f, 0x7f, 0x30, 0x60, 0x30,
+   0x60, 0x30, 0x60, 0x30, 0xe0, 0x3f, 0xe0, 0x3f, 0x00, 0x00, 0x00, 0x00};
+
 #define p_speaker_width 12
 #define p_speaker_height 12
 static unsigned char p_speaker_bits[] = {
@@ -436,7 +452,7 @@ static unsigned char p_speaker_bits[] = {
 
 static int mixer_depth;
 static GC gc;
-static Pixmap speaker_r;
+static Pixmap speaker_r, pan_r;
 void make_mixer_icons_transparent_again(Pixel old_color, Pixel new_color)
 {
   if (mix_dialog)
@@ -444,8 +460,10 @@ void make_mixer_icons_transparent_again(Pixel old_color, Pixel new_color)
       XFreePixmap(XtDisplay(mix_dialog), speaker_r);
       XSetBackground(XtDisplay(mix_dialog), gc, new_color);
       speaker_r = make_pixmap(p_speaker_bits, p_speaker_width, p_speaker_height, mixer_depth, gc);
+      pan_r = make_pixmap(pan_bits, pan_width, pan_height, mixer_depth, gc);
       XtVaSetValues(mix_play, XmNlabelPixmap, speaker_r, NULL);
       XtVaSetValues(mix_track_play, XmNlabelPixmap, speaker_r, NULL);
+      XtVaSetValues(w_mix_pan, XmNlabelPixmap, pan_r, NULL);
     }
 }
 
@@ -571,6 +589,7 @@ Widget make_mix_dialog(void)
       XtVaGetValues(mix_row, XmNforeground, &v.foreground, XmNbackground, &v.background, XmNdepth, &mixer_depth, NULL);
       gc = XtGetGC(mix_row, GCForeground | GCBackground, &v);
       speaker_r = make_pixmap(p_speaker_bits, p_speaker_width, p_speaker_height, mixer_depth, gc);
+      pan_r = make_pixmap(pan_bits, pan_width, pan_height, mixer_depth, gc);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
@@ -620,6 +639,13 @@ Widget make_mix_dialog(void)
       mix_track_play = XtCreateManagedWidget("track-play", xmPushButtonWidgetClass, track_row, args, n);
       XtAddCallback(mix_track_play, XmNactivateCallback, mix_track_dialog_play_callback, NULL);
 
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
+      XtSetArg(args[n], XmNlabelType, XmPIXMAP); n++;
+      XtSetArg(args[n], XmNlabelPixmap, pan_r); n++;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNarmColor, (ss->sgx)->yellow); n++;}
+      w_mix_pan = XtCreateManagedWidget("mix-pan", xmPushButtonWidgetClass, track_row, args, n);
+      XtAddCallback(w_mix_pan, XmNactivateCallback, mix_dialog_pan_callback, NULL);
 
       /* separator before sliders */
       n = 0;
@@ -816,7 +842,6 @@ Widget make_mix_dialog(void)
   return(mix_dialog);
 }
 
-/* TODO: gmix side of no-mix stuff (callbacks, local) */
 static void update_mix_dialog(int mix_id) 
 {
   chan_info *cp = NULL;
@@ -865,15 +890,21 @@ static void update_mix_dialog(int mix_id)
 	  chans = mix_dialog_mix_input_chans(mix_dialog_id);
 	  if (chans > 8) chans = 8; 
 	  set_sensitive(XmMessageBoxGetChild(mix_dialog, XmDIALOG_CANCEL_BUTTON), true);
+	  if (!(ss->using_schemes))
+	    {
+	      if (mix_dialog_mix_inverted(mix_dialog_id))
+		XmChangeColor(w_mix_pan, (ss->sgx)->yellow);
+	      else XmChangeColor(w_mix_pan, (ss->sgx)->highlight_color);
+	    }
 	}
       else
 	{
-	  /* TODO: some way for user to set the mix dialog id and force an update */
 	  chans = 1;
 	  XmTextSetString(w_track, "0");
 	  XmTextSetString(w_id, "-1");
-	  XmTextSetString(w_beg, "no active mixes?");
+	  XmTextSetString(w_beg, _("no active mixes"));
 	  set_sensitive(XmMessageBoxGetChild(mix_dialog, XmDIALOG_CANCEL_BUTTON), false);
+	  XmChangeColor(w_mix_pan, (ss->sgx)->highlight_color);
 	}
       for (i = 0; i < chans; i++)
 	{
@@ -912,11 +943,6 @@ static void update_mix_dialog(int mix_id)
 
 /* -------------------------------- track dialog -------------------------------- */
 
-/* TODO: mix list of track (and color?)
-   TODO: speed change->amp env, pos change->amp env? (drag), amp-env itself
-   TODO: multimix drag of any kind doesn't erase initial state correctly
- */
-
 static void update_track_dialog(int track_id);
 
 static Widget track_dialog = NULL;
@@ -941,6 +967,7 @@ static void change_track_speed(int track_id, Float val)
 
 static void track_speed_click_callback(Widget w, XtPointer context, XtPointer info) 
 {
+  if (!(track_p(track_dialog_id))) return;
   change_track_speed(track_dialog_id, 1.0);
   XtVaSetValues(w_track_speed, XmNvalue, (int)SPEED_SCROLLBAR_MID, NULL);
 }
@@ -953,8 +980,9 @@ static int track_speed_to_int(Float uval, snd_info *sp)
 static void track_speed_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
   int ival;
-  ival = ((XmScrollBarCallbackStruct *)info)->value;
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
+  if (!(track_p(track_dialog_id))) return;
+  ival = ((XmScrollBarCallbackStruct *)info)->value;
   if (!track_dialog_slider_dragging) track_dialog_start_slider_drag(track_dialog_id);
   track_dialog_slider_dragging = true;
   change_track_speed(track_dialog_id, exp((Float)(ival - SPEED_SCROLLBAR_MID) / SPEED_SCROLLBAR_BREAK));
@@ -964,6 +992,7 @@ static void track_speed_valuechanged_callback(Widget w, XtPointer context, XtPoi
 {
   XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
+  if (!(track_p(track_dialog_id))) return;
   track_dialog_slider_dragging = false;
   change_track_speed(track_dialog_id, exp((Float)(cb->value - SPEED_SCROLLBAR_MID) / SPEED_SCROLLBAR_BREAK));
 }
@@ -983,6 +1012,7 @@ static void change_track_amp(int track_id, Float val)
 
 static void track_amp_click_callback(Widget w, XtPointer context, XtPointer info) 
 {
+  if (!(track_p(track_dialog_id))) return;
   change_track_amp(track_dialog_id, 1.0);
   XtVaSetValues(w_track_amp, XmNvalue, SCROLLBAR_MID, NULL);
 }
@@ -990,8 +1020,9 @@ static void track_amp_click_callback(Widget w, XtPointer context, XtPointer info
 static void track_amp_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
   int ival;
-  ival = ((XmScrollBarCallbackStruct *)info)->value;
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
+  ival = ((XmScrollBarCallbackStruct *)info)->value;
+  if (!(track_p(track_dialog_id))) return;
   if (!track_dialog_slider_dragging) track_dialog_start_slider_drag(track_dialog_id);
   track_dialog_slider_dragging = true;
   change_track_amp(track_dialog_id, int_amp_to_Float(ival));
@@ -1000,8 +1031,9 @@ static void track_amp_drag_callback(Widget w, XtPointer context, XtPointer info)
 static void track_amp_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
 {
   int ival;
-  ival = ((XmScrollBarCallbackStruct *)info)->value;
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
+  ival = ((XmScrollBarCallbackStruct *)info)->value;
+  if (!(track_p(track_dialog_id))) return;
   track_dialog_slider_dragging = false;
   change_track_amp(track_dialog_id, int_amp_to_Float(ival));
 }
@@ -1021,6 +1053,7 @@ static void track_amp_env_resize(Widget w, XtPointer context, XtPointer info)
   XGCValues gv;
   env *e;
   env *cur_env;
+  if (!(track_p(track_dialog_id))) return;
   if (track_ax == NULL)
     {
       gv.function = GXcopy;
@@ -1057,6 +1090,7 @@ static void track_drawer_button_motion(Widget w, XtPointer context, XEvent *even
 {
   XMotionEvent *ev = (XMotionEvent *)event;
   env *e;
+  if (!(track_p(track_dialog_id))) return;
 #ifdef MAC_OSX
   if ((track_press_x == ev->x) && (track_press_y == ev->y)) return;
 #endif
@@ -1069,6 +1103,7 @@ static void track_drawer_button_press(Widget w, XtPointer context, XEvent *event
 {
   XButtonEvent *ev = (XButtonEvent *)event;
   env *e;
+  if (!(track_p(track_dialog_id))) return;
 #ifdef MAC_OSX
   track_press_x = ev->x;
   track_press_y = ev->y;
@@ -1081,28 +1116,33 @@ static void track_drawer_button_press(Widget w, XtPointer context, XEvent *event
 static void track_drawer_button_release(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   env *e;
+  if (!(track_p(track_dialog_id))) return;
   e = track_dialog_env(track_dialog_id);
   edp_handle_release(track_spf, e);
   track_amp_env_resize(w, NULL, NULL);
 }
 
 static Widget w_track_id = NULL, w_track_beg = NULL, w_track_track = NULL, w_track_track_play;
+static Widget w_track_text; /* error msgs, mix lists etc */
 
 static void track_track_activated(void)
 {
   char *val;
+  if (!(track_p(track_dialog_id))) return;
   val = XmTextGetString(w_track_track);
   if (val)
     {
       int id;
       id = string2int(val);
-      if (id != track_dialog_id)
+      if ((id == track_dialog_id) ||
+	  (!(set_track_track(track_dialog_id, id))))
 	{
-	  if (!(set_track_track(track_dialog_id, id)))
-	    {
-	      /* TODO: post error and undo (similarly for the others) */
-	    }
+	  char lab[16];
+	  set_label(w_track_text, _("circular track chain"));
+	  mus_snprintf(lab, 16, "%d", track_dialog_track_track(track_dialog_id));
+	  XmTextSetString(w_track_track, lab);
 	}
+      else update_track_dialog(id);
       XtFree(val);
     }
 }
@@ -1111,7 +1151,7 @@ static void track_id_activated(void)
 {
   char *val;
   int id;
-  val = XmTextGetString(w_track_id); /* post if no id (-1 etc) */
+  val = XmTextGetString(w_track_id);
   if (val)
     {
       id = string2int(val);
@@ -1120,7 +1160,32 @@ static void track_id_activated(void)
 	  track_dialog_id = id;
 	  update_track_dialog(id);
 	}
+      else
+	{
+	  set_label(w_track_text, _("no such track"));	  
+	}
       XtFree(val);
+    }
+}
+
+static void redisplay_track_bounds(void)
+{
+  char lab[LABEL_BUFFER_SIZE];
+  chan_info *cp;
+  off_t beg, len;
+  cp = track_channel(track_dialog_id, 0); /* can be NULL */
+  if (cp)
+    {
+      beg = track_position(track_dialog_id, -1);
+      len = track_frames(track_dialog_id, -1);
+      mus_snprintf(lab, LABEL_BUFFER_SIZE, "%.3f : %.3f",
+		   (float)((double)beg / (float)SND_SRATE(cp->sound)),
+		   (float)((double)(beg + len) / (float)SND_SRATE(cp->sound)));
+      XmTextSetString(w_track_beg, lab);
+    }
+  else
+    {
+      XmTextSetString(w_track_beg, _("no mixes in track"));
     }
 }
 
@@ -1128,12 +1193,31 @@ static void track_beg_activated(void)
 {
   char *val;
   chan_info *cp;
-  val = XmTextGetString(w_track_beg); /* post if < 0 etc */
+  if (!(track_p(track_dialog_id))) return;
+  val = XmTextGetString(w_track_beg);
   if (val)
     {
       cp = track_channel(track_dialog_id, 0);
-      set_track_position(track_dialog_id, (off_t)(string2Float(val) * SND_SRATE(cp->sound)));
-      update_track_dialog(track_dialog_id);
+      if (cp)
+	{
+	  Float beg;
+	  beg = string2Float(val);
+	  if (beg >= 0.0)
+	    {
+	      set_track_position(track_dialog_id, (off_t)(beg * SND_SRATE(cp->sound)));
+	      update_track_dialog(track_dialog_id);
+	    }
+	  else 
+	    {
+	      set_label(w_track_text, _("begin time < 0.0?"));
+	      redisplay_track_bounds();
+	    }
+	}
+      else 
+	{
+	  set_label(w_track_text, _("no mixes in track, so begin time ignored"));
+	  redisplay_track_bounds();
+	}
       XtFree(val);
     }
 }
@@ -1141,6 +1225,7 @@ static void track_beg_activated(void)
 static void apply_track_dialog_callback(Widget w, XtPointer context, XtPointer info) 
 {
   env *e;
+  if (!(track_p(track_dialog_id))) return;
   e = track_dialog_env(track_dialog_id);
   track_dialog_set_amp_env(track_dialog_id, e);
   track_amp_env_resize(w_track_env, NULL, NULL);
@@ -1192,6 +1277,7 @@ static void track_dialog_play_callback(Widget w, XtPointer context, XtPointer in
     reflect_track_play_stop();
   else
     {
+      if (!(track_p(track_dialog_id))) return;
       track_playing = true;
       if ((w_track_track_play) && (!(ss->using_schemes))) XmChangeColor(w_track_track_play, (ss->sgx)->pushed_button_color);
       track_dialog_play(track_dialog_id);
@@ -1248,9 +1334,11 @@ static void track_previous_callback(Widget w, XtPointer context, XtPointer info)
     }
 }
 
+static Widget w_track_frame = NULL;
+
 Widget make_track_dialog(void) 
 {
-  Widget mainform, track_row, track_track_row, track_frame, track_track_frame, sep;
+  Widget mainform, track_row, track_track_row, track_track_frame, sep, sep2;
   XmString xdismiss, xhelp, xtitle, s1, xapply;
   int n;
   Arg args[20];
@@ -1339,7 +1427,7 @@ Widget make_track_dialog(void)
       XtSetArg(args[n], XmNallowResize, true); n++;
       XtSetArg(args[n], XmNshadowType, XmSHADOW_ETCHED_IN); n++;
       XtSetArg(args[n], XmNshadowThickness, 2); n++;
-      track_frame = XtCreateManagedWidget("track-frame", xmFrameWidgetClass, mainform, args, n);
+      w_track_frame = XtCreateManagedWidget("track-frame", xmFrameWidgetClass, mainform, args, n);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
@@ -1348,7 +1436,7 @@ Widget make_track_dialog(void)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
-      track_row = XtCreateManagedWidget("track-dialog-row", xmRowColumnWidgetClass, track_frame, args, n);
+      track_row = XtCreateManagedWidget("track-dialog-row", xmRowColumnWidgetClass, w_track_frame, args, n);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
@@ -1421,9 +1509,36 @@ Widget make_track_dialog(void)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
-      XtSetArg(args[n], XmNheight, 10); n++;
+      XtSetArg(args[n], XmNheight, 6); n++; /* 10 */
       XtSetArg(args[n], XmNseparatorType, XmNO_LINE); n++;
-      sep = XtCreateManagedWidget("track-dialog-sep", xmSeparatorWidgetClass, mainform, args, n);
+      sep2 = XtCreateManagedWidget("track-dialog-sep", xmSeparatorWidgetClass, mainform, args, n);
+
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
+      /*
+      XtSetArg(args[n], XmNresizeWidth, false); n++;
+      XtSetArg(args[n], XmNrecomputeSize, false); n++;
+      */
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, sep2); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      w_track_text = XtCreateManagedWidget("track-text", xmLabelWidgetClass, mainform, args, n);
+      set_label(w_track_text, "");
+	
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, w_track_text); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
+      XtSetArg(args[n], XmNheight, 6); n++; /* 10 */
+      XtSetArg(args[n], XmNseparatorType, XmNO_LINE); n++;
+      sep = XtCreateManagedWidget("track-dialog-sep2", xmSeparatorWidgetClass, mainform, args, n);
+
 
       /* SRATE */
       n = 0;
@@ -1597,7 +1712,7 @@ static void update_track_dialog(int track_id)
   Float val;
   XmString s1;
   char lab[LABEL_BUFFER_SIZE];
-  if (track_id == INVALID_TRACK_ID) return;
+  char *temp = NULL;
   if (!(track_p(track_dialog_id))) track_dialog_id = track_id;
   if (!(track_p(track_dialog_id))) track_dialog_id = any_track_id();
   if (track_id == track_dialog_id)
@@ -1606,42 +1721,65 @@ static void update_track_dialog(int track_id)
 	make_track_dialog();
       else
 	{
-	  set_sensitive(track_nextb, (next_track_id(track_id) != INVALID_TRACK_ID));
-	  set_sensitive(track_previousb, (previous_track_id(track_id) != INVALID_TRACK_ID));
+	  set_sensitive(track_nextb, (next_track_id(track_dialog_id) != INVALID_TRACK_ID));
+	  set_sensitive(track_previousb, (previous_track_id(track_dialog_id) != INVALID_TRACK_ID));
 	}
-
       /* now reflect current track state in track dialog controls */
-
-      cp = track_channel(track_id, 0);
-      val = track_dialog_track_speed(track_id);
-      if ((val != current_track_speed) && (cp))
+      if (track_p(track_dialog_id))
 	{
-	  XtVaSetValues(w_track_speed, XmNvalue, track_speed_to_int(val, cp->sound), NULL);
-	  current_track_speed = val;
+	  cp = track_channel(track_dialog_id, 0); /* can be NULL */
+	  val = track_dialog_track_speed(track_dialog_id);
+	  if ((val != current_track_speed) && (cp))
+	    {
+	      XtVaSetValues(w_track_speed, XmNvalue, track_speed_to_int(val, cp->sound), NULL);
+	      current_track_speed = val;
+	    }
+
+	  mus_snprintf(lab, LABEL_BUFFER_SIZE, "%d", track_dialog_track_track(track_dialog_id));
+	  XmTextSetString(w_track_track, lab);
+	  mus_snprintf(lab, LABEL_BUFFER_SIZE, "%d", track_dialog_id);
+	  XmTextSetString(w_track_id, lab);
+	  s1 = XmStringCreate(_("amp:"), XmFONTLIST_DEFAULT_TAG);
+	  XtVaSetValues(w_track_amp_label, XmNlabelString, s1, NULL);
+	  XmStringFree(s1);
+	  val = track_dialog_track_amp(track_dialog_id);
+	  XtVaSetValues(w_track_amp, XmNvalue, track_amp_to_int(val), NULL);
+	  current_track_amp = val;
+	  track_amp_env_resize(w_track_env, NULL, NULL);
+	  if (cp)
+	    {
+	      beg = track_position(track_dialog_id, -1);
+	      len = track_frames(track_dialog_id, -1);
+	      mus_snprintf(lab, LABEL_BUFFER_SIZE, "%.3f : %.3f",
+			   (float)((double)beg / (float)SND_SRATE(cp->sound)),
+			   (float)((double)(beg + len) / (float)SND_SRATE(cp->sound)));
+	      XmTextSetString(w_track_beg, lab);
+	    }
+	  else XmTextSetString(w_track_beg, _("no mixes in track"));
+	  set_sensitive(XmMessageBoxGetChild(track_dialog, XmDIALOG_CANCEL_BUTTON), true);
+	  set_label(w_track_text, temp = track_dialog_track_info(track_dialog_id));
+	  if (temp) FREE(temp);
 	}
-
-      mus_snprintf(lab, LABEL_BUFFER_SIZE, "%d", track_dialog_track_track(track_id));
-      XmTextSetString(w_track_track, lab);
-
-      mus_snprintf(lab, LABEL_BUFFER_SIZE, "%d", track_id);
-      XmTextSetString(w_track_id, lab);
-
-      s1 = XmStringCreate(_("amp:"), XmFONTLIST_DEFAULT_TAG);
-      XtVaSetValues(w_track_amp_label, XmNlabelString, s1, NULL);
-      XmStringFree(s1);
-      val = track_dialog_track_amp(track_id);
-      XtVaSetValues(w_track_amp, XmNvalue, track_amp_to_int(val), NULL);
-      current_track_amp = val;
-      track_amp_env_resize(w_track_env, NULL, NULL);
-
-      if (cp)
+      else
 	{
-	  beg = track_position(track_id, -1);
-	  len = track_frames(track_id, -1);
-	  mus_snprintf(lab, LABEL_BUFFER_SIZE, "%.3f : %.3f",
-		       (float)((double)beg / (float)SND_SRATE(cp->sound)),
-		       (float)((double)(beg + len) / (float)SND_SRATE(cp->sound)));
-	  XmTextSetString(w_track_beg, lab);
+	  XmTextSetString(w_track_track, "0");
+	  XmTextSetString(w_track_id, "0");
+	  XmTextSetString(w_track_beg, _("no active track"));
+	  set_sensitive(XmMessageBoxGetChild(track_dialog, XmDIALOG_CANCEL_BUTTON), false);
+	}
+      if (track_dialog_track_color_set(track_dialog_id))
+	{
+	  XmChangeColor(w_track_frame, track_dialog_track_color(track_dialog_id));
+	  XtVaSetValues(w_track_frame, 
+			XmNshadowThickness, 4, 
+			NULL);
+	}
+      else
+	{
+	  XmChangeColor(w_track_frame, ss->sgx->basic_color);
+	  XtVaSetValues(w_track_frame, 
+			XmNshadowThickness, 2, 
+			NULL);
 	}
     }
 }
@@ -1652,9 +1790,6 @@ static void update_track_dialog(int track_id)
 
 void reflect_mix_or_track_change(int mix_id, int track_id, bool forced)
 {
-  /* TODO: if squelch updates? */
-  /* TODO: if edit then this is already updated -- how to check */
-
   if ((mix_dialog) && 
       (XtIsManaged(mix_dialog)))
     {
@@ -1680,23 +1815,7 @@ void reflect_mix_or_track_change(int mix_id, int track_id, bool forced)
 }
 
 
-/* -------------------------------- XEN CONNECTION -------------------------------- */
-
-static XEN g_set_mix_dialog_mix(XEN val)
-{
-  mix_dialog_id = XEN_TO_C_INT(val);
-  update_mix_dialog(mix_dialog_id);
-  return(val);
-}
-
-#ifdef XEN_ARGIFY_1
-XEN_NARGIFY_1(g_set_mix_dialog_mix_w, g_set_mix_dialog_mix)
-#else
-#define g_set_mix_dialog_mix_w g_set_mix_dialog_mix
-#endif
-
-void g_init_gxmix(void)
-{
-  XEN_DEFINE_PROCEDURE("set-mix-dialog-mix", g_set_mix_dialog_mix_w, 1, 0, 0, "internal testing func");
-}
-
+int mix_dialog_mix(void) {return(mix_dialog_id);}
+int mix_dialog_set_mix(int id) {mix_dialog_id = id; update_mix_dialog(mix_dialog_id); return(id);}
+int track_dialog_track(void) {return(track_dialog_id);}
+int track_dialog_set_track(int id) {track_dialog_id = id; update_track_dialog(track_dialog_id); return(id);}

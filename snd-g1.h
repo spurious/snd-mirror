@@ -251,6 +251,8 @@ char **cd_bits(void);
 char **mic_bits(void);
 char **speaker_bits(void);
 char **blue_speaker_bits(void);
+char **pan_bits(void);
+char **yellow_pan_bits(void);
 void make_icons_transparent(char *basic_color);
 
 
@@ -448,7 +450,10 @@ bool mix_play_stopped(void);
 bool track_play_stopped(void);
 void reflect_mix_play_stop(void);
 void reflect_track_play_stop(void);
-void g_init_gxmix(void);
+int mix_dialog_mix(void);
+int mix_dialog_set_mix(int id);
+int track_dialog_track(void);
+int track_dialog_set_track(int id);
 
 
 

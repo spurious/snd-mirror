@@ -367,6 +367,10 @@ bool mix_play_stopped(void);
 bool track_play_stopped(void);
 void reflect_mix_play_stop(void);
 void reflect_track_play_stop(void);
+int mix_dialog_mix(void);
+int mix_dialog_set_mix(int id);
+int track_dialog_track(void);
+int track_dialog_set_track(int id);
 
 
 

@@ -2051,22 +2051,6 @@ off_t string2off_t(char *str)
 #endif
 }
 
-static XEN g_mix_dialog(void)
-{
-  widget_t w;
-  #define H_mix_dialog "(" S_mix_dialog "): start the Mix browser"
-  w = make_mix_dialog();
-  return(XEN_WRAP_WIDGET(w));
-}
-
-static XEN g_track_dialog(void)
-{
-  widget_t w;
-  #define H_track_dialog "(" S_track_dialog "): start the Track browser"
-  w = make_track_dialog();
-  return(XEN_WRAP_WIDGET(w));
-}
-
 static XEN g_color_dialog(void) 
 {
   widget_t w;
@@ -2879,8 +2863,6 @@ XEN_ARGIFY_1(g_edit_header_dialog_w, g_edit_header_dialog)
 XEN_NARGIFY_0(g_edit_save_as_dialog_w, g_edit_save_as_dialog)
 XEN_NARGIFY_0(g_file_save_as_dialog_w, g_file_save_as_dialog)
 XEN_NARGIFY_2(g_info_dialog_w, g_info_dialog)
-XEN_NARGIFY_0(g_mix_dialog_w, g_mix_dialog)
-XEN_NARGIFY_0(g_track_dialog_w, g_track_dialog)
 XEN_NARGIFY_0(g_sounds_w, g_sounds)
 XEN_NARGIFY_1(g_yes_or_no_p_w, g_yes_or_no_p)
 XEN_NARGIFY_0(g_abort_w, g_abort)
@@ -3051,8 +3033,6 @@ XEN_NARGIFY_0(g_mus_audio_describe_w, g_mus_audio_describe)
 #define g_edit_save_as_dialog_w g_edit_save_as_dialog
 #define g_file_save_as_dialog_w g_file_save_as_dialog
 #define g_info_dialog_w g_info_dialog
-#define g_mix_dialog_w g_mix_dialog
-#define g_track_dialog_w g_track_dialog
 #define g_sounds_w g_sounds
 #define g_yes_or_no_p_w g_yes_or_no_p
 #define g_abort_w g_abort
@@ -3358,8 +3338,6 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE(S_edit_save_as_dialog, g_edit_save_as_dialog_w, 0, 0, 0, H_edit_save_as_dialog);
   XEN_DEFINE_PROCEDURE(S_file_save_as_dialog, g_file_save_as_dialog_w, 0, 0, 0, H_file_save_as_dialog);
   XEN_DEFINE_PROCEDURE(S_info_dialog,         g_info_dialog_w,         2, 0, 0, H_info_dialog);
-  XEN_DEFINE_PROCEDURE(S_mix_dialog,          g_mix_dialog_w,          0, 0, 0, H_mix_dialog);
-  XEN_DEFINE_PROCEDURE(S_track_dialog,        g_track_dialog_w,        0, 0, 0, H_track_dialog);
   XEN_DEFINE_PROCEDURE(S_sounds,              g_sounds_w,              0, 0, 0, H_sounds);
   XEN_DEFINE_PROCEDURE(S_yes_or_no_p,         g_yes_or_no_p_w,         1, 0, 0, H_yes_or_no_p);
   XEN_DEFINE_PROCEDURE(S_abort,               g_abort_w,               0, 0, 0, H_abort);
@@ -3448,7 +3426,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   g_init_gxregion();
   g_init_gxsnd();
   g_init_gxrec();
-  g_init_gxmix();
 #if DEBUGGING
   g_init_gxfind();
 #endif

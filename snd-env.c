@@ -305,6 +305,30 @@ static XEN g_multiply_envs(XEN e1, XEN e2, XEN maxx)
 }
 #endif
 
+env *invert_env(env *e)
+{
+  env *new_e;
+  int i;
+  new_e = copy_env(e);
+  for (i = 1; i < new_e->data_size; i += 2)
+    new_e->data[i] = 1.0 - new_e->data[i];
+  return(new_e);
+}
+
+#if DEBUGGING && HAVE_GUILE
+static XEN g_invert_env(XEN e)
+{
+  env *temp1, *temp2;
+  XEN res;
+  temp1 = xen_to_env(e);
+  temp2 = invert_env(temp1);
+  res = env_to_xen(temp2);
+  free_env(temp1);
+  free_env(temp2);
+  return(res);
+}
+#endif
+
 
 static void add_point (env *e, int pos, Float x, Float y)
 {
@@ -1759,5 +1783,6 @@ stretch-envelope from env.scm: \n\
   XEN_DEFINE_PROCEDURE("interp-env", g_interp_env, 2, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE("window-env", g_window_env, 5, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE("multiply-envs", g_multiply_envs, 3, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE("invert-env", g_invert_env, 1, 0, 0, NULL);
 #endif
 }

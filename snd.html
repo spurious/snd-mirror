@@ -136,8 +136,8 @@ and a CVS <a href="http://snd.sourceforge.net">repository</a>.
       <ul>
       <li><a href="extsnd.html#colors">Colors</a>
       <li><a href="extsnd.html#fonts">Fonts</a>
-      <li><a href="extsnd.html#sndgraphics">Graphics</a>
       <li><a href="extsnd.html#sndwidgets">Widgets</a>
+      <li><a href="extsnd.html#sndgraphics">Graphics</a>
       </ul>
     </ul>
   </ul>
@@ -686,7 +686,7 @@ flushed (but see the function check-for-unsaved-edits in <a href="sndscm.html#ex
 <tr><td width=140><a href="#controls">Show controls</a></td><td>show the control panel</td><td>(C-x C-o, C-x C-c)</td></tr>
 <tr><td><a href="extsnd.html#lisplistener">Open listener</a></td><td>show lisp listener</td><td></td></tr>
 <tr><td><a href="#mixdialog">Mixes</a></td><td>mix browser</td><td></td></tr>
-<tr><td><a href="#trackdialog">Tracks</a></td><td>track browser</td><td></td></tr>
+<tr><td><a href="#mixdialog">Tracks</a></td><td>track browser</td><td></td></tr>
 <tr><td><a href="#regionbrowser">Regions</a></td><td>a browser to examine the region stack</td><td></td></tr>
 <tr><td><a href="#prevfiles">Files</a></td><td>a browser of currently and previously loaded files</td><td></td></tr>
 <tr><td><a href="#colorbrowser">Color</a></td><td>a browser that chooses color maps</td><td></td></tr>
@@ -1583,8 +1583,13 @@ via the Mix Dialog.</p>
 
 <p>The Mix Dialog (under the View Menu) provides various
 commonly-used controls on the currently chosen mix.  At the top are
-the mix id, name, begin and end times, track number, and a play button.
-Beneath that are various sliders
+the mix id, name, begin and end times, and a play button for the mix,
+followed by the track number, a play button for the track, and a
+panning button (that icon is a pan...).  If the pan is set (am I babbling?)
+the track amplitude envelope is inverted before being applied to the mix;
+in conjunction with the un-inverted case, this treats the track envelope
+as a panning control.
+Beneath all that are various sliders
 controlling the speed (sampling rate) of the mix, and the amplitude of each
 input channel; and finally, an editor for the mix's (input) channels.
 The current mix amp env is not actually changed until you click 'Apply Env'.
@@ -1598,13 +1603,10 @@ one thing, or group several mixed-in sounds together.  These groups are called "
 and there are a variety of functions and hooks that apply to them.  See
 <a href="extsnd.html#sndmixes">Mixes and Tracks</a> for details, and
 mix.scm for examples.
+The track dialog is very similar to the mix dialog, providing the same
+kinds of controls.
 </p>
 
-<A NAME="trackdialog">The Track Dialog</a>
-
-<p>Nothing here yet...
-</p>
-<!-- TODO: doc track dialog -->
 
 <A NAME="gotomix"></a>
 <p>To move the cursor from one mix to the next, in the same

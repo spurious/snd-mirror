@@ -936,6 +936,7 @@ Float interp_env(env *e, Float x);
 env *normalize_x_axis(env *e);
 env *window_env(env *e, off_t local_beg, off_t local_dur, off_t e_beg, off_t e_dur);
 env *multiply_envs(env *e1, env *e2, Float maxx);
+env *invert_env(env *e);
 void move_point (env *e, int pos, Float x, Float y);
 void delete_point(env *e, int pos);
 env *default_env(Float x1, Float y);
@@ -1343,12 +1344,32 @@ void track_dialog_set_amp(int track_id, Float val, bool dragging);
 void track_dialog_start_slider_drag(int id);
 void track_dialog_set_speed(int id, Float val, bool dragging);
 void track_dialog_set_amp_env(int id, env *e);
+bool track_dialog_track_color_set(int id);
+color_t track_dialog_track_color(int id);
 void reflect_edit_in_track_dialog_env(int n);
 bool set_track_track(int id, int trk);
 void set_track_position(int id, off_t pos);
 int any_track_id(void);
 int next_track_id(int id);
 int previous_track_id(int id);
+char *track_dialog_track_info(int id);
+void release_pending_track_states(void);
+
+Float mix_read_sample_to_float(void *ptr);
+bool mf_p(XEN obj);
+void *get_mf(XEN obj);
+char *run_mix_reader_to_string(void *ptr);
+void run_free_mix_fd(void *ptr);
+void *run_make_mix_sample_reader(int id, off_t beg);
+Float track_read_sample_to_float(void *ptr);
+bool tf_p(XEN obj);
+void *get_tf(XEN obj);
+char *run_track_reader_to_string(void *ptr);
+void run_free_track_fd(void *ptr);
+void *run_make_track_sample_reader(int id, int chan, off_t beg);
+bool mix_dialog_mix_inverted(int id);
+void mix_dialog_set_mix_inverted(int id, bool on);
+
 
 
 /* -------- snd-find.c -------- */
