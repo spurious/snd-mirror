@@ -347,7 +347,7 @@ void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
   min = ((nj < previous_j) ? nj : previous_j);
   if (cp->graph_style == GRAPH_LINES)
     {
-      for (i = 0, j = 1; i < min-1; i++, j++)
+      for (i = 0, j = 1; i < min - 1; i++, j++)
 	{
 	  gdk_draw_line(wn, undraw_gc, ms->p0[i].x, ms->p0[i].y, ms->p0[j].x, ms->p0[j].y);
 	  gdk_draw_line(wn, draw_gc, points[i].x, points[i].y, points[j].x, points[j].y);

@@ -326,13 +326,6 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 
 snd_state *get_global_state(void) 
 {
-#if DEBUGGING
-  if (ss == NULL) 
-    {
-      fprintf(stderr,"global state stepped on?"); 
-      abort();
-    }
-#endif
   return(ss);
 }
 

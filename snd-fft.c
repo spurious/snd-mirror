@@ -349,7 +349,7 @@ static void build_Pn(int n)
       rate = 2.0 / (Float)n;
       for (k = 0, x = -1.0; k < n; k++, x += rate) 
 	{
-	  chebyshev_polynomials(x, saved_Pn[k], n-1);
+	  chebyshev_polynomials(x, saved_Pn[k], n - 1);
 	  if ((x == 1.0) || (x == -1.0))
 	    saved_wx[k] = ln2;
 	  else saved_wx[k] = 1.0 / sqrt(1.0 - x * x);
@@ -377,7 +377,7 @@ static void chebyshev_transform(Float *data, int n)
 	    wx = ln2;
 	  else wx = 1.0 / sqrt(1.0 - x * x);
 	  wfx = wx * data[k];
-	  chebyshev_polynomials(x, Pn, n-1);
+	  chebyshev_polynomials(x, Pn, n - 1);
 	  x += rate;
 	}
       else 

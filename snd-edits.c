@@ -1561,7 +1561,7 @@ void ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, i
  *
  * Next step in virtual ops
  *   FILTER:
- *     add "context" arg to ptree-channel: how many preceding samples to include with current
+ *     TODO: add "context" arg to ptree-channel: how many preceding samples to include with current
  *     if given, user proc takes vct arg, not sample (intended for FIR filters)
  *     snd_fd would need vct arg with size
  *     new ED_VTREE? ptree+vct op

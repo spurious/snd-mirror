@@ -1831,13 +1831,6 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
       si = sc->si;
       for (i = 0; i < si->chans; i++) 
 	{
-#if DEBUGGING
-	  if (beg != si->begs[i])
-	    fprintf(stderr,"using scale %lld for %lld\n", si->begs[i], beg);
-	  if ((regexpr) &&
-	      (dur != selection_end(si->cps[i]) - si->begs[i] + 1))
-	    fprintf(stderr,"using scale dur %lld for %lld\n", selection_end(si->cps[i]) - si->begs[i] + 1, dur);
-#endif
 	  if (regexpr)
 	    scale_channel(si->cps[i], 
 			  val[0], 
@@ -1876,10 +1869,6 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
       si = sc->si;
       for (i = 0; i < si->chans; i++) 
 	{
-#if DEBUGGING
-	  if (beg != si->begs[i])
-	    fprintf(stderr,"using beg %lld for %lld\n", si->begs[i], beg);
-#endif
 	  segbeg = si->begs[i];
 	  segend = si->begs[i] + dur;
 	  segnum = passes[0] + 1;
@@ -1926,20 +1915,14 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
 	si = snd_sync(ss, sp->sync);
       else si = make_simple_sync(cp, beg);
       for (i = 0; i < si->chans; i++)
-	{
-#if DEBUGGING
-	  if (beg != si->begs[i])
-	    fprintf(stderr,"using ramp %lld for %lld\n", si->begs[i], beg);
-#endif
-	  if (ramp_or_ptree_fragments_in_use(si->cps[i], 
-					     si->begs[i],
-					     dur,
-					     to_c_edit_position(si->cps[i], edpos, origin, arg_pos)))
-	    {
-	      rampable = FALSE;
-	      break;
-	    }
-	}
+	if (ramp_or_ptree_fragments_in_use(si->cps[i], 
+					   si->begs[i],
+					   dur,
+					   to_c_edit_position(si->cps[i], edpos, origin, arg_pos)))
+	  {
+	    rampable = FALSE;
+	    break;
+	  }
       si = free_sync_info(si);
     }
   else rampable = FALSE;
@@ -2093,10 +2076,6 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
       si = sc->si;
       for (i = 0; i < si->chans; i++) 
 	{
-#if DEBUGGING
-	  if (beg != si->begs[i])
-	    fprintf(stderr,"using seg %lld for %lld\n", si->begs[i], beg);
-#endif
 	  segbeg = si->begs[i];
 	  segend = si->begs[i] + dur;
 	  segnum = passes[0] + 1;
@@ -2404,6 +2383,8 @@ static char *run_channel(chan_info *cp, void *upt, off_t beg, off_t dur, int edp
   return(NULL);
 }
 
+/* TODO: protect map-chan with dynamic-wind */
+
 static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN chn, XEN edpos, XEN s_dur, char *fallback_caller) 
 { 
   snd_state *ss;
@@ -2632,6 +2613,92 @@ about where it is in the sound."
   return(XEN_FALSE);
 }
 
+#if HAVE_DYNAMIC_WIND
+typedef struct {
+  XEN proc;
+  off_t beg, num;
+  snd_fd *sf;
+  snd_info *sp;
+  const char *caller;
+  int counting, reporting;
+} scan_context;
+
+static scan_context *make_scan_context(XEN p, off_t b, off_t n, snd_fd *f, snd_info *s, const char *orig, int count)
+{
+  scan_context *sc;
+  sc = (scan_context *)CALLOC(1, sizeof(scan_context));
+  sc->proc = p;
+  sc->beg = b;
+  sc->num = n;
+  sc->sf = f;
+  sc->sp = s;
+  sc->caller = orig;
+  sc->counting = count;
+  sc->reporting = FALSE;
+  return(sc);
+}
+
+static void before_scan(void *ignore)
+{
+  /* we could possibly catch call/cc into previous scan here */
+}
+
+static SCM scan_body(void *context)
+{
+  off_t kp;
+  snd_state *ss;
+  int counts = 0, rpt = 0, rpt4 = 0;
+  XEN res = XEN_FALSE;
+  scan_context *sc = (scan_context *)context;
+  sc->reporting = (sc->num > MAX_BUFFER_SIZE);
+  rpt4 = MAX_BUFFER_SIZE / 4;
+  ss = get_global_state();
+  if (sc->reporting) start_progress_report(sc->sp, NOT_FROM_ENVED);
+  for (kp = 0; kp < sc->num; kp++)
+    {
+      res = XEN_CALL_1_NO_CATCH(sc->proc,
+				C_TO_XEN_DOUBLE((double)read_sample_to_float(sc->sf)),
+				sc->caller);
+      if (XEN_NOT_FALSE_P(res))
+	{
+	  if ((sc->counting) &&
+	      (XEN_TRUE_P(res)))
+	    counts++;
+	  else
+	    return(XEN_LIST_2(res,
+			      C_TO_XEN_OFF_T(kp + sc->beg)));
+	}
+      if (sc->reporting) 
+	{
+	  rpt++;
+	  if (rpt > rpt4)
+	    {
+	      progress_report(sc->sp, sc->caller, 1, 1, (Float)((double)kp / (double)(sc->num)), NOT_FROM_ENVED);
+	      rpt = 0;
+	    }
+	}
+      if (ss->stopped_explicitly)
+	{
+	  ss->stopped_explicitly = 0;
+	  report_in_minibuffer(sc->sp, "C-G stopped %s at sample " OFF_TD, 
+			       sc->caller, kp + sc->beg);
+	  break;
+	}
+    }
+  if (sc->counting)
+    return(C_TO_XEN_INT(counts));
+  return(XEN_FALSE);
+}
+
+static void after_scan(void *context)
+{
+  scan_context *sc = (scan_context *)context;
+  if (sc->sf) sc->sf = free_snd_fd(sc->sf);
+  if (sc->reporting) finish_progress_report(sc->sp, NOT_FROM_ENVED);
+  FREE(sc);
+}
+#endif
+
 static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn, 
 		     const char *caller, int counting, XEN edpos, int arg_pos, XEN s_dur)
 {
@@ -2642,8 +2709,11 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
   snd_fd *sf;
   XEN errstr;
   off_t kp, num;
-  int reporting = 0, rpt = 0, rpt4, counts = 0, pos;
+#if (!HAVE_DYNAMIC_WIND)
+  int reporting = 0, rpt = 0, rpt4;
   XEN res;
+#endif
+  int counts = 0, pos;
   char *errmsg;
   XEN proc = XEN_FALSE;
   void *pt = NULL;
@@ -2675,9 +2745,6 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
     }
   ss = get_global_state();
   sp = cp->sound;
-  sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
-  if (sf == NULL) return(XEN_TRUE);
-  rpt4 = MAX_BUFFER_SIZE / 4;
   if (end == 0) 
     {
       if (dur != 0)
@@ -2685,15 +2752,16 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
       else end = cp->samples[pos] - 1;
     }
   num = end - beg + 1;
+  if (num <= 0) return(XEN_FALSE);
+  sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
+  if (sf == NULL) return(XEN_TRUE);
+
   if (optimization(ss) > 0)
-    pt = form_to_ptree_1f2b(proc_and_list);
-  if (num > 0)
     {
-      reporting = (num > MAX_BUFFER_SIZE);
-      if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
-      for (kp = 0; kp < num; kp++)
+      pt = form_to_ptree_1f2b(proc_and_list);
+      if (pt)
 	{
-	  if (pt)
+	  for (kp = 0; kp < num; kp++)
 	    {
 	      if (evaluate_ptree_1f2b(pt, read_sample_to_float(sf)))
 		{
@@ -2703,62 +2771,76 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 		    {
 		      sf = free_snd_fd(sf);
 		      free_ptree(pt);
-		      if (reporting) 
-			finish_progress_report(sp, NOT_FROM_ENVED);
 		      return(XEN_LIST_2(XEN_TRUE,
 					C_TO_XEN_OFF_T(kp + beg)));
 		    }
 		}
 	    }
+	  sf = free_snd_fd(sf);
+	  free_ptree(pt);
+	  if (counting)
+	    return(C_TO_XEN_INT(counts));
+	  return(XEN_FALSE);
+	}
+    }
+#if HAVE_DYNAMIC_WIND
+  /* package up context and try to protect against errors/throws in the user's code */
+  {
+    scan_context *sc;
+    sc = make_scan_context(proc, beg, num, sf, sp, caller, counting);
+    return(scm_internal_dynamic_wind((scm_t_guard)before_scan, 
+				     (scm_t_inner)scan_body, 
+				     (scm_t_guard)after_scan, 
+				     (void *)sc,
+				     (void *)sc));
+  }
+#else
+  reporting = (num > MAX_BUFFER_SIZE);
+  if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
+  rpt4 = MAX_BUFFER_SIZE / 4;
+  for (kp = 0; kp < num; kp++)
+    {
+      res = XEN_CALL_1_NO_CATCH(proc,
+				C_TO_XEN_DOUBLE((double)read_sample_to_float(sf)),
+				caller);
+      /* leak here -- if reader active and error occurs, we jump out without cleanup */
+      /* see dynamic_wind above */
+      if (XEN_NOT_FALSE_P(res))
+	{
+	  if ((counting) &&
+	      (XEN_TRUE_P(res)))
+	    counts++;
 	  else
 	    {
-	      res = XEN_CALL_1_NO_CATCH(proc,
-					C_TO_XEN_DOUBLE((double)read_sample_to_float(sf)),
-					caller);
-	      /* leak here -- if reader active and error occurs, we jump out without cleanup */
-	      /* perhaps we want scm_internal_lazy_catch here followed (in error handler) by scm_throw */
-	      if (XEN_NOT_FALSE_P(res))
-		{
-		  if ((counting) &&
-		      (XEN_TRUE_P(res)))
-		    counts++;
-		  else
-		    {
-		      sf = free_snd_fd(sf);
-		      if (reporting) 
-			finish_progress_report(sp, NOT_FROM_ENVED);
-		      return(XEN_LIST_2(res,
-					C_TO_XEN_OFF_T(kp + beg)));
-		    }
-		}
-	    }
-	  if (reporting) 
-	    {
-	      rpt++;
-	      if (rpt > rpt4)
-		{
-		  progress_report(sp, caller, 1, 1, (Float)((double)kp / (double)num), NOT_FROM_ENVED);
-		  rpt = 0;
-		}
-	    }
-	  if (ss->stopped_explicitly)
-	    {
-	      ss->stopped_explicitly = 0;
-	      if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
-	      report_in_minibuffer(sp, "C-G stopped %s at sample " OFF_TD, 
-				   caller, kp + beg);
 	      sf = free_snd_fd(sf);
-	      if (counting)
-		return(C_TO_XEN_INT(counts));
-	      return(XEN_FALSE);
+	      if (reporting) 
+		finish_progress_report(sp, NOT_FROM_ENVED);
+	      return(XEN_LIST_2(res,
+				C_TO_XEN_OFF_T(kp + beg)));
 	    }
 	}
-      if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
+      if (reporting) 
+	{
+	  rpt++;
+	  if (rpt > rpt4)
+	    {
+	      progress_report(sp, caller, 1, 1, (Float)((double)kp / (double)num), NOT_FROM_ENVED);
+	      rpt = 0;
+	    }
+	}
+      if (ss->stopped_explicitly)
+	{
+	  ss->stopped_explicitly = 0;
+	  report_in_minibuffer(sp, "C-G stopped %s at sample " OFF_TD, 
+			       caller, kp + beg);
+	  break;
+	}
     }
+  if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
   if (sf) sf = free_snd_fd(sf);
-  if (pt) free_ptree(pt);
   if (counting)
     return(C_TO_XEN_INT(counts));
+#endif
   return(XEN_FALSE);
 }
 

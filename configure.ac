@@ -709,6 +709,7 @@ if test $GUILE_CONFIG_works = yes; then
     AC_CHECK_LIB(guile, scm_list_n,             [AC_DEFINE(HAVE_SCM_LIST_N)])
     AC_CHECK_LIB(guile, scm_str2symbol,         [AC_DEFINE(HAVE_SCM_STR2SYMBOL)])
     AC_CHECK_TYPE(scm_t_catch_body,             [AC_DEFINE(HAVE_SCM_T_CATCH_BODY)], , [#include <guile/gh.h>])
+    AC_CHECK_TYPE(scm_t_guard,                  [AC_DEFINE(HAVE_DYNAMIC_WIND)], , [#include <guile/gh.h>])
     LIBS="$OLD_LIBS"
     CFLAGS="$OLD_CFLAGS"
 

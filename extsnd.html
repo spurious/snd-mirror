@@ -36,13 +36,6 @@
 <li><a href="#lisplistener">Introduction</a>
 <li><a href="#etc">Snd Programming</a>
   <ul>
-  <li><a href="#appearance">Customizing Snd's appearance</a>
-    <ul>
-    <li><a href="#colors">Colors</a>
-    <li><a href="#fonts">Fonts</a>
-    <li><a href="#sndgraphics">Graphics</a>
-    <li><a href="#sndwidgets">Widgets</a>
-    </ul>
   <li><a href="#behavior">Customizing Snd's behavior</a>
     <ul>
     <li><a href="#sndglobalvars">Global variables</a>
@@ -64,6 +57,13 @@
     <li><a href="#snderrors">Errors and Debugging</a>
     <li><a href="#sndconstants">Constants</a>
     <li><a href="#sndmisc">Miscellaneous functions</a>
+    </ul>
+  <li><a href="#appearance">Customizing Snd's appearance</a>
+    <ul>
+    <li><a href="#colors">Colors</a>
+    <li><a href="#fonts">Fonts</a>
+    <li><a href="#sndgraphics">Graphics</a>
+    <li><a href="#sndwidgets">Widgets</a>
     </ul>
   <li><a href="grfsnd.html#grfsndcontents">Customization Part 2</a>
   </ul>
@@ -169,657 +169,6 @@ various examples of and extensions to Snd can be found in the contrib directory,
 </table>
 
 <br>
-<span class=bbox><h3><A NAME="appearance">Customizing Snd's appearance</a></h3></span>
-
-<p>Snd's overall appearance is controlled first by the startup <a href="grfsnd.html#sndswitches">switches</a> that
-choose the outermost widget; normally this is a paned window with a sound
-in each pane; -separate puts each
-sound in a separate window, and -notebook
-puts each sound on a separate page of a notebook widget.  Similarly -horizontal
-and -vertical determine which way the outer panes are layed out. 
-<A NAME="autoexpl"></a>As panes (sounds) come and go, Snd's overall size may change (this is
-partly determined by the window manager, but is to some extent also
-up to Snd); many people find this distracting -- they would rather the
-overall window size try to stay the same.  The Snd variable associated
-with this is "auto-resize"; it can be accessed as follows (we're typing
-to the listener here, as described above):</p>
-
-<pre>
-&gt;<em class=typing>(auto-resize)</em>
-<em class=listener>#t</em>
-&gt;<em class=typing>(set! (auto-resize) #f)</em>
-<em class=listener>#f</em>
-</pre>
-
-<p>As this illustrates, 
-variables in Snd are accessed as though each were a function, and set using set!.  auto-resize's current
-value is accessed above via <code>(auto-resize)</code>, and set to a
-new value via <code>(set! (auto-resize) #f)</code>. #t is Scheme for "true"
-(often 1 in C, t in Lisp), #f is "false" (0 in C, nil in Lisp).
-A statement like <code>(set! (auto-resize) #f)</code> can be placed in your ~/.snd initialization file
-to make it the default setting for your version of Snd, or placed
-in a separate file of Scheme code and loaded at any time via the load
-function.  </p>
-
-<p>In the sections below, the variable or function name is followed by
-either its default value or the function arguments, then some brief
-description of what it does.  So,
-</p>
-<pre>
-  <em class=def>basic-color</em>           ivory2          main Snd color.
-</pre>
-<p>means there's a thing called basic-color (and a way to set it via  "(set! (basic-color) ...)"),
-that its default value is ivory2 (see <a href="sndscm.html#rgbdoc">rgb.scm</a> for a definition of this color), and that
-it is the main Snd color.</p>
-<br>
-<span class=cbox><h4><A NAME="colors">Colors</a></h4></span>
-
-<p>A color in Snd is an object with three fields representing the
-rgb (red green blue) settings as numbers between 0.0 and 1.0.  A color
-object is created via make-color:</p>
-<pre>
-&gt;<em class=typing>(define blue (make-color 0 0 1))</em>
-</pre>
-<p>This declares the Scheme variable "blue" and gives it the value
-of the color whose rgb components include only blue in full force.
-The X11 color names are defined in <a href="sndscm.html#rgbdoc">rgb.scm</a>. Now, in Snd, the basic
-color is known as "basic-color" (another Scheme variable); we can
-set it:</p>
-<pre>
-&gt;<em class=typing>(set! (basic-color) blue)</em>
-</pre>
-
-<p>The color variables
-are:</p>
-
-<table border=0 cellpadding=0 cellspacing=0>
-<tr><td width=220><code><em class=def><a name="basiccolor">basic-color</a></em></code></td>
-    <td width=180><code>ivory2</code></td>
-    <td>main Snd color.</td></tr>
-<tr><td><code><em class=def><a name="cursorcolor">cursor-color</a></em></code></td>
-    <td><code>red</code></td>
-    <td>cursor color.</td></tr>
-<tr><td><code><em class=def><a name="datacolor">data-color</a></em></code></td>
-    <td><code>black</code></td>
-    <td>color of data in unselected graph.</td></tr>
-<tr><td><code><em class=def>enved-waveform-color</em></code></td>
-    <td><code>blue</code></td>
-    <td>color of waveform displayed in envelope editor.</td></tr>
-<tr><td><code><em class=def><a name="filterwaveformcolor">filter-waveform-color</a></em></code></td>
-    <td><code>blue</code></td>
-    <td>color of control panel filter waveform.</td></tr>
-<tr><td><code><em class=def><a name="graphcolor">graph-color</a></em></code></td>
-    <td><code>white</code></td>
-    <td>background color of unselected graph.</td></tr>
-<tr><td><code><em class=def><a name="highlightcolor">highlight-color</a></em></code></td>
-    <td><code>ivory1</code></td>
-    <td>highlighting color.</td></tr>
-<tr><td><code><em class=def>listener-color</em></code></td>
-    <td><code>aliceblue</code></td>
-    <td>background color of lisp listener.</td></tr>
-<tr><td><code><em class=def>listener-text-color</em></code></td>
-    <td><code>black</code></td>
-    <td>text color in lisp listener.</td></tr>
-<tr><td><code><em class=def><a name="markcolor">mark-color</a></em></code></td>
-    <td><code>red</code></td>
-    <td>color of mark indicator.</td></tr>
-<tr><td><code><em class=def>mix-color</em></code></td>
-    <td><code>darkgray</code></td>
-    <td>color of mix waveforms.</td></tr>
-<tr><td><code><em class=def>selected-mix-color</em></code></td>
-    <td><code>lightgreen</code></td>
-    <td>color of selected mix waveform.</td></tr>
-<tr><td><code><em class=def><a name="positioncolor">position-color</a></em></code></td>
-    <td><code>ivory3</code></td>
-    <td>position slider color</td></tr>
-<tr><td><code><em class=def><a name="pushedbuttoncolor">pushed-button-color</a></em></code></td>
-    <td><code>lightsteelblue1</code></td>
-    <td>color of pushed button.</td></tr>
-<tr><td><code><em class=def>sash-color</em></code></td>
-    <td><code>lightgreen</code></td>
-    <td>color of paned window sashes.</td></tr>
-<tr><td><code><em class=def><a name="selecteddatacolor">selected-data-color</a></em></code></td>
-    <td><code>black</code></td>
-    <td>color of data in currently selected graph.</td></tr>
-<tr><td><code><em class=def><a name="selectedgraphcolor">selected-graph-color</a></em></code></td>
-    <td><code>white</code></td>
-    <td>background color of currently selected graph.</td></tr>
-<tr><td><code><em class=def><a name="selectioncolor">selection-color</a></em></code></td>
-    <td><code>lightsteelblue1</code></td>
-    <td>color of selected portion of graph.</td></tr>
-<tr><td><code><em class=def><a name="textfocuscolor">text-focus-color</a></em></code></td>
-    <td><code>white</code></td>
-    <td>color of text field when it has focus.</td></tr>
-<tr><td><code><em class=def><a name="zoomcolor">zoom-color</a></em></code></td>
-    <td><code>ivory4</code></td>
-    <td>zoom slider color.</td></tr>
-</table>
-
-<br>
-<!-- --><center><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define beige (make-color 0.96 0.96 0.86))
-(define blue (make-color 0 0 1))
-(set! (selected-graph-color) beige)
-(set! (selected-data-color) blue)
-<!-- --></pre></td></tr></table></center>
-
-<p>In addition, the various transforms can be displayed using colormaps.  The following
-variables and functions control this:</p>
-
-<table border=0 cellspacing=4>
-
-<tr><td width=180><code><em class=def><a name="colorcutoff">color-cutoff</a></em></code></td><td width=100>0.003</td>
-<td>In spectra, sets the lowest data value that will be colored.</td></tr>
-<tr><td><code><em class=def><a name="sndcolordialog">color-dialog</a></em></code></td><td>()</td>
-<td>Create the Color dialog (to choose a colormap etc), if necessary, activate it and return the dialog widget.</td></tr>
-<tr><td><code><em class=def><a name="colorinverted">color-inverted</a></em></code></td><td>#t</td>
-<td>The 'invert' button in the <a href="snd.html#colorbrowser">color</a> dialog, negated (hunh?!).</td></tr>
-<tr><td><code><em class=def><a name="colorscale">color-scale</a></em></code></td><td>0.5</td>
-<td>The darkness setting in the <a href="snd.html#colorbrowser">color</a> dialog, divided by 100.</td></tr>
-<tr><td valign=top><code><em class=def><a name="colormap">colormap</a></em></code></td><td valign=top>0</td>
-<td>Colormap choice for various displays (see the Color Editor).
-<br>
-This should be an integer between -1 and 15.  The maps (from 0 to 15) are: 
-gray, hsv, hot, cool, bone, copper, pink, jet, prism, autumn, winter, 
-spring, summer, colorcube, flag, and lines.  -1 means black and white.
-</td></tr>
-</table>
-
-<p>The color object handlers are:</p>
-
-<table border=0 cellspacing=4>
-<tr>
-<td width="20%"><code><em class=def><a name="colorp">color?</a></em> (obj)</code></td>
-<td>#t if <i>obj</i> is a color (this is the same as |Pixel? in xm), (see <a href="#makecolor">make-color</a>).</td></tr>
-
-<tr>
-<td><code><em class=def><a name="color3list">color-&gt;list</a></em> (obj)</code></td>
-<td>return list (r g b) of color components.</td></tr>
-
-<tr>
-<td valign=top><code><em class=def><a name="makecolor">make-color</a></em> (r g b)</code></td>
-<td>return a color object using the red/green/blue values.  If the object is called
-as a function, it returns the list of rgb values.
-If, for example, blue is a defined color, <code>(blue)</code> is the same as <code>(color-&gt;list blue)</code>.
-Two colors are equal (i.e. equal? returns #t) if their rgb values are the same.
-</td>
-</tr>
-</table>
-
-<br>
-<span class=cbox><h4><A NAME="fonts">Fonts</a></h4></span>
-
-<p>Fonts in Snd are strings containing a description of the
-desired font.  These can be the abbreviated forms such as
-"8x14" or a full X font name such as "-misc-fixed-bold-r-normal--*-140-*-*-c-*-iso8859-1".
-The font variables are:
-</p>
-<table cellpadding=0 cellspacing=0>
-<tr><td width=200><code><em class=def><a name="axislabelfont">axis-label-font</a></em></code></td><td>used in axis labels</td></tr>
-<tr><td><code><em class=def><a name="axisnumbersfont">axis-numbers-font</a></em></code></td><td>used in axis tick numbers</td></tr>
-<tr><td><code><em class=def><a name="boldbuttonfont">bold-button-font</a></em></code></td><td>used by various buttons and labels</td></tr>
-<tr><td><code><em class=def><a name="buttonfont">button-font</a></em></code></td><td>used by various buttons and labels</td></tr>
-<tr><td><code><em class=def>help-text-font</em></code></td><td>help dialog text font</td></tr>
-<tr><td><code><em class=def>listener-font</em></code></td><td>listener font</td></tr>
-<tr><td><code><em class=def><a name="tinyfont">tiny-font</a></em></code></td><td>smallest font used</td></tr>
-</table>
-<br>
-<!-- --><center><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(set! (listener-font) "9x15")
-(set! (help-text-font) "9x15")
-(set! (button-font) "-adobe-times-medium-r-*-*-14-*-*-*-*-*-*-*")
-(set! (bold-button-font) "-adobe-times-bold-r-*-*-14-*-*-*-*-*-*-*")
-(set! (axis-label-font) "-adobe-times-medium-r-normal-*-18-*-*-*-*-*-*-*")
-(set! (axis-numbers-font) "9x15")
-<!-- --></pre></td></tr></table></center>
-
-<p>See also <a href="#loadfont">load-font</a> and <a href="#currentfont">current-font</a> below.
-In Gtk2, Pango-style names are used for the fonts: "Monospace 8" for example.
-If the requested font can't be loaded, the set! statement will return the old (unchanged) font name.
-</p>
-<pre>
-&gt;<em class=typing>(set! (axis-label-font) "8x14")</em>
-<em class=listener>"-adobe-times-medium-r-normal-*-18-*-*-*-*-*-*-*"</em>
-</pre>
-<br>
-<br>
-<span class=cbox><h4><A NAME="sndwidgets">Widgets</a></h4></span>
-
-<p>This section is new, and in flux, but here's what's currently implemented:
-</p>
-
-<table cellspacing=0>
-<tr><td><code><em class=def>widget-position</em> (widget)</code></td>
-<td>return a list giving the widget x and y positions</td></tr>
-<tr><td valign=top><code><em class=def>widget-size</em> (widget)</code></td>
-<td>return a list giving the widget width and height.  The corresponding set! forms also take a list:<br>
-<code>(set! (widget-position (cadr (main-widgets))) (list 300 100))</code></td></tr>
-<tr><td><code><em class=def>widget-text</em> (widget)</code></td><td>return or set the contents of text widget</td></tr>
-<tr><td><code><em class=def><a name="recolorwidget">recolor-widget</a></em> (widget color)</code></td></tr>
-<tr><td><code><em class=def><a name="showwidget">show-widget</a></em> (widget)</code></td></tr>
-<tr><td><code><em class=def><a name="hidewidget">hide-widget</a></em> (widget)</code></td></tr>
-<tr><td colspan=2><br></td></tr>
-<tr><td><code><em class=def><a name="mainmenu">main-menu</a></em> (menu)</code></td><td></td></tr>
-<tr><td><code><em class=def><a name="mainwidgets">main-widgets</a></em> ()</code></td><td></td></tr>
-<tr><td><code><em class=def><a name="menuwidgets">menu-widgets</a></em> ()</code></td><td></td></tr>
-<tr><td><code><em class=def><a name="soundwidgets">sound-widgets</a></em> (snd)</code></td><td></td></tr>
-<tr><td><code><em class=def><a name="channelwidgets">channel-widgets</a></em> (snd chn)</code></td><td></td></tr>
-<tr><td><code><em class=def><a name="dialogwidgets">dialog-widgets</a></em> ()</code></td><td></td></tr>
-</table>
-
-<p>
-The four "-widgets" procedure return lists of possibly useful widgets:
-</p>
-<pre>
-  main-widgets:    '(0:top-level-application 1:top-level-shell 2:main-pane 3:main-sound-pane 4:listener-pane 5:notebook-outer-pane)
-  menu-widgets:    '(0:top-level-menu-bar 1:file-menu 2:edit-menu 3:view-menu 4:options-menu 5:help-menu)
-  sound-widgets:   '(0:main-pane 1:name-label 2:control-panel 3:minibuffer 4:play 5:filter-graph 6:unite 7:minibuffer-label 8:name-icon 9:sync)
-  channel-widgets: '(0:graph 1:w 2:f 3:sx 4:sy 5:zx 6:zy 7:edhist 8:gsy 9:gzy)
-  dialog-widgets:  '(0:color_dialog 1:orientation_dialog 2:enved_dialog 3:error_dialog 
-                     4:yes_or_no_dialog 5:transform_dialog 6:file_open_dialog 
-                     7:file_save_as_dialog 8:view_files_dialog 9:raw_data_dialog 
-                     10:new_file_dialog 11:file_mix_dialog 12:edit_header_dialog 
-                     13:find_dialog 14:help_dialog 15:completion_dialog 16:mix_panel_dialog
-                     17:print_dialog 18:recorder_dialog 19:region_dialog)
-</pre>
-<p>I've only included the ones I needed immediately (for autotesting), but all Snd widgets are potentially (and easily)
-accessible; if you need access to one that
-isn't included, let me know.  <i>dialog-widgets</i> entries will be #f for any dialogs that have not
-yet been created.
-</p>
-<pre>
-  (recolor-widget (cadr (sound-widgets)) (make-color 1 0 0))
-</pre>
-<p>makes the sound name label red. To remove the y-position slider (which is only there
-for looks):
-</p>
-<pre>
-  (hide-widget (list-ref (channel-widgets) 4))
-</pre>
-<p>See also examp.scm.</p>
-
-<br>
-<span class=cbox><h4><A NAME="sndgraphics">Graphics</a></h4></span>
-
-<p>It is possible to draw directly on any of the channel graphs.  Simple examples include the
-<a href="extsnd.html#showoriginal">show-original</a> after-graph-hook function, and the
-<a href="extsnd.html#xcursor">x-cursor</a> function that draws an "x" shaped cursor.
-The lowest level procedures are:
-</p>
-
-<!-- -------------------------------- GRAPHICS TABLE -------------------------------- -->
-<!-- --><table border=0 cellspacing=4>
-<!-- -->
-<!-- axis-info -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="axisinfo">axis-info</a></em> (snd chn <i>grf</i>)</code></span></td></tr>
-<!-- -->
-<!-- --><tr><td><spacer type=horizontal size=40><br></td><td>
-<!-- -->returns a list describing the specified axis:
-<!-- --><code>'(left-sample right-sample x0 y0 x1 y1 x-min y-min x-max y-max 
-<!-- -->x0-position y0-position x1-position y1-position y-offset)</code>.  This might be
-<!-- -->useful if you're drawing arbitrary figures in a graph.  <i>grf</i> defaults to
-<!-- -->time-graph; the other choices are transform-graph and lisp-graph.  The procedure <a href="#x2position">x-&gt;position</a>
-<!-- -->could be defined as:
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define (x-&gt;position-1 x snd chn)
-  (let* ((axinfo (<em class=red>axis-info</em> snd chn time-graph))
-	 (x0 (list-ref axinfo 2))
-	 (x1 (list-ref axinfo 4))
-	 (axis-left (list-ref axinfo 10))
-	 (axis-right (list-ref axinfo 12)))
-    (inexact-&gt;exact 
-     (+ axis-left
-	(* (- x x0) 
-	   (/ (- axis-right axis-left)
-	      (- x1 x0)))))))
-<!-- --></pre></td></tr></table>
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- copy-context -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="copycontext">copy-context</a></em></code></span></td></tr>
-<!-- -->
-<!-- --><tr><td></td><td>
-<!-- -->the graphics mode to use to draw over whatever is currently in a graph.
-<!-- -->The "contexts" refer to graphics contexts used throughout Snd; the <i>copy-context</i>
-<!-- -->copies into the current graph, whereas the <i>cursor-context</i> uses XOR.
-<!-- -->The error returned for an unimplemented 'context' is 'no-such-graphics-context.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- current-font -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="currentfont">current-font</a></em> (snd chn context)</code></span></td></tr>
-<!-- -->
-<!-- --><tr><td></td><td>
-<!-- -->returns the current font (also settable).</td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- cursor-context -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="cursorcontext">cursor-context</a></em></code></span></td></tr>
-<!-- -->
-<!-- --><tr><td></td><td>
-<!-- -->the graphics mode for XOR drawing in the cursor color (for cursors, normally).</td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- draw-axes -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="drawaxes">draw-axes</a></em> (wid gc <i>label x0 x1 y0 y1 style axes</i>)</code></span></td></tr>
-<!-- -->
-<!-- --><tr><td width=50></td><td>
-<!-- -->(Motif only currently) draws axes in the widget <i>wid</i>, using the graphics context <i>gc</i>, with the x-axis label <i>label</i>
-<!-- -->going from <i>x0</i> to <i>x1</i> (floats) along the x axis, <i>y0</i> to <i>y1</i> along the y axis, with x-axis-style
-<!-- --><i>style</i> (x-axis-in-seconds etc); whether the axes are actually displayed or just implied
-<!-- -->depends on <i>axes</i>. Returns a list of the actual (pixel) axis bounds.  See, for example,  the scanned-synthesis display code in snd-motif.scm.
-<!-- --></td></tr><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- draw-dot -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="drawdot">draw-dot</a></em> (x0 y0 dot-size snd chn context)</code></span></td></tr>
-<!-- -->
-<!-- --><tr><td width=50></td><td>
-<!-- -->draws a dot at (x0 y0) of <i>dot-size</i> pixels diameter in the given graph</td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- draw-dots -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="drawdots">draw-dots</a></em> (positions dot-size snd chn context)</code></span></td></tr>
-<!-- -->
-<!-- --><tr><td></td><td>
-<!-- -->draws dots of size <i>dot-size</i> from the (x y) pairs in the vector <i>positions</i> in the given context.</td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- draw-line -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="drawline">draw-line</a></em> (x0 y0 x1 y1 snd chn context)</code></span></td></tr>
-<!-- -->
-<!-- --><tr><td></td><td>
-<!-- -->draws a line from (x0 y0) to (x1 y1) in the given context.</td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- draw-lines -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="drawlines">draw-lines</a></em> (lines size snd chn context)</code></span></td></tr>
-<!-- -->
-<!-- --><tr><td></td><td>
-<!-- -->draws lines following the (x y) pairs in the vector <i>lines</i> in the given context.
-<!-- --><i>make-bezier-1</i> in <a href="sndscm.html#musglyphs">musglyphs.scm</a> can be used to draw Bezier curves.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- draw-string -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="drawstring">draw-string</a></em> (text x0 y0 snd chn context)</code></span></td></tr>
-<!-- -->
-<!-- --><tr><td></td><td>
-<!-- -->draws a string (<i>text</i>) in the current font and foreground color starting at (x0 y0) in the given context.
-<!-- -->The next procedure draws a box over sample 1000 (if it is visible)
-<!-- -->with the text "hiho":
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define show-hiho
-  ;; show "hiho" in a box over sample 1000
-  (lambda (snd chn)
-    (define (draw-rectangle x0 y0 width height)
-      (<em class=red>draw-line</em> x0 y0 (+ x0 width) y0)
-      (<em class=red>draw-line</em> (+ x0 width) y0 (+ x0 width) (+ y0 height))
-      (<em class=red>draw-line</em> (+ x0 width) (+ y0 height) x0 (+ y0 height))
-      (<em class=red>draw-line</em> x0 (+ y0 height) x0 y0))
-    (let ((ls (left-sample snd chn))
-          (rs (right-sample snd chn)))
-      (if (and (&lt; ls 1000)
-               (&gt; rs 1000))
-	  (let ((pos (<em class=red>x-&gt;position</em> (/ 1000.0 (srate)))))
-            (draw-rectangle pos 10 50 20)
-            (<em class=red>draw-string</em> "hiho" (+ pos 5) 24))))))
-
-(add-hook! after-graph-hook show-hiho)
-<!-- --></pre></td></tr></table>
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- fill-rectangle -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="fillrectangle">fill-rectangle</a></em> (x0 y0 width height snd chn context)</code></span></td></tr>
-<!-- -->
-<!-- --><tr><td></td><td>
-<!-- -->draws a filled rectangle (in the current foreground color) from (x0 y0) of size (width height).</td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- fill-polygon -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="fillpolygon">fill-polygon</a></em> (points snd chn context)</code></span></td></tr>
-<!-- -->
-<!-- --><tr><td></td><td>
-<!-- -->draws a filled polygon whose vertices are in <i>points</i>.</td></tr>
-<!-- --><tr><td></td><td>
-<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define (-&gt; x0 y0 size snd chn)
-  "draw an arrow pointing (from the left) at the point (x0 y0)"
-  (let ((points (make-vector 8)))
-    (define (point i x y)
-      (vector-set! points (* i 2) x)
-      (vector-set! points (+ (* i 2) 1) y))
-    (define (arrow-head x y)
-      (point 0 x y)
-      (point 1 (- x (* 2 size)) (- y size))
-      (point 2 (- x (* 2 size)) (+ y size))
-      (point 3 x y)
-      (<em class=red>fill-polygon</em> points snd chn))
-    (arrow-head x0 y0)
-    (fill-rectangle (- x0 (* 4 size)) 
-		    (inexact-&gt;exact (- y0 (* .4 size)))
-		    (* 2 size)
-		    (inexact-&gt;exact (* .8 size))
-                    snd chn)))	
-<!-- --></pre></td></tr></table></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->musglyphs.scm has some elaborate examples that use fill-polygon to draw various music symbols.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- foreground-color -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="foregroundcolor">foreground-color</a></em> (snd chn context)</code></span></td></tr>
-<!-- -->
-<!-- --><tr><td></td><td>
-<!-- -->returns the current foreground color (also settable).
-<!-- -->The following gives us a green cursor:
-<!-- --><pre>
-<!-- -->  (set! (<em class=red>foreground-color</em> 0 0 cursor-context) (make-color 1 0 1))
-<!-- --></pre>
-<!-- -->We can goof around with colors and fonts:
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define new-font (load-font "-adobe-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*"))
-
-(define show-hiho
-  ;; show a red "hiho" in the helvetica bold font on a gray background
-  (lambda (snd chn)
-    (let ((ls (left-sample snd chn))
-          (rs (right-sample snd chn)))
-      (if (and (&lt; ls 1000)
-               (&gt; rs 1000))
-	  (let ((pos (x-&gt;position (/ 1000.0 (srate))))
-		(old-color (foreground-color)))
-	    (set! (<em class=red>foreground-color</em>) (make-color .75 .75 .75))
-            (fill-rectangle pos 10 50 20)
-	    (set! (<em class=red>foreground-color</em>) (make-color 1 0 0))
-	    (if new-font (set! (<em class=red>current-font</em>) new-font))
-            (draw-string "hiho" (+ pos 5) 24)
-	    (set! (<em class=red>foreground-color</em>) old-color))))))
-<!-- --></pre></td></tr></table>
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-
-<!-- graph-data -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="graphdata">graph-data</a></em> (data snd chn context low high graphics-style)</code></span></td></tr>
-<!-- -->
-<!-- --><tr><td></td><td>
-<!-- --><i>graph-data</i> displays <i>data</i> in the time domain graph of <i>snd</i>'s channel
-<!-- --><i>chn</i> using the graphics context <i>context</i> (normally copy-context), placing the
-<!-- -->data in the recipient's graph between points <i>low</i> and <i>high</i>
-<!-- -->in the drawing mode (<i>graphics-style</i>).
-<!-- -->With this function and <i>make-graph-data</i> we can overlay sounds,
-<!-- -->overlay different versions of the same sound, place a portion of a
-<!-- -->sound over another at an arbitrary point, and so on (see draw.scm):
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define (<A NAME="displaysampsinred">display-samps-in-red</A> snd chn)
-  "display samples 1000 to 2000 in red whenever they're in the current view"
-  (let ((left (left-sample snd chn))
-	(right (right-sample snd chn))
-	(old-color (foreground-color snd chn))
-	(red (make-color 1 0 0)))
-    (if (and (&lt; left 2000)
-	     (&gt; right 1000))
-	(let* ((data (<em class=red>make-graph-data</em> snd chn)))
-	  (if (vct? data)                      ;the simple, one-sided graph case
-	      (let* ((samps (- (min right 2000)
-			       (max left 1000)))
-		     (offset (max 0 (- 1000 left)))
-		     (new-data (vct-subseq data offset (+ offset samps))))
-		(set! (foreground-color snd chn) red)
-		(<em class=red>graph-data</em> new-data snd chn copy-context (max 1000 left) (min 2000 right))
-		(set! (foreground-color snd chn) old-color))
-	      (let* ((low-data (car data))     ;the two-sided envelope graph case
-		     (high-data (cadr data))
-                     ;; we need to place the red portion correctly in the current graph
-                     ;; so the following is getting the "bin" numbers associated with 
-                     ;; samples 1000 and 2000
-		     (size (vct-length low-data))
-		     (samps (- right left))
-		     (left-offset (max 0 (- 1000 left)))
-		     (left-bin (inexact-&gt;exact (/ (* size left-offset) samps)))
-		     (right-offset (- (min 2000 right) left))
-		     (right-bin (inexact-&gt;exact (/ (* size right-offset) samps)))
-		     (new-low-data (vct-subseq low-data left-bin right-bin))
-		     (new-high-data (vct-subseq high-data left-bin right-bin)))
-		(set! (foreground-color snd chn) red)
-		(<em class=red>graph-data</em> 
-                  (list new-low-data new-high-data) snd chn copy-context left-bin right-bin)
-		(set! (foreground-color snd chn) old-color)))))))
-
-(add-hook! after-graph-hook display-samps-in-red)
-<!-- --></pre></td></tr></table></td></tr>
-<!-- --><tr><td></td><td align=center>
-<!-- --><img src="redsamps.png" alt="red samples">
-<!-- -->
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- load-font -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="loadfont">load-font</a></em> (font-name)</code></span></td></tr>
-<!-- -->
-<!-- --><tr><td></td><td>
-<!-- -->loads the font <i>font-name</i> (an X-style font spec), and returns a handle for it (for <a href="#currentfont">current-font</a>).
-<!-- --><pre>
-<!-- -->  (define new-font (<em class=red>load-font</em> "-adobe-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*"))
-<!-- --></pre>
-<!-- --><p>load-font could be (should have been!) defined using the xm module as:</p>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define (load-font name)
-  (let ((fs (|XLoadQueryFont (|XtDisplay (cadr (main-widgets))) name)))
-    (and (|XFontStruct? fs) (|fid fs))))
-<!-- --></pre></td></tr></table>
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- make-graph-data -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="makegraphdata">make-graph-data</a></em> (snd chn edit-position low-sample high-sample)</code></span></td></tr>
-<!-- -->
-<!-- --><tr><td></td><td>
-<!-- -->Use <i>make-graph-data</i> to get the currently displayed data (i.e. the actual waveform displayed
-<!-- -->in the graph, which can be based on an overall envelope rather than the
-<!-- -->actual samples).
-<!-- -->It returns either a vct (if the graph has one trace), or a
-<!-- -->list of two vcts (the two sides of the envelope graph).
-<!-- --><i>edit-position</i> defaults to the current edit history position,
-<!-- --><i>low-sample</i> defaults to the current window left sample, and
-<!-- --><i>high-sample</i> defaults to the current rightmost sample.
-<!-- -->The result can be use in the "lisp graph":
-<!-- -->
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define <A NAME="displaydb">display-db</A>
-  (lambda (snd chn)
-    "(display-db snd chn) is a lisp-graph-hook function to display the time domain data in dB"
-    (let* ((datal (<em class=red>make-graph-data</em> snd chn))
-	   (data (if (vct? datal) datal (cadr datal)))
-           (sr (srate snd)))
-      (define (dB val)
-	(if (&lt; val .001)
-	    -60.0
-	    (* 20.0 (log10 val))))
-      (vct-map! data (lambda ()
-		       (+ 60.0 (dB (abs (vct-ref data i))))))
-      (graph data "dB" 
-	     (/ (left-sample snd chn) sr) (/ (right-sample snd chn) sr)  
-	     0.0 60.0
-	     snd chn))))
-
-(add-hook! lisp-graph-hook display-db)
-<!-- --></pre></td></tr></table>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->Here we are taking whatever is displayed in the time domain, and
-<!-- -->presenting the same thing in dB in the lisp graph.  <i>display-energy</i>
-<!-- -->in examp.scm is another example.  But the real power of this function
-<!-- -->comes from its use with <i>graph-data</i>.  
-<!-- -->The latter takes its argument (either a vct or a list of two
-<!-- -->vcts), and displays it in any channel's time domain graph using its current graph-style.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- mark-context -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="markcontext">mark-context</a></em></code></span></td></tr>
-<!-- -->
-<!-- --><tr><td></td><td>
-<!-- -->the graphics context to use to draw a mark (XOR mode).
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- selection-context -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="selectioncontext">selection-context</a></em></code></span></td></tr>
-<!-- -->
-<!-- --><tr><td></td><td>
-<!-- -->the graphics context for XOR drawing in the selection color.</td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- with-gl -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="withgl">with-gl</a></em></code></span></td></tr>
-<!-- -->
-<!-- --><tr><td></td><td>
-<!-- -->If #t and GL is loaded, use GL where possible (default is #t if HAVE_GL).</td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- --></table>
-
-
-<p>This only scratches the surface of these functions; I'll eventually 
-collect more examples into draw.scm.
-</p>
-
-<br>
 <span class=bbox><h3><A NAME="behavior">Customizing Snd's behavior</a></h3></span>
 
 <p>Most of Snd's behavior can be customized.  For example,
@@ -851,10 +200,33 @@ unsaved-edits?, and if the latter returns #t, if prints
 a worried message in the minibuffer, and refuses to
 exit.  Similar hooks customize actions such as closing
 a sound (close-hook), clicking a mark (mark-click-hook),
-pressing a key (key-press-hook), and so on.  Slightly
-special are the hooks output-comment-hook and output-name-hook;
-these refer to the default file name and comment displayed
-when you save a sound via the "save" dialog.</p>
+pressing a key (key-press-hook), and so on.</p>
+
+The global variables handle various customizations that aren't callback-oriented.
+For example, 
+<A NAME="autoexpl"></a>as panes (sounds) come and go, Snd's overall size may change (this is
+partly determined by the window manager, but is to some extent also
+up to Snd); many people find this distracting -- they would rather the
+overall window size try to stay the same.  The Snd variable associated
+with this is "auto-resize"; it can be accessed as follows (we're typing
+to the listener here, as described above):</p>
+
+<pre>
+&gt;<em class=typing>(auto-resize)</em>
+<em class=listener>#t</em>
+&gt;<em class=typing>(set! (auto-resize) #f)</em>
+<em class=listener>#f</em>
+</pre>
+
+<p>As this illustrates, 
+variables in Snd are accessed as though each were a function, and set using set!.  auto-resize's current
+value is accessed above via <code>(auto-resize)</code>, and set to a
+new value via <code>(set! (auto-resize) #f)</code>. #t is Scheme for "true"
+(often 1 in C, t in Lisp), #f is "false" (0 in C, nil in Lisp).
+A statement like <code>(set! (auto-resize) #f)</code> can be placed in your ~/.snd initialization file
+to make it the default setting for your version of Snd, or placed
+in a separate file of Scheme code and loaded at any time via the load
+function.  </p>
 
 <br>
 <span class=cbox><h4><A NAME="sndglobalvars">Global variables</a></h4></span>
@@ -3280,7 +2652,7 @@ a globally unique id number (returned by <b>find-mark</b> or <b>add-mark</b>, fo
 <!-- backward-mark -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sndbackwardmark">backward-mark</a></em> (<i>count snd chn</i>)</code></span></td>
-<!-- --><td>move back <i>count</i> marks (C-j), returning mark id, or #f if none.
+<!-- --><td>move the cursor back <i>count</i> marks (C-j), returning mark id, or #f if none.
 <!-- --></td></tr>
 <!-- -->
 <!-- delete-mark -->
@@ -3292,7 +2664,7 @@ a globally unique id number (returned by <b>find-mark</b> or <b>add-mark</b>, fo
 <!-- delete-marks -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="snddeletemarks">delete-marks</a></em> (<i>snd chn</i>)</code></span></td>
-<!-- --><td>delete all marks in <i>snd</i>'s channel <i>chn</i>
+<!-- --><td>delete all marks in <i>snd</i>'s channel <i>chn</i>.
 <!-- --></td></tr>
 <!-- -->
 <!-- find-mark -->
@@ -3308,7 +2680,7 @@ a globally unique id number (returned by <b>find-mark</b> or <b>add-mark</b>, fo
 <!-- forward-mark -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sndforwardmark">forward-mark</a></em> (<i>count snd chn</i>)</code></span></td>
-<!-- --><td>move forward <i>count</i> marks (C-j), returning mark id, or #f if none.
+<!-- --><td>move the cursor forward <i>count</i> marks (C-j), returning mark id, or #f if none.
 <!-- --></td></tr>
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a href="#markclickhook">mark-click-hook</a></em> (id)</code></span></td>
@@ -3318,12 +2690,19 @@ a globally unique id number (returned by <b>find-mark</b> or <b>add-mark</b>, fo
 <!-- mark-name -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sndmarkname">mark-name</a></em> (<i>id</i>)</code></span></td>
-<!-- --><td>name of mark <i>id</i>; also (set! (mark-name id) name).
+<!-- --><td>name of mark <i>id</i>.
+<!-- --><tr><td colspan=2>
+<!-- --><center><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(define* (add-named-mark samp name #:optional snd chn)
+  (let ((m (add-mark samp snd chn)))
+    (set! (<em class=red>mark-name</em> m) name)
+    m))
+<!-- --></pre></td></tr></table></center>
 <!-- --></td></tr>
 <!-- -->
 <!-- mark-sample -->
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndmarksample">mark-sample</a></em> (<i>id pos</i>)</code></span></td>
+<!-- --><tr><td valign=top><span class=defbox><code><em class=def><a name="sndmarksample">mark-sample</a></em> (<i>id pos</i>)</code></span></td>
 <!-- --><td>sample (number) marked by mark <i>id</i> at edit history position <i>pos</i>; also <code>(set! (mark-sample id) samp)</code>.
 <!-- -->It might be more consistent with other Snd names to call this mark-position, but I wanted to emphasize
 <!-- -->that a mark follows its sample around as a sound is edited; that is, it marks a sample, not a position in the sound.
@@ -3332,19 +2711,19 @@ a globally unique id number (returned by <b>find-mark</b> or <b>add-mark</b>, fo
 <!-- mark-sync -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sndmarksync">mark-sync</a></em> (<i>id</i>)</code></span></td>
-<!-- --><td>mark <i>id</i>'s sync value; also (set! (mark-sync id) sync).
+<!-- --><td>mark <i>id</i>'s sync value; can be set.
 <!-- --></td></tr>
 <!-- -->
 <!-- mark-sync-max -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sndmarksyncmax">mark-sync-max</a></em> ()</code></span></td>
-<!-- --><td>max mark sync value seen so far.
+<!-- --><td>max mark sync value seen so far (intended as a way to get a unique sync value).
 <!-- --></td></tr>
 <!-- -->
-<!-- mark->sound -->
+<!-- mark-home -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="markhome">mark-home</a></em> (<i>id</i>)</code></span></td>
-<!-- --><td>sound and channel that hold mark <i>id</i>.
+<!-- --><td>a list with the sound index and channel that hold mark <i>id</i>.
 <!-- --></td></tr>
 <!-- -->
 <!-- marks -->
@@ -3522,7 +2901,7 @@ a particular mix object:</p>
 <!-- backward-mix -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sndbackwardmix">backward-mix</a></em> (<i>count snd chn</i>)</code></span></td>
-<!-- --><td>move back <i>count</i> mix tags (C-x C-j), returning the mix id.
+<!-- --><td>move the cursor back <i>count</i> mix tags (C-x C-j), returning the mix id.
 <!-- --></td></tr>
 <!-- -->
 <!-- find-mix -->
@@ -3534,7 +2913,7 @@ a particular mix object:</p>
 <!-- forward-mix -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sndforwardmix">forward-mix</a></em> (<i>count snd chn</i>)</code></span></td>
-<!-- --><td> move forward <i>count</i> mix tags (C-x C-j), returning the mix id.
+<!-- --><td> move the cursor forward <i>count</i> mix tags (C-x C-j), returning the mix id.
 <!-- --></td></tr>
 <!-- -->
 <!-- mixes -->
@@ -5999,13 +5378,7 @@ applied to the original (not the newly edited) data.
 		    (next-scan)))))
 	(set! scan-again next-scan)
 	(next-scan)))))
-</small><!-- --></pre></td></tr></table><br>
-<!-- -->If you jump out of the scan via:<br><br>
-<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(scan-channel (lambda (y) (if (&gt; y .1) (throw 'we-want-to-lose))))
-<!-- --></pre></td></tr></table>
-<!-- --><br>the internal sample reader will not be garbage collected (this is a semi-bug in Snd -- it should use
-<!-- -->a lazy-catch or dynamic-wind here).
+</small><!-- --></pre></td></tr></table>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6640,7 +6013,7 @@ applied to the original (not the newly edited) data.
 <!-- --><span class=defbox><code><em class=def><a name="sndview">view-sound</a></em> (filename)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->open <i>filename</i> read-only (you can edit the sound, but not save the edits). [<em class=error>no-such-file</em>].
+<!-- -->open <i>filename</i> read-only (you can edit the sound within Snd, but you can't overwrite the original sound). [<em class=error>no-such-file</em>].
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6909,6 +6282,9 @@ The control panel procedures are:
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->current <a href="snd.html#contrast">contrast</a> (control panel slider) value.
+<!-- -->The contrast-enhancement algorithm treats this variable as a kind of modulation index (the higher, the brighter),
+<!-- -->where as <i>contrast-control-amp</i> below prescales the in-coming signal to be closer to -1.0 to 1.0
+<!-- -->(the brightening effect works best if it has a full amplitude signal to work with).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6938,7 +6314,8 @@ The control panel procedures are:
 <!-- --><span class=defbox><code><em class=def><a name="sndexpand">expand-control</a></em> (<em class=targ>snd</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->current <a href="snd.html#expand">expansion</a> amount (control panel).
+<!-- -->current <a href="snd.html#expand">expansion</a> amount (control panel).  This sets the ratio between the
+<!-- -->output and input spacing between successive grains.  If it is greater than 1.0, the result is longer, etc.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6958,7 +6335,8 @@ The control panel procedures are:
 <!-- --><span class=defbox><code><em class=def><a name="sndexpandlength">expand-control-length</a></em> (<em class=targ>snd</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- --><i>snd</i>'s <a href="snd.html#expand">expansion</a> segment length (seconds).
+<!-- --><i>snd</i>'s <a href="snd.html#expand">expansion</a> segment (grain) length in seconds.  The longer the grain,
+<!-- -->the more "reverberated" or "slurred" the effect.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6990,7 +6368,8 @@ The control panel procedures are:
 <!-- --><span class=defbox><code><em class=def><a name="sndfilterdbing">filter-control-in-dB</a></em> (<em class=targ>snd</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- --><i>snd</i>'s <a href="snd.html#filter">filter</a> dB button state (control panel).
+<!-- --><i>snd</i>'s control panel <a href="snd.html#filter">filter</a> dB button state.  If #t, the filter (frequency) envelope
+<!-- -->graph is displayed in dB.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -7000,7 +6379,7 @@ The control panel procedures are:
 <!-- --><span class=defbox><code><em class=def><a name="sndfilterenv">filter-control-env</a></em> (<em class=targ>snd</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- --><i>snd</i>'s <a href="snd.html#filter">filter</a> envelope (control panel).
+<!-- --><i>snd</i>'s control panel <a href="snd.html#filter">filter</a> envelope (a list of breakpoints).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -7010,7 +6389,8 @@ The control panel procedures are:
 <!-- --><span class=defbox><code><em class=def><a name="sndfilterorder">filter-control-order</a></em> (<em class=targ>snd</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- --><i>snd</i>'s <a href="snd.html#filter">filter</a> order (control panel).
+<!-- --><i>snd</i>'s control panel <a href="snd.html#filter">filter</a> order.  This affects how much computing
+<!-- -->is needed to run the filter, and how close the filter can get to the desired frequency envelope.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -8937,9 +8317,628 @@ and returns the new file's index"</em>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- --></table>
+<br>
 
 
-<hr>
+<span class=bbox><h3><A NAME="appearance">Customizing Snd's appearance</a></h3></span>
+
+<p>Snd's overall appearance is controlled first by the startup <a href="grfsnd.html#sndswitches">switches</a> that
+choose the outermost widget; normally this is a paned window with a sound
+in each pane; -separate puts each
+sound in a separate window, and -notebook
+puts each sound on a separate page of a notebook widget.  Similarly -horizontal
+and -vertical determine which way the outer panes are laid out. 
+There are a variety of functions and variables related to widget colors and so forth.
+</p>
+
+<span class=cbox><h4><A NAME="colors">Colors</a></h4></span>
+
+<p>A color in Snd is an object with three fields representing the
+rgb (red green blue) settings as numbers between 0.0 and 1.0.  A color
+object is created via make-color:</p>
+<pre>
+&gt;<em class=typing>(define blue (make-color 0 0 1))</em>
+</pre>
+<p>This declares the Scheme variable "blue" and gives it the value
+of the color whose rgb components include only blue in full force.
+The X11 color names are defined in <a href="sndscm.html#rgbdoc">rgb.scm</a>. The overall
+widget background color is <i>basic-color</i>.
+</p>
+<pre>
+&gt;<em class=typing>(set! (basic-color) blue)</em>
+</pre>
+
+<p>The color variables
+are:</p>
+
+<table border=0 cellpadding=0 cellspacing=0>
+<tr><td width=220><code><em class=def><a name="basiccolor">basic-color</a></em></code></td>
+    <td width=180><code>ivory2</code></td>
+    <td>main Snd color.</td></tr>
+<tr><td><code><em class=def><a name="cursorcolor">cursor-color</a></em></code></td>
+    <td><code>red</code></td>
+    <td>cursor color.</td></tr>
+<tr><td><code><em class=def><a name="datacolor">data-color</a></em></code></td>
+    <td><code>black</code></td>
+    <td>color of data in unselected graph.</td></tr>
+<tr><td><code><em class=def>enved-waveform-color</em></code></td>
+    <td><code>blue</code></td>
+    <td>color of waveform displayed in envelope editor.</td></tr>
+<tr><td><code><em class=def><a name="filterwaveformcolor">filter-waveform-color</a></em></code></td>
+    <td><code>blue</code></td>
+    <td>color of control panel filter waveform.</td></tr>
+<tr><td><code><em class=def><a name="graphcolor">graph-color</a></em></code></td>
+    <td><code>white</code></td>
+    <td>background color of unselected graph.</td></tr>
+<tr><td><code><em class=def><a name="highlightcolor">highlight-color</a></em></code></td>
+    <td><code>ivory1</code></td>
+    <td>highlighting color.</td></tr>
+<tr><td><code><em class=def>listener-color</em></code></td>
+    <td><code>aliceblue</code></td>
+    <td>background color of lisp listener.</td></tr>
+<tr><td><code><em class=def>listener-text-color</em></code></td>
+    <td><code>black</code></td>
+    <td>text color in lisp listener.</td></tr>
+<tr><td><code><em class=def><a name="markcolor">mark-color</a></em></code></td>
+    <td><code>red</code></td>
+    <td>color of mark indicator.</td></tr>
+<tr><td><code><em class=def>mix-color</em></code></td>
+    <td><code>darkgray</code></td>
+    <td>color of mix waveforms.</td></tr>
+<tr><td><code><em class=def>selected-mix-color</em></code></td>
+    <td><code>lightgreen</code></td>
+    <td>color of selected mix waveform.</td></tr>
+<tr><td><code><em class=def><a name="positioncolor">position-color</a></em></code></td>
+    <td><code>ivory3</code></td>
+    <td>position slider color</td></tr>
+<tr><td><code><em class=def><a name="pushedbuttoncolor">pushed-button-color</a></em></code></td>
+    <td><code>lightsteelblue1</code></td>
+    <td>color of pushed button.</td></tr>
+<tr><td><code><em class=def>sash-color</em></code></td>
+    <td><code>lightgreen</code></td>
+    <td>color of paned window sashes.</td></tr>
+<tr><td><code><em class=def><a name="selecteddatacolor">selected-data-color</a></em></code></td>
+    <td><code>black</code></td>
+    <td>color of data in currently selected graph.</td></tr>
+<tr><td><code><em class=def><a name="selectedgraphcolor">selected-graph-color</a></em></code></td>
+    <td><code>white</code></td>
+    <td>background color of currently selected graph.</td></tr>
+<tr><td><code><em class=def><a name="selectioncolor">selection-color</a></em></code></td>
+    <td><code>lightsteelblue1</code></td>
+    <td>color of selected portion of graph.</td></tr>
+<tr><td><code><em class=def><a name="textfocuscolor">text-focus-color</a></em></code></td>
+    <td><code>white</code></td>
+    <td>color of text field when it has focus.</td></tr>
+<tr><td><code><em class=def><a name="zoomcolor">zoom-color</a></em></code></td>
+    <td><code>ivory4</code></td>
+    <td>zoom slider color.</td></tr>
+</table>
+
+<br>
+<!-- --><center><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(define beige (make-color 0.96 0.96 0.86))
+(define blue (make-color 0 0 1))
+(set! (selected-graph-color) beige)
+(set! (selected-data-color) blue)
+<!-- --></pre></td></tr></table></center>
+
+<p>In addition, the various transforms can be displayed using colormaps.  The following
+variables and functions control this:</p>
+
+<table border=0 cellspacing=4>
+
+<tr><td width=180><code><em class=def><a name="colorcutoff">color-cutoff</a></em></code></td><td width=100>0.003</td>
+<td>In spectra, sets the lowest data value that will be colored.</td></tr>
+<tr><td><code><em class=def><a name="sndcolordialog">color-dialog</a></em></code></td><td>()</td>
+<td>Create the Color dialog (to choose a colormap etc), if necessary, activate it and return the dialog widget.</td></tr>
+<tr><td><code><em class=def><a name="colorinverted">color-inverted</a></em></code></td><td>#t</td>
+<td>The 'invert' button in the <a href="snd.html#colorbrowser">color</a> dialog, negated (hunh?!).</td></tr>
+<tr><td><code><em class=def><a name="colorscale">color-scale</a></em></code></td><td>0.5</td>
+<td>The darkness setting in the <a href="snd.html#colorbrowser">color</a> dialog, divided by 100.</td></tr>
+<tr><td valign=top><code><em class=def><a name="colormap">colormap</a></em></code></td><td valign=top>0</td>
+<td>Colormap choice for various displays (see the Color Editor).
+<br>
+This should be an integer between -1 and 15.  The maps (from 0 to 15) are: 
+gray, hsv, hot, cool, bone, copper, pink, jet, prism, autumn, winter, 
+spring, summer, colorcube, flag, and lines.  -1 means black and white.
+</td></tr>
+</table>
+
+<p>The color object handlers are:</p>
+
+<table border=0 cellspacing=4>
+<tr>
+<td width="20%"><code><em class=def><a name="colorp">color?</a></em> (obj)</code></td>
+<td>#t if <i>obj</i> is a color (this is the same as |Pixel? in xm), (see <a href="#makecolor">make-color</a>).</td></tr>
+
+<tr>
+<td><code><em class=def><a name="color3list">color-&gt;list</a></em> (obj)</code></td>
+<td>return list (r g b) of color components.</td></tr>
+
+<tr>
+<td valign=top><code><em class=def><a name="makecolor">make-color</a></em> (r g b)</code></td>
+<td>return a color object using the red/green/blue values.  If the object is called
+as a function, it returns the list of rgb values.
+If, for example, blue is a defined color, <code>(blue)</code> is the same as <code>(color-&gt;list blue)</code>.
+Two colors are equal (i.e. equal? returns #t) if their rgb values are the same.
+</td>
+</tr>
+</table>
+
+<br>
+<span class=cbox><h4><A NAME="fonts">Fonts</a></h4></span>
+
+<p>Fonts in Snd are strings containing a description of the
+desired font.  These can be the abbreviated forms such as
+"8x14" or a full X font name such as "-misc-fixed-bold-r-normal--*-140-*-*-c-*-iso8859-1".
+The font variables are:
+</p>
+<table cellpadding=0 cellspacing=0>
+<tr><td width=200><code><em class=def><a name="axislabelfont">axis-label-font</a></em></code></td><td>used in axis labels</td></tr>
+<tr><td><code><em class=def><a name="axisnumbersfont">axis-numbers-font</a></em></code></td><td>used in axis tick numbers</td></tr>
+<tr><td><code><em class=def><a name="boldbuttonfont">bold-button-font</a></em></code></td><td>used by various buttons and labels</td></tr>
+<tr><td><code><em class=def><a name="buttonfont">button-font</a></em></code></td><td>used by various buttons and labels</td></tr>
+<tr><td><code><em class=def>help-text-font</em></code></td><td>help dialog text font</td></tr>
+<tr><td><code><em class=def>listener-font</em></code></td><td>listener font</td></tr>
+<tr><td><code><em class=def><a name="tinyfont">tiny-font</a></em></code></td><td>smallest font used</td></tr>
+</table>
+<br>
+<!-- --><center><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(set! (listener-font) "9x15")
+(set! (help-text-font) "9x15")
+(set! (button-font) "-adobe-times-medium-r-*-*-14-*-*-*-*-*-*-*")
+(set! (bold-button-font) "-adobe-times-bold-r-*-*-14-*-*-*-*-*-*-*")
+(set! (axis-label-font) "-adobe-times-medium-r-normal-*-18-*-*-*-*-*-*-*")
+(set! (axis-numbers-font) "9x15")
+<!-- --></pre></td></tr></table></center>
+
+<p>See also <a href="#loadfont">load-font</a> and <a href="#currentfont">current-font</a> below.
+In Gtk2, Pango-style names are used for the fonts: "Monospace 8" for example.
+If the requested font can't be loaded, the set! statement will return the old (unchanged) font name.
+</p>
+<pre>
+&gt;<em class=typing>(set! (axis-label-font) "8x14")</em>
+<em class=listener>"-adobe-times-medium-r-normal-*-18-*-*-*-*-*-*-*"</em>
+</pre>
+<br>
+<br>
+<span class=cbox><h4><A NAME="sndwidgets">Widgets</a></h4></span>
+
+<p>This section is new, and in flux, but here's what's currently implemented:
+</p>
+
+<table cellspacing=0>
+<tr><td><code><em class=def>widget-position</em> (widget)</code></td>
+<td>return a list giving the widget x and y positions</td></tr>
+<tr><td valign=top><code><em class=def>widget-size</em> (widget)</code></td>
+<td>return a list giving the widget width and height.  The corresponding set! forms also take a list:<br>
+<code>(set! (widget-position (cadr (main-widgets))) (list 300 100))</code></td></tr>
+<tr><td><code><em class=def>widget-text</em> (widget)</code></td><td>return or set the contents of text widget</td></tr>
+<tr><td><code><em class=def><a name="recolorwidget">recolor-widget</a></em> (widget color)</code></td></tr>
+<tr><td><code><em class=def><a name="showwidget">show-widget</a></em> (widget)</code></td></tr>
+<tr><td><code><em class=def><a name="hidewidget">hide-widget</a></em> (widget)</code></td></tr>
+<tr><td colspan=2><br></td></tr>
+<tr><td><code><em class=def><a name="mainmenu">main-menu</a></em> (menu)</code></td><td></td></tr>
+<tr><td><code><em class=def><a name="mainwidgets">main-widgets</a></em> ()</code></td><td></td></tr>
+<tr><td><code><em class=def><a name="menuwidgets">menu-widgets</a></em> ()</code></td><td></td></tr>
+<tr><td><code><em class=def><a name="soundwidgets">sound-widgets</a></em> (snd)</code></td><td></td></tr>
+<tr><td><code><em class=def><a name="channelwidgets">channel-widgets</a></em> (snd chn)</code></td><td></td></tr>
+<tr><td><code><em class=def><a name="dialogwidgets">dialog-widgets</a></em> ()</code></td><td></td></tr>
+</table>
+
+<p>
+The four "-widgets" procedure return lists of possibly useful widgets:
+</p>
+<pre>
+  main-widgets:    '(0:top-level-application 1:top-level-shell 2:main-pane 3:main-sound-pane 4:listener-pane 5:notebook-outer-pane)
+  menu-widgets:    '(0:top-level-menu-bar 1:file-menu 2:edit-menu 3:view-menu 4:options-menu 5:help-menu)
+  sound-widgets:   '(0:main-pane 1:name-label 2:control-panel 3:minibuffer 4:play 5:filter-graph 6:unite 7:minibuffer-label 8:name-icon 9:sync)
+  channel-widgets: '(0:graph 1:w 2:f 3:sx 4:sy 5:zx 6:zy 7:edhist 8:gsy 9:gzy)
+  dialog-widgets:  '(0:color_dialog 1:orientation_dialog 2:enved_dialog 3:error_dialog 
+                     4:yes_or_no_dialog 5:transform_dialog 6:file_open_dialog 
+                     7:file_save_as_dialog 8:view_files_dialog 9:raw_data_dialog 
+                     10:new_file_dialog 11:file_mix_dialog 12:edit_header_dialog 
+                     13:find_dialog 14:help_dialog 15:completion_dialog 16:mix_panel_dialog
+                     17:print_dialog 18:recorder_dialog 19:region_dialog)
+</pre>
+<p>I've only included the ones I needed immediately (for autotesting), but all Snd widgets are potentially (and easily)
+accessible; if you need access to one that
+isn't included, let me know.  <i>dialog-widgets</i> entries will be #f for any dialogs that have not
+yet been created.
+</p>
+<pre>
+  (recolor-widget (cadr (sound-widgets)) (make-color 1 0 0))
+</pre>
+<p>makes the sound name label red. To remove the y-position slider (which is only there
+for looks):
+</p>
+<pre>
+  (hide-widget (list-ref (channel-widgets) 4))
+</pre>
+<p>See also examp.scm.</p>
+
+<br>
+<span class=cbox><h4><A NAME="sndgraphics">Graphics</a></h4></span>
+
+<p>It is possible to draw directly on any of the channel graphs.  Simple examples include the
+<a href="extsnd.html#showoriginal">show-original</a> after-graph-hook function, and the
+<a href="extsnd.html#xcursor">x-cursor</a> function that draws an "x" shaped cursor.
+The lowest level procedures are:
+</p>
+
+<!-- -------------------------------- GRAPHICS TABLE -------------------------------- -->
+<!-- --><table border=0 cellspacing=4>
+<!-- -->
+<!-- axis-info -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="axisinfo">axis-info</a></em> (snd chn <i>grf</i>)</code></span></td></tr>
+<!-- -->
+<!-- --><tr><td><spacer type=horizontal size=40><br></td><td>
+<!-- -->returns a list describing the specified axis:
+<!-- --><code>'(left-sample right-sample x0 y0 x1 y1 x-min y-min x-max y-max 
+<!-- -->x0-position y0-position x1-position y1-position y-offset)</code>.  This might be
+<!-- -->useful if you're drawing arbitrary figures in a graph.  <i>grf</i> defaults to
+<!-- -->time-graph; the other choices are transform-graph and lisp-graph.  The procedure <a href="#x2position">x-&gt;position</a>
+<!-- -->could be defined as:
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(define (x-&gt;position-1 x snd chn)
+  (let* ((axinfo (<em class=red>axis-info</em> snd chn time-graph))
+	 (x0 (list-ref axinfo 2))
+	 (x1 (list-ref axinfo 4))
+	 (axis-left (list-ref axinfo 10))
+	 (axis-right (list-ref axinfo 12)))
+    (inexact-&gt;exact 
+     (+ axis-left
+	(* (- x x0) 
+	   (/ (- axis-right axis-left)
+	      (- x1 x0)))))))
+<!-- --></pre></td></tr></table>
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- copy-context -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="copycontext">copy-context</a></em></code></span></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- -->the graphics mode to use to draw over whatever is currently in a graph.
+<!-- -->The "contexts" refer to graphics contexts used throughout Snd; the <i>copy-context</i>
+<!-- -->copies into the current graph, whereas the <i>cursor-context</i> uses XOR.
+<!-- -->The error returned for an unimplemented 'context' is 'no-such-graphics-context.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- current-font -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="currentfont">current-font</a></em> (snd chn context)</code></span></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- -->returns the current font (also settable).</td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- cursor-context -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="cursorcontext">cursor-context</a></em></code></span></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- -->the graphics mode for XOR drawing in the cursor color (for cursors, normally).</td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- draw-axes -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="drawaxes">draw-axes</a></em> (wid gc <i>label x0 x1 y0 y1 style axes</i>)</code></span></td></tr>
+<!-- -->
+<!-- --><tr><td width=50></td><td>
+<!-- -->(Motif only currently) draws axes in the widget <i>wid</i>, using the graphics context <i>gc</i>, with the x-axis label <i>label</i>
+<!-- -->going from <i>x0</i> to <i>x1</i> (floats) along the x axis, <i>y0</i> to <i>y1</i> along the y axis, with x-axis-style
+<!-- --><i>style</i> (x-axis-in-seconds etc); whether the axes are actually displayed or just implied
+<!-- -->depends on <i>axes</i>. Returns a list of the actual (pixel) axis bounds.  See, for example,  the scanned-synthesis display code in snd-motif.scm.
+<!-- --></td></tr><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- draw-dot -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="drawdot">draw-dot</a></em> (x0 y0 dot-size snd chn context)</code></span></td></tr>
+<!-- -->
+<!-- --><tr><td width=50></td><td>
+<!-- -->draws a dot at (x0 y0) of <i>dot-size</i> pixels diameter in the given graph</td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- draw-dots -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="drawdots">draw-dots</a></em> (positions dot-size snd chn context)</code></span></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- -->draws dots of size <i>dot-size</i> from the (x y) pairs in the vector <i>positions</i> in the given context.</td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- draw-line -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="drawline">draw-line</a></em> (x0 y0 x1 y1 snd chn context)</code></span></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- -->draws a line from (x0 y0) to (x1 y1) in the given context.</td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- draw-lines -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="drawlines">draw-lines</a></em> (lines size snd chn context)</code></span></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- -->draws lines following the (x y) pairs in the vector <i>lines</i> in the given context.
+<!-- --><i>make-bezier-1</i> in <a href="sndscm.html#musglyphs">musglyphs.scm</a> can be used to draw Bezier curves.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- draw-string -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="drawstring">draw-string</a></em> (text x0 y0 snd chn context)</code></span></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- -->draws a string (<i>text</i>) in the current font and foreground color starting at (x0 y0) in the given context.
+<!-- -->The next procedure draws a box over sample 1000 (if it is visible)
+<!-- -->with the text "hiho":
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(define show-hiho
+  ;; show "hiho" in a box over sample 1000
+  (lambda (snd chn)
+    (define (draw-rectangle x0 y0 width height)
+      (<em class=red>draw-line</em> x0 y0 (+ x0 width) y0)
+      (<em class=red>draw-line</em> (+ x0 width) y0 (+ x0 width) (+ y0 height))
+      (<em class=red>draw-line</em> (+ x0 width) (+ y0 height) x0 (+ y0 height))
+      (<em class=red>draw-line</em> x0 (+ y0 height) x0 y0))
+    (let ((ls (left-sample snd chn))
+          (rs (right-sample snd chn)))
+      (if (and (&lt; ls 1000)
+               (&gt; rs 1000))
+	  (let ((pos (<em class=red>x-&gt;position</em> (/ 1000.0 (srate)))))
+            (draw-rectangle pos 10 50 20)
+            (<em class=red>draw-string</em> "hiho" (+ pos 5) 24))))))
+
+(add-hook! after-graph-hook show-hiho)
+<!-- --></pre></td></tr></table>
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- fill-rectangle -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="fillrectangle">fill-rectangle</a></em> (x0 y0 width height snd chn context)</code></span></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- -->draws a filled rectangle (in the current foreground color) from (x0 y0) of size (width height).</td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- fill-polygon -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="fillpolygon">fill-polygon</a></em> (points snd chn context)</code></span></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- -->draws a filled polygon whose vertices are in <i>points</i>.</td></tr>
+<!-- --><tr><td></td><td>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(define (-&gt; x0 y0 size snd chn)
+  "draw an arrow pointing (from the left) at the point (x0 y0)"
+  (let ((points (make-vector 8)))
+    (define (point i x y)
+      (vector-set! points (* i 2) x)
+      (vector-set! points (+ (* i 2) 1) y))
+    (define (arrow-head x y)
+      (point 0 x y)
+      (point 1 (- x (* 2 size)) (- y size))
+      (point 2 (- x (* 2 size)) (+ y size))
+      (point 3 x y)
+      (<em class=red>fill-polygon</em> points snd chn))
+    (arrow-head x0 y0)
+    (fill-rectangle (- x0 (* 4 size)) 
+		    (inexact-&gt;exact (- y0 (* .4 size)))
+		    (* 2 size)
+		    (inexact-&gt;exact (* .8 size))
+                    snd chn)))	
+<!-- --></pre></td></tr></table></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->musglyphs.scm has some elaborate examples that use fill-polygon to draw various music symbols.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- foreground-color -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="foregroundcolor">foreground-color</a></em> (snd chn context)</code></span></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- -->returns the current foreground color (also settable).
+<!-- -->The following gives us a green cursor:
+<!-- --><pre>
+<!-- -->  (set! (<em class=red>foreground-color</em> 0 0 cursor-context) (make-color 1 0 1))
+<!-- --></pre>
+<!-- -->We can goof around with colors and fonts:
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(define new-font (load-font "-adobe-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*"))
+
+(define show-hiho
+  ;; show a red "hiho" in the helvetica bold font on a gray background
+  (lambda (snd chn)
+    (let ((ls (left-sample snd chn))
+          (rs (right-sample snd chn)))
+      (if (and (&lt; ls 1000)
+               (&gt; rs 1000))
+	  (let ((pos (x-&gt;position (/ 1000.0 (srate))))
+		(old-color (foreground-color)))
+	    (set! (<em class=red>foreground-color</em>) (make-color .75 .75 .75))
+            (fill-rectangle pos 10 50 20)
+	    (set! (<em class=red>foreground-color</em>) (make-color 1 0 0))
+	    (if new-font (set! (<em class=red>current-font</em>) new-font))
+            (draw-string "hiho" (+ pos 5) 24)
+	    (set! (<em class=red>foreground-color</em>) old-color))))))
+<!-- --></pre></td></tr></table>
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+
+<!-- graph-data -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="graphdata">graph-data</a></em> (data snd chn context low high graphics-style)</code></span></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- --><i>graph-data</i> displays <i>data</i> in the time domain graph of <i>snd</i>'s channel
+<!-- --><i>chn</i> using the graphics context <i>context</i> (normally copy-context), placing the
+<!-- -->data in the recipient's graph between points <i>low</i> and <i>high</i>
+<!-- -->in the drawing mode (<i>graphics-style</i>).
+<!-- -->With this function and <i>make-graph-data</i> we can overlay sounds,
+<!-- -->overlay different versions of the same sound, place a portion of a
+<!-- -->sound over another at an arbitrary point, and so on (see draw.scm):
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(define (<A NAME="displaysampsinred">display-samps-in-red</A> snd chn)
+  "display samples 1000 to 2000 in red whenever they're in the current view"
+  (let ((left (left-sample snd chn))
+	(right (right-sample snd chn))
+	(old-color (foreground-color snd chn))
+	(red (make-color 1 0 0)))
+    (if (and (&lt; left 2000)
+	     (&gt; right 1000))
+	(let* ((data (<em class=red>make-graph-data</em> snd chn)))
+	  (if (vct? data)                      ;the simple, one-sided graph case
+	      (let* ((samps (- (min right 2000)
+			       (max left 1000)))
+		     (offset (max 0 (- 1000 left)))
+		     (new-data (vct-subseq data offset (+ offset samps))))
+		(set! (foreground-color snd chn) red)
+		(<em class=red>graph-data</em> new-data snd chn copy-context (max 1000 left) (min 2000 right))
+		(set! (foreground-color snd chn) old-color))
+	      (let* ((low-data (car data))     ;the two-sided envelope graph case
+		     (high-data (cadr data))
+                     ;; we need to place the red portion correctly in the current graph
+                     ;; so the following is getting the "bin" numbers associated with 
+                     ;; samples 1000 and 2000
+		     (size (vct-length low-data))
+		     (samps (- right left))
+		     (left-offset (max 0 (- 1000 left)))
+		     (left-bin (inexact-&gt;exact (/ (* size left-offset) samps)))
+		     (right-offset (- (min 2000 right) left))
+		     (right-bin (inexact-&gt;exact (/ (* size right-offset) samps)))
+		     (new-low-data (vct-subseq low-data left-bin right-bin))
+		     (new-high-data (vct-subseq high-data left-bin right-bin)))
+		(set! (foreground-color snd chn) red)
+		(<em class=red>graph-data</em> 
+                  (list new-low-data new-high-data) snd chn copy-context left-bin right-bin)
+		(set! (foreground-color snd chn) old-color)))))))
+
+(add-hook! after-graph-hook display-samps-in-red)
+<!-- --></pre></td></tr></table></td></tr>
+<!-- --><tr><td></td><td align=center>
+<!-- --><img src="redsamps.png" alt="red samples">
+<!-- -->
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- load-font -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="loadfont">load-font</a></em> (font-name)</code></span></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- -->loads the font <i>font-name</i> (an X-style font spec), and returns a handle for it (for <a href="#currentfont">current-font</a>).
+<!-- --><pre>
+<!-- -->  (define new-font (<em class=red>load-font</em> "-adobe-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*"))
+<!-- --></pre>
+<!-- --><p>load-font could be (should have been!) defined using the xm module as:</p>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(define (load-font name)
+  (let ((fs (|XLoadQueryFont (|XtDisplay (cadr (main-widgets))) name)))
+    (and (|XFontStruct? fs) (|fid fs))))
+<!-- --></pre></td></tr></table>
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- make-graph-data -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="makegraphdata">make-graph-data</a></em> (snd chn edit-position low-sample high-sample)</code></span></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- -->Use <i>make-graph-data</i> to get the currently displayed data (i.e. the actual waveform displayed
+<!-- -->in the graph, which can be based on an overall envelope rather than the
+<!-- -->actual samples).
+<!-- -->It returns either a vct (if the graph has one trace), or a
+<!-- -->list of two vcts (the two sides of the envelope graph).
+<!-- --><i>edit-position</i> defaults to the current edit history position,
+<!-- --><i>low-sample</i> defaults to the current window left sample, and
+<!-- --><i>high-sample</i> defaults to the current rightmost sample.
+<!-- -->The result can be use in the "lisp graph":
+<!-- -->
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(define <A NAME="displaydb">display-db</A>
+  (lambda (snd chn)
+    "(display-db snd chn) is a lisp-graph-hook function to display the time domain data in dB"
+    (let* ((datal (<em class=red>make-graph-data</em> snd chn))
+	   (data (if (vct? datal) datal (cadr datal)))
+           (sr (srate snd)))
+      (define (dB val)
+	(if (&lt; val .001)
+	    -60.0
+	    (* 20.0 (log10 val))))
+      (vct-map! data (lambda ()
+		       (+ 60.0 (dB (abs (vct-ref data i))))))
+      (graph data "dB" 
+	     (/ (left-sample snd chn) sr) (/ (right-sample snd chn) sr)  
+	     0.0 60.0
+	     snd chn))))
+
+(add-hook! lisp-graph-hook display-db)
+<!-- --></pre></td></tr></table>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->Here we are taking whatever is displayed in the time domain, and
+<!-- -->presenting the same thing in dB in the lisp graph.  <i>display-energy</i>
+<!-- -->in examp.scm is another example.  But the real power of this function
+<!-- -->comes from its use with <i>graph-data</i>.  
+<!-- -->The latter takes its argument (either a vct or a list of two
+<!-- -->vcts), and displays it in any channel's time domain graph using its current graph-style.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- mark-context -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="markcontext">mark-context</a></em></code></span></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- -->the graphics context to use to draw a mark (XOR mode).
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- selection-context -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="selectioncontext">selection-context</a></em></code></span></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- -->the graphics context for XOR drawing in the selection color.</td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- with-gl -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="withgl">with-gl</a></em></code></span></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- -->If #t and GL is loaded, use GL where possible (default is #t if HAVE_GL).</td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- --></table>
+
+
+<p>This only scratches the surface of these functions; I'll eventually 
+collect more examples into draw.scm.
+</p>
+
+<br>
 <p>leftovers...</p>
 <pre>
   <b><a name="changeproperty">change-property</a></b> (known-atom property value)

@@ -52,6 +52,10 @@ static char *sndlib_consistency_check(void)
   #include <gsl/gsl_version.h>
 #endif
 
+#if HAVE_LADSPA
+  #include <ladspa.h>
+#endif
+
 static char* vstrcat(char *buf, ...)
 {
   va_list ap;
@@ -191,6 +195,18 @@ char *version_info(void)
 #endif
 #if HAVE_GL
 	  "\n    OpenGL", glx_version(),
+  #if HAVE_GTK2
+	  ", gtkglext ",
+    #if HAVE_GTK_GL_EXT_0_1
+	  "0.1",
+    #else
+      #if HAVE_GDK_GL_FONT_USE_GDK_FONT
+	  "0.2",
+      #else
+	  "0.3 or later",
+      #endif
+    #endif
+  #endif
 #endif
 #if (!(defined(USE_MOTIF))) && (!(defined(USE_GTK)))
 	  "\n    without any graphics system",
@@ -210,7 +226,12 @@ char *version_info(void)
                         snd_itoa(XpmRevision),
 #endif
 #if HAVE_LADSPA
-	  "\n    with LADSPA",
+	  "\n    LADSPA",
+  #ifdef LADSPA_HINT_DEFAULT_MASK
+	  " 1.1",
+  #else
+	  " 1.0",
+  #endif
 #endif
 #if SND_AS_WIDGET
 	  "\n    (compiled as a widget)",
@@ -246,21 +267,16 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+15-Jul:  snd 5.12.\n\
 8-Jul:   update-transform changed to update-transform-graph.\n\
          added sample-reader-position.\n\
 3-Jul:   added contrib/DotEmacs thanks to Fernando.\n\
 27-Jun:  bad-header-hook.\n\
-20-Jun:  ptree-channel (an experiment) -- any func as virtual edit.\n\
+20-Jun:  ptree-channel (an experiment) -- func as virtual edit.\n\
          env-channel can take envelope (list) arg.\n\
 18-Jun:  snd colors now mimic xm/xg, snd-pixel is a no-op.\n\
 12-Jun:  snd 5.11.\n\
          moved forward|backward-sample to snd5.scm.\n\
-10-Jun:  mix panel amp envs are now editable.\n\
-7-Jun:   added fftw support, removed fht.\n\
-6-Jun:   removed --with-big-colormap switch (use -DCOLORMAP_SIZE=64 to get old form).\n\
-4-Jun:   Gtk OpenGL support via the gtkglext library.\n\
-3-Jun:   removed \"colour\" spelling option (snd5.scm has backwards compatible definitions).\n\
-28-May:  Dave Phillips' Snd tutorial added in contrib/tutorial.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
