@@ -12,14 +12,14 @@
 
 /* ed_list fields accessed only in this file */
 
-#if (!HAVE_GUILE) || (HAVE_GUILE_1_3_0)
-static int dont_edit(chan_info *cp) {return(0);}
-static void call_undo_hook(chan_info *cp, int undo) {return;}
-static int dont_save(snd_state *ss, snd_info *sp, char *newname) {return(0);}
-#else
+#if HAVE_HOOKS
 static int dont_edit(chan_info *cp);
 static void call_undo_hook(chan_info *cp, int undo);
 static int dont_save(snd_state *ss, snd_info *sp, char *newname);
+#else
+static int dont_edit(chan_info *cp) {return(0);}
+static void call_undo_hook(chan_info *cp, int undo) {return;}
+static int dont_save(snd_state *ss, snd_info *sp, char *newname) {return(0);}
 #endif
 
 static char edit_buf[256];
@@ -296,6 +296,20 @@ static ed_list *make_ed_list(int size)
   return(ed);
 }
 
+static ed_list *append_ed_list(chan_info *cp, int size)
+{
+  /* edit_ctr is already incremented */
+  ed_list *new_ed,*old_ed;
+  new_ed = make_ed_list(size);
+  if ((cp->edits) && (cp->edit_ctr > 0))
+    {
+      old_ed = cp->edits[cp->edit_ctr - 1];
+      new_ed->selection_beg = old_ed->selection_beg;
+      new_ed->selection_end = old_ed->selection_end;
+    }
+  return(new_ed);
+}
+
 static ed_list *free_ed_list(ed_list *ed)
 {
   if (ed)
@@ -370,6 +384,8 @@ static ed_list *initial_ed_list(int beg, int end)
   ed = make_ed_list(2);
   ed->beg = beg;
   ed->len = end+1;
+  ed->selection_beg = NO_SELECTION;
+  ed->selection_end = 0;
   ed->sfnum = PACK_EDIT(INITIALIZE_EDIT,0);
   /* origin (channel %s %d) desc channel should be obvious from context */
   ed->fragments[0*ED_SIZE + ED_BEG] = beg;
@@ -990,7 +1006,7 @@ static ed_list *insert_samples_1 (int samp, int num, MUS_SAMPLE_TYPE* vals, ed_l
   if ((k == 0) && (cb[ED_END] == -1))
     {
       /* no data: just set insertion */
-      new_state = make_ed_list(len);
+      new_state = append_ed_list(cp,len);
       copy_ed_blocks(new_state->fragments,ed,0,0,len);
       cb = (int *)(new_state->fragments);
       cb[ED_END] = num-1;
@@ -999,7 +1015,7 @@ static ed_list *insert_samples_1 (int samp, int num, MUS_SAMPLE_TYPE* vals, ed_l
     {
       if ((samp == cb[ED_OUT]) || (samp == (cb[ED_OUT] - 1)))
 	{
-	  new_state = make_ed_list(len+1);
+	  new_state = append_ed_list(cp,len+1);
 	  copy_ed_blocks(new_state->fragments,ed,0,0,k);
 	  copy_ed_blocks(new_state->fragments,ed,k+1,k,len-k);
 	  len++;
@@ -1011,7 +1027,7 @@ static ed_list *insert_samples_1 (int samp, int num, MUS_SAMPLE_TYPE* vals, ed_l
 	  old_end = cbback[ED_END];
 	  old_snd = cbback[ED_SND];
 	  old_out = cbback[ED_OUT];
-	  new_state = make_ed_list(len+2);
+	  new_state = append_ed_list(cp,len+2);
 	  copy_ed_blocks(new_state->fragments,ed,0,0,k);
 	  copy_ed_blocks(new_state->fragments,ed,k+2,k,len-k);
 	  cb = (int *)(new_state->fragments + (k+1)*ED_SIZE);  /* old after split */
@@ -1041,7 +1057,7 @@ static ed_list *insert_samples_1 (int samp, int num, MUS_SAMPLE_TYPE* vals, ed_l
   ripple_out(new_state->fragments,k+1,num,len);
   ripple_marks(cp,samp,num);
   ripple_mixes(cp,samp,num);
-  ripple_selection(cp,samp,num);
+  ripple_selection(cp,new_state,samp,num);
   reflect_sample_change_in_axis(cp);
   check_for_first_edit(cp);
   fixup_edlist_endmark(new_state,current_state,len);
@@ -1146,7 +1162,7 @@ static ed_list *delete_samples_1(int beg, int num, ed_list *current_state, chan_
   curbeg = beg;
   cb = (int *)(current_state->fragments + k*ED_SIZE);
   if (cb[ED_OUT]>beg) start_del--;
-  new_state = make_ed_list(len+1);
+  new_state = append_ed_list(cp,len+1);
   copy_ed_blocks(new_state->fragments,current_state->fragments,0,0,start_del);
   cbi=start_del;
   temp_cb = (int *)(current_state->fragments + start_del*ED_SIZE);
@@ -1191,7 +1207,7 @@ static ed_list *delete_samples_1(int beg, int num, ed_list *current_state, chan_
   ripple_out(new_state->fragments,start_del,-num,len+len_fixup);
   ripple_marks(cp,beg,-num);
   ripple_mixes(cp,beg,-num);
-  ripple_selection(cp,beg,-num);
+  ripple_selection(cp,new_state,beg,-num);
   reflect_sample_change_in_axis(cp);
   check_for_first_edit(cp);
   new_state->size = len+len_fixup; /* don't propogate useless trailing blocks */
@@ -1262,7 +1278,7 @@ static ed_list *change_samples_1(int beg, int num, MUS_SAMPLE_TYPE *vals, ed_lis
   cbi=0;
   cb = (int *)(current_state->fragments + k*ED_SIZE);
   if (cb[ED_OUT]>beg) start_del--;
-  new_state = make_ed_list(len+2);
+  new_state = append_ed_list(cp,len+2);
   copy_ed_blocks(new_state->fragments,current_state->fragments,0,0,start_del);
   cbi=start_del;
   temp_cb = (int *)(current_state->fragments + start_del*ED_SIZE);  
@@ -2334,7 +2350,7 @@ void undo_edit_with_sync(chan_info *cp, int count)
 	  if (si)
 	    {
 	      for (i=0;i<si->chans;i++) undo_edit(si->cps[i],count);
-	      free_sync_info(si);
+	      si = free_sync_info(si);
 	    }
 	  else undo_edit(cp,count);
 	}
@@ -2382,7 +2398,7 @@ void redo_edit_with_sync(chan_info *cp, int count)
 	  if (si)
 	    {
 	      for (i=0;i<si->chans;i++) redo_edit(si->cps[i],count);
-	      free_sync_info(si);
+	      si = free_sync_info(si);
 	    }
 	  else redo_edit(cp,count);
 	}
@@ -2391,7 +2407,6 @@ void redo_edit_with_sync(chan_info *cp, int count)
 
 
 #if HAVE_GUILE
-#include "sg.h"
 
 #if DEBUGGING
 static SCM g_display_edits(SCM snd, SCM chn)
@@ -2491,7 +2506,7 @@ static scm_sizet free_sf(SCM obj)
   return(0);
 }
 
-#if HAVE_GUILE_1_3_0
+#if (!(HAVE_NEW_SMOB))
 static scm_smobfuns sf_smobfuns = {
   &mark_sf,
   &free_sf,
@@ -2508,7 +2523,7 @@ static SCM g_sample_reader_at_end(SCM obj)
 
 SCM g_c_make_sample_reader(snd_fd *fd)
 {
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_NEW_SMOB
   SCM_RETURN_NEWSMOB(sf_tag,(SCM)fd);
 #else
   SCM new_sf;
@@ -2532,7 +2547,7 @@ static SCM g_make_sample_reader(SCM samp_n, SCM snd, SCM chn, SCM dir1, SCM pos)
   char *loc_name;
   snd_state *ss;
   snd_info *loc_sp = NULL;
-#if HAVE_GUILE_1_3_0
+#if (!(HAVE_NEW_SMOB))
   SCM new_sf;
 #endif
   ERRB1(samp_n,S_make_sample_reader);
@@ -2561,7 +2576,7 @@ static SCM g_make_sample_reader(SCM samp_n, SCM snd, SCM chn, SCM dir1, SCM pos)
   edpos = g_scm2intdef(pos,cp->edit_ctr);
   fd = init_sample_read_any(g_scm2intdef(samp_n,0),cp,g_scm2intdef(dir1,1),edpos);
   fd->local_sp = loc_sp;
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_NEW_SMOB
   SCM_RETURN_NEWSMOB(sf_tag,(SCM)fd);
 #else
   SCM_NEWCELL(new_sf);
@@ -2578,7 +2593,7 @@ static SCM g_make_region_sample_reader(SCM samp_n, SCM reg, SCM chn, SCM dir1)
    returns a reader ready to access region's channel chn data starting at 'start-samp' going in direction 'dir'"
 
   snd_fd *fd = NULL;
-#if HAVE_GUILE_1_3_0
+#if (!(HAVE_NEW_SMOB))
   SCM new_sf;
 #endif
   ERRB1(samp_n,S_make_sample_reader);
@@ -2588,7 +2603,7 @@ static SCM g_make_region_sample_reader(SCM samp_n, SCM reg, SCM chn, SCM dir1)
   fd = init_region_read(get_global_state(),g_scm2intdef(samp_n,0),g_scm2intdef(reg,0),g_scm2intdef(chn,0),g_scm2intdef(dir1,1));
   if (fd)
     {
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_NEW_SMOB
       SCM_RETURN_NEWSMOB(sf_tag,(SCM)fd);
 #else
       SCM_NEWCELL(new_sf);
@@ -2817,7 +2832,7 @@ static SCM g_as_one_edit(SCM proc)
   return(result);
 }
 
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_HOOKS
 static int dont_edit(chan_info *cp) 
 {
   SCM res = SCM_BOOL_F;
@@ -2853,7 +2868,7 @@ static int dont_save(snd_state *ss, snd_info *sp, char *newname)
 
 void g_init_edits(SCM local_doc)
 {
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_NEW_SMOB
   sf_tag = scm_make_smob_type("sf",sizeof(SCM));
   scm_set_smob_mark(sf_tag,mark_sf);
   scm_set_smob_print(sf_tag,print_sf);
@@ -2881,7 +2896,7 @@ void g_init_edits(SCM local_doc)
   DEFINE_PROC(gh_new_procedure("display-edits",SCM_FNC g_display_edits,0,2,0),H_display_edits);
 #endif
 
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_HOOKS
   save_hook = scm_create_hook(S_save_hook,2);                   /* arg = sound index, possible new name */
 #endif
 }

@@ -885,7 +885,6 @@ int channel_unlock_pane(chan_info *cp, void *ptr) {return(0);}
 
 #if HAVE_GUILE_GTK
 #include <guile-gtk.h>
-#include "sg.h"
 
 #define Sg_sample2x                "sg-sample->x"
 #define Sg_sample2y                "sg-sample->y"

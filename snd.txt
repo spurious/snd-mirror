@@ -278,21 +278,19 @@ is the 'control pane', normally hidden except for the file name and
 'minibuffer'. At the very bottom of the Snd window is the lisp listener, if
 any (see the View menu "Open listener" option). The panes can all be
 independently raised and lowered by dragging the pane buttons on the right.
-The channel that is currently active (receiving keyboard commands) has a
-thin black border around the display portion. Each channel has the four
-scrollbars setting what portion of the data is displayed; the 'w' button
-(normally set) which causes the time domain waveform to be displayed; and
-the 'f' button (normally unset) which includes the frequency domain (FFT)
-display. There is a third display settable by user-provided functions; if
-both the 'w' and 'f' buttons are off and there is no active user-display
-function, you get an empty display. For each sound there is a control panel
-containing the file name, in parentheses if the file is actually a link,
-with an asterisk if there are unsaved edits, a 'minibuffer' for various
-kinds of simple text-based interactions, a 'sync' button for grouped display
-and edit operations, a 'unite' button (if the sound has more than one
-channel), and a 'play' button to play the current (edited) state of the
-file. Any number of files can be played at the same time. The rest of the
-control panel modifies how the file is played.
+Each channel has the four scrollbars setting what portion of the data is
+displayed; the 'w' button (normally set) which causes the time domain
+waveform to be displayed; and the 'f' button (normally unset) which includes
+the frequency domain (FFT) display. There is a third display settable by
+user-provided functions; if both the 'w' and 'f' buttons are off and there
+is no active user-display function, you get an empty display. For each sound
+there is a control panel containing the file name, in parentheses if the
+file is actually a link, with an asterisk if there are unsaved edits, a
+'minibuffer' for various kinds of simple text-based interactions, a 'sync'
+button for grouped display and edit operations, a 'unite' button (if the
+sound has more than one channel), and a 'play' button to play the current
+(edited) state of the file. Any number of files can be played at the same
+time. The rest of the control panel modifies how the file is played.
 
 To open a new, empty file, use the New option. The default values for the
 fields can be set via default-output-chans, default-output-format,
@@ -545,11 +543,18 @@ The Active Channel and The Cursor
 
 The Active Channel
 
-The cursor (and its associated channel) is activated by clicking on the time
-domain waveform. The active channel normally has a dark edge around the
-graphics portion, as a sort of highlight. It is the window that receives
-keyboard commands. You can also move between windows with C-x o (forwards or
-backwards).
+The cursor is activated (and its associated channel selected) by clicking on
+the time domain waveform. Although the selected channel is indicated as such
+in some (nearly invisible) manner, it will be more noticeable if you set the
+selected-data-color or the selected-graph-color:
+
+  (define beige (make-color 0.96 0.96 0.86))
+  (define blue (make-color 0 0 1))
+  (set! (selected-graph-color) beige)
+  (set! (selected-data-color) blue)
+
+The selected channel receives keyboard commands. You can also move between
+windows with C-x o (forwards or backwards).
 
 Moving the Cursor
 
@@ -661,17 +666,21 @@ A region is a (saved) portion of the sound data. Although I'm not completely
 consistent in this document, the word "selection" is used to refer to the
 currently selected (and highlighted) portion of the data; an operation such
 as filter-selection affects the underlying data. A "region" on the other
-hand, refers to the saved (copied) version of that data that can be inserted
-or mixed elsewhere. Regions can be defined by dragging the mouse through a
-portion of the data. If the mouse drags off the end of the graph, the x axis
-moves, in a sense dragging the data along to try to keep up with the mouse;
-the further away the mouse is from the display, the faster the axis moves.
-(One minor caveat: if you drag the mouse too quickly off the end of the
-graph, making a grand sweeping gesture, the last portion of the graph may be
-missed because the mouse updates are coalesced to some extent; move
-deliberately as you near the end of the sound). A region can also be defined
-with keyboard commands, much as in Emacs. C-[space] starts the region
-definition and the various cursor moving commands continue the definition.
+hand, refers to the saved (copied) version of (the original form of) that
+data that can be inserted or mixed elsewhere. That is, when a portion is
+initially selected, it is saved as the new region 0; subsequent edits may
+not disable the notion that there's an active selection, but the region 0
+data still reflects the initial data. Regions can be defined by dragging the
+mouse through a portion of the data. If the mouse drags off the end of the
+graph, the x axis moves, in a sense dragging the data along to try to keep
+up with the mouse; the further away the mouse is from the display, the
+faster the axis moves. (One minor caveat: if you drag the mouse too quickly
+off the end of the graph, making a grand sweeping gesture, the last portion
+of the graph may be missed because the mouse updates are coalesced to some
+extent; move deliberately as you near the end of the sound). A region can
+also be defined with keyboard commands, much as in Emacs. C-[space] starts
+the region definition and the various cursor moving commands continue the
+definition.
 
 Once defined, the copied selection is added to a stack of currently
 available regions (the stack size is normally 16 -- see max-regions). In
@@ -716,8 +725,7 @@ The keyboard commands that apply to regions are:
 
 If the current selection is active (displayed somewhere in the current time
 domain displays), there are several functions that can edit that portion of
-the current sounds (that is, the edit applies to the underlying sound, not
-to the selection as a separate entity).
+the current sounds (without affecting whatever was saved in region 0).
 
   scale-selection-by args
   scale-selection-to args

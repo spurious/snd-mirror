@@ -1216,7 +1216,7 @@ void save_envelope_editor_state(FILE *fd)
 	{
 	  fprintf(fd,"(defvar %s %s)",all_names[i],estr);
 	  if (all_envs[i]->base != 1.0)
-#if (HAVE_GUILE) && (!(HAVE_GUILE_1_3_0))
+#if HAVE_GENERALIZED_SET
 	    fprintf(fd," (set! (env-base \"%s\") %.4f)",all_names[i],all_envs[i]->base);
 #else
 	    fprintf(fd," (%s \"%s\" %.4f)","set-" S_env_base,all_names[i],all_envs[i]->base);
@@ -1228,7 +1228,6 @@ void save_envelope_editor_state(FILE *fd)
 }
 
 #if HAVE_GUILE
-#include "sg.h"
 
 static env *scm2env(SCM res)
 {

@@ -82,7 +82,7 @@ static void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char
 					 SCM local_doc,
 					 int get_req, int get_opt, int set_req, int set_opt)
 {
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_GENERALIZED_SET
   scm_set_object_property_x(
 			    gh_cdr(
 				   gh_define(get_name,
@@ -98,7 +98,7 @@ static void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char
 }
 #endif
 
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_KEYWORDS
 /* new version uses guile's built-in keyword support */
 
 /* ---------------- keywords ---------------- */
@@ -356,7 +356,7 @@ static int keyword_p(SCM obj) {return((SCM_NIMP(obj)) && (SCM_TYP16(obj) == (SCM
 static scm_sizet free_keyword(SCM obj) {return(0);}
 static int print_keyword(SCM obj, SCM port, scm_print_state *pstate) {scm_puts(keywords[get_keyword(obj)],port); return(1);}
 
-#if HAVE_GUILE_1_3_0
+#if (!(HAVE_NEW_SMOB))
 static scm_smobfuns keyword_smobfuns = {
   &mark_keyword,
   &free_keyword,
@@ -366,7 +366,7 @@ static scm_smobfuns keyword_smobfuns = {
 
 static SCM make_keyword(int val)
 {
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_NEW_SMOB
   SCM_RETURN_NEWSMOB(keyword_tag,val);
 #else
   SCM new_keyword;
@@ -380,7 +380,7 @@ static SCM make_keyword(int val)
 static void init_keywords(void)
 {
   int i;
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_NEW_SMOB
   keyword_tag = scm_make_smob_type("keyword",sizeof(SCM));
   scm_set_smob_mark(keyword_tag,mark_keyword);
   scm_set_smob_print(keyword_tag,print_keyword);
@@ -891,7 +891,7 @@ static SCM equalp_mus_scm(SCM obj1, SCM obj2)
   return((mus_equalp(mus_get_any(obj1),mus_get_any(obj2))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
-#if HAVE_GUILE_1_3_0
+#if (!(HAVE_NEW_SMOB))
 static scm_smobfuns mus_scm_smobfuns = {
   &mark_mus_scm,
   &free_mus_scm,
@@ -901,7 +901,7 @@ static scm_smobfuns mus_scm_smobfuns = {
 
 static void init_mus_scm(void)
 {
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_NEW_SMOB
   mus_scm_tag = scm_make_smob_type("mus",sizeof(mus_scm));
   scm_set_smob_mark(mus_scm_tag,mark_mus_scm);
   scm_set_smob_print(mus_scm_tag,print_mus_scm);
@@ -914,7 +914,7 @@ static void init_mus_scm(void)
 
 static SCM mus_scm_to_smob(mus_scm *gn)
 {
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_NEW_SMOB
   SCM_RETURN_NEWSMOB(mus_scm_tag,gn);
 #else
   SCM new_osc;
@@ -930,7 +930,7 @@ static SCM mus_scm_to_smob(mus_scm *gn)
 static SCM mus_scm_to_smob_with_vct(mus_scm *gn, SCM v)
 {
   SCM new_dly;
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_NEW_SMOB
   SCM_NEWSMOB(new_dly,mus_scm_tag,gn);
 #else
   SCM_NEWCELL(new_dly);

@@ -836,8 +836,10 @@ void ripple_marks(chan_info *cp, int beg, int change)
 
 void mark_define_region(chan_info *cp,int count)
 {
-  int beg,end,temp;
+  int beg,end;
   mark *mp;
+  sync_info *si;
+  int ends[1];
   if (cp)
     {
       if (cp->marks)
@@ -849,8 +851,16 @@ void mark_define_region(chan_info *cp,int count)
 	      end = mp->samp;
 	      if (end != beg)
 		{
-		  if (end < beg) {temp = end; end = beg; beg = temp;}
-		  define_region(cp,beg,end,CLEAR_MINIBUFFER);
+		  ends[0] = end;
+		  if (end < beg) 
+		    {
+		      ends[0] = beg;
+		      beg = end;
+		    }
+		  si = sync_to_chan(cp);
+		  si->begs[0] = beg;
+		  define_region(si,ends);
+		  si = free_sync_info(si);
 		}
 	    }
 	  else report_in_minibuffer(cp->sound,"no such mark");
@@ -1473,8 +1483,6 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int
 
 /* -------------------------------- SCM connection -------------------------------- */
 #if HAVE_GUILE
-
-#include "sg.h"
 
 static SCM g_restore_marks(SCM size, SCM snd, SCM chn, SCM marklist)
 {

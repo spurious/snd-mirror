@@ -382,7 +382,7 @@ void ps_set_tiny_numbers_font(chan_info *cp)
 
 #define PRINTED_VERTICAL_SPACING 25 
 
-void snd_print(snd_state *ss, char *output, int syncing)
+void snd_print(snd_state *ss, char *output)
 {
   int j,i,err;
   int *offsets = NULL;
@@ -390,8 +390,7 @@ void snd_print(snd_state *ss, char *output, int syncing)
   sync_info *si;
   if ((output) && (*output))
     {
-      if (syncing) si = snd_sync(ss,1); else si=NULL;
-      if (!si) si = make_simple_sync(current_channel(ss),0);
+      si = sync_to_chan(current_channel(ss));
       offsets = (int *)CALLOC(si->chans,sizeof(int));
       for (j=0,i=(si->chans-1);i>=0;i--)
 	{
@@ -425,7 +424,7 @@ void snd_print(snd_state *ss, char *output, int syncing)
 	  end_ps_graph();
 	}
       else snd_error("%s: %s",output,strerror(errno));
-      free_sync_info(si);
+      si = free_sync_info(si);
       if (offsets) FREE(offsets);
     }
   else snd_error("print sound: eps file name needed");

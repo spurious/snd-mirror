@@ -169,7 +169,6 @@ typedef struct chan__info {
   void *sonogram_data;
   void *last_sonogram;
   void *fft_data;          /* parallels sonogram -- try to avoid repeating large ffts needlessly */
-  int clear;
   int ps_fd;
   int printing;
   int drawing;
@@ -196,6 +195,7 @@ typedef struct chan__info {
 #if HAVE_GUILE
   SCM edit_hook,undo_hook;
 #endif
+  int selection_visible,old_x0,old_x1;
 } chan_info;
 
 typedef struct snd__info {
@@ -509,7 +509,6 @@ void exit_from_menu(snd_state *ss);
 void mix_selection_from_menu(snd_state *ss);
 void cut_selection_from_menu(void);
 void paste_selection_from_menu(snd_state *ss);
-void select_all_from_menu(snd_state *ss);
 void save_options_from_menu(snd_state *ss);
 void save_state_from_menu(snd_state *ss);
 void new_file_from_menu(snd_state *ss);
@@ -599,7 +598,7 @@ void ps_set_label_font(chan_info *cp);
 void ps_set_bold_peak_numbers_font(chan_info *cp);
 void ps_set_peak_numbers_font(chan_info *cp);
 void ps_set_tiny_numbers_font(chan_info *cp);
-void snd_print(snd_state *ss, char *output, int syncing);
+void snd_print(snd_state *ss, char *output);
 void region_print(char *output, char* title, chan_info *cp);
 void print_enved(char *output, chan_info *cp, int y0);
 
@@ -659,11 +658,11 @@ chan_info *selected_channel(snd_state *ss);
 snd_info *any_selected_sound (snd_state *ss);
 chan_info *any_selected_channel(snd_info *sp);
 void select_channel(snd_info *sp, int chan);
-int syncd_chans(snd_state *ss, int sync);
 chan_info *current_channel(snd_state *ss);
-void free_sync_info (sync_info *si);
+sync_info *free_sync_info (sync_info *si);
 sync_info *snd_sync(snd_state *ss, int sync);
 sync_info *make_simple_sync (chan_info *cp, int beg);
+sync_info *sync_to_chan(chan_info *cp);
 snd_info *find_sound(snd_state *ss, char *name);
 void display_info(snd_info *sp);
 
@@ -809,6 +808,35 @@ void snd_eval_stdin_str(snd_state *ss, char *buf);
 void g_snd_callback(int callb);
 
 
+/* -------- snd-select.c -------- */
+
+int selection_is_active(void);
+int selection_is_active_in_channel(chan_info *cp);
+int selection_is_visible_in_channel(chan_info *cp);
+int selection_beg(chan_info *cp);
+int selection_end(chan_info *cp);
+int selection_len(void);
+int selection_chans(void);
+void deactivate_selection(void);
+void reactivate_selection(chan_info *cp, int beg, int end);
+void ripple_selection(chan_info *cp, ed_list *new_ed, int beg, int num);
+sync_info *selection_sync(void);
+void start_selection_creation(chan_info *cp, int samp);
+void update_possible_selection_in_progress(chan_info *cp, int samp);
+void make_region_from_selection(void);
+void display_selection(chan_info *cp);
+int delete_selection(char *origin, int regraph);
+void move_selection(chan_info *cp, int x);
+void finish_selection_creation(void);
+void select_all(chan_info *cp);
+int save_selection(snd_state *ss, char *ofile,int type, int format, int srate, char *comment);
+int selection_creation_in_progress(void);
+void cancel_selection_watch(void);
+
+#if HAVE_GUILE
+  void g_init_selection(SCM local_doc);
+#endif
+  
 
 /* -------- snd-region.c -------- */
 
@@ -817,40 +845,20 @@ int region_ok(int n);
 int region_len(int n);
 int region_chans(int n);
 int region_srate(int n);
+int region_id(int n);
 Float region_maxamp(int n);
-int selection_is_current(void);
 file_info *fixup_region_data(chan_info *cp, int chan, int n);
 region_state *region_report(void);
 void free_region_state (region_state *r);
 void select_region(int n);
 int delete_region(int n);
 void protect_region(int n,int protect);
-int selection_is_current_in_channel(chan_info *cp);
-int selection_member(snd_info *sp);
-int active_selection (chan_info *cp);
-int selection_beg(chan_info *cp);
-int selection_len(void);
-void selection_off(chan_info *cp);
 int save_region(snd_state *ss, int n, char *ofile, int data_format);
-int delete_selection(char *origin, int regraph);
 void paste_region(int n, chan_info *cp, char *origin);
 void add_region(int n, chan_info *cp, char *origin);
-void finish_keyboard_selection(void);
-int cancel_keyboard_selection(void);
-void start_selection (chan_info *cp,int x);
-void start_keyboard_selection(chan_info *cp, int x);
-void check_keyboard_selection(chan_info *cp, int x);
-void deactivate_selection(void);
-int selection_active(chan_info *cp);
-void display_selection(chan_info *cp);
-void ripple_selection(chan_info *cp, int beg, int num);
-void create_selection(chan_info *cp);
 void region_stats(int *vals);
-void move_selection(chan_info *cp, int x);
-void define_selection(chan_info *cp);
-void define_region(chan_info *cp, int beg, int end, int cleared);
+void define_region(sync_info *si, int *ends);
 snd_fd *init_region_read (snd_state *ss, int beg, int n, int chan, int direction);
-sync_info *region_sync(int n);
 void cleanup_region_temp_files(void);
 int snd_regions(void);
 void save_regions(snd_state *ss, FILE *fd);
@@ -972,6 +980,8 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, snd_state *ss, int graphed)
 void handle_cursor(chan_info *cp, int redisplay);
 void set_x_bounds(axis_info *ap);
 void display_channel_data (chan_info *cp, snd_info *sp, snd_state *ss);
+void display_channel_fft_data (chan_info *cp, snd_info *sp, snd_state *ss);
+void display_channel_lisp_data (chan_info *cp, snd_info *sp, snd_state *ss);
 void show_cursor_info(chan_info *cp);
 void apply_x_axis_change(axis_info *ap, chan_info *cp, snd_info *sp);
 void apply_y_axis_change (axis_info *ap, chan_info *cp);
@@ -990,7 +1000,6 @@ int keyboard_command (chan_info *cp, int keysym, int state);
 #if HAVE_GUILE
   void g_init_chn(SCM local_doc);
 #endif
-int save_selection(snd_state *ss, char *ofile,int type, int format, int srate, char *comment);
 void convolve_with(char *filename, Float amp, chan_info *cp);
 void scale_by(snd_state *ss, snd_info *sp, chan_info *cp, Float *scalers, int len, int selection);
 void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *scalers, int len, int selection);
@@ -1008,7 +1017,6 @@ void waveb(chan_info *cp, int on);
 void f_button_callback(chan_info *cp, int on, int with_control);
 void w_button_callback(chan_info *cp, int on, int with_control);
 void edit_select_callback(chan_info *cp, int ed, int with_control);
-void draw_graph_border(chan_info *cp);
 void display_frequency_response(env *e, axis_info *ap, axis_context *gax, int order, int dBing);
 axis_context *copy_context (chan_info *cp);
 axis_context *erase_context (chan_info *cp);

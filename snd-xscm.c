@@ -2,8 +2,6 @@
 
 #if HAVE_GUILE
 
-#include "sg.h"
-
 static snd_state *state;
 
 #if HAVE_HTML
@@ -136,7 +134,7 @@ static SCM equalp_snd_color(SCM obj1, SCM obj2)
 static SCM g_make_snd_color(SCM r, SCM g, SCM b)
 {
   #define H_make_color "(" S_make_color " r g b) -> a color object with the indicated rgb values"
-#if HAVE_GUILE_1_3_0
+#if (!(HAVE_NEW_SMOB))
   SCM ans;
 #endif
   Colormap cmap;
@@ -157,7 +155,7 @@ static SCM g_make_snd_color(SCM r, SCM g, SCM b)
   if ((XAllocColor(dpy,cmap,&tmp_color)) == 0)
     new_color->color = BlackPixel(dpy,DefaultScreen(dpy)); 
   else new_color->color = tmp_color.pixel;
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_NEW_SMOB
   SCM_RETURN_NEWSMOB(snd_color_tag,new_color);
 #else
   SCM_NEWCELL(ans);
@@ -182,7 +180,7 @@ static SCM pixel2color(Pixel pix)
 			  gh_double2scm((Float)tmp_color.blue / 65535.0)));
 }
 
-#if HAVE_GUILE_1_3_0
+#if (!(HAVE_NEW_SMOB))
 static scm_smobfuns snd_color_smobfuns = {
   &mark_snd_color,
   &free_snd_color,
@@ -725,7 +723,7 @@ void g_initialize_xgh(snd_state *ss, SCM local_doc)
 {
   state = ss;
 
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_NEW_SMOB
   snd_color_tag = scm_make_smob_type("color",sizeof(snd_color));
   scm_set_smob_mark(snd_color_tag,mark_snd_color);
   scm_set_smob_print(snd_color_tag,print_snd_color);

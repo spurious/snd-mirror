@@ -358,7 +358,7 @@ static char *b2s(int val) {if (val) return("#t"); else return("#f");}
 static char *b2s(int val) {if (val) return("1"); else return("0");}
 #endif
 
-#if (HAVE_GUILE) && (!(HAVE_GUILE_1_3_0))
+#if HAVE_GENERALIZED_SET
 
 void save_recorder_state(FILE *fd)
 {
@@ -1442,7 +1442,6 @@ void set_read_in_progress (snd_state *ss)
 
 
 #if HAVE_GUILE
-#include "sg.h"
 
 static SCM g_recorder_autoload(void) {RTNBOOL(rp->autoload);}
 static SCM g_set_recorder_autoload(SCM val) 

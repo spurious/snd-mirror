@@ -980,7 +980,7 @@ void create_envelope_editor (snd_state *ss)
       set_sensitive(undoB,FALSE);
       set_sensitive(redoB,FALSE);
       set_sensitive(saveB,FALSE);
-      if (!(selection_is_current())) set_sensitive(selectionB,FALSE);
+      if (!(selection_is_active())) set_sensitive(selectionB,FALSE);
 
       set_toggle_button(clipB,enved_clipping(ss),FALSE,(void *)ss);
       set_toggle_button(graphB,enved_waving(ss),FALSE,(void *)ss);
@@ -1089,7 +1089,6 @@ void reflect_mix_in_enved(void)
 
 #if HAVE_GUILE_GTK
 #include <guile-gtk.h>
-#include "sg.h"
 
 #define Sg_enved_dialog_widget       "sg-enved-dialog-widget"
 #define Sg_enved_apply_widget        "sg-enved-apply-widget"

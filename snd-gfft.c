@@ -775,7 +775,6 @@ void set_show_selection_transform(snd_state *ss, int show)
 
 #if HAVE_GUILE_GTK
 #include <guile-gtk.h>
-#include "sg.h"
 
 #define Sg_transform_dialog_widget      "sg-transform-dialog-widget"
 #define Sg_transform_transform_widget   "sg-transform-transform-widget"

@@ -52,7 +52,6 @@ static void file_print_ok_callback(GtkWidget *w,gpointer clientData)
 	  set_label(file_print_message,print_string);
 	}
       printing = 1;
-      finish_keyboard_selection();
       print_it = GTK_TOGGLE_BUTTON(file_print_eps_or_lpr)->active;
       quit = (ss->print_choice == PRINT_ENV);
       if (print_it)
@@ -60,7 +59,7 @@ static void file_print_ok_callback(GtkWidget *w,gpointer clientData)
 	  name = snd_tempnam(ss);
 	  switch (ss->print_choice)
 	    {
-	    case PRINT_SND: snd_print(ss,name,1); break;
+	    case PRINT_SND: snd_print(ss,name); break;
 	    case PRINT_ENV: enved_print(name); break;
 	    }
 	  err = lpr(name);
@@ -73,7 +72,7 @@ static void file_print_ok_callback(GtkWidget *w,gpointer clientData)
 	{
 	  switch (ss->print_choice)
 	    {
-	    case PRINT_SND: snd_print(ss,gtk_entry_get_text(GTK_ENTRY(file_print_name)),1); break;
+	    case PRINT_SND: snd_print(ss,gtk_entry_get_text(GTK_ENTRY(file_print_name))); break;
 	    case PRINT_ENV: enved_print(gtk_entry_get_text(GTK_ENTRY(file_print_name))); break;
 	    }
 	}
@@ -176,7 +175,6 @@ char *ps_rgb(snd_state *ss, int pchan)
 
 #if HAVE_GUILE_GTK
 #include <guile-gtk.h>
-#include "sg.h"
 
 #define Sg_file_print_dialog_widget  "sg-file-print-dialog-widget"
 

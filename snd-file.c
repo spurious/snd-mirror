@@ -591,11 +591,10 @@ static void read_memo_file(snd_info *sp)
 }
 
 #if HAVE_GUILE
-#include "sg.h"
 
 static SCM memo_sound,open_hook,close_hook,just_sounds_hook;
 
-#if  (!HAVE_GUILE_1_3_0)
+#if HAVE_HOOKS
 static int dont_open(snd_state *ss, char *file)
 {
   char *mcf = NULL;
@@ -637,7 +636,6 @@ static int just_sounds_happy(char *filename)
 }
 
 #else
-  /* HAVE_GUILE_1_3_0 */
   static int dont_open(snd_state *ss, char *file) {return(0);}
   static int dont_close(snd_state *ss, snd_info *sp) {return(0);}
   static int just_sounds_happy(char *filename) {return(1);}
@@ -708,11 +706,6 @@ void snd_close_file(snd_info *sp, snd_state *ss)
   remember_me(ss,sp->shortname,sp->fullname);
   if (sp->playing) stop_playing_sound(sp);
   clear_minibuffer(sp);
-  if ((region_ok(0)) && (selection_member(sp))) 
-    {
-      cancel_keyboard_selection();
-      deactivate_selection();
-    }
   if (sp == selected_sound(ss)) ss->selected_sound = NO_SELECTION;
   free_snd_info(sp);
   ss->active_sounds--;
@@ -1007,11 +1000,7 @@ void view_curfiles_save(snd_state *ss, int pos)
 {
   snd_info *sp;
   sp = find_sound(ss,curnames[pos]);
-  if (sp)
-    {
-      finish_keyboard_selection();
-      save_edits(sp,NULL);
-    }
+  if (sp) save_edits(sp,NULL);
 }
 
 void view_prevfiles_select(snd_state *ss, int pos)
@@ -1921,7 +1910,6 @@ snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_f
 
 
 #if HAVE_GUILE
-#include "sg.h"
 
 static SCM g_add_sound_file_extension(SCM ext)
 {
@@ -2116,7 +2104,7 @@ void g_init_file(SCM local_doc)
 
   memo_sound = gh_define(S_memo_sound,SCM_BOOL_F);
 
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_HOOKS
   open_hook = scm_create_hook(S_open_hook,1);                     /* arg = filename */
   close_hook = scm_create_hook(S_close_hook,1);                   /* arg = sound index */
   just_sounds_hook = scm_create_hook(S_just_sounds_hook,1);       /* arg = filename */

@@ -93,7 +93,6 @@ void snd_error(char *format, ...)
 
 /* -------------------------------- SCM connection -------------------------------- */
 #if HAVE_GUILE
-#include "sg.h"
 
 static SCM g_snd_error(SCM msg)
 {
@@ -119,7 +118,7 @@ static SCM g_snd_warning(SCM msg)
  
 static SCM snd_error_hook,snd_warning_hook,mus_error_hook;
 
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_HOOKS
 int ignore_mus_error(int type, char *msg)
 {
   SCM result = SCM_BOOL_F;
@@ -155,7 +154,7 @@ void g_init_errors(SCM local_doc)
   DEFINE_PROC(gh_new_procedure1_0(S_snd_error,g_snd_error),H_snd_error);
   DEFINE_PROC(gh_new_procedure1_0(S_snd_warning,g_snd_warning),H_snd_warning);
 
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_HOOKS
   mus_error_hook = scm_create_hook(S_mus_error_hook,2);           /* arg = error-type error-message */
   snd_error_hook = scm_create_hook(S_snd_error_hook,1);           /* arg = error-message */
   snd_warning_hook = scm_create_hook(S_snd_warning_hook,1);       /* arg = error-message */

@@ -1,7 +1,4 @@
 #include "snd.h"
-#if HAVE_GUILE
-  #include "sg.h"
-#endif
 
 typedef struct {int n; int direction; int chans; int inc; chan_info **cps; snd_fd **fds;} gfd;
 

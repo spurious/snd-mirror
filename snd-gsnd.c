@@ -1162,7 +1162,7 @@ static void apply_button_callback(GtkWidget *w, gpointer clientData)
 
       if (last_apply_state & snd_ControlMask) 
 	{
-	  if (selection_is_current())
+	  if (selection_is_active())
 	    ss->apply_choice = APPLY_TO_SELECTION;
 	  else ss->apply_choice = APPLY_TO_CHANNEL;
 	}
@@ -1253,7 +1253,6 @@ void reflect_amp_env_in_progress(snd_info *sp)
 static gint Close_Sound_Dialog(GtkWidget *w, GdkEvent *event, gpointer clientData)
 {
   snd_info *sp = (snd_info *)clientData;
-  finish_keyboard_selection();
   if (sp) snd_close_file(sp,sp->state);
   gtk_widget_hide(sp->sgx->dialog); 
   return(TRUE);

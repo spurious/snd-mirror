@@ -966,7 +966,6 @@ void use_mixmark(mixdata *md, int x, int y)
 
 #if HAVE_GUILE_GTK
 #include <guile-gtk.h>
-#include "sg.h"
 
 #define NO_SUCH_WIDGET gh_symbol2scm("no-such-widget")
 

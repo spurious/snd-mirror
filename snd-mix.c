@@ -1177,7 +1177,7 @@ int mix_complete_file(snd_info *sp, char *str, char *origin, int with_console)
 	      chans = 1;
 	    }
 	  id = mix(cp->cursor,len,chans,cps,fullname,DONT_DELETE_ME,origin,with_console);
-	  if (si) free_sync_info(si); else if (cps) FREE(cps);
+	  if (si) si = free_sync_info(si); else if (cps) FREE(cps);
 	}
       else 
 	{
@@ -2936,7 +2936,6 @@ void set_mix_amp_env(int n, int chan, env *val)
 
 /* -------------------------------- SCM connection -------------------------------- */
 #if HAVE_GUILE
-#include "sg.h"
 
 static SCM g_mix_position(SCM n) 
 {
@@ -3545,7 +3544,7 @@ static scm_sizet free_mf(SCM obj)
   return(0);
 }
 
-#if HAVE_GUILE_1_3_0
+#if (!(HAVE_NEW_SMOB))
 static scm_smobfuns mf_smobfuns = {
   &mark_mf,
   &free_mf,
@@ -3558,7 +3557,7 @@ static SCM g_make_mix_sample_reader(SCM mix_id)
   #define H_make_mix_sample_reader "(" S_make_mix_sample_reader " id) returns a reader ready to access mix 'id'"
   mixdata *md = NULL;
   mix_fd *mf = NULL;
-#if HAVE_GUILE_1_3_0
+#if (!(HAVE_NEW_SMOB))
   SCM new_mf;
 #endif
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(mix_id)),mix_id,SCM_ARG1,S_make_mix_sample_reader);
@@ -3566,7 +3565,7 @@ static SCM g_make_mix_sample_reader(SCM mix_id)
   if (md) mf = init_mix_read(md,FALSE); else return(scm_throw(NO_SUCH_MIX,SCM_LIST2(gh_str02scm(S_make_mix_sample_reader),mix_id)));
   if (mf)
     {
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_NEW_SMOB
       SCM_RETURN_NEWSMOB(mf_tag,(SCM)mf);
 #else
       SCM_NEWCELL(new_mf);
@@ -3663,7 +3662,7 @@ static scm_sizet free_tf(SCM obj)
   return(0);
 }
 
-#if HAVE_GUILE_1_3_0
+#if (!(HAVE_NEW_SMOB))
 static scm_smobfuns tf_smobfuns = {
   &mark_tf,
   &free_tf,
@@ -3678,7 +3677,7 @@ static SCM g_make_track_sample_reader(SCM track_id, SCM samp, SCM snd, SCM chn)
 
   track_fd *tf = NULL;
   chan_info *cp;
-#if HAVE_GUILE_1_3_0
+#if (!(HAVE_NEW_SMOB))
   SCM new_tf;
 #endif
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(track_id)),track_id,SCM_ARG1,S_make_track_sample_reader);
@@ -3687,7 +3686,7 @@ static SCM g_make_track_sample_reader(SCM track_id, SCM samp, SCM snd, SCM chn)
   tf = init_track_reader(cp,g_scm2int(track_id),g_scm2intdef(samp,0));
   if (tf)
     {
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_NEW_SMOB
       SCM_RETURN_NEWSMOB(tf_tag,(SCM)tf);
 #else
       SCM_NEWCELL(new_tf);
@@ -3742,7 +3741,7 @@ static SCM g_play_mix(SCM num)
 
 static SCM multichannel_mix_hook;
 
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_HOOKS
 static void call_multichannel_mix_hook(int *ids, int n)
 {
   SCM lst = SCM_EOL;
@@ -3762,7 +3761,7 @@ static void call_multichannel_mix_hook(int *ids, int n) {}
 
 void g_init_mix(SCM local_doc)
 {
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_NEW_SMOB
   mf_tag = scm_make_smob_type("mf",sizeof(SCM));
   scm_set_smob_mark(mf_tag,mark_mf);
   scm_set_smob_print(mf_tag,print_mf);
@@ -3776,7 +3775,7 @@ void g_init_mix(SCM local_doc)
   DEFINE_PROC(gh_new_procedure1_0(S_free_mix_sample_reader,g_free_mix_sample_reader),H_free_mix_sample_reader);
   DEFINE_PROC(gh_new_procedure1_0(S_mix_sample_readerQ,g_mf_p),H_mf_p);
 
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_NEW_SMOB
   tf_tag = scm_make_smob_type("tf",sizeof(SCM));
   scm_set_smob_mark(tf_tag,mark_tf);
   scm_set_smob_print(tf_tag,print_tf);
@@ -3853,7 +3852,7 @@ void g_init_mix(SCM local_doc)
   DEFINE_PROC(gh_new_procedure(S_backward_mix,SCM_FNC g_backward_mix,0,3,0),H_backward_mix);
   DEFINE_PROC(gh_new_procedure(S_mix,SCM_FNC g_mix,1,5,0),H_mix);
 
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_HOOKS
   multichannel_mix_hook = scm_create_hook(S_multichannel_mix_hook,1);
 #else
   multichannel_mix_hook = gh_define(S_multichannel_mix_hook,SCM_BOOL_F);

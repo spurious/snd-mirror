@@ -163,7 +163,7 @@ char *mus_fft_window_name(int i); /* from clm2scm.c */
 
 #define white_space "      "
 
-#if (HAVE_GUILE) && (!(HAVE_GUILE_1_3_0))
+#if HAVE_GENERALIZED_SET
 static void pss_ss(FILE *fd, char *name, char *val) {fprintf(fd,"(set! (%s) %s)\n",name,val);}
 static void pss_sq(FILE *fd, char *name, char *val) {fprintf(fd,"(set! (%s) \"%s\")\n",name,val);}
 static void pss_sd(FILE *fd, char *name, int val) {fprintf(fd,"(set! (%s) %d)\n",name,val);}
@@ -605,7 +605,6 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
 }
 
 #if HAVE_GUILE
-#include "sg.h"
 
 static SCM g_save_options(SCM filename)
 {

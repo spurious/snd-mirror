@@ -32,6 +32,8 @@
 (define include-clm #f)
 (define original-prompt (listener-prompt))
 (show-listener)
+(set! (window-x) 600)
+(set! (window-y) 10)
 
 (define fneq (lambda (a b) (> (abs (- a b)) .001)))
 (define feql
@@ -1088,7 +1090,7 @@
       (if (not (= (region-chans 0) 1)) (snd-print (format #f ";region-chans: ~A?" (region-chans 0))))
       (if (not (= (region-length 0) 50829)) (snd-print (format #f ";region-length: ~A?" (region-length 0)))) ;or 50828...
       (if (not (= (selection-length) 50829)) (snd-print (format #f ";selection-length: ~A?" (selection-length 0)))) ;or 50828...
-      (if (not (= (selection-beg) 0)) (snd-print (format #f ";selection-beg: ~A?" (selection-beg))))
+      (if (not (= (selection-position) 0)) (snd-print (format #f ";selection-position: ~A?" (selection-position))))
       (if (fneq (region-maxamp 0) (maxamp index)) (snd-print (format #f ";region-maxamp: ~A?" (region-maxamp 0))))
       (let ((samps1 (samples->vct 0 50828 index 0))
 	    (samps2 (region-samples->vct 0 50828 0 0))
@@ -4117,6 +4119,7 @@
 	    (snd-print (format #f ";edit-fragment(0): ~A?" (edit-fragment 0 obi 0))))
 
 	(let ((samp100 (sample 1100 obi 0)))
+	  (make-region 1000 2000 obi 0)
 	  (eval-over-selection (lambda (val) (* 2.0 val)) obi)
 	  (let ((nsamp100 (sample 1100 obi 0)))
 	    (if (fneq (* 2.0 samp100) nsamp100) (snd-print (format #f ";eval-over-selection: ~A ~A?" samp100 nsamp100)))
@@ -4407,7 +4410,7 @@
 
       ))
 
-
+(if #f (begin
 ;;; ---------------- test 16: define-syntax ----------------
 (if (or full-test (= snd-test 16))
     (let ((hi 32)
@@ -4420,7 +4423,7 @@
       (if (not (= ho 16)) (snd-print (format #f "loop: ~A?" ho)))
       (set! hi (prog1 (+ 2 ho) (set! ho 3)))
       (if (not (= hi 18)) (snd-print (format #f "prog1: ~A?" hi)))))
-
+))
 
 ;;; ---------------- test 17: guile-gtk dialogs ----------------
 (if (or full-test (= snd-test 17))

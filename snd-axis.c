@@ -698,8 +698,6 @@ void make_axes(chan_info *cp, axis_info *ap, int x_style)
   snd_state *ss;
   snd_info *sp;
   axis_context *ax;
-  axis_info *fap;
-  chan_info *cp0;
   ss = cp->state;
   if (!(ap->ax))
     {
@@ -710,39 +708,7 @@ void make_axes(chan_info *cp, axis_info *ap, int x_style)
   else ax = ap->ax;
   sp = cp->sound;
   setup_axis_context(cp,ax);
-  if (cp->clear) 
-    {
-      switch (sp->combining)
-	{
-	case CHANNELS_SUPERIMPOSED:     /* clear our portion and mark so others don't clear */
-	  cp0 = sp->chans[0];
-	  if (cp0->clear)
-	    {
-	      clear_window(ap->ax);     /* clear entire channel window (once) */
-	      cp0->clear = 0;           /* channel graphs can occur in any order (background procs) */
-	    }
-	  break;
-	case CHANNELS_COMBINED:         /* clear only our (full width) portion of the window */
-	  erase_rectangle(cp,ap->ax,0,ap->y_offset,ap->window_width,ap->height); 
-	  if (!(cp->graphs_horizontal))
-	    {
-	      if ((cp->ffting) && (cp->fft))
-		{
-		  fap = (cp->fft)->axis;
-		  if (fap) erase_rectangle(cp,fap->ax,0,fap->y_offset,fap->window_width,fap->height); 
-		}
-	      if ((cp->lisp_graphing) && (cp->lisp_info))
-		{
-		  fap = (cp->lisp_info)->axis;
-		  if (fap) erase_rectangle(cp,fap->ax,0,fap->y_offset,fap->window_width,fap->height); 
-		}
-	    }
-	  break; 
-	default: 
-	  clear_window(ap->ax);         /* clear entire channel window */
-	  break;
-	}
-      cp->clear = 0;
-    }
+  if ((cp->chan == 0) || (sp->combining != CHANNELS_SUPERIMPOSED))
+    erase_rectangle(cp,ap->ax,ap->graph_x0,ap->y_offset,ap->width,ap->height); 
   make_axes_1(cp,ap,x_style,SND_SRATE(sp));
 }

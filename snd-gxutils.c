@@ -8,7 +8,6 @@
 #endif
 
 #if HAVE_GUILE
-#include "sg.h"
 #include <X11/Xatom.h>
 
 /* this code based on XmHTML's netscape.c */

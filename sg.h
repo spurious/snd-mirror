@@ -2,10 +2,22 @@
 #define SG_H
 /* macros useful in all the files using guile */
 
+#if (HAVE_GUILE) && (!(HAVE_GUILE_1_3_0))
+  #define HAVE_GENERALIZED_SET 1
+  #define HAVE_NEW_SMOB 1
+  #define HAVE_KEYWORDS 1
+  #define HAVE_HOOKS 1
+#else
+  #define HAVE_GENERALIZED_SET 0
+  #define HAVE_NEW_SMOB 0
+  #define HAVE_KEYWORDS 0
+  #define HAVE_HOOKS 0
+#endif
+
 #define GH_LOOKUP(a) scm_symbol_value0(a)
 #define GH_TYPE_OF(a) (SCM_TYP16(a))
 
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_NEW_SMOB
   #define GH_VALUE_OF(a) SCM_SMOB_DATA(a)
   #define GH_SET_VALUE_OF(a,b) SCM_SET_SMOB_DATA(a,b)
 #else

@@ -153,7 +153,7 @@ static SCM equalp_vct(SCM obj1, SCM obj2)
 
 SCM make_vct(int len, Float *data)
 {
-#if HAVE_GUILE_1_3_0
+#if (!(HAVE_NEW_SMOB))
   SCM ans;
 #endif
   vct *new_vct;
@@ -161,7 +161,7 @@ SCM make_vct(int len, Float *data)
   new_vct->length = len;
   new_vct->data = data;
   new_vct->dont_free = 0;
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_NEW_SMOB
   SCM_RETURN_NEWSMOB(vct_tag,new_vct);
 #else
   SCM_NEWCELL(ans);
@@ -173,7 +173,7 @@ SCM make_vct(int len, Float *data)
 
 SCM make_vct_wrapper(int len, Float *data)
 {
-#if HAVE_GUILE_1_3_0
+#if (!(HAVE_NEW_SMOB))
   SCM ans;
 #endif
   vct *new_vct;
@@ -181,7 +181,7 @@ SCM make_vct_wrapper(int len, Float *data)
   new_vct->length = len;
   new_vct->data = data;
   new_vct->dont_free = 1;
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_NEW_SMOB
   SCM_RETURN_NEWSMOB(vct_tag,new_vct);
 #else
   SCM_NEWCELL(ans);
@@ -191,7 +191,7 @@ SCM make_vct_wrapper(int len, Float *data)
 #endif
 }
 
-#if HAVE_GUILE_1_3_0
+#if (!(HAVE_NEW_SMOB))
 static scm_smobfuns vct_smobfuns = {
   &mark_vct,
   &free_vct,
@@ -588,7 +588,7 @@ static SCM vector2vct(SCM vect)
 void init_vct(void)
 {
   SCM local_doc;
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_NEW_SMOB
   vct_tag = scm_make_smob_type("vct",sizeof(vct));
   scm_set_smob_mark(vct_tag,mark_vct);
   scm_set_smob_print(vct_tag,print_vct);

@@ -1,54 +1,25 @@
 #include "snd.h" 
 
-/* snd selections/regions */
-
-typedef struct { /* one for each 'channel' */
-  int visible;
-  /* int type; */
-  snd_info *sp;
-  chan_info *cp;
-  int first,last;
-  int x0,y0,width,height;
-  int *fixups;
-  int fixup_size;
-} region_context;  
-
-static int samp0(region_context *rg)
-{
-  chan_info *cp;
-  if (!rg->fixups) return(rg->first);
-  cp = rg->cp;
-  if (cp->edit_ctr < 0) return(rg->first);
-  return(rg->first+rg->fixups[cp->edit_ctr]);
-}
-
-static int samp1(region_context *rg)
-{
-  chan_info *cp;
-  if (!rg->fixups) return(rg->last);
-  cp = rg->cp;
-  if (cp->edit_ctr < 0) return(rg->last);
-  return(rg->last+rg->fixups[cp->edit_ctr]);
-}
-
 #define REGION_ARRAY 0
 #define REGION_FILE 1
 /* region data can be stored either in-core (if less than MAX_BUFFER_SIZE ints), else in a temp file that */
 /*    is deleted when the region is deleted (hence must be copied upon insert or mix) */
+
+#define CLEAR_REGION_DATA 0
+#define COMPLETE_DELETION 1
+
 
 static int region_id_ctr = 0;
 
 typedef struct {
   MUS_SAMPLE_TYPE **data;
   int chans;
-  int len;
-  int beg; /* DELETE */
+  int frames;
   int srate;               /* for file save (i.e. region->file) */
   int header_type;         /* for file save */
   int save;
   snd_info *rsp;
-  region_context **rgx; /* DELETE */
-  char *name,*start,*end;
+  char *name,*start,*end;  /* for region browser */
   char *filename;          /* if region data is stored in a temp file */
   int use_temp_file;       /* REGION_ARRAY = data is in 'data' arrays, else in temp file 'filename' */
   Float maxamp;
@@ -56,25 +27,6 @@ typedef struct {
   char *editor_name;
   int id;
 } region;
-
-static void free_region_contexts(region *r)
-{
-  int i;
-  region_context *rg;
-  for (i=0;i<r->chans;i++)
-    {
-      if ((rg = r->rgx[i]))
-	{
-	  if (rg->fixups) FREE(rg->fixups);
-	  FREE(rg);
-	}
-    }
-  FREE(r->rgx);
-  r->rgx = NULL;
-}
-
-#define CLEAR_REGION_DATA 0
-#define COMPLETE_DELETION 1
 
 static void free_region(region *r, int complete)
 {
@@ -89,7 +41,6 @@ static void free_region(region *r, int complete)
 	  sp->edited_region = NULL;
 	  r->editor_copy = NULL;
 	}
-      if (r->rgx) free_region_contexts(r);
       if (r->data)  /* null if temp file */
 	{
 	  for (i=0;i<r->chans;i++) 
@@ -163,12 +114,12 @@ static void set_max_regions(snd_state *ss, int n)
 }
 
 int region_ok(int n) {return((n<regions_size) && (regions[n]));}
-int region_len(int n) {if (region_ok(n)) return(regions[n]->len); else return(0);}
+int region_len(int n) {if (region_ok(n)) return(regions[n]->frames); else return(0);}
 int region_chans(int n) {if (region_ok(n)) return(regions[n]->chans); else return(0);}
 int region_srate(int n) {if (region_ok(n)) return(regions[n]->srate); else return(0);}
 Float region_maxamp(int n) {if (region_ok(n)) return(regions[n]->maxamp); else return(0.0);}
+int region_id(int n) {if (region_ok(n)) return(regions[n]->id); else return(-1);}
 
-static int region_id(int n) {if (region_ok(n)) return(regions[n]->id); else return(-1);}
 static int id_region(int id)
 {
   int i;
@@ -176,13 +127,6 @@ static int id_region(int id)
     if ((regions[i]) && (regions[i]->id == id))
       return(i);
   return(-1);
-}
-
-int selection_is_current(void) 
-{
-  region *r;
-  r = regions[0];
-  return((r) && (r->rgx));
 }
 
 static Float region_sample(int reg, int chn, int samp)
@@ -193,7 +137,7 @@ static Float region_sample(int reg, int chn, int samp)
   if (region_ok(reg))
     {
       r = regions[reg];
-      if ((samp < r->len) && (chn < r->chans)) 
+      if ((samp < r->frames) && (chn < r->chans)) 
 	{
 	  if (r->use_temp_file == REGION_ARRAY)
 	    return(MUS_SAMPLE_TO_FLOAT(r->data[chn][samp]));
@@ -218,16 +162,16 @@ static void region_samples(int reg, int chn, int beg, int num, Float *data)
   if (region_ok(reg))
     {
       r = regions[reg];
-      if ((beg < r->len) && (chn < r->chans))
+      if ((beg < r->frames) && (chn < r->chans))
 	{
 	  if (r->use_temp_file == REGION_ARRAY)
 	    {
-	      for (i=beg,j=0;(i<r->len) && (j<num);i++,j++) data[j] = MUS_SAMPLE_TO_FLOAT(r->data[chn][i]);
+	      for (i=beg,j=0;(i<r->frames) && (j<num);i++,j++) data[j] = MUS_SAMPLE_TO_FLOAT(r->data[chn][i]);
 	    }
 	  else
 	    {
 	      sf = init_region_read(get_global_state(),beg,reg,chn,READ_FORWARD);
-	      for (i=beg,j=0;(i<r->len) && (j<num);i++,j++) 
+	      for (i=beg,j=0;(i<r->frames) && (j<num);i++,j++) 
 		{
 		  NEXT_SAMPLE(val,sf);		  
 		  data[j] = MUS_SAMPLE_TO_FLOAT(val);
@@ -257,7 +201,6 @@ static int check_regions(void)
   return(act);
 }
 
-
 static void make_region_readable(region *r, snd_state *ss)
 {
   snd_info *regsp;
@@ -272,7 +215,7 @@ static void make_region_readable(region *r, snd_state *ss)
   regsp->chans = (chan_info **)CALLOC(r->chans,sizeof(chan_info *));
   regsp->hdr = (file_info *)CALLOC(1,sizeof(file_info));
   hdr = regsp->hdr;
-  hdr->samples = r->len * r->chans;
+  hdr->samples = r->frames * r->chans;
   hdr->srate = r->srate;
   hdr->chans = r->chans;
   hdr->comment = NULL;
@@ -281,12 +224,12 @@ static void make_region_readable(region *r, snd_state *ss)
       cp = make_chan_info(NULL,i,regsp,ss);
       regsp->chans[i] = cp;
       add_channel_data_1(cp,regsp,ss,0);
-      set_initial_ed_list(cp,r->len-1);
+      set_initial_ed_list(cp,r->frames-1);
       cp->edit_size = 1;
       cp->sound_size = 1;
       cp->hookable = 0;
       if (r->use_temp_file == REGION_ARRAY)
-	cp->sounds[0] = make_snd_data_buffer(r->data[i],r->len,cp->edit_ctr);
+	cp->sounds[0] = make_snd_data_buffer(r->data[i],r->frames,cp->edit_ctr);
       else
 	{
 	  hdr = make_file_info(r->filename,ss);
@@ -337,7 +280,6 @@ region_state *region_report(void)
   int i,len;
   char *reg_buf;
   region *r;
-  finish_keyboard_selection();
   rs = (region_state *)CALLOC(1,sizeof(region_state));
   len = regions_size;
   for (i=0;i<regions_size;i++) {if (!(regions[i])) {len = i; break;}}
@@ -371,7 +313,7 @@ void free_region_state (region_state *r)
     }
 }
 
-void select_region(int n)
+void select_region(int n) /* region browser */
 {
   int i;
   region *r;
@@ -383,7 +325,7 @@ void select_region(int n)
     }
 }
 
-int delete_region(int n)
+int delete_region(int n) /* region browser */
 {
   int i;
   /* delete-region-hook? (passes region-id to hook, if #t, don't delete?) -- restack uses free_region instead */
@@ -398,7 +340,7 @@ int delete_region(int n)
   return(check_regions());
 }
 
-void protect_region(int n,int protect)
+void protect_region(int n,int protect) /* region browser */
 {
   region *r;
   if (region_ok(n))
@@ -432,86 +374,6 @@ static void stack_region(snd_state *ss, region *r)
   if (!r) check_regions();
 }
 
-static region_context *region_member(chan_info *cp, region* r)
-{
-  int i;
-  region_context **rg;
-  if ((r) && (r->rgx))
-    {
-      rg = r->rgx;
-      for (i=0;i<r->chans;i++)
-	{
-	  if ((rg[i]) && (rg[i]->cp == cp)) return(rg[i]);
-	}
-    }
-  return(NULL);
-}
-
-int selection_is_current_in_channel(chan_info *cp)
-{
-  return(region_member(cp,regions[0]) != NULL);
-}
-
-int selection_member(snd_info *sp)
-{
-  region *r;
-  region_context **rg;
-  int i;
-  r = regions[0];
-  if ((r) && (r->rgx))
-    {
-      rg = r->rgx;
-      for (i=0;i<r->chans;i++)
-	{
-	  if ((rg[i]) && (rg[i]->sp == sp)) return(1);
-	}
-    }
-  return(0);
-}
-
-int active_selection (chan_info *cp)
-{
-  region_context *rg;
-  return((regions[0]) &&
-	 (rg=(region_member(cp,regions[0]))) && 
-	 (rg->visible));
-}
-
-int selection_beg(chan_info *cp) 
-{
-  region *r;
-  region_context *rg;
-  region_context **rgx;
-  int i,fallback_beg = 0;
-  if ((r = regions[0]))
-    {
-      fallback_beg = r->beg;
-      rgx = r->rgx;
-      if (rgx)
-	{
-	  if (cp == NULL) return(samp0(rgx[0]));
-	  for (i=0;i<r->chans;i++)
-	    {
-	      rg = rgx[i];
-	      if (rg)
-		{
-		  if (cp == rg->cp)
-		    return(samp0(rg));
-		  else fallback_beg = rg->first;
-		}
-	    }
-	}
-    }
-  return(fallback_beg); /* was 0 which seems useless */
-}
- 
-void selection_off(chan_info *cp)
-{
-  region *r;
-  region_context *rg;
-  if ((r = regions[0]) && (rg = region_member(cp,r))) rg->visible = 0;
-}
-
 static int save_region_1(snd_state *ss, char *ofile,int type, int format, int srate, int reg, char *comment)
 {
   int ofd,oloc,ifd,chans,i,frames,cursamples,iloc,comlen,err=0;
@@ -521,7 +383,7 @@ static int save_region_1(snd_state *ss, char *ofile,int type, int format, int sr
   if (region_ok(reg)) r = regions[reg]; else r=NULL;
   if (r)
     {
-      if ((snd_write_header(ss,ofile,type,srate,r->chans,28,r->chans*r->len,format,comment,comlen,NULL)) == -1) return(SND_CANNOT_WRITE_HEADER);
+      if ((snd_write_header(ss,ofile,type,srate,r->chans,28,r->chans*r->frames,format,comment,comlen,NULL)) == -1) return(SND_CANNOT_WRITE_HEADER);
       oloc = mus_header_data_location();
       if ((ofd = snd_reopen_write(ss,ofile)) == -1) return(SND_CANNOT_OPEN_TEMP_FILE);
       mus_file_set_descriptors(ofd,ofile,format,mus_data_format_to_bytes_per_sample(format),oloc,r->chans,type);
@@ -529,7 +391,7 @@ static int save_region_1(snd_state *ss, char *ofile,int type, int format, int sr
       mus_file_seek(ofd,oloc,SEEK_SET);
       if (r->use_temp_file == REGION_ARRAY)
 	{
-	  mus_file_write(ofd,0,r->len-1,r->chans,r->data); /* was * r->chans --> mus_file_write wants per channel size */
+	  mus_file_write(ofd,0,r->frames-1,r->chans,r->data); /* was * r->chans --> mus_file_write wants per channel size */
 	}
       else
 	{
@@ -582,58 +444,10 @@ int save_region(snd_state *ss, int n, char *ofile, int data_format)
   return(0);
 }
 
-int selection_len(void)
-{
-  region *r;
-  region_context *rg;
-  r = regions[0];
-  if ((r) && (r->rgx))
-    {
-      rg = r->rgx[0];
-      return(samp1(rg) - samp0(rg) + 1);
-    }
-  return(region_len(0));
-}
-
-int delete_selection(char *origin, int regraph)
-{
-  /* if we own the selection, delete it from the current sync'd channels, reset stippling, update displays */
-  region *r;
-  int i;
-  chan_info **ncp;
-  region_context *rg;
-  finish_keyboard_selection();
-  r = regions[0];
-  if ((r) && (r->rgx))
-    {
-      ncp = (chan_info **)CALLOC(r->chans,sizeof(chan_info *));
-      for (i=0;i<r->chans;i++)
-	{
-	  rg = r->rgx[i];
-	  ncp[i] = rg->cp;
-	  if (samp1(rg) > samp0(rg))
-	    delete_samples(samp0(rg),samp1(rg) - samp0(rg) + 1,ncp[i],origin);
-	}
-      free_region_contexts(r);
-      if (regraph == UPDATE_DISPLAY)
-	{
-	  for (i=0;i<r->chans;i++)
-	    {
-	      update_graph(ncp[i],NULL);
-	    }
-	}
-      FREE(ncp);
-      reflect_edit_without_selection_in_menu();
-      return(1);
-    }
-  return(0);
-}
-
 static int paste_region_1(int n, chan_info *cp, int add, int beg, Float scaler, char *origin)
 {
   region *r;
-  region_context *rg;
-  int chn,i,j,k,err=SND_NO_ERROR,id=-1,idtmp;
+  int i,j,err=SND_NO_ERROR,id=-1,idtmp;
   snd_info *sp;
   sync_info *si;
   chan_info *ncp;
@@ -643,80 +457,46 @@ static int paste_region_1(int n, chan_info *cp, int add, int beg, Float scaler, 
   ss = cp->state;
   sp = cp->sound;
   si = NULL;
-  finish_keyboard_selection();
-  /* 
-   * two cases: if current selection, rg has the cp pointers, else traverse in parallel
-   * so -- get syncd chans, if rg, loop looking for matches, else loop until either exhausted
-   */
-  if (region_ok(n)) r = regions[n]; else r=NULL;
-  if (r)
+  if (region_ok(n)) r = regions[n]; else return(-1);
+  si = sync_to_chan(cp);
+  if (add)
     {
-      /* get syncd chans relative to current (cp) */
-      if (sp->syncing != 0) si = snd_sync(ss,sp->syncing);  
-      else si = make_simple_sync(cp,beg);
-      /* chans in si->cps[i], for si->chans */
-      if (add)
+      if (r->use_temp_file == REGION_ARRAY)
+	idtmp = mix_array(beg,r->frames,r->data,si->cps,r->chans,si->chans,SND_SRATE(sp),origin,with_mix_consoles(ss));
+      else idtmp = mix_file(beg,r->frames,r->filename,si->cps,si->chans,origin,with_mix_consoles(ss));
+      if (id == -1) id = idtmp;
+    }
+  else
+    {
+      if (r->use_temp_file == REGION_FILE)
 	{
-	  if (r->use_temp_file == REGION_ARRAY)
-	    idtmp = mix_array(beg,r->len,r->data,si->cps,r->chans,si->chans,SND_SRATE(sp),origin,with_mix_consoles(ss));
-	  else idtmp = mix_file(beg,r->len,r->filename,si->cps,si->chans,origin,with_mix_consoles(ss));
-	  if (id == -1) id = idtmp;
+	  tempfile = snd_tempnam(ss);
+	  err = copy_file(r->filename,tempfile);
+	  if (err != SND_NO_ERROR)
+	    snd_error("can't make region temp file (%s: %s)",tempfile,strerror(errno));
+	  else if (r->chans > 1) remember_temp(tempfile,r->chans);
 	}
-      else
+      for (i=0;((i<r->chans) && (i<si->chans));i++)
 	{
-	  if (r->use_temp_file == REGION_FILE)
+	  ncp = si->cps[i]; /* currently syncd chan that we might paste to */
+	  if (r->use_temp_file == REGION_ARRAY)
 	    {
-	      tempfile = snd_tempnam(ss);
-	      err = copy_file(r->filename,tempfile);
-	      if (err != SND_NO_ERROR)
-		snd_error("can't make region temp file (%s: %s)",tempfile,strerror(errno));
-	      else if (r->chans > 1) remember_temp(tempfile,r->chans);
+	      data = (MUS_SAMPLE_TYPE *)CALLOC(r->frames,sizeof(MUS_SAMPLE_TYPE));
+	      if (scaler == 1.0)
+		for (j=0;j<r->frames;j++) data[j] = r->data[i][j];
+	      else for (j=0;j<r->frames;j++) data[j] = (MUS_SAMPLE_TYPE)(scaler * r->data[i][j]);
+	      insert_samples(beg,r->frames,data,ncp,origin);
+	      FREE(data);
 	    }
-	  /* if current_selection and rg->cp == si->cps[i] for some rg or i, edit there, else go through each in order until either is done */
-	  for (i=0;((i<r->chans) && (i<si->chans));i++)
+	  else
 	    {
-	      ncp = si->cps[i]; /* currently syncd chan that we might paste to */
-	      chn  = i;         /* default is parallel paste */
-	      if ((n == 0) && (r->rgx))
-		{
-		  for (k=0;k<r->chans;k++)
-		    {
-		      rg = r->rgx[k];
-		      if ((rg->cp) == ncp)
-			{
-			  chn = k;
-			  break;
-			}
-		    }
-		}
-	      /* now chn = region chan, ncp = Snd chan */
-	      if (r->use_temp_file == REGION_ARRAY)
-		{
-		  data = (MUS_SAMPLE_TYPE *)CALLOC(r->len,sizeof(MUS_SAMPLE_TYPE));
-		  if (scaler == 1.0)
-		    {
-		      for (j=0;j<r->len;j++) data[j] = r->data[chn][j];
-		    }
-		  else
-		    {
-		      for (j=0;j<r->len;j++) data[j] = (MUS_SAMPLE_TYPE)(scaler * r->data[chn][j]);
-		    }
-		  insert_samples(beg,r->len,data,ncp,origin);
-		  FREE(data);
-		}
-	      else
-		{
-		  if (err == SND_NO_ERROR)
-		    file_insert_samples(beg,r->len,tempfile,ncp,chn,(r->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,origin);
-		}
-	      if ((n == 0) && (r->rgx) && ((beg+r->len) >= samp0(r->rgx[0])) && (beg <= samp1(r->rgx[0])))
-		free_region_contexts(r);
-	      /* we mixed or pasted into the active selection, so it should not remain active */
-	      update_graph(ncp,NULL);
+	      if (err == SND_NO_ERROR)
+		file_insert_samples(beg,r->frames,tempfile,ncp,i,(r->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,origin);
 	    }
+	  update_graph(si->cps[i],NULL);
 	}
     }
-  if (si) free_sync_info(si);
+  if (si) si = free_sync_info(si);
   return(id);
 }
 
@@ -728,336 +508,6 @@ void paste_region(int n, chan_info *cp,char *origin) {paste_region_1(paste_fix_r
 void add_region(int n, chan_info *cp, char *origin) {paste_region_1(paste_fix_region(n),cp,TRUE,cp->cursor,paste_fix_scaler(n,cp),origin);}
 static int mix_region(int n, chan_info *cp, int beg, Float scaler) {return(paste_region_1(n,cp,TRUE,beg,scaler,S_mix_region));}
 
-/* we're drawing the selection in one channel, but others may be sync'd to it */
-
-static double selbeg,selend;    /* true bounds (as the axes move etc) */
-static int keyboard_selecting = 0;
-
-void finish_keyboard_selection(void)
-{
-  region_context **rgx;
-  if (keyboard_selecting)
-    {
-      rgx = regions[0]->rgx;
-      define_selection(rgx[0]->cp);
-      keyboard_selecting = 0;
-    }
-}
-
-int cancel_keyboard_selection (void)
-{
-  region_context **rgx;
-  snd_info *sp = NULL;
-  int beg = -1;
-  if (keyboard_selecting)
-    {
-      keyboard_selecting = 0;
-      rgx = regions[0]->rgx;
-      if ((rgx) && (sp = (rgx[0]->sp)))
-	{
-	 clear_minibuffer(sp);
-	 beg = (int)(selbeg * SND_SRATE(sp)); /* during kbd selection we have to use selbeg (samp0 not set yet) */
-	}
-      deactivate_selection();
-      delete_region(0);
-    }
-  return(beg);
-}
-
-void start_selection (chan_info *cp, int x)
-{ /* only from mouse so we use ungrf here (very inaccurate if lots of data displayed) */
-  if (keyboard_selecting) /* i.e. mouse button while c-space active = save and start again */
-    {
-      finish_keyboard_selection();
-    }
-  /* reflect_edit_with_selection_in_menu(); */ /* can be called when cursor first defined -- no selection intended */
-  selbeg = ungrf_x(cp->axis,x);
-  if (selbeg < 0.0) selbeg = 0.0;
-  selend = selbeg;
-}
-
-void start_keyboard_selection(chan_info *cp, int x)
-{
-  if (active_selection(cp)) deactivate_selection(); /* i.e. c-space while c-space active = flush and start again */
-  keyboard_selecting = 0;
-  create_selection(cp);
-  reflect_edit_with_selection_in_menu();
-  if (cp->cursor_on)                           /* use exact sample if it's available */
-    selbeg = (double)(cp->cursor)/(double)SND_SRATE(cp->sound);
-  else ungrf_x(cp->axis,x);
-  if (selbeg < 0.0) selbeg = 0.0;
-  selend = selbeg;
-  keyboard_selecting = 1;
-  cp->cursor_on = 1;
-}
-
-static void redraw_selection(chan_info *cp, int x);
-
-void check_keyboard_selection(chan_info *cp, int x)
-{
-  if (keyboard_selecting) redraw_selection(cp,x);
-}
-
-static void draw_selection_portion(chan_info *cp, region_context *rg)
-{
-  if (cp->waving)
-    fill_rectangle(selection_context(cp),rg->x0,rg->y0,rg->width,rg->height);
-}
-
-static void erase_selection_portion(chan_info *cp, region_context *rg)
-{
-  if (cp->waving)
-    fill_rectangle(selection_context(cp),rg->x0,rg->y0,rg->width,rg->height);
-}
-
-void deactivate_selection(void)
-{
-  region *r;
-  region_context *rg;
-  int i;
-  chan_info *ncp;
-  r = regions[0];
-  if ((r) && (r->rgx))
-    {
-      for (i=0;i<r->chans;i++)
-	{
-	  rg = r->rgx[i];
-	  ncp = rg->cp;
-	  if (rg->visible) erase_selection_portion(ncp,rg);
-	}
-      free_region_contexts(r);
-    }
-  reflect_edit_without_selection_in_menu();
-}
-
-/* if the current view is small (i.e. widely spaced individual samples),
- * we need to get only those samples that fall within the selection bounds.
- * But this needs to be a little sloppy for convenience.
- */
-
-static int round_up(double x)
-{
-  int xint;
-  Float xfrac;
-  xint = (int)x;
-  xfrac = x - xint;
-  if (xfrac > .2) return(xint+1);
-  return(xint);
-}
-
-static int round_down(double x)
-{
-  int xint;
-  Float xfrac;
-  xint = (int)x;
-  xfrac = x - xint;
-  if (xfrac < .8) return(xint);
-  return(xint+1);
-}
-
-static void redraw_selection(chan_info *cp, int x)
-{
-  /* called as mouse is dragged, for example */
-  region *r;
-  region_context *rg;
-  int i;
-  Float sx0,sx1;
-  chan_info *ncp;
-  axis_info *ap;
-  snd_state *ss;
-  ss = cp->state;
-  if (keyboard_selecting)
-    selend = (double)(cp->cursor)/(double)SND_SRATE(cp->sound);
-  else selend = ungrf_x(cp->axis,x);
-  if (selend < 0.0) selend = 0.0;
-  r=regions[0];
-  if (r)
-    {
-      for (i=0;i<r->chans;i++)
-	{
-	  rg = r->rgx[i];
-	  if (rg)
-	    {
-	      ncp = rg->cp;
-	      ap = ncp->axis;
-	      if (rg->visible) erase_selection_portion(ncp,rg);
-	      if (selbeg < selend)
-		{
-		  if (selbeg >= ap->x0) sx0 = selbeg; else sx0 = ap->x0;
-		  if (selend <= ap->x1) sx1 = selend; else sx1 = ap->x1;
-		}
-	      else
-		{
-		  if (selend >= ap->x0) sx0 = selend; else sx0 = ap->x0;
-		  if (selbeg <= ap->x1) sx1 = selbeg; else sx1 = ap->x1;
-		}
-	      rg->x0 = grf_x(sx0,ap);
-	      rg->y0 = ap->y_axis_y1;
-	      rg->width = grf_x(sx1,ap) - rg->x0;
-	      rg->height = (unsigned int)(ap->y_axis_y0-ap->y_axis_y1);
-	      rg->visible = 1;
-	      
-	      if (show_selection_transform(ss)) 
-		{
-		  if (selbeg < selend)
-		    {
-		      rg->first = round_up(selbeg * SND_SRATE(cp->sound));
-		      rg->last = round_down(selend * SND_SRATE(cp->sound));
-		    }
-		  else
-		    {
-		      rg->first = round_up(selend * SND_SRATE(cp->sound));
-		      rg->last = round_down(selbeg * SND_SRATE(cp->sound));
-		    }
-		  r->len = rg->last - rg->first + 1;
-		}
-
-	      draw_selection_portion(ncp,rg);
-	      if ((show_selection_transform(ss)) && (ncp->ffting) && (!(chan_fft_in_progress(ncp)))) calculate_fft(ncp,NULL);
-	    }
-	}
-    }
-}
-
-int selection_active(chan_info *cp)
-{
-  return((regions[0]) && (region_member(cp,regions[0])));
-}
-
-void display_selection(chan_info *cp)
-{ /* cp's graph was just cleared and redrawn -- now add selection, if relevant */
-  int x0,x1,sx0,sx1;
-  region_context *rg;
-  axis_info *ap;
-  snd_info *sp;
-  if ((regions[0]) && (rg=(region_member(cp,regions[0]))))
-    {
-      /* we have the current selection -- should it be visible? */
-      ap = cp->axis;
-      sp = cp->sound;
-      if (keyboard_selecting) /* selection definition is in progress, so rg->first and last are not set yet */
-	{
-	  x0 = (int)(selbeg * SND_SRATE(sp));
-	  x1 = (int)(selend * SND_SRATE(sp));
-	  if (x1 < x0) {sx0 = x0; x0 = x1; x1 = sx0;}
-	}
-      else
-	{
-	  x0 = samp0(rg);
-	  x1 = samp1(rg);
-	}
-      if ((x0 <= ap->hisamp) && (x1 >= ap->losamp))
-	{
-	  if (ap->losamp > x0) x0 = ap->losamp;
-	  if (ap->hisamp < x1) x1 = ap->hisamp;
-	  sx0 = grf_x((double)x0/(double)SND_SRATE(sp),ap);
-	  sx1 = grf_x((double)x1/(double)SND_SRATE(sp),ap);
-	  rg->x0 = sx0;
-	  rg->y0 = ap->y_axis_y1;
-	  rg->width = sx1-sx0;
-	  rg->height = (unsigned int)(ap->y_axis_y0-ap->y_axis_y1);
-	  rg->visible = 1;
-	  draw_selection_portion(cp,rg);
-	}
-    }
-}
-
-void ripple_selection(chan_info *cp, int beg, int num)
-{
-  /* if selection channel = cp, and selection samp > beg, fixup samp nums, etc */
-  /* this has to be undo-able, so these fixups need to follow edit_ctr -- */
-  /* region_context needs an integer array of num which we use before accessing samp0/samp1 */
-  region_context *rg;
-  int previous_fixup,i,old_size;
-  if ((regions[0]) && (rg=region_member(cp,regions[0])))
-    {
-      if (samp0(rg) > beg)
-	{
-	  draw_selection_portion(cp,rg);
-	  if (!rg->fixups)
-	    {
-	      rg->fixups = (int *)CALLOC(cp->edit_size,sizeof(int));
-	      rg->fixup_size = cp->edit_size;
-	      previous_fixup = 0;
-	    }
-	  else 
-	    {
-	      if (cp->edit_size > rg->fixup_size)
-		{
-		  /* must have REALLOCated on this edit */
-		  old_size = rg->fixup_size;
-		  rg->fixup_size = cp->edit_size;
-		  rg->fixups = (int *)REALLOC(rg->fixups,rg->fixup_size * sizeof(int));
-		  for (i=old_size;i<rg->fixup_size;i++) rg->fixups[i] = 0;
-		}
-	      if (cp->edit_ctr <= 0) /* can this happen? */
-		previous_fixup = 0;
-	      else previous_fixup = rg->fixups[cp->edit_ctr-1];
-	    }
-
-	  rg->fixups[cp->edit_ctr] = previous_fixup+num;
-	  display_selection(cp);
-	}
-    }
-}
-
-void create_selection(chan_info *cp)
-{
-  /* called upon initial mouse drag notification and elsewhere */
-  /* if we're sync'd collect all */
-  snd_info *sp,*nsp;
-  snd_state *ss;
-  region *r;
-  region_context *rg;
-  int chans,i,j,k;
-  r = (region *)CALLOC(1,sizeof(region));
-  r->id = region_id_ctr++;
-  sp = cp->sound;
-  ss = cp->state;
-  if (regions[0]) stack_region(ss,r); else regions[0] = r;
-  report_in_minibuffer(sp,"defining region...");
-  r->header_type = (sp->hdr)->type;
-  r->srate = SND_SRATE(sp);
-  r->maxamp = 0.0;
-  r->editor_copy = NULL;
-  r->name = copy_string(sp->shortname);
-  chans = 1;
-  if (sp->syncing != 0) chans = syncd_chans(ss,sp->syncing);
-  r->chans = chans;
-  r->rgx = (region_context **)CALLOC(chans,sizeof(region_context *));
-  r->data = (MUS_SAMPLE_TYPE **)CALLOC(chans,sizeof(MUS_SAMPLE_TYPE *));
-  /* don't alloc these until definition time when we know the selection length */
-  if (sp->syncing != 0)
-    {
-      k = 0;
-      for (i=0;i<ss->max_sounds;i++)
-	{
-	  nsp = ss->sounds[i];
-	  if ((nsp) && (nsp->inuse) && (nsp->syncing == sp->syncing))
-	    {
-	      for (j=0;j<nsp->nchans;j++)
-		{
-		  rg = (region_context *)CALLOC(1,sizeof(region_context));
-		  r->rgx[k] = rg;
-		  /* set cp sp fields while we know what we're doing */
-		  rg->sp = nsp;
-		  rg->cp = nsp->chans[j];
-		  rg->visible = 0;
-		  k++;
-		}
-	    }
-	}
-    }
-  else 
-    {
-      rg = (region_context *)CALLOC(1,sizeof(region_context));
-      r->rgx[0] = rg;
-      rg->sp = sp;
-      rg->cp = cp;
-      rg->visible = 0;
-    }
-}
-
 void region_stats(int *vals)
 {
   int i,fil=0,arr=0;
@@ -1068,41 +518,56 @@ void region_stats(int *vals)
       if (r)
 	{
 	  if (r->use_temp_file == REGION_FILE)
-	    fil += (r->len*r->chans*2);
-	  else arr += (r->len*r->chans*4);
+	    fil += (r->frames*r->chans*2);
+	  else arr += (r->frames*r->chans*4);
 	}
     }
   vals[0] = arr;
   vals[1] = fil;
 }
 
-static void load_region(chan_info *cp, region *r, int beg, int end)
+void define_region(sync_info *si, int *ends)
 {
   /* now look at all sync'd channels, collect them into the current region */
   /* we created the necessary pointers in create_selection above */
   int i,j,len,k,ofd = 0,datumb = 0,err=0;
   MUS_SAMPLE_TYPE val,mval,curval;
+  chan_info *cp0;
+  snd_info *sp0;
+  region *r;
   snd_fd **sfs;
   snd_state *ss;
-  snd_info *sp;
   file_info *hdr = NULL;
-  region_context *rg;
-  len = end-beg+1;
+  len = 0;
+  for (i=0;i<si->chans;i++)
+    if (len < (ends[i] - si->begs[i]))
+      len = ends[i] - si->begs[i];
+  len += 1;
   if (len <= 0) return;
-  r->len = len;
-  r->beg = beg;
+  r = (region *)CALLOC(1,sizeof(region));
+  r->id = region_id_ctr++;
+  cp0 = si->cps[0];
+  sp0 = cp0->sound;
+  ss = cp0->state;
+  if (regions[0]) stack_region(ss,r); else regions[0] = r;
+  r->header_type = (sp0->hdr)->type;
+  r->srate = SND_SRATE(sp0);
+  r->maxamp = 0.0;
+  r->editor_copy = NULL;
+  r->name = copy_string(sp0->shortname);
+  r->chans = si->chans;
+  r->data = (MUS_SAMPLE_TYPE **)CALLOC(r->chans,sizeof(MUS_SAMPLE_TYPE *));
+  r->frames = len;
   val = MUS_SAMPLE_0; 
   mval = MUS_SAMPLE_0;
-  r->start = prettyf((Float)beg/(Float)(r->srate),2);
-  r->end = prettyf((Float)end/(Float)(r->srate),2);
+  r->start = prettyf((Float)si->begs[0]/(Float)(r->srate),2);
+  r->end = prettyf((Float)ends[0]/(Float)(r->srate),2);
   sfs = (snd_fd **)CALLOC(r->chans,sizeof(snd_fd *));
-  ss = cp->state;
-  if (r->len >= MAX_BUFFER_SIZE)
+  if (r->frames >= MAX_BUFFER_SIZE)
     {
-      sp = cp->sound;
       r->use_temp_file = REGION_FILE;
       r->filename = copy_string(snd_tempnam(ss));
-      hdr = make_temp_header(ss,r->filename,sp->hdr,0);
+      hdr = make_temp_header(ss,r->filename,sp0->hdr,0);
       ofd = open_temp_file(r->filename,r->chans,hdr,ss);
       datumb = mus_data_format_to_bytes_per_sample(hdr->format);
     }
@@ -1113,10 +578,7 @@ static void load_region(chan_info *cp, region *r, int beg, int end)
     }
   for (i=0;i<r->chans;i++)
     {
-      rg = r->rgx[i];
-      rg->first = beg;
-      rg->last = end;
-      sfs[i]=init_sample_read(beg,rg->cp,READ_FORWARD);
+      sfs[i]=init_sample_read(si->begs[i],si->cps[i],READ_FORWARD);
       if (r->use_temp_file == REGION_ARRAY)
 	r->data[i] = (MUS_SAMPLE_TYPE *)CALLOC(len,sizeof(MUS_SAMPLE_TYPE));
       else r->data[i] = (MUS_SAMPLE_TYPE *)CALLOC(MAX_BUFFER_SIZE,sizeof(MUS_SAMPLE_TYPE));
@@ -1131,16 +593,20 @@ static void load_region(chan_info *cp, region *r, int beg, int end)
 	}
       for (i=0;i<r->chans;i++)
 	{
-	  NEXT_SAMPLE(curval,sfs[i]);
-	  r->data[i][k] = curval;
-	  if (curval>val) val=curval;
-	  if (curval<mval) mval=curval;
+	  if (j < ends[i]) 
+	    {
+	      NEXT_SAMPLE(curval,sfs[i]);
+	      r->data[i][k] = curval;
+	      if (curval>val) val=curval;
+	      if (curval<mval) mval=curval;
+	    }
+	  else r->data[i][k] = MUS_SAMPLE_0;
 	}
     }
   if (r->use_temp_file == REGION_FILE)
     {
       if (k > 0) mus_file_write(ofd,0,k-1,r->chans,r->data);
-      close_temp_file(ofd,hdr,len*r->chans*datumb,cp->sound);
+      close_temp_file(ofd,hdr,len*r->chans*datumb,sp0);
       hdr = free_file_info(hdr);
       for (i=0;i<r->chans;i++) FREE(r->data[i]);
       FREE(r->data);
@@ -1155,94 +621,6 @@ static void load_region(chan_info *cp, region *r, int beg, int end)
 }
 
 
-/* ---------------- selection mouse motion ---------------- */
-
-static void move_selection_2(chan_info *cp);
-static BACKGROUND_FUNCTION_TYPE watch_selection_button = 0;
-static BACKGROUND_TYPE WatchSelection(GUI_POINTER cp)
-{
-  if (watch_selection_button)
-    {
-      move_selection_2((chan_info *)cp);
-      return(BACKGROUND_CONTINUE);
-    }
-  else return(BACKGROUND_QUIT);
-}
-
-static int last_selection_x = 0;
-
-static void start_selection_watching(chan_info *cp)
-{
-  snd_state *ss;
-  ss = cp->state;
-  watch_selection_button = BACKGROUND_ADD(ss,WatchSelection,cp);
-}
-
-static void cancel_selection_watch(void)
-{
-  BACKGROUND_REMOVE(watch_selection_button);
-  watch_selection_button = 0;
-}
-
-static void move_selection_1(chan_info *cp, int x)
-{
-  axis_info *ap;
-  int nx;
-  ap = cp->axis;
-  if ((x > ap->x_axis_x1) || (x < ap->x_axis_x0)) 
-    {
-      if (((x > ap->x_axis_x1) && (ap->x1 == ap->xmax)) ||
-	  ((x < ap->x_axis_x0) && (ap->x0 == ap->xmin)))
-	return;
-      nx = move_axis(cp,ap,x);
-      if (!watch_selection_button) start_selection_watching(cp);
-    }
-  else 
-    {
-      nx = x;
-      if (watch_selection_button) cancel_selection_watch();
-    }
-  redraw_selection(cp,nx);
-}
-
-static void move_selection_2(chan_info *cp)
-{
-  move_selection_1(cp,last_selection_x); /* called via watch work proc */
-}
-
-void move_selection(chan_info *cp, int x)
-{
-  last_selection_x = x; /* called in snd-xchn -- sets last_selection_x */
-  move_selection_1(cp,x);
-}
-
-
-void define_selection(chan_info *cp)
-{
-  /* called in snd-xchn.c upon mouse button release */
-  region *r;
-  region_context *rg;
-  Float tmp;
-  if (watch_selection_button) cancel_selection_watch();
-  keyboard_selecting = 0; /* mouse click might have interrupted kbd definition */
-  r = regions[0];
-  rg = region_member(cp,r);
-  if (rg->sp) clear_minibuffer(rg->sp);
-  if (selbeg > selend) {tmp = selbeg; selbeg = selend; selend = tmp;}
-  load_region(cp,r,round_up(selbeg * SND_SRATE(cp->sound)),round_down(selend * SND_SRATE(cp->sound)));
-  reflect_edit_with_selection_in_menu();
-}
-
-void define_region(chan_info *cp, int beg, int end, int cleared)
-{
-  deactivate_selection();
-  if (beg > end) return; /* was >=? */
-  create_selection(cp);
-  load_region(cp,regions[0],beg,end);
-  if (cleared == CLEAR_MINIBUFFER) clear_minibuffer(cp->sound);
-  reflect_edit_with_selection_in_menu();
-}
-
 snd_fd *init_region_read (snd_state *ss, int beg, int n, int chan, int direction)
 {
   /* conjure up a reasonable looking ed list and sound list */
@@ -1255,37 +633,9 @@ snd_fd *init_region_read (snd_state *ss, int beg, int n, int chan, int direction
       if ((r) && (chan < r->chans))
 	{
 	  rsp = r->rsp;
-	  if ((beg == 0) && (direction == READ_BACKWARD)) beg=r->len-1;
+	  if ((beg == 0) && (direction == READ_BACKWARD)) beg=r->frames-1;
 	  return(init_sample_read(beg,rsp->chans[chan],direction));
 	}
-    }
-  return(NULL);
-}
-
-sync_info *region_sync(int n)  /* MISNAMED: selection_sync */
-{
-  region *r;
-  region_context *rg;
-  sync_info *si;
-  int i;
-  finish_keyboard_selection();
-  if (region_ok(n)) r = regions[n]; else r=NULL;
-  if (r)
-    {
-      si = (sync_info *)CALLOC(1,sizeof(sync_info));
-      si->chans = r->chans;
-      si->cps = (chan_info **)CALLOC(si->chans,sizeof(chan_info *));
-      si->begs = (int *)CALLOC(si->chans,sizeof(int));
-      for (i=0;i<r->chans;i++)
-	{
-	  rg = r->rgx[i];
-	  if (rg)
-	    {
-	      si->begs[i] = samp0(rg);
-	      si->cps[i] = rg->cp;
-	    }
-	}
-      return(si);
     }
   return(NULL);
 }
@@ -1327,13 +677,13 @@ void save_regions(snd_state *ss, FILE *fd)
       if (r)
 	{
 	  fprintf(fd,"(%s %d %d %d %d %.4f \"%s\" \"%s\" \"%s\"",
-	          S_restore_region,i,r->chans,r->len,r->srate,r->maxamp,r->name,r->start,r->end);
+	          S_restore_region,i,r->chans,r->frames,r->srate,r->maxamp,r->name,r->start,r->end);
 	  if (r->use_temp_file == REGION_ARRAY)
 	    {
 	      fprintf(fd,"\n  #(");
 	      for (j=0;j<r->chans;j++)
 		{
-		  for (k=0;k<r->len;k++)
+		  for (k=0;k<r->frames;k++)
 #if SNDLIB_USE_FLOATS
 		    fprintf(fd,"%f ",r->data[j][k]);
 #else
@@ -1364,12 +714,12 @@ void save_regions(snd_state *ss, FILE *fd)
 		  mus_file_seek(ifd,iloc,SEEK_SET);
 		  ibufs = (MUS_SAMPLE_TYPE **)CALLOC(r->chans,sizeof(MUS_SAMPLE_TYPE *));
 		  for (j=0;j<r->chans;j++)
-		    ibufs[j] = (MUS_SAMPLE_TYPE *)CALLOC(r->len,sizeof(MUS_SAMPLE_TYPE));
-		  mus_file_read(ifd,0,r->len-1,r->chans,ibufs);
+		    ibufs[j] = (MUS_SAMPLE_TYPE *)CALLOC(r->frames,sizeof(MUS_SAMPLE_TYPE));
+		  mus_file_read(ifd,0,r->frames-1,r->chans,ibufs);
 		  fprintf(fd,"\n  #(");
 		  for (j=0;j<r->chans;j++)
 		    {
-		      for (k=0;k<r->len;k++) 
+		      for (k=0;k<r->frames;k++) 
 #if SNDLIB_USE_FLOATS
 			fprintf(fd,"%f ",ibufs[j][k]);
 #else
@@ -1466,7 +816,7 @@ void save_region_backpointer(snd_info *sp)
 	  free_region(r,CLEAR_REGION_DATA);
 	  r->use_temp_file = REGION_FILE;
 	  r->maxamp = 0.0;
-	  r->len = current_ed_samples(sp->chans[0]);
+	  r->frames = current_ed_samples(sp->chans[0]);
 	  for (i=0;i<sp->nchans;i++)
 	    {
 	      val = get_maxamp(sp,sp->chans[i]);
@@ -1484,7 +834,6 @@ void save_region_backpointer(snd_info *sp)
 }
 
 #if HAVE_GUILE
-#include "sg.h"
 
 static SCM g_restore_region(SCM n, SCM chans, SCM len, SCM srate, SCM maxamp, SCM name, SCM start, SCM end, SCM data)
 {
@@ -1497,10 +846,9 @@ static SCM g_restore_region(SCM n, SCM chans, SCM len, SCM srate, SCM maxamp, SC
   r->maxamp = gh_scm2double(maxamp);
   r->chans = gh_scm2int(chans);
   r->rsp = NULL;
-  r->rgx = NULL;
   r->editor_copy = NULL;
   r->editor_name = NULL;
-  r->len = gh_scm2int(len);
+  r->frames = gh_scm2int(len);
   r->srate = gh_scm2int(srate);
   r->name = gh_scm2newstr(name,NULL);
   r->start = gh_scm2newstr(start,NULL);
@@ -1518,8 +866,8 @@ static SCM g_restore_region(SCM n, SCM chans, SCM len, SCM srate, SCM maxamp, SC
       k=0; 
       for (i=0;i<r->chans;i++)
 	{
-	  r->data[i] = (MUS_SAMPLE_TYPE *)CALLOC(r->len,sizeof(MUS_SAMPLE_TYPE));
-	  for (j=0;j<r->len;j++,k++)
+	  r->data[i] = (MUS_SAMPLE_TYPE *)CALLOC(r->frames,sizeof(MUS_SAMPLE_TYPE));
+	  for (j=0;j<r->frames;j++,k++)
 #if SNDLIB_USE_FLOATS
 	    r->data[i][j] = gh_scm2double(scm_vector_ref(data,gh_int2scm(k)));
 #else
@@ -1542,25 +890,12 @@ static SCM g_insert_region(SCM samp_n, SCM reg_n, SCM snd_n, SCM chn_n) /* opt r
   ERRB2(reg_n,S_insert_region);
   ERRCP(S_insert_region,snd_n,chn_n,3);
   cp = get_cp(snd_n,chn_n,S_insert_region);
-  finish_keyboard_selection();
   rg = g_scm2intdef(reg_n,0);
   if (!(region_ok(rg))) return(scm_throw(NO_SUCH_REGION,SCM_LIST2(gh_str02scm(S_insert_region),reg_n)));
   samp = g_scm2intdef(samp_n,0);
   paste_region_1(rg,cp,FALSE,samp,1.0,S_insert_region);
   update_graph(cp,NULL);
   RTNINT(region_id(rg));
-}
-
-static SCM g_cut(void)
-{
-  #define H_cut "(" S_cut ") cuts (deletes) the currently selected portion"
-  finish_keyboard_selection();
-  if (selection_is_current())
-    {
-      delete_selection(S_cut,UPDATE_DISPLAY);
-      return(SCM_BOOL_T);
-    }
-  return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_cut))));
 }
 
 static SCM g_max_regions(void) 
@@ -1726,57 +1061,21 @@ static SCM g_make_region (SCM beg, SCM end, SCM snd_n, SCM chn_n)
 {
   #define H_make_region "(" S_make_region " beg end &optional snd chn) makes a new region between beg and end in snd"
   chan_info *cp;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(beg)),beg,SCM_ARG1,S_make_region);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(end)),end,SCM_ARG2,S_make_region);
-  ERRCP(S_make_region,snd_n,chn_n,3);
-  cp = get_cp(snd_n,chn_n,S_make_region);
-  define_region(cp,g_scm2int(beg),g_scm2int(end),DONT_CLEAR_MINIBUFFER);
-  RTNINT(region_id(0));
-}
-
-static SCM g_selectionQ(void)
-{
-  #define H_selectionQ "(" S_selectionQ ") -> #t if selection is currently active, visible, etc"
-  RTNBOOL(selection_is_current());
-}
-
-static SCM g_selection_beg(void)
-{
-  #define H_selection_beg "(" S_selection_beg ") -> selection start samp in selected sound"
-  if (selection_is_current())
-    return(gh_int2scm(selection_beg(NULL)));
-  return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_selection_beg))));
-}
-
-/* (catch 'no-active-selection (lambda () (+ 1 (selection-beg))) (lambda (tag val) 0)) */
-
-static SCM g_selection_length(void)
-{
-  #define H_selection_length "(" S_selection_length ") -> length (frames) of selected portion"
-  if (selection_is_current())
-    return(gh_int2scm(selection_len()));
-  return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_selection_length))));
-}
-
-static SCM g_selection_member(SCM snd, SCM chn)
-{
-  #define H_selection_member "(" S_selection_member " &optional snd chn) -> #t if snd's channel chn is a member of the current selection"
-  chan_info *cp;
-  ERRCP(S_selection_member,snd,chn,1);
-  cp = get_cp(snd,chn,S_selection_member);
-  if (selection_is_current_in_channel(cp))
-    return(SCM_BOOL_T);
-  return(SCM_BOOL_F);
-}
-
-static SCM g_select_all (SCM snd_n, SCM chn_n)
-{
-  #define H_select_all "(" S_select_all " &optional snd chn) makes a new selection containing all of snd's channel chn"
-  chan_info *cp;
-  ERRCP(S_select_all,snd_n,chn_n,1);
-  cp = get_cp(snd_n,chn_n,S_select_all);
-  define_region(cp,0,current_ed_samples(cp),DONT_CLEAR_MINIBUFFER);
-  update_graph(cp,NULL);
+  sync_info *si;
+  int ends[1];
+  if (SCM_UNBNDP(beg))
+    make_region_from_selection();
+  else
+    {
+      SCM_ASSERT(SCM_NFALSEP(scm_real_p(beg)),beg,SCM_ARG1,S_make_region);
+      SCM_ASSERT(SCM_NFALSEP(scm_real_p(end)),end,SCM_ARG2,S_make_region);
+      cp = get_cp(snd_n,chn_n,S_make_region);
+      si = make_simple_sync(cp,gh_scm2int(beg));
+      ends[0] = gh_scm2int(end);
+      define_region(si,ends);
+      reactivate_selection(si->cps[0],si->begs[0],ends[0]); /* ??? */
+      si = free_sync_info(si);
+    }
   RTNINT(region_id(0));
 }
 
@@ -1834,7 +1133,6 @@ static SCM g_region_sample(SCM samp_n, SCM reg_n, SCM chn_n)
   ERRB1(samp_n,S_region_sample);
   ERRB2(reg_n,S_region_sample);
   ERRB3(chn_n,S_region_sample);
-  finish_keyboard_selection();
   rg = g_scm2intdef(reg_n,0);
   chan = g_scm2intdef(chn_n,0);
   if (region_ok(rg))
@@ -1858,7 +1156,6 @@ static SCM g_region_samples(SCM beg_n, SCM num, SCM reg_n, SCM chn_n)
   ERRB2(num,S_region_samples);
   ERRB3(reg_n,S_region_samples);
   ERRB4(chn_n,S_region_samples);
-  finish_keyboard_selection();
   reg = g_scm2intdef(reg_n,0);
   if (!(region_ok(reg))) return(scm_throw(NO_SUCH_REGION,SCM_LIST2(gh_str02scm(S_region_samples),reg_n)));
   chn = g_scm2intdef(chn_n,0);
@@ -1890,7 +1187,6 @@ static SCM g_region_samples2vct(SCM beg_n, SCM num, SCM reg_n, SCM chn_n, SCM v)
   Float *data;
   int len,reg,chn;
   vct *v1 = get_vct(v);
-  finish_keyboard_selection();
   ERRB1(beg_n,S_region_samples_vct);
   ERRB2(num,S_region_samples_vct);
   ERRB3(reg_n,S_region_samples_vct);
@@ -1931,18 +1227,12 @@ void g_init_regions(SCM local_doc)
   DEFINE_PROC(gh_new_procedure(S_delete_region,SCM_FNC g_delete_region,0,1,0),H_delete_region);
   DEFINE_PROC(gh_new_procedure(S_protect_region,SCM_FNC g_protect_region,2,0,0),H_protect_region);
   DEFINE_PROC(gh_new_procedure(S_play_region,SCM_FNC g_play_region,0,2,0),H_play_region);
-  DEFINE_PROC(gh_new_procedure(S_make_region,SCM_FNC g_make_region,2,2,0),H_make_region);
-  DEFINE_PROC(gh_new_procedure(S_selection_beg,SCM_FNC g_selection_beg,0,0,0),H_selection_beg);
-  DEFINE_PROC(gh_new_procedure(S_selection_length,SCM_FNC g_selection_length,0,0,0),H_selection_length);
-  DEFINE_PROC(gh_new_procedure(S_selection_member,SCM_FNC g_selection_member,0,2,0),H_selection_member);
-  DEFINE_PROC(gh_new_procedure(S_select_all,SCM_FNC g_select_all,0,2,0),H_select_all);
+  DEFINE_PROC(gh_new_procedure(S_make_region,SCM_FNC g_make_region,0,4,0),H_make_region);
   DEFINE_PROC(gh_new_procedure(S_mix_region,SCM_FNC g_mix_region,0,5,0),H_mix_region);
   DEFINE_PROC(gh_new_procedure(S_region_sample,SCM_FNC g_region_sample,0,3,0),H_region_sample);
   DEFINE_PROC(gh_new_procedure(S_region_samples,SCM_FNC g_region_samples,0,4,0),H_region_samples);
   DEFINE_PROC(gh_new_procedure(S_region_samples_vct,SCM_FNC g_region_samples2vct,0,5,0),H_region_samples2vct);
   DEFINE_PROC(gh_new_procedure(S_regionQ,SCM_FNC g_regionQ,1,0,0),H_regionQ);
-  DEFINE_PROC(gh_new_procedure(S_selectionQ,SCM_FNC g_selectionQ,0,0,0),H_selectionQ);
-  DEFINE_PROC(gh_new_procedure(S_cut,SCM_FNC g_cut,0,0,0),H_cut);
 
   define_procedure_with_setter(S_max_regions,SCM_FNC g_max_regions,H_max_regions,
 			       "set-" S_max_regions,SCM_FNC g_set_max_regions,

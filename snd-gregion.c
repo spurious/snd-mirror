@@ -494,7 +494,6 @@ void allocate_region_rows(snd_state *ss, int n)
 
 #if HAVE_GUILE_GTK
 #include <guile-gtk.h>
-#include "sg.h"
 
 #define Sg_region_dialog_widget  "sg-region-dialog-widget"
 #define Sg_region_list_widget    "sg-region-list-widget"

@@ -152,7 +152,6 @@ static GtkWidget *open_dialog = NULL;
 void alert_new_file(void) {}
 
 #if HAVE_GUILE
-#include "sg.h"
 
 static SCM g_just_sounds(void)
 {
@@ -203,7 +202,6 @@ static void file_open_dialog_delete(GtkWidget *widget, gpointer data)
 
 void make_open_file_dialog(snd_state *ss)
 {
-  finish_keyboard_selection();
   if (!open_dialog)
     open_dialog = snd_gtk_file_selection_new(ss,STR_File,
 					     (GtkSignalFunc)file_open_dialog_delete,
@@ -437,7 +435,6 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int save_type, 
 {
   /* save old as new, close old, open new */
   GtkWidget *fbox;
-  finish_keyboard_selection();
   if (!save_as_dialog)
     {
 

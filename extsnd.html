@@ -1115,7 +1115,8 @@ To mix data in such a way as to create an associated mix object:</p>
 
 <p>A region is a saved portion of sound data.  There is a dialog to browse regions, and
 a notion of a stack of regions.  As regions are added, old ones get pushed off the
-stack and deleted.  The current selection is based on (and usually the same as) region 0.
+stack and deleted.  The current selection is usually based on region 0,
+although in fact there's no necessary connection between them.
 The region number (e.g. 0) refers to its position in the region stack; each region also
 has a unique identifier called its <i>id</i>.
 Some of the <i>reg</i> arguments can be #t, referring to all current regions; 
@@ -1127,9 +1128,10 @@ these are indicated as <em class=targ>reg</em> below.
                                     region from the region stack; it doesn't edit the corresponding file(s).
   <a name="sndidregion">id-region</a>         (<i>id</i>)          map from region-id <i>id</i> to its current region stack location.
   <a name="sndinsertregion">insert-region</a>     (<i>beg reg snd chn</i>) insert region <i>reg</i> at sample <i>beg</i> in <i>snd</i>'s channel <i>chn</i>.
-  <a name="sndmakeregion">make-region</a>       (beg end <i>snd chn</i>)
+  <a name="sndmakeregion">make-region</a>       (<i>beg end snd chn</i>)
                                   create a new region spanning samples <i>beg</i> to <i>end</i> in <i>snd</i>'s channel <i>chn</i>.
-                                    returns region's id.
+                                    returns region's id.  If no arguments are given, the 
+                                    current selection is used.
   <a href="#makeregionsamplereader">make-region-sample-reader</a>(<i>start reg chn dir</i>) 
                                   create a <a href="#samplereaders">sample-reader</a> object reading region <i>reg</i>'s channel <i>chn</i>
   <a name="maxregions">max-regions</a>       16            Size of region stack.
@@ -1176,9 +1178,9 @@ these are indicated as <em class=targ>reg</em> below.
                                     or a vector of floats 
   <a name="sndscaleselectionto">scale-selection-to</a>(<i>scalers</i>)     <a href="snd.html#scaling">normalize</a> the current selection to <i>scalers</i> which can be either a float, 
                                     or a vector of floats 
-  <a name="selectionbeg">selection-beg</a>     ()            selection begin sample number 
   <a name="selectionlength">selection-length</a>  ()            selection frames 
   <a name="selectionmember">selection-member</a>  (<i>snd chn</i>)     #t if snd's chn is member of active selection.
+  <a name="selectionposition">selection-position</a> ()            selection begin sample number (used to be called selection-beg).
   <a name="selectiontotemp">selection-to-temp</a> (<i>type format</i>) write out selected data as a temp file (see <a href="grfsnd.html#programs">external programs</a>) 
   <a name="selectiontotemps">selection-to-temps</a>(<i>type format</i>) write out selected data as temp files (see <a href="grfsnd.html#programs">external programs</a>) 
   <a name="selectionok">selection?</a>        ()            #t if selection is active.
@@ -1190,6 +1192,8 @@ these are indicated as <em class=targ>reg</em> below.
   <a name="tempstoselection">temps-to-selection</a>(data names origin) 
                                   read selected data from temp files (see <a href="grfsnd.html#programs">external programs</a>).
 </pre>
+<p>The selected portion can be set, independent of any region, by setting selection-position and selection-length.
+</p>
 <hr>
 
 
@@ -2285,26 +2289,26 @@ Error:
 <p> When something goes awry, the various functions can "throw" an error (a symbol)
 which is normally "caught" by the default error handler (this is a kind of "goto" 
 but without the embarassment); it prints out some message,
-and in some cases appends a stack trace.  So, as a simple example, selection-beg
+and in some cases appends a stack trace.  So, as a simple example, selection-position
 throws 'no-active-selection is there isn't a selection. In the default case, you
 get behavior like this:
 </p>
 <pre>
-&gt;<em class=typing>(selection-beg)</em>
-<em class=listener>selection-beg: no-active-selection</em>
+&gt;<em class=typing>(selection-position)</em>
+<em class=listener>selection-position: no-active-selection</em>
 </pre>
 <p>But there are cases where you'd rather handle an error (or all errors) specially.
 In the case of 'no-active-selection, we set up our own handler for that as follows:</p>
 <pre>
 &gt;<em class=typing>(catch 'no-active-selection 
        (lambda () 
-         (+ 1 (selection-beg))) 
+         (+ 1 (selection-position))) 
        (lambda (tag val) 0))</em>
 <em class=listener>0</em>
 </pre>
 <p>Here's we've "caught" 'no-active-selection (if it occurs within the
 first "thunk's" body), and return 0 if it occurs; otherwise we return
-<code>(+ 1 (selection-beg))</code>.  Scheme (Guile) has a number
+<code>(+ 1 (selection-position))</code>.  Scheme (Guile) has a number
 of errors such as 'out-of-range, 'wrong-type-arg, 'numerical-overflow,
 etc.  The Snd-specific errors are:</p>
 <pre>

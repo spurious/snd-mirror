@@ -11,8 +11,6 @@
 
 #if HAVE_GUILE
 
-#include "sg.h"
-
 static snd_state *state;
 
 #if HAVE_HTML
@@ -129,7 +127,7 @@ static SCM equalp_snd_color(SCM obj1, SCM obj2)
 static SCM g_make_snd_color(SCM r, SCM g, SCM b)
 {
   #define H_make_color "(" S_make_color " r g b) -> a color object with the indicated rgb values"
-#if HAVE_GUILE_1_3_0
+#if (!(HAVE_NEW_SMOB))
   SCM ans;
 #endif
   snd_color *new_color;
@@ -144,7 +142,7 @@ static SCM g_make_snd_color(SCM r, SCM g, SCM b)
   gcolor.blue = (unsigned short)(65535 * gh_scm2double(b));
   new_color->color = gdk_color_copy(&gcolor);
   gdk_color_alloc(gdk_colormap_get_system(),new_color->color);
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_NEW_SMOB
   SCM_RETURN_NEWSMOB(snd_color_tag,new_color);
 #else
   SCM_NEWCELL(ans);
@@ -161,7 +159,7 @@ static SCM gcolor2sndcolor(GdkColor *pix)
 			  gh_double2scm((Float)(pix->blue) / 65535.0)));
 }
 
-#if HAVE_GUILE_1_3_0
+#if (!(HAVE_NEW_SMOB))
 static scm_smobfuns snd_color_smobfuns = {
   &mark_snd_color,
   &free_snd_color,
@@ -666,7 +664,7 @@ static void init_guile_gtk(SCM local_doc);
 void g_initialize_xgh(snd_state *ss, SCM local_doc)
 {
   state = ss;
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_NEW_SMOB
   snd_color_tag = scm_make_smob_type("color",sizeof(snd_color));
   scm_set_smob_mark(snd_color_tag,mark_snd_color);
   scm_set_smob_print(snd_color_tag,print_snd_color);

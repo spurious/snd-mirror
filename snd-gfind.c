@@ -70,7 +70,6 @@ void Edit_Find_Callback(GtkWidget *w,gpointer clientData)
   snd_state *ss = (snd_state *)clientData;
   GtkWidget *dl,*rc;
   GtkWidget *help_button,*next_button,*previous_button;
-  finish_keyboard_selection();
   if (!edit_find_dialog)
     {
       edit_find_dialog = gtk_dialog_new();
@@ -129,7 +128,6 @@ void Edit_Find_Callback(GtkWidget *w,gpointer clientData)
 
 #if HAVE_GUILE_GTK
 #include <guile-gtk.h>
-#include "sg.h"
 
 #define S_find_dialog               "find-dialog"
 #define Sg_find_dialog_widget       "sg-find-dialog-widget"

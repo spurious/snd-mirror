@@ -524,9 +524,8 @@ of the Snd window is the lisp listener, if any (see
 the View menu "Open listener" option).
 The panes can all be independently
 raised and lowered by dragging the pane buttons on
-the right.  The channel that is currently active
-(receiving keyboard commands) has a thin black border
-around the display portion. Each channel has the 
+the right.  
+Each channel has the 
 four scrollbars setting what portion of the data
 is displayed; the 'w' button (normally set) which
 causes the time domain waveform to be displayed;
@@ -916,10 +915,17 @@ has a chapter to itself.</p>
 
 <h4>The Active Channel</h4>
 
-<p>The cursor (and its associated channel) is activated by clicking on the time domain waveform.
-The active channel normally has a dark
-edge around the graphics portion, as a sort of highlight.
-It is the window that receives keyboard commands.  You can
+<p>The cursor is activated (and its associated channel selected) by clicking on the time domain waveform.
+Although the selected channel is indicated as such in some (nearly invisible) manner,
+it will be more noticeable if
+you set the selected-data-color or the selected-graph-color:</p>
+<pre>
+  (define beige (make-color 0.96 0.96 0.86))
+  (define blue (make-color 0 0 1))
+  (set! (selected-graph-color) beige)
+  (set! (selected-data-color) blue)
+</pre>
+<p>The selected channel receives keyboard commands.  You can
 also move between windows with <a name="cxo">C-x o</a> (forwards or backwards).</p>
         <!-- I(select sound):K(C-x o)(cxo) -->
 
@@ -1064,8 +1070,12 @@ data.  Although I'm not completely consistent in this document,
 the word "selection" is used to refer to the currently selected
 (and highlighted) portion of the data; an operation such as
 filter-selection affects the underlying data.  A "region" on
-the other hand, refers to the saved (copied) version of that
+the other hand, refers to the saved (copied) version of (the original form of) that
 data that can be inserted or mixed elsewhere.
+That is, when a portion is initially selected, it is saved as the new
+region 0; subsequent edits may not disable the notion that there's
+an active selection, but the region 0 data still reflects the initial
+data.
 <a name="mousedefsect">Regions</a> can be defined by dragging the mouse
 through a portion of the data.  If the mouse drags off
 the end of the graph, the x axis moves, in a sense dragging
@@ -1137,8 +1147,8 @@ return to this state later via the region browser.
 
 <p>If the current selection is active (displayed somewhere in the
 current time domain displays), there are several functions that
-can edit that portion of the current sounds (that is, the edit
-applies to the underlying sound, not to the selection as a separate entity).
+can edit that portion of the current sounds (without affecting whatever
+was saved in region 0).
 </p>
 <pre>
   <a href="extsnd.html#sndscaleselectionby">scale-selection-by</a> args

@@ -251,6 +251,8 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+18-Sep:  selection now follows the edit history lists.\n\
+         selection-beg is now selection-position (to be consistent with everything else).\n\
 12-Sep:  effects.scm.\n\
 11-Sep:  generalized set! now built-in.\n\
            removed setf.scm.\n\
@@ -1289,9 +1291,9 @@ all refer to the same thing.\n\
   " S_selected_channel "  (snd)\n\
   " S_selected_mix "      ()\n\
   " S_selected_sound "    ()\n\
-  " S_selection_beg "     ()\n\
   " S_selection_length "  ()\n\
   " S_selection_member "  (snd chn)\n\
+  " S_selection_position "()\n\
   " S_selection_to_temp " (type format)\n\
   " S_selection_to_temps "(type format)\n\
   " S_selectionQ "        ()\n\

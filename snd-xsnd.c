@@ -1091,7 +1091,7 @@ static void Apply_Callback(Widget w,XtPointer clientData,XtPointer callData)
       ev = (XButtonEvent *)(cb->event);
       if (ev->state & snd_ControlMask) 
 	{
-	  if (selection_is_current())
+	  if (selection_is_active())
 	    ss->apply_choice = APPLY_TO_SELECTION;
 	  else ss->apply_choice = APPLY_TO_CHANNEL;
 	}
@@ -1277,7 +1277,6 @@ void x_bomb(snd_info *sp, int on) {}
 static void Close_Sound_Dialog(Widget w,XtPointer clientData,XtPointer callData) 
 {
   snd_info *sp = (snd_info *)clientData;
-  finish_keyboard_selection();
   if (sp) snd_close_file(sp,sp->state);
 } 
 

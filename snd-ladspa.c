@@ -12,8 +12,6 @@
 #include <ladspa.h>
 #include <dirent.h>
 
-#include "sg.h"
-
 /*****************************************************************************/
 
 //FIXME: Repository is not threadsafe. Does this matter in Snd?

@@ -146,19 +146,17 @@ static void Edit_Envelope_Callback(GtkWidget *w,gpointer clientData) {create_env
 static void Edit_Cut_Callback(GtkWidget *w,gpointer clientData) {cut_selection_from_menu();}
 static void Edit_Paste_Callback(GtkWidget *w,gpointer clientData) {paste_selection_from_menu((snd_state *)clientData);}
 static void Edit_Save_As_Callback(GtkWidget *w,gpointer clientData) {make_edit_save_as_dialog((snd_state *)clientData);}
-static void Edit_Select_All_Callback(GtkWidget *w,gpointer clientData) {select_all_from_menu((snd_state *)clientData);}
+static void Edit_Select_All_Callback(GtkWidget *w,gpointer clientData) {select_all(current_channel((snd_state *)clientData));}
 
 static void Edit_Undo_Callback(GtkWidget *w,gpointer clientData) 
 {
   snd_state *ss = (snd_state *)clientData;
-  finish_keyboard_selection();
   undo_edit_with_sync(current_channel(ss),1);
 }
 
 static void Edit_Redo_Callback(GtkWidget *w,gpointer clientData) 
 {
   snd_state *ss = (snd_state *)clientData;
-  finish_keyboard_selection();
   redo_edit_with_sync(current_channel(ss),1);
 }
 
@@ -172,7 +170,6 @@ static void Edit_Header_Callback(GtkWidget *w,gpointer clientData)
 
 static void Edit_Play_Callback(GtkWidget *w,gpointer clientData) 
 {
-  finish_keyboard_selection();
   play_selection(IN_BACKGROUND);
 }
 

@@ -68,6 +68,7 @@ There are many examples in examp.scm and snd-test.scm. In addition, various
 extensions to Snd can be found in:
 
 bell.scm          the fm-bell from CLM
+effects.scm       an Effects menu based on examp.scm
 env.scm           various envelope functions from CLM
 fmv.scm           the fm-violin tied to real-time gtk graphics
 glfft.scm         OpenGL for spectra (needs work)
@@ -1029,11 +1030,12 @@ Regions
 
 A region is a saved portion of sound data. There is a dialog to browse
 regions, and a notion of a stack of regions. As regions are added, old ones
-get pushed off the stack and deleted. The current selection is based on (and
-usually the same as) region 0. The region number (e.g. 0) refers to its
-position in the region stack; each region also has a unique identifier
-called its id. Some of the reg arguments can be #t, referring to all current
-regions; these are indicated as reg below.
+get pushed off the stack and deleted. The current selection is usually based
+on region 0, although in fact there's no necessary connection between them.
+The region number (e.g. 0) refers to its position in the region stack; each
+region also has a unique identifier called its id. Some of the reg arguments
+can be #t, referring to all current regions; these are indicated as reg
+below.
 
   delete-region     (reg)         delete region number reg (which defaults to 0).  This removes the
                                     region from the region stack; it doesn't edit the corresponding file(s).
@@ -1041,7 +1043,8 @@ regions; these are indicated as reg below.
   insert-region     (beg reg snd chn) insert region reg at sample beg in snd's channel chn.
   make-region       (beg end snd chn)
                                   create a new region spanning samples beg to end in snd's channel chn.
-                                    returns region's id.
+                                    returns region's id.  If no arguments are given, the
+                                    current selection is used.
   make-region-sample-reader(start reg chn dir)
                                   create a sample-reader object reading region reg's channel chn
   max-regions       16            Size of region stack.
@@ -1088,9 +1091,9 @@ These are specific to the current selection (these can return the error
                                     or a vector of floats
   scale-selection-to(scalers)     normalize the current selection to scalers which can be either a float,
                                     or a vector of floats
-  selection-beg     ()            selection begin sample number
   selection-length  ()            selection frames
   selection-member  (snd chn)     #t if snd's chn is member of active selection.
+  selection-position ()            selection begin sample number (used to be called selection-beg).
   selection-to-temp (type format) write out selected data as a temp file (see external programs)
   selection-to-temps(type format) write out selected data as temp files (see external programs)
   selection?        ()            #t if selection is active.
@@ -1101,6 +1104,9 @@ These are specific to the current selection (these can return the error
                                   read selected data from temp file (see external programs).
   temps-to-selection(data names origin)
                                   read selected data from temp files (see external programs).
+
+The selected portion can be set, independent of any region, by setting
+selection-position and selection-length.
 
   ------------------------------------------------------------------------
 
@@ -2175,11 +2181,11 @@ When something goes awry, the various functions can "throw" an error (a
 symbol) which is normally "caught" by the default error handler (this is a
 kind of "goto" but without the embarassment); it prints out some message,
 and in some cases appends a stack trace. So, as a simple example,
-selection-beg throws 'no-active-selection is there isn't a selection. In the
-default case, you get behavior like this:
+selection-position throws 'no-active-selection is there isn't a selection.
+In the default case, you get behavior like this:
 
->(selection-beg)
-selection-beg: no-active-selection
+>(selection-position)
+selection-position: no-active-selection
 
 But there are cases where you'd rather handle an error (or all errors)
 specially. In the case of 'no-active-selection, we set up our own handler
@@ -2187,13 +2193,13 @@ for that as follows:
 
 >(catch 'no-active-selection
        (lambda ()
-         (+ 1 (selection-beg)))
+         (+ 1 (selection-position)))
        (lambda (tag val) 0))
 0
 
 Here's we've "caught" 'no-active-selection (if it occurs within the first
 "thunk's" body), and return 0 if it occurs; otherwise we return (+ 1
-(selection-beg)). Scheme (Guile) has a number of errors such as
+(selection-position)). Scheme (Guile) has a number of errors such as
 'out-of-range, 'wrong-type-arg, 'numerical-overflow, etc. The Snd-specific
 errors are:
 

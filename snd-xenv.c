@@ -1517,7 +1517,7 @@ void create_envelope_editor (snd_state *ss)
       set_sensitive(undoB,FALSE);
       set_sensitive(redoB,FALSE);
       set_sensitive(saveB,FALSE);
-      if (!(selection_is_current())) set_sensitive(selectionB,FALSE);
+      if (!(selection_is_active())) set_sensitive(selectionB,FALSE);
 
       XmToggleButtonSetState(clipB,enved_clipping(ss),FALSE);
       XmToggleButtonSetState(graphB,enved_waving(ss),FALSE);

@@ -299,8 +299,6 @@ static int just_sounds_state = FALSE;
 
 #if HAVE_GUILE
 
-#include "sg.h"
-
 static SCM g_just_sounds(void)
 {
   #define H_just_sounds "(" S_just_sounds ") reflects the 'just sounds' button in the file chooser dialog"
@@ -376,7 +374,6 @@ void CreateOpenDialog(Widget w,XtPointer clientData)
 
 void make_open_file_dialog(snd_state *ss)
 {
-  finish_keyboard_selection();
   if (!open_dialog) CreateOpenDialog(MAIN_SHELL(ss),(XtPointer)ss);
   if (new_file_written) 
     {
@@ -761,7 +758,6 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int header_type
   int n;
   XmString xmstr1,xmstr2,s1;
   char *file_string;
-  finish_keyboard_selection();
   if (!save_as_dialog)
     {
       n=0;

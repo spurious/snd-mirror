@@ -98,7 +98,7 @@
   (lambda ()
     "(selection-rms-1) -> rms of selection data using sample readers"
     (if (selection?)
-	(let* ((reader (make-sample-reader (selection-beg)))
+	(let* ((reader (make-sample-reader (selection-position)))
 	       (len (selection-length))
 	       (sum 0.0))
 	  (do ((i 0 (1+ i))) 
@@ -117,7 +117,7 @@
     ;; this is actually slightly faster than selection-rms
     ;; all the DO loops in this file could be re-written in this form, but I find loops easier to read
     (if (selection?)
-	(let* ((reader (make-sample-reader (selection-beg)))
+	(let* ((reader (make-sample-reader (selection-position)))
 	       (len (selection-length)))
 	  (define rsum 
 	    (lambda (leng sum)
@@ -770,7 +770,7 @@
   (lambda ()
     "(delete-selection-and-smooth) deletes the current selection and smooths the splice"
     (if (selection?)
-	(let ((beg (selection-beg))
+	(let ((beg (selection-position))
 	      (len (selection-length)))
 	  (apply map (lambda (snd chn)
 		       (if (selection-member snd chn)
@@ -796,8 +796,9 @@
 (define eval-over-selection 
   (lambda (func snd)
     "(eval-over-selection func snd) evaluates func on each sample in the current selection"
-    (if (procedure? func) 
-	(let* ((beg (selection-beg))
+    (if (and (procedure? func) 
+	     (selection?))
+	(let* ((beg (selection-position))
 	       (len (selection-length)))
 	  (apply map (lambda (snd chn)
 		       (if (selection-member snd chn)
@@ -2288,7 +2289,7 @@
 	  (lambda (tag val) val))))
     (if (selection?)
 	(if (= (region-chans 0) 2)
-	    (let* ((beg (selection-beg))
+	    (let* ((beg (selection-position))
 		   (len (selection-length))
 		   (snd-chn0 (find-selection-sound '()))
 		   (snd-chn1 (find-selection-sound snd-chn0)))

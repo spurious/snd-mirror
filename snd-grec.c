@@ -2284,7 +2284,6 @@ void set_recorder_srate(recorder_info *rp, int val)
 
 #if HAVE_GUILE_GTK
 #include <guile-gtk.h>
-#include "sg.h"
 
 #define Sg_recorder_dialog_widget  "sg-recorder-dialog-widget"
 

@@ -75,7 +75,6 @@ static void file_print_ok_callback(Widget w,XtPointer clientData,XtPointer callD
 	  XmStringFree(slab);
 	}
       printing = 1;
-      finish_keyboard_selection();
       print_it = XmToggleButtonGetState(file_print_eps_or_lpr);
       quit = (ss->print_choice == PRINT_ENV);
       if (print_it)
@@ -83,7 +82,7 @@ static void file_print_ok_callback(Widget w,XtPointer clientData,XtPointer callD
 	  name = snd_tempnam(ss);
 	  switch (ss->print_choice)
 	    {
-	    case PRINT_SND: snd_print(ss,name,1); break;
+	    case PRINT_SND: snd_print(ss,name); break;
 	    case PRINT_ENV: enved_print(name); break;
 	    }
 	  err = lpr(name);
@@ -96,7 +95,7 @@ static void file_print_ok_callback(Widget w,XtPointer clientData,XtPointer callD
 	{
 	  switch (ss->print_choice)
 	    {
-	    case PRINT_SND: snd_print(ss,str=XmTextGetString(file_print_name),1); break;
+	    case PRINT_SND: snd_print(ss,str=XmTextGetString(file_print_name)); break;
 	    case PRINT_ENV: enved_print(str=XmTextGetString(file_print_name)); break;
 	    }
 	  if (str) XtFree(str);

@@ -634,7 +634,6 @@ static int symit(snd_state *ss,char **str)
 	}
       if (strcmp(tok,S_convolve_selection_with) == 0) 
 	{
-	  finish_keyboard_selection();
 	  filename = mus_file_full_name(sstr(str[1]));
 	  if (snd_probe_file(filename) == FILE_EXISTS)
 	    convolve_with(filename,fstr(str[2]),NULL); 
@@ -648,7 +647,6 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,S_cursor_follows_play) == 0) {sp = get_sp(ss,str[1]); if (sp) isym(ss,sp->cursor_follows_play); else isym(ss,0); return(0);}
       if (strcmp(tok,S_cut) == 0) 
 	{
-	  finish_keyboard_selection();
 	  if (region_ok(0))
 	    {
 	      delete_selection(S_cut,UPDATE_DISPLAY);
@@ -798,7 +796,7 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,S_graph_style) == 0) {isym(ss,graph_style(ss)); return(0);}
       if (strcmp(tok,S_graphs_horizontal) == 0) {isym(ss,graphs_horizontal(ss)); return(0);}
       if (strcmp(tok,S_graphing) == 0) {cp = get_cp(ss,str[1],str[2]); if (cp) isym(ss,cp->lisp_graphing); else isym(ss,0); return(0);}
-      if (strcmp(tok,S_graph_ps) == 0) {snd_print(ss,eps_file(ss),1); isym(ss,0); return(0);}
+      if (strcmp(tok,S_graph_ps) == 0) {snd_print(ss,eps_file(ss)); isym(ss,0); return(0);}
       break;
     case 'h':
       if (strcmp(tok,S_header_type) == 0) {sp = get_sp(ss,str[1]); if (sp) isym(ss,(sp->hdr)->type); else isym(ss,0); return(0);}
@@ -1125,8 +1123,8 @@ static int symit(snd_state *ss,char **str)
 	}
       if (strcmp(tok,S_selected_channel) == 0) {sp = get_sp(ss,str[1]); if (sp) isym(ss,sp->selected_channel); else isym(ss,0); return(0);}
       if (strcmp(tok,S_selected_mix) == 0) {isym(ss,ss->selected_mix); return(0);}
-      if (strcmp(tok,S_selection_beg) == 0) {if (selection_is_current()) isym(ss,selection_beg(NULL)); else isym(ss,0); return(0);}
-      if (strcmp(tok,S_selection_length) == 0) {if (selection_is_current()) isym(ss,selection_len()); else isym(ss,0); return(0);}
+      if (strcmp(tok,S_selection_length) == 0) {if (selection_is_active()) isym(ss,selection_len()); else isym(ss,0); return(0);}
+      if (strcmp(tok,S_selection_position) == 0) {if (selection_is_active()) isym(ss,selection_beg(NULL)); else isym(ss,0); return(0);}
       if (strcmp(tok,S_short_file_name) == 0) {sp = get_sp(ss,str[1]); if (sp) ssym(ss,sp->shortname); else isym(ss,0); return(0);}
       if (strcmp(tok,S_show_axes) == 0) {isym(ss,show_axes(ss)); return(0);}
       if (strcmp(tok,S_show_fft_peaks) == 0) {isym(ss,show_fft_peaks(ss)); return(0);}

@@ -4,7 +4,6 @@
 #if HAVE_GUILE
 
 #include "sndlib2scm.h"
-#include "sg.h"
 
 static SCM gc_protection;
 static int gc_protection_size = 0;
@@ -1189,7 +1188,7 @@ static SCM g_set_zoom_focus_style(SCM focus)
 static SCM g_graph2ps(void) 
 {
   #define H_graph2ps "(" S_graph_ps ") writes the current Snd displays to an EPS file"
-  snd_print(state,eps_file(state),1); 
+  snd_print(state,eps_file(state)); 
   RTNSTR(eps_file(state));
 }
 
@@ -2399,7 +2398,7 @@ static SCM g_scale_selection_to(SCM scalers)
   #define H_scale_selection_to "(" S_scale_selection_to " norms &optional chn) normalizes current selected portion to norms"
   int len[1];
   Float *scls;
-  if (selection_is_current())
+  if (selection_is_active())
     {
       scls = load_Floats(scalers,len);
       scale_to(state,NULL,NULL,scls,len[0],TRUE);
@@ -2414,7 +2413,7 @@ static SCM g_scale_selection_by(SCM scalers)
   #define H_scale_selection_by "(" S_scale_selection_by " scalers &optional chn) scales current selected portion by scalers"
   int len[1];
   Float *scls;
-  if (selection_is_current())
+  if (selection_is_active())
     {
       scls = load_Floats(scalers,len);
       scale_by(state,NULL,NULL,scls,len[0],TRUE);
@@ -2506,7 +2505,7 @@ static SCM g_env_selection(SCM edata, SCM base, SCM snd_n, SCM chn_n)
   chan_info *cp;
   env *e;
   ERRCP(S_env_selection,snd_n,chn_n,3);
-  if (selection_is_current() == 0) return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_env_selection))));
+  if (selection_is_active() == 0) return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_env_selection))));
   cp = get_cp(snd_n,chn_n,S_env_selection);
   e = get_env(edata,base,S_env_selection);
   if (e)
@@ -2733,7 +2732,7 @@ static SCM g_convolve_selection_with(SCM file, SCM new_amp)
   Float amp;
   char *fname = NULL;
   SCM_ASSERT(gh_string_p(file),file,SCM_ARG1,S_convolve_selection_with);
-  if (selection_is_current() == 0) return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_convolve_selection_with))));
+  if (selection_is_active() == 0) return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_convolve_selection_with))));
   if (gh_number_p(new_amp)) 
     amp = gh_scm2double(new_amp);
   else
@@ -2780,7 +2779,7 @@ static SCM g_src_selection(SCM ratio_or_env, SCM base)
    currently selected data by ratio (which can be an envelope)"
 
   chan_info *cp;
-  if (selection_is_current() == 0) return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_src_selection))));
+  if (selection_is_active() == 0) return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_src_selection))));
   cp = get_cp(SCM_BOOL_F,SCM_BOOL_F,S_src_selection);
   if (gh_number_p(ratio_or_env))
     src_env_or_num(state,cp,NULL,gh_scm2double(ratio_or_env),TRUE,NOT_FROM_ENVED,S_src_selection,TRUE);
@@ -2824,7 +2823,7 @@ static SCM g_filter_selection(SCM e, SCM order)
   int len;
   SCM_ASSERT((gh_vector_p(e)) || (gh_list_p(e)) || (vct_p(e)),e,SCM_ARG1,S_filter_selection);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(order)),order,SCM_ARG2,S_filter_selection);
-  if (selection_is_current() == 0) return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_filter_selection))));
+  if (selection_is_active() == 0) return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_filter_selection))));
   cp = get_cp(SCM_BOOL_F,SCM_BOOL_F,S_filter_selection);
   len = g_scm2int(order);
 #if HAVE_GUILE_1_4
@@ -2840,35 +2839,6 @@ static SCM g_filter_selection(SCM e, SCM order)
     }
   else apply_filter(cp,len,get_env(e,gh_double2scm(1.0),S_filter_selection),NOT_FROM_ENVED,S_filter_selection,TRUE,NULL); 
   return(scm_return_first(SCM_BOOL_T,e));
-}
-
-static SCM g_save_selection(SCM filename, SCM header_type, SCM data_format, SCM srate, SCM comment)
-{
-  #define H_save_selection "(" S_save_selection " filename &optional header-type data-format srate comment)\n\
-   saves the current selection in filename using the indicated file attributes"
-
-  snd_state *ss;
-  int type,format,sr,err;
-  char *com = NULL, *fname = NULL;
-  SCM_ASSERT(gh_string_p(filename),filename,SCM_ARG1,S_save_selection);
-  if (selection_is_current() == 0) return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_save_selection))));
-  ss = get_global_state();
-  if (gh_number_p(header_type)) 
-    type = g_scm2int(header_type); 
-#if MUS_LITTLE_ENDIAN
-  else type = MUS_RIFF;
-#else
-  else type = MUS_NEXT;
-#endif
-  format = g_scm2intdef(data_format,MUS_OUT_FORMAT);
-  sr = g_scm2intdef(srate,region_srate(0));
-  if (gh_string_p(comment)) com = gh_scm2newstr(comment,NULL); else com = NULL;
-  fname = full_filename(filename);
-  err = save_selection(ss,fname,type,format,sr,com);
-  if (fname) FREE(fname);
-  if (com) free(com);
-  if (err == 0) return(filename);
-  return(SCM_BOOL_F);
 }
 
 #if 0
@@ -2986,7 +2956,7 @@ static SCM g_graph(SCM ldata, SCM xlabel, SCM x0, SCM x1, SCM y0, SCM y1, SCM sn
   lg->axis = make_axis_info(cp,nominal_x0,nominal_x1,ymin,ymax,label,nominal_x0,nominal_x1,ymin,ymax,lg->axis);
   if (label) free(label);
   cp->lisp_graphing = 1;
-  display_channel_data(cp,cp->sound,cp->state);
+  display_channel_lisp_data(cp,cp->sound,cp->state);
   return(scm_return_first(SCM_BOOL_F,data));
 }
 
@@ -3089,7 +3059,7 @@ void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char *get_h
 				  SCM local_doc,
 				  int get_req, int get_opt, int set_req, int set_opt)
 {
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_GENERALIZED_SET
   scm_set_object_property_x(
 			    gh_cdr(
 				   gh_define(get_name,
@@ -3112,7 +3082,7 @@ void define_procedure_with_reversed_setter(char *get_name, SCM (*get_func)(), ch
 					   SCM local_doc,
 					   int get_req, int get_opt, int set_req, int set_opt)
 {
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_GENERALIZED_SET
   scm_set_object_property_x(
 			    gh_cdr(
 				   gh_define(get_name,
@@ -3484,7 +3454,6 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure(S_convolve_arrays,SCM_FNC g_convolve,1,1,0),H_convolve);
   DEFINE_PROC(gh_new_procedure(S_convolve_with,SCM_FNC g_convolve_with,1,3,0),H_convolve_with);
   DEFINE_PROC(gh_new_procedure(S_convolve_selection_with,SCM_FNC g_convolve_selection_with,1,1,0),H_convolve_selection_with);
-  DEFINE_PROC(gh_new_procedure(S_save_selection,SCM_FNC g_save_selection,1,4,0),H_save_selection);
   DEFINE_PROC(gh_new_procedure(S_src_sound,SCM_FNC g_src_sound,1,3,0),H_src_sound);
   DEFINE_PROC(gh_new_procedure(S_src_selection,SCM_FNC g_src_selection,1,1,0),H_src_selection);
   DEFINE_PROC(gh_new_procedure(S_filter_sound,SCM_FNC g_filter_sound,2,2,0),H_filter_sound);
@@ -3509,7 +3478,7 @@ void g_initialize_gh(snd_state *ss)
   gh_new_procedure(S_insert_samples_with_origin,SCM_FNC g_insert_samples_with_origin,4,2,0);
 
   /* ---------------- HOOKS ---------------- */
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_HOOKS
   /* I think this is the actual hook object, not the "vcell" so it might make sense to set its documentation property */
   /*   or is this a per-hook function thing? -- then the help function could run through the hook list displaying docs? */
   during_open_hook = scm_create_hook(S_during_open_hook,3);       /* args = fd filename reason */
@@ -3543,6 +3512,7 @@ void g_initialize_gh(snd_state *ss)
 
   g_init_marks(local_doc);
   g_init_regions(local_doc);
+  g_init_selection(local_doc);
   g_init_dac(local_doc);
   init_vct();
   init_mus2scm_module();
@@ -3616,7 +3586,7 @@ the functions html and ? can be used in place of help to go to the HTML descript
   scm_add_feature("snd");
 }
 
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_HOOKS
 
 SCM g_c_run_progn_hook (SCM hook, SCM args)
 {
@@ -3766,7 +3736,7 @@ char *output_comment(file_info *hdr)
 {
   char *com = NULL;
   if (hdr) com = mus_sound_comment(hdr->name);
-#if (HAVE_GUILE && (!HAVE_GUILE_1_3_0))
+#if HAVE_HOOKS
   if (HOOKED(output_comment_hook))
     {
       SCM result;

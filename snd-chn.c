@@ -12,7 +12,6 @@
 #endif
 
 #if HAVE_GUILE
-#include "sg.h"
 static void after_fft(snd_state *ss, chan_info *cp, Float scaler);
 static int dont_graph(snd_state *ss, chan_info *cp);
 static void after_graph(chan_info *cp);
@@ -440,7 +439,7 @@ int update_graph(chan_info *cp, void *ptr)
   if (ap)
     {
       cur_srate = (double)(SND_SRATE(sp));
-      ap->losamp = (int)(ap->x0*cur_srate); 
+      ap->losamp = (int)(ceil(ap->x0*cur_srate)); 
       if (ap->losamp < 0) ap->losamp = 0;
       ap->hisamp = (int)(ap->x1*cur_srate);
     }
@@ -775,7 +774,7 @@ void apply_x_axis_change(axis_info *ap, chan_info *cp, snd_info *sp)
 	{
 	  if (cp != si->cps[i]) update_xs(si->cps[i],ap);
 	}
-      free_sync_info(si);
+      si = free_sync_info(si);
     }
   else 
     {
@@ -850,7 +849,7 @@ void focus_x_axis_change(axis_info *ap, chan_info *cp, snd_info *sp, int focus_s
 	      newf = visible_syncd_cursor(cp);
 	      if (newf == -1)
 		{
-		  if (active_selection(ncp)) 
+		  if (selection_is_visible_in_channel(ncp)) 
 		    newf = selection_beg(ncp);
 		  else
 		    if (active_mix(ncp))
@@ -980,13 +979,26 @@ static void display_channel_id (chan_info *cp, int height, int chans)
       if (cp->printing) ps_set_peak_numbers_font(cp);
       x0 = 5;
       y0 = height - 5;
-      if (chans > 1)
+      if (cp == selected_channel(cp->state))
 	{
-	  if (cp->edit_ctr == 0)
-	    sprintf(chn_id_str,"%s%d",STR_channel_id,(cp->chan+1)); /* cp chan numbers are 0 based to index sp->chans array */
-	  else sprintf(chn_id_str,"%s%d:(%d)",STR_channel_id,(cp->chan+1),cp->edit_ctr);
+	  if (chans > 1)
+	    {
+	      if (cp->edit_ctr == 0)
+		sprintf(chn_id_str,"[%s%d]",STR_channel_id,(cp->chan+1)); /* cp chan numbers are 0 based to index sp->chans array */
+	      else sprintf(chn_id_str,"[%s%d: (%d)]",STR_channel_id,(cp->chan+1),cp->edit_ctr);
+	    }
+	  else sprintf(chn_id_str,"[%d]",cp->edit_ctr);
 	}
-      else sprintf(chn_id_str,"(%d)",cp->edit_ctr);
+      else
+	{
+	  if (chans > 1)
+	    {
+	      if (cp->edit_ctr == 0)
+		sprintf(chn_id_str,"%s%d",STR_channel_id,(cp->chan+1)); /* cp chan numbers are 0 based to index sp->chans array */
+	      else sprintf(chn_id_str,"%s%d:(%d)",STR_channel_id,(cp->chan+1),cp->edit_ctr);
+	    }
+	  else sprintf(chn_id_str,"(%d)",cp->edit_ctr);
+	}
       draw_string(copy_context(cp),x0,y0,chn_id_str,strlen(chn_id_str));
       if (cp->printing) ps_draw_string(cp,x0,y0,chn_id_str);
     }
@@ -1052,9 +1064,8 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   if (sp)
     {
       cur_srate = (double)SND_SRATE(sp);
-      ap->losamp = (int)(ap->x0*cur_srate);
+      ap->losamp = (int)(ceil(ap->x0*cur_srate));
       if (ap->losamp < 0) ap->losamp = 0;
-      if (ap->x0 != (ap->losamp/cur_srate)) ap->losamp++;
       start_time = (double)(ap->losamp)/cur_srate;
       ap->hisamp = (int)(ap->x1*cur_srate);
       if ((ap->losamp == 0) && (ap->hisamp == 0)) return(0);
@@ -1081,13 +1092,17 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
     }
   if (samples_per_pixel < 1.0)
     {
+
+      /* i.e. individual samples are widely spaced, so we have to be careful about placement
+       *   mouse uses grf_x so in this case we have to also (to make the cursor hit the dots etc) 
+       */
+
       sf = init_sample_read(ap->losamp,cp,READ_FORWARD);
-      /* i.e. individual samples are widely spaced */
-      incr = 1.0 / samples_per_pixel;
-      for (j=0,i=ap->losamp,x=x_start;i<=ap->hisamp;i++,j++,x+=incr)
+      incr = (double)1.0 / cur_srate;
+      for (j=0,i=ap->losamp,x=((double)(ap->losamp)/cur_srate);i<=ap->hisamp;i++,j++,x+=incr)
 	{
 	  NEXT_SAMPLE(ina,sf);
-	  set_grf_point((int)x,j,grf_y(MUS_SAMPLE_TO_FLOAT(ina),ap));
+	  set_grf_point(grf_x(x,ap),j,grf_y(MUS_SAMPLE_TO_FLOAT(ina),ap));
 
 	  /* for colored lines (mix as green for example), we'd check sf->cb[ED_COLOR],
 	   * if it has changed, send out the current points in the current color,
@@ -1557,9 +1572,7 @@ static int display_fft_peaks(chan_info *ucp, char *filename)
   chan_info *cp;
   ss = ucp->state;
   sp = ucp->sound;
-  if (sp->syncing != 0)
-    si = snd_sync(ss,sp->syncing);
-  else si = make_simple_sync(ucp,0);
+  si = sync_to_chan(ucp);
   if ((filename) && (snd_strlen(filename) > 0))
     {
       fd = fopen(mcf = mus_file_full_name(filename),"w");
@@ -1640,7 +1653,7 @@ static int display_fft_peaks(chan_info *ucp, char *filename)
 	  remove(filename);
 	}
     }
-  if (si) free_sync_info(si);
+  if (si) si = free_sync_info(si);
   return(err);
 }
 
@@ -2102,7 +2115,7 @@ static void make_lisp_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 
 static void draw_graph_cursor(chan_info *cp);
 
-static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_state *ss, int width, int height, int offset)
+static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_state *ss, int width, int height, int offset, int just_fft, int just_lisp)
 {
   int with_fft,with_lisp,displays,points;
   axis_info *ap = NULL;
@@ -2151,6 +2164,12 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
     }
   else with_fft = 0;
 
+  if (displays == 0)
+    {
+      clear_window(ap->ax);
+      return;
+    }
+
   if (cp->graphs_horizontal)
     {
       if (cp->waving) ap->width = width/displays;
@@ -2163,7 +2182,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
     }
   else
     {
-      if (displays > 0) height /= displays;
+      height /= displays;
       if (cp->waving) ap->height = height;
       if (with_fft) fap->height =  height;
       if (with_lisp) uap->height = height;
@@ -2180,85 +2199,86 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	  uap->graph_x0 = 0;
 	}
     }
-  if ((!with_fft) && (!(cp->waving)) && (!(with_lisp)))
-    clear_window(ap->ax);
-  else 
+
+  if ((!just_fft) && (!just_lisp))
     {
-      if (sp->combining != CHANNELS_SUPERIMPOSED)
-	cp->clear = 1; /* deferred clear (can be wave, fft, lisp triggered) in make_axes (snd-xdraw.c) */
-      else 
+      marks_off(cp);
+      if (cp->waving)
 	{
-	  if (cp->chan == 0)
-	    cp->clear = updating; /* a horrible kludge... */
-	  else cp->clear = 1;
+	  if (cp->wavo)
+	    {
+	      if (ap->y_axis_y0 == ap->y_axis_y1) make_axes(cp,ap,x_axis_style(ss)); /* first time needs setup */
+	      ap->y0 = ap->x0;
+	      ap->y1 = ap->y0+(Float)(cp->wavo_trace * (ap->y_axis_y0 - ap->y_axis_y1)) / ((Float)(cp->wavo_hop)*SND_SRATE(sp));
+	      ap->x1 = ap->x0 + (Float)(cp->wavo_trace)/(Float)SND_SRATE(sp);
+	    }
+	  make_axes(cp,ap,x_axis_style(ss));
+	  cp->cursor_visible = 0;
+	  cp->selection_visible = 0;
+	  points = make_graph(cp,sp,ss);
+	  if (points == 0) return;
+	  if ((cp->show_mix_consoles) && (cp->mixes) && (cp->mix_dragging)) mix_save_graph(ss,((mixdata *)(cp->mix_dragging))->wg,points);
+	  if (cp->cursor_on) draw_graph_cursor(cp);
 	}
     }
 
-  marks_off(cp);
-  selection_off(cp);
-  if (cp->waving)
+  if (!just_lisp)
     {
-      if (cp->wavo)
+      if (with_fft)
 	{
-	  if (ap->y_axis_y0 == ap->y_axis_y1) make_axes(cp,ap,x_axis_style(ss)); /* first time needs setup */
-	  ap->y0 = ap->x0;
-	  ap->y1 = ap->y0+(Float)(cp->wavo_trace * (ap->y_axis_y0 - ap->y_axis_y1)) / ((Float)(cp->wavo_hop)*SND_SRATE(sp));
-	  ap->x1 = ap->x0 + (Float)(cp->wavo_trace)/(Float)SND_SRATE(sp);
+	  if ((cp->fft_style == SPECTROGRAM) || ((cp->chan > 0) && (sp->combining == CHANNELS_SUPERIMPOSED)))
+	    cp->drawing = 0;
+	  make_axes(cp,fap,(x_axis_style(ss) == X_IN_SAMPLES) ? X_IN_SECONDS : (x_axis_style(ss)));
+	  cp->drawing = 1;
+	  if ((!cp->waving) || (just_fft))
+	    { /* make_graph does this -- sets losamp needed by fft to find its starting point */
+	      ap->losamp = (int)(ap->x0*(double)SND_SRATE(sp));
+	      ap->hisamp = (int)(ap->x1*(double)SND_SRATE(sp));
+	    }
+	  switch (cp->fft_style)
+	    {
+	    case NORMAL_FFT: make_fft_graph(cp,sp,ss); break;
+	    case SONOGRAM: make_sonogram(cp,sp,ss); break;
+	    case SPECTROGRAM: make_spectrogram(cp,sp,ss); break;
+	    default: snd_error("unknown fft style: %d",cp->fft_style); break;
+	    }
 	}
-      make_axes(cp,ap,x_axis_style(ss));
-      cp->cursor_visible = 0;
-      points = make_graph(cp,sp,ss);
-      if (points == 0) return;
-      if ((cp->show_mix_consoles) && (cp->mixes) && (cp->mix_dragging)) mix_save_graph(ss,((mixdata *)(cp->mix_dragging))->wg,points);
-      if (cp->cursor_on) draw_graph_cursor(cp);
     }
-  if (with_fft)
+
+  if (!just_fft)
     {
-      if ((cp->fft_style == SPECTROGRAM) || ((cp->chan > 0) && (sp->combining == CHANNELS_SUPERIMPOSED)))
-	cp->drawing = 0;
-      make_axes(cp,fap,(x_axis_style(ss) == X_IN_SAMPLES) ? X_IN_SECONDS : (x_axis_style(ss)));
-      cp->drawing = 1;
-      if (!cp->waving)
-	{ /* make_graph does this -- sets losamp needed by fft to find its starting point */
-	  ap->losamp = (int)(ap->x0*(double)SND_SRATE(sp));
-	  ap->hisamp = (int)(ap->x1*(double)SND_SRATE(sp));
-	}
-      switch (cp->fft_style)
+      if (with_lisp)
 	{
-	case NORMAL_FFT: make_fft_graph(cp,sp,ss); break;
-	case SONOGRAM: make_sonogram(cp,sp,ss); break;
-	case SPECTROGRAM: make_spectrogram(cp,sp,ss); break;
-	default: snd_error("unknown fft style: %d",cp->fft_style); break;
+	  make_axes(cp,uap,X_IN_LENGTH);
+	  if ((just_lisp) || ((!(cp->waving)) && (!(with_fft))))
+	    {
+	      ap->losamp = (int)(ap->x0*(double)SND_SRATE(sp));
+	      ap->hisamp = (int)(ap->x1*(double)SND_SRATE(sp));
+	    }
+	  make_lisp_graph(cp,sp,ss);
 	}
-    }
-  if (with_lisp)
-    {
-      make_axes(cp,uap,X_IN_LENGTH);
-      if ((!(cp->waving)) && (!(with_fft)))
+
+      if (!just_lisp)
 	{
-	  ap->losamp = (int)(ap->x0*(double)SND_SRATE(sp));
-	  ap->hisamp = (int)(ap->x1*(double)SND_SRATE(sp));
+	  if (cp->waving)
+	    {
+	      display_selection(cp);
+	      if ((cp->marks) && (cp->show_marks)) display_channel_marks(cp);
+	      if (cp->show_y_zero) display_zero(cp);
+	      if ((cp->show_mix_consoles) && (cp->mixes)) display_channel_mixes(cp);
+	    }
+	  else 
+	    {
+	      if (cp->mixes) release_mixes(cp);
+	    }
+	  if ((sp->combining != CHANNELS_SUPERIMPOSED) && (height > 10))
+	    display_channel_id(cp,height+offset,sp->nchans);
+	  if (cp->hookable) after_graph(cp);
 	}
-      make_lisp_graph(cp,sp,ss);
-    }
-  if (cp->waving)
-    {
-      display_selection(cp);
-      if ((cp->marks) && (cp->show_marks)) display_channel_marks(cp);
-      if (cp == selected_channel(ss)) draw_graph_border(cp);
-      if (cp->show_y_zero) display_zero(cp);
-      if ((cp->show_mix_consoles) && (cp->mixes)) display_channel_mixes(cp);
-    }
-  else 
-    {
-      if (cp->mixes) release_mixes(cp);
-    }
-  if ((displays > 0) && (sp->combining != CHANNELS_SUPERIMPOSED) && (height > 10)) 
-    display_channel_id(cp,height+offset,sp->nchans);
-  if (cp->hookable) after_graph(cp);
+    } 
 }
 
-void display_channel_data (chan_info *cp, snd_info *sp, snd_state *ss)
+static void display_channel_data_1 (chan_info *cp, snd_info *sp, snd_state *ss, int just_fft, int just_lisp)
 {
   int width,height,offset,full_height,chan_height,y0,y1,bottom,top;
   Float val,size;
@@ -2268,7 +2288,7 @@ void display_channel_data (chan_info *cp, snd_info *sp, snd_state *ss)
       width = widget_width(channel_graph(cp));
       height = widget_height(channel_graph(cp));
       if ((height > 5) && (width > 5))
-	display_channel_data_with_size(cp,sp,ss,width,height,0);
+	display_channel_data_with_size(cp,sp,ss,width,height,0,just_fft,just_lisp);
     }
   else
     {
@@ -2279,7 +2299,7 @@ void display_channel_data (chan_info *cp, snd_info *sp, snd_state *ss)
       height = widget_height(channel_graph(sp->chans[0]));
       cp->height = height;
       if (sp->combining == CHANNELS_SUPERIMPOSED)
-	display_channel_data_with_size(cp,sp,ss,width,height,0);
+	display_channel_data_with_size(cp,sp,ss,width,height,0,just_fft,just_lisp);
       else
 	{
 	  val = gsy_value(sp->chans[0]);
@@ -2300,7 +2320,7 @@ void display_channel_data (chan_info *cp, snd_info *sp, snd_state *ss)
 	  if ((cp->chan == (sp->nchans - 1)) && ((offset+chan_height) < height))
 	    chan_height = height - offset;
 	  if (((y0 < top) && (y0 >= bottom)) || ((y1 > bottom) && (y1 <= top)))
-	    display_channel_data_with_size(cp,sp,ss,width,chan_height,offset);
+	    display_channel_data_with_size(cp,sp,ss,width,chan_height,offset,just_fft,just_lisp);
 	  else 
 	    {
 	      ap = cp->axis;
@@ -2311,6 +2331,20 @@ void display_channel_data (chan_info *cp, snd_info *sp, snd_state *ss)
     }
 }
 
+void display_channel_fft_data(chan_info *cp, snd_info *sp, snd_state *ss)
+{
+  display_channel_data_1(cp,sp,ss,TRUE,FALSE);
+}
+
+void display_channel_lisp_data(chan_info *cp, snd_info *sp, snd_state *ss)
+{
+  display_channel_data_1(cp,sp,ss,FALSE,TRUE);
+}
+
+void display_channel_data(chan_info *cp, snd_info *sp, snd_state *ss)
+{
+  display_channel_data_1(cp,sp,ss,FALSE,FALSE);
+}
 
 
 /* ---------------- CHANNEL CURSOR ---------------- */
@@ -2385,7 +2419,7 @@ static void handle_cursor_with_sync(chan_info *cp,int decision)
 	  si = snd_sync(cp->state,sp->syncing);
 	  for (i=0;i<si->chans;i++)
 	    handle_cursor(si->cps[i],decision);
-	  free_sync_info(si);
+	  si = free_sync_info(si);
 	}
       else handle_cursor(cp,decision);
     }
@@ -2407,7 +2441,7 @@ int cursor_moveto (chan_info *cp, int samp)
 	  ncp->cursor = samp;
 	  if (ncp != cp) handle_cursor(ncp,cursor_decision(ncp)); /* checks len */
 	}
-      free_sync_info(si);
+      si = free_sync_info(si);
     }
   else cp->cursor = samp;
   return(cursor_decision(cp));
@@ -2553,7 +2587,7 @@ static void window_frames_selection(chan_info *cp)
   for (i=0;i<ss->max_sounds;i++)
     {
       sp = ss->sounds[i];
-      if ((sp) && (sp->inuse) && (cp->sound != sp) && (selection_is_current_in_channel(sp->chans[0])) && (sp->syncing != (cp->sound->syncing)))
+      if ((sp) && (sp->inuse) && (cp->sound != sp) && (selection_is_active_in_channel(sp->chans[0])) && (sp->syncing != (cp->sound->syncing)))
 	set_x_axis_x0x1(sp->chans[0],x0,x1);
     }
 }
@@ -2601,7 +2635,7 @@ void handle_cursor(chan_info *cp, int redisplay)
 	  else {if (cp->cursor_on) draw_graph_cursor(cp);}
 	}
     }
-  check_keyboard_selection(cp,cp->cx);
+  update_possible_selection_in_progress(cp,cp->cursor);
 }
 
 /* collect syncd chans */
@@ -2615,7 +2649,7 @@ static void free_sync_state(sync_state *sc)
 {
   if (sc)
     {
-      if (sc->si) free_sync_info(sc->si);
+      if (sc->si) sc->si = free_sync_info(sc->si);
       if (sc->sfs) FREE(sc->sfs);
       FREE(sc);
     }
@@ -2646,9 +2680,9 @@ static sync_state *get_sync_state_1(snd_state *ss, snd_info *sp, chan_info *cp, 
     {
       if (regexpr)
 	{
-	  if (selection_is_current())
+	  if (selection_is_active())
 	    {
-	      si = region_sync(0);
+	      si = selection_sync();
 	      dur = selection_len();
 	      sfs = (snd_fd **)CALLOC(si->chans,sizeof(snd_fd *));
 	      for (i=0;i<si->chans;i++) 
@@ -3276,83 +3310,6 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
 
 #endif /* HAVE_GUILE */
 
-int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, char *comment)
-{
-  /* can't use save_region here because the currently selected data may not
-   * match region(0) -- reverse-selection, for example, reverses the underlying
-   * data, but leaves region(0) unchanged -- maybe this is a bug?
-   */
-  int ofd,oloc,comlen,err=0;
-  sync_state *sc;
-  sync_info *si;
-  int i,dur,j,k;
-  MUS_SAMPLE_TYPE val;
-  snd_fd **sfs;
-  MUS_SAMPLE_TYPE **data;
-  if (MUS_DATA_FORMAT_OK(format))
-    {
-      if (MUS_HEADER_TYPE_OK(type))
-	{
-	  sc = get_sync_state(ss,NULL,NULL,0,TRUE,READ_FORWARD);
-	  if (sc == NULL) return(SND_NO_ERROR);
-	  si = sc->si;
-	  sfs = sc->sfs;
-	  comlen = snd_strlen(comment);
-	  dur = sc->dur;
-	  if ((snd_write_header(ss,ofile,type,srate,si->chans,28,si->chans*dur,format,comment,comlen,NULL)) == -1) 
-	    {
-	      free_sync_state(sc);
-	      return(SND_CANNOT_WRITE_HEADER);
-	    }
-	  oloc = mus_header_data_location();
-	  if ((ofd = snd_reopen_write(ss,ofile)) == -1) 
-	    {
-	      free_sync_state(sc);
-	      return(SND_CANNOT_OPEN_TEMP_FILE);
-	    }
-	  mus_file_set_descriptors(ofd,ofile,format,mus_data_format_to_bytes_per_sample(format),oloc,si->chans,type);
-	  mus_file_set_data_clipped(ofd,data_clipped(ss));
-	  mus_file_seek(ofd,oloc,SEEK_SET);
-	  data = (MUS_SAMPLE_TYPE **)CALLOC(si->chans,sizeof(MUS_SAMPLE_TYPE *));
-	  for (i=0;i<si->chans;i++) data[i] = (MUS_SAMPLE_TYPE *)CALLOC(FILE_BUFFER_SIZE,sizeof(MUS_SAMPLE_TYPE)); 
-	  j = 0;
-	  for (i=0;i<dur;i++)
-	    {
-	      for (k=0;k<si->chans;k++)
-		{
-		  NEXT_SAMPLE(val,sfs[k]);
-		  data[k][j] = val;
-		}
-	      j++;
-	      if (j == FILE_BUFFER_SIZE)
-		{
-		  err = mus_file_write(ofd,0,j-1,si->chans,data);
-		  j = 0;
-		  if (err == -1) break;
-		}
-	    }
-	  if (j > 0) mus_file_write(ofd,0,j-1,si->chans,data);
-	  for (i=0;i<si->chans;i++)
-	    {
-	      free_snd_fd(sfs[i]);
-	      FREE(data[i]);
-	    }
-	  FREE(data);
-	  free_sync_state(sc);
-	  snd_close(ofd);
-	  alert_new_file();
-	  return(SND_NO_ERROR);
-	}
-      else 
-	{
-	  snd_error("unknown header type?!? %d ",type);
-	  return(SND_UNSUPPORTED_HEADER_TYPE);
-	}
-    }
-  else snd_error("impossible data format?!? %d ",format);
-  return(SND_UNSUPPORTED_DATA_FORMAT);
-}
-
 void convolve_with(char *filename, Float amp, chan_info *cp)
 {
   /* amp == 0.0 means unnormalized, cp == NULL means current selection */
@@ -3457,6 +3414,7 @@ void convolve_with(char *filename, Float amp, chan_info *cp)
 		{
 		  ok = delete_selection(origin,DONT_UPDATE_DISPLAY);
 		  file_insert_samples(si->begs[ip],filtersize + filesize,ofile,ucp,0,DELETE_ME,origin);
+		  reactivate_selection(si->cps[ip],si->begs[ip],si->begs[ip]+filtersize+filesize);
 		  if (ok) backup_edit_list(ucp); /* pray... */
 		  if (ucp->marks) ripple_trailing_marks(ucp,si->begs[ip],sc->dur,filtersize+filesize);
 		}
@@ -3916,6 +3874,7 @@ static int temp_to_snd(snd_exf *data, char *origin)
 		      for (k=0;k<chans;k++)
 			{
 			  file_insert_samples(si->begs[k],new_len,data->new_filenames[0],si->cps[k],k,DELETE_ME,origin);
+			  reactivate_selection(si->cps[k],si->begs[k],si->begs[k]+new_len);
 			  if (ok) backup_edit_list(si->cps[k]);
 			  if ((si->cps[k])->marks) ripple_trailing_marks(si->cps[k],si->begs[k],old_len,new_len);
 			}
@@ -3936,6 +3895,7 @@ static int temp_to_snd(snd_exf *data, char *origin)
 		  if (new_len != -1)
 		    {
 		      file_insert_samples(si->begs[k],new_len,data->new_filenames[k],si->cps[k],0,DELETE_ME,origin);
+		      reactivate_selection(si->cps[k],si->begs[k],si->begs[k]+new_len);
 		      if (ok) backup_edit_list(si->cps[k]);
 		      if ((si->cps[k])->marks) ripple_trailing_marks(si->cps[k],si->begs[k],old_len,new_len);
 		    }
@@ -4235,6 +4195,7 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 		{
 		  ok = delete_selection(S_src_selection,DONT_UPDATE_DISPLAY);
 		  file_insert_samples(si->begs[i],k,ofile,cp,0,DELETE_ME,S_src_selection);
+		  reactivate_selection(si->cps[i],si->begs[i],si->begs[i]+k);
 		  if (ok) backup_edit_list(cp); /* pray... */
 		  if (cp->marks) ripple_marks(cp,0,0);
 		  update_graph(cp,NULL);
@@ -4969,7 +4930,7 @@ static int cursor_delete(chan_info *cp, int count, char *origin)
 	  else delete_samples(beg+count,-count,cps[i],origin);
 	  update_graph(si->cps[i],NULL);
 	}
-      free_sync_info(si);
+      si = free_sync_info(si);
     }
   else
     {
@@ -5013,7 +4974,7 @@ static int cursor_insert(chan_info *cp, int count)
 	  insert_samples(beg,count,zeros,cps[i],"C-o");
 	  update_graph(si->cps[i],NULL);
 	}
-      free_sync_info(si);
+      si = free_sync_info(si);
     }
   else
     {
@@ -5039,9 +5000,9 @@ static int cursor_zeros(chan_info *cp, int count, int regexpr)
     }
   else
     {
-      if ((regexpr) && (selection_is_current()))
+      if ((regexpr) && (selection_is_active()))
 	{
-	  si = region_sync(0);
+	  si = selection_sync();
 	  num = selection_len();
 	}
     }
@@ -5055,7 +5016,7 @@ static int cursor_zeros(chan_info *cp, int count, int regexpr)
       update_graph(si->cps[i],NULL);
     }
   FREE(zeros);
-  free_sync_info(si);
+  si = free_sync_info(si);
   return(CURSOR_IN_VIEW);
 }
 
@@ -5074,9 +5035,9 @@ static sync_state *get_sync_state_without_snd_fds(snd_state *ss, snd_info *sp, c
     {
       if (regexpr)
 	{
-	  if (selection_is_current())
+	  if (selection_is_active())
 	    {
-	      si = region_sync(0);
+	      si = selection_sync();
 	      dur = selection_len();
 	    }
 	  else
@@ -5607,7 +5568,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym)
     {
       if (sp->printing)
 	{
-	  snd_print(ss,str,(sp->printing != 1));
+	  snd_print(ss,str);
 	  sp->printing = 0;
 	  clear_minibuffer(sp);
 	  free(str);
@@ -5819,9 +5780,6 @@ static int get_count(char *number_buffer,int number_ctr, int dot_seen, chan_info
 
 #define NUMBER_BUFFER_SIZE 12
 
-static void dks(void) {finish_keyboard_selection();}
-static int cks(void) {return(cancel_keyboard_selection());}
-
 static Float state_amount (int state)
 {
   Float amount;
@@ -5837,6 +5795,13 @@ static void no_selection_error(snd_info *sp)
   report_in_minibuffer(sp,"no active selection");
 }
 
+static int stop_selecting(int keysym, int state)
+{
+  return(((state & snd_ControlMask) == 0) ||
+	 (keysym == snd_K_D) || (keysym == snd_K_d) ||
+	 (keysym == snd_K_H) || (keysym == snd_K_H) ||
+	 (keysym == snd_K_Y) || (keysym == snd_K_Y));
+}
 
 static char *key_to_name(int keysym) {if (keysym) return(KEY_TO_NAME(keysym)); else return("NUL");}
 
@@ -5855,7 +5820,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
   static int extended_mode = 0;
   static int count = 1, got_count = 0;
   static int m = 0;
-  int redisplay,searching,cursor_searching,old_cursor_loc,hashloc,loc,sync_num,i;
+  int redisplay,searching,cursor_searching,hashloc,loc,sync_num,i;
   static int ext_count = NO_CX_ARG_SPECIFIED;
   snd_info *sp;
   axis_info *ap;
@@ -5881,6 +5846,10 @@ int keyboard_command (chan_info *cp, int keysym, int state)
   
   /* should we check snd_keypad_Decimal as well as snd_K_period? -- is this assuming USA float syntax? */
   /*   (similarly snd_keypad_0...9) */
+
+  if ((selection_creation_in_progress) &&
+      ((extended_mode) || (stop_selecting(keysym,state))))
+    finish_selection_creation();
 
   if ((counting) && (((keysym < snd_K_0) || (keysym > snd_K_9)) && (keysym != snd_K_minus) && (keysym != snd_K_period) && (keysym != snd_K_plus)))
     {
@@ -5912,6 +5881,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
   if (hashloc != -1) {return(call_user_keymap(hashloc,count));}
 #endif
   if (sp->minibuffer_temp) clear_minibuffer(sp);
+
   if (state & snd_ControlMask)
     {
       if (!extended_mode)
@@ -5931,7 +5901,6 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 	    case snd_K_D: case snd_K_d: 
 	      cp->cursor_on = 1; 
-	      cks(); 
 	      redisplay = cursor_delete(cp,count,"C-d"); 
 	      break;
 	    case snd_K_E: case snd_K_e:
@@ -5948,8 +5917,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      number_ctr = 0; 
 	      counting = 0; 
 	      dot_seen = 0; 
-	      if ((cks() == -1) && (selection_is_current()))
-		deactivate_selection();
+	      deactivate_selection();
 	      defining_macro = 0;
 	      if (ss->checking_explicitly) ss->stopped_explicitly = 1; 
 	      /* this tries to break out of long filter/src computations (and perhaps others) */
@@ -5959,7 +5927,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      clear_minibuffer(sp);
 	      break;
 	    case snd_K_H: case snd_K_h: 
-	      cp->cursor_on = 1; cks(); 
+	      cp->cursor_on = 1; 
 	      redisplay = cursor_delete_previous(cp,count,"C-h"); 
 	      break; 
 	    case snd_K_I: case snd_K_i: 
@@ -5972,7 +5940,6 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 	    case snd_K_K: case snd_K_k: 
 	      cp->cursor_on = 1; 
-	      cks(); 
 	      redisplay = cursor_delete(cp,count*cp->line_size,"C-k"); 
 	      break;
 	    case snd_K_L: case snd_K_l: 
@@ -6009,7 +5976,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 			  else delete_mark_samp(cp->cursor,si->cps[i]);
 			}
 		    }
-		  free_sync_info(si);
+		  si = free_sync_info(si);
 		}
 	      break;
 	    case snd_K_N: case snd_K_n: 
@@ -6017,7 +5984,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      redisplay = cursor_move(cp,count*cp->line_size); 
 	      break;
 	    case snd_K_O: case snd_K_o: 
-	      cp->cursor_on = 1; cks(); 
+	      cp->cursor_on = 1; 
 	      redisplay = cursor_insert(cp,count); 
 	      break;
 	    case snd_K_P: case snd_K_p: 
@@ -6057,22 +6024,18 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      else redisplay = cursor_moveto(cp,(int)(ap->x0*SND_SRATE(sp)-1+(count+1)*SND_SRATE(sp)*(ap->x1 - ap->x0)));
 	      break;
 	    case snd_K_W: case snd_K_w: 
-	      dks(); 
 	      delete_selection("C-x C-w",UPDATE_DISPLAY); 
 	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      break;
 	    case snd_K_X: case snd_K_x: 
-	      dks(); 
 	      extended_mode = 1; 
 	      if (got_count) {ext_count = count; got_count = 0;}
 	      break;
 	    case snd_K_Y: case snd_K_y: 
-	      dks(); 
 	      paste_region(count,cp,"C-y"); 
 	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      break;
 	    case snd_K_Z: case snd_K_z: 
-	      cks(); 
 	      cp->cursor_on = 1; 
 	      redisplay = cursor_zeros(cp,count,0); 
 	      break;
@@ -6096,18 +6059,10 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      /* there is also the bare-number case below */
 	      break;
 	    case snd_K_space: 
-	      if (selection_is_current())
+	      if (count > 0)
 		{
-		  if (cks() == -1)
-		    deactivate_selection();
-		}
-	      else
-		{
-		  if (count > 0)
-		    {
-		      start_keyboard_selection(cp,cp->cx); 
-		      redisplay = NO_ACTION;
-		    }
+		  start_selection_creation(cp,cp->cursor);
+		  redisplay = NO_ACTION;
 		}
 	      break;
 	    case snd_K_period:
@@ -6259,14 +6214,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_Down: zx_incremented(cp,1.0/(1.0+state_amount(state))); break;
 	    case snd_K_Home: snd_update(ss,sp); break;
 	    case snd_K_space: 
-	      old_cursor_loc = cks(); /* can be -1 => not actively selecting via kbd */
-	      if (old_cursor_loc == -1) 
-		{
-		  deactivate_selection();
-		  if (play_in_progress()) toggle_dac_pausing(ss);
-		}
-	      else /* all syncd chans need to reset cursor */
-		cursor_moveto(cp,old_cursor_loc);
+	      if (play_in_progress()) toggle_dac_pausing(ss); else deactivate_selection();
 	      break;
 
 	      /* fUn WiTh KeYpAd! */
@@ -6396,7 +6344,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	  switch (keysym)
 	    {
 	    case snd_K_A: case snd_K_a: 
-	      if (selection_active(cp)) 
+	      if (selection_is_active_in_channel(cp)) 
 		{
 		  get_amp_expression(sp,(ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count,1); 
 		  searching = 1; 
@@ -6422,13 +6370,13 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_K: case snd_K_k: snd_close_file(sp,ss); redisplay = CURSOR_NO_ACTION; break;
 	    case snd_K_L: case snd_K_l: 
 	      cp->cursor_on = 1;
-	      if (selection_active(cp))
+	      if (selection_is_active_in_channel(cp))
 		cursor_moveto(cp,(int)(selection_beg(cp)+0.5*selection_len()));
 	      else no_selection_error(sp); 
 	      redisplay = CURSOR_IN_MIDDLE;
 	      break;
 	    case snd_K_N: case snd_K_n: 
-	      if (selection_active(cp))
+	      if (selection_is_active_in_channel(cp))
 		eval_expression(cp,sp,(ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count,TRUE); 
 	      else no_selection_error(sp); 
 	      break;
@@ -6445,7 +6393,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_R: case snd_K_r: redo_edit_with_sync(cp,(ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count); redisplay = CURSOR_UPDATE_DISPLAY; break;
 	    case snd_K_U: case snd_K_u: undo_edit_with_sync(cp,(ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count); redisplay = CURSOR_UPDATE_DISPLAY; break;
 	    case snd_K_V: case snd_K_v: 
-	      if (selection_active(cp))
+	      if (selection_is_active_in_channel(cp))
 		{
 		  window_frames_selection(cp); 
 		  redisplay = CURSOR_UPDATE_DISPLAY; 
@@ -6459,7 +6407,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      searching = 1;
 	      break;
 	    case snd_K_X: case snd_K_x: 
-	      if (selection_active(cp))
+	      if (selection_is_active_in_channel(cp))
 		{
 		  get_eval_expression(sp,(ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count,TRUE); 
 		  searching = 1; 
@@ -6468,7 +6416,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      else no_selection_error(sp); 
 	      break;
 	    case snd_K_Z: case snd_K_z: 
-	      if (selection_active(cp))
+	      if (selection_is_active_in_channel(cp))
 		{
 		  cos_smooth(cp,cp->cursor,(ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count,1,"C-x z"); 
 		  redisplay = CURSOR_UPDATE_DISPLAY; 
@@ -6732,32 +6680,6 @@ void edit_select_callback(chan_info *cp, int ed, int with_control)
   goto_graph(cp);
 }
 
-void draw_graph_border(chan_info *cp)
-{
-  axis_info *ap;
-  axis_context *ax;
-  int h,w,displays,y0,y1;
-  if (cp->waving) ap = cp->axis;
-  else if (cp->ffting) ap = (cp->fft)->axis;
-  else if (cp->lisp_graphing) ap = ((lisp_grf *)(cp->lisp_info))->axis;
-  else ap = cp->axis;
-  h = ap->height-2;
-  if (cp->waving) displays = 1; else displays = 0;
-  if (cp->ffting) displays++;
-  if (cp->lisp_graphing) displays++;
-  w = ap->width*displays - 1;
-  y0 = 1+ap->y_offset;
-  y1 = h+ap->y_offset;
-  if (w > 0)
-    {
-      ax = copy_context(cp);
-      draw_line(ax,1,y0,1,y1);
-      draw_line(ax,1,y0,w,y0);
-      draw_line(ax,w,y0,w,y1);
-      draw_line(ax,1,y1,w,y1);
-    }
-}
-
 int key_press_callback(chan_info *ncp, int x, int y, int key_state, int keysym)
 {
   /* called by every key-intercepting widget in the entire sound pane */
@@ -6812,11 +6734,10 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
   sp = cp->sound;
   /* if combining, figure out which virtual channel the mouse is in */
   if (sp->combining == CHANNELS_COMBINED) cp = which_channel(sp,y);
-  start_selection(cp,x);
-  /* cp->cursor_on = 1; */
   mouse_down_time = time;
   select_channel(sp,cp->chan);
   dragged = 0;
+  finish_selection_creation();
   mouse_mark = hit_mark(cp,x,y,key_state);
   if (mouse_mark == NULL) play_mark = hit_triangle(cp,x,y);
   click_within_graph = within_graph(cp,x,y);
@@ -6979,7 +6900,8 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	    {
 	      if (click_within_graph == WAVE)
 		{
-		  define_selection(cp);
+		  cancel_selection_watch();
+		  finish_selection_creation();
 		  dragged = 0;
 		  reflect_edit_with_selection_in_menu();
 		  if (show_selection_transform(ss)) 
@@ -7044,12 +6966,13 @@ void graph_button_motion_callback(chan_info *cp,int x, int y, TIME_TYPE time, TI
 	  if (click_within_graph == WAVE)
 	    {
 	      if (!dragged) 
+		start_selection_creation(cp,(int)round(ungrf_x(cp->axis,x) * SND_SRATE(sp)));
+	      else 
 		{
-		  deactivate_selection();
-		  create_selection(cp);
+		  update_possible_selection_in_progress(cp,(int)round(ungrf_x(cp->axis,x) * SND_SRATE(sp)));
+		  move_selection(cp,x);
 		}
 	      dragged = 1;
-	      move_selection(cp,x);
 	    }
 	  else
 	    {
@@ -7203,8 +7126,6 @@ axis_context *mix_waveform_context (chan_info *cp)    {return(set_context(cp,CHA
 static axis_context *combined_context (chan_info *cp) {return(set_context(cp,CHAN_TMPGC));}
 
 #if HAVE_GUILE
-#include "sg.h"
-
 
 /* -------- EXTERNAL PROGRAMS -------- */
 
@@ -7232,7 +7153,7 @@ static SCM g_sound_to_temp_1(SCM ht, SCM df, int selection, int one_file)
   chan_info *cp;
   int type,format;
   snd_state *ss;
-  if ((selection) && (selection_is_current() == 0)) 
+  if ((selection) && (selection_is_active() == 0)) 
     return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm((one_file) ? S_selection_to_temp : S_selection_to_temps))));
   ss = get_global_state();
   cp = current_channel(ss);
@@ -9260,7 +9181,7 @@ static SCM g_smooth_selection(void)
 {
   #define H_smooth_selection "(" S_smooth_selection ") smooths the data in the currently selected portion"
   chan_info *cp;
-  if (selection_is_current() == 0) 
+  if (selection_is_active() == 0) 
     return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_smooth_selection))));
   cp = get_cp(SCM_BOOL_F,SCM_BOOL_F,S_smooth_selection);
   cos_smooth(cp,0,0,TRUE,S_smooth_selection);
@@ -9281,7 +9202,7 @@ static SCM g_reverse_selection(void)
 {
   #define H_reverse_selection "(" S_reverse_selection ") reverses the data in the currently selected portion"
   chan_info *cp;
-  if (selection_is_current() == 0) 
+  if (selection_is_active() == 0) 
     return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_reverse_selection))));
   cp = get_cp(SCM_BOOL_F,SCM_BOOL_F,S_reverse_selection);
   reverse_sound(cp,TRUE);
@@ -9340,7 +9261,7 @@ static SCM mouse_release_hook,mouse_drag_hook,key_press_hook,fft_hook;
 static SCM graph_hook,after_graph_hook;
 
 
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_HOOKS
 static void after_fft(snd_state *ss, chan_info *cp, Float scaler)
 {
   if (!(ss->fft_hook_active))
@@ -9680,7 +9601,7 @@ void g_init_chn(SCM local_doc)
 					"set-" S_y_bounds,SCM_FNC g_set_y_bounds, SCM_FNC g_set_y_bounds_reversed,
 					local_doc,0,2,1,2);
 
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_HOOKS
   fft_hook = scm_create_hook(S_fft_hook,3);                       /* args = sound channel scaler */
   graph_hook = scm_create_hook(S_graph_hook,4);                   /* args = sound channel y0 y1 */
   after_graph_hook = scm_create_hook(S_after_graph_hook,2);       /* args = sound channel */

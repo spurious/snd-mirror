@@ -174,7 +174,6 @@ void check_stats_window(snd_state *ss, int val)
 
 #if HAVE_GUILE_GTK
 #include <guile-gtk.h>
-#include "sg.h"
 
 #define Sg_stats_dialog_widget  "sg-stats-dialog-widget"
 

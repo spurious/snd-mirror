@@ -77,7 +77,6 @@ static int revdecay = 0;
 
 /* -------------------------------- user-defined control-panel functions -------------------------------- */
 #if HAVE_GUILE
-#include "sg.h"
 
 /* user hooks into reverb */
 static SCM g_make_reverb = SCM_UNDEFINED,g_reverb = SCM_UNDEFINED, g_free_reverb = SCM_UNDEFINED;
@@ -152,7 +151,7 @@ static SCM g_set_expand_funcs(SCM expnd, SCM make_expnd, SCM free_expnd)
   return(expnd);
 }
 
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_HOOKS
   static void call_stop_playing_hook(snd_info *sp);
   static void call_stop_playing_region_hook(int n);
   static void call_stop_playing_channel_hook(snd_info *sp, chan_info *cp);
@@ -1050,9 +1049,9 @@ void play_selection(int background)
   int i;
   int *ends;
   sync_info *si = NULL;
-  if (selection_is_current())
+  if (selection_is_active())
     {
-      si = region_sync(0);
+      si = selection_sync();
       if (si)
 	{
 	  ends = (int *)CALLOC(si->chans,sizeof(int));
@@ -1064,7 +1063,7 @@ void play_selection(int background)
 #if DEBUGGING
 	  in_selection = 0;
 #endif
-	  free_sync_info(si); /* does not free sample readers */
+	  si = free_sync_info(si); /* does not free sample readers */
 	  FREE(ends);
 	}
     }
@@ -1898,7 +1897,6 @@ int run_apply(int ofd)
 /* -------------------------------- scheme connection -------------------------------- */
 
 #if HAVE_GUILE
-#include "sg.h"
 
 static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd, SCM end_n) 
 {
@@ -1943,7 +1941,7 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
 	      for (i=0;i<si->chans;i++) ends[i] = end;
 	    }
 	  play_channels(si->cps,si->chans,si->begs,ends,background);
-	  free_sync_info(si);
+	  si = free_sync_info(si);
 	  FREE(ends);
 	}
       else
@@ -1976,7 +1974,7 @@ static SCM g_play(SCM samp_n, SCM snd_n, SCM chn_n, SCM syncd, SCM end_n)
 static SCM g_play_selection(SCM wait) 
 {
   #define H_play_selection "(" S_play_selection " &optional (wait #f)) plays the current selection"
-  if (selection_is_current())
+  if (selection_is_active())
     {
       play_selection(!(bool_int_or_zero(wait)));
       return(SCM_BOOL_T);
@@ -2125,7 +2123,7 @@ static SCM g_stop_player(SCM snd_chn)
 
 static SCM start_playing_hook,stop_playing_hook,stop_playing_region_hook,stop_playing_channel_hook;
 
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_HOOKS
 static void call_stop_playing_hook(snd_info *sp)
 {
   if (HOOKED(stop_playing_hook))
@@ -2172,7 +2170,7 @@ void g_init_dac(SCM local_doc)
   DEFINE_PROC(gh_new_procedure(S_start_playing,SCM_FNC g_start_playing,0,3,0),H_start_playing);
   DEFINE_PROC(gh_new_procedure(S_stop_player,SCM_FNC g_stop_player,1,0,0),H_stop_player);
 
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_HOOKS
   stop_playing_hook = scm_create_hook(S_stop_playing_hook,1);                     /* arg = sound */
   stop_playing_channel_hook = scm_create_hook(S_stop_playing_channel_hook,2);     /* args = sound channel */
   stop_playing_region_hook = scm_create_hook(S_stop_playing_region_hook,1);       /* arg = region number */

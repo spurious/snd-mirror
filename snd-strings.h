@@ -671,7 +671,7 @@
 #define S_selected_graph_color          "selected-graph-col" STR_OR
 #define S_selected_mix                  "selected-mix"
 #define S_selected_sound                "selected-sound"
-#define S_selection_beg                 "selection-beg"
+#define S_selection_position            "selection-position"
 #define S_selection_color               "selection-col" STR_OR
 #define S_selection_length              "selection-length"
 #define S_selection_member              "selection-member"

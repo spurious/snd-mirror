@@ -344,7 +344,9 @@ static int print_sound_data(SCM obj, SCM port, scm_print_state *pstate)
   else
     {
       buf = (char *)CALLOC(64,sizeof(char));
-      sprintf(buf,"#<sound-data: %d chan%s, %d frames>",v->chans,(v->chans == 1) ? "" : "s",v->length);
+      sprintf(buf,"#<sound-data: %d chan%s, %d frame%s>",
+	      v->chans,(v->chans == 1) ? "" : "s",
+	      v->length,(v->length == 1) ? "" : "s");
       scm_puts(buf,port);
       FREE(buf);
     }
@@ -380,7 +382,7 @@ static SCM sound_data_chans(SCM obj)
 SCM make_sound_data(int chans, int frames)
 {
   #define H_make_sound_data "(" S_make_sound_data " chans frames) -> new sound-data object with chans channels, each having frames samples"
-#if HAVE_GUILE_1_3_0
+#if (!(HAVE_NEW_SMOB))
   SCM ans;
 #endif
   int i;
@@ -390,7 +392,7 @@ SCM make_sound_data(int chans, int frames)
   new_sound_data->chans = chans;
   new_sound_data->data = (MUS_SAMPLE_TYPE **)CALLOC(chans,sizeof(MUS_SAMPLE_TYPE *));
   for (i=0;i<chans;i++) new_sound_data->data[i] = (MUS_SAMPLE_TYPE *)CALLOC(frames,sizeof(MUS_SAMPLE_TYPE));
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_NEW_SMOB
   SCM_RETURN_NEWSMOB(sound_data_tag,new_sound_data);
 #else
   SCM_NEWCELL(ans);
@@ -400,7 +402,7 @@ SCM make_sound_data(int chans, int frames)
 #endif
 }
 
-#if HAVE_GUILE_1_3_0
+#if (!(HAVE_NEW_SMOB))
 static scm_smobfuns sound_data_smobfuns = {
   &mark_sound_data,
   &free_sound_data,
@@ -843,7 +845,7 @@ void mus_sndlib2scm_initialize(void)
   mus_sound_initialize();
   local_doc = scm_permanent_object(scm_string_to_symbol(gh_str02scm("documentation")));
 
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_NEW_SMOB
   sound_data_tag = scm_make_smob_type("sound-data",sizeof(sound_data));
   scm_set_smob_mark(sound_data_tag,mark_sound_data);
   scm_set_smob_print(sound_data_tag,print_sound_data);

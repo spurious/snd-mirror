@@ -45,7 +45,6 @@ typedef struct {
 #if HAVE_GUILE
 
 #include "vct.h"
-#include "sg.h"
 
 typedef struct {
   char *name,*xlabel;
@@ -1246,7 +1245,7 @@ static int apply_fft_window(fft_state *fs)
   
   if (cp->transform_type == FOURIER) pad = fs->pad_zero;
   data_len = (int)(fs->size / (1+pad));
-  if ((show_selection_transform(ss)) && (selection_is_current_in_channel(cp)))
+  if ((show_selection_transform(ss)) && (selection_is_active_in_channel(cp)))
     {
       ind0 = fs->databeg;
       if (cp->fft_style == NORMAL_FFT) data_len = fs->datalen;
@@ -1423,7 +1422,7 @@ void *make_fft_state(chan_info *cp, int simple)
   ss = cp->state;
   ap = cp->axis;
   
-  if ((show_selection_transform(ss)) && (cp->fft_style == NORMAL_FFT) && (selection_is_current_in_channel(cp)))
+  if ((show_selection_transform(ss)) && (cp->fft_style == NORMAL_FFT) && (selection_is_active_in_channel(cp)))
     {
       /* override fft_size(ss) in this case (sonograms cover selection but use preset size) */
       dbeg = selection_beg(cp);
@@ -1546,7 +1545,7 @@ BACKGROUND_TYPE safe_fft_in_slices(void *fftData)
       sp = cp->sound;
       set_chan_fft_in_progress(cp,0);
       if (cp->fft_size >= 65536) finish_progress_report(sp,NOT_FROM_ENVED);
-      display_channel_data(cp,sp,ss);
+      display_channel_fft_data(cp,sp,ss);
     }
   return(res);
 }
@@ -1789,7 +1788,7 @@ static int cleanup_sonogram(sonogram_state *sg)
       if (sg->fs) sg->fs = free_fft_state(sg->fs);
       cp->fft_data = NULL;
       set_chan_fft_in_progress(cp,0);
-      display_channel_data(cp,cp->sound,cp->state);
+      display_channel_fft_data(cp,cp->sound,cp->state);
       if (cp->last_sonogram) FREE(cp->last_sonogram);
       if (sg->outer == sg->outlim) sg->done = 1;
       sg->old_scale = (sg->scp)->scale;
@@ -1949,7 +1948,6 @@ void c_convolve (char *fname, Float amp, int filec, int filehdr, int filterc, in
 }
 
 #if HAVE_GUILE
-#include "sg.h"
 
 static SCM g_autocorrelate(SCM reals)
 {

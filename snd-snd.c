@@ -687,19 +687,16 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
     case 0: 
       ap->ofile = NULL;
       lock_apply(ss,sp);
-      finish_keyboard_selection();
       ap->ofile = snd_tempnam(ss);
       ap->hdr = make_temp_header(ss,ap->ofile,sp->hdr,0);
       switch (ss->apply_choice)
 	{
 	case APPLY_TO_CHANNEL:   
-	  deactivate_selection(); /* any edit will change the data within the selection highlight region */
 	  ap->hdr->chans = 1; 
 	  if (sp->selected_channel != NO_SELECTION) curchan = sp->selected_channel;
 	  apply_dur = current_ed_samples(sp->chans[curchan]);
 	  break;
 	case APPLY_TO_SOUND:     
-	  deactivate_selection();
 	  ap->hdr->chans = sp->nchans; 
 	  apply_dur = current_ed_samples(sp->chans[0]); 
 	  break;
@@ -773,8 +770,8 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 	      file_override_samples(apply_dur,ap->ofile,sp->chans[curchan],0,DELETE_ME,LOCK_MIXES,"Apply to channel");
 	      break;
 	    case APPLY_TO_SELECTION:
-	      if (region_chans(0) > 1) remember_temp(ap->ofile,region_chans(0));
-	      si = region_sync(0);
+	      if (selection_chans() > 1) remember_temp(ap->ofile,selection_chans());
+	      si = selection_sync();
 	      if (apply_dur == selection_len())
 		{
 		  for (i=0;i<si->chans;i++)
@@ -791,11 +788,11 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 		  for (i=0;i<si->chans;i++)
 		    {
 		      file_insert_samples(si->begs[i],apply_dur,ap->ofile,si->cps[i],0,DELETE_ME,"Apply to selection");
+		      reactivate_selection(si->cps[i],si->begs[i],si->begs[i]+apply_dur);
 		      if (ok) backup_edit_list(si->cps[i]);
 		    }
-		  deactivate_selection();
 		}
-	      free_sync_info(si); 
+	      si = free_sync_info(si); 
 	      break;
 	    }
 	  report_in_minibuffer(sp,"");
@@ -976,7 +973,6 @@ void set_speed_style(snd_state *ss, int val) {in_set_speed_style(ss,val); map_ov
 
 
 #if HAVE_GUILE
-#include "sg.h"
 
 static SCM g_soundQ(SCM snd_n)
 {
@@ -2116,7 +2112,7 @@ static SCM name_click_hook;
 static int dont_babble_info(snd_info *sp)
 {
   /* call name-click-hook (if any) return #t = don't print info in minibuffer */
-#if (HAVE_GUILE && (!HAVE_GUILE_1_3_0))
+#if HAVE_HOOKS
   SCM res = SCM_BOOL_F,ind;
   ind = gh_int2scm(sp->index);
   if (HOOKED(name_click_hook))
@@ -2129,7 +2125,7 @@ static int dont_babble_info(snd_info *sp)
 
 void g_init_snd(SCM local_doc)
 {
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_HOOKS
   name_click_hook = scm_create_hook(S_name_click_hook,1);       /* args = snd-index */
 #else
   name_click_hook = gh_define(S_name_click_hook,SCM_BOOL_F);

@@ -114,7 +114,7 @@ static char *snd_commands[NUM_COMMANDS]={
   S_scan_across_all_chans,S_scan_across_chans,S_scan_across_sound_chans,S_scan_all_chans,S_scan_chan,S_scan_chans,S_scan_sound_chans,
   S_select_all,S_select_channel,S_select_mix,S_select_region,S_select_sound,
   S_selected_channel,S_selected_data_color,S_selected_graph_color,S_selected_mix,S_selected_sound,
-  S_selection_beg,S_selection_color,S_selection_length,S_selection_member,S_selection_to_temp,S_selection_to_temps,S_selectionQ,
+  S_selection_color,S_selection_length,S_selection_member,S_selection_position,S_selection_to_temp,S_selection_to_temps,S_selectionQ,
 
   S_short_file_name,S_short_file_names,S_show_all_axes,S_show_axes,S_show_fft_peaks,S_show_indices,S_show_listener,S_show_marks,
   S_show_mix_consoles,S_show_mix_waveforms,S_show_no_axes,S_show_selection_transform,S_show_usage_stats,S_show_x_axis,S_show_y_zero,
@@ -601,7 +601,6 @@ char *complete_listener_text(char *old_text, int end, int *try_completion, char 
 
 
 #if HAVE_GUILE
-#include "sg.h"
 
 static char *snd_apropos(char *old_text)
 {

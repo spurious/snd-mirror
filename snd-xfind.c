@@ -148,7 +148,6 @@ static void make_edit_find_dialog(snd_state *ss)
 void Edit_Find_Callback(Widget w,XtPointer clientData,XtPointer callData)
 {
   snd_state *ss = (snd_state *)clientData;
-  finish_keyboard_selection();
   if (!edit_find_dialog)
     {
       make_edit_find_dialog(ss);

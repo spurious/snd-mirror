@@ -43,13 +43,11 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
       (cp->cgx)->ax = (axis_context *)CALLOC(1,sizeof(axis_context));
       cp->mixes = NULL;
       cp->last_sonogram = NULL;
-#if HAVE_GUILE
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_HOOKS
       cp->edit_hook = scm_make_hook(SCM_MAKINUM(0));
       snd_protect(cp->edit_hook);
       cp->undo_hook = scm_make_hook(SCM_MAKINUM(0));
       snd_protect(cp->undo_hook);
-#endif
 #endif
     }
   else cp = cip;
@@ -62,6 +60,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
   cp->edit_size = 0;
   cp->cursor_on = 0;
   cp->cursor_visible = 0;
+  cp->selection_visible = 0;
   cp->cursor = 0;
   cp->cursor_style = CURSOR_CROSS;
   cp->squelch_update = 0;
@@ -150,6 +149,7 @@ static chan_info *free_chan_info(chan_info *cp)
   cp->mix_md = NULL;
   cp->cursor_on = 0;
   cp->cursor_visible = 0;
+  cp->selection_visible = 0;
   cp->cursor = 0;
   cp->cursor_style = CURSOR_CROSS;
   cp->drawing = 1;
@@ -170,11 +170,9 @@ static chan_info *free_chan_info(chan_info *cp)
   if (cp->hdr) cp->hdr = free_file_info(cp->hdr);
   if (cp->filename) {FREE(cp->filename); cp->filename = NULL;}
 #endif
-#if HAVE_GUILE
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_HOOKS
   scm_reset_hook_x(cp->edit_hook);
   scm_reset_hook_x(cp->undo_hook);
-#endif
 #endif
   return(cp);  /* pointer is left for possible future re-use */
 }
@@ -647,20 +645,7 @@ chan_info *current_channel(snd_state *ss)
   return(NULL);
 }
 
-int syncd_chans(snd_state *ss, int sync)
-{
-  int chans,i;
-  snd_info *sp;
-  chans = 0;
-  for (i=0;i<ss->max_sounds;i++)
-    {
-      sp = ss->sounds[i];
-      if ((sp) && (sp->inuse) && (sp->syncing == sync)) chans += sp->nchans;
-    }
-  return(chans);
-}
-
-void free_sync_info (sync_info *si)
+sync_info *free_sync_info (sync_info *si)
 {
   if (si)
     {
@@ -670,6 +655,7 @@ void free_sync_info (sync_info *si)
       si->cps = NULL;
       FREE(si);
     }
+  return(NULL);
 }
 
 sync_info *snd_sync(snd_state *ss, int sync)
@@ -677,7 +663,11 @@ sync_info *snd_sync(snd_state *ss, int sync)
   int i,j,k,chans;
   snd_info *sp;
   sync_info *si;
-  chans = syncd_chans(ss,sync);
+  for (i=0;i<ss->max_sounds;i++)
+    {
+      sp = ss->sounds[i];
+      if ((sp) && (sp->inuse) && (sp->syncing == sync)) chans += sp->nchans;
+    }
   if (chans > 0)
     {
       si = (sync_info *)CALLOC(1,sizeof(sync_info));
@@ -711,6 +701,15 @@ sync_info *make_simple_sync (chan_info *cp, int beg)
   si->begs = (int *)CALLOC(1,sizeof(int));
   si->begs[0] = beg;
   return(si);
+}
+
+sync_info *sync_to_chan(chan_info *cp)
+{
+  snd_info *sp;
+  sp = cp->sound;
+  if (sp->syncing)
+    return(snd_sync(cp->state,sp->syncing));
+  return(make_simple_sync(cp,0));
 }
 
 snd_info *find_sound(snd_state *ss, char *name)

@@ -225,7 +225,6 @@ void set_show_usage_stats(snd_state *ss, int val)
 void close_file_from_menu(snd_state *ss)
 {
   snd_info *sp;
-  finish_keyboard_selection();
   sp = any_selected_sound(ss);
   if (sp) snd_close_file(sp,ss);
 }
@@ -233,7 +232,6 @@ void close_file_from_menu(snd_state *ss)
 void save_file_from_menu(snd_state *ss)
 {
   snd_info *sp;
-  finish_keyboard_selection();
   sp = any_selected_sound(ss);
   save_edits(sp,NULL);
 }
@@ -250,7 +248,6 @@ static int file_update(snd_info *sp, void *ptr)
 
 void update_file_from_menu(snd_state *ss)
 {
-  finish_keyboard_selection();
   map_over_sounds(ss,file_update,(void *)ss);
 }
 
@@ -264,7 +261,6 @@ void new_file_from_menu(snd_state *ss)
 {
   char *new_file_name = NULL,*extension = NULL, *new_comment = NULL;
   int header_type, data_format, chans, srate;
-  finish_keyboard_selection();
 #if HAVE_GUILE
   new_file_name = output_name();
 #endif
@@ -293,7 +289,6 @@ void revert_file_from_menu(snd_state *ss)
 {
   snd_info *sp;
   int i;
-  finish_keyboard_selection();
   sp = any_selected_sound(ss);
   for (i=0;i<sp->nchans;i++) revert_edits(sp->chans[i],NULL);
   reflect_file_revert_in_label(sp);
@@ -302,7 +297,6 @@ void revert_file_from_menu(snd_state *ss)
 
 void exit_from_menu(snd_state *ss)
 {
-  finish_keyboard_selection();
   if (dont_exit(ss)) return;
   snd_exit_cleanly(ss);
   snd_exit(1);
@@ -311,14 +305,12 @@ void exit_from_menu(snd_state *ss)
 void mix_selection_from_menu(snd_state *ss)
 {
   chan_info *cp;
-  finish_keyboard_selection();
   cp = selected_channel(ss);
   if (cp) add_region(0,cp,"Edit: mix");
 }
 
 void cut_selection_from_menu(void)
 {
-  finish_keyboard_selection();
   if (region_ok(0))
     {
       delete_selection("Edit: Cut",UPDATE_DISPLAY);
@@ -328,17 +320,8 @@ void cut_selection_from_menu(void)
 void paste_selection_from_menu(snd_state *ss)
 {
   chan_info *cp;
-  finish_keyboard_selection();
   cp = selected_channel(ss);
   if (cp) paste_region(0,cp,"Edit: Paste");
-}
-
-void select_all_from_menu(snd_state *ss)
-{
-  chan_info *cp;
-  cp = current_channel(ss);
-  if (cp) define_region(cp,0,current_ed_samples(cp),CLEAR_MINIBUFFER);
-  map_over_chans(ss,update_graph,NULL);
 }
 
 void save_options_from_menu(snd_state *ss)
@@ -574,11 +557,10 @@ void set_channel_style(snd_state *ss, int val)
 }
 
 #if HAVE_GUILE
-#include "sg.h"
 
 static SCM output_name_hook;
 
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_HOOKS
 static char *output_name(void)
 {
   if (HOOKED(output_name_hook))
@@ -747,7 +729,7 @@ static SCM g_set_menu_sensitive(SCM menu, SCM label, SCM on)
 
 void g_init_menu(SCM local_doc)
 {
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_HOOKS
   output_name_hook = scm_create_hook(S_output_name_hook,0);
 #else
   output_name_hook = gh_define(S_output_name_hook,SCM_BOOL_F);

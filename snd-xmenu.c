@@ -140,19 +140,17 @@ static void Edit_Help_Callback(Widget w,XtPointer clientData,XtPointer callData)
 static void Edit_Cut_Callback(Widget w,XtPointer clientData,XtPointer callData) {cut_selection_from_menu();}
 static void Edit_Paste_Callback(Widget w,XtPointer clientData,XtPointer callData) {paste_selection_from_menu((snd_state *)clientData);}
 static void Edit_Save_As_Callback(Widget w,XtPointer clientData,XtPointer callData) {make_edit_save_as_dialog((snd_state *)clientData);}
-static void Edit_Select_All_Callback(Widget w,XtPointer clientData,XtPointer callData) {select_all_from_menu((snd_state *)clientData);}
+static void Edit_Select_All_Callback(Widget w,XtPointer clientData,XtPointer callData) {select_all(current_channel((snd_state *)clientData));}
 
 static void Edit_Undo_Callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
   snd_state *ss = (snd_state *)clientData;
-  finish_keyboard_selection();
   undo_edit_with_sync(current_channel(ss),1);
 }
 
 static void Edit_Redo_Callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
   snd_state *ss = (snd_state *)clientData;
-  finish_keyboard_selection();
   redo_edit_with_sync(current_channel(ss),1);
 }
 
@@ -166,7 +164,6 @@ static void Edit_Header_Callback(Widget w,XtPointer clientData,XtPointer callDat
 
 static void Edit_Play_Callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
-  finish_keyboard_selection();
   play_selection(IN_BACKGROUND);
 }
 
