@@ -4294,7 +4294,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
   snd_info *sp;
   snd_state *ss;
   int i;
-  off_t curlen, newlen;
+  off_t curlen = 0, newlen = 0;
   char *error = NULL;
   Float curamp;
   Float newamp[1];
@@ -4506,7 +4506,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
       break;
     case CP_TRANSFORM_NORMALIZATION:      
       if (XEN_INTEGER_P(on))
-	cp->transform_normalization = XEN_TO_SMALL_C_INT(on);
+	cp->transform_normalization = mus_iclamp(DONT_NORMALIZE, XEN_TO_SMALL_C_INT(on), NORMALIZE_GLOBALLY);
       else
 	if (XEN_FALSE_P(on))
 	  cp->transform_normalization = DONT_NORMALIZE;
@@ -4577,6 +4577,8 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
       /* if less than current, delete, else zero pad */
       curlen = CURRENT_SAMPLES(cp);
       newlen = XEN_TO_C_OFF_T_OR_ELSE(on, curlen);
+      if (newlen < 0)
+	mus_misc_error(S_setB S_frames, "invalid length", on);
       if (curlen > newlen)
 	{
 	  if (newlen > 0)
@@ -5677,7 +5679,9 @@ static XEN g_set_transform_normalization(XEN val, XEN snd, XEN chn)
   else
     {
       ss = get_global_state();
-      set_transform_normalization(ss, XEN_TO_C_INT_OR_ELSE(val, DEFAULT_TRANSFORM_NORMALIZATION));
+      set_transform_normalization(ss, mus_iclamp(DONT_NORMALIZE,
+						 XEN_TO_C_INT_OR_ELSE(val, DEFAULT_TRANSFORM_NORMALIZATION),
+						 NORMALIZE_GLOBALLY));
       return(C_TO_XEN_INT(transform_normalization(ss)));
     }
 }
@@ -6247,7 +6251,12 @@ If 'data' is a list of numbers, it is treated as an envelope."
 	      v = (vct *)XEN_OBJECT_REF(data);
 	      len = v->length;
 	    }
-	  else len = XEN_VECTOR_LENGTH(data);
+	  else 
+	    {
+	      if (XEN_VECTOR_P(data))
+		len = XEN_VECTOR_LENGTH(data);
+	      else mus_misc_error(S_graph, "data list element not vector or vct?", data);
+	    }
 	  if (lg->len[graph] != len)
 	    {
 	      if (lg->data[graph]) FREE(lg->data[graph]);

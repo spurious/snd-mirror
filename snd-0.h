@@ -76,6 +76,10 @@
   #define STATFS_ARGS 2
 #endif
 
+#if HAVE_RUBY
+  #undef _
+#endif
+
 #if ENABLE_NLS && HAVE_GETTEXT
   #include "gettext.h"
   #define _(String) gettext (String)
@@ -87,6 +91,19 @@
   #define textdomain(Domain)
   #define bindtextdomain(Package, Directory)
 #endif
+
+#ifdef PRId64
+/* this is needed because guile's libguile.h->tags.h->inttypes.h picks up
+   a version of PRId64 that doesn't work with gettext as advertised.
+*/
+  #undef PRId64
+#endif
+#if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
+  #define PRId64 "%lld"
+#else
+  #define PRId64 "%d"
+#endif
+
 
 #ifndef Float
   #define Float float

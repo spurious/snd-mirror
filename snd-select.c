@@ -721,15 +721,15 @@ static XEN g_mix_selection(XEN beg, XEN snd, XEN chn)
   #define H_mix_selection "(" S_mix_selection " beg snd chn) mixes the currently selected portion start at beg"
   chan_info *cp;
   snd_state *ss;
+  off_t obeg;
   if (selection_is_active())
     {
       ASSERT_CHANNEL(S_mix_selection, snd, chn, 2);
       XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_1, S_mix_selection, "a number");
       ss = get_global_state();
       cp = get_cp(snd, chn, S_mix_selection);
-      return(C_TO_XEN_INT(mix_selection(ss, cp, 
-					XEN_TO_C_OFF_T_OR_ELSE(beg, 0), 
-					S_mix_selection)));
+      obeg = beg_to_sample(beg, S_mix_selection);
+      return(C_TO_XEN_INT(mix_selection(ss, cp, obeg, S_mix_selection)));
     }
   return(snd_no_active_selection_error(S_mix_selection));
 }

@@ -5332,7 +5332,7 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_frame_add,      g_frame_add_w, 2, 1, 0,      H_frame_add);
   XEN_DEFINE_PROCEDURE(S_frame_multiply, g_frame_multiply_w, 2, 1, 0, H_frame_multiply);
 #if HAVE_GUILE
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_frame_ref, g_frame_ref_w, H_frame_ref, "set-" S_frame_ref, g_set_frame_ref_w,  2, 0, 3, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_frame_ref, g_frame_ref_w, H_frame_ref, S_setB S_frame_ref, g_set_frame_ref_w,  2, 0, 3, 0);
 #else
   XEN_DEFINE_PROCEDURE(S_frame_ref,      g_frame_ref_w, 2, 0, 0,      H_frame_ref);
 #endif
@@ -5343,7 +5343,7 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_mixer_p,        g_mixer_p_w, 1, 0, 0,        H_mixer_p);
   XEN_DEFINE_PROCEDURE(S_mixer_multiply, g_mixer_multiply_w, 2, 1, 0, H_mixer_multiply);
 #if HAVE_GUILE
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mixer_ref, g_mixer_ref_w, H_mixer_ref, "set-" S_mixer_ref, g_set_mixer_ref_w,  3, 0, 4, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mixer_ref, g_mixer_ref_w, H_mixer_ref, S_setB S_mixer_ref, g_set_mixer_ref_w,  3, 0, 4, 0);
 #else
   XEN_DEFINE_PROCEDURE(S_mixer_ref,      g_mixer_ref_w, 3, 0, 0,      H_mixer_ref);
 #endif
@@ -5408,7 +5408,7 @@ the closer the radius is to 1.0, the narrower the resonance."
   XEN_DEFINE_PROCEDURE(S_move_locsig,       g_move_locsig_w, 3, 0, 0,       H_move_locsig);
   XEN_DEFINE_PROCEDURE(S_mus_channels,      g_channels_w, 1, 0, 0,          H_mus_channels);
 #if HAVE_GUILE
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_locsig_ref, g_locsig_ref_w, H_locsig_ref, "set-" S_locsig_ref, g_locsig_set_w,  2, 0, 3, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_locsig_ref, g_locsig_ref_w, H_locsig_ref, S_setB S_locsig_ref, g_locsig_set_w,  2, 0, 3, 0);
 #else
   XEN_DEFINE_PROCEDURE(S_locsig_ref,        g_locsig_ref_w, 2, 0, 0,        H_locsig_ref);
 #endif
@@ -5450,7 +5450,7 @@ the closer the radius is to 1.0, the narrower the resonance."
   XEN_DEFINE_PROCEDURE(S_mus_close,        g_mus_close_w, 1, 0, 0,        H_mus_close);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_file_buffer_size, g_mus_file_buffer_size_w, H_mus_file_buffer_size,
-				   "set-" S_mus_file_buffer_size, g_mus_set_file_buffer_size_w,  0, 0, 1, 0);
+				   S_setB S_mus_file_buffer_size, g_mus_set_file_buffer_size_w,  0, 0, 1, 0);
 
 
   XEN_DEFINE_PROCEDURE(S_readin_p,    g_readin_p_w, 1, 0, 0,    H_readin_p);
@@ -5488,7 +5488,7 @@ the closer the radius is to 1.0, the narrower the resonance."
   XEN_DEFINE_PROCEDURE(S_pv_freqs,              g_pv_freqs_w, 1, 0, 0,            H_pv_freqs);
   XEN_DEFINE_PROCEDURE(S_pv_phases,             g_pv_phases_w, 1, 0, 0,           H_pv_phases);
   XEN_DEFINE_PROCEDURE(S_pv_phase_increments,   g_pv_phase_increments_w, 1, 0, 0, H_pv_phase_increments);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_pv_outctr, g_pv_outctr_w, H_pv_outctr, "set-" S_pv_outctr, g_pv_set_outctr_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_pv_outctr, g_pv_outctr_w, H_pv_outctr, S_setB S_pv_outctr, g_pv_set_outctr_w,  1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_hop, g_hop_w, H_mus_hop, S_mus_set_hop, g_set_hop_w,  1, 0, 2, 0);
 

@@ -1,7 +1,7 @@
 Snd change log
 
   5-Mar:     contrib/popup.rb from Michael Scholz.
-  4-Mar:     redo renamed redo_edit in Ruby version.
+  4-Mar:     redo renamed redo_edit in Ruby version, and in -> call_in.
   3-Mar:     contrib/effects.rb from Michael Scholz.
   1-Mar:     make-power-env and power-env in env.scm.
   28-Feb:    new-effects.scm bugfixes from Michael Scholz.

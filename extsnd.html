@@ -8576,7 +8576,8 @@ create Postscript description of current display.
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="gin">in</a></em> (ms thunk)</code></span></td></tr>
 <tr><td></td><td>
-<i>ms</i> milliseconds from now, evaluate <i>thunk</i>, a function of no arguments.
+<i>ms</i> milliseconds from now, evaluate <i>thunk</i>, a function of no arguments.  In Ruby, this
+is named "call_in".
 <pre><code>(in 5000 (lambda () (snd-print "boo!")))</code></pre>
 </td></tr>
 <tr><td></td><td>

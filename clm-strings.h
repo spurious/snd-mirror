@@ -57,8 +57,13 @@
 #define S_frame2frame                "frame->frame"
 #define S_frame2list                 "frame->list"
 #define S_frame2sample               "frame->sample"
-#define S_frame_add                  "frame+"
-#define S_frame_multiply             "frame*"
+#if HAVE_RUBY
+  #define S_frame_add                "frame_add"
+  #define S_frame_multiply           "frame_multiply"
+#else
+  #define S_frame_add                "frame+"
+  #define S_frame_multiply           "frame*"
+#endif
 #define S_frame_p                    "frame?"
 #define S_frame_ref                  "frame-ref"
 #define S_frame_set                  "frame-set!"
@@ -125,7 +130,11 @@
 #define S_make_wave_train            "make-wave-train"
 #define S_make_waveshape             "make-waveshape"
 #define S_make_zpolar                "make-zpolar"
-#define S_mixer_multiply             "mixer*"
+#if HAVE_RUBY
+  #define S_mixer_multiply           "mixer_multiply"
+#else
+  #define S_mixer_multiply           "mixer*"
+#endif
 #define S_mixer_p                    "mixer?"
 #define S_mixer_ref                  "mixer-ref"
 #define S_mixer_set                  "mixer-set!"

@@ -8457,12 +8457,6 @@ static XEN g_undo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
   return(C_TO_XEN_INT(1));
 }
 
-#if HAVE_RUBY
-  #define S_redo_edit "redo-edit"
-#else
-  #define S_redo_edit "redo"
-#endif
-
 static XEN g_redo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
 {
   #define H_redo "("  S_redo " &optional (count 1) snd chn) redoes 'count' edits in snd's channel chn"
@@ -9472,7 +9466,7 @@ void g_init_edits(void)
 #if HAVE_RUBY
   XEN_DEFINE_PROCEDURE("undo_edit",                 g_undo_w, 0, 3, 0,                      H_undo);
 #endif
-  XEN_DEFINE_PROCEDURE(S_redo_edit,                 g_redo_w, 0, 3, 0,                      H_redo);
+  XEN_DEFINE_PROCEDURE(S_redo,                      g_redo_w, 0, 3, 0,                      H_redo);
   XEN_DEFINE_PROCEDURE(S_as_one_edit,               g_as_one_edit_w, 1, 1, 0,               H_as_one_edit);
   XEN_DEFINE_PROCEDURE(S_display_edits,             g_display_edits_w, 0, 4, 0,             H_display_edits);
   XEN_DEFINE_PROCEDURE(S_edit_tree,                 g_edit_tree_w, 0, 3, 0,                 H_edit_tree);

@@ -41,7 +41,7 @@ off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback, const char *origin)
 #if HAVE_GUILE
   if ((XEN_NOT_FALSE_P(scm_integer_p(obj))) && XEN_EXACT_P(obj))
 #else
-  if (XEN_ULONG_P(obj))
+  if (XEN_OFF_T_P(obj))
 #endif
 #if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
     return(XEN_TO_C_LONG_LONG(obj));
@@ -286,7 +286,7 @@ static char *scheme_to_ruby(const char *name)
   len = strlen(name);
   if (len > 0)
     {
-      new_name = (char *)calloc(len + 2, sizeof(char)); /* +1 for possible _p, +1 for possible $ */
+      new_name = (char *)calloc(len + 3, sizeof(char)); /* +1 for possible _p, +1 for possible $ */
       for (i = 0, j = 0; i < len; i++)
 	{
 	  if (isalnum(name[i]))

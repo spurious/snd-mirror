@@ -230,7 +230,11 @@
 #define S_hide_widget                   "hide-widget"
 #define S_highlight_color               "highlight-color"
 #define S_html_dir                      "html-dir"
-#define S_in                            "in"
+#if HAVE_RUBY
+  #define S_in                          "call-in"
+#else
+  #define S_in                          "in"
+#endif
 #define S_initial_graph_hook            "initial-graph-hook"
 #define S_insert_region                 "insert-region"
 #define S_insert_sample                 "insert-sample"
@@ -407,7 +411,11 @@
 #define S_recorder_out_format           "recorder-out-format"
 #define S_recorder_srate                "recorder-srate"
 #define S_recorder_trigger              "recorder-trigger"
-#define S_redo                          "redo"
+#if HAVE_RUBY
+  #define S_redo                        "redo-edit"
+#else
+  #define S_redo                        "redo"
+#endif
 #define S_region_chans                  "region-chans"
 #define S_region_dialog                 "region-dialog"
 #define S_region_frames                 "region-frames"

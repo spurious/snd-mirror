@@ -57,49 +57,36 @@
 
 #include "sndlib.h"
 #include "clm.h"
-#include "snd-0.h"
 #include "xen.h"
-
-#if HAVE_GUILE
-/* this is needed because guile's linguile.h->tags.h->inttypes.h picks up
-   a version of PRId64 that doesn't work with gettext as advertised.
-*/
-  #undef PRId64
-  #if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
-    #define PRId64 "%lld"
-  #else
-    #define PRId64 "%d"
-  #endif
-#endif
-
 #include "sndlib2xen.h"
 #include "vct.h"
+#include "snd-0.h"
 
 #ifdef USE_MOTIF
   #include "snd-x0.h"
-#endif
-#if USE_GTK
-  #include "snd-g0.h"
-#endif
-#if USE_NO_GUI
-  #include "snd-nogui0.h"
+#else
+  #if USE_GTK
+    #include "snd-g0.h"
+  #else
+    #include "snd-nogui0.h"
+  #endif
 #endif
 
 #include "snd-1.h"
 
 #ifdef USE_MOTIF
   #include "snd-x1.h"
-#endif
-#if USE_GTK
-  #include "snd-g1.h"
-#endif
-#if USE_NO_GUI
-  #include "snd-nogui1.h"
+#else
+  #if USE_GTK
+    #include "snd-g1.h"
+  #else
+    #include "snd-nogui1.h"
+  #endif
 #endif
 
 #include "snd-strings.h"
 
-#define SND_VERSION "7-Mar-03"
+#define SND_VERSION "8-Mar-03"
 #define SND_RPM_VERSION "6.7"
 #define SND_MAJOR_VERSION 6
 #define SND_MINOR_VERSION 7
