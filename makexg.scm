@@ -131,7 +131,7 @@
 	"GtkTreeDragSource*" "GtkTreeModel**" "GtkTreeModelFilter*" "GtkTreeModelSort*" "GtkTreeSortable*" "GtkUIManagerItemType"
 	"GtkViewport*" "PangoAnalysis*" "PangoAttrList**" "PangoFontDescription**" "PangoFontFace*" "PangoFontMap*" "PangoRectangle*"
 	"gchar***" "gfloat*" "gint8*" "gsize" "gssize" "guint16*" "guint8*" "gunichar*"
-	"GtkCellView*" "GValue*" "GtkAboutDialog*"
+	"GtkCellView*" "GValue*" "GtkAboutDialog*" "PangoAttrFilterFunc" "PangoFontFamily*" "PangoScript*"
 	))
 
 (define no-xen-p 

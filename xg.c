@@ -882,7 +882,7 @@ XM_TYPE_PTR_2(GArray_, GArray*)
 #if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND
 XM_TYPE_PTR(PangoEngineInfo_, PangoEngineInfo*)
 XM_TYPE_PTR(PangoEngine_, PangoEngine*)
-XM_TYPE_PTR(PangoFontFamily_, PangoFontFamily*)
+XM_TYPE_PTR_1(PangoFontFamily_, PangoFontFamily*)
 XM_TYPE_PTR(PangoFontFace__, PangoFontFace**)
 #endif
 
@@ -952,12 +952,12 @@ XM_TYPE_PTR_1(GtkAboutDialog_, GtkAboutDialog*)
 #define C_TO_XEN_PangoEllipsizeMode(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_PangoEllipsizeMode(Arg) (PangoEllipsizeMode)(XEN_TO_C_INT(Arg))
 #define XEN_PangoEllipsizeMode_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(PangoAttrFilterFunc, PangoAttrFilterFunc)
+XM_TYPE_1(PangoAttrFilterFunc, PangoAttrFilterFunc)
 XM_TYPE_PTR(PangoMatrix_, PangoMatrix*)
-XM_TYPE_PTR(PangoFontFamily_, PangoFontFamily*)
+XM_TYPE_PTR_1(PangoFontFamily_, PangoFontFamily*)
 XM_TYPE(PangoScript, PangoScript)
 XM_TYPE_PTR(PangoScriptIter_, PangoScriptIter*)
-XM_TYPE_PTR(PangoScript_, PangoScript*)
+XM_TYPE_PTR_1(PangoScript_, PangoScript*)
 #endif
 
 #define XLS(a, b) XEN_TO_C_gchar_(XEN_LIST_REF(a, b))
@@ -30550,6 +30550,7 @@ static void define_integers(void)
   DEFINE_INTEGER(PANGO_DIRECTION_WEAK_LTR);
   DEFINE_INTEGER(PANGO_DIRECTION_WEAK_RTL);
   DEFINE_INTEGER(PANGO_DIRECTION_NEUTRAL);
+  DEFINE_INTEGER(GTK_TREE_SORTABLE_DEFAULT_SORT_COLUMN_ID);
 #endif
 
   DEFINE_ULONG(GDK_TYPE_PIXBUF);
@@ -31069,10 +31070,10 @@ static bool xg_already_inited = false;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"07-Aug-04\")");
+      XEN_EVAL_C_STRING("(define xm-version \"08-Aug-04\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("07-Aug-04"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("08-Aug-04"));
 #endif
       xg_already_inited = true;
 #if WITH_GTK_AND_X11

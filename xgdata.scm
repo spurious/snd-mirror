@@ -5254,3 +5254,5 @@
 (CFNC-251 "void pango_script_iter_free PangoScriptIter* iter")
 (CFNC-251 "PangoLanguage* pango_script_get_sample_language PangoScript script")
 (CFNC-251 "gboolean pango_language_includes_script PangoLanguage* language PangoScript script")
+
+(CINT-251 "GTK_TREE_SORTABLE_DEFAULT_SORT_COLUMN_ID" "void")
