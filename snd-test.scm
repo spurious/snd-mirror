@@ -65,7 +65,7 @@
 (define with-exit (< snd-test 0))
 (set! (with-background-processes) #f)
 (define all-args #f) ; huge arg testing
-(define with-big-file #t)
+(define with-big-file #f)
 (define have-libguile-so #t) ; set to #f if loading libguile.a
 (define debugging-device-channels 8)
 (define pi 3.141592653589793)
@@ -22540,7 +22540,7 @@ EDITS: 5
 		  (XmTabListFree tabl)))
 
 	      (let ((hname (host-name))) ; from snd-motif.scm
-		(IF (and (not (string=? hname "vulch"))
+		(IF (and (not (string=? hname "fatty"))
 			 (not (string=? hname "goggle")))
 		    (snd-display ";host name appears to be ~A" hname)))
 	      (let ((blu (x->snd-color "blue")))

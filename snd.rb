@@ -34,7 +34,7 @@ end
 # ---------------------------------------- test 0 ----------------------------------------
 
 if Enved_amplitude != 0 then snd_display sprintf("\n# Enved_amplitude => %d", Enved_amplitude) end
-if Autocorrelation != 4 then snd_display sprintf("\n# Autocorrelation => %d", Autocorrelation) end
+if Autocorrelation != 3 then snd_display sprintf("\n# Autocorrelation => %d", Autocorrelation) end
 if Bartlett_window != 4 then snd_display sprintf("\n# Bartlett_window => %d", Bartlett_window) end
 if Blackman2_window != 6 then snd_display sprintf("\n# Blackman2_window => %d", Blackman2_window) end
 if Blackman3_window != 7 then snd_display sprintf("\n# Blackman3_window => %d", Blackman3_window) end
@@ -43,13 +43,11 @@ if Cauchy_window != 12 then snd_display sprintf("\n# Cauchy_window => %d", Cauch
 if Channels_combined != 1 then snd_display sprintf("\n# Channels_combined => %d", Channels_combined) end
 if Channels_separate != 0 then snd_display sprintf("\n# Channels_separate => %d", Channels_separate) end
 if Channels_superimposed != 2 then snd_display sprintf("\n# Channels_superimposed => %d", Channels_superimposed) end
-if Chebyshev_transform != 5 then snd_display sprintf("\n# Chebyshev_transform => %d", Chebyshev_transform) end
+if Chebyshev_transform != 4 then snd_display sprintf("\n# Chebyshev_transform => %d", Chebyshev_transform) end
 if Cursor_in_middle != 3 then snd_display sprintf("\n# Cursor_in_middle => %d", Cursor_in_middle) end
 if Cursor_in_view != 0 then snd_display sprintf("\n# Cursor_in_view => %d", Cursor_in_view) end
-if Cursor_no_action != 5 then snd_display sprintf("\n# Cursor_no_action => %d", Cursor_no_action) end
 if Cursor_on_left != 1 then snd_display sprintf("\n# Cursor_on_left => %d", Cursor_on_left) end
 if Cursor_on_right != 2 then snd_display sprintf("\n# Cursor_on_right => %d", Cursor_on_right) end
-if Cursor_update_display != 4 then snd_display sprintf("\n# Cursor_update_display => %d", Cursor_update_display) end
 if Dolph_chebyshev_window != 16 then snd_display sprintf("\n# Dolph_chebyshev_window => %d", Dolph_chebyshev_window) end
 if Exponential_window != 9 then snd_display sprintf("\n# Exponential_window => %d", Exponential_window) end
 if Zoom_focus_active != 2 then snd_display sprintf("\n# Zoom_focus_active => %d", Zoom_focus_active) end
@@ -63,14 +61,14 @@ if Graph_dots_and_lines != 3 then snd_display sprintf("\n# Graph_dots_and_lines 
 if Graph_filled != 2 then snd_display sprintf("\n# Graph_filled => %d", Graph_filled) end
 if Graph_lines != 0 then snd_display sprintf("\n# Graph_lines => %d", Graph_lines) end
 if Graph_lollipops != 4 then snd_display sprintf("\n# Graph_lollipops => %d", Graph_lollipops) end
-if Hadamard_transform != 7 then snd_display sprintf("\n# Hadamard_transform => %d", Hadamard_transform) end
-if Haar_transform != 8 then snd_display sprintf("\n# Haar_transform => %d", Haar_transform) end
+if Hadamard_transform != 6 then snd_display sprintf("\n# Hadamard_transform => %d", Hadamard_transform) end
+if Haar_transform != 7 then snd_display sprintf("\n# Haar_transform => %d", Haar_transform) end
 if Hamming_window != 5 then snd_display sprintf("\n# Hamming_window => %d", Hamming_window) end
-if Hankel_transform != 2 then snd_display sprintf("\n# Hankel_transform => %d", Hankel_transform) end
+if Hankel_transform != 8 then snd_display sprintf("\n# Hankel_transform => %d", Hankel_transform) end
 if Hanning_window != 1 then snd_display sprintf("\n# Hanning_window => %d", Hanning_window) end
 if Kaiser_window != 11 then snd_display sprintf("\n# Kaiser_window => %d", Kaiser_window) end
-if Keyboard_no_action != 6 then snd_display sprintf("\n# Keyboard_no_action => %d", Keyboard_no_action) end
-if Cepstrum != 6 then snd_display sprintf("\n# Cepstrum => %d", Cepstrum) end
+if Keyboard_no_action != 4 then snd_display sprintf("\n# Keyboard_no_action => %d", Keyboard_no_action) end
+if Cepstrum != 5 then snd_display sprintf("\n# Cepstrum => %d", Cepstrum) end
 if Graph_transform_once != 0 then snd_display sprintf("\n# Graph_transform_once => %d", Graph_transform_once) end
 if Parzen_window != 3 then snd_display sprintf("\n# Parzen_window => %d", Parzen_window) end
 if Poisson_window != 13 then snd_display sprintf("\n# Poisson_window => %d", Poisson_window) end
@@ -86,7 +84,7 @@ if Speed_control_as_ratio != 1 then snd_display sprintf("\n# Speed_control_as_ra
 if Speed_control_as_semitone != 2 then snd_display sprintf("\n# Speed_control_as_semitone => %d", Speed_control_as_semitone) end
 if Enved_srate != 2 then snd_display sprintf("\n# Enved_srate => %d", Enved_srate) end
 if Tukey_window != 15 then snd_display sprintf("\n# Tukey_window => %d", Tukey_window) end
-if Walsh_transform != 3 then snd_display sprintf("\n# Walsh_transform => %d", Walsh_transform) end
+if Walsh_transform != 2 then snd_display sprintf("\n# Walsh_transform => %d", Walsh_transform) end
 if Wavelet_transform != 1 then snd_display sprintf("\n# Wavelet_transform => %d", Wavelet_transform) end
 if Welch_window != 2 then snd_display sprintf("\n# Welch_window => %d", Welch_window) end
 if Cursor_cross != 0 then snd_display sprintf("\n# Cursor_cross => %d", Cursor_cross) end
@@ -194,7 +192,7 @@ if channel_style != 0 then snd_display sprintf("\n# channel_style: %s", channel_
 if fneq(color_cutoff, 0.003) then snd_display sprintf("\n# color_cutoff: %s", color_cutoff) end
 if color_inverted != true then snd_display sprintf("\n# color_inverted: %s", color_inverted) end
 if color_scale != 1.0 then snd_display sprintf("\n# color_scale: %s", color_scale) end
-if colormap != -1 then snd_display sprintf("\n# colormap: %s", colormap) end
+if colormap != 2 then snd_display sprintf("\n# colormap: %s", colormap) end
 if auto_update_interval != 60.0 then snd_display sprintf("\n# auto_update_interval: %s", auto_update_interval) end
 if dac_combines_channels != true then snd_display sprintf("\n# dac_combines_channels: %s", dac_combines_channels) end
 if emacs_style_save_as != false then snd_display sprintf("\n# emacs_style_save_as: %s", emacs_style_save_as) end
@@ -237,7 +235,6 @@ if listener_prompt != ">" then snd_display sprintf("\n# listener_prompt: %s", li
 if max_transform_peaks != 100 then snd_display sprintf("\n# max_transform_peaks: %s", max_transform_peaks) end
 if max_regions != 16 then snd_display sprintf("\n# max_regions: %s", max_regions) end
 if min_dB != -60.0 then snd_display sprintf("\n# min_dB: %s", min_dB) end
-if movies != true then snd_display sprintf("\n# movies: %s", movies) end
 if selection_creates_region != true then snd_display sprintf("\n# selection_creates_region: %s", selection_creates_region) end
 if transform_normalization != Normalize_transform_by_channel then snd_display sprintf("\n# transform_normalization: %s", transform_normalization) end
 if previous_files_sort != 0 then snd_display sprintf("\n# previous_files_sort: %s", previous_files_sort) end
@@ -287,14 +284,14 @@ if time_graph_type != Graph_time_once then snd_display sprintf("\n# time_graph_t
 if wavo_hop != 3 then snd_display sprintf("\n# wavo_hop: %s", wavo_hop) end
 if wavo_trace != 64 then snd_display sprintf("\n# wavo_trace: %s", wavo_trace) end
 if x_axis_style != 0 then snd_display sprintf("\n# x_axis_style: %s", x_axis_style) end
-if beats_per_minute != 60.0 then snd_display sprintf("\n# beats_per_minute: %s", beats_per_minute) end
+if beats_per_minute != 60.0 then snd_display sprintf("\n# beats_per_minute 60: %s", beats_per_minute) end
 if zero_pad != 0 then snd_display sprintf("\n# zero_pad: %s", zero_pad) end
 if zoom_focus_style != 2 then snd_display sprintf("\n# zoom_focus_style: %s", zoom_focus_style) end
 if mix_waveform_height != 20 then snd_display sprintf("\n# mix_waveform_height: %s", mix_waveform_height) end
 if mix_tag_width != 6 then snd_display sprintf("\n# mix_tag_width: %s", mix_tag_width) end
 if mix_tag_height != 14 then snd_display sprintf("\n# mix_tag_height: %s", mix_tag_height) end
 if audio_output_device != 0 then snd_display sprintf("\n# audio_output_device: %s", audio_output_device) end
-if selected_mix != -1 then snd_display sprintf("\n# selected_mix: %s", selected_mix) end
+if selected_mix != false then snd_display sprintf("\n# selected_mix: %s", selected_mix) end
 
 # ---------------------------------------- test 2 ----------------------------------------
 
@@ -525,9 +522,6 @@ test_headers("zulu_a4.w11", 1, 33000, 1.21987879276276, "TX-16W", "unsupported")
 
 oboe = open_sound "oboe.snd"
 td = temp_dir     
-set_temp_dir "/hoho/wasup"
-if temp_dir != "/hoho/wasup" then snd_print sprintf("# temp_dir: %s?\n", temp_dir) end
-set_temp_dir td
 if (sample(1000) - 0.0328).abs > .001 then snd_print sprintf("# sample: %s\n", sample(1000)); end
 set_show_controls true
 if not provided? "snd-nogui" then
@@ -804,10 +798,6 @@ set_mix_tag_width 20
 if mix_tag_width !=  20 then snd_display sprintf("\n# mix_tag_width: %s", mix_tag_width) end
 set_mix_tag_width 6 
 if mix_tag_width != 6 then snd_display sprintf("\n# mix_tag_width: %s", mix_tag_width) end
-set_movies false
-if movies !=  false then snd_display sprintf("\n# movies: %s", movies) end
-set_movies true 
-if movies != true then snd_display sprintf("\n# movies: %s", movies) end
 set_selection_creates_region false
 if selection_creates_region !=  false then snd_display sprintf("\n# selection_creates_region: %s", selection_creates_region) end
 set_selection_creates_region true 
@@ -1013,9 +1003,9 @@ if x_axis_style !=  1 then snd_display sprintf("\n# x_axis_style: %s", x_axis_st
 set_x_axis_style 0 
 if x_axis_style != 0 then snd_display sprintf("\n# x_axis_style: %s", x_axis_style) end
 set_beats_per_minute 120.0
-if fneq(beats_per_minute, 120.0) then snd_display sprintf("\n# beats_per_minute: %s", beats_per_minute) end
+if fneq(beats_per_minute, 120.0) then snd_display sprintf("\n# beats_per_minute 120: %s", beats_per_minute) end
 set_beats_per_minute 30.0 
-if fneq(beats_per_minute, 30.0) then snd_display sprintf("\n# beats_per_minute: %s", beats_per_minute) end
+if fneq(beats_per_minute, 30.0) then snd_display sprintf("\n# beats_per_minute 30: %s", beats_per_minute) end
 set_zero_pad 1
 if zero_pad !=  1 then snd_display sprintf("\n# zero_pad: %s", zero_pad) end
 set_zero_pad 0 
@@ -1036,7 +1026,7 @@ v1 = make_vct 10
 if v0 == 10 then snd_display "v0 is 10?!?" end
 vlst = make_vct 3
 if not vct?(v0) then snd_display "v0 isn't a vct?!?" end
-if vct_length(v0) != 10 then snd_display sprintf("\n#v0 length = %d?", vct_length v0) end
+if vct_length(v0) != 10 then snd_display sprintf("\n#v0 length = %d?", vct_length(v0)) end
 vct_fill!(v0, 1.0)
 vct_fill!(v1, 0.5)
 if v0 == v1 then snd_display sprintf("\n#vct equal? %s %s", v0, v1) end
@@ -1112,31 +1102,7 @@ vct_map!(v, Proc.new {||
                       if (ctr < 3) then ctr else 0 end
 		     })
 if !(vequal(v, vct(1.0, 2.0, 0.0, 0.0))) then snd_display sprintf("\n# vct_map! with symbol: %s", v) end
-vct_fill!(v, 10.0)
 ctr = 0
-vct_do!(v, Proc.new {|n|
-                     ctr = ctr + 1
-                     if (ctr < 3) then n else 10 end
-		    })
-if !(vequal(v, vct(0.0, 1.0, 10.0, 10.0))) then snd_display sprintf("\n# vct_do! with symbol: %s", v) end
-vct_fill!(v, 10.0)
-vct_fill!(vv, 10.0)
-ctr = 0
-vcts_map!(v, vv, Proc.new { |len|
-                            ctr = ctr + 1
-                            if (ctr < 3) then [ctr, ctr + 1] else [10.0, 10.0] end
-                          })
-if !(vequal(v, vct(1.0, 2.0, 10.0, 10.0))) then snd_display sprintf("\n# vcts_do! with symbol (1): %s", v) end
-if !(vequal(vv, vct(2.0, 3.0, 10.0, 10.0))) then snd_display sprintf("\n# vcts_do! with symbol (2): %s", vv) end
-vct_fill!(v, 10.0)
-vct_fill!(vv, 10.0)
-ctr = 0
-vcts_do!(v, vv, Proc.new { |len, n|
-		 	   ctr = ctr + 1
-                           if (ctr < 3) then [n, n + 1] else [10.0, 10.0] end
-                          })
-if !(vequal(v, vct(0.0, 1.0, 10.0, 10.0))) then snd_display sprintf("\n# vcts_do! with symbol (1): %s", v) end
-if !(vequal(vv, vct(1.0, 2.0, 10.0, 10.0))) then snd_display sprintf("\n# vcts_do! with symbol (2): %s", vv) end
 v0 = make_vct 10
 v1 = make_vct 10
 vct_fill!(v0, 1.0)

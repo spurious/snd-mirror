@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 16
-#define MUS_DATE "16-Aug-02"
+#define MUS_REVISION 17
+#define MUS_DATE "19-Aug-02"
 
 /* 
+ * 10-Aug:     changed a couple "temporary" internal phase-vocoder array accessor names
  * 13-Aug:     added set! (*-ref) for frame, locsig, mixer, locsig-reverb.
  * 29-Jul:     added various *_1 cases for the optimizer.
  * 15-Jul:     mus_continue_sample2file.
@@ -558,13 +559,12 @@ mus_any *mus_make_phase_vocoder PROTO((Float (*input)(void *arg, int direction),
 				       void *environ));
 Float mus_phase_vocoder         PROTO((mus_any *ptr, Float (*input)(void *arg, int direction)));
 
-/* temporary names -- can't immediately think of better ones */
-Float *mus_phase_vocoder_ampinc PROTO((void *ptr));
+Float *mus_phase_vocoder_amp_increments PROTO((void *ptr));
 Float *mus_phase_vocoder_amps   PROTO((void *ptr));
 Float *mus_phase_vocoder_freqs  PROTO((void *ptr));
 Float *mus_phase_vocoder_phases PROTO((void *ptr));
-Float *mus_phase_vocoder_phaseinc PROTO((void *ptr));
-Float *mus_phase_vocoder_lastphase PROTO((void *ptr));
+Float *mus_phase_vocoder_phase_increments PROTO((void *ptr));
+Float *mus_phase_vocoder_previous_phases PROTO((void *ptr));
 int mus_phase_vocoder_outctr    PROTO((void *ptr));
 int mus_phase_vocoder_set_outctr PROTO((void *ptr, int val));
 

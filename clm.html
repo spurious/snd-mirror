@@ -2061,10 +2061,7 @@ loop to pan between speakers (but see move-locsig below):</p>
 	       (rdA (make-readin :file f))
 	       (dist-env (make-env distance-env :duration duration))
 	       (amp-env (make-env amplitude-env :duration duration))
-	       (deg-env (make-env (loop for x in degree-env by #'cddr and
-					    y in (cdr degree-env) by #'cddr 
-				    collect x collect (/ y 90)))
-				:duration duration)
+               (deg-env (make-env (scale-envelope degree-env (/ 1.0 90.0)) :duration duration))
 	       (dist-scaler 0.0))
 	  (run
 	   (loop for i from beg below end do
@@ -2073,7 +2070,7 @@ loop to pan between speakers (but see move-locsig below):</p>
 		   (distval (env dist-env)))
 	       (setf dist-scaler (/ 1.0 distval))
 	       (setf (<em class=red>locsig-ref</em> loc 0) (* (- 1.0 degval) dist-scaler))
-	       (setf (<em class=red>locsig-ref</em> loc 1) (* degval dist-scaler))
+               (if (> (mus-channels *output*) 1) (setf (<em class=red>locsig-ref</em> loc 1) (* degval dist-scaler)))
 	       (when *reverb* 
                  (setf (<em class=red>locsig-reverb-ref</em> loc 0) (* reverb-amount (sqrt dist-scaler))))
 	       (<em class=red>locsig</em> loc i rdval)))))
