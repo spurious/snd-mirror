@@ -15,7 +15,7 @@
 #endif
       
 
-#define NUM_COMMANDS 748
+#define NUM_COMMANDS 750
 
 static char *snd_commands[NUM_COMMANDS]={
   S_abort,S_abortQ,S_activate_listener,S_add_mark,S_add_sound_file_extension,S_add_to_main_menu,S_add_to_menu,S_add_transform,
@@ -103,7 +103,7 @@ static char *snd_commands[NUM_COMMANDS]={
   S_restore_marks,S_restore_region,S_reverb_decay,S_reverb_feedback,S_reverb_funcs,S_reverb_length,S_reverb_lowpass,S_reverb_scale,
   S_reverbing,S_reverse_selection,S_reverse_sound,S_revert_sound,S_right_sample,
 
-  S_sample,S_sample_reader_at_endQ,S_sample_readerQ,S_samples,S_samples2sound_data,S_samples_vct,
+  S_sample,S_sample_reader_at_endQ,S_sample_readerQ,S_samples,S_samples2sound_data,S_samples_vct,S_sash_color,
   S_save_control_panel,S_save_dir,S_save_edit_history,S_save_envelopes,S_save_hook,
   S_save_macros,S_save_marks,S_save_multifile_sound_hook,S_save_options,
   S_save_region,S_save_selection,S_save_sound,S_save_sound_as,S_save_state,S_save_state_file,
@@ -146,7 +146,7 @@ static char *snd_commands[NUM_COMMANDS]={
   S_set_recorder_in_format,S_set_recorder_max_duration,S_set_recorder_out_amp,S_set_recorder_out_chans,
   S_set_recorder_out_format,S_set_recorder_srate,S_set_recorder_trigger,
   S_set_reverb_decay,S_set_reverb_feedback,S_set_reverb_funcs,S_set_reverb_length,S_set_reverb_lowpass,S_set_reverb_scale,S_set_reverbing,
-  S_set_right_sample,S_set_sample,S_set_samples,
+  S_set_right_sample,S_set_sample,S_set_samples,S_set_sash_color,
   S_set_save_dir,S_set_save_state_file,S_set_save_state_on_exit,
   S_set_selected_data_color,S_set_selected_graph_color,S_set_selection_color,S_set_show_axes,
   S_set_show_fft_peaks,S_set_show_indices,S_set_show_marks,S_set_show_mix_consoles,S_set_show_mix_waveforms,

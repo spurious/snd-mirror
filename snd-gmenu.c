@@ -1130,7 +1130,10 @@ void create_popup_menu(snd_state *ss, guint button, guint32 time)
       gtk_window_set_position (GTK_WINDOW(popup_menu), GTK_WIN_POS_MOUSE);
       gtk_signal_connect(GTK_OBJECT(popup_menu),"button_release_event",GTK_SIGNAL_FUNC(Popup_Dismiss_Callback),(gpointer)ss);
       gtk_signal_connect(GTK_OBJECT(popup_menu),"delete_event",GTK_SIGNAL_FUNC(Popup_Destroy_Callback),(gpointer)ss);
-			 
+      /*
+      gtk_widget_set_app_paintable (GTK_WIDGET (popup_menu), TRUE);
+      gtk_widget_realize (popup_menu);
+      */
       m5 = gtk_vbox_new(FALSE,0); /* not homogenous, spacing 0 */
       gtk_container_add(GTK_CONTAINER(popup_menu),m5);
       set_background(m5,(ss->sgx)->basic_color);
@@ -1201,9 +1204,12 @@ static gint middle_button_press (GtkWidget *widget, GdkEvent *bevent, gpointer d
   return(FALSE);
 }
 
-void init_popup(void)
+static void init_popup(void)
 {
-   gtk_signal_connect(GTK_OBJECT(MAIN_SHELL(ss)),"button_press_event",GTK_SIGNAL_FUNC(middle_button_press),(gpointer)ss); 
+  snd_state *ss;
+  ss = get_global_state();
+  gtk_widget_add_events (MAIN_SHELL(ss),gtk_widget_get_events(MAIN_SHELL(ss)) | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK);
+  gtk_signal_connect(GTK_OBJECT(MAIN_SHELL(ss)),"button_press_event",GTK_SIGNAL_FUNC(middle_button_press),(gpointer)ss); 
 }
 #endif
 

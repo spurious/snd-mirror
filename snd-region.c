@@ -1689,12 +1689,13 @@ static SCM g_delete_region (SCM n)
 static SCM g_play_region (SCM n, SCM wait) 
 {
   #define H_play_region "(" S_play_region " &optional (n 0) (wait #f)) play region n, if wait is #t, play to end before returning"
-  int rg;
+  int rg,wt=0;
   ERRB1(n,S_play_region); 
   ERRB2(wait,S_play_region);
   rg = g_scm2intdef(n,0);
+  if (SCM_TRUE_P(wait)) wt = 1; else wt = g_scm2intdef(n,0);
   if (region_ok(rg))
-    play_region(get_global_state(),rg,NULL,g_scm2intdef(wait,0));
+    play_region(get_global_state(),rg,NULL,wt);
   else return(scm_throw(NO_SUCH_REGION,SCM_LIST2(gh_str02scm(S_play_region),n)));
   return(n);
 }

@@ -5845,7 +5845,7 @@ static char *key_to_name(int keysym) {if (keysym) return(KEY_TO_NAME(keysym)); e
 
 int keyboard_command (chan_info *cp, int keysym, int state)
 {
-  /* we can't use the meta bit in most cases because this is trapped at a higher level for the Menu mnemonics */
+  /* we can't use the meta bit in some cases because this is trapped at a higher level for the Menu mnemonics */
   /* state here is the kbd bucky-bit state */
   /* keysym has Shift taken into account already (see snd-xchn.c XKeycodeToKeysym, and same snd-xsnd.c) */
   static int number_ctr = 0;
@@ -6148,7 +6148,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
   else
     {
       if (!extended_mode)
-	{ /* no control/meta, not extended mode -- bare alpha chars sent to listener if possible */
+	{ /* no control (but possibly meta), not extended mode -- bare alpha chars sent to listener if possible */
 	  switch (keysym)
 	    {
 	    case snd_K_0: case snd_K_1: case snd_K_2: case snd_K_3: case snd_K_4:
@@ -7675,6 +7675,22 @@ static SCM cp_iread(SCM snd_n, SCM chn_n, int fld, char *caller)
   return(SCM_BOOL_F);
 }
 
+static int g_scm2boolintdef(SCM obj, int fallback)
+{
+  if (SCM_INUMP(obj))
+    return(SCM_INUM(obj));
+  else
+    if (gh_number_p(obj))
+      return((int)scm_num2dbl(obj,"g_scm2intdef"));
+    else
+      if (SCM_FALSEP(obj))
+	return(0);
+      else 
+	if (SCM_TRUE_P(obj))
+	  return(1);
+  return(fallback);
+}
+
 static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
 {
   chan_info *cp;
@@ -7739,7 +7755,7 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
 	    case CP_FFT_STYLE: cp->fft_style = g_scm2intdef(on,DEFAULT_FFT_STYLE); calculate_fft(cp,NULL); RTNINT(cp->fft_style); break;
 	    case CP_FFT_WINDOW: cp->fft_window = g_scm2intdef(on,DEFAULT_FFT_WINDOW); calculate_fft(cp,NULL); RTNINT(cp->fft_window); break;
 	    case CP_TRANSFORM_TYPE: cp->transform_type = g_scm2intdef(on,DEFAULT_TRANSFORM_TYPE); calculate_fft(cp,NULL); RTNINT(cp->transform_type); break;
-	    case CP_NORMALIZE_FFT: cp->normalize_fft = g_scm2intdef(on,DEFAULT_NORMALIZE_FFT); calculate_fft(cp,NULL); RTNINT(cp->normalize_fft); break;
+	    case CP_NORMALIZE_FFT: cp->normalize_fft = g_scm2boolintdef(on,DEFAULT_NORMALIZE_FFT); calculate_fft(cp,NULL); RTNINT(cp->normalize_fft); break;
 	    case CP_SHOW_MIX_CONSOLES: cp->show_mix_consoles = bool_int_or_one(on); update_graph(cp,NULL); RTNBOOL(cp->show_mix_consoles); break;
 	    case CP_SHOW_MIX_WAVEFORMS: cp->show_mix_waveforms = bool_int_or_one(on); update_graph(cp,NULL); RTNBOOL(cp->show_mix_waveforms); break;
 	    case CP_GRAPH_STYLE: cp->graph_style = g_scm2intdef(on,DEFAULT_GRAPH_STYLE); update_graph(cp,NULL); RTNINT(cp->graph_style); break;

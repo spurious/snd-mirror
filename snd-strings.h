@@ -625,6 +625,7 @@
 #define S_samples                       "samples"
 #define S_samples_vct                   "samples->vct"
 #define S_samples2sound_data            "samples->sound-data"
+#define S_sash_color                    "sash-col" STR_OR
 #define S_save_control_panel            "save-control-panel"
 #define S_save_dir                      "save-dir"
 #define S_save_edit_history             "save-edit-history"
@@ -811,6 +812,7 @@
 #define S_set_right_sample              "set-right-sample"
 #define S_set_sample                    "set-sample"
 #define S_set_samples                   "set-samples"
+#define S_set_sash_color                "set-sash-col" STR_OR
 #define S_set_save_dir                  "set-save-dir"
 #define S_set_save_state_file           "set-save-state-file"
 #define S_set_save_state_on_exit        "set-save-state-on-exit"

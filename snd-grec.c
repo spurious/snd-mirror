@@ -1,3 +1,11 @@
+/* TODO: buttons that choose which devices to display are no-ops
+ *       vu meter frames aren't filled by the vu meter pixmaps
+ *       icons cause vertical sliders to be wrong length
+ *       vertical slider labels aren't centered correctly
+ *       vu-button box (if > 2 chans) place sliders as they're chosen, not in chan order
+ *       message pane is too big
+ */
+
 #include "snd.h"
 #include "snd-rec.h"
 
@@ -1374,7 +1382,7 @@ static void make_reset_button(snd_state *ss, PANE *p, GtkWidget *btab);
 static GtkWidget *make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Float meter_size,
 			      int input, int overall_input_ctr, int vu_meters, GtkWidget *vuh);
 static void make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE *p, 
-					     int num_gains, int gain_ctr, int *mixflds, int input, int last_device, GtkWidget *gv);
+					     int num_gains, int gain_ctr, int *mixflds, int input, GtkWidget *gv);
 static void make_vu_meters(snd_state *ss, PANE *p, int vu_meters,
 			   int overall_input_ctr, Float meter_size, int input, GtkWidget *vuh);
 
@@ -1399,7 +1407,6 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, GtkWidget *paned_window
   Float meter_size;
   state_context *sx;
   int mixflds[MAX_AUDIO_FIELD];
-  int last_device;
   static int gain_ctr = 0;
   static int overall_input_ctr = 0;
 
@@ -1409,10 +1416,6 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, GtkWidget *paned_window
   p->system = system;
   p->ss = ss;
   vu_meters = recorder_check_device(system,device,mixer_gains_posted,tone_controls_posted,mixflds,&num_gains,&input);
-
-#if (HAVE_OSS || HAVE_ALSA)
-  last_device = MUS_AUDIO_MICROPHONE;
-#endif
 
   if (input) 
     {
@@ -1486,7 +1489,7 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, GtkWidget *paned_window
 
   if (num_gains > 0)
     {
-      make_vertical_gain_sliders(ss,rp,p,num_gains,gain_ctr,mixflds,input,last_device,gv);
+      make_vertical_gain_sliders(ss,rp,p,num_gains,gain_ctr,mixflds,input,gv);
       gain_ctr += num_gains;
     }
 
@@ -1560,14 +1563,14 @@ static void make_vu_meters(snd_state *ss, PANE *p, int vu_meters,
 }
 
 static void make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE *p, 
-					     int num_gains, int gain_ctr, int *mixflds, int input, int in_last_device, GtkWidget *gv)
+					     int num_gains, int gain_ctr, int *mixflds, int input, GtkWidget *gv)
 {
   int i,chan,this_device=0,last_device=0;
   GtkWidget *sbox,*slabel,*spix;
   Float vol;
   Wdesc *wd;
 
-  last_device = in_last_device;
+  last_device = -1;
 
   for (i=0,chan=num_gains-1;i<num_gains;i++,chan--)
     {
@@ -2096,6 +2099,7 @@ void snd_record_file(snd_state *ss)
       gtk_widget_show(help_button);
 
       rec_panes = gtk_vpaned_new();
+      set_backgrounds(rec_panes,(ss->sgx)->sash_color);
       gtk_container_add(GTK_CONTAINER(GTK_DIALOG(recorder)->vbox),rec_panes);
       gtk_widget_show(rec_panes);
 

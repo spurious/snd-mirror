@@ -120,6 +120,18 @@ static SCM parse_proc_handler(void *data, SCM tag, SCM throw_args)
   return(SCM_BOOL_F);
 }
 
+static void string_to_stdout(snd_state *ss, char *msg)
+{
+  char *str;
+  write(fileno(stdout),msg,snd_strlen(msg));
+  str = (char *)CALLOC(8,sizeof(char));
+  sprintf(str,"\n%s",listener_prompt(ss));
+  write(fileno(stdout),str,snd_strlen(str));
+  FREE(str);
+}
+
+static int send_error_output_to_stdout = 0;
+
 static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error handler */
 {
   /* this is actually catching any throw not caught elsewhere, I think */
@@ -131,7 +143,17 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
   SCM stack;
 #endif
   char *name_buf = NULL;
-  port = scm_mkstrport(SCM_INUM0, scm_make_string(SCM_MAKINUM(MAX_ERROR_STRING_LENGTH), SCM_UNDEFINED),SCM_OPN | SCM_WRTNG,"snd-scm-error-handler");
+#ifdef SCM_MAKE_CHAR
+  port = scm_mkstrport(SCM_INUM0, 
+		       scm_make_string(SCM_MAKINUM(MAX_ERROR_STRING_LENGTH), SCM_MAKE_CHAR(0)),
+		       SCM_OPN | SCM_WRTNG,
+		       "snd-scm-error-handler");
+#else
+  port = scm_mkstrport(SCM_INUM0, 
+		       scm_make_string(SCM_MAKINUM(MAX_ERROR_STRING_LENGTH), SCM_UNDEFINED),
+		       SCM_OPN | SCM_WRTNG,
+		       "snd-scm-error-handler");
+#endif
 
   if ((gh_list_p(throw_args)) && (gh_length(throw_args) > 0))
     {
@@ -179,7 +201,7 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
       scm_display(throw_args,port);
     }
 #if (!HAVE_GUILE_1_3_0)
-  scm_force_output(port); /* needed to get rid of trailing garbage chars */
+  scm_force_output(port); /* needed to get rid of trailing garbage chars?? -- might be pointless now */
   ans = scm_strport_to_string(port);
 #else
   SCM_DEFER_INTS;
@@ -188,20 +210,25 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
 #endif
 
   name_buf = gh_scm2newstr(ans,NULL);
-  if (state->mx_sp)
+  if (send_error_output_to_stdout)
+    string_to_stdout(state,name_buf);
+  else
     {
-      sp = state->mx_sp;
-      clear_minibuffer_prompt(sp);
-      report_in_minibuffer(sp,name_buf);
+      if (state->mx_sp)
+	{
+	  sp = state->mx_sp;
+	  clear_minibuffer_prompt(sp);
+	  report_in_minibuffer(sp,name_buf);
+	}
+      if (state->listening != LISTENER_CLOSED)
+	{
+	  state->result_printout = MESSAGE_WITH_CARET;
+	  snd_append_command(state,name_buf);
+	}
+      else 
+	if (!(state->mx_sp))
+	  snd_error(name_buf);
     }
-  if (state->listening != LISTENER_CLOSED)
-    {
-      state->result_printout = MESSAGE_WITH_CARET;
-      snd_append_command(state,name_buf);
-    }
-  else 
-    if (!(state->mx_sp))
-      snd_error(name_buf);
   g_error_occurred = 1;
   if (name_buf) free(name_buf);
   return(tag);
@@ -519,14 +546,14 @@ void snd_eval_listener_str(snd_state *ss, char *buf)
   if ((snd_strlen(buf) == 0) || ((snd_strlen(buf) == 1) && (buf[0] == '\n'))) return;
   result = scm_internal_stack_catch(SCM_BOOL_T,eval_str_wrapper,buf,snd_catch_scm_error,buf);
   if (g_error_occurred)
+    g_error_occurred = 0;
+  else
     {
-      g_error_occurred = 0;
-      return;
+      str = gh_print(result);
+      ss->result_printout = MESSAGE_WITH_CARET;
+      snd_append_command(ss,str);
+      if (str) FREE(str);
     }
-  str = gh_print(result);
-  ss->result_printout = MESSAGE_WITH_CARET;
-  snd_append_command(ss,str);
-  if (str) FREE(str);
 }
 
 
@@ -535,18 +562,16 @@ void snd_eval_stdin_str(snd_state *ss, char *buf)
   SCM result;
   char *str = NULL;
   if ((snd_strlen(buf) == 0) || ((snd_strlen(buf) == 1) && (buf[0] == '\n'))) return;
+  send_error_output_to_stdout = 1;
   result = scm_internal_stack_catch(SCM_BOOL_T,eval_str_wrapper,buf,snd_catch_scm_error,buf);
+  send_error_output_to_stdout = 0;
   if (g_error_occurred)
     g_error_occurred = 0;
   else
     {
       str = gh_print(result);
-      write(fileno(stdout),str,snd_strlen(str));
-      FREE(str);
-      str = (char *)CALLOC(8,sizeof(char));
-      sprintf(str,"\n%s",listener_prompt(ss));
-      write(fileno(stdout),str,snd_strlen(str));
-      FREE(str);
+      string_to_stdout(ss,str);
+      if (str) FREE(str);
     }
 }
 
@@ -596,7 +621,9 @@ void snd_load_file(char *filename)
   if (str) FREE(str);
 }
 
-static SCM snd_test = SCM_BOOL_F, full_test = SCM_BOOL_F;
+#if DEBUGGING
+  static SCM snd_test = SCM_BOOL_F, full_test = SCM_BOOL_F;
+#endif
 
 static SCM g_snd_print(SCM msg)
 {
@@ -605,11 +632,14 @@ static SCM g_snd_print(SCM msg)
   char *str=NULL,*buf;
   char time_buf[TIME_STR_SIZE];
   time_t ts;
+#if DEBUGGING
   SCM val;
+#endif
   ERRS1(msg,S_snd_print);
   state->result_printout = MESSAGE_WITHOUT_CARET;
   str = gh_scm2newstr(msg,NULL);
   snd_append_command(state,str);
+#if DEBUGGING
   val = gh_cdr(snd_test);
   if ((gh_number_p(val)) && (g_scm2int(val) != -1))
     {
@@ -629,6 +659,7 @@ static SCM g_snd_print(SCM msg)
       if (g_scm2int(val) == -2) fprintf(stderr,buf);
       FREE(buf);
     }
+#endif
   if (str) free(str);
   return(msg);
 }
@@ -3668,10 +3699,10 @@ void g_initialize_gh(snd_state *ss)
 #if HAVE_LADSPA
   g_ladspa_to_snd(local_doc);
 #endif
-
+#if DEBUGGING
   snd_test = gh_define("snd-test",gh_int2scm(-1));
   full_test = gh_define("full-test",SCM_BOOL_T);
-
+#endif
   gh_eval_str("(define unbind-key\
                  (lambda (key state)\
                    \"(unbind-key key state) undoes the effect of a prior bind-key call\"\

@@ -1,11 +1,3 @@
-/* TODO: sash color (currently basically invisible)
- *       debug X property support -- appears to be ignoring non-selection property notify events?
- */
-
-/* DIFF: no .Xdefaults -- use ~/.sndrc 
- *       no directory pre-read
- */
-
 #include "snd.h"
 
 #if defined(NEXT) || defined(HAVE_SYS_DIR_H)
@@ -177,15 +169,11 @@ static GdkAtom snd_v,snd_c;
 static void who_called(GtkWidget *w,GdkEvent *event, gpointer clientData) 
 {
   /* watch for communication from some other program via the SND_COMMAND property */
-
-  /* this is broken */
-
   GdkEventProperty *ev = (GdkEventProperty *)event;
   snd_state *ss = (snd_state *)clientData;
   GdkAtom type;
   gint format,nitems;
   guchar *version[1];
-fprintf(stderr,"prop: %s ",gdk_atom_name(ev->atom));
   if (ev->atom == snd_c)
     {
       if (gdk_property_get(MAIN_WINDOW(ss),snd_c,GDK_TARGET_STRING,0L,(long)BUFSIZ,FALSE,
@@ -346,10 +334,10 @@ static BACKGROUND_TYPE startup_funcs(gpointer clientData)
       /* add X property level communication path (see sndctrl.c for the other side) */
       snd_v = gdk_atom_intern("SND_VERSION",FALSE);
       snd_c = gdk_atom_intern("SND_COMMAND",FALSE);
+
       gdk_property_change(MAIN_WINDOW(ss),snd_v,GDK_TARGET_STRING,8,GDK_PROP_MODE_REPLACE,SND_VERSION,strlen(SND_VERSION)+1);
+      gtk_widget_add_events (tm->shell,gtk_widget_get_events (tm->shell) | GDK_PROPERTY_CHANGE_MASK);
       gtk_signal_connect(GTK_OBJECT(tm->shell),"property_notify_event",GTK_SIGNAL_FUNC(who_called),(gpointer)ss);
-      /* this doesn't work for some reason */
-      /*  -- I think this is because gtk assumes the only property of interest is the gtk_selection!! */
 
       /* trap outer-level Close for cleanup check */
       gtk_signal_connect(GTK_OBJECT(tm->shell),"delete_event",GTK_SIGNAL_FUNC(Window_Close),(gpointer)ss);
@@ -645,12 +633,13 @@ void snd_doit(snd_state *ss,int argc, char **argv)
   if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
     {
       sx->soundpane = gtk_vpaned_new();
+      set_backgrounds(sx->soundpane,(ss->sgx)->sash_color);
       gtk_paned_set_handle_size(GTK_PANED(SOUND_PANE(ss)),ss->sash_size);
       gtk_paned_set_gutter_size(GTK_PANED(SOUND_PANE(ss)),8);
       gtk_container_set_border_width(GTK_CONTAINER(SOUND_PANE(ss)),0);
       /* we need gtk 1.2.7 or later here */
       gtk_container_add(GTK_CONTAINER(MAIN_PANE(ss)),SOUND_PANE(ss));
-      set_background(SOUND_PANE(ss),(ss->sgx)->basic_color);
+      /* set_background(SOUND_PANE(ss),(ss->sgx)->basic_color); */
       
       /* gtk_signal_connect(GTK_OBJECT(MAIN_SHELL(ss)),"key_press_event",GTK_SIGNAL_FUNC(shell_key_press),(gpointer)ss); */
 

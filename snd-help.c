@@ -253,6 +253,9 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+30-Aug:  new snd.spec thanks to Fernando Lopez-Lezcano.\n\
+         snd-emacs errors now go to emacs, play-region notices its wait argument (thanks to Anders Vinjar).\n\
+         added sash-color, gtk CLM/Snd connection finally works.\n\
 28-Aug:  more gtk-related bugfixes.\n\
 24-Aug:  drag-and-drop bugfixes.\n\
 23-Aug:  removed -s startup switch.\n\
@@ -988,6 +991,7 @@ new value via (" S_set_auto_resize " #t). \n\
   " S_recorder_srate "        22050\n\
   " S_recorder_trigger "      0.0\n\
   " S_reverb_decay "          1.0 &optional (snd #t)\n\
+  " S_sash_color "            lightgreen\n\
   " S_save_dir "              nil\n\
   " S_save_state_on_exit "    #f\n\
   " S_save_state_file "       nil\n\

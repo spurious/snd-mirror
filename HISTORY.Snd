@@ -1,5 +1,8 @@
 snd change log
 
+  30-Aug:    new snd.spec thanks to Fernando Lopez-Lezcano.
+             snd-emacs errors now go to emacs, play-region notices its wait argument (thanks to Anders Vinjar).
+             added sash-color, gtk CLM/Snd connection finally works.
   28-Aug:    more gtk-related bugfixes.
   24-Aug:    drag-and-drop bugfixes.
   23-Aug:    removed -s startup switch.

@@ -1,13 +1,4 @@
-/* TODO: split out stuff that is not widget-dependent into snd-rec.c
- *         see snd-rec.h/c 
- *
- * it would be possible to combine much of the Motif/Gtk code using macros (WIDGET,etc)
- *   but I can't decide if it's worth the bother
- *
- *
- *   This split is underway -- many name changes, weird temporary code, etc
- *
- *
+/* TODO: 
  *       multiple inputs in new sgi al on properly equipped machines (how do Indys behave in this case?)
  *       smoothed amp sliders(?)
  *       clicks upon swap or whatever (set process priority?)
@@ -18,7 +9,7 @@
  *       recorder-defaults device {function} -> layout, chans, whether included and active, etc (using sndlib device numbers)
  *       dB in VUs
  *       syncd sliders ("master" volume control basically)
- *       in kde, recorder not redrawn upon desktop switch
+ *       in kde, recorder not re-drawn upon desktop switch
  *       if mono microphone, both chans of analog in are seeing input?
  */
 
@@ -167,14 +158,13 @@ static void attach_error(char *msg)
 }
 #endif
 
+static GC draw_gc,vu_gc;
 
 /* -------------------------------- ROTATE TEXT -------------------------------- */
 /* rotate and scale text */
 
-static GC draw_gc,vu_gc;
-
 static Pixmap transform_text (Widget w, char *str, XFontStruct *font, Float angle_in_degrees, 
-			      Float xscl, Float yscl, int *nw, int *nh, Pixel bg, Pixel fg)
+		       Float xscl, Float yscl, int *nw, int *nh, Pixel bg, Pixel fg)
 {
   /* scale str in font font by xscl and yscl, then rotate clockwise by angle_in_degrees degrees */
   /* (i.e. 45 points text south-east), new bounding box (text centered in it) returned in nw and nh */
@@ -2332,7 +2322,7 @@ static Widget make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Float m
 			      int input, int overall_input_ctr, int vu_meters, Widget vu_vertical_sep, Widget *frames);
 static void make_gain_separator(snd_state *ss, PANE *p, int num_gains, int vu_meters, Widget last_slider);
 static Widget make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE *p, 
-					 int num_gains, int gain_ctr, int *mixflds, int input, int last_device);
+					 int num_gains, int gain_ctr, int *mixflds, int input);
 static Widget make_vertical_gain_separator(snd_state *ss, PANE *p, int vu_meters, Widget last_frame);
 static Widget make_vu_meters(snd_state *ss, PANE *p, int vu_meters, Widget *frames, Widget in_last_frame, Widget in_left_frame,
 			   int overall_input_ctr, Float meter_size, int input, Widget *out_frame);
@@ -2352,7 +2342,6 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
   Position pane_max;
   Float meter_size;
   int mixflds[MAX_AUDIO_FIELD];
-  int last_device=0;
   static int overall_input_ctr = 0;
   static int gain_ctr = 0;
 
@@ -2378,10 +2367,6 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
       p->out_chans = vu_meters;
       p->in_chans = 1;
     }
-
-#if (HAVE_OSS || HAVE_ALSA)
-  last_device = MUS_AUDIO_MICROPHONE;
-#endif
 
   p->meters = (VU **)CALLOC(vu_meters,sizeof(VU *));
   p->meters_size = vu_meters;
@@ -2436,7 +2421,7 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
   vu_vertical_sep = make_vertical_gain_separator(ss,p,vu_meters,last_frame);
   if (num_gains > 0)
     {
-      last_slider = make_vertical_gain_sliders(ss,rp,p,num_gains,gain_ctr,mixflds,input,last_device);
+      last_slider = make_vertical_gain_sliders(ss,rp,p,num_gains,gain_ctr,mixflds,input);
       gain_ctr += num_gains;
     }
 
@@ -2595,17 +2580,20 @@ void recorder_fill_wd(void *uwd, int chan, int field, int device)
 }
 
 static Widget make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE *p, 
-					 int num_gains, int gain_ctr, int *mixflds, int input,int in_last_device)
+					 int num_gains, int gain_ctr, int *mixflds, int input)
 {
   /* vertical scalers on the right (with icon) */
-  int n,i,chan,this_device=0,last_device;
+  int n,i,chan,this_device=0,last_device=-1;
   Arg args[32];
   Widget icon_label, last_slider;
   Wdesc *wd;
   XmString slabel = NULL;
   Float vol;
 
-  last_device = in_last_device;
+#if (HAVE_OSS || HAVE_ALSA)
+  last_device = MUS_AUDIO_MICROPHONE;
+#endif
+
   n=0;
   if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
   XtSetArg(args[n],XmNlabelType,XmPIXMAP); n++;

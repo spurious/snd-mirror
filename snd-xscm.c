@@ -664,6 +664,22 @@ static SCM g_text_focus_color(void)
   return(pixel2color((state->sgx)->text_focus_color));
 }
 
+static SCM g_sash_color(void) 
+{
+  #define H_sash_color "(" S_sash_color ") -> color used to draw paned window sashes"
+  return(pixel2color((state->sgx)->sash_color));
+}
+
+static SCM g_set_sash_color (SCM color) 
+{
+  #define H_set_sash_color  "(" S_set_sash_color  " color) sets the color used for paned window sashes"
+  snd_color *v; 
+  ERRCOL1(color,S_set_sash_color); 
+  v = get_snd_color(color); 
+  if (v) (state->sgx)->sash_color = v->color;
+  return(color);
+}
+
 static SCM g_load_colormap(SCM colors)
 {
   #define H_load_colormap "(" S_load_colormap " colors) uses the vector colors to set the current colormap"
@@ -781,6 +797,8 @@ void g_initialize_xgh(snd_state *ss, SCM local_doc)
   DEFINE_PROC(gh_new_procedure0_0(S_pushed_button_color,g_pushed_button_color),H_pushed_button_color);
   DEFINE_PROC(gh_new_procedure1_0(S_set_text_focus_color,g_set_text_focus_color),H_set_text_focus_color);
   DEFINE_PROC(gh_new_procedure0_0(S_text_focus_color,g_text_focus_color),H_text_focus_color);
+  DEFINE_PROC(gh_new_procedure1_0(S_set_sash_color,g_set_sash_color),H_set_sash_color);
+  DEFINE_PROC(gh_new_procedure0_0(S_sash_color,g_sash_color),H_sash_color);
 
   DEFINE_PROC(gh_new_procedure0_0(S_graph_cursor,g_graph_cursor),H_graph_cursor);
   DEFINE_PROC(gh_new_procedure1_0(S_set_graph_cursor,g_set_graph_cursor),H_set_graph_cursor);
