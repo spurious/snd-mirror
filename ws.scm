@@ -310,8 +310,6 @@ returning you to the true top-level."
 
 
 ;;; -------- def-clm-struct --------
-;;; second stab at def-clm-struct
-;;; TODO: if file with def-clm-struct reloaded, struct defs are not updated
 
 (defmacro* def-clm-struct (name #:rest fields)
   ;; (def-clm-struct fd loc (chan 1))

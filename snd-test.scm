@@ -26691,7 +26691,28 @@ EDITS: 2
 			      (lambda args (car args)))))
 	      (if (not (eq? tag 'cannot-parse))
 		  (snd-display ";format arg type check? ~A" tag)))
+
+	    ;; test def-clm-struct redefinition
+	    (def-clm-struct hiho1 i xxx x (s "hiho") (ii 3 :type int) (xx 1.0 :type float))
+	    (set! hi1 (make-hiho1))
+	    (let ((val (run-eval '(lambda (y) (declare (y hiho1)) (hiho1-ii y)) hi1)))
+	      (if (not (= val 3)) (snd-display ";typed hiho1-ii(2): ~A" val)))
+	    (set! hi2 (make-hiho1 :xx 3.14))
+	    (let ((val (run-eval '(lambda (y) (declare (y hiho1)) (hiho1-xx y)) hi2)))
+	      (if (fneq val 3.14) (snd-display ";typed hiho1-xx(2): ~A" val)))
+	    (let ((val (run-eval '(lambda (x y) (declare (x hiho1) (y hiho1)) (+ (hiho1-xx y) (hiho1-xx x))) hi1 hi2)))
+	      (if (fneq val 4.14) (snd-display ";typed hiho1-xx+xx(2): ~A" val)))
+	    (let ((val (run-eval '(lambda (y) (declare (y hiho1)) y) hi1)))
+	      (if (not (hiho1? val)) (snd-display ";clm-struct return(2): ~A" val)))
+	    (set! hi2 (make-hiho1 :xxx 31.14))
+	    (let ((old 0.0))
+	      (run (lambda ()
+		     (set! old (hiho1-xxx hi2))
+		     (set! (hiho1-xxx hi2) 1.0)))
+	      (if (fneq (hiho1-xxx hi2) 1.0) (snd-display ";hiho1-xxx: ~A" (hiho1-xxx hi2)))
+	      (if (fneq old 31.14) (snd-display ";hiho1-xxx old: ~A" old)))
 	    
+	    ;; this is testing a missing quote??
 	    (let ((tag (catch #t (lambda () (run-eval (lambda () (eq? .3 .2)))) (lambda args (car args)))))
 	      (if (not (eq? tag 'cannot-parse)) (snd-display ";cannot parse case: ~A" tag)))
 	    

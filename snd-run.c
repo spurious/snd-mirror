@@ -4880,6 +4880,58 @@ static char *int_vct_to_string(int_vct *v)
   return(buf);
 }
 
+static char *clm_vct_to_string(clm_vct *v)
+{
+  int len, i, slen;
+  char *buf;
+  char flt[16];
+  if (v == NULL) return(copy_string("#<clm_vct: null>"));
+  len = 8;
+  if (len > v->length) len = v->length;
+  slen = 64 + len * 8;
+  buf = (char *)CALLOC(slen, sizeof(char));
+  sprintf(buf, "#<clm_vct[len=%d]:", v->length);
+  if (len > 0)
+    {
+      for (i = 0; i < len; i++)
+	{
+	  mus_snprintf(flt, 16, " #<%s>", (v->data[i]) ? mus_name(v->data[i]) : "#f");
+	  buf = snd_strcat(buf, flt, &slen);
+	}
+      if (v->length > 8)
+	buf = snd_strcat(buf, " ...", &slen);
+    }
+  buf = snd_strcat(buf, ">", &slen);
+  return(buf);
+}
+
+static char *vct_vct_to_string(vct_vct *v)
+{
+  int len, i, slen;
+  char *buf;
+  char flt[32];
+  if (v == NULL) return(copy_string("#<vct_vct: null>"));
+  len = 8;
+  if (len > v->length) len = v->length;
+  slen = 64 + len * 8;
+  buf = (char *)CALLOC(slen, sizeof(char));
+  sprintf(buf, "#<vct_vct[len=%d]:", v->length);
+  if (len > 0)
+    {
+      for (i = 0; i < len; i++)
+	{
+	  if (v->data[i])
+	    mus_snprintf(flt, 32, " #<vct[len=%d]>", (v->data[i])->length);
+	  else mus_snprintf(flt, 32, " #f");
+	  buf = snd_strcat(buf, flt, &slen);
+	}
+      if (v->length > 8)
+	buf = snd_strcat(buf, " ...", &slen);
+    }
+  buf = snd_strcat(buf, ">", &slen);
+  return(buf);
+}
+
 static void display_str(int *args, Int *ints, Float *dbls) {fprintf(stderr, "%s", STRING_ARG_1);}
 static char *descr_display_str(int *args, Int *ints, Float *dbls) {return(mus_format("display(" STR_PT ")", args[1], STRING_ARG_1));}
 static void display_int(int *args, Int *ints, Float *dbls) {fprintf(stderr, "%d", INT_ARG_1);}
@@ -4909,13 +4961,23 @@ static void display_int_vct(int *args, Int *ints, Float *dbls)
 {
   char *buf = NULL;
   buf = int_vct_to_string((int_vct *)(INT_ARG_1));
-  if (buf)
-    {
-      fprintf(stderr, "%s", buf);
-      FREE(buf);
-    }
+  if (buf) {fprintf(stderr, "%s", buf); FREE(buf); }
 }
 static char *descr_display_int_vct(int *args, Int *ints, Float *dbls) {return(mus_format("display(" PTR_PT ")", args[1], ((int_vct *)(INT_ARG_1))));}
+static void display_clm_vct(int *args, Int *ints, Float *dbls) 
+{
+  char *buf = NULL;
+  buf = clm_vct_to_string((clm_vct *)(INT_ARG_1));
+  if (buf) {fprintf(stderr, "%s", buf); FREE(buf); }
+}
+static char *descr_display_clm_vct(int *args, Int *ints, Float *dbls) {return(mus_format("display(" PTR_PT ")", args[1], ((clm_vct *)(INT_ARG_1))));}
+static void display_vct_vct(int *args, Int *ints, Float *dbls) 
+{
+  char *buf = NULL;
+  buf = vct_vct_to_string((vct_vct *)(INT_ARG_1));
+  if (buf) {fprintf(stderr, "%s", buf); FREE(buf); }
+}
+static char *descr_display_vct_vct(int *args, Int *ints, Float *dbls) {return(mus_format("display(" PTR_PT ")", args[1], ((vct_vct *)(INT_ARG_1))));}
 static void display_rd(int *args, Int *ints, Float *dbls) {char *buf = NULL; fprintf(stderr, "%s", buf = sf_to_string((snd_fd *)(INT_ARG_1))); FREE(buf);}
 static char *descr_display_rd(int *args, Int *ints, Float *dbls) {return(mus_format("display(" PTR_PT ")", args[1], ((snd_fd *)(INT_ARG_1))));}
 static void display_chr(int *args, Int *ints, Float *dbls) {fprintf(stderr, "%c", (char)(INT_ARG_1));}
@@ -4954,8 +5016,8 @@ static xen_value *display_1(ptree *pt, xen_value **args, int num_args)
     case R_CHAR:       return(package(pt, R_BOOL, display_chr, descr_display_chr, args, 1));   break;
     case R_GOTO:       return(package(pt, R_BOOL, display_con, descr_display_con, args, 1));   break;
     case R_FUNCTION:   return(package(pt, R_BOOL, display_func, descr_display_func, args, 1)); break;
-    case R_CLM_VECTOR: /* SOMEDAY: display clm_vector and vct_vector in some pretty manner */
-    case R_VCT_VECTOR:
+    case R_CLM_VECTOR: return(package(pt, R_BOOL, display_clm_vct, descr_display_clm_vct, args, 1));   break;
+    case R_VCT_VECTOR: return(package(pt, R_BOOL, display_vct_vct, descr_display_vct_vct, args, 1));   break;
     case R_INT_VECTOR: return(package(pt, R_BOOL, display_int_vct, descr_display_int_vct, args, 1));   break;
     default:
       if (args[1]->type > R_ANY)
@@ -6628,7 +6690,6 @@ SET_DBL_GEN0(formant_radius)
 
 
 /* ---------------- mus-bank ---------------- */
-/* SOMEDAY: mus_bank inp args */
 
 static char *descr_mus_bank_1f(int *args, Int *ints, Float *dbls) 
 {
@@ -6638,7 +6699,35 @@ static void mus_bank_1f(int *args, Int *ints, Float *dbls)
 {
   FLOAT_RESULT = mus_bank(((clm_vct *)(INT_ARG_1))->data, ((vct *)(INT_ARG_2))->data, NULL, NULL, ((vct *)(INT_ARG_2))->length);
 }
-static xen_value *mus_bank_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, mus_bank_1f, descr_mus_bank_1f, args, 2));}
+
+static char *descr_mus_bank_2f(int *args, Int *ints, Float *dbls) 
+{
+  return(mus_format( FLT_PT " = mus-bank(" PTR_PT ", " PTR_PT ", " PTR_PT ")", 
+		     args[0], FLOAT_RESULT, args[1], (clm_vct *)(INT_ARG_1), args[2], (vct *)(INT_ARG_2), args[3], (vct *)(INT_ARG_3)));
+}
+static void mus_bank_2f(int *args, Int *ints, Float *dbls) 
+{
+  FLOAT_RESULT = mus_bank(((clm_vct *)(INT_ARG_1))->data, ((vct *)(INT_ARG_2))->data, ((vct *)(INT_ARG_3))->data, NULL, ((vct *)(INT_ARG_2))->length);
+}
+
+static char *descr_mus_bank_3f(int *args, Int *ints, Float *dbls) 
+{
+  return(mus_format( FLT_PT " = mus-bank(" PTR_PT ", " PTR_PT ", " PTR_PT ", " PTR_PT ")", 
+		     args[0], FLOAT_RESULT, args[1], (clm_vct *)(INT_ARG_1), args[2], (vct *)(INT_ARG_2), 
+		     args[3], (vct *)(INT_ARG_3), args[4], (vct *)(INT_ARG_4)));
+}
+static void mus_bank_3f(int *args, Int *ints, Float *dbls) 
+{
+  FLOAT_RESULT = mus_bank(((clm_vct *)(INT_ARG_1))->data, ((vct *)(INT_ARG_2))->data, 
+			  ((vct *)(INT_ARG_3))->data, ((vct *)(INT_ARG_4))->data, ((vct *)(INT_ARG_2))->length);
+}
+
+static xen_value *mus_bank_1(ptree *prog, xen_value **args, int num_args) 
+{
+  if (num_args == 2) return(package(prog, R_FLOAT, mus_bank_1f, descr_mus_bank_1f, args, 2));
+  if (num_args == 3) return(package(prog, R_FLOAT, mus_bank_2f, descr_mus_bank_2f, args, 3));
+  return(package(prog, R_FLOAT, mus_bank_3f, descr_mus_bank_3f, args, 4));
+}
 
 
 /* ---------------- polynomial ---------------- */
@@ -8092,30 +8181,52 @@ static char **clm_struct_names = NULL;
 static XEN g_add_clm_field(XEN name, XEN offset, XEN type) /* type=field type (a symbol or #f) */
 {
   #define H_add_clm_field "def-clm-struct tie-in to run optimizer"
+  char *field_name;
+  int i, loc = -1;
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_add_clm_field, "string");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(offset), offset, XEN_ARG_2, S_add_clm_field, "int");
+  /* if def-clm-struct is called twice on the same struct, we need to recognize
+   *    existing fields and update them, not tack a copy onto the end of this list.
+   */
+  field_name = copy_string(XEN_TO_C_STRING(name));
   if (clm_structs == 0)
     {
-      clm_structs = 4;
+      loc = 0;
+      clm_structs = 8;
       clm_struct_offsets = (int *)CALLOC(clm_structs, sizeof(int));
       clm_struct_types = (int *)CALLOC(clm_structs, sizeof(int));
       clm_struct_names = (char **)CALLOC(clm_structs, sizeof(char *));
+      clm_struct_top++;
     }
   else
     {
-      if (clm_struct_top >= clm_structs)
+      for (i = 0; i < clm_struct_top; i++)
 	{
-	  clm_structs = clm_struct_top + 4;
-	  clm_struct_offsets = (int *)REALLOC(clm_struct_offsets, clm_structs * sizeof(int));
-	  clm_struct_types = (int *)REALLOC(clm_struct_types, clm_structs * sizeof(int));
-	  clm_struct_names = (char **)REALLOC(clm_struct_names, clm_structs * sizeof(char *));
+	  if (strcmp(field_name, clm_struct_names[i]) == 0)
+	    {
+	      loc = i;
+	      FREE(clm_struct_names[i]);
+	      break;
+	    }
+	}
+      if (loc == -1)
+	{
+	  loc = clm_struct_top;
+	  if (clm_struct_top >= clm_structs)
+	    {
+	      clm_structs = clm_struct_top + 8;
+	      clm_struct_offsets = (int *)REALLOC(clm_struct_offsets, clm_structs * sizeof(int));
+	      clm_struct_types = (int *)REALLOC(clm_struct_types, clm_structs * sizeof(int));
+	      clm_struct_names = (char **)REALLOC(clm_struct_names, clm_structs * sizeof(char *));
+	    }
+	  clm_struct_top++;
 	}
     }
-  clm_struct_offsets[clm_struct_top] = XEN_TO_C_INT(offset);
-  clm_struct_types[clm_struct_top] = R_UNSPECIFIED;
+  clm_struct_offsets[loc] = XEN_TO_C_INT(offset);
+  clm_struct_types[loc] = R_UNSPECIFIED;
   if (XEN_SYMBOL_P(type))
-    clm_struct_types[clm_struct_top] = name_to_type(XEN_SYMBOL_TO_C_STRING(type));
-  clm_struct_names[clm_struct_top++] = copy_string(XEN_TO_C_STRING(name));
+    clm_struct_types[loc] = name_to_type(XEN_SYMBOL_TO_C_STRING(type));
+  clm_struct_names[loc] = field_name;
   return(name);
 }
 
@@ -9600,7 +9711,7 @@ static void init_walkers(void)
   INIT_WALKER(S_buffer2frame, make_walker(buffer2frame_1, NULL, NULL, 1, 2, R_CLM, FALSE, 2, R_CLM, R_CLM));
   INIT_WALKER(S_frame2file, make_walker(frame2file_1, NULL, NULL, 3, 3, R_CLM, FALSE, 3, R_CLM, R_NUMBER, R_CLM));
   INIT_WALKER(S_file2frame, make_walker(file2frame_1, NULL, NULL, 2, 3, R_CLM, FALSE, 3, R_CLM, R_NUMBER, R_CLM));
-  INIT_WALKER(S_mus_bank, make_walker(mus_bank_1, NULL, NULL, 2, 2, R_FLOAT, FALSE, 2, R_CLM_VECTOR, R_VCT));
+  INIT_WALKER(S_mus_bank, make_walker(mus_bank_1, NULL, NULL, 2, 4, R_FLOAT, FALSE, 4, R_CLM_VECTOR, R_VCT, R_VCT, R_VCT));
 
   INIT_WALKER(S_radians_hz, make_walker(mus_radians2hz_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_NUMBER));
   INIT_WALKER(S_hz_radians, make_walker(mus_hz2radians_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_NUMBER));
