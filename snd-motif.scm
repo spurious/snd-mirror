@@ -76,7 +76,7 @@
      (throw 'no-such-widget (list "find-child" name)))))
 
 (define (display-widget-tree widget)
-  "display hierarchy of widgets beneath 'widget'"
+  "(display-widget-tree widget) displays the hierarchy of widgets beneath 'widget'"
   (define (display-widget w spaces)
     (let ((name (XtName w)))
       (if (or (not (string? name))

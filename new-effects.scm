@@ -499,11 +499,6 @@
 
     (add-to-menu effects-menu normalize-label cp-normalize))
 
-(define (change-label widget new-label)
-  (let ((str (XmStringCreateLocalized new-label)))
-    (XtSetValues widget (list XmNlabelString str))
-    (XmStringFree str)))
-
 (set! amp-menu-list (cons (lambda ()
                       (let ((new-label (format #f "Normalize (~1,2F)"  normalize-amount)))
                         (change-label normalize-menu-widget new-label)))
@@ -639,11 +634,6 @@
 
     (add-to-menu effects-menu gate-label cp-gate))
 
-(define (change-label widget new-label)
-  (let ((str (XmStringCreateLocalized new-label)))
-    (XtSetValues widget (list XmNlabelString str))
-    (XmStringFree str)))
-
 (set! amp-menu-list (cons (lambda ()
                       (let ((new-label (format #f "Gate (~1,2F)"  gate-amount)))
                         (change-label gate-menu-widget new-label)))
@@ -751,11 +741,6 @@
                    (and (not echo-truncate) 
                         (* 4 delay-time))))))
 
-(define (change-label widget new-label)
-  (let ((str (XmStringCreateLocalized new-label)))
-    (XtSetValues widget (list XmNlabelString str))
-    (XmStringFree str)))
-
 (set! delay-menu-list (cons (lambda ()
                       (let ((new-label (format #f "Echo (~1,2F ~1,2F)" delay-time echo-amount)))
                         (change-label echo-menu-widget new-label)))
@@ -839,11 +824,6 @@
                           (post-flecho-dialog)))))
 
     (add-to-menu effects-menu flecho-label cp-flecho))
-
-(define (change-label widget new-label)
-  (let ((str (XmStringCreateLocalized new-label)))
-    (XtSetValues widget (list XmNlabelString str))
-    (XmStringFree str)))
 
 (set! delay-menu-list (cons (lambda ()
                       (let ((new-label (format #f "Filtered echo (~1,2F ~1,2F)" flecho-scaler flecho-delay)))
@@ -947,11 +927,6 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
                           (post-zecho-dialog)))))
 
     (add-to-menu effects-menu zecho-label cp-zecho))
-
-(define (change-label widget new-label)
-  (let ((str (XmStringCreateLocalized new-label)))
-    (XtSetValues widget (list XmNlabelString str))
-    (XmStringFree str)))
 
 (set! delay-menu-list (cons (lambda ()
                       (let ((new-label (format #f "Modulated echo (~1,2F ~1,2F ~1,2F ~1,2F)" zecho-scaler zecho-delay zecho-freq zecho-amp)))
@@ -1064,11 +1039,6 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 
     (add-to-menu effects-menu band-pass-label cp-band-pass))
 
-(define (change-label widget new-label)
-  (let ((str (XmStringCreateLocalized new-label)))
-    (XtSetValues widget (list XmNlabelString str))
-    (XmStringFree str)))
-
 (set! filter-menu-list (cons (lambda ()
                       (let ((new-label (format #f "Band-pass filter (~,2F ~1,2D" band-pass-freq band-pass-bw)))
                         (change-label band-pass-menu-widget new-label)))
@@ -1145,11 +1115,6 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 
     (add-to-menu effects-menu notch-label cp-notch))
 
-(define (change-label widget new-label)
-  (let ((str (XmStringCreateLocalized new-label)))
-    (XtSetValues widget (list XmNlabelString str))
-    (XmStringFree str)))
-
 (set! filter-menu-list (cons (lambda ()
                       (let ((new-label (format #f "Band-reject filter (~,2F ~1,2D)" notch-freq notch-bw)))
                         (change-label notch-menu-widget new-label)))
@@ -1219,11 +1184,6 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 
     (add-to-menu effects-menu high-pass-label cp-high-pass))
 
-(define (change-label widget new-label)
-  (let ((str (XmStringCreateLocalized new-label)))
-    (XtSetValues widget (list XmNlabelString str))
-    (XmStringFree str)))
-
 (set! filter-menu-list (cons (lambda ()
                       (let ((new-label (format #f "High-pass filter (~,2F)" high-pass-freq)))
                         (change-label high-pass-menu-widget new-label)))
@@ -1292,11 +1252,6 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
                           (post-low-pass-dialog)))))
 
     (add-to-menu effects-menu low-pass-label cp-low-pass))
-
-(define (change-label widget new-label)
-  (let ((str (XmStringCreateLocalized new-label)))
-    (XtSetValues widget (list XmNlabelString str))
-    (XmStringFree str)))
 
 (set! filter-menu-list (cons (lambda ()
                       (let ((new-label (format #f "Low-pass filter (~,2F)" low-pass-freq)))
@@ -1380,11 +1335,6 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 		 (lambda (ignored) 
 		   (comb-filter comb-scaler comb-size)) 
 		 comb-target "comb-filter" #f))))
-
-(define (change-label widget new-label)
-  (let ((str (XmStringCreateLocalized new-label)))
-    (XtSetValues widget (list XmNlabelString str))
-    (XmStringFree str)))
 
 (set! filter-menu-list (cons (lambda ()
                       (let ((new-label (format #f "Comb filter (~1,2F ~1,2D)" comb-scaler comb-size)))
@@ -1492,11 +1442,6 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
                                   new-comb-chord-interval-one new-comb-chord-interval-two))
                     "new-comb-chord"))))
 
-(define (change-label widget new-label)
-  (let ((str (XmStringCreateLocalized new-label)))
-    (XtSetValues widget (list XmNlabelString str))
-    (XmStringFree str)))
-
 (set! filter-menu-list (cons (lambda ()
                       (let ((new-label (format #f "Comb chord filter (~1,2F ~1,2D ~1,2F ~1,2F ~1,2F)"  new-comb-chord-scaler new-comb-chord-size new-comb-chord-amp new-comb-chord-interval-one new-comb-chord-interval-two)))           
                         (change-label new-comb-chord-menu-widget new-label)))
@@ -1570,11 +1515,6 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
                           (post-moog-dialog)))))
 
     (add-to-menu effects-menu moog-label cp-moog))
-
-(define (change-label widget new-label)
-  (let ((str (XmStringCreateLocalized new-label)))
-    (XtSetValues widget (list XmNlabelString str))
-    (XmStringFree str)))
 
 (set! filter-menu-list (cons (lambda ()
                       (let ((new-label (format #f "Moog filter (~,2F ~1,2F)" moog-cutoff-frequency moog-resonance)))
@@ -1676,11 +1616,6 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 
     (add-to-menu effects-menu adsat-label cp-adsat))
 
-(define (change-label widget new-label)
-  (let ((str (XmStringCreateLocalized new-label)))
-    (XtSetValues widget (list XmNlabelString str))
-    (XmStringFree str)))
-
 (set! freq-menu-list (cons (lambda ()
                       (let ((new-label (format #f "Adaptive saturation (~1,2D)" adsat-size)))
                         (change-label adsat-menu-widget new-label)))
@@ -1739,11 +1674,6 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
                           (post-src-dialog)))))
 
     (add-to-menu effects-menu src-label cp-src))
-
-(define (change-label widget new-label)
-  (let ((str (XmStringCreateLocalized new-label)))
-    (XtSetValues widget (list XmNlabelString str))
-    (XmStringFree str)))
 
 (set! freq-menu-list (cons (lambda ()
                       (let ((new-label (format #f "Sample rate scaling (~1,2F)" src-amount)))
@@ -1845,11 +1775,6 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
                           (post-expsrc-dialog)))))
 
     (add-to-menu effects-menu expsrc-label cp-expsrc))
-
-(define (change-label widget new-label)
-  (let ((str (XmStringCreateLocalized new-label)))
-    (XtSetValues widget (list XmNlabelString str))
-    (XmStringFree str)))
 
 (set! freq-menu-list (cons (lambda ()
                       (let ((new-label (format #f "Time/pitch scaling (~1,2F ~1,2F)" time-scale pitch-scale)))
@@ -1957,11 +1882,6 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 			  (post-am-effect-dialog)))))
 
     (add-to-menu effects-menu am-effect-label cp-am-effect))
-
-(define (change-label widget new-label)
-  (let ((str (XmStringCreateLocalized new-label)))
-    (XtSetValues widget (list XmNlabelString str))
-    (XmStringFree str)))
 
 (set! mod-menu-list (cons (lambda ()
 		      (let ((new-label (format #f "Amplitude modulation (~1,2F)"  am-effect-amount)))
@@ -2184,11 +2104,6 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 
     (add-to-menu effects-menu reverb-label cp-reverb))
 
-(define (change-label widget new-label)
-  (let ((str (XmStringCreateLocalized new-label)))
-    (XtSetValues widget (list XmNlabelString str))
-    (XmStringFree str)))
-
 (set! reverb-menu-list (cons (lambda ()
                       (let ((new-label (format #f "McNabb reverb (~1,2F ~1,2F ~1,2F)" reverb-amount reverb-filter reverb-feedback)))
                         (change-label reverb-menu-widget new-label)))
@@ -2289,11 +2204,6 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
                   (map-chan-over-target-with-sync
 		   jc-reverb-1 jc-reverb-target "jc-reverb" (and (not jc-reverb-truncate) jc-reverb-decay)))))
 
-(define (change-label widget new-label)
-  (let ((str (XmStringCreateLocalized new-label)))
-    (XtSetValues widget (list XmNlabelString str))
-    (XmStringFree str)))
-
 (set! reverb-menu-list (cons (lambda ()
                       (let ((new-label (format #f "Chowning reverb (~1,2F ~1,2F)" jc-reverb-decay jc-reverb-volume)))
                         (change-label jc-reverb-menu-widget new-label)))
@@ -2378,11 +2288,6 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
                           (post-convolve-dialog)))))
 
     (add-to-menu effects-menu convolve-label cp-convolve))
-
-(define (change-label widget new-label)
-  (let ((str (XmStringCreateLocalized new-label)))
-    (XtSetValues widget (list XmNlabelString str))
-    (XmStringFree str)))
 
 (set! reverb-menu-list (cons (lambda ()
                       (let ((new-label (format #f "Convolution (~1,2D ~1,2D ~1,2F)" convolve-sound-one convolve-sound-two convolve-amp)))
@@ -2518,11 +2423,6 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 
     (add-to-menu effects-menu place-sound-label cp-psound))
 
-(define (change-label widget new-label)
-  (let ((str (XmStringCreateLocalized new-label)))
-    (XtSetValues widget (list XmNlabelString str))
-    (XmStringFree str)))
-
 (set! misc-menu-list (cons (lambda ()
                       (let ((new-label (format #f "Place sound (~1,2D ~1,2D ~1,2D)" mono-snd stereo-snd pan-pos)))
                         (change-label place-sound-menu-widget new-label)))
@@ -2581,11 +2481,6 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
                           (post-silence-dialog)))))
 
     (add-to-menu effects-menu silence-label cp-silence))
-
-(define (change-label widget new-label)
-  (let ((str (XmStringCreateLocalized new-label)))
-    (XtSetValues widget (list XmNlabelString str))
-    (XmStringFree str)))
 
 (set! misc-menu-list (cons (lambda ()
                       (let ((new-label (format #f "Add silence (~1,2F)" silence-amount)))
@@ -2652,11 +2547,6 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
                           (post-contrast-dialog)))))
 
     (add-to-menu effects-menu contrast-label cp-contrast))
-
-(define (change-label widget new-label)
-  (let ((str (XmStringCreateLocalized new-label)))
-    (XtSetValues widget (list XmNlabelString str))
-    (XmStringFree str)))
 
 (set! misc-menu-list (cons (lambda ()
                         (let ((new-label (format #f "Contrast enhancement (~1,2F)" contrast-amount)))
@@ -2858,11 +2748,6 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 
     (add-to-menu effects-menu cross-synth-label cp-cross-synth))
 
-(define (change-label widget new-label)
-  (let ((str (XmStringCreateLocalized new-label)))
-    (XtSetValues widget (list XmNlabelString str))
-    (XmStringFree str)))
-
 (set! misc-menu-list (cons (lambda ()
                            (let ((new-label (format #f "Cross synthesis (~1,2D ~1,2F ~1,2D ~1,2F)" cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius)))
                         (change-label cross-synth-menu-widget new-label)))
@@ -2945,11 +2830,6 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
                  (lambda ()
                    (map-chan-over-target-with-sync (lambda (ignored) (cp-flange)) flange-target "flange" #f))))
 
-(define (change-label widget new-label)
-  (let ((str (XmStringCreateLocalized new-label)))
-    (XtSetValues widget (list XmNlabelString str))
-    (XmStringFree str)))
-
 (set! misc-menu-list (cons (lambda ()
                            (let ((new-label (format #f "Flange (~1,2F ~1,2F ~1,3F)" flange-speed flange-amount flange-time)))
                         (change-label flange-menu-widget new-label)))
@@ -3002,11 +2882,6 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
                           (post-random-phase-dialog)))))
 
     (add-to-menu effects-menu random-phase-label cp-random-phase))
-
-(define (change-label widget new-label)
-  (let ((str (XmStringCreateLocalized new-label)))
-    (XtSetValues widget (list XmNlabelString str))
-    (XmStringFree str)))
 
 (set! misc-menu-list (cons (lambda ()
                            (let ((new-label (format #f "Randomize phase (~1,2F)"  random-phase-amp-scaler)))
@@ -3110,11 +2985,6 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
     
     (add-to-menu effects-menu robotize-label cp-robotize))
 
-(define (change-label widget new-label)
-  (let ((str (XmStringCreateLocalized new-label)))
-    (XtSetValues widget (list XmNlabelString str))
-    (XmStringFree str)))
-
 (set! misc-menu-list (cons (lambda ()
                            (let ((new-label (format #f "Robotize (~1,2F ~1,2F ~1,2F)" samp-rate osc-amp osc-freq)))
                         (change-label robotize-menu-widget new-label)))
@@ -3170,11 +3040,6 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
                           (post-rubber-dialog)))))
 
     (add-to-menu effects-menu rubber-label cp-rubber))
-
-(define (change-label widget new-label)
-  (let ((str (XmStringCreateLocalized new-label)))
-    (XtSetValues widget (list XmNlabelString str))
-    (XmStringFree str)))
 
 (set! misc-menu-list (cons (lambda ()
                            (let ((new-label (format #f "Rubber sound (~1,2F)"  rubber-factor)))
@@ -3277,11 +3142,6 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
                           (post-wobble-dialog)))))
     
     (add-to-menu effects-menu wobble-label cp-wobble))
-
-(define (change-label widget new-label)
-  (let ((str (XmStringCreateLocalized new-label)))
-    (XtSetValues widget (list XmNlabelString str))
-    (XmStringFree str)))
 
 (set! misc-menu-list (cons (lambda ()
                            (let ((new-label (format #f "Wobble (~1,2F ~1,2F)" wobble-frequency wobble-amplitude)))

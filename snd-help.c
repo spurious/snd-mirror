@@ -268,16 +268,11 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+31-Oct:  gtk-popup.scm.\n\
 28-Oct:  added peaks-font and bold-peaks-font.\n\
 25-Oct:  added -I switch to add dir to load path.\n\
 23-Oct:  added origin arg to bind-key, edpos arg to find-mark.\n\
-14-Oct:  removed max-sounds.\n\
-11-Oct:  add-find-to-listener in snd-motif.scm.\n\
-18-Sep:  show-font-name et al in snd-motif.scm.\n\
-16-Sep:  snd 6.1.\n\
-12-Sep:  removed \"set-\" names -- use -DWITH_SET_NAME=1 to restore them.\n\
-11-Sep:  save-state-hook.\n\
-10-Sep:  new edit123.scm thanks to Tom Roth.\n\
+16-Oct:  snd-6.2.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

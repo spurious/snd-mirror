@@ -130,6 +130,10 @@ enum {ENVED_AMPLITUDE, ENVED_SPECTRUM, ENVED_SRATE};
 #define WITH_ARROWS 1
 #define WITH_FW_BUTTONS 0
 
+#ifndef POPUP_BUTTON
+  #define POPUP_BUTTON 3
+#endif
+
 enum {GRAPH_LINES, GRAPH_DOTS, GRAPH_FILLED, GRAPH_DOTS_AND_LINES, GRAPH_LOLLIPOPS};
 #define GRAPH_STYLE_OK(Grf) ((Grf >= GRAPH_LINES) && (Grf <= GRAPH_LOLLIPOPS))
  /* using lollipop rather than the suggested popsicle because 

@@ -163,7 +163,6 @@ GtkWidget *popup_save_menu(void);
 GtkWidget *popup_equalize_panes_menu(void);
 GtkWidget *popup_info_menu(void);
 int popup_menu_exists(void);
-void create_popup_menu(snd_state *ss, guint button, TIME_TYPE time);
 void set_menu_label(GtkWidget *w, const char *label);
 int g_change_menu_label(int which_menu, char *old_label, char *new_label);
 int g_set_menu_sensitive(int which_menu, char *old_label, int on);
@@ -178,6 +177,7 @@ void reflect_play_selection_stop(void);
 void g_init_gxmenu(void);
 GtkWidget *menu_widget(int which_menu);
 void check_menu_labels(int key, int state, int extended);
+void popup_menu_from(GtkWidget *w, GdkEventButton *ev, gpointer data, int snd, int chn);
 
 
 /* -------- snd-gfft.c -------- */

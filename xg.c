@@ -143,7 +143,7 @@ static void define_xm_obj(void)
 #define XM_TYPE_PTR(Name, XType) \
   static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);} \
   static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
-  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} /* if NULL ok, should be explicit */
+  static int XEN_ ## Name ## _P(XEN val) {return(XEN_FALSE_P(val) || (WRAP_P(#Name, val)));} /* if NULL ok, should be explicit? */
 
 /* type checks for callback wrappers */
 #define XEN_lambda2_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 2))
@@ -856,157 +856,17 @@ XM_TYPE_PTR(GArray_, GArray*)
 XM_TYPE_PTR(GtkTableRowCol_, GtkTableRowCol*)
 XM_TYPE_PTR(GtkTextBTree_, GtkTextBTree*)
 XM_TYPE_PTR(GtkTextLogAttrCache_, GtkTextLogAttrCache*)
-static XEN XEN_GdkColormap__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GdkColormap_", val)));}
-static XEN XEN_GdkDragContext__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GdkDragContext_", val)));}
-static XEN XEN_GdkDrawable__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GdkDrawable_", val)));}
-static XEN XEN_GdkGC__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GdkGC_", val)));}
-static XEN XEN_GdkImage__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GdkImage_", val)));}
-static XEN XEN_GdkDevice__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GdkDevice_", val)));}
-static XEN XEN_GdkKeymap__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GdkKeymap_", val)));}
-static XEN XEN_GdkPixmap__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GdkPixmap_", val)));}
-static XEN XEN_GdkVisual__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GdkVisual_", val)));}
-static XEN XEN_GdkWindow__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GdkWindow_", val)));}
-static XEN XEN_GdkPixbuf__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GdkPixbuf_", val)));}
-static XEN XEN_GdkPixbufAnimation__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GdkPixbufAnimation_", val)));}
-static XEN XEN_GdkPixbufAnimationIter__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GdkPixbufAnimationIter_", val)));}
-static XEN XEN_GdkPixbufLoader__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GdkPixbufLoader_", val)));}
-static XEN XEN_GtkVBox__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkVBox_", val)));}
-static XEN XEN_GtkAccelGroup__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkAccelGroup_", val)));}
-static XEN XEN_GtkAccelLabel__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkAccelLabel_", val)));}
-static XEN XEN_GtkAccessible__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkAccessible_", val)));}
-static XEN XEN_GtkAdjustment__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkAdjustment_", val)));}
-static XEN XEN_GtkAlignment__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkAlignment_", val)));}
-static XEN XEN_GtkArrow__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkArrow_", val)));}
-static XEN XEN_GtkAspectFrame__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkAspectFrame_", val)));}
-static XEN XEN_GtkButtonBox__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkButtonBox_", val)));}
-static XEN XEN_GtkBin__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkBin_", val)));}
-static XEN XEN_GtkBox__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkBox_", val)));}
-static XEN XEN_GtkButton__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkButton_", val)));}
-static XEN XEN_GtkCalendar__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkCalendar_", val)));}
-static XEN XEN_GtkCellEditable__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkCellEditable_", val)));}
-static XEN XEN_GtkCellRenderer__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkCellRenderer_", val)));}
-static XEN XEN_GtkCellRendererPixbuf__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkCellRendererPixbuf_", val)));}
-static XEN XEN_GtkCellRendererText__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkCellRendererText_", val)));}
-static XEN XEN_GtkCellRendererToggle__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkCellRendererToggle_", val)));}
-static XEN XEN_GtkCheckButton__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkCheckButton_", val)));}
-static XEN XEN_GtkCheckMenuItem__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkCheckMenuItem_", val)));}
-static XEN XEN_GtkColorSelectionDialog__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkColorSelectionDialog_", val)));}
-static XEN XEN_GtkColorSelection__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkColorSelection_", val)));}
-static XEN XEN_GtkCombo__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkCombo_", val)));}
-static XEN XEN_GtkContainer__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkContainer_", val)));}
-static XEN XEN_GtkCurve__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkCurve_", val)));}
-static XEN XEN_GtkDialog__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkDialog_", val)));}
-static XEN XEN_GtkDrawingArea__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkDrawingArea_", val)));}
-static XEN XEN_GtkEditable__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkEditable_", val)));}
-static XEN XEN_GtkEntry__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkEntry_", val)));}
-static XEN XEN_GtkEventBox__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkEventBox_", val)));}
-static XEN XEN_GtkFileSelection__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkFileSelection_", val)));}
-static XEN XEN_GtkFixed__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkFixed_", val)));}
-static XEN XEN_GtkFontSelection__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkFontSelection_", val)));}
-static XEN XEN_GtkFontSelectionDialog__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkFontSelectionDialog_", val)));}
-static XEN XEN_GtkFrame__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkFrame_", val)));}
-static XEN XEN_GtkGammaCurve__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkGammaCurve_", val)));}
-static XEN XEN_GtkHandleBox__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkHandleBox_", val)));}
-static XEN XEN_GtkHButtonBox__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkHButtonBox_", val)));}
-static XEN XEN_GtkHBox__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkHBox_", val)));}
-static XEN XEN_GtkHPaned__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkHPaned_", val)));}
-static XEN XEN_GtkHRuler__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkHRuler_", val)));}
-static XEN XEN_GtkHScale__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkHScale_", val)));}
-static XEN XEN_GtkHScrollbar__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkHScrollbar_", val)));}
-static XEN XEN_GtkHSeparator__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkHSeparator_", val)));}
-static XEN XEN_GtkIconFactory__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkIconFactory_", val)));}
-static XEN XEN_GtkImage__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkImage_", val)));}
-static XEN XEN_GtkImageMenuItem__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkImageMenuItem_", val)));}
-static XEN XEN_GtkIMContext__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkIMContext_", val)));}
-static XEN XEN_GtkIMContextSimple__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkIMContextSimple_", val)));}
-static XEN XEN_GtkIMMulticontext__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkIMMulticontext_", val)));}
-static XEN XEN_GtkInputDialog__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkInputDialog_", val)));}
-static XEN XEN_GtkInvisible__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkInvisible_", val)));}
-static XEN XEN_GtkItemFactory__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkItemFactory_", val)));}
-static XEN XEN_GtkItem__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkItem_", val)));}
-static XEN XEN_GtkLabel__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkLabel_", val)));}
-static XEN XEN_GtkLayout__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkLayout_", val)));}
-static XEN XEN_GtkListStore__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkListStore_", val)));}
-static XEN XEN_GtkMenuBar__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkMenuBar_", val)));}
-static XEN XEN_GtkMenu__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkMenu_", val)));}
-static XEN XEN_GtkMenuItem__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkMenuItem_", val)));}
-static XEN XEN_GtkMenuShell__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkMenuShell_", val)));}
-static XEN XEN_GtkMessageDialog__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkMessageDialog_", val)));}
-static XEN XEN_GtkMisc__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkMisc_", val)));}
-static XEN XEN_GtkNotebook__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkNotebook_", val)));}
-static XEN XEN_GtkObject__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkObject_", val)));}
-static XEN XEN_GtkOptionMenu__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkOptionMenu_", val)));}
-static XEN XEN_GtkPaned__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkPaned_", val)));}
-static XEN XEN_GtkPlug__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkPlug_", val)));}
-static XEN XEN_GtkProgressBar__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkProgressBar_", val)));}
-static XEN XEN_GtkRadioButton__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkRadioButton_", val)));}
-static XEN XEN_GtkRadioMenuItem__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkRadioMenuItem_", val)));}
-static XEN XEN_GtkRange__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkRange_", val)));}
-static XEN XEN_GtkRcStyle__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkRcStyle_", val)));}
-static XEN XEN_GtkRuler__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkRuler_", val)));}
-static XEN XEN_GtkScale__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkScale_", val)));}
-static XEN XEN_GtkScrollbar__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkScrollbar_", val)));}
-static XEN XEN_GtkScrolledWindow__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkScrolledWindow_", val)));}
-static XEN XEN_GtkSeparator__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkSeparator_", val)));}
-static XEN XEN_GtkSeparatorMenuItem__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkSeparatorMenuItem_", val)));}
-static XEN XEN_GtkSettings__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkSettings_", val)));}
-static XEN XEN_GtkSizeGroup__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkSizeGroup_", val)));}
-static XEN XEN_GtkSocket__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkSocket_", val)));}
-static XEN XEN_GtkSpinButton__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkSpinButton_", val)));}
-static XEN XEN_GtkStatusbar__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkStatusbar_", val)));}
-static XEN XEN_GtkStyle__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkStyle_", val)));}
-static XEN XEN_GtkTable__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkTable_", val)));}
-static XEN XEN_GtkTearoffMenuItem__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkTearoffMenuItem_", val)));}
-static XEN XEN_GtkTextBuffer__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkTextBuffer_", val)));}
-static XEN XEN_GtkTextChildAnchor__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkTextChildAnchor_", val)));}
-static XEN XEN_GtkTextMark__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkTextMark_", val)));}
-static XEN XEN_GtkTextTag__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkTextTag_", val)));}
-static XEN XEN_GtkTextTagTable__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkTextTagTable_", val)));}
-static XEN XEN_GtkTextView__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkTextView_", val)));}
-static XEN XEN_GtkToggleButton__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkToggleButton_", val)));}
-static XEN XEN_GtkToolbar__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkToolbar_", val)));}
-static XEN XEN_GtkTooltips__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkTooltips_", val)));}
-static XEN XEN_GtkTreeDragSource__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkTreeDragSource_", val)));}
-static XEN XEN_GtkTreeDragDest__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkTreeDragDest_", val)));}
-static XEN XEN_GtkTreeModel__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkTreeModel_", val)));}
-static XEN XEN_GtkTreeModelSort__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkTreeModelSort_", val)));}
-static XEN XEN_GtkTreeSelection__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkTreeSelection_", val)));}
-static XEN XEN_GtkTreeSortable__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkTreeSortable_", val)));}
-static XEN XEN_GtkTreeStore__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkTreeStore_", val)));}
-static XEN XEN_GtkTreeViewColumn__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkTreeViewColumn_", val)));}
-static XEN XEN_GtkTreeView__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkTreeView_", val)));}
-static XEN XEN_GtkVButtonBox__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkVButtonBox_", val)));}
-static XEN XEN_GtkViewport__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkViewport_", val)));}
-static XEN XEN_GtkVPaned__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkVPaned_", val)));}
-static XEN XEN_GtkVRuler__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkVRuler_", val)));}
-static XEN XEN_GtkVScale__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkVScale_", val)));}
-static XEN XEN_GtkVScrollbar__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkVScrollbar_", val)));}
-static XEN XEN_GtkVSeparator__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkVSeparator_", val)));}
-static XEN XEN_GtkWidget__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkWidget_", val)));}
-static XEN XEN_GtkWindow__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkWindow_", val)));}
-static XEN XEN_GtkWindowGroup__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkWindowGroup_", val)));}
-static XEN XEN_PangoContext__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("PangoContext_", val)));}
-static XEN XEN_PangoFontFace__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("PangoFontFace_", val)));}
-static XEN XEN_PangoFont__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("PangoFont_", val)));}
-static XEN XEN_PangoFontMap__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("PangoFontMap_", val)));}
-static XEN XEN_PangoLayout__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("PangoLayout_", val)));}
 #if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND
 XM_TYPE_PTR(PangoEngineInfo_, PangoEngineInfo*)
 XM_TYPE_PTR(PangoEngine_, PangoEngine*)
 XM_TYPE_PTR(PangoFontFamily_, PangoFontFamily*)
 XM_TYPE_PTR(PangoFontFace__, PangoFontFace**)
-static XEN XEN_PangoEngineInfo__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("PangoEngineInfo_", val)));}
-static XEN XEN_PangoEngine__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("PangoEngine_", val)));}
-static XEN XEN_PangoFontFamily__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("PangoFontFamily_", val)));}
-static XEN XEN_PangoFontFace___p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("PangoFontFace__", val)));}
 #endif
 
 #if HAVE_GDK_DRAW_PIXBUF
 XM_TYPE_PTR(GdkDisplay_, GdkDisplay*)
 XM_TYPE_PTR(GdkScreen_, GdkScreen*)
 XM_TYPE_PTR(GdkDisplayPointerHooks_, GdkDisplayPointerHooks*)
-static XEN XEN_GdkScreen__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GdkScreen_", val)));}
-static XEN XEN_GdkDisplay__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GdkDisplay_", val)));}
 #endif
 
 /* -------------------------------- gc protection -------------------------------- */
@@ -30526,7 +30386,7 @@ static int xg_already_inited = 0;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"29-Oct-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"30-Oct-02\")");
 #endif
       xg_already_inited = 1;
     }

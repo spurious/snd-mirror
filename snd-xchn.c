@@ -601,7 +601,7 @@ static void graph_mouse_leave(Widget w, XtPointer context, XEvent *event, Boolea
 static void graph_button_press(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   XButtonEvent *ev = (XButtonEvent *)event;
-  if ((ev->button == 3) && 
+  if ((ev->button == POPUP_BUTTON) && 
       (sound_style(get_global_state()) == SOUNDS_IN_SEPARATE_WINDOWS))
     post_popup(ev);
   else graph_button_press_callback((chan_info *)context, ev->x, ev->y, ev->state, ev->button, ev->time);

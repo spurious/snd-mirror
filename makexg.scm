@@ -1002,7 +1002,7 @@
 (hey "#define XM_TYPE_PTR(Name, XType) \\~%")
 (hey "  static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);} \\~%")
 (hey "  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \\~%")
-(hey "  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} /* if NULL ok, should be explicit */~%")
+(hey "  static int XEN_ ## Name ## _P(XEN val) {return(XEN_FALSE_P(val) || (WRAP_P(#Name, val)));} /* if NULL ok, should be explicit? */~%")
 (hey "~%")
 (hey "/* type checks for callback wrappers */~%")
 
@@ -1041,22 +1041,28 @@
 
 (for-each type-it (reverse types))
 
-(define (check-type-it type)
-  (hey "static XEN XEN_~A_p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P(~S, val)));}~%"
-       (no-stars type) (no-stars type)))
+;;; (define (check-type-it type)
+;;;   ;; not currently used -- this is the equivalent of Widget? in xm (but gtk uses GTK_IS_WIDGET etc)
+;;;   (if (has-stars type)
+;;;       (hey "static XEN XEN_~A_p(XEN val) {return(C_TO_XEN_BOOLEAN(XEN_FALSE_P(val) || (WRAP_P(~S, val))));}~%"
+;;; 	   (no-stars type) (no-stars type))
+;;;       (hey "static XEN XEN_~A_p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P(~S, val)));}~%"
+;;; 	   (no-stars type) (no-stars type))))
 
-(for-each check-type-it (reverse check-types))
+;;; (for-each check-type-it (reverse check-types))
 
 (if (not (null? extra-types)) 
     (with-extra hey (lambda () 
 		      (for-each type-it (reverse extra-types))
-		      (for-each check-type-it (reverse extra-types)))))
+;;;		      (for-each check-type-it (reverse extra-types))
+		      )))
 
 (if (not (null? types-21))
     (with-21 hey
 	     (lambda ()
 	       (for-each type-it (reverse types-21))
-	       (for-each check-type-it (reverse check-types-21)))))
+;;;	       (for-each check-type-it (reverse check-types-21))
+	       )))
 
 (hey "/* -------------------------------- gc protection -------------------------------- */~%")
 (hey "~%")

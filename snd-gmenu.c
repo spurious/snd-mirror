@@ -1,7 +1,5 @@
 #include "snd.h"
 
-static gint middle_button_press (GtkWidget *widget, GdkEvent *bevent, gpointer data);
-
 enum {menu_menu,
         file_menu, f_cascade_menu,
           f_open_menu, f_close_menu, f_save_menu, f_save_as_menu, f_revert_menu, f_exit_menu, f_new_menu,
@@ -1404,13 +1402,6 @@ GtkWidget *add_menu(snd_state *ss)
 				 g_cclosure_new(GTK_SIGNAL_FUNC(help_news_callback), (gpointer)ss, 0),
 				 0);
 
-  gtk_widget_add_events (MAIN_SHELL(ss), gtk_widget_get_events(MAIN_SHELL(ss)) | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK);
-  g_signal_connect_closure_by_id(GTK_OBJECT(MAIN_SHELL(ss)),
-				 g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(MAIN_SHELL(ss)))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(middle_button_press), (gpointer)ss, 0),
-				 0);
-
 #ifndef SND_AS_WIDGET
   gtk_menu_set_accel_group(GTK_MENU(mw[f_cascade_menu]), accel_group);
   gtk_widget_add_accelerator(mw[f_open_menu], "activate", accel_group, GDK_O, GDK_MOD1_MASK, GTK_ACCEL_VISIBLE);
@@ -1752,7 +1743,7 @@ static void popup_info_callback(GtkWidget *w, gpointer cD)
   gtk_widget_hide(popup_menu);
 }
 
-void create_popup_menu(snd_state *ss, guint button, TIME_TYPE time)
+static void create_popup_menu(snd_state *ss, guint button, TIME_TYPE time)
 {
   int undo_possible = 0, redo_possible = 0;
   chan_info *selcp = NULL;
@@ -1828,26 +1819,21 @@ void create_popup_menu(snd_state *ss, guint button, TIME_TYPE time)
 
 static XEN gtk_popup_hook = XEN_FALSE;
 
-static gboolean middle_button_press (GtkWidget *widget, GdkEvent *bevent, gpointer data)
+void popup_menu_from(GtkWidget *w, GdkEventButton *ev, gpointer data, int snd, int chn)
 {
-  #define XEN_WRAP_EVENT(Value) ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkEvent_"), C_TO_XEN_ULONG((unsigned long)Value)) : XEN_FALSE)
-  GdkEventButton *event = (GdkEventButton *) bevent; 
-  XEN result;
-  if ((event->type == GDK_BUTTON_PRESS) && (event->button == 2))
+  if (XEN_HOOKED(gtk_popup_hook))
     {
-      if (XEN_HOOKED(gtk_popup_hook))
-	{
-	  result = run_progn_hook(gtk_popup_hook,
-				  XEN_LIST_3(XEN_WRAP_WIDGET(widget),
-					     XEN_WRAP_EVENT(bevent),
-					     C_TO_XEN_ULONG(data)),
+      XEN result;
+      result = run_progn_hook(gtk_popup_hook,
+			      XEN_LIST_5(XEN_WRAP_WIDGET(w),
+					 XEN_WRAP_EVENT((GdkEvent *)ev),
+					 C_TO_XEN_ULONG(data),
+					 C_TO_XEN_INT(snd),
+					 C_TO_XEN_INT(chn)),
 				  "gtk-popup-hook");
-	  if (XEN_TRUE_P(result)) return(TRUE);
-	}
-      create_popup_menu((snd_state *)data, event->button, event->time);
-      return(TRUE);
+      if (XEN_TRUE_P(result)) return;
     }
-  return(FALSE);
+  create_popup_menu(get_global_state(), ev->button, ev->time);
 }
 
 static XEN g_menu_widgets(void)
@@ -1883,11 +1869,11 @@ wants to override the default menu action:\n\
           #f)\n\
         #t))) ; #t to make sure other menu items remain active"
 
-  #define H_gtk_popup_hook "gtk-popup-hook (widget event data) is called upon middle button click. \
+  #define H_gtk_popup_hook "gtk-popup-hook (widget event data snd chn) is called upon middle button click. \
 If it returns other than #t, the normal Snd popup menu is posted."
 
   XEN_DEFINE_HOOK(menu_hook, S_menu_hook, 2, H_menu_hook);
-  XEN_DEFINE_HOOK(gtk_popup_hook, "gtk-popup-hook", 3, H_gtk_popup_hook);
+  XEN_DEFINE_HOOK(gtk_popup_hook, "gtk-popup-hook", 5, H_gtk_popup_hook);
   XEN_DEFINE_PROCEDURE(S_menu_widgets, g_menu_widgets_w, 0, 0, 0, H_menu_widgets);
 }
 

@@ -560,11 +560,16 @@ static gboolean graph_button_press(GtkWidget *w, GdkEventButton *ev, gpointer da
   chan_info *cp = (chan_info *)data;
   snd_state *ss;
   /* fprintf(stderr, "graph press "); */
-  ss = cp->state;
-  if ((ev->type == GDK_BUTTON_PRESS) && (ev->button == 2))
-    create_popup_menu(ss, ev->button, ev->time);
+  if ((ev->type == GDK_BUTTON_PRESS) && (ev->button == POPUP_BUTTON))
+    {
+      int pdata;
+      pdata = get_user_int_data(GTK_OBJECT(w));
+      popup_menu_from(w, ev, data, UNPACK_SOUND(pdata), UNPACK_CHANNEL(pdata));
+      return(TRUE);
+    }
   else
     {
+      ss = cp->state;
       (ss->sgx)->graph_is_active = TRUE;
       gtk_widget_grab_focus(w);
       ((cp->sound)->sgx)->mini_active = 0;
