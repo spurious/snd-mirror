@@ -681,7 +681,11 @@ static void enved_reset(void)
   set_enved_in_dB(ss, DEFAULT_ENVED_IN_DB);
   set_enved_filter_order(ss, DEFAULT_ENVED_FILTER_ORDER);
   if (active_env) active_env = free_env(active_env);
+#if HAVE_GUILE
   active_env = string2env("'(0 0 1 0)");
+#else
+  active_env = string2env("[0, 0, 1, 0]");
+#endif
   set_enved_env_list_top(0);
   do_env_edit(active_env, TRUE);
   set_sensitive(saveB, TRUE);

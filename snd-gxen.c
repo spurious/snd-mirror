@@ -17,7 +17,7 @@ static XEN g_in(XEN ms, XEN code)
       gtk_timeout_add((guint32)XEN_TO_C_INT(ms), timed_eval, (gpointer)code);
       snd_protect(code);
     }
-  else mus_misc_error(S_in, "2nd argument should be a procedure of no args", code);
+  else XEN_BAD_ARITY_ERROR(S_in, 2, code, "should take no args");
   return(ms);
 }
 
@@ -130,7 +130,7 @@ static XEN g_set_graph_cursor(XEN curs)
       ss->Graph_Cursor = val;
       (ss->sgx)->graph_cursor = gdk_cursor_new((GdkCursorType)in_graph_cursor(ss));
     }
-  else mus_misc_error("set! " S_graph_cursor, "invalid cursor", curs);
+  else XEN_OUT_OF_RANGE_ERROR(S_setB S_graph_cursor, 1, curs, "invalid cursor");
   return(curs);
 }
 

@@ -33,17 +33,17 @@
 <ul>
   <li><a href="#autosavedoc">autosave.scm: auto-save support</a>
   <li><a href="#belldoc">bell.scm: the fm-bell from CLM</a>
-  <li><a href="#bessdoc">bess.scm: FM demo</a>
-  <li><a href="#birddoc">bird.scm and bird.rb: North-American birds</a>
+  <li><a href="#bessdoc">bess.scm, contrib/bess.rb: FM demo</a>
+  <li><a href="#birddoc">bird.scm, bird.rb: North-American birds</a>
   <li><a href="#contribdoc">contrib directory contents</a>
   <li><a href="#drawdoc">draw.scm: graphics additions</a>
   <li><a href="#dspdoc">dsp.scm: various DSP-related procedures</a>
   <li><a href="#editmenudoc">edit-menu.scm: Edit menu additions</a>
-  <li><a href="#effectsdoc">new-effects.scm, gtk-effects.scm: an Effects menu</a>
+  <li><a href="#effectsdoc">new-effects.scm, gtk-effects.scm, contrib/effects.rb: an Effects menu</a>
   <li><a href="#envdoc">env.scm: envelope functions</a>
   <li><a href="#enveddoc">enved.scm: envelope editor</a>
   <li><a href="#eventdoc">event.scm: xm module stuff</a>
-  <li><a href="#exampdoc">examp.scm: many examples</a>
+  <li><a href="#exampdoc">examp.scm, contrib/examp.rb: many examples</a>
   <li><a href="#extensionsdoc">extensions.scm: various generally useful Snd extensions</a>
   <li><a href="#fadedoc">fade.scm: frequency-domain cross-fades</a>
   <li><a href="#fmvdoc">fmv.scm: a controller for the fm-violin</a>
@@ -59,7 +59,7 @@
   <li><a href="#nbdoc">nb.scm: Popup File info etc</a>
   <li><a href="#peakenvdoc">peak-env.scm: peak envelope support</a>
   <li><a href="#playdoc">play.scm: play-related functions</a>
-  <li><a href="#popupdoc">popup.scm and gtk-popup.scm: Popup menu specializations</a>
+  <li><a href="#popupdoc">popup.scm, gtk-popup.scm, contrib/popup.rb: Popup menu specializations</a>
   <li><a href="#pqwvoxdoc">pqwvox.scm: phase-quadrature waveshaping</a>
   <li><a href="#prc95doc">prc95.scm: Perry Cook's physical model examples</a>
   <li><a href="#pvocdoc">pvoc.scm: phase-vocoder</a>
@@ -73,7 +73,7 @@
   <li><a href="#sndgldoc">snd-gl.scm: OpenGL examples (gl.c)</a>
   <li><a href="#sndmotifdoc">snd-motif.scm, snd-gtk.scm: Motif/Gtk module (xm.c, xg.c)</a>
   <li><a href="#sndtestdoc">snd-test.scm, snd_test.rb, and event.scm: Snd regression tests</a>
-  <li><a href="#vdoc">v.scm: fm-violin</a>
+  <li><a href="#vdoc">v.scm, contrib/v.rb: fm-violin</a>
   <li><a href="#wsdoc">ws.scm: with-sound</a>
   <li><a href="#xmenveddoc">xm-enved.scm</a>
   <li><a href="#zipdoc">zip.scm: the zipper (a cross-fader)</a>
@@ -180,7 +180,7 @@ Waveshaping is described in Le Brun, "Digital Waveshaping Synthesis", JAES 1979 
 into one vct object, then mixes that into the output sound.  The <i>beg</i> and <i>maxdur</i>
 arguments set the begin time and maximum duration in seconds of the mix; the duration is
 used to allocate the global vct object (<i>out-data</i>. The <i>func</i> argument is
-a Scheme function of no arguments (known in Scheme as a "thunk").  It is called
+a Scheme function of no arguments (known in Scheme as a thunk).  It is called
 via <code>(func)</code>; the assumption is that <i>func</i> will actually provide
 a complete bird song.  For example:</p>
 <pre>
@@ -274,8 +274,10 @@ include:
     <em class=def>README</em>                 loading info
   <em class=def>DotEmacs</em>               Emacs init file (Fernando Lopez-Lezcano)
   <em class=def>edit123.scm</em>            Handy editing sequences (Tom Roth)
+  <em class=def>effects.rb</em>             Ruby version of new-effects.scm (Michael Scholz)
   <em class=def>examp.rb</em>               Ruby version of examp.scm (Michael Scholz)
   <em class=def>inf-snd.el</em>             Ruby/Guile Emacs connection (Michael Scholz)
+  <em class=def>popup.rb</em>               Ruby version of popup.scm (Michael Scholz)
   <em class=def>rmsgain.scm</em>            amplitude via rms (Fabio Furlanete)
   <em class=def>tutorial/</em>              Snd tutorial (Dave Phillips)
   <em class=def>v.rb</em>                   Ruby version of v.scm (and more) (Michael Scholz)
@@ -404,7 +406,7 @@ The code:
    (return (/ (srate snd)
 	      (* 2 (+ i 1 offset)))))
 </pre>
-<p>is using Xavier Serra's interpolation technique to find the "true" location
+<p>is using Xavier Serra's interpolation technique to find the true location
 of the autocorrelation peak.  The <i>cor-peak</i> business is making sure the
 log10 arguments fall between 0.0 and 1.0.
 </p>
@@ -459,7 +461,7 @@ Polynomials driven by a cosine). Three other similar functions are <i>sum-of-n-s
 
 <A NAME="effectsdoc"></a><span class=box><h2>new-effects.scm, gtk-effects.scm</h2></span>
 
-<p>new-effects.scm implements an "Effects" menu.  If you have Motif,
+<p>new-effects.scm implements an Effects menu.  If you have Motif,
 you can load xm.so (or build Snd with it preloaded), and get sliders
 to control most of the effects.  (Use gtk-effects.scm with Gtk, obviously).
 The effects include:
@@ -516,7 +518,7 @@ get its current option label.  That is,
 			      (update-label (cdr effects)))))
 		      (update-label effects-list))))
 </pre>
-<p>defines the update-callback to be a "thunk" (the outer lambda) that itself
+<p>defines the update-callback to be a thunk (the outer lambda) that itself
 defines a local function (update-label) that runs through the effects-list
 calling each one via <code>((car effects))</code>.  Each effect that wants
 to recalculate its option label then
@@ -758,7 +760,7 @@ I'm slowly dividing out related groups of procedures to separate files.
 <li><a href="#ssuserinterface">user-interface</a>
 <small>
   <ul>
-    <li>XEmacs-like "Buffers" menu
+    <li>XEmacs-like Buffers menu
     <li>Reopen menu
     <li>make dot size dependent on number of samples being displayed
     <li>flash selected data red and green
@@ -956,9 +958,9 @@ up to the nearest power of 2.
 <span class=bbox><h3><A NAME="ssuserinterface">user-interface</a></h3></span>
 
 <p><i>show-draggable-graph</i>, in imitation of Snd's FFT display, implements a
-draggable X axis in the "lisp" graph window.  (This is slightly messier than
+draggable X axis in the lisp graph window.  (This is slightly messier than
 it ought to be).
-Two of the examples are imitations of Xemacs: a "Buffers" menu and an auto-save hook (now in <a href="autosavedoc">autosave.scm</a>).</p>
+Two of the examples are imitations of Xemacs: a Buffers menu and an auto-save hook (now in <a href="autosavedoc">autosave.scm</a>).</p>
 <pre>
   <em class=def><A NAME="exopenbuffer">open-buffer</a></em> filename
   <em class=def><A NAME="exclosebuffer">close-buffer</a></em> snd
@@ -986,7 +988,7 @@ closed (and not subsequently re-opened) files in reverse order of closing.
 writes to <i>current-output-port</i>, but there's no simple way to redirect that
 elsewhere (and with-output-to-string is not completely integrated with
 Guile's help system).  So, if your code calls display, the result may be invisible.
-One way around this is to reset the current-output-port to be a "soft port"
+One way around this is to reset the current-output-port to be a soft port
 that actually calls <a href="extsnd.html#sndprint">snd-print</a> instead:
 </p>
 <pre>
@@ -1044,7 +1046,7 @@ echo '\e[41m This is red! \e[0m'
 </pre>
 <p>This is a mouse-enter-label-hook function for the View:Files dialog;
 it hides all sounds but the one the mouse is pointing to in the current files list.
-The "pointer-focus" style of interaction uses similar hooks.  There is also
+The pointer-focus style of interaction uses similar hooks.  There is also
 a first stab at Emacs-like C-x b support here; the file name in the prompt
 should be a string (i.e. in quotes), unlike Emacs.  This still needs work
 especially for multichannel sounds.
@@ -1285,8 +1287,8 @@ and moves the cursor to that sample. It can be interrupted by C-g.
   <em class=def><a name="exenvsoundinterp">env-sound-interp</a></em> envelope &amp;optional (time-scale 1.0) snd chn) 
 </pre>
 <p><i>make-sound-interp</i> returns an interpolating reader for <i>snd</i>'s channel <i>chn</i>.
-The "interpolating reader" reads a channel at an arbitary location,
-interpolating between samples if necessary.  The corresponding "generator" is <i>sound-interp</i>.
+The interpolating reader reads a channel at an arbitary location,
+interpolating between samples if necessary.  The corresponding generator is <i>sound-interp</i>.
 The function <i>test-interp</i> shows one way to use this, using a sine wave to lookup the
 current sound.
 <i>env-sound-interp</i> reads <i>snd</i>'s channel <i>chn</i> (via a sound-interp generator)
@@ -1466,7 +1468,7 @@ those hooks.
 and if that same sound is subsquently re-opened, restores the previous state.
 </p>
 
-<p><i>mix-channel</i> is a "regularized" version of the file mixing functions (mix and mix-sound).
+<p><i>mix-channel</i> is a regularized version of the file mixing functions (mix and mix-sound).
 It's first argument can be either a filename (a string) or a list containing the filename, the
 start point in the file, and (optionally) the channel of the file to mix.  For example:
 </p>
@@ -1669,15 +1671,14 @@ between the leftmost marks in <i>snd</i>.
 
 <A NAME="mixdoc"></a><span class=box><h2>mix.scm</h2></span>
 
-<p>mix.scm provides various mix-related utilities, including support for "tracks".  The latter were originally
+<p>mix.scm provides various mix-related utilities, including support for tracks.  The latter were originally
 called groups in Snd, with their own elaborate dialog and what-not. That was jettisoned soon after it
-was written.  The next thing to go were the "mix consoles" -- originally each mix encapsulated the
+was written.  The next thing to go were the mix consoles -- originally each mix encapsulated the
 current Mix Panel in a little (but incredibly complicated) widget set that followed the mix around
 in the time domain graph.  This was too hard to implement in Gtk+, and too hard to use in any case.
-The current version has only the "tag" to drag a mix around, the Mix Panel to set mix amplitudes
-and so on, and a bunch of hooks.  These hooks are used in mix.scm to implement one view of "tracks",
-which I assume are groups of related mixes (I've actually never looked at a "real" sound editor
-to find out what all the fuss is about).
+The current version has only the tag to drag a mix around, the Mix Panel to set mix amplitudes
+and so on, and a bunch of hooks.  These hooks are used in mix.scm to implement one view of tracks,
+which I assume are groups of related mixes.
 </p>
 <pre>
   <em class=def><a name="mixname2id">mix-name-&gt;id</a></em> name
@@ -1859,7 +1860,7 @@ to make a new version of the picture).
 
 <A NAME="nbdoc"></a><span class=box><h2>nb.scm</h2></span>
 
-<p>nb.scm provides "popup" help for files in the View:Files dialog; as you move
+<p>nb.scm provides popup help for files in the View:Files dialog; as you move
 the mouse through the lists, the help dialog posts information about the file
 underneath the mouse.  This uses a slightly fancier file information procedure
 than 'finfo' in examp.scm.  If you have the guile-gdbm package, you can use
@@ -1950,7 +1951,7 @@ If you want the DAC to be held open in the background,
   <em class=def><A NAME="exstartdac">start-dac</a></em>
   <em class=def><A NAME="exstopdac">stop-dac</a></em>
 </pre>
-<p>The "vector-synthesis" 
+<p>The vector-synthesis 
 idea (and weird name) came from a linux-audio-development mailing list.
 Apparently some commercial synths (or software?) provide this.
 It reads any number of sound files, using a function to
@@ -1989,10 +1990,10 @@ set from the distance to the desired frequency.  If a center frequency moves (fo
 the base frequency moves down far enough that the previous upper member of the pair has
 to become the lower member), the upper waveshaper (which has ramped to zero amplitude), jumps
 down to its new center. The formant table was provided by Robert Poor.
-The "phase-quadrature" part of the business creates single side-band spectra.
+The phase-quadrature part of the business creates single side-band spectra.
 For details on waveshaping, see Le Brun, "Digital Waveshaping Synthesis", JAES 1979 April, vol 27, no 4, p250.
 It might be simpler to set up three formant generators and drive them with the waveshapers,
-but the "leap-frog" idea was a neat hack -- such things are worth keeping even when
+but the leap-frog idea was a neat hack -- such things are worth keeping even when
 they aren't all that sensible anymore.  (Also, I noticed while writing this paragraph that
 the single-sideband cancellation is not working as I expected -- another bug to track down...)
 </p>
@@ -2295,14 +2296,14 @@ waterfall spectrum display of the incoming audio data.  <b>stop-waterfall</b> tu
 <p>snd-motif.scm has procedures that rely on the Motif module (xm.c).
 Some of these have been translated to Gtk and xg.c -- snd-gtk.scm.
 <b>install-searcher</b> places
-our own search procedure into the "filter" mechanism in the File:Open
+our own search procedure into the filter mechanism in the File:Open
 dialog. The pair <b>zync</b> and <b>unzync</b> cause the
 y-axis zoom sliders of a multi-channel file to move together or separately.
 <b>make-hidden-controls-dialog</b> adds "Hidden controls" to the Option
 menu.  If you click it, it
-creates a dialog that controls all the "hidden" control-panel variables.
+creates a dialog that controls all the hidden control-panel variables.
 The "expand-hop" control sets the hop size (per grain), "expand-length"
-sets the grain length, "expand-ramp" sets the slope, essentially, of the grain amplitude envelope,
+sets the grain length, "expand-ramp" sets the slope of the grain amplitude envelope,
 "contrast-amp" sets the prescaler for the contrast effect, "reverb-feedback" sets the feedback
 amount in the reverberator (it sets all the comb filter scalers), and "reverb-lowpass" sets
 the lowpass filter coefficient in the reverberator. 
@@ -2349,7 +2350,7 @@ then adds a dac-hook function to display the current playback volume
 in the respective meter.  <b>show-disk-space</b> adds a label in the
 minibuffer area which shows the current amount of disk space available
 on the partition of the associated sound.
-<b>keep-file-dialog-open-upon-ok</b> changes File:Open so that clicking "ok" does not "unmanage" the dialog.
+<b>keep-file-dialog-open-upon-ok</b> changes File:Open so that clicking "ok" does not unmanage the dialog.
 <b>add-amp-controls</b> adds amp sliders to the control panel
 for multi-channel sounds.
 <b>add-very-useful-icons</b> adds some very useful icons. (It is now commented out, replaced 
@@ -3118,7 +3119,7 @@ opened (corresponding to CLM's *reverb*).  So the cooperating instrument code sh
             ((= i end))
           (outa i ... *output*))))))
 </pre>
-<p>which is essentially the same as in the standard CLM (change the "loop" statement to a "do" statement,
+<p>which is the same as in the standard CLM (change the loop statement to a do statement,
 add the lambda wrapper (needed by the run macro unfortunately),
 and you're ready to go!  If the run macro can handle the instrument code (and
 it can handle anything the CL version can handle, I think), then the Snd with-sound
@@ -3169,9 +3170,9 @@ resource argument list is <i>args</i>.  The editor's current envelope is accessi
 <p>The zipper generator performs a kind of cross fade, but not one that
 tries to be smooth!  It marches through the two sounds taking equal short
 portions of each, then abutting them while resampling so that as one
-takes less overall "frame" space, the other takes more.  The <i>frame-size</i>
+takes less overall frame space, the other takes more.  The <i>frame-size</i>
 argument is the maximum length of each twosome in seconds (for initial array allocation), the <i>frame-env</i>
-argument determines the current such length as new "frames" are needed, and the
+argument determines the current such length as new frames are needed, and the
 <i>ramp-env</i> argument determines which of the files gets more space
 in the frame (0: all first, 1: all second).
 For example, the following function sets up two sounds,
@@ -3332,8 +3333,8 @@ counter is 246
 </pre>
 <p>It's not completely ideal, but it's close enough that I don't find it painful to use.
 If you run the program above, you'll be annoyed to discover that any error causes
-it to exit!  Guile's default is to have no error handler installed, so the "throw"
-that an error generates is not "caught", causing the program to exit.  The next
+it to exit!  Guile's default is to have no error handler installed, so the throw
+that an error generates is not caught, causing the program to exit.  The next
 version of our program adds error handling, a cleaner exit mechanism (you can
 call the exit procedure to exit), and a simple procedure that adds some amount
 to the counter:
@@ -3846,7 +3847,7 @@ static void init_fcomb(void)
 
 <span class=box><h2><A NAME="continuations">About Continuations</a></h2></span>
 
-<p>A continuation is essentially a GOTO, a jump to the end of the 
+<p>A continuation is a GOTO, a jump to the end of the 
 defining call-with-current-continuation form. 
 Here are a few simple examples:</p>
 <pre>
@@ -3904,7 +3905,7 @@ Here are a few simple examples:</p>
 	 (lambda args
 	     (if (eq? (car args) 'not-really-an-error)
 		 ((cadr args) #f)  ;; here we are invoking the continuation passed as an arg to throw
-		                   ;;   it will effectively "goto" the "display i" statement with i = 3
+		                   ;;   it will "goto" the "display i" statement with i = 3
 		 (display "got a real error")))))
 
 ;;; (con-go-on)

@@ -946,7 +946,9 @@
 (hey " * ~A: test suite (snd-test 24)~%" (string-append "T" "ODO"))
 (hey " *~%")
 (hey " * HISTORY:~%")
-(hey " *     6-Jan:     gtk 2.2 changes.~%")
+(hey " *     10-Mar:    Ruby Xm_Version.~%")
+(hey " *     6-Jan-03:  gtk 2.2 changes.~%")
+(hey " *     --------~%")
 (hey " *     18-Nov:    Ruby/Gtk bugfixes.~%")
 (hey " *     28-Oct:    gtk 2.1 additions.~%")
 (hey " *     25-Oct:    removed (deprecated) gdk_set_pointer_hooks~%")
@@ -1996,8 +1998,8 @@
 
 (for-each 
  (lambda (field)
-   (hey "  XG_DEFINE_ACCESSOR(~A, gxg_~A, \"set_~A\", gxg_set_~A, 1, 0, 2, 0);~%" field field field field)
-   (say "  XG_DEFINE_ACCESSOR(~A, gxg_~A_w, \"set_~A\", gxg_set_~A_w, 1, 0, 2, 0);~%" field field field field))
+   (hey "  XG_DEFINE_ACCESSOR(~A, gxg_~A, set_~A, gxg_set_~A, 1, 0, 2, 0);~%" field field field field)
+   (say "  XG_DEFINE_ACCESSOR(~A, gxg_~A_w, set_~A, gxg_set_~A_w, 1, 0, 2, 0);~%" field field field field))
  settable-struct-fields)
 
 (for-each 
@@ -2144,6 +2146,9 @@
 (hey "      XEN_YES_WE_HAVE(\"xg\");~%")
 (hey "#if HAVE_GUILE~%")
 (hey "      XEN_EVAL_C_STRING(\"(define xm-version \\\"~A\\\")\");~%" (strftime "%d-%b-%y" (localtime (current-time))))
+(hey "#endif~%")
+(hey "#if HAVE_RUBY~%")
+(hey "      rb_define_global_const(\"Xm_Version\", C_TO_XEN_STRING(\"~A\"));~%" (strftime "%d-%b-%y" (localtime (current-time))))
 (hey "#endif~%")
 (hey "      xg_already_inited = TRUE;~%")
 (hey "    }~%")

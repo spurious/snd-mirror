@@ -68,12 +68,18 @@ static char* vstrcat(char *buf, ...)
   return(buf);
 }
 
-#if HAVE_GUILE
 static char *xm_version(void)
 {
   char *version = NULL;
-  XEN xm_val;
+  XEN xm_val = XEN_FALSE;
+#if HAVE_GUILE
   xm_val = XEN_EVAL_C_STRING("(and (or (provided? 'xm) (provided? 'xg)) xm-version)");
+#else
+  #if HAVE_RUBY
+  if (rb_const_defined(rb_cObject, rb_intern("Xm_Version")))
+    xm_val = XEN_EVAL_C_STRING("Xm_Version");
+  #endif
+#endif
   if (XEN_STRING_P(xm_val))
     {
       version = (char *)CALLOC(32, sizeof(char));
@@ -88,9 +94,29 @@ static char *xm_version(void)
     }
   return("");
 }
-#endif
 
 #if HAVE_GL
+static char *gl_version(void)
+{
+  char *version = NULL;
+  XEN gl_val = XEN_FALSE;
+#if HAVE_GUILE
+  gl_val = XEN_EVAL_C_STRING("(and (provided? 'gl) gl-version)");
+#else
+  #if HAVE_RUBY
+  if (rb_const_defined(rb_cObject, rb_intern("Gl_Version")))
+    gl_val = XEN_EVAL_C_STRING("Gl_Version");
+  #endif
+#endif
+  if (XEN_STRING_P(gl_val))
+    {
+      version = (char *)CALLOC(32, sizeof(char));
+      mus_snprintf(version, 32, "\n    gl: %s", XEN_TO_C_STRING(gl_val));
+      return(version);
+    }
+  return("");
+}
+
 static char *glx_version(void)
 {
   snd_state *ss;
@@ -181,10 +207,9 @@ char *version_info(void)
                          snd_itoa(GLIB_MINOR_VERSION), ".", 
                          snd_itoa(GLIB_MICRO_VERSION),
 #endif
-#if HAVE_GUILE
 	  xm_version(),
-#endif
 #if HAVE_GL
+	  gl_version(),
 	  "\n    OpenGL", glx_version(),
   #if USE_GTK
 	  ", gtkglext ",
@@ -267,11 +292,17 @@ void news_help(snd_state *ss)
 {
   char *info = NULL, *features = NULL;
   info = version_info();
+#if HAVE_GUILE
   features = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING("*features*")), 600);
+#endif
+#if HAVE_RUBY
+  features = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING("$\".join(' ')")), 600);
+#endif
   ssnd_help(ss, "News",
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+10-Mar:  Ruby-related bugfixes thanks to Michael Scholz.\n\
 5-Mar:   contrib/popup.rb from Michael Scholz.\n\
 4-Mar:   redo renamed redo_edit in Ruby version, in -> call_in.\n\
 3-Mar:   contrib/effects.rb from Michael Scholz.\n\
@@ -279,14 +310,15 @@ void news_help(snd_state *ss)
 28-Feb:  new-effects.scm bugfixes from Michael Scholz.\n\
 21-Feb:  convolve-arrays renamed vct-convolve!.\n\
 20-Feb:  removed transform-samples and region-samples.\n\
-17-Feb:  snd 6.6.\n\
-10-Feb:  removed click-for-help option.\n\
-7-Feb:   German translation (po/de.po) thanks to Michael Scholz.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
 #else
+  #if HAVE_RUBY	    
+	    "\n    $LOADED_FEATURES: \n", features, "\n\n",
+  #else
 	    "\n",
+  #endif
 #endif
 NULL);
   if (info) FREE(info);

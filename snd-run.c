@@ -40,7 +40,7 @@
  *
  * currently handled, at least partially:
  *
- *   types: float int char string boolean symbol vct snd_fd mus_any vector function [and list constants] keyword[underway...]
+ *   types: float int char string boolean symbol keyword vct snd_fd mus_any vector function [and list constants]
  *
  *   lambda (use 'declare' to set arg types)
  *   call-with-current-continuation call/cc
@@ -4928,7 +4928,7 @@ static xen_value *display_1(ptree *pt, xen_value **args, int num_args)
     case R_CHAR:       return(package(pt, R_BOOL, display_chr, descr_display_chr, args, 1));   break;
     case R_GOTO:       return(package(pt, R_BOOL, display_con, descr_display_con, args, 1));   break;
     case R_FUNCTION:   return(package(pt, R_BOOL, display_func, descr_display_func, args, 1)); break;
-    case R_CLM_VECTOR:
+    case R_CLM_VECTOR: /* SOMEDAY: display clm_vector and vct_vector in some pretty manner */
     case R_VCT_VECTOR:
     case R_INT_VECTOR: return(package(pt, R_BOOL, display_int_vct, descr_display_int_vct, args, 1));   break;
     }

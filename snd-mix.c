@@ -4316,7 +4316,7 @@ mixes data (a vct object) into snd's channel chn starting at beg; returns the ne
   cp = get_cp(snd, chn, S_mix_vct);
   bg = XEN_TO_C_OFF_T_OR_ELSE(beg, 0);
   if (bg < 0)
-    mus_misc_error(S_mix_vct, _("mix-vct: beg < 0?"), beg);
+    XEN_OUT_OF_RANGE_ERROR(S_mix_vct, 2, beg, "beg < 0?");
   else
     {
       if (XEN_NOT_BOUND_P(with_tag))

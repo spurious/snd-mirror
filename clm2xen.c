@@ -52,6 +52,7 @@
 
 #include "sndlib.h"
 #include "clm.h"
+#include "xen.h"
 #include "sndlib2xen.h"
 #include "vct.h"
 #include "clm2xen.h"
@@ -452,7 +453,7 @@ the real and imaginary parts of the data, len should be a power of 2, dir = 1 fo
     {
       n = XEN_TO_C_INT(len); 
       if (n <= 0)
-	mus_misc_error(S_mus_fft, "size <= 0?", len);
+	XEN_OUT_OF_RANGE_ERROR(S_mus_fft, 3, len, "size <= 0?");
       if (n > v1->length)
 	n = v1->length;
     }
@@ -481,11 +482,11 @@ static XEN g_make_fft_window(XEN type, XEN size, XEN ubeta)
   if (XEN_NUMBER_P(ubeta)) beta = XEN_TO_C_DOUBLE(ubeta);
   n = XEN_TO_C_INT(size);
   if (n <= 0)
-    mus_misc_error(S_make_fft_window, "size <= 0?", size);
+    XEN_OUT_OF_RANGE_ERROR(S_make_fft_window, 2, size, "size <= 0?");
   t = XEN_TO_C_INT(type);
   if (MUS_FFT_WINDOW_OK(t))
     return(make_vct(n, mus_make_fft_window(t, n, beta)));
-  mus_misc_error(S_make_fft_window, "unknown fft window", type);
+  XEN_OUT_OF_RANGE_ERROR(S_make_fft_window, 1, type, "unknown fft window");
   return(XEN_FALSE);
 }
 
@@ -511,7 +512,7 @@ and type determines how the spectral data is scaled:\n\
     {
       n = XEN_TO_C_INT(un); 
       if (n <= 0)
-	mus_misc_error(S_spectrum, "size <= 0?", un);
+	XEN_OUT_OF_RANGE_ERROR(S_spectrum, 4, un, "size <= 0?");
       if (n > v1->length)
 	n = v1->length;
     }
@@ -543,7 +544,7 @@ of (vcts) v1 with v2, using fft of size len (a power of 2), result in v1"
     {
       n = XEN_TO_C_INT(un); 
       if (n <= 0)
-	mus_misc_error(S_convolution, "size <= 0?", un);
+	XEN_OUT_OF_RANGE_ERROR(S_convolution, 3, un, "size <= 0?");
       if (n > v1->length)
 	n = v1->length;
       if (n > v2->length)
@@ -595,7 +596,7 @@ taking into account wrap-around (size = size of data), with linear interpolation
     {
       len = XEN_TO_C_INT(size); 
       if (len <= 0)
-	mus_misc_error(S_array_interp, "size <= 0?", size);
+	XEN_OUT_OF_RANGE_ERROR(S_array_interp, 3, size, "size <= 0?");
       if (len > v->length) len = v->length;
     }
   else len = v->length;
@@ -903,7 +904,7 @@ static Float *whatever_to_floats(XEN inp, int size, const char *caller)
 		      for (i = 0; i < size; i++) 
 			invals[i] = XEN_TO_C_DOUBLE(XEN_CALL_1_NO_CATCH(inp, C_TO_XEN_INT(i), caller));
 		    }
-		  else mus_misc_error(caller, "wrong number of args to function (want 1)", inp);
+		  else XEN_BAD_ARITY_ERROR(caller, 0, inp, "data function wants 1 arg");
 		}
 	      /* not an error if #<undefined> or the like -- just return NULL */
 	    }
@@ -1084,9 +1085,9 @@ static XEN g_make_delay_1(int choice, XEN arglist)
 	}
       size = ikeyarg(keys[keyn], caller, orig_arg[keyn] + 1, size);
       if (size < 0)
-	mus_misc_error(caller, "size < 0?", keys[size_key]);
+	XEN_OUT_OF_RANGE_ERROR(caller, size_key + 1, keys[size_key], "size < 0?");
       if (size > MAX_TABLE_SIZE)
-	mus_misc_error(caller, "size too large", keys[size_key]);
+	XEN_OUT_OF_RANGE_ERROR(caller, size_key + 1, keys[size_key], "size too large");
       size_key = keyn;
       keyn++;
       if (!(XEN_KEYWORD_P(keys[keyn])))
@@ -1099,7 +1100,10 @@ static XEN g_make_delay_1(int choice, XEN arglist)
 	      if (XEN_LIST_P_WITH_LENGTH(initial_contents, len))
 		{
 		  if (len == 0) 
-		    mus_misc_error(caller, "initial-contents empty?", initial_contents);
+		    XEN_ERROR(NO_DATA,
+			      XEN_LIST_3(C_TO_XEN_STRING(caller), 
+					 C_TO_XEN_STRING("initial-contents empty?"), 
+					 initial_contents));
 		  line = (Float *)CALLOC(len, sizeof(Float));
 		  if (line == NULL)
 		    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate delay line");
@@ -1133,7 +1137,7 @@ static XEN g_make_delay_1(int choice, XEN arglist)
 	      if (max_size > MAX_TABLE_SIZE)
 		{
 		  if (line) FREE(line);
-		  mus_misc_error(caller, "max-size too large", keys[keyn]);
+		  XEN_OUT_OF_RANGE_ERROR(caller, keyn + 1, keys[keyn], "max-size too large");
 		}
 	    }
 	  else
@@ -1147,7 +1151,7 @@ static XEN g_make_delay_1(int choice, XEN arglist)
   if ((max_size <= 0) || (max_size < size))
     {
       if (line) FREE(line);
-      mus_misc_error(caller, "invalid delay length", C_TO_XEN_INT(max_size));
+      XEN_OUT_OF_RANGE_ERROR(caller, 0, C_TO_XEN_INT(max_size), "invalid delay length");
     }
   if (line == NULL)
     {
@@ -1334,7 +1338,7 @@ returns a new " S_sum_of_cosines " generator, producing a band-limited pulse tra
       phase = fkeyarg(keys[2], S_make_sum_of_cosines, orig_arg[2] + 1, phase);
     }
   if (cosines <= 0)
-    mus_misc_error(S_make_sum_of_cosines, "cosines <= 0?", keys[0]);
+    XEN_OUT_OF_RANGE_ERROR(S_make_sum_of_cosines, 1, keys[0], "cosines <= 0?");
   ge = mus_make_sum_of_cosines(cosines, freq, phase);
   if (ge)
     {
@@ -1491,7 +1495,10 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
   XEN_ASSERT_TYPE(VCT_P(utable) || XEN_FALSE_P(utable) || (!(XEN_BOUND_P(utable))), utable, XEN_ARG_2, S_partials2wave, "a vct or #f");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(normalize), normalize, XEN_ARG_3, S_partials2wave, "a boolean");
   if (len == 0)
-    mus_misc_error(S_partials2wave, "partials list empty?", partials);
+    XEN_ERROR(NO_DATA, 
+	      XEN_LIST_3(C_TO_XEN_STRING(S_partials2wave), 
+			 C_TO_XEN_STRING("partials list empty?"), 
+			 partials));
   if ((XEN_NOT_BOUND_P(utable)) || (!(VCT_P(utable))))
     {
       wave = (Float *)CALLOC(DEFAULT_TABLE_SIZE, sizeof(Float));
@@ -1528,7 +1535,10 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
   XEN_ASSERT_TYPE(VCT_P(utable) || XEN_FALSE_P(utable) || (!(XEN_BOUND_P(utable))), utable, XEN_ARG_2, S_phasepartials2wave, "a vct or #f");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(normalize), normalize, XEN_ARG_3, S_phasepartials2wave, "a boolean");
   if (len == 0)
-    mus_misc_error(S_partials2wave, "partials list empty?", partials);
+    XEN_ERROR(NO_DATA,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_partials2wave), 
+			 C_TO_XEN_STRING("partials list empty?"),
+			 partials));
   if ((XEN_NOT_BOUND_P(utable)) || (!(VCT_P(utable))))
     {
       wave = (Float *)CALLOC(DEFAULT_TABLE_SIZE, sizeof(Float));
@@ -2204,7 +2214,7 @@ with chans samples, each sample set from the trailing arguments (defaulting to 0
   if (len > (size + 1)) 
     mus_misc_error(S_make_frame, "extra trailing args?", arglist);
   if (size <= 0)
-    mus_misc_error(S_make_frame, "size: ", C_TO_XEN_INT(size));
+    XEN_OUT_OF_RANGE_ERROR(S_make_frame, 1, C_TO_XEN_INT(size), "size <= 0?");
   ge = (mus_any *)mus_make_empty_frame(size);
   if (ge)
     {
@@ -2216,12 +2226,12 @@ with chans samples, each sample set from the trailing arguments (defaulting to 0
 	  vals = mus_data(fr);
 	  for (i = 1, lst = XEN_CDR(XEN_COPY_ARG(arglist)); i < len; i++, lst = XEN_CDR(lst))
 	    if (XEN_NUMBER_P(XEN_CAR(lst)))
-	      vals[i - 1] = XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst), 0.0);
+	      vals[i - 1] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
 	    else
 	      {
 		mus_free(gn->gen);
 		FREE(gn);
-		mus_misc_error(S_make_frame, "invalid arg:", XEN_CAR(lst));
+		XEN_WRONG_TYPE_ARG_ERROR(S_make_frame, i, XEN_CAR(lst), "not a number?");
 	      }
 	}
       return(mus_xen_to_object(gn));
@@ -2440,8 +2450,8 @@ giving | (a*.5 + b*.125) (a*.25 + b*1.0) |"
   cararg = XEN_CAR(arglist);
   if (!(XEN_NUMBER_P(cararg))) mus_misc_error(S_make_mixer, "first arg is the number of chans", cararg);
   size = XEN_TO_C_INT_OR_ELSE(cararg, 0);
-  if (size <= 0) mus_misc_error(S_make_mixer, "chans <= 0?", cararg);
-  if (size > 256) mus_misc_error(S_make_mixer, "chans > 256?", cararg);
+  if (size <= 0) XEN_OUT_OF_RANGE_ERROR(S_make_mixer, 1, cararg, "chans <= 0?");
+  if (size > 256) XEN_OUT_OF_RANGE_ERROR(S_make_mixer, 1, cararg, "chans > 256?");
   if (len > (size * size + 1)) 
     mus_misc_error(S_make_mixer, "extra trailing args?", arglist);
   ge = (mus_any *)mus_make_empty_mixer(size);
@@ -2458,12 +2468,12 @@ giving | (a*.5 + b*.125) (a*.25 + b*1.0) |"
 	  for (i = 1, lst = XEN_CDR(XEN_COPY_ARG(arglist)); (i < len) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
 	    {
 	      if (XEN_NUMBER_P(XEN_CAR(lst)))
-		vals[j][k] = XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst), 0.0);
+		vals[j][k] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
 	      else
 		{
 		  mus_free(gn->gen);
 		  FREE(gn);
-		  mus_misc_error(S_make_mixer, "invalid arg (not a number):", XEN_CAR(lst));
+		  XEN_WRONG_TYPE_ARG_ERROR(S_make_mixer, i, XEN_CAR(lst), "not a number?");
 		}
 	      k++;
 	      if (k == size)
@@ -2723,7 +2733,10 @@ is basically the same as make-oscil"
 	  XEN_ASSERT_TYPE(XEN_LIST_P(keys[1]), keys[1], orig_arg[1] + 1, S_make_waveshape, "a list");
 	  partials = list2partials(keys[1], &npartials);
 	  if (partials == NULL)
-	    mus_misc_error(S_make_waveshape, "partials list empty?", keys[1]);
+	    XEN_ERROR(NO_DATA, 
+		      XEN_LIST_3(C_TO_XEN_STRING(S_make_waveshape), 
+				 C_TO_XEN_STRING("partials list empty?"), 
+				 keys[1]));
 	  partials_allocated = 1;
         }
       if (!(XEN_KEYWORD_P(keys[2])))
@@ -2754,7 +2767,7 @@ is basically the same as make-oscil"
   if (wsize <= 0)
     {
       if (partials_allocated) {FREE(partials); partials = NULL;}
-      mus_misc_error(S_make_waveshape, "size <= 0?", keys[2]);
+      XEN_OUT_OF_RANGE_ERROR(S_make_waveshape, 3, keys[2], "size <= 0?");
     }
   if (wave == NULL) 
     {
@@ -2812,9 +2825,12 @@ that will produce the harmonic spectrum given by the partials argument"
     size = XEN_TO_C_INT(s_size);
   else size = DEFAULT_TABLE_SIZE;
   if ((size <= 0) || (size > MAX_TABLE_SIZE))
-    mus_misc_error(S_partials2waveshape, "bad size?", s_size);
+    XEN_OUT_OF_RANGE_ERROR(S_partials2waveshape, 2, s_size, "bad size?");
   if (len == 0)
-    mus_misc_error(S_partials2waveshape, "partials list empty?", amps);
+    XEN_ERROR(NO_DATA,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_partials2waveshape), 
+			 C_TO_XEN_STRING("partials list empty?"), 
+			 amps));
   partials = list2partials(amps, &npartials);
   wave = mus_partials2waveshape(npartials, partials, size, (Float *)CALLOC(size, sizeof(Float)));
   gwave = make_vct(size, wave);
@@ -2839,7 +2855,10 @@ to create (via waveshaping) the harmonic spectrum described by the partials argu
     kind = XEN_TO_C_INT(ukind);
   else kind = 1;
   if (len == 0)
-    mus_misc_error(S_partials2polynomial, "partials list empty?", amps);
+    XEN_ERROR(NO_DATA, 
+	      XEN_LIST_3(C_TO_XEN_STRING(S_partials2polynomial), 
+			 C_TO_XEN_STRING("partials list empty?"), 
+			 amps));
   partials = list2partials(amps, &npartials);
   wave = mus_partials2polynomial(npartials, partials, kind);
   return(make_vct(npartials, wave));
@@ -2995,7 +3014,7 @@ static XEN g_make_filter_1(int choice, XEN arg1, XEN arg2, XEN arg3, XEN arg4, X
 	}
     }
   if (order < 0)
-    mus_misc_error(caller, "order < 0?", keys[0]);
+    XEN_OUT_OF_RANGE_ERROR(caller, 1, keys[0], "order < 0?");
   if (choice == G_FILTER)
     {
       if (y == NULL)
@@ -3008,7 +3027,9 @@ static XEN g_make_filter_1(int choice, XEN arg1, XEN arg2, XEN arg3, XEN arg4, X
     }
   if (((x == NULL) && (choice != G_IIR_FILTER)) ||
       ((y == NULL) && (choice != G_FIR_FILTER)))
-    mus_misc_error(caller, "no coeffs?", XEN_FALSE);
+    XEN_ERROR(NO_DATA,
+	      XEN_LIST_2(C_TO_XEN_STRING(caller), 
+			 C_TO_XEN_STRING("no coeffs?")));
   if (order == 0)
     {
       if (x)
@@ -3152,7 +3173,10 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
         {
 	  XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(keys[0], len), keys[0], orig_arg[0] + 1, S_make_env, "a list");
 	  if (len == 0)
-	    mus_misc_error(S_make_env, "null env?", keys[0]);
+	    XEN_ERROR(NO_DATA,
+		      XEN_LIST_3(C_TO_XEN_STRING(S_make_env), 
+				 C_TO_XEN_STRING("null env?"), 
+				 keys[0]));
 	  npts = len / 2;
 	  brkpts = (Float *)CALLOC(len, sizeof(Float));
 	  if (brkpts == NULL)
@@ -3168,15 +3192,17 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
         }
     }
   if (brkpts == NULL) 
-    mus_misc_error(S_make_env, "no envelope?", XEN_EMPTY_LIST);
+    XEN_ERROR(NO_DATA,
+	      XEN_LIST_2(C_TO_XEN_STRING(S_make_env), 
+			 C_TO_XEN_STRING("no envelope?")));
   if ((end < 0) || (base < 0.0) || (duration < 0.0) || (start < 0))
     {
       if (brkpts) FREE(brkpts);
       if (odata) FREE(odata);
-      if (end < 0) mus_misc_error(S_make_env, "end < 0?", keys[5]);
-      if (base < 0.0) mus_misc_error(S_make_env, "base < 0.0?", keys[4]);
-      if (duration < 0.0) mus_misc_error(S_make_env, "duration < 0.0?", keys[2]);
-      if (start < 0) mus_misc_error(S_make_env, "start < 0?", keys[6]);
+      if (end < 0) XEN_OUT_OF_RANGE_ERROR(S_make_env, 6, keys[5], "end < 0?");
+      if (base < 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_env, 5, keys[4], "base < 0.0?");
+      if (duration < 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_env, 3, keys[2], "duration < 0.0?");
+      if (start < 0) XEN_OUT_OF_RANGE_ERROR(S_make_env, 7, keys[6], "start < 0?");
     }
   /* odata = vct->data in this context [vcts[0]] */
   old_error_handler = mus_error_set_handler(local_mus_error);
@@ -3394,11 +3420,11 @@ should be sndlib identifiers:\n\
 		  return(xen_return_first(mus_xen_to_object(gn), name));
 		}
 	    }
-	  else mus_misc_error(S_make_sample2file, "invalid chans", chans);
+	  else XEN_OUT_OF_RANGE_ERROR(S_make_sample2file, 2, chans, "chans <= 0?");
 	}
-      else mus_misc_error(S_make_sample2file, "invalid header type", out_type);
+      else XEN_OUT_OF_RANGE_ERROR(S_make_sample2file, 4, out_type, "invalid header type");
     }
-  else mus_misc_error(S_make_sample2file, "invalid data format", out_format);
+  else XEN_OUT_OF_RANGE_ERROR(S_make_sample2file, 3, out_format, "invalid data format");
   return(XEN_FALSE);
 }
 
@@ -3531,7 +3557,7 @@ srate and channels.  'len' samples are written."
   v = TO_VCT(data);
   samps = XEN_TO_C_INT_OR_ELSE(len, 1);
   if (samps <= 0)
-    mus_misc_error(S_array2file, "samples <= 0?", len);
+    XEN_OUT_OF_RANGE_ERROR(S_array2file, 3, len, "samples <= 0?");
   if (samps > v->length)
     samps = v->length;
   olen = mus_fltarray2file(XEN_TO_C_STRING(filename),
@@ -3565,7 +3591,7 @@ at frame 'start' and reading 'samples' samples altogether."
   v = TO_VCT(data);
   samps = XEN_TO_C_INT_OR_ELSE(samples, 1);
   if (samps <= 0) 
-    mus_misc_error(S_file2array, "samples <= 0?", samples);
+    XEN_OUT_OF_RANGE_ERROR(S_file2array, 4, samples, "samples <= 0?");
   chn = XEN_TO_C_INT(chan);
   if ((chn < 0) || (chn > mus_sound_chans(name)))
     XEN_ERROR(NO_SUCH_CHANNEL,
@@ -3645,14 +3671,14 @@ returns a new readin (file input) generator reading the sound file 'file' starti
       direction = ikeyarg(keys[3], S_make_readin, orig_arg[3] + 1, direction);
     }
   if (channel < 0)
-    mus_misc_error(S_make_readin, "channel < 0?", keys[1]);
+    XEN_OUT_OF_RANGE_ERROR(S_make_readin, 2, keys[1], "channel < 0?");
   if (!(mus_file_probe(file)))
     XEN_ERROR(NO_SUCH_FILE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_make_readin),
 			 C_TO_XEN_STRING(file),
 			 C_TO_XEN_STRING(strerror(errno))));
   if (channel >= mus_sound_chans(file))
-    mus_misc_error(S_make_readin, "channel > available chans?", keys[1]);
+    XEN_OUT_OF_RANGE_ERROR(S_make_readin, 2, keys[1], "channel > available chans?");
   ge = mus_make_readin(file, channel, start, direction);
   if (ge)
     {
@@ -3931,7 +3957,7 @@ included an 'input' argument, input-function is ignored."
     {
       if (XEN_REQUIRED_ARGS(func) == 1)
 	gn->vcts[INPUT_FUNCTION] = func;
-      else mus_misc_error(S_src, "wrong number of args to input function (want 1)", func);
+      else XEN_BAD_ARITY_ERROR(S_src, 3, func, "src input function wants 1 arg");
     }
   return(C_TO_XEN_DOUBLE(mus_src(XEN_TO_MUS_ANY(obj), pm1, 0)));
 }
@@ -3966,9 +3992,9 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
       srate = fkeyarg(keys[1], S_make_src, orig_arg[1] + 1, srate);
       wid = ikeyarg(keys[2], S_make_src, orig_arg[2] + 1, wid);
     }
-  if (srate <= 0) mus_misc_error(S_make_src, "srate <= 0.0?", keys[1]);
-  if (wid < 0) mus_misc_error(S_make_src, "width < 0?", keys[2]);
-  if (wid > 2000) mus_misc_error(S_make_src, "width > 2000?", keys[2]);
+  if (srate <= 0) XEN_OUT_OF_RANGE_ERROR(S_make_src, 2, keys[1], "srate <= 0.0?");
+  if (wid < 0) XEN_OUT_OF_RANGE_ERROR(S_make_src, 3, keys[2], "width < 0?");
+  if (wid > 2000) XEN_OUT_OF_RANGE_ERROR(S_make_src, 3, keys[2], "width > 2000?");
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
   /* mus_make_src assumes it can invoke the input function! */
   gn->vcts = make_vcts(1);
@@ -4009,7 +4035,7 @@ static XEN g_granulate(XEN obj, XEN func)
     {
       if (XEN_REQUIRED_ARGS(func) == 1)
 	gn->vcts[INPUT_FUNCTION] = func;
-      else mus_misc_error(S_granulate, "wrong number of args to input function (want 1)", func);
+      else XEN_BAD_ARITY_ERROR(S_granulate, 2, func, "granulate input function wants 1 arg");
     }
   return(C_TO_XEN_DOUBLE(mus_granulate(XEN_TO_MUS_ANY(obj), 0)));
 }
@@ -4073,12 +4099,12 @@ jitter controls the randomness in that spacing, input can be a file pointer."
       XEN_ASSERT_TYPE((jitter >= 0.0) && (jitter < 100.0), keys[6], orig_arg[6] + 1, S_make_granulate, "0.0 .. 100.0");
       maxsize = ikeyarg(keys[7], S_make_granulate, orig_arg[7] + 1, maxsize);
     }
-  if (expansion <= 0.0) mus_misc_error(S_make_granulate, "expansion <= 0.0?", keys[1]);
-  if (segment_length <= 0.0) mus_misc_error(S_make_granulate, "segment-length <= 0.0?", keys[2]);
-  if (segment_scaler == 0.0) mus_misc_error(S_make_granulate, "segment-scaler: 0.0?", keys[3]);
-  if (output_hop < 0.0) mus_misc_error(S_make_granulate, "hop < 0?", keys[4]);
+  if (expansion <= 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, 2, keys[1], "expansion <= 0.0?");
+  if (segment_length <= 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, 3, keys[2], "segment-length <= 0.0?");
+  if (segment_scaler == 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, 4, keys[3], "segment-scaler: 0.0?");
+  if (output_hop < 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, 5, keys[4], "hop < 0?");
   if ((segment_length + output_hop) > 60.0) /* multiplied by srate in mus_make_granulate in array allocation */
-    mus_misc_error(S_make_granulate, "segment_length + output_hop too large!", XEN_LIST_2(keys[2], keys[4]));
+    XEN_OUT_OF_RANGE_ERROR(S_make_granulate, 3, XEN_LIST_2(keys[2], keys[4]), "segment_length + output_hop too large!");
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
   old_error_handler = mus_error_set_handler(local_mus_error);
   ge = mus_make_granulate(funcall1, expansion, segment_length, segment_scaler, output_hop, ramp_time, jitter, maxsize, gn);
@@ -4117,7 +4143,7 @@ static XEN g_convolve(XEN obj, XEN func)
     {
       if (XEN_REQUIRED_ARGS(func) == 1)
 	gn->vcts[INPUT_FUNCTION] = func;
-      else mus_misc_error(S_convolve, "wrong number of args to input function (want 1)", func);
+      else XEN_BAD_ARITY_ERROR(S_convolve, 2, func, "convolve input function wants 1 arg");
     }
   return(C_TO_XEN_DOUBLE(mus_convolve(XEN_TO_MUS_ANY(obj), 0)));
 }
@@ -4160,7 +4186,9 @@ returns a new convolution generator which convolves its input with the impulse r
       fft_size = ikeyarg(keys[2], S_make_convolve, orig_arg[2] + 1, fft_size);
     }
   if (filter == NULL)
-    mus_misc_error(S_make_convolve, "no impulse (filter)?", XEN_FALSE);
+    XEN_ERROR(NO_DATA,
+	      XEN_LIST_2(C_TO_XEN_STRING(S_make_convolve), 
+			 C_TO_XEN_STRING("no impulse (filter)?")));
   if (POWER_OF_2_P(filter->length))
     fftlen = filter->length * 2;
   else fftlen = (int)pow(2.0, 1 + (int)(log((Float)(filter->length + 1)) / log(2.0)));
@@ -4268,7 +4296,7 @@ static XEN g_phase_vocoder(XEN obj, XEN func)
     {
       if (XEN_REQUIRED_ARGS(func) == 1)
 	gn->vcts[INPUT_FUNCTION] = func;
-      else mus_misc_error(S_phase_vocoder, "wrong number of args to input function (want 1)", func);
+      else XEN_BAD_ARITY_ERROR(S_phase_vocoder, 2, func, "phase-vocoder input function wants 1 arg");
     }
   return(C_TO_XEN_DOUBLE(mus_phase_vocoder(XEN_TO_MUS_ANY(obj), 0)));
 }
@@ -4314,35 +4342,35 @@ is run.  'synthesize' is a function of 1 arg, the generator; it is called to get
 	{
 	  if (XEN_REQUIRED_ARGS(keys[0]) == 1)
 	    in_obj = keys[0];
-	  else mus_misc_error(S_make_phase_vocoder, "wrong number of args to input function (want 1)", keys[0]);
+	  else XEN_BAD_ARITY_ERROR(S_make_phase_vocoder, 1, keys[0], "input function wants 1 arg");
 	}
       fft_size = ikeyarg(keys[1], S_make_phase_vocoder, orig_arg[1] + 1, fft_size);
       if (fft_size <= 1) 
-	mus_misc_error(S_make_phase_vocoder, "fft size bad:", keys[1]);
+	XEN_OUT_OF_RANGE_ERROR(S_make_phase_vocoder, 2, keys[1], "fft size <= 1?");
       overlap = ikeyarg(keys[2], S_make_phase_vocoder, orig_arg[2] + 1, overlap);
       if (overlap <= 0)
-	mus_misc_error(S_make_phase_vocoder, "overlap bad:", keys[2]);
+	XEN_OUT_OF_RANGE_ERROR(S_make_phase_vocoder, 3, keys[2], "overlap <= 0?");
       interp = ikeyarg(keys[3], S_make_phase_vocoder, orig_arg[3] + 1, interp);
       if (interp <= 0)
-	mus_misc_error(S_make_phase_vocoder, "interp bad:", keys[3]);
+	XEN_OUT_OF_RANGE_ERROR(S_make_phase_vocoder, 4, keys[3], "interp <= 0?");
       pitch = fkeyarg(keys[4], S_make_phase_vocoder, orig_arg[4] + 1, pitch);
       if (XEN_PROCEDURE_P(keys[5]))
 	{
 	  if (XEN_REQUIRED_ARGS(keys[5]) == 2)
 	    analyze_obj = keys[5];
-	  else mus_misc_error(S_make_phase_vocoder, "wrong number of args to analyze function (want 2: pv infunc)", keys[5]);
+	  else XEN_BAD_ARITY_ERROR(S_make_phase_vocoder, 6, keys[5], "analyze function wants 2 args: pv infunc");
 	}
       if (XEN_PROCEDURE_P(keys[6]))
 	{
 	  if (XEN_REQUIRED_ARGS(keys[6]) == 1)
 	    edit_obj = keys[6];
-	  else mus_misc_error(S_make_phase_vocoder, "wrong number of args to edit function (want 1: pv)", keys[6]);
+	  else XEN_BAD_ARITY_ERROR(S_make_phase_vocoder, 7, keys[6], "edit function wants 1 arg");
 	}
       if (XEN_PROCEDURE_P(keys[7]))
 	{
 	  if (XEN_REQUIRED_ARGS(keys[7]) == 1)
 	    synthesize_obj = keys[7];
-	  else mus_misc_error(S_make_phase_vocoder, "wrong number of args to synthesize function (want 1: pv)", keys[7]);
+	  else XEN_BAD_ARITY_ERROR(S_make_phase_vocoder, 8, keys[7], "synthesize function wants 1 arg");
 	}
     }
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));

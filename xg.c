@@ -36,7 +36,9 @@
  * TODO: test suite (snd-test 24)
  *
  * HISTORY:
- *     6-Jan:     gtk 2.2 changes.
+ *     10-Mar:    Ruby Xm_Version.
+ *     6-Jan-03:  gtk 2.2 changes.
+ *     --------
  *     18-Nov:    Ruby/Gtk bugfixes.
  *     28-Oct:    gtk 2.1 additions.
  *     25-Oct:    removed (deprecated) gdk_set_pointer_hooks
@@ -28959,11 +28961,11 @@ static void define_structs(void)
   XG_DEFINE_READER(visual, gxg_visual, 1, 0, 0, NULL);
   XG_DEFINE_READER(colors, gxg_colors, 1, 0, 0, NULL);
   XG_DEFINE_READER(size, gxg_size, 1, 0, 0, NULL);
-  XG_DEFINE_ACCESSOR(value, gxg_value, "set_value", gxg_set_value, 1, 0, 2, 0);
-  XG_DEFINE_ACCESSOR(blue, gxg_blue, "set_blue", gxg_set_blue, 1, 0, 2, 0);
-  XG_DEFINE_ACCESSOR(green, gxg_green, "set_green", gxg_set_green, 1, 0, 2, 0);
-  XG_DEFINE_ACCESSOR(red, gxg_red, "set_red", gxg_set_red, 1, 0, 2, 0);
-  XG_DEFINE_ACCESSOR(pixel, gxg_pixel, "set_pixel", gxg_set_pixel, 1, 0, 2, 0);
+  XG_DEFINE_ACCESSOR(value, gxg_value, set_value, gxg_set_value, 1, 0, 2, 0);
+  XG_DEFINE_ACCESSOR(blue, gxg_blue, set_blue, gxg_set_blue, 1, 0, 2, 0);
+  XG_DEFINE_ACCESSOR(green, gxg_green, set_green, gxg_set_green, 1, 0, 2, 0);
+  XG_DEFINE_ACCESSOR(red, gxg_red, set_red, gxg_set_red, 1, 0, 2, 0);
+  XG_DEFINE_ACCESSOR(pixel, gxg_pixel, set_pixel, gxg_set_pixel, 1, 0, 2, 0);
   XG_DEFINE_PROCEDURE(GdkColor, gxg_make_GdkColor, 0, 0, 1, NULL);
   XG_DEFINE_PROCEDURE(GdkCursor, gxg_make_GdkCursor, 0, 0, 1, NULL);
   XG_DEFINE_PROCEDURE(GdkPoint, gxg_make_GdkPoint, 0, 0, 1, NULL);
@@ -30478,7 +30480,10 @@ static int xg_already_inited = FALSE;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"06-Jan-03\")");
+      XEN_EVAL_C_STRING("(define xm-version \"08-Mar-03\")");
+#endif
+#if HAVE_RUBY
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("08-Mar-03"));
 #endif
       xg_already_inited = TRUE;
     }

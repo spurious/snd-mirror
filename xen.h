@@ -24,13 +24,14 @@
 
 /* HISTORY:
  *  
- *   17-Feb-03: added XEN_HOOK_P
+ *   10-Mar-03: XEN_OUT_OF_RANGE_ERROR, XEN_BAD_ARITY_ERROR
+ *   17-Feb-03: XEN_HOOK_P
  *   20-Jan-03: added Windows case for auto-import loader bugfix.
  *   19-Dec-02: proc arg checks for Ruby (to make sure XEN_[N|V]ARGIFY|DEFINE_PROCEDURE[etc] agree)
  *   29-Jul-02: SCM_WRITABLE_VELTS for current CVS Guile
  *   28-May-02: off_t equivalents in Ruby 1.7
- *   6-May-02:  added off_t (long long) macros.
- *   29-Apr-02: added XEN_EXACT_P
+ *   6-May-02:  off_t (long long) macros.
+ *   29-Apr-02: XEN_EXACT_P
  *   2-Jan-02:  removed TIMING and MCHECK debugging stuff, VARIABLE_REF -> XEN_VARIABLE_REF
  *   22-Sep-01: removed (redundant) UNSIGNED_LONG macros -- use ULONG instead
 */
@@ -404,6 +405,12 @@
     scm_wrong_type_arg(Caller, ArgN, Arg)
 #endif
 
+#define XEN_OUT_OF_RANGE_ERROR(Caller, ArgN, Arg, Descr) \
+  XEN_ERROR(XEN_ERROR_TYPE("out-of-range"), \
+            XEN_LIST_3(C_TO_XEN_STRING(Caller), \
+                       C_TO_XEN_STRING(Descr), \
+                       Arg))
+
 #if USE_SND
   /* take advantage of Snd's elaborate error handling */
   #define XEN_CALL_0(Func, Caller)                   g_call0(Func, Caller)
@@ -749,6 +756,10 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 
 #define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr) \
   rb_raise(rb_eTypeError, "%s: wrong type arg %d, %s, wanted %s\n", \
+           Caller, ArgN, XEN_TO_C_STRING(XEN_TO_STRING(Arg)), Descr)
+
+#define XEN_OUT_OF_RANGE_ERROR(Caller, ArgN, Arg, Descr) \
+  rb_raise(rb_eRangeError, "%s: arg %d, %s, out of range: %s\n", \
            Caller, ArgN, XEN_TO_C_STRING(XEN_TO_STRING(Arg)), Descr)
 
 #if DEBUGGING
@@ -1207,6 +1218,7 @@ XEN xen_rb_copy_list(XEN val); /* Ruby arrays (lists) are passed by reference */
 #define XEN_ERROR(Type, Info) fprintf(stderr, "error")
 #define XEN_TO_STRING(Obj) "(unknown)"
 #define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr)
+#define XEN_OUT_OF_RANGE_ERROR(Caller, ArgN, Arg, Descr)
 #define XEN_APPEND(X, Y) 0
 #define XEN_ONLY_ARG 0
 #define XEN_ARG_1    0
@@ -1249,6 +1261,12 @@ XEN xen_rb_copy_list(XEN val); /* Ruby arrays (lists) are passed by reference */
 #define C_TO_XEN_OFF_T(a)             c_to_xen_off_t(a)
 #define XEN_TO_C_OFF_T(a)             xen_to_c_off_t(a)
 #define XEN_AS_STRING(form)           XEN_TO_C_STRING(XEN_TO_STRING(form))
+
+#define XEN_BAD_ARITY_ERROR(Caller, ArgN, Arg, Descr) \
+  XEN_ERROR(XEN_ERROR_TYPE("bad-arity"), \
+            XEN_LIST_3(C_TO_XEN_STRING(Caller), \
+                       C_TO_XEN_STRING(Descr), \
+                       Arg))
 
 XEN xen_return_first(XEN a, ...);
 int xen_to_c_int_or_else(XEN obj, int fallback, const char *origin);

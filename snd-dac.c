@@ -2085,11 +2085,11 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, int background, int syncd,
 	  return(snd_no_such_file_error(caller, samp_n));
 	}
       if (!(MUS_HEADER_TYPE_OK(mus_sound_header_type(name))))
-	mus_misc_error(caller, _("can't read header"), 
+	mus_misc_error(caller, "can't read header", 
 		       XEN_LIST_2(samp_n, 
 				  C_TO_XEN_STRING(mus_header_type_name(mus_header_type()))));
       if (!(MUS_DATA_FORMAT_OK(mus_sound_data_format(name))))
-	mus_misc_error(caller, _("can't read data"), 
+	mus_misc_error(caller, "can't read data", 
 		       XEN_LIST_2(samp_n, 
 				  C_TO_XEN_STRING(mus_header_original_format_name(mus_sound_original_format(name),
 										  mus_sound_header_type(name)))));
@@ -2385,10 +2385,10 @@ static XEN g_start_playing(XEN Chans, XEN Srate, XEN In_Background)
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(In_Background), In_Background, XEN_ARG_3, S_start_playing, "a boolean");
   chans = XEN_TO_C_INT_OR_ELSE(Chans, 1);
   if ((chans <= 0) || (chans > 256))
-    mus_misc_error(S_start_playing, _("invalid chans arg"), Chans);
+    XEN_OUT_OF_RANGE_ERROR(S_start_playing, 1, Chans, "chans <= 0 or > 256?");
   srate = XEN_TO_C_INT_OR_ELSE(Srate, 44100);
   if (srate <= 0)
-    mus_misc_error(S_start_playing, _("invalid srate arg"), Srate);
+    XEN_OUT_OF_RANGE_ERROR(S_start_playing, 2, Srate, "srate <= 0?");
   start_dac(get_global_state(), srate, chans, XEN_TO_C_BOOLEAN_OR_TRUE(In_Background));
   return(XEN_FALSE);
 }

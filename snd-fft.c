@@ -1857,7 +1857,7 @@ static XEN g_snd_transform(XEN type, XEN data, XEN hint)
   XEN_ASSERT_TYPE(VCT_P(data), data, XEN_ARG_2, "snd-transform", "a vct");
   trf = XEN_TO_SMALL_C_INT(type);
   if ((trf < 0) || (trf > HAAR))
-    mus_misc_error("snd-transform", _("invalid transform choice"), type);
+    XEN_OUT_OF_RANGE_ERROR("snd-transform", 1, type, "invalid transform choice");
   v = TO_VCT(data);
   switch (trf)
     {

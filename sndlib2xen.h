@@ -18,7 +18,6 @@
 #define NO_SUCH_EDIT         XEN_ERROR_TYPE("no-such-edit")
 #define CANNOT_SAVE          XEN_ERROR_TYPE("cannot-save")
 #define CANNOT_PRINT         XEN_ERROR_TYPE("cannot-print")
-#define IMPOSSIBLE_BOUNDS    XEN_ERROR_TYPE("impossible-bounds")
 #define NO_ACTIVE_SELECTION  XEN_ERROR_TYPE("no-active-selection")
 #define MUS_MISC_ERROR       XEN_ERROR_TYPE("mus-error")
 #define NO_SUCH_AXIS_INFO    XEN_ERROR_TYPE("no-such-axis")
@@ -30,6 +29,7 @@
 #define BAD_ARITY            XEN_ERROR_TYPE("bad-arity")
 #define NO_SUCH_DIRECTION    XEN_ERROR_TYPE("no-such-direction")
 #define BAD_TYPE             XEN_ERROR_TYPE("bad-type")
+#define NO_DATA              XEN_ERROR_TYPE("no-data")
 
 #if HAVE_GSL
   #define SND_GSL_ERROR      XEN_ERROR_TYPE("gsl-error")

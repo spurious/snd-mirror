@@ -1152,9 +1152,7 @@ static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
 	{
 	  if ((XEN_REQUIRED_ARGS(update_hook_result)) == 1)
 	    snd_protect(update_hook_result);
-	  else XEN_ERROR(BAD_ARITY,
-			 XEN_LIST_2(C_TO_XEN_STRING(S_update_hook),
-				    update_hook_result));
+	  else XEN_BAD_ARITY_ERROR(S_update_hook, 0, update_hook_result, "update-hook function result should require 1 arg");
 	}
     }
 

@@ -178,7 +178,7 @@ to increment the current phase in the last line:</p>
 <pre>
       (outa i (* amplitude (sin (* j 2.0 pi (/ frequency *srate*))))))))
 </pre>
-<p>This is the "meat" of our instrument.  The call (<a href="#outa">outa</a> <i>i</i> <i>whatever</i>)
+<p>This is the meat of our instrument.  The call (<a href="#outa">outa</a> <i>i</i> <i>whatever</i>)
 adds its third argument (in this case a complicated expression) into channel 0 of the
 current output stream at location <i>i</i>.  The expression itself:</p>
 <pre>
@@ -226,8 +226,8 @@ instrument function. Its syntax can be considered to be identical to defun:</p>
 We use <i>run</i> and <i>definstrument</i> which work together to speed up the computation,
 and replace the explicit phase calculation with <i>oscil</i>.
 <a href="#oscil">Oscil</a> returns a sine wave at the frequency specified
-in the <a href="#make-oscil">make-oscil</a> call.  Each "generator"
-in clm has a corresponding "make" function to create and initialize an instance
+in the <a href="#make-oscil">make-oscil</a> call.  Each generator
+in clm has a corresponding make function to create and initialize an instance
 of that generator.  One such generator, <a href="#env">env</a>, handles envelopes -- 
 let's put an amplitude envelope on simp's output:</p>
 <pre>
@@ -255,8 +255,8 @@ lisps there's actually no way to unload it).
 </p>
 <p>In Scheme/Snd, the exact same sequence can be used: with-sound
 has the same syntax, and the run macro optimizes compute speed.  The main
-difference is that "definstrument" is "define", and "loop" may not be supported,
-so our "simp" instrument becomes:
+difference is that definstrument is define, and loop may not be supported,
+so our simp instrument becomes:
 </p>
 <pre>
 (define (simp start-time duration frequency amplitude)
@@ -361,7 +361,7 @@ Each generator consists of a set of functions:  Make-&lt;gen&gt; sets up the
 data structure associated with the generator at initialization time;
 &lt;gen&gt; produces a new sample;
 &lt;gen&gt;? checks whether a variable is that kind of generator.
-Internal fields are accessible via various "generic" functions such as mus-frequency.
+Internal fields are accessible via various generic functions such as mus-frequency.
 For example,</p>
 <pre>
     (setf oscillator (make-oscil :frequency 330))
@@ -751,10 +751,10 @@ determines which kind of Chebyshev polynomial we are interested in.</p>
 <b>Sawtooth-wave</b> ramps from -1 to 1, then goes immediately back to -1.
 <b>Triangle-wave</b> ramps from -1 to 1, then ramps from 1 to -1.
 <b>Pulse-train</b> produces a single sample of 1.0, then zeros.
-<b>Square-wave</b> produces 1 for half a period, then 0.  All have a "period"
+<b>Square-wave</b> produces 1 for half a period, then 0.  All have a period
 of two-pi, so the <i>fm</i> argument should have an effect comparable to the
 same fm applied to the same waveform in <a href="#table-lookup">table-lookup</a>.
-These are not "band-limited"; if the frequency is too high, you can get foldover.
+These are not band-limited; if the frequency is too high, you can get foldover.
 David Lowenfels has provided band-limited versions based on the sum-of-cosines
 generator: good-sqr.ins, good-saw.ins, and good-tri.ins.
 </p>
@@ -916,7 +916,7 @@ rand:
 <br clear=left>
 <br>
 
-<p>The "central-limit theorem" says that you can get closer and closer to gaussian
+<p>The central-limit theorem says that you can get closer and closer to gaussian
 noise simply by adding rand's together.  Orfanidis in 
 "Introduction to Signal Processing" says 12 calls on rand will
 do perfectly well.  We could define our own generator:
@@ -1365,7 +1365,7 @@ Digital Waveguides".</p>
   <a name="all-pass"><em class=def>all-pass</em></a> <i>f input</i> &amp;optional (<i>pm</i> 0.0)
   <a name="all-pass?"><em class=def>all-pass?</em></a> <i>f</i>
 </pre>
-<p><b>All-pass</b> or "moving average comb" is just like <a href="#comb">comb</a> but with
+<p><b>All-pass</b> or moving average comb is just like <a href="#comb">comb</a> but with
 an added feedforward term.  If <i>feedback</i> = 0, we get a moving
 average comb filter.  If both scale terms = 0, we get a pure delay line. </p>
 
@@ -1542,7 +1542,7 @@ to change the speed at which things happen in a recorded sound without
 changing the pitches.  It works by slicing the input file into short
 pieces, then overlapping these slices to lengthen (or shorten) the
 result; this process is sometimes known as granular synthesis, and is
-similar to the "freeze" function.  The duration of each slice is
+similar to the freeze function.  The duration of each slice is
 <i>length</i> -- the longer, the more like reverb the effect.  The
 portion of the length (on a scale from 0 to 1.0) spent on each
 ramp (up or down) is <i>ramp</i>.  This can control the smoothness of
@@ -1572,7 +1572,24 @@ close to the original speed.
        (outa i (<em class=red>granulate</em> exA))))
     (close-input f)))
 </small></pre>
-<p>See expsrc.ins for examples.</p>
+<p>See expsrc.ins for examples.  Here's a short example of using the <i>input-function</i>
+argument to granulate.  It cause the granulation to run backwards through the file:
+</p>
+<pre><small>
+(definstrument grev (beg dur exp-amt file file-beg)
+  (let* ((exA (make-granulate :expansion exp-amt))
+	 (fil (open-input* file file-beg))
+	 (ctr file-beg))
+    (run
+     (loop for i from beg to (+ beg dur) do
+       (outa i (granulate exA
+			  #'(lambda (dir)
+			      (let ((inval (ina ctr fil)))
+				(if (&gt; ctr 0) (setf ctr (1- ctr)))
+				inval))))))))
+
+(with-sound () (grev 0 100000 2.0 "pistol.snd" 40000))
+</small></pre>
 <br>
 
 <!-- TOPIC phase-vocoder -->
@@ -1708,7 +1725,7 @@ Spectra" JAES vol 36, no 9, Sept 88, p671-685:  this is another extension of
 the <a href="#sine-summation">sine-summation</a> and <a href="#sum-of-cosines">sum-of-cosines</a> approach.
 The generator's output amplitude is not always easy to predict.  <i>r</i> is the ratio between successive 
 sideband amplitudes, <i>r</i> &gt; 1.0 pushes energy above the carrier, <i>r</i> &lt; 1.0 pushes it below. (<i>r</i> = 1.0
-gives essentially normal FM). <i>ratio</i>
+gives normal FM). <i>ratio</i>
 is the ratio between the carrier and modulator (i.e. sideband spacing). It's somewhat inconsistent
 that asymmetric-fm takes <i>index</i> (the fm-index) as its second argument, but otherwise it
 would be tricky to get time-varying indices.
@@ -1848,9 +1865,9 @@ a multi-channel sample (that is, in a stereo file, at time 0.0, there
 are two samples, one for each channel).  A mixer is a array of arrays
 that represents a set of input to output scalers, as if it were the
 current state of a mixing console's volume controls.  A frame (a multi-channel
-input) can be "mixed" into a new frame (a multi-channel output) by passing
-it through a "mixer" (a matrix, the operation being a matrix multiply).
-These are combined with the notion of a "sample" (one datum of sampled music), and
+input) can be mixed into a new frame (a multi-channel output) by passing
+it through a mixer (a matrix, the operation being a matrix multiply).
+These are combined with the notion of a sample (one datum of sampled music), and
 input/output ports (files, audio ports, etc) to handle all the underlying
 data.
 </p>
@@ -1972,7 +1989,7 @@ instrument will run much faster if it does sequential output.
 <p><b>Ina</b> and friends get the sample at position <i>loc</i> in
 <i>i-stream</i> as a float.  The data is normally between -1.0 and 1.0.
 <i>I-stream</i> defaults to the current input file (it is an IO struct, not a file name).
-See the "digital zipper" instrument <a href="zipper.ins">zipper.ins</a> for an example.
+See the digital zipper instrument <a href="zipper.ins">zipper.ins</a> for an example.
 </p>
 <br>
 
@@ -2057,12 +2074,12 @@ help with the "hole-in-the-middle" problem).
 </p>
 <p>Locsig is a
 kludge, but then so is any pretence of placement when you're piping the signal
-out a loudspeaker.  It is my current belief that locsig does the "right"
-thing for all the wrong reasons; a good concert hall provides "auditory
-spaciousness" by interfering with the ear's attempt to localize a sound --
+out a loudspeaker.  It is my current belief that locsig does the right
+thing for all the wrong reasons; a good concert hall provides auditory
+spaciousness by interfering with the ear's attempt to localize a sound --
 that is, a diffuse sound source is the ideal!  By sending an arbitrary mix of
 signal and reverberation to various speakers, locsig gives you a very
-diffuse "source"; it does the opposite of what it claims to do, and by
+diffuse source; it does the opposite of what it claims to do, and by
 some perversity of Mother Nature, that is what you want.  (See "Binaural
 Phenomena" by J Blauert).
 </p>
@@ -2315,7 +2332,7 @@ a simple instrument such as:</p>
 <b>Ring-modulate</b> returns (* <i>in1</i> <i>in2</i>).
 <b>Amplitude-modulate</b> returns (* <i>input1</i> (+ <i>am-carrier</i> <i>input2</i>))
 
-<p>Since neither needs any state information, there are no associated "make"
+<p>Since neither needs any state information, there are no associated make
 functions.</p>
 
 <p>Both of these take advantage of the "Modulation Theorem"; since
@@ -2515,7 +2532,7 @@ an instrument that is handled by a special scheduler that runs
 it one sample at a time, in parallel with all other p-instruments that want to
 run on that sample.
 P-instruments can be mixed
-freely with "normal" instruments.  The latter run to completion when they are
+freely with normal instruments.  The latter run to completion when they are
 called, while the currently running p-instruments wait in the background.
 Obviously, calls on these
 instruments must be ordered by begin-time.</p>
@@ -2625,7 +2642,7 @@ you can use other constructs instead:</p>
        (outa (+ k beg) (* .1 (oscil o)))))))
 </small></pre>
 <p>And, of course, outa and locsig can be called any number of times
-(including zero) per "sample" and at any output location.  Except in
+(including zero) per sample and at any output location.  Except in
 extreme cases (spraying samples to random locations several seconds
 apart), there is almost no speed penalty associated with such output,
 so don't feel constrained to write an instrument as a sample-at-a-time loop.
@@ -2641,7 +2658,7 @@ good reason not to write an instrument such as:</p>
 </small></pre>
 <p>See also the stick and stick1 instruments in ug.ins.
 "Parallel" instruments must use loop (all such instruments are assumed to be running
-in parallel, generating the "current sample" for the DACs).  It is also possible (albeit slow) to call
+in parallel, generating the current sample for the DACs).  It is also possible (albeit slow) to call
 any of the run-oriented functions in with-sound:</p>
 <pre>
 (with-sound (:statistics t) 
@@ -2765,7 +2782,7 @@ do this is with with-sound or clm-load.
    (<i>explode</i> *clm-explode*)   ; if t, produce "exploded" output -- each instrument call becomes a separately mixed file in Snd
 </pre>
 <p><b>With-sound</b> is a macro that performs all the various services needed to
-produce and play a sound file; it also wraps an "unwind-protect" around its body to
+produce and play a sound file; it also wraps an unwind-protect around its body to
 make sure that everything is cleaned up properly if you happen to interrupt
 computation, then returns the output file name.  Here are some examples showing how to use the various options:</p>
 <pre>
@@ -2908,12 +2925,21 @@ CLM can read and write sound data in all the currently popular formats,
 leaving aside propietary compression schemes.  The names used in
 :data-format can be found in <a href="initmus.lisp">initmus.lisp</a>,
 along with the headers CLM knows about.</p>
+
+<p>You can make your own specialized versions of with-sound:
+</p>
+<pre>
+(defmacro with-my-sound ((&rest args) &body body)
+  `(let ((filename (with-sound ,args ,.body)))
+     ;; any post-processing you like here
+     filename))
+</pre>
  
 <p><a name="clm-load"><em class=def>Clm-load</em></a> is the same as with-sound, but its first argument is the name
 of a file containing clm instrument calls (i.e. the body of
 with-sound), the reverb argument is the name of the reverb function,
 and the reverb-data argument is the list; that is, clm-load's arguments
-look like "normal" lisp, whereas with-sound's are unquoted in these two cases.</p>
+look like normal lisp, whereas with-sound's are unquoted in these two cases.</p>
 <pre>
   (with-sound (:reverb jc-reverb :reverb-data (:volume .3)) ...)
   (clm-load "test.clm" :reverb 'jc-reverb :reverb-data '(volume .3))
@@ -2935,7 +2961,7 @@ argument is given); in some cases (MCL and ACL) it then returns to the lisp list
 to interrupt the dac in those cases, use <b>stop-dac</b>.  To set the dac volume
 (setf (<em class=red>volume</em>) 1.0).  Similarly (<em class=red>volume</em>)
 returns the current volume settings.
-Currently, <b>dac</b> calls the sndplay program if possible; <b>sl-dac</b> is essentially
+Currently, <b>dac</b> calls the sndplay program if possible; <b>sl-dac</b> is
 the same thing, but calls the sl_dac function.  The latter gives you control over the
 output device (sndplay will also someday).
 </p>
@@ -3015,7 +3041,7 @@ memory; (setf (control n) val) sets it to val.  While lisp is running (most usef
 with-psound or with-dac is running), any instrument or program can read or write these
 values (via sliders or whatever) by accessing the same
 memory.  Besides serving as real-time IO locations, these can also be used
-for inter-instrument communication in "parallel" instruments; for example,
+for inter-instrument communication in parallel instruments; for example,
 for example, spectral fusion effects involving shared frequency modulation
 across instruments can be implemented with control.
 Several complete examples can be found in the bess*.cl files.
@@ -3341,7 +3367,7 @@ directory;  <a href="clm-example.lisp">clm-example.lisp</a> shows one way to wri
 <a href="cm-clm.lisp">cm-clm.lisp</a> is
 a brief example of using Rick Taube's Common Music to drive CLM.  There are several
 *.clm files included in the clm distribution.  clm-test.lisp runs my standard
-set of "regression" tests, exercising many of the instruments. <a href="pitches.cl">pitches.cl</a>
+set of regression tests, exercising many of the instruments. <a href="pitches.cl">pitches.cl</a>
 provides the standard pitch names as lisp variables (a4 = 440.0 and so on).
 </p>
 <br>
@@ -3415,7 +3441,7 @@ Here's another example that implements legato between notes by using the previou
 
 <p>CLM provides several built-in data display and instrument debugging aids, 
 loosely divided into three groups; lisp itself, 
-realtime readback and analysis, and a "memo" mechanism to communicate with Snd.
+realtime readback and analysis, and a memo mechanism to communicate with Snd.
 The realtime support is described above under
 <a href="#realtimecontrols">realtime controls</a>.  The lisp support
 is mostly oriented around the lisp debugger, but includes some additional
@@ -3477,7 +3503,7 @@ int clm_lnxacl_fm_violin3 (int clm_beg, int clm_end, double *clm_double, int *cl
   #define CARRIER_r 19
  ...
 </small></pre>
-<p>For example, to see the "carrier" fields, we call clm_print_object with the
+<p>For example, to see the carrier fields, we call clm_print_object with the
 two locations:</p>
 <pre><small>
 (gdb) p <em class=red>clm_print_object</em>(38,19,0,clm_int,clm_double)
@@ -3797,7 +3823,7 @@ standard reverbs as they decay into "silence"; you'll be horrified.
 The latter effect is so noticeable that many of the reverbs have an
 amplitude envelope argument that can be used to cut them off quickly
 at the end of the piece; it is against my religion to add noise
-(i.e. the "dithering" used currently by commercial CD's; the theory
+(i.e. the dithering used currently by commercial CD's; the theory
 is that this dithering makes the buzz (a periodic toggling of the low
 order bits) uncorrelated, and therefore we're happier because we've
 come to expect tape noise anyway; but turn up the soft portions of
@@ -3823,15 +3849,15 @@ the case of sinusoidal input".  Since the ramping portions are often
 sinusoidal, or nearly so, these chirps might be analyzable as FM caused by
 quantization.</p>
 
-<p>Another source of "noise" is foldover.  This is mostly a problem with FM when
+<p>Another source of noise is foldover.  This is mostly a problem with FM when
 the sampling rate is low; you'll hear inharmonic artifacts caused by
 components that are beyond half the sampling rate.  Then there are the obvious
 problems like discontinuities in the wave becoming clicks at the speaker, and
 clipping. Finally, avoid reverberating notes with
 sharp attacks.</p>
 
-<p>The major sources of noise in audio equipment are bad connections and "ground
-loops".  In the latter case, various pieces of equipment are at slightly
+<p>The major sources of noise in audio equipment are bad connections and ground
+loops.  In the latter case, various pieces of equipment are at slightly
 different ground voltages due to tiny resistances in ground wires; this
 sets up a sort of screen upon which all kinds of interference can be projected,
 so to speak.  These loops are hard to avoid.  In my house, for example, the
@@ -3839,7 +3865,7 @@ grounds are real; that is, the third plug on the power cords is actually
 connected to a solid ground, but I still had to connect all the drives, audio
 equipment, and NeXT itself to the same outlet (representing altogether about
 1000 watts of worst case power consumption). The problem was that the ground
-and "neutral" wires  meander through the conduits alongside the power wires, so it becomes a
+and neutral wires  meander through the conduits alongside the power wires, so it becomes a
 serial connection of grounds along a given path; it's a low gauge wire,
 but even so, there is a slight resistance along that path, causing equipment
 connected to different outlets to be at a slightly different ground voltage.
@@ -3857,7 +3883,7 @@ apparently be caused by stray inductance from transformers.  The simplest
 answer is to buy properly shielded computer equipment, route the wires away
 from that equipment, and use the shortest wires possible.  If that's not an
 option, I'm told that it helps to use shielded cables.  If there's still
-interference, you might be able to go to "balanced" connections, but this
+interference, you might be able to go to balanced connections, but this
 normally means investing in pro-audio equipment.</p>
 
 <smaller>
@@ -3925,7 +3951,7 @@ in lisp; see <a href="zd.ins">zd.ins</a> or <a href="prc-toolkit95.lisp">prc-too
 There's rarely a real need to drop into C!
 If you want to call your own C code within the run loop, you have to
 tell the run macro how to make the call.  The run macro looks up identifiers
-in a table built by def-clm-fun; as an example, we'll make a "generator"
+in a table built by def-clm-fun; as an example, we'll make a generator
 that averages its arguments:
 </p>
 <pre><small>
@@ -4077,7 +4103,7 @@ an "as-needed" function, rather than calling in-any or whatever.  The other
 difference is one of approach; you need to separate the note-list-oriented
 portion of an instrument from its signal-processing or synthesis section.
 Once split apart, the same code can be used in "real-time"
-situations (the "control" function and the closures-as-envelopes are
+situations (the control function and the closures-as-envelopes are
 interchangeable).
 </p>
 

@@ -977,7 +977,7 @@ how loud subsequent echos are, and secs sets how far apart they
 are in seconds.  <i>echo</i> uses the <i>secs</i> argument to create
 a delay line (<i>make-delay</i>) using the current sound's
 sampling rate to turn the <i>secs</i> parameter into samples.
-<i>echo</i> then returns a "closure", that is, a function with
+<i>echo</i> then returns a closure, that is, a function with
 associated variables (in this case <i>del</i> and <i>scaler</i>);
 the returned function (the second <i>lambda</i>) takes
 one argument (<i>inval</i>) and returns the result of passing
@@ -1278,7 +1278,7 @@ bank of generators (the second argument) is assumed to be a vector full of gener
 <pre>
   (formant-bank amps gens inval)
 </pre>
-<p>is essentially the same as (but 30 times faster than)</p>
+<p>is the same as (but 30 times faster than)</p>
 <pre>
   (do ((sum 0.0)
        (i 0 (1+ i))) 
@@ -1407,7 +1407,7 @@ Here are a few more examples, taken from <a href="sndscm.html#exampdoc">examp.sc
 <p>Geez, I haven't had this much fun in a long time!  Check out <a href="sndscm.html#exampdoc">examp.scm</a> and <a href="sndscm.html#sndtestdoc">snd-test.scm</a> for more.  
 CLM-in-CL users will be disappointed with the CLM-in-Scheme performance; my tests indicate that
 interpreted Scheme (as in Snd currently) is about 30 to 100 times slower than CLM instruments using
-the "run" macro.  That macro now exists in Snd; see the <a href="extsnd.html#optimization">optimization</a>
+the run macro.  That macro now exists in Snd; see the <a href="extsnd.html#optimization">optimization</a>
 variable for a brief discussion.  Currently, I can speed up most CLM-related Scheme code
 by factors between 8 and 20.  This is still slightly slower than CLM, but it's certainly
 an improvement!
@@ -1785,7 +1785,7 @@ into a bunch of mono files:
   (display "usage: split.scm filename\n")
   (let* ((name (list-ref (script-args) (1+ (script-arg))))
 	 (chns (mus-sound-chans name)))
-    (if (> chns 1)
+    (if (&gt; chns 1)
 	(let ((ind (open-sound name)))
 	  (do ((i 0 (1+ i)))
 	      ((= i chns))
@@ -1943,7 +1943,7 @@ and
 many cute methods.  The RubyInline module might serve as a run-macro replacement.
 I'm slowly translating snd-test.scm to Ruby: see snd_test.rb.  bird.rb is the
 Ruby version of bird.scm. My very informal timing tests indicate that
-Guile and Ruby run at essentially the same speed.
+Guile and Ruby run at the same speed.
 Michael Scholz has translated bess.scm to Ruby: contrib/bess.rb,
 and much of examp.scm: contrib/examp.rb.
 </p>
@@ -1954,7 +1954,7 @@ and much of examp.scm: contrib/examp.rb.
 <p><A NAME="gmeteor">gmeteor</A> is a Guile-based filter design package
 written by Matteo Frigo, based on the Meteor system of Steiglitz, Parks,
 and Kaiser.  It is freely available <a href="ftp://ftp.prosa.it/pub/gmeteor/gmeteor-0.9.tar.gz">here</a>.
-Once installed, it can be loaded into Snd and used to define filters very easily:
+Once installed, you can load it into Snd and use it to define filters:
 (here I'm typing in Snd's listener and editing the numbers for legibility; the file
 gm.scm is taken nearly verbatim from the gmeteor script):</p>
 <pre>
@@ -1972,7 +1972,7 @@ gm.scm is taken nearly verbatim from the gmeteor script):</p>
 we can use gmeteor directly in the Control Panel
 filter text field (where the list of breakpoints is specified).
 I don't currently have a version of gmeteor compatible with my
-version of Snd, but the basic idea would be to have a function
+version of Snd, but the basic idea is to have a function
 that sets the filter-control-order based on the length of the *coefficients*
 vector, then returns that vector as a list.
 </p>

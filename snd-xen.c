@@ -213,7 +213,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 #if HAVE_GSL
 		  (XEN_EQ_P(tag, SND_GSL_ERROR)) ||
 #endif
-		  (XEN_EQ_P(tag, IMPOSSIBLE_BOUNDS)) || (XEN_EQ_P(tag, NO_SUCH_SAMPLE)) || (XEN_EQ_P(tag, NO_SUCH_KEY)))
+		  (XEN_EQ_P(tag, NO_SUCH_SAMPLE)) || (XEN_EQ_P(tag, NO_SUCH_KEY)) || (XEN_EQ_P(tag, NO_DATA)))
 		{
 		  XEN_DISPLAY(tag, port);
 		  XEN_PUTS(" ", port);
@@ -439,10 +439,7 @@ XEN snd_no_active_selection_error(const char *caller)
 
 XEN snd_bad_arity_error(const char *caller, XEN errstr, XEN proc)
 {
-  XEN_ERROR(BAD_ARITY,
-	    XEN_LIST_3(C_TO_XEN_STRING(caller),
-		       errstr,
-		       proc));
+  XEN_BAD_ARITY_ERROR(caller, 0, proc, errstr);
   return(XEN_FALSE);
 }
 
@@ -1114,7 +1111,7 @@ This value only matters if auto-update is #t"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_auto_update_interval, "a number"); 
   ctime = XEN_TO_C_DOUBLE(val);
   if ((ctime < 0.0) || (ctime > (24 * 3600)))
-    mus_misc_error(S_setB S_auto_update_interval, "invalid time:", val);
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_auto_update_interval, 1, val, "invalid time");
   set_auto_update_interval(ss, XEN_TO_C_DOUBLE(val)); 
   return(C_TO_XEN_DOUBLE(auto_update_interval(ss)));
 }
@@ -1931,7 +1928,7 @@ static XEN g_close_sound_file(XEN g_fd, XEN g_bytes)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(g_bytes), g_bytes, XEN_ARG_2, S_close_sound_file, "a number");
   fd = XEN_TO_C_INT(g_fd);
   if ((fd < 0) || (fd == fileno(stdin)) || (fd == fileno(stdout)) || (fd == fileno(stderr)))
-    mus_misc_error(S_close_sound_file, "invalid file", g_fd);
+    XEN_OUT_OF_RANGE_ERROR(S_close_sound_file, 1, g_fd, "invalid file");
   bytes = XEN_TO_C_OFF_T_OR_ELSE(g_bytes, 0);
   hdr = get_temp_header(fd);
   if (hdr == NULL) 
@@ -1963,9 +1960,7 @@ reading edit version edit-position (defaulting to the current version)"
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(sdchan), sdchan, XEN_ARG_7, S_samples2sound_data, "an integer");
   cp = get_cp(snd_n, chn_n, S_samples2sound_data);
   pos = to_c_edit_position(cp, edpos, S_samples2sound_data, 6);
-  beg = XEN_TO_C_OFF_T_OR_ELSE(samp_0, 0);
-  if (beg < 0)
-    mus_misc_error(S_samples2sound_data, "invalid begin sample", samp_0);
+  beg = beg_to_sample(samp_0, S_samples2sound_data);
   maxlen = (int)(cp->samples[pos] - beg);
   len = XEN_TO_C_INT_OR_ELSE(samps, maxlen);
   if (len > maxlen) len = maxlen;
@@ -1973,7 +1968,7 @@ reading edit version edit-position (defaulting to the current version)"
     {
       chn = XEN_TO_C_INT_OR_ELSE(sdchan, 0);
       if (chn < 0)
-	mus_misc_error(S_samples2sound_data, "invalid channel", sdchan);
+	XEN_OUT_OF_RANGE_ERROR(S_samples2sound_data, 7, sdchan, "sound-data channel < 0?");
       if (sound_data_p(sdobj))
 	sd = (sound_data *)XEN_OBJECT_REF(sdobj);
       else
@@ -1994,6 +1989,7 @@ reading edit version edit-position (defaulting to the current version)"
 	      free_snd_fd(sf);
 	    }
 	}
+      else XEN_OUT_OF_RANGE_ERROR(S_samples2sound_data, 7, sdchan, "sound-data channel > available chans");
     }
   if (XEN_NOT_FALSE_P(newsd))
     return(newsd);
@@ -2012,14 +2008,17 @@ static XEN vct2soundfile(XEN g_fd, XEN obj, XEN g_nums)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(g_nums), g_nums, XEN_ARG_3, S_vct2sound_file, "a number");
   fd = XEN_TO_C_INT(g_fd);
   if ((fd < 0) || (fd == fileno(stdin)) || (fd == fileno(stdout)) || (fd == fileno(stderr)))
-    mus_misc_error(S_vct2sound_file, "invalid file", g_fd);
+    XEN_OUT_OF_RANGE_ERROR(S_vct2sound_file, 1, g_fd, "invalid file");
   nums = XEN_TO_C_INT_OR_ELSE(g_nums, 0);
   if (nums == 0) return(XEN_FALSE);
   v = TO_VCT(obj);
   if (v == NULL)
-    mus_misc_error(S_vct2sound_file, "no data?", obj);
+    XEN_ERROR(NO_DATA,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_vct2sound_file), 
+			 C_TO_XEN_STRING("no data?"), 
+			 obj));
   if ((nums < 0) || (nums > v->length))
-    mus_misc_error(S_vct2sound_file, "invalid len", g_nums);
+    XEN_OUT_OF_RANGE_ERROR(S_vct2sound_file, 3, g_nums, "len < 0 or > vct length");
   err = lseek(fd, 0L, SEEK_END);
   if (err == -1)
     mus_misc_error(S_vct2sound_file, "IO error", C_TO_XEN_STRING(strerror(errno)));
@@ -3359,7 +3358,7 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE(S_mus_audio_describe,  g_mus_audio_describe_w, 0, 0, 0,  H_mus_audio_describe);
   XEN_DEFINE_PROCEDURE("little-endian?",      g_little_endian_w, 0, 0, 0,       "return #t if host is little endian");
   XEN_DEFINE_PROCEDURE("snd-completion",      g_snd_completion_w, 1, 0, 0,      "return completion of arg");
-  /* XEN_DEFINE_PROCEDYRE(S_clm_print,           g_clm_print, 0, 0, 1,             H_clm_print); */
+  /* XEN_DEFINE_PROCEDURE(S_clm_print,        g_clm_print, 0, 0, 1,             H_clm_print); */
 
   #define H_during_open_hook S_during_open_hook " (fd name reason) is called after file is opened, \
 but before data has been read. \n\

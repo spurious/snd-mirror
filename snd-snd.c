@@ -2092,7 +2092,7 @@ static XEN sound_set(XEN snd_n, XEN val, int fld, char *caller)
 	{
 	  ival = XEN_TO_C_INT(val);
 	  if ((ival <= 0) || (ival > 100000000))
-	    mus_misc_error(S_setB S_srate, "impossible srate", val);
+	    XEN_OUT_OF_RANGE_ERROR(S_setB S_srate, 1, val, "impossible srate");
 	  mus_sound_set_srate(sp->filename, ival);
 	  sp->hdr->srate = ival;
 	  snd_update(ss, sp); 
@@ -2103,7 +2103,7 @@ static XEN sound_set(XEN snd_n, XEN val, int fld, char *caller)
 	{
 	  ival = XEN_TO_C_INT(val);
 	  if ((ival <= 0) || (ival > 256))
-	    mus_misc_error(S_setB S_channels, "impossible channel number", val);
+	    XEN_OUT_OF_RANGE_ERROR(S_setB S_channels, 1, val, "impossible number of channels");
 	  mus_sound_set_chans(sp->filename, ival);
 	  sp->hdr->chans = ival;
 	  snd_update(ss, sp); 
@@ -2125,7 +2125,7 @@ static XEN sound_set(XEN snd_n, XEN val, int fld, char *caller)
 		}
 	      snd_update(ss, sp);
 	    }
-	  else mus_misc_error(S_setB S_data_format, "unknown data format", val);
+	  else XEN_OUT_OF_RANGE_ERROR(S_setB S_data_format, 1, val, "unknown data format");
 	}
       break;
     case SP_HEADER_TYPE:
@@ -2137,7 +2137,7 @@ static XEN sound_set(XEN snd_n, XEN val, int fld, char *caller)
 	      mus_sound_set_header_type(sp->filename, ival);
 	      snd_update(ss, sp); 
 	    }
-	  else mus_misc_error(S_setB S_header_type, "unknown header type", val);
+	  else XEN_OUT_OF_RANGE_ERROR(S_setB S_header_type, 1, val, "unknown header type");
 	}
       break;
     case SP_DATA_LOCATION:  
@@ -2150,7 +2150,7 @@ static XEN sound_set(XEN snd_n, XEN val, int fld, char *caller)
 	      mus_sound_set_data_location(sp->filename, loc);
 	      snd_update(ss, sp); 
 	    }
-	  else mus_misc_error(S_setB S_data_location, "impossible location", val);
+	  else XEN_OUT_OF_RANGE_ERROR(S_setB S_data_location, 1, val, "data location < 0?");
 	}
       break;
     case SP_COMMENT:
@@ -2893,7 +2893,7 @@ creates a new sound file with the indicated attributes; if any are omitted, the 
 		  if (ch <= 0)
 		    {
 		      if (str) FREE(str);
-		      mus_misc_error(S_new_sound, _("chans <= 0?"), chans);
+		      XEN_OUT_OF_RANGE_ERROR(S_new_sound, 5, chans, "chans <= 0?");
 		    }
 		  if (XEN_STRING_P(comment))
 		    com = XEN_TO_C_STRING(comment);
@@ -2924,13 +2924,13 @@ creates a new sound file with the indicated attributes; if any are omitted, the 
 	  else 
 	    {
 	      if (str) FREE(str);
-	      mus_misc_error(S_new_sound, _("invalid data format"), format);
+	      XEN_OUT_OF_RANGE_ERROR(S_new_sound, 3, format, "invalid data format");
 	    }
 	}
       else
 	{
 	  if (str) FREE(str);
-	  mus_misc_error(S_new_sound, _("invalid header type"), type);
+	  XEN_OUT_OF_RANGE_ERROR(S_new_sound, 2, type, "invalid header type");
 	}
     }
   if (str) FREE(str);
@@ -3218,10 +3218,7 @@ static XEN g_set_filter_control_env(XEN edata, XEN snd_n)
 	    (e->data[i * 2 + 1] < 0.0))
 	  {
 	    free_env(e);
-	    XEN_ERROR(MUS_MISC_ERROR,
-		      XEN_LIST_3(C_TO_XEN_STRING(S_setB S_filter_control_env),
-				 C_TO_XEN_STRING("y values out of range"),
-				 edata));
+	    XEN_OUT_OF_RANGE_ERROR(S_setB S_filter_control_env, 1, edata, "y values < 0.0 or > 1.0");
 	  }
       sp->filter_control_env = e;
       filter_env_changed(sp, sp->filter_control_env);

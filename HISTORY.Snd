@@ -1,5 +1,6 @@
 Snd change log
 
+  10-Mar:    Ruby-related bugfixes thanks to Michael Scholz.
   5-Mar:     contrib/popup.rb from Michael Scholz.
   4-Mar:     redo renamed redo_edit in Ruby version, and in -> call_in.
   3-Mar:     contrib/effects.rb from Michael Scholz.

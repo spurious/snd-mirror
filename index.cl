@@ -13,6 +13,7 @@
 ;;; (index '("extsnd.html" "grfsnd.html" "sndscm.html" "sndlib.html" "clm.html") nil "test.html" 5 '("XmHTML" "AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") t t)
 ;;;   use (make-index)
 
+;;; TODO: output a Ruby version of index.scm
 
 ;;; -------------------------------- index --------------------------------
 
@@ -243,7 +244,8 @@
 		  (if gpos (setf ind (concatenate 'string (subseq ind 0 gpos) ">" (subseq ind (+ gpos 4)))))
 		  (let ((loc (find ind all-locs :key #'car :test #'string-equal)))
 		    (if loc
-			(format sfil "    (list ~S ~S ~S ~D ~S)~%" ind url (cadr loc) (caddr loc) (cadddr loc))
+			(format sfil "    (list ~S ~S ~S)~%" ind url (cadr loc))
+			;(format sfil "    (list ~S ~S ~S ~D ~S)~%" ind url (cadr loc) (caddr loc) (cadddr loc))
 		      (format sfil "    (list ~S ~S)~%" ind url)))))
 	      (format sfil "  ))~%~%"))))
       (when make-help

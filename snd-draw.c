@@ -115,7 +115,10 @@ static POINT *TO_C_POINTS(XEN pts, const char *caller)
   XEN *data;
   len = XEN_VECTOR_LENGTH(pts) / 2;
   if (len <= 0) 
-    mus_misc_error(caller, "empty vector?", XEN_LIST_1(pts));
+    XEN_ERROR(NO_DATA,
+	      XEN_LIST_3(C_TO_XEN_STRING(caller), 
+			 C_TO_XEN_STRING("empty vector?"), 
+			 pts));
   data = XEN_VECTOR_ELEMENTS(pts);
   pack_pts = (POINT *)CALLOC(len, sizeof(POINT));
   for (i = 0, j = 0; i < len; i++, j += 2)

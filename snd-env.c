@@ -1271,7 +1271,10 @@ env *get_env(XEN e, char *origin) /* list in e */
   XEN lst;
   XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(e, len), e, XEN_ARG_1, origin, "a list");
   if (len == 0)
-    mus_misc_error(origin, "null env", e);
+    XEN_ERROR(NO_DATA,
+	      XEN_LIST_3(C_TO_XEN_STRING(origin), 
+			 C_TO_XEN_STRING("null env"), 
+			 e));
   buf = (Float *)CALLOC(len, sizeof(Float));
   for (i = 0, lst = XEN_COPY_ARG(e); i < len; i++, lst = XEN_CDR(lst)) 
     buf[i] = XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst), 0.0);

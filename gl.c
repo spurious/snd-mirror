@@ -7,7 +7,9 @@
  * 'gl is added to *features*
  *
  * HISTORY:
+ *     10-Mar:    Gl_Version.
  *     1-Feb-03:  glGet* funcs now try to handle multiple return values correctly.
+ *     --------
  *     18-Nov:    added more GtkGlext bindings.
  *     1-Aug:     removed all 'EXT' junk.
  *     24-July:   changed Guile prefix (R5RS reserves vertical-bar).
@@ -5179,7 +5181,10 @@ static int gl_already_inited = FALSE;
       define_functions();
       XEN_YES_WE_HAVE("gl");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define gl-version \"03-Feb-03\")");
+      XEN_EVAL_C_STRING("(define gl-version \"08-Mar-03\")");
+#endif
+#if HAVE_RUBY
+      rb_define_global_const("Gl_Version", C_TO_XEN_STRING("08-Mar-03"));
 #endif
       gl_already_inited = TRUE;
     }

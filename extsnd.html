@@ -139,7 +139,7 @@ Extensions to Snd can be found in the contrib directory, and in:
 <tr><td><a href="sndscm.html#drawdoc">draw.scm</a></td>      <td>graphics additions</td></tr>
 <tr><td><a href="sndscm.html#dspdoc">dsp.scm</a></td>        <td>various DSP-related procedures</td></tr>
 <tr><td><a href="sndscm.html#editmenudoc">edit-menu.scm</a></td><td>Edit menu additions</td></tr>
-<tr><td><a href="sndscm.html#effectsdoc">new-effects.scm, gtk-effects.scm</a></td><td>an Effects menu</td></tr>
+<tr><td><a href="sndscm.html#effectsdoc">new-effects.scm, gtk-effects.scm, contrib/effects.rb</a></td><td>an Effects menu</td></tr>
 <tr><td><a href="sndscm.html#envdoc">env.scm</a></td>        <td>various envelope functions from CLM</td></tr>
 <tr><td><a href="sndscm.html#enveddoc">enved.scm</a></td>    <td>envelope editor in lisp graph section</td></tr>
 <tr><td><a href="sndscm.html#eventdoc">event.scm</a></td>    <td>xm module stuff for automatic user-interface tests</td></tr>
@@ -157,7 +157,7 @@ Extensions to Snd can be found in the contrib directory, and in:
 <tr><td><a href="sndscm.html#nbdoc">nb.scm</a></td>          <td>Popup File info etc</td></tr>
 <tr><td><a href="sndscm.html#peakenvdoc">peak-env.scm</a></td><td>peak envelope support</td></tr>
 <tr><td><a href="sndscm.html#playdoc">play.scm</a></td><td>play-related functions</td></tr>
-<tr><td><a href="sndscm.html#popupdoc">popup.scm, gtk-popup.scm</a></td>    <td>Popup menu specializations</td></tr>
+<tr><td><a href="sndscm.html#popupdoc">popup.scm, gtk-popup.scm, contrib/popup.rb</a></td>    <td>Popup menu specializations</td></tr>
 <tr><td><a href="sndscm.html#pqwvoxdoc">pqwvox.scm</a></td>  <td>phase-quadrature waveshaping (from CLM)</td></tr>
 <tr><td><a href="sndscm.html#prc95doc">prc95.scm</a></td>    <td>Perry Cook's physical model examples (from CLM)</td></tr>
 <tr><td><a href="sndscm.html#pvocdoc">pvoc.scm</a></td>      <td>phase-vocoder examples</td></tr>
@@ -184,7 +184,7 @@ when a sound is saved, some people want to be warned if
 a pre-existing sound is about to be destroyed; others (Snd's
 author included) grumble "just do it".  There are two ways
 this kind of situation is handled in Snd; variables and hooks.
-A hook is a list of "callbacks" invoked whenever the associated
+A hook is a list of callbacks invoked whenever the associated
 event happens.  When Snd exits, for example, any functions found
 on the <a href="#exithook">exit-hook</a> list are evaluated; if any of them returns #t,
 Snd does not exit.</p>
@@ -229,8 +229,8 @@ to the listener here, as described above):</p>
 <p>As this illustrates, 
 variables in Snd are accessed as though each were a function, and set using set!.  auto-resize's current
 value is accessed via <code>(auto-resize)</code>, and set to a
-new value via <code>(set! (auto-resize) #f)</code>. #t is Scheme for "true"
-(often 1 in C, t in Lisp, true in Ruby), #f is "false" (0 in C, nil in Lisp, false in Ruby).
+new value via <code>(set! (auto-resize) #f)</code>. #t is Scheme for true
+(often 1 in C, t in Lisp, true in Ruby), #f is false (0 in C, nil in Lisp, false in Ruby).
 The statement <code>(set! (auto-resize) #f)</code> can be placed in your ~/.snd initialization file
 to make it the default setting for your version of Snd, or placed
 in a separate file of Scheme code and loaded at any time via the load
@@ -546,7 +546,7 @@ them); if you're not using regions anyway, this switch can turn them off.
 <br><br>
 The higher this number, the better the src low-pass filter, but the slower
 src runs.  If you use too low a setting, you can sometimes hear high 
-frequency "whistles" leaking through. To hear these on purpose, make 
+frequency whistles leaking through. To hear these on purpose, make 
 a sine wave at (say) 55 Hz, then <code>(src-sound '(0 3 1 1))</code> with sinc-width at 4.
 </td></tr>
 <tr><td colspan=3></td></tr>
@@ -576,7 +576,7 @@ computer; if you're trying to play 8 channel 44Khz sounds on a slow
 machine, It may help to set use-sinc-interp to #f.  In fact, if you're
 running a machine in the 100 MHz range, even stereo 44.1kHz can be a
 problem -- if the sound has clicks or stutters or seems horribly distorted when
-the "speed" control is not at 1.0, try setting this variable to #f.
+the speed control is not at 1.0, try setting this variable to #f.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -588,7 +588,7 @@ This is the same as <br>
 <code>(cadr (<a href="widgetsize">widget-size</a> (cadr (<a href="mainwidgets">main-widgets</a>))))</code><br>
 except at startup when the window-height function and friends defer the set until after the main widgets
 have been created.  If Snd becomes confused about screen size, it can make its main window so large that
-you can't get at any of the "decorations" for resizing the window; in this emergency you can
+you can't get at any of the decorations for resizing the window; in this emergency you can
 <code>(set! (window-height) 300)</code> or some such number.
 </td></tr>
 <tr><td colspan=3></td></tr>
@@ -1902,7 +1902,7 @@ the returned procedure to make sure the mark pane is reactivated right away when
 
 <table border=0><tr><td width=150><br></td><td>
 These are functions that return the hooks in question associated with the specified channel.
-The functions on these hooks are "thunks" -- they should take no arguments.
+The functions on these hooks are thunks -- they should take no arguments.
 edit-hook is called just before any attempt to edit the channel's data; if it returns #t,
 the edit is aborted. So,
 </td></tr></table>
@@ -1994,7 +1994,7 @@ about the following documentation.
 <p>In the following lists, optional arguments are in italics (although
 netscape sometimes displays them in bold face for some reason).
 Each sound has an
-associated "index" used to refer to it in all the
+associated index used to refer to it in all the
 functions.  This arbitrary number is more
 or less related to the sound's position in the
 display of sounds (if the variable <a href="#showindices">show-indices</a> is #t,
@@ -2033,7 +2033,7 @@ turns on the fft display in all channels of all sounds.
 </p>
 
 <p>When an error occurs, in most cases the function throws a tag such as 'no-such-sound,
-'impossible-bounds, 'no-active-selection, etc.
+'no-active-selection, etc.
 All the functions that take sound and channel args (<i>snd chn</i> below) can return the errors
 'no-such-sound and 'no-such-channel; all the mix-related functions can return 'no-such-mix;
 all the region-related functions can return 'no-such-region; all selection-oriented functions
@@ -2416,7 +2416,7 @@ and whatever else seems appropriate.</td></tr>
 If you're reading float data that is extremely soft (i.e. max amp
 below .001), the transfer to integer form in sndlib can cause bits
 to be lost, resulting in hiss.  In this case set the prescaler for
-the file to 1000.0 or so to get the data into a more "normal"
+the file to 1000.0 or so to get the data into a more normal
 range.  Since the mus-file-set-prescaler call should come just after opening
 the sound file, but before trying to read any data, you need to use it in the context of <a href="#duringopenhook">during-open-hook</a>.
 A similar low-level sndlib function is <em class=def><a name="musfilesetdataclipped">mus-file-set-data-clipped</a></em>.
@@ -2549,7 +2549,7 @@ accommodate the read</td></tr>
 
 <!-- mus-audio-set-oss-buffers -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="setossbuffers">mus-audio-set-oss-buffers</a></em> (num size)</code></span></td></tr>
-<tr><td></td><td>in Linux (OSS), this sets the number and size of the OSS "fragments".
+<tr><td></td><td>in Linux (OSS), this sets the number and size of the OSS fragments.
 The default (as of 21-May-01) is to accept whatever OSS chooses: I believe this is normally
 equivalent to <code>(mus-audio-set-oss-buffers 16 12)</code>.  This default makes the control panel controls very sluggish.  
 Snd used to call <code>(mus-audio-set-oss-buffers 4 12)</code> as its default, 
@@ -3796,8 +3796,8 @@ See <b>make-sound-icon</b> in snd-motif.scm for an example.
 A property list associated with the given channel.  It is set to '() at the time a sound is opened.  The accessor
 <a href="sndscm.html#exchannelproperty">channel-property</a> is provided in extensions.scm.  See enved.scm (which uses
 the property 'enved-envelope), or draw.scm (the properties 'colored-samples and 'insert-envelope).
-<br><br>Traditionally in Lisp, a property list has been treated as an "association list". This is a list
-of pairs (made by cons), each inner pair having a "key" as its first element, and the associated value as the second element.
+<br><br>Traditionally in Lisp, a property list has been treated as an association list. This is a list
+of pairs (made by cons), each inner pair having a key as its first element, and the associated value as the second element.
 The function <b>assoc</b> can be used to search the list for a given key's value; a new key-value pair can be
 added with:<br><br>
   <code>(cons (cons key value) a-list)</code>
@@ -4104,7 +4104,7 @@ treats it as signed by default, so to make one of the unsigned-byte files playab
 Float data is another source of confusion;
 there is apparently no agreement on whether the data is between -1.0 and 1.0, or -32768.0 and 32767.0 or anything else.
 In this case, Snd assumes -1.0 to 1.0 (except in one special case involving IRCAM headers), and you may have to set y-bounds to see the actual data.
-Yet another: files with 32-bit integers.  Some programs (Glame, apparently, and perhaps Ardour) assume the "fraction" is
+Yet another: files with 32-bit integers.  Some programs (Glame, apparently, and perhaps Ardour) assume the fraction is
 31 bits wide, others (Snd) use whatever its sample-width is configured to be; there is no correct or standard
 placement of the fixed point, but not to worry!  Your data is ok:
 <code>(set! (y-bounds) (list -256.0 256.0))</code>. There are several ways you can handle
@@ -4429,7 +4429,7 @@ See popup.scm, and <i>files-popup-buffer</i>, <i>open-next-file-in-directory</i>
 <span class=defbox><code><em class=def><a name="finishprogressreport">finish-progress-report</a></em> (<i>snd</i>)</code></span>
 </td></tr>
 <tr><td></td><td>
-End an on-going "progress report" (a visual indication of how far along some time-consuming process is). 
+End an on-going progress report (a visual indication of how far along some time-consuming process is). 
 See <a href="#progressreport">progress-report</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -5005,7 +5005,7 @@ To insert a block of arbitrary-valued samples:
 </pre></td></tr></table>
 <br>
 We could also use map-channel here (rather than ptree-channel), but this version
-uses only "virtual" edits, so no matter how big the block of samples we insert,
+uses only virtual edits, so no matter how big the block of samples we insert,
 no disk space or memory is needed.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -5357,7 +5357,7 @@ Since the run macro (on which ptree-channel depends) is currently limited in
 the kinds of vector or list elements it can decipher, you're pretty tightly
 constricted in this context.
 The read direction argument can be ignored if you know you're not going to read backwards.
-The only "hidden" reverse read is in the src generator where a negative increment can be
+The only hidden reverse read is in the src generator where a negative increment can be
 generated in a variety of ways (for example, src driven by oscil).  A one-zero filter
 could in this case be:
 <br><br><pre>
@@ -5528,7 +5528,7 @@ Virtual reverse-channel: <a href="#virtualreverse">xen-channel</a>
 <span class=defbox><code><em class=def><a name="sndreverse">reverse-sound</a></em> (<i>snd chn edpos</i>)</code></span>
 </td></tr>
 <tr><td></td><td>
-reverse data.  There are some interesting "non-causal" effects you can get with this; for example,
+reverse data.  There are some interesting non-causal effects you can get with this; for example,
 take a voice sound, reverse it, reverberate it, reverse it again, and you get the original with
 reversed reverb.
 </td></tr>
@@ -5627,7 +5627,7 @@ for real-time audio applications; see play.scm for examples.
 return vct struct with same data as in <i>samples</i> call above.  
 If v (a vct object) is provided, it is filled, rather than creating 
 a new vct object. <i>pos</i> is the edit history position to read.
-The "regularized" version of this function is <a href="#channel2vct">channel-&gt;vct</a>.
+The regularized version of this function is <a href="#channel2vct">channel-&gt;vct</a>.
 There are many examples in examp.scm and dsp.scm.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -6110,8 +6110,8 @@ at the loop points:
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndsoundloopinfo">sound-loop-info</a></em> (<i>snd</i>)</code></span></td>
 </tr><tr><td></td>
 <td>returns or sets loop points in header.  In each case, the loop info is a list of
-up to 4 points, the first two (start, end) refer to the "sustain" loop,
-the second two to the "release".  The 5th and 6th list entries are the "base note" and "detune" values.
+up to 4 points, the first two (start, end) refer to the sustain loop,
+the second two to the release.  The 5th and 6th list entries are the base note and detune values.
 For historical reasons, the 7th and 8th entries are the sustain and release modes.
 This is similar to <a href="#soundloopinfo">mus-sound-loop-info</a> (but it's settable).  See <i>explode-sf2</i> in examp.scm.
 </td></tr>
@@ -6326,7 +6326,7 @@ if a <a href="#makeplayer">play-list</a> is waiting, start it.  <i>chans</i> def
 <span class=defbox><code><em class=def><a name="startprogressreport">start-progress-report</a></em> (<i>snd</i>)</code></span>
 </td></tr>
 <tr><td></td><td>
-Start a "progress report"; see <a href="#progressreport">progress-report</a>.
+Start a progress report; see <a href="#progressreport">progress-report</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6361,7 +6361,7 @@ If no argument is given, stop all sounds (channels) in progress.  See play.scm o
 </td></tr>
 <tr><td></td><td>
 Swap the indicated channels, between beg and beg+dur.  See <i>swap-selection-channels</i> in examp.scm.
-In simple cases, this is a "virtual" operation.
+In simple cases, this is a virtual operation.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6373,7 +6373,7 @@ In simple cases, this is a "virtual" operation.
 <tr><td></td><td>
 <i>snd</i>'s 'sync' value (an integer, 0=none). Several functions (scale-by, for example), apply to the
 currently selected sound and also to any other sounds that share its sync value.  (I later decided that
-this was a bad idea, hence the "regularized" replacements).  Sounds that share a given sync value 
+this was a bad idea, hence the regularized replacements).  Sounds that share a given sync value 
 move together when you drag an x-axis slider and so on.
 <br><br>The built-in Guile/Posix function named sync ("flush OS disk buffers") is available (are you sure you want this?) as %sync.
 </td></tr>
@@ -6922,7 +6922,7 @@ The <a href="snd.html#expand">expansion</a> hop amount in seconds.
 </td></tr>
 <tr><td></td><td>
 The <a href="snd.html#expand">expansion</a> segment (grain) length in seconds.  The longer the grain,
-the more "reverberated" or "slurred" the effect.
+the more reverberated or slurred the effect.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7283,7 +7283,7 @@ changed, you can load this file to restore the current edit list state.
 save-edit-history returns #t if all went well.
 The following function makes an
 exact copy of the state (edit lists and all) of the given sound,
-providing a way to "fork" an edit path (geez, what jargon!).  The idea here
+providing a way to fork an edit path (geez, what jargon!).  The idea here
 is to copy the complete edit state into a new sound so that two or more
 edit sequences can be compared).
 </td></tr>
@@ -7336,7 +7336,7 @@ put in it something like:</p>
 
 <p>Now fire up Snd: <code>snd -l myfile.scm</code> and voila!
 Files like this can contain any arbitrary code, calling
-anything in Snd or anywhere else for that matter; you basically
+anything in Snd or anywhere else for that matter; you
 have a CLM-like notelist reader to describe sound file edits.
 Similarly, when you save Snd's state (via the Save State menu
 option or by calling the function <a href="#sndsavestate">save-state</a>),
@@ -7447,7 +7447,7 @@ input data). <i>sgn</i> is 1 for an FFT, -1 for an inverse FFT; (default 1).
 <tr><td></td><td>
 convolve vct <i>rl1</i> with <i>rl2</i>.  Result returned in rl1.
 rl1 should be large enough to hold the full convolution result.
-This function is basically the same as <a href="clm.html#convolution">convolution</a>.
+This function is the same as <a href="clm.html#convolution">convolution</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 </table>
@@ -7953,8 +7953,8 @@ to do!
 <br>
 <span class=bbox><h3><A NAME="snderrors">Errors and Debugging</a></h3></span>
 
-<p> When something goes awry, the various functions can "throw" an error (a symbol)
-which is normally "caught" by the default error handler (this is a kind of "goto" 
+<p> When something goes awry, the various functions can throw an error (a symbol)
+which is normally caught by the default error handler (this is a kind of goto 
 but without the embarrassment).  It prints out some message,
 and sometimes appends a stack trace.  So, as a simple example, selection-position
 throws 'no-active-selection if there isn't a selection:
@@ -7974,19 +7974,19 @@ In the case of 'no-active-selection, we set up our own handler for that as follo
        (lambda (tag val) 0))</em>
 <em class=listener>0</em>
 </pre>
-<p>Here we've "caught" 'no-active-selection (if it occurs within the
-first "thunk's" body), and return 0 if it occurs; otherwise we return
+<p>Here we've caught 'no-active-selection (if it occurs within the
+first thunk's body), and return 0 if it occurs; otherwise we return
 <code>(+ 1 (selection-position))</code>.  Scheme (Guile) has a number
 of errors such as 'out-of-range, 'wrong-type-arg, 'numerical-overflow,
 etc.  The Snd-specific errors are:</p>
 <pre>
 'no-such-channel 'no-such-sound  'no-such-mark       'no-such-mix
 'no-such-menu    'no-such-file   'no-such-region     'no-such-sample
-'no-such-edit    'cannot-save    'impossible-bounds  'no-active-selection
-'no-such-widget  'mus-error      'no-such-track      'no-such-envelope
-'cannot-print    'no-such-axis   'no-such-player     'bad-arity
-'no-such-color   'no-such-widget 'no-such-plugin     'no-such-graphics-context
-'gsl-error       'no-such-key    'no-such-direction
+'no-such-edit    'cannot-save    'no-such-envelope   'no-active-selection
+'no-such-widget  'mus-error      'no-such-track      'bad-arity
+'cannot-print    'no-such-axis   'no-such-player     'no-such-graphics-context
+'no-such-color   'no-such-widget 'no-such-plugin     'no-data
+'gsl-error       'no-such-key    'no-such-direction  'cannot-parse
 </pre>
 <p><i>bad-arity</i> is jargon indicating that a procedure has been passed the
 wrong number of arguments.  <i>gsl-error</i> indicates that the GSL
@@ -8577,7 +8577,7 @@ create Postscript description of current display.
 <span class=defbox><code><em class=def><a name="gin">in</a></em> (ms thunk)</code></span></td></tr>
 <tr><td></td><td>
 <i>ms</i> milliseconds from now, evaluate <i>thunk</i>, a function of no arguments.  In Ruby, this
-is named "call_in".
+is named "<a name="callin">call_in</a>".
 <pre><code>(in 5000 (lambda () (snd-print "boo!")))</code></pre>
 </td></tr>
 <tr><td></td><td>
@@ -8632,7 +8632,7 @@ starts the help dialog with help related to the selection if "h" is typed in the
 When a sound file is opened, Snd looks for a file with the same 
 name but with an appended ".scm" extension.  If such a file is found, 
 it is loaded automatically.  The variable <i>memo-sound</i> is set to 
-the newly opened sound's index.  This supports the "snd-memo" feature 
+the newly opened sound's index.  This supports the snd-memo feature 
 in CLM, but can be used independently of CLM to store marks, selections,
 or whatever that you want associated with a particular sound. Confusingly
 enough, this is a variable, unlike all the others -- that is, you
@@ -8655,7 +8655,7 @@ loads a file into Snd for editing.
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="sndpreloaddirectory">preload-directory</a></em> (dir)</code></span></td></tr>
 <tr><td></td><td>
-preload sound files from directory <i>dir</i> (see -<a href="snd.html#minusp">p</a>).  "Preloading" a file means
+preload sound files from directory <i>dir</i> (see -<a href="snd.html#minusp">p</a>).  Preloading a file means
 placing it in the list of previous files in the View menu's <a href="snd.html#prevfiles">View Files</a> dialog.
 By preloading all the files you might want to use, you can use that dialog as a convenient access method, and so on.
 See <a href="sndscm.html#nbdoc">nb.scm</a> for example.
@@ -8666,7 +8666,7 @@ See <a href="sndscm.html#nbdoc">nb.scm</a> for example.
 <span class=defbox><code><em class=def><a name="sndpreloadfile">preload-file</a></em> (file)</code></span></td></tr>
 <tr><td></td><td>
 preload <i>file</i>, placing it in the View menu's <a href="snd.html#prevfiles">View Files</a> dialog as
-a "previous" file (as if you had opened and closed it).
+a previous file (as if you had opened and closed it).
 </td></tr>
 
 <!-- reset-listener-cursor -->
@@ -8794,7 +8794,7 @@ returns the spectrum (as a vct) of <i>data</i> (also a vct) using fft-window <i>
 <i>length</i> is the number of samples 
 of data. <code>(let ((spectr (snd-spectrum data rectangular-window (transform-size)))) ...)</code>
 If <i>linear</i> is #f (its default is #t), the spectrum is returned in dB.
-<i>beta</i> is the fft data window "family" parameter; it is scaled internally so here it should be between 0.0 and 1.0.
+<i>beta</i> is the fft data window family parameter; it is scaled internally so here it should be between 0.0 and 1.0.
 If <i>in-place</i> is #t, the spectrum is returned in <i>data</i>, otherwise snd-spectrum returns a new vct.
 </td></tr>
 
@@ -9464,7 +9464,7 @@ load-font could be (should have been!) defined using the xm module as:
 
 <tr><td></td><td>
 Use <i>make-graph-data</i> to get the currently displayed data (i.e. the waveform displayed
-in the graph, which can be based on an overall "peak" envelope rather than the
+in the graph, which can be based on an overall peak envelope rather than the
 individual samples).
 It returns either a vct (if the graph has one trace), or a
 list of two vcts (the two sides of the peak envelope graph).

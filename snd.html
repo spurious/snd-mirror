@@ -394,7 +394,7 @@ Everything in Snd from the low-level data readers to the
 high-level editing operations is tied into the extension
 language.  You can do anything you want with sounds.
 Rather than try to present endless menus full of
-canned "effects", Snd gives
+canned effects, Snd gives
 you full programming power over sounds, and you can 
 extend it to include whatever you want.  But if you
 are in a big hurry, or not yet confident in your ability as a programmer, many such
@@ -588,7 +588,7 @@ has a pane, and below the channels is the 'control
 pane', normally hidden except for the file name
 and 'minibuffer'.  At the very bottom
 of the Snd window is the lisp listener, if any (see
-the View menu "Open listener" option).
+the View menu Open listener option).
 The panes can all be independently
 raised and lowered by dragging the pane buttons on
 the right.  
@@ -660,7 +660,7 @@ edit.
 
 <A NAME="printfile"></a><p>The Print option opens the Print
 dialog.  You can send the currently active graph directly to
-a printer, or save it as an "encapsulated Postscript"
+a printer, or save it as an encapsulated Postscript
 file.  The default name
 of this file is "snd.eps"; the resource that overrides
 this default is named 'epsFile'.
@@ -846,7 +846,7 @@ window size:</p>
 The fft data is scaled to fit between 0.0 and 1.0 unless
 transform normalization is off. 
 The full frequency axis is normally displayed, but the
-axis is "dragable" -- put the mouse on the axis and
+axis is dragable -- put the mouse on the axis and
 drag it either way to change the range (this is equivalent
 to changing the variable <a href="extsnd.html#spectrocutoff">spectro-cutoff</a>).  You can also click
 on any point in the fft to get the associated fft value at that point
@@ -1100,7 +1100,7 @@ triangle to play following the mouse.</p>
 <p>A mark can be named or unnamed.  It it has a name, it is displayed
 above the horizontal tab at the top of the window. As with
 sounds and mixes, marks can be grouped together through
-the "sync" field; marks sharing the same sync value (other
+the sync field; marks sharing the same sync value (other
 than 0) will move together when one is moved, and so on.
 See the <a href="extsnd.html#sndmarks">marks</a> chapter 
 for a further discussion of synced marks.
@@ -1152,7 +1152,7 @@ moves.  (One minor caveat: if you drag the mouse too quickly off the end
 of the graph, making a grand sweeping gesture, the last portion
 of the graph may be missed because the mouse updates are
 coalesced by X; move deliberately as you near the end
-of the sound).  In large sounds, the mouse "granularity" can be
+of the sound).  In large sounds, the mouse granularity can be
 large, but you can zoom onto the start or end of the selected
 portion and move them using <a href="extsnd.html#selectionposition">selection-position</a>
 and <a href="extsnd.html#selectionframes">selection-frames</a>.
@@ -1390,7 +1390,7 @@ amplitude, use the functions:</p>
   <a href="extsnd.html#sndscaleselectionto">scale-selection-to</a> args
 </pre>
 <p><i>scale-by</i> scales the current sync'd channels by its arguments,
-and <i>scale-to</i> scales them to its arguments (a "normalization").
+and <i>scale-to</i> scales them to its arguments (a normalization).
 The arguments in each case are either a list of floats
 corresponding to each successive member of the current
 set of sync'd channels, or just one argument. In the
@@ -1647,7 +1647,7 @@ automatically pad with zeros, if necessary.
 
 <h4><A NAME="recordfile">Record a File</a></h4>
 
-<p>To make a recording, choose "Record" from the File menu.
+<p>To make a recording, choose Record from the File menu.
 A window opens with the various recording controls (SGI and Linux shown below):</p>
 
 <img src="rec.png" alt="picture of SGI Record window" vspace=5><img src="reclin.png" alt="picture of Linux Record window" hspace=10>
@@ -1669,7 +1669,7 @@ name and so on), and the layout of the window.  The buttons on the
 right can be used to open and close panes painlessly.  If the
 button is not square (a diamond on the SGI), the underlying audio
 hardware can't handle input from that device at the same time as
-it reads other "radio" button devices.  So, in that case, opening
+it reads other radio button devices.  So, in that case, opening
 the panel via the button also turns off the other incompatible
 device.  The '<A NAME="Xautoload">autoload</a>' button, if set,
 causes the newly recorded file to be loaded automatically into Snd.</p>
@@ -1695,7 +1695,7 @@ variable before invoking the recorder.
 your screen, you can fool around with the variable vu-size which
 defaults to 1.0.  Similarly the variable vu-font-size tries to
 change the size of the numbers on the label, and vu-font chooses
-the family name of the font used (normally "courier").
+the family name of the font used (normally courier).
 </p>
 
 <p>
@@ -1715,15 +1715,15 @@ mixed into the output signal, scaled by its horizontal sliders,
 reflected in its VU meters, then written to the output file,
 while another copy passes out the right side of the output panel
 to the speakers scaled by the output (vertical) sliders. The bizarre icon next to
-the microphone in Linux is supposed to mean "line-in".
+the microphone in Linux is supposed to mean line-in.
 </p>
 
 <p>Sometimes it is more convenient to have the recorder start writing
 the output file data only after some threshold amplitude has been
 reached.  The scale bar in the lower right marked "trigger:" sets
 this value.  If it is 0.0 (the default), the recording begins
-as soon as you push the "Record" button.  Otherwise, the recording
-begins after you push "Record" and after the triggered value is
+as soon as you push the Record button.  Otherwise, the recording
+begins after you push Record and after the triggered value is
 noticed in the output (modulo buffer crossings -- sometimes you'll
 get up to a buffer's worth of whatever preceded that value).  In
 this case, the button is labelled "Triggered Record".
@@ -2169,7 +2169,7 @@ or is too buzzy -- but it certainly is more
 robust than the phase vocoder approach to the
 same problem. The best quality time expansion
 comes from rubber-sound in rubber.scm, but unfortunately
-it only works on "well-behaved" sounds.
+it only works on well-behaved sounds.
 The expander is on only if the expand
 button is set.
         <!-- I(change tempo):O(see 'expand' control)(expand) --><!-- I(change tempo):A(expand) -->

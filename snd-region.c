@@ -1203,7 +1203,7 @@ static XEN g_set_max_regions(XEN n)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ONLY_ARG, S_setB S_max_regions, "an integer"); 
   regs = XEN_TO_C_INT(n);
   if (regs < 0)
-    mus_misc_error(S_setB S_max_regions, "max_regions can't be < 0", n);
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_max_regions, 1, n, "max_regions < 0?");
   ss = get_global_state();
   set_max_regions(ss, regs);
   return(C_TO_XEN_INT(max_regions(ss)));
@@ -1370,10 +1370,7 @@ selection is used."
 	      FREE(ends);
 	      ends = NULL;
 	      si = free_sync_info(si);
-	      XEN_ERROR(IMPOSSIBLE_BOUNDS,
-			XEN_LIST_5(C_TO_XEN_STRING(S_make_region),
-				   beg, end,
-				   snd_n, chn_n));
+	      XEN_OUT_OF_RANGE_ERROR(S_make_region, 1, XEN_LIST_2(beg, end), "end < beg?");
 	    }
 	}
       if (ends)

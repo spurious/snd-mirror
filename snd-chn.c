@@ -4525,7 +4525,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
     case CP_TIME_GRAPH_STYLE:
       val = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, DEFAULT_GRAPH_STYLE, caller);
       if (!(GRAPH_STYLE_OK(val)))
-	mus_misc_error(caller, "unknown " S_time_graph_style, on);
+	XEN_OUT_OF_RANGE_ERROR(caller, 1, on, "unknown " S_time_graph_style);
       cp->time_graph_style = val;
       if (call_update_graph) update_graph(cp);
       return(C_TO_XEN_INT(cp->time_graph_style));
@@ -4533,7 +4533,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
     case CP_LISP_GRAPH_STYLE:
       val = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, DEFAULT_GRAPH_STYLE, caller);
       if (!(GRAPH_STYLE_OK(val)))
-	mus_misc_error(caller, "unknown " S_lisp_graph_style, on);
+	XEN_OUT_OF_RANGE_ERROR(caller, 1, on, "unknown " S_lisp_graph_style);
       cp->lisp_graph_style = val;
       if (call_update_graph) update_graph(cp);
       return(C_TO_XEN_INT(cp->lisp_graph_style));
@@ -4541,7 +4541,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
     case CP_TRANSFORM_GRAPH_STYLE:
       val = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, DEFAULT_GRAPH_STYLE, caller);
       if (!(GRAPH_STYLE_OK(val)))
-	mus_misc_error(caller, "unknown " S_transform_graph_style, on);
+	XEN_OUT_OF_RANGE_ERROR(caller, 1, on, "unknown " S_transform_graph_style);
       cp->transform_graph_style = val;
       if (call_update_graph) update_graph(cp);
       return(C_TO_XEN_INT(cp->transform_graph_style));
@@ -4550,7 +4550,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
       val = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, DEFAULT_X_AXIS_STYLE, caller);
       if ((val < X_AXIS_IN_SECONDS) ||
 	  (val > X_AXIS_IN_BEATS))
-	mus_misc_error(caller, "unknown x axis style", on);
+	XEN_OUT_OF_RANGE_ERROR(caller, 1, on, "unknown x axis style");
       chans_x_axis_style(cp, (void *)(&val));
       return(C_TO_XEN_INT(cp->x_axis_style));
       break;
@@ -4563,7 +4563,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
       val = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, DEFAULT_SHOW_AXES, caller);
       if ((val < SHOW_NO_AXES) ||
 	  (val > SHOW_X_AXIS))
-	mus_misc_error(caller, "unknown show-axes value", on);
+	XEN_OUT_OF_RANGE_ERROR(caller, 1, on, "unknown show-axes value");
       cp->show_axes = val;
       update_graph(cp); 
       return(C_TO_XEN_INT(cp->show_axes));
@@ -4578,7 +4578,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
       curlen = CURRENT_SAMPLES(cp);
       newlen = XEN_TO_C_OFF_T_OR_ELSE(on, curlen);
       if (newlen < 0)
-	mus_misc_error(S_setB S_frames, "invalid length", on);
+	XEN_OUT_OF_RANGE_ERROR(S_setB S_frames, 1, on, "frames < 0?");
       if (curlen > newlen)
 	{
 	  if (newlen > 0)
@@ -5754,7 +5754,7 @@ static XEN g_set_graph_style(XEN style, XEN snd, XEN chn)
 	  return(C_TO_XEN_INT(graph_style(ss)));
 	}
     }
-  mus_misc_error(S_setB S_graph_style, "invalid style", style);
+  XEN_OUT_OF_RANGE_ERROR(S_setB S_graph_style, 1, style, "unknown graph-style");
   return(XEN_FALSE);
 }
 
@@ -5776,7 +5776,7 @@ static XEN g_set_time_graph_style(XEN style, XEN snd, XEN chn)
   val = XEN_TO_C_INT(style);
   if (GRAPH_STYLE_OK(val))
     return(channel_set(snd, chn, style, CP_TIME_GRAPH_STYLE, S_setB S_time_graph_style));
-  mus_misc_error(S_setB S_time_graph_style, "invalid style", style);
+  XEN_OUT_OF_RANGE_ERROR(S_setB S_time_graph_style, 1, style, "unknown " S_time_graph_style);
   return(XEN_FALSE);
 }
 
@@ -5798,7 +5798,7 @@ static XEN g_set_lisp_graph_style(XEN style, XEN snd, XEN chn)
   val = XEN_TO_C_INT(style);
   if (GRAPH_STYLE_OK(val))
     return(channel_set(snd, chn, style, CP_LISP_GRAPH_STYLE, S_setB S_lisp_graph_style));
-  mus_misc_error(S_setB S_lisp_graph_style, "invalid style", style);
+  XEN_OUT_OF_RANGE_ERROR(S_setB S_lisp_graph_style, 1, style, "unknown " S_lisp_graph_style);
   return(XEN_FALSE);
 }
 
@@ -5820,7 +5820,7 @@ static XEN g_set_transform_graph_style(XEN style, XEN snd, XEN chn)
   val = XEN_TO_C_INT(style);
   if (GRAPH_STYLE_OK(val))
     return(channel_set(snd, chn, style, CP_TRANSFORM_GRAPH_STYLE, S_setB S_transform_graph_style));
-  mus_misc_error(S_setB S_transform_graph_style, "invalid style", style);
+  XEN_OUT_OF_RANGE_ERROR(S_setB S_transform_graph_style, 1, style, "unknown " S_transform_graph_style);
   return(XEN_FALSE);
 }
 
@@ -6062,9 +6062,7 @@ static XEN g_set_x_bounds(XEN bounds, XEN snd_n, XEN chn_n)
       x1 = XEN_TO_C_DOUBLE(XEN_CADR(bounds));
       if (x1 > x0)
 	set_x_axis_x0x1(cp, x0, x1);
-      else XEN_ERROR(IMPOSSIBLE_BOUNDS,
-		     XEN_LIST_2(C_TO_XEN_STRING(S_setB S_x_bounds),
-				bounds));
+      else XEN_OUT_OF_RANGE_ERROR(S_setB S_x_bounds, 1, bounds, "x1 > x0?");
     }
   return(bounds);
 }
@@ -6125,9 +6123,7 @@ static XEN g_set_y_bounds(XEN bounds, XEN snd_n, XEN chn_n)
       resize_zy(cp);
       apply_y_axis_change(ap, cp);
     }
-  else XEN_ERROR(IMPOSSIBLE_BOUNDS,
-		 XEN_LIST_2(C_TO_XEN_STRING(S_setB S_y_bounds),
-			    bounds));
+  else XEN_OUT_OF_RANGE_ERROR(S_setB S_y_bounds, 1, bounds, "y1 < y0?");
   return(bounds);
 }
 

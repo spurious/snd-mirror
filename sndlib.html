@@ -430,7 +430,7 @@ The following briefly describes the C calls (see clm.h).
 has three associated functions, make-gen, gen, and gen_p; the first
 creates the generator (if needed), the second gets the next sample from
 the generator, and the last examines some pointer to determine if it is
-that kind of generator.  In addition, there are a variety of "generic"
+that kind of generator.  In addition, there are a variety of generic
 functions that generators respond to: mus_free, for example, frees a
 generator, and mus_frequency returns its current frequency, if relevant.
 All generators are pointers to mus_any structs.  Finally, CLM has two
@@ -439,8 +439,8 @@ a multi-channel sample (that is, in a stereo file, at time 0.0, there
 are two samples, one for each channel).  A mixer is a array of arrays
 that represents a set of input and output scalers, as if it were the
 current state of a mixing console's volume controls.  A frame (a multi-channel
-input) can be "mixed" into a new frame (a multi-channel output) by passing
-it through a "mixer" (a matrix, the operation being a matrix multiply).
+input) can be mixed into a new frame (a multi-channel output) by passing
+it through a mixer (a matrix, the operation being a matrix multiply).
 </p>
 
 <ul>
@@ -632,7 +632,7 @@ int main(int argc, char *argv[])
 
 <p>This code records a couple seconds of sound from a microphone.
 Input formats and sampling rates are dependent on available
-hardware, so in a "real" program, you'd use <a href="#readaudiostate">mus_audio_mixer_read</a>
+hardware, so in a real program, you'd use <a href="#readaudiostate">mus_audio_mixer_read</a>
 to find out what was available, then mus_file_read_buffer to
 turn that data into a stream of floats.
 You'd also provide, no doubt,
@@ -1091,7 +1091,7 @@ see headers.c or sndlib.h for details.  The next functions handle various IO cal
 If you're reading float data that is extremely soft (i.e. max amp
 below .001), the transfer to integer form in sndlib can cause bits
 to be lost, resulting in hiss.  In this case set the prescaler for
-the file to 1000.0 or so to get the data into a more "normal"
+the file to 1000.0 or so to get the data into a more normal
 range.  The mus_file_set_prescaler call should come just after opening
 the sound file, before trying to read any data.
 </p>
