@@ -330,6 +330,8 @@ XEN xen_rb_ary_new_with_initial_element(long num, XEN element)
   return(arr);
 }
 
+static char *last_name1 = NULL, *last_name2 = NULL, *last_name3; /* too much of a bother to free the return values over and over */
+
 static char *scheme_to_ruby(const char *name)
 {
   /* replace any non-alphanumeric except "?" with "_". "?" -> "_p". '->" -> "2" drop "!" */
@@ -363,6 +365,10 @@ static char *scheme_to_ruby(const char *name)
 	    }
 	}
     }
+  if (last_name3) free(last_name3);
+  last_name3 = last_name2;
+  last_name2 = last_name1;
+  last_name1 = new_name;
   return(new_name);
 }
 
@@ -400,6 +406,10 @@ char *xen_scheme_procedure_to_ruby(const char *name)
 	    }
 	}
     }
+  if (last_name3) free(last_name3);
+  last_name3 = last_name2;
+  last_name2 = last_name1;
+  last_name1 = new_name;
   return(new_name);
 }
 

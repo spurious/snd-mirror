@@ -1026,8 +1026,10 @@ void snd_load_file(char *filename)
 	  str = NULL;
 	  FREE(str1);
 	  str1 = NULL;
+#if (!HAVE_RUBY)
 	  FREE(str2);
 	  str2 = NULL;
+#endif
 	  snd_error(_("can't load %s: %s"), filename, strerror(errno));
 	}
       /* snd_error ok here because all uses of this are user-interface generated (autoload, memo-file, etc) */
@@ -1487,7 +1489,7 @@ static XEN g_set_zoom_focus_style(XEN focus)
 static XEN g_snd_version(void) 
 {
   #define H_snd_version "(" S_snd_version "): current Snd version (a string)"
-  return(C_TO_XEN_STRING(SND_VERSION));
+  return(C_TO_XEN_STRING(SND_DATE));
 }
 
 static XEN g_sounds(void)

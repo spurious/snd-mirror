@@ -225,9 +225,9 @@ char *version_info(void)
   snd_itoa_ctr = 0;
   result = vstrcat(
 	  _("This is Snd version "),
-	  SND_RPM_VERSION,
-	  " of ",
 	  SND_VERSION,
+	  " of ",
+	  SND_DATE,
 	  ":\n    ", xversion = xen_version(),
 	  "\n    ", mus_audio_moniker(),
 	  "\n    Sndlib ", snd_itoa(SNDLIB_VERSION), ".", 
@@ -375,6 +375,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+21-May:  --with-doc-dir configuration switch.\n\
 16-May:  snd 7.4\n\
 6-May:   mono->stereo, mono-files->stereo, stereo->mono (extensions.scm).\n\
          channel-variance etc in dsp.scm, taken from J Smith \"Mathematics of the DFT\"\n\
@@ -1871,12 +1872,22 @@ static char *html_directory(void)
       FREE(hd);
       if (happy) return(copy_string(html_dir(ss)));
     }
-  if (mus_file_probe("/usr/share/doc/snd-7/snd.html"))
-    return(copy_string("/usr/share/doc/snd-7"));
-  if (mus_file_probe("/usr/local/share/doc/snd-7/snd.html"))
-    return(copy_string("/usr/local/share/doc/snd-7"));
-  if (mus_file_probe("/usr/doc/snd-7/snd.html"))
-    return(copy_string("/usr/doc/snd-7"));
+#ifdef DEFAULT_DOC_DIR
+  if (mus_file_probe(DEFAULT_DOC_DIR "/snd.html"))
+    return(copy_string(DEFAULT_DOC_DIR "/snd.html"));
+#endif
+  if (mus_file_probe("/usr/share/doc/snd-" SND_VERSION "/snd.html"))
+    return(copy_string("/usr/share/doc/snd-" SND_VERSION));
+  if (mus_file_probe("/usr/share/doc/snd-" SND_MAJOR_VERSION "/snd.html"))
+    return(copy_string("/usr/share/doc/snd-" SND_MAJOR_VERSION));
+  if (mus_file_probe("/usr/local/share/doc/snd-" SND_VERSION "/snd.html"))
+    return(copy_string("/usr/local/share/doc/snd-" SND_VERSION));
+  if (mus_file_probe("/usr/local/share/doc/snd-" SND_MAJOR_VERSION "/snd.html"))
+    return(copy_string("/usr/local/share/doc/snd-" SND_MAJOR_VERSION));
+  if (mus_file_probe("/usr/doc/snd-" SND_MAJOR_VERSION "/snd.html"))
+    return(copy_string("/usr/doc/snd-" SND_MAJOR_VERSION));
+  if (mus_file_probe("/usr/share/docs/snd-" SND_VERSION "/snd.html"))
+    return(copy_string("/usr/share/docs/snd-" SND_VERSION));
   return(NULL);
 }
 

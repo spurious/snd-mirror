@@ -51,6 +51,7 @@ AC_DEFINE_UNQUOTED(CONFIGURE_ARGS, "$INVOKED_ARGS")
 #   --with-static-xm      include xm module
 #   --with-temp-dir       directory to use for temp files
 #   --with-save-dir       directory to use for saved-state files
+#   --with-doc-dir        directory to search for documentation
 #   --with-gl             include OpenGL support (default=no)
 #   --with-just-gl        include OpenGL support but omit the Guile bindings (gl.o) (default=no)
 #   --with-modules        accommodate sndlib that was built with modules
@@ -131,6 +132,11 @@ AC_ARG_WITH(temp-dir,
 AC_ARG_WITH(save-dir,
 	[  --with-save-dir	  directory to use for saved-state files],
 	    AC_DEFINE_UNQUOTED(DEFAULT_SAVE_DIR, "${withval}")
+	)
+
+AC_ARG_WITH(doc-dir,
+	[  --with-doc-dir	  directory to search for documentation],
+	    AC_DEFINE_UNQUOTED(DEFAULT_DOC_DIR, "${withval}")
 	)
 
 RUBY="ruby"

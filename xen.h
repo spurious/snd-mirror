@@ -21,11 +21,12 @@
  */
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 11
-#define XEN_VERSION "1.11"
+#define XEN_MINOR_VERSION 12
+#define XEN_VERSION "1.12"
 
 /* HISTORY:
  *
+ *  21-May-04: plug some memory leaks in Ruby cases.
  *  23-Feb-04: changed DEBUGGING to XEN_DEBUGGING, added redefinition checks under that switch.
  *  2-Feb-04:  C_TO_XEN_CHAR, ratio support (Guile), XEN_CONS_P, XEN_PAIR_P, etc
  *  6-Jan-04:  XEN_VARIABLE_REF in Guile changed to support 1.4 and older versions.

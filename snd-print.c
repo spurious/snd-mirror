@@ -53,7 +53,7 @@ static int start_ps_graph(char *output, char *title)
 
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, 
 	       "%%!PS-Adobe-2.0 EPSF-2.0\n%%%%Title: %s\n%%%%Creator: Snd: %s\n%%%%CreationDate: ", 
-	       title, SND_VERSION);
+	       title, SND_DATE);
   ps_write(pbuf);
 #if HAVE_STRFTIME
   time(&ts);

@@ -263,8 +263,8 @@ static Cessate startup_funcs(gpointer context)
 			  snd_v, 
 			  GDK_TARGET_STRING, 8, 
 			  GDK_PROP_MODE_REPLACE, 
-			  (guchar *)(SND_VERSION), 
-			  strlen(SND_VERSION) + 1);
+			  (guchar *)(SND_DATE), 
+			  strlen(SND_DATE) + 1);
 #if HAVE_EXTENSION_LANGUAGE
       gtk_widget_add_events(MAIN_SHELL(ss), GDK_PROPERTY_CHANGE_MASK);
       g_signal_connect_closure_by_id(GTK_OBJECT(MAIN_SHELL(ss)),

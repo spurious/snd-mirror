@@ -1,5 +1,7 @@
 #include "snd.h"
 
+#define FREE_FONTS 1
+
 bool set_tiny_font(char *font)
 {
   PangoFontDescription *fs = NULL;
@@ -10,6 +12,9 @@ bool set_tiny_font(char *font)
     {
       if (tiny_font(ss)) FREE(tiny_font(ss));
       in_set_tiny_font(copy_string(font));
+#if FREE_FONTS
+      if (TINY_FONT(ss)) pango_font_description_free(TINY_FONT(ss));
+#endif
       TINY_FONT(ss) = fs;
       return(true);
     }
@@ -24,6 +29,9 @@ bool set_listener_font(char *font)
     {
       if (listener_font(ss)) FREE(listener_font(ss));
       in_set_listener_font(copy_string(font));
+#if FREE_FONTS
+      if (LISTENER_FONT(ss)) pango_font_description_free(LISTENER_FONT(ss));
+#endif
       LISTENER_FONT(ss) = fs;
       set_listener_text_font();
       return(true);
@@ -39,6 +47,9 @@ bool set_peaks_font(char *font)
     {
       if (peaks_font(ss)) FREE(peaks_font(ss));
       in_set_peaks_font(copy_string(font));
+#if FREE_FONTS
+      if (PEAKS_FONT(ss)) pango_font_description_free(PEAKS_FONT(ss));
+#endif
       PEAKS_FONT(ss) = fs;
       return(true);
     }
@@ -53,6 +64,9 @@ bool set_bold_peaks_font(char *font)
     {
       if (bold_peaks_font(ss)) FREE(bold_peaks_font(ss));
       in_set_bold_peaks_font(copy_string(font));
+#if FREE_FONTS
+      if (BOLD_PEAKS_FONT(ss)) pango_font_description_free(BOLD_PEAKS_FONT(ss));
+#endif
       BOLD_PEAKS_FONT(ss) = fs;
       return(true);
     }
@@ -67,6 +81,9 @@ bool set_axis_label_font(char *font)
     {
       if (axis_label_font(ss)) FREE(axis_label_font(ss));
       in_set_axis_label_font(copy_string(font));
+#if FREE_FONTS
+      if (AXIS_LABEL_FONT(ss)) pango_font_description_free(AXIS_LABEL_FONT(ss));
+#endif
       AXIS_LABEL_FONT(ss) = fs;
 #if HAVE_GL
       reload_label_font();
@@ -84,6 +101,9 @@ bool set_axis_numbers_font(char *font)
     {
       if (axis_numbers_font(ss)) FREE(axis_numbers_font(ss));
       in_set_axis_numbers_font(copy_string(font));
+#if FREE_FONTS
+      if (AXIS_NUMBERS_FONT(ss)) pango_font_description_free(AXIS_NUMBERS_FONT(ss));
+#endif
       AXIS_NUMBERS_FONT(ss) = fs;
 #if HAVE_GL
       reload_number_font();

@@ -518,7 +518,7 @@ Widget snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_w
 {
   Widget w;
   w = snd_help(subject, helpstr, with_wrap);
-  help_urls = urls; /* can't associated the url with the help item in any "natural" way in Motif (no user-data per item) */
+  help_urls = urls; /* can't associate the url with the help item in any "natural" way in Motif (no user-data per item) */
   if (xrefs)
     {
       XmString *strs;

@@ -390,7 +390,7 @@ static Cessate startup_funcs(XtPointer context)
       snd_v = XInternAtom(dpy, "SND_VERSION", false);
       snd_c = XInternAtom(dpy, "SND_COMMAND", false);
       XChangeProperty(dpy, XtWindow(shell), snd_v, XA_STRING, 8, PropModeReplace, 
-		      (unsigned char *)(SND_VERSION), strlen(SND_VERSION) + 1);
+		      (unsigned char *)(SND_DATE), strlen(SND_DATE) + 1);
 #if HAVE_EXTENSION_LANGUAGE
       XtAddEventHandler(shell, PropertyChangeMask, false, who_called, NULL);
 #endif

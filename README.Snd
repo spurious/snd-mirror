@@ -20,7 +20,7 @@ The configure program has several Snd-related arguments:
    --with-motif          use Motif (the default)
      --with-static-motif same, but load Motif statically (for RPM)
      --with-motif-prefix set Motif location (will append lib and include)
-   --with-gtk            use Gtk+ (this port still needs work)
+   --with-gtk            use Gtk+
    --with-no-gui         make Snd without any graphics support
 
    --with-alsa           use ALSA if possible (default is OSS in Linux)
@@ -48,10 +48,8 @@ The configure program has several Snd-related arguments:
                            You'll need this (or need to make xm and load xm.so
                            at runtime) if you want to use Dave Phillips'
                            extensions described in the tutorial.
-   --with-x11            if --with-gtk, this includes the X funcs from xm.c
-			   This is a special case -- not normally useful.
          
-   --with-static-gsl     try to load GSL statically (for RPM)
+   --with-static-gsl     try to load GSL statically
                            GSL is loaded in any case, if it is available, and the
 			   ISO C99 complex trig support is not available.
                            This affects only the Dolph-Chebyshev window.  FFT's 
@@ -70,9 +68,12 @@ The configure program has several Snd-related arguments:
 
    --with-temp-dir       directory to use for temp files (default: ".")
    --with-save-dir       directory to use for saved-state files (default: ".")
+   --with-doc-dir        directory to search for documentation
+
    --with-shared-sndlib  try to use libsndlib.so (default: no).  The path to
                            sndlib-config can be specified via SNDLIB_CONFIG_path.
 			   Normally, sndlib is built into Snd at compile time.
+
    --disable-nls         the gettext (internationalization) support is on
                            by default; this turns it off.
 

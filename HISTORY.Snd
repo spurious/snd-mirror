@@ -1,5 +1,6 @@
 Snd change log
 
+  21-May:    --with-doc-dir configuration switch.
   17-May:    snd 7.4.
   6-May:     mono->stereo, mono-files->stereo, stereo->mono (extensions.scm).
              channel-variance etc in dsp.scm, taken from J Smith "Mathematics of the DFT"
