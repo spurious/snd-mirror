@@ -298,6 +298,7 @@ void news_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+29-Aug:  gcc complex trig replaces GSL if it's available.\n\
 21-Aug:  added snd->sample and xen->sample (Snd-specific) generators to redirect\n\
            ina and friends automatically to Snd data.\n\
 19-Aug:  removed mouse-release-hook (use mouse-click-hook).\n\

@@ -2715,7 +2715,7 @@ Float mus_fir_filter (mus_any *ptr, Float input)
   gen->state[0] = input;
   for (j = gen->order - 1; j >= 1; j--) 
     {
-      xout += gen->state[j] * gen->x[j];
+      xout += gen->state[j] * gen->x[j]; /* if fma: xout = fma(gen->state[j], gen->x[j], xout) */
       gen->state[j] = gen->state[j - 1];
     }
   return(xout + (gen->state[0] * gen->x[0]));
@@ -5835,7 +5835,7 @@ Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int dir
       i = 0;
       if (xs < 0)
 	for (; (i < lim) && (xs < 0); i++, xs += xi)
-	  sum += (srp->data[i] * srp->sinc_table[-xs]);
+	  sum += (srp->data[i] * srp->sinc_table[-xs]); /* fma? */
       for (; i < lim; i++, xs += xi)
 	sum += (srp->data[i] * srp->sinc_table[xs]);
     }
@@ -6319,6 +6319,10 @@ static double mus_bessi0(Float x)
 
 static Float sqr(Float x) {return(x*x);}
 
+#if HAVE_COMPLEX_TRIG
+#include <complex.h>
+#endif
+
 Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float beta, Float *window)
 {
   /* mostly taken from
@@ -6333,7 +6337,7 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
    */
   int i, j, midn, midp1;
   Float freq, rate, sr1, angle, expn, expsum, I0beta, cx;
-#if HAVE_GSL
+#if HAVE_GSL || HAVE_COMPLEX_TRIG
   Float *rl, *im;
   Float pk;
 #endif
@@ -6431,9 +6435,6 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
     case MUS_DOLPH_CHEBYSHEV_WINDOW:
 #if HAVE_GSL
       {
-	/* SOMEDAY: we would not need GSL if C had complex trig (ccos) -- this is supposed to be in ISO C99,
-	 *          but apparently it's not in gcc yet.  Other nice additions worth a look: log2, exp2.
-	 */
 	gsl_complex val;
 	Float den, alpha;
 	freq = M_PI / (Float)size;
@@ -6476,7 +6477,40 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 	FREE(im);
       }
 #else
-      mus_error(MUS_NO_SUCH_FFT_WINDOW, "Dolph-Chebyshev window needs the complex trig support from GSL");
+#if HAVE_COMPLEX_TRIG
+      {
+	_Complex double val;
+	Float den, alpha;
+	freq = M_PI / (Float)size;
+	if (beta < 0.2) beta = 0.2;
+	alpha = ccosh(cacosh(pow(10.0, beta)) / (Float)size);
+	den = 1.0 / ccosh(cacosh(alpha) * size);
+	rl = (Float *)clm_calloc(size, sizeof(Float), "Dolph-Chebyshev buffer");
+	im = (Float *)clm_calloc(size, sizeof(Float), "Dolph-Chebyshev buffer");
+	for (i = 0, angle = 0.0; i < size; i++, angle += freq)
+	  {
+	    val = ccos(cacos(alpha * cos(angle)) * size) * den;
+	    rl[i] = creal(val);
+	    im[i] = cimag(val);
+	  }
+	mus_fft(rl, im, size, -1);    /* can be 1 here */
+	rl[size / 2] = 0.0;
+	pk = 0.0;
+	for (i = 0; i < size; i++) 
+	  if (pk < rl[i]) 
+	    pk = rl[i];
+	if ((pk != 0.0) && (pk != 1.0))
+	  for (i = 0, j = size / 2; i < size; i++) 
+	    {
+	      window[i] = rl[j++] / pk;
+	      if (j == size) j = 0;
+	    }
+	FREE(rl);
+	FREE(im);
+      }
+#else
+      mus_error(MUS_NO_SUCH_FFT_WINDOW, "Dolph-Chebyshev window needs the complex trig support");
+#endif
 #endif
       break;
     default: 

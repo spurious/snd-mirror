@@ -35,6 +35,7 @@
 #undef HAVE_LSTAT
 #undef HAVE_DECL_HYPOT
 #undef HAVE_DECL_ISNAN
+#undef HAVE_COMPLEX_TRIG
 
 #undef STDC_HEADERS
 #undef TM_IN_SYS_TIME

@@ -31,27 +31,29 @@ The configure program has several Snd-related arguments:
 
    --with-doubles        use doubles throughout (default is floats)
    --with-float-samples  represent samples internally as floats (default: ints)
-   --with-sample-width=N use N bits of samples (default = 24). N = 32 or so is 
+   --with-sample-width=N use N bits of samples (default: 24). N = 32 or so is 
                            not recommended because it does not leave you any 
                            "head room" during mixes. N < 16 isn't supported.
 
-   --with-gl             include support for OpenGL (default = no)
-     --with-just-gl      same but omit Guile bindings in gl.c (default = no)
+   --with-gl             include support for OpenGL (default: no)
+     --with-just-gl      same but omit Guile bindings in gl.c (default: no)
                            The gl module is only useful if you want to write
                            Scheme code to add your own OpenGL graphics to Snd.
                            --with-just-gl will give you the GL spectrograms
                            without any extras.
 
-   --with-ladspa         include LADSPA plugin support (default=yes in Linux)
+   --with-ladspa         include LADSPA plugin support (default: yes in Linux)
    --with-static-xm      include the xm module (rather than loading it dynamically)
 			   this option affects xm.c for Motif, xg.c for Gtk.
                            You'll need this (or need to make xm and load xm.so
                            at runtime) if you want to use Dave Phillips'
                            extensions described in the tutorial.
    --with-x11            if --with-gtk, this includes the X funcs from xm.c
+			   This is a special case -- not normally useful.
          
    --with-static-gsl     try to load GSL statically (for RPM)
-                           GSL is loaded in any case, if it is available.
+                           GSL is loaded in any case, if it is available, and the
+			   ISO C99 complex trig support is not available.
                            This affects only the Dolph-Chebyshev window.  FFT's 
                            are currently handled by FFTW, if it is available, otherwise
                            by built-in code.
@@ -63,15 +65,20 @@ The configure program has several Snd-related arguments:
    --with-guile          use Guile, not Ruby (the default); the path to guile-config
                            can be set via GUILE_CONFIG_path (see examples below).
 
-   --with-temp-dir       directory to use for temp files
-   --with-save-dir       directory to use for saved-state files
-   --with-shared-sndlib  try to use libsndlib.so (default = no).  The path to
-                           sndlib-config can be specified via SNDLIB_CONFIG_path
+			 To build Snd without any extension language, use
+			 --without-ruby --without-guile
+
+   --with-temp-dir       directory to use for temp files (default: ".")
+   --with-save-dir       directory to use for saved-state files (default: ".")
+   --with-shared-sndlib  try to use libsndlib.so (default: no).  The path to
+                           sndlib-config can be specified via SNDLIB_CONFIG_path.
+			   Normally, sndlib is built into Snd at compile time.
    --disable-nls         the gettext (internationalization) support is on
                            by default; this turns it off.
 
    --without-gsl, --without-fftw 
-                         these turn off the default inclusion of GSL and FFTW.
+                         these turn off the default inclusion of FFTW and the
+                         possible inclusion of GSL.
 
 If the configure/make process fails, please send me
 (bil@ccrma.stanford.edu) the files config.h, config.log, and makefile,
@@ -151,9 +158,11 @@ the previous posts (going back to late 1993) are in
 ftp://ccrma-ftp.stanford.edu/pub/Lisp/old-cmdist.html.
 
 
+----------------------------------------------------------------
 This software is available to anyone who is interested, free gratis
 for nothing, without warranties of any kind (see the file COPYING for
 legalese).  Send bug reports or suggestions to bil@ccrma.stanford.edu.
+----------------------------------------------------------------
 
 
 Larry Plona provided the OpenServer and UnixWare ports.

@@ -1163,7 +1163,8 @@ static fft_state *make_fft_state(chan_info *cp, bool simple)
   return(fs);
 }
 
-static int last_size = 0, last_wintype = -1, last_zero = 0;
+static int last_size = 0, last_zero = 0;
+static mus_fft_window_t last_wintype = MUS_RECTANGULAR_WINDOW;
 static Float last_beta = 0.0;
 static Float *last_window = NULL;
 

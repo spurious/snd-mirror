@@ -1,5 +1,6 @@
 Snd change log
 
+  29-Aug:    gcc complex trig replaces GSL if it's available.
   21-Aug:    added snd->sample and xen->sample (Snd-specific) generators to redirect
                ina and friends automatically to Snd data.
   19-Aug:    removed mouse-release-hook (use mouse-click-hook).

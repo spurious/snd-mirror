@@ -178,43 +178,6 @@ AC_ARG_WITH(ruby,
 	fi)
 
 
-# -------- GSL --------
-GSL_LIBS=""
-GSL_CFLAGS=""
-if test "$with_gsl" != no; then
-AC_PATH_PROG(GSL_CONFIG, gsl-config, no)
-AC_MSG_CHECKING(for GSL)
-if test "$GSL_CONFIG" = "no" ; then
-  AC_MSG_RESULT(no)
-else
-  GSL_CFLAGS=`$GSL_CONFIG --cflags`
-  GSL_PREFIX=`$GSL_CONFIG --prefix`
-  if test "$with_static_gsl" = yes ; then
-    AC_CHECK_FILE($GSL_PREFIX/lib/libgsl.a,
-	[GSL_LIBS="$GSL_PREFIX/lib/libgsl.a"],
-	[GSL_LIBS=`$GSL_CONFIG --libs`
-	 with_static_gsl=no
-	 AC_MSG_WARN([can't find libgsl.a])])
-  else
-    GSL_LIBS=`$GSL_CONFIG --libs`
-  fi
-  gsl_version="`$GSL_CONFIG --version`"
-  AC_MSG_RESULT($gsl_version)
-  if test "`$GSL_CONFIG --version`" = "0.6" || test "`$GSL_CONFIG --version`" = "0.7" || test "`$GSL_CONFIG --version`" = "0.5"; then
-    AC_MSG_WARN([Snd needs GSL 0.8 or later])
-  else
-    if test "`$GSL_CONFIG --version`" = "0.8" && test "$with_static_gsl" = yes ; then
-      GSL_LIBS="$GSL_LIBS $GSL_PREFIX/lib/libgslcblas.a"
-    fi
-    AC_DEFINE(HAVE_GSL)
-    AC_DEFINE_UNQUOTED(GSL_VERSION,"${gsl_version}")
-  fi
-fi
-fi
-AC_SUBST(GSL_LIBS)
-AC_SUBST(GSL_CFLAGS)
-
-
 AC_ARG_WITH(snd-as-widget,
 	[  --with-snd-as-widget	  make Snd a loadable widget, not a standalone program],
   	if test "$with_snd_as_widget" = yes ; then
@@ -306,6 +269,55 @@ AC_FUNC_STRFTIME
 AC_CHECK_FUNCS(getcwd strerror readlink setlocale access opendir sleep signal statfs statvfs clock vsnprintf snprintf memmove strdup lstat fileno)
 AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_VPRINTF
+
+if test "$with_gsl" != yes; then
+AC_CHECK_HEADER(complex.h, 
+  [
+    AC_CHECK_DECLS(cacos,
+      [
+        AC_DEFINE(HAVE_COMPLEX_TRIG)
+        with_gsl=no
+      ],,[#include <complex.h>])
+  ])
+fi
+
+# -------- GSL --------
+GSL_LIBS=""
+GSL_CFLAGS=""
+if test "$with_gsl" != no; then
+AC_PATH_PROG(GSL_CONFIG, gsl-config, no)
+AC_MSG_CHECKING(for GSL)
+if test "$GSL_CONFIG" = "no" ; then
+  AC_MSG_RESULT(no)
+else
+  GSL_CFLAGS=`$GSL_CONFIG --cflags`
+  GSL_PREFIX=`$GSL_CONFIG --prefix`
+  if test "$with_static_gsl" = yes ; then
+    AC_CHECK_FILE($GSL_PREFIX/lib/libgsl.a,
+	[GSL_LIBS="$GSL_PREFIX/lib/libgsl.a"],
+	[GSL_LIBS=`$GSL_CONFIG --libs`
+	 with_static_gsl=no
+	 AC_MSG_WARN([can't find libgsl.a])])
+  else
+    GSL_LIBS=`$GSL_CONFIG --libs`
+  fi
+  gsl_version="`$GSL_CONFIG --version`"
+  AC_MSG_RESULT($gsl_version)
+  if test "`$GSL_CONFIG --version`" = "0.6" || test "`$GSL_CONFIG --version`" = "0.7" || test "`$GSL_CONFIG --version`" = "0.5"; then
+    AC_MSG_WARN([Snd needs GSL 0.8 or later])
+  else
+    if test "`$GSL_CONFIG --version`" = "0.8" && test "$with_static_gsl" = yes ; then
+      GSL_LIBS="$GSL_LIBS $GSL_PREFIX/lib/libgslcblas.a"
+    fi
+    AC_DEFINE(HAVE_GSL)
+    AC_DEFINE_UNQUOTED(GSL_VERSION,"${gsl_version}")
+  fi
+fi
+fi
+AC_SUBST(GSL_LIBS)
+AC_SUBST(GSL_CFLAGS)
+
+
 
 # AC_CHECK_STRUCT_FOR([#include <sys/statfs.h>],statfs,f_bsize)
 
