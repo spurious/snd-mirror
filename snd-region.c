@@ -391,7 +391,6 @@ static int save_region_1(snd_state *ss, char *ofile,int type, int format, int sr
   if (region_ok(reg)) r = regions[reg]; else r=NULL;
   if (r)
     {
-      /* TODO: fix these error messages! */
       if ((snd_write_header(ss,ofile,type,srate,r->chans,28,r->chans*r->frames,format,comment,comlen,NULL)) == -1)
 	return(MUS_HEADER_WRITE_FAILED);
       oloc = mus_header_data_location();
@@ -405,7 +404,12 @@ static int save_region_1(snd_state *ss, char *ofile,int type, int format, int sr
       else
 	{
 	  /* copy r->filename with possible header/data format changes */
-	  if ((ifd = snd_open_read(ss,r->filename)) == -1) return(MUS_CANT_OPEN_TEMP_FILE);
+	  if ((ifd = snd_open_read(ss,r->filename)) == -1) 
+	    {
+	      snd_error("can't find region %d data file %s: %s",
+			reg,r->filename,strerror(errno));
+	      return(MUS_CANT_OPEN_TEMP_FILE);
+	    }
 	  chans = mus_sound_chans(r->filename);
 	  frames = mus_sound_samples(r->filename) / chans;
 	  iloc = mus_sound_data_location(r->filename);
@@ -509,7 +513,9 @@ static int paste_region_1(int n, chan_info *cp, int add, int beg, Float scaler, 
 	  else
 	    {
 	      if (err == MUS_NO_ERROR)
-		file_insert_samples(beg,r->frames,tempfile,ncp,i,(r->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,origin);
+		file_insert_samples(beg,r->frames,tempfile,ncp,i,
+				    (r->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
+				    origin);
 	    }
 	  update_graph(si->cps[i],NULL);
 	}

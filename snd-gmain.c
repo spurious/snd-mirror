@@ -177,7 +177,7 @@ static void who_called(GtkWidget *w,GdkEvent *event, gpointer clientData)
   if (ev->atom == snd_c)
     {
       if (gdk_property_get(MAIN_WINDOW(ss),snd_c,GDK_TARGET_STRING,0L,(long)BUFSIZ,FALSE,
-			       &type,&format,&nitems,(guchar **)version))
+			   &type,&format,&nitems,(guchar **)version))
 	{
 	  if (version[0])
 	    {

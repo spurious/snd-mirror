@@ -1,6 +1,7 @@
 #include "snd.h"
 
 /* TODO:   dolph-chebychev window  
+ *         there's still a memory leak somewhere involving make_fft_state
  */
 
 /* handling of "beta" changed drastically 28-June-98 
@@ -758,9 +759,11 @@ int find_and_sort_fft_peaks(Float *buf, fft_peak *found, int num_peaks, int ffts
       oldpkj = pkj;
       ra = 0.0;
       for (k=0;k<hop;k++) 
-	{
-	  if (buf[i+k]>ra) {pkj = i+k; ra=buf[pkj];} /* reflect user's view of the graph */
-	}
+	if (buf[i+k]>ra) 
+	  {
+	    pkj = i+k; 
+	    ra = buf[pkj]; /* reflect user's view of the graph */
+	  } 
       if ((ca > minval) && (ca > ra) && (ca > la))
 	{
           if (ascl < ca) ascl = ca;
@@ -1011,7 +1014,8 @@ static void free_fft_window(int i)
 {
   if (fft_windows[i])
     {
-      if (((fft_window_state *)fft_windows[i])->window) FREE(((fft_window_state *)fft_windows[i])->window);
+      if (((fft_window_state *)fft_windows[i])->window) 
+	FREE(((fft_window_state *)fft_windows[i])->window);
       FREE(fft_windows[i]);
       fft_windows[i]=NULL;
     }
@@ -1425,7 +1429,9 @@ void *make_fft_state(chan_info *cp, int simple)
   ss = cp->state;
   ap = cp->axis;
   
-  if ((show_selection_transform(ss)) && (cp->fft_style == NORMAL_FFT) && (selection_is_active_in_channel(cp)))
+  if ((show_selection_transform(ss)) && 
+      (cp->fft_style == NORMAL_FFT) && 
+      (selection_is_active_in_channel(cp)))
     {
       /* override fft_size(ss) in this case (sonograms cover selection but use preset size) */
       dbeg = selection_beg(cp);
@@ -1647,7 +1653,7 @@ static int set_up_sonogram(sonogram_state *sg)
   if (cp->waving) dpys++; 
   if (cp->lisp_graphing) dpys++; 
   if (cp->fft_style == SPECTROGRAM)
-    sg->outlim = ap->height / cp->spectro_hop; /* this was window_width?? */
+    sg->outlim = ap->height / cp->spectro_hop;
   else sg->outlim = ap->window_width/dpys;
   if (sg->outlim <= 1) return(2);
   sg->hop = (int)(ceil((Float)(ap->hisamp - ap->losamp+1)/(Float)(sg->outlim)));
@@ -1687,7 +1693,7 @@ static int set_up_sonogram(sonogram_state *sg)
   si->active_slices = 0;
   si->target_slices = sg->outlim;
   si->scale = 0.0;
-  allocate_sono_rects(ss,si->total_bins);              /* was total_slices by mistake (21-Mar-97) */
+  allocate_sono_rects(ss,si->total_bins);
   if (cp->last_sonogram)                               /* there was a previous run */
     {
       lsg = (sonogram_state *)(cp->last_sonogram);

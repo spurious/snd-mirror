@@ -1662,7 +1662,11 @@ static int start_audio_output_1 (dac_state *dacp)
 	    }
 	  /* FIXME: assumes devices are same size... */
 	  set_dac_print();
-	  dev_fd[d] = mus_audio_open_output(alsa_devices[out_dev[d]], dacp->srate, channels, dacp->out_format, (dac_size(ss)));
+	  dev_fd[d] = mus_audio_open_output(alsa_devices[out_dev[d]], 
+					    dacp->srate,
+					    channels, 
+					    dacp->out_format, 
+					    dacp->frames*channels*mus_data_format_to_bytes_per_sample(dacp->out_format));
 	  unset_dac_print();
       
 	  if (dev_fd[d] == -1) 

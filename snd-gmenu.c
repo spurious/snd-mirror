@@ -143,7 +143,7 @@ static void File_Exit_Callback(GtkWidget *w,gpointer clientData) {exit_from_menu
 
 static void Edit_Mix_Callback(GtkWidget *w,gpointer clientData) {mix_selection_from_menu((snd_state *)clientData);}
 static void Edit_Envelope_Callback(GtkWidget *w,gpointer clientData) {create_envelope_editor((snd_state *)clientData);}
-static void Edit_Cut_Callback(GtkWidget *w,gpointer clientData) {cut_selection_from_menu();}
+static void Edit_Cut_Callback(GtkWidget *w,gpointer clientData) {delete_selection("Edit: Cut",UPDATE_DISPLAY);}
 static void Edit_Paste_Callback(GtkWidget *w,gpointer clientData) {paste_selection_from_menu((snd_state *)clientData);}
 static void Edit_Save_As_Callback(GtkWidget *w,gpointer clientData) {make_edit_save_as_dialog((snd_state *)clientData);}
 static void Edit_Select_All_Callback(GtkWidget *w,gpointer clientData) {select_all(current_channel((snd_state *)clientData));}

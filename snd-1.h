@@ -827,7 +827,6 @@ int selection_creation_in_progress(void);
 void cancel_selection_watch(void);
 
 void mix_selection_from_menu(snd_state *ss);
-void cut_selection_from_menu(void);
 void paste_selection_from_menu(snd_state *ss);
 
 #if HAVE_GUILE

@@ -27,7 +27,9 @@ static int selection_is_visible(chan_info *cp)
   ed = cp->edits[cp->edit_ctr];
   if (ed->selection_beg == NO_SELECTION) return(0);
   ap = cp->axis;
-  return((ed) && (ap->losamp < ed->selection_end) && (ap->hisamp > ed->selection_beg));
+  return((ed) && 
+	 (ap->losamp < ed->selection_end) && 
+	 (ap->hisamp > ed->selection_beg));
 }
 
 int selection_is_visible_in_channel (chan_info *cp)
@@ -245,36 +247,62 @@ sync_info *selection_sync(void)
 void mix_selection_from_menu(snd_state *ss)
 {
   chan_info *cp;
+  char *tempfile = NULL;
+  sync_info *si_out;
+  int err;
   cp = selected_channel(ss);
   if (cp) 
     {
-      if ((0) && (selection_is_active()))
+      if (selection_is_active())
 	{
-	  /* TODO: use current data here */
-	  /* perhaps use save_selection to write a temp file, then mix_file */
-	  /* mix_file(beg,r->frames,r->filename,si->cps,si->chans,origin,with_mix_consoles(ss)); */
+	  tempfile = snd_tempnam(ss);
+	  err = save_selection(ss,tempfile,MUS_NEXT,MUS_BINT,SND_SRATE(cp->sound),NULL);
+	  if (err == MUS_NO_ERROR)
+	    {
+	      si_out = sync_to_chan(cp);
+	      mix_file(cp->cursor,selection_len(),tempfile,si_out->cps,si_out->chans,"Edit: mix",with_mix_consoles(ss));
+	      free_sync_info(si_out);	      
+	    }
 	}
       else add_region(0,cp,"Edit: mix");
     }
 }
 
-void cut_selection_from_menu(void)
-{
-  delete_selection("Edit: Cut",UPDATE_DISPLAY);
-}
-
 void paste_selection_from_menu(snd_state *ss)
 {
   chan_info *cp;
+  char *tempfile = NULL;
+  sync_info *si_out,*si_in;
+  chan_info *cp_in,*cp_out;
+  int i,err;
   cp = selected_channel(ss);
   if (cp) 
     {
-      if ((0) && (selection_is_active()))
+      if (selection_is_active())
 	{
-	  /* TODO: use current data here */
-	  /* save_selection to write file, then file_insert_samples */
-	  /* for (i=0;((i<r->chans) && (i<si->chans));i++) */
-	  /* file_insert_samples(beg,frames,tempfile,ncp,i,(r->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,origin); */
+	  tempfile = snd_tempnam(ss);
+	  err = save_selection(ss,tempfile,MUS_NEXT,MUS_BINT,SND_SRATE(cp->sound),NULL);
+	  if (err == MUS_NO_ERROR)
+	    {
+	      si_out = sync_to_chan(cp);
+	      si_in = selection_sync();
+	      if (si_in->chans > 1) 
+		remember_temp(tempfile,si_in->chans);
+	      for (i=0;((i<si_in->chans) && (i<si_out->chans));i++)
+		{
+		  cp_out = si_out->cps[i]; /* currently syncd chan that we might paste to */
+		  cp_in = si_in->cps[i];   /* selection chan to paste in (no wrap-around here) */
+		  file_insert_samples(cp_out->cursor,
+				      cp_selection_len(cp_in,NULL),
+				      tempfile,cp_out,i,
+				      (si_in->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
+				      "Edit: Paste");
+		  update_graph(cp_out,NULL);
+		}
+	      free_sync_info(si_in);
+	      free_sync_info(si_out);
+	    }
+	  /* else assume save_selection already posted an error message */
 	}
       else paste_region(0,cp,"Edit: Paste");
     }

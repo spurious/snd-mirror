@@ -137,7 +137,7 @@ static void File_Exit_Callback(Widget w,XtPointer clientData,XtPointer callData)
 static void Edit_Mix_Callback(Widget w,XtPointer clientData,XtPointer callData) {mix_selection_from_menu((snd_state *)clientData);}
 static void Edit_Envelope_Callback(Widget w,XtPointer clientData,XtPointer callData) {create_envelope_editor((snd_state *)clientData);}
 static void Edit_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) {click_for_edit_menu_help((snd_state *)clientData);}
-static void Edit_Cut_Callback(Widget w,XtPointer clientData,XtPointer callData) {cut_selection_from_menu();}
+static void Edit_Cut_Callback(Widget w,XtPointer clientData,XtPointer callData) {delete_selection("Edit: Cut",UPDATE_DISPLAY);}
 static void Edit_Paste_Callback(Widget w,XtPointer clientData,XtPointer callData) {paste_selection_from_menu((snd_state *)clientData);}
 static void Edit_Save_As_Callback(Widget w,XtPointer clientData,XtPointer callData) {make_edit_save_as_dialog((snd_state *)clientData);}
 static void Edit_Select_All_Callback(Widget w,XtPointer clientData,XtPointer callData) {select_all(current_channel((snd_state *)clientData));}
@@ -837,6 +837,9 @@ int gh_add_to_main_menu(snd_state *ss, char *label, int slot)
   static Arg args[12];
   Widget m,cas;
   int n;
+
+  if (auto_resize(ss)) XtVaSetValues(MAIN_SHELL(ss),XmNallowShellResize,FALSE,NULL);
+
   n=0;
   if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
   m = XmCreatePulldownMenu(mw[menu_menu],label,args,n);
@@ -846,6 +849,8 @@ int gh_add_to_main_menu(snd_state *ss, char *label, int slot)
   XtSetArg(args[n],XmNsubMenuId,m); n++;
   cas = XtCreateManagedWidget(label,xmCascadeButtonWidgetClass,mw[menu_menu],args,n);
   if (slot >= 0) XtAddCallback(cas,XmNcascadingCallback,GHC_Callback,(XtPointer)slot);
+
+  if (auto_resize(ss)) XtVaSetValues(MAIN_SHELL(ss),XmNallowShellResize,TRUE,NULL);
 
   new_menu++;
 

@@ -328,8 +328,8 @@ else
 
   else
 
-    dnl not sure 1.2.5 is the earliest usable version -- 1.0.4 didn't work
-    AM_PATH_GTK(1.2.5,
+    dnl 1.2.6 and 7 will work, but there's a serious bug in vpaned widgets that was fixed in 1.2.8
+    AM_PATH_GTK(1.2.8,
             [
       GX_FILES="G_O_FILES"
       GX_HEADERS="SND_G_HEADERS"

@@ -48,6 +48,11 @@
  * char *mus_audio_moniker(void) returns some brief description of the overall audio setup (don't free return string).
  */
 
+/* error handling is tricky here -- higher levels are using many calls as probes, so
+ *   the "error" is a sign of non-existence, not a true error.  So, for nearly all
+ *   cases, I'll use mus_print, not mus_error.
+ */
+
 #if defined(HAVE_CONFIG_H)
   #include "config.h"
 #endif
@@ -92,11 +97,6 @@ char *strerror(int errnum)
 
 #include "sndlib.h"
 
-
-/* error handling is tricky here -- higher levels are using many calls as probes, so
- *   the "error" is a sign of non-existence, not a true error.  So, for nearly all
- *   cases, I'll use mus_print, not mus_error.
- */
 
 #define MUS_STANDARD_ERROR(Error_Type,Error_Message) \
   mus_print("%s\n  [%s[%d] %s]",Error_Message,__FILE__,__LINE__,__FUNCTION__)
@@ -596,7 +596,7 @@ int mus_audio_close(int line)
       line_in_use[line] = 0;
       if (err) 
 	RETURN_ERROR_EXIT(MUS_AUDIO_CANT_CLOSE,-1,
-			  mus_format("can't close audio port %d (line%d)",
+			  mus_format("can't close audio port %d (line %d)",
 				     port[line],line));
     }
   end_sgi_print();

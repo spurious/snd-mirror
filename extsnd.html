@@ -1258,7 +1258,8 @@ sets its value to val.
   <a name="channels">channels</a>          (<em class=targ>snd</em>)         number of channels in <i>snd</i>.
   <a name="sndchans">chans</a>             (<em class=targ>snd</em>)         same as <i>channels</i> (the forgetful programmer's friend).
   <a name="sndclose">close-sound</a>       (<em class=targ>snd</em>)         close <i>snd</i> (same as File menu Close).
-  <a name="sndcomment">comment</a>           (<em class=targ>snd</em>)         <i>snd</i>'s comment, if any.
+  <a name="sndcomment">comment</a>           (<em class=targ>snd</em>)         <i>snd</i>'s comment, if any.  If this is set, the new value may be appended 
+                                  to the old (AIFC and RIFF headers are the only safe ones in this case).
   <a name="sndcontrast">contrast</a>          (<em class=targ>snd</em>)         current <a href="snd.html#contrast">contrast</a> (control panel slider) value.
   <a name="sndcontrastamp">contrast-amp</a>      (<em class=targ>snd</em>)         <i>snd</i>'s <a href="snd.html#contrast">contrast-amp</a> (control panel variable).
   <a name="sndcontrasting">contrasting</a>       (<em class=targ>snd</em>)         #t if <i>snd</i> has <a href="snd.html#contrast">contrast</a> turned on (control panel)
@@ -1840,7 +1841,7 @@ one, and are exposed in many functions described above as the <i>pos</i> argumen
                                 begin sample (given the current edit tree), and the number of samples 
                                 affected.  If num is omitted, return the last (currently active) 
                                 edit [<em class=error>no-such-edit</em>].
-  <a name="sndeditposition">edit-position</a> (<em class=targ>snd chn</em>)     return a current position in edit history list.
+  <a name="sndeditposition">edit-position</a> (<em class=targ>snd chn</em>)     current position in edit history list (can be set).
   <a name="sndedits">edits</a>         (<em class=targ>snd chn</em>)     return a list with number of undo-able edits and redo-able edits.
   revert-sound  (<i>snd</i>)         revert <i>snd</i> to saved state (undo all edits).
   <a name="sndsaveedithistory">save-edit-history</a> (filename <i>snd chn</i>)

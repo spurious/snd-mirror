@@ -193,7 +193,9 @@
   "echo adds echos spaced by echo-length seconds and scaled by echo-amount"
   (let ((del (make-delay (round (* echo-length (srate))))))
     (lambda (inval)
-      (+ inval (delay del (* echo-amount (+ (tap del) inval)))))))
+      (+ inval 
+	 (delay del 
+		(* echo-amount (+ (tap del) inval)))))))
 
 (add-to-menu effects-menu echo-label (lambda () (map-chan-with-sync (lambda () (echo)) "echo")))
 

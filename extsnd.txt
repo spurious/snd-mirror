@@ -1166,7 +1166,8 @@ value to val.
   channels          (snd)         number of channels in snd.
   chans             (snd)         same as channels (the forgetful programmer's friend).
   close-sound       (snd)         close snd (same as File menu Close).
-  comment           (snd)         snd's comment, if any.
+  comment           (snd)         snd's comment, if any.  If this is set, the new value may be appended
+                                  to the old (AIFC and RIFF headers are the only safe ones in this case).
   contrast          (snd)         current contrast (control panel slider) value.
   contrast-amp      (snd)         snd's contrast-amp (control panel variable).
   contrasting       (snd)         #t if snd has contrast turned on (control panel)

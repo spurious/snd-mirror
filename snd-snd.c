@@ -1,6 +1,7 @@
 #include "snd.h"
 
-/* TODO:  set! for comment? file-name?
+/* TODO: syncing should be sync (it's no longer a boolean)
+ *       set! comment probably needs update to reflect immediately
  */
 
 /* ---------------- amp envs ---------------- */
@@ -464,24 +465,26 @@ static char *short_sound_format (int format, int type)
 {
   switch (format)
     {
-    case MUS_BSHORT: if (type == MUS_RIFF) return("short swapped"); else return("short"); break;
-    case MUS_LSHORT: if (type == MUS_AIFC) return("short swapped"); else return("short"); break;
-    case MUS_UBSHORT: case MUS_ULSHORT: return("unsigned short"); break;
-    case MUS_MULAW: return("mulaw"); break;
-    case MUS_BYTE: return("byte"); break;
-    case MUS_ALAW: return("alaw"); break;
-    case MUS_BFLOAT: if (type == MUS_RIFF) return("float swapped"); else return("float"); break;
-    case MUS_LFLOAT: if (type == MUS_AIFC) return("float swapped"); else return("float"); break;
-    case MUS_BINT: if (type == MUS_RIFF) return("int swapped"); else return("int"); break;
-    case MUS_LINT: if (type == MUS_AIFC) return("int swapped"); else return("int"); break;
-    case MUS_BINTN: if (type == MUS_RIFF) return("normalized int swapped"); else return("normalized int"); break;
-    case MUS_LINTN: if (type == MUS_AIFC) return("normalized int swapped"); else return("normalized int"); break;
-    case MUS_UBYTE: return("unsigned byte"); break;
-    case MUS_B24INT: if (type == MUS_RIFF) return("24-bit swapped"); else return("24-bit"); break;
-    case MUS_L24INT: if (type == MUS_AIFC) return("24-bit swapped"); else return("24-bit"); break;
-    case MUS_BDOUBLE: case MUS_LDOUBLE: return("double"); break;
-    case MUS_L12INT: return("12-bit"); break;
-    default: return("unknown"); break;
+    case MUS_BSHORT:  if (type == MUS_RIFF) return("short swapped"); else return("short"); break;
+    case MUS_LSHORT:  if (type == MUS_AIFC) return("short swapped"); else return("short"); break;
+    case MUS_UBSHORT: 
+    case MUS_ULSHORT: return("unsigned short"); break;
+    case MUS_MULAW:   return("mulaw"); break;
+    case MUS_BYTE:    return("byte"); break;
+    case MUS_ALAW:    return("alaw"); break;
+    case MUS_BFLOAT:  if (type == MUS_RIFF) return("float swapped"); else return("float"); break;
+    case MUS_LFLOAT:  if (type == MUS_AIFC) return("float swapped"); else return("float"); break;
+    case MUS_BINT:    if (type == MUS_RIFF) return("int swapped"); else return("int"); break;
+    case MUS_LINT:    if (type == MUS_AIFC) return("int swapped"); else return("int"); break;
+    case MUS_BINTN:   if (type == MUS_RIFF) return("normalized int swapped"); else return("normalized int"); break;
+    case MUS_LINTN:   if (type == MUS_AIFC) return("normalized int swapped"); else return("normalized int"); break;
+    case MUS_UBYTE:   return("unsigned byte"); break;
+    case MUS_B24INT:  if (type == MUS_RIFF) return("24-bit swapped"); else return("24-bit"); break;
+    case MUS_L24INT:  if (type == MUS_AIFC) return("24-bit swapped"); else return("24-bit"); break;
+    case MUS_BDOUBLE: 
+    case MUS_LDOUBLE: return("double"); break;
+    case MUS_L12INT:  return("12-bit"); break;
+    default:          return("unknown"); break;
     }
 }
 
@@ -1102,34 +1105,34 @@ static SCM sp_iread(SCM snd_n, int fld, char *caller)
       if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(caller),snd_n)));
       switch (fld)
 	{
-	case SYNCF: RTNINT(sp->syncing); break;
-	case UNITEF: RTNINT(sp->combining); break;
-	case READONLYF: RTNBOOL(sp->read_only); break;
-	case NCHANSF: RTNINT(sp->nchans); break;
-	case EXPANDINGF: RTNBOOL(sp->expanding); break;
-	case CONTRASTINGF: RTNBOOL(sp->contrasting); break;
-	case REVERBINGF: RTNBOOL(sp->reverbing); break;
-	case FILTERINGF: RTNBOOL(sp->filtering); break;
-	case FILTERDBING: RTNBOOL(sp->filter_dBing); break;
-	case FILTERORDERF: RTNINT(sp->filter_order); break;
-	case SRATEF: RTNINT((sp->hdr)->srate); break;
-	case DATAFORMATF: return(gh_int2scm((sp->hdr)->format)); break;
-	case HEADERTYPEF: return(gh_int2scm((sp->hdr)->type)); break;
-	case DATALOCATIONF: RTNINT((sp->hdr)->data_location); break;
-	case CONTROLPANELSAVEF: save_control_panel(sp); break;
+	case SYNCF:                RTNINT(sp->syncing); break;
+	case UNITEF:               RTNINT(sp->combining); break;
+	case READONLYF:            RTNBOOL(sp->read_only); break;
+	case NCHANSF:              RTNINT(sp->nchans); break;
+	case EXPANDINGF:           RTNBOOL(sp->expanding); break;
+	case CONTRASTINGF:         RTNBOOL(sp->contrasting); break;
+	case REVERBINGF:           RTNBOOL(sp->reverbing); break;
+	case FILTERINGF:           RTNBOOL(sp->filtering); break;
+	case FILTERDBING:          RTNBOOL(sp->filter_dBing); break;
+	case FILTERORDERF:         RTNINT(sp->filter_order); break;
+	case SRATEF:               RTNINT((sp->hdr)->srate); break;
+	case DATAFORMATF:          return(gh_int2scm((sp->hdr)->format)); break;
+	case HEADERTYPEF:          return(gh_int2scm((sp->hdr)->type)); break;
+	case DATALOCATIONF:        RTNINT((sp->hdr)->data_location); break;
+	case CONTROLPANELSAVEF:    save_control_panel(sp); break;
 	case CONTROLPANELRESTOREF: restore_control_panel(sp); break;
-	case CONTROLPANELRESETF: reset_control_panel(sp); break;
-	case SELECTEDCHANNELF: RTNINT(sp->selected_channel); break;
-	case FILENAMEF: RTNSTR(sp->fullname); break;
-	case SHORTFILENAMEF: RTNSTR(sp->shortname); break;
-	case COMMENTF: RTNSTR(mus_sound_comment(sp->fullname)); break;
-	case CLOSEF: snd_close_file(sp,sp->state); break;
-	case SAVEF: save_edits(sp,NULL); break;
-	case UPDATEF: snd_update(sp->state,sp); break;
-	case CURSORFOLLOWSPLAYF: RTNBOOL(sp->cursor_follows_play); break;
-	case SHOWCONTROLSF: RTNBOOL(control_panel_open(sp)); break;
-	case SPEEDTONESF: RTNINT(sp->speed_tones); break;
-	case SPEEDSTYLEF: RTNINT(sp->speed_style); break;
+	case CONTROLPANELRESETF:   reset_control_panel(sp); break;
+	case SELECTEDCHANNELF:     RTNINT(sp->selected_channel); break;
+	case FILENAMEF:            RTNSTR(sp->fullname); break;
+	case SHORTFILENAMEF:       RTNSTR(sp->shortname); break;
+	case COMMENTF:             RTNSTR(mus_sound_comment(sp->fullname)); break;
+	case CLOSEF:               snd_close_file(sp,sp->state); break;
+	case SAVEF:                save_edits(sp,NULL); break;
+	case UPDATEF:              snd_update(sp->state,sp); break;
+	case CURSORFOLLOWSPLAYF:   RTNBOOL(sp->cursor_follows_play); break;
+	case SHOWCONTROLSF:        RTNBOOL(control_panel_open(sp)); break;
+	case SPEEDTONESF:          RTNINT(sp->speed_tones); break;
+	case SPEEDSTYLEF:          RTNINT(sp->speed_style); break;
 	}
     }
   return(SCM_BOOL_F);
@@ -1139,6 +1142,7 @@ static SCM sp_iwrite(SCM snd_n, SCM val, int fld, char *caller)
 {
   snd_info *sp;
   snd_state *ss;
+  char *com;
   int ival=0,i;
   if (SCM_EQ_P(snd_n,SCM_BOOL_T))
     {
@@ -1155,22 +1159,22 @@ static SCM sp_iwrite(SCM snd_n, SCM val, int fld, char *caller)
     {
       sp = get_sp(snd_n);
       if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(caller),snd_n)));
-      ival = bool_int_or_one(val);
+      if (fld != COMMENTF) ival = bool_int_or_one(val);
       switch (fld)
 	{
-	case SYNCF:         syncb(sp,ival); break;
-	case UNITEF:        combineb(sp,ival); break;
-	case READONLYF:     sp->read_only = ival; snd_file_lock_icon(sp,ival); break;
-	case EXPANDINGF:    toggle_expand_button(sp,ival); break;
-	case CONTRASTINGF:  toggle_contrast_button(sp,ival); break;
-	case REVERBINGF:    toggle_reverb_button(sp,ival); break;
-	case FILTERINGF:    toggle_filter_button(sp,ival); break;
-	case FILTERDBING:   set_filter_dBing(sp,ival); break;
-	case FILTERORDERF:  set_snd_filter_order(sp,ival); break;
-	case CURSORFOLLOWSPLAYF: sp->cursor_follows_play = ival; break;
+	case SYNCF:         syncb(sp,ival);                                            break;
+	case UNITEF:        combineb(sp,ival);                                         break;
+	case READONLYF:     sp->read_only = ival; snd_file_lock_icon(sp,ival);         break;
+	case EXPANDINGF:    toggle_expand_button(sp,ival);                             break;
+	case CONTRASTINGF:  toggle_contrast_button(sp,ival);                           break;
+	case REVERBINGF:    toggle_reverb_button(sp,ival);                             break;
+	case FILTERINGF:    toggle_filter_button(sp,ival);                             break;
+	case FILTERDBING:   set_filter_dBing(sp,ival);                                 break;
+	case FILTERORDERF:  set_snd_filter_order(sp,ival);                             break;
+	case CURSORFOLLOWSPLAYF: sp->cursor_follows_play = ival;                       break;
 	case SHOWCONTROLSF: if (ival) sound_show_ctrls(sp); else sound_hide_ctrls(sp); break;
-	case SPEEDTONESF:   sp->speed_tones = ival; break;
-	case SPEEDSTYLEF:   sp->speed_style = ival; break;
+	case SPEEDTONESF:   sp->speed_tones = ival;                                    break;
+	case SPEEDSTYLEF:   sp->speed_style = ival;                                    break;
 
 	case SRATEF:        mus_sound_override_header(sp->fullname,ival,-1,-1,-1,-1,-1); snd_update(sp->state,sp); break;
 	case NCHANSF:       mus_sound_override_header(sp->fullname,-1,ival,-1,-1,-1,-1); snd_update(sp->state,sp); break;
@@ -1178,6 +1182,12 @@ static SCM sp_iwrite(SCM snd_n, SCM val, int fld, char *caller)
 	case HEADERTYPEF:   mus_sound_override_header(sp->fullname,-1,-1,-1,ival,-1,-1); snd_update(sp->state,sp); break;
 	case DATALOCATIONF: mus_sound_override_header(sp->fullname,-1,-1,-1,-1,ival,-1); snd_update(sp->state,sp); break;
 	  /* last arg is size */
+	case COMMENTF:      
+	  /* this is safe only with aifc and riff headers */
+	  com = gh_scm2newstr(val,NULL);
+	  mus_header_update_comment(sp->fullname,0,com,snd_strlen(com),mus_sound_header_type(sp->fullname));
+	  free(com);
+	  break;
 	}
     }
   RTNBOOL(ival);
@@ -1260,6 +1270,13 @@ static SCM g_comment(SCM snd_n)
   #define H_comment "(" S_comment " &optional snd) -> snd's comment (in its header)"
   ERRSPT(S_comment,snd_n,1); 
   return(sp_iread(snd_n,COMMENTF,S_comment));
+}
+
+static SCM g_set_comment(SCM snd_n, SCM val) 
+{
+  if (SCM_UNBNDP(val))
+    return(sp_iwrite(SCM_UNDEFINED,snd_n,COMMENTF,"set-" S_comment));
+  else return(sp_iwrite(snd_n,val,COMMENTF,"set-" S_comment));
 }
 
 
@@ -2204,8 +2221,6 @@ void g_init_snd(SCM local_doc)
   DEFINE_PROC(gh_new_procedure0_2(S_bomb,SCM_FNC g_bomb),H_bomb);
   DEFINE_PROC(gh_new_procedure1_0(S_find_sound,SCM_FNC g_find_sound),H_find_sound);
 
-  DEFINE_PROC(gh_new_procedure0_1(S_comment,SCM_FNC g_comment),H_comment);
-
   define_procedure_with_setter(S_channels,SCM_FNC g_channels,H_channels,
 			       "set-" S_channels,SCM_FNC g_set_channels,local_doc,0,1,0,2);
 
@@ -2223,6 +2238,9 @@ void g_init_snd(SCM local_doc)
 
   define_procedure_with_setter(S_header_type,SCM_FNC g_header_type,H_header_type,
 			       "set-" S_header_type,SCM_FNC g_set_header_type,local_doc,0,1,0,2);
+
+  define_procedure_with_setter(S_comment,SCM_FNC g_comment,H_comment,
+			       "set-" S_comment,SCM_FNC g_set_comment,local_doc,0,1,0,2);
 
   DEFINE_PROC(gh_new_procedure0_1(S_file_name,SCM_FNC g_file_name),H_file_name);
   DEFINE_PROC(gh_new_procedure0_1(S_short_file_name,SCM_FNC g_short_file_name),H_short_file_name);

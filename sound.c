@@ -582,6 +582,9 @@ void mus_sound_print_cache(void)
 static void fill_sf_record(const char *name, sound_file *sf)
 {
   int i;
+#if HAVE_GDBM
+  int err;
+#endif
   sf->data_location = mus_header_data_location();
   sf->samples = mus_header_samples();
   sf->data_format = mus_header_format();
@@ -593,6 +596,18 @@ static void fill_sf_record(const char *name, sound_file *sf)
   sf->true_file_length = mus_header_true_length();
   sf->comment_start = mus_header_comment_start();
   sf->comment_end = mus_header_comment_end();
+  if (sf->header_type == MUS_AIFC)
+    {
+#if (!HAVE_GDBM)
+      sf->aux_comment_start = (int *)CALLOC(4,sizeof(int));
+      sf->aux_comment_end = (int *)CALLOC(4,sizeof(int));
+#endif
+      for (i=0;i<4;i++)
+	{
+	  sf->aux_comment_start[i] = mus_header_aux_comment_start(i);
+	  sf->aux_comment_end[i] = mus_header_aux_comment_end(i);
+	}
+    }
   sf->header_distributed = mus_header_distributed();
   sf->type_specifier = mus_header_type_specifier();
   sf->bits_per_sample = mus_header_bits_per_sample();
@@ -626,10 +641,11 @@ static void fill_sf_record(const char *name, sound_file *sf)
   /* aux comments */
 #if HAVE_GDBM
   sf->max_amps_ok = 0;
-  i= gdbm_store(gdbm_fd(),gdbm_key((char *)name),gdbm_contents(sf),GDBM_REPLACE);
-  if (i != 0) mus_error(MUS_CANT_OPEN_FILE,"%s %d = %s \n  [%s[%d] %s]",
-			name,i,gdbm_strerror(gdbm_errno),
-			__FILE__,__LINE__,__FUNCTION__,i);
+  err = gdbm_store(gdbm_fd(),gdbm_key((char *)name),gdbm_contents(sf),GDBM_REPLACE);
+  if (err != 0) 
+    mus_error(MUS_CANT_OPEN_FILE,"%s %d = %s \n  [%s[%d] %s]",
+	      name,i,gdbm_strerror(gdbm_errno),
+	      __FILE__,__LINE__,__FUNCTION__,i);
 #endif
 }
 
@@ -805,8 +821,9 @@ int mus_sound_aiff_p(const char *arg)
 
 char *mus_sound_comment(const char *name)
 {
-  int start,end,fd,len;
-  char *sc = NULL;
+  int start,end,fd,len,i,full_len;
+  char *sc = NULL,*auxcom;
+  sound_file *sf = NULL;
   start = mus_sound_comment_start(name);
   end = mus_sound_comment_end(name);
   if (end == 0) return(NULL);
@@ -826,6 +843,35 @@ char *mus_sound_comment(const char *name)
 #endif
       lseek(fd,start,SEEK_SET);
       read(fd,sc,len);
+#ifndef MACOS
+      /* AIFC: look for aux comments (ANNO chunks) */
+      if (mus_sound_header_type(name) == MUS_AIFC)
+	{
+	  sf = find_sound_file(name);
+	  if ((sf) && (sf->aux_comment_start) && (sf->aux_comment_start[0] != 0))
+	    {
+	      full_len = len;
+	      for (i=0;i<4;i++) /* 4 = AUX_COMMENTS (headers.c) */
+		{
+		  start = sf->aux_comment_start[i];
+		  end = sf->aux_comment_end[i];
+		  if ((start > 0) && (start < end))
+		    {
+		      len = end-start+1;
+		      auxcom = (char *)CALLOC(len+3,sizeof(char));
+		      lseek(fd,start,SEEK_SET);
+		      read(fd,auxcom,len);
+		      full_len += len;
+		      sc = REALLOC(sc,full_len * sizeof(char));
+		      strcat(sc,"\n");
+		      strcat(sc,auxcom);
+		      FREE(auxcom);
+		    }
+		  else break;
+		}
+	    }
+	}
+#endif
       close(fd);
       return(sc);
     }
@@ -1042,14 +1088,23 @@ int mus_file_to_array(const char *filename, int chan, int start, int samples, MU
   int ifd,chans,total_read;
   MUS_SAMPLE_TYPE **bufs;
   ifd = mus_sound_open_input(filename);
-  if (ifd == MUS_ERROR) {unset_sound_error(); return(MUS_ERROR);}
+  if (ifd == MUS_ERROR) return(MUS_ERROR);
   chans = mus_sound_chans(filename);
-  if (chan >= chans) {unset_sound_error(); return(MUS_ERROR);}
+  if (chan >= chans) 
+    {
+      mus_sound_close_input(ifd);      
+      mus_error(MUS_NO_SUCH_CHANNEL,"can't read %s channel %d to array (file has %d chans)\n [%s[%d] %s]",
+		filename,chan,chans,
+		__FILE__,__LINE__,__FUNCTION__);
+      return(MUS_ERROR);
+    }
   bufs = (MUS_SAMPLE_TYPE **)CALLOC(chans,sizeof(MUS_SAMPLE_TYPE *));
   bufs[chan] = array;
+  set_sound_error(filename,__LINE__,__FUNCTION__);
   mus_sound_seek_frame(ifd,start);
   total_read = mus_file_read_any(ifd,0,chans,samples,bufs,(MUS_SAMPLE_TYPE *)bufs);
   mus_sound_close_input(ifd);
+  unset_sound_error();
   FREE(bufs);
   return(total_read);
 }
@@ -1080,10 +1135,10 @@ int mus_array_to_file(const char *filename, MUS_SAMPLE_TYPE *ddata, int len, int
       if (err != MUS_ERROR)
 	{
 	  bufs[0] = ddata;
-	  mus_file_write(fd,0,len-1,1,bufs);
-	  mus_file_close(fd);
+	  err = mus_file_write(fd,0,len-1,1,bufs);
 	}
     }
+  mus_file_close(fd);
   unset_sound_error();
   return(err);
 }
