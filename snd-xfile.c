@@ -683,7 +683,16 @@ static void save_as_ok_callback(Widget w, XtPointer context, XtPointer info)
 
 static void save_as_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  click_for_save_as_help((snd_state *)context);
+  snd_help_with_wrap((snd_state *)context,
+		     "Save As",
+"You can save the current state of a file or region under a different file name using the Save \
+As option.  The output header type, data format,  and sampling rate can also be set.  The data formats \
+are big-endian where relevant except for 'wave' output.  If a file by the chosen name already exists \
+it is silently overwritten, unless that file is already open in Snd and has edits.  In that case,  \
+you'll be asked what to do.  If you want to be warned whenever a file is about to be overwritten by this \
+option, set the resource overwriteCheck to 1. If you give the current file name to Save As,  \
+any current edits will be saved and the current version in Snd will be updated (that is, in this \
+case, the current edit tree is not preserved).");
 }
 
 static void save_as_cancel_callback(Widget w, XtPointer context, XtPointer info)

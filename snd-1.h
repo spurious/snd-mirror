@@ -416,30 +416,9 @@ void clm_help(snd_state *ss);
 char *version_info(void);
 void news_help(snd_state *ss);
 
-#if HAVE_CLICK_FOR_HELP
-void click_for_file_menu_help(snd_state *ss);
-void click_for_edit_menu_help(snd_state *ss);
-void click_for_view_menu_help(snd_state *ss);
-void click_for_options_menu_help(snd_state *ss);
-void click_for_help_menu_help(snd_state *ss);
-void click_for_graph_help(snd_state *ss);
-void click_for_history_help(snd_state *ss);
-void click_for_minibuffer_help(snd_state *ss);
-void click_for_play_help(snd_state *ss);
-void click_for_speed_help(snd_state *ss);
-void click_for_expand_help(snd_state *ss);
-void click_for_name_separator_help(snd_state *ss);
-void click_for_amp_help(snd_state *ss);
-void click_for_srate_arrow_help(snd_state *ss);
-void click_for_contrast_help(snd_state *ss);
-void click_for_sound_help(snd_state *ss);
-void click_for_reverb_scale_help(snd_state *ss);
-void click_for_reverb_length_help(snd_state *ss);
-void click_for_filter_help(snd_state *ss);
-void click_for_filter_order_help(snd_state *ss);
-void click_for_filter_envelope_help(snd_state *ss);
-void click_for_save_as_help(snd_state *ss);
-#endif
+void snd_help_with_url(snd_state *ss, char *subject, char *url, char *helpstr);
+void snd_help_with_url_and_wrap(snd_state *ss, char *subject, char *url, char *helpstr);
+void ssnd_help_with_url(snd_state *ss, char *subject, char *url, ...);
 
 void help_dialog_help(snd_state *ss);
 void transform_dialog_help(snd_state *ss);
@@ -812,8 +791,8 @@ int selection_creation_in_progress(void);
 void cancel_selection_watch(void);
 void add_selection_or_region(snd_state *ss, int reg, chan_info *cp, const char *origin);
 void mix_selection_from_menu(snd_state *ss);
-void paste_selection_from_menu(snd_state *ss);
-void paste_selection_or_region(snd_state *ss, int reg, chan_info *cp, const char *origin);
+void insert_selection_from_menu(snd_state *ss);
+void insert_selection_or_region(snd_state *ss, int reg, chan_info *cp, const char *origin);
 
 void g_init_selection(void);
   

@@ -720,29 +720,6 @@ static void update_next_header (int chan, int size)
   write(chan, hdrbuf, 4);
 }
 
-static void update_next_header_comment (int chan, int loc, const char *comment, int len)
-{
-  int i, j;
-  lseek(chan, (long)(loc - 4), SEEK_SET);
-  read(chan, hdrbuf, 4);
-  lseek(chan, (long)(loc - 4), SEEK_SET);
-  for (j = 0; j < 4; j++) 
-    if (hdrbuf[j] ==0) 
-      hdrbuf[j] = 32;
-  j = 4;
-  for (i = 0; i < len; i++) 
-    {
-      hdrbuf[j] = comment[i];
-      j++;
-      if (j == HDRBUFSIZ) 
-	{
-	  write(chan, hdrbuf, HDRBUFSIZ); 
-	  j = 0;
-	}
-    }
-  if (j != 0) write(chan, hdrbuf, j);
-}
-
 
 
 /* ------------------------------------ AIFF ------------------------------------ 
@@ -1368,27 +1345,6 @@ static void update_aiff_header (int chan, int siz)
   write(chan, hdrbuf, 4);
 }
 
-static void update_aiff_header_comment (int chan, const char *comment, int len)
-{
-  /* save-stats in CLM appends a comment after the sound data has been written */
-  int i, j, true_len, old_len;
-  if (len & 1) 
-    true_len = len + 1; 
-  else true_len = len;
-  lseek(chan, 0L, SEEK_END);
-  write_four_chars((unsigned char *)hdrbuf, I_ANNO);
-  mus_bint_to_char((unsigned char *)(hdrbuf + 4), len);
-  for (i = 0, j = 8; i < len; i++, j++) 
-    hdrbuf[j] = comment[i];
-  write(chan, hdrbuf, 8 + true_len);
-  lseek(chan, 4L, SEEK_SET);
-  read(chan, hdrbuf, 4);
-  old_len = mus_char_to_bint((unsigned char *)hdrbuf);
-  mus_bint_to_char((unsigned char *)hdrbuf, old_len + true_len + 8);
-  lseek(chan, 4L, SEEK_SET);
-  write(chan, hdrbuf, 4);
-}
-
 char *mus_header_aiff_aux_comment(const char *name, int *starts, int *ends)
 {
   /* AIFC: look for aux comments (ANNO chunks) */
@@ -1764,28 +1720,6 @@ static void update_riff_header (int chan, int siz)
   write(chan, hdrbuf, 4);
   lseek(chan, update_ssnd_location, SEEK_SET);
   mus_lint_to_char((unsigned char *)hdrbuf, siz);
-  write(chan, hdrbuf, 4);
-}
-
-
-static void update_riff_header_comment (int chan, const char *comment, int len)
-{
-  /* save-stats in CLM appends a comment after the sound data has been written */
-  int i, j, true_len, old_len;
-  if (len & 1) 
-    true_len = len + 1; 
-  else true_len = len;
-  lseek(chan, 0L, SEEK_END);
-  write_four_chars((unsigned char *)hdrbuf, I_INFO);
-  mus_lint_to_char((unsigned char *)(hdrbuf + 4), len);
-  for (i = 0, j = 8; i < len; i++, j++) 
-    hdrbuf[j] = comment[i];
-  write(chan, hdrbuf, 8 + true_len);
-  lseek(chan, 4L, SEEK_SET);
-  read(chan, hdrbuf, 4);
-  old_len = mus_char_to_lint((unsigned char *)hdrbuf);
-  mus_lint_to_char((unsigned char *)hdrbuf, old_len + true_len + 8);
-  lseek(chan, 4L, SEEK_SET);
   write(chan, hdrbuf, 4);
 }
 
@@ -5273,37 +5207,6 @@ int mus_header_update (const char *name, int type, int size, int wsrate, int for
       return(MUS_ERROR);
     }
   return(err);
-}
-
-int mus_header_update_comment (const char *name, int loc, const char *comment, int len, int typ)
-{
-  int chan;
-  chan = mus_file_reopen_write(name);
-  if (chan == MUS_ERROR)
-    {
-      mus_error(MUS_CANT_OPEN_FILE,
-		"can't update header comment of %s: %s\n  [%s[%d] %s]",
-		name, strerror(errno),
-		__FILE__, __LINE__, __FUNCTION__);
-      return(MUS_ERROR);
-    }
-  switch (typ)
-    {
-    case MUS_NEXT: update_next_header_comment(chan, loc, comment, len); break;
-    case MUS_AIFC: case MUS_AIFF: update_aiff_header_comment(chan, comment, len); break;
-    case MUS_RIFF: update_riff_header_comment(chan, comment, len); break;
-    case MUS_RAW: break;
-    default:
-      {
-	mus_error(MUS_UNSUPPORTED_HEADER_TYPE,
-		  "Sndlib can't udpate %s header comments\n  [%s[%d] %s]",
-		  mus_header_type_name(typ),
-		  __FILE__, __LINE__, __FUNCTION__);
-	return(MUS_ERROR);
-	break;
-      }
-    }
-  return(MUS_NO_ERROR);
 }
 
 int mus_header_writable(int type, int format) /* -2 to ignore format for this call */

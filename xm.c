@@ -5,9 +5,11 @@
 
 /* TODO: finish selection-oriented Xt callbacks
  * TODO: XmVaCreateSimple* (need special arglist handlers)
+ * TODO: Motif 2.2 has a bunch of widgets that seem to be partly ICS-specific? (Xi... rather than Xm...)
  */
 
 /* HISTORY: 
+ *   1-Feb:     Motif 2.2 additions (tooltip).
  *   21-Jan:    Ruby fixups (XEN_COPY_ARGS to protect lists)
  *   7-Jan-02:  XEvent fields settable. added XtCallCallbacks-raw.
  *   12-Sep:    xm-version.
@@ -69,6 +71,9 @@
 #if HAVE_MOTIF
   #define MOTIF_2 (XmVERSION >= 2)
   /* 2.1 really -- I don't have a test system for 2.0 */
+  #ifdef XmNtoolTipString
+    #define MOTIF_2_2 1
+  #endif
 #endif
 
 
@@ -4831,6 +4836,15 @@ static XEN gxm_XmCreateLabelGadget(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   #define H_XmCreateLabelGadget "Widget XmCreateLabelGadget(Widget parent, String name, ArgList arglist, Cardinal argcount) The LabelGadget creation function"
   return(gxm_new_widget("XmCreateLabelGadget", XmCreateLabelGadget, arg1, arg2, arg3, arg4));
 }
+
+#if MOTIF_2_2
+static XEN gxm_XmToolTipGetLabel(XEN arg1)
+{
+  #define H_XmToolTipGetLabel "Widget XmToolTipGetLabel(Widget wid) apparently returns the tooltip label associated with its argument"
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, XEN_ONLY_ARG, "XmToolTipGetLabel", "Widget");
+  return(C_TO_XEN_Widget(XmToolTipGetLabel(XEN_TO_C_Widget(arg1))));
+}
+#endif
 
 #if MOTIF_2
 static XEN gxm_XmCreateIconHeader(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
@@ -17975,6 +17989,9 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateLabelGadget" XM_POSTFIX, gxm_XmCreateLabelGadget, 3, 1, 0, H_XmCreateLabelGadget);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateLabel" XM_POSTFIX, gxm_XmCreateLabel, 3, 1, 0, H_XmCreateLabel);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsMotifWMRunning" XM_POSTFIX, gxm_XmIsMotifWMRunning, 1, 0, 0, H_XmIsMotifWMRunning);
+#if MOTIF_2_2
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmToolTipGetLabel" XM_POSTFIX, gxm_XmToolTipGetLabel, 1, 0, 0, H_XmToolTipGetLabel);
+#endif
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListAddItem" XM_POSTFIX, gxm_XmListAddItem, 3, 0, 0, H_XmListAddItem);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListAddItems" XM_POSTFIX, gxm_XmListAddItems, 4, 0, 0, H_XmListAddItems);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListAddItemsUnselected" XM_POSTFIX, gxm_XmListAddItemsUnselected, 4, 0, 0, H_XmListAddItemsUnselected);
@@ -22170,7 +22187,8 @@ static int alphabet_compare(const void *a, const void *b)
 }
 
 /* #define XM_HASH_SIZE 1024 */
-#define XM_HASH_SIZE 700
+/* 684 in Motif 2.1, but more added for 2.2 */
+#define XM_HASH_SIZE 750
 
 static hdata **xm_hash = NULL;
 static int hd_ctr = 0;
@@ -22703,6 +22721,13 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNtitle" XM_POSTFIX, XmNtitle,				          XM_STRING);
   DEFINE_RESOURCE(XM_PREFIX "XmNtitleEncoding" XM_POSTFIX, XmNtitleEncoding,		          XM_ATOM);
   DEFINE_RESOURCE(XM_PREFIX "XmNtitleString" XM_POSTFIX, XmNtitleString,		          XM_XMSTRING);
+#if MOTIF_2_2
+  DEFINE_RESOURCE(XM_PREFIX "XmNtoolTipString" XM_POSTFIX, XmNtoolTipString,                      XM_XMSTRING);
+  DEFINE_RESOURCE(XM_PREFIX "XmNtoolTipPostDelay" XM_POSTFIX, XmNtoolTipPostDelay,                XM_INT);
+  DEFINE_RESOURCE(XM_PREFIX "XmNtoolTipPostDuration" XM_POSTFIX, XmNtoolTipPostDuration,          XM_INT);
+  DEFINE_RESOURCE(XM_PREFIX "XmNtoolTipEnable" XM_POSTFIX, XmNtoolTipEnable,                      XM_BOOLEAN);
+  DEFINE_RESOURCE(XM_PREFIX "XmNanimate" XM_POSTFIX, XmNanimate,                                  XM_BOOLEAN);
+#endif
   DEFINE_RESOURCE(XM_PREFIX "XmNtoBottomCallback" XM_POSTFIX, XmNtoBottomCallback,	          XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNtoPositionCallback" XM_POSTFIX, XmNtoPositionCallback,	          XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNtoTopCallback" XM_POSTFIX, XmNtoTopCallback,		          XM_CALLBACK);
@@ -24129,6 +24154,9 @@ static void define_integers(void)
   DEFINE_INTEGER(XM_PREFIX "XmALIGNMENT_BASELINE_BOTTOM" XM_POSTFIX,  XmALIGNMENT_BASELINE_BOTTOM);
   DEFINE_INTEGER(XM_PREFIX "XmALIGNMENT_WIDGET_TOP" XM_POSTFIX,	      XmALIGNMENT_WIDGET_TOP);
   DEFINE_INTEGER(XM_PREFIX "XmALIGNMENT_WIDGET_BOTTOM" XM_POSTFIX,    XmALIGNMENT_WIDGET_BOTTOM);
+#ifdef XmALIGNMENT_UNSPECIFIED
+  DEFINE_INTEGER(XM_PREFIX "XmALIGNMENT_UNSPECIFIED" XM_POSTFIX,      XmALIGNMENT_UNSPECIFIED);
+#endif
   DEFINE_INTEGER(XM_PREFIX "XmFRAME_GENERIC_CHILD" XM_POSTFIX,	      XmFRAME_GENERIC_CHILD);
   DEFINE_INTEGER(XM_PREFIX "XmFRAME_WORKAREA_CHILD" XM_POSTFIX,	      XmFRAME_WORKAREA_CHILD);
   DEFINE_INTEGER(XM_PREFIX "XmFRAME_TITLE_CHILD" XM_POSTFIX,	      XmFRAME_TITLE_CHILD);

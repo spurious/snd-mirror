@@ -214,7 +214,7 @@ static void edit_cut_callback(GtkWidget *w, gpointer cD)
 
 static void edit_paste_callback(GtkWidget *w, gpointer cD) 
 {
-  IF_MENU_HOOK(STR_Edit, STR_Insert_Selection) paste_selection_from_menu((snd_state *)cD);
+  IF_MENU_HOOK(STR_Edit, STR_Insert_Selection) insert_selection_from_menu((snd_state *)cD);
 }
 
 static void edit_save_as_callback(GtkWidget *w, gpointer cD) 

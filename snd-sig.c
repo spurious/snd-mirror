@@ -1828,14 +1828,14 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
       len = mus_length(egen);
       passes = mus_env_passes(egen);
       rates = mus_env_rates(egen);
-      segbeg = beg;
-      segend = beg + dur;
-      segnum = passes[0];
       sc = get_sync_state_without_snd_fds(ss, sp, cp, beg, regexpr);
       if (sc == NULL) return;
       si = sc->si;
       for (i = 0; i < si->chans; i++) 
 	{
+	  segbeg = beg;
+	  segend = beg + dur;
+	  segnum = passes[0];
 	  local_edpos = si->cps[i]->edit_ctr;
 	  old_squelch = si->cps[i]->squelch_update;
 	  si->cps[i]->squelch_update = 1;
@@ -1912,7 +1912,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 	  if ((temp_file) && (j == FILE_BUFFER_SIZE))
 	    {
 	      if (reporting) 
-		progress_report(sp, S_env_sound, 0, 0, (Float)i / ((Float)dur), from_enved);
+		progress_report(sp, origin, 0, 0, (Float)i / ((Float)dur), from_enved);
 	      err = mus_file_write(ofd, 0, j - 1, si->chans, data);
 	      j = 0;
 	      if (err == -1) break;
@@ -1931,7 +1931,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 	  if ((temp_file) && (j == FILE_BUFFER_SIZE))
 	    {
 	      if (reporting)
-		progress_report(sp, S_env_sound, 0, 0, (Float)i / ((Float)dur), from_enved);
+		progress_report(sp, origin, 0, 0, (Float)i / ((Float)dur), from_enved);
 	      err = mus_file_write(ofd, 0, j - 1, 1, data);
 	      j = 0;
 	      if (err == -1) break;

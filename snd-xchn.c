@@ -421,17 +421,28 @@ static void gsy_valuechanged_callback(Widget w, XtPointer context, XtPointer inf
 /* anything special for increment?  XmNincrementCallback sx_increment_callback */
 
 
-/* help callbacks (for mouse click help) -- all take snd_state as context */
-
 static void graph_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  click_for_graph_help((snd_state *)context);
+  snd_help_with_url_and_wrap((snd_state *)context,
+			     "Graph", "#panelayout",
+"This portion of the Snd display shows the sound data in the time and/or frequency domains. \
+If you click on the time domain wave, you can edit it using emacs-like keyboard commands, as \
+well as using mouse-click-and-drag to define the selection.  Once defined, the selected portion \
+can be cut, deleted, or pasted elsewhere, the latter with the middle mouse button.");
 }
 
 #if (XmVERSION > 1)
 static void history_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  click_for_history_help((snd_state *)context);
+  snd_help_with_url_and_wrap((snd_state *)context,
+			     "Edit History",
+			     "#edithistory",
+"The current state of the undo/redo list can be viewed as a scrolled list of strings in the pane \
+on the left of the graph (in Motif 1, there's a 'Show Edit History' menu option).  If there are no \
+current edits, it just lists the associated file name (i.e. the zero-edits state).  As you edit the \
+sound, the operations appear in the edit list window.  Click on a member of the list to move to \
+that point in the edit list (equivalent to some number of undo's or redo's).  To move to a given \
+edit point and follow the sync chain (if any), use control-click.");
 }
 #endif
 

@@ -63,20 +63,130 @@ Widget w_snd_name(snd_info *sp)   {return((sp->sgx)->snd_widgets[W_name]);}
 
 #define MAX_NOTEBOOK_TAB_LENGTH 5
 
-static void info_help_callback(Widget w, XtPointer context, XtPointer info)            {click_for_minibuffer_help((snd_state *)context);}
-static void play_help_callback(Widget w, XtPointer context, XtPointer info)            {click_for_play_help((snd_state *)context);}
-static void info_sep_help_callback(Widget w, XtPointer context, XtPointer info)        {click_for_name_separator_help((snd_state *)context);}
-static void amp_help_callback(Widget w, XtPointer context, XtPointer info)             {click_for_amp_help((snd_state *)context);}
-static void srate_help_callback(Widget w, XtPointer context, XtPointer info)           {click_for_speed_help((snd_state *)context);}
-static void srate_arrow_help_callback(Widget w, XtPointer context, XtPointer info)     {click_for_srate_arrow_help((snd_state *)context);}
-static void expand_help_callback(Widget w, XtPointer context, XtPointer info)          {click_for_expand_help((snd_state *)context);}
-static void contrast_help_callback(Widget w, XtPointer context, XtPointer info)        {click_for_contrast_help((snd_state *)context);}
-static void revscl_help_callback(Widget w, XtPointer context, XtPointer info)          {click_for_reverb_scale_help((snd_state *)context);}
-static void revlen_help_callback(Widget w, XtPointer context, XtPointer info)          {click_for_reverb_length_help((snd_state *)context);}
-static void filter_help_callback(Widget w, XtPointer context, XtPointer info)          {click_for_filter_help((snd_state *)context);} 
-static void filter_order_help_callback(Widget w, XtPointer context, XtPointer info)    {click_for_filter_order_help((snd_state *)context);}
-static void filter_envelope_help_callback(Widget w, XtPointer context, XtPointer info) {click_for_filter_envelope_help((snd_state *)context);}
-static void name_help_callback(Widget w, XtPointer context, XtPointer info)            {click_for_sound_help((snd_state *)context);}
+static void info_help_callback(Widget w, XtPointer context, XtPointer info)
+{
+  snd_help_with_url_and_wrap((snd_state *)context, 
+			     "Minibuffer", "#panelayout",
+"This is the 'minibuffer', to use Emacs jargon.  Although it looks inert and wasted,  \
+there is in fact a text window lurking beneath that has access to the Lisp evaluator, not \
+to mention much of the innards of the Snd program.");
+}
+
+static void play_help_callback(Widget w, XtPointer context, XtPointer info)
+{  
+  snd_help_with_url_and_wrap((snd_state *)context, 
+			     "Play", "#play",
+"Snd can play any number of sounds at once or should be able to anyway.  A sort of \
+clumsy realtime mixer, although it was not intended to fill that role.");
+}
+
+static void info_sep_help_callback(Widget w, XtPointer context, XtPointer info)        
+{  
+  snd_help_with_wrap((snd_state *)context, 
+		     "Name Separator", 
+"When reading a very large file, Snd tries to keep an overview at hand of the channels so \
+that you can move around quickly in very large data sets; when first read in, these overviews \
+are set underway, and when they are finally ready for use, the line after the file name \
+appears.  If you try to zoom out to a large view before the separator line appears, the graphics update process may be slow. ");
+}
+
+static void amp_help_callback(Widget w, XtPointer context, XtPointer info)             
+{
+  snd_help_with_wrap((snd_state *)context, 
+		     "Amp", 
+"This scrollbar controls the amplitude at which the sound is played.  Click the \
+amp label to return to 1.0. Control-Click returns to the previous value.");
+}
+
+static void srate_help_callback(Widget w, XtPointer context, XtPointer info)           
+{
+  snd_help_with_url_and_wrap((snd_state *)context, 
+			     "Srate", "#speed", 
+"This scrollbar controls the sampling rate at which the sound is played.  The arrow \
+controls the direction (forwards or backwards) of playback.  Label clicks behave as with amp.");
+}
+
+static void srate_arrow_help_callback(Widget w, XtPointer context, XtPointer info)     
+{
+  snd_help_with_wrap((snd_state *)context, 
+		     "Srate Arrow",
+"This button determines which direction the sound file is played.  When pointing \
+to the right, the sound is played forwards;  to the left, backwards.");
+}
+
+static void expand_help_callback(Widget w, XtPointer context, XtPointer info)          
+{  
+  snd_help_with_url_and_wrap((snd_state *)context, 
+			     STR_Expand, "#expand",
+"This scrollbar controls the tempo at which the sound is played back, using granular \
+synthesis. The expand button must be down to get any expansion. Label clicks as in amp.");
+}
+
+static void contrast_help_callback(Widget w, XtPointer context, XtPointer info)        
+{  
+  snd_help_with_url((snd_state *)context, 
+		    STR_Contrast, "#contrast",
+"This scrollbar controls the amount of 'contrast enhancement' applied during \
+playback.  The contrast button must be down to get any effect.  Label clicks as in amp.");
+}
+
+static void revscl_help_callback(Widget w, XtPointer context, XtPointer info)          
+{  
+  snd_help_with_url_and_wrap((snd_state *)context, 
+			     "Reverb amount", "#reverb",
+"This scrollbar controls the amount of the sound that is fed into the reverberator. \
+The reverb button must be down to get any reverb during playback.  Label clicks as in amp.");
+}
+
+static void revlen_help_callback(Widget w, XtPointer context, XtPointer info)          
+{
+  snd_help_with_url_and_wrap((snd_state *)context, 
+			     "Reverb length", "#reverb", 
+"This scrollbar controls the lengths of the various delay lines in the reverb. \
+It only takes effect when the reverb is created, that is, only when the play \
+operation starts from silence.  Label clicks as in amp.");
+}
+
+static void filter_help_callback(Widget w, XtPointer context, XtPointer info)          
+{
+  snd_help_with_wrap((snd_state *)context, 
+		     "Filter", 
+"The Snd filter is an FIR filter of arbitrary order.  You specify the filter you want by \
+defining the frequency response as an envelope in the 'env' window; set the desired order in \
+the 'order' window; then turn it on by pushing the filter button at the right.  The filter \
+design algorithm uses frequency sampling. The higher the order, the closer the filter \
+can approximate the envelope you draw. You can also specify the filter coefficients \
+in a file of floats, then load them into the Snd filter by typing the file name in the \
+filter envelope text window.");
+}
+
+static void filter_order_help_callback(Widget w, XtPointer context, XtPointer info)    
+{
+  snd_help_with_wrap((snd_state *)context, 
+		     "Filter Order", 
+"The filter order determines how closely the filter approximates the frequency response curve you drew in the 'env' window. ");
+}
+
+static void filter_envelope_help_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  snd_help_with_wrap((snd_state *)context, 
+		     "Filter Envelope", 
+"The filter envelope is a line-segment description of the frequency response \
+you want.  It consists of a sequence of x, y pairs; normally the x axis goes \
+from 0 to .5 or 0 to 1.0.  For example, a low-pass filter envelope could be: \
+0.0 1.0 .25 1.0 .5 0.0 1.0 0.0");
+}
+
+static void name_help_callback(Widget w, XtPointer context, XtPointer info)            
+{
+  snd_help_with_wrap((snd_state *)context,
+		     "Minibuffer",
+"This portion of the snd display has several parts: the sound file name, with an asterisk if \
+the file has unsaved edits; a minibuffer for various expression evaluations; a sync button \
+that causes operations on one channel to be applied to all channels; and a play button \
+that causes the sound to be played.  The lower portion of the pane, normally hidden, \
+contains a variety of sound manipulation controls that can be applied while it is playing.");
+}
 
 static void expand_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -1633,6 +1743,12 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XM_FONT_RESOURCE, BUTTON_FONT(ss)); n++;
       XtSetArg(args[n], XmNrecomputeSize, FALSE); n++;
+#if MOTIF_2_2
+      {
+	XtSetArg(args[n], XmNtoolTipString, XmStringCreate("play this sound", XmFONTLIST_DEFAULT_TAG)); n++;
+	/* (|XtVaSetValues (cadr (main-widgets)) (list |XmNtoolTipEnable #t)) */
+      }
+#endif
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, (ss->sgx)->pushed_button_color); n++;}
       sw[W_play] = make_togglebutton_widget(STR_play, sw[W_name_form], args, n);
       XtAddCallback(sw[W_play], XmNhelpCallback, play_help_callback, ss);

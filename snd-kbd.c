@@ -1703,7 +1703,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      handle_cursor(cp, redisplay);
 	      break;
 	    case snd_K_I: case snd_K_i: 
-	      paste_selection_or_region(ss, (ext_count == NO_CX_ARG_SPECIFIED) ? 0 : ext_count, cp, "C-x i");
+	      insert_selection_or_region(ss, (ext_count == NO_CX_ARG_SPECIFIED) ? 0 : ext_count, cp, "C-x i");
 	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      break;
 	    case snd_K_J: case snd_K_j: 

@@ -15,10 +15,7 @@
 #endif
 
 #define HAVE_XPM 1
-#define HAVE_CLICK_FOR_HELP 0
-
 #define LOTSA_PIXELS 10000
-
 #define POINT_BUFFER_SIZE 4096
 
 #ifdef WITH_BIG_COLORMAP

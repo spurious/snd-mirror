@@ -350,7 +350,7 @@ static int insert_selection(snd_state *ss, chan_info *cp, int beg, const char *o
   return(err);
 }
 
-void paste_selection_or_region(snd_state *ss, int reg, chan_info *cp, const char *origin)
+void insert_selection_or_region(snd_state *ss, int reg, chan_info *cp, const char *origin)
 {
   if (cp) 
     {
@@ -360,9 +360,9 @@ void paste_selection_or_region(snd_state *ss, int reg, chan_info *cp, const char
     }
 }
 
-void paste_selection_from_menu(snd_state *ss)
+void insert_selection_from_menu(snd_state *ss)
 {
-  paste_selection_or_region(ss, 0, selected_channel(ss), "Edit: Paste");
+  insert_selection_or_region(ss, 0, selected_channel(ss), "Edit: Insert selection");
 }
 
 

@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 14
-#define SNDLIB_REVISION 20
-#define SNDLIB_DATE "24-Jan-02"
+#define SNDLIB_REVISION 21
+#define SNDLIB_DATE "1-Feb-02"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -603,7 +603,6 @@ int mus_header_update_with_fd       PROTO((int chan, int type, int siz));
 int mus_header_update               PROTO((const char *name, int type, int size, int srate, int format, int chans, int loc));
 int mus_header_aux_comment_start    PROTO((int n));
 int mus_header_aux_comment_end      PROTO((int n));
-int mus_header_update_comment       PROTO((const char *name, int loc, const char *comment, int len, int typ));
 int mus_header_initialize           PROTO((void));
 void mus_header_snd_set_header      PROTO((int in_srate, int in_chans, int in_format));
 int mus_header_aiff_p               PROTO((void));

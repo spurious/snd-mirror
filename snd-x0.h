@@ -20,7 +20,9 @@
   #define XM_FONT_FREE XmFontListFree
 #endif
 
-#define HAVE_CLICK_FOR_HELP 1
+#ifdef XmNtoolTipString
+  #define MOTIF_2_2 1
+#endif
 
 #if (XmVERSION >= 2)
   #define OVERRIDE_TOGGLE 1

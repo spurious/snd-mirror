@@ -27,7 +27,7 @@ void ssnd_help(snd_state *ss, char *subject, ...)
   FREE(newstr);
 }  
 
-static void snd_help_with_url(snd_state *ss, char *subject, char *url, char *helpstr)
+void snd_help_with_url(snd_state *ss, char *subject, char *url, char *helpstr)
 {
 #if HAVE_HTML
   snd_help(ss, subject, url);
@@ -36,7 +36,7 @@ static void snd_help_with_url(snd_state *ss, char *subject, char *url, char *hel
 #endif
 }
 
-static void snd_help_with_url_and_wrap(snd_state *ss, char *subject, char *url, char *helpstr)
+void snd_help_with_url_and_wrap(snd_state *ss, char *subject, char *url, char *helpstr)
 {
 #if HAVE_HTML
   snd_help(ss, subject, url);
@@ -45,7 +45,7 @@ static void snd_help_with_url_and_wrap(snd_state *ss, char *subject, char *url, 
 #endif
 }
 
-static void ssnd_help_with_url(snd_state *ss, char *subject, char *url, ...)
+void ssnd_help_with_url(snd_state *ss, char *subject, char *url, ...)
 {
 #if HAVE_HTML
   snd_help(ss, subject, url);
@@ -1616,253 +1616,6 @@ void mix_help(snd_state *ss) {snd_help_with_url_and_wrap(ss, STR_Mixing, "#mixin
 void sound_files_help(snd_state *ss) {snd_help_with_url(ss, STR_Format, "#formats", sound_files_help_string);}
 void recording_help(snd_state *ss) {snd_help_with_url_and_wrap(ss, STR_Recording, "#recordfile", recording_help_string);}
 void init_file_help(snd_state *ss) {ssnd_help_with_url(ss, STR_Customization, "grfsnd.html", init_file_help_string, "\n", resource_help_string, NULL);}
-
-#if HAVE_CLICK_FOR_HELP
-
-/* -------- click for help -------- */
-
-void click_for_file_menu_help(snd_state *ss)
-{
-  ssnd_help_with_url(ss,
-		     "File Menu",
-		     "#fileoperations",
-"The File menu provides one way to open, \n\
-close, and save files. Its options are:\n\
-\n",
-file_menu_help_string,
-"\n\
-The Print option produces a Postscript file; \n\
-you can print it with lpr.\n",
-NULL);
-}
-
-void click_for_edit_menu_help(snd_state *ss)
-{
-  ssnd_help_with_url(ss,
-		     "Edit Menu",
-		     "#editoperations",
-"The Edit Menu options apply to the\n\
-current selection in most cases.  The\n\
-successive selections are saved on a stack\n\
-of 'regions' accessible via ctrl-Y.\n\
-The selection can be retrieved by or\n\
-from other programs or within Snd with\n\
-the middle mouse button.  The options are:\n\
-\n",
-edit_menu_help_string,
-NULL);
-}
-
-void click_for_view_menu_help(snd_state *ss)
-{
-  ssnd_help_with_url(ss,
-		     "View Menu",
-		     "#viewing",
-"The View Menu affects the overall Snd display.\n\
-Its options are:\n\
-\n\
-",
-view_menu_help_string,
-NULL);
-}
-
-void click_for_options_menu_help(snd_state *ss)
-{
-  ssnd_help_with_url(ss,
-		     "Options Menu",
-		     "#options",
-"The Options menu items affect how the FFT\n\
-operates, and whatnot.  The items are:\n\
-\n\
-",
-options_menu_help_string,
-NULL);
-}
-
-void click_for_help_menu_help(snd_state *ss)
-{
-  ssnd_help_with_url(ss,
-		     "Help Menu",
-		     "#menus",
-"The Help menu tries to provide quick\n\
-help for the most common Snd operations.\n\
-The menu items are:\n\
-\n",
-help_menu_help_string,
-NULL);
-}
-
-void click_for_graph_help(snd_state *ss)
-{
-  ssnd_help_with_url(ss,
-	    "Graph",
-	    "#panelayout",
-"This portion of the Snd display shows the\n\
-sound data in the time and/or frequency domains.\n\
-If you click on the time domain wave, you can\n\
-edit it using emacs-like keyboard commands, as\n\
-well as using mouse-click-and-drag to define the\n\
-selection.  Once defined, the selected portion\n\
-can be cut, deleted, or pasted elsewhere, the\n\
-latter with the middle mouse button.  The keyboard\n\
-commands are (c = control):\n\
-\n\
-",
-graph_help_string,
-NULL);
-}
-
-void click_for_history_help(snd_state *ss)
-{
-  snd_help_with_url_and_wrap(ss,
-		    "Edit History",
-		    "#edithistory",
-"The current state of the undo/redo list can be viewed as a scrolled list of strings in the pane \
-on the left of the graph (in Motif 1, there's a 'Show Edit History' menu option).  If there are no \
-current edits, it just lists the associated file name (i.e. the zero-edits state).  As you edit the \
-sound, the operations appear in the edit list window.  Click on a member of the list to move to \
-that point in the edit list (equivalent to some number of undo's or redo's).  To move to a given \
-edit point and follow the sync chain (if any), use control-click.");
-}
-
-void listener_dialog_help(snd_state *ss)
-{
-  ssnd_help_with_url(ss,
-		     "Lisp Listener",
-		     "#customization",
-"This is the lisp listener pane; it is one way to\n\
-access the Guile Scheme interpreter.\n\
-\n",
-	   init_file_help_string,
-	   NULL);
-}
-
-void click_for_name_separator_help(snd_state *ss)
-{
-  snd_help_with_wrap(ss, "Name Separator", 
-"When reading a very large file, Snd tries to keep an overview at hand of the channels so \
-that you can move around quickly in very large data sets; when first read in, these overviews \
-are set underway, and when they are finally ready for use, the line after the file name \
-appears.  If you try to zoom out to a large view before the separator line appears, the graphics update process may be slow. ");
-}
-
-void click_for_amp_help(snd_state *ss)
-{
-  snd_help_with_wrap(ss, "Amp", 
-"This scrollbar controls the amplitude at which the sound is played.  Click the \
-amp label to return to 1.0. Control-Click returns to the previous value.");
-}
-
-void click_for_srate_arrow_help(snd_state *ss)
-{
-  snd_help_with_wrap(ss, "Srate Arrow",
-"This button determines which direction the sound file is played.  When pointing \
-to the right, the sound is played forwards;  to the left, backwards.");
-}
-
-void click_for_speed_help(snd_state *ss)
-{
-  snd_help_with_url_and_wrap(ss, "Srate", "#speed", 
-"This scrollbar controls the sampling rate at which the sound is played.  The arrow \
-controls the direction (forwards or backwards) of playback.  Label clicks behave as with amp.");
-}
-
-void click_for_minibuffer_help(snd_state *ss)
-{
-  snd_help_with_url_and_wrap(ss, "Minibuffer", "#panelayout",
-"This is the 'minibuffer', to use Emacs jargon.  Although it looks inert and wasted,  \
-there is in fact a text window lurking beneath that has access to the Lisp evaluator, not \
-to mention much of the innards of the Snd program.");
-}
-
-void click_for_play_help(snd_state *ss)
-{
-  snd_help_with_url_and_wrap(ss, "Play", "#play",
-"Snd can play any number of sounds at once or should be able to anyway.  A sort of \
-clumsy realtime mixer, although it was not intended to fill that role.");
-}
-
-void click_for_expand_help(snd_state *ss)
-{
-  snd_help_with_url_and_wrap(ss, STR_Expand, "#expand",
-"This scrollbar controls the tempo at which the sound is played back, using granular \
-synthesis. The expand button must be down to get any expansion. Label clicks as in amp.");
-}
-
-void click_for_contrast_help(snd_state *ss)
-{
-  snd_help_with_url(ss, STR_Contrast, "#contrast",
-"This scrollbar controls the amount of 'contrast enhancement' applied during \
-playback.  The contrast button must be down to get any effect.  Label clicks as in amp.");
-}
-
-void click_for_reverb_scale_help(snd_state *ss)
-{
-  snd_help_with_url_and_wrap(ss, "Reverb amount", "#reverb",
-"This scrollbar controls the amount of the sound that is fed into the reverberator. \
-The reverb button must be down to get any reverb during playback.  Label clicks as in amp.");
-}
-
-void click_for_reverb_length_help(snd_state *ss)
-{
-  snd_help_with_url_and_wrap(ss, "Reverb length", "#reverb", 
-"This scrollbar controls the lengths of the various delay lines in the reverb. \
-It only takes effect when the reverb is created, that is, only when the play \
-operation starts from silence.  Label clicks as in amp.");
-}
-
-void click_for_filter_help(snd_state *ss)
-{
-  snd_help_with_wrap(ss, "Filter", 
-"The Snd filter is an FIR filter of arbitrary order.  You specify the filter you want by \
-defining the frequency response as an envelope in the 'env' window; set the desired order in \
-the 'order' window; then turn it on by pushing the filter button at the right.  The filter \
-design algorithm uses frequency sampling. The higher the order, the closer the filter \
-can approximate the envelope you draw. You can also specify the filter coefficients \
-in a file of floats, then load them into the Snd filter by typing the file name in the \
-filter envelope text window.");
-}
-
-void click_for_filter_order_help(snd_state *ss)
-{
-  snd_help_with_wrap(ss, "Filter Order", 
-"The filter order determines how closely the filter approximates the frequency response curve you drew in the 'env' window. ");
-}
-
-void click_for_filter_envelope_help(snd_state *ss)
-{
-  snd_help_with_wrap(ss, "Filter Envelope", 
-"The filter envelope is a line-segment description of the frequency response \
-you want.  It consists of a sequence of x, y pairs; normally the x axis goes \
-from 0 to .5 or 0 to 1.0.  For example, a low-pass filter envelope could be: \
-0.0 1.0 .25 1.0 .5 0.0 1.0 0.0");
-}
-
-void click_for_sound_help(snd_state *ss)
-{
-  snd_help_with_wrap(ss,
-		     "Minibuffer",
-"This portion of the snd display has several parts: the sound file name, with an asterisk if \
-the file has unsaved edits; a minibuffer for various expression evaluations; a sync button \
-that causes operations on one channel to be applied to all channels; and a play button \
-that causes the sound to be played.  The lower portion of the pane, normally hidden, \
-contains a variety of sound manipulation controls that can be applied while it is playing.");
-}
-
-void click_for_save_as_help(snd_state *ss)
-{
-  snd_help_with_wrap(ss,
-		     "Save As",
-"You can save the current state of a file or region under a different file name using the Save \
-As option.  The output header type, data format,  and sampling rate can also be set.  The data formats \
-are big-endian where relevant except for 'wave' output.  If a file by the chosen name already exists \
-it is silently overwritten, unless that file is already open in Snd and has edits.  In that case,  \
-you'll be asked what to do.  If you want to be warned whenever a file is about to be overwritten by this \
-option, set the resource overwriteCheck to 1. If you give the current file name to Save As,  \
-any current edits will be saved and the current version in Snd will be updated (that is, in this \
-case, the current edit tree is not preserved).");
-}
-#endif
 
 
 /* -------- dialog help button -------- */

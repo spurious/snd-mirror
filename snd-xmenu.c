@@ -142,11 +142,6 @@ static void file_new_callback(Widget w, XtPointer cD, XtPointer mD)
   IF_MENU_HOOK(STR_File, STR_New) new_file_from_menu((snd_state *)cD);
 }
 
-static void file_help_callback(Widget w, XtPointer cD, XtPointer mD) 
-{
-  click_for_file_menu_help((snd_state *)cD);
-}
-
 static void file_record_callback(Widget w, XtPointer cD, XtPointer mD) 
 {
   IF_MENU_HOOK(STR_File, STR_Record) snd_record_file((snd_state *)cD);
@@ -207,11 +202,6 @@ static void edit_envelope_callback(Widget w, XtPointer cD, XtPointer mD)
   IF_MENU_HOOK(STR_Edit, STR_Edit_Envelope) create_envelope_editor((snd_state *)cD);
 }
 
-static void edit_help_callback(Widget w, XtPointer cD, XtPointer mD) 
-{
-  click_for_edit_menu_help((snd_state *)cD);
-}
-
 static void edit_cut_callback(Widget w, XtPointer cD, XtPointer mD) 
 {
   IF_MENU_HOOK(STR_Edit, STR_Delete_Selection) delete_selection("Edit: Cut", UPDATE_DISPLAY);
@@ -219,7 +209,7 @@ static void edit_cut_callback(Widget w, XtPointer cD, XtPointer mD)
 
 static void edit_paste_callback(Widget w, XtPointer cD, XtPointer mD) 
 {
-  IF_MENU_HOOK(STR_Edit, STR_Insert_Selection) paste_selection_from_menu((snd_state *)cD);
+  IF_MENU_HOOK(STR_Edit, STR_Insert_Selection) insert_selection_from_menu((snd_state *)cD);
 }
 
 static void edit_save_as_callback(Widget w, XtPointer cD, XtPointer mD) 
@@ -287,11 +277,6 @@ static void edit_find_callback_1(Widget w, XtPointer cD, XtPointer mD)
 
 
 /* -------------------------------- VIEW MENU -------------------------------- */
-
-static void view_help_callback(Widget w, XtPointer cD, XtPointer mD) 
-{
-  click_for_view_menu_help((snd_state *)cD);
-}
 
 static void view_separate_callback(Widget w, XtPointer cD, XtPointer mD) 
 {
@@ -403,11 +388,6 @@ static void view_files_callback_1(Widget w, XtPointer cD, XtPointer mD)
 
 /* -------------------------------- OPTIONS MENU -------------------------------- */
 
-static void options_help_callback(Widget w, XtPointer cD, XtPointer mD) 
-{
-  click_for_options_menu_help((snd_state *)cD);
-}
-
 static void options_transform_callback(Widget w, XtPointer cD, XtPointer mD) 
 {
   IF_MENU_HOOK(STR_Options, STR_Transform_Options) fire_up_transform_dialog((snd_state *)cD, TRUE);
@@ -486,8 +466,6 @@ static void options_save_state_callback(Widget w, XtPointer cD, XtPointer mD)
 
 
 /* -------------------------------- HELP MENU -------------------------------- */
-
-static void help_help_callback(Widget w, XtPointer cD, XtPointer mD) {click_for_help_menu_help((snd_state *)cD);}
 
 static void help_context_help_callback(Widget w, XtPointer cD, XtPointer mD) 
 {
@@ -585,7 +563,6 @@ Widget add_menu(snd_state *ss)
   XtSetArg(high_args[high_n], XmNsubMenuId, mw[file_menu]); high_n++;
   XtSetArg(high_args[high_n], XmNmnemonic, 'F'); high_n++;
   mw[f_cascade_menu] = XtCreateManagedWidget(STR_File, xmCascadeButtonWidgetClass, mw[menu_menu], high_args, high_n);
-  XtAddCallback(mw[f_cascade_menu], XmNhelpCallback, file_help_callback, ss);
 
   mw[f_open_menu] = XtCreateManagedWidget(STR_Open "   C-x C-f", xmPushButtonWidgetClass, mw[file_menu], main_args, main_n);
   XtAddCallback(mw[f_open_menu], XmNactivateCallback, file_open_callback, ss);
@@ -647,7 +624,6 @@ Widget add_menu(snd_state *ss)
   XtSetArg(high_args[high_n], XmNsubMenuId, mw[edit_menu]); high_n++;
   XtSetArg(high_args[high_n], XmNmnemonic, 'E'); high_n++;
   mw[e_cascade_menu] = XtCreateManagedWidget(STR_Edit, xmCascadeButtonWidgetClass, mw[menu_menu], high_args, high_n);
-  XtAddCallback(mw[e_cascade_menu], XmNhelpCallback, edit_help_callback, ss);
   
   mw[e_undo_menu] = XtCreateManagedWidget(STR_Undo "    C-x C-u", xmPushButtonWidgetClass, mw[edit_menu], in_args, in_n);
   XtAddCallback(mw[e_undo_menu], XmNactivateCallback, edit_undo_callback, ss);
@@ -707,7 +683,6 @@ Widget add_menu(snd_state *ss)
   XtSetArg(high_args[high_n], XmNsubMenuId, mw[view_menu]); high_n++;
   XtSetArg(high_args[high_n], XmNmnemonic, 'V'); high_n++;
   mw[v_cascade_menu] = XtCreateManagedWidget(STR_View, xmCascadeButtonWidgetClass, mw[menu_menu], high_args, high_n);
-  XtAddCallback(mw[v_cascade_menu], XmNhelpCallback, view_help_callback, ss);
 
   mw[v_ctrls_menu] = XtCreateManagedWidget(STR_Show_controls, xmPushButtonWidgetClass, mw[view_menu], main_args, main_n);
   XtAddCallback(mw[v_ctrls_menu], XmNactivateCallback, view_ctrls_callback, ss);
@@ -825,7 +800,6 @@ Widget add_menu(snd_state *ss)
   XtSetArg(high_args[high_n], XmNsubMenuId, mw[option_menu]); high_n++;
   XtSetArg(high_args[high_n], XmNmnemonic, 'O'); high_n++;
   mw[o_cascade_menu] = XtCreateManagedWidget(STR_Options, xmCascadeButtonWidgetClass, mw[menu_menu], high_args, high_n);
-  XtAddCallback(mw[o_cascade_menu], XmNhelpCallback, options_help_callback, ss);
 
   mw[o_transform_menu] = XtCreateManagedWidget(STR_Transform_Options, xmPushButtonWidgetClass, mw[option_menu], main_args, main_n);
   XtAddCallback(mw[o_transform_menu], XmNactivateCallback, options_transform_callback, ss);
@@ -885,7 +859,6 @@ Widget add_menu(snd_state *ss)
   XtSetArg(high_args[high_n], XmNsubMenuId, mw[help_menu]); high_n++;
   XtSetArg(high_args[high_n], XmNmnemonic, 'H'); high_n++;
   mw[h_cascade_menu] = XtCreateManagedWidget(STR_Help, xmCascadeButtonWidgetClass, mw[menu_menu], high_args, high_n);
-  XtAddCallback(mw[h_cascade_menu], XmNhelpCallback, help_help_callback, ss);
 
   mw[h_click_for_help_menu] = XtCreateManagedWidget(STR_Click_for_help, xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
   XtAddCallback(mw[h_click_for_help_menu], XmNactivateCallback, help_context_help_callback, ss);
