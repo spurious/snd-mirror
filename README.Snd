@@ -205,7 +205,7 @@ SGI systems.  It tries real hard on a Sun, but drops samples.
 If Snd complains that it can't find various colors upon startup, the
 problem is that some other program (probably Netscape) has grabbed all
 the color cells -- exit it and try Snd again, or (if you have the
-video RAM), increase your "depth" to 16.
+video RAM), increase your "depth" to 16 or 24.
 
 If you're running KDE and the menu labels are invisible, check
 the 'theme' you're using.  You normally want black label foregrounds.

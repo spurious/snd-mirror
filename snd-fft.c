@@ -2108,18 +2108,18 @@ static XEN g_snd_transform(XEN type, XEN data, XEN hint)
     {
     case FOURIER: 
       n2 = v->length / 2;
+#if HAVE_FFTW
       if ((XEN_BOUND_P(hint)) && (XEN_TRUE_P(hint)))
 	{
-#if HAVE_FFTW
 	  mus_fftw(v->data, v->length, 1);
 	  v->data[0] *= v->data[0];
 	  v->data[n2] *= v->data[n2];
 	  for (i = 1, j = v->length - 1; i < n2; i++, j--) 
 	    v->data[i] = v->data[i] * v->data[i] + v->data[j] * v->data[j];
-#endif
 	}
       else
 	{
+#endif
 	  dat = (Float *)CALLOC(v->length, sizeof(Float));
 	  mus_fft(v->data, dat, v->length, 1);
 	  v->data[0] *= v->data[0];
@@ -2130,7 +2130,9 @@ static XEN g_snd_transform(XEN type, XEN data, XEN hint)
 	      v->data[j] = v->data[i];
 	    }
 	  FREE(dat);
+#if HAVE_FFTW
 	}
+#endif
       break;
 #if HAVE_GSL
     case HANKEL:

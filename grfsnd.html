@@ -425,6 +425,27 @@ startup switches you like:
 <pre>
 (setq snd-program "snd -horizontal ~/cl/oboe.snd")
 </pre>
+<p>Fernando Lopez-Lezcano's DotEmacs file in the contrib directory
+shows another way to set up the emacs-snd connection:
+</p>
+<pre>
+       (defdialect snd "Snd" guile
+         (setq comint-prompt-regexp "^&gt;+")
+         (setq ilisp-complete-command nil)
+         ;; try to autodetect the binary
+         (unless snd-program
+           (cond
+            ((file-executable-p "/usr/bin/snd")
+             (setq snd-program "/usr/bin/snd"))
+            (t (setq snd-program "snd")))))
+
+       (add-hook 'snd-hook
+                 (lambda ()
+
+                   ))
+       ;; if you have the binary somewhere else:
+       ;; (setq snd-program "snd")
+</pre>
 <br>
 <span class=bbox><h3><A NAME="dynamic">Dynamically loaded modules</a></h3></span>
 

@@ -168,6 +168,8 @@ static int decode_keywords(char *caller, int nkeys, XEN *keys, int nargs, XEN *a
 	  if (keying) 
 	    mus_misc_error(caller, "unmatched value within keyword section?", args[arg_ctr]);
 	  /* type checking on the actual values has to be the caller's problem */
+	  if (arg_ctr >= nkeys)
+	    mus_misc_error(caller, "extra trailing args?", args[arg_ctr]);
 	  keys[arg_ctr] = args[arg_ctr];
 	  orig[arg_ctr] = arg_ctr;
 	  arg_ctr++;
@@ -3551,14 +3553,14 @@ returns a new readin (file input) generator reading the sound file 'file' starti
   vals = decode_keywords(S_make_readin, 4, keys, 8, args, orig_arg);
   if (vals > 0)
     {
-      channel = ikeyarg(keys[1], S_make_readin, orig_arg[1] + 1, channel);
-      start = okeyarg(keys[2], S_make_readin, orig_arg[2] + 1, start);
-      direction = ikeyarg(keys[3], S_make_readin, orig_arg[3] + 1, direction);
       if (!(XEN_KEYWORD_P(keys[0])))
         {
 	  XEN_ASSERT_TYPE(XEN_STRING_P(keys[0]), keys[0], orig_arg[0] + 1, S_make_readin, "a string");
 	  file = XEN_TO_C_STRING(keys[0]);
 	}
+      channel = ikeyarg(keys[1], S_make_readin, orig_arg[1] + 1, channel);
+      start = okeyarg(keys[2], S_make_readin, orig_arg[2] + 1, start);
+      direction = ikeyarg(keys[3], S_make_readin, orig_arg[3] + 1, direction);
     }
   if (channel < 0)
     mus_misc_error(S_make_readin, "channel < 0?", keys[1]);

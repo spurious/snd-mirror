@@ -58,7 +58,7 @@
     ((IF <form1> <form2> <form3>) (if <form1> <form2> <form3>))))
 
 (system "cp /home/bil/.snd /home/bil/dot-snd")
-(define tests 20)
+(define tests 1)
 (define snd-test -1)
 (if (provided? 'snd-debug) (disable-play))
 (define keep-going #f)
@@ -14662,18 +14662,26 @@ EDITS: 5
       (set! d0 (make-vct 19))
       (vct-set! d0 0 1.0)
       (snd-transform fourier-transform d0 0)
-      (do ((i 0 (1+ i)))
-	  ((= i 16))
-	(IF (fneq (vct-ref d0 i) 1.0)
-	    (snd-display ";fourier (1.0) [~D]: ~A?" i (vct-ref d0 i))))
+      (call-with-current-continuation
+       (lambda (break)
+	 (do ((i 0 (1+ i)))
+	     ((= i 16))
+	   (IF (fneq (vct-ref d0 i) 1.0)
+	       (begin
+		 (snd-display ";fourier (1.0) [~D]: ~A?" i (vct-ref d0 i))
+		 (break))))))
 
       (snd-transform fourier-transform d0 0)
       (IF (fneq (vct-ref d0 0) 256.0)
 	  (snd-display (format ";fourier (256.0): ~A?" (vct-ref d0 0))))
-      (do ((i 1 (1+ i)))
-	  ((= i 16))
-	(IF (fneq (vct-ref d0 i) 0.0)
-	    (snd-display ";fourier (0.0) [~D]: ~A?" i (vct-ref d0 i))))
+      (call-with-current-continuation
+       (lambda (break)
+	 (do ((i 1 (1+ i)))
+	     ((= i 16))
+	   (IF (fneq (vct-ref d0 i) 0.0)
+	       (begin
+		 (snd-display ";fourier (0.0) [~D]: ~A?" i (vct-ref d0 i))
+		 (break))))))
 
       (set! d0 (make-vct 8))
       (set! d1 (make-vct 8))
@@ -14712,25 +14720,36 @@ EDITS: 5
 	 (set! d0 (make-vct size))
 	 (vct-set! d0 0 1.0)
 	 (set! d1 (snd-spectrum d0 rectangular-window size))
-	 (do ((i 0 (1+ i)))
-	     ((= i (/ size 2)))
-	   (IF (fneq (vct-ref d1 i) 1.0)
-	       (snd-display ";snd-spectrum (1.0) [~D: ~D]: ~A?" i size (vct-ref d1 i))))
+	 (call-with-current-continuation
+	  (lambda (break)
+	    (do ((i 0 (1+ i)))
+		((= i (/ size 2)))
+	      (IF (fneq (vct-ref d1 i) 1.0)
+		  (begin
+		    (snd-display ";snd-spectrum (1.0) [~D: ~D]: ~A?" i size (vct-ref d1 i))
+		    (break))))))
 
 	 (set! d1 (snd-spectrum d0 rectangular-window))
 	 (IF (fneq (vct-ref d1 0) 1.0)
 	     (snd-display (format ";snd-spectrum back (1.0 ~D): ~A?" size (vct-ref d1 0))))
-	 (do ((i 1 (1+ i)))
-	     ((= i (/ size 2)))
-	   (IF (fneq (vct-ref d1 i) 0.0)
-	       (snd-display ";snd-spectrum (0.0) [~D: ~D]: ~A?" i size (vct-ref d1 i))))
-
+	 (call-with-current-continuation
+	  (lambda (break)
+	    (do ((i 1 (1+ i)))
+		((= i (/ size 2)))
+	      (IF (fneq (vct-ref d1 i) 0.0)
+		  (begin
+		    (snd-display ";snd-spectrum (0.0) [~D: ~D]: ~A?" i size (vct-ref d1 i))
+		    (break))))))
+	      
 	 (set! d1 (snd-spectrum d0 rectangular-window size #f)) ; dB (0.0 = max)
-	 (do ((i 0 (1+ i)))
-	     ((= i (/ size 2)))
-	   (IF (fneq (vct-ref d1 i) 0.0)
-	       (snd-display ";snd-spectrum dB (0.0) [~D: ~D]: ~A?" i size (vct-ref d1 i)))))
-
+	 (call-with-current-continuation
+	  (lambda (break)
+	    (do ((i 0 (1+ i)))
+		((= i (/ size 2)))
+	      (IF (fneq (vct-ref d1 i) 0.0)
+		  (begin
+		    (snd-display ";snd-spectrum dB (0.0) [~D: ~D]: ~A?" i size (vct-ref d1 i))
+		    (break)))))))
        (list 8 16))
 
       (for-each
@@ -14742,10 +14761,14 @@ EDITS: 5
 	   (vct-fill! xrl 1.0)
 	   (snd-transform fourier-transform rl)
 	   (snd-transform fourier-transform xrl #t)
-	   (do ((i 0 (1+ i)))
-	       ((= i len2))
-	     (if (fneq (vct-ref rl i) (vct-ref xrl i))
-		 (snd-display "flat fft: ~A at ~A: ~A ~A" len i (vct-ref rl i) (vct-ref xrl i))))
+	   (call-with-current-continuation
+	    (lambda (break)
+	      (do ((i 0 (1+ i)))
+		  ((= i len2))
+		(if (fneq (vct-ref rl i) (vct-ref xrl i))
+		    (begin
+		      (snd-display "flat fft: ~A at ~A: ~A ~A" len i (vct-ref rl i) (vct-ref xrl i))
+		      (break))))))
 	   (if (fneq (vct-ref rl 0) (* len len)) (snd-display ";~A at 0: ~A" len (vct-ref rl 0)))
 	   (vct-set! rl 0 0.0)
 	   (if (> (vct-peak rl) .001) (snd-display ";~A impulse: ~A" (vct-peak rl)))))
@@ -14760,10 +14783,14 @@ EDITS: 5
 	   (vct-set! xrl len2 1.0)
 	   (snd-transform fourier-transform rl)
 	   (snd-transform fourier-transform xrl #t)
-	   (do ((i 0 (1+ i)))
-	       ((= i len2))
-	     (if (fneq (vct-ref rl i) (vct-ref xrl i))
-		 (snd-display "impulse fft: ~A at ~A: ~A ~A" len i (vct-ref rl i) (vct-ref xrl i))))
+	   (call-with-current-continuation
+	    (lambda (break)
+	      (do ((i 0 (1+ i)))
+		  ((= i len2))
+		(if (fneq (vct-ref rl i) (vct-ref xrl i))
+		    (begin
+		      (snd-display "impulse fft: ~A at ~A: ~A ~A" len i (vct-ref rl i) (vct-ref xrl i))
+		      (break))))))
 	   (if (fneq (vct-ref rl 0) 1.0) (snd-display ";flat ~A at 0: ~A" len (vct-ref rl 0)))))
        (list 16 128 512 1024))
       
@@ -14781,10 +14808,14 @@ EDITS: 5
 	   (vct-scale! rl (/ 1.0 len))
 	   (snd-transform fourier-transform xrl #t)
 	   (vct-scale! xrl (/ 1.0 len))
-	   (do ((i 0 (1+ i)))
-	       ((= i len2))
-	     (if (fneq (vct-ref rl i) (vct-ref xrl i))
-		 (snd-display "random fft: ~A at ~A: ~A ~A" len i (vct-ref rl i) (vct-ref xrl i))))))
+	   (call-with-current-continuation
+	    (lambda (break)
+	      (do ((i 0 (1+ i)))
+		  ((= i len2))
+		(if (fneq (vct-ref rl i) (vct-ref xrl i))
+		    (begin
+		      (snd-display "random fft: ~A at ~A: ~A ~A" len i (vct-ref rl i) (vct-ref xrl i))
+		      (break))))))))
        (list 16 128 512 1024 4096))
       
       (for-each
@@ -14801,10 +14832,14 @@ EDITS: 5
 	   (vct-scale! rl (/ 1.0 len))
 	   (snd-transform fourier-transform xrl #t)
 	   (vct-scale! xrl (/ 1.0 len))
-	   (do ((i 0 (1+ i)))
-	       ((= i len2))
-	     (if (fneq (vct-ref rl i) (vct-ref xrl i))
-		 (snd-display "random fft: ~A at ~A: ~A ~A" len i (vct-ref rl i) (vct-ref xrl i))))))
+	   (call-with-current-continuation
+	    (lambda (break)
+	      (do ((i 0 (1+ i)))
+		  ((= i len2))
+		(if (fneq (vct-ref rl i) (vct-ref xrl i))
+		    (begin
+		      (snd-display "random fft: ~A at ~A: ~A ~A" len i (vct-ref rl i) (vct-ref xrl i))
+		      (break))))))))
        (list 16 128 512 1024 4096))
 
       ;;; -------- autocorrelation
@@ -14835,11 +14870,14 @@ EDITS: 5
 	   (mus-fft xrl xim len -1)
 	   (vct-scale! xrl (/ 1.0 len))
 	   
-	   (do ((i 0 (1+ i)))
-	       ((= i len2))
-	     (if (fneq (vct-ref rl i) (vct-ref xrl i))
-		 (snd-display "~A at ~A: ~A ~A" len i (vct-ref rl i) (vct-ref xrl i))))
-	   
+	   (call-with-current-continuation
+	    (lambda (break)
+	      (do ((i 0 (1+ i)))
+		  ((= i len2))
+		(if (fneq (vct-ref rl i) (vct-ref xrl i))
+		    (begin
+		      (snd-display "~A at ~A: ~A ~A" len i (vct-ref rl i) (vct-ref xrl i))
+		      (break))))))
 	   (vct-set! rl 0 0.0)
 	   (vct-set! rl 4 0.0)
 	   (if (> (vct-peak rl) .001) (snd-display ";autocorrelate peak: ~A" (vct-peak rl)))))
@@ -14870,10 +14908,14 @@ EDITS: 5
 	   (vct-scale! xim 0.0)
 	   (mus-fft xrl xim len -1)
 	   (vct-scale! xrl (/ 1.0 len))
-	   (do ((i 0 (1+ i)))
-	       ((= i len2))
-	     (if (fneq (vct-ref rl i) (vct-ref xrl i))
-		 (snd-display "random ~A at ~A: ~A ~A" len i (vct-ref rl i) (vct-ref xrl i))))))
+	   (call-with-current-continuation
+	    (lambda (break)
+	      (do ((i 0 (1+ i)))
+		  ((= i len2))
+		(if (fneq (vct-ref rl i) (vct-ref xrl i))
+		    (begin
+		      (snd-display "random ~A at ~A: ~A ~A" len i (vct-ref rl i) (vct-ref xrl i))
+		      (break))))))))
        (list 16 64 256 512))
 
       ;; -------- cepstrum
@@ -14908,10 +14950,14 @@ EDITS: 5
 		 ((= i len))
 	       (set! fscl (max fscl (abs (vct-ref xrl i)))))
 	     (vct-scale! xrl (/ 1.0 fscl)))
-	   (do ((i 0 (1+ i)))
-	       ((= i len2))
-	     (if (fneq (vct-ref rl i) (vct-ref xrl i))
-		 (snd-display "~A at ~A: ~A ~A" len i (vct-ref rl i) (vct-ref xrl i))))))
+	   (call-with-current-continuation
+	    (lambda (break)
+	      (do ((i 0 (1+ i)))
+		  ((= i len2))
+		(if (fneq (vct-ref rl i) (vct-ref xrl i))
+		    (begin
+		      (snd-display "~A at ~A: ~A ~A" len i (vct-ref rl i) (vct-ref xrl i))
+		      (break))))))))
        (list 16 64 256 512))
 
 
@@ -23936,6 +23982,9 @@ EDITS: 5
 (define procs4 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 4)))) procs))
 (define set-procs4 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 4)))) set-procs))
 (define procs5 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 5)))) procs))
+(define set-procs5 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 5)))) set-procs))
+(define procs6 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 6)))) procs))
+(define set-procs6 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 6)))) set-procs))
 
 (define make-procs (list
                make-all-pass make-asymmetric-fm
@@ -24670,6 +24719,7 @@ EDITS: 5
 	  (check-error-tag 'mus-error (lambda () (src-sound (make-env '(0 1 1 0) :end 10))))
 	  (check-error-tag 'mus-error (lambda () (src-sound (make-env '(0 1 1 -1) :end 10))))
 	  (check-error-tag 'mus-error (lambda () (src-sound (make-env '(0 -1 1 1) :end 10))))
+	  (check-error-tag 'mus-error (lambda () (make-readin 0.0 0.0 0.0 0.0 0.0 0.0 0.0)))
 	  (check-error-tag 'no-such-sound (lambda () (swap-channels ind 0 12345 0)))
 	  (check-error-tag 'no-such-sample (lambda () (scan-channel (lambda (n) #f) (* (frames) 2))))
 	  (check-error-tag 'no-such-sample (lambda () (map-channel (lambda (n) #f) (* (frames) 2))))
@@ -25041,16 +25091,88 @@ EDITS: 5
 				       (lambda () (n arg1 arg2 arg3 arg4 arg5))
 				       (lambda args (car args))))
 			      procs5))
-			   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) 
-				 :wave -1 0 1 #f #t '() (make-vector 0) 12345678901234567890)))
-			(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) 
-			      :initial-contents -1 0 1 #f #t '() (make-vector 0) 12345678901234567890)))
-		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) 
-			   :srate -1 0 1 #f #t '() (make-vector 0) 12345678901234567890)))
-		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) 
-			:input -1 0 1 #f #t '() (make-vector 0) 12345678901234567890)))
-	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32)
-		     :order -1 0 1 #f #t '() (make-vector 0) 12345678901234567890))
+			      (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f #t '() 12345678901234567890)))
+			   (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f #t '() 12345678901234567890)))
+			(list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f #t '() 12345678901234567890)))
+		     (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f #t '() 12345678901234567890)))
+		  (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f #t '() 12345678901234567890))
+
+	      ;; ---------------- set! 5 Args
+	      (for-each 
+	       (lambda (arg1)
+		 (for-each 
+		  (lambda (arg2)
+		    (for-each 
+		     (lambda (arg3)
+		       (for-each 
+			(lambda (arg4)
+			  (for-each
+			   (lambda (arg5)
+			     (for-each 
+			      (lambda (n)
+				(catch #t
+				       (lambda () (set! (n arg1 arg2 arg3 arg4) arg5))
+				       (lambda args (car args))))
+			      procs5))
+			      (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f #t '() 12345678901234567890)))
+			   (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f #t '() 12345678901234567890)))
+			(list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f #t '() 12345678901234567890)))
+		     (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f #t '() 12345678901234567890)))
+		  (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f #t '() 12345678901234567890))
+
+	      (gc)
+
+	      ;; ---------------- 6 Args
+	      (for-each 
+	       (lambda (arg1)
+		 (for-each 
+		  (lambda (arg2)
+		    (for-each 
+		     (lambda (arg3)
+		       (for-each 
+			(lambda (arg4)
+			  (for-each
+			   (lambda (arg5)
+			     (for-each 
+			      (lambda (arg6)
+				(for-each 
+				 (lambda (n)
+				   (catch #t
+					  (lambda () (n arg1 arg2 arg3 arg4 arg5 arg6))
+					  (lambda args (car args))))
+				 procs6))
+			      (list 1.5 "/hiho" 1234 (make-vct 3) -1 0 #f #t)))
+			   (list 1.5 "/hiho" 1234 (make-vct 3) -1 0 #f #t)))
+			(list 1.5 "/hiho" 1234 (make-vct 3) -1 0 #f #t)))
+		     (list 1.5 "/hiho" 1234 (make-vct 3) -1 0 #f #t)))
+		  (list 1.5 "/hiho" 1234 (make-vct 3) -1 0 #f #t)))
+	       (list 1.5 "/hiho" 1234 (make-vct 3) -1 #f #t))
+		 
+	      ;; ---------------- set! 6 Args
+	      (for-each 
+	       (lambda (arg1)
+		 (for-each 
+		  (lambda (arg2)
+		    (for-each 
+		     (lambda (arg3)
+		       (for-each 
+			(lambda (arg4)
+			  (for-each
+			   (lambda (arg5)
+			     (for-each 
+			      (lambda (arg6)
+				(for-each 
+				 (lambda (n)
+				   (catch #t
+					  (lambda () (set! (n arg1 arg2 arg3 arg4 arg5) arg6))
+					  (lambda args (car args))))
+				 procs6))
+			      (list 1.5 "/hiho" 1234 (make-vct 3) -1 0 #f #t)))
+			   (list 1.5 "/hiho" 1234 (make-vct 3) -1 0 #f #t)))
+			(list 1.5 "/hiho" 1234 (make-vct 3) -1 0 #f #t)))
+		     (list 1.5 "/hiho" 1234 (make-vct 3) -1 0 #f #t)))
+		  (list 1.5 "/hiho" 1234 (make-vct 3) -1 0 #f #t)))
+	       (list 1.5 "/hiho" 1234 (make-vct 3) -1 0 #f #t))
 
 	      (gc)))
 	))
