@@ -1535,8 +1535,8 @@ int snd_translate(const char *oldname, const char *newname, int type)
   FREE(hdr);
   if (err == MUS_CANT_TRANSLATE) /* i.e a case we don't even try to handle */
     {
-      snd_state *ss;
-      ss = get_global_state();
+
+
       if (ss->catch_exists)
 	return(mus_error(MUS_CANT_TRANSLATE,
 			 _("can't translate %s\n  (%s header: %s (0x%x) data format)\n"),

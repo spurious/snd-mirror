@@ -6,6 +6,7 @@
 
 #include "snd.h"
 
+snd_state *ss = NULL;
 static XEN mus_error_hook;
 
 static int ignore_mus_error(int type, char *msg)
@@ -28,9 +29,7 @@ static void mus_error2snd(int type, char *msg)
   /* it's possible to get here outside any catch, and in Guile a throw in that case
    *   kills the main program!
    */
-  snd_state *ss;
-  ss = get_global_state();
-  if (ss == NULL)
+  if (!ss)
     {
       fprintf(stderr, msg);
       return;
@@ -58,14 +57,12 @@ static void mus_error2snd(int type, char *msg)
 
 static void mus_print2snd(char *msg)
 {
-  snd_state *ss;
-  ss = get_global_state();
-  if (ss == NULL)
+  if (!ss)
     {
       fprintf(stderr, msg);
       return;
     }
-  add_to_error_history(ss, msg, false);
+  add_to_error_history(msg, false);
   if (record_dialog_is_active()) recorder_error(msg);
   if (!(ignore_mus_error(MUS_NO_ERROR, msg)))
     if (msg)
@@ -107,8 +104,6 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 				  C_TO_XEN_INT(gsl_errno))));
 }
 #endif
-
-static snd_state *ss = NULL;
 
 #if SND_AS_WIDGET
   snd_state *snd_main(int argc, char **argv)
@@ -270,7 +265,7 @@ static snd_state *ss = NULL;
   ss->Max_Regions = DEFAULT_MAX_REGIONS;
   ss->Max_Transform_Peaks = DEFAULT_MAX_TRANSFORM_PEAKS;
   ss->Reverb_Control_Decay = DEFAULT_REVERB_CONTROL_DECAY;
-  allocate_regions(ss, max_regions(ss));
+  allocate_regions(max_regions(ss));
   ss->HTML_Dir = NULL;
   ss->HTML_Program = copy_string(DEFAULT_HTML_PROGRAM);
   ss->min_dB = DEFAULT_MIN_DB;
@@ -309,7 +304,7 @@ static snd_state *ss = NULL;
 #ifdef SND_AS_WIDGET
   return(ss);
 #else
-  snd_doit(ss, argc, argv);
+  snd_doit(argc, argv);
   #if (!HAVE_GUILE)
     return(0);
   #endif
@@ -325,11 +320,6 @@ static snd_state *ss = NULL;
    }
   #endif
 #endif
-
-snd_state *get_global_state(void) 
-{
-  return(ss);
-}
 
 
 void g_init_base(void)

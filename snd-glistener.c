@@ -49,8 +49,7 @@ static void dismiss_completion_callback(GtkWidget *w, gpointer context)
 
 static void help_completion_callback(GtkWidget *w, gpointer context)
 {
-  snd_help(get_global_state(), 
-	   "completion",
+  snd_help("completion",
 	   "These are the completions that Snd thinks might be likely. If you select one, it will be used to complete the current name.",
 	   true);
 }
@@ -63,16 +62,14 @@ static void delete_completion_dialog(GtkWidget *w, GdkEvent *event, gpointer con
 static void start_completion_dialog(int num_items, char **items)
 {
   GtkWidget *help_button, *dismiss_button;
-  snd_state *ss;
   GtkTreeSelection *tree;
   if (!completion_dialog)
     {
-      ss = get_global_state();
       completion_dialog = gtk_dialog_new();
       g_signal_connect_closure_by_id(GTK_OBJECT(completion_dialog),
 				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(completion_dialog))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(delete_completion_dialog), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(delete_completion_dialog), NULL, 0),
 				     0);
       gtk_window_set_title(GTK_WINDOW(completion_dialog), _("Completions"));
       sg_make_resizable(completion_dialog);
@@ -88,12 +85,12 @@ static void start_completion_dialog(int num_items, char **items)
       g_signal_connect_closure_by_id(GTK_OBJECT(dismiss_button),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(dismiss_button))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(dismiss_completion_callback), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(dismiss_completion_callback), NULL, 0),
 				     0);
       g_signal_connect_closure_by_id(GTK_OBJECT(help_button),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(help_button))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(help_completion_callback), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(help_completion_callback), NULL, 0),
 				     0);
       gtk_widget_show(dismiss_button);
       gtk_widget_show(help_button);
@@ -101,12 +98,12 @@ static void start_completion_dialog(int num_items, char **items)
       completion_list = sg_make_list(_("Completions"), 
 				     GTK_DIALOG(completion_dialog)->vbox,
 				     CONTAINER_ADD,
-				     (gpointer)ss,
+				     NULL,
 				     num_items, items,
 				     GTK_SIGNAL_FUNC(list_completions_callback),
 				     0, 0, 0, 0);
 
-      set_dialog_widget(ss, COMPLETION_DIALOG, completion_dialog);
+      set_dialog_widget(COMPLETION_DIALOG, completion_dialog);
     }
   else 
     {
@@ -143,17 +140,15 @@ void append_listener_text(int end, char *msg)
 {
   /* "end" arg needed in Motif */
   int chars;
-  snd_state *ss;
   if (listener_print_p(msg))
     {
-      ss = get_global_state();
       chars = gtk_text_buffer_get_char_count(LISTENER_BUFFER);
       if (chars > 0) sg_set_cursor(listener_text, chars + 1);
       sg_text_insert(listener_text, msg);
     }
 }
 
-static void listener_completion(snd_state *ss)
+static void listener_completion(void)
 {
   int beg, end, matches = 0;
   char *old_text, *new_text = NULL, *file_text = NULL;
@@ -200,7 +195,7 @@ static void listener_completion(snd_state *ss)
 	      FREE(new_text); 
 	      new_text = NULL;
 	    }
-	  display_completions(ss);
+	  display_completions();
 	  set_save_completions(false);
 	  if (file_text) FREE(file_text);
 	}
@@ -208,7 +203,7 @@ static void listener_completion(snd_state *ss)
     }
 }
 
-void snd_completion_help(snd_state *ss, int matches, char **pbuffer) 
+void snd_completion_help(int matches, char **pbuffer) 
 {
   if (matches > 0)
     start_completion_dialog(matches, pbuffer);
@@ -221,8 +216,6 @@ void listener_append(char *msg)
 {
   if (listener_text)
     {
-      snd_state *ss;
-      ss = get_global_state();
       if ((ss->sgx)->graph_is_active)
 	(ss->sgx)->graph_is_active = false;
       append_listener_text(0, msg);
@@ -237,19 +230,19 @@ void listener_append_and_prompt(char *msg)
     {
       if (msg)
 	append_listener_text(0, msg);
-      append_listener_text(0, listener_prompt_with_cr(get_global_state()));
+      append_listener_text(0, listener_prompt_with_cr());
       cmd_eot = gtk_text_buffer_get_char_count(LISTENER_BUFFER);
       printout_end = cmd_eot - 1;
     }
 }
 
-static void command_return_callback(snd_state *ss)
+static void command_return_callback(void)
 {
   if (!(ss->error_lock))
-    command_return(listener_text, ss, printout_end);
+    command_return(listener_text, printout_end);
 }
 
-static void back_to_start(snd_state *ss)
+static void back_to_start(void)
 {
   char *full_str = NULL, *prompt;
   int i, start_of_text;
@@ -274,7 +267,7 @@ static void clear_back_to_prompt(GtkWidget *w)
 {
   int beg, end;
   end = sg_cursor_position(w);
-  back_to_start(get_global_state());
+  back_to_start();
   beg = sg_cursor_position(w);
   if (end <= beg) return;
   sg_text_delete(w, beg, end);
@@ -355,7 +348,7 @@ static void word_upper(GtkWidget *w, int cap, int up)
 }
 
 
-static void listener_help(snd_state *ss)
+static void listener_help(void)
 {
   char *source = NULL;
   source = sg_get_text(listener_text, 0, -1);
@@ -397,8 +390,6 @@ static void remove_inverse(int pos)
 
 static gint flash_unbalanced_paren(gpointer data)
 {
-  snd_state *ss;
-  ss = get_global_state();
   flashes--;
   if (flashes & 1) remove_inverse(paren_pos); else add_inverse(paren_pos);
   if (flashes > 0)
@@ -417,8 +408,6 @@ bool highlight_unbalanced_paren(void)
   int pos;
   bool success = true;
   char *str = NULL;
-  snd_state *ss;
-  ss = get_global_state();
   pos = sg_cursor_position(listener_text);
   if (pos > 2)
     {
@@ -471,7 +460,6 @@ static gboolean listener_key_release(GtkWidget *w, GdkEventKey *event, gpointer 
 {
   int current_position, parens, pos;
   char *fstr;
-  snd_state *ss = (snd_state *)data;
   if (old_pos != -1)
     {
       remove_underline(old_pos);
@@ -497,28 +485,22 @@ static gboolean listener_key_release(GtkWidget *w, GdkEventKey *event, gpointer 
 
 static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
-  snd_state *ss = (snd_state *)data;
   chan_info *cp;
   int end;
-  /*
-  fprintf(stderr,"listener got %d %c, mapped: %d, realized: %d, visible: %d\n", 
-	  event->state & snd_ControlMask, event->keyval,
-	  GTK_WIDGET_MAPPED(w), GTK_WIDGET_REALIZED(w),GTK_WIDGET_VISIBLE(w));
-  */
   if ((ss->sgx)->graph_is_active) 
     {
-      cp = current_channel(ss);
+      cp = current_channel();
       graph_key_press(channel_graph(cp), event, (gpointer)cp); 
       return(false);
     }
   else
     {
       if (event->keyval == GDK_Tab)
-	listener_completion(ss);
+	listener_completion();
       else
 	{
 	  if (event->keyval == GDK_Return)
-	    command_return_callback(ss);
+	    command_return_callback();
 	  else
 	    {
 	      if (((event->keyval == snd_K_g) || (event->keyval == snd_K_G)) && 
@@ -526,14 +508,14 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
 		{
 		  if (event->state & snd_MetaMask)
 		    clear_listener();
-		  else control_g(ss, any_selected_sound(ss));
+		  else control_g(any_selected_sound());
 		}
 	      else
 		{
 		  if (((event->keyval == snd_K_a) || (event->keyval == snd_K_A)) && 
 		      (event->state & snd_ControlMask))
 		    {
-		      back_to_start(ss);
+		      back_to_start();
 		    }
 		  else
 		    {
@@ -546,7 +528,7 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
 			    {
 			      fstr = sg_get_text(listener_text, current_position - 2, current_position);
 			      if ((current_position != (printout_end - 2)) && 
-				  (strcmp(fstr, listener_prompt_with_cr(ss)) != 0))
+				  (strcmp(fstr, listener_prompt_with_cr()) != 0))
 				{
 				  g_free(fstr);
 				  return(false);
@@ -585,7 +567,7 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
 					{
 					  if ((event->keyval == GDK_question) && (event->state & snd_ControlMask))
 					    {
-					      listener_help(ss);
+					      listener_help();
 					    }
 					  else
 					    {
@@ -623,9 +605,7 @@ static XEN listener_click_hook;
 
 static gboolean listener_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
-  snd_state *ss = (snd_state *)data;
   (ss->sgx)->graph_is_active = false;
-
   /* this code from gedit/src/gedit-view.c.
    *    click in listener can place cursor (and autoscroll window) at any random place!
    *    so we have to explicitly find the correct place and put the cursor there.
@@ -691,7 +671,7 @@ static gboolean mouse_leave_text_callback(GtkWidget *w, GdkEventCrossing *ev, gp
   return(false);
 }
 
-GtkWidget *snd_entry_new(snd_state *ss, GtkWidget *container, bool with_white_background)
+GtkWidget *snd_entry_new(GtkWidget *container, bool with_white_background)
 {
   GtkWidget *text;
   text = gtk_entry_new();
@@ -702,18 +682,18 @@ GtkWidget *snd_entry_new(snd_state *ss, GtkWidget *container, bool with_white_ba
   g_signal_connect_closure_by_id(GTK_OBJECT(text),
 				 g_signal_lookup("enter_notify_event", G_OBJECT_TYPE(GTK_OBJECT(text))),
 				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(mouse_enter_text_callback), (gpointer)ss, 0),
+				 g_cclosure_new(GTK_SIGNAL_FUNC(mouse_enter_text_callback), NULL, 0),
 				 0);
   g_signal_connect_closure_by_id(GTK_OBJECT(text),
 				 g_signal_lookup("leave_notify_event", G_OBJECT_TYPE(GTK_OBJECT(text))),
 				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(mouse_leave_text_callback), (gpointer)ss, 0),
+				 g_cclosure_new(GTK_SIGNAL_FUNC(mouse_leave_text_callback), NULL, 0),
 				 0);
   return(text);
 }
 
 
-static void make_command_widget(snd_state *ss, int height)
+static void make_command_widget(int height)
 {
   GtkWidget *frame;
   if (!listener_text)
@@ -724,7 +704,7 @@ static void make_command_widget(snd_state *ss, int height)
       if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
 	gtk_paned_add2(GTK_PANED(SOUND_PANE(ss)), frame);
       else gtk_container_add(GTK_CONTAINER(MAIN_PANE(ss)), frame);
-      listener_text = make_scrolled_text(ss, frame, true, NULL, NULL);
+      listener_text = make_scrolled_text(frame, true, NULL, NULL);
 
       if (ss->sgx->listener_fnt) gtk_widget_modify_font(listener_text, ss->sgx->listener_fnt);
       {
@@ -846,17 +826,17 @@ static void make_command_widget(snd_state *ss, int height)
       g_signal_connect_closure_by_id(GTK_OBJECT(listener_text),
 				     g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(listener_text))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(listener_key_press), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(listener_key_press), NULL, 0),
 				     0);
       g_signal_connect_closure_by_id(GTK_OBJECT(listener_text),
 				     g_signal_lookup("key_release_event", G_OBJECT_TYPE(GTK_OBJECT(listener_text))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(listener_key_release), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(listener_key_release), NULL, 0),
 				     0);
       g_signal_connect_closure_by_id(GTK_OBJECT(listener_text),
 				     g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(listener_text))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(listener_button_press), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(listener_button_press), NULL, 0),
 				     0);
       g_signal_connect_closure_by_id(GTK_OBJECT(listener_text),
 				     g_signal_lookup("enter_notify_event", G_OBJECT_TYPE(GTK_OBJECT(listener_text))),
@@ -881,8 +861,6 @@ void goto_listener(void)
 
 void color_listener(GdkColor *pix)
 {
-  snd_state *ss;
-  ss = get_global_state();
   (ss->sgx)->listener_color = pix;
   if (listener_text) 
     set_text_background(listener_text, (ss->sgx)->listener_color);
@@ -890,17 +868,15 @@ void color_listener(GdkColor *pix)
 
 void color_listener_text(GdkColor *pix)
 {
-  snd_state *ss;
-  ss = get_global_state();
   (ss->sgx)->listener_text_color = pix;
 }
 
-void handle_listener(snd_state *ss, bool open)
+void handle_listener(bool open)
 {
   if (open)
     {
       if (!listener_text)
-	make_command_widget(ss, 100);
+	make_command_widget(100);
       else gtk_widget_show(listener_text);
       set_view_listener_label(_("Hide listener"));
     }
@@ -949,12 +925,8 @@ static XEN g_listener_selected_text(void)
 static XEN g_reset_listener_cursor(void)
 {
   #define H_reset_listener_cursor "(" S_reset_listener_cursor "): reset listener cursor to the default pointer"
-  snd_state *ss;
   if (listener_text)
-    {
-      ss = get_global_state();
-      gdk_window_set_cursor(listener_text->window, (ss->sgx)->arrow_cursor);
-    }
+    gdk_window_set_cursor(listener_text->window, (ss->sgx)->arrow_cursor);
   return(XEN_FALSE);
 }
 

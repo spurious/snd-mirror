@@ -3,7 +3,7 @@
 #include "snd.h"
 #include "snd-rec.h"
 
-FONT_TYPE *get_vu_font(snd_state *ss, Float size)
+FONT_TYPE *get_vu_font(Float size)
 {
   char font_name[LABEL_BUFFER_SIZE];
   int font_size;
@@ -123,7 +123,7 @@ char *recorder_system_and_device_name(int sys, int dev)
   return(sysdevstr);
 }
 
-int recorder_input_device(int dev)
+bool recorder_input_device(int dev)
 {
   switch (dev)
     {
@@ -146,13 +146,13 @@ int recorder_input_device(int dev)
     case MUS_AUDIO_MICROPHONE: 
     case MUS_AUDIO_DIGITAL_IN: 
     case MUS_AUDIO_CD:
-    default: return(1); break;
+    default: return(true); break;
     }
   snd_error(_("unknown audio device: %d"), dev);
-  return(0);
+  return(false);
 }
 
-int recorder_output_device(int dev)
+bool recorder_output_device(int dev)
 {
   return((dev != MUS_AUDIO_DAC_FILTER) && 
 	 (dev != MUS_AUDIO_MIXER) &&
@@ -184,7 +184,7 @@ char *recorder_field_abbreviation(int fld)
 }
 #endif
 
-int recorder_sort_mixer_device(void *wd, int i, int chan, int input, int device, int *mixflds)
+int recorder_sort_mixer_device(void *wd, int i, int chan, bool input, int device, int *mixflds)
 {
 #if (HAVE_OSS || HAVE_ALSA)
   int k;
@@ -251,15 +251,16 @@ int recorder_sort_mixer_device(void *wd, int i, int chan, int input, int device,
   return(device);
 }
 
-int recorder_check_device(int system, int device, int *mixer_gains_posted, int *tone_controls_posted, int *mixflds, int *gains, int *inp)
+int recorder_check_device(int system, int device, int *mixer_gains_posted, int *tone_controls_posted, int *mixflds, int *gains, bool *inp)
 {
-  int vu_meters = 0, input, num_gains;
+  int vu_meters = 0, num_gains;
+  bool input;
 #if (HAVE_OSS || HAVE_ALSA)
   int k;
   float mixer_field_chans[MAX_AUDIO_FIELD];
 #endif
   vu_meters = device_channels(MUS_AUDIO_PACK_SYSTEM(system) | device);
-  input = (recorder_input_device(device));
+  input = recorder_input_device(device);
   num_gains = device_gains(MUS_AUDIO_PACK_SYSTEM(system) | device);
 
 #if (HAVE_OSS || HAVE_ALSA)
@@ -396,7 +397,7 @@ void save_recorder_state(FILE *fd)
 static char numbuf[LABEL_BUFFER_SIZE];
 char *channel_name(int in_chans, int out_chans, int chan)
 {
-  int use_numbers;
+  bool use_numbers;
   use_numbers = ((out_chans > 4) || (in_chans > 4));
   if (use_numbers)
     mus_snprintf(numbuf, LABEL_BUFFER_SIZE, "%d", chan + 1);
@@ -404,9 +405,9 @@ char *channel_name(int in_chans, int out_chans, int chan)
   return(numbuf);
 }
 
-char *gain_channel_name(int in_chans, int out_chans, int input, int dev_in, int out)
+char *gain_channel_name(int in_chans, int out_chans, bool input, int dev_in, int out)
 {
-  int use_numbers;
+  bool use_numbers;
   if (input)
     {
       use_numbers = ((out_chans > 4) || (in_chans > 4));
@@ -453,19 +454,19 @@ void set_mixer_gain(int system, int device, int chan, int gain, int field, Float
 }
 
 
-void recorder_set_audio_srate(snd_state *ss, int device, int srate, int system, int aud)
+void recorder_set_audio_srate(int device, int srate, int system, int aud)
 {
   float g[1];
 #if (!NEW_SGI_AL)
   if (aud) close_recorder_audio();
   g[0] = (Float)srate;
   mus_audio_mixer_write(MUS_AUDIO_PACK_SYSTEM(system) | device, MUS_AUDIO_SRATE, 0, g);
-  if (aud) fire_up_recorder(ss);
+  if (aud) fire_up_recorder();
 #endif
 }
 
 #if OLD_SGI_AL
-void set_line_source(snd_state *ss, int in_digital)
+void set_line_source(bool in_digital)
 {
   int aud, err;
   aud = rp->taking_input;
@@ -484,7 +485,7 @@ void set_line_source(snd_state *ss, int in_digital)
   rp->input_channel_active[3] = (!in_digital);
   rp->input_channel_active[4] = in_digital; 
   rp->input_channel_active[5] = in_digital;
-  if (aud) fire_up_recorder(ss);
+  if (aud) fire_up_recorder();
 }
 #endif
 
@@ -577,7 +578,7 @@ static void get_input_devices(void)
 #endif
 
 #if (HAVE_ALSA || HAVE_OSS)
-void fire_up_recorder(snd_state *ss)
+void fire_up_recorder(void)
 {
   int i, j;
   float val[64];
@@ -791,12 +792,12 @@ void fire_up_recorder(snd_state *ss)
 	}
       else rp->monitoring = true;
     }
-  set_read_in_progress(ss);
+  set_read_in_progress();
 }
 
 #else /* not ALSA or OSS */
 
-void fire_up_recorder(snd_state *ss)
+void fire_up_recorder(void)
 {
   int i;
 #if NEW_SGI_AL
@@ -975,7 +976,7 @@ void fire_up_recorder(snd_state *ss)
       rp->monitoring = false;
     }
   else rp->monitoring = true;
-  set_read_in_progress(ss);
+  set_read_in_progress();
 }
 #endif
 
@@ -1087,7 +1088,7 @@ void recorder_characterize_devices(int devs, int output_devices)
 
 #if (HAVE_ALSA || HAVE_OSS)
 
-static Cessate read_adc(snd_state *ss) 
+static Cessate read_adc(void) 
 {
   int in_chan, out_chan, i, k, m, n, out_frame, inchn, offset, active_in_chans, ochns, sr, buffer_size, in_datum_size;
   mus_sample_t val;
@@ -1220,7 +1221,7 @@ static Cessate read_adc(snd_state *ss)
 #else
 /* not ALSA or OSS */
 
-static Cessate read_adc(snd_state *ss)
+static Cessate read_adc(void)
 {
   int in_chan, out_chan, i, k, m, n, out_frame, inchn, offset, active_in_chans, cur_size, ochns, sr, sz, ifmt, in_datum_size;
   mus_sample_t val;
@@ -1342,13 +1343,13 @@ static Cessate read_adc(snd_state *ss)
 }
 #endif
 
-bool recorder_start_output_file(snd_state *ss, char *comment)
+bool recorder_start_output_file(char *comment)
 {
   int comlen, err, i;
   char *msg;
   comlen = (int)(snd_strlen(comment) + 3) / 4;
   comlen *= 4;
-  err = snd_write_header(ss, rp->output_file, rp->output_header_type, rp->srate, rp->out_chans, 28 + comlen, 0,
+  err = snd_write_header(rp->output_file, rp->output_header_type, rp->srate, rp->out_chans, 28 + comlen, 0,
 			 rp->output_data_format, comment, snd_strlen(comment), NULL);
   if (err == -1)
     {
@@ -1362,7 +1363,7 @@ bool recorder_start_output_file(snd_state *ss, char *comment)
     }
   unsensitize_control_buttons();
 
-  rp->output_file_descriptor = snd_reopen_write(ss, rp->output_file);
+  rp->output_file_descriptor = snd_reopen_write(rp->output_file);
   if (rp->output_header_type != MUS_RAW) mus_header_read_with_fd(rp->output_file_descriptor);
   mus_file_open_descriptors(rp->output_file_descriptor, 
 			    rp->output_file,
@@ -1441,26 +1442,25 @@ void cleanup_recording (void)
     }
 }
 
-static Cessate run_adc(Indicium uss)
+static Cessate run_adc(Indicium ignore)
 {
   Cessate val;
-  snd_state *ss = (snd_state *)uss;
-  val = read_adc(ss);
+  val = read_adc();
 #if DEBUGGING
   if (!(with_background_processes(ss))) val = BACKGROUND_QUIT;
 #endif
   if (val == BACKGROUND_QUIT)
     {
       rp->recording = false;
-      finish_recording(ss, rp);
+      finish_recording(rp);
     }
   return(val);
 }
 
-void set_read_in_progress (snd_state *ss)
+void set_read_in_progress (void)
 {
   if (with_background_processes(ss) != DISABLE_BACKGROUND_PROCESSES)
-    rp->recorder_reader = BACKGROUND_ADD(ss, run_adc, ss);
+    rp->recorder_reader = BACKGROUND_ADD(run_adc, NULL);
 }
 
 
@@ -1672,43 +1672,37 @@ static XEN g_set_recorder_out_amp (XEN num, XEN amp)
 static XEN g_recorder_dialog(void) 
 {
   #define H_recorder_dialog "(" S_recorder_dialog "): start the Recorder"
-  snd_record_file(get_global_state()); 
+  snd_record_file(); 
   return(XEN_FALSE);
 }
 
-static XEN g_vu_font(void) {return(C_TO_XEN_STRING(vu_font(get_global_state())));}
+static XEN g_vu_font(void) {return(C_TO_XEN_STRING(vu_font(ss)));}
 static XEN g_set_vu_font(XEN val) 
 {
   #define H_vu_font "(" S_vu_font "): name of font used to make VU meter labels (courier)"
-  snd_state *ss;
-  ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, S_setB S_vu_font, "a string"); 
   if (vu_font(ss)) FREE(vu_font(ss));
   if (XEN_FALSE_P(val))
-    set_vu_font(ss, (DEFAULT_VU_FONT) ? copy_string(DEFAULT_VU_FONT) : NULL);
-  else set_vu_font(ss, copy_string(XEN_TO_C_STRING(val)));
+    set_vu_font((DEFAULT_VU_FONT) ? copy_string(DEFAULT_VU_FONT) : NULL);
+  else set_vu_font(copy_string(XEN_TO_C_STRING(val)));
   return(C_TO_XEN_STRING(vu_font(ss)));
 }
 
-static XEN g_vu_font_size(void) {return(C_TO_XEN_DOUBLE(vu_font_size(get_global_state())));}
+static XEN g_vu_font_size(void) {return(C_TO_XEN_DOUBLE(vu_font_size(ss)));}
 static XEN g_set_vu_font_size(XEN val) 
 {
   #define H_vu_font_size "(" S_vu_font_size "): size of VU font meter labels (1.0)"
-  snd_state *ss;
-  ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_vu_font_size, "a number"); 
-  set_vu_font_size(ss, XEN_TO_C_DOUBLE(val));
+  set_vu_font_size(XEN_TO_C_DOUBLE(val));
   return(C_TO_XEN_DOUBLE(vu_font_size(ss)));
 }
 
-static XEN g_vu_size(void) {return(C_TO_XEN_DOUBLE(vu_size(get_global_state())));}
+static XEN g_vu_size(void) {return(C_TO_XEN_DOUBLE(vu_size(ss)));}
 static XEN g_set_vu_size(XEN val) 
 {
   #define H_vu_size "(" S_vu_size "): size of VU meters (1.0)"
-  snd_state *ss;
-  ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_vu_size, "a number"); 
-  set_vu_size(ss, XEN_TO_C_DOUBLE(val));
+  set_vu_size(XEN_TO_C_DOUBLE(val));
   return(C_TO_XEN_DOUBLE(vu_size(ss)));
 }
 
@@ -1842,7 +1836,7 @@ void g_init_recorder(void)
   void set_recorder_autoload(recorder_info *rp, bool val) {}
   void recorder_set_vu_in_val(int chan, mus_sample_t val) {}
   void recorder_set_vu_out_val(int chan, mus_sample_t val) {}
-  void finish_recording(snd_state *ss, recorder_info *rp) {}
+  void finish_recording(recorder_info *rp) {}
   void sensitize_control_buttons(void) {}
   void recorder_fill_wd(void *uwd, int chan, int field, int device) {}
 #endif

@@ -1,6 +1,6 @@
 #include "snd.h"
 
-Float un_dB(snd_state *ss, Float py)
+Float un_dB(Float py)
 {
   /* used only by envelope editor (snd-xenv etc) */
   return((py <= ss->min_dB) ? 0.0 : pow(10.0, py * .05));
@@ -152,7 +152,7 @@ static int place_point(int *cxs, int points, int x)
   return(points);
 }
 
-static int hit_point(snd_state *ss, int *cxs, int *cys, int points, int x, int y)
+static int hit_point(int *cxs, int *cys, int points, int x, int y)
 {
   int i;
   for (i = 0; i < points; i++)
@@ -233,17 +233,17 @@ static void edp_set_current_point(env_ed *edp, int pos, int x, int y)
   edp->current_ys[pos] = y;
 }
 
-static short edp_grf_y_dB(snd_state *ss, Float val, axis_info *ap, bool use_dB)
+static short edp_grf_y_dB(Float val, axis_info *ap, bool use_dB)
 {
   if (use_dB)
     return(grf_y(in_dB(ss->min_dB, ss->lin_dB, val), ap));
   else return(grf_y(val, ap));
 }
 
-static double edp_ungrf_y_dB(snd_state *ss, axis_info *ap, int y, bool use_dB)
+static double edp_ungrf_y_dB(axis_info *ap, int y, bool use_dB)
 {
   if (use_dB)
-    return(un_dB(ss, ungrf_y(ap, y)));
+    return(un_dB(ungrf_y(ap, y)));
   else return(ungrf_y(ap, y));
 }
 
@@ -255,7 +255,7 @@ axis_info *edp_ap(void *spf)
 #define EXP_SEGLEN 4
 #define MIN_FILTER_GRAPH_HEIGHT 20
 
-bool edp_display_graph(snd_state *ss, void *spf, const char *name, axis_context *ax, 
+bool edp_display_graph(void *spf, const char *name, axis_context *ax, 
 		       int x, int y, int width, int height, env *e, bool use_dB, bool with_dots)
 {
   axis_info *ap;
@@ -289,7 +289,7 @@ bool edp_display_graph(snd_state *ss, void *spf, const char *name, axis_context 
   if (with_dots)
     init_env_axes(ap, name, x, y, width, height, ex0, ex1, ey0, ey1, false);
   ix1 = grf_x(e->data[0], ap);
-  iy1 = edp_grf_y_dB(ss, e->data[1], ap, use_dB);
+  iy1 = edp_grf_y_dB(e->data[1], ap, use_dB);
   if (with_dots)
     {
       if (e->pts < 100)
@@ -305,7 +305,7 @@ bool edp_display_graph(snd_state *ss, void *spf, const char *name, axis_context 
 	  ix0 = ix1;
 	  iy0 = iy1;
 	  ix1 = grf_x(e->data[i], ap);
-	  iy1 = edp_grf_y_dB(ss, e->data[i + 1], ap, use_dB);
+	  iy1 = edp_grf_y_dB(e->data[i + 1], ap, use_dB);
 	  if (with_dots)
 	    {
 	      edp_set_current_point(edp, j, ix1, iy1);
@@ -360,7 +360,7 @@ bool edp_display_graph(snd_state *ss, void *spf, const char *name, axis_context 
   return(edp->edited);
 }
 
-void edp_handle_point(snd_state *ss, void *spf, int evx, int evy, Tempus motion_time, env *e, bool use_dB, Float xmax)
+void edp_handle_point(void *spf, int evx, int evy, Tempus motion_time, env *e, bool use_dB, Float xmax)
 {
   env_ed *edp = (env_ed *)spf;
   axis_info *ap;
@@ -385,12 +385,12 @@ void edp_handle_point(snd_state *ss, void *spf, int evx, int evy, Tempus motion_
   if (y < 0.0) y = 0.0;
   if (y < ap->y0) y = ap->y0;
   if (y > ap->y1) y = ap->y1;
-  if (use_dB) y = un_dB(ss, y);
+  if (use_dB) y = un_dB(y);
   move_point(e, edp->env_pos, x, y);
   edp->edited = true;
 }
 
-int edp_handle_press(snd_state *ss, void *spf, int evx, int evy, Tempus time, env *e, bool use_dB, Float xmax)
+int edp_handle_press(void *spf, int evx, int evy, Tempus time, env *e, bool use_dB, Float xmax)
 {
   int pos;
   Float x, y;
@@ -399,9 +399,9 @@ int edp_handle_press(snd_state *ss, void *spf, int evx, int evy, Tempus time, en
   ap = edp->axis;
   edp->down_time = time;
   edp->env_dragged = false;
-  pos = hit_point(ss, edp->current_xs, edp->current_ys, e->pts, evx, evy);
+  pos = hit_point(edp->current_xs, edp->current_ys, e->pts, evx, evy);
   x = ungrf_x(ap, evx);
-  y = edp_ungrf_y_dB(ss, ap, evy, use_dB);
+  y = edp_ungrf_y_dB(ap, evy, use_dB);
   if (y < 0.0) y = 0.0;
   if (pos == -1)
     {
@@ -512,22 +512,21 @@ void init_env_axes(axis_info *ap, const char *name, int x_offset, int ey0, int w
 }
 
 
-static short grf_y_dB(snd_state *ss, Float val, axis_info *ap)
+static short grf_y_dB(Float val, axis_info *ap)
 {
   if (enved_in_dB(ss))
     return(grf_y(in_dB(ss->min_dB, ss->lin_dB, val), ap));
   else return(grf_y(val, ap));
 }
 
-static double ungrf_y_dB(snd_state *ss, axis_info *ap, int y)
+static double ungrf_y_dB(axis_info *ap, int y)
 {
   if (enved_in_dB(ss))
-    return(un_dB(ss, ungrf_y(ap, y)));
+    return(un_dB(ungrf_y(ap, y)));
   else return(ungrf_y(ap, y));
 }
 
-void display_enved_env(snd_state *ss, env *e, axis_context *ax,
-		       char *name, int x0, int y0, int width, int height, int dots, Float base, bool printing)
+void display_enved_env(env *e, axis_context *ax, char *name, int x0, int y0, int width, int height, bool dots, Float base, bool printing)
 {
   int i, j, k;
   Float ex0, ey0, ex1, ey1, val;
@@ -536,7 +535,6 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax,
   mus_any *ce;
   int dur;
   axis_info *ap;
-
   if (e)
     {
       ex0 = e->data[0];
@@ -571,7 +569,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax,
   if (e)
     {
       ix1 = grf_x(e->data[0], ap);
-      iy1 = grf_y_dB(ss, e->data[1], ap);
+      iy1 = grf_y_dB(e->data[1], ap);
       if (dots)
 	{
 	  if (e->pts < 100)
@@ -589,7 +587,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax,
 		  ix0 = ix1;
 		  iy0 = iy1;
 		  ix1 = grf_x(e->data[i], ap);
-		  iy1 = grf_y_dB(ss, e->data[i + 1], ap);
+		  iy1 = grf_y_dB(e->data[i + 1], ap);
 		  if (dots)
 		    {
 		      set_current_point(j, ix1, iy1);
@@ -652,7 +650,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax,
 		  ix0 = ix1;
 		  iy0 = iy1;
 		  ix1 = grf_x(e->data[i], ap);
-		  iy1 = grf_y_dB(ss, e->data[i + 1], ap);
+		  iy1 = grf_y_dB(e->data[i + 1], ap);
 		  if (dots)
 		    {
 		      set_current_point(j, ix1, iy1);
@@ -680,7 +678,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax,
 	      if (dur < e->pts) dur = e->pts;
 	      env_val = mus_env(ce);
 	      ix1 = grf_x(0.0, ap);
-	      iy1 = grf_y_dB(ss, env_val, ap);
+	      iy1 = grf_y_dB(env_val, ap);
 	      xincr = (ex1 - ex0) / (Float)dur;
 	      j = 1;
 	      for (i = 1, curx = ex0 + xincr; i < dur; i++, curx += xincr)
@@ -689,7 +687,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax,
 		  ix0 = ix1;
 		  env_val = mus_env(ce);
 		  ix1 = grf_x(curx, ap);
-		  iy1 = grf_y_dB(ss, env_val, ap);
+		  iy1 = grf_y_dB(env_val, ap);
 		  draw_line(ax, ix0, iy0, ix1, iy1);
 		  if (printing) ps_draw_line(ap, ix0, iy0, ix1, iy1);
 		  if ((dots) && (index != mus_position(ce)))
@@ -704,7 +702,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax,
 		  iy0 = iy1;
 		  ix0 = ix1;
 		  ix1 = grf_x(ex1, ap);
-		  iy1 = grf_y_dB(ss, e->data[e->pts * 2 - 1], ap);
+		  iy1 = grf_y_dB(e->data[e->pts * 2 - 1], ap);
 		  draw_line(ax, ix0, iy0, ix1, iy1);
 		  if (printing) ps_draw_line(ap, ix0, iy0, ix1, iy1);
 		}
@@ -716,7 +714,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax,
     }
 }
 
-void view_envs(snd_state *ss, int env_window_width, int env_window_height, bool printing)
+void view_envs(int env_window_width, int env_window_height, bool printing)
 {
   /* divide space available into a grid (if needed) that shows all currently defined envelopes */
   /* I suppose if there were several hundred envelopes, we'd need a scrollable viewer... */
@@ -738,7 +736,7 @@ void view_envs(snd_state *ss, int env_window_width, int env_window_height, bool 
   for (i = 0, x = 0; i < cols; i++, x += width)
     for (j = 0, y = 0; j < rows; j++, y += height)
       {
-	display_enved_env_with_selection(ss, all_envs[k], all_names[k], x, y, width, height, 0, 1.0, printing);
+	display_enved_env_with_selection(all_envs[k], all_names[k], x, y, width, height, 0, 1.0, printing);
 	k++;
 	if (k == all_envs_top) return;
       }
@@ -863,7 +861,7 @@ char *enved_all_names(int n) {return(all_names[n]);}
 void set_enved_env_list_top(int n) {env_list_top = n;}
 env *enved_all_envs(int pos) {return(all_envs[pos]);}
 
-static void add_envelope(snd_state *ss, char *name, env *val)
+static void add_envelope(char *name, env *val)
 {
   int i;
   if (all_envs_top == all_envs_size)
@@ -888,11 +886,11 @@ static void add_envelope(snd_state *ss, char *name, env *val)
   if (enved_dialog_is_active())
     {
       set_enved_show_sensitive(true);
-      make_scrolled_env_list(ss);
+      make_scrolled_env_list();
     }
 }
 
-void delete_envelope(snd_state *ss, char *name)
+void delete_envelope(char *name)
 {
   int i, pos;
   pos = find_env(name);
@@ -911,12 +909,12 @@ void delete_envelope(snd_state *ss, char *name)
 	{
 	  if (all_envs_top > 0)
 	    set_enved_show_sensitive(true);
-	  make_scrolled_env_list(ss);
+	  make_scrolled_env_list();
 	}
     }
 }
 
-void alert_envelope_editor(snd_state *ss, char *name, env *val)
+void alert_envelope_editor(char *name, env *val)
 {
   /* whenever an envelope is defined or setf'd, we get notification through this function */
   int i;
@@ -927,23 +925,23 @@ void alert_envelope_editor(snd_state *ss, char *name, env *val)
       if (all_envs[i]) free_env(all_envs[i]);
       all_envs[i] = val;
     }
-  else add_envelope(ss, name, val);
+  else add_envelope(name, val);
 }
 
-void enved_show_background_waveform(snd_state *ss, axis_info *ap, axis_info *gray_ap, bool apply_to_selection, bool show_fft, bool printing)
+void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool apply_to_selection, bool show_fft, bool printing)
 {
   int srate, pts = 0;
   graph_type_t old_time_graph_type = GRAPH_ONCE;
   off_t samps;
   axis_info *active_ap = NULL;
   chan_info *active_channel = NULL;
-  if (!(any_selected_sound(ss))) return;
+  if (!(any_selected_sound())) return;
   set_grf_points(-1, 0, 0, 0); /* this is a kludge to handle one-sided graphs (snd-xchn.c) */
   gray_ap->x_axis_x0 = ap->x_axis_x0;
   gray_ap->x_axis_x1 = ap->x_axis_x1;
   gray_ap->y_axis_y0 = ap->y_axis_y0;
   gray_ap->y_axis_y1 = ap->y_axis_y1;
-  active_channel = current_channel(ss);
+  active_channel = current_channel();
   if (active_channel == NULL) return;
   active_channel->printing = printing;
   if (show_fft)
@@ -960,7 +958,7 @@ void enved_show_background_waveform(snd_state *ss, axis_info *ap, axis_info *gra
 	      gray_ap->x0 = 0.0;
 	      gray_ap->x1 = SND_SRATE(active_channel->sound) / 2;
 	      init_axis_scales(gray_ap);
-	      make_fft_graph(active_channel, active_channel->sound, gray_ap, gray_ap->ax, false);
+	      make_fft_graph(active_channel, gray_ap, gray_ap->ax, false);
 	      /* last arg makes sure we don't call any hooks in make_fft_graph */
 	    }
 	}
@@ -1004,7 +1002,7 @@ void enved_show_background_waveform(snd_state *ss, axis_info *ap, axis_info *gra
       active_channel->axis = gray_ap;
       old_time_graph_type = active_channel->time_graph_type;
       active_channel->time_graph_type = GRAPH_ONCE;
-      pts = make_graph(active_channel, NULL, ss);
+      pts = make_background_graph(active_channel);
       active_channel->time_graph_type = old_time_graph_type;
       active_channel->axis = active_ap;
       if (pts > 0) draw_both_grfs(gray_ap->ax, pts);
@@ -1012,13 +1010,13 @@ void enved_show_background_waveform(snd_state *ss, axis_info *ap, axis_info *gra
   active_channel->printing = false;
 }
 
-int enved_button_press_display(snd_state *ss, axis_info *ap, env *active_env, int evx, int evy)
+int enved_button_press_display(axis_info *ap, env *active_env, int evx, int evy)
 {
   int pos, env_pos;
   Float x, y;
-  pos = hit_point(ss, current_xs, current_ys, active_env->pts, evx, evy);
+  pos = hit_point(current_xs, current_ys, active_env->pts, evx, evy);
   x = ungrf_x(ap, evx);
-  y = ungrf_y_dB(ss, ap, evy);
+  y = ungrf_y_dB(ap, evy);
   if (enved_clip_p(ss))
     {
       if (y < ap->y0) y = ap->y0;
@@ -1049,10 +1047,10 @@ int enved_button_press_display(snd_state *ss, axis_info *ap, env *active_env, in
 	add_point(active_env, pos + 1, x, y);
       env_pos = pos + 1;
       set_enved_click_to_delete(false);
-      env_redisplay(ss);
+      env_redisplay();
     }
   else set_enved_click_to_delete(true);
-  enved_display_point_label(ss, x, y);
+  enved_display_point_label(x, y);
   return(env_pos);
 }
 
@@ -1122,7 +1120,7 @@ void save_envelope_editor_state(FILE *fd)
 
 env *xen_to_env(XEN res)
 {
-  XEN el; XEN lst;
+  XEN el, lst;
   int i, len = 0;
   Float *data;
   env *rtn = NULL;
@@ -1236,8 +1234,7 @@ static XEN g_define_envelope(XEN a, XEN b)
   #define H_define_envelope "(" S_define_envelope " name data): define 'name' to be the envelope 'data', a list of breakpoints"
   XEN_ASSERT_TYPE(XEN_STRING_P(a), a, XEN_ARG_1, S_define_envelope, "a string");
   if (XEN_LIST_P(b)) 
-    alert_envelope_editor(get_global_state(), 
-			  XEN_TO_C_STRING(a), 
+    alert_envelope_editor(XEN_TO_C_STRING(a), 
 			  xen_to_env(b));
   return(b);
 }
@@ -1319,7 +1316,7 @@ static XEN enved_hook;
 bool check_enved_hook(env *e, int pos, Float x, Float y, enved_point_t reason)
 {
   XEN result = XEN_FALSE;
-  XEN procs; XEN env_list;
+  XEN procs, env_list;
   bool env_changed = false;
   int len = 0;
   if (XEN_HOOKED(enved_hook))
@@ -1378,51 +1375,51 @@ bool check_enved_hook(env *e, int pos, Float x, Float y, enved_point_t reason)
   return(env_changed); /* 0 = default action */
 }
 
-static XEN g_enved_base(void) {return(C_TO_XEN_DOUBLE(enved_base(get_global_state())));}
+static XEN g_enved_base(void) {return(C_TO_XEN_DOUBLE(enved_base(ss)));}
 static XEN g_set_enved_base(XEN val) 
 {
   #define H_enved_base "(" S_enved_base "): envelope editor exponential base value (1.0)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_enved_base, "a number"); 
-  set_enved_base(get_global_state(), mus_fclamp(0.0, XEN_TO_C_DOUBLE(val), 300000.0));
-  return(C_TO_XEN_DOUBLE(enved_base(get_global_state())));
+  set_enved_base(mus_fclamp(0.0, XEN_TO_C_DOUBLE(val), 300000.0));
+  return(C_TO_XEN_DOUBLE(enved_base(ss)));
 }
 
-static XEN g_enved_power(void) {return(C_TO_XEN_DOUBLE(enved_power(get_global_state())));}
+static XEN g_enved_power(void) {return(C_TO_XEN_DOUBLE(enved_power(ss)));}
 static XEN g_set_enved_power(XEN val) 
 {
   #define H_enved_power "(" S_enved_power "): envelope editor base scale range (9.0^power)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_enved_power, "a number"); 
-  set_enved_power(get_global_state(), mus_fclamp(0.0, XEN_TO_C_DOUBLE(val), 10.0));
-  return(C_TO_XEN_DOUBLE(enved_power(get_global_state())));
+  set_enved_power(mus_fclamp(0.0, XEN_TO_C_DOUBLE(val), 10.0));
+  return(C_TO_XEN_DOUBLE(enved_power(ss)));
 }
 
-static XEN g_enved_clip_p(void) {return(C_TO_XEN_BOOLEAN(enved_clip_p(get_global_state())));}
+static XEN g_enved_clip_p(void) {return(C_TO_XEN_BOOLEAN(enved_clip_p(ss)));}
 static XEN g_set_enved_clip_p(XEN on)
 {
   #define H_enved_clip_p "(" S_enved_clip_p "): envelope editor clip button setting; \
 if clipping, the motion of the mouse is restricted to the current graph bounds."
 
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ONLY_ARG, S_setB S_enved_clip_p, "a boolean");
-  set_enved_clip_p(get_global_state(), XEN_TO_C_BOOLEAN(on)); 
-  return(C_TO_XEN_BOOLEAN(enved_clip_p(get_global_state())));
+  set_enved_clip_p(XEN_TO_C_BOOLEAN(on)); 
+  return(C_TO_XEN_BOOLEAN(enved_clip_p(ss)));
 }
 
-static XEN g_enved_exp_p(void) {return(C_TO_XEN_BOOLEAN(enved_exp_p(get_global_state())));}
+static XEN g_enved_exp_p(void) {return(C_TO_XEN_BOOLEAN(enved_exp_p(ss)));}
 static XEN g_set_enved_exp_p(XEN val) 
 {
   #define H_enved_exp_p "(" S_enved_exp_p "): envelope editor 'exp' and 'lin' buttons; \
 if enved-exping, the connecting segments use exponential curves rather than straight lines."
 
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_enved_exp_p, "a boolean");
-  set_enved_exp_p(get_global_state(), XEN_TO_C_BOOLEAN(val)); 
-  return(C_TO_XEN_BOOLEAN(enved_clip_p(get_global_state())));
+  set_enved_exp_p(XEN_TO_C_BOOLEAN(val)); 
+  return(C_TO_XEN_BOOLEAN(enved_clip_p(ss)));
 }
 
-static XEN g_enved_target(void) {return(C_TO_XEN_INT((int)enved_target(get_global_state())));}
+static XEN g_enved_target(void) {return(C_TO_XEN_INT((int)enved_target(ss)));}
 static XEN g_set_enved_target(XEN val) 
 {
   enved_target_t n; 
-  snd_state *ss;
+
   #define H_enved_target "(" S_enved_target "): where (amplitude, frequency, etc) the envelope is applied in the envelope editor; \
 choices are " S_enved_amplitude ", " S_enved_srate ", and " S_enved_spectrum
 
@@ -1430,42 +1427,44 @@ choices are " S_enved_amplitude ", " S_enved_srate ", and " S_enved_spectrum
   n = (enved_target_t)XEN_TO_C_INT(val);
   if ((n < ENVED_AMPLITUDE) || (n > ENVED_SRATE))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_enved_target, 1, val, "~A, but must be " S_enved_amplitude ", " S_enved_srate ", or " S_enved_spectrum);
-  ss = get_global_state();
-  set_enved_target(ss, n); 
+
+  set_enved_target(n); 
   return(C_TO_XEN_INT((int)enved_target(ss)));
 }
 
-static XEN g_enved_wave_p(void) {return(C_TO_XEN_BOOLEAN(enved_wave_p(get_global_state())));}
+static XEN g_enved_wave_p(void) {return(C_TO_XEN_BOOLEAN(enved_wave_p(ss)));}
 static XEN g_set_enved_wave_p(XEN val) 
 {
   #define H_enved_wave_p "(" S_enved_wave_p "): #t if the envelope editor is displaying the waveform to be edited"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_enved_wave_p, "a boolean");
-  set_enved_wave_p(get_global_state(), XEN_TO_C_BOOLEAN(val));
-  return(C_TO_XEN_BOOLEAN(enved_wave_p(get_global_state())));
+  set_enved_wave_p(XEN_TO_C_BOOLEAN(val));
+  return(C_TO_XEN_BOOLEAN(enved_wave_p(ss)));
 }
 
-static XEN g_enved_in_dB(void) {return(C_TO_XEN_BOOLEAN(enved_in_dB(get_global_state())));}
+static XEN g_enved_in_dB(void) {return(C_TO_XEN_BOOLEAN(enved_in_dB(ss)));}
 static XEN g_set_enved_in_dB(XEN val) 
 {
   #define H_enved_in_dB "(" S_enved_in_dB "): #t if the envelope editor is using dB"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_enved_in_dB, "a boolean");
-  set_enved_in_dB(get_global_state(), XEN_TO_C_BOOLEAN(val)); 
-  return(C_TO_XEN_BOOLEAN(enved_in_dB(get_global_state())));
+  set_enved_in_dB(XEN_TO_C_BOOLEAN(val)); 
+  return(C_TO_XEN_BOOLEAN(enved_in_dB(ss)));
 }
 
-static XEN g_enved_filter_order(void) {return(C_TO_XEN_INT(enved_filter_order(get_global_state())));}
+static XEN g_enved_filter_order(void) {return(C_TO_XEN_INT(enved_filter_order(ss)));}
 static XEN g_set_enved_filter_order(XEN val) 
 {
   #define H_enved_filter_order "(" S_enved_filter_order "): envelope editor's FIR filter order (40)"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_enved_filter_order, "an integer"); 
-  set_enved_filter_order(get_global_state(), XEN_TO_C_INT(val));
-  return(C_TO_XEN_INT(enved_filter_order(get_global_state())));
+  set_enved_filter_order(XEN_TO_C_INT(val));
+  return(C_TO_XEN_INT(enved_filter_order(ss)));
 }
 
 static XEN g_enved_dialog(void) 
 {
   #define H_enved_dialog "(" S_enved_dialog "): start the Envelope Editor"
-  return(XEN_WRAP_WIDGET(create_envelope_editor(get_global_state()))); 
+  widget_t w;
+  w = create_envelope_editor();
+  return(XEN_WRAP_WIDGET(w));
 }
 
 #ifdef XEN_ARGIFY_1

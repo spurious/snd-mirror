@@ -23,7 +23,7 @@ static void prepare_global_search (chan_info *cp, void *g0)
   if (g->fds[g->n] != NULL) g->n++;
 }
 
-static int run_global_search (snd_state *ss, gfd *g)
+static int run_global_search (gfd *g)
 {
   /* return 0 until success or all eof */
   /* if success, n = winner (as aref index), if eofs, n=-1 */
@@ -97,7 +97,7 @@ static int run_global_search (snd_state *ss, gfd *g)
 
 static char search_message[PRINT_BUFFER_SIZE];
 
-char *global_search(snd_state *ss, int direction)
+char *global_search(int direction)
 {
   /* set up snd_fd for each active channel, 
    * tick each one forward until a match is found, 
@@ -143,7 +143,7 @@ char *global_search(snd_state *ss, int direction)
 	}
     }
   search_in_progress = true;
-  chans = active_channels(ss, WITH_VIRTUAL_CHANNELS);
+  chans = active_channels(WITH_VIRTUAL_CHANNELS);
   search_message[0] = '\0';
   if (chans > 0)
     {
@@ -154,15 +154,15 @@ char *global_search(snd_state *ss, int direction)
       fd->chans = chans;
       fd->fds = (snd_fd **)CALLOC(chans, sizeof(snd_fd *));
       fd->cps = (chan_info **)CALLOC(chans, sizeof(chan_info *));
-      for_each_chan_1(ss, prepare_global_search, (void *)fd);
+      for_each_chan_1(prepare_global_search, (void *)fd);
       fd->n = -1;
       ss->stopped_explicitly = false;
-      while (!(run_global_search(ss, fd)))
+      while (!(run_global_search(fd)))
 	{
 	  passes++;
 	  if (passes >= MANY_PASSES)
 	    {
-	      check_for_event(ss);
+	      check_for_event();
 	      passes = 0;
 	      fd->n = -1;
 	    }
@@ -203,9 +203,7 @@ static off_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
   int passes = 0;
   off_t i = 0, end, start;
   snd_fd *sf = NULL;
-  snd_state *ss;
   XEN res = XEN_FALSE;
-  ss = sp->state;
   if (search_in_progress) 
     {
       report_in_minibuffer(sp, _("search in progress"));
@@ -246,7 +244,7 @@ static off_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
 	    }
 	  if (passes >= MANY_PASSES)
 	    {
-	      check_for_event(ss);
+	      check_for_event();
 	      /* if user types C-s during an active search, we risk stomping on our current pointers */
 	      if (!(sp->active)) break;
 	      passes = 0;
@@ -268,9 +266,7 @@ static off_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
   off_t i = 0, start;
   int passes = 0;
   snd_fd *sf = NULL;
-  snd_state *ss;
   XEN res = XEN_FALSE;
-  ss = sp->state;
   if (search_in_progress) 
     {
       report_in_minibuffer(sp, _("search in progress"));
@@ -311,7 +307,7 @@ static off_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
 	    }
 	  if (passes >= MANY_PASSES)
 	    {
-	      check_for_event(ss);
+	      check_for_event();
 	      /* if user types C-s during an active search, we risk stomping on our current pointers */
 	      if (!(sp->active)) break;
 	      passes = 0;
@@ -342,7 +338,6 @@ static void get_find_expression(snd_info *sp, int count)
 void cursor_search(chan_info *cp, int count)
 {
   off_t samp;
-  snd_state *ss;
   snd_info *sp;
   char *s1, *s2;
   sp = cp->sound;
@@ -361,7 +356,6 @@ void cursor_search(chan_info *cp, int count)
 		  snd_unprotect(sp->search_proc);
 		  sp->search_proc = XEN_UNDEFINED;
 		}
-	      ss = sp->state;
 	      if (sp->search_tree)
 		sp->search_tree = free_ptree(sp->search_tree);
 	      if (optimization(ss) > 0)
@@ -372,7 +366,6 @@ void cursor_search(chan_info *cp, int count)
 		  snd_protect(sp->search_proc);
 		}
 	    }
-
 	  if (count > 0)
 	    samp = cursor_find_forward(sp, cp, count);
 	  else samp = cursor_find_backward(sp, cp, -count);
@@ -405,7 +398,6 @@ void cursor_search(chan_info *cp, int count)
 static XEN g_search_procedure(XEN snd)
 {
   #define H_search_procedure "(" S_search_procedure " (snd #f)): global (if no 'snd' specified) or sound-local search function"
-  snd_state *ss;
   snd_info *sp;
   if (XEN_BOUND_P(snd))
     {
@@ -415,17 +407,14 @@ static XEN g_search_procedure(XEN snd)
 	return(sp->search_proc);
       else return(XEN_FALSE);
     }
-  ss = get_global_state();
   return(ss->search_proc);
 }
 
 static XEN g_set_search_procedure(XEN snd, XEN proc)
 {
-  snd_state *ss;
   snd_info *sp;
   char *error = NULL;
   XEN errstr;
-  ss = get_global_state();
   if (XEN_INTEGER_P(snd)) /* could be the proc arg if no snd */
     {
       ASSERT_JUST_SOUND(S_setB S_search_procedure, snd, 1);

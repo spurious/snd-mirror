@@ -421,7 +421,7 @@ v. (" S_vct_mapB " v (lambda () 3.0)) is the same as (" S_vct_fillB " v 3.0)"
 #if WITH_RUN
   {
     void *pt = NULL;
-    if ((optimization(get_global_state())) > 0)
+    if ((optimization(ss)) > 0)
       {
 	pt = form_to_ptree_0_f(proc);
 	if (pt)
@@ -502,7 +502,7 @@ static XEN list2vct(XEN lst)
   #define H_list2vct "(" S_list2vct " lst): returns a new vct filled with elements of list lst"
   int len, i;
   vct *v;
-  XEN scv; XEN lst1;
+  XEN scv, lst1;
   XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(lst, len), lst, XEN_ONLY_ARG, S_list2vct, "a list");
   if (len == 0) 
     return(XEN_FALSE);

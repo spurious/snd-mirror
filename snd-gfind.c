@@ -6,7 +6,6 @@ static GtkWidget *edit_find_dialog, *edit_find_text, *cancelB, *edit_find_label,
 
 static void edit_find_dismiss(GtkWidget *w, gpointer context) 
 { /* "Done" */
-  snd_state *ss = (snd_state *)context;
   if (ss->checking_explicitly)
     ss->stopped_explicitly = true;
   else gtk_widget_hide(edit_find_dialog);
@@ -19,8 +18,7 @@ static void edit_find_delete(GtkWidget *w, GdkEvent *event, gpointer context)
 
 static void edit_find_help(GtkWidget *w, gpointer context) 
 {
-  snd_help((snd_state *)context,
-	   "Global Find",
+  snd_help("Global Find",
 "This search travels through all the current channels in parallel until a match is found.  The find \
 expression is a Scheme function of one argument,  the current sample value.  It should return #t when the \
 search is satisified.  For example, (lambda (n) (> n .1) looks for the next sample that is greater than .1.",
@@ -30,7 +28,6 @@ search is satisified.  For example, (lambda (n) (> n .1) looks for the next samp
 static void edit_find_find(int direction, GtkWidget *w, gpointer context) 
 { /* "Find" is the label here */
   char *str, *buf = NULL;
-  snd_state *ss = (snd_state *)context;
   XEN proc;
   str = (char *)gtk_entry_get_text(GTK_ENTRY(edit_find_text));
   if ((str) && (*str))
@@ -70,7 +67,7 @@ static void edit_find_find(int direction, GtkWidget *w, gpointer context)
   if ((XEN_PROCEDURE_P(ss->search_proc)) || (ss->search_tree))
     {
       set_button_label(cancelB, _("Stop"));
-      str = global_search(ss, direction);
+      str = global_search(direction);
       set_button_label(cancelB, _("Dismiss"));
       if ((str) && (*str)) set_label(edit_find_label, str);
     }
@@ -81,7 +78,6 @@ static void edit_find_previous(GtkWidget *w, gpointer context) {edit_find_find(R
 
 void edit_find_callback(GtkWidget *w, gpointer context)
 {
-  snd_state *ss = (snd_state *)context;
   GtkWidget *dl, *rc;
   GtkWidget *help_button;
   if (!edit_find_dialog)
@@ -90,7 +86,7 @@ void edit_find_callback(GtkWidget *w, gpointer context)
       g_signal_connect_closure_by_id(GTK_OBJECT(edit_find_dialog),
 				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(edit_find_dialog))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(edit_find_delete), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(edit_find_delete), NULL, 0),
 				     0);
       gtk_window_set_title(GTK_WINDOW(edit_find_dialog), _("Find"));
       sg_make_resizable(edit_find_dialog);
@@ -110,22 +106,22 @@ void edit_find_callback(GtkWidget *w, gpointer context)
       g_signal_connect_closure_by_id(GTK_OBJECT(cancelB),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(cancelB))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(edit_find_dismiss), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(edit_find_dismiss), NULL, 0),
 				     0);
       g_signal_connect_closure_by_id(GTK_OBJECT(help_button),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(help_button))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(edit_find_help), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(edit_find_help), NULL, 0),
 				     0);
       g_signal_connect_closure_by_id(GTK_OBJECT(next_button),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(next_button))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(edit_find_next), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(edit_find_next), NULL, 0),
 				     0);
       g_signal_connect_closure_by_id(GTK_OBJECT(previous_button),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(previous_button))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(edit_find_previous), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(edit_find_previous), NULL, 0),
 				     0);
       gtk_widget_show(cancelB);
       gtk_widget_show(next_button);
@@ -140,18 +136,18 @@ void edit_find_callback(GtkWidget *w, gpointer context)
       gtk_box_pack_start(GTK_BOX(rc), dl, false, false, 4);
       gtk_widget_show(dl);
 
-      edit_find_text = snd_entry_new(ss, rc, true);
+      edit_find_text = snd_entry_new(rc, true);
       g_signal_connect_closure_by_id(GTK_OBJECT(edit_find_text),
 				     g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(edit_find_text))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(edit_find_next), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(edit_find_next), NULL, 0),
 				     0);
       
       edit_find_label = gtk_label_new(_("global search"));
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(edit_find_dialog)->vbox), edit_find_label, false, false, 4);
       gtk_widget_show(edit_find_label);
       gtk_widget_show(edit_find_dialog);
-      set_dialog_widget(ss, FIND_DIALOG, edit_find_dialog);
+      set_dialog_widget(FIND_DIALOG, edit_find_dialog);
     }
   else raise_dialog(edit_find_dialog);
 }
@@ -171,7 +167,7 @@ static XEN g_find_dialog_widgets(void)
 
 static XEN g_edit_find_dialog(void)
 {
-  edit_find_callback(NULL, (gpointer)(get_global_state()));
+  edit_find_callback(NULL, (gpointer)(ss));
   return(XEN_FALSE);
 }
 

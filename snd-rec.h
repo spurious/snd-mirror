@@ -56,14 +56,14 @@
 #endif
 
 int recorder_columns(int vu_meters);
-int recorder_sort_mixer_device(void *wd, int i, int chan, int input, int device, int *mixflds);
+int recorder_sort_mixer_device(void *wd, int i, int chan, bool input, int device, int *mixflds);
 void recorder_fill_wd(void *wd, int chan, int field, int device);
-int recorder_check_device(int system, int device, int *mixer_gains_posted, int *tone_controls_posted, int *mixflds, int *gains, int *inp);
-void recorder_set_audio_srate(snd_state *ss, int device, int srate, int system, int aud);
+int recorder_check_device(int system, int device, int *mixer_gains_posted, int *tone_controls_posted, int *mixflds, int *gains, bool *inp);
+void recorder_set_audio_srate(int device, int srate, int system, int aud);
 char *recorder_device_name(int dev);
 char *recorder_system_and_device_name(int sys, int dev);
-int recorder_input_device(int dev);
-int recorder_output_device(int dev);
+bool recorder_input_device(int dev);
+bool recorder_output_device(int dev);
 
 #if (HAVE_OSS || HAVE_ALSA)
   char *recorder_field_abbreviation(int fld);
@@ -85,7 +85,6 @@ typedef struct {
   mus_sample_t *all_systems_input_buf;
   mus_sample_t *one_system_input_buf;
   int system_input_buffer_size;
-
   int *chan_in_active;             /* overall_in_chans */
   int *chan_out_active;            /* (file)_out_chans */
   Float max_duration, trigger;
@@ -111,7 +110,6 @@ typedef struct {
   int output_file_descriptor;     /* mus_file_write to this */
   int output_header_type;
   mus_sample_t **output_bufs;  /* formatted non-interleaved output (for file and monitor outputs) */
-
   int duration_label_update_frames; /* frames between updates of the duration label */
   off_t total_output_frames;
   int systems;                    /* soundcards normally = how many independent input sources from sndlib's point of view */
@@ -134,7 +132,7 @@ void reflect_recorder_mixer_gain(int ind, Float val);
 void reflect_recorder_out_amp(int ind, Float val);
 void reflect_recorder_in_amp(int in, int out, Float val);
 char *channel_name(int in_chans, int out_chans, int chan);
-char *gain_channel_name(int in_chans, int out_chans, int input, int dev_in, int out);
+char *gain_channel_name(int in_chans, int out_chans, bool input, int dev_in, int out);
 Float mixer_gain(int system, int device, int chan, int gain, int field);
 void set_mixer_gain(int system, int device, int chan, int gain, int field, Float amp) ;
 void set_record_size (int new_size);
@@ -146,7 +144,7 @@ int device_channels(int dev); /* audio.c */
 /* static int device_channels(int dev) {return(8);} */
 int device_gains(int dev);
 
-void set_read_in_progress (snd_state *ss);
+void set_read_in_progress (void);
 int in_chans_active(void);
 int out_chans_active(void);
 void recorder_characterize_devices(int devs, int output_devices);
@@ -155,11 +153,11 @@ void recorder_set_vu_out_val(int chan, mus_sample_t val);
 
 void sensitize_control_buttons(void);
 void unsensitize_control_buttons(void);
-bool recorder_start_output_file(snd_state *ss, char *comment);
-void finish_recording(snd_state *ss, recorder_info *rp);
+bool recorder_start_output_file(char *comment);
+void finish_recording(recorder_info *rp);
 
 #if OLD_SGI_AL
-  void set_line_source(snd_state *ss, int in_digital);
+  void set_line_source(bool in_digital);
 #endif
 
 #if USE_MOTIF
@@ -175,6 +173,6 @@ void finish_recording(snd_state *ss, recorder_info *rp);
   #endif
 #endif
 
-FONT_TYPE *get_vu_font(snd_state *ss, Float size);
+FONT_TYPE *get_vu_font(Float size);
 
 #endif

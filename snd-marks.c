@@ -104,11 +104,9 @@ static mark *find_mark_id_1(chan_info *cp, mark *mp, void *uid)
 static mark *find_mark_from_id(int id, chan_info **cps, int pos)
 {
   int i, j, old_pos;
-  snd_state *ss;
   snd_info *sp;
   chan_info *cp;
   mark *mp;
-  ss = get_global_state();
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
@@ -189,7 +187,6 @@ static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, bool show)
   /* fields are samp and name */
   int len, top, cx, y0, y1;
   axis_context *ax;
-  snd_state *ss;
   XEN res = XEN_FALSE;
   ax = mark_context(cp);
   if (XEN_HOOKED(draw_mark_hook))
@@ -210,7 +207,6 @@ static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, bool show)
   cx = grf_x((double)(mp->samp) / (double)SND_SRATE(cp->sound), ap);
   if (mp->name)
     {
-      ss = get_global_state();
 #if USE_MOTIF
       ax->current_font = ((ss->sgx)->peaks_fontstruct)->fid;
       XSetFont(ax->dp, ax->gc, ((ss->sgx)->peaks_fontstruct)->fid);
@@ -219,7 +215,7 @@ static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, bool show)
       ax->current_font = (ss->sgx)->peaks_fnt;
   #endif
 #endif
-      len = mark_name_width(cp->state, mp->name);
+      len = mark_name_width(mp->name);
       draw_string(ax, (int)(cx - 0.5 * len), y1 + 6, mp->name, strlen(mp->name));
     }
   fill_rectangle(ax,
@@ -348,7 +344,7 @@ static Cessate WatchMouse(Indicium cp)
 static void start_mark_watching(chan_info *cp, mark *mp)
 {
   moving_mark = mp;
-  watch_mouse_button = BACKGROUND_ADD(cp->state, WatchMouse, cp);
+  watch_mouse_button = BACKGROUND_ADD(WatchMouse, cp);
   watching_mouse = true;
 }
 
@@ -1278,11 +1274,11 @@ static void gather_chan_syncd_marks(chan_info *cp, void *sd)
   map_over_marks(cp, gather_local_syncd_marks, sd, READ_FORWARD);
 }
 
-static syncdata *gather_syncd_marks(snd_state *ss, int sync)
+static syncdata *gather_syncd_marks(int sync)
 {
   syncdata *sd;
   sd = make_syncdata(sync);
-  for_each_chan_1(ss, gather_chan_syncd_marks, (void *)sd);
+  for_each_chan_1(gather_chan_syncd_marks, (void *)sd);
   return(sd);
 }
 
@@ -1312,7 +1308,7 @@ static void initialize_md_context(int size, chan_info **cps)
     {
       mark_movers[i] = make_mix_context(cps[i]);
       ms = mark_movers[i];
-      ms->lastpj = make_graph(cps[i], cps[i]->sound, cps[i]->state); 
+      ms->lastpj = make_graph(cps[i]); 
       mix_save_graph(ms, ms->lastpj);
     }
 }
@@ -1355,7 +1351,7 @@ mark *hit_mark(chan_info *cp, int x, int y, int key_state)
 	      if (mp->sync != 0) 
 		{
 		  if (mark_sd) mark_sd = free_syncdata(mark_sd);
-		  mark_sd = gather_syncd_marks(cp->state, mp->sync);
+		  mark_sd = gather_syncd_marks(mp->sync);
 		}
 	      if (mark_control_clicked)
 		{
@@ -1384,7 +1380,6 @@ mark *hit_mark(chan_info *cp, int x, int y, int key_state)
 			      mark_sd->chans[loc] = tc;
 			    }
 			}
-
 		      initialize_md_context(mark_sd->mark_ctr, mark_sd->chans);
 		    }
 		  else initialize_md_context(1, &cp);
@@ -1395,7 +1390,7 @@ mark *hit_mark(chan_info *cp, int x, int y, int key_state)
   return(mp);
 }
 
-static void make_mark_graph(chan_info *cp, snd_info *sp, off_t initial_sample, off_t current_sample, int which);
+static void make_mark_graph(chan_info *cp, off_t initial_sample, off_t current_sample, int which);
 
 static int move_syncd_mark(chan_info *cp, mark *m, int x)
 {
@@ -1426,7 +1421,7 @@ static int move_syncd_mark(chan_info *cp, mark *m, int x)
 		  samps = CURRENT_SAMPLES(ncp);
 		  if (mp->samp > samps) mp->samp = samps;
 		  if (mark_control_clicked)
-		    make_mark_graph(ncp, ncp->sound, mark_sd->initial_samples[i], mp->samp, i);
+		    make_mark_graph(ncp, mark_sd->initial_samples[i], mp->samp, i);
 		  if ((mp->samp >= ap->losamp) && 
 		      (mp->samp <= ap->hisamp)) 
 		    draw_mark(ncp, ap, mp);
@@ -1457,7 +1452,7 @@ void move_mark(chan_info *cp, mark *mp, int x) /* from mouse drag callback in sn
     redraw = move_syncd_mark(cp, mp, x);
   else redraw = move_mark_1(cp, mp, x);
   if (mark_control_clicked)
-    make_mark_graph(cp, cp->sound, mark_initial_sample, mp->samp, 0);
+    make_mark_graph(cp, mark_initial_sample, mp->samp, 0);
   if (redraw) draw_mark(cp, cp->axis, mp);
 }
 
@@ -1537,7 +1532,7 @@ void finish_moving_mark(chan_info *cp, mark *m) /* button release called from sn
 void play_syncd_mark(chan_info *cp, mark *m)
 {
   syncdata *sd;
-  sd = gather_syncd_marks(cp->state, m->sync);
+  sd = gather_syncd_marks(m->sync);
   if ((sd) && (sd->mark_ctr > 0))
     play_channels(sd->chans, sd->mark_ctr, sd->initial_samples, NULL, IN_BACKGROUND, 
 		  C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 
@@ -1545,8 +1540,9 @@ void play_syncd_mark(chan_info *cp, mark *m)
   if (sd) free_syncdata(sd);
 }
 
-static void make_mark_graph(chan_info *cp, snd_info *sp, off_t initial_sample, off_t current_sample, int which)
+static void make_mark_graph(chan_info *cp, off_t initial_sample, off_t current_sample, int which)
 {
+  snd_info *sp;
   int j = 0;
   off_t i, k, samps;
   Locus xi;
@@ -1557,6 +1553,7 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, off_t initial_sample, o
   snd_fd *sf = NULL;
   int x_start, x_end;
   double start_time = 0.0, cur_srate = 1.0;
+  sp = cp->sound;
   ap = cp->axis;
   cur_srate = (double)SND_SRATE(sp);
   ap->losamp = (off_t)(ap->x0 * cur_srate);
@@ -1581,7 +1578,6 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, off_t initial_sample, o
       sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
       if (sf == NULL) return;
       incr = (double)1.0 / cur_srate;
-
       if (current_sample < initial_sample)
 	{
 	  for (j = 0, i = ap->losamp, x = start_time; i <= ap->hisamp; i++, j++, x += incr)
@@ -1750,7 +1746,7 @@ static XEN snd_no_such_mark_error(const char *caller, XEN id)
 
 static XEN g_restore_marks(XEN size, XEN snd, XEN chn, XEN marklist)
 {
-  XEN lst; XEN el; XEN nm; XEN sm; XEN mlst; XEN olst; XEN molst;
+  XEN lst, el, nm, sm, mlst, olst, molst;
   chan_info *cp;
   snd_info *sp;
   char *str;
@@ -2045,13 +2041,13 @@ static XEN int_array_to_list(int *arr, int i, int len)
 		       XEN_EMPTY_LIST));
 }
 
-static int *syncd_marks(snd_state *ss, int sync)
+static int *syncd_marks(int sync)
 {
   syncdata *sd;
   int *ids;
   int i;
   sd = make_syncdata(sync);
-  for_each_chan_1(ss, gather_chan_syncd_marks, (void *)sd);
+  for_each_chan_1(gather_chan_syncd_marks, (void *)sd);
   ids = (int *)CALLOC(1 + sd->mark_ctr, sizeof(int));
   ids[0] = sd->mark_ctr;
   for (i = 0; i < sd->mark_ctr; i++) ids[i + 1] = mark_id(sd->marks[i]);
@@ -2065,7 +2061,7 @@ static XEN g_syncd_marks(XEN sync)
   int *ids;
   XEN res;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(sync), sync, XEN_ONLY_ARG, S_syncd_marks, "an integer");
-  ids = syncd_marks(get_global_state(), XEN_TO_C_INT(sync));
+  ids = syncd_marks(XEN_TO_C_INT(sync));
   if (ids == NULL) return(XEN_EMPTY_LIST);
   if (ids[0] == 0) {FREE(ids); return(XEN_EMPTY_LIST);}
   res = int_array_to_list(ids, 1, ids[0]);
@@ -2099,8 +2095,7 @@ static XEN g_marks(XEN snd_n, XEN chn_n, XEN pos_n)
 mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neither given: (((id ...) ...) ...)."
   chan_info *cp;
   snd_info *sp;
-  snd_state *ss;
-  XEN res; XEN res1 = XEN_EMPTY_LIST;
+  XEN res, res1 = XEN_EMPTY_LIST;
   int *ids;
   int i, pos, j;
   if (XEN_INTEGER_P(snd_n))
@@ -2149,7 +2144,6 @@ mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neit
   else
     {
       /* all marks */
-      ss = get_global_state();
       for (j = ss->max_sounds - 1; j >= 0; j--)
 	{
 	  sp = ss->sounds[j];

@@ -16,8 +16,8 @@ enum {
 #define NUM_CHAN_WIDGETS 16
 #define DEFAULT_EDIT_HISTORY_WIDTH 1
 
-#define START_JUST_TIME(cp) (cp->state)->just_time = true
-#define END_JUST_TIME(cp) (cp->state)->just_time = false
+#define START_JUST_TIME(cp) ss->just_time = true
+#define END_JUST_TIME(cp) ss->just_time = false
 
 Widget channel_main_pane(chan_info *cp)
 {
@@ -68,13 +68,11 @@ static void sx_changed(int value, chan_info *cp)
 {
   /* treat as centered with non-slider trough as defining current bounds */
   axis_info *ap;
-  snd_info *sp;
   double low;
   ap = cp->axis;
-  sp = cp->sound;
   low = get_scrollbar(channel_sx(cp), value, SCROLLBAR_SX_MAX);
   ap->sx = low * (1.0 - ap->zx);
-  apply_x_axis_change(ap, cp, sp);
+  apply_x_axis_change(ap, cp);
 }
 
 static void zy_changed(int value, chan_info *cp)
@@ -96,10 +94,6 @@ static void zy_changed(int value, chan_info *cp)
 static void zx_changed(int value, chan_info *cp)
 { /* scrollbar change */
   axis_info *ap;
-  snd_info *sp;
-  snd_state *ss;
-  sp = cp->sound;
-  ss = cp->state;
   ap = cp->axis;
   if (ap->xmax == 0.0) return;
   if (ap->xmax <= ap->xmin) 
@@ -112,7 +106,7 @@ static void zx_changed(int value, chan_info *cp)
     ap->zx = sqr(get_scrollbar(channel_zx(cp), value, SCROLLBAR_MAX));
   else ap->zx = cube(get_scrollbar(channel_zx(cp), value, SCROLLBAR_MAX));
   /* if cursor visible, focus on that, else selection, else mark, else left side */
-  focus_x_axis_change(ap, cp, sp, zoom_focus_style(ss));
+  focus_x_axis_change(ap, cp, zoom_focus_style(ss));
   resize_sx(cp);
 }
 
@@ -453,11 +447,8 @@ static void channel_expose_callback(Widget w, XtPointer context, XtPointer info)
   ASSERT_WIDGET_TYPE(XmIsDrawingArea(w), w);
   if ((cp == NULL) || (!(cp->active)) || (cp->sound == NULL)) return;
   ev = (XExposeEvent *)(cb->event);
-  /*
-  fprintf(stderr,"expose %d %d %d\n", ev->count, ev->width, ev->height);
-  */
   if (ev->count > 0) return;
-  curtime = XtLastTimestampProcessed(MAIN_DISPLAY(cp->state));
+  curtime = XtLastTimestampProcessed(MAIN_DISPLAY(ss));
   if ((ev->width < 15) && (last_expose_event_time == curtime) && (cp == last_cp)) return;
   last_cp = cp;
   last_expose_event_time = curtime;
@@ -489,7 +480,6 @@ static XEN mouse_leave_graph_hook;
 
 static void graph_mouse_enter(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
-  snd_state *ss = (snd_state *)context;
   int data;
   XtVaGetValues(w, XmNuserData, &data, NULL);
   if (XEN_HOOKED(mouse_enter_graph_hook))
@@ -516,7 +506,7 @@ static void graph_button_press(Widget w, XtPointer context, XEvent *event, Boole
 {
   XButtonEvent *ev = (XButtonEvent *)event;
   if ((ev->button == POPUP_BUTTON) && 
-      (sound_style(get_global_state()) == SOUNDS_IN_SEPARATE_WINDOWS))
+      (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS))
     post_popup(ev);
   else graph_button_press_callback((chan_info *)context, ev->x, ev->y, ev->state, ev->button, ev->time);
 }
@@ -729,7 +719,7 @@ void reflect_edit_counter_change(chan_info *cp)
 
 static void cp_graph_key_press(Widget w, XtPointer context, XEvent *event, Boolean *cont);
 
-int add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int insertion, Widget main, int button_style, bool with_events)
+int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Widget main, int button_style, bool with_events)
 {
   Widget *cw;
   XtCallbackList n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14;
@@ -737,11 +727,12 @@ int add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int
   chan_context *cx;
   axis_context *cax;
   state_context *sx;
-  int make_widgets, i, n;
+  bool make_widgets;
+  int i, n;
   bool need_colors, need_extra_scrollbars;
   Arg args[32];
   make_widgets = ((sp->chans[channel]) == NULL);
-  sp->chans[channel] = make_chan_info(sp->chans[channel], channel, sp, ss);
+  sp->chans[channel] = make_chan_info(sp->chans[channel], channel, sp);
   if ((main) && (!(XmIsForm(main)))) return(-1);
   cp = sp->chans[channel];
   cx = cp->cgx;
@@ -977,13 +968,13 @@ int add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int
 	}
       if (main == NULL)
 	{
-	  XtAddEventHandler(cw[W_graph], EnterWindowMask, false, graph_mouse_enter, (XtPointer)ss);
+	  XtAddEventHandler(cw[W_graph], EnterWindowMask, false, graph_mouse_enter, NULL);
 	  XtAddEventHandler(cw[W_graph], LeaveWindowMask, false, graph_mouse_leave, (XtPointer)cp);
 	  XtAddEventHandler(cw[W_graph], ButtonPressMask, false, graph_button_press, (XtPointer)cp);
 	  XtAddEventHandler(cw[W_graph], ButtonMotionMask, false, graph_button_motion, (XtPointer)cp);
 	  XtAddEventHandler(cw[W_graph], ButtonReleaseMask, false, graph_button_release, (XtPointer)cp);
 	  XtAddEventHandler(cw[W_graph], KeyPressMask, false, cp_graph_key_press, (XtPointer)cp);
-	  add_drop(ss, cw[W_graph]);
+	  add_drop(cw[W_graph]);
 	}
       FREE(n1);
       FREE(n2);
@@ -1086,15 +1077,13 @@ static void set_graph_font(chan_info *cp, XFontStruct *bf)
   XSetFont(XtDisplay(cx->chan_widgets[W_graph]), copy_GC(cp), bf->fid);
 }
 
-void set_peak_numbers_font(chan_info *cp) {set_graph_font(cp, PEAK_NUMBERS_FONT(cp->state));}
-void set_tiny_numbers_font(chan_info *cp) {set_graph_font(cp, TINY_NUMBERS_FONT(cp->state));}
-void set_bold_peak_numbers_font(chan_info *cp) {set_graph_font(cp, BOLD_PEAK_NUMBERS_FONT(cp->state));}
+void set_peak_numbers_font(chan_info *cp) {set_graph_font(cp, PEAK_NUMBERS_FONT(ss));}
+void set_tiny_numbers_font(chan_info *cp) {set_graph_font(cp, TINY_NUMBERS_FONT(ss));}
+void set_bold_peak_numbers_font(chan_info *cp) {set_graph_font(cp, BOLD_PEAK_NUMBERS_FONT(ss));}
 
 color_t get_foreground_color(chan_info *cp, axis_context *ax)
 {
   XGCValues gv;
-  snd_state *ss;
-  ss = cp->state;
   XGetGCValues(MAIN_DISPLAY(ss), ax->gc, GCForeground, &gv);
   return(gv.foreground);
 }
@@ -1102,23 +1091,19 @@ color_t get_foreground_color(chan_info *cp, axis_context *ax)
 color_t get_background_color(chan_info *cp, axis_context *ax)
 {
   XGCValues gv;
-  snd_state *ss;
-  ss = cp->state;
   XGetGCValues(MAIN_DISPLAY(ss), ax->gc, GCBackground, &gv);
   return(gv.background);
 }
 
 void set_foreground_color(chan_info *cp, axis_context *ax, Pixel color)
 {
-  snd_state *ss;
-  ss = cp->state;
   XSetForeground(MAIN_DISPLAY(ss), ax->gc, color);
 }
 
 GC copy_GC(chan_info *cp)
 {
   state_context *sx;
-  sx = (cp->state)->sgx;
+  sx = ss->sgx;
   if ((cp->cgx)->selected) return(sx->selected_basic_gc);
   return(sx->basic_gc);
 }
@@ -1128,8 +1113,6 @@ GC erase_GC(chan_info *cp)
   /* used only to clear partial bgs in chan graphs */
   state_context *sx;
   snd_info *sp;
-  snd_state *ss;
-  ss = cp->state;
   sp = cp->sound;
   sx = ss->sgx;
   if (((cp->cgx)->selected) ||
@@ -1199,7 +1182,6 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 {
   int i, j;
   channel_style_t old_style;
-  snd_state *ss;
   chan_info *ncp, *cp, *pcp;
   int height[1];
   chan_context *mcgx;
@@ -1208,7 +1190,6 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
   chan_context *cx;
   if ((sp) && (sp->nchans > 1))
     {
-      ss = sp->state;
       old_style = sp->channel_style;
       if (new_style != old_style)
 	{
@@ -1239,7 +1220,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		  if (sp->sync == 0) syncb(sp, 1);
 		  XtVaSetValues(unite_button(sp), XmNselectColor, (ss->sgx)->green, NULL);
 		  apply_y_axis_change((sp->chans[0])->axis, sp->chans[0]);
-		  apply_x_axis_change((sp->chans[0])->axis, sp->chans[0], sp);
+		  apply_x_axis_change((sp->chans[0])->axis, sp->chans[0]);
 		}
 	    }
 	  height[0] = widget_height(w_snd_pane(sp)) - control_panel_height(sp) - 16;

@@ -10,12 +10,11 @@ static char print_string[PRINT_BUFFER_SIZE];
 
 static void file_print_help_callback(GtkWidget *w, gpointer context)
 {
-  print_dialog_help((snd_state *)context);
+  print_dialog_help();
 }
 
 static void file_print_cancel_callback(GtkWidget *w, gpointer context)
 {
-  snd_state *ss = (snd_state *)context;
   ss->print_choice = PRINT_SND;
   gtk_widget_hide(file_print_dialog);
 }
@@ -36,8 +35,8 @@ static bool printing = false;
 
 static void file_print_ok_callback(GtkWidget *w, gpointer context)
 {
-  snd_state *ss = (snd_state *)context;
-  int print_it, quit = 0, err = 0;
+  bool print_it, quit = false;
+  int err = 0;
   char *name;
   snd_info *nsp = NULL;
   if (printing) 
@@ -47,20 +46,20 @@ static void file_print_ok_callback(GtkWidget *w, gpointer context)
       if (ss->print_choice == PRINT_SND)
 	{
 	  set_button_label(file_print_ok_button, _("Stop"));
-	  nsp = any_selected_sound(ss);
+	  nsp = any_selected_sound();
 	  mus_snprintf(print_string, PRINT_BUFFER_SIZE, _("printing %s"), nsp->short_filename);
 	  set_label(file_print_message, print_string);
 	}
       printing = true;
-      print_it = GTK_TOGGLE_BUTTON(file_print_eps_or_lpr)->active;
+      print_it = (bool)GTK_TOGGLE_BUTTON(file_print_eps_or_lpr)->active;
       quit = (ss->print_choice == PRINT_ENV);
       if (print_it)
 	{
-	  name = snd_tempnam(ss);
+	  name = snd_tempnam();
 	  switch (ss->print_choice)
 	    {
 	    case PRINT_SND: 
-	      snd_print(ss, name); 
+	      snd_print(name); 
 	      break;
 	    case PRINT_ENV: 
 	      enved_print(name); 
@@ -77,7 +76,7 @@ static void file_print_ok_callback(GtkWidget *w, gpointer context)
 	  switch (ss->print_choice)
 	    {
 	    case PRINT_SND: 
-	      snd_print(ss, (char *)gtk_entry_get_text(GTK_ENTRY(file_print_name))); 
+	      snd_print((char *)gtk_entry_get_text(GTK_ENTRY(file_print_name))); 
 	      break;
 	    case PRINT_ENV: 
 	      enved_print((char *)gtk_entry_get_text(GTK_ENTRY(file_print_name))); 
@@ -100,14 +99,13 @@ void file_print_callback(GtkWidget *w, gpointer context)
 {
   GtkWidget *print_button, *help_button, *dismiss_button, *epsbox, *epslabel;
   snd_info *nsp;
-  snd_state *ss = (snd_state *)context;
   if (!file_print_dialog)
     {
       file_print_dialog = gtk_dialog_new();
       g_signal_connect_closure_by_id(GTK_OBJECT(file_print_dialog),
 				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(file_print_dialog))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(file_print_delete_callback), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(file_print_delete_callback), NULL, 0),
 				     0);
       gtk_window_set_title(GTK_WINDOW(file_print_dialog), _("Print"));
       sg_make_resizable(file_print_dialog);
@@ -125,22 +123,21 @@ void file_print_callback(GtkWidget *w, gpointer context)
       g_signal_connect_closure_by_id(GTK_OBJECT(dismiss_button),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(dismiss_button))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(file_print_cancel_callback), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(file_print_cancel_callback), NULL, 0),
 				     0);
       g_signal_connect_closure_by_id(GTK_OBJECT(help_button),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(help_button))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(file_print_help_callback), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(file_print_help_callback), NULL, 0),
 				     0);
       g_signal_connect_closure_by_id(GTK_OBJECT(print_button),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(print_button))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(file_print_ok_callback), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(file_print_ok_callback), NULL, 0),
 				     0);
       gtk_widget_show(dismiss_button);
       gtk_widget_show(print_button);
       gtk_widget_show(help_button);
-
       file_print_ok_button = print_button;
 
       file_print_message = gtk_label_new("");
@@ -155,17 +152,17 @@ void file_print_callback(GtkWidget *w, gpointer context)
       gtk_box_pack_start(GTK_BOX(epsbox), epslabel, false, false, 2);
       gtk_widget_show(epslabel);
       
-      file_print_name = snd_entry_new(ss, epsbox, true);
+      file_print_name = snd_entry_new(epsbox, true);
       gtk_entry_set_text(GTK_ENTRY(file_print_name), eps_file(ss));
 
       file_print_eps_or_lpr = gtk_check_button_new_with_label(_("direct to printer"));
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(file_print_dialog)->vbox), file_print_eps_or_lpr, false, false, 6);
       gtk_widget_show(file_print_eps_or_lpr);
-      set_dialog_widget(ss, PRINT_DIALOG, file_print_dialog);
+      set_dialog_widget(PRINT_DIALOG, file_print_dialog);
     }
   if (ss->print_choice == PRINT_SND)
     {
-      nsp = any_selected_sound(ss);
+      nsp = any_selected_sound();
       mus_snprintf(print_string, PRINT_BUFFER_SIZE, _("print %s"), nsp->short_filename);
     }
   else mus_snprintf(print_string, PRINT_BUFFER_SIZE, "%s", _("print env"));

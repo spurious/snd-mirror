@@ -112,10 +112,8 @@ static char *gl_version(void)
 
 static char *glx_version(void)
 {
-  snd_state *ss;
   int major = 0, minor = 0;
   char *version;
-  ss = get_global_state();
   if (ss == NULL) return(""); /* snd --help for example */
   version = (char *)CALLOC(128, sizeof(char));
 #if USE_MOTIF
@@ -283,7 +281,7 @@ char *version_info(void)
   return(buf);
 }
 
-void news_help(snd_state *ss)
+void news_help(void)
 {
   char *info = NULL, *features = NULL;
   info = version_info();
@@ -293,7 +291,7 @@ void news_help(snd_state *ss)
 #if HAVE_RUBY
   features = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING("$\".join(' ')")), 600);
 #endif
-  ssnd_help(ss, "News",
+  ssnd_help("News",
 	    info,
 	    "\nRecent changes include:\n\
 \n\
@@ -326,7 +324,7 @@ NULL);
 
 /* -------- basic helpers -------- */
 
-void ssnd_help(snd_state *ss, const char *subject, ...)
+void ssnd_help(const char *subject, ...)
 {
   va_list ap;
   char *helpstr, *newstr;
@@ -346,7 +344,7 @@ void ssnd_help(snd_state *ss, const char *subject, ...)
       strcat(newstr, helpstr);
     }
   va_end(ap);
-  snd_help(ss, subject, newstr, false);
+  snd_help(subject, newstr, false);
   FREE(newstr);
 }  
 
@@ -645,9 +643,9 @@ data values, to some extent), set the variable\n\
 ";
 
 
-void find_help(snd_state *ss) 
+void find_help(void) 
 {
-  snd_help(ss, "Find", 
+  snd_help("Find", 
 "Searches in Snd refer to the sound data, and are in general patterned after Emacs.  When you type \
 C-s or C-r, the minibuffer below the graph is activated and you are asked for the search function. \
 The expression is a function of one argument, the current sample value.  It should return #t when the \
@@ -659,9 +657,9 @@ Normally, the search applies only to the current channel. To search all current 
 	   true);
 }
 
-void undo_help(snd_state *ss) 
+void undo_help(void) 
 {
-  snd_help(ss, "Undo", 
+  snd_help("Undo", 
 "Snd supports unlimited undo in the sense that you can back up through all \
 the edits since the last save, and at any point redo those edits.  Certain \
 operations require that temporary files be written, so disk space may eventually \
@@ -671,9 +669,9 @@ In addition, eight or so of the previous selections are saved on a 'region' stac
 	   true);
 }
 
-void sync_help(snd_state *ss) 
+void sync_help(void) 
 {
-  snd_help(ss, "Sync", 
+  snd_help("Sync", 
 "The sync button causes certain operations to apply to all channels simultaneously.  In mono \
 sounds, the sync button has a similar effect, but applied across multiple sounds. \
 \n\n\
@@ -719,18 +717,18 @@ pass filter in the allpass bank. The variables are '" S_reverb_control_feedback 
 The reverb is on only if the reverb button is set.\
 ";
 
-void contrast_help(snd_state *ss) 
+void contrast_help(void) 
 {
-  snd_help(ss, "Contrast", 
+  snd_help("Contrast", 
 "'Contrast enhancement' is my name for this somewhat weird waveshaper or compander.  It \
 phase-modulates a sound, which can in some cases make it sound sharper or brighter. \
 For softer sounds, it causes only an amplitude change.  Contrast is on only if the contrast button is set.",
 	   true);
 }
 
-void env_help(snd_state *ss) 
+void env_help(void) 
 {
-  snd_help(ss, "Envelope", 
+  snd_help("Envelope", 
 "An envelope in Snd is a list of x y break-point pairs. The x axis range is \
 arbitrary. For example, to define a triangle curve: '(0 0 1 1 2 0). There is no (obvious) limit \
 on the number of breakpoints. \
@@ -901,9 +899,9 @@ Digital input is slightly tricky -- you need to set the sampling rate before you
 click the 'digital input' button; otherwise you'll get a stuttering effect because the output \
 (monitor) rate doesn't match the input rate. ";
 
-void envelope_editor_dialog_help(snd_state *ss)
+void envelope_editor_dialog_help(void)
 {
-  snd_help(ss, "Envelope Editor",
+  snd_help("Envelope Editor",
 "The Edit Envelope dialog (under the Edit menu) fires up a window for viewing and editing \
 envelopes. The dialog has a display showing either the envelope currently being edited or a panorama \
 of all currently loaded envelopes. The current envelope can be edited with the mouse: click at \
@@ -942,10 +940,9 @@ axis bounds (the 'clip' button).",
 	   true);
 }
 
-void about_snd_help(snd_state *ss)
+void about_snd_help(void)
 {
-  ssnd_help(ss,
-	    "Snd",
+  ssnd_help("Snd",
 about_snd_help_string,
 "The various Help menu items are:\n\
 \n",
@@ -984,10 +981,9 @@ init_file_help_string,
 NULL);
 }
 
-void fft_help(snd_state *ss)
+void fft_help(void)
 {
-  ssnd_help(ss,
-	    "FFT",
+  ssnd_help("FFT",
 fft_help_string,
 "\n\
 ",
@@ -995,22 +991,21 @@ fft_keypad_help_string,
 NULL);
 }
 
-void speed_help(snd_state *ss) {snd_help(ss, "Speed", speed_help_string, true);}
-void expand_help(snd_state *ss) {snd_help(ss, "Expand", expand_help_string, true);}
-void reverb_help(snd_state *ss) {snd_help(ss, "Reverb", reverb_help_string, true);}
-void marks_help(snd_state *ss) {snd_help(ss, "Marks", mark_help_string, true);}
-void mix_help(snd_state *ss) {snd_help(ss, "Mixing", mix_help_string, true);}
-void sound_files_help(snd_state *ss) {snd_help(ss, "Format", sound_files_help_string, false);}
-void recording_help(snd_state *ss) {snd_help(ss, "Recording", recording_help_string, true);}
-void init_file_help(snd_state *ss) {snd_help(ss, "Customization", init_file_help_string, true);}
+void speed_help(void) {snd_help("Speed", speed_help_string, true);}
+void expand_help(void) {snd_help("Expand", expand_help_string, true);}
+void reverb_help(void) {snd_help("Reverb", reverb_help_string, true);}
+void marks_help(void) {snd_help("Marks", mark_help_string, true);}
+void mix_help(void) {snd_help("Mixing", mix_help_string, true);}
+void sound_files_help(void) {snd_help("Format", sound_files_help_string, false);}
+void recording_help(void) {snd_help("Recording", recording_help_string, true);}
+void init_file_help(void) {snd_help("Customization", init_file_help_string, true);}
 
 
 /* -------- dialog help button -------- */
 
-void transform_dialog_help(snd_state *ss)
+void transform_dialog_help(void)
 {
-  snd_help(ss,
-	   "Transform Options",
+  snd_help("Transform Options",
 "This dialog presents the various transform (fft) related choices. \
 \n\n\
 On the upper left is a list of available transform types; next on the right is a list of fft sizes;  \
@@ -1039,26 +1034,24 @@ button makes a similar choice along the frequency axis.",
 	   true);	   
 }
 
-void color_dialog_help(snd_state *ss)
+void color_dialog_help(void)
 {
-  snd_help(ss,
-	   "View Color",
+  snd_help("View Color",
 "This dialog sets the colormap and associated variables used during sonogram, spectrogram,  \
 and perhaps wavogram display. The cutoff scale refers to the minimum data value to be displayed.",
 	   true);	   
 }
 
-void orientation_dialog_help(snd_state *ss)
+void orientation_dialog_help(void)
 {
-  snd_help(ss,
-	   "View Orientation",
+  snd_help("View Orientation",
 	   "This dialog sets the rotation and scaling variables used during sonogram, spectrogram, and wavogram display.",
 	   true);	   
 }
 
-void region_dialog_help(snd_state *ss)
+void region_dialog_help(void)
 {
-  snd_help(ss, "Region Browser",
+  snd_help("Region Browser",
 "This is the 'region browser'.  The scrolled window contains the list of current regions \
 with a brief title to indicate the provenance thereof, and two buttons.  The 'save' button \
 protects or unprotects the region from deletion. The 'play' button plays the associated region. \
@@ -1071,10 +1064,9 @@ the file, the region is updated to reflect any edits you made.",
 	   true);
 }
 
-void raw_data_dialog_help(snd_state *ss)
+void raw_data_dialog_help(void)
 {
-  snd_help(ss,
-	   "Raw Data",
+  snd_help("Raw Data",
 "To display and edit sound data, Snd needs to know how the data's sampling rate, number \
 of channels, and numerical format.  This dialog gives you a chance to set those fields. \
 To make the current settings the default for any future headerless files, click the \
@@ -1082,18 +1074,16 @@ To make the current settings the default for any future headerless files, click 
 	   true);
 }
 
-void new_file_dialog_help(snd_state *ss)
+void new_file_dialog_help(void)
 {
-  snd_help(ss,
-	   "New File",
+  snd_help("New File",
 	   "This dialog sets the new file's output header type, data format, srate, chans, and comment if any.",
 	   true);
 }
 
-void edit_header_dialog_help(snd_state *ss)
+void edit_header_dialog_help(void)
 {
-  snd_help(ss,
-	   "Edit Header",
+  snd_help("Edit Header",
 "This dialog edits the header of a sound file. No change is made to the actual sound data; the \
 new header is blindly written, any unsaved edits are ignored. If you specify 'raw' as the type, \
 any existing header is removed.  This dialog is aimed at adding or removing an entire header,  \
@@ -1101,20 +1091,18 @@ or editing the header comments; anything else is obviously dangerous.",
 	   true);
 }
 
-void print_dialog_help(snd_state *ss)
+void print_dialog_help(void)
 {
-  snd_help(ss,
-	   "File Print",
+  snd_help("File Print",
 "Print causes the currently active display to be either printed (via the lpr command) or saved as \
 an eps file.  In the latter case, the file name is set either by the dialog, or taken from the \
 resource epsFile (normally snd.eps).",
 	   true);
 }
 
-void view_files_dialog_help(snd_state *ss)
+void view_files_dialog_help(void)
 {
-  snd_help(ss,
-	   "File Browser",
+  snd_help("File Browser",
 "This dialog provides two lists, one of the currently active files in Snd, and \
 the other of previously active files. The save button saves current edits, the \
 play button plays the file, and the unlist button removes a file from the \
@@ -1398,38 +1386,36 @@ static XEN g_listener_help(XEN arg, XEN formatted)
   return(g_snd_help(arg, listener_width()));
 }
 
-void set_html_dir(snd_state *ss, char *new_dir)
+void set_html_dir(char *new_dir)
 {
   if (html_dir(ss)) FREE(html_dir(ss));
-  set_html_dir_1(ss, new_dir);
+  set_html_dir_1(new_dir);
 }
 
 static XEN g_html_dir(void) 
 {
   #define H_html_dir "(" S_html_dir "): location of Snd documentation"
-  return(C_TO_XEN_STRING(html_dir(get_global_state())));
+  return(C_TO_XEN_STRING(html_dir(ss)));
 }
 
 static XEN g_set_html_dir(XEN val) 
 {
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_html_dir, "a string");
-  set_html_dir(get_global_state(), copy_string(XEN_TO_C_STRING(val))); 
+  set_html_dir(copy_string(XEN_TO_C_STRING(val))); 
   return(val);
 }
 
 static XEN g_html_program(void) 
 {
   #define H_html_program "(" S_html_program "): name of documentation reader (netscape, by default)"
-  return(C_TO_XEN_STRING(html_program(get_global_state())));
+  return(C_TO_XEN_STRING(html_program(ss)));
 }
 
 static XEN g_set_html_program(XEN val) 
 {
-  snd_state *ss;
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_html_program, "a string");
-  ss = get_global_state();
   if (html_program(ss)) FREE(html_program(ss));
-  set_html_program(ss, copy_string(XEN_TO_C_STRING(val))); 
+  set_html_program(copy_string(XEN_TO_C_STRING(val))); 
   return(val);
 }
 

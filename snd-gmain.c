@@ -58,7 +58,7 @@
 #ifndef SND_AS_WIDGET
 static gint window_close(GtkWidget *w, GdkEvent *event, gpointer context)
 {
-  if (snd_exit_cleanly((snd_state *)context, true))
+  if (snd_exit_cleanly(true))
     snd_exit(0);
   return(false);
 }
@@ -66,12 +66,11 @@ static gint window_close(GtkWidget *w, GdkEvent *event, gpointer context)
 
 static gint auto_update_check(gpointer context)
 {
-  snd_state *ss = (snd_state *)context;
   if (auto_update_interval(ss) > 0.0)
     {
       if ((!(play_in_progress())) && 
 	  (!(record_in_progress())))
-	for_each_sound(ss, sound_not_current, NULL);
+	for_each_sound(sound_not_current, NULL);
       gtk_timeout_add((guint32)(auto_update_interval(ss) * 1000), auto_update_check, context);
     }
   return(0);
@@ -86,7 +85,6 @@ static void who_called(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   /* watch for communication from some other program via the SND_COMMAND property */
   GdkEventProperty *ev = (GdkEventProperty *)event;
-  snd_state *ss = (snd_state *)context;
   GdkAtom type;
   gint format, nitems;
   guchar *version[1];
@@ -159,13 +157,13 @@ static void get_stdin_string(gpointer context, gint fd, int condition)
 	  buf = (char *)REALLOC(buf, size);
 	  bytes = read(fd, (char *)(buf + size - 1024), 1024);
 	}
-      snd_eval_stdin_str((snd_state *)context, buf);
+      snd_eval_stdin_str(buf);
     }
   FREE(buf);
 }
 #endif
 
-static void setup_gcs (snd_state *ss)
+static void setup_gcs (void)
 {
   GdkWindow *wn;	
   state_context *sx;
@@ -245,13 +243,13 @@ static void setup_gcs (snd_state *ss)
   gdk_gc_set_foreground(sx->fltenv_data_gc, sx->filter_waveform_color);
   gdk_gc_set_function(sx->fltenv_data_gc, GDK_COPY);
 
-  initialize_colormap(ss);
+  initialize_colormap();
 }
 
 #if HAVE_EXTENSION_LANGUAGE
 static gboolean io_invoke(GIOChannel *source, GIOCondition condition, gpointer data)
 {
-  get_stdin_string((gpointer)get_global_state(), g_io_channel_unix_get_fd(source), 0);
+  get_stdin_string(NULL, g_io_channel_unix_get_fd(source), 0);
   return(true);
 }
 #endif
@@ -260,10 +258,8 @@ static int tm_slice = 0;
 
 static Cessate startup_funcs(gpointer context)
 {
-  snd_state *ss;
   snd_info *sp;
   static int auto_open_ctr = 0;
-  ss = get_global_state();
   switch (tm_slice)
     {
     case 0:
@@ -283,14 +279,14 @@ static Cessate startup_funcs(gpointer context)
       g_signal_connect_closure_by_id(GTK_OBJECT(MAIN_SHELL(ss)),
 				     g_signal_lookup("property_notify_event", G_OBJECT_TYPE(GTK_OBJECT(MAIN_SHELL(ss)))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(who_called), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(who_called), NULL, 0),
 				     0);
 #endif
       /* trap outer-level Close for cleanup check */
       g_signal_connect_closure_by_id(GTK_OBJECT(MAIN_SHELL(ss)),
 				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(MAIN_SHELL(ss)))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(window_close), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(window_close), NULL, 0),
 				     0);
 #endif
 
@@ -301,7 +297,7 @@ static Cessate startup_funcs(gpointer context)
       break;
     case 1: 
 #if HAVE_EXTENSION_LANGUAGE
-      snd_load_init_file(ss, noglob, noinit);
+      snd_load_init_file(noglob, noinit);
 #endif
 #if HAVE_SIGNAL && HAVE_EXTENSION_LANGUAGE
       if (!nostdin)
@@ -325,7 +321,7 @@ static Cessate startup_funcs(gpointer context)
     case 2: 
       if (auto_open_files > 0)
 	{
-	  auto_open_ctr = handle_next_startup_arg(ss, auto_open_ctr, auto_open_file_names, true, auto_open_files);
+	  auto_open_ctr = handle_next_startup_arg(auto_open_ctr, auto_open_file_names, true, auto_open_files);
 	  if (auto_open_ctr < auto_open_files) return(BACKGROUND_CONTINUE); /* i.e. come back to this branch */
 	}
       break;
@@ -336,7 +332,7 @@ static Cessate startup_funcs(gpointer context)
       if ((ss->init_window_x != DEFAULT_INIT_WINDOW_X) && (ss->init_window_y != DEFAULT_INIT_WINDOW_Y))
 	set_widget_position(GTK_WIDGET(MAIN_SHELL(ss)), ss->init_window_x, ss->init_window_y);
 #endif
-      gtk_timeout_add((guint32)(auto_update_interval(ss) * 1000), auto_update_check, (gpointer)ss);
+      gtk_timeout_add((guint32)(auto_update_interval(ss) * 1000), auto_update_check, NULL);
       break;
     case 4: 
 #if TRAP_SEGFAULT
@@ -363,15 +359,12 @@ static void SetupIcon(GtkWidget *shell)
 {
   GdkPixmap *pix;
   GdkBitmap *mask;
-  snd_state *ss;
-  ss = get_global_state();
   pix = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), &mask, NULL, snd_icon_bits());
   gdk_window_set_icon(MAIN_WINDOW(ss), NULL, pix, mask);
 }
 #endif
 
-static GdkColor *get_color(char *defined_color, char *fallback_color, char *second_fallback_color,
-			   int use_white)
+static GdkColor *get_color(char *defined_color, char *fallback_color, char *second_fallback_color, bool use_white)
 {
   GdkColor tmp_color;
   GdkColor *new_color;
@@ -403,17 +396,15 @@ static GdkColor *get_color(char *defined_color, char *fallback_color, char *seco
 #ifdef SND_AS_WIDGET
 GtkWidget *snd_as_widget(int argc, char **argv, GtkWidget *parent, void (*error_func)(const char *))
 {
-  snd_state *ss;
+
 #else
 
-void snd_doit(snd_state *ss, int argc, char **argv)
+void snd_doit(int argc, char **argv)
 {
 #endif
-  
   GtkWidget *shell;
   int i;
   state_context *sx;
-
 #ifdef SND_AS_WIDGET
   set_snd_error_display (error_func);
   ss = snd_main(argc, argv);
@@ -437,21 +428,21 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   if (argc > 1) auto_open_file_names = (char **)(argv + 1);
   ss->startup_title = copy_string("snd");
 
-  set_sound_style(ss, SOUNDS_VERTICAL);
+  set_sound_style(SOUNDS_VERTICAL);
   for (i = 1; i < argc; i++)
     if ((strcmp(argv[i], "-h") == 0) || 
 	(strcmp(argv[i], "-horizontal") == 0))
-      set_sound_style(ss, SOUNDS_HORIZONTAL);
+      set_sound_style(SOUNDS_HORIZONTAL);
     else
       if ((strcmp(argv[i], "-v") == 0) || 
 	  (strcmp(argv[i], "-vertical") == 0))
-	set_sound_style(ss, SOUNDS_VERTICAL);
+	set_sound_style(SOUNDS_VERTICAL);
       else
 	if (strcmp(argv[i], "-notebook") == 0)
-	  set_sound_style(ss, SOUNDS_IN_NOTEBOOK);
+	  set_sound_style(SOUNDS_IN_NOTEBOOK);
 	else
 	  if (strcmp(argv[i], "-separate") == 0)
-	    set_sound_style(ss, SOUNDS_IN_SEPARATE_WINDOWS);
+	    set_sound_style(SOUNDS_IN_SEPARATE_WINDOWS);
 	  else
 	    if (strcmp(argv[i], "-noglob") == 0)
 	      noglob = true;
@@ -467,7 +458,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 		    batch = true;
 
   ss->batch_mode = batch;
-  set_auto_resize(ss, AUTO_RESIZE_DEFAULT);
+  set_auto_resize(AUTO_RESIZE_DEFAULT);
   ss->zoom_slider_width = ZOOM_SLIDER_WIDTH;
   ss->position_slider_width = POSITION_SLIDER_WIDTH;
   ss->channel_sash_indent = CHANNEL_SASH_INDENT; /* not currently used */
@@ -480,7 +471,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   ss->sgx = (state_context *)CALLOC(1, sizeof(state_context));
   sx = ss->sgx;
   sx->graph_is_active = false;
-  set_html_dir(ss, copy_string(DEFAULT_HTML_DIR));
+  set_html_dir(copy_string(DEFAULT_HTML_DIR));
 
   /* the gray shades are an attempt to get around Netscape which hogs all the colors */
   sx->white =                 get_color(WHITE_COLOR,           NULL, NULL, true);
@@ -511,36 +502,36 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   sx->pushed_button_color =   get_color(PUSHED_BUTTON_COLOR,   NULL, NULL, false);
   sx->text_focus_color =      get_color(TEXT_FOCUS_COLOR,      NULL, NULL, false);
 
-  if ((!(set_tiny_font(ss, TINY_FONT))) &&
-      (!(set_tiny_font(ss, FALLBACK_FONT))))
+  if ((!(set_tiny_font(TINY_FONT))) &&
+      (!(set_tiny_font(FALLBACK_FONT))))
     fprintf(stderr, _("can't find font: %s"), TINY_FONT);
 
-  if ((!(set_bold_button_font(ss, DEFAULT_BOLD_BUTTON_FONT))) &&
-      (!(set_bold_button_font(ss, FALLBACK_FONT))))
+  if ((!(set_bold_button_font(DEFAULT_BOLD_BUTTON_FONT))) &&
+      (!(set_bold_button_font(FALLBACK_FONT))))
     fprintf(stderr, _("can't find font: %s"), DEFAULT_BOLD_BUTTON_FONT);
 
-  if ((!(set_axis_label_font(ss, DEFAULT_AXIS_LABEL_FONT))) &&
-      (!(set_axis_label_font(ss, FALLBACK_FONT))))
+  if ((!(set_axis_label_font(DEFAULT_AXIS_LABEL_FONT))) &&
+      (!(set_axis_label_font(FALLBACK_FONT))))
     fprintf(stderr, _("can't find font: %s"), DEFAULT_AXIS_LABEL_FONT);
 
-  if ((!(set_axis_numbers_font(ss, DEFAULT_AXIS_NUMBERS_FONT))) &&
-      (!(set_axis_numbers_font(ss, FALLBACK_FONT))))
+  if ((!(set_axis_numbers_font(DEFAULT_AXIS_NUMBERS_FONT))) &&
+      (!(set_axis_numbers_font(FALLBACK_FONT))))
     fprintf(stderr, _("can't find font: %s"), DEFAULT_AXIS_NUMBERS_FONT);
 
-  if ((!(set_peaks_font(ss, DEFAULT_PEAKS_FONT))) &&
-      (!(set_peaks_font(ss, FALLBACK_FONT))))
+  if ((!(set_peaks_font(DEFAULT_PEAKS_FONT))) &&
+      (!(set_peaks_font(FALLBACK_FONT))))
     fprintf(stderr, _("can't find font: %s"), DEFAULT_PEAKS_FONT);
 
-  if ((!(set_bold_peaks_font(ss, DEFAULT_BOLD_PEAKS_FONT))) &&
-      (!(set_bold_peaks_font(ss, FALLBACK_FONT))))
+  if ((!(set_bold_peaks_font(DEFAULT_BOLD_PEAKS_FONT))) &&
+      (!(set_bold_peaks_font(FALLBACK_FONT))))
     fprintf(stderr, _("can't find font: %s"), DEFAULT_BOLD_PEAKS_FONT);
 
   ss->init_file = copy_string(getenv(SND_INIT_FILE_ENVIRONMENT_NAME));
   if (ss->init_file == NULL)
     ss->init_file = INIT_FILE_NAME;
 
-  set_color_map(ss, DEFAULT_SPECTROGRAM_COLOR);
-  set_ask_before_overwrite(ss, false);
+  set_color_map(DEFAULT_SPECTROGRAM_COLOR);
+  set_ask_before_overwrite(false);
 
   sx->mainpane = gtk_vbox_new(false, 0); /* not homogenous, spacing 0 */
 
@@ -555,7 +546,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 
   set_background(MAIN_PANE(ss), (ss->sgx)->basic_color);
 
-  add_menu(ss);
+  add_menu();
 
   if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
     {
@@ -589,10 +580,10 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   ss->sgx->mainwindow = gtk_widget_get_parent_window (ss->sgx->mainshell);
 #endif
 
-  setup_gcs(ss);
+  setup_gcs();
 
   if (batch) gtk_widget_hide(MAIN_SHELL(ss));
-  BACKGROUND_ADD(ss, startup_funcs, NULL);
+  BACKGROUND_ADD(startup_funcs, NULL);
 
 #if HAVE_SETJMP_H
 #if TRAP_SEGFAULT

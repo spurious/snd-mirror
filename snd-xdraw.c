@@ -471,7 +471,7 @@ static int grays_allocated = -1;
 static XRectangle *sono_data[COLORMAP_SIZE];
 static GC colormap_GC;
 
-void initialize_colormap(snd_state *ss)
+void initialize_colormap(void)
 {
   state_context *sx;
   XGCValues gv;
@@ -520,7 +520,7 @@ void allocate_sono_rects(int size)
     }
 }
 
-void allocate_color_map(snd_state *ss, int colormap)
+void allocate_color_map(int colormap)
 {
   static bool warned_color = false;
   int i;
@@ -574,7 +574,6 @@ typedef struct {
   Widget scale; 
   Widget invert;
   Widget cutoff;
-  snd_state *state;
 } color_chooser_info;
 
 static color_chooser_info *ccd = NULL;
@@ -587,42 +586,36 @@ static void update_graph_setting_fft_changed(chan_info *cp)
 
 static void invert_color_callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_state *ss;
-  color_chooser_info *cd = (color_chooser_info *)context;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
-  ss = cd->state;
-  in_set_color_inverted(ss, cb->set);
+  in_set_color_inverted(cb->set);
   check_color_hook();
-  for_each_chan(ss, update_graph_setting_fft_changed);
+  for_each_chan(update_graph_setting_fft_changed);
 }
 
-void set_color_inverted(snd_state *ss, bool val)
+void set_color_inverted(bool val)
 {
-  in_set_color_inverted(ss, val);
+  in_set_color_inverted(val);
   if (ccd) 
     XmToggleButtonSetState(ccd->invert, (Boolean)val, false);
   check_color_hook();
   if (!(ss->graph_hook_active)) 
-    for_each_chan(ss, update_graph_setting_fft_changed);
+    for_each_chan(update_graph_setting_fft_changed);
 }
 
 static void scale_color_callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_state *ss;
   Float val;
   int scale_val;
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
-  color_chooser_info *cd = (color_chooser_info *)context;
   ASSERT_WIDGET_TYPE(XmIsScale(w), w);
-  ss = cd->state;
   scale_val = cbs->value;
   if (scale_val <= 50) 
     val = (Float)(scale_val + 1) / 51.0;
   else val = 1.0 + (Float)((scale_val - 50) * (scale_val - 50)) / 12.5;
-  in_set_color_scale(ss, val);
+  in_set_color_scale(val);
   check_color_hook();
-  for_each_chan(ss, update_graph_setting_fft_changed);
+  for_each_chan(update_graph_setting_fft_changed);
 }
 
 static void reflect_color_scale(Float val)
@@ -637,57 +630,51 @@ static void reflect_color_scale(Float val)
     }
 }
 
-void set_color_scale(snd_state *ss, Float val)
+void set_color_scale(Float val)
 {
-  in_set_color_scale(ss, val);
+  in_set_color_scale(val);
   if (ccd) 
     reflect_color_scale(color_scale(ss));
   if (!(ss->graph_hook_active)) 
-    for_each_chan(ss, update_graph_setting_fft_changed);
+    for_each_chan(update_graph_setting_fft_changed);
 }
 
 static void list_color_callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_state *ss;
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
-  color_chooser_info *cd = (color_chooser_info *)context;
   ASSERT_WIDGET_TYPE(XmIsList(w), w);
-  ss = cd->state;
-  in_set_color_map(ss, (cbs->item_position - 1));
+  in_set_color_map((cbs->item_position - 1));
   check_color_hook();
-  for_each_chan(ss, update_graph_setting_fft_changed);
+  for_each_chan(update_graph_setting_fft_changed);
 }
 
-void set_color_map(snd_state *ss, int val)
+void set_color_map(int val)
 {
-  in_set_color_map(ss, val);
+  in_set_color_map(val);
   if ((ccd) && (val >= 0))
     XmListSelectPos(ccd->list, val + 1, false);
   check_color_hook();
   if (!(ss->graph_hook_active)) 
-    for_each_chan(ss, update_graph_setting_fft_changed);
+    for_each_chan(update_graph_setting_fft_changed);
 }
 
 static void cutoff_color_callback(Widget w, XtPointer context, XtPointer info) /* cutoff point */
 {
   /* cutoff point for color chooser */
-  snd_state *ss;
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
-  color_chooser_info *cd = (color_chooser_info *)context;
   ASSERT_WIDGET_TYPE(XmIsScale(w), w);
-  ss = cd->state;
-  in_set_color_cutoff(ss, (Float)(cbs->value) / 1000.0);
+  in_set_color_cutoff((Float)(cbs->value) / 1000.0);
   check_color_hook();
-  for_each_chan(ss, update_graph_setting_fft_changed);
+  for_each_chan(update_graph_setting_fft_changed);
 }
 
-void set_color_cutoff(snd_state *ss, Float val)
+void set_color_cutoff(Float val)
 {
-  in_set_color_cutoff(ss, val);
+  in_set_color_cutoff(val);
   if (ccd) 
     XmScaleSetValue(ccd->cutoff, (int)(val * 1000.0));
   if (!(ss->graph_hook_active)) 
-    for_each_chan(ss, update_graph_setting_fft_changed);
+    for_each_chan(update_graph_setting_fft_changed);
 }
 
 
@@ -699,7 +686,7 @@ static void dismiss_color_callback(Widget w, XtPointer context, XtPointer info)
 
 static void help_color_callback(Widget w, XtPointer context, XtPointer info)
 {
-  color_dialog_help((snd_state *)context);
+  color_dialog_help();
 }
 
 /* I tried a scrolled window with each colormap name in an appropriate color, but it looked kinda dumb */
@@ -712,12 +699,10 @@ void view_color_callback(Widget w, XtPointer context, XtPointer info)
   XmString *cmaps;
   char **names;
   Widget mainform, list_label, light_label, sep, sep1;
-  snd_state *ss = (snd_state *)context;
   if (!ccd)
     {
       /* create color chooser dialog window */
       ccd = (color_chooser_info *)CALLOC(1, sizeof(color_chooser_info));
-      ccd->state = ss;
 
       xdismiss = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG); /* needed by template dialog */
       xhelp = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
@@ -734,7 +719,7 @@ void view_color_callback(Widget w, XtPointer context, XtPointer info)
       ccd->dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), _("Color"), args, n);
 
       XtAddCallback(ccd->dialog, XmNcancelCallback, dismiss_color_callback, ccd);
-      XtAddCallback(ccd->dialog, XmNhelpCallback, help_color_callback, ss);
+      XtAddCallback(ccd->dialog, XmNhelpCallback, help_color_callback, NULL);
       XmStringFree(xhelp);
       XmStringFree(xdismiss);
       XmStringFree(titlestr);
@@ -784,7 +769,7 @@ void view_color_callback(Widget w, XtPointer context, XtPointer info)
 		    XmNitemCount, NUM_COLORMAPS, 
 		    XmNvisibleItemCount, 6, 
 		    NULL);
-      XtAddCallback(ccd->list, XmNbrowseSelectionCallback, list_color_callback, ccd);
+      XtAddCallback(ccd->list, XmNbrowseSelectionCallback, list_color_callback, NULL);
       for (i = 0; i < NUM_COLORMAPS; i++) XmStringFree(cmaps[i]);
       FREE(cmaps);
       XtManageChild(ccd->list);
@@ -828,8 +813,8 @@ void view_color_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNshowValue, true); n++;
       XtSetArg(args[n], XmNvalue, 50); n++;
       ccd->scale = XtCreateManagedWidget("ccdscl", xmScaleWidgetClass, mainform, args, n);
-      XtAddCallback(ccd->scale, XmNvalueChangedCallback, scale_color_callback, ccd);
-      XtAddCallback(ccd->scale, XmNdragCallback, scale_color_callback, ccd);
+      XtAddCallback(ccd->scale, XmNvalueChangedCallback, scale_color_callback, NULL);
+      XtAddCallback(ccd->scale, XmNdragCallback, scale_color_callback, NULL);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -866,8 +851,8 @@ void view_color_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNtitleString, xcutoff); n++;
       XtSetArg(args[n], XmNvalue, (int)(color_cutoff(ss) * 1000)); n++;
       ccd->cutoff = XtCreateManagedWidget("cutoff", xmScaleWidgetClass, mainform, args, n);
-      XtAddCallback(ccd->cutoff, XmNvalueChangedCallback, cutoff_color_callback, ccd);
-      XtAddCallback(ccd->cutoff, XmNdragCallback, cutoff_color_callback, ccd);
+      XtAddCallback(ccd->cutoff, XmNvalueChangedCallback, cutoff_color_callback, NULL);
+      XtAddCallback(ccd->cutoff, XmNdragCallback, cutoff_color_callback, NULL);
       XmStringFree(xcutoff);
 
       n = 0;
@@ -882,11 +867,11 @@ void view_color_callback(Widget w, XtPointer context, XtPointer info)
       xinvert = XmStringCreate(_("invert"), XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNlabelString, xinvert); n++;
       ccd->invert = make_togglebutton_widget("invert", mainform, args, n);
-      XtAddCallback(ccd->invert, XmNvalueChangedCallback, invert_color_callback, ccd);
+      XtAddCallback(ccd->invert, XmNvalueChangedCallback, invert_color_callback, NULL);
       XmStringFree(xinvert);
       if (color_scale(ss) != 1.0)
 	reflect_color_scale(color_scale(ss));
-      set_dialog_widget(ss, COLOR_DIALOG, ccd->dialog);
+      set_dialog_widget(COLOR_DIALOG, ccd->dialog);
     }
   else raise_dialog(ccd->dialog);
   if (!XtIsManaged(ccd->dialog)) 
@@ -898,14 +883,9 @@ bool color_dialog_is_active(void)
   return((ccd) && (ccd->dialog) && (XtIsManaged(ccd->dialog)));
 }
 
-Widget start_color_dialog(snd_state *ss, int width, int height)
+Widget start_color_dialog(void)
 {
-  view_color_callback(NULL, (XtPointer)ss, NULL);
-  if (width != 0) 
-    XtVaSetValues(ccd->dialog, 
-		  XmNwidth, (Dimension)width, 
-		  XmNheight, (Dimension)height, 
-		  NULL);
+  view_color_callback(NULL, NULL, NULL);
   return(ccd->dialog);
 }
 
@@ -922,7 +902,6 @@ static void check_orientation_hook(void)
 typedef struct {
   Widget dialog;
   Widget ax, ay, az, sx, sy, sz, hop, cut, glbutton; 
-  snd_state *state;
 } orientation_info;
 
 #define HOP_MAX 20
@@ -931,172 +910,151 @@ static orientation_info *oid = NULL;
 
 static void ax_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss;
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
-  orientation_info *od = (orientation_info *)context;
   ASSERT_WIDGET_TYPE(XmIsScale(w), w);
-  ss = od->state;
-  in_set_spectro_x_angle(ss, (Float)(cbs->value));
-  chans_field(ss, FCP_X_ANGLE, (Float)(cbs->value));
+  in_set_spectro_x_angle((Float)(cbs->value));
+  chans_field(FCP_X_ANGLE, (Float)(cbs->value));
   check_orientation_hook();
-  for_each_chan(ss, update_graph);
+  for_each_chan(update_graph);
 }
 
-void set_spectro_x_angle(snd_state *ss, Float val)
+void set_spectro_x_angle(Float val)
 {
   if (val < 0.0) val += 360.0; else if (val >= 360.0) val = fmod(val, 360.0);
-  in_set_spectro_x_angle(ss, val);
+  in_set_spectro_x_angle(val);
   if (oid) XmScaleSetValue(oid->ax, (int)val);
-  chans_field(ss, FCP_X_ANGLE, val);
+  chans_field(FCP_X_ANGLE, val);
   check_orientation_hook();
   if (!(ss->graph_hook_active)) 
-    for_each_chan(ss, update_graph);
+    for_each_chan(update_graph);
 }
 
 static void ay_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss;
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
-  orientation_info *od = (orientation_info *)context;
   ASSERT_WIDGET_TYPE(XmIsScale(w), w);
-  ss = od->state;
-  in_set_spectro_y_angle(ss, (Float)(cbs->value));
-  chans_field(ss, FCP_Y_ANGLE, (Float)(cbs->value));
+  in_set_spectro_y_angle((Float)(cbs->value));
+  chans_field(FCP_Y_ANGLE, (Float)(cbs->value));
   check_orientation_hook();
-  for_each_chan(ss, update_graph);
+  for_each_chan(update_graph);
 }
 
-void set_spectro_y_angle(snd_state *ss, Float val)
+void set_spectro_y_angle(Float val)
 {
   if (val < 0.0) val += 360.0; else if (val >= 360.0) val = fmod(val, 360.0);
-  in_set_spectro_y_angle(ss, val);
+  in_set_spectro_y_angle(val);
   if (oid) XmScaleSetValue(oid->ay, (int)val);
-  chans_field(ss, FCP_Y_ANGLE, val);
+  chans_field(FCP_Y_ANGLE, val);
   check_orientation_hook();
   if (!(ss->graph_hook_active)) 
-    for_each_chan(ss, update_graph);
+    for_each_chan(update_graph);
 }
 
 static void az_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss;
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
-  orientation_info *od = (orientation_info *)context;
   ASSERT_WIDGET_TYPE(XmIsScale(w), w);
-  ss = od->state;
-  in_set_spectro_z_angle(ss, (Float)(cbs->value));
-  chans_field(ss, FCP_Z_ANGLE, (Float)(cbs->value));
+  in_set_spectro_z_angle((Float)(cbs->value));
+  chans_field(FCP_Z_ANGLE, (Float)(cbs->value));
   check_orientation_hook();
-  for_each_chan(ss, update_graph);
+  for_each_chan(update_graph);
 }
 
-void set_spectro_z_angle(snd_state *ss, Float val)
+void set_spectro_z_angle(Float val)
 {
   if (val < 0.0) val += 360.0; else if (val >= 360.0) val = fmod(val, 360.0);
-  in_set_spectro_z_angle(ss, val);
+  in_set_spectro_z_angle(val);
   if (oid) XmScaleSetValue(oid->az, (int)val);
-  chans_field(ss, FCP_Z_ANGLE, val);
+  chans_field(FCP_Z_ANGLE, val);
   check_orientation_hook();
   if (!(ss->graph_hook_active)) 
-    for_each_chan(ss, update_graph);
+    for_each_chan(update_graph);
 }
 
 static void sx_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss;
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
-  orientation_info *od = (orientation_info *)context;
   ASSERT_WIDGET_TYPE(XmIsScale(w), w);
-  ss = od->state;
-  in_set_spectro_x_scale(ss, (Float)(cbs->value) * 0.01);
-  chans_field(ss, FCP_X_SCALE, (Float)(cbs->value) * 0.01);
+  in_set_spectro_x_scale((Float)(cbs->value) * 0.01);
+  chans_field(FCP_X_SCALE, (Float)(cbs->value) * 0.01);
   check_orientation_hook();
-  for_each_chan(ss, update_graph);
+  for_each_chan(update_graph);
 }
 
-void set_spectro_x_scale(snd_state *ss, Float val)
+void set_spectro_x_scale(Float val)
 {
-  in_set_spectro_x_scale(ss, val);
+  in_set_spectro_x_scale(val);
   if (oid) XmScaleSetValue(oid->sx, mus_iclamp(0, (int)(val * 100), 100));
-  chans_field(ss, FCP_X_SCALE, val);
+  chans_field(FCP_X_SCALE, val);
   check_orientation_hook();
   if (!(ss->graph_hook_active)) 
-    for_each_chan(ss, update_graph);
+    for_each_chan(update_graph);
 }
 
 static void sy_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss;
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
-  orientation_info *od = (orientation_info *)context;
   ASSERT_WIDGET_TYPE(XmIsScale(w), w);
-  ss = od->state;
-  in_set_spectro_y_scale(ss, (Float)(cbs->value) * 0.01);
-  chans_field(ss, FCP_Y_SCALE, (Float)(cbs->value) * 0.01);
+  in_set_spectro_y_scale((Float)(cbs->value) * 0.01);
+  chans_field(FCP_Y_SCALE, (Float)(cbs->value) * 0.01);
   check_orientation_hook();
-  for_each_chan(ss, update_graph);
+  for_each_chan(update_graph);
 }
 
-void set_spectro_y_scale(snd_state *ss, Float val)
+void set_spectro_y_scale(Float val)
 {
-  in_set_spectro_y_scale(ss, val);
+  in_set_spectro_y_scale(val);
   if (oid) XmScaleSetValue(oid->sy, mus_iclamp(0, (int)(val * 100), 100));
-  chans_field(ss, FCP_Y_SCALE, val);
+  chans_field(FCP_Y_SCALE, val);
   check_orientation_hook();
   if (!(ss->graph_hook_active)) 
-    for_each_chan(ss, update_graph);
+    for_each_chan(update_graph);
 }
 
 static void sz_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss;
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
-  orientation_info *od = (orientation_info *)context;
   ASSERT_WIDGET_TYPE(XmIsScale(w), w);
-  ss = od->state;
-  in_set_spectro_z_scale(ss, (Float)(cbs->value) * 0.01);
-  chans_field(ss, FCP_Z_SCALE, (Float)(cbs->value) * 0.01);
+  in_set_spectro_z_scale((Float)(cbs->value) * 0.01);
+  chans_field(FCP_Z_SCALE, (Float)(cbs->value) * 0.01);
   check_orientation_hook();
-  for_each_chan(ss, update_graph);
+  for_each_chan(update_graph);
 }
 
-void set_spectro_z_scale(snd_state *ss, Float val)
+void set_spectro_z_scale(Float val)
 {
-  in_set_spectro_z_scale(ss, val);
+  in_set_spectro_z_scale(val);
   if (oid) XmScaleSetValue(oid->sz, mus_iclamp(0, (int)(val * 100), 100));
-  chans_field(ss, FCP_Z_SCALE, val);
+  chans_field(FCP_Z_SCALE, val);
   check_orientation_hook();
   if (!(ss->graph_hook_active)) 
-    for_each_chan(ss, update_graph);
+    for_each_chan(update_graph);
 }
 
 static void chans_spectro_hop(chan_info *cp, void *ptr) {cp->spectro_hop = (*((int *)ptr));}
 
 static void hop_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss;
   int val;
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
-  orientation_info *od = (orientation_info *)context;
   ASSERT_WIDGET_TYPE(XmIsScale(w), w);
-  ss = od->state;
   val = mus_iclamp(1, cbs->value, HOP_MAX);
-  in_set_spectro_hop(ss, val);
-  for_each_chan_1(ss, chans_spectro_hop, (void *)(&val));
+  in_set_spectro_hop(val);
+  for_each_chan_1(chans_spectro_hop, (void *)(&val));
   check_orientation_hook();
-  for_each_chan(ss, update_graph);
+  for_each_chan(update_graph);
 }
 
-void set_spectro_hop(snd_state *ss, int val)
+void set_spectro_hop(int val)
 {
   if (val > 0)
     {
-      in_set_spectro_hop(ss, val);
+      in_set_spectro_hop(val);
       if (oid) XmScaleSetValue(oid->hop, mus_iclamp(1, val, HOP_MAX));
-      for_each_chan_1(ss, chans_spectro_hop, (void *)(&val));
+      for_each_chan_1(chans_spectro_hop, (void *)(&val));
       check_orientation_hook();
       if (!(ss->graph_hook_active)) 
-	for_each_chan(ss, update_graph);
+	for_each_chan(update_graph);
     }
 }
 
@@ -1105,25 +1063,22 @@ static void chans_spectro_cut(chan_info *cp) {cp->fft_changed = FFT_CHANGE_LOCKE
 static void cut_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* y axis limit */
-  snd_state *ss;
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
-  orientation_info *od = (orientation_info *)context;
   ASSERT_WIDGET_TYPE(XmIsScale(w), w);
-  ss = od->state;
-  chans_field(ss, FCP_CUTOFF, (Float)(cbs->value) * 0.01);
-  for_each_chan(ss, chans_spectro_cut);
+  chans_field(FCP_CUTOFF, (Float)(cbs->value) * 0.01);
+  for_each_chan(chans_spectro_cut);
   check_orientation_hook();
-  set_spectro_cutoff_and_redisplay(ss, (Float)(cbs->value) * 0.01); /* calls in_set... */
+  set_spectro_cutoff_and_redisplay((Float)(cbs->value) * 0.01); /* calls in_set... */
 } 
 
-void set_spectro_cutoff(snd_state *ss, Float val)
+void set_spectro_cutoff(Float val)
 {
-  in_set_spectro_cutoff(ss, val);
+  in_set_spectro_cutoff(val);
   if (oid) XmScaleSetValue(oid->cut, (int)(val * 100));
-  chans_field(ss, FCP_CUTOFF, val);
+  chans_field(FCP_CUTOFF, val);
   check_orientation_hook();
   if (!(ss->graph_hook_active)) 
-    for_each_chan(ss, update_graph_setting_fft_changed);
+    for_each_chan(update_graph_setting_fft_changed);
 }
 
 static int fixup_angle(Float ang)
@@ -1135,7 +1090,7 @@ static int fixup_angle(Float ang)
   return(na);
 }
 
-void reflect_spectro(snd_state *ss)
+void reflect_spectro(void)
 {
   /* set color/orientaton widget values */
   if (ccd) 
@@ -1158,16 +1113,16 @@ void reflect_spectro(snd_state *ss)
     }
 }
 
-int set_with_gl(snd_state *ss, bool val)
+int set_with_gl(bool val)
 {
 #if HAVE_GL
-  sgl_save_currents(ss);
+  sgl_save_currents();
 #endif
-  in_set_with_gl(ss, val);
+  in_set_with_gl(val);
 #if HAVE_GL
-  sgl_set_currents(ss);
+  sgl_set_currents();
   if (oid) XmToggleButtonSetState(oid->glbutton, val, false);
-  /* for_each_chan(ss, update_graph); */
+  /* for_each_chan(update_graph); */
 #endif
   return(with_gl(ss));
 } 
@@ -1175,21 +1130,19 @@ int set_with_gl(snd_state *ss, bool val)
 #if HAVE_GL
 static void with_gl_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
-  ss = get_global_state();
-  sgl_save_currents(ss);
-  in_set_with_gl(ss, cb->set);
-  sgl_set_currents(ss);
-  for_each_chan(ss, update_graph);
+  sgl_save_currents();
+  in_set_with_gl(cb->set);
+  sgl_set_currents();
+  for_each_chan(update_graph);
 }
 
 #endif
 
 static void help_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  orientation_dialog_help((snd_state *)context);
+  orientation_dialog_help();
 }
 
 static void dismiss_orientation_callback(Widget w, XtPointer context, XtPointer info) 
@@ -1200,18 +1153,14 @@ static void dismiss_orientation_callback(Widget w, XtPointer context, XtPointer 
 
 static void reset_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss;
-  orientation_info *od = (orientation_info *)context;
   /* put everything back the way it was at the start */
-  ss = od->state;
-  reset_spectro(ss);
-  reflect_spectro(ss);
-  for_each_chan(ss, update_graph);
+  reset_spectro();
+  reflect_spectro();
+  for_each_chan(update_graph);
 }
 
 void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_state *ss = (snd_state *)context;
   Widget mainform, rightbox, leftbox;
   XmString xdismiss, xhelp, xstr, xreset, titlestr;
 #if HAVE_GL
@@ -1223,7 +1172,6 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
     {
       /* create orientation window */
       oid = (orientation_info *)CALLOC(1, sizeof(orientation_info));
-      oid->state = ss;
 
       xdismiss = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG); /* needed by template dialog */
       xhelp = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
@@ -1243,8 +1191,8 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       oid->dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), _("Orientation"), args, n);
 
       XtAddCallback(oid->dialog, XmNcancelCallback, dismiss_orientation_callback, oid);
-      XtAddCallback(oid->dialog, XmNhelpCallback, help_orientation_callback, ss);
-      XtAddCallback(oid->dialog, XmNokCallback, reset_orientation_callback, oid);
+      XtAddCallback(oid->dialog, XmNhelpCallback, help_orientation_callback, NULL);
+      XtAddCallback(oid->dialog, XmNokCallback, reset_orientation_callback, NULL);
       XmStringFree(xhelp);
       XmStringFree(xdismiss);
       XmStringFree(titlestr);
@@ -1296,8 +1244,8 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNmaximum, 360); n++;
       XtSetArg(args[n], XmNtitleString, xstr); n++;
       oid->ax = XtCreateManagedWidget("ax", xmScaleWidgetClass, leftbox, args, n);
-      XtAddCallback(oid->ax, XmNvalueChangedCallback, ax_orientation_callback, oid);
-      XtAddCallback(oid->ax, XmNdragCallback, ax_orientation_callback, oid);
+      XtAddCallback(oid->ax, XmNvalueChangedCallback, ax_orientation_callback, NULL);
+      XtAddCallback(oid->ax, XmNdragCallback, ax_orientation_callback, NULL);
       XmStringFree(xstr);
 
       n = 0;
@@ -1309,8 +1257,8 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNmaximum, 360); n++;
       XtSetArg(args[n], XmNtitleString, xstr); n++;
       oid->ay = XtCreateManagedWidget("ay", xmScaleWidgetClass, leftbox, args, n);
-      XtAddCallback(oid->ay, XmNvalueChangedCallback, ay_orientation_callback, oid);
-      XtAddCallback(oid->ay, XmNdragCallback, ay_orientation_callback, oid);
+      XtAddCallback(oid->ay, XmNvalueChangedCallback, ay_orientation_callback, NULL);
+      XtAddCallback(oid->ay, XmNdragCallback, ay_orientation_callback, NULL);
       XmStringFree(xstr);
 
       n = 0;
@@ -1322,8 +1270,8 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNmaximum, 360); n++;
       XtSetArg(args[n], XmNtitleString, xstr); n++;
       oid->az = XtCreateManagedWidget("az", xmScaleWidgetClass, leftbox, args, n);
-      XtAddCallback(oid->az, XmNvalueChangedCallback, az_orientation_callback, oid);
-      XtAddCallback(oid->az, XmNdragCallback, az_orientation_callback, oid);
+      XtAddCallback(oid->az, XmNvalueChangedCallback, az_orientation_callback, NULL);
+      XtAddCallback(oid->az, XmNdragCallback, az_orientation_callback, NULL);
       XmStringFree(xstr);
 
       n = 0;
@@ -1335,8 +1283,8 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNmaximum, HOP_MAX); n++;
       XtSetArg(args[n], XmNtitleString, xstr); n++;
       oid->hop = XtCreateManagedWidget("hop", xmScaleWidgetClass, leftbox, args, n);
-      XtAddCallback(oid->hop, XmNvalueChangedCallback, hop_orientation_callback, oid);
-      XtAddCallback(oid->hop, XmNdragCallback, hop_orientation_callback, oid);
+      XtAddCallback(oid->hop, XmNvalueChangedCallback, hop_orientation_callback, NULL);
+      XtAddCallback(oid->hop, XmNdragCallback, hop_orientation_callback, NULL);
       XmStringFree(xstr);
 
       /* right box */
@@ -1350,8 +1298,8 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNtitleString, xstr); n++;
       XtSetArg(args[n], XmNdecimalPoints, 2); n++;
       oid->sx = XtCreateManagedWidget("xs", xmScaleWidgetClass, rightbox, args, n);
-      XtAddCallback(oid->sx, XmNvalueChangedCallback, sx_orientation_callback, oid);
-      XtAddCallback(oid->sx, XmNdragCallback, sx_orientation_callback, oid);
+      XtAddCallback(oid->sx, XmNvalueChangedCallback, sx_orientation_callback, NULL);
+      XtAddCallback(oid->sx, XmNdragCallback, sx_orientation_callback, NULL);
       XmStringFree(xstr);
 
       n = 0;
@@ -1364,8 +1312,8 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNtitleString, xstr); n++;
       XtSetArg(args[n], XmNdecimalPoints, 2); n++;
       oid->sy = XtCreateManagedWidget("ys", xmScaleWidgetClass, rightbox, args, n);
-      XtAddCallback(oid->sy, XmNvalueChangedCallback, sy_orientation_callback, oid);
-      XtAddCallback(oid->sy, XmNdragCallback, sy_orientation_callback, oid);
+      XtAddCallback(oid->sy, XmNvalueChangedCallback, sy_orientation_callback, NULL);
+      XtAddCallback(oid->sy, XmNdragCallback, sy_orientation_callback, NULL);
       XmStringFree(xstr);
 
       n = 0;
@@ -1378,8 +1326,8 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNvalue, mus_iclamp(0, (int)(spectro_z_scale(ss) * 100), 100)); n++;
       XtSetArg(args[n], XmNtitleString, xstr); n++;
       oid->sz = XtCreateManagedWidget("zs", xmScaleWidgetClass, rightbox, args, n);
-      XtAddCallback(oid->sz, XmNvalueChangedCallback, sz_orientation_callback, oid);
-      XtAddCallback(oid->sz, XmNdragCallback, sz_orientation_callback, oid);
+      XtAddCallback(oid->sz, XmNvalueChangedCallback, sz_orientation_callback, NULL);
+      XtAddCallback(oid->sz, XmNdragCallback, sz_orientation_callback, NULL);
       XmStringFree(xstr);
 
       n = 0;
@@ -1390,8 +1338,8 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNvalue, (int)(spectro_cutoff(ss) * 100)); n++;
       XtSetArg(args[n], XmNtitleString, xstr); n++;
       oid->cut = XtCreateManagedWidget("cut", xmScaleWidgetClass, rightbox, args, n);
-      XtAddCallback(oid->cut, XmNvalueChangedCallback, cut_orientation_callback, oid);
-      XtAddCallback(oid->cut, XmNdragCallback, cut_orientation_callback, oid);
+      XtAddCallback(oid->cut, XmNvalueChangedCallback, cut_orientation_callback, NULL);
+      XtAddCallback(oid->cut, XmNdragCallback, cut_orientation_callback, NULL);
       XmStringFree(xstr);
 
 #if HAVE_GL
@@ -1402,11 +1350,11 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       glstr = XmStringCreate(_("use OpenGL"), XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNlabelString, glstr); n++;
       oid->glbutton = make_togglebutton_widget("use OpenGL", leftbox, args, n);
-      XtAddCallback(oid->glbutton, XmNvalueChangedCallback, with_gl_callback, oid);
+      XtAddCallback(oid->glbutton, XmNvalueChangedCallback, with_gl_callback, NULL);
       XmStringFree(glstr);
 #endif
 
-      set_dialog_widget(ss, ORIENTATION_DIALOG, oid->dialog);
+      set_dialog_widget(ORIENTATION_DIALOG, oid->dialog);
     }
   else raise_dialog(oid->dialog);
   if (!XtIsManaged(oid->dialog)) XtManageChild(oid->dialog);
@@ -1417,14 +1365,9 @@ bool orientation_dialog_is_active(void)
   return((oid) && (oid->dialog) && (XtIsManaged(oid->dialog)));
 }
 
-Widget start_orientation_dialog(snd_state *ss, int width, int height)
+Widget start_orientation_dialog(void)
 {
-  view_orientation_callback(NULL, (XtPointer)ss, NULL);
-  if (width != 0) 
-    XtVaSetValues(oid->dialog, 
-		  XmNwidth, (Dimension)width, 
-		  XmNheight, (Dimension)height, 
-		  NULL);
+  view_orientation_callback(NULL, NULL, NULL);
   return(oid->dialog);
 }
 

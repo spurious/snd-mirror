@@ -106,7 +106,6 @@ typedef struct {
   char *green_color;
   char *light_blue_color;
   char *lighter_blue_color;
-
   char *use_schemes;
   char *peaks_font;
   char *listener_font;
@@ -187,18 +186,17 @@ static XtResource resources[] = {
 #ifndef SND_AS_WIDGET
 static void window_close(Widget w, XtPointer context, XtPointer info)
 {
-  snd_exit_cleanly((snd_state *)context, true);
+  snd_exit_cleanly(true);
 }
 #endif
 
 static void auto_update_check(XtPointer context, XtIntervalId *id)
 {
-  snd_state *ss = (snd_state *)context;
   if (auto_update_interval(ss) > 0.0)
     {
       if ((!(play_in_progress())) && 
 	  (!(record_in_progress())))
-	for_each_sound(ss, sound_not_current, NULL);
+	for_each_sound(sound_not_current, NULL);
       XtAppAddTimeOut(MAIN_APP(ss),
 		      (unsigned long)(auto_update_interval(ss) * 1000),
 		      (XtTimerCallbackProc)auto_update_check,
@@ -207,7 +205,7 @@ static void auto_update_check(XtPointer context, XtIntervalId *id)
 }
 
 #ifndef SND_AS_WIDGET
-static void dismiss_all_dialogs(snd_state *ss)
+static void dismiss_all_dialogs(void)
 {
   state_context *sx;
   int i;
@@ -224,7 +222,6 @@ static int *live_dialogs = NULL;
 static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   XMapEvent *ev = (XMapEvent *)event;
-  snd_state *ss = (snd_state *)context;
   state_context *sx;
   int i;
   sx = ss->sgx;
@@ -256,7 +253,7 @@ static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boo
 	  for (i = 0; i < NUM_DIALOGS; i++)
 	    live_dialogs[i] = ((sx->dialogs[i]) && (XtIsManaged(sx->dialogs[i])));
 	}
-      dismiss_all_dialogs(ss);
+      dismiss_all_dialogs();
     }
   else
     {
@@ -352,7 +349,7 @@ static void get_stdin_string (XtPointer context, int *fd, XtInputId *id)
 	  buf = (char *)REALLOC(buf, size);
 	  bytes = read(*fd, (char *)(buf + size - 1024), 1024);
 	}
-      snd_eval_stdin_str((snd_state *)context, buf);
+      snd_eval_stdin_str(buf);
     }
   FREE(buf);
 }
@@ -365,43 +362,41 @@ static Cessate startup_funcs(XtPointer context)
 #ifndef SND_AS_WIDGET
   Atom wm_delete_window;
 #endif
-  snd_state *ss;
   snd_info *sp;
   static int auto_open_ctr = 0;
   Widget shell;
   Display *dpy;
-  ss = get_global_state();
   shell = ss->sgx->mainshell;
   dpy = MAIN_DISPLAY(ss);
   switch (tm_slice)
     {
     case 0:
-      create_popup_menu(ss);
+      create_popup_menu();
 #ifndef SND_AS_WIDGET
 #ifndef __alpha__
-      add_menu_drop(ss);
+      add_menu_drop();
 #endif
 #endif
 #ifndef SND_AS_WIDGET
       /* trap outer-level Close for cleanup check */
       wm_delete_window = XmInternAtom(dpy, "WM_DELETE_WINDOW", false);
-      XmAddWMProtocolCallback(shell, wm_delete_window, window_close, (XtPointer)ss);
+      XmAddWMProtocolCallback(shell, wm_delete_window, window_close, NULL);
 
       snd_v = XInternAtom(dpy, "SND_VERSION", false);
       snd_c = XInternAtom(dpy, "SND_COMMAND", false);
       XChangeProperty(dpy, XtWindow(shell), snd_v, XA_STRING, 8, PropModeReplace, 
 		      (unsigned char *)(SND_VERSION), strlen(SND_VERSION) + 1);
 #if HAVE_EXTENSION_LANGUAGE
-      XtAddEventHandler(shell, PropertyChangeMask, false, who_called, (XtPointer)ss);
+      XtAddEventHandler(shell, PropertyChangeMask, false, who_called, NULL);
 #endif
-      XtAddEventHandler(shell, StructureNotifyMask, false, minify_maxify_window, (XtPointer)ss);
+      XtAddEventHandler(shell, StructureNotifyMask, false, minify_maxify_window, NULL);
 #endif
       (ss->sgx)->graph_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), in_graph_cursor(ss));
       (ss->sgx)->wait_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), XC_watch);
       break;
     case 1:
 #if HAVE_EXTENSION_LANGUAGE
-      snd_load_init_file(ss, noglob, noinit);
+      snd_load_init_file(noglob, noinit);
 #endif
 #if HAVE_SIGNAL && HAVE_EXTENSION_LANGUAGE
       if (!nostdin)
@@ -416,14 +411,14 @@ static Cessate startup_funcs(XtPointer context)
 				   fileno(stdin), 
 				   (XtPointer)XtInputReadMask, 
 				   get_stdin_string, 
-				   (XtPointer)ss);
+				   NULL);
 	}
 #endif
       break;
     case 2: 
       if (auto_open_files > 0)
 	{
-	  auto_open_ctr = handle_next_startup_arg(ss, auto_open_ctr, auto_open_file_names, false, auto_open_files);
+	  auto_open_ctr = handle_next_startup_arg(auto_open_ctr, auto_open_file_names, false, auto_open_files);
 	  if (auto_open_ctr < auto_open_files) 
 	    return(BACKGROUND_CONTINUE); /* i.e. come back to this branch */
 	}
@@ -436,7 +431,7 @@ static Cessate startup_funcs(XtPointer context)
       XtAppAddTimeOut(MAIN_APP(ss), 
 		      (unsigned long)(auto_update_interval(ss) * 1000), 
 		      auto_update_check, 
-		      (XtPointer)ss);
+		      NULL);
 #if TRAP_SEGFAULT
       if (trap_segfault(ss)) signal(SIGSEGV, segv);
 #endif
@@ -451,7 +446,7 @@ static Cessate startup_funcs(XtPointer context)
 	}
       if ((ss->active_sounds > 1) &&
 	  ((sound_style(ss) == SOUNDS_VERTICAL) || (sound_style(ss) == SOUNDS_HORIZONTAL)))
-	equalize_all_panes(ss);
+	equalize_all_panes();
       return(BACKGROUND_QUIT); 
       break;
     }
@@ -511,7 +506,7 @@ static void muffle_warning(char *name, char *type, char *klass, char *defaultp, 
 
 static Pixel get_color(Widget shell,
 		       char *rs_color, char *defined_color, char *fallback_color, char *second_fallback_color,
-		       int use_white)
+		       bool use_white)
 {
   Colormap cmap;
   Display *dpy;
@@ -546,14 +541,11 @@ static Pixel get_color(Widget shell,
 #ifdef SND_AS_WIDGET
 void snd_as_widget(int argc, char **argv, XtAppContext app, Widget parent, Arg *caller_args, int caller_argn)
 {
-  snd_state *ss;
 #else
-
-void snd_doit(snd_state *ss, int argc, char **argv)
+void snd_doit(int argc, char **argv)
 {
   XtAppContext app;     
 #endif
-
   Widget shell;
   Display *dpy;
   Drawable wn;
@@ -564,7 +556,6 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   Widget menu;
   XGCValues gv;
   char *app_title = NULL;
-
 #ifdef SND_AS_WIDGET
   ss = snd_main(argc, argv);
 #else
@@ -613,24 +604,24 @@ void snd_doit(snd_state *ss, int argc, char **argv)
     ss->startup_title = copy_string(app_title); 
   else ss->startup_title = copy_string("snd");
 
-  set_sound_style(ss, (sound_style_t)snd_rs.horizontal_panes);
+  set_sound_style((sound_style_t)snd_rs.horizontal_panes);
   for (i = 1; i < argc; i++)
     if ((strcmp(argv[i], "-h") == 0) || 
 	(strcmp(argv[i], "-horizontal") == 0))
-      set_sound_style(ss, SOUNDS_HORIZONTAL);
+      set_sound_style(SOUNDS_HORIZONTAL);
     else
       if ((strcmp(argv[i], "-v") == 0) || 
 	  (strcmp(argv[i], "-vertical") == 0))
-	set_sound_style(ss, SOUNDS_VERTICAL);
+	set_sound_style(SOUNDS_VERTICAL);
       else
 	if (strcmp(argv[i], "-notebook") == 0)
 	  {
-	    set_sound_style(ss, SOUNDS_IN_NOTEBOOK);
+	    set_sound_style(SOUNDS_IN_NOTEBOOK);
 	    snd_rs.auto_resize = 0;
 	  }
 	else
 	  if (strcmp(argv[i], "-separate") == 0)
-	    set_sound_style(ss, SOUNDS_IN_SEPARATE_WINDOWS);
+	    set_sound_style(SOUNDS_IN_SEPARATE_WINDOWS);
 	  else
 	    if (strcmp(argv[i], "-noglob") == 0)
 	      noglob = true;
@@ -647,10 +638,10 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 
   ss->batch_mode = batch;
   if (batch) XtSetMappedWhenManaged(shell, False);
-  set_html_dir(ss, copy_string(snd_rs.html_dir));
+  set_html_dir(copy_string(snd_rs.html_dir));
   ss->using_schemes = ((snd_rs.use_schemes) &&
 		       ((strcmp(snd_rs.use_schemes, "all") == 0) || (strcmp(snd_rs.use_schemes, "All") == 0)));
-  set_auto_resize(ss, snd_rs.auto_resize);
+  set_auto_resize(snd_rs.auto_resize);
   ss->zoom_slider_width = snd_rs.zoom_slider_width;
   ss->position_slider_width = snd_rs.position_slider_width;
   ss->channel_sash_indent = snd_rs.channel_sash_indent;
@@ -659,10 +650,8 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   ss->sash_indent = snd_rs.sash_indent;
   ss->toggle_size = snd_rs.toggle_size;
   ss->enved_point_size = snd_rs.enved_point_size;
-
   ss->sgx = (state_context *)CALLOC(1, sizeof(state_context));
   sx = ss->sgx;
-
 #if (HAVE_GL) && (!SND_AS_WIDGET)
   {
     /* this taken from glxmotif.c from xjournal/sgi */
@@ -705,7 +694,6 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   sx->mainapp = app;
   sx->mainshell = shell;
   sx->mdpy = dpy;
-
   /* the gray shades are an attempt to get around Netscape which hogs all the colors */
   sx->white =                 get_color(shell, snd_rs.white_color,           WHITE_COLOR,           NULL, NULL, true);
   sx->black =                 get_color(shell, snd_rs.black_color,           BLACK_COLOR,           NULL, NULL, false);
@@ -735,37 +723,37 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   sx->pushed_button_color =   get_color(shell, snd_rs.pushed_button_color,   PUSHED_BUTTON_COLOR,   NULL, NULL, false);
   sx->text_focus_color =      get_color(shell, snd_rs.text_focus_color,      TEXT_FOCUS_COLOR,      NULL, NULL, false);
 
-  if ((!(set_peaks_font(ss, snd_rs.peaks_font))) &&
-      (!(set_peaks_font(ss, DEFAULT_PEAKS_FONT))) &&
-      (!(set_peaks_font(ss, FALLBACK_FONT))))
+  if ((!(set_peaks_font(snd_rs.peaks_font))) &&
+      (!(set_peaks_font(DEFAULT_PEAKS_FONT))) &&
+      (!(set_peaks_font(FALLBACK_FONT))))
     fprintf(stderr, _("can't find font %s"), snd_rs.peaks_font);
 
-  if ((!(set_tiny_font(ss, TINY_FONT))) &&
-      (!(set_tiny_font(ss, FALLBACK_FONT))))
+  if ((!(set_tiny_font(TINY_FONT))) &&
+      (!(set_tiny_font(FALLBACK_FONT))))
     fprintf(stderr, _("can't find font %s"), TINY_FONT);
 
-  if ((!(set_bold_button_font(ss, snd_rs.bold_button_font))) &&
-      (!(set_bold_button_font(ss, DEFAULT_BOLD_BUTTON_FONT))) &&
-      (!(set_bold_button_font(ss, FALLBACK_FONT))))
+  if ((!(set_bold_button_font(snd_rs.bold_button_font))) &&
+      (!(set_bold_button_font(DEFAULT_BOLD_BUTTON_FONT))) &&
+      (!(set_bold_button_font(FALLBACK_FONT))))
     fprintf(stderr, _("can't find font %s"), snd_rs.bold_button_font);
 
-  if ((!(set_bold_peaks_font(ss, snd_rs.bold_peaks_font))) &&
-      (!(set_bold_peaks_font(ss, DEFAULT_BOLD_PEAKS_FONT))) &&
-      (!(set_bold_peaks_font(ss, FALLBACK_FONT))))
+  if ((!(set_bold_peaks_font(snd_rs.bold_peaks_font))) &&
+      (!(set_bold_peaks_font(DEFAULT_BOLD_PEAKS_FONT))) &&
+      (!(set_bold_peaks_font(FALLBACK_FONT))))
     fprintf(stderr, _("can't find font %s"), snd_rs.bold_peaks_font);
 
-  if ((!(set_axis_label_font(ss, snd_rs.axis_label_font))) &&
-      (!(set_axis_label_font(ss, DEFAULT_AXIS_LABEL_FONT))) &&
-      (!(set_axis_label_font(ss, FALLBACK_FONT))))
+  if ((!(set_axis_label_font(snd_rs.axis_label_font))) &&
+      (!(set_axis_label_font(DEFAULT_AXIS_LABEL_FONT))) &&
+      (!(set_axis_label_font(FALLBACK_FONT))))
     fprintf(stderr, _("can't find font %s"), snd_rs.axis_label_font);
 
-  if ((!(set_axis_numbers_font(ss, snd_rs.axis_numbers_font))) &&
-      (!(set_axis_numbers_font(ss, DEFAULT_AXIS_NUMBERS_FONT))) &&
-      (!(set_axis_numbers_font(ss, FALLBACK_FONT))))
+  if ((!(set_axis_numbers_font(snd_rs.axis_numbers_font))) &&
+      (!(set_axis_numbers_font(DEFAULT_AXIS_NUMBERS_FONT))) &&
+      (!(set_axis_numbers_font(FALLBACK_FONT))))
     fprintf(stderr, _("can't find font %s"), snd_rs.axis_numbers_font);
 
   if ((snd_rs.listener_font) &&
-      (!(set_listener_font(ss, snd_rs.listener_font))))
+      (!(set_listener_font(snd_rs.listener_font))))
     fprintf(stderr, _("can't find font %s"), snd_rs.listener_font);
 
   if (!(ss->using_schemes)) XtVaSetValues(shell, XmNbackground, sx->basic_color, NULL);
@@ -776,9 +764,9 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   ss->init_file = copy_string("~/.sndrb"); /* save me some time... */
 #endif
   if (eps_file(ss)) FREE(eps_file(ss));
-  set_eps_file(ss, copy_string(snd_rs.eps_file_name));
-  set_color_map(ss, snd_rs.spectrogram_color);
-  set_ask_before_overwrite(ss, snd_rs.overwrite_check);
+  set_eps_file(copy_string(snd_rs.eps_file_name));
+  set_color_map(snd_rs.spectrogram_color);
+  set_ask_before_overwrite(snd_rs.overwrite_check);
 
 #ifndef SND_AS_WIDGET
   n = 0;
@@ -792,7 +780,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 #else
   sx->mainpane = XtCreateManagedWidget("mainpane", xmFormWidgetClass, parent, caller_args, caller_argn);
 #endif
-  menu = add_menu(ss);
+  menu = add_menu();
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -835,7 +823,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
       XtSetArg(args[n], XmNframeBackground, sx->zoom_color); n++;
       XtSetArg(args[n], XmNbindingWidth, NOTEBOOK_BINDING_WIDTH); n++;
       sx->soundpane = XtCreateManagedWidget("nb", xmNotebookWidgetClass, sx->soundpanebox, args, n);
-      map_over_children(sx->soundpane, set_main_color_of_widget, (void *)ss); /* appears to be a no-op */
+      map_over_children(sx->soundpane, set_main_color_of_widget, NULL); /* appears to be a no-op */
       break;
 #endif
     }
@@ -922,9 +910,9 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   gv.foreground = sx->filter_waveform_color;
   sx->fltenv_data_gc = XCreateGC(dpy, wn, GCBackground | GCForeground | GCFunction, &gv);
 
-  initialize_colormap(ss);
+  initialize_colormap();
 
-  BACKGROUND_ADD(ss, startup_funcs, NULL);
+  BACKGROUND_ADD(startup_funcs, NULL);
   /* this complication seems necessary because we might be loading Scheme code files
    *   from the startup args (via -l) and they might contain errors etc -- we want to
    *   be sure the complete interface is running (via the XtAppMainLoop below) when
@@ -956,8 +944,6 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 #if HAVE_GL
 static XEN g_snd_glx_context(void)
 {
-  snd_state *ss;
-  ss = get_global_state();
   return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GLXContext"), 
 		    C_TO_XEN_ULONG((unsigned long)(ss->sgx->cx))));
 } 

@@ -5996,12 +5996,12 @@ static xen_value *goto_0(ptree *prog, xen_value **args, xen_value *sf)
 
 static snd_info *run_get_sp(int offset, int *args, Int *ints)
 {
-  snd_state *ss;
+
   int spint;
-  ss = get_global_state();
+
   spint = ints[args[offset]];
   if (spint == -1)
-    return(any_selected_sound(ss));
+    return(any_selected_sound());
   else
     if ((spint < ss->max_sounds) && 
 	(snd_ok(ss->sounds[spint])))
@@ -6222,9 +6222,9 @@ static void c_g_p(int *args, ptree *pt)
   #endif
 #endif
     {
-      snd_state *ss;
-      ss = get_global_state();
-      check_for_event(ss);
+
+
+      check_for_event();
       if (ss->stopped_explicitly)
 	{
 	  ss->stopped_explicitly = false;
@@ -9560,7 +9560,7 @@ static void *form_to_ptree(XEN code)
   ptree *prog;
   XEN form;
   run_warned = false;
-  current_optimization = optimization(get_global_state());
+  current_optimization = optimization(ss);
   if (current_optimization == DONT_OPTIMIZE) return(NULL);
   form = XEN_CAR(code);
   prog = make_ptree(8);
@@ -9880,7 +9880,7 @@ in multi-channel situations where you want the optimization that vct-map! provid
     }
 
 #if WITH_RUN
-  if (optimization(get_global_state()) != DONT_OPTIMIZE)
+  if (optimization(ss) != DONT_OPTIMIZE)
     {
       ptree *pt = NULL;
       pt = (ptree *)form_to_ptree(proc_and_code);
@@ -9921,14 +9921,12 @@ in multi-channel situations where you want the optimization that vct-map! provid
   return(proc);
 }
 
-static XEN g_optimization(void) {return(C_TO_XEN_INT(optimization(get_global_state())));}
+static XEN g_optimization(void) {return(C_TO_XEN_INT(optimization(ss)));}
 static XEN g_set_optimization(XEN val) 
 {
   #define H_optimization "(" S_optimization "): the current 'run' optimization level (default 0 = off, max is 6)"
-  snd_state *ss;
-  ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set! " S_optimization, "an integer");
-  set_optimization(ss, XEN_TO_C_INT(val));
+  set_optimization(XEN_TO_C_INT(val));
   return(C_TO_XEN_INT(optimization(ss)));
 }
 

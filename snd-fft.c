@@ -647,7 +647,6 @@ static XEN added_transform_proc(int type)
 
 static XEN before_transform_hook;
 
-
 static char *spectro_xlabel(chan_info *cp)
 {
   switch (cp->transform_type)
@@ -757,7 +756,6 @@ typedef struct {
   bool dBing, lfreq;
   int pad_zero;
   Float cutoff;
-  snd_state *ss;
 } fft_state;
 
 #if (!HAVE_HYPOT)
@@ -772,8 +770,6 @@ static void apply_fft(fft_state *fs)
   int data_len;
   snd_fd *sf;
   chan_info *cp;
-  snd_state *ss;
-  ss = fs->ss;
   cp = (chan_info *)(fs->chan);
   fft_data = fs->data;
   data_len = cp->transform_size;
@@ -882,7 +878,7 @@ static void apply_fft(fft_state *fs)
       break;
     default:
       {
-	XEN res = XEN_FALSE; XEN sfd;
+	XEN res = XEN_FALSE, sfd;
 	vct *v;
 	int len;
 	sfd = g_c_make_sample_reader(sf);
@@ -920,7 +916,6 @@ static void display_fft(fft_state *fs)
   chan_info *ncp;
   snd_info *sp;
   int i, j, lo, hi;
-
   cp = (chan_info *)(fs->chan);
   if ((cp == NULL) || (!(cp->active))) return;
   fp = cp->fft;
@@ -958,7 +953,6 @@ static void display_fft(fft_state *fs)
 	  max_freq = added_transform_hi(cp->transform_type) * fs->size * cp->spectro_cutoff; 
 	  break;
 	}
-
       if (cp->transform_normalization == DONT_NORMALIZE)
 	{
 	  lo = 0;
@@ -977,7 +971,6 @@ static void display_fft(fft_state *fs)
 	      lo = (int)(fs->size * cp->spectro_start);
 	    }
 	}
-
       data_max = 0.0;
       if ((cp->transform_normalization == NORMALIZE_BY_SOUND) ||
 	  ((cp->transform_normalization == DONT_NORMALIZE) && 
@@ -1017,7 +1010,6 @@ static void display_fft(fft_state *fs)
 		}
 	    }
 	}
-
       if (data_max == 0.0) data_max = 1.0;
       if (cp->transform_normalization != DONT_NORMALIZE)
 	scale = 1.0 / data_max;
@@ -1044,7 +1036,6 @@ static void display_fft(fft_state *fs)
 	      scale = 1.0;
 	    }
 	}
-
       if (cp->fft_log_magnitude) 
 	{
 	  if (cp->transform_normalization == DONT_NORMALIZE)
@@ -1101,12 +1092,10 @@ bool fft_window_beta_in_use(mus_fft_window_t win) {return(win >= MUS_KAISER_WIND
 static fft_state *make_fft_state(chan_info *cp, bool simple)
 {
   fft_state *fs = NULL;
-  snd_state *ss;
   axis_info *ap;
   bool reuse_old = false;
   int fftsize;
   off_t dbeg = 0, dlen = 0;
-  ss = cp->state;
   ap = cp->axis;
   if ((show_selection_transform(ss)) && 
       (cp->transform_graph_type == GRAPH_ONCE) && 
@@ -1161,7 +1150,6 @@ static fft_state *make_fft_state(chan_info *cp, bool simple)
       fs->window = NULL;
       fs->losamp = ap->losamp;
       fs->edit_ctr = cp->edit_ctr;
-      fs->ss = ss;
       fs->wavelet_choice = cp->wavelet_type;
       fs->transform_type = cp->transform_type;
       fs->old_style = cp->transform_graph_type;
@@ -1267,7 +1255,7 @@ void single_fft(chan_info *cp, bool dpy)
 {
   if (cp->transform_size < 2) return;
   one_fft(make_fft_state(cp, true));
-  if (!dpy) display_channel_fft_data(cp, cp->sound, cp->state);
+  if (!dpy) display_channel_fft_data(cp);
   enved_fft_update();
 }
 
@@ -1532,7 +1520,6 @@ static int run_all_ffts(sonogram_state *sg)
   sg->outer++;
   if ((sg->outer == sg->outlim) || (!(cp->graph_transform_p)) || (cp->transform_graph_type == GRAPH_ONCE)) return(1);
   fs->beg += sg->hop;
-  
   ap = cp->axis;
   if ((sg->losamp != ap->losamp) || (sg->hisamp != ap->hisamp)) 
     {
@@ -1560,7 +1547,7 @@ static int cleanup_sonogram(sonogram_state *sg)
       set_chan_fft_in_progress(cp, 0); /* i.e. clear it */
       if ((sg->scp != NULL) && (sg->outlim > 1))
 	{
-	  display_channel_fft_data(cp, cp->sound, cp->state);
+	  display_channel_fft_data(cp);
 	  if (sg->outer == sg->outlim) sg->done = true;
 	  sg->old_scale = (sg->scp)->scale;
 	}
@@ -1609,10 +1596,10 @@ void sono_update(chan_info *cp)
   update_graph(cp);
 }
 
-void set_spectro_cutoff_and_redisplay(snd_state *ss, Float val)
+void set_spectro_cutoff_and_redisplay(Float val)
 {
-  in_set_spectro_cutoff(ss, val); 
-  for_each_chan(ss, sono_update);
+  in_set_spectro_cutoff(val); 
+  for_each_chan(sono_update);
 }
 
 static void spectral_multiply (Float* rl1, Float* rl2, int n)
@@ -1646,7 +1633,6 @@ void c_convolve(char *fname, Float amp, int filec, off_t filehdr, int filterc, o
   int i;
   Float scl;
   int tempfile;
-
   /* need file to hold convolution output */
   tempfile = mus_file_create(fname);
   if (tempfile != -1)
@@ -1654,7 +1640,6 @@ void c_convolve(char *fname, Float amp, int filec, off_t filehdr, int filterc, o
       /* get to start point in the two sound files */
       lseek(filec, filehdr, SEEK_SET);
       lseek(filterc, filterhdr, SEEK_SET);
-
       rl0 = (Float *)CALLOC(fftsize, sizeof(Float));
       if (rl0) rl1 = (Float *)CALLOC(fftsize, sizeof(Float));
       if (rl1) pbuffer = (mus_sample_t **)CALLOC(1, sizeof(mus_sample_t *));

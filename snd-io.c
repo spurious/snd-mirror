@@ -171,14 +171,14 @@ static void close_temp_files(chan_info *cp, void *closed)
     }
 }
 
-static int too_many_files_cleanup(snd_state *ss)
+static int too_many_files_cleanup(void)
 {
   int *closed;
   int rtn;
   rtn = -1;
   closed = (int *)MALLOC(sizeof(int));
   (*closed) = 0;
-  for_each_chan_1(ss, close_temp_files, (void *)closed);
+  for_each_chan_1(close_temp_files, (void *)closed);
   if ((*closed) == 0) 
     for_each_region_chan(close_temp_files, (void *)closed);
   if ((*closed) == 0)
@@ -188,13 +188,13 @@ static int too_many_files_cleanup(snd_state *ss)
   return(rtn);
 }
 
-int snd_open_read(snd_state *ss, const char *arg) 
+int snd_open_read(const char *arg) 
 {
   int fd;
   fd = OPEN(arg, O_RDONLY, 0);
   if ((fd == -1) && (errno == EMFILE))
     {
-      fd = too_many_files_cleanup(ss);
+      fd = too_many_files_cleanup();
       if (fd != -1) 
 	fd = OPEN(arg, O_RDONLY, 0);
       if (fd == -1) 
@@ -203,7 +203,7 @@ int snd_open_read(snd_state *ss, const char *arg)
   return(fd);
 }
 
-bool snd_overwrite_ok(snd_state *ss, const char *ofile)
+bool snd_overwrite_ok(const char *ofile)
 {
   int fil;
   bool rtn = true;
@@ -213,20 +213,20 @@ bool snd_overwrite_ok(snd_state *ss, const char *ofile)
       if (fil != -1) 
 	{
 	  CLOSE(fil);
-	  rtn = snd_yes_or_no_p(ss, _("file %s exists. Overwrite?"), ofile);
+	  rtn = snd_yes_or_no_p(_("file %s exists. Overwrite?"), ofile);
 	}
     }
   return(rtn);
 }
 
-int snd_reopen_write(snd_state *ss, const char *arg)
+int snd_reopen_write(const char *arg)
 {
   int fd;
   fd = OPEN(arg, O_RDWR, 0);
   if ((fd == -1) && 
       (errno == EMFILE))
     {
-      fd = too_many_files_cleanup(ss);
+      fd = too_many_files_cleanup();
       if (fd != -1) 
 	fd = OPEN(arg, O_RDWR, 0);
       if (fd == -1) 
@@ -239,7 +239,7 @@ static int local_mus_error = MUS_NO_ERROR;
 static mus_error_handler_t *old_error_handler;
 static void local_mus_error2snd(int type, char *msg) {local_mus_error = type;}
 
-int snd_write_header(snd_state *ss, const char *name, int type, int srate, int chans, off_t loc, 
+int snd_write_header(const char *name, int type, int srate, int chans, off_t loc, 
 		     off_t samples, int format, const char *comment, int len, int *loops)
 {
   int err;
@@ -252,7 +252,7 @@ int snd_write_header(snd_state *ss, const char *name, int type, int srate, int c
     {
       if (errno == EMFILE) /* 0 => no error (err not actually returned unless it's -1) */
 	{
-	  err = too_many_files_cleanup(ss);
+	  err = too_many_files_cleanup();
 	  if (err != -1) 
 	    err = mus_header_write(name, type, srate, chans, loc, samples, format, comment, len);
 	}
@@ -414,14 +414,14 @@ snd_data *make_snd_data_file(const char *name, snd_io *io, file_info *hdr, file_
   return(sd);
 }
 
-snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize)
+snd_data *copy_snd_data(snd_data *sd, int bufsize)
 {
   snd_data *sf;
   snd_io *io;
   int fd;
   file_info *hdr;
   hdr = sd->hdr;
-  fd = snd_open_read(cp->state, sd->filename);
+  fd = snd_open_read(sd->filename);
   if (fd == -1) 
     return(NULL);
   mus_file_open_descriptors(fd,
@@ -536,7 +536,7 @@ snd_data *free_snd_data(snd_data *sd)
   return(NULL);
 }
 
-int open_temp_file(const char *ofile, int chans, file_info *hdr, snd_state *ss)
+int open_temp_file(const char *ofile, int chans, file_info *hdr)
 {
   int ofd, len, err;
   len = snd_strlen(hdr->comment);
@@ -552,9 +552,9 @@ int open_temp_file(const char *ofile, int chans, file_info *hdr, snd_state *ss)
 	  hdr->format = MUS_OUT_FORMAT;
 	}
     }
-  err = snd_write_header(ss, ofile, hdr->type, hdr->srate, chans, 0, 0, hdr->format, hdr->comment, len, hdr->loops);
+  err = snd_write_header(ofile, hdr->type, hdr->srate, chans, 0, 0, hdr->format, hdr->comment, len, hdr->loops);
   if (err == -1) return(-1);
-  if ((ofd = snd_reopen_write(ss, ofile)) == -1) return(-1);
+  if ((ofd = snd_reopen_write(ofile)) == -1) return(-1);
   hdr->data_location = mus_header_data_location(); /* header might have changed size (aiff extras) */
   mus_file_open_descriptors(ofd,
 			    ofile,

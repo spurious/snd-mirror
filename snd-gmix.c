@@ -26,8 +26,7 @@ static void change_mix_speed(int mix_id, Float val)
 
 static gboolean speed_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
-  snd_state *ss = (snd_state *)data;
-  change_mix_speed(current_mix_id(ss), 1.0);
+  change_mix_speed(current_mix_id(), 1.0);
   GTK_ADJUSTMENT(w_speed_adj)->value = .45;
   gtk_adjustment_value_changed(GTK_ADJUSTMENT(w_speed_adj));
   return(false);
@@ -37,10 +36,9 @@ static void speed_changed_callback(GtkAdjustment *adj, gpointer data)
 {
   Float val;
   int mix_id;
-  snd_state *ss = (snd_state *)data;
   chan_info *cp;
   snd_info *sp;
-  mix_id = current_mix_id(ss);
+  mix_id = current_mix_id();
   cp = mix_channel_from_id(mix_id);
   sp = cp->sound;
   val = srate_changed(exp((GTK_ADJUSTMENT(w_speed_adj)->value - .45) / .15),
@@ -57,10 +55,9 @@ static gboolean speed_release_callback(GtkWidget *w, GdkEventButton *ev, gpointe
 {
   Float val;
   int mix_id;
-  snd_state *ss = (snd_state *)data;
   chan_info *cp;
   snd_info *sp;
-  mix_id = current_mix_id(ss);
+  mix_id = current_mix_id();
   cp = mix_channel_from_id(mix_id);
   sp = cp->sound;
   val = srate_changed(exp((GTK_ADJUSTMENT(w_speed_adj)->value - .45) / .15),
@@ -109,9 +106,8 @@ static void change_mix_amp(int mix_id, int chan, Float val)
 static gboolean amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   int chan;
-  snd_state *ss = (snd_state *)data;
   chan = get_user_int_data(G_OBJECT(w));
-  change_mix_amp(current_mix_id(ss), chan, 1.0);
+  change_mix_amp(current_mix_id(), chan, 1.0);
   GTK_ADJUSTMENT(w_amp_adjs[chan])->value = 0.5;
   gtk_adjustment_value_changed(GTK_ADJUSTMENT(w_amp_adjs[chan]));
   return(false);
@@ -140,23 +136,21 @@ static void amp_changed_callback(GtkAdjustment *adj, gpointer data)
 {
   int chan;
   Float scrollval;
-  snd_state *ss = (snd_state *)data;
   chan = get_user_int_data(G_OBJECT(adj));
   scrollval = GTK_ADJUSTMENT(w_amp_adjs[chan])->value;
-  if (!dragging) start_mix_drag(current_mix_id(ss));
+  if (!dragging) start_mix_drag(current_mix_id());
   dragging = true;
-  change_mix_amp(current_mix_id(ss), chan, scroll_to_amp(scrollval));
+  change_mix_amp(current_mix_id(), chan, scroll_to_amp(scrollval));
 }
 
 static gboolean amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   int chan;
   Float scrollval;
-  snd_state *ss = (snd_state *)data;
   chan = get_user_int_data(G_OBJECT(w));
   scrollval = GTK_ADJUSTMENT(w_amp_adjs[chan])->value;
   dragging = false;
-  change_mix_amp(current_mix_id(ss), chan, scroll_to_amp(scrollval));
+  change_mix_amp(current_mix_id(), chan, scroll_to_amp(scrollval));
   return(false);
 }
 
@@ -169,13 +163,12 @@ static GdkGC *cur_gc;
 static void *spfs[8];
 static int last_clicked_env_chan;
 
-static void mix_amp_env_resize(GtkWidget *w, snd_state *ss)
+static void mix_amp_env_resize(GtkWidget *w)
 {
   GdkWindow *wn;
   int chans, chan, mix_id;
   env **e;
   env *cur_env;
-
   if (ax == NULL)
     {
       wn = MAIN_WINDOW(ss);
@@ -190,12 +183,12 @@ static void mix_amp_env_resize(GtkWidget *w, snd_state *ss)
       ax->gc = cur_gc;
     }
   else clear_window(ax);
-  mix_id = current_mix_id(ss);
+  mix_id = current_mix_id();
   chans = mix_input_chans_from_id(mix_id);
   e = mix_panel_envs(mix_id);
   for (chan = 0; chan < chans; chan++)
     {
-      edp_display_graph(ss, spfs[chan], _("mix env"), ax, 
+      edp_display_graph(spfs[chan], _("mix env"), ax, 
 			(int)(chan * widget_width(w) / chans), 0,
 			widget_width(w) / chans, widget_height(w), 
 			e[chan], false, true);
@@ -203,7 +196,7 @@ static void mix_amp_env_resize(GtkWidget *w, snd_state *ss)
       if (cur_env)
 	{
 	  gdk_gc_set_foreground(ax->gc, (ss->sgx)->enved_waveform_color);
-	  edp_display_graph(ss, spfs[chan], _("mix env"), ax, 
+	  edp_display_graph(spfs[chan], _("mix env"), ax, 
 			    (int)(chan * widget_width(w) / chans), 0,
 			    widget_width(w) / chans, widget_height(w), 
 			    cur_env, false, false);
@@ -214,46 +207,43 @@ static void mix_amp_env_resize(GtkWidget *w, snd_state *ss)
 
 static gboolean mix_drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
-  snd_state *ss = (snd_state *)data;
   int mix_id, chans, chan;
   env *e;
   Float pos;
-  mix_id = current_mix_id(ss);
+  mix_id = current_mix_id();
   chans = mix_input_chans_from_id(mix_id);
   pos = (Float)(ev->x) / (Float)widget_width(w);
   chan = (int)(pos * chans);
   last_clicked_env_chan = chan;
   e = mix_panel_env(mix_id, chan);
-  if (edp_handle_press(ss,
+  if (edp_handle_press(
 		       spfs[chan],
 		       (int)(ev->x), (int)(ev->y), ev->time, 
 		       e,
 		       false,
 		       1.0))
-    mix_amp_env_resize(w, ss);
+    mix_amp_env_resize(w);
   return(false);
 }
 
 static gboolean mix_drawer_button_release(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
-  snd_state *ss = (snd_state *)data;
   int mix_id, chans, chan;
   env *e;
   Float pos;
-  mix_id = current_mix_id(ss);
+  mix_id = current_mix_id();
   chans = mix_input_chans_from_id(mix_id);
   pos = (Float)(ev->x) / (Float)widget_width(w);
   chan = (int)(pos * chans);
   last_clicked_env_chan = chan;
   e = mix_panel_env(mix_id, chan);
   edp_handle_release(spfs[chan], e);
-  mix_amp_env_resize(w, ss);
+  mix_amp_env_resize(w);
   return(false);
 }
 
 static gboolean mix_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 { 
-  snd_state *ss = (snd_state *)data;
   int mix_id, chans, chan, x, y;
   GdkModifierType state;
   env *e;
@@ -267,33 +257,32 @@ static gboolean mix_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpoin
 	  x = (int)(ev->x);
 	  y = (int)(ev->y);
 	}
-      mix_id = current_mix_id(ss);
+      mix_id = current_mix_id();
       chans = mix_input_chans_from_id(mix_id);
       pos = (Float)x / (Float)widget_width(w);
       chan = (int)(pos * chans);
       last_clicked_env_chan = chan;
       e = mix_panel_env(mix_id, chan);
-      edp_handle_point(ss,
+      edp_handle_point(
 		       spfs[chan],
 		       x, y, ev->time, 
 		       e,
 		       false,
 		       1.0);
-      mix_amp_env_resize(w, ss);
+      mix_amp_env_resize(w);
     }
   return(false);
 }
 
-
 static gboolean mix_amp_env_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
-  mix_amp_env_resize(w, (snd_state *)data);
+  mix_amp_env_resize(w);
   return(false);
 }
 
 static gboolean mix_amp_env_resize_callback(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
 {
-  mix_amp_env_resize(w, (snd_state *)data);
+  mix_amp_env_resize(w);
   return(false);
 }
 
@@ -309,7 +298,6 @@ static void id_activated(GtkWidget *w, gpointer context)
 {
   char *val;
   int id;
-  snd_state *ss = (snd_state *)context;
   val = (char *)gtk_entry_get_text(GTK_ENTRY(w_id));
   if (val)
     {
@@ -327,11 +315,10 @@ static void beg_activated(GtkWidget *w, gpointer context)
   char *val;
   chan_info *cp;
   int mix_id;
-  snd_state *ss = (snd_state *)context;
   val = (char *)gtk_entry_get_text(GTK_ENTRY(w_beg));
   if (val)
     {
-      mix_id = current_mix_id(ss);
+      mix_id = current_mix_id();
       cp = mix_channel_from_id(mix_id);
       set_mix_position(mix_id, (int)(string2Float(val) * SND_SRATE(cp->sound)));
       update_mix_panel(mix_id);
@@ -341,68 +328,53 @@ static void beg_activated(GtkWidget *w, gpointer context)
 static void track_activated(GtkWidget *w, gpointer context) 
 {
   char *val;
-  snd_state *ss = (snd_state *)context;
   val = (char *)gtk_entry_get_text(GTK_ENTRY(w_track));
   if (val)
-    set_mix_track_from_id(current_mix_id(ss), string2int(val));
+    set_mix_track_from_id(current_mix_id(), string2int(val));
 }
 
 static bool mix_playing = false;
-int mix_play_stopped(void) {return(!mix_playing);}
+bool mix_play_stopped(void) {return(!mix_playing);}
 
 void reflect_mix_play_stop(void)
 {
-  snd_state *ss;
   if (mix_play) 
-    {
-      ss = get_global_state();
-      set_backgrounds(mix_play, (ss->sgx)->basic_color);
-    }
+    set_backgrounds(mix_play, (ss->sgx)->basic_color);
   mix_playing = false;
 }
 
 static void mix_play_callback(GtkWidget *w, gpointer context) 
 {
-  snd_state *ss = (snd_state *)context;
   if (mix_playing)
-    {
-      reflect_mix_play_stop();
-    }
+    reflect_mix_play_stop();
   else
     {
       mix_playing = true;
       if (mix_play) set_backgrounds(mix_play, (ss->sgx)->pushed_button_color);
-      mix_play_from_id(current_mix_id(ss));
+      mix_play_from_id(current_mix_id());
     }
 }
 
 static void track_play_callback(GtkWidget *w, gpointer context) 
 {
-  snd_state *ss = (snd_state *)context;
   if (mix_playing)
-    {
-      reflect_mix_play_stop();
-    }
+    reflect_mix_play_stop();
   else
     {
       mix_playing = true;
       if (track_play) set_backgrounds(track_play, (ss->sgx)->pushed_button_color);
-      track_play_from_id(current_mix_id(ss));
+      track_play_from_id(current_mix_id());
     }
 }
 
 static gboolean mix_play_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
-  snd_state *ss;
-  ss = get_global_state();
   gdk_draw_drawable(GDK_DRAWABLE(mix_play_pix->window), ss->sgx->basic_gc, speaker_pix, 0, 0, 2, 4, 12, 12);
   return(false);
 }
 
 static gboolean track_play_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
-  snd_state *ss;
-  ss = get_global_state();
   gdk_draw_drawable(GDK_DRAWABLE(track_play_pix->window), ss->sgx->basic_gc, speaker_pix, 0, 0, 2, 4, 12, 12);
   return(false);
 }
@@ -410,17 +382,16 @@ static gboolean track_play_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer
 static void apply_mix_panel(GtkWidget *w, gpointer context)
 {
   /* set all mix amp envs, last one should remix */
-  snd_state *ss = (snd_state *)context;
   int i, chans, mix_id;
   env **envs;
-  mix_id = current_mix_id(ss);
+  mix_id = current_mix_id();
   chans = mix_input_chans_from_id(mix_id);
   envs = mix_panel_envs(mix_id);
   for (i = 0; i < chans; i++)
     if (i != last_clicked_env_chan)
       set_mix_amp_env_without_edit(mix_id, i, envs[i]);
   set_mix_amp_env_from_gui(mix_id, last_clicked_env_chan, envs[last_clicked_env_chan]);
-  mix_amp_env_resize(w_env, ss);
+  mix_amp_env_resize(w_env);
 }
 
 static void dismiss_mix_panel(GtkWidget *w, gpointer context)
@@ -438,9 +409,8 @@ static GtkWidget *nextb, *previousb;
 
 static void mix_next_callback(GtkWidget *w, gpointer context)
 {
-  snd_state *ss = (snd_state *)context;
   int id;
-  id = next_mix_id(current_mix_id(ss));
+  id = next_mix_id(current_mix_id());
   if (id != INVALID_MIX_ID)
     {
       select_mix_from_id(id);
@@ -452,9 +422,8 @@ static void mix_next_callback(GtkWidget *w, gpointer context)
 
 static void mix_previous_callback(GtkWidget *w, gpointer context)
 {
-  snd_state *ss = (snd_state *)context;
   int id;
-  id = previous_mix_id(current_mix_id(ss));
+  id = previous_mix_id(current_mix_id());
   if (id != INVALID_MIX_ID)
     {
       select_mix_from_id(id);
@@ -466,8 +435,7 @@ static void mix_previous_callback(GtkWidget *w, gpointer context)
 
 static void mix_panel_help(GtkWidget *w, gpointer context) 
 {
-  snd_help((snd_state *)context,
-	   _("Mix Panel"),
+  snd_help(_("Mix Panel"),
 "This dialog provides various commonly-used controls on the currently \
 selected mix.  At the top are the mix id, begin and end times, \
 track number, and a play button.  Beneath that are various sliders \
@@ -479,20 +447,19 @@ mix amp env (if any) is drawn in blue.",
 	   true);
 }
 
-GtkWidget *make_mix_panel(snd_state *ss)
+GtkWidget *make_mix_panel(void)
 {
   GtkWidget *dismiss_button, *help_button, *rc, *apply_button, *mix_frame, *track_frame, *rc_top, *rc1;
   char amplab[LABEL_BUFFER_SIZE];
   int mix_id, i;
-  mix_id = current_mix_id(ss);
-
+  mix_id = current_mix_id();
   if (mix_panel == NULL)
     {
       mix_panel = gtk_dialog_new();
       g_signal_connect_closure_by_id(GTK_OBJECT(mix_panel),
 				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(mix_panel))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(delete_mix_panel), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(delete_mix_panel), NULL, 0),
 				     0);
       gtk_window_set_title(GTK_WINDOW(mix_panel), _("Mix Panel"));
       sg_make_resizable(mix_panel);
@@ -505,7 +472,7 @@ GtkWidget *make_mix_panel(snd_state *ss)
       g_signal_connect_closure_by_id(GTK_OBJECT(dismiss_button),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(dismiss_button))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(dismiss_mix_panel), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(dismiss_mix_panel), NULL, 0),
 				     0);
       gtk_widget_show(dismiss_button);
 
@@ -514,7 +481,7 @@ GtkWidget *make_mix_panel(snd_state *ss)
       g_signal_connect_closure_by_id(GTK_OBJECT(previousb),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(previousb))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_previous_callback), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_previous_callback), NULL, 0),
 				     0);
       gtk_widget_show(previousb);
 
@@ -523,7 +490,7 @@ GtkWidget *make_mix_panel(snd_state *ss)
       g_signal_connect_closure_by_id(GTK_OBJECT(nextb),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(nextb))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_next_callback), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_next_callback), NULL, 0),
 				     0);
       gtk_widget_show(nextb);
 
@@ -532,7 +499,7 @@ GtkWidget *make_mix_panel(snd_state *ss)
       g_signal_connect_closure_by_id(GTK_OBJECT(apply_button),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(apply_button))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(apply_mix_panel), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(apply_mix_panel), NULL, 0),
 				     0);
       gtk_widget_show(apply_button);
 
@@ -541,7 +508,7 @@ GtkWidget *make_mix_panel(snd_state *ss)
       g_signal_connect_closure_by_id(GTK_OBJECT(help_button),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(help_button))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_panel_help), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_panel_help), NULL, 0),
 				     0);
       gtk_widget_show(help_button);
 
@@ -572,18 +539,18 @@ GtkWidget *make_mix_panel(snd_state *ss)
       gtk_box_pack_start(GTK_BOX(rc), w_id_label, false, false, 4);
       gtk_widget_show(w_id_label);
 
-      w_id = snd_entry_new(ss, rc, false);
+      w_id = snd_entry_new(rc, false);
       g_signal_connect_closure_by_id(GTK_OBJECT(w_id),
 				     g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(w_id))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(id_activated), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(id_activated), NULL, 0),
 				     0);
 
-      w_beg = snd_entry_new(ss, rc, false);
+      w_beg = snd_entry_new(rc, false);
       g_signal_connect_closure_by_id(GTK_OBJECT(w_beg),
 				     g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(w_beg))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(beg_activated), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(beg_activated), NULL, 0),
 				     0);
 
       mix_play = gtk_button_new();
@@ -591,7 +558,7 @@ GtkWidget *make_mix_panel(snd_state *ss)
       g_signal_connect_closure_by_id(GTK_OBJECT(mix_play),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(mix_play))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_play_callback), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_play_callback), NULL, 0),
 				     0);
       gtk_widget_show(mix_play);
       
@@ -605,7 +572,7 @@ GtkWidget *make_mix_panel(snd_state *ss)
       g_signal_connect_closure_by_id(GTK_OBJECT(mix_play_pix),
 				     g_signal_lookup("expose_event", G_OBJECT_TYPE(GTK_OBJECT(mix_play_pix))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_play_pix_expose), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_play_pix_expose), NULL, 0),
 				     0);
 
 
@@ -613,11 +580,11 @@ GtkWidget *make_mix_panel(snd_state *ss)
       gtk_box_pack_start(GTK_BOX(rc1), w_track_label, false, false, 4);
       gtk_widget_show(w_track_label);
 
-      w_track = snd_entry_new(ss, rc1, false);
+      w_track = snd_entry_new(rc1, false);
       g_signal_connect_closure_by_id(GTK_OBJECT(w_track),
 				     g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(w_track))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(track_activated), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(track_activated), NULL, 0),
 				     0);
 
       track_play = gtk_button_new();
@@ -625,7 +592,7 @@ GtkWidget *make_mix_panel(snd_state *ss)
       g_signal_connect_closure_by_id(GTK_OBJECT(track_play),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(track_play))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(track_play_callback), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(track_play_callback), NULL, 0),
 				     0);
       gtk_widget_show(track_play);
       
@@ -638,7 +605,7 @@ GtkWidget *make_mix_panel(snd_state *ss)
       g_signal_connect_closure_by_id(GTK_OBJECT(track_play_pix),
 				     g_signal_lookup("expose_event", G_OBJECT_TYPE(GTK_OBJECT(track_play_pix))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(track_play_pix_expose), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(track_play_pix_expose), NULL, 0),
 				     0);
 
       /* SPEED */
@@ -652,7 +619,7 @@ GtkWidget *make_mix_panel(snd_state *ss)
       g_signal_connect_closure_by_id(GTK_OBJECT(w_speed_event),
 				     g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(w_speed_event))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(speed_click_callback), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(speed_click_callback), NULL, 0),
 				     0);
       set_background(w_speed_event, (ss->sgx)->basic_color);
       
@@ -675,12 +642,12 @@ GtkWidget *make_mix_panel(snd_state *ss)
       g_signal_connect_closure_by_id(GTK_OBJECT(w_speed_adj),
 				     g_signal_lookup("value_changed", G_OBJECT_TYPE(GTK_OBJECT(w_speed_adj))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(speed_changed_callback), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(speed_changed_callback), NULL, 0),
 				     0);
       g_signal_connect_closure_by_id(GTK_OBJECT(w_speed),
 				     g_signal_lookup("button_release_event", G_OBJECT_TYPE(GTK_OBJECT(w_speed))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(speed_release_callback), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(speed_release_callback), NULL, 0),
 				     0);
       gtk_widget_show(w_speed);
       gtk_widget_show(w_speed_form);
@@ -707,7 +674,7 @@ GtkWidget *make_mix_panel(snd_state *ss)
 	  g_signal_connect_closure_by_id(GTK_OBJECT(w_amp_events[i]),
 					 g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(w_amp_events[i]))),
 					 0,
-					 g_cclosure_new(GTK_SIGNAL_FUNC(amp_click_callback), (gpointer)ss, 0),
+					 g_cclosure_new(GTK_SIGNAL_FUNC(amp_click_callback), NULL, 0),
 					 0);
 	  set_background(w_amp_events[i], (ss->sgx)->basic_color);
       
@@ -727,12 +694,12 @@ GtkWidget *make_mix_panel(snd_state *ss)
 	  g_signal_connect_closure_by_id(GTK_OBJECT(w_amp_adjs[i]),
 					 g_signal_lookup("value_changed", G_OBJECT_TYPE(GTK_OBJECT(w_amp_adjs[i]))),
 					 0,
-					 g_cclosure_new(GTK_SIGNAL_FUNC(amp_changed_callback), (gpointer)ss, 0),
+					 g_cclosure_new(GTK_SIGNAL_FUNC(amp_changed_callback), NULL, 0),
 					 0);
 	  g_signal_connect_closure_by_id(GTK_OBJECT(w_amps[i]),
 					 g_signal_lookup("button_release_event", G_OBJECT_TYPE(GTK_OBJECT(w_amps[i]))),
 					 0,
-					 g_cclosure_new(GTK_SIGNAL_FUNC(amp_release_callback), (gpointer)ss, 0),
+					 g_cclosure_new(GTK_SIGNAL_FUNC(amp_release_callback), NULL, 0),
 					 0);
 	  set_user_int_data(G_OBJECT(w_amps[i]), i);	  
 	  set_user_int_data(G_OBJECT(w_amp_adjs[i]), i);
@@ -753,32 +720,32 @@ GtkWidget *make_mix_panel(snd_state *ss)
       g_signal_connect_closure_by_id(GTK_OBJECT(w_env),
 				     g_signal_lookup("expose_event", G_OBJECT_TYPE(GTK_OBJECT(w_env))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_amp_env_expose_callback), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_amp_env_expose_callback), NULL, 0),
 				     0);
       g_signal_connect_closure_by_id(GTK_OBJECT(w_env),
 				     g_signal_lookup("configure_event", G_OBJECT_TYPE(GTK_OBJECT(w_env))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_amp_env_resize_callback), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_amp_env_resize_callback), NULL, 0),
 				     0);
       g_signal_connect_closure_by_id(GTK_OBJECT(w_env),
 				     g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(w_env))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_drawer_button_press), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_drawer_button_press), NULL, 0),
 				     0);
       g_signal_connect_closure_by_id(GTK_OBJECT(w_env),
 				     g_signal_lookup("button_release_event", G_OBJECT_TYPE(GTK_OBJECT(w_env))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_drawer_button_release), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_drawer_button_release), NULL, 0),
 				     0);
       g_signal_connect_closure_by_id(GTK_OBJECT(w_env),
 				     g_signal_lookup("motion_notify_event", G_OBJECT_TYPE(GTK_OBJECT(w_env))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_drawer_button_motion), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_drawer_button_motion), NULL, 0),
 				     0);
       gtk_widget_show(w_env_frame);
 
       gtk_widget_show(mix_panel);
-      set_dialog_widget(ss, MIX_PANEL_DIALOG, mix_panel);
+      set_dialog_widget(MIX_PANEL_DIALOG, mix_panel);
 
       for (i = 0; i < CHANS_ALLOCATED; i++) spfs[i] = new_env_editor();
       speed_number_buffer[1] = local_decimal_point();
@@ -786,24 +753,22 @@ GtkWidget *make_mix_panel(snd_state *ss)
     }
   else raise_dialog(mix_panel);
 
-  update_mix_panel(current_mix_id(ss));
+  update_mix_panel(current_mix_id());
   return(mix_panel);
 }
 
 static void update_mix_panel(int mix_id) 
 {
-  snd_state *ss;
   chan_info *cp;
   int i, chans;
   off_t beg, len;
   Float val;
   char lab[LABEL_BUFFER_SIZE];
-  ss = get_global_state();
   if (mix_id == INVALID_MIX_ID) return;
-  if (mix_id == current_mix_id(ss))
+  if (mix_id == current_mix_id())
     {
       if (mix_panel == NULL) 
-	make_mix_panel(get_global_state());
+	make_mix_panel();
       else
 	{
 	  set_sensitive(nextb, (next_mix_id(mix_id) != INVALID_MIX_ID));
@@ -857,26 +822,22 @@ static void update_mix_panel(int mix_id)
 	  gtk_widget_hide(w_amp_forms[i]);
 	}
 
-      mix_amp_env_resize(w_env, ss);
+      mix_amp_env_resize(w_env);
 
     }
 }
 
-
-
 void reflect_mix_in_mix_panel(int mix_id)
 {
-  snd_state *ss;
   if ((mix_panel) &&
       (GTK_WIDGET_VISIBLE(mix_panel)))
     {
-      ss = get_global_state();
-      if (current_mix_id(ss) == mix_id)
+      if (current_mix_id() == mix_id)
 	update_mix_panel(mix_id);
       if (mix_id != INVALID_MIX_ID)
 	{
-	  set_sensitive(nextb, (next_mix_id(current_mix_id(ss)) != INVALID_MIX_ID));
-	  set_sensitive(previousb, (previous_mix_id(current_mix_id(ss)) != INVALID_MIX_ID));
+	  set_sensitive(nextb, (next_mix_id(current_mix_id()) != INVALID_MIX_ID));
+	  set_sensitive(previousb, (previous_mix_id(current_mix_id()) != INVALID_MIX_ID));
 	}
     }
 }

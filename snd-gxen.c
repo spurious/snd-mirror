@@ -66,8 +66,6 @@ void color_unselected_graphs(color_t color)
   int i, j;
   chan_info *cp;
   snd_info *sp;
-  snd_state *ss;
-  ss = get_global_state();
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
@@ -86,8 +84,6 @@ void color_chan_components(color_t color, int which_component)
   int i, j;
   chan_info *cp;
   snd_info *sp;
-  snd_state *ss;
-  ss = get_global_state();
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
@@ -115,14 +111,12 @@ void color_chan_components(color_t color, int which_component)
 static XEN g_graph_cursor(void)
 {
   #define H_graph_cursor "(" S_graph_cursor "): current graph cursor shape"
-  return(C_TO_SMALL_XEN_INT(in_graph_cursor(get_global_state())));
+  return(C_TO_SMALL_XEN_INT(in_graph_cursor(ss)));
 }
 
 static XEN g_set_graph_cursor(XEN curs)
 {
   int val;
-  snd_state *ss;
-  ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_INTEGER_P(curs), curs, XEN_ONLY_ARG, S_setB S_graph_cursor, "an integer");
   val = XEN_TO_C_INT(curs);
   if ((val >= 0) && (val <= GDK_XTERM))

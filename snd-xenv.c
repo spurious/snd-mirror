@@ -52,22 +52,22 @@ axis_info *enved_make_axis(char *name, axis_context *ax,
   return(axis);
 }
 
-static void display_env(snd_state *ss, env *e, char *name, GC cur_gc, 
-			int x0, int y0, int width, int height, int dots, Float base, bool printing)
+static void display_env(env *e, char *name, GC cur_gc, 
+			int x0, int y0, int width, int height, bool dots, Float base, bool printing)
 {
   axis_context *ax = NULL;  
   ax = (axis_context *)CALLOC(1, sizeof(axis_context));
   ax->wn = XtWindow(drawer);
   ax->dp = XtDisplay(drawer);
   ax->gc = cur_gc;
-  display_enved_env(ss, e, ax, name, x0, y0, width, height, dots, base, printing);
+  display_enved_env(e, ax, name, x0, y0, width, height, dots, base, printing);
   ax = free_axis_context(ax);
 }
 
-void display_enved_env_with_selection(snd_state *ss, env *e, char *name, 
-				      int x0, int y0, int width, int height, int dots, Float base, bool printing)
+void display_enved_env_with_selection(env *e, char *name, 
+				      int x0, int y0, int width, int height, bool dots, Float base, bool printing)
 {
-  display_env(ss, e, name, (selected_env == e) ? rgc : gc, x0, y0, width, height, dots, base, printing);
+  display_env(e, name, (selected_env == e) ? rgc : gc, x0, y0, width, height, dots, base, printing);
 }
 
 static void do_env_edit(env *new_env, int loading)
@@ -88,7 +88,7 @@ void set_enved_undo_sensitive(bool val) {set_sensitive(undoB, val);}
 void set_enved_save_sensitive(bool val) {set_sensitive(saveB, val);}
 void set_enved_show_sensitive(bool val) {set_sensitive(showB, val);}
 
-void make_scrolled_env_list (snd_state *ss)
+void make_scrolled_env_list (void)
 {
   XmString *strs;
   int n, size;
@@ -108,26 +108,23 @@ void make_scrolled_env_list (snd_state *ss)
 
 void alert_enved_amp_env(snd_info *sp)
 {
-  snd_state *ss;
-  ss = sp->state;
   if ((ss) && (enved_dialog) && (active_channel) && (enved_wave_p(ss)))
     if (active_channel->sound == sp) 
-      env_redisplay(sp->state);
+      env_redisplay();
 }
 
-void new_active_channel_alert(snd_state *ss)
+void new_active_channel_alert(void)
 {
   if (enved_dialog)
     {
       /* if showing current active channel in gray, update */
-      active_channel = current_channel(ss);
-      env_redisplay(ss);
+      active_channel = current_channel();
+      env_redisplay();
     }
 }
 
 static void dismiss_enved_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)context;
   if (ss->checking_explicitly)
     ss->stopped_explicitly = true;
   else XtUnmanageChild(enved_dialog);
@@ -135,12 +132,12 @@ static void dismiss_enved_callback(Widget w, XtPointer context, XtPointer info)
 
 static void help_enved_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  envelope_editor_dialog_help((snd_state *)context);
+  envelope_editor_dialog_help();
 }
 
 static bool within_selection_src = false;
 
-static void apply_enved(snd_state *ss)
+static void apply_enved(void)
 {
   int mix_id = 0, i, j, chan;
   env *max_env = NULL;
@@ -157,20 +154,20 @@ static void apply_enved(snd_state *ss)
 	  if (sp)
 	    active_channel = sp->chans[(chan != NO_SELECTION) ? chan : 0];
 	}
-      else active_channel = current_channel(ss);
+      else active_channel = current_channel();
       if (active_channel)
 	{
 	  set_sensitive(applyB, false);
 	  set_sensitive(apply2B, false);
 	  set_button_label(cancelB, _("Stop"));
-	  check_for_event(ss);
+	  check_for_event();
 	  switch (enved_target(ss))
 	    {
 	    case ENVED_AMPLITUDE:
 	      if (apply_to_mix)
 		{
 		  set_mix_amp_env_from_gui(mix_id, NO_SELECTION, active_env); /* chan = NO_SELECTION: use selected chan if more than 1 */
-		  active_channel = current_channel(ss);
+		  active_channel = current_channel();
 		}
 	      else apply_env(active_channel, active_env, 0,
 			     CURRENT_SAMPLES(active_channel), 
@@ -194,7 +191,7 @@ static void apply_enved(snd_state *ss)
 		if (max_env->data[j] < .01) 
 		  max_env->data[j] = .01;
 	      within_selection_src = true;
-	      src_env_or_num(ss, active_channel, max_env, 0.0, 
+	      src_env_or_num(active_channel, max_env, 0.0, 
 			     false, FROM_ENVED, "Enved: src", 
 			     apply_to_selection, NULL,
 			     C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, (enved_exp_p(ss)) ? active_env_base : 1.0);
@@ -202,7 +199,7 @@ static void apply_enved(snd_state *ss)
 	      max_env = free_env(max_env);
 	      break;
 	    }
-	  if (enved_wave_p(ss)) env_redisplay(ss);
+	  if (enved_wave_p(ss)) env_redisplay();
 	  set_sensitive(applyB, true);
 	  if (!apply_to_mix) set_sensitive(apply2B, true);
 	  set_button_label(cancelB, _("Dismiss"));
@@ -210,19 +207,19 @@ static void apply_enved(snd_state *ss)
     }
 }
 
-static void env_redisplay_1(snd_state *ss, int printing)
+static void env_redisplay_1(bool printing)
 {
   char *name = NULL;
   if (enved_dialog_is_active())
     {
       XClearWindow(XtDisplay(drawer), XtWindow(drawer));
       if (showing_all_envs) 
-	view_envs(ss, env_window_width, env_window_height, printing);
+	view_envs(env_window_width, env_window_height, printing);
       else 
 	{
 	  name = XmTextGetString(textL);
 	  if (!name) name = copy_string(_("noname"));
-	  display_env(ss, active_env, name, gc, 0, 0, 
+	  display_env(active_env, name, gc, 0, 0, 
 		      env_window_width, env_window_height, 1, 
 		      (enved_exp_p(ss)) ? active_env_base : 1.0,
 		      printing);
@@ -230,43 +227,39 @@ static void env_redisplay_1(snd_state *ss, int printing)
 	  if ((enved_wave_p(ss)) && (!apply_to_mix))
 	    {
 	      if ((enved_target(ss) == ENVED_SPECTRUM) && (active_env) && (FIR_p) && (!printing))
-		display_frequency_response(ss, active_env, axis, gray_ap->ax, enved_filter_order(ss), enved_in_dB(ss));
-	      enved_show_background_waveform(ss, axis, gray_ap, apply_to_selection, (enved_target(ss) == ENVED_SPECTRUM), printing);
+		display_frequency_response(active_env, axis, gray_ap->ax, enved_filter_order(ss), enved_in_dB(ss));
+	      enved_show_background_waveform(axis, gray_ap, apply_to_selection, (enved_target(ss) == ENVED_SPECTRUM), printing);
 	    }
 	}
     }
 }
 
-void env_redisplay(snd_state *ss) {env_redisplay_1(ss, false);}
-void env_redisplay_with_print(snd_state *ss) {env_redisplay_1(ss, true);}
+void env_redisplay(void) {env_redisplay_1(false);}
+void env_redisplay_with_print(void) {env_redisplay_1(true);}
 
 void enved_fft_update(void)
 {
-  snd_state *ss;
   if ((enved_dialog_is_active()) &&
       (!(showing_all_envs)))
     {
-      ss = get_global_state();
       if ((enved_wave_p(ss)) &&
 	  (enved_target(ss) == ENVED_SPECTRUM) && 
 	  (active_env))
-	enved_show_background_waveform(ss, axis, gray_ap, apply_to_selection, true, false);
+	enved_show_background_waveform(axis, gray_ap, apply_to_selection, true, false);
     }
 }
 
 static void enved_reset(void)
 {
-  snd_state *ss;
-  ss = get_global_state();
-  set_enved_clip_p(ss, DEFAULT_ENVED_CLIP_P);
-  set_enved_exp_p(ss, DEFAULT_ENVED_EXP_P);
-  set_enved_power(ss, DEFAULT_ENVED_POWER);
-  set_enved_base(ss, DEFAULT_ENVED_BASE);
-  set_enved_target(ss, DEFAULT_ENVED_TARGET);
-  set_enved_wave_p(ss, DEFAULT_ENVED_WAVE_P);
-  set_enved_in_dB(ss, DEFAULT_ENVED_IN_DB);
+  set_enved_clip_p(DEFAULT_ENVED_CLIP_P);
+  set_enved_exp_p(DEFAULT_ENVED_EXP_P);
+  set_enved_power(DEFAULT_ENVED_POWER);
+  set_enved_base(DEFAULT_ENVED_BASE);
+  set_enved_target(DEFAULT_ENVED_TARGET);
+  set_enved_wave_p(DEFAULT_ENVED_WAVE_P);
+  set_enved_in_dB(DEFAULT_ENVED_IN_DB);
   XmTextSetString(textL, NULL);
-  set_enved_filter_order(ss, DEFAULT_ENVED_FILTER_ORDER);
+  set_enved_filter_order(DEFAULT_ENVED_FILTER_ORDER);
   if (active_env) active_env = free_env(active_env);
 #if HAVE_GUILE
   active_env = string2env("'(0 0 1 0)");
@@ -276,10 +269,10 @@ static void enved_reset(void)
   set_enved_env_list_top(0);
   do_env_edit(active_env, true);
   set_sensitive(saveB, true);
-  env_redisplay(ss);
+  env_redisplay();
 }
 
-static void order_field_activated(snd_state *ss)
+static void order_field_activated(void)
 {
   /* return in order text field */
   char *str = NULL;
@@ -291,12 +284,12 @@ static void order_field_activated(snd_state *ss)
       if (order & 1) order++;
       if ((order > 0) && 
 	  (order < 2000)) 
-	set_enved_filter_order(ss, order);
+	set_enved_filter_order(order);
     }
   if (str) XtFree(str);
 }
 
-static void text_field_activated(snd_state *ss)
+static void text_field_activated(void)
 { /* might be breakpoints to load or an envelope name (<cr> in enved text field) */
   char *name = NULL, *str;
   env *e = NULL;
@@ -310,10 +303,10 @@ static void text_field_activated(snd_state *ss)
 	{
 	  if (isalpha((int)(str[0])))
 	    {
-	      alert_envelope_editor(ss, str, copy_env(active_env));
+	      alert_envelope_editor(str, copy_env(active_env));
 	      add_or_edit_symbol(str, active_env);
 	      set_sensitive(saveB, false);
-	      env_redisplay(ss); /* updates label */
+	      env_redisplay(); /* updates label */
 	    }
 	  else e = string2env(str);
 	}
@@ -324,7 +317,7 @@ static void text_field_activated(snd_state *ss)
 	  set_enved_env_list_top(0);
 	  do_env_edit(active_env, true);
 	  set_sensitive(saveB, true);
-	  env_redisplay(ss);
+	  env_redisplay();
 	  e = free_env(e);
 	}
     }
@@ -333,22 +326,20 @@ static void text_field_activated(snd_state *ss)
 
 static void save_button_pressed(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)context;
   char *name = NULL;
   name = XmTextGetString(textL);
   if ((!name) || (!(*name))) 
     name = copy_string(_("unnamed"));
-  alert_envelope_editor(ss, name, copy_env(active_env));
+  alert_envelope_editor(name, copy_env(active_env));
   add_or_edit_symbol(name, active_env);
   set_sensitive(saveB, false);
-  env_redisplay(ss);
+  env_redisplay();
   if (name) XtFree(name);
 }
 
 static void apply_enved_callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* apply current envs to currently sync'd channels */
-  snd_state *ss = (snd_state *)context;
   state_context *sgx;
   XmAnyCallbackStruct *cb = (XmAnyCallbackStruct *)info;
   sgx = ss->sgx;
@@ -358,14 +349,14 @@ static void apply_enved_callback(Widget w, XtPointer context, XtPointer info)
    */
   if (cb->event != sgx->text_activate_event)
     {
-      apply_enved((snd_state *)context);
+      apply_enved();
       last_active_channel = active_channel;
     }
   else 
     {
       if (sgx->text_widget == textL)
-	text_field_activated(ss);
-      else order_field_activated(ss);
+	text_field_activated();
+      else order_field_activated();
     }
 }
 
@@ -373,18 +364,17 @@ static void undo_and_apply_enved_callback(Widget w, XtPointer context, XtPointer
 {
   /* undo previous amp env, then apply */
   /* this blindly undoes the previous edit (assumed to be an envelope) -- if the user made some other change in the meantime, too bad */
-  snd_state *ss = (snd_state *)context;
   if ((active_channel) && (active_channel == last_active_channel))
     {
       active_channel->squelch_update = true;
       undo_edit_with_sync(active_channel, 1);
       active_channel->squelch_update = false;
     }
-  apply_enved(ss);
+  apply_enved();
   last_active_channel = active_channel;
 }
 
-static void reflect_segment_state (snd_state *ss)
+static void reflect_segment_state (void)
 {
   if (enved_dialog)
     {
@@ -399,11 +389,11 @@ static void reflect_segment_state (snd_state *ss)
 	}
       if ((active_env) && 
 	  (!(showing_all_envs))) 
-	env_redisplay(ss);
+	env_redisplay();
     }
 }
 
-static void select_or_edit_env(snd_state *ss, int pos)
+static void select_or_edit_env(int pos)
 {
   if (showing_all_envs)
     {
@@ -419,9 +409,9 @@ static void select_or_edit_env(snd_state *ss, int pos)
   set_sensitive(undoB, false);
   set_sensitive(revertB, false);
   set_sensitive(saveB, false);
-  set_enved_exp_p(ss, (active_env_base != 1.0));
-  set_enved_base(ss, active_env_base);
-  env_redisplay(ss);
+  set_enved_exp_p((active_env_base != 1.0));
+  set_enved_base(active_env_base);
+  env_redisplay();
   set_sensitive(deleteB, true);
 }
 
@@ -430,7 +420,7 @@ static void clear_point_label(void)
   XtVaSetValues(brkptL, XmNlabelType, XmSTRING, XmNlabelString, NULL, NULL);
 }
 
-void enved_display_point_label(snd_state *ss, Float x, Float y)
+void enved_display_point_label(Float x, Float y)
 {
   char brkpt_buf[LABEL_BUFFER_SIZE];
   if ((enved_in_dB(ss)) && (ss->min_dB < -60))
@@ -460,7 +450,6 @@ static int press_x, press_y;
 
 static void drawer_button_motion(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
-  snd_state *ss = (snd_state *)context;
   XMotionEvent *ev = (XMotionEvent *)event;
   Tempus motion_time;
   axis_info *ap;
@@ -496,18 +485,17 @@ static void drawer_button_motion(Widget w, XtPointer context, XEvent *event, Boo
 	  if (y < ap->y0) y = ap->y0;
 	  if (y > ap->y1) y = ap->y1;
 	}
-      if (enved_in_dB(ss)) y = un_dB(ss, y);
+      if (enved_in_dB(ss)) y = un_dB(y);
       if (check_enved_hook(active_env, env_pos, x, y, ENVED_MOVE_POINT) == 0)
 	move_point(active_env, env_pos, x, y);
-      enved_display_point_label(ss, x, y);
-      env_redisplay(ss);
+      enved_display_point_label(x, y);
+      env_redisplay();
     }
 }
 
 static void drawer_button_press(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   XButtonEvent *ev = (XButtonEvent *)event;
-  snd_state *ss = (snd_state *)context;
   int pos;
 #ifdef MAC_OSX
   press_x = ev->x;
@@ -521,7 +509,7 @@ static void drawer_button_press(Widget w, XtPointer context, XEvent *event, Bool
       XmListSelectPos(screnvlst, pos + 1, false);
       if ((pos >= 0) && 
 	  (pos < enved_all_envs_top())) 
-	select_or_edit_env(ss, pos);
+	select_or_edit_env(pos);
     }
   else
     {
@@ -529,9 +517,9 @@ static void drawer_button_press(Widget w, XtPointer context, XEvent *event, Bool
 	{
 	  active_env = default_env(1.0, 0.0);
 	  active_env_base = 1.0;
-	  env_redisplay(ss); /* needed to get current_xs set up correctly */
+	  env_redisplay(); /* needed to get current_xs set up correctly */
 	}
-      env_pos = enved_button_press_display(ss, axis, active_env, ev->x, ev->y);
+      env_pos = enved_button_press_display(axis, active_env, ev->x, ev->y);
     }
 }
 
@@ -550,7 +538,7 @@ static void drawer_button_release(Widget w, XtPointer context, XEvent *event, Bo
       env_pos = 0;
       env_dragged = false;
       click_to_delete = false;
-      env_redisplay((snd_state *)context);
+      env_redisplay();
       clear_point_label();
     }
 }
@@ -560,7 +548,7 @@ static void drawer_resize(Widget w, XtPointer context, XtPointer info)
   /* update display, can be either view of all envs or sequence of current envs */
   env_window_width = widget_width(w);
   env_window_height = widget_height(w);
-  env_redisplay((snd_state *)context);
+  env_redisplay();
 }
 
 static void show_button_pressed(Widget w, XtPointer context, XtPointer info) 
@@ -568,12 +556,11 @@ static void show_button_pressed(Widget w, XtPointer context, XtPointer info)
   /* if show all (as opposed to show current), loop through loaded LV_LISTs */
   showing_all_envs = (!showing_all_envs);
   set_button_label(showB, (showing_all_envs) ? _("edit env") : _("view envs"));
-  env_redisplay((snd_state *)context);
+  env_redisplay();
 }
 
 static void selection_button_pressed(Widget s, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)context;
   apply_to_selection = (!apply_to_selection);
   if (apply_to_selection) 
     {
@@ -588,12 +575,11 @@ static void selection_button_pressed(Widget s, XtPointer context, XtPointer info
   if ((enved_target(ss) != ENVED_SPECTRUM) && 
       (enved_wave_p(ss)) && 
       (!showing_all_envs)) 
-    env_redisplay(ss);
+    env_redisplay();
 }
 
 static void mix_button_pressed(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)context;
   int chan = 0;
   int mxchan, mix_id = INVALID_MIX_ID;
   apply_to_mix = (!apply_to_mix);
@@ -623,7 +609,7 @@ static void mix_button_pressed(Widget w, XtPointer context, XtPointer info)
 	      set_sensitive(undoB, false);
 	      set_sensitive(revertB, false);
 	      set_sensitive(saveB, false);
-	      env_redisplay(ss);
+	      env_redisplay();
 	    }
 	}
     }
@@ -634,12 +620,11 @@ static void mix_button_pressed(Widget w, XtPointer context, XtPointer info)
   if ((enved_target(ss) == ENVED_AMPLITUDE) && 
       (enved_wave_p(ss)) && 
       (!showing_all_envs)) 
-    env_redisplay(ss);
+    env_redisplay();
 }
 
 static void delete_button_pressed(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)context;
   int i, len;
   if (selected_env)
     {
@@ -647,12 +632,12 @@ static void delete_button_pressed(Widget w, XtPointer context, XtPointer info)
       for (i = 0; i < len; i++)
 	if (selected_env == enved_all_envs(i))
 	  {
-	    delete_envelope(ss, enved_all_names(i));
+	    delete_envelope(enved_all_names(i));
 	    if (enved_all_envs_top() == 0)
 	      set_sensitive(deleteB, false);
 	    if (active_env) active_env = free_env(active_env);
 	    selected_env = NULL;
-	    env_redisplay(ss);
+	    env_redisplay();
 	    break;
 	  }
     }
@@ -663,7 +648,7 @@ static void revert_button_pressed(Widget w, XtPointer context, XtPointer info)
   revert_env_edit();
   if (active_env) active_env = free_env(active_env);
   active_env = enved_next_env();
-  env_redisplay((snd_state *)context);
+  env_redisplay();
 }
 
 static void undo_button_pressed(Widget w, XtPointer context, XtPointer info) 
@@ -671,7 +656,7 @@ static void undo_button_pressed(Widget w, XtPointer context, XtPointer info)
   undo_env_edit();
   if (active_env) active_env = free_env(active_env);
   active_env = enved_next_env();
-  env_redisplay((snd_state *)context);
+  env_redisplay();
 }
 
 static void redo_button_pressed(Widget w, XtPointer context, XtPointer info) 
@@ -679,10 +664,10 @@ static void redo_button_pressed(Widget w, XtPointer context, XtPointer info)
   redo_env_edit();
   if (active_env) active_env = free_env(active_env);
   active_env = enved_next_env();
-  env_redisplay((snd_state *)context);
+  env_redisplay();
 }
 
-static void reflect_apply_state (snd_state *ss)
+static void reflect_apply_state (void)
 {
   set_label(nameL, _(env_names[enved_target(ss)]));
   XmChangeColor(ampB, 
@@ -696,34 +681,31 @@ static void reflect_apply_state (snd_state *ss)
                                                   ((Pixel)(ss->sgx)->highlight_color));
   if ((!showing_all_envs) && 
       (enved_wave_p(ss))) 
-    env_redisplay(ss);
+    env_redisplay();
 }
 
 static void freq_button_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)context;
-  in_set_enved_target(ss, ENVED_SPECTRUM);
+  in_set_enved_target(ENVED_SPECTRUM);
   old_clip_p = enved_clip_p(ss);
-  set_enved_clip_p(ss, true);
-  reflect_apply_state(ss);
+  set_enved_clip_p(true);
+  reflect_apply_state();
 }
 
 static void amp_button_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)context;
   if (enved_target(ss) == ENVED_SPECTRUM)
-    set_enved_clip_p(ss, old_clip_p);
-  in_set_enved_target(ss, ENVED_AMPLITUDE);
-  reflect_apply_state(ss);
+    set_enved_clip_p(old_clip_p);
+  in_set_enved_target(ENVED_AMPLITUDE);
+  reflect_apply_state();
 }
 
 static void src_button_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)context;
   if (enved_target(ss) == ENVED_SPECTRUM)
-    set_enved_clip_p(ss, old_clip_p);
-  in_set_enved_target(ss, ENVED_SRATE);
-  reflect_apply_state(ss);
+    set_enved_clip_p(old_clip_p);
+  in_set_enved_target(ENVED_SRATE);
+  reflect_apply_state();
 }
 
 static void reset_button_callback(Widget w, XtPointer context, XtPointer info) 
@@ -738,7 +720,6 @@ void enved_print(char *name)
 
 static void print_button_pressed(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)context;
   ss->print_choice = PRINT_ENV;
   file_print_callback(w, context, info); /* eventually calls enved_print -> print_enved -> env_redisplay_with_print */
 }
@@ -746,41 +727,36 @@ static void print_button_pressed(Widget w, XtPointer context, XtPointer info)
 static void env_browse_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmListCallbackStruct *cb = (XmListCallbackStruct *)info;
-  snd_state *ss = (snd_state *)context;
   ASSERT_WIDGET_TYPE(XmIsList(w), w);
-  select_or_edit_env(ss, cb->item_position - 1);
+  select_or_edit_env(cb->item_position - 1);
 }
 
 static void graph_button_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
-  snd_state *ss = (snd_state *)context; 
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
-  in_set_enved_wave_p(ss, cb->set);
-  env_redisplay(ss);
+  in_set_enved_wave_p(cb->set);
+  env_redisplay();
 }
 
 static void dB_button_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
-  snd_state *ss = (snd_state *)context; 
-  in_set_enved_in_dB(ss, cb->set);
-  env_redisplay(ss);
+  in_set_enved_in_dB(cb->set);
+  env_redisplay();
 }
 
 static void clip_button_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)context; 
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info; 
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
-  in_set_enved_clip_p(ss, cb->set);
+  in_set_enved_clip_p(cb->set);
 }
 
 static void exp_button_callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* a push button */
-  snd_state *ss = (snd_state *)context; 
-  in_set_enved_exp_p(ss, true); 
+  in_set_enved_exp_p(true); 
   if ((active_env) && 
       (!(showing_all_envs)))
     {
@@ -789,14 +765,13 @@ static void exp_button_callback(Widget w, XtPointer context, XtPointer info)
       else active_env_base = 1.0;
       set_sensitive(saveB, true);
     }
-  reflect_segment_state(ss);
+  reflect_segment_state();
 }
 
 static void lin_button_callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* a push button */
-  snd_state *ss = (snd_state *)context; 
-  in_set_enved_exp_p(ss, false);
+  in_set_enved_exp_p(false);
   if ((active_env) && 
       (!(showing_all_envs)))
     {
@@ -805,14 +780,14 @@ static void lin_button_callback(Widget w, XtPointer context, XtPointer info)
       else active_env_base = 1.0;
       set_sensitive(saveB, true);
     }
-  reflect_segment_state(ss);
+  reflect_segment_state();
 }
 
 #define BASE_MAX 400
 #define BASE_MID 200
 /* these two just set the granularity of the scale widget, not the user-visible bounds */
 
-static void make_base_label(snd_state *ss, Float bval)
+static void make_base_label(Float bval)
 {
   char *sfs, *buf;
   int i, len, scale_len;
@@ -828,17 +803,17 @@ static void make_base_label(snd_state *ss, Float bval)
   set_button_label(baseValue, buf);
   FREE(sfs);
   FREE(buf);
-  in_set_enved_base(ss, bval);
+  in_set_enved_base(bval);
   if ((active_env) && 
       (!(showing_all_envs))) 
     {
       active_env_base = enved_base(ss);
       if (enved_exp_p(ss)) 
-	env_redisplay(ss);
+	env_redisplay();
     }
 }
 
-static void base_changed(snd_state *ss, int val)
+static void base_changed(int val)
 {
   Float bval;
   if (val == 0) 
@@ -855,12 +830,12 @@ static void base_changed(snd_state *ss, int val)
 	    bval = pow(((Float)val / (Float)BASE_MID), enved_power(ss) - 1.0);
 	}
     }
-  make_base_label(ss, bval);
+  make_base_label(bval);
   if ((active_env) && (enved_exp_p(ss))) 
     set_sensitive(saveB, true); /* what about undo/redo here? */
 }
 
-static void reflect_changed_base(snd_state *ss, Float val)
+static void reflect_changed_base(Float val)
 {
   int ival;
   if (val <= 0.0) 
@@ -877,32 +852,29 @@ static void reflect_changed_base(snd_state *ss, Float val)
 	}
     }
   XtVaSetValues(baseScale, XmNvalue, mus_iclamp(0, ival, (int)(BASE_MAX * .9)), NULL);
-  make_base_label(ss, val);
+  make_base_label(val);
 }
 
 static void base_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)context;
   XmScrollBarCallbackStruct *sb = (XmScrollBarCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
-  base_changed(ss, sb->value);
+  base_changed(sb->value);
 }
 
 static int base_last_value = BASE_MID;
 
 static void base_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)context;
   XmScrollBarCallbackStruct *sb = (XmScrollBarCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   base_last_value = sb->value;
-  base_changed(ss, sb->value);
+  base_changed(sb->value);
 }
 
 static void base_click_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)info;
-  snd_state *ss = (snd_state *)context;
   XButtonEvent *ev;
   int val;
   ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
@@ -910,7 +882,7 @@ static void base_click_callback(Widget w, XtPointer context, XtPointer info)
   if (ev->state & (snd_ControlMask | snd_MetaMask)) 
     val = base_last_value; 
   else val = BASE_MID;
-  base_changed(ss, val);
+  base_changed(val);
   XtVaSetValues(baseScale, XmNvalue, val, NULL);
 }
 
@@ -921,7 +893,7 @@ static void FIR_click_callback(Widget w, XtPointer context, XtPointer info)
   set_label(w, (FIR_p) ? "fir" : "fft");
 }
 
-Widget create_envelope_editor (snd_state *ss)
+Widget create_envelope_editor(void)
 {
   int n;
   Arg args[32];
@@ -954,9 +926,9 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNtransient, false); n++;
       enved_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), _("envelope editor"), args, n);
   
-      XtAddCallback(enved_dialog, XmNcancelCallback, dismiss_enved_callback, ss);
-      XtAddCallback(enved_dialog, XmNhelpCallback, help_enved_callback, ss);
-      XtAddCallback(enved_dialog, XmNokCallback, apply_enved_callback, ss);
+      XtAddCallback(enved_dialog, XmNcancelCallback, dismiss_enved_callback, NULL);
+      XtAddCallback(enved_dialog, XmNhelpCallback, help_enved_callback, NULL);
+      XtAddCallback(enved_dialog, XmNokCallback, apply_enved_callback, NULL);
 
       XmStringFree(xhelp);
       XmStringFree(xdismiss);
@@ -977,10 +949,10 @@ Widget create_envelope_editor (snd_state *ss)
 	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
 	}
       apply2B = XtCreateManagedWidget(_("Undo&Apply"), xmPushButtonGadgetClass, enved_dialog, args, n);
-      XtAddCallback(apply2B, XmNactivateCallback, undo_and_apply_enved_callback, ss);
+      XtAddCallback(apply2B, XmNactivateCallback, undo_and_apply_enved_callback, NULL);
 
       resetB = XtCreateManagedWidget(_("Reset"), xmPushButtonGadgetClass, enved_dialog, args, n);
-      XtAddCallback(resetB, XmNactivateCallback, reset_button_callback, ss);
+      XtAddCallback(resetB, XmNactivateCallback, reset_button_callback, NULL);
 
 
       /* -------- MAIN WIDGET -------- */
@@ -1011,7 +983,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, false); n++;
       baseLabel = make_pushbutton_widget (_("exp:"), mainform, args, n);
-      XtAddCallback(baseLabel, XmNactivateCallback, base_click_callback, ss);
+      XtAddCallback(baseLabel, XmNactivateCallback, base_click_callback, NULL);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -1046,7 +1018,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNmarginBottom, 0); n++;
       mus_snprintf(str, LABEL_BUFFER_SIZE, "%d", enved_filter_order(ss));
       XtSetArg(args[n], XmNvalue, str); n++;
-      orderL = make_textfield_widget(ss, "orderL", mainform, args, n, ACTIVATABLE, NO_COMPLETER);
+      orderL = make_textfield_widget("orderL", mainform, args, n, ACTIVATABLE, NO_COMPLETER);
 
       /* -------- fft/fir choice -------- */
       n = 0;      
@@ -1061,7 +1033,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, false); n++;
       firB = make_pushbutton_widget((char *)((FIR_p) ? "fir" : "fft"), mainform, args, n);
-      XtAddCallback(firB, XmNactivateCallback, FIR_click_callback, ss);
+      XtAddCallback(firB, XmNactivateCallback, FIR_click_callback, NULL);
 
       /* -------- exp base scale -------- */
       n = 0;      
@@ -1078,8 +1050,8 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNvalue, BASE_MID); n++;
       XtSetArg(args[n], XmNincrement, 1); n++;
       XtSetArg(args[n], XmNpageIncrement, 1); n++;
-      XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(base_drag_callback, (XtPointer)ss)); n++;
-      XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(base_valuechanged_callback, (XtPointer)ss)); n++;
+      XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(base_drag_callback, NULL)); n++;
+      XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(base_valuechanged_callback, NULL)); n++;
       baseScale = XtCreateManagedWidget("expscl", xmScrollBarWidgetClass, mainform, args, n);
 
       n = 0;
@@ -1120,7 +1092,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, nameL); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-      textL = make_textfield_widget(ss, "textL", mainform, args, n, ACTIVATABLE, NO_COMPLETER);
+      textL = make_textfield_widget("textL", mainform, args, n, ACTIVATABLE, NO_COMPLETER);
 
       /* -------- dB, GRAPH ('wave') AND CLIP BUTTONS -------- */
       n = 0;
@@ -1136,7 +1108,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
       dBB = make_togglebutton_widget(_("dB"), mainform, args, n);
-      XtAddCallback(dBB, XmNvalueChangedCallback, dB_button_callback, ss);
+      XtAddCallback(dBB, XmNvalueChangedCallback, dB_button_callback, NULL);
 
       n = 0;
       if (!(ss->using_schemes)) 
@@ -1152,7 +1124,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNrightWidget, dBB); n++;
       if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
       graphB = make_togglebutton_widget(_("wave"), mainform, args, n);
-      XtAddCallback(graphB, XmNvalueChangedCallback, graph_button_callback, ss);
+      XtAddCallback(graphB, XmNvalueChangedCallback, graph_button_callback, NULL);
 
       n = 0;
       if (!(ss->using_schemes)) 
@@ -1168,7 +1140,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNrightWidget, graphB); n++;
       if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
       clipB = make_togglebutton_widget(_("clip"), mainform, args, n);
-      XtAddCallback(clipB, XmNvalueChangedCallback, clip_button_callback, ss);
+      XtAddCallback(clipB, XmNvalueChangedCallback, clip_button_callback, NULL);
 
       /* -------- BREAKPOINT DATA DISPLAY LABEL -------- */
       n = 0;
@@ -1247,7 +1219,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;	
       showB = XtCreateManagedWidget(_("view envs"), xmPushButtonWidgetClass, colB, args, n);
-      XtAddCallback(showB, XmNactivateCallback, show_button_pressed, ss);
+      XtAddCallback(showB, XmNactivateCallback, show_button_pressed, NULL);
 
       /* SAVE PRINT */
       n = 0;
@@ -1280,8 +1252,8 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNleftWidget, saveB); n++;
       printB = XtCreateManagedWidget(_("print"), xmPushButtonWidgetClass, colB, args, n);
 
-      XtAddCallback(saveB, XmNactivateCallback, save_button_pressed, ss);
-      XtAddCallback(printB, XmNactivateCallback, print_button_pressed, ss);
+      XtAddCallback(saveB, XmNactivateCallback, save_button_pressed, NULL);
+      XtAddCallback(printB, XmNactivateCallback, print_button_pressed, NULL);
 
       /* UNDO REDO */
       n = 0;
@@ -1314,8 +1286,8 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       redoB = XtCreateManagedWidget(_("redo"), xmPushButtonWidgetClass, colB, args, n);
 
-      XtAddCallback(undoB, XmNactivateCallback, undo_button_pressed, ss);
-      XtAddCallback(redoB, XmNactivateCallback, redo_button_pressed, ss);
+      XtAddCallback(undoB, XmNactivateCallback, undo_button_pressed, NULL);
+      XtAddCallback(redoB, XmNactivateCallback, redo_button_pressed, NULL);
 
       /* REVERT DELETE */
       n = 0;
@@ -1348,8 +1320,8 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       deleteB = XtCreateManagedWidget(_("delete"), xmPushButtonWidgetClass, colB, args, n);
 
-      XtAddCallback(revertB, XmNactivateCallback, revert_button_pressed, ss);
-      XtAddCallback(deleteB, XmNactivateCallback, delete_button_pressed, ss);
+      XtAddCallback(revertB, XmNactivateCallback, revert_button_pressed, NULL);
+      XtAddCallback(deleteB, XmNactivateCallback, delete_button_pressed, NULL);
 
       /* AMP FLT SRC */
       /* enved_function (target) choice (a row of three push buttons that acts like a "radio box") */
@@ -1399,9 +1371,9 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       srcB = XtCreateManagedWidget(_("src"), xmPushButtonWidgetClass, colB, args, n);
 
-      XtAddCallback(fltB, XmNactivateCallback, freq_button_callback, ss);
-      XtAddCallback(ampB, XmNactivateCallback, amp_button_callback, ss);
-      XtAddCallback(srcB, XmNactivateCallback, src_button_callback, ss);
+      XtAddCallback(fltB, XmNactivateCallback, freq_button_callback, NULL);
+      XtAddCallback(ampB, XmNactivateCallback, amp_button_callback, NULL);
+      XtAddCallback(srcB, XmNactivateCallback, src_button_callback, NULL);
 
       /* LINEAR EXP */
       n = 0;
@@ -1434,8 +1406,8 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       expB = XtCreateManagedWidget(_("exp"), xmPushButtonWidgetClass, colB, args, n);
 
-      XtAddCallback(linB, XmNactivateCallback, lin_button_callback, ss);
-      XtAddCallback(expB, XmNactivateCallback, exp_button_callback, ss);
+      XtAddCallback(linB, XmNactivateCallback, lin_button_callback, NULL);
+      XtAddCallback(expB, XmNactivateCallback, exp_button_callback, NULL);
 
 
       /* SELECTION MIX */
@@ -1470,8 +1442,8 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       mixB = make_pushbutton_widget(_("mix"), colB, args, n);
 
-      XtAddCallback(selectionB, XmNactivateCallback, selection_button_pressed, ss);
-      XtAddCallback(mixB, XmNactivateCallback, mix_button_pressed, ss);
+      XtAddCallback(selectionB, XmNactivateCallback, selection_button_pressed, NULL);
+      XtAddCallback(mixB, XmNactivateCallback, mix_button_pressed, NULL);
 
 
       /* -------- ENV LIST AT LEFT UNDER BUTTONS -------- */
@@ -1507,9 +1479,9 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       screnvlst = XmCreateScrolledList(colD, "scrolled-env-list", args, n);
       XtManageChild(screnvlst); 
-      XtAddCallback(screnvlst, XmNbrowseSelectionCallback, env_browse_callback, ss);
-      map_over_children(screnvlst, set_main_color_of_widget, (void *)ss);
-      if (enved_all_envs_top() > 0) make_scrolled_env_list(ss);
+      XtAddCallback(screnvlst, XmNbrowseSelectionCallback, env_browse_callback, NULL);
+      map_over_children(screnvlst, set_main_color_of_widget, NULL);
+      if (enved_all_envs_top() > 0) make_scrolled_env_list();
 
       /* -------- MAIN GRAPH -------- */
 
@@ -1537,12 +1509,12 @@ Widget create_envelope_editor (snd_state *ss)
       applyB = XmMessageBoxGetChild(enved_dialog, XmDIALOG_OK_BUTTON);
       cancelB = XmMessageBoxGetChild(enved_dialog, XmDIALOG_CANCEL_BUTTON);
 
-      XtAddCallback(drawer, XmNresizeCallback, drawer_resize, ss);
-      XtAddCallback(drawer, XmNexposeCallback, drawer_resize, ss);
+      XtAddCallback(drawer, XmNresizeCallback, drawer_resize, NULL);
+      XtAddCallback(drawer, XmNexposeCallback, drawer_resize, NULL);
 
-      XtAddEventHandler(drawer, ButtonPressMask, false, drawer_button_press, ss);
-      XtAddEventHandler(drawer, ButtonMotionMask, false, drawer_button_motion, ss);
-      XtAddEventHandler(drawer, ButtonReleaseMask, false, drawer_button_release, ss);
+      XtAddEventHandler(drawer, ButtonPressMask, false, drawer_button_press, NULL);
+      XtAddEventHandler(drawer, ButtonMotionMask, false, drawer_button_motion, NULL);
+      XtAddEventHandler(drawer, ButtonReleaseMask, false, drawer_button_release, NULL);
 
       if (enved_all_envs_top() == 0)
 	set_sensitive(showB, false);
@@ -1561,57 +1533,57 @@ Widget create_envelope_editor (snd_state *ss)
       FREE(n1);
       FREE(n2);
 
-      reflect_apply_state(ss);
-      reflect_segment_state(ss);
-      set_dialog_widget(ss, ENVED_DIALOG, enved_dialog);
+      reflect_apply_state();
+      reflect_segment_state();
+      set_dialog_widget(ENVED_DIALOG, enved_dialog);
     }
   else raise_dialog(enved_dialog);
   if (!XtIsManaged(enved_dialog)) 
     XtManageChild(enved_dialog);
-  active_channel = current_channel(ss);
+  active_channel = current_channel();
   set_sensitive(mixB, (any_mix_id() != INVALID_MIX_ID));
   return(enved_dialog);
 }
 
-void set_enved_clip_p(snd_state *ss, bool val) 
+void set_enved_clip_p(bool val) 
 {
-  in_set_enved_clip_p(ss, val); 
+  in_set_enved_clip_p(val); 
   if (enved_dialog) 
     XmToggleButtonSetState(clipB, (Boolean)val, false);
 }
 
-void set_enved_exp_p(snd_state *ss, bool val) 
+void set_enved_exp_p(bool val) 
 {
-  in_set_enved_exp_p(ss, val); 
-  reflect_segment_state(ss);
+  in_set_enved_exp_p(val); 
+  reflect_segment_state();
 }
 
-void set_enved_target(snd_state *ss, enved_target_t val) 
+void set_enved_target(enved_target_t val) 
 {
-  in_set_enved_target(ss, val); 
+  in_set_enved_target(val); 
   if (enved_dialog) 
-    reflect_apply_state(ss);
+    reflect_apply_state();
 }
 
-void set_enved_wave_p(snd_state *ss, bool val) 
+void set_enved_wave_p(bool val) 
 {
-  in_set_enved_wave_p(ss, val); 
+  in_set_enved_wave_p(val); 
   if (enved_dialog) 
     XmToggleButtonSetState(graphB, (Boolean)val, false);
 }
 
-void set_enved_in_dB(snd_state *ss, bool val) 
+void set_enved_in_dB(bool val) 
 {
-  in_set_enved_in_dB(ss, val);
+  in_set_enved_in_dB(val);
   if (enved_dialog) 
     XmToggleButtonSetState(dBB, (Boolean)val, false);
 }
 
-void set_enved_base(snd_state *ss, Float val) 
+void set_enved_base(Float val) 
 {
-  in_set_enved_base(ss, val); 
+  in_set_enved_base(val); 
   if (enved_dialog) 
-    reflect_changed_base(ss, val);
+    reflect_changed_base(val);
 }
 
 bool enved_dialog_is_active(void)
@@ -1619,14 +1591,14 @@ bool enved_dialog_is_active(void)
   return((enved_dialog) && (XtIsManaged(enved_dialog)));
 }
 
-void set_enved_filter_order(snd_state *ss, int order)
+void set_enved_filter_order(int order)
 {
   char str[LABEL_BUFFER_SIZE];
   if ((order > 0) && (order < 2000))
     {
       if (order & 1) 
-	in_set_enved_filter_order(ss, order + 1);
-      else in_set_enved_filter_order(ss, order);
+	in_set_enved_filter_order(order + 1);
+      else in_set_enved_filter_order(order);
       if (enved_dialog)
 	{
 	  mus_snprintf(str, LABEL_BUFFER_SIZE, "%d", enved_filter_order(ss));
@@ -1634,17 +1606,15 @@ void set_enved_filter_order(snd_state *ss, int order)
 	  if ((enved_dialog) && 
 	      (enved_target(ss) == ENVED_SPECTRUM) && 
 	      (enved_wave_p(ss)) && (!showing_all_envs)) 
-	    env_redisplay(ss);
+	    env_redisplay();
 	}
     }
 }
 
 void enved_reflect_selection(bool on)
 {
-  snd_state *ss;
   if ((enved_dialog) && (!within_selection_src))
     {
-      ss = get_global_state();
       set_sensitive(selectionB, on);
       if ((apply_to_selection) && (!on))
 	{
@@ -1654,21 +1624,19 @@ void enved_reflect_selection(bool on)
       if ((enved_target(ss) != ENVED_SPECTRUM) && 
 	  (enved_wave_p(ss)) && 
 	  (!showing_all_envs)) 
-	env_redisplay(ss);
+	env_redisplay();
     }
 }
 
 void color_enved_waveform(Pixel pix)
 {
-  snd_state *ss;
-  ss = get_global_state();
   (ss->sgx)->enved_waveform_color = pix;
   if (enved_dialog)
     {
       XSetForeground(MAIN_DISPLAY(ss), ggc, pix);
       if ((enved_wave_p(ss)) && 
 	  (enved_dialog)) 
-	env_redisplay(ss);
+	env_redisplay();
     }
 }
 
@@ -1706,7 +1674,7 @@ static XEN g_set_enved_active_env(XEN e)
     active_env = copy_env(enved_all_envs(find_named_env(e)));
   else active_env = xen_to_env(e);
   if (enved_dialog) 
-    env_redisplay(get_global_state());
+    env_redisplay();
   return(e);
 }
 

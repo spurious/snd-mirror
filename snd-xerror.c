@@ -5,7 +5,7 @@
 static Widget snd_error_dialog = NULL;
 static Widget snd_error_history = NULL;
 
-static void create_snd_error_dialog(snd_state *ss, bool popup)
+static void create_snd_error_dialog(bool popup)
 {
   Arg args[32];
   int n;
@@ -37,17 +37,17 @@ static void create_snd_error_dialog(snd_state *ss, bool popup)
   if (popup) 
     XtManageChild(snd_error_dialog);
 
-  if (!(ss->using_schemes)) map_over_children(snd_error_dialog, set_main_color_of_widget, (void *)ss);
+  if (!(ss->using_schemes)) map_over_children(snd_error_dialog, set_main_color_of_widget, NULL);
   XmStringFree(titlestr);
   if (!(ss->using_schemes))
     {
       XtVaSetValues(XtNameToWidget(snd_error_dialog, _("OK")), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
       XtVaSetValues(snd_error_history, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
     }
-  set_dialog_widget(ss, ERROR_DIALOG, snd_error_dialog);
+  set_dialog_widget(ERROR_DIALOG, snd_error_dialog);
 }
 
-void add_to_error_history(snd_state *ss, char *msg, bool popup)
+void add_to_error_history(char *msg, bool popup)
 {
 #if HAVE_STRFTIME
   char *tim, *buf;
@@ -56,7 +56,7 @@ void add_to_error_history(snd_state *ss, char *msg, bool popup)
   XmTextPosition pos;
   if ((ss == NULL) || (ss->sgx == NULL)) return; /* an attempt to call this before X/Motif is ready */
   if (!snd_error_dialog) 
-    create_snd_error_dialog(ss, popup);
+    create_snd_error_dialog(popup);
   else
     if ((popup) && 
 	(!(XtIsManaged(snd_error_dialog))))
@@ -88,10 +88,10 @@ void add_to_error_history(snd_state *ss, char *msg, bool popup)
     }
 }
 
-void post_error_dialog(snd_state *ss, char *msg)
+void post_error_dialog(char *msg)
 {
   XmString error_msg;
-  if (!snd_error_dialog) create_snd_error_dialog(ss, true);
+  if (!snd_error_dialog) create_snd_error_dialog(true);
   error_msg = XmStringCreate(msg, XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(snd_error_dialog, XmNmessageString, error_msg, NULL);
   if (!(XtIsManaged(snd_error_dialog)))
@@ -99,7 +99,7 @@ void post_error_dialog(snd_state *ss, char *msg)
   XmStringFree(error_msg);
 }
 
-void show_snd_errors(snd_state *ss)
+void show_snd_errors(void)
 {
   if (snd_error_dialog)
     {
@@ -107,7 +107,7 @@ void show_snd_errors(snd_state *ss)
 	XtManageChild(snd_error_dialog);
       else raise_dialog(snd_error_dialog);
     }
-  else post_error_dialog(ss, _("no errors yet"));
+  else post_error_dialog(_("no errors yet"));
 }
 
 static bool yes_or_no = false;
@@ -117,13 +117,12 @@ static void no_callback(Widget w, XtPointer context, XtPointer info) {yes_or_no 
 
 #define YES_OR_NO_BUFFER_SIZE 1024
 
-bool snd_yes_or_no_p(snd_state *ss, const char *format, ...)
+bool snd_yes_or_no_p(const char *format, ...)
 {
   static Widget yes_or_no_dialog = NULL;
   Arg args[20];
   int n;
   XmString titlestr, error_msg, xmstr1, xmstr2;
-
   char *yes_buf;
 #if HAVE_VPRINTF
   va_list ap;
@@ -163,7 +162,7 @@ bool snd_yes_or_no_p(snd_state *ss, const char *format, ...)
 
       XtUnmanageChild(XmMessageBoxGetChild(yes_or_no_dialog, XmDIALOG_SYMBOL_LABEL));
       XtUnmanageChild(XmMessageBoxGetChild(yes_or_no_dialog, XmDIALOG_HELP_BUTTON));
-      if (!(ss->using_schemes)) map_over_children(yes_or_no_dialog, set_main_color_of_widget, (void *)ss);
+      if (!(ss->using_schemes)) map_over_children(yes_or_no_dialog, set_main_color_of_widget, NULL);
       XtAddCallback(yes_or_no_dialog, XmNokCallback, yes_callback, NULL);
       XtAddCallback(yes_or_no_dialog, XmNcancelCallback, no_callback, NULL);
 
@@ -175,7 +174,7 @@ bool snd_yes_or_no_p(snd_state *ss, const char *format, ...)
       XmStringFree(titlestr);
       XmStringFree(xmstr1);
       XmStringFree(xmstr2);
-      set_dialog_widget(ss, YES_OR_NO_DIALOG, yes_or_no_dialog);
+      set_dialog_widget(YES_OR_NO_DIALOG, yes_or_no_dialog);
     }
   error_msg = XmStringCreate(yes_buf, XmFONTLIST_DEFAULT_TAG);
   if (!(XtIsManaged(yes_or_no_dialog))) 
@@ -185,7 +184,7 @@ bool snd_yes_or_no_p(snd_state *ss, const char *format, ...)
     {
       ss->error_lock = true;
       while ((XtIsManaged(yes_or_no_dialog)) && (ss->error_lock))
-	check_for_event(ss);
+	check_for_event();
       ss->error_lock = false;
     }
   if (XtIsManaged(yes_or_no_dialog))

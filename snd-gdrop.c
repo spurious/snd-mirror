@@ -15,13 +15,11 @@ static XEN drop_hook;
 static void drag_data_received (GtkWidget *widget, GdkDragContext *context, gint x, gint y, 
 				GtkSelectionData *data, guint info, guint time)
 {
-  snd_state *ss;
   snd_info *sp = NULL;
   /* data->target */
   if ((data->length >= 0) && 
       (data->format == 8))
     {
-      ss = get_global_state();
       if ((!(XEN_HOOKED(drop_hook))) || 
 	  (!(XEN_TRUE_P(run_or_hook(drop_hook,
 				    XEN_LIST_1(C_TO_XEN_STRING((char *)(data->data))),
@@ -34,10 +32,10 @@ static void drag_data_received (GtkWidget *widget, GdkDragContext *context, gint
 	    filename = (char *)(data->data);
 	  else filename = (char *)g_filename_from_utf8((gchar *)(data->data), data->length, &bread, &bwritten, &error);
 	  if (GTK_IS_DRAWING_AREA(widget))
-	    mix_at_x_y(ss, get_user_int_data(G_OBJECT(widget)), filename, x, y);
+	    mix_at_x_y(get_user_int_data(G_OBJECT(widget)), filename, x, y);
 	  else
 	    {
-	      sp = snd_open_file(filename, ss, false);
+	      sp = snd_open_file(filename, false);
 	      if (sp) select_channel(sp, 0);
 	    }
 	}
@@ -49,12 +47,10 @@ static void drag_data_received (GtkWidget *widget, GdkDragContext *context, gint
 
 static void report_mouse_position_as_seconds(GtkWidget *w, gint x, gint y)
 {
-  snd_state *ss;
   snd_info *sp;
   chan_info *cp;
   int data, snd, chn;
   float seconds;
-  ss = get_global_state();
   data = get_user_int_data(G_OBJECT(w));
   chn = UNPACK_CHANNEL(data);
   snd = UNPACK_SOUND(data);
@@ -71,9 +67,7 @@ static void report_mouse_position_as_seconds(GtkWidget *w, gint x, gint y)
 
 static void clear_minibuffer_of(GtkWidget *w)
 {
-  snd_state *ss;
   int snd, data;
-  ss = get_global_state();
   data = get_user_int_data(G_OBJECT(w));
   snd = UNPACK_SOUND(data);
   clear_minibuffer(ss->sounds[snd]);
@@ -86,7 +80,7 @@ void drag_leave(GtkWidget *widget, GdkDragContext *context, guint time)
     clear_minibuffer_of(widget);
   else 
     {
-      reflect_file_change_in_title(get_global_state());
+      reflect_file_change_in_title();
       have_drag_title = false;
     }
 }
@@ -99,9 +93,7 @@ gboolean drag_motion(GtkWidget *widget, GdkDragContext *context, gint x, gint y,
     {
       if (!have_drag_title)
 	{
-	  snd_state *ss;
 	  char *new_title;
-	  ss = get_global_state();
 	  new_title = (char *)CALLOC(64, sizeof(char));
 	  sprintf(new_title, "%s: drop to open file", ss->startup_title);
 	  gtk_window_set_title(GTK_WINDOW(MAIN_SHELL(ss)), new_title);
@@ -112,7 +104,7 @@ gboolean drag_motion(GtkWidget *widget, GdkDragContext *context, gint x, gint y,
   return(true); /* this is what the examples return in gtk/tests/testdnd.c -- don't know what it means, if anything */
 }
 
-void add_drop(snd_state *ss, GtkWidget *w)
+void add_drop(GtkWidget *w)
 {
   gtk_drag_dest_set(w, GTK_DEST_DEFAULT_ALL, target_table, 5, (GdkDragAction)(GDK_ACTION_COPY | GDK_ACTION_MOVE));
   /* this (the cast to GdkDragAction) is actually a bug in gtk -- they are OR'ing these together so the correct type is some flavor of int */

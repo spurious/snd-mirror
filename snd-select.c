@@ -12,7 +12,7 @@ static bool cp_has_selection(chan_info *cp, void *ignore)
 bool selection_is_active(void)
 {
   /* is selection active in any channel */
-  return(map_over_chans(get_global_state(), cp_has_selection, NULL));
+  return(map_over_chans(cp_has_selection, NULL));
 }
 
 bool selection_is_active_in_channel(chan_info *cp)
@@ -38,7 +38,7 @@ bool selection_is_visible_in_channel (chan_info *cp)
 	 (selection_is_visible(cp)));
 }
 
-static off_t off_t_map_over_chans(snd_state *ss, off_t (*func)(chan_info *, off_t *), off_t *userptr)
+static off_t off_t_map_over_chans(off_t (*func)(chan_info *, off_t *), off_t *userptr)
 {
   int i, j;
   off_t val;
@@ -78,7 +78,7 @@ off_t selection_beg(chan_info *cp)
   beg[0] = 0;
   if (cp)
     cp_selection_beg(cp, beg);
-  else off_t_map_over_chans(get_global_state(), cp_selection_beg, beg);
+  else off_t_map_over_chans(cp_selection_beg, beg);
   return(beg[0]);
 }
 
@@ -110,7 +110,7 @@ static off_t cp_selection_len(chan_info *cp, off_t *ptr)
 
 off_t selection_len(void)
 {
-  return(off_t_map_over_chans(get_global_state(), cp_selection_len, NULL));
+  return(off_t_map_over_chans(cp_selection_len, NULL));
 }
 
 static void cp_set_selection_len(chan_info *cp, off_t len)
@@ -134,7 +134,7 @@ int selection_chans(void)
 {
   int count[1];
   count[0] = 0;
-  for_each_chan_1(get_global_state(), selection_chans_1, (void *)count);
+  for_each_chan_1(selection_chans_1, (void *)count);
   return(count[0]);
 }
 
@@ -148,7 +148,7 @@ static off_t selection_srate_1(chan_info *cp, off_t *ignored)
 int selection_srate(void)
 {
   if (selection_is_active())
-    return((int)off_t_map_over_chans(get_global_state(), selection_srate_1, NULL));
+    return((int)off_t_map_over_chans(selection_srate_1, NULL));
   return(0);
 }
 
@@ -182,12 +182,10 @@ static void cp_delete_selection(chan_info *cp, void *origin)
 
 int delete_selection(const char *origin, int regraph)
 {
-  snd_state *ss;
   if (selection_is_active())
     {
-      ss = get_global_state();
-      for_each_chan_1(ss, cp_delete_selection, (void *)origin);
-      if (regraph == UPDATE_DISPLAY) for_each_chan(ss, update_graph);
+      for_each_chan_1(cp_delete_selection, (void *)origin);
+      if (regraph == UPDATE_DISPLAY) for_each_chan(update_graph);
       reflect_edit_without_selection_in_menu();
       return(1);
     }
@@ -205,10 +203,8 @@ static sync_info *selection_creation_chans = NULL;
 
 void deactivate_selection(void)
 {
-  snd_state *ss;
-  ss = get_global_state();
-  for_each_chan(ss, cp_deactivate_selection);
-  for_each_chan(ss, update_graph);
+  for_each_chan(cp_deactivate_selection);
+  for_each_chan(update_graph);
   reflect_edit_without_selection_in_menu();
   if (selection_creation_chans) 
     selection_creation_chans = free_sync_info(selection_creation_chans);
@@ -302,17 +298,17 @@ sync_info *selection_sync(void)
   si->cps = (chan_info **)CALLOC(si->chans, sizeof(chan_info *));
   si->begs = (off_t *)CALLOC(si->chans, sizeof(off_t));
   si->chans = 0;
-  for_each_chan_1(get_global_state(), next_selection_chan, (void *)si);
+  for_each_chan_1(next_selection_chan, (void *)si);
   return(si);
 }
 
-static int mix_selection(snd_state *ss, chan_info *cp, off_t beg, const char *origin)
+static int mix_selection(chan_info *cp, off_t beg, const char *origin)
 {
   char *tempfile = NULL;
   sync_info *si_out;
   int err, id = INVALID_MIX_ID;
-  tempfile = snd_tempnam(ss);
-  err = save_selection(ss, tempfile, MUS_NEXT, MUS_OUT_FORMAT, SND_SRATE(cp->sound), NULL, SAVE_ALL_CHANS);
+  tempfile = snd_tempnam();
+  err = save_selection(tempfile, MUS_NEXT, MUS_OUT_FORMAT, SND_SRATE(cp->sound), NULL, SAVE_ALL_CHANS);
   if (err == MUS_NO_ERROR)
     {
       si_out = sync_to_chan(cp);
@@ -325,25 +321,25 @@ static int mix_selection(snd_state *ss, chan_info *cp, off_t beg, const char *or
   return(id);
 }
 
-void add_selection_or_region(snd_state *ss, int reg, chan_info *cp, const char *origin)
+void add_selection_or_region(int reg, chan_info *cp, const char *origin)
 {
   if (cp) 
     {
       if ((reg == 0) && (selection_is_active()))
-	mix_selection(ss, cp, CURSOR(cp), origin);
+	mix_selection(cp, CURSOR(cp), origin);
       else add_region(reg, cp, origin);
     }
 }
 
-static int insert_selection(snd_state *ss, chan_info *cp, off_t beg, const char *origin)
+static int insert_selection(chan_info *cp, off_t beg, const char *origin)
 {
   char *tempfile = NULL;
   sync_info *si_out, *si_in;
   chan_info *cp_in, *cp_out;
   int i, err = MUS_NO_ERROR;
   off_t len;
-  tempfile = snd_tempnam(ss);
-  err = save_selection(ss, tempfile, MUS_NEXT, MUS_OUT_FORMAT, SND_SRATE(cp->sound), NULL, SAVE_ALL_CHANS);
+  tempfile = snd_tempnam();
+  err = save_selection(tempfile, MUS_NEXT, MUS_OUT_FORMAT, SND_SRATE(cp->sound), NULL, SAVE_ALL_CHANS);
   if (err == MUS_NO_ERROR)
     {
       si_out = sync_to_chan(cp);
@@ -368,19 +364,19 @@ static int insert_selection(snd_state *ss, chan_info *cp, off_t beg, const char 
   return(err);
 }
 
-void insert_selection_or_region(snd_state *ss, int reg, chan_info *cp, const char *origin)
+void insert_selection_or_region(int reg, chan_info *cp, const char *origin)
 {
   if (cp) 
     {
       if ((reg == 0) && (selection_is_active()))
-	insert_selection(ss, cp, CURSOR(cp), origin);
+	insert_selection(cp, CURSOR(cp), origin);
       else paste_region(reg, cp, origin);
     }
 }
 
-void insert_selection_from_menu(snd_state *ss)
+void insert_selection_from_menu(void)
 {
-  insert_selection_or_region(ss, 0, selected_channel(ss), "Edit: Insert selection");
+  insert_selection_or_region(0, selected_channel(), "Edit: Insert selection");
 }
 
 
@@ -389,7 +385,7 @@ void insert_selection_from_menu(snd_state *ss)
 void start_selection_creation(chan_info *cp, off_t samp)
 {  
   int i;
-  if ((selection_creation_chans) && (selection_creates_region(cp->state)))
+  if ((selection_creation_chans) && (selection_creates_region(ss)))
     /* hmmm -- if keyboard selection in progress, then mouse press? */
     make_region_from_selection();
   deactivate_selection();
@@ -415,10 +411,8 @@ int selection_creation_in_progress(void) {return(selection_creation_chans != NUL
 
 void finish_selection_creation(void)
 {
-  snd_state *ss;
   if (selection_creation_chans)
     {
-      ss = get_global_state();
       if (selection_creates_region(ss)) 
 	make_region_from_selection();
       reflect_edit_with_selection_in_menu();
@@ -432,7 +426,6 @@ static void cp_redraw_selection(chan_info *cp, void *with_fft)
   off_t beg, end;
   axis_info *ap;
   double sp_srate;
-  snd_state *ss;
   if (selection_is_visible(cp))
     {
       ap = cp->axis;
@@ -462,7 +455,6 @@ static void cp_redraw_selection(chan_info *cp, void *with_fft)
     }
   if ((with_fft) && (cp->graph_transform_p) && (cp_has_selection(cp, NULL)) && (!(chan_fft_in_progress(cp))))
     {
-      ss = get_global_state();
       if (show_selection_transform(ss)) 
 	calculate_fft(cp);
     }
@@ -471,7 +463,7 @@ static void cp_redraw_selection(chan_info *cp, void *with_fft)
 static void redraw_selection(void)
 {
   /* selection transform while synced redraw */
-  for_each_chan_1(get_global_state(), cp_redraw_selection, (void *)1);
+  for_each_chan_1(cp_redraw_selection, (void *)1);
 }
 
 void display_selection(chan_info *cp)
@@ -514,7 +506,7 @@ int select_all(chan_info *cp)
 	  update_graph(si->cps[i]);
 	}
       si = free_sync_info(si);
-      if (selection_creates_region(cp->state)) 
+      if (selection_creates_region(ss)) 
 	return(make_region_from_selection());
     }
   return(-1);
@@ -565,7 +557,7 @@ static Cessate WatchSelection(Indicium cp)
 
 static void start_selection_watching(chan_info *cp)
 {
-  watch_selection_button = BACKGROUND_ADD(cp->state, WatchSelection, cp);
+  watch_selection_button = BACKGROUND_ADD(WatchSelection, cp);
 }
 
 void move_selection(chan_info *cp, int x)
@@ -574,10 +566,11 @@ void move_selection(chan_info *cp, int x)
   move_selection_1(cp, x);
 }
 
-int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, const char *comment, int chan)
+int save_selection(char *ofile, int type, int format, int srate, const char *comment, int chan)
 {
   /* type and format have already been checked */
-  int ofd, comlen, err = MUS_NO_ERROR, reporting = 0, bps;
+  int ofd, comlen, err = MUS_NO_ERROR, bps;
+  bool reporting = false;
   disk_space_t no_space;
   off_t oloc;
   sync_info *si = NULL;
@@ -594,14 +587,13 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
   if (chan == SAVE_ALL_CHANS)
     chans = si->chans;
   else chans = 1;
-
-  if ((snd_write_header(ss, ofile, type, srate, chans, 28, chans * dur, format, comment, comlen, NULL)) == -1) 
+  if ((snd_write_header(ofile, type, srate, chans, 28, chans * dur, format, comment, comlen, NULL)) == -1) 
     {
       si = free_sync_info(si);
       return(MUS_HEADER_WRITE_FAILED);
     }
   oloc = mus_header_data_location();
-  ofd = snd_reopen_write(ss, ofile);
+  ofd = snd_reopen_write(ofile);
   if (sp)
     {
       bps = mus_bytes_per_sample(format);
@@ -701,17 +693,15 @@ static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
 {
   #define H_insert_selection "(" S_insert_selection " (beg 0) (snd #f) (chn #f)): insert the currently selected portion starting at beg"
   chan_info *cp;
-  snd_state *ss;
   off_t samp;
   int err = MUS_NO_ERROR;
   if (selection_is_active())
     {
       ASSERT_JUST_CHANNEL(S_insert_selection, snd, chn, 2);
       XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_1, S_insert_selection, "a number");
-      ss = get_global_state();
       cp = get_cp(snd, chn, S_insert_selection);
       samp = beg_to_sample(beg, S_insert_selection);
-      err = insert_selection(ss, cp, samp, S_insert_selection);
+      err = insert_selection(cp, samp, S_insert_selection);
       return(C_TO_XEN_BOOLEAN((err == MUS_NO_ERROR)));
     }
   return(snd_no_active_selection_error(S_insert_selection));
@@ -721,16 +711,14 @@ static XEN g_mix_selection(XEN beg, XEN snd, XEN chn)
 {
   #define H_mix_selection "(" S_mix_selection " (beg 0) (snd #f) (chn #f)): mix the currently selected portion starting at beg"
   chan_info *cp;
-  snd_state *ss;
   off_t obeg;
   if (selection_is_active())
     {
       ASSERT_JUST_CHANNEL(S_mix_selection, snd, chn, 2);
       XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_1, S_mix_selection, "a number");
-      ss = get_global_state();
       cp = get_cp(snd, chn, S_mix_selection);
       obeg = beg_to_sample(beg, S_mix_selection);
-      return(C_TO_XEN_INT(mix_selection(ss, cp, obeg, S_mix_selection)));
+      return(C_TO_XEN_INT(mix_selection(cp, obeg, S_mix_selection)));
     }
   return(snd_no_active_selection_error(S_mix_selection));
 }
@@ -774,7 +762,7 @@ static XEN g_set_selection_position(XEN pos, XEN snd, XEN chn)
 	si = selection_sync();
       else 
 	{
-	  cp = current_channel(get_global_state());
+	  cp = current_channel();
 	  if (cp) si = sync_to_chan(cp);
 	}
       if (si)
@@ -829,7 +817,7 @@ static XEN g_set_selection_frames(XEN samps, XEN snd, XEN chn)
 	si = selection_sync();
       else 
 	{
-	  cp = current_channel(get_global_state());
+	  cp = current_channel();
 	  if (cp) si = sync_to_chan(cp);
 	}
       if (si)
@@ -898,7 +886,7 @@ If sync is set, all chans are included.  The new region id is returned (if " S_s
   ASSERT_JUST_CHANNEL(S_select_all, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_select_all);
   id = select_all(cp);
-  if (selection_creates_region(cp->state)) 
+  if (selection_creates_region(ss)) 
     return(C_TO_XEN_INT(id)); /* C_INT_TO_XEN_REGION to be consistent with-snd-region.c */
   else return(XEN_TRUE);
 }
@@ -907,8 +895,6 @@ static XEN g_save_selection(XEN filename, XEN header_type, XEN data_format, XEN 
 {
   #define H_save_selection "(" S_save_selection " filename (header-type #f) (data-format #f) (srate #f) (comment #f) (chan #f)): \
 save the current selection in filename using the indicated file attributes.  If chan is given, save only that channel."
-
-  snd_state *ss;
   int type, format, sr, err, chn;
   char *com = NULL, *fname = NULL;
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ARG_1, S_save_selection, "a string");
@@ -918,12 +904,10 @@ save the current selection in filename using the indicated file attributes.  If 
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(chan), chan, XEN_ARG_6, S_save_selection, "an integer");
   if (!(selection_is_active()))
     return(snd_no_active_selection_error(S_save_selection));
-  ss = get_global_state();
   if (XEN_INTEGER_P(header_type)) 
     type = XEN_TO_C_INT(header_type); 
   else type = MUS_NEXT;
   format = XEN_TO_C_INT_OR_ELSE(data_format, MUS_OUT_FORMAT);
-
   if (!(mus_header_writable(type, -2)))
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_save_selection),
@@ -935,7 +919,6 @@ save the current selection in filename using the indicated file attributes.  If 
 			 C_TO_XEN_STRING(_("can't write this combination of header type and data format:")),
 			 C_TO_XEN_STRING(mus_header_type_name(type)),
 			 C_TO_XEN_STRING(mus_data_format_name(format))));
-
   sr = XEN_TO_C_INT_OR_ELSE(srate, selection_srate());
   if (XEN_STRING_P(comment)) 
     com = XEN_TO_C_STRING(comment); 
@@ -943,7 +926,7 @@ save the current selection in filename using the indicated file attributes.  If 
   chn = XEN_TO_C_INT_OR_ELSE(chan, SAVE_ALL_CHANS);
   fname = mus_expand_filename(XEN_TO_C_STRING(filename));
   ss->catch_message = NULL;
-  err = save_selection(ss, fname, type, format, sr, com, chn);
+  err = save_selection(fname, type, format, sr, com, chn);
   if (fname) FREE(fname);
   if (err != MUS_NO_ERROR) 
     XEN_ERROR(CANNOT_SAVE,

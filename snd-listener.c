@@ -197,7 +197,7 @@ int check_balance(char *expr, int start, int end, bool in_listener)
 }
 
 static char listener_prompt_buffer[LABEL_BUFFER_SIZE];
-char *listener_prompt_with_cr(snd_state *ss)
+char *listener_prompt_with_cr(void)
 {
   mus_snprintf(listener_prompt_buffer, LABEL_BUFFER_SIZE, "\n%s", listener_prompt(ss));
   return(listener_prompt_buffer);
@@ -223,13 +223,11 @@ static XEN provide_listener_help_1(char *source, int start, int end)
 XEN provide_listener_help(char *source)
 {
   int i, len, j, start_of_name = -1;
-  snd_state *ss;
   char *prompt;
   if (source)
     {
       len = snd_strlen(source);
       /* look for "(name...)" or "\n>name" */
-      ss = get_global_state();
       prompt = listener_prompt(ss);
       for (i = len - 1; i >= 0; i--)
 	{
@@ -280,7 +278,7 @@ XEN provide_listener_help(char *source)
 
 static XEN read_hook;
 
-void command_return(widget_t w, snd_state *ss, int last_prompt)
+void command_return(widget_t w, int last_prompt)
 {
 #if (!USE_NO_GUI)
   /* try to find complete form either enclosing current cursor, or just before it */
@@ -314,10 +312,8 @@ void command_return(widget_t w, snd_state *ss, int last_prompt)
 	  if (XEN_TRUE_P(result)) return;
 	}
     }
-
   prompt = listener_prompt(ss);
   prompt_length = snd_strlen(prompt);
-
   /* first look for a form just before the current mouse location,
    *   independent of everything (i.e. user may have made changes
    *   in a form included in a comment, then typed return, expecting
@@ -436,7 +432,7 @@ void command_return(widget_t w, snd_state *ss, int last_prompt)
 		  str = NULL;
 		  new_eot = GUI_TEXT_END(w);
 		  if (end_of_text < 0)
-		    GUI_LISTENER_TEXT_INSERT(w, new_eot, listener_prompt_with_cr(ss));
+		    GUI_LISTENER_TEXT_INSERT(w, new_eot, listener_prompt_with_cr());
 		  else GUI_LISTENER_TEXT_INSERT(w, new_eot, "\n");
 		  return;
 		}
@@ -507,8 +503,7 @@ void command_return(widget_t w, snd_state *ss, int last_prompt)
   else
     {
       new_eot = GUI_TEXT_END(w);
-      GUI_LISTENER_TEXT_INSERT(w, new_eot, listener_prompt_with_cr(ss));
-      /* last_prompt = GUI_TEXT_END(w) - 1; */
+      GUI_LISTENER_TEXT_INSERT(w, new_eot, listener_prompt_with_cr());
     }
   cmd_eot = GUI_TEXT_END(w);
   GUI_TEXT_GOTO(w, cmd_eot - 1);
@@ -541,30 +536,24 @@ static XEN g_clear_listener(void)
 static XEN g_show_listener(void) 
 {
   #define H_show_listener "(" S_show_listener "): opens the lisp listener pane"
-  snd_state *ss;
-  ss = get_global_state();
-  handle_listener(ss, true); 
+  handle_listener(true); 
   return(C_TO_XEN_BOOLEAN(listener_height() > 5));
 }
 
 static XEN g_set_show_listener(XEN val)
 {
-  snd_state *ss;
-  ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_show_listener, "a boolean");
-  handle_listener(ss, XEN_TO_C_BOOLEAN(val));
+  handle_listener(XEN_TO_C_BOOLEAN(val));
   return(C_TO_XEN_BOOLEAN(listener_height() > 5));
 }
 
-static XEN g_listener_prompt(void) {return(C_TO_XEN_STRING(listener_prompt(get_global_state())));}
+static XEN g_listener_prompt(void) {return(C_TO_XEN_STRING(listener_prompt(ss)));}
 static XEN g_set_listener_prompt(XEN val) 
 {
   #define H_listener_prompt "(" S_listener_prompt "): the current lisp listener prompt character ('>') "
-  snd_state *ss;
-  ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_listener_prompt, "a string"); 
   if (listener_prompt(ss)) FREE(listener_prompt(ss));
-  set_listener_prompt(ss, copy_string(XEN_TO_C_STRING(val)));
+  set_listener_prompt(copy_string(XEN_TO_C_STRING(val)));
 #if USE_NO_GUI
   {
 #if HAVE_GUILE

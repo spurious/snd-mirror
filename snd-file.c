@@ -161,7 +161,7 @@ file_info *copy_header(const char *fullname, file_info *ohdr)
   return(hdr);
 }
 
-static file_info *translate_file(const char *filename, snd_state *ss, int type)
+static file_info *translate_file(const char *filename, int type)
 {
   char *newname, *tempname;
   int *loops = NULL;
@@ -180,7 +180,7 @@ static file_info *translate_file(const char *filename, snd_state *ss, int type)
   fd = CREAT(newname, 0666);
   if (fd == -1)
     {
-      tempname = snd_tempnam(ss);
+      tempname = snd_tempnam();
       fd = CREAT(tempname, 0666);
       if (fd == -1)
 	{
@@ -215,10 +215,10 @@ static file_info *translate_file(const char *filename, snd_state *ss, int type)
 
 static XEN open_raw_sound_hook, bad_header_hook;
 #if (!USE_NO_GUI)
-static char *raw_data_explanation(const char *filename, snd_state *ss, file_info *hdr);
+static char *raw_data_explanation(const char *filename, file_info *hdr);
 #endif
 
-file_info *make_file_info(const char *fullname, snd_state *ss)
+file_info *make_file_info(const char *fullname)
 {
   file_info *hdr = NULL;
   int type = MUS_UNSUPPORTED, format = MUS_UNKNOWN;
@@ -248,8 +248,8 @@ file_info *make_file_info(const char *fullname, snd_state *ss)
 		  char *tmp;
 		  file_info *tmp_hdr;
 		  tmp_hdr = make_file_info_1(fullname);
-		  tmp = raw_data_explanation(fullname, ss, tmp_hdr);
-		  hdr = raw_data_dialog_to_file_info(fullname, ss, tmp);
+		  tmp = raw_data_explanation(fullname, tmp_hdr);
+		  hdr = raw_data_dialog_to_file_info(fullname, tmp);
 		  if (tmp) FREE(tmp);
 		  if (tmp_hdr) tmp_hdr = free_file_info(tmp_hdr);
 		  return(hdr);
@@ -261,7 +261,7 @@ file_info *make_file_info(const char *fullname, snd_state *ss)
 	{
 	  XEN res = XEN_FALSE;
 #if HAVE_GUILE
-	  XEN procs; XEN arg1;
+	  XEN procs, arg1;
 #endif
 	  int len, srate, chans, data_format;
 	  off_t data_location, bytes;
@@ -328,7 +328,7 @@ file_info *make_file_info(const char *fullname, snd_state *ss)
 	      char *str;
 	      str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
 	      mus_snprintf(str, PRINT_BUFFER_SIZE, _("No header found for %s"), filename_without_home_directory(fullname));
-	      hdr = raw_data_dialog_to_file_info(fullname, ss, str);
+	      hdr = raw_data_dialog_to_file_info(fullname, str);
 	      FREE(str);
 	      return(hdr);
 	    }
@@ -341,7 +341,7 @@ file_info *make_file_info(const char *fullname, snd_state *ss)
 	      format = mus_sound_data_format(fullname);
 	      if (MUS_DATA_FORMAT_OK(format))
 		hdr = make_file_info_1(fullname);
-	      else hdr = translate_file(fullname, ss, type);
+	      else hdr = translate_file(fullname, type);
 	    }
 	  else 
 	    snd_error(_("%s does not seem to be a sound file?"), fullname);
@@ -580,14 +580,14 @@ static void add_sound_to_active_list (snd_info *sp, void *sptr1)
 
 static char title_buffer[4 * (MUS_MAX_FILE_NAME)];
 
-void reflect_file_change_in_title(snd_state *ss)
+void reflect_file_change_in_title(void)
 {
   active_sound_list *alist;
   int i, j;
   alist = (active_sound_list *)CALLOC(1, sizeof(active_sound_list));
   alist->sounds = (int *)CALLOC(ss->max_sounds, sizeof(int));
   alist->names = (char **)CALLOC(ss->max_sounds, sizeof(char *));
-  for_each_sound(ss, add_sound_to_active_list, alist);
+  for_each_sound(add_sound_to_active_list, alist);
   mus_snprintf(title_buffer, 4 * (MUS_MAX_FILE_NAME),
 	       "%s%s", 
 	       ss->startup_title, 
@@ -606,7 +606,7 @@ void reflect_file_change_in_title(snd_state *ss)
       if (alist->active_sounds > 4) 
 	strcat(title_buffer, "...");
     }
-  set_title(ss, title_buffer);
+  set_title(title_buffer);
   FREE(alist->sounds);
   FREE(alist->names);
   FREE(alist);
@@ -635,8 +635,8 @@ static XEN memo_sound;
 static XEN open_hook;
 static XEN close_hook;
 
-static void add_to_current_files(snd_state *ss, const char *shortname);
-static void add_to_previous_files(snd_state *ss, const char *shortname, const char *fullname);
+static void add_to_current_files(const char *shortname);
+static void add_to_previous_files(const char *shortname, const char *fullname);
 
 #if HAVE_DYNAMIC_WIND
 /* cleanup even if error in file lookup process */
@@ -651,7 +651,7 @@ static void before_open_file(void *context) {}
 static XEN open_file_body(void *context)
 {
   open_file_context *sc = (open_file_context *)context;
-  open_file_sp = add_sound_window(sc->filename, get_global_state(), sc->read_only); /* snd-xsnd.c -> make_file_info (in this file) */
+  open_file_sp = add_sound_window(sc->filename, sc->read_only); /* snd-xsnd.c -> make_file_info (in this file) */
   return(XEN_FALSE);
 }
 
@@ -663,12 +663,12 @@ static void after_open_file(void *context)
 }
 #endif
 
-static snd_info *snd_open_file_1 (const char *filename, snd_state *ss, bool select, bool read_only)
+static snd_info *snd_open_file_1 (const char *filename, bool select, bool read_only)
 {
   snd_info *sp;
   char *mcf = NULL;
   int files;
-  XEN res = XEN_FALSE; XEN fstr;
+  XEN res = XEN_FALSE, fstr;
   mcf = mus_expand_filename(filename);
   if (XEN_HOOKED(open_hook))
     {
@@ -705,7 +705,7 @@ static snd_info *snd_open_file_1 (const char *filename, snd_state *ss, bool sele
     mcf = NULL; /* freed above in unwind */
   }
 #else
-  sp = add_sound_window(mcf, ss, read_only); /* snd-xsnd.c -> make_file_info (in this file) */
+  sp = add_sound_window(mcf, read_only); /* snd-xsnd.c -> make_file_info (in this file) */
   if (mcf) FREE(mcf);
 #endif
   if (sp)
@@ -716,16 +716,16 @@ static snd_info *snd_open_file_1 (const char *filename, snd_state *ss, bool sele
       ss->active_sounds++;
       files = ss->active_sounds;
       if (files == 1) reflect_file_open_in_menu();
-      reflect_equalize_panes_in_menu(active_channels(ss, WITHOUT_VIRTUAL_CHANNELS) > 1);
-      reflect_file_change_in_title(ss);
+      reflect_equalize_panes_in_menu(active_channels(WITHOUT_VIRTUAL_CHANNELS) > 1);
+      reflect_file_change_in_title();
 #if USE_MOTIF
       unlock_control_panel(sp);
 #endif
-      add_to_current_files(ss, sp->short_filename);
+      add_to_current_files(sp->short_filename);
     }
-  map_over_separate_chans(ss, channel_open_pane, NULL);
+  map_over_separate_chans(channel_open_pane, NULL);
 #if USE_MOTIF
-  map_over_separate_chans(ss, channel_unlock_pane, NULL);
+  map_over_separate_chans(channel_unlock_pane, NULL);
 #endif
   if (sp) 
     {
@@ -746,10 +746,10 @@ static snd_info *snd_open_file_1 (const char *filename, snd_state *ss, bool sele
   return(sp);
 }
 
-snd_info *snd_open_file(const char *filename, snd_state *ss, bool read_only) {return(snd_open_file_1(filename, ss, true, read_only));}
-snd_info *snd_open_file_unselected(const char *filename, snd_state *ss, bool read_only) {return(snd_open_file_1(filename, ss, false, read_only));}
+snd_info *snd_open_file(const char *filename, bool read_only) {return(snd_open_file_1(filename, true, read_only));}
+snd_info *snd_open_file_unselected(const char *filename, bool read_only) {return(snd_open_file_1(filename, false, read_only));}
 
-void snd_close_file(snd_info *sp, snd_state *ss)
+void snd_close_file(snd_info *sp)
 {
   int files, i;
   XEN res = XEN_FALSE;
@@ -760,18 +760,18 @@ void snd_close_file(snd_info *sp, snd_state *ss)
   if (XEN_TRUE_P(res)) return;
   sp->inuse = SOUND_IDLE;
   for (i = 0; i < sp->nchans; i++) sp->chans[i]->squelch_update = true;
-  add_to_previous_files(ss, sp->short_filename, sp->filename);
+  add_to_previous_files(sp->short_filename, sp->filename);
   if (sp->playing) stop_playing_sound(sp);
   if (sp->sgx) clear_minibuffer(sp); /* this can trigger a redisplay-expose sequence, so make sure channels ignore it above */
-  if (sp == selected_sound(ss)) 
+  if (sp == selected_sound()) 
     ss->selected_sound = NO_SELECTION;
   if (selection_creation_in_progress()) finish_selection_creation();
   free_snd_info(sp);
   ss->active_sounds--;
   files = ss->active_sounds;
   if (files == 0) reflect_file_lack_in_menu();
-  reflect_file_change_in_title(ss);
-  reflect_equalize_panes_in_menu(active_channels(ss, WITHOUT_VIRTUAL_CHANNELS) > 1);
+  reflect_file_change_in_title();
+  reflect_equalize_panes_in_menu(active_channels(WITHOUT_VIRTUAL_CHANNELS) > 1);
   if (!(selection_is_active())) 
     reflect_edit_without_selection_in_menu();
 }
@@ -840,7 +840,7 @@ int move_file(const char *oldfile, const char *newfile)
 #define TEMP_SOUND_INDEX 123456
 /* just a marker for debugging */
 
-snd_info *make_sound_readable(snd_state *ss, const char *filename, bool post_close)
+snd_info *make_sound_readable(const char *filename, bool post_close)
 {
   /* conjure up just enough Snd structure to make this sound readable by the edit-tree readers */
   snd_info *sp;
@@ -858,8 +858,7 @@ snd_info *make_sound_readable(snd_state *ss, const char *filename, bool post_clo
   sp->nchans = chans;
   sp->hdr = hdr;
   sp->inuse = SOUND_READER;
-  sp->state = ss;
-  initialize_control_panel(ss, sp);
+  initialize_control_panel(sp);
   sp->search_proc = XEN_UNDEFINED;
   sp->prompt_callback = XEN_UNDEFINED;
   sp->index = TEMP_SOUND_INDEX;
@@ -867,7 +866,7 @@ snd_info *make_sound_readable(snd_state *ss, const char *filename, bool post_clo
   len = (hdr->samples) / (hdr->chans);
   for (i = 0; i < sp->nchans; i++)
     {
-      cp = make_chan_info(NULL, i, sp, ss);
+      cp = make_chan_info(NULL, i, sp);
       FREE((cp->cgx)->ax);
       FREE(cp->cgx);
       cp->cgx = NULL;
@@ -876,7 +875,7 @@ snd_info *make_sound_readable(snd_state *ss, const char *filename, bool post_clo
       cp->edits[0] = initial_ed_list(0, len - 1);
       cp->edit_size = 1;
       cp->sound_size = 1;
-      fd = snd_open_read(ss, filename); /* sends the error if any */
+      fd = snd_open_read(filename); /* sends the error if any */
       if (fd != -1)
 	{
 	  mus_file_set_descriptors(fd,
@@ -1053,7 +1052,6 @@ static void copy_chan_info(chan_info *ncp, chan_info *ocp)
   ncp->show_mix_waveforms = ocp->show_mix_waveforms;
   ncp->spectro_hop = ocp->spectro_hop;
   ncp->graphs_horizontal = ocp->graphs_horizontal;
-      
   ncp->cursor_proc = ocp->cursor_proc;
   if (XEN_BOUND_P(ncp->cursor_proc)) snd_protect(ncp->cursor_proc);
   if (XEN_VECTOR_P(ocp->properties))
@@ -1161,7 +1159,7 @@ static void sound_restore_chan_info(snd_info *nsp, snd_info *osp)
 
 static XEN update_hook;
 
-static snd_info *snd_update_1(snd_state *ss, snd_info *sp, const char *ur_filename)
+static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
 {
   /* we can't be real smart here because the channel number may have changed and so on */
   int i, old_srate, old_chans, old_format, old_raw, sp_chans, old_index;
@@ -1212,11 +1210,11 @@ static snd_info *snd_update_1(snd_state *ss, snd_info *sp, const char *ur_filena
   saved_sp = sound_store_chan_info(sp);
   old_cursors = (off_t *)CALLOC(sp_chans, sizeof(off_t));
   for (i = 0; i < sp_chans; i++) old_cursors[i] = CURSOR(sp->chans[i]);
-  snd_close_file(sp, ss);
+  snd_close_file(sp);
   /* this normalizes the fft/lisp/wave state so we need to reset it after reopen */
   alert_new_file();
   ss->reloading_updated_file = (old_index + 1);
-  nsp = snd_open_file(filename, ss, read_only);
+  nsp = snd_open_file(filename, read_only);
   ss->reloading_updated_file = 0;
   if (old_raw)
     mus_header_set_raw_defaults(old_srate, old_chans, old_format);
@@ -1254,7 +1252,7 @@ static snd_info *snd_update_1(snd_state *ss, snd_info *sp, const char *ur_filena
   return(nsp);
 }
 
-snd_info *snd_update(snd_state *ss, snd_info *sp)
+snd_info *snd_update(snd_info *sp)
 {
   Latus app_x, app_y;
   if (sp->edited_region) return(sp);
@@ -1266,7 +1264,7 @@ snd_info *snd_update(snd_state *ss, snd_info *sp)
     }
   app_x = widget_width(MAIN_SHELL(ss));
   app_y = widget_height(MAIN_SHELL(ss));
-  sp = snd_update_1(ss, sp, sp->filename);
+  sp = snd_update_1(sp, sp->filename);
   if (sp)
     report_in_minibuffer(sp, _("updated %s"), sp->short_filename);
   else snd_error(_("update failed!"));
@@ -1302,9 +1300,7 @@ int get_prevfile_size(void) {return(prevfile_size);}
 char *get_curfullname(int pos)
 {
   snd_info *sp;
-  snd_state *ss;
-  ss = get_global_state();
-  sp = find_sound(ss, curnames[pos], 0);
+  sp = find_sound(curnames[pos], 0);
   if (sp) return(sp->filename);
   return(NULL);
 }
@@ -1314,10 +1310,10 @@ char *view_curfiles_name(int pos)
   return(curnames[pos]);
 }
 
-void view_curfiles_play(snd_state *ss, int pos, int play)
+void view_curfiles_play(int pos, int play)
 {
   snd_info *sp;
-  sp = find_sound(ss, curnames[pos], 0);
+  sp = find_sound(curnames[pos], 0);
   if (sp)
     {
       if (sp->playing) stop_playing_sound(sp);
@@ -1327,23 +1323,23 @@ void view_curfiles_play(snd_state *ss, int pos, int play)
     }
 }
 
-void view_curfiles_select(snd_state *ss, int pos)
+void view_curfiles_select(int pos)
 {
   snd_info *sp, *osp;
-  curfile_highlight(ss, pos);
-  sp = find_sound(ss, curnames[pos], 0);
-  osp = any_selected_sound(ss);
+  curfile_highlight(pos);
+  sp = find_sound(curnames[pos], 0);
+  osp = any_selected_sound();
   if (sp != osp)
     {
       select_channel(sp, 0);
-      equalize_sound_panes(ss, sp, sp->chans[0], false);
+      equalize_sound_panes(sp, sp->chans[0], false);
       /* goto_graph(sp->chans[0]); */
     }
 }
 
 static XEN previous_files_select_hook;
 
-void view_prevfiles_select(snd_state *ss, int pos)
+void view_prevfiles_select(int pos)
 {
   snd_info *sp;
   XEN res = XEN_FALSE;
@@ -1353,12 +1349,12 @@ void view_prevfiles_select(snd_state *ss, int pos)
 		      S_previous_files_select_hook);
   if (XEN_NOT_TRUE_P(res))
     {
-      sp = snd_open_file(prevfullnames[pos], ss, false);
+      sp = snd_open_file(prevfullnames[pos], false);
       if (sp) select_channel(sp, 0); 
     }
 }
 
-int view_prevfiles_play(snd_state *ss, int pos, int play)
+int view_prevfiles_play(int pos, int play)
 {
   static snd_info *play_sp;
   if (play)
@@ -1375,7 +1371,7 @@ int view_prevfiles_play(snd_state *ss, int pos, int play)
       if ((!play_sp) && (prevfullnames[pos]))
 	{
 	  if (mus_file_probe(prevfullnames[pos]))
-	    play_sp = make_sound_readable(ss, prevfullnames[pos], false);
+	    play_sp = make_sound_readable(prevfullnames[pos], false);
 	  else snd_error(_("play previous file: can't find %s: %s"), prevfullnames[pos], strerror(errno));
 	}
       if (play_sp)
@@ -1458,7 +1454,7 @@ static void file_prevlist(const char *filename, const char *fullname)
     max_prevfile_end = prevfile_end;
 }
 
-void add_directory_to_prevlist(snd_state *ss, const char *dirname)
+void add_directory_to_prevlist(const char *dirname)
 {
   dir *sound_files = NULL;
   char *fullpathname = NULL;
@@ -1488,10 +1484,10 @@ void add_directory_to_prevlist(snd_state *ss, const char *dirname)
       free_dir(sound_files);
       FREE(fullpathname);
     }
-  if (file_dialog_is_active()) make_prevfiles_list(ss);
+  if (file_dialog_is_active()) make_prevfiles_list();
 }
 
-static void add_to_previous_files(snd_state *ss, const char *shortname, const char *fullname)
+static void add_to_previous_files(const char *shortname, const char *fullname)
 {
   int i, j;
   file_prevlist(shortname, fullname);
@@ -1507,8 +1503,8 @@ static void add_to_previous_files(snd_state *ss, const char *shortname, const ch
     }
   if (file_dialog_is_active())
     {
-      make_curfiles_list(ss);
-      make_prevfiles_list(ss);
+      make_curfiles_list();
+      make_prevfiles_list();
     }
 }
 
@@ -1521,7 +1517,7 @@ void init_curfiles(int size)
     }
 }
 
-static void add_to_current_files(snd_state *ss, const char *shortname)
+static void add_to_current_files(const char *shortname)
 {
   int i, new_size;
   if (curfile_end == curfile_size)
@@ -1545,8 +1541,8 @@ static void add_to_current_files(snd_state *ss, const char *shortname)
   file_unprevlist(shortname);
   if (file_dialog_is_active())
     {
-      make_curfiles_list(ss);
-      make_prevfiles_list(ss);
+      make_curfiles_list();
+      make_prevfiles_list();
     }
 }
 
@@ -1595,7 +1591,7 @@ void save_prevlist(FILE *fd)
 	      prevfullnames[i]);
 }
 
-void clear_prevlist(snd_state *ss)
+void clear_prevlist(void)
 {
   int i;
   if (prevnames)
@@ -1610,7 +1606,7 @@ void clear_prevlist(snd_state *ss)
 	  }
       prevfile_end = -1;
       prevtime = 0;
-      make_prevfiles_list(ss);
+      make_prevfiles_list();
     }
 }
 
@@ -1694,7 +1690,7 @@ static int less_compare(const void *a, const void *b)
     }
 }
 
-void make_prevfiles_list_1(snd_state *ss)
+void make_prevfiles_list_1(void)
 {
   heapdata **data;
   int i, len;
@@ -1778,17 +1774,13 @@ void make_prevfiles_list_1(snd_state *ss)
 static XEN g_previous_files_sort_procedure(void)
 {
   #define H_previous_files_sort_procedure "(" S_previous_files_sort_procedure "): sort procedure for the current files viewer"
-  snd_state *ss;
-  ss = get_global_state();
   return(ss->file_sort_proc);
 }
 
 static XEN g_set_previous_files_sort_procedure(XEN proc)
 {
-  snd_state *ss;
   char *error = NULL;
   XEN errstr;
-  ss = get_global_state();
   if (XEN_PROCEDURE_P(ss->file_sort_proc))
     snd_unprotect(ss->file_sort_proc);
   ss->file_sort_proc = XEN_UNDEFINED;
@@ -2054,7 +2046,7 @@ static bool check_for_same_name(snd_info *sp1, void *ur_info)
   return(false);
 }
 
-int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *str, int save_type, int srate, int type, int format, char *comment)
+int check_for_filename_collisions_and_save(snd_info *sp, char *str, int save_type, int srate, int type, int format, char *comment)
 {
   /* only from save-as dialog where type/format are known to be writable */
   /* returns 0 if new file not opened, 1 if opened (same name as old), -1 if cancelled or error of some sort */
@@ -2066,7 +2058,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
   /* now check in-core files -- need to close any of same name -- if edited what to do? */
   /* also it's possible the new file name is the same as the current file name(!) */
   fullname = mus_expand_filename(str);
-  if (!(snd_overwrite_ok(ss, fullname))) 
+  if (!(snd_overwrite_ok(fullname))) 
     {
       FREE(fullname); 
       return(-1);
@@ -2086,14 +2078,14 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
 	}
       /* it's possible also that the same-named file is open in several windows -- for now we'll ignore that */
       /* also what if a sound is write-protected in one window, and not in another? */
-      ofile = snd_tempnam(ss); 
+      ofile = snd_tempnam(); 
       if (save_type == FILE_SAVE_AS)
 	result = save_edits_without_display(sp, ofile, type, format, srate, comment, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "file save as", 0);
-      else result = save_selection(ss, ofile, type, format, srate, comment, SAVE_ALL_CHANS);
+      else result = save_selection(ofile, type, format, srate, comment, SAVE_ALL_CHANS);
       if (result != MUS_NO_ERROR)
 	report_in_minibuffer(sp, _("save as temp %s hit error: %s"), ofile, strerror(errno));
       else move_file(ofile, sp->filename);
-      snd_update(ss, sp);
+      snd_update(sp);
       opened = 1;
       FREE(ofile);
       FREE(fullname);
@@ -2104,7 +2096,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
       collision->filename = fullname;
       collision->edits = 0;
       collision->sp = NULL;
-      map_over_sounds(ss, check_for_same_name, (void *)collision);
+      map_over_sounds(check_for_same_name, (void *)collision);
       if (collision->sp)
 	{
 	  /* if no edits, we'll just close, overwrite, reopen */
@@ -2112,19 +2104,19 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
 	  /* we don't need to check for overwrites at this point */
 	  if (collision->edits > 0)
 	    {
-	      if (!(snd_yes_or_no_p(ss, _("%s has unsaved edits. Clobber them?"), str)))
+	      if (!(snd_yes_or_no_p(_("%s has unsaved edits. Clobber them?"), str)))
 		{
 		  FREE(fullname); 
 		  FREE(collision); 
 		  return(-1);
 		}
 	    }
-	  snd_close_file(collision->sp, ss);
+	  snd_close_file(collision->sp);
 	}
       mus_sound_forget(fullname);
       if (save_type == FILE_SAVE_AS)
 	result = save_edits_without_display(sp, str, type, format, srate, comment, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "file save as", 0);
-      else result = save_selection(ss, str, type, format, srate, comment, SAVE_ALL_CHANS);
+      else result = save_selection(str, type, format, srate, comment, SAVE_ALL_CHANS);
       if (result != MUS_NO_ERROR)
 	{
 	  report_in_minibuffer_and_save(sp, "%s: %s", str, strerror(errno));
@@ -2135,7 +2127,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
 				str);
       if (collision->sp) 
 	{
-	  snd_open_file(fullname, ss, false);
+	  snd_open_file(fullname, false);
 	  if (opened == 0) opened = 1;
 	}
       FREE(fullname);
@@ -2145,7 +2137,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
 }
 
 
-void edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_data)
+void edit_header_callback(snd_info *sp, file_data *edit_header_data)
 {
   /* this blindly changes the header info -- it does not actually reformat the data or whatever */
   int err, chans, srate, type, format;
@@ -2192,7 +2184,7 @@ void edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_da
 	mus_header_change_comment(sp->filename, comment);
       if (comment) FREE(comment);
       if (original_comment) FREE(original_comment);
-      snd_update(ss, sp);
+      snd_update(sp);
     }
   else 
     snd_error(_("can't write file %s: %s"), sp->short_filename, strerror(errno));
@@ -2242,7 +2234,7 @@ static short swap_short(short n)
   return(o);
 }
 
-static char *raw_data_explanation(const char *filename, snd_state *ss, file_info *hdr)
+static char *raw_data_explanation(const char *filename, file_info *hdr)
 {
   char *reason_str, *tmp_str, *file_string;
   off_t nsamp;
@@ -2304,7 +2296,7 @@ static char *raw_data_explanation(const char *filename, snd_state *ss, file_info
   mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nformat: %s\n", mus_data_format_name(hdr->format));
   reason_str = snd_strcat(reason_str, tmp_str, &len);
   hdr->type = MUS_RAW;
-  snd_help(ss, "Current header values", reason_str, false);
+  snd_help("Current header values", reason_str, false);
   file_string = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   mus_snprintf(file_string, PRINT_BUFFER_SIZE,
 	       "Bogus header found for %s", 
@@ -2351,7 +2343,6 @@ list: (sustain-start sustain-end release-start release-end baseNote detune)"
   if (sp == NULL)
     return(snd_no_such_sound_error(S_sound_loop_info, snd));
   res = sp->hdr->loops;
-
   if (res)
     return(XEN_LIST_8(C_TO_XEN_INT(res[0]), C_TO_XEN_INT(res[1]), C_TO_XEN_INT(res[2]),
 		      C_TO_XEN_INT(res[3]), C_TO_XEN_INT(res[4]), C_TO_XEN_INT(res[5]),
@@ -2365,10 +2356,10 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
   char *tmp_file;
   file_info *hdr;
   int type, len = 0;
-  XEN start0 = XEN_UNDEFINED; XEN end0 = XEN_UNDEFINED; 
-  XEN start1 = XEN_UNDEFINED; XEN end1 = XEN_UNDEFINED; 
-  XEN mode0 = XEN_UNDEFINED; XEN mode1 = XEN_UNDEFINED;
-  XEN note = XEN_UNDEFINED; XEN detune = XEN_UNDEFINED;
+  XEN start0 = XEN_UNDEFINED, end0 = XEN_UNDEFINED; 
+  XEN start1 = XEN_UNDEFINED, end1 = XEN_UNDEFINED; 
+  XEN mode0 = XEN_UNDEFINED, mode1 = XEN_UNDEFINED;
+  XEN note = XEN_UNDEFINED, detune = XEN_UNDEFINED;
   XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(vals) || XEN_LIST_P_WITH_LENGTH(vals, len), vals, XEN_ARG_2, S_setB S_sound_loop_info, "a list");
   if (XEN_NOT_BOUND_P(vals))
     {
@@ -2450,7 +2441,7 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
    *   but this aspect of AIFC headers is impossibly complicated (if we could assume our own headers,
    *   it would not be so hard).
    */
-  tmp_file = snd_tempnam(sp->state);
+  tmp_file = snd_tempnam();
   save_edits_without_display(sp, tmp_file, type, 
 			     hdr->format, 
 			     hdr->srate, 
@@ -2459,7 +2450,7 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
 			     S_sound_loop_info, 0);
   move_file(tmp_file, sp->filename);
   FREE(tmp_file);
-  snd_update(sp->state, sp);
+  snd_update(sp);
   return(xen_return_first(XEN_TRUE, snd, vals));
 }
 
@@ -2469,7 +2460,7 @@ static XEN g_soundfont_info(XEN snd)
   #define H_soundfont_info "(" S_soundfont_info " (snd #f)): list of lists describing snd as a soundfont. \
 each inner list has the form: (name start loopstart loopend)"
 
-  XEN inlist = XEN_EMPTY_LIST; XEN outlist = XEN_EMPTY_LIST;
+  XEN inlist = XEN_EMPTY_LIST, outlist = XEN_EMPTY_LIST;
   int i, lim;
   snd_info *sp;
   ASSERT_JUST_SOUND(S_soundfont_info, snd, 1);
@@ -2497,8 +2488,7 @@ static XEN g_preload_directory(XEN directory)
 {
   #define H_preload_directory "(" S_preload_directory " dir): preload into the View:Files dialog any sounds in dir"
   XEN_ASSERT_TYPE(XEN_STRING_P(directory), directory, XEN_ONLY_ARG, S_preload_directory, "a string");
-  add_directory_to_prevlist(get_global_state(), 
-			    XEN_TO_C_STRING(directory));
+  add_directory_to_prevlist(XEN_TO_C_STRING(directory));
   return(directory);
 }
 
@@ -2509,9 +2499,7 @@ static XEN g_preload_file(XEN file)
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_preload_file, "a string");
   name = mus_expand_filename(XEN_TO_C_STRING(file));
   if (mus_file_probe(name))
-    add_to_previous_files(get_global_state(), 
-			  filename_without_home_directory(name), 
-			  name);
+    add_to_previous_files(filename_without_home_directory(name), name);
   if (name) FREE(name);
   return(file);
 }
@@ -2552,7 +2540,7 @@ static XEN g_open_file_dialog(XEN managed)
 {
   #define H_open_file_dialog "(" S_open_file_dialog " (managed #t)): create the file dialog if needed and display it if 'managed'"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_open_file_dialog, "a boolean");
-  make_open_file_dialog(get_global_state(), false, (XEN_BOUND_P(managed)) ? XEN_TO_C_BOOLEAN(managed) : true);
+  make_open_file_dialog(false, (XEN_BOUND_P(managed)) ? XEN_TO_C_BOOLEAN(managed) : true);
   return(managed);
 }
 
@@ -2560,26 +2548,25 @@ static XEN g_mix_file_dialog(XEN managed)
 {
   #define H_mix_file_dialog "(" S_mix_file_dialog " (managed #t)): create the mix file dialog if needed and display it if 'managed'"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_mix_file_dialog, "a boolean");
-  make_mix_file_dialog(get_global_state(), (XEN_BOUND_P(managed)) ? XEN_TO_C_BOOLEAN(managed) : true);
+  make_mix_file_dialog((XEN_BOUND_P(managed)) ? XEN_TO_C_BOOLEAN(managed) : true);
   return(managed);
 }
 
-static XEN g_previous_files_sort(void) {return(C_TO_XEN_INT(previous_files_sort(get_global_state())));}
+static XEN g_previous_files_sort(void) {return(C_TO_XEN_INT(previous_files_sort(ss)));}
 static XEN g_set_previous_files_sort(XEN val) 
 {
   #define H_previous_files_sort "(" S_previous_files_sort "): sort choice in view files (0 = unsorted, 1 = by name, \
 2 = by write date, 3 = by size, 4 = by directory order, 5 = by previous-files-sort-procedure."
-  snd_state *ss;
+
   int choice;
-  ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_previous_files_sort, "an integer"); 
   update_prevlist();
   choice = XEN_TO_C_INT(val);
   if ((choice < 0) || (choice > 5))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_previous_files_sort, 1, val, "~A, but must be between 0.0 and 0..5");
-  set_previous_files_sort(ss, choice);
+  set_previous_files_sort(choice);
   if (file_dialog_is_active()) 
-    make_prevfiles_list(ss);
+    make_prevfiles_list();
   return(C_TO_XEN_INT(previous_files_sort(ss)));
 }
 

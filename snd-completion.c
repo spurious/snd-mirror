@@ -53,7 +53,7 @@ static int scan_tab(XEN tab, char *text, int len, int matches)
 static int completions(char *text)
 {
   int len, matches = 0;
-  XEN curmod; XEN uses;
+  XEN curmod, uses;
   len = strlen(text);
   curmod = scm_current_module();
   matches = scan_tab(SCM_MODULE_OBARRAY(curmod), 
@@ -86,7 +86,7 @@ static XEN snd_rb_methods(void)
 
 static int completions(char *text)
 {
-  XEN tab; XEN handle;
+  XEN tab, handle;
   int i, j, n, curlen, len, matches = 0;
   char *sym;
   tab = snd_rb_methods();
@@ -241,10 +241,10 @@ void add_possible_completion(char *text)
     }
 }
 
-void display_completions(snd_state *ss)
+void display_completions(void)
 {
   if (possible_completions_ctr > 0)
-    snd_completion_help(ss, possible_completions_ctr, possible_completions);
+    snd_completion_help(possible_completions_ctr, possible_completions);
 }
 
 char *complete_text(char *text, int func)
@@ -318,14 +318,12 @@ char *filename_completer(char *text)
   int i, j, k, len, curlen, matches = 0;
   struct dirent *dirp;
   DIR *dpos;
-
   if (snd_strlen(text) == 0) return(NULL);
   full_name = mus_expand_filename(text);
   len = snd_strlen(full_name);
   for (i = len - 1; i > 0; i--)
     if (full_name[i] == '/')
       break;
-
   dir_name = (char *)CALLOC(i + 1, sizeof(char));
   strncpy(dir_name, full_name, i);
   file_name = (char *)CALLOC(len - i + 2, sizeof(char));
@@ -395,7 +393,7 @@ char *info_completer(char *text)
   snd_info *sp = NULL;
   char *new_text, *new_file;
   int i, beg, parens, len;
-  sp = selected_sound(get_global_state());
+  sp = selected_sound();
   if (sp)
     {
       if (sp->searching) return(copy_string(text));      /* C-s or C-r so as above */

@@ -43,7 +43,6 @@ static char *previous_locale = NULL;
 static int start_ps_graph(char *output, char *title) 
 { 
   time_t ts;
-  snd_state *ss;
   ps_fd = CREAT(output, 0666);
   if (ps_fd == -1) return(-1);
   if (!pbuf) pbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
@@ -69,7 +68,7 @@ static int start_ps_graph(char *output, char *title)
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, 
 	       "/LT {lineto} bind def\n/RF {rectfill} bind def\n/RG {setrgbcolor} bind def\n/NAF {newpath arc fill} bind def\n\n");
   ps_write(pbuf);
-  ss = get_global_state();
+
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, 
 	       "gsave [%.3f 0.0 0.0 %.3f %.3f %.3f] concat\n\n",
 	       eps_size(ss), eps_size(ss), eps_left_margin(ss), eps_bottom_margin(ss));
@@ -82,14 +81,12 @@ static void ps_graph(chan_info *cp, int x0, int y0)
   cp->printing = true;
   bx0 = x0;
   by0 = y0;
-  display_channel_data(cp, cp->sound, cp->state);
+  display_channel_data(cp);
   cp->printing = false;
 }
 
 static void end_ps_graph(void)
 {
-  snd_state *ss;
-  ss = get_global_state();
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, 
 	       "%s\nshowpage\n%%%%Trailer\n%%%%BoundingBox: %d %d %d %d\n",
 	       ((eps_left_margin(ss) != 0) || (eps_bottom_margin(ss) != 0)) ? "\ngrestore" : "",
@@ -307,9 +304,7 @@ static int last_color = -1;
 
 void ps_draw_sono_rectangle(axis_info *ap, int color, Float x, Float y, Float width, Float height)
 {
-  snd_state *ss;
   unsigned short r, g, b;
-  ss = get_global_state();
   if (last_color != color)
     {
       get_current_color(color_map(ss), color, &r, &g, &b);
@@ -334,8 +329,6 @@ static void ps_set_color(color_t color)
   Colormap cmap;
   XColor tmp_color;
   Display *dpy;
-  snd_state *ss;
-  ss = get_global_state();
   dpy = XtDisplay(MAIN_SHELL(ss));
   cmap = DefaultColormap(dpy, DefaultScreen(dpy));
   tmp_color.flags = DoRed | DoGreen | DoBlue;
@@ -393,9 +386,7 @@ void ps_draw_line (axis_info *ap, int x0, int y0, int x1, int y1)
 void ps_draw_spectro_line(axis_info *ap, int color, Float x0, Float y0, Float x1, Float y1)
 {
   /* these are in local coords */
-  snd_state *ss;
   unsigned short r, g, b;
-  ss = get_global_state();
   if (last_color != color)
     {
       get_current_color(color_map(ss), color, &r, &g, &b);
@@ -465,7 +456,7 @@ void ps_set_tiny_numbers_font(void)
 
 #define PRINTED_VERTICAL_SPACING 25 
 
-static char *snd_print_or_error(snd_state *ss, char *output)
+static char *snd_print_or_error(char *output)
 {
   int j, i, err;
   int *offsets = NULL;
@@ -475,7 +466,7 @@ static char *snd_print_or_error(snd_state *ss, char *output)
   char *errstr = NULL;
   if ((output) && (*output))
     {
-      ccp = current_channel(ss);
+      ccp = current_channel();
       if (ccp == NULL) 
 	return(copy_string(_("nothing to print?")));
       si = sync_to_chan(ccp);
@@ -514,10 +505,10 @@ static char *snd_print_or_error(snd_state *ss, char *output)
   else return(copy_string(_("print sound: eps file name needed")));
 }
 
-void snd_print(snd_state *ss, char *output)
+void snd_print(char *output)
 {
   char *error;
-  error = snd_print_or_error(ss,output);
+  error = snd_print_or_error(output);
   if (error)
     {
       snd_error(error);
@@ -551,7 +542,7 @@ void print_enved(char *output, int y0)
 	{
 	  bx0 = 0;
 	  by0 = y0;
-	  env_redisplay_with_print(get_global_state());
+	  env_redisplay_with_print();
 	  end_ps_graph();
 	}
       else snd_error(_("print env %s failed: %s"), output, strerror(errno));
@@ -565,12 +556,10 @@ static XEN g_graph2ps(XEN filename)
 
   char *error,*file;
   XEN result;
-  snd_state *ss;
-  ss = get_global_state();
   if (XEN_STRING_P(filename))
     file = XEN_TO_C_STRING(filename);
   else file = eps_file(ss);
-  error = snd_print_or_error(ss, file);
+  error = snd_print_or_error(file);
   if (error)
     {
       result = C_TO_XEN_STRING(error);
@@ -583,51 +572,42 @@ static XEN g_graph2ps(XEN filename)
   return(C_TO_XEN_STRING(file));
 }
 
-static XEN g_eps_file(void) {return(C_TO_XEN_STRING(eps_file(get_global_state())));}
+static XEN g_eps_file(void) {return(C_TO_XEN_STRING(eps_file(ss)));}
 static XEN g_set_eps_file(XEN val) 
 {
   #define H_eps_file "(" S_eps_file "): File:Print and " S_graph2ps " file name (snd.eps)"
-  snd_state *ss;
-  ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_eps_file, "a string"); 
   if (eps_file(ss)) FREE(eps_file(ss));
-  set_eps_file(ss, copy_string(XEN_TO_C_STRING(val))); 
+  set_eps_file(copy_string(XEN_TO_C_STRING(val))); 
   return(C_TO_XEN_STRING(eps_file(ss)));
 }
 
-static XEN g_eps_left_margin(void) {return(C_TO_XEN_DOUBLE(eps_left_margin(get_global_state())));}
+static XEN g_eps_left_margin(void) {return(C_TO_XEN_DOUBLE(eps_left_margin(ss)));}
 static XEN g_set_eps_left_margin(XEN val) 
 {
   #define H_eps_left_margin "(" S_eps_left_margin "): File:Print and " S_graph2ps " left margin"
-  snd_state *ss;
-  ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_eps_left_margin, "a number"); 
-  set_eps_left_margin(ss, XEN_TO_C_DOUBLE(val));
+  set_eps_left_margin(XEN_TO_C_DOUBLE(val));
   return(C_TO_XEN_DOUBLE(eps_left_margin(ss)));
 }
 
-static XEN g_eps_bottom_margin(void) {return(C_TO_XEN_DOUBLE(eps_bottom_margin(get_global_state())));}
+static XEN g_eps_bottom_margin(void) {return(C_TO_XEN_DOUBLE(eps_bottom_margin(ss)));}
 static XEN g_set_eps_bottom_margin(XEN val) 
 {
   #define H_eps_bottom_margin "(" S_eps_bottom_margin "): File:Print and " S_graph2ps " bottom margin"
-  snd_state *ss;
-  ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_eps_bottom_margin, "a number"); 
-  set_eps_bottom_margin(ss, XEN_TO_C_DOUBLE(val));
+  set_eps_bottom_margin(XEN_TO_C_DOUBLE(val));
   return(C_TO_XEN_DOUBLE(eps_bottom_margin(ss)));
 }
 
-static XEN g_eps_size(void) {return(C_TO_XEN_DOUBLE(eps_size(get_global_state())));}
+static XEN g_eps_size(void) {return(C_TO_XEN_DOUBLE(eps_size(ss)));}
 static XEN g_set_eps_size(XEN val) 
 {
   #define H_eps_size "(" S_eps_size "): File:Print and " S_graph2ps " output size scaler (1.0)"
-  snd_state *ss;
-  ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_eps_size, "a number"); 
-  set_eps_size(ss, XEN_TO_C_DOUBLE(val));
+  set_eps_size(XEN_TO_C_DOUBLE(val));
   return(C_TO_XEN_DOUBLE(eps_size(ss)));
 }
-
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_1(g_graph2ps_w, g_graph2ps)

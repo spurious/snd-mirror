@@ -11,7 +11,7 @@
 #define BACKGROUND_QUIT true
 #define BACKGROUND_CONTINUE false
 #define BACKGROUND_REMOVE(func)
-#define BACKGROUND_ADD(ss, func, data) func(data)
+#define BACKGROUND_ADD(func, data) func(data)
 
 #define widget_t int
 #define XEN_WRAP_WIDGET(Value) 0

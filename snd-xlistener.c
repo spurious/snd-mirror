@@ -13,9 +13,7 @@ static Widget completion_help_dialog = NULL, completion_help_list = NULL;
 
 static void completion_help_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)context;
-  snd_help(ss, 
-	   "completion",
+  snd_help("completion",
 	   "These are the completions that Snd thinks might be likely. If you select one, it will be used to complete the current name.",
 	   true);
 }
@@ -23,7 +21,6 @@ static void completion_help_help_callback(Widget w, XtPointer context, XtPointer
 static void completion_help_browse_callback(Widget w, XtPointer context, XtPointer info) 
 {
   int i, j, old_len, new_len;
-  snd_state *ss = (snd_state *)context;
   char *text = NULL, *old_text = NULL;
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
   /* choice = cbs->item_position - 1; */
@@ -62,11 +59,10 @@ static void completion_help_browse_callback(Widget w, XtPointer context, XtPoint
 
 static void help_completion_ok_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)context;
   ss->sgx->completion_requestor = NULL;
 }
 
-static void create_completion_help_dialog(snd_state *ss, char *title)
+static void create_completion_help_dialog(char *title)
 {
   Arg args[20];
   int n;
@@ -91,30 +87,30 @@ static void create_completion_help_dialog(snd_state *ss, char *title)
 
   XtManageChild(completion_help_list);
 
-  XtAddCallback(completion_help_list, XmNbrowseSelectionCallback, completion_help_browse_callback, ss);
-  XtAddCallback(completion_help_dialog, XmNhelpCallback, completion_help_help_callback, ss);
-  XtAddCallback(completion_help_dialog, XmNokCallback, help_completion_ok_callback, ss);
+  XtAddCallback(completion_help_list, XmNbrowseSelectionCallback, completion_help_browse_callback, NULL);
+  XtAddCallback(completion_help_dialog, XmNhelpCallback, completion_help_help_callback, NULL);
+  XtAddCallback(completion_help_dialog, XmNokCallback, help_completion_ok_callback, NULL);
 
   XtManageChild(completion_help_dialog);
 
   if (!(ss->using_schemes))
     {
-      map_over_children(completion_help_dialog, set_main_color_of_widget, (void *)ss);
+      map_over_children(completion_help_dialog, set_main_color_of_widget, NULL);
       XtVaSetValues(completion_help_list, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
       XtVaSetValues(XmMessageBoxGetChild(completion_help_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
       XtVaSetValues(XmMessageBoxGetChild(completion_help_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
     }
-  set_dialog_widget(ss, COMPLETION_DIALOG, completion_help_dialog);
+  set_dialog_widget(COMPLETION_DIALOG, completion_help_dialog);
 }
 
-void snd_completion_help(snd_state *ss, int matches, char **buffer)
+void snd_completion_help(int matches, char **buffer)
 {
   int i;
   Dimension w, h;
   XmString *match;
   if (completion_help_dialog)
     XtManageChild(completion_help_dialog);
-  else create_completion_help_dialog(ss, _("Completions"));
+  else create_completion_help_dialog(_("Completions"));
   match = (XmString *)CALLOC(matches, sizeof(XmString));
   for (i = 0; i < matches; i++) 
     match[i] = XmStringCreate(buffer[i], XmFONTLIST_DEFAULT_TAG);
@@ -143,14 +139,12 @@ void snd_completion_help(snd_state *ss, int matches, char **buffer)
 
 void textfield_focus_callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_state *ss = (snd_state *)context;
   if (!(ss->using_schemes)) 
     XtVaSetValues(w, XmNbackground, (ss->sgx)->text_focus_color, NULL);
 }
 
 void textfield_unfocus_callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_state *ss = (snd_state *)context;
   if (!(ss->using_schemes)) 
     XtVaSetValues(w, XmNbackground, (ss->sgx)->basic_color, NULL);
 }
@@ -173,7 +167,7 @@ static void Activate_keyboard (Widget w, XEvent *ev, char **str, Cardinal *num)
 {
   /* make the current channel active preloading kbd cmd with str[0]+ctrl bit */
   chan_info *cp;
-  cp = current_channel(get_global_state());
+  cp = current_channel();
   if (cp) 
     {
       goto_graph(cp);
@@ -223,13 +217,13 @@ static void Begin_of_line(Widget w, XEvent *ev, char **ustr, Cardinal *num)
   XmTextPosition curpos, loc;
   int prompt_len;
   char *str = NULL;
-  snd_state *ss;
+
   Boolean found;
   curpos = XmTextGetCursorPosition(w) - 1;
   found = XmTextFindString(w, curpos, "\n", XmTEXT_BACKWARD, &loc);
   if (found) 
     {
-      ss = get_global_state();
+
       prompt_len = snd_strlen(listener_prompt(ss));
       str = (char *)CALLOC(prompt_len + 3, sizeof(char));
       XmTextGetSubstring(w, loc + 1, prompt_len, prompt_len + 2, str);
@@ -253,8 +247,6 @@ static void B1_press(Widget w, XEvent *event, char **str, Cardinal *num)
 {
   XmTextPosition pos;
   XButtonEvent *ev = (XButtonEvent *)event;
-  snd_state *ss;
-  ss = get_global_state();
   XmProcessTraversal(w, XmTRAVERSE_CURRENT);
   /* we're replacing the built-in take_focus action here, so do it by hand, but leave listener blue, so to speak */
   if ((!(ss->using_schemes)) && 
@@ -339,7 +331,8 @@ static void Complain(Widget w, XEvent *event, char **str, Cardinal *num)
 
 static void Word_upper(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
-  int i, j, length, wstart, wend, up, cap;
+  int i, j, length, wstart, wend;
+  bool up, cap;
   XmTextPosition curpos, endpos;
   char *buf = NULL;
   up = (str[0][0] == 'u');
@@ -412,14 +405,13 @@ static void add_completer_widget(Widget w, int row)
 static void Name_completion(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
   /* non-listener tab completion */
-  int data, i, matches, need_position;
+  int data, i, matches;
+  bool need_position;
   Position wx, wy;
   int xoff, yoff; 
   Window wn;
   Pixel old_color;
   char *old_text, *new_text, *search_text;
-  snd_state *ss;
-  ss = get_global_state();
   data = -1;
   for (i = 0; i < cmpwids_size; i++)
     if (w == cmpwids[i])
@@ -458,7 +450,7 @@ static void Name_completion(Widget w, XEvent *event, char **str, Cardinal *num)
 	      search_text = complete_text(old_text, data);
 	      if (search_text) FREE(search_text);
 	      need_position = (completion_help_dialog == NULL);
-	      display_completions(ss);
+	      display_completions();
 	      set_save_completions(false);
 	      if (need_position)
 		{
@@ -551,28 +543,24 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
    *   and we don't want to back up past the last prompt
    *   also if at start of line (or all white-space to previous \n, indent
    */
-  int beg, end, len, matches = 0, need_position;
+  int beg, end, len, matches = 0;
+  bool need_position;
   char *old_text, *new_text = NULL, *file_text = NULL;
   bool try_completion = true;
   Position wx, wy;
   int xoff, yoff; 
   Window wn;
-  snd_state *ss;
-  ss = get_global_state();
   ss->sgx->completion_requestor = listener_text;
   beg = printout_end + 1;
   end = XmTextGetLastPosition(w);
-  /* fprintf(stderr,"requested completion: %d %d\n", beg, end); */
   if (end <= beg) return;
   len = end - beg + 1;
   old_text = (char *)CALLOC(len + 1, sizeof(char));
   XmTextGetSubstring(w, beg, len, len + 1, old_text);
-  /* fprintf(stderr,"-> %s\n",old_text); */
   /* now old_text is the stuff typed since the last prompt */
   if (old_text)
     {
       new_text = complete_listener_text(old_text, end, &try_completion, &file_text);
-      /* fprintf(stderr,"  --> %s\n", new_text); */
       if (!try_completion)
 	{
 	  FREE(old_text);
@@ -600,7 +588,7 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
 	      new_text = NULL;
 	    }
 	  need_position = (completion_help_dialog == NULL);
-	  display_completions(ss);
+	  display_completions();
 	  set_save_completions(false);
 	  if (need_position)
 	    {
@@ -624,7 +612,7 @@ static void Listener_clear(Widget w, XEvent *event, char **str, Cardinal *num)
 
 static void Listener_g(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
-  control_g(get_global_state(), any_selected_sound(get_global_state()));
+  control_g(any_selected_sound());
 }
 
 
@@ -840,7 +828,6 @@ static void mouse_leave_text_callback(Widget w, XtPointer context, XEvent *event
 
 static void remember_event(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)context;
   XmAnyCallbackStruct *cb = (XmAnyCallbackStruct *)info;
   (ss->sgx)->text_activate_event = cb->event;
   (ss->sgx)->text_widget = w;
@@ -848,7 +835,7 @@ static void remember_event(Widget w, XtPointer context, XtPointer info)
 
 static XtCallbackList n1 = NULL;
 
-Widget make_textfield_widget(snd_state *ss, char *name, Widget parent, Arg *args, int n, int activatable, int completer)
+Widget make_textfield_widget(char *name, Widget parent, Arg *args, int n, int activatable, int completer)
 {
   /* white background when active, emacs translations, text_activate_event in ss->sgx for subsequent activation check */
   Widget df;
@@ -858,12 +845,11 @@ Widget make_textfield_widget(snd_state *ss, char *name, Widget parent, Arg *args
       actions_loaded = true;
     }
   if (n1) {FREE(n1); n1 = NULL;}
-  XtSetArg(args[n], XmNactivateCallback, n1 = make_callback_list(remember_event, (XtPointer)ss)); n++;
+  XtSetArg(args[n], XmNactivateCallback, n1 = make_callback_list(remember_event, NULL)); n++;
   /* can't use XmNuserData here because it is in use elsewhere (snd-xmix.c) */
   df = XtCreateManagedWidget(name, xmTextFieldWidgetClass, parent, args, n);
-  XtAddCallback(df, XmNfocusCallback, textfield_focus_callback, ss);
-  XtAddCallback(df, XmNlosingFocusCallback, textfield_unfocus_callback, ss);
-
+  XtAddCallback(df, XmNfocusCallback, textfield_focus_callback, NULL);
+  XtAddCallback(df, XmNlosingFocusCallback, textfield_unfocus_callback, NULL);
   XtAddEventHandler(df, EnterWindowMask, false, mouse_enter_text_callback, NULL);
   XtAddEventHandler(df, LeaveWindowMask, false, mouse_leave_text_callback, NULL);
 
@@ -883,7 +869,7 @@ Widget make_textfield_widget(snd_state *ss, char *name, Widget parent, Arg *args
   return(df);
 }
 
-void add_completer_to_textfield(snd_state *ss, Widget w, int completer)
+void add_completer_to_textfield(Widget w, int completer)
 {
   /* used to make file selection dialog act like other text field widgets */
   if (!actions_loaded) 
@@ -897,7 +883,7 @@ void add_completer_to_textfield(snd_state *ss, Widget w, int completer)
   add_completer_widget(w, completer);
 }
 
-Widget make_text_widget(snd_state *ss, char *name, Widget parent, Arg *args, int n)
+Widget make_text_widget(char *name, Widget parent, Arg *args, int n)
 {
   /* white background when active, emacs translations, text_activate_event in ss->sgx for subsequent activation check */
   Widget df;
@@ -907,13 +893,13 @@ Widget make_text_widget(snd_state *ss, char *name, Widget parent, Arg *args, int
       actions_loaded = true;
     }
   if (n1) {FREE(n1); n1 = NULL;}
-  XtSetArg(args[n], XmNactivateCallback, n1 = make_callback_list(remember_event, (XtPointer)ss)); n++;
+  XtSetArg(args[n], XmNactivateCallback, n1 = make_callback_list(remember_event, NULL)); n++;
   XtSetArg(args[n], XmNeditMode, XmMULTI_LINE_EDIT); n++;
   df = XmCreateScrolledText(parent, name, args, n);
   XtManageChild(df);
   /* df = XtCreateManagedWidget(name, xmTextWidgetClass, parent, args, n); */
-  /* XtAddCallback(df, XmNfocusCallback, textfield_focus_callback, ss); */
-  XtAddCallback(df, XmNlosingFocusCallback, textfield_unfocus_callback, ss);
+  /* XtAddCallback(df, XmNfocusCallback, textfield_focus_callback, NULL); */
+  XtAddCallback(df, XmNlosingFocusCallback, textfield_unfocus_callback, NULL);
   /* b1_press action overrides focus */
   if (!transTable3) 
     transTable3 = XtParseTranslationTable(TextTrans3);
@@ -948,7 +934,7 @@ void listener_append_and_prompt(char *msg)
 	  if (msg)
 	    XmTextInsert(listener_text, XmTextGetLastPosition(listener_text), msg);
 	  cmd_eot = XmTextGetLastPosition(listener_text);
-	  XmTextInsert(listener_text, cmd_eot, listener_prompt_with_cr(get_global_state()));
+	  XmTextInsert(listener_text, cmd_eot, listener_prompt_with_cr());
 	}
       cmd_eot = XmTextGetLastPosition(listener_text);
       printout_end = cmd_eot - 1;
@@ -958,9 +944,8 @@ void listener_append_and_prompt(char *msg)
 
 static void command_return_callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_state *ss = (snd_state *)context;
   if (!(ss->error_lock))
-    command_return(w, (snd_state *)context, printout_end);
+    command_return(w, printout_end);
 }
 
 static int flashes = 0;
@@ -969,8 +954,6 @@ static int paren_pos = -1;
 
 static void flash_unbalanced_paren(XtPointer context, XtIntervalId *id)
 {
-  snd_state *ss;
-  ss = get_global_state();
   flashes--;
   XmTextSetHighlight(listener_text, paren_pos, paren_pos + 1, (flashes & 1) ? XmHIGHLIGHT_NORMAL : XmHIGHLIGHT_SELECTED);
   if (flashes > 0)
@@ -991,8 +974,6 @@ bool highlight_unbalanced_paren(void)
   int pos;
   bool success = true;
   char *str = NULL;
-  snd_state *ss;
-  ss = get_global_state();
   pos = XmTextGetInsertionPosition(listener_text);
   if (pos > 2)
     {
@@ -1023,7 +1004,6 @@ static int last_highlight_position = -1;
 static void command_motion_callback(Widget w, XtPointer context, XtPointer info)
 {
   XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)info;
-  snd_state *ss = (snd_state *)context;
   char *str = NULL;
   int pos, parens;
   cbs->doit = true; 
@@ -1051,7 +1031,6 @@ static void command_motion_callback(Widget w, XtPointer context, XtPointer info)
 static void command_modify_callback(Widget w, XtPointer context, XtPointer info)
 {
   XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)info;
-  snd_state *ss = (snd_state *)context;
   char *str = NULL, *prompt;
   int len;
   if (((cbs->text)->length > 0) || (dont_check_motion))
@@ -1096,7 +1075,7 @@ static void listener_unfocus_callback(Widget w, XtPointer context, XEvent *event
 	     S_mouse_leave_listener_hook);
 }
 
-static void make_command_widget(snd_state *ss, int height)
+static void make_command_widget(int height)
 {
   Arg args[32];
   Widget wv, wh;
@@ -1121,7 +1100,7 @@ static void make_command_widget(snd_state *ss, int height)
       if ((ss->sgx)->listener_fontlist) {XtSetArg(args[n], XM_FONT_RESOURCE, (ss->sgx)->listener_fontlist); n++;}
       n = attach_all_sides(args, n);
       if (n1) {FREE(n1); n1 = NULL;}
-      XtSetArg(args[n], XmNactivateCallback, n1 = make_callback_list(remember_event, (XtPointer)ss)); n++;
+      XtSetArg(args[n], XmNactivateCallback, n1 = make_callback_list(remember_event, NULL)); n++;
       XtSetArg(args[n], XmNeditMode, XmMULTI_LINE_EDIT); n++;
       XtSetArg(args[n], XmNskipAdjust, true); n++;
       XtSetArg(args[n], XmNvalue, listener_prompt(ss)); n++;
@@ -1138,9 +1117,9 @@ static void make_command_widget(snd_state *ss, int height)
 	transTable4 = XtParseTranslationTable(TextTrans4);
       XtOverrideTranslations(listener_text, transTable4);
       printout_end = 0;
-      XtAddCallback(listener_text, XmNactivateCallback, command_return_callback, ss);
-      XtAddCallback(listener_text, XmNmodifyVerifyCallback, command_modify_callback, ss);
-      XtAddCallback(listener_text, XmNmotionVerifyCallback, command_motion_callback, ss);
+      XtAddCallback(listener_text, XmNactivateCallback, command_return_callback, NULL);
+      XtAddCallback(listener_text, XmNmodifyVerifyCallback, command_modify_callback, NULL);
+      XtAddCallback(listener_text, XmNmotionVerifyCallback, command_motion_callback, NULL);
 
       lisp_window = XtParent(listener_text);
       XtAddEventHandler(lisp_window, EnterWindowMask, false, listener_focus_callback, NULL);
@@ -1152,7 +1131,7 @@ static void make_command_widget(snd_state *ss, int height)
 	  XtVaGetValues(lisp_window, XmNverticalScrollBar, &wv, XmNhorizontalScrollBar, &wh, NULL);
 	  XmChangeColor(wv, (ss->sgx)->basic_color);
 	  XmChangeColor(wh, (ss->sgx)->basic_color);
-	  map_over_children(SOUND_PANE(ss), color_sashes, (void *)ss);
+	  map_over_children(SOUND_PANE(ss), color_sashes, NULL);
 	}
       if (auto_resize(ss))
 	XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, true, NULL);
@@ -1168,8 +1147,6 @@ void goto_listener(void)
 
 void color_listener(Pixel pix)
 {
-  snd_state *ss;
-  ss = get_global_state();
   (ss->sgx)->listener_color = pix;
   if (listener_text)
     XmChangeColor(listener_text, pix);
@@ -1177,19 +1154,17 @@ void color_listener(Pixel pix)
 
 void color_listener_text(Pixel pix)
 {
-  snd_state *ss;
-  ss = get_global_state();
   (ss->sgx)->listener_text_color = pix;
   if (listener_text)
     XtVaSetValues(listener_text, XmNforeground, pix, NULL);
 }
 
-void handle_listener(snd_state *ss, bool open)
+void handle_listener(bool open)
 {
   if (open)
     {
       if (!listener_text)
-	make_command_widget(ss, 100);
+	make_command_widget(100);
       else 
 	{
 	  XtManageChild(listener_pane);

@@ -1,6 +1,6 @@
 #include "snd.h"
 
-bool set_tiny_font(snd_state *ss, char *font)
+bool set_tiny_font(char *font)
 {
   PangoFontDescription *fs = NULL;
   state_context *sgx;
@@ -9,97 +9,97 @@ bool set_tiny_font(snd_state *ss, char *font)
   if (fs)
     {
       if (tiny_font(ss)) FREE(tiny_font(ss));
-      in_set_tiny_font(ss, copy_string(font));
+      in_set_tiny_font(copy_string(font));
       sgx->tiny_fnt = fs;
       return(true);
     }
   return(false);
 }
 
-bool set_listener_font(snd_state *ss, char *font)
+bool set_listener_font(char *font)
 {
   PangoFontDescription *fs = NULL;
   fs = pango_font_description_from_string(font);
   if (fs)
     {
       if (listener_font(ss)) FREE(listener_font(ss));
-      in_set_listener_font(ss, copy_string(font));
+      in_set_listener_font(copy_string(font));
       (ss->sgx)->listener_fnt = fs;
       return(true);
     }
   return(false);
 }
 
-bool set_bold_button_font(snd_state *ss, char *font)
+bool set_bold_button_font(char *font)
 {
   PangoFontDescription *fs = NULL;
   fs = pango_font_description_from_string(font);
   if (fs)
     {
       if (bold_button_font(ss)) FREE(bold_button_font(ss));
-      in_set_bold_button_font(ss, copy_string(font));
+      in_set_bold_button_font(copy_string(font));
       (ss->sgx)->bold_button_fnt = fs;
       return(true);
     }
   return(false);
 }
 
-bool set_peaks_font(snd_state *ss, char *font)
+bool set_peaks_font(char *font)
 {
   PangoFontDescription *fs = NULL;
   fs = pango_font_description_from_string(font);
   if (fs)
     {
       if (peaks_font(ss)) FREE(peaks_font(ss));
-      in_set_peaks_font(ss, copy_string(font));
+      in_set_peaks_font(copy_string(font));
       (ss->sgx)->peaks_fnt = fs;
       return(true);
     }
   return(false);
 }
 
-bool set_bold_peaks_font(snd_state *ss, char *font)
+bool set_bold_peaks_font(char *font)
 {
   PangoFontDescription *fs = NULL;
   fs = pango_font_description_from_string(font);
   if (fs)
     {
       if (bold_peaks_font(ss)) FREE(bold_peaks_font(ss));
-      in_set_bold_peaks_font(ss, copy_string(font));
+      in_set_bold_peaks_font(copy_string(font));
       (ss->sgx)->bold_peaks_fnt = fs;
       return(true);
     }
   return(false);
 }
 
-bool set_axis_label_font(snd_state *ss, char *font)
+bool set_axis_label_font(char *font)
 {
   PangoFontDescription *fs = NULL;
   fs = pango_font_description_from_string(font);
   if (fs)
     {
       if (axis_label_font(ss)) FREE(axis_label_font(ss));
-      in_set_axis_label_font(ss, copy_string(font));
+      in_set_axis_label_font(copy_string(font));
       (ss->sgx)->axis_label_fnt = fs;
 #if HAVE_GL
-      reload_label_font(ss);
+      reload_label_font();
 #endif
       return(true);
     }
   return(false);
 }
 
-bool set_axis_numbers_font(snd_state *ss, char *font)
+bool set_axis_numbers_font(char *font)
 {
   PangoFontDescription *fs = NULL;
   fs = pango_font_description_from_string(font);
   if (fs)
     {
       if (axis_numbers_font(ss)) FREE(axis_numbers_font(ss));
-      in_set_axis_numbers_font(ss, copy_string(font));
+      in_set_axis_numbers_font(copy_string(font));
       (ss->sgx)->axis_numbers_fnt = fs;
 #if HAVE_GL
-      reload_number_font(ss);
+      reload_number_font();
 #endif
       return(true);
     }
@@ -123,22 +123,21 @@ static int sg_text_width(char *txt, PangoFontDescription *font)
   return(wid);
 }
 
-int label_width(snd_state *ss, char *txt)
+int label_width(char *txt)
 {
   if (txt)
     return(sg_text_width(txt, AXIS_LABEL_FONT(ss)));
   else return(0);
 }
 
-int mark_name_width(snd_state *ss, char *txt)
+int mark_name_width(char *txt)
 {
   if (txt)
     return(sg_text_width(txt, (ss->sgx)->peaks_fnt));
   return(0);
 }
 
-
-int number_width(snd_state *ss, char *num)
+int number_width(char *num)
 {
   if (num)
     return(sg_text_width(num, AXIS_NUMBERS_FONT(ss)));
@@ -175,12 +174,12 @@ static int sg_font2height(PangoFontDescription *font)
   return(wid);
 }
 
-int number_height(snd_state *ss)
+int number_height(void)
 {
   return(sg_font2height(AXIS_NUMBERS_FONT(ss)));
 }
 
-int label_height(snd_state *ss)
+int label_height(void)
 {
   return(sg_font2width(AXIS_LABEL_FONT(ss)));
 }
@@ -255,12 +254,12 @@ void set_text_background(GtkWidget *w, GdkColor *col)
   gtk_widget_set_style(w, style);
 }
 
-void highlight_color(snd_state *ss, GtkWidget *w)
+void highlight_color(GtkWidget *w)
 {
   set_background(w, (ss->sgx)->highlight_color);
 }
 
-void white_color(snd_state *ss, GtkWidget *w)
+void white_color(GtkWidget *w)
 {
   set_background(w, (ss->sgx)->white);
 }
@@ -276,8 +275,6 @@ void raise_dialog(GtkWidget *w)
 
 void set_button_label_bold(GtkWidget *button, const char *str)
 {
-  snd_state *ss;
-  ss = get_global_state();
   gtk_widget_modify_font(button, (ss->sgx)->bold_button_fnt);
   gtk_label_set_text(GTK_LABEL(GTK_BIN(button)->child), str);
 }
@@ -308,7 +305,7 @@ void sg_left_justify_label(GtkWidget *label)
 }
 
 
-void check_for_event(snd_state *ss)
+void check_for_event(void)
 {
   /* this is needed to force label updates and provide interrupts for long computations */
   int i = 0;
@@ -328,12 +325,12 @@ void force_update(GtkWidget *wid)
   gdk_window_process_updates(GDK_WINDOW((GTK_WIDGET(wid))->window), true);
 }
 
-int event_pending(snd_state *ss)
+bool event_pending(void)
 {
-  return(gtk_events_pending());
+  return((bool)gtk_events_pending());
 }
 
-void set_title(snd_state *ss, const char *title)
+void set_title(const char *title)
 {
 #ifndef SND_AS_WIDGET
   gtk_window_set_title(GTK_WINDOW(MAIN_SHELL(ss)), title);
@@ -356,7 +353,7 @@ void gc_set_foreground_xor(GdkGC *gc, GdkColor *col1, GdkColor *col2)
 }
 
 
-void color_cursor(snd_state *ss, GdkColor *color)
+void color_cursor(GdkColor *color)
 {
   state_context *sx;
   sx = ss->sgx;
@@ -365,7 +362,7 @@ void color_cursor(snd_state *ss, GdkColor *color)
   gc_set_foreground_xor(sx->selected_cursor_gc, color, sx->selected_graph_color);
 }
 
-void color_marks(snd_state *ss, GdkColor *color)
+void color_marks(GdkColor *color)
 {
   state_context *sx;
   sx = ss->sgx;
@@ -374,7 +371,7 @@ void color_marks(snd_state *ss, GdkColor *color)
   gc_set_foreground_xor(sx->selected_mark_gc, color, sx->selected_graph_color);
 }
 
-void color_selection(snd_state *ss, GdkColor *color)
+void color_selection(GdkColor *color)
 {
   state_context *sx;
   sx = ss->sgx;
@@ -383,7 +380,7 @@ void color_selection(snd_state *ss, GdkColor *color)
   gc_set_foreground_xor(sx->selected_selection_gc, color, sx->selected_graph_color);
 }
 
-void color_graph(snd_state *ss, GdkColor *color)
+void color_graph(GdkColor *color)
 {
   state_context *sx;
   sx = ss->sgx;
@@ -395,7 +392,7 @@ void color_graph(snd_state *ss, GdkColor *color)
   gc_set_foreground_xor(sx->mark_gc, sx->mark_color, color);
 }
 
-void color_selected_graph(snd_state *ss, GdkColor *color)
+void color_selected_graph(GdkColor *color)
 {
   state_context *sx;
   sx = ss->sgx;
@@ -407,7 +404,7 @@ void color_selected_graph(snd_state *ss, GdkColor *color)
   gc_set_foreground_xor(sx->selected_mark_gc, sx->mark_color, color);
 }
 
-void color_data(snd_state *ss, GdkColor *color)
+void color_data(GdkColor *color)
 {
   state_context *sx;
   sx = ss->sgx;
@@ -416,7 +413,7 @@ void color_data(snd_state *ss, GdkColor *color)
   gdk_gc_set_background(sx->erase_gc, color);
 }
 
-void color_selected_data(snd_state *ss, GdkColor *color)
+void color_selected_data(GdkColor *color)
 {
   state_context *sx;
   sx = ss->sgx;
@@ -425,7 +422,7 @@ void color_selected_data(snd_state *ss, GdkColor *color)
   gdk_gc_set_background(sx->selected_erase_gc, color);
 }
 
-void set_mix_color(snd_state *ss, GdkColor *color)
+void set_mix_color(GdkColor *color)
 {
   state_context *sx;
   sx = ss->sgx;
@@ -434,7 +431,7 @@ void set_mix_color(snd_state *ss, GdkColor *color)
 }
 
 
-void set_selected_mix_color(snd_state *ss, GdkColor *color)
+void set_selected_mix_color(GdkColor *color)
 {
   state_context *sx;
   sx = ss->sgx;
@@ -444,15 +441,13 @@ void set_selected_mix_color(snd_state *ss, GdkColor *color)
 
 void recolor_graph(chan_info *cp, bool selected)
 {
-  snd_state *ss;
   state_context *sx;
-  ss = cp->state;
   sx = ss->sgx;
   set_background(channel_graph(cp), (selected) ? sx->selected_graph_color : sx->graph_color);
 }
 
 
-void reflect_resize(snd_state *ss)
+void reflect_resize(void)
 {
   gtk_window_set_resizable(GTK_WINDOW(MAIN_SHELL(ss)), auto_resize(ss));
 }
@@ -527,8 +522,6 @@ void set_widget_position(GtkWidget *w, gint16 x, gint16 y)
 
 void fixup_axis_context(axis_context *ax, GtkWidget *w, GdkGC *gc)
 {
-  snd_state *ss;
-  ss = get_global_state();
   ax->wn = w->window;
   ax->w = w;
   if (gc) ax->gc = gc;
@@ -559,7 +552,6 @@ int get_user_int_data(GObject *obj)
   gdata = g_object_get_data(obj, "snd-data");
   return(((int *)gdata)[0]);
 }
-
 
 char *sg_get_text(GtkWidget *w, int start, int end)
 {
@@ -616,7 +608,7 @@ int sg_cursor_position(GtkWidget *w)
   return(gtk_text_iter_get_offset(&pos));
 }
 
-GtkWidget *make_scrolled_text(snd_state *ss, GtkWidget *parent, int editable, GtkWidget *boxer, GtkWidget *paner)
+GtkWidget *make_scrolled_text(GtkWidget *parent, int editable, GtkWidget *boxer, GtkWidget *paner)
 {
   /* returns new text widget */
   GtkWidget *sw, *new_text;
@@ -722,7 +714,6 @@ void sg_list_set_text(GtkWidget *lst, int row, char *val)
 
 void sg_list_select(GtkWidget *lst, int row)
 {
-
   GtkTreeIter iter;
   GtkTreeModel *w;
   GtkTreeSelection *tree;
@@ -753,7 +744,7 @@ void sg_make_resizable(GtkWidget *w)
     }
 }
 
-Cessator add_work_proc(snd_state *ss, GtkFunction func, gpointer data)
+Cessator add_work_proc(GtkFunction func, gpointer data)
 {
   /* during auto-testing I need to force the background procs to run to completion */
   if (with_background_processes(ss))

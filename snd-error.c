@@ -18,7 +18,6 @@ void snd_warning(char *format, ...)
 {
   va_list ap;
   snd_info *sp;
-  snd_state *ss;
   if (snd_error_buffer == NULL) 
     snd_error_buffer = (char *)CALLOC(SND_ERROR_BUFFER_SIZE, sizeof(char));
 #if HAVE_VPRINTF
@@ -34,10 +33,9 @@ void snd_warning(char *format, ...)
 				   XEN_LIST_1(C_TO_XEN_STRING(snd_error_buffer)),
 				   S_snd_warning_hook))))
     return;
-  ss = get_global_state();
   if ((ss) && (!(ss->batch_mode)))
     {
-      sp = any_selected_sound(ss);
+      sp = any_selected_sound();
       if ((sp) && (sp->active))
 	report_in_minibuffer(sp, snd_error_buffer);
       else fprintf(stderr, snd_error_buffer);
@@ -67,7 +65,6 @@ void snd_error(char *format, ...)
 #if HAVE_VPRINTF
   va_list ap;
   snd_info *sp;
-  snd_state *ss;
   if (snd_error_buffer == NULL) 
     snd_error_buffer = (char *)CALLOC(SND_ERROR_BUFFER_SIZE, sizeof(char));
   va_start(ap, format);
@@ -82,7 +79,6 @@ void snd_error(char *format, ...)
 				   XEN_LIST_1(C_TO_XEN_STRING(snd_error_buffer)),
 				   S_snd_error_hook))))
     return;
-  ss = get_global_state();
   if ((ss) && (ss->sgx))
     {
       if ((DEBUGGING) || (USE_NO_GUI) || (ss->batch_mode))
@@ -95,15 +91,15 @@ void snd_error(char *format, ...)
 	{
 	  /* don't break (unlikely) existing code? */
 #endif
-      add_to_error_history(ss, snd_error_buffer, true);
-      sp = selected_sound(ss);
+      add_to_error_history(snd_error_buffer, true);
+      sp = selected_sound();
       ss->catch_message = snd_error_buffer;
       if ((direct_snd_error_call) ||
 	  (ss->catch_exists == 0))
 	{
 	  if ((sp) && (sp->active))
 	    report_in_minibuffer(sp, snd_error_buffer);
-	  else post_error_dialog(ss, snd_error_buffer);
+	  else post_error_dialog(snd_error_buffer);
 	}
 #ifdef SND_AS_WIDGET
 	}

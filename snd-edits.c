@@ -173,11 +173,10 @@ static ed_list *free_ed_list(ed_list *ed, chan_info *cp);
 static void prune_edits(chan_info *cp, int edpt)
 {
   int es = 0;
-
   int i;
   if (cp->edits[edpt]) 
     {
-      if ((cp->state) && (cp->state->deferred_regions > 0))
+      if ((ss) && (ss->deferred_regions > 0))
 	sequester_deferred_regions(cp, edpt - 1);
       for (i = edpt; i < cp->edit_size; i++) 
 	{
@@ -862,14 +861,13 @@ static void display_edits(chan_info *cp, FILE *outp, bool with_source)
 static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 {
   snd_data *sd;
-  snd_state *ss;
   char *newname;
   int i, snd;
   snd = ed->sound_location; /* sound_location read only here (modulo error reporting) */
   if (snd < cp->sound_size)
     {
       sd = cp->sounds[snd];
-      ss = cp->state;
+
       if (sd->type == SND_DATA_BUFFER)
 	{
 	  if ((ed->len > BUFFER_NOT_FILE_LIMIT) && (save_dir(ss)))
@@ -1496,7 +1494,6 @@ void file_insert_samples(off_t beg, off_t num, char *inserted_file, chan_info *c
   ed_fragment *cb;
   int fd;
   file_info *hdr;
-  snd_state *ss;
   if (dont_edit(cp)) return;
   len = cp->samples[edpos];
   if (beg >= len)
@@ -1505,15 +1502,14 @@ void file_insert_samples(off_t beg, off_t num, char *inserted_file, chan_info *c
       edpos = cp->edit_ctr;
       len = CURRENT_SAMPLES(cp);
     }
-  ss = cp->state;
   prepare_edit_list(cp, len + num, edpos, origin);
   cp->edits[cp->edit_ctr] = insert_samples_into_list(beg, num, edpos, cp, &cb, origin, 1.0);
   reflect_edit_history_change(cp);
   ss->catch_message = NULL;
-  hdr = make_file_info(inserted_file, ss);
+  hdr = make_file_info(inserted_file);
   if (hdr)
     {
-      fd = snd_open_read(ss, inserted_file);
+      fd = snd_open_read(inserted_file);
       mus_file_open_descriptors(fd,
 				inserted_file,
 				hdr->format,
@@ -1734,11 +1730,9 @@ void file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, in
   ed_fragment *cb;
   int fd;
   file_info *hdr;
-  snd_state *ss;
   if (dont_edit(cp)) return;
-  ss = cp->state;
   ss->catch_message = NULL;
-  hdr = make_file_info(tempfile, ss);
+  hdr = make_file_info(tempfile);
   if (hdr)
     {
       prev_len = cp->samples[edpos];
@@ -1755,7 +1749,7 @@ void file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, in
       if (new_len > prev_len) reflect_sample_change_in_axis(cp);
       reflect_edit_history_change(cp);
       if (lock == LOCK_MIXES) lock_affected_mixes(cp, beg, beg + num);
-      fd = snd_open_read(ss, tempfile);
+      fd = snd_open_read(tempfile);
       mus_file_open_descriptors(fd,
 				tempfile,
 				hdr->format,
@@ -1789,16 +1783,14 @@ void file_override_samples(off_t num, char *tempfile, chan_info *cp, int chan, f
   int fd;
   ed_list *e;
   file_info *hdr;
-  snd_state *ss;
   if (dont_edit(cp)) return;
-  ss = cp->state;
   ss->catch_message = NULL;
-  hdr = make_file_info(tempfile, ss);
+  hdr = make_file_info(tempfile);
   if (hdr) 
     {
       if (num == -1) num = (hdr->samples / hdr->chans);
       prepare_edit_list(cp, num, AT_CURRENT_EDIT_POSITION, origin);
-      fd = snd_open_read(ss, tempfile);
+      fd = snd_open_read(tempfile);
       mus_file_open_descriptors(fd,
 				tempfile,
 				hdr->format,
@@ -7240,7 +7232,7 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, int 
 	       */
 	      if (first_snd->inuse)
 		{
-		  first_snd = copy_snd_data(first_snd, cp, bufsize);
+		  first_snd = copy_snd_data(first_snd, bufsize);
 		  if (first_snd == NULL)
 		    return(cancel_reader(sf));
 		}
@@ -7341,7 +7333,7 @@ static void previous_sound_1 (snd_fd *sf)
 	  if (prev_snd->type == SND_DATA_FILE)
 	    {
 	      if (prev_snd->inuse) 
-		prev_snd = copy_snd_data(prev_snd, sf->cp, MIX_FILE_BUFFER_SIZE);
+		prev_snd = copy_snd_data(prev_snd, MIX_FILE_BUFFER_SIZE);
 	      sf->data = prev_snd->buffered_data;
 	      prev_snd->inuse = true;
 	      sf->current_sound = prev_snd;
@@ -7428,7 +7420,7 @@ static void next_sound_1(snd_fd *sf)
 	  if (nxt_snd->type == SND_DATA_FILE)
 	    {
 	      if (nxt_snd->inuse)
-		nxt_snd = copy_snd_data(nxt_snd, sf->cp, MIX_FILE_BUFFER_SIZE);
+		nxt_snd = copy_snd_data(nxt_snd, MIX_FILE_BUFFER_SIZE);
 	      sf->data = nxt_snd->buffered_data;
 	      nxt_snd->inuse = true;
 	      sf->current_sound = nxt_snd;
@@ -7473,17 +7465,10 @@ void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
   char *name;
   ed_list *new_ed, *old_ed;
   file_info *hdr0, *hdr1;
-  snd_state *ss;
   env_info *e0, *e1;
-  ss = cp0->state;
-  /*
-  fprintf(stderr,"copy then swap %s[%d]:%d of %d and %s[%d]:%d of %d\n",
-	  cp0->sound->short_filename, cp0->chan, pos0, cp0->edit_ctr,
-	  cp1->sound->short_filename, cp1->chan, pos1, cp1->edit_ctr);
-  */
   name = cp0->sound->filename;
   hdr0 = copy_header(name, cp0->sound->hdr);
-  fd = snd_open_read(ss, name);
+  fd = snd_open_read(name);
   mus_file_open_descriptors(fd,
 			    name,
 			    hdr0->format,
@@ -7496,7 +7481,7 @@ void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
 				     hdr0, DONT_DELETE_ME, cp0->chan);
   name = cp1->sound->filename;
   hdr1 = copy_header(name, cp1->sound->hdr);
-  fd = snd_open_read(ss, name);
+  fd = snd_open_read(name);
   mus_file_open_descriptors(fd,
 			    name,
 			    hdr1->format,
@@ -7561,17 +7546,18 @@ void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
   update_graph(cp1);
 }
 
-static int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, off_t length, snd_state *ss)
+static int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, off_t length)
 {
   /* create ofile, fill it by following sfs, use hdr for srate/type/format decisions */
   /* used only in this file and snd-chn (for external temps, snd->temp) */
   int ofd;
-  int i, j, datumb, reporting = 0, err = 0;
+  int i, j, datumb, err = 0;
+  bool reporting = false;
   off_t len, total = 0;
   chan_info *cp = NULL;
   mus_sample_t **obufs;
   err = MUS_NO_ERROR;
-  ofd = open_temp_file(ofile, chans, hdr, ss);
+  ofd = open_temp_file(ofile, chans, hdr);
   mus_file_set_data_clipped(ofd, data_clipped(ss));
   if (ofd == -1) return(MUS_CANT_OPEN_TEMP_FILE);
   datumb = mus_data_format_to_bytes_per_sample(hdr->format);
@@ -7604,7 +7590,7 @@ static int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, o
 		      total += FILE_BUFFER_SIZE;
 		      progress_report(cp->sound, NULL, 1, 1, (Float)((double)total / (double)length), NOT_FROM_ENVED);
 		    }
-		  check_for_event(ss);
+		  check_for_event();
 		  if (ss->stopped_explicitly)
 		    {
 		      ss->stopped_explicitly = false;
@@ -7639,7 +7625,7 @@ static int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, o
 		  total += FILE_BUFFER_SIZE;
 		  progress_report(cp->sound, NULL, 1, 1, (Float)((double)total / (double)length), NOT_FROM_ENVED);
 		}
-	      check_for_event(ss);
+	      check_for_event();
 	      if (ss->stopped_explicitly)
 		{
 		  ss->stopped_explicitly = false;
@@ -7654,7 +7640,7 @@ static int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, o
     mus_file_write(ofd, 0, j - 1, chans, obufs);
   if (err == MUS_NO_ERROR)
     {
-      err = close_temp_file(ofd, hdr, len * chans * datumb, any_selected_sound(ss));
+      err = close_temp_file(ofd, hdr, len * chans * datumb, any_selected_sound());
       alert_new_file();
     }
   else err = mus_file_close(ofd);
@@ -7672,10 +7658,8 @@ static int save_edits_and_update_display(snd_info *sp)
   /* if latter, must be able to write all headers! -- perhaps warn user and use snd/aiff/riff/ircam */
 
   /* sp->read_only already checked */
-
   char *ofile = NULL;
   int err = MUS_NO_ERROR, saved_errno = 0;
-  snd_state *ss;
   int i;
   off_t samples = 0;
   off_t *old_cursors = NULL;
@@ -7683,10 +7667,9 @@ static int save_edits_and_update_display(snd_info *sp)
   snd_fd **sf;
   void *sa;
   file_info *sphdr = NULL;
-  ss = sp->state;
   if (dont_save(sp, NULL)) return(MUS_NO_ERROR);
   err = MUS_NO_ERROR;
-  ofile = snd_tempnam(ss); 
+  ofile = snd_tempnam(); 
   /* this will use user's TMPDIR if temp_dir(ss) is not set, else stdio.h's P_tmpdir else /tmp */
   sa = make_axes_data(sp);
   sf = (snd_fd **)CALLOC(sp->nchans, sizeof(snd_fd *));
@@ -7701,7 +7684,7 @@ static int save_edits_and_update_display(snd_info *sp)
     {
       report_in_minibuffer(sp, _("saving %s"), sp->short_filename);
       sphdr = sp->hdr;
-      err = snd_make_file(ofile, sp->nchans, sp->hdr, sf, samples, ss);
+      err = snd_make_file(ofile, sp->nchans, sp->hdr, sf, samples);
     }
   if (err != MUS_NO_ERROR) 
     {
@@ -7758,7 +7741,7 @@ static int save_edits_and_update_display(snd_info *sp)
     CURSOR(sp->chans[i]) = old_cursors[i];
   FREE(old_cursors);
   reflect_file_revert_in_label(sp);
-  reflect_file_save_in_menu(ss);
+  reflect_file_save_in_menu();
   if (err)
     report_in_minibuffer_and_save(sp, _("file write failed: %s, edits are saved in: %s"), strerror(saved_errno), ofile);
   else report_in_minibuffer(sp, _("wrote %s"), sp->filename); 
@@ -7768,7 +7751,7 @@ static int save_edits_and_update_display(snd_info *sp)
       ofile = NULL;
     }
   if (auto_update(ss)) 
-    for_each_sound(ss, sound_not_current, NULL);
+    for_each_sound(sound_not_current, NULL);
   return(MUS_NO_ERROR); /* don't erase our error message for the special write-permission problem */
 }
 
@@ -7776,12 +7759,10 @@ int save_edits_without_display(snd_info *sp, char *new_name, int type, int forma
 { 
   /* file save as menu option -- changed 19-June-97 to retain current state after writing */
   file_info *hdr, *ohdr;
-  snd_state *ss;
   int i, err = MUS_NO_ERROR, pos;
   off_t frames = 0;
   snd_fd **sf;
   chan_info *cp;
-  ss = sp->state;
   if ((sp->read_only) && (strcmp(new_name, sp->filename) == 0))
     {
       snd_error(_("%s is write-protected"), sp->filename);
@@ -7811,7 +7792,7 @@ int save_edits_without_display(snd_info *sp, char *new_name, int type, int forma
 	      if (sf[i] == NULL) err = MUS_ERROR;
 	    }
 	  if (err == MUS_NO_ERROR)
-	    err = snd_make_file(new_name, sp->nchans, hdr, sf, frames, ss);
+	    err = snd_make_file(new_name, sp->nchans, hdr, sf, frames);
 	  for (i = 0; i < sp->nchans; i++) 
 	    free_snd_fd(sf[i]);
 	  FREE(sf);
@@ -7839,11 +7820,9 @@ int save_channel_edits(chan_info *cp, char *ofile, XEN edpos, const char *caller
   snd_fd **sf;
   int err, pos;
   char *nfile;
-  snd_state *ss;
-  ss = cp->state;
   sp = cp->sound;
   err = MUS_NO_ERROR;
-  if (!(snd_overwrite_ok(ss, ofile))) return(MUS_NO_ERROR); /* no error because decision was explicit */
+  if (!(snd_overwrite_ok(ofile))) return(MUS_NO_ERROR); /* no error because decision was explicit */
   pos = to_c_edit_position(cp, edpos, caller, arg_pos);
   if (strcmp(ofile, sp->filename) == 0)
     {
@@ -7853,14 +7832,14 @@ int save_channel_edits(chan_info *cp, char *ofile, XEN edpos, const char *caller
 	  return(MUS_WRITE_ERROR);
 	}
       /* here we're overwriting the current (possibly multi-channel) file with one of its channels */
-      nfile = snd_tempnam(ss); 
+      nfile = snd_tempnam(); 
       sf = (snd_fd **)MALLOC(sizeof(snd_fd *));
       sf[0] = init_sample_read_any(0, cp, READ_FORWARD, pos); 
       if (sf[0] == NULL)
 	err = MUS_ERROR;
       else
 	{
-	  err = snd_make_file(nfile, 1, sp->hdr, sf, cp->samples[pos], ss);
+	  err = snd_make_file(nfile, 1, sp->hdr, sf, cp->samples[pos]);
 	  free_snd_fd(sf[0]);
 	}
       FREE(sf);
@@ -7869,7 +7848,7 @@ int save_channel_edits(chan_info *cp, char *ofile, XEN edpos, const char *caller
       else 
 	{
 	  err = move_file(nfile, ofile);
-	  if (err == 0) snd_update(ss, sp);
+	  if (err == 0) snd_update(sp);
 	}
       FREE(nfile);
     }
@@ -7881,7 +7860,7 @@ int save_channel_edits(chan_info *cp, char *ofile, XEN edpos, const char *caller
 	err = MUS_ERROR;
       else
 	{
-	  err = snd_make_file(ofile, 1, sp->hdr, sf, cp->samples[pos], ss);
+	  err = snd_make_file(ofile, 1, sp->hdr, sf, cp->samples[pos]);
 	  free_snd_fd(sf[0]);
 	}
       FREE(sf);
@@ -7915,7 +7894,7 @@ void save_edits(snd_info *sp, void *ptr)
 	  current_write_date = file_write_date(sp->filename);
 	  if ((current_write_date - sp->write_date) > 1) /* weird!! In Redhat 7.1 these can differ by 1?? Surely this is a bug! */
 	    {
-	      err = snd_yes_or_no_p(sp->state, _("%s changed on disk! Save anyway?"), sp->short_filename);
+	      err = snd_yes_or_no_p(_("%s changed on disk! Save anyway?"), sp->short_filename);
 	      if (err == 0) return;
 	    }
 	  err = save_edits_and_update_display(sp);
@@ -7966,7 +7945,7 @@ void undo_edit(chan_info *cp, int count)
       if (cp->edit_ctr == 0)
 	{
 	  reflect_file_revert_in_label(sp);
-	  reflect_file_revert_in_menu(cp->state);
+	  reflect_file_revert_in_menu();
 	}
       if (selection_is_active()) 
 	reflect_edit_with_selection_in_menu();
@@ -7997,7 +7976,7 @@ void undo_edit_with_sync(chan_info *cp, int count)
       if (cp)
 	{
 	  sp = cp->sound;
-	  if (sp->sync != 0) si = snd_sync(cp->state, sp->sync);
+	  if (sp->sync != 0) si = snd_sync(sp->sync);
 	  if (si)
 	    {
 	      for (i = 0; i < si->chans; i++) undo_edit(si->cps[i], count);
@@ -8052,7 +8031,7 @@ void redo_edit_with_sync(chan_info *cp, int count)
       if (cp)
 	{
 	  sp = cp->sound;
-	  if (sp->sync != 0) si = snd_sync(cp->state, sp->sync);
+	  if (sp->sync != 0) si = snd_sync(sp->sync);
 	  if (si)
 	    {
 	      for (i = 0; i < si->chans; i++) redo_edit(si->cps[i], count);
@@ -8073,14 +8052,12 @@ static XEN g_display_edits(XEN snd, XEN chn, XEN edpos, XEN with_source)
   int fd;
   bool include_source = true;
   off_t len;
-  snd_state *ss;
   XEN res;
   ASSERT_CHANNEL(S_display_edits, snd, chn, 1);
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(with_source), with_source, XEN_ARG_4, S_display_edits, "boolean");
   cp = get_cp(snd, chn, S_display_edits);
   if (XEN_BOOLEAN_P(with_source)) include_source = XEN_TO_C_BOOLEAN(with_source);
-  ss = get_global_state();
-  name = snd_tempnam(ss);
+  name = snd_tempnam();
   tmp = FOPEN(name, "w");
   if (tmp) 
     {
@@ -8437,19 +8414,17 @@ snd can be a filename, a sound index number, or a list with a mix id number."
   snd_fd *fd = NULL;
   int chan, edpos, direction = 1;
   chan_info *cp;
-  snd_state *ss;
   char *filename;
   snd_info *loc_sp = NULL;
   off_t beg;
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_make_sample_reader, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(dir1), dir1, XEN_ARG_4, S_make_sample_reader, "an integer");
-  ss = get_global_state();
   if (XEN_STRING_P(snd))
     {
       XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(chn), chn, XEN_ARG_3, S_make_sample_reader, "an integer or boolean");
       filename = XEN_TO_C_STRING(snd);
       if (mus_file_probe(filename))
-	loc_sp = make_sound_readable(ss, filename, false);
+	loc_sp = make_sound_readable(filename, false);
       else return(snd_no_such_file_error(S_make_sample_reader, snd));
       chan = XEN_TO_C_INT_OR_ELSE(chn, 0);
       if ((chan < 0) || 
@@ -8494,7 +8469,6 @@ return a reader ready to access region's channel chn data starting at start-samp
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(reg), reg, XEN_ARG_2, S_make_sample_reader, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn), chn, XEN_ARG_3, S_make_sample_reader, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(dir1), dir1, XEN_ARG_4, S_make_sample_reader, "an integer");
-
   reg_n = XEN_TO_C_INT_OR_ELSE(reg, 0);
   if (!(region_ok(reg_n))) 
     XEN_ERROR(NO_SUCH_REGION,
@@ -8578,7 +8552,6 @@ static XEN g_save_edit_history(XEN filename, XEN snd, XEN chn)
   snd_info *sp;
   chan_info *cp;
   char *mcf = NULL;
-  snd_state *ss;
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ARG_1, S_save_edit_history, "a string");
   ASSERT_CHANNEL(S_save_edit_history, snd, chn, 2);
   mcf = mus_expand_filename(XEN_TO_C_STRING(filename));
@@ -8602,7 +8575,7 @@ static XEN g_save_edit_history(XEN filename, XEN snd, XEN chn)
 	    }
 	  else
 	    {
-	      ss = get_global_state();
+	      
 	      for (i = 0; i < ss->max_sounds; i++)
 		{
 		  sp = ss->sounds[i];
@@ -8672,7 +8645,7 @@ void as_one_edit(chan_info *cp, int one_edit, const char *one_edit_origin) /* or
   need_backup = (cp->edit_ctr > one_edit);      /* cp->edit_ctr will be changing, so save this */
   if (cp->edit_ctr >= one_edit)                 /* ">=" here because the origin needs to be set even if there were no extra edits */
     {
-      if ((cp->state) && (cp->state->deferred_regions > 0))
+      if ((ss) && (ss->deferred_regions > 0))
 	sequester_deferred_regions(cp, one_edit - 1);
       while (cp->edit_ctr > one_edit) backup_edit_list(cp);
       if ((need_backup) && (cp->mixes)) backup_mix_list(cp, one_edit);
@@ -8724,7 +8697,7 @@ static void before_as_one_edit(void *context)
   as_one_edit_context *sc = (as_one_edit_context *)context;
   sc->cur_edits = (int *)CALLOC(sc->chans, sizeof(int));
   chan_ctr = 0;
-  for_each_chan_1(get_global_state(), init_as_one_edit, (void *)(sc->cur_edits));
+  for_each_chan_1(init_as_one_edit, (void *)(sc->cur_edits));
 }
 
 static XEN as_one_edit_body(void *context)
@@ -8737,7 +8710,7 @@ static void after_as_one_edit(void *context)
 {
   as_one_edit_context *sc = (as_one_edit_context *)context;
   chan_ctr = 0;
-  for_each_chan_1(get_global_state(), finish_as_one_edit, (void *)(sc->cur_edits));
+  for_each_chan_1(finish_as_one_edit, (void *)(sc->cur_edits));
   FREE(sc->cur_edits);
   FREE(sc);
 }
@@ -8751,7 +8724,6 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
 #if (!HAVE_DYNAMIC_WIND)
   int *cur_edits;
 #endif
-  snd_state *ss;
   XEN result = XEN_FALSE;
   char *errmsg;
   XEN errstr;
@@ -8764,8 +8736,7 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
       FREE(errmsg);
       return(snd_bad_arity_error(S_as_one_edit, errstr, proc));
     }
-  ss = get_global_state();
-  chans = active_channels(ss, WITH_VIRTUAL_CHANNELS);
+  chans = active_channels(WITH_VIRTUAL_CHANNELS);
   if (chans > 0)
     {
       if (XEN_STRING_P(origin))
@@ -8786,12 +8757,12 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
 #else
       cur_edits = (int *)CALLOC(chans, sizeof(int));
       chan_ctr = 0;
-      for_each_chan_1(ss, init_as_one_edit, (void *)cur_edits); /* redo here can't make sense, can it? */
+      for_each_chan_1(init_as_one_edit, (void *)cur_edits); /* redo here can't make sense, can it? */
       /* this is problematic mainly because we now squelch updates within as-one-edit */
       /*   so we really need the dynamic unwind above to make sure graphics aren't disabled by a user programming error */
       result = XEN_CALL_0_NO_CATCH(proc, S_as_one_edit);
       chan_ctr = 0;
-      for_each_chan_1(ss, finish_as_one_edit, (void *)cur_edits);
+      for_each_chan_1(finish_as_one_edit, (void *)cur_edits);
       FREE(cur_edits);
 #endif
     }
@@ -8860,7 +8831,6 @@ scale samples in the given sound/channel between beg and beg + num by scaler."
 Float local_maxamp(chan_info *cp, off_t beg, off_t num, int edpos)
 {
   snd_fd *sf;
-  snd_state *ss;
   mus_sample_t ymax, mval;
   off_t i;
   int j = 0;
@@ -8869,7 +8839,6 @@ Float local_maxamp(chan_info *cp, off_t beg, off_t num, int edpos)
   ymax = MUS_SAMPLE_0;
   if (num > (1 << 30))
     {
-      ss = cp->state;
       ss->stopped_explicitly = false;
       for (i = 0; i < num; i++)
 	{
@@ -8878,7 +8847,7 @@ Float local_maxamp(chan_info *cp, off_t beg, off_t num, int edpos)
 	  j++;
 	  if (j > 1000000)
 	    {
-	      check_for_event(ss);
+	      check_for_event();
 	      if (ss->stopped_explicitly)
 		{
 		  ss->stopped_explicitly = false;
@@ -9080,7 +9049,8 @@ the new data's end."
   chan_info *cp;
   mus_sample_t *ivals;
   off_t len = 0, beg, curlen;
-  int override = 0, inchan = 0, pos;
+  bool override = false;
+  int inchan = 0, pos;
   bool delete_file = false;
   char *fname, *caller;
   if (XEN_STRING_P(edname))

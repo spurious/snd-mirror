@@ -290,9 +290,7 @@ static XEN g_load_font(XEN font)
 {
   #define H_load_font "(" S_load_font " name): load font 'name' and return its font-id"
   XFontStruct *fs = NULL;
-  snd_state *ss;
   XEN_ASSERT_TYPE(XEN_STRING_P(font), font, XEN_ONLY_ARG, S_load_font, "a string");
-  ss = get_global_state();
   fs = XLoadQueryFont(MAIN_DISPLAY(ss), 
 		      XEN_TO_C_STRING(font));
   if (fs) return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("Font"),
@@ -357,7 +355,6 @@ static XEN g_set_current_font(XEN id, XEN snd, XEN chn, XEN ax_id)
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, XEN_ARG_4, S_setB S_current_font, "an integer");
   ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, S_setB S_current_font);
   XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(id), id, XEN_ARG_1, S_setB S_current_font, "a wrapped object");
-  /* gtk_widget_modify_font(ax->w, (PangoFontDescription *)XEN_UNWRAP_C_POINTER(id)); */
   ax->current_font = (PangoFontDescription *)XEN_UNWRAP_C_POINTER(id);
   return(id);
 }
@@ -452,9 +449,8 @@ static XEN g_main_widgets(void)
 {
   #define H_main_widgets "(" S_main_widgets "): top level \
 widgets (list (0)main-app (1)main-shell (2)main-pane (3)sound-pane (4)listener-pane or #f (5)notebook-outer-pane or #f)"
-  snd_state *ss;
+
   XEN main_win;
-  ss = get_global_state();
 #if USE_MOTIF
   main_win = XEN_WRAP_APPCONTEXT(MAIN_APP(ss));
 #else
@@ -500,7 +496,7 @@ static XEN g_dialog_widgets(void)
   return(XEN_VECTOR_TO_LIST(dialog_widgets));
 }
 
-void set_dialog_widget(snd_state *ss, snd_dialog_t which, widget_t wid)
+void set_dialog_widget(snd_dialog_t which, widget_t wid)
 {
   state_context *sx;
   sx = ss->sgx;
@@ -756,9 +752,7 @@ static XEN g_snd_gcs(void)
 cursor selected_cursor selection selected_selection erase selected_erase mark selected_mark mix \
 selected_mix fltenv_basic fltenv_data)"
 
-  snd_state *ss;
   state_context *sx;
-  ss = get_global_state();
   sx = ss->sgx;
   if (sx)
     return(XEN_CONS(XEN_WRAP_GC(sx->basic_gc),
@@ -785,7 +779,7 @@ static Float gl_currents[6] = {DEFAULT_SPECTRO_X_ANGLE, DEFAULT_SPECTRO_Y_ANGLE,
 			       DEFAULT_SPECTRO_X_SCALE, DEFAULT_SPECTRO_Y_SCALE, DEFAULT_SPECTRO_Z_SCALE};
 static Float x_currents[6] = {90.0, 0.0, 358.0, 1.0, 1.0, 0.1};
 
-void sgl_save_currents(snd_state *ss)
+void sgl_save_currents(void)
 {
   Float *vals;
   if (with_gl(ss)) vals = gl_currents; else vals = x_currents;
@@ -797,23 +791,23 @@ void sgl_save_currents(snd_state *ss)
   vals[5] = spectro_z_scale(ss);
 }
 
-void sgl_set_currents(snd_state *ss)
+void sgl_set_currents(void)
 {
   Float *vals;
   if (with_gl(ss)) vals = gl_currents; else vals = x_currents;
-  in_set_spectro_x_angle(ss, vals[0]);
-  in_set_spectro_y_angle(ss, vals[1]);
-  in_set_spectro_z_angle(ss, vals[2]);
-  in_set_spectro_x_scale(ss, vals[3]);
-  in_set_spectro_y_scale(ss, vals[4]);
-  in_set_spectro_z_scale(ss, vals[5]);
-  reflect_spectro(ss);
-  chans_field(ss, FCP_X_ANGLE, vals[0]);
-  chans_field(ss, FCP_Y_ANGLE, vals[1]);
-  chans_field(ss, FCP_Z_ANGLE, vals[2]);
-  chans_field(ss, FCP_X_SCALE, vals[3]);
-  chans_field(ss, FCP_Y_SCALE, vals[4]);
-  chans_field(ss, FCP_Z_SCALE, vals[5]);
+  in_set_spectro_x_angle(vals[0]);
+  in_set_spectro_y_angle(vals[1]);
+  in_set_spectro_z_angle(vals[2]);
+  in_set_spectro_x_scale(vals[3]);
+  in_set_spectro_y_scale(vals[4]);
+  in_set_spectro_z_scale(vals[5]);
+  reflect_spectro();
+  chans_field(FCP_X_ANGLE, vals[0]);
+  chans_field(FCP_Y_ANGLE, vals[1]);
+  chans_field(FCP_Z_ANGLE, vals[2]);
+  chans_field(FCP_X_SCALE, vals[3]);
+  chans_field(FCP_Y_SCALE, vals[4]);
+  chans_field(FCP_Z_SCALE, vals[5]);
 }
 #endif
 

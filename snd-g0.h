@@ -30,7 +30,7 @@
 #define BACKGROUND_QUIT 0
 #define BACKGROUND_CONTINUE 1
 #define BACKGROUND_REMOVE(func) gtk_idle_remove(func)
-#define BACKGROUND_ADD(ss, func, data) add_work_proc(ss, func, (gpointer)data)
+#define BACKGROUND_ADD(func, data) add_work_proc(func, (gpointer)data)
 
 #define widget_t GtkWidget*
 #define XEN_WRAP_WIDGET(Value)   ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkWidget_"), C_TO_XEN_ULONG((unsigned long)Value)) : XEN_FALSE)
@@ -165,8 +165,8 @@ typedef struct {
 #define MAIN_PANE(a) (a->sgx)->mainpane
 #define SOUND_PANE(a) (a->sgx)->soundpane
 #define SOUND_PANE_BOX(a) (a->sgx)->soundpanebox
-#define AXIS_NUMBERS_FONT(a) ((state_context *)((snd_state *)a)->sgx)->axis_numbers_fnt
-#define AXIS_LABEL_FONT(a) ((state_context *)((snd_state *)a)->sgx)->axis_label_fnt
+#define AXIS_NUMBERS_FONT(a) (a->sgx)->axis_numbers_fnt
+#define AXIS_LABEL_FONT(a) (a->sgx)->axis_label_fnt
 #define color_t GdkColor *
 #define KEY_TO_NAME(key) gdk_keyval_name(key)
 

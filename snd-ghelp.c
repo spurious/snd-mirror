@@ -15,7 +15,7 @@ static void delete_help(GtkWidget *w, GdkEvent *event, gpointer context) {gtk_wi
 
 static GtkWidget *help_text = NULL;
 
-static void add_help_text (snd_state *ss, GtkWidget *text, const char *message)
+static void add_help_text (GtkWidget *text, const char *message)
 {
   sg_text_insert(text, (char *)message);
 }
@@ -32,6 +32,7 @@ static char *cr_to_space(char *val)
     }
   return(val);
 }
+
 static bool no_cr(const char *val)
 {
   int i, len;
@@ -44,8 +45,10 @@ static bool no_cr(const char *val)
     }
   return(true);
 }
+
 static int help_text_width = 0;
 static bool outer_with_wrap = false;
+
 static gboolean help_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
   int curwid;
@@ -77,7 +80,7 @@ static gboolean help_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer 
   return(false);
 }
 
-static void create_help_monolog(snd_state *ss)
+static void create_help_monolog(void)
 {
   /* create scrollable but not editable text window */
   GtkWidget *ok_button;
@@ -85,7 +88,7 @@ static void create_help_monolog(snd_state *ss)
   g_signal_connect_closure_by_id(GTK_OBJECT(help_dialog),
 				 g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(help_dialog))),
 				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(delete_help), (gpointer)ss, 0),
+				 g_cclosure_new(GTK_SIGNAL_FUNC(delete_help), NULL, 0),
 				 0);
 
   g_signal_connect_closure_by_id(GTK_OBJECT(GTK_OBJECT(help_dialog)),
@@ -106,22 +109,22 @@ static void create_help_monolog(snd_state *ss)
   g_signal_connect_closure_by_id(GTK_OBJECT(ok_button),
 				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(ok_button))),
 				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(dismiss_help), (gpointer)ss, 0),
+				 g_cclosure_new(GTK_SIGNAL_FUNC(dismiss_help), NULL, 0),
 				 0);
   gtk_widget_show(ok_button);
 
-  help_text = make_scrolled_text(ss, GTK_DIALOG(help_dialog)->vbox, false, NULL, NULL);
+  help_text = make_scrolled_text(GTK_DIALOG(help_dialog)->vbox, false, NULL, NULL);
   gtk_text_view_set_left_margin(GTK_TEXT_VIEW(help_text), 10);
   gtk_widget_show(help_dialog);
-  set_dialog_widget(ss, HELP_DIALOG, help_dialog);
+  set_dialog_widget(HELP_DIALOG, help_dialog);
 }
 
-GtkWidget *snd_help(snd_state *ss, const char *subject, const char *helpstr, bool with_wrap)
+GtkWidget *snd_help(const char *subject, const char *helpstr, bool with_wrap)
 {
   /* place help string in scrollable help window */
   /* if window is already active, add this help at the top and reposition */
   outer_with_wrap = ((with_wrap) && (no_cr(helpstr)));
-  if (!(help_dialog)) create_help_monolog(ss); else raise_dialog(help_dialog);
+  if (!(help_dialog)) create_help_monolog(); else raise_dialog(help_dialog);
   mus_snprintf(help_window_label, LABEL_BUFFER_SIZE, _("%s help"), subject);
   gtk_window_set_title(GTK_WINDOW(help_dialog), help_window_label);
   gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(help_text)), "", 0);
@@ -129,9 +132,9 @@ GtkWidget *snd_help(snd_state *ss, const char *subject, const char *helpstr, boo
     {
       char *new_help = NULL;
       new_help = word_wrap(helpstr, (int)(widget_width(help_text) * 1.3));
-      add_help_text(ss, help_text, new_help);
+      add_help_text(help_text, new_help);
       if (new_help) FREE(new_help);
     }
-  else add_help_text(ss, help_text, helpstr);
+  else add_help_text(help_text, helpstr);
   return(help_dialog);
 }

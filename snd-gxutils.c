@@ -57,11 +57,9 @@ static XEN send_netscape(XEN cmd)
   #define H_send_netscape "(" S_send_netscape " cmd): find an html-reader (or start it if necessary), and send it the \
 string 'cmd'.  cmd should be a URL."
   Window window;
-  snd_state *ss;
   Display *dpy;
   char *command, *tmp = NULL;
   XEN_ASSERT_TYPE(XEN_STRING_P(cmd), cmd, XEN_ONLY_ARG, S_send_netscape, "a string");
-  ss = get_global_state();
   dpy = MAIN_DISPLAY(ss);
   command = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   tmp = XEN_TO_C_STRING(cmd);
@@ -93,7 +91,7 @@ string 'cmd'.  cmd should be a URL."
   return(XEN_TRUE);
 }
 
-static void change_window_property(snd_state *ss, char *winat, char *name, char *command)
+static void change_window_property(char *winat, char *name, char *command)
 {
   Window window;
   Display *dpy;
@@ -126,9 +124,7 @@ for example"
   if (XEN_STRING_P(command))
     c = copy_string(XEN_TO_C_STRING(command));
   else c = copy_string(g_print_1(command));
-  change_window_property(get_global_state(), 
-		  XEN_TO_C_STRING(winat), 
-		  XEN_TO_C_STRING(name), c);
+  change_window_property(XEN_TO_C_STRING(winat), XEN_TO_C_STRING(name), c);
   if (c) FREE(c);
   return(XEN_FALSE);
 }

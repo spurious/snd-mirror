@@ -15,7 +15,7 @@ static XEN g_in(XEN ms, XEN code)
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code), code, XEN_ARG_2, S_in, "a procedure");
   if (XEN_REQUIRED_ARGS(code) == 0)
     {
-      XtAppAddTimeOut(MAIN_APP(get_global_state()), 
+      XtAppAddTimeOut(MAIN_APP(ss), 
 		      (unsigned long)XEN_TO_C_INT(ms),
 		      (XtTimerCallbackProc)timed_eval, 
 		      (XtPointer)code);
@@ -32,7 +32,7 @@ static XEN g_color2list(XEN obj)
   XColor tmp_color;
   Display *dpy;
   XEN_ASSERT_TYPE(XEN_PIXEL_P(obj), obj, XEN_ONLY_ARG, S_color2list, "a color"); 
-  dpy = XtDisplay(MAIN_SHELL(get_global_state()));
+  dpy = XtDisplay(MAIN_SHELL(ss));
   cmap = DefaultColormap(dpy, DefaultScreen(dpy));
   tmp_color.flags = DoRed | DoGreen | DoBlue;
   tmp_color.pixel = XEN_UNWRAP_PIXEL(obj);
@@ -57,7 +57,7 @@ static XEN g_make_snd_color(XEN r, XEN g, XEN b)
   rf = check_color_range(S_make_color, r);
   gf = check_color_range(S_make_color, g);
   bf = check_color_range(S_make_color, b);
-  dpy = XtDisplay(MAIN_SHELL(get_global_state()));
+  dpy = XtDisplay(MAIN_SHELL(ss));
   cmap = DefaultColormap(dpy, DefaultScreen(dpy));
   tmp_color.flags = DoRed | DoGreen | DoBlue;
   tmp_color.red = (unsigned short)(65535 * rf); 
@@ -73,13 +73,11 @@ static XEN g_make_snd_color(XEN r, XEN g, XEN b)
 void recolor_everything(widget_t w, void *ptr)
 {
   Pixel curcol;
-  snd_state *ss;
   if (XtIsWidget(w))
     {
       XtVaGetValues(w, XmNbackground, &curcol, NULL);
       if (curcol == (Pixel)ptr)
 	{
-	  ss = get_global_state();
 	  XtVaSetValues(w, XmNbackground, (ss->sgx)->basic_color, NULL);
 	}
     }
@@ -90,8 +88,6 @@ void color_unselected_graphs(color_t color)
   int i, j;
   chan_info *cp;
   snd_info *sp;
-  snd_state *ss;
-  ss = get_global_state();
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
@@ -110,8 +106,6 @@ void color_chan_components(color_t color, int which_component)
   int i, j;
   chan_info *cp;
   snd_info *sp;
-  snd_state *ss;
-  ss = get_global_state();
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
@@ -138,8 +132,6 @@ void color_chan_components(color_t color, int which_component)
 
 void recolor_button(widget_t w, void *ptr)
 {
-  snd_state *ss;
-  ss = get_global_state();
   if (XtIsWidget(w))
     {
       if (XmIsPushButton(w))
@@ -155,19 +147,17 @@ void recolor_button(widget_t w, void *ptr)
 static XEN g_graph_cursor(void)
 {
   #define H_graph_cursor "(" S_graph_cursor "): current graph cursor shape"
-  return(C_TO_XEN_INT(in_graph_cursor(get_global_state())));
+  return(C_TO_XEN_INT(in_graph_cursor(ss)));
 }
 
 #include <X11/cursorfont.h>
 static XEN g_set_graph_cursor(XEN curs)
 {
   int val;
-  snd_state *ss;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(curs), curs, XEN_ONLY_ARG, S_setB S_graph_cursor, "an integer");
   /* X11/cursorfont.h has various even-numbered glyphs, but the odd numbers are ok, and XC_num_glyphs is a lie */
   /*   if you use too high a number here, X dies */
   val = XEN_TO_C_INT(curs);
-  ss = get_global_state();
   if ((val >= 0) && (val <= XC_xterm))
     {
       ss->Graph_Cursor = val;

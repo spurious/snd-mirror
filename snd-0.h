@@ -196,7 +196,6 @@ typedef enum {GRAPH_ONCE, GRAPH_AS_SONOGRAM, GRAPH_AS_SPECTROGRAM, GRAPH_AS_WAVO
 typedef enum {ZOOM_FOCUS_LEFT, ZOOM_FOCUS_RIGHT, ZOOM_FOCUS_ACTIVE, ZOOM_FOCUS_MIDDLE} zoom_focus_t;
 enum {DONT_LOCK_MIXES, LOCK_MIXES};
 typedef enum {DONT_DELETE_ME, DELETE_ME, ALREADY_DELETED, MULTICHANNEL_DELETION} file_delete_t;
-/* TODO: enum typedefs, rest of bools */
 typedef enum {SND_REOPEN_CLOSED_FILE, SND_OPEN_CHANNEL, SND_COPY_READER, SND_INSERT_FILE, SND_CHANGE_FILE, SND_OVERRIDE_FILE, SND_MIX_FILE} open_reason_t;
 typedef enum {CURSOR_CROSS, CURSOR_LINE, CURSOR_PROC} cursor_style_t;
 typedef enum {SHOW_NO_AXES, SHOW_ALL_AXES, SHOW_X_AXIS} show_axes_t;
@@ -305,23 +304,23 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 #define DEFAULT_INIT_WINDOW_HEIGHT 0
 
 #define reverb_control_decay(ss) ss->Reverb_Control_Decay
-#define in_set_reverb_control_decay(ss, a) ss->Reverb_Control_Decay = a
+#define in_set_reverb_control_decay(a) ss->Reverb_Control_Decay = a
 #define DEFAULT_REVERB_CONTROL_DECAY 1.0
 
 #define default_output_type(ss) ss->Default_Output_Type
-#define set_default_output_type(ss, a) ss->Default_Output_Type = a
+#define set_default_output_type(a) ss->Default_Output_Type = a
 
 #define default_output_chans(ss) ss->Default_Output_Chans
-#define set_default_output_chans(ss, a) ss->Default_Output_Chans = a
+#define set_default_output_chans(a) ss->Default_Output_Chans = a
 
 #define default_output_srate(ss) ss->Default_Output_Srate
-#define set_default_output_srate(ss, a) ss->Default_Output_Srate = a
+#define set_default_output_srate(a) ss->Default_Output_Srate = a
 
 #define default_output_format(ss) ss->Default_Output_Format
-#define set_default_output_format(ss, a) ss->Default_Output_Format = a
+#define set_default_output_format(a) ss->Default_Output_Format = a
 
 #define dac_size(ss) ss->Dac_Size
-#define set_dac_size(ss, a) ss->Dac_Size = a
+#define set_dac_size(a) ss->Dac_Size = a
 #if (HAVE_OSS || HAVE_ALSA)
   #ifdef PPC
      /* actually linuxppc */
@@ -334,99 +333,99 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 #endif
 
 #define dac_combines_channels(ss) ss->Dac_Combines_Channels
-#define set_dac_combines_channels(ss, a) ss->Dac_Combines_Channels = a
+#define set_dac_combines_channels(a) ss->Dac_Combines_Channels = a
 #define DEFAULT_DAC_COMBINES_CHANNELS true
 
 #define emacs_style_save_as(ss) ss->Emacs_Style_Save_As
-#define set_emacs_style_save_as(ss, a) ss->Emacs_Style_Save_As = a
+#define set_emacs_style_save_as(a) ss->Emacs_Style_Save_As = a
 #define DEFAULT_EMACS_STYLE_SAVE_AS false
 
 #define max_regions(ss) ss->Max_Regions
-#define in_set_max_regions(ss, a) ss->Max_Regions = a
+#define in_set_max_regions(a) ss->Max_Regions = a
 #define DEFAULT_MAX_REGIONS 16
 
 #define max_transform_peaks(ss) ss->Max_Transform_Peaks
-#define in_set_max_transform_peaks(ss, a) ss->Max_Transform_Peaks = a
+#define in_set_max_transform_peaks(a) ss->Max_Transform_Peaks = a
 #define DEFAULT_MAX_TRANSFORM_PEAKS 100
 
 #define auto_resize(ss) ss->Auto_Resize
-#define set_auto_resize(ss, a) ss->Auto_Resize = a
+#define set_auto_resize(a) ss->Auto_Resize = a
 #define DEFAULT_AUTO_RESIZE true
 
 #define auto_update(ss) ss->Auto_Update
-#define set_auto_update(ss, a) ss->Auto_Update = a
+#define set_auto_update(a) ss->Auto_Update = a
 #define DEFAULT_AUTO_UPDATE false
 
 #define auto_update_interval(ss) ss->Auto_Update_Interval
-#define set_auto_update_interval(ss, a) ss->Auto_Update_Interval = a
+#define set_auto_update_interval(a) ss->Auto_Update_Interval = a
 #define DEFAULT_AUTO_UPDATE_INTERVAL 60.0
 
 #define color_cutoff(ss) ss->Color_Cutoff
-#define in_set_color_cutoff(ss, a) ss->Color_Cutoff = a
+#define in_set_color_cutoff(a) ss->Color_Cutoff = a
 #define DEFAULT_COLOR_CUTOFF 0.003
 
 #define color_inverted(ss) ss->Color_Inverted
-#define in_set_color_inverted(ss, a) ss->Color_Inverted = a
+#define in_set_color_inverted(a) ss->Color_Inverted = a
 #define DEFAULT_COLOR_INVERTED true
 
 #define color_scale(ss) ss->Color_Scale
-#define in_set_color_scale(ss, a) ss->Color_Scale = a
+#define in_set_color_scale(a) ss->Color_Scale = a
 #define DEFAULT_COLOR_SCALE 1.0
 
 #define fft_window_beta(ss) ss->Fft_Window_Beta
-#define in_set_fft_window_beta(ss, a) ss->Fft_Window_Beta = a
+#define in_set_fft_window_beta(a) ss->Fft_Window_Beta = a
 #define DEFAULT_FFT_WINDOW_BETA 0.0
 
 #define transform_size(ss) ss->Transform_Size
-#define in_set_transform_size(ss, a) ss->Transform_Size = a
+#define in_set_transform_size(a) ss->Transform_Size = a
 #define DEFAULT_TRANSFORM_SIZE 256
 
 #define transform_graph_type(ss) ss->Transform_Graph_Type
-#define in_set_transform_graph_type_1(ss, a) ss->Transform_Graph_Type = a
+#define in_set_transform_graph_type_1(a) ss->Transform_Graph_Type = a
 #define DEFAULT_TRANSFORM_GRAPH_TYPE GRAPH_ONCE
 
 #define time_graph_type(ss) ss->Time_Graph_Type
-#define in_set_time_graph_type(ss, a) ss->Time_Graph_Type = a
+#define in_set_time_graph_type(a) ss->Time_Graph_Type = a
 #define DEFAULT_TIME_GRAPH_TYPE GRAPH_ONCE
 
 #define fft_window(ss) ss->Fft_Window
-#define in_set_fft_window_1(ss, a) ss->Fft_Window = a
+#define in_set_fft_window_1(a) ss->Fft_Window = a
 #define DEFAULT_FFT_WINDOW MUS_BLACKMAN2_WINDOW
 
 #define trap_segfault(ss) ss->Trap_Segfault
-#define set_trap_segfault(ss, a) ss->Trap_Segfault = a
+#define set_trap_segfault(a) ss->Trap_Segfault = a
 #define DEFAULT_TRAP_SEGFAULT true
 
 #define optimization(ss) ss->Optimization
-#define set_optimization(ss, a) ss->Optimization = a
+#define set_optimization(a) ss->Optimization = a
 #define DEFAULT_OPTIMIZATION 0
 
 #define dot_size(ss) ss->Dot_Size
-#define in_set_dot_size(ss, a) ss->Dot_Size = a
+#define in_set_dot_size(a) ss->Dot_Size = a
 #define DEFAULT_DOT_SIZE 1
 
 #define minibuffer_history_length(ss) ss->Minibuffer_History_Length
-#define set_minibuffer_history_length(ss, a) ss->Minibuffer_History_Length = a
+#define set_minibuffer_history_length(a) ss->Minibuffer_History_Length = a
 #define DEFAULT_MINIBUFFER_HISTORY_LENGTH 8
 
 #define transform_normalization(ss) ss->Transform_Normalization
-#define in_set_transform_normalization(ss, a) ss->Transform_Normalization = a
+#define in_set_transform_normalization(a) ss->Transform_Normalization = a
 #define DEFAULT_TRANSFORM_NORMALIZATION NORMALIZE_BY_CHANNEL
 
 #define ask_before_overwrite(ss) ss->Ask_Before_Overwrite
-#define set_ask_before_overwrite(ss, a) ss->Ask_Before_Overwrite = a
+#define set_ask_before_overwrite(a) ss->Ask_Before_Overwrite = a
 #define DEFAULT_ASK_BEFORE_OVERWRITE false
 
 #define spectro_cutoff(ss) ss->Spectro_Cutoff
-#define in_set_spectro_cutoff(ss, a) ss->Spectro_Cutoff = a
+#define in_set_spectro_cutoff(a) ss->Spectro_Cutoff = a
 #define DEFAULT_SPECTRO_CUTOFF 1.0
 
 #define spectro_start(ss) ss->Spectro_Start
-#define in_set_spectro_start(ss, a) ss->Spectro_Start = a
+#define in_set_spectro_start(a) ss->Spectro_Start = a
 #define DEFAULT_SPECTRO_START 0.0
 
 #define spectro_x_angle(ss) ss->Spectro_X_Angle
-#define in_set_spectro_x_angle(ss, a) ss->Spectro_X_Angle = a
+#define in_set_spectro_x_angle(a) ss->Spectro_X_Angle = a
 #if HAVE_GL
   #define DEFAULT_SPECTRO_X_ANGLE 300.0
 #else
@@ -434,7 +433,7 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 #endif
 
 #define spectro_y_angle(ss) ss->Spectro_Y_Angle
-#define in_set_spectro_y_angle(ss, a) ss->Spectro_Y_Angle = a
+#define in_set_spectro_y_angle(a) ss->Spectro_Y_Angle = a
 #if HAVE_GL
   #define DEFAULT_SPECTRO_Y_ANGLE 320.0
 #else
@@ -442,7 +441,7 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 #endif
 
 #define spectro_z_angle(ss) ss->Spectro_Z_Angle
-#define in_set_spectro_z_angle(ss, a) ss->Spectro_Z_Angle = a
+#define in_set_spectro_z_angle(a) ss->Spectro_Z_Angle = a
 #if HAVE_GL
   #define DEFAULT_SPECTRO_Z_ANGLE 0.0
 #else
@@ -450,7 +449,7 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 #endif
 
 #define spectro_x_scale(ss) ss->Spectro_X_Scale
-#define in_set_spectro_x_scale(ss, a) ss->Spectro_X_Scale = a
+#define in_set_spectro_x_scale(a) ss->Spectro_X_Scale = a
 #if HAVE_GL
   #define DEFAULT_SPECTRO_X_SCALE 1.5
   #define SPECTRO_X_SCALE_MAX 4.0
@@ -460,7 +459,7 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 #endif
 
 #define spectro_y_scale(ss) ss->Spectro_Y_Scale
-#define in_set_spectro_y_scale(ss, a) ss->Spectro_Y_Scale = a
+#define in_set_spectro_y_scale(a) ss->Spectro_Y_Scale = a
 #if HAVE_GL
   #define DEFAULT_SPECTRO_Y_SCALE 1.0
   #define SPECTRO_Y_SCALE_MAX 4.0
@@ -470,7 +469,7 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 #endif
 
 #define spectro_z_scale(ss) ss->Spectro_Z_Scale
-#define in_set_spectro_z_scale(ss, a) ss->Spectro_Z_Scale = a
+#define in_set_spectro_z_scale(a) ss->Spectro_Z_Scale = a
 #if HAVE_GL
   #define DEFAULT_SPECTRO_Z_SCALE 1.0
   #define SPECTRO_Z_SCALE_MAX 4.0
@@ -480,11 +479,11 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 #endif
 
 #define spectro_hop(ss) ss->Spectro_Hop
-#define in_set_spectro_hop(ss, a) ss->Spectro_Hop = a
+#define in_set_spectro_hop(a) ss->Spectro_Hop = a
 #define DEFAULT_SPECTRO_HOP 4
 
 #define color_map(ss) ss->Color_Map
-#define in_set_color_map(ss, a) ss->Color_Map = a
+#define in_set_color_map(a) ss->Color_Map = a
 #if HAVE_GL
   #define DEFAULT_COLOR_MAP 2
 #else
@@ -492,134 +491,134 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 #endif
 
 #define speed_control_tones(ss) ss->Speed_Control_Tones
-#define in_set_speed_control_tones(ss, a) ss->Speed_Control_Tones = a
+#define in_set_speed_control_tones(a) ss->Speed_Control_Tones = a
 #define DEFAULT_SPEED_CONTROL_TONES 12
 
 #define speed_control_style(ss) ss->Speed_Control_Style
-#define in_set_speed_control_style(ss, a) ss->Speed_Control_Style = a
+#define in_set_speed_control_style(a) ss->Speed_Control_Style = a
 #define DEFAULT_SPEED_CONTROL_STYLE SPEED_CONTROL_AS_FLOAT
 
 #define graph_style(ss) ss->Graph_Style
-#define in_set_graph_style(ss, a) ss->Graph_Style = a
+#define in_set_graph_style(a) ss->Graph_Style = a
 #define DEFAULT_GRAPH_STYLE GRAPH_LINES
 
 #define region_graph_style(ss) ss->Region_Graph_Style
-#define set_region_graph_style(ss, a) ss->Region_Graph_Style = a
+#define set_region_graph_style(a) ss->Region_Graph_Style = a
 
 #define sinc_width(ss) ss->Sinc_Width
-#define set_sinc_width(ss, a) ss->Sinc_Width = a
+#define set_sinc_width(a) ss->Sinc_Width = a
 #define DEFAULT_SINC_WIDTH 10
 
 #define verbose_cursor(ss) ss->Verbose_Cursor
-#define in_set_verbose_cursor(ss, a) ss->Verbose_Cursor = a
+#define in_set_verbose_cursor(a) ss->Verbose_Cursor = a
 #define DEFAULT_VERBOSE_CURSOR false
 
 #define selection_creates_region(ss) ss->Selection_Creates_Region
 
-#define set_selection_creates_region(ss, a) ss->Selection_Creates_Region = a
+#define set_selection_creates_region(a) ss->Selection_Creates_Region = a
 #define DEFAULT_SELECTION_CREATES_REGION true
 
 #define filter_env_in_hz(ss) ss->Filter_Env_In_Hz
-#define set_filter_env_in_hz(ss, a) ss->Filter_Env_In_Hz = a
+#define set_filter_env_in_hz(a) ss->Filter_Env_In_Hz = a
 #define DEFAULT_FILTER_ENV_IN_HZ false
 
 #define zoom_focus_style(ss) ss->Zoom_Focus_Style
-#define set_zoom_focus_style(ss, a) ss->Zoom_Focus_Style = a
+#define set_zoom_focus_style(a) ss->Zoom_Focus_Style = a
 #define DEFAULT_ZOOM_FOCUS_STYLE ZOOM_FOCUS_ACTIVE
 
 #define eps_file(ss) ss->Eps_File
-#define set_eps_file(ss, a) ss->Eps_File = a
+#define set_eps_file(a) ss->Eps_File = a
 #define DEFAULT_EPS_FILE "snd.eps"
 
 #define eps_left_margin(ss) ss->Eps_Left_Margin
-#define set_eps_left_margin(ss, a) ss->Eps_Left_Margin = a
+#define set_eps_left_margin(a) ss->Eps_Left_Margin = a
 #define DEFAULT_EPS_LEFT_MARGIN 0.0
 
 #define eps_bottom_margin(ss) ss->Eps_Bottom_Margin
-#define set_eps_bottom_margin(ss, a) ss->Eps_Bottom_Margin = a
+#define set_eps_bottom_margin(a) ss->Eps_Bottom_Margin = a
 #define DEFAULT_EPS_BOTTOM_MARGIN 0.0
 
 #define eps_size(ss) ss->Eps_Size
-#define set_eps_size(ss, a) ss->Eps_Size = a
+#define set_eps_size(a) ss->Eps_Size = a
 #define DEFAULT_EPS_SIZE 1.0
 
 #define tiny_font(ss) ss->Tiny_Font
-#define in_set_tiny_font(ss, a) ss->Tiny_Font = a
+#define in_set_tiny_font(a) ss->Tiny_Font = a
 
 #define bold_button_font(ss) ss->Bold_Button_Font
-#define in_set_bold_button_font(ss, a) ss->Bold_Button_Font = a
+#define in_set_bold_button_font(a) ss->Bold_Button_Font = a
 
 #define peaks_font(ss) ss->Peaks_Font
-#define in_set_peaks_font(ss, a) ss->Peaks_Font = a
+#define in_set_peaks_font(a) ss->Peaks_Font = a
 
 #define bold_peaks_font(ss) ss->Bold_Peaks_Font
-#define in_set_bold_peaks_font(ss, a) ss->Bold_Peaks_Font = a
+#define in_set_bold_peaks_font(a) ss->Bold_Peaks_Font = a
 
 #define axis_label_font(ss) ss->Axis_Label_Font
-#define in_set_axis_label_font(ss, a) ss->Axis_Label_Font = a
+#define in_set_axis_label_font(a) ss->Axis_Label_Font = a
 
 #define axis_numbers_font(ss) ss->Axis_Numbers_Font
-#define in_set_axis_numbers_font(ss, a) ss->Axis_Numbers_Font = a
+#define in_set_axis_numbers_font(a) ss->Axis_Numbers_Font = a
 
 #define listener_font(ss) ss->Listener_Font
-#define in_set_listener_font(ss, a) ss->Listener_Font = a
+#define in_set_listener_font(a) ss->Listener_Font = a
 
 #define save_state_file(ss) ss->Save_State_File
-#define in_set_save_state_file(ss, a) ss->Save_State_File = a
+#define in_set_save_state_file(a) ss->Save_State_File = a
 #define DEFAULT_SAVE_STATE_FILE "saved-snd." XEN_FILE_EXTENSION
 
 #define temp_dir(ss) ss->Temp_Dir
-#define set_temp_dir(ss, a) ss->Temp_Dir = a
+#define set_temp_dir(a) ss->Temp_Dir = a
 #ifndef DEFAULT_TEMP_DIR
   #define DEFAULT_TEMP_DIR NULL
 #endif
 
 #define save_dir(ss) ss->Save_Dir
-#define set_save_dir(ss, a) ss->Save_Dir = a
+#define set_save_dir(a) ss->Save_Dir = a
 #ifndef DEFAULT_SAVE_DIR
   #define DEFAULT_SAVE_DIR NULL
 #endif
 
 #define ladspa_dir(ss) ss->Ladspa_Dir
-#define set_ladspa_dir(ss, a) ss->Ladspa_Dir = a
+#define set_ladspa_dir(a) ss->Ladspa_Dir = a
 #ifndef DEFAULT_LADSPA_DIR
   #define DEFAULT_LADSPA_DIR NULL
 #endif
 
 #define vu_font(ss) ss->Vu_Font
-#define set_vu_font(ss, a) ss->Vu_Font = a
+#define set_vu_font(a) ss->Vu_Font = a
 #define DEFAULT_VU_FONT NULL
 
 #define vu_font_size(ss) ss->Vu_Font_Size
-#define set_vu_font_size(ss, a) ss->Vu_Font_Size = a
+#define set_vu_font_size(a) ss->Vu_Font_Size = a
 #define DEFAULT_VU_FONT_SIZE 1.0
 
 #define vu_size(ss) ss->Vu_Size
-#define set_vu_size(ss, a) ss->Vu_Size = a
+#define set_vu_size(a) ss->Vu_Size = a
 #define DEFAULT_VU_SIZE 1.0
 
 #define wavelet_type(ss) ss->Wavelet_Type
-#define in_set_wavelet_type(ss, a) ss->Wavelet_Type = a
+#define in_set_wavelet_type(a) ss->Wavelet_Type = a
 #define DEFAULT_WAVELET_TYPE 0
 
 #define transform_type(ss) ss->Transform_Type
-#define in_set_transform_type(ss, a) ss->Transform_Type = a
+#define in_set_transform_type(a) ss->Transform_Type = a
 #define DEFAULT_TRANSFORM_TYPE FOURIER
 
 #define show_selection_transform(ss) ss->Show_Selection_Transform
-#define in_set_show_selection_transform(ss, a) ss->Show_Selection_Transform = a
+#define in_set_show_selection_transform(a) ss->Show_Selection_Transform = a
 #define DEFAULT_SHOW_SELECTION_TRANSFORM 0
 
 #define with_mix_tags(ss) ss->With_Mix_Tags
-#define set_with_mix_tags(ss, a) ss->With_Mix_Tags = a
+#define set_with_mix_tags(a) ss->With_Mix_Tags = a
 #define DEFAULT_WITH_MIX_TAGS true
 
 #define with_relative_panes(ss) ss->With_Relative_Panes
-#define set_with_relative_panes(ss, a) ss->With_Relative_Panes = a
+#define set_with_relative_panes(a) ss->With_Relative_Panes = a
 #define DEFAULT_WITH_RELATIVE_PANES true
 
 #define with_gl(ss) ss->With_GL
-#define in_set_with_gl(ss, a) ss->With_GL = a
+#define in_set_with_gl(a) ss->With_GL = a
 #if HAVE_GL
   #define DEFAULT_WITH_GL true
 #else
@@ -627,154 +626,154 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 #endif
 
 #define with_background_processes(ss) ss->With_Background_Processes
-#define set_with_background_processes(ss, a) ss->With_Background_Processes = a
+#define set_with_background_processes(a) ss->With_Background_Processes = a
 #define DEFAULT_WITH_BACKGROUND_PROCESSES true
 #define DISABLE_BACKGROUND_PROCESSES 1234
 
 #define wavo_hop(ss) ss->Wavo_Hop
-#define in_set_wavo_hop(ss, a) ss->Wavo_Hop = a
+#define in_set_wavo_hop(a) ss->Wavo_Hop = a
 #define DEFAULT_WAVO_HOP 3
 
 #define wavo_trace(ss) ss->Wavo_Trace
-#define in_set_wavo_trace(ss, a) ss->Wavo_Trace = a
+#define in_set_wavo_trace(a) ss->Wavo_Trace = a
 #define DEFAULT_WAVO_TRACE 64
 
 #define x_axis_style(ss) ss->X_Axis_Style
-#define in_set_x_axis_style(ss, a) ss->X_Axis_Style = a
+#define in_set_x_axis_style(a) ss->X_Axis_Style = a
 #define DEFAULT_X_AXIS_STYLE X_AXIS_IN_SECONDS
 
 #define beats_per_minute(ss) ss->Beats_Per_Minute
-#define in_set_beats_per_minute(ss, a) ss->Beats_Per_Minute = a
+#define in_set_beats_per_minute(a) ss->Beats_Per_Minute = a
 #define DEFAULT_BEATS_PER_MINUTE 60.0
 
 #define zero_pad(ss) ss->Zero_Pad
-#define in_set_zero_pad(ss, a) ss->Zero_Pad = a
+#define in_set_zero_pad(a) ss->Zero_Pad = a
 #define DEFAULT_ZERO_PAD 0
 
 #define show_transform_peaks(ss) ss->Show_Transform_Peaks
-#define in_set_show_transform_peaks(ss, a) ss->Show_Transform_Peaks = a
+#define in_set_show_transform_peaks(a) ss->Show_Transform_Peaks = a
 #define DEFAULT_SHOW_TRANSFORM_PEAKS false
 
 #define show_indices(ss) ss->Show_Indices
-#define set_show_indices(ss, a) ss->Show_Indices = a
+#define set_show_indices(a) ss->Show_Indices = a
 #define DEFAULT_SHOW_INDICES false
 
 #define show_backtrace(ss) ss->Show_Backtrace
-#define set_show_backtrace(ss, a) ss->Show_Backtrace = a
+#define set_show_backtrace(a) ss->Show_Backtrace = a
 #define DEFAULT_SHOW_BACKTRACE false
 
 #define show_y_zero(ss) ss->Show_Y_Zero
-#define in_set_show_y_zero(ss, a) ss->Show_Y_Zero = a
+#define in_set_show_y_zero(a) ss->Show_Y_Zero = a
 #define DEFAULT_SHOW_Y_ZERO false
 
 #define show_axes(ss) ss->Show_Axes
-#define in_set_show_axes(ss, a) ss->Show_Axes = a
+#define in_set_show_axes(a) ss->Show_Axes = a
 #define DEFAULT_SHOW_AXES SHOW_ALL_AXES
 
 #define show_mix_waveforms(ss) ss->Show_Mix_Waveforms
-#define in_set_show_mix_waveforms(ss, a) ss->Show_Mix_Waveforms = a
+#define in_set_show_mix_waveforms(a) ss->Show_Mix_Waveforms = a
 #define DEFAULT_SHOW_MIX_WAVEFORMS true
 
 #define mix_waveform_height(ss) ss->Mix_Waveform_Height
-#define in_set_mix_waveform_height(ss, a) ss->Mix_Waveform_Height = a
+#define in_set_mix_waveform_height(a) ss->Mix_Waveform_Height = a
 #define DEFAULT_MIX_WAVEFORM_HEIGHT 20
 
 #define show_marks(ss) ss->Show_Marks
-#define in_set_show_marks(ss, a) ss->Show_Marks = a
+#define in_set_show_marks(a) ss->Show_Marks = a
 #define DEFAULT_SHOW_MARKS true
 
 #define fft_log_magnitude(ss) ss->Fft_Log_Magnitude
-#define in_set_fft_log_magnitude(ss, a) ss->Fft_Log_Magnitude = a
+#define in_set_fft_log_magnitude(a) ss->Fft_Log_Magnitude = a
 #define DEFAULT_FFT_LOG_MAGNITUDE false
 
 #define fft_log_frequency(ss) ss->Fft_Log_Frequency
-#define in_set_fft_log_frequency(ss, a) ss->Fft_Log_Frequency = a
+#define in_set_fft_log_frequency(a) ss->Fft_Log_Frequency = a
 #define DEFAULT_FFT_LOG_FREQUENCY false
 
 #define channel_style(ss) ss->Channel_Style
-#define in_set_channel_style(ss, a) ss->Channel_Style = a
+#define in_set_channel_style(a) ss->Channel_Style = a
 #define DEFAULT_CHANNEL_STYLE CHANNELS_SEPARATE
 
 #define sound_style(ss) ss->Sound_Style
-#define set_sound_style(ss, a) ss->Sound_Style = a
+#define set_sound_style(a) ss->Sound_Style = a
 #define DEFAULT_SOUND_STYLE SOUNDS_VERTICAL
 
 #define listener_prompt(ss) ss->Listener_Prompt
-#define set_listener_prompt(ss, a) ss->Listener_Prompt = a
+#define set_listener_prompt(a) ss->Listener_Prompt = a
 #define DEFAULT_LISTENER_PROMPT ">"
 
 #define print_length(ss) ss->Print_Length
-#define set_print_length(ss, a) ss->Print_Length = a
+#define set_print_length(a) ss->Print_Length = a
 #define DEFAULT_PRINT_LENGTH 12
 
 #define previous_files_sort(ss) ss->Previous_Files_Sort
-#define set_previous_files_sort(ss, a) ss->Previous_Files_Sort = a
+#define set_previous_files_sort(a) ss->Previous_Files_Sort = a
 #define DEFAULT_PREVIOUS_FILES_SORT 0
 
 #define enved_clip_p(ss) ss->Enved_Clip_p
-#define in_set_enved_clip_p(ss, a) ss->Enved_Clip_p = a
+#define in_set_enved_clip_p(a) ss->Enved_Clip_p = a
 #define DEFAULT_ENVED_CLIP_P false
 
 #define enved_wave_p(ss) ss->Enved_Wave_p
-#define in_set_enved_wave_p(ss, a) ss->Enved_Wave_p = a
+#define in_set_enved_wave_p(a) ss->Enved_Wave_p = a
 #define DEFAULT_ENVED_WAVE_P false
 
 #define enved_filter_order(ss) ss->Enved_Filter_Order
-#define in_set_enved_filter_order(ss, a) ss->Enved_Filter_Order = a
+#define in_set_enved_filter_order(a) ss->Enved_Filter_Order = a
 #define DEFAULT_ENVED_FILTER_ORDER 40
 
 #define enved_in_dB(ss) ss->Enved_in_dB
-#define in_set_enved_in_dB(ss, a) ss->Enved_in_dB = a
+#define in_set_enved_in_dB(a) ss->Enved_in_dB = a
 #define DEFAULT_ENVED_IN_DB false
 
 #define enved_target(ss) ss->Enved_Target
-#define in_set_enved_target(ss, a) ss->Enved_Target = a
+#define in_set_enved_target(a) ss->Enved_Target = a
 #define DEFAULT_ENVED_TARGET ENVED_AMPLITUDE
 
 #define enved_base(ss) ss->Enved_Base
-#define in_set_enved_base(ss, a) ss->Enved_Base = a
+#define in_set_enved_base(a) ss->Enved_Base = a
 #define DEFAULT_ENVED_BASE 1.0
 
 #define enved_power(ss) ss->Enved_Power
-#define set_enved_power(ss, a) ss->Enved_Power = a
+#define set_enved_power(a) ss->Enved_Power = a
 #define DEFAULT_ENVED_POWER 3.0
 
 #define enved_exp_p(ss) ss->Enved_Exp_p
-#define in_set_enved_exp_p(ss, a) ss->Enved_Exp_p = a
+#define in_set_enved_exp_p(a) ss->Enved_Exp_p = a
 #define DEFAULT_ENVED_EXP_P false
 
 #define audio_output_device(ss) ss->Audio_Output_Device
-#define set_audio_output_device(ss, a) ss->Audio_Output_Device = a
+#define set_audio_output_device(a) ss->Audio_Output_Device = a
 #define DEFAULT_AUDIO_OUTPUT_DEVICE MUS_AUDIO_DEFAULT
 
 #define audio_input_device(ss) ss->Audio_Input_Device
-#define set_audio_input_device(ss, a) ss->Audio_Input_Device = a
+#define set_audio_input_device(a) ss->Audio_Input_Device = a
 #define DEFAULT_AUDIO_INPUT_DEVICE MUS_AUDIO_DEFAULT
 
 #define in_graph_cursor(ss) ss->Graph_Cursor
 
 #define data_clipped(ss) ss->Data_Clipped
-#define set_data_clipped(ss, a) ss->Data_Clipped = a
+#define set_data_clipped(a) ss->Data_Clipped = a
 #define DEFAULT_DATA_CLIPPED false
 
 #define html_dir(ss) ss->HTML_Dir
-#define set_html_dir_1(ss, a) ss->HTML_Dir = a
+#define set_html_dir_1(a) ss->HTML_Dir = a
 #define DEFAULT_HTML_DIR "."
 
 #define html_program(ss) ss->HTML_Program
-#define set_html_program(ss, a) ss->HTML_Program = a
+#define set_html_program(a) ss->HTML_Program = a
 #define DEFAULT_HTML_PROGRAM "netscape"
 
 #define graphs_horizontal(ss) ss->Graphs_Horizontal
-#define in_set_graphs_horizontal(ss, a) ss->Graphs_Horizontal = a
+#define in_set_graphs_horizontal(a) ss->Graphs_Horizontal = a
 #define DEFAULT_GRAPHS_HORIZONTAL true
 
 #define mix_tag_width(ss) ss->Mix_Tag_Width
-#define set_mix_tag_width(ss, a) ss->Mix_Tag_Width = a
+#define set_mix_tag_width(a) ss->Mix_Tag_Width = a
 #define DEFAULT_MIX_TAG_WIDTH 6
 
 #define mix_tag_height(ss) ss->Mix_Tag_Height
-#define set_mix_tag_height(ss, a) ss->Mix_Tag_Height = a
+#define set_mix_tag_height(a) ss->Mix_Tag_Height = a
 #define DEFAULT_MIX_TAG_HEIGHT 14
 
 #endif

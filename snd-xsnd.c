@@ -104,8 +104,6 @@ void sound_unlock_control_panel(snd_info *sp, void *ptr)
 
 void sound_lock_control_panel(snd_info *sp, void *ptr)
 {
-  snd_state *ss;
-  ss = (snd_state *)(sp->state);
   XtUnmanageChild(CONTROL_PANEL(sp));
   XtVaSetValues(CONTROL_PANEL(sp), XmNpaneMinimum, ss->ctrls_height, NULL);
 }
@@ -205,7 +203,7 @@ static void amp_valuechanged_callback(Widget w, XtPointer context, XtPointer inf
 
 static char srate_number_buffer[5] = {'1', STR_decimal, '0', '0', '\0'};
 
-XmString initial_speed_label(snd_state *ss)
+XmString initial_speed_label(void)
 {
   switch (speed_control_style(ss))
     {
@@ -361,11 +359,9 @@ static void expand_valuechanged_callback(Widget w, XtPointer context, XtPointer 
 
 static void expand_button_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info; 
   snd_info *sp = (snd_info *)context;
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
-  ss = sp->state;
   sp->expand_control_p = cb->set;
   if (!(ss->using_schemes)) 
     XmChangeColor(EXPAND_SCROLLBAR(sp), (Pixel)((sp->expand_control_p) ? ((ss->sgx)->position_color) : ((ss->sgx)->basic_color)));
@@ -443,11 +439,9 @@ static void contrast_valuechanged_callback(Widget w, XtPointer context, XtPointe
 
 static void contrast_button_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss;
   snd_info *sp = (snd_info *)context;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
-  ss = sp->state;
   sp->contrast_control_p = cb->set;
   if (!(ss->using_schemes)) 
     XmChangeColor(CONTRAST_SCROLLBAR(sp), (Pixel)((sp->contrast_control_p) ? ((ss->sgx)->position_color) : ((ss->sgx)->basic_color)));
@@ -539,7 +533,6 @@ static void revscl_valuechanged_callback(Widget w, XtPointer context, XtPointer 
 }
 
 
-
 #define REVLEN_SCROLLBAR_MULT (SCROLLBAR_MAX / 5.0)
 
 static char revlen_number_buffer[5] = {'1', STR_decimal, '0', '0', '\0'};
@@ -605,11 +598,9 @@ static void revlen_valuechanged_callback(Widget w, XtPointer context, XtPointer 
 
 static void reverb_button_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss;
   snd_info *sp = (snd_info *)context;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
-  ss = sp->state;
   sp->reverb_control_p = cb->set;
   if (!(ss->using_schemes))
     {
@@ -658,11 +649,9 @@ static void filter_textfield_deactivate(snd_info *sp)
 
 static void display_filter_env(snd_info *sp)
 {
-  snd_state *ss;
   axis_context *ax;
   int height, width;
   Widget drawer;
-  ss = sp->state;
   drawer = filter_graph(sp);
   height = widget_height(drawer);
   if (height < MIN_FILTER_GRAPH_HEIGHT) return;
@@ -672,16 +661,14 @@ static void display_filter_env(snd_info *sp)
   ax->wn = XtWindow(drawer);
   ax->dp = XtDisplay(drawer);
   XClearWindow(ax->dp, ax->wn);
-  if (edp_display_graph(ss, 
-			sp->sgx->flt,
+  if (edp_display_graph(sp->sgx->flt,
 			_("frequency response"),
 			ax, 0, 0, width, height, 
 			sp->filter_control_env, 
 			sp->filter_control_in_dB, true))
     {
       ax->gc = (ss->sgx)->fltenv_data_gc;
-      display_frequency_response(ss, 
-				 sp->filter_control_env, 
+      display_frequency_response(sp->filter_control_env, 
 				 edp_ap(sp->sgx->flt), ax, 
 				 sp->filter_control_order, 
 				 sp->filter_control_in_dB);
@@ -706,8 +693,7 @@ static void filter_drawer_button_motion(Widget w, XtPointer context, XEvent *eve
 #ifdef MAC_OSX
   if ((press_x == ev->x) && (press_y == ev->y)) return;
 #endif
-  edp_handle_point(sp->state, 
-		   sp->sgx->flt,
+  edp_handle_point(sp->sgx->flt,
 		   ev->x, ev->y, ev->time, 
 		   sp->filter_control_env, 
 		   sp->filter_control_in_dB,
@@ -724,8 +710,7 @@ static void filter_drawer_button_press(Widget w, XtPointer context, XEvent *even
   press_x = ev->x;
   press_y = ev->y;
 #endif
-  if (edp_handle_press(sp->state, 
-		       sp->sgx->flt,
+  if (edp_handle_press(sp->sgx->flt,
 		       ev->x, ev->y, ev->time, 
 		       sp->filter_control_env, 
 		       sp->filter_control_in_dB,
@@ -805,7 +790,6 @@ static void filter_activate_callback(Widget w, XtPointer context, XtPointer info
   snd_info *sp = (snd_info *)context;
   char *str = NULL;
   int order;
-  snd_state *ss;
   XmAnyCallbackStruct *cb = (XmAnyCallbackStruct *)info;
   XKeyEvent *ev;
   KeySym keysym;
@@ -813,9 +797,7 @@ static void filter_activate_callback(Widget w, XtPointer context, XtPointer info
   keysym = XKeycodeToKeysym(XtDisplay(w),
 			    (int)(ev->keycode),
 			    (ev->state & snd_ShiftMask) ? 1 : 0);
-  ss = sp->state;
   ss->mx_sp = sp; 
-
   if ((ev->state & snd_MetaMask) && 
       ((keysym == snd_K_p) || (keysym == snd_K_P) || (keysym == snd_K_n) || (keysym == snd_K_N)))
     {
@@ -892,7 +874,6 @@ static void play_button_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_info *sp = (snd_info *)context;
   chan_info *cp;
-  snd_state *ss;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   XButtonEvent *ev;
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
@@ -910,7 +891,7 @@ static void play_button_callback(Widget w, XtPointer context, XtPointer info)
   goto_graph(cp);
   if (cb->set) 
     {
-      ss = sp->state;
+
       XtVaSetValues(w, XmNselectColor, ((sp->cursor_follows_play != DONT_FOLLOW) ? ((ss->sgx)->green) : ((ss->sgx)->pushed_button_color)), NULL);
       play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, 
 		 C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION),
@@ -918,16 +899,14 @@ static void play_button_callback(Widget w, XtPointer context, XtPointer info)
     }
 }
 
-typedef struct {bool pausing; snd_state *ss;} pause_data;
+typedef struct {bool pausing; } pause_data;
 
 static void set_play_button_pause(snd_info *sp, void *ptr)
 {
   pause_data *pd = (pause_data *)ptr;
-  snd_state *ss;
   Widget w;
   if ((sp->playing) && (!(IS_PLAYER(sp))))
     {
-      ss = pd->ss;
       w = PLAY_BUTTON(sp);
       if (pd->pausing)
 	XtVaSetValues(w, XmNselectColor, (ss->sgx)->red, NULL);
@@ -935,25 +914,23 @@ static void set_play_button_pause(snd_info *sp, void *ptr)
     }
 }
 
-void play_button_pause(snd_state *ss, bool pausing)
+void play_button_pause(bool pausing)
 {
   pause_data *pd;
   pd = (pause_data *)CALLOC(1, sizeof(pause_data));
   pd->pausing = pausing;
-  pd->ss = ss;
-  for_each_sound(ss, set_play_button_pause, (void *)pd);
+  for_each_sound(set_play_button_pause, (void *)pd);
   FREE(pd);
 }
 
 void set_control_panel_play_button(snd_info *sp, bool val)
 {
-  snd_state *ss;
   if ((sp) && (sp->sgx) && (PLAY_BUTTON(sp)))
     {
       set_toggle_button(PLAY_BUTTON(sp), false, false, sp);
       if (!val) 
 	{
-	  ss = get_global_state();
+	  
 	  XtVaSetValues(PLAY_BUTTON(sp), XmNselectColor, (ss->sgx)->pushed_button_color, NULL);
 	}
     }
@@ -972,10 +949,8 @@ static void play_arrow_callback(Widget w, XtPointer context, XtPointer info)
 
 static void set_sync_color(snd_info *sp)
 {
-  snd_state *ss;
   Widget syb;
   syb = SYNC_BUTTON(sp);
-  ss = sp->state;
   switch (sp->sync)
     {
     case 1: case 0: XtVaSetValues(syb, XmNselectColor, (ss->sgx)->pushed_button_color, NULL); break;
@@ -1020,7 +995,7 @@ static void sync_button_callback(Widget w, XtPointer context, XtPointer info)
       if (cp == NULL) cp = any_selected_channel(sp);
       goto_graph(cp);
       if (cp->cursor_on) cursor_moveto(cp, CURSOR(cp));
-      apply_x_axis_change(cp->axis, cp, sp);
+      apply_x_axis_change(cp->axis, cp);
     }
 }
 
@@ -1048,7 +1023,6 @@ static void minibuffer_click_callback(Widget w, XtPointer context, XtPointer inf
 {
   /* can be response to various things */
   snd_info *sp = (snd_info *)context;
-  snd_state *ss;
   XmAnyCallbackStruct *cb = (XmAnyCallbackStruct *)info;
   XKeyEvent *ev;
   KeySym keysym;
@@ -1056,7 +1030,6 @@ static void minibuffer_click_callback(Widget w, XtPointer context, XtPointer inf
   keysym = XKeycodeToKeysym(XtDisplay(w),
 			    (int)(ev->keycode),
 			    (ev->state & ShiftMask) ? 1 : 0);
-  ss = sp->state;
   ss->mx_sp = sp; 
   snd_minibuffer_activate(sp, keysym, (ev->state & snd_MetaMask));
 }
@@ -1067,11 +1040,9 @@ static void apply_callback(Widget w, XtPointer context, XtPointer info)
   snd_info *sp = (snd_info *)context;
   XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)info;
   XButtonEvent *ev;
-  snd_state *ss;
   snd_context *sgx;
   ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
   sgx = sp->sgx;
-  ss = sp->state;
   if (sp->applying) 
     {
       stop_applying(sp);
@@ -1092,7 +1063,7 @@ static void apply_callback(Widget w, XtPointer context, XtPointer info)
       sp->applying = true;
       if (!(ss->using_schemes)) 
 	XmChangeColor(APPLY_BUTTON(sp), (Pixel)((ss->sgx)->pushed_button_color));
-      sgx->apply_in_progress = BACKGROUND_ADD(ss, apply_controls, (Indicium)(make_apply_state_with_implied_beg_and_dur(sp)));
+      sgx->apply_in_progress = BACKGROUND_ADD(apply_controls, (Indicium)(make_apply_state_with_implied_beg_and_dur(sp)));
     }
 }
 
@@ -1105,10 +1076,10 @@ static void lockapply(snd_info *sp, void *up)
   if (sp != (snd_info *)up) set_sensitive(APPLY_BUTTON(sp), false);
 }
 
-void lock_apply(snd_state *ss, snd_info *sp)
+void lock_apply(snd_info *sp)
 {
   /* if playing or applying, set other applys to insensitive */
-  for_each_sound(ss, lockapply, (void *)sp);
+  for_each_sound(lockapply, (void *)sp);
 }
 
 static void unlockapply(snd_info *sp, void *up) 
@@ -1116,9 +1087,9 @@ static void unlockapply(snd_info *sp, void *up)
   if (sp != (snd_info *)up) set_sensitive(APPLY_BUTTON(sp), true);
 }
 
-void unlock_apply(snd_state *ss, snd_info *sp)
+void unlock_apply(snd_info *sp)
 {
-  for_each_sound(ss, unlockapply, (void *)sp);
+  for_each_sound(unlockapply, (void *)sp);
   if ((sp) && (!(ss->using_schemes)) && (sp->index >= 0))
     XmChangeColor(APPLY_BUTTON(sp), (Pixel)((ss->sgx)->basic_color));
 }
@@ -1150,10 +1121,8 @@ static void watch_sash(Widget w, XtPointer closure, XtPointer info)
   SashCallData call_data = (SashCallData)info;
   int i, k;
   Widget child;
-  snd_state *ss;
   snd_info *sp;
   /* call_data->params[0]: Commit, Move, Key, Start (as strings) */
-  ss = get_global_state();
   if ((call_data->params) && 
       (call_data->params[0]) && 
       (with_relative_panes(ss)) &&
@@ -1401,12 +1370,9 @@ static bool bomb_in_progress = false;
 
 static void bomb_check(XtPointer context, XtIntervalId *id)
 {
-  snd_info *sp = (snd_info *)context;
-  snd_state *ss;
   int incs[1];
-  ss = sp->state;
   incs[0] = 0;
-  for_each_sound(ss, inc_bomb, (void *)incs);
+  for_each_sound(inc_bomb, (void *)incs);
   if (incs[0] > 0)
     XtAppAddTimeOut(MAIN_APP(ss),
 		    (unsigned long)BOMB_TIME,
@@ -1417,10 +1383,8 @@ static void bomb_check(XtPointer context, XtIntervalId *id)
 
 void snd_file_bomb_icon(snd_info *sp, bool on)
 {
-  snd_state *ss;
   if ((on) && (!bomb_in_progress))
     {
-      ss = sp->state;
       bomb_in_progress = true;
       XtAppAddTimeOut(MAIN_APP(ss),
 		      (unsigned long)BOMB_TIME,
@@ -1429,7 +1393,7 @@ void snd_file_bomb_icon(snd_info *sp, bool on)
     }
 }
 
-static void snd_file_glasses_icon(snd_info *sp, int on, int glass)
+static void snd_file_glasses_icon(snd_info *sp, bool on, int glass)
 {
   Widget w;
   snd_context *sx;
@@ -1457,26 +1421,27 @@ void snd_file_bomb_icon(snd_info *sp, bool on)
   if (on)
     report_in_minibuffer(sp, _("%s has changed since we last read it!"), sp->short_filename);
 }
-/* static void snd_file_glasses_icon(snd_info *sp, int on, int glass) {} */
+/* static void snd_file_glasses_icon(snd_info *sp, bool on, int glass) {} */
 void x_bomb(snd_info *sp, bool on) {}
 #endif
 
 static void close_sound_dialog(Widget w, XtPointer context, XtPointer info) 
 {
   snd_info *sp = (snd_info *)context;
-  if (sp) snd_close_file(sp, sp->state);
+  if (sp) snd_close_file(sp);
 }
 
 static Pixmap spd_r, spd_l;
 static bool spd_ok = false;
 
-static snd_info *add_sound_window_with_parent (Widget parent, char *filename, snd_state *ss, int read_only)
+snd_info *add_sound_window(char *filename, int read_only)
 {  
   snd_info *sp = NULL, *osp;
   file_info *hdr = NULL;
   Widget *sw;
   XmString s1;
-  int snd_slot, nchans = 1, make_widgets, i, k, need_colors, n, old_chans;
+  int snd_slot, nchans = 1, i, k, n, old_chans;
+  bool make_widgets, need_colors;
   Arg args[32];
   char *old_name = NULL, *title;
   Dimension app_y, app_dy, screen_y, chan_min_y;
@@ -1490,7 +1455,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
   Atom sound_delete;
   static bool first_window = true;
   errno = 0;
-  hdr = make_file_info(filename, ss);
+  hdr = make_file_info(filename);
   if (!hdr) return(NULL);
   if (ss->pending_change) 
     {
@@ -1515,7 +1480,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
     if (chan_min_y < 5) 
       chan_min_y = 5;
 
-  snd_slot = find_free_sound_slot(ss, nchans); /* expands sound list if needed */
+  snd_slot = find_free_sound_slot(nchans); /* expands sound list if needed */
   if (ss->sounds[snd_slot]) /* we're trying to re-use an old, inactive set of widgets and whatnot */
     {
       osp = ss->sounds[snd_slot];
@@ -1523,7 +1488,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
     }
   else old_chans = 0;
   make_widgets = (ss->sounds[snd_slot] == NULL);
-  ss->sounds[snd_slot] = make_snd_info(ss->sounds[snd_slot], ss, filename, hdr, snd_slot, read_only);
+  ss->sounds[snd_slot] = make_snd_info(ss->sounds[snd_slot], filename, hdr, snd_slot, read_only);
   sp = ss->sounds[snd_slot];
   sp->inuse = SOUND_NORMAL;
   sx = sp->sgx;
@@ -1539,14 +1504,14 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
   if ((!make_widgets) && (old_chans < nchans))
     {
       for (i = old_chans; i < nchans; i++) 
-	add_channel_window(sp, i, ss, chan_min_y, 1, NULL, WITH_FW_BUTTONS, true);
+	add_channel_window(sp, i, chan_min_y, 1, NULL, WITH_FW_BUTTONS, true);
     }
 
   if (make_widgets)
     {
       need_colors = (!(ss->using_schemes));
 
-      if ((parent == NULL) && (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS))
+      if ((sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS))
 	{
 	  title = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
 	  mus_snprintf(title, PRINT_BUFFER_SIZE, "%d: %s", snd_slot, sp->short_filename);
@@ -1591,21 +1556,16 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
 	  XtSetArg(args[n], XmNpositionIndex, snd_slot); n++;
 	}
 
-      if (parent)
-	sw[W_pane] = XtCreateManagedWidget("snd-pane", xmPanedWindowWidgetClass, parent, args, n);
-      else
-	{
-	  if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
-	    sw[W_pane] = XtCreateManagedWidget("snd-pane", xmPanedWindowWidgetClass, sx->dialog, args, n);
-	  else sw[W_pane] = XtCreateManagedWidget("snd-pane", xmPanedWindowWidgetClass, SOUND_PANE(ss), args, n);
-	}
+      if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
+	sw[W_pane] = XtCreateManagedWidget("snd-pane", xmPanedWindowWidgetClass, sx->dialog, args, n);
+      else sw[W_pane] = XtCreateManagedWidget("snd-pane", xmPanedWindowWidgetClass, SOUND_PANE(ss), args, n);
 
       XtAddEventHandler(sw[W_pane], KeyPressMask, false, graph_key_press, (XtPointer)sp);
       /* if user clicks in controls, then starts typing, try to send key events to current active channel */
       /* all widgets in the control-pane that would otherwise intercept the key events get this event handler */
 
       for (i = 0; i < nchans; i++)
-	add_channel_window(sp, i, ss, chan_min_y, 0, NULL, WITH_FW_BUTTONS, true);
+	add_channel_window(sp, i, chan_min_y, 0, NULL, WITH_FW_BUTTONS, true);
       
       n = 0;      
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -1741,7 +1701,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNcolumns, 30); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
-      sw[W_info] = make_textfield_widget(ss, "snd-info", sw[W_name_form], args, n, ACTIVATABLE, add_completer_func(info_completer));
+      sw[W_info] = make_textfield_widget("snd-info", sw[W_name_form], args, n, ACTIVATABLE, add_completer_func(info_completer));
       XtAddCallback(sw[W_info], XmNactivateCallback, minibuffer_click_callback, (XtPointer)sp);
 
       n = 0;
@@ -1896,7 +1856,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XmStringFree(s1);
 
       n = 0;
-      s1 = initial_speed_label(ss);
+      s1 = initial_speed_label();
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
@@ -2292,7 +2252,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++;
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
-      sw[W_filter_order] = make_textfield_widget(ss, "filter-order", sw[W_amp_form], args, n, ACTIVATABLE, NO_COMPLETER);
+      sw[W_filter_order] = make_textfield_widget("filter-order", sw[W_amp_form], args, n, ACTIVATABLE, NO_COMPLETER);
       XmTextSetString(sw[W_filter_order], " 20");
       XtAddCallback(sw[W_filter_order], XmNactivateCallback, filter_order_activate_callback, (XtPointer)sp);
 
@@ -2381,7 +2341,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNrightWidget, sw[W_filter_dB]); n++;
       XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++;
-      sw[W_filter] = make_textfield_widget(ss, "filter-text", sw[W_amp_form], args, n, ACTIVATABLE, add_completer_func(filename_completer));
+      sw[W_filter] = make_textfield_widget("filter-text", sw[W_amp_form], args, n, ACTIVATABLE, add_completer_func(filename_completer));
       XtAddCallback(sw[W_filter], XmNactivateCallback, filter_activate_callback, (XtPointer)sp);
 
       /* APPLY */
@@ -2531,7 +2491,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
 	if ((sw[i]) && (!XtIsManaged(sw[i]))) 
 	  XtManageChild(sw[i]);
       for (k = 0; k < nchans; k++) 
-	add_channel_window(sp, k, ss, chan_min_y, 0, NULL, WITH_FW_BUTTONS, true);
+	add_channel_window(sp, k, chan_min_y, 0, NULL, WITH_FW_BUTTONS, true);
       set_button_label(sw[W_name], shortname_indexed(sp));
       if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
 	XtVaSetValues(sw[W_control_panel],
@@ -2557,8 +2517,8 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
   snd_file_lock_icon(sp, (sp->read_only || (cant_write(sp->filename))));
   if (old_name)
     report_in_minibuffer(sp, _("(translated %s)"), old_name);
-  if (!(ss->using_schemes)) map_over_children(SOUND_PANE(ss), color_sashes, (void *)ss);
-  if (!(auto_resize(ss))) equalize_all_panes(ss); 
+  if (!(ss->using_schemes)) map_over_children(SOUND_PANE(ss), color_sashes, NULL);
+  if (!(auto_resize(ss))) equalize_all_panes(); 
 
   /* TODO: if -horizontal, if no height setting, first sound gets no space, added sounds get no width */
   if (first_window)
@@ -2594,26 +2554,19 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
 		    XmNwidth, (Dimension)(widget_width(MAIN_SHELL(ss))),
 		    XmNheight, (Dimension)(chan_min_y * nchans), /* bugfix thanks to Paul @pobox */
 		    NULL);
-      if (nchans > 1) equalize_all_panes(ss);
+      if (nchans > 1) equalize_all_panes();
     }
   after_open(sp->index);
   if (free_filename) FREE(filename);
   return(sp);
 }
 
-snd_info *add_sound_window (char *filename, snd_state *ss, int read_only)
-{
-  return(add_sound_window_with_parent(NULL, filename, ss, read_only));
-}
-
 void snd_info_cleanup(snd_info *sp)
 {
   snd_context *sx;
-  snd_state *ss;
   if ((sp) && (sp->sgx))
     {
       sx = sp->sgx;
-      ss = sp->state;
       if (SYNC_BUTTON(sp))
 	{
 	  XtVaSetValues(SYNC_BUTTON(sp), XmNset, false, NULL);
@@ -2641,7 +2594,6 @@ void snd_info_cleanup(snd_info *sp)
 
 void set_sound_pane_file_label(snd_info *sp, char *str)
 {
-  
   if ((sp->name_string == NULL) || (strcmp(sp->name_string, str) != 0))
     {
       if (sp->name_string) FREE(sp->name_string);
@@ -2709,7 +2661,7 @@ void unlock_control_panel(snd_info *sp)
   XtVaSetValues(CONTROL_PANEL(sp), XmNpaneMinimum, 1, NULL);
 }
 
-void equalize_sound_panes(snd_state *ss, snd_info *sp, chan_info *ncp, bool all_panes)
+void equalize_sound_panes(snd_info *sp, chan_info *ncp, bool all_panes)
 {
   /* make sp look ok, squeezing others if needed */
   /* if there's already enough (i.e. ss->channel_min_height), just return */
@@ -2786,8 +2738,7 @@ void equalize_sound_panes(snd_state *ss, snd_info *sp, chan_info *ncp, bool all_
 }
 
 
-
-void color_filter_waveform(snd_state *ss, Pixel color)
+void color_filter_waveform(Pixel color)
 {
   int i;
   snd_info *sp;
@@ -2828,7 +2779,7 @@ void reflect_amp_env_in_progress(snd_info *sp)
     XtVaSetValues(MINIBUFFER_SEPARATOR(sp), XmNseparatorType, XmNO_LINE, NULL);
 }
 
-void equalize_all_panes(snd_state *ss)
+void equalize_all_panes(void)
 {
   /* normalize: get size, #chans, #snds, set pane minima, force remanage(?), unlock */
   int sounds = 0, chans, chan_y, height, width, screen_y, i;
@@ -2866,18 +2817,18 @@ void equalize_all_panes(snd_state *ss)
 	  if (height > screen_y) height = screen_y;
 	}
       else XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, true, NULL); /* need temporary resize to change pane sizes below */
-      chans = active_channels(ss, WITHOUT_VIRTUAL_CHANNELS);
+      chans = active_channels(WITHOUT_VIRTUAL_CHANNELS);
       if (chans > 1)
 	{
 	  /* now we try to make room for the sound ctrl bar, each channel, perhaps the menu */
 	  chan_y = (height - (sounds * ss->ctrls_height)) / chans - 16;
 	  /* probably can be 14 or 12 -- seems to be margin related or something */
 	  wid[0] = chan_y;
-	  for_each_sound(ss, sound_lock_control_panel, NULL);
-	  map_over_separate_chans(ss, channel_lock_pane, (void *)wid);
-	  map_over_separate_chans(ss, channel_open_pane, NULL);
-	  map_over_separate_chans(ss, channel_unlock_pane, NULL);
-	  for_each_sound(ss, sound_unlock_control_panel, NULL);
+	  for_each_sound(sound_lock_control_panel, NULL);
+	  map_over_separate_chans(channel_lock_pane, (void *)wid);
+	  map_over_separate_chans(channel_open_pane, NULL);
+	  map_over_separate_chans(channel_unlock_pane, NULL);
+	  for_each_sound(sound_unlock_control_panel, NULL);
 	}
       unlock_listener_pane();
       if (!(auto_resize(ss))) XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, false, NULL);
@@ -2891,23 +2842,21 @@ void equalize_all_panes(snd_state *ss)
 	    {
 	      width = widget_width(MAIN_PANE(ss));
 	      width /= sounds;
-	      for_each_sound(ss, even_sounds, (void *)(&width));
-	      for_each_sound(ss, sound_open_pane, NULL);
-	      for_each_sound(ss, sound_unlock_pane, NULL);
+	      for_each_sound(even_sounds, (void *)(&width));
+	      for_each_sound(sound_open_pane, NULL);
+	      for_each_sound(sound_unlock_pane, NULL);
 	    }
-	  for_each_sound(ss, sound_lock_control_panel, NULL);
-	  for_each_sound(ss, even_channels, (void *)(&height));
-	  map_over_separate_chans(ss, channel_open_pane, NULL);   /* manage the channel widgets */
-	  map_over_separate_chans(ss, channel_unlock_pane, NULL); /* allow pane to be resized */
-	  for_each_sound(ss, sound_unlock_control_panel, NULL);
+	  for_each_sound(sound_lock_control_panel, NULL);
+	  for_each_sound(even_channels, (void *)(&height));
+	  map_over_separate_chans(channel_open_pane, NULL);   /* manage the channel widgets */
+	  map_over_separate_chans(channel_unlock_pane, NULL); /* allow pane to be resized */
+	  for_each_sound(sound_unlock_control_panel, NULL);
 	}
     }
 }
 
 void sound_show_ctrls(snd_info *sp)
 {
-  snd_state *ss;
-  ss = sp->state;
   XtUnmanageChild(CONTROL_PANEL(sp));
   XtVaSetValues(CONTROL_PANEL(sp),
 		XmNpaneMinimum, ss->open_ctrls_height,
@@ -2941,7 +2890,7 @@ int control_panel_open(snd_info *sp)
   return(hgt > CLOSED_CTRLS_HEIGHT);
 }
 
-void show_controls(snd_state *ss)
+void show_controls(void)
 {
   snd_info *sp;
   int i;
@@ -2955,7 +2904,7 @@ void show_controls(snd_state *ss)
     }
 }
 
-void hide_controls(snd_state *ss)
+void hide_controls(void)
 {
   snd_info *sp;
   int i;
@@ -3010,13 +2959,12 @@ void progress_report(snd_info *sp, const char *funcname, int curchan, int chans,
   else report_in_minibuffer(sp, expr_str);
   FREE(expr_str);
 #endif
-  check_for_event(sp->state);
+  check_for_event();
 }
 
 void finish_progress_report(snd_info *sp, bool from_enved)
 {
 #if (!HAVE_XPM)
-  snd_state *ss;
 #endif
   if (sp->inuse != SOUND_NORMAL) return;
 #if HAVE_XPM
@@ -3025,7 +2973,7 @@ void finish_progress_report(snd_info *sp, bool from_enved)
   else snd_file_glasses_icon(sp, false, 0);
   clear_minibuffer_prompt(sp);
 #else
-  ss = get_global_state();
+
   if (from_enved)
     display_enved_progress((ss->stopped_explicitly) ? _("stopped") : "", 0);
   else report_in_minibuffer(sp, (ss->stopped_explicitly) ? _("stopped") : "");

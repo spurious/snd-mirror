@@ -31,7 +31,6 @@
 /*****************************************************************************/
 
 /* FIXME: Repository is not threadsafe. */
-
 /* FIXME: Memory checking is non-existent. */
 
 /*****************************************************************************/
@@ -59,7 +58,6 @@ static int lInputCount, lOutputCount;
 static void isLADSPAPluginSupported(const LADSPA_Descriptor *psDescriptor) {
   unsigned int lIndex;
   LADSPA_PortDescriptor iPortDescriptor;
-
   lInputCount = lOutputCount = 0;
   for (lIndex = 0; lIndex < psDescriptor->PortCount; lIndex++) {
     iPortDescriptor = psDescriptor->PortDescriptors[lIndex];
@@ -81,7 +79,6 @@ static const LADSPA_Descriptor *findLADSPADescriptor(const char *pcPackedFilenam
 
   long lIndex;
   LADSPAPluginInfo *psInfo;
-
   for (lIndex = 0; lIndex < g_lLADSPARepositoryCount; lIndex++) {
     psInfo = g_psLADSPARepository[lIndex];
     if (strcmp(pcLabel, psInfo->m_pcLabel) == 0
@@ -258,7 +255,7 @@ static void loadLADSPA() {
   g_lLADSPARepositoryCapacity = LADSPA_REPOSITORY_CAPACITY_STEP;
   g_lLADSPARepositoryCount = 0;
 
-  pcLADSPAPath = ladspa_dir(get_global_state());
+  pcLADSPAPath = ladspa_dir(ss);
   if (!pcLADSPAPath)
     {
       pcLADSPAPath = getenv("LADSPA_PATH");
@@ -324,7 +321,7 @@ information of the LADSPA plugins currently available. For each plugin a \
 list containing the plugin-file and plugin-label is included."
 
   long lIndex;
-  XEN xenList; XEN xenPluginList;
+  XEN xenList, xenPluginList;
   LADSPAPluginInfo *psInfo;
 
   if (!g_bLADSPAInitialised)
@@ -361,7 +358,7 @@ a user interface edit the parameter in a useful way."
   long lIndex;
   const LADSPA_Descriptor *psDescriptor;
   char *pcFilename, *pcLabel, *pcTmp;
-  XEN xenList; XEN xenPortData;
+  XEN xenList, xenPortData;
   LADSPA_PortRangeHintDescriptor iHint;
 
   if (!g_bLADSPAInitialised)
@@ -455,7 +452,6 @@ Information about about parameters can be acquired using analyse-ladspa."
   unsigned long lParameterCount;
   XEN xenParameters;
   LADSPA_PortDescriptor iPortDescriptor;
-
   LADSPA_Data *pfControls = NULL;
   chan_info *cp, *ncp;
   snd_info *sp;
@@ -464,13 +460,11 @@ Information about about parameters can be acquired using analyse-ladspa."
   off_t num;
   snd_fd **sf;
   file_info *hdr;
-  snd_state *state;
   XEN errmsg;
   mus_sample_t **data;
   LADSPA_Data **pfInputBuffer = NULL;
   LADSPA_Data **pfOutputBuffer = NULL;
 
-  state = get_global_state();
   if (!g_bLADSPAInitialised)
     loadLADSPA();
 
@@ -625,7 +619,7 @@ Information about about parameters can be acquired using analyse-ladspa."
   }
 
   /* Temporary file name. */
-  ofile = snd_tempnam(state);
+  ofile = snd_tempnam();
 
   /* Create initial header for output file, stealing info from input
      file. */
@@ -636,7 +630,7 @@ Information about about parameters can be acquired using analyse-ladspa."
 			 XEN_TO_C_STRING(origin));
 
   /* Open the output file, using the header we've been working on. */
-  ofd = open_temp_file(ofile, outchans, hdr, state);
+  ofd = open_temp_file(ofile, outchans, hdr);
   if (ofd == -1)
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_apply_ladspa),
@@ -650,7 +644,7 @@ Information about about parameters can be acquired using analyse-ladspa."
     psDescriptor->activate(psHandle);
 
   lAt = 0;
-  state->stopped_explicitly = false;
+  ss->stopped_explicitly = false;
   while (lAt < num) {
 
     /* Decide how much audio to process this frame. */
@@ -680,7 +674,7 @@ Information about about parameters can be acquired using analyse-ladspa."
 			 data);
     if (err == -1)
       break;
-    if (state->stopped_explicitly)
+    if (ss->stopped_explicitly)
       break;
 
     lAt += lBlockSize;
@@ -698,7 +692,7 @@ Information about about parameters can be acquired using analyse-ladspa."
 
   /* Discard tmp header. */
   hdr = free_file_info(hdr);
-  if (!(state->stopped_explicitly))
+  if (!(ss->stopped_explicitly))
     {
       for (i = 0, j = 0; i < outchans; i++)
 	{
@@ -720,7 +714,7 @@ Information about about parameters can be acquired using analyse-ladspa."
   else 
     {
       report_in_minibuffer(sp, _(S_apply_ladspa " interrupted"));
-      state->stopped_explicitly = false;
+      ss->stopped_explicitly = false;
     }
   if (ofile) FREE(ofile);
   for (i = 0; i < inchans; i++)

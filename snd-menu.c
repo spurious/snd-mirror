@@ -62,9 +62,7 @@ void reflect_file_lack_in_menu (void)
 
 void reflect_mix_in_menu(void)
 {
-  snd_state *ss;
   set_sensitive(view_mix_panel_menu(), (any_mix_id() != INVALID_MIX_ID));
-  ss = get_global_state();
   if ((ss->selected_mix != INVALID_MIX_ID) &&
       (!(mix_ok(ss->selected_mix))))
     {
@@ -88,10 +86,10 @@ static bool find_any_possible_edits (chan_info *cp, void *ignore)
   return(cp->edit_size > 0);
 }
 
-void reflect_file_revert_in_menu (snd_state *ss)
+void reflect_file_revert_in_menu (void)
 {
   bool editing;
-  editing = map_over_chans(ss, find_any_edits, NULL);
+  editing = map_over_chans(find_any_edits, NULL);
   if (!editing)
     {
       set_sensitive(file_save_menu(), false);
@@ -107,10 +105,10 @@ void reflect_file_revert_in_menu (snd_state *ss)
   if (popup_menu_exists()) set_sensitive(popup_redo_menu(), true);
 }
 
-void reflect_file_save_in_menu (snd_state *ss)
+void reflect_file_save_in_menu (void)
 {
   bool editing;
-  editing = map_over_chans(ss, find_any_edits, NULL);
+  editing = map_over_chans(find_any_edits, NULL);
   if (!editing)
     {
       set_sensitive(file_save_menu(), false);
@@ -124,7 +122,7 @@ void reflect_file_save_in_menu (snd_state *ss)
 	}
       set_sensitive(edit_redo_menu(), false);
     }
-  editing = map_over_chans(ss, find_any_possible_edits, NULL);
+  editing = map_over_chans(find_any_possible_edits, NULL);
 }
 
 void reflect_file_revert_in_label (snd_info *sp)
@@ -225,39 +223,38 @@ void reflect_raw_pending_in_menu(void)
   set_sensitive(file_new_menu(), false);
 }
 
-void close_file_from_menu(snd_state *ss)
+void close_file_from_menu(void)
 {
   snd_info *sp;
-  sp = any_selected_sound(ss);
-  if (sp) snd_close_file(sp, ss);
+  sp = any_selected_sound();
+  if (sp) snd_close_file(sp);
 }
 
-void save_file_from_menu(snd_state *ss)
+void save_file_from_menu(void)
 {
   snd_info *sp;
-  sp = any_selected_sound(ss);
+  sp = any_selected_sound();
   if (sp) save_edits(sp, NULL);
 }
 
 static void file_update(snd_info *sp, void *ptr)
 {
-  snd_state *ss = (snd_state *)ptr;
   /* here we should only update files that have changed on disk */
   if ((sp) && (sp->edited_region == NULL) &&
       ((sp->need_update) || 
        (file_write_date(sp->filename) != sp->write_date)))
-    snd_update(ss, sp);
+    snd_update(sp);
 }
 
-void update_file_from_menu(snd_state *ss)
+void update_file_from_menu(void)
 {
-  for_each_sound(ss, file_update, (void *)ss);
+  for_each_sound(file_update, NULL);
 }
 
 static char *output_name(void);
 static int new_ctr = 0;
 
-snd_info *new_file_from_menu(snd_state *ss)
+snd_info *new_file_from_menu(void)
 {
   char *new_file_name = NULL, *extension = NULL, *new_comment = NULL;
   int header_type, data_format, chans, srate;
@@ -280,45 +277,45 @@ snd_info *new_file_from_menu(snd_state *ss)
   srate = default_output_srate(ss);
   new_comment = output_comment(NULL);
   mus_sound_forget(new_file_name);
-  sp = make_new_file_dialog(ss, new_file_name, header_type, data_format, srate, chans, new_comment);
+  sp = make_new_file_dialog(new_file_name, header_type, data_format, srate, chans, new_comment);
   if (new_comment) FREE(new_comment);
   if (new_file_name) FREE(new_file_name);
   return(sp);
 }
 
-void revert_file_from_menu(snd_state *ss)
+void revert_file_from_menu(void)
 {
   snd_info *sp;
   int i;
-  sp = any_selected_sound(ss);
+  sp = any_selected_sound();
   if (sp)
     {
       for (i = 0; i < sp->nchans; i++) 
 	revert_edits(sp->chans[i], NULL);
       reflect_file_revert_in_label(sp);
-      reflect_file_revert_in_menu(ss);
+      reflect_file_revert_in_menu();
     }
 }
 
-void exit_from_menu(snd_state *ss)
+void exit_from_menu(void)
 {
-  if (snd_exit_cleanly(ss, false))
+  if (snd_exit_cleanly(false))
     snd_exit(1);
 }
 
-void save_options_from_menu(snd_state *ss)
+void save_options_from_menu(void)
 {
-  if ((save_options(ss) == 0) && 
-      (any_selected_sound(ss)))
-    report_in_minibuffer(any_selected_sound(ss), _("saved options in %s"), ss->init_file);
+  if ((save_options() == 0) && 
+      (any_selected_sound()))
+    report_in_minibuffer(any_selected_sound(), _("saved options in %s"), ss->init_file);
 }
 
-void save_state_from_menu(snd_state *ss)
+void save_state_from_menu(void)
 {
   if ((save_state_file(ss)) && 
-      (save_state(ss, save_state_file(ss)) == 0) && 
-      (any_selected_sound(ss)))
-    report_in_minibuffer(any_selected_sound(ss), _("saved state in %s"), save_state_file(ss));
+      (save_state(save_state_file(ss)) == 0) && 
+      (any_selected_sound()))
+    report_in_minibuffer(any_selected_sound(), _("saved state in %s"), save_state_file(ss));
 }
 
 static void chans_graph_style(chan_info *cp, void *ptr) 
@@ -330,7 +327,7 @@ static void chans_graph_style(chan_info *cp, void *ptr)
   update_graph(cp);
 }
 
-void set_graph_style(snd_state *ss, graph_style_t val)
+void set_graph_style(graph_style_t val)
 {
   switch (graph_style(ss))
     {
@@ -340,8 +337,8 @@ void set_graph_style(snd_state *ss, graph_style_t val)
     case GRAPH_DOTS_AND_LINES: set_sensitive(view_dots_and_lines_menu(), true); break;
     case GRAPH_LOLLIPOPS:      set_sensitive(view_lollipops_menu(), true);      break;
     }
-  in_set_graph_style(ss, val);
-  for_each_chan_1(ss, chans_graph_style, (void *)(&val));
+  in_set_graph_style(val);
+  for_each_chan_1(chans_graph_style, (void *)(&val));
   switch (val)
     {
     case GRAPH_LINES:          set_sensitive(view_lines_menu(), false);          break;
@@ -358,10 +355,10 @@ static void chans_marks(chan_info *cp, void *ptr)
   update_graph(cp);
 }
 
-void set_show_marks(snd_state *ss, bool val)
+void set_show_marks(bool val)
 {
-  in_set_show_marks(ss, val);
-  for_each_chan_1(ss, chans_marks, (void *)(&val));
+  in_set_show_marks(val);
+  for_each_chan_1(chans_marks, (void *)(&val));
 }
 
 static void chans_zero(chan_info *cp, void *ptr)
@@ -370,14 +367,14 @@ static void chans_zero(chan_info *cp, void *ptr)
   update_graph(cp);
 }
 
-void set_show_y_zero(snd_state *ss, bool val)
+void set_show_y_zero(bool val)
 {
-  in_set_show_y_zero(ss, val);
+  in_set_show_y_zero(val);
   if (view_zero_menu())
     {
       set_menu_label(view_zero_menu(), 
 		     (val) ? _("Hide Y = 0") : _("Show Y = 0"));
-      for_each_chan_1(ss, chans_zero, (void *)(&val));
+      for_each_chan_1(chans_zero, (void *)(&val));
     }
 }
 
@@ -388,11 +385,11 @@ static void chans_verbose_cursor(chan_info *cp, void *ptr)
   update_graph(cp);
 }
 
-void set_verbose_cursor(snd_state *ss, bool val)
+void set_verbose_cursor(bool val)
 {
-  in_set_verbose_cursor(ss, val);
-  if (val == 0) for_each_sound(ss, clrmini, NULL);
-  for_each_chan_1(ss, chans_verbose_cursor, (void *)(&val));
+  in_set_verbose_cursor(val);
+  if (val == 0) for_each_sound(clrmini, NULL);
+  for_each_chan_1(chans_verbose_cursor, (void *)(&val));
   if (view_cursor_menu())
     set_menu_label(view_cursor_menu(), 
 		   (val) ? _("Silent cursor") : _("Verbose cursor"));
@@ -408,7 +405,7 @@ void set_view_listener_label(const char *lab)
   set_menu_label(view_listener_menu(), lab);
 }
 
-void activate_focus_menu(snd_state *ss, zoom_focus_t new_focus)
+void activate_focus_menu(zoom_focus_t new_focus)
 {
   if (options_focus_left_menu())
     {
@@ -420,7 +417,7 @@ void activate_focus_menu(snd_state *ss, zoom_focus_t new_focus)
 	case ZOOM_FOCUS_ACTIVE: set_sensitive(options_focus_active_menu(), true); break;
 	}
     }
-  set_zoom_focus_style(ss, new_focus);
+  set_zoom_focus_style(new_focus);
   if (options_focus_left_menu())
     {
       switch (new_focus)
@@ -433,7 +430,7 @@ void activate_focus_menu(snd_state *ss, zoom_focus_t new_focus)
     }
 }  
 
-void activate_speed_in_menu(snd_state *ss, speed_style_t newval)
+void activate_speed_in_menu(speed_style_t newval)
 {
   if (options_speed_ratio_menu())
     {
@@ -444,7 +441,7 @@ void activate_speed_in_menu(snd_state *ss, speed_style_t newval)
 	default:                        set_sensitive(options_speed_float_menu(), true);    break;
 	}
     }
-  set_speed_style(ss, newval);
+  set_speed_style(newval);
   if (options_speed_ratio_menu())
     {
       switch (speed_control_style(ss))
@@ -494,16 +491,15 @@ static void reflect_x_axis_unit_change_in_menu(x_axis_style_t oldval, x_axis_sty
     }
 }
   
-void set_x_axis_style(snd_state *ss, x_axis_style_t val)
+void set_x_axis_style(x_axis_style_t val)
 {
   reflect_x_axis_unit_change_in_menu(x_axis_style(ss), val);
-  in_set_x_axis_style(ss, val);
-  for_each_chan_1(ss, chans_x_axis_style, (void *)(&val));
+  in_set_x_axis_style(val);
+  for_each_chan_1(chans_x_axis_style, (void *)(&val));
 }
 
 static void update_sound(snd_info *sp, void *ptr)
 {
-  snd_state *ss = (snd_state *)ptr;
   if (sp)
     {
       switch (channel_style(ss))
@@ -515,7 +511,7 @@ static void update_sound(snd_info *sp, void *ptr)
     }
 }
 
-void set_channel_style(snd_state *ss, channel_style_t val)
+void set_channel_style(channel_style_t val)
 {
   switch (channel_style(ss))
     {
@@ -523,15 +519,15 @@ void set_channel_style(snd_state *ss, channel_style_t val)
     case CHANNELS_COMBINED:     set_sensitive(view_combine_combined_menu(), true);     break;
     case CHANNELS_SUPERIMPOSED: set_sensitive(view_combine_superimposed_menu(), true); break;
     }
-  in_set_channel_style(ss, val);
+  in_set_channel_style(val);
   switch (val)
     {
     case CHANNELS_SEPARATE:     set_sensitive(view_combine_separate_menu(), false);     break;
     case CHANNELS_COMBINED:     set_sensitive(view_combine_combined_menu(), false);     break;
     case CHANNELS_SUPERIMPOSED: set_sensitive(view_combine_superimposed_menu(), false); break;
     }
-  for_each_sound(ss, update_sound, (void *)ss);
-  for_each_chan(ss, update_graph);
+  for_each_sound(update_sound, NULL);
+  for_each_chan(update_graph);
 }
 
 static XEN snd_no_such_menu_error(const char *caller, XEN id)
@@ -567,23 +563,21 @@ static char *output_name(void)
 
 static XEN g_save_state_file(void) 
 {
-  return(C_TO_XEN_STRING(save_state_file(get_global_state())));
+  return(C_TO_XEN_STRING(save_state_file(ss)));
 }
 
-static void set_save_state_file(snd_state *ss, char *name)
+static void set_save_state_file(char *name)
 {
   if (save_state_file(ss)) FREE(save_state_file(ss));
-  in_set_save_state_file(ss, copy_string(name));
+  in_set_save_state_file(copy_string(name));
   set_sensitive(options_save_state_menu(), (snd_strlen(name) > 0));
 }
 
 static XEN g_set_save_state_file(XEN val) 
 {
   #define H_save_state_file "(" S_save_state_file "): the name of the saved state file (\"saved-snd." XEN_FILE_EXTENSION "\")"
-  snd_state *ss;
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_save_state_file, "a string"); 
-  ss = get_global_state();
-  set_save_state_file(ss, XEN_TO_C_STRING(val));
+  set_save_state_file(XEN_TO_C_STRING(val));
   return(C_TO_XEN_STRING(save_state_file(ss)));
 }
 
@@ -639,7 +633,7 @@ void unprotect_callback(int slot)
 static XEN gl_add_to_main_menu(XEN label, XEN callback)
 {
   #define H_add_to_main_menu "(" S_add_to_main_menu " label (callback #f)): adds label to the main (top-level) menu, returning its index"
-  int val = -1, slot = -1;
+  int slot = -1;
   char *err;
   XEN errm;
   XEN_ASSERT_TYPE(XEN_STRING_P(label), label, XEN_ARG_1, S_add_to_main_menu, "a string");
@@ -656,10 +650,7 @@ static XEN gl_add_to_main_menu(XEN label, XEN callback)
 	  return(snd_bad_arity_error(S_add_to_main_menu, errm, callback));
 	}
     }
-  val = g_add_to_main_menu(get_global_state(), 
-			   XEN_TO_C_STRING(label), 
-			   slot);
-  return(C_TO_XEN_INT(val));
+  return(C_TO_XEN_INT(g_add_to_main_menu(XEN_TO_C_STRING(label), slot)));
 }
 
 static XEN gl_add_to_menu(XEN menu, XEN label, XEN callback, XEN gpos)
@@ -683,7 +674,7 @@ func (a function of no args) when the new menu is activated."
 	return(snd_no_such_menu_error(S_add_to_menu, menu));
       if (XEN_PROCEDURE_P(callback)) slot = make_callback_slot();
       if (XEN_INTEGER_P(gpos)) position = XEN_TO_C_INT(gpos);
-      err = g_add_to_menu(get_global_state(), 
+      err = g_add_to_menu(
 			  m,
 #if (SGI) && (!(HAVE_EXTENSION_LANGUAGE)) && (!(defined(__GNUC__)))
 			  /* SGI C-compiler thinks NULL:NULL can't be char*! */
@@ -715,15 +706,13 @@ void g_snd_callback(int callb)
 static XEN gl_remove_from_menu(XEN menu, XEN label)
 {
   #define H_remove_from_menu "(" S_remove_from_menu " menu label): removes menu item label from menu"
-  int val, m;
+  int m;
   XEN_ASSERT_TYPE(XEN_STRING_P(label), label, XEN_ARG_2, S_remove_from_menu, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(menu), menu, XEN_ARG_1, S_remove_from_menu, "an integer");
   m = XEN_TO_C_INT(menu);
   if (m < 0) 
     return(snd_no_such_menu_error(S_remove_from_menu, menu));
-  val = g_remove_from_menu(m,
-			   XEN_TO_C_STRING(label));
-  return(C_TO_XEN_INT(val));
+  return(C_TO_XEN_INT(g_remove_from_menu(m, XEN_TO_C_STRING(label))));
 }
 
 static XEN gl_change_menu_label(XEN menu, XEN old_label, XEN new_label)

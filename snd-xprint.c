@@ -9,12 +9,11 @@ static char print_string[PRINT_BUFFER_SIZE];
 
 static void file_print_help_callback(Widget w, XtPointer context, XtPointer info)
 {
-  print_dialog_help((snd_state *)context);
+  print_dialog_help();
 }
 
 static void file_print_cancel_callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_state *ss = (snd_state *)context;
   ss->print_choice = PRINT_SND;
   XtUnmanageChild(file_print_dialog);
 }
@@ -30,8 +29,8 @@ static bool printing = false;
 
 static void file_print_ok_callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_state *ss = (snd_state *)context;
-  int print_it, quit = 0, err = 0;
+  bool print_it, quit = false;
+  int err = 0;
   char *name, *str = NULL;
   XmString plab, slab;
   snd_info *nsp = NULL;
@@ -42,7 +41,7 @@ static void file_print_ok_callback(Widget w, XtPointer context, XtPointer info)
       if (ss->print_choice == PRINT_SND)
 	{
 	  plab = XmStringCreate(_("Stop"), XmFONTLIST_DEFAULT_TAG);
-	  nsp = any_selected_sound(ss);
+	  nsp = any_selected_sound();
 	  mus_snprintf(print_string, PRINT_BUFFER_SIZE, _("printing %s"), nsp->short_filename);
 	  slab = XmStringCreate(print_string, XmFONTLIST_DEFAULT_TAG);
 	  XtVaSetValues(file_print_dialog, 
@@ -53,14 +52,14 @@ static void file_print_ok_callback(Widget w, XtPointer context, XtPointer info)
 	  XmStringFree(slab);
 	}
       printing = true;
-      print_it = XmToggleButtonGetState(file_print_eps_or_lpr);
+      print_it = (bool)XmToggleButtonGetState(file_print_eps_or_lpr);
       quit = (ss->print_choice == PRINT_ENV);
       if (print_it)
 	{
-	  name = snd_tempnam(ss);
+	  name = snd_tempnam();
 	  switch (ss->print_choice)
 	    {
-	    case PRINT_SND: snd_print(ss, name); break;
+	    case PRINT_SND: snd_print(name); break;
 	    case PRINT_ENV: enved_print(name); break;
 	    }
 	  err = lpr(name);
@@ -73,7 +72,7 @@ static void file_print_ok_callback(Widget w, XtPointer context, XtPointer info)
 	{
 	  switch (ss->print_choice)
 	    {
-	    case PRINT_SND: snd_print(ss, str = XmTextGetString(file_print_name)); break;
+	    case PRINT_SND: snd_print(str = XmTextGetString(file_print_name)); break;
 	    case PRINT_ENV: enved_print(str = XmTextGetString(file_print_name)); break;
 	    }
 	  if (str) XtFree(str);
@@ -104,10 +103,9 @@ void file_print_callback(Widget w, XtPointer context, XtPointer info)
   Widget dl, rc;
   XmString xmstr1, xmstr2, xmstr3, xmstr4, titlestr;
   snd_info *nsp;
-  snd_state *ss = (snd_state *)context;
   if (ss->print_choice == PRINT_SND)
     {
-      nsp = any_selected_sound(ss);
+      nsp = any_selected_sound();
       if (!nsp) return;
       mus_snprintf(print_string, PRINT_BUFFER_SIZE, _("print %s"), nsp->short_filename);
       xmstr4 = XmStringCreate(print_string, XmFONTLIST_DEFAULT_TAG);
@@ -139,9 +137,9 @@ void file_print_callback(Widget w, XtPointer context, XtPointer info)
       XmStringFree(xmstr4);
       XmStringFree(titlestr);
       XtUnmanageChild(XmMessageBoxGetChild(file_print_dialog, XmDIALOG_SYMBOL_LABEL));
-      XtAddCallback(file_print_dialog, XmNhelpCallback, file_print_help_callback, ss);
-      XtAddCallback(file_print_dialog, XmNcancelCallback, file_print_cancel_callback, ss);
-      XtAddCallback(file_print_dialog, XmNokCallback, file_print_ok_callback, ss);
+      XtAddCallback(file_print_dialog, XmNhelpCallback, file_print_help_callback, NULL);
+      XtAddCallback(file_print_dialog, XmNcancelCallback, file_print_cancel_callback, NULL);
+      XtAddCallback(file_print_dialog, XmNokCallback, file_print_ok_callback, NULL);
 
       rc = XtCreateManagedWidget("form", xmFormWidgetClass, file_print_dialog, NULL, 0);
 
@@ -159,7 +157,7 @@ void file_print_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNvalue, eps_file(ss)); n++;
-      file_print_name = make_textfield_widget(ss, "text", rc, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
+      file_print_name = make_textfield_widget("text", rc, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
 
       n = 0;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
@@ -179,7 +177,7 @@ void file_print_callback(Widget w, XtPointer context, XtPointer info)
 	  XtVaSetValues(XmMessageBoxGetChild(file_print_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	  XtVaSetValues(file_print_eps_or_lpr, XmNselectColor, (ss->sgx)->pushed_button_color, NULL);
 	}
-      set_dialog_widget(ss, PRINT_DIALOG, file_print_dialog);
+      set_dialog_widget(PRINT_DIALOG, file_print_dialog);
     }
   else
     {

@@ -15,15 +15,14 @@ static void delete_snd_error(GtkWidget *w, GdkEvent *event, gpointer context)
   gtk_widget_hide(snd_error_dialog);
 }
 
-static void create_snd_error_dialog(snd_state *ss, bool popup)
+static void create_snd_error_dialog(bool popup)
 {
   GtkWidget *ok_button;
-
   snd_error_dialog = gtk_dialog_new();
   g_signal_connect_closure_by_id(GTK_OBJECT(snd_error_dialog),
 				 g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(snd_error_dialog))),
 				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(delete_snd_error), (gpointer)ss, 0),
+				 g_cclosure_new(GTK_SIGNAL_FUNC(delete_snd_error), NULL, 0),
 				 0);
   gtk_window_set_title(GTK_WINDOW(snd_error_dialog), _("Error"));
   sg_make_resizable(snd_error_dialog);
@@ -37,15 +36,15 @@ static void create_snd_error_dialog(snd_state *ss, bool popup)
   g_signal_connect_closure_by_id(GTK_OBJECT(ok_button),
 				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(ok_button))),
 				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(dismiss_snd_error), (gpointer)ss, 0),
+				 g_cclosure_new(GTK_SIGNAL_FUNC(dismiss_snd_error), NULL, 0),
 				 0);
   gtk_widget_show(ok_button);
-  snd_error_history = make_scrolled_text(ss, GTK_DIALOG(snd_error_dialog)->vbox, false, NULL, NULL);
+  snd_error_history = make_scrolled_text(GTK_DIALOG(snd_error_dialog)->vbox, false, NULL, NULL);
   if (popup) gtk_widget_show(snd_error_dialog);
-  set_dialog_widget(ss, ERROR_DIALOG, snd_error_dialog);
+  set_dialog_widget(ERROR_DIALOG, snd_error_dialog);
 }
 
-void add_to_error_history(snd_state *ss, char *msg, bool popup)
+void add_to_error_history(char *msg, bool popup)
 {
 #if HAVE_STRFTIME
   char *tim, *buf;
@@ -53,13 +52,12 @@ void add_to_error_history(snd_state *ss, char *msg, bool popup)
 #endif
   int pos;
   if (!snd_error_dialog) 
-    create_snd_error_dialog(ss, popup);
+    create_snd_error_dialog(popup);
   else
     if ((popup) && (!(GTK_WIDGET_VISIBLE(snd_error_dialog))))
       gtk_widget_show(snd_error_dialog);
   pos = gtk_text_buffer_get_char_count(gtk_text_view_get_buffer(GTK_TEXT_VIEW(snd_error_history)));
   if (pos > 0) sg_set_cursor(snd_error_history, pos + 1);
-
 #if HAVE_STRFTIME
   tim = (char *)CALLOC(TIME_STR_SIZE, sizeof(char));
   buf = (char *)CALLOC(TIME_STR_SIZE, sizeof(char));
@@ -73,13 +71,13 @@ void add_to_error_history(snd_state *ss, char *msg, bool popup)
   sg_text_insert(snd_error_history, msg);
 }
 
-void post_error_dialog(snd_state *ss, char *msg)
+void post_error_dialog(char *msg)
 {
-  if (!snd_error_dialog) create_snd_error_dialog(ss, true); else raise_dialog(snd_error_dialog);
-  add_to_error_history(ss, msg, true);
+  if (!snd_error_dialog) create_snd_error_dialog(true); else raise_dialog(snd_error_dialog);
+  add_to_error_history(msg, true);
 }
 
-void show_snd_errors(snd_state *ss)
+void show_snd_errors(void)
 {
   if (snd_error_dialog)
     {
@@ -87,7 +85,7 @@ void show_snd_errors(snd_state *ss)
 	raise_dialog(snd_error_dialog);
       gtk_widget_show(snd_error_dialog);
     }
-  else post_error_dialog(ss, _("no errors yet"));
+  else post_error_dialog(_("no errors yet"));
 }
 
 static bool yes_or_no = false;
@@ -101,7 +99,7 @@ static void delete_yes_or_no_dialog(GtkWidget *w, GdkEvent *event, gpointer cont
 
 #define YES_OR_NO_BUFFER_SIZE 1024
 
-bool snd_yes_or_no_p(snd_state *ss, const char *format, ...)
+bool snd_yes_or_no_p(const char *format, ...)
 {
   char *yes_buf;
 #if HAVE_VPRINTF
@@ -130,7 +128,7 @@ bool snd_yes_or_no_p(snd_state *ss, const char *format, ...)
       g_signal_connect_closure_by_id(GTK_OBJECT(yes_or_no_dialog),
 				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(yes_or_no_dialog))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(delete_yes_or_no_dialog), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(delete_yes_or_no_dialog), NULL, 0),
 				     0);
       gtk_window_set_title(GTK_WINDOW(yes_or_no_dialog), _("Yow!"));
       sg_make_resizable(yes_or_no_dialog);
@@ -146,12 +144,12 @@ bool snd_yes_or_no_p(snd_state *ss, const char *format, ...)
       g_signal_connect_closure_by_id(GTK_OBJECT(yes_button),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(yes_button))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(yes_callback), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(yes_callback), NULL, 0),
 				     0);
       g_signal_connect_closure_by_id(GTK_OBJECT(no_button),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(no_button))),
 				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(no_callback), (gpointer)ss, 0),
+				     g_cclosure_new(GTK_SIGNAL_FUNC(no_callback), NULL, 0),
 				     0);
       gtk_widget_show(yes_button);
       gtk_widget_show(no_button);
@@ -160,13 +158,13 @@ bool snd_yes_or_no_p(snd_state *ss, const char *format, ...)
       gtk_container_add(GTK_CONTAINER(GTK_DIALOG(yes_or_no_dialog)->vbox), yn_label);
 
       gtk_widget_show(yn_label);
-      set_dialog_widget(ss, YES_OR_NO_DIALOG, yes_or_no_dialog);
+      set_dialog_widget(YES_OR_NO_DIALOG, yes_or_no_dialog);
     }
   else gtk_label_set_text(GTK_LABEL(yn_label), yes_buf);
   gtk_widget_show(yes_or_no_dialog);
   ss->error_lock = true;
   while ((GTK_WIDGET_VISIBLE(yes_or_no_dialog))  && (ss->error_lock))
-    check_for_event(ss);
+    check_for_event();
   ss->error_lock = false;
   if (GTK_WIDGET_VISIBLE(yes_or_no_dialog))
     gtk_widget_hide(yes_or_no_dialog);

@@ -80,8 +80,8 @@
 #define BACKGROUND_QUIT 1
 #define BACKGROUND_CONTINUE 0
 #define BACKGROUND_REMOVE(func) XtRemoveWorkProc(func)
-/* #define BACKGROUND_ADD(ss, func, data) XtAppAddWorkProc(MAIN_APP(ss), func, (XtPointer)data) */
-#define BACKGROUND_ADD(ss, func, data) add_work_proc(ss, func, (XtPointer)data)
+/* #define BACKGROUND_ADD(func, data) XtAppAddWorkProc(MAIN_APP(ss), func, (XtPointer)data) */
+#define BACKGROUND_ADD(func, data) add_work_proc(func, (XtPointer)data)
 #define NUM_COLORMAPS 16
 
 #if DEBUGGING
@@ -220,8 +220,8 @@ typedef struct {
 #define BOLD_BUTTON_FONT(a) (a->sgx)->bold_button_fontlist
 #define PEAK_NUMBERS_FONT(a) (a->sgx)->peaks_fontstruct
 #define BOLD_PEAK_NUMBERS_FONT(a) (a->sgx)->bold_peaks_fontstruct
-#define AXIS_NUMBERS_FONT(a) ((state_context *)((snd_state *)a)->sgx)->axis_numbers_fontstruct
-#define AXIS_LABEL_FONT(a) ((state_context *)((snd_state *)a)->sgx)->axis_label_fontstruct
+#define AXIS_NUMBERS_FONT(a) (a->sgx)->axis_numbers_fontstruct
+#define AXIS_LABEL_FONT(a) (a->sgx)->axis_label_fontstruct
 #define TINY_NUMBERS_FONT(a) (a->sgx)->tiny_fontstruct
 #define color_t Pixel
 /* this was unsigned long = Pixel (/usr/X11R6/include/X11/Intrinsic.h) */

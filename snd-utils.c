@@ -277,7 +277,7 @@ char *shorter_tempnam(const char *udir, const char *prefix)
   return(tmpdir);
 }
 
-char *snd_tempnam(snd_state *ss)
+char *snd_tempnam(void)
 {
   /* problem here is that NULL passed back from Guile becomes "" which is not NULL from tempnam's point of view */
   char *udir;
@@ -551,7 +551,7 @@ void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, in
   return(new_ptr);
 }
 
-static char *mem_stats(snd_state *ss, int ub)
+static char *mem_stats(int ub)
 {
   int i, ptrs = 0, sum = 0, snds = 0, chns = 0;
   snd_info *sp;
@@ -715,8 +715,6 @@ void mem_report(void)
   FILE *Fp;
   time_t ts;
   char time_buf[TIME_STR_SIZE];
-  snd_state *ss;
-  ss = get_global_state();
   if (ss->search_tree)
     ss->search_tree = free_ptree(ss->search_tree);
   for (i = 0; i < mem_size; i++)
@@ -748,7 +746,7 @@ void mem_report(void)
   strftime(time_buf, TIME_STR_SIZE, STRFTIME_FORMAT, localtime(&ts));
   {
     char *str;
-    str = mem_stats(ss, 0);
+    str = mem_stats(0);
     fprintf(Fp, "memlog: %s: %s\n\n", time_buf, str);
     free(str);
   }

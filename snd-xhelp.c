@@ -60,7 +60,7 @@ static void help_expose(Widget w, XtPointer context, XEvent *event, Boolean *con
     }
 }
 
-static void create_help_monolog(snd_state *ss)
+static void create_help_monolog(void)
 {
   /* create scrollable but not editable text window */
   Arg args[20];
@@ -100,14 +100,14 @@ static void create_help_monolog(snd_state *ss)
 
   if (!(ss->using_schemes))
     {
-      map_over_children(help_dialog, set_main_color_of_widget, (void *)ss);
+      map_over_children(help_dialog, set_main_color_of_widget, NULL);
       XtVaSetValues(help_text, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
       XtVaSetValues(XmMessageBoxGetChild(help_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
     }
-  set_dialog_widget(ss, HELP_DIALOG, help_dialog);
+  set_dialog_widget(HELP_DIALOG, help_dialog);
 }
 
-Widget snd_help(snd_state *ss, const char *subject, const char *helpstr, bool with_wrap)
+Widget snd_help(const char *subject, const char *helpstr, bool with_wrap)
 {
   /* place help string in scrollable help window */
   /* if window is already active, add this help at the top and reposition */
@@ -115,9 +115,8 @@ Widget snd_help(snd_state *ss, const char *subject, const char *helpstr, bool wi
   XmString xstr1;
   outer_with_wrap = ((with_wrap) && (no_cr(helpstr)));
   if (!(help_dialog)) 
-    create_help_monolog(ss); 
+    create_help_monolog(); 
   else raise_dialog(help_dialog);
-
   mus_snprintf(help_window_label, LABEL_BUFFER_SIZE, _("%s help"), subject);
   xstr1 = XmStringCreate(help_window_label, XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(help_dialog, XmNmessageString, xstr1, NULL);

@@ -1,16 +1,16 @@
 #include "snd.h"
 #include "sndlib-strings.h"
 
-snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *new_comment, off_t samples)
+snd_info *snd_new_file(char *newname, int header_type, int data_format, int srate, int chans, char *new_comment, off_t samples)
 {
   int chan, err;
   off_t size;
   unsigned char* buf;
-  if (snd_overwrite_ok(ss, newname))
+  if (snd_overwrite_ok(newname))
     {
       if (mus_header_writable(header_type, data_format))
 	{
-	  err = snd_write_header(ss, newname, header_type, srate, chans, 0, 
+	  err = snd_write_header(newname, header_type, srate, chans, 0, 
 				 chans /* one sample in each chan */, 
 				 data_format, new_comment, 
 				 snd_strlen(new_comment), NULL);
@@ -18,14 +18,14 @@ snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_f
 	    snd_error(_("can't write %s"),newname);
 	  else
 	    {
-	      chan = snd_reopen_write(ss, newname);
+	      chan = snd_reopen_write(newname);
 	      lseek(chan, mus_header_data_location(), SEEK_SET);
 	      size = chans * mus_samples_to_bytes(data_format, samples);
 	      buf = (unsigned char *)CALLOC(size, sizeof(unsigned char));
 	      write(chan, buf, size);
 	      snd_close(chan, newname);
 	      FREE(buf);
-	      return(snd_open_file(newname, ss, false));
+	      return(snd_open_file(newname, false));
 	    }
 	}
       else 
@@ -1141,7 +1141,7 @@ char *shortname(snd_info *sp)
 
 char *shortname_indexed(snd_info *sp)
 {
-  if (show_indices(sp->state))
+  if (show_indices(ss))
     {
       if (link_p(sp->filename))
 	mus_snprintf(sname, PRINT_BUFFER_SIZE, "%d: (%s)", sp->index, sp->short_filename); /* don't try to share sname */
@@ -1360,7 +1360,7 @@ static void remember_string(snd_info *sp, char *str, int which)
   if (mh == NULL)
     {
       mh = (mini_history *)CALLOC(1, sizeof(mini_history));
-      mh->strings_size = minibuffer_history_length(get_global_state());
+      mh->strings_size = minibuffer_history_length(ss);
       mh->strings = (char **)CALLOC(mh->strings_size, sizeof(char *));
       switch (which)
 	{
@@ -1514,7 +1514,6 @@ void *make_apply_state_with_implied_beg_and_dur(void *xp)
 Cessate apply_controls(Indicium ptr)
 {
   apply_state *ap = (apply_state *)ptr;
-  snd_state *ss;
   snd_context *sgx;
   snd_info *sp;
   chan_info *cp, *ncp;
@@ -1527,7 +1526,6 @@ Cessate apply_controls(Indicium ptr)
   if (ptr == NULL) return(BACKGROUND_QUIT);
   sp = ap->sp;
   if ((!(sp->active)) || (sp->inuse != SOUND_NORMAL)) return(BACKGROUND_QUIT);
-  ss = sp->state;
   if (sp->filter_control_p) added_dur = sp->filter_control_order;
   mult_dur = 1.0 / fabs(sp->speed_control);
   if (sp->expand_control_p) mult_dur *= sp->expand_control;
@@ -1542,7 +1540,7 @@ Cessate apply_controls(Indicium ptr)
       if (ss->apply_choice == APPLY_TO_SOUND)
 	{
 	  maxsync[0] = 0;
-	  for_each_sound(ss, max_sync, (void *)maxsync);
+	  for_each_sound(max_sync, (void *)maxsync);
 	  sp->sync = maxsync[0] + 1;
 	}
       else sp->sync = 0;
@@ -1572,7 +1570,7 @@ Cessate apply_controls(Indicium ptr)
 	case 0:
 	  /* apply_beg = 0; */
 	  ap->ofile = NULL;
-	  ap->ofile = snd_tempnam(ss);
+	  ap->ofile = snd_tempnam();
 	  ap->hdr = make_temp_header(ap->ofile, SND_SRATE(sp), sp->nchans, 0, (char *)c__FUNCTION__);
 	  switch (ss->apply_choice)
 	    {
@@ -1597,7 +1595,7 @@ Cessate apply_controls(Indicium ptr)
 	    }
 	  orig_dur = apply_dur;
 	  apply_dur = (off_t)(mult_dur * (apply_dur + added_dur));
-	  ap->ofd = open_temp_file(ap->ofile, ap->hdr->chans, ap->hdr, ss);
+	  ap->ofd = open_temp_file(ap->ofile, ap->hdr->chans, ap->hdr);
 	  if (ap->ofd == -1)
 	    {
 	      snd_error(_("can't open apply temp file %s: %s\n"), ap->ofile, strerror(errno));
@@ -1605,7 +1603,7 @@ Cessate apply_controls(Indicium ptr)
 	      FREE(ap);
 	      return(BACKGROUND_QUIT);
 	    }
-	  lock_apply(ss, sp);
+	  lock_apply(sp);
 	  sp->apply_ok = true;
 	  initialize_apply(sp, ap->hdr->chans, apply_beg, apply_dur); /* snd-dac.c, called only here */
 	  apply_reporting = (apply_dur > REPORTING_SIZE);
@@ -1624,7 +1622,7 @@ Cessate apply_controls(Indicium ptr)
 	      len = run_apply(ap->ofd); /* returns frames written */
 	      ap->i += len;
 	      if (ap->i >= apply_dur) ap->slice++;
-	      check_for_event(ss);
+	      check_for_event();
 	      /* if C-G, stop_applying called which cancels and backs out */
 	      if (ss->stopped_explicitly)
 		{
@@ -1766,7 +1764,7 @@ Cessate apply_controls(Indicium ptr)
 	  break;
 	}
     }
-  unlock_apply(ss, sp);
+  unlock_apply(sp);
   reset_controls(sp); /* i.e. clear it */
   sp->applying = false;
   sgx = sp->sgx;
@@ -1790,11 +1788,11 @@ void remove_apply(snd_info *sp)
     }
 }
 
-static void set_reverb_decay(snd_state *ss, Float val) 
+static void set_reverb_decay(Float val) 
 {
   int i;
   snd_info *sp;
-  in_set_reverb_control_decay(ss, val);
+  in_set_reverb_control_decay(val);
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
@@ -1808,10 +1806,10 @@ static void map_sounds_speed_tones(snd_info *sp, void *val)
   sp->speed_control_tones = (*((int *)val)); 
 }
 
-static void set_speed_tones(snd_state *ss, int val) 
+static void set_speed_tones(int val) 
 {
-  in_set_speed_control_tones(ss, val); 
-  for_each_sound(ss, map_sounds_speed_tones, (void *)(&val));
+  in_set_speed_control_tones(val); 
+  for_each_sound(map_sounds_speed_tones, (void *)(&val));
 }      
 
 static void map_sounds_speed_style(snd_info *sp, void *val) 
@@ -1819,10 +1817,10 @@ static void map_sounds_speed_style(snd_info *sp, void *val)
   sp->speed_control_style = (*((speed_style_t *)val)); 
 }
 
-void set_speed_style(snd_state *ss, speed_style_t val) 
+void set_speed_style(speed_style_t val) 
 {
-  in_set_speed_control_style(ss, val); 
-  for_each_sound(ss, map_sounds_speed_style, (void *)(&val));
+  in_set_speed_control_style(val); 
+  for_each_sound(map_sounds_speed_style, (void *)(&val));
 }      
 
 XEN snd_no_such_sound_error(const char *caller, XEN n)
@@ -1847,9 +1845,7 @@ static XEN g_select_sound(XEN snd_n)
 {
   #define H_select_sound "(" S_select_sound " (snd #f)): select snd."
   int val;
-  snd_state *ss;
   snd_info *sp;
-  ss = get_global_state();
   ASSERT_JUST_SOUND(S_select_sound, snd_n, 1);
   if (XEN_FALSE_P(snd_n))
     ss->selected_sound = NO_SELECTION;
@@ -1864,8 +1860,8 @@ static XEN g_select_sound(XEN snd_n)
 	      (sp->inuse == SOUND_NORMAL))
 	    {
 	      select_channel(sp, 0);
-	      equalize_sound_panes(ss, sp, sp->chans[0], false);
-	      for_each_chan(ss, update_graph);
+	      equalize_sound_panes(sp, sp->chans[0], false);
+	      for_each_chan(update_graph);
 	      return(snd_n);
 	    }
 	}
@@ -1878,12 +1874,10 @@ static XEN g_select_channel(XEN chn_n)
 {
   #define H_select_channel "(" S_select_channel " (chn 0)): select channel"
   snd_info *sp;
-  snd_state *ss;
   int chan;
-  ss = get_global_state();
   ASSERT_JUST_SOUND(S_select_channel, chn_n, 1);
   chan = XEN_TO_C_INT_OR_ELSE(chn_n, 0);
-  sp = any_selected_sound(ss);
+  sp = any_selected_sound();
   if ((sp) && 
       (chan >= 0) &&
       (chan < sp->nchans)) 
@@ -1898,12 +1892,10 @@ static XEN g_find_sound(XEN filename, XEN which)
 {
   #define H_find_sound "(" S_find_sound " name (nth 0)): return the id of the sound associated with file 'name'. \
 If more than one such sound exists, 'nth' chooses which one to return."
-  snd_state *ss;
   snd_info *sp;
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ARG_1, S_find_sound, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(which), which, XEN_ARG_2, S_find_sound, "an integer");
-  ss = get_global_state();
-  sp = find_sound(ss, XEN_TO_C_STRING(filename), XEN_TO_C_INT_OR_ELSE(which, 0));
+  sp = find_sound(XEN_TO_C_STRING(filename), XEN_TO_C_INT_OR_ELSE(which, 0));
   if (sp) return(C_TO_XEN_INT(sp->index));
   return(xen_return_first(XEN_FALSE, filename));
 }
@@ -1921,24 +1913,22 @@ static XEN g_bomb(XEN snd, XEN on)
   return(on);
 }
 
-enum {SP_SYNC, SP_READ_ONLY, SP_NCHANS, SP_CONTRASTING, SP_EXPANDING, SP_REVERBING, SP_FILTERING, SP_FILTER_ORDER,
-      SP_SRATE, SP_DATA_FORMAT, SP_DATA_LOCATION, SP_HEADER_TYPE, SP_SAVE_CONTROLS, SP_RESTORE_CONTROLS, SP_SELECTED_CHANNEL,
-      SP_COMMENT, SP_FILE_NAME, SP_SHORT_FILE_NAME, SP_CLOSE, SP_UPDATE, SP_SAVE, SP_CURSOR_FOLLOWS_PLAY, SP_SHOW_CONTROLS,
-      SP_FILTER_DBING, SP_SPEED_TONES, SP_SPEED_STYLE, SP_RESET_CONTROLS,
-      SP_AMP, SP_CONTRAST, SP_CONTRAST_AMP, SP_EXPAND, SP_EXPAND_LENGTH, SP_EXPAND_RAMP, SP_EXPAND_HOP,
-      SP_SPEED, SP_REVERB_LENGTH, SP_REVERB_FEEDBACK, SP_REVERB_SCALE, SP_REVERB_LOW_PASS,
-      SP_REVERB_DECAY, SP_PROPERTIES, SP_FILTER_COEFFS, SP_DATA_SIZE
-};
+typedef enum {SP_SYNC, SP_READ_ONLY, SP_NCHANS, SP_CONTRASTING, SP_EXPANDING, SP_REVERBING, SP_FILTERING, SP_FILTER_ORDER,
+	      SP_SRATE, SP_DATA_FORMAT, SP_DATA_LOCATION, SP_HEADER_TYPE, SP_SAVE_CONTROLS, SP_RESTORE_CONTROLS, SP_SELECTED_CHANNEL,
+	      SP_COMMENT, SP_FILE_NAME, SP_SHORT_FILE_NAME, SP_CLOSE, SP_UPDATE, SP_SAVE, SP_CURSOR_FOLLOWS_PLAY, SP_SHOW_CONTROLS,
+	      SP_FILTER_DBING, SP_SPEED_TONES, SP_SPEED_STYLE, SP_RESET_CONTROLS,
+	      SP_AMP, SP_CONTRAST, SP_CONTRAST_AMP, SP_EXPAND, SP_EXPAND_LENGTH, SP_EXPAND_RAMP, SP_EXPAND_HOP,
+	      SP_SPEED, SP_REVERB_LENGTH, SP_REVERB_FEEDBACK, SP_REVERB_SCALE, SP_REVERB_LOW_PASS,
+	      SP_REVERB_DECAY, SP_PROPERTIES, SP_FILTER_COEFFS, SP_DATA_SIZE
+} sp_field_t;
 
-static XEN sound_get(XEN snd_n, int fld, char *caller, bool just_sound)
+static XEN sound_get(XEN snd_n, sp_field_t fld, char *caller, bool just_sound)
 {
   snd_info *sp;
-  snd_state *ss;
   int i;
   XEN res = XEN_EMPTY_LIST;
   if (XEN_TRUE_P(snd_n))
     {
-      ss = get_global_state();
       for (i = ss->max_sounds - 1; i >= 0; i--)
 	{
 	  sp = ss->sounds[i];
@@ -1980,9 +1970,9 @@ static XEN sound_get(XEN snd_n, int fld, char *caller, bool just_sound)
     case SP_SELECTED_CHANNEL:    if (sp->selected_channel != NO_SELECTION) return(C_TO_XEN_INT(sp->selected_channel)); else return(XEN_FALSE); break;
     case SP_FILE_NAME:           return(C_TO_XEN_STRING(sp->filename));                break;
     case SP_SHORT_FILE_NAME:     return(C_TO_XEN_STRING(sp->short_filename));          break;
-    case SP_CLOSE:               if (!(IS_PLAYER(sp))) snd_close_file(sp, sp->state);  break;
+    case SP_CLOSE:               if (!(IS_PLAYER(sp))) snd_close_file(sp);  break;
     case SP_SAVE:                if (!(IS_PLAYER(sp))) save_edits(sp, NULL);           break;
-    case SP_UPDATE:              if (!(IS_PLAYER(sp))) {sp = snd_update(sp->state, sp); if (sp) return(C_TO_XEN_INT(sp->index));} break;
+    case SP_UPDATE:              if (!(IS_PLAYER(sp))) {sp = snd_update(sp); if (sp) return(C_TO_XEN_INT(sp->index));} break;
     case SP_CURSOR_FOLLOWS_PLAY: return(C_TO_XEN_BOOLEAN(sp->cursor_follows_play));    break;
     case SP_SHOW_CONTROLS:       if (!(IS_PLAYER(sp))) return(C_TO_XEN_BOOLEAN(control_panel_open(sp))); break;
     case SP_SPEED_TONES:         return(C_TO_XEN_INT(sp->speed_control_tones));        break;
@@ -2035,15 +2025,13 @@ static XEN sound_get(XEN snd_n, int fld, char *caller, bool just_sound)
   return(XEN_FALSE);
 }
 
-static XEN sound_set(XEN snd_n, XEN val, int fld, char *caller)
+static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
 {
   snd_info *sp;
-  snd_state *ss;
   int i, ival, old_format;
   Float fval;
   if (XEN_TRUE_P(snd_n))
     {
-      ss = get_global_state();
       for (i = 0; i < ss->max_sounds; i++)
 	{
 	  sp = ss->sounds[i];
@@ -2056,7 +2044,7 @@ static XEN sound_set(XEN snd_n, XEN val, int fld, char *caller)
   sp = get_sp(snd_n, PLAYERS_OK);
   if ((sp == NULL) || (sp->inuse == SOUND_WRAPPER))
     return(snd_no_such_sound_error(caller, snd_n));
-  ss = sp->state;
+
   switch (fld)
     {
     case SP_SYNC:  
@@ -2116,7 +2104,7 @@ static XEN sound_set(XEN snd_n, XEN val, int fld, char *caller)
 	    XEN_OUT_OF_RANGE_ERROR(S_setB S_srate, 1, val, "~A: impossible srate");
 	  mus_sound_set_srate(sp->filename, ival);
 	  sp->hdr->srate = ival;
-	  snd_update(ss, sp); 
+	  snd_update(sp); 
 	}
       break;
     case SP_NCHANS: 
@@ -2127,7 +2115,7 @@ static XEN sound_set(XEN snd_n, XEN val, int fld, char *caller)
 	    XEN_OUT_OF_RANGE_ERROR(S_setB S_channels, 1, val, "~A: highly unlikely number of channels");
 	  mus_sound_set_chans(sp->filename, ival);
 	  sp->hdr->chans = ival;
-	  snd_update(ss, sp); 
+	  snd_update(sp); 
 	}
       break;
     case SP_DATA_FORMAT:
@@ -2153,7 +2141,7 @@ static XEN sound_set(XEN snd_n, XEN val, int fld, char *caller)
 		  if ((cp) && (cp->amp_envs) && (cp->amp_envs[cp->edit_ctr]))
 		    cp->amp_envs[cp->edit_ctr] = free_amp_env(cp, cp->edit_ctr);
 		}
-	      snd_update(ss, sp);
+	      snd_update(sp);
 	    }
 	  else XEN_OUT_OF_RANGE_ERROR(S_setB S_data_format, 1, val, "~A: unknown data format");
 	}
@@ -2165,7 +2153,7 @@ static XEN sound_set(XEN snd_n, XEN val, int fld, char *caller)
 	  if (MUS_HEADER_TYPE_OK(ival))
 	    {
 	      mus_sound_set_header_type(sp->filename, ival);
-	      snd_update(ss, sp); 
+	      snd_update(sp); 
 	    }
 	  else XEN_OUT_OF_RANGE_ERROR(S_setB S_header_type, 1, val, "~A: unknown header type");
 	}
@@ -2178,7 +2166,7 @@ static XEN sound_set(XEN snd_n, XEN val, int fld, char *caller)
 	  if (loc >= 0)
 	    {
 	      mus_sound_set_data_location(sp->filename, loc);
-	      snd_update(ss, sp); 
+	      snd_update(sp); 
 	    }
 	  else XEN_OUT_OF_RANGE_ERROR(S_setB S_data_location, 1, val, "data location ~A < 0?");
 	}
@@ -2191,7 +2179,7 @@ static XEN sound_set(XEN snd_n, XEN val, int fld, char *caller)
 	  if (size >= 0)
 	    {
 	      mus_sound_set_samples(sp->filename, mus_bytes_to_samples((sp->hdr)->format, size));
-	      snd_update(ss, sp); 
+	      snd_update(sp); 
 	    }
 	  else XEN_OUT_OF_RANGE_ERROR(S_setB S_data_size, 1, val, "data size ~A < 0?");
 	}
@@ -2451,7 +2439,7 @@ static XEN g_channel_style(XEN snd)
 {
   snd_info *sp;
   if (XEN_NOT_BOUND_P(snd))
-    return(C_TO_XEN_INT(channel_style(get_global_state())));
+    return(C_TO_XEN_INT(channel_style(ss)));
   ASSERT_JUST_SOUND(S_channel_style, snd, 1);
   sp = get_sp(snd, NO_PLAYERS);
   if (sp == NULL) 
@@ -2461,7 +2449,6 @@ static XEN g_channel_style(XEN snd)
 
 static XEN g_set_channel_style(XEN style, XEN snd) 
 {
-  snd_state *ss;
   snd_info *sp;
   channel_style_t new_style = CHANNELS_SEPARATE;
   #define H_channel_style "(" S_channel_style " (snd #f)): how multichannel sounds lay out the channels. \
@@ -2474,8 +2461,7 @@ As a global (if the 'snd' arg is omitted), it is the default setting for each so
     XEN_OUT_OF_RANGE_ERROR(S_setB S_channel_style, 1, style, "~A, but must be " S_channels_separate ", " S_channels_combined ", or " S_channels_superimposed);
   if (XEN_NOT_BOUND_P(snd))
     {
-      ss = get_global_state();
-      set_channel_style(ss, new_style);
+      set_channel_style(new_style);
       return(C_TO_XEN_INT(channel_style(ss)));
     }
   ASSERT_JUST_SOUND(S_setB S_channel_style, snd, 2);
@@ -2736,15 +2722,13 @@ static XEN g_revert_sound(XEN index)
       update_graph(sp->chans[i]);
     }
   reflect_file_revert_in_label(sp);
-  reflect_file_revert_in_menu(sp->state);
+  reflect_file_revert_in_menu();
   return(XEN_TRUE);
 }
 
 static XEN g_selected_sound(void)
 {
   #define H_selected_sound "(" S_selected_sound "): index of currently selected sound (or #f if none)"
-  snd_state *ss;
-  ss = get_global_state();
   if ((ss->selected_sound != NO_SELECTION) && 
       (snd_ok(ss->sounds[ss->selected_sound])))
     return(C_TO_SMALL_XEN_INT(ss->selected_sound));
@@ -2756,9 +2740,7 @@ static XEN g_open_sound(XEN filename)
   #define H_open_sound "(" S_open_sound " filename): \
 open filename (as if opened from File:Open menu option), and return the new sound's index"
   char *fname = NULL;
-  snd_state *ss;
   snd_info *sp;
-  ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_open_sound, "a string");
   fname = mus_expand_filename(XEN_TO_C_STRING(filename));
   if (!(mus_file_probe(fname)))
@@ -2767,7 +2749,7 @@ open filename (as if opened from File:Open menu option), and return the new soun
       return(snd_no_such_file_error(S_open_sound, filename));
     }
   ss->catch_message = NULL;
-  sp = snd_open_file(fname, ss, false);
+  sp = snd_open_file(fname, false);
   if (fname) FREE(fname);
   if (sp) 
     return(C_TO_XEN_INT(sp->index));
@@ -2779,9 +2761,7 @@ static XEN g_open_raw_sound(XEN filename, XEN chans, XEN srate, XEN format)
 {
   #define H_open_raw_sound "(" S_open_raw_sound " filename chans srate format): \
 open filename assuming the data matches the attributes indicated unless the file actually has a header"
-
   char *fname = NULL;
-  snd_state *ss;
   snd_info *sp;
   int os, oc, ofr;
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ARG_1, S_open_raw_sound, "a string");
@@ -2794,14 +2774,14 @@ open filename assuming the data matches the attributes indicated unless the file
       if (fname) FREE(fname);
       return(snd_no_such_file_error(S_open_raw_sound, filename));
     }
-  ss = get_global_state();
+
   mus_header_raw_defaults(&os, &oc, &ofr);
   mus_header_set_raw_defaults(XEN_TO_C_INT_OR_ELSE(srate, os),
 			      XEN_TO_C_INT_OR_ELSE(chans, oc),
 			      XEN_TO_C_INT_OR_ELSE(format, ofr));
   ss->reloading_updated_file = -1;
   ss->catch_message = NULL;
-  sp = snd_open_file(fname, ss, false);
+  sp = snd_open_file(fname, false);
   ss->reloading_updated_file = 0;
   /* snd_open_file -> snd_open_file_1 -> add_sound_window -> make_file_info -> raw_data_dialog_to_file_info */
   /*   so here if hooked, we'd need to save the current hook, make it return the current args, open, then restore */
@@ -2817,8 +2797,6 @@ static XEN g_view_sound(XEN filename)
 You can subsequently make it writable by (set! (read-only) #f)."
   char *fname = NULL;
   snd_info *sp = NULL;
-  snd_state *ss;
-  ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_view_sound, "a string");
   fname = mus_expand_filename(XEN_TO_C_STRING(filename));
   if (!(mus_file_probe(fname)))
@@ -2827,7 +2805,7 @@ You can subsequently make it writable by (set! (read-only) #f)."
       return(snd_no_such_file_error(S_view_sound, filename));
     }
   ss->catch_message = NULL;
-  sp = snd_open_file(fname, ss, true);
+  sp = snd_open_file(fname, true);
   FREE(fname);
   if (sp) 
     return(C_TO_XEN_INT(sp->index));
@@ -2844,7 +2822,6 @@ Any argument can be #f which causes its value to be taken from the sound being s
   snd_info *sp;
   chan_info *cp;
   file_info *hdr;
-  snd_state *ss;
   int ht, df, sr, chan, err;
   char *fname = NULL;
   XEN_ASSERT_TYPE(XEN_STRING_P(newfile), newfile, XEN_ARG_1, S_save_sound_as, "a string");
@@ -2860,7 +2837,7 @@ Any argument can be #f which causes its value to be taken from the sound being s
   hdr = sp->hdr;
   ht = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(type, hdr->type, S_save_sound_as);
   sr = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(srate, hdr->srate, S_save_sound_as);
-  sp->state->catch_message = NULL;
+  ss->catch_message = NULL;
   if (XEN_INTEGER_P(format)) 
     df = XEN_TO_C_INT(format);
   else    
@@ -2904,11 +2881,10 @@ Any argument can be #f which causes its value to be taken from the sound being s
     }
   if (err != MUS_NO_ERROR)
     {
-      ss = sp->state;
       if (ss->catch_message)
 	XEN_ERROR(CANNOT_SAVE,
 		  XEN_LIST_2(C_TO_XEN_STRING(S_save_sound_as),
-			     C_TO_XEN_STRING(sp->state->catch_message)));
+			     C_TO_XEN_STRING(ss->catch_message)));
       else
 	XEN_ERROR(CANNOT_SAVE,
 		  XEN_LIST_3(C_TO_XEN_STRING(S_save_sound_as),
@@ -2928,7 +2904,6 @@ The 'initial-length' argument sets the number of samples (zeros) in the newly cr
 
   snd_info *sp = NULL; 
   int ht, df, sr, ch, err;
-  snd_state *ss;
   int chan;
   off_t size, len = 1;
   unsigned char* buf;
@@ -2940,11 +2915,11 @@ The 'initial-length' argument sets the number of samples (zeros) in the newly cr
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chans), chans, XEN_ARG_5, S_new_sound, "an integer");
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(comment), comment, XEN_ARG_6, S_new_sound, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(initial_length), initial_length, XEN_ARG_7, S_new_sound, "an integer");
-  ss = get_global_state();
+
   if (XEN_STRING_P(name))
     str = mus_expand_filename(XEN_TO_C_STRING(name));
-  else str = snd_tempnam(ss);
-  if (snd_overwrite_ok(ss, str))
+  else str = snd_tempnam();
+  if (snd_overwrite_ok(str))
     {
       mus_sound_forget(str);
       ht = XEN_TO_C_INT_OR_ELSE(type, default_output_type(ss));
@@ -2966,7 +2941,7 @@ The 'initial-length' argument sets the number of samples (zeros) in the newly cr
 		    com = XEN_TO_C_STRING(comment);
 		  ss->catch_message = NULL;
 		  if (XEN_INTEGER_P(initial_length)) len = XEN_TO_C_OFF_T(initial_length);
-		  err = snd_write_header(ss, str, ht, sr, ch, 0, len * ch, df, com, snd_strlen(com), NULL);
+		  err = snd_write_header(str, ht, sr, ch, 0, len * ch, df, com, snd_strlen(com), NULL);
 		  if (err == -1)
 		    {
 		      if (str) FREE(str);
@@ -2974,14 +2949,14 @@ The 'initial-length' argument sets the number of samples (zeros) in the newly cr
 			mus_misc_error(S_new_sound, ss->catch_message, name);
 		      else mus_misc_error(S_new_sound, strerror(errno), name);
 		    }
-		  chan = snd_reopen_write(ss, str);
+		  chan = snd_reopen_write(str);
 		  lseek(chan, mus_header_data_location(), SEEK_SET);
 		  size = ch * mus_samples_to_bytes(df, len);
 		  buf = (unsigned char *)CALLOC(size, sizeof(unsigned char));
 		  write(chan, buf, size);
 		  snd_close(chan, str);
 		  FREE(buf);
-		  sp = snd_open_file(str, ss, false);
+		  sp = snd_open_file(str, false);
 		}
 	      else 
 		{
@@ -3011,12 +2986,11 @@ static XEN g_speed_control_style(XEN snd)
   #define H_speed_control_style "(" S_speed_control_style " (snd #t)): speed control panel interpretation choice (" S_speed_control_as_float ")"
   if (XEN_BOUND_P(snd))
     return(sound_get(snd, SP_SPEED_STYLE, S_speed_control_style, NO_MIX));
-  return(C_TO_XEN_INT((int)speed_control_style(get_global_state())));
+  return(C_TO_XEN_INT((int)speed_control_style(ss)));
 }
 
 static XEN g_set_speed_control_style(XEN speed, XEN snd) 
 {
-  snd_state *ss;
   speed_style_t spd;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(speed), speed, XEN_ARG_1, S_setB S_speed_control_style, "an integer"); 
   spd = (speed_style_t)XEN_TO_C_INT(speed);
@@ -3028,8 +3002,7 @@ static XEN g_set_speed_control_style(XEN speed, XEN snd)
     return(sound_set(snd, speed, SP_SPEED_STYLE, S_setB S_speed_control_style));
   else
     {
-      ss = get_global_state();
-      activate_speed_in_menu(ss, spd);
+      activate_speed_in_menu(spd);
       return(C_TO_XEN_INT((int)speed_control_style(ss)));
     }
 }
@@ -3041,19 +3014,18 @@ static XEN g_speed_control_tones(XEN snd)
   #define H_speed_control_tones "(" S_speed_control_tones " (snd #t)): if " S_speed_control_style " is " S_speed_control_as_semitone ", this chooses the octave divisions (12)"
   if (XEN_BOUND_P(snd))
     return(sound_get(snd, SP_SPEED_TONES, S_speed_control_tones, NO_MIX));
-  return(C_TO_XEN_INT(speed_control_tones(get_global_state())));
+  return(C_TO_XEN_INT(speed_control_tones(ss)));
 }
 
 static XEN g_set_speed_control_tones(XEN val, XEN snd)
 {
-  snd_state *ss;
+
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_setB S_speed_control_tones, "a number"); 
   if (XEN_BOUND_P(snd))
     return(sound_set(snd, val, SP_SPEED_TONES, S_setB S_speed_control_tones));
   else
     {
-      ss = get_global_state();
-      set_speed_tones(ss, XEN_TO_C_INT_OR_ELSE(val, 0));
+      set_speed_tones(XEN_TO_C_INT_OR_ELSE(val, 0));
       return(C_TO_XEN_INT(speed_control_tones(ss)));
     }
 }
@@ -3253,19 +3225,17 @@ static XEN g_reverb_control_decay(XEN snd)
   #define H_reverb_control_decay "(" S_reverb_control_decay " (snd #t)): 'Apply' button reverb decay time (1.0 seconds)"
   if (XEN_BOUND_P(snd))
     return(sound_get(snd, SP_REVERB_DECAY, S_reverb_control_decay, NO_MIX));
-  return(C_TO_XEN_DOUBLE(reverb_control_decay(get_global_state())));
+  return(C_TO_XEN_DOUBLE(reverb_control_decay(ss)));
 }
 
 static XEN g_set_reverb_control_decay(XEN val, XEN snd)
 {
-  snd_state *ss;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_setB S_reverb_control_decay, "a number"); 
   if (XEN_BOUND_P(snd))
     return(sound_set(snd, val, SP_REVERB_DECAY, S_setB S_reverb_control_decay));
   else
     {
-      ss = get_global_state();
-      set_reverb_decay(ss, XEN_TO_C_DOUBLE(val));
+      set_reverb_decay(XEN_TO_C_DOUBLE(val));
       return(C_TO_XEN_DOUBLE(reverb_control_decay(ss)));
     }
 }
@@ -3318,7 +3288,6 @@ equivalent to clicking the control panel 'Apply' button.\
 The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to selection).  If 'beg' is given, the apply starts there."
 
   snd_info *sp;
-  snd_state *ss;
   apply_state *ap;
   snd_apply_t cur_choice;
   ASSERT_JUST_SOUND(S_apply_controls, snd, 1);
@@ -3328,7 +3297,6 @@ The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to sele
   sp = get_sp(snd, PLAYERS_OK);
   if (sp)
     {
-      ss = sp->state;
       if (XEN_OFF_T_P(beg)) apply_beg = XEN_TO_C_OFF_T(beg); else apply_beg = 0;
       if (XEN_OFF_T_P(dur)) apply_dur = XEN_TO_C_OFF_T(dur); else apply_dur = 0;
       cur_choice = (snd_apply_t)XEN_TO_C_INT_OR_ELSE(choice, APPLY_TO_SOUND);
@@ -3390,7 +3358,7 @@ static int pack_mus_sample_type(void)
   return(val);
 }
 
-static int mus_sample_type_ok(int val)
+static bool mus_sample_type_ok(int val)
 {
   return((val == 0) ||                            /* for backwards compatibility */
 	 (val == pack_mus_sample_type()));
@@ -3631,7 +3599,6 @@ If 'filename' is a sound index (an integer), 'size' is an edit-position, and the
   chan_info *cp = NULL;
   XEN peak = XEN_FALSE;
   env_state *es;
-  snd_state *ss;
   env_info *ep;
   int id, err = 0;
   env_tick *et;
@@ -3670,7 +3637,7 @@ If 'filename' is a sound index (an integer), 'size' is an edit-position, and the
 	}
     }
   /* filename is a string from here down */
-  ss = get_global_state();
+
   fullname = mus_expand_filename(XEN_TO_C_STRING(filename));
   chn = XEN_TO_C_INT(chan);
   len = XEN_TO_C_INT(pts);
@@ -3678,7 +3645,7 @@ If 'filename' is a sound index (an integer), 'size' is an edit-position, and the
      then peak
      then read direct (via make_sound_readable)
   */
-  sp = find_sound(ss, fullname, 0);
+  sp = find_sound(fullname, 0);
   if (sp)
     {
       cp = sp->chans[chn];
@@ -3718,7 +3685,7 @@ If 'filename' is a sound index (an integer), 'size' is an edit-position, and the
   /* now set up to read direct... */
   peak = XEN_FALSE;
   if (mus_file_probe(fullname))
-    sp = make_sound_readable(ss, fullname, false);
+    sp = make_sound_readable(fullname, false);
   if (sp)
     {
       cp = sp->chans[chn];
@@ -3736,7 +3703,7 @@ If 'filename' is a sound index (an integer), 'size' is an edit-position, and the
 	      et->len = len;
 	      et->filename = filename;
 	      snd_protect(done_func);
-	      id = (int)BACKGROUND_ADD(ss, tick_it, (Indicium)et);
+	      id = (int)BACKGROUND_ADD(tick_it, (Indicium)et);
 	      if (fullname) FREE(fullname);
 	      return(C_TO_XEN_INT(id));
 	    }

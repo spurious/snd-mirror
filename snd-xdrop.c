@@ -7,7 +7,7 @@ static Atom COMPOUND_TEXT;           /* various Motif widgets use this and the n
 static Atom _MOTIF_COMPOUND_STRING;
 static Atom text_plain;              /* gtk uses this -- untested here */
 
-#define WITH_DRAG_CONVERSION false
+#define WITH_DRAG_CONVERSION 0
 
 #if WITH_DRAG_CONVERSION
 static Atom _MOTIF_DROP;             /* to query in-coming drag for filename */
@@ -58,7 +58,6 @@ static Position mx, my;
 static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom *type, XtPointer value, unsigned long *length, int *format)
 {
   char *str = NULL;
-  snd_state *ss;
   snd_info *sp = NULL;
   Widget caller;
   str = atom_to_filename(*type, value, *length);
@@ -69,11 +68,10 @@ static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom
 				    XEN_LIST_1(C_TO_XEN_STRING(str)),
 				    "drop")))))
 	{
-	  ss = get_global_state();
 	  caller = (Widget)((XmDropTransferEntry)context)->client_data;
 	  if (XmIsRowColumn(caller)) /* top menuBar widget or top level menu */
 	    {
-	      sp = snd_open_file(str, ss, false);
+	      sp = snd_open_file(str, false);
 	      if (sp) select_channel(sp, 0);
 	    }
 	  else
@@ -82,7 +80,7 @@ static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom
 		{
 		  int data;
 		  XtVaGetValues(caller, XmNuserData, &data, NULL);
-		  mix_at_x_y(ss, data, str, mx, my);
+		  mix_at_x_y(data, str, mx, my);
 		}
 	    }
 	  /* value is the file name if dropped icon from filer */
@@ -123,7 +121,7 @@ static void handle_drop(Widget w, XtPointer context, XtPointer info)
       fprintf(stderr, "failed drop attempt:\n");
       for (i = 0; i < num_targets; i++) 
 	fprintf(stderr, "  target %d = %s\n", i, 
-		XGetAtomName(MAIN_DISPLAY(get_global_state()),
+		XGetAtomName(MAIN_DISPLAY(ss),
 			     targets[i]));
 #endif
       cb->dropSiteStatus = XmINVALID_DROP_SITE;
@@ -148,12 +146,10 @@ static void handle_drop(Widget w, XtPointer context, XtPointer info)
 
 static void report_mouse_position_as_seconds(Widget w, const char *file, Position x, Position y)
 {
-  snd_state *ss;
   snd_info *sp;
   chan_info *cp;
   int data, snd, chn;
   float seconds;
-  ss = get_global_state();
   XtVaGetValues(w, XmNuserData, &data, NULL);
   chn = UNPACK_CHANNEL(data);
   snd = UNPACK_SOUND(data);
@@ -170,9 +166,7 @@ static void report_mouse_position_as_seconds(Widget w, const char *file, Positio
 
 static void clear_minibuffer_of(Widget w)
 {
-  snd_state *ss;
   int snd, data;
-  ss = get_global_state();
   XtVaGetValues(w, XmNuserData, &data, NULL);
   snd = UNPACK_SOUND(data);
   clear_minibuffer(ss->sounds[snd]);
@@ -183,10 +177,8 @@ static char *current_file = NULL; /* used only in the broken WITH_DRAG_CONVERSIO
 static void handle_drag(Widget w, XtPointer context, XtPointer info)
 {
   XmDragProcCallbackStruct *cb = (XmDragProcCallbackStruct *)info;
-  int is_menubar;
-  snd_state *ss;
+  bool is_menubar;
   is_menubar = XmIsRowColumn(w);
-  ss = get_global_state();
   switch(cb->reason)
     { 
     case XmCR_DROP_SITE_MOTION_MESSAGE:
@@ -259,7 +251,7 @@ static void handle_drag(Widget w, XtPointer context, XtPointer info)
     case XmCR_DROP_SITE_LEAVE_MESSAGE: 
       if (is_menubar)
 	{
-	  reflect_file_change_in_title(ss);
+	  reflect_file_change_in_title();
 	  XmChangeColor(w, ss->sgx->highlight_color);
 	}
       else clear_minibuffer_of(w);
@@ -272,7 +264,7 @@ static void handle_drag(Widget w, XtPointer context, XtPointer info)
     }
 }
 
-void add_drop(snd_state *ss, Widget w)
+void add_drop(Widget w)
 {
   Display *dpy;
   int n;

@@ -10,7 +10,7 @@
  * snd_state: overall state of program
  */
 
-chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *ss)
+chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
 {
   chan_info *cp; /* may be re-used */
   if (!cip)
@@ -97,7 +97,6 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
   cp->graph_transform_p = false;
   cp->printing = false;
   cp->waiting_to_make_graph = false;
-  cp->state = ss;
   cp->amp_envs = NULL;
   cp->sonogram_data = NULL;
   cp->lisp_info = NULL;
@@ -148,7 +147,6 @@ static chan_info *free_chan_info(chan_info *cp)
   free_mark_list(cp, -1);
   free_mixes(cp);
   cp->sound = NULL;  /* a backpointer */
-  cp->state = NULL;
   cp->mix_md = NULL;
   cp->cursor_on = false;
   cp->cursor_visible = false;
@@ -203,7 +201,7 @@ snd_info *make_basic_snd_info(int chans)
   return(sp);
 }
 
-void initialize_control_panel(snd_state *ss, snd_info *sp)
+void initialize_control_panel(snd_info *sp)
 {
   sp->expand_control = DEFAULT_EXPAND_CONTROL;
   sp->last_expand_control = 0.0;
@@ -243,11 +241,10 @@ void initialize_control_panel(snd_state *ss, snd_info *sp)
   sp->saved_controls = NULL;
 }
 
-snd_info *make_snd_info(snd_info *sip, snd_state *state, const char *filename, file_info *hdr, int snd_slot, bool read_only)
+snd_info *make_snd_info(snd_info *sip, const char *filename, file_info *hdr, int snd_slot, bool read_only)
 {
   snd_info *sp = NULL;
   int chans, i;
-  snd_state *ss = (snd_state *)state;
   /* assume file has been found and header read before reaching us */
   /* if a reused pointer, may need to extend current chans array */
   chans = hdr->chans;
@@ -273,10 +270,9 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, const char *filename, f
   sp->inuse = SOUND_NORMAL;
   sp->filename = copy_string(filename);
   sp->short_filename = filename_without_home_directory(sp->filename); /* a pointer into filename, not a new string */
-  sp->state = ss;
   sp->sync = DEFAULT_SYNC;
   sp->previous_sync = sp->sync;
-  initialize_control_panel(ss, sp);
+  initialize_control_panel(sp);
   sp->searching = 0;
   if (chans > 1)
     sp->channel_style = channel_style(ss);
@@ -317,7 +313,7 @@ void free_snd_info(snd_info *sp)
 	toggle_contrast_button(sp, DEFAULT_CONTRAST_CONTROL_P);
     }
   /* leave most for reuse as in free_chan_info */
-  if ((sp->state) && (sp->state->deferred_regions > 0))
+  if ((ss) && (ss->deferred_regions > 0))
     for (i = 0; i < sp->nchans; i++)
       if (sp->chans[i]) 
 	sequester_deferred_regions(sp->chans[i], -1);
@@ -334,7 +330,6 @@ void free_snd_info(snd_info *sp)
   for (i = 0; i < sp->nchans; i++)
     if (sp->chans[i]) 
       sp->chans[i] = free_chan_info(sp->chans[i]);
-  sp->state = NULL;
   sp->inuse = SOUND_IDLE;
   sp->playing_mark = NULL;
   sp->playing = 0;
@@ -413,7 +408,7 @@ snd_info *completely_free_snd_info(snd_info *sp)
   return(NULL);
 }
 
-bool map_over_chans(snd_state *ss, bool (*func)(chan_info *, void *), void *userptr)
+bool map_over_chans(bool (*func)(chan_info *, void *), void *userptr)
 {
   /* argument to func is chan_info pointer+void pointer of user spec, return non-zero = abort map, skips inactive sounds */
   int i, j;
@@ -436,7 +431,7 @@ bool map_over_chans(snd_state *ss, bool (*func)(chan_info *, void *), void *user
   return(val);
 }
 
-void for_each_chan_1(snd_state *ss, void (*func)(chan_info *, void *), void *userptr)
+void for_each_chan_1(void (*func)(chan_info *, void *), void *userptr)
 {
   int i, j;
   snd_info *sp;
@@ -452,7 +447,7 @@ void for_each_chan_1(snd_state *ss, void (*func)(chan_info *, void *), void *use
       }
 }
 
-void for_each_chan(snd_state *ss, void (*func)(chan_info *))
+void for_each_chan(void (*func)(chan_info *))
 {
   int i, j;
   snd_info *sp;
@@ -493,7 +488,7 @@ void for_each_sound_chan(snd_info *sp, void (*func)(chan_info *))
       (*func)(cp);
 }
 
-bool map_over_sounds(snd_state *ss, bool (*func)(snd_info *, void *), void *userptr)
+bool map_over_sounds(bool (*func)(snd_info *, void *), void *userptr)
 {
   /* argument to func is snd_info pointer, return true = abort map, skips inactive sounds */
   int i;
@@ -513,7 +508,7 @@ bool map_over_sounds(snd_state *ss, bool (*func)(snd_info *, void *), void *user
   return(val);
 }
 
-void for_each_sound(snd_state *ss, void (*func)(snd_info *, void *), void *userptr)
+void for_each_sound(void (*func)(snd_info *, void *), void *userptr)
 {
   int i;
   snd_info *sp;
@@ -526,7 +521,7 @@ void for_each_sound(snd_state *ss, void (*func)(snd_info *, void *), void *userp
       }
 }
 
-bool map_over_separate_chans(snd_state *ss, bool (*func)(chan_info *, void *), void *userptr)
+bool map_over_separate_chans(bool (*func)(chan_info *, void *), void *userptr)
 {
   int i, val;
   snd_info *sp;
@@ -553,7 +548,7 @@ bool snd_ok(snd_info *sp)
 	 (sp->active));
 }
 
-int active_channels(snd_state *ss, int count_virtual_channels)
+int active_channels(int count_virtual_channels)
 {
   int chans, i;
   snd_info *sp;
@@ -575,7 +570,7 @@ int active_channels(snd_state *ss, int count_virtual_channels)
 
 #define SOUNDS_ALLOC_SIZE 4
 
-int find_free_sound_slot(snd_state *ss, int desired_chans)
+int find_free_sound_slot(int desired_chans)
 {
   int i, j;
   snd_info *sp;
@@ -611,7 +606,7 @@ int find_free_sound_slot(snd_state *ss, int desired_chans)
   return(j);
 }
 
-int find_free_sound_slot_for_channel_display(snd_state *ss)
+int find_free_sound_slot_for_channel_display(void)
 {
   int i, j;
   for (i = 0; i < ss->max_sounds; i++)
@@ -623,7 +618,7 @@ int find_free_sound_slot_for_channel_display(snd_state *ss)
   return(j);
 }
 
-static snd_info *any_active_sound(snd_state *ss)
+static snd_info *any_active_sound(void)
 {
   snd_info *sp;
   int i;
@@ -636,18 +631,18 @@ static snd_info *any_active_sound(snd_state *ss)
   return(NULL);
 }
 
-snd_info *selected_sound(snd_state *ss)
+snd_info *selected_sound(void)
 {
   if (ss->selected_sound != NO_SELECTION)
     return(ss->sounds[ss->selected_sound]);
   return(NULL);
 }
 
-snd_info *any_selected_sound (snd_state *ss)
+snd_info *any_selected_sound (void)
 {
   snd_info *sp;
-  sp = selected_sound(ss);
-  if (!sp) sp = any_active_sound(ss);
+  sp = selected_sound();
+  if (!sp) sp = any_active_sound();
   return(sp);
 }
 
@@ -658,7 +653,7 @@ chan_info *any_selected_channel(snd_info *sp)
   return(sp->chans[0]);
 }
 
-chan_info *selected_channel(snd_state *ss)
+chan_info *selected_channel(void)
 {
   snd_info *sp;
   if (ss->selected_sound != NO_SELECTION)
@@ -673,7 +668,7 @@ chan_info *selected_channel(snd_state *ss)
 static XEN select_sound_hook;
 static XEN select_channel_hook;
 
-static void select_sound(snd_state *ss, snd_info *sp)
+static void select_sound(snd_info *sp)
 {
   snd_info *osp = NULL;
   if ((sp == NULL) || (sp->inuse != SOUND_NORMAL)) return;
@@ -690,7 +685,7 @@ static void select_sound(snd_state *ss, snd_info *sp)
 	  if (ss->selected_sound != NO_SELECTION) osp = ss->sounds[ss->selected_sound];
 	  if ((osp) && (sp != osp) && (osp->inuse == SOUND_NORMAL)) 
 	    {
-	      highlight_color(ss, w_snd_name(osp));
+	      highlight_color(w_snd_name(osp));
 #if ((USE_MOTIF) && (XmVERSION > 1))
 	      if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
 		XmChangeColor((osp->sgx)->tab, (ss->sgx)->graph_color);
@@ -698,7 +693,7 @@ static void select_sound(snd_state *ss, snd_info *sp)
 	    }
 	  if (sp->selected_channel != NO_SELECTION) 
 	    {
-	      white_color(ss, w_snd_name(sp));
+	      white_color(w_snd_name(sp));
 #if ((USE_MOTIF) && (XmVERSION > 1))
 	      if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
 		XmChangeColor((sp->sgx)->tab, (ss->sgx)->selected_graph_color);
@@ -706,17 +701,15 @@ static void select_sound(snd_state *ss, snd_info *sp)
 	    }
 	}
       ss->selected_sound = sp->index;
-      highlight_selected_sound(ss);
+      highlight_selected_sound();
       reflect_undo_or_redo_in_menu(any_selected_channel(sp));
-      new_active_channel_alert(ss);
+      new_active_channel_alert();
     }
 }
 
 chan_info *color_selected_channel(snd_info *sp)
 {
-  snd_state *ss;
   chan_info *ncp;
-  ss = sp->state;
   ncp = sp->chans[sp->selected_channel];
   recolor_graph(ncp, true);
   (ncp->cgx)->selected = true;
@@ -727,14 +720,13 @@ chan_info *color_selected_channel(snd_info *sp)
 
 void select_channel(snd_info *sp, int chan)
 {
-  snd_state *ss = sp->state;
   chan_info *cp, *ncp;
   if ((sp == NULL) || (sp->inuse != SOUND_NORMAL)) return;
-  cp = selected_channel(ss);
+  cp = selected_channel();
   if (cp != sp->chans[chan])
     {
       sp->selected_channel = chan;
-      select_sound(ss, sp);
+      select_sound(sp);
       if (cp) 
 	{
 	  recolor_graph(cp, false);
@@ -753,12 +745,12 @@ void select_channel(snd_info *sp, int chan)
     }
 }
 
-chan_info *current_channel(snd_state *ss)
+chan_info *current_channel(void)
 {
   snd_info *sp = NULL;
   if (ss->selected_sound != NO_SELECTION)
     sp = ss->sounds[ss->selected_sound];
-  else sp = any_active_sound(ss);
+  else sp = any_active_sound();
   if (sp) return(any_selected_channel(sp));
   return(NULL);
 }
@@ -776,7 +768,7 @@ sync_info *free_sync_info(sync_info *si)
   return(NULL);
 }
 
-sync_info *snd_sync(snd_state *ss, int sync)
+sync_info *snd_sync(int sync)
 {
   int i, j, k, chans = 0;
   snd_info *sp;
@@ -823,11 +815,11 @@ sync_info *sync_to_chan(chan_info *cp)
   snd_info *sp;
   sp = cp->sound;
   if (sp->sync)
-    return(snd_sync(cp->state, sp->sync));
+    return(snd_sync(sp->sync));
   return(make_simple_sync(cp, 0));
 }
 
-snd_info *find_sound(snd_state *ss, const char *name, int nth)
+snd_info *find_sound(const char *name, int nth)
 {
   snd_info *sp;
   char *sname;
@@ -910,7 +902,7 @@ void display_info(snd_info *sp)
 		       (ampstr) ? ampstr : "",
 		       (comment) ? _("\ncomment: ") : "",
 		       (comment) ? comment : "");
-	  ssnd_help(sp->state,
+	  ssnd_help(
 		    sp->short_filename,
 		    buffer,
 		    NULL);
@@ -923,7 +915,7 @@ void display_info(snd_info *sp)
 #if DEBUGGING && HAVE_GUILE
 static XEN g_display_info(void)
 {
-  display_info(selected_sound(get_global_state()));
+  display_info(selected_sound());
   return(XEN_FALSE);
 }
 #endif

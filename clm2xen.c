@@ -172,7 +172,8 @@ static void init_keywords(void)
 int mus_decode_keywords(const char *caller, int nkeys, XEN *keys, int nargs, XEN *args, int *orig)
 {
   /* implement the &optional-key notion in CLM */
-  int arg_ctr = 0, key_start = 0, rtn_ctr = 0, i, keying = 0, key_found = 0;
+  int arg_ctr = 0, key_start = 0, rtn_ctr = 0, i;
+  bool keying = false, key_found = false;
   XEN key;
   arg_ctr = 0;
   while ((arg_ctr < nargs) && 
@@ -196,11 +197,11 @@ int mus_decode_keywords(const char *caller, int nkeys, XEN *keys, int nargs, XEN
 	  if ((arg_ctr == (nargs - 1)) ||
 	      (!(XEN_BOUND_P(args[arg_ctr + 1]))))
 	    mus_misc_error(caller, "keyword without value?", args[arg_ctr]);
-	  keying = 1;
+	  keying = true;
 	  key = args[arg_ctr];
 	  if (XEN_KEYWORD_P(args[arg_ctr + 1])) 
 	    mus_misc_error(caller, "two keywords in a row?", key);
-	  key_found = 0;
+	  key_found = false;
 	  for (i = key_start; i < nkeys; i++)
 	    {
 	      if (XEN_KEYWORD_EQ_P(keys[i], key))
@@ -209,10 +210,10 @@ int mus_decode_keywords(const char *caller, int nkeys, XEN *keys, int nargs, XEN
 		  orig[i] = arg_ctr + 1;
 		  arg_ctr += 2;
 		  rtn_ctr++;
-		  key_found = 1;
+		  key_found = true;
 		}
 	    }
-	  if (key_found == 0)
+	  if (!key_found)
 	    {
 	      /* either there's a redundant keyword pair or a keyword that 'caller' doesn't recognize */
 	      mus_misc_error(caller, "redundant or invalid key found", key);
@@ -978,7 +979,8 @@ static XEN g_make_oscil(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   mus_xen *gn;
   mus_any *ge;
   int vals;
-  XEN args[4]; XEN keys[2];
+  XEN args[4]; 
+  XEN keys[2];
   int orig_arg[2] = {0, 0};
   Float freq = 440.0, phase = 0.0;
   keys[0] = all_keys[C_frequency];
@@ -1055,7 +1057,8 @@ static XEN g_make_delay_1(int choice, XEN arglist)
   mus_xen *gn;
   mus_any *ge = NULL;
   char *caller = NULL;
-  XEN args[14]; XEN keys[7];
+  XEN args[14]; 
+  XEN keys[7];
   int orig_arg[7] = {0, 0, 0, 0, 0, 0, 0};
   int vals, i, argn = 0, len, arglist_len, keyn, max_size = -1;
   int size = 1, size_key = 0;
@@ -1333,7 +1336,8 @@ return a new " S_sum_of_cosines " generator, producing a band-limited pulse trai
 
   mus_xen *gn;
   mus_any *ge;
-  XEN args[6]; XEN keys[3];
+  XEN args[6]; 
+  XEN keys[3];
   int orig_arg[3] = {0, 0, 0};
   int vals;
   int cosines = 1;
@@ -1382,7 +1386,8 @@ static XEN g_make_noi(bool rand_case, XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   mus_xen *gn;
   mus_any *ge = NULL;
-  XEN args[4]; XEN keys[2];
+  XEN args[4]; 
+  XEN keys[2];
   int orig_arg[2] = {0, 0};
   int vals;
   Float freq = 440.0;
@@ -1505,7 +1510,8 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
   (set! gen (make-table-lookup 440.0 :wave (partials->wave '(1 1.0 2 .5))))"
 
   vct *f;
-  XEN table; XEN lst;
+  XEN table; 
+  XEN lst;
   Float *partial_data, *wave;
   int len, i;
   XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(partials, len), partials, XEN_ARG_1, S_partials2wave, "a list");
@@ -1538,7 +1544,7 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
 static XEN g_phasepartials2wave(XEN partials, XEN utable, XEN normalize)
 {
   vct *f;
-  XEN table; XEN lst;
+  XEN table, lst;
   Float *partial_data, *wave;
   int len, i;
 
@@ -1587,7 +1593,8 @@ is the same in effect as " S_make_oscil "."
   mus_any *ge;
   int vals, table_size = DEFAULT_TABLE_SIZE;
   bool need_free = false;
-  XEN args[8]; XEN keys[4];
+  XEN args[8]; 
+  XEN keys[4];
   int orig_arg[4] = {0, 0, 0, 0};
   Float freq = 440.0, phase = 0.0;
   Float *table = NULL;
@@ -1658,7 +1665,8 @@ static XEN g_make_sw(int type, Float def_phase, XEN arg1, XEN arg2, XEN arg3, XE
   mus_xen *gn;
   mus_any *ge = NULL;
   char *caller = NULL;
-  XEN args[6]; XEN keys[3];
+  XEN args[6]; 
+  XEN keys[3];
   int orig_arg[3] = {0, 0, 0};
   int vals;
   Float freq = 440.0;
@@ -1802,7 +1810,8 @@ return a new " S_asymmetric_fm " generator."
 
   mus_xen *gn;
   mus_any *ge;
-  XEN args[8]; XEN keys[4];
+  XEN args[8]; 
+  XEN keys[4];
   int orig_arg[4] = {0, 0, 0, 0};
   int vals;
   Float freq = 440.0;
@@ -1859,7 +1868,8 @@ static XEN g_make_smpflt_1(int choice, XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   mus_xen *gn;
   mus_any *gen = NULL;
-  XEN args[4]; XEN keys[2];
+  XEN args[4]; 
+  XEN keys[2];
   int orig_arg[2] = {0, 0};
   int vals;
   Float a0 = 0.0;
@@ -1927,7 +1937,8 @@ static XEN g_make_smpflt_2(int choice, XEN arg1, XEN arg2, XEN arg3, XEN arg4, X
 {
   mus_xen *gn;
   mus_any *gen = NULL;
-  XEN args[6]; XEN keys[3];
+  XEN args[6]; 
+  XEN keys[3];
   int orig_arg[3] = {0, 0, 0};
   int vals;
   Float a0 = 0.0;
@@ -2154,7 +2165,8 @@ control."
   mus_xen *gn;
   mus_any *ge;
   int vals;
-  XEN args[6]; XEN keys[3];
+  XEN args[6]; 
+  XEN keys[3];
   int orig_arg[3] = {0, 0, 0};
   Float freq = 0.0, radius = 0.0, gain = 1.0;
   keys[0] = all_keys[C_radius];
@@ -2228,7 +2240,7 @@ with chans samples, each sample set from the trailing arguments (defaulting to 0
   mus_any *ge;
   mus_any *fr;
   Float *vals;
-  XEN cararg; XEN lst;
+  XEN cararg, lst;
   int size = 0, i, len;
   XEN_ASSERT_TYPE((XEN_LIST_P_WITH_LENGTH(arglist, len)) && (len > 0), arglist, XEN_ARG_1, S_make_frame, "a list");
   cararg = XEN_CAR(arglist);
@@ -2466,7 +2478,7 @@ giving | (a*.5 + b*.125) (a*.25 + b*1.0) |"
   mus_any *ge;
   mus_any *fr;
   Float **vals;
-  XEN cararg; XEN lst;
+  XEN cararg, lst;
   int size = 0, i, j, k, len;
   XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(arglist, len), arglist, XEN_ARG_1, S_make_mixer, "a list");
   if (len == 0) mus_misc_error(S_make_mixer, "need at least 1 arg", arglist);
@@ -2532,7 +2544,8 @@ processing, normally involving overlap-adds."
 
   mus_xen *gn;
   mus_any *ge;
-  XEN args[4]; XEN keys[2];
+  XEN args[4]; 
+  XEN keys[2];
   int orig_arg[2] = {0, 0};
   int vals;
   Float *buf;
@@ -2632,7 +2645,8 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
 
   mus_xen *gn;
   mus_any *ge;
-  XEN args[8]; XEN keys[4];
+  XEN args[8]; 
+  XEN keys[4];
   int orig_arg[4] = {0, 0, 0, 0};
   int vals, wsize = DEFAULT_TABLE_SIZE;
   bool need_free = false;
@@ -2740,7 +2754,8 @@ is the same in effect as make-oscil"
 
   mus_xen *gn;
   mus_any *ge;
-  XEN args[8]; XEN keys[4];
+  XEN args[8]; 
+  XEN keys[4];
   int orig_arg[4] = {0, 0, 0, 0};
   int vals, wsize = 0, npartials = 0, partials_allocated = 0;
   vct *v;
@@ -2918,7 +2933,8 @@ return a new sine summation synthesis generator."
 
   mus_xen *gn;
   mus_any *ge;
-  XEN args[10]; XEN keys[5];
+  XEN args[10]; 
+  XEN keys[5];
   int orig_arg[5] = {0, 0, 0, 0, 0};
   int vals, i, arglist_len;
   Float freq = 440.0, phase = 0.0, a=.5, ratio = 1.0;
@@ -3003,10 +3019,11 @@ enum {G_FILTER_STATE, G_FILTER_XCOEFFS, G_FILTER_YCOEFFS};
 
 static XEN g_make_filter_1(int choice, XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
 {
-  XEN xwave = XEN_UNDEFINED; XEN ywave = XEN_UNDEFINED;
+  XEN xwave = XEN_UNDEFINED, ywave = XEN_UNDEFINED;
   mus_any *fgen = NULL;
   mus_xen *gn = NULL;
-  XEN args[6]; XEN keys[3];
+  XEN args[6]; 
+  XEN keys[3];
   int orig_arg[3] = {0, 0, 0};
   vct *x = NULL, *y = NULL;
   int vals, order = 0;
@@ -3177,7 +3194,8 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 
   mus_xen *gn;
   mus_any *ge;
-  XEN args[14]; XEN keys[7];
+  XEN args[14]; 
+  XEN keys[7];
   int orig_arg[7] = {0, 0, 0, 0, 0, 0, 0};
   int vals, i, len = 0, arglist_len;
   Float base = 1.0, scaler = 1.0, offset = 0.0, duration = 0.0;
@@ -3690,7 +3708,8 @@ return a new readin (file input) generator reading the sound file 'file' startin
   mus_xen *gn;
   mus_any *ge;
   char *file = NULL;
-  XEN args[8]; XEN keys[4];
+  XEN args[8]; 
+  XEN keys[4];
   int orig_arg[4] = {0, 0, 0, 0};
   int vals;
   int channel = 0, direction = 1;
@@ -3854,11 +3873,12 @@ static XEN g_make_locsig(XEN arglist)
   #define H_make_locsig "(" S_make_locsig " (:degree 0.0) (:distance 1.0) (:reverb 0.0) (:output) (:revout) (:channels 1) (:type mus-linear)): \
 return a new generator for signal placement in n channels.  Channel 0 corresponds to 0 degrees."
 
-  XEN out_obj = XEN_UNDEFINED; XEN rev_obj = XEN_UNDEFINED;
+  XEN out_obj = XEN_UNDEFINED, rev_obj = XEN_UNDEFINED;
   mus_xen *gn;
   mus_any *ge;
   mus_any *outp = NULL, *revp = NULL;
-  XEN args[14]; XEN keys[7];
+  XEN args[14]; 
+  XEN keys[7];
   int orig_arg[7] = {0, 0, 0, 0, 0, 0, 0};
   int vals, i, arglist_len, vlen = 0, out_chans = 1;
   mus_locsig_interp_t type;
@@ -4022,7 +4042,8 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
   mus_xen *gn;
   mus_any *ge;
   int vals, wid = 0; /* 0 here picks up the current default width in clm.c */
-  XEN args[6]; XEN keys[3];
+  XEN args[6]; 
+  XEN keys[3];
   int orig_arg[3] = {0, 0, 0};
   Float srate = 1.0;
   keys[0] = all_keys[C_input];
@@ -4112,7 +4133,8 @@ jitter controls the randomness in that spacing, input can be a file pointer."
   XEN in_obj = XEN_UNDEFINED;
   mus_xen *gn;
   mus_any *ge;
-  XEN args[16]; XEN keys[8];
+  XEN args[16]; 
+  XEN keys[8];
   int orig_arg[8] = {0, 0, 0, 0, 0, 0, 0, 0};
   int vals, i, arglist_len, maxsize = 0;
   Float expansion = 1.0, segment_length = .15, segment_scaler = .6, ramp_time = .4, output_hop = .05;
@@ -4202,11 +4224,12 @@ return a new convolution generator which convolves its input with the impulse re
 
   mus_xen *gn;
   mus_any *ge;
-  XEN args[6]; XEN keys[3];
+  XEN args[6]; 
+  XEN keys[3];
   int orig_arg[3] = {0, 0, 0};
   int vals, i, arglist_len, fftlen;
   vct *filter = NULL;
-  XEN filt = XEN_UNDEFINED; XEN in_obj = XEN_UNDEFINED;
+  XEN filt = XEN_UNDEFINED, in_obj = XEN_UNDEFINED;
   int fft_size = 0;
   keys[0] = all_keys[C_input];
   keys[1] = all_keys[C_filter];
@@ -4359,10 +4382,11 @@ is run.  'synthesize' is a function of 1 arg, the generator; it is called to get
   (lambda (v) (set! editcalls (+ editcalls 1)) #t) \n\
   (lambda (v) (set! outcalls (+ outcalls 1)) 0.0))) \n"
 
-  XEN in_obj = XEN_UNDEFINED; XEN edit_obj = XEN_UNDEFINED; XEN synthesize_obj = XEN_UNDEFINED; XEN analyze_obj = XEN_UNDEFINED;
+  XEN in_obj = XEN_UNDEFINED, edit_obj = XEN_UNDEFINED, synthesize_obj = XEN_UNDEFINED, analyze_obj = XEN_UNDEFINED;
   mus_xen *gn;
   mus_any *ge;
-  XEN args[16]; XEN keys[8];
+  XEN args[16]; 
+  XEN keys[8];
   XEN pv_obj;
   int orig_arg[8] = {0, 0, 0, 0, 0, 0, 0, 0};
   int vals, arglist_len, i;
@@ -4560,7 +4584,7 @@ generator."
   int in_len = 0, out_len, i, j;
   off_t ostart = 0, istart = 0, osamps = 0;
   int in_chans = 0, out_chans = 0, in_size = 0, out_size;  /* mus_mix in clm.c assumes the envs array is large enough */
-  XEN *vdata0; XEN *vdata1;
+  XEN *vdata0, *vdata1;
   XEN_ASSERT_TYPE(XEN_STRING_P(out) || ((MUS_XEN_P(out)) && (mus_output_p(XEN_TO_MUS_ANY(out)))), 
 		  out, XEN_ARG_1, S_mus_mix, "a filename or a frame->file generator");
   XEN_ASSERT_TYPE(XEN_STRING_P(in) || ((MUS_XEN_P(in)) && (mus_input_p(XEN_TO_MUS_ANY(in)))), 

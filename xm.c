@@ -3346,7 +3346,7 @@ static XEN gxm_XmStringDrawUnderline(XEN args)
   #define H_XmStringDrawUnderline "void XmStringDrawUnderline(Display *d, Window w, XmRenderTable rendertable, XmString string, GC gc, \
 Position x, Position y, Dimension width, unsigned char alignment, unsigned char layout_direction, XRectangle *clip, XmString underline) \
 underlines a string drawn in an X Window"
-  XEN arg1; XEN arg2; XEN arg3; XEN arg4; XEN arg5; XEN arg6; XEN arg7; XEN arg8; XEN arg9; XEN arg10; XEN arg11; XEN arg12;
+  XEN arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12;
   arg1 = XEN_LIST_REF(args, 0);
   arg2 = XEN_LIST_REF(args, 1);
   arg3 = XEN_LIST_REF(args, 2);
@@ -3388,7 +3388,7 @@ static XEN gxm_XmStringDrawImage(XEN args)
   #define H_XmStringDrawImage "void XmStringDrawImage(Display *d, Window w, XmRenderTable rendertable, XmString string, GC gc, Position x, \
 Position y, Dimension width, unsigned char alignment, unsigned char layout_direction, XRectangle *clip) \
 draws a compound string in an X Window and creates an image"
-  XEN arg1; XEN arg2; XEN arg3; XEN arg4; XEN arg5; XEN arg6; XEN arg7; XEN arg8; XEN arg9; XEN arg10; XEN arg11;
+  XEN arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11;
   arg1 = XEN_LIST_REF(args, 0);
   arg2 = XEN_LIST_REF(args, 1);
   arg3 = XEN_LIST_REF(args, 2);
@@ -3427,7 +3427,7 @@ static XEN gxm_XmStringDraw(XEN args)
   #define H_XmStringDraw "void XmStringDraw(Display *d, Window w, XmRenderTable rendertable, XmString string, GC gc, Position x, Position y, \
 Dimension width, unsigned char alignment, unsigned char layout_direction, XRectangle *clip) draws a compound \
 string in an X window"
-  XEN arg1; XEN arg2; XEN arg3; XEN arg4; XEN arg5; XEN arg6; XEN arg7; XEN arg8; XEN arg9; XEN arg10; XEN arg11;
+  XEN arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11;
   arg1 = XEN_LIST_REF(args, 0);
   arg2 = XEN_LIST_REF(args, 1);
   arg3 = XEN_LIST_REF(args, 2);
@@ -9553,7 +9553,7 @@ static XEN gxm_XPutImage(XEN args)
 {
   #define H_XPutImage "XPutImage(display, d, gc, image, src_x, src_y, dest_x, dest_y, width, height) combines an image with a rectangle \
 of the specified drawable."
-  XEN arg1; XEN arg2; XEN arg3; XEN arg4; XEN arg5; XEN arg6; XEN arg7; XEN arg8; XEN arg9; XEN arg10;
+  XEN arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10;
   arg1 = XEN_LIST_REF(args, 0);
   arg2 = XEN_LIST_REF(args, 1);
   arg3 = XEN_LIST_REF(args, 2);
@@ -9931,7 +9931,7 @@ static XEN gxm_XGrabButton(XEN args)
 {
   #define H_XGrabButton "XGrabButton(display, button, modifiers, grab_window, owner_events, event_mask, pointer_mode, keyboard_mode, confine_to, cursor) \
 establishes a passive grab."
-  XEN arg1; XEN arg2; XEN arg3; XEN arg4; XEN arg5; XEN arg6; XEN arg7; XEN arg8; XEN arg9; XEN arg10;
+  XEN arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10;
   arg1 = XEN_LIST_REF(args, 0);
   arg2 = XEN_LIST_REF(args, 1);
   arg3 = XEN_LIST_REF(args, 2);
@@ -9982,7 +9982,7 @@ number of 8-bit, 16-bit, or 32-bit items transferred; the number of bytes remain
 actually returned."
   /* DIFF: XGetWindowProperty omit trailing 5 args, rtn as list
    */
-  XEN arg1; XEN arg2; XEN arg3; XEN arg4; XEN arg5; XEN arg6; XEN arg7; 
+  XEN arg1, arg2, arg3, arg4, arg5, arg6, arg7; 
   XEN result = XEN_FALSE;
   Atom a;
   int ret, val;
@@ -10057,7 +10057,7 @@ static XEN gxm_XGetScreenSaver(XEN arg1)
 		    C_TO_XEN_INT(d)));
 }
 
-static XEN gxm_XGetPointerMapping(XEN arg1, XEN arg2, XEN arg3)
+static XEN gxm_XGetPointerMapping(XEN arg1, XEN ignore, XEN arg3)
 {
   #define H_XGetPointerMapping "int XGetPointerMapping(display, ignored, len) returns the current mapping of the pointer."
   /* DIFF: XGetPointerMapping ignores arg2, returns list
@@ -10205,7 +10205,7 @@ static XEN gxm_XGetFontProperty(XEN arg1, XEN arg2)
 		    C_TO_XEN_ULONG(prop)));
 }
 
-static XEN gxm_XGetErrorText(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static XEN gxm_XGetErrorText(XEN arg1, XEN arg2, XEN ignore, XEN arg4)
 {
   #define H_XGetErrorText "XGetErrorText(display, code, buffer_return, length) copies a null-terminated string describing the specified error \
 code into the specified buffer."
@@ -10234,7 +10234,7 @@ window geometry given user geometry string and default geometry"
   /* DIFF: XGetGeometry omits trailing 4 args and returns them
    */
   int x, y, w, h, val;
-  XEN arg1; XEN arg2; XEN arg3; XEN arg4; XEN arg5; XEN arg6; XEN arg7; XEN arg8; XEN arg9;
+  XEN arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9;
   arg1 = XEN_LIST_REF(args, 0);
   arg2 = XEN_LIST_REF(args, 1);
   arg3 = XEN_LIST_REF(args, 2);
@@ -10293,7 +10293,7 @@ static XEN gxm_XFreeGC(XEN arg1, XEN arg2)
   return(C_TO_XEN_INT(XFreeGC(XEN_TO_C_Display(arg1), XEN_TO_C_GC(arg2))));
 }
 
-static XEN gxm_XFreeFontPath(XEN arg1)
+static XEN gxm_XFreeFontPath(XEN ignore)
 {
   #define H_XFreeFontPath "XFreeFontPath(list) frees the data allocated by XGetFontPath (a no-op in xm)."
   /* DIFF: XFreeFontPath is no-op
@@ -10301,7 +10301,7 @@ static XEN gxm_XFreeFontPath(XEN arg1)
   return(XEN_FALSE);
 }
 
-static XEN gxm_XFreeFontNames(XEN arg1)
+static XEN gxm_XFreeFontNames(XEN ignore)
 {
   #define H_XFreeFontNames "XFreeFontNames(list) frees the array and strings returned by XListFonts or XListFontsWithInfo (a no-op in xm)."
   /* DIFF: XFreeFontNames is no-op
@@ -10309,7 +10309,7 @@ static XEN gxm_XFreeFontNames(XEN arg1)
   return(XEN_FALSE);
 }
 
-static XEN gxm_XFreeFontInfo(XEN arg1, XEN arg2, XEN arg3)
+static XEN gxm_XFreeFontInfo(XEN ignore1, XEN ignore2, XEN ignore3)
 {
   #define H_XFreeFontInfo "XFreeFontInfo(names, free_info, actual_count) frees a font structure or an array of font structures, and \
 optionally an array of font names (a no-op in xm)."
@@ -10327,7 +10327,7 @@ frees the XFontStruct structure."
   return(C_TO_XEN_INT(XFreeFont(XEN_TO_C_Display(arg1), XEN_TO_C_XFontStruct(arg2))));
 }
 
-static XEN gxm_XFreeExtensionList(XEN arg1)
+static XEN gxm_XFreeExtensionList(XEN ignore)
 {
   /* DIFF: XFreeExtensionList is a no-op
    */
@@ -11073,7 +11073,7 @@ static XEN gxm_XCopyPlane(XEN args)
 {
   #define H_XCopyPlane "XCopyPlane(display, src, dest, gc, src_x, src_y, width, height, dest_x, dest_y, plane) uses a single bit plane of the \
 specified source rectangle combined with the specified GC to modify the specified rectangle of dest."
-  XEN arg1; XEN arg2; XEN arg3; XEN arg4; XEN arg5; XEN arg6; XEN arg7; XEN arg8; XEN arg9; XEN arg10; XEN arg11;
+  XEN arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11;
   arg1 = XEN_LIST_REF(args, 0);
   arg2 = XEN_LIST_REF(args, 1);
   arg3 = XEN_LIST_REF(args, 2);
@@ -11119,7 +11119,7 @@ static XEN gxm_XCopyArea(XEN args)
 {
   #define H_XCopyArea "XCopyArea(display, src, dest, gc, src_x, src_y, width, height, dest_x, dest_y) combines the specified rectangle of src \
 with the specified rectangle of dest."
-  XEN arg1; XEN arg2; XEN arg3; XEN arg4; XEN arg5; XEN arg6; XEN arg7; XEN arg8; XEN arg9; XEN arg10;
+  XEN arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10;
   arg1 = XEN_LIST_REF(args, 0);
   arg2 = XEN_LIST_REF(args, 1);
   arg3 = XEN_LIST_REF(args, 2);
@@ -11576,7 +11576,7 @@ static XEN gxm_XAllocColorPlanes(XEN args)
   unsigned long *ps;
   int i, len, val, loc;
   XEN lst = XEN_FALSE, plist = XEN_EMPTY_LIST;
-  XEN arg1; XEN arg2; XEN arg3; XEN arg5; XEN arg6; XEN arg7; XEN arg8;
+  XEN arg1, arg2, arg3, arg5, arg6, arg7, arg8;
   arg1 = XEN_LIST_REF(args, 0);
   arg2 = XEN_LIST_REF(args, 1);
   arg3 = XEN_LIST_REF(args, 2);
@@ -12318,7 +12318,7 @@ static XEN gxm_XCreateWindow(XEN args)
   #define H_XCreateWindow "Window XCreateWindow(display, parent, x, y, width, height, border_width, depth, class, visual, valuemask, attributes) \
 creates an unmapped subwindow for a specified parent window, returns the window ID of the created window, and causes the X server to generate \
 a CreateNotify event."
-  XEN arg1; XEN arg2; XEN arg3; XEN arg4; XEN arg5; XEN arg6; XEN arg7; XEN arg8; XEN arg9; XEN arg10; XEN arg11; XEN arg12;
+  XEN arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12;
   arg1 = XEN_LIST_REF(args, 0);
   arg2 = XEN_LIST_REF(args, 1);
   arg3 = XEN_LIST_REF(args, 2);
@@ -12665,7 +12665,7 @@ static XEN gxm_XGetSubImage(XEN args)
 {
   #define H_XGetSubImage "XImage *XGetSubImage(display, d, x, y, width, height, plane_mask, format, dest_image, dest_x, dest_y) updates \
 dest_image with the specified subimage in the same manner as "
-  XEN arg1; XEN arg2; XEN arg3; XEN arg4; XEN arg5; XEN arg6; XEN arg7; XEN arg8; XEN arg9; XEN arg10; XEN arg11;
+  XEN arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11;
   arg1 = XEN_LIST_REF(args, 0);
   arg2 = XEN_LIST_REF(args, 1);
   arg3 = XEN_LIST_REF(args, 2);
@@ -12719,7 +12719,7 @@ static XEN gxm_XCreateImage(XEN args)
 {
   #define H_XCreateImage "XImage *XCreateImage(display, visual, depth, format, offset, data, width, height, bitmap_pad, bytes_per_line) \
 allocates the memory needed for an XImage structure for the specified display but does not allocate space for the image itself."
-  XEN arg1; XEN arg2; XEN arg3; XEN arg4; XEN arg5; XEN arg6; XEN arg7; XEN arg8; XEN arg9; XEN arg10;
+  XEN arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10;
   arg1 = XEN_LIST_REF(args, 0);
   arg2 = XEN_LIST_REF(args, 1);
   arg3 = XEN_LIST_REF(args, 2);
@@ -15404,7 +15404,7 @@ static XEN gxm_XtDisplay(XEN arg1)
   return(C_TO_XEN_Display(XtDisplay(XEN_TO_C_Widget(arg1))));
 }
 
-static XEN gxm_XtVaCreateArgsList(XEN arg1, XEN arg2)
+static XEN gxm_XtVaCreateArgsList(XEN arg1, XEN ignore2)
 {
   #define H_XtVaCreateArgsList "XtVarArgsList XtVaCreateArgsList(unused, ...) allocates memory and copies its arguments into a single \
 list pointer, which may be used with XtVaNestedList."
@@ -15413,7 +15413,7 @@ list pointer, which may be used with XtVaNestedList."
   return(arg1);
 }
 
-static XEN gxm_XtMergeArgLists(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static XEN gxm_XtMergeArgLists(XEN arg1, XEN ignore2, XEN arg3, XEN ignore4)
 {
   #define H_XtMergeArgLists "ArgList XtMergeArgLists(args1, num_args1, args2, num_args2) allocates enough storage to hold the combined \
 ArgList structures and copies them into it."

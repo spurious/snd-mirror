@@ -21,7 +21,7 @@ static void remove_temp_files(chan_info *cp)
 
 static XEN exit_hook;
 
-int snd_exit_cleanly(snd_state *ss, bool force_exit)
+int snd_exit_cleanly(bool force_exit)
 {  
   XEN res = XEN_FALSE;
   if (XEN_HOOKED(exit_hook))
@@ -30,7 +30,7 @@ int snd_exit_cleanly(snd_state *ss, bool force_exit)
 		      S_exit_hook);
   if ((XEN_TRUE_P(res)) && (!force_exit)) return(0);
   cleanup_dac();
-  for_each_chan(ss, remove_temp_files);
+  for_each_chan(remove_temp_files);
   cleanup_region_temp_files();
   cleanup_recording();
   forget_temps();
@@ -44,18 +44,15 @@ void sound_not_current(snd_info *sp, void *ignore)
 {
   /* check for change in update status */
   bool needs_update;
-  snd_state *ss;
   needs_update = (file_write_date(sp->filename) != sp->write_date);
   if (needs_update != sp->need_update)
     {
-      ss = sp->state;
       sp->need_update = needs_update;
       if ((needs_update) && (auto_update(ss)))
-	snd_update(ss, sp);
+	snd_update(sp);
       else snd_file_bomb_icon(sp, needs_update);
     }
 }
-
 
 /* ---------------- save sound state (options, or entire state) ---------------- */
 
@@ -214,7 +211,7 @@ static void pcp_sl(FILE *fd, const char *name, Float val1, Float val2, int chan)
   {fprintf(fd, "%s(set! (%s sfile %d) (list %f %f))\n", white_space, name, chan, val1, val2);}
 #endif
 
-static void save_snd_state_options (snd_state *ss, FILE *fd)
+static void save_snd_state_options (FILE *fd)
 { /* for save options menu choice (.snd) -- mostly saving snd_state info */
   time_t ts;
   char time_buf[TIME_STR_SIZE];
@@ -376,16 +373,16 @@ static FILE *open_restart_file(char *name, bool append)
   return(fd);
 }
 
-FILE *open_snd_init_file (snd_state *ss)
+FILE *open_snd_init_file (void)
 { /* needed also by keyboard macro saver */
   return(open_restart_file(ss->init_file, true));
 }
 
-static char *save_options_or_error(snd_state *ss)
+static char *save_options_or_error(void)
 {
   FILE *fd;
-  fd = open_snd_init_file(ss);
-  if (fd) save_snd_state_options(ss, fd);
+  fd = open_snd_init_file();
+  if (fd) save_snd_state_options(fd);
   if ((!fd) || (FCLOSE(fd) != 0))
     return(mus_format(_("save-options in %s hit error: %s"),
 		      ss->init_file,
@@ -393,10 +390,10 @@ static char *save_options_or_error(snd_state *ss)
   return(NULL);
 }
 
-int save_options(snd_state *ss)
+int save_options(void)
 {
   char *error;
-  error = save_options_or_error(ss);
+  error = save_options_or_error();
   if (error)
     {
       snd_error(error);
@@ -441,7 +438,7 @@ static void save_property_list(FILE *fd, XEN property_list, int chan)
 }
 #endif
 
-static int find_sound_nth(snd_state *ss, snd_info *nsp)
+static int find_sound_nth(snd_info *nsp)
 {
   snd_info *sp;
   int i, which = 0;
@@ -464,8 +461,6 @@ static void save_sound_state (snd_info *sp, void *ptr)
   chan_info *cp;
   axis_info *ap;
   char *tmpstr = NULL;
-  snd_state *ss;
-  ss = sp->state;
   fd = (FILE *)ptr;
   /* here we have to use the 'nth' arg to find_sound -- it should return #f if such an 'nth' case is not found,
    *   so that we can tell when to open another view on a given file
@@ -474,7 +469,7 @@ static void save_sound_state (snd_info *sp, void *ptr)
   fprintf(fd, "begin\n  sfile = %s(\"%s\", %d)\n  if (sfile == false)\n    sfile = %s(\"%s\")\n  end\n",
 	  TO_PROC_NAME(S_find_sound),
 	  sp->short_filename,
-	  find_sound_nth(ss, sp),
+	  find_sound_nth(sp),
 	  TO_PROC_NAME((sp->read_only) ? S_view_sound : S_open_sound),
 	  sp->filename);
   
@@ -482,7 +477,7 @@ static void save_sound_state (snd_info *sp, void *ptr)
   fprintf(fd, "(let ((sfile (or (%s \"%s\" %d) (%s \"%s\"))))\n  (if sfile\n    (begin\n",
 	  S_find_sound,
 	  sp->short_filename, /* short filename ok because find-sound searches for that name as well as the full filename */
-	  find_sound_nth(ss, sp),
+	  find_sound_nth(sp),
 	  (sp->read_only) ? S_view_sound : S_open_sound,
 	  sp->filename);
 #endif
@@ -611,7 +606,7 @@ static void save_sound_state (snd_info *sp, void *ptr)
 
 static XEN after_save_state_hook;
 
-static char *save_state_or_error (snd_state *ss, char *save_state_name)
+static char *save_state_or_error (char *save_state_name)
 {
 #if HAVE_RUBY
   #define BPAREN ""
@@ -627,19 +622,18 @@ static char *save_state_or_error (snd_state *ss, char *save_state_name)
     return(mus_format(_("can't write %s: %s"), 
 		      save_state_name, 
 		      strerror(errno)));
-
   else
     {
 #if HAVE_SETLOCALE
       locale = copy_string(setlocale(LC_NUMERIC, "C")); /* must use decimal point in floats since Scheme assumes that format */
 #endif
       save_prevlist(save_fd);                                 /* list of previous files (View: Files option) */
-      save_snd_state_options(ss, save_fd);                    /* options = user-settable global state variables */
+      save_snd_state_options(save_fd);                    /* options = user-settable global state variables */
       /* the global settings need to precede possible local settings */
-      for_each_sound(ss, save_sound_state, (void *)save_fd);  /* current sound state -- will traverse chans */
+      for_each_sound(save_sound_state, (void *)save_fd);  /* current sound state -- will traverse chans */
       save_macro_state(save_fd);                              /* current unsaved keyboard macros (snd-chn.c) */
       save_envelope_editor_state(save_fd);                    /* current envelope editor window state */
-      save_regions(ss, save_fd);                              /* regions */
+      save_regions(save_fd);                              /* regions */
       if (transform_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_transform_dialog));
       if (enved_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_enved_dialog));
       if (color_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_color_dialog));
@@ -676,10 +670,10 @@ static char *save_state_or_error (snd_state *ss, char *save_state_name)
   return(NULL);
 }
 
-int save_state (snd_state *ss, char *save_state_name)
+int save_state (char *save_state_name)
 {
   char *error;
-  error = save_state_or_error(ss, save_state_name);
+  error = save_state_or_error(save_state_name);
   if (error)
     {
       snd_error(error);
@@ -732,7 +726,7 @@ static XEN g_script_args(void)
   return(lst);
 }
 
-int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_file_names, bool with_title, int args)
+int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool with_title, int args)
 {
   char *argname;
   argname = auto_open_file_names[auto_open_ctr];
@@ -758,7 +752,7 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
 	      if ((auto_open_ctr >= args) ||
 		  (auto_open_file_names[auto_open_ctr] == NULL))
 		snd_error(_("%s but no directory to preload?"), argname);
-	      else add_directory_to_prevlist(ss, auto_open_file_names[auto_open_ctr]);
+	      else add_directory_to_prevlist(auto_open_file_names[auto_open_ctr]);
 	    }
 	  else
 	    {
@@ -798,7 +792,7 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
 		      if ((auto_open_ctr >= args) ||
 			  (auto_open_file_names[auto_open_ctr] == NULL))
 			snd_error(_("%s but no form to evaluate?"), argname);
-		      else snd_eval_str(ss, auto_open_file_names[auto_open_ctr]);
+		      else snd_eval_str(auto_open_file_names[auto_open_ctr]);
 		    }
 		  else
 		    {
@@ -841,7 +835,7 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
 				  startup_filename = copy_string(argname);
 				  if (dont_start(startup_filename)) snd_exit(1);
 				}
-			      snd_open_file_unselected(argname, ss, false);
+			      snd_open_file_unselected(argname, false);
 			    }
 			}
 		    }
@@ -855,12 +849,10 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
 static XEN g_save_state(XEN filename) 
 {
   #define H_save_state "(" S_save_state " filename): save the current Snd state in filename; (load filename) restores it)"
-
   char *error;
   XEN result;
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_save_state, "a string");
-  error = save_state_or_error(get_global_state(), 
-			      XEN_TO_C_STRING(filename));
+  error = save_state_or_error(XEN_TO_C_STRING(filename));
   if (error)
     {
       result = C_TO_XEN_STRING(error);
@@ -883,7 +875,7 @@ static XEN g_save_options(XEN filename)
   fd = FOPEN(name, "w");
   if (name) FREE(name);
   if (fd) 
-    save_snd_state_options(get_global_state(), fd);
+    save_snd_state_options(fd);
   if ((!fd) || 
       (FCLOSE(fd) != 0))
     XEN_ERROR(CANNOT_SAVE, 
@@ -896,7 +888,7 @@ static XEN g_save_options(XEN filename)
 static XEN g_exit(XEN val) 
 {
   #define H_exit "(" S_exit "): exit Snd"
-  if (snd_exit_cleanly(get_global_state(), false))
+  if (snd_exit_cleanly(false))
     snd_exit(XEN_TO_C_INT_OR_ELSE(val,1)); 
   return(XEN_FALSE);
 }
