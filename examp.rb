@@ -1,8 +1,8 @@
 # examp.rb -- Guile -> Ruby translation
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Wed Apr 09 04:53:00 CEST 2003
-# Version: $Revision: 1.52 $
+# Last: Sat Apr 12 04:41:50 CEST 2003
+# Version: $Revision: 1.56 $
 
 #
 # Utilities
@@ -23,6 +23,8 @@
 # extension to Module Enumerable
 #  map_with_index { |x, i| ... }
 #
+# times2samples(start, dur)
+# seconds2samples(sec)
 # get_func_name(n)
 # doc(str), putd(func), snd_putd(func)
 # remove_if(func, lst)
@@ -192,7 +194,7 @@ Example:
     set_channel_style(Channels_combined, snd)
   end
 
-  #after_open_hook.to_s -> \"Hook name: my_hook (|*a|)\"
+  $after_open_hook.to_s -> \"Hook name: my_hook (|*a|)\"
 
   $after_open_hook.remove_hook!(\"my_hook\")\n"
   
@@ -303,6 +305,21 @@ end
 ##
 ## Utilities
 ##
+
+def times2samples(start, dur = nil)
+  doc("times2samples(start, dur)
+START and DUR are in seconds;
+returns array [beg, len] in samples\n") if start == :help
+  beg = seconds2samples(start)
+  [beg, beg + seconds2samples(dur)]
+end
+
+def seconds2samples(sec)
+  doc("seconds2samples(sec)
+returns SEC in samples.\n") if sec == :help
+  sr = (mus_srate() rescue $rbm_srate)
+  (sec * sr).round
+end
 
 def remove_if(func, lst)
   if lst.empty?
@@ -713,7 +730,7 @@ end
 
 # for a faster version see v.rb
 
-def jc_reverb_rb(startime, dur, *args)
+def jc_reverb_rb(startime, dur = nil, *args)
   doc("jc_reverb_rb(startime, dur, *args)
 	:low_pass, false
 	:volume,   1.0
@@ -723,7 +740,7 @@ def jc_reverb_rb(startime, dur, *args)
 	:delay2,   0.011
 The old Chowning reverberator (see examp.scm).
 Usage: jc_reverb_rb(0, 2.5, :volume, 0.1)
-       with_sound(:reverb, :jc_reverb) { fm_violin }\n") if get_args(args, :help, false)
+       with_sound(:reverb, :jc_reverb) { fm_violin }\n") if startime == :help
   low_pass = get_args(args, :low_pass, false)
   volume   = get_args(args, :volume, 1.0)
   amp_env1 = get_args(args, :amp_env1, false)
@@ -741,8 +758,7 @@ Usage: jc_reverb_rb(0, 2.5, :volume, 0.1)
   chans = (mus_channels($rbm_output) rescue $rbm_channels)
   outdel1 = make_delay((delay1 * srate).round)
   outdel2 = make_delay((delay2 * srate).round) if chans == 2
-  beg = (srate * startime).round
-  len = beg + (srate * dur).round
+  beg, len = times2samples(startime, dur)
   envA = (amp_env1 ? make_env(amp_env1, volume, dur) : false)
   envB = (amp_env2 ? make_env(amp_env2, volume, dur) : false)
   delA = (envA ? env(envA) : volume)

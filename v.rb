@@ -1,8 +1,8 @@
-# v.rb -- Inlined fm_violin and jc_reverb version
+# v.rb -- Inlined fm_violin, jc_reverb, and nrev version
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Tue Apr 08 04:00:49 CEST 2003
-# Version: $Revision: 1.10 $
+# Last: Sat Apr 12 04:39:37 CEST 2003
+# Version: $Revision: 1.12 $
 
 # NOTE: Don't `require' the normal inline.rb but use function `inline'
 # included in this file.  It will work with Snd as well as with Ruby.
@@ -16,8 +16,10 @@
 
 # fm_violin(start, dur, freq, amp, *args)
 # run_fm_violin(*args)
-# jc_reverb(startime, dur, *args)
+# jc_reverb(startime, dur, *args) 1/2 chans and 1/2 rev_chans
 # run_jc_reverb(*args)
+# nrev(startime, dur, *args)      1/2/4 chans and 1 rev_chan
+# run_nrev(*args)
 
 $IN_SND = true unless defined? $IN_SND
 $HAVE_SNDLIB_SO = false unless defined? $HAVE_SNDLIB_SO
@@ -445,7 +447,7 @@ get_ary(VALUE ary) {
 }
 end
 
-def jc_reverb(startime, dur, *args)
+def jc_reverb(startime, dur = nil, *args)
   doc("jc_reverb(startime, dur, *args)
 	:low_pass, false
 	:volume,   1.0
@@ -455,7 +457,7 @@ def jc_reverb(startime, dur, *args)
 	:delay2,   0.011
 	:help
 The old Chowning reverberator (see snd-6/examp.scm).
-Usage: with_sound(:reverb, :jc_reverb) { fm_violin }\n") if get_args(args, :help, false)
+Usage: with_sound(:reverb, :jc_reverb) { fm_violin }\n") if startime == :help
   low_pass = get_args(args, :low_pass, 0)
   volume   = get_args(args, :volume, 1.0)
   amp_env1 = get_args(args, :amp_env1, false)
@@ -469,11 +471,9 @@ Usage: with_sound(:reverb, :jc_reverb) { fm_violin }\n") if get_args(args, :help
   comb2 = make_comb(0.733, 4999)
   comb3 = make_comb(0.715, 5399)
   comb4 = make_comb(0.697, 5801)
-  srate = (mus_srate() rescue $rbm_srate)
-  outdel1 = make_delay((delay1 * srate).round)
-  outdel2 = make_delay((delay2 * srate).round)
-  beg = (srate * startime).round
-  len = beg + (srate * dur).round
+  outdel1 = make_delay((delay1 * $rbm_srate).round)
+  outdel2 = make_delay((delay2 * $rbm_srate).round)
+  beg, len = times2samples(startime, dur)
   envA = (amp_env1 ? make_env(amp_env1, volume, dur) : false)
   envB = (amp_env2 ? make_env(amp_env2, volume, dur) : false)
   delA = (envA ? env(envA) : volume)
@@ -579,6 +579,164 @@ typedef struct {
 	    mus_outb(i, delB * mus_delay(outdel2, all_sums, 0.0), out);
     }
 
+    return INT2FIX(i);
+}
+end
+
+def nrev(startime, dur = nil, *args)
+  doc("nrev(startime, dur, *args)
+        :reverb_factor, 1.09
+        :lp_coeff,      0.7
+        :lp_out_coeff,  0.85
+        :output_scale,  1.0
+        :amp_env,       [0, 1, 1, 1]
+        :volume,        1.0
+This is a faster version (with C-loop) of dlocnrev (see
+clm-2/dlocsig/dlocsig.lisp).\n") if startime == :help
+  reverb_factor = get_args(args, :reverb_factor, 1.09)
+  lp_coeff      = get_args(args, :lp_coeff, 0.7)
+  lp_out_coeff  = get_args(args, :lp_out_coeff, 0.85)
+  output_scale  = get_args(args, :output_scale, 1.0)
+  amp_env       = get_args(args, :amp_env, [0, 1, 1, 1])
+  volume        = get_args(args, :volume, 1.0)
+  beg, len = times2samples(startime, dur)
+  env_a = make_env(:envelope, amp_env, :scaler, output_scale, :duration, dur)
+  srscale = $rbm_srate / 25641.0
+  val = 0
+  dly_len = [1433, 1601, 1867, 2053, 2251, 2399, 347, 113, 37, 59, 53, 43, 37, 29, 19]
+  dly_len.map! do |x|
+    val = (srscale * x).floor
+    val += 1 if val.modulo(2).zero?
+    val += 2 until val.prime?
+    val
+  end
+  comb1 = make_comb(reverb_factor * 0.822, dly_len[0])
+  comb2 = make_comb(reverb_factor * 0.802, dly_len[1])
+  comb3 = make_comb(reverb_factor * 0.773, dly_len[2])
+  comb4 = make_comb(reverb_factor * 0.753, dly_len[3])
+  comb5 = make_comb(reverb_factor * 0.753, dly_len[4])
+  comb6 = make_comb(reverb_factor * 0.733, dly_len[5])
+  low = make_one_pole(lp_out_coeff, lp_coeff - 1.0)
+  low_a = make_one_pole(lp_out_coeff, lp_coeff - 1.0)
+  low_b = make_one_pole(lp_out_coeff, lp_coeff - 1.0)
+  low_c = make_one_pole(lp_out_coeff, lp_coeff - 1.0)
+  low_d = make_one_pole(lp_out_coeff, lp_coeff - 1.0)
+  allpass1 = make_all_pass(-0.7, 0.7, dly_len[6])
+  allpass2 = make_all_pass(-0.7, 0.7, dly_len[7])
+  allpass3 = make_all_pass(-0.7, 0.7, dly_len[8])
+  allpass4 = make_all_pass(-0.7, 0.7, dly_len[10])  # 9 for stereo
+  allpass5 = make_all_pass(-0.7, 0.7, dly_len[11])
+  allpass6 = make_all_pass(-0.7, 0.7, dly_len[12])
+  allpass7 = make_all_pass(-0.7, 0.7, dly_len[13])
+  allpass8 = make_all_pass(-0.7, 0.7, dly_len[14])
+  run_nrev(beg,
+           len,
+           output_scale,
+           volume,
+           env_a,
+           comb1,
+           comb2,
+           comb3,
+           comb4,
+           comb5,
+           comb6,
+           low,
+           low_a,
+           low_b,
+           low_c,
+           low_d,
+           allpass1,
+           allpass2,
+           allpass3,
+           allpass4,
+           allpass5,
+           allpass6,
+           allpass7,
+           allpass8)
+rescue
+  die get_func_name
+end
+
+def run_nrev(*args)
+  prelude = %Q{
+#include <sndlib.h>
+#include <clm.h>
+
+typedef struct {
+    mus_any *gen;
+    VALUE *vcts;
+    int nvcts;
+    void *input_ptree;
+} mus_xen;
+
+#define RSNDGEN(obj) (mus_any *)(((mus_xen *)(DATA_PTR(obj)))->gen)
+}
+
+  inline args, prelude, %Q{
+    long i = 0L;
+    long beg = FIX2LONG(argv[i++]);
+    long len = FIX2LONG(argv[i++]);
+    float output_scale = NUM2DBL(argv[i++]);
+    float volume = NUM2DBL(argv[i++]);
+    mus_any *env_a = RSNDGEN(argv[i++]);
+    mus_any *comb1 = RSNDGEN(argv[i++]);
+    mus_any *comb2 = RSNDGEN(argv[i++]);
+    mus_any *comb3 = RSNDGEN(argv[i++]);
+    mus_any *comb4 = RSNDGEN(argv[i++]);
+    mus_any *comb5 = RSNDGEN(argv[i++]);
+    mus_any *comb6 = RSNDGEN(argv[i++]);
+    mus_any *low = RSNDGEN(argv[i++]);
+    mus_any *low_a = RSNDGEN(argv[i++]);
+    mus_any *low_b = RSNDGEN(argv[i++]);
+    mus_any *low_c = RSNDGEN(argv[i++]);
+    mus_any *low_d = RSNDGEN(argv[i++]);
+    mus_any *allpass1 = RSNDGEN(argv[i++]);
+    mus_any *allpass2 = RSNDGEN(argv[i++]);
+    mus_any *allpass3 = RSNDGEN(argv[i++]);
+    mus_any *allpass4 = RSNDGEN(argv[i++]);
+    mus_any *allpass5 = RSNDGEN(argv[i++]);
+    mus_any *allpass6 = RSNDGEN(argv[i++]);
+    mus_any *allpass7 = RSNDGEN(argv[i++]);
+    mus_any *allpass8 = RSNDGEN(argv[i++]);
+    mus_any *out = (rb_gv_get("$rbm_output") != Qfalse) ?
+	RSNDGEN(rb_gv_get("$rbm_output")) : NULL;
+    mus_any *rev_in = (rb_gv_get("$rbm_reverb") != Qfalse) ?
+	RSNDGEN(rb_gv_get("$rbm_reverb")) : NULL;
+    int chans = mus_channels((mus_any *)out);
+    float sample_a = 0.0, sample_b = 0.0, sample_c = 0.0, sample_d = 0.0;
+    float rev = 0.0, outrev = 0.0;
+    for(i = beg; i < len; i++) {
+	rev = volume * mus_env(env_a) * mus_ina(i, rev_in);
+        outrev = mus_all_pass(allpass4,
+                     mus_one_pole(low, 
+			 mus_all_pass(allpass3,
+			     mus_all_pass(allpass2,
+                                 mus_all_pass(allpass1,
+                                     mus_comb(comb1, rev, 0.0) +
+                                     mus_comb(comb2, rev, 0.0) +
+                                     mus_comb(comb3, rev, 0.0) +
+                                     mus_comb(comb4, rev, 0.0) +
+                                     mus_comb(comb5, rev, 0.0) +
+                                     mus_comb(comb6, rev, 0.0), 0.0), 0.0), 0.0)), 0.0);
+        sample_a = output_scale * mus_one_pole(low_a, mus_all_pass(allpass5, outrev, 0.0));
+        sample_b = output_scale * mus_one_pole(low_b, mus_all_pass(allpass6, outrev, 0.0));
+        sample_c = output_scale * mus_one_pole(low_c, mus_all_pass(allpass7, outrev, 0.0));
+        sample_d = output_scale * mus_one_pole(low_d, mus_all_pass(allpass8, outrev, 0.0));
+        if(chans == 2)
+            mus_outa(i, (sample_a + sample_d) / 2.0, out);
+        else
+            mus_outa(i, sample_a, out);
+        if((chans == 2) || (chans == 4)) {
+            if(chans == 2)
+                mus_outb(i, (sample_b + sample_c) / 2.0, out);
+            else
+                mus_outb(i, sample_b, out);
+        }
+        if(chans == 4) {
+            mus_outc(i, sample_c, out);
+            mus_outd(i, sample_d, out);
+        }
+    }
     return INT2FIX(i);
 }
 end

@@ -4,8 +4,8 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Mar 25 23:21:37 CET 2003
-# Last: Wed Apr 09 05:39:46 CEST 2003
-# Version: $Revision: 1.10 $
+# Last: Wed Apr 16 17:53:39 CEST 2003
+# Version: $Revision: 1.13 $
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -57,6 +57,10 @@
 # implementation of a Snd-menu to set the points of the path via
 # sliders.  The menu class needs the Motif module (xm.so) or compiling
 # --with-static-xm, the Dlocsig-stuff works without Motif.
+#
+# Note: dlocsig.rb handles not more rev_channels than out_channels;
+# B_format_ambisonics handles only 4 out_channels and 0, 1, or 4
+# rev_channels.
 #
 # The simple example
 #
@@ -364,17 +368,17 @@ module Inject
   end
 end
 
-module CLM
+module CLM_module
   TWO_PI = 2.0 * PI
 
-  class CLMError < StandardError
+  class CLM_moduleError < StandardError
   end
 
   def error(*args)
     if $IN_SND
       snd_error(format(*args))
     else
-      raise(CLMError, format(*args), caller(1)[0])
+      raise(CLM_moduleError, format(*args), caller(1)[0])
     end
   end
 
@@ -429,7 +433,7 @@ end
 #
 
 module Dlocsig
-  include CLM
+  include CLM_module
 
   Group = Struct.new("Group", :id, :size, :vertices, :speakers, :matrix)
   Speaker_config = Struct.new("Speaker_config",
@@ -476,12 +480,12 @@ module Dlocsig
     distances = get_args(args, :distances, [])
     map       = get_args(args, :map, [])
     if speakers.empty?
-      error("a speaker configuration must have at least one speaker!")
+      error("%s: a speaker configuration must have at least one speaker!", get_func_name())
     end
     unless groups.empty?
       first_len = groups[0].length
       if groups.detect do |group| group.length != first_len end
-        error("all groups must be of the same length! (#{first_len})")
+        error("%s: all groups must be of the same length! (%d)", get_func_name(), first_len)
       end
     else
       unless speakers[0].kind_of?(Array)
@@ -498,43 +502,43 @@ module Dlocsig
       end
     end
     if groups.empty?
-      error("no groups specified, speakers must be arranged in groups")
+      error("%s: no groups specified, speakers must be arranged in groups", get_func_name())
     end
     if (not delays.empty?) and (not distances.empty?)
-      error("please specify delays or distances but not both")
+      error("%s: please specify delays or distances but not both", get_func_name())
     end
     unless delays.empty?
       if speakers.length > delays.length
-        error("all speaker delays have to be specified, only %d supplied [%s]",
-              delays.length, delays.inspect)
+        error("%s: all speaker delays have to be specified, only %d supplied [%s]",
+              get_func_name(), delays.length, delays.inspect)
       elsif speakers.length < delays.length
-        error("more speaker delays than speakers, %d supplied instead of %d [%s]",
-              delays.length, speakers.length, delays.inspect)
+        error("%s: more speaker delays than speakers, %d supplied instead of %d [%s]",
+              get_func_name(), delays.length, speakers.length, delays.inspect)
       end
       if x = delays.detect do |delay| delay < 0.0 end
-        error("delays must be all positive, #{x} is negative")
+        error("%s: delays must be all positive, %d is negative", get_func_name(), x)
       end
     end
     unless distances.empty?
       if speakers.length > distances.length
-        error("all speaker distances have to be specified, only %d supplied [%s]",
-              distances.length, distances.inspect)
+        error("%s: all speaker distances have to be specified, only %d supplied [%s]",
+              get_func_name(), distances.length, distances.inspect)
       elsif speakers.length < distances.length
-        error("more speaker distances than speakers, %d supplied instead of %d [%s]",
-              distances.length, speakers.length, distances.inspect)
+        error("%s: more speaker distances than speakers, %d supplied instead of %d [%s]",
+              get_func_name(), distances.length, speakers.length, distances.inspect)
       end
       if x = distances.detect do |delay| delay < 0.0 end
-        error("distances must be all positive, #{x} is negative")
+        error("%s: distances must be all positive, %d is negative", get_func_name(), x)
       end
     end
     unless map.empty?
       if speakers.length > map.length
-        error("must map all speakers to output channels, only %d mapped [%s]",
-              map.length, map.inspect)
+        error("%s: must map all speakers to output channels, only %d mapped [%s]",
+              get_func_name(), map.length, map.inspect)
       elsif speakers.length < map.length
-        error("trying to map more channels than there are speakers, \
+        error("%s: trying to map more channels than there are speakers, \
 %d supplied instead of %d [%s]",
-              map.length, speakers.length, map.inspect)
+              get_func_name(), map.length, speakers.length, map.inspect)
       end
     end
     coords = speakers.map do |s|
@@ -575,10 +579,11 @@ module Dlocsig
     unless map.empty?
       entries = map.length
       if x = map.detect do |entry| entry >= entries end
-        error("channel %d in map %s is out of range (max=%d)", x, map.inspect, entries)
+        error("%s: channel %d in map %s is out of range (max=%d)",
+              get_func_name(), x, map.inspect, entries)
       end
       if map.uniq.length != map.length
-        error("there are duplicate channels in map %s", map.inspect)
+        error("%s: there are duplicate channels in map %s", get_func_name(), map.inspect)
       end
     end
     Speaker_config.new(speakers.length, groups[0][:size], coords, groups, times,
@@ -595,8 +600,9 @@ module Dlocsig
   def get_speaker_configuration(channels, *args)
     d3      = get_args(args, :d3, false)
     configs = get_args(args, :configs, $dlocsig_speaker_configs)
-    configs[(d3 ? 1 : 0)][channels] or error("no speaker configuration exists for %s %d \
-output channel%s", (d3 ? "tridimensional" : "bidimensional"), channels, (channels == 1 ? "" : "s"))
+    configs[(d3 ? 1 : 0)][channels] or error("%s: no speaker configuration exists for %s %d \
+output channel%s", get_func_name(), (d3 ? "tridimensional" : "bidimensional"),
+                                             channels, (channels == 1 ? "" : "s"))
   end
 
   def make_dlocsig(startime, dur, *args)
@@ -614,12 +620,35 @@ output channel%s", (d3 ? "tridimensional" : "bidimensional"), channels, (channel
     render_using        = get_args(args, :render_using, Amplitude_panning)
     out_channels        = get_args(args, :out_channels, nil)
     rev_channels        = get_args(args, :rev_channels, nil)
-    if render_using == B_format_ambisonics and ((out_channels or mus_channels($rbm_output) != 4))
-      error("ambisonics b_format requires four output channels, current number is %d",
-            (out_channels or mus_channels($rbm_output)))
+    out_channels = (out_channels or mus_channels($rbm_output))
+    if render_using == B_format_ambisonics and out_channels != 4
+      warn("%s: ambisonics b_format requires 4 output channels; \
+compute silently with 4 out_channels instead of %d",
+           get_func_name(), out_channels)
+      out_channels = 4
     end
     out_channels = (out_channels or mus_channels($rbm_output))
     rev_channels = (rev_channels or ($rbm_reverb ? mus_channels($rbm_reverb) : 0))
+    if render_using == B_format_ambisonics
+      if rev_channels == 2 or rev_channels == 3
+        warn("%s: ambisonics b_format: only 1 or 4 rev_channels possible; \
+compute silently with 1 rev_channel instead of %d",
+             get_func_name(), rev_channels)
+        rev_channels = 1
+      elsif rev_channels > 4
+        warn("%s: ambisonics b_format: only 1 or 4 rev_channels possible; \
+compute silently with 4 rev_channels instead of %d",
+             get_func_name(), rev_channels)
+        rev_channels = 4
+      end
+    end
+    if rev_channels > out_channels
+      warn("%s: more rev_channels than out_channels (%d > %d); \
+compute silently with %d rev_channel%s instead of %d",
+           get_func_name(), rev_channels, out_channels, out_channels,
+           (out_channels > 1 ? "s" : ""), rev_channels)
+      rev_channels = out_channels
+    end
     speakers = get_speaker_configuration(out_channels)
     channel_gains = Array.new(out_channels) do |i| [] end
     channel_rev_gains = Array.new(rev_channels) do |i| [] end
@@ -754,7 +783,7 @@ output channel%s", (d3 ? "tridimensional" : "bidimensional"), channels, (channel
         group[:speakers].each_with_index do |speaker, i|
           gain = gains[i]
           outputs[speaker] = gain * att
-          if rev_channels > 1
+          if rev_channels > speaker
             rev_outputs[speaker] = gain * ratt
           end
         end
@@ -763,12 +792,12 @@ output channel%s", (d3 ? "tridimensional" : "bidimensional"), channels, (channel
           if (found = group[:speakers].index(speaker))
             gain = gains[found]
             outputs[speaker] = gain + (1.0 - gain) * att
-            if rev_channels > 1
+            if rev_channels > speaker
               rev_outputs[speaker] = gain + (1.0 - gain) * ratt
             end
           else
             outputs[speaker] = att
-            if rev_channels > 1
+            if rev_channels > speaker
               rev_outputs[speaker] = ratt
             end
           end
@@ -777,7 +806,7 @@ output channel%s", (d3 ? "tridimensional" : "bidimensional"), channels, (channel
       speakers[:number].times do |i|
         channel_gains[i].push(time)
         channel_gains[i].push(outputs[i])
-        if rev_channels > 1
+        if rev_channels > i
           channel_rev_gains[i].push(time)
           channel_rev_gains[i].push(rev_outputs[i])
         end
@@ -793,8 +822,8 @@ output channel%s", (d3 ? "tridimensional" : "bidimensional"), channels, (channel
         if time != prev_time
           speed = (dist - prev_dist) / (time - prev_time)
           if speed > speed_limit and $VERBOSE
-            warn(format("supersonic radial movement at [%f, %f, %f, %f], speed=%f",
-                        x, y, z, time, speed))
+            warn("%s: supersonic radial movement at [%f, %f, %f, %f], speed=%f",
+                 get_func_name(), x, y, z, time, speed)
           end
         end
         if inside
@@ -822,7 +851,8 @@ output channel%s", (d3 ? "tridimensional" : "bidimensional"), channels, (channel
                   if inside
                     push_gains.call(group, gains, di, ti)
                   else
-                    error("Outside of both adyacent groups [%s:%s:%s %s]", xi, yi, zi, ti.inspect)
+                    error("%s: Outside of both adjacent groups [%s:%s:%s %s]",
+                          get_func_name(), xi, yi, zi, ti.inspect)
                   end
                 end
               end
@@ -840,7 +870,8 @@ output channel%s", (d3 ? "tridimensional" : "bidimensional"), channels, (channel
                   if inside
                     push_gains.call(group, gains, di, ti)
                   else
-                    error("Outside of both adyacent groups [%s:%s %s]", xi, yi, ti.inspect)
+                    error("%s: Outside of both adjacent groups [%s:%s %s]",
+                          get_func_name(), xi, yi, ti.inspect)
                   end
                 end
               end
@@ -854,12 +885,13 @@ output channel%s", (d3 ? "tridimensional" : "bidimensional"), channels, (channel
                   message("e1=%s; e2=%s", edge1, edge2)
                 end
               end
-              warn(format("crossing between groups with only one point in common
+              warn("%s: crossing between groups with only one point in common
   prev=%s
-  curr=%s", prev_group.inspect, group.inspect)) if $VERBOSE
+  curr=%s", get_func_name(), prev_group.inspect, group.inspect) if $VERBOSE
             elsif edge.length == 0 and $VERBOSE
-              warn(format("crossing between groups with no common points, %s%s to %s%s",
-                          prev_group[:id], prev_group[:speakers], group[:id], group[:speakers]))
+              warn("%s: crossing between groups with no common points, %s%s to %s%s",
+                   get_func_name(), prev_group[:id], prev_group[:speakers],
+                   group[:id], group[:speakers])
             end
             push_gains.call(group, gains, dist, time)
             prev_group = group
@@ -916,24 +948,22 @@ output channel%s", (d3 ? "tridimensional" : "bidimensional"), channels, (channel
       channel_gains[2].push((dist.zero? ? 0 : (-x / dist)) * att)
       channel_gains[3].push(time)
       channel_gains[3].push((dist.zero? ? 0 : (z / dist)) * att)
-      unless rev_channels.zero?
-        if rev_channels == 1
-          channel_rev_gains[0].push(time)
-          channel_rev_gains[0].push((if dist >= inside_radius
-                                       1.0 / dist ** reverb_power
-                                     else
-                                       1.0 - (dist / inside_radius) ** (1.0 / inside_reverb_power)
-                                     end))
-        else
-          channel_rev_gains[0].push(time)
-          channel_rev_gains[0].push(rattw)
-          channel_rev_gains[1].push(time)
-          channel_rev_gains[1].push((dist.zero? ? 0 : (y / dist)) * ratt)
-          channel_rev_gains[2].push(time)
+      if rev_channels == 1
+        channel_rev_gains[0].push(time)
+        channel_rev_gains[0].push((if dist >= inside_radius
+                                     1.0 / dist ** reverb_power
+                                   else
+                                     1.0 - (dist / inside_radius) ** (1.0 / inside_reverb_power)
+                                   end))
+      elsif rev_channels == 4
+        channel_rev_gains[0].push(time)
+        channel_rev_gains[0].push(rattw)
+        channel_rev_gains[1].push(time)
+        channel_rev_gains[1].push((dist.zero? ? 0 : (y / dist)) * ratt)
+        channel_rev_gains[2].push(time)
         channel_rev_gains[2].push((dist.zero? ? 0 : (-x / dist)) * ratt)
-          channel_rev_gains[3].push(time)
-          channel_rev_gains[3].push((dist.zero? ? 0 : (z / dist)) * ratt)
-        end
+        channel_rev_gains[3].push(time)
+        channel_rev_gains[3].push((dist.zero? ? 0 : (z / dist)) * ratt)
       end
     end
     decoded_ambisonics = lambda do |x, y, z, dist, time|
@@ -1222,15 +1252,15 @@ output channel%s", (d3 ? "tridimensional" : "bidimensional"), channels, (channel
     initial_direction = get_args(args, :initial_direction, nil)
     final_direction   = get_args(args, :final_direction, nil)
     if (not path) or (path.kind_of?(Array) and path.empty?)
-      warn("Can't define a path with no points in it")
+      warn("%s: Can't define a path with no points in it", get_func_name())
     end
     if closed and initial_direction
-      error("Can't specify initial direction %s for a closed path %s",
-            initial_direction.inspect, path.inspect)
+      error("%s: Can't specify initial direction %s for a closed path %s",
+            get_func_name(), initial_direction.inspect, path.inspect)
     end
     if closed and final_direction
-      error("Can't specify final direction %s for a closed path %s",
-            final_direction.inspect, path.inspect)
+      error("%s: Can't specify final direction %s for a closed path %s",
+            get_func_name(), final_direction.inspect, path.inspect)
     end
     if closed and (unless path[0].kind_of?(Array)
                      start = path[0]
@@ -1244,7 +1274,7 @@ output channel%s", (d3 ? "tridimensional" : "bidimensional"), channels, (channel
                      (path[1] == fin[1]) and
                      (d3 ? (path[2] == fin[2]) : true)
                    end)
-      error("Closed path %s is not closed", path.inspect)
+      error("%s: Closed path %s is not closed", get_func_name(), path.inspect)
     end
     closed ? Closed_bezier_path.new(:path, path, *args) : Open_bezier_path.new(:path, path, *args)
   end
@@ -1289,8 +1319,8 @@ output channel%s", (d3 ? "tridimensional" : "bidimensional"), channels, (channel
     total_angle = get_args(args, :total_angle, nil)
     turns       = get_args(args, :turns, nil)
     if total_angle and turns
-      error("can't specify total_angle [%d] and turns [%d] at the same time for the spiral path",
-            total_angle, turns)
+      error("%s: can't specify total_angle [%d] and turns [%d] at the same time for spiral path",
+            get_func_name(), total_angle, turns)
     end
     Spiral_path.new(*args)
   end
@@ -1745,10 +1775,10 @@ class Path
       yc = path_y()
       zc = path_z()
       if rotation_center and (rotation_center.length != 3)
-        error("rotation center has to have all three coordinates")
+        error("%s: rotation center has to have all three coordinates", get_func_name())
       end
       if rotation_axis and (rotation_axis.length != 3)
-        error("rotation axis has to have all three coordinates")
+        error("%s: rotation axis has to have all three coordinates", get_func_name())
       end
       let do
         xtr = []
@@ -2006,7 +2036,7 @@ class Bezier_path < Path
     @curvature = get_args(args, :curvature, nil)
     @x = @y = @z = @v = @bx = @by = @bz = nil
     if (not @path) or (@path.kind_of?(Array) and @path.empty?)
-      error("Can't define a path with no points in it")
+      error("%s: Can't define a path with no points in it", get_func_name())
     end
     super
   end
@@ -2053,7 +2083,7 @@ class Bezier_path < Path
       @x, @y, @z, @v = parse_cartesian_coordinates(@path, @d3)
     end
     if @v.min and @v.min < 0
-      error("velocities for path %s must be all positive", @path.inspect)
+      error("%s: velocities for path %s must be all positive", get_func_name(), @path.inspect)
     end
     reset_fit()
   end
@@ -2263,7 +2293,8 @@ class Open_bezier_path < Bezier_path
         c.each_with_index do |ci, i|
           cs[i] = if ci.kind_of?(Array)
                     if ci.length != 2
-                      error("curvature sublist must have two elements %s", ci.inspect)
+                      error("%s: curvature sublist must have two elements %s",
+                            get_func_name(), ci.inspect)
                     else
                       ci
                     end
@@ -2272,7 +2303,8 @@ class Open_bezier_path < Bezier_path
                   end
         end
       else
-        error("bad curvature argument %s to path, need %d elements", c.inspect, n)
+        error("%s: bad curvature argument %s to path, need %d elements",
+              get_func_name(), c.inspect, n)
       end
       @bx = (0...n).map do |i|
         [p[0][i], p[0][i] + d[0][i] * cs[i][0], p[0][i + 1] - d[0][i + 1] * cs[i][1], p[0][i + 1]]
@@ -2374,7 +2406,7 @@ class Literal_path < Path
   
   def render_path
     if (not @path.kind_of?(Array)) or (@path.kind_of?(Array) and @path.empty?)
-      error("Can't define a path with no points in it")
+      error("%s: Can't define a path with no points in it", get_func_name())
     end
     if @polar
       @rx, @ry, @rz, @rv = parse_polar_coordinates(@path, @d3)
@@ -2467,7 +2499,8 @@ class Spiral_path < Literal_path
             elsif @turns and (not @turns.zero?)
               @turns * TWO_PI
             else
-              error("a spiral_path needs either a total_angle or turns, none specified")
+              error("%s: a spiral_path needs either a total_angle or turns, none specified",
+                    get_func_name())
             end
     steps = (total / ((@step_angle / $dlocsig_one_turn.to_f) * TWO_PI)).abs
     step = total / (steps.ceil * (@step_angle < 0 ? -1 : 1))
@@ -2785,10 +2818,11 @@ class Dlocsig_menu
         res = true
         ary.flatten.each do |x| res = false if x.nonzero? end
         if res
-          error("path contains only zeros (%s)", ary.inspect)
+          error("%s: path contains only zeros (%s)", get_func_name(), ary.inspect)
           false
         elsif ary.length < 3
-          error("to draw a path at least three points are recommended (%d)", ary.length)
+          error("%s: to draw a path at least three points are recommended (%d)",
+                get_func_name(), ary.length)
           false
         else
           true
@@ -3005,25 +3039,39 @@ def move(start, file, *args)
   end
 end
 
-def move_sound(*args)
+#
+# move_sound(*args, &body)
+#
+# Uses two more options than the original move-sound of
+# move-sound.lisp to decide to mix in the intermediate "to_move" file
+# in a permanent file and where to start (in seconds) the mixin in the
+# permanent file.
+#
+
+def move_sound(*args, &body)
   doc("move_sound(*args) { ... }
      :path,     nil
      :paths,    nil
      :srate,    $rbm_srate (#$rbm_srate)
-     :channels, nil") if get_args(args, :help, false)
-  path  = get_args(args, :path, nil)
-  paths = get_args(args, :paths, nil)
-  sr    = get_args(args, :srate, $rbm_srate)
-  chns  = get_args(args, :channels, nil)
+     :channels, nil
+     :output,   false (output file name to mix in)
+     :startime, 0     (start time in seconds in output file)") if get_args(args, :help, false)
+  path     = get_args(args, :path, nil)
+  paths    = get_args(args, :paths, nil)
+  sr       = get_args(args, :srate, $rbm_srate)
+  chns     = get_args(args, :channels, nil)
+  output   = get_args(args, :output, false)
+  startime = get_args(args, :startime, 0)
   if path or paths
     chns = (chns or (path ? 1 : paths.length))
     sound_let("to_move", :srate, sr, :channels, chns) do |tmp_file|
-      yield
-      message("Moving sound on %d channels... ", chns)
+      body.call
+      message("Moving sound on %d channel%s... ", chns, (chns > 1 ? "s" : ""))
       move(0, tmp_file, :paths, (path ? [path] : paths))
+      mus_mix(output, tmp_file, (startime * $rbm_srate).round) if output
     end
   else
-    yield
+    body.call
   end
 end
 
