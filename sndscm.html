@@ -617,6 +617,7 @@ I'm slowly dividing out related groups of procedures to separate files.
 <small>
   <ul>
     <li>XEmacs-like "Buffers" menu
+    <li>Reopen menu
     <li>make dot size dependent on number of samples being displayed
     <li>flash selected data red and green
     <li>add date and time to title bar
@@ -878,6 +879,10 @@ to:
 (add-hook! open-hook open-buffer)
 (add-hook! close-hook close-buffer)
 </pre>
+
+<p>A similar menu is the "reopen menu"; it presents a list of previously
+closed (and not subsequently re-opened) files in reverse order of closing.
+</p>
 
 <pre>
   <em class=def><A NAME="exsndout">snd-out</a></em>

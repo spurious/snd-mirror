@@ -672,9 +672,9 @@ int mus_header_write_next_header (int chan, int wsrate, int wchans, int loc, int
     case MUS_BFLOAT_UNSCALED:  mus_bint_to_char((unsigned char *)(hdrbuf + 12), 38); break;
     case MUS_LDOUBLE_UNSCALED: mus_bint_to_char((unsigned char *)(hdrbuf + 12), 39); break;
     case MUS_BDOUBLE_UNSCALED: mus_bint_to_char((unsigned char *)(hdrbuf + 12), 40); break;
-    case MUS_LSHORT:           mus_bint_to_char((unsigned char *)(hdrbuf + 12), 41);  break;
-    case MUS_L24INT:           mus_bint_to_char((unsigned char *)(hdrbuf + 12), 42);  break;
-    case MUS_UBYTE:            mus_bint_to_char((unsigned char *)(hdrbuf + 12), 43);  break;
+    case MUS_LSHORT:           mus_bint_to_char((unsigned char *)(hdrbuf + 12), 41); break;
+    case MUS_L24INT:           mus_bint_to_char((unsigned char *)(hdrbuf + 12), 42); break;
+    case MUS_UBYTE:            mus_bint_to_char((unsigned char *)(hdrbuf + 12), 43); break;
 
     default: 
       mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
@@ -3042,7 +3042,7 @@ static int read_spl_header(int chan)
   data_location = 61;
   srate = 8000; /* I need an example to decode this */
   true_file_length = SEEK_FILE_LENGTH(chan);
-  if (hdrbuf[60]&1) 
+  if (hdrbuf[60] & 1) 
     data_format = MUS_BSHORT; 
   else data_format = MUS_BYTE; /* unsigned? */
   data_size = mus_long_bytes_to_samples(data_format,
@@ -3717,7 +3717,7 @@ static int read_gravis_header(int chan)
   srate = mus_char_to_ulshort((unsigned char *)(hdrbuf + 20));
   data_size = mus_char_to_ulshort((unsigned char *)(hdrbuf + 8));
   mode = hdrbuf[55];
-  if (mode&1)
+  if (mode & 1)
     {
       if (mode & 2)
 	data_format = MUS_ULSHORT;

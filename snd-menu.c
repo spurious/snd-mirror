@@ -774,12 +774,10 @@ void g_init_menu(void)
   XEN_DEFINE_HOOK(output_name_hook, S_output_name_hook, 0, H_output_name_hook);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_save_state_file, g_save_state_file_w, H_save_state_file,
-			       "set-" S_save_state_file, g_set_save_state_file_w,
-			       0, 0, 1, 0);
+			       "set-" S_save_state_file, g_set_save_state_file_w, 0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_menu_sensitive, gl_menu_sensitive_w, H_menu_sensitive,
-			       "set-" S_menu_sensitive, gl_set_menu_sensitive_w,
-			       2, 0, 3, 0);
+			       "set-" S_menu_sensitive, gl_set_menu_sensitive_w, 2, 0, 3, 0);
 
   XEN_DEFINE_PROCEDURE(S_add_to_main_menu,  gl_add_to_main_menu_w, 1, 1, 0,  H_add_to_main_menu);
   XEN_DEFINE_PROCEDURE(S_add_to_menu,       gl_add_to_menu_w, 3, 1, 0,       H_add_to_menu);

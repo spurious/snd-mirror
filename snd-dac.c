@@ -349,7 +349,7 @@ static char *inspect_fcomb(void *ptr)
   desc = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   if (desc) 
     mus_snprintf(desc, PRINT_BUFFER_SIZE, "fcomb line[%d at %d], xscl: %f, a0: %f, a1: %f, x1: %f",
-	    gen->size, gen->loc, gen->xscl, gen->a0, gen->a1, gen->x1);
+		 gen->size, gen->loc, gen->xscl, gen->a0, gen->a1, gen->x1);
   return(desc);
 }
 
@@ -727,7 +727,7 @@ static void *make_freeverb(snd_info *sp, int chans)
     for (j = 0; j < r->chan_allpasses; j++)
       {
 	delay_len = (int)(srscale * freeverb_allpass_tuning[j]);
-	if (i&1) delay_len += (int)(srscale * freeverb_stereo_spread);
+	if (i & 1) delay_len += (int)(srscale * freeverb_stereo_spread);
 	r->allpasses[k] = mus_make_all_pass(0.5, -1.0, delay_len, NULL, delay_len);
 	k++;
       }

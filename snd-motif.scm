@@ -24,7 +24,7 @@
 ;;; add delete and rename options to the file menu (add-delete-option) (add-rename-option)
 
 
-(use-modules (ice-9 common-list))
+(use-modules (ice-9 common-list) (ice-9 format))
 
 (if (not (provided? 'xm))
     (let ((hxm (dlopen "xm.so")))

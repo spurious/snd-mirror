@@ -8,6 +8,7 @@
 ;;; 'info' from extsnd.html using format
 ;;; correlation
 ;;; XEmacs-like "Buffers" menu
+;;; Reopen menu
 ;;; set transform-size based on current time domain window size
 ;;; superimpose spectra of sycn'd sounds
 ;;; example of c-g?
@@ -68,7 +69,7 @@
 ;;; TODO: decide how to handle the CLM examples
 ;;; TODO: robust pitch tracker
 ;;; TODO: adaptive notch filter
-;;; TODO: ins: singer piano flute fade
+;;; TODO: ins: singer piano flute fade dlocsig
 ;;; TODO: data-file rw case for pvoc.scm
 ;;; TODO: C-s wrap-around (as in Emacs)
 ;;; TODO: triggered record
@@ -78,7 +79,10 @@
 (use-modules (ice-9 debug))
 (use-modules (ice-9 format))
 (use-modules (ice-9 optargs))
-(debug-enable 'debug 'backtrace)
+(use-modules (ice-9 common-list))
+
+(debug-enable 'debug)
+(debug-enable 'backtrace)
 (read-enable 'positions)
 
 (if (not (defined? 'all-chans))
@@ -327,6 +331,56 @@
 
 ;(add-hook! open-hook open-buffer)
 ;(add-hook! close-hook close-buffer)
+
+
+;;; -------- Reopen Menu --------
+;;; 
+;;; a similar idea, here presenting the last-closed sounds
+;;; this can be used in conjunction with remember-sound-state in extensions.scm
+
+;(define reopen-menu (add-to-main-menu "Reopen"))
+(define reopen-max-length 8)
+(define reopen-names '())
+
+(define add-to-reopen-menu
+  (lambda (snd)
+    (let ((brief-name (short-file-name snd))
+	  (long-name (file-name snd)))
+      (if (not (member brief-name reopen-names))
+	  (begin
+	    (add-to-menu reopen-menu 
+			 brief-name
+			 (lambda () 
+			   (remove-from-menu reopen-menu brief-name)
+			   (open-sound long-name))
+			 0) ; add to top
+	    (set! reopen-names (append reopen-names (list brief-name)))
+	    (if (> (length reopen-names) reopen-max-length)
+		(let ((goner (car reopen-names)))
+		  (set! reopen-names (cdr reopen-names))
+		  (remove-from-menu reopen-menu goner)))))
+      #f)))
+
+(define check-reopen-menu
+  (lambda (filename)
+    (define (just-filename name)
+      (let ((last-slash -1)
+	    (len (string-length name)))
+	(do ((i 0 (1+ i)))
+	    ((= i len) (substring name (1+ last-slash)))
+	  (if (char=? (string-ref name i) #\/)
+	      (set! last-slash i)))))
+    (let ((brief-name (just-filename filename)))
+      (if (member brief-name reopen-names)
+	  (set! reopen-names (remove-if (lambda (n) 
+					  (let ((val (string=? n brief-name)))
+					    (if val (remove-from-menu reopen-menu brief-name))
+					    val))
+					reopen-names))))))
+
+;(add-hook! close-hook add-to-reopen-menu)
+;(add-hook! open-hook check-reopen-menu)
+
 
 
 ;;; -------- set transform-size based on current time domain window size

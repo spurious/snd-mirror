@@ -5,7 +5,7 @@
  */
 
 /* if mark is handled as an smob, rather than a bare integer, we get better
- *   type-checking, but (for example) searching for a gven mark becomes messy
+ *   type-checking, but (for example) searching for a given mark becomes messy
  */
 
 #include "snd.h"
@@ -1696,7 +1696,8 @@ finds the mark in snd's channel chn at samp (if a number) or with the given name
   int i, samp = 0;
   char *name = NULL;
   chan_info *cp = NULL;
-  XEN_ASSERT_TYPE((XEN_NUMBER_P(samp_n) || XEN_STRING_P(samp_n) || (XEN_NOT_BOUND_P(samp_n)) || (XEN_FALSE_P(samp_n))), samp_n, XEN_ARG_1, S_find_mark, "a number or string or #f");
+  XEN_ASSERT_TYPE((XEN_NUMBER_P(samp_n) || XEN_STRING_P(samp_n) || (XEN_NOT_BOUND_P(samp_n)) || (XEN_FALSE_P(samp_n))), 
+		  samp_n, XEN_ARG_1, S_find_mark, "a number or string or #f");
   ASSERT_CHANNEL(S_find_mark, snd_n, chn_n, 2); 
   cp = get_cp(snd_n, chn_n, S_find_mark);
   if (cp->marks == NULL) 
@@ -1899,7 +1900,7 @@ static XEN g_forward_mark(XEN count, XEN snd, XEN chn)
   if (cp->marks) mp = find_nth_mark(cp, val);
   if (mp)
     {
-      handle_cursor(cp, cursor_moveto(cp, mp->samp));
+      cursor_moveto(cp, mp->samp);
       return(C_TO_XEN_INT(mark_id(mp)));
     }
   return(XEN_FALSE);
@@ -1918,7 +1919,7 @@ static XEN g_backward_mark(XEN count, XEN snd, XEN chn)
   if (cp->marks) mp = find_nth_mark(cp, val);
   if (mp)
     {
-      handle_cursor(cp, cursor_moveto(cp, mp->samp));
+      cursor_moveto(cp, mp->samp);
       return(C_TO_XEN_INT(mark_id(mp)));
     }
   return(XEN_FALSE);
@@ -2041,16 +2042,13 @@ void g_init_marks(void)
   XEN_DEFINE_HOOK(mark_hook, S_mark_hook, 4, H_mark_hook);                /* args = id snd chn reason */
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mark_sample, g_mark_sample_w, H_mark_sample,
-				   "set-" S_mark_sample, g_set_mark_sample_w,
-				   0, 2, 1, 1);
+				   "set-" S_mark_sample, g_set_mark_sample_w, 0, 2, 1, 1);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mark_sync, g_mark_sync_w, H_mark_sync,
-				   "set-" S_mark_sync, g_set_mark_sync_w,
-				   0, 1, 1, 1);
+				   "set-" S_mark_sync, g_set_mark_sync_w, 0, 1, 1, 1);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mark_name, g_mark_name_w, H_mark_name,
-				   "set-" S_mark_name, g_set_mark_name_w,
-				   0, 1, 1, 1);
+				   "set-" S_mark_name, g_set_mark_name_w, 0, 1, 1, 1);
 
   XEN_DEFINE_PROCEDURE(S_restore_marks, g_restore_marks_w, 4, 0, 0, "internal func");
   XEN_DEFINE_PROCEDURE(S_mark_sync_max, g_mark_sync_max_w, 0, 0, 0, H_mark_sync_max);
