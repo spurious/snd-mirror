@@ -3,6 +3,8 @@
 /* TODO: if gtk 2.3: changeover to GtkFileChooser and use its filters to implement the just-sounds button */
 /* use HAVE_GTK_FILE_CHOOSER_DIALOG_NEW */
 
+#define HAVE_GFCDN 0
+
 /* most of these dialogs present a view of the various file header possibilities */
 
 #define NUM_VISIBLE_HEADERS 4
@@ -146,14 +148,40 @@ static void unpad(gpointer w, gpointer data)
     GTK_CELL_RENDERER(w)->ypad = 0;
 }
 
-static GtkWidget *snd_gtk_file_selection_new(char *title, GtkSignalFunc gdelete, GtkSignalFunc ok, GtkSignalFunc cancel)
+#if HAVE_GFCDN
+  #define SND_FILER(Widget) GTK_FILE_CHOOSER_DIALOG(Widget)
+  #define SndFiler GtkFileChooser
+#else
+  #define SND_FILER(Widget) GTK_FILE_SELECTION(Widget)
+  #define SndFiler GtkFileSelection
+#endif
+
+static char *snd_filer_get_filename(GtkWidget *dialog)
+{
+#if HAVE_GFCDN
+  return((char *)gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog)));
+#else
+  return((char *)gtk_file_selection_get_filename(GTK_FILE_SELECTION(dialog)));
+#endif
+}
+
+static GtkWidget *snd_filer_new(char *title, bool saving, GtkSignalFunc gdelete, GtkSignalFunc ok, GtkSignalFunc cancel)
 {
   GtkWidget *new_dialog, *entry;
   GList *cells;
   GtkTreeViewColumn *dirl;
+#if HAVE_GFCDN
+  GtkFileChooserDialog *filer;
+  new_dialog = gtk_file_chooser_dialog_new(title, NULL, 
+					   (saving) ? GTK_FILE_CHOOSER_ACTION_SAVE : GTK_FILE_CHOOSER_ACTION_OPEN,
+					   (saving) ? GTK_STOCK_SAVE : GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+					   GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+					   NULL);
+  filer = GTK_FILE_CHOOSER_DIALOG(new_dialog);
+#else
   GtkFileSelection *filer;
   new_dialog = gtk_file_selection_new(title);
-  filer = GTK_FILE_SELECTION(new_dialog);
+  filer = SND_FILER(new_dialog);
 
   /* get rid of ridiculous padding in lists */
   dirl = gtk_tree_view_get_column(GTK_TREE_VIEW(filer->dir_list), 0);
@@ -164,8 +192,6 @@ static GtkWidget *snd_gtk_file_selection_new(char *title, GtkSignalFunc gdelete,
   cells = gtk_tree_view_column_get_cell_renderers(dirl);
   g_list_foreach(cells, unpad, NULL);
   g_list_free(cells);
-
-  
 
   /* make entry widget look like one of ours */
   entry = filer->selection_entry;
@@ -193,6 +219,7 @@ static GtkWidget *snd_gtk_file_selection_new(char *title, GtkSignalFunc gdelete,
   if (filer->fileop_c_dir) gtk_widget_set_name(filer->fileop_c_dir, "help_button");
   if (filer->fileop_del_file) gtk_widget_set_name(filer->fileop_del_file, "doit_again_button");
   if (filer->fileop_ren_file) gtk_widget_set_name(filer->fileop_ren_file, "reset_button");
+#endif
   return(new_dialog);
 }
 
@@ -224,7 +251,7 @@ static void dialog_select_callback(GtkTreeSelection *selection, gpointer context
   char timestr[64];
   time_t date;
   file_dialog_info *fd = (file_dialog_info *)context;
-  filename = (char *)gtk_file_selection_get_filename(GTK_FILE_SELECTION(fd->dialog));
+  filename = snd_filer_get_filename(fd->dialog);
   if ((filename) && (sound_file_p(filename)))
     {
       buf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
@@ -269,6 +296,7 @@ void clear_deleted_snd_info(void *data)
   fd->file_play_sp = NULL;
 }
 
+#if (!HAVE_GFCDN)
 static char *just_directory(const char *uname)
 {
   int i, len, last_slash;
@@ -287,7 +315,7 @@ static char *just_directory(const char *uname)
   return(NULL);
 }
 
-static void prune_file_list(GtkFileSelection *filer)
+static void prune_file_list(SndFiler *filer)
 {
   GtkListStore *list_store;  
   GtkTreeIter iter;
@@ -296,7 +324,7 @@ static void prune_file_list(GtkFileSelection *filer)
   bool more_files = true;
   tree_model = gtk_tree_view_get_model(GTK_TREE_VIEW(filer->file_list));
   list_store = GTK_LIST_STORE(tree_model);
-  dirname = just_directory((char *)gtk_file_selection_get_filename(filer)); /* unused but perhaps hook or proc? */
+  dirname = just_directory(snd_filer_get_filename((GtkWidget *)filer)); /* unused but perhaps hook or proc? */
   if (gtk_tree_model_get_iter_first(tree_model, &iter))
     {
       while (more_files)
@@ -310,15 +338,19 @@ static void prune_file_list(GtkFileSelection *filer)
 	}
     }
 }
+#endif
 
 /* TODO: for just-sounds, how to get notification that the file list has changed? */
 
 static void just_sounds_callback(GtkWidget *w, gpointer data)
 {
   file_dialog_info *fd = (file_dialog_info *)data;
+#if HAVE_GFCDN
+#else
   if (GTK_TOGGLE_BUTTON(w)->active)
-    prune_file_list(GTK_FILE_SELECTION(fd->dialog));
-  else gtk_file_selection_complete(GTK_FILE_SELECTION(fd->dialog), ""); /* i.e. re-read dir, make a new file list */
+    prune_file_list(SND_FILER(fd->dialog));
+  else gtk_file_selection_complete(SND_FILER(fd->dialog), ""); /* i.e. re-read dir, make a new file list */
+#endif
 }
 
 static void play_selected_callback(GtkWidget *w, gpointer data)
@@ -329,7 +361,7 @@ static void play_selected_callback(GtkWidget *w, gpointer data)
     {
       if ((fd->file_play_sp) && (fd->file_play_sp->playing)) 
 	stop_playing_sound(fd->file_play_sp);
-      filename = (char *)gtk_file_selection_get_filename(GTK_FILE_SELECTION(fd->dialog));
+      filename = snd_filer_get_filename(fd->dialog);
       if (mus_file_probe(filename))
 	{
 	  fd->file_play_sp = make_sound_readable(filename, false);
@@ -352,13 +384,12 @@ static file_dialog_info *make_file_dialog(int read_only, char *title, snd_dialog
   file_dialog_info *fd;
   fd = (file_dialog_info *)CALLOC(1, sizeof(file_dialog_info));
   fd->file_dialog_read_only = read_only;
-  fd->dialog = snd_gtk_file_selection_new(title,
-					  file_delete_proc,
-					  file_ok_proc,
-					  file_dismiss_proc);
+  fd->dialog = snd_filer_new(title, false, file_delete_proc, file_ok_proc, file_dismiss_proc);
 
+#if HAVE_GFCDN
+#else
   fd->just_sounds_button = gtk_check_button_new_with_label(_("sound files only"));
-  gtk_box_pack_start(GTK_BOX(GTK_FILE_SELECTION(fd->dialog)->main_vbox), fd->just_sounds_button, false, false, 6);
+  gtk_box_pack_start(GTK_BOX(SND_FILER(fd->dialog)->main_vbox), fd->just_sounds_button, false, false, 6);
   gtk_widget_show(fd->just_sounds_button);
   g_signal_connect_closure_by_id(GTK_OBJECT(fd->just_sounds_button),
 				 g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(fd->just_sounds_button))),
@@ -368,7 +399,7 @@ static file_dialog_info *make_file_dialog(int read_only, char *title, snd_dialog
 
   /* these start out hidden -- are shown only when a file is selected */
   fd->dialog_frame = gtk_frame_new(NULL);
-  gtk_box_pack_start(GTK_BOX(GTK_FILE_SELECTION(fd->dialog)->main_vbox), fd->dialog_frame, true, true, 0);
+  gtk_box_pack_start(GTK_BOX(SND_FILER(fd->dialog)->main_vbox), fd->dialog_frame, true, true, 0);
   gtk_frame_set_shadow_type(GTK_FRAME(fd->dialog_frame), GTK_SHADOW_ETCHED_IN);
   
   fd->dialog_vbox = gtk_vbox_new(false, 0);
@@ -379,7 +410,7 @@ static file_dialog_info *make_file_dialog(int read_only, char *title, snd_dialog
 	
   fd->dialog_info2 = gtk_label_new(NULL);
   gtk_box_pack_start(GTK_BOX(fd->dialog_vbox), fd->dialog_info2, true, true, 2);
-  g_signal_connect(gtk_tree_view_get_selection(GTK_TREE_VIEW(GTK_FILE_SELECTION(fd->dialog)->file_list)), "changed",
+  g_signal_connect(gtk_tree_view_get_selection(GTK_TREE_VIEW(SND_FILER(fd->dialog)->file_list)), "changed",
 		   G_CALLBACK (dialog_select_callback), fd);
 
   fd->playb = gtk_check_button_new_with_label(_("play selected sound"));
@@ -389,7 +420,7 @@ static file_dialog_info *make_file_dialog(int read_only, char *title, snd_dialog
 				 0,
 				 g_cclosure_new(GTK_SIGNAL_FUNC(play_selected_callback), (gpointer)fd, 0),
 				 0);
-
+#endif
   set_dialog_widget(which_dialog, fd->dialog);
   return(fd);
 }
@@ -409,7 +440,7 @@ static void file_open_dialog_ok(GtkWidget *w, gpointer data)
 {
   snd_info *sp;
   char *filename;
-  filename = (char *)gtk_file_selection_get_filename(GTK_FILE_SELECTION(open_dialog->dialog));
+  filename = snd_filer_get_filename(open_dialog->dialog);
   gtk_widget_hide(open_dialog->dialog);
   file_dialog_stop_playing(open_dialog);
   if (!(directory_p(filename)))
@@ -470,7 +501,7 @@ static void file_mix_ok_callback(GtkWidget *w, gpointer context)
   gtk_widget_hide(mix_dialog->dialog);
   file_dialog_stop_playing(mix_dialog);
   mix_complete_file_at_cursor(any_selected_sound(),
-			      (char *)gtk_file_selection_get_filename(GTK_FILE_SELECTION(mix_dialog->dialog)),
+			      snd_filer_get_filename(mix_dialog->dialog),
 			      "File: mix", with_mix_tags(ss), 0);
 }
 
@@ -640,7 +671,6 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
       fdat->comment_text = make_scrolled_text(frame, true, NULL, NULL);
       connect_mouse_to_text(fdat->comment_text);
     }
-
   return(fdat);
 }
 
@@ -659,7 +689,7 @@ static void save_as_ok_callback(GtkWidget *w, gpointer data)
   off_t location, samples;
   snd_info *sp;
   comment = read_file_data_choices(save_as_file_data, &srate, &chans, &type, &format, &location, &samples);
-  last_save_as_filename = (char *)gtk_file_selection_get_filename(GTK_FILE_SELECTION(save_as_dialog));
+  last_save_as_filename = snd_filer_get_filename(save_as_dialog);
   sp = any_selected_sound();
   if (last_save_as_filename)
     opened = check_for_filename_collisions_and_save(sp, last_save_as_filename, save_as_dialog_type, srate, type, format, comment);
@@ -697,14 +727,17 @@ static void make_save_as_dialog(char *sound_name, int header_type, int format_ty
   GtkWidget *fbox;
   if (!save_as_dialog)
     {
-      save_as_dialog = snd_gtk_file_selection_new(_("save as:"),
-						  (GtkSignalFunc)save_as_delete_callback,
-						  (GtkSignalFunc)save_as_ok_callback,
-						  (GtkSignalFunc)save_as_cancel_callback);
+      save_as_dialog = snd_filer_new(_("save as:"), true,
+				     (GtkSignalFunc)save_as_delete_callback,
+				     (GtkSignalFunc)save_as_ok_callback,
+				     (GtkSignalFunc)save_as_cancel_callback);
+#if HAVE_GFCDN
+#else
       fbox = gtk_vbox_new(false, 0);
-      gtk_box_pack_start(GTK_BOX(GTK_FILE_SELECTION(save_as_dialog)->main_vbox), fbox, true, true, 0);
+      gtk_box_pack_start(GTK_BOX(SND_FILER(save_as_dialog)->main_vbox), fbox, true, true, 0);
       gtk_widget_show(fbox);
       save_as_file_data = make_file_data_panel(fbox, "data-form", false, header_type, format_type, false, false, false);
+#endif
       set_dialog_widget(FILE_SAVE_AS_DIALOG, save_as_dialog);
     }
 }
@@ -763,11 +796,9 @@ ww_info *make_title_row(GtkWidget *formw, char *top_str, char *main_str, dialog_
   GtkWidget *smenu, *sbar, *sitem;
   ww_info *wwi;
   wwi = (ww_info *)CALLOC(1, sizeof(ww_info));
-
   /* assuming "formw" is a vbox */
   if (main_str)
     {
-      
       rlw = snd_gtk_label_new(main_str, ss->sgx->highlight_color);
       gtk_box_pack_start(GTK_BOX(formw), rlw, false, false, 0);
       gtk_widget_show(rlw);
@@ -1215,7 +1246,6 @@ void view_files_callback(GtkWidget *w, gpointer context)
    * The previous files list requires that we keep such a list as we go along, on the
    * off-chance this browser will be fired up.  (Such files may be subsequently moved or deleted).
    */
-
   ww_info *wwl;
   GtkWidget *mainform, *curform, *prevform, *updateB, *helpB, *dismissB, *clearB, *sep;
   if (!view_files_dialog)
@@ -1325,7 +1355,6 @@ void view_files_callback(GtkWidget *w, gpointer context)
 				     0,
 				     g_cclosure_new_swap(GTK_SIGNAL_FUNC(sort_prevfiles_by_user_procedure), NULL, 0),
 				     0);
-
       vf_prevww = wwl->list;
       vf_prevlst = wwl->list;
       FREE(wwl); 
@@ -1381,7 +1410,6 @@ static char **data_format_names(void)
 }
 
 /* must parallel sndlib.h definitions */
-
 
 static void raw_data_browse_callback(GtkTreeSelection *selection, gpointer *gp)
 {
@@ -1710,7 +1738,6 @@ GtkWidget *edit_header(snd_info *sp)
   if (!sp) return(NULL);
   edit_header_sp = sp;
   hdr = sp->hdr;
-
   if (!edit_header_dialog)
     {
       edit_header_dialog = snd_gtk_dialog_new();
@@ -1765,7 +1792,6 @@ GtkWidget *edit_header(snd_info *sp)
 
   gtk_widget_show(edit_header_dialog);
   load_header_and_data_lists(edit_header_data, hdr->type, hdr->format, hdr->srate, hdr->chans, hdr->data_location, hdr->samples, hdr->comment);
-
   return(edit_header_dialog);
 }
 
@@ -1824,8 +1850,11 @@ void post_it(const char *subject, const char *str)
 
 void reflect_just_sounds_state(void)
 {
-  if (open_dialog) prune_file_list(GTK_FILE_SELECTION(open_dialog->dialog));
+#if HAVE_GFCDN
+#else
+  if (open_dialog) prune_file_list(SND_FILER(open_dialog->dialog));
   /* TODO: finish tying just-sounds variable into gtk, also just-sounds-hook? */
+#endif
 }
 
 

@@ -323,6 +323,7 @@ int label_width(char *txt);
 int number_width(char *num);
 int number_height(void);
 int label_height(void);
+int sg_text_width(char *txt, PangoFontDescription *font);
 int mark_name_width(char *txt);
 void clear_window(axis_context *ax);
 void highlight_color(GtkWidget *w);

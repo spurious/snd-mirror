@@ -387,7 +387,7 @@ static gint flash_unbalanced_paren(gpointer data)
   flashes--;
   if (flashes & 1) remove_inverse(paren_pos); else add_inverse(paren_pos);
   if (flashes > 0)
-    gtk_timeout_add((guint32)FLASH_TIME, flash_unbalanced_paren, NULL);
+    g_timeout_add_full(0, (guint32)FLASH_TIME, flash_unbalanced_paren, NULL, NULL);
   else 
     {
       remove_inverse(paren_pos);
@@ -415,7 +415,7 @@ bool highlight_unbalanced_paren(void)
 	    {
 	      add_inverse(paren_pos);
 	      flashes = 4;
-	      gtk_timeout_add((guint32)FLASH_TIME, flash_unbalanced_paren, NULL);
+	      g_timeout_add_full(0, (guint32)FLASH_TIME, flash_unbalanced_paren, NULL, NULL);
 	    }
 	  else success = false;
 	}

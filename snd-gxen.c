@@ -14,7 +14,7 @@ static XEN g_in(XEN ms, XEN code)
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code), code, XEN_ARG_2, S_in, "a procedure");
   if (XEN_REQUIRED_ARGS(code) == 0)
     {
-      gtk_timeout_add((guint32)XEN_TO_C_INT(ms), timed_eval, (gpointer)code);
+      g_timeout_add_full(0, (guint32)XEN_TO_C_INT(ms), timed_eval, (gpointer)code, NULL);
       snd_protect(code);
     }
   else XEN_BAD_ARITY_ERROR(S_in, 2, code, "should take no args");

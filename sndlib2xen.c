@@ -230,6 +230,7 @@ static XEN g_mus_data_format_name(XEN format)
   return(C_TO_XEN_STRING(mus_data_format_name(XEN_TO_C_INT(format))));
 }
 
+/* TODO: mus-data-format-bytes... but mus_data_format_to_bytes...? */
 static XEN g_mus_data_format_to_bytes_per_sample(XEN format) 
 {
   #define H_mus_data_format_bytes_per_sample "(" S_mus_data_format_bytes_per_sample " format): number of bytes per sample in \

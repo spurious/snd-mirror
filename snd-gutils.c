@@ -92,7 +92,7 @@ bool set_axis_numbers_font(char *font)
   return(false);
 }
 
-static int sg_text_width(char *txt, PangoFontDescription *font)
+int sg_text_width(char *txt, PangoFontDescription *font)
 {
   PangoLayout *layout = NULL;
   int wid = 0;
@@ -661,7 +661,7 @@ Cessator add_work_proc(GtkFunction func, gpointer data)
 {
   /* during auto-testing I need to force the background procs to run to completion */
   if (with_background_processes(ss))
-    return(gtk_idle_add(func, data));
+    return(g_idle_add_full(G_PRIORITY_DEFAULT_IDLE, func, data, NULL));
   else
     {
       while (((*func)(data)) == BACKGROUND_CONTINUE);
@@ -685,7 +685,7 @@ GtkWidget *snd_gtk_label_new(const char *label, GdkColor *color)
   rlw = gtk_entry_new();
   gtk_entry_set_has_frame(GTK_ENTRY(rlw), false);
   gtk_entry_set_text(GTK_ENTRY(rlw), label);
-  gtk_entry_set_editable(GTK_ENTRY(rlw), false);
+  gtk_editable_set_editable(GTK_EDITABLE(rlw), false);
   GTK_WIDGET_UNSET_FLAGS(GTK_WIDGET(rlw), GTK_CAN_FOCUS); /* turn off the $%#@$! blinking cursor */
   gtk_widget_modify_base(rlw, GTK_STATE_NORMAL, color);
   gtk_widget_modify_base(rlw, GTK_STATE_ACTIVE, color);

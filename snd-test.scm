@@ -30291,6 +30291,7 @@ EDITS: 2
 	    (stst '(mus-header-type-name mus-aifc) "AIFC")
 	    (stst '(mus-header-type-name (mus-sound-header-type "oboe.snd")) "Sun")
 	    (etst '(mus-header-type-name "hiho"))
+	    (itst '(mus-data-format-bytes-per-sample mus-bshort) 2)
 	    (etst '(make-vct 3 "hi"))
 	    (btst '(let* ((file "oboe.snd")
 		          (str (string-append file ": chans: "

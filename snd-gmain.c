@@ -68,7 +68,7 @@ static gint auto_update_check(gpointer context)
       if ((!(play_in_progress())) && 
 	  (!(record_in_progress())))
 	for_each_sound(sound_not_current, NULL);
-      gtk_timeout_add((guint32)(auto_update_interval(ss) * 1000), auto_update_check, context);
+      g_timeout_add_full(0, (guint32)(auto_update_interval(ss) * 1000), auto_update_check, context, NULL);
     }
   return(0);
 }
@@ -143,7 +143,7 @@ static void get_stdin_string(gpointer context, gint fd, int condition)
   if (bytes <= 0) 
     {
       /* redirected to /dev/null?? */
-      gtk_input_remove(stdin_id);
+      g_source_remove(stdin_id);
       stdin_id = 0;
     }
   else
@@ -322,7 +322,7 @@ static Cessate startup_funcs(gpointer context)
       if ((ss->init_window_x != DEFAULT_INIT_WINDOW_X) && (ss->init_window_y != DEFAULT_INIT_WINDOW_Y))
 	set_widget_position(GTK_WIDGET(MAIN_SHELL(ss)), ss->init_window_x, ss->init_window_y);
 #endif
-      gtk_timeout_add((guint32)(auto_update_interval(ss) * 1000), auto_update_check, NULL);
+      g_timeout_add_full(0, (guint32)(auto_update_interval(ss) * 1000), auto_update_check, NULL, NULL);
       break;
     case 4: 
 #if TRAP_SEGFAULT

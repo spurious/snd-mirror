@@ -203,8 +203,6 @@ XEN_NARGIFY_1(gxg_gdk_set_double_click_time_w, gxg_gdk_set_double_click_time)
 XEN_NARGIFY_3(gxg_gdk_rectangle_intersect_w, gxg_gdk_rectangle_intersect)
 XEN_NARGIFY_3(gxg_gdk_rectangle_union_w, gxg_gdk_rectangle_union)
 XEN_NARGIFY_0(gxg_gdk_rectangle_get_type_w, gxg_gdk_rectangle_get_type)
-XEN_NARGIFY_1(gxg_gdk_wcstombs_w, gxg_gdk_wcstombs)
-XEN_NARGIFY_3(gxg_gdk_mbstowcs_w, gxg_gdk_mbstowcs)
 XEN_NARGIFY_1(gxg_gdk_event_send_clientmessage_toall_w, gxg_gdk_event_send_clientmessage_toall)
 XEN_NARGIFY_2(gxg_gdk_event_send_client_message_w, gxg_gdk_event_send_client_message)
 XEN_NARGIFY_0(gxg_gdk_threads_enter_w, gxg_gdk_threads_enter)
@@ -898,26 +896,6 @@ XEN_NARGIFY_0(gxg_gtk_input_dialog_get_type_w, gxg_gtk_input_dialog_get_type)
 XEN_NARGIFY_0(gxg_gtk_input_dialog_new_w, gxg_gtk_input_dialog_new)
 XEN_NARGIFY_0(gxg_gtk_invisible_get_type_w, gxg_gtk_invisible_get_type)
 XEN_NARGIFY_0(gxg_gtk_invisible_new_w, gxg_gtk_invisible_new)
-XEN_NARGIFY_0(gxg_gtk_item_factory_get_type_w, gxg_gtk_item_factory_get_type)
-XEN_NARGIFY_3(gxg_gtk_item_factory_new_w, gxg_gtk_item_factory_new)
-XEN_NARGIFY_4(gxg_gtk_item_factory_construct_w, gxg_gtk_item_factory_construct)
-XEN_NARGIFY_5(gxg_gtk_item_factory_add_foreign_w, gxg_gtk_item_factory_add_foreign)
-XEN_NARGIFY_1(gxg_gtk_item_factory_from_widget_w, gxg_gtk_item_factory_from_widget)
-XEN_NARGIFY_1(gxg_gtk_item_factory_path_from_widget_w, gxg_gtk_item_factory_path_from_widget)
-XEN_NARGIFY_2(gxg_gtk_item_factory_get_item_w, gxg_gtk_item_factory_get_item)
-XEN_NARGIFY_2(gxg_gtk_item_factory_get_widget_w, gxg_gtk_item_factory_get_widget)
-XEN_NARGIFY_2(gxg_gtk_item_factory_get_widget_by_action_w, gxg_gtk_item_factory_get_widget_by_action)
-XEN_NARGIFY_2(gxg_gtk_item_factory_get_item_by_action_w, gxg_gtk_item_factory_get_item_by_action)
-XEN_NARGIFY_4(gxg_gtk_item_factory_create_item_w, gxg_gtk_item_factory_create_item)
-XEN_NARGIFY_4(gxg_gtk_item_factory_create_items_w, gxg_gtk_item_factory_create_items)
-XEN_NARGIFY_2(gxg_gtk_item_factory_delete_item_w, gxg_gtk_item_factory_delete_item)
-XEN_NARGIFY_2(gxg_gtk_item_factory_delete_entry_w, gxg_gtk_item_factory_delete_entry)
-XEN_NARGIFY_3(gxg_gtk_item_factory_delete_entries_w, gxg_gtk_item_factory_delete_entries)
-XEN_NARGIFY_5(gxg_gtk_item_factory_popup_w, gxg_gtk_item_factory_popup)
-XEN_NARGIFY_7(gxg_gtk_item_factory_popup_with_data_w, gxg_gtk_item_factory_popup_with_data)
-XEN_NARGIFY_1(gxg_gtk_item_factory_popup_data_w, gxg_gtk_item_factory_popup_data)
-XEN_NARGIFY_1(gxg_gtk_item_factory_popup_data_from_widget_w, gxg_gtk_item_factory_popup_data_from_widget)
-XEN_NARGIFY_4(gxg_gtk_item_factory_set_translate_func_w, gxg_gtk_item_factory_set_translate_func)
 XEN_NARGIFY_0(gxg_gtk_item_get_type_w, gxg_gtk_item_get_type)
 XEN_NARGIFY_1(gxg_gtk_item_select_w, gxg_gtk_item_select)
 XEN_NARGIFY_1(gxg_gtk_item_deselect_w, gxg_gtk_item_deselect)
@@ -1097,7 +1075,6 @@ XEN_NARGIFY_1(gxg_GTK_OBJECT_FLOATING_w, gxg_GTK_OBJECT_FLOATING)
 XEN_NARGIFY_2(gxg_GTK_OBJECT_SET_FLAGS_w, gxg_GTK_OBJECT_SET_FLAGS)
 XEN_NARGIFY_2(gxg_GTK_OBJECT_UNSET_FLAGS_w, gxg_GTK_OBJECT_UNSET_FLAGS)
 XEN_NARGIFY_0(gxg_gtk_object_get_type_w, gxg_gtk_object_get_type)
-XEN_NARGIFY_2(gxg_gtk_object_new_w, gxg_gtk_object_new)
 XEN_NARGIFY_1(gxg_gtk_object_sink_w, gxg_gtk_object_sink)
 XEN_NARGIFY_1(gxg_gtk_object_destroy_w, gxg_gtk_object_destroy)
 XEN_NARGIFY_0(gxg_gtk_paned_get_type_w, gxg_gtk_paned_get_type)
@@ -2519,6 +2496,137 @@ XEN_NARGIFY_0(gxg_gtk_toggle_tool_button_new_w, gxg_gtk_toggle_tool_button_new)
 XEN_NARGIFY_1(gxg_gtk_toggle_tool_button_new_from_stock_w, gxg_gtk_toggle_tool_button_new_from_stock)
 XEN_NARGIFY_2(gxg_gtk_toggle_tool_button_set_active_w, gxg_gtk_toggle_tool_button_set_active)
 XEN_NARGIFY_1(gxg_gtk_toggle_tool_button_get_active_w, gxg_gtk_toggle_tool_button_get_active)
+XEN_NARGIFY_5(gxg_g_timeout_add_full_w, gxg_g_timeout_add_full)
+XEN_NARGIFY_3(gxg_g_timeout_add_w, gxg_g_timeout_add)
+XEN_NARGIFY_2(gxg_g_idle_add_w, gxg_g_idle_add)
+XEN_NARGIFY_4(gxg_g_idle_add_full_w, gxg_g_idle_add_full)
+XEN_NARGIFY_1(gxg_g_idle_remove_by_data_w, gxg_g_idle_remove_by_data)
+XEN_NARGIFY_0(gxg_gtk_file_filter_get_type_w, gxg_gtk_file_filter_get_type)
+XEN_NARGIFY_0(gxg_gtk_file_filter_new_w, gxg_gtk_file_filter_new)
+XEN_NARGIFY_2(gxg_gtk_file_filter_set_name_w, gxg_gtk_file_filter_set_name)
+XEN_NARGIFY_1(gxg_gtk_file_filter_get_name_w, gxg_gtk_file_filter_get_name)
+XEN_NARGIFY_2(gxg_gtk_file_filter_add_mime_type_w, gxg_gtk_file_filter_add_mime_type)
+XEN_NARGIFY_2(gxg_gtk_file_filter_add_pattern_w, gxg_gtk_file_filter_add_pattern)
+XEN_NARGIFY_5(gxg_gtk_file_filter_add_custom_w, gxg_gtk_file_filter_add_custom)
+XEN_NARGIFY_1(gxg_gtk_file_filter_get_needed_w, gxg_gtk_file_filter_get_needed)
+XEN_NARGIFY_2(gxg_gtk_file_filter_filter_w, gxg_gtk_file_filter_filter)
+XEN_NARGIFY_0(gxg_gtk_cell_layout_get_type_w, gxg_gtk_cell_layout_get_type)
+XEN_NARGIFY_3(gxg_gtk_cell_layout_pack_start_w, gxg_gtk_cell_layout_pack_start)
+XEN_NARGIFY_3(gxg_gtk_cell_layout_pack_end_w, gxg_gtk_cell_layout_pack_end)
+XEN_NARGIFY_1(gxg_gtk_cell_layout_clear_w, gxg_gtk_cell_layout_clear)
+XEN_NARGIFY_2(gxg_gtk_cell_layout_set_attributes_w, gxg_gtk_cell_layout_set_attributes)
+XEN_NARGIFY_4(gxg_gtk_cell_layout_add_attribute_w, gxg_gtk_cell_layout_add_attribute)
+XEN_NARGIFY_5(gxg_gtk_cell_layout_set_cell_data_func_w, gxg_gtk_cell_layout_set_cell_data_func)
+XEN_NARGIFY_2(gxg_gtk_cell_layout_clear_attributes_w, gxg_gtk_cell_layout_clear_attributes)
+XEN_NARGIFY_0(gxg_gtk_file_chooser_get_type_w, gxg_gtk_file_chooser_get_type)
+XEN_NARGIFY_2(gxg_gtk_file_chooser_set_action_w, gxg_gtk_file_chooser_set_action)
+XEN_NARGIFY_1(gxg_gtk_file_chooser_get_action_w, gxg_gtk_file_chooser_get_action)
+XEN_NARGIFY_2(gxg_gtk_file_chooser_set_folder_mode_w, gxg_gtk_file_chooser_set_folder_mode)
+XEN_NARGIFY_1(gxg_gtk_file_chooser_get_folder_mode_w, gxg_gtk_file_chooser_get_folder_mode)
+XEN_NARGIFY_2(gxg_gtk_file_chooser_set_local_only_w, gxg_gtk_file_chooser_set_local_only)
+XEN_NARGIFY_1(gxg_gtk_file_chooser_get_local_only_w, gxg_gtk_file_chooser_get_local_only)
+XEN_NARGIFY_2(gxg_gtk_file_chooser_set_select_multiple_w, gxg_gtk_file_chooser_set_select_multiple)
+XEN_NARGIFY_1(gxg_gtk_file_chooser_get_select_multiple_w, gxg_gtk_file_chooser_get_select_multiple)
+XEN_NARGIFY_2(gxg_gtk_file_chooser_set_current_name_w, gxg_gtk_file_chooser_set_current_name)
+XEN_NARGIFY_1(gxg_gtk_file_chooser_get_filename_w, gxg_gtk_file_chooser_get_filename)
+XEN_NARGIFY_2(gxg_gtk_file_chooser_set_filename_w, gxg_gtk_file_chooser_set_filename)
+XEN_NARGIFY_2(gxg_gtk_file_chooser_select_filename_w, gxg_gtk_file_chooser_select_filename)
+XEN_NARGIFY_2(gxg_gtk_file_chooser_unselect_filename_w, gxg_gtk_file_chooser_unselect_filename)
+XEN_NARGIFY_1(gxg_gtk_file_chooser_select_all_w, gxg_gtk_file_chooser_select_all)
+XEN_NARGIFY_1(gxg_gtk_file_chooser_unselect_all_w, gxg_gtk_file_chooser_unselect_all)
+XEN_NARGIFY_1(gxg_gtk_file_chooser_get_filenames_w, gxg_gtk_file_chooser_get_filenames)
+XEN_NARGIFY_2(gxg_gtk_file_chooser_set_current_folder_w, gxg_gtk_file_chooser_set_current_folder)
+XEN_NARGIFY_1(gxg_gtk_file_chooser_get_current_folder_w, gxg_gtk_file_chooser_get_current_folder)
+XEN_NARGIFY_1(gxg_gtk_file_chooser_get_uri_w, gxg_gtk_file_chooser_get_uri)
+XEN_NARGIFY_2(gxg_gtk_file_chooser_set_uri_w, gxg_gtk_file_chooser_set_uri)
+XEN_NARGIFY_2(gxg_gtk_file_chooser_select_uri_w, gxg_gtk_file_chooser_select_uri)
+XEN_NARGIFY_2(gxg_gtk_file_chooser_unselect_uri_w, gxg_gtk_file_chooser_unselect_uri)
+XEN_NARGIFY_1(gxg_gtk_file_chooser_get_uris_w, gxg_gtk_file_chooser_get_uris)
+XEN_NARGIFY_2(gxg_gtk_file_chooser_set_current_folder_uri_w, gxg_gtk_file_chooser_set_current_folder_uri)
+XEN_NARGIFY_1(gxg_gtk_file_chooser_get_current_folder_uri_w, gxg_gtk_file_chooser_get_current_folder_uri)
+XEN_NARGIFY_2(gxg_gtk_file_chooser_set_preview_widget_w, gxg_gtk_file_chooser_set_preview_widget)
+XEN_NARGIFY_1(gxg_gtk_file_chooser_get_preview_widget_w, gxg_gtk_file_chooser_get_preview_widget)
+XEN_NARGIFY_2(gxg_gtk_file_chooser_set_preview_widget_active_w, gxg_gtk_file_chooser_set_preview_widget_active)
+XEN_NARGIFY_1(gxg_gtk_file_chooser_get_preview_widget_active_w, gxg_gtk_file_chooser_get_preview_widget_active)
+XEN_NARGIFY_1(gxg_gtk_file_chooser_get_preview_filename_w, gxg_gtk_file_chooser_get_preview_filename)
+XEN_NARGIFY_1(gxg_gtk_file_chooser_get_preview_uri_w, gxg_gtk_file_chooser_get_preview_uri)
+XEN_NARGIFY_2(gxg_gtk_file_chooser_set_extra_widget_w, gxg_gtk_file_chooser_set_extra_widget)
+XEN_NARGIFY_1(gxg_gtk_file_chooser_get_extra_widget_w, gxg_gtk_file_chooser_get_extra_widget)
+XEN_NARGIFY_2(gxg_gtk_file_chooser_add_filter_w, gxg_gtk_file_chooser_add_filter)
+XEN_NARGIFY_2(gxg_gtk_file_chooser_remove_filter_w, gxg_gtk_file_chooser_remove_filter)
+XEN_NARGIFY_1(gxg_gtk_file_chooser_list_filters_w, gxg_gtk_file_chooser_list_filters)
+XEN_NARGIFY_2(gxg_gtk_file_chooser_set_filter_w, gxg_gtk_file_chooser_set_filter)
+XEN_NARGIFY_1(gxg_gtk_file_chooser_get_filter_w, gxg_gtk_file_chooser_get_filter)
+XEN_NARGIFY_3(gxg_gtk_file_chooser_add_shortcut_folder_w, gxg_gtk_file_chooser_add_shortcut_folder)
+XEN_NARGIFY_3(gxg_gtk_file_chooser_remove_shortcut_folder_w, gxg_gtk_file_chooser_remove_shortcut_folder)
+XEN_NARGIFY_1(gxg_gtk_file_chooser_list_shortcut_folders_w, gxg_gtk_file_chooser_list_shortcut_folders)
+XEN_NARGIFY_3(gxg_gtk_file_chooser_add_shortcut_folder_uri_w, gxg_gtk_file_chooser_add_shortcut_folder_uri)
+XEN_NARGIFY_3(gxg_gtk_file_chooser_remove_shortcut_folder_uri_w, gxg_gtk_file_chooser_remove_shortcut_folder_uri)
+XEN_NARGIFY_1(gxg_gtk_file_chooser_list_shortcut_folder_uris_w, gxg_gtk_file_chooser_list_shortcut_folder_uris)
+XEN_NARGIFY_0(gxg_gtk_icon_theme_get_type_w, gxg_gtk_icon_theme_get_type)
+XEN_NARGIFY_0(gxg_gtk_icon_theme_new_w, gxg_gtk_icon_theme_new)
+XEN_NARGIFY_0(gxg_gtk_icon_theme_get_default_w, gxg_gtk_icon_theme_get_default)
+XEN_NARGIFY_1(gxg_gtk_icon_theme_get_for_screen_w, gxg_gtk_icon_theme_get_for_screen)
+XEN_NARGIFY_2(gxg_gtk_icon_theme_set_screen_w, gxg_gtk_icon_theme_set_screen)
+XEN_ARGIFY_3(gxg_gtk_icon_theme_get_search_path_w, gxg_gtk_icon_theme_get_search_path)
+XEN_NARGIFY_2(gxg_gtk_icon_theme_append_search_path_w, gxg_gtk_icon_theme_append_search_path)
+XEN_NARGIFY_2(gxg_gtk_icon_theme_prepend_search_path_w, gxg_gtk_icon_theme_prepend_search_path)
+XEN_NARGIFY_2(gxg_gtk_icon_theme_set_custom_theme_w, gxg_gtk_icon_theme_set_custom_theme)
+XEN_NARGIFY_2(gxg_gtk_icon_theme_has_icon_w, gxg_gtk_icon_theme_has_icon)
+XEN_NARGIFY_4(gxg_gtk_icon_theme_lookup_icon_w, gxg_gtk_icon_theme_lookup_icon)
+XEN_NARGIFY_5(gxg_gtk_icon_theme_load_icon_w, gxg_gtk_icon_theme_load_icon)
+XEN_NARGIFY_2(gxg_gtk_icon_theme_list_icons_w, gxg_gtk_icon_theme_list_icons)
+XEN_NARGIFY_1(gxg_gtk_icon_theme_get_example_icon_name_w, gxg_gtk_icon_theme_get_example_icon_name)
+XEN_NARGIFY_1(gxg_gtk_icon_theme_rescan_if_needed_w, gxg_gtk_icon_theme_rescan_if_needed)
+XEN_NARGIFY_3(gxg_gtk_icon_theme_add_builtin_icon_w, gxg_gtk_icon_theme_add_builtin_icon)
+XEN_NARGIFY_0(gxg_gtk_icon_info_get_type_w, gxg_gtk_icon_info_get_type)
+XEN_NARGIFY_1(gxg_gtk_icon_info_copy_w, gxg_gtk_icon_info_copy)
+XEN_NARGIFY_1(gxg_gtk_icon_info_free_w, gxg_gtk_icon_info_free)
+XEN_NARGIFY_1(gxg_gtk_icon_info_get_base_size_w, gxg_gtk_icon_info_get_base_size)
+XEN_NARGIFY_1(gxg_gtk_icon_info_get_filename_w, gxg_gtk_icon_info_get_filename)
+XEN_NARGIFY_1(gxg_gtk_icon_info_get_builtin_pixbuf_w, gxg_gtk_icon_info_get_builtin_pixbuf)
+XEN_NARGIFY_2(gxg_gtk_icon_info_load_icon_w, gxg_gtk_icon_info_load_icon)
+XEN_NARGIFY_2(gxg_gtk_icon_info_set_raw_coordinates_w, gxg_gtk_icon_info_set_raw_coordinates)
+XEN_NARGIFY_2(gxg_gtk_icon_info_get_embedded_rect_w, gxg_gtk_icon_info_get_embedded_rect)
+XEN_ARGIFY_3(gxg_gtk_icon_info_get_attach_points_w, gxg_gtk_icon_info_get_attach_points)
+XEN_NARGIFY_1(gxg_gtk_icon_info_get_display_name_w, gxg_gtk_icon_info_get_display_name)
+XEN_NARGIFY_0(gxg_gtk_tool_button_get_type_w, gxg_gtk_tool_button_get_type)
+XEN_NARGIFY_2(gxg_gtk_tool_button_new_w, gxg_gtk_tool_button_new)
+XEN_NARGIFY_1(gxg_gtk_tool_button_new_from_stock_w, gxg_gtk_tool_button_new_from_stock)
+XEN_NARGIFY_2(gxg_gtk_tool_button_set_label_w, gxg_gtk_tool_button_set_label)
+XEN_NARGIFY_1(gxg_gtk_tool_button_get_label_w, gxg_gtk_tool_button_get_label)
+XEN_NARGIFY_2(gxg_gtk_tool_button_set_use_underline_w, gxg_gtk_tool_button_set_use_underline)
+XEN_NARGIFY_1(gxg_gtk_tool_button_get_use_underline_w, gxg_gtk_tool_button_get_use_underline)
+XEN_NARGIFY_2(gxg_gtk_tool_button_set_stock_id_w, gxg_gtk_tool_button_set_stock_id)
+XEN_NARGIFY_1(gxg_gtk_tool_button_get_stock_id_w, gxg_gtk_tool_button_get_stock_id)
+XEN_NARGIFY_2(gxg_gtk_tool_button_set_icon_widget_w, gxg_gtk_tool_button_set_icon_widget)
+XEN_NARGIFY_1(gxg_gtk_tool_button_get_icon_widget_w, gxg_gtk_tool_button_get_icon_widget)
+XEN_NARGIFY_2(gxg_gtk_tool_button_set_label_widget_w, gxg_gtk_tool_button_set_label_widget)
+XEN_NARGIFY_1(gxg_gtk_tool_button_get_label_widget_w, gxg_gtk_tool_button_get_label_widget)
+XEN_NARGIFY_0(gxg_gtk_tool_item_get_type_w, gxg_gtk_tool_item_get_type)
+XEN_NARGIFY_0(gxg_gtk_tool_item_new_w, gxg_gtk_tool_item_new)
+XEN_NARGIFY_2(gxg_gtk_tool_item_set_homogeneous_w, gxg_gtk_tool_item_set_homogeneous)
+XEN_NARGIFY_1(gxg_gtk_tool_item_get_homogeneous_w, gxg_gtk_tool_item_get_homogeneous)
+XEN_NARGIFY_2(gxg_gtk_tool_item_set_expand_w, gxg_gtk_tool_item_set_expand)
+XEN_NARGIFY_1(gxg_gtk_tool_item_get_expand_w, gxg_gtk_tool_item_get_expand)
+XEN_NARGIFY_2(gxg_gtk_tool_item_set_pack_end_w, gxg_gtk_tool_item_set_pack_end)
+XEN_NARGIFY_1(gxg_gtk_tool_item_get_pack_end_w, gxg_gtk_tool_item_get_pack_end)
+XEN_NARGIFY_4(gxg_gtk_tool_item_set_tooltip_w, gxg_gtk_tool_item_set_tooltip)
+XEN_NARGIFY_2(gxg_gtk_tool_item_set_use_drag_window_w, gxg_gtk_tool_item_set_use_drag_window)
+XEN_NARGIFY_1(gxg_gtk_tool_item_get_use_drag_window_w, gxg_gtk_tool_item_get_use_drag_window)
+XEN_NARGIFY_2(gxg_gtk_tool_item_set_visible_horizontal_w, gxg_gtk_tool_item_set_visible_horizontal)
+XEN_NARGIFY_1(gxg_gtk_tool_item_get_visible_horizontal_w, gxg_gtk_tool_item_get_visible_horizontal)
+XEN_NARGIFY_2(gxg_gtk_tool_item_set_visible_vertical_w, gxg_gtk_tool_item_set_visible_vertical)
+XEN_NARGIFY_1(gxg_gtk_tool_item_get_visible_vertical_w, gxg_gtk_tool_item_get_visible_vertical)
+XEN_NARGIFY_1(gxg_gtk_tool_item_get_is_important_w, gxg_gtk_tool_item_get_is_important)
+XEN_NARGIFY_2(gxg_gtk_tool_item_set_is_important_w, gxg_gtk_tool_item_set_is_important)
+XEN_NARGIFY_1(gxg_gtk_tool_item_get_icon_size_w, gxg_gtk_tool_item_get_icon_size)
+XEN_NARGIFY_1(gxg_gtk_tool_item_get_orientation_w, gxg_gtk_tool_item_get_orientation)
+XEN_NARGIFY_1(gxg_gtk_tool_item_get_toolbar_style_w, gxg_gtk_tool_item_get_toolbar_style)
+XEN_NARGIFY_1(gxg_gtk_tool_item_get_relief_style_w, gxg_gtk_tool_item_get_relief_style)
+XEN_NARGIFY_1(gxg_gtk_tool_item_retrieve_proxy_menu_item_w, gxg_gtk_tool_item_retrieve_proxy_menu_item)
+XEN_NARGIFY_2(gxg_gtk_tool_item_get_proxy_menu_item_w, gxg_gtk_tool_item_get_proxy_menu_item)
+XEN_NARGIFY_3(gxg_gtk_tool_item_set_proxy_menu_item_w, gxg_gtk_tool_item_set_proxy_menu_item)
 #endif
 
 XEN_NARGIFY_1(gxg_GDK_COLORMAP_w, gxg_GDK_COLORMAP)
@@ -2587,7 +2695,6 @@ XEN_NARGIFY_1(gxg_GTK_IM_CONTEXT_SIMPLE_w, gxg_GTK_IM_CONTEXT_SIMPLE)
 XEN_NARGIFY_1(gxg_GTK_IM_MULTICONTEXT_w, gxg_GTK_IM_MULTICONTEXT)
 XEN_NARGIFY_1(gxg_GTK_INPUT_DIALOG_w, gxg_GTK_INPUT_DIALOG)
 XEN_NARGIFY_1(gxg_GTK_INVISIBLE_w, gxg_GTK_INVISIBLE)
-XEN_NARGIFY_1(gxg_GTK_ITEM_FACTORY_w, gxg_GTK_ITEM_FACTORY)
 XEN_NARGIFY_1(gxg_GTK_ITEM_w, gxg_GTK_ITEM)
 XEN_NARGIFY_1(gxg_GTK_LABEL_w, gxg_GTK_LABEL)
 XEN_NARGIFY_1(gxg_GTK_LAYOUT_w, gxg_GTK_LAYOUT)
@@ -2699,6 +2806,13 @@ XEN_NARGIFY_1(gxg_GTK_RADIO_ACTION_w, gxg_GTK_RADIO_ACTION)
 XEN_NARGIFY_1(gxg_GTK_SEPARATOR_TOOL_ITEM_w, gxg_GTK_SEPARATOR_TOOL_ITEM)
 XEN_NARGIFY_1(gxg_GTK_TOGGLE_ACTION_w, gxg_GTK_TOGGLE_ACTION)
 XEN_NARGIFY_1(gxg_GTK_TOGGLE_TOOL_BUTTON_w, gxg_GTK_TOGGLE_TOOL_BUTTON)
+XEN_NARGIFY_1(gxg_GTK_FILE_FILTER_w, gxg_GTK_FILE_FILTER)
+XEN_NARGIFY_1(gxg_GTK_CELL_LAYOUT_w, gxg_GTK_CELL_LAYOUT)
+XEN_NARGIFY_1(gxg_GTK_CLIPBOARD_w, gxg_GTK_CLIPBOARD)
+XEN_NARGIFY_1(gxg_GTK_FILE_CHOOSER_w, gxg_GTK_FILE_CHOOSER)
+XEN_NARGIFY_1(gxg_GTK_ICON_THEME_w, gxg_GTK_ICON_THEME)
+XEN_NARGIFY_1(gxg_GTK_TOOL_BUTTON_w, gxg_GTK_TOOL_BUTTON)
+XEN_NARGIFY_1(gxg_GTK_TOOL_ITEM_w, gxg_GTK_TOOL_ITEM)
 #endif
 
 XEN_NARGIFY_1(gxg_GDK_IS_COLORMAP_w, gxg_GDK_IS_COLORMAP)
@@ -2766,7 +2880,6 @@ XEN_NARGIFY_1(gxg_GTK_IS_IM_CONTEXT_SIMPLE_w, gxg_GTK_IS_IM_CONTEXT_SIMPLE)
 XEN_NARGIFY_1(gxg_GTK_IS_IM_MULTICONTEXT_w, gxg_GTK_IS_IM_MULTICONTEXT)
 XEN_NARGIFY_1(gxg_GTK_IS_INPUT_DIALOG_w, gxg_GTK_IS_INPUT_DIALOG)
 XEN_NARGIFY_1(gxg_GTK_IS_INVISIBLE_w, gxg_GTK_IS_INVISIBLE)
-XEN_NARGIFY_1(gxg_GTK_IS_ITEM_FACTORY_w, gxg_GTK_IS_ITEM_FACTORY)
 XEN_NARGIFY_1(gxg_GTK_IS_ITEM_w, gxg_GTK_IS_ITEM)
 XEN_NARGIFY_1(gxg_GTK_IS_LABEL_w, gxg_GTK_IS_LABEL)
 XEN_NARGIFY_1(gxg_GTK_IS_LAYOUT_w, gxg_GTK_IS_LAYOUT)
@@ -2861,6 +2974,13 @@ XEN_NARGIFY_1(gxg_GTK_IS_RADIO_ACTION_w, gxg_GTK_IS_RADIO_ACTION)
 XEN_NARGIFY_1(gxg_GTK_IS_SEPARATOR_TOOL_ITEM_w, gxg_GTK_IS_SEPARATOR_TOOL_ITEM)
 XEN_NARGIFY_1(gxg_GTK_IS_TOGGLE_ACTION_w, gxg_GTK_IS_TOGGLE_ACTION)
 XEN_NARGIFY_1(gxg_GTK_IS_TOGGLE_TOOL_BUTTON_w, gxg_GTK_IS_TOGGLE_TOOL_BUTTON)
+XEN_NARGIFY_1(gxg_GTK_IS_FILE_FILTER_w, gxg_GTK_IS_FILE_FILTER)
+XEN_NARGIFY_1(gxg_GTK_IS_CELL_LAYOUT_w, gxg_GTK_IS_CELL_LAYOUT)
+XEN_NARGIFY_1(gxg_GTK_IS_CLIPBOARD_w, gxg_GTK_IS_CLIPBOARD)
+XEN_NARGIFY_1(gxg_GTK_IS_FILE_CHOOSER_w, gxg_GTK_IS_FILE_CHOOSER)
+XEN_NARGIFY_1(gxg_GTK_IS_ICON_THEME_w, gxg_GTK_IS_ICON_THEME)
+XEN_NARGIFY_1(gxg_GTK_IS_TOOL_BUTTON_w, gxg_GTK_IS_TOOL_BUTTON)
+XEN_NARGIFY_1(gxg_GTK_IS_TOOL_ITEM_w, gxg_GTK_IS_TOOL_ITEM)
 #endif
 
 XEN_NARGIFY_2(c_array_to_xen_list_w, c_array_to_xen_list)
@@ -3017,6 +3137,7 @@ XEN_NARGIFY_1(gxg_widgets_w, gxg_widgets)
 XEN_NARGIFY_1(gxg_rc_context_w, gxg_rc_context)
 XEN_NARGIFY_1(gxg_property_values_w, gxg_property_values)
 XEN_NARGIFY_1(gxg_queued_settings_w, gxg_queued_settings)
+XEN_NARGIFY_1(gxg_list_w, gxg_list)
 XEN_NARGIFY_1(gxg_info_w, gxg_info)
 #if (!WITH_GTK_AND_X11)
 XEN_NARGIFY_1(gxg_data_w, gxg_data)
@@ -3082,7 +3203,6 @@ XEN_NARGIFY_1(gxg_xor_gc_w, gxg_xor_gc)
 XEN_NARGIFY_1(gxg_handle_w, gxg_handle)
 XEN_NARGIFY_1(gxg_child2_w, gxg_child2)
 XEN_NARGIFY_1(gxg_child1_w, gxg_child1)
-XEN_NARGIFY_1(gxg_menu_item_w, gxg_menu_item)
 #if (!WITH_GTK_AND_X11)
 XEN_NARGIFY_1(gxg_flags_w, gxg_flags)
 #endif
@@ -3170,12 +3290,6 @@ XEN_NARGIFY_1(gxg_use_markup_w, gxg_use_markup)
 XEN_NARGIFY_1(gxg_wrap_w, gxg_wrap)
 XEN_NARGIFY_1(gxg_jtype_w, gxg_jtype)
 XEN_NARGIFY_1(gxg_label_w, gxg_label)
-XEN_NARGIFY_1(gxg_extra_data_w, gxg_extra_data)
-XEN_NARGIFY_1(gxg_item_type_w, gxg_item_type)
-XEN_NARGIFY_1(gxg_callback_action_w, gxg_callback_action)
-XEN_NARGIFY_1(gxg_callback_w, gxg_callback)
-XEN_NARGIFY_1(gxg_accelerator_w, gxg_accelerator)
-XEN_NARGIFY_1(gxg_path_w, gxg_path)
 XEN_NARGIFY_1(gxg_has_user_ref_count_w, gxg_has_user_ref_count)
 XEN_NARGIFY_1(gxg_keys_listbox_w, gxg_keys_listbox)
 XEN_NARGIFY_1(gxg_keys_list_w, gxg_keys_list)
@@ -3295,19 +3409,6 @@ XEN_NARGIFY_1(gxg_need_resize_w, gxg_need_resize)
 XEN_NARGIFY_1(gxg_border_width_w, gxg_border_width)
 #endif
 XEN_NARGIFY_1(gxg_focus_child_w, gxg_focus_child)
-XEN_NARGIFY_1(gxg_activate_id_w, gxg_activate_id)
-XEN_NARGIFY_1(gxg_current_button_w, gxg_current_button)
-XEN_NARGIFY_1(gxg_use_arrows_always_w, gxg_use_arrows_always)
-XEN_NARGIFY_1(gxg_use_arrows_w, gxg_use_arrows)
-XEN_NARGIFY_1(gxg_case_sensitive_w, gxg_case_sensitive)
-XEN_NARGIFY_1(gxg_ok_if_empty_w, gxg_ok_if_empty)
-XEN_NARGIFY_1(gxg_value_in_list_w, gxg_value_in_list)
-XEN_NARGIFY_1(gxg_list_change_id_w, gxg_list_change_id)
-XEN_NARGIFY_1(gxg_entry_change_id_w, gxg_entry_change_id)
-XEN_NARGIFY_1(gxg_list_w, gxg_list)
-XEN_NARGIFY_1(gxg_popwin_w, gxg_popwin)
-XEN_NARGIFY_1(gxg_popup_w, gxg_popup)
-XEN_NARGIFY_1(gxg_entry_w, gxg_entry)
 XEN_NARGIFY_1(gxg_help_button_w, gxg_help_button)
 XEN_NARGIFY_1(gxg_cancel_button_w, gxg_cancel_button)
 XEN_NARGIFY_1(gxg_ok_button_w, gxg_ok_button)
@@ -3781,8 +3882,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_rectangle_intersect, gxg_gdk_rectangle_intersect_w, 3, 0, 0, H_gdk_rectangle_intersect);
   XG_DEFINE_PROCEDURE(gdk_rectangle_union, gxg_gdk_rectangle_union_w, 3, 0, 0, H_gdk_rectangle_union);
   XG_DEFINE_PROCEDURE(gdk_rectangle_get_type, gxg_gdk_rectangle_get_type_w, 0, 0, 0, H_gdk_rectangle_get_type);
-  XG_DEFINE_PROCEDURE(gdk_wcstombs, gxg_gdk_wcstombs_w, 1, 0, 0, H_gdk_wcstombs);
-  XG_DEFINE_PROCEDURE(gdk_mbstowcs, gxg_gdk_mbstowcs_w, 3, 0, 0, H_gdk_mbstowcs);
   XG_DEFINE_PROCEDURE(gdk_event_send_clientmessage_toall, gxg_gdk_event_send_clientmessage_toall_w, 1, 0, 0, H_gdk_event_send_clientmessage_toall);
   XG_DEFINE_PROCEDURE(gdk_event_send_client_message, gxg_gdk_event_send_client_message_w, 2, 0, 0, H_gdk_event_send_client_message);
   XG_DEFINE_PROCEDURE(gdk_threads_enter, gxg_gdk_threads_enter_w, 0, 0, 0, H_gdk_threads_enter);
@@ -4476,26 +4575,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_input_dialog_new, gxg_gtk_input_dialog_new_w, 0, 0, 0, H_gtk_input_dialog_new);
   XG_DEFINE_PROCEDURE(gtk_invisible_get_type, gxg_gtk_invisible_get_type_w, 0, 0, 0, H_gtk_invisible_get_type);
   XG_DEFINE_PROCEDURE(gtk_invisible_new, gxg_gtk_invisible_new_w, 0, 0, 0, H_gtk_invisible_new);
-  XG_DEFINE_PROCEDURE(gtk_item_factory_get_type, gxg_gtk_item_factory_get_type_w, 0, 0, 0, H_gtk_item_factory_get_type);
-  XG_DEFINE_PROCEDURE(gtk_item_factory_new, gxg_gtk_item_factory_new_w, 3, 0, 0, H_gtk_item_factory_new);
-  XG_DEFINE_PROCEDURE(gtk_item_factory_construct, gxg_gtk_item_factory_construct_w, 4, 0, 0, H_gtk_item_factory_construct);
-  XG_DEFINE_PROCEDURE(gtk_item_factory_add_foreign, gxg_gtk_item_factory_add_foreign_w, 5, 0, 0, H_gtk_item_factory_add_foreign);
-  XG_DEFINE_PROCEDURE(gtk_item_factory_from_widget, gxg_gtk_item_factory_from_widget_w, 1, 0, 0, H_gtk_item_factory_from_widget);
-  XG_DEFINE_PROCEDURE(gtk_item_factory_path_from_widget, gxg_gtk_item_factory_path_from_widget_w, 1, 0, 0, H_gtk_item_factory_path_from_widget);
-  XG_DEFINE_PROCEDURE(gtk_item_factory_get_item, gxg_gtk_item_factory_get_item_w, 2, 0, 0, H_gtk_item_factory_get_item);
-  XG_DEFINE_PROCEDURE(gtk_item_factory_get_widget, gxg_gtk_item_factory_get_widget_w, 2, 0, 0, H_gtk_item_factory_get_widget);
-  XG_DEFINE_PROCEDURE(gtk_item_factory_get_widget_by_action, gxg_gtk_item_factory_get_widget_by_action_w, 2, 0, 0, H_gtk_item_factory_get_widget_by_action);
-  XG_DEFINE_PROCEDURE(gtk_item_factory_get_item_by_action, gxg_gtk_item_factory_get_item_by_action_w, 2, 0, 0, H_gtk_item_factory_get_item_by_action);
-  XG_DEFINE_PROCEDURE(gtk_item_factory_create_item, gxg_gtk_item_factory_create_item_w, 4, 0, 0, H_gtk_item_factory_create_item);
-  XG_DEFINE_PROCEDURE(gtk_item_factory_create_items, gxg_gtk_item_factory_create_items_w, 4, 0, 0, H_gtk_item_factory_create_items);
-  XG_DEFINE_PROCEDURE(gtk_item_factory_delete_item, gxg_gtk_item_factory_delete_item_w, 2, 0, 0, H_gtk_item_factory_delete_item);
-  XG_DEFINE_PROCEDURE(gtk_item_factory_delete_entry, gxg_gtk_item_factory_delete_entry_w, 2, 0, 0, H_gtk_item_factory_delete_entry);
-  XG_DEFINE_PROCEDURE(gtk_item_factory_delete_entries, gxg_gtk_item_factory_delete_entries_w, 3, 0, 0, H_gtk_item_factory_delete_entries);
-  XG_DEFINE_PROCEDURE(gtk_item_factory_popup, gxg_gtk_item_factory_popup_w, 5, 0, 0, H_gtk_item_factory_popup);
-  XG_DEFINE_PROCEDURE(gtk_item_factory_popup_with_data, gxg_gtk_item_factory_popup_with_data_w, 7, 0, 0, H_gtk_item_factory_popup_with_data);
-  XG_DEFINE_PROCEDURE(gtk_item_factory_popup_data, gxg_gtk_item_factory_popup_data_w, 1, 0, 0, H_gtk_item_factory_popup_data);
-  XG_DEFINE_PROCEDURE(gtk_item_factory_popup_data_from_widget, gxg_gtk_item_factory_popup_data_from_widget_w, 1, 0, 0, H_gtk_item_factory_popup_data_from_widget);
-  XG_DEFINE_PROCEDURE(gtk_item_factory_set_translate_func, gxg_gtk_item_factory_set_translate_func_w, 4, 0, 0, H_gtk_item_factory_set_translate_func);
   XG_DEFINE_PROCEDURE(gtk_item_get_type, gxg_gtk_item_get_type_w, 0, 0, 0, H_gtk_item_get_type);
   XG_DEFINE_PROCEDURE(gtk_item_select, gxg_gtk_item_select_w, 1, 0, 0, H_gtk_item_select);
   XG_DEFINE_PROCEDURE(gtk_item_deselect, gxg_gtk_item_deselect_w, 1, 0, 0, H_gtk_item_deselect);
@@ -4675,7 +4754,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_OBJECT_SET_FLAGS, gxg_GTK_OBJECT_SET_FLAGS_w, 2, 0, 0, H_GTK_OBJECT_SET_FLAGS);
   XG_DEFINE_PROCEDURE(GTK_OBJECT_UNSET_FLAGS, gxg_GTK_OBJECT_UNSET_FLAGS_w, 2, 0, 0, H_GTK_OBJECT_UNSET_FLAGS);
   XG_DEFINE_PROCEDURE(gtk_object_get_type, gxg_gtk_object_get_type_w, 0, 0, 0, H_gtk_object_get_type);
-  XG_DEFINE_PROCEDURE(gtk_object_new, gxg_gtk_object_new_w, 2, 0, 0, H_gtk_object_new);
   XG_DEFINE_PROCEDURE(gtk_object_sink, gxg_gtk_object_sink_w, 1, 0, 0, H_gtk_object_sink);
   XG_DEFINE_PROCEDURE(gtk_object_destroy, gxg_gtk_object_destroy_w, 1, 0, 0, H_gtk_object_destroy);
   XG_DEFINE_PROCEDURE(gtk_paned_get_type, gxg_gtk_paned_get_type_w, 0, 0, 0, H_gtk_paned_get_type);
@@ -6097,6 +6175,137 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_toggle_tool_button_new_from_stock, gxg_gtk_toggle_tool_button_new_from_stock_w, 1, 0, 0, H_gtk_toggle_tool_button_new_from_stock);
   XG_DEFINE_PROCEDURE(gtk_toggle_tool_button_set_active, gxg_gtk_toggle_tool_button_set_active_w, 2, 0, 0, H_gtk_toggle_tool_button_set_active);
   XG_DEFINE_PROCEDURE(gtk_toggle_tool_button_get_active, gxg_gtk_toggle_tool_button_get_active_w, 1, 0, 0, H_gtk_toggle_tool_button_get_active);
+  XG_DEFINE_PROCEDURE(g_timeout_add_full, gxg_g_timeout_add_full_w, 5, 0, 0, H_g_timeout_add_full);
+  XG_DEFINE_PROCEDURE(g_timeout_add, gxg_g_timeout_add_w, 3, 0, 0, H_g_timeout_add);
+  XG_DEFINE_PROCEDURE(g_idle_add, gxg_g_idle_add_w, 2, 0, 0, H_g_idle_add);
+  XG_DEFINE_PROCEDURE(g_idle_add_full, gxg_g_idle_add_full_w, 4, 0, 0, H_g_idle_add_full);
+  XG_DEFINE_PROCEDURE(g_idle_remove_by_data, gxg_g_idle_remove_by_data_w, 1, 0, 0, H_g_idle_remove_by_data);
+  XG_DEFINE_PROCEDURE(gtk_file_filter_get_type, gxg_gtk_file_filter_get_type_w, 0, 0, 0, H_gtk_file_filter_get_type);
+  XG_DEFINE_PROCEDURE(gtk_file_filter_new, gxg_gtk_file_filter_new_w, 0, 0, 0, H_gtk_file_filter_new);
+  XG_DEFINE_PROCEDURE(gtk_file_filter_set_name, gxg_gtk_file_filter_set_name_w, 2, 0, 0, H_gtk_file_filter_set_name);
+  XG_DEFINE_PROCEDURE(gtk_file_filter_get_name, gxg_gtk_file_filter_get_name_w, 1, 0, 0, H_gtk_file_filter_get_name);
+  XG_DEFINE_PROCEDURE(gtk_file_filter_add_mime_type, gxg_gtk_file_filter_add_mime_type_w, 2, 0, 0, H_gtk_file_filter_add_mime_type);
+  XG_DEFINE_PROCEDURE(gtk_file_filter_add_pattern, gxg_gtk_file_filter_add_pattern_w, 2, 0, 0, H_gtk_file_filter_add_pattern);
+  XG_DEFINE_PROCEDURE(gtk_file_filter_add_custom, gxg_gtk_file_filter_add_custom_w, 5, 0, 0, H_gtk_file_filter_add_custom);
+  XG_DEFINE_PROCEDURE(gtk_file_filter_get_needed, gxg_gtk_file_filter_get_needed_w, 1, 0, 0, H_gtk_file_filter_get_needed);
+  XG_DEFINE_PROCEDURE(gtk_file_filter_filter, gxg_gtk_file_filter_filter_w, 2, 0, 0, H_gtk_file_filter_filter);
+  XG_DEFINE_PROCEDURE(gtk_cell_layout_get_type, gxg_gtk_cell_layout_get_type_w, 0, 0, 0, H_gtk_cell_layout_get_type);
+  XG_DEFINE_PROCEDURE(gtk_cell_layout_pack_start, gxg_gtk_cell_layout_pack_start_w, 3, 0, 0, H_gtk_cell_layout_pack_start);
+  XG_DEFINE_PROCEDURE(gtk_cell_layout_pack_end, gxg_gtk_cell_layout_pack_end_w, 3, 0, 0, H_gtk_cell_layout_pack_end);
+  XG_DEFINE_PROCEDURE(gtk_cell_layout_clear, gxg_gtk_cell_layout_clear_w, 1, 0, 0, H_gtk_cell_layout_clear);
+  XG_DEFINE_PROCEDURE(gtk_cell_layout_set_attributes, gxg_gtk_cell_layout_set_attributes_w, 2, 0, 0, H_gtk_cell_layout_set_attributes);
+  XG_DEFINE_PROCEDURE(gtk_cell_layout_add_attribute, gxg_gtk_cell_layout_add_attribute_w, 4, 0, 0, H_gtk_cell_layout_add_attribute);
+  XG_DEFINE_PROCEDURE(gtk_cell_layout_set_cell_data_func, gxg_gtk_cell_layout_set_cell_data_func_w, 5, 0, 0, H_gtk_cell_layout_set_cell_data_func);
+  XG_DEFINE_PROCEDURE(gtk_cell_layout_clear_attributes, gxg_gtk_cell_layout_clear_attributes_w, 2, 0, 0, H_gtk_cell_layout_clear_attributes);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_get_type, gxg_gtk_file_chooser_get_type_w, 0, 0, 0, H_gtk_file_chooser_get_type);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_set_action, gxg_gtk_file_chooser_set_action_w, 2, 0, 0, H_gtk_file_chooser_set_action);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_get_action, gxg_gtk_file_chooser_get_action_w, 1, 0, 0, H_gtk_file_chooser_get_action);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_set_folder_mode, gxg_gtk_file_chooser_set_folder_mode_w, 2, 0, 0, H_gtk_file_chooser_set_folder_mode);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_get_folder_mode, gxg_gtk_file_chooser_get_folder_mode_w, 1, 0, 0, H_gtk_file_chooser_get_folder_mode);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_set_local_only, gxg_gtk_file_chooser_set_local_only_w, 2, 0, 0, H_gtk_file_chooser_set_local_only);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_get_local_only, gxg_gtk_file_chooser_get_local_only_w, 1, 0, 0, H_gtk_file_chooser_get_local_only);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_set_select_multiple, gxg_gtk_file_chooser_set_select_multiple_w, 2, 0, 0, H_gtk_file_chooser_set_select_multiple);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_get_select_multiple, gxg_gtk_file_chooser_get_select_multiple_w, 1, 0, 0, H_gtk_file_chooser_get_select_multiple);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_set_current_name, gxg_gtk_file_chooser_set_current_name_w, 2, 0, 0, H_gtk_file_chooser_set_current_name);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_get_filename, gxg_gtk_file_chooser_get_filename_w, 1, 0, 0, H_gtk_file_chooser_get_filename);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_set_filename, gxg_gtk_file_chooser_set_filename_w, 2, 0, 0, H_gtk_file_chooser_set_filename);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_select_filename, gxg_gtk_file_chooser_select_filename_w, 2, 0, 0, H_gtk_file_chooser_select_filename);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_unselect_filename, gxg_gtk_file_chooser_unselect_filename_w, 2, 0, 0, H_gtk_file_chooser_unselect_filename);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_select_all, gxg_gtk_file_chooser_select_all_w, 1, 0, 0, H_gtk_file_chooser_select_all);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_unselect_all, gxg_gtk_file_chooser_unselect_all_w, 1, 0, 0, H_gtk_file_chooser_unselect_all);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_get_filenames, gxg_gtk_file_chooser_get_filenames_w, 1, 0, 0, H_gtk_file_chooser_get_filenames);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_set_current_folder, gxg_gtk_file_chooser_set_current_folder_w, 2, 0, 0, H_gtk_file_chooser_set_current_folder);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_get_current_folder, gxg_gtk_file_chooser_get_current_folder_w, 1, 0, 0, H_gtk_file_chooser_get_current_folder);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_get_uri, gxg_gtk_file_chooser_get_uri_w, 1, 0, 0, H_gtk_file_chooser_get_uri);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_set_uri, gxg_gtk_file_chooser_set_uri_w, 2, 0, 0, H_gtk_file_chooser_set_uri);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_select_uri, gxg_gtk_file_chooser_select_uri_w, 2, 0, 0, H_gtk_file_chooser_select_uri);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_unselect_uri, gxg_gtk_file_chooser_unselect_uri_w, 2, 0, 0, H_gtk_file_chooser_unselect_uri);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_get_uris, gxg_gtk_file_chooser_get_uris_w, 1, 0, 0, H_gtk_file_chooser_get_uris);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_set_current_folder_uri, gxg_gtk_file_chooser_set_current_folder_uri_w, 2, 0, 0, H_gtk_file_chooser_set_current_folder_uri);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_get_current_folder_uri, gxg_gtk_file_chooser_get_current_folder_uri_w, 1, 0, 0, H_gtk_file_chooser_get_current_folder_uri);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_set_preview_widget, gxg_gtk_file_chooser_set_preview_widget_w, 2, 0, 0, H_gtk_file_chooser_set_preview_widget);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_get_preview_widget, gxg_gtk_file_chooser_get_preview_widget_w, 1, 0, 0, H_gtk_file_chooser_get_preview_widget);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_set_preview_widget_active, gxg_gtk_file_chooser_set_preview_widget_active_w, 2, 0, 0, H_gtk_file_chooser_set_preview_widget_active);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_get_preview_widget_active, gxg_gtk_file_chooser_get_preview_widget_active_w, 1, 0, 0, H_gtk_file_chooser_get_preview_widget_active);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_get_preview_filename, gxg_gtk_file_chooser_get_preview_filename_w, 1, 0, 0, H_gtk_file_chooser_get_preview_filename);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_get_preview_uri, gxg_gtk_file_chooser_get_preview_uri_w, 1, 0, 0, H_gtk_file_chooser_get_preview_uri);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_set_extra_widget, gxg_gtk_file_chooser_set_extra_widget_w, 2, 0, 0, H_gtk_file_chooser_set_extra_widget);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_get_extra_widget, gxg_gtk_file_chooser_get_extra_widget_w, 1, 0, 0, H_gtk_file_chooser_get_extra_widget);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_add_filter, gxg_gtk_file_chooser_add_filter_w, 2, 0, 0, H_gtk_file_chooser_add_filter);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_remove_filter, gxg_gtk_file_chooser_remove_filter_w, 2, 0, 0, H_gtk_file_chooser_remove_filter);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_list_filters, gxg_gtk_file_chooser_list_filters_w, 1, 0, 0, H_gtk_file_chooser_list_filters);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_set_filter, gxg_gtk_file_chooser_set_filter_w, 2, 0, 0, H_gtk_file_chooser_set_filter);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_get_filter, gxg_gtk_file_chooser_get_filter_w, 1, 0, 0, H_gtk_file_chooser_get_filter);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_add_shortcut_folder, gxg_gtk_file_chooser_add_shortcut_folder_w, 3, 0, 0, H_gtk_file_chooser_add_shortcut_folder);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_remove_shortcut_folder, gxg_gtk_file_chooser_remove_shortcut_folder_w, 3, 0, 0, H_gtk_file_chooser_remove_shortcut_folder);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_list_shortcut_folders, gxg_gtk_file_chooser_list_shortcut_folders_w, 1, 0, 0, H_gtk_file_chooser_list_shortcut_folders);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_add_shortcut_folder_uri, gxg_gtk_file_chooser_add_shortcut_folder_uri_w, 3, 0, 0, H_gtk_file_chooser_add_shortcut_folder_uri);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_remove_shortcut_folder_uri, gxg_gtk_file_chooser_remove_shortcut_folder_uri_w, 3, 0, 0, H_gtk_file_chooser_remove_shortcut_folder_uri);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_list_shortcut_folder_uris, gxg_gtk_file_chooser_list_shortcut_folder_uris_w, 1, 0, 0, H_gtk_file_chooser_list_shortcut_folder_uris);
+  XG_DEFINE_PROCEDURE(gtk_icon_theme_get_type, gxg_gtk_icon_theme_get_type_w, 0, 0, 0, H_gtk_icon_theme_get_type);
+  XG_DEFINE_PROCEDURE(gtk_icon_theme_new, gxg_gtk_icon_theme_new_w, 0, 0, 0, H_gtk_icon_theme_new);
+  XG_DEFINE_PROCEDURE(gtk_icon_theme_get_default, gxg_gtk_icon_theme_get_default_w, 0, 0, 0, H_gtk_icon_theme_get_default);
+  XG_DEFINE_PROCEDURE(gtk_icon_theme_get_for_screen, gxg_gtk_icon_theme_get_for_screen_w, 1, 0, 0, H_gtk_icon_theme_get_for_screen);
+  XG_DEFINE_PROCEDURE(gtk_icon_theme_set_screen, gxg_gtk_icon_theme_set_screen_w, 2, 0, 0, H_gtk_icon_theme_set_screen);
+  XG_DEFINE_PROCEDURE(gtk_icon_theme_get_search_path, gxg_gtk_icon_theme_get_search_path_w, 1, 2, 0, H_gtk_icon_theme_get_search_path);
+  XG_DEFINE_PROCEDURE(gtk_icon_theme_append_search_path, gxg_gtk_icon_theme_append_search_path_w, 2, 0, 0, H_gtk_icon_theme_append_search_path);
+  XG_DEFINE_PROCEDURE(gtk_icon_theme_prepend_search_path, gxg_gtk_icon_theme_prepend_search_path_w, 2, 0, 0, H_gtk_icon_theme_prepend_search_path);
+  XG_DEFINE_PROCEDURE(gtk_icon_theme_set_custom_theme, gxg_gtk_icon_theme_set_custom_theme_w, 2, 0, 0, H_gtk_icon_theme_set_custom_theme);
+  XG_DEFINE_PROCEDURE(gtk_icon_theme_has_icon, gxg_gtk_icon_theme_has_icon_w, 2, 0, 0, H_gtk_icon_theme_has_icon);
+  XG_DEFINE_PROCEDURE(gtk_icon_theme_lookup_icon, gxg_gtk_icon_theme_lookup_icon_w, 4, 0, 0, H_gtk_icon_theme_lookup_icon);
+  XG_DEFINE_PROCEDURE(gtk_icon_theme_load_icon, gxg_gtk_icon_theme_load_icon_w, 5, 0, 0, H_gtk_icon_theme_load_icon);
+  XG_DEFINE_PROCEDURE(gtk_icon_theme_list_icons, gxg_gtk_icon_theme_list_icons_w, 2, 0, 0, H_gtk_icon_theme_list_icons);
+  XG_DEFINE_PROCEDURE(gtk_icon_theme_get_example_icon_name, gxg_gtk_icon_theme_get_example_icon_name_w, 1, 0, 0, H_gtk_icon_theme_get_example_icon_name);
+  XG_DEFINE_PROCEDURE(gtk_icon_theme_rescan_if_needed, gxg_gtk_icon_theme_rescan_if_needed_w, 1, 0, 0, H_gtk_icon_theme_rescan_if_needed);
+  XG_DEFINE_PROCEDURE(gtk_icon_theme_add_builtin_icon, gxg_gtk_icon_theme_add_builtin_icon_w, 3, 0, 0, H_gtk_icon_theme_add_builtin_icon);
+  XG_DEFINE_PROCEDURE(gtk_icon_info_get_type, gxg_gtk_icon_info_get_type_w, 0, 0, 0, H_gtk_icon_info_get_type);
+  XG_DEFINE_PROCEDURE(gtk_icon_info_copy, gxg_gtk_icon_info_copy_w, 1, 0, 0, H_gtk_icon_info_copy);
+  XG_DEFINE_PROCEDURE(gtk_icon_info_free, gxg_gtk_icon_info_free_w, 1, 0, 0, H_gtk_icon_info_free);
+  XG_DEFINE_PROCEDURE(gtk_icon_info_get_base_size, gxg_gtk_icon_info_get_base_size_w, 1, 0, 0, H_gtk_icon_info_get_base_size);
+  XG_DEFINE_PROCEDURE(gtk_icon_info_get_filename, gxg_gtk_icon_info_get_filename_w, 1, 0, 0, H_gtk_icon_info_get_filename);
+  XG_DEFINE_PROCEDURE(gtk_icon_info_get_builtin_pixbuf, gxg_gtk_icon_info_get_builtin_pixbuf_w, 1, 0, 0, H_gtk_icon_info_get_builtin_pixbuf);
+  XG_DEFINE_PROCEDURE(gtk_icon_info_load_icon, gxg_gtk_icon_info_load_icon_w, 2, 0, 0, H_gtk_icon_info_load_icon);
+  XG_DEFINE_PROCEDURE(gtk_icon_info_set_raw_coordinates, gxg_gtk_icon_info_set_raw_coordinates_w, 2, 0, 0, H_gtk_icon_info_set_raw_coordinates);
+  XG_DEFINE_PROCEDURE(gtk_icon_info_get_embedded_rect, gxg_gtk_icon_info_get_embedded_rect_w, 2, 0, 0, H_gtk_icon_info_get_embedded_rect);
+  XG_DEFINE_PROCEDURE(gtk_icon_info_get_attach_points, gxg_gtk_icon_info_get_attach_points_w, 1, 2, 0, H_gtk_icon_info_get_attach_points);
+  XG_DEFINE_PROCEDURE(gtk_icon_info_get_display_name, gxg_gtk_icon_info_get_display_name_w, 1, 0, 0, H_gtk_icon_info_get_display_name);
+  XG_DEFINE_PROCEDURE(gtk_tool_button_get_type, gxg_gtk_tool_button_get_type_w, 0, 0, 0, H_gtk_tool_button_get_type);
+  XG_DEFINE_PROCEDURE(gtk_tool_button_new, gxg_gtk_tool_button_new_w, 2, 0, 0, H_gtk_tool_button_new);
+  XG_DEFINE_PROCEDURE(gtk_tool_button_new_from_stock, gxg_gtk_tool_button_new_from_stock_w, 1, 0, 0, H_gtk_tool_button_new_from_stock);
+  XG_DEFINE_PROCEDURE(gtk_tool_button_set_label, gxg_gtk_tool_button_set_label_w, 2, 0, 0, H_gtk_tool_button_set_label);
+  XG_DEFINE_PROCEDURE(gtk_tool_button_get_label, gxg_gtk_tool_button_get_label_w, 1, 0, 0, H_gtk_tool_button_get_label);
+  XG_DEFINE_PROCEDURE(gtk_tool_button_set_use_underline, gxg_gtk_tool_button_set_use_underline_w, 2, 0, 0, H_gtk_tool_button_set_use_underline);
+  XG_DEFINE_PROCEDURE(gtk_tool_button_get_use_underline, gxg_gtk_tool_button_get_use_underline_w, 1, 0, 0, H_gtk_tool_button_get_use_underline);
+  XG_DEFINE_PROCEDURE(gtk_tool_button_set_stock_id, gxg_gtk_tool_button_set_stock_id_w, 2, 0, 0, H_gtk_tool_button_set_stock_id);
+  XG_DEFINE_PROCEDURE(gtk_tool_button_get_stock_id, gxg_gtk_tool_button_get_stock_id_w, 1, 0, 0, H_gtk_tool_button_get_stock_id);
+  XG_DEFINE_PROCEDURE(gtk_tool_button_set_icon_widget, gxg_gtk_tool_button_set_icon_widget_w, 2, 0, 0, H_gtk_tool_button_set_icon_widget);
+  XG_DEFINE_PROCEDURE(gtk_tool_button_get_icon_widget, gxg_gtk_tool_button_get_icon_widget_w, 1, 0, 0, H_gtk_tool_button_get_icon_widget);
+  XG_DEFINE_PROCEDURE(gtk_tool_button_set_label_widget, gxg_gtk_tool_button_set_label_widget_w, 2, 0, 0, H_gtk_tool_button_set_label_widget);
+  XG_DEFINE_PROCEDURE(gtk_tool_button_get_label_widget, gxg_gtk_tool_button_get_label_widget_w, 1, 0, 0, H_gtk_tool_button_get_label_widget);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_get_type, gxg_gtk_tool_item_get_type_w, 0, 0, 0, H_gtk_tool_item_get_type);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_new, gxg_gtk_tool_item_new_w, 0, 0, 0, H_gtk_tool_item_new);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_set_homogeneous, gxg_gtk_tool_item_set_homogeneous_w, 2, 0, 0, H_gtk_tool_item_set_homogeneous);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_get_homogeneous, gxg_gtk_tool_item_get_homogeneous_w, 1, 0, 0, H_gtk_tool_item_get_homogeneous);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_set_expand, gxg_gtk_tool_item_set_expand_w, 2, 0, 0, H_gtk_tool_item_set_expand);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_get_expand, gxg_gtk_tool_item_get_expand_w, 1, 0, 0, H_gtk_tool_item_get_expand);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_set_pack_end, gxg_gtk_tool_item_set_pack_end_w, 2, 0, 0, H_gtk_tool_item_set_pack_end);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_get_pack_end, gxg_gtk_tool_item_get_pack_end_w, 1, 0, 0, H_gtk_tool_item_get_pack_end);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_set_tooltip, gxg_gtk_tool_item_set_tooltip_w, 4, 0, 0, H_gtk_tool_item_set_tooltip);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_set_use_drag_window, gxg_gtk_tool_item_set_use_drag_window_w, 2, 0, 0, H_gtk_tool_item_set_use_drag_window);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_get_use_drag_window, gxg_gtk_tool_item_get_use_drag_window_w, 1, 0, 0, H_gtk_tool_item_get_use_drag_window);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_set_visible_horizontal, gxg_gtk_tool_item_set_visible_horizontal_w, 2, 0, 0, H_gtk_tool_item_set_visible_horizontal);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_get_visible_horizontal, gxg_gtk_tool_item_get_visible_horizontal_w, 1, 0, 0, H_gtk_tool_item_get_visible_horizontal);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_set_visible_vertical, gxg_gtk_tool_item_set_visible_vertical_w, 2, 0, 0, H_gtk_tool_item_set_visible_vertical);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_get_visible_vertical, gxg_gtk_tool_item_get_visible_vertical_w, 1, 0, 0, H_gtk_tool_item_get_visible_vertical);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_get_is_important, gxg_gtk_tool_item_get_is_important_w, 1, 0, 0, H_gtk_tool_item_get_is_important);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_set_is_important, gxg_gtk_tool_item_set_is_important_w, 2, 0, 0, H_gtk_tool_item_set_is_important);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_get_icon_size, gxg_gtk_tool_item_get_icon_size_w, 1, 0, 0, H_gtk_tool_item_get_icon_size);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_get_orientation, gxg_gtk_tool_item_get_orientation_w, 1, 0, 0, H_gtk_tool_item_get_orientation);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_get_toolbar_style, gxg_gtk_tool_item_get_toolbar_style_w, 1, 0, 0, H_gtk_tool_item_get_toolbar_style);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_get_relief_style, gxg_gtk_tool_item_get_relief_style_w, 1, 0, 0, H_gtk_tool_item_get_relief_style);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_retrieve_proxy_menu_item, gxg_gtk_tool_item_retrieve_proxy_menu_item_w, 1, 0, 0, H_gtk_tool_item_retrieve_proxy_menu_item);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_get_proxy_menu_item, gxg_gtk_tool_item_get_proxy_menu_item_w, 2, 0, 0, H_gtk_tool_item_get_proxy_menu_item);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_set_proxy_menu_item, gxg_gtk_tool_item_set_proxy_menu_item_w, 3, 0, 0, H_gtk_tool_item_set_proxy_menu_item);
 #endif
 
   XG_DEFINE_PROCEDURE(GDK_COLORMAP, gxg_GDK_COLORMAP_w, 1, 0, 0, NULL);
@@ -6165,7 +6374,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_IM_MULTICONTEXT, gxg_GTK_IM_MULTICONTEXT_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GTK_INPUT_DIALOG, gxg_GTK_INPUT_DIALOG_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GTK_INVISIBLE, gxg_GTK_INVISIBLE_w, 1, 0, 0, NULL);
-  XG_DEFINE_PROCEDURE(GTK_ITEM_FACTORY, gxg_GTK_ITEM_FACTORY_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GTK_ITEM, gxg_GTK_ITEM_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GTK_LABEL, gxg_GTK_LABEL_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GTK_LAYOUT, gxg_GTK_LAYOUT_w, 1, 0, 0, NULL);
@@ -6277,6 +6485,13 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_SEPARATOR_TOOL_ITEM, gxg_GTK_SEPARATOR_TOOL_ITEM_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GTK_TOGGLE_ACTION, gxg_GTK_TOGGLE_ACTION_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GTK_TOGGLE_TOOL_BUTTON, gxg_GTK_TOGGLE_TOOL_BUTTON_w, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_FILE_FILTER, gxg_GTK_FILE_FILTER_w, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_CELL_LAYOUT, gxg_GTK_CELL_LAYOUT_w, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_CLIPBOARD, gxg_GTK_CLIPBOARD_w, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_FILE_CHOOSER, gxg_GTK_FILE_CHOOSER_w, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_ICON_THEME, gxg_GTK_ICON_THEME_w, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_TOOL_BUTTON, gxg_GTK_TOOL_BUTTON_w, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_TOOL_ITEM, gxg_GTK_TOOL_ITEM_w, 1, 0, 0, NULL);
 #endif
 
   XG_DEFINE_PROCEDURE(c-array->list, c_array_to_xen_list_w, 2, 0, 0, NULL);
@@ -6348,7 +6563,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_IS_IM_MULTICONTEXT, gxg_GTK_IS_IM_MULTICONTEXT_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GTK_IS_INPUT_DIALOG, gxg_GTK_IS_INPUT_DIALOG_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GTK_IS_INVISIBLE, gxg_GTK_IS_INVISIBLE_w, 1, 0, 0, NULL);
-  XG_DEFINE_PROCEDURE(GTK_IS_ITEM_FACTORY, gxg_GTK_IS_ITEM_FACTORY_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GTK_IS_ITEM, gxg_GTK_IS_ITEM_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GTK_IS_LABEL, gxg_GTK_IS_LABEL_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GTK_IS_LAYOUT, gxg_GTK_IS_LAYOUT_w, 1, 0, 0, NULL);
@@ -6443,6 +6657,13 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_IS_SEPARATOR_TOOL_ITEM, gxg_GTK_IS_SEPARATOR_TOOL_ITEM_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GTK_IS_TOGGLE_ACTION, gxg_GTK_IS_TOGGLE_ACTION_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GTK_IS_TOGGLE_TOOL_BUTTON, gxg_GTK_IS_TOGGLE_TOOL_BUTTON_w, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_FILE_FILTER, gxg_GTK_IS_FILE_FILTER_w, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_CELL_LAYOUT, gxg_GTK_IS_CELL_LAYOUT_w, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_CLIPBOARD, gxg_GTK_IS_CLIPBOARD_w, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_FILE_CHOOSER, gxg_GTK_IS_FILE_CHOOSER_w, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_ICON_THEME, gxg_GTK_IS_ICON_THEME_w, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_TOOL_BUTTON, gxg_GTK_IS_TOOL_BUTTON_w, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_TOOL_ITEM, gxg_GTK_IS_TOOL_ITEM_w, 1, 0, 0, NULL);
 #endif
 
 }
@@ -6600,6 +6821,7 @@ static void define_structs(void)
   XG_DEFINE_READER(rc_context, gxg_rc_context_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(property_values, gxg_property_values_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(queued_settings, gxg_queued_settings_w, 1, 0, 0, NULL);
+  XG_DEFINE_READER(list, gxg_list_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(info, gxg_info_w, 1, 0, 0, NULL);
 #if (!WITH_GTK_AND_X11)
   XG_DEFINE_READER(data, gxg_data_w, 1, 0, 0, NULL);
@@ -6665,7 +6887,6 @@ static void define_structs(void)
   XG_DEFINE_READER(handle, gxg_handle_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(child2, gxg_child2_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(child1, gxg_child1_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(menu_item, gxg_menu_item_w, 1, 0, 0, NULL);
 #if (!WITH_GTK_AND_X11)
   XG_DEFINE_READER(flags, gxg_flags_w, 1, 0, 0, NULL);
 #endif
@@ -6753,12 +6974,6 @@ static void define_structs(void)
   XG_DEFINE_READER(wrap, gxg_wrap_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(jtype, gxg_jtype_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(label, gxg_label_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(extra_data, gxg_extra_data_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(item_type, gxg_item_type_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(callback_action, gxg_callback_action_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(callback, gxg_callback_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(accelerator, gxg_accelerator_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(path, gxg_path_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(has_user_ref_count, gxg_has_user_ref_count_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(keys_listbox, gxg_keys_listbox_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(keys_list, gxg_keys_list_w, 1, 0, 0, NULL);
@@ -6878,19 +7093,6 @@ static void define_structs(void)
   XG_DEFINE_READER(border_width, gxg_border_width_w, 1, 0, 0, NULL);
 #endif
   XG_DEFINE_READER(focus_child, gxg_focus_child_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(activate_id, gxg_activate_id_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(current_button, gxg_current_button_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(use_arrows_always, gxg_use_arrows_always_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(use_arrows, gxg_use_arrows_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(case_sensitive, gxg_case_sensitive_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(ok_if_empty, gxg_ok_if_empty_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(value_in_list, gxg_value_in_list_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(list_change_id, gxg_list_change_id_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(entry_change_id, gxg_entry_change_id_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(list, gxg_list_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(popwin, gxg_popwin_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(popup, gxg_popup_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(entry, gxg_entry_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(help_button, gxg_help_button_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(cancel_button, gxg_cancel_button_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(ok_button, gxg_ok_button_w, 1, 0, 0, NULL);

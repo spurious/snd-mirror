@@ -951,6 +951,7 @@ void save_regions(FILE *fd)
       r = regions[i];
       if (r)
 	{
+	  char *ofile = NULL;
 #if HAVE_RUBY
 	  fprintf(fd, "%s(%d, %d, " OFF_TD ", %d, %.4f, \"%s\", \"%s\", \"%s\", ",
 	          "restore_region", i, r->chans, r->frames, r->srate, r->maxamp, r->name, r->start, r->end);
@@ -960,7 +961,9 @@ void save_regions(FILE *fd)
 #endif
 	  if (r->use_temp_file == REGION_DEFERRED) 
 	    deferred_region_to_temp_file(r);
-	  newname = run_save_state_hook(shorter_tempnam(save_dir(ss), "snd_save_"));
+	  ofile = shorter_tempnam(save_dir(ss), "snd_save_");
+	  newname = run_save_state_hook(ofile);
+	  FREE(ofile);
 	  copy_file(r->filename, newname);
 	  fprintf(fd, " \"%s\")\n", newname);
 	  FREE(newname);

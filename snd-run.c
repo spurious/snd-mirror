@@ -6206,6 +6206,30 @@ static xen_value *goto_0(ptree *prog, xen_value **args, xen_value *sf)
   return(args[0]);
 }
 
+/* ---------------- simple snd ops ---------------- */
+#define INT_OP(CName) \
+static void CName ## _i(int *args, ptree *pt) {INT_RESULT = CName(INT_ARG_1);} \
+static char *descr_ ## CName ## _i(int *args, ptree *pt)  \
+{ return(mus_format( INT_PT " = " #CName "(" INT_PT ")", args[0], INT_RESULT, args[1], INT_ARG_1));} \
+static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) \
+{return(package(prog, R_INT, CName ## _i, descr_ ##CName ## _i, args, 1));}
+
+/*
+     current-edit-position
+     mark-sample mark-name mark? mark-sync mark-sync-max
+     mix-chans mix-frames mix-inverted? mix-locked? mix? mix-amp(?) mix-position mix-track
+     region-chans region-frames region-maxamp(?) region? region-srate
+     selected-channel selected-sound select-channel select-sound
+     select-all(?) selection-chans selection-frames selection-maxamp(?) selection? selection-position selection?
+     short-file-name file-name
+     snd-tempnam sound? sync temp-dir save-dir
+     track? track-amp(?) track-chans track-position(?) track-frames(?) track-speed track-tempo track-track
+*/
+
+INT_OP(mus_data_format_to_bytes_per_sample)
+
+  /* others need export */
+
 
 /* ---------------- snd utils ---------------- */
 
@@ -8957,7 +8981,7 @@ static XEN xen_values_to_list(ptree *pt, int *args)
   if (args[2] >= 0) 
     {
       xargs = pt->xen_vars[args[2]];
-      for (i = pt->ints[args[1]] + 1; i >= 2; i--)
+      for (i = (int)(pt->ints[args[1]] + 1); i >= 2; i--)
 	lst = XEN_CONS(xen_value_to_xen(pt, xargs[i]), lst);
     }
   return(lst);
@@ -10844,6 +10868,7 @@ static void init_walkers(void)
 
   INIT_WALKER(S_mus_header_type_name, make_walker(mus_header_type_name_1, NULL, NULL, 1, 1, R_STRING, false, 1, R_INT));
   INIT_WALKER(S_mus_data_format_name, make_walker(mus_data_format_name_1, NULL, NULL, 1, 1, R_STRING, false, 1, R_INT));
+  INIT_WALKER(S_mus_data_format_bytes_per_sample, make_walker(mus_data_format_to_bytes_per_sample_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
 
   INIT_WALKER(S_vct_ref, make_walker(vct_ref_1, NULL, vct_set_1, 2, 2, R_FLOAT, false, 2, R_VCT, R_INT));
   INIT_WALKER(S_vct_length, make_walker(vct_length_1, NULL, NULL, 1, 1, R_INT, false, 1, R_VCT));
@@ -10867,7 +10892,6 @@ static void init_walkers(void)
   INIT_WALKER(S_sound_data_ref, make_walker(sound_data_ref_1, NULL, sound_data_set_1, 3, 3, R_FLOAT, false, 3, R_SOUND_DATA, R_INT, R_INT));
   INIT_WALKER(S_sound_data_setB, make_walker(sound_data_set_2, NULL, NULL, 4, 4, R_FLOAT, false, 4, R_SOUND_DATA, R_INT, R_INT, R_NUMBER));
   INIT_WALKER(S_make_sound_data, make_walker(make_sound_data_1, NULL, NULL, 2, 2, R_SOUND_DATA, false, 2, R_INT, R_INT));
-
 
   /* -------- snd funcs */
   INIT_WALKER(S_next_sample, make_walker(next_sample_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_READER));
@@ -10901,6 +10925,19 @@ static void init_walkers(void)
   INIT_WALKER(S_snd_print, make_walker(snd_print_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_STRING));
   INIT_WALKER(S_snd_warning, make_walker(snd_warning_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_STRING));
   INIT_WALKER(S_report_in_minibuffer, make_walker(report_in_minibuffer_1, NULL, NULL, 1, 2, R_BOOL, false, 1, R_STRING));
+
+  /* 
+     mus-data-format-bytes-per-sample
+     current-edit-position
+     mark-sample mark-name mark? mark-sync mark-sync-max
+     mix-chans mix-frames mix-inverted? mix-locked? mix? mix-amp(?) mix-position mix-track
+     region-chans region-frames region-maxamp(?) region? region-srate
+     selected-channel selected-sound select-channel select-sound
+     select-all(?) selection-chans selection-frames selection-maxamp(?) selection? selection-position selection?
+     short-file-name file-name
+     snd-tempnam sound? sync temp-dir save-dir
+     track? track-amp(?) track-chans track-position(?) track-frames(?) track-speed track-tempo track-track
+   */
 }
 #endif
 

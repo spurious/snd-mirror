@@ -313,9 +313,11 @@ static void check_for_first_edit(chan_info *cp)
 
 static XEN save_state_hook = XEN_FALSE;
 
-char *run_save_state_hook(char *filename)
+char *run_save_state_hook(char *file)
 {
   XEN result = XEN_FALSE;
+  char *filename;
+  filename = copy_string(file);
   if (XEN_HOOKED(save_state_hook))
     {
 #if HAVE_GUILE
@@ -891,7 +893,10 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 	{
 	  if ((ed->len > BUFFER_NOT_FILE_LIMIT) && (save_dir(ss)))
 	    {
-	      newname = run_save_state_hook(shorter_tempnam(save_dir(ss), "snd_"));
+	      char *ofile = NULL;
+	      ofile = shorter_tempnam(save_dir(ss), "snd_");
+	      newname = run_save_state_hook(ofile);
+	      FREE(ofile);
 	      mus_array_to_file(newname, sd->buffered_data, ed->len, 22050, 1);
 	      fprintf(fd, "\"%s\"", newname);
 	      FREE(newname);
@@ -914,7 +919,10 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 	{
 	  if (save_dir(ss))
 	    {
-	      newname = run_save_state_hook(shorter_tempnam(save_dir(ss), "snd_"));
+	      char *ofile = NULL;
+	      ofile = shorter_tempnam(save_dir(ss), "snd_");
+	      newname = run_save_state_hook(ofile);
+	      FREE(ofile);
 	      copy_file(sd->filename, newname);
 	      fprintf(fd, "\"%s\"", newname);
 	      FREE(newname);
@@ -1125,10 +1133,12 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 	       * The backed_up flag is set in the backed-up entry, and for save/restore, we
 	       * override the entire current sound with a saved file.
 	       */
-	      char *nfile;
+	      char *nfile = NULL, *ofile = NULL;
 	      off_t len;
 	      int err;
-	      nfile = run_save_state_hook(shorter_tempnam(save_dir(ss), "snd_"));
+	      ofile = shorter_tempnam(save_dir(ss), "snd_");
+	      nfile = run_save_state_hook(ofile);
+	      FREE(ofile);
 	      len = cp->samples[i];
 	      err = channel_to_file(cp, nfile, i);
 	      if (err != MUS_NO_ERROR)
@@ -1140,6 +1150,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 	      fprintf(fd, "      (%s \"%s\" " OFF_TD " sfile %d \"%s\")\n",
 		      S_override_samples_with_origin, nfile, len, cp->chan, (ed->origin) ? ed->origin : "");
 #endif
+	      FREE(nfile);
 	    }
 	  else
 	    {

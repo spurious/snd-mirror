@@ -140,7 +140,7 @@ static gint bomb_check(gpointer data)
   incs[0] = 0;
   for_each_sound(inc_bomb, (void *)incs);
   if (incs[0] > 0)
-    gtk_timeout_add((guint32)BOMB_TIME, bomb_check, data);
+    g_timeout_add_full(0, (guint32)BOMB_TIME, bomb_check, data, NULL);
   else bomb_in_progress = false;
   return(0);
 }
@@ -150,7 +150,7 @@ void snd_file_bomb_icon(snd_info *sp, bool on)
   if ((on) && (!bomb_in_progress))
     {
       bomb_in_progress = true;
-      gtk_timeout_add((guint32)BOMB_TIME, bomb_check, (gpointer)sp);
+      g_timeout_add_full(0, (guint32)BOMB_TIME, bomb_check, (gpointer)sp, NULL);
     }
 }
 

@@ -1566,10 +1566,16 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
 	  if (sub->calc == C_ZERO_SOUND)
 	    {
 	      /* not actually a no-op unless true_old_beg == true_new_beg */
-	      if (use_temp_file) close_temp_file(ofd, ohdr, 0, cursp);
+	      if (use_temp_file) 
+		{
+		  close_temp_file(ofd, ohdr, 0, cursp);
+		  free_file_info(ohdr);
+		  snd_remove(ofile, REMOVE_FROM_CACHE);
+		}
 	      if (add) free_mix_fd(add);
 	      if (sub) free_mix_fd(sub);
 	      cp->edit_hook_checked = false;
+	      if (ofile) {FREE(ofile); ofile = NULL;}
 	      if (true_new_beg != true_old_beg)
 		{
 		  /* conjure up a fake edit op to hold the position change */
@@ -1599,9 +1605,15 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
   if (!cur)
     {
       cp->edit_hook_checked = false;
-      if (use_temp_file) close_temp_file(ofd, ohdr, 0, cursp);
+      if (use_temp_file) 
+	{
+	  close_temp_file(ofd, ohdr, 0, cursp);
+	  free_file_info(ohdr);
+	  snd_remove(ofile, REMOVE_FROM_CACHE);
+	}
       if (add) free_mix_fd(add);
       if (sub) free_mix_fd(sub);
+      if (ofile) FREE(ofile);
       return;
     }
   if ((num > 0) && (num < MAX_BUFFER_SIZE)) size = (int)num; else size = MAX_BUFFER_SIZE;
@@ -1717,7 +1729,7 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
   FREE(data[0]);
   FREE(data);
   cp->edit_hook_checked = false;
-
+  if (ofile) FREE(ofile);
  REMIX_END:
   extend_mix_state_list(md);
   cs = copy_mix_state(cs);
@@ -3210,7 +3222,6 @@ static int set_mix_amp(int mix_id, int chan, Float val, bool from_gui, bool remi
 {
   mix_info *md;
   mix_state *cs;
-  char *origin = NULL;
   md = md_from_id(mix_id);
   if ((md) && (mix_ok_and_unlocked(mix_id)))
     {
@@ -3218,8 +3229,8 @@ static int set_mix_amp(int mix_id, int chan, Float val, bool from_gui, bool remi
 	{
 	  if (md->in_chans > chan)
 	    {
+	      char *origin = NULL;
 	      cs = md->active_mix_state;
-	      if (remix) origin = mus_format("Mix %d: amp[%d]=%.3f", md->id, chan, val);
 	      if (!from_gui) 
 		{
 		  if ((cs->scalers[chan] == val) && /* drag sets scalers, so we can't optimize that case without some difficulties */
@@ -3227,14 +3238,20 @@ static int set_mix_amp(int mix_id, int chan, Float val, bool from_gui, bool remi
 		    return(mix_id);
 		  cs->scalers[chan] = val;
 		  reflect_mix_or_track_change(mix_id, ANY_TRACK_ID, false);
+		  origin = mus_format("Mix %d: amp[%d]=%.3f", md->id, chan, val);
 		  remix_file(md, origin, true);
+		  FREE(origin);
 		}
 	      else
 		{
 		  if (!remix) erase_mix_waveform(md);
 		  cs->scalers[chan] = val;
 		  if (remix)
-		    remix_file(md, origin, false);
+		    {
+		      origin = mus_format("Mix %d: amp[%d]=%.3f", md->id, chan, val);		      
+		      remix_file(md, origin, false);
+		      FREE(origin);
+		    }
 		  else 
 		    {
 		      cs->as_built->scalers[chan] = val * gather_track_amp(cs);
@@ -3242,7 +3259,6 @@ static int set_mix_amp(int mix_id, int chan, Float val, bool from_gui, bool remi
 		      make_temporary_graph(md->cp, md, cs);
 		    }
 		}
-	      if (origin) FREE(origin);
 	    }
 	  else return(INVALID_MIX_CHANNEL);
 	}
