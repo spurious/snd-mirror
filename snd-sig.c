@@ -1,4 +1,6 @@
 #include "snd.h"
+#include "clm2xen.h"
+
 
 /* collect syncd chans */
 typedef struct {
@@ -38,7 +40,8 @@ int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos
 	{
 	  errstr = C_TO_XEN_STRING(errmsg);
 	  FREE(errmsg);
-	  return(snd_bad_arity_error(caller, errstr, edpos));
+	  snd_bad_arity_error(caller, errstr, edpos);
+	  return(AT_CURRENT_EDIT_POSITION);
 	}
       pos = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(XEN_CALL_2(edpos, 
 							C_TO_SMALL_XEN_INT(cp->sound->index), 
@@ -1803,7 +1806,11 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
       /* both beg and dur are meaningless here -- use selection bounds (per chan) */
       if (selection_is_active())
 	dur = selection_len();
-      else return(snd_no_active_selection_error(S_env_selection));
+      else 
+	{
+	  snd_no_active_selection_error(S_env_selection);
+	  return;
+	}
     }
   if (dur == 0) return;
   if (e)
@@ -2315,11 +2322,6 @@ void cos_smooth(chan_info *cp, off_t beg, off_t num, int regexpr, const char *or
   free_sync_state(sc);
 }
 
-
-
-#include "vct.h"
-#include "clm2xen.h"
-
 static char *run_channel(chan_info *cp, void *upt, off_t beg, off_t dur, int edpos)
 {
   snd_state *ss;
@@ -2581,9 +2583,7 @@ current sample), comes about as an implicit change in the way the data is read. 
 scaling and some envelope operations in that no data actually changes.  If 'peak-env-also' is #t, \
 the same function is applied to the peak env values to get the new version.  If the underlying data \
 has any envelope ramps of previous ptree operations, map-channel is called instead and the new \
-data is saved in the normal manner.  Also, there's currently no way to inform the 'proc' that \
-a new read has begun, so (for now) 'proc' should not have any state or make any assumptions \
-about where it is in the sound."
+data is saved in the normal manner."
 
   chan_info *cp;
   off_t beg = 0, dur = 0;

@@ -1180,8 +1180,6 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
  *   to the second cp -- allow arbitrary overlapping etc).
  */
 
-#include "vct.h"
-
 XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
 {
   int i, j = 0;
@@ -4099,8 +4097,6 @@ axis_context *mark_context (chan_info *cp)                  {return(set_context(
 axis_context *mix_waveform_context (chan_info *cp)          {return(set_context(cp, CHAN_MXGC));}
 axis_context *selected_mix_waveform_context (chan_info *cp) {return(set_context(cp, CHAN_SELMXGC));}
 static axis_context *combined_context (chan_info *cp)       {return(set_context(cp, CHAN_TMPGC));}
-
-#include "vct.h"
 
 enum {CP_GRAPH_TRANSFORM_P, CP_GRAPH_TIME_P, CP_FRAMES, CP_CURSOR, CP_GRAPH_LISP_P, CP_AP_LOSAMP, CP_AP_HISAMP, CP_SQUELCH_UPDATE,
       CP_EDIT_CTR, CP_CURSOR_STYLE, CP_EDIT_HOOK, CP_UNDO_HOOK, CP_AFTER_EDIT_HOOK,

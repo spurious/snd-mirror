@@ -1,5 +1,4 @@
 #include "snd.h"
-#include "vct.h"
 #include "sndlib-strings.h"
 
 static char *current_match = NULL;

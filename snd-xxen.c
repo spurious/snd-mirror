@@ -1,5 +1,4 @@
 #include "snd.h"
-#include "vct.h"
 
 static void timed_eval(XtPointer in_code, XtIntervalId *id)
 {

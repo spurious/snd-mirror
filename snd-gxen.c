@@ -1,5 +1,4 @@
 #include "snd.h"
-#include "vct.h"
 
 static gint timed_eval(gpointer in_code)
 {

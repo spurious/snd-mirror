@@ -1,5 +1,4 @@
 #include "snd.h"
-#include "vct.h"
 
 Float un_dB(snd_state *ss, Float py)
 {

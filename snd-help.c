@@ -1,6 +1,5 @@
 #include "snd.h"
 #include "sndlib-strings.h"
-#include "vct.h"
 #include "clm2xen.h"
 
 /* ---------------- help 'news' menu item ---------------- */
@@ -274,9 +273,6 @@ void news_help(snd_state *ss)
          -nostdin switch for CLM/Snd communication.\n\
 22-Nov:  added contrib/v.rb thanks to Michael Scholz.\n\
 13-Nov:  snd 6.3.\n\
-8-Nov:   gtk-effects.scm.\n\
-1-Nov:   snd-gtk.scm.\n\
-31-Oct:  gtk-popup.scm.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

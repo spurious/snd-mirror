@@ -2,8 +2,6 @@
 
 #if (!USE_NO_GUI)
 
-#include "vct.h"
-
 static axis_context *get_ax(chan_info *cp, int ax_id, const char *caller)
 {
   if ((cp) && (AXIS_CONTEXT_ID_OK(ax_id)))

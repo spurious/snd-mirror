@@ -4290,8 +4290,6 @@ static int call_mix_position_changed_hook(mix_info *md, off_t samps)
   return(XEN_TRUE_P(res));
 }
 
-#include "vct.h"
-
 static XEN mix_vct(XEN obj, XEN beg, XEN snd, XEN chn, XEN with_tag, XEN origin)
 {
   #define H_mix_vct "(" S_mix_vct " data &optional (beg 0) snd chn (with-tag #t) origin)\n\

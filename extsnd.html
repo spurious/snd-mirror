@@ -4712,7 +4712,7 @@ the direction argument between the channel and edit-position:
 <!-- -->the sound itself (independent of map-chan), the result will be all such edits after the current edit, then the map-chan result
 <!-- -->applied to the original (not the newly edited) data.  That is,<br><br><pre>
 (let ((first #t)) 
-  (map-chan (lambda (y) 
+  (<em class=red>map-chan</em> (lambda (y) 
               (if first (set! (sample 0) 1.0)) 
               (set! first #f) 
               (* y 2))))
@@ -4729,6 +4729,19 @@ the direction argument between the channel and edit-position:
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- --><b>map-channel</b> is the <a href="#regularizedargs">regularized</a> version of <a href="#mapchan">map-chan</a>.
+<!-- --><br><br>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(define* (cosine-channel #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+  (<em class=red>map-channel</em>
+   (let* ((samps (or dur (frames snd chn)))
+	  (incr (/ pi samps))
+	  (angle (* -0.5 pi)))
+     (lambda (y)
+       (let ((val (* y (cos angle))))
+	 (set! angle (+ angle incr))
+	 val)))
+   beg dur snd chn edpos))
+<!-- --></pre></td></tr></table>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5078,19 +5091,23 @@ the direction argument between the channel and edit-position:
 <!-- -->If the underlying data
 <!-- -->has any envelope ramps or previous ptree operations, map-channel is called instead and the new
 <!-- -->data is saved in the normal manner (that is, I don't currently try to chain these operations
-<!-- -->together).  Also, there's currently no way to inform the 'proc' that
-<!-- -->a new read has begun, so (for now) 'proc' should not have any state, or randomness, or make any assumptions
-<!-- -->about where it is in the sound.  'proc' must be compatible with (and run through) the optimizer;
+<!-- -->together).  
+<!-- -->'proc' must be compatible with (and run through) the optimizer;
 <!-- -->this means the <a href="#optimization">optimization</a> variable must be greater than 0. 
+<!-- --><br><br>
+<!-- -->The editing procedure ('proc') should not assume anything about
+<!-- -->the context in which it is called.  Since there's no way for 'proc' to know where it starts, or when it is being restarted,
+<!-- -->or which direction it is running, there's no way it can make any use of closures (or randomness!).
+<!-- -->For example, the following call:
+<!-- --><br><br><pre>
+   (let ((ctr 0)) 
+     (ptree-channel (lambda (y) 
+                      (set! ctr (1+ ctr)) 
+                      (* ctr .0001))))
+<!-- --></pre><br><br>
+<!-- -->will never reset ctr to 0!  So every time the segment is read by Snd, the samples will be
+<!-- -->higher -- this is probably not what you want.
 <!-- -->The name refers to "parse tree" -- see <a href="#editexpl">Edit Lists</a> and snd-run.c for more details. (ptree-channel does not work in Ruby).
-<!-- --><br><br><small>
-<!-- -->The "no state" restriction include closures.  For example, the following call:
-<br><br><pre>
-        (let ((ctr 0)) (ptree-channel (lambda (y) (set! ctr (1+ ctr)) (* ctr .0001))))
-</pre>
-will never reset ctr to 0!  So every time the segment is read by Snd, the samples will be
-higher -- this is probably not what you want.
-</small>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

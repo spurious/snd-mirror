@@ -56,6 +56,7 @@
 #include "snd-0.h"
 #include "xen.h"
 #include "sndlib2xen.h"
+#include "vct.h"
 
 #ifdef USE_MOTIF
   #include "snd-x0.h"
@@ -81,7 +82,7 @@
 
 #include "snd-strings.h"
 
-#define SND_VERSION "5-Dec-02"
+#define SND_VERSION "6-Dec-02"
 #define SND_RPM_VERSION "6.4"
 #define SND_MAJOR_VERSION 6
 #define SND_MINOR_VERSION 4

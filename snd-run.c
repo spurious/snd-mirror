@@ -89,7 +89,6 @@
  */
 
 #include "snd.h"
-#include "vct.h"
 #include "clm2xen.h"
 
 static XEN optimization_hook = XEN_FALSE;

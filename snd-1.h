@@ -101,6 +101,8 @@ typedef struct snd__fd {
   off_t frag_pos;
   double incr, curval;
   void *ptree;
+  mus_sample_t (*rev_run)(struct snd__fd *sf);
+  Float (*rev_runf)(struct snd__fd *sf);
 } snd_fd;
 
 typedef struct {Float freq; Float amp;} fft_peak;

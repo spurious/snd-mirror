@@ -1,5 +1,4 @@
 #include "snd.h"
-#include "vct.h"
 
 snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *new_comment)
 {

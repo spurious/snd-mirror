@@ -1636,25 +1636,20 @@ void ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, i
  *
  * Next steps in virtual ops:
  *
- *  add "context" arg to ptree-channel: how many preceding samples to include with current
- *     if given, user proc takes vct arg, not sample (intended for FIR filters)
- *     snd_fd would need vct arg with size
- *     new ED_VTREE? ptree+vct op
- *     next_sample: shift back all current, get next, put at end of vct
- *       init: start back n, fill vct (leaving 0's if loc < 0)
- *       from prev: move sf across vct, filling it as we go
- *     previous_sample: shift forward current, put prev at vct[0] (we're reading ahead here)
- *       init: start at end of vct[end]=requested start, move back filling (unless < 0)
- *       from next: move back filling
- *
  *  to embed exp env calc, we need room for the base/scaler (power is the ramp)
  *  ramp + ptree, ptree + ramp could be chained if we had room for a subsequent scaling (i.e. need one more seg value)
  *  ptree + ptree if had list of ptrees (function composition-style)
  *  ramp + ramp is out unless we add more segment info since end points do not uniquely set the intervening values:
  *    '(0 1 1 .5) * '(0 0 1 1) has the same endpoints as '(0 0 1 .707) * '(0 0 1 .707)
+ *
+ * any position-sensitive ptree (i.e. passing frag_pos etc) can't work because subsequent
+ *   sectional scaling (or whatever) splits the fragments, copying the tree locs, but
+ *   there's no straightforward way to carry around the current offset from the original
+ *   fragment begin time.  Realizing this cost 4 hours of hacking...
  */
 void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, void *env_pt)
 {
+  /* env_pt is usually either NULL (env_too: #f) or the same ptree as ptree */
   off_t len;
   int i, ptree_loc = 0;
   ed_list *new_ed, *old_ed;
@@ -2012,64 +2007,15 @@ static Float previous_sample_to_float_with_ptree_on_air(snd_fd *sf)
 
 void read_sample_change_direction(snd_fd *sf, int dir)
 {
-  if (dir == READ_FORWARD)
-    {
-      if (sf->fscaler != 0.0)
-	{
-	  if (sf->run == previous_sample_with_ramp)
-	    {
-	      sf->run = next_sample_with_ramp;
-	      sf->runf = next_sample_to_float_with_ramp;
-	    }
-	  else
-	    {
-	      if (sf->run == previous_sample_with_ptree)
-		{
-		  sf->run = next_sample_with_ptree;
-		  sf->runf = next_sample_to_float_with_ptree;
-		}
-	      else
-		{
-		  sf->run = next_sample;
-		  sf->runf = next_sample_to_float;
-		}
-	    }
-	}
-      else
-	{
-	  sf->run = next_zero_sample;
-	  sf->runf = next_zero_sample_to_float;
-	}
-    }
-  else
-    {
-      if (sf->fscaler != 0.0)
-	{
-	  if (sf->run == next_sample_with_ramp)
-	    {
-	      sf->run = previous_sample_with_ramp;
-	      sf->runf = previous_sample_to_float_with_ramp;
-	    }
-	  else
-	    {
-	      if (sf->run == next_sample_with_ptree)
-		{
-		  sf->run = previous_sample_with_ptree;
-		  sf->runf = previous_sample_to_float_with_ptree;
-		}
-	      else
-		{
-		  sf->run = previous_sample;
-		  sf->runf = previous_sample_to_float;
-		}
-	    }
-	}
-      else
-	{
-	  sf->run = previous_zero_sample;
-	  sf->runf = previous_zero_sample_to_float;
-	}
-    }
+  /* direction reversal can happen in dac(speed arrow), src gen, or user can call next/previous independent of initial dir */
+  mus_sample_t (*rrun)(struct snd__fd *sf);
+  Float (*rrunf)(struct snd__fd *sf);
+  rrun = sf->run;
+  rrunf = sf->runf;
+  sf->run = sf->rev_run;
+  sf->runf = sf->rev_runf;
+  sf->rev_run = rrun;
+  sf->rev_runf = rrunf;
   sf->direction = dir;
 }
 
@@ -2099,6 +2045,9 @@ static mus_sample_t reader_out_of_data(snd_fd *sf)
   sf->at_eof = TRUE;
   sf->run = end_sample;
   sf->runf = end_sample_to_float;
+  /* TODO: check this */
+  sf->rev_run = end_sample;
+  sf->rev_runf = end_sample_to_float;
   return(MUS_SAMPLE_0);
 }
 
@@ -2120,6 +2069,8 @@ static void choose_accessor(snd_fd *sf)
 	{
 	  sf->run = next_zero_sample;
 	  sf->runf = next_zero_sample_to_float;
+	  sf->rev_run = previous_zero_sample;
+	  sf->rev_runf = previous_zero_sample_to_float;
 	}
       else
 	{
@@ -2135,6 +2086,8 @@ static void choose_accessor(snd_fd *sf)
 	      sf->curval = rmp0 + sf->incr * sf->frag_pos;
 	      sf->run = next_sample_with_ramp;
 	      sf->runf = next_sample_to_float_with_ramp;
+	      sf->rev_run = previous_sample_with_ramp;
+	      sf->rev_runf = previous_sample_to_float_with_ramp;
 	      break;
 	    case ED_PTREE:
 	      /* one special case here -- since zero blocks have scl=0.0 and snd=-1,
@@ -2145,11 +2098,15 @@ static void choose_accessor(snd_fd *sf)
 		{
 		  sf->run = next_sample_with_ptree_on_air;
 		  sf->runf = next_sample_to_float_with_ptree_on_air;
+		  sf->rev_run = previous_sample_with_ptree_on_air;
+		  sf->rev_runf = previous_sample_to_float_with_ptree_on_air;
 		}
 	      else
 		{
 		  sf->run = next_sample_with_ptree;
 		  sf->runf = next_sample_to_float_with_ptree;
+		  sf->rev_run = previous_sample_with_ptree;
+		  sf->rev_runf = previous_sample_to_float_with_ptree;
 		}
 	      sf->ptree = sf->cp->ptrees[sf->cb->loc];
 	      break;
@@ -2157,9 +2114,17 @@ static void choose_accessor(snd_fd *sf)
 	      if (sf->cb->scl == 1.0)
 		{
 		  sf->run = next_sample_unscaled;
+		  sf->rev_run = previous_sample_unscaled;
 		  if (sf->fscaler == 1.0) 
-		    sf->runf = next_sample_to_float_unscaled;
-		  else sf->runf = next_sample_to_float;
+		    {
+		      sf->runf = next_sample_to_float_unscaled;
+		      sf->rev_runf = previous_sample_to_float_unscaled;
+		    }
+		  else 
+		    {
+		      sf->runf = next_sample_to_float;
+		      sf->rev_runf = previous_sample_to_float;
+		    }
 		}
 	      else
 		{
@@ -2170,15 +2135,20 @@ static void choose_accessor(snd_fd *sf)
 		    {
 		      sf->iscaler = (int)floor(scl);
 		      sf->run = next_sample_by_int;
+		      sf->rev_run = previous_sample_by_int;
 		    }
 		  else
 		    {
 		      sf->run = next_sample;
+		      sf->rev_run = previous_sample;
 		    }
 		  sf->runf = next_sample_to_float;
+		  sf->rev_runf = previous_sample_to_float;
 #else
 		  sf->run = next_sample;
 		  sf->runf = next_sample_to_float;
+		  sf->rev_run = previous_sample;
+		  sf->rev_runf = previous_sample_to_float;
 #endif
 		}
 	      break;
@@ -2191,6 +2161,8 @@ static void choose_accessor(snd_fd *sf)
 	{
 	  sf->run = previous_zero_sample;
 	  sf->runf = previous_zero_sample_to_float;
+	  sf->rev_run = next_zero_sample;
+	  sf->rev_runf = next_zero_sample_to_float;
 	}
       else
 	{
@@ -2206,17 +2178,23 @@ static void choose_accessor(snd_fd *sf)
 	      sf->curval = rmp0 + sf->incr * sf->frag_pos;
 	      sf->run = previous_sample_with_ramp;
 	      sf->runf = previous_sample_to_float_with_ramp;
+	      sf->rev_run = next_sample_with_ramp;
+	      sf->rev_runf = next_sample_to_float_with_ramp;
 	      break;
 	    case ED_PTREE:
 	      if ((sf->cb->rmp0 == 0.0) || (sf->cb->snd == EDIT_LIST_ZERO_MARK))
 		{
 		  sf->run = previous_sample_with_ptree_on_air;
 		  sf->runf = previous_sample_to_float_with_ptree_on_air;
+		  sf->rev_run = next_sample_with_ptree_on_air;
+		  sf->rev_runf = next_sample_to_float_with_ptree_on_air;
 		}
 	      else
 		{
 		  sf->run = previous_sample_with_ptree;
 		  sf->runf = previous_sample_to_float_with_ptree;
+		  sf->rev_run = next_sample_with_ptree;
+		  sf->rev_runf = next_sample_to_float_with_ptree;
 		}
 	      sf->ptree = sf->cp->ptrees[sf->cb->loc];
 	      break;
@@ -2224,9 +2202,17 @@ static void choose_accessor(snd_fd *sf)
 	      if (sf->cb->scl == 1.0)
 		{
 		  sf->run = previous_sample_unscaled;
-		  if (sf->fscaler == 1.0) 
-		    sf->runf = previous_sample_to_float_unscaled;
-		  else sf->runf = previous_sample_to_float;
+		  sf->rev_run = next_sample_unscaled;
+		  if (sf->fscaler == 1.0)
+		    {
+		      sf->runf = previous_sample_to_float_unscaled;
+		      sf->rev_runf = next_sample_to_float_unscaled;
+		    }
+		  else 
+		    {
+		      sf->runf = previous_sample_to_float;
+		      sf->rev_runf = next_sample_to_float;
+		    }
 		}
 	      else
 		{
@@ -2236,15 +2222,20 @@ static void choose_accessor(snd_fd *sf)
 		    {
 		      sf->iscaler = (int)floor(scl);
 		      sf->run = previous_sample_by_int;
+		      sf->rev_run = next_sample_by_int;
 		    }
 		  else
 		    {
 		      sf->run = previous_sample;
+		      sf->rev_run = next_sample;
 		    }
 		  sf->runf = previous_sample_to_float;
+		  sf->rev_runf = next_sample_to_float;
 #else
 		  sf->run = previous_sample;
 		  sf->runf = previous_sample_to_float;
+		  sf->rev_run = next_sample;
+		  sf->rev_runf = next_sample_to_float;
 #endif
 		}
 	      break;
@@ -3011,8 +3002,6 @@ void redo_edit_with_sync(chan_info *cp, int count)
     }
 }
 
-
-#include "vct.h"
 
 static XEN g_display_edits(XEN snd, XEN chn)
 {

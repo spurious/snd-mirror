@@ -1488,8 +1488,6 @@ static XEN g_region_sample(XEN samp_n, XEN reg_n, XEN chn_n)
   else return(snd_no_such_channel_error(S_region_sample, XEN_LIST_1(reg_n), chn_n));
 }
 
-#include "vct.h"
-
 static XEN g_region_samples2vct(XEN beg_n, XEN num, XEN reg_n, XEN chn_n, XEN v)
 {
   #define H_region_samples2vct "(" S_region_samples2vct " &optional (beg 0) samps (region 0) (chan 0) obj)\n\
