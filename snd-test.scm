@@ -14608,9 +14608,40 @@ EDITS: 5
 	(print-and-check gen 
 			 "mixer"
 			 "mixer: chans: 2, vals: [
- (0.500 0.250)
- (0.125 1.000)
+ 0.500 0.250
+ 0.125 1.000
 ]")
+
+	(let ((ap (mus-array-print-length))
+	      (mx (make-mixer 8)))
+	  (set! (mus-array-print-length) 4)
+	  (do ((i 0 (1+ i)))
+	      ((= i 8))
+	    (do ((j 0 (1+ j)))
+		((= j 8))
+	      (mixer-set! mx i j (+ j (* i 8)))))
+	  (print-and-check mx
+			   "mixer"
+			   "mixer: chans: 8, vals: [
+ 0.000 1.000 2.000 3.000...
+ 8.000 9.000 10.000 11.000...
+ 16.000 17.000 18.000 19.000...
+ 24.000 25.000 26.000 27.000...
+]")
+	  (set! (mus-array-print-length) 12)
+	  (print-and-check mx
+			   "mixer"
+			   "mixer: chans: 8, vals: [
+ 0.000 1.000 2.000 3.000 4.000 5.000 6.000 7.000
+ 8.000 9.000 10.000 11.000 12.000 13.000 14.000 15.000
+ 16.000 17.000 18.000 19.000 20.000 21.000 22.000 23.000
+ 24.000 25.000 26.000 27.000 28.000 29.000 30.000 31.000
+ 32.000 33.000 34.000 35.000 36.000 37.000 38.000 39.000
+ 40.000 41.000 42.000 43.000 44.000 45.000 46.000 47.000
+ 48.000 49.000 50.000 51.000 52.000 53.000 54.000 55.000
+ 56.000 57.000 58.000 59.000 60.000 61.000 62.000 63.000
+]")
+	  (set! (mus-array-print-length) ap))
 	(print-and-check fr0 
 			 "frame"
 			 "frame[2]: [1.000 1.000]")
@@ -14660,7 +14691,7 @@ EDITS: 5
 	       (val (frame->sample mx1 fr1)))
 	  (if (fneq val 1.0) (snd-display ";frame->sample: ~A?" val))
 	  (if (fneq (frame->sample fr5 fr4) 2.0) (snd-display ";frame->sample ~A" (frame->sample fr5 fr4)))
-	  (if (not (equal? (frame->list fr1) (list 1.0 1.0))) (snd-display ";frame->list: ~A?" (frame->list fr1)))
+	  (if (not (equal? (frame->list fr1) (list 1.0 1.25))) (snd-display ";frame->list: ~A?" (frame->list fr1)))
 	  (if (or (fneq (mixer-ref mx2 0 1) .25) (fneq (mixer-ref mx2 1 0) .125)) (snd-display ";mixer*: ~A?" mx2))
 	  (if (not (equal? mx2 gen)) (snd-display ";mixer=? ~A ~A?" gen mx2))
 	  (if (equal? mx2 mx1) (snd-display ";mixer/=? ~A ~A?" mx1 mx2))
@@ -15071,6 +15102,57 @@ EDITS: 5
 	    (let ((fr (frame-reverse (make-frame 3 .5 1.0 2.0))))
 	      (if (not (frame-equal? fr (make-frame 3 2.0 1.0 0.5)))
 		  (snd-display ";frame-reverse 3: ~A" fr)))
+
+	    (let ((hi (make-mixer 3 10 5 1 1 20 5 1 3 7))
+		  (ho (make-mixer 3 10 5 2 1 3 2 1 3 2)))
+	      ;; these adapted from gsl linalg tests
+	      (let ((val (mixer* hi ho)))
+		(if (not (mixer-equal? val (make-mixer 3 106.000 68.000 32.000  35.000 80.000 52.000  20.000 35.000 22.000)))
+		    (snd-display ";mixer* 3x3 1: ~A" val)))
+	      
+	      (let ((val (mixer* hi (mixer-transpose ho))))
+		(if (not (mixer-equal? val (make-mixer 3  127.000 27.000 27.000  120.000 71.000 71.000  39.000 24.000 24.000)))
+		    (snd-display ";mixer* 3x3 2: ~A" val)))
+	      
+	      (let ((val (mixer* (mixer-transpose hi) (mixer-transpose ho))))
+		(if (not (mixer-equal? val (make-mixer 3 107.000 15.000 15.000  156.000 71.000 71.000  49.000 30.000 30.000)))
+		    (snd-display ";mixer* 3x3 2: ~A" val))))
+
+	    ;; from Golub and van Loan:
+	    (let ((val (mixer-solve (make-mixer 2 .001 1.0 1.0 2.0) (make-frame 2 1.0 3.0))))
+	      (if (not (frame-equal? val (make-frame 2 1.002 0.999)))
+		  (snd-display ";mixer-solve G1: ~A" val)))
+	    (let ((val (mixer-solve (make-mixer 2 .0001 1.0 1.0 1.0) (make-frame 2 1.0 3.0))))
+	      (if (not (frame-equal? val (make-frame 2 2.000 1.000)))
+		  (snd-display ";mixer-solve G2: ~A" val)))
+	    (let ((val (mixer-solve (make-mixer 2 .986 .579 .409 .237) (make-frame 2 .235 .107))))
+	      (if (not (frame-equal? val (make-frame 2 2.000 -3.000)))
+		  (snd-display ";mixer-solve G3: ~A" val)))
+	    (let ((val (invert-matrix (make-mixer 3 2 -1 1  -1 1.0e-6 1.0e-6  1 1.0e-6 1.0e-6) (make-frame 3 (* 2 (+ 1 1.0e-6)) -1.0e-6 1.0e-6))))
+	      (if (or (not val)
+		      (not (frame-equal? (cadr val) (make-frame 3 0.000 -1.000 1.000))))
+		  (snd-display ";mixer-solve G4: ~A" val)))
+	    (let ((val (invert-matrix (make-mixer 3 2 -1 1  -1 1.0e-7 1.0e-7  1 1.0e-7 1.0e-7) (make-frame 3 (* 2 (+ 1 1.0e-7)) -1.0e-7 1.0e-7))))
+	      (if (or (not val)
+		      (not (frame-equal? (cadr val) (make-frame 3 0.000 -1.000 1.000))))
+		  (snd-display ";mixer-solve G5: ~A" val)))
+	    (let ((val (mixer-solve (make-mixer 3 1 4 7 2 5 8 3 6 10) (make-frame 3 1 1 1))))
+	      (if (not (frame-equal? val (make-frame 3 -0.333 0.333 -0.000)))
+		  (snd-display ";mixer-solve G6: ~A" val)))
+	    (let ((val (mixer-solve (make-mixer 2 1 0 0 1.0e-6) (make-frame 2 1 1.0e-6))))
+	      (if (not (frame-equal? val (make-frame 2 1.000 1.000)))
+		  (snd-display ";mixer-solve G7: ~A" val)))
+	    (let ((val (invert-matrix (make-mixer 2 1 0 0 1.0e-8) (make-frame 2 1 1.0e-8) 1.0e-10)))
+	      (if (or (not val)
+		      (not (frame-equal? (cadr val) (make-frame 2 1.000 1.000))))
+		  (snd-display ";mixer-solve G8: ~A" val)))
+	    (let ((val (invert-matrix (make-mixer 2 1 0 0 1.0e-12) (make-frame 2 1 1.0e-12) 1.0e-14)))
+	      (if (or (not val) 
+		      (not (frame-equal? (cadr val) (make-frame 2 1.000 1.000))))
+		  (snd-display ";mixer-solve G9: ~A" val)))
+	    (let ((val (mixer-solve (make-mixer 2 10 100000 1 1) (make-frame 2 100000 2))))
+	      (if (not (frame-equal? val (make-frame 2 1.000 1.000)))
+		  (snd-display ";mixer-solve G10: ~A" val)))
 	    ))
       
       (let ((gen (make-fft-window hamming-window 16)))

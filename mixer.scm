@@ -109,7 +109,7 @@
       (set! sum (+ sum (mixer-ref mx i i))))))
 
 
-(define* (invert-matrix matrix :optional b)
+(define* (invert-matrix matrix :optional b (zero 1.0e-7))
   ;; translated from Numerical Recipes (gaussj)
   (call-with-current-continuation
    (lambda (return)
@@ -152,7 +152,7 @@
 	   (vector-set! cols i col)
 	   (vector-set! rows i row)
 	   ;; round-off troubles here
-	   (if (< (abs (mixer-ref matrix col col)) 0.000001)
+	   (if (< (abs (mixer-ref matrix col col)) zero)
 	       (return #f))
 	   (let ((inverse-pivot (/ 1.0 (mixer-ref matrix col col))))
 	     (mixer-set! matrix col col 1.0)

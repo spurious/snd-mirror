@@ -110,25 +110,41 @@ static char* vstrcat(char *arg1, ...)
   return(buf);
 }
 
-static char *main_snd_xrefs[11] = {
+static char *main_snd_xrefs[12] = {
   "{CLM}: sound synthesis",
   "{CM}: algorithmmic composition",
   "{CMN}: music notation",
+  "{Ruby}: extension language",
   "{Emacs}: Snd as Emacs subjob",
   "{Libxm}: graphics module",
   "{Sndlib}: underlying sound support library",
-  "{Ruby}: extension language",
   "{Scripting}: Snd as scripting language",
   "{Motif}: Motif extensions via Libxm",
   "{Gtk}: Gtk extensions via Libxm",
+  "{Ladspa}: plugins",
   NULL
+};
+
+static char *main_snd_xref_urls[12] = {
+  "grfsnd.html#sndwithclm",
+  "grfsnd.html#sndwithcm",
+  "sndscm.html#musglyphs",
+  "grfsnd.html#sndandruby",
+  "grfsnd.html#emacssnd",
+  "libxm.html#xm",
+  "sndlib.html#introduction",
+  "grfsnd.html#sndwithnogui",
+  "grfsnd.html#sndwithmotif",
+  "grfsnd.html#sndwithgtk",  
+  "grfsnd.html#sndandladspa",
+  NULL,
 };
 
 static void main_snd_help(const char *subject, ...)
 {
   va_list ap;
   char *helpstr;
-  snd_help_with_xrefs(subject, "", WITHOUT_WORD_WRAP, main_snd_xrefs, NULL);
+  snd_help_with_xrefs(subject, "", WITHOUT_WORD_WRAP, main_snd_xrefs, main_snd_xref_urls);
   va_start(ap, subject);
   while ((helpstr = va_arg(ap, char *))) snd_help_append(helpstr);
   va_end(ap);
@@ -385,7 +401,7 @@ void about_snd_help(void)
 25-Mar:  mixer.scm with various matrix/vector related functions (determinant, inverse,\n\
            solve simultaneous linear equations, etc) as applied to mixers/frames.\n\
          invert-filter in dsp.scm.\n\
-23-Mar:  changed interpretation or frame->frame args.\n\
+23-Mar:  changed interpretation of frame->frame args.\n\
 18-Mar:  snd 7.11\n\
 17-Mar:  gc-on|off are no-ops now in Guile.\n\
          pvoc.rb thanks to Mike Scholz.\n\
@@ -393,11 +409,6 @@ void about_snd_help(void)
 1-Mar:   rt-engine.scm thanks to Kjetil Matheussen!\n\
          zoom-focus-style can be a function\n\
 28-Feb:  env-channel-with-base, Ruby side of edit-list->function.\n\
-24-Feb:  added mix.rb thanks to Mike Scholz.\n\
-22-Feb:  changed libxm to libxg in gtk case, also xm-version to xg-version\n\
-           added --with-static-xg configure option\n\
-21-Feb:  removed snd_test.rb, replaced by snd-test.rb thanks to Mike Scholz!\n\
-	 added oo.scm and rt-compiler.scm thanks to Kjetil Matheussen!\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
@@ -747,21 +758,25 @@ click the 'digital input' button; otherwise you'll get a stuttering effect becau
 		      NULL);
 }
 
-static char *header_and_data_xrefs[8] = {
+static char *header_and_data_xrefs[10] = {
   "data format discussion: {data-format}",
   "data format constants: {mus-data-format-name}",
   "header type discussion: {header-type}",
   "header type constants: {mus-header-type-name}",
   "MPEG support: mpg in examp.scm",
   "OGG support: read-ogg in examp.scm",
+  "Speex support: read-speex in examp.scm",
+  "Flac support: read-flac in examp.scm",
   "{Sndlib}: underlying support",
   NULL};
 
-static char *header_and_data_urls[8] = {
+static char *header_and_data_urls[10] = {
   "extsnd.html#snddataformat",
   "extsnd.html#soundformatname",
   "extsnd.html#sndheadertype",
   "extsnd.html#soundtypename",
+  "sndscm.html#exmpg",
+  "sndscm.html#exmpg",
   "sndscm.html#exmpg",
   "sndscm.html#exmpg",
   "sndlib.html#introduction",
@@ -803,18 +818,20 @@ and that file is the one the editor sees from then on.",
 		      header_and_data_urls);
 }
 
-static char *init_file_xrefs[5] = {
+static char *init_file_xrefs[6] = {
   "{X resources}:  .Xdefaults settings",
   "{Invocation flags}", 
   "~/.snd: {Initialization file}",
   "{Customization}",
+  "examples of ~/.snd",
   NULL};
 
-static char *init_file_urls[5] = {
+static char *init_file_urls[6] = {
   "grfsnd.html#sndresources",
   "grfsnd.html#sndswitches",
   "grfsnd.html#sndinitfile",
   "extsnd.html#lisplistener",
+  "grfsnd.html#sndinitfile",
   NULL};
 
 void init_file_help(void) 
@@ -1091,13 +1108,15 @@ in linear terms.",
 		      snd_xref_urls("FFT"));
 }
 
-static char *color_dialog_xrefs[7] = {
+static char *color_dialog_xrefs[9] = {
   "colormap variable: {colormap}",
   "colormap constants: rgb.scm",
   "colormap colors: {colormap-ref}",
   "color dialog variables: {color-cutoff}, {color-inverted}, {color-scale}",
   "specialize color dialog actions: {color-hook}",
   "start the color dialog: {color-dialog}",
+  "add a new colormap: {add-colormap}",
+  "remove a colormap: {delete-colormap}",
   NULL};
 
 void color_dialog_help(void)

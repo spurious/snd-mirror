@@ -1533,6 +1533,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 
 (define (periodogram N)
+  ;; the "Bartlett" version, apparently
   (let* ((len (frames))
 	 (average-data (make-vct N))
 	 (rd (make-sample-reader 0))
