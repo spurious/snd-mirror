@@ -729,6 +729,115 @@ void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, i
     }
 }
 
+void amp_env_ptree(chan_info *cp, void *pt, int pos)
+{
+  env_info *old_ep, *new_ep;
+  int i;
+  mus_sample_t fmin, fmax, dmin, dmax;
+  old_ep = cp->amp_envs[pos];
+  if ((old_ep) && (old_ep->completed))
+    {
+      new_ep = cp->amp_envs[cp->edit_ctr];
+      if ((new_ep) && 
+	  (new_ep->amp_env_size != old_ep->amp_env_size)) 
+	new_ep = free_amp_env(cp, cp->edit_ctr);
+      if (new_ep == NULL)
+	{
+	  new_ep = (env_info *)CALLOC(1, sizeof(env_info));
+	  new_ep->data_max = (mus_sample_t *)MALLOC(old_ep->amp_env_size * sizeof(mus_sample_t));
+	  new_ep->data_min = (mus_sample_t *)MALLOC(old_ep->amp_env_size * sizeof(mus_sample_t));
+	}
+      new_ep->amp_env_size = old_ep->amp_env_size;
+      new_ep->samps_per_bin = old_ep->samps_per_bin;
+      fmin = MUS_SAMPLE_MAX;
+      fmax = MUS_SAMPLE_MIN;
+      for (i = 0; i < new_ep->amp_env_size; i++) 
+	{
+	  dmin = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_min[i])));
+	  dmax = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_max[i])));
+	  if (dmin <= dmax)
+	    {
+	      new_ep->data_min[i] = dmin;
+	      new_ep->data_max[i] = dmax;
+	    }
+	  else
+	    {
+	      new_ep->data_min[i] = dmax;
+	      new_ep->data_max[i] = dmin;
+	    }
+	  if (new_ep->data_min[i] < fmin) fmin = new_ep->data_min[i];
+	  if (new_ep->data_max[i] > fmax) fmax = new_ep->data_max[i];
+	}
+      new_ep->fmin = fmin;
+      new_ep->fmax = fmax;
+      new_ep->completed = 1;
+      new_ep->bin = old_ep->bin;
+      new_ep->top_bin = old_ep->top_bin;
+      cp->amp_envs[cp->edit_ctr] = new_ep;
+    }
+}
+
+void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int pos)
+{
+  env_info *old_ep, *new_ep = NULL;
+  mus_sample_t fmax = MUS_SAMPLE_0, fmin = MUS_SAMPLE_0, dmin, dmax;
+  int i;
+  off_t cursamp, start, end;
+  old_ep = cp->amp_envs[pos];
+  if ((old_ep) && (old_ep->completed))
+    {
+      new_ep = cp->amp_envs[cp->edit_ctr];
+      if ((new_ep) && 
+	  (new_ep->amp_env_size != old_ep->amp_env_size)) 
+	new_ep = free_amp_env(cp, cp->edit_ctr);
+      if (new_ep == NULL)
+	{
+	  new_ep = (env_info *)CALLOC(1, sizeof(env_info));
+	  new_ep->data_max = (mus_sample_t *)MALLOC(old_ep->amp_env_size * sizeof(mus_sample_t));
+	  new_ep->data_min = (mus_sample_t *)MALLOC(old_ep->amp_env_size * sizeof(mus_sample_t));
+	}
+      new_ep->amp_env_size = old_ep->amp_env_size;
+      new_ep->samps_per_bin = old_ep->samps_per_bin;
+      end = beg + num - 1;
+      start = beg - new_ep->samps_per_bin;
+      for (i = 0, cursamp = 0; i < new_ep->amp_env_size; i++, cursamp += new_ep->samps_per_bin) 
+	{
+	  if ((cursamp >= end) || (cursamp <= start))
+	    {
+	      new_ep->data_min[i] = old_ep->data_min[i];
+	      new_ep->data_max[i] = old_ep->data_max[i];
+	    }
+	  else
+	    {
+	      if ((cursamp >= beg) && ((cursamp + new_ep->samps_per_bin) <= end))
+		{
+		  dmin = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_min[i])));
+		  dmax = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_max[i])));
+		  if (dmin <= dmax)
+		    {
+		      new_ep->data_min[i] = dmin;
+		      new_ep->data_max[i] = dmax;
+		    }
+		  else
+		    {
+		      new_ep->data_min[i] = dmax;
+		      new_ep->data_max[i] = dmin;
+		    }
+		}
+	      else pick_one_bin(new_ep, i, cursamp, cp, cp->edit_ctr);
+	    }
+	  if (fmin > new_ep->data_min[i]) fmin = new_ep->data_min[i];
+	  if (fmax < new_ep->data_max[i]) fmax = new_ep->data_max[i];
+	}
+      new_ep->fmin = fmin;
+      new_ep->fmax = fmax;
+      new_ep->completed = 1;
+      new_ep->bin = old_ep->bin;
+      new_ep->top_bin = old_ep->top_bin;
+      cp->amp_envs[cp->edit_ctr] = new_ep;
+    }
+}
+
 #if 0
 static void check_env(chan_info *cp, env_info *new_ep)
 {

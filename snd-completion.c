@@ -87,7 +87,7 @@ static int completions(char *text)
   for (i = 0; i < n; ++i)
     {
       handle = XEN_VECTOR_REF(tab, i);
-      sym = XEN_TO_C_STRING(XEN_TO_STRING(handle));
+      sym = XEN_AS_STRING(handle);
       if (strncmp(text, sym, len) == 0)
 	{
 	  matches++;

@@ -9904,8 +9904,9 @@ _ACEOF
 #define JUST_GL 1
 _ACEOF
 
+    else
+      GL_FILES="gl.o"
     fi
-    GL_FILES="gl.o"
     GL_LIBS="-lGLU -lGL"
     if test "$with_gtk" = yes; then
       GL_LIBS="$GL_LIBS -lgdkglext-x11-0.x -lgtkglext-x11-0.x"

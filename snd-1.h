@@ -78,7 +78,7 @@ typedef struct {
   ed_fragment **fragments;
   off_t beg, len;
   char *origin;
-  int edit_type, sound_location;
+  int edit_type, sound_location, ptree_location;
   off_t selection_beg, selection_end;  /* selection needs to follow edit list */
   Float maxamp, selection_maxamp;
 } ed_list;
@@ -86,8 +86,6 @@ typedef struct {
 typedef struct snd__fd {
   mus_sample_t (*run)(struct snd__fd *sf);
   Float (*runf)(struct snd__fd *sf);
-
-  /* the rest are private to snd-edits.c (or should be) */
   ed_list *current_state;
   ed_fragment *cb;
   off_t loc, first, last;
@@ -703,7 +701,7 @@ mus_sample_t previous_sound (snd_fd *sf);
 mus_sample_t next_sound (snd_fd *sf);
 void scale_channel(chan_info *cp, Float scaler, off_t beg, off_t num, int pos);
 void ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, int pos);
-void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos);
+void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, void *env_pt);
 void move_to_next_sample(snd_fd *sf);
 snd_fd *init_sample_read(off_t samp, chan_info *cp, int direction);
 snd_fd *init_sample_read_any(off_t samp, chan_info *cp, int direction, int edit_position);
@@ -1076,6 +1074,8 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER xp);
 void *make_apply_state_with_implied_beg_and_dur(void *xp);
 void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos);
 void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, int pos);
+void amp_env_ptree(chan_info *cp, void *pt, int pos);
+void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int pos);
 
 void g_init_snd(void);
 XEN snd_no_such_sound_error(const char *caller, XEN n);
@@ -1355,6 +1355,7 @@ Float evaluate_ptree_1f2f(void *upt, Float arg);
 int evaluate_ptree_1f2b(void *upt, Float arg);
 void *free_ptree(void *upt);
 void g_init_run(void);
+XEN ptree_code(void *p);
 
 
 /* -------- snd-draw.c -------- */

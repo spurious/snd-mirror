@@ -241,7 +241,7 @@ void news_help(snd_state *ss)
 {
   char *info = NULL, *features = NULL;
   info = version_info();
-  features = word_wrap(XEN_TO_C_STRING(XEN_TO_STRING(XEN_EVAL_C_STRING("*features*"))), 600);
+  features = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING("*features*")), 600);
   ssnd_help(ss, STR_News,
 	    info,
 	    "\nRecent changes include:\n\

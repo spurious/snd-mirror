@@ -287,9 +287,6 @@ enum {ED_SIMPLE, ED_RAMP, ED_PTREE}; /* typ field choices */
 /* ed->typ has code for accessor choice */
 /* ed->loc is an index into the cp->ptrees array */
 /* EDIT_ALLOC_SIZE is the allocation amount (pointers) each time cp->sounds is (re)allocated */
-/*
- * other possible easy virtual ops: compand/contrast, sqr/abs, clm-op
- */
 
 enum {INSERTION_EDIT, DELETION_EDIT, CHANGE_EDIT, INITIALIZE_EDIT, SCALED_EDIT, ZERO_EDIT, RAMP_EDIT, PTREE_EDIT};
 static char *edit_names[9] = {"insert", "delete", "set", "init", "scale", "zero", "env", "ptree", ""};
@@ -308,7 +305,10 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed)
     case SCALED_EDIT:     fprintf(outp, "\n (scale " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);    break;
     case ZERO_EDIT:       fprintf(outp, "\n (silence " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);  break;
     case RAMP_EDIT:       fprintf(outp, "\n (ramp " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);     break;
-    case PTREE_EDIT:      fprintf(outp, "\n (ptree " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);    break; 
+    case PTREE_EDIT:      
+      fprintf(outp, "\n (ptree[%d] " OFF_TD " " OFF_TD ") ", 
+	      ed->ptree_location, ed->beg, ed->len);
+      break; 
     case INITIALIZE_EDIT: fprintf(outp, "\n (begin) ");                                            break;
     }
   if (ed->origin) fprintf(outp, "; %s ", ed->origin);
@@ -331,9 +331,14 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed)
 		    FRAGMENT_RAMP_BEG(ed, j),
 		    FRAGMENT_RAMP_END(ed, j));
 	  if (FRAGMENT_TYPE(ed, j) == ED_PTREE)
-	    fprintf(outp, ", arg: %f",
-		    (float)(MUS_FLOAT_TO_FIX * FRAGMENT_RAMP_BEG(ed, j)));
-	  /* TODO: if ptree, describe it? */
+	    {
+	      XEN code;
+	      fprintf(outp, ", arg: %f",
+		      (float)(MUS_FLOAT_TO_FIX * FRAGMENT_RAMP_BEG(ed, j)));
+	      code = ptree_code(cp->ptrees[FRAGMENT_PTREE(ed, j)]);
+	      if (XEN_LIST_P(code))
+		fprintf(outp, ", code: %s", XEN_AS_STRING(code));
+	    }
 	  fprintf(outp, "])");
 	  if (index != EDIT_LIST_ZERO_MARK)
 	    {
@@ -403,7 +408,6 @@ char *edit_to_string(chan_info *cp, int edit)
   ed_list *ed;
   ed = cp->edits[edit];
   /* only for edit list in snd-xchn.c */
-  /* TODO: need better name than "ptree" for user's edit history list */
   mus_snprintf(edbuf, PRINT_BUFFER_SIZE, "%s : (%s " OFF_TD " " OFF_TD ")", 
 	       ed->origin, 
 	       edit_names[ed->edit_type], 
@@ -541,9 +545,8 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 void edit_history_to_file(FILE *fd, chan_info *cp)
 {
   /* write edit list as a snd-guile program to fd (open for writing) for subsequent load */
-  /* this needs only 3 operations: delete-samples, insert-samples, and change-samples */
   /*   the actual user-operations that produced these are included as comments */
-  /*   the data is included as a vector, so the file can be very large! */
+  /*   the data is sometimes included as a vector, so the file can be very large! */
   /*   the entire current list is written, then the edit_ctr is fixed up to reflect its current state */
   int i, edits;
   ed_list *ed;
@@ -605,9 +608,10 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 		      cp->chan);
 	      break;
 	    case PTREE_EDIT:
-	      /* TODO: collapse out tree and save direct -- could do this ahead of time as change edit */
-	      fprintf(fd, "      (%s sfile %d)\n",
-		      ed->origin,
+	      fprintf(fd, "      (ptree-channel %s " OFF_TD " " OFF_TD " sfile %d)\n",
+		      XEN_AS_STRING(ptree_code(cp->ptrees[ed->ptree_location])),
+		      ed->beg,
+		      ed->len,
 		      cp->chan);
 	      break;
 	    default:
@@ -1198,8 +1202,12 @@ void delete_samples(off_t beg, off_t num, chan_info *cp, const char *origin, int
   else
     {
       if (num == 1)
-	report_in_minibuffer_and_save(cp->sound, "can't delete sample " OFF_TD " (current len=" OFF_TD ")", beg, len);
-      else report_in_minibuffer_and_save(cp->sound, "can't delete samples " OFF_TD " to " OFF_TD " (current len=" OFF_TD")", beg, beg + num - 1, len);
+	report_in_minibuffer_and_save(cp->sound, 
+				      "can't delete sample " OFF_TD " (current len=" OFF_TD ")", 
+				      beg, len);
+      else report_in_minibuffer_and_save(cp->sound, 
+					 "can't delete samples " OFF_TD " to " OFF_TD " (current len=" OFF_TD")", 
+					 beg, beg + num - 1, len);
     }
 }
 
@@ -1563,7 +1571,17 @@ void ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, i
   update_graph(cp);
 }
 
-void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos)
+/* The ptree can be called moving in either direction, starting anywhere, without 
+ *   any way to tell position, sound, chan, edpos etc. We could set up an initialization
+ *   call, but even if all the rest were passed in, dir could change without warning.
+ *   Also currently assumes sample->sample mapping (as opposed to src etc)
+ *   and randomness is out -- need to be able to start anywhere with same result etc.
+ * Next step in virtual ops (leaving aside mixing support) might require
+ *   user-written edit list, or perhaps pass in sample reader rather than 
+ *   current sample -- return new length+peak envs?  (But sample reader
+ *   would need prescaler to keep compatibility with scale-by etc).
+ */
+void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, void *env_pt)
 {
   off_t len;
   int i, ptree_loc = 0;
@@ -1592,8 +1610,8 @@ void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos)
 	  FRAGMENT_RAMP_BEG(new_ed, i) = MUS_SAMPLE_TO_FLOAT(FRAGMENT_SCALER(new_ed, i));
 	  FRAGMENT_SCALER(new_ed, i) = 1.0;
 	}
-      /* TODO: amp env via ptree if ok'd */
-      /* amp_env_scale_by(cp, scl, pos); */
+      if (env_pt)
+	amp_env_ptree(cp, env_pt, pos);
     }
   else 
     {
@@ -1610,10 +1628,12 @@ void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos)
 	      FRAGMENT_SCALER(new_ed, i) = 1.0;
 	    }
 	}
-      /* amp_env_scale_selection_by(cp, scl, beg, num, pos); */
+      if (env_pt)
+	amp_env_ptree_selection(cp, env_pt, beg, num, pos);
     }
   new_ed->edit_type = PTREE_EDIT;
   new_ed->sound_location = 0;
+  new_ed->ptree_location = ptree_loc;
   new_ed->origin = mus_format("ptree %d " OFF_TD " " OFF_TD, ptree_loc, beg, num);
   new_ed->beg = beg;
   new_ed->len = num;
@@ -1842,16 +1862,12 @@ static Float previous_sample_to_float_unscaled(snd_fd *sf)
 }
 
 
-/* TODO: save-state of ptree should collapse it and save as direct data */
 static mus_sample_t next_sample_with_ptree(snd_fd *sf)
 {
   if (sf->loc > sf->last)
      return(next_sound(sf));
   else return(MUS_FLOAT_TO_SAMPLE(sf->cb->scl * evaluate_ptree_1f2f(sf->ptree, sf->cb->rmp0 * sf->data[sf->loc++])));
-  /* fscaler after ptree so that subsequent scaling of ptree-fragment actually scales it
-   *   (ptree might be nonlinear)
-   *   but this means we can use ptree only if we have direct (unramped) data access
-   */
+  /* fscaler after ptree so that subsequent scaling of ptree-fragment actually scales it */
 }
 
 static mus_sample_t previous_sample_with_ptree(snd_fd *sf)
@@ -2370,8 +2386,6 @@ int read_sample_eof (snd_fd *sf)
   return(sf->at_eof);
 }
 
-
-/* -------------------------------- EDITS -------------------------------- */
 
 static int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, off_t length, snd_state *ss)
 {

@@ -63,7 +63,6 @@
  * tests in snd-test.scm, test 22
  *
  *
- * TODO: ptree as fragment edit op
  * TODO: general evaluate_ptree accessor
  * TODO: procedure property 'ptree -> saved ptree
  * TODO: make-vector
@@ -359,7 +358,7 @@ typedef struct {
   int gc_ctr, gcs_size;
   int initial_pc;
   int need_init;
-  XEN code;
+  XEN code, form;
   int str_ctr, strs_size;
   int *strs;
   void *outer_tree;
@@ -536,6 +535,11 @@ static char *str_append(char *oldstr, int *oldsize, char *newstr)
   strcat(oldstr, newstr);
   FREE(newstr);
   return(oldstr);
+}
+
+XEN ptree_code(void *p)
+{
+  return(((ptree *)p)->form);
 }
 
 static char *describe_ptree(ptree *p)
@@ -907,6 +911,7 @@ void *free_ptree(void *upt)
   if (pt)
     {
       /* free_xen_var depends (in vector case) on finding current (unfreed) data */
+      snd_unprotect(pt->form);
       if (pt->vars)
 	{
 	  for (i = 0; i < pt->var_ctr; i++)
@@ -7045,6 +7050,8 @@ static void *form_to_ptree(XEN code)
 	FREE(msg);
       }
 #endif
+      prog->form = form;
+      snd_protect(prog->form);
       return((void *)prog);
     }
   if (!run_warned)
@@ -7204,6 +7211,7 @@ void *form_to_ptree_0f2f(XEN code) {return(NULL);}
 Float evaluate_ptree_1f2f(void *upt, Float arg) {return(0.0);}
 int evaluate_ptree_1f2b(void *upt, Float arg) {return(0);}
 void *free_ptree(void *upt) {return(NULL);}
+XEN ptree_code(void *p) {return(XEN_FALSE);}
 #endif
 /* end with_run && have_guile and so on */
 

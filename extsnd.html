@@ -3184,7 +3184,7 @@ edited) sound can be accessed by a normal sample-reader.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- make-track-sample-reader -->
-<!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="maketracksamplereader">make-track-sample-reader</a></em> (track samp snd chn)</code></span></td>
+<!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="maketracksamplereader">make-track-sample-reader</a></em> (track snd chn)</code></span></td>
 <!-- --></tr><tr><td></td>
 <!-- --><td>create a <a href="#samplereaders">track-sample-reader</a> object reading <i>track</i></td></tr>
 <!-- -->
@@ -5446,6 +5446,26 @@ the direction argument between the channel and edit-position.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
+<!-- ptree-channel -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="ptreechannel">ptree-channel</a></em> (proc <i>beg dur snd chn edpos env-too</i>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- --><b>ptree-channel</b>
+<!-- -->applies 'proc' as a 'virtual edit'; that is, the effect of 'proc' (a function of one argument, the
+<!-- -->current sample), comes about as an implicit change in the way the data is read.  This is similar to
+<!-- -->scaling and some envelope operations in that no data actually changes.  If 'env-too' is #t,
+<!-- -->the same function is applied to the peak env values to get the new version.  If the underlying data
+<!-- -->has any envelope ramps of previous ptree operations, map-channel is called instead and the new
+<!-- -->data is saved in the normal manner.  Also, there's currently no way to inform the 'proc' that
+<!-- -->a new read has begun, so (for now) 'proc' should not have any state or make any assumptions
+<!-- -->about where it is in the sound.  'proc' must be compatible with the optimizer. <b>ptree-channel</b> operations are effectively instantaneous,
+<!-- -->take no memory, and save no temporary data on disk. <code>(ptree-channel (lambda (y) (+ y .1)))</code>
+<!-- -->The name refers to "parse tree" -- see snd-run.c for more details.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
 <!-- ramp-channel -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="rampchannel">ramp-channel</a></em> (rmp0 rmp1 <i>beg dur snd chn edpos</i>)</code></span>
@@ -7144,7 +7164,7 @@ in zeros, most non-exponential envelopes, and simple cases of channel swaps are 
 the edit list.  This means that ideally such operations are instantaneous
 and take no disk space no matter how large the sound being edited
 (in other cases we have to save at least the changed portion of the
-sound).  ptree-channel (still in the experimental stages) extends this part of Snd to 
+sound).  <a href="#ptreechannel">ptree-channel</a> (still in the experimental stages) extends this part of Snd to 
 arbitrary functions.
 </p>
 

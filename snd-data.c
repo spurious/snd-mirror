@@ -68,6 +68,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
   cp->sound_size = 0;
   cp->ptrees = NULL;
   cp->ptree_size = 0;
+  cp->ptree_ctr = -1;
   cp->edit_size = 0;
   cp->cursor_on = 0;
   cp->cursor_visible = 0;

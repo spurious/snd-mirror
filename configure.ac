@@ -420,8 +420,9 @@ if test "$with_gl" = yes || test "$with_just_gl" = yes ; then
     AC_DEFINE(HAVE_GL)
     if test "$with_just_gl" = yes ; then
       AC_DEFINE(JUST_GL)
+    else
+      GL_FILES="gl.o"
     fi   
-    GL_FILES="gl.o"
     GL_LIBS="-lGLU -lGL"
     if test "$with_gtk" = yes; then
       GL_LIBS="$GL_LIBS -lgdkglext-x11-0.x -lgtkglext-x11-0.x"

@@ -609,6 +609,7 @@
 #define S_prompt_in_minibuffer          "prompt-in-minibuffer"
 #define S_property_changed_hook         "property-changed-hook"
 #define S_protect_region                "protect-region"
+#define S_ptree_channel                 "ptree-channel"
 #define S_pushed_button_color           "pushed-button-color"
 #define S_ramp_channel                  "ramp-channel"
 #define S_read_hook                     "read-hook"
@@ -665,6 +666,7 @@
 #define S_sample                        "sample"
 #define S_sample_reader_at_end_p        "sample-reader-at-end?"
 #define S_sample_reader_home            "sample-reader-home"
+/* SOMEDAY: sample-reader-position sample-reader-direction if useful */
 #define S_sample_reader_p               "sample-reader?"
 #define S_samples                       "samples"
 #define S_samples2sound_data            "samples->sound-data"

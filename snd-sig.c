@@ -2326,9 +2326,9 @@ void cos_smooth(chan_info *cp, off_t beg, off_t num, int regexpr, const char *or
 #include "vct.h"
 #include "clm2xen.h"
 
-#if WITH_RUN
 static char *run_channel(chan_info *cp, void *upt, off_t beg, off_t dur, int edpos)
 {
+#if WITH_RUN
   snd_state *ss;
   snd_info *sp;
   file_info *hdr = NULL;
@@ -2396,38 +2396,11 @@ static char *run_channel(chan_info *cp, void *upt, off_t beg, off_t dur, int edp
   free_snd_fd(sf);
   FREE(data[0]);
   FREE(data);
+#endif
   return(NULL);
 }
 
-static XEN g_ptree_channel(XEN proc_and_list, XEN s_beg, XEN s_dur, XEN snd, XEN chn, XEN edpos)
-{
-  /* TODO: only virtual if no underlying ed ops */
-  /* TODO: collapse into "run-channel"? */
-  chan_info *cp;
-  off_t beg = 0, dur = 0;
-  int pos;
-  XEN proc = XEN_FALSE;
-  void *pt = NULL;
-  if (XEN_LIST_P(proc_and_list))
-    proc = XEN_CADR(proc_and_list);
-  XEN_ASSERT_TYPE((XEN_PROCEDURE_P(proc)), proc, XEN_ARG_1, "ptree-channel", "a procedure");
-  ASSERT_SAMPLE_TYPE("ptree-channel", s_beg, XEN_ARG_2);
-  ASSERT_SAMPLE_TYPE("ptree-channel", s_dur, XEN_ARG_3);
-  ASSERT_CHANNEL("ptree-channel", snd, chn, 4); 
-  cp = get_cp(snd, chn, "ptree-channel");
-  pos = to_c_edit_position(cp, edpos, "ptree-channel", 6);
-  beg = beg_to_sample(s_beg, "ptree-channel");
-  dur = dur_to_samples(s_dur, beg, cp, pos, 2, "ptree-channel");
-  if (beg > cp->samples[pos])
-    XEN_ERROR(NO_SUCH_SAMPLE,
-	      XEN_LIST_2(C_TO_XEN_STRING("ptree-channel"),
-			 s_beg));
-  pt = form_to_ptree_1f2f(proc_and_list);
-  if (pt)
-    ptree_channel(cp, pt, beg, dur, pos);
-  return(XEN_FALSE);
-}
-
+#if WITH_RUN
 static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN chn, XEN edpos, XEN s_dur, char *fallback_caller) 
 #else
 static XEN g_map_chan_1(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN chn, XEN edpos, XEN s_dur, char *fallback_caller) 
@@ -2604,6 +2577,58 @@ static XEN g_map_chan_1(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN ch
     }
   return(res);
 }
+
+static XEN g_ptree_channel(XEN proc_and_list, XEN s_beg, XEN s_dur, XEN snd, XEN chn, XEN edpos, XEN env_too)
+{
+  #define H_ptree_channel "(" S_ptree_channel " proc &optional beg dur snd chn edpos peak-env-also) \
+applies 'proc' as a 'virtual edit'; that is, the effect of 'proc' (a function of one argument, the \
+current sample), comes about as an implicit change in the way the data is read.  This is similar to \
+scaling and some envelope operations in that no data actually changes.  If 'peak-env-also' is #t, \
+the same function is applied to the peak env values to get the new version.  If the underlying data \
+has any envelope ramps of previous ptree operations, map-channel is called instead and the new \
+data is saved in the normal manner.  Also, there's currently no way to inform the 'proc' that \
+a new read has begun, so (for now) 'proc' should not have any state or make any assumptions \
+about where it is in the sound."
+
+  chan_info *cp;
+  off_t beg = 0, dur = 0;
+  int pos;
+  XEN proc = XEN_FALSE;
+  void *pt = NULL;
+  if (XEN_LIST_P(proc_and_list))
+    proc = XEN_CADR(proc_and_list);
+  XEN_ASSERT_TYPE((XEN_PROCEDURE_P(proc)), proc, XEN_ARG_1, S_ptree_channel, "a procedure");
+  ASSERT_SAMPLE_TYPE(S_ptree_channel, s_beg, XEN_ARG_2);
+  ASSERT_SAMPLE_TYPE(S_ptree_channel, s_dur, XEN_ARG_3);
+  ASSERT_CHANNEL(S_ptree_channel, snd, chn, 4); 
+  cp = get_cp(snd, chn, S_ptree_channel);
+  pos = to_c_edit_position(cp, edpos, S_ptree_channel, 6);
+  beg = beg_to_sample(s_beg, S_ptree_channel);
+  dur = dur_to_samples(s_dur, beg, cp, pos, 2, S_ptree_channel);
+  clear_minibuffer(cp->sound);
+  if (beg > cp->samples[pos])
+    XEN_ERROR(NO_SUCH_SAMPLE,
+	      XEN_LIST_2(C_TO_XEN_STRING(S_ptree_channel),
+			 s_beg));
+  pt = form_to_ptree_1f2f(proc_and_list);
+  if (pt)
+    {
+      if (ramp_or_ptree_fragments_in_use(cp, beg, dur, pos))
+	{
+	  snd_warning("ptree not virtual in this case");
+	  run_channel(cp, pt, beg, dur, pos);
+	  free_ptree(pt);
+	}
+      else ptree_channel(cp, pt, beg, dur, pos, (XEN_TRUE_P(env_too)) ? pt : NULL);
+    }
+  else
+    {
+      snd_warning("can't optimize ptree -> calling map-channel");
+      g_map_chan_1(proc_and_list, s_beg, XEN_FALSE, C_TO_XEN_STRING(S_ptree_channel), snd, chn, edpos, s_dur, "map-chan");
+    }
+  return(XEN_FALSE);
+}
+
 
 #if WITH_RUN
 static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn, 
@@ -3789,7 +3814,7 @@ void g_init_sig(void)
   XEN_DEFINE_PROCEDURE(S_count_matches "-1",      g_count_matches_w, 1, 4, 0,           H_count_matches);
   XEN_DEFINE_PROCEDURE(S_map_chan "-1",           g_map_chan_w, 1, 6, 0,                H_map_chan);
   XEN_DEFINE_PROCEDURE(S_map_channel "-1",        g_map_channel_w, 1, 6, 0,             H_map_channel);
-  XEN_DEFINE_PROCEDURE("ptree-channel-1",         g_ptree_channel, 1, 5, 0,             "no doc yet");
+  XEN_DEFINE_PROCEDURE(S_ptree_channel "-1",      g_ptree_channel, 1, 6, 0,             H_ptree_channel);
 
   XEN_EVAL_C_STRING("(defmacro* scan-channel (form #:rest args) `(apply scan-channel-1 (list (list ',form ,form) ,@args)))");
   scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL("scan-channel"), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(H_scan_channel));
@@ -3805,7 +3830,7 @@ void g_init_sig(void)
   scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL("map-chan"), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(H_map_chan));
 
   XEN_EVAL_C_STRING("(defmacro* ptree-channel (form #:rest args) `(apply ptree-channel-1 (list (list ',form ,form) ,@args)))");
-  scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL("ptree-channel"), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING("no doc yet"));
+  scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL(S_ptree_channel), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(H_ptree_channel));
 #else
   XEN_DEFINE_PROCEDURE(S_scan_channel,            g_scan_channel_w, 1, 5, 0,            H_scan_channel);
   XEN_DEFINE_PROCEDURE(S_scan_chan,               g_scan_chan_w, 1, 5, 0,               H_scan_chan);
@@ -3813,6 +3838,7 @@ void g_init_sig(void)
   XEN_DEFINE_PROCEDURE(S_count_matches,           g_count_matches_w, 1, 4, 0,           H_count_matches);
   XEN_DEFINE_PROCEDURE(S_map_chan,                g_map_chan_w, 1, 6, 0,                H_map_chan);
   XEN_DEFINE_PROCEDURE(S_map_channel,             g_map_channel_w, 1, 6, 0,             H_map_channel);
+  XEN_DEFINE_PROCEDURE(S_ptree_channel,           g_ptree_channel, 1, 6, 0,             H_ptree_channel);
 #endif
 
   XEN_DEFINE_PROCEDURE(S_smooth_sound,            g_smooth_sound_w, 0, 4, 0,            H_smooth_sound);

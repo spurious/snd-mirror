@@ -610,6 +610,32 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;(let ((gen (make-legendre-summation 10 100))) (map-chan (lambda (y) (legendre-summation gen))))
 
 
+;;; -------- variations on sum-of-cosines
+;;; from "Trigonometric Delights" by Eli Maor
+
+(define (sum-of-n-sines angle n)
+  (let* ((a2 (* angle 0.5))
+	 (den (sin a2)))
+    (if (= den 0.0)
+	0.0 ; I'm guessing...
+	(/ (* (sin (* n a2)) (sin (* (1+ n) a2))) den))))
+;(let ((angle 0.0)) (map-channel (lambda (y) (let ((val (sum-of-n-sines angle 3))) (set! angle (+ angle .1)) (* .1 val)))))
+
+(define (sum-of-n-odd-sines angle n)
+  (let ((den (sin angle))
+	(na (sin (* n angle))))
+    (if (= den 0.0)
+	0.0
+	(/ (* na na) den))))
+
+(define (sum-of-n-odd-cosines angle n)
+  (let ((den (* 2 (sin angle))))
+    (if (= den 0.0)
+	n ; just guessing
+	(/ (sin (* 2 n angle)) den))))
+
+
+
 ;;; -------- brighten-slightly
 
 (define (brighten-slightly amount)
