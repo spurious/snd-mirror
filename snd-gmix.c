@@ -27,7 +27,7 @@ static void change_mix_speed(int mix_id, Float val)
 
 static gboolean speed_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
-  if (!(mix_ok(mix_dialog_id))) return;
+  if (!(mix_ok(mix_dialog_id))) return(false);
   change_mix_speed(mix_dialog_id, 1.0);
   GTK_ADJUSTMENT(w_speed_adj)->value = .45;
   gtk_adjustment_value_changed(GTK_ADJUSTMENT(w_speed_adj));
@@ -57,7 +57,7 @@ static gboolean speed_release_callback(GtkWidget *w, GdkEventButton *ev, gpointe
   Float val;
   chan_info *cp;
   snd_info *sp;
-  if (!(mix_ok(mix_dialog_id))) return;
+  if (!(mix_ok(mix_dialog_id))) return(false);
   cp = mix_dialog_mix_channel(mix_dialog_id);
   sp = cp->sound;
   val = srate_changed(exp((GTK_ADJUSTMENT(w_speed_adj)->value - .45) / .15),
@@ -104,7 +104,7 @@ static void change_mix_amp(int mix_id, int chan, Float val)
 static gboolean amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   int chan;
-  if (!(mix_ok(mix_dialog_id))) return;
+  if (!(mix_ok(mix_dialog_id))) return(false);
   chan = get_user_int_data(G_OBJECT(w));
   change_mix_amp(mix_dialog_id, chan, 1.0);
   GTK_ADJUSTMENT(w_amp_adjs[chan])->value = 0.5;
@@ -147,7 +147,7 @@ static gboolean amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer 
 {
   int chan;
   Float scrollval;
-  if (!(mix_ok(mix_dialog_id))) return;
+  if (!(mix_ok(mix_dialog_id))) return(false);
   chan = get_user_int_data(G_OBJECT(w));
   scrollval = GTK_ADJUSTMENT(w_amp_adjs[chan])->value;
   mix_dialog_slider_dragging = false;
@@ -207,7 +207,7 @@ static gboolean mix_drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpoint
   int chans, chan;
   env *e;
   Float pos;
-  if (!(mix_ok(mix_dialog_id))) return;
+  if (!(mix_ok(mix_dialog_id))) return(false);
   chans = mix_dialog_mix_input_chans(mix_dialog_id);
   pos = (Float)(ev->x) / (Float)widget_width(w);
   chan = (int)(pos * chans);
@@ -227,7 +227,7 @@ static gboolean mix_drawer_button_release(GtkWidget *w, GdkEventButton *ev, gpoi
   int chans, chan;
   env *e;
   Float pos;
-  if (!(mix_ok(mix_dialog_id))) return;
+  if (!(mix_ok(mix_dialog_id))) return(false);
   chans = mix_dialog_mix_input_chans(mix_dialog_id);
   pos = (Float)(ev->x) / (Float)widget_width(w);
   chan = (int)(pos * chans);
@@ -244,7 +244,7 @@ static gboolean mix_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpoin
   GdkModifierType state;
   env *e;
   Float pos;
-  if (!(mix_ok(mix_dialog_id))) return;
+  if (!(mix_ok(mix_dialog_id))) return(false);
   if (ev->state & GDK_BUTTON1_MASK)
     {
       if (ev->is_hint)
@@ -277,7 +277,7 @@ static gboolean mix_amp_env_expose_callback(GtkWidget *w, GdkEventExpose *ev, gp
 
 static gboolean mix_amp_env_resize_callback(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
 {
-  if (!(mix_ok(mix_dialog_id))) return;
+  if (!(mix_ok(mix_dialog_id))) return(false);
   mix_amp_env_resize(w);
   return(false);
 }
@@ -911,7 +911,7 @@ static void change_track_speed(int track_id, Float val)
 
 static gboolean track_speed_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
-  if (!(track_p(track_dialog_id))) return;
+  if (!(track_p(track_dialog_id))) return(false);
   change_track_speed(track_dialog_id, 1.0);
   GTK_ADJUSTMENT(w_track_speed_adj)->value = .45;
   gtk_adjustment_value_changed(GTK_ADJUSTMENT(w_track_speed_adj));
@@ -938,7 +938,7 @@ static gboolean track_speed_release_callback(GtkWidget *w, GdkEventButton *ev, g
 {
   Float val;
   chan_info *cp;
-  if (!(track_p(track_dialog_id))) return;
+  if (!(track_p(track_dialog_id))) return(false);
   cp = track_channel(track_dialog_id, 0);
   val = srate_changed(exp((GTK_ADJUSTMENT(w_track_speed_adj)->value - .45) / .15),
 		      track_speed_number_buffer,
@@ -983,7 +983,7 @@ static void change_track_amp(int track_id, Float val)
 
 static gboolean track_amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
-  if (!(track_p(track_dialog_id))) return;
+  if (!(track_p(track_dialog_id))) return(false);
   change_track_amp(track_dialog_id, 1.0);
   GTK_ADJUSTMENT(w_track_amp_adj)->value = 0.5;
   gtk_adjustment_value_changed(GTK_ADJUSTMENT(w_track_amp_adj));
@@ -1003,7 +1003,7 @@ static void track_amp_changed_callback(GtkAdjustment *adj, gpointer data)
 static gboolean track_amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   Float scrollval;
-  if (!(track_p(track_dialog_id))) return;
+  if (!(track_p(track_dialog_id))) return(false);
   scrollval = GTK_ADJUSTMENT(w_track_amp_adj)->value;
   track_dialog_slider_dragging = false;
   change_track_amp(track_dialog_id, scroll_to_amp(scrollval));
@@ -1055,7 +1055,7 @@ static void track_amp_env_resize(GtkWidget *w)
 static gboolean track_drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   env *e;
-  if (!(track_p(track_dialog_id))) return;
+  if (!(track_p(track_dialog_id))) return(false);
   e = track_dialog_env(track_dialog_id);
   if (edp_handle_press(track_spf,
 		       (int)(ev->x), (int)(ev->y), ev->time, 
@@ -1069,7 +1069,7 @@ static gboolean track_drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpoi
 static gboolean track_drawer_button_release(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   env *e;
-  if (!(track_p(track_dialog_id))) return;
+  if (!(track_p(track_dialog_id))) return(false);
   e = track_dialog_env(track_dialog_id);
   edp_handle_release(track_spf, e);
   track_amp_env_resize(w);
@@ -1081,7 +1081,7 @@ static gboolean track_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpo
   int x, y;
   GdkModifierType state;
   env *e;
-  if (!(track_p(track_dialog_id))) return;
+  if (!(track_p(track_dialog_id))) return(false);
   if (ev->state & GDK_BUTTON1_MASK)
     {
       if (ev->is_hint)
@@ -1104,14 +1104,14 @@ static gboolean track_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpo
 
 static gboolean track_amp_env_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
-  if (!(track_p(track_dialog_id))) return;
+  if (!(track_p(track_dialog_id))) return(false);
   track_amp_env_resize(w);
   return(false);
 }
 
 static gboolean track_amp_env_resize_callback(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
 {
-  if (!(track_p(track_dialog_id))) return;
+  if (!(track_p(track_dialog_id))) return(false);
   track_amp_env_resize(w);
   return(false);
 }

@@ -3341,6 +3341,9 @@ the portion of the track env that happens to fall over it.  Use #f to reset it t
 Anything that changes the track's bounds causes the track envelope to be reapplied; there are many ways
 this can happen implicitly: set mix-track, mix-position, mix-speed (of a constituent mix), track-position,
 and track-speed; even make-track if it steals away one of our member mixes.
+If a mix in a track has set the <a href="#mixinverted">mix-inverted?</a> flag, the
+first track envelope in its track chain is inverted, thereby interpreting the
+track envelope as a panning control.
 </td></tr>
 
 <!-- track-chans -->

@@ -6167,10 +6167,10 @@ static void funcall_nf(int *args, ptree *pt)
       READER_RESULT = pt->readers[fres->addr];   
       break;
     case R_MIX_READER:   
-      READER_RESULT = pt->mix_readers[fres->addr];   
+      MIX_READER_RESULT = pt->mix_readers[fres->addr];   
       break;
     case R_TRACK_READER:   
-      READER_RESULT = pt->track_readers[fres->addr];   
+      TRACK_READER_RESULT = pt->track_readers[fres->addr];   
       break;
     default:      
       INT_RESULT = pt->ints[fres->addr];   

@@ -147,10 +147,12 @@ If 'envelope' is a scaler, it is turned into an evelope at that value."
 		   (lambda ()
 		     (as-one-edit
 		      (lambda ()
-			(let* ((mix0 (mix name beg #f index chan0))
-			       (mix1 (1+ mix0))
-			       (trk (mix-track mix0)))
-			  (set! (track-amp-env trk) track-func)))))
+			(let* ((trk (make-track))
+			       (mix0 (mix name beg 0 index chan0 (with-mix-tags) #f trk))
+			       (mix1 (mix name beg 1 index chan1 (with-mix-tags) #f trk)))
+			  (set! (mix-inverted? mix1) #t)
+			  (set! (track-amp-env trk) track-func)
+			  mix0))))
 		   (lambda ()
 		     (set! (sync index) old-sync))))))))))
 
