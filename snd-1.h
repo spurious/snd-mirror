@@ -229,6 +229,7 @@ typedef struct chan__info {
   XEN edit_hook;
   XEN undo_hook;
   XEN cursor_proc;
+  XEN after_edit_hook;
   int selection_visible, sync, active;
   Locus old_x0, old_x1;
   Float *amp_control; /* an experiment */

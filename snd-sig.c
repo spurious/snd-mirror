@@ -530,10 +530,6 @@ static void swap_channels(snd_state *ss, int beg, int dur, snd_fd *c0, snd_fd *c
   int reporting = 0;
   char *ofile0 = NULL, *ofile1 = NULL;
   if (dur <= 0) return;
-  data0 = (MUS_SAMPLE_TYPE **)MALLOC(sizeof(MUS_SAMPLE_TYPE *));
-  data0[0] = (MUS_SAMPLE_TYPE *)CALLOC(MAX_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE)); 
-  data1 = (MUS_SAMPLE_TYPE **)MALLOC(sizeof(MUS_SAMPLE_TYPE *));
-  data1[0] = (MUS_SAMPLE_TYPE *)CALLOC(MAX_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE)); 
   cp0 = c0->cp;
   sp0 = cp0->sound;
   cp1 = c1->cp;
@@ -545,12 +541,27 @@ static void swap_channels(snd_state *ss, int beg, int dur, snd_fd *c0, snd_fd *c
       ofile0 = snd_tempnam(ss);
       hdr0 = make_temp_header(ofile0, SND_SRATE(sp0), 1, dur, (char *)S_swap_channels);
       ofd0 = open_temp_file(ofile0, 1, hdr0, ss);
+      if (ofd0 == -1)
+	{
+	  snd_error("can't open swap-channels temp file %s: %s\n", ofile0, strerror(errno));
+	  return;
+	}
       datumb = mus_data_format_to_bytes_per_sample(hdr0->format);
       ofile1 = snd_tempnam(ss);
       hdr1 = make_temp_header(ofile1, SND_SRATE(sp0), 1, dur, (char *)S_swap_channels);
       ofd1 = open_temp_file(ofile1, 1, hdr1, ss);
+      if (ofd1 == -1)
+	{
+	  close_temp_file(ofd0, hdr0, 0, sp0);
+	  snd_error("can't open swap-channels temp file %s: %s\n", ofile1, strerror(errno));
+	  return;
+	}
     }
   else temp_file = 0;
+  data0 = (MUS_SAMPLE_TYPE **)MALLOC(sizeof(MUS_SAMPLE_TYPE *));
+  data0[0] = (MUS_SAMPLE_TYPE *)CALLOC(MAX_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE)); 
+  data1 = (MUS_SAMPLE_TYPE **)MALLOC(sizeof(MUS_SAMPLE_TYPE *));
+  data1[0] = (MUS_SAMPLE_TYPE *)CALLOC(MAX_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE)); 
   idata0 = data0[0];
   idata1 = data1[0];
   j = 0;
@@ -710,6 +721,11 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 	  ofile = snd_tempnam(ss);
 	  hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, (char *)origin);
 	  ofd = open_temp_file(ofile, 1, hdr, ss);
+	  if (ofd == -1)
+	    {
+	      snd_error("can't open src-sound temp file %s: %s\n", ofile, strerror(errno));
+	      break;
+	    }
 	  datumb = mus_data_format_to_bytes_per_sample(hdr->format);
 	  sf = sfs[i];
 	  idata = data[0];
@@ -1237,6 +1253,11 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 	  else hdr->format = MUS_BDOUBLE;
 #endif
 	  ofd = open_temp_file(ofile, 1, hdr, ss);
+	  if (ofd == -1)
+	    {
+	      snd_error("can't open filter-sound temp file %s: %s\n", ofile, strerror(errno));
+	      break;
+	    }
 	  write(ofd, sndrdat, fsize * sizeof(Float));
 	  close_temp_file(ofd, hdr, fsize * sizeof(Float), sp);
 	  hdr = free_file_info(hdr);
@@ -1298,6 +1319,11 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 		  ofile = snd_tempnam(ss);
 		  hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, (char *)origin);
 		  ofd = open_temp_file(ofile, 1, hdr, ss);
+		  if (ofd == -1)
+		    {
+		      snd_error("can't open filter-sound temp file %s: %s\n", ofile, strerror(errno));
+		      break;
+		    }
 		  datumb = mus_data_format_to_bytes_per_sample(hdr->format);
 		}
 	      else temp_file = 0;
@@ -1461,6 +1487,11 @@ static void reverse_sound(chan_info *ncp, int over_selection, XEN edpos, int arg
 	      ofile = snd_tempnam(ss);
 	      hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, (char *)S_reverse_sound);
 	      ofd = open_temp_file(ofile, 1, hdr, ss);
+	      if (ofd == -1)
+		{
+		  snd_error("can't open reverse-sound temp file %s: %s\n", ofile, strerror(errno));
+		  break;
+		}
 	      datumb = mus_data_format_to_bytes_per_sample(hdr->format);
 	    }
 	  else temp_file = 0;
@@ -1606,13 +1637,14 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
       ofd = open_temp_file(ofile, si->chans, hdr, ss);
       if (ofd == -1)
 	{
-	  FREE(ofile);
 	  if (e) mus_free(egen);
 	  for (i = 0; i < si->chans; i++) 
 	    if (sfs[i]) 
 	      free_snd_fd(sfs[i]);
 	  free_sync_state(sc);
-	  return; /* hopefully someone raised an error flag?? */
+	  snd_error("can't open env-sound temp file %s: %s\n", ofile, strerror(errno));
+	  FREE(ofile);
+	  return;
 	}
       datumb = mus_data_format_to_bytes_per_sample(hdr->format);
     }

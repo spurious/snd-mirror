@@ -450,7 +450,7 @@ Float mixer_gain(int system, int device, int chan, int gain, int field)
     snd_error("%s[%d] %s: overflow %d > %d",
 	      __FILE__, __LINE__, __FUNCTION__, 
 	      gain, rp->num_mixer_gains);
-  rp->mixer_gains[gain] = g[0];
+  else rp->mixer_gains[gain] = g[0];
   return(g[0]);
 }
 
@@ -469,7 +469,7 @@ void set_mixer_gain(int system, int device, int chan, int gain, int field, Float
     snd_error("%s[%d] %s: overflow %d > %d",
 	      __FILE__, __LINE__, __FUNCTION__, 
 	      gain, rp->num_mixer_gains);
-  rp->mixer_gains[gain] = amp;
+  else rp->mixer_gains[gain] = amp;
 }
 
 
@@ -1147,6 +1147,7 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
 	  if (rp->one_system_input_buf) FREE(rp->one_system_input_buf);
 	  rp->one_system_input_buf = (MUS_SAMPLE_TYPE *)CALLOC(rp->system_input_buffer_size, sizeof(MUS_SAMPLE_TYPE));
 	}
+      if (rp->one_system_input_buf == NULL) rp->one_system_input_buf = (MUS_SAMPLE_TYPE *)CALLOC(buffer_size, sizeof(MUS_SAMPLE_TYPE));
       input_bufs[0] = rp->one_system_input_buf;
       for (i = 0; i < rp->systems; i++)
 	{
@@ -1419,8 +1420,11 @@ int recorder_get_devices(recorder_info *rp, int *outs)
 				 AUDVAL_SIZE, 
 				 audval);
       if (err != 0) 
-	snd_error("%s[%d] %s", 
-		  __FILE__, __LINE__, __FUNCTION__);
+	{
+	  snd_error("%s[%d] %s", 
+		    __FILE__, __LINE__, __FUNCTION__);
+	  return(-1);
+	}
       cur_devices = (int)(audval[0]);
       if (cur_devices == 0) 
 	{

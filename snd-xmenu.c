@@ -279,10 +279,12 @@ static void Edit_Header_Callback(Widget w, XtPointer cD, XtPointer mD)
     }
 }
 
+#if HAVE_EXTENSION_LANGUAGE
 static void Edit_Find_Callback_1(Widget w, XtPointer cD, XtPointer mD) 
 {
   IF_MENU_HOOK(STR_Edit, STR_Find) Edit_Find_Callback(w, cD, mD);
 }
+#endif
 
 
 /* -------------------------------- VIEW MENU -------------------------------- */
@@ -337,11 +339,13 @@ static void View_Lollipops_Callback(Widget w, XtPointer cD, XtPointer mD)
   IF_MENU_HOOK(STR_View, STR_lollipops) set_graph_style((snd_state *)cD, GRAPH_LOLLIPOPS);
 }
 
+#if HAVE_EXTENSION_LANGUAGE
 static void View_Listener_Callback(Widget w, XtPointer cD, XtPointer mD) 
 {
   snd_state *ss = (snd_state *)cD;
   IF_MENU_HOOK(STR_View, STR_Show_listener) handle_listener((snd_state *)cD, (!(ss->listening)));
 }
+#endif
 
 static void View_Mix_Panel_Callback(Widget w, XtPointer cD, XtPointer mD) 
 {
@@ -410,10 +414,12 @@ static void Options_Transform_Callback(Widget w, XtPointer cD, XtPointer mD)
   IF_MENU_HOOK(STR_Options, STR_Transform_Options) fire_up_transform_dialog((snd_state *)cD, TRUE);
 }
 
+#if HAVE_EXTENSION_LANGUAGE
 static void Options_Save_Callback(Widget w, XtPointer cD, XtPointer mD) 
 {
   IF_MENU_HOOK(STR_Options, STR_Save_options) save_options_from_menu((snd_state *)cD);
 }
+#endif
 
 static void Options_Focus_Right_Callback(Widget w, XtPointer cD, XtPointer Data) 
 {
@@ -465,10 +471,12 @@ static void Options_X_Axis_Percentage_Callback(Widget w, XtPointer cD, XtPointer
   IF_MENU_HOOK(STR_Options, STR_percentage) set_x_axis_style((snd_state *)cD, X_AXIS_AS_PERCENTAGE);
 }
 
+#if HAVE_EXTENSION_LANGUAGE
 static void Options_Save_State_Callback(Widget w, XtPointer cD, XtPointer mD) 
 {
   IF_MENU_HOOK(STR_Options, STR_Save_state) save_state_from_menu((snd_state *)cD);
 }
+#endif
 
 static void Options_Stats_Callback(Widget w, XtPointer cD, XtPointer mD)
 {
@@ -651,9 +659,11 @@ Widget add_menu(snd_state *ss)
   XtAddCallback(mw[e_redo_menu], XmNactivateCallback, Edit_Redo_Callback, ss);
   XtVaSetValues(mw[e_redo_menu], XmNmnemonic, 'R', NULL);
 
+#if HAVE_EXTENSION_LANGUAGE
   mw[e_find_menu] = XtCreateManagedWidget(STR_Find, xmPushButtonWidgetClass, mw[edit_menu], in_args, in_n);
   XtAddCallback(mw[e_find_menu], XmNactivateCallback, Edit_Find_Callback_1, ss);
   XtVaSetValues(mw[e_find_menu], XmNmnemonic, 'F', NULL);
+#endif
 
   mw[e_select_sep_menu] = XtCreateManagedWidget("", xmSeparatorWidgetClass, mw[edit_menu], sep_args, j);
 
@@ -705,10 +715,11 @@ Widget add_menu(snd_state *ss)
   XtAddCallback(mw[v_ctrls_menu], XmNactivateCallback, View_Ctrls_Callback, ss);
   XtVaSetValues(mw[v_ctrls_menu], XmNmnemonic, 'S', NULL);
 
+#if HAVE_EXTENSION_LANGUAGE
   mw[v_listener_menu] = XtCreateManagedWidget(STR_Open_listener, xmPushButtonWidgetClass, mw[view_menu], main_args, main_n);
-
   XtAddCallback(mw[v_listener_menu], XmNactivateCallback, View_Listener_Callback, ss);
   XtVaSetValues(mw[v_listener_menu], XmNmnemonic, 'L', NULL);
+#endif
 
   mw[v_mix_panel_menu] = XtCreateManagedWidget(STR_Mix_Panel, xmPushButtonWidgetClass, mw[view_menu], in_args, in_n);
   XtAddCallback(mw[v_mix_panel_menu], XmNactivateCallback, View_Mix_Panel_Callback, ss);
@@ -855,12 +866,14 @@ Widget add_menu(snd_state *ss)
   XtAddCallback(mw[o_focus_active_menu], XmNactivateCallback, Options_Focus_Active_Callback, ss);  
   activate_focus_menu(ss, zoom_focus_style(ss));
 
+#if HAVE_EXTENSION_LANGUAGE
   mw[o_save_menu] = XtCreateManagedWidget(STR_Save_options, xmPushButtonWidgetClass, mw[option_menu], main_args, main_n);
   XtAddCallback(mw[o_save_menu], XmNactivateCallback, Options_Save_Callback, ss);
   XtVaSetValues(mw[o_save_menu], XmNmnemonic, 'a', NULL);
 
   mw[o_save_state_menu] = XtCreateManagedWidget(STR_Save_state, xmPushButtonWidgetClass, mw[option_menu], main_args, main_n);
   XtAddCallback(mw[o_save_state_menu], XmNactivateCallback, Options_Save_State_Callback, ss);
+#endif
 
   mw[o_stats_menu] = XtCreateManagedWidget(STR_Show_stats, xmPushButtonWidgetClass, mw[option_menu], main_args, main_n);
   XtAddCallback(mw[o_stats_menu], XmNactivateCallback, Options_Stats_Callback, ss);

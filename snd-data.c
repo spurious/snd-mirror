@@ -50,6 +50,8 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
       cp->temp_sonogram = NULL;
       XEN_DEFINE_HOOK((cp->edit_hook), "edit-hook", 0, NULL);
       snd_protect(cp->edit_hook);
+      XEN_DEFINE_HOOK((cp->after_edit_hook), "after-edit-hook", 0, NULL);
+      snd_protect(cp->after_edit_hook);
       XEN_DEFINE_HOOK((cp->undo_hook), "undo-hook", 0, NULL);
       snd_protect(cp->undo_hook);
     }
@@ -204,6 +206,7 @@ static chan_info *free_chan_info(chan_info *cp)
   cp->graph_lisp_p = 0;
   cp->selection_transform_size = 0;
   XEN_CLEAR_HOOK(cp->edit_hook);
+  XEN_CLEAR_HOOK(cp->after_edit_hook);
   XEN_CLEAR_HOOK(cp->undo_hook);
   return(cp);  /* pointer is left for possible future re-use */
 }

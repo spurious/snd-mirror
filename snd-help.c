@@ -274,7 +274,8 @@ void news_help(snd_state *ss)
 #endif
 	    "Recent changes include:\n\
 \n\
-24-Sep:  changed mus-sound-max-amp to mus-sound-maxamp to match all other such cases (old name still exists)
+26-Sep:  after-edit-hook.\n\
+24-Sep:  changed mus-sound-max-amp to mus-sound-maxamp to match all other such cases (old name still exists)\n\
 18-Sep:  backwards incompatible change to save-state of small regions\n\
 17-Sep:  section-scale-by renamed scale-sound-by (more consistent), also scale-sound-to\n\
 14-Sep:  peak-env.scm.\n\
@@ -285,7 +286,6 @@ void news_help(snd_state *ss)
 1-Sep:   zero-phase, rotate-phase in dsp.scm (Scott McNab).\n\
          region-play-list in examp.scm.\n\
 31-Aug:  Snd 5.2.\n\
-29-Aug:  added edit-menu.scm and merged in Dave Phillips changes for effects.scm.\n\
 ",
 NULL);
   FREE(info);
@@ -1058,13 +1058,14 @@ static char hooks_help_string[] =
 "The hooks provide a way to customize various situations that arise through\n\
 user-interface manipulations.\n\
 \n\
+  " S_after_edit_hook " ()\n\
   " S_after_graph_hook " (snd chn)\n\
   " S_after_open_hook " (snd)\n\
   " S_before_transform_hook " (snd chn)\n\
   " S_close_hook " (snd)\n\
   " S_drop_hook " (filename\n\
   " S_during_open_hook " (fd name reason)\n\
-  " S_edit_hook " (snd chn)\n\
+  " S_edit_hook " ()\n\
   " S_enved_hook " (env pt new-x new-y)\n\
   " S_exit_hook "\n\
   " S_transform_hook " (snd chn scaler)\n\
@@ -1108,7 +1109,7 @@ user-interface manipulations.\n\
   " S_stop_playing_channel_hook " (snd chn)\n\
   " S_stop_playing_hook " (snd)\n\
   " S_stop_playing_region_hook " (reg)\n\
-  " S_undo_hook " (snd chn)\n\
+  " S_undo_hook " ()\n\
 \n\
 ";
 

@@ -482,7 +482,7 @@ static chan_info *goto_previous_graph (chan_info *cp, int count)
 	    }
     }
   if (ncp == vcp) return(ncp);
-  if (!ncp) snd_error("goto previous graph lost!");
+  if (!ncp) snd_error("goto previous graph failed!");
   select_channel(ncp->sound, ncp->chan);
   equalize_sound_panes(ss, ncp->sound, ncp, FALSE); /* snd-xsnd.c */
   /* goto_graph(ncp); */
@@ -540,7 +540,7 @@ static chan_info *goto_next_graph (chan_info *cp, int count)
 	    }
     }
   if (ncp == vcp) return(ncp);
-  if (!ncp) snd_error("goto next graph lost!");
+  if (!ncp) snd_error("goto next graph failed!");
   select_channel(ncp->sound, ncp->chan);
   equalize_sound_panes(ss, ncp->sound, ncp, FALSE);
   /* goto_graph(ncp); */
@@ -604,6 +604,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
   if ((str) && (*str)) 
     remember_mini_string(sp, str);
 
+#if HAVE_EXTENSION_LANGUAGE
   if (sp->searching)
     {
       /* it's the search expr request */
@@ -634,6 +635,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	handle_cursor_with_sync(active_chan, cursor_search(active_chan, sp->searching));
       return;
     }
+#endif
   
   /* str = get_minibuffer_string(sp); */
   if ((sp->marking) || (sp->finding_mark))
@@ -798,6 +800,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	  return;
 	}
     }
+#if HAVE_EXTENSION_LANGUAGE
   /* strlen can be 0 here if <cr> response to prompt */
   if (sp->prompting)
     {
@@ -817,6 +820,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
       clear_minibuffer(sp);
       return;
     }
+#endif
   if (snd_strlen(str) > 0)
     {
       snd_eval_str(ss, str);
@@ -1054,6 +1058,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
       got_count = 0;
       if (count == 0) return(KEYBOARD_NO_ACTION);
     }
+#if HAVE_EXTENSION_LANGUAGE
   if ((state & snd_MetaMask) && 
       ((keysym == snd_K_X) || (keysym == snd_K_x)))
     {
@@ -1069,6 +1074,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
       extended_mode = 0;
       return(call_user_keymap(hashloc, count));
     }
+#endif
   if (sp->minibuffer_temp) clear_minibuffer(sp);
 
   if (state & snd_ControlMask)
@@ -1080,7 +1086,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	    {
 	    case snd_K_A: case snd_K_a: 
 	      cp->cursor_on = 1; 
-	      loc = (int)(ap->x0*SND_SRATE(sp)); 
+	      loc = (int)(ap->x0 * SND_SRATE(sp)); 
 	      if ((loc + 1) == ap->losamp) loc = ap->losamp; /* handle dumb rounding problem */
 	      cursor_moveto(cp, loc); 
 	      break;
@@ -1094,7 +1100,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 	    case snd_K_E: case snd_K_e:
 	      cp->cursor_on = 1; 
-	      loc = (int)(ap->x1*(double)SND_SRATE(sp));
+	      loc = (int)(ap->x1 * (double)SND_SRATE(sp));
 	      if ((loc + 1) == ap->hisamp) loc = ap->hisamp;
 	      cursor_moveto(cp, loc); 
 	      break;
@@ -1174,6 +1180,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      set_play_button(sp, 1); 
 	      redisplay = NO_ACTION; 
 	      break;
+#if HAVE_EXTENSION_LANGUAGE
 	    case snd_K_R: case snd_K_r: 
 	      cp->cursor_on = 1; 
 	      redisplay = cursor_search(cp, -count); 
@@ -1186,6 +1193,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      searching = 1; 
 	      cursor_searching = 1; 
 	      break;
+#endif
 	    case snd_K_T: case snd_K_t: 
 	      stop_playing_sound(sp); 
 	      set_play_button(sp, 0);
@@ -1458,7 +1466,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_0: case snd_K_1: case snd_K_2: case snd_K_3: case snd_K_4:
 	    case snd_K_5: case snd_K_6: case snd_K_7: case snd_K_8: case snd_K_9: 
 	      counting = 1;
-	      number_buffer[number_ctr] =(char)('0' + keysym-snd_K_0); 
+	      number_buffer[number_ctr] = (char)('0' + keysym-snd_K_0); 
 	      if (number_ctr < (NUMBER_BUFFER_SIZE-2)) 
 		number_ctr++; 
 	      break;
@@ -1635,7 +1643,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 		return(KEYBOARD_NO_ACTION);
 	      /* it might be better to remove the menu accelerators -- they are a dubious feature to begin with */
 #endif
-
+#if HAVE_EXTENSION_LANGUAGE
 	      if (ss->listening)
 		{
 		  if (listener_height() > 5)
@@ -1656,9 +1664,12 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 		      sp->macroing = count;
 		      redisplay = KEYBOARD_NO_ACTION;
 		    }
-		  report_in_minibuffer(sp, "%s undefined", key_to_name(keysym));
+		  report_in_minibuffer(sp, "%s%s undefined", (state & snd_MetaMask) ? "M-" : "", key_to_name(keysym));
 		}
 	      /* should we open the minibuffer in all cases? */
+#else
+	      report_in_minibuffer(sp, "%s%s undefined", (state & snd_MetaMask) ? "M-" : "", key_to_name(keysym));
+#endif
 	      break;
 	    }
 	}
@@ -1977,7 +1988,10 @@ static XEN g_append_to_minibuffer(XEN msg, XEN snd_n)
   if (sp == NULL)
     return(snd_no_such_sound_error(S_append_to_minibuffer, snd_n));
   expr_str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-  mus_snprintf(expr_str, PRINT_BUFFER_SIZE, "%s%s", str1 = get_minibuffer_string(sp), XEN_TO_C_STRING(msg));
+  mus_snprintf(expr_str, PRINT_BUFFER_SIZE, 
+	       "%s%s", 
+	       str1 = get_minibuffer_string(sp), 
+	       XEN_TO_C_STRING(msg));
   set_minibuffer_string(sp, expr_str);
   FREE(expr_str);
   sp->minibuffer_temp = 1;

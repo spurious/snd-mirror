@@ -1528,21 +1528,26 @@ static XEN g_restore_marks(XEN size, XEN snd, XEN chn, XEN marklist)
 		{
 		  el = XEN_CAR(molst);
 		  if (!(XEN_LIST_P(el))) 
-		    snd_error("%s[%d] %s: saved mark data is not a list?? ",
-			      __FILE__, __LINE__, __FUNCTION__);
-		  sm = XEN_CADR(el);
-		  if (XEN_NOT_FALSE_P(sm))
 		    {
-		      nm = XEN_CAR(el);
-		      if (XEN_NOT_FALSE_P(nm))
-			str = XEN_TO_C_STRING(nm);
-		      else str = NULL;
-		      id = XEN_TO_C_INT(XEN_CADDR(el));
-		      if (XEN_LIST_LENGTH(el) > 3)
-			sync = XEN_TO_C_INT(XEN_CADDDR(el));
-		      else sync = 0;
-		      cp->marks[i][j] = make_mark_1(XEN_TO_C_INT(sm), str, id, sync);
-		      if (id > mark_id_counter) mark_id_counter = id;
+		      snd_error("%s[%d] %s: saved mark data is not a list?? ",
+				__FILE__, __LINE__, __FUNCTION__);
+		    }
+		  else
+		    {
+		      sm = XEN_CADR(el);
+		      if (XEN_NOT_FALSE_P(sm))
+			{
+			  nm = XEN_CAR(el);
+			  if (XEN_NOT_FALSE_P(nm))
+			    str = XEN_TO_C_STRING(nm);
+			  else str = NULL;
+			  id = XEN_TO_C_INT(XEN_CADDR(el));
+			  if (XEN_LIST_LENGTH(el) > 3)
+			    sync = XEN_TO_C_INT(XEN_CADDDR(el));
+			  else sync = 0;
+			  cp->marks[i][j] = make_mark_1(XEN_TO_C_INT(sm), str, id, sync);
+			  if (id > mark_id_counter) mark_id_counter = id;
+			}
 		    }
 		}
 	    }

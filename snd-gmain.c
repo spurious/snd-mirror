@@ -88,6 +88,8 @@ void dismiss_all_dialogs(snd_state *ss)
 }
 
 static GdkAtom snd_v, snd_c;
+
+#if HAVE_EXTENSION_LANGUAGE
 static XEN property_changed_hook;
 
 static void who_called(GtkWidget *w, GdkEvent *event, gpointer context) 
@@ -116,6 +118,7 @@ static void who_called(GtkWidget *w, GdkEvent *event, gpointer context)
 	}
     }
 }
+#endif
 
 #if TRAP_SEGFAULT
 #include <setjmp.h>
@@ -131,6 +134,8 @@ static RETSIGTYPE segv(int ignored)
 static char **auto_open_file_names = NULL;
 static int auto_open_files = 0;
 static int noglob = 0, noinit = 0, batch = 0;
+
+#if HAVE_EXTENSION_LANGUAGE
 static gint stdin_id = 0;
 
 static void GetStdinString (gpointer context, gint fd, GdkInputCondition condition)
@@ -158,6 +163,7 @@ static void GetStdinString (gpointer context, gint fd, GdkInputCondition conditi
     }
   FREE(buf);
 }
+#endif
 
 static void setup_gcs (snd_state *ss)
 {
@@ -275,9 +281,10 @@ static BACKGROUND_TYPE startup_funcs(gpointer context)
 			  GDK_PROP_MODE_REPLACE, 
 			  (guchar *)(SND_VERSION), 
 			  strlen(SND_VERSION) + 1);
+#if HAVE_EXTENSION_LANGUAGE
       gtk_widget_add_events (tm->shell, gtk_widget_get_events (tm->shell) | GDK_PROPERTY_CHANGE_MASK);
       gtk_signal_connect(GTK_OBJECT(tm->shell), "property_notify_event", GTK_SIGNAL_FUNC(who_called), (gpointer)ss);
-
+#endif
       /* trap outer-level Close for cleanup check */
       gtk_signal_connect(GTK_OBJECT(tm->shell), "delete_event", GTK_SIGNAL_FUNC(Window_Close), (gpointer)ss);
 #endif
@@ -291,7 +298,7 @@ static BACKGROUND_TYPE startup_funcs(gpointer context)
     case 1: 
 
       snd_load_init_file(ss, noglob, noinit);
-#if HAVE_SIGNAL
+#if HAVE_SIGNAL && HAVE_EXTENSION_LANGUAGE
       signal(SIGTTIN, SIG_IGN);
       signal(SIGTTOU, SIG_IGN);
       /* these signals are sent by a shell if we start Snd as a background process,

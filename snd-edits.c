@@ -29,7 +29,6 @@
  * offsets could be added, but need reader-proc at init time (and isn't a very common editing operation)
  */
 
-/* TODO: after-edit-hook after-undo-hook (also change to before-edit|undo-hook?) */
 /* TODO: if edit applies to edpos not current, show that somehow in the edit-history list */
 
 /* another thing we could use: anonymous edit -- an unattached edlist passable to init-sample-read etc
@@ -51,6 +50,7 @@
 
 static int dont_edit(chan_info *cp);
 static int dont_save(snd_info *sp, char *newname);
+static void after_edit(chan_info *cp);
 
 /* each block in an edit-list list describes one fragment of the current sound */
 #define ED_OUT 0
@@ -1397,6 +1397,7 @@ void file_insert_samples(int beg, int num, char *inserted_file, chan_info *cp, i
       ed->sfnum = PACK_EDIT(INSERTION_EDIT, cb[ED_SND]);
       lock_affected_mixes(cp, beg, beg + num);
       if (cp->mix_md) reflect_mix_edit(cp, origin);
+      after_edit(cp);
     }
   else
     {
@@ -1425,6 +1426,7 @@ void insert_samples(int beg, int num, MUS_SAMPLE_TYPE *vals, chan_info *cp, cons
   reflect_edit_history_change(cp);
   lock_affected_mixes(cp, beg, beg + num);
   if (cp->mix_md) reflect_mix_edit(cp, origin);
+  after_edit(cp);
 }
 
 static ed_list *delete_samples_1(int beg, int num, ed_list *current_state, chan_info *cp, const char *origin)
@@ -1532,6 +1534,7 @@ void delete_samples(int beg, int num, chan_info *cp, const char *origin)
       reflect_edit_history_change(cp);
       lock_affected_mixes(cp, beg, beg + num);
       if (cp->mix_md) reflect_mix_edit(cp, origin);
+      after_edit(cp);
     }
   else
     {
@@ -1678,6 +1681,7 @@ void file_change_samples(int beg, int num, char *tempfile,
       ed = cp->edits[cp->edit_ctr];
       ed->sfnum = PACK_EDIT(CHANGE_EDIT, cb[ED_SND]);
       if (cp->mix_md) reflect_mix_edit(cp, origin);
+      after_edit(cp);
     }
   else
     {
@@ -1734,6 +1738,7 @@ void file_override_samples(int num, char *tempfile,
       check_for_first_edit(cp);
       update_graph(cp, NULL);
       if (cp->mix_md) reflect_mix_edit(cp, origin);
+      after_edit(cp);
     }
   else
     {
@@ -1763,6 +1768,7 @@ void change_samples(int beg, int num, MUS_SAMPLE_TYPE *vals, chan_info *cp, int 
   reflect_edit_history_change(cp);
   if (lock == LOCK_MIXES) lock_affected_mixes(cp, beg, beg + num);
   if (cp->mix_md) reflect_mix_edit(cp, origin);
+  after_edit(cp);
 }
 
 static void parse_tree_scale_by(chan_info *cp, Float scl)
@@ -2474,10 +2480,16 @@ int save_channel_edits(chan_info *cp, char *ofile, XEN edpos, const char *caller
 	}
       FREE(sf);
       if (err != MUS_NO_ERROR)
-	report_in_minibuffer(sp, "save channel as temp: %s: %s)", nfile, strerror(errno));
-      else err = move_file(nfile, ofile);
-      reflect_save_as_in_edit_history(cp, ofile);
-      snd_update(ss, sp);
+	report_in_minibuffer_and_save(sp, "save channel as temp: %s: %s)", nfile, strerror(errno));
+      else 
+	{
+	  err = move_file(nfile, ofile);
+	  if (err == 0)
+	    {
+	      reflect_save_as_in_edit_history(cp, ofile);
+	      snd_update(ss, sp);
+	    }
+	}
       FREE(nfile);
     }
   else
@@ -2686,7 +2698,6 @@ static XEN g_display_edits(XEN snd, XEN chn)
   if (tmp) display_edits(cp, tmp);
   if ((!tmp) || (fclose(tmp) != 0))
     {
-      if (name) FREE(name);
       XEN_ERROR(CANNOT_SAVE,
 		XEN_LIST_3(C_TO_XEN_STRING(S_display_edits),
 			   C_TO_XEN_STRING(name),
@@ -3012,6 +3023,11 @@ replacing current data with the function results; origin is the edit-history nam
   sp = (cp->sound);
   hdr = make_temp_header(ofile, SND_SRATE(sp), 1, num, XEN_TO_C_STRING(origin));
   ofd = open_temp_file(ofile, 1, hdr, ss);
+  if (ofd == -1)
+    XEN_ERROR(CANNOT_SAVE,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_loop_samples),
+			 C_TO_XEN_STRING(ofile),
+			 C_TO_XEN_STRING(strerror(errno))));
   datumb = mus_data_format_to_bytes_per_sample(hdr->format);
   data = (MUS_SAMPLE_TYPE **)MALLOC(sizeof(MUS_SAMPLE_TYPE *));
   data[0] = (MUS_SAMPLE_TYPE *)CALLOC(MAX_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE)); 
@@ -3807,6 +3823,12 @@ static int dont_save(snd_info *sp, char *newname)
 				     (newname) ? C_TO_XEN_STRING(newname) : XEN_FALSE),
 			  S_save_hook);
   return(XEN_TRUE_P(res));
+}
+
+static void after_edit(chan_info *cp)
+{
+  if (XEN_HOOKED(cp->after_edit_hook))
+    g_c_run_progn_hook(cp->after_edit_hook, XEN_EMPTY_LIST, S_after_edit_hook);
 }
 
 

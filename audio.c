@@ -5326,8 +5326,15 @@ static int alsa_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val
 	while (info!=NULL) {
 	    dev = to_sndlib_device(info->device, info->channel);
 	    if (dev!=-1) {
-		val[count+1] =(float)dev;
-		if (count++>chan) break;
+		if (info->info.max_rate > 9000) {
+		    /* Hack Alert!
+		     * we ignore all input devices with less than decent srate,
+		     * this is too ignore extra devices like the one offered by
+		     * the sound blaster live 0.5 driver...
+		     */
+		    val[count+1] =(float)dev;
+		    if (count++>chan) break;
+		}
 	    }
 	    info = info->next;
 	}

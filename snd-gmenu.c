@@ -274,10 +274,12 @@ static void Edit_Header_Callback(GtkWidget *w, gpointer cD)
     }
 }
 
+#if HAVE_EXTENSION_LANGUAGE
 static void Edit_Find_Callback_1(GtkWidget *w, gpointer cD)
 {
   IF_MENU_HOOK(STR_Edit, STR_Find) Edit_Find_Callback(w, cD);
 }
+#endif
 
 
 /* -------------------------------- VIEW MENU -------------------------------- */
@@ -345,11 +347,13 @@ static void View_Ctrls_Callback(GtkWidget *w, gpointer cD)
     }
 }
 
+#if HAVE_EXTENSION_LANGUAGE
 static void View_Listener_Callback(GtkWidget *w, gpointer cD) 
 {
   snd_state *ss = (snd_state *)cD;
   IF_MENU_HOOK(STR_View, STR_Show_listener) handle_listener((snd_state *)cD, (!(ss->listening)));
 }
+#endif
 
 static void View_Mix_Panel_Callback(GtkWidget *w, gpointer cD) 
 {
@@ -389,10 +393,12 @@ static void Options_Transform_Callback(GtkWidget *w, gpointer cD)
   IF_MENU_HOOK(STR_Options, STR_Transform_Options) fire_up_transform_dialog((snd_state *)cD, TRUE);
 }
 
+#if HAVE_EXTENSION_LANGUAGE
 static void Options_Save_Callback(GtkWidget *w, gpointer cD) 
 {
   IF_MENU_HOOK(STR_Options, STR_Save_options) save_options_from_menu((snd_state *)cD);
 }
+#endif
 
 static void Options_Focus_Right_Callback(GtkWidget *w, gpointer cD, gpointer Data) 
 {
@@ -444,10 +450,12 @@ static void Options_X_Axis_Percentage_Callback(GtkWidget *w, gpointer cD)
   IF_MENU_HOOK(STR_Options, STR_percentage) set_x_axis_style((snd_state *)cD, X_AXIS_AS_PERCENTAGE);
 }
 
+#if HAVE_EXTENSION_LANGUAGE
 static void Options_Save_State_Callback(GtkWidget *w, gpointer cD) 
 {
   IF_MENU_HOOK(STR_Options, STR_Save_state) save_state_from_menu((snd_state *)cD);
 }
+#endif
 
 static void Options_Stats_Callback(GtkWidget *w, gpointer cD)
 {
@@ -617,12 +625,14 @@ GtkWidget *add_menu(snd_state *ss)
   set_sensitive(mw[e_redo_menu], FALSE);
   gtk_signal_connect(GTK_OBJECT(mw[e_redo_menu]), "activate", GTK_SIGNAL_FUNC(Edit_Redo_Callback), (gpointer)ss);
 
+#if HAVE_EXTENSION_LANGUAGE
   mw[e_find_menu] = gtk_menu_item_new_with_label(STR_Find);
   set_background(mw[e_find_menu], (ss->sgx)->basic_color);
   gtk_menu_append(GTK_MENU(mw[e_cascade_menu]), mw[e_find_menu]);
   gtk_widget_show(mw[e_find_menu]);
   set_sensitive(mw[e_find_menu], FALSE);
   gtk_signal_connect(GTK_OBJECT(mw[e_find_menu]), "activate", GTK_SIGNAL_FUNC(Edit_Find_Callback_1), (gpointer)ss);
+#endif
 
   mw[e_select_sep_menu] = gtk_menu_item_new();
   set_background(mw[e_select_sep_menu], (ss->sgx)->basic_color);
@@ -715,11 +725,13 @@ GtkWidget *add_menu(snd_state *ss)
   gtk_signal_connect(GTK_OBJECT(mw[v_equalize_panes_menu]), "activate", GTK_SIGNAL_FUNC(View_Equalize_Panes_Callback), (gpointer)ss);
 #endif
 
+#if HAVE_EXTENSION_LANGUAGE
   mw[v_listener_menu] = gtk_menu_item_new_with_label(STR_Open_listener);
   gtk_menu_append(GTK_MENU(mw[v_cascade_menu]), mw[v_listener_menu]);
   set_background(mw[v_listener_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[v_listener_menu]);
   gtk_signal_connect(GTK_OBJECT(mw[v_listener_menu]), "activate", GTK_SIGNAL_FUNC(View_Listener_Callback), (gpointer)ss);
+#endif
 
   mw[v_mix_panel_menu] = gtk_menu_item_new_with_label(STR_Mix_Panel);
   gtk_menu_append(GTK_MENU(mw[v_cascade_menu]), mw[v_mix_panel_menu]);
@@ -962,7 +974,7 @@ GtkWidget *add_menu(snd_state *ss)
   gtk_signal_connect(GTK_OBJECT(mw[o_focus_active_menu]), "activate", GTK_SIGNAL_FUNC(Options_Focus_Active_Callback), (gpointer)ss);
   activate_focus_menu(ss, zoom_focus_style(ss));
 
-
+#if HAVE_EXTENSION_LANGUAGE
   mw[o_save_menu] = gtk_menu_item_new_with_label(STR_Save_options);
   gtk_menu_append(GTK_MENU(mw[o_cascade_menu]), mw[o_save_menu]);
   set_background(mw[o_save_menu], (ss->sgx)->basic_color);
@@ -974,6 +986,7 @@ GtkWidget *add_menu(snd_state *ss)
   set_background(mw[o_save_state_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[o_save_state_menu]);
   gtk_signal_connect(GTK_OBJECT(mw[o_save_state_menu]), "activate", GTK_SIGNAL_FUNC(Options_Save_State_Callback), (gpointer)ss);
+#endif
 
   mw[o_stats_menu] = gtk_menu_item_new_with_label(STR_Show_stats);
   gtk_menu_append(GTK_MENU(mw[o_cascade_menu]), mw[o_stats_menu]);
@@ -1111,7 +1124,9 @@ GtkWidget *add_menu(snd_state *ss)
   gtk_widget_add_accelerator(mw[f_new_menu], "activate", accel_group, GDK_N, GDK_MOD1_MASK, GTK_ACCEL_VISIBLE);
   gtk_widget_add_accelerator(mw[f_view_menu], "activate", accel_group, GDK_V, GDK_MOD1_MASK, GTK_ACCEL_VISIBLE);
   gtk_widget_add_accelerator(mw[f_print_menu], "activate", accel_group, GDK_P, GDK_MOD1_MASK, GTK_ACCEL_VISIBLE);
+#if HAVE_EXTENSION_LANGUAGE
   gtk_widget_add_accelerator(mw[e_find_menu], "activate", accel_group, GDK_F, GDK_MOD1_MASK, GTK_ACCEL_VISIBLE);
+#endif
   gtk_widget_add_accelerator(mw[o_transform_menu], "activate", accel_group, GDK_T, GDK_MOD1_MASK, GTK_ACCEL_VISIBLE);
 #endif
 

@@ -1190,7 +1190,6 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 	case 0:
 	  /* apply_beg = 0; */
 	  ap->ofile = NULL;
-	  lock_apply(ss, sp);
 	  ap->ofile = snd_tempnam(ss);
 	  ap->hdr = make_temp_header(ap->ofile, SND_SRATE(sp), sp->nchans, 0, (char *)__FUNCTION__);
 	  switch (ss->apply_choice)
@@ -1217,6 +1216,14 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 	  orig_dur = apply_dur;
 	  apply_dur = (int)(mult_dur * (apply_dur + added_dur));
 	  ap->ofd = open_temp_file(ap->ofile, ap->hdr->chans, ap->hdr, ss);
+	  if (ap->ofd == -1)
+	    {
+	      snd_error("can't open apply temp file %s: %s\n",ap->ofile, strerror(errno));
+	      sp->applying = 0;
+	      FREE(ap);
+	      return(BACKGROUND_QUIT);
+	    }
+	  lock_apply(ss, sp);
 	  sp->apply_ok = 1;
 	  initialize_apply(sp, ap->hdr->chans, apply_beg, apply_dur); /* snd-dac.c, called only here */
 	  apply_reporting = (apply_dur > (MAX_BUFFER_SIZE * 4));
@@ -2203,6 +2210,7 @@ Any argument can be #f which causes its value to be taken from the sound being s
   snd_info *sp;
   chan_info *cp;
   file_info *hdr;
+  snd_state *ss;
   int ht, df, sr, chan, err;
   char *fname = NULL;
   XEN_ASSERT_TYPE(XEN_STRING_P(newfile), newfile, XEN_ARG_1, S_save_sound_as, "a string");
@@ -2243,11 +2251,20 @@ Any argument can be #f which causes its value to be taken from the sound being s
 	}
     }
   else err = save_edits_without_display(sp, fname, ht, df, sr, NULL, edpos, S_save_sound_as, 7);
-  if (fname) FREE(fname);
   if (err != MUS_NO_ERROR)
-    XEN_ERROR(CANNOT_SAVE,
-	      XEN_LIST_2(C_TO_XEN_STRING(S_save_sound_as),
-			 C_TO_XEN_STRING(sp->state->catch_message)));
+    {
+      ss = sp->state;
+      if (ss->catch_message)
+	XEN_ERROR(CANNOT_SAVE,
+		  XEN_LIST_2(C_TO_XEN_STRING(S_save_sound_as),
+			     C_TO_XEN_STRING(sp->state->catch_message)));
+      else
+	XEN_ERROR(CANNOT_SAVE,
+		  XEN_LIST_3(C_TO_XEN_STRING(S_save_sound_as),
+			     C_TO_XEN_STRING(fname),
+			     C_TO_XEN_STRING(strerror(errno))));
+    }
+  if (fname) FREE(fname);
   return(newfile);
 }
 

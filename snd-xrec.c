@@ -2714,7 +2714,7 @@ static Widget make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE 
 	snd_error("%s[%d] %s: overflow %d > %d", 
 		  __FILE__, __LINE__, __FUNCTION__,
 		  wd->gain, rp->num_mixer_gains);
-      gain_sliders[wd->gain] = wd;
+      else gain_sliders[wd->gain] = wd;
       vol = mixer_gain(wd->system, wd->device, wd->chan, wd->gain, wd->field);
       if (vol < 0.0) vol = 0.0;
       if (vol > 1.0) vol = 1.0;

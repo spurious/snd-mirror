@@ -296,6 +296,8 @@ static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boo
 }
 
 static Atom snd_v, snd_c;
+
+#if HAVE_EXTENSION_LANGUAGE
 static XEN property_changed_hook;
 
 static void who_called(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
@@ -324,6 +326,7 @@ static void who_called(Widget w, XtPointer context, XEvent *event, Boolean *cont
 	  }
     }
 }
+#endif
 
 #if TRAP_SEGFAULT
 #include <setjmp.h>
@@ -339,6 +342,8 @@ static RETSIGTYPE segv(int ignored)
 static char **auto_open_file_names = NULL;
 static int auto_open_files = 0;
 static int noglob = 0, noinit = 0, batch = 0;
+
+#if HAVE_EXTENSION_LANGUAGE
 static XtInputId stdin_id = 0;
 
 static void GetStdinString (XtPointer context, int *fd, XtInputId *id)
@@ -366,6 +371,7 @@ static void GetStdinString (XtPointer context, int *fd, XtInputId *id)
     }
   FREE(buf);
 }
+#endif
 
 static BACKGROUND_TYPE startup_funcs(XtPointer context)
 {
@@ -393,7 +399,9 @@ static BACKGROUND_TYPE startup_funcs(XtPointer context)
       snd_c = XInternAtom(tm->dpy, "SND_COMMAND", FALSE);
       XChangeProperty(tm->dpy, XtWindow(tm->shell), snd_v, XA_STRING, 8, PropModeReplace, 
 		      (unsigned char *)(SND_VERSION), strlen(SND_VERSION) + 1);
+#if HAVE_EXTENSION_LANGUAGE
       XtAddEventHandler(tm->shell, PropertyChangeMask, FALSE, who_called, (XtPointer)ss);
+#endif
       XtAddEventHandler(tm->shell, StructureNotifyMask, FALSE, minify_maxify_window, (XtPointer)ss);
 #endif
       (ss->sgx)->graph_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), in_graph_cursor(ss));
@@ -402,7 +410,7 @@ static BACKGROUND_TYPE startup_funcs(XtPointer context)
       break;
     case 1:
       snd_load_init_file(ss, noglob, noinit);
-#if HAVE_SIGNAL
+#if HAVE_SIGNAL && HAVE_EXTENSION_LANGUAGE
       signal(SIGTTIN, SIG_IGN);
       signal(SIGTTOU, SIG_IGN);
       /* these signals are sent by a shell if we start Snd as a background process,

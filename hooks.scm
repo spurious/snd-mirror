@@ -16,7 +16,16 @@
   (for-each 
    (lambda (n)
      (reset-hook! n))
-   (snd-hooks)))
+   (snd-hooks))
+  (for-each 
+   (lambda (snd)
+     (do ((chn 0 (1+ chn)))
+	 ((= chn (channels snd)))
+       (reset-hook! (edit-hook snd chn))
+       (reset-hook! (after-edit-hook snd chn))
+       (reset-hook! (undo-hook snd chn))))
+   (sounds)))
+
 
 
 ;;; -------- describe-hook

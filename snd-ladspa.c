@@ -649,6 +649,11 @@ by any arguments. (Information about about parameters can be acquired using anal
 
   /* Open the output file, using the header we've been working on. */
   ofd = open_temp_file(ofile, 1, hdr, state);
+  if (ofd == -1)
+    XEN_ERROR(CANNOT_SAVE,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_apply_ladspa),
+			 C_TO_XEN_STRING(ofile),
+			 C_TO_XEN_STRING(strerror(errno))));
 
   /* Tidy up header. */
   datumb = mus_data_format_to_bytes_per_sample(hdr->format);

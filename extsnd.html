@@ -2314,13 +2314,14 @@ the hook.
   <h4>Channel-specific hooks:</h4>
 
   <em class=def><a name="edithook">edit-hook</a></em> (<i>snd chn</i>)
-
   <em class=def><a name="undohook">undo-hook</a></em> (<i>snd chn</i>)
+  <em class=def><a name="afteredithook">after-edit-hook</a></em> (<i>snd chn</i>)
 </pre>
 
 <table border=0><tr><td width=150><br></td><td>
 These are functions that return the hooks in question associated with the specified channel.
-edit-hook is called just before any attempt to edit the channel's data.  If it returns #t,
+edit-hook is called just before any attempt to edit the channel's data (a better name might
+be before-edit-hook).  If it returns #t,
 the edit is aborted. So,
 </td></tr></table>
 <center><pre>
@@ -2329,7 +2330,9 @@ the edit is aborted. So,
 <table border=0><tr><td width=150><br></td><td>
 aborts any attempt to edit the data; this is even more restrictive than setting the read-only
 flag because the latter only refuses to overwrite the current data.  undo-hook is called
-just after any undo, redo, or revert that affects the channel.  You can use edit-hook to set
+just after any undo, redo, or revert that affects the channel.  after-edit-hook is called
+after an edit.
+You can use edit-hook to set
 up protected portions of the edit history:
 </td></tr></table>
 <br>

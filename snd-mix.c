@@ -1232,6 +1232,17 @@ static void remix_file(mix_info *md, const char *origin)
   num = end - beg + 1;
   use_temp_file = (num >= MAX_BUFFER_SIZE);
 
+  if (use_temp_file)
+    {
+      ofile = snd_tempnam(ss);
+      ohdr = make_temp_header(ofile, SND_SRATE(cursp), 1, 0, (char *)origin);
+      ofd = open_temp_file(ofile, 1, ohdr, ss);
+      if (ofd == -1)
+	{
+	  snd_error("can't write mix temp file %s: %s\n", ofile, strerror(errno));
+	  return;
+	}
+    }
   add = init_mix_read(md, 0);
   if (!add) return;
   sub = init_mix_read(md, 1);
@@ -1241,9 +1252,6 @@ static void remix_file(mix_info *md, const char *origin)
 
   if (use_temp_file)
     {
-      ofile = snd_tempnam(ss);
-      ohdr = make_temp_header(ofile, SND_SRATE(cursp), 1, 0, (char *)origin);
-      ofd = open_temp_file(ofile, 1, ohdr, ss);
       no_space = disk_space_p(cursp, ofd, num * 4, num * 2, ofile);
       switch (no_space)
 	{

@@ -431,7 +431,7 @@ static XEN g_select_item(XEN wid, XEN pos)
   int id;
   w = (Widget)(XEN_UNWRAP_C_POINTER(wid));
   if (!(XmIsList(w)))
-    snd_error("not a list");
+    snd_error("%s is not a list", XtName(w));
   else
     {
       id = XEN_TO_C_INT(pos);

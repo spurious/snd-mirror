@@ -773,7 +773,7 @@ int copy_file(char *oldname, char *newname)
   total = total >> 10;
   wb = disk_kspace(newname);
   if (wb < 0) 
-    snd_error(strerror(errno));
+    snd_error("%s: %s\n", newname, strerror(errno));
   else
     if (total > wb) 
       snd_error("disk nearly full: used %d Kbytes leaving %d",

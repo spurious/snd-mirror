@@ -3547,7 +3547,7 @@ static axis_context *combined_context (chan_info *cp)       {return(set_context(
 #include "vct.h"
 
 enum {CP_GRAPH_TRANSFORM_P, CP_GRAPH_TIME_P, CP_FRAMES, CP_CURSOR, CP_GRAPH_LISP_P, CP_AP_LOSAMP, CP_AP_HISAMP, CP_SQUELCH_UPDATE,
-      CP_EDIT_CTR, CP_CURSOR_STYLE, CP_EDIT_HOOK, CP_UNDO_HOOK,
+      CP_EDIT_CTR, CP_CURSOR_STYLE, CP_EDIT_HOOK, CP_UNDO_HOOK, CP_AFTER_EDIT_HOOK,
       CP_SHOW_Y_ZERO, CP_SHOW_MARKS, CP_TIME_GRAPH_TYPE, CP_WAVO_HOP, CP_WAVO_TRACE, CP_MAX_TRANSFORM_PEAKS, 
       CP_SHOW_TRANSFORM_PEAKS, CP_ZERO_PAD, CP_VERBOSE_CURSOR, CP_FFT_LOG_FREQUENCY, CP_FFT_LOG_MAGNITUDE,
       CP_WAVELET_TYPE, CP_SPECTRO_HOP, CP_TRANSFORM_SIZE, CP_TRANSFORM_GRAPH_TYPE, CP_FFT_WINDOW, CP_TRANSFORM_TYPE,
@@ -3605,6 +3605,7 @@ static XEN cp_iread(XEN snd_n, XEN chn_n, int fld, char *caller)
 	    case CP_CURSOR_SIZE:        return(C_TO_XEN_INT(cp->cursor_size));                       break;
 	    case CP_CURSOR_STYLE:       return(C_TO_XEN_INT(cp->cursor_style));                      break;
 	    case CP_EDIT_HOOK:          return(cp->edit_hook);                                       break;
+	    case CP_AFTER_EDIT_HOOK:    return(cp->after_edit_hook);                                 break;
 	    case CP_UNDO_HOOK:          return(cp->undo_hook);                                       break;
 	    case CP_SHOW_Y_ZERO:        return(C_TO_XEN_BOOLEAN(cp->show_y_zero));                   break;
 	    case CP_SHOW_MARKS:         return(C_TO_XEN_BOOLEAN(cp->show_marks));                    break;
@@ -4347,6 +4348,12 @@ static XEN g_edit_hook(XEN snd_n, XEN chn_n)
 {
   #define H_edit_hook "(" S_edit_hook " &optional snd chn) -> snd's channel chn's edit-hook"
   return(cp_iread(snd_n, chn_n, CP_EDIT_HOOK, S_edit_hook));
+}
+
+static XEN g_after_edit_hook(XEN snd_n, XEN chn_n) 
+{
+  #define H_after_edit_hook "(" S_after_edit_hook " &optional snd chn) -> snd's channel chn's after-edit-hook"
+  return(cp_iread(snd_n, chn_n, CP_AFTER_EDIT_HOOK, S_after_edit_hook));
 }
 
 static XEN g_undo_hook(XEN snd_n, XEN chn_n) 
@@ -5455,6 +5462,7 @@ XEN_ARGIFY_2(g_channel_widgets_w, g_channel_widgets)
 XEN_ARGIFY_2(g_edits_w, g_edits)
 XEN_ARGIFY_3(g_peaks_w, g_peaks)
 XEN_ARGIFY_2(g_edit_hook_w, g_edit_hook)
+XEN_ARGIFY_2(g_after_edit_hook_w, g_after_edit_hook)
 XEN_ARGIFY_2(g_undo_hook_w, g_undo_hook)
 XEN_ARGIFY_2(g_ap_sx_w, g_ap_sx)
 XEN_ARGIFY_3(g_set_ap_sx_w, g_set_ap_sx)
@@ -5575,6 +5583,7 @@ XEN_ARGIFY_2(g_update_transform_w, g_update_transform)
 #define g_edits_w g_edits
 #define g_peaks_w g_peaks
 #define g_edit_hook_w g_edit_hook
+#define g_after_edit_hook_w g_after_edit_hook
 #define g_undo_hook_w g_undo_hook
 #define g_ap_sx_w g_ap_sx
 #define g_set_ap_sx_w g_set_ap_sx
@@ -5701,6 +5710,7 @@ void g_init_chn(void)
   XEN_DEFINE_PROCEDURE(S_edits,                   g_edits_w, 0, 2, 0,                   H_edits);
   XEN_DEFINE_PROCEDURE(S_peaks,                   g_peaks_w, 0, 3, 0,                   H_peaks);
   XEN_DEFINE_PROCEDURE(S_edit_hook,               g_edit_hook_w, 0, 2, 0,               H_edit_hook);
+  XEN_DEFINE_PROCEDURE(S_after_edit_hook,         g_after_edit_hook_w, 0, 2, 0,         H_after_edit_hook);
   XEN_DEFINE_PROCEDURE(S_undo_hook,               g_undo_hook_w, 0, 2, 0,               H_undo_hook);
   XEN_DEFINE_PROCEDURE(S_update_time_graph,       g_update_time_graph_w, 0, 2, 0,       H_update_time_graph);
   XEN_DEFINE_PROCEDURE(S_update_lisp_graph,       g_update_lisp_graph_w, 0, 2, 0,       H_update_lisp_graph);

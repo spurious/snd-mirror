@@ -200,9 +200,9 @@
 (define silence-dialog #f)
 
 (define (cp-silence)
-"Add silence adds the requested seconds of silence at the cursor"
-    (insert-silence (cursor)
-       (inexact->exact (* (srate) silence-amount))))
+  "Add silence adds the requested seconds of silence at the cursor"
+  (insert-silence (cursor)
+		  (inexact->exact (* (srate) silence-amount))))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -429,7 +429,7 @@
 
 
 (define (cp-gate)
-"Gate: higher values remove more of the sound"
+  "Gate: higher values remove more of the sound"
   (let ((snc (sync)))
     (if (> snc 0)
        (apply map
@@ -543,11 +543,23 @@
 (define am-amount 100.0)
 (define am-label "Amplitude modulation")
 (define am-dialog #f)
-
+(define am-target 'sound)
 
 (define (cp-am)
   "amplitude modulation"
-  (map-chan (am am-amount)))
+  (let ((ms (and (eq? am-target 'marks)
+		 (plausible-mark-samples))))
+    (map-chan (am am-amount)
+	      (if (eq? am-target 'sound)
+		0
+		(if (eq? am-target 'selection)
+		    (selection-position)
+		    (car ms)))
+	      (if (eq? am-target 'sound)
+		  (1- (frames))
+		  (if (eq? am-target 'selection)
+		      (+ (selection-position) (selection-length))
+		      (cadr ms))))))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -572,7 +584,11 @@
 				 (list (list "amplitude modulation" 0.0 initial-am-amount 1000.0 
 					     (lambda (w context info)
 					       (set! am-amount (|value info)))
-					     1))))))
+					     1))))
+	      (add-target (|XtParent (car sliders))
+			  (lambda (target)
+			    (set! am-target target)))))
+
 	(activate-dialog am-dialog))
 
       (add-to-menu effects-menu "Amplitude modulation" (lambda () (post-am-dialog))))
