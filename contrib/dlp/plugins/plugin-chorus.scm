@@ -20,7 +20,7 @@
          (provided? 'xm))
 
     (add-to-menu
-     plugins-menu "Multivoice Chorus"
+     plugins-menu "Chorus (multivoice)"
      (lambda ()
        (if (not (|Widget? mvChorus-dialog))
            ;; if mvChorus-dialog doesn't exist, create it

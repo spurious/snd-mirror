@@ -4,7 +4,7 @@
                         |XmNpaneMinimum 48
                         |XmNpaneMaximum 48
                         |XmNorientation |XmHORIZONTAL))))
-    (load "new-icons.scm")
+    (load "/home/dlphilp/my_scm/new-icons.scm")
     (for-each
      (lambda (icon callback)
        (let ((button
@@ -14,7 +14,7 @@
                       |XmNwidth       32
                       |XmNheight      32))))
          (|XtAddCallback button |XmNactivateCallback callback)))
-     (list open-file close-file save-as rec-pane env-edit regions-browser mix-pane full-stop start-of-file start-of-window back-one-window back-one-sample mid-window forward-one-sample forward-one-window end-of-window end-of-file undo-it exit-it)
+     (list open-file close-file save-as rec-pane env-edit regions-browser mix-pane full-go full-stop start-of-file start-of-window back-one-window back-one-sample mid-window forward-one-sample forward-one-window end-of-window end-of-file undo-it exit-it)
      (list 
            (lambda (w c i) (open-file-dialog))
            (lambda (w c i) (close-sound))
@@ -23,6 +23,7 @@
 	   (lambda (w c i) (enved-dialog))
            (lambda (w c i) (region-dialog))
            (lambda (w c i) (mix-panel))
+           (lambda (w c i) (play))
            (lambda (w c i) (stop-playing))
            (lambda (w c i) (set! (cursor) 0)) ; to start of file
            (lambda (w c i) (set! (cursor) (left-sample))) ; to window start

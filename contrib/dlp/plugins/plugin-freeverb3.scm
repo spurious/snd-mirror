@@ -20,7 +20,7 @@
          (provided? 'xm))
 
     (add-to-menu
-     plugins-menu "Freeverb3"
+     plugins-menu "Freeverb3 (stereo)"
      (lambda ()
        (if (not (|Widget? freeverb-dialog))
            (let ((sliders '()))
