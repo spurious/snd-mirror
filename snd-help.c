@@ -204,6 +204,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+15-Apr:  snd 5.9.\n\
 12-Apr:  optimization variable, --with-run configure switch, snd-run.c.\n\
 9-Apr:   ramp-channel.\n\
 8-Apr:   virtualized envelopes.\n\
@@ -2031,7 +2032,7 @@ char* word_wrap(char *text, int widget_len)
 
 static XEN help_hook = XEN_FALSE;
 
-XEN g_help(XEN text, int widget_wid)
+XEN g_snd_help(XEN text, int widget_wid)
 {
   #define H_snd_help "(" S_snd_help " arg) returns the documentation associated with its argument. (snd-help make-vct) \
 for example, prints out a brief description of make-vct. \
@@ -2137,7 +2138,7 @@ and its value is returned."
 
 static XEN g_listener_help(XEN arg)
 {
-  return(g_help(arg, listener_width()));
+  return(g_snd_help(arg, listener_width()));
 }
 
 void set_html_dir(snd_state *ss, char *new_dir)

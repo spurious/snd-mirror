@@ -520,7 +520,7 @@ static void Listener_help(Widget w, XEvent *event, char **str, Cardinal *num)
 		  {
 		    name = (char *)CALLOC(j - i + 1, sizeof(char));
 		    strncpy(name, (char *)(source + i + 1), j - i - 1);
-                    result = g_help(C_TO_XEN_STRING(name), listener_width());
+                    result = g_snd_help(C_TO_XEN_STRING(name), listener_width());
 		    FREE(name);
 		    if (XEN_STRING_P(result))
 		      {

@@ -1,5 +1,5 @@
 dnl Configuration script for Snd
-dnl Process this file with autoconf 2.50 to produce a configure script.
+dnl Process this file with autoconf 2.53 to produce a configure script.
 
 #--------------------------------------------------------------------------------
 #

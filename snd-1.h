@@ -449,7 +449,7 @@ void view_files_dialog_help(snd_state *ss);
 void ssnd_help(snd_state *ss, char *subject, ...);
 char* word_wrap(char *text, int widget_len);
 void g_init_help(void);
-XEN g_help(XEN text, int widget_wid);
+XEN g_snd_help(XEN text, int widget_wid);
 
 void set_html_dir(snd_state *ss, char *new_dir);
 
@@ -1141,7 +1141,7 @@ void fill_number(char *fs, char *ps);
 void snd_exit(int val);
 char *kmg (int num);
 #ifdef DEBUG_MEMORY
-  void set_encloser(const char *name);
+  void set_encloser(char *name);
   char *stack_to_string(void);
 #endif
 #if DEBUGGING && HAVE_CLOCK
@@ -1307,7 +1307,14 @@ int end_to_sample(XEN end, chan_info *cp, int edpos, const char *caller);
 
 
 /* -------- snd-run.c -------- */
+
 #if WITH_RUN
+void *form_to_ptree(XEN code);
+void *form_to_ptree_1f2b(XEN code);
+void *form_to_ptree_1f2f(XEN code);
+Float evaluate_ptree_1f2f(void *upt, Float arg);
+int evaluate_ptree_1f2b(void *upt, Float arg);
+void *free_ptree(void *upt);
 void g_init_run(void);
 #endif
 

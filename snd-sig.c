@@ -2260,7 +2260,12 @@ void cos_smooth(chan_info *cp, int beg, int num, int regexpr, const char *origin
 #include "vct.h"
 #include "clm2xen.h"
 
+#if WITH_RUN
+char *run_channel(chan_info *cp, void *upt, int beg, int dur, int edpos);
+static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN chn, XEN edpos, XEN s_dur, char *fallback_caller) 
+#else
 static XEN g_map_chan_1(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN chn, XEN edpos, XEN s_dur, char *fallback_caller) 
+#endif
 { 
   snd_state *ss;
   chan_info *cp;
@@ -2276,6 +2281,13 @@ static XEN g_map_chan_1(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN ch
   mus_any *outgen = NULL;
   XEN *data;
   vct *v;
+#if WITH_RUN
+  XEN proc = XEN_FALSE;
+  void *pt = NULL;
+  if (XEN_LIST_P(proc_and_list))
+    proc = XEN_CADR(proc_and_list);
+#endif
+
   if (XEN_STRING_P(org)) 
     caller = XEN_TO_C_STRING(org);
   else caller = fallback_caller;
@@ -2311,6 +2323,20 @@ static XEN g_map_chan_1(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN ch
 	  FREE(errmsg);
 	  return(snd_bad_arity_error(caller, errstr, proc));
 	}
+
+#if WITH_RUN
+  if (optimization(ss) > 0)
+    {
+      pt = form_to_ptree_1f2f(XEN_CAR(proc_and_list));
+      if (pt)
+	{
+	  run_channel(cp, pt, beg, num, pos);
+	  free_ptree(pt);
+	  return(XEN_ZERO);
+	}
+    }
+#endif
+
       sp = cp->sound;
       reporting = (num > MAX_BUFFER_SIZE);
       if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
@@ -2411,8 +2437,13 @@ static XEN g_map_chan_1(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN ch
   return(res);
 }
 
+#if WITH_RUN
+static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn, 
+		     const char *caller, int counting, XEN edpos, int arg_pos, XEN s_dur)
+#else
 static XEN g_sp_scan(XEN proc, XEN s_beg, XEN s_end, XEN snd, XEN chn, 
 		     const char *caller, int counting, XEN edpos, int arg_pos, XEN s_dur)
+#endif
 {
   snd_state *ss;
   chan_info *cp;
@@ -2423,6 +2454,12 @@ static XEN g_sp_scan(XEN proc, XEN s_beg, XEN s_end, XEN snd, XEN chn,
   int kp, num, reporting = 0, rpt = 0, rpt4, counts = 0, pos;
   XEN res;
   char *errmsg;
+#if WITH_RUN
+  XEN proc = XEN_FALSE;
+  void *pt = NULL;
+  if (XEN_LIST_P(proc_and_list))
+    proc = XEN_CADR(proc_and_list);
+#endif
 
   XEN_ASSERT_TYPE((XEN_PROCEDURE_P(proc)), proc, XEN_ARG_1, caller, "a procedure");
   ASSERT_SAMPLE_TYPE(caller, s_beg, XEN_ARG_2);
@@ -2459,29 +2496,57 @@ static XEN g_sp_scan(XEN proc, XEN s_beg, XEN s_end, XEN snd, XEN chn,
       else end = cp->samples[pos] - 1;
     }
   num = end - beg + 1;
+#if WITH_RUN
+  if (optimization(ss) > 0)
+    pt = form_to_ptree_1f2b(XEN_CAR(proc_and_list));
+#endif
   if (num > 0)
     {
       reporting = (num > MAX_BUFFER_SIZE);
       if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
       for (kp = 0; kp < num; kp++)
 	{
-	  res = XEN_CALL_1_NO_CATCH(proc,
-				    C_TO_XEN_DOUBLE((double)read_sample_to_float(sf)),
-				    caller);
-	  if (XEN_NOT_FALSE_P(res))
+#if WITH_RUN
+	  if (pt)
 	    {
-	      if ((counting) &&
-		  (XEN_TRUE_P(res)))
-		counts++;
-	      else
+	      if (evaluate_ptree_1f2b(pt, read_sample_to_float(sf)))
 		{
-		  sf = free_snd_fd(sf);
-		  if (reporting) 
-		    finish_progress_report(sp, NOT_FROM_ENVED);
-		  return(XEN_LIST_2(res,
-				    C_TO_XEN_INT(kp + beg)));
+		  if (counting)
+		    counts++;
+		  else
+		    {
+		      sf = free_snd_fd(sf);
+		      free_ptree(pt);
+		      if (reporting) 
+			finish_progress_report(sp, NOT_FROM_ENVED);
+		      return(XEN_LIST_2(XEN_TRUE,
+					C_TO_XEN_INT(kp + beg)));
+		    }
 		}
 	    }
+	  else
+	    {
+#endif
+	      res = XEN_CALL_1_NO_CATCH(proc,
+					C_TO_XEN_DOUBLE((double)read_sample_to_float(sf)),
+					caller);
+	      if (XEN_NOT_FALSE_P(res))
+		{
+		  if ((counting) &&
+		      (XEN_TRUE_P(res)))
+		    counts++;
+		  else
+		    {
+		      sf = free_snd_fd(sf);
+		      if (reporting) 
+			finish_progress_report(sp, NOT_FROM_ENVED);
+		      return(XEN_LIST_2(res,
+					C_TO_XEN_INT(kp + beg)));
+		    }
+		}
+#if WITH_RUN
+	    }
+#endif
 	  if (reporting) 
 	    {
 	      rpt++;
@@ -2506,6 +2571,9 @@ static XEN g_sp_scan(XEN proc, XEN s_beg, XEN s_end, XEN snd, XEN chn,
       if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
     }
   if (sf) sf = free_snd_fd(sf);
+#if WITH_RUN
+  if (pt) free_ptree(pt);
+#endif
   if (counting)
     return(C_TO_XEN_INT(counts));
   return(XEN_FALSE);
@@ -2543,7 +2611,8 @@ apply func to samples in current channel, edname is the edit history name for th
   return(g_map_chan_1(proc, s_beg, s_end, org, snd, chn, edpos, XEN_FALSE, S_map_chan));
 }
 
-static XEN g_map_channel(XEN proc, XEN s_beg, XEN s_dur, XEN snd, XEN chn, XEN edpos, XEN org) 
+XEN g_map_channel(XEN proc, XEN s_beg, XEN s_dur, XEN snd, XEN chn, XEN edpos, XEN org);
+XEN g_map_channel(XEN proc, XEN s_beg, XEN s_dur, XEN snd, XEN chn, XEN edpos, XEN org) 
 {
   #define H_map_channel "(" S_map_channel " func &optional (start 0) dur snd chn edpos edname)\n\
 apply func to samples in current channel, edname is the edit history name for this editing operation.\n\
@@ -3561,10 +3630,35 @@ XEN_ARGIFY_7(g_clm_channel_w, g_clm_channel)
 
 void g_init_sig(void)
 {
+#if WITH_RUN
+  XEN_EVAL_C_STRING("(use-modules (ice-9 optargs))");
+  XEN_DEFINE_PROCEDURE(S_scan_channel "-1",       g_scan_channel_w, 1, 5, 0,            H_scan_channel);
+  XEN_DEFINE_PROCEDURE(S_scan_chan "-1",          g_scan_chan_w, 1, 5, 0,               H_scan_chan);
+  XEN_DEFINE_PROCEDURE(S_find "-1",               g_find_w, 1, 4, 0,                    H_find);
+  XEN_DEFINE_PROCEDURE(S_count_matches "-1",      g_count_matches_w, 1, 4, 0,           H_count_matches);
+  XEN_DEFINE_PROCEDURE(S_map_chan "-1",           g_map_chan_w, 1, 6, 0,                H_map_chan);
+  XEN_DEFINE_PROCEDURE(S_map_channel "-1",        g_map_channel_w, 1, 6, 0,             H_map_channel);
+
+  XEN_EVAL_C_STRING("(defmacro* scan-channel (form #:rest args) `(apply scan-channel-1 (list (list ',form ,form) ,@args)))");
+  scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL("scan-channel"), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(H_scan_channel));
+  XEN_EVAL_C_STRING("(defmacro* scan-chan (form #:rest args) `(apply scan-chan-1 (list (list ',form ,form) ,@args)))");
+  scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL("scan-chan"), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(H_scan_chan));
+  XEN_EVAL_C_STRING("(defmacro* find (form #:rest args) `(apply find-1 (list (list ',form ,form) ,@args)))");
+  scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL("find"), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(H_find));
+  XEN_EVAL_C_STRING("(defmacro* count-matches (form #:rest args) `(apply count-matches-1 (list (list ',form ,form) ,@args)))");
+  scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL("count-matches"), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(H_count_matches));
+  XEN_EVAL_C_STRING("(defmacro* map-channel (form #:rest args) `(apply map-channel-1 (list (list ',form ,form) ,@args)))");
+  scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL("map-channel"), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(H_map_channel));
+  XEN_EVAL_C_STRING("(defmacro* map-chan (form #:rest args) `(apply map-chan-1 (list (list ',form ,form) ,@args)))");
+  scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL("map-chan"), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(H_map_chan));
+#else
+  XEN_DEFINE_PROCEDURE(S_scan_channel,            g_scan_channel_w, 1, 5, 0,            H_scan_channel);
   XEN_DEFINE_PROCEDURE(S_scan_chan,               g_scan_chan_w, 1, 5, 0,               H_scan_chan);
-  XEN_DEFINE_PROCEDURE(S_map_chan,                g_map_chan_w, 1, 6, 0,                H_map_chan);
   XEN_DEFINE_PROCEDURE(S_find,                    g_find_w, 1, 4, 0,                    H_find);
   XEN_DEFINE_PROCEDURE(S_count_matches,           g_count_matches_w, 1, 4, 0,           H_count_matches);
+  XEN_DEFINE_PROCEDURE(S_map_chan,                g_map_chan_w, 1, 6, 0,                H_map_chan);
+  XEN_DEFINE_PROCEDURE(S_map_channel,             g_map_channel_w, 1, 6, 0,             H_map_channel);
+#endif
 
   XEN_DEFINE_PROCEDURE(S_smooth_sound,            g_smooth_sound_w, 0, 4, 0,            H_smooth_sound);
   XEN_DEFINE_PROCEDURE(S_smooth_selection,        g_smooth_selection_w, 0, 0, 0,        H_smooth_selection);
@@ -3590,15 +3684,12 @@ void g_init_sig(void)
   XEN_DEFINE_PROCEDURE(S_filter_sound,            g_filter_sound_w, 1, 4, 0,            H_filter_sound);
   XEN_DEFINE_PROCEDURE(S_filter_selection,        g_filter_selection_w, 1, 1, 0,        H_filter_selection);
 
-  XEN_DEFINE_PROCEDURE(S_scan_channel,            g_scan_channel_w, 1, 5, 0,            H_scan_channel);
-  XEN_DEFINE_PROCEDURE(S_map_channel,             g_map_channel_w, 1, 6, 0,             H_map_channel);
   XEN_DEFINE_PROCEDURE(S_reverse_channel,         g_reverse_channel_w, 0, 5, 0,         H_reverse_channel);
   XEN_DEFINE_PROCEDURE(S_clm_channel,             g_clm_channel_w, 1, 6, 0,             H_clm_channel);
   XEN_DEFINE_PROCEDURE(S_env_channel,             g_env_channel_w, 1, 5, 0,             H_env_channel);
   XEN_DEFINE_PROCEDURE(S_smooth_channel,          g_smooth_channel_w, 0, 5, 0,          H_smooth_channel);
   XEN_DEFINE_PROCEDURE(S_src_channel,             g_src_channel_w, 1, 5, 0,             H_src_channel);
   XEN_DEFINE_PROCEDURE(S_pad_channel,             g_pad_channel_w, 2, 3, 0,             H_pad_channel);
-
 }
 
 

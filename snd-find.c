@@ -34,6 +34,7 @@ static int run_global_search (snd_state *ss, gfd *g)
 	      if (!((g->cps[i])->sound)) return(-1);
 	      sf = g->fds[i]; 
 	      samp = read_sample_to_float(sf);
+	      /* TODO: search proc as ptree */
 	      res = XEN_CALL_1(ss->search_proc,
 			       C_TO_XEN_DOUBLE((double)(samp)), 
 			       "global search func");
@@ -197,6 +198,7 @@ static int cursor_find_forward(snd_info *sp, chan_info *cp, int count)
   end = current_ed_samples(cp);
   for (i = start, passes = 0; i < end; i++, passes++)
     {
+      /* sp search proc as ptree */
       res = XEN_CALL_1(sp->search_proc, 
 		       C_TO_XEN_DOUBLE((double)(read_sample_to_float(sf))), 
 		       "local search func");
@@ -247,6 +249,7 @@ static int cursor_find_backward(snd_info *sp, chan_info *cp, int count)
     }
   for (i = start, passes = 0; i >= 0; i--, passes++)
     {
+      /* sp search proc as ptree */
       res = XEN_CALL_1(sp->search_proc, 
 		       C_TO_XEN_DOUBLE((double)(read_sample_to_float(sf))), 
 		       "local search func");
