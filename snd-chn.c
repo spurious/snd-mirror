@@ -1020,8 +1020,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	}
       else
 	{
-#if 0
-	  /* if not SNDLIB_USE_FLOATS? */
+#if (!SNDLIB_USE_FLOATS)
 	  MUS_SAMPLE_TYPE ay0, ay1, isamp;
 	  Locus yval;
 	  Float yscl;
@@ -1031,15 +1030,20 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	  for (j = 0, x = ((double)(ap->losamp) / cur_srate); j < grfpts; j++, x += incr)
 	    {
 	      isamp = read_sample(sf);
-	      if (isamp >= ay1) yval = ap->y_axis_y1;
+	      if (isamp >= ay1) 
+		yval = ap->y_axis_y1;
 	      else 
-		if (isamp <= ay0) yval = ap->y_axis_y0;
+		{
+		  if (isamp <= ay0) 
+		    yval = ap->y_axis_y0;
 		else yval = (Locus)(ap->y_base + isamp * yscl);
+		}
 	      set_grf_point(local_grf_x(x, ap), j, yval);
 	    }
-#endif
+#else
 	  for (j = 0, x = ((double)(ap->losamp) / cur_srate); j < grfpts; j++, x += incr)
 	    set_grf_point(local_grf_x(x, ap), j, local_grf_y(read_sample_to_float(sf), ap));
+#endif
 	}
       if (sp)
 	{

@@ -5410,6 +5410,7 @@ void mus_audio_restore (void)
  */
 
 /* apparently input other than 8000 is 16-bit, 8000 is (?) mulaw */
+/* apparently Sun-on-Intel reads/writes little-endian */
 
 #if (defined(SUN) || defined(OPENBSD)) && (!(defined(AUDIO_OK)))
 #define AUDIO_OK
@@ -5502,8 +5503,11 @@ static int to_sun_format(int format)
 {
   switch (format)
     {
+#if MUS_LITTLE_ENDIAN
     case MUS_LSHORT: /* Solaris on Intel? */
+#else
     case MUS_BSHORT: 
+#endif
 #ifdef OPENBSD
       return(AUDIO_ENCODING_PCM16); 
 #else
@@ -5826,7 +5830,7 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
 	  val[port] = MUS_AUDIO_DAC_OUT; 
 	  port++;
 	}
-      val[0] = port-1;
+      val[0] = port - 1;
     }
   else
     {
@@ -5859,6 +5863,9 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
 	    }
 #endif
           if (chan > port) val[port] = MUS_MULAW;
+#if MUS_LITTLE_ENDIAN
+	  if (chan > (port + 1)) val[++port] = MUS_LSHORT;
+#endif
           val[0] = port;
         }
       else

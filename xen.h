@@ -165,7 +165,6 @@
   /* this assumes its argument is a XEN string and does not allocate new space */
 #endif
 #define C_TO_XEN_STRING(a)            scm_makfrom0str(a)
-#define XEN_TO_NEW_C_STRING(a)        strdup(C_TO_XEN_STRING(a))
 
 #define C_TO_XEN_BOOLEAN(a)           ((a) ? XEN_TRUE : XEN_FALSE)
 #define XEN_TO_C_BOOLEAN_OR_TRUE(a)   ((XEN_FALSE_P(a) || ((SCM_INUMP(a)) && (SCM_INUM(a) == 0))) ? 0 : 1)
@@ -526,7 +525,6 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 
 #define C_TO_XEN_STRING(a)                rb_str_new2((a) ? a : "")
 #define XEN_TO_C_STRING(Str)              RSTRING(Str)->ptr
-#define XEN_TO_NEW_C_STRING(a)            strdup(RSTRING(a)->ptr)
 
 #define C_TO_XEN_BOOLEAN(a)               ((a) ? Qtrue : Qfalse)
 #define XEN_TO_C_BOOLEAN_OR_TRUE(a)       ((XEN_FALSE_P(a) ? 0 : 1))
@@ -876,7 +874,6 @@ XEN xen_rb_copy_list(XEN val); /* Ruby arrays (lists) are passed by reference */
 #define C_TO_SMALL_XEN_INT(a) a
 #define XEN_TO_SMALL_C_INT(a) a
 #define C_TO_XEN_STRING(a) 0
-#define XEN_TO_NEW_C_STRING(a) NULL
 #define C_TO_XEN_BOOLEAN(a) 0
 #define C_STRING_TO_XEN_SYMBOL(a) 0
 #define XEN_TO_C_BOOLEAN_OR_TRUE(a) 0

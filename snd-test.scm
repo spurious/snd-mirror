@@ -12779,6 +12779,76 @@
 			   (vct-fill! (make-vct 1) -1.0) "at end")
 	  (close-sound ind))
 
+	(for-each
+	 (lambda (dur)
+	   (let* ((i1 (new-sound))
+		  (i2 (new-sound "fmv1.snd" mus-next mus-bfloat 44100 2))
+		  (v (vct-fill! (make-vct dur) 1.0)))
+	     (define (check-env name r e)
+	       (call-with-current-continuation
+		(lambda (break)
+		  (do ((i 0 (1+ i)))
+		      ((= i dur))
+		    (let ((rv (r))
+			  (ev (e)))
+		      (if (fneq rv ev) 
+			  (begin
+			    (snd-display ";~A env check [~A]: ~A ~A" name i rv ev)
+			    (throw 'uhoh)
+			    (break))))))))
+	     (define (check-envs name r-maker e-maker)
+	       (check-env (format #f "~A-1-0" name) (r-maker i1 0) (e-maker i1 0))
+	       (check-env (format #f "~A-2-0" name) (r-maker i2 0) (e-maker i2 0))
+	       (check-env (format #f "~A-2-1" name) (r-maker i2 1) (e-maker i2 1)))
+	     (vct->channel v 0 dur i1)
+	     (vct->channel v 0 dur i2 0)
+	     (vct->channel v 0 dur i2 1)
+	     (set! (sync i1) 1)
+	     (set! (sync i2) 1)
+	     (env-sound '(0 0 1 1))
+	     (check-envs 'ramps (lambda (s c) (make-sample-reader 0 s c)) (lambda (s c) (make-env '(0 0 1 1) :end (1- dur))))
+	     (reverse-sound)
+	     (check-envs 'rev-ramps (lambda (s c) (make-sample-reader 0 s c)) (lambda (s c) (make-env '(0 1 1 0) :end (1- dur))))
+	     (undo 2)
+	     (env-sound '(0 0 1 1 2 0))
+	     (check-envs 'ramps (lambda (s c) (make-sample-reader 0 s c)) (lambda (s c) (make-env '(0 0 1 1 2 0) :end (1- dur))))
+	     (undo 1)
+	     (scale-by .5)
+	     (env-sound '(0 0 1 1))
+	     (check-envs 'scl-ramps (lambda (s c) (make-sample-reader 0 s c)) (lambda (s c) (make-env '(0 0 1 1) :end (1- dur) :scaler .5)))
+	     (reverse-sound)
+	     (check-envs 'scl-rev-ramps (lambda (s c) (make-sample-reader 0)) (lambda (s c) (make-env '(0 1 1 0) :end (1- dur) :scaler .5)))
+	     (undo 3)
+	     (env-sound '(0 0 1 1))
+	     (env-sound '(0 0 1 1))
+	     (check-envs 'unenv-ramps
+			 (lambda (s c)
+			   (make-sample-reader 0 s c))
+			 (lambda (s c)
+			   (let ((e (make-env '(0 0 1 1) :end (1- dur))))
+			     (lambda ()
+			       (let ((val (env e)))
+				 (* val val))))))
+	     (undo 2)
+	     (env-sound '(0 0 1 1))
+	     (let ((v1 (vct-fill! (make-vct 3) 1.0)))
+	       (vct->channel v1 3 3 i1)
+	       (vct->channel v1 3 3 i2 0)
+	       (vct->channel v1 3 3 i2 1)
+	       (let ((vals (channel->vct 0 10 i1 0)))
+		 (if (not (vequal vals (vct 0.0 (/ 1.111 dur) (/ 2.222 dur) 1 1 1 (/ 6.66  dur) (/ 7.77  dur) (/ 8.88  dur) (/ 10.0 dur))))
+		     (snd-display "; 1 0 vals: ~A" vals))
+		 (set! vals (channel->vct 0 10 i2 0))
+		 (if (not (vequal vals (vct 0.0 (/ 1.111 dur) (/ 2.222 dur) 1 1 1 (/ 6.66  dur) (/ 7.77  dur) (/ 8.88  dur) (/ 10.0 dur))))
+		     (snd-display "; 2 0 vals: ~A" vals))
+		 (set! vals (channel->vct 0 10 i2 1))
+		 (if (not (vequal vals (vct 0.0 (/ 1.111 dur) (/ 2.222 dur) 1 1 1 (/ 6.66  dur) (/ 7.77  dur) (/ 8.88  dur) (/ 10.0 dur))))
+		     (snd-display "; 2 1 vals: ~A" vals))))
+	     (close-sound i1)
+	     (close-sound i2)
+	     ))
+	 (list 10 10000))
+
 	(if all-args
 	    (let ((data (map
 			 (lambda (sound)
@@ -19668,7 +19738,7 @@ EDITS: 5
 	       vct-length vct-multiply! vct-offset! vct-ref vct-scale! vct-fill! vct-set! mus-audio-describe vct-peak
 	       vct? list->vct vct->list vector->vct vct->vector vct-move!  vct-subseq vct little-endian?
 	       clm-channel env-channel map-channel scan-channel play-channel reverse-channel 
-	       smooth-channel vct->channel channel->vct src-channel scale-channel pad-channel
+	       smooth-channel vct->channel channel->vct src-channel scale-channel ramp-channel pad-channel
 	       cursor-position clear-listener mus-sound-prune mus-sound-forget
 	       ))
 
@@ -20119,7 +20189,7 @@ EDITS: 5
 			  src-sound transform-sample transform-samples transform-samples->vct scale-sound-by scale-sound-to
 			  transform-samples-size transform-type undo update-transform update-time-graph update-lisp-graph
 			  update-sound wavelet-type graph-time? time-graph-type wavo-hop wavo-trace x-bounds x-position-slider
-			  x->position x-zoom-slider y-bounds y-position-slider y->position y-zoom-slider zero-pad )))
+			  x->position x-zoom-slider y-bounds y-position-slider y->position y-zoom-slider zero-pad scale-channel)))
 
         (let ((ctr 0))
 	  (for-each (lambda (n)

@@ -1,8 +1,5 @@
 #include "snd.h"
 
-/* TODO: check more of the XEN_CALLs for possible catch removal
- */
-
 /* collect syncd chans */
 typedef struct {
   sync_info *si;
@@ -1748,10 +1745,6 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
    *    if linear segments and no underlying ramps, use sequence of ramp_channels and scale_channels to mimic env
    *    else use mus_env and multiply every sample
    */
-
-  /* TODO: split this into 4 functions! */
-  /* TODO: test the sync business */
-
   snd_fd *sf = NULL;
   snd_info *sp;
   sync_info *si;
@@ -2082,7 +2075,6 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 				  env_to_string(newe), 
 				  (len > 1) ? (passes[len - 2] - 1) : dur,
 				  beg, dur);
-	  /* TODO: does this need snd(sfile?) chn? */
 	  free_env(newe);
 	  as_one_edit(si->cps[i], local_edpos + 1, new_origin);
 	  FREE(new_origin);

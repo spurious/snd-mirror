@@ -222,7 +222,7 @@ static void check_for_first_edit(chan_info *cp)
  * redo: push position foward
  * No actual changes are flushed out to the file system until the file is saved.
  *
- * the editing possibilities are insert, change, delete, scaling, zero.  All input goes through these lists.
+ * the editing possibilities are insert, change, delete, scaling, zero, ramp.  All input goes through these lists.
  *   others are being added slowly ("virtual" edits)
  */
 
@@ -1507,7 +1507,6 @@ void ramp_channel(chan_info *cp, Float rmp0, Float rmp1, int beg, int num, int p
 	  FRAGMENT_RAMP_END(new_ed, i) = FLOAT_AS_INT(seg1);
 	  FRAGMENT_TYPE(new_ed, i) = ED_RAMP;
 	}
-      /* amp_env_scale_by(cp, scl, pos); */
     }
   else 
     {
@@ -1526,7 +1525,6 @@ void ramp_channel(chan_info *cp, Float rmp0, Float rmp1, int beg, int num, int p
 	      FRAGMENT_TYPE(new_ed, i) = ED_RAMP;
 	    }
 	}
-      /* amp_env_scale_selection_by(cp, scl, beg, num, pos); */
     }
   new_ed->sfnum = PACK_EDIT(RAMP_EDIT, 0);
   new_ed->origin = mus_format("%s %.4f %.4f %d %d", S_ramp_channel, rmp0, rmp1, beg, num);
@@ -3246,7 +3244,7 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
       cur_edits = (int *)CALLOC(chans, sizeof(int));
       chan_ctr = 0;
       map_over_chans(ss, init_as_one_edit, (void *)cur_edits); /* redo here can't make sense, can it? */
-      result = XEN_CALL_0(proc, S_as_one_edit);
+      result = XEN_CALL_0_NO_CATCH(proc, S_as_one_edit);
       chan_ctr = 0;
       map_over_chans(ss, finish_as_one_edit, (void *)cur_edits);
       FREE(cur_edits);

@@ -1,7 +1,5 @@
 #include "snd.h"
 
-/* TODO: specialized readers (can embed amp as scaler, etc) */
-
 /* this was sound-oriented; changed to be channel-oriented 31-Aug-00 */
 /* removed reverb-control-procedures (with freeverb and fcomb) and contrast-control-procedure 13-Dec-01 */
 
