@@ -231,12 +231,6 @@ static void gfft_window(snd_state *ss, int row)
 			FFT_WINDOWS[fft_window(ss)]);
   get_fft_window_data(ss);
   graph_redisplay(ss);
-  if (!(ss->using_schemes))
-    {
-      if (fft_window_beta_in_use(fft_window(ss)))
-	set_background(window_beta_scale, (ss->sgx)->highlight_color);
-      else set_background(window_beta_scale, (ss->sgx)->basic_color);
-    }
 }
 
 static void window_browse_callback(GtkTreeSelection *selection, gpointer *gp)

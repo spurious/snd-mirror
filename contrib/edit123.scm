@@ -1,6 +1,6 @@
 ; easy edit
 ;
-;version 0.7a
+;version 0.8
 ;keybindings and functions to make sound editing as easy and convenient
 ;as pressing 1 2 3
 ;1 set mark
@@ -37,6 +37,89 @@
 (define status 0)
 (define curpos 0)
 (define is-playing 0)
+
+(define open-next-file-in-directory
+  (let ((last-file-opened #f)
+	(current-directory #f)
+	(current-sorted-files #f))
+
+    (define (file-from-path curfile)
+      (let ((last-slash 0))
+	(do ((i 0 (1+ i)))
+	    ((= i (string-length curfile)))
+	  (if (char=? (string-ref curfile i) #\/)
+	      (set! last-slash i)))
+	(substring curfile (1+ last-slash))))
+
+    (define (directory-from-path curfile)
+      (let ((last-slash 0))
+	(do ((i 0 (1+ i)))
+	    ((= i (string-length curfile)))
+	  (if (char=? (string-ref curfile i) #\/)
+	      (set! last-slash i)))
+	(substring curfile 0 last-slash)))
+
+    (define (find-next-file)
+      ;; find the next file in the sorted list, with wrap-around
+      (let ((choose-next (not (string? last-file-opened)))
+	    (just-filename (file-from-path last-file-opened)))
+	(call-with-current-continuation
+	 (lambda (return)
+	   (for-each
+	    (lambda (file)
+	      (if choose-next
+		  (return file)
+		  (if (string=? file just-filename)
+		      (set! choose-next #t))))
+	    current-sorted-files)
+	   ;; if we get here we wrapped around
+	   (car current-sorted-files)))))
+
+    (define (get-current-files dir)
+      (set! current-directory dir)
+      (set! current-sorted-files (sort (sound-files-in-directory dir) string<?)))
+
+    (define (get-current-directory filename)
+      (set! last-file-opened filename)
+      (display last-file-opened)
+      (let ((new-path (directory-from-path (mus-expand-filename filename))))
+	(if (or (not (string? current-directory))
+		(not (string=? current-directory new-path)))
+	    (get-current-files new-path)))
+      #f)
+
+    (lambda ()
+      (if (not (member get-current-files (hook->list open-hook)))
+	  (add-hook! open-hook get-current-directory))
+      (if (and (not (string? last-file-opened))
+	       (not (null? (sounds))))
+	  (set! last-file-opened (file-name (or (selected-sound)
+						(car (sounds))))))
+      (if (not current-directory)
+	  (if (null? (sounds))
+	      (get-current-files (getcwd))
+	      (get-current-files (directory-from-path last-file-opened))))
+      (if (null? current-sorted-files)
+	  (throw 'no-such-file (list "open-next-file-in-directory" current-directory))
+	  (let ((next-file (find-next-file)))
+	    (if (find-sound next-file)
+		(throw 'file-already-open (list "open-next-file-in-directory" next-file))
+		(begin
+		  (if (not (null? (sounds)))
+		      (close-sound (or (selected-sound)  ; not sure this is what you want -- closes current file
+				       (car (sounds)))))
+		  (open-sound next-file)))))
+      #t)))
+
+(define (click-middle-button-to-open-next-file-in-directory)
+  (add-hook! mouse-click-hook
+	     (lambda (snd chn button state x y axis)
+	       (if (= button 2)
+		   (open-next-file-in-directory)
+		   #f)))) ; else handle it normally
+
+;; or you could bind this (i.e. "(open-next-file-in-directory)") to some key.
+
 
 
 (add-hook! after-open-hook
@@ -277,13 +360,13 @@
 
 (define (my_save)
 (save-sound )
-(close-sound)
+(open-next-file-in-directory)
 )
 
-(bind-key (char->integer #\d) 0 (lambda ()(delete-selection-and-smooth)))
+(bind-key (char->integer #\d) 0  (lambda ()(delete-selection)))
 (bind-key (char->integer #\s) 0  (lambda () ( my_save)))
-
-
+(bind-key (char->integer #\c) 0  (lambda () (my_crop)))
+(bind-key (char->integer #\n) 0  (lambda () (open-next-file-in-directory)))
 (bind-key (char->integer #\ ) 8  (lambda () (stop-song)))
 (bind-key (char->integer #\c) 0  (lambda () (my_crop)))
 (bind-key (char->integer #\x) 0  (lambda () (half-selection)))
@@ -298,7 +381,7 @@
 (bind-key (char->integer #\p) 8 (lambda () (toggle-play)))
 (bind-key (char->integer #\3) 8 (lambda () (forward-selection)))
 (bind-key (char->integer #\2) 8 (lambda () (backward-selection)))
-(bind-key (char->integer #\c) 0  (lambda () (my_crop)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; status 
 ;;;;             0 = new

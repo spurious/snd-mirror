@@ -524,7 +524,7 @@ GtkWidget *make_mix_panel(snd_state *ss)
       gtk_widget_show(w_id_label);
 
       w_id = snd_entry_new(ss, rc, FALSE);
-      set_widget_width(w_id, 60);
+      /* set_widget_width(w_id, 60); */
       g_signal_connect_closure_by_id(GTK_OBJECT(w_id),
 				     g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(w_id))),
 				     0,

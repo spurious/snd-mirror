@@ -1301,13 +1301,13 @@ static GtkWidget *make_button_matrix(snd_state *ss, PANE *p, char *name, GtkWidg
   gtk_widget_show(outer_hbox);
 
   left_vbox = gtk_vbox_new(FALSE, 0);
-  set_widget_width(left_vbox, 10);
+  /* set_widget_width(left_vbox, 10); */
   gtk_box_pack_start(GTK_BOX(outer_hbox), left_vbox, FALSE, FALSE, 0);
   gtk_widget_show(left_vbox);
 
   buttons = gtk_table_new(ins, outs, TRUE);
   gtk_box_pack_start(GTK_BOX(outer_hbox), buttons, TRUE, TRUE, 0);
-  set_widget_width(buttons, outs*30);
+  /* set_widget_width(buttons, outs * 30); */
   gtk_widget_show(buttons);
 
   diag_button = gtk_label_new("/ ");

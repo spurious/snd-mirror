@@ -490,7 +490,6 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 		    (strcmp(argv[i], "-batch") == 0))
 		  batch = 1;
 
-  ss->using_schemes = 0;
   set_auto_resize(ss, AUTO_RESIZE_DEFAULT);
   ss->zoom_slider_width = ZOOM_SLIDER_WIDTH;
   ss->position_slider_width = POSITION_SLIDER_WIDTH;
@@ -660,7 +659,6 @@ static XEN g_parse_rc_file(XEN name)
   if (XEN_STRING_P(name))
     gtk_rc_parse(XEN_TO_C_STRING(name));
   ss = get_global_state();
-  ss->using_schemes = TRUE;
   return(XEN_FALSE);
 }
 

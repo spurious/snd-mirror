@@ -747,7 +747,6 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       adjs[W_sx_adj] = gtk_adjustment_new(0.0, 0.0, 1.00, 0.001, 0.01, .01);
       cw[W_sx] = gtk_hscrollbar_new(GTK_ADJUSTMENT(adjs[W_sx_adj]));
       gtk_box_pack_start(GTK_BOX(cw[W_bottom_scrollers]), cw[W_sx], TRUE, TRUE, 0);
-      set_background(cw[W_sx], (ss->sgx)->position_color);
       set_user_data(GTK_OBJECT(adjs[W_sx_adj]), (gpointer)cp);
       g_signal_connect_closure_by_id(GTK_OBJECT(adjs[W_sx_adj]),
 				     g_signal_lookup("value_changed", G_OBJECT_TYPE(GTK_OBJECT(adjs[W_sx_adj]))),
@@ -758,7 +757,6 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 
       adjs[W_zx_adj] = gtk_adjustment_new(0.0, 0.0, 1.1, 0.001, 0.01, .1);
       cw[W_zx] = gtk_hscrollbar_new(GTK_ADJUSTMENT(adjs[W_zx_adj]));
-      set_background(cw[W_zx], (ss->sgx)->zoom_color);
       gtk_box_pack_start(GTK_BOX(cw[W_bottom_scrollers]), cw[W_zx], TRUE, TRUE, 0);
       set_user_data(GTK_OBJECT(adjs[W_zx_adj]), (gpointer)cp);
       g_signal_connect_closure_by_id(GTK_OBJECT(adjs[W_zx_adj]),
@@ -827,8 +825,8 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 
 	  cw[W_f] = gtk_arrow_new(GTK_ARROW_UP, GTK_SHADOW_ETCHED_OUT);
 	  gtk_container_add(GTK_CONTAINER(cw[W_up_ev]), cw[W_f]);
-	  set_background(cw[W_f], (ss->sgx)->zoom_color);
-	  gtk_window_resize(GTK_WINDOW(cw[W_f]), 14, 14);
+	  /* set_background(cw[W_f], (ss->sgx)->zoom_color); */
+	  /* gtk_window_resize(GTK_WINDOW(cw[W_f]), 14, 14); */
 	  gtk_widget_show(cw[W_f]);
 
 	  cw[W_down_ev] = gtk_event_box_new();
@@ -837,14 +835,13 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 
 	  cw[W_w] = gtk_arrow_new(GTK_ARROW_DOWN, GTK_SHADOW_ETCHED_OUT);
 	  gtk_container_add(GTK_CONTAINER(cw[W_down_ev]), cw[W_w]);
-	  set_background(cw[W_w], (ss->sgx)->zoom_color);
-	  gtk_window_resize(GTK_WINDOW(cw[W_w]), 14, 14);
+	  /* set_background(cw[W_w], (ss->sgx)->zoom_color); */
+	  /* gtk_window_resize(GTK_WINDOW(cw[W_w]), 14, 14); */
 	  gtk_widget_show(cw[W_w]);
 	}
 
       adjs[W_zy_adj] = gtk_adjustment_new(0.0, 0.0, 1.1, 0.001, 0.01, .1);   /* 0 -> 1 (upside down) */
       cw[W_zy] = gtk_vscrollbar_new(GTK_ADJUSTMENT(adjs[W_zy_adj]));
-      set_background(cw[W_zy], (ss->sgx)->zoom_color);
       gtk_table_attach(GTK_TABLE(cw[W_graph_window]), cw[W_zy], 0, 1, 0, 1, 
 		       (GtkAttachOptions)(GTK_FILL), 
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 
@@ -859,7 +856,6 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 
       adjs[W_sy_adj] = gtk_adjustment_new(0.5, 0.0, 1.01, 0.001, 0.01, .01);
       cw[W_sy] = gtk_vscrollbar_new(GTK_ADJUSTMENT(adjs[W_sy_adj]));
-      set_background(cw[W_sy], (ss->sgx)->position_color);
       gtk_table_attach(GTK_TABLE(cw[W_graph_window]), cw[W_sy], 1, 2, 0, 1, 
 		       (GtkAttachOptions)(GTK_FILL), 
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 
@@ -876,7 +872,6 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	{
 	  adjs[W_gsy_adj] = gtk_adjustment_new(0.0, 0.0, 1.0, 0.001, 0.01, .01);
 	  cw[W_gsy] = gtk_vscrollbar_new(GTK_ADJUSTMENT(adjs[W_gsy_adj]));
-	  set_background(cw[W_gsy], (ss->sgx)->position_color);
 	  gtk_table_attach(GTK_TABLE(cw[W_graph_window]), cw[W_gsy], 3, 4, 0, 2, 
 			   (GtkAttachOptions)(GTK_FILL), 
 			   (GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 
@@ -891,7 +886,6 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 
 	  adjs[W_gzy_adj] = gtk_adjustment_new(1.0, 0.0, 1.00, 0.001, 0.01, .01);
 	  cw[W_gzy] = gtk_vscrollbar_new(GTK_ADJUSTMENT(adjs[W_gzy_adj]));
-	  set_background(cw[W_gzy], (ss->sgx)->zoom_color);
 	  gtk_table_attach(GTK_TABLE(cw[W_graph_window]), cw[W_gzy], 4, 5, 0, 2, 
 			   (GtkAttachOptions)(GTK_FILL), 
 			   (GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 

@@ -597,6 +597,11 @@ static XEN g_widget_text(XEN wid)
 	{
 	  if ((GTK_IS_BIN(w)) && (GTK_IS_LABEL(GTK_BIN(w)->child)))
 	    return(C_TO_XEN_STRING((char *)gtk_label_get_text(GTK_LABEL(GTK_BIN(w)->child))));
+	  else
+	    {
+	      if (GTK_IS_LABEL(w))
+		return(C_TO_XEN_STRING((char *)gtk_label_get_text(GTK_LABEL(w))));
+	    }
 	}
 #endif
     }

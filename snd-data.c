@@ -659,7 +659,9 @@ static void select_sound (snd_state *ss, snd_info *sp)
 	     S_select_sound_hook);
   if (ss->selected_sound != sp->index)
     {
+#if (!USE_GTK)
       if (!ss->using_schemes)
+#endif
 	{
 	  if (ss->selected_sound != NO_SELECTION) osp = ss->sounds[ss->selected_sound];
 	  if ((osp) && (sp != osp) && (osp->inuse)) 

@@ -55,6 +55,13 @@
 (define extra-ints '())
 (define extra-strings '())
 
+(define funcs-21 '())
+(define types-21 '())
+(define casts-21 '())
+(define checks-21 '())
+(define check-types-21 '())
+(define ulongs-21 '())
+
 (define idlers (list "gtk_idle_remove" "gtk_idle_remove_by_data" 
 		     "gtk_quit_remove" "gtk_quit_remove_by_data" 
 		     "gtk_input_remove" "gtk_key_snooper_remove"))
@@ -189,7 +196,7 @@
 		 (char=? (string-ref name i) #\*))
 	     (return (substring name 0 i))))))))
 
-(define (parse-args args broken)
+(define (parse-args args extra)
   (let ((data '())
 	(sp -1)
 	(type #f)
@@ -227,12 +234,16 @@
 				    (set! data (cons (list type given-name) data)))))
 			(if reftype (set! type reftype))
 
-			(if (eq? broken 'extra)
+			(if (eq? extra 'extra)
 			    (if (and (not (member type types))
 				     (not (member type extra-types)))
 				(set! extra-types (cons type extra-types)))
-			    (if (not (member type types))
-				(set! types (cons type types))))
+			    (if (eq? extra '21)
+				(if (and (not (member type types))
+					 (not (member type types-21)))
+				    (set! types-21 (cons type types-21)))
+				(if (not (member type types))
+				    (set! types (cons type types)))))
 			(set! type #f))
 		      (if (> i (1+ sp))
 			  (set! type (substring args (1+ sp) i))))
@@ -613,6 +624,19 @@
 	    (set! extra-funcs (cons (list name type strs args) extra-funcs))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
+(define* (CFNC-21 data)
+  (let ((name (cadr-str data))
+	(args (caddr-str data)))
+    (if (assoc name names)
+	(no-way "~A CFNC-21~%" name)
+	(let ((type (car-str data)))
+	  (if (and (not (member type types))
+		   (not (member type types-21)))
+	      (set! types-21 (cons type types-21)))
+	  (let ((strs (parse-args args '21)))
+	    (set! funcs-21 (cons (list name type strs args) funcs-21))
+	    (set! names (cons (cons name (func-type strs)) names)))))))
+
 (define (helpify name type args)
   (let* ((initial (format #f "  #define H_~A \"~A ~A(" name type name))
 	 (line-len (string-length initial))
@@ -679,6 +703,13 @@
 	(set! ulongs (cons (list name type spec-name) ulongs))
 	(set! names (cons (cons name 'ulong) names)))))
 
+(define* (CLNG-21 name #:optional type spec-name)
+  (if (assoc name names)
+      (no-way "~A CLNG-21~%" name)
+      (begin
+	(set! ulongs-21 (cons (list name type spec-name) ulongs-21))
+	(set! names (cons (cons name 'ulong) names)))))
+
 (define* (CINT name #:optional type)
   (if (assoc name names)
       (no-way "~A CINT~%" name)
@@ -702,13 +733,30 @@
 	(set! casts (cons (list name type) casts))
 	(set! names (cons (cons name 'def) names)))))
 
-(define (CCHK name type) ; this is the check = (eq? type (car obj))
+(define (CCAST-21 name type)
+  (if (assoc name names)
+      (no-way "~A CCAST-21~%" name)
+      (begin
+	(set! casts-21 (cons (list name type) casts-21))
+	(set! names (cons (cons name 'def) names)))))
+
+(define (CCHK name type)
   (if (assoc name names)
       (no-way "~A CCHK~%" name)
       (begin
 	(if (not (member type check-types))
 	    (set! check-types (cons type check-types)))
 	(set! checks (cons (list name type) checks))
+	(set! names (cons (cons name 'def) names)))))
+
+(define (CCHK-21 name type)
+  (if (assoc name names)
+      (no-way "~A CCHK-21~%" name)
+      (begin
+	(if (and (not (member type check-types))
+		 (not (member type check-types-21)))
+	    (set! check-types-21 (cons type check-types-21)))
+	(set! checks-21 (cons (list name type) checks-21))
 	(set! names (cons (cons name 'def) names)))))
 
 (define (CCAST-extra name type)
@@ -792,6 +840,11 @@
   (thunk)
   (dpy "#endif~%~%"))
 
+(define (with-21 dpy thunk)
+  (dpy "#if HAVE_GDK_DRAW_PIXBUF~%")
+  (thunk)
+  (dpy "#endif~%~%"))
+
 
 ;;; ---------------------------------------- write output files ----------------------------------------
 (hey "/* xg.c: Guile and Ruby bindings for gdk/gtk/pango, some of glib~%")
@@ -801,6 +854,7 @@
 (hey " *   PANGO_ENABLE_ENGINE and PANGO_ENABLE_BACKEND are handled together, and may be removed later~%")
 (hey " *~%")
 (hey " *   other flags:~%")
+(hey " *     HAVE_GDK_DRAW_PIXBUF for gtk+-2.1 additions~%")
 
 (let ((ifs '()))
   (for-each
@@ -851,6 +905,7 @@
 (hey " * ~A: test suite (snd-test 24)~%" (string-append "T" "ODO"))
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     28-Oct:    gtk 2.1 additions.~%")
 (hey " *     25-Oct:    removed (deprecated) gdk_set_pointer_hooks~%")
 (hey " *     23-Oct:    gtk_init and friends ref args ignored~%")
 (hey " *     31-Jul:    removed GTK 1.n support~%")
@@ -999,7 +1054,13 @@
 (if (not (null? extra-types)) 
     (with-extra hey (lambda () 
 		      (for-each type-it (reverse extra-types))
-		      (for-each check-type-it  (reverse extra-types)))))
+		      (for-each check-type-it (reverse extra-types)))))
+
+(if (not (null? types-21))
+    (with-21 hey
+	     (lambda ()
+	       (for-each type-it (reverse types-21))
+	       (for-each check-type-it (reverse check-types-21)))))
 
 (hey "/* -------------------------------- gc protection -------------------------------- */~%")
 (hey "~%")
@@ -1463,6 +1524,7 @@
 
 (for-each handle-func (reverse funcs))
 (if (not (null? extra-funcs)) (with-extra hey (lambda () (for-each handle-func (reverse extra-funcs)))))
+(if (not (null? funcs-21)) (with-21 hey (lambda () (for-each handle-func (reverse funcs-21)))))
 
 (define cast-it
  (lambda (cast)
@@ -1473,6 +1535,16 @@
 
 (for-each cast-it (reverse casts))
 (if (not (null? extra-casts)) (with-extra hey (lambda () (for-each cast-it (reverse extra-casts)))))
+(if (not (null? casts-21)) (with-21 hey (lambda () (for-each cast-it (reverse casts-21)))))
+
+;;; checks have to use the built-in macros, not local symbol-based type checks
+(define (make-check func)
+  (hey "static XEN gxg_~A(XEN obj)" (no-arg (car func)))
+  (hey " {return(C_TO_XEN_BOOLEAN(XEN_LIST_P(obj) && ~A((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}~%" (no-arg (car func))))
+
+(for-each make-check (reverse checks))
+(if (not (null? extra-checks)) (with-extra say-hey (lambda () (for-each make-check (reverse extra-checks)))))
+(if (not (null? checks-21)) (with-21 say-hey (lambda () (for-each make-check (reverse checks-21)))))
 
 
 ;;; ---------------- Ruby step 1 ----------------
@@ -1497,14 +1569,17 @@
 	 
 (for-each argify-func (reverse funcs))
 (if (not (null? extra-funcs)) (with-extra say (lambda () (for-each argify-func (reverse extra-funcs)))))
+(if (not (null? funcs-21)) (with-21 say (lambda () (for-each argify-func (reverse funcs-21)))))
 
 (define (ruby-cast func) (say "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func)))) 
 (for-each ruby-cast (reverse casts))
-(if (not (null? extra-casts)) (with-extra say (lambda () (for-each ruby-cast (reverse extra-funcs)))))
+(if (not (null? extra-casts)) (with-extra say (lambda () (for-each ruby-cast (reverse extra-casts)))))
+(if (not (null? casts-21)) (with-21 say (lambda () (for-each ruby-cast (reverse casts-21)))))
 
 (define (ruby-check func) (say "XEN_NARGIFY_1(XEN_~A_p_w, XEN_~A_p)~%" (no-stars (cadr func)) (no-stars (cadr func)))) 
 (for-each ruby-check (reverse checks))
 (if (not (null? extra-checks)) (with-extra say (lambda () (for-each ruby-check (reverse extra-checks)))))
+(if (not (null? checks-21)) (with-21 say (lambda () (for-each ruby-check (reverse checks-21)))))
 
 (for-each (lambda (field) (say "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" field field)) struct-fields)
 (for-each (lambda (struct) 
@@ -1557,6 +1632,7 @@
 
 (for-each defun (reverse funcs))
 (if (not (null? extra-funcs)) (with-extra say-hey (lambda () (for-each defun (reverse extra-funcs)))))
+(if (not (null? funcs-21)) (with-21 say-hey (lambda () (for-each defun (reverse funcs-21)))))
 
 (define (cast-out func)
   (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-arg (car func)))
@@ -1564,13 +1640,15 @@
 
 (for-each cast-out (reverse casts))
 (if (not (null? extra-casts)) (with-extra say-hey (lambda () (for-each cast-out (reverse extra-casts)))))
+(if (not (null? casts-21)) (with-21 say-hey (lambda () (for-each cast-out (reverse casts-21)))))
 
 (define (check-out func)
-  (hey "  XG_DEFINE_PROCEDURE(~A, XEN_~A_p, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-stars (cadr func)))
-  (say "  XG_DEFINE_PROCEDURE(~A, XEN_~A_p_w, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-stars (cadr func))))
+  (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-arg (car func)))
+  (say "  XG_DEFINE_PROCEDURE(~A, gxg_~A_w, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-arg (car func))))
 
 (for-each check-out (reverse checks))
 (if (not (null? extra-checks)) (with-extra say-hey (lambda () (for-each check-out (reverse extra-checks)))))
+(if (not (null? checks-21)) (with-21 say-hey (lambda () (for-each check-out (reverse checks-21)))))
 
 (say-hey "}~%~%")
 (hey "#endif~%")
@@ -1785,6 +1863,10 @@
 
 (if (not (null? extra-ints)) 
     (with-extra hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse extra-ints)))))
+
+(if (not (null? ulongs-21))
+    (with-21 hey (lambda () (for-each (lambda (vals) (let ((val (car vals))) (hey "  DEFINE_ULONG(~A);~%" val))) (reverse ulongs-21)))))
+     
 
 (hey "}~%~%")
 

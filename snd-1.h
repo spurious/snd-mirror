@@ -328,7 +328,9 @@ typedef struct snd__state {
   XEN file_sort_proc;
   int catch_exists;
   char *catch_message;
+#if (!USE_GTK)
   int using_schemes;
+#endif
   state_context *sgx;
   int position_slider_width, zoom_slider_width, toggle_size, enved_point_size, channel_sash_indent, sash_size, channel_sash_size, sash_indent;
   char *init_file;

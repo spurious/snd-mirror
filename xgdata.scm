@@ -798,36 +798,6 @@
 (CFNC "PangoAttribute* gdk_pango_attr_embossed_new gboolean embossed")
 (CFNC "void gdk_pixbuf_render_threshold_alpha GdkPixbuf* pixbuf GdkBitmap* bitmap int src_x int src_y int dest_x int dest_y int width int height int alpha_threshold")
 (CFNC "void gdk_pixbuf_render_to_drawable GdkPixbuf* pixbuf GdkDrawable* drawable GdkGC* gc int src_x int src_y int dest_x int dest_y int width int height GdkRgbDither dither int x_dither int y_dither")
-
-
-;;; -------- 2.1 changes 
-
-;;; TODO: named gdk_draw_pixbuf in 2.1.1
-;;;       also GdkDisplay and GdkScreen stuff [gdk/gdkdisplay*.h, gdk/gdkscreen.h]
-;;; TODO: added in gtk 2.1.0: gtk_tree_model_get_string_from_iter
-;;;       gtk_tree_model_sort_iter_is_valid(), gtk_tree_view_expand_to_path() 
-;;;       gtk_tree_selection_get_selected_rows(),
-;;;       gtk_tree_selection_count_selected_rows() 
-;;;       gtk_tree_path_new_from_indices() -- uses ... arg,  gtk_{list,tree}_store_{reorder,swap,_move} 
-;;;       gtk_menu_shell_select_first() gtk_notebook_get_n_pages()
-
-; (CFNC "void gdk_draw_pixbuf GdkDrawable* drawable GdkGC* gc GdkPixbuf* pixbuf int src_x int src_y int dest_x int dest_y int width int height GdkRgbDither dither int x_dither int y_dither")
-; (CFNC "gchar* gtk_tree_model_get_string_from_iter GtkTreeModel* tree_model GtkTreeIter* iter")
-; (CFNC "gboolean gtk_tree_model_sort_iter_is_valid GtkTreeModelSort* tree_model_sort GtkTreeIter* iter")
-; (CFNC "void gtk_tree_view_expand_to_path GtkTreeView* tree_view GtkTreePath* path")
-; (CFNC "GList* gtk_tree_selection_get_selected_rows GtkTreeSelection* selection GtkTreeModel** model")
-; (CFNC "int gtk_tree_selection_count_selected_rows GtkTreeSelection* selection")
-; (CFNC "void gtk_menu_shell_select_first GtkMenuShell* menu_shell gboolean search_sensitive")
-; (CFNC "int gtk_notebook_get_n_pages GtkNotebook* notebook")
-; (CFNC "void gtk_list_store_reorder GtkListStore* store int* new_order")
-; (CFNC "void gtk_list_store_swap GtkListStore* store GtkTreeIter* a GtkTreeIter* b")
-; (CFNC "void gtk_list_store_move GtkListStore* store GtkTreeIter* iter GtkTreePath* position")
-; (CFNC "void gtk_tree_store_reorder GtkTreeStore* tree_store GtkTreeIter* parent int* new_order")
-; (CFNC "void gtk_tree_store_swap GtkTreeStore* tree_store GtkTreeIter* a GtkTreeIter* b")
-; (CFNC "void gtk_tree_store_move GtkTreeStore* tree_store GtkTreeIter* iter GtkTreePath* position")
-
-;;; --------
-
 (CFNC "void gdk_pixbuf_render_to_drawable_alpha GdkPixbuf* pixbuf GdkDrawable* drawable int src_x int src_y int dest_x int dest_y int width int height GdkPixbufAlphaMode alpha_mode int alpha_threshold GdkRgbDither dither int x_dither int y_dither")
 (CFNC "void gdk_pixbuf_render_pixmap_and_mask_for_colormap GdkPixbuf* pixbuf GdkColormap* colormap GdkPixmap** [pixmap_return] GdkBitmap** [mask_return] int alpha_threshold")
 (CFNC "void gdk_pixbuf_render_pixmap_and_mask GdkPixbuf* pixbuf GdkPixmap** [pixmap_return] GdkBitmap** [mask_return] int alpha_threshold")
@@ -3255,8 +3225,8 @@
 (CFNC "void gtk_text_view_set_tabs GtkTextView* text_view PangoTabArray* tabs")
 (CFNC "PangoTabArray* gtk_text_view_get_tabs GtkTextView* text_view")
 (CFNC "GtkTextAttributes* gtk_text_view_get_default_attributes GtkTextView* text_view")
-(CCAST "GTK_THEME_ENGINE(theme_engine)" "GtkThemeEngine*")
-(CCHK "GTK_IS_THEME_ENGINE(theme_engine)" "GtkThemeEngine*")
+;(CCAST "GTK_THEME_ENGINE(theme_engine)" "GtkThemeEngine*")
+;(CCHK "GTK_IS_THEME_ENGINE(theme_engine)" "GtkThemeEngine*")
 ;(CFNC "GType gtk_theme_engine_get_type void")
 ;(CFNC "GtkThemeEngine* gtk_theme_engine_get gchar* name")
 ;(CFNC "GtkRcStyle* gtk_theme_engine_create_rc_style GtkThemeEngine* engine")
@@ -4835,4 +4805,89 @@ G_TYPE_IS_VALUE_TYPE(type)
 
 !#
 ;;; and gobject/gtype.h type creation functions
+
+
+
+
+;;; -------- 2.1 changes 
+;;; omitted gtk_tree_path_new_from_indices() -- uses va arg
+
+(CFNC-21 "void gdk_draw_pixbuf GdkDrawable* drawable GdkGC* gc GdkPixbuf* pixbuf int src_x int src_y int dest_x int dest_y int width int height GdkRgbDither dither int x_dither int y_dither")
+(CFNC-21 "gchar* gtk_tree_model_get_string_from_iter GtkTreeModel* tree_model GtkTreeIter* iter")
+(CFNC-21 "gboolean gtk_tree_model_sort_iter_is_valid GtkTreeModelSort* tree_model_sort GtkTreeIter* iter")
+(CFNC-21 "void gtk_tree_view_expand_to_path GtkTreeView* tree_view GtkTreePath* path")
+(CFNC-21 "GList* gtk_tree_selection_get_selected_rows GtkTreeSelection* selection GtkTreeModel** model")
+(CFNC-21 "int gtk_tree_selection_count_selected_rows GtkTreeSelection* selection")
+(CFNC-21 "void gtk_menu_shell_select_first GtkMenuShell* menu_shell gboolean search_sensitive")
+(CFNC-21 "int gtk_notebook_get_n_pages GtkNotebook* notebook")
+(CFNC-21 "void gtk_list_store_reorder GtkListStore* store int* new_order")
+(CFNC-21 "void gtk_list_store_swap GtkListStore* store GtkTreeIter* a GtkTreeIter* b")
+(CFNC-21 "void gtk_list_store_move GtkListStore* store GtkTreeIter* iter GtkTreePath* position")
+(CFNC-21 "void gtk_tree_store_reorder GtkTreeStore* tree_store GtkTreeIter* parent int* new_order")
+(CFNC-21 "void gtk_tree_store_swap GtkTreeStore* tree_store GtkTreeIter* a GtkTreeIter* b")
+(CFNC-21 "void gtk_tree_store_move GtkTreeStore* tree_store GtkTreeIter* iter GtkTreePath* position")
+
+(CFNC-21 "GType gdk_display_get_type void")
+(CFNC-21 "GdkDisplay* gdk_display_open gchar* display_name")
+(CFNC-21 "gchar* gdk_display_get_name GdkDisplay* display")
+(CFNC-21 "int gdk_display_get_n_screens GdkDisplay* display")
+(CFNC-21 "GdkScreen* gdk_display_get_screen GdkDisplay* display int screen_num")
+(CFNC-21 "GdkScreen* gdk_display_get_default_screen GdkDisplay* display")
+(CFNC-21 "void gdk_display_pointer_ungrab GdkDisplay* display guint32 time")
+(CFNC-21 "void gdk_display_keyboard_ungrab GdkDisplay* display guint32 time")
+(CFNC-21 "gboolean gdk_display_pointer_is_grabbed GdkDisplay* display")
+(CFNC-21 "void gdk_display_beep GdkDisplay* display")
+(CFNC-21 "void gdk_display_sync GdkDisplay* display")
+(CFNC-21 "void gdk_display_close GdkDisplay* display")
+(CFNC-21 "GList* gdk_display_list_devices GdkDisplay* display")
+(CFNC-21 "GdkEvent* gdk_display_get_event GdkDisplay* display")
+(CFNC-21 "GdkEvent* gdk_display_peek_event GdkDisplay* display")
+(CFNC-21 "void gdk_display_put_event GdkDisplay* display GdkEvent* event")
+(CFNC-21 "void gdk_display_add_client_message_filter GdkDisplay* display GdkAtom message_type GdkFilterFunc func gpointer data")
+(CFNC-21 "void gdk_display_set_double_click_time GdkDisplay* display guint msec")
+(CFNC-21 "GdkDisplay* gdk_display_get_default void")
+(CFNC-21 "GdkDevice* gdk_display_get_core_pointer GdkDisplay* display")
+(CFNC-21 "void gdk_display_get_pointer GdkDisplay* display GdkScreen* *screen int* x int* y GdkModifierType* mask")
+(CFNC-21 "GdkWindow* gdk_display_get_window_at_pointer GdkDisplay* display int* win_x int* win_y")
+(CFNC-21 "GdkDisplayPointerHooks* gdk_display_set_pointer_hooks GdkDisplay* display GdkDisplayPointerHooks* new_hooks")
+(CFNC-21 "GType gdk_screen_get_type void")
+(CFNC-21 "GdkColormap* gdk_screen_get_default_colormap GdkScreen* screen")
+(CFNC-21 "void gdk_screen_set_default_colormap GdkScreen* screen GdkColormap* colormap")
+(CFNC-21 "GdkColormap* gdk_screen_get_system_colormap GdkScreen* screen")
+(CFNC-21 "GdkVisual* gdk_screen_get_system_visual GdkScreen* screen")
+(CFNC-21 "GdkColormap* gdk_screen_get_rgb_colormap GdkScreen* screen")
+(CFNC-21 "GdkVisual* gdk_screen_get_rgb_visual GdkScreen* screen")
+(CFNC-21 "GdkWindow* gdk_screen_get_root_window GdkScreen* screen")
+(CFNC-21 "GdkDisplay* gdk_screen_get_display GdkScreen* screen")
+(CFNC-21 "int gdk_screen_get_number GdkScreen* screen")
+(CFNC-21 "int gdk_screen_get_width GdkScreen* screen")
+(CFNC-21 "int gdk_screen_get_height GdkScreen* screen")
+(CFNC-21 "int gdk_screen_get_width_mm GdkScreen* screen")
+(CFNC-21 "int gdk_screen_get_height_mm GdkScreen* screen")
+(CFNC-21 "GList* gdk_screen_list_visuals GdkScreen* screen")
+(CFNC-21 "GList* gdk_screen_get_toplevel_windows GdkScreen* screen")
+(CFNC-21 "gchar* gdk_screen_make_display_name GdkScreen* screen")
+(CFNC-21 "int gdk_screen_get_n_monitors GdkScreen* screen")
+(CFNC-21 "void gdk_screen_get_monitor_geometry GdkScreen* screen int monitor_num GdkRectangle* dest")
+(CFNC-21 "int gdk_screen_get_monitor_at_point GdkScreen* screen int x int y")
+(CFNC-21 "int gdk_screen_get_monitor_at_window GdkScreen* screen GdkWindow* window")
+(CFNC-21 "void gdk_screen_broadcast_client_message GdkScreen* screen GdkEvent* event")
+(CFNC-21 "GdkScreen* gdk_screen_get_default void")
+(CFNC-21 "gboolean gdk_screen_get_setting GdkScreen* screen gchar* name GValue* value")
+
+(CLNG-21 "GDK_TYPE_SCREEN")
+(CLNG-21 "GDK_TYPE_DISPLAY")
+(CCAST-21 "GDK_SCREEN(object)" "GdkScreen*")
+;GDK_SCREEN_CLASS(klass)
+(CCHK-21 "GDK_IS_SCREEN(object)" "GdkScreen*")
+;GDK_IS_SCREEN_CLASS(klass)
+;GDK_SCREEN_GET_CLASS(obj)
+(CCAST-21 "GDK_DISPLAY_OBJECT(object)" "GdkDisplay*")
+;GDK_DISPLAY_CLASS(klass)
+(CCHK-21 "GDK_IS_DISPLAY(object)" "GdkDisplay*")
+;GDK_IS_DISPLAY_CLASS(klass)
+;GDK_DISPLAY_GET_CLASS(obj)
+
+
+;;; -------- end gtk 2.1 additions
 

@@ -734,9 +734,6 @@ static void expand_button_callback(GtkWidget *w, gpointer context)
   snd_info *sp = (snd_info *)context;
   ss = sp->state;
   sp->expand_control_p = GTK_TOGGLE_BUTTON(w)->active;
- if (sp->expand_control_p) 
-   set_background(EXPAND_SCROLLBAR(sp), (ss->sgx)->position_color);
- else set_background(EXPAND_SCROLLBAR(sp), (ss->sgx)->basic_color);
 }
 
 void toggle_expand_button(snd_info *sp, int state)
@@ -812,9 +809,6 @@ static void contrast_button_callback(GtkWidget *w, gpointer context)
   snd_info *sp = (snd_info *)context;
   ss = sp->state;
   sp->contrast_control_p = GTK_TOGGLE_BUTTON(w)->active;
- if (sp->contrast_control_p) 
-   set_background(CONTRAST_SCROLLBAR(sp), (ss->sgx)->position_color);
- else set_background(CONTRAST_SCROLLBAR(sp), (ss->sgx)->basic_color);
 }
 
 
@@ -962,16 +956,6 @@ static void reverb_button_callback(GtkWidget *w, gpointer context)
   snd_info *sp = (snd_info *)context;
   ss = sp->state;
   sp->reverb_control_p = GTK_TOGGLE_BUTTON(w)->active;
- if (sp->reverb_control_p)
-   {
-     set_background(REVSCL_SCROLLBAR(sp), (ss->sgx)->position_color);
-     set_background(REVLEN_SCROLLBAR(sp), (ss->sgx)->position_color);
-   }
- else 
-   {
-     set_background(REVSCL_SCROLLBAR(sp), (ss->sgx)->basic_color);
-     set_background(REVLEN_SCROLLBAR(sp), (ss->sgx)->basic_color);
-   }
 }
 
 void toggle_reverb_button(snd_info *sp, int state)

@@ -1684,7 +1684,7 @@
 	  (snd-display ";oboe: mus-sound-maxamp-exists after maxamp: ~A" (mus-sound-maxamp-exists? "oboe.snd")))
 
       (let ((str (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "oboe.snd")))))
-	(IF (not (string=? str "19-Oct 09:46 PDT"))
+	(IF (not (string=? str "25-Oct 07:15 PDT"))
 	    (snd-display ";mus-sound-write-date oboe.snd: ~A?" str)))
       (let ((str (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "pistol.snd")))))
 	(IF (not (string=? str "19-Oct 09:46 PDT"))
@@ -1842,7 +1842,7 @@
       (IF (and (not (= (mus-sound-type-specifier "oboe.snd") #x646e732e))  ;little endian reader
 	       (not (= (mus-sound-type-specifier "oboe.snd") #x2e736e64))) ;big endian reader
 	  (snd-display ";oboe: mus-sound-type-specifier: ~X?" (mus-sound-type-specifier "oboe.snd")))
-      (IF (not (string=? (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd"))) "19-Oct-1998 09:46"))
+      (IF (not (string=? (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd"))) "25-Oct-2002 07:15"))
 	  (snd-display ";oboe: file-write-date: ~A?" (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd")))))
       (play-sound "oboe.snd")
 
@@ -7327,7 +7327,9 @@
 	(set! (mus-location gen) 1000)
 	(IF (not (= (mus-location gen) 1000)) (snd-display ";mus-set-location: ~A?" (mus-location gen)))
 	(let ((val (readin gen)))
-	  (IF (fneq val 0.033) (snd-display ";mus-set-location readin: ~A?" val))))
+	  (IF (fneq val 0.033) (snd-display ";mus-set-location readin: ~A?" val)))
+	(set! (mus-increment gen) -1)
+	(IF (fneq (mus-increment gen) -1.0) (snd-display ";set increment readin: ~A" (mus-increment gen))))
       (let ((tag (catch #t (lambda () (make-readin "/baddy/hiho" 0 124)) (lambda args args))))
 	(IF (not (eq? (car tag) 'no-such-file)) (snd-display ";make-readin w/o file: ~A" tag)))
       (let ((tag (catch #t (lambda () (make-readin "oboe.snd" 123 124)) (lambda args args))))
@@ -9976,9 +9978,11 @@
 	     (snd-display ";report-in-minibuffer 1: ~A?" str)))
        (IF (widget-text (cadr (main-widgets))) 
 	   (snd-display ";widget text should be #f: ~A" (widget-text (cadr (main-widgets)))))
-       (let ((str (format #f "~D: ~A" ind (short-file-name ind))))
-	 (IF (not (string=? str (widget-text (cadr (sound-widgets ind)))))
-	     (snd-display ";name text: ~A ~A" str (widget-text (cadr (sound-widgets ind))))))
+       (let ((str (format #f "~D: ~A" ind (short-file-name ind)))
+	     (txt (widget-text (cadr (sound-widgets ind)))))
+	 (IF (or (not (string? txt))
+		 (not (string=? str txt)))
+	     (snd-display ";name text: ~A ~A" str txt)))
        (close-sound ind))
      (if (file-exists? "link-oboe.snd")
 	 (let* ((ind (open-sound "link-oboe.snd"))
@@ -20892,6 +20896,17 @@ EDITS: 2
 		    (key-event cwid (char->integer #\-) 0) (force-event)
 		    (key-event cwid (char->integer #\8) 0) (force-event)
 		    (key-event cwid (char->integer #\d) 4) (force-event)
+
+		    (bind-key (char->integer #\n) 0 (lambda (arg) (set! (cursor) (+ (cursor) (* 128 arg)))))
+		    (set! (cursor) 0)
+		    (key-event cwid (char->integer #\u) 4) (force-event)
+		    (key-event cwid (char->integer #\2) 0) (force-event)
+		    (key-event cwid (char->integer #\n) 0) (force-event)
+		    (IF (not (= (cursor) (* 128 2))) (snd-display ";C-n bound: ~A" (cursor)))
+		    (key-event cwid (char->integer #\n) 0) (force-event)
+		    (IF (not (= (cursor) (* 128 3))) (snd-display ";C-n bound no arg: ~A" (cursor)))
+		    (unbind-key (char->integer #\n) 0)
+		    
 		    (close-sound ind))
 		  (select-sound ind)
 		  (select-channel 0)
@@ -21513,7 +21528,7 @@ EDITS: 2
 			  (not (string=? (mark-name m) "hiho!")))
 		      (snd-display ";named mark prompt: ~A ~A" m (IF (mark? m) (mark-name m) "no name"))))
 
-		(key-event cwid (char->integer #\g) 4) (force-event)		
+		(key-event cwid (char->integer #\g) 4) (force-event)	
 		(close-sound (car (sounds)))
 	      ))
 
@@ -27003,9 +27018,10 @@ EDITS: 2
       (if (procedure? test-hook) (test-hook 26))
       (if (and (provided? 'snd-gtk)
 	       (provided? 'xg))
-	  (begin
+	  (let ((ind (open-sound "oboe.snd")))
 	    (IF (not (GTK_IS_WIDGET (cadr (main-widgets)))) (snd-display ";GTK_IS_WIDGET?"))
 	    ;; all gtk proc names are in gtk-procs.scm
+	    (IF (not (GTK_IS_ENTRY (cadr (sound-widgets)))) (snd-display ";GTK_IS_ENTRY?"))
 
 	    (let* ((win (car (main-widgets)))
 		   (vals (gdk_property_get win (gdk_atom_intern "SND_VERSION" #f) GDK_TARGET_STRING 0 1024 0))
@@ -27016,7 +27032,8 @@ EDITS: 2
 		(string-set! str i (integer->char (list-ref lst i))))
 	      (if (not (string=? (snd-version) str)) (snd-display ";SND_VERSION: ~A ~A" str (snd-version))))
 
-	    ))))
+	    (close-sound ind))
+	    )))
 
 
 ;;; -------------------- test 27: GL --------------------
