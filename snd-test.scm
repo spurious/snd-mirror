@@ -246,7 +246,7 @@
 (snd-display "~%~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
 
 (define (log-mem tst) 
-  (if (> tests 1) (snd-display ";test ~D " tst))
+  (if (> tests 1) (snd-display ";test ~D " (1+ tst)))
   (if (and (> tests 50) (= (modulo tst 10) 0))  (mem-report)))
 
 (defmacro without-errors (func)
@@ -3163,6 +3163,8 @@
       (set! (optimization) 5) ; these trees assume optimization is on
       
       (if (dac-is-running) (snd-display ";dac is running??"))
+      (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests)) 
+	(log-mem clmtest)
 
       ;; basic edit tree cases
       (let ((ind (new-sound "test.snd")))
@@ -5360,8 +5362,8 @@ EDITS: 5
 	(ramp-channel 0.0 1.0)
 	(xramp-channel 0.0 1.0 32.0)
 	(if (not (string=? (display-edits ind 0 4) "
- (set 0 11) ; xramp-channel [4:2]:
-   (at 0, cp->sounds[2][0:10, 1.000000]) [buf: 11] 
+ (ramp 0 11) ; xramp-channel 0.0000 1.0000 32.0000 0 11 [4:2]:
+   (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, -0.000000 -> 1.000000, 0.000000 -> 3.465736, off: -0.032258, scl: 0.032258]) [buf: 11] 
    (at 11, end_mark)
 "))
 	    (snd-display ";xramp+ramp2 0: ~A" (display-edits ind 0 4)))
@@ -6267,8 +6269,8 @@ EDITS: 5
 	(ramp-channel 0.0 1.0)
 	(xramp-channel 0.0 1.0 32.0)
 	(if (not (string=? (display-edits ind 0 4) "
- (set 0 11) ; xramp-channel [4:2]:
-   (at 0, cp->sounds[2][0:10, 1.000000]) [buf: 11] 
+ (ramp 0 11) ; xramp-channel 0.0000 1.0000 32.0000 0 11 [4:2]:
+   (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, -0.000000 -> 1.000000, 0.000000 -> 3.465736, off: -0.032258, scl: 0.032258]) [buf: 11] 
    (at 11, end_mark)
 "))
 	    (snd-display ";ramp+ramp+xramp: ~A" (display-edits ind 0 4)))
@@ -7807,7 +7809,7 @@ EDITS: 5
 	    (close-sound obind)))
 	
 	(let ((ind1 (open-sound "oboe.snd")))
-	  (test-orig (lambda (snd) (src-sound 2.0 ind1)) (lambda (snd) (src-sound 0.5 ind1)) 'src-sound ind1)
+	  (test-orig (lambda (snd) (src-sound 2.0 1.0 ind1)) (lambda (snd) (src-sound 0.5 1.0 ind1)) 'src-sound ind1)
 	  (test-orig (lambda (snd) (src-channel 2.0)) (lambda (snd) (src-channel 0.5)) 'src-channel ind1)
 	  (test-orig (lambda (snd) (scale-by 2.0 ind1)) (lambda (snd) (scale-by 0.5 ind1)) 'scale-by ind1)
 	  (test-orig (lambda (snd) (scale-sound-by 2.0 ind1)) (lambda (snd) (scale-sound-by 0.5 ind1)) 'scale-sound-by ind1)
@@ -8199,7 +8201,7 @@ EDITS: 5
 	  (close-sound ind1))
 	(let* ((ind1 (open-sound "oboe.snd")))
 	  (test-edpos maxamp 'maxamp (lambda () (scale-by 2.0 ind1 0)) ind1)
-	  (test-edpos frames 'frames (lambda () (src-sound 2.0 ind1 0)) ind1)
+	  (test-edpos frames 'frames (lambda () (src-sound 2.0 1.0 ind1 0)) ind1)
 	  (test-edpos 
 	   (lambda* (#:optional (snd 0) (chn 0) (edpos current-edit-position)) (count-matches (lambda (n1) (> n1 .1)) 0 snd chn edpos)) 
 	   'count-matches
@@ -8225,7 +8227,7 @@ EDITS: 5
 	   (lambda () (delete-samples 0 100 ind1 0))
 	   ind1)
 	  
-	  (src-sound 2.0 ind1 0)
+	  (src-sound 2.0 1.0 ind1 0)
 	  (play-and-wait 0 ind1 0 #f #f 0)
 	  (play-and-wait 0 ind1 0 #f #f 1)
 	  (play-and-wait 0 ind1 0 #f #f (lambda (snd chn) (edit-position snd chn)))
@@ -9389,6 +9391,7 @@ EDITS: 5
 	  
 	  
 	  ))
+      )
       (run-hook after-test-hook 5)
       ))
 
@@ -14054,10 +14057,10 @@ EDITS: 5
 
 (if (or full-test (= snd-test 9) (and keep-going (<= snd-test 9)))
     (begin
+	  (run-hook before-test-hook 9)
       (do ((test-ctr 0 (1+ test-ctr)))
 	  ((= test-ctr tests))
 	(let ((new-index (new-sound "hiho.wave" mus-next mus-bshort 22050 1)))
-	  (run-hook before-test-hook 9)
 	  (log-mem test-ctr)
 	  (select-sound new-index)
 	  (if (find-mix 0 new-index 0) (snd-display ";found non-existent mix? ~A" (find-mix 0 new-index 0)))
@@ -14128,15 +14131,15 @@ EDITS: 5
 	      (set! (mix-speed mix-id) 2.0) 
 	      (let ((trk (make-track mix-id)))
 		(let ((tag (catch #t
-				  (lambda () (play-track 3))
+				  (lambda () (play-track 1231233))
 				  (lambda args (car args)))))
 		  (if (not (eq? tag 'no-such-track)) (snd-display ";play-track bad track: ~A" tag)))
 		(let ((tag (catch #t
-				  (lambda () (play-track 3 #t))
+				  (lambda () (play-track 1231233 #t))
 				  (lambda args (car args)))))
 		  (if (not (eq? tag 'no-such-track)) (snd-display ";play-track bad track #t: ~A" tag)))
 		(let ((tag (catch #t
-				  (lambda () (play-track 3 0))
+				  (lambda () (play-track 1231233 0))
 				  (lambda args (car args)))))
 		  (if (not (eq? tag 'no-such-track)) (snd-display ";play-track bad track index: ~A" tag)))
 		(play-track trk))
@@ -17846,6 +17849,10 @@ EDITS: 5
 	      (open-ctr 0))
 	  (run-hook before-test-hook 12)
 	  (add-sound-file-extension "wave")
+
+      (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests)) 
+	(log-mem clmtest)
+
 	  (do ()
 	      ((= open-ctr 32))
 	    (let* ((len (length open-files))
@@ -17876,6 +17883,8 @@ EDITS: 5
 			(close-sound fd)
 			(set! open-files (remove-if (lambda (a) (= a fd)) open-files)))))))
 	  (if open-files (for-each close-sound open-files))
+          (set! open-files '())
+
 	  (if (not (= (length (sounds)) 0)) (snd-display ";active-sounds: ~A ~A?" (sounds) (map short-file-name (sounds))))
 	  (let ((fd (open-raw-sound (string-append sf-dir "addf8.nh") 1 8012 mus-mulaw)))
 	    (if (not (= (data-format fd) mus-mulaw)) (snd-display ";open-raw-sound: ~A?" (mus-data-format-name (data-format fd))))
@@ -18041,6 +18050,7 @@ EDITS: 5
 	    (if (or (not (equal? ffiles (list "s24.snd")))
 		    (not (equal? sfiles (list "s24.snd"))))
 		(snd-display ";map|for-each-sound-file(s): ~A ~A" ffiles sfiles)))
+	  )
 	  (run-hook after-test-hook 12)
 	  )))
 
@@ -20599,9 +20609,9 @@ EDITS: 5
 	(if (not (equal? (edit-fragment 0 obi 0) '(#f "init" 0 50828))) 
 	    (snd-display ";edit-fragment(0): ~A?" (edit-fragment 0 obi 0)))
 	(if (not (equal? (edit-fragment 1 obi 0) '("delete-samples" "delete" 1000 1001))) 
-	    (snd-display ";edit-fragment(1): ~A?" (edit-fragment 0 obi 0)))
-	(if (not (equal? (edit-fragment 2 obi 0) '("smooth-sound" "set" 984 32))) 
-	    (snd-display ";edit-fragment(2): ~A?" (edit-fragment 0 obi 0)))
+	    (snd-display ";edit-fragment(1): ~A?" (edit-fragment 1 obi 0)))
+	(if (not (equal? (edit-fragment 2 obi 0) '("smooth-sound from 984 for 32" "set" 984 32))) 
+	    (snd-display ";edit-fragment(2): ~A?" (edit-fragment 2 obi 0)))
 	
 	(let ((samp100 (sample 1100 obi 0)))
 	  (safe-make-region 1000 2000 obi)
@@ -26225,7 +26235,7 @@ EDITS: 1
       (if (not (equal? (edit-fragment 2) '("delete-sample" "delete" 100 1))) (snd-display ";save-edit-history 2: ~A?" (edit-fragment 2)))
       (if (not (equal? (edit-fragment 3) '("insert-sample" "insert" 10 1))) (snd-display ";save-edit-history 3: ~A?" (edit-fragment 3)))
       (if (not (equal? (edit-fragment 4) '("scale-channel 2.0000 0 50828" "scale" 0 50828))) (snd-display ";save-edit-history 4: ~A?" (edit-fragment 4)))
-      (if (not (equal? (edit-fragment 5) '("pad-channel" "zero" 100 20))) (snd-display ";save-edit-history 5: ~A?" (edit-fragment 5)))
+      (if (not (equal? (edit-fragment 5) '("pad-channel from 100 for 20" "zero" 100 20))) (snd-display ";save-edit-history 5: ~A?" (edit-fragment 5)))
       (let ((str (display-edits)))
 	(if (not (string=? str (string-append "
 EDITS: 5
