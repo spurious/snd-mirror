@@ -5,12 +5,10 @@
 (define* (make-pvocoder fftsize overlap interp #:optional analyze edit synthesize)
   "(make-pvocoder fftsize overlap interp #:optional analyze edit synthesize) makes a new (Scheme-based, not CLM) phase-vocoder generator"
 
-  (define ifloor (lambda (n) (inexact->exact (floor n))))
-
   (let* ((N (or fftsize 512))
-	 (N2 (ifloor (/ N 2)))
+	 (N2 (inexact->exact (floor (/ N 2))))
 	 (hop (or overlap 4))
-	 (D (ifloor (/ N hop))))
+	 (D (inexact->exact (floor (/ N hop)))))
 
     ;; basic: fftsize overlap
     ;;  everything else via closures (interp in particular)
@@ -237,18 +235,16 @@
   'gate' specifies a resynthesis gate in dB (partials with amplitudes lower than
   the gate value will not be synthesized), 'hoffset is a pitch offset in Hz."
 
-    (define ifloor (lambda (n) (inexact->exact (floor n))))
-
     (let* ((pi 3.141592653589793)
 	   (len (frames))
 	   (filptr 0)           ; index into the file
 	   (pi2 (* 2 pi))       ; handy constant
 	   (sr (srate))
 	   (N fftsize)          ; fft size
-	   (N2 (ifloor (/ N 2)))  ;; half the fft size
+	   (N2 (inexact->exact (floor (/ N 2))))
 	   (Nw fftsize) ;; window size -- currently restricted to the fftsize
-	   (D (ifloor (/ fftsize overlap))) ; decimation factor (how often do we take an fft)
-	   (interp (* (ifloor (/ fftsize overlap)) time)) ; interpolation factor how often do we synthesize
+	   (D (inexact->exact (floor (/ fftsize overlap)))) ; decimation factor (how often do we take an fft)
+	   (interp (* (inexact->exact (floor (/ fftsize overlap))) time)) ; interpolation factor how often do we synthesize
 	   ;; take a resynthesis gate specificed in dB, convert to linear amplitude
 	   (syngate (if (= 0.0 gate) 0.0 (expt 10 (/ (- (abs gate)) 20))))
 	   (poffset (hz->radians hoffset))
@@ -265,7 +261,7 @@
 	   (output interp)      ; count of samples that have been output
 	   (resynth-oscils (make-vector N2))  ; synthesis oscillators
 	   (nextpct 10.0)       ; how often to print out the percentage complete message
-	   (outlen (ifloor (* time len)))
+	   (outlen (inexact->exact (floor (* time len))))
 	   (out-data (make-vct (max len outlen)))
 	   (in-data (samples->vct 0 (* N 2) snd chn))
 	   (in-data-beg 0))

@@ -342,39 +342,40 @@ to end of channel, beg defaults to 0, snd defaults to the currently selected sou
 (define* (check-for-unsaved-edits #:optional (check #t))
   "(check-for-unsaved-edits #:optional (check #t)) -> sets up hooks to check for and ask about unsaved edits when a sound is closed. \
 If 'check' is #f, the hooks are removed."
-  (define (unsaved-edits-at-close? ind)
-    (letrec ((unsaved-edits-in-chan? 
-	      (lambda (chan)
-		(if (>= chan (channels ind))
-		    #f
-		    (let ((eds (edits ind chan)))
-		      (if (> (car eds) 0)
-			  (not (yes-or-no? ;that is, "yes" => exit
-				(format #f "~A has ~D unsaved edit~P in channel ~D, exit anyway? " 
-					(short-file-name ind) 
-					(car eds)
-					(car eds)
-					chan)))
-			  (unsaved-edits-in-chan? (1+ chan))))))))
-      (unsaved-edits-in-chan? 0)))
-
-  (define (unsaved-edits-at-exit?)
-    (letrec ((unsaved-edits-at-exit-1?
-	      (lambda (snds)
-		(and (not (null? snds))
-		     (or (unsaved-edits-at-close? (car snds))
-			 (unsaved-edits-at-exit-1? (cdr snds)))))))
-      (unsaved-edits-at-exit-1? (sounds))))
-
-  (if check
-      (begin
-	(if (not (member unsaved-edits-at-exit? (hook->list exit-hook)))
-	    (add-hook! exit-hook unsaved-edits-at-exit?))
-	(if (not (member unsaved-edits-at-close? (hook->list close-hook)))
-	    (add-hook! close-hook unsaved-edits-at-close?)))
-      (begin
-	(remove-hook! exit-hook unsaved-edits-at-exit?)
-	(remove-hook! close-hook unsaved-edits-at-close?))))
+  (let ((dummy #f)) ; make new guile happy
+    (define (unsaved-edits-at-close? ind)
+      (letrec ((unsaved-edits-in-chan? 
+		(lambda (chan)
+		  (if (>= chan (channels ind))
+		      #f
+		      (let ((eds (edits ind chan)))
+			(if (> (car eds) 0)
+			    (not (yes-or-no? ;that is, "yes" => exit
+				  (format #f "~A has ~D unsaved edit~P in channel ~D, exit anyway? " 
+					  (short-file-name ind) 
+					  (car eds)
+					  (car eds)
+					  chan)))
+			    (unsaved-edits-in-chan? (1+ chan))))))))
+	(unsaved-edits-in-chan? 0)))
+    
+    (define (unsaved-edits-at-exit?)
+      (letrec ((unsaved-edits-at-exit-1?
+		(lambda (snds)
+		  (and (not (null? snds))
+		       (or (unsaved-edits-at-close? (car snds))
+			   (unsaved-edits-at-exit-1? (cdr snds)))))))
+	(unsaved-edits-at-exit-1? (sounds))))
+    
+    (if check
+	(begin
+	  (if (not (member unsaved-edits-at-exit? (hook->list exit-hook)))
+	      (add-hook! exit-hook unsaved-edits-at-exit?))
+	  (if (not (member unsaved-edits-at-close? (hook->list close-hook)))
+	      (add-hook! close-hook unsaved-edits-at-close?)))
+	(begin
+	  (remove-hook! exit-hook unsaved-edits-at-exit?)
+	  (remove-hook! close-hook unsaved-edits-at-close?)))))
 
 
 ;;; -------- remember-sound-state

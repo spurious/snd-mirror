@@ -378,6 +378,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+20-Nov:  track-tempo.\n\
 17-Nov:  mix-dialog-mix, track-dialog-track, mix-inverted?\n\
 10-Nov:  removed next-mix-sample, next-track-sample.\n\
          renamed mix-panel to mix-dialog, added track-dialog.\n\

@@ -3340,7 +3340,7 @@ each mix's resultant amp env is the result of multiplying its env (if any) by
 the portion of the track env that happens to fall over it.  Use #f to reset it to the default (null) envelope.
 Anything that changes the track's bounds causes the track envelope to be reapplied; there are many ways
 this can happen implicitly: set mix-track, mix-position, mix-speed (of a constituent mix), track-position,
-and track-speed; even make-track if it steals away one of our member mixes.
+track-speed, and track-tempo; even make-track if it steals away one of our member mixes.
 If a mix in a track has set the <a href="#mixinverted">mix-inverted?</a> flag, the
 first track envelope in its track chain is inverted, thereby interpreting the
 track envelope as a panning control.
@@ -3395,7 +3395,14 @@ track are moved.
 
 <!-- track-speed -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="trackspeed">track-speed</a></em> (track-id)</code></span></td></tr>
-<tr><td width=50><br></td><td>Track speed (settable).
+<tr><td width=50><br></td><td>Track speed (settable).  This affects the resampling of each mix, not the speed at
+which the mixes occur (the latter is controlled by <a href="#tracktempo">track-tempo</a>).
+</td></tr>
+
+<!-- track-tempo -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="tracktempo">track-tempo</a></em> (track-id)</code></span></td></tr>
+<tr><td width=50><br></td><td>Track tempo (settable). This affects the spacing between mixes; a higher track-tempo corresponds to
+tighter spacing between mixes.
 </td></tr>
 
 <!-- track-track -->

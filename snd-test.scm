@@ -31,10 +31,11 @@
 ;;; test 28: errors
 
 ;;; TODO: recorder-file-hook tests
+;;; TODO: track-tempo tests
 
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 
-(use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen) (ice-9 syncase) (ice-9 session))
+(use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen) (ice-9 session))
 
 (define (snd-display . args)
   (let ((str (if (null? (cdr args))
@@ -50,7 +51,7 @@
 (define tests 1)
 (if (not (defined? 'snd-test)) (define snd-test -1))
 (if (defined? 'disable-play) (disable-play))
-(define keep-going #f)
+(define keep-going #t)
 (define full-test (< snd-test 0))
 (define total-tests 28)
 (if (not (defined? 'with-exit)) (define with-exit (< snd-test 0)))
@@ -16090,32 +16091,32 @@ EDITS: 5
 	    (set! (track-amp-env trk) '(0 0 1 1))
 	    (if (or (not (vequal (track->vct trk 0) (vct 0.000 0.005 0.011 0.016 0.021 0.026 0.032 0.037 0.042 0.048)))
 		    (not (vequal (track->vct trk 1) (vct 0.952 0.958 0.963 0.968 0.974 0.979 0.984 0.989 0.995 1.000))))
-		(snd-display ";2chan track-pos amp-env: ~A ~A" (track->vct trk 0) (track->vct trk 1 1)))
+		(snd-display ";2chan track-pos amp-env: ~A ~A" (track->vct trk 0) (track->vct trk 1)))
 	    (set! (track-position trk 0) 100)
 	    (if (or (not (vequal (track->vct trk 0) (vct 0.000 0.010 0.020 0.030 0.040 0.051 0.061 0.071 0.081 0.091)))
 		    (not (vequal (track->vct trk 1) (vct 0.909 0.919 0.929 0.939 0.949 0.960 0.970 0.980 0.990 1.000))))
-		(snd-display ";2chan track-pos amp-env 2: ~A ~A" (track->vct trk 0) (track->vct trk 1 1)))
+		(snd-display ";2chan track-pos amp-env 2: ~A ~A" (track->vct trk 0) (track->vct trk 1)))
 	    (set! (track-position trk 1) 100)
 	    (if (or (not (vequal (track->vct trk 0) (vct 0.000 0.111 0.222 0.333 0.444 0.556 0.667 0.778 0.889 1.000)))
 		    (not (vequal (track->vct trk 1) (vct 0.000 0.111 0.222 0.333 0.444 0.556 0.667 0.778 0.889 1.000))))
-		(snd-display ";2chan track-pos amp-env 3: ~A ~A" (track->vct trk 0) (track->vct trk 1 1)))
+		(snd-display ";2chan track-pos amp-env 3: ~A ~A" (track->vct trk 0) (track->vct trk 1)))
 	    (set! (track-position trk 1) 0)
 	    (if (or (not (vequal (track->vct trk 1) (vct 0.000 0.010 0.020 0.030 0.040 0.051 0.061 0.071 0.081 0.091)))
 		    (not (vequal (track->vct trk 0) (vct 0.909 0.919 0.929 0.939 0.949 0.960 0.970 0.980 0.990 1.000))))
-		(snd-display ";2chan track-pos amp-env 4: ~A ~A" (track->vct trk 0) (track->vct trk 1 1)))
+		(snd-display ";2chan track-pos amp-env 4: ~A ~A" (track->vct trk 0) (track->vct trk 1)))
 	    (let ((mix3 (mix-vct (make-vct 10 1.0) 200 ind 1)))
 	      (set! (mix-track mix3) trk))
 	    (if (or (not (vequal (track->vct trk 0) (vct 0.476 0.481 0.487 0.492 0.497 0.503 0.508 0.513 0.519 0.524)))
 		    (not (vequal (channel->vct 0 10 ind 1) (vct 0.000 0.005 0.011 0.016 0.021 0.026 0.032 0.037 0.042 0.048)))
 		    (not (vequal (channel->vct 200 10 ind 1) (vct 0.952 0.958 0.963 0.968 0.974 0.979 0.984 0.989 0.995 1.000))))
-		(snd-display ";2chan track-pos amp-env 5: ~A ~A" (track->vct trk 0) (track->vct trk 1 1)))
+		(snd-display ";2chan track-pos amp-env 5: ~A ~A" (track->vct trk 0) (track->vct trk 1)))
 	    (let ((edpos (edit-position ind 1)))
 	      (set! (track-position trk 0) 50)
 	      (if (not (= (edit-position ind 1) edpos)) (snd-display ";set track pos changed edpos: ~A ~A" edpos (edit-position ind 1)))
 	      (if (or (not (vequal (track->vct trk 0) (vct 0.238 0.243 0.249 0.254 0.259 0.265 0.270 0.275 0.280 0.286)))
 		      (not (vequal (channel->vct 0 10 ind 1) (vct 0.000 0.005 0.011 0.016 0.021 0.026 0.032 0.037 0.042 0.048)))
 		      (not (vequal (channel->vct 200 10 ind 1) (vct 0.952 0.958 0.963 0.968 0.974 0.979 0.984 0.989 0.995 1.000))))
-		  (snd-display ";2chan track-pos amp-env 6: ~A ~A" (track->vct trk 0) (track->vct trk 1 1))))
+		  (snd-display ";2chan track-pos amp-env 6: ~A ~A" (track->vct trk 0) (track->vct trk 1))))
 	    (close-sound ind))
 
 	  (let* ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 1 "multi-channel track position tests" 300))
@@ -16344,6 +16345,67 @@ EDITS: 5
 		    ))
 
 	      (close-sound ind))))
+
+	  ;; track-tempo tests
+	  (let* ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 1 "track tests" 1000))
+		 (trk (make-track))
+		 (initial-edpos (edit-position ind 0)))
+	    (if (fneq (track-tempo trk) 1.0) (snd-display ";initial track tempo: ~A" (track-tempo trk)))
+	    (set! (track-tempo trk) 0.5)
+	    (if (fneq (track-tempo trk) 0.5) (snd-display ";track-tempo set: ~A" (track-tempo trk)))
+	    (if (not (= (edit-position ind 0) initial-edpos)) (snd-display ";no-op set track_tempo edits: ~A ~A" edpos (edit-position ind 0)))
+	    (set! (track-tempo trk) 1.0)
+	    (let ((mix0 (mix-vct (make-vct 10 .1) 100)))
+	      (set! (mix-track mix0) trk)
+	      (if (not (= (mix-position mix0) 100)) (snd-display ";track tempo initial mix pos: ~A" (mix-position mix0)))
+	      (set! (track-tempo trk) 0.5)
+	      (if (not (= (mix-position mix0) 100)) (snd-display ";track tempo mix pos: ~A" (mix-position mix0)))
+	      (set! (track-tempo trk) 1.0)
+	      (let ((mix1 (mix-vct (make-vct 10 .3) 300)))
+		(set! (mix-track mix1) trk)
+		(if (not (= (mix-position mix0) 100)) (snd-display ";track (2) tempo initial mix0 pos: ~A" (mix-position mix0)))
+		(if (not (= (mix-position mix1) 300)) (snd-display ";track (2) tempo initial mix1 pos: ~A" (mix-position mix1)))
+		(let ((edpos1 (edit-position ind 0)))
+		  (set! (track-tempo trk) 0.5)
+		  (if (not (= (mix-position mix0) 100)) (snd-display ";track tempo (2) mix0 pos: ~A" (mix-position mix0)))
+		  (if (not (= (mix-position mix1) 500)) (snd-display ";track tempo (2) mix1 pos: ~A" (mix-position mix1)))
+		  (if (not (= (edit-position ind 0) (1+ edpos1))) (snd-display ";track tempo not atomic: ~A ~A" edpos1 (edit-position ind 0))))
+		(set! (track-tempo trk) 1.0)      
+		(if (not (= (mix-position mix0) 100)) (snd-display ";track (2) tempo back mix0 pos: ~A" (mix-position mix0)))
+		(if (not (= (mix-position mix1) 300)) (snd-display ";track (2) tempo back mix1 pos: ~A" (mix-position mix1)))
+		(set! (track-tempo trk) 2.0)
+		(if (not (= (mix-position mix0) 100)) (snd-display ";track tempo (2) mix0 2 pos: ~A" (mix-position mix0)))
+		(if (not (= (mix-position mix1) 200)) (snd-display ";track tempo (2) mix1 2 pos: ~A" (mix-position mix1)))
+		(set! (track-tempo trk) 1.0)      
+		(let ((mix2 (mix-vct (make-vct 10 .4) 400)))
+		  (set! (mix-track mix2) trk)
+		  (if (not (= (mix-position mix0) 100)) (snd-display ";track (3) tempo initial mix0 pos: ~A" (mix-position mix0)))
+		  (if (not (= (mix-position mix1) 300)) (snd-display ";track (3) tempo initial mix1 pos: ~A" (mix-position mix1)))
+		  (if (not (= (mix-position mix2) 400)) (snd-display ";track (3) tempo initial mix2 pos: ~A" (mix-position mix2)))
+		  (set! (track-tempo trk) 0.5)
+		  (if (not (= (mix-position mix0) 100)) (snd-display ";track tempo (3) mix0 pos: ~A" (mix-position mix0)))
+		  (if (not (= (mix-position mix1) 500)) (snd-display ";track tempo (3) mix1 pos: ~A" (mix-position mix1)))
+		  (if (not (= (mix-position mix2) 700)) (snd-display ";track tempo (3) mix2 pos: ~A" (mix-position mix2)))
+		  (set! (track-tempo trk) 1.0)      
+		  (if (not (= (mix-position mix0) 100)) (snd-display ";track (3) tempo back mix0 pos: ~A" (mix-position mix0)))
+		  (if (not (= (mix-position mix1) 300)) (snd-display ";track (3) tempo back mix1 pos: ~A" (mix-position mix1)))
+		  (if (not (= (mix-position mix2) 400)) (snd-display ";track (3) tempo back mix2 pos: ~A" (mix-position mix2)))
+		  (set! (track-tempo trk) 2.0)
+		  (if (not (= (mix-position mix0) 100)) (snd-display ";track tempo (3) mix0 2 pos: ~A" (mix-position mix0)))
+		  (if (not (= (mix-position mix1) 200)) (snd-display ";track tempo (3) mix1 2 pos: ~A" (mix-position mix1)))
+		  (if (not (= (mix-position mix2) 250)) (snd-display ";track tempo (3) mix2 2 pos: ~A" (mix-position mix2)))
+		  
+		  (set! (track-amp-env trk) '(0 0 1 1))
+		  (set! (track-tempo trk) 1.0)
+		  (if (not (= (mix-position mix0) 100)) (snd-display ";track (4) tempo initial mix0 pos: ~A" (mix-position mix0)))
+		  (if (not (= (mix-position mix1) 300)) (snd-display ";track (4) tempo initial mix1 pos: ~A" (mix-position mix1)))
+		  (if (not (= (mix-position mix2) 400)) (snd-display ";track (4) tempo initial mix2 pos: ~A" (mix-position mix2)))
+		  (set! (track-amp-env trk) '(0 1 1 0))	
+		  (set! (track-tempo trk) 2.0)
+		  (if (not (= (mix-position mix0) 100)) (snd-display ";track tempo (4) mix0 2 pos: ~A" (mix-position mix0)))
+		  (if (not (= (mix-position mix1) 200)) (snd-display ";track tempo (4) mix1 2 pos: ~A" (mix-position mix1)))
+		  (if (not (= (mix-position mix2) 250)) (snd-display ";track tempo (4) mix2 2 pos: ~A" (mix-position mix2)))
+		  (close-sound ind)))))
 
 	  ;; pan-mix tests
 	  (let* ((ind (new-sound "fmv.snd" mus-next mus-bshort 22050 1 "pan-mix tests"))
@@ -19734,7 +19796,7 @@ EDITS: 5
 					 (do ((i 0 (1+ i)))
 					     ((= i len) v)
 					   (let* ((val (abs (next-sample fd)))
-						  (bin (inexact->exact (* val 16.0))))
+						  (bin (inexact->exact (round (* val 16.0)))))
 					     (if (< bin steps)
 						 (do ((j 0 (1+ j)))
 						     ((= j steps))
@@ -35065,13 +35127,13 @@ EDITS: 2
 	      (if (not (= (XDisplayMotionBufferSize dpy) 256))
 		  (snd-display ";XDisplayMotionBufferSize: ~A" (XDisplayMotionBufferSize dpy)))
 	      (XGetMotionEvents dpy win (list 'Time 100) (list 'Time CurrentTime))
-	      (let ((map (XNewModifiermap 2)))
-		(if (not (XModifierKeymap? map))
-		    (snd-display ";xNewModifiermap: ~A" map)
+	      (let ((mapk (XNewModifiermap 2)))
+		(if (not (XModifierKeymap? mapk))
+		    (snd-display ";xNewModifiermap: ~A" mapk)
 		    (begin
-		      (set! map (XInsertModifiermapEntry map (list 'KeyCode 50) ShiftMapIndex))
-		      (set! map(XDeleteModifiermapEntry map (list 'KeyCode 50) ShiftMapIndex))
-		      (XFreeModifiermap map) ;prone to segfault in X
+		      (set! mapk (XInsertModifiermapEntry mapk (list 'KeyCode 50) ShiftMapIndex))
+		      (set! mapk (XDeleteModifiermapEntry mapk (list 'KeyCode 50) ShiftMapIndex))
+		      (XFreeModifiermap mapk) ;prone to segfault in X
 		      )))
 	      (if (not (= (XExtendedMaxRequestSize dpy) 1048575))
 		  (snd-display ";XExtendedMaxRequestSize ~A" (XExtendedMaxRequestSize dpy)))
@@ -39303,7 +39365,7 @@ EDITS: 2
 		     snd-url snd-urls
 		     quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
 
-		     track tracks track? make-track track-amp track-position track-frames track-speed track-amp-env
+		     track tracks track? make-track track-amp track-position track-frames track-speed track-tempo track-amp-env
 		     track-track delete-track delete-mix track-color free-track
 		     ))
       
@@ -39354,7 +39416,7 @@ EDITS: 2
 
 			 quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
 
-			 track-amp track-position track-speed track-amp-env track-track track-color
+			 track-amp track-position track-speed track-tempo track-amp-env track-track track-color
 			 ))
       
       (define make-procs (list
@@ -39600,7 +39662,7 @@ EDITS: 2
 					(lambda args (car args)))))
 			    (if (not (eq? tag 'no-such-track))
 				(snd-display ";track ~A: ~A" n tag))))
-			(list track track-amp track-position track-frames track-speed track-amp-env track-track delete-track track-color))
+			(list track track-amp track-position track-frames track-speed track-tempo track-amp-env track-track delete-track track-color))
 	      (for-each (lambda (n a)
 			  (let ((tag
 				 (catch #t
@@ -39609,8 +39671,8 @@ EDITS: 2
 					(lambda args (car args)))))
 			    (if (not (eq? tag 'no-such-track))
 				(snd-display ";set track ~A: ~A" n tag))))
-			(list track-amp track-position track-speed track-amp-env track-track track-color)
-			(list 1.0 0 1.0 '(0 0 1 1) (1- trk) (make-color 1 0 0)))
+			(list track-amp track-position track-speed track-tempo track-amp-env track-track track-color)
+			(list 1.0 0 1.0 1.0 '(0 0 1 1) (1- trk) (make-color 1 0 0)))
 	      (let ((tag (catch #t
 				(lambda () (set! (track-track trk) (1+ trk)))
 				(lambda args (car args)))))

@@ -56,6 +56,8 @@ static bool mix_dialog_slider_dragging = false;
 static void update_mix_dialog(int mix_id);
 static int mix_dialog_id = INVALID_MIX_ID;
 
+
+/* -------- speed -------- */
 static Widget w_speed_number, w_speed_label, w_speed;
 static Float current_speed = 1.0;
 
@@ -104,6 +106,8 @@ static void speed_valuechanged_callback(Widget w, XtPointer context, XtPointer i
   change_mix_speed(mix_dialog_id, exp((Float)(cb->value - SPEED_SCROLLBAR_MID) / SPEED_SCROLLBAR_BREAK));
 }
 
+
+/* -------- amp -------- */
 static Widget *w_amp_numbers, *w_amp_labels, *w_amps;
 static Float *current_amps;
 #define CHANS_ALLOCATED 8
@@ -167,6 +171,8 @@ static int mix_amp_to_int(Float amp, int chan)
   return(amp_to_int_1(w_amp_numbers[chan], amp));
 }
 
+
+/* -------- amp-envs -------- */
 static Widget w_env_frame, w_env;
 static axis_context *ax = NULL;
 static GC cur_gc;
@@ -271,6 +277,8 @@ static void mix_drawer_button_release(Widget w, XtPointer context, XEvent *event
   mix_amp_env_resize(w, NULL, NULL);
 }
 
+
+/* -------- track -------- */
 static Widget w_id = NULL, w_beg = NULL, w_track = NULL, mix_play = NULL, mix_track_play = NULL, w_mix_pan = NULL;
 
 static void track_activated(void)
@@ -361,6 +369,8 @@ static void help_mix_dialog_callback(Widget w, XtPointer context, XtPointer info
   mix_dialog_help();
 }
 
+
+/* -------- play -------- */
 static bool mix_playing = false;
 bool mix_play_stopped(void) {return(!mix_playing);}
 
@@ -949,6 +959,8 @@ static Widget track_dialog = NULL;
 static bool track_dialog_slider_dragging = false;
 static int track_dialog_id = INVALID_TRACK_ID;
 
+
+/* -------- speed -------- */
 static Widget w_track_speed_number, w_track_speed_label, w_track_speed;
 static Float current_track_speed = 1.0;
 
@@ -997,6 +1009,92 @@ static void track_speed_valuechanged_callback(Widget w, XtPointer context, XtPoi
   change_track_speed(track_dialog_id, exp((Float)(cb->value - SPEED_SCROLLBAR_MID) / SPEED_SCROLLBAR_BREAK));
 }
 
+
+/* -------- tempo -------- */
+static Widget w_track_tempo_number, w_track_tempo_label, w_track_tempo;
+static Float current_track_tempo = 1.0;
+
+static char tempo_number_buffer[5] = {'1', STR_decimal, '0', '0', '\0'};
+
+static Float int_tempo_to_Float(int tempo)
+{
+  if (tempo == 0)
+    return(0.0);
+  else
+    {
+      if (tempo < SCROLLBAR_LINEAR_MAX)
+	return((Float)tempo * SCROLLBAR_LINEAR_MULT);
+      else return(exp((Float)(tempo - SCROLLBAR_MID) / ((Float)SCROLLBAR_MAX * .2)));
+    }
+}
+
+static int tempo_to_int_1(Widget tempo_number, Float tempo)
+{
+  char *sfs;
+  int val;
+  sfs = prettyf(tempo, 2);
+  fill_number(sfs, tempo_number_buffer);
+  set_label(tempo_number, tempo_number_buffer);
+  FREE(sfs);
+  if (tempo <= 0.0)
+    return(0);
+  else
+    {
+      val = (int)snd_round(tempo / (Float)(SCROLLBAR_LINEAR_MULT));
+      if (val > SCROLLBAR_LINEAR_MAX)
+	{
+	  val = (int)snd_round((log(tempo) * ((Float)SCROLLBAR_MAX * .2)) + SCROLLBAR_MID);
+	  if (val > SCROLLBAR_MAX) val = SCROLLBAR_MAX;
+	}
+    }
+  return(val);
+}
+
+static void change_track_tempo(int track_id, Float val)
+{
+  char *sfs;
+  track_dialog_set_tempo(track_id, val, track_dialog_slider_dragging);
+  sfs = prettyf(val, 2);
+  fill_number(sfs, tempo_number_buffer);
+  set_label(w_track_tempo_number, tempo_number_buffer);
+  FREE(sfs);
+}
+
+static void track_tempo_click_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  if (!(track_p(track_dialog_id))) return;
+  change_track_tempo(track_dialog_id, 1.0);
+  XtVaSetValues(w_track_tempo, XmNvalue, SCROLLBAR_MID, NULL);
+}
+
+static void track_tempo_drag_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  int ival;
+  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
+  ival = ((XmScrollBarCallbackStruct *)info)->value;
+  if (!(track_p(track_dialog_id))) return;
+  if (!track_dialog_slider_dragging) track_dialog_start_slider_drag(track_dialog_id);
+  track_dialog_slider_dragging = true;
+  change_track_tempo(track_dialog_id, int_tempo_to_Float(ival));
+}
+
+static void track_tempo_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  int ival;
+  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
+  ival = ((XmScrollBarCallbackStruct *)info)->value;
+  if (!(track_p(track_dialog_id))) return;
+  track_dialog_slider_dragging = false;
+  change_track_tempo(track_dialog_id, int_tempo_to_Float(ival));
+}
+
+static int track_tempo_to_int(Float tempo)
+{
+  return(tempo_to_int_1(w_track_tempo_number, tempo));
+}
+
+
+/* -------- amp -------- */
 static Widget w_track_amp_number, w_track_amp_label, w_track_amp;
 static Float current_track_amp = 1.0;
 
@@ -1043,6 +1141,8 @@ static int track_amp_to_int(Float amp)
   return(amp_to_int_1(w_track_amp_number, amp));
 }
 
+
+/* -------- amp-env -------- */
 static Widget w_track_env_frame, w_track_env;
 static axis_context *track_ax = NULL;
 static GC track_cur_gc;
@@ -1122,6 +1222,8 @@ static void track_drawer_button_release(Widget w, XtPointer context, XEvent *eve
   track_amp_env_resize(w, NULL, NULL);
 }
 
+
+/* -------- track -------- */
 static Widget w_track_id = NULL, w_track_beg = NULL, w_track_track = NULL, w_track_track_play;
 static Widget w_track_text; /* error msgs, mix lists etc */
 
@@ -1260,6 +1362,8 @@ static void help_track_dialog_callback(Widget w, XtPointer context, XtPointer in
   track_dialog_help();
 }
 
+
+/* -------- play -------- */
 static bool track_playing = false;
 
 bool track_play_stopped(void) {return(!track_playing);}
@@ -1593,12 +1697,66 @@ Widget make_track_dialog(void)
       FREE(n1);
       FREE(n2);
 
+
+      /* TEMPO */
+      n = 0;
+      s1 = XmStringCreate(_("tempo:"), XmFONTLIST_DEFAULT_TAG);
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
+      XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, w_track_speed_label); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNlabelString, s1); n++;
+      XtSetArg(args[n], XmNrecomputeSize, false); n++;
+      XtSetArg(args[n], XmNshadowThickness, 0); n++;
+      XtSetArg(args[n], XmNhighlightThickness, 0); n++;
+      XtSetArg(args[n], XmNfillOnArm, false); n++;
+      w_track_tempo_label = make_pushbutton_widget("tempo-label", mainform, args, n);
+      XtAddCallback(w_track_tempo_label, XmNactivateCallback, track_tempo_click_callback, NULL);
+      XmStringFree(s1);
+      
+      n = 0;
+      s1 = XmStringCreate(tempo_number_buffer, XmFONTLIST_DEFAULT_TAG);
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
+      XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, w_track_speed_number); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNleftWidget, w_track_tempo_label); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNlabelString, s1); n++;
+      XtSetArg(args[n], XmNrecomputeSize, false); n++;
+      w_track_tempo_number = XtCreateManagedWidget("tempo-number", xmLabelWidgetClass, mainform, args, n);
+      XmStringFree(s1);
+      
+      n = 0;      
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->position_color); n++;}
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, w_track_tempo_number); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNleftWidget, w_track_tempo_number); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
+      XtSetArg(args[n], XmNmaximum, SCROLLBAR_MAX); n++;
+      XtSetArg(args[n], XmNvalue, 0); n++;  /* fixed up later */
+      XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(track_tempo_drag_callback, NULL)); n++;
+      XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(track_tempo_valuechanged_callback, NULL)); n++;
+      w_track_tempo = XtCreateManagedWidget("tempo", xmScrollBarWidgetClass, mainform, args, n);
+      FREE(n1);
+      FREE(n2);
+      
+
+      /* AMP */
       n = 0;
       s1 = XmStringCreate(_("amp:"), XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, w_track_speed_label); n++;
+      XtSetArg(args[n], XmNtopWidget, w_track_tempo_label); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
@@ -1616,7 +1774,7 @@ Widget make_track_dialog(void)
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, w_track_speed_number); n++;
+      XtSetArg(args[n], XmNtopWidget, w_track_tempo_number); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, w_track_amp_label); n++;
@@ -1642,6 +1800,7 @@ Widget make_track_dialog(void)
       w_track_amp = XtCreateManagedWidget("amp", xmScrollBarWidgetClass, mainform, args, n);
       FREE(n1);
       FREE(n2);
+
       
       /* separator before envelope */
       n = 0;
@@ -1694,6 +1853,7 @@ Widget make_track_dialog(void)
       set_dialog_widget(TRACK_DIALOG, track_dialog);
       speed_number_buffer[1] = local_decimal_point();
       amp_number_buffer[1] = local_decimal_point();
+      tempo_number_buffer[1] = local_decimal_point();
     }
   else 
     {
@@ -1710,7 +1870,6 @@ static void update_track_dialog(int track_id)
   chan_info *cp;
   off_t beg, len;
   Float val;
-  XmString s1;
   char lab[LABEL_BUFFER_SIZE];
   char *temp = NULL;
   if (!(track_p(track_dialog_id))) track_dialog_id = track_id;
@@ -1739,9 +1898,9 @@ static void update_track_dialog(int track_id)
 	  XmTextSetString(w_track_track, lab);
 	  mus_snprintf(lab, LABEL_BUFFER_SIZE, "%d", track_dialog_id);
 	  XmTextSetString(w_track_id, lab);
-	  s1 = XmStringCreate(_("amp:"), XmFONTLIST_DEFAULT_TAG);
-	  XtVaSetValues(w_track_amp_label, XmNlabelString, s1, NULL);
-	  XmStringFree(s1);
+	  val = track_dialog_track_tempo(track_dialog_id);
+	  XtVaSetValues(w_track_tempo, XmNvalue, track_tempo_to_int(val), NULL);
+	  current_track_tempo = val;
 	  val = track_dialog_track_amp(track_dialog_id);
 	  XtVaSetValues(w_track_amp, XmNvalue, track_amp_to_int(val), NULL);
 	  current_track_amp = val;

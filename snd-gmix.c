@@ -7,6 +7,8 @@ static bool mix_dialog_slider_dragging = false;
 static void update_mix_dialog(int mix_id);
 static int mix_dialog_id = INVALID_MIX_ID;
 
+
+/* -------- speed -------- */
 static GtkWidget *w_speed, *w_speed_label, *w_speed_number, *w_speed_form, *w_speed_event;
 static GtkObject *w_speed_adj;
 static char speed_number_buffer[5] = {'1', STR_decimal, '0', '0', '\0'};
@@ -83,6 +85,8 @@ static void reflect_mix_speed(Float uval, snd_info *sp)
   gtk_adjustment_value_changed(GTK_ADJUSTMENT(w_speed_adj));
 }
 
+
+/* -------- amp -------- */
 static GtkWidget **w_amps, **w_amp_labels, **w_amp_numbers, **w_amp_events, **w_amp_forms;
 static GtkObject **w_amp_adjs;
 static Float *current_amps;
@@ -92,8 +96,6 @@ static char amp_number_buffer[5] = {'1', STR_decimal, '0', '0', '\0'};
 static void change_mix_amp(int mix_id, int chan, Float val)
 {
   char *sfs;
-  chan_info *cp;
-  cp = mix_dialog_mix_channel(mix_id);
   mix_dialog_set_mix_amp(mix_id, chan, val, mix_dialog_slider_dragging);
   sfs = prettyf(val, 2);
   fill_number(sfs, amp_number_buffer);
@@ -155,6 +157,8 @@ static gboolean amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer 
   return(false);
 }
 
+
+/* -------- amp-envs -------- */
 static GtkWidget *w_env_frame, *w_env;
 static axis_context *ax = NULL;
 static GdkGC *cur_gc;
@@ -282,6 +286,8 @@ static gboolean mix_amp_env_resize_callback(GtkWidget *w, GdkEventConfigure *ev,
   return(false);
 }
 
+
+/* -------- track -------- */
 static GtkWidget *w_id = NULL, *w_beg = NULL, *w_track = NULL, *mix_play = NULL, *w_id_label = NULL;
 static GtkWidget *w_track_label = NULL, *mix_track_play_pix = NULL, *mix_play_pix = NULL, *mix_track_play = NULL, *w_mix_pan, *w_mix_pan1;
 static GdkPixmap *speaker_off_pix, *speaker_on_pix, *mix_speaker_pix, *mix_track_speaker_pix, *mix_pan_pix, *mix_yellow_pan_pix, *mix_basic_pan_pix;
@@ -324,6 +330,8 @@ static void mix_track_activated(GtkWidget *w, gpointer context)
     mix_dialog_set_mix_track(mix_dialog_id, string2int(val));
 }
 
+
+/* -------- play -------- */
 static bool mix_playing = false;
 bool mix_play_stopped(void) {return(!mix_playing);}
 
@@ -724,7 +732,7 @@ GtkWidget *make_mix_dialog(void)
 	  gtk_box_pack_start(GTK_BOX(w_amp_forms[i]), w_amp_numbers[i], false, false, 0);
 	  gtk_widget_show(w_amp_numbers[i]);
 	  
-	  w_amp_adjs[i] = gtk_adjustment_new(0.0, 0.0, 1.0, 0.001, 0.01, .1);
+	  w_amp_adjs[i] = gtk_adjustment_new((i == 0) ? 0.5 : 0.0, 0.0, 1.0, 0.001, 0.01, .1);
 	  w_amps[i] = gtk_hscrollbar_new(GTK_ADJUSTMENT(w_amp_adjs[i]));
 	  gtk_box_pack_start(GTK_BOX(w_amp_forms[i]), w_amps[i], true, true, 4);
 	  g_signal_connect_closure_by_id(GTK_OBJECT(w_amp_adjs[i]),
@@ -866,7 +874,9 @@ static void update_mix_dialog(int mix_id)
 	  gtk_widget_show(w_amp_numbers[i]);	  
 	  gtk_widget_show(w_amps[i]);
 	  gtk_widget_show(w_amp_forms[i]);
-	  val = mix_dialog_mix_amp(mix_dialog_id, i);
+	  if (mix_ok(mix_dialog_id))
+	    val = mix_dialog_mix_amp(mix_dialog_id, i);
+	  else val = 1.0;
 	  GTK_ADJUSTMENT(w_amp_adjs[i])->value = amp_to_scroll(val);
 	  gtk_adjustment_value_changed(GTK_ADJUSTMENT(w_amp_adjs[i]));
 	  current_amps[i] = val;
@@ -891,6 +901,8 @@ static bool track_dialog_slider_dragging = false;
 static void update_track_dialog(int track_id);
 static int track_dialog_id = INVALID_TRACK_ID;
 
+
+/* -------- speed -------- */
 static GtkWidget *w_track_speed, *w_track_speed_label, *w_track_speed_number, *w_track_speed_form, *w_track_speed_event;
 static GtkObject *w_track_speed_adj;
 static char track_speed_number_buffer[5] = {'1', STR_decimal, '0', '0', '\0'};
@@ -966,6 +978,73 @@ static void reflect_track_speed(Float uval, snd_info *sp)
   gtk_adjustment_value_changed(GTK_ADJUSTMENT(w_track_speed_adj));
 }
 
+
+/* -------- tempo -------- */
+static GtkWidget *w_track_tempo, *w_track_tempo_label, *w_track_tempo_number, *w_track_tempo_event, *w_track_tempo_form;
+static GtkObject *w_track_tempo_adj;
+static Float current_track_tempo = 1.0;
+static char track_tempo_number_buffer[5] = {'1', STR_decimal, '0', '0', '\0'};
+
+static Float tempo_to_scroll(Float tempo)
+{
+  if (tempo <= 0.0)
+    return(0.0);
+  else
+    {
+      if (tempo < .173)
+	return(tempo * .867);
+      else return(log(tempo) * 0.2 + 0.5);
+    }
+}
+
+static Float scroll_to_tempo(Float scrollval)
+{
+  if (scrollval < .15)
+    return(scrollval * 1.13);
+  else return(exp((scrollval - 0.5) * 5.0));
+}
+
+static void change_track_tempo(int track_id, Float val)
+{
+  char *sfs;
+  track_dialog_set_tempo(track_id, val, track_dialog_slider_dragging);
+  sfs = prettyf(val, 2);
+  fill_number(sfs, track_tempo_number_buffer);
+  gtk_label_set_text(GTK_LABEL(w_track_tempo_number), track_tempo_number_buffer);
+  FREE(sfs);
+}
+
+static gboolean track_tempo_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
+{
+  if (!(track_p(track_dialog_id))) return(false);
+  change_track_tempo(track_dialog_id, 1.0);
+  GTK_ADJUSTMENT(w_track_tempo_adj)->value = 0.5;
+  gtk_adjustment_value_changed(GTK_ADJUSTMENT(w_track_tempo_adj));
+  return(false);
+}
+
+static void track_tempo_changed_callback(GtkAdjustment *adj, gpointer data)
+{
+  Float scrollval;
+  if (!(track_p(track_dialog_id))) return;
+  scrollval = GTK_ADJUSTMENT(w_track_tempo_adj)->value;
+  if (!track_dialog_slider_dragging) track_dialog_start_slider_drag(track_dialog_id);
+  track_dialog_slider_dragging = true;
+  change_track_tempo(track_dialog_id, scroll_to_tempo(scrollval));
+}
+
+static gboolean track_tempo_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
+{
+  Float scrollval;
+  if (!(track_p(track_dialog_id))) return(false);
+  scrollval = GTK_ADJUSTMENT(w_track_tempo_adj)->value;
+  track_dialog_slider_dragging = false;
+  change_track_tempo(track_dialog_id, scroll_to_tempo(scrollval));
+  return(false);
+}
+
+
+/* -------- amp -------- */
 static GtkWidget *w_track_amp, *w_track_amp_label, *w_track_amp_number, *w_track_amp_event, *w_track_amp_form;
 static GtkObject *w_track_amp_adj;
 static Float current_track_amp = 1.0;
@@ -1010,6 +1089,8 @@ static gboolean track_amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpo
   return(false);
 }
 
+
+/* -------- amp-env -------- */
 static GtkWidget *w_track_env_frame, *w_track_env;
 static axis_context *track_ax = NULL;
 static GdkGC *track_cur_gc;
@@ -1116,6 +1197,8 @@ static gboolean track_amp_env_resize_callback(GtkWidget *w, GdkEventConfigure *e
   return(false);
 }
 
+
+/* -------- track -------- */
 static GtkWidget *w_track_id = NULL, *w_track_beg = NULL, *w_track_id_label = NULL, *w_track_text;
 static GtkWidget *w_track_track_label = NULL, *w_track_play_pix = NULL, *w_track_play = NULL, *w_track_track;
 static GdkPixmap *track_speaker_pix;
@@ -1208,6 +1291,8 @@ static void track_track_activated(GtkWidget *w, gpointer context)
     }
 }
 
+
+/* -------- play -------- */
 static bool track_playing = false;
 bool track_play_stopped(void) {return(!track_playing);}
 
@@ -1444,6 +1529,7 @@ GtkWidget *make_track_dialog(void)
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(track_dialog)->vbox), w_track_text, false, false, 4); 
       gtk_widget_show(w_track_text);
       
+
       /* SPEED */
       w_track_speed_form = gtk_hbox_new(false, 2);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(track_dialog)->vbox), w_track_speed_form, false, false, 4);
@@ -1486,6 +1572,46 @@ GtkWidget *make_track_dialog(void)
       gtk_widget_show(w_track_speed);
       gtk_widget_show(w_track_speed_form);
 
+      /* TEMPO */
+      current_track_tempo = 1.0;
+
+      w_track_tempo_form = gtk_hbox_new(false, 2);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(track_dialog)->vbox), w_track_tempo_form, false, false, 0);
+      
+      w_track_tempo_event = gtk_event_box_new();
+      gtk_box_pack_start(GTK_BOX(w_track_tempo_form), w_track_tempo_event, false, false, 4);
+      gtk_widget_show(w_track_tempo_event);
+      g_signal_connect_closure_by_id(GTK_OBJECT(w_track_tempo_event),
+				     g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(w_track_tempo_event))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(track_tempo_click_callback), NULL, 0),
+				     0);
+      
+      w_track_tempo_label = gtk_label_new(_("tempo:"));
+      gtk_container_add(GTK_CONTAINER(w_track_tempo_event), w_track_tempo_label);
+      gtk_widget_show(w_track_tempo_label);
+      
+      w_track_tempo_number = gtk_label_new(track_tempo_number_buffer);
+      gtk_box_pack_start(GTK_BOX(w_track_tempo_form), w_track_tempo_number, false, false, 0);
+      gtk_widget_show(w_track_tempo_number);
+	  
+      w_track_tempo_adj = gtk_adjustment_new(0.0, 0.0, 1.0, 0.001, 0.01, .1);
+      w_track_tempo = gtk_hscrollbar_new(GTK_ADJUSTMENT(w_track_tempo_adj));
+      gtk_box_pack_start(GTK_BOX(w_track_tempo_form), w_track_tempo, true, true, 4);
+      g_signal_connect_closure_by_id(GTK_OBJECT(w_track_tempo_adj),
+				     g_signal_lookup("value_changed", G_OBJECT_TYPE(GTK_OBJECT(w_track_tempo_adj))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(track_tempo_changed_callback), NULL, 0),
+				     0);
+      g_signal_connect_closure_by_id(GTK_OBJECT(w_track_tempo),
+				     g_signal_lookup("button_release_event", G_OBJECT_TYPE(GTK_OBJECT(w_track_tempo))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(track_tempo_release_callback), NULL, 0),
+				     0);
+      gtk_widget_show(w_track_tempo);
+      gtk_widget_show(w_track_tempo_form);
+
+
       /* AMP */
       current_track_amp = 1.0;
 
@@ -1524,6 +1650,7 @@ GtkWidget *make_track_dialog(void)
 				     0);
       gtk_widget_show(w_track_amp);
       gtk_widget_show(w_track_amp_form);
+
 
       /* GRAPH */
       w_track_env_frame = gtk_frame_new(NULL);
@@ -1566,6 +1693,7 @@ GtkWidget *make_track_dialog(void)
 
       track_spf = new_env_editor();
       track_speed_number_buffer[1] = local_decimal_point();
+      track_tempo_number_buffer[1] = local_decimal_point();
       track_amp_number_buffer[1] = local_decimal_point();
 
       if ((widget_width(track_dialog) > 0) && (widget_height(track_dialog) < 300))
@@ -1622,6 +1750,10 @@ static void update_track_dialog(int track_id)
 			   (float)((double)(beg + len) / (float)SND_SRATE(cp->sound)));
 	      gtk_entry_set_text(GTK_ENTRY(w_track_beg), lab);
 	    }
+	  val = track_dialog_track_tempo(track_id);
+	  GTK_ADJUSTMENT(w_track_tempo_adj)->value = tempo_to_scroll(val);
+	  gtk_adjustment_value_changed(GTK_ADJUSTMENT(w_track_tempo_adj));
+	  current_track_tempo = val;
 	  val = track_dialog_track_amp(track_id);
 	  GTK_ADJUSTMENT(w_track_amp_adj)->value = amp_to_scroll(val);
 	  gtk_adjustment_value_changed(GTK_ADJUSTMENT(w_track_amp_adj));

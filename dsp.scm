@@ -7,7 +7,7 @@
 ;;; -------- Dolph-Chebyshev window
 ;;; 
 ;;; formula taken from Richard Lyons, "Understanding DSP"
-;;; see clm.c for C version (using GSL's complex trig functions)
+;;; see clm.c for C version (using either GSL's or GCC's complex trig functions)
 
 (define (dolph N gamma)
   "(dolph n gamma) produces a Dolph-Chebyshev FFT data window of 'n' points using 'gamma' as the window parameter."

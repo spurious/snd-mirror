@@ -372,22 +372,9 @@ If 'envelope' is a scaler, it is turned into an evelope at that value."
 
 (define (retempo-track trk tempo)
   "(retempo-track track tempo) changes the inter-mix begin times of mixes in track by tempo (> 1.0 is faster)"
-  (if (and (not (= tempo 1.0)) (not (= tempo 0.0)))
-      (if (some mix? (track trk))
-	  (let ((track-beg (track-position trk))
-		(new-tempo (/ 1.0 tempo))) ;make tempo>1.0 go faster
-	    (if track-beg
-		(as-one-edit 
-		 (lambda ()
-		   (for-each (lambda (a) 
-			       (if (mix? a)
-				   (set! (mix-position a) (+ track-beg 
-							     (inexact->exact (floor (* new-tempo 
-										(- (mix-position a) track-beg))))))))
-			     (track trk))))))
-	  (throw 'no-such-track (list "retempo-track" trk tempo)))))
+  (set! (track-tempo trk) (* (track-tempo trk) tempo)))
 
-;;; (retempo-track '(0 1) 2.0)
+;;; (retempo-track 1 2.0)
 
 (define (filter-track track-id fir-filter-coeffs)
   "(filter-track track coeffs) filters track data using FIR filter coeffs: (filter-track track-id '(.1 .2 .3 .3 .2 .1))"

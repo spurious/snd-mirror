@@ -609,6 +609,7 @@
 #define S_track_position                "track-position"
 #define S_track_sample_reader_p         "track-sample-reader?"
 #define S_track_speed                   "track-speed"
+#define S_track_tempo                   "track-tempo"
 #define S_track_track                   "track-track"
 #define S_transform_dialog              "transform-dialog"
 #define S_transform_graph               "transform-graph"

@@ -1621,8 +1621,7 @@ void mus_sndlib2xen_initialize(void)
   XEN_YES_WE_HAVE("sndlib");
 
 #if WITH_MODULES
-  scm_c_export(
-	       S_make_sound_data,
+  scm_c_export(S_make_sound_data,
 	       S_mus_aifc,
 	       S_mus_aiff,
 	       S_mus_alaw,
@@ -1746,6 +1745,8 @@ void mus_sndlib2xen_initialize(void)
 	       S_mus_ubshort,
 	       S_mus_ubyte,
 	       S_mus_ulshort,
+	       S_mus_unknown,
+	       S_mus_unsupported,
 	       S_mus_voc,
 	       S_new_sound_hook,
 	       S_sound_data2vct,
