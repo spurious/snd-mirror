@@ -856,7 +856,7 @@ the hook.
 (add-hook! <em class=red>enved-hook</em>
   (lambda (env pt x y reason)
     (if (= reason enved-move-point)
-        (if (and (&gt; x 0.0) (&lt; x (max-x env)))
+        (if (and (&gt; x 0.0) (&lt; x (envelope-last-x env))) ; from env.scm
             (let* ((old-x (list-ref env (* pt 2)))
                    (new-env (<em class=red>stretch-envelope</em> env old-x x)))
               (list-set! new-env (+ (* pt 2) 1) y)
@@ -4254,9 +4254,9 @@ the direction argument between the channel and edit-position:
 <!-- --><tr><td></td><td>
 <!-- -->find the sample that satisfies the function <i>proc</i>. <i>sample</i>
 <!-- -->determines where to start the search. 
-<!-- -->If the function returns an integer, it represents how many samples to offset the cursor from the "find" location.<br><br>
-<!-- -->
-<!-- --><code>(find (lambda (y) (&gt; y .1)))</code><br><code>(find (lambda (y) (and (&gt; y .1) -2)))</code><br>
+<!-- -->If the fund function returns some non-#f value, find itself returns a list of that value and the sample number.
+<!-- -->In the find dialog and in C-s or C-r searches, if the value returned is an integer, the cursor is offset by that number of samples.
+<!-- --><br><br><code>(find (lambda (y) (&gt; y .1)))</code><br><code>(find (lambda (y) (and (&gt; y .1) -2)))</code><br>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

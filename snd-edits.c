@@ -3815,7 +3815,8 @@ static XEN g_set_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n, XEN edpos)
   cp = get_cp(snd_n, chn_n, "set! " S_sample);
   pos = to_c_edit_position(cp, edpos, "set! " S_sample, 5);
   ival[0] = MUS_FLOAT_TO_SAMPLE(XEN_TO_C_DOUBLE(val));
-  change_samples(XEN_TO_C_OFF_T_OR_ELSE(samp_n, cp->cursor), 1, ival, cp, LOCK_MIXES, "set! " S_sample, pos);
+  change_samples(XEN_TO_C_OFF_T_OR_ELSE(samp_n, cp->cursor), 
+		 1, ival, cp, LOCK_MIXES, "set! " S_sample, pos);
   update_graph(cp);
   return(val);
 }

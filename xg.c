@@ -60,6 +60,11 @@
   #include <config.h>
 #endif
 
+#if UNDEF_USE_SND
+  #undef USE_SND
+  #define USE_SND 0
+#endif
+
 #include <glib.h>
 #include <gdk/gdk.h>
 #include <gdk/gdkkeysyms.h>

@@ -2431,6 +2431,7 @@ static xen_value *do_form_1(ptree *prog, XEN form, int need_result, int sequenti
 	    {
 	      if ((sequential) && (expr)) FREE(expr);
 	      expr = walk(prog, XEN_CADDR(var), TRUE);
+	      /* (run-eval '(do ((i 0 (1+ i)) (j 0 (1+ i)) (k 0 (hiho k))) ((= i 3)) 0)) */
 	      if (expr == NULL)
 		{
 		  if (exprs) 
@@ -2658,9 +2659,7 @@ static xen_value *generalized_set_form(ptree *prog, XEN form, int need_result)
     {
       XEN in_settee;
       xen_value *in_v = NULL, *v = NULL;
-      char accessor[256];
       in_settee = XEN_CAR(settee);
-      mus_snprintf(accessor, 256, "%s", XEN_SYMBOL_TO_C_STRING(in_settee));
       v = walk(prog, setval, TRUE);
       if (v == NULL)
 	return(run_warn("set!: can't handle: %s", XEN_AS_STRING(setval)));
@@ -2676,7 +2675,7 @@ static xen_value *generalized_set_form(ptree *prog, XEN form, int need_result)
 	      return(run_warn("set!: can't handle setter: %s", XEN_AS_STRING(settee)));
 	    }
 	}
-      return(lookup_generalized_set(prog, copy_string(accessor), in_v, v));
+      return(lookup_generalized_set(prog, copy_string(XEN_SYMBOL_TO_C_STRING(in_settee)), in_v, v));
     }
   return(run_warn("generalized set! for %s not implemented yet", XEN_AS_STRING(settee)));
 }
@@ -4722,9 +4721,11 @@ static char *substring(char *str, int start, int end)
 }
 static void substr_1(int *args, int *ints, Float *dbls) 
 {
-  int i, start, end, len;
+  int i, start, end, len, arg_len;
   start = ints[args[2]];
   end = ints[args[3]];
+  arg_len = snd_strlen(STRING_ARG_1);
+  if (arg_len < end) end = arg_len; /* should throw run-time error technically */
   len = end - start;
   if (STRING_RESULT) FREE(STRING_RESULT);
   if (len <= 0) 
@@ -4747,9 +4748,18 @@ static xen_value *substring_1(ptree *pt, xen_value **args, int num_args, int con
   if ((num_args != 3) || (args[1]->type != R_STRING) || (args[2]->type != R_INT) || (args[3]->type != R_INT))
     return(NULL);
   if (constants == 3)
-    return(make_xen_value(R_STRING, 
-			  add_string_to_ptree(pt, substring((char *)(pt->ints[args[1]->addr]), pt->ints[args[2]->addr], pt->ints[args[3]->addr])),
-			  R_CONSTANT));
+    {
+      /* parse time substring -- can check bounds here */
+      int beg, end, len;
+      len = snd_strlen((char *)(pt->ints[args[1]->addr]));
+      beg = pt->ints[args[2]->addr];
+      end = pt->ints[args[3]->addr];
+      if ((beg <= len) && (end <= len))
+	return(make_xen_value(R_STRING, 
+			      add_string_to_ptree(pt, substring((char *)(pt->ints[args[1]->addr]), beg, end)),
+			      R_CONSTANT));
+      return(run_warn("substring: args out of range"));
+    }
   return(package(pt, R_STRING, substr_1, descr_substr_1, args, 3));
 }
 
@@ -6153,9 +6163,12 @@ static char *descr_sample2file_4(int *args, int *ints, Float *dbls)
 static void sample2file_4(int *args, int *ints, Float *dbls) {FLOAT_RESULT = mus_sample2file((mus_any *)(INT_ARG_1), INT_ARG_2, INT_ARG_3, FLOAT_ARG_4);}
 static xen_value *sample2file_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if ((args[2]->type != R_INT) || (args[3]->type != R_INT) || (args[4]->type != R_FLOAT))
-    return(run_warn("sample->file: bad arg type"));
-  if (num_args == 4) return(package(prog, R_FLOAT, sample2file_4, descr_sample2file_4, args, 4));
+  if (num_args == 4)
+    {
+      if ((args[2]->type != R_INT) || (args[3]->type != R_INT) || (args[4]->type != R_FLOAT))
+	return(run_warn("sample->file: bad arg type"));
+      return(package(prog, R_FLOAT, sample2file_4, descr_sample2file_4, args, 4));
+    }
   return(run_warn("sample->file: wrong number of args"));
 }
 
@@ -6173,9 +6186,12 @@ static void locsig_3(int *args, int *ints, Float *dbls)
 }
 static xen_value *locsig_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if (args[2]->type != R_INT) return(run_warn("locsig 2nd arg not int: %s", type_names[args[2]->type]));
-  if (args[3]->type != R_FLOAT) return(run_warn("locsig 3rd arg not real"));
-  if (num_args == 3) return(package(prog, R_CLM, locsig_3, descr_locsig_3, args, 3));
+  if (num_args == 3)
+    {
+      if (args[2]->type != R_INT) return(run_warn("locsig 2nd arg not int: %s", type_names[args[2]->type]));
+      if (args[3]->type != R_FLOAT) return(run_warn("locsig 3rd arg not real"));
+      return(package(prog, R_CLM, locsig_3, descr_locsig_3, args, 3));
+    }
   return(run_warn("locsig: wrong number of args"));
 }
 
@@ -6188,8 +6204,11 @@ static char *descr_env_interp_2(int *args, int *ints, Float *dbls)
 static void env_interp_2(int *args, int *ints, Float *dbls) {FLOAT_RESULT = mus_env_interp(FLOAT_ARG_1, (mus_any *)(INT_ARG_2));}
 static xen_value *env_interp_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if (args[1]->type != R_FLOAT) return(run_warn("env-interp 1st arg not real"));
-  if (num_args == 2) return(package(prog, R_FLOAT, env_interp_2, descr_env_interp_2, args, 2));
+  if (num_args == 2)
+    {
+      if (args[1]->type != R_FLOAT) return(run_warn("env-interp 1st arg not real"));
+      return(package(prog, R_FLOAT, env_interp_2, descr_env_interp_2, args, 2));
+    }
   return(run_warn("env-interp: wrong number of args"));
 }
 
@@ -6316,8 +6335,11 @@ static void frame2file_3(int *args, int *ints, Float *dbls)
 }
 static xen_value *frame2file_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if (args[2]->type != R_INT) return(run_warn("frame->file 2nd arg not int"));
-  if (num_args == 3) return(package(prog, R_CLM, frame2file_3, descr_frame2file_3, args, 3));
+  if (num_args == 3)
+    {
+      if (args[2]->type != R_INT) return(run_warn("frame->file 2nd arg not int"));
+      return(package(prog, R_CLM, frame2file_3, descr_frame2file_3, args, 3));
+    }
   return(run_warn("frame->file: wrong number of args"));
 }
 
@@ -6332,8 +6354,11 @@ static void file2frame_3(int *args, int *ints, Float *dbls)
 }
 static xen_value *file2frame_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if (args[2]->type != R_INT) return(run_warn("file->frame 2nd arg not int"));
-  if (num_args == 3) return(package(prog, R_CLM, file2frame_3, descr_file2frame_3, args, 3));
+  if (num_args == 3)
+    {
+      if (args[2]->type != R_INT) return(run_warn("file->frame 2nd arg not int"));
+      return(package(prog, R_CLM, file2frame_3, descr_file2frame_3, args, 3));
+    }
   return(run_warn("file->frame: wrong number of args"));
 }
 
@@ -7509,6 +7534,16 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	  if (strcmp(funcname, "previous-sample") == 0) return(clean_up(previous_sample_1(prog, args), args, num_args));
 	  if (strcmp(funcname, "read-sample") == 0) return(clean_up(reader_1(prog, args), args, num_args));
 	}
+
+      if (strcmp(funcname, "vector-ref") == 0) return(clean_up(vector_ref_1(prog, args, num_args), args, num_args));
+      if (strcmp(funcname, "vector-length") == 0) return(clean_up(vector_length_1(prog, args, num_args), args, num_args));
+      if (strcmp(funcname, "vector-fill!") == 0) return(clean_up(vector_fill_1(prog, args, num_args, need_result), args, num_args));
+      if (strcmp(funcname, "vector-set!") == 0) return(clean_up(vector_set_1(prog, args, num_args, need_result), args, num_args));
+      if ((strcmp(funcname, "make-vector") == 0) && 
+	  (num_args == 2) &&
+	  (args[2]->type == R_FLOAT))
+	return(clean_up(make_vct_1(prog, args, num_args), args, num_args));
+
       if (readers > 0) return(clean_up(run_warn("reader bad arg"), args, num_args));
       if (clms > 0) return(clean_up(run_warn("clm gen bad arg"), args, num_args));
       /* both of these can be applicable objects, but those are not counted in the arg scan */
@@ -7530,14 +7565,6 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	  if (strcmp(funcname, "vct-peak") == 0) return(clean_up(vct_peak_1(prog, args, num_args), args, num_args));
 	}
       /* no vcts from here on (except make-vct) */
-      if (strcmp(funcname, "vector-ref") == 0) return(clean_up(vector_ref_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "vector-length") == 0) return(clean_up(vector_length_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "vector-fill!") == 0) return(clean_up(vector_fill_1(prog, args, num_args, need_result), args, num_args));
-      if (strcmp(funcname, "vector-set!") == 0) return(clean_up(vector_set_1(prog, args, num_args, need_result), args, num_args));
-      if ((strcmp(funcname, "make-vector") == 0) && 
-	  (num_args == 2) &&
-	  (args[2]->type == R_FLOAT))
-	return(clean_up(make_vct_1(prog, args, num_args), args, num_args));
 
       if (num_args == 0)
 	{
@@ -7665,29 +7692,30 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 
 static xen_value *lookup_generalized_set(ptree *prog, char *accessor, xen_value *in_v, xen_value *v)
 {
+  xen_value *sv = NULL;
   if (v->type == R_FLOAT)
     {
-      if (strcmp(accessor, "mus-phase") == 0) v = mus_set_phase_1(prog, in_v, v); else
-      if (strcmp(accessor, "mus-frequency") == 0) v = mus_set_frequency_1(prog, in_v, v); else
-      if (strcmp(accessor, "mus-scaler") == 0) v = mus_set_scaler_1(prog, in_v, v); else
-      if (strcmp(accessor, "mus-feedback") == 0) v = mus_set_feedback_1(prog, in_v, v); else
-      if (strcmp(accessor, "mus-feedforward") == 0) v = mus_set_feedforward_1(prog, in_v, v); else
-      if (strcmp(accessor, "mus-increment") == 0) v = mus_set_increment_1(prog, in_v, v); else
-      if (strcmp(accessor, "mus-a0") == 0) v = mus_set_a0_1(prog, in_v, v); else
-      if (strcmp(accessor, "mus-a1") == 0) v = mus_set_a1_1(prog, in_v, v); else
-      if (strcmp(accessor, "mus-a2") == 0) v = mus_set_a2_1(prog, in_v, v); else
-      if (strcmp(accessor, "mus-b1") == 0) v = mus_set_b1_1(prog, in_v, v); else
-      if (strcmp(accessor, "mus-b2") == 0) v = mus_set_b2_1(prog, in_v, v); else
-      if (strcmp(accessor, "mus-formant-radius") == 0) v = mus_set_formant_radius_1(prog, in_v, v);
+      if (strcmp(accessor, "mus-phase") == 0) sv = mus_set_phase_1(prog, in_v, v); else
+      if (strcmp(accessor, "mus-frequency") == 0) sv = mus_set_frequency_1(prog, in_v, v); else
+      if (strcmp(accessor, "mus-scaler") == 0) sv = mus_set_scaler_1(prog, in_v, v); else
+      if (strcmp(accessor, "mus-feedback") == 0) sv = mus_set_feedback_1(prog, in_v, v); else
+      if (strcmp(accessor, "mus-feedforward") == 0) sv = mus_set_feedforward_1(prog, in_v, v); else
+      if (strcmp(accessor, "mus-increment") == 0) sv = mus_set_increment_1(prog, in_v, v); else
+      if (strcmp(accessor, "mus-a0") == 0) sv = mus_set_a0_1(prog, in_v, v); else
+      if (strcmp(accessor, "mus-a1") == 0) sv = mus_set_a1_1(prog, in_v, v); else
+      if (strcmp(accessor, "mus-a2") == 0) sv = mus_set_a2_1(prog, in_v, v); else
+      if (strcmp(accessor, "mus-b1") == 0) sv = mus_set_b1_1(prog, in_v, v); else
+      if (strcmp(accessor, "mus-b2") == 0) sv = mus_set_b2_1(prog, in_v, v); else
+      if (strcmp(accessor, "mus-formant-radius") == 0) sv = mus_set_formant_radius_1(prog, in_v, v);
     }
   if (v->type == R_INT)
     {
-      if (strcmp(accessor, "mus-ramp") == 0) v = mus_set_ramp_1(prog, in_v, v); else
-      if (strcmp(accessor, "mus-hop") == 0) v = mus_set_hop_1(prog, in_v, v); else
-      if (strcmp(accessor, "mus-location") == 0) v = mus_set_location_1(prog, in_v, v); else
-      if (strcmp(accessor, "mus-length") == 0) v = mus_set_length_1(prog, in_v, v);
+      if (strcmp(accessor, "mus-ramp") == 0) sv = mus_set_ramp_1(prog, in_v, v); else
+      if (strcmp(accessor, "mus-hop") == 0) sv = mus_set_hop_1(prog, in_v, v); else
+      if (strcmp(accessor, "mus-location") == 0) sv = mus_set_location_1(prog, in_v, v); else
+      if (strcmp(accessor, "mus-length") == 0) sv = mus_set_length_1(prog, in_v, v);
     }
-  if (strcmp(accessor, "mus-srate") == 0) v = mus_set_srate_1(prog, in_v, v);
+  if (strcmp(accessor, "mus-srate") == 0) sv = mus_set_srate_1(prog, in_v, v);
   /* TODO: list-set! for def-clm-struct [needs to retain old type] -- in_v: accessor-arg, v:new val [also needs runtime list-ref]
      lst = (XEN)(prog->ints[in_v->addr]);
      (set! (fd-loc arg) 123) -- arg is a list, fd-loc gives the offset
@@ -7703,9 +7731,10 @@ static xen_value *lookup_generalized_set(ptree *prog, char *accessor, xen_value 
   /*       these would require that set_form pass us the 2nd (and 3rd) arg(s) to the accessor as well */
   /*       then something like set_dbl_gen0 as the call */
   /*       or set_form needs to notice and translate to vct-set! et al */
-  if (v == NULL) run_warn("can't set! %s", accessor);
+  if (sv == NULL) run_warn("can't set! %s", accessor);
   if (in_v) FREE(in_v);
   if (accessor) FREE(accessor);
+  if ((sv == NULL) && (v)) {FREE(v); v = NULL;}
   return(v);
 }
 

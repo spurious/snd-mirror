@@ -786,11 +786,7 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
   /* we've already checked that filename exists */
   hdr = make_file_info_1(filename);
   chans = mus_sound_chans(filename);
-#if DEBUGGING
-  if (chans <= 0) {fprintf(stderr,"no chans %s\n", filename); abort();} /* can't happen? */
-#else
   if (chans <= 0) chans = 1;
-#endif
   sp = make_basic_snd_info(chans);
   sp->nchans = chans;
   sp->hdr = hdr;
@@ -2021,6 +2017,7 @@ static int check_for_same_name(snd_info *sp1, void *ur_info)
 
 int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *str, int save_type, int srate, int type, int format, char *comment)
 {
+  /* only from save-as dialog where type/format are known to be writable */
   /* returns 0 if new file not opened, 1 if opened (same name as old), -1 if cancelled or error of some sort */
   same_name_info *collision = NULL;
   char *fullname, *ofile;

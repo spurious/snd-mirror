@@ -91,27 +91,16 @@ static void cp_set_selection_beg(chan_info *cp, off_t beg)
   ed->selection_maxamp = -1.0;
 }
 
-static off_t cp_selection_end(chan_info *cp, off_t *begptr) 
+off_t selection_end(chan_info *cp) /* never called without selection_member check in advance */
 {
-  ed_list *ed;
-  off_t *beg = begptr;
-  ed = cp->edits[cp->edit_ctr];
-  if (ed->selection_beg != NO_SELECTION)
+#if DEBUGGING
+  if ((cp == NULL) || (cp->edits[cp->edit_ctr]->selection_beg == NO_SELECTION))
     {
-      beg[0] = ed->selection_end;
-      return(1); /* i.e. stop map_over_chans */
+      fprintf(stderr, "selection_end called with non-selection cp");
+      abort();
     }
-  return(0);
-}
-
-off_t selection_end(chan_info *cp)
-{
-  off_t beg[1];
-  beg[0] = 0;
-  if (cp)
-    cp_selection_end(cp, beg);
-  else off_t_map_over_chans(get_global_state(), cp_selection_end, beg);
-  return(beg[0]);
+#endif
+  return(cp->edits[cp->edit_ctr]->selection_end);
 }
 
 static off_t cp_selection_len(chan_info *cp, off_t *ptr)
@@ -320,12 +309,6 @@ sync_info *selection_sync(void)
   for_each_chan_1(get_global_state(), next_selection_chan, (void *)si);
   return(si);
 }
-
-int mix_file_and_delete(off_t beg, off_t num, char *file, chan_info **cps, int out_chans, const char *origin, int with_tag)
-{
-  return(mix(beg, num, out_chans, cps, file, DELETE_ME, origin, with_tag));
-}
-
 
 static int mix_selection(snd_state *ss, chan_info *cp, off_t beg, const char *origin)
 {
@@ -594,6 +577,7 @@ void move_selection(chan_info *cp, int x)
 
 int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, char *comment, int chan)
 {
+  /* type and format have already been checked */
   int ofd, comlen, err = MUS_NO_ERROR, reporting = 0, no_space, bps;
   off_t oloc;
   sync_info *si = NULL;
@@ -603,121 +587,115 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
   snd_fd **sfs;
   snd_info *sp = NULL;
   mus_sample_t **data;
-
-  if (MUS_DATA_FORMAT_OK(format))
+#if DEBUGGING
+  if (!(mus_header_writable(type, format)))
     {
-      if (MUS_HEADER_TYPE_OK(type))
-	{
-	  si = selection_sync();
-	  if ((si) && (si->cps) && (si->cps[0])) sp = si->cps[0]->sound;
-	  comlen = snd_strlen(comment);
-	  dur = selection_len();
-	  if (chan == SAVE_ALL_CHANS)
-	    chans = si->chans;
-	  else chans = 1;
+      fprintf(stderr, "somehow save-selection called with type: %d (%s), format: %d (%s)\n",
+	      type, mus_header_type_name(type),
+	      format, mus_data_format_name(format));
+      abort();
+    }
+#endif
+  si = selection_sync();
+  if ((si) && (si->cps) && (si->cps[0])) sp = si->cps[0]->sound;
+  comlen = snd_strlen(comment);
+  dur = selection_len();
+  if (chan == SAVE_ALL_CHANS)
+    chans = si->chans;
+  else chans = 1;
 
-	  if ((snd_write_header(ss, ofile, type, srate, chans, 28, chans * dur, format, comment, comlen, NULL)) == -1) 
-	    {
-	      si = free_sync_info(si);
-	      return(MUS_HEADER_WRITE_FAILED);
-	    }
-	  oloc = mus_header_data_location();
-	  if ((ofd = snd_reopen_write(ss, ofile)) == -1) 
-	    {
-	      si = free_sync_info(si);
-	      return(MUS_CANT_OPEN_TEMP_FILE);
-	    }
-	  if (sp)
-	    {
-	      bps = mus_bytes_per_sample(format);
-	      num = dur * bps * chans;
-	      no_space = disk_space_p(sp, num, 0, ofile);
-	      if (no_space == GIVE_UP)
-		{
-		  /* has already interacted with user about disk problem */
-		  snd_close(ofd, ofile);
-		  si = free_sync_info(si);
-		  return(MUS_WRITE_ERROR);
-		}
-	    }
-	  reporting = ((sp) && (dur > 1000000));
-	  if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
-	  ends = (off_t *)CALLOC(chans, sizeof(off_t));
-	  sfs = (snd_fd **)CALLOC(chans, sizeof(snd_fd *));
-	  if (chan == SAVE_ALL_CHANS)
-	    for (i = 0; i < chans; i++) 
-	      {
-		ends[i] = selection_end(si->cps[i]);
-		sfs[i] = init_sample_read(selection_beg(si->cps[i]), si->cps[i], READ_FORWARD);
-	      }
-	  else
-	    {
-	      ends[0] = selection_end(si->cps[chan]);
-	      sfs[0] = init_sample_read(selection_beg(si->cps[chan]), si->cps[chan], READ_FORWARD);
-	    }
-	  mus_file_open_descriptors(ofd, ofile, format, 
-				    mus_bytes_per_sample(format), 
-				    oloc, chans, type);
-	  mus_file_set_data_clipped(ofd, data_clipped(ss));
-	  lseek(ofd, oloc, SEEK_SET);
-	  data = (mus_sample_t **)CALLOC(chans, sizeof(mus_sample_t *));
-	  for (i = 0; i < chans; i++) 
-	    data[i] = (mus_sample_t *)CALLOC(FILE_BUFFER_SIZE, sizeof(mus_sample_t)); 
-	  j = 0;
-	  for (ioff = 0; ioff < dur; ioff++)
-	    {
-	      for (k = 0; k < chans; k++)
-		{
-		  if (ioff <= ends[k]) 
-		    data[k][j] = read_sample(sfs[k]);
-		  else data[k][j] = MUS_SAMPLE_0;
-		}
-	      j++;
-	      if (j == FILE_BUFFER_SIZE)
-		{
-		  err = mus_file_write(ofd, 0, j - 1, chans, data);
-		  j = 0;
-		  if (err == MUS_ERROR) break; /* error message already posted */
-		  if (reporting) 
-		    progress_report(sp, "save-selection", chans - 1, chans, (Float)((double)ioff / (double)dur), NOT_FROM_ENVED);
-		  if (ss->stopped_explicitly)
-		    {
-		      ss->stopped_explicitly = 0;
-		      snd_warning("save selection stopped");
-		      break;
-		    }
-		}
-	    }
-	  if ((err == MUS_NO_ERROR) && (j > 0)) 
-	    mus_file_write(ofd, 0, j - 1, chans, data);
-	  if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
-	  for (i = 0; i < chans; i++)
-	    {
-	      free_snd_fd(sfs[i]);
-	      FREE(data[i]);
-	    }
-	  FREE(sfs);
-	  FREE(data);
-	  si = free_sync_info(si);
-	  FREE(ends);
-	  if (mus_file_close(ofd) != 0)
-	    {
-	      snd_error("save-selection: can't close %s: %s!", ofile, strerror(errno));
-	      return(MUS_CANT_CLOSE_FILE);
-	    }
-	  alert_new_file();
-	  return(err);
-	}
-      else 
+  if ((snd_write_header(ss, ofile, type, srate, chans, 28, chans * dur, format, comment, comlen, NULL)) == -1) 
+    {
+      si = free_sync_info(si);
+      return(MUS_HEADER_WRITE_FAILED);
+    }
+  oloc = mus_header_data_location();
+  if ((ofd = snd_reopen_write(ss, ofile)) == -1) 
+    {
+      si = free_sync_info(si);
+      return(MUS_CANT_OPEN_TEMP_FILE);
+    }
+  if (sp)
+    {
+      bps = mus_bytes_per_sample(format);
+      num = dur * bps * chans;
+      no_space = disk_space_p(sp, num, 0, ofile);
+      if (no_space == GIVE_UP)
 	{
-	  snd_error("save-selection: unsupported header type? %d (%s)", type, mus_header_type_name(type));
-	  return(MUS_UNSUPPORTED_HEADER_TYPE);
+	  /* has already interacted with user about disk problem */
+	  snd_close(ofd, ofile);
+	  si = free_sync_info(si);
+	  return(MUS_WRITE_ERROR);
 	}
     }
-  else snd_error("save-selection: unsupported data format? %d (%s)", format, mus_data_format_name(format));
-  return(MUS_UNSUPPORTED_DATA_FORMAT);
+  reporting = ((sp) && (dur > 1000000));
+  if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
+  ends = (off_t *)CALLOC(chans, sizeof(off_t));
+  sfs = (snd_fd **)CALLOC(chans, sizeof(snd_fd *));
+  if (chan == SAVE_ALL_CHANS)
+    for (i = 0; i < chans; i++) 
+      {
+	ends[i] = selection_end(si->cps[i]);
+	sfs[i] = init_sample_read(selection_beg(si->cps[i]), si->cps[i], READ_FORWARD);
+      }
+  else
+    {
+      ends[0] = selection_end(si->cps[chan]);
+      sfs[0] = init_sample_read(selection_beg(si->cps[chan]), si->cps[chan], READ_FORWARD);
+    }
+  mus_file_open_descriptors(ofd, ofile, format, 
+			    mus_bytes_per_sample(format), 
+			    oloc, chans, type);
+  mus_file_set_data_clipped(ofd, data_clipped(ss));
+  lseek(ofd, oloc, SEEK_SET);
+  data = (mus_sample_t **)CALLOC(chans, sizeof(mus_sample_t *));
+  for (i = 0; i < chans; i++) 
+    data[i] = (mus_sample_t *)CALLOC(FILE_BUFFER_SIZE, sizeof(mus_sample_t)); 
+  j = 0;
+  for (ioff = 0; ioff < dur; ioff++)
+    {
+      for (k = 0; k < chans; k++)
+	{
+	  if (ioff <= ends[k]) 
+	    data[k][j] = read_sample(sfs[k]);
+	  else data[k][j] = MUS_SAMPLE_0;
+	}
+      j++;
+      if (j == FILE_BUFFER_SIZE)
+	{
+	  err = mus_file_write(ofd, 0, j - 1, chans, data);
+	  j = 0;
+	  if (err == MUS_ERROR) break; /* error message already posted */
+	  if (reporting) 
+	    progress_report(sp, "save-selection", chans - 1, chans, (Float)((double)ioff / (double)dur), NOT_FROM_ENVED);
+	  if (ss->stopped_explicitly)
+	    {
+	      ss->stopped_explicitly = 0;
+	      snd_warning("save selection stopped");
+	      break;
+	    }
+	}
+    }
+  if ((err == MUS_NO_ERROR) && (j > 0)) 
+    mus_file_write(ofd, 0, j - 1, chans, data);
+  if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
+  for (i = 0; i < chans; i++)
+    {
+      free_snd_fd(sfs[i]);
+      FREE(data[i]);
+    }
+  FREE(sfs);
+  FREE(data);
+  si = free_sync_info(si);
+  FREE(ends);
+  if (mus_file_close(ofd) != 0)
+    {
+      snd_error("save-selection: can't close %s: %s!", ofile, strerror(errno));
+      return(MUS_CANT_CLOSE_FILE);
+    }
+  alert_new_file();
+  return(err);
 }
-
 
 
 static XEN g_delete_selection(void)

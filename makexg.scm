@@ -862,6 +862,7 @@
 (hey " */~%~%")
 
 (hey "#if defined(HAVE_CONFIG_H)~%  #include <config.h>~%#endif~%~%")
+(hey "#if UNDEF_USE_SND~%  #undef USE_SND~%  #define USE_SND 0~%#endif~%~%")
 
 (hey "#include <glib.h>~%")
 (hey "#include <gdk/gdk.h>~%")

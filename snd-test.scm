@@ -34,7 +34,7 @@
 ;;; TODO: mix panel env editor (apply button (XmMessageBoxGetChild mix_panel XmDIALOG_CANCEL_BUTTON)
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs) (ice-9 syncase))
-;should this be (use-syntax (ice-9 syncase))?
+;(use-syntax (ice-9 syncase))
 
 (define (snd-display . args)
   (let ((str (if (null? (cdr args))
@@ -81,6 +81,7 @@
 
 (define pi 3.141592653589793)
 (define mus-position mus-channels)
+(define max-optimization 5)
 
 (define home-dir "/home/bil")
 (if (file-exists? "/export/home/bil/cl/oboe.snd")
@@ -265,6 +266,16 @@
 		(begin
 		  (set! tests (string->number (list-ref args (+ arg 2))))
 		  (set! (script-arg) (+ arg 2))))))))
+
+(if (and (provided? 'snd-motif)
+	 (provided? 'xm))
+    (begin
+      (load "event.scm")
+      (if (not (defined? 'find-child))
+	  (begin
+	    (load "snd-motif.scm")
+	    (load "popup.scm")))))
+
 
 
 ;;; ---------------- test 0: constants ----------------
@@ -8365,10 +8376,6 @@
       ))
 
 
-(if (and (provided? 'snd-motif)
-	 (provided? 'xm))
-    (load "event.scm"))
-
 ;;; ---------------- test 9: mix ----------------
 
 (if (or full-test (= snd-test 9) (and keep-going (<= snd-test 9)))
@@ -9036,6 +9043,10 @@
       (set! (mix-amp md 0) 1.0)
       (if (fneq (maxamp ind 1) .165) (snd-display ";non-sinc mix-speed: ~A" (maxamp ind 1)))
       (set! (use-sinc-interp) #t)
+      (set! (mix-amp-env md 0) '(0 0 1 1 2 0))
+      (update-time-graph)
+      (set! (mix-speed md) 1.0)
+      (update-time-graph)
       (revert-sound ind)
       (set! (sync ind) 1)
       (let ((m0 (maxamp ind 0))
@@ -9660,6 +9671,7 @@
 		(else (add-mark (irandom (1- (frames))))))))
 	  (close-sound ind))
 
+	(if (provided? 'snd-motif) (mark-sync-color "blue"))
 	(let ((ind (open-sound "oboe.snd")))
 	  (let ((m0 (add-mark 4321)))
 	    (delete-sample 100)
@@ -9706,6 +9718,7 @@
 	    (IF (not (= (mark-sample m0) 4763)) (snd-display ";pad-marks m0 pos: ~A" (mark-sample m0)))
 	    (IF (fneq (sample 1235) 0.0) (snd-display ";pad-marks 1235: ~A" (sample 1235))))
 	  (close-sound ind))
+	(reset-hook! draw-mark-hook)
 	(let ((ind (open-sound "oboe.snd")))
 	  (IF (forward-mark) (snd-display ";forward-mark when no marks: ~A" (forward-mark)))
 	  (IF (backward-mark) (snd-display ";backward-mark when no marks: ~A" (backward-mark)))
@@ -11111,8 +11124,10 @@
 	(let* ((name (list-ref cur-dir-files i))
 	       (ht (mus-sound-header-type name))
 	       (df (mus-sound-data-format name))
+	       (len (mus-sound-frames name))
 	       (chans (mus-sound-chans name)))
 	  (if (and (not (= ht mus-raw))
+		   (not (= len 0))
 		   (not (= df -1)))
 	      (if (= chans 1)
 		  (set! mono-files (cons name mono-files))
@@ -17102,6 +17117,7 @@ EDITS: 2
       (define int-var 32)
       (define dbl-var 3.14)
       (define bool-var #t)
+      (define lst-var '(0 1 2))
       
       (if (procedure? test-hook) (test-hook 22))
       (if (> (optimization) 0) (begin
@@ -17259,6 +17275,8 @@ EDITS: 2
       (ftsta '(lambda (y) (/ y (* 2 y) (+ y y) y 2)) 2.0 0.03125)
       (itst '(inexact->exact (/ 0.5)) 2)
       (itst '(inexact->exact (/ 0.5 0.5)) 1)
+      (itst '(inexact->exact (/ 3)) 0)
+      (itst '(inexact->exact (/ 3 1.5 2)) 1)
       (etst '(/ #f))
       (etst '(/ 1.0 2 "oops" 2))
       (ftst '(/ 2.0 1.0) 2.0)
@@ -17943,6 +17961,7 @@ EDITS: 2
       (btsta '(lambda (y) (or #f (odd? 4))) 0.0 #f)
       (btsta '(lambda (y) (or (odd? y) (begin (set! int-var 123) #f))) 3 #t)
       (IF (= int-var 123) (snd-display ";or not short-circuited"))
+      (etst '(or (hiho 3)))
       
       (btsta '(lambda (y) (and)) 0 #t)
       (btsta '(lambda (y) (and #f)) 0 #f)
@@ -17955,6 +17974,7 @@ EDITS: 2
       (if (not (= int-var 123)) (snd-display ";and quit early?"))
       (btsta '(lambda (y) (and (odd? y) (begin (set! int-var 321) #t))) 2 #f)
       (IF (= int-var 321) (snd-display ";and not short-circuited"))
+      (etst '(and (hiho 3)))
       
       (btst '(eq? 1 1) #t)
       (btst '(eq? 1 2) #f)
@@ -18111,7 +18131,11 @@ EDITS: 2
       (etst '(set! dbl-var 1))
       (etst '(set! bool-var 1))
       (etst '(let ((a 1)) (set! a 3.14)))
-      
+      (etst '(set! (hiho) 3))
+      (etst '(set! (sample 0 0 0) .1))
+      (let ((hiho '(1 2))) (etst '(set! hiho 3)))
+      (etst '(set! lst-var 3))
+
       (itst '(1+ 1) 2)
       (itst '(1+ 0) 1)
       (itst '(1+ -1) 0)
@@ -18745,8 +18769,11 @@ EDITS: 2
       (etst '(substring "asdfg"))
       (etst '(substring "asdfg" "hi"))
       (etst '(substring "asdfg" 0 3 123))
-      (ststa '(lambda (y) (substring "012345" 1 4)) 0 "123")
-      (ststa '(lambda (y) (substring "012345" 1 1)) 0 "")
+      (etst '(substring "hi" 3 4))
+      (etst '(substring "hi" 3 2))
+      (ststa '(lambda (y) (substring "012345" 1 (inexact->exact y))) 4 "123")
+      (ststa '(lambda (y) (substring "012345" (inexact->exact y) 1)) 1 "")
+      (ststa '(lambda (y) (substring "hi" 2 (inexact->exact y))) 4 "") ; should send error
       (ststa '(lambda (y) (substring (make-string 6 (integer->char (inexact->exact y))) 2 4)) 65 "AA")
       (ststa '(lambda (y) (let ((str (make-string 6 (integer->char (inexact->exact y))))) (string-set! str 0 #\b) (substring str 0 2))) 65 "bA")
       (stst '(string-append "a" "bc") "abc")
@@ -18763,6 +18790,7 @@ EDITS: 2
       (stst '(number->string 1) "1")
       (stst '(number->string 3 2) "11")
       (stst '(number->string 1.5) "1.5")
+      (stst '(number->string 1.5 10) "1.5") ; actually radix is ignored here by scheme
       (ststa '(lambda (y) (number->string y)) 1.5 "1.5")
       (ststa '(lambda (y) (number->string (inexact->exact y))) 1.0 "1")
       (ststa '(lambda (y) (number->string y 10)) 1.0 "1.0")
@@ -18781,6 +18809,7 @@ EDITS: 2
       (ftst '(let ((v (make-vct 3))) (vct-set! v 1 32.1) (vct-ref v 1)) 32.1)
       (ftst '(let ((v (make-vector 3 0.0))) (vct-set! v 1 32.1) (vct-ref v 1)) 32.1)
       (ftst '(let ((v (make-vct 3))) (vct-set! v 1 3.0) (vct-scale! v 2.0) (vct-ref v 1)) 6.0)
+      (ftst '(let ((v (make-vct 3))) (set! int-var 2) (vct-set! v 1 3.0) (vct-scale! v int-var) (vct-ref v 1)) 6.0)
       (ftst '(let ((v (make-vct 3))) (vct-set! v 1 3.0) (vct-add! v v) (vct-ref v 1)) 6.0)
       (ftst '(let ((v (make-vct 3))) (vct-set! v 1 3.0) (vct-multiply! v v) (vct-ref v 1)) 9.0)
       (ftst '(let ((v (make-vct 3))) (vct-set! v 1 3.0) (vct-subtract! v v) (vct-ref v 1)) 0.0)
@@ -18807,6 +18836,8 @@ EDITS: 2
       (etst '(let ((a 1)) (cond ((> a 1) 2) ((> a 0) "hi"))))
       (etst '(do ((i 0 (1+ i))) ("hi" 3)))
       (etst '(do ((i 0 (1+ i))) ((= i 3) (list 1 2)) (+ 1 2)))
+      (etst '(do ((i 0 (1+ i)) (j 0 (1+ i))) ((= i 3)) (hiho 3)))
+      (etst '(do ((i 0 (1+ i)) (j 0 (1+ i)) (k 0 (hiho k))) ((= i 3)) 0))
       (etst '(call/cc (lambda (break) (let ((a 1)) (if (> a 0) (break 3) (break "hi"))))))
       (etst '(call/cc (lambda (break) (let ((a 1)) (if (> a 0) (break 3)) (break "hi")))))
       (etst '(let ((a 1)) (or (> a 1) "hi"))) ; kinda stupid -- run should handle this!
@@ -19017,6 +19048,7 @@ EDITS: 2
       (ftst '(gen 1.0) 0.153)
       (ftst '(gen 0.0 0.0) 0.925)
       (ftst '(gen 0.0 1.0) 0.802)
+      (etst '(oscil gen 1.0 2.0 3.0))
 
       (ftst '(mus-srate) 22050.0)
       (ftst '(set! (mus-srate) 44100.0) 44100.0)
@@ -19110,15 +19142,71 @@ EDITS: 2
 	    (v (make-vct 3)))
 	(vct-map! v (lambda () (vector-set! vect 0 123) 0.0))
 	(IF (not (= (vector-ref vect 0) 123)) (snd-display ";i vect set: ~A" vect)))
+
       (let ((vect (make-vector 3 32.0))
 	    (v (make-vct 3)))
 	(vct-map! v (lambda () (vector-set! vect 0 123.0) 0.0))
 	(IF (fneq (vector-ref vect 0) 123.0) (snd-display ";f vect set: ~A" vect)))
 
+      (let ((vect (make-vector 3))
+	    (v (make-vct 3))
+	    (gen (make-oscil 440)))
+	(vector-set! vect 0 (make-oscil 440))
+	(vector-set! vect 1 (make-oscil 440))
+	(vector-set! vect 2 (make-oscil 440))
+	(vct-map! v (lambda ()
+		      (let ((val (vector-ref vect 0)))
+			(oscil val 0.0))))
+	(IF (not (vequal v (vct 0.0 0.125 0.248))) (snd-display ";vect gen vct-map 1.0: ~A" v)))
+
+      (let ((vect (make-vector 3))
+	    (v (make-vct 3))
+	    (gen (make-oscil 440)))
+	(vector-set! vect 0 (make-oscil 440))
+	(vector-set! vect 1 (make-oscil 440))
+	(vector-set! vect 2 (make-oscil 440))
+	(vct-map! v (lambda ()
+		      (let ((val (vector-ref vect 0)))
+			(vector-set! vect 0 gen)
+			(vector-fill! vect gen)
+			(oscil val 0.0))))
+	(IF (not (vequal v (vct 0.0 0.0 0.125))) (snd-display ";vect gen set vct-map 1.0: ~A" v)))
+
+      (let ((vect (make-vector 3))
+	    (v (make-vct 3))
+	    (v1 (make-vct 3)))
+	(vector-set! vect 0 (make-vct 3 0.25))
+	(vector-set! vect 1 (make-vct 3 0.5))
+	(vector-set! vect 2 (make-vct 3 1.0))
+	(vct-map! v (lambda ()
+		      (let ((val (vector-ref vect 0)))
+			(vct-ref val 0))))
+	(IF (not (vequal v (vct 0.25 0.25 0.25))) (snd-display ";vect vct vct-map 1.0: ~A" v)))
+
+      (let ((vect (make-vector 3))
+	    (v (make-vct 3))
+	    (v1 (make-vct 3 2.0)))
+	(vector-set! vect 0 (make-vct 3 0.25))
+	(vector-set! vect 1 (make-vct 3 0.5))
+	(vector-set! vect 2 (make-vct 3 1.0))
+	(vct-map! v (lambda ()
+		      (let ((val (vector-ref vect 0)))
+			(vector-set! vect 0 v1)
+			(vector-fill! vect v1)
+			(vct-ref val 0))))
+	(IF (not (vequal v (vct 0.25 2.0 2.0))) (snd-display ";vect vct set vct-map 1.0: ~A" v)))
+
       (let ((v (make-vct 3))
 	    (f (make-frame 1)))
 	(vct-map (lambda () (frame-set! f 0 1.0) f) v)
 	(IF (not (vequal v (vct 1.0 1.0 1.0))) (snd-display ";vct-map 1.0: ~A" v)))
+
+      (let ((v (make-vct 3))
+	    (f (make-frame 1)))
+	(set! (optimization) 0)
+	(vct-map (lambda () (frame-set! f 0 1.0) f) v)
+	(set! (optimization) max-optimization)
+	(IF (not (vequal v (vct 1.0 1.0 1.0))) (snd-display ";unopt vct-map 1.0: ~A" v)))
 
       (let ((v (make-vct 3))
 	    (f (make-frame 1)))
@@ -19146,7 +19234,9 @@ EDITS: 2
 		 v0 v1)
 	(IF (or (not (vequal v0 (vct 0.667 0.667 0.667)))
 		(not (vequal v1 (vct 0.333 0.333 0.333))))
-	    (snd-display ";vct-map locsig: ~A ~A" v0 v1)))
+	    (snd-display ";vct-map locsig: ~A ~A" v0 v1))
+	(catch #t (lambda () (vct-map! v0 (lambda () (locsig l)))) (lambda args args))
+	(catch #t (lambda () (vct-map! v0 (lambda () (locsig l 1.0 2.0 3.0 4.0)))) (lambda args args)))
 
       (let ((v1 (make-vector 3 1.5))
 	    (v2 (make-vector 3 32))
@@ -19187,7 +19277,8 @@ EDITS: 2
 		      0.0))
 	(IF (or (fneq (vct-ref rdat 3) 16.0)
 		(fneq (vct-ref rdat 4) 0.0))
-	    (snd-display ";run vct fft (2) real[3 or 4]: ~A ~A?" (vct-ref rdat 3) (vct-ref rdat 4))))
+	    (snd-display ";run vct fft (2) real[3 or 4]: ~A ~A?" (vct-ref rdat 3) (vct-ref rdat 4)))
+	(catch #t (lambda () (vct-map! v (lambda () (mus-fft rdat idat 16 1.5)))) (lambda args args)))
 
       (etst '(let ((v0 (make-vct 3))) (polynomial v0 0.0 123)))
       (etst '(let ((v0 (make-vct 3))) (vct-ref v0 "hiho")))
@@ -19270,11 +19361,12 @@ EDITS: 2
 	(IF (fneq (mus-formant-radius flt) .3) (snd-display ";run set mus-formant-radius: ~A" (mus-formant-radius flt))))
 
       (let ((frm (make-formant .1 440.0))
-	    (v (make-vct 1)))
+	    (v (make-vct 3)))
 	(vct-map! v (lambda ()
 		      (mus-set-formant-radius-and-frequency frm 2.0 100.0)))
 	(IF (fneq (mus-formant-radius frm) 2.0) (snd-display ";run set-formant-radius-etc: ~A" (mus-formant-radius frm)))
-	(IF (fneq (mus-frequency frm) 100.0) (snd-display ";run set-formant-radius-etc (frq): ~A" (mus-frequency frm))))
+	(IF (fneq (mus-frequency frm) 100.0) (snd-display ";run set-formant-radius-etc (frq): ~A" (mus-frequency frm)))
+	(catch #t (lambda () (vct-map (lambda () (formant frm 1.0 2.0 3.0)) v)) (lambda args args)))
 
       (let ((v (make-vct 3)))
 	(vct-map! v (let ((i 0))
@@ -19346,7 +19438,9 @@ EDITS: 2
 	(IF (not fq) (snd-display "run frame?"))
 	(IF (not mq) (snd-display "run mixer?"))
 	(IF (fneq (frame-ref fr 0) .123) (snd-display ";run frame-ref: ~A" (frame-ref fr 0)))
-	(IF (fneq (mixer-ref mx 0 1) .123) (snd-display ";run mixer-ref: ~A" (mixer-ref mx 0 1))))
+	(IF (fneq (mixer-ref mx 0 1) .123) (snd-display ";run mixer-ref: ~A" (mixer-ref mx 0 1)))
+	(catch #t (lambda () (vct-map (lambda () (frame-ref fr 1 2 3)) v)) (lambda args args))
+	(catch #t (lambda () (vct-map (lambda () (mixer-ref mx 1 2 3 4)) v)) (lambda args args)))
 
       (let ((cmb (make-comb .1 12))
 	    (fb .123)
@@ -19359,7 +19453,8 @@ EDITS: 2
 		      0.0))
 	(IF (fneq fb .1) (snd-display ";run feedback: ~A" fb))
 	(IF (not (= len 12)) (snd-display ";run mus-length: ~A" len))
-	(IF (fneq (mus-feedback cmb) .123) (snd-display ";run set feedback: ~A" (mus-feedback cmb))))
+	(IF (fneq (mus-feedback cmb) .123) (snd-display ";run set feedback: ~A" (mus-feedback cmb)))
+	(catch #t (lambda () (vct-map (lambda () (comb cmb 1.0 2.0 3.0)) v)) (lambda args args)))
 
 	    
       (let ((cmb (make-notch .1 12))
@@ -19370,7 +19465,8 @@ EDITS: 2
 		      (set! (mus-feedforward cmb) .321)
 		      0.0))
 	(IF (fneq ff .1) (snd-display ";run feedforward: ~A" ff))
-	(IF (fneq (mus-feedforward cmb) .321) (snd-display ";run set feedforward: ~A" (mus-feedforward cmb))))
+	(IF (fneq (mus-feedforward cmb) .321) (snd-display ";run set feedforward: ~A" (mus-feedforward cmb)))
+	(catch #t (lambda () (vct-map (lambda () (notch cmb 1.0 2.0 3.0)) v)) (lambda args args)))
 
       (let ((gen (make-oscil 440))
 	    (res 0)
@@ -19380,7 +19476,8 @@ EDITS: 2
 		      (if (not (string=? (mus-describe gen) "oscil freq: 440.000Hz, phase: 0.000")) (set! res (+ res 10)))
 		      (if (not (string=? (mus-inspect gen) "osc freq: 0.125379, phase: 0.000000")) (set! res (+ res 100)))
 		      0.0))
-	(IF (not (= res 0)) (snd-display ";run mus-name etc: ~A" res)))
+	(IF (not (= res 0)) (snd-display ";run mus-name etc: ~A" res))
+	(catch #t (lambda () (vct-map (lambda () (oscil gen 0.0 1.0 1.0)) v)) (lambda args args)))
 
       (let ((r1 (make-rand 100))
 	    (r2 (make-rand-interp 100 .1))
@@ -19396,7 +19493,9 @@ EDITS: 2
 			  0.0)))
 	(IF (fneq (vct-ref v 0) 0.0) (snd-display ";run rand/interp?"))
 	(IF (not r1q) (snd-display "run rand?"))
-	(IF (not r2q) (snd-display "run rand-interp?")))
+	(IF (not r2q) (snd-display "run rand-interp?"))
+	(catch #t (lambda () (vct-map! v (lambda () (rand r1 0.0 1.0 2.0)))) (lambda args args))
+	(catch #t (lambda () (vct-map! v (lambda () (rand-interp r2 1.0 2.0 3.0)))) (lambda args args)))
 
       (let ((v0 (make-vct 10))
 	    (v (make-vct 1)))
@@ -19406,8 +19505,8 @@ EDITS: 2
 	(IF (fneq (vct-ref v 0) 3.5) (snd-display ";run array-interp: ~F?" (vct-ref v 0)))
 	(vct-map! v (lambda () (array-interp v0 3.5 10)))
 	(IF (fneq (vct-ref v 0) 3.5) (snd-display ";run array-interp sized: ~F?" (vct-ref v 0)))
-	(etst '(array-interp v0))
-	(etst '(array-interp v0 3.5 10 123)))
+	(catch #t (lambda () (vct-map! v (lambda () (array-interp v0)))) (lambda args args))
+	(catch #t (lambda () (vct-map! v (lambda () (array-interp v0 3.5 10 123)))) (lambda args args)))
 
       (let ((e (make-env '(0 0 1 1) :end 10))
 	    (v (make-vct 1))
@@ -19434,7 +19533,9 @@ EDITS: 2
 	(IF (fneq b 1.0) (snd-display ";run mus-increment: ~A" b))
 	(IF (fneq val8 0.8) (snd-display ";run set location: ~A" val8))
 	(IF (fneq val0 0.0) (snd-display ";run restart-env: ~A" val0))
-	(IF (fneq (vct-ref v 0) .5) (snd-display ";run env-interp: ~A" (vct-ref v 0))))
+	(IF (fneq (vct-ref v 0) .5) (snd-display ";run env-interp: ~A" (vct-ref v 0)))
+	(catch #t (lambda () (vct-map! v (lambda () (env e 1.0)))) (lambda args args))
+	(catch #t (lambda () (vct-map! v (lambda () (env-interp e)))) (lambda args args)))
 
       (let ((grn (make-granulate :expansion 2.0))
 	    (v (make-vct 1))
@@ -19550,7 +19651,7 @@ EDITS: 2
 	    ((= i 8)) 
 	  (if (fneq (vct-ref rdat i) 1.0)
 	      (snd-display "run impulse->flat? ~A" rdat)))
-	(etst '(spectrum rdat idat win 17.3)))
+	(catch #t (lambda () (vct-map! v (lambda () (spectrum rdat idat win 17.3)))) (lambda args args)))
 
       (let ((rdat (make-vct 16))
 	    (idat (make-vct 16))
@@ -19618,7 +19719,9 @@ EDITS: 2
 		      0.0))
 	(mus-close gen)
 	(IF (not oq) (snd-display ";run mus-output?"))
-	(IF (not sq) (snd-display ";run mus-output?")))
+	(IF (not sq) (snd-display ";run mus-output?"))
+	(catch #t (lambda () (vct-map! v (lambda () (sample->file gen)))) (lambda args args))
+	(catch #t (lambda () (vct-map! v (lambda () (sample->file gen 0 0 .1 .2)))) (lambda args args)))
 
       (let* ((gen (make-file->sample "fmv.snd"))
 	     (vals (make-vct 10))
@@ -19729,8 +19832,6 @@ EDITS: 2
 	  (itst (list 'frames #f #f current-edit-position) 50828)
 	  (etst '(edit-position ind 0 0))
 	  (close-sound ind)))
-
-      (define max-optimization 5)
 
       (let ((ind0 (new-sound "fmv0.snd" mus-next mus-bfloat 22050 1 "map tests"))
 	    (ind1 (new-sound "fmv1.snd" mus-next mus-bfloat 22050 1 "map tests"))
@@ -20035,12 +20136,6 @@ EDITS: 2
 
 ;;; ---------------- test 24: user-interface ----------------
 
-(if (and (provided? 'snd-motif)
-	 (provided? 'xm))
-    (begin
-      (load "popup.scm")
-      (load "snd-motif.scm")))
-
 (load "peak-env.scm")
 (if (hook-empty? initial-graph-hook) (snd-display "restore peaks failed?"))
 
@@ -20096,10 +20191,14 @@ EDITS: 2
 		(snd-kp-right-key #xFF98)
 		(snd-kp-up-key #xFF97)
 		(snd-tab-key #xFF09)
-		(snd-kp-pagedown-key #xFF56)
-		(snd-kp-pageup-key #xFF55)
+		;(snd-kp-pagedown-key #xFF56) ; these are the non-keypad page up/down
+		;(snd-kp-pageup-key #xFF55)
+		(snd-kp-pagedown-key #xFF9B)
+		(snd-kp-pageup-key #xFF9A)
 		(snd-kp-down-key #xFF99)
-		(snd-home-key #xFF50))
+		(snd-home-key #xFF50)
+		(snd-kp-0 #xFFB0)
+		(snd-kp-1 #xFFB1))
 
 	    (define (all-help wid)
 	      (if (Widget? wid)
@@ -20205,13 +20304,51 @@ EDITS: 2
 		(IF (not (= (cursor) 22050))
 		    (snd-display ";C-u 1.0 C-f -> ~A" (cursor)))
 
-		(let ((i1 (open-sound "2.snd")))
+		(let* ((i1 (open-sound "2.snd"))
+		       (len (frames i1 0)))
 		  (select-sound i1)
 		  (key (char->integer #\u) 4 i1)
 		  (key (char->integer #\1) 0 i1)
 		  (key (char->integer #\0) 0 i1)
 		  (key (char->integer #\0) 0 i1)
 		  (key (char->integer #\d) 4 i1)
+		  (if (not (= (frames i1 0) (- len 100)))
+		      (snd-display ";C-u 100 C-d: ~A ~A" len (frames i1 0)))
+
+		  (key (char->integer #\u) 4 i1)
+		  (key snd-kp-1 0 i1)
+		  (key snd-kp-0 0 i1)
+		  (key snd-kp-0 0 i1)
+		  (key (char->integer #\d) 4 i1)
+		  (if (not (= (frames i1 0) (- len 200)))
+		      (snd-display ";C-u (kp)100 C-d: ~A ~A" len (frames i1 0)))
+		  
+		  (key (char->integer #\u) 4 i1)
+		  (key snd-kp-1 4 i1)
+		  (key snd-kp-0 4 i1)
+		  (key snd-kp-0 4 i1)
+		  (key (char->integer #\d) 4 i1)
+		  (if (not (= (frames i1 0) (- len 300)))
+		      (snd-display ";C-u (C-kp)100 C-d: ~A ~A" len (frames i1 0)))
+		  
+		  (key (char->integer #\x) 4 i1)
+		  (key (char->integer #\() 0 i1)
+		  (let ((str (widget-text (list-ref (sound-widgets i1) 3))))
+		    (IF (not (string=? str "defining macro..."))
+			(snd-display ";C-x C-( report-in-minibuffer: ~A?" str)))
+		  (key (char->integer #\x) 4 i1)
+		  (key (char->integer #\() 0 i1)
+		  (let ((str (widget-text (list-ref (sound-widgets i1) 3))))
+		    (IF (not (string=? str "macro definition already in progress"))
+			(snd-display ";C-x C-( again report-in-minibuffer: ~A?" str)))
+		  (key (char->integer #\g) 4 i1)
+		  (key (char->integer #\x) 4 i1)
+		  (key (char->integer #\9) 0 i1)
+		  (let ((str (widget-text (list-ref (sound-widgets i1) 3))))
+		    (IF (not (string=? str "C-x 9 undefined"))
+			(snd-display ";C-x C-9 report-in-minibuffer: ~A?" str)))
+		  (key (char->integer #\g) 4 i1)
+
 		  (close-sound i1)
 		  (select-sound ind))
 
@@ -21560,6 +21697,10 @@ EDITS: 2
 		    (key-event text-widget snd-return-key 0) (force-event)
 		    (IF (not (= (cursor) 0))
 			(snd-display ";edit no find: ~A?" (cursor)))
+		    (widget-string text-widget "(lambda (n) (if (> n .1) 1 #f))")
+		    (key-event text-widget snd-return-key 0) (force-event)
+		    (if (not (= (cursor) 4424))
+			(snd-display ";find 1 past .1: ~A ~A ~A" (cursor) (sample (1- (cursor))) (sample (cursor))))
 		    (click-button cancel-button) (force-event)
 		    (close-sound ind))))
 
@@ -21817,8 +21958,10 @@ EDITS: 2
 		  (IF (not (reverb-control? ind)) (snd-display ";toggle but reverb off?"))
 		  (XmToggleButtonSetState (find-child sctrls "fltoff") #t #t)
 		  (IF (not (filter-control? ind)) (snd-display ";toggle but filter off?"))
-		  (XmToggleButtonSetState (find-child sctrls "fltdB") #t #t)
-		  (IF (not (filter-control-in-dB ind)) (snd-display ";toggle but filter-in-db off?"))
+		  (if (not (filter-control-in-dB ind))
+		      (begin
+			(XmToggleButtonSetState (find-child sctrls "fltdB") #t #t)
+			(IF (not (filter-control-in-dB ind)) (snd-display ";toggle but filter-in-db off?"))))
 		  ;(click-button (cadr (find-child sctrls "expand-label")))
 		  ;(IF (fneq (expand-control ind) 1.0) (snd-display ";click expand: ~A" (expand-control)))
 		  ;need click event here, not just pushbutton callback
@@ -21945,6 +22088,20 @@ EDITS: 2
 			    (define (enved-x x) (inexact->exact (+ axis-x0 (* x (- axis-x1 axis-x0)))))
 			    (define (enved-y y) (inexact->exact (- axis-y0 (* y (- axis-y0 axis-y1)))))
 			    (click-event ewid 1 0 (enved-x 0.5) (enved-y 1.0)) (force-event)
+
+			    (add-hook! enved-hook
+				       (lambda (env pt x y reason)
+					 (if (= reason enved-move-point)
+					     (if (and (> x 0.0) (< x (envelope-last-x env)))
+						 (let* ((old-x (list-ref env (* pt 2)))
+							(new-env (stretch-envelope env old-x x)))
+						   (list-set! new-env (+ (* pt 2) 1) y)
+						   new-env)
+						 env)
+					     #f)))
+			    (drag-event ewid 1 0 (enved-x 0.25) (enved-y 0.0) (enved-x 0.4) (enved-y 0.1)) (force-event)
+			    (drag-event ewid 1 0 (enved-x 0.75) (enved-y 1.0) (enved-x 0.6) (enved-y 0.6)) (force-event)
+
 			    (click-button (XmMessageBoxGetChild envd XmDIALOG_OK_BUTTON)) (force-event)
 			    (click-button (find-child envd "Reset")) (force-event)
 			    (click-button (XmMessageBoxGetChild envd XmDIALOG_CANCEL_BUTTON)) (force-event)
@@ -25790,6 +25947,57 @@ EDITS: 2
 	      (XmRemoveProtocols shell prop (list proto1)))
 	    (XmCascadeButtonHighlight (XmCreateCascadeButton (cadr (main-widgets)) "cascade" '()) #f)
 	    ;(XmCascadeButtonGadgetHighlight (XmCreateCascadeButtonGadget (cadr (main-widgets)) "gadget" '()) #f)
+
+	    (let ((callbacks
+		   (list
+		    (list XmAnyCallbackStruct .reason .event)
+		    (list XmArrowButtonCallbackStruct .reason .event .click_count)
+		    (list XmCommandCallbackStruct .reason .event .value .length)
+		    (list XmDragDropFinishCallbackStruct .reason .event .timeStamp)
+		    (list XmDragMotionCallbackStruct .reason .event .timeStamp .operation .operations .dropSiteStatus .x .y)
+		    (list XmDragProcCallbackStruct .reason .event .timeStamp .dragContext .x .y .dropSiteStatus .operation .operations .animate)
+		    (list XmDrawingAreaCallbackStruct .reason .event .window)
+		    (list XmDrawnButtonCallbackStruct .reason .event .window .click_count)
+		    (list XmDropFinishCallbackStruct .reason .event .timeStamp .operation .operations .dropSiteStatus .dropAction .completionStatus)
+		    (list XmDropProcCallbackStruct .reason .event .timeStamp .dragContext .x .y .dropSiteStatus .operation .operations .dropAction)
+		    (list XmDropSiteEnterCallbackStruct .reason .event .timeStamp .operation .operations .dropSiteStatus .x .y)
+		    (list XmDropSiteLeaveCallbackStruct .reason .event .timeStamp)
+		    (list XmDropStartCallbackStruct .reason .event .timeStamp .operation .operations .dropSiteStatus .dropAction)
+		    (list XmFileSelectionBoxCallbackStruct .reason .event .value .length .mask .mask_length .dir .dir_length .pattern .pattern_length)
+		    (list XmListCallbackStruct .reason .event .item .item_length .item_position .selected_items .selected_item_count .selected_item_positions .selection_type .auto_selection_type)
+		    (list XmOperationChangedCallbackStruct .reason .event .timeStamp .operation .operations .dropSiteStatus)
+		    (list XmPushButtonCallbackStruct .reason .event .click_count)
+		    (list XmRowColumnCallbackStruct .reason .event .widget .data .callbackstruct)
+		    (list XmScaleCallbackStruct .reason .event .value)
+		    (list XmScrollBarCallbackStruct .reason .event .value .pixel)
+		    (list XmSelectionBoxCallbackStruct .reason .event .value .length)
+		    (list XmTextVerifyCallbackStruct .reason .event .doit .currInsert .newInsert .startPos .endPos)
+		    (list XmToggleButtonCallbackStruct .reason .event .set)
+		    (list XmDestinationCallbackStruct .reason .event .selection .operation .flags .transfer_id .destination_data .location_data .time)
+		    (list XmConvertCallbackStruct .reason .event .selection .target .source_data .location_data .flags .parm .parm_format .parm_length .parm_type .status .value .type .format .length)
+		    (list XmComboBoxCallbackStruct .reason .event .item_or_text .item_position)
+		    (list XmContainerOutlineCallbackStruct .reason .event .item .new_outline_state)
+		    (list XmContainerSelectCallbackStruct .reason .event .selected_items .selected_item_count .auto_selection_type)
+		    (list XmNotebookCallbackStruct .reason .event .page_number .page_widget .prev_page_number .prev_page_widget)
+		    (list XmSpinBoxCallbackStruct .reason .event .widget .doit .position .value .crossed_boundary)
+		    (list XmTraverseObscuredCallbackStruct .reason .event .traversal_destination)
+		    (list XmTopLevelLeaveCallbackStruct .reason .event .timeStamp .screen .window)
+		    (list XmTopLevelEnterCallbackStruct .reason .event .timeStamp .screen .window .x .y .dragProtocolStyle)
+		    (list XmPopupHandlerCallbackStruct .reason .event .menuToPost .postIt .target)
+		    (list XmSelectionCallbackStruct .reason .event .selection .target .type .transfer_id .flags .remaining .value .length .format)
+		    (list XmTransferDoneCallbackStruct .reason .event  .selection .transfer_id .status .client_data)
+		    )))
+		  
+	      (for-each
+	       (lambda (call)
+		 (let ((struct ((car call)))
+		       (val #f))
+		   (set! (.event struct) (XEvent))
+		   (for-each
+		    (lambda (field)
+		      (set! val (field struct)))
+		    (cdr call))))
+	       callbacks))
 
 	    (let ((shell (cadr (main-widgets)))
 		  (resource-list

@@ -2091,7 +2091,7 @@ static int display_mix_waveform(chan_info *cp, mix_info *md, console_state *cs, 
 
 
 
-/* -------------------------------- moving mix consoles -------------------------------- */
+/* -------------------------------- moving mix tags -------------------------------- */
 
 static int mix_dragged = 0;
 
@@ -2247,6 +2247,9 @@ static void move_mix(mix_info *md)
 	}
       reflect_mix_in_mix_panel(md->id);
       if (show_mix_waveforms(ss)) draw_mix_waveform(md);
+
+      /* TODO: move track should move all mixes in track at the same time */
+      /* TODO: should mix-track(sync) be handled globally like sound sync? what about mark-sync? */
 
       /* can't easily use work proc here because the erasure gets complicated */
       make_temporary_graph(cp, md, cs);

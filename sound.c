@@ -607,7 +607,7 @@ static sound_file *getsf(const char *arg)
   return(MUS_ERROR)
 
 off_t mus_sound_samples (const char *arg)       {MUS_SF(arg, sf->samples);}
-off_t mus_sound_frames (const char *arg)        {MUS_SF(arg, (sf->samples / sf->chans));}
+off_t mus_sound_frames (const char *arg)        {MUS_SF(arg, (sf->chans > 0) ? (sf->samples / sf->chans) : 0);}
 int mus_sound_datum_size (const char *arg)      {MUS_SF(arg, sf->datum_size);}
 off_t mus_sound_data_location (const char *arg) {MUS_SF(arg, sf->data_location);}
 int mus_sound_chans (const char *arg)           {MUS_SF(arg, sf->chans);}

@@ -91,11 +91,6 @@ static void name_last_macro (char *name)
   named_macro *nm;
   macro_cmd *mc;
   int i;
-  if (macro_size == 0)
-    {
-      snd_error("no macro active?");
-      return;
-    }
   nm = name_macro(name);
   nm->macro_size = macro_size;
   nm->cmds = (macro_cmd **)CALLOC(macro_size, sizeof(macro_cmd *));
@@ -801,13 +796,14 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	  if (sp->raw_prompt)
 	    proc = C_TO_XEN_STRING(str);
 	  else proc = snd_catch_any(eval_str_wrapper, str, str);
+	  if (XEN_PROCEDURE_P(sp->prompt_callback))
+	    {
+	      snd_protect(proc);
+	      XEN_CALL_1(sp->prompt_callback, proc, "prompt callback func");
+	      snd_unprotect(proc);
+	    }
+	  free(str);
 	}
-      else proc = C_TO_XEN_STRING("");
-      snd_protect(proc);
-      if (XEN_PROCEDURE_P(sp->prompt_callback))
-	XEN_CALL_1(sp->prompt_callback, proc, "prompt callback func");
-      snd_unprotect(proc);
-      if (str) free(str);
       sp->prompting = 0;
       clear_minibuffer(sp);
       return;
@@ -1005,7 +1001,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
   snd_state *ss;
   sync_info *si;
   mark *mk = NULL;
-  /* fprintf(stderr, "kbd: %d %d %d ", keysym, state, extended_mode); */
+  /* fprintf(stderr, "kbd: %x %d, %d %d ", keysym, keysym, state, extended_mode);  */
   if (!cp) return;
   searching = 0;
   cursor_searching = 0;
@@ -1320,9 +1316,14 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      searching = 1; 
 	      break;
 	    case snd_K_E: case snd_K_e: 
-	      prompt(sp, "macro name:", NULL); 
-	      sp->filing = MACRO_FILING; 
-	      searching = 1; 
+	      if (macro_size == 0)
+		report_in_minibuffer(sp, "no macro active?");
+	      else
+		{
+		  prompt(sp, "macro name:", NULL); 
+		  sp->filing = MACRO_FILING; 
+		  searching = 1; 
+		}
 	      break;
 	    case snd_K_F: case snd_K_f: 
 	      prompt(sp, "file:", NULL); 

@@ -59,6 +59,11 @@
   #include <config.h>
 #endif
 
+#if UNDEF_USE_SND
+  #undef USE_SND
+  #define USE_SND 0
+#endif
+
 #if HAVE_EXTENSION_LANGUAGE
 
 #if HAVE_MOTIF
@@ -547,7 +552,8 @@ static XEN gxm_XEvent(XEN type)
   XEvent *e;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(type), type, XEN_ONLY_ARG, "XEvent", "an X event type (integer)");
   e = (XEvent *)CALLOC(1, sizeof(XEvent));
-  e->type = XEN_TO_C_INT_OR_ELSE(type, 0);
+  if (XEN_INTEGER_P(type))
+    e->type = XEN_TO_C_INT(type);
   return(XEN_LIST_4(type_to_event_symbol(e->type),
 		    C_TO_XEN_ULONG((unsigned long)e),
 		    make_xm_obj(e),
@@ -12337,10 +12343,9 @@ static XEN xm_AfterFunction = XEN_FALSE;
 static int default_after_function(Display *dpy) {return(0);}
 static int gxm_AfterFunction(Display *dpy)
 {
-  return(XEN_TO_C_INT_OR_ELSE(XEN_CALL_1(xm_AfterFunction, 
-					 C_TO_XEN_Display(dpy),
-					 __FUNCTION__),
-			      0));
+  return(XEN_TO_C_INT(XEN_CALL_1(xm_AfterFunction, 
+				 C_TO_XEN_Display(dpy),
+				 __FUNCTION__)));
 }
 
 static XEN gxm_XSetAfterFunction(XEN arg1, XEN arg2)
@@ -19538,7 +19543,7 @@ static XEN gxm_set_request(XEN ptr, XEN val)
 static XEN gxm_format(XEN ptr)
 {
   if (XEN_XImage_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XImage(ptr))->format)));
-#if HAVE_MOTIF_2
+#if MOTIF_2
   if (XEN_XmSelectionCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmSelectionCallbackStruct(ptr))->format)));
   if (XEN_XmConvertCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmConvertCallbackStruct(ptr))->format)));
 #endif
@@ -20211,7 +20216,7 @@ static XEN gxm_y(XEN ptr)
   if (XEN_XmDropStartCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDropStartCallbackStruct(ptr))->y)));
   if (XEN_XmDragMotionCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDragMotionCallbackStruct(ptr))->y)));
   if (XEN_XmDropSiteEnterCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDropSiteEnterCallbackStruct(ptr))->y)));
-#if HAVE_MOTIF_2
+#if MOTIF_2
   if (XEN_XmTopLevelEnterCallbackStruct_P(ptr)) return(C_TO_XEN_Position((Position)((XEN_TO_C_XmTopLevelEnterCallbackStruct(ptr))->y)));
 #endif
 #endif
@@ -20242,7 +20247,7 @@ static XEN gxm_x(XEN ptr)
   if (XEN_XmDropStartCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDropStartCallbackStruct(ptr))->x)));
   if (XEN_XmDragMotionCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDragMotionCallbackStruct(ptr))->x)));
   if (XEN_XmDropSiteEnterCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDropSiteEnterCallbackStruct(ptr))->x)));
-#if HAVE_MOTIF_2
+#if MOTIF_2
   if (XEN_XmTopLevelEnterCallbackStruct_P(ptr)) return(C_TO_XEN_Position((Position)((XEN_TO_C_XmTopLevelEnterCallbackStruct(ptr))->x)));
 #endif
 #endif
@@ -21458,11 +21463,11 @@ static XEN gxm_set_value(XEN ptr, XEN val)
   if (XEN_XmFileSelectionBoxCallbackStruct_P(ptr)) (XEN_TO_C_XmFileSelectionBoxCallbackStruct(ptr))->value = XEN_TO_C_XmString(val); else
   if (XEN_XmCommandCallbackStruct_P(ptr)) (XEN_TO_C_XmCommandCallbackStruct(ptr))->value = XEN_TO_C_XmString(val); else
   if (XEN_XmScrollBarCallbackStruct_P(ptr)) (XEN_TO_C_XmScrollBarCallbackStruct(ptr))->value = XEN_TO_C_INT(val); else
-#if HAVE_MOTIF_2
+#if MOTIF_2
   if (XEN_XmConvertCallbackStruct_P(ptr)) (XEN_TO_C_XmConvertCallbackStruct(ptr))->value = (XtPointer)XEN_TO_C_ULONG(val); else
   if (XEN_XmSpinBoxCallbackStruct_P(ptr)) (XEN_TO_C_XmSpinBoxCallbackStruct(ptr))->value = XEN_TO_C_XmString(val); else
   if (XEN_XmSelectionBoxCallbackStruct_P(ptr)) (XEN_TO_C_XmSelectionBoxCallbackStruct(ptr))->value = XEN_TO_C_XmString(val); else
-  if (XEN_XmSelectionCallbackStruct_P(ptr)) (XEN_TO_C_XmSelectionCallbackStruct(ptr))->value = XEN_TO_C_ULONG(val); else
+  if (XEN_XmSelectionCallbackStruct_P(ptr)) (XEN_TO_C_XmSelectionCallbackStruct(ptr))->value = (XtPointer)XEN_TO_C_ULONG(val); else
 #endif
 #endif    
 #if HAVE_XPM

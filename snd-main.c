@@ -714,7 +714,7 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
 			  auto_open_ctr++;
 			  if ((auto_open_ctr >= args) ||
 			      (auto_open_file_names[auto_open_ctr] == NULL))
-			    snd_error("-ltitle but no title?");
+			    snd_error("-title but no title?"); /* for gtk -- Xt handles the Motif case */
 			  else ss->startup_title = copy_string(auto_open_file_names[auto_open_ctr]);
 			}
 		      else
