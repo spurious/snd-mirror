@@ -31,7 +31,7 @@
 	 (lambda ()
 	   (do ((i 0 (1+ i)))
 	       ((= i len))
-	     (let* ((inval (file->sample *reverb* i))
+	     (let* ((inval (ina i *reverb*))
 		    (allpass-sum (all-pass allpass3 (all-pass allpass2 (all-pass allpass1 inval))))
 		    (amp (if amp-env (env envA) 1.0)))
 	       (set! comb-sum-2 comb-sum-1)
@@ -50,7 +50,7 @@
 	 (lambda ()
 	   (do ((i 0 (1+ i)))
 	       ((= i len))
-	     (let ((allpass-sum (all-pass allpass3 (all-pass allpass2 (all-pass allpass1 (file->sample *reverb* i))))))
+	     (let ((allpass-sum (all-pass allpass3 (all-pass allpass2 (all-pass allpass1 (ina i *reverb*))))))
 	       (set! comb-sum 
 		     (+ (comb comb1 allpass-sum)
 			(comb comb2 allpass-sum)

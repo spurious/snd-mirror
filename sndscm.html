@@ -1760,7 +1760,9 @@ an ordinary editing function:
   (let ((output (snd-tempnam))
 	(revout (snd-tempnam))
 	(len (+ (frames snd) (srate snd))))
+    (scale-by (- 1.0 reverb-amount) snd)
     (save-sound-as output snd)
+    (undo 1 snd)
     (scale-by reverb-amount snd)
     (save-sound-as revout snd)
     (undo 1 snd)
@@ -1771,18 +1773,14 @@ an ordinary editing function:
     (mus-close *reverb*)
     (mus-close *output*)
     (delete-file revout)
-    (do ((i 0 (1+ i)))
-	((= i (chans snd)))
-      (set-samples 0 len output snd i #f "reverb" i #f (= (chans snd) 1)))))
+    (set! (samples 0 len snd #f #f #f 0 #f #t) output)))
 
 ;;; (clm-reverb-sound .1 (lambda (dur) (jc-reverb #f 1.0 #f dur)))
 </pre>
-<p>Another approach to this problem would be to make the reverberator slightly
-smarter about where it gets its input; if *reverb* is undefined or #f, it
-could instead read Snd's currently selected sound, etc.  This option isn't built into
-jc-reverb and other such instruments because it might cause trouble for
-those using the CLM instruments outside Snd (currently sndlib is all that is
-needed).
+<p>Another approach to this problem would be to use <a href="extsnd.html#snd2sample">snd-&gt;sample</a> to
+redirect the *reverb* input (without any change to the reverberator),
+getting its data from the current sound (probably after scaling it
+by the reverb amount). 
 </p>
 <br>
 

@@ -1823,6 +1823,8 @@ void set_speed_style(speed_style_t val)
   for_each_sound(map_sounds_speed_style, (void *)(&val));
 }      
 
+#define NO_SUCH_SOUND    XEN_ERROR_TYPE("no-such-sound")
+
 XEN snd_no_such_sound_error(const char *caller, XEN n)
 {
   XEN_ERROR(NO_SUCH_SOUND,

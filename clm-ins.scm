@@ -5,8 +5,6 @@
 (if (not (defined? '*output*)) (load-from-path "ws.scm"))
 (if (not (defined? 'stretch-envelope)) (load-from-path "env.scm"))
 
-;;; TODO: snd->sample if not in with-sound here and in all ins
-
 ;;; -------- pluck
 ;;;
 ;;; The Karplus-Strong algorithm as extended by David Jaffe and Julius Smith -- see 
@@ -1135,7 +1133,7 @@ is a physical model of a flute:\n\
        (lambda ()
 	 (do ((i 0 (1+ i)))
 	     ((= i len))
-	   (let* ((rev (* volume (file->sample *reverb* i)))
+	   (let* ((rev (* volume (ina i *reverb*)))
 		  (outrev (all-pass allpass4
 				    (one-pole low
 					      (all-pass allpass3
@@ -1288,7 +1286,7 @@ is a physical model of a flute:\n\
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i len))
-	 (let ((allpass-sum (all-pass allpass3 (all-pass allpass2 (all-pass allpass1 (file->sample *reverb* i))))))
+	 (let ((allpass-sum (all-pass allpass3 (all-pass allpass2 (all-pass allpass1 (ina i *reverb*))))))
 	   (set! comb-sum 
 		 (+ (comb comb1 allpass-sum)
 		    (comb comb2 allpass-sum)

@@ -1181,7 +1181,6 @@ void clear_prevlist(void);
 void update_prevlist(void);
 void init_curfiles(int size);
 void init_prevfiles(int size);
-void file_unprevlist(const char *filename);
 void add_directory_to_prevlist(const char *dirname);
 void make_prevfiles_list_1(void);
 char **set_header_and_data_positions(file_data *fdat, int type, int format);

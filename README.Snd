@@ -52,10 +52,9 @@ The configure program has several Snd-related arguments:
          
    --with-static-gsl     try to load GSL statically (for RPM)
                            GSL is loaded in any case, if it is available.
-                           This affects only the Hankel transform and the
-                           Dolph-Chebyshev window.  FFT's are currently
-                           handled by FFTW, if it is available, otherwise
-                           built-in code.
+                           This affects only the Dolph-Chebyshev window.  FFT's 
+                           are currently handled by FFTW, if it is available, otherwise
+                           by built-in code.
 
    --with-snd-as-widget  make Snd a loadable widget, not a standalone program
 
@@ -207,11 +206,6 @@ SGI systems, and perhaps Mac OSX.
 
 
 ---- Colors: ----
-If Snd complains that it can't find various colors upon startup, the
-problem is that some other program (probably Netscape) has grabbed all
-the color cells -- exit it and try Snd again, or (if you have the
-video RAM), increase your "depth" to 16 or 24.
-
 If you're running KDE and the menu labels are invisible, check
 the 'theme' you're using.  You normally want black label foregrounds;
 you can get these by
@@ -234,7 +228,6 @@ the lang.csh file in /etc/profile.d).
 
 
 ---- Compiling: ----
-
 If you get the error:
 
  snd-x0.h:9 Xm/XmAll: No such file or directory
@@ -301,7 +294,6 @@ There's also a discussion of RME cards in the cmdist archives.
 
 
 ---- Gtk+: ----
-
 Only Gtk-2 or later is supported.
 
 Gtk+ is not as sophisticated as Motif, and the port is still somewhat new, so

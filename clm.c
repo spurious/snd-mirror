@@ -57,8 +57,6 @@ enum {MUS_OSCIL, MUS_SUM_OF_COSINES, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PAS
       MUS_SAMPLE2FILE, MUS_FRAME2FILE, MUS_MIXER, MUS_PHASE_VOCODER,
       MUS_INITIAL_GEN_TAG};
 
-enum {MUS_NOT_SPECIAL, MUS_SIMPLE_FILTER, MUS_FULL_FILTER, MUS_OUTPUT, MUS_INPUT, MUS_DELAY_LINE};
-
 static int mus_class_tag = MUS_INITIAL_GEN_TAG;
 int mus_make_class_tag(void) {return(mus_class_tag++);}
 
@@ -3325,18 +3323,19 @@ Float *mus_partials2polynomial(int npartials, Float *partials, int kind)
  * only slightly slower (but more accurate).
  */
 
+typedef enum {ENV_SEG, ENV_STEP, ENV_EXP} env_style_t;
+
 typedef struct {
   mus_any_class *core;
   double rate, current_value, base, offset, scaler, power, init_y, init_power, original_scaler, original_offset;
   off_t pass, end;
-  int style, index, size;
+  env_style_t style;
+  int index, size;
   bool data_allocated;
   Float *original_data;
   double *rates;
   off_t *passes;
 } seg;
-
-enum {ENV_SEG, ENV_STEP, ENV_EXP};
 
 static char *inspect_seg(mus_any *ptr)
 {
@@ -3347,7 +3346,7 @@ static char *inspect_seg(mus_any *ptr)
 pass: " OFF_TD ", end: " OFF_TD ", style: %d, index: %d, size: %d, original_data[%d]: %s, rates[%d]: %s, passes[%d]: %s",
 	       gen->original_scaler, gen->original_offset,
 	       gen->rate, gen->current_value, gen->base, gen->offset, gen->scaler, gen->power, gen->init_y, gen->init_power,
-	       gen->pass, gen->end, gen->style, gen->index, gen->size,
+	       gen->pass, gen->end, (int)(gen->style), gen->index, gen->size,
 	       gen->size * 2,
 	       arr = print_array(gen->original_data, gen->size * 2, 0),
 	       gen->size,
@@ -5119,13 +5118,17 @@ static Float sample_file(mus_any *ptr, off_t samp, int chan, Float val)
       if (samp > gen->out_end) 
 	gen->out_end = samp;
     }
-  /* It would be useful if this returned the new value MUS_SAMPLE_TO_FLOAT(gen->obufs[chan][samp - gen->data_start])
-   *   because we could break on overflow in an instrument, or watch the overall output, but
-   *   that's inconsistent with locsig (but locsig could return a frame of the updated values),
-   *   and requires a second type conversion.  Perhaps a parallel output set?
-   */
   return(val);
 }
+
+#if 0
+Float mus_sample2file_current_value(mus_any *ptr, off_t samp, int chan)
+{
+  /* this is only safe just after calling sample_file (mus_write_sample) */
+  rdout *gen = (rdout *)ptr;
+  return(MUS_SAMPLE_TO_FLOAT(gen->obufs[chan][samp - gen->data_start]));
+}
+#endif
 
 static int sample2file_end(mus_any *ptr)
 {

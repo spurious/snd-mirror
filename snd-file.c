@@ -1395,7 +1395,7 @@ int view_prevfiles_play(int pos, int play)
   return(0);
 }
 
-void file_unprevlist(const char *filename)
+static void file_unprevlist(const char *filename)
 {
   int i, j;
   i = find_prevfile_regrow(filename);
