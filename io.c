@@ -1044,40 +1044,6 @@ static int checked_write(int tfd, char *buf, int chars)
   return(MUS_NO_ERROR);
 }
 
-off_t mus_file_write_zeros(int tfd, off_t num)
-{
-#if (!USE_SND)
-  off_t lim;
-  off_t curnum;
-  io_fd *fd;
-  char *charbuf = NULL;
-  if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL))
-    return(mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_file_write_zeros: no file descriptors!"));
-  fd = io_fds[tfd];
-  if (fd->data_format == MUS_UNKNOWN) 
-    return(mus_error(MUS_FILE_CLOSED, "mus_file_write_zeros: invalid data format for %s", fd->name));
-  charbuf = (char *)CALLOC(BUFLIM, sizeof(char)); 
-  if (charbuf == NULL) 
-    return(mus_error(MUS_MEMORY_ALLOCATION_FAILED, "mus_file_write_zeros: IO buffer allocation failed"));
-  lim = num * (fd->bytes_per_sample);
-  curnum = lim;
-  if (curnum > BUFLIM) curnum = BUFLIM;
-  while (curnum > 0)
-    {
-      int err;
-      err = checked_write(tfd, charbuf, curnum);
-      if (err == MUS_ERROR) return(MUS_ERROR);
-      lim -= (BUFLIM);
-      curnum = lim;
-      if (curnum > BUFLIM) curnum = BUFLIM;
-    }
-  FREE(charbuf);
-  return(num);
-#else
-  return(0);
-#endif
-}
-
 static int mus_write_1(int tfd, int beg, int end, int chans, mus_sample_t **bufs, char *inbuf, bool clipped)
 {
   int loclim, c3;

@@ -1026,7 +1026,7 @@ void mark_define_region(chan_info *cp, int count)
     }
 }
 
-/* TODO: cp mark size starts at 16?  makes long empty lists in save-marks */
+/* TODO: cp mark size starts at 16 [MARKS_ALLOC_SIZE above]?  makes long empty lists in save-marks */
 
 void save_mark_list(FILE *fd, chan_info *cp)
 {

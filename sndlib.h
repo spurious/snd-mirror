@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 19
-#define SNDLIB_REVISION 9
-#define SNDLIB_DATE "7-Feb-05"
+#define SNDLIB_REVISION 10
+#define SNDLIB_DATE "9-Mar-05"
 
 #include <config.h>
 
@@ -445,7 +445,6 @@ int mus_file_close(int fd);
 off_t mus_file_seek_frame(int tfd, off_t frame);
 int mus_file_read(int fd, int beg, int end, int chans, mus_sample_t **bufs);
 int mus_file_read_chans(int fd, int beg, int end, int chans, mus_sample_t **bufs, mus_sample_t *cm);
-off_t mus_file_write_zeros(int tfd, off_t num);
 int mus_file_write(int tfd, int beg, int end, int chans, mus_sample_t **bufs);
 int mus_file_read_any(int tfd, int beg, int chans, int nints, mus_sample_t **bufs, mus_sample_t *cm);
 int mus_file_read_file(int tfd, int beg, int chans, int nints, mus_sample_t **bufs);

@@ -9,6 +9,8 @@
  *   got segfaults that were not easy to understand. 
  */
 
+/* TODO: check in map-chan that small changes use a buffer not a temp file even if unoptimized */
+
 /* collect syncd chans */
 typedef struct {
   sync_info *si;
