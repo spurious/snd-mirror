@@ -951,7 +951,7 @@ void das_init(){
 		     (XtAddEventHandler w ButtonReleaseMask #f 
 					(lambda (w c e f)
 					  (-> mouse-button-release-hook run 
-					      snd (.x e) (.y e) (.state e)))))
+					      snd (.x e) (.y e) 1 (.state e)))))
 		   (let ((ispressed #f)
 			 (ismoved #f))
 		     
@@ -1077,14 +1077,14 @@ void das_init(){
 			    (run-hook mouse-click-hook
 				      snd ch (+ stat 4) 0 orgx y time-graph)))))
   (-> mouse-button-release-hook add!
-      (lambda (snd orgx y stat)
+      (lambda (snd orgx y button stat)
 	(if (not isdragged)
 	    (c-get-mouse-info snd orgx y #t
 			      (lambda (ch x y)
 				(focus-widget (c-editor-widget snd))
 				(select-channel ch)
 				(run-hook mouse-click-hook
-					  snd ch 1 stat orgx y time-graph)))))))
+					  snd ch button stat orgx y time-graph)))))))
 
 
 ;;  Moving marks with the mouse

@@ -334,7 +334,7 @@
     (if isplaying
 	(begin
 	  (c-stop-playing legalpos)
-	  (c-play legalpos))
+	  (c-play legalpos #t))
 	(begin
 	  (c-show-times legalpos #f)
 	  (c-set-cursor-pos legalpos)))))
@@ -575,12 +575,13 @@
 
 
 
-(define (c-play pos)
-  (set! c-playstartpos pos)
+(define* (c-play pos #:optional dontsetstartpos)
+  (if (not dontsetstartpos)
+      (set! c-playstartpos pos))
   (play pos #f #f #f #f #f
 	(lambda (x)
 	  (if (and (= x 0) c-islooping)
-	      (c-play pos)))))
+	      (c-play c-playstartpos)))))
 
 
 
@@ -602,7 +603,7 @@
 	  (lambda x
 	    (if (dac-is-running)
 		(c-stop-playing #f)
-		(c-play (cursor)))))
+		(c-play (cursor) #t))))
 
 
 
@@ -1421,6 +1422,38 @@ Does not work.
 	     #f))
 
 
+
+
+
+;;##############################################################
+;; dac-size slider in the control-panel
+;;##############################################################
+
+(add-hook! after-open-hook
+	   (lambda (snd)
+	     (let ((control-panel (list-ref (sound-widgets snd) 2))
+		   (iswaiting #f)
+		   (must-wait-more #f))
+	       (define (waitfunc)
+		 (in 50
+		     (lambda ()
+		       (if must-wait-more
+			   (begin
+			     (set! must-wait-more #f)
+			     (waitfunc))
+			   (begin
+			     (c-play (cursor) #t)
+			     (set! iswaiting #f))))))
+	       (<slider> control-panel "dac-size" 8 (dac-size) 8192
+			 (lambda (val)
+			   (c-stop-playing (cursor))
+			   (set! (dac-size) (c-integer val))
+			   (if iswaiting
+			       (set! must-wait-more #t)
+			       (begin
+				 (set! iswaiting #t)
+				 (waitfunc))))
+			 1))))
 
 
 
