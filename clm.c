@@ -3807,7 +3807,7 @@ static int free_env_gen(mus_any *pt)
   return(0);
 }
 
-static Float *env_data(mus_any *ptr) {return(((seg *)ptr)->original_data);}
+static Float *env_data(mus_any *ptr) {return(((seg *)ptr)->original_data);} /* mus-data */
 static Float env_scaler(mus_any *ptr) {return(((seg *)ptr)->original_scaler);}
 static Float env_offset(mus_any *ptr) {return(((seg *)ptr)->original_offset);}
 static Float set_env_offset(mus_any *ptr, Float val) {((seg *)ptr)->original_offset = val; return(val);}
@@ -3837,7 +3837,7 @@ static mus_any_class ENV_CLASS = {
   &free_env_gen,
   &describe_env,
   &env_equalp,
-  &env_data,
+  &env_data, /* mus-data -> original breakpoints */
   0,
   &env_length,
   0,
@@ -3900,8 +3900,11 @@ mus_any *mus_make_env(Float *brkpts, int npts, Float scaler, Float offset, Float
       e->original_data = (Float *)clm_calloc(npts * 2, sizeof(Float), "env original data");
       e->data_allocated = true;
     }
-  memcpy((void *)(e->original_data), (void *)brkpts, npts * 2 *sizeof(Float));
-  /* for (i = 0; i < npts * 2; i++) e->original_data[i] = brkpts[i]; */
+  if (e->original_data != brkpts)
+    {
+      memcpy((void *)(e->original_data), (void *)brkpts, npts * 2 *sizeof(Float));
+      /* for (i = 0; i < npts * 2; i++) e->original_data[i] = brkpts[i]; */
+    }
   if (base == 0.0)
     {
       e->style = ENV_STEP;

@@ -4116,23 +4116,15 @@ static int alsa_mus_audio_initialize(void)
 /* dump current hardware and software configuration */
 
 
-/* configuration dump is disabled for now -- Alsa clobbers
- * memory it does not own, causing later segfaults.
- */
-
-/* TODO: re-enable snd_output in Alsa based on version number or something (1.0.8?):
- * #if ((SND_LIB_MAJOR >= 1) && ((SND_LIB_MINOR > 0) || (SND_LIB_SUBMINOR > 7))
- */
-
 static void alsa_dump_configuration(char *name, snd_pcm_hw_params_t *hw_params, snd_pcm_sw_params_t *sw_params)
 {
     int err; 
     char *str;
     size_t len;
     snd_output_t *buf;
-
-    return; /* see note above */
-
+#if (SND_LIB_MAJOR == 0) || ((SND_LIB_MAJOR == 1) && (SND_LIB_MINOR == 0) && (SND_LIB_SUBMINOR < 8))
+    return; /* avoid Alsa bug */
+#endif
     err = snd_output_buffer_open(&buf);
     if (err < 0) {
 	mus_print("%s: could not open dump buffer: %s", 
@@ -4570,9 +4562,9 @@ static void alsa_describe_audio_state_1(void)
     size_t len;
     snd_config_t *conf;
     snd_output_t *buf = NULL;
-
-    return; /* see note above -- this code in Alsa clobbers memory it does not own */
-
+#if (SND_LIB_MAJOR == 0) || ((SND_LIB_MAJOR == 1) && (SND_LIB_MINOR == 0) && (SND_LIB_SUBMINOR < 8))
+    return; /* avoid Alsa bug */
+#endif
     err = snd_config_update();
     if (err < 0) {
 	mus_print("%s: snd_config_update: %s", 

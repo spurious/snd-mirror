@@ -434,6 +434,10 @@ static void remake_edit_history(GtkWidget *lst, chan_info *cp)
   char *str;
   gtk_list_store_clear(GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(lst))));
   sp = cp->sound;
+#if DEBUGGING
+  if ((!sp) || (!(sp->active)) || (sp->inuse != SOUND_NORMAL))
+    fprintf(stderr, "trouble in remake_edit_history: %p %d %d\n", sp, (sp) ? sp->active : -1, (sp) ? sp->inuse : -1);
+#endif
   if (sp->channel_style != CHANNELS_SEPARATE)
     {
       int k, all_eds = 0, ed, filelen;
@@ -442,9 +446,12 @@ static void remake_edit_history(GtkWidget *lst, chan_info *cp)
       for (k = 0; k < sp->nchans; k++)
 	{
 	  ncp = sp->chans[k];
-	  eds = ncp->edit_ctr;
-	  while ((eds < (ncp->edit_size - 1)) && (ncp->edits[eds + 1])) eds++;
-	  all_eds += eds;
+	  if ((ncp) && (ncp->sound))
+	    {
+	      eds = ncp->edit_ctr;
+	      while ((eds < (ncp->edit_size - 1)) && (ncp->edits[eds + 1])) eds++;
+	      all_eds += eds;
+	    }
 	}
       all_eds += 3 * sp->nchans;
       filelen = 16 + strlen(sp->filename);
@@ -452,21 +459,24 @@ static void remake_edit_history(GtkWidget *lst, chan_info *cp)
       for (k = 0, ed = 0; k < sp->nchans; k++)
 	{
 	  ncp = sp->chans[k];
-	  ncp->edhist_base = ed++;
-	  sprintf(title, "chan %d: %s", k + 1, sp->filename);
-	  sg_list_append(lst, title);
-	  eds = ncp->edit_ctr;
-	  while ((eds < (ncp->edit_size - 1)) && (ncp->edits[eds + 1])) eds++;
-	  for (i = 1; i <= eds; i++, ed++) 
+	  if ((ncp) && (ncp->sound))
 	    {
-	      str = edit_to_string(ncp, i);
-	      sg_list_append(lst, str);
+	      ncp->edhist_base = ed++;
+	      sprintf(title, "chan %d: %s", k + 1, sp->filename);
+	      sg_list_append(lst, title);
+	      eds = ncp->edit_ctr;
+	      while ((eds < (ncp->edit_size - 1)) && (ncp->edits[eds + 1])) eds++;
+	      for (i = 1; i <= eds; i++, ed++) 
+		{
+		  str = edit_to_string(ncp, i);
+		  sg_list_append(lst, str);
+		}
+	      if (k < sp->nchans - 1)
+		{
+		  sg_list_append(lst, "______________________________"); 
+		  ed++; 
+		} 
 	    }
-	  if (k < sp->nchans - 1)
-	    {
-	      sg_list_append(lst, "______________________________"); 
-	      ed++; 
-	    } 
 	}
       FREE(title);
     }
@@ -499,8 +509,11 @@ void reflect_edit_history_change(chan_info *cp)
     {
       chan_info *ncp;
       ncp = sp->chans[0];
-      lst = EDIT_HISTORY_LIST(ncp);
-      if (lst) remake_edit_history(lst, ncp);
+      if ((ncp) && (ncp->sound))
+	{
+	  lst = EDIT_HISTORY_LIST(ncp);
+	  if (lst) remake_edit_history(lst, ncp);
+	}
     }
   else
     {

@@ -8897,6 +8897,8 @@ static xen_value *phase_vocoder_ ## Name ## _1(ptree *prog, xen_value **args, in
   return(run_warn("wrong type arg (%s) to mus_phase_vocoder_ " #Name , type_name(args[1]->type))); \
 }
 
+/* add_vct_to_ptree here (or in xcoeffs below) causes segfault?? (snd-test 23, embedded ptree eval) */
+
 PV_VCT_1(amps)
 PV_VCT_1(amp_increments)
 PV_VCT_1(freqs)
@@ -9640,11 +9642,16 @@ static void clm_print_s(int *args, ptree *pt)
 
 static char *descr_clm_print_s(int *args, ptree *pt) {return(describe_xen_args("clm_print", R_STRING, args, pt));}
 
+static bool clm_print_walk_property_set = false;
 static xen_value *clm_print_1(ptree *prog, xen_value **args, int num_args)
 {
-  XEN_SET_OBJECT_PROPERTY(XEN_NAME_AS_C_STRING_TO_VARIABLE("clm-print"),
-			  walk_sym,
-			  C_TO_XEN_ULONG(make_walker(clm_print_1, NULL, NULL, 1, UNLIMITED_ARGS, R_STRING, false, 1, -R_XEN)));
+  if (!clm_print_walk_property_set)
+    {
+      XEN_SET_OBJECT_PROPERTY(XEN_NAME_AS_C_STRING_TO_VARIABLE("clm-print"),
+			      walk_sym,
+			      C_TO_XEN_ULONG(make_walker(clm_print_1, NULL, NULL, 1, UNLIMITED_ARGS, R_STRING, false, 1, -R_XEN)));
+      clm_print_walk_property_set = true;
+    }
   return(package_n_xen_args(prog, R_STRING, clm_print_s, descr_clm_print_s, args, num_args));
 }
 

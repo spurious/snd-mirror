@@ -2270,10 +2270,17 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 					scaler, offset, segbeg, segnum, pos, true, egen, k);
 			  power += rates[k] * segnum;
 			}
-		      else ramp_channel(si->cps[i], 
-					(Float)(offset + (scaler * (data[m] + ((data[m + 2] - data[m]) / (double)segnum)))),
-					(Float)(offset + scaler * data[m + 2]), 
-					segbeg, segnum, pos, true);
+		      else 
+			{
+			  if (k == (len - 1)) /* oops -- must have sticky end in play here? */
+			    scale_channel(si->cps[i], 
+					  (Float)(offset + scaler * data[m]), 
+					  segbeg, segnum, pos, true);
+			  else ramp_channel(si->cps[i], 
+					    (Float)(offset + (scaler * (data[m] + ((data[m + 2] - data[m]) / (double)segnum)))),
+					    (Float)(offset + scaler * data[m + 2]), 
+					    segbeg, segnum, pos, true);
+			}
 		    }
 		  pos = si->cps[i]->edit_ctr;
 		}

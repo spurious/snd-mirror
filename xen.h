@@ -597,6 +597,13 @@
 #define XEN_HOOK_PROCEDURES(a)        SCM_HOOK_PROCEDURES(a)
 
 /* disabling type checks saves almost no space (200k out of 12M) and no time (5% or so) */
+#if HAVE_SCM_FROM_LOCALE_KEYWORD
+  #define XEN_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) \
+    SCM_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type)
+
+  #define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr) \
+    scm_wrong_type_arg_msg(Caller, ArgN, Arg, Descr)
+#else
 #ifdef SCM_ASSERT_TYPE
   #define XEN_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) \
     do {SCM_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type);} while (0) /* actual macro is unprotected if..then */
@@ -609,6 +616,7 @@
 
   #define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr) \
     scm_wrong_type_arg(Caller, ArgN, Arg)
+#endif
 #endif
 
 #define XEN_OUT_OF_RANGE_ERROR(Caller, ArgN, Arg, Descr) \
