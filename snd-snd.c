@@ -182,7 +182,7 @@ static env_state *make_env_state(chan_info *cp, int samples)
 	  /* we want samps_per_bin to be useful over a wide range of file sizes */
 	  /* 160e6 = about a hour at 44KHz */
 	  val = (int)(log((double)(es->samples)));
-	  ep->amp_env_size = (int)pow(2.0, val);
+	  ep->amp_env_size = snd_ipow2(val);
 	  ep->samps_per_bin = (int)(ceil((Float)(es->samples) / (Float)(ep->amp_env_size)));
 	  ep->data_max = (MUS_SAMPLE_TYPE *)CALLOC(ep->amp_env_size, sizeof(MUS_SAMPLE_TYPE));
 	  ep->data_min = (MUS_SAMPLE_TYPE *)CALLOC(ep->amp_env_size, sizeof(MUS_SAMPLE_TYPE));

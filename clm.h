@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 1
-#define MUS_REVISION 61
-#define MUS_DATE "5-Mar-02"
+#define MUS_REVISION 62
+#define MUS_DATE "6-Mar-02"
 
 /* 
+ * 6-Mar:      mus_scaler in asymmetric-fm now refers to the "r" parameter, "a" in sine-summation.
  * 5-Mar:      dumb typo in asymmetric-fm generator fixed.
  * 19-Feb:     buffer reallocation redundant free bugfix.
  * 25-Jan-02:  mus_increment of env returns base.

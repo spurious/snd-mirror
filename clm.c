@@ -1912,6 +1912,18 @@ static Float asyfm_freq(void *ptr) {return(mus_radians2hz(((asyfm *)ptr)->freq))
 static Float set_asyfm_freq(void *ptr, Float val) {((asyfm *)ptr)->freq = mus_hz2radians(val); return(val);}
 static Float asyfm_phase(void *ptr) {return(fmod(((asyfm *)ptr)->phase, TWO_PI));}
 static Float set_asyfm_phase(void *ptr, Float val) {((asyfm *)ptr)->phase = val; return(val);}
+static Float asyfm_r(void *ptr) {return(((asyfm *)ptr)->r);}
+static Float set_asyfm_r(void *ptr, Float val) 
+{
+  asyfm *gen = (asyfm *)ptr;
+  if (val != 0.0)
+    {
+      gen->r = val; 
+      gen->cosr = 0.5 * (val - (1.0 / val));
+      gen->sinr = 0.5 * (val + (1.0 / val));
+    }
+  return(val);
+}
 
 static int asyfm_equalp(void *p1, void *p2)
 {
@@ -1938,8 +1950,6 @@ static char *describe_asyfm(void *ptr)
 
 int mus_asymmetric_fm_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_ASYMMETRIC_FM));}
 
-/* TODO: for moving formant from asymmetric-fm, need access to "r" at run-time */
-
 Float mus_asymmetric_fm(mus_any *ptr, Float index, Float fm)
 {
   asyfm *gen = (asyfm *)ptr;
@@ -1964,7 +1974,8 @@ static mus_any_class ASYMMETRIC_FM_CLASS = {
   &set_asyfm_freq,
   &asyfm_phase,
   &set_asyfm_phase,
-  0, 0,
+  &asyfm_r,
+  &set_asyfm_r,
   &mus_asymmetric_fm,
   0
 };
@@ -1977,14 +1988,19 @@ mus_any *mus_make_asymmetric_fm(Float freq, Float phase, Float r, Float ratio) /
     mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_asymmetric_fm!");
   else
     {
-      gen->core = &ASYMMETRIC_FM_CLASS;
-      gen->freq = mus_hz2radians(freq);
-      gen->phase = phase;
-      gen->r = r;
-      gen->ratio = ratio;
-      gen->cosr = 0.5 * (r - (1.0 / r)); /* 0.5 factor for I/2 */
-      gen->sinr = 0.5 * (r + (1.0 / r));
-      return((mus_any *)gen);
+      if (r == 0.0)
+	mus_error(MUS_ARG_OUT_OF_RANGE, "r can't be 0.0");
+      else
+	{
+	  gen->core = &ASYMMETRIC_FM_CLASS;
+	  gen->freq = mus_hz2radians(freq);
+	  gen->phase = phase;
+	  gen->r = r;
+	  gen->ratio = ratio;
+	  gen->cosr = 0.5 * (r - (1.0 / r)); /* 0.5 factor for I/2 */
+	  gen->sinr = 0.5 * (r + (1.0 / r));
+	  return((mus_any *)gen);
+	}
     }
   return(NULL);
 }
@@ -2494,6 +2510,16 @@ static Float sss_freq(void *ptr) {return(mus_radians2hz(((sss *)ptr)->freq));}
 static Float set_sss_freq(void *ptr, Float val) {((sss *)ptr)->freq = mus_hz2radians(val); return(val);}
 static Float sss_phase(void *ptr) {return(fmod(((sss *)ptr)->phase, TWO_PI));}
 static Float set_sss_phase(void *ptr, Float val) {((sss *)ptr)->phase = val; return(val);}
+static Float sss_a(void *ptr) {return(((sss *)ptr)->a);}
+static Float set_sss_a(void *ptr, Float val) 
+{
+  sss *gen = (sss *)ptr;
+  gen->a = val;
+  gen->a2 = 1.0 + val * val;
+  if (gen->n != 0) gen->an = pow(val, gen->n + 1);
+  /* TODO: add mus-index method for asyfm index (and remove that arg), waveshape index (remove arg???) */
+  return(val);
+}
 
 static int sss_equalp(void *p1, void *p2)
 {
@@ -2554,7 +2580,8 @@ static mus_any_class SINE_SUMMATION_CLASS = {
   &set_sss_freq,
   &sss_phase,
   &set_sss_phase,
-  0, 0,
+  &sss_a,
+  &set_sss_a,
   &run_sine_summation,
   0
 };

@@ -30,7 +30,6 @@
 ;;; TODO: gtk tests
 ;;; TODO: Xt selection tests?
 ;;; TODO: rest of Snd callbacks triggered
-;;; TODO: rest of CLM fm-arg tests
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs) (ice-9 syncase))
 
@@ -53,7 +52,7 @@
 
 (define tests 1)
 (define snd-test -1)
-(define keep-going #t)
+(define keep-going #f)
 (define full-test (< snd-test 0))
 (define total-tests 25)
 (define with-exit (< snd-test 0))
@@ -4586,6 +4585,23 @@
     (IF (equal? g0 g2)
 	(snd-display ";run ~A not equal? ~A ~A" (mus-name g0) g0 g2))))
     
+(define (fm-test gen)
+  (set! (mus-frequency gen) 0.0)
+  (set! (mus-phase gen) 0.0)
+  (gen 0.0)
+  (IF (fneq (mus-phase gen) 0.0) (snd-display ";~A phase(0): ~A" gen (mus-phase gen)))
+  (gen 1.0)
+  (IF (fneq (mus-phase gen) 1.0) (snd-display ";~A phase(1): ~A" gen (mus-phase gen)))
+  (gen 0.0)
+  (IF (fneq (mus-phase gen) 1.0) (snd-display ";~A phase(1, 0): ~A" gen (mus-phase gen)))
+  (set! (mus-frequency gen) (radians->hz 2.0))
+  (gen 0.0)
+  (IF (fneq (mus-phase gen) 3.0) (snd-display ";~A phase(1, 2): ~A ~A" gen (mus-phase gen) (mus-frequency gen)))
+  (gen 1.0)
+  (IF (fneq (mus-phase gen) 6.0) (snd-display ";~A phase(3, 2, 1): ~A ~A" gen (mus-phase gen) (mus-frequency gen)))
+  (do ((i 0 (1+ i))) ((= i 10)) (gen 10.0))
+  (IF (fneq (mus-phase gen) (+ 26 (- 100 (* 2 3.14159 20)))) (snd-display ";~A phase (over): ~A ~A" gen (mus-phase gen) (mus-frequency gen))))
+
 (if (or full-test (= snd-test 8) (and keep-going (<= snd-test 8)))
     (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests))
       (if (procedure? test-hook) (test-hook 8))
@@ -5117,6 +5133,16 @@
 	(IF (fneq (mus-apply) 0.0)
 	    (snd-display ";(mus-apply): ~A" (mus-apply))))
 
+      (fm-test (make-oscil))
+      (fm-test (make-sine-summation))
+      (fm-test (make-square-wave))
+      (fm-test (make-triangle-wave))
+      (fm-test (make-sum-of-cosines))
+      (fm-test (make-sawtooth-wave))
+      (fm-test (make-rand))
+      (fm-test (make-rand-interp))
+      (fm-test (make-pulse-train))
+
       (let ((gen (make-oscil 440.0))
 	    (gen1 (make-oscil 440.0)))
 	(do ((i 0 (1+ i)))
@@ -5320,7 +5346,10 @@
 	(IF (not (sine-summation? gen)) (snd-display ";~A not sine-summation?" gen))
 	(IF (fneq (mus-phase gen) 1.253787) (snd-display ";sine-summation phase: ~F?" (mus-phase gen)))
 	(IF (fneq (mus-frequency gen) 440.0) (snd-display ";sine-summation frequency: ~F?" (mus-frequency gen)))
-	(IF (or (fneq (vct-ref v0 1) 0.249) (fneq (vct-ref v0 8) 1.296)) (snd-display ";sine-summation output: ~A" v0)))
+	(IF (or (fneq (vct-ref v0 1) 0.249) (fneq (vct-ref v0 8) 1.296)) (snd-display ";sine-summation output: ~A" v0))
+	(IF (fneq (mus-scaler gen) 0.5) (snd-display ";mus-scaler (a) sine-summation: ~A" (mus-scaler gen)))
+	(set! (mus-scaler gen) 0.75)
+	(IF (fneq (mus-scaler gen) 0.75) (snd-display ";mus-scaler (set a) sine-summation: ~A" (mus-scaler gen))))
 
       (test-gen-equal (make-sine-summation 440.0) (make-sine-summation 440.0) (make-sine-summation 100.0))
       (test-gen-equal (make-sine-summation 440.0) (make-sine-summation 440.0) (make-sine-summation 440.0 1.0))
@@ -5346,7 +5375,7 @@
 		   (begin
 		     (snd-display ";sine-summation 1: ~A: os: ~A ss: ~A" i os ss)
 		     (give-up)))
-	       (IF (fneq ss1 os1)
+	       (IF (ffneq ss1 os1)
 		   (begin
 		     (snd-display ";sine-summation 2: ~A: os1: ~A ss1: ~A" i os1 ss1)
 		     (give-up))))))))
@@ -5364,7 +5393,10 @@
 	(IF (not (asymmetric-fm? gen)) (snd-display ";~A not asymmetric-fm?" gen))
 	(IF (fneq (mus-phase gen) 1.253787) (snd-display ";asymmetric-fm phase: ~F?" (mus-phase gen)))
 	(IF (fneq (mus-frequency gen) 440.0) (snd-display ";asymmetric-fm frequency: ~F?" (mus-frequency gen)))
-	(IF (or (fneq (vct-ref v0 1) 0.248) (fneq (vct-ref v0 8) .843)) (snd-display ";asymmetric-fm output: ~A" v0)))
+	(IF (or (fneq (vct-ref v0 2) 0.248) (fneq (vct-ref v0 8) .843)) (snd-display ";asymmetric-fm output: ~A" v0))
+	(IF (fneq (mus-scaler gen) 1.0) (snd-display ";mus-scaler (r) asymmetric-fm: ~A" (mus-scaler gen)))
+	(set! (mus-scaler gen) 0.5)
+	(IF (fneq (mus-scaler gen) 0.5) (snd-display ";mus-scaler (set r) asymmetric-fm: ~A" (mus-scaler gen))))
 
       (test-gen-equal (make-asymmetric-fm 440.0) (make-asymmetric-fm 440.0) (make-asymmetric-fm 100.0))
       (test-gen-equal (make-asymmetric-fm 440.0) (make-asymmetric-fm 440.0) (make-asymmetric-fm 440.0 1.0))
@@ -5422,7 +5454,16 @@
 	    (if (< (abs (- 1.0 (vct-ref spectr2 i))) .01) (set! s2-loc i)))
 	  (IF (> s2-loc s1-loc) (snd-display ";asymmetric-fm peaks: ~A ~A" s1-loc s2-loc))
 	  (let ((center (* (/ 22050 2048) (* .5 (+ s1-loc s2-loc)))))
-	    (IF (> (abs (- 1000 center)) 50) (snd-display ";asymmetric-fm center: ~A" center)))))
+	    (IF (> (abs (- 1000 center)) 50) (snd-display ";asymmetric-fm center: ~A" center)))
+	  (set! (mus-scaler gen3) 0.5)
+	  (do ((i 0 (1+ i)))
+	      ((= i 2048))
+	    (vct-set! vct0 i (asymmetric-fm gen3 2.0 0.0)))
+	  (set! spectr1 (snd-spectrum vct0 rectangular-window 2048 #t))
+	  (do ((i 1 (1+ i)))
+	      ((= i 256))
+	    (if (< (abs (- 1.0 (vct-ref spectr1 i))) .01) (set! s1-loc i)))
+	  (if (not (= s2-loc s1-loc)) (snd-print (format #f "asymmetric-fm set r peaks: ~A ~A" s1-loc s2-loc)))))
 
 
       (let ((gen (make-fir-filter 3 (list->vct '(.5 .25 .125))))

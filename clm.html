@@ -1617,6 +1617,7 @@ t when a new block of data is needed; mus-increment sets the next block-trigger 
 <tr><td colspan=2><center>sine-summation methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
+<tr><td><em class=gen>mus-scaler</em></td><td>"a" parameter; sideband scaler</td></tr>
 </table>
 
 <p><b>sine-summation</b> provides a kind of additive synthesis.
@@ -1626,12 +1627,9 @@ Synthesis of Complex Audio Spectra by means of Discrete Summation Formulae"
 ratio between successive sidebands, <i>ratio</i> is the ratio between the
 carrier frequency and the spacing between successive sidebands.
 The basic idea is very similar to that used in the
-<a href="#sum-of-cosines">sum-of-cosines</a> generator.  As in that case
-(a band-limited pulse train), we can come close to other standard waveforms
-with sine-summation, yet retain the band-limitedness.  For example,
-(make-sine-summation 100 0 10 .7 1) produces a reasonably good
-sawtooth function.  The output amplitude of this generator is hard to predict.
-See Moorer's paper for some normalization functions.
+<a href="#sum-of-cosines">sum-of-cosines</a> generator. 
+The output amplitude of this generator is hard to predict; 
+see Moorer's paper for some normalization functions.
 </p>
 <pre><small>
   (definstrument ss (beg dur freq amp &amp;optional (N 1) (a .5) (B-ratio 1.0))
@@ -1659,6 +1657,7 @@ See Moorer's paper for some normalization functions.
 <tr><td colspan=2><center>asymmetric-fm methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
+<tr><td><em class=gen>mus-scaler</em></td><td>"r" parameter; sideband scaler</td></tr>
 </table>
 
 <p><b>asymmetric-fm</b> provides a way around the symmetric spectra normally produced by FM.

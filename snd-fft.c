@@ -2498,10 +2498,10 @@ returns the current transform sample at bin and slice in snd channel chn (assumi
 		  (fbin < si->target_bins) && 
 		  (fslice < si->active_slices))
 		return(C_TO_XEN_DOUBLE(si->data[fslice][fbin]));
-	      else  XEN_ERROR(NO_SUCH_SAMPLE,
-			      XEN_LIST_5(C_TO_XEN_STRING(S_transform_sample),
-					 bin, slice,
-					 snd_n, chn_n));
+	      else XEN_ERROR(NO_SUCH_SAMPLE,
+			     XEN_LIST_5(C_TO_XEN_STRING(S_transform_sample),
+					bin, slice,
+					snd_n, chn_n));
 	    }
 	}
     }
