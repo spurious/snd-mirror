@@ -188,14 +188,12 @@ GtkWidget *get_help_menu_widget(void);
 void set_fft_window_beta(Float val);
 void set_transform_size(int val);
 void set_fft_window(mus_fft_window_t val);
-void set_transform_type(int val);
 void set_wavelet_type(int val);
 GtkWidget *fire_up_transform_dialog(bool managed);
 bool transform_dialog_is_active(void);
 
-char *transform_type_name(int choice);
-int add_transform_to_list(char *name);
-int max_transform_type(void);
+void set_transform_type(int val);
+void make_transform_type_list(void);
 
 void set_show_transform_peaks(bool val);
 void set_fft_log_magnitude(bool val);
@@ -234,7 +232,7 @@ void g_init_gxregion(void);
 
 /* -------- snd-gxutils -------- */
 
-bool send_netscape(const char *html_viewer, const char *url);
+bool send_mozilla(const char *html_viewer, const char *url);
 void g_init_gxutils(void);
 
 

@@ -3,7 +3,7 @@
 #include "snd.h"
 
 static GtkWidget *transform_dialog = NULL; /* main dialog shell */
-static GtkWidget *transform_list, *size_list, *window_list, *wavelet_list,
+static GtkWidget *transform_list = NULL, *size_list, *window_list, *wavelet_list, *outer_table,
                  *db_button, *peaks_button, *logfreq_button, *sono_button, *spectro_button, *normal_fft_button, *normalize_button, *selection_button,
                  *window_beta_scale, *graph_drawer = NULL, *graph_frame = NULL;
 static GtkObject *beta_adj;
@@ -30,21 +30,6 @@ static int transform_sizes[NUM_TRANSFORM_SIZES] =
 static char *FFT_WINDOWS[NUM_FFT_WINDOWS] = 
   {"Rectangular", "Hann", "Welch", "Parzen", "Bartlett", "Hamming", "Blackman2", "Blackman3", "Blackman4",
    "Exponential", "Riemann", "Kaiser", "Cauchy", "Poisson", "Gaussian", "Tukey", "Dolph-Chebyshev", "Hann-Poisson", "Connes"};
-
-static char *TRANSFORM_TYPES[NUM_TRANSFORM_TYPES] = {"Fourier", "Wavelet", "Walsh", "Autocorrelate", "Cepstrum", "Haar"};
-static int num_transform_types = NUM_TRANSFORM_TYPES;
-
-static char *TRANSFORM_TYPE_CONSTANTS[NUM_TRANSFORM_TYPES] = {
-  S_fourier_transform, S_wavelet_transform, S_walsh_transform, S_autocorrelation, S_cepstrum, S_haar_transform};
-
-char *transform_type_name(int choice)
-{
-  if (choice < NUM_TRANSFORM_TYPES)
-    return(TRANSFORM_TYPE_CONSTANTS[choice]);
-  else return(added_transform_name(choice));
-}
-
-int max_transform_type(void) {return(num_transform_types - 1);}
 
 static Float fp_dB(Float py)
 {
@@ -249,12 +234,13 @@ static void transform_browse_callback(GtkTreeSelection *selection, gpointer *gp)
 {
   GtkTreeIter iter;
   gchar *value = NULL;
-  int i;
+  int i, num;
   GtkTreeModel *model;
   if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
   gtk_tree_model_get(model, &iter, 0, &value, -1);
-  for (i = 0; i < NUM_TRANSFORM_TYPES; i++)
-    if (strcmp(value, TRANSFORM_TYPES[i]) == 0)
+  num = max_transform_type();
+  for (i = 0; i < num; i++)
+    if (strcmp(value, transform_name(i)) == 0)
       {
 	gfft_transform(i);
 	g_free(value);
@@ -456,7 +442,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
   bool need_callback = false;
   if (!transform_dialog)
     {
-      GtkWidget *outer_table, *buttons;
+      GtkWidget *buttons;
       int i;
       GtkWidget *display_frame, *help_button, *dismiss_button;
       GtkWidget *window_box, *orient_button, *color_button;
@@ -501,20 +487,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       */
 
       /* TYPE */
-      {
-	char **transform_names;
-	transform_names = (char **)CALLOC(num_transform_types, sizeof(char *));
-	for (i = 0; i < num_transform_types; i++) 
-	  {
-	    if (i < NUM_TRANSFORM_TYPES)
-	      transform_names[i] = TRANSFORM_TYPES[i];
-	    else transform_names[i] = added_transform_name(i);
-	  }
-	transform_list = sg_make_list(_("type"), outer_table, TABLE_ATTACH, NULL, num_transform_types, transform_names, 
-				      GTK_SIGNAL_FUNC(transform_browse_callback), 0, 1, 0, 3);
-	gtk_widget_show(transform_list);
-	FREE(transform_names);
-      }
+      make_transform_type_list();
 
       /* SIZE */
       size_list = sg_make_list(_("size"), outer_table, TABLE_ATTACH, NULL, NUM_TRANSFORM_SIZES, TRANSFORM_SIZES, 
@@ -669,7 +642,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       gtk_widget_show(graph_drawer);
       gtk_widget_show(graph_frame);
 
-      sg_list_select(transform_list, transform_type(ss));
+      sg_list_select(transform_list, transform_type_to_position(transform_type(ss)));
       for (i = 0; i < NUM_TRANSFORM_SIZES; i++)
 	if (transform_sizes[i] == transform_size(ss))
 	  {
@@ -766,13 +739,16 @@ void set_fft_window(mus_fft_window_t val)
   
 void set_transform_type(int val)
 {
-  if (!(ss->graph_hook_active)) for_each_chan(force_fft_clear);
-  in_set_transform_type(val);
-  for_each_chan_1(chans_transform_type, (void *)(&val));
-  if (!(ss->graph_hook_active)) 
-    for_each_chan(calculate_fft);
-  if (transform_dialog) 
-    sg_list_select(transform_list, val);
+  if (transform_p(val))
+    {
+      if (!(ss->graph_hook_active)) for_each_chan(force_fft_clear);
+      in_set_transform_type(val);
+      for_each_chan_1(chans_transform_type, (void *)(&val));
+      if (!(ss->graph_hook_active)) 
+	for_each_chan(calculate_fft);
+      if (transform_dialog) 
+	sg_list_select(transform_list, transform_type_to_position(val));
+    }
 }
 
 void set_wavelet_type(int val)
@@ -861,12 +837,33 @@ void set_show_selection_transform(bool show)
     for_each_chan(calculate_fft);
 }
 
-
-int add_transform_to_list(char *name)
+void make_transform_type_list(void)
 {
-  /* put at end of list and return associated browse callback row */
   if (transform_dialog)
-    sg_list_append(transform_list, name);
-  return(num_transform_types++);
+    {
+      int i, j, num;
+      char **transform_names;
+      num = max_transform_type();
+      transform_names = (char **)CALLOC(num, sizeof(char *));
+      for (i = 0, j = 0; i < num; i++) 
+	if (transform_p(i))
+	  {
+	    set_transform_position(i, j);
+	    transform_names[j++] = transform_name(i);
+	  }
+      if (!transform_list)
+	transform_list = sg_make_list(_("type"), outer_table, TABLE_ATTACH, NULL, j, transform_names, 
+				      GTK_SIGNAL_FUNC(transform_browse_callback), 0, 1, 0, 3);
+      else
+	{
+	  GtkListStore *w;
+	  w = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(transform_list)));
+	  gtk_list_store_clear(w);
+	  for (i = 0; i < j; i++)
+	    sg_list_append(transform_list, transform_names[i]);
+	  sg_list_select(transform_list, transform_type_to_position(transform_type(ss)));
+	}
+      gtk_widget_show(transform_list);
+      FREE(transform_names);
+    }
 }
-

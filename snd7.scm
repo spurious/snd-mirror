@@ -332,3 +332,5 @@
 	     (add-hook! after-save-as-hook after-save-as-hook-replace-sound))
 	 (if (member after-save-as-hook-replace-sound (hook->list after-save-as-hook))
 	     (remove-hook! after-save-as-hook after-save-as-hook-replace-sound))))))
+
+(define send-netscape send-mozilla)

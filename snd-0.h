@@ -102,7 +102,6 @@
 /* progress bar (hourglass icon) is displayed if more than this many samples are being processed */
 #define NUM_GLASSES 15
 #define NUM_BOMBS 15
-#define NUM_TRANSFORM_TYPES 6
 
 #define AMP_ENV_CUTOFF 50000
 

@@ -31,22 +31,6 @@ static char *FFT_WINDOWS[NUM_FFT_WINDOWS] =
   {"Rectangular", "Hann", "Welch", "Parzen", "Bartlett", "Hamming", "Blackman2", "Blackman3", "Blackman4",
    "Exponential", "Riemann", "Kaiser", "Cauchy", "Poisson", "Gaussian", "Tukey", "Dolph-Chebyshev", "Hann-Poisson", "Connes"};
 
-#define NUM_TRANSFORM_TYPES 6
-static char *TRANSFORM_TYPES[NUM_TRANSFORM_TYPES] = {"Fourier", "Wavelet", "Walsh", "Autocorrelate", "Cepstrum", "Haar"};
-static int num_transform_types = NUM_TRANSFORM_TYPES;
-
-static char *TRANSFORM_TYPE_CONSTANTS[NUM_TRANSFORM_TYPES] = {
-  S_fourier_transform, S_wavelet_transform, S_walsh_transform, S_autocorrelation, S_cepstrum, S_haar_transform};
-
-char *transform_type_name(int choice) 
-{
-  if (choice < NUM_TRANSFORM_TYPES)
-    return(TRANSFORM_TYPE_CONSTANTS[choice]);
-  else return(added_transform_name(choice));
-}
-
-int max_transform_type(void) {return(num_transform_types - 1);}
-
 static Float fp_dB(Float py)
 {
   return((py <= ss->lin_dB) ? 0.0 : (1.0 - (20.0 * log10(py) / ss->min_dB)));
@@ -216,7 +200,7 @@ static void transform_type_browse_callback(Widget w, XtPointer context, XtPointe
   int type;
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsList(w), w);
-  type = cbs->item_position - 1;
+  type = transform_position_to_type(cbs->item_position - 1);
   for_each_chan(force_fft_clear);
   in_set_transform_type(type);
   for_each_chan_1(chans_transform_type, (void *)(&type));
@@ -475,7 +459,6 @@ Widget fire_up_transform_dialog(bool managed)
       XmString xhelp, xdismiss, xtitle, bstr, xorient;
       Arg args[32];
       XmString sizes[NUM_TRANSFORM_SIZES];
-      XmString *types;
       XmString wavelets[NUM_WAVELETS];
       XmString windows[GUI_NUM_FFT_WINDOWS];
       XGCValues gv;
@@ -483,7 +466,6 @@ Widget fire_up_transform_dialog(bool managed)
       int size_pos = 1;
       int n, i;
 
-      types = (XmString *)CALLOC(num_transform_types, sizeof(XmString));
       for (i = 0; i < NUM_TRANSFORM_SIZES; i++)
 	if (transform_sizes[i] == transform_size(ss))
 	  {
@@ -587,22 +569,9 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       type_list = XmCreateScrolledList(type_form, "type-list", args, n);
       if (!(ss->using_schemes)) XtVaSetValues(type_list, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
-      for (i = 0; i < num_transform_types; i++) 
-	{
-	  if (i < NUM_TRANSFORM_TYPES)
-	    types[i] = XmStringCreate(TRANSFORM_TYPES[i], XmFONTLIST_DEFAULT_TAG);
-	  else types[i] = XmStringCreate(added_transform_name(i), XmFONTLIST_DEFAULT_TAG);
-	}
-      XtVaSetValues(type_list, 
-		    XmNitems, types, 
-		    XmNitemCount, num_transform_types, 
-		    XmNvisibleItemCount, 6, 
-		    NULL);
-      for (i = 0; i < num_transform_types; i++) 
-	XmStringFree(types[i]);
+      make_transform_type_list();
       XtManageChild(type_list); 
       XtAddCallback(type_list, XmNbrowseSelectionCallback, transform_type_browse_callback, NULL);
-      FREE(types);
 
       /* SIZE */
       n = 0;
@@ -1075,7 +1044,7 @@ Widget fire_up_transform_dialog(bool managed)
       /* select current list choices */
       /* display current windowing choice unless wavelet in force */
 
-      XmListSelectPos(type_list, transform_type(ss) + 1, false);
+      XmListSelectPos(type_list, transform_type_to_position(transform_type(ss)) + 1, false);
       XmListSelectPos(wavelet_list, wavelet_type(ss) + 1, false);
       XmListSelectPos(size_list, size_pos, false);
       XmListSelectPos(window_list, (int)fft_window(ss) + 1, false);
@@ -1193,12 +1162,15 @@ void set_fft_window(mus_fft_window_t val)
   
 void set_transform_type(int val)
 {
-  if (!(ss->graph_hook_active)) for_each_chan(force_fft_clear);
-  in_set_transform_type(val);
-  for_each_chan_1(chans_transform_type, (void *)(&val));
-  if (!(ss->graph_hook_active)) 
-    for_each_chan(calculate_fft);
-  if (transform_dialog) XmListSelectPos(type_list, val + 1, false);
+  if (transform_p(val))
+    {
+      if (!(ss->graph_hook_active)) for_each_chan(force_fft_clear);
+      in_set_transform_type(val);
+      for_each_chan_1(chans_transform_type, (void *)(&val));
+      if (!(ss->graph_hook_active)) 
+	for_each_chan(calculate_fft);
+      if (transform_dialog) XmListSelectPos(type_list, transform_type_to_position(val) + 1, false);
+    }
 }
 
 void set_wavelet_type(int val)
@@ -1261,15 +1233,29 @@ void set_show_selection_transform(bool show)
     for_each_chan(calculate_fft);
 }
 
-int add_transform_to_list(char *name)
+void make_transform_type_list(void)
 {
-  /* put at end of list and return associated browse callback row */
+  int num;
+  num = max_transform_type();
   if (transform_dialog)
     {
-      XmString str;
-      str = XmStringCreate(name, XmFONTLIST_DEFAULT_TAG);
-      XmListAddItem(type_list, str, 0);
-      XmStringFree(str);
+      XmString *types;
+      int i, j;
+      types = (XmString *)CALLOC(num, sizeof(XmString));
+      for (i = 0, j = 0; i < num; i++) 
+	if (transform_p(i))
+	  {
+	    set_transform_position(i, j);
+	    types[j++] = XmStringCreate(transform_name(i), XmFONTLIST_DEFAULT_TAG); 
+	  }
+      XtVaSetValues(type_list, 
+		    XmNitems, types, 
+		    XmNitemCount, j,
+		    XmNvisibleItemCount, 6, 
+		    NULL);
+      for (i = 0; i < j; i++) 
+	XmStringFree(types[i]);
+      FREE(types);
     }
-  return(num_transform_types++);
 }
+

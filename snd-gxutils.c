@@ -11,8 +11,6 @@
 
 #include <X11/Xatom.h>
 
-/* this code based on XmHTML's netscape.c */
-
 #define NS_VERSION      "_MOZILLA_VERSION"
 #define NS_COMMAND      "_MOZILLA_COMMAND"
 
@@ -54,7 +52,7 @@ static Window find_window(Display *display,
   return(window);
 }
 
-bool send_netscape(const char *html_viewer, const char *url)
+bool send_mozilla(const char *html_viewer, const char *url)
 {
   Window window;
   Display *dpy;
@@ -90,12 +88,12 @@ bool send_netscape(const char *html_viewer, const char *url)
   return(true);
 }
 
-static XEN g_send_netscape(XEN cmd)
+static XEN g_send_mozilla(XEN cmd)
 {
-  #define H_send_netscape "(" S_send_netscape " cmd): find an html-reader (or start it if necessary), and send it the \
+  #define H_send_mozilla "(" S_send_mozilla " cmd): find an html-reader (or start it if necessary), and send it the \
 string 'cmd'.  cmd should be a URL."
-  XEN_ASSERT_TYPE(XEN_STRING_P(cmd), cmd, XEN_ONLY_ARG, S_send_netscape, "a string");
-  return(C_TO_XEN_BOOLEAN(send_netscape(html_program(ss), XEN_TO_C_STRING(cmd))));
+  XEN_ASSERT_TYPE(XEN_STRING_P(cmd), cmd, XEN_ONLY_ARG, S_send_mozilla, "a string");
+  return(C_TO_XEN_BOOLEAN(send_mozilla(html_program(ss), XEN_TO_C_STRING(cmd))));
 }
 
 /* TODO: change_window_property is flakey in gtk if not run with --sync (and is X dependent) */
@@ -170,25 +168,25 @@ static XEN g_set_window_property(XEN winat, XEN name, XEN command)
 }
 
 #ifdef XEN_ARGIFY_1
-XEN_NARGIFY_1(g_send_netscape_w, g_send_netscape)
+XEN_NARGIFY_1(g_send_mozilla_w, g_send_mozilla)
 XEN_NARGIFY_2(g_window_property_w, g_window_property)
 XEN_NARGIFY_3(g_set_window_property_w, g_set_window_property)
 #else
-#define g_send_netscape_w g_send_netscape
+#define g_send_mozilla_w g_send_mozilla
 #define g_window_property_w g_window_property
 #define g_set_window_property_w g_set_window_property
 #endif
 
 void g_init_gxutils(void)
 {
-  XEN_DEFINE_PROCEDURE(S_send_netscape, g_send_netscape_w,                   1, 0, 0, H_send_netscape);
+  XEN_DEFINE_PROCEDURE(S_send_mozilla, g_send_mozilla_w, 1, 0, 0, H_send_mozilla);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_window_property, g_window_property_w, H_window_property,
 				   S_setB S_window_property, g_set_window_property_w, 2, 0, 3, 0);
 }
 
 #else
 /* gtk+osx = no X window property access, apparently */
-bool send_netscape(const char *html_viewer, const char *url)
+bool send_mozilla(const char *html_viewer, const char *url)
 {
 }
 #endif

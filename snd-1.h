@@ -844,7 +844,6 @@ void c_convolve(char *fname, Float amp, int filec, off_t filehdr, int filterc, o
 void *make_sonogram_state(chan_info *cp, bool force_recalc);
 void single_fft(chan_info *cp, bool update_display, bool force_recalc);
 Cessate sonogram_in_slices(void *sono);
-char *added_transform_name(int type);
 void clear_transform_edit_ctrs(chan_info *cp);
 void g_init_fft(void);
 Float fft_beta_max(mus_fft_window_t win);
@@ -854,6 +853,14 @@ void set_fft_info_xlabel(chan_info *cp, char *new_label);
 void fourier_spectrum(snd_fd *sf, Float *data, int fft_size, int data_len, Float *window);
 char *wavelet_name(int i);
 char **wavelet_names(void);
+
+char *transform_name(int type);
+char *transform_program_name(int type);
+int transform_position_to_type(int pos);
+int transform_type_to_position(int type);
+int max_transform_type(void);
+void set_transform_position(int i, int j);
+bool transform_p(int type);
 
 
 /* -------- snd-xen.c -------- */

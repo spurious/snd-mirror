@@ -14,11 +14,8 @@
  *
  * TODO: bark scale as axis or color as above (fft as well?)
  * TODO: Fletcher-Munson post-process fft data -- is there a hook that would allow this?
- * TODO: is send-netscape obsolete -- send-mozilla?  is there a Mac equivalent? -- move to scheme? (it's used in index.rb/scm)
  * TODO: "memo-sound" is a dumb name, etc "focus-widget" ambiguous (focus->widget?)
  * SOMEDAY: user-addable graph-style?
- *
- * TODO: if region-sample-reader exists and delete-region called, (similarly for sounds/players) -- is this tested?
  */
 
 typedef enum {CLICK_NOGRAPH, CLICK_WAVE, CLICK_FFT_AXIS, CLICK_LISP, CLICK_FFT_MAIN} click_loc_t;    /* for marks, regions, mouse click detection */
@@ -6216,7 +6213,7 @@ static XEN g_set_transform_type(XEN val, XEN snd, XEN chn)
   int type;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, S_setB S_transform_type, "an integer"); 
   type = XEN_TO_C_INT(val);
-  if ((type < 0) || (type > max_transform_type()))
+  if (!(transform_p(type)))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_transform_type, 1, val, "~A: unknown transform type");
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_TRANSFORM_TYPE, S_setB S_transform_type));

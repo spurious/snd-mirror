@@ -1695,7 +1695,7 @@
 				  (lambda args (car args)))
 			   (let ((nowval (getfnc)))
 			     (if (equal? n nowval)
-				 (snd-display ";~A = ~A (~A)" name n initval))
+				 (snd-display ";(bad set) ~A = ~A (~A)" name n initval))
 			     (setfnc initval)))
 			 newvals)
 			(test-bad-args (cdr lst)))))))
@@ -7288,11 +7288,14 @@ EDITS: 5
 	  (do ((i 0 (1+ i)))
 	      ((= i num-transforms))
 	    (set! (transform-type) i)
+	    (if (not (transform? i)) (snd-display "transform? ~A?" i))
 	    (do ((j 0 (1+ j)))
 		((= j num-transform-graph-types))
 	      (set! (transform-graph-type index 0) j)
 	      (update-transform-graph index 0))))
 	(set! (transform-type) fourier-transform)
+	(if (not (transform? (transform-type))) (snd-display ";transform? ~A ~A?" (transform-type) fourier-transform))
+	(if (not (transform? autocorrelation)) (snd-display ";transform? autocorrelation"))
 	
 	(if (read-only index) (snd-display ";read-only open-sound: ~A?" (read-only index)))
 	(set! (read-only index) #t)
@@ -33093,6 +33096,7 @@ EDITS: 2
 					     (make-vct len) 
 					     (lambda () 
 					       (fir-filter flt (read-sample fd)))))))))
+	      (if (not (transform? ftype)) (snd-display ";transform added: ~A?" ftype))
 	      (set! (transform-normalization) dont-normalize)
 	      (set! (transform-type ind 0) ftype)
 	      (set! (transform-size ind 0) 16)
@@ -33134,6 +33138,12 @@ EDITS: 2
 	      (set! (graph-style ind 0) graph-lollipops)
 	      (set! (x-bounds) (list 2.579 2.580))
 	      (update-time-graph)
+	      (delete-transform ftype)
+	      (if (transform? ftype) (snd-display ";transform deleted: ~A" ftype))
+	      (if (transform? -1) (snd-display ";transform? -1"))
+	      (if (transform? 123) (snd-display ";transform? 123"))
+	      (if (not (= (transform-type ind 0) fourier-transform)) 
+		  (snd-display ";after delete-transform ~A -> ~A" ftype (transform-type ind 0)))
 	      (close-sound ind))
 	    
 	    (let ((ind1 (open-sound "oboe.snd")))
@@ -52252,7 +52262,7 @@ EDITS: 2
 		     fill-rectangle filter-sound filter-control-in-dB filter-control-envelope enved-filter-order enved-filter
 		     filter-control-in-hz filter-control-order filter-selection filter-channel filter-control-waveform-color filter-control? find
 		     find-mark find-sound finish-progress-report foreground-color
-		     frames free-sample-reader graph 
+		     frames free-sample-reader graph transform? delete-transform
 		     graph-color graph-cursor graph-data graph->ps graph-style lisp-graph?  graphs-horizontal header-type
 		     help-dialog info-dialog highlight-color in insert-region insert-sample insert-samples
 		     insert-samples-with-origin insert-selection insert-silence insert-sound just-sounds key key-binding
@@ -53547,6 +53557,8 @@ EDITS: 2
 	    (check-error-tag 'bad-arity (lambda () (add-to-menu 1 "hi" (lambda (a b) #f))))
 	    (check-error-tag 'no-such-file (lambda () (open-sound-file "/bad/baddy.snd")))
 	    (check-error-tag 'out-of-range (lambda () (close-sound-file 0 0)))
+	    (check-error-tag 'out-of-range (lambda () (set! (transform-type) -1)))
+	    (check-error-tag 'out-of-range (lambda () (set! (transform-type) 123)))
 	    (check-error-tag 'wrong-type-arg (lambda () (help-dialog (list 0 1) "hiho")))
 	    (check-error-tag 'wrong-type-arg (lambda () (info-dialog (list 0 1) "hiho")))
 	    (check-error-tag 'no-such-sound (lambda () (edit-header-dialog 1234)))
@@ -53566,7 +53578,7 @@ EDITS: 2
 	    (check-error-tag 'no-such-key (lambda () (key-binding -1 0)))
 	    (check-error-tag 'no-such-key (lambda () (key-binding 12 17)))
 	    (check-error-tag 'no-such-key (lambda () (key-binding 12 -1)))
-	    (check-error-tag 'wrong-type-arg (lambda () (send-netscape -1)))
+	    (check-error-tag 'wrong-type-arg (lambda () (send-mozilla -1)))
 	    (check-error-tag 'bad-header (lambda () (file->array "/home/bil/sf1/bad_chans.snd" 0 0 123 (make-vct 123))))
 	    (check-error-tag 'bad-header (lambda () (make-readin "/home/bil/sf1/bad_chans.snd")))
 	    (check-error-tag 'wrong-type-arg (lambda () (make-iir-filter 30 (make-vct 3))))

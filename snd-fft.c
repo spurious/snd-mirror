@@ -4,7 +4,6 @@
 /* SOMEDAY: logfreq in spectrogram?  */
 
 /* TODO: check out B Battey's scentroid, autoc, and sndwarp instruments */
-/* TODO: delete-transform (user-added), transform? -- does this make sense? */
 
 #if WITH_SHARED_SNDLIB
 #if HAVE_FFTW3
@@ -492,118 +491,184 @@ static Float beta_maxes[NUM_FFT_WINDOWS] = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1
 					    1.0, 1.0, 15.0, 10.0, 10.0, 10.0, 1.0, 18.0, 10.0, 1.0};
 Float fft_beta_max(mus_fft_window_t win) {return(beta_maxes[(int)win]);}
 
+
+#define NUM_BUILTIN_TRANSFORM_TYPES 6
+
+static char *transform_type_names[NUM_BUILTIN_TRANSFORM_TYPES] = {"Fourier", "Wavelet", "Walsh", "Autocorrelate", "Cepstrum", "Haar"};
+
+static char *transform_type_program_names[NUM_BUILTIN_TRANSFORM_TYPES] = {
+  S_fourier_transform, S_wavelet_transform, S_walsh_transform, S_autocorrelation, S_cepstrum, S_haar_transform};
+
+
 typedef struct {
   char *name, *xlabel;
   Float lo, hi;
   XEN proc;
-  int type;
+  int type, row, gc_loc;
 } added_transform;
 
 static added_transform **added_transforms = NULL;
 static int added_transforms_size = 0;
-static int added_transforms_top = 0;
 
-static added_transform *new_added_transform(void)
+static added_transform *new_transform(void)
 {
+  int loc = -1;
   if (added_transforms == NULL)
     {
+      loc = 0;
       added_transforms_size = 4;
       added_transforms = (added_transform **)CALLOC(added_transforms_size, sizeof(added_transform *));
     }
   else
     {
-      if (added_transforms_top == added_transforms_size)
+      int i;
+      for (i = 0; i < added_transforms_size; i++)
+	if (added_transforms[i] == NULL)
+	  {
+	    loc = i;
+	    break;
+	  }
+      if (loc == -1)
 	{
 	  int i;
+	  loc = added_transforms_size;
 	  added_transforms_size += 4;
 	  added_transforms = (added_transform **)REALLOC(added_transforms, added_transforms_size * sizeof(added_transform *));
-	  for (i = added_transforms_top; i < added_transforms_size; i++) added_transforms[i] = NULL;
+	  for (i = loc; i < added_transforms_size; i++) added_transforms[i] = NULL;
 	}
     }
-  added_transforms[added_transforms_top] = (added_transform *)CALLOC(1, sizeof(added_transform));
-  return(added_transforms[added_transforms_top++]);
+  added_transforms[loc] = (added_transform *)CALLOC(1, sizeof(added_transform));
+  added_transforms[loc]->type = loc + NUM_BUILTIN_TRANSFORM_TYPES;
+  return(added_transforms[loc]);
 }
 
 static int add_transform(char *name, char *xlabel, Float lo, Float hi, XEN proc)
 {
   added_transform *af;
-  XEN_PROTECT_FROM_GC(proc);
-  af = new_added_transform();
+  af = new_transform();
   af->name = copy_string(name);
   af->xlabel = copy_string(xlabel);
   af->lo = lo;
   af->hi = hi;
   af->proc = proc;
-  af->type = add_transform_to_list(name);
+  af->gc_loc = snd_protect(proc);
   return(af->type);
 }
 
-#if 0
-/* will also need check for null ptrs throughout */
-bool transform_p(int type)
+static added_transform *type_to_transform(int type)
 {
-  int i;
-  if (type < NUM_TRANSFORM_TYPES) return(true);
-  for (i = 0; i < added_transforms_top; i++)
-    if ((added_transforms[i]) && (added_transforms[i]->type == type))
-      return(true);
-  return(false);
+  int loc;
+  loc = type - NUM_BUILTIN_TRANSFORM_TYPES;
+  if ((loc >= 0) && (loc < added_transforms_size))
+    return(added_transforms[loc]);
+  return(NULL);
 }
 
-static XEN g_transform_p(XEN type)
+bool transform_p(int type)
 {
-  #define H_transform_p "(" S_transform_p " type): #t if 'type' is a legit transform type."
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(type), type, XEN_ONLY_ARG, S_transform_p, "an integer");
-  return(C_TO_XEN_BOOLEAN(transform_p(XEN_TO_C_INT(type))));
+  if (type < 0) return(false);
+  if (type < NUM_BUILTIN_TRANSFORM_TYPES) return(true);
+  return(type_to_transform(type) != NULL);
 }
 
 /* delete-transform would also need to remove its name from the various UI lists */
 
-#endif
-
-char *added_transform_name(int type)
+char *transform_name(int type)
 {
-  int i;
-  for (i = 0; i < added_transforms_top; i++)
-    if (added_transforms[i]->type == type)
-      return(added_transforms[i]->name);
+  if (transform_p(type))
+    {
+      added_transform *af;
+      if (type < NUM_BUILTIN_TRANSFORM_TYPES)
+	return(transform_type_names[type]);
+      af = type_to_transform(type);
+      return(af->name);
+    }
+  return("unknown");
+}
+
+char *transform_program_name(int type)
+{
+  if (transform_p(type))
+    {
+      added_transform *af;
+      if (type < NUM_BUILTIN_TRANSFORM_TYPES)
+	return(transform_type_program_names[type]);
+      af = type_to_transform(type);
+      return(af->name);
+    }
   return("unknown");
 }
 
 static char *added_transform_xlabel(int type)
 {
-  int i;
-  for (i = 0; i < added_transforms_top; i++)
-    if (added_transforms[i]->type == type)
-      return(added_transforms[i]->xlabel);
+  added_transform *af;
+  af = type_to_transform(type);
+  if (af) return(af->xlabel);
   return("unknown");
 }
 
 static Float added_transform_lo(int type)
 {
-  int i;
-  for (i = 0; i < added_transforms_top; i++)
-    if (added_transforms[i]->type == type)
-      return(added_transforms[i]->lo);
+  added_transform *af;
+  af = type_to_transform(type);
+  if (af) return(af->lo);
   return(0.0);
 }
 
 static Float added_transform_hi(int type)
 {
-  int i;
-  for (i = 0; i < added_transforms_top; i++)
-    if (added_transforms[i]->type == type)
-      return(added_transforms[i]->hi);
+  added_transform *af;
+  af = type_to_transform(type);
+  if (af) return(af->hi);
   return(1.0);
 }
 
 static XEN added_transform_proc(int type)
 {
-  int i;
-  for (i = 0; i < added_transforms_top; i++)
-    if (added_transforms[i]->type == type)
-      return(added_transforms[i]->proc);
+  added_transform *af;
+  af = type_to_transform(type);
+  if (af) return(af->proc);
   return(XEN_FALSE);
+}
+
+void set_transform_position(int i, int j)
+{
+  if (i >= NUM_BUILTIN_TRANSFORM_TYPES)
+    {
+      added_transform *af;
+      af = type_to_transform(i);
+      af->row = j;
+    }
+}
+
+int max_transform_type(void)
+{
+  return(NUM_BUILTIN_TRANSFORM_TYPES + added_transforms_size);
+}
+
+int transform_type_to_position(int type)
+{
+  added_transform *af;
+  if (type < NUM_BUILTIN_TRANSFORM_TYPES)
+    return(type);
+  af = type_to_transform(type);
+  if (af) return(af->row);
+  return(-1);
+}
+
+int transform_position_to_type(int pos)
+{
+  int i;
+  if (pos < NUM_BUILTIN_TRANSFORM_TYPES)
+    return(pos);
+  for (i = 0; i < added_transforms_size; i++)
+    {
+      added_transform *af;
+      af = added_transforms[i];
+      if ((af) && (af->row = pos))
+	return(af->type);
+    }
+  return(-1);
 }
 
 static XEN before_transform_hook;
@@ -622,11 +687,11 @@ static char *spectro_xlabel(chan_info *cp)
 	  else return(_("frequency"));
 	}
       break;
-    case WAVELET:         return(wavelet_names_1[cp->wavelet_type]); break;
-    case HAAR:            return(_("Haar spectrum"));              break;
-    case CEPSTRUM:        return("cepstrum");                      break;
-    case WALSH:           return("Sequency");                      break;
-    case AUTOCORRELATION: return(_("Lag time"));                   break;
+    case WAVELET:         return(wavelet_names_1[cp->wavelet_type]);          break;
+    case HAAR:            return(_("Haar spectrum"));                         break;
+    case CEPSTRUM:        return("cepstrum");                                 break;
+    case WALSH:           return("Sequency");                                 break;
+    case AUTOCORRELATION: return(_("Lag time"));                              break;
     default:              return(added_transform_xlabel(cp->transform_type)); break;
     }
   return(NULL);
@@ -1403,29 +1468,29 @@ static sono_slice_t set_up_sonogram(sonogram_state *sg)
   si->active_slices = 0;
   si->target_slices = sg->outlim;
   si->scale = 0.0;
-  if ((!(sg->force_recalc)) && (cp->last_sonogram))    /* there was a previous run */
+  if ((!(sg->force_recalc)) && (cp->last_sonogram))      /* there was a previous run */
     {
       lsg = (sonogram_state *)(cp->last_sonogram);
-      if ((lsg->done) &&                               /* it completed all ffts */
-	  (lsg->outlim == sg->outlim) &&               /* the number of ffts is the same */
-	  (lsg->spectrum_size == sg->spectrum_size) && /* ditto fft sizes */
-	  (lsg->losamp == sg->losamp) &&               /* begins are same */
-	  (lsg->hisamp == sg->hisamp) &&               /* ends are same */
-	  (lsg->window == sg->window) &&               /* data windows are same */
+      if ((lsg->done) &&                                 /* it completed all ffts */
+	  (lsg->outlim == sg->outlim) &&                 /* the number of ffts is the same */
+	  (lsg->spectrum_size == sg->spectrum_size) &&   /* ditto fft sizes */
+	  (lsg->losamp == sg->losamp) &&                 /* begins are same */
+	  (lsg->hisamp == sg->hisamp) &&                 /* ends are same */
+	  (lsg->window == sg->window) &&                 /* data windows are same */
 	  (lsg->transform_type == sg->transform_type) && /* transform types are the same */
-	  (lsg->w_choice == sg->w_choice) &&           /* wavelets are the same */
-	  (lsg->edit_ctr == sg->edit_ctr))             /* underlying data is the same */
+	  (lsg->w_choice == sg->w_choice) &&             /* wavelets are the same */
+	  (lsg->edit_ctr == sg->edit_ctr))               /* underlying data is the same */
 	{
-	  sg->outer = sg->outlim;                      /* fake up the run */
+	  sg->outer = sg->outlim;                        /* fake up the run */
 	  si->active_slices = si->target_slices;
 	  sg->old_scale = lsg->old_scale;
 	  si->scale = sg->old_scale;
 	  if ((lsg->graph_type != cp->transform_graph_type) ||
 	      (lsg->old_logxing != cp->fft_log_frequency))
-	    make_sonogram_axes(cp);                    /* may need to fixup frequency axis labels */
+	    make_sonogram_axes(cp);                      /* may need to fixup frequency axis labels */
 	  sg->graph_type = cp->transform_graph_type;
 	  sg->old_logxing = cp->fft_log_frequency;
-	  return(SONO_QUIT);                                   /* so skip the ffts! */
+	  return(SONO_QUIT);                             /* so skip the ffts! */
 	}
     }
   cp->fft_changed = FFT_CHANGED;
@@ -1925,6 +1990,50 @@ static XEN g_snd_transform(XEN type, XEN data, XEN hint)
   return(data);
 }
 
+
+static XEN g_transform_p(XEN type)
+{
+  #define H_transform_p "(" S_transform_p " type): #t if 'type' is a legit transform type."
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(type), type, XEN_ONLY_ARG, S_transform_p, "an integer");
+  return(C_TO_XEN_BOOLEAN(transform_p(XEN_TO_C_INT(type))));
+}
+
+static int deleted_type = 0;
+static void unset_deleted_transform_type(chan_info *cp)
+{
+  if (cp->transform_type == deleted_type)
+    cp->transform_type = DEFAULT_TRANSFORM_TYPE;
+}
+
+static XEN g_delete_transform(XEN type)
+{
+  int typ;
+  added_transform *af;
+  #define H_delete_transform "(" S_delete_transform " type) deletes the specified transform if it was created via " S_add_transform "."
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(type), type, XEN_ONLY_ARG, S_delete_transform, "an integer");
+  typ = XEN_TO_C_INT(type);
+  if ((typ < NUM_BUILTIN_TRANSFORM_TYPES) || (!transform_p(typ)))
+    XEN_OUT_OF_RANGE_ERROR(S_delete_transform, XEN_ONLY_ARG, type, "an integer (an active added transform)");
+  af = type_to_transform(typ);
+  if (af)
+    {
+      added_transforms[af->type - NUM_BUILTIN_TRANSFORM_TYPES] = NULL;
+      FREE(af->xlabel);
+      FREE(af->name);
+      snd_unprotect_at(af->gc_loc);
+      af->proc = XEN_FALSE;
+      FREE(af);
+      /* now make sure nobody expects to use that transform */
+      if (transform_type(ss) == typ) set_transform_type(DEFAULT_TRANSFORM_TYPE);
+      deleted_type = typ;
+      for_each_chan(unset_deleted_transform_type);
+      return(XEN_TRUE);
+    }
+  return(XEN_FALSE);
+}
+
+
+
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_2(g_transform_frames_w, g_transform_frames)
 XEN_ARGIFY_4(g_transform_sample_w, g_transform_sample)
@@ -1932,6 +2041,8 @@ XEN_ARGIFY_3(g_transform_to_vct_w, g_transform_to_vct)
 XEN_NARGIFY_1(g_autocorrelate_w, g_autocorrelate)
 XEN_NARGIFY_5(g_add_transform_w, g_add_transform)
 XEN_ARGIFY_3(g_snd_transform_w, g_snd_transform)
+XEN_NARGIFY_1(g_transform_p_w, g_transform_p)
+XEN_NARGIFY_1(g_delete_transform_w, g_delete_transform)
 #else
 #define g_transform_frames_w g_transform_frames
 #define g_transform_sample_w g_transform_sample
@@ -1939,6 +2050,8 @@ XEN_ARGIFY_3(g_snd_transform_w, g_snd_transform)
 #define g_autocorrelate_w g_autocorrelate
 #define g_add_transform_w g_add_transform
 #define g_snd_transform_w g_snd_transform
+#define g_transform_p_w g_transform_p
+#define g_delete_transform_w g_delete_transform
 #endif
 
 void g_init_fft(void)
@@ -1991,6 +2104,8 @@ an integer, it is used as the starting point of the transform."
   XEN_DEFINE_PROCEDURE(S_transform_to_vct,     g_transform_to_vct_w, 0, 3, 0, H_transform_to_vct);
   XEN_DEFINE_PROCEDURE(S_autocorrelate,        g_autocorrelate_w,    1, 0, 0, H_autocorrelate);
   XEN_DEFINE_PROCEDURE(S_add_transform,        g_add_transform_w,    5, 0, 0, H_add_transform);
+  XEN_DEFINE_PROCEDURE(S_transform_p,          g_transform_p_w,      1, 0, 0, H_transform_p);
+  XEN_DEFINE_PROCEDURE(S_delete_transform,     g_delete_transform_w, 1, 0, 0, H_delete_transform);
   XEN_DEFINE_PROCEDURE("snd-transform",        g_snd_transform_w,    2, 1, 0, "call transform code directly");
 }
 

@@ -47,7 +47,7 @@ def goto_html(url)
   if dir
     case html_program()
     when "netscape", "mozilla"
-      send_netscape(dir + "/" + url)
+      send_mozilla(dir + "/" + url)
     else
       system(format("%s file:%s/%s &", html_program(), dir, url))
     end

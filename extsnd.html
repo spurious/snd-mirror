@@ -2051,7 +2051,7 @@ about the following documentation.
 </p>
 
 <p>In the following lists, optional arguments are in italics (although
-netscape sometimes displays them in bold face for some reason).
+mozilla sometimes displays them in bold face for some reason).
 Each sound has an
 associated index used to refer to it in all the
 functions.  This arbitrary number is more
@@ -4009,7 +4009,7 @@ It's easy to extend the notion of a selection to an arbitrary list of sound port
 ;; an example that scales each member of the section by .5
 (section-for-each 
  (lambda (sect)
-   (apply scale-channel (append (list .5) sect)))
+   (apply <a class=quiet href="#scalechannel">scale-channel</a> (append (list .5) sect)))
  (make-section (list 0 10000 0 0) (list 30000 10000 0 0)))
 </pre></td></tr></table>
 
@@ -6602,7 +6602,7 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
   (<a class=quiet href="#vctset">vct-set!</a> flt 0 2.0)
   (let ((cnv (<a class=quiet href="clm.html#make-convolve">make-convolve</a> :filter flt))
 	(sf (<a class=quiet href="#makesamplereader">make-sample-reader</a> 0)))
-    (map-channel
+    (<a class=quiet href="#mapchannel">map-channel</a>
      (lambda (val)
        (<a class=quiet href="clm.html#convolve">convolve</a> cnv (lambda (dir) 
                        (<a class=quiet href="#readsample">read-sample</a> sf)))))))
@@ -6801,18 +6801,18 @@ it's probably simpler to use <a href="clm.html#with-sound">with-sound</a> (from 
 <br><br>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (step-src)
-  (let* ((rd (make-sample-reader 0))
-	 (o (make-oscil 2205.0))
-	 (s (make-src :srate 0.0))
-	 (incr (+ 2.0 (oscil o)))	  
-	 (tempfile (<em class=red>with-sound</em> (:output (snd-tempnam) :srate (srate) :to-snd #f)
-		     (run (lambda ()
+  (let* ((rd (<a class=quiet href="#makesamplereader">make-sample-reader</a> 0))
+	 (o (<a class=quiet href="clm.html#make-oscil">make-oscil</a> 2205.0))
+	 (s (<a class=quiet href="clm.html#make-src">make-src</a> :srate 0.0))
+	 (incr (+ 2.0 (<a class=quiet href="clm.html#oscil">oscil</a> o)))	  
+	 (tempfile (<em class=red>with-sound</em> (:output (<a class=quiet href="#sndtempnam">snd-tempnam</a>) :srate (<a class=quiet href="#srate">srate</a>) :to-snd #f)
+		     (<a class=quiet href="clm.html#run">run</a> (lambda ()
 			    (do ((samp 0 (1+ samp)))
-				((or (c-g?) (sample-reader-at-end? rd)))
-			      (out-any samp (src s incr (lambda (dir) (read-sample rd))) 0 *output*)
+				((or (c-g?) (<a class=quiet href="#samplereaderatendQ">sample-reader-at-end?</a> rd)))
+			      (<a class=quiet href="clm.html#out-any">out-any</a> samp (<a class=quiet href="clm.html#src">src</a> s incr (lambda (dir) (<a class=quiet href="#readsample">read-sample</a> rd))) 0 *output*)
 			      (if (= (modulo samp 2205) 0)
-				  (set! incr (+ 2.0 (oscil o)))))))))
-	 (len (mus-sound-frames tempfile)))
+				  (set! incr (+ 2.0 (<a class=quiet href="clm.html#oscil">oscil</a> o)))))))))
+	 (len (<a class=quiet href="#soundframes">mus-sound-frames</a> tempfile)))
     (<em class=red>set-samples</em> 0 (1- len) tempfile #f #f #t "step-src" 0 #f #t)))
 </pre></td></tr></table>
 </td></tr>
@@ -7059,7 +7059,7 @@ take the "snd chn" arguments):
               (<em class=red>sounds</em>))
     (list sndlist chnlist)))
 
-(apply map maxamp (all-chans))
+(apply map <a class=quiet href="#maxamp">maxamp</a> (all-chans))
 </pre></td></tr></table>
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -7614,7 +7614,7 @@ See <a href="#zeropad">zero-pad</a> and <a href="#beforetransformhook">before-tr
 <code><a class=def name="variablegraphp">variable-graph?</a> (index)</code>
 </td></tr>
 <tr><td></td><td>
-return #t if <i>index</i> refers to a variable graph (see <a href=#makevariablegraph">make-variable-graph</a>).
+return #t if <i>index</i> refers to a variable graph (see <a href="#makevariablegraph">make-variable-graph</a>).
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -8578,8 +8578,8 @@ sound).  <a href="#ptreechannel">ptree-channel</a> (still in the experimental st
 <br>
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndtransforms">Transforms</a></h3></td></tr></table>
 
-<p>Except for add-transform, the transform functions and variables have been treated above, so this is just
-a list of them with cross-references.</p>
+<p>Most of the transform functions and variables have been treated above, so they are only mentioned here.
+</p>
 
 <!-- -------------------------------- TRANSFORM TABLE -------------------------------- -->
 
@@ -8646,6 +8646,18 @@ or <a href="sndscm.html#rubberdoc">rubber.scm</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
+
+<!-- delete-transform -->
+<tr><td colspan=2>
+<code><a class=def name="deletetransform">delete-transform</a> (type)</code>
+</td></tr>
+<tr><td></td><td>
+delete a transform that was added via <a class=quiet href="#addtransform">add-transform</a>.  The deleted type may be re-used by
+a subsequent add-transform.
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+
 <!-- fft -->
 <tr><td colspan=2>
 <code><a class=def name="fft">fft</a> (rl im <i>sgn</i>)</code></td></tr>
@@ -8657,6 +8669,17 @@ The only difference between the two is that Snd's fft determines the fft size fr
 the size of the vcts passed to it, whereas CLM's takes the size as an argument.
 </td></tr>
 <tr><td colspan=2></td></tr>
+
+
+<!-- transform? -->
+<tr><td colspan=2>
+<code><a class=def name="transformp">transform?</a> (type)</code>
+</td></tr>
+<tr><td></td><td>
+return #t if <i>type</i> refers to an active transform type.
+</td></tr>
+<tr><td colspan=2></td></tr>
+
 </table>
 
 <p>Other related variables and functions:</p>
@@ -11127,11 +11150,11 @@ the graphics context to use to draw a mark (XOR mode).
 the graphics context for XOR drawing in the selection color.</td></tr>
 <tr><td colspan=2></td></tr>
 
-<!-- send-netscape -->
+<!-- send-mozilla -->
 <tr><td colspan=2>
-<code><a class=def name="sendnetscape">send-netscape</a> (url)</code></td></tr>
+<code><a class=def name="sendmozilla">send-mozilla</a> (url)</code></td></tr>
 <tr><td></td><td>
-Start netscape, if necessary, and tell it to go to the location 'url'.
+Start mozilla, if necessary, and tell it to go to the location 'url'.
 The actual HTML reader invoked is determined by <a href="#htmlprogram">html-program</a>,
 but it's currently assumed that netscape/mozilla url syntax can be used to jump to
 the desired url.

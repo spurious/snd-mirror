@@ -39,7 +39,7 @@ and if one is found, and the Snd documentation can be found, calls (html-program
 		(if dir
 		    (if (or (string=? (html-program) "netscape")
 			    (string=? (html-program) "mozilla"))
-			(send-netscape (string-append dir "/" n)) ; definition in snd-gxutils.c
+			(send-mozilla (string-append dir "/" n)) ; definition in snd-gxutils.c
 			(system (string-append (html-program) " file:" dir "/" n))))))))
     
     (let ((name (if (string? obj) 
@@ -66,7 +66,7 @@ and if one is found, and the Snd documentation can be found, calls (html-program
 
 
 (define (? obj)
-  "(? obj) prints out any help it can find for obj, and tries to find obj in the docs via netscape"
+  "(? obj) prints out any help it can find for obj, and tries to find obj in the docs via netscape or mozilla"
   (let ((hlp (snd-help obj)))
     (if (string? hlp)
 	(snd-print hlp))

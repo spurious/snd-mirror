@@ -369,18 +369,15 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
-18-Jan:  changed transfrom-hook to after-transform-hook.\n\
+19-Jan:  changed send-netscape to send-mozilla.\n\
+         transform?, delete-transform\n\
+18-Jan:  changed transform-hook to after-transform-hook.\n\
          variable-graph?, free-player.\n\
 17-Jan:  gfm improvements (see gfm/README) thanks to Mike Scholz.\n\
 14-Jan:  moved makesnd.* into makefile.in.\n\
 10-Jan:  colormap?\n\
          moved sndsine.c to documentation\n\
 5-Jan:   snd 7.9.\n\
-3-Jan:   removed next-to-last (xen fallback) arg to ptree-channel,\n\
-           and associated xen-channel stuff.\n\
-29-Dec:  eval-c.scm (Kjetil Matheussen).\n\
-7-Dec:   after-save-as-hook, replacing emacs-style-save-as (see snd7.scm).\n\
-3-Dec:   mark-tag-width|height.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
@@ -1911,7 +1908,7 @@ void url_to_html_viewer(char *url)
 	      (strcmp(program, "mozilla") == 0))
 	    {
 	      sprintf(path, "%s/%s", dir_path, url);
-	      send_netscape(program, path);
+	      send_mozilla(program, path);
 	    }
 	  else
 	    {
@@ -2118,7 +2115,7 @@ static XEN g_set_html_dir(XEN val)
 
 static XEN g_html_program(void) 
 {
-  #define H_html_program "(" S_html_program "): name of documentation reader (netscape, by default)"
+  #define H_html_program "(" S_html_program "): name of documentation reader (mozilla, by default)"
   return(C_TO_XEN_STRING(html_program(ss)));
 }
 

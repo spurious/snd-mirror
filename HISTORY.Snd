@@ -1,6 +1,8 @@
 Snd change log
 
-  18-Jan:    changed transfrom-hook to after-transform-hook.
+  19-Jan:    changed send-netscape to send-mozilla.
+             transform?, delete-transform.
+  18-Jan:    changed transform-hook to after-transform-hook.
              variable-graph?, free-player.
   14-Jan:    moved makesnd.* into makefile.in.
   10-Jan:    colormap?

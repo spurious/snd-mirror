@@ -4,7 +4,7 @@ void reflect_amp_control_bounds_change_in_recorder(void) {}
 void snd_help_back_to_top(void) {}
 color_t get_in_between_color(color_t fg, color_t bg) {return(0);}
 void set_find_dialog_label(const char *str) {}
-bool send_netscape(const char *html_viewer, const char *url) {return(false);}
+bool send_mozilla(const char *html_viewer, const char *url) {return(false);}
 void check_menu_labels(int key, int state, bool extended) {}
 int add_channel_window(snd_info *sound, int channel, int chan_y, int insertion, widget_t main, fw_button_t arrows, bool with_events) {return(0);}
 int snd_help(const char *subject, const char *help, with_word_wrap_t with_wrap) {fprintf(stdout, help); return(0);}
@@ -277,17 +277,8 @@ widget_t make_mix_file_dialog(bool managed) {return(0);}
 void clear_listener(void) {}
 int menu_widget(int which_menu) {return(0);}
 void get_current_color(int colormap, int j, unsigned short *r, unsigned short *g, unsigned short *b) {}
-
-static char *TRANSFORM_TYPE_CONSTANTS[NUM_TRANSFORM_TYPES] =
-  {S_fourier_transform, S_wavelet_transform, S_walsh_transform, 
-   S_autocorrelation, S_cepstrum, S_haar_transform};
-char *transform_type_name(int choice) {return(TRANSFORM_TYPE_CONSTANTS[choice]);}
-
-int add_transform_to_list(char *name) {return(0);}
 void set_filter_text(snd_info *sp, char *str) {}
 void display_filter_env(snd_info *sp) {}
-int max_transform_type(void) {return(19);}
-
 void reflect_mix_or_track_change(int mix_id, int track_id, bool forced) {}
 int make_mix_dialog(void) {return(0);}
 int make_track_dialog(void) {return(0);}
@@ -305,6 +296,7 @@ void set_fft_window_beta(Float val) {in_set_fft_window_beta(val);}
 void set_transform_size(int val) {in_set_transform_size(val);}
 void set_fft_window(mus_fft_window_t val) {in_set_fft_window(val);}
 void set_transform_type(int val) {in_set_transform_type(val);}
+void make_transform_type_list(void) {}
 void set_wavelet_type(int val) {in_set_wavelet_type(val);}
 void set_transform_graph_type(graph_type_t val) {in_set_transform_graph_type(val);}
 void set_amp(snd_info *sp, Float val) {sp->amp_control = val;}
