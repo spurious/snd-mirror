@@ -328,7 +328,6 @@ file_info *fixup_region_data(chan_info *cp, int chan, int pos)
 	  make_region_readable(r, cp->state);
 	  nsp = r->rsp;
 	  ncp = nsp->chans[chan];
-	  /* cp->sound = ncp->sound; */ /* added for hdr->srate 4-june-01 */
 	  cp->sounds = ncp->sounds;
 	  cp->sound_size = ncp->sound_size;
 	  cp->edits = ncp->edits;

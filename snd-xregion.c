@@ -129,6 +129,7 @@ void update_region_browser(snd_state *ss, int grf_too)
       highlight_region(ss);
       goto_window(region_rows[0]->nm);
       cp = reg_sp->chans[0];
+      cp->sound = reg_sp;
       if (cp) 
 	{
 	  cp->chan = 0;
@@ -198,6 +199,7 @@ static void region_up_arrow_Callback(Widget w, XtPointer context, XtPointer info
 {
   chan_info *cp;
   cp = reg_sp->chans[0];
+  cp->sound = reg_sp;
   if (cp->chan > 0)
     {
       cp->chan--;
@@ -212,6 +214,7 @@ static void region_down_arrow_Callback(Widget w, XtPointer context, XtPointer in
 {
   chan_info *cp;
   cp = reg_sp->chans[0];
+  cp->sound = reg_sp;
   if ((cp->chan + 1) < region_chans(stack_position_to_id(current_region)))
     {
       cp->chan++;
@@ -232,6 +235,7 @@ static void region_focus_Callback(Widget w, XtPointer context, XtPointer info)
   if (stack_position_to_id(r->pos) == INVALID_REGION) return; /* needed by auto-tester */
   current_region = r->pos;
   cp = reg_sp->chans[0];
+  cp->sound = reg_sp;
   cp->chan  = 0;
   highlight_region(ss);
   set_sensitive(channel_f(cp), FALSE);
@@ -493,6 +497,7 @@ static void make_region_dialog(snd_state *ss)
       current_region = 0;
       add_channel_window(reg_sp, 0, ss, 0, 0, region_grf, WITH_ARROWS);
       cp = reg_sp->chans[0];
+      cp->sound = reg_sp;
       cp->edit_size = 1;
       cp->edit_ctr = 0;
       allocate_ed_list(cp);
@@ -598,7 +603,27 @@ static SCM g_region_dialog(void)
   return(SND_WRAP(region_dialog));
 }
 
+#if DEBUGGING
+SCM g_channel_widgets_1(chan_info *cp);
+static SCM g_region_dialog_widgets(void)
+{
+  if (region_dialog)
+    return(CONS(SND_WRAP(region_dialog),
+	     CONS(SND_WRAP(region_list),
+	       CONS(SND_WRAP(reg_srtxt),
+	         CONS(SND_WRAP(reg_lentxt),
+	           CONS(SND_WRAP(reg_chntxt),
+	             CONS(SND_WRAP(reg_maxtxt),
+		       (reg_sp) ? g_channel_widgets_1(reg_sp->chans[0]) : SCM_EOL)))))));
+  return(SCM_EOL);
+}
+#endif
+
 void g_init_gxregion(SCM local_doc)
 {
   DEFINE_PROC(S_region_dialog, g_region_dialog, 0, 0, 0,  H_region_dialog);
+
+#if DEBUGGING
+  DEFINE_PROC("region-dialog-widgets", g_region_dialog_widgets, 0, 0, 0, "");
+#endif
 }

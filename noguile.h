@@ -60,7 +60,7 @@ SCM scm_return_first(SCM a, ...);
 
 /* this is the sg.h replacement */
 
-#define SND_RETURN_NEWSMOB(Tag, Val) 0
+#define SND_RETURN_NEWSMOB(Tag, Val) return(0)
 #define SND_VALUE_OF(a) 0
 #define SND_SET_VALUE_OF(a, b) 
 #define SND_LOOKUP(a) 0

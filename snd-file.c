@@ -242,10 +242,11 @@ file_info *make_file_info(char *fullname, snd_state *ss)
 	      if (len > 1) srate = TO_C_INT(SCM_CADR(res));
 	      if (len > 2) data_format = TO_C_INT(LIST_REF(res, 2)); 
 	      if (len > 3) data_location = TO_C_INT(LIST_REF(res, 3)); else data_location = 0;
-	      if (len > 4) bytes = TO_C_INT(LIST_REF(res, 4)); else bytes = mus_sound_length(fullname);
+	      if (len > 4) bytes = TO_C_INT(LIST_REF(res, 4)); else bytes = mus_sound_length(fullname) - data_location;
 	      mus_header_set_raw_defaults(srate, chans, data_format);
-	      mus_sound_override_header(fullname, srate, chans, data_format, MUS_RAW, data_location,
-					mus_bytes_to_samples(data_format, bytes - data_location));
+	      mus_sound_override_header(fullname, srate, chans, data_format, 
+					MUS_RAW, data_location,
+					mus_bytes_to_samples(data_format, bytes));
 	      hdr = (file_info *)CALLOC(1, sizeof(file_info));
 	      hdr->name = copy_string(fullname);
 	      hdr->type = MUS_RAW;

@@ -23,6 +23,7 @@
 ;;; test 20: errors
 ;;; test 21: transforms
 ;;; test 22: goops
+;;; test 23: user-interface
 
 
 ;;; backups for map|scan|temp funcs
@@ -31,9 +32,9 @@
 
 (define tests 1)
 (define snd-test -1)
-(define keep-going #t)
+(define keep-going #f)
 (define full-test (< snd-test 0))
-(define total-tests 22)
+(define total-tests 23)
 
 (if (provided? 'gcing) (set! g-gc-step 100))
 
@@ -5785,14 +5786,17 @@
 	(close-sound ind)
 	)
 
+      (if (not (hook-empty? open-raw-sound-hook)) (reset-hook! open-raw-sound-hook))
       (add-hook! open-raw-sound-hook (lambda (file choices) (list 1 22050 mus-bshort)))
-      (let ((ind (open-sound "../sf/addf8.nh")))
+      (let* ((ind (open-sound "../sf/addf8.nh")))
 	(play-and-wait 0 ind)
 	(reset-hook! open-raw-sound-hook)
 	(if (or (not (= (chans ind) 1))
 		(not (= (srate ind) 22050))
-		(not (= (data-format ind) mus-bshort)))
-	    (snd-display (format #f ";open-raw: ~A ~A ~A" (chans ind) (srate ind) (data-format ind))))
+		(not (= (data-format ind) mus-bshort))
+		(not (= (frames ind) 23808)))
+	    (snd-display (format #f ";open-raw: ~A ~A ~A ~A" 
+				 (chans ind) (srate ind) (data-format ind) (frames ind))))
 	(close-sound ind))
 
       (let ((ind (open-sound "oboe.snd")))
@@ -5810,22 +5814,26 @@
 	(if (or (not (= (header-type ind) mus-raw))
 		(not (= (data-format ind) mus-mulaw))
 		(not (= (chans ind) 2))
-		(not (= (srate ind) 44100)))
-	    (snd-display (format #f ";open-raw-sound-hook 1: ~A ~A ~A ~A" (header-type ind) (data-format ind) (chans ind) (srate ind))))
+		(not (= (srate ind) 44100))
+		(not (= (frames ind) 50828)))
+	    (snd-display (format #f ";open-raw-sound-hook 1: ~A ~A ~A ~A ~A" 
+				 (header-type ind) (data-format ind) (chans ind) (srate ind) (frames ind))))
 	(close-sound ind)
 	(add-hook! open-raw-sound-hook
 		   (lambda (file choice)
 		     ;; append to list
 		     (if (not (equal? choice (list 2 44100 mus-mulaw)))
 			 (snd-display (format #f ";open-raw-sound-hook 2: ~A" choice)))
-		     (list 1 22050 mus-bshort))
+		     (list 1 22050 mus-lint))
 		   #t)
 	(set! ind (open-sound "test.snd"))
 	(if (or (not (= (header-type ind) mus-raw))
-		(not (= (data-format ind) mus-bshort))
+		(not (= (data-format ind) mus-lint))
 		(not (= (chans ind) 1))
-		(not (= (srate ind) 22050)))
-	    (snd-display (format #f ";open-raw-sound-hook 3: ~A ~A ~A ~A" (header-type ind) (data-format ind) (chans ind) (srate ind))))
+		(not (= (srate ind) 22050))
+		(not (= (frames ind) (/ 50828 2))))
+	    (snd-display (format #f ";open-raw-sound-hook 3: ~A ~A ~A ~A ~A" 
+				 (header-type ind) (data-format ind) (chans ind) (srate ind) (frames ind))))
 	(close-sound ind)
 	(reset-hook! open-raw-sound-hook)
 	(add-hook! open-raw-sound-hook 
@@ -5833,11 +5841,28 @@
 		     (list 2)))
 	(set! ind (open-sound "test.snd"))
 	(if (or (not (= (header-type ind) mus-raw))
-		(not (= (data-format ind) mus-bshort))
+		(not (= (data-format ind) mus-lint))
 		(not (= (chans ind) 2))
 		(not (= (srate ind) 22050)))
-	    (snd-display (format #f ";open-raw-sound-hook 4: ~A ~A ~A ~A" (header-type ind) (data-format ind) (chans ind) (srate ind))))
-	(close-sound ind))
+	    (snd-display (format #f ";open-raw-sound-hook 4: ~A ~A ~A ~A"
+				 (header-type ind) (data-format ind) (chans ind) (srate ind))))
+	(close-sound ind)
+	(reset-hook! open-raw-sound-hook)
+	(add-hook! open-raw-sound-hook 
+		   (lambda (file choice)
+		     (list 1 22050 mus-bshort 120 320)))
+	(set! ind (open-sound "test.snd"))
+	(if (or (not (= (header-type ind) mus-raw))
+		(not (= (data-format ind) mus-bshort))
+		(not (= (chans ind) 1))
+		(not (= (srate ind) 22050))
+		(not (= (data-location ind) 120))
+		(not (= (frames ind) 160)))
+	    (snd-display (format #f ";open-raw-sound-hook 5: ~A ~A ~A ~A ~A ~A" 
+				 (header-type ind) (data-format ind) (chans ind) (srate ind)
+				 (data-location ind) (/ (frames ind) 2))))
+	(close-sound ind)
+	(reset-hook! open-raw-sound-hook))
 
       (let ((ind #f)
 	    (op #f)
@@ -7722,8 +7747,8 @@
 	       (wids4 (channel-widgets ind1 1)))
 	  (if (or (not (list? wids))
 		  (not (list? wids3))
-		  (not (= (length wids1) 1))
-		  (not (= (length wids2) 1))
+		  (not (= (length wids1) 7))
+		  (not (= (length wids2) 7))
 		  (= (car wids3) (car wids4))
 		  (= (car wids3) (car wids))
 		  (not (= (car wids) (car wids1)))
@@ -9453,6 +9478,90 @@ EDITS: 3
 		(snd-display (format #f ";fcomb at ~A: ~A ~A?" i fval gval))))))))
 
 
+;;; ---------------- test 23: user-interface ----------------
+
+(if (or full-test (= snd-test 23) (and keep-going (<= snd-test 23)))
+    (begin
+      (if (procedure? trace-hook) (trace-hook 23))
+      (if (provided? 'snd-events)
+	  (begin
+	    ;; TODO: rest of UI event tests (requires access to all event-wise widgets)
+	    ;;       rest of key codes
+	    ;;       random clicks across all widgets?
+	    ;; x-synchronize bool
+	    ;; force-event
+	    ;; widget-window wid
+	    ;; key-event win key state
+	    ;; click-event win button state x y
+	    ;; drag-event win button state x0 y0 x1 y1
+	    ;; expose-event win x y width height
+	    ;; resize-event win width height
+
+	    (x-synchronize #t)
+	    (let ((ind (open-sound "oboe.snd")))
+	      (if (< (window-width) 600) 
+		  (set! (window-width) 60))
+	      (if (< (window-height) 400)
+		  (set! (window-height) 400))
+	      (let ((cwin (widget-window (car (channel-widgets))))
+		    (size (widget-size (car (channel-widgets)))))
+		
+		(click-event cwin 1 0 100 (inexact->exact (/ (cadr size) 2)))
+		(force-event)
+		(let ((pos (cursor-position)))
+		  (if (> (abs (- (car pos) 100)) 1)
+		      (snd-print (format #f ";pos ~A: ~A?" 100 (car pos)))))
+		(click-event cwin 1 0 300 (inexact->exact (/ (cadr size) 2)))
+		(force-event)
+		(let ((pos (cursor-position)))
+		  (if (> (abs (- (car pos) 300)) 1)
+		      (snd-print (format #f ";pos ~A: ~A?" 300 (car pos)))))
+		
+		(expose-event cwin 20 20 200 200)
+		(resize-event cwin 500 500)
+		(let ((pos (cursor)))
+		  (key-event cwin (char->integer #\f) 4)
+		  (force-event)
+		  (if (>= pos (cursor))
+		      (snd-display (format #f ";C-f: ~A ~A?" pos (cursor)))))
+		
+		(focus-widget (car (channel-widgets)))
+		(key-event cwin (char->integer #\<) 5)
+		(force-event)
+		(if (not (= (cursor) 0))
+		    (snd-display (format #f ";C-<: ~A?" (cursor))))
+		(key-event cwin (char->integer #\>) 9)
+		(force-event)
+		(if (not (= (cursor) (- (frames) 1)))
+		    (snd-display (format #f ";C->: ~A (~A)?" (cursor) (frames))))
+		
+		(drag-event cwin 1 0 100 50 400 50)
+		(force-event)
+		(if (not (selection?))
+		    (snd-display (format #f ";drag but no selection?")))
+		(let* ((pos (selection-position))
+		       (end (+ pos (selection-length)))
+		       (x0 (x->position (/ pos (srate))))
+		       (x1 (x->position (/ end (srate)))))
+		  (if (or (> (abs (- x0 100)) 1)
+			  (> (abs (- x1 400)) 1))
+		      (snd-print (format #f ";selectpos: ~A ~A ~A ~A " pos end x0 x1)))
+		  
+		  (key-event cwin (char->integer #\x) 4)
+		  (key-event cwin (char->integer #\v) 0)
+		  (force-event)
+		  (if (or (> (abs (- pos (left-sample))) 1)
+			  (> (abs (- end (right-sample))) 1))
+		      (snd-print (format #f ";C-x v selectpos: ~A ~A ~A ~A " pos end (left-sample) (right-sample))))
+		  
+		  ))
+	      
+	      (close-sound ind))
+	    (x-synchronize #f)
+	    ))))
+
+
+
 ;;; -------------------------------- clean up and quit -------------------------------- 
 
 (set! (max-regions) 2)
@@ -9503,16 +9612,15 @@ EDITS: 3
 ;;;   backward-mix peaks cursor-position y->position position->y mix-home
 ;;;   play-track? equalize-panes
 ;;;   edpos in sound->temp graph-data
-;;;   open-raw-sound-hook (data-loc/len)
 ;;;   arg to key binding, cursor-on-left et al via key commands
 ;;;   (bind-key (char->integer #\p) 0 (lambda () cursor-on-left)) ;now (cursor) == (left-sample)
 ;;;    unbind-key, new extended args to bind-key, key-binding, unbind-key
 
-;; TODO: the spectro-<mumble> names are no good (and the whole thing is a mess) -- spectrogram-orientation (a list)?
-;; also we have mus-sound-srate in sndlib, mus-srate in clm.c, sound-srate and *clm-srate* in clm, mus-sound-srate and srate in snd
-;;  perhaps a mus module, giving mus:sound-srate in scm, mus:sound-srate in clm, mus_sound_srate in C?
+;; we have mus-sound-srate in sndlib, mus-srate in clm.c, sound-srate and *clm-srate* in clm, mus-sound-srate and srate in snd
+;;    perhaps a mus module, giving mus:sound-srate in scm, mus:sound-srate in clm, mus_sound_srate in C?
 ;; TODO: equalize-panes with index is almost a no-op
 ;; TODO: control-changed-hook (lambda (snd control-func val) ...) (for auto-set etc)
+;;   and cursor-position (widget-position) is a different thing from selection|mix-position
 
 ;;; need to know before calling this if libguile.so was loaded
 ;;; (system "cc gsl-ex.c -c")

@@ -1,7 +1,7 @@
 # make file for snd in Linux with the works
 
 CC = gcc
-CFLAGS = -O3 -DLINUX -DUSR_LIB_OSS=1 -I/usr/X11R6/include -DWITH_BIG_COLORMAP -DHAVE_HTML=1 -I/home/bil/test/XmHTML-1.1.4/include -DUSE_SND
+CFLAGS = -O3 -DLINUX -I/usr/X11R6/include -DWITH_BIG_COLORMAP -DHAVE_HTML=1 -I/home/bil/test/XmHTML-1.1.4/include -DUSE_SND
 
 LIBS = /usr/local/lib/libguile.a /home/bil/test/XmHTML-1.1.4/src/libXmHTML.a /usr/X11R6/lib/libXm.a /usr/X11R6/lib/libXp.a /usr/X11R6/lib/libXpm.a /usr/X11R6/lib/libXext.a /usr/X11R6/lib/libXt.a /usr/X11R6/lib/libSM.a /usr/X11R6/lib/libICE.a /usr/X11R6/lib/libX11.a -lpng -ljpeg -lm -ldl
 

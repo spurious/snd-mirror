@@ -600,9 +600,9 @@ static SCM g_main_widgets(void)
   main_win = SND_WRAP(MAIN_WINDOW(ss));
 #endif
   return(CONS(main_win,
-	  CONS(SND_WRAP(MAIN_SHELL(ss)),
-           CONS(SND_WRAP(MAIN_PANE(ss)),
-            CONS(SND_WRAP(SOUND_PANE(ss)),
+	   CONS(SND_WRAP(MAIN_SHELL(ss)),
+             CONS(SND_WRAP(MAIN_PANE(ss)),
+               CONS(SND_WRAP(SOUND_PANE(ss)),
 		 SCM_EOL)))));
 }
 

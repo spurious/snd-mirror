@@ -125,10 +125,254 @@ static SCM g_change_property(SCM winat, SCM name, SCM command)
   return(SCM_BOOL_F);
 }
 
+#if DEBUGGING
+/* these are intended for auto-testing the user-interface via scheme-generated X events */
+static SCM g_key_event(SCM win, SCM key, SCM state)
+{
+  Window window;
+  Display *dpy;
+  snd_state *ss;
+  XKeyEvent ev;
+  KeySym k;
+  int key_state = 0;
+  Status err;
+  ss = get_global_state();
+  dpy = MAIN_DISPLAY(ss);
+  ev.type = KeyPress;
+  window = (Window)TO_C_UNSIGNED_LONG(win);
+  ev.window = window;
+  ev.display = dpy;
+  ev.root = RootWindow(dpy, DefaultScreen(dpy));
+  ev.x = 0;
+  ev.y = 0;
+  ev.x_root = 0;
+  ev.y_root = 0;
+  k = (KeySym)TO_C_INT(key);
+  key_state = TO_C_INT(state);
+  if ((k >= snd_K_A) && (k <= snd_K_Z)) 
+    key_state |= ShiftMask;
+  ev.keycode = XKeysymToKeycode(dpy, k);
+  ev.state = key_state;
+  ev.time = CurrentTime;
+  ev.same_screen = True;
+  ev.subwindow = (Window)None;
+  err = XSendEvent(dpy, window, False, KeyPressMask, (XEvent *)(&ev));
+  if (err != 0)
+    {
+      ev.time = CurrentTime;
+      ev.type = KeyRelease;
+      err = XSendEvent(dpy, window, False, KeyReleaseMask, (XEvent *)(&ev));
+    }
+  return(TO_SCM_INT(err));
+}
+
+static SCM g_click_event(SCM win, SCM button, SCM state, SCM x, SCM y)
+{
+  Window window;
+  Display *dpy;
+  snd_state *ss;
+  XButtonEvent ev;
+  Status err;
+  int b;
+  ss = get_global_state();
+  dpy = MAIN_DISPLAY(ss);
+  window = (Window)TO_C_UNSIGNED_LONG(win);
+  ev.type = ButtonPress;
+  ev.window = window;
+  ev.display = dpy;
+  ev.root = RootWindow(dpy, DefaultScreen(dpy));
+  ev.x = TO_C_INT(x);
+  ev.y = TO_C_INT(y);
+  ev.x_root = 0;
+  ev.y_root = 0;
+  ev.state = TO_C_INT(state);
+  b = TO_C_INT(button);
+  switch (b)
+    {
+    case 1: ev.button = Button1; break;
+    case 2: ev.button = Button2; break;
+    case 3: ev.button = Button3; break;
+    default: ev.button = Button1; break;
+    }
+  ev.time = CurrentTime;
+  ev.same_screen = True;
+  ev.subwindow = (Window)None;
+  err = XSendEvent(dpy, window, False, ButtonPressMask, (XEvent *)(&ev));
+  if (err != 0)
+    {
+      ev.time = CurrentTime;
+      ev.type = ButtonRelease;
+      err = XSendEvent(dpy, window, False, ButtonReleaseMask, (XEvent *)(&ev));
+    }
+  return(TO_SCM_INT(err));
+}
+
+static SCM g_drag_event(SCM win, SCM button, SCM state, SCM x0, SCM y0, SCM x1, SCM y1)
+{
+  /* aimed at Snd's selection creation in the graph widget */
+  Window window;
+  Display *dpy;
+  snd_state *ss;
+  XButtonEvent ev;
+  XMotionEvent evm;
+  Status err;
+  int b;
+  ss = get_global_state();
+  dpy = MAIN_DISPLAY(ss);
+  window = (Window)TO_C_UNSIGNED_LONG(win);
+  ev.type = ButtonPress;
+  ev.window = window;
+  ev.display = dpy;
+  ev.root = RootWindow(dpy, DefaultScreen(dpy));
+  ev.x = TO_C_INT(x0);
+  ev.y = TO_C_INT(y0);
+  ev.x_root = 0;
+  ev.y_root = 0;
+  ev.state = TO_C_INT(state);
+  b = TO_C_INT(button);
+  switch (b)
+    {
+    case 1: ev.button = Button1; break;
+    case 2: ev.button = Button2; break;
+    case 3: ev.button = Button3; break;
+    default: ev.button = Button1; break;
+    }
+  ev.time = CurrentTime;
+  ev.same_screen = True;
+  ev.subwindow = (Window)None;
+  err = XSendEvent(dpy, window, False, ButtonPressMask, (XEvent *)(&ev));
+  if (err != 0)
+    {
+      evm.window = window;
+      evm.display = dpy;
+      evm.root = RootWindow(dpy, DefaultScreen(dpy));
+      evm.x_root = 0;
+      evm.y_root = 0;
+      evm.state = TO_C_INT(state);
+      evm.type = MotionNotify;
+      evm.x_root = ev.x;
+      evm.y_root = ev.y;
+      evm.x = TO_C_INT(x1);
+      evm.y = TO_C_INT(y1);
+      evm.same_screen = True;
+      evm.time = CurrentTime + 300;
+      evm.is_hint = NotifyNormal;
+      err = XSendEvent(dpy, window, False, ButtonMotionMask, (XEvent *)(&evm));
+      ev.type = ButtonRelease;
+      ev.time = CurrentTime + 500;
+      ev.x = TO_C_INT(x1);
+      ev.y = TO_C_INT(y1);
+      err = XSendEvent(dpy, window, False, ButtonReleaseMask, (XEvent *)(&ev));
+    }
+  return(TO_SCM_INT(err));
+}
+
+static SCM g_expose_event(SCM win, SCM x, SCM y, SCM width, SCM height)
+{
+  Window window;
+  Display *dpy;
+  snd_state *ss;
+  XExposeEvent ev;
+  ss = get_global_state();
+  dpy = MAIN_DISPLAY(ss);
+  window = (Window)TO_C_UNSIGNED_LONG(win);
+  ev.type = Expose;
+  ev.window = window;
+  ev.display = dpy;
+  ev.x = TO_C_INT(x);
+  ev.y = TO_C_INT(y);
+  ev.width = TO_C_INT(width);
+  ev.height = TO_C_INT(height);
+  ev.count = 0;
+  return(TO_SCM_INT(XSendEvent(dpy, window, False, ExposureMask, (XEvent *)(&ev))));
+}
+
+static SCM g_resize_event(SCM win, SCM width, SCM height)
+{
+  Window window;
+  Display *dpy;
+  snd_state *ss;
+  XResizeRequestEvent ev;
+  ss = get_global_state();
+  dpy = MAIN_DISPLAY(ss);
+  window = (Window)TO_C_UNSIGNED_LONG(win);
+  ev.type = ResizeRequest;
+  ev.window = window;
+  ev.display = dpy;
+  ev.width = TO_C_INT(width);
+  ev.height = TO_C_INT(height);
+  return(TO_SCM_INT(XSendEvent(dpy, window, False, ResizeRedirectMask, (XEvent *)(&ev))));
+}
+
+static SCM g_force_event(void)
+{
+  int evs = 0;
+#if USE_MOTIF
+  XEvent event;
+  XtInputMask msk = 0;
+  XtAppContext app;
+  snd_state *ss;
+  ss = get_global_state();
+  app = MAIN_APP(ss);
+  while (1)
+    {
+      msk = XtAppPending(app);
+      if (msk & (XtIMXEvent | XtIMAlternateInput))
+	{
+	  XtAppNextEvent(app, &event);
+	  XtDispatchEvent(&event);
+	  evs++;
+	}
+      else break;
+    }
+#endif
+#if USE_GTK
+  while (gtk_events_pending()) 
+    {
+      gtk_main_iteration();
+      evs++;
+    }
+#endif
+  return(TO_SCM_INT(evs));
+}
+
+static SCM g_widget_window(SCM wid)
+{
+#if USE_MOTIF
+  return(TO_SCM_UNSIGNED_LONG(XtWindow((Widget)(SND_UNWRAP(wid)))));
+#endif
+#if USE_GTK
+  return(TO_SCM_UNSIGNED_LONG((unsigned long)(((GtkWidget *)(SND_UNWRAP(wid)))->window)));
+#endif
+  return(SCM_BOOL_F);
+}
+
+static SCM g_x_synchronize(SCM on)
+{
+  snd_state *ss;
+  ss = get_global_state();
+  XSynchronize(MAIN_DISPLAY(ss),
+	       TO_C_BOOLEAN(on));
+  return(on);
+}
+
+#endif
+
 void g_init_gxutils(SCM local_doc)
 {
   DEFINE_PROC("send-netscape", send_netscape, 1, 0, 0, "");
   DEFINE_PROC(S_change_property, g_change_property, 3, 0, 0, "");
+#if DEBUGGING
+  DEFINE_PROC("key-event", g_key_event, 3, 0, 0, "");
+  DEFINE_PROC("click-event", g_click_event, 5, 0, 0, "");
+  DEFINE_PROC("expose-event", g_expose_event, 5, 0, 0, "");
+  DEFINE_PROC("resize-event", g_resize_event, 3, 0, 0, "");
+  DEFINE_PROC("drag-event", g_drag_event, 7, 0, 0, "");
+  DEFINE_PROC("widget-window", g_widget_window, 1, 0, 0, "");
+  DEFINE_PROC("force-event", g_force_event, 0, 0, 0, "");
+  DEFINE_PROC("x-synchronize", g_x_synchronize, 1, 0, 0, "");
+  YES_WE_HAVE("snd-events");
+#endif
 }
 
 #endif

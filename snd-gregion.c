@@ -120,6 +120,7 @@ void update_region_browser(snd_state *ss, int grf_too)
       highlight_region(ss);
       goto_window(region_rows[0]->nm);
       cp = reg_sp->chans[0];
+      cp->sound = reg_sp;
       if (cp) 
 	{
 	  cp->chan = 0;
@@ -200,6 +201,7 @@ static void region_up_arrow_Callback(GtkWidget *w, GdkEventButton *ev, gpointer 
 {
   chan_info *cp;
   cp = reg_sp->chans[0];
+  cp->sound = reg_sp;
   if (cp->chan > 0)
     {
       cp->chan--;
@@ -214,6 +216,7 @@ static void region_down_arrow_Callback(GtkWidget *w, GdkEventButton *ev, gpointe
 {
   chan_info *cp;
   cp = reg_sp->chans[0];
+  cp->sound = reg_sp;
   if ((cp->chan + 1) < region_chans(stack_position_to_id(current_region)))
     {
       cp->chan++;
@@ -234,6 +237,7 @@ static void region_focus_Callback(GtkWidget *w, gpointer context) /* button clic
   if (stack_position_to_id(r->pos) == INVALID_REGION) return; /* needed by auto-tester */
   current_region = r->pos;
   cp = reg_sp->chans[0];
+  cp->sound = reg_sp;
   cp->chan  = 0;
   highlight_region(ss);
   set_sensitive(channel_f(cp), FALSE);
@@ -432,6 +436,7 @@ static void make_region_dialog(snd_state *ss)
       current_region = 0;
       add_channel_window(reg_sp, 0, ss, 0, 0, region_grf, WITH_ARROWS);
       cp = reg_sp->chans[0];
+      cp->sound = reg_sp;
       cp->edit_size = 1;
       cp->edit_ctr = 0;
       allocate_ed_list(cp);

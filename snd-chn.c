@@ -5288,13 +5288,27 @@ static void after_fft(snd_state *ss, chan_info *cp, Float scaler)
 }
 
 #if (!USE_NO_GUI)
+#if DEBUGGING
+SCM g_channel_widgets_1(chan_info *cp);
+SCM g_channel_widgets_1(chan_info *cp)
+#else
+static SCM g_channel_widgets_1(chan_info *cp)
+#endif
+{
+  return(CONS(SND_WRAP(channel_graph(cp)),
+	   CONS(SND_WRAP(channel_w(cp)),
+	     CONS(SND_WRAP(channel_f(cp)),
+	       CONS(SND_WRAP(channel_sx(cp)),
+	         CONS(SND_WRAP(channel_sy(cp)),
+	           CONS(SND_WRAP(channel_zx(cp)),
+	             CONS(SND_WRAP(channel_zy(cp)),
+	               SCM_EOL))))))));
+}
+
 static SCM g_channel_widgets(SCM snd, SCM chn)
 {
-  chan_info *cp;
   SND_ASSERT_CHAN(S_channel_widgets, snd, chn, 1);
-  cp = get_cp(snd, chn, S_channel_widgets);
-  return(CONS(SND_WRAP(channel_graph(cp)),
-	      SCM_EOL));
+  return(g_channel_widgets_1(get_cp(snd, chn, S_channel_widgets)));
 }
 #endif
 
