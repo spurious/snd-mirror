@@ -77,7 +77,7 @@
 
 #define TO_SCM_INT(a)         scm_long2num((long)a)
 #define TO_SMALL_SCM_INT(a)   SCM_MAKINUM(a)
-#define TO_SMALL_C_INT(a)     SCM_INUM(a)
+#define TO_SMALL_C_INT(a)     ((int)(SCM_INUM(a)))
 #define TO_C_UNSIGNED_LONG(a) gh_scm2ulong(a)
 #define TO_SCM_STRING(a)      scm_makfrom0str(a)
 #define TO_NEW_C_STRING(a)    gh_scm2newstr(a, NULL)
@@ -196,7 +196,7 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 #endif
 
 #ifndef SCM_VECTOR_LENGTH
-  #define SCM_VECTOR_LENGTH(Arg)  gh_vector_length(Arg)
+  #define SCM_VECTOR_LENGTH(Arg)  ((int)(gh_vector_length(Arg)))
 #endif
 
 #define BOOLEAN_P(Arg)            (SCM_BOOLP(Arg))
@@ -214,8 +214,8 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 #define STRING_P(Arg)             (SCM_STRINGP(Arg))
 #define VECTOR_P(Arg)             (SCM_VECTORP(Arg))
 #define LIST_P(Arg)               (scm_ilength(Arg) >= 0)
-#define LIST_P_WITH_LENGTH(Arg, Len) ((Len = scm_ilength(Arg)) >= 0)
-#define LIST_LENGTH(Arg)          (scm_ilength(Arg))
+#define LIST_P_WITH_LENGTH(Arg, Len) ((Len = ((int)scm_ilength(Arg))) >= 0)
+#define LIST_LENGTH(Arg)          ((int)(scm_ilength(Arg)))
 #define VECTOR_LENGTH(Arg)        (SCM_VECTOR_LENGTH(Arg))
 #define PROCEDURE_P(Arg)          (NOT_FALSE_P(scm_procedure_p(Arg)))
 #define CONS(Arg1, Arg2)          scm_cons(Arg1, Arg2)
@@ -227,7 +227,7 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 #define REVERSE_LIST(Lst)         scm_reverse(Lst)
 #define EVAL_STRING(Arg)          scm_eval_0str(Arg)
 #if HAVE_SCM_C_MAKE_VECTOR
-  #define MAKE_VECTOR(Num, Fill)  scm_c_make_vector(Num, Fill)
+  #define MAKE_VECTOR(Num, Fill)  scm_c_make_vector((unsigned long)(Num), Fill)
 #else
   #define MAKE_VECTOR(Num, Fill)  scm_make_vector(TO_SCM_INT(Num), Fill)
 #endif

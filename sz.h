@@ -21,20 +21,20 @@
   #define scm_catch_handler_t void *
 #endif
 
-#define scm_print_state
-#define scm_sizet
+#define scm_print_state int
+#define scm_sizet int
 
 #define scm_apply(a, b, c)
 SCM scm_return_first(SCM a, ...);
 
 #define SCM_EQ_P(a, b)                  scheme_eq(a, b)
 #define SCM_LIST0                       scheme_null
-#define SCM_LIST1(a)
-#define SCM_LIST2(a, b)
-#define SCM_LIST3(a, b, c)
-#define SCM_LIST4(a, b, c, d)
-#define SCM_LIST5(a, b, c, d, e)
-#define SCM_LIST6(a, b, c, d, e, f)
+#define SCM_LIST1(a)                    scheme_make_pair(a, scheme_null)
+#define SCM_LIST2(a, b)                 scheme_make_pair(a, SCM_LIST1(b))
+#define SCM_LIST3(a, b, c)              scheme_make_pair(a, SCM_LIST2(b, c))
+#define SCM_LIST4(a, b, c, d)           scheme_make_pair(a, SCM_LIST3(b, c, d))
+#define SCM_LIST5(a, b, c, d, e)        scheme_make_pair(a, SCM_LIST4(b, c, d, e))
+#define SCM_LIST6(a, b, c, d, e, f)     scheme_make_pair(a, SCM_LIST5(b, c, d, e, f))
 #define SCM_CAR(a)                       SCHEME_CAR(a)
 #define SCM_CADR(a)                      SCHEME_CADR(a)
 #define SCM_CADDR(a)                     SCHEME_CAR(SCHEME_CDDR(a))
@@ -46,13 +46,13 @@ SCM scm_return_first(SCM a, ...);
 #define SCM_HOOK_PROCEDURES(a)
 #define SCM_SETCDR(a, b)
 
-#define SND_RETURN_NEWSMOB(Tag, Val)
-#define SND_VALUE_OF(a)
+#define SND_RETURN_NEWSMOB(Tag, Val) 0
+#define SND_VALUE_OF(a) 0
 #define SND_SET_VALUE_OF(a, b) 
-#define SND_LOOKUP(a)
+#define SND_LOOKUP(a) 0
 #define SND_TAG_TYPE int
-#define SND_SMOB_TYPE(TAG, OBJ)
-#define SMOB_TYPE_P(OBJ, TAG)
+#define SND_SMOB_TYPE(TAG, OBJ) 0
+#define SMOB_TYPE_P(OBJ, TAG) 0
 #define SND_SETGCMARK(X)
 
 #define TRUE_P(a)                       scheme_eq(a, SCM_BOOL_T)
@@ -61,9 +61,9 @@ SCM scm_return_first(SCM a, ...);
 #define NOT_FALSE_P(a)                  (!(FALSE_P(a)))
 #define NULL_P(a)                       SCHEME_NULLP(a)
 #define NOT_NULL_P(a)                   (!(NULL_P(a)))
-#define BOUND_P(Arg)
-#define NOT_BOUND_P(Arg)
-#define INTEGER_ZERO                    
+#define BOUND_P(Arg)                    (!(SCM_EQ_P(Arg, SCM_UNDEFINED)))
+#define NOT_BOUND_P(Arg)                (SCM_EQ_P(Arg, SCM_UNDEFINED)))
+#define INTEGER_ZERO                    scheme_make_integer_value(0)
 
 #ifndef __GNUC__
   #ifndef __FUNCTION__
@@ -74,8 +74,8 @@ SCM scm_return_first(SCM a, ...);
 #define TO_C_DOUBLE(a)                       SCHEME_DBL_VAL(a)
 #define TO_C_DOUBLE_WITH_ORIGIN(a, b)        SCHEME_DBL_VAL(a)
 #define TO_C_INT(a)                          SCHEME_INT_VAL(a)
-#define TO_C_INT_OR_ELSE(a, b)
-#define TO_C_INT_OR_ELSE_WITH_ORIGIN(a, b, c)
+#define TO_C_INT_OR_ELSE(a, b)               0
+#define TO_C_INT_OR_ELSE_WITH_ORIGIN(a, b, c) 0
 #define TO_C_STRING(STR)                     SCHEME_STR_VAL(a)
 #define TO_SCM_DOUBLE(a)                     scheme_make_double(a)
 #define TO_SCM_INT(a)                        scheme_make_integer_value((long)a)
@@ -86,13 +86,13 @@ SCM scm_return_first(SCM a, ...);
 #define TO_NEW_C_STRING(a)                   strdup(SCHEME_STR_VAL(a))
 #define TO_SCM_BOOLEAN(a)                    ((a) ? scheme_true : scheme_false)
 #define TO_SCM_SYMBOL(a)                     scheme_intern_symbol(a)
-#define TO_C_BOOLEAN_OR_T(a)
+#define TO_C_BOOLEAN_OR_T(a)                 (BOOLEAN_P(a) ? (TRUE_P(a)) : 1)
 #define TO_C_BOOLEAN(a)                      ((FALSE_P(a)) ? 0 : 1)
 #define SYMBOL_TO_C_STRING(a)                SCHEME_SYM_VAL(a)
 #define SND_WRAP(a)                          scheme_make_integer_value_from_unsigned((unsigned long)a)
-#define SND_UNWRAP(a)
-#define SND_WRAPPED(a)
-#define HOOKED(a)
+#define SND_UNWRAP(a) 0
+#define SND_WRAPPED(a) 0
+#define HOOKED(a) 0
 #define DEFINE_PROC(Name, Func, ReqArg, OptArg, RstArg, Doc)
 #define DEFINE_VAR(a, b, c)
 #define WITH_REVERSED_CHANNEL_ARGS(name_reversed, name)
@@ -121,14 +121,14 @@ SCM scm_return_first(SCM a, ...);
 #define BOOLEAN_P(Arg)                 SCHEME_BOOLP(Arg)
 #define NUMBER_P(Arg)                  (SCHEME_REALP(Arg) && (!SCHEME_COMPLEXP(Arg)))
 #define INTEGER_P(Arg)                 SCHEME_INTP(Arg)
-#define BOOLEAN_IF_BOUND_P(Arg)
-#define INTEGER_IF_BOUND_P(Arg)
-#define NUMBER_IF_BOUND_P(Arg)
-#define STRING_IF_BOUND_P(Arg)
-#define INTEGER_OR_BOOLEAN_IF_BOUND_P(Arg)
-#define NUMBER_OR_BOOLEAN_IF_BOUND_P(Arg)
-#define NUMBER_OR_BOOLEAN_P(Arg)
-#define INTEGER_OR_BOOLEAN_P(Arg)
+#define BOOLEAN_IF_BOUND_P(Arg)        (NOT_BOUND_P(Arg) || (BOOLEAN_P(Arg)))
+#define INTEGER_IF_BOUND_P(Arg)        (NOT_BOUND_P(Arg) || (INTEGER_P(Arg)))
+#define NUMBER_IF_BOUND_P(Arg)         (NOT_BOUND_P(Arg) || (NUMBER_P(Arg)))
+#define STRING_IF_BOUND_P(Arg)         (NOT_BOUND_P(Arg) || (STRING_P(Arg)))
+#define INTEGER_OR_BOOLEAN_IF_BOUND_P(Arg) (NOT_BOUND_P(Arg) || (BOOLEAN_P(Arg)) || (INTEGER_P(Arg)))
+#define NUMBER_OR_BOOLEAN_IF_BOUND_P(Arg)  (NOT_BOUND_P(Arg) || (BOOLEAN_P(Arg)) || (NUMBER_P(Arg)))
+#define NUMBER_OR_BOOLEAN_P(Arg)      (NUMBER_P(Arg) || BOOLEAN_P(Arg))
+#define INTEGER_OR_BOOLEAN_P(Arg)     (INTEGER_P(Arg) || BOOLEAN_P(Arg))
 #define SYMBOL_P(Arg)                  SCHEME_SYMBOLP(Arg)
 #define STRING_P(Arg)                  SCHEME_STRINGP(Arg)
 #define VECTOR_P(Arg)                  SCHEME_VECTORP(Arg)
@@ -139,34 +139,34 @@ SCM scm_return_first(SCM a, ...);
 #define PROCEDURE_P(Arg)               SCHEME_PROCP(Arg)
 #define CONS(Arg1, Arg2)               scheme_make_pair(Arg1, Arg2)
 #define CONS2(Arg1, Arg2, Arg3)        scheme_make_pair(Arg1, scheme_make_pair(Arg2, Arg3))
-#define LIST_REF(Lst, Num)
+#define LIST_REF(Lst, Num) 0
 #define VECTOR_REF(Vect, Num)          SCHEME_VEC_ELS(a)[Num]
 #define VECTOR_SET(a, b, c)            SCHEME_VEC_ELS(a)[b] = c
 #define EVAL_STRING(Arg)               scheme_eval_string(Arg, get_global_env())
 #define MAKE_VECTOR(Num, Fill)         scheme_make_vector(Num, Fill)
 #define VECTOR_TO_LIST(Vect)           scheme_vector_to_list(Vect)
-#define MAKE_HOOK(Name, Args, Help)
-#define MAKE_HELPLESS_HOOK(Args)
+#define MAKE_HOOK(Name, Args, Help) 0
+#define MAKE_HELPLESS_HOOK(Args) 0
 #define CLEAR_HOOK(Arg)
 #define CHAR_P(Arg)                     SCHEME_CHARP(Arg)
 #define TO_C_CHAR(Arg)                  SCHEME_CHAR_VAL(Arg)
 #define SND_ASSERT_SND(Origin, Snd, Offset)
 #define SND_ASSERT_CHAN(Origin, Snd, Chn, Offset)
-#define CALL0(Func, Caller)
-#define CALL1(Func, Arg1, Caller)
-#define CALL2(Func, Arg1, Arg2, Caller)
-#define CALL3(Func, Arg1, Arg2, Arg3, Caller)
-#define APPLY(Func, Args, Caller)
-#define APPLY_EOL
-#define ARITY(Func)
-#define KEYWORD_P(Obj)
-#define MAKE_KEYWORD(Arg)
+#define CALL0(Func, Caller) 0
+#define CALL1(Func, Arg1, Caller) 0
+#define CALL2(Func, Arg1, Arg2, Caller) 0
+#define CALL3(Func, Arg1, Arg2, Arg3, Caller) 0
+#define APPLY(Func, Args, Caller) 0
+#define APPLY_EOL scheme_null
+#define ARITY(Func) 0
+#define KEYWORD_P(Obj) 0
+#define MAKE_KEYWORD(Arg) 0
 #define YES_WE_HAVE(Feature)
-#define DOCUMENTATION
+#define DOCUMENTATION 0
 #define WRONG_TYPE_ERROR(Caller, Position, Arg, Correct_Type) 
 #define ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type)
 #define REVERSE_LIST(a) a
-#define MAKE_PERMANENT(a)
+#define MAKE_PERMANENT(a) a
 #define LOAD_SCM_FILE(a)              scheme_load(a)
 #define ERROR(Type, Info)             scheme_signal_error(Info)
 #define WRITE_STRING(a, b)             scheme_write_string(a, 0, strlen(a), b)

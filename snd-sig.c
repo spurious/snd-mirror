@@ -633,7 +633,7 @@ static output_state *end_output(output_state *os, int beg, chan_info *cp, const 
 	      if (cp->marks) 
 		ripple_trailing_marks(cp, beg, os->orig_size, os->data_size);
 	    }
-	  free(os->filename);
+	  FREE(os->filename);
 	  FREE(os->mus_data);
 	  if (os->hdr) os->hdr = free_file_info(os->hdr);
 	}
@@ -999,9 +999,12 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp)
 	  saved_chan_file = snd_tempnam(ss);
 	  err = chan_save_edits(ucp, saved_chan_file);
 	  if (err != MUS_NO_ERROR)
-	    return(mus_format("convolve: save chan (%s[%d]) in %s: %s\n",
-			      sp->shortname, ucp->chan, 
-			      saved_chan_file, strerror(errno)));
+	    {
+	      FREE(ofile);
+	      return(mus_format("convolve: save chan (%s[%d]) in %s: %s\n",
+				sp->shortname, ucp->chan, 
+				saved_chan_file, strerror(errno)));
+	    }
 	  else
 	    {
 	      scfd = mus_file_open_read(saved_chan_file);
@@ -1059,7 +1062,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp)
 				  saved_chan_file, strerror(errno)));
 	    }
 	  snd_remove(saved_chan_file);
-	  free(saved_chan_file);
+	  FREE(saved_chan_file);
 
 	  if (ok)
 	    {
@@ -1078,7 +1081,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp)
 		}
 	      else file_override_samples(filtersize + filesize, ofile, ucp, 0, DELETE_ME, LOCK_MIXES, origin);
 	    }
-	  if (ofile) free(ofile);
+	  if (ofile) FREE(ofile);
 	  sfs[ip] = free_snd_fd(sfs[ip]);
 	  check_for_event(ss);
 	  if (ss->stopped_explicitly) 
@@ -1371,8 +1374,8 @@ static void swap_channels(snd_state *ss, int beg, int dur, snd_fd *c0, snd_fd *c
       free_file_info(hdr1);
       file_change_samples(beg, dur, ofile0, cp0, 0, DELETE_ME, LOCK_MIXES, S_swap_channels);
       file_change_samples(beg, dur, ofile1, cp1, 0, DELETE_ME, LOCK_MIXES, S_swap_channels);
-      if (ofile0) {free(ofile0); ofile0 = NULL;}
-      if (ofile1) {free(ofile1); ofile1 = NULL;}
+      if (ofile0) {FREE(ofile0); ofile0 = NULL;}
+      if (ofile1) {FREE(ofile1); ofile1 = NULL;}
       if (reporting) finish_progress_report(sp0, NOT_FROM_ENVED);
     }
   else 
@@ -1382,8 +1385,8 @@ static void swap_channels(snd_state *ss, int beg, int dur, snd_fd *c0, snd_fd *c
     }
   update_graph(cp0, NULL);
   update_graph(cp1, NULL);
-  if (ofile0) free(ofile0);
-  if (ofile1) free(ofile1);
+  if (ofile0) FREE(ofile0);
+  if (ofile1) FREE(ofile1);
   FREE(data0[0]);
   FREE(data0);
   FREE(data1[0]);
@@ -1482,7 +1485,7 @@ static int temp_to_snd(snd_exf *data, const char *origin)
 	if ((data->new_filenames[i] == NULL) || 
 	    (strcmp(data->new_filenames[i], data->old_filenames[i]) != 0))
 	  err = snd_remove(data->old_filenames[i]);
-	free(data->old_filenames[i]);
+	FREE(data->old_filenames[i]);
       }
   if (data->selection)
     {
@@ -1837,7 +1840,7 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 	  old_marks = NULL;
 	  if (new_marks) FREE(new_marks);
 	  new_marks = NULL;
-	  free(ofile); 
+	  FREE(ofile); 
 	  ofile = NULL;
 	  sfs[i] = free_snd_fd(sfs[i]);
 	  if (ss->stopped_explicitly) 
@@ -2234,7 +2237,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 	  close_temp_file(ofd, hdr, fsize * sizeof(Float), sp);
 	  hdr = free_file_info(hdr);
 	  file_change_samples(0, dur + order, ofile, cp, 0, DELETE_ME, LOCK_MIXES, origin);
-	  if (ofile) {free(ofile); ofile = NULL;}
+	  if (ofile) {FREE(ofile); ofile = NULL;}
 	  update_graph(cp, NULL);
 	  FREE(sndrdat);
 	  FREE(fltdat);
@@ -2351,7 +2354,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 		  if (over_selection)
 		    file_change_samples(si->begs[i], dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, origin);
 		  else file_change_samples(0, dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, origin);
-		  if (ofile) {free(ofile); ofile = NULL;}
+		  if (ofile) {FREE(ofile); ofile = NULL;}
 		}
 	      else change_samples(si->begs[i], dur, data[0], cp, LOCK_MIXES, origin);
 	      update_graph(cp, NULL); 
@@ -2492,7 +2495,7 @@ static void reverse_sound(chan_info *ncp, int over_selection)
 	      if (over_selection)
 		file_change_samples(si->begs[i], dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, S_reverse_selection);
 	      else file_change_samples(0, dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, S_reverse_sound);
-	      if (ofile) {free(ofile); ofile = NULL;}
+	      if (ofile) {FREE(ofile); ofile = NULL;}
 	    }
 	  else change_samples(si->begs[i], dur, data[0], cp, LOCK_MIXES, 
 			      (char *)((over_selection) ? S_reverse_selection : S_reverse_sound));
@@ -2596,7 +2599,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
       ofd = open_temp_file(ofile, si->chans, hdr, ss);
       if (ofd == -1)
 	{
-	  free(ofile);
+	  FREE(ofile);
 	  if (e) mus_free(egen);
 	  for (i = 0; i < si->chans; i++) 
 	    if (sfs[i]) 
@@ -2691,7 +2694,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
       sfs[i] = free_snd_fd(sfs[i]);
       FREE(data[i]);
     }
-  if ((temp_file) && (ofile)) {free(ofile); ofile = NULL;} /* safe only if snd_tempnam, not tmpnam used */
+  if ((temp_file) && (ofile)) {FREE(ofile); ofile = NULL;}
   if (data) FREE(data);
   if (e) mus_free(egen);
   free_sync_state(sc);
@@ -3052,7 +3055,7 @@ static SCM g_sp_scan(SCM proc, int chan_choice, SCM s_beg, SCM s_end, int series
   else
     {
       if (series)
-	return(series_map(ss, cp, proc, chan_choice, beg, end, caller, procname, proc));
+	return(series_map(ss, cp, proc, chan_choice, beg, end, caller, procname, procn));
       return(parallel_map(ss, cp, proc, chan_choice, beg, end, caller, procname, procn));
     }
 }

@@ -244,7 +244,7 @@ typedef struct {
   int *marker_ids, *marker_positions;
   int samples, datum_size, data_location, srate, chans, header_type, data_format, original_sound_format, true_file_length;
   int comment_start, comment_end, header_distributed, type_specifier, bits_per_sample, fact_samples, block_align;
-  int write_date;
+  time_t write_date;
   MUS_SAMPLE_TYPE *max_amps;
 } sound_file;
 
@@ -328,7 +328,8 @@ int mus_sound_forget(const char *name)
 
 static sound_file *check_write_date(const char *name, sound_file *sf)
 {
-  int chan, data_size, date;
+  int chan, data_size;
+  time_t date;
   if (sf)
     {
       date = local_file_write_date(name);

@@ -219,56 +219,20 @@ char *shorter_tempnam(char *udir, char *prefix)
 {
   /* tempnam turns out names that are inconveniently long (in this case the filename is user-visible) */
   char *str;
-  str = (char *)CALLOC(256, sizeof(char));
+  str = (char *)CALLOC(512, sizeof(char));
   if ((udir == NULL) || (strlen(udir) == 0)) udir = get_tmpdir();
-#if 0
-  sprintf(str, "%s/%s%d.XXXXXX", udir, (prefix) ? prefix : "snd_", sect_ctr++);
-#else
-  sprintf(str, "%s/%s%d.snd", udir, (prefix) ? prefix : "snd_", sect_ctr++);
-#endif
-#if 0
-  {
-    int fd;
-    fd = mkstemp(str);
-    if (fd == -1)
-      fprintf(stderr, "can't open %s %s ", str, strerror(errno));
-    close(fd); /* sigh... will reopen later */
-  }
-#endif
+  mus_snprintf(str, 512, "%s/%s%d_%d.snd", udir, (prefix) ? prefix : "snd_", getpid(), sect_ctr++);
   return(str);
 }
-
-/* goddamn mkstemp on the SGI returns the same name over and over!! */
-
-#if (!HAVE_TEMPNAM) /* && (!HAVE_MKSTEMP) */
-static char *tempnam(const char *ignored, const char *tmp)
-{
-  return(copy_string(tmpnam(NULL)));
-}
-#endif
 
 char *snd_tempnam(snd_state *ss)
 {
   /* problem here is that NULL passed back from Guile becomes "" which is not NULL from tempnam's point of view */
   char *udir;
-#if 0
-  char *str;
-  int fd;
-  str = (char *)CALLOC(256, sizeof(char));
-  udir = temp_dir(ss);
-  if ((udir == NULL) || (strlen(udir) == 0)) udir = get_tmpdir();
-  sprintf(str, "%s/snd_XXXXXX", udir);
-  fd = mkstemp(str);
-  if (fd == -1)
-    fprintf(stderr, "YOW: can't open %s %s ", str, strerror(errno));
-  close(fd); /* sigh... will reopen later */
-  return(str);
-#else
   udir = temp_dir(ss);
   if ((udir) && (*udir))
-    return(tempnam(udir, "snd_"));
-  return(tempnam(NULL, "snd_"));
-#endif
+    return(shorter_tempnam(udir, "snd_"));
+  return(shorter_tempnam(NULL, "snd_"));
 }
 
 void snd_exit(int val)

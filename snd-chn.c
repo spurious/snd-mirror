@@ -209,7 +209,7 @@ void set_dot_size(snd_state *ss, int val)
 {
   if (val > 0)  /* -1 here can crash X! */
     {
-      in_set_dot_size(ss, val);
+      in_set_dot_size(ss, (Latus)val);
       map_over_chans(ss, map_chans_dot_size, (void *)(&val));
     }
 }
@@ -1213,7 +1213,8 @@ SCM make_graph_data(chan_info *cp, int edit_pos, int losamp, int hisamp)
 void draw_graph_data(chan_info *cp, int losamp, int hisamp, int data_size, 
 		     Float *data, Float *data1, axis_context *ax, int style)
 {
-  int i, xi, samps;
+  int i, samps;
+  Locus xi;
   axis_info *ap;
   snd_info *sp;
   double x, incr;  
@@ -1692,6 +1693,7 @@ static int display_fft_peaks(chan_info *ucp, char *filename)
 	  FREE(str);
 	  if (remove(filename) == -1)
 	    snd_error("can't remove %s: %s", filename, strerror(errno));
+	  FREE(filename);
 	}
     }
   if (si) si = free_sync_info(si);
@@ -2122,8 +2124,9 @@ static void make_lisp_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   int i, j, grf_len, graph;
   axis_context *ax;
   COLOR_TYPE old_color = 0;
-  Float x, y, samples_per_pixel = 1.0, xinc, start_x, xf, ymin, ymax, xi, pinc;
+  Float x, y, samples_per_pixel = 1.0, xinc, start_x, xf, ymin, ymax, pinc;
   int x0, x1, y0, y1;
+  Locus xi;
   up = (lisp_grf *)(cp->lisp_info);
   if (up) uap = up->axis; else return;
   if ((!uap) || (!uap->graph_active) || (up->len == NULL) || (up->len[0] <= 0)) return;
@@ -2211,7 +2214,7 @@ static void make_lisp_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 		  i++;
 		  if (xf > samples_per_pixel)
 		    {
-		      set_grf_points((int)xi, j, 
+		      set_grf_points(xi, j, 
 				     local_grf_y(ymin, uap), 
 				     local_grf_y(ymax, uap));
 		      if (cp->printing) 
@@ -3359,7 +3362,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, TIME_TYPE time, T
 	    {
 	      time_interval = mouse_time - first_time;
 	      first_time = mouse_time;
-	      samps = move_play_mark(cp, &mouse_cursor, x);
+	      samps = move_play_mark(cp, &mouse_cursor, (Locus)x);
 	      if (time_interval != 0)
 		sp->srate = (Float)(samps * 1000) / (Float)(time_interval * SND_SRATE(sp));
 	      else sp->srate = 0.0;
@@ -5040,7 +5043,7 @@ static SCM g_set_dot_size(SCM size, SCM snd, SCM chn)
   else
     {
       ss = get_global_state();
-      set_dot_size(ss, TO_C_INT_OR_ELSE(size, 0));
+      set_dot_size(ss, (Latus)TO_C_INT_OR_ELSE(size, 0));
       return(TO_SCM_INT(dot_size(ss)));
     }
 }
@@ -5194,7 +5197,8 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_x_bounds_reversed, g_set_x_bounds)
 static SCM g_set_y_bounds(SCM bounds, SCM snd_n, SCM chn_n)
 {
   chan_info *cp;
-  Float low, hi, len = 0;
+  Float low, hi;
+  int len = 0;
   SCM y0 = SCM_UNDEFINED, y1 = SCM_UNDEFINED;
   SND_ASSERT_CHAN("set-" S_y_bounds, snd_n, chn_n, 2);
   ASSERT_TYPE(LIST_P_WITH_LENGTH(bounds, len), bounds, SCM_ARG1, "set-" S_y_bounds, "a list");

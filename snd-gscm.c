@@ -79,7 +79,10 @@ static int print_snd_color(SCM obj, SCM port, scm_print_state *pstate)
 	  (float)(v->color->blue) / 65535.0);
   WRITE_STRING(buf, port);
   FREE(buf);
-  return(scm_return_first(1, obj));
+#if HAVE_SCM_REMEMBER_UPTO_HERE
+  scm_remember_upto_here(obj);
+#endif
+  return(1);
 }
 
 static SCM g_color2list(SCM obj)

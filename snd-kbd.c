@@ -728,7 +728,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 		  tok = dir_from_tempnam(ss);
 		  report_in_minibuffer_and_save(sp, "can't access %s! temp dir is still %s", newdir, tok);
 		  if (newdir) free(newdir);
-		  if (tok) free(tok);
+		  if (tok) FREE(tok);
 		}
 	      break;
 #endif

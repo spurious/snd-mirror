@@ -515,62 +515,62 @@ int is_sensitive(Widget wid) {if (wid) return(XtIsSensitive(wid)); return(0);}
 void set_toggle_button(Widget wid, int val, int passed, void *data) {XmToggleButtonSetState(wid, val, passed);}
 
 
-int widget_height(Widget w)
+Dimension widget_height(Widget w)
 {
   Dimension height;
   XtVaGetValues(w, XmNheight, &height, NULL);
   return(height);
 }
 
-int widget_width(Widget w)
+Dimension widget_width(Widget w)
 {
   Dimension width;
   XtVaGetValues(w, XmNwidth, &width, NULL);
   return(width);
 }
 
-void set_widget_height(Widget w, int height)
+void set_widget_height(Widget w, Dimension height)
 {
-  XtVaSetValues(w, XmNheight, (Dimension)height, NULL);
+  XtVaSetValues(w, XmNheight, height, NULL);
 }
 
-void set_widget_width(Widget w, int width)
+void set_widget_width(Widget w, Dimension width)
 {
-  XtVaSetValues(w, XmNwidth, (Dimension)width, NULL);
+  XtVaSetValues(w, XmNwidth, width, NULL);
 }
 
-void set_widget_size(Widget w, int width, int height)
+void set_widget_size(Widget w, Dimension width, Dimension height)
 {
-  XtVaSetValues(w, XmNwidth, (Dimension)width, XmNheight, (Dimension)height, NULL);
+  XtVaSetValues(w, XmNwidth, width, XmNheight, height, NULL);
 }
 
-int widget_x(Widget w)
+Position widget_x(Widget w)
 {
-  Dimension x;
+  Position x;
   XtVaGetValues(w, XmNx, &x, NULL);
   return(x);
 }
 
-int widget_y(Widget w)
+Position widget_y(Widget w)
 {
-  Dimension y;
+  Position y;
   XtVaGetValues(w, XmNy, &y, NULL);
   return(y);
 }
 
-void set_widget_x(Widget w, int x)
+void set_widget_x(Widget w, Position x)
 {
-  XtVaSetValues(w, XmNx, (Dimension)x, NULL);
+  XtVaSetValues(w, XmNx, x, NULL);
 }
 
-void set_widget_y(Widget w, int y)
+void set_widget_y(Widget w, Position y)
 {
-  XtVaSetValues(w, XmNy, (Dimension)y, NULL);
+  XtVaSetValues(w, XmNy, y, NULL);
 }
 
-void set_widget_position(Widget w, int x, int y)
+void set_widget_position(Widget w, Position x, Position y)
 {
-  XtVaSetValues(w, XmNx, (Dimension)x, XmNy, (Dimension)y, NULL);
+  XtVaSetValues(w, XmNx, x, XmNy, y, NULL);
 }
 
 void fixup_axis_context(axis_context *ax, Widget w, GC gc)

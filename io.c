@@ -1507,11 +1507,11 @@ static int mus_write_1(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **b
 	      break;
 	    case MUS_UBSHORT: 
 	      for (; loc < loclim; loc++, jchar += siz_chans) 
-		m_set_big_endian_unsigned_short(jchar, (short)(MUS_SAMPLE_TO_SHORT(buffer[loc]) + 32768));
+		m_set_big_endian_unsigned_short(jchar, (unsigned short)(MUS_SAMPLE_TO_SHORT(buffer[loc]) + 32768));
 	      break;
 	    case MUS_ULSHORT: 
 	      for (; loc < loclim; loc++, jchar += siz_chans) 
-		m_set_little_endian_unsigned_short(jchar, (short)(MUS_SAMPLE_TO_SHORT(buffer[loc]) + 32768));
+		m_set_little_endian_unsigned_short(jchar, (unsigned short)(MUS_SAMPLE_TO_SHORT(buffer[loc]) + 32768));
 	      break;
 	    case MUS_B24INT:   
 	      bk = (k * 3);

@@ -257,7 +257,7 @@ void combine_sound(snd_info *sp);
 void separate_sound(snd_info *sp);
 void superimpose_sound(snd_info *sp);
 int fixup_cp_cgx_ax_wn(chan_info *cp);
-void get_current_color(int colormap, int j, int *r, int *g, int *b);
+void get_current_color(int colormap, int j, unsigned short *r, unsigned short *g, unsigned short *b);
 void change_channel_style(snd_info *sp, int new_style);
 
 

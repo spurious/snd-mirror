@@ -42,7 +42,6 @@
   #endif
   #ifdef LINUX
     #define HAVE_MALLINFO 1
-    #define HAVE_MKSTEMP 1
     #define HAVE_VSNPRINTF 1
     #define HAVE_SNPRINTF 1
   #endif
@@ -50,7 +49,6 @@
     #ifndef TRAP_SEGFAULT
       #define TRAP_SEGFAULT 1
     #endif
-    #define HAVE_TEMPNAM 1
     #define HAVE_READLINK 1
     #define HAVE_ACCESS 1
     #define HAVE_OPENDIR 1

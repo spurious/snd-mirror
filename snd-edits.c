@@ -2320,7 +2320,7 @@ static int save_edits_1(snd_info *sp)
   else report_in_minibuffer(sp, "wrote %s", sp->fullname); 
   if (ofile) 
     {
-      free(ofile); 
+      FREE(ofile); 
       ofile = NULL;
     }
   if (auto_update(ss)) 
@@ -2396,7 +2396,7 @@ int chan_save_edits(chan_info *cp, char *ofile)
       else err = move_file(nfile, ofile);
       reflect_save_as_in_edit_history(cp, ofile);
       snd_update(ss, sp);
-      free(nfile);
+      FREE(nfile);
     }
   else
     {
@@ -2590,19 +2590,24 @@ static SCM g_display_edits(SCM snd, SCM chn)
   #define H_display_edits "(" S_display_edits " &optional snd chn) returns the current edit tree state"
   FILE *tmp = NULL;
   char *buf, *name;
+  chan_info *cp;
   int len, fd;
   snd_state *ss;
   SCM res;
   SND_ASSERT_CHAN(S_display_edits, snd, chn, 1);
+  cp = get_cp(snd, chn, S_display_edits);
   ss = get_global_state();
   name = snd_tempnam(ss);
   tmp = fopen(name, "w");
-  if (tmp) display_edits(get_cp(snd, chn, S_display_edits), tmp);
+  if (tmp) display_edits(cp, tmp);
   if ((!tmp) || (fclose(tmp) != 0))
-    ERROR(CANNOT_SAVE,
-	  SCM_LIST3(TO_SCM_STRING(S_display_edits),
-		    TO_SCM_STRING(name),
-		    TO_SCM_STRING(strerror(errno))));
+    {
+      if (name) FREE(name);
+      ERROR(CANNOT_SAVE,
+	    SCM_LIST3(TO_SCM_STRING(S_display_edits),
+		      TO_SCM_STRING(name),
+		      TO_SCM_STRING(strerror(errno))));
+    }
   fd = mus_file_open_read(name);
   len = lseek(fd, 0L, SEEK_END);
   buf = (char *)CALLOC(len + 1, sizeof(char));
@@ -2611,7 +2616,7 @@ static SCM g_display_edits(SCM snd, SCM chn)
   close(fd);
   if (remove(name) == -1)
     snd_error("can't remove %s: %s", name, strerror(errno));
-  if (name) free(name);
+  if (name) FREE(name);
   res = TO_SCM_STRING(buf);
   FREE(buf);
   return(res);
@@ -2955,11 +2960,11 @@ replacing current data with the function results; origin is the edit-history nam
 	}
     }
   if (j > 0) mus_file_write(ofd, 0, j - 1, 1, data);
-  close_temp_file(ofd, hdr, num*datumb, sp);
+  close_temp_file(ofd, hdr, num * datumb, sp);
   hdr = free_file_info(hdr);
   file_change_samples(sf->initial_samp, num, ofile, cp, 0, DELETE_ME, LOCK_MIXES, TO_C_STRING(origin));
   update_graph(cp, NULL); /* is this needed? */
-  if (ofile) free(ofile);
+  if (ofile) FREE(ofile);
   FREE(data[0]);
   FREE(data);
   return(SCM_BOOL_F);

@@ -153,7 +153,7 @@ static Locus tick_grf_x(double val, axis_info *ap, int style, int srate)
     }
   if (res >= -32768) 
     {
-      if (res < 32768) return(res);
+      if (res < 32768) return((Locus)res);
       return(32767);
     }
   return(-32768);

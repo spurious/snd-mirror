@@ -101,7 +101,7 @@ unsigned short *snd_colormap(int n)
     }
 }
 
-void get_current_color(int colormap, int j, int *r, int *g, int *b)
+void get_current_color(int colormap, int j, unsigned short *r, unsigned short *g, unsigned short *b)
 {
   /* used only by printer to translate to Postscript rgb colors */
   switch (colormap)

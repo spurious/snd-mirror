@@ -192,10 +192,12 @@ typedef struct chan__info {
   Float lin_dB, min_dB, fft_beta;
   int show_y_zero, show_marks, wavo, wavo_hop, wavo_trace, zero_pad, x_axis_style, wavelet_type, verbose_cursor, max_fft_peaks;
   int show_fft_peaks, show_axes, line_size, graph_style, fft_log_frequency, fft_log_magnitude, fft_size, fft_style, fft_window;
-  int dot_size, normalize_fft, transform_type, show_mix_waveforms, spectro_hop, graphs_horizontal;
+  Latus dot_size;
+  int normalize_fft, transform_type, show_mix_waveforms, spectro_hop, graphs_horizontal;
   void *mix_md;
   SCM edit_hook, undo_hook, cursor_proc;
-  int selection_visible, old_x0, old_x1, sync, active;
+  int selection_visible, sync, active;
+  Locus old_x0, old_x1;
 } chan_info;
 
 typedef struct snd__info {
@@ -298,7 +300,8 @@ typedef struct snd__state {
   char *Vu_Font;
   Float Spectro_X_Scale, Spectro_Y_Scale, Spectro_Z_Scale, Spectro_Z_Angle, Spectro_X_Angle, Spectro_Y_Angle, Spectro_Cutoff, Spectro_Start;
   int Default_Output_Type, Default_Output_Format, Default_Output_Chans, Default_Output_Srate;
-  int Spectro_Hop, Color_Map, Wavelet_Type, Transform_Type, Dot_Size;
+  int Spectro_Hop, Color_Map, Wavelet_Type, Transform_Type;
+  Latus Dot_Size;
   int Fft_Size, Fft_Window, Fft_Style, Zero_Pad, Ask_Before_Overwrite, Line_Size, Wavo_Hop, Wavo, Wavo_Trace;
   Float Fft_Beta, Reverb_Decay;
   Float Color_Scale, Color_Cutoff;
@@ -570,7 +573,7 @@ mark *hit_mark(chan_info *cp, int x, int y, int key_state);
 mark *hit_triangle(chan_info *cp, int x, int y);
 void move_mark(chan_info *cp, mark *mp, int x);
 void play_syncd_mark(chan_info *cp, mark *mp);
-int move_play_mark(chan_info *cp, int *mc, int cx);
+int move_play_mark(chan_info *cp, int *mc, Locus cx);
 void finish_moving_play_mark(chan_info *cp);
 void finish_moving_mark(chan_info *cp, mark *m);
 mark *add_mark(int samp, char *name, chan_info *cp);

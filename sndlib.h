@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 12
-#define SNDLIB_REVISION 22
-#define SNDLIB_DATE "28-Apr-01"
+#define SNDLIB_REVISION 23
+#define SNDLIB_DATE "4-May-01"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 /* gcc has various compile-time macros like #cpu, but we're hoping to run in Metroworks C, Watcom C, MSC, MPW, etc */
@@ -317,15 +317,15 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
   #define FREE(a)      DisposePtr((Ptr)(a))
 #else
   #ifdef DEBUG_MEMORY
-    #define CALLOC(a, b)  mem_calloc(a, b, __FUNCTION__, __FILE__, __LINE__)
-    #define MALLOC(a)     mem_malloc(a, __FUNCTION__, __FILE__, __LINE__)
+    #define CALLOC(a, b)  mem_calloc((size_t)(a), (size_t)(b), __FUNCTION__, __FILE__, __LINE__)
+    #define MALLOC(a)     mem_malloc((size_t)(a), __FUNCTION__, __FILE__, __LINE__)
     #define FREE(a)       mem_free(a, __FUNCTION__, __FILE__, __LINE__)
-    #define REALLOC(a, b) mem_realloc(a, b, __FUNCTION__, __FILE__, __LINE__)
+    #define REALLOC(a, b) mem_realloc(a, (size_t)(b), __FUNCTION__, __FILE__, __LINE__)
   #else
-    #define CALLOC(a, b)  calloc(a, b)
-    #define MALLOC(a)     malloc(a)
+    #define CALLOC(a, b)  calloc((size_t)(a), (size_t)(b))
+    #define MALLOC(a)     malloc((size_t)(a))
     #define FREE(a)       free(a)
-    #define REALLOC(a, b) realloc(a, b)
+    #define REALLOC(a, b) realloc(a, (size_t)(b))
   #endif
 #endif 
 

@@ -401,7 +401,10 @@ static int print_sound_data(SCM obj, SCM port, scm_print_state *pstate)
       WRITE_STRING(buf, port);
       FREE(buf);
     }
-  return(scm_return_first(1, obj));
+#if HAVE_SCM_REMEMBER_UPTO_HERE
+  scm_remember_upto_here(obj);
+#endif
+  return(1);
 }
 
 static SCM equalp_sound_data(SCM obj1, SCM obj2)
@@ -868,13 +871,13 @@ to the audio line from the sound-data object sdata."
   if (sd->chans == 1)
     {
       for (k = 0; k < frms; k++) 
-	obuf[k] = MUS_SAMPLE_TO_SHORT(bufs[0][k]);
+	obuf[k] = (short)MUS_SAMPLE_TO_SHORT(bufs[0][k]);
     }
   else
     {
       for (k = 0, j = 0; k < frms; k++, j += sd->chans)
 	for (i = 0; i < sd->chans; i++) 
-	  obuf[j + i] = MUS_SAMPLE_TO_SHORT(bufs[i][k]);
+	  obuf[j + i] = (short)MUS_SAMPLE_TO_SHORT(bufs[i][k]);
     }
   val = mus_audio_write(TO_C_INT(line), (char *)obuf, outbytes);
   FREE(obuf);
@@ -902,13 +905,13 @@ from the audio line into the sound-data object sdata."
   if (sd->chans == 1)
     {
       for (k = 0; k < frms; k++) 
-	bufs[0][k] = MUS_SHORT_TO_SAMPLE(inbuf[k]);
+	bufs[0][k] = (short)MUS_SHORT_TO_SAMPLE(inbuf[k]);
     }
   else
     {
       for (k = 0, j = 0; k < frms; k++, j += sd->chans)
 	for (i = 0; i < sd->chans; i++) 
-	  bufs[i][k] = MUS_SHORT_TO_SAMPLE(inbuf[j + i]);
+	  bufs[i][k] = (short)MUS_SHORT_TO_SAMPLE(inbuf[j + i]);
     }
   FREE(inbuf);
   return(scm_return_first(TO_SCM_INT(val), sdata));

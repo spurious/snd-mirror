@@ -108,7 +108,7 @@ static void record_report(Widget text, ...)
 {
   /* place time-stamped message in text window */
   time_t ts;
-  int pos;
+  XmTextPosition pos;
   va_list ap;
   char *nextstr;
   int textpos = 0;
@@ -128,7 +128,7 @@ static void record_report(Widget text, ...)
       textpos = XmTextGetLastPosition(text);
       XmTextInsert(text, textpos, nextstr);
     }
-  XmTextShowPosition(text, XmTextGetLastPosition(text)-1);
+  XmTextShowPosition(text, XmTextGetLastPosition(text) - 1);
   va_end(ap);
 }
 

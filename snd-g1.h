@@ -257,7 +257,7 @@ char **speaker_bits(void);
 
 char *colormap_name(int n);
 unsigned short *snd_colormap(int n);
-void get_current_color(int colormap, int j, int *r, int *g, int *b);
+void get_current_color(int colormap, int j, unsigned short *r, unsigned short *g, unsigned short *b);
 
 
 /* -------- snd-gchn.c -------- */
@@ -359,16 +359,16 @@ void reflect_resize(snd_state *ss);
 void set_sensitive(GtkWidget *wid, int val);
 int is_sensitive(GtkWidget *wid);
 void set_toggle_button(GtkWidget *wid, int val, int passed, void *data);
-int widget_height(GtkWidget *w);
-int widget_width(GtkWidget *w);
-void set_widget_height(GtkWidget *w, int height);
-void set_widget_width(GtkWidget *w, int width);
-int widget_x(GtkWidget *w);
-int widget_y(GtkWidget *w);
-void set_widget_x(GtkWidget *w, int x);
-void set_widget_y(GtkWidget *w, int y);
-void set_widget_size(GtkWidget *w, int width, int height);
-void set_widget_position(GtkWidget *w, int x, int y);
+guint16 widget_height(GtkWidget *w);
+guint16 widget_width(GtkWidget *w);
+void set_widget_height(GtkWidget *w, guint16 height);
+void set_widget_width(GtkWidget *w, guint16 width);
+gint16 widget_x(GtkWidget *w);
+gint16 widget_y(GtkWidget *w);
+void set_widget_x(GtkWidget *w, gint16 x);
+void set_widget_y(GtkWidget *w, gint16 y);
+void set_widget_size(GtkWidget *w, guint16 width, guint16 height);
+void set_widget_position(GtkWidget *w, gint16 x, gint16 y);
 void fixup_axis_context(axis_context *ax, GtkWidget *w, GdkGC *gc);
 
 

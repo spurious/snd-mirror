@@ -525,7 +525,7 @@ void set_channel_style(snd_state *ss, int val)
   map_over_chans(ss, update_graph, NULL);
 }
 
-static void snd_no_such_menu_error(const char *caller, int id)
+static void snd_no_such_menu_error(const char *caller, SCM id)
 {
   ERROR(NO_SUCH_MENU,
 	SCM_LIST2(TO_SCM_STRING(caller),

@@ -266,7 +266,7 @@ char **speed_r_bits(void);
 
 char *colormap_name(int n);
 unsigned short *snd_colormap(int n);
-void get_current_color(int colormap, int j, int *r, int *g, int *b);
+void get_current_color(int colormap, int j, unsigned short *r, unsigned short *g, unsigned short *b);
 
 
 /* -------- snd-xfind.c -------- */
@@ -322,16 +322,16 @@ void reflect_resize(snd_state *ss);
 void set_sensitive(Widget wid, int val);
 int is_sensitive(Widget wid);
 void set_toggle_button(Widget wid, int val, int passed, void *data);
-int widget_height(Widget w);
-int widget_width(Widget w);
-void set_widget_height(Widget w, int height);
-void set_widget_width(Widget w, int width);
-int widget_x(Widget w);
-int widget_y(Widget w);
-void set_widget_x(Widget w, int x);
-void set_widget_y(Widget w, int y);
-void set_widget_size(Widget w, int width, int height);
-void set_widget_position(Widget w, int x, int y);
+Dimension widget_height(Widget w);
+Dimension widget_width(Widget w);
+void set_widget_height(Widget w, Dimension height);
+void set_widget_width(Widget w, Dimension width);
+Position widget_x(Widget w);
+Position widget_y(Widget w);
+void set_widget_x(Widget w, Position x);
+void set_widget_y(Widget w, Position y);
+void set_widget_size(Widget w, Dimension width, Dimension height);
+void set_widget_position(Widget w, Position x, Position y);
 void fixup_axis_context(axis_context *ax, Widget w, GC gc);
 Pixmap make_pixmap(snd_state *ss, unsigned char *bits, int width, int height, int depth, GC gc);
 

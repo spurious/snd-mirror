@@ -282,6 +282,7 @@ static int mix_selection(snd_state *ss, chan_info *cp, int beg, const char *orig
       id = mix_file_and_delete(beg, selection_len(), tempfile, si_out->cps, si_out->chans, origin, with_mix_tags(ss));
       free_sync_info(si_out);	      
     }
+  if (tempfile) FREE(tempfile);
   return(id);
 }
 
@@ -328,6 +329,7 @@ static int insert_selection(snd_state *ss, chan_info *cp, int beg, const char *o
       free_sync_info(si_in);
       free_sync_info(si_out);
     }
+  if (tempfile) FREE(tempfile);
   return(err);
 }
 
@@ -391,7 +393,7 @@ void finish_selection_creation(void)
 
 static int cp_redraw_selection(chan_info *cp, void *with_fft)
 {
-  int x0, x1;
+  Locus x0, x1;
   int beg, end;
   axis_info *ap;
   double sp_srate;
@@ -413,12 +415,12 @@ static int cp_redraw_selection(chan_info *cp, void *with_fft)
 		       cp->old_x0,
 		       ap->y_axis_y1,
 		       cp->old_x1 - cp->old_x0,
-		       (unsigned int)(ap->y_axis_y0 - ap->y_axis_y1));
+		       (int)(ap->y_axis_y0 - ap->y_axis_y1));
       fill_rectangle(selection_context(cp),
 		     x0,
 		     ap->y_axis_y1,
 		     x1 - x0,
-		     (unsigned int)(ap->y_axis_y0 - ap->y_axis_y1));
+		     (int)(ap->y_axis_y0 - ap->y_axis_y1));
       cp->old_x0 = x0;
       cp->old_x1 = x1;
       cp->selection_visible = 1;

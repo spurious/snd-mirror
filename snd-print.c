@@ -283,7 +283,7 @@ static int last_color = -1;
 void ps_draw_sono_rectangle(chan_info *cp, axis_info *ap, int color, Float x, Float y, Float width, Float height)
 {
   snd_state *ss;
-  int r, g, b;
+  unsigned short r, g, b;
   ss = cp->state;
   if (last_color != color)
     {
@@ -331,7 +331,7 @@ void ps_draw_spectro_line(chan_info *cp, int color, Float x0, Float y0, Float x1
 {
   /* these are in local coords */
   snd_state *ss;
-  int r, g, b;
+  unsigned short r, g, b;
   ss = cp->state;
   if (last_color != color)
     {

@@ -189,7 +189,7 @@ void marks_off(chan_info *cp)
 static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, int show)
 {
   /* fields are samp and name */
-  int top, len, cx, y0, y1;
+  int len, top, cx, y0, y1;
   axis_context *ax;
   ax = mark_context(cp); /* was cursor_context */
   top = ap->y_axis_y1;
@@ -216,7 +216,7 @@ static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, int show)
   if (show) mp->id |= MARK_VISIBLE; else mp->id &= (~MARK_VISIBLE);
 }
 
-static void draw_play_triangle(chan_info *cp, int x)
+static void draw_play_triangle(chan_info *cp, Locus x)
 {
   int y0;
   y0 = ((axis_info *)(cp->axis))->y_axis_y0;
@@ -396,9 +396,9 @@ static void sort_marks(chan_info *cp)
 }
 
 
-static int prev_cx = -1;
+static Locus prev_cx = -1;
 
-int move_play_mark(chan_info *cp, int *mc, int cx)
+int move_play_mark(chan_info *cp, int *mc, Locus cx)
 {
   /* mc = mouse loc sampwise return samps updating mc */
   int cur_mc;
@@ -1348,7 +1348,8 @@ static void move_to_next_sample(snd_fd *sf)
 
 static void make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int current_sample, int which)
 {
-  int i, j = 0, samps, xi, k;
+  int i, j = 0, samps, k;
+  Locus xi;
   axis_info *ap;
   Float samples_per_pixel, xf, samp;
   double x, incr;  
@@ -1463,7 +1464,7 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int
 }
 
 
-static void snd_no_such_mark_error(const char *caller, int id)
+static void snd_no_such_mark_error(const char *caller, SCM id)
 {
   ERROR(NO_SUCH_MARK,
 	SCM_LIST2(TO_SCM_STRING(caller),
@@ -1534,7 +1535,7 @@ static SCM g_restore_marks(SCM size, SCM snd, SCM chn, SCM marklist)
 
 enum {MARK_SAMPLE, MARK_NAME, MARK_SYNC, MARK_HOME};
 
-static SCM iread_mark(SCM n, int fld, int pos_n, char *caller)
+static SCM iread_mark(SCM n, int fld, SCM pos_n, char *caller)
 {
   int pos;
   chan_info *ncp[1];

@@ -1765,7 +1765,7 @@ void mus_set_rand_seed(int val) {randx = val;}
 
 Float mus_random(Float amp) /* -amp to amp as Float */
 {
-  int val;
+  unsigned int val;
   randx = randx * 1103515245 + 12345;
   val = (unsigned int)(randx >> 16) & 32767;
   return(amp * (((Float)val) * INVERSE_MAX_RAND - 1.0));
@@ -5849,9 +5849,9 @@ mus_any *mus_make_granulate(Float (*input)(void *arg, int direction),
 
 static int irandom(int amp)
 {
-  int val;
+  unsigned int val;
   randx = randx * 1103515245 + 12345;
-  val=(unsigned int)(randx >> 16) & 32767;
+  val = (unsigned int)((randx >> 16) & 32767);
   return((int)(amp * (((Float)val) * INVERSE_MAX_RAND)));
 }
 

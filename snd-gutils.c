@@ -466,59 +466,59 @@ void set_toggle_button(GtkWidget *wid, int val, int passed, void *data)
   if (!passed) gtk_signal_handler_unblock_by_data(GTK_OBJECT(wid), (gpointer)data);
 }
 
-int widget_height(GtkWidget *w)
+guint16 widget_height(GtkWidget *w)
 {
   if ((w) && (GTK_WIDGET_VISIBLE(w)) && (w->allocation.height < 10000))
     return(w->allocation.height);
   return(0);
 }
 
-int widget_width(GtkWidget *w)
+guint16 widget_width(GtkWidget *w)
 {
   if ((w) && (GTK_WIDGET_VISIBLE(w)) && (w->allocation.width < 10000))
     return(w->allocation.width);
   return(0);
 }
 
-void set_widget_height(GtkWidget *w, int height)
+void set_widget_height(GtkWidget *w, guint16 height)
 {
   /* fprintf(stderr, "uheight: %d ", height); */
   gtk_widget_set_usize(w, w->allocation.width, height);
 }
 
-void set_widget_width(GtkWidget *w, int width)
+void set_widget_width(GtkWidget *w, guint16 width)
 {
   /* fprintf(stderr, "uwidth: %d ", width); */
   gtk_widget_set_usize(w, width, w->allocation.height);
 }
 
-int widget_x(GtkWidget *w)
+gint16 widget_x(GtkWidget *w)
 {
   return(w->allocation.x);
 }
 
-int widget_y(GtkWidget *w)
+gint16 widget_y(GtkWidget *w)
 {
   return(w->allocation.y);
 }
 
-void set_widget_x(GtkWidget *w, int x)
+void set_widget_x(GtkWidget *w, gint16 x)
 {
   gtk_widget_set_uposition(w, x, w->allocation.y);
 }
 
-void set_widget_y(GtkWidget *w, int y)
+void set_widget_y(GtkWidget *w, gint16 y)
 {
   gtk_widget_set_uposition(w, w->allocation.x, y);
 }
 
-void set_widget_size(GtkWidget *w, int width, int height)
+void set_widget_size(GtkWidget *w, guint16 width, guint16 height)
 {
   /* fprintf(stderr, "usize: %d %d ", width, height); */
   gtk_widget_set_usize(w, width, height);
 }
 
-void set_widget_position(GtkWidget *w, int x, int y)
+void set_widget_position(GtkWidget *w, gint16 x, gint16 y)
 {
   gtk_widget_set_uposition(w, x, y);
 }

@@ -680,9 +680,7 @@ by any arguments. (Information about about parameters can be acquired using anal
 
   update_graph(cp, NULL); /* is this needed? */
 
-  if (ofile)
-    free(ofile); /* Not FREE, because tempnam called by snd_tempname does its own allocation */
-
+  if (ofile) FREE(ofile);
   FREE(data[0]);
   FREE(data);
 

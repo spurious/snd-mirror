@@ -1240,7 +1240,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 	      mus_sound_forget(ap->ofile);
 	      report_in_minibuffer(sp, "apply flushed!");
 	    }
-	  free(ap->ofile);                                              /* safe only if tempnam, not tmpnam used */
+	  FREE(ap->ofile);
 	  ap->ofile = NULL;
 	  if (ap->hdr) ap->hdr = free_file_info(ap->hdr);
 	  free_controls(sp);

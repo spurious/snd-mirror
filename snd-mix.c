@@ -909,13 +909,14 @@ static mix_info *file_mix_samples(int beg, int num, char *tempfile, chan_info *c
       snd_error("mix %s which has %d samples?", tempfile, num);
       return(NULL);
     }
-
   len = current_ed_samples(cp);
   if (beg >= len)
     extend_with_zeros(cp, len, beg - len + 1, "(mix-extend)");
   /* might set flag here that we need backup after file_mix_samples below (backup_edit_list(cp)) */
   /* otherwise user sees unexplained mix-extend in edit history list */
   if (beg < 0) beg = 0;
+  csf = init_sample_read(beg, cp, READ_FORWARD);
+  if (csf == NULL) return(NULL);
   sp = cp->sound;
   ss = cp->state;
   ihdr = make_file_info(tempfile, ss);
@@ -944,11 +945,9 @@ static mix_info *file_mix_samples(int beg, int num, char *tempfile, chan_info *c
     {
       mus_file_close(ofd);
       snd_remove(ofile);
-      free(ofile);
+      FREE(ofile);
       return(NULL);
     }
-  csf = init_sample_read(beg, cp, READ_FORWARD);
-  if (csf == NULL) return(NULL);
   ifd = snd_open_read(ss, tempfile);
   mus_file_open_descriptors(ifd, tempfile,
 			   ihdr->format,
@@ -1000,6 +999,7 @@ static mix_info *file_mix_samples(int beg, int num, char *tempfile, chan_info *c
   free_file_info(ihdr);
   free_file_info(ohdr);
   file_change_samples(beg, num, ofile, cp, 0, DELETE_ME, DONT_LOCK_MIXES, origin);
+  if (ofile) FREE(ofile);
   if (with_tag)
     return(add_mix(cp, chan, beg, num, tempfile, in_chans, temp));
   else return(NULL);
@@ -1221,7 +1221,7 @@ static void remix_file(mix_info *md, const char *origin)
 	  free_mix_fd(sub);
 	  free_file_info(ohdr);
 	  snd_remove(ofile);
-	  free(ofile);
+	  FREE(ofile);
 	  return;
 	  break;
 	case HUNKER_DOWN:
@@ -1615,7 +1615,8 @@ static int make_temporary_amp_env_graph(chan_info *cp, axis_info *ap, mix_info *
 static void make_temporary_graph(chan_info *cp, mix_info *md, console_state *cs)
 {
   int oldbeg, newbeg, oldend, newend;
-  int i, j, samps, xi;
+  int i, j, samps;
+  Locus xi;
   int widely_spaced;
   axis_info *ap;
   snd_info *sp;
@@ -1683,7 +1684,7 @@ static void make_temporary_graph(chan_info *cp, mix_info *md, console_state *cs)
 	  if ((i >= oldbeg) && (i <= oldend)) ina -= next_mix_sample(sub);
 	  if ((i >= newbeg) && (i <= newend)) ina += next_mix_sample(add);
 	  if (widely_spaced)
-	    set_grf_point((int)x, j, local_grf_y(ina, ap));
+	    set_grf_point((Locus)x, j, local_grf_y(ina, ap));
 	  else set_grf_point(local_grf_x(x, ap), j, local_grf_y(ina, ap));
 	}
       erase_and_draw_grf_points(md->wg, cp, j);
@@ -1798,7 +1799,8 @@ static int display_mix_amp_env(mix_info *md, Float scl, int yoff, int newbeg, in
   /* need min and max readers */
   snd_state *ss;
   mix_fd *min_fd, *max_fd;
-  int hi, lo, j, lastx, newx;
+  int hi, lo, j;
+  Locus lastx, newx;
   Float ymin, ymax, high = 0.0, low = 0.0;
   Float sum, xend, xstart, xstep;
   min_fd = init_mix_input_amp_env_read(md, 0, 0); /* not old, not hi */
@@ -1844,8 +1846,8 @@ static int display_mix_amp_env(mix_info *md, Float scl, int yoff, int newbeg, in
       if (newx > lastx)
 	{
 	  set_grf_points(lastx, j,
-			 (int)(yoff - scl * ymin),
-			 (int)(yoff - scl * ymax));
+			 (Locus)(yoff - scl * ymin),
+			 (Locus)(yoff - scl * ymax));
 	  lastx = newx;
 	  j++;
 	  ymin = low;
@@ -1897,7 +1899,8 @@ static int display_mix_waveform(chan_info *cp, mix_info *md, console_state *cs, 
   snd_state *ss;
   int newbeg, newend, endi;
   Float scl;
-  int i, j = 0, samps, xi;
+  int i, j = 0, samps;
+  Locus xi;
   int widely_spaced;
   axis_info *ap;
   snd_info *sp;
@@ -1972,8 +1975,8 @@ static int display_mix_waveform(chan_info *cp, mix_info *md, console_state *cs, 
 	{
 	  ina = next_mix_sample(add);
 	  if (widely_spaced)
-	    set_grf_point((int)x, j, (int)(yoff - scl * ina));
-	  else set_grf_point(local_grf_x(x, ap), j, (int)(yoff - scl * ina));
+	    set_grf_point((Locus)x, j, (Locus)(yoff - scl * ina));
+	  else set_grf_point(local_grf_x(x, ap), j, (Locus)(yoff - scl * ina));
 	}
       if (sp)
 	{
@@ -2028,8 +2031,8 @@ static int display_mix_waveform(chan_info *cp, mix_info *md, console_state *cs, 
 	      if (xf > samples_per_pixel)
 		{
 		  set_grf_points(xi, j,
-				 (int)(yoff - scl * ymin),
-				 (int)(yoff - scl * ymax));
+				 (Locus)(yoff - scl * ymin),
+				 (Locus)(yoff - scl * ymax));
 		  j++;
 		  ymin = 100.0;
 		  ymax = -100.0;
@@ -3832,7 +3835,10 @@ static int print_mf(SCM obj, SCM port, scm_print_state *pstate)
       WRITE_STRING(desc, port); 
       FREE(desc);
     }
-  return(scm_return_first(1, obj));
+#if HAVE_SCM_REMEMBER_UPTO_HERE
+  scm_remember_upto_here(obj);
+#endif
+  return(1);
 }
 
 static scm_sizet free_mf(SCM obj) 
@@ -3932,7 +3938,10 @@ static int print_tf(SCM obj, SCM port, scm_print_state *pstate)
       WRITE_STRING(desc, port); 
       FREE(desc);
     }
-  return(scm_return_first(1, obj));
+#if HAVE_SCM_REMEMBER_UPTO_HERE
+  scm_remember_upto_here(obj);
+#endif
+  return(1);
 }
 
 static scm_sizet free_tf(SCM obj) 

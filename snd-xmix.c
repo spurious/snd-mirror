@@ -518,8 +518,8 @@ void make_mix_panel(snd_state *ss)
       XtSetArg(args[n], XmNmaximum, SPEED_SCROLLBAR_MAX); n++;
       XtSetArg(args[n], XmNvalue, 450); n++;
       XtSetArg(args[n], XmNheight, 16); n++;
-      XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(Speed_Drag_Callback, ss)); n++;
-      XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(Speed_ValueChanged_Callback, ss)); n++;
+      XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(Speed_Drag_Callback, (XtPointer)ss)); n++;
+      XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(Speed_ValueChanged_Callback, (XtPointer)ss)); n++;
       w_speed = XtCreateManagedWidget("speed", xmScrollBarWidgetClass, mainform, args, n);
   
       FREE(n1);
@@ -579,8 +579,8 @@ void make_mix_panel(snd_state *ss)
 	  XtSetArg(args[n], XmNmaximum, SCROLLBAR_MAX); n++;
 	  XtSetArg(args[n], XmNuserData, i); n++;
 	  XtSetArg(args[n], XmNvalue, SCROLLBAR_MID); n++;
-	  XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(Amp_Drag_Callback, ss)); n++;
-	  XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(Amp_ValueChanged_Callback, ss)); n++;
+	  XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(Amp_Drag_Callback, (XtPointer)ss)); n++;
+	  XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(Amp_ValueChanged_Callback, (XtPointer)ss)); n++;
 	  w_amps[i] = XtCreateManagedWidget("amp", xmScrollBarWidgetClass, mainform, args, n);
 	  FREE(n1);
 	  FREE(n2);

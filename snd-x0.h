@@ -107,6 +107,7 @@
 
 #define Locus short
 #define Latus unsigned short
+/* TODO: finish tracing all these Position/Dimension data paths */
 
 typedef struct {
   GC gc;

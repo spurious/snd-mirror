@@ -279,28 +279,6 @@ static int ikeyarg (SCM key, char *caller, int n, SCM val, int def)
   return(def);
 }
 
-static Float fkeyarg_or_error (SCM key, char *caller, int n, SCM val, Float def)
-{
-  if (!(KEYWORD_P(key)))
-    {
-      if (NUMBER_P(key))
-	return(TO_C_DOUBLE_WITH_ORIGIN(key, caller));
-      else return(MUS_MISC_ERROR);
-    }
-  return(def);
-}
-
-static int ikeyarg_or_error (SCM key, char *caller, int n, SCM val, int def)
-{
-  if (!(KEYWORD_P(key)))
-    {
-      if (NUMBER_P(key))
-	return(TO_C_INT_OR_ELSE_WITH_ORIGIN(key, 0, caller));
-      else return(MUS_MISC_ERROR);
-    }
-  return(def);
-}
-
 
 static SCM local_doc;
 
@@ -1277,18 +1255,31 @@ static SCM g_make_delay_1(int choice, SCM arglist)
 	    }
 	}
       keyn++;
-      initial_element = fkeyarg_or_error(keys[keyn], caller, orig_arg[keyn] + 1, args[orig_arg[keyn]], 0.0);
-      if (SCM_EQ_P(initial_element, MUS_MISC_ERROR))
+      if (KEYWORD_P(keys[keyn]))
+	initial_element = 0.0;
+      else
 	{
-	  if (line) FREE(line);
-	  WRONG_TYPE_ERROR(caller, orig_arg[keyn] + 1, args[orig_arg[keyn]], "a number");
+	  if (NUMBER_P(keys[keyn]))
+	    initial_element = TO_C_DOUBLE_WITH_ORIGIN(keys[keyn], caller);
+	  else 
+	    {
+	      if (line) FREE(line);
+	      WRONG_TYPE_ERROR(caller, orig_arg[keyn] + 1, args[orig_arg[keyn]], "a number");
+	    }
 	}
       keyn++;
-      max_size = ikeyarg_or_error(keys[keyn], caller, orig_arg[keyn] + 1, args[orig_arg[keyn]], size);
-      if (SCM_EQ_P(max_size, MUS_MISC_ERROR))
+
+      if (KEYWORD_P(keys[keyn]))
+	max_size = size;
+      else
 	{
-	  if (line) FREE(line);
-	  WRONG_TYPE_ERROR(caller, orig_arg[keyn] + 1, args[orig_arg[keyn]], "a number");
+	  if (NUMBER_P(keys[keyn]))
+	    max_size = TO_C_INT_OR_ELSE_WITH_ORIGIN(keys[keyn], 0, caller);
+	  else
+	    {
+	      if (line) FREE(line);
+	      WRONG_TYPE_ERROR(caller, orig_arg[keyn] + 1, args[orig_arg[keyn]], "a number");
+	    }
 	}
     }
   if (size < 0)
@@ -3053,11 +3044,15 @@ is basically the same as make-oscil"
 	    }
           else WRONG_TYPE_ERROR(S_make_waveshape, orig_arg[1] + 1, args[orig_arg[1]], "a list");
         }
-      wsize = ikeyarg_or_error(keys[2], S_make_waveshape, orig_arg[2] + 1, args[orig_arg[2]], wsize);
-      if (SCM_EQ_P(wsize, MUS_MISC_ERROR))
+      if (!(KEYWORD_P(keys[2])))
 	{
-	  if (partials_allocated) {FREE(partials); partials = NULL;}
-	  WRONG_TYPE_ERROR(S_make_waveshape, orig_arg[2] + 1, args[orig_arg[2]], "a number");
+	  if (NUMBER_P(keys[2]))
+	    wsize = TO_C_INT_OR_ELSE_WITH_ORIGIN(keys[2], 0, S_make_waveshape);
+	  else
+	    {
+	      if (partials_allocated) {FREE(partials); partials = NULL;}
+	      WRONG_TYPE_ERROR(S_make_waveshape, orig_arg[2] + 1, args[orig_arg[2]], "a number");
+	    }
 	}
       if (!(KEYWORD_P(keys[3])))
         {

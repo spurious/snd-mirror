@@ -289,7 +289,7 @@ void g_init_gxmenu(SCM local_doc) {}
 void update_stats(snd_state *ss) {}
 void update_stats_display(snd_state *ss, int all) {}
 void check_stats_window(snd_state *ss, int val) {}
-void get_current_color(int colormap, int j, int *r, int *g, int *b) {}
+void get_current_color(int colormap, int j, unsigned short *r, unsigned short *g, unsigned short *b) {}
 
 #define NUM_TRANSFORM_TYPES 9
 static char *TRANSFORM_TYPE_CONSTANTS[NUM_TRANSFORM_TYPES] =

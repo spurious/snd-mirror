@@ -21,7 +21,7 @@ void draw_string (axis_context *ax, int x0, int y0, char *str, int len)
 }
 
 void fill_polygon(axis_context *ax, int points, ...)
-{
+{ /* currently used only in snd-marks.c */
   int i;
   XPoint *pts;
   va_list ap;
@@ -30,7 +30,7 @@ void fill_polygon(axis_context *ax, int points, ...)
   va_start(ap, points);
   for (i = 0; i < points; i++)
     {
-      pts[i].x = va_arg(ap, int);
+      pts[i].x = va_arg(ap, int); /* not Locus due to the way va_arg is implemented */
       pts[i].y = va_arg(ap, int);
     }
   va_end(ap);
@@ -39,7 +39,7 @@ void fill_polygon(axis_context *ax, int points, ...)
 }
 
 void draw_polygon(axis_context *ax, int points, ...)
-{
+{ /* currently used only in snd-marks.c */
   int i;
   XPoint *pts;
   va_list ap;

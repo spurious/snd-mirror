@@ -98,7 +98,10 @@ static int print_snd_color(SCM obj, SCM port, scm_print_state *pstate)
 	  (float)tmp_color.blue / 65535.0);
   WRITE_STRING(buf, port);
   FREE(buf);
-  return(scm_return_first(1, obj));
+#if HAVE_SCM_REMEMBER_UPTO_HERE
+  scm_remember_upto_here(obj);
+#endif
+  return(1);
 }
 
 static SCM g_color2list(SCM obj)
@@ -144,9 +147,9 @@ static SCM g_make_snd_color(SCM r, SCM g, SCM b)
   dpy = XtDisplay(MAIN_SHELL(state));
   cmap = DefaultColormap(dpy, DefaultScreen(dpy));
   tmp_color.flags = DoRed | DoGreen | DoBlue;
-  tmp_color.red = (int)(65535 * TO_C_DOUBLE(r));
-  tmp_color.green = (int)(65535 * TO_C_DOUBLE(g));
-  tmp_color.blue = (int)(65535 * TO_C_DOUBLE(b));
+  tmp_color.red = (unsigned short)(65535 * TO_C_DOUBLE(r));
+  tmp_color.green = (unsigned short)(65535 * TO_C_DOUBLE(g));
+  tmp_color.blue = (unsigned short)(65535 * TO_C_DOUBLE(b));
   if ((XAllocColor(dpy, cmap, &tmp_color)) == 0)
     new_color->color = BlackPixel(dpy, DefaultScreen(dpy)); 
   else new_color->color = tmp_color.pixel;

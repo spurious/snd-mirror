@@ -509,7 +509,7 @@ static int paste_region_1(int n, chan_info *cp, int add, int beg, const char *or
   snd_info *sp;
   sync_info *si;
   chan_info *ncp;
-  MUS_SAMPLE_TYPE *data;
+  MUS_SAMPLE_TYPE *data = NULL;
   snd_state *ss;
   char *tempfile = NULL;
   ss = cp->state;
@@ -560,6 +560,7 @@ static int paste_region_1(int n, chan_info *cp, int add, int beg, const char *or
 	    }
 	  update_graph(si->cps[i], NULL);
 	}
+      if ((r->use_temp_file == REGION_FILE) && (tempfile)) FREE(tempfile);
     }
   if (si) si = free_sync_info(si);
   return(id);
@@ -629,7 +630,7 @@ void define_region(sync_info *si, int *ends)
   if (r->frames >= MAX_BUFFER_SIZE)
     {
       r->use_temp_file = REGION_FILE;
-      r->filename = copy_string(snd_tempnam(ss));
+      r->filename = snd_tempnam(ss);
       hdr = make_temp_header(r->filename, r->srate, r->chans, 0);
       ofd = open_temp_file(r->filename, r->chans, hdr, ss);
       datumb = mus_data_format_to_bytes_per_sample(hdr->format);

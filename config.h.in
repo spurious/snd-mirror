@@ -17,7 +17,6 @@
 #undef HAVE_GETCWD
 #undef HAVE_STRFTIME
 #undef HAVE_STRERROR
-#undef HAVE_TEMPNAM
 #undef HAVE_VPRINTF
 #undef HAVE_MALLINFO
 #undef HAVE_READLINK
@@ -30,7 +29,6 @@
 #undef HAVE_MEMMOVE
 #undef HAVE_FINITE
 #undef HAVE_ISNAN
-#undef HAVE_MKSTEMP
 #undef HAVE_STRDUP
 #undef HAVE_FSTATFS
 #undef HAVE_CLOCK

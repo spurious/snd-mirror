@@ -157,7 +157,7 @@ static file_info *translate_file(char *filename, snd_state *ss, int type)
 	}
       FREE(newname);
       newname = copy_string(tempname);
-      free(tempname);
+      FREE(tempname);
     }
   if (close(fd) != 0)
     snd_error("can't close %d (%s): %s [%s[%d] %s]",
@@ -1759,7 +1759,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
 	report_in_minibuffer(sp, "save as temp: %s: %s", ofile, strerror(errno));
       else err = move_file(ofile, sp->fullname);
       snd_update(ss, sp);
-      free(ofile);
+      FREE(ofile);
       FREE(fullname);
     }
   else
@@ -2089,7 +2089,7 @@ static SCM g_set_sound_loop_info(SCM snd, SCM vals)
 	       hdr->srate, 
 	       hdr->comment);
   move_file(tmp_file, sp->fullname);
-  free(tmp_file);
+  FREE(tmp_file);
   snd_update(sp->state, sp);
   return(SCM_BOOL_T);
 }

@@ -55,7 +55,7 @@ void add_to_error_history(snd_state *ss, char *msg, int popup)
   char *tim, *buf;
   time_t ts;
 #endif
-  int pos;
+  XmTextPosition pos;
   if (!snd_error_dialog) 
     create_snd_error_dialog(ss, popup);
   else

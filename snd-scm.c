@@ -1345,7 +1345,12 @@ static SCM g_set_temp_dir(SCM val)
 static SCM g_snd_tempnam(void) 
 {
   #define H_snd_tempnam "(" S_snd_tempnam ") -> new temp file name using temp-dir"
-  return(TO_SCM_STRING(snd_tempnam(get_global_state())));
+  char *tmp;
+  SCM res;
+  tmp = snd_tempnam(get_global_state());
+  res = TO_SCM_STRING(tmp);
+  FREE(tmp);
+  return(res);
 }
 
 static SCM g_save_dir(void) {return(TO_SCM_STRING(save_dir(state)));}
@@ -2182,7 +2187,8 @@ If 'data' is a list of numbers, it is treated as an envelope."
   int i, len, graph, graphs, need_update = 0;
   Float ymin, ymax, val, nominal_x0, nominal_x1;
   lisp_grf *old_lp = NULL;
-  int h = 0, w = 0, o = 0, gx0 = 0, ww = 0;
+  Latus h = 0, w = 0, ww = 0;
+  Locus o = 0, gx0 = 0;
   axis_info *uap = NULL;
   /* ldata can be a vct object, a vector, or a list of either */
   ASSERT_TYPE(((VCT_P(ldata)) || (VECTOR_P(ldata)) || (LIST_P(ldata))), ldata, SCM_ARG1, S_graph, "a vct, vector, or list");
