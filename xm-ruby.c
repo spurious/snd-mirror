@@ -827,7 +827,7 @@
   XEN_ARGIFY_3(gxm_XmDropTransferStart_w, gxm_XmDropTransferStart)
   XEN_NARGIFY_2(gxm_XmDropTransferAdd_w, gxm_XmDropTransferAdd)
   XEN_NARGIFY_1(gxm_XmTextFieldGetString_w, gxm_XmTextFieldGetString)
-  XEN_NARGIFY_5(gxm_XmTextFieldGetSubstring_w, gxm_XmTextFieldGetSubstring)
+  XEN_NARGIFY_3(gxm_XmTextFieldGetSubstring_w, gxm_XmTextFieldGetSubstring)
   XEN_NARGIFY_1(gxm_XmTextFieldGetLastPosition_w, gxm_XmTextFieldGetLastPosition)
   XEN_NARGIFY_2(gxm_XmTextFieldSetString_w, gxm_XmTextFieldSetString)
   XEN_NARGIFY_4(gxm_XmTextFieldReplace_w, gxm_XmTextFieldReplace)
@@ -863,7 +863,7 @@
   XEN_NARGIFY_4(gxm_XmTextSetHighlight_w, gxm_XmTextSetHighlight)
   XEN_ARGIFY_4(gxm_XmCreateScrolledText_w, gxm_XmCreateScrolledText)
   XEN_ARGIFY_4(gxm_XmCreateText_w, gxm_XmCreateText)
-  XEN_NARGIFY_5(gxm_XmTextGetSubstring_w, gxm_XmTextGetSubstring)
+  XEN_NARGIFY_3(gxm_XmTextGetSubstring_w, gxm_XmTextGetSubstring)
   XEN_NARGIFY_1(gxm_XmTextGetString_w, gxm_XmTextGetString)
   XEN_NARGIFY_1(gxm_XmTextGetLastPosition_w, gxm_XmTextGetLastPosition)
   XEN_NARGIFY_2(gxm_XmTextSetString_w, gxm_XmTextSetString)
@@ -2058,7 +2058,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmDropTransferStart" XM_POSTFIX, gxm_XmDropTransferStart_w, 2, 1, 0, H_XmDropTransferStart);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmDropTransferAdd" XM_POSTFIX, gxm_XmDropTransferAdd_w, 2, 0, 0, H_XmDropTransferAdd);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextFieldGetString" XM_POSTFIX, gxm_XmTextFieldGetString_w, 1, 0, 0, H_XmTextFieldGetString);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextFieldGetSubstring" XM_POSTFIX, gxm_XmTextFieldGetSubstring_w, 5, 0, 0, H_XmTextFieldGetSubstring);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextFieldGetSubstring" XM_POSTFIX, gxm_XmTextFieldGetSubstring_w, 3, 0, 0, H_XmTextFieldGetSubstring);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextFieldGetLastPosition" XM_POSTFIX, gxm_XmTextFieldGetLastPosition_w, 1, 0, 0, H_XmTextFieldGetLastPosition);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextFieldSetString" XM_POSTFIX, gxm_XmTextFieldSetString_w, 2, 0, 0, H_XmTextFieldSetString);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextFieldReplace" XM_POSTFIX, gxm_XmTextFieldReplace_w, 4, 0, 0, H_XmTextFieldReplace);
@@ -2094,7 +2094,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextSetHighlight" XM_POSTFIX, gxm_XmTextSetHighlight_w, 4, 0, 0, H_XmTextSetHighlight);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateScrolledText" XM_POSTFIX, gxm_XmCreateScrolledText_w, 3, 1, 0, H_XmCreateScrolledText);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateText" XM_POSTFIX, gxm_XmCreateText_w, 3, 1, 0, H_XmCreateText);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextGetSubstring" XM_POSTFIX, gxm_XmTextGetSubstring_w, 5, 0, 0, H_XmTextGetSubstring);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextGetSubstring" XM_POSTFIX, gxm_XmTextGetSubstring_w, 3, 0, 0, H_XmTextGetSubstring);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextGetString" XM_POSTFIX, gxm_XmTextGetString_w, 1, 0, 0, H_XmTextGetString);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextGetLastPosition" XM_POSTFIX, gxm_XmTextGetLastPosition_w, 1, 0, 0, H_XmTextGetLastPosition);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextSetString" XM_POSTFIX, gxm_XmTextSetString_w, 2, 0, 0, H_XmTextSetString);

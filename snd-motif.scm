@@ -84,7 +84,7 @@
 	 (scr (|DefaultScreen dpy))
 	 (cmap (|DefaultColormap dpy scr)))
     (if (= (|XAllocNamedColor dpy cmap color-name col col) 0)
-        (snd-error "can't allocate ~S" color-name)
+        (snd-error (format #f "can't allocate ~A" color-name))
 	(make-color (/ (|red col) 65535.0)
 		    (/ (|green col) 65535.0)
 		    (/ (|blue col) 65535.0)))))
@@ -152,7 +152,7 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
 		    (lambda (color)
 		      (let ((col (|XColor)))
 			(if (= (|XAllocNamedColor dpy cmap color col col) 0)
-			    (snd-error "can't allocate ~S" color)
+			    (snd-error (format #f "can't allocate ~A" color))
 			    (|pixel col))))
 		    colors)))
 	 (rendertable (|XmRenderTableAddRenditions 
@@ -2098,7 +2098,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	     (scr (|DefaultScreen dpy))
 	     (cmap (|DefaultColormap dpy scr)))
 	(if (= (|XAllocNamedColor dpy cmap color-name col col) 0)
-	    (snd-error "can't allocate ~S" color-name)
+	    (snd-error (format #f "can't allocate ~A" color-name))
 	    (|pixel col)))))
 
   (let* ((mark-gc (list-ref (snd-gcs) 9))

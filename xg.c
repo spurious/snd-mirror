@@ -212,9 +212,15 @@ XM_TYPE(GtkTreeSelection_, GtkTreeSelection*)
 #define C_TO_XEN_guint(Arg) C_TO_XEN_ULONG(Arg)
 #define XEN_TO_C_guint(Arg) XEN_TO_C_ULONG(Arg)
 #define XEN_guint_P(Arg) XEN_ULONG_P(Arg)
-XM_TYPE_UNCHECKED(GType, GType)
-XM_TYPE_UNCHECKED(GQuark, GQuark)
-XM_TYPE_UNCHECKED(GSignalFlags, GSignalFlags)
+#define C_TO_XEN_GType(Arg) C_TO_XEN_ULONG(Arg)
+#define XEN_TO_C_GType(Arg) XEN_TO_C_ULONG(Arg)
+#define XEN_GType_P(Arg) XEN_ULONG_P(Arg)
+#define C_TO_XEN_GQuark(Arg) C_TO_XEN_ULONG(Arg)
+#define XEN_TO_C_GQuark(Arg) XEN_TO_C_ULONG(Arg)
+#define XEN_GQuark_P(Arg) XEN_ULONG_P(Arg)
+#define C_TO_XEN_GSignalFlags(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_GSignalFlags(Arg) XEN_TO_C_INT(Arg)
+#define XEN_GSignalFlags_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_UNCHECKED(GSignalAccumulator, GSignalAccumulator)
 XM_TYPE_UNCHECKED(gpointer, gpointer)
 XM_TYPE_UNCHECKED(GSignalCMarshaller, GSignalCMarshaller)
@@ -231,8 +237,12 @@ XM_TYPE_UNCHECKED(GSignalEmissionHook, GSignalEmissionHook)
 XM_TYPE_UNCHECKED(GDestroyNotify, GDestroyNotify)
 XM_TYPE_UNCHECKED(GCallback, GCallback)
 XM_TYPE_UNCHECKED(GClosureNotify, GClosureNotify)
-XM_TYPE_UNCHECKED(GConnectFlags, GConnectFlags)
-XM_TYPE_UNCHECKED(GSignalMatchType, GSignalMatchType)
+#define C_TO_XEN_GConnectFlags(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_GConnectFlags(Arg) XEN_TO_C_INT(Arg)
+#define XEN_GConnectFlags_P(Arg) XEN_INTEGER_P(Arg)
+#define C_TO_XEN_GSignalMatchType(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_GSignalMatchType(Arg) XEN_TO_C_INT(Arg)
+#define XEN_GSignalMatchType_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE(GdkColormap_, GdkColormap*)
 XM_TYPE(GdkVisual_, GdkVisual*)
 XM_TYPE(GdkColor_, GdkColor*)
@@ -276,7 +286,9 @@ XM_TYPE(GdkGCValues_, GdkGCValues*)
 #define C_TO_XEN_GdkGCValuesMask(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkGCValuesMask(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GdkGCValuesMask_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_UNCHECKED(GdkFunction, GdkFunction)
+#define C_TO_XEN_GdkFunction(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_GdkFunction(Arg) XEN_TO_C_INT(Arg)
+#define XEN_GdkFunction_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_GdkFill(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkFill(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GdkFill_P(Arg) XEN_INTEGER_P(Arg)
@@ -381,7 +393,9 @@ XM_TYPE(GdkWMDecoration_, GdkWMDecoration*)
 #define XEN_GdkWindowEdge_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE(GdkGeometry_, GdkGeometry*)
 XM_TYPE(GdkPointerHooks_, GdkPointerHooks*)
-XM_TYPE_UNCHECKED(GtkType, GtkType)
+#define C_TO_XEN_GtkType(Arg) C_TO_XEN_ULONG(Arg)
+#define XEN_TO_C_GtkType(Arg) XEN_TO_C_ULONG(Arg)
+#define XEN_GtkType_P(Arg) XEN_ULONG_P(Arg)
 XM_TYPE(GtkAccelGroup_, GtkAccelGroup*)
 #define C_TO_XEN_GtkAccelFlags(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkAccelFlags(Arg) XEN_TO_C_INT(Arg)
@@ -640,8 +654,12 @@ XM_TYPE(GtkSortType_, GtkSortType*)
 #define XEN_TO_C_GtkSortType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkSortType_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE(GtkTreeStore_, GtkTreeStore*)
-XM_TYPE_UNCHECKED(GtkTreeViewColumnSizing, GtkTreeViewColumnSizing)
-XM_TYPE_UNCHECKED(GtkTreeViewDropPosition, GtkTreeViewDropPosition)
+#define C_TO_XEN_GtkTreeViewColumnSizing(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_GtkTreeViewColumnSizing(Arg) XEN_TO_C_INT(Arg)
+#define XEN_GtkTreeViewColumnSizing_P(Arg) XEN_INTEGER_P(Arg)
+#define C_TO_XEN_GtkTreeViewDropPosition(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_GtkTreeViewDropPosition(Arg) XEN_TO_C_INT(Arg)
+#define XEN_GtkTreeViewDropPosition_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE(GtkViewport_, GtkViewport*)
 XM_TYPE(GtkWidget__, GtkWidget**)
 XM_TYPE(GtkRequisition_, GtkRequisition*)
@@ -655,7 +673,9 @@ XM_TYPE(GtkWidgetAuxInfo_, GtkWidgetAuxInfo*)
 #define C_TO_XEN_GtkWindowType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkWindowType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkWindowType_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_UNCHECKED(GtkWindowPosition, GtkWindowPosition)
+#define C_TO_XEN_GtkWindowPosition(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_GtkWindowPosition(Arg) XEN_TO_C_INT(Arg)
+#define XEN_GtkWindowPosition_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_GdkWindowTypeHint(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkWindowTypeHint(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GdkWindowTypeHint_P(Arg) XEN_INTEGER_P(Arg)
@@ -700,14 +720,18 @@ XM_TYPE(PangoFontFamily__, PangoFontFamily**)
 XM_TYPE(PangoFontset_, PangoFontset*)
 XM_TYPE(PangoFontMetrics_, PangoFontMetrics*)
 XM_TYPE(PangoCoverage_, PangoCoverage*)
-XM_TYPE_UNCHECKED(PangoCoverageLevel, PangoCoverageLevel)
+#define C_TO_XEN_PangoCoverageLevel(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_PangoCoverageLevel(Arg) XEN_TO_C_INT(Arg)
+#define XEN_PangoCoverageLevel_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE(PangoFontDescription__, PangoFontDescription**)
 #define C_TO_XEN_PangoFontMask(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_PangoFontMask(Arg) XEN_TO_C_INT(Arg)
 #define XEN_PangoFontMask_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE(PangoFontFace_, PangoFontFace*)
 XM_TYPE(PangoEngineShape_, PangoEngineShape*)
-XM_TYPE_UNCHECKED(PangoGlyph, PangoGlyph)
+#define C_TO_XEN_PangoGlyph(Arg) C_TO_XEN_ULONG(Arg)
+#define XEN_TO_C_PangoGlyph(Arg) XEN_TO_C_ULONG(Arg)
+#define XEN_PangoGlyph_P(Arg) XEN_ULONG_P(Arg)
 XM_TYPE(PangoFontMap_, PangoFontMap*)
 XM_TYPE(PangoItem_, PangoItem*)
 #define C_TO_XEN_PangoWrapMode(Arg) C_TO_XEN_INT(Arg)
@@ -941,10 +965,14 @@ XM_TYPE(GdkFont_, GdkFont*)
 #define C_TO_XEN_gchar(Arg) C_TO_XEN_CHAR(Arg)
 #define XEN_TO_C_gchar(Arg) XEN_TO_C_CHAR(Arg)
 #define XEN_gchar_P(Arg) XEN_CHAR_P(Arg)
-XM_TYPE_UNCHECKED(GdkWChar, GdkWChar)
+#define C_TO_XEN_GdkWChar(Arg) C_TO_XEN_ULONG(Arg)
+#define XEN_TO_C_GdkWChar(Arg) XEN_TO_C_ULONG(Arg)
+#define XEN_GdkWChar_P(Arg) XEN_ULONG_P(Arg)
 XM_TYPE_UNCHECKED(GdkDestroyNotify, GdkDestroyNotify)
 XM_TYPE(GtkCList_, GtkCList*)
-XM_TYPE_UNCHECKED(GtkVisibility, GtkVisibility)
+#define C_TO_XEN_GtkVisibility(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_GtkVisibility(Arg) XEN_TO_C_INT(Arg)
+#define XEN_GtkVisibility_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_GtkCellType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkCellType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkCellType_P(Arg) XEN_INTEGER_P(Arg)
@@ -981,7 +1009,9 @@ XM_TYPE(GtkPreviewInfo_, GtkPreviewInfo*)
 #define XEN_TO_C_GtkProgressBarStyle(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkProgressBarStyle_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE(GtkProgress_, GtkProgress*)
-XM_TYPE_UNCHECKED(GtkSignalRunType, GtkSignalRunType)
+#define C_TO_XEN_GtkSignalRunType(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_GtkSignalRunType(Arg) XEN_TO_C_INT(Arg)
+#define XEN_GtkSignalRunType_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_UNCHECKED(GtkSignalMarshaller, GtkSignalMarshaller)
 XM_TYPE(GtkType_, GtkType*)
 XM_TYPE(GtkTipsQuery_, GtkTipsQuery*)
@@ -29863,25 +29893,125 @@ static XEN c_array_to_xen_list(XEN val, XEN clen)
   char *ctype;
   len = XEN_TO_C_INT(clen);
   ctype = XEN_SYMBOL_TO_C_STRING(XEN_CAR(val));
+  if (strcmp(ctype, "gint*") == 0)
+    {
+      gint* arr; arr = (gint*)XEN_CADR(val); 
+      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gint(arr[i]), result);
+    }
+  if (strcmp(ctype, "gboolean*") == 0)
+    {
+      gboolean* arr; arr = (gboolean*)XEN_CADR(val); 
+      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gboolean(arr[i]), result);
+    }
+  if (strcmp(ctype, "GType*") == 0)
+    {
+      GType* arr; arr = (GType*)XEN_CADR(val); 
+      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GType(arr[i]), result);
+    }
+  if (strcmp(ctype, "guint*") == 0)
+    {
+      guint* arr; arr = (guint*)XEN_CADR(val); 
+      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_guint(arr[i]), result);
+    }
+  if (strcmp(ctype, "GQuark*") == 0)
+    {
+      GQuark* arr; arr = (GQuark*)XEN_CADR(val); 
+      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GQuark(arr[i]), result);
+    }
+  if (strcmp(ctype, "GdkDragProtocol*") == 0)
+    {
+      GdkDragProtocol* arr; arr = (GdkDragProtocol*)XEN_CADR(val); 
+      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GdkDragProtocol(arr[i]), result);
+    }
+  if (strcmp(ctype, "GdkModifierType*") == 0)
+    {
+      GdkModifierType* arr; arr = (GdkModifierType*)XEN_CADR(val); 
+      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GdkModifierType(arr[i]), result);
+    }
+  if (strcmp(ctype, "gdouble*") == 0)
+    {
+      gdouble* arr; arr = (gdouble*)XEN_CADR(val); 
+      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gdouble(arr[i]), result);
+    }
   if (strcmp(ctype, "gint8*") == 0)
     {
       gint8* arr; arr = (gint8*)XEN_CADR(val); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gint8(arr[i]), result);
+    }
+  if (strcmp(ctype, "GdkWChar*") == 0)
+    {
+      GdkWChar* arr; arr = (GdkWChar*)XEN_CADR(val); 
+      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GdkWChar(arr[i]), result);
+    }
+  if (strcmp(ctype, "gchar**") == 0)
+    {
+      gchar** arr; arr = (gchar**)XEN_CADR(val); 
+      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gchar_(arr[i]), result);
+    }
+  if (strcmp(ctype, "guint32*") == 0)
+    {
+      guint32* arr; arr = (guint32*)XEN_CADR(val); 
+      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_guint32(arr[i]), result);
+    }
+  if (strcmp(ctype, "GdkVisualType*") == 0)
+    {
+      GdkVisualType* arr; arr = (GdkVisualType*)XEN_CADR(val); 
+      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GdkVisualType(arr[i]), result);
+    }
+  if (strcmp(ctype, "GdkWMDecoration*") == 0)
+    {
+      GdkWMDecoration* arr; arr = (GdkWMDecoration*)XEN_CADR(val); 
+      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GdkWMDecoration(arr[i]), result);
+    }
+  if (strcmp(ctype, "GtkPackType*") == 0)
+    {
+      GtkPackType* arr; arr = (GtkPackType*)XEN_CADR(val); 
+      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GtkPackType(arr[i]), result);
+    }
+  if (strcmp(ctype, "gfloat*") == 0)
+    {
+      gfloat* arr; arr = (gfloat*)XEN_CADR(val); 
+      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gfloat(arr[i]), result);
+    }
+  if (strcmp(ctype, "GtkIconSize*") == 0)
+    {
+      GtkIconSize* arr; arr = (GtkIconSize*)XEN_CADR(val); 
+      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GtkIconSize(arr[i]), result);
+    }
+  if (strcmp(ctype, "guint16*") == 0)
+    {
+      guint16* arr; arr = (guint16*)XEN_CADR(val); 
+      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_guint16(arr[i]), result);
     }
   if (strcmp(ctype, "int*") == 0)
     {
       int* arr; arr = (int*)XEN_CADR(val); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_int(arr[i]), result);
     }
-  if (strcmp(ctype, "gint*") == 0)
+  if (strcmp(ctype, "GtkStateType*") == 0)
     {
-      gint* arr; arr = (gint*)XEN_CADR(val); 
-      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gint(arr[i]), result);
+      GtkStateType* arr; arr = (GtkStateType*)XEN_CADR(val); 
+      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GtkStateType(arr[i]), result);
     }
-  if (strcmp(ctype, "gdouble*") == 0)
+  if (strcmp(ctype, "GtkPathPriorityType*") == 0)
     {
-      gdouble* arr; arr = (gdouble*)XEN_CADR(val); 
-      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gdouble(arr[i]), result);
+      GtkPathPriorityType* arr; arr = (GtkPathPriorityType*)XEN_CADR(val); 
+      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GtkPathPriorityType(arr[i]), result);
+    }
+  if (strcmp(ctype, "GtkSortType*") == 0)
+    {
+      GtkSortType* arr; arr = (GtkSortType*)XEN_CADR(val); 
+      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GtkSortType(arr[i]), result);
+    }
+  if (strcmp(ctype, "char**") == 0)
+    {
+      char** arr; arr = (char**)XEN_CADR(val); 
+      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_char_(arr[i]), result);
+    }
+  if (strcmp(ctype, "gunichar*") == 0)
+    {
+      gunichar* arr; arr = (gunichar*)XEN_CADR(val); 
+      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gunichar(arr[i]), result);
     }
   if (strcmp(ctype, "GdkPixmap**") == 0)
     {
@@ -29947,11 +30077,113 @@ static XEN xen_list_to_c_array(XEN val, XEN type)
   char *ctype;
   len = XEN_LIST_LENGTH(val);
   ctype = XEN_TO_C_STRING(type);
+  if (strcmp(ctype, "gint*") == 0)
+    {
+      gint* arr; arr = (gint*)CALLOC(len, sizeof(gint));
+      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gint(XEN_CAR(val));
+      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("gint_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
+    }
+  if (strcmp(ctype, "gboolean*") == 0)
+    {
+      gboolean* arr; arr = (gboolean*)CALLOC(len, sizeof(gboolean));
+      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gboolean(XEN_CAR(val));
+      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("gboolean_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
+    }
+  if (strcmp(ctype, "GType*") == 0)
+    {
+      GType* arr; arr = (GType*)CALLOC(len, sizeof(GType));
+      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GType(XEN_CAR(val));
+      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GType_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
+    }
+  if (strcmp(ctype, "guint*") == 0)
+    {
+      guint* arr; arr = (guint*)CALLOC(len, sizeof(guint));
+      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_guint(XEN_CAR(val));
+      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("guint_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
+    }
+  if (strcmp(ctype, "GQuark*") == 0)
+    {
+      GQuark* arr; arr = (GQuark*)CALLOC(len, sizeof(GQuark));
+      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GQuark(XEN_CAR(val));
+      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GQuark_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
+    }
+  if (strcmp(ctype, "GdkDragProtocol*") == 0)
+    {
+      GdkDragProtocol* arr; arr = (GdkDragProtocol*)CALLOC(len, sizeof(GdkDragProtocol));
+      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GdkDragProtocol(XEN_CAR(val));
+      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkDragProtocol_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
+    }
+  if (strcmp(ctype, "GdkModifierType*") == 0)
+    {
+      GdkModifierType* arr; arr = (GdkModifierType*)CALLOC(len, sizeof(GdkModifierType));
+      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GdkModifierType(XEN_CAR(val));
+      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkModifierType_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
+    }
+  if (strcmp(ctype, "gdouble*") == 0)
+    {
+      gdouble* arr; arr = (gdouble*)CALLOC(len, sizeof(gdouble));
+      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gdouble(XEN_CAR(val));
+      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("gdouble_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
+    }
   if (strcmp(ctype, "gint8*") == 0)
     {
       gint8* arr; arr = (gint8*)CALLOC(len, sizeof(gint8));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gint8(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("gint8_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
+    }
+  if (strcmp(ctype, "GdkWChar*") == 0)
+    {
+      GdkWChar* arr; arr = (GdkWChar*)CALLOC(len, sizeof(GdkWChar));
+      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GdkWChar(XEN_CAR(val));
+      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkWChar_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
+    }
+  if (strcmp(ctype, "gchar**") == 0)
+    {
+      gchar** arr; arr = (gchar**)CALLOC(len, sizeof(gchar*));
+      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gchar_(XEN_CAR(val));
+      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("gchar__"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
+    }
+  if (strcmp(ctype, "guint32*") == 0)
+    {
+      guint32* arr; arr = (guint32*)CALLOC(len, sizeof(guint32));
+      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_guint32(XEN_CAR(val));
+      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("guint32_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
+    }
+  if (strcmp(ctype, "GdkVisualType*") == 0)
+    {
+      GdkVisualType* arr; arr = (GdkVisualType*)CALLOC(len, sizeof(GdkVisualType));
+      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GdkVisualType(XEN_CAR(val));
+      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkVisualType_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
+    }
+  if (strcmp(ctype, "GdkWMDecoration*") == 0)
+    {
+      GdkWMDecoration* arr; arr = (GdkWMDecoration*)CALLOC(len, sizeof(GdkWMDecoration));
+      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GdkWMDecoration(XEN_CAR(val));
+      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkWMDecoration_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
+    }
+  if (strcmp(ctype, "GtkPackType*") == 0)
+    {
+      GtkPackType* arr; arr = (GtkPackType*)CALLOC(len, sizeof(GtkPackType));
+      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GtkPackType(XEN_CAR(val));
+      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkPackType_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
+    }
+  if (strcmp(ctype, "gfloat*") == 0)
+    {
+      gfloat* arr; arr = (gfloat*)CALLOC(len, sizeof(gfloat));
+      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gfloat(XEN_CAR(val));
+      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("gfloat_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
+    }
+  if (strcmp(ctype, "GtkIconSize*") == 0)
+    {
+      GtkIconSize* arr; arr = (GtkIconSize*)CALLOC(len, sizeof(GtkIconSize));
+      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GtkIconSize(XEN_CAR(val));
+      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkIconSize_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
+    }
+  if (strcmp(ctype, "guint16*") == 0)
+    {
+      guint16* arr; arr = (guint16*)CALLOC(len, sizeof(guint16));
+      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_guint16(XEN_CAR(val));
+      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("guint16_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
   if (strcmp(ctype, "int*") == 0)
     {
@@ -29959,17 +30191,35 @@ static XEN xen_list_to_c_array(XEN val, XEN type)
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_int(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("int_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "gint*") == 0)
+  if (strcmp(ctype, "GtkStateType*") == 0)
     {
-      gint* arr; arr = (gint*)CALLOC(len, sizeof(gint));
-      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gint(XEN_CAR(val));
-      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("gint_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
+      GtkStateType* arr; arr = (GtkStateType*)CALLOC(len, sizeof(GtkStateType));
+      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GtkStateType(XEN_CAR(val));
+      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkStateType_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "gdouble*") == 0)
+  if (strcmp(ctype, "GtkPathPriorityType*") == 0)
     {
-      gdouble* arr; arr = (gdouble*)CALLOC(len, sizeof(gdouble));
-      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gdouble(XEN_CAR(val));
-      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("gdouble_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
+      GtkPathPriorityType* arr; arr = (GtkPathPriorityType*)CALLOC(len, sizeof(GtkPathPriorityType));
+      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GtkPathPriorityType(XEN_CAR(val));
+      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkPathPriorityType_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
+    }
+  if (strcmp(ctype, "GtkSortType*") == 0)
+    {
+      GtkSortType* arr; arr = (GtkSortType*)CALLOC(len, sizeof(GtkSortType));
+      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GtkSortType(XEN_CAR(val));
+      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkSortType_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
+    }
+  if (strcmp(ctype, "char**") == 0)
+    {
+      char** arr; arr = (char**)CALLOC(len, sizeof(char*));
+      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_char_(XEN_CAR(val));
+      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("char__"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
+    }
+  if (strcmp(ctype, "gunichar*") == 0)
+    {
+      gunichar* arr; arr = (gunichar*)CALLOC(len, sizeof(gunichar));
+      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gunichar(XEN_CAR(val));
+      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("gunichar_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
   if (strcmp(ctype, "GdkPixmap**") == 0)
     {
@@ -34919,11 +35169,14 @@ static void define_integers(void)
 #if HAVE_GUILE
 #if HAVE_SCM_C_DEFINE
   #define DEFINE_INTEGER(Name, Value) scm_c_define(Name, scm_long2num(Value))
+  #define DEFINE_ULONG(Name, Value) scm_c_define(Name, scm_ulong2num(Value))
 #else
   #define DEFINE_INTEGER(Name, Value) gh_define(Name, scm_long2num(Value))
+  #define DEFINE_ULONG(Name, Value) gh_define(Name, scm_ulong2num(Value))
 #endif
 #else
   #define DEFINE_INTEGER(Name, Value) rb_define_global_const(Name, C_TO_XEN_INT(Value))
+  #define DEFINE_ULONG(Name, Value) rb_define_global_const(Name, C_TO_XEN_ULONG(Value))
 #endif
 
   DEFINE_INTEGER(XG_PRE "G_SIGNAL_RUN_FIRST" XG_POST,                           G_SIGNAL_RUN_FIRST);
@@ -36154,6 +36407,296 @@ static void define_integers(void)
   DEFINE_INTEGER(XG_PRE "PANGO_DIRECTION_RTL" XG_POST,                          PANGO_DIRECTION_RTL);
   DEFINE_INTEGER(XG_PRE "PANGO_DIRECTION_TTB_LTR" XG_POST,                      PANGO_DIRECTION_TTB_LTR);
   DEFINE_INTEGER(XG_PRE "PANGO_DIRECTION_TTB_RTL" XG_POST,                      PANGO_DIRECTION_TTB_RTL);
+  DEFINE_INTEGER(XG_PRE "G_NORMALIZE_DEFAULT" XG_POST,                          G_NORMALIZE_DEFAULT);
+  DEFINE_INTEGER(XG_PRE "G_NORMALIZE_NFD" XG_POST,                              G_NORMALIZE_NFD);
+  DEFINE_INTEGER(XG_PRE "G_NORMALIZE_DEFAULT_COMPOSE" XG_POST,                  G_NORMALIZE_DEFAULT_COMPOSE);
+  DEFINE_INTEGER(XG_PRE "G_NORMALIZE_NFC" XG_POST,                              G_NORMALIZE_NFC);
+  DEFINE_INTEGER(XG_PRE "G_NORMALIZE_ALL" XG_POST,                              G_NORMALIZE_ALL);
+  DEFINE_INTEGER(XG_PRE "G_NORMALIZE_NFKD" XG_POST,                             G_NORMALIZE_NFKD);
+  DEFINE_INTEGER(XG_PRE "G_NORMALIZE_ALL_COMPOSE" XG_POST,                      G_NORMALIZE_ALL_COMPOSE);
+  DEFINE_INTEGER(XG_PRE "G_NORMALIZE_NFKC" XG_POST,                             G_NORMALIZE_NFKC);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_ACCEL_GROUP" XG_POST,                           GTK_TYPE_ACCEL_GROUP);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_ACCEL_LABEL" XG_POST,                           GTK_TYPE_ACCEL_LABEL);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_ACCESSIBLE" XG_POST,                            GTK_TYPE_ACCESSIBLE);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_ADJUSTMENT" XG_POST,                            GTK_TYPE_ADJUSTMENT);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_ALIGNMENT" XG_POST,                             GTK_TYPE_ALIGNMENT);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_ARROW" XG_POST,                                 GTK_TYPE_ARROW);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_ASPECT_FRAME" XG_POST,                          GTK_TYPE_ASPECT_FRAME);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_BUTTON_BOX" XG_POST,                            GTK_TYPE_BUTTON_BOX);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_BIN" XG_POST,                                   GTK_TYPE_BIN);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_BOX" XG_POST,                                   GTK_TYPE_BOX);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_BUTTON" XG_POST,                                GTK_TYPE_BUTTON);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_CALENDAR" XG_POST,                              GTK_TYPE_CALENDAR);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_CELL_EDITABLE" XG_POST,                         GTK_TYPE_CELL_EDITABLE);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_CELL_RENDERER" XG_POST,                         GTK_TYPE_CELL_RENDERER);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_CELL_RENDERER_PIXBUF" XG_POST,                  GTK_TYPE_CELL_RENDERER_PIXBUF);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_CELL_RENDERER_TEXT" XG_POST,                    GTK_TYPE_CELL_RENDERER_TEXT);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_CELL_RENDERER_TOGGLE" XG_POST,                  GTK_TYPE_CELL_RENDERER_TOGGLE);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_CHECK_BUTTON" XG_POST,                          GTK_TYPE_CHECK_BUTTON);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_CHECK_MENU_ITEM" XG_POST,                       GTK_TYPE_CHECK_MENU_ITEM);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_COLOR_SELECTION_DIALOG" XG_POST,                GTK_TYPE_COLOR_SELECTION_DIALOG);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_COLOR_SELECTION" XG_POST,                       GTK_TYPE_COLOR_SELECTION);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_COMBO" XG_POST,                                 GTK_TYPE_COMBO);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_CONTAINER" XG_POST,                             GTK_TYPE_CONTAINER);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_CURVE" XG_POST,                                 GTK_TYPE_CURVE);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_DIALOG" XG_POST,                                GTK_TYPE_DIALOG);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_DRAWING_AREA" XG_POST,                          GTK_TYPE_DRAWING_AREA);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_EDITABLE" XG_POST,                              GTK_TYPE_EDITABLE);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_ENTRY" XG_POST,                                 GTK_TYPE_ENTRY);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_EVENT_BOX" XG_POST,                             GTK_TYPE_EVENT_BOX);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_FILE_SELECTION" XG_POST,                        GTK_TYPE_FILE_SELECTION);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_FIXED" XG_POST,                                 GTK_TYPE_FIXED);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_FONT_SELECTION" XG_POST,                        GTK_TYPE_FONT_SELECTION);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_FONT_SELECTION_DIALOG" XG_POST,                 GTK_TYPE_FONT_SELECTION_DIALOG);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_FRAME" XG_POST,                                 GTK_TYPE_FRAME);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_GAMMA_CURVE" XG_POST,                           GTK_TYPE_GAMMA_CURVE);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_HANDLE_BOX" XG_POST,                            GTK_TYPE_HANDLE_BOX);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_HBUTTON_BOX" XG_POST,                           GTK_TYPE_HBUTTON_BOX);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_HBOX" XG_POST,                                  GTK_TYPE_HBOX);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_HPANED" XG_POST,                                GTK_TYPE_HPANED);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_HRULER" XG_POST,                                GTK_TYPE_HRULER);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_HSCALE" XG_POST,                                GTK_TYPE_HSCALE);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_HSCROLLBAR" XG_POST,                            GTK_TYPE_HSCROLLBAR);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_HSEPARATOR" XG_POST,                            GTK_TYPE_HSEPARATOR);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_ICON_FACTORY" XG_POST,                          GTK_TYPE_ICON_FACTORY);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_IMAGE" XG_POST,                                 GTK_TYPE_IMAGE);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_IMAGE_MENU_ITEM" XG_POST,                       GTK_TYPE_IMAGE_MENU_ITEM);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_IM_CONTEXT" XG_POST,                            GTK_TYPE_IM_CONTEXT);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_IM_CONTEXT_SIMPLE" XG_POST,                     GTK_TYPE_IM_CONTEXT_SIMPLE);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_IM_MULTICONTEXT" XG_POST,                       GTK_TYPE_IM_MULTICONTEXT);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_INPUT_DIALOG" XG_POST,                          GTK_TYPE_INPUT_DIALOG);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_INVISIBLE" XG_POST,                             GTK_TYPE_INVISIBLE);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_ITEM_FACTORY" XG_POST,                          GTK_TYPE_ITEM_FACTORY);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_ITEM" XG_POST,                                  GTK_TYPE_ITEM);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_LABEL" XG_POST,                                 GTK_TYPE_LABEL);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_LAYOUT" XG_POST,                                GTK_TYPE_LAYOUT);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_LIST" XG_POST,                                  GTK_TYPE_LIST);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_LIST_ITEM" XG_POST,                             GTK_TYPE_LIST_ITEM);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_LIST_STORE" XG_POST,                            GTK_TYPE_LIST_STORE);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_MENU_BAR" XG_POST,                              GTK_TYPE_MENU_BAR);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_MENU" XG_POST,                                  GTK_TYPE_MENU);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_MENU_ITEM" XG_POST,                             GTK_TYPE_MENU_ITEM);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_MENU_SHELL" XG_POST,                            GTK_TYPE_MENU_SHELL);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_MESSAGE_DIALOG" XG_POST,                        GTK_TYPE_MESSAGE_DIALOG);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_MISC" XG_POST,                                  GTK_TYPE_MISC);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_NOTEBOOK" XG_POST,                              GTK_TYPE_NOTEBOOK);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_OBJECT" XG_POST,                                GTK_TYPE_OBJECT);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_OLD_EDITABLE" XG_POST,                          GTK_TYPE_OLD_EDITABLE);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_OPTION_MENU" XG_POST,                           GTK_TYPE_OPTION_MENU);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_PANED" XG_POST,                                 GTK_TYPE_PANED);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_PIXMAP" XG_POST,                                GTK_TYPE_PIXMAP);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_PLUG" XG_POST,                                  GTK_TYPE_PLUG);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_PREVIEW" XG_POST,                               GTK_TYPE_PREVIEW);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_PROGRESS_BAR" XG_POST,                          GTK_TYPE_PROGRESS_BAR);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_PROGRESS" XG_POST,                              GTK_TYPE_PROGRESS);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_RADIO_BUTTON" XG_POST,                          GTK_TYPE_RADIO_BUTTON);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_RADIO_MENU_ITEM" XG_POST,                       GTK_TYPE_RADIO_MENU_ITEM);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_RANGE" XG_POST,                                 GTK_TYPE_RANGE);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_RC_STYLE" XG_POST,                              GTK_TYPE_RC_STYLE);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_RULER" XG_POST,                                 GTK_TYPE_RULER);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_SCALE" XG_POST,                                 GTK_TYPE_SCALE);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_SCROLLBAR" XG_POST,                             GTK_TYPE_SCROLLBAR);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_SCROLLED_WINDOW" XG_POST,                       GTK_TYPE_SCROLLED_WINDOW);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_SEPARATOR" XG_POST,                             GTK_TYPE_SEPARATOR);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_SEPARATOR_MENU_ITEM" XG_POST,                   GTK_TYPE_SEPARATOR_MENU_ITEM);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_SETTINGS" XG_POST,                              GTK_TYPE_SETTINGS);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_SIZE_GROUP" XG_POST,                            GTK_TYPE_SIZE_GROUP);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_SOCKET" XG_POST,                                GTK_TYPE_SOCKET);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_SPIN_BUTTON" XG_POST,                           GTK_TYPE_SPIN_BUTTON);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_STATUSBAR" XG_POST,                             GTK_TYPE_STATUSBAR);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_STYLE" XG_POST,                                 GTK_TYPE_STYLE);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_TABLE" XG_POST,                                 GTK_TYPE_TABLE);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_TEAROFF_MENU_ITEM" XG_POST,                     GTK_TYPE_TEAROFF_MENU_ITEM);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_TEXT_BUFFER" XG_POST,                           GTK_TYPE_TEXT_BUFFER);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_TEXT_CHILD_ANCHOR" XG_POST,                     GTK_TYPE_TEXT_CHILD_ANCHOR);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_TEXT" XG_POST,                                  GTK_TYPE_TEXT);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_TEXT_MARK" XG_POST,                             GTK_TYPE_TEXT_MARK);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_TEXT_TAG" XG_POST,                              GTK_TYPE_TEXT_TAG);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_TEXT_TAG_TABLE" XG_POST,                        GTK_TYPE_TEXT_TAG_TABLE);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_TEXT_VIEW" XG_POST,                             GTK_TYPE_TEXT_VIEW);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_TIPS_QUERY" XG_POST,                            GTK_TYPE_TIPS_QUERY);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_TOGGLE_BUTTON" XG_POST,                         GTK_TYPE_TOGGLE_BUTTON);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_TOOLBAR" XG_POST,                               GTK_TYPE_TOOLBAR);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_TOOLTIPS" XG_POST,                              GTK_TYPE_TOOLTIPS);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_TREE_DRAG_SOURCE" XG_POST,                      GTK_TYPE_TREE_DRAG_SOURCE);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_TREE_DRAG_DEST" XG_POST,                        GTK_TYPE_TREE_DRAG_DEST);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_TREE" XG_POST,                                  GTK_TYPE_TREE);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_TREE_ITEM" XG_POST,                             GTK_TYPE_TREE_ITEM);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_TREE_MODEL" XG_POST,                            GTK_TYPE_TREE_MODEL);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_TREE_MODEL_SORT" XG_POST,                       GTK_TYPE_TREE_MODEL_SORT);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_TREE_SELECTION" XG_POST,                        GTK_TYPE_TREE_SELECTION);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_TREE_SORTABLE" XG_POST,                         GTK_TYPE_TREE_SORTABLE);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_TREE_STORE" XG_POST,                            GTK_TYPE_TREE_STORE);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_TREE_VIEW_COLUMN" XG_POST,                      GTK_TYPE_TREE_VIEW_COLUMN);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_TREE_VIEW" XG_POST,                             GTK_TYPE_TREE_VIEW);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_INVALID" XG_POST,                               GTK_TYPE_INVALID);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_NONE" XG_POST,                                  GTK_TYPE_NONE);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_ENUM" XG_POST,                                  GTK_TYPE_ENUM);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_FLAGS" XG_POST,                                 GTK_TYPE_FLAGS);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_CHAR" XG_POST,                                  GTK_TYPE_CHAR);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_UCHAR" XG_POST,                                 GTK_TYPE_UCHAR);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_BOOL" XG_POST,                                  GTK_TYPE_BOOL);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_INT" XG_POST,                                   GTK_TYPE_INT);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_UINT" XG_POST,                                  GTK_TYPE_UINT);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_LONG" XG_POST,                                  GTK_TYPE_LONG);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_ULONG" XG_POST,                                 GTK_TYPE_ULONG);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_FLOAT" XG_POST,                                 GTK_TYPE_FLOAT);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_DOUBLE" XG_POST,                                GTK_TYPE_DOUBLE);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_STRING" XG_POST,                                GTK_TYPE_STRING);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_BOXED" XG_POST,                                 GTK_TYPE_BOXED);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_POINTER" XG_POST,                               GTK_TYPE_POINTER);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_VBUTTON_BOX" XG_POST,                           GTK_TYPE_VBUTTON_BOX);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_VBOX" XG_POST,                                  GTK_TYPE_VBOX);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_VIEWPORT" XG_POST,                              GTK_TYPE_VIEWPORT);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_VPANED" XG_POST,                                GTK_TYPE_VPANED);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_VRULER" XG_POST,                                GTK_TYPE_VRULER);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_VSCALE" XG_POST,                                GTK_TYPE_VSCALE);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_VSCROLLBAR" XG_POST,                            GTK_TYPE_VSCROLLBAR);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_VSEPARATOR" XG_POST,                            GTK_TYPE_VSEPARATOR);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_WIDGET" XG_POST,                                GTK_TYPE_WIDGET);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_WINDOW" XG_POST,                                GTK_TYPE_WINDOW);
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_WINDOW_GROUP" XG_POST,                          GTK_TYPE_WINDOW_GROUP);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_COLORMAP" XG_POST,                              GDK_TYPE_COLORMAP);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_COLOR" XG_POST,                                 GDK_TYPE_COLOR);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_CURSOR" XG_POST,                                GDK_TYPE_CURSOR);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_DRAG_CONTEXT" XG_POST,                          GDK_TYPE_DRAG_CONTEXT);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_DRAWABLE" XG_POST,                              GDK_TYPE_DRAWABLE);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_CURSOR_TYPE" XG_POST,                           GDK_TYPE_CURSOR_TYPE);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_DRAG_ACTION" XG_POST,                           GDK_TYPE_DRAG_ACTION);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_DRAG_PROTOCOL" XG_POST,                         GDK_TYPE_DRAG_PROTOCOL);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_FILTER_RETURN" XG_POST,                         GDK_TYPE_FILTER_RETURN);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_EVENT_TYPE" XG_POST,                            GDK_TYPE_EVENT_TYPE);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_EVENT_MASK" XG_POST,                            GDK_TYPE_EVENT_MASK);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_VISIBILITY_STATE" XG_POST,                      GDK_TYPE_VISIBILITY_STATE);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_SCROLL_DIRECTION" XG_POST,                      GDK_TYPE_SCROLL_DIRECTION);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_NOTIFY_TYPE" XG_POST,                           GDK_TYPE_NOTIFY_TYPE);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_CROSSING_MODE" XG_POST,                         GDK_TYPE_CROSSING_MODE);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_PROPERTY_STATE" XG_POST,                        GDK_TYPE_PROPERTY_STATE);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_WINDOW_STATE" XG_POST,                          GDK_TYPE_WINDOW_STATE);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_SETTING_ACTION" XG_POST,                        GDK_TYPE_SETTING_ACTION);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_FONT_TYPE" XG_POST,                             GDK_TYPE_FONT_TYPE);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_CAP_STYLE" XG_POST,                             GDK_TYPE_CAP_STYLE);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_FILL" XG_POST,                                  GDK_TYPE_FILL);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_FUNCTION" XG_POST,                              GDK_TYPE_FUNCTION);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_JOIN_STYLE" XG_POST,                            GDK_TYPE_JOIN_STYLE);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_LINE_STYLE" XG_POST,                            GDK_TYPE_LINE_STYLE);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_SUBWINDOW_MODE" XG_POST,                        GDK_TYPE_SUBWINDOW_MODE);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_GC_VALUES_MASK" XG_POST,                        GDK_TYPE_GC_VALUES_MASK);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_IMAGE_TYPE" XG_POST,                            GDK_TYPE_IMAGE_TYPE);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_EXTENSION_MODE" XG_POST,                        GDK_TYPE_EXTENSION_MODE);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_INPUT_SOURCE" XG_POST,                          GDK_TYPE_INPUT_SOURCE);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_INPUT_MODE" XG_POST,                            GDK_TYPE_INPUT_MODE);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_AXIS_USE" XG_POST,                              GDK_TYPE_AXIS_USE);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_PROP_MODE" XG_POST,                             GDK_TYPE_PROP_MODE);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_FILL_RULE" XG_POST,                             GDK_TYPE_FILL_RULE);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_OVERLAP_TYPE" XG_POST,                          GDK_TYPE_OVERLAP_TYPE);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_RGB_DITHER" XG_POST,                            GDK_TYPE_RGB_DITHER);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_BYTE_ORDER" XG_POST,                            GDK_TYPE_BYTE_ORDER);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_MODIFIER_TYPE" XG_POST,                         GDK_TYPE_MODIFIER_TYPE);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_INPUT_CONDITION" XG_POST,                       GDK_TYPE_INPUT_CONDITION);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_STATUS" XG_POST,                                GDK_TYPE_STATUS);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_GRAB_STATUS" XG_POST,                           GDK_TYPE_GRAB_STATUS);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_VISUAL_TYPE" XG_POST,                           GDK_TYPE_VISUAL_TYPE);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_WINDOW_CLASS" XG_POST,                          GDK_TYPE_WINDOW_CLASS);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_WINDOW_TYPE" XG_POST,                           GDK_TYPE_WINDOW_TYPE);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_WINDOW_ATTRIBUTES_TYPE" XG_POST,                GDK_TYPE_WINDOW_ATTRIBUTES_TYPE);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_WINDOW_HINTS" XG_POST,                          GDK_TYPE_WINDOW_HINTS);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_WINDOW_TYPE_HINT" XG_POST,                      GDK_TYPE_WINDOW_TYPE_HINT);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_WM_DECORATION" XG_POST,                         GDK_TYPE_WM_DECORATION);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_WM_FUNCTION" XG_POST,                           GDK_TYPE_WM_FUNCTION);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_GRAVITY" XG_POST,                               GDK_TYPE_GRAVITY);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_WINDOW_EDGE" XG_POST,                           GDK_TYPE_WINDOW_EDGE);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_EVENT" XG_POST,                                 GDK_TYPE_EVENT);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_FONT" XG_POST,                                  GDK_TYPE_FONT);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_GC" XG_POST,                                    GDK_TYPE_GC);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_RECTANGLE" XG_POST,                             GDK_TYPE_RECTANGLE);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_IMAGE" XG_POST,                                 GDK_TYPE_IMAGE);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_DEVICE" XG_POST,                                GDK_TYPE_DEVICE);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_KEYMAP" XG_POST,                                GDK_TYPE_KEYMAP);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_PIXMAP" XG_POST,                                GDK_TYPE_PIXMAP);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_VISUAL" XG_POST,                                GDK_TYPE_VISUAL);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_WINDOW" XG_POST,                                GDK_TYPE_WINDOW);
+  DEFINE_ULONG(XG_PRE "G_TYPE_IO_CONDITION" XG_POST,                            G_TYPE_IO_CONDITION);
+  DEFINE_ULONG(XG_PRE "G_TYPE_INVALID" XG_POST,                                 G_TYPE_INVALID);
+  DEFINE_ULONG(XG_PRE "G_TYPE_NONE" XG_POST,                                    G_TYPE_NONE);
+  DEFINE_ULONG(XG_PRE "G_TYPE_INTERFACE" XG_POST,                               G_TYPE_INTERFACE);
+  DEFINE_ULONG(XG_PRE "G_TYPE_CHAR" XG_POST,                                    G_TYPE_CHAR);
+  DEFINE_ULONG(XG_PRE "G_TYPE_UCHAR" XG_POST,                                   G_TYPE_UCHAR);
+  DEFINE_ULONG(XG_PRE "G_TYPE_BOOLEAN" XG_POST,                                 G_TYPE_BOOLEAN);
+  DEFINE_ULONG(XG_PRE "G_TYPE_INT" XG_POST,                                     G_TYPE_INT);
+  DEFINE_ULONG(XG_PRE "G_TYPE_UINT" XG_POST,                                    G_TYPE_UINT);
+  DEFINE_ULONG(XG_PRE "G_TYPE_LONG" XG_POST,                                    G_TYPE_LONG);
+  DEFINE_ULONG(XG_PRE "G_TYPE_ULONG" XG_POST,                                   G_TYPE_ULONG);
+  DEFINE_ULONG(XG_PRE "G_TYPE_INT64" XG_POST,                                   G_TYPE_INT64);
+  DEFINE_ULONG(XG_PRE "G_TYPE_UINT64" XG_POST,                                  G_TYPE_UINT64);
+  DEFINE_ULONG(XG_PRE "G_TYPE_ENUM" XG_POST,                                    G_TYPE_ENUM);
+  DEFINE_ULONG(XG_PRE "G_TYPE_FLAGS" XG_POST,                                   G_TYPE_FLAGS);
+  DEFINE_ULONG(XG_PRE "G_TYPE_FLOAT" XG_POST,                                   G_TYPE_FLOAT);
+  DEFINE_ULONG(XG_PRE "G_TYPE_DOUBLE" XG_POST,                                  G_TYPE_DOUBLE);
+  DEFINE_ULONG(XG_PRE "G_TYPE_STRING" XG_POST,                                  G_TYPE_STRING);
+  DEFINE_ULONG(XG_PRE "G_TYPE_POINTER" XG_POST,                                 G_TYPE_POINTER);
+  DEFINE_ULONG(XG_PRE "G_TYPE_BOXED" XG_POST,                                   G_TYPE_BOXED);
+  DEFINE_ULONG(XG_PRE "G_TYPE_PARAM" XG_POST,                                   G_TYPE_PARAM);
+  DEFINE_ULONG(XG_PRE "G_TYPE_OBJECT" XG_POST,                                  G_TYPE_OBJECT);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_CONTROL" XG_POST,                              G_UNICODE_CONTROL);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_FORMAT" XG_POST,                               G_UNICODE_FORMAT);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_UNASSIGNED" XG_POST,                           G_UNICODE_UNASSIGNED);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_PRIVATE_USE" XG_POST,                          G_UNICODE_PRIVATE_USE);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_SURROGATE" XG_POST,                            G_UNICODE_SURROGATE);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_LOWERCASE_LETTER" XG_POST,                     G_UNICODE_LOWERCASE_LETTER);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_MODIFIER_LETTER" XG_POST,                      G_UNICODE_MODIFIER_LETTER);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_OTHER_LETTER" XG_POST,                         G_UNICODE_OTHER_LETTER);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_TITLECASE_LETTER" XG_POST,                     G_UNICODE_TITLECASE_LETTER);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_UPPERCASE_LETTER" XG_POST,                     G_UNICODE_UPPERCASE_LETTER);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_COMBINING_MARK" XG_POST,                       G_UNICODE_COMBINING_MARK);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_ENCLOSING_MARK" XG_POST,                       G_UNICODE_ENCLOSING_MARK);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_NON_SPACING_MARK" XG_POST,                     G_UNICODE_NON_SPACING_MARK);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_DECIMAL_NUMBER" XG_POST,                       G_UNICODE_DECIMAL_NUMBER);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_LETTER_NUMBER" XG_POST,                        G_UNICODE_LETTER_NUMBER);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_OTHER_NUMBER" XG_POST,                         G_UNICODE_OTHER_NUMBER);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_CONNECT_PUNCTUATION" XG_POST,                  G_UNICODE_CONNECT_PUNCTUATION);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_DASH_PUNCTUATION" XG_POST,                     G_UNICODE_DASH_PUNCTUATION);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_CLOSE_PUNCTUATION" XG_POST,                    G_UNICODE_CLOSE_PUNCTUATION);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_FINAL_PUNCTUATION" XG_POST,                    G_UNICODE_FINAL_PUNCTUATION);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_INITIAL_PUNCTUATION" XG_POST,                  G_UNICODE_INITIAL_PUNCTUATION);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_OTHER_PUNCTUATION" XG_POST,                    G_UNICODE_OTHER_PUNCTUATION);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_OPEN_PUNCTUATION" XG_POST,                     G_UNICODE_OPEN_PUNCTUATION);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_CURRENCY_SYMBOL" XG_POST,                      G_UNICODE_CURRENCY_SYMBOL);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_MODIFIER_SYMBOL" XG_POST,                      G_UNICODE_MODIFIER_SYMBOL);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_MATH_SYMBOL" XG_POST,                          G_UNICODE_MATH_SYMBOL);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_OTHER_SYMBOL" XG_POST,                         G_UNICODE_OTHER_SYMBOL);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_LINE_SEPARATOR" XG_POST,                       G_UNICODE_LINE_SEPARATOR);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_PARAGRAPH_SEPARATOR" XG_POST,                  G_UNICODE_PARAGRAPH_SEPARATOR);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_SPACE_SEPARATOR" XG_POST,                      G_UNICODE_SPACE_SEPARATOR);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_MANDATORY" XG_POST,                      G_UNICODE_BREAK_MANDATORY);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_CARRIAGE_RETURN" XG_POST,                G_UNICODE_BREAK_CARRIAGE_RETURN);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_LINE_FEED" XG_POST,                      G_UNICODE_BREAK_LINE_FEED);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_COMBINING_MARK" XG_POST,                 G_UNICODE_BREAK_COMBINING_MARK);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_SURROGATE" XG_POST,                      G_UNICODE_BREAK_SURROGATE);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_ZERO_WIDTH_SPACE" XG_POST,               G_UNICODE_BREAK_ZERO_WIDTH_SPACE);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_INSEPARABLE" XG_POST,                    G_UNICODE_BREAK_INSEPARABLE);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_NON_BREAKING_GLUE" XG_POST,              G_UNICODE_BREAK_NON_BREAKING_GLUE);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_CONTINGENT " XG_POST,                    G_UNICODE_BREAK_CONTINGENT );
+  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_SPACE" XG_POST,                          G_UNICODE_BREAK_SPACE);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_AFTER" XG_POST,                          G_UNICODE_BREAK_AFTER);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_BEFORE" XG_POST,                         G_UNICODE_BREAK_BEFORE);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_BEFORE_AND_AFTER" XG_POST,               G_UNICODE_BREAK_BEFORE_AND_AFTER);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_HYPHEN" XG_POST,                         G_UNICODE_BREAK_HYPHEN);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_NON_STARTER" XG_POST,                    G_UNICODE_BREAK_NON_STARTER);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_OPEN_PUNCTUATION" XG_POST,               G_UNICODE_BREAK_OPEN_PUNCTUATION);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_CLOSE_PUNCTUATION" XG_POST,              G_UNICODE_BREAK_CLOSE_PUNCTUATION);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_QUOTATION" XG_POST,                      G_UNICODE_BREAK_QUOTATION);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_EXCLAMATION" XG_POST,                    G_UNICODE_BREAK_EXCLAMATION);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_IDEOGRAPHIC" XG_POST,                    G_UNICODE_BREAK_IDEOGRAPHIC);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_NUMERIC" XG_POST,                        G_UNICODE_BREAK_NUMERIC);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_INFIX_SEPARATOR" XG_POST,                G_UNICODE_BREAK_INFIX_SEPARATOR);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_SYMBOL" XG_POST,                         G_UNICODE_BREAK_SYMBOL);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_ALPHABETIC" XG_POST,                     G_UNICODE_BREAK_ALPHABETIC);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_PREFIX" XG_POST,                         G_UNICODE_BREAK_PREFIX);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_POSTFIX" XG_POST,                        G_UNICODE_BREAK_POSTFIX);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_COMPLEX_CONTEXT" XG_POST,                G_UNICODE_BREAK_COMPLEX_CONTEXT);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_AMBIGUOUS" XG_POST,                      G_UNICODE_BREAK_AMBIGUOUS);
+  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_UNKNOWN" XG_POST,                        G_UNICODE_BREAK_UNKNOWN);
 
   /* -------------------- deprecated ints -------------------- */
 #if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED)))

@@ -380,6 +380,7 @@ static int last_remembered = -1, last_remembered_ptr = -1;
 static void forget_pointer(void *ptr, const char *func, const char *file, int line)
 {
   int i;
+  /* fprintf(stderr,"forget %p (%s %s %d)\n",ptr,func,file,line); */
   if (ptr == NULL) {fprintf(stderr, "attempt to free NULL"); mem_report(); abort();}
   if (last_remembered_ptr == (int)ptr)
     {
@@ -405,6 +406,7 @@ static void forget_pointer(void *ptr, const char *func, const char *file, int li
 static void remember_pointer(void *ptr, size_t len, const char *func, const char *file, int line)
 {
   int i, loc = 0;
+  /* fprintf(stderr,"remember %p (%s %s %d)\n",ptr,func,file,line); */
   if (last_forgotten == -1)
     {
       if (mem_size == 0)

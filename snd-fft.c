@@ -1600,8 +1600,11 @@ static int display_snd_fft(fft_state *fs)
   int i, j, lo, hi;
 
   cp = (chan_info *)(fs->chan);
+  if ((cp == NULL) || (cp->active == 0)) return(-1);
   fp = cp->fft;
+  if (fp == NULL) return(-1); /* can happen if selection transform set, but no selection */
   data = fp->data;
+  if (data == NULL) return(-1);
   sp = cp->sound;
   if (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE)
     {

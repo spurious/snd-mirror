@@ -13,7 +13,6 @@
 ;;; TODO: add gdk-pixbuf? (has GDK_PIXBUF_DISABLE_DEPRECATED)
 ;;; TODO: add unicode handlers from glib
 ;;; TODO: unprotect *_remove?
-;;; TODO: gtypes (as constants?)
 
 (use-modules (ice-9 debug))
 (use-modules (ice-9 format))
@@ -30,6 +29,7 @@
 (define names '())
 (define types '())
 (define ints '())
+(define ulongs '())
 (define dbls '())
 (define funcs '())
 (define casts '())
@@ -60,7 +60,7 @@
 (define extra-checks '())
 (define extra-ints '())
 (define extra-strings '())
-(define listable-types (list "gint8*" "int*" "gint*" "gdouble*"))
+
 (define idlers (list "gtk_idle_remove" "gtk_idle_remove_by_data" 
 		     "gtk_quit_remove" "gtk_quit_remove_by_data" 
 		     "gtk_input_remove" "gtk_key_snooper_remove"))
@@ -378,6 +378,11 @@
 	;;   need also to be direct (so that (= GDK_WHATEVER func-return-val) makes sense)
 	;;   or should the constants be tagged? -- seems kinda silly
 
+	(cons "GType" "ULONG")
+	(cons "GQuark" "ULONG")
+	(cons "GConnectFlags" "INT")
+	(cons "GSignalMatchType" "INT")
+	(cons "GSignalFlags" "INT")
 	(cons "GdkInputCondition" "INT")
 	(cons "GdkCursorType" "INT")
 	(cons "GdkDragAction" "INT")
@@ -385,6 +390,7 @@
 	(cons "GdkAxisUse" "INT")
 	(cons "GdkGCValuesMask" "INT")
 	(cons "GdkFill" "INT")
+	(cons "GdkFunction" "INT")
 	(cons "GdkSubwindowMode" "INT")
 	(cons "GdkLineStyle" "INT")
 	(cons "GdkCapStyle" "INT")
@@ -427,6 +433,7 @@
 	(cons "GtkTextDirection" "INT")
 	(cons "GtkStateType" "INT")
 	(cons "GtkImageType" "INT")
+	(cons "GtkType" "ULONG")
 	(cons "GtkIconSize" "INT")
 	(cons "GtkJustification" "INT")
 	(cons "GtkMessageType" "INT")
@@ -445,6 +452,9 @@
 	(cons "GtkTextSearchFlags" "INT")
 	(cons "GtkTextWindowType" "INT")
 	(cons "GtkWrapMode" "INT")
+	(cons "GtkWindowPosition" "INT")
+	(cons "GtkTreeViewColumnSizing" "INT")
+	(cons "GtkTreeViewDropPosition" "INT")
 	(cons "GtkToolbarChildType" "INT")
 	(cons "GtkToolbarStyle" "INT")
 	(cons "GtkTreeModelFlags" "INT")
@@ -464,6 +474,8 @@
 	(cons "PangoFontMask" "INT")
 	(cons "PangoWrapMode" "INT")
 	(cons "PangoAlignment" "INT")
+	(cons "PangoCoverageLevel" "INT")
+	(cons "PangoGlyph" "ULONG")
 	(cons "GdkEventType" "INT")
 	(cons "GdkVisibilityState" "INT")
 	(cons "GdkScrollDirection" "INT")
@@ -479,6 +491,9 @@
 	(cons "GtkScrollType" "INT")
 	(cons "GtkPreviewType" "INT")
 	(cons "GtkProgressBarStyle" "INT")
+	(cons "GtkVisibility" "INT")
+	(cons "GtkSignalRunType" "INT")
+	(cons "GdkWChar" "ULONG")
 
 	;; broken
 	(cons "GtkTreeViewMode" "INT")
@@ -661,6 +676,13 @@
 	(set! dbls (cons name dbls))
 	(set! names (cons (cons name 'dbl) names)))))
 
+(define (CLNG name)
+  (if (assoc name names)
+      (hey "~A CLNG~%" name)
+      (begin
+	(set! ulongs (cons name ulongs))
+	(set! names (cons (cons name 'ulong) names)))))
+
 (define (CINT name)
   (if (assoc name names)
       (hey "~A CINT~%" name)
@@ -807,6 +829,20 @@
 
 (load "xgdata.scm")
 
+;(define listable-types (list "gint8*" "int*" "gint*" "gdouble*"))
+(define listable-types '())
+(for-each
+ (lambda (type)
+   (let* ((len (string-length type))
+	  (dereftype (if (and (char=? (string-ref type (1- len)) #\*)
+			      (not (string=? type "char*")) ; these are surely strings
+			      (not (string=? type "gchar*")))
+			 (substring type 0 (1- len)) 
+			 #f)))
+     (if (and dereftype
+	      (assoc dereftype direct-types))
+	 (set! listable-types (cons type listable-types)))))
+ types)
 
 (hey "/* xg.c: Guile (and someday Ruby) bindings for gdk/gtk/pango, some of glib~%")
 (hey " *   generated automatically from makexg.scm and xgdata.scm~%")
@@ -1754,11 +1790,14 @@
 (hey "#if HAVE_GUILE~%")
 (hey "#if HAVE_SCM_C_DEFINE~%")
 (hey "  #define DEFINE_INTEGER(Name, Value) scm_c_define(Name, scm_long2num(Value))~%")
+(hey "  #define DEFINE_ULONG(Name, Value) scm_c_define(Name, scm_ulong2num(Value))~%")
 (hey "#else~%")
 (hey "  #define DEFINE_INTEGER(Name, Value) gh_define(Name, scm_long2num(Value))~%")
+(hey "  #define DEFINE_ULONG(Name, Value) gh_define(Name, scm_ulong2num(Value))~%")
 (hey "#endif~%")
 (hey "#else~%")
 (hey "  #define DEFINE_INTEGER(Name, Value) rb_define_global_const(Name, C_TO_XEN_INT(Value))~%")
+(hey "  #define DEFINE_ULONG(Name, Value) rb_define_global_const(Name, C_TO_XEN_ULONG(Value))~%")
 (hey "#endif~%")
 (hey "~%")
 
@@ -1766,6 +1805,11 @@
  (lambda (val)
    (hey "  DEFINE_INTEGER(XG_PRE ~S XG_POST,~80,1T~A);~%" val val))
  (reverse ints))
+
+(for-each
+ (lambda (val)
+   (hey "  DEFINE_ULONG(XG_PRE ~S XG_POST,~80,1T~A);~%" val val))
+ (reverse ulongs))
 
 (if (not (null? extra-ints))
     (begin

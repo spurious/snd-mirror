@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 1
-#define MUS_REVISION 59
-#define MUS_DATE "25-Jan-02"
+#define MUS_REVISION 60
+#define MUS_DATE "19-Feb-02"
 
 /* 
+ * 19-Feb:     buffer reallocation redundant free bugfix.
  * 25-Jan-02:  mus_increment of env returns base.
  * --------
  * 10-Dec:     add outctr calls, phase-vocoder bugfixes, thanks to Scott Wilson.

@@ -4046,26 +4046,22 @@ Float mus_buffer2sample(mus_any *ptr)
 Float mus_sample2buffer(mus_any *ptr, Float val)
 {
   /* place val at fill_time and increment */
-  int i, j, loc;
-#ifdef MACOS
+  int i, j, loc, old_size;
   Float *tmp;
-#endif
   rblk *gen = (rblk *)ptr;
   if (gen->fill_time >= (Float)(gen->size))
     {
       if (gen->loc == 0)
 	{
 	  /* have to make more space */
+	  old_size = gen->size;
 	  gen->size += 256;
-#ifdef MACOS
-	  /* gotta do realloc by hand */
+	  /* gotta do realloc by hand -- gen->buf may not belong to us */
 	  tmp = (Float *)CALLOC(gen->size, sizeof(Float));
-	  for (i = 0; i < gen->size-256; i++) tmp[i] = gen->buf[i];
-	  FREE(gen->buf);
+	  for (i = 0; i < old_size; i++) tmp[i] = gen->buf[i];
+	  if (gen->buf_allocated) FREE(gen->buf);
 	  gen->buf = tmp;
-#else
-	  gen->buf = (Float *)REALLOC(gen->buf, gen->size * sizeof(Float));
-#endif
+	  gen->buf_allocated = 1;
 	}
       else
 	{

@@ -4604,6 +4604,7 @@ it in conjunction with mixer to scale/envelope all the various ins and outs."
   if (XEN_BOUND_P(envs))
     {
       /* pack into a C-style array of arrays of env pointers */
+      /* TODO: make sure this env array is big enough for mus_mix (in/out chans) */
       in_len = XEN_VECTOR_LENGTH(envs);
       vdata0 = XEN_VECTOR_ELEMENTS(envs);
       for (i = 0; i < in_len; i++)

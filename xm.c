@@ -6,7 +6,6 @@
 /* TODO: finish selection-oriented Xt callbacks
  * TODO: XmVaCreateSimple* (need special arglist handlers)
  * TODO: Motif 2.2 has a bunch of widgets that seem to be partly ICS-specific? (Xi... rather than Xm...)
- * TODO: finish the explicit widget type checks
  */
 
 /* HISTORY: 
@@ -1386,10 +1385,12 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	  XEN_ASSERT_TYPE(XEN_INTEGER_P(value), value, XEN_ONLY_ARG, name, "an integer");
 	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_INT(value)));
 	  break;
+#if HAVE_UNDOCUMENTED_RESOURCES
 	case XM_FLOAT:	
 	  XEN_ASSERT_TYPE(XEN_NUMBER_P(value), value, XEN_ONLY_ARG, name, "a number");      
 	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_DOUBLE(value)));
 	  break;
+#endif
 	case XM_STRING:	      
 	  XEN_ASSERT_TYPE(XEN_STRING_P(value), value, XEN_ONLY_ARG, name, "a string");      
 	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_STRING(value)));
@@ -6291,12 +6292,14 @@ static XEN gxm_XmClipboardBeginCopy(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN 
 		    C_TO_XEN_INT(id)));
 }
 
+#define XEN_ScaleWidget_P(Arg) (XEN_Widget_P(Arg) && XmIsScale(XEN_TO_C_Widget(Arg)))
+
 #if MOTIF_2
 static XEN gxm_XmScaleSetTicks(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
 {
   #define H_XmScaleSetTicks "void XmScaleSetTicks(Widget scale, int big_every, Cardinal num_medium, Cardinal num_small, Dimension size_big, \
 Dimension size_medium, Dimension size_small) controls Scale tick marks"
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmScaleSetTicks", "Widget");
+  XEN_ASSERT_TYPE(XEN_ScaleWidget_P(arg1), arg1, 1, "XmScaleSetTicks", "Scale Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmScaleSetTicks", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmScaleSetTicks", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XmScaleSetTicks", "int");
@@ -6323,7 +6326,7 @@ static XEN gxm_XmScaleGetValue(XEN arg1)
   /* DIFF: XmScaleGetValue omits and returns arg2
    */
   int val;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmScaleGetValue", "Widget");
+  XEN_ASSERT_TYPE(XEN_ScaleWidget_P(arg1), arg1, 1, "XmScaleGetValue", "Scale Widget");
   XmScaleGetValue(XEN_TO_C_Widget(arg1), &val);
   return(C_TO_XEN_INT(val));
 }
@@ -6331,7 +6334,7 @@ static XEN gxm_XmScaleGetValue(XEN arg1)
 static XEN gxm_XmScaleSetValue(XEN arg1, XEN arg2)
 {
   #define H_XmScaleSetValue "void XmScaleSetValue(Widget widget, int value) sets a Scale slider value"
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmScaleSetValue", "Widget");
+  XEN_ASSERT_TYPE(XEN_ScaleWidget_P(arg1), arg1, 1, "XmScaleSetValue", "Scale Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmScaleSetValue", "int");
   XmScaleSetValue(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2));
   return(XEN_FALSE);
@@ -6589,10 +6592,13 @@ The Command widget creation function"
 }
 
 #if MOTIF_2
+
+#define XEN_ComboBoxWidget_P(Arg) (XEN_Widget_P(Arg) && XmIsComboBox(XEN_TO_C_Widget(Arg)))
+
 static XEN gxm_XmComboBoxUpdate(XEN arg1)
 {
   #define H_XmComboBoxUpdate "void XmComboBoxUpdate(Widget widget) A ComboBox function that resynchronizes data"
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmComboBoxUpdate", "Widget");
+  XEN_ASSERT_TYPE(XEN_ComboBoxWidget_P(arg1), arg1, 1, "XmComboBoxUpdate", "ComboBox Widget");
   XmComboBoxUpdate(XEN_TO_C_Widget(arg1));
   return(XEN_FALSE);
 }
@@ -6600,7 +6606,7 @@ static XEN gxm_XmComboBoxUpdate(XEN arg1)
 static XEN gxm_XmComboBoxSetItem(XEN arg1, XEN arg2)
 {
   #define H_XmComboBoxSetItem "void XmComboBoxSetItem(Widget w, XmString item) set an item in the XmComboBox list"
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmComboBoxSetItem", "Widget");
+  XEN_ASSERT_TYPE(XEN_ComboBoxWidget_P(arg1), arg1, 1, "XmComboBoxSetItem", "ComboBox Widget");
   XEN_ASSERT_TYPE(XEN_XmString_P(arg2), arg2, 2, "XmComboBoxSetItem", "XmString");
   XmComboBoxSetItem(XEN_TO_C_Widget(arg1), XEN_TO_C_XmString(arg2));
   return(XEN_FALSE);
@@ -6609,7 +6615,7 @@ static XEN gxm_XmComboBoxSetItem(XEN arg1, XEN arg2)
 static XEN gxm_XmComboBoxSelectItem(XEN arg1, XEN arg2)
 {
   #define H_XmComboBoxSelectItem "void XmComboBoxSelectItem(Widget w, XmString item) select a XmComboBox item"
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmComboBoxSelectItem", "Widget");
+  XEN_ASSERT_TYPE(XEN_ComboBoxWidget_P(arg1), arg1, 1, "XmComboBoxSelectItem", "ComboBox Widget");
   XEN_ASSERT_TYPE(XEN_XmString_P(arg2), arg2, 2, "XmComboBoxSelectItem", "XmString");
   XmComboBoxSelectItem(XEN_TO_C_Widget(arg1), XEN_TO_C_XmString(arg2));
   return(XEN_FALSE);
@@ -6618,7 +6624,7 @@ static XEN gxm_XmComboBoxSelectItem(XEN arg1, XEN arg2)
 static XEN gxm_XmComboBoxDeletePos(XEN arg1, XEN arg2)
 {
   #define H_XmComboBoxDeletePos "void XmComboBoxDeletePos(Widget w, int pos)  Delete a XmComboBox item"
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmComboBoxDeletePos", "Widget");
+  XEN_ASSERT_TYPE(XEN_ComboBoxWidget_P(arg1), arg1, 1, "XmComboBoxDeletePos", "ComboBox Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmComboBoxDeletePos", "int");
   XmComboBoxDeletePos(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2));
   return(XEN_FALSE);
@@ -6627,7 +6633,7 @@ static XEN gxm_XmComboBoxDeletePos(XEN arg1, XEN arg2)
 static XEN gxm_XmComboBoxAddItem(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmComboBoxAddItem "void XmComboBoxAddItem(Widget w, XmString item, int pos, Boolean unique) add an item to the ComboBox widget"
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmComboBoxAddItem", "Widget");
+  XEN_ASSERT_TYPE(XEN_ComboBoxWidget_P(arg1), arg1, 1, "XmComboBoxAddItem", "ComboBox Widget");
   XEN_ASSERT_TYPE(XEN_XmString_P(arg2), arg2, 2, "XmComboBoxAddItem", "XmString");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmComboBoxAddItem", "int");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg4), arg4, 4, "XmComboBoxAddItem", "Boolean");
@@ -8772,7 +8778,7 @@ file containing a bitmap, in the same manner as XReadBitmapFile, but returns the
    */
   unsigned int w, h, i, j;
   int x, y;
-  unsigned char **str = NULL; /* apparently allocated by X */
+  unsigned char **str = NULL; /* allocated by X? */
   int val, loc;
   XEN bits = XEN_EMPTY_LIST;
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XReadBitmapFileData", "char*");
@@ -8799,7 +8805,7 @@ static XEN gxm_XReadBitmapFile(XEN arg1, XEN arg2, XEN arg3)
   unsigned int w, h;
   int x, y;
   int val;
-  Pixmap *p = NULL; /* apparently allocated by X */
+  Pixmap *p = NULL; /* allocated by X? */
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XReadBitmapFile", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XReadBitmapFile", "Drawable");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg3), arg3, 3, "XReadBitmapFile", "char*");
@@ -22128,7 +22134,7 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNpopupEnabled" XM_POSTFIX, XmNpopupEnabled,		          XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNpositionIndex" XM_POSTFIX, XmNpositionIndex,		          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNpostFromButton" XM_POSTFIX, XmNpostFromButton,		          XM_WIDGET);
-  DEFINE_RESOURCE(XM_PREFIX "XmNpreeditType" XM_POSTFIX, XmNpreeditType,		          XM_UCHAR);
+  DEFINE_RESOURCE(XM_PREFIX "XmNpreeditType" XM_POSTFIX, XmNpreeditType,		          XM_STRING);
   DEFINE_RESOURCE(XM_PREFIX "XmNprocessingDirection" XM_POSTFIX, XmNprocessingDirection,          XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNpromptString" XM_POSTFIX, XmNpromptString,		          XM_XMSTRING);
   DEFINE_RESOURCE(XM_PREFIX "XmNpushButtonEnabled" XM_POSTFIX, XmNpushButtonEnabled,	          XM_BOOLEAN);
@@ -22196,7 +22202,7 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNsingleSelectionCallback" XM_POSTFIX, XmNsingleSelectionCallback,  XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNskipAdjust" XM_POSTFIX, XmNskipAdjust,			          XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNsliderSize" XM_POSTFIX, XmNsliderSize,			          XM_INT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNsliderVisual" XM_POSTFIX, XmNsliderVisual,		          XM_VISUAL);
+  DEFINE_RESOURCE(XM_PREFIX "XmNsliderVisual" XM_POSTFIX, XmNsliderVisual,		          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNslidingMode" XM_POSTFIX, XmNslidingMode,		          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNsource" XM_POSTFIX, XmNsource,				          XM_TEXT_SOURCE);
   DEFINE_RESOURCE(XM_PREFIX "XmNsourceCursorIcon" XM_POSTFIX, XmNsourceCursorIcon,	          XM_WIDGET);
