@@ -436,3 +436,19 @@ Guile-gtk:
 
 gmeteor:
   ftp://ftp.prosa.it/pub/gmeteor/gmeteor-0.9.tar.gz
+
+
+
+----------------------------------------------------------------
+CVS: (I haven't tested this).
+
+To follow the Snd CVS repository, the first time you need to
+
+       cvs -d:pserver:anonymous@cvs.snd.sourceforge.net:/cvsroot/snd login 
+       cvs -d:pserver:anonymous@cvs.snd.sourceforge.net:/cvsroot/snd co cvs-snd
+
+After that, you simply go to the local cvs-snd directory and
+
+       cvs update 
+
+
