@@ -1125,6 +1125,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;; translated from the fxt package of Joerg Arndt
 
 (define (fractional-fourier-transform fr fi n v)
+  "(fractional-fourier-transform real imaginary n angle) performs a fractional Fourier transform on data; if angle=1.0, you get a normal Fourier transform"
   ;; this is the slow (dft) form
   ;; v=1 -> normal fourier transform
   (let ((hr (make-vct n))
@@ -1151,6 +1152,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 (define (z-transform f n z)
   ;; using vector to allow complex sums (z=e^2*pi*i/n -> fourier transform)
+  "(z-transform data n z) performs a Z transform on data; if z=e^2*pi*i/n you get a Fourier transform"
   (let ((res (make-vector n)))
     (do ((w 0 (1+ w)))
 	((= w n))

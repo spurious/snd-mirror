@@ -26048,7 +26048,7 @@ static bool xm_already_inited = false;
 /* end HAVE_EXTENSION_LANGUAGE */
 
 
-/* TODO: Motif 2.2.3: MultiList, DropDown, DataField
+/* SOMEDAY: Motif 2.2.3: MultiList, DropDown, DataField
             Hierarchy, Outline, Tree, Panned, TabBox, TabStack, IconButton, ButtonBox, Column, IconBox
          these (public?) h files appear to be new: 
 	   ButtonBox.h Column.h ComboBox2.h DataF.h DrawUtils.h DropDown.h Ext18List.h Ext.h Hierarchy.h 

@@ -1,7 +1,5 @@
 #include "snd.h"
 
-/* TODO: resurrect lpc */
-
 #define NO_SUCH_KEY XEN_ERROR_TYPE("no-such-key")
 
 static bool defining_macro = false;
@@ -325,6 +323,7 @@ char *key_binding_description(int key, int state, bool cx_extended)
       (state < MIN_KEY_STATE) || (state > MAX_KEY_STATE))
     return(NULL);
   pos = in_user_keymap(key, state, cx_extended);
+  if (pos < 0) pos = in_user_keymap(key, state | 1, cx_extended);
   if (pos >= 0)
     {
 #if HAVE_GUILE
@@ -1891,6 +1890,7 @@ static XEN g_bind_key_1(XEN key, XEN state, XEN code, XEN cx_extended, XEN origi
 			 C_TO_XEN_STRING("key: ~A, state: ~A"),
 			 XEN_LIST_2(key,
 				    state)));
+  if ((k >= 65) && (k <= 90) && ((s & 1) == 0)) s |= 1;
   if (XEN_FALSE_P(code))
     set_keymap_entry(k, s, 0, XEN_UNDEFINED, e, NULL);
   else 

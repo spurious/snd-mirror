@@ -2938,7 +2938,6 @@ _ACEOF
 #   SNDLIB_CONFIG_path    where to look for sndlib-config
 #
 # SOMEDAY: --with-static-libraries --with-static-guile
-# TODO: update sndlib(jack) and libxm(gtkglext) configures
 
 #--------------------------------------------------------------------------------
 

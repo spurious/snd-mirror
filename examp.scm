@@ -531,6 +531,42 @@ this can be confusing if fft normalization is on (the default)"
       (system (format #f "oggenc ~A" (file-name snd)))))
 
 
+;;; -------- read and write Speex files
+
+(define (read-speex filename)
+  (let ((wavfile (string-append filename ".wav")))
+    (if (file-exists? wavfile) (delete-file wavfile))
+    (system (format #f "speexdec ~A ~A" filename wavfile))
+    wavfile))
+
+(define (write-speex snd)
+  ;; write snd data in Speex format
+  (if (or (> (car (edits snd)) 0)
+	  (not (= (header-type snd) mus-riff)))
+      (let ((file (string-append (file-name snd) ".wav"))
+	    (spxfile (string-append (file-name snd) ".spx")))
+	(save-sound-as file snd mus-riff)
+	(system (format #f "speexenc ~A ~A" file spxfile))
+	(delete-file file))
+      (system (format #f "speexenc ~A ~A" (file-name snd) spxfile))))
+
+
+;;; -------- read and write FLAC files
+
+(define (read-flac filename)
+  (system (format #f "flac -d ~A ~A" filename)))
+
+(define (write-flac snd)
+  ;; write snd data in FLAC format
+  (if (or (> (car (edits snd)) 0)
+	  (not (= (header-type snd) mus-riff)))
+      (let ((file (string-append (file-name snd) ".wav")))
+	(save-sound-as file snd mus-riff)
+	(system (format #f "flac ~A" file))
+	(delete-file file))
+      (system (format #f "flac ~A" (file-name snd)))))
+
+
 ;;; -------- make dot size dependent on number of samples being displayed
 ;;; 
 ;;; this could be extended to set time-graph-style to graph-lines if many samples are displayed, etc

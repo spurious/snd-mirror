@@ -1043,6 +1043,8 @@ I'm slowly dividing out related groups of procedures to separate files.
     <li>example of c-g?
     <li>translate mpeg input to 16-bit linear and read into Snd
     <li>read and write OGG files
+    <li>read and write Speex files
+    <li>read and write FLAC files
     <li>mapping extensions (map arbitrary single-channel function over various channel collections)
     <li>sound-interp, env-sound-interp
     <li>searching procedures (search-for-click, find-pitch, zero+, next-peak)
@@ -1429,6 +1431,10 @@ happens to be on the chosen one, with fade-ins and fade-outs to avoid clicks.
   <a class=def name="exmpg">mpg</a> mpgfile rawfile 
   <em class=emdef>read-ogg</em> file
   <em class=emdef>write-ogg</em> snd
+  <em class=emdef>read-speex</em> file
+  <em class=emdef>write-speex</em> snd
+  <em class=emdef>read-flac</em> file
+  <em class=emdef>write-flac</em> snd
 </pre>
 <p><b>finfo</b> returns a description of the file <i>filename</i>. <b>shell</b> is similar
 to Guile's <i>system</i> function, but output is sent to Snd's listener, rather than stdout.
@@ -1443,8 +1449,9 @@ format sound file to a headerless ("raw") file containing 16-bit samples.
 <p>
 Presumably a similar function could be written to call TiMidity to translate
 MIDI files to something Snd can read, but I'm not having any luck getting it
-to work. OGG Vorbis files can be handled in a similar manner: read-ogg and
-write-ogg are examples.
+to work. OGG Vorbis files can be handled in a similar manner: see read-ogg and
+write-ogg.  For Speeex files: read-speex and write-speex. For FLAC files:
+read-flac and write-flac.
 </p>
 <p>
 Several of the functions in this section are slight robustifications of the

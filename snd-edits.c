@@ -8696,7 +8696,7 @@ static XEN g_xen2sample_p(XEN os)
 
 static XEN g_snd2sample(XEN os, XEN frame, XEN chan)
 {
-  #define H_snd2sample "(" S_snd2sample " gen frame chan): input sample at frame in channel chan"
+  #define H_snd2sample "(" S_snd2sample " gen frame chan): input sample (via snd->sample gen) at frame in channel chan"
   XEN_ASSERT_TYPE((mus_xen_p(os)) && (snd2sample_p(XEN_TO_MUS_ANY(os))), os, XEN_ARG_1, S_snd2sample, "a " S_snd2sample " gen");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(frame), frame, XEN_ARG_2, S_snd2sample, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_3, S_snd2sample, "an integer");
@@ -8705,7 +8705,7 @@ static XEN g_snd2sample(XEN os, XEN frame, XEN chan)
 
 static XEN g_xen2sample(XEN os, XEN frame, XEN chan)
 {
-  #define H_xen2sample "(" S_xen2sample " gen frame chan): input sample at frame in channel chan"
+  #define H_xen2sample "(" S_xen2sample " gen frame chan): input sample (via xen->sample gen) at frame in channel chan"
   XEN_ASSERT_TYPE((mus_xen_p(os)) && (xen2sample_p(XEN_TO_MUS_ANY(os))), os, XEN_ARG_1, S_xen2sample, "a " S_xen2sample " gen");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(frame), frame, XEN_ARG_2, S_snd2sample, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_3, S_snd2sample, "an integer");

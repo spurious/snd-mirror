@@ -378,6 +378,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+3-Mar:   read|write-speex for Speex files and read|write-flac for FLAC files (examp.scm)\n\
 1-Mar:   show-grid.\n\
          C-_ deletes text in listener to previous command.\n\
 23-Feb:  speed-control-tones, speed-control-style, reverb-control-decay\n\
@@ -900,7 +901,6 @@ static bool find_leftover_keys(int key, int state, bool cx, XEN func, char *orig
 
 void key_binding_help(void)
 {
-  /* TODO: how to handle shift in key binding help? -- how does shift work in general? */
   int i;
   snd_help_with_xrefs("Key bindings",
 		      "",
@@ -2138,4 +2138,4 @@ If more than one hook function, each function gets the previous function's outpu
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_html_program, g_html_program_w, H_html_program, S_setB S_html_program, g_set_html_program_w,  0, 0, 1, 0);
 }
 
-/* (for-each (lambda (n) (snd-display "~A: ~A~%~%" (car n) (snd-help (car n)))) (snd-urls)) */
+

@@ -1,5 +1,6 @@
 Snd change log
 
+  3-Mar:     read|write-speex for Speex files and read|write-flac for FLAC files (examp.scm)
   1-Mar:     show-grid.
              C-_ deletes text in listener to previous command.
   23-Feb:    speed-control-tones, speed-control-style, reverb-control-decay now handled like other control settings

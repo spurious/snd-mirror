@@ -66,7 +66,6 @@ AC_DEFINE_UNQUOTED(CONFIGURE_ARGS, "$INVOKED_ARGS")
 #   SNDLIB_CONFIG_path    where to look for sndlib-config
 #
 # SOMEDAY: --with-static-libraries --with-static-guile
-# TODO: update sndlib(jack) and libxm(gtkglext, better x/xm) configures
 
 #--------------------------------------------------------------------------------
 

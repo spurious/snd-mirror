@@ -266,7 +266,14 @@ static const unsigned char I_SMP1[4] = {'S','M','P','1'};  /* Korg */
 static const unsigned char I_Maui[4] = {'M','a','u','i'};  /* Turtle Beach */
 static const unsigned char I_SDIF[4] = {'S','D','I','F'};  /* IRCAM sdif */
 static const unsigned char I_NVF_[4] = {'N','V','F',' '};  /* Nomad II Creative NVF */
-
+#if 0
+static const unsigned char I_Spee[4] = {'S','p','e','e'};  /* Speex word 1 (actual file starts with "OggS") */
+static const unsigned char I_x___[4] = {'x',' ',' ',' '};  /* Speex word 2 */
+static const unsigned char I_OggS[4] = {'O','g','g','S'};  /* Ogg-related files, apparently -- ogg123 has "vorbis" instead of "Speex" */
+static const unsigned char I_fLaC[4] = {'f','L','a','C'};  /* FLAC */
+/* it appears that Rezound .rez files start with "DavyBlox" */
+/* similarly rx2 files start with "CAT "? */
+#endif
 
 #define I_IRCAM_VAX  0x0001a364
 #define I_IRCAM_SUN  0x0002a364
