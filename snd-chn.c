@@ -4971,7 +4971,13 @@ static XEN g_set_transform_size(XEN val, XEN snd, XEN chn)
   else
     {
       ss = get_global_state();
-      set_transform_size(ss, (int)pow(2, (ceil(log((double)(len))/log(2.0)))));
+      if (POWER_OF_2_P(len))
+	set_transform_size(ss, len);
+      else set_transform_size(ss, (int)pow(2.0, (int)(log(len + 1) / log(2.0))));
+#if DEBUGGING
+      if (transform_size(ss) > len)
+	fprintf(stderr,"set-transform-size (snd-chn.c): %d %d\n", transform_size(ss), len);
+#endif
       return(C_TO_XEN_INT(transform_size(ss)));
     }
 }

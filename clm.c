@@ -5954,7 +5954,11 @@ void mus_fft (Float *rl, Float *im, int n, int is)
    */
   int m, j, mh, ldm, lg, i, i2, j2, imh;
   double ur, ui, u, vr, vi, angle, c, s;
-  imh = (int)(ceil(log(n) / log(2.0)));
+  imh = (int)(log(n + 1) / log(2.0));
+#if DEBUGGING
+  if ((POWER_OF_2_P(n)) && ((int)pow(2.0, imh) != n))
+    fprintf(stderr,"mus_fft: %d %d\n", (int)pow(2.0, imh), n);
+#endif
   mus_scramble(rl, im, n);
   m = 2;
   ldm = 1;

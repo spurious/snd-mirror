@@ -18,7 +18,7 @@ dnl Process this file with autoconf 2.50 to produce a configure script.
 #   m68k-next-nextstep3 mips-sgi-irix6.2 i386-next-nextstep3 i586-pc-beos
 #   i686-pc-linux-gnu powerpc-unknown-linux-gnu sparc-sun-solaris2.7
 #   powerpc-apple-darwin1.1 i386-pc-cygwin32 sparc64-unknown-linux-gnu
-#   alphaev67-unknown-linux-gnu i386-unknown-freebsd4.2
+#   alphaev67-unknown-linux-gnu i386-unknown-freebsd4.2 powerpc-apple-darwin1.3.7
 #--------------------------------------------------------------------------------
 
 AC_INIT(snd, 5.3, bil@ccrma.stanford.edu)

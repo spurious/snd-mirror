@@ -434,13 +434,13 @@ void handle_filter_press(snd_info *sp, int evx, int evy, TIME_TYPE time)
   y = sp_ungrf_y_dB(sp, ap, evy);
   if (pos == -1)
     {
-      if (x < 0.0)
+      if (x <= 0.0)
 	{
 	  pos = 0;
 	  x = 0.0;
 	}
       else 
-	if (x > sp->filter_control_env_xmax) /* (x > 1.0) */
+	if (x >= sp->filter_control_env_xmax) /* (x > 1.0) */
 	  {
 	    pos = e->pts - 1;
 	    x = sp->filter_control_env_xmax; /* x = 1.0; */
@@ -451,7 +451,7 @@ void handle_filter_press(snd_info *sp, int evx, int evy, TIME_TYPE time)
   if (pos == -1) 
     {
       pos = place_point(spf->current_xs, e->pts, evx);
-      add_point(e, pos+1, x, y);
+      add_point(e, pos + 1, x, y);
       spf->env_pos = pos + 1;
       spf->click_to_delete = 0;
       sp_display_env(sp);
@@ -1134,13 +1134,13 @@ int enved_button_press_display(snd_state *ss, axis_info *ap, env *active_env, in
     }
   if (pos == -1)
     {
-      if (x < ap->x0)
+      if (x <= ap->x0)
 	{
 	  pos = 0;
 	  x = ap->x0;
 	}
       else 
-	if (x > ap->x1) 
+	if (x >= ap->x1) 
 	  {
 	    pos = active_env->pts - 1;
 	    x = ap->x1;

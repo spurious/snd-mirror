@@ -1,7 +1,7 @@
 #include "snd.h"
 
-int snd_help(snd_state *ss, char *subject, char *help) {fprintf(stdout, help);}
-int snd_help_with_wrap(snd_state *ss, char *subject, char *help) {fprintf(stdout, help);}
+int snd_help(snd_state *ss, char *subject, char *help) {fprintf(stdout, help); return(0);}
+int snd_help_with_wrap(snd_state *ss, char *subject, char *help) {fprintf(stdout, help); return(0);}
 void add_to_error_history(snd_state *ss, char *msg, int popup) {}
 void post_error_dialog(snd_state *ss, char *msg) {}
 int snd_yes_or_no_p(snd_state *ss, char *format, ...) {return(0);}

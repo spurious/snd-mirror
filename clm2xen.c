@@ -1050,7 +1050,6 @@ static XEN g_make_delay_1(int choice, XEN arglist)
   XEN initial_contents = XEN_UNDEFINED; 
   XEN lst;
   Float initial_element = 0.0;
-  
   switch (choice)
     {
     case G_DELAY:   caller = S_make_delay;                                       break;
@@ -2710,7 +2709,7 @@ is basically the same as make-oscil"
   mus_xen *gn;
   XEN args[8]; XEN keys[4];
   int orig_arg[4] = {0, 0, 0, 0};
-  int vals, wsize, npartials = 0, partials_allocated = 0;
+  int vals, wsize = 0, npartials = 0, partials_allocated = 0;
   vct *v;
   Float freq = 440.0;
   Float *wave = NULL, *partials = NULL;
@@ -4101,7 +4100,13 @@ returns a new convolution generator which convolves its input with the impulse r
     }
   if (filter == NULL)
     mus_misc_error(S_make_convolve, "no impulse (filter)?", XEN_FALSE);
-  fftlen = (int)pow(2.0, 1 + (int)ceil(log((Float)(filter->length)) / log(2.0)));
+  if (POWER_OF_2_P(filter->length))
+    fftlen = filter->length * 2;
+  else fftlen = (int)pow(2.0, 1 + (int)(log((Float)(filter->length + 1)) / log(2.0)));
+#if DEBUGGING
+  if (fftlen != (int)pow(2.0, 1 + (int)(log((Float)(filter->length + 1)) / log(2.0))))
+    fprintf(stderr,"clmxen make convolve fftlen: %d %d\n", fftlen, (int)pow(2.0, 1 + (int)(log((Float)(filter->length + 1)) / log(2.0))));
+#endif
   if (fft_size < fftlen) fft_size = fftlen;
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
   gn->nvcts = 2;

@@ -664,7 +664,7 @@ static void autocorrelation(Float *data, int n)
   im = (Float *)CALLOC(n, sizeof(Float));
   for (i = 0; i < n; i++) rl[i] = data[i];
 
-  p = (int)(log(n) / log(4.0));
+  p = (int)(log(n + 1) / log(4.0));
   if (n == (int)pow(4, p))
     {
       fht(p, rl);
@@ -1458,7 +1458,7 @@ static int apply_fft_window(fft_state *fs)
 	{
 	  /* to my surprise, it's smoother even on an old SGI to just do the fft in place */
 	  /*   hooray for micro-optimization! */
-	  p = (int)(log(fs->size) / log(4.0));
+	  p = (int)(log(fs->size + 1) / log(4.0));
 	  use_fht = (fs->size == (int)pow(4, p));
 	}
       if (use_fht)
@@ -1779,7 +1779,25 @@ void *make_fft_state(chan_info *cp, int simple)
     }
   else 
     {
-      fftsize = (int)pow(2.0, (int)(ceil(log((Float)(cp->transform_size * (1 + cp->zero_pad))) / log(2.0))));
+      if ((cp->zero_pad == 0) && (POWER_OF_2_P(cp->transform_size)))
+	fftsize = cp->transform_size;
+      else fftsize = (int)pow(2.0, (int)((log((Float)(cp->transform_size * (1 + cp->zero_pad))) / log(2.0)) + .001));
+#if DEBUGGING
+      if (fftsize != cp->transform_size)
+	{
+	  if (!(POWER_OF_2_P(cp->transform_size)))
+	    fprintf(stderr,"make_fft_state: %d transform size?\n", cp->transform_size);
+	  else
+	    {
+	      if (cp->zero_pad == 1)
+		{
+		  if ((fftsize >> 1) != cp->transform_size)
+		    fprintf(stderr,"make_fft_state: pad 1 but %d != %d?\n", fftsize >> 1, cp->transform_size);
+		}
+	      else fprintf(stderr,"make_fft_state: sizes: %d %d %d?\n", cp->transform_size, fftsize, cp->zero_pad);
+	    }
+	}
+#endif
       cp->selection_transform_size = 0;
     }
 
@@ -2037,7 +2055,7 @@ static int set_up_sonogram(sonogram_state *sg)
       si = (sono_info *)CALLOC(1, sizeof(sono_info));
       cp->sonogram_data = si;
       si->total_bins = sg->spectrum_size;
-      si->total_slices = (int)(pow(2.0, ceil(log(sg->outlim) / log(2.0))));
+      si->total_slices = (int)(pow(2.0, (int)ceil(log(sg->outlim) / log(2.0))));
       si->begs = (int *)CALLOC(si->total_slices, sizeof(int));
       si->data = (Float **)CALLOC(si->total_slices, sizeof(Float *));
       for (i = 0; i < si->total_slices; i++) si->data[i] = (Float *)CALLOC(si->total_bins, sizeof(Float));
@@ -2052,7 +2070,7 @@ static int set_up_sonogram(sonogram_state *sg)
 	      FREE(si->data[i]); 
 	      si->data[i] = NULL;
 	    }
-	tempsize = (int)(pow(2.0, ceil(log(sg->outlim) / log(2.0))));
+	tempsize = (int)(pow(2.0, (int)ceil(log(sg->outlim) / log(2.0))));
 	if (si->total_slices < tempsize) 
 	  {
 	    FREE(si->data);

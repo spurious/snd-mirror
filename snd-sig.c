@@ -2804,7 +2804,7 @@ static XEN g_fft_1(XEN reals, XEN imag, XEN sign, int use_fft)
     n2 = n;
   else
     {
-      ipow = (int)ceil(log((Float)n) / log(2.0));
+      ipow = (int)(log(n + 1) / log(2.0));
       n2 = (int)pow(2.0, (Float)ipow);
     }
 #if DEBUGGING
