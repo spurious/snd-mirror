@@ -560,6 +560,7 @@
 
 (define (fejer-sum angle n)
   ;; from "Trigonometric Series" Zygmund p88
+  ;; TODO: if 0, n+1
   (let ((val (/ (sin (* 0.5 (+ n 1) angle)) (* 2 (sin (* 0.5 angle))))))
     (* 2 (/ (* val val) (+ n 1)))))
 

@@ -5327,9 +5327,9 @@ mus_any *mus_make_file_to_sample(const char *filename)
     mus_error(MUS_NO_FILE_NAME_PROVIDED, S_make_file_to_sample " requires a file name");
   else
     {
-      gen = (rdin *)clm_calloc(1, sizeof(rdin), S_make_readin);
+      gen = (rdin *)clm_calloc(1, sizeof(rdin), S_make_file_to_sample);
       gen->core = &FILE_TO_SAMPLE_CLASS;
-      gen->file_name = (char *)clm_calloc(strlen(filename) + 1, sizeof(char), "readin filename");
+      gen->file_name = (char *)clm_calloc(strlen(filename) + 1, sizeof(char), S_file_to_sample " filename");
       strcpy(gen->file_name, filename);
       gen->data_end = -1; /* force initial read */
       gen->chans = mus_sound_chans(gen->file_name);
