@@ -82,7 +82,7 @@ static gint auto_update_check(gpointer context)
 static GdkAtom snd_v, snd_c;
 
 #if HAVE_EXTENSION_LANGUAGE
-static XEN property_changed_hook;
+static XEN window_property_changed_hook;
 
 static void who_called(GtkWidget *w, GdkEvent *event, gpointer context) 
 {
@@ -100,10 +100,10 @@ static void who_called(GtkWidget *w, GdkEvent *event, gpointer context)
 	{
 	  if (version[0])
 	    {
-	      if ((!(XEN_HOOKED(property_changed_hook))) ||
-		  (!(XEN_TRUE_P(run_or_hook(property_changed_hook,
+	      if ((!(XEN_HOOKED(window_property_changed_hook))) ||
+		  (!(XEN_TRUE_P(run_or_hook(window_property_changed_hook,
 					    XEN_LIST_1(C_TO_XEN_STRING((char *)(version[0]))),
-					    S_property_changed_hook)))))
+					    S_window_property_changed_hook)))))
 		snd_eval_property_str((char *)(version[0]));
 	      free(version[0]);
 	    }
@@ -660,8 +660,8 @@ XEN_NARGIFY_1(g_parse_rc_file_w, g_parse_rc_file)
 
 void g_init_gxmain(void)
 {
-  #define H_property_changed_hook S_property_changed_hook "(command): called upon receipt of a change in SND_COMMAND (an X window property)"
-  XEN_DEFINE_HOOK(property_changed_hook, S_property_changed_hook, 1, H_property_changed_hook);
+  #define H_window_property_changed_hook S_window_property_changed_hook "(command): called upon receipt of a change in SND_COMMAND (an X window property)"
+  XEN_DEFINE_HOOK(window_property_changed_hook, S_window_property_changed_hook, 1, H_window_property_changed_hook);
 
   XEN_DEFINE_PROCEDURE("parse-rc-file", g_parse_rc_file_w, 1, 0, 0, "(parse-rc-file name) -> read gtk rc file");
 }

@@ -51,6 +51,9 @@
 ;;;   and subsequent srate or position changes affect all channels in parallel (this makes
 ;;;   it easier to mix multichannel files into other multichannel files and keep the mixed
 ;;;   channels in sync)
+;;;
+;;; mix-property associates a property list with a mix
+;;; mix-click-sets-amp sets up hook functions so that mix click zeros amps, then subsequent click resets to the before-zero value
 
 (load-from-path "env.scm") ; multiply-envelope and window-envelope for track-amp-env
 
@@ -526,6 +529,70 @@ the filter to the underlying mixes: (filter-track (track 1) '(.1 .2 .3 .3 .2 .1)
 		  mix-ids)))))
 
 
+;;; --------------------------------------------------------------------------------
+
+(define all-mix-properties '())
+
+(define mix-properties
+  (make-procedure-with-setter
+   (lambda (id)
+     (let ((data (assoc id all-mix-properties)))
+       (if data
+	   (cdr data)
+           '())))
+   (lambda (id new-val)
+     (let ((old-val (assoc id all-mix-properties)))
+       (if old-val
+	   (set-cdr! old-val new-val)
+	   (set! all-mix-properties (cons (cons id new-val) all-mix-properties)))
+       new-val))))
+     
+(define mix-property
+  (make-procedure-with-setter
+   (lambda (key id)
+     "(mix-property key id) returns the value associated with 'key' in the given mix's property list, or #f"
+     (if (mix? id)
+	 (let ((data (assoc key (mix-properties id))))
+	   (if data
+	       (cdr data)
+	       #f))
+	 (throw 'no-such-mix (list "mix-property" id))))
+   (lambda (key id new-val)
+     (if (mix? id)
+	 (let ((old-val (assoc key (mix-properties id))))
+	   (if old-val
+	       (set-cdr! old-val new-val)
+	       (set! (mix-properties id) (cons (cons key new-val) (mix-properties id))))
+	   new-val)
+	 (throw 'no-such-mix (list "set! mix-property" id))))))
+
+(define (mix-click-sets-amp)
+  (add-hook! mix-click-hook 
+	     (lambda (n)
+	       (let ((zeroed (mix-property :zero n)))
+		 (if (not zeroed)
+		     (let ((amps '()))
+		       (do ((i (1- (mix-chans n)) (1- i)))
+			   ((< i 0))
+			 (set! amps (cons (mix-amp n i) amps)))
+		       (set! (mix-property :amps n) amps)
+		       (do ((i 0 (1+ i)))
+			   ((= i (mix-chans n)))
+			 (set! (mix-amp n i) 0.0))
+		       (set! (mix-property :zero n) #t))
+		     (let ((amps (mix-property :amps n)))
+		       (do ((i 0 (1+ i)))
+			   ((= i (mix-chans n)))
+			 (set! (mix-amp n i) (list-ref amps i)))
+		       (set! (mix-property :zero n) #f)))
+		 #t)))
+  (add-hook! close-hook
+	     (lambda (snd)
+	       ;; prune out inactive mix properties
+	       (set! all-mix-properties (remove-if (lambda (val)
+						     (not (mix? (car val))))
+						   all-mix-properties))
+	       #f)))
 
 
-
+  

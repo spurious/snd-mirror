@@ -2112,12 +2112,13 @@ static XEN sound_set(XEN snd_n, XEN val, int fld, char *caller)
 	}
       break;
     case SP_DATA_FORMAT:
-      /* TODO: if data_format or location is changed, the existing amp envs are not recalculated */
       if (!(IS_PLAYER(sp))) 
 	{
 	  ival = XEN_TO_C_INT(val);
 	  if (MUS_DATA_FORMAT_OK(ival))
 	    {
+	      int i;
+	      chan_info *cp;
 	      old_format = sp->hdr->format;
 	      mus_sound_set_data_format(sp->filename, ival);
 	      sp->hdr->format = ival;
@@ -2125,6 +2126,15 @@ static XEN sound_set(XEN snd_n, XEN val, int fld, char *caller)
 		{
 		  sp->hdr->samples = (sp->hdr->samples * mus_bytes_per_sample(old_format)) / mus_bytes_per_sample(ival);
 		  mus_sound_set_samples(sp->filename, sp->hdr->samples);
+		}
+	      /* clear peak amp envs, if any -- if user undoes edit or whatever, other peak envs are still wrong,
+	       *   but he should by god save the correct header!
+	       */
+	      for (i = 0; i < sp->nchans; i++)
+		{
+		  cp = sp->chans[i];
+		  if ((cp) && (cp->amp_envs) && (cp->amp_envs[cp->edit_ctr]))
+		    cp->amp_envs[cp->edit_ctr] = free_amp_env(cp, cp->edit_ctr);
 		}
 	      snd_update(ss, sp);
 	    }

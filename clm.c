@@ -5793,10 +5793,6 @@ void mus_clear_sinc_tables(void)
 
 static Float *init_sinc_table(int width)
 {
-#ifdef MACOS
-  Float **ftmp;
-  int *itmp;
-#endif
   int i, size, loc;
   Float sinc_freq, win_freq, sinc_phase, win_phase;
   for (i = 0; i < sincs; i++)
@@ -5820,22 +5816,8 @@ static Float *init_sinc_table(int width)
 	  }
       if (loc == -1)
 	{
-#ifdef MACOS
-	  ftmp = sinc_tables;
-	  itmp = sinc_widths;
-	  sinc_tables = (Float **)clm_calloc((sincs + 8), sizeof(Float *), "sinc tables");
-	  sinc_widths = (int *)clm_calloc((sincs + 8), sizeof(int), "sinc tables");
-	  for (i = 0; i < sincs; i++)
-	    {
-	      sinc_tables[i] = ftmp[i];
-	      sinc_widths[i] = itmp[i];
-	    }
-	  FREE(ftmp);
-	  FREE(itmp);
-#else
 	  sinc_tables = (Float **)REALLOC(sinc_tables, (sincs + 8) * sizeof(Float *));
 	  sinc_widths = (int *)REALLOC(sinc_widths, (sincs + 8) * sizeof(int));
-#endif
 	  for (i = sincs; i < (sincs + 8); i++) 
 	    {
 	      sinc_widths[i] = 0; 

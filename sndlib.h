@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 18
-#define SNDLIB_REVISION 3
-#define SNDLIB_DATE "28-Apr-03"
+#define SNDLIB_REVISION 4
+#define SNDLIB_DATE "30-Apr-03"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -292,6 +292,9 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
   #define CALLOC(a, b)  NewPtrClear((a) * (b))
   #define MALLOC(a)     NewPtr((a))
   #define FREE(a)       DisposePtr((Ptr)(a))
+  #define REALLOC(a, b) NewPtr_realloc((Ptr)(a), (Size)(b))
+  /* implementation in io.c */
+  Ptr NewPtr_realloc(Ptr p, Size newSize);
 
   #define OPEN(File, Flags, Mode) open((File), (Flags))
   #define FOPEN(File, Flags) fopen((File), (Flags))

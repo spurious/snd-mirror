@@ -1933,11 +1933,7 @@ static void soundfont_entry(const char *name, int start, int end, int loop_start
     {
       if (soundfont_size == 0)
 	{
-#ifdef MACOS
-	  soundfont_size = 256;
-#else
 	  soundfont_size = 8;
-#endif
 	  soundfont_starts = (int *)CALLOC(soundfont_size, sizeof(int));
 	  soundfont_ends = (int *)CALLOC(soundfont_size, sizeof(int));
 	  soundfont_loop_starts = (int *)CALLOC(soundfont_size, sizeof(int));
@@ -1946,14 +1942,12 @@ static void soundfont_entry(const char *name, int start, int end, int loop_start
 	}
       else
 	{
-#ifndef MACOS
 	  soundfont_size += 8;
 	  soundfont_starts = (int *)REALLOC(soundfont_starts, soundfont_size * sizeof(int));
 	  soundfont_ends = (int *)REALLOC(soundfont_ends, soundfont_size * sizeof(int));
 	  soundfont_loop_starts = (int *)REALLOC(soundfont_loop_starts, soundfont_size * sizeof(int));
 	  soundfont_loop_ends = (int *)REALLOC(soundfont_loop_ends, soundfont_size * sizeof(int));
 	  soundfont_names = (char **)REALLOC(soundfont_names, soundfont_size * sizeof(char *));
-#endif
 	}
       for (i = soundfont_entries; i < soundfont_size; i++) soundfont_names[i] = NULL;
     }
@@ -4822,10 +4816,6 @@ static void local_mus_error(int type, char *msg)
 int mus_header_read(const char *name)
 {
   int chan, err = 0;
-#ifdef MACOS
-  int loc, happy;
-  char *dupname;
-#endif
   chan = mus_file_open_read(name);
   if (chan == -1) 
     return(mus_error(MUS_CANT_OPEN_FILE, "mus_header_read: can't open %s: %s", name, strerror(errno)));

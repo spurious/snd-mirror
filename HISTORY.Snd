@@ -1,5 +1,7 @@
 Snd change log
 
+  30-Apr:    mix-property in mix.scm.
+             property-changed-hook -> window-property-changed-hook.
   29-Apr:    mix-click-hook
   28-Apr:    snd 6.8.
              freeverb.rb and freeverb.scm from Michael Scholz.

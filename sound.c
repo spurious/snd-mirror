@@ -172,12 +172,10 @@ int mus_make_error(char *error_name)
 	    }
 	  else
 	    {
-#ifndef MACOS
 	      len = mus_error_names_size;
 	      mus_error_names_size += 8;
 	      mus_error_names = (char **)REALLOC(mus_error_names, mus_error_names_size * sizeof(char *));
 	      for (i = len; i < mus_error_names_size; i++) mus_error_names[i] = NULL;
-#endif
 	    }
 	}
       len = strlen(error_name);
@@ -293,9 +291,6 @@ static void free_sound_file(sound_file *sf)
 static sound_file *add_to_sound_table(const char *name)
 {
   int i, pos;
-#ifdef MACOS
-  sound_file **ptr;
-#endif
   pos = previous_freed_sf;
   if (pos == -1)
     {
@@ -313,14 +308,7 @@ static sound_file *add_to_sound_table(const char *name)
 	    sound_table = (sound_file **)CALLOC(sound_table_size, sizeof(sound_file *));
 	  else 
 	    {
-#ifdef MACOS
-	      ptr = (sound_file **)CALLOC(sound_table_size, sizeof(sound_file *));
-	      for (i = 0; i < pos; i++) ptr[i] = sound_table[i];
-	      FREE(sound_table);
-	      sound_table = ptr;
-#else
 	      sound_table = (sound_file **)REALLOC(sound_table, sound_table_size * sizeof(sound_file *));
-#endif
 	      for (i = pos; i < sound_table_size; i++) sound_table[i] = NULL;
 	    }
 	}
@@ -745,7 +733,6 @@ char *mus_sound_comment(const char *name)
       sc = (char *)CALLOC(len + 1, sizeof(char));
       read(fd, sc, len);
       CLOSE(fd);
-#ifndef MACOS
       if (((mus_sound_header_type(name) == MUS_AIFF) || 
 	   (mus_sound_header_type(name) == MUS_AIFC)) &&
 	  (sf->aux_comment_start))
@@ -761,7 +748,6 @@ char *mus_sound_comment(const char *name)
 	      strcat(sc, auxcom);
 	    }
 	}
-#endif
     }
   return(sc);
 }

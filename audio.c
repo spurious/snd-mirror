@@ -9220,24 +9220,10 @@ static int save_it_loc = 0;
 
 static void check_save_it(int loc)
 {
-#ifdef MACOS
-  char *ptr;
-  int k;
-#endif
   if (loc >= save_it_len)
     {
       save_it_len += 1024;
-#ifdef MACOS
-      ptr = (char *)CALLOC(save_it_len, sizeof(char));
-      if (save_it)
-	{
-	  for (k = 0; k < save_it_loc; k++) ptr[k] = save_it[k];
-	  FREE(save_it);
-	}
-      save_it = ptr;
-#else
       save_it = (char *)REALLOC(save_it, save_it_len * sizeof(char));
-#endif
     }
 }
 

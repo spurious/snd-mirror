@@ -460,14 +460,9 @@ int mus_file_set_descriptors(int tfd, const char *name, int format, int size /* 
   int i, lim = -1;
   if (io_fd_size == 0)
     {
-#ifdef MACOS
-      io_fd_size = 64;
-#else
       io_fd_size = tfd + IO_FD_ALLOC_SIZE;
-#endif
       io_fds = (io_fd **)CALLOC(io_fd_size, sizeof(io_fd *));
     }
-#ifndef MACOS
   if (io_fd_size <= tfd)
     {
       lim = io_fd_size;
@@ -475,7 +470,6 @@ int mus_file_set_descriptors(int tfd, const char *name, int format, int size /* 
       io_fds = (io_fd **)REALLOC(io_fds, io_fd_size * sizeof(io_fd *));
       for (i = lim; i < io_fd_size; i++) io_fds[i] = NULL;
     }
-#endif
   if (io_fds[tfd] == NULL)
     io_fds[tfd] = (io_fd *)CALLOC(1, sizeof(io_fd));
 
@@ -1371,6 +1365,45 @@ char *strdup (const char *str)
   return(newstr);
 }
 #endif
+
+#ifdef MACOS
+/* realloc replacement, thanks to Michael Klingbeil */
+Ptr NewPtr_realloc(Ptr p, Size newSize)
+{
+  Size oldSize;
+  Ptr  newP;
+  /* zero size means free */
+  if (newSize == 0) 
+    {
+      DisposePtr(p);
+      return 0;
+    }
+  if (p) 
+    {
+      /* first try to reallocate in place */
+      SetPtrSize(p, newSize);
+      if (MemError() == 0)
+	return p;
+    }
+  /* if that fails then try to reallocate */
+  newP = NewPtr(newSize);
+  /* failure */
+  if (newP == 0) 
+    {
+      /* do we do DisposePtr(p) ? */
+      return 0;
+    }
+  /* copy old pointer data */
+  if (p) 
+    {
+      oldSize = GetPtrSize(p);
+      BlockMoveData(p, newP, oldSize);
+      DisposePtr(p);
+    }
+  return newP;
+}
+#endif
+
 
 static char *file_name_buf = NULL;
 

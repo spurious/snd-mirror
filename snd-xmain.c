@@ -292,7 +292,7 @@ static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boo
 static Atom snd_v, snd_c;
 
 #if HAVE_EXTENSION_LANGUAGE
-static XEN property_changed_hook;
+static XEN window_property_changed_hook;
 
 static void who_called(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
@@ -310,10 +310,10 @@ static void who_called(Widget w, XtPointer context, XEvent *event, Boolean *cont
 	  (type != None))
 	if (version[0])
 	  {
-	    if ((!(XEN_HOOKED(property_changed_hook))) ||
-		(!(XEN_TRUE_P(run_or_hook(property_changed_hook,
+	    if ((!(XEN_HOOKED(window_property_changed_hook))) ||
+		(!(XEN_TRUE_P(run_or_hook(window_property_changed_hook,
 					  XEN_LIST_1(C_TO_XEN_STRING((char *)(version[0]))),
-					  S_property_changed_hook)))))
+					  S_window_property_changed_hook)))))
 	    snd_eval_property_str((char *)(version[0]));
 	    free(version[0]);
 	  }
@@ -1038,8 +1038,8 @@ XEN_NARGIFY_0(g_snd_glx_context_w, g_snd_glx_context)
 
 void g_init_gxmain(void)
 {
-  #define H_property_changed_hook S_property_changed_hook "(command): called upon receipt of a change in SND_COMMAND (an X window property)"
-  XEN_DEFINE_HOOK(property_changed_hook, S_property_changed_hook, 1, H_property_changed_hook);
+  #define H_window_property_changed_hook S_window_property_changed_hook "(command): called upon receipt of a change in SND_COMMAND (an X window property)"
+  XEN_DEFINE_HOOK(window_property_changed_hook, S_window_property_changed_hook, 1, H_window_property_changed_hook);
 
 #if HAVE_GL
   XEN_DEFINE_PROCEDURE("snd-glx-context", g_snd_glx_context_w, 0, 0, 0, "OpenGL GLXContext");

@@ -492,7 +492,12 @@ file_data *make_file_data_panel(snd_state *ss, GtkWidget *parent, char *name,
     }
   else
     {
-      fdat->comment_text = make_scrolled_text(ss, NULL, TRUE, combox, NULL);
+      GtkWidget *frame;
+      frame = gtk_frame_new(NULL);
+      gtk_box_pack_start(GTK_BOX(combox), frame, TRUE, TRUE, 4);  
+      gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_IN);
+      gtk_widget_show(frame);
+      fdat->comment_text = make_scrolled_text(ss, frame, TRUE, NULL, NULL);
     }
 
   return(fdat);

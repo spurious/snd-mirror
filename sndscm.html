@@ -1714,6 +1714,8 @@ and so on, and a bunch of hooks.  These hooks are used in mix.scm to implement o
 which I assume are groups of related mixes.
 </p>
 <pre>
+  <em class=def><a name="mixproperty">mix-property</a></em> key id
+  <em class=def><A NAME="mixclicksetsamp">mix-click-sets-amp</A></em>
   <em class=def><a name="mixname2id">mix-name-&gt;id</a></em> name
   <em class=def><a name="mix2vct">mix-&gt;vct</a></em> id
   <em class=def><a name="panmix">pan-mix</a></em> file frame env
@@ -1732,6 +1734,10 @@ to pan the mixed samples (0: all chan 0, 1: all chan 1).
 <i>snap-mix-to-beat</i> forces a dragged mix to end up on a beat.
 <i>delete-mix</i> deletes the mix referred to by its argument; this
 operation can be undone (bringing the mix back to life).
+<i>mix-property</i> associates a property list with each mix.
+<i>mix-click-sets-amp</i> uses the property lists to keep track of
+whether the next click should set the mix amps to zero, or to the
+pre-zero value.
 </p>
 <center><img src="pan.png" alt="picture of panning"></center>
 <pre>

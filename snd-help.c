@@ -309,6 +309,8 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+30-Apr:  mix-property in mix.scm.\n\
+         property-changed-hook -> window-property-changed-hook.\n\
 29-Apr:  mix-click-hook\n\
 28-Apr:  snd 6.8.\n\
          freeverb.rb and freeverb.scm from Michael Scholz.\n\
@@ -1092,6 +1094,7 @@ user-interface manipulations.\n\
   " S_mark_drag_hook " (id)\n\
   " S_menu_hook " (name option)\n\
   " S_mix_amp_changed_hook " (id)\n\
+  " S_mix_click_hook " (id)\n\
   " S_mix_position_changed_hook " (id samps)\n\
   " S_mix_speed_changed_hook " (id)\n\
   " S_mouse_drag_hook " (snd chn button state x y)\n\
@@ -1113,7 +1116,7 @@ user-interface manipulations.\n\
   " S_output_comment_hook " (str)\n\
   " S_output_name_hook "()\n\
   " S_play_hook " (samps)\n\
-  " S_property_changed_hook " (command)\n\
+  " S_window_property_changed_hook " (command)\n\
   " S_save_hook " (snd name)\n\
   " S_select_channel_hook " (snd chn)\n\
   " S_select_mix_hook " (id)\n\

@@ -763,7 +763,8 @@ If it returns #t, the file is not closed.
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (add-hook! <em class=red>close-hook</em>
   (lambda (snd) 
-    (system \"sndplay wood16.wav\")))
+    (system \"sndplay wood16.wav\")
+    #f))
 </pre></td></tr></table>
 <br><i>close-hook</i> is used in autosave.scm, examp.scm, extensions.scm, and peak-env.scm; see, for example,
 <i>check-for-unsaved-edits</i> or <i>remember-sound-state</i> in extensions.scm.
@@ -1201,7 +1202,8 @@ If it returns #t, the actual remix is the hook's responsibility.
 </td></tr>
 <tr><td></td><td colspan=2>
 called when a mix tag is clicked; return #t to omit the default action which is to print the mix id in
-the minibuffer.  Here's an example that sets the mix amps to 0 if you click it:
+the minibuffer.  Here's an example that sets the mix amps to 0 if you click it (see <a href="sndscm.html#mixclicksetsamp">mix-click-sets-amp</a>
+in mix.scm for a fancier version):
 </td></tr>
 <tr><td></td><td colspan=2>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
@@ -1386,7 +1388,9 @@ called when the mouse leaves a text widget.
 <span class=defbox><code><em class=def><a name="mousepresshook">mouse-press-hook</a></em> (snd chn button state x y) </code></span></td><td>
 </td></tr>
 <tr><td></td><td colspan=2>
-called upon a mouse button press within the lisp graph (see, for example, enved.scm).
+called upon a mouse button press within the lisp graph (see, for example, enved.scm).  The x and y values are 
+relative to the lisp graph axis (as if the raw mouse pixel position was passed through
+<a href="#position2x">position-&gt;x</a> and <a href="#position2y">position-&gt;y</a>).
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -1442,7 +1446,7 @@ If it returns #t, the usual informative minibuffer babbling is squelched.
 <span class=defbox><code><em class=def><a name="newsoundhook">new-sound-hook</a></em> (filename)</code></span></td><td>
 </td></tr>
 <tr><td></td><td colspan=2>
-called whenever a new sound file is being created.
+called whenever a new sound file is being created.  See sound-let in ws.scm for an example.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -1511,6 +1515,10 @@ Return '() to accept all the current raw header defaults; return #f to fallback 
 </td></tr>
 <tr><td></td><td colspan=2>
 called each time the optimizer hits something it can't handle; <i>message</i> tries to give some information about the situation.
+<br><br><code>(add-hook! optimization-hook (lambda (n) (display (format #f "~A~%" n))))</code>
+<br><br>
+Normally, if the optimizer fails for some reason, it falls back silently on the Guile evaluator, so
+the code simply runs slower.  This hook gives you a way to find out why the optimizer gave up.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -1623,16 +1631,6 @@ examples, the first adds a timestamp, the second (in Gtk) displays Snd's respons
     (set! (listener-text-color) old-color))
     (snd-print (listener-prompt))))
 </pre></td></tr></table></td></tr>
-<tr><td colspan=3></td></tr>
-
-<!-- property-changed-hook -->
-<tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="propertychangedhook">property-changed-hook</a></em> (command)</code></span></td><td align=right><b>or</b>
-</td></tr>
-<tr><td></td><td colspan=2>
-called when Snd sees a SND_COMMAND window property change.
-If it returns #t, the command is not evaluated.  (This is mostly an internal debugging hook).
-</td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- read-hook -->
@@ -1899,6 +1897,16 @@ the returned procedure to make sure the mark pane is reactivated right away when
       (snd-print "ok!"))))
 </pre></td></tr></table>
 </td></tr><tr><td colspan=3></td></tr>
+
+<!-- window-property-changed-hook -->
+<tr><td colspan=2>
+<span class=defbox><code><em class=def><a name="windowpropertychangedhook">window-property-changed-hook</a></em> (command)</code></span></td><td align=right><b>or</b>
+</td></tr>
+<tr><td></td><td colspan=2>
+called when Snd sees a SND_COMMAND window property change.
+If it returns #t, the command is not evaluated.  (This is mostly an internal debugging hook).
+</td></tr>
+<tr><td colspan=3></td></tr>
 
 </table>
 
@@ -4030,7 +4038,10 @@ To leave the cursor at the final position after tracking play: if-cursor-follows
 <tr><td></td><td>
 current cursor position as a list (x y).
 These graph-relative values can be turned into axis-relative values with
-<a href="#position2x">position-&gt;x</a> and <a href="#position2y">position-&gt;y</a>.
+<a href="#position2x">position-&gt;x</a> and <a href="#position2y">position-&gt;y</a>:
+<br><br>
+<code>(position-&gt;x (car (cursor-position)))</code> equals <code>(/ (cursor) (srate))</code>
+<br>
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -4370,7 +4381,7 @@ CLM filtering to a sound. (The regularized version of this is <a href="#clmchann
 (filter-sound (make-formant .99 1200))               ;CLM formant
 </pre></td></tr></table>
 <br><blockquote><small>
-<spacer type=horizontal size=40>Filters in Snd:<br>
+<spacer type=horizontal size=40><A NAME="filtersinsnd">Filters</a> in Snd:<br>
 CLM filter generators: <a href="clm.html#filters">filter, one-pole, formant, comb, notch, all-pass, etc</a>, many examples in examp.scm, new-effects.scm<br>
 lowpass filter: make-lowpass in dsp.scm<br>
 highpass filter: make-highpass in dsp.scm<br>
@@ -5040,6 +5051,7 @@ no disk space or memory is needed.
 return some of the overall amplitude envelope data for the given channel
 at the given edit list position.  The data currently returned are whether
 the envelopes are complete (they are the result of a background process), and the min and max data values.
+See <a href="#initialgraphhook">initial-graph-hook</a> and peak-env.scm for examples.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6088,6 +6100,17 @@ If #t, the y=0 axis is displayed.  This is the '<a href="snd.html#viewy0">Show Y
 <tr><td></td><td>
 <b>smooth-channel</b> is the <a href="#regularizedargs">regularized</a> version of <a href="#sndsmooth">smooth-sound</a>.
 <i>smooth-channel-via-ptree</i> in examp.scm is the virtual form.
+
+<pre>
+<small><blockquote>
+To smooth all channels: <a href="#sndsmooth">smooth-sound</a>
+To smooth selection: <a href="#sndsmoothselection">smooth-selection</a>
+To delete the selection and smooth the splice: <a href="sndscm.html#exdeleteselectionandsmooth">delete-selection-and-smooth</a>
+Smoothing as virtual op: smooth-channel-via-ptree in examp.scm
+Smoothing via fft: <a href="sndscm.html#exfftsmoother">fft-smoother</a>
+Smooth via low-pass <a href="#filtersinsnd">filter</a>
+Smooth over click: Remove-click in examp.scm
+</blockquote></small></pre>
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6335,6 +6358,19 @@ is the sampling rate of the ADC.
 sampling rate conversion using 'warped sinc interpolation'.  The
 argument <i>num-or-env-gen</i> can be either a number or an envelope generator.
 This is the <a href="#regularizedargs">regularized</a> version of <a href="#sndsrc">src-sound</a>.
+<pre>
+<small><blockquote>
+resample all chans: <a href="#sndsrc">src-sound</a>
+resample selection: <a href="#sndsrcselection">src-selection</a>
+resample mix: speed control in <a href="snd.html#mixpanel">Mix dialog</a> (also <a href="#applycontrols">apply-controls</a>) or src-channel with mix id in list
+resample via drawn envelope: srate in <a href="snd.html#editenvelope">Envelope editor</a>
+resample via CLM gen: <a href="clm.html#src">src</a>
+resample with independent time control: expand in <a href="#customcontrols">control panel</a>, <a href="sndscm.html#exexpsrc">expsrc</a> and <a href="sndscm.html#exexpsnd">expsnd</a>
+resampling-based sound effects: <a href="sndscm.html#exhellodentist">hello-dentist</a>, <a href="sndscm.html#exfp">fp</a> ("Forbidden Planet"), flange and chorus in dsp.scm and new-effects.scm
+the digital zipper: <a href="sndscm.html#zipdoc">zipper</a>
+resample via FFT: <a href="sndscm.html#exdownoct">down-oct</a>
+resample through env: <a href="sndscm.html#exsoundinterp">sound-interp</a> and <a href="sndscm.html#exenvsoundinterp">env-sound-interp</a>
+</blockquote></small></pre>
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -9579,7 +9615,7 @@ the graphics context for XOR drawing in the selection color.</td></tr>
 
 <!-- send-netscape -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="sendnetscape">send-netscape</a></em>(url)</code></span></td></tr>
+<span class=defbox><code><em class=def><a name="sendnetscape">send-netscape</a></em> (url)</code></span></td></tr>
 
 <tr><td></td><td>
 Start netscape, if necessary, and tell it to go to the location 'url'.

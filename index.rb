@@ -812,7 +812,7 @@ Snd_names_and_urls =
     ["print_length", "extsnd.html#printlength", "snd-xen.c"],
     ["progress_report", "extsnd.html#progressreport", "snd-snd.c"],
     ["prompt_in_minibuffer", "extsnd.html#sndpromptinminibuffer", "snd-kbd.c"],
-    ["property_changed_hook", "extsnd.html#propertychangedhook", "snd-gmain.c"],
+    ["window_property_changed_hook", "extsnd.html#windowpropertychangedhook", "snd-gmain.c"],
     ["protect_region", "extsnd.html#sndprotectregion", "snd-region.c"],
     ["ptree_channel", "extsnd.html#ptreechannel", "snd-sig.c"],
     ["pulse_train", "clm.html#pulse-train", "clm2xen.c"],

@@ -30,12 +30,24 @@
 ;;; test 27: openGL
 ;;; test 28: errors
 
-;;; TODO: mix-click-hook test and ex with remembered amps
-;;; TODO: drag-mark-hook ex with amps/pitches
-;;; TODO: data size field in header editor (and somehow settable like others)
+;;; TODO: drag-mark-hook ex with amps/pitches, also set-0 under dragging mark
+;;; TODO: data size field in header editor
+;;; TODO: data-size alongside data-location: 
+;;;          int mus_header_change_samples(const char *filename, off_t new_samples) [update]
+;;;          mus_sound_set_samples(sp->filename, sp->hdr->samples) [just cache]
+;;;          this is settable (set! (mus-sound-samples...)) -- need update graph etc
 ;;; TODO: mouse-drag in time graph hook?
 ;;; TODO: thumbnail sketch in file dialog info section?
-;;; TODO: hook forward proc cases?
+;;; TODO: hook forward proc cases? ->composition via optarg?           close-hook, mix-click-hook
+;;; TODO: mark property lists (prune in close-hook?), auto-prune mix properties? (close-hook not set by default)
+;;; TODO: find/"fix" clipping
+;;; TODO: pan env field in mix dialog if stereo in/out
+;;; TODO: doc ex of key-press-hook (cx cs=save as in xe-enved?), mix-amp-changed-hook, select-*-hook
+;;; TODO: crossref tables for sections/regions in extsnd.html, enved-*
+;;; TODO: extsnd -- fft graph variables all in one table (min-dB fft-beta etc) -- perhaps in transform section
+;;; TODO: does multi-chan mix try to delete temp file twice?
+
+;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs) (ice-9 syncase))
 
@@ -1268,8 +1280,8 @@
 	  (snd-display ";mouse-leave-graph-hook: ~A?" mouse-leave-graph-hook))
       (if (or (not (hook? mouse-leave-listener-hook)) (not (hook-empty? mouse-leave-listener-hook)))
 	  (snd-display ";mouse-leave-listener-hook: ~A?" mouse-leave-listener-hook))
-      (if (or (not (hook? property-changed-hook)) (not (hook-empty? property-changed-hook)))
-	  (snd-display ";property-changed-hook: ~A?" property-changed-hook))
+      (if (or (not (hook? window-property-changed-hook)) (not (hook-empty? window-property-changed-hook)))
+	  (snd-display ";window-property-changed-hook: ~A?" window-property-changed-hook))
       (if (or (not (hook? initial-graph-hook)) (not (hook-empty? initial-graph-hook)))
 	  (snd-display ";initial-graph-hook: ~A?" initial-graph-hook))
       (if (or (not (hook? after-graph-hook)) (not (hook-empty? after-graph-hook)))
@@ -1707,7 +1719,7 @@
 	  (snd-display ";oboe: mus-sound-maxamp-exists after maxamp: ~A" (mus-sound-maxamp-exists? "oboe.snd")))
 
       (let ((str (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "oboe.snd")))))
-	(if (not (string=? str "25-Oct 07:15 PDT"))
+	(if (not (string=? str "19-Oct 09:46 PDT"))
 	    (snd-display ";mus-sound-write-date oboe.snd: ~A?" str)))
       (let ((str (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "pistol.snd")))))
 	(if (not (string=? str "19-Oct 09:46 PDT"))
@@ -1865,7 +1877,7 @@
       (if (and (not (= (mus-sound-type-specifier "oboe.snd") #x646e732e))  ;little endian reader
 	       (not (= (mus-sound-type-specifier "oboe.snd") #x2e736e64))) ;big endian reader
 	  (snd-display ";oboe: mus-sound-type-specifier: ~X?" (mus-sound-type-specifier "oboe.snd")))
-      (if (not (string=? (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd"))) "25-Oct-2002 07:15"))
+      (if (not (string=? (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd"))) "19-Oct-1998 09:46"))
 	  (snd-display ";oboe: file-write-date: ~A?" (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd")))))
       (play-sound "oboe.snd")
 
@@ -12620,6 +12632,9 @@ EDITS: 5
 	      (snd-display ";find-mix(200): ~A ~A?" nid (and (mix? nid) (mix-position nid)))))
 	(let ((mix-id (mix "oboe.snd" 100)))
 	  (set! (mix-waveform-height) 40)
+	  (set! (mix-property :hiho mix-id) 123)
+	  (if (not (= (mix-property :hiho mix-id) 123)) (snd-display ";mix-property: ~A" (mix-property mix-id)))
+	  (if (mix-property :not-there mix-id) (snd-display ";mix-not-property: ~A" (mix-property :not-there mix-id)))
 	  (update-time-graph)
 	  (set! (mix-waveform-height) 20)
 	  (if (not (sound? (list mix-id))) (snd-display ";mix oboe: ~D not ok?" mix-id))
@@ -14407,47 +14422,62 @@ EDITS: 5
 	      (if (not (sample-reader-at-end? rd)) (snd-display ";region-sample-reader after deletion?"))
 	      (free-sample-reader rd)))
 	  ;; mix reader
-	  (let* ((ind (open-sound "oboe.snd"))
-		 (reg (make-region 1000 2000 ind 0))
-		 (md (mix-region 0 reg ind 0))
-		 (rd (make-mix-sample-reader md)))
-	    (let ((val (rd)))
-	      (if (fneq val .0328) (snd-display ";mix-sample-reader at start: ~A" val))
-	      (if (not (string? (format #f "~A" rd))) (snd-display ";mix-sample-reader: ~A" (format #f "~A" rd)))
-	      (close-sound ind)
-	      (let ((str (format #f "~A" rd)))
-		(if (not (string=? str "#<mix-sample-reader: inactive>")) (snd-display ";mix-sample-reader released: ~A" str))
-		(set! val (read-mix-sample rd))
-		(if (fneq val 0.0) (snd-display ";mix-sample-reader at end: ~A" val))
-		(free-mix-sample-reader rd))))
-	  ;; track reader
-	  (let* ((ind (open-sound "oboe.snd"))
-		 (reg (make-region 1000 2000 ind 0))
-		 (md (mix-region 0 reg ind 0)))
-	    (set! (mix-track md) 101)
-	    (let ((rd (make-track-sample-reader 101)))
+	  (let ((save-md 0))
+	    (mix-click-sets-amp)
+	    (let* ((ind (open-sound "oboe.snd"))
+		   (reg (make-region 1000 2000 ind 0))
+		   (md (mix-region 0 reg ind 0))
+		   (rd (make-mix-sample-reader md)))
+	      (set! (mix-property :hi md) "hi")
+	      (set! save-md md)
+	      (if (not (string=? (mix-property :hi md) "hi")) (snd-display ";mix(9)-property: ~A" (mix-property :hi md)))
 	      (let ((val (rd)))
-		(if (fneq val .0328) (snd-display ";track-sample-reader at start: ~A" val))
-		(if (not (string? (format #f "~A" rd))) (snd-display ";track-sample-reader: ~A" (format #f "~A" rd)))
+		(if (fneq val .0328) (snd-display ";mix-sample-reader at start: ~A" val))
+		(if (not (string? (format #f "~A" rd))) (snd-display ";mix-sample-reader: ~A" (format #f "~A" rd)))
 		(close-sound ind)
+		(let ((tag (catch #t
+				  (lambda () (mix-property :hi md))
+				  (lambda args (car args)))))
+		  (if (not (eq? tag 'no-such-mix)) (snd-display ";mix-property bad mix: ~A" tag)))
 		(let ((str (format #f "~A" rd)))
-		  (if (not (string? str)) (snd-display ";track-sample-reader released: ~A" str))
-		  (set! val (read-track-sample rd))
-		  (if (fneq val 0.0) (snd-display ";track-sample-reader at end: ~A" val))
-		  (free-track-sample-reader rd)
-		  (for-each
-		   (lambda (n b)
-		     (let ((tag (catch #t
-				       (lambda ()
-					 (n md))
-				       (lambda args (car args)))))
-		       (if (not (eq? tag 'no-such-mix))
-			   (snd-display ";~A: ~A" b tag))))
-		   (list mix-amp mix-anchor mix-chans mix-track mix-frames mix-locked mix-name
-			 mix-position mix-home mix-speed mix-tag-y)
-		   (list 'mix-amp 'mix-anchor 'mix-chans 'mix-track 'mix-frames 'mix-locked 'mix-name
-			 'mix-position 'mix-home 'mix-speed 'mix-tag-y)))
-		)))
+		  (if (not (string=? str "#<mix-sample-reader: inactive>")) (snd-display ";mix-sample-reader released: ~A" str))
+		  (set! val (read-mix-sample rd))
+		  (if (fneq val 0.0) (snd-display ";mix-sample-reader at end: ~A" val))
+		  (free-mix-sample-reader rd))))
+	    ;; track reader
+	    (let* ((ind (open-sound "oboe.snd"))
+		   (reg (make-region 1000 2000 ind 0))
+		   (md (mix-region 0 reg ind 0)))
+	      (set! (mix-track md) 101)
+	      (let ((rd (make-track-sample-reader 101)))
+		(let ((val (rd)))
+		  (if (fneq val .0328) (snd-display ";track-sample-reader at start: ~A" val))
+		  (if (not (string? (format #f "~A" rd))) (snd-display ";track-sample-reader: ~A" (format #f "~A" rd)))
+		  (close-sound ind)
+		  (let ((tag (catch #t
+				    (lambda () (mix-property :hi save-md))
+				    (lambda args (car args)))))
+		    (if (not (eq? tag 'no-such-mix)) (snd-display ";mix-property(2) bad mix: ~A" tag)))
+		  (let ((str (format #f "~A" rd)))
+		    (if (not (string? str)) (snd-display ";track-sample-reader released: ~A" str))
+		    (set! val (read-track-sample rd))
+		    (if (fneq val 0.0) (snd-display ";track-sample-reader at end: ~A" val))
+		    (free-track-sample-reader rd)
+		    (for-each
+		     (lambda (n b)
+		       (let ((tag (catch #t
+					 (lambda ()
+					   (n md))
+					 (lambda args (car args)))))
+			 (if (not (eq? tag 'no-such-mix))
+			     (snd-display ";~A: ~A" b tag))))
+		     (list mix-amp mix-anchor mix-chans mix-track mix-frames mix-locked mix-name
+			   mix-position mix-home mix-speed mix-tag-y)
+		     (list 'mix-amp 'mix-anchor 'mix-chans 'mix-track 'mix-frames 'mix-locked 'mix-name
+			   'mix-position 'mix-home 'mix-speed 'mix-tag-y)))
+		  ))))
+	  (reset-hook! mix-click-hook)
+	  (reset-hook! close-hook)
 	  
 	  (let* ((ind (open-sound "oboe.snd"))
 		 (reg (make-region 1000 2000 ind 0))
@@ -14623,7 +14653,7 @@ EDITS: 5
   (add-hook! stop-playing-region-hook arg1) (carg1 stop-playing-region-hook)
   (add-hook! mouse-enter-listener-hook arg1) (carg1 mouse-enter-listener-hook)
   (add-hook! mouse-leave-listener-hook arg1) (carg1 mouse-leave-listener-hook)
-  (add-hook! property-changed-hook arg1) (carg1 property-changed-hook)
+  (add-hook! window-property-changed-hook arg1) (carg1 window-property-changed-hook)
   (add-hook! select-sound-hook arg1) (carg1 select-sound-hook)
   (add-hook! select-mix-hook arg1) (carg1 select-mix-hook)
   (add-hook! print-hook arg1) (carg1 print-hook)
@@ -14833,9 +14863,9 @@ EDITS: 5
 					    (format #f ":~{~A~^, ~}" names)))))
       (let ((gotit #f)
 	    (oldsize (vu-size)))
-	(add-hook! property-changed-hook (lambda (hi) (set! gotit #t) #f))
+	(add-hook! window-property-changed-hook (lambda (hi) (set! gotit #t) #f))
 	(change-window-property "SND_VERSION" "SND_COMMAND" "(set! (vu-size) .5)")
-	(reset-hook! property-changed-hook)
+	(reset-hook! window-property-changed-hook)
 	(change-window-property "SND_VERSION" "SND_COMMAND" "(make-vector 10 3.14)")
 	(if (or (not gotit)
 		(fneq (vu-size) 0.5))
@@ -35010,7 +35040,7 @@ EDITS: 2
 			(list stop-playing-region-hook 'stop-playing-region-hook)
 			(list mouse-enter-listener-hook 'mouse-enter-listener-hook)
 			(list mouse-leave-listener-hook 'mouse-leave-listener-hook)
-			(list property-changed-hook 'property-changed-hook)
+			(list window-property-changed-hook 'window-property-changed-hook)
 			(list select-sound-hook 'select-sound-hook)
 			(list select-mix-hook 'select-mix-hook)
 			(list previous-files-select-hook 'previous-files-select-hook)

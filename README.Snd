@@ -463,6 +463,15 @@ I added the two /home/bil/test directories to the makefile:
 Don't run the Motif/GL and the Gtk/GL versions of Snd at the same time.
 This can kill the X server!
 
+Another problem with gtkglext is that its developers have been screwing
+up library version numbers, so if you want to upgrade your version, first
+completely delete every trace of the former version -- check especially
+/usr/local/lib!  If the loader gets confused by leftovers, you'll get
+an error along these lines:
+
+(snd:16515): GLib-GObject-WARNING **: specified class size for type `GdkGLWindow' is smaller than the parent type's `GdkDrawable' class size
+
+
 
 ---- Sun ----
 
