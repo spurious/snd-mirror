@@ -12,30 +12,108 @@
 ;;;   binding in CL to implement dynamic-wind by hand, I think.
 
 
-;;; (with-sound () (fm-violin 0 1 440 .1) (sleep 1) (fm-violin 1 1 440 .1) (sleep 1) (fm-violin 2 1 440 .1) (sleep 1))
-
-
 ;;; -------- with-sound debugger --------
 ;;;
 ;;; slightly different from the snd-break debugger because there are several
-;;;  ways one might want to get out of the with-sound, and we need a way to
-;;;  escape n levels of recursive with-sounds
+;;;   ways one might want to get out of the with-sound (w/out rev etc).
 
-(define *ws-level* 0)
+(define *ws-stacks* '())
 (define *ws-stack* #f)
-(define *ws-continuation* #f)
+(define *ws-continues* '())
+(define *ws-continue* #f)
+(define *ws-finishes* '())
 (define *ws-finish* #f)
+(define *ws-top-level-prompt* (listener-prompt))
 
-(define* (ws-go #:optional result) (*ws-continuation* result))
+(define (ws-prompt)
+  (let ((stack-len (length *ws-stacks*)))
+    (if (> stack-len 1)
+	(format #f "ws(~D)~A" (1- stack-len) *ws-top-level-prompt*)
+	(if (> stack-len 0)
+	    (format #f "ws~A" *ws-top-level-prompt*)
+	    *ws-top-level-prompt*))))
 
-(define (ws-quit) (*ws-finish* #f))
-(define (ws-quit!) (*ws-finish* *ws-level*))
-(define (ws-stop) (*ws-finish* #t))
-(define (ws-stop!) (*ws-finish* *ws-level*))
+(define (pop-ws)
+  (if (not (null? *ws-continues*))
+      (begin
+	(set! *ws-continue* (car *ws-continues*))
+	(set! *ws-continues* (cdr *ws-continues*)))
+      (set! *ws-continue* #f))
+  (if (not (null? *ws-stacks*))
+      (begin
+	(set! *ws-stack* (car *ws-stacks*))
+	(set! *ws-stacks* (cdr *ws-stacks*)))
+      (set! *ws-stack* #f))
+  (if (not (null? *ws-finishes*))
+      (begin
+	(set! *ws-finish* (car *ws-finishes*))
+	(set! *ws-finishes* (cdr *ws-finishes*)))
+      (set! *ws-continue* #f))
+  (set! (listener-prompt) (ws-prompt))
+  (snd-print (format #f "~%~A" (listener-prompt)))
+  (goto-listener-end))
 
-(define* (ws-backtrace #:optional all) (backtrace *ws-stack* all))
-(define* (ws-locals #:optional (index 0)) (local-variables *ws-stack* index))
-(define* (ws-local obj #:optional (index 0)) (local-variable *ws-stack* obj index))
+(define (push-ws continue finish stack)
+  (if (null? *ws-continues*) (set! *ws-top-level-prompt* (listener-prompt)))
+  (set! *ws-continues* (cons *ws-continue* *ws-continues*))
+  (set! *ws-continue* continue)
+  (set! *ws-stacks* (cons *ws-stack* *ws-stacks*))
+  (set! *ws-stack* stack)
+  (set! *ws-finishes* (cons *ws-finish* *ws-finishes*))
+  (set! *ws-finish* finish)
+  (set! (listener-prompt) (ws-prompt))
+  (snd-print (format #f "~%~A" (listener-prompt)))
+  (goto-listener-end))
+
+(define* (ws-go #:optional val)
+  "(ws-go (val #f)) tries to continue from the point at which with-sound was interrupted. 'val' is \
+the value returned by the interrupt (ws-interrupt? normally)"
+  (let ((current-continuation *ws-continue*))
+    (pop-ws)
+    (if (continuation? current-continuation)
+	(current-continuation val)
+	";no notelist to continue?")))
+
+(define (ws-quit)
+  "(ws-quit) exits a with-sound context (without reverb)"
+  (let ((current-finish *ws-finish*))
+    (pop-ws)
+    (if (continuation? current-finish)
+	(current-finish #f)
+	";no with-sound to quit")))
+
+(define (ws-quit!)
+  "(ws-quit!) exits all current with-sound contexts, returning you to the true top-level."
+  (ws-quit)
+  (if (not (null? *ws-continues*))
+      (ws-quit!)))
+
+(define (ws-stop)
+  "(ws-stop) exits a with-sound context (but runs the reverb, if any)"
+  (let ((current-finish *ws-finish*))
+    (pop-ws)
+    (if (continuation? current-finish)
+	(current-finish #t)
+	";no with-sound to stop")))
+
+(define (ws-stop!)
+  "(ws-quit!) exits all current with-sound contexts (running any reverbs on the way), \
+returning you to the true top-level."
+  (ws-stop)
+  (if (not (null? *ws-continues*))
+      (ws-stop!)))
+
+(define* (ws-backtrace #:optional all) 
+  "(ws-backtrace (all #f)) shows the stack backtrace at the point where with-sound was interrupted."
+  (backtrace *ws-stack* all))
+
+(define* (ws-locals #:optional (index 0)) 
+  "(ws-locals (index 0)) shows the local variables at the index-th frame."
+  (local-variables *ws-stack* index))
+
+(define* (ws-local obj #:optional (index 0)) 
+  "(ws-local obj (index 0)) shows the value of obj in the context where with-sound was interrupted."
+  (local-variable *ws-stack* obj index))
 
 (define (ws-location)
   (if (stack? *ws-stack*)
@@ -57,51 +135,25 @@
 ;The '?' prompt means you're in the with-sound debugger.\n\
 ;This is the standard Snd listener, so anything is ok at this level, but\n\
 ;there are also several additional functions:\n\
-;  (ws-go) continues from the point of the interrupt.\n\
+;  (ws-go (val #f)) continues from the point of the interrupt.\n\
 ;  (ws-quit) finishes with-sound, ignoring any reverb request.\n\
 ;  (ws-stop) runs the reverb, then finishes with-sound.\n\
 ;  (ws-quit!) and (ws-stop!) are similar, but if you're nested several\n\
-;     levels deep in the debugger (the prompt has more than one '?')\n\
-;     these two will pop you back to the top level.\n\
+;     levels deep in the debugger, these two will pop you back to the top level.\n\
 ;  (ws-locals) shows the local variables and their values.\n\
 ;  (ws-local obj) shows the value of obj.\n\
 ;  (ws-backtrace) shows the backtrace at the point of the interrupt.\n\
 ")
 
-(define (ws-debug args)
-  (let ((old-prompt (listener-prompt))
-	(old-continuation *ws-continuation*)
-	(old-finish *ws-finish*)
-	(old-stack *ws-stack*))
-    (set! *ws-stack* (caddr args))
-    (set! *ws-continuation* (car args))
-    (set! *ws-finish* (cadr args))
-    (set! *ws-level* (1+ *ws-level*))
-    (reset-listener-cursor)
-    (dynamic-wind
-     (lambda ()
-       (set! (listener-prompt) (make-string *ws-level* #\?))
-       (snd-print (format #f ";with-sound interrupted at: ~A~%" (ws-location)))
-       (snd-print (format #f ";ws-debug...[(ws-go): continue, (ws-quit): quit, (ws-locals): local vars]~%~A" (listener-prompt)))
-       (goto-listener-end))
-     (lambda ()
-       (event-loop)) 
-     ;; TODO: no-gui case would need a nested repl?
-     ;; TODO: in gtk, damned glib exits because it's confused about a key-press event!
-     (lambda ()
-       (set! *ws-level* (max 0 (1- *ws-level*)))
-       (set! (listener-prompt) old-prompt)
-       (set! *ws-continuation* old-continuation)
-       (set! *ws-finish* old-finish)))
-    #f))
-
 ;;; this goes in the instrument, but not in the run macro body (run doesn't (yet?) handle code this complex)
-(defmacro ws-interrupt? ()
+(defmacro* ws-interrupt? (#:optional message)
   `(let ((stack (make-stack #t)))
      (if (c-g?) 
 	 (call-with-current-continuation
 	  (lambda (continue)
-	    (throw 'with-sound-interrupt continue stack))))))
+	    (if ,message
+		(throw 'with-sound-interrupt continue stack ,message)
+		(throw 'with-sound-interrupt continue stack)))))))
 
 
 ;;; -------- with-sound --------
@@ -140,6 +192,7 @@
   (let ((old-srate (mus-srate))
 	(old-*output* *output*)
 	(old-*reverb* *reverb*)
+	(in-debugger #f)
 	(output-1 output)) ; protect during nesting
     (dynamic-wind 
 
@@ -166,22 +219,27 @@
 	 (catch 'with-sound-interrupt
 		thunk
 		(lambda args 
+		  ;; if from ws-interrupt? we have (continue stack message) as args
 		  (begin
 		    (if (and (not (null? (cdr args)))
 			     (continuation? (cadr args)))
 			;; instrument passed us a way to continue, so drop into the with-sound debugger
 			(let ((val (call-with-current-continuation
 				    (lambda (finish)
-				      (ws-debug (list (cadr args) 
-						      finish 
-						      (if (not (null? (cddr args))) 
-							  (caddr args) 
-							  #f)))))))
-			  (set! flush-reverb (eq? val #f))
-			  (if (and (continuation? *ws-finish*)
-				   (number? val) 
-				   (> val 0))
-			      (*ws-finish* (1- val))))
+				      (push-ws (cadr args)              ; continue in notelist from ws-interrupt
+					       finish                   ; stop notelist, go to output close section below
+					       (if (> (length args) 2)
+						   (list-ref args 2) 
+						   (make-stack #t)))    ; stack at point of ws-interrupt or stack right here
+				      (set! in-debugger #t)             ; gad -- turn off dynamic-wind output fixup below
+				      (throw 'snd-top-level             ; return to "top level" (can be nested)
+					     (format #f ";~Awith-sound interrupted at: ~A" 
+						     (if (> (length args) 3)    ; optional message to ws-interrupt
+							 (format #f ";~A, " (list-ref args 3))
+							 "")
+						     (ws-location)))))))
+			  (set! in-debugger #f)
+			  (set! flush-reverb (eq? val #f)))
 			(begin
 			  (snd-print (format #f "with-sound interrupted: ~{~A~^ ~}" (cdr args)))
 			  (set! flush-reverb #t)))
@@ -216,15 +274,17 @@
 	 output-1))
 
      (lambda () 
-       (if *reverb*
+       (if (not in-debugger)
 	   (begin
-	     (mus-close *reverb*)
-	     (set! *reverb* old-*reverb*)))
-       (if *output*
-	   (begin
-	     (mus-close *output*)
-	     (set! *output* old-*output*)))
-       (set! (mus-srate) old-srate)))))
+	     (if *reverb*
+		 (begin
+		   (mus-close *reverb*)
+		   (set! *reverb* old-*reverb*)))
+	     (if *output*
+		 (begin
+		   (mus-close *output*)
+		   (set! *output* old-*output*)))
+	     (set! (mus-srate) old-srate)))))))
 
 (defmacro with-sound (args . body)
   `(with-sound-helper (lambda () ,@body) ,@args))
@@ -406,6 +466,29 @@
       (throw 'wrong-type-arg
 	     (list "finish-with-sound" wsd))))
 
+#!
+;;; these are for compatibility with CLM/CM
+;;;(defstruct wsdat revfun revdat revdecay outtype play stats wait scaled-to format file channels scaled-by)
+(define (wsdat-revfun w) (list-ref w 2))
+(define (wsdat-revdat w) #f)
+(define (wsdat-revdecay w) #f)
+(define (wsdat-outtype w) #f)
+(define (wsdat-play w) (list-ref w 9))
+(define (wsdat-stats w) (list-ref w 5))
+(define (wsdat-wait w) #f)
+(define (wsdat-scaled-to w) (list-ref w 7))
+(define (wsdat-format w) #f)
+(define (wsdat-file w) (list-ref w 1))
+(define (wsdat-channels w) #f)
+(define (wsdat-scaled-by w) (list-ref w 8))
+!#
+(define wsdat-play
+  (make-procedure-with-setter
+   (lambda (w)
+     (list-ref w 9))
+   (lambda (w val)
+     (list-set! w 9 val))))
+
 
 ;;; -------- with-sound save state --------
 (define (mus-data-format->string df)
@@ -522,4 +605,7 @@
 	  #t)
 	#f)))
 !#
+
+;;; (with-sound () (fm-violin 0 1 440 .1) (sleep 1) (fm-violin 1 1 440 .1) (sleep 1) (fm-violin 2 1 440 .1) (sleep 1))
+
 

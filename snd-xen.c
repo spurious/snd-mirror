@@ -247,6 +247,9 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
   char *name_buf = NULL;
   int need_comma = FALSE;
   snd_state *ss;
+  if ((XEN_SYMBOL_P(tag)) &&
+      (strcmp(XEN_SYMBOL_TO_C_STRING(tag), "snd-top-level") == 0))
+    return(throw_args); /* not an error -- just a way to exit the current context */
   ss = get_global_state();
 #ifdef SCM_MAKE_CHAR
   port = scm_mkstrport(XEN_ZERO, 
@@ -264,22 +267,11 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
     {
       /* force out an error before possible backtrace call */
       XEN lport;
-#ifdef SCM_MAKE_CHAR
-      lport = scm_mkstrport(XEN_ZERO, 
-			    scm_make_string(XEN_ZERO, SCM_MAKE_CHAR(0)),
-			    SCM_OPN | SCM_WRTNG,
-			    "snd error handler");
-#else
-      lport = scm_mkstrport(XEN_ZERO, 
-			    scm_make_string(XEN_ZERO, XEN_UNDEFINED),
-			    SCM_OPN | SCM_WRTNG,
-			    "snd error handler");
-#endif
+      lport = scm_current_error_port();
       XEN_DISPLAY(tag, lport);
       XEN_PUTS(": ", lport);
       XEN_DISPLAY(throw_args, lport);
       XEN_FLUSH_PORT(lport);
-      fprintf(stderr, XEN_TO_C_STRING(XEN_PORT_TO_STRING(lport)));
     }
 
   /* Guile's error messages sometimes have formatting directives in the first of the throw_args,
@@ -317,7 +309,6 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
     }
   if (show_backtrace(ss))
     {
-      /* this should probably use lazy catch to get the stack at the point of the error */
 #if HAVE_SCM_C_DEFINE
       stack = scm_fluid_ref(XEN_VARIABLE_REF(scm_the_last_stack_fluid_var));
 #else

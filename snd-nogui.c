@@ -397,7 +397,6 @@ void snd_doit(snd_state *ss, int argc, char **argv)
                (define (" S_make_color " . args) #f)\
                (define (" S_color_p " . args) #f)\
                (define (goto-listener-end) #f)\
-               (define (event-loop) #f)\
                (define (" S_color2list " .args) #f)");
 
   XEN_EVAL_C_STRING("(define " S_mouse_enter_graph_hook " (make-hook 2))\

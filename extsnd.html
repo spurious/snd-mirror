@@ -8862,6 +8862,11 @@ throws the error 'no-such-file:</p>
 <p>The mix.scm track functions can return 'no-such-track if a
 given track has no mixes.
 </p>
+<p>There is one special catch: 'snd-top-level.  This is used by the
+debuggers to exit the current context, returning up a level in the
+stack of listeners.  Normally that means you jump out of a breakpoint
+or whatever and find yourself back at the top level.
+</p>
 
 <hr>
 <p>There are a variety of debugging aids supplied by Guile, including

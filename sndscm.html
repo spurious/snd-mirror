@@ -311,7 +311,7 @@ based on Perry Cook's Scrubber.m.
 <pre>
   <em class=def><a name="exsnddebug">snd-debug</a></em>
   <em class=def><a name="exsndtrace">snd-trace</a></em>
-  <em class=def><a name="exsndbreak">snd-break</a></em>
+  <em class=def><a name="exsndbreak">snd-break</a></em> (message #f)
 </pre>
 
 <p>debug.scm is a package of debugging aids.
@@ -326,15 +326,44 @@ these functions available:
   <em class=def>break-local</em> local-var (stack-location 0)
   <em class=def>break-backtrace</em> (all #f)
   <em class=def>break-help</em>
+  <em class=def>break-quit</em>
+  <em class=def>break-quit!</em>
 </pre>
-<p><i>break-go</i> continues from the point of the breakpoint.
 <i>break-locals</i> prints out the local variables and their values.
 <i>break-local</i> prints one such variable's value (the <i>local-var</i> argument should be a symbol or a string).
 <i>break-help</i> prints out help.
 <i>break-backtrace</i> shows the stack at the point of the snd-break call.  The stack trace
 is normally truncated to show just the 5 or so inner frames; to get the full
 backtrace, call break-backtrace with an argument of #t.
+<i>break-quit</i> exits the current break level.
+<i>break-quit!</i> exits all break levels, returning you to the true top-level.
+<p><i>break-go</i> continues from the point of the breakpoint.
+The 'returned-value' is the value to return from the original call on snd-break.
+For example, here is a brief session in Snd's listener:
 </p>
+<pre>
+<em class=listener>:</em><em class=typing>(define (test-break a) (let ((b (+ a (<em class=red>snd-break</em> "hiho")))) b))</em>
+<em class=listener>#&lt;unspecified&gt;</em>
+<em class=listener>:</em><em class=typing>(define hi 123)</em>
+<em class=listener>#&lt;unspecified&gt;</em>
+<em class=listener>:</em><em class=typing>(set! hi (test-break 1))</em>
+<em class=listener>break:("hiho")</em>
+<em class=listener>break:</em><em class=typing>hi</em>
+<em class=listener>123</em>
+<em class=listener>break:</em><em class=typing>(break-go 32)</em>
+<em class=listener>:#&lt;unspecified&gt;</em>
+<em class=listener>:</em><em class=typing>hi</em>
+<em class=listener>33</em>
+</pre>
+<p>In words, we put a breakpoint in the midst of an expression in the test-break function,
+asking it to type "hiho" and drop into the debugger if it is executed.  Then we call
+test-break in an expression that sets the variable hi.  The breakpoint is hit, "hiho"
+gets reported, and we're placed in the debugger.  As you can probably tell, this is
+just the Snd listener, but with some extra context to implement the break support.
+After poking around, we call break-go with an argument of 32.  This causes the original
+set! to continue with 32 plugged in where the snd-break call was, setting hi to 33.
+</p>
+<p>
 <b>snd-debug</b> sets up a debugger. You can examine the stack or local variables etc.
 After calling snd-debug, there are functions similar to the break functions listed above:
 </p>
