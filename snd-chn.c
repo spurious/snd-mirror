@@ -1093,7 +1093,6 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
       /* i.e. individual samples are widely spaced, so we have to be careful about placement
        *   mouse uses grf_x so in this case we have to also (to make the cursor hit the dots etc) 
        */
-
       sf = init_sample_read(ap->losamp,cp,READ_FORWARD);
       incr = (double)1.0 / cur_srate;
       for (j=0,i=ap->losamp,x=((double)(ap->losamp)/cur_srate);i<=ap->hisamp;i++,j++,x+=incr)
@@ -3692,6 +3691,7 @@ void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int
 	}
       update_graph(ncp,NULL);
     }
+  FREE(scalers);
   free_sync_info(si);
 }
 

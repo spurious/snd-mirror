@@ -711,7 +711,7 @@ void save_regions(snd_state *ss, FILE *fd)
 	    {
 	      if (save_dir(ss))
 		{
-		  newname = shorter_tempnam(save_dir(ss),"snd_");
+		  newname = shorter_tempnam(save_dir(ss),"snd_save_");
 		  copy_file(r->filename,newname);
 		  fprintf(fd," \"%s\"",newname);
 		  FREE(newname);

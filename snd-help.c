@@ -256,6 +256,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+8-Nov:   filter text field also has history (M-p) now.\n\
 7-Nov:   shell (readline) style M-p and M-n in minibuffer with variable minibuffer-history-length (8).\n\
 6-Nov:   various cosmetic changes for the new g++ (Redhat 7.0).\n\
          insert-sound arguments changed.\n\
@@ -279,11 +280,6 @@ void news_help(snd_state *ss)
            added mix-tag-width and height, mix-panel.\n\
          removed .sndrc and other related stuff.\n\
          removed Show Marks menu item.\n\
-16-Oct:  snd 4.7.\n\
-         optional environ arg to loop-samples and clm example to grfsnd.html.\n\
-11-Oct:  delete button in envelope editor.\n\
-10-Oct:  removed scaler arg to mix-region and associated kbd scaler arg.\n\
-9-Oct:   bird.scm.  added origin arg to as-one-edit.\n\
 ",
 NULL);
   FREE(info);

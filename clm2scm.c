@@ -4092,6 +4092,13 @@ static Float funcall1 (void *ptr, int direction) /* intended for "as-needed" inp
 #define S_src       "src"
 #define S_src_p     "src?"
 #define S_make_src  "make-src"
+#define S_clear_sincs "clear-sincs"
+
+static SCM g_clear_sincs(void)
+{
+  mus_clear_sinc_tables();
+  return(SCM_BOOL_F);
+}
 
 static SCM g_src_p(SCM obj) 
 {
@@ -4155,6 +4162,7 @@ static SCM g_make_src(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6
 
 static void init_sr(void)
 {
+  DEFINE_PROC(gh_new_procedure(S_clear_sincs,SCM_FNC g_clear_sincs,0,0,0),"clears out any sinc tables");
   DEFINE_PROC(gh_new_procedure(S_src_p,SCM_FNC g_src_p,1,0,0),H_src_p);
   DEFINE_PROC(gh_new_procedure(S_src,SCM_FNC g_src,1,2,0),H_src);
   DEFINE_PROC(gh_new_procedure(S_make_src,SCM_FNC g_make_src,0,6,0),H_make_src);

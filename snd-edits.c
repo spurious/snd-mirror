@@ -795,10 +795,12 @@ snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize)
   if (sd->just_zeros)
     {
       datai = make_zero_file_state(sd->len);
-      return(make_snd_data_zero_file(sd->len,
-				     datai,
-				     MUS_SAMPLE_ARRAY(datai[file_state_channel_offset(0)]),
-				     sd->edit_ctr));
+      sf = make_snd_data_zero_file(sd->len,
+				   datai,
+				   MUS_SAMPLE_ARRAY(datai[file_state_channel_offset(0)]),
+				   sd->edit_ctr);
+      sf->copy = TRUE;
+      return(sf);
     }
   hdr = sd->hdr;
   fd = snd_open_read(cp->state,sd->filename);
@@ -1794,11 +1796,6 @@ snd_fd *init_sample_read_any (int samp, chan_info *cp, int direction, int edit_p
   if ((edit_position < 0) || (edit_position > cp->edit_size)) return(NULL);
   ed = (ed_list *)(cp->edits[edit_position]);
   if (!ed) return(NULL);
-  sf = (snd_fd *)CALLOC(1,sizeof(snd_fd));
-  sf->initial_samp = samp;
-  sf->direction = 0;
-  sf->cp = cp;
-  sf->scaler = MUS_SAMPLE_TO_FLOAT(1.0);
   sp = cp->sound;
   if (sp->need_update) 
     {
@@ -1807,6 +1804,11 @@ snd_fd *init_sample_read_any (int samp, chan_info *cp, int direction, int edit_p
       else snd_warning("%s has changed since we last read it!",sp->shortname);
     }
   curlen = cp->samples[edit_position];
+  sf = (snd_fd *)CALLOC(1,sizeof(snd_fd));
+  sf->initial_samp = samp;
+  sf->direction = 0;
+  sf->cp = cp;
+  sf->scaler = MUS_SAMPLE_TO_FLOAT(1.0);
   sf->current_state = ed;
   if ((curlen <= 0) ||    /* no samples, not ed->len (delete->len = #deleted samps) */
       (samp < 0) ||       /* this should never happen */
@@ -1869,11 +1871,14 @@ snd_fd *init_sample_read_any (int samp, chan_info *cp, int direction, int edit_p
 	  return(sf);
 	}
     }
+#if DEBUGGING
+  if (sf->current_sound) fprintf(stderr,"leftover??");
+#endif
   if (sf) FREE(sf);
   return(NULL);
 }
 
-snd_fd *init_sample_read (int samp, chan_info *cp, int direction)
+snd_fd *init_sample_read(int samp, chan_info *cp, int direction)
 {
   return(init_sample_read_any(samp,cp,direction,cp->edit_ctr));
 }

@@ -1367,8 +1367,10 @@ The extended commands (preceded by C-x) are:
   C-x:  evaluate expression
   C-z:  smooth using cosine
 
-In addition, within the "minibuffer" the commands M-p and M-n march back and
-forth in the list of saved strings, much as in a shell.
+In addition, within the "minibuffer" and the filter text field the commands
+M-p and M-n march back and forth in the list of saved strings, much as in a
+shell (this applies only to the Motif version; in the Gtk+ version, M-p and
+M-n are menu accelerators).
 
 The Control Panel
 

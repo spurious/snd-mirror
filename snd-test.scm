@@ -32,7 +32,7 @@
 (if (file-exists? "test.errors") (delete-file "test.errors"))
 (if (file-exists? "sndlib.gdbm") (delete-file "sndlib.gdbm"))
 
-(define tests 1)
+(define tests 10)
 (define snd-test -1)
 (define full-test #t)
 
@@ -1114,16 +1114,16 @@
       (if (not (selection-member? index)) (snd-print (format #f ";selection-member?: ~A" (selection-member? index))))
       (if (not (= (region-srate 0) 22050)) (snd-print (format #f ";region-srate: ~A?" (region-srate 0))))
       (if (not (= (region-chans 0) 1)) (snd-print (format #f ";region-chans: ~A?" (region-chans 0))))
-      (if (not (= (region-length 0) 50829)) (snd-print (format #f ";region-length: ~A?" (region-length 0)))) ;or 50828...
-      (if (not (= (selection-length) 50829)) (snd-print (format #f ";selection-length: ~A?" (selection-length 0)))) ;or 50828...
+      (if (not (= (region-length 0) 50828)) (snd-print (format #f ";region-length: ~A?" (region-length 0))))
+      (if (not (= (selection-length) 50828)) (snd-print (format #f ";selection-length: ~A?" (selection-length 0))))
       (if (not (= (selection-position) 0)) (snd-print (format #f ";selection-position: ~A?" (selection-position))))
       (if (fneq (region-maxamp 0) (maxamp index)) (snd-print (format #f ";region-maxamp: ~A?" (region-maxamp 0))))
-      (let ((samps1 (samples->vct 0 50828 index 0))
-	    (samps2 (region-samples->vct 0 50828 0 0))
+      (let ((samps1 (samples->vct 0 50827 index 0))
+	    (samps2 (region-samples->vct 0 50827 0 0))
 	    (vr (make-sample-reader 0 index 0 1)))
 	(if (not (sample-reader? vr)) (snd-print (format #f ";~A not sample-reader?" vr)))
 	(do ((i 0 (1+ i)))
-	    ((= i 50828))
+	    ((= i 50827))
 	  (if (not (= (next-sample vr) (vct-ref samps1 i) (vct-ref samps2 i)))
 	      (snd-print (format #f ";readers disagree at ~D" i))))
 	(if (rs .5) (gc))
@@ -1265,14 +1265,14 @@
 	(select-all) 
 	(env-selection '(0 0 1 1 2 0) 1.0) 
 	(set! v0 (samples->vct 0 128 index 0 v0)) 
-	(if (or (fneq (sample 64) 0.9846) (fneq (sample 20) .3076) (fneq (sample 120) 0.1538))
-	    (snd-print (format #f ";env-selection: ~A?" v0)))
+	(if (or (fneq (sample 64) 1.0) (fneq (sample 20) .3125) (fneq (sample 120) 0.125))
+	    (snd-print (format #f ";env-selection: ~A ~A ~A ~A?" (sample 64) (sample 20) (sample 120) v0)))
 	(if (file-exists? "fmv5.snd") (delete-file "fmv5.snd"))
 	(save-selection "fmv5.snd" mus-next mus-bint 22050 "") ;1.0->-1.0 if short
 	(revert-sound index)
 	(file->array "fmv5.snd" 0 0 128 v0) 
-	(if (or (fneq (vct-ref v0 64) 0.9846) (fneq (vct-ref v0 20) .3076) (fneq (vct-ref v0 120) 0.1538))
-	    (snd-print (format #f ";save-selection: ~A?" v0)))
+	(if (or (fneq (vct-ref v0 64) 1.0) (fneq (vct-ref v0 20) .3125) (fneq (vct-ref v0 120) 0.125))
+	    (snd-print (format #f ";save-selection: ~A ~A ~A ~A?" (vct-ref v0 64) (vct-ref v0 20) (vct-ref v0 120) v0)))
 	(vct-fill! v0 0.0)
 	(vct-set! v0 100 .5)
 	(vct-set! v0 2 -.5)
@@ -1289,7 +1289,7 @@
 	(select-all) 
 	(convolve-selection-with "fmv5.snd" .5) 
 	(set! v0 (samples->vct 0 128 index 0 v0))
-	(if (fneq (sample 67) -.5) (snd-print (format #f ";convolve-selection-with: ~A ~A ~A?" (vct-ref v0 67) (sample 67) v0)))
+	(if (fneq (sample 66) -.5) (snd-print (format #f ";convolve-selection-with: ~A ~A ~A?" (vct-ref v0 66) (sample 66) v0)))
 	(close-sound index))
       (let* ((obind (open-sound "oboe.snd"))
 	     (vol (maxamp obind))
@@ -1495,6 +1495,7 @@
 (reset-hook! graph-hook)
 (load "mix.scm")
 (load "pqwvox.scm")
+(clear-sincs)
 
 ;;; ---------------- test 8: clm ----------------
 (if (or full-test (= snd-test 8))
@@ -2827,6 +2828,7 @@
       (close-sound (find-sound "fmv.snd"))
       ))
 
+(clear-sincs)
 
 (define data-max
   (lambda (beg end)
@@ -3316,7 +3318,7 @@
 	(preload-directory ".")
 	(select-all)
 	(copyfile-1 #t)
-	(if (not (equal? (edit-fragment) '("(cp)" "set" 0 50829))) (snd-print (format #f ";copyfile-1 (select): ~A?" (edit-fragment))))
+	(if (not (equal? (edit-fragment) '("(cp)" "set" 0 50828))) (snd-print (format #f ";copyfile-1 (select): ~A?" (edit-fragment))))
 	(if (not (equal? (edits) (list (+ (car eds) 1) (cadr eds)))) (snd-print (format #f ";copyfile-1 (select eds): ~A ~A?" eds (edits)))))
       (if (not full-test)
 	  ;; these are causing the test process to hang for some reason
@@ -3413,8 +3415,12 @@
       
       (do ((test-ctr 0 (1+ test-ctr)))
 	  ((= test-ctr tests))
+	(if (> (length open-files) 8)
+	    (begin
+	      (map close-sound open-files)
+	      (set! open-files '())))
 	(let* ((len (length open-files))
-	       (open-chance (* (- 8 len) .125))
+	       (open-chance (max 0.0 (* (- 8 len) .125)))
 	       (close-chance (* len .125)))
 	  (if (or (= len 0) (rs open-chance))
 	      (let* ((choice (my-random cur-dir-len))
@@ -3430,6 +3436,7 @@
 		  (close-sound fd)
 		  (set! open-files (remove-if (lambda (a) (= a fd)) open-files)))))
 	  
+	  (clear-sincs)
 	  (if (= open-ctr 0)
 	      (let ((fd (view-sound "oboe.snd")))
 		(set! open-files (cons fd open-files))))
@@ -4039,6 +4046,7 @@
 	  (save-options "hiho.scm")
 	  )))
       (if open-files (map close-sound open-files))
+      (set! open-files '())
       (mus-set-rand-seed 1234)
       (let ((val (mus-random 1.0)))
 	(if (fneq val -0.7828) (snd-print (format #f ";mus-random: ~A?" val))))
@@ -4791,6 +4799,7 @@
 (reset-hook! graph-hook)
 (reset-hook! name-click-hook)
 (gc)
+(clear-sincs)
 (set! (listener-prompt) original-prompt)
 (snd-print (format #f ";all done!~%~A" original-prompt))
 (if (= snd-test -1) (exit))

@@ -197,6 +197,9 @@ typedef struct {
   int dialog_list_size,ndialogs;
 
   Cursor mix_cursor,graph_cursor,wait_cursor;
+#if HAVE_THEMES
+  Pixmap backmap;
+#endif
 } state_context;
 
 typedef struct {

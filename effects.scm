@@ -17,6 +17,7 @@
 ;;;      cut selection->new
 ;;;      add silence (at cursor)
 ;;;      append selection (and append sound)
+;;;      remove DC
 ;;;
 ;;; These follow sync lists starting from current chan
 ;;;
@@ -445,10 +446,24 @@
 
 (define (append-sound name)
   ;; appends sound file
-  (mix-sound name (frames))) ;this ought to use insert-sound...
+  (insert-sound name (frames)))
 
 (define (append-selection)
   (if (selection?)
       (insert-selection (frames))))
 
 (add-to-menu effects-menu "append selection" append-selection)
+
+
+;;; -------- remove DC (from Perry Cook's physical modeling toolkit)
+
+(define (block-dc)
+  (let ((lastx 0.0)
+	(lasty 0.0))
+    (lambda (inval)
+      (set! lasty (+ inval (- (* 0.999 lasty) lastx)))
+      (set! lastx inval)
+      lasty)))
+
+(add-to-menu effects-menu "remove DC" (lambda () (map-chan-with-sync (lambda () (block-dc)) "block-dc")))
+

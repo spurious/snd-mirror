@@ -867,7 +867,24 @@ static void Filter_activate_Callback(Widget w,XtPointer clientData,XtPointer cal
   snd_info *sp = (snd_info *)clientData;
   char *str=NULL;
   int order;
+  snd_state *ss;
+  XmAnyCallbackStruct *cb = (XmAnyCallbackStruct *)callData;
+  XKeyEvent *ev;
+  KeySym keysym;
+  ev = (XKeyEvent *)(cb->event);
+  keysym = XKeycodeToKeysym(XtDisplay(w),(int)(ev->keycode),(ev->state & snd_ShiftMask) ? 1 : 0);
+  ss = sp->state;
+  ss->mx_sp = sp; 
+
+  if ((ev->state & snd_MetaMask) && 
+      ((keysym == snd_K_p) || (keysym == snd_K_P) || (keysym == snd_K_n) || (keysym == snd_K_N)))
+    {
+      restore_filter_string(sp,(keysym == snd_K_p) || (keysym == snd_K_P));
+      return;
+    }
   str = XmTextGetString(w);
+  if ((str) && (*str)) remember_filter_string(sp,str);
+
   if (sp->filter_env) free_env(sp->filter_env);
   sp->filter_env = string2env(str);
   if (str) XtFree(str);

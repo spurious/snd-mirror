@@ -750,7 +750,11 @@ void save_control_panel(snd_info *sp)
   cs->contrast_on = sp->contrasting;
   cs->filter_on = sp->filtering;
   cs->filter_order = sp->filter_order;
-  if (sp->filter_env) cs->filter_env = copy_env(sp->filter_env);
+  if (sp->filter_env) 
+    {
+      if (cs->filter_env) free_env(cs->filter_env);
+      cs->filter_env = copy_env(sp->filter_env);
+    }
   if (sp->play_direction == 1) cs->direction = 0; else cs->direction = 1;
 }
 
@@ -788,8 +792,9 @@ void restore_control_panel(snd_info *sp)
   set_snd_revscl(sp,cs->revscl);
   set_snd_revlen(sp,cs->revlen);
   if (sp->filter_env) free_env(sp->filter_env); 
-  sp->filter_env = default_env(sp->filter_env_xmax,1.0);
-  if (cs->filter_env) sp->filter_env = copy_env(cs->filter_env);
+  if (cs->filter_env) 
+    sp->filter_env = copy_env(cs->filter_env);
+  else sp->filter_env = default_env(sp->filter_env_xmax,1.0);
   set_snd_filter_order(sp,cs->filter_order);
 }
 
@@ -819,17 +824,27 @@ typedef struct {
   int strings_size,strings_pos,first_time;
 } mini_history;
   
-void remember_mini_string(snd_info *sp, char *str)
+enum {MINIBUFFER,FILTER_TEXT};
+
+static void remember_string(snd_info *sp, char *str, int which)
 {
   mini_history *mh;
   int i,top;
-  mh = (mini_history *)(sp->minibuffer_history);
+  switch (which)
+    {
+    case MINIBUFFER: mh = (mini_history *)(sp->minibuffer_history); break;
+    case FILTER_TEXT: mh = (mini_history *)(sp->filter_history); break;
+    }
   if (mh == NULL)
     {
       mh = (mini_history *)CALLOC(1,sizeof(mini_history));
       mh->strings_size = minibuffer_history_length(sp->state);
       mh->strings = (char **)CALLOC(mh->strings_size,sizeof(char *));
-      sp->minibuffer_history = (void *)mh;
+      switch (which)
+	{
+	case MINIBUFFER: sp->minibuffer_history = (void *)mh; break;
+	case FILTER_TEXT: sp->filter_history = (void *)mh; break;
+	}
     }
   top = mh->strings_size - 1;
   if (mh->strings[top]) FREE(mh->strings[top]);
@@ -839,11 +854,18 @@ void remember_mini_string(snd_info *sp, char *str)
   mh->first_time = 1;
 }
 
-void restore_mini_string(snd_info *sp, int back)
+void remember_mini_string(snd_info *sp, char *str) {remember_string(sp,str,MINIBUFFER);}
+void remember_filter_string(snd_info *sp, char *str) {remember_string(sp,str,FILTER_TEXT);}
+
+static void restore_string(snd_info *sp, int back, int which)
 {
   mini_history *mh;
   char *str;
-  mh = (mini_history *)(sp->minibuffer_history);
+  switch (which)
+    {
+    case MINIBUFFER: mh = (mini_history *)(sp->minibuffer_history); break;
+    case FILTER_TEXT: mh = (mini_history *)(sp->filter_history); break;
+    }
   if (mh)
     {
       if (mh->first_time == 0)
@@ -856,18 +878,36 @@ void restore_mini_string(snd_info *sp, int back)
       if (mh->strings_pos < 0) mh->strings_pos = 0;
       if (mh->strings_pos > (mh->strings_size - 1)) mh->strings_pos = mh->strings_size - 1;
       str = mh->strings[mh->strings_pos];
-      if (str) set_minibuffer_string(sp,str);
+      if (str)
+	{
+	  switch (which)
+	    {
+	    case MINIBUFFER: set_minibuffer_string(sp,str); break;
+	    case FILTER_TEXT: set_filter_text(sp,str); break;
+	    }
+	}
     }
 }
 
-void clear_mini_strings(snd_info *sp)
+void restore_mini_string(snd_info *sp, int back) {restore_string(sp,back,MINIBUFFER);}
+void restore_filter_string(snd_info *sp, int back) {restore_string(sp,back,FILTER_TEXT);}
+
+static void clear_strings(snd_info *sp, int which)
 {
   mini_history *mh;
   int i;
-  mh = (mini_history *)(sp->minibuffer_history);
+  switch (which)
+    {
+    case MINIBUFFER: mh = (mini_history *)(sp->minibuffer_history); break;
+    case FILTER_TEXT: mh = (mini_history *)(sp->filter_history); break;
+    }
   if (mh)
     {
-      sp->minibuffer_history = NULL;
+      switch (which)
+	{
+	case MINIBUFFER: sp->minibuffer_history = NULL; break;
+	case FILTER_TEXT: sp->filter_history = NULL; break;
+	}
       for (i=0;i<mh->strings_size;i++) 
 	if (mh->strings[i])
 	  FREE(mh->strings[i]);
@@ -875,6 +915,9 @@ void clear_mini_strings(snd_info *sp)
       FREE(mh);
     }
 }
+
+void clear_mini_strings(snd_info *sp) {clear_strings(sp,MINIBUFFER);}
+void clear_filter_strings(snd_info *sp) {clear_strings(sp,FILTER_TEXT);}
 
 
 /* ---------------- APPLY ---------------- */

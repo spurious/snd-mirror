@@ -4967,6 +4967,21 @@ static Float **sinc_tables = NULL;
 static int *sinc_widths = NULL;
 static int sincs = 0;
 
+void mus_clear_sinc_tables(void)
+{
+  int i;
+  if (sincs)
+    {
+      for (i=0;i<sincs;i++) 
+	if (sinc_tables[i]) FREE(sinc_tables[i]);
+      FREE(sinc_tables);
+      sinc_tables = NULL;
+      FREE(sinc_widths);
+      sinc_widths = NULL;
+      sincs = 0;
+    }
+}
+
 static Float *init_sinc_table(int width)
 {
 #ifdef MACOS

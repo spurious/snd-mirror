@@ -584,3 +584,82 @@ Pixmap make_pixmap(snd_state *ss, unsigned char *bits, int width, int height, in
 }
 
 
+#if HAVE_THEMES
+/* background pixmap (can be filled with fancy gradients etc) */
+
+static void repixmap(Widget w, void *usx)
+{
+  Pixel curcol;
+  state_context *sx = (state_context *)usx;
+  if (XtIsWidget(w))
+    {
+      XtVaGetValues(w,XmNbackground,&curcol,NULL);
+      if (curcol == sx->basic_color)
+	XtVaSetValues(w,XmNbackgroundPixmap,sx->backmap,NULL);
+    }
+}
+
+static Pixel *bgs = NULL;
+static int bgs_size = 0;
+void make_bg(snd_state *ss, unsigned int width, unsigned int height);
+void make_bg(snd_state *ss, unsigned int width, unsigned int height)
+{
+  unsigned int depth;
+  Widget w;
+  Display *dp;
+  Drawable wn;
+  XGCValues v;
+  state_context *sx;
+  Colormap cmap;
+  int scr,i,j,err,wid_incr;
+  GC draw_gc;
+  XColor tmp_color;
+  Float red_incr,blue_incr,green_incr,red_init,blue_init,green_init;
+  sx = ss->sgx;
+  w = MAIN_PANE(ss);
+  dp = MAIN_DISPLAY(ss);
+  wn = XtWindow(w);
+  scr = DefaultScreen(dp);
+  XtVaGetValues(w,XmNdepth,&depth,NULL);
+  if (sx->backmap) XFreePixmap(dp,sx->backmap);
+  cmap=DefaultColormap(dp,scr);
+  if (bgs) 
+    {
+      XFreeColors(dp,cmap,bgs,bgs_size,0);
+      free(bgs);
+    }
+  bgs_size = width/2;
+  if (bgs_size > 200) bgs_size = 200;
+  wid_incr = width / bgs_size;
+  bgs = (Pixel *)calloc(bgs_size,sizeof(Pixel));
+  tmp_color.flags = DoRed | DoGreen | DoBlue;
+  sx->backmap = XCreatePixmap(dp,wn,width,height,depth);
+  v.background = WhitePixel(dp,scr);
+  v.foreground = WhitePixel(dp,scr);
+  draw_gc = XCreateGC(dp,wn,GCForeground | GCBackground,&v);
+  tmp_color.pixel = sx->highlight_color;
+  XQueryColor(dp,cmap,&tmp_color);
+  red_init = tmp_color.red;
+  green_init = tmp_color.green;
+  blue_init = tmp_color.blue;
+  tmp_color.pixel = sx->basic_color;
+  XQueryColor(dp,cmap,&tmp_color);
+  red_incr = (tmp_color.red - red_init) / bgs_size;
+  green_incr = (tmp_color.green - green_init) / bgs_size;
+  blue_incr = (tmp_color.blue - blue_init) / bgs_size;
+  /* this should probably be light at left top and shade toward lower right */
+  for (i=0,j=0;i<width;i+=wid_incr,j++)
+    {
+      tmp_color.flags = DoRed | DoGreen | DoBlue;
+      tmp_color.red = red_init; red_init += red_incr;
+      tmp_color.green = green_init; green_init += green_incr;
+      tmp_color.blue = blue_init; blue_init += blue_incr;
+      err = XAllocColor(dp,cmap,&tmp_color); if (err == 0) fprintf(stderr,".");
+      bgs[j] = tmp_color.pixel;
+      XSetForeground(dp,draw_gc,tmp_color.pixel);
+      XFillRectangle(dp,sx->backmap,draw_gc,i,0,wid_incr,height);
+    }
+  map_over_children(w,repixmap,(void *)sx);
+}
+#endif
+

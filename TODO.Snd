@@ -26,21 +26,26 @@ Dolph-chebyshev window.  (Also some expert needs to bless the cepstrum).
 GL spectrum display (the communication with Snd is in glfft.c).
 
 Sawfish connection: it should be possible to send commands to sawfish,
-  (via sawfish-client?).
+  (via sawfish-client?); also there's a switch in Snd, HAVE_THEMES,
+  that can draw widget backgrounds that grade between colors (as in
+  sawfish's title bars) -- it might be neat to have this use the
+  current theme.
 
 gtk-html support (and the XmHTML stuff is not very recent).
 
-XmPrint support.
-
-A more direct connection to gmeteor (perhaps using the control-lanel filter
-  text widget).
+A more direct connection to gmeteor (perhaps using the control-panel filter
+  text widget). This requires a way to bypass the current frequency-response
+  to coefficients step.
 
 A graphic-EQ effect (effects.scm) -- this could use guile-gtk and the
-  CLM formant generator.
+  CLM formant generator.  The other effects in that file could use
+  some sort of dialog to set the various variables, and ideally a
+  C module (effects.c -> effects.so) autoloaded by the effects module.
 
 A pitch tracker.
 
 Noise reduction.
 
-dB display in VU meters (in the record dialog).
+dB display in VU meters (in the record dialog).  A nicer VU meter background.
 
+loop syntax filled in (loop.scm)

@@ -249,7 +249,7 @@ typedef struct snd__info {
   /* moved from global to channel-local 4-Aug-00 */
   int speed_style,speed_tones;
   Float reverb_decay,filter_env_xmax;
-  void *minibuffer_history;
+  void *minibuffer_history,*filter_history;
 } snd_info;
 
 #define SND_SRATE(sp) (((sp)->hdr)->srate)
@@ -1048,6 +1048,9 @@ env_info *amp_env_copy(chan_info *cp, int reversed);
 void remember_mini_string(snd_info *sp, char *str);
 void restore_mini_string(snd_info *s, int back);
 void clear_mini_strings(snd_info *sp);
+void remember_filter_string(snd_info *sp, char *str);
+void restore_filter_string(snd_info *s, int back);
+void clear_filter_strings(snd_info *sp);
 
 
 

@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 1
-#define MUS_REVISION 33
-#define MUS_DATE "12-Oct-00"
+#define MUS_REVISION 34
+#define MUS_DATE "8-Nov-00"
 
 /* 
+ * 8-Nov:      added mus_clear_sinc_tables.
  * 12-Oct:     mus_formant_bank takes one input (can't remember why I had an array here)
  * 27-Sep:     mus_array_interp bugfix (imitates mus.lisp now).
  * 18-Sep:     clm now assumes it's used as a part of sndlib.
@@ -487,6 +488,7 @@ Float *mus_phase_vocoder_phases PROTO((void *ptr));
 Float *mus_phase_vocoder_phaseinc PROTO((void *ptr));
 Float *mus_phase_vocoder_lastphase PROTO((void *ptr));
 
+void mus_clear_sinc_tables      PROTO((void));
 
 __END_DECLS
 

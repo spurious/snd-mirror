@@ -141,7 +141,6 @@ static void apply_enved(snd_state *ss)
 	  sp = make_mix_readable_from_id(mix_id);
 	  if (sp)
 	    active_channel = sp->chans[(chan != NO_SELECTION) ? chan : 0];
-	  /* TODO else error no such whatever? */
 	}
       else active_channel = current_channel(ss);
       if (active_channel)

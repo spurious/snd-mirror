@@ -684,6 +684,17 @@ static SCM g_main_shell(void)
   return(gh_ulong2scm((unsigned long)(MAIN_SHELL(ss))));
 }
 
+#if HAVE_THEMES
+
+void make_bg(snd_state *ss, unsigned int width, unsigned int height);
+static SCM g_make_bg(SCM wid, SCM hgt)
+{
+  make_bg(get_global_state(),gh_scm2int(wid),gh_scm2int(hgt));
+  return(SCM_BOOL_F);
+}
+
+#endif
+
 void g_initialize_xgh(snd_state *ss, SCM local_doc)
 {
   state = ss;
@@ -776,5 +787,9 @@ void g_initialize_xgh(snd_state *ss, SCM local_doc)
 
   /* an experiment */
   DEFINE_PROC(gh_new_procedure0_0("snd-main-shell",g_main_shell),"snd-main-shell tries to return Snd's topmost widget");
+
+#if HAVE_THEMES
+  DEFINE_PROC(gh_new_procedure("make-bg",g_make_bg,2,0,0),"make background pixmap");
+#endif
 }
 #endif
