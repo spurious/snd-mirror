@@ -1680,10 +1680,21 @@ the hook.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called just before the lisp graph is updated or redisplayed (see, for example, <a href="#displaydb">display-db</a>).
-<!-- -->If it returns a list of pixels (xm style), these are used in order by the list of graphs (if any), rather than Snd's default set.
-<!-- -->If it returns a function (of no arguments), that function is called rather than the standard graph routine.  This makes
-<!-- -->it possible to use the lisp-graph section of the display to show anything (text, music symbols, etc).
+<!-- -->If it returns a list of pixels (xm style), these are used in order by the list of graphs (if any), rather than Snd's default set
+<!-- -->(this makes it possible to use different colors for the various graphs).
+<!-- -->If it returns a function (of no arguments), that function is called rather than the standard graph routine:
+<!-- -->
 <!-- --></td></tr>
+<!-- --><tr><td></td><td colspan=2>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(add-hook! lisp-graph-hook
+	   (lambda (snd chn)
+	     (lambda ()
+	       (draw-string "hi" 
+			    (x-&gt;position 0.5 snd chn lisp-graph) 
+			    (y-&gt;position 0.0 snd chn lisp-graph)
+			    snd chn))))
+<!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
 <!-- mark-hook -->
@@ -2912,7 +2923,7 @@ See play.scm and rtio.scm for example code. The most important Sndlib functions 
 <!-- -->
 <!-- mus-data-format-name -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="soundformatname">mus-data-format-name</a></em> (format)</code></span></td>
-<!-- --><td>e.g. "16-bit big endian linear", <i>format</i> an integer, some of which have names (mus-out-format is the fastest):</td></tr>
+<!-- --><td>e.g. "16-bit big endian linear", <i>format</i> is an integer (mus-out-format is the fastest):</td></tr>
 <!-- --><tr><td colspan=2><pre>
 <!-- -->  mus-bshort   mus-lshort   mus-mulaw   mus-alaw   mus-byte  
 <!-- -->  mus-lfloat   mus-bint     mus-lint    mus-b24int mus-l24int
@@ -4159,8 +4170,14 @@ The following substitutions can be made:
 </small>
 </pre>
 <p>Another case that might deserve "regularization" is make-sample-reader which confusingly interpolates
-the direction argument between the channel and edit-position.
+the direction argument between the channel and edit-position:
 </p>
+<pre>
+<small>
+ (define* (read-channel #:optional (beg 0) snd chn edpos (direction 1))
+   (make-sample-reader beg snd chn direction edpos))
+</small>
+</pre>
 <hr>
 </blockquote>
 
@@ -4624,12 +4641,33 @@ the direction argument between the channel and edit-position.
 <!-- -->based on <i>env-base</i>.  <i>env-base</i> defaults to 1.0 (line segments).
 <!-- --><i>samp</i> defaults to 0.  <i>samps</i> defaults to the full duration.
 <!-- --><i>envelope</i> is a list or vector containing the breakpoint values 
-<!-- -->(as in CLM).<br>
+<!-- -->(as in CLM).<br><br>
 <!-- --><code>(env-sound '(0 0 1 1 2 0))</code>
-<!-- --><br>
+<!-- --><br><br>
+<!-- -->As mentioned in <a href="clm.html#make-env">clm.html</a>, 
+<!-- --><i>env-base</i> determines how the break-points are connected.  If it is 1.0 (the
+<!-- -->default), you get straight line segments.  <i>env-base</i> = 0.0 gives a step
+<!-- -->function (the envelope changes its value suddenly to the new one without any
+<!-- -->interpolation).  Any other positive value becomes the exponent of the exponential curve
+<!-- -->connecting the points.  <i>env-base</i> &lt; 1.0 gives convex curves (i.e. bowed
+<!-- -->out), and <i>env-base</i> &gt; 1.0 gives concave curves (i.e. sagging).
+<!-- -->If you'd rather think in terms of e^-kt, set <i>env-base</i> to (exp k).
+<!-- -->See env.lisp for a CLM instrument that shows the relation between the connecting
+<!-- -->curve's exponent and <i>env-base</i>.  Here's a brief restatement in Scheme:
+<!-- --></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(define (compare-exp k)
+   (let ((e (make-env (list 0 1 1 (exp (- k))) :base (exp k) :end 10)))
+      (do ((i 0 (1+ i )))
+         ((= i 10))
+         (snd-print (format #f "~A ~A~%" (env e) (exp (* (- k) (/ i 10.0))))))))
+<!-- --></pre></td></tr></table>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
 <!-- --><i>envelope</i> can also be a CLM env generator (in this case, <i>env-base</i> 
 <!-- -->is ignored, and it's assumed <i>samps</i> is reflected in the make-env call).
-<!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
@@ -4675,7 +4713,10 @@ the direction argument between the channel and edit-position.
 <!-- --><span class=defbox><code><em class=def><a name="fftbeta">fft-window-beta</a></em> (<em class=narg>snd chn</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->The fft data <a href="snd.html#Xfftbeta">window parameter</a>, if relevant.
+<!-- -->Some fft windows have a parameter, often named alpha or beta, that chooses one from a family of possible windows.
+<!-- -->The actual (underlying) beta values are dependent on the window choice, but
+<!-- -->in Snd, <i>fft-window-beta</i> is scaled to fit the current window's range of values, so
+<!-- -->its value here should fall between 0.0 and 1.0.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4685,7 +4726,8 @@ the direction argument between the channel and edit-position.
 <!-- --><span class=defbox><code><em class=def><a name="sndfilename">file-name</a></em> (<em class=targ>snd</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- --><i>snd</i>'s complete file name.
+<!-- --><i>snd</i>'s complete (or "absolute") file name (that is, the directory is included; see <a href="#shortfilename">short-file-name</a>
+<!-- -->if you don't want all the directory junk).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4921,7 +4963,7 @@ the direction argument between the channel and edit-position.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->insert channel <i>in_chan</i> of <i>file</i> at sample <i>beg</i> in <i>snd</i>'s channel <i>chn</i>.
-<!-- -->beg defaults to the cursor position; if in_chan is not given, all 
+<!-- -->beg defaults to the cursor position; if <i>in_chan</i> is not given, all 
 <!-- -->channels are inserted. 
 <!-- -->[<em class=error>no-such-file</em>].
 <!-- --></td></tr>
@@ -5204,6 +5246,8 @@ the direction argument between the channel and edit-position.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->Sets the minimum dB value displayed in various graphs (default: -60.0).
+<!-- -->Due to problems with arithmetic underflows in sqrt, the spectrum functions set the lowest
+<!-- -->actual dB value calculated to -140.0 or -180.0 (depending on which function is called and so on).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5255,7 +5299,7 @@ the direction argument between the channel and edit-position.
 <!-- --><span class=defbox><code><em class=def><a name="sndopen">open-sound</a></em> (name)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->open <i>name</i> as in File menu Open option.  [<em class=error>no-such-file</em>].
+<!-- -->open <i>name</i> and return its index; this is equivalent to the File:Open option.  [<em class=error>no-such-file</em>].
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5856,7 +5900,7 @@ the direction argument between the channel and edit-position.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->the current global or sound-local (if <i>snd</i> is specified) search procedure.
-<!-- --><code>(set! (search-procedure) (lambda (y) (> y .1)))</code>
+<!-- --><code>(set! (search-procedure) (lambda (y) (&gt; y .1)))</code>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5919,7 +5963,7 @@ the direction argument between the channel and edit-position.
 <!-- -->
 <!-- short-file-name -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndshortfilename">short-file-name</a></em> (<em class=targ>snd</em>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="shortfilename">short-file-name</a></em> (<em class=targ>snd</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->return the brief (no directory) form of <i>snd</i>'s filename.
@@ -6565,7 +6609,8 @@ the direction argument between the channel and edit-position.
 <!-- --><span class=defbox><code><em class=def><a name="x2position">x-&gt;position</a></em> (x snd chn axis)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->returns the graph position that corresponds to the X axis value <i>x</i>. [<em class=error>no-such-axis</em>].
+<!-- -->returns the graph position that corresponds to the X axis value <i>x</i>. <i>axis</i> is one of time-graph, lisp-graph, or transform-graph.
+<!-- -->[<em class=error>no-such-axis</em>].
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6628,7 +6673,8 @@ the direction argument between the channel and edit-position.
 <!-- --><span class=defbox><code><em class=def><a name="y2position">y-&gt;position</a></em> (y snd chn axis)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->returns the graph position that corresponds to the Y axis value <i>y</i>. [<em class=error>no-such-axis</em>].
+<!-- -->returns the graph position that corresponds to the Y axis value <i>y</i>. <i>axis</i> is one of time-graph, lisp-graph, or transform-graph.
+<!-- -->[<em class=error>no-such-axis</em>].
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -8172,7 +8218,7 @@ run
   show-all-axes  show-no-axes  show-x-axis
 </pre><br>
 
-<p><b>Graph</b> id (for <a href="#drawline">draw-line</a> etc):</p>
+<p><b>Graph</b> id (for <a href="#y2position">y-&gt;position</a> etc):</p>
 <pre>
   time-graph     transform-graph     lisp-graph
 </pre>

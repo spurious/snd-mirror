@@ -2138,10 +2138,6 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, int 
   sf->cp = cp;
   sf->fscaler = MUS_SAMPLE_TO_FLOAT(1.0);
   sf->direction = direction;
-
-  /* TODO: mix reader (i.e. two readers running in parallel) */
-  /* TODO: ptree2 where we pass reader to user's proc (would need scaler too)? */
-
   sf->current_state = ed;
   if ((curlen <= 0) ||    /* no samples, not ed->len (delete->len = #deleted samps) */
       (samp < 0) ||       /* this should never happen */

@@ -1264,9 +1264,9 @@ void add_or_edit_symbol(char *name, env *val)
 	       name, 
 	       tmpstr = env_to_string(val));
 #endif
+  if (tmpstr) FREE(tmpstr);
   snd_catch_any(eval_str_wrapper, buf, buf);
   FREE(buf);
-  if (tmpstr) FREE(tmpstr);
 }
 
 env *get_env(XEN e, char *origin) /* list in e */

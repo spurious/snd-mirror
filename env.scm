@@ -344,4 +344,3 @@ repetition to be in reverse."
 	    (list-set! new-env i (* scl (list-ref new-env i))))))
     new-env))
 
-;;; TODO: from env.lisp power env, db env

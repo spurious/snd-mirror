@@ -1781,7 +1781,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
   mus_sample_t *idata;
   int reporting = 0;
   Float val[1];
-  char *ofile = NULL;
+  char *ofile = NULL, *tmpstr = NULL;
   snd_state *ss;
   mus_any *egen;
   off_t *passes;
@@ -1907,9 +1907,10 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
 	  si->cps[i]->squelch_update = old_squelch;
 	  newe = make_envelope(mus_data(egen), mus_length(egen) * 2);
 	  new_origin = mus_format("env-channel (make-env %s :base 0 :end " OFF_TD ") " OFF_TD " " OFF_TD,
-				  env_to_string(newe), 
+				  tmpstr = env_to_string(newe), 
 				  (len > 1) ? (passes[len - 2] - 1) : dur,
 				  si->begs[i], dur);
+	  if (tmpstr) FREE(tmpstr);
 	  free_env(newe);
 	  as_one_edit(si->cps[i], local_edpos + 1, new_origin);
 	  FREE(new_origin);
@@ -2140,9 +2141,10 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
 	  si->cps[i]->squelch_update = old_squelch;
 	  newe = make_envelope(mus_data(egen), mus_length(egen) * 2);
 	  new_origin = mus_format("env-channel (make-env %s :base 1 :end " OFF_TD ") " OFF_TD " " OFF_TD,
-				  env_to_string(newe), 
+				  tmpstr = env_to_string(newe), 
 				  (len > 1) ? (passes[len - 2] - 1) : dur,
 				  si->begs[i], dur);
+	  if (tmpstr) FREE(tmpstr);
 	  free_env(newe);
 	  as_one_edit(si->cps[i], local_edpos + 1, new_origin);
 	  FREE(new_origin);

@@ -30,10 +30,7 @@
 
 ;;; TODO: GL tests, gtk (xg) tests
 ;;; TODO: mix panel env editor (apply button (|XmMessageBoxGetChild mix_panel |XmDIALOG_CANCEL_BUTTON)
-;;; TODO: [before-]transform-hook? output-name-hook [requires New dialog]?
-;;; TODO: lisp-graph-hook with forward proc
-;;; TODO: control-panel apply to channel [apply button with ctrl and no active selection]
-;;; TODO: new data dialog help
+;;; TODO: output-name-hook [requires New dialog] -- new data dialog help
 
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs) (ice-9 syncase))
@@ -10115,7 +10112,9 @@
 	(reset-hook! open-hook)
 
 	(let ((gr #f)
-	      (agr #f))
+	      (agr #f)
+	      (gbf #f)
+	      (abf #f))
 	  (add-hook! graph-hook
 		     (lambda (snd chn y0 y1)
 		       (IF (not (= snd ind))
@@ -10130,9 +10129,29 @@
 		       (IF (not (= chn 0))
 			   (snd-display ";after-graph-hook (channel): ~A not 0?" chn))
 		       (set! agr #t)))
+	  (add-hook! before-transform-hook
+		     (lambda (snd chn)
+		       (set! gbf #t)
+		       (cursor)))
+	  (add-hook! transform-hook
+		     (lambda (snd chn scale)
+		       (set! abf #t)
+		       (if (and (graph-transform? snd chn) 
+				(= (transform-graph-type snd chn) graph-transform-once))
+			   (report-in-minibuffer 
+			    (number->string (/ (* 2.0 (vct-peak (transform-samples->vct snd chn)))
+					       (transform-size snd chn)))
+			    snd)
+			   #f)))
+	  (set! (graph-transform? ind 0) #t)
 	  (update-time-graph ind 0)
+	  (update-transform ind 0)
 	  (IF (not gr) (snd-display ";graph-hook not called?"))
 	  (IF (not agr) (snd-display ";after-graph-hook not called?"))
+	  (IF (not gbf) (snd-display ";before-transform-hook not called?"))
+	  (IF (not abf) (snd-display ";transform-hook not called?"))
+	  (reset-hook! before-transform-hook)
+	  (set! (graph-transform? ind 0) #f)
 	  (reset-hook! graph-hook)
 	  (reset-hook! after-graph-hook))
 
@@ -14141,7 +14160,13 @@ EDITS: 6
       (load "musglyphs.scm")
       (load "draw.scm")
       (add-hook! after-graph-hook display-previous-edits)
-      (add-hook! lisp-graph-hook display-energy)
+      (add-hook! lisp-graph-hook 
+		 (lambda (snd chn)
+		   (lambda ()
+		     (draw-string "hi" 
+				  (x->position .5 snd chn lisp-graph) 
+				  (y->position .5 snd chn lisp-graph)
+				  snd chn))))
       (let* ((ind (open-sound "oboe.snd"))
 	     (wids (channel-widgets))
 	     (wids1 (channel-widgets (selected-sound)))
@@ -21918,7 +21943,7 @@ EDITS: 5
 	      (let* ((fonts (list "fixed"
 				  "-adobe-times-bold-r-*-*-14-*-*-*-*-*-*-*"
 				  "-adobe-*-medium-i-*-*-18-*-*-*-*-*-*-*"
-				  "-*-helvetica-)-*-*-*-18-*-*-*-*-*-*-*"))
+				  "-*-helvetica-*-*-*-*-18-*-*-*-*-*-*-*"))
 		     (tags (list "one" "two" "three" "four"))
 		     (colors (list "red" "green" "blue" "orange"))
 		     (pixels

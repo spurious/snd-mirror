@@ -301,6 +301,19 @@ static xen_value *run_warn(char *format, ...)
   return(NULL); /* this is so we can insert the call into the error return call chain */
 }
 
+static xen_value *run_warn_with_free(char *str)
+{
+  XEN msg;
+  run_warned = TRUE;
+  msg = C_TO_XEN_STRING(str);
+  FREE(str);
+  if (XEN_HOOKED(optimization_hook))
+    g_c_run_progn_hook(optimization_hook, 
+		       XEN_LIST_1(msg),
+		       S_optimization_hook);
+  return(NULL);
+}
+
 static xen_value *copy_xen_value(xen_value *v)
 {
   return(make_xen_value(v->type, v->addr, v->constant));
@@ -1915,7 +1928,7 @@ static xen_value *let_form(ptree *prog, XEN form, int need_result)
   lets = XEN_CADR(form);
   locals_loc = prog->var_ctr; /* lets can be nested */
   trouble = parallel_binds(prog, lets, "let");
-  if (trouble) return(run_warn(trouble));
+  if (trouble) return(run_warn_with_free(trouble));
   if (!got_lambda) prog->initial_pc = prog->triple_ctr;
   return(walk_then_undefine(prog, XEN_CDDR(form), need_result, "let", locals_loc));
 }
@@ -2240,7 +2253,7 @@ static xen_value *do_form_1(ptree *prog, XEN form, int need_result, int sequenti
   if (sequential)
     trouble = sequential_binds(prog, vars, "do*");
   else trouble = parallel_binds(prog, vars, "do");
-  if (trouble) return(run_warn(trouble));
+  if (trouble) return(run_warn_with_free(trouble));
 
   test_loc = prog->triple_ctr;
   test = walk(prog, test_form, TRUE);
@@ -6915,7 +6928,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
       /* both of these can be applicable objects, but those are not counted in the arg scan */
       /* no readers or CLM gens from here on */
       if (strcmp(funcname, "edit-position") == 0) return(clean_up(edit_position_1(prog, args, num_args), args, num_args));
-
+      /* TODO: frames, tap with 1 arg */
       if (vcts > 0)
 	{
 	  if (strcmp(funcname, "vct-ref") == 0) return(clean_up(vct_ref_1(prog, args, num_args), args, num_args));
@@ -7084,7 +7097,7 @@ static xen_value *lookup_generalized_set(ptree *prog, char *accessor, xen_value 
       if (strcmp(accessor, "mus-length") == 0) v = mus_set_length_1(prog, in_v, v);
     }
   if (strcmp(accessor, "mus-srate") == 0) v = mus_set_srate_1(prog, in_v, v);
-  if (v == NULL) run_warn(mus_format("can't set! %s", accessor));
+  if (v == NULL) run_warn("can't set! %s", accessor);
   if (in_v) FREE(in_v);
   if (accessor) FREE(accessor);
   return(v);

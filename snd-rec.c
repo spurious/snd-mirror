@@ -27,7 +27,9 @@ FONT_TYPE *get_vu_font(snd_state *ss, Float size)
 	  else vu_font_name = "times";
 	}
     }
-  /* TODO: vu_font name needs gtk2 (pango) names */
+#if HAVE_GTK2
+  label_font = LOAD_FONT(font_name);
+#else
   mus_snprintf(font_name, LABEL_BUFFER_SIZE, "-*-%s-%s-r-*-*-%d-*-*-*-*-*-*",
 	  vu_font_name,
 	  (font_size > 10) ? "bold" : "*",
@@ -55,6 +57,7 @@ FONT_TYPE *get_vu_font(snd_state *ss, Float size)
 	    }
 	}
     }
+#endif
   return(label_font);
 }
 
