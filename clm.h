@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 10
-#define MUS_DATE "14-Feb-05"
+#define MUS_REVISION 11
+#define MUS_DATE "18-Feb-05"
 
 /*
+ * 18-Feb:     mus_interpolate.
  * 14-Feb:     deprecated mus_restart_env and mus_clear_filter_state.
  * 7-Feb-05:   mus_reset method, replaces mus_restart_env and mus_clear_filter_state.
  * --------
@@ -279,6 +280,7 @@ void mus_rectangular_to_polar(Float *rl, Float *im, int size);
 void mus_polar_to_rectangular(Float *rl, Float *im, int size);
 Float mus_array_interp(Float *wave, Float phase, int size);
 double mus_bessi0(Float x);
+Float mus_interpolate(mus_interp_t type, Float x, Float *table, int table_size, Float y);
 
 int mus_free(mus_any *ptr);
 char *mus_describe(mus_any *gen);

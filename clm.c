@@ -698,6 +698,9 @@ static Float *array_normalize(Float *table, int table_size)
   return(table);
 }
 
+
+/* ---------------- interpolation ---------------- */
+
 Float mus_array_interp(Float *wave, Float phase, int size)
 {
   /* changed 26-Sep-00 to be closer to mus.lisp */
@@ -799,8 +802,36 @@ static Float mus_array_hermite_interp(Float *wave, Float x, int size)
   return(((c3 * p + c2) * p + c1) * p + c0);
 }
 
-/* PERHAPS: mus_interp as generator
- */
+Float mus_interpolate(mus_interp_t type, Float x, Float *table, int table_size, Float y)
+{
+  switch (type)
+    {
+    case MUS_INTERP_NONE:
+      {
+	int x0;
+	x0 = ((int)x) % table_size;
+	if (x0 < 0) x0 += table_size;
+	return(table[x0]);
+      }
+      break;
+    case MUS_INTERP_LAGRANGE:
+      return(mus_array_lagrange_interp(table, x, table_size));
+      break;
+    case MUS_INTERP_HERMITE:
+      return(mus_array_hermite_interp(table, x, table_size));
+      break;
+    case MUS_INTERP_LINEAR:
+      return(mus_array_interp(table, x, table_size));
+      break;
+    case MUS_INTERP_ALL_PASS:
+      return(mus_array_all_pass_interp(table, x, table_size, y));
+      break;
+    default:
+      mus_error(MUS_ARG_OUT_OF_RANGE, "unknown interpolation type: %d", type);
+      break;
+    }
+  return(0.0);
+}
 
 
 
@@ -1128,6 +1159,861 @@ mus_any *mus_make_sum_of_sines(int sines, Float freq, Float phase)
 }
 
 
+/* ---------------- asymmetric-fm ---------------- */
+
+typedef struct {
+  mus_any_class *core;
+  Float r;
+  double freq, phase;
+  Float ratio;
+  Float cosr;
+  Float sinr;
+} asyfm;
+
+static int free_asymmetric_fm(mus_any *ptr) {if (ptr) FREE(ptr); return(0);}
+static Float asyfm_freq(mus_any *ptr) {return(mus_radians_to_hz(((asyfm *)ptr)->freq));}
+static Float set_asyfm_freq(mus_any *ptr, Float val) {((asyfm *)ptr)->freq = mus_hz_to_radians(val); return(val);}
+static Float asyfm_phase(mus_any *ptr) {return(fmod(((asyfm *)ptr)->phase, TWO_PI));}
+static Float set_asyfm_phase(mus_any *ptr, Float val) {((asyfm *)ptr)->phase = val; return(val);}
+static Float asyfm_ratio(mus_any *ptr) {return(((asyfm *)ptr)->ratio);}
+static Float asyfm_r(mus_any *ptr) {return(((asyfm *)ptr)->r);}
+static Float set_asyfm_r(mus_any *ptr, Float val) 
+{
+  asyfm *gen = (asyfm *)ptr;
+  if (val != 0.0)
+    {
+      gen->r = val; 
+      gen->cosr = 0.5 * (val - (1.0 / val));
+      gen->sinr = 0.5 * (val + (1.0 / val));
+    }
+  return(val);
+}
+static void asyfm_reset(mus_any *ptr) {((asyfm *)ptr)->phase = 0.0;}
+
+static bool asyfm_equalp(mus_any *p1, mus_any *p2)
+{
+  return((p1 == p2) ||
+	 (((p1->core)->type == (p2->core)->type) &&
+	  ((((asyfm *)p1)->freq) == (((asyfm *)p2)->freq)) && 
+	  ((((asyfm *)p1)->phase) == (((asyfm *)p2)->phase)) &&
+	  ((((asyfm *)p1)->ratio) == (((asyfm *)p2)->ratio)) &&
+	  ((((asyfm *)p1)->r) == (((asyfm *)p2)->r))));
+}
+
+static char *describe_asyfm(mus_any *ptr)
+{
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_asymmetric_fm " freq: %.3fHz, phase: %.3f, ratio: %.3f, r: %.3f",
+	       mus_frequency(ptr),
+	       mus_phase(ptr),
+	       ((asyfm *)ptr)->ratio, 
+	       asyfm_r(ptr));
+  return(describe_buffer);
+}
+
+bool mus_asymmetric_fm_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_ASYMMETRIC_FM));}
+
+Float mus_asymmetric_fm(mus_any *ptr, Float index, Float fm)
+{
+  asyfm *gen = (asyfm *)ptr;
+  Float result, mth;
+  mth = gen->ratio * gen->phase;
+  result = exp(index * gen->cosr * cos(mth)) * sin(gen->phase + index * gen->sinr * sin(mth));
+  /* second index factor added 4-Mar-02 */
+  gen->phase += (gen->freq + fm);
+  return(result);
+}
+
+Float mus_asymmetric_fm_1(mus_any *ptr, Float index) /* mostly for internal optimizer consistency */
+{
+  asyfm *gen = (asyfm *)ptr;
+  Float result, mth;
+  mth = gen->ratio * gen->phase;
+  result = exp(index * gen->cosr * cos(mth)) * sin(gen->phase + index * gen->sinr * sin(mth));
+  /* second index factor added 4-Mar-02 */
+  gen->phase += gen->freq;
+  return(result);
+}
+
+static mus_any_class ASYMMETRIC_FM_CLASS = {
+  MUS_ASYMMETRIC_FM,
+  S_asymmetric_fm,
+  &free_asymmetric_fm,
+  &describe_asyfm,
+  &asyfm_equalp,
+  0, 0, 0, 0,
+  &asyfm_freq,
+  &set_asyfm_freq,
+  &asyfm_phase,
+  &set_asyfm_phase,
+  &asyfm_r,
+  &set_asyfm_r,
+  &asyfm_ratio, 0,
+  &mus_asymmetric_fm,
+  MUS_NOT_SPECIAL, 
+  NULL, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0,
+  &_mus_wrap_no_vcts,
+  &asyfm_reset
+};
+
+mus_any *mus_make_asymmetric_fm(Float freq, Float phase, Float r, Float ratio) /* r default 1.0, ratio 1.0 */
+{
+ asyfm *gen = NULL;
+ if (r == 0.0)
+   mus_error(MUS_ARG_OUT_OF_RANGE, "r can't be 0.0");
+ else
+   {
+     gen = (asyfm *)clm_calloc(1, sizeof(asyfm), S_make_asymmetric_fm);
+     gen->core = &ASYMMETRIC_FM_CLASS;
+     gen->freq = mus_hz_to_radians(freq);
+     gen->phase = phase;
+     gen->r = r;
+     gen->ratio = ratio;
+     gen->cosr = 0.5 * (r - (1.0 / r)); /* 0.5 factor for I/2 */
+     gen->sinr = 0.5 * (r + (1.0 / r));
+   }
+ return((mus_any *)gen);
+}
+
+
+
+/*---------------- sine-summation ---------------- */
+
+typedef struct {
+  mus_any_class *core;
+  double freq, phase;
+  Float a, b, an, a2;
+  int n;
+} sss;
+
+static int free_sss(mus_any *ptr) {if (ptr) FREE(ptr); return(0);}
+static Float sss_freq(mus_any *ptr) {return(mus_radians_to_hz(((sss *)ptr)->freq));}
+static Float set_sss_freq(mus_any *ptr, Float val) {((sss *)ptr)->freq = mus_hz_to_radians(val); return(val);}
+static Float sss_phase(mus_any *ptr) {return(fmod(((sss *)ptr)->phase, TWO_PI));}
+static Float set_sss_phase(mus_any *ptr, Float val) {((sss *)ptr)->phase = val; return(val);}
+static void sss_reset(mus_any *ptr) {((sss *)ptr)->phase = 0.0;}
+static off_t sss_n(mus_any *ptr) {return((off_t)(((sss *)ptr)->n));}
+static Float sss_b(mus_any *ptr) {return(((sss *)ptr)->b);}
+static Float sss_a(mus_any *ptr) {return(((sss *)ptr)->a);}
+static Float set_sss_a(mus_any *ptr, Float val) 
+{
+  sss *gen = (sss *)ptr;
+  gen->a = val;
+  gen->a2 = 1.0 + val * val;
+  gen->an = pow(val, gen->n + 1);
+  return(val);
+}
+
+static bool sss_equalp(mus_any *p1, mus_any *p2)
+{
+  sss *g1 = (sss *)p1;
+  sss *g2 = (sss *)p2;
+  return((p1 == p2) ||
+	 (((g1->core)->type == (g2->core)->type) &&
+	  (g1->freq == g2->freq) &&
+	  (g1->phase == g2->phase) &&
+	  (g1->n == g2->n) &&
+	  (g1->a == g2->a) &&
+	  (g1->b == g2->b)));
+}
+
+bool mus_sine_summation_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_SINE_SUMMATION));}
+
+static char *describe_sss(mus_any *ptr)
+{
+  sss *gen = (sss *)ptr;
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_sine_summation ": frequency: %.3f, phase: %.3f, n: %d, a: %.3f, ratio: %.3f",
+	       mus_frequency(ptr),
+	       mus_phase(ptr),
+	       gen->n, 
+	       sss_a(ptr),
+	       gen->b);
+  return(describe_buffer);
+}
+
+Float mus_sine_summation(mus_any *ptr, Float fm)
+{
+  sss *gen = (sss *)ptr;
+  Float B, thB, result, divisor;
+  B = gen->b * gen->phase;
+  thB = gen->phase - B;
+  divisor = (gen->a2 - (2 * gen->a * cos(B)));
+  if (divisor == 0.0) 
+    result = 0.0;
+  /* if a=1.0, the formula given by Moorer is extremely unstable anywhere near phase=0.0 
+   *   (map-channel (let ((gen (make-sine-summation 100.0 0.0 1 1 1.0))) (lambda (y) (sine-summation gen))))
+   * or even worse:
+   *   (map-channel (let ((gen (make-sine-summation 100.0 0.0 0 1 1.0))) (lambda (y) (sine-summation gen))))
+   * which should be a sine wave! 
+   * I wonder if that formula is incorrect...
+   */
+  else result = (sin(gen->phase) - (gen->a * sin(thB)) - 
+		 (gen->an * (sin(gen->phase + (B * (gen->n + 1))) - 
+			     (gen->a * sin(gen->phase + (B * gen->n)))))) / divisor;
+  gen->phase += (gen->freq + fm);
+  /* gen->phase = fmod(gen->phase, TWO_PI); */
+  return(result);
+}
+
+static Float run_sine_summation(mus_any *ptr, Float fm, Float unused) {return(mus_sine_summation(ptr, fm));}
+
+static mus_any_class SINE_SUMMATION_CLASS = {
+  MUS_SINE_SUMMATION,
+  S_sine_summation,
+  &free_sss,
+  &describe_sss,
+  &sss_equalp,
+  0, 0, 0, 0,
+  &sss_freq,
+  &set_sss_freq,
+  &sss_phase,
+  &set_sss_phase,
+  &sss_a,
+  &set_sss_a,
+  &sss_b, 0,
+  &run_sine_summation,
+  MUS_NOT_SPECIAL, 
+  NULL, 0,
+  0, 0, 0, 0, 0, 0, 
+  &sss_n, /* mus-cosines */
+  0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0,
+  &_mus_wrap_no_vcts,
+  &sss_reset
+};
+
+mus_any *mus_make_sine_summation(Float frequency, Float phase, int n, Float a, Float b_ratio)
+{
+  sss *gen;
+  gen = (sss *)clm_calloc(1, sizeof(sss), S_make_sine_summation);
+  gen->core = &SINE_SUMMATION_CLASS;
+  gen->freq = mus_hz_to_radians(frequency);
+  gen->phase = phase;
+  gen->an = pow(a, n + 1);
+  gen->a2 = 1.0 + a * a;
+  gen->a = a;
+  gen->n = n;
+  gen->b = b_ratio;
+  return((mus_any *)gen);
+}
+
+
+/* ---------------- table lookup ---------------- */
+
+/* PERHAPS: compand as extension of table-lookup
+ */
+
+typedef struct {
+  mus_any_class *core;
+  Float freq;
+  Float internal_mag;
+  Float phase;
+  Float *table;
+  int table_size;
+  mus_interp_t type;
+  bool table_allocated;
+  Float yn1;
+} tbl;
+
+Float *mus_partials_to_wave(Float *partial_data, int partials, Float *table, int table_size, bool normalize)
+{
+  int partial, k;
+  memset((void *)table, 0, table_size * sizeof(Float));
+  for (partial = 0, k = 1; partial < partials; partial++, k += 2)
+    {
+      Float amp;
+      amp = partial_data[k];
+      if (amp != 0.0)
+	{
+	  int i;
+	  Float freq, angle;
+	  freq = (partial_data[partial * 2] * TWO_PI) / (Float)table_size;
+	  for (i = 0, angle = 0.0; i < table_size; i++, angle += freq) 
+	    table[i] += amp * sin(angle);
+	}
+    }
+  if (normalize) 
+    return(array_normalize(table, table_size));
+  return(table);
+}
+
+Float *mus_phase_partials_to_wave(Float *partial_data, int partials, Float *table, int table_size, bool normalize)
+{
+  int partial, k, n;
+  memset((void *)table, 0, table_size * sizeof(Float));
+  for (partial = 0, k = 1, n = 2; partial < partials; partial++, k += 3, n += 3)
+    {
+      Float amp;
+      amp = partial_data[k];
+      if (amp != 0.0)
+	{
+	  int i;
+	  Float freq, angle;
+	  freq = (partial_data[partial * 3] * TWO_PI) / (Float)table_size;
+	  for (i = 0, angle = partial_data[n]; i < table_size; i++, angle += freq) 
+	    table[i] += amp * sin(angle);
+	}
+    }
+  if (normalize) 
+    return(array_normalize(table, table_size));
+  return(table);
+}
+
+Float mus_table_lookup(mus_any *ptr, Float fm)
+{
+  tbl *gen = (tbl *)ptr;
+  gen->yn1 = mus_interpolate(gen->type, gen->phase, gen->table, gen->table_size, gen->yn1);
+  gen->phase += (gen->freq + (fm * gen->internal_mag));
+  if ((gen->phase >= gen->table_size) || (gen->phase < 0.0))
+    {
+      gen->phase = fmod(gen->phase, (double)(gen->table_size));
+      if (gen->phase < 0.0) gen->phase += gen->table_size;
+    }
+  return(gen->yn1);
+}
+
+Float mus_table_lookup_1(mus_any *ptr)
+{
+  tbl *gen = (tbl *)ptr;
+  gen->yn1 = mus_interpolate(gen->type, gen->phase, gen->table, gen->table_size, gen->yn1);
+  gen->phase += gen->freq;
+  if ((gen->phase >= gen->table_size) || (gen->phase < 0.0))
+    {
+      gen->phase = fmod(gen->phase, (double)(gen->table_size));
+      if (gen->phase < 0.0) gen->phase += gen->table_size;
+    }
+  return(gen->yn1);
+}
+
+static Float run_table_lookup(mus_any *ptr, Float fm, Float unused) {return(mus_table_lookup(ptr, fm));}
+bool mus_table_lookup_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_TABLE_LOOKUP));}
+static off_t table_lookup_length(mus_any *ptr) {return(((tbl *)ptr)->table_size);}
+static Float *table_lookup_data(mus_any *ptr) {return(((tbl *)ptr)->table);}
+static Float table_lookup_freq(mus_any *ptr) {return((((tbl *)ptr)->freq * sampling_rate) / (Float)(((tbl *)ptr)->table_size));}
+static Float set_table_lookup_freq(mus_any *ptr, Float val) {((tbl *)ptr)->freq = (val * ((tbl *)ptr)->table_size) / sampling_rate; return(val);}
+static Float table_lookup_phase(mus_any *ptr) {return(fmod(((TWO_PI * ((tbl *)ptr)->phase) / ((tbl *)ptr)->table_size), TWO_PI));}
+static Float set_table_lookup_phase(mus_any *ptr, Float val) {((tbl *)ptr)->phase = (val * ((tbl *)ptr)->table_size) / TWO_PI; return(val);}
+static int table_lookup_interp_type(mus_any *ptr) {return((int)(((tbl *)ptr)->type));}
+static void table_lookup_reset(mus_any *ptr) {((tbl *)ptr)->phase = 0.0;}
+
+static char *describe_table_lookup(mus_any *ptr)
+{
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_table_lookup ": freq: %.3fHz, phase: %.3f, length: %d, interp: %s",
+	       mus_frequency(ptr),
+	       mus_phase(ptr),
+	       (int)mus_length(ptr),
+	       interp_name[table_lookup_interp_type(ptr)]);
+  return(describe_buffer);
+}
+
+static bool table_lookup_equalp(mus_any *p1, mus_any *p2)
+{
+  int i;
+  tbl *t1 = (tbl *)p1;
+  tbl *t2 = (tbl *)p2;
+  if (p1 == p2) return(true);
+  if ((t1) && (t2) &&
+      (t1->core->type == t2->core->type) &&
+      (t1->table_size == t2->table_size) &&
+      (t1->freq == t2->freq) &&
+      (t1->phase == t2->phase) &&
+      (t1->type == t2->type) &&
+      (t1->internal_mag == t2->internal_mag))
+    {
+      for (i = 0; i < t1->table_size; i++)
+	if (t1->table[i] != t2->table[i])
+	  return(false);
+      return(true);
+    }
+  return(false);
+}
+
+static int free_table_lookup(mus_any *ptr) 
+{
+  tbl *gen = (tbl *)ptr;
+  if (gen)
+    {
+      if ((gen->table) && (gen->table_allocated)) FREE(gen->table); 
+      FREE(gen); 
+    }
+  return(0);
+}
+
+static Float *table_set_data(mus_any *ptr, Float *val) 
+{
+  tbl *gen = (tbl *)ptr;
+  if (gen->table_allocated) {FREE(gen->table); gen->table_allocated = false;}
+  gen->table = val; 
+  return(val);
+}
+
+static mus_any_class TABLE_LOOKUP_CLASS = {
+  MUS_TABLE_LOOKUP,
+  S_table_lookup,
+  &free_table_lookup,
+  &describe_table_lookup,
+  &table_lookup_equalp,
+  &table_lookup_data,
+  &table_set_data,
+  &table_lookup_length,
+  0,
+  &table_lookup_freq,
+  &set_table_lookup_freq,
+  &table_lookup_phase,
+  &set_table_lookup_phase,
+  0, 0,
+  0, 0,
+  &run_table_lookup,
+  MUS_NOT_SPECIAL, 
+  NULL,
+  &table_lookup_interp_type,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0,
+  &_mus_wrap_one_vct_wrapped,
+  &table_lookup_reset
+};
+
+mus_any *mus_make_table_lookup (Float freq, Float phase, Float *table, int table_size, mus_interp_t type)
+{
+  tbl *gen;
+  gen = (tbl *)clm_calloc(1, sizeof(tbl), S_make_table_lookup);
+  gen->core = &TABLE_LOOKUP_CLASS;
+  gen->table_size = table_size;
+  gen->internal_mag = (Float)table_size / TWO_PI;
+  gen->freq = (freq * table_size) / sampling_rate;
+  gen->phase = (fmod(phase, TWO_PI) * table_size) / TWO_PI;
+  gen->type = type;
+  gen->yn1 = 0.0;
+  if (table)
+    {
+      gen->table = table;
+      gen->table_allocated = false;
+    }
+  else
+    {
+      gen->table = (Float *)clm_calloc(table_size, sizeof(Float), "table lookup table");
+      gen->table_allocated = true;
+    }
+  return((mus_any *)gen);
+}
+
+
+/* ---------------- waveshape ---------------- */
+
+typedef struct {
+  mus_any_class *core;
+  mus_any *o;
+  Float *table;
+  int table_size;
+  Float offset;
+  bool table_allocated;
+} ws;
+
+static int free_ws(mus_any *pt) 
+{
+  ws *ptr = (ws *)pt;
+  if (ptr) 
+    {
+      mus_free(ptr->o);
+      if ((ptr->table) && (ptr->table_allocated)) FREE(ptr->table);
+      FREE(ptr); 
+    }
+  return(0);
+}
+
+static Float ws_freq(mus_any *ptr) {return(mus_frequency(((ws *)ptr)->o));}
+static Float set_ws_freq(mus_any *ptr, Float val) {return(mus_set_frequency(((ws *)ptr)->o, val));}
+static Float ws_phase(mus_any *ptr) {return(mus_phase(((ws *)ptr)->o));}
+static Float set_ws_phase(mus_any *ptr, Float val) {return(mus_set_phase(((ws *)ptr)->o, val));}
+static off_t ws_size(mus_any *ptr) {return(((ws *)ptr)->table_size);}
+static off_t set_ws_size(mus_any *ptr, off_t val) {((ws *)ptr)->table_size = (int)val; return(val);}
+static Float *ws_data(mus_any *ptr) {return(((ws *)ptr)->table);}
+
+static void ws_reset(mus_any *ptr)
+{
+  ws *gen = (ws *)ptr;
+  oscil_reset(gen->o);
+  memset((void *)(gen->table), 0, gen->table_size * sizeof(Float));
+}
+
+static bool ws_equalp(mus_any *p1, mus_any *p2)
+{
+  int i;
+  ws *w1 = (ws *)p1;
+  ws *w2 = (ws *)p2;
+  if (p1 == p2) return(true);
+  if ((w1) && (w2) &&
+      (w1->core->type == w2->core->type) &&
+      (mus_equalp(w1->o, w2->o)) &&
+      (w1->table_size == w2->table_size) &&
+      (w1->offset == w2->offset))
+    {
+      for (i = 0; i < w1->table_size; i++)
+	if (w1->table[i] != w2->table[i])
+	  return(false);
+      return(true);
+    }
+  return(false);
+}
+
+static Float *set_ws_data(mus_any *ptr, Float *val) 
+{
+  ws *gen = (ws *)ptr;
+  if (gen->table_allocated) {FREE(gen->table); gen->table_allocated = false;}
+  gen->table = val; 
+  return(val);
+}
+
+static char *describe_waveshape(mus_any *ptr)
+{
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_waveshape " freq: %.3fHz, phase: %.3f, size: %d",
+	       mus_frequency(ptr),
+	       mus_phase(ptr),
+	       (int)ws_size(ptr));
+  return(describe_buffer);
+}
+
+static mus_any_class WAVESHAPE_CLASS = {
+  MUS_WAVESHAPE,
+  S_waveshape,
+  &free_ws,
+  &describe_waveshape,
+  &ws_equalp,
+  &ws_data,
+  &set_ws_data,
+  &ws_size,
+  &set_ws_size,
+  &ws_freq,
+  &set_ws_freq,
+  &ws_phase,
+  &set_ws_phase,
+  0, 0,
+  0, 0,
+  &mus_waveshape,
+  MUS_NOT_SPECIAL, 
+  NULL, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0,
+  &_mus_wrap_one_vct_wrapped,
+  &ws_reset
+};
+
+bool mus_waveshape_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_WAVESHAPE));}
+
+/* PERHAPS: waveshape via polynomial as gen or built-in choice?  polyshape?
+ */
+
+mus_any *mus_make_waveshape(Float frequency, Float phase, Float *table, int size)
+{
+  ws *gen;
+  gen = (ws *)clm_calloc(1, sizeof(ws), S_make_waveshape);
+  gen->core = &WAVESHAPE_CLASS;
+  gen->o = mus_make_oscil(frequency, phase);
+  if (table)
+    {
+      gen->table = table;
+      gen->table_allocated = false;
+    }
+  else
+    {
+      gen->table = (Float *)clm_calloc(size, sizeof(Float), "waveshape table");
+      gen->table_allocated = true;
+    }
+  gen->table_size = size;
+  gen->offset = (Float)(size - 1) / 2.0;
+  return((mus_any *)gen);
+}
+
+Float mus_waveshape(mus_any *ptr, Float index, Float fm)
+{
+  ws *gen = (ws *)ptr;
+  Float table_index;
+  table_index = gen->offset * (1.0 + (mus_oscil_1(gen->o, fm) * index));
+  return(mus_array_interp(gen->table, table_index, gen->table_size));
+}
+
+Float mus_waveshape_1(mus_any *ptr, Float index)
+{
+  ws *gen = (ws *)ptr;
+  Float table_index;
+  table_index = gen->offset * (1.0 + (mus_oscil_0(gen->o) * index));
+  return(mus_array_interp(gen->table, table_index, gen->table_size));
+}
+
+Float *mus_partials_to_waveshape(int npartials, Float *partials, int size, Float *table)
+{
+  /* partials incoming is a list of partials amps indexed by partial number */
+  /* #<0.0, 1.0, 0.0> = 2nd partial 1.0, rest 0. */
+  int i;
+  Float maxI2, x, sum = 0.0;
+  Float *data;
+  if (partials == NULL) return(NULL);
+  for (i = 0; i < npartials; i++) sum += partials[i];
+  if (sum != 0.0) for (i = 0; i < npartials; i++) partials[i] /= sum;
+  for (i = 2; i < npartials; i += 4)
+    {
+      partials[i] = (-partials[i]);
+      if (npartials > (i + 1)) partials[i + 1] = (-partials[i + 1]);
+    }
+  if (table == NULL)
+    data = (Float *)clm_calloc(size, sizeof(Float), "waveshape table");
+  else data = table;
+  if (data == NULL) return(NULL);
+  maxI2 = 2.0 / (Float)(size - 1); /* was size, but mus.lisp was correct?!? */
+  for (i = 0, x = -1.0; i < size; i++, x += maxI2)
+    {
+      Float temp, Tn, Tn1;
+      int hnum;
+      sum = 0.0;
+      temp = 0.0;
+      Tn = 1.0;
+      Tn1 = x;
+      for (hnum = 0; hnum < npartials; hnum++)
+	{
+	  sum += (Tn * partials[hnum]);
+	  temp = Tn1;
+	  Tn1 = (2.0 * Tn1 * x) - Tn;
+	  Tn = temp;
+	}
+      data[i] = sum;
+    }
+  return(array_normalize(data, size));
+}
+
+Float *mus_partials_to_polynomial(int npartials, Float *partials, int kind)
+{
+  /* coeffs returned in partials */
+  int i;
+  int *T0, *T1, *Tn;
+  Float *Cc1;
+  T0 = (int *)clm_calloc(npartials + 1, sizeof(int), "partials_to_polynomial t0");
+  T1 = (int *)clm_calloc(npartials + 1, sizeof(int), "partials_to_polynomial t1");
+  Tn = (int *)clm_calloc(npartials + 1, sizeof(int), "partials_to_polynomial tn");
+  Cc1 = (Float *)clm_calloc(npartials + 1, sizeof(Float), "partials_to_polynomial cc1");
+  if (!Cc1) return(NULL);
+  T0[0] = kind;
+  T1[1] = 1;
+  for (i = 1; i < npartials; i++)
+    {
+      int k;
+      Float amp;
+      amp = partials[i];
+      if (amp != 0.0)
+	{
+	  if (kind == 1)
+	    for (k = 0; k <= i; k++) 
+	      Cc1[k] += (amp * T1[k]);
+	  else
+	    for (k = 1; k <= i; k++) 
+	      Cc1[k - 1] += (amp * T1[k]);
+	}
+      for (k = i + 1; k > 0; k--) 
+	Tn[k] = (2 * T1[k - 1]) - T0[k];
+      Tn[0] = -T0[0];
+      for (k = i + 1; k >= 0; k--)
+	{
+	  T0[k] = T1[k];
+	  T1[k] = Tn[k];
+	}
+    }
+  for (i = 0; i < npartials; i++) 
+    partials[i] = Cc1[i];
+  FREE(T0);
+  FREE(T1);
+  FREE(Tn);
+  FREE(Cc1);
+  return(partials);
+}
+
+/* PERHAPS: pw_waveshape? -- package up the pqw stuff, much as in ssb-am -- maybe a better name is ssb_waveshape
+ */
+
+
+/* ---------------- wave-train ---------------- */
+
+typedef struct {
+  mus_any_class *core;
+  Float freq;
+  Float phase;
+  Float *wave;        /* passed in from caller */
+  int wave_size;
+  Float *out_data;
+  int out_data_size;
+  mus_interp_t interp_type; /* "type" field exists in core -- avoid confusion */
+  Float next_wave_time;
+  int out_pos;
+  bool first_time;
+  Float yn1;
+} wt;
+
+static Float wt_freq(mus_any *ptr) {return(((wt *)ptr)->freq);}
+static Float set_wt_freq(mus_any *ptr, Float val) {((wt *)ptr)->freq = val; return(val);}
+static Float wt_phase(mus_any *ptr) {return(fmod(((TWO_PI * ((wt *)ptr)->phase) / ((Float)((wt *)ptr)->wave_size)), TWO_PI));}
+static Float set_wt_phase(mus_any *ptr, Float val) {((wt *)ptr)->phase = (fmod(val, TWO_PI) * ((wt *)ptr)->wave_size) / TWO_PI; return(val);}
+static off_t wt_length(mus_any *ptr) {return(((wt *)ptr)->wave_size);}
+static off_t wt_set_length(mus_any *ptr, off_t val) {if (val > 0) ((wt *)ptr)->wave_size = (int)val; return((off_t)(((wt *)ptr)->wave_size));}
+static Float *wt_data(mus_any *ptr) {return(((wt *)ptr)->wave);}
+static int wt_interp_type(mus_any *ptr) {return((int)(((wt *)ptr)->interp_type));}
+static Float *wt_set_data(mus_any *ptr, Float *data) {((wt *)ptr)->wave = data; return(data);}
+
+static bool wt_equalp(mus_any *p1, mus_any *p2)
+{
+  int i;
+  wt *w1 = (wt *)p1;
+  wt *w2 = (wt *)p2;
+  if (p1 == p2) return(true);
+  if ((w1) && (w2) &&
+      (w1->core->type == w2->core->type) &&
+      (w1->freq == w2->freq) &&
+      (w1->phase == w2->phase) &&
+      (w1->interp_type == w2->interp_type) &&
+      (w1->wave_size == w2->wave_size) &&
+      (w1->out_data_size == w2->out_data_size) &&
+      (w1->out_pos == w2->out_pos))
+    {
+      for (i = 0; i < w1->wave_size; i++)
+	if (w1->wave[i] != w2->wave[i])
+	  return(false);
+      for (i = 0; i < w1->out_data_size; i++)
+	if (w1->out_data[i] != w2->out_data[i])
+	  return(false);
+      return(true);
+    }
+  return(false);
+}
+
+static char *describe_wt(mus_any *ptr)
+{
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_wave_train " freq: %.3fHz, phase: %.3f, size: " OFF_TD ", interp: %s",
+	       mus_frequency(ptr), 
+	       mus_phase(ptr), 
+	       mus_length(ptr), 
+	       interp_name[wt_interp_type(ptr)]);
+  return(describe_buffer);
+}
+
+static Float mus_wave_train_any(mus_any *ptr, Float fm) 
+{
+  wt *gen = (wt *)ptr;
+  Float result = 0.0;
+  if (gen->out_pos < gen->out_data_size)
+    result = gen->out_data[gen->out_pos];
+  gen->out_pos++;
+  if (gen->out_pos >= gen->next_wave_time)
+    {
+      int i;
+      if (gen->out_pos < gen->out_data_size)
+	{
+	  int good_samps;
+	  good_samps = gen->out_data_size - gen->out_pos;
+	  memmove((void *)(gen->out_data), (void *)(gen->out_data + gen->out_pos), good_samps * sizeof(Float));
+	  memset((void *)(gen->out_data + good_samps), 0, gen->out_pos * sizeof(Float));
+	}
+      else memset((void *)(gen->out_data), 0, gen->out_data_size * sizeof(Float));
+      for (i = 0; i < gen->wave_size; i++)
+	{
+	  gen->yn1 = mus_interpolate(gen->interp_type, gen->phase + i, gen->wave, gen->wave_size, gen->yn1);
+	  gen->out_data[i] += gen->yn1;
+	}
+      if (gen->first_time)
+	{
+	  gen->first_time = false;
+	  gen->out_pos = (int)(gen->phase); /* initial phase, but as an integer in terms of wave table size (gad...) */
+	  if (gen->out_pos >= gen->wave_size)
+	    gen->out_pos = gen->out_pos % gen->wave_size;
+	  result = gen->out_data[gen->out_pos++];
+	  gen->next_wave_time = ((Float)sampling_rate / (gen->freq + fm));
+	}
+      else 
+	{
+	  gen->next_wave_time += (((Float)sampling_rate / (gen->freq + fm)) - gen->out_pos);
+	  gen->out_pos = 0;
+	}
+    }
+  return(result);
+}
+
+Float mus_wave_train(mus_any *ptr, Float fm) {return(mus_wave_train_any(ptr, fm / w_rate));}
+Float mus_wave_train_1(mus_any *ptr) {return(mus_wave_train(ptr, 0.0));}
+static Float run_wave_train(mus_any *ptr, Float fm, Float unused) {return(mus_wave_train_any(ptr, fm / w_rate));}
+
+static int free_wt(mus_any *p) 
+{
+  wt *ptr = (wt *)p;
+  if (ptr) 
+    {
+      if (ptr->out_data) {FREE(ptr->out_data); ptr->out_data = NULL;}
+      FREE(ptr);
+    }
+  return(0);
+}
+
+static void wt_reset(mus_any *ptr)
+{
+  wt *gen = (wt *)ptr;
+  gen->phase = 0.0;
+  memset((void *)(gen->out_data), 0, gen->out_data_size * sizeof(Float));
+  gen->out_pos = gen->out_data_size;
+  gen->next_wave_time = 0.0;
+  gen->first_time = true;
+}
+
+static mus_any_class WAVE_TRAIN_CLASS = {
+  MUS_WAVE_TRAIN,
+  S_wave_train,
+  &free_wt,
+  &describe_wt,
+  &wt_equalp,
+  &wt_data,
+  &wt_set_data,
+  &wt_length,
+  &wt_set_length,
+  &wt_freq,
+  &set_wt_freq,
+  &wt_phase,
+  &set_wt_phase,
+  0, 0,
+  0, 0,
+  &run_wave_train,
+  MUS_NOT_SPECIAL, 
+  NULL,
+  &wt_interp_type,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0,
+  &_mus_wrap_one_vct_wrapped,
+  &wt_reset
+};
+
+mus_any *mus_make_wave_train(Float freq, Float phase, Float *wave, int wave_size, mus_interp_t type)
+{
+  wt *gen;
+  gen = (wt *)clm_calloc(1, sizeof(wt), S_make_wave_train);
+  gen->core = &WAVE_TRAIN_CLASS;
+  gen->freq = freq;
+  gen->phase = (wave_size * fmod(phase, TWO_PI)) / TWO_PI;
+  gen->wave = wave;
+  gen->wave_size = wave_size;
+  gen->interp_type = type;
+  gen->out_data_size = wave_size + 2;
+  gen->out_data = (Float *)clm_calloc(gen->out_data_size, sizeof(Float), "wave train out data");
+  gen->out_pos = gen->out_data_size;
+  gen->next_wave_time = 0.0;
+  gen->first_time = true;
+  gen->yn1 = 0.0;
+  return((mus_any *)gen);
+}
+
+bool mus_wave_train_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_WAVE_TRAIN));}
+
+
+
+
 /* ---------------- delay, comb, notch, all-pass, average ---------------- */
 
 typedef struct {
@@ -1191,31 +2077,8 @@ Float mus_tap(mus_any *ptr, Float loc)
   int taploc;
   if (gen->zdly)
     {
-      switch (gen->type)
-	{
-	case MUS_INTERP_ALL_PASS:
-	  gen->yn1 = mus_array_all_pass_interp(gen->line, gen->zloc - loc, gen->zsize, gen->yn1);
-	  return(gen->yn1);
-	  break;
-	case MUS_INTERP_NONE:
-	  if (gen->size == 0) return(gen->line[0]);
-	  taploc = (int)(gen->loc - (int)loc) % gen->size;
-	  if (taploc < 0) taploc += gen->size;
-	  return(gen->line[taploc]);
-	  break;
-	case MUS_INTERP_LAGRANGE:
-	  return(mus_array_lagrange_interp(gen->line, gen->zloc - loc, gen->zsize));
-	  break;
-	case MUS_INTERP_HERMITE:
-	  return(mus_array_hermite_interp(gen->line, gen->zloc - loc, gen->zsize));
-	  break;
-	case MUS_INTERP_LINEAR:
-	default:
-	  if (loc == 0.0) 
-	    return(gen->line[gen->zloc]);
-	  else return(mus_array_interp(gen->line, gen->zloc - loc, gen->zsize));
-	  break;
-	}
+      gen->yn1 = mus_interpolate(gen->type, gen->zloc - loc, gen->line, gen->zsize, gen->yn1);
+      return(gen->yn1);
     }
   else
     {
@@ -1691,235 +2554,6 @@ mus_any *mus_make_average(int size, Float *line)
       return((mus_any *)gen);
     }
   return(NULL);
-}
-
-
-
-/* ---------------- table lookup ---------------- */
-
-/* PERHAPS: compand as extension of table-lookup
- */
-
-typedef struct {
-  mus_any_class *core;
-  Float freq;
-  Float internal_mag;
-  Float phase;
-  Float *table;
-  int table_size;
-  mus_interp_t type;
-  bool table_allocated;
-} tbl;
-
-Float *mus_partials_to_wave(Float *partial_data, int partials, Float *table, int table_size, bool normalize)
-{
-  int partial, k;
-  memset((void *)table, 0, table_size * sizeof(Float));
-  for (partial = 0, k = 1; partial < partials; partial++, k += 2)
-    {
-      Float amp;
-      amp = partial_data[k];
-      if (amp != 0.0)
-	{
-	  int i;
-	  Float freq, angle;
-	  freq = (partial_data[partial * 2] * TWO_PI) / (Float)table_size;
-	  for (i = 0, angle = 0.0; i < table_size; i++, angle += freq) 
-	    table[i] += amp * sin(angle);
-	}
-    }
-  if (normalize) 
-    return(array_normalize(table, table_size));
-  return(table);
-}
-
-Float *mus_phase_partials_to_wave(Float *partial_data, int partials, Float *table, int table_size, bool normalize)
-{
-  int partial, k, n;
-  memset((void *)table, 0, table_size * sizeof(Float));
-  for (partial = 0, k = 1, n = 2; partial < partials; partial++, k += 3, n += 3)
-    {
-      Float amp;
-      amp = partial_data[k];
-      if (amp != 0.0)
-	{
-	  int i;
-	  Float freq, angle;
-	  freq = (partial_data[partial * 3] * TWO_PI) / (Float)table_size;
-	  for (i = 0, angle = partial_data[n]; i < table_size; i++, angle += freq) 
-	    table[i] += amp * sin(angle);
-	}
-    }
-  if (normalize) 
-    return(array_normalize(table, table_size));
-  return(table);
-}
-
-static Float table_lookup_interp(mus_interp_t type, Float x, Float *table, int table_size)
-{
-  switch (type)
-    {
-    case MUS_INTERP_NONE:
-      {
-	int x0;
-	x0 = ((int)x) % table_size;
-	if (x0 < 0) x0 += table_size;
-	return(table[x0]);
-      }
-      break;
-    case MUS_INTERP_LAGRANGE:
-      return(mus_array_lagrange_interp(table, x, table_size));
-      break;
-    case MUS_INTERP_HERMITE:
-      return(mus_array_hermite_interp(table, x, table_size));
-      break;
-    case MUS_INTERP_LINEAR:
-      return(mus_array_interp(table, x, table_size));
-      break;
-    default:
-      return(mus_array_interp(table, x, table_size));
-      break;
-    }
-}
-
-Float mus_table_lookup(mus_any *ptr, Float fm)
-{
-  tbl *gen = (tbl *)ptr;
-  Float result;
-  result = table_lookup_interp(gen->type, gen->phase, gen->table, gen->table_size);
-  gen->phase += (gen->freq + (fm * gen->internal_mag));
-  if ((gen->phase >= gen->table_size) || (gen->phase < 0.0))
-    {
-      gen->phase = fmod(gen->phase, (double)(gen->table_size));
-      if (gen->phase < 0.0) gen->phase += gen->table_size;
-    }
-  return(result);
-}
-
-Float mus_table_lookup_1(mus_any *ptr)
-{
-  tbl *gen = (tbl *)ptr;
-  Float result;
-  result = table_lookup_interp(gen->type, gen->phase, gen->table, gen->table_size);
-  gen->phase += gen->freq;
-  if ((gen->phase >= gen->table_size) || (gen->phase < 0.0))
-    {
-      gen->phase = fmod(gen->phase, (double)(gen->table_size));
-      if (gen->phase < 0.0) gen->phase += gen->table_size;
-    }
-  return(result);
-}
-
-static Float run_table_lookup(mus_any *ptr, Float fm, Float unused) {return(mus_table_lookup(ptr, fm));}
-bool mus_table_lookup_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_TABLE_LOOKUP));}
-static off_t table_lookup_length(mus_any *ptr) {return(((tbl *)ptr)->table_size);}
-static Float *table_lookup_data(mus_any *ptr) {return(((tbl *)ptr)->table);}
-static Float table_lookup_freq(mus_any *ptr) {return((((tbl *)ptr)->freq * sampling_rate) / (Float)(((tbl *)ptr)->table_size));}
-static Float set_table_lookup_freq(mus_any *ptr, Float val) {((tbl *)ptr)->freq = (val * ((tbl *)ptr)->table_size) / sampling_rate; return(val);}
-static Float table_lookup_phase(mus_any *ptr) {return(fmod(((TWO_PI * ((tbl *)ptr)->phase) / ((tbl *)ptr)->table_size), TWO_PI));}
-static Float set_table_lookup_phase(mus_any *ptr, Float val) {((tbl *)ptr)->phase = (val * ((tbl *)ptr)->table_size) / TWO_PI; return(val);}
-static int table_lookup_interp_type(mus_any *ptr) {return((int)(((tbl *)ptr)->type));}
-static void table_lookup_reset(mus_any *ptr) {((tbl *)ptr)->phase = 0.0;}
-
-static char *describe_table_lookup(mus_any *ptr)
-{
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_table_lookup ": freq: %.3fHz, phase: %.3f, length: %d, interp: %s",
-	       mus_frequency(ptr),
-	       mus_phase(ptr),
-	       (int)mus_length(ptr),
-	       interp_name[table_lookup_interp_type(ptr)]);
-  return(describe_buffer);
-}
-
-static bool table_lookup_equalp(mus_any *p1, mus_any *p2)
-{
-  int i;
-  tbl *t1 = (tbl *)p1;
-  tbl *t2 = (tbl *)p2;
-  if (p1 == p2) return(true);
-  if ((t1) && (t2) &&
-      (t1->core->type == t2->core->type) &&
-      (t1->table_size == t2->table_size) &&
-      (t1->freq == t2->freq) &&
-      (t1->phase == t2->phase) &&
-      (t1->type == t2->type) &&
-      (t1->internal_mag == t2->internal_mag))
-    {
-      for (i = 0; i < t1->table_size; i++)
-	if (t1->table[i] != t2->table[i])
-	  return(false);
-      return(true);
-    }
-  return(false);
-}
-
-static int free_table_lookup(mus_any *ptr) 
-{
-  tbl *gen = (tbl *)ptr;
-  if (gen)
-    {
-      if ((gen->table) && (gen->table_allocated)) FREE(gen->table); 
-      FREE(gen); 
-    }
-  return(0);
-}
-
-static Float *table_set_data(mus_any *ptr, Float *val) 
-{
-  tbl *gen = (tbl *)ptr;
-  if (gen->table_allocated) {FREE(gen->table); gen->table_allocated = false;}
-  gen->table = val; 
-  return(val);
-}
-
-static mus_any_class TABLE_LOOKUP_CLASS = {
-  MUS_TABLE_LOOKUP,
-  S_table_lookup,
-  &free_table_lookup,
-  &describe_table_lookup,
-  &table_lookup_equalp,
-  &table_lookup_data,
-  &table_set_data,
-  &table_lookup_length,
-  0,
-  &table_lookup_freq,
-  &set_table_lookup_freq,
-  &table_lookup_phase,
-  &set_table_lookup_phase,
-  0, 0,
-  0, 0,
-  &run_table_lookup,
-  MUS_NOT_SPECIAL, 
-  NULL,
-  &table_lookup_interp_type,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0,
-  &_mus_wrap_one_vct_wrapped,
-  &table_lookup_reset
-};
-
-mus_any *mus_make_table_lookup (Float freq, Float phase, Float *table, int table_size, mus_interp_t type)
-{
-  tbl *gen;
-  gen = (tbl *)clm_calloc(1, sizeof(tbl), S_make_table_lookup);
-  gen->core = &TABLE_LOOKUP_CLASS;
-  gen->table_size = table_size;
-  gen->internal_mag = (Float)table_size / TWO_PI;
-  gen->freq = (freq * table_size) / sampling_rate;
-  gen->phase = (fmod(phase, TWO_PI) * table_size) / TWO_PI;
-  gen->type = type;
-  if (table)
-    {
-      gen->table = table;
-      gen->table_allocated = false;
-    }
-  else
-    {
-      gen->table = (Float *)clm_calloc(table_size, sizeof(Float), "table lookup table");
-      gen->table_allocated = true;
-    }
-  return((mus_any *)gen);
 }
 
 
@@ -2497,248 +3131,6 @@ mus_any *mus_make_rand_interp_with_distribution(Float freq, Float base, Float *d
   gen = (noi *)mus_make_rand_interp(freq, base);
   gen->distribution = distribution;
   gen->distribution_size = distribution_size;
-  return((mus_any *)gen);
-}
-
-
-/* ---------------- asymmetric-fm ---------------- */
-
-typedef struct {
-  mus_any_class *core;
-  Float r;
-  double freq, phase;
-  Float ratio;
-  Float cosr;
-  Float sinr;
-} asyfm;
-
-static int free_asymmetric_fm(mus_any *ptr) {if (ptr) FREE(ptr); return(0);}
-static Float asyfm_freq(mus_any *ptr) {return(mus_radians_to_hz(((asyfm *)ptr)->freq));}
-static Float set_asyfm_freq(mus_any *ptr, Float val) {((asyfm *)ptr)->freq = mus_hz_to_radians(val); return(val);}
-static Float asyfm_phase(mus_any *ptr) {return(fmod(((asyfm *)ptr)->phase, TWO_PI));}
-static Float set_asyfm_phase(mus_any *ptr, Float val) {((asyfm *)ptr)->phase = val; return(val);}
-static Float asyfm_ratio(mus_any *ptr) {return(((asyfm *)ptr)->ratio);}
-static Float asyfm_r(mus_any *ptr) {return(((asyfm *)ptr)->r);}
-static Float set_asyfm_r(mus_any *ptr, Float val) 
-{
-  asyfm *gen = (asyfm *)ptr;
-  if (val != 0.0)
-    {
-      gen->r = val; 
-      gen->cosr = 0.5 * (val - (1.0 / val));
-      gen->sinr = 0.5 * (val + (1.0 / val));
-    }
-  return(val);
-}
-static void asyfm_reset(mus_any *ptr) {((asyfm *)ptr)->phase = 0.0;}
-
-static bool asyfm_equalp(mus_any *p1, mus_any *p2)
-{
-  return((p1 == p2) ||
-	 (((p1->core)->type == (p2->core)->type) &&
-	  ((((asyfm *)p1)->freq) == (((asyfm *)p2)->freq)) && 
-	  ((((asyfm *)p1)->phase) == (((asyfm *)p2)->phase)) &&
-	  ((((asyfm *)p1)->ratio) == (((asyfm *)p2)->ratio)) &&
-	  ((((asyfm *)p1)->r) == (((asyfm *)p2)->r))));
-}
-
-static char *describe_asyfm(mus_any *ptr)
-{
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_asymmetric_fm " freq: %.3fHz, phase: %.3f, ratio: %.3f, r: %.3f",
-	       mus_frequency(ptr),
-	       mus_phase(ptr),
-	       ((asyfm *)ptr)->ratio, 
-	       asyfm_r(ptr));
-  return(describe_buffer);
-}
-
-bool mus_asymmetric_fm_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_ASYMMETRIC_FM));}
-
-Float mus_asymmetric_fm(mus_any *ptr, Float index, Float fm)
-{
-  asyfm *gen = (asyfm *)ptr;
-  Float result, mth;
-  mth = gen->ratio * gen->phase;
-  result = exp(index * gen->cosr * cos(mth)) * sin(gen->phase + index * gen->sinr * sin(mth));
-  /* second index factor added 4-Mar-02 */
-  gen->phase += (gen->freq + fm);
-  return(result);
-}
-
-Float mus_asymmetric_fm_1(mus_any *ptr, Float index) /* mostly for internal optimizer consistency */
-{
-  asyfm *gen = (asyfm *)ptr;
-  Float result, mth;
-  mth = gen->ratio * gen->phase;
-  result = exp(index * gen->cosr * cos(mth)) * sin(gen->phase + index * gen->sinr * sin(mth));
-  /* second index factor added 4-Mar-02 */
-  gen->phase += gen->freq;
-  return(result);
-}
-
-static mus_any_class ASYMMETRIC_FM_CLASS = {
-  MUS_ASYMMETRIC_FM,
-  S_asymmetric_fm,
-  &free_asymmetric_fm,
-  &describe_asyfm,
-  &asyfm_equalp,
-  0, 0, 0, 0,
-  &asyfm_freq,
-  &set_asyfm_freq,
-  &asyfm_phase,
-  &set_asyfm_phase,
-  &asyfm_r,
-  &set_asyfm_r,
-  &asyfm_ratio, 0,
-  &mus_asymmetric_fm,
-  MUS_NOT_SPECIAL, 
-  NULL, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0,
-  &_mus_wrap_no_vcts,
-  &asyfm_reset
-};
-
-mus_any *mus_make_asymmetric_fm(Float freq, Float phase, Float r, Float ratio) /* r default 1.0, ratio 1.0 */
-{
- asyfm *gen = NULL;
- if (r == 0.0)
-   mus_error(MUS_ARG_OUT_OF_RANGE, "r can't be 0.0");
- else
-   {
-     gen = (asyfm *)clm_calloc(1, sizeof(asyfm), S_make_asymmetric_fm);
-     gen->core = &ASYMMETRIC_FM_CLASS;
-     gen->freq = mus_hz_to_radians(freq);
-     gen->phase = phase;
-     gen->r = r;
-     gen->ratio = ratio;
-     gen->cosr = 0.5 * (r - (1.0 / r)); /* 0.5 factor for I/2 */
-     gen->sinr = 0.5 * (r + (1.0 / r));
-   }
- return((mus_any *)gen);
-}
-
-
-
-/*---------------- sine-summation ---------------- */
-
-typedef struct {
-  mus_any_class *core;
-  double freq, phase;
-  Float a, b, an, a2;
-  int n;
-} sss;
-
-static int free_sss(mus_any *ptr) {if (ptr) FREE(ptr); return(0);}
-static Float sss_freq(mus_any *ptr) {return(mus_radians_to_hz(((sss *)ptr)->freq));}
-static Float set_sss_freq(mus_any *ptr, Float val) {((sss *)ptr)->freq = mus_hz_to_radians(val); return(val);}
-static Float sss_phase(mus_any *ptr) {return(fmod(((sss *)ptr)->phase, TWO_PI));}
-static Float set_sss_phase(mus_any *ptr, Float val) {((sss *)ptr)->phase = val; return(val);}
-static void sss_reset(mus_any *ptr) {((sss *)ptr)->phase = 0.0;}
-static off_t sss_n(mus_any *ptr) {return((off_t)(((sss *)ptr)->n));}
-static Float sss_b(mus_any *ptr) {return(((sss *)ptr)->b);}
-static Float sss_a(mus_any *ptr) {return(((sss *)ptr)->a);}
-static Float set_sss_a(mus_any *ptr, Float val) 
-{
-  sss *gen = (sss *)ptr;
-  gen->a = val;
-  gen->a2 = 1.0 + val * val;
-  gen->an = pow(val, gen->n + 1);
-  return(val);
-}
-
-static bool sss_equalp(mus_any *p1, mus_any *p2)
-{
-  sss *g1 = (sss *)p1;
-  sss *g2 = (sss *)p2;
-  return((p1 == p2) ||
-	 (((g1->core)->type == (g2->core)->type) &&
-	  (g1->freq == g2->freq) &&
-	  (g1->phase == g2->phase) &&
-	  (g1->n == g2->n) &&
-	  (g1->a == g2->a) &&
-	  (g1->b == g2->b)));
-}
-
-bool mus_sine_summation_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_SINE_SUMMATION));}
-
-static char *describe_sss(mus_any *ptr)
-{
-  sss *gen = (sss *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_sine_summation ": frequency: %.3f, phase: %.3f, n: %d, a: %.3f, ratio: %.3f",
-	       mus_frequency(ptr),
-	       mus_phase(ptr),
-	       gen->n, 
-	       sss_a(ptr),
-	       gen->b);
-  return(describe_buffer);
-}
-
-Float mus_sine_summation(mus_any *ptr, Float fm)
-{
-  sss *gen = (sss *)ptr;
-  Float B, thB, result, divisor;
-  B = gen->b * gen->phase;
-  thB = gen->phase - B;
-  divisor = (gen->a2 - (2 * gen->a * cos(B)));
-  if (divisor == 0.0) 
-    result = 0.0;
-  /* if a=1.0, the formula given by Moorer is extremely unstable anywhere near phase=0.0 
-   *   (map-channel (let ((gen (make-sine-summation 100.0 0.0 1 1 1.0))) (lambda (y) (sine-summation gen))))
-   * or even worse:
-   *   (map-channel (let ((gen (make-sine-summation 100.0 0.0 0 1 1.0))) (lambda (y) (sine-summation gen))))
-   * which should be a sine wave! 
-   * I wonder if that formula is incorrect...
-   */
-  else result = (sin(gen->phase) - (gen->a * sin(thB)) - 
-		 (gen->an * (sin(gen->phase + (B * (gen->n + 1))) - 
-			     (gen->a * sin(gen->phase + (B * gen->n)))))) / divisor;
-  gen->phase += (gen->freq + fm);
-  /* gen->phase = fmod(gen->phase, TWO_PI); */
-  return(result);
-}
-
-static Float run_sine_summation(mus_any *ptr, Float fm, Float unused) {return(mus_sine_summation(ptr, fm));}
-
-static mus_any_class SINE_SUMMATION_CLASS = {
-  MUS_SINE_SUMMATION,
-  S_sine_summation,
-  &free_sss,
-  &describe_sss,
-  &sss_equalp,
-  0, 0, 0, 0,
-  &sss_freq,
-  &set_sss_freq,
-  &sss_phase,
-  &set_sss_phase,
-  &sss_a,
-  &set_sss_a,
-  &sss_b, 0,
-  &run_sine_summation,
-  MUS_NOT_SPECIAL, 
-  NULL, 0,
-  0, 0, 0, 0, 0, 0, 
-  &sss_n, /* mus-cosines */
-  0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0,
-  &_mus_wrap_no_vcts,
-  &sss_reset
-};
-
-mus_any *mus_make_sine_summation(Float frequency, Float phase, int n, Float a, Float b_ratio)
-{
-  sss *gen;
-  gen = (sss *)clm_calloc(1, sizeof(sss), S_make_sine_summation);
-  gen->core = &SINE_SUMMATION_CLASS;
-  gen->freq = mus_hz_to_radians(frequency);
-  gen->phase = phase;
-  gen->an = pow(a, n + 1);
-  gen->a2 = 1.0 + a * a;
-  gen->a = a;
-  gen->n = n;
-  gen->b = b_ratio;
   return((mus_any *)gen);
 }
 
@@ -3503,238 +3895,6 @@ Float *mus_make_fir_coeffs(int order, Float *envl, Float *aa)
 }
 
 /* PERHAPS: mus_cascade_to_canonical
- */
-
-
-/* ---------------- waveshape ---------------- */
-
-typedef struct {
-  mus_any_class *core;
-  mus_any *o;
-  Float *table;
-  int table_size;
-  Float offset;
-  bool table_allocated;
-} ws;
-
-static int free_ws(mus_any *pt) 
-{
-  ws *ptr = (ws *)pt;
-  if (ptr) 
-    {
-      mus_free(ptr->o);
-      if ((ptr->table) && (ptr->table_allocated)) FREE(ptr->table);
-      FREE(ptr); 
-    }
-  return(0);
-}
-
-static Float ws_freq(mus_any *ptr) {return(mus_frequency(((ws *)ptr)->o));}
-static Float set_ws_freq(mus_any *ptr, Float val) {return(mus_set_frequency(((ws *)ptr)->o, val));}
-static Float ws_phase(mus_any *ptr) {return(mus_phase(((ws *)ptr)->o));}
-static Float set_ws_phase(mus_any *ptr, Float val) {return(mus_set_phase(((ws *)ptr)->o, val));}
-static off_t ws_size(mus_any *ptr) {return(((ws *)ptr)->table_size);}
-static off_t set_ws_size(mus_any *ptr, off_t val) {((ws *)ptr)->table_size = (int)val; return(val);}
-static Float *ws_data(mus_any *ptr) {return(((ws *)ptr)->table);}
-
-static void ws_reset(mus_any *ptr)
-{
-  ws *gen = (ws *)ptr;
-  oscil_reset(gen->o);
-  memset((void *)(gen->table), 0, gen->table_size * sizeof(Float));
-}
-
-static bool ws_equalp(mus_any *p1, mus_any *p2)
-{
-  int i;
-  ws *w1 = (ws *)p1;
-  ws *w2 = (ws *)p2;
-  if (p1 == p2) return(true);
-  if ((w1) && (w2) &&
-      (w1->core->type == w2->core->type) &&
-      (mus_equalp(w1->o, w2->o)) &&
-      (w1->table_size == w2->table_size) &&
-      (w1->offset == w2->offset))
-    {
-      for (i = 0; i < w1->table_size; i++)
-	if (w1->table[i] != w2->table[i])
-	  return(false);
-      return(true);
-    }
-  return(false);
-}
-
-static Float *set_ws_data(mus_any *ptr, Float *val) 
-{
-  ws *gen = (ws *)ptr;
-  if (gen->table_allocated) {FREE(gen->table); gen->table_allocated = false;}
-  gen->table = val; 
-  return(val);
-}
-
-static char *describe_waveshape(mus_any *ptr)
-{
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_waveshape " freq: %.3fHz, phase: %.3f, size: %d",
-	       mus_frequency(ptr),
-	       mus_phase(ptr),
-	       (int)ws_size(ptr));
-  return(describe_buffer);
-}
-
-static mus_any_class WAVESHAPE_CLASS = {
-  MUS_WAVESHAPE,
-  S_waveshape,
-  &free_ws,
-  &describe_waveshape,
-  &ws_equalp,
-  &ws_data,
-  &set_ws_data,
-  &ws_size,
-  &set_ws_size,
-  &ws_freq,
-  &set_ws_freq,
-  &ws_phase,
-  &set_ws_phase,
-  0, 0,
-  0, 0,
-  &mus_waveshape,
-  MUS_NOT_SPECIAL, 
-  NULL, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0,
-  &_mus_wrap_one_vct_wrapped,
-  &ws_reset
-};
-
-bool mus_waveshape_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_WAVESHAPE));}
-
-/* PERHAPS: waveshape via polynomial as gen or built-in choice?  polyshape?
- */
-
-mus_any *mus_make_waveshape(Float frequency, Float phase, Float *table, int size)
-{
-  ws *gen;
-  gen = (ws *)clm_calloc(1, sizeof(ws), S_make_waveshape);
-  gen->core = &WAVESHAPE_CLASS;
-  gen->o = mus_make_oscil(frequency, phase);
-  if (table)
-    {
-      gen->table = table;
-      gen->table_allocated = false;
-    }
-  else
-    {
-      gen->table = (Float *)clm_calloc(size, sizeof(Float), "waveshape table");
-      gen->table_allocated = true;
-    }
-  gen->table_size = size;
-  gen->offset = (Float)(size - 1) / 2.0;
-  return((mus_any *)gen);
-}
-
-Float mus_waveshape(mus_any *ptr, Float index, Float fm)
-{
-  ws *gen = (ws *)ptr;
-  Float table_index;
-  table_index = gen->offset * (1.0 + (mus_oscil_1(gen->o, fm) * index));
-  return(mus_array_interp(gen->table, table_index, gen->table_size));
-}
-
-Float mus_waveshape_1(mus_any *ptr, Float index)
-{
-  ws *gen = (ws *)ptr;
-  Float table_index;
-  table_index = gen->offset * (1.0 + (mus_oscil_0(gen->o) * index));
-  return(mus_array_interp(gen->table, table_index, gen->table_size));
-}
-
-Float *mus_partials_to_waveshape(int npartials, Float *partials, int size, Float *table)
-{
-  /* partials incoming is a list of partials amps indexed by partial number */
-  /* #<0.0, 1.0, 0.0> = 2nd partial 1.0, rest 0. */
-  int i;
-  Float maxI2, x, sum = 0.0;
-  Float *data;
-  if (partials == NULL) return(NULL);
-  for (i = 0; i < npartials; i++) sum += partials[i];
-  if (sum != 0.0) for (i = 0; i < npartials; i++) partials[i] /= sum;
-  for (i = 2; i < npartials; i += 4)
-    {
-      partials[i] = (-partials[i]);
-      if (npartials > (i + 1)) partials[i + 1] = (-partials[i + 1]);
-    }
-  if (table == NULL)
-    data = (Float *)clm_calloc(size, sizeof(Float), "waveshape table");
-  else data = table;
-  if (data == NULL) return(NULL);
-  maxI2 = 2.0 / (Float)(size - 1); /* was size, but mus.lisp was correct?!? */
-  for (i = 0, x = -1.0; i < size; i++, x += maxI2)
-    {
-      Float temp, Tn, Tn1;
-      int hnum;
-      sum = 0.0;
-      temp = 0.0;
-      Tn = 1.0;
-      Tn1 = x;
-      for (hnum = 0; hnum < npartials; hnum++)
-	{
-	  sum += (Tn * partials[hnum]);
-	  temp = Tn1;
-	  Tn1 = (2.0 * Tn1 * x) - Tn;
-	  Tn = temp;
-	}
-      data[i] = sum;
-    }
-  return(array_normalize(data, size));
-}
-
-Float *mus_partials_to_polynomial(int npartials, Float *partials, int kind)
-{
-  /* coeffs returned in partials */
-  int i;
-  int *T0, *T1, *Tn;
-  Float *Cc1;
-  T0 = (int *)clm_calloc(npartials + 1, sizeof(int), "partials_to_polynomial t0");
-  T1 = (int *)clm_calloc(npartials + 1, sizeof(int), "partials_to_polynomial t1");
-  Tn = (int *)clm_calloc(npartials + 1, sizeof(int), "partials_to_polynomial tn");
-  Cc1 = (Float *)clm_calloc(npartials + 1, sizeof(Float), "partials_to_polynomial cc1");
-  if (!Cc1) return(NULL);
-  T0[0] = kind;
-  T1[1] = 1;
-  for (i = 1; i < npartials; i++)
-    {
-      int k;
-      Float amp;
-      amp = partials[i];
-      if (amp != 0.0)
-	{
-	  if (kind == 1)
-	    for (k = 0; k <= i; k++) 
-	      Cc1[k] += (amp * T1[k]);
-	  else
-	    for (k = 1; k <= i; k++) 
-	      Cc1[k - 1] += (amp * T1[k]);
-	}
-      for (k = i + 1; k > 0; k--) 
-	Tn[k] = (2 * T1[k - 1]) - T0[k];
-      Tn[0] = -T0[0];
-      for (k = i + 1; k >= 0; k--)
-	{
-	  T0[k] = T1[k];
-	  T1[k] = Tn[k];
-	}
-    }
-  for (i = 0; i < npartials; i++) 
-    partials[i] = Cc1[i];
-  FREE(T0);
-  FREE(T1);
-  FREE(Tn);
-  FREE(Cc1);
-  return(partials);
-}
-
-/* PERHAPS: pw_waveshape? -- package up the pqw stuff, much as in ssb-am -- maybe a better name is ssb_waveshape
  */
 
 
@@ -4714,180 +4874,6 @@ mus_any *mus_mixer_scale(mus_any *uf1, Float scaler, mus_any *ures)
       res->vals[i][j] = f1->vals[i][j] * scaler;
   return((mus_any *)res);
 }
-
-
-/* ---------------- wave-train ---------------- */
-
-typedef struct {
-  mus_any_class *core;
-  Float freq;
-  Float phase;
-  Float *wave;        /* passed in from caller */
-  int wave_size;
-  Float *out_data;
-  int out_data_size;
-  mus_interp_t interp_type; /* "type" field exists in core -- avoid confusion */
-  Float next_wave_time;
-  int out_pos;
-  bool first_time;
-} wt;
-
-static Float wt_freq(mus_any *ptr) {return(((wt *)ptr)->freq);}
-static Float set_wt_freq(mus_any *ptr, Float val) {((wt *)ptr)->freq = val; return(val);}
-static Float wt_phase(mus_any *ptr) {return(fmod(((TWO_PI * ((wt *)ptr)->phase) / ((Float)((wt *)ptr)->wave_size)), TWO_PI));}
-static Float set_wt_phase(mus_any *ptr, Float val) {((wt *)ptr)->phase = (fmod(val, TWO_PI) * ((wt *)ptr)->wave_size) / TWO_PI; return(val);}
-static off_t wt_length(mus_any *ptr) {return(((wt *)ptr)->wave_size);}
-static off_t wt_set_length(mus_any *ptr, off_t val) {if (val > 0) ((wt *)ptr)->wave_size = (int)val; return((off_t)(((wt *)ptr)->wave_size));}
-static Float *wt_data(mus_any *ptr) {return(((wt *)ptr)->wave);}
-static int wt_interp_type(mus_any *ptr) {return((int)(((wt *)ptr)->interp_type));}
-static Float *wt_set_data(mus_any *ptr, Float *data) {((wt *)ptr)->wave = data; return(data);}
-
-static bool wt_equalp(mus_any *p1, mus_any *p2)
-{
-  int i;
-  wt *w1 = (wt *)p1;
-  wt *w2 = (wt *)p2;
-  if (p1 == p2) return(true);
-  if ((w1) && (w2) &&
-      (w1->core->type == w2->core->type) &&
-      (w1->freq == w2->freq) &&
-      (w1->phase == w2->phase) &&
-      (w1->interp_type == w2->interp_type) &&
-      (w1->wave_size == w2->wave_size) &&
-      (w1->out_data_size == w2->out_data_size) &&
-      (w1->out_pos == w2->out_pos))
-    {
-      for (i = 0; i < w1->wave_size; i++)
-	if (w1->wave[i] != w2->wave[i])
-	  return(false);
-      for (i = 0; i < w1->out_data_size; i++)
-	if (w1->out_data[i] != w2->out_data[i])
-	  return(false);
-      return(true);
-    }
-  return(false);
-}
-
-static char *describe_wt(mus_any *ptr)
-{
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_wave_train " freq: %.3fHz, phase: %.3f, size: " OFF_TD ", interp: %s",
-	       mus_frequency(ptr), 
-	       mus_phase(ptr), 
-	       mus_length(ptr), 
-	       interp_name[wt_interp_type(ptr)]);
-  return(describe_buffer);
-}
-
-static Float mus_wave_train_any(mus_any *ptr, Float fm) 
-{
-  wt *gen = (wt *)ptr;
-  Float result = 0.0;
-  if (gen->out_pos < gen->out_data_size)
-    result = gen->out_data[gen->out_pos];
-  gen->out_pos++;
-  if (gen->out_pos >= gen->next_wave_time)
-    {
-      int i;
-      if (gen->out_pos < gen->out_data_size)
-	{
-	  int good_samps;
-	  good_samps = gen->out_data_size - gen->out_pos;
-	  memmove((void *)(gen->out_data), (void *)(gen->out_data + gen->out_pos), good_samps * sizeof(Float));
-	  memset((void *)(gen->out_data + good_samps), 0, gen->out_pos * sizeof(Float));
-	}
-      else memset((void *)(gen->out_data), 0, gen->out_data_size * sizeof(Float));
-      for (i = 0; i < gen->wave_size; i++)
-	gen->out_data[i] += table_lookup_interp(gen->interp_type, gen->phase + i, gen->wave, gen->wave_size);
-      if (gen->first_time)
-	{
-	  gen->first_time = false;
-	  gen->out_pos = (int)(gen->phase); /* initial phase, but as an integer in terms of wave table size (gad...) */
-	  if (gen->out_pos >= gen->wave_size)
-	    gen->out_pos = gen->out_pos % gen->wave_size;
-	  result = gen->out_data[gen->out_pos++];
-	  gen->next_wave_time = ((Float)sampling_rate / (gen->freq + fm));
-	}
-      else 
-	{
-	  gen->next_wave_time += (((Float)sampling_rate / (gen->freq + fm)) - gen->out_pos);
-	  gen->out_pos = 0;
-	}
-    }
-  return(result);
-}
-
-Float mus_wave_train(mus_any *ptr, Float fm) {return(mus_wave_train_any(ptr, fm / w_rate));}
-Float mus_wave_train_1(mus_any *ptr) {return(mus_wave_train(ptr, 0.0));}
-static Float run_wave_train(mus_any *ptr, Float fm, Float unused) {return(mus_wave_train_any(ptr, fm / w_rate));}
-
-static int free_wt(mus_any *p) 
-{
-  wt *ptr = (wt *)p;
-  if (ptr) 
-    {
-      if (ptr->out_data) {FREE(ptr->out_data); ptr->out_data = NULL;}
-      FREE(ptr);
-    }
-  return(0);
-}
-
-static void wt_reset(mus_any *ptr)
-{
-  wt *gen = (wt *)ptr;
-  gen->phase = 0.0;
-  memset((void *)(gen->out_data), 0, gen->out_data_size * sizeof(Float));
-  gen->out_pos = gen->out_data_size;
-  gen->next_wave_time = 0.0;
-  gen->first_time = true;
-}
-
-static mus_any_class WAVE_TRAIN_CLASS = {
-  MUS_WAVE_TRAIN,
-  S_wave_train,
-  &free_wt,
-  &describe_wt,
-  &wt_equalp,
-  &wt_data,
-  &wt_set_data,
-  &wt_length,
-  &wt_set_length,
-  &wt_freq,
-  &set_wt_freq,
-  &wt_phase,
-  &set_wt_phase,
-  0, 0,
-  0, 0,
-  &run_wave_train,
-  MUS_NOT_SPECIAL, 
-  NULL,
-  &wt_interp_type,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0,
-  &_mus_wrap_one_vct_wrapped,
-  &wt_reset
-};
-
-mus_any *mus_make_wave_train(Float freq, Float phase, Float *wave, int wave_size, mus_interp_t type)
-{
-  wt *gen;
-  gen = (wt *)clm_calloc(1, sizeof(wt), S_make_wave_train);
-  gen->core = &WAVE_TRAIN_CLASS;
-  gen->freq = freq;
-  gen->phase = (wave_size * fmod(phase, TWO_PI)) / TWO_PI;
-  gen->wave = wave;
-  gen->wave_size = wave_size;
-  gen->interp_type = type;
-  gen->out_data_size = wave_size + 2;
-  gen->out_data = (Float *)clm_calloc(gen->out_data_size, sizeof(Float), "wave train out data");
-  gen->out_pos = gen->out_data_size;
-  gen->next_wave_time = 0.0;
-  gen->first_time = true;
-  return((mus_any *)gen);
-}
-
-bool mus_wave_train_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_WAVE_TRAIN));}
-
 
 
 /* ---------------- input/output ---------------- */

@@ -1076,6 +1076,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	(vct-set! a1 j (vct-ref d j))))
     a1))
 
+
 (define (make-butter-lp M fc)
   ;; order is M*2, fc is cutoff freq (Hz)
   (let* ((xcoeffs '())

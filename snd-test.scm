@@ -12367,7 +12367,22 @@ EDITS: 5
 	(let ((var (catch #t (lambda () (array-interp v0 1 -10)) (lambda args args))))
 	  (if (not (eq? (car var) 'out-of-range))
 	      (snd-display ";array-interp bad index: ~A" var))))
-      
+
+      (let ((v0 (make-vct 10)))
+	(do ((i 0 (1+ i))) ((= i 10))
+	  (vct-set! v0 i i))
+	(let ((val (mus-interpolate mus-interp-linear 1.5 v0)))
+	  (if (fneq val 1.5) (snd-display ";mus-interpolate linear: ~A" val))
+	  (set! val (mus-interpolate mus-interp-all-pass 1.5 v0))
+	  (if (fneq val 1.667) (snd-display ";mus-interpolate all-pass: ~A" val))
+	  (set! val (mus-interpolate mus-interp-none 1.5 v0))
+	  (if (fneq val 1.0) (snd-display ";mus-interpolate none: ~A" val))
+	  (set! val (mus-interpolate mus-interp-hermite 1.5 v0))
+	  (if (fneq val 1.5) (snd-display ";mus-interpolate hermite: ~A" val))
+	  (set! val (mus-interpolate mus-interp-lagrange 1.5 v0))
+	  (if (fneq val 1.5) (snd-display ";mus-interpolate lagrange: ~A" val))))
+
+
       (let ((gen (make-delay 3))
 	    (gen2 (make-delay 3))
 	    (gen1 (make-delay 4 :initial-contents '(1.0 0.5 0.25 0.0)))
@@ -13921,6 +13936,13 @@ EDITS: 5
       (let ((fr (make-fir-filter 6 (vct 0 1 2 3 4 5))))
 	(if (not (= (mus-length fr) 6)) (snd-display ";filter-length: ~A" (mus-length fr))))
 
+      (let ((val (cascade->canonical (list (vct 1 0.8 0) (vct 1 1.4 0.65) (vct 1 0 0)))))
+	(if (not (vequal val (vct 1.000 2.200 1.770 0.520 0.000 0.000 0.000)))
+	    (snd-display ";cascade->canonical: ~A" val)))
+      (let ((val (cascade->canonical (list (vct 1 -0.9 0) (vct 1 1 0.74) (vct 1 -1.6 0.8)))))
+	(if (not (vequal val (vct 1.000 -1.500 0.480 -0.330 0.938 -0.533 0.000)))
+	    (snd-display ";cascade->canonical 1: ~A" val)))
+
       (let ((ind (new-sound "test.snd" mus-next mus-bfloat 22050)))
 	(pad-channel 0 10000)
 	(freq-sweep .45)
@@ -14991,7 +15013,7 @@ EDITS: 5
 	  (if (fneq (env-interp 2.0 e) 1.0) (snd-display ";env-interp 0011 at 2: ~A" (env-interp 2.0 e)))
 	  (if (fneq (env-interp 0.0 e) 0.0) (snd-display ";env-interp 0011 at 0: ~A" (env-interp 0.0 e)))
 	  (if (fneq (env-interp 0.444 e) 0.444) (snd-display ";env-interp 0011 at .444: ~A" (env-interp 0.45 e)))
-	  (restart-env e)
+	  (mus-reset e)
 	  (do ((i 0 (1+ i)))
 	      ((= i 10))
 	    (let ((val (env e)))
@@ -15090,10 +15112,10 @@ EDITS: 5
 	      (lv3 (make-vct 11)))
 	  (do ((i 0 (1+ i))) ((= i 11)) (vct-set! lv1 i (env e1)))
 	  (do ((i 0 (1+ i))) ((= i 11)) (vct-set! lv2 i (env e1)))
-	  (restart-env e1)
+	  (mus-reset e1)
 	  (do ((i 0 (1+ i))) ((= i 11)) (vct-set! lv3 i (env e1)))
-	  (if (not (vequal lv1 lv3)) (snd-display ";restart-env: ~A ~A?" lv1 lv3))
-	  (if (not (vequal lv2 (make-vct 11))) (snd-display ";restart-env 1: ~A?" lv2)))
+	  (if (not (vequal lv1 lv3)) (snd-display ";mus-reset: ~A ~A?" lv1 lv3))
+	  (if (not (vequal lv2 (make-vct 11))) (snd-display ";mus-reset 1: ~A?" lv2)))
 	
 	(set! gen (make-env '(0 0 1 1 2 0) :end 10))
 	(do ((i 0 (1+ i))) ((= i 4)) (env gen))
@@ -15102,7 +15124,7 @@ EDITS: 5
 	  (mus-reset gen)
 	  (do ((i 0 (1+ i))) ((= i 4)) (env gen))
 	  (set! val (env gen))
-	  (if (fneq val .8) (snd-display ";restart-env (via reset): ~A?" val))
+	  (if (fneq val .8) (snd-display ";mus-reset (via reset): ~A?" val))
 	  (set! (mus-location gen) 6)
 	  (let ((val (env gen)))
 	    (if (fneq val 0.8) (snd-display ";set! mus-location 6 -> ~A (0.8)?" val)))))
@@ -15266,9 +15288,9 @@ EDITS: 5
 	       (if (not (= (mus-interp-type tbl1) type)) (snd-display ";tbl interp-type (~A): ~A" type (mus-interp-type tbl1)))))))
        (list 
 	(list mus-interp-none (vct 0.000 0.000 0.000 0.000 0.000 1.000 1.000 1.000 1.000 1.000))
-;	(list mus-interp-none (vct 0.000 0.000 0.000 0.000 0.000 0.000 1.000 1.000 1.000 1.000))
 	(list mus-interp-linear (vct 0.000 0.200 0.400 0.600 0.800 1.000 0.800 0.600 0.400 0.200))
 	(list mus-interp-lagrange (vct 0.000 0.120 0.280 0.480 0.720 1.000 0.960 0.840 0.640 0.360))
+	(list mus-interp-all-pass (vct 1.000 0.000 0.429 0.143 0.095 0.905 0.397 0.830 0.793 0.912))
 	(list mus-interp-hermite (vct 0.000 0.168 0.424 0.696 0.912 1.000 0.912 0.696 0.424 0.168))))
 
       (let ((gen0 (make-waveshape 440.0 :wave (partials->waveshape '(1 1))))
@@ -38629,7 +38651,20 @@ EDITS: 2
 	      (vct-map! v (lambda () (array-interp v0 3.5 10)))
 	      (if (fneq (vct-ref v 0) 3.5) (snd-display ";run array-interp sized: ~F?" (vct-ref v 0)))
 	      (catch #t (lambda () (vct-map! v (lambda () (array-interp v0)))) (lambda args args))
-	      (catch #t (lambda () (vct-map! v (lambda () (array-interp v0 3.5 10 123)))) (lambda args args)))
+	      (catch #t (lambda () (vct-map! v (lambda () (array-interp v0 3.5 10 123)))) (lambda args args))
+
+	      (do ((i 0 (1+ i))) ((= i 10))
+		(vct-set! v0 i i))
+	      (let ((val (run (lambda () (mus-interpolate mus-interp-linear 1.5 v0)))))
+		(if (fneq val 1.5) (snd-display ";opt mus-interpolate linear: ~A" val))
+		(set! val (run (lambda () (mus-interpolate mus-interp-all-pass 1.5 v0 10))))
+		(if (fneq val 1.667) (snd-display ";opt mus-interpolate all-pass: ~A" val))
+		(set! val (run (lambda () (mus-interpolate mus-interp-none 1.5 v0 10 0.0))))
+		(if (fneq val 1.0) (snd-display ";opt mus-interpolate none: ~A" val))
+		(set! val (run (lambda () (mus-interpolate mus-interp-hermite 1.5 v0))))
+		(if (fneq val 1.5) (snd-display ";opt mus-interpolate hermite: ~A" val))
+		(set! val (run (lambda () (mus-interpolate mus-interp-lagrange 1.5 v0))))
+		(if (fneq val 1.5) (snd-display ";opt mus-interpolate lagrange: ~A" val))))
 	    
 	    (let ((e (make-env '(0 0 1 1) :end 10))
 		  (v (make-vct 1))
@@ -38647,7 +38682,7 @@ EDITS: 2
 			    (set! enq (env? e))
 			    (set! val8 (env e))
 			    (set! ep (mus-channels e))
-			    (restart-env e)
+			    (mus-reset e)
 			    (set! val0 (env e))
 			    (env-interp .5 e)))
 	      (if (not enq) (snd-display ";run env?"))
@@ -38655,7 +38690,7 @@ EDITS: 2
 	      (if (not (= ep 0)) (snd-display ";run mus-channels: ~A" ep))
 	      (if (fneq b 1.0) (snd-display ";run mus-increment: ~A" b))
 	      (if (fneq val8 0.8) (snd-display ";run set location: ~A" val8))
-	      (if (fneq val0 0.0) (snd-display ";run restart-env: ~A" val0))
+	      (if (fneq val0 0.0) (snd-display ";run mus-reset: ~A" val0))
 	      (if (fneq (vct-ref v 0) .5) (snd-display ";run env-interp: ~A" (vct-ref v 0)))
 	      (catch #t (lambda () (vct-map! v (lambda () (env e 1.0)))) (lambda args args))
 	      (catch #t (lambda () (vct-map! v (lambda () (env-interp e)))) (lambda args args)))
@@ -53142,7 +53177,7 @@ EDITS: 2
 		     mus-sound-seek-frame mus-file-prescaler mus-file-data-clipped average average? make-average
 		     mus-expand-filename make-sound-data sound-data-ref sound-data-set!  sound-data? sound-data-length
 		     sound-data-maxamp sound-data-chans sound-data->vct vct->sound-data all-pass all-pass? amplitude-modulate
-		     array->file array-interp asymmetric-fm asymmetric-fm? sound-data->sound-data
+		     array->file array-interp mus-interpolate asymmetric-fm asymmetric-fm? sound-data->sound-data
 		     clear-array comb comb? contrast-enhancement convolution convolve convolve? db->linear degrees->radians
 		     delay delay? dot-product env env-interp env? file->array file->frame file->frame?  file->sample
 		     file->sample? filter filter? fir-filter fir-filter? formant formant-bank formant? frame* frame+

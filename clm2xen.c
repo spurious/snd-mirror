@@ -752,6 +752,38 @@ taking into account wrap-around (size is size of data), with linear interpolatio
   return(xen_return_first(C_TO_XEN_DOUBLE(mus_array_interp(v->data, XEN_TO_C_DOUBLE(phase), len)), obj));
 }
 
+static XEN g_mus_interpolate(XEN type, XEN x, XEN obj, XEN size, XEN yn1)
+{
+  #define H_mus_interpolate "(" S_mus_interpolate " type x v (size) (yn1)) -> interpolate in \
+data ('v' is a vct) using interpolation 'type', such as " S_mus_interp_linear "."
+
+  int len, itype;
+  vct *v;
+  Float y = 0.0;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(type), type, XEN_ARG_1, S_mus_interpolate, "an integer (interp type such as " S_mus_interp_all_pass ")");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ARG_2, S_mus_interpolate, "a number");
+  XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ARG_3, S_mus_interpolate, "a vct");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(size), size, XEN_ARG_4, S_mus_interpolate, "an integer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(yn1), yn1, XEN_ARG_5, S_mus_interpolate, "a number");
+  itype = XEN_TO_C_INT(type);
+  if (!(MUS_INTERP_TYPE_OK(itype)))
+    XEN_OUT_OF_RANGE_ERROR(S_mus_interpolate, 1, type, "unknown interp type ~A");
+  v = TO_VCT(obj);
+  if (XEN_BOUND_P(size)) 
+    {
+      len = XEN_TO_C_INT(size); 
+      if (len <= 0)
+	XEN_OUT_OF_RANGE_ERROR(S_mus_interpolate, 4, size, "size ~A <= 0?");
+      if (len > v->length) len = v->length;
+    }
+  else len = v->length;
+  if (XEN_NUMBER_P(yn1))
+    y = XEN_TO_C_DOUBLE(yn1);
+  return(xen_return_first(C_TO_XEN_DOUBLE(mus_interpolate(itype, XEN_TO_C_DOUBLE(x), v->data, len, y))));
+}
+
+
+
 /* ---------------- mus-xen struct ---------------- */
 
 static XEN_OBJECT_TYPE mus_xen_tag;
@@ -5135,6 +5167,7 @@ XEN_ARGIFY_3(g_convolution_w, g_convolution)
 XEN_NARGIFY_2(g_rectangular_to_polar_w, g_rectangular_to_polar)
 XEN_NARGIFY_2(g_polar_to_rectangular_w, g_polar_to_rectangular)
 XEN_ARGIFY_3(g_array_interp_w, g_array_interp)
+XEN_ARGIFY_5(g_mus_interpolate_w, g_mus_interpolate)
 XEN_ARGIFY_3(g_sine_bank_w, g_sine_bank)
 XEN_NARGIFY_1(g_mus_describe_w, g_mus_describe)
 XEN_NARGIFY_1(g_mus_name_w, g_mus_name)
@@ -5391,6 +5424,7 @@ XEN_NARGIFY_1(g_mus_generator_p_w, g_mus_generator_p)
 #define g_rectangular_to_polar_w g_rectangular_to_polar
 #define g_polar_to_rectangular_w g_polar_to_rectangular
 #define g_array_interp_w g_array_interp
+#define g_mus_interpolate_w g_mus_interpolate
 #define g_sine_bank_w g_sine_bank
 #define g_mus_describe_w g_mus_describe
 #define g_mus_name_w g_mus_name
@@ -5701,6 +5735,7 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_rectangular_to_polar, g_rectangular_to_polar_w, 2, 0, 0, H_rectangular_to_polar);
   XEN_DEFINE_PROCEDURE(S_polar_to_rectangular, g_polar_to_rectangular_w, 2, 0, 0, H_polar_to_rectangular);
   XEN_DEFINE_PROCEDURE(S_array_interp,         g_array_interp_w,         2, 1, 0, H_array_interp);
+  XEN_DEFINE_PROCEDURE(S_mus_interpolate,      g_mus_interpolate_w,      3, 2, 0, H_mus_interpolate);
   XEN_DEFINE_PROCEDURE(S_sine_bank,            g_sine_bank_w,            2, 1, 0, H_sine_bank);
 
   #define H_rectangular_window     "The un-window, so to speak"
@@ -5948,7 +5983,7 @@ the closer the radius is to 1.0, the narrower the resonance."
 
   XEN_DEFINE_PROCEDURE(S_env_p,       g_env_p_w,       1, 0, 0, H_env_p);
   XEN_DEFINE_PROCEDURE(S_env,         g_env_w,         1, 0, 0, H_env);
-  XEN_DEFINE_PROCEDURE(S_restart_env, g_mus_reset_w,   1, 0, 0, H_mus_reset); /* backwards compatibility */
+  XEN_DEFINE_PROCEDURE("restart-env", g_mus_reset_w,   1, 0, 0, H_mus_reset); /* backwards compatibility */
   XEN_DEFINE_PROCEDURE(S_make_env,    g_make_env_w,    0, 0, 1, H_make_env);
   XEN_DEFINE_PROCEDURE(S_env_interp,  g_env_interp_w,  2, 0, 0, H_env_interp);
 
@@ -6219,6 +6254,7 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_mus_input_p,
 	       S_mus_interp_type,
 	       S_mus_length,
+	       S_mus_interpolate,
 	       S_mus_interp_all_pass,
 	       S_mus_interp_bezier,
 	       S_mus_interp_hermite,
@@ -6287,7 +6323,6 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_readin_p,
 	       S_rectangular_to_polar,
 	       S_rectangular_window,
-	       S_restart_env,
 	       S_riemann_window,
 	       S_ring_modulate,
 	       S_sample_to_file,

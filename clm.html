@@ -2837,6 +2837,7 @@ See also the <a href="#brighten">brighten</a> instrument.
   <a class=def name="dot-product">dot-product</a> <i>in1 in2</i>
   <a class=def name="sine-bank">sine-bank</a> <i>amps phases</i>
   <a class=def name="edot-product">edot-product</a> <i>freq data</i> [Scheme/C versions]
+  <a class=def name="mus-interpolate">mus-interpolate</a> type x v <i>size y1</i>
 </pre>
 <p>These functions underlie some of the generators, and can be
 called within run.  See <a href="mus.lisp">mus.lisp</a> for
@@ -2860,6 +2861,10 @@ of the companding function, then:
 (as opposed to various unusual ones).
 <b>edot-product</b> returns a dot product, the sum of e^(freq*i) with data[i], i going from 0 to (1 less than) data's size.
 <i>freq</i> and <i>data</i> can be complex, as can the return value.  (This is intended for DFT applications).
+</p>
+<p>
+<b>mus-interpolate</b> is the function used whenever table lookup interpolation is requested, as in
+delay or wave-train. The <i>type</i> is one of the interpolation types (mus-interp-linear, for example).
 </p>
 <br>
 

@@ -2239,6 +2239,7 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define FLOAT_ARG_2 pt->dbls[args[2]]
 #define FLOAT_ARG_3 pt->dbls[args[3]]
 #define FLOAT_ARG_4 pt->dbls[args[4]]
+#define FLOAT_ARG_5 pt->dbls[args[5]]
 
 #define VCT_RESULT pt->vcts[args[0]]
 #define DESC_VCT_RESULT ((args[0] < pt->vct_ctr) ? pt->vcts[args[0]] : NULL)
@@ -8361,6 +8362,34 @@ static xen_value *array_interp_1(ptree *prog, xen_value **args, int num_args)
   return(package(prog, R_FLOAT, array_interp_2f, descr_array_interp_2f, args, 3));
 }
 
+/* ---------------- mus-interpolate ---------------- */
+static char *descr_mus_interpolate_3f(int *args, ptree *pt) 
+{
+  return(mus_format( FLT_PT " = mus-interpolate(" INT_PT ", " FLT_PT ", " VCT_PT ")", 
+		     args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2, args[3], DESC_VCT_ARG_3));
+}
+static void mus_interpolate_3f(int *args, ptree *pt) {FLOAT_RESULT = mus_interpolate(INT_ARG_1, FLOAT_ARG_2, VCT_ARG_3->data, VCT_ARG_3->length, 0.0);}
+static char *descr_mus_interpolate_4f(int *args, ptree *pt) 
+{
+  return(mus_format( FLT_PT " = mus-interpolate(" INT_PT ", " FLT_PT ", " VCT_PT ", " INT_PT ")", 
+		     args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2, args[3], DESC_VCT_ARG_3, args[4], INT_ARG_4));
+}
+static void mus_interpolate_4f(int *args, ptree *pt) {FLOAT_RESULT = mus_interpolate(INT_ARG_1, FLOAT_ARG_2, VCT_ARG_3->data, INT_ARG_4, 0.0);}
+static char *descr_mus_interpolate_5f(int *args, ptree *pt) 
+{
+  return(mus_format( FLT_PT " = mus-interpolate(" INT_PT ", " FLT_PT ", " VCT_PT ", " INT_PT ", " FLT_PT ")", 
+		     args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2, args[3], DESC_VCT_ARG_3, args[4], INT_ARG_4, args[5], FLOAT_ARG_5));
+}
+static void mus_interpolate_5f(int *args, ptree *pt) {FLOAT_RESULT = mus_interpolate(INT_ARG_1, FLOAT_ARG_2, VCT_ARG_3->data, INT_ARG_4, FLOAT_ARG_5);}
+
+static xen_value *mus_interpolate_1(ptree *prog, xen_value **args, int num_args) 
+{
+  if (num_args == 3) return(package(prog, R_FLOAT, mus_interpolate_3f, descr_mus_interpolate_3f, args, 3));
+  if (num_args == 4) return(package(prog, R_FLOAT, mus_interpolate_4f, descr_mus_interpolate_4f, args, 4));
+  return(package(prog, R_FLOAT, mus_interpolate_5f, descr_mus_interpolate_5f, args, 5));
+}
+
+
 /* ---------------- vct-peak ---------------- */
 static char *descr_vct_peak_v(int *args, ptree *pt) 
 {
@@ -11021,7 +11050,7 @@ static void init_walkers(void)
   INIT_WALKER(S_mus_width, make_walker(mus_width_0, NULL, mus_set_width_1, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_mus_scaler, make_walker(mus_scaler_0, NULL, mus_set_scaler_1, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_mus_reset, make_walker(mus_reset_0, NULL, NULL, 1, 1, R_CLM, false, 1, R_CLM));
-  INIT_WALKER(S_restart_env, make_walker(mus_reset_0, NULL, NULL, 1, 1, R_CLM, false, 1, R_CLM)); /* backwards compatibility */
+  INIT_WALKER("restart-env", make_walker(mus_reset_0, NULL, NULL, 1, 1, R_CLM, false, 1, R_CLM)); /* backwards compatibility */
   INIT_WALKER(S_mus_offset, make_walker(mus_offset_0, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_mus_formant_radius, make_walker(mus_formant_radius_0, NULL, mus_set_formant_radius_1, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_mus_data, make_walker(mus_data_1, NULL, NULL, 1, 1, R_VCT, false, 0));
@@ -11113,6 +11142,7 @@ static void init_walkers(void)
   INIT_WALKER(S_polynomial, make_walker(polynomial_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_VCT, R_NUMBER));
   INIT_WALKER(S_clear_array, make_walker(clear_array_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_VCT));
   INIT_WALKER(S_array_interp, make_walker(array_interp_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_VCT, R_FLOAT, R_INT));
+  INIT_WALKER(S_mus_interpolate, make_walker(mus_interpolate_1, NULL, NULL, 3, 5, R_FLOAT, false, 3, R_INT, R_FLOAT, R_VCT, R_INT, R_FLOAT));
   INIT_WALKER(S_mus_srate, make_walker(mus_srate_1, NULL, mus_set_srate_1, 0, 0, R_NUMBER, false, 0));
   INIT_WALKER(S_ring_modulate, make_walker(ring_modulate_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_amplitude_modulate, make_walker(amplitude_modulate_1, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_NUMBER));
