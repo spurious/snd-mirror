@@ -1672,10 +1672,10 @@ void delete_samples(off_t beg, off_t num, chan_info *cp, const char *origin, int
     {
       if (num == 1)
 	report_in_minibuffer_and_save(cp->sound, 
-				      _("can't delete sample " PRId64 " (current len =" PRId64 ")"), 
+				      _("can't delete sample " PRId64 " (current len = " PRId64 ")"), 
 				      beg, len);
       else report_in_minibuffer_and_save(cp->sound, 
-					 _("can't delete samples " PRId64 " to " PRId64 " (current len =" PRId64")"), 
+					 _("can't delete samples " PRId64 " to " PRId64 " (current len = " PRId64")"), 
 					 beg, beg + num - 1, len);
     }
 }

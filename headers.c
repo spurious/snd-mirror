@@ -55,7 +55,7 @@
  * Microsoft Multimedia Programmer's Reference Manual at ftp.microsoft.com:/SoftLib/MSLFILES/MDRK.EXE.
  * AVI format is described in http://www.rahul.net/jfm/avi.html.
  *
- * For a lot of info and examples see http://www.TSP.ECE.McGill.CA/Docs/AudioFormats
+ * For a lot of info and examples see http://www.TSP.ECE.McGill.CA/MMSP/Documents/AudioFormats/index.html
  *
  * The main problem with compressed sound files is that you can't do reliable
  * random access to the data, can't easily read backwards, and most of the compression

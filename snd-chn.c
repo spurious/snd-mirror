@@ -404,7 +404,7 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, int graphed)
     case X_AXIS_IN_BEATS:      label = _("time (beats)");   break;
     case X_AXIS_IN_SAMPLES:    label = _("time (samples)"); break;
     case X_AXIS_AS_PERCENTAGE: label = _("time (percent)"); break;
-    default:                   label = _("time");         break;
+    default:                   label = _("time");           break;
     }
   dur = (double)samples_per_channel / (double)(hdr->srate);
 

@@ -182,7 +182,6 @@ void check_menu_labels(int key, int state, int extended);
 
 /* -------- snd-xmain.c -------- */
 
-void dismiss_all_dialogs(snd_state *ss);
 void snd_doit(snd_state *state, int argc, char **argv);
 #ifdef SND_AS_WIDGET
   void snd_as_widget(int argc, char **argv, XtAppContext app, Widget parent, Arg *caller_args, int caller_argn);

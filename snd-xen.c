@@ -2777,6 +2777,13 @@ static XEN g_snd_sound_pointer(XEN snd)
 }
 
 #if HAVE_GUILE
+static XEN g_snd_stdin_test(XEN str)
+{
+  /* autotest stdin stuff since I can't figure out how to write stdin directly */
+  snd_eval_stdin_str(get_global_state(), XEN_TO_C_STRING(str));
+  return(XEN_FALSE);
+}
+
 static SCM g_gc_off(void) {++scm_block_gc; return(XEN_FALSE);}
 static SCM g_gc_on(void) {--scm_block_gc; return(XEN_FALSE);}
 #endif
@@ -3140,6 +3147,7 @@ void g_initialize_gh(void)
 #if HAVE_GUILE
   XEN_DEFINE_PROCEDURE("gc-off", g_gc_off, 0, 0, 0, "turns off the garbage collector");
   XEN_DEFINE_PROCEDURE("gc-on", g_gc_on, 0, 0, 0, "turns on the garbage collector");
+  XEN_DEFINE_PROCEDURE("snd-stdin-test", g_snd_stdin_test, 1, 0, 0, "internal testing function");
 #endif
 #endif
 
