@@ -1643,6 +1643,11 @@ static void reverse_sound(chan_info *ncp, bool over_selection, XEN edpos, int ar
 void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool regexpr, 
 	       enved_progress_t from_enved, const char *origin, mus_any *gen, XEN edpos, int arg_pos)
 {
+  /* basic cases: if env has 1 y value, use scale-channel,
+   *              if step env (base == 0.0), use sequence of scale-channels,
+   *              if not optimizable (via virtual edits), call mus_env on each sample
+   *              if optimizable, use sequence of (x)ramp-channels
+   */
   snd_info *sp;
   sync_info *si;
   sync_state *sc = NULL;
@@ -1656,18 +1661,8 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool regexpr,
   Float egen_val, base;
   double scaler, offset;
   if ((!e) && (!gen)) return;
-  if (regexpr) 
-    {
-      /* both beg and dur are meaningless here -- use selection bounds (per chan) */
-      if (selection_is_active())
-	dur = selection_len();
-      else 
-	{
-	  snd_no_active_selection_error(S_env_selection); /* can't actually happen currently (checked at all higher levels) */
-	  return;
-	}
-    }
-  if (dur == 0) return;
+  if (regexpr) dur = selection_len();
+  if (dur <= 0) return;
   if (e)
     {
       if (e->pts == 0) return;
@@ -1689,6 +1684,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool regexpr,
   sp = cp->sound;
   if (scalable) /* only true if e (not gen) and all vals are equal and not full chan (latter case handled above) */
     {
+      /* ---------------- use scale-channel ---------------- */
       sc = get_sync_state_without_snd_fds(sp, cp, beg, regexpr);
       if (sc == NULL) return;
       si = sc->si;
@@ -1710,19 +1706,8 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool regexpr,
     }
 
   if (e)
-    {
-      if (e->type == ENVELOPE_LAMBDA)
-	{
-	  /* handle as map|ptree-channel call, if possible */
-	  
-	  /* need any-env-channel equivalent; also would be nice to save ptree rather than reparse */
-
-	}
-      egen = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, 0, dur - 1, NULL); /* dur - 1 = end sample number */
-    }
+    egen = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, 0, dur - 1, NULL); /* dur - 1 = end sample number */
   else egen = gen;
-  /* must take into account possible egen scaler/offset/base and funny lengths from here on */
-
   len = mus_env_breakpoints(egen);
   passes = mus_env_passes(egen);
   rates = mus_env_rates(egen);
@@ -1732,7 +1717,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool regexpr,
 
   if (base == 0.0) 
     {
-      /* step env -- handled as sequence of scalings */
+      /* ---------------- step env -- handled as sequence of scalings ---------------- */
       int local_edpos, k, pos;
       off_t segbeg, segnum, segend;
       env *newe;
@@ -1789,7 +1774,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool regexpr,
       return;
     }
 
-  /* step env and degenerate cases are out of the way */
+  /* step env, special env, and degenerate cases are out of the way */
   if (sp->sync)
     si = snd_sync(sp->sync);
   else si = make_simple_sync(cp, beg);
@@ -1807,6 +1792,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool regexpr,
 
   if (!rampable)
     {
+      /* ---------------- not optimizable, so call mus_env on each sample ---------------- */
       off_t ioff;
       mus_sample_t **data;
       mus_sample_t *idata;
@@ -1952,8 +1938,9 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool regexpr,
       if ((temp_file) && (ofile)) {FREE(ofile); ofile = NULL;}
       if (data) FREE(data);
     }
-  else /* rampable -- treat env as a sequence of virtual (x)ramps and scalings (if slope=0) */
+  else 
     {
+      /* ---------------- optimizable -- treat env as a sequence of virtual (x)ramps and scalings (if slope=0) ---------------- */
       int local_edpos, k, m, pos, env_pos;
       bool need_xramp = false;
       off_t segbeg, segnum, segend;
@@ -3410,7 +3397,6 @@ static XEN g_env_1(XEN edata, off_t beg, off_t dur, XEN base, chan_info *cp, XEN
 		  free_env(e);
 		  XEN_OUT_OF_RANGE_ERROR(caller, 4, ebase, "base ~A < 0.0?");
 		}
-	      if ((e->type == ENVELOPE_LINEAR) && (e->base != 0.0) && (e->base != 1.0)) e->type = ENVELOPE_EXPONENTIAL;
 	    }
 	  apply_env(cp, e, beg, dur, selection, NOT_FROM_ENVED, caller, NULL, edpos, 7);
 	  free_env(e);
@@ -4023,10 +4009,7 @@ static XEN g_src_1(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edpos, 
 	  /* env 'e' is a temp here, so we can clobber its base, etc */
 	  e = get_env(ratio_or_env, caller);
 	  if (XEN_NUMBER_P(ebase))
-	    {
-	      e->base = XEN_TO_C_DOUBLE_OR_ELSE(ebase, 1.0);
-	      if ((e->type == ENVELOPE_LINEAR) && (e->base != 0.0) && (e->base != 1.0)) e->type = ENVELOPE_EXPONENTIAL;
-	    }
+	    e->base = XEN_TO_C_DOUBLE_OR_ELSE(ebase, 1.0);
 	  e_ratio = check_src_envelope(e->pts, e->data, caller);
 	  src_env_or_num(cp, e, e_ratio, false, NOT_FROM_ENVED, caller, selection, NULL, edpos, 5);
 	  if (e) free_env(e);

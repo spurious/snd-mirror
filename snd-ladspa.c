@@ -1160,12 +1160,12 @@ void g_ladspa_to_snd(void)
   DEFINE_READER(PortRangeHints, g_ladspa_PortRangeHints_w); 
   DEFINE_READER(PortCount, g_ladspa_PortCount_w);
  
-  XEN_DEFINE_PROCEDURE(S_ladspa_instantiate, g_ladspa_instantiate_w, 2, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(S_ladspa_activate, g_ladspa_activate_w, 2, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(S_ladspa_deactivate, g_ladspa_deactivate_w, 2, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(S_ladspa_cleanup, g_ladspa_cleanup_w, 2, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(S_ladspa_run, g_ladspa_run_w, 3, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(S_ladspa_run_adding, g_ladspa_run_adding_w, 3, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(S_ladspa_instantiate, g_ladspa_instantiate_w,   2, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(S_ladspa_activate, g_ladspa_activate_w,         2, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(S_ladspa_deactivate, g_ladspa_deactivate_w,     2, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(S_ladspa_cleanup, g_ladspa_cleanup_w,           2, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(S_ladspa_run, g_ladspa_run_w,                   3, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(S_ladspa_run_adding, g_ladspa_run_adding_w,     3, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(S_ladspa_set_run_adding_gain, g_ladspa_set_run_adding_gain_w, 3, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(S_ladspa_connect_port, g_ladspa_connect_port_w, 4, 0, 0, NULL);
 

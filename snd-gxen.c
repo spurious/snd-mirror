@@ -137,9 +137,9 @@ XEN_NARGIFY_1(g_set_graph_cursor_w, g_set_graph_cursor)
 
 void g_init_gxen(void)
 {
-  XEN_DEFINE_PROCEDURE(S_in,            g_in_w, 2, 0, 0,             H_in);
+  XEN_DEFINE_PROCEDURE(S_in,            g_in_w,             2, 0, 0, H_in);
   XEN_DEFINE_PROCEDURE(S_make_color,    g_make_snd_color_w, 3, 0, 0, H_make_color);
-  XEN_DEFINE_PROCEDURE(S_color2list,    g_color2list_w, 1, 0, 0,     H_color2list);
+  XEN_DEFINE_PROCEDURE(S_color2list,    g_color2list_w,     1, 0, 0, H_color2list);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_graph_cursor, g_graph_cursor_w, H_graph_cursor,
 				   S_setB S_graph_cursor, g_set_graph_cursor_w,  0, 0, 1, 0);

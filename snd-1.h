@@ -151,10 +151,7 @@ typedef struct {
 typedef struct {
   Float *data;
   int pts, data_size; /* data_size is independent of actual number of points of data (can be much larger) */
-  env_type_t type;
   Float base;
-  XEN procs;
-  int gc_loc;
 } env;
 
 typedef struct {
@@ -353,7 +350,6 @@ typedef struct snd_state {
   void *search_tree;
   XEN search_proc;
   XEN file_sort_proc;
-  XEN enved_proc;
   int catch_exists;
   char *catch_message;
 #if (!USE_GTK)
@@ -957,8 +953,6 @@ char *env_to_string(env *e);
 int find_env(const char *name);
 env *make_envelope(Float *env_buffer, int len);
 XEN envelope_base(XEN obj);
-XEN envelope_type(XEN obj);
-XEN envelope_procedure(XEN obj);
 env *window_env(env *e, off_t local_beg, off_t local_dur, off_t e_beg, off_t e_dur, Float maxx);
 env *multiply_envs(env *e1, env *e2, Float maxx);
 env *invert_env(env *e);

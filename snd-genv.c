@@ -6,7 +6,7 @@ static GtkWidget *enved_dialog = NULL;
 static GtkWidget *applyB, *apply2B, *cancelB, *drawer, *showB, *saveB, *resetB, *firB = NULL;
 static GtkWidget *revertB, *undoB, *redoB, *printB, *brktxtL, *brkpixL, *graphB, *fltB, *ampB, *srcB, *rbrow, *clipB, *deleteB;
 static GtkWidget *nameL, *textL, *env_list, *dBB, *orderL;
-static GtkWidget *expB, *linB, *procB, *lerow, *baseScale, *baseLabel, *baseValue, *selectionB, *selrow, *revrow, *unrow, *saverow;
+static GtkWidget *expB, *linB, *lerow, *baseScale, *baseLabel, *baseValue, *selectionB, *selrow, *revrow, *unrow, *saverow;
 static GtkObject *baseAdj, *orderAdj;
 static GdkGC *gc, *rgc, *ggc;
 
@@ -76,9 +76,13 @@ static void reflect_segment_state (void);
 static void prepare_env_edit(env *new_env)
 {
   prepare_enved_edit(new_env);
-  set_enved_style(new_env->type);
-  if (new_env->type == ENVELOPE_EXPONENTIAL)
-    set_enved_base(new_env->base);
+  if (new_env->base == 1.0)
+    set_enved_style(ENVELOPE_LINEAR);
+  else
+    {
+      set_enved_style(ENVELOPE_EXPONENTIAL);
+      set_enved_base(new_env->base);
+    }
   reflect_segment_state();
 }
 
@@ -296,11 +300,8 @@ static void reflect_segment_state (void)
 {
   if (enved_dialog)
     {
-      if ((!(XEN_LIST_P(ss->enved_proc))) && (enved_style(ss) == ENVELOPE_LAMBDA)) set_enved_style(ENVELOPE_LINEAR);
-      gtk_widget_set_sensitive(procB, (XEN_LIST_P(ss->enved_proc)));
       gtk_widget_modify_bg(expB, GTK_STATE_NORMAL, (enved_style(ss) == ENVELOPE_EXPONENTIAL) ? (ss->sgx)->yellow : (ss->sgx)->basic_color);
       gtk_widget_modify_bg(linB, GTK_STATE_NORMAL, (enved_style(ss) == ENVELOPE_LINEAR) ? (ss->sgx)->yellow : (ss->sgx)->basic_color);
-      gtk_widget_modify_bg(procB, GTK_STATE_NORMAL, (enved_style(ss) == ENVELOPE_LAMBDA) ? (ss->sgx)->yellow : (ss->sgx)->basic_color);
       if ((active_env) && (!(showing_all_envs))) env_redisplay();
     }
 }
@@ -631,7 +632,6 @@ static void exp_button_pressed(GtkWidget *w, gpointer context)
   if ((active_env) && (!(showing_all_envs)))
     {
       active_env->base = enved_base(ss);
-      active_env->type = ENVELOPE_EXPONENTIAL;
       set_sensitive(saveB, true);
     }
   reflect_segment_state();
@@ -643,24 +643,10 @@ static void lin_button_pressed(GtkWidget *w, gpointer context)
   if ((active_env) && (!(showing_all_envs)))
     {
       active_env->base = 1.0;
-      active_env->type = ENVELOPE_LINEAR;
       set_sensitive(saveB, true);
     }
   reflect_segment_state();
 }
-
-static void proc_button_pressed(GtkWidget *w, gpointer context)
-{
-  set_enved_style(ENVELOPE_LAMBDA);
-  if ((active_env) && (!(showing_all_envs)))
-    {
-      active_env->base = 1.0;
-      active_env->type = ENVELOPE_LAMBDA;
-      set_sensitive(saveB, true);
-    }
-  reflect_segment_state();
-}
-
 
 #define BASE_MAX 400
 #define BASE_MID 200
@@ -986,17 +972,6 @@ GtkWidget *create_envelope_editor (void)
 				     0);
       gtk_widget_show(expB);
       gtk_widget_set_size_request(GTK_WIDGET(expB), -1, BUTTON_HEIGHT);
-
-      procB = gtk_button_new_with_label(_("proc"));
-      gtk_box_pack_start(GTK_BOX(lerow), procB, true, true, BB_MARGIN);
-      g_signal_connect_closure_by_id(GTK_OBJECT(procB),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(procB))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(proc_button_pressed), NULL, 0),
-				     0);
-      gtk_widget_show(procB);
-      gtk_widget_set_size_request(GTK_WIDGET(procB), -1, BUTTON_HEIGHT);
-      gtk_widget_set_sensitive(procB, XEN_LIST_P(ss->enved_proc));
 
       selrow = gtk_hbox_new(false, 0);
       gtk_box_pack_start(GTK_BOX(leftbox), selrow, false, false, BB_MARGIN);
@@ -1325,8 +1300,7 @@ static XEN g_enved_dialog_widgets(void)
 				  XEN_CONS(XEN_WRAP_WIDGET(resetB),
 				   XEN_CONS(XEN_WRAP_WIDGET(env_list),
 				    XEN_CONS(XEN_WRAP_WIDGET(firB),
-				     XEN_CONS(XEN_WRAP_WIDGET(procB),
-				      XEN_EMPTY_LIST))))))))))))))))))))))))))));
+				     XEN_EMPTY_LIST)))))))))))))))))))))))))));
   return(XEN_EMPTY_LIST);
 }
 

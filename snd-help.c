@@ -385,28 +385,12 @@ void about_snd_help(void)
 12-Jan:  removed enved-selected-env, changed enved-active-env to enved-envelope.\n\
 9-Jan:   snd 7.1\n\
 8-Jan:   extensions.rb thanks to Michael Scholz.\n\
-5-Jan:   envelopes can now have the properties 'envelope-base, 'envelope-type, and\n\
-           'envelope-lambda.  The envelope editor manages these, and define-envelope\n\
-           provides an optional base argument.  The rest of Snd knows about the\n\
-           properties.  The envelope variable itself still evaluates to the list\n\
-           of breakpoints (for backwards compatibility).\n\
+5-Jan:   envelopes can now have the property 'envelope-base.\n\
          added dur arg to make-env for duration in samples.\n\
          hooks.rb and hooks support in Ruby thanks to Michael Scholz.\n\
 22-Dec:  selection-changed-hook.\n\
-         changed enved-exp? to enved-style for user-defined segment connectors,\n\
-           (envelope-linear, envelope-exponential, or a list of 2 procedures, mimicking cursor-style).\n\
+         changed enved-exp? to enved-style (envelope-linear, envelope-exponential)\n\
            old enved-exp? is in snd7.scm.\n\
-15-Dec:  kosine-summation in dsp.scm -- sum-of-cosines with an \"FM index\".\n\
-         sine-ramp and sine-env-channel for envelopes that connect the dots\n\
-           with a sinusoidal curve.  Also env-squared-channel, and (x^n for any positive n)\n\
-           env-expt-channel.\n\
-         offset-channel, contrast-channel, ring-modulate-channel.\n\
-28-Nov:  pan-mix-selection|region|vct in mix.scm.\n\
-26-Nov:  rtio.rb thanks to Michael Scholz.\n\
-25-Nov:  copy-sample-reader, region-sample-reader?, read-region-sample.\n\
-         removed free-mix|track-sample-reader (use free-sample-reader).\n\
-         sample-reader-position|home|at-end? are generic.\n\
-24-Nov:  snd 7.0.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
@@ -2012,9 +1996,9 @@ XEN_ARGIFY_4(g_help_dialog_w, g_help_dialog)
 
 void g_init_help(void)
 {
-  XEN_DEFINE_PROCEDURE(S_snd_help, g_listener_help_w, 0, 2, 0, H_snd_help);
-  XEN_DEFINE_PROCEDURE(S_snd_url, g_snd_url_w, 1, 0, 0, H_snd_url);
-  XEN_DEFINE_PROCEDURE(S_snd_urls, g_snd_urls_w, 0, 0, 0, H_snd_urls);
+  XEN_DEFINE_PROCEDURE(S_snd_help, g_listener_help_w,  0, 2, 0, H_snd_help);
+  XEN_DEFINE_PROCEDURE(S_snd_url, g_snd_url_w,         1, 0, 0, H_snd_url);
+  XEN_DEFINE_PROCEDURE(S_snd_urls, g_snd_urls_w,       0, 0, 0, H_snd_urls);
   XEN_DEFINE_PROCEDURE(S_help_dialog, g_help_dialog_w, 2, 2, 0, H_help_dialog);
 
   #define H_help_hook S_help_hook "(subject help-string): called from snd-help.  If \

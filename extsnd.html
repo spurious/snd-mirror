@@ -3720,7 +3720,8 @@ See popup.scm for an example.
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define (brksnd dur base)
-  "(brksnd dur base) divides the current sound into dur-sized pieces, saving them as base.n"
+  "(brksnd dur base) divides the current sound into dur-sized pieces, \
+saving them in files named 'base'.n: (brksnd 1.0 \"sec\")"
   (let ((hop (inexact-&gt;exact (* (<a class=quiet href="#sndsrate">srate</a>) dur)))
 	(len (<a class=quiet href="#sndframes">frames</a>))
         (old-sync (<a class=quiet href="#sndsyncing">sync</a>)))
@@ -4143,7 +4144,7 @@ See also <i>mark-explode</i> in marks.scm.
 <br><code><a class=def name="chans">chans</a> (<em class=targ>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-number of channels in <i>snd</i>.  <i>chans</i> is another name for this procedure.
+number of channels in <i>snd</i>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -4534,8 +4535,7 @@ can be either a CLM envelope generator or an envelope (a list of breakpoints). <
 An 'envelope' in Snd is a list of breakpoints. It can be packaged as a CLM generator (an 'env') via <a href="clm.html#make-env">make-env</a>.
 It can be declared via define, just like any other variable, or <a href="#ldefvar">defvar</a> (for CLM/Snd intercompatibility),
 or <a href="#defineenvelope">define-envelope</a>.  The latter is probably most convenient because it automatically
-sets up the envelope properties 'envelope-base, 'envelope-type, and 'envelope-procedure.  These properties package
-up the base, type, and user-defined connecting procedure of the envelope (if any) alongside the breakpoint list.
+sets up the envelope property 'envelope-base.
 <!-- INDEX envexamples:Envelopes -->
 <br><br>
 <TABLE border=3 bordercolor="tan" hspace=40><tr><td>
@@ -5086,7 +5086,7 @@ and <i>add-amp-controls</i> in <a href="sndscm.html#sndmotifdoc">snd-motif.scm</
 <code><a class=def name="makevariablegraph">make-variable-graph</a> (container <i>name length srate</i>)</code>
 </td></tr>
 <tr><td></td><td>
-make-variable-graph is a part of the <b>variable-display</b> mechanism in snd-motif.scm.  It creates the
+make-variable-graph is a part of the <a href="sndscm.html#variabledisplay">variable-display</a> mechanism in snd-motif.scm.  It creates the
 sound/channel pair that displays a graph of spectrum of the arbitrary data accessed via <a href="#channeldata">channel-data</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -8261,8 +8261,7 @@ should return that list, sorted as it pleases.  The following sorts the list by 
 <tr><td></td><td>
 Add an envelope to the envelope editor's list, under the name 'name', using the list of breakpoints
 'data', and the optional 'base'.  If the 'base' is omitted, this is the same as <a href="#ldefvar">defvar</a>.
-<code>(define-envelope ramp '(0 0 1 1))</code>.  The resultant envelope has three properties:
-'envelope-base, 'envelope-type, and 'envelope-procedure.
+<code>(define-envelope ramp '(0 0 1 1))</code>.
 </td></tr>
 
 <!-- enved-base -->
@@ -8312,28 +8311,9 @@ as the default:
 
 <!-- enved-style -->
 <tr><td colspan=2><code><a class=def name="envedstyle">enved-style</a> ()</code></td></tr>
-<tr><td></td><td>envelope editor choice for connecting breakpoints.  Can be <i>envelope-linear</i> (the default),
-<i>envelope-exponential</i>, or 
-a list of the two procedures suitable for ptree-channel usage.
-The following uses sine-ramp in extensions.scm to connect the breakpoints with a
-sinusoid:
+<tr><td></td><td>envelope editor choice for connecting breakpoints.  Can be <i>envelope-linear</i> (the default), or
+<i>envelope-exponential</i>.
 </td></tr>
-
-<tr><td></td><td><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(set! (<em class=red>enved-style</em>)
-   (lambda (y data forward)
-     (declare (y real) (data vct) (forward boolean))
-     (let* ((angle (<a class=quiet href="#vctref">vct-ref</a> data 0))
-	    (incr (<a class=quiet href="#vctref">vct-ref</a> data 1))
-	    (val (* y (+ (<a class=quiet href="#vctref">vct-ref</a> data 2) (* (<a class=quiet href="#vctref">vct-ref</a> data 3) (+ 0.5 (* 0.5 (cos angle))))))))
-       (if forward
-	   (<a class=quiet href="#vctset">vct-set!</a> data 0 (+ angle incr))
-	   (<a class=quiet href="#vctset">vct-set!</a> data 0 (- angle incr)))
-       val))
-   (lambda (frag-beg frag-dur)
-     (let ((incr (/ pi frag-dur)))
-       (<a class=quiet href="#sndvct">vct</a> (+ (* -1.0 pi) (* frag-beg incr)) incr rmp0 (- rmp1 rmp0)))))
-</pre></td></tr></table></td></tr>
 
 <!-- enved-target -->
 <tr><td colspan=2><code><a class=def name="envedtarget">enved-target</a> ()</code></td></tr>
@@ -9425,7 +9405,7 @@ return a list giving the widget width and height (pixels).  Can be set. See nb.s
 
 <p><b>Envelope Editor</b> ramp choice (<a href="#envedstyle">enved-style</a>):</p>
 <pre>
-  envelope-linear   envelope-exponential   envelope-lambda
+  envelope-linear   envelope-exponential
 </pre><br>
 
 <p><b>Graph Line</b> style (<a href="#graphstyle">graph-style</a>):</p>

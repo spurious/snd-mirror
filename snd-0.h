@@ -193,7 +193,7 @@ typedef enum {WITHOUT_HOOK, WITH_HOOK} with_hook_t;
 #endif
 
 typedef enum {ENVED_AMPLITUDE, ENVED_SPECTRUM, ENVED_SRATE} enved_target_t;
-typedef enum {ENVELOPE_LINEAR, ENVELOPE_EXPONENTIAL, ENVELOPE_LAMBDA} env_type_t;
+typedef enum {ENVELOPE_LINEAR, ENVELOPE_EXPONENTIAL} env_type_t;
 typedef enum {GRAPH_LINES, GRAPH_DOTS, GRAPH_FILLED, GRAPH_DOTS_AND_LINES, GRAPH_LOLLIPOPS} graph_style_t;
 #if defined(__GNUC__) && (!(defined(__cplusplus)))
   #define GRAPH_STYLE_OK(Grf) ({ graph_style_t _snd_0_h_0 = Grf; ((_snd_0_h_0 >= GRAPH_LINES) && (_snd_0_h_0 <= GRAPH_LOLLIPOPS)); })

@@ -6,19 +6,14 @@ Snd change log
   12-Jan:    removed enved-selected-env, changed enved-active-env to enved-envelope.
   9-Jan:     snd 7.1.
   8-Jan:     extensions.rb thanks to Michael Scholz.
-  5-Jan:     envelopes can now have the properties 'envelope-base, 'envelope-type, and
-               'envelope-lambda.  The envelope editor manages these, and define-envelope
-               provides an optional base argument.  The rest of Snd knows about the
-               properties.  The envelope variable itself still evaluates to the list
-               of breakpoints (for backwards compatibility).
+  5-Jan:     envelopes can now have the property 'envelope-base.
              added dur arg to make-env for duration in samples.
 	     hooks.rb and hooks support in Ruby thanks to Michael Scholz.
 
 2004 ----------------------------------------------------------------
 
   22-Dec:    selection-changed-hook.
-             changed enved-exp? to enved-style for user-defined segment connectors,
-               (envelope-linear, envelope-exponential, or a list of 2 procedures, mimicking cursor-style).
+             changed enved-exp? to enved-style (envelope-linear, envelope-exponential).
   15-Dec:    kosine-summation in dsp.scm -- sum-of-cosines with an "FM index".
              sine-ramp and sine-env-channel for envelopes that connect the dots
                 with a sinusoidal curve.  Also env-squared-channel, and (x^n for any positive n)

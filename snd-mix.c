@@ -8044,7 +8044,6 @@ void g_init_track(void)
 /* 
    mix/track stuff:
    SOMEDAY: how to save|restore-(mix|track)-state? dialog-state? mix|track-properties?
-   SOMEDAY: pan choices with sinusoidal, exponential envs
    TODO: synchronization across mixes ("snap")
    SOMEDAY: choice of y-style (i.e. split out tracks vertically -- track all at same height)
    SOMEDAY: timing grid

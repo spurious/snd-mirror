@@ -811,10 +811,9 @@ void g_init_menu(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_menu_sensitive, gl_menu_sensitive_w, H_menu_sensitive,
 				   S_setB S_menu_sensitive, gl_set_menu_sensitive_w, 2, 0, 3, 0);
 
-  XEN_DEFINE_PROCEDURE(S_add_to_main_menu,  gl_add_to_main_menu_w, 1, 1, 0,  H_add_to_main_menu);
-  XEN_DEFINE_PROCEDURE(S_add_to_menu,       gl_add_to_menu_w, 3, 1, 0,       H_add_to_menu);
-  XEN_DEFINE_PROCEDURE(S_remove_from_menu,  gl_remove_from_menu_w, 2, 0, 0,  H_remove_from_menu);
+  XEN_DEFINE_PROCEDURE(S_add_to_main_menu,  gl_add_to_main_menu_w,  1, 1, 0, H_add_to_main_menu);
+  XEN_DEFINE_PROCEDURE(S_add_to_menu,       gl_add_to_menu_w,       3, 1, 0, H_add_to_menu);
+  XEN_DEFINE_PROCEDURE(S_remove_from_menu,  gl_remove_from_menu_w,  2, 0, 0, H_remove_from_menu);
   XEN_DEFINE_PROCEDURE(S_change_menu_label, gl_change_menu_label_w, 3, 0, 0, H_change_menu_label);
-
-  XEN_DEFINE_PROCEDURE(S_main_menu,         g_main_menu_w, 1, 0, 0,          H_main_menu);
+  XEN_DEFINE_PROCEDURE(S_main_menu,         g_main_menu_w,          1, 0, 0, H_main_menu);
 }

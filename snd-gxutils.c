@@ -144,7 +144,7 @@ XEN_NARGIFY_3(g_change_window_property_w, g_change_window_property)
 
 void g_init_gxutils(void)
 {
-  XEN_DEFINE_PROCEDURE(S_send_netscape, g_send_netscape_w, 1, 0, 0, H_send_netscape);
+  XEN_DEFINE_PROCEDURE(S_send_netscape, g_send_netscape_w,                   1, 0, 0, H_send_netscape);
   XEN_DEFINE_PROCEDURE(S_change_window_property, g_change_window_property_w, 3, 0, 0, H_change_window_property);
 }
 

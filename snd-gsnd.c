@@ -533,22 +533,25 @@ static gboolean amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer 
 
 static char speed_number_buffer[6] = {'1', STR_decimal, '0', '0', ' ', '\0'};
 
+static bool ignore_callback = false;
 void set_snd_speed(snd_info *sp, Float amp)
 {
   Float scrollval;
   GtkObject *adj;
-  sp->speed_control = amp;
   if (!(IS_PLAYER(sp)))
     {
-      if (amp > 0.0)
-	scrollval = .45 + .15 * log(amp);
-      else scrollval = 0.0;
-      sprintf(speed_number_buffer, "%.3f", amp);
+      scrollval = speed_changed(amp, speed_number_buffer, sp->speed_control_style, sp->speed_control_tones, 6);
       gtk_label_set_text(GTK_LABEL(SPEED_LABEL(sp)), speed_number_buffer);
       adj = SPEED_ADJUSTMENT(sp);
+      if (scrollval > 0.0)
+	scrollval = .45 + .15 * log(scrollval);
+      else scrollval = 0.0;
+      ignore_callback = true;
       GTK_ADJUSTMENT(adj)->value = scrollval;
       gtk_adjustment_value_changed(GTK_ADJUSTMENT(adj));
+      ignore_callback = false;
     }
+  sp->speed_control = amp;
 }
 
 static gboolean speed_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
@@ -570,11 +573,9 @@ static void speed_changed_callback(GtkAdjustment *adj, gpointer data)
 {
   Float scrollval, val;
   snd_info *sp = (snd_info *)data;
+  if (ignore_callback) return;
   val = speed_changed(exp((GTK_ADJUSTMENT(adj)->value - .45) / .15), speed_number_buffer, sp->speed_control_style, sp->speed_control_tones, 6);
   sp->speed_control = val;
-  if (val > 0.0)
-    scrollval = .45 + .15 * log(val);
-  else scrollval = 0.0;
   gtk_label_set_text(GTK_LABEL(SPEED_LABEL(sp)), speed_number_buffer);
 #if HAVE_SCM_MAKE_RATIO
   if (sp->speed_control_style == SPEED_CONTROL_AS_RATIO)

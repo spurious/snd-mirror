@@ -6,7 +6,7 @@ static Widget enved_dialog = NULL;
 static Widget applyB, apply2B, cancelB, drawer, showB, saveB, revertB, undoB, redoB;
 static Widget printB, brkptL, graphB, fltB, ampB, srcB, clipB;
 static Widget nameL, textL, screnvlst, dBB, orderL, deleteB, resetB, firB = NULL;
-static Widget expB, linB, procB, baseScale, baseValue, selectionB;
+static Widget expB, linB, baseScale, baseValue, selectionB;
 static GC gc, rgc, ggc;
 
 static char *env_names[3] = {N_("amp env:"), N_("flt env:"), N_("src env:")};
@@ -72,13 +72,10 @@ static void reflect_segment_state (void)
 {
   if (enved_dialog)
     {
-      if ((!(XEN_LIST_P(ss->enved_proc))) && (enved_style(ss) == ENVELOPE_LAMBDA)) set_enved_style(ENVELOPE_LINEAR);
-      XtSetSensitive(procB, (XEN_LIST_P(ss->enved_proc)));
       if (!(ss->using_schemes))
 	{
 	  XmChangeColor(expB, (enved_style(ss) == ENVELOPE_EXPONENTIAL) ? ((Pixel)(ss->sgx)->yellow) : ((Pixel)(ss->sgx)->highlight_color));
 	  XmChangeColor(linB, (enved_style(ss) == ENVELOPE_LINEAR) ? ((Pixel)(ss->sgx)->yellow) : ((Pixel)(ss->sgx)->highlight_color));
-	  XmChangeColor(procB, (enved_style(ss) == ENVELOPE_LAMBDA) ? ((Pixel)(ss->sgx)->yellow) : ((Pixel)(ss->sgx)->highlight_color));
 	}
       if ((active_env) && (!(showing_all_envs))) env_redisplay();
     }
@@ -87,9 +84,13 @@ static void reflect_segment_state (void)
 static void prepare_env_edit(env *new_env)
 {
   prepare_enved_edit(new_env);
-  set_enved_style(new_env->type);
-  if (new_env->type == ENVELOPE_EXPONENTIAL)
-    set_enved_base(new_env->base);
+  if (new_env->base == 1.0)
+    set_enved_style(ENVELOPE_LINEAR);
+  else
+    {
+      set_enved_base(new_env->base);
+      set_enved_style(ENVELOPE_EXPONENTIAL);
+    }
   reflect_segment_state();
 }
 
@@ -165,15 +166,6 @@ static void apply_enved(void)
 	  check_for_event();
 	  switch (enved_target(ss))
 	    {
-
-	      /* TODO: apply_env, apply_filter, src_env_or_num need to handle enved_proc */
-	      /* 	 ptree_channel(cp, (void *)proc, beg, dur, pos, XEN_TRUE_P(env_too), init_func, true); */
-	      /*         proc here is result of form_to_ptree_3_f(proc_and_list) */
-	      /*         presumably car/cadr enved-style will be in the proc-and-list form? -- nope... */
-	      /*         get one value: (evaluate_ptreec(enved_tree, arg, vct-from-init, dir=true)) */
-	      /*           or val = evaluate_ptreec(enved_tree, val1, (vct *)XEN_OBJECT_REF(enved_closure), true) */
-	      /* mix et al use env_editor__* */
-
 	    case ENVED_AMPLITUDE:
 	      apply_env(active_channel, active_env, 0,
 			CURRENT_SAMPLES(active_channel), 
@@ -656,7 +648,6 @@ static void exp_button_callback(Widget w, XtPointer context, XtPointer info)
       (!(showing_all_envs)))
     {
       active_env->base = enved_base(ss);
-      active_env->type = ENVELOPE_EXPONENTIAL;
       set_sensitive(saveB, true);
     }
   reflect_segment_state();
@@ -670,21 +661,6 @@ static void lin_button_callback(Widget w, XtPointer context, XtPointer info)
       (!(showing_all_envs)))
     {
       active_env->base = 1.0;
-      active_env->type = ENVELOPE_LINEAR;
-      set_sensitive(saveB, true);
-    }
-  reflect_segment_state();
-}
-
-static void proc_button_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  /* a push button */
-  set_enved_style(ENVELOPE_LAMBDA);
-  if ((active_env) && 
-      (!(showing_all_envs)))
-    {
-      active_env->base = 1.0;
-      active_env->type = ENVELOPE_LAMBDA;
       set_sensitive(saveB, true);
     }
   reflect_segment_state();
@@ -1306,7 +1282,7 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
-      XtSetArg(args[n], XmNrightPosition, 33); n++;
+      XtSetArg(args[n], XmNrightPosition, 50); n++;
       linB = XtCreateManagedWidget(_("lin"), xmPushButtonWidgetClass, colB, args, n);
 
       n = 0;
@@ -1322,30 +1298,11 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, linB); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
-      XtSetArg(args[n], XmNrightPosition, 67); n++;
+      XtSetArg(args[n], XmNrightPosition, 100); n++;
       expB = XtCreateManagedWidget(_("exp"), xmPushButtonWidgetClass, colB, args, n);
-
-      n = 0;
-      if (!(ss->using_schemes)) 
-	{
-	  XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;
-	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->yellow); n++;
-	}
-      XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;	
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, expB); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNleftWidget, expB); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      procB = XtCreateManagedWidget(_("proc"), xmPushButtonWidgetClass, colB, args, n);
 
       XtAddCallback(linB, XmNactivateCallback, lin_button_callback, NULL);
       XtAddCallback(expB, XmNactivateCallback, exp_button_callback, NULL);
-      XtAddCallback(procB, XmNactivateCallback, proc_button_callback, NULL);
-
-      XtSetSensitive(procB, (XEN_LIST_P(ss->enved_proc)));
-      /* (set! (enved-style) (list (lambda (a b c) #f) (lambda (a b) #f))) */
 
       /* SELECTION */
       n = 0;
@@ -1633,8 +1590,7 @@ static XEN g_enved_dialog_widgets(void)
 				  XEN_CONS(XEN_WRAP_WIDGET(resetB),
 				   XEN_CONS(XEN_WRAP_WIDGET(screnvlst),
 				    XEN_CONS(XEN_WRAP_WIDGET(firB),
-				     XEN_CONS(XEN_WRAP_WIDGET(procB),
-				      XEN_EMPTY_LIST))))))))))))))))))))))))))));
+				     XEN_EMPTY_LIST)))))))))))))))))))))))))));
   return(XEN_EMPTY_LIST);
 }
 static XEN g_enved_axis_info(void)

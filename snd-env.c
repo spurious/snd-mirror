@@ -11,22 +11,13 @@
 
 #define ENVED_DOT_SIZE 10
 
-/* TODO: tie sine-env (et al) into the envelope editors (enved, mix, xm-enved)
-           enved: need enved-ramp(int)-procedure, application of it to underlying portion, spin-button (or whatever) to set
-	   new_env_type?  then list of available env types
-           add list of user-defined seg-funcs to enved
-           use enved-proc if ENVELOPE_LAMBDA in display and everywhere else
-*/
-/* TODO: add env name field to mix/track enveds (undo/redo? lin/exp/proc?) */
+/* TODO: add env name field to mix/track enveds (undo/redo? lin/exp?) */
 /* TODO: xm-enved packaged enved access (widgets and callbacks) */
-/* PERHAPS: mix/track dialog exp scale? */
-/* TODO: incorporate env props throughout Snd (env.scm?) */
-
 /* TODO: in ruby, view envs gets the env val, but edit env doesn't?? */
 
 
 #if HAVE_GUILE
-  XEN envelope_base_sym, envelope_type_sym, envelope_procedure_sym;
+  XEN envelope_base_sym;
   #define XEN_VARIABLE_PROPERTY(Obj, Prop)          scm_object_property(Obj, Prop)
   #define XEN_SET_VARIABLE_PROPERTY(Obj, Prop, Val) scm_set_object_property_x(XEN_VARIABLE_REF(Obj), Prop, Val)
   #define XEN_OBJECT_PROPERTY(Obj, Prop)            scm_object_property(Obj, Prop)
@@ -39,12 +30,6 @@ env *free_env(env *e)
   if (e)
     {
       if (e->data) {FREE(e->data); e->data = NULL;}
-      if ((e->type == ENVELOPE_LAMBDA) && (e->gc_loc >= 0))
-	{
-	  snd_unprotect_at(e->gc_loc);
-	  e->procs = XEN_FALSE;
-	  e->gc_loc = -1;
-	}
       FREE(e);
     }
   return(NULL);
@@ -61,13 +46,6 @@ env *copy_env(env *e)
       ne->data = (Float *)MALLOC(ne->data_size * sizeof(Float));
       memcpy((void *)(ne->data), (void *)(e->data), ne->data_size * sizeof(Float));
       ne->base = e->base;
-      ne->type = e->type;
-      if (e->type == ENVELOPE_LAMBDA)
-	{
-	  ne->procs = e->procs;
-	  ne->gc_loc = snd_protect(ne->procs);
-	}
-      else ne->gc_loc = -1;
       return(ne);
     }
   return(NULL);
@@ -82,9 +60,7 @@ bool envs_equal(env *e1, env *e2)
   for (i = 0; i < e1->pts * 2; i++)
     if (e1->data[i] != e2->data[i])
       return(false);
-  if (e1->type != e2->type) return(false);
   if (e1->base != e2->base) return(false); /* 1 and 0 are possibilities here */
-  if ((e1->type == ENVELOPE_LAMBDA) && (!(XEN_EQ_P(e1->procs, e2->procs)))) return(false);
   return(true);
 }
 
@@ -148,7 +124,6 @@ env *make_envelope(Float *env_buffer, int len)
       e->data[2] = e->data[0] + 1.0; 
       e->data[3] = e->data[1];
     }
-  e->type = ENVELOPE_LINEAR;
   e->base = 1.0;
   return(e);
 }
@@ -222,7 +197,7 @@ env *window_env(env *e, off_t local_beg, off_t local_dur, off_t e_beg, off_t e_d
 	    }
 	  if ((e->data[i] < local_x1) && (e->data[i] != local_x0))
 	    {
-	      if ((e->type != ENVELOPE_LINEAR) || (e->base != 1.0))
+	      if (e->base != 1.0)
 		{
 		  while ((lx0 + .001) < e->data[i])
 		    {
@@ -237,7 +212,7 @@ env *window_env(env *e, off_t local_beg, off_t local_dur, off_t e_beg, off_t e_d
 	}
       if (e->data[i] >= local_x1)
 	{
-	  if ((e->type != ENVELOPE_LINEAR) || (e->base != 1.0))
+	  if (e->base != 1.0)
 	    {
 	      while ((lx0 + .001) < local_x1)
 		{
@@ -253,7 +228,6 @@ env *window_env(env *e, off_t local_beg, off_t local_dur, off_t e_beg, off_t e_d
   if (j == 0)
     return(free_env(local_e));
   local_e->pts = j / 2;
-  local_e->type = e->type;
   local_e->base = e->base;
   return(normalize_x_axis(local_e));
 }
@@ -314,7 +288,6 @@ env *multiply_envs(env *e1, env *e2, Float maxx)
   if (k == 0)
     return(free_env(e));
   e->pts = k / 2;
-  e->type = ENVELOPE_LINEAR;  /* I doubt anything would be gained by using exp envs here */
   e->base = 1.0;
   mus_free(me1);
   mus_free(me2);
@@ -344,7 +317,7 @@ env *invert_env(env *e)
   new_e = copy_env(e);
   for (k = 0, i = 1; k < new_e->pts; k++, i += 2)
     new_e->data[i] = 1.0 - new_e->data[i];
-  if ((e->type == ENVELOPE_EXPONENTIAL) && (e->base != 0.0))
+  if ((e->base != 0.0) && (e->base != 1.0))
     new_e->base = 1.0 / e->base;
   return(new_e);
 }
@@ -439,7 +412,6 @@ env *default_env(Float x1, Float y)
   e->data[1] = y; 
   e->data[2] = x1;
   e->data[3] = y;
-  e->type = ENVELOPE_LINEAR;
   e->base = 1.0;
   return(e);
 }
@@ -561,7 +533,7 @@ void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const cha
 	  env_editor_set_current_point(edp, 0, ix1, iy1);
 	  draw_arc(ax, ix1, iy1, size);
 	}
-      if ((e->type == ENVELOPE_LINEAR) && (e->base == 1.0))
+      if (e->base == 1.0)
 	{
 	  if (edp->in_dB)
 	    {
@@ -1360,13 +1332,7 @@ env *xen_to_env(XEN res)
 	  rtn = make_envelope(data, len);
 	  FREE(data);
 	  if ((rtn) && (XEN_NUMBER_P(envelope_base(res))))
-	    {
-	      Float b;
-	      b = XEN_TO_C_DOUBLE(envelope_base(res));
-	      if ((b > 0.0) && (b != 1.0))
-		rtn->type = ENVELOPE_EXPONENTIAL;
-	      rtn->base = b;
-	    }
+	    rtn->base = XEN_TO_C_DOUBLE(envelope_base(res));
 	}
     }
   return(rtn);
@@ -1401,7 +1367,6 @@ env *string2env(char *str)
   XEN res;
   int len = 0;
   res = snd_catch_any(eval_str_wrapper, str, "string->env");
-  /* TODO: what about power-env triples? (xenv + name field as list with power-env chosen) */
   if (XEN_LIST_P_WITH_LENGTH(res, len))
     {
       if ((len % 2) == 0)
@@ -1496,38 +1461,22 @@ and 'base' into the envelope editor."
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(base) || XEN_FALSE_P(base), base, XEN_ARG_3, S_define_envelope, "a float or #f");
   e = xen_to_env(data);
   if ((e) && (XEN_NUMBER_P(base)))
-    {
-      Float b;
-      b = XEN_TO_C_DOUBLE(base);
-      if ((b > 0.0) && (b != 1.0))
-	e->type = ENVELOPE_EXPONENTIAL;
-      e->base = b;
-    }
+    e->base = XEN_TO_C_DOUBLE(base);
   alert_envelope_editor(XEN_TO_C_STRING(name), e);
   XEN_DEFINE_VARIABLE(XEN_TO_C_STRING(name), temp, data); /* already gc protected */
 #if HAVE_GUILE
-  /* add properties */
+  /* add property */
   XEN_SET_VARIABLE_PROPERTY(temp, envelope_base_sym, C_TO_XEN_DOUBLE(e->base));
-  XEN_SET_VARIABLE_PROPERTY(temp, envelope_type_sym, C_TO_XEN_INT(e->type));
-  XEN_SET_VARIABLE_PROPERTY(temp, envelope_procedure_sym, XEN_FALSE); /* for env_proc */
 #endif
   return(temp);
 }
 
 #if HAVE_GUILE
 XEN envelope_base(XEN obj) {return(XEN_VARIABLE_PROPERTY(obj, envelope_base_sym));}
-XEN envelope_type(XEN obj) {return(XEN_VARIABLE_PROPERTY(obj, envelope_type_sym));}
-XEN envelope_procedure(XEN obj) {return(XEN_VARIABLE_PROPERTY(obj, envelope_procedure_sym));}
 static XEN set_envelope_base(XEN obj, XEN base) {XEN_SET_VARIABLE_PROPERTY(obj, envelope_base_sym, base); return(base);}
-static XEN set_envelope_type(XEN obj, XEN type) {XEN_SET_VARIABLE_PROPERTY(obj, envelope_type_sym, type); return(type);}
-static XEN set_envelope_procedure(XEN obj, XEN func) {XEN_SET_VARIABLE_PROPERTY(obj, envelope_procedure_sym, func); return(func);}
 #else
 XEN envelope_base(XEN obj) {return(XEN_FALSE);}
-XEN envelope_type(XEN obj) {return(XEN_FALSE);}
-XEN envelope_procedure(XEN obj) {return(XEN_FALSE);}
 static XEN set_envelope_base(XEN obj, XEN base) {return(XEN_FALSE);}
-static XEN set_envelope_type(XEN obj, XEN type) {return(XEN_FALSE);}
-static XEN set_envelope_procedure(XEN obj, XEN func) {return(XEN_FALSE);}
 #endif
 
 XEN env_to_xen(env *e)
@@ -1570,7 +1519,6 @@ void add_or_edit_symbol(char *name, env *val)
   XEN_DEFINE_VARIABLE(name, e, env_to_xen(val));
 #endif
   set_envelope_base(e, C_TO_XEN_DOUBLE(val->base));
-  set_envelope_type(e, C_TO_XEN_INT(val->type));
 #endif
 }
 
@@ -1687,64 +1635,21 @@ if clipping, the motion of the mouse is restricted to the current graph bounds."
   return(C_TO_XEN_BOOLEAN(enved_clip_p(ss)));
 }
 
-static XEN g_enved_style(void) 
-{
-  if (enved_style(ss) == ENVELOPE_LAMBDA)
-    return(ss->enved_proc);
-  return(C_TO_XEN_INT(enved_style(ss)));
-}
-
+static XEN g_enved_style(void) {return(C_TO_XEN_INT(enved_style(ss)));}
 static XEN g_set_enved_style(XEN val) 
 {
   #define H_enved_style "(" S_enved_style "): envelope editor breakpoint connection choice: can \
-be " S_envelope_linear ", " S_envelope_exponential ", or a list of 2 procedures."
+be " S_envelope_linear ", or " S_envelope_exponential
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val) || XEN_LIST_P(val), val, XEN_ONLY_ARG, S_setB S_enved_style, 
-		  S_envelope_linear ", " S_envelope_exponential ", or a list of 2 procedures");
-  if (XEN_INTEGER_P(val))
+  int choice;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_enved_style, S_envelope_linear ", or " S_envelope_exponential);
+  choice = XEN_TO_C_INT(val);
+  if ((choice == ENVELOPE_LINEAR) || (choice == ENVELOPE_EXPONENTIAL))
     {
-      int choice;
-      choice = XEN_TO_C_INT(val);
-      if ((choice == ENVELOPE_LINEAR) || (choice == ENVELOPE_EXPONENTIAL))
-	{
-	  set_enved_style((env_type_t)choice);
-	  reflect_enved_style();
-	}
-      else XEN_OUT_OF_RANGE_ERROR(S_enved_style, XEN_ONLY_ARG, val, "must be " S_envelope_linear ", " S_envelope_exponential ", or a list of 2 procedures");
+      set_enved_style((env_type_t)choice);
+      reflect_enved_style();
     }
-  else
-    {
-      XEN proc, init_func;
-      /* the values here are the bare procedures (not as in ptree-channel):
-       *   (set! (enved-style) (list (lambda (a b c) #f) (lambda (a b) #f)))
-       *   -> (#<procedure #f ((a b c) #f)> #<procedure #f ((a b) #f)>)
-       *   scm_procedure_source(XEN_CAR(val)) XEN_AS_STRING(scm_procedure_source(XEN_CADR(val)))
-       */
-      if (XEN_LIST_P(ss->enved_proc))
-	snd_unprotect(ss->enved_proc);
-      if (XEN_LIST_LENGTH(val) == 2)
-	{
-	  proc = XEN_CAR(val);
-	  init_func = XEN_CADR(val);
-	  if (!(XEN_PROCEDURE_P(proc)))
-	    XEN_WRONG_TYPE_ARG_ERROR(S_enved_style, XEN_ONLY_ARG, proc, "ramp func must be a procedure");
-	  if (XEN_REQUIRED_ARGS(proc) != 3)
-	    XEN_BAD_ARITY_ERROR(S_enved_style, XEN_ONLY_ARG, proc, "ramp func must take 3 args");
-	  if (!(XEN_PROCEDURE_P(init_func)))
-	    XEN_WRONG_TYPE_ARG_ERROR(S_enved_style, XEN_ONLY_ARG, init_func, "ramp init func must be a procedure");
-	  if (XEN_REQUIRED_ARGS(init_func) != 2)
-	    XEN_BAD_ARITY_ERROR(S_enved_style, XEN_ONLY_ARG, init_func, "ramp init-func must take 2 args");
-	  snd_protect(val);
-	  ss->enved_proc = val;
-	  set_enved_style(ENVELOPE_LAMBDA);
-	  reflect_enved_style();
-	  /* to get ptree: form_to_ptree_3_f(XEN_LIST_2(scm_procedure_source(XEN_CAR(val)), XEN_CAR(val)));
-	   * init can be saved as is (XEN_CADR(val))
-	   * but in enved, seems simplest to use XEN form (go to ptree only if applied to sound and guile)
-	   */
-	}
-      else XEN_WRONG_TYPE_ARG_ERROR(S_enved_style, XEN_ONLY_ARG, val, "must be list of 2 procedures");
-    }
+  else XEN_OUT_OF_RANGE_ERROR(S_enved_style, XEN_ONLY_ARG, val, "must be " S_envelope_linear ", or " S_envelope_exponential);
   return(val);
 }
 
@@ -1851,6 +1756,9 @@ void g_init_env(void)
   XEN_DEFINE_CONSTANT(S_enved_spectrum,  ENVED_SPECTRUM,  H_enved_spectrum);
   XEN_DEFINE_CONSTANT(S_enved_srate,     ENVED_SRATE,     H_enved_srate);
 
+  XEN_DEFINE_CONSTANT(S_envelope_linear,      ENVELOPE_LINEAR,      S_enved_style " choice: linear connections between breakpoints");
+  XEN_DEFINE_CONSTANT(S_envelope_exponential, ENVELOPE_EXPONENTIAL, S_enved_style " choice: exponential connections between breakpoints");
+
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_base,   g_enved_base_w,   H_enved_base,   S_setB S_enved_base,   g_set_enved_base_w,    0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_power,  g_enved_power_w,  H_enved_power,  S_setB S_enved_power,  g_set_enved_power_w,   0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_clip_p, g_enved_clip_p_w, H_enved_clip_p, S_setB S_enved_clip_p, g_set_enved_clip_p_w,  0, 0, 1, 0);
@@ -1874,10 +1782,6 @@ void g_init_env(void)
 #endif
   envelope_base_sym = C_STRING_TO_XEN_SYMBOL(S_envelope_base);
   snd_protect(envelope_base_sym);
-  envelope_type_sym = C_STRING_TO_XEN_SYMBOL(S_envelope_type);
-  snd_protect(envelope_type_sym);
-  envelope_procedure_sym = C_STRING_TO_XEN_SYMBOL(S_envelope_procedure);
-  snd_protect(envelope_procedure_sym);
 #else
   XEN_DEFINE_PROCEDURE(S_define_envelope, g_define_envelope_w, 2, 1, 0, H_define_envelope);
 #endif
@@ -1885,10 +1789,6 @@ void g_init_env(void)
   XEN_DEFINE_CONSTANT(S_enved_add_point,      ENVED_ADD_POINT,      S_enved_hook " 'reason' arg when point is added");
   XEN_DEFINE_CONSTANT(S_enved_delete_point,   ENVED_DELETE_POINT,   S_enved_hook " 'reason' arg when point is deleted");
   XEN_DEFINE_CONSTANT(S_enved_move_point,     ENVED_MOVE_POINT,     S_enved_hook " 'reason' arg when point is moved");
-
-  XEN_DEFINE_CONSTANT(S_envelope_linear,      ENVELOPE_LINEAR,      S_enved_style " choice: linear connections between breakpoints");
-  XEN_DEFINE_CONSTANT(S_envelope_exponential, ENVELOPE_EXPONENTIAL, S_enved_style " choice: exponential connections between breakpoints");
-  XEN_DEFINE_CONSTANT(S_envelope_lambda,      ENVELOPE_LAMBDA,      S_enved_style " choice: procedural connections between breakpoints");
 
   #define H_enved_hook S_enved_hook " (env pt new-x new-y reason): \
 called each time a breakpoint is changed in the envelope editor; \

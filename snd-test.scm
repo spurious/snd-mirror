@@ -30,7 +30,7 @@
 ;;; test 27: openGL
 ;;; test 28: errors
 
-;;; TODO: recorder-file-hook, enved-style tests
+;;; TODO: recorder-file-hook
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen) (ice-9 session))
@@ -395,7 +395,6 @@
 	'dont-normalize dont-normalize 0
 	'envelope-linear envelope-linear 0
 	'envelope-exponential envelope-exponential 1
-	'envelope-lambda envelope-lambda 2
 	'normalize-by-channel normalize-by-channel 1
 	'normalize-by-sound normalize-by-sound 2
 	'normalize-globally normalize-globally 3
@@ -2991,6 +2990,12 @@
 	      (delete-file "tmp1.snd")
 	      (close-sound ind)
 	      (delete-file "tmp.snd")))
+	  (let ((ind (new-sound "tmp.snd" mus-next mus-bfloat 22050 1 #f 10)))
+	    (map-channel (lambda (y) 1.0))
+	    (env-channel '(0 0 .1 .1 .2 .2 .3 .3 .4 .4 .5 .5 .6 .6 .7 .7 .8 .8 .9  .9))
+	    (if (not (vequal (channel->vct) (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900)))
+		(snd-display ";ramp env by .1: ~A" (channel->vct)))
+	    (close-sound ind))
 	  ))
       (run-hook after-test-hook 4)
       ))
@@ -18576,18 +18581,13 @@ EDITS: 5
 	 (let* ((e (car vals))
 		(name (cadr vals))
 		(base (caddr vals))
-		(type (cadddr vals))
-		(ebase (object-property e 'envelope-base))
-		(etype (object-property e 'envelope-type)))
-	   (if (fneq ebase base) (snd-display ";define-envelope ~A base: ~A ~A" name base ebase))
-	   (if (or (not etype)
-		   (not (= etype type)))
-	       (snd-display ";define-envelope ~A type: ~A ~A" name type type))))
-       (list (list ramp32 "ramp32" 32.0 envelope-exponential)
-	     (list ramp032 "ramp032" .032 envelope-exponential)
-	     (list ramp12 "ramp12" 3.0 envelope-exponential)
-	     (list ramp012 "ramp012" .3 envelope-exponential)
-	     (list test-ramp "test-ramp" 1.0 envelope-linear)))
+		(ebase (object-property e 'envelope-base)))
+	   (if (fneq ebase base) (snd-display ";define-envelope ~A base: ~A ~A" name base ebase))))
+       (list (list ramp32 "ramp32" 32.0)
+	     (list ramp032 "ramp032" .032)
+	     (list ramp12 "ramp12" 3.0)
+	     (list ramp012 "ramp012" .3)
+	     (list test-ramp "test-ramp" 1.0)))
 
 	  (let ((ind (new-sound "fmv.snd" mus-aifc mus-bshort 22050 1 "define-envelope tests" 10)))
 	    (map-channel (lambda (y) 1.0))
@@ -41955,9 +41955,6 @@ EDITS: 2
 	    (check-error-tag 'out-of-range (lambda () (mus-sound-close-input 2)))
 	    (check-error-tag 'wrong-type-arg (lambda () (vector->vct (make-vector 3 "hio"))))
 	    (check-error-tag 'wrong-type-arg (lambda () (vct (list #f))))
-	    (check-error-tag 'wrong-type-arg (lambda () (set! (enved-style) (list 0 1))))
-	    (check-error-tag 'bad-arity (lambda () (set! (enved-style) (list (lambda (a) #f) (lambda (b) #f)))))
-	    (check-error-tag 'bad-arity (lambda () (set! (enved-style) (list (lambda (a b c) #f) (lambda (b) #f)))))
 	    (check-error-tag 'out-of-range (lambda () (set! (enved-style) 12)))
 	    (check-error-tag 'out-of-range (lambda () (make-color 1.5 0.0 0.0)))
 	    (check-error-tag 'out-of-range (lambda () (make-color -0.5 0.0 0.0)))

@@ -8963,12 +8963,6 @@ append the rest?
           so ca 50 lines of real code + 300 lines of case entries to get ptree3
 	xen2 could piggy-back on xen in the same manner
 
-      TODO: currently mix+tag then scl locks mix -- seems unnecessary (env as well?)
-        but remix is needed somewhere -- initial stab at this failed
-      
-      PERHAPS: filter: need to save segment init state vals, own local reader for base of table and mimic dir in table reader
-        filter op itself needs to be reversible -- initial 2 or 3 stabs at this failed (and amp env is a mess as well)
-
       PERHAPS: reverse as pure-top-level (i.e. any split=>make explicit)
         but init_read within reversed fragment needs to get beg correctly etc
 
