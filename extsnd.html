@@ -300,19 +300,89 @@ This is still kludgey, but the following shows how to use it:
 
 <p>The color object handlers are:</p>
 
-<table border=0 cellspacing=4>
+<!-- -------------------------------------------------------------------------------- -->
+<!-- an experiment: click button to post an example -- I'd like the buttons on the right to take less space somehow -->
+<!--    also, need some automatic way to update the location references etc -->
+<!-- func args: title example-code definition-loc related-stuff comments... -->
+<SCRIPT>
+var win = null;
+function example()
+{
+  if ((win == null) || (win.closed))
+    {
+      win = window.open("","example","width=500,height=300,resizable");
+      win.document.open();
+     }
+  win.document.write('<body bgcolor=white><p><b>', arguments[0], '</b></p>');
+  if (arguments.length > 1)
+    {
+      win.document.write('<pre>', arguments[1], '</pre>');
+      if (arguments.length > 2)
+        {
+          win.document.write('<p>defined: ', arguments[2], '</p>');
+          if (arguments.length > 3)
+            {
+              win.document.write('<p>see also: ', arguments[3], '</p>');
+              if (arguments.length > 4)
+                {
+                  win.document.write('<hr>');
+                  for (var i = 4; i < arguments.length; i++)
+                    win.document.write('<p>', arguments[i], '</p>');
+		}
+            }
+	}
+    }
+  win.document.write('</body>');
+  win.document.close();
+  return true;
+}
+</SCRIPT>
 
-<tr><td width=200><code><em class=def><a name="colorp">color?</a></em> (obj)</code></td>
-<td>#t if <i>obj</i> is a color object (see <a href="#makecolor">make-color</a>).
-</td></tr>
 
-<tr><td><code><em class=def><a name="color3list">color-&gt;list</a></em> (obj)</code></td><td>return list (r g b) of color components.</td></tr>
+<!-- -------------------------------------------------------------------------------- -->
 
-<tr><td><code><em class=def><a name="makecolor">make-color</a></em> (r g b)</code></td><td>return a color value using the red/green/blue values</td></tr>
+<form>
+<table border=0 cellspacing=0 cellpadding=0 width="100%">
+<tr>
+<td width="20%"><code><em class=def><a name="colorp">color?</a></em> (obj)</code></td>
+<td>#t if <i>obj</i> is a color object (see <a href="#makecolor">make-color</a>).</td>
+<td align right><input type="button" value="->" onClick="example(
+  'color?', 
+  '(define blue (make-color 0 0 1))\n(color? blue)\n  => #t',
+  '<code>snd-x|gscm.c g_color_p</code>',
+  'rgb.scm'
+);">
+</input></td>
+</tr>
+
+<tr>
+<td><code><em class=def><a name="color3list">color-&gt;list</a></em> (obj)</code></td>
+<td>return list (r g b) of color components.</td>
+<td><input type="button" value="->" onClick="example(
+  'color->list', 
+  '(define red (make-color 1 0 0))\n(color->list red)\n => \'(1.0 0.0 0.0)',
+  '<code>snd-x|gscm.c g_color2list</code>'
+);">
+</input></td>
+</tr>
+
+<tr>
+<td valign=top><code><em class=def><a name="makecolor">make-color</a></em> (r g b)</code></td>
+<td>return a color object using the red/green/blue values.  If the object is called
+as a function, it returns the list of rgb values.
+If, for example, blue is a defined color, <code>(blue)</code> is the same as <code>(color->list blue)</code>.
+</td>
+<td valign=top><input type="button" value="->" onClick="example(
+  'make-color', 
+  '(define red (make-color 1 0 0))\n(define beige (make-color 0.96 0.96 0.86))',
+  '<code>snd-x|gscm.c g_make_snd_color</code>',
+  'rbg.scm',
+  'The arguments are floats between 0.0 and 1.0 (as in Postscript).'
+);">
+</input></td>
+</tr>
 </table>
-
-<p>If, for example, blue is a defined color, <code>(blue)</code> is the same as <code>(color->list blue)</code>.
-</p>
+</form>
 
 <p><small>(British spelling enthusiasts can use "colour" throughout Snd by building it with the CFLAG
  -DSTR_OR=\"our\").</small>
@@ -326,7 +396,7 @@ desired font.  These can be the abbreviated forms such as
 "8x14" or a full X font name such as "-misc-fixed-bold-r-normal--*-140-*-*-c-*-iso8859-1".
 The font variables are:
 </p>
-<table cell-padding=0 cellspacing=0>
+<table cellpadding=0 cellspacing=0>
 <tr><td width=200><code><em class=def><a name="axislabelfont">axis-label-font</a></em></code></td><td>used in axis labels</td></tr>
 <tr><td><code><em class=def><a name="axisnumbersfont">axis-numbers-font</a></em></code></td><td>used in axis tick numbers</td></tr>
 <tr><td><code><em class=def><a name="boldbuttonfont">bold-button-font</a></em></code></td><td>used by various buttons and labels</td></tr>
@@ -345,7 +415,7 @@ The font variables are:
 <p>This section is new, and in flux, but here's what's currently implemented:
 </p>
 
-<table cell-padding=0 cellspacing=0>
+<table cellspacing=0>
 <tr><td><code><em class=def>widget-position</em> (widget)</code></td>
 <td>return a list giving the widget x and y positions</td></tr>
 <tr><td valign=top><code><em class=def>widget-size</em> (widget)</code></td>
@@ -715,7 +785,7 @@ sound over another at an arbitrary point, and so on:
 </pre>
 <center><image src="redsamps.png" alt="red samples"></center>
 <pre>
-(define (display-previous-edits snd chn)
+(define (<A NAME="displaypreviousedits">display-previous-edits</a> snd chn)
   "display all edits of the current sound, with older versions gradually fading away"
   (let* ((edits (edit-position snd chn))
 	 (old-color (foreground-color snd chn))
@@ -2681,7 +2751,7 @@ you create a reader (via <i>make-sample-reader</i> or <i>make-region-sample-read
 to read, and the initial read direction, then get data via <i>next-sample</i> and
 <i>previous-sample</i>, finally closing the reader with <i>free-sample-reader</i>.
 It is not strictly necessary to call <i>free-sample-reader</i> yourself; the
-garbage collector will handle this if necessary.
+garbage collector will take care of it if you forget to.
 A standard way to add something to the current
 data is:</p>
 <pre>
