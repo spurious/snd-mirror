@@ -514,7 +514,6 @@ Snd_names_and_urls =
     ["mix_region", "extsnd.html#sndmixregion", "snd-region.c"],
     ["mix_sample_reader?", "extsnd.html#mixsamplereaderQ", "snd-mix.c"],
     ["mix_selection", "extsnd.html#sndmixselection", "snd-select.c"],
-    ["mix_sound", "extsnd.html#sndmixsound", "snd-mix.c"],
     ["mix_speed", "extsnd.html#sndmixspeed", "snd-mix.c"],
     ["mix_speed_changed_hook", "extsnd.html#mixspeedchangedhook", "snd-mix.c"],
     ["mix_tag_height", "extsnd.html#sndmixtagheighth", "snd-mix.c"],

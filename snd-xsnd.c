@@ -3073,7 +3073,7 @@ widgets: (0)pane (1)name (2)control-panel (3)minibuffer (4)play-button (5)filter
 	           XEN_EMPTY_LIST)))))))))));
 }
 
-#if DEBUGGING
+#if DEBUGGING && HAVE_GUILE
 static XEN g_sash(void)
 {
   int i;

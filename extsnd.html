@@ -1596,7 +1596,7 @@ the cursor:
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (add-hook! <em class=red>previous-files-select-hook</em>
   (lambda (file)
-    (mix-sound file (cursor))
+    (mix file (cursor))
     #t))
 </pre></td></tr></table></td></tr>
 <tr><td colspan=3></td></tr>
@@ -3163,11 +3163,6 @@ mix (subsequent channels simply increment this number).
 mix (add) selection starting at beg in snd's channel chn.  Return new mix id.
 </td></tr>
 
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixsound">mix-sound</a></em> (file start)</code></span></td></tr>
-<tr><td></td><td>
-mix <i>file</i> (all chans) into selected sound at <i>start</i>.
-</td></tr>
-
 <!-- mix-speed -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixspeed">mix-speed</a></em> (<i>mix</i>)</code></span></td></tr>
 <tr><td></td><td>speed of <i>mix</i>.
@@ -3254,7 +3249,7 @@ See mix.scm for more mix-related (and track-related) functions including:
 <!-- INDEX mixingexamples:Mixing -->
 <A NAME="mixingexamples"></a>
 <blockquote><small>
-mix sound file: <a href="#sndmixsound">mix-sound</a> or drag-and-drop it where you want it mixed.
+mix sound file: <a href="#sndmix">mix</a> or drag-and-drop it where you want it mixed.
 mix channel: see <i>mix-channel</i> in extensions.scm
 mix region: <a href="#sndmixregion">mix-region</a>
 mix selection: <a href="#sndmixselection">mix-selection</a>
@@ -3716,7 +3711,6 @@ The following substitutions can be made:
 <a href="#sndconvolvewith">convolve-with</a> file amp s c e                    <a href="#clmchannel">clm-channel</a> convolve-gen beg dur s c e
 <a href="grfsnd.html#applyladspa">apply-ladspa</a> reader dat dur origin              <a href="grfsnd.html#ladspachannel">ladspa-channel</a> dat beg dur s c e
 <a href="#sndmix">mix</a> file beg filechn s c with-tags              <a href="sndscm.html#mixchannel">mix-channel</a> filedat beg dur s c e
-<a href="#sndmixsound">mix-sound</a> file beg                              <a href="sndscm.html#mixchannel">mix-channel</a> filedat beg dur s c e
 <a href="#sndinsertfile">insert-sound</a> file beg filechn s c e             <a href="sndscm.html#insertchannel">insert-channel</a> filedat beg dur s c e
 <a href="#sndredo">redo</a> edits s c                                  <a href="#redochannel">redo-channel</a> edits s c
 <a href="#sndundo">undo</a> edits s c                                  <a href="#undochannel">undo-channel</a> edits s c

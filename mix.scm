@@ -64,6 +64,21 @@
 
 ;;; ---------------- mixes ----------------
 
+(define (mix-sound file start)
+  "(mix-sound file start) mixes file (all chans) at start in the currently selected sound."
+  (if (null? (sounds))
+      (throw 'no-such-sound (list "mix-sound" "no sound to mix into")))
+  (if (not (file-exists? file))
+      (throw 'no-such-file (list "mix-sound" file)))
+  (let* ((snd (or (selected-sound) (car (sounds))))
+	 (old-sync (sync snd))
+	 (new-sync 1))
+    (for-each (lambda (s) (if (>= (sync s) new-sync) (set! new-sync (1+ (sync s))))) (sounds))
+    (set! (sync snd) new-sync)
+    (let ((val (mix file start #f snd)))
+      (set! (sync snd) old-sync)
+      val)))
+
 (define (delete-mix id)
   "(delete-mix id) removes mix (sets amp to 0 -- can be undone)"
   (if (mix? id)

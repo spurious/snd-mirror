@@ -2,13 +2,11 @@
 
 /* can't move axes if icon dragged to end of graph because the entire system freezes! */
 
-/* TODO: multichan mix/target: autosync, autoscale, etc */
-/* SOMEDAY: figure out how to include the incoming filename in the drag report */
-
 static Atom FILE_NAME;               /* Sun uses this, SGI uses STRING */
 static Atom COMPOUND_TEXT;           /* various Motif widgets use this and the next */
 static Atom _MOTIF_COMPOUND_STRING;
 static Atom text_plain;              /* gtk uses this -- untested here */
+static Atom _MOTIF_DROP;             /* to query in-coming drag for filename */
 
 static XEN drop_hook;
 
@@ -141,7 +139,7 @@ static void handle_drop(Widget w, XtPointer context, XtPointer info)
   XmDropTransferStart(cb->dragContext, args, n);
 }
 
-static void report_mouse_position_as_seconds(Widget w, Position x, Position y)
+static void report_mouse_position_as_seconds(Widget w, const char *file, Position x, Position y)
 {
   snd_state *ss;
   snd_info *sp;
@@ -159,8 +157,8 @@ static void report_mouse_position_as_seconds(Widget w, Position x, Position y)
   seconds = (float)(ungrf_x(cp->axis, x));
   if (seconds < 0.0) seconds = 0.0;
   if (sp->nchans > 1)
-    report_in_minibuffer(sp, "drop to mix file in chan %d at %.4f", cp->chan + 1, seconds);
-  else report_in_minibuffer(sp, "drop to mix file at %.4f", seconds);
+    report_in_minibuffer(sp, "drop to mix %s in chan %d at %.4f", file, cp->chan + 1, seconds);
+  else report_in_minibuffer(sp, "drop to mix %s at %.4f", file, seconds);
 }
 
 static void clear_minibuffer_of(Widget w)
@@ -173,6 +171,8 @@ static void clear_minibuffer_of(Widget w)
   clear_minibuffer(ss->sounds[snd]);
 }
 
+static char *current_file = NULL;
+
 static void handle_drag(Widget w, XtPointer context, XtPointer info)
 {
   XmDragProcCallbackStruct *cb = (XmDragProcCallbackStruct *)info;
@@ -184,19 +184,70 @@ static void handle_drag(Widget w, XtPointer context, XtPointer info)
     { 
     case XmCR_DROP_SITE_MOTION_MESSAGE:
       if (!is_menubar)
-	report_mouse_position_as_seconds(w, cb->x, cb->y);
+	report_mouse_position_as_seconds(w, (current_file) ? current_file : "file", cb->x, cb->y);
       break;
     case XmCR_DROP_SITE_ENTER_MESSAGE:
+#if 0
+      /* this code does get the filename from the drag context, but after the first such transfer
+       * it starts complaining 
+       *
+       *   Xt warning: xtGetSelectionRequest, notInConvertSelection: 
+       *   XtGetSelectionRequest or XtGetSelectionParameters called for widget "dragContext" outside of ConvertSelection proc
+       *
+       * and eventually (after a half-dozen drags), the entire machine freezes.  In other cases,
+       * we die with an immediate segfault in XtGetSelectionRequest
+       *
+       * See comment above as well -- I'd say drag-and-drop is not very robust in Xt!
+       */
+      {
+	int i, num_targets, k, format = 0;
+	Boolean ok;
+	Atom *targets;
+	XtPointer value;
+	Atom type_returned;
+	XtConvertSelectionIncrProc proc;
+	unsigned long len = 0, maxlen = 0;
+	if (cb->dragContext)
+	  {
+	    XtVaGetValues(cb->dragContext, XmNexportTargets, &targets, XmNnumExportTargets, &num_targets, NULL);
+	    if (num_targets > 0)
+	      {
+		XtVaGetValues(cb->dragContext, XmNconvertProc, &proc, NULL);
+		if (proc != NULL)
+		  {
+		    k = -1;
+		    for (i = 0; i < num_targets; i++) 
+		      if ((targets[i] == XA_STRING) || 
+			  (targets[i] == FILE_NAME) ||
+			  (targets[i] == COMPOUND_TEXT) ||
+			  (targets[i] == _MOTIF_COMPOUND_STRING) ||
+			  (targets[i] == text_plain))
+			{
+			  k = i; 
+			  break;
+			}
+		    if (k != -1)
+		      {
+			XtVaSetValues(cb->dragContext, XmNincremental, FALSE, NULL); /* see Motif docs for XmDragContext */
+			ok = (*proc)(cb->dragContext, &_MOTIF_DROP, &(targets[i]), &type_returned, &value, &len, &format, &maxlen, NULL, 0);
+			if (ok == True)
+			  current_file = just_filename(atom_to_filename(type_returned, value, len));
+		      }
+		}
+	    }
+	  }
+      }
+#endif
       if (is_menubar)
 	{
 	  char *new_title;
 	  new_title = (char *)CALLOC(64, sizeof(char));
-	  sprintf(new_title, "%s: drop to open file", ss->startup_title);
+	  sprintf(new_title, "%s: drop to open %s", ss->startup_title, (current_file) ? current_file : "file");
 	  XtVaSetValues(MAIN_SHELL(ss), XmNtitle, (char*)new_title, NULL);
 	  XmChangeColor(w, ss->sgx->pushed_button_color);
 	  FREE(new_title);
 	}
-      else report_mouse_position_as_seconds(w, cb->x, cb->y);
+      else report_mouse_position_as_seconds(w, (current_file) ? current_file : "file", cb->x, cb->y);
       break;
     case XmCR_DROP_SITE_LEAVE_MESSAGE: 
       if (is_menubar)
@@ -205,6 +256,11 @@ static void handle_drag(Widget w, XtPointer context, XtPointer info)
 	  XmChangeColor(w, ss->sgx->highlight_color);
 	}
       else clear_minibuffer_of(w);
+      if (current_file)
+	{
+	  FREE(current_file);
+	  current_file = NULL;
+	}
       break;
     }
 }
@@ -216,6 +272,7 @@ void add_drop(snd_state *ss, Widget w)
   Atom targets[5];
   Arg args[12];
   dpy = MAIN_DISPLAY(ss);
+  _MOTIF_DROP = XInternAtom(dpy, "_MOTIF_DROP", FALSE);
   targets[0] = XA_STRING;
   FILE_NAME = XInternAtom(dpy, "FILE_NAME", FALSE);
   targets[1] = FILE_NAME;

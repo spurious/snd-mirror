@@ -72,8 +72,7 @@ The configure program has several Snd-related arguments:
                            by default; this turns it off.
 
    --without-gsl, --without-fftw 
-                         these turn off the default inclusion of GSL and FFTW,
-                         saving about 2.5 MBytes in Snd's image size.
+                         these turn off the default inclusion of GSL and FFTW.
 
 If the configure/make process fails, please send me
 (bil@ccrma.stanford.edu) the files config.h, config.log, and makefile,
@@ -81,7 +80,8 @@ created (or updated) by configure.
 
 If you don't have Guile or Ruby, Snd can still be built, but it's
 severely limited in what it can do.  Snd can also be built without
-any graphics toolkit.
+any graphics toolkit.  Without either the GUI or the extension
+language, however, there's nothing it can do.
 
 Here at CCRMA, we use this configure invocation:
 

@@ -268,7 +268,7 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
 		       (let ((filename (cadr (XmStringGetLtoR (.value info) XmFONTLIST_DEFAULT_TAG))))
 			 (if (file-exists? filename)
 			     (if (not (file-is-directory? filename))
-				 (mix-sound filename (cursor))
+				 (mix filename (cursor))
 				 (snd-error (format #f "~S is a directory" filename)))
 			     (snd-error (format #f "no such file: ~A" filename))))))
       'ok)))

@@ -1625,6 +1625,7 @@
 	frame)))
 
 (load "snd5.scm")
+(load "mix.scm")
 
 (define (show-input-1 . arg)
   ;; from rtio.scm
@@ -9260,7 +9261,6 @@ EDITS: 5
 
 
 (reset-hook! graph-hook)
-(load "mix.scm")
 (clear-sincs)
 
 ;;; ---------------- test 8: clm ----------------

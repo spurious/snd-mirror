@@ -2035,7 +2035,7 @@ or with-dac (0=microphone, 1=analog line in, 2=digital line in).
 Here is an instrument that applies an envelope to a sound file using
 readin and <a href="#env">env</a> (see also the fullmix instrument in fullmix.ins):</p>
 <pre><small>
-(definstrument <A NAME="envsound">env-sound</a> (file beg &amp;optional (amp 1.0) (amp-env '(0 1 100 1)))
+(definstrument env-sound (file beg &amp;optional (amp 1.0) (amp-env '(0 1 100 1)))
   (let ((f (open-input* file)))
     (when f
       (unwind-protect
@@ -2194,7 +2194,7 @@ a few that look for all the world like generators.</p>
 
 <b>hz-&gt;radians</b>
 converts its argument to radians/sample (for any situation where a
-frequency is used as an amplitude, glissando or FM.  It
+frequency is used as an amplitude, glissando or FM).  It
 can be used within run. hz-&gt;radians is equivalent to 
 <pre>
   Freq-in-hz * 2 * pi / *srate*.  

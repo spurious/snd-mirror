@@ -1,5 +1,6 @@
 Snd change log
 
+  18-Jun:    mix-sound moved to mix.scm.
   16-Jun:    mark-drag-triangle-hook.
              renamed mix-position-changed-hook to mix-dragged-hook.
              mix.scm name changes (see snd6.scm for old forms).

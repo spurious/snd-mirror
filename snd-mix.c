@@ -1052,8 +1052,6 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
  *                     a notion of initial scalers
  */
 
-/* TODO: if mix func had track arg, we could sync at the mix time (no need for multichannel-mix-hook) */
-
 int mix(off_t beg, off_t num, int chans, chan_info **cps, char *mixinfile, int temp, const char *origin, int with_tag)
 {
   /* loop through out_chans cps writing the new mixed temp files and fixing up the edit trees */
@@ -3842,48 +3840,6 @@ static XEN g_set_mix_amp_env(XEN n, XEN chan_1, XEN val_1)
   return(val);
 }
 
-static XEN g_mix_sound(XEN file, XEN start_samp)
-{
-  /* TODO: mix-sound add dur snd chn edpos loc args */
-  /* TODO: mix-channel -> mix with sync/pos choices etc */
-  #define H_mix_sound "(" S_mix_sound " file start-samp): mix file (all channels) into the currently selected sound at start-samp."
-
-  char *filename;
-  snd_state *ss;
-  snd_info *sp;
-  off_t beg, len = 0;
-  int err = 0;
-  XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_mix_sound, "a string");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(start_samp), start_samp, XEN_ARG_2, S_mix_sound, "a number");
-  ss = get_global_state();
-  sp = any_selected_sound(ss);  /* why not as arg?? -- apparently this is assuming CLM with-sound explode */
-  if (sp == NULL) mus_misc_error(S_mix_sound, "no sound to mix into!", file);
-  filename = mus_expand_filename(XEN_TO_C_STRING(file));
-  beg = beg_to_sample(start_samp, S_mix_sound);
-  ss->catch_message = NULL;
-  if (mus_file_probe(filename))
-    {
-      len = mus_sound_frames(filename);
-      if (len > 0)
-	err = mix(beg, len,
-		  sp->nchans, sp->chans,
-		  filename, DONT_DELETE_ME, 
-		  S_mix_sound, 
-		  with_mix_tags(ss)); 
-    }
-  else err = -1;
-  if (filename) FREE(filename);
-  if (err == -1) 
-    {
-      if (ss->catch_message)
-	XEN_ERROR(MUS_MISC_ERROR,
-		  XEN_LIST_2(C_TO_XEN_STRING(S_mix),
-			     C_TO_XEN_STRING(ss->catch_message)));
-      return(snd_no_such_file_error(S_mix_sound, file));
-    }
-  return(C_TO_XEN_INT(err));
-}
-
 static void update_mix_waveforms(chan_info *cp)
 {
   if ((cp) && (cp->mixes)) update_graph(cp);
@@ -4005,7 +3961,7 @@ static XEN g_mix(XEN file, XEN chn_samp_n, XEN file_chn, XEN snd_n, XEN chn_n, X
   #define H_mix "(" S_mix " file (chn-start 0) (file-chan 0) (snd #f) (chn #f) (with-tag " S_with_mix_tags ")): \
 mix file channel file-chan into snd's channel chn starting at chn-start (or at the cursor location if chn-start \
 is omitted), returning the new mix's id.  if with-tag is #f, the data is mixed (no draggable tag is created). \
-If file_chn is omitted, file's channels are mixed until snd runs out of channels."
+If file_chn is omitted or #f, file's channels are mixed until snd runs out of channels."
 
   chan_info *cp = NULL;
   char *name = NULL;
@@ -4016,7 +3972,7 @@ If file_chn is omitted, file's channels are mixed until snd runs out of channels
   off_t beg;
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_mix, "a string");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(chn_samp_n), chn_samp_n, XEN_ARG_2, S_mix, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(file_chn), file_chn, XEN_ARG_3, S_mix, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(file_chn) || XEN_FALSE_P(file_chn) || (!(XEN_BOUND_P(file_chn))), file_chn, XEN_ARG_3, S_mix, "an integer or #f");
   ASSERT_JUST_CHANNEL(S_mix, snd_n, chn_n, 4);
   XEN_ASSERT_TYPE(XEN_NUMBER_OR_BOOLEAN_IF_BOUND_P(tag), tag, XEN_ARG_6, S_mix, "a number");
   name = mus_expand_filename(XEN_TO_C_STRING(file));
@@ -4032,7 +3988,7 @@ If file_chn is omitted, file's channels are mixed until snd runs out of channels
   else with_mixer = XEN_TO_C_BOOLEAN_OR_TRUE(tag);
   cp = get_cp(snd_n, chn_n, S_mix);
   beg = XEN_TO_C_OFF_T_OR_ELSE(chn_samp_n, CURSOR(cp));
-  if (XEN_NOT_BOUND_P(file_chn))
+  if (!(XEN_INTEGER_P(file_chn)))
     {
       id = mix_complete_file(any_selected_sound(ss), beg, name, S_mix, with_mixer);
       if (id == -1) 
@@ -4622,7 +4578,6 @@ XEN_ARGIFY_1(g_mix_chans_w, g_mix_chans)
 XEN_ARGIFY_1(g_mix_p_w, g_mix_p)
 XEN_ARGIFY_1(g_mix_home_w, g_mix_home)
 XEN_ARGIFY_2(g_mixes_w, g_mixes)
-XEN_NARGIFY_2(g_mix_sound_w, g_mix_sound)
 XEN_ARGIFY_3(g_find_mix_w, g_find_mix)
 XEN_NARGIFY_0(g_selected_mix_w, g_selected_mix)
 XEN_NARGIFY_1(g_set_selected_mix_w, g_set_selected_mix)
@@ -4680,7 +4635,6 @@ XEN_NARGIFY_1(g_set_with_mix_tags_w, g_set_with_mix_tags)
 #define g_mix_p_w g_mix_p
 #define g_mix_home_w g_mix_home
 #define g_mixes_w g_mixes
-#define g_mix_sound_w g_mix_sound
 #define g_find_mix_w g_find_mix
 #define g_selected_mix_w g_selected_mix
 #define g_set_selected_mix_w g_set_selected_mix
@@ -4768,7 +4722,6 @@ void g_init_mix(void)
   XEN_DEFINE_PROCEDURE(S_mix_p,        g_mix_p_w, 0, 1, 0,        H_mix_p);
   XEN_DEFINE_PROCEDURE(S_mix_home,     g_mix_home_w, 0, 1, 0,     H_mix_home);
   XEN_DEFINE_PROCEDURE(S_mixes,        g_mixes_w, 0, 2, 0,        H_mixes);
-  XEN_DEFINE_PROCEDURE(S_mix_sound,    g_mix_sound_w, 2, 0, 0,    H_mix_sound);
   XEN_DEFINE_PROCEDURE(S_find_mix,     g_find_mix_w, 0, 3, 0,     H_find_mix);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selected_mix, g_selected_mix_w, H_selected_mix, S_setB S_selected_mix, g_set_selected_mix_w, 0, 0, 1, 0);

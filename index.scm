@@ -614,7 +614,7 @@ and if one is found, and the Snd documentation can be found, calls (html-program
     (list "mix-region" "extsnd.html#sndmixregion" "snd-region.c")
     (list "mix-sample-reader?" "extsnd.html#mixsamplereaderQ" "snd-mix.c")
     (list "mix-selection" "extsnd.html#sndmixselection" "snd-select.c")
-    (list "mix-sound" "extsnd.html#sndmixsound" "snd-mix.c")
+    (list "mix-sound" "sndscm.html#mixsound" "snd-mix.c")
     (list "mix-speed" "extsnd.html#sndmixspeed" "snd-mix.c")
     (list "mix-speed-changed-hook" "extsnd.html#mixspeedchangedhook" "snd-mix.c")
     (list "mix-tag-height" "extsnd.html#sndmixtagheighth" "snd-mix.c")
