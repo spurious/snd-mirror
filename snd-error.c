@@ -43,6 +43,9 @@ void snd_warning(char *format, ...)
       else fprintf(stderr, snd_error_buffer);
     }
   else fprintf(stderr, snd_error_buffer);
+#if DEBUGGING
+  fprintf(stderr, snd_error_buffer);
+#endif
 #else
   fprintf(stderr, "warning...");
 #endif

@@ -282,46 +282,6 @@ static mix_info *make_mix_info(chan_info *cp)
   return(md);
 }
 
-static void release_dangling_mix_readers(mix_info *md);
-
-static mix_info *free_mix_info(mix_info *md)
-{
-  int i;
-  snd_state *ss;
-  if (md)
-    {
-      release_dangling_mix_readers(md);
-      ss = md->ss;
-      if (md->id == ss->selected_mix) ss->selected_mix = INVALID_MIX_ID;
-      if (md->wg) md->wg = free_mix_context(md->wg);
-      mix_infos[md->id] = NULL;
-      if (md->temporary == DELETE_ME) 
-	snd_remove(md->in_filename, TRUE);
-      if (md->name) {FREE(md->name); md->name = NULL;}
-      if (md->in_filename) {FREE(md->in_filename); md->in_filename = NULL;}
-      if (md->add_snd) {completely_free_snd_info(md->add_snd); md->add_snd = NULL;}
-      if (md->states)
-	{
-	  for (i = 0; i < md->console_state_size; i++) 
-	    if (md->states[i]) 
-	      md->states[i] = free_console_state(md->states[i]);
-	  FREE(md->states);
-	  md->states = NULL;
-	}
-      if (md->current_cs) md->current_cs = free_console_state(md->current_cs);
-      if (md->panel_envs)
-	{
-	  for (i = 0; i < md->in_chans; i++)
-	    if (md->panel_envs[i])
-	      free_env(md->panel_envs[i]);
-	  FREE(md->panel_envs);
-	  md->panel_envs = NULL;
-	}
-      FREE(md);
-    }
-  return(NULL);
-}
-
 static int map_over_channel_mixes(chan_info *cp, int (*func)(mix_info *, void *), void *ptr)
 {
   int i, val;
@@ -352,6 +312,59 @@ static int map_over_mixes(int (*func)(mix_info *, void *), void *ptr)
 	}
     }
   return(0);
+}
+
+static void release_dangling_mix_readers(mix_info *md);
+
+static int look_for_mix_tempfile(mix_info *md, void *in_name)
+{
+  return((md->in_filename) && (strcmp(md->in_filename, (char *)in_name) == 0));
+}
+
+static mix_info *free_mix_info(mix_info *md)
+{
+  int i;
+  snd_state *ss;
+  if (md)
+    {
+      release_dangling_mix_readers(md);
+      ss = md->ss;
+      if (md->id == ss->selected_mix) ss->selected_mix = INVALID_MIX_ID;
+      if (md->wg) md->wg = free_mix_context(md->wg);
+      mix_infos[md->id] = NULL;
+      if (md->temporary == DELETE_ME) 
+	snd_remove(md->in_filename, TRUE);
+      else
+	{
+	  if (md->temporary == MULTICHANNEL_DELETION) /* n-chan selection via C-x q for example */
+	    {
+	      if (!(map_over_mixes(look_for_mix_tempfile, (void *)(md->in_filename))))
+		snd_remove(md->in_filename, TRUE);
+	    }
+	}
+      if (md->name) {FREE(md->name); md->name = NULL;}
+      if (md->in_filename) {FREE(md->in_filename); md->in_filename = NULL;}
+      if (md->add_snd) {completely_free_snd_info(md->add_snd); md->add_snd = NULL;}
+      if (md->states)
+	{
+	  for (i = 0; i < md->console_state_size; i++) 
+	    if (md->states[i]) 
+	      md->states[i] = free_console_state(md->states[i]);
+	  FREE(md->states);
+	  md->states = NULL;
+	}
+      if (md->current_cs) md->current_cs = free_console_state(md->current_cs);
+      if (md->panel_envs)
+	{
+	  for (i = 0; i < md->in_chans; i++)
+	    if (md->panel_envs[i])
+	      free_env(md->panel_envs[i]);
+	  FREE(md->panel_envs);
+	  md->panel_envs = NULL;
+	}
+      FREE(md);
+    }
+  return(NULL);
 }
 
 static XEN select_mix_hook;
@@ -3962,13 +3975,7 @@ If file_chn is omitted, file's channels are mixed until snd runs out of channels
   beg = XEN_TO_C_OFF_T_OR_ELSE(chn_samp_n, CURSOR(cp));
   if (XEN_NOT_BOUND_P(file_chn))
     {
-      id = mix_complete_file(any_selected_sound(ss), beg, name, 
-#if DEBUGGING
-			     "mix_complete_file line 3967",
-#else
-			     S_mix, 
-#endif
-			     with_mixer);
+      id = mix_complete_file(any_selected_sound(ss), beg, name, S_mix, with_mixer);
       if (id == -1) 
 	{
 	  if (name) FREE(name);
@@ -4005,11 +4012,7 @@ If file_chn is omitted, file's channels are mixed until snd runs out of channels
 				cp, 
 				file_channel,
 				DONT_DELETE_ME, 
-#if DEBUGGING
-				"file_mix_samples line 4001",
-#else
 				S_mix,
-#endif
 				with_mixer);
 	  if (md) 
 	    id = md->id;

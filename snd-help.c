@@ -15,9 +15,6 @@ static char *snd_itoa(int n)
   #if HAVE_XPM
     #include <X11/xpm.h>
   #endif
-  #if HAVE_HTML
-    #include <XmHTML/XmHTML.h>
-  #endif
 #endif
 
 static char *sndlib_consistency_check(void)
@@ -242,15 +239,6 @@ char *version_info(void)
 #if (!USE_MOTIF) && (!USE_GTK)
 	  _("\n    without any graphics system"),
 #endif
-#if HAVE_HTML
-  #if USE_MOTIF
-	  "\n    XmHTML ", snd_itoa(XmHTMLVERSION), ".", 
-                           snd_itoa(XmHTMLREVISION), ".", 
-                           snd_itoa(XmHTMLUPDATE_LEVEL),
-  #else
-	  _("\n    with mozilla browser"),
-  #endif
-#endif
 #if HAVE_XPM && USE_MOTIF
 	  "\n    Xpm ", snd_itoa(XpmFormat), ".", 
                         snd_itoa(XpmVersion), ".", 
@@ -307,6 +295,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+12-May:  removed --with-html and associated variables.\n\
 7-May:   or-hooks run all functions on the hook list now.\n\
          mix-drag-hook.\n\
 5-May:   after-save-state-hook.\n\
@@ -367,53 +356,6 @@ void ssnd_help(snd_state *ss, char *subject, ...)
   snd_help(ss, subject, newstr);
   FREE(newstr);
 }  
-
-static void snd_help_with_url(snd_state *ss, char *subject, char *url, char *helpstr)
-{
-#if HAVE_HTML
-  snd_help(ss, subject, url);
-#else
-  snd_help(ss, subject, helpstr);
-#endif
-}
-
-static void snd_help_with_url_and_wrap(snd_state *ss, char *subject, char *url, char *helpstr)
-{
-#if HAVE_HTML
-  snd_help(ss, subject, url);
-#else
-  snd_help_with_wrap(ss, subject, helpstr);
-#endif
-}
-
-static void ssnd_help_with_url(snd_state *ss, char *subject, char *url, ...)
-{
-#if HAVE_HTML
-  snd_help(ss, subject, url);
-#else
-  /* groan! */
-  va_list ap;
-  char *helpstr, *newstr;
-  int len, size;
-  va_start(ap, url);
-  size = 1024;
-  newstr = (char *)CALLOC(size, sizeof(char));
-  len = 0;
-  while ((helpstr = va_arg(ap, char *)))
-    {
-      len += snd_strlen(helpstr);
-      if (len >= size)
-	{
-	  size = len + 1024;
-	  newstr = (char *)REALLOC(newstr, size * sizeof(char));
-	}
-      strcat(newstr, helpstr);
-    }
-  va_end(ap);
-  snd_help_with_url(ss, subject, url, newstr);
-  FREE(newstr);
-#endif
-}
 
 /* ---------------- help menu strings ---------------- */
 
@@ -719,7 +661,7 @@ data values, to some extent), set the variable\n\
 
 void find_help(snd_state *ss) 
 {
-  snd_help_with_url_and_wrap(ss, "Find", "#find", 
+  snd_help_with_wrap(ss, "Find", 
 "Searches in Snd refer to the sound data, and are in general patterned after Emacs.  When you type \
 c-s or c-r, the minibuffer below the graph is activated and you are asked for the search function. \
 The expression is a Scheme function of one argument, the current sample value.  It should return #t when the \
@@ -732,7 +674,7 @@ Normally, the search applies only to the current channel. To search all current 
 
 void undo_help(snd_state *ss) 
 {
-  snd_help_with_url_and_wrap(ss, "Undo", "#undoredo",
+  snd_help_with_wrap(ss, "Undo", 
 "Snd supports unlimited undo in the sense that you can backup through all \
 the edits since the last save, and at any point redo those edits.  Certain \
 operations require that temporary files be written, so disk space may eventually \
@@ -743,7 +685,7 @@ In addition, eight or so of the previous selections are saved on a stack accessi
 
 void sync_help(snd_state *ss) 
 {
-  snd_help_with_url_and_wrap(ss, "Sync", "#multichannel",
+  snd_help_with_wrap(ss, "Sync", 
 "The sync button causes certain operations to apply to all channels simultaneously.  In mono \
 sounds, the sync button has a similar effect, but applied across multiple sounds. \
 \n\n\
@@ -791,7 +733,7 @@ The reverb is on only if the reverb button is set.\
 
 void contrast_help(snd_state *ss) 
 {
-  snd_help_with_url_and_wrap(ss, "Contrast", "#contrast",
+  snd_help_with_wrap(ss, "Contrast", 
 "'Contrast enhancement' is my name for this somewhat weird waveshaper or compander.  It \
 phase-modulates a sound, which can in some cases make it sound sharper or brighter. \
 For softer sounds, it causes only an amplitude change.  Contrast is on only if the contrast button is set.");
@@ -799,7 +741,7 @@ For softer sounds, it causes only an amplitude change.  Contrast is on only if t
 
 void env_help(snd_state *ss) 
 {
-  snd_help_with_url_and_wrap(ss, "Envelope", "#editenvelope",
+  snd_help_with_wrap(ss, "Envelope", 
 "An envelope in Snd is a list of x y break-point pairs. The x axis range is \
 arbitrary. For example, to define a triangle curve: '(0 0 1 1 2 0). There is no (obvious) limit \
 on the number of breakpoints. \
@@ -985,7 +927,7 @@ click the 'digital input' button; otherwise you'll get a stuttering effect becau
 
 void envelope_editor_dialog_help(snd_state *ss)
 {
-  snd_help_with_url_and_wrap(ss, "Envelope Editor", "#editenvelope", 
+  snd_help_with_wrap(ss, "Envelope Editor",
 "The Edit Envelope dialog (under the Edit menu) fires up a window for viewing and editing \
 envelopes. The dialog has a display showing either the envelope currently being edited or a panorama \
 of all currently loaded envelopes. The current envelope can be edited with the mouse: click at \
@@ -1025,9 +967,8 @@ axis bounds (the 'clip' button).");
 
 void about_snd_help(snd_state *ss)
 {
-  ssnd_help_with_url(ss,
-		     "Snd",
-		     "#gettingstarted",
+  ssnd_help(ss,
+	    "Snd",
 about_snd_help_string,
 "The various Help menu items are:\n\
 \n",
@@ -1074,9 +1015,8 @@ NULL);
 
 void fft_help(snd_state *ss)
 {
-  ssnd_help_with_url(ss,
-		     "FFT",
-		     "#viewfft",
+  ssnd_help(ss,
+	    "FFT",
 fft_help_string,
 "\n\
 ",
@@ -1084,14 +1024,14 @@ fft_keypad_help_string,
 NULL);
 }
 
-void speed_help(snd_state *ss) {snd_help_with_url_and_wrap(ss, "Speed", "#speed", speed_help_string);}
-void expand_help(snd_state *ss) {snd_help_with_url_and_wrap(ss, "Expand", "#expand", expand_help_string);}
-void reverb_help(snd_state *ss) {snd_help_with_url_and_wrap(ss, "Reverb", "#reverb", reverb_help_string);}
-void marks_help(snd_state *ss) {snd_help_with_url(ss, "Marks", "#marks", mark_help_string);}
-void mix_help(snd_state *ss) {snd_help_with_url_and_wrap(ss, "Mixing", "#mixingfiles", mix_help_string);}
-void sound_files_help(snd_state *ss) {snd_help_with_url(ss, "Format", "#formats", sound_files_help_string);}
-void recording_help(snd_state *ss) {snd_help_with_url_and_wrap(ss, "Recording", "#recordfile", recording_help_string);}
-void init_file_help(snd_state *ss) {ssnd_help_with_url(ss, "Customization", "extsnd.html", init_file_help_string, NULL);}
+void speed_help(snd_state *ss) {snd_help_with_wrap(ss, "Speed", speed_help_string);}
+void expand_help(snd_state *ss) {snd_help_with_wrap(ss, "Expand", expand_help_string);}
+void reverb_help(snd_state *ss) {snd_help_with_wrap(ss, "Reverb", reverb_help_string);}
+void marks_help(snd_state *ss) {snd_help(ss, "Marks", mark_help_string);}
+void mix_help(snd_state *ss) {snd_help_with_wrap(ss, "Mixing", mix_help_string);}
+void sound_files_help(snd_state *ss) {snd_help(ss, "Format", sound_files_help_string);}
+void recording_help(snd_state *ss) {snd_help_with_wrap(ss, "Recording", recording_help_string);}
+void init_file_help(snd_state *ss) {ssnd_help(ss, "Customization", init_file_help_string, NULL);}
 
 
 /* -------- dialog help button -------- */
@@ -1152,7 +1092,7 @@ void orientation_dialog_help(snd_state *ss)
 
 void region_dialog_help(snd_state *ss)
 {
-  snd_help_with_url_and_wrap(ss, "Region Browser", "#regionbrowser",
+  snd_help_with_wrap(ss, "Region Browser",
 "This is the 'region browser'.  The scrolled window contains the list of current regions \
 with a brief title to indicate the provenance thereof, and two buttons.  The 'save' button \
 protects or unprotects the region from deletion. The 'play' button plays the associated region. \
@@ -1395,13 +1335,10 @@ static XEN g_listener_help(XEN arg, XEN formatted)
 
 void set_html_dir(snd_state *ss, char *new_dir)
 {
-#if HAVE_HTML
   if (html_dir(ss)) FREE(html_dir(ss));
   set_html_dir_1(ss, new_dir);
-#endif
 }
 
-#if HAVE_HTML && (!USE_NO_GUI)
 static XEN g_html_dir(void) 
 {
   #define H_html_dir "(" S_html_dir "): location of Snd documentation"
@@ -1414,21 +1351,16 @@ static XEN g_set_html_dir(XEN val)
   set_html_dir(get_global_state(), copy_string(XEN_TO_C_STRING(val))); 
   return(val);
 }
-#endif
 
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_2(g_listener_help_w, g_listener_help)
-#if HAVE_HTML && (!USE_NO_GUI)
 XEN_NARGIFY_0(g_html_dir_w, g_html_dir)
 XEN_NARGIFY_1(g_set_html_dir_w, g_set_html_dir)
-#endif
 #else
 #define g_listener_help_w g_listener_help
-#if HAVE_HTML && (!USE_NO_GUI)
 #define g_html_dir_w g_html_dir
 #define g_set_html_dir_w g_set_html_dir
-#endif
 #endif
 
 void g_init_help(void)
@@ -1450,8 +1382,5 @@ If more than one hook function, each function gets the previous function's outpu
 
   XEN_DEFINE_HOOK(output_comment_hook, S_output_comment_hook, 1, H_output_comment_hook); /* arg = current mus_sound_comment(hdr) if any */
 
-#if HAVE_HTML && (!USE_NO_GUI)
-  XEN_YES_WE_HAVE("snd-html");
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_html_dir, g_html_dir_w, H_html_dir, S_setB S_html_dir, g_set_html_dir_w,  0, 0, 1, 0);
-#endif
 }

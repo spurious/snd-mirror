@@ -56,7 +56,8 @@ static Window find_window(Display *display,
   return(window);
 }
 
-static XEN send_netscape(XEN cmd)
+XEN send_netscape(XEN cmd);
+XEN send_netscape(XEN cmd)
 {
   #define H_send_netscape "(send-netscape cmd): find netscape (or start it if necessary), and send it the \
 string 'cmd'.  cmd should be a URL.  This is used by index.scm."

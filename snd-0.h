@@ -751,22 +751,9 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 #define set_data_clipped(ss, a) ss->Data_Clipped = a
 #define DEFAULT_DATA_CLIPPED FALSE
 
-#if HAVE_HTML
-  #define html_width(ss) ss->HTML_Width
-  #define set_html_width(ss, a) ss->HTML_Width = a
-
-  #define html_height(ss) ss->HTML_Height
-  #define set_html_height(ss, a) ss->HTML_Height = a
-
-  #define html_dir(ss) ss->HTML_Dir
-  #define set_html_dir_1(ss, a) ss->HTML_Dir = a
-
-  #define html_font_size_list(ss) ss->HTML_Font_Size_List
-  #define set_html_font_size_list(ss, a) ss->HTML_Font_Size_List = a
-
-  #define html_fixed_font_size_list(ss) ss->HTML_Fixed_Font_Size_List
-  #define set_html_fixed_font_size_list(ss, a) ss->HTML_Fixed_Font_Size_List = a
-#endif
+#define html_dir(ss) ss->HTML_Dir
+#define set_html_dir_1(ss, a) ss->HTML_Dir = a
+#define DEFAULT_HTML_DIR "."
 
 #define graphs_horizontal(ss) ss->Graphs_Horizontal
 #define in_set_graphs_horizontal(ss, a) ss->Graphs_Horizontal = a

@@ -146,6 +146,7 @@ Extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#eventdoc">event.scm</a></td>            <td>xm module stuff for automatic user-interface tests</td></tr>
 <tr><td><a href="sndscm.html#extensionsdoc">extensions.scm</a></td>  <td>extensions of Snd</td></tr>
 <tr><td><a href="sndscm.html#fadedoc">fade.scm</a></td>              <td>frequency-domain cross-fades</td></tr>
+<tr><td><a href="sndscm.html#flutedoc">flute.scm</a></td>            <td>Nicky Hind's flute physical model</td></tr>
 <tr><td><a href="sndscm.html#fmvdoc">fmv.scm</a></td>                <td>the fm-violin tied to real-time stuff</td></tr>
 <tr><td><a href="sndscm.html#freeverbdoc">freverb.scm, freeverb.rb</a></td><td>a reverb</td></tr>
 <tr><td><a href="sndscm.html#goopsnddoc">goopsnd.scm</a></td>        <td>first look at Goops (Guile Object System) for Snd</td></tr>
@@ -4423,7 +4424,7 @@ If 'proc' returns some non-#f value, find itself returns a list with that value 
 In the find dialog and in C-s or C-r searches, if the value returned is an integer, the cursor is offset by that number of samples.
 <br><br><code>(find (lambda (y) (&gt; y .1)))</code><br><code>(find (lambda (y) (and (&gt; y .1) -2)))</code><br>
 
-<!-- INDEX searchexamples:Searches -->
+<!-- INDEX searchexamples:Searching -->
 <A NAME="searchexamples"></a>
 <blockquote><small>
 Example find procedures: <a href="sndscm.html#exsearchforclick">search-for-click, zero+, next-peak, find-pitch</a><br>
@@ -5582,7 +5583,7 @@ temporary messages.  C-g clears it.
 </td></tr>
 <tr><td></td><td>
 <b>reverse-channel</b> is the <a href="#regularizedargs">regularized</a> version of <a href="#sndreverse">reverse-sound</a>.
-<!-- INDEX reverseexamples:Reversals -->
+<!-- INDEX reverseexamples:Reversing -->
 <A NAME="reverseexamples"></a>
 <pre><blockquote><small>
 To reverse selected portion: <a href="#sndreverseselection">reverse-selection</a><br>

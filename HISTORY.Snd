@@ -1,5 +1,6 @@
 Snd change log
 
+  12-May:    removed --with-html and associated variables.
   7-May:     or-hooks now run all functions on the hook list.
              mix-drag-hook.
   5-May:     after-save-state-hook.

@@ -532,7 +532,7 @@ int open_temp_file(char *ofile, int chans, file_info *hdr, snd_state *ss)
 	hdr->format = default_output_format(ss);
       else
 	{
-	  /* was default_output_* here, but that's for the user's output not ours */
+	  /* was default_output_* here, but that's for the user's output, not ours */
 	  hdr->type = MUS_NEXT;
 	  hdr->format = MUS_OUT_FORMAT;
 	}

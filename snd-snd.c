@@ -2428,7 +2428,7 @@ static XEN g_sound_properties(XEN snd_n)
 
 static XEN g_set_sound_properties(XEN on, XEN snd_n) 
 {
-  XEN_ASSERT_TYPE(XEN_LIST_P(on), on, XEN_ARG_1, S_setB S_sound_properties, "a property list");
+  /* XEN_ASSERT_TYPE(XEN_LIST_P(on), on, XEN_ARG_1, S_setB S_sound_properties, "a property list"); */
   return(sound_set(snd_n, on, SP_PROPERTIES, S_setB S_sound_properties));
 }
 

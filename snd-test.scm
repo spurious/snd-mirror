@@ -34,9 +34,7 @@
 ;;; TODO: find/"fix" clipping
 ;;; TODO: pan env field in mix dialog if stereo in/out
 ;;; TODO: doc ex of key-press-hook (cx cs=save as in xe-enved?), mix-amp-changed-hook, select-*-hook [click=>post info in box]
-;;; TODO: does multi-chan mix try to delete temp file twice?
 ;;; TODO: xemacs style top list of sounds, current takes whole screen [make-top-row tmp18.scm, files-popup-buffer in examp.scm]
-;;; TODO: ruby case of sound property -- gc gets setfault? save-state of any list(array) is probably broken (ruby not readable rep)
 ;;; TOOD: extend the mix-as-list syntax to list-of-ids (tracks) (are these all rationalized now?)
 ;;;       do we need make-track|mix-sample-reader? should they accept all the standard args?
 
@@ -13430,6 +13428,38 @@ EDITS: 5
 	    (snd-display ";as-one-edit positions after redo: ~A ~A" (mix-position m1) (mix-position m2)))
 	(close-sound ind)))
 
+    (let ((ind (open-sound "2.snd")))
+      (make-selection 0 10000 ind)
+      (if (not (= (selection-chans) 2))
+	  (snd-display ";stereo selection: ~A" (selection-chans)))
+      (set! (sync ind) #t)
+      (let ((md (mix-selection 500 ind)))
+	(if (not (= (mix-chans md) 2))
+	    (snd-display ";mix-chans of stereo selection: ~A" (mix-chans md)))
+	(if (not (mix? (1+ md)))
+	    (snd-display ";where is 2nd mix? ~A ~A" md (mixes)))
+	(if (not (= (edit-position ind 0) 1))
+	    (snd-display ";edit-position 0 after stereo mix selection: ~A" (edit-position ind 0)))
+	(if (not (= (edit-position ind 1) 1))
+	    (snd-display ";edit-position 1 after stereo mix selection: ~A" (edit-position ind 1)))
+	(set! (sync ind) #f)
+	(undo 1 ind 0)
+	(delete-sample 25 ind 0)
+	(set! (mix-position (1+ md)) 750)
+	(if (not (= (edit-position ind 1) 2))
+	    (snd-display ";edit-position 1 after stereo mix selection moved: ~A" (edit-position ind 2)))
+	(if (fneq (maxamp (list (1+ md))) 0.03332)
+	    (snd-display ";maxamp of 2nd sel mix: ~A" (maxamp (list (1+ md)))))
+	(if (fneq (sample 1005 ind 1) 0.011)
+	    (snd-display ";mixed sel samp: ~A" (sample 1005 ind 1)))
+	(scale-channel .5 0 10000 (list (1+ md)) 1)
+	(if (fneq (sample 1005 ind 1) 0.0084)
+	    (snd-display ";mixed sel samp 2: ~A" (sample 1005 ind 1)))
+	(revert-sound ind)
+	(delete-sample 25 ind 1)
+	(if (or (mix? md) (mix? (1+ md)))
+	    (snd-display ";undo mix stereo sel: ~A ~A" (mix? md) (mix? (1+ md))))
+	(close-sound ind)))
     ))
 
 (clear-sincs)

@@ -27,7 +27,6 @@ AC_SUBST(VERSION)
 #   --with-gtk            use Gtk+	
 #   --with-alsa           use ALSA if possible
 #   --with-static-alsa    use ALSA statically loaded (for RPM generation)
-#   --with-html           include the XmHTML or mozilla browser library
 #   --with-snd-as-widget  make Snd a loadable widget, not a standalone program
 #   --with-doubles        use doubles throughout (default is floats)
 #   --with-float-samples  represent samples internally as floats 
@@ -65,7 +64,6 @@ AC_ARG_WITH(static-xm,  [  --with-static-xm	  include the xm module])
 AC_ARG_WITH(guile,      [  --with-guile		  use Guile])
 AC_ARG_WITH(gl,         [  --with-gl		  include OpenGL support])
 AC_ARG_WITH(just-gl,    [  --with-just-gl	  include OpenGL support, but omit the GL/Guile bindings])
-AC_ARG_WITH(html,	[  --with-html		  include the XmHTML or mozilla browser library])
 AC_ARG_WITH(motif,	[  --with-motif		  use libXm to build Snd])
 AC_ARG_WITH(static-motif,[  --with-static-motif	  use libXm.a to build Snd])
 AC_ARG_WITH(modules,    [  --with-modules	  use if sndlib uses modules])
@@ -93,10 +91,6 @@ AC_ARG_WITH(sample-width,
 	AC_DEFINE_UNQUOTED(MUS_SAMPLE_BITS,$with_sample_width)
         LOCAL_SNDLIB_BITS=$with_sample_width
 	)
-
-XMHTML_LIB=""
-GTKHTML_LIB=""
-GTKHTML_FLAGS=""
 
 if test "$with_motif" = yes ; then
   AC_DEFINE(USE_MOTIF)
@@ -331,14 +325,8 @@ if test "$no_x" = yes || test "$with_no_gui" = yes ; then
   AC_DEFINE(USE_NO_GUI)
   XLIBS=""
   XFLAGS=""
-  GTKHTML_LIB=""
-  GTKHTML_FLAGS=""
-  XMHTML_LIB=""
   AC_SUBST(XLIBS)
   AC_SUBST(XFLAGS)
-  AC_SUBST(GTKHTML_LIB)
-  AC_SUBST(GTKHTML_FLAGS)
-  AC_SUBST(XMHTML_LIB)
   GX_FILES="NO_GUI_O_FILES"
   GX_HEADERS="NO_GUI_HEADERS"
 
@@ -422,14 +410,6 @@ else
 	  AC_DEFINE(HAVE_MOTIF) # for xm
 	  AC_SUBST(XLIBS)
 	  AC_SUBST(XFLAGS)
-	  if test "$with_html" = yes ; then
-  	    AC_DEFINE(HAVE_HTML)
-  	    XMHTML_LIB="-lXmHTML -ljpeg -lpng"
-	  fi
- 	  AC_SUBST(XMHTML_LIB)
- 	  GTKHTML_LIB=""
- 	  GTKHTML_FLAGS=""
-	
  	  AC_CHECK_LIB(Xpm, XpmReadFileToPixmap,
             [
   	     XLIBS="$XLIBS -lXpm"
@@ -505,71 +485,8 @@ else
         if test "$with_x11" = yes ; then
 	  AC_DEFINE(WITH_GTK_AND_X11)
         fi
-
-# TODO: figure out how to find mozilla gtkembedmoz (and the library in RH 9.0 seems to be broken)
-
-	if test "$with_html" = yes ; then
-	  AC_PATH_PROG(MOZILLA_CONFIG, mozilla-config, no)
-	  if test "$MOZILLA_CONFIG" = no ; then
-	    OLD_CFLAGS="$CFLAGS"
-	    CFLAGS="$CFLAGS $GTK_CFLAGS -I/usr/include/mozilla"
-	    AC_MSG_CHECKING([for /usr/include/mozilla/gtkembedmoz/gtkmozembed.h])
-    	    AC_COMPILE_IFELSE(
-	      [AC_LANG_PROGRAM([#include <gtkembedmoz/gtkmozembed.h>],
-		               [int g; g = (int)gtk_moz_embed_get_type()])],
-	      [
-	       AC_MSG_RESULT(yes)
-               AC_DEFINE(HAVE_HTML)
-	       GTKHTML_LIB="-Xlinker -rpath -Xlinker /usr/lib/mozilla -L/usr/lib/mozilla -lgtkembedmoz"
-	       GTKHTML_FLAGS="-I/usr/include/mozilla"
-	      ],
-	      [
-	       AC_MSG_RESULT(no)
-	       AC_MSG_CHECKING([for /usr/include/mozilla-1.0.1/gtkembedmoz/gtkmozembed.h])
-    	       CFLAGS="$OLD_CFLAGS $GTK_CFLAGS -I/usr/include/mozilla-1.0.1"
-	       AC_COMPILE_IFELSE(
-                 [AC_LANG_PROGRAM([#include <gtkembedmoz/gtkmozembed.h>],
-			          [int g; g = (int)gtk_moz_embed_get_type()])],
-		 [
-		  AC_MSG_RESULT(yes)
-  	       	  AC_DEFINE(HAVE_HTML)
-		  GTKHTML_LIB="-lgtkembedmoz"
-		  GTKHTML_FLAGS="-I/usr/include/mozilla-1.0.1"
-		 ],
-		 [
-	           AC_MSG_RESULT(no)
-	       	   AC_MSG_CHECKING([for /usr/include/mozilla-1.2.1/gtkembedmoz/gtkmozembed.h])
-    	           CFLAGS="$OLD_CFLAGS $GTK_CFLAGS -I/usr/include/mozilla-1.2.1"
-	           AC_COMPILE_IFELSE(
-                     [AC_LANG_PROGRAM([#include <gtkembedmoz/gtkmozembed.h>],
-			              [int g; g = (int)gtk_moz_embed_get_type()])],
-		     [
-		       AC_MSG_RESULT(yes)
-  	       	       AC_DEFINE(HAVE_HTML)
-		       GTKHTML_LIB="-lgtkembedmoz"
-		       GTKHTML_FLAGS="-I/usr/include/mozilla-1.2.1"
-		     ],
-		     [
-	               AC_MSG_RESULT(no)
-	             ]
-	            ) # compile_ifelse
-	          ]
-	         ) # compile_ifelse
-	        ]
-	      ) # compile_ifelse
-            CFLAGS="$OLD_CFLAGS"
-	  else
-  	    AC_DEFINE(HAVE_HTML)
-	    GTKHTML_LIB=`$MOZILLA_CONFIG --libs`
-	    GTKHTML_FLAGS=`$MOZILLA_CONFIG --cflags`
-	  fi
-	fi
-
-      	AC_SUBST(GTKHTML_LIB)
-      	AC_SUBST(GTKHTML_FLAGS)
 	XLIBS=""
       	XFLAGS=""
-      	XMHTML_LIB=""
       	AC_SUBST(XLIBS)
       	AC_SUBST(XFLAGS)
       	if test "$with_static_xm" = yes ; then
@@ -588,14 +505,8 @@ else
   AC_DEFINE(USE_NO_GUI)
   XLIBS=""
   XFLAGS=""
-  GTKHTML_LIB=""
-  GTKHTML_FLAGS=""
-  XMHTML_LIB=""
   AC_SUBST(XLIBS)
   AC_SUBST(XFLAGS)
-  AC_SUBST(GTKHTML_LIB)
-  AC_SUBST(GTKHTML_FLAGS)
-  AC_SUBST(XMHTML_LIB)
   GX_FILES="NO_GUI_O_FILES"
   GX_HEADERS="NO_GUI_HEADERS"
   fi

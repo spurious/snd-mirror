@@ -111,7 +111,6 @@
 #undef STATFS_ARGS
 #undef SND_CONFIG_GET_ID_ARGS
 #undef TRAP_SEGFAULT
-#undef HAVE_HTML
 #undef SND_AS_WIDGET
 #undef Float
 #undef _FILE_OFFSET_BITS

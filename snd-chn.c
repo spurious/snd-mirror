@@ -6106,7 +6106,7 @@ The accessor channel-property is provided in extensions.scm."
 
 static XEN g_set_channel_properties(XEN on, XEN snd_n, XEN chn_n) 
 {
-  XEN_ASSERT_TYPE(XEN_LIST_P(on), on, XEN_ARG_1, S_setB S_channel_properties, "a property list");
+  /* XEN_ASSERT_TYPE(XEN_LIST_P(on), on, XEN_ARG_1, S_setB S_channel_properties, "a property list"); */
   return(channel_set(snd_n, chn_n, on, CP_PROPERTIES, S_setB S_channel_properties));
 }
 

@@ -39,15 +39,6 @@
 #define ENVED_POINT_SIZE 10
 #define NOTEBOOK_BINDING_WIDTH 20
 
-#if HAVE_HTML
-/* XmHTML defaults */
-#define HTML_WIDTH 600
-#define HTML_HEIGHT 400
-#define HTML_DIR "."
-#define HTML_FONT_SIZE_LIST "14, 10, 24, 24, 18, 14, 12"
-#define HTML_FIXED_FONT_SIZE_LIST "14, 10"
-#endif
-
 #define NO_ICON 0
 #define PLAIN_ICON 1
 #define XPM_ICON 2
@@ -141,13 +132,7 @@ typedef struct {
   int channel_sash_size;
   int sash_size;
   int sash_indent;
-#if HAVE_HTML
-  int html_width;
-  int html_height;
   char *html_dir;
-  char *html_font_size_list;
-  char *html_fixed_font_size_list;
-#endif
 } sndres;
 
 static XtResource resources[] = {
@@ -201,13 +186,7 @@ static XtResource resources[] = {
   {"channelSashSize", "ChannelSashSize", XmRInt, sizeof(int), XtOffset(sndres *, channel_sash_size), XmRImmediate, (XtPointer)CHANNEL_SASH_SIZE},
   {"sashSize", "SashSize", XmRInt, sizeof(int), XtOffset(sndres *, sash_size), XmRImmediate, (XtPointer)SASH_SIZE},
   {"sashIndent", "SashIndent", XmRInt, sizeof(int), XtOffset(sndres *, sash_indent), XmRImmediate, (XtPointer)SASH_INDENT},
-#if HAVE_HTML
-  {"htmlWidth", "HtmlWidth", XmRInt, sizeof(int), XtOffset(sndres *, html_width), XmRImmediate, (XtPointer)HTML_WIDTH},
-  {"htmlHeight", "HtmlHeight", XmRInt, sizeof(int), XtOffset(sndres *, html_height), XmRImmediate, (XtPointer)HTML_HEIGHT},
-  {"htmldir", "HtmlDir", XmRString, sizeof(char *), XtOffset(sndres *, html_dir), XmRString, (XtPointer)HTML_DIR},
-  {"htmlfontsizelist", "Htmlfontsizelist", XmRString, sizeof(char *), XtOffset(sndres *, html_font_size_list), XmRString, (XtPointer)HTML_FONT_SIZE_LIST},
-  {"htmlfixedfontsizelist", "Htmlfixedfontsizelist", XmRString, sizeof(char *), XtOffset(sndres *, html_fixed_font_size_list), XmRString, (XtPointer)HTML_FIXED_FONT_SIZE_LIST}
-#endif
+  {"htmldir", "HtmlDir", XmRString, sizeof(char *), XtOffset(sndres *, html_dir), XmRString, (XtPointer)DEFAULT_HTML_DIR},
 };
 
 
@@ -582,9 +561,6 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   Widget menu;
   XGCValues gv;
   char *app_title = NULL;
-#if HAVE_HTML
-  char *tmpstr;
-#endif
 
 #ifdef SND_AS_WIDGET
   ss = snd_main(argc, argv);
@@ -669,12 +645,10 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   ss->batch_mode = batch;
   if (batch) XtSetMappedWhenManaged(shell, False);
 
-#if HAVE_HTML
-  set_html_width(ss, snd_rs.html_width);
-  set_html_height(ss, snd_rs.html_height);
   set_html_dir(ss, copy_string(snd_rs.html_dir));
-  if ((html_dir(ss)) && (strcmp(html_dir(ss), HTML_DIR) == 0))
+  if ((html_dir(ss)) && (strcmp(html_dir(ss), DEFAULT_HTML_DIR) == 0))
     {
+      char *tmpstr;
       /* default wasn't changed by user -- check to see if default should have been /usr/doc/snd-n instead */
       tmpstr = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
       mus_snprintf(tmpstr, PRINT_BUFFER_SIZE, "%s/snd.html", html_dir(ss));
@@ -696,7 +670,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 		  else 
 		    {
 		      add_to_error_history(ss, _("can't find Snd doc directory"), FALSE);
-		      mus_snprintf(tmpstr, PRINT_BUFFER_SIZE, HTML_DIR);
+		      mus_snprintf(tmpstr, PRINT_BUFFER_SIZE, DEFAULT_HTML_DIR);
 		    }
 		}
 	    }
@@ -704,9 +678,6 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 	}
       FREE(tmpstr);
     }
-  set_html_font_size_list(ss, snd_rs.html_font_size_list);
-  set_html_fixed_font_size_list(ss, snd_rs.html_fixed_font_size_list);
-#endif
 
   ss->using_schemes = ((snd_rs.use_schemes) &&
 		       ((strcmp(snd_rs.use_schemes, "all") == 0) || (strcmp(snd_rs.use_schemes, "All") == 0)));

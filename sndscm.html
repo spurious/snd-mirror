@@ -47,6 +47,7 @@
   <li><a href="#exampdoc">examp.scm, examp.rb: many examples</a>
   <li><a href="#extensionsdoc">extensions.scm: various generally useful Snd extensions</a>
   <li><a href="#fadedoc">fade.scm: frequency-domain cross-fades</a>
+  <li><a href="#flutedoc">flute.scm: Nicky Hind's flute physcial model</a>
   <li><a href="#fmvdoc">fmv.scm: a controller for the fm-violin</a>
   <li><a href="#freeverbdoc">freeverb.scm, freeverb.rb: a reverb</a>
   <li><a href="#goopsnddoc">goopsnd.scm: look at Goops</a>
@@ -1518,6 +1519,11 @@ is sometimes only slightly different from a normal (time-domain) cross-fade, but
 there are some interesting possibilities ("sound evaporation", etc).
 </p>
 
+<A NAME="flutedoc"></a><span class=box><h2>flute.scm</h2></span>
+
+<p>flute.scm is a translation of the CLM version of Nicky Hind's flute physical model.
+</p>
+
 <A NAME="fmvdoc"></a><span class=box><h2>fmv.scm</h2></span>
 
 <p>fmv.scm implements the fm-violin (v.scm) as a CLM-style generator, making it possible
@@ -2071,7 +2077,7 @@ See also:
   piano: <a href="#pianodoc">piano.scm, piano.rb</a>
   singer: <a href="#singerdoc">singer.scm</a>
   bowed string: <a href="#straddoc">strad.scm, strad.rb</a>
-  flute: flute.scm
+  flute: <a href="#flutedoc">flute.scm</a>
   string: <a href="#excomputeuniformcircularstring">compute-string</a>
   plucked string: pluck in examp.scm
   plate-reverb: plugins-menu.scm
@@ -2303,6 +2309,8 @@ in Linux/OSS, tries to reduce soundcard background racket.
 appends <i>msg</i> to whatever is in <i>snd</i>'s minibuffer.
 <b><a name="sndselectmix">select-mix</a></b> sets the selected mix (#f = none).
 <b>dismiss-all-dialogs</b> deactivates all active dialogs.
+<b>with-html</b>sets up Help menu callbacks to send netscape 
+a url to open, rather than opening Snd's help dialog.
 </p>
 
 

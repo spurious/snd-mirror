@@ -2927,14 +2927,14 @@ static void define_procedures(void)
   XEN_NARGIFY_1(gxm_width_inc_w, gxm_width_inc)
 
   XEN_NARGIFY_2(gxm_set_data_w, gxm_set_data)
+
+#if HAVE_MOTIF
   XEN_NARGIFY_2(gxm_set_set_w, gxm_set_set)
   XEN_NARGIFY_2(gxm_set_click_count_w, gxm_set_click_count)
   XEN_NARGIFY_2(gxm_set_length_w, gxm_set_length)
   XEN_NARGIFY_1(gxm_ptr_w, gxm_ptr)
   XEN_NARGIFY_2(gxm_set_ptr_w, gxm_set_ptr)
   XEN_NARGIFY_2(gxm_set_reason_w, gxm_set_reason)
-
-#if HAVE_MOTIF
 #if MOTIF_2
   XEN_NARGIFY_1(gxm_page_number_w, gxm_page_number)
   XEN_NARGIFY_1(gxm_page_widget_w, gxm_page_widget)

@@ -315,7 +315,9 @@ static int mix_selection(snd_state *ss, chan_info *cp, off_t beg, const char *or
   if (err == MUS_NO_ERROR)
     {
       si_out = sync_to_chan(cp);
-      id = mix(beg, selection_len(), si_out->chans, si_out->cps, tempfile, DELETE_ME, origin, with_mix_tags(ss));
+      id = mix(beg, selection_len(), si_out->chans, si_out->cps, tempfile, 
+	       (si_out->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME, 
+	       origin, with_mix_tags(ss));
       free_sync_info(si_out);	      
     }
   if (tempfile) FREE(tempfile);

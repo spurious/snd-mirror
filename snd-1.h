@@ -371,10 +371,7 @@ typedef struct snd__state {
   int Enved_Clip_p, Enved_Exp_p, Enved_Target, Enved_Wave_p, Enved_in_dB, Graphs_Horizontal, With_Background_Processes;
   int Graph_Cursor, Data_Clipped, Show_Indices, Mix_Tag_Width, Mix_Tag_Height, Minibuffer_History_Length;
   Float min_dB, lin_dB;
-#if HAVE_HTML
-  int HTML_Width, HTML_Height;
-  char *HTML_Dir, *HTML_Font_Size_List, *HTML_Fixed_Font_Size_List;
-#endif
+  char *HTML_Dir;
   int error_lock, deferred_regions, jump_ok, batch_mode;
 } snd_state;
 

@@ -42,10 +42,6 @@ The configure program has several Snd-related arguments:
                            --with-just-gl will give you the GL spectrograms
                            without any extras.
 
-   --with-html           include the XmHTML or mozilla browser library
-                           (mozilla is used with Gtk, XmHTML with Motif).
-                           This affects only the Help dialog.
-
    --with-ladspa         include LADSPA plugin support (default=yes in Linux)
    --with-static-xm      include the xm module (rather than loading it dynamically)
 			   this option affects xm.c for Motif, xg.c for Gtk.
@@ -311,30 +307,6 @@ you can find where it occurs by:
   run --g-fatal-warnings
     <now do whatever it takes to hit the warning>
   where
-
-If you configure Snd --with-html as well as --with-gtk, and
-get an error in snd-ghelp about gtkmozembed.h, it probably
-means you don't have the mozilla-devel package installed.
-
-In RedHat 8.0, there's some undefined identifier problem
-triggered by gtkmozembed -- I don't know what to do to 
-fix this beyond complaining to someone.
-
-
-
----- XmHTML: ----
-src/images.c line 3955 comment out this block:
-#if 0
-	if(XmIsHTML((Widget)html))		/* fix 09/01/97-01, rr */
-	{
-		for(image = html->html.images; image != NULL; image = image->next)
-		{
-			if(image->html_image == info)
-				image->options |= IMG_INFOFREED;
-		}
-	}
-#endif
-then rebuild libXmHTML.a.
 
 
 ---- GSL: ----
