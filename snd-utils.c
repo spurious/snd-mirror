@@ -298,7 +298,7 @@ void snd_exit(int val)
 
 #if __GNUC__
 #if WITH_EFENCE && (!DEBUG_MEMORY)
-  #warning compile switches are inconsistent
+  #warning compile switches are inconsistent (with_efence needs debug_memory)
 #endif
 #endif
 

@@ -331,7 +331,9 @@ If configure finds GSL, but Snd refuses to load with an error
 about missing gsl_complex_cos (or whatever), you need to get the
 GSL sources and build it again; apparently the version of libgsl.a
 that comes with Redhat 7.0 doesn't include any of the complex
-trig package?  Snd needs GSL 0.8 or later.
+trig package?  If GSL is used at all (it is only needed if your
+C compiler/libraries don't support complex trig), the Snd needs 
+GSL 0.8 or later.
 
 
 ---- Guile: ---- 

@@ -33,7 +33,6 @@
 ;;; TODO: recorder-file-hook
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; TODO: replace all the (buggy) keystroke junk with snd-simulate-keystroke 
-;;; TODO: test filter-channel, also n-chan filter-sound/selection, notch-channel
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen) (ice-9 session))
 
@@ -20553,10 +20552,6 @@ EDITS: 5
 			    (snd-display ";delete marks: ~A ~A?" new-marks old-marks)))))
 		))
 	    
-	    (if (rs 0.5)
-		(add-hook! exit-hook (lambda () (report-in-minibuffer "") (unsaved-edits? 0)))
-		(reset-hook! exit-hook))
-	    
 	    (key (char->integer #\x) 4)
 	    (key (char->integer #\() 0)
 	    (key (char->integer #\f) 4)
@@ -28680,7 +28675,77 @@ EDITS: 2
 	(if (fneq (maxamp) 0.318) (snd-display ";filter-selection 1000 no trunc? ~A" (maxamp)))
 	(if (not (vequal (channel->vct 505 10) (vct 0.035 -0.045 0.064 -0.106 0.318 0.318 -0.106 0.064 -0.045 0.035)))
 	    (snd-display ";filter-selection 1000 no trunc: ~A" (channel->vct 505 10)))
+
+	(undo)
+	(filter-channel '(0 1 1 1) 10)
+	(if (not (vequal (channel->vct 10 10) (vct 0.008 -0.025 0.050 -0.098 0.316 0.316 -0.098 0.050 -0.025 0.008)))
+	    (snd-display ";filter-channel 10: ~A" (channel->vct 10 10)))
+	(undo)
+	(filter-channel '(0 1 1 1) 1000)
+	(if (not (vequal (channel->vct 5 10) (vct 0.000 0.000 0.000 0.000 0.000 0.500 0.000 0.000 0.000 0.000)))
+	    (snd-display ";filter-channel 1 (1000): ~A" (channel->vct 5 10)))
+	(undo)
+	(filter-channel '(0 1 1 0) 10)
+	(if (not (vequal (channel->vct 0 30) (vct 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000
+						  0.005 0.010 0.006 0.038 0.192 0.192 0.038 0.006 0.010 0.005
+						  0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+	    (snd-display ";filter-channel lp: ~A ~A ~A" (channel->vct 0 10) (channel->vct 10 10) (channel->vct 20 10)))
+	(undo)
+	(filter-channel '(0 1 1 0) 10 0 20 #f #f #f #f)
+	(if (not (vequal (channel->vct 0 30) (vct 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000
+						  0.005 0.010 0.006 0.038 0.192 0.192 0.038 0.006 0.010 0.005
+						  0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+	    (snd-display ";filter-channel lp no trunc: ~A ~A ~A" (channel->vct 0 10) (channel->vct 10 10) (channel->vct 20 10)))
+	(undo)
 	(close-sound))
+
+      (let ((ind (new-sound "tmp.snd" mus-next mus-bfloat 22050 2 #f 100)))
+	(set! (sample 10) 0.5)
+	(set! (sample 5 ind 1) -0.5)
+	(set! (sync ind) 1)
+	(filter-sound (vct 1.0 0.0 1.0) 3)
+	(if (not (vequal (channel->vct 5 10 ind 0) (vct 0.000 0.000 0.000 0.000 0.000 0.500 0.000 0.500 0.000 0.000)))
+	    (snd-display ";(2) filter-sound 1 0 1: ~A" (channel->vct 5 10)))
+	(if (not (vequal (channel->vct 0 10 ind 1) (vct 0.000 0.000 0.000 0.000 0.000 -0.500 0.000 -0.500 0.000 0.000)))
+	    (snd-display ";(2) filter-sound 1 0 2: ~A" (channel->vct 0 10 ind 1)))
+	(undo)
+	(filter-sound '(0 1 1 1) 1000)
+	(if (not (vequal (channel->vct 5 10 ind 0) (vct 0.000 0.000 0.000 0.000 0.000 0.500 0.000 0.000 0.000 0.000)))
+	    (snd-display ";(2) filter-sound 1 (1000): ~A" (channel->vct 5 10)))
+	(if (not (vequal (channel->vct 0 10 ind 1) (vct 0.000 0.000 0.000 0.000 0.000 -0.500 0.000 0.000 0.000 0.000)))
+	    (snd-display ";(2) filter-sound 2 (1000): ~A" (channel->vct 0 10)))
+	(undo)
+	(make-selection 0 20)
+	(filter-selection (vct 1.0 0.0 1.0) 3)
+	(if (not (vequal (channel->vct 5 10 ind 0) (vct 0.000 0.000 0.000 0.000 0.000 0.500 0.000 0.500 0.000 0.000)))
+	    (snd-display ";(2) filter-selection 1 0 1: ~A" (channel->vct 5 10)))
+	(if (not (vequal (channel->vct 0 10 ind 1) (vct 0.000 0.000 0.000 0.000 0.000 -0.500 0.000 -0.500 0.000 0.000)))
+	    (snd-display ";(2) filter-selection 1 0 2: ~A" (channel->vct 0 10 ind 1)))
+	(undo)
+	(set! (sync ind) 0)
+	(filter-selection (vct 1.0 0.0 1.0) 3)
+	(if (not (vequal (channel->vct 5 10 ind 0) (vct 0.000 0.000 0.000 0.000 0.000 0.500 0.000 0.500 0.000 0.000)))
+	    (snd-display ";(2) filter-selection 1 0 1 (no sync): ~A" (channel->vct 5 10)))
+	(if (not (vequal (channel->vct 0 10 ind 1) (vct 0.000 0.000 0.000 0.000 0.000 -0.500 0.000 -0.500 0.000 0.000)))
+	    (snd-display ";(2) filter-selection 1 0 2 (no sync): ~A" (channel->vct 0 10 ind 1)))
+	(undo 1 ind 0)
+	(undo 1 ind 1)
+	(if (not (= (edit-position ind 0) 1)) (snd-display ";edpos filter-sel undo: ~A" (edit-position ind 0)))
+	(if (not (= (edit-position ind 1) 1)) (snd-display ";edpos filter-sel undo 1: ~A" (edit-position ind 1)))
+	(filter-sound (vct 1.0 0.0 1.0) 3)
+	(if (not (vequal (channel->vct 5 10 ind 0) (vct 0.000 0.000 0.000 0.000 0.000 0.500 0.000 0.500 0.000 0.000)))
+	    (snd-display ";(2) filter-sound 1 0 1 no sync: ~A" (channel->vct 5 10)))
+	(if (not (vequal (channel->vct 0 10 ind 1) (vct 0.000 0.000 0.000 0.000 0.000 -0.500 0.000 0.000 0.000 0.000)))
+	    (snd-display ";(2) filter-sound 1 0 2 no sync: ~A" (channel->vct 0 10 ind 1)))
+	(undo 1 ind 0)
+	(filter-channel '(0 1 1 0) 10 #f #f ind 1)
+	(if (not (vequal (channel->vct 0 30 ind 1) (vct 0.000 0.000 0.000 0.000 0.000; 0.000 0.000 0.000 0.000 0.000
+							-0.005 -0.010 -0.006 -0.038 -0.192 -0.192 -0.038 -0.006 -0.010 -0.005
+							0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000
+							0 0 0 0 0)))
+	    (snd-display ";filter-channel lp: ~A ~A ~A" (channel->vct 0 10 ind 1) (channel->vct 10 10 ind 1) (channel->vct 20 10 ind 1)))
+	(undo 1 ind 1)
+	(close-sound ind))
 
       (let ((ind (new-sound "tmp.snd" mus-next mus-bshort 22050 1 #f 100)))
 	(set! (sample 10) 0.5)
@@ -33520,6 +33585,9 @@ EDITS: 2
 	      (snd-display ";notch 60 Hz: ~A to ~A" mx (maxamp)))
 	  (undo)
 	  (notch-sound (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) #f ind 0 10)
+	  (if (ffneq (maxamp) .009)
+	      (snd-display ";notch 60 hz 2: ~A" (maxamp)))
+	  (notch-channel (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) #f #f #f ind 0 #f #f 10)
 	  (if (ffneq (maxamp) .009)
 	      (snd-display ";notch 60 hz 2: ~A" (maxamp)))
 	  (undo)
@@ -41182,7 +41250,7 @@ EDITS: 2
 		     expand-control? fft fft-window-beta fft-log-frequency fft-log-magnitude transform-size disk-kspace
 		     transform-graph-type fft-window transform-graph? file-dialog mix-file-dialog file-name fill-polygon
 		     fill-rectangle filter-sound filter-control-in-dB filter-control-envelope enved-filter-order enved-filter
-		     filter-control-in-hz filter-control-order filter-selection filter-control-waveform-color filter-control? find
+		     filter-control-in-hz filter-control-order filter-selection filter-channel filter-control-waveform-color filter-control? find
 		     find-mark find-sound finish-progress-report foreground-color forward-graph forward-mark forward-mix
 		     frames free-sample-reader graph 
 		     graph-color graph-cursor graph-data graph->ps graph-style lisp-graph?  graphs-horizontal header-type
@@ -42283,6 +42351,7 @@ EDITS: 2
 	      (check-error-tag 'no-such-sound (lambda () (graph '#(0 1) "hi" 0 1 0 1 1234)))
 	      (check-error-tag 'no-such-channel (lambda () (graph '#(0 1) "hi" 0 1 0 1 ind 1234)))
 	      (set! (selection-member? #t) #f)
+	      (check-error-tag 'no-active-selection (lambda () (filter-selection (vct 0 0 1 1) 4)))
 	      (check-error-tag 'no-active-selection (lambda () (save-selection "/bad/baddy.snd")))
 	      (check-error-tag 'no-active-selection (lambda () (env-selection '(0 0 1 1))))
 	      (check-error-tag 'no-such-region (lambda () (save-region 1234 "/bad/baddy.snd")))
@@ -42328,6 +42397,11 @@ EDITS: 2
 	      (check-error-tag 'wrong-type-arg (lambda () (amp-control (list 0))))
 	      (check-error-tag 'wrong-type-arg (lambda () (sound-loop-info (list 0))))
 	      (check-error-tag 'wrong-type-arg (lambda () (add-mark 123 (list 0))))
+	      (check-error-tag 'no-such-sound (lambda () (filter-channel '(0 0 1 1) 100 #f #f 1234 0)))
+	      (check-error-tag 'no-such-channel (lambda () (filter-channel '(0 0 1 1) 100 #f #f ind 1)))
+	      (check-error-tag 'wrong-type-arg (lambda () (filter-channel (vct 0 0 1 1) 4 #f #f ind 1)))
+	      (check-error-tag 'out-of-range (lambda () (filter-sound (vct 0 0 1 1) 0)))
+	      (check-error-tag 'out-of-range (lambda () (filter-sound (vct 0 0 1 1) 10)))
 	      (close-sound ind))
 	    (check-error-tag 'bad-arity (lambda () (add-transform "hiho" "time" 0 1 (lambda () 1.0))))
 	    (check-error-tag 'cannot-save (lambda () (save-options "/bad/baddy")))

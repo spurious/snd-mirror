@@ -1058,30 +1058,20 @@ static Float *get_filter_coeffs(int order, env *e)
   FREE(fdata);
   return(a);
 }
-/* TODO: fft for freq resp? */
-static Float frequency_response(Float *coeffs, int order, Float frq)
-{
-  Float at = 0.0, am;
-  int n2, i;
-  n2 = order >> 1;
-  am = (order + 1) * 0.5;
-  for (i = 0; i < n2; i++) 
-    at += coeffs[i] * cos(M_PI * (am - i - 1) * frq);
-  if (at < 0.0) return(-2 * at);
-  return(2 * at);
-}
 
 void display_frequency_response(env *e, axis_info *ap, axis_context *gax, int order, bool dBing)
 {
   /* not cp->min_dB here -- this is sound panel related which refers to ss->min_dB */
   Float *coeffs = NULL;
   int height, width, i, pts, x0, y0, x1, y1;
-  Float samps_per_pixel, invpts, resp, frq, pix;
+  Float samps_per_pixel, invpts, resp, pix;
+  int fsize, j, fxi;
+  Float step, fx;
+  Float *rl, *im;
   if (order & 1) order++;
   height = (ap->y_axis_y1 - ap->y_axis_y0);
   width = (ap->x_axis_x1 - ap->x_axis_x0);
   pts = order * 4;
-  if (pts > (width * 10)) return;        /* no point in the graph since it just duplicates the current envelope and slows everything to a halt */
   if (pts > width) pts = width;
   if (pts <= 0) pts = 1;
   invpts = 1.0 / (Float)pts;
@@ -1089,23 +1079,34 @@ void display_frequency_response(env *e, axis_info *ap, axis_context *gax, int or
   x1 = ap->x_axis_x0;
   coeffs = get_filter_coeffs(order, e);
   if (!coeffs) return;
-  resp = frequency_response(coeffs, order, 0.0);
+  fsize = 2 * snd_2pow2(pts); /* *2 for 1/2 frqs */
+  rl = (Float *)CALLOC(fsize, sizeof(Float));
+  im = (Float *)CALLOC(fsize, sizeof(Float));
+  for (i = 0, j = order - 1; i < order / 2; i++, j -= 2) rl[j] = coeffs[i]; /* by 2 from 1 for 1/2 bins */
+  mus_fft(rl, im, fsize, -1);
+  resp = 2 * rl[0];
   if (dBing)
     y1 = (int)(ap->y_axis_y0 + (ss->min_dB - in_dB(ss->min_dB, ss->lin_dB, resp)) * height / ss->min_dB);
   else y1 = (int)(ap->y_axis_y0 + resp * height);
-  for (i = 1, pix = x1, frq = invpts; 
+  x1 = ap->x_axis_x0;
+  step = (Float)(fsize - 1) / (4 * (Float)pts); /* fsize-1 since we got 1 already, *4 due to double size fft */
+  for (i = 1, pix = x1, fx = step; 
        i < pts; 
-       i++, pix += samps_per_pixel, frq += invpts)
+       i++, pix += samps_per_pixel, fx += step)
     {
       x0 = x1;
       y0 = y1;
       x1 = (int)(pix);
-      resp = frequency_response(coeffs, order, frq);
+      fxi = (int)fx;
+      resp = 2 * (rl[fxi] + (fx - fxi) * (rl[fxi + 1] - rl[fxi]));
+      if (resp < 0.0) resp = -resp;
       if (dBing)
 	y1 = (int)(ap->y_axis_y0 + (ss->min_dB - in_dB(ss->min_dB, ss->lin_dB, resp)) * height / ss->min_dB);
       else y1 = (int)(ap->y_axis_y0 + resp * height);
       draw_line(gax, x0, y0, x1, y1);
     }
+  FREE(rl);
+  FREE(im);
   FREE(coeffs);
 }
 
@@ -1430,7 +1431,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t b
   if ((over_selection) && (!truncate))
     {
       snd_fd *sfold;
-      sfold = init_sample_read_any(beg + dur - order, cp, READ_FORWARD, sf->edit_ctr);
+      sfold = init_sample_read_any(beg + dur, cp, READ_FORWARD, sf->edit_ctr);
       for (offk = 0; offk < order; offk++)
 	{
 	  if (gen)

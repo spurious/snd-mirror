@@ -492,17 +492,17 @@ void init_gsl_j0(void)
  ;; bessel-FM from CLM
    (let* ((car-ph 0.0)
 	  (mod-ph 0.0)
- 	  (car-incr (<a class=quiet href="clm.html#hz-&gt;radians">hz-&gt;radians</a> freq))
+ 	  (car-incr (hz-&gt;radians freq))
 	  (mod-incr (* ratio car-incr))
-	  (ampenv (<a class=quiet href="clm.html#make-env">make-env</a> :envelope '(0 0 25 1 75 1 100 0) :scaler amp :end dur))
-	  (output (<a class=quiet href="extsnd.html#makevct">make-vct</a> dur)))
-     (<a class=quiet href="extsnd.html#vctmap">vct-map!</a> output
+	  (ampenv (make-env :envelope '(0 0 25 1 75 1 100 0) :scaler amp :end dur))
+	  (output (make-vct dur)))
+     (vct-map! output
        (lambda ()
          (let ((val (* (env ampenv) (</em><em class=red>j0</em><em class=typing> car-ph))))
            (set! car-ph (+ car-ph car-incr (* index (</em><em class=red>j0</em><em class=typing> mod-ph))))
            (set! mod-ph (+ mod-ph mod-incr))
 	   val)))
-     (<a class=quiet href="extsnd.html#vct2samples">vct-&gt;samples</a> 0 dur output)))</em>
+     (vct-&gt;samples 0 dur output)))</em>
 <em class=listener>#&lt;unspecified&gt;</em>
 &gt;<em class=typing>(bes-fm 22050 440 10.0 1.0 8.0)</em>
 </pre>
@@ -1171,15 +1171,15 @@ CLM:
 <em class=listener>#&lt;unspecified&gt;</em>
 &gt; <em class=typing>(load "ws.scm")</em>
 <em class=listener>#&lt;unspecified&gt;</em>
-&gt; <em class=typing>(<a class=quiet href="clm.html#definstrument">definstrument</a> (simp beg dur freq amp)
-   (let* ((o (<a class=quiet href="clm.html#make-oscil">make-oscil</a> freq))
-          (st (inexact-&gt;exact (* beg (<a class=quiet href="grfsnd.html#mussrate">mus-srate</a>))))
-          (nd (+ st (inexact-&gt;exact (* dur (<a class=quiet href="grfsnd.html#mussrate">mus-srate</a>))))))
+&gt; <em class=typing>(definstrument (simp beg dur freq amp)
+   (let* ((o (make-oscil freq))
+          (st (inexact-&gt;exact (* beg (mus-srate))))
+          (nd (+ st (inexact-&gt;exact (* dur (mus-srate))))))
      (run
        (lambda ()
          (do ((i st (1+ i)))
              ((= i nd))
-           (<a class=quiet href="clm.html#outa">outa</a> i (* amp (<a class=quiet href="clm.html#oscil">oscil</a> o)) *output*))))))</em>
+           (outa i (* amp (oscil o)) *output*))))))</em>
 <em class=listener>#&lt;unspecified&gt;</em>
 &gt; <em class=typing>(formals-&gt;defobject '(simp beg dur freq amp))</em>
 <em class=listener>(defobject simp () ((beg #:accessor object-time) dur freq amp) (#:parameters beg dur freq amp))</em>
@@ -1421,16 +1421,16 @@ the non-interface related functions are available, so you can do things
 like:
 </p>
 <pre>
-<em class=listener>snd&gt;</em><em class=typing> (<a class=quiet href="extsnd.html#newsound">new-sound</a> "new.snd")</em>
+<em class=listener>snd&gt;</em><em class=typing> (new-sound "new.snd")</em>
 <em class=listener>0</em>
 <em class=listener>snd&gt;</em><em class=typing> (load "v.scm")</em>
 <em class=listener>snd&gt;</em><em class=typing> (fm-violin 0 1 440 .1)</em>
 <em class=listener>-1</em>
-<em class=listener>snd&gt;</em><em class=typing> (<a class=quiet href="extsnd.html#frames">frames</a> 0)</em>
+<em class=listener>snd&gt;</em><em class=typing> (frames 0)</em>
 <em class=listener>22050</em>
-<em class=listener>snd&gt;</em><em class=typing> (<a class=quiet href="extsnd.html#play">play</a>)</em>
+<em class=listener>snd&gt;</em><em class=typing> (play)</em>
 <em class=listener>#t</em>
-<em class=listener>snd&gt;</em><em class=typing> (<a class=quiet href="extsnd.html#exit">exit</a>)</em>
+<em class=listener>snd&gt;</em><em class=typing> (exit)</em>
 </pre>
 <p>Guile's repl has its own error handlers, different from the
 normal Snd handlers; name completion, if it exists at all,

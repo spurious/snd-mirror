@@ -253,14 +253,14 @@ to the listener here, as described above):</p>
 
 <table border=0><tr><td>
 <pre>
-&gt;<em class=typing>(<a class=quiet href="#autoresize">auto-resize</a>)</em>
+&gt;<em class=typing>(auto-resize)</em>
 <em class=listener>#t</em>
-&gt;<em class=typing>(set! (<a class=quiet href="#autoresize">auto-resize</a>) #f)</em>
+&gt;<em class=typing>(set! (auto-resize) #f)</em>
 <em class=listener>#f</em>
 </pre>
 </td><td width=100></td><td bgcolor=aliceblue>
 <pre>
-&gt;<em class=typing><a class=quiet href="#autoresize">auto_resize</a></em>
+&gt;<em class=typing>auto_resize</em>
 <em class=listener>true</em>
 &gt;<em class=typing>set_auto-resize false</em>
 <em class=listener>false</em>
@@ -671,7 +671,7 @@ list, remove-hook! removes a function, and reset-hook! clears out the list.
 For example, the hook that is checked when you click the sound's name in the minibuffer is
 name-click-hook.  We can cause that action to print "hi" in the listener by:</p>
 <pre>
-&gt;<em class=typing>(add-hook! name-click-hook (lambda (snd) (<a class=quiet href="#sndprint">snd-print</a> "hi") #t))</em>
+&gt;<em class=typing>(add-hook! name-click-hook (lambda (snd) (snd-print "hi") #t))</em>
 </pre>
 <p>
 If there is more than one function attached to a hook, some of the hooks
@@ -898,7 +898,7 @@ This provides an opportunity to set sndlib prescaling values:
 (add-hook! <em class=red>during-open-hook</em>
   (lambda (fd name reason)
     (if (= (<a class=quiet href="#soundheadertype">mus-sound-header-type</a> name) <a class=quiet href="#headertype">mus-raw</a>)
-        (<a href="#musfileprescaler">(set! (mus-file-prescaler</a> fd) 500.0)))))
+        (set! (<a href="#musfileprescaler">mus-file-prescaler</a> fd) 500.0))))
 </pre></td></tr></table></td></tr>
 
 <tr><td></td><td colspan=2>
@@ -2019,7 +2019,7 @@ we were.  Do we panic and dial 911? No!  We simply type:
 <pre>
 <em class=listener>:</em><em class=typing>(describe-hook name-click-hook)</em>
 <em class=listener>#&lt;primitive-procedure snd-print&gt;
-#&lt;procedure (n) (<a class=quiet href="#sndprint">snd-print</a> n)&gt;
+#&lt;procedure (n) (snd-print n)&gt;
 #&lt;procedure (n) ha&gt;
 #&lt;unspecified&gt;
 :</em>
@@ -2280,11 +2280,11 @@ This is using a feature called "applicable smobs" in Guile.
 The clm generators also use this syntax:
 </p>
 <pre>
-  &gt;<em class=typing>(define hi (<a class=quiet href="clm.html#make-oscil">make-oscil</a> 440.0))</em>
+  &gt;<em class=typing>(define hi (make-oscil 440.0))</em>
   <em class=listener>#&lt;unspecified&gt;</em>
   &gt;<em class=typing>(hi)</em>
   <em class=listener>0.0</em>
-  &gt;<em class=typing>(<a class=quiet href="clm.html#oscil">oscil</a> hi)</em>
+  &gt;<em class=typing>(oscil hi)</em>
   <em class=listener>0.125050634145737</em>
 </pre>
 <p>It's no accident that the generator's type (i.e. oscil or whatever)
@@ -2601,7 +2601,7 @@ accommodate the read</td></tr>
 <tr><td></td><td>sound's write date:
 </td></tr><tr><td></td><td>
 <pre>
-    :<em class=typing>(strftime "%d-%b %H:%M %Z" (localtime (<a class=quiet href="#soundwritedate">mus-sound-write-date</a> "oboe.snd")))</em>
+    :<em class=typing>(strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "oboe.snd")))</em>
     <em class=listener>"18-Oct 06:56 PDT"</em>
 </pre></td></tr>
 
@@ -3155,9 +3155,9 @@ Each mix object has a unique identifier called its id that identifies it in the 
 A track is a list of mixes that are treated in many ways as a single big mix.
 Say we have a mix whose id is 123:</p>
 <pre>
-&gt;<em class=typing>(<a class=quiet href="#mixchans">mix-chans</a> 123)</em>
+&gt;<em class=typing>(mix-chans 123)</em>
 <em class=listener>1</em>
-&gt;<em class=listener>(set! (<a class=quiet href="#mixamp">mix-amp</a> 123 0) .5)</em>
+&gt;<em class=listener>(set! (mix-amp 123 0) .5)</em>
 <em class=typing>.5</em>
 </pre>
 <p>This 
@@ -3471,9 +3471,9 @@ has at least one active mix that is a member of the given track.
 The track-color refers to the color of the mix waveform (the thing displayed to the right
 of the tag).
 <pre>  
-:<em class=typing>(define hi (<a class=quiet href="#maketrack">make-track</a> 0 1))</em>
+:<em class=typing>(define hi (make-track 0 1))</em>
 <em class=listener>#&lt;unspecified&gt;</em>
-:<em class=typing>(set! (track-color 1) (<a class=quiet href="#makecolor">make-color</a> 0 0 1))</em>
+:<em class=typing>(set! (track-color 1) (make-color 0 0 1))</em>
 <em class=listener>(#&lt;color: (0.00 0.00 1.00)&gt; #&lt;color: (0.00 0.00 1.00)&gt;)</em>
 </pre>
 </td></tr>
@@ -3493,15 +3493,15 @@ track are moved.
 <pre>
 :<em class=typing>(track-position 1)</em>
 <em class=listener>10748</em>
-:<em class=typing>(<a class=quiet href="#mixposition">mix-position</a> 0)</em>
+:<em class=typing>(mix-position 0)</em>
 <em class=listener>10748</em>
-:<em class=typing>(<a class=quiet href="#mixposition">mix-position</a> 1)</em>
+:<em class=typing>(mix-position 1)</em>
 <em class=listener>23287</em>
 :<em class=typing>(set! (track-position 1) 1500)</em>
 <em class=listener>1500</em>
-:<em class=typing>(<a class=quiet href="#mixposition">mix-position</a> 0)</em>
+:<em class=typing>(mix-position 0)</em>
 <em class=listener>1500</em>
-:<em class=typing>(<a class=quiet href="#mixposition">mix-position</a> 1)</em>
+:<em class=typing>(mix-position 1)</em>
 <em class=listener>14039</em>
 </pre>
 </td></tr>
@@ -4686,12 +4686,11 @@ cauchy-window        poisson-window       gaussian-window     tukey-window
 dolph-chebyshev-window (only if your C supports complex trig functions (cacos etc), or GSL is loaded)
 </pre>
 <p>The Hann window is sometimes called Hanning in the DSP literature, apparently
-as a sort of in-joke.  These windows matter less than you might think (this is true
-of a lot of things that DSP texts worry over at great length); for details see
+as a sort of in-joke.  
+For an extensive discussion of these windows, see
 Fredric J. Harris, 'On the Use of Windows for Harmonic Analysis with the Discrete Fourier Transform', Proceedings of the
 IEEE, Vol. 66, No. 1, January 1978, with updates from: Albert H. Nuttall, 'Some Windows with Very Good Sidelobe Behaviour', IEEE Transactions
 of Acoustics, Speech, and Signal Processing, Vol. ASSP-29, 1, February 1981. 
-Briefly, the best one is the Dolph-Chebyshev window.
 </p>
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -6498,7 +6497,7 @@ In this case, we found such a sample at position 4423.<br>
       (if baddy (set! (<a class=quiet href="#cursor">cursor</a>) (cadr baddy)))
       (not baddy))))
 
-&gt;<em class=typing>(<a class=quiet href="sndscm.html#exeverysample">every-sample?</a> (lambda (y) (&lt; y .5)))</em>
+&gt;<em class=typing>(every-sample? (lambda (y) (&lt; y .5)))</em>
 <em class=listener>#t</em>
 </pre>
 <i>scan-chan</i> could be defined in terms of make-sample-reader:<br><br>
@@ -7067,11 +7066,11 @@ how long the resultant note will be given an src envelope:
 ;;; (src-duration '(0 .5 .5 3 .6 1 .7 .1 .8 1.5 1 1)) -&gt; 1.02474349685432
 
 ;;; here we're using this in the Snd listener:
-<em class=listener>&gt;</em><em class=typing>(<a class=quiet href="#frames">frames</a>)</em>
+<em class=listener>&gt;</em><em class=typing>(frames)</em>
 <em class=listener>220501</em>
-<em class=listener>&gt;</em><em class=typing>(<a class=quiet href="#srcsound">src-sound</a> '(0 1 1 2))</em> ; should be about .693 * 220500 frames 
+<em class=listener>&gt;</em><em class=typing>(src-sound '(0 1 1 2))</em> ; should be about .693 * 220500 frames 
 <em class=listener>(0 1 1 2)</em>
-<em class=listener>&gt;</em><em class=typing>(<a class=quiet href="#frames">frames</a>)</em>
+<em class=listener>&gt;</em><em class=typing>(frames)</em>
 <em class=listener>152842</em>
 <em class=listener>&gt;</em><em class=typing>(/ 152842.0 220501)</em>
 <em class=listener>0.693157854159392</em><em class=typing></em>       ; tada!
@@ -9466,7 +9465,7 @@ return (as a string) the help text associated with <i>obj</i>:
 <br><br>
 <pre>
 :<em class=typing>(snd-help 'open-sound)</em>
-<em class=listener>"(<a class=quiet href="#opensound">open-sound</a> filename) opens filename (as if opened from File:Open menu option), 
+<em class=listener>"(open-sound filename) opens filename (as if opened from File:Open menu option), 
 and returns the new file's index"</em>
 </pre>
 To go to the
@@ -9494,7 +9493,7 @@ debugging aid -- there's still nothing like a lowly print statement).
 <code><a class=def name="sndrememberpaths">snd-remember-paths</a></code></td></tr>
 <tr><td></td><td>
 A variable (not a function); if #t (its default is #f), Snd adds code to the Guile %load-hook that makes sure the
-current file's path is included in %load-path when load or load-from-file is called.  This makes it possible to
+current file's path is included in %load-path when load or load-from-path is called.  This makes it possible to
 use load-from-path inside a Scheme file when you don't know in advance where that file will reside at load time.
 </td></tr>
 
@@ -9708,7 +9707,7 @@ and sometimes appends a stack trace.  So, as a simple example, selection-positio
 throws 'no-active-selection if there isn't a selection:
 </p>
 <pre>
-&gt;<em class=typing>(<a class=quiet href="#selectionposition">selection-position</a>)</em>
+&gt;<em class=typing>(selection-position)</em>
 <em class=listener>selection-position: no-active-selection</em>
 &gt;<em class=typing>asdf</em>
 <em class=listener>Unbound variable: asdf</em>
@@ -9718,7 +9717,7 @@ In the case of 'no-active-selection, we set up our own handler for that as follo
 <pre>
 &gt;<em class=typing>(catch 'no-active-selection 
        (lambda () 
-         (+ 1 (<a class=quiet href="#selectionposition">selection-position</a>))) 
+         (+ 1 (selection-position))) 
        (lambda (tag val) 0))</em>
 <em class=listener>0</em>
 </pre>
@@ -9984,6 +9983,31 @@ Two colors are equal (i.e. equal? returns #t) if their rgb values are the same.
 </table>
 
 <br>
+<br>
+<!-- INDEX colors:Colors -->
+<TABLE border=3 bordercolor="tan" hspace=40><tr><td>
+<blockquote><small><br>
+Other color-related stuff:<br>
+X/Motif color resources: <a href="grfsnd.html#sndresources">Snd Resources</a><br>
+Color names: <a href="sndscm.html#rgbdoc">rgb.scm, rgb.rb</a><br>
+colors in the file dialogs: install-searcher-with-colors in snd-motif.scm<br>
+color-dialog: <a href="#colordialog">color-dialog</a><br>
+colored samples: <a href="sndscm.html#drawdoc">display-colored-samples</a> and others in draw.scm<br>
+colored edits: <a href="sndscm.html#drawdoc">display-previous-edits</a> in draw.scm<br>
+colored tracks: dlp/track-colors.scm in the tutorial<br>
+colored marks: mark-sync-color in snd-motif.scm<br>
+colors in rxvt: red-text et al in examp.scm<br>
+flashing colors: flash-selected-data in examp.scm<br>
+openGL: snd-gl.scm, <a href="grfsnd.html#sndandgl">Snd and OpenGL</a><br>
+fancy widget backgrounds: dlp/new-backgrounds.scm in the tutorial<br>
+root window color: set-root-window-color in snd-motif.scm<br>
+color hook<a href="#colorhook">color-hook</a><br>
+Snd graphics contexts: <a href="#sndgcs">snd-gcs</a><br>
+<br></small></blockquote>
+</td></tr></TABLE>
+
+
+<br>
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="fonts">Fonts</a></h4></td></tr></table>
 
 <p>Fonts in Snd are strings containing a description of the
@@ -10011,7 +10035,7 @@ In Gtk2, Pango-style names are used for the fonts: "Monospace 8" for example.
 If the requested font can't be loaded, the set! statement returns the old (unchanged) font name.
 </p>
 <pre>
-&gt;<em class=typing>(set! (<a class=quiet href="#axislabelfont">axis-label-font</a>) "8x14")</em>
+&gt;<em class=typing>(set! (axis-label-font) "8x14")</em>
 <em class=listener>"-*-times-medium-r-normal-*-18-*-*-*-*-*-*-*"</em>
 </pre>
 <br>
