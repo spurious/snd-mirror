@@ -719,8 +719,7 @@ static void filter_drawer_button_motion(Widget w, XtPointer context, XEvent *eve
   edp_handle_point(sp->sgx->flt,
 		   ev->x, ev->y, ev->time, 
 		   sp->filter_control_env, 
-		   sp->filter_control_in_dB,
-		   sp->filter_control_env_xmax);
+		   sp->filter_control_in_dB);
   display_filter_env(sp);
   sp->filter_control_changed = true;
 }
@@ -736,8 +735,7 @@ static void filter_drawer_button_press(Widget w, XtPointer context, XEvent *even
   if (edp_handle_press(sp->sgx->flt,
 		       ev->x, ev->y, ev->time, 
 		       sp->filter_control_env, 
-		       sp->filter_control_in_dB,
-		       sp->filter_control_env_xmax))
+		       sp->filter_control_in_dB))
     display_filter_env(sp);
 }
 

@@ -241,21 +241,16 @@ static Widget help_search = NULL;
 
 static void ok_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  state_context *sgx;
+  Widget active_widget;
   char *help_str;
-  XmAnyCallbackStruct *cb = (XmAnyCallbackStruct *)info;
-  sgx = ss->sgx;
-  /* this is the OK button from Motif's point of view, or text activation (<cr> in the text field) from ours */
-  if (cb->event != sgx->text_activate_event)
+  active_widget = XmGetFocusWidget(help_dialog);
+  if ((!active_widget) || (active_widget != help_search))
     XtUnmanageChild(help_dialog);
   else 
     {
-      if (sgx->text_widget == help_search)
-	{
-	  help_str = XmTextFieldGetString(help_search);
-	  new_help(help_str);
-	  XtFree(help_str);
-	}
+      help_str = XmTextFieldGetString(help_search);
+      new_help(help_str);
+      XtFree(help_str);
     }
 }
 
@@ -284,7 +279,7 @@ static void create_help_monolog(void)
   XmString titlestr;
   Widget holder, xref_label; /* documentation says this isn't needed, but it is */
   XmRendition texts[2];
-  Widget frame, search, label, inner_holder, sep, parent;
+  Widget frame, label, inner_holder, sep, parent;
   XmRenderTable rs = NULL;
   titlestr = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
   n = 0;
@@ -382,14 +377,14 @@ static void create_help_monolog(void)
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNleftWidget, label); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-  search = make_textfield_widget("help-search", holder, args, n, ACTIVATABLE, add_completer_func(help_completer));
-  XtAddCallback(search, XmNactivateCallback, help_search_callback, NULL);
+  help_search = make_textfield_widget("help-search", holder, args, n, ACTIVATABLE, add_completer_func(help_completer));
+  XtAddCallback(help_search, XmNactivateCallback, help_search_callback, NULL);
   
   n = 0;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, sep); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNbottomWidget, search); n++;
+  XtSetArg(args[n], XmNbottomWidget, help_search); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNshadowThickness, 4); n++;

@@ -151,7 +151,7 @@ typedef struct {
 
 typedef struct {
   Float *data;
-  int pts, data_size;
+  int pts, data_size; /* data_size is independent of actual number of points of data (can be much larger) */
 } env;
 
 typedef struct {
@@ -946,8 +946,8 @@ void edp_reset(void *spf);
 axis_info *edp_ap(void *spf);
 bool edp_display_graph(void *spf, const char *name, axis_context *ax, 
 		       int x, int y, int width, int height, env *e, bool in_dB, bool with_dots);
-void edp_handle_point(void *spf, int evx, int evy, Tempus motion_time, env *e, bool in_dB, Float xmax);
-bool edp_handle_press(void *spf, int evx, int evy, Tempus time, env *e, bool in_dB, Float xmax);
+void edp_handle_point(void *spf, int evx, int evy, Tempus motion_time, env *e, bool in_dB);
+bool edp_handle_press(void *spf, int evx, int evy, Tempus time, env *e, bool in_dB);
 void edp_handle_release(void *spf, env *e);
 void edp_edited(void *spf);
 void init_env_axes(axis_info *ap, const char *name, int x_offset, int ey0, int width, int height, 
@@ -1244,6 +1244,7 @@ Float in_dB(Float min_dB, Float lin_dB, Float py);
 char *copy_string(const char *str);
 int snd_strlen(const char *str);
 char *snd_strcat(char *errmsg, const char *str, int *err_size);
+char *string_to_colon(char *val);
 char *filename_without_home_directory(const char *name);
 char *just_filename(char *name);
 char *prettyf(Float num, int tens);

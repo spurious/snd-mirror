@@ -161,11 +161,8 @@ typedef struct {
   GC mark_gc, selected_mark_gc;          
   GC mix_gc;
   GC fltenv_basic_gc, fltenv_data_gc;
-
-  XEvent *text_activate_event;
-  Widget text_widget, listener_pane;
+  Widget listener_pane;
   Widget *dialogs;
-
   Cursor graph_cursor, wait_cursor;
   Widget completion_requestor;
 #if HAVE_GL

@@ -68,9 +68,8 @@ static void edit_find_next_callback(Widget w, XtPointer context, XtPointer info)
 static void edit_find_previous_callback(Widget w, XtPointer context, XtPointer info) {edit_find_ok_callback(READ_BACKWARD, w, context, info);}
 
 static void edit_find_cancel_callback(Widget w, XtPointer context, XtPointer info)
-{ /* "Done" */
-  XmAnyCallbackStruct *cb = (XmAnyCallbackStruct *)info;
-  if (cb->event != (ss->sgx)->text_activate_event)
+{
+  if (XmGetFocusWidget(edit_find_dialog) == XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_OK_BUTTON))
     {
       if (ss->checking_explicitly)
 	ss->stopped_explicitly = true;

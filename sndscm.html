@@ -1922,6 +1922,7 @@ Max Mathews.
   <em class=def><a name="findmix">find-mix</a></em> sample snd chn
   <em class=def><A NAME="mixmaxamp">mix-maxamp</a></em> id
   <em class=def><A NAME="savemix">save-mix</a></em> id filename
+  <em class=def><A NAME="mixclickinfo">mix-click-info</a></em> id
 </pre>
 <p>
 <b>mix-sound</b> mixes <i>file</i> (all chans) into the currently selected sound at <i>start</i>.
@@ -1953,6 +1954,8 @@ pre-zero value.
 <b>find-mix</b> returns the identifier of the mix at sample <i>sample</i> (or anywhere in the given channel if 
 <i>sample</i> is not specified), or #f if no mix is found.
 <b>mix-maxamp</b> returns the maxamp in the given mix.
+<b>mix-click-info</b> is a <a href="extsnd.html#mixclickhook">mix-click-hook</a> function that posts a description of the
+clicked mix in the help dialog.
 <b>save-mix</b> saves a given mix's data in a file.
 </p>
 <center><img src="pan.png" alt="picture of panning"></center>

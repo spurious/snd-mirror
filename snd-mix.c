@@ -446,7 +446,7 @@ static mix_info *free_mix_info(mix_info *md)
 
 /* ---------------- MIX READ ---------------- */
 
-#if DEBUGGING
+#if 0
 static char *mix_calc_names[] = {
   "straight_sound", "amp_sound", "speed_sound", "zero_sound", "amp_env_sound", "speed_amp_sound", "speed_env_sound",
   "straight_peak", "amp_peak", "speed_peak", "zero_peak", "amp_env_peak", "speed_amp_peak", "speed_env_peak"
@@ -1592,7 +1592,7 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
 	  if (sub->calc == C_ZERO_SOUND)
 	    {
 	      beg = true_new_beg;
-	      num = true_new_end - new_beg + 1;
+	      num = true_new_end - true_new_beg + 1;
 	    }
 	}
       /* now "beg" reflects actual changed portion */
@@ -2205,18 +2205,27 @@ static void draw_mix_tag(mix_info *md)
   chan_info *cp;
   int width, height;
   axis_context *ax;
+  char lab[16];
   if ((md->x == md->tagx) && (md->y == md->tagy)) return; 
   cp = md->cp;
   width = mix_tag_width(ss);
   height = mix_tag_height(ss);
   ax = mark_context(cp);
-  if (md->tagx > 0)
+  if (md->tagx > 0)  /* erase old */
     fill_rectangle(ax,
 		   md->tagx - width, md->tagy - height / 2,
 		   width, height);
-  fill_rectangle(ax,
+  fill_rectangle(ax, /* draw new */
 		 md->x - width, md->y - height / 2,
 		 width, height);
+  set_tiny_numbers_font(cp);
+  if (cp->printing) ps_set_tiny_numbers_font();
+  mus_snprintf(lab, 16, "%d", md->id);
+  if (md->tagx > 0)
+    draw_string(ax, md->tagx - width, md->tagy + height + 3, lab, strlen(lab));
+  draw_string(ax, md->x - width, md->y + height + 3, lab, strlen(lab));
+  if (cp->printing) ps_draw_string(cp->axis, md->x - width, md->y + height + 3, lab);
+  /* TODO: inverse video or something for number of current mix in (active) mix dialog */
   md->tagx = md->x;
   md->tagy = md->y;
 }
@@ -4010,8 +4019,14 @@ static XEN g_set_mix_track(XEN n, XEN val)
     return(snd_no_such_mix_error(S_setB S_mix_track, n));
   if (mix_ok_and_unlocked(md->id))
     {
-      set_mix_track(md, XEN_TO_C_INT(val), true);
-      reflect_mix_or_track_change(md->id, ANY_TRACK_ID, false);
+      int trk;
+      trk = XEN_TO_C_INT(val);
+      if (trk >= 0)
+	{
+	  set_mix_track(md, trk, true);
+	  reflect_mix_or_track_change(md->id, ANY_TRACK_ID, false);
+	}
+      else XEN_OUT_OF_RANGE_ERROR(S_setB S_mix_track, XEN_ARG_2, val, "track id must be >= 0");
     }
   return(val);
 }
@@ -4464,6 +4479,69 @@ static XEN g_free_mix_sample_reader(XEN obj)
   free_mix_fd_almost(mf);
   return(xen_return_first(XEN_FALSE, obj));
 }
+
+#if 0
+XEN g_copy_mix_sample_reader(XEN obj);
+XEN g_describe_mix_sample_reader(XEN obj);
+XEN g_mix_sample_reader_home(XEN obj);
+XEN g_mix_sample_reader_at_end_p(XEN obj);
+XEN g_mix_sample_reader_position(XEN obj);
+
+XEN g_copy_mix_sample_reader(XEN obj)
+{
+  mix_fd *mf, *new_mf;
+  XEN_ASSERT_TYPE(MIX_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_copy_sample_reader, "a mix-sample-reader");
+  mf = TO_MIX_SAMPLE_READER(obj);
+  new_mf = init_mix_read(mf->md, CURRENT_MIX, current_location(mf->sfs[mf->base]));
+  if (new_mf)
+    {
+      list_mix_reader(new_mf);
+      XEN_MAKE_AND_RETURN_OBJECT(mf_tag, new_mf, 0, free_mf);
+    }
+  return(xen_return_first(XEN_FALSE, obj));
+}
+
+XEN g_describe_mix_sample_reader(XEN obj)
+{
+  char *desc;
+  mix_fd *mf;
+  mix_info *md;
+  XEN result;
+  XEN_ASSERT_TYPE(MIX_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_sample_reader_home, "a mix-sample-reader");
+  mf = TO_MIX_SAMPLE_READER(obj);
+  md = mf->md;
+  desc = mus_format("mix %d (%d chans) sample-reader at " OFF_TD ", %s",
+		    md->id, mf->chans, current_location(mf->sfs[mf->base]), mix_calc_names[mf->type]);
+  result = C_TO_XEN_STRING(desc);
+  FREE(desc);
+  return(result);
+}
+
+XEN g_mix_sample_reader_home(XEN obj)
+{
+  mix_fd *mf;
+  XEN_ASSERT_TYPE(MIX_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_sample_reader_home, "a mix-sample-reader");
+  mf = TO_MIX_SAMPLE_READER(obj);
+  return(C_TO_XEN_INT(mf->md->id));
+}
+
+XEN g_mix_sample_reader_at_end_p(XEN obj)
+{
+  mix_fd *mf;
+  XEN_ASSERT_TYPE(MIX_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_sample_reader_at_end_p, "a mix-sample-reader");
+  mf = TO_MIX_SAMPLE_READER(obj);
+  return(C_TO_XEN_BOOLEAN(mf->sfs[mf->base]->at_eof));
+}
+
+XEN g_mix_sample_reader_position(XEN obj)
+{
+  mix_fd *mf;
+  XEN_ASSERT_TYPE(MIX_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_sample_reader_position, "a mix-sample-reader");
+  mf = TO_MIX_SAMPLE_READER(obj);
+  return(C_TO_XEN_OFF_T(current_location(mf->sfs[mf->base])));
+}
+#endif
+
 
 static XEN g_play_mix(XEN num, XEN beg)
 {
@@ -5654,6 +5732,11 @@ bool set_track_track(int id, int trk)
 	      if (tid == id) return(false);
 	      tid = active_track_track(tid);
 	    }
+	  if (!(track_p(trk))) /* set_mix_track ensures that track exists */
+	    {
+	      tid = make_track(NULL, 0);
+	      while (tid < trk) tid = make_track(NULL, 0);
+	    }
 	}
       set_active_track_track(id, trk);
       remix_track(id, set_track_track_1, NULL);
@@ -6201,12 +6284,22 @@ static void track_finish_drag(int track_id, Float amp, track_drag_t field)
   mix_info *md;
   mix_state *cs;
   chan_info *cp;
+  char *origin = NULL;
   trk = track_mixes(track_id);
   switch (field)
     {
-    case DRAG_AMP:   set_active_track_amp(track_id, amp);   break;
-    case DRAG_SPEED: set_active_track_speed(track_id, amp); break;
-    case DRAG_TEMPO: set_active_track_tempo(track_id, amp); break;
+    case DRAG_AMP:   
+      set_active_track_amp(track_id, amp); 
+      origin = "drag track amp";
+      break;
+    case DRAG_SPEED: 
+      set_active_track_speed(track_id, amp); 
+      origin = "drag track speed";
+      break;
+    case DRAG_TEMPO: 
+      set_active_track_tempo(track_id, amp); 
+      origin = "drag track tempo";
+      break;
     }
   for (i = 0; i < trk->lst_ctr; i++)
     {
@@ -6214,7 +6307,7 @@ static void track_finish_drag(int track_id, Float amp, track_drag_t field)
       cs = md->states[md->current_state];
       for (k = 0; k < md->in_chans; k++) 
 	cs->as_built->scalers[k] = 0.0;
-      remix_file(md, "drag track", false);
+      remix_file(md, origin, false);
     }
   for (i = 0; i < trk->cps_ctr; i++)      /* drag is one edit */
     {
@@ -6275,7 +6368,10 @@ static void temporary_track_tempo(mix_info *md, void *ptr)
   ms = cs->as_built;
   /* use orig to get original position (we're using the original tempo as well) */
   if (cs->orig != tt->beg)
-    cs->beg = tt->beg + (off_t)((cs->orig - tt->beg) * tt->tempo_mult);  
+    {
+      cs->beg = tt->beg + (off_t)((cs->orig - tt->beg) * tt->tempo_mult);  
+      if (show_mix_waveforms(ss)) draw_mix_waveform(md);
+    }
   make_temporary_graph(md->cp, md, cs);
 }
 
@@ -6389,19 +6485,6 @@ static int xen_to_c_track(XEN id, const char *origin)
 			 id));
   return(track_id);
 }
-
-static int xen_to_c_track_zero_ok(XEN id, const char *origin)
-{
-  int track_id;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(id), id, XEN_ARG_1, origin, "an integer");
-  track_id = XEN_TO_C_INT(id);
-  if ((track_id != 0) && (!(track_p(track_id))))
-    XEN_ERROR(NO_SUCH_TRACK,
-	      XEN_LIST_2(C_TO_XEN_STRING(origin),
-			 id));
-  return(track_id);
-}
-
 
 /* ---------------- track?, track, tracks ---------------- */
 
@@ -6857,9 +6940,14 @@ static XEN g_set_track_track(XEN id, XEN trk)
 {
   int track_id, its_track;
   track_id = xen_to_c_track(id, S_setB S_track_track);
-  its_track = xen_to_c_track_zero_ok(trk, S_setB S_track_track);
-  if (!(set_track_track(track_id, its_track)))
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_track_track, XEN_ARG_2, trk, "a track's track can't be a member of that track");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(trk), trk, XEN_ARG_2, S_setB S_track_track, "an integer");
+  its_track = XEN_TO_C_INT(trk);
+  if (its_track >= 0)
+    {
+      if (!(set_track_track(track_id, its_track)))
+	XEN_OUT_OF_RANGE_ERROR(S_setB S_track_track, XEN_ARG_2, trk, "a track's track can't be a member of that track");
+    }
+  else XEN_OUT_OF_RANGE_ERROR(S_setB S_track_track, XEN_ARG_2, trk, "track id must be >= 0");
   return(trk);
 }
 
@@ -7589,6 +7677,61 @@ static XEN g_free_track_sample_reader(XEN obj)
   return(xen_return_first(XEN_FALSE, obj));
 }
 
+#if 0
+XEN g_copy_track_sample_reader(XEN obj);
+XEN g_describe_track_sample_reader(XEN obj);
+XEN g_track_sample_reader_home(XEN obj);
+XEN g_track_sample_reader_at_end_p(XEN obj);
+XEN g_track_sample_reader_position(XEN obj);
+
+XEN g_copy_track_sample_reader(XEN obj)
+{
+  track_fd *tf, *new_tf;
+  XEN_ASSERT_TYPE(TRACK_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_copy_sample_reader, "a track-sample-reader");
+  tf = TO_TRACK_SAMPLE_READER(obj);
+  new_tf = init_track_read(?TRACK?, ?CHAN?, ?CURRENT_LOCATION?, false);
+  if (new_tf)
+    {
+      /* list all readers */
+      XEN_MAKE_AND_RETURN_OBJECT(tf_tag, new_tf, 0, free_tf);
+    }
+  return(xen_return_first(XEN_FALSE, obj));
+}
+
+XEN g_describe_track_sample_reader(XEN obj)
+{
+  XEN result;
+  char *desc;
+  track_fd *tf;
+  XEN_ASSERT_TYPE(TRACK_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_describe_sample_reader, "a track-sample-reader");
+  tf = TO_TRACK_SAMPLE_READER(obj);
+
+  FREE(desc);
+  return(result);
+}
+
+XEN g_track_sample_reader_home(XEN obj)
+{
+  track_fd *tf;
+  XEN_ASSERT_TYPE(TRACK_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_sample_reader_home, "a track-sample-reader");
+  tf = TO_TRACK_SAMPLE_READER(obj);
+}
+
+XEN g_track_sample_reader_at_end_p(XEN obj)
+{
+  track_fd *tf;
+  XEN_ASSERT_TYPE(TRACK_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_sample_reader_at_end_p, "a track-sample-reader");
+  tf = TO_TRACK_SAMPLE_READER(obj);
+}
+
+XEN g_track_sample_reader_position(XEN obj)
+{
+  track_fd *tf;
+  XEN_ASSERT_TYPE(TRACK_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_sample_reader_position, "a track-sample-reader");
+  tf = TO_TRACK_SAMPLE_READER(obj);
+}
+#endif
+
 
 /* -------- mix/track dialog ---------------- */
 
@@ -7762,8 +7905,11 @@ void g_init_track(void)
 				   S_setB S_track_dialog_track, g_set_track_dialog_track_w, 0, 0, 1, 0);
 }
 
-/* SOMEDAY: how to save|restore-(mix|track)-state? -- mixes are not currently saved, but the track states could be
+/* 
+   mix/track stuff:
+   SOMEDAY: how to save|restore-(mix|track)-state? -- mixes are not currently saved, but the track states could be
    SOMEDAY: what about saving all dialog state? mix|track-properties? (see marks.scm save-mark-properties)
+   TODO: autotest save/restore with track ops (drag esp)
    TODO: test lock-track and make it work with undo/redo somehow (similarly for mix-locked?/inverted?)
    SOMEDAY: pan choices with sinusoidal, exponential envs
    TODO: synchronization across mixes ("snap")
@@ -7773,7 +7919,20 @@ void g_init_track(void)
    TODO: first and last samples of mix-peak-amp-waveform don't cancel
    TODO: mix waveform not fixed up alongside waveform if track dragging (and lags in mix dialog)
    TODO: some way to squelch mix-tag/wave in 2nd chan (less clutter in track etc)
-   TODO: in gmix, display is confused until update
+   TODO: axis movement stops if track drag motion stops when outside axis?
+   TODO: initial dpy leaves start|end points unerased?
+   TODO: track/mix edit history entries are uninformative
+   TODO: tag not correctly erased in track drag cases
+   TODO: pan-mix selection region vct channel sound sound-data?
+     "(" S_mix_selection " (beg 0) (snd #f) (chn #f) (track 0)): mix the currently selected portion starting at beg"
+     so: either read desired selection channel directly, or add a selection-channel arg to mix-selection|region
+   TODO: pan-mix C-x q example and Mix menu binding
+   TODO: initialization for drag is slow if 100 mixes in track -- 100 edits added to list?
+
+   somewhat unrelated stuff:
+   TODO: vct-map! and backtrace troubles in new guile
+   TODO: is arglist autocode (gl.c) safe from gc?
+   TODO: run non-gl case (test 25) through efence/new guile
    SOMEDAY: describe-* [mix|mark|selection|sound|channel|track|cursor|region, gen|(mix,track)reader|
                        player|(sound)file|key|plugin|hook|dialog(i.e. recorder)|audio]
             [have mus-(audio|midi)-)describe, mark|instrument|hook]
@@ -7789,14 +7948,15 @@ void g_init_track(void)
       (make-track-sample-reader 
         (car (sample-reader-home tr))
         (cadr (sample-reader-home tr))
-        (sample-reader-position tr))
+        (sample-reader-position tr)) -- this can't currently be done 
     and if region sample-reader-home -> (reg chan) -- how to tell its a region reader?
+             sf->inuse = SOUND_READER (not unique)
+	     need another field somewhere to distinguish from sound, and reg/chan/etc
+	     there's also direct (deferred) reads -- this is currently not catchable
       (make-region-sample-reader
         (sample-reader-position rg)
         (car (sample-reader-home rg))
         (cadr (sample-reader-home rg)))
     or generic copy|describe-sample-reader
 
-   TODO: axis movement stops if track drag motion stops when outside axis?
-   TODO: initial dpy leaves start|end points unerased?
 */

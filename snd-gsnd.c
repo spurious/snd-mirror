@@ -979,8 +979,7 @@ static gboolean filter_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gp
       edp_handle_point(sp->sgx->flt,
 		       evx, evy, ev->time, 
 		       sp->filter_control_env, 
-		       sp->filter_control_in_dB,
-		       sp->filter_control_env_xmax);
+		       sp->filter_control_in_dB);
       display_filter_env(sp);
       sp->filter_control_changed = true;
     }
@@ -993,8 +992,7 @@ static gboolean filter_drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpo
   if (edp_handle_press(sp->sgx->flt,
 		       (int)(ev->x), (int)(ev->y), ev->time, 
 		       sp->filter_control_env, 
-		       sp->filter_control_in_dB,
-		       sp->filter_control_env_xmax))
+		       sp->filter_control_in_dB))
     display_filter_env(sp);
   return(false);
 }

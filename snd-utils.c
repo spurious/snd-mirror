@@ -88,6 +88,23 @@ char *snd_strcat(char *errmsg, const char *str, int *size)
   return(errmsg);
 }
 
+char *string_to_colon(char *val)
+{
+  char *up_to_colon;
+  int i, len;
+  up_to_colon = (char *)CALLOC(strlen(val) + 1, sizeof(char));
+  len = strlen(val);
+  for (i = 0; i < len; i++)
+    {
+      if ((val[i] == ':') || (val[i] == ' '))
+	{
+	  up_to_colon[i] = 0;
+	  return(up_to_colon);
+	}
+      up_to_colon[i] = val[i];
+    }
+  return(up_to_colon);
+}
 
 char *filename_without_home_directory(const char *name)
 {
@@ -340,7 +357,6 @@ static char **functions = NULL, **files = NULL;
 static int *lines = NULL;
 static int mem_location = -1;
 static int mem_locations = 0;
-static int last_mem_location = -1;
 static char **stacks = NULL;
 
 static char *encloser = NULL;
@@ -350,17 +366,17 @@ void set_encloser(char *name)
   else encloser = NULL;
 }
 
+static int *lines_hit = NULL;
+
 static int find_mem_location(const char *func, const char *file, int line)
 {
   int i;
-  if ((last_mem_location >= 0) &&
-      (line == lines[last_mem_location]) &&
-      (strcmp(func, functions[last_mem_location]) == 0) &&
-      (strcmp(file, files[last_mem_location]) == 0))
-    return(last_mem_location);
+  if ((lines_hit) && 
+      (lines_hit[line] > 0) &&
+      (strcmp(file, files[lines_hit[line]]) == 0))
+    return(lines_hit[line]);
   for (i = 0; i <= mem_location; i++)
     if ((line == lines[i]) &&
-	(strcmp(func, functions[i]) == 0) &&
 	(strcmp(file, files[i]) == 0))
       return(i);
   mem_location++;
@@ -368,10 +384,13 @@ static int find_mem_location(const char *func, const char *file, int line)
     {
       if (mem_locations == 0)
 	{
-	  functions = (char **)calloc(1024, sizeof(char *));
-	  files = (char **)calloc(1024, sizeof(char *));
-	  lines = (int *)calloc(1024, sizeof(int));
-	  mem_locations = 1024;
+	  functions = (char **)calloc(2048, sizeof(char *));
+	  files = (char **)calloc(2048, sizeof(char *));
+	  lines = (int *)calloc(2048, sizeof(int));
+
+	  lines_hit = (int *)calloc(65536, sizeof(int));
+
+	  mem_locations = 2048;
 	}
       else
 	{
@@ -388,12 +407,18 @@ static int find_mem_location(const char *func, const char *file, int line)
 	}
     }
   /* NOT copy_string HERE!! */
-  last_mem_location = mem_location;
   functions[mem_location] = (char *)calloc(strlen(func) + 1, sizeof(char));
   strcpy(functions[mem_location], func);
   files[mem_location] = (char *)calloc(strlen(file) + 1, sizeof(char));
   strcpy(files[mem_location], file);
   lines[mem_location] = line;
+
+  if (line < 65536)
+    {
+      if (lines_hit[line] == 0) 
+	lines_hit[line] = mem_location;
+      else lines_hit[line] = -1;
+    }
   return(mem_location);
 }
 
@@ -729,7 +754,6 @@ void mem_report(void)
 	have_stacks = true;
 	break;
       }
-
   sums = (int *)calloc(mem_location + 1, sizeof(int));
   ptrs = (int *)calloc(mem_location + 1, sizeof(int));
   for (loc = 0; loc <= mem_location; loc++)

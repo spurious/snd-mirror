@@ -327,21 +327,16 @@ static void save_button_pressed(Widget w, XtPointer context, XtPointer info)
 static void apply_enved_callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* apply current envs to currently sync'd channels */
-  state_context *sgx;
-  XmAnyCallbackStruct *cb = (XmAnyCallbackStruct *)info;
-  sgx = ss->sgx;
-  /* since this is the OK button from Motif's point of view, text activation (<cr> in the text field)
-   * causes a bogus activation of this callback; we trap that by looking for text_activate_event.
-   * cr in text => save under that name
-   */
-  if (cb->event != sgx->text_activate_event)
+  Widget active_widget;
+  active_widget = XmGetFocusWidget(enved_dialog);
+  if (active_widget == XmMessageBoxGetChild(enved_dialog, XmDIALOG_OK_BUTTON))
     {
       apply_enved();
       last_active_channel = active_channel;
     }
   else 
     {
-      if (sgx->text_widget == textL)
+      if (active_widget == textL)
 	text_field_activated();
       else order_field_activated();
     }
@@ -356,6 +351,8 @@ static void undo_and_apply_enved_callback(Widget w, XtPointer context, XtPointer
       active_channel->squelch_update = true;
       undo_edit_with_sync(active_channel, 1);
       active_channel->squelch_update = false;
+      clear_minibuffer(active_channel->sound);
+      /* TODO: this is not updating the thumbnail sketch? perhaps no new env? */
     }
   apply_enved();
   last_active_channel = active_channel;

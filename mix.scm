@@ -430,3 +430,41 @@ If 'envelope' is a scaler, it is turned into an evelope at that value."
 	       (set! (track-properties id) (cons (cons key new-val) (track-properties id))))
 	   new-val)
 	 (throw 'no-such-track (list "set! track-property" id))))))
+
+
+;;; --------------------------------------------------------------------------------
+
+(define (mix-click-info n)
+  "(mix-click-info n) is a mix-click-hook function that describes a mix and its properties"
+  (help-dialog "Mix Help"
+	       (format #f "Mix ~D:~%  position: ~D = ~,3F secs~%  length: ~D (~,3F secs)\
+~%  in: ~A[~D]~A~A~A~%  scalers: ~A~%  speed: ~A~%  envs: ~{~A~^~%    ~}~A~A"
+		       n 
+		       (mix-position n)
+		       (exact->inexact (/ (mix-position n) (srate (car (mix-home n)))))
+		       (mix-frames n)
+		       (exact->inexact (/ (mix-frames n) (srate (car (mix-home n)))))
+		       (short-file-name (car (mix-home n))) (cadr (mix-home n))
+		       (if (mix-locked? n) ", (locked)" "")
+		       (if (mix-inverted? n) ", (inverted)" "")
+		       (if (not (= (mix-track n) 0))
+			   (format #f "~%  track: ~A" (mix-track n))
+			   "")
+		       (let ((scls '()))
+			 (do ((i (1- (mix-chans n)) (1- i)))
+			     ((< i 0) scls)
+			   (set! scls (cons (mix-amp n i) scls))))
+		       (mix-speed n)
+		       (let ((es '()))
+			 (do ((i (1- (mix-chans n)) (1- i)))
+			     ((< i 0) es)
+			   (set! es (cons (mix-amp-env n i) es))))
+		       (if (not (= (mix-tag-position n) 0))
+			   (format #f "~%  tag-position: ~A" (mix-tag-position n))
+			   "")
+		       (let ((props (mix-properties n)))
+			 (if (and (list? props)
+				  (not (null? props)))
+			     (format #f "~%  properties: '~A" props)
+			     ""))))
+  #t)

@@ -12358,13 +12358,13 @@ echo "$as_me: WARNING: trouble with gtk -- will try to make Snd without any GUI"
 _ACEOF
 
 
-	echo "$as_me:$LINENO: checking for gdk_draw_pixbuf in -lgdk" >&5
-echo $ECHO_N "checking for gdk_draw_pixbuf in -lgdk... $ECHO_C" >&6
-if test "${ac_cv_lib_gdk_gdk_draw_pixbuf+set}" = set; then
+	echo "$as_me:$LINENO: checking for gdk_draw_pixbuf in -lm" >&5
+echo $ECHO_N "checking for gdk_draw_pixbuf in -lm... $ECHO_C" >&6
+if test "${ac_cv_lib_m_gdk_draw_pixbuf+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lgdk $GTK_LIBS $LIBS"
+LIBS="-lm $GTK_LIBS $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 /* confdefs.h.  */
@@ -12400,19 +12400,19 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_gdk_gdk_draw_pixbuf=yes
+  ac_cv_lib_m_gdk_draw_pixbuf=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_gdk_gdk_draw_pixbuf=no
+ac_cv_lib_m_gdk_draw_pixbuf=no
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_gdk_gdk_draw_pixbuf" >&5
-echo "${ECHO_T}$ac_cv_lib_gdk_gdk_draw_pixbuf" >&6
-if test $ac_cv_lib_gdk_gdk_draw_pixbuf = yes; then
+echo "$as_me:$LINENO: result: $ac_cv_lib_m_gdk_draw_pixbuf" >&5
+echo "${ECHO_T}$ac_cv_lib_m_gdk_draw_pixbuf" >&6
+if test $ac_cv_lib_m_gdk_draw_pixbuf = yes; then
   cat >>confdefs.h <<\_ACEOF
 #define HAVE_GDK_DRAW_PIXBUF 1
 _ACEOF
@@ -12420,13 +12420,13 @@ _ACEOF
 fi
 
 	# gtk 2.1
-	echo "$as_me:$LINENO: checking for gtk_file_chooser_dialog_new in -lgtk" >&5
-echo $ECHO_N "checking for gtk_file_chooser_dialog_new in -lgtk... $ECHO_C" >&6
-if test "${ac_cv_lib_gtk_gtk_file_chooser_dialog_new+set}" = set; then
+	echo "$as_me:$LINENO: checking for gtk_file_chooser_dialog_new in -lm" >&5
+echo $ECHO_N "checking for gtk_file_chooser_dialog_new in -lm... $ECHO_C" >&6
+if test "${ac_cv_lib_m_gtk_file_chooser_dialog_new+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lgtk $GTK_LIBS $LIBS"
+LIBS="-lm $GTK_LIBS $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 /* confdefs.h.  */
@@ -12462,19 +12462,19 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_gtk_gtk_file_chooser_dialog_new=yes
+  ac_cv_lib_m_gtk_file_chooser_dialog_new=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_gtk_gtk_file_chooser_dialog_new=no
+ac_cv_lib_m_gtk_file_chooser_dialog_new=no
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_gtk_gtk_file_chooser_dialog_new" >&5
-echo "${ECHO_T}$ac_cv_lib_gtk_gtk_file_chooser_dialog_new" >&6
-if test $ac_cv_lib_gtk_gtk_file_chooser_dialog_new = yes; then
+echo "$as_me:$LINENO: result: $ac_cv_lib_m_gtk_file_chooser_dialog_new" >&5
+echo "${ECHO_T}$ac_cv_lib_m_gtk_file_chooser_dialog_new" >&6
+if test $ac_cv_lib_m_gtk_file_chooser_dialog_new = yes; then
   cat >>confdefs.h <<\_ACEOF
 #define HAVE_GTK_FILE_CHOOSER_DIALOG_NEW 1
 _ACEOF

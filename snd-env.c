@@ -26,8 +26,8 @@ env *copy_env(env *e)
       ne = (env *)CALLOC(1, sizeof(env));
       ne->pts = e->pts;
       ne->data_size = e->pts * 2;
-      ne->data = (Float *)MALLOC(e->pts * 2 * sizeof(Float));
-      memcpy((void *)(ne->data), (void *)(e->data), e->pts * 2 * sizeof(Float));
+      ne->data = (Float *)MALLOC(ne->data_size * sizeof(Float));
+      memcpy((void *)(ne->data), (void *)(e->data), ne->data_size * sizeof(Float));
       return(ne);
     }
   return(NULL);
@@ -90,6 +90,18 @@ char *env_to_string(env *e)
   return(news);
 }
 
+static Float env_last_x(env *e)
+{
+  /* since data_size has no necessary relation to the number of points (besides being large enough),
+   *   we need some direct way to get the last x/y values */
+  return(e->data[e->pts * 2 - 2]);
+}
+
+static Float env_last_y(env *e)
+{
+  return(e->data[e->pts * 2 - 1]);
+}
+
 env *make_envelope(Float *env_buffer, int len)
 {
   env *e;
@@ -110,22 +122,23 @@ env *make_envelope(Float *env_buffer, int len)
 
 Float interp_env(env *e, Float x)
 {
-  int i;
+  int i, j;
   if (e)
     {
       if ((e->pts == 1) || (x <= e->data[0])) return(e->data[1]);
-      if (x >= e->data[e->data_size - 2]) return(e->data[e->data_size - 1]);
-      for (i = 0; i < e->data_size - 1; i += 2)
+      if (x >= env_last_x(e)) return(env_last_y(e));
+      for (i = 0, j = 0; i < e->pts; i++, j += 2)
 	{
-	  if (e->data[i] == x)
-	    return(e->data[i + 1]);
+	  if (e->data[j] == x)
+	    return(e->data[j + 1]);
 	  else
 	    {
-	      if (e->data[i + 2] > x)
-		return(e->data[i + 1] + 
-		       (e->data[i + 3] - e->data[i + 1]) * (x - e->data[i]) / (e->data[i + 2] - e->data[i]));
+	      if (e->data[j + 2] > x)
+		return(e->data[j + 1] + 
+		       (e->data[j + 3] - e->data[j + 1]) * (x - e->data[j]) / (e->data[j + 2] - e->data[j]));
 	    }
 	}
+      return(env_last_y(e));
     }
   return(0.0);
 }
@@ -145,11 +158,11 @@ static XEN g_interp_env(XEN e, XEN val)
 env *normalize_x_axis(env *e)
 {
   /* make sure env goes from 0 to 1 x-wise; e is changed */
-  Float x0, x1;
-  int i;
+  Float x0, x1, scl;
+  int i, j;
   if (!e) return(NULL);
   x0 = e->data[0];
-  x1 = e->data[e->data_size - 2];
+  x1 = env_last_x(e);
   if ((x0 == 0.0) && (x1 == 1.0))
     return(e);
   if ((e->pts == 1) || (x0 == x1))
@@ -157,15 +170,16 @@ env *normalize_x_axis(env *e)
       e->data[0] = 0.0;
       return(e);
     }
-  for (i = 0; i < e->data_size - 1; i += 2)
-    e->data[i] = (e->data[i] - x0) / (x1 - x0);
+  scl = 1.0 / (x1 - x0);
+  for (i = 0, j = 0; i < e->pts; i++, j += 2)
+    e->data[j] = (e->data[j] - x0) * scl;
   return(e);
 }
 
 env *window_env(env *e, off_t local_beg, off_t local_dur, off_t e_beg, off_t e_dur)
 {
   env *local_e = NULL;
-  int i, j = 0;
+  int i, j = 0, k;
   Float x0, x1, e_x_range, e_x0, e_x1, local_x0, local_x1;
   /* return env representing e from local beg for local dur */
   if ((local_beg == e_beg) && (local_dur == e_dur))
@@ -174,14 +188,15 @@ env *window_env(env *e, off_t local_beg, off_t local_dur, off_t e_beg, off_t e_d
   x0 = (double)(local_beg - e_beg) / (double)e_dur;
   x1 = (double)(local_beg + local_dur - e_beg) / (double)e_dur;
   e_x0 = e->data[0];
-  e_x1 = e->data[e->data_size - 2];
+  e_x1 = env_last_x(e);
   e_x_range = e_x1 - e_x0;
   local_x0 = e_x0 + x0 * e_x_range;
   local_x1 = e_x0 + x1 * e_x_range;
   local_e = (env *)CALLOC(1, sizeof(env));
   local_e->data = (Float *)CALLOC(e->data_size, sizeof(Float));
+  local_e->data_size = e->data_size;
   /* this may leave wasted space, but worst case the two envs are the same size */
-  for (i = 0; i < e->data_size - 1; i += 2)
+  for (k = 0, i = 0; k < e->pts; k++, i += 2)
     {
       if (e->data[i] >= local_x0)
 	{
@@ -218,7 +233,6 @@ env *window_env(env *e, off_t local_beg, off_t local_dur, off_t e_beg, off_t e_d
   if (j == 0)
     return(free_env(local_e));
   local_e->pts = j / 2;
-  local_e->data_size = j;
   return(normalize_x_axis(local_e));
 }
 
@@ -264,7 +278,7 @@ env *multiply_envs(env *e1, env *e2, Float maxx)
       if (x == e1->data[i])
 	{
 	  y0 = e1->data[i + 1];
-	  if (i < e1->data_size - 1) i += 2;
+	  if (i < ((e1->pts * 2) - 1)) i += 2;
 	}
       else
 	y0 = e1->data[i - 1] + (x - e1->data[i - 2]) * (e1->data[i + 1] - e1->data[i - 1]) / (e1->data[i] - e1->data[i - 2]);
@@ -272,7 +286,7 @@ env *multiply_envs(env *e1, env *e2, Float maxx)
       if (x == e2->data[j])
 	{
 	  y1 = e2->data[j + 1];
-	  if (j < e2->data_size - 1) j += 2;
+	  if (j < ((e2->pts * 2) - 1)) j += 2;
 	}
       else
 	y1 = e2->data[j - 1] + (x - e2->data[j - 2]) * (e2->data[j + 1] - e2->data[j - 1]) / (e2->data[j] - e2->data[j - 2]);
@@ -280,11 +294,10 @@ env *multiply_envs(env *e1, env *e2, Float maxx)
       e->data[k] = x;
       e->data[k + 1] = y0 * y1;
       k += 2;
-      if (x >= 1.0) break;
+      if ((x + (maxx * .01)) >= 1.0) break;
     }
   if (k == 0)
     return(free_env(e));
-  e->data_size = k;
   e->pts = k / 2;
   return(e);
 }
@@ -308,9 +321,9 @@ static XEN g_multiply_envs(XEN e1, XEN e2, XEN maxx)
 env *invert_env(env *e)
 {
   env *new_e;
-  int i;
+  int i, k;
   new_e = copy_env(e);
-  for (i = 1; i < new_e->data_size; i += 2)
+  for (k = 0, i = 1; k < new_e->pts; k++, i += 2)
     new_e->data[i] = 1.0 - new_e->data[i];
   return(new_e);
 }
@@ -582,7 +595,7 @@ bool edp_display_graph(void *spf, const char *name, axis_context *ax,
   return(edp->edited);
 }
 
-void edp_handle_point(void *spf, int evx, int evy, Tempus motion_time, env *e, bool use_dB, Float xmax)
+void edp_handle_point(void *spf, int evx, int evy, Tempus motion_time, env *e, bool use_dB)
 {
   env_ed *edp = (env_ed *)spf;
   axis_info *ap;
@@ -595,10 +608,10 @@ void edp_handle_point(void *spf, int evx, int evy, Tempus motion_time, env *e, b
   x = ungrf_x(ap, evx);
   if (edp->env_pos > 0) 
     x0 = e->data[edp->env_pos * 2 - 2]; 
-  else x0 = 0.0;
-  if (edp->env_pos < e->pts) 
-    x1 = e->data[edp->env_pos * 2 + 2]; 
-  else x1 = xmax; /* x1 = 1.0; */
+  else x0 = e->data[0];
+  if (edp->env_pos < (e->pts - 1))
+    x1 = e->data[edp->env_pos * 2 + 2]; /* looking for next point on right to avoid crossing it */
+  else x1 = env_last_x(e);
   if (x < x0) x = x0;
   if (x > x1) x = x1;
   if (edp->env_pos == 0) x = e->data[0];
@@ -612,10 +625,10 @@ void edp_handle_point(void *spf, int evx, int evy, Tempus motion_time, env *e, b
   edp->edited = true;
 }
 
-bool edp_handle_press(void *spf, int evx, int evy, Tempus time, env *e, bool use_dB, Float xmax)
+bool edp_handle_press(void *spf, int evx, int evy, Tempus time, env *e, bool use_dB)
 {
   int pos;
-  Float x, y;
+  Float x, y, xmax;
   env_ed *edp = (env_ed *)spf;
   axis_info *ap;
   ap = edp->axis;
@@ -633,11 +646,14 @@ bool edp_handle_press(void *spf, int evx, int evy, Tempus time, env *e, bool use
 	  x = 0.0;
 	}
       else 
-	if (x >= xmax) /* (x > 1.0) */
-	  {
-	    pos = e->pts - 1;
-	    x = xmax; /* x = 1.0; */
-	  }
+	{
+	  xmax = env_last_x(e);
+	  if (x >= xmax)
+	    {
+	      pos = e->pts - 1;
+	      x = xmax;
+	    }
+	}
     }
   edp->env_pos = pos;
   /* if not -1, then user clicked existing point -- wait for drag/release to decide what to do */

@@ -237,7 +237,7 @@ static void mix_drawer_button_motion(Widget w, XtPointer context, XEvent *event,
   chan = (int)(pos * chans);
   last_clicked_env_chan = chan;
   e = mix_dialog_env(mix_dialog_id, chan);
-  edp_handle_point(spfs[chan], ev->x, ev->y, ev->time, e, false, 1.0);
+  edp_handle_point(spfs[chan], ev->x, ev->y, ev->time, e, false);
   mix_amp_env_resize(w, NULL, NULL);
 }
 
@@ -257,7 +257,7 @@ static void mix_drawer_button_press(Widget w, XtPointer context, XEvent *event, 
   chan = (int)(pos * chans);
   last_clicked_env_chan = chan;
   e = mix_dialog_env(mix_dialog_id, chan);
-  if (edp_handle_press(spfs[chan], ev->x, ev->y, ev->time, e, false, 1.0))
+  if (edp_handle_press(spfs[chan], ev->x, ev->y, ev->time, e, false))
     mix_amp_env_resize(w, NULL, NULL);
 }
 
@@ -281,22 +281,50 @@ static void mix_drawer_button_release(Widget w, XtPointer context, XEvent *event
 /* -------- track -------- */
 static Widget w_id = NULL, w_beg = NULL, w_track = NULL, mix_play = NULL, mix_track_play = NULL, w_mix_pan = NULL;
 
+static bool track_changed = false;
+
 static void track_activated(void)
 {
   char *val;
+  track_changed = false;
   if (!(mix_ok(mix_dialog_id))) return;
   val = XmTextGetString(w_track);
   if (val)
     {
-      mix_dialog_set_mix_track(mix_dialog_id, string2int(val));
+      int trk;
+      trk = string2int(val);
+      if (trk >= 0)
+	mix_dialog_set_mix_track(mix_dialog_id, trk);
+      else
+	{
+	  char lab[16];
+	  XmTextSetString(w_beg, _("track must be >= 0"));
+	  mus_snprintf(lab, 16, "%d", mix_dialog_mix_track(mix_dialog_id));
+	  XmTextSetString(w_track, lab);
+	}
       XtFree(val);
     }
 }
+
+static void track_modify_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  track_changed = true;
+}
+
+static void track_check_callback(Widget w, XtPointer context, XtPointer info)
+{
+  /* if user changes id, but forgets <cr>, then moves mouse away, we update as if <cr> */
+  if (track_changed) track_activated();
+}
+
+
+static bool id_changed = false;
 
 static void id_activated(void)
 {
   char *val;
   int id;
+  id_changed = false;
   val = XmTextGetString(w_id);
   if (val)
     {
@@ -310,6 +338,16 @@ static void id_activated(void)
     }
 }
 
+static void id_modify_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  id_changed = true;
+}
+
+static void id_check_callback(Widget w, XtPointer context, XtPointer info)
+{
+  if (id_changed) id_activated();
+}
+
 static void beg_activated(void)
 {
   char *val;
@@ -318,9 +356,12 @@ static void beg_activated(void)
   val = XmTextGetString(w_beg);
   if (val)
     {
+      char *up_to_colon;
+      up_to_colon = string_to_colon(val);
       cp = mix_dialog_mix_channel(mix_dialog_id);
-      set_mix_position(mix_dialog_id, (off_t)(string2Float(val) * SND_SRATE(cp->sound)));
+      set_mix_position(mix_dialog_id, (off_t)(string2Float(up_to_colon) * SND_SRATE(cp->sound)));
       update_mix_dialog(mix_dialog_id);
+      FREE(up_to_colon);
       XtFree(val);
     }
 }
@@ -342,22 +383,21 @@ static void apply_mix_dialog_callback(Widget w, XtPointer context, XtPointer inf
 
 static void dismiss_mix_dialog_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  state_context *sgx;
-  XmAnyCallbackStruct *cb = (XmAnyCallbackStruct *)info;
-  sgx = ss->sgx;
-  if (cb->event != sgx->text_activate_event)
+  Widget active_widget;
+  active_widget = XmGetFocusWidget(mix_dialog);
+  if (active_widget == XmMessageBoxGetChild(mix_dialog, XmDIALOG_OK_BUTTON))
     XtUnmanageChild(mix_dialog);
   else
     {
-      if (sgx->text_widget == w_track)
+      if (active_widget == w_track)
 	track_activated();
       else
 	{
-	  if (sgx->text_widget == w_id)
+	  if (active_widget == w_id)
 	    id_activated();
 	  else
 	    {
-	      if (sgx->text_widget == w_beg)
+	      if (active_widget == w_beg)
 		beg_activated();
 	    }
 	}
@@ -589,6 +629,8 @@ Widget make_mix_dialog(void)
       XtSetArg(args[n], XmNcolumns, 3); n++;
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
       w_id = make_textfield_widget("mix-id", mix_row, args, n, ACTIVATABLE, NO_COMPLETER);
+      XtAddCallback(w_id, XmNlosingFocusCallback, id_check_callback, NULL);
+      XtAddCallback(w_id, XmNmodifyVerifyCallback, id_modify_callback, NULL);
       XmTextSetString(w_id, "0");
 
       n = 0;
@@ -639,6 +681,8 @@ Widget make_mix_dialog(void)
       XtSetArg(args[n], XmNcolumns, 3); n++;
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
       w_track = make_textfield_widget("mix-track", track_row, args, n, ACTIVATABLE, NO_COMPLETER);
+      XtAddCallback(w_track, XmNlosingFocusCallback, track_check_callback, NULL);
+      XtAddCallback(w_track, XmNmodifyVerifyCallback, track_modify_callback, NULL);
       XmTextSetString(w_track, "0");
 
       n = 0;
@@ -780,7 +824,7 @@ Widget make_mix_dialog(void)
 	  XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
 	  XtSetArg(args[n], XmNmaximum, SCROLLBAR_MAX); n++;
 	  XtSetArg(args[n], XmNuserData, i); n++;
-	  XtSetArg(args[n], XmNvalue, 0); n++;  /* fixed up later; current_amp[chan] initial value is 0.0 */
+	  XtSetArg(args[n], XmNvalue, SCROLLBAR_MID); n++;  /* fixed up later; current_amp[chan] initial value is 0.0 */
 	  XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(amp_drag_callback, NULL)); n++;
 	  XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(amp_valuechanged_callback, NULL)); n++;
 	  w_amps[i] = XtCreateManagedWidget("amp", xmScrollBarWidgetClass, mainform, args, n);
@@ -852,6 +896,8 @@ Widget make_mix_dialog(void)
   return(mix_dialog);
 }
 
+static bool track_dialog_slider_dragging = false;
+
 static void update_mix_dialog(int mix_id) 
 {
   chan_info *cp = NULL;
@@ -916,35 +962,38 @@ static void update_mix_dialog(int mix_id)
 	  set_sensitive(XmMessageBoxGetChild(mix_dialog, XmDIALOG_CANCEL_BUTTON), false);
 	  XmChangeColor(w_mix_pan, (ss->sgx)->highlight_color);
 	}
-      for (i = 0; i < chans; i++)
+      if ((!mix_dialog_slider_dragging) && (!track_dialog_slider_dragging))
 	{
-	  XmString s1;
-	  char amplab[LABEL_BUFFER_SIZE];
-	  if ((i == 0) && (chans == 1))
-	    mus_snprintf(amplab, LABEL_BUFFER_SIZE, _("amp:"));
-	  else mus_snprintf(amplab, LABEL_BUFFER_SIZE, _("amp %d:"), i);
-	  s1 = XmStringCreate(amplab, XmFONTLIST_DEFAULT_TAG);
-	  XtVaSetValues(w_amp_labels[i], XmNlabelString, s1, NULL);
-	  XmStringFree(s1);
-	  if (!(XtIsManaged(w_amp_labels[i]))) XtManageChild(w_amp_labels[i]);
-	  if (!(XtIsManaged(w_amp_numbers[i]))) XtManageChild(w_amp_numbers[i]);
-	  if (mix_ok(mix_dialog_id))
-	    val = mix_dialog_mix_amp(mix_dialog_id, i);
-	  else val = 1.0;
-	  XtVaSetValues(w_amps[i], XmNvalue, mix_amp_to_int(val, i), NULL);
-	  current_amps[i] = val;
-	  if (!(XtIsManaged(w_amps[i]))) XtManageChild(w_amps[i]);
-	}
-      for (i = chans; i < CHANS_ALLOCATED; i++)
-	{
-	  if ((w_amp_labels[i]) && (XtIsManaged(w_amp_labels[i])))
+	  for (i = 0; i < chans; i++)
 	    {
-	      XtUnmanageChild(w_amp_labels[i]);
-	      XtUnmanageChild(w_amp_numbers[i]);
-	      XtUnmanageChild(w_amps[i]);
+	      XmString s1;
+	      char amplab[LABEL_BUFFER_SIZE];
+	      if ((i == 0) && (chans == 1))
+		mus_snprintf(amplab, LABEL_BUFFER_SIZE, _("amp:"));
+	      else mus_snprintf(amplab, LABEL_BUFFER_SIZE, _("amp %d:"), i);
+	      s1 = XmStringCreate(amplab, XmFONTLIST_DEFAULT_TAG);
+	      XtVaSetValues(w_amp_labels[i], XmNlabelString, s1, NULL);
+	      XmStringFree(s1);
+	      if (mix_ok(mix_dialog_id))
+		val = mix_dialog_mix_amp(mix_dialog_id, i);
+	      else val = 1.0;
+	      XtVaSetValues(w_amps[i], XmNvalue, mix_amp_to_int(val, i), NULL);
+	      current_amps[i] = val;
+	      if (!(XtIsManaged(w_amp_labels[i]))) XtManageChild(w_amp_labels[i]);
+	      if (!(XtIsManaged(w_amp_numbers[i]))) XtManageChild(w_amp_numbers[i]);
+	      if (!(XtIsManaged(w_amps[i]))) XtManageChild(w_amps[i]);
 	    }
+	  for (i = chans; i < CHANS_ALLOCATED; i++)
+	    {
+	      if ((w_amp_labels[i]) && (XtIsManaged(w_amp_labels[i])))
+		{
+		  XtUnmanageChild(w_amp_labels[i]);
+		  XtUnmanageChild(w_amp_numbers[i]);
+		  XtUnmanageChild(w_amps[i]);
+		}
+	    }
+	  XtVaSetValues(w_sep1, XmNtopWidget, w_amp_labels[chans - 1], NULL);
 	}
-      XtVaSetValues(w_sep1, XmNtopWidget, w_amp_labels[chans - 1], NULL);
       mix_amp_env_resize(w_env, NULL, NULL);
     }
 }
@@ -956,7 +1005,6 @@ static void update_mix_dialog(int mix_id)
 static void update_track_dialog(int track_id);
 
 static Widget track_dialog = NULL;
-static bool track_dialog_slider_dragging = false;
 static int track_dialog_id = INVALID_TRACK_ID;
 
 
@@ -995,8 +1043,11 @@ static void track_speed_drag_callback(Widget w, XtPointer context, XtPointer inf
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   if (!(track_p(track_dialog_id))) return;
   ival = ((XmScrollBarCallbackStruct *)info)->value;
-  if (!track_dialog_slider_dragging) track_dialog_start_slider_drag(track_dialog_id);
-  track_dialog_slider_dragging = true;
+  if (!track_dialog_slider_dragging) 
+    {
+      track_dialog_slider_dragging = true;
+      track_dialog_start_slider_drag(track_dialog_id);
+    }
   change_track_speed(track_dialog_id, exp((Float)(ival - SPEED_SCROLLBAR_MID) / SPEED_SCROLLBAR_BREAK));
 }
 
@@ -1073,8 +1124,11 @@ static void track_tempo_drag_callback(Widget w, XtPointer context, XtPointer inf
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   ival = ((XmScrollBarCallbackStruct *)info)->value;
   if (!(track_p(track_dialog_id))) return;
-  if (!track_dialog_slider_dragging) track_dialog_start_slider_drag(track_dialog_id);
-  track_dialog_slider_dragging = true;
+  if (!track_dialog_slider_dragging) 
+    {
+      track_dialog_slider_dragging = true;
+      track_dialog_start_slider_drag(track_dialog_id);
+    }
   change_track_tempo(track_dialog_id, int_tempo_to_Float(ival));
 }
 
@@ -1121,8 +1175,11 @@ static void track_amp_drag_callback(Widget w, XtPointer context, XtPointer info)
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   ival = ((XmScrollBarCallbackStruct *)info)->value;
   if (!(track_p(track_dialog_id))) return;
-  if (!track_dialog_slider_dragging) track_dialog_start_slider_drag(track_dialog_id);
-  track_dialog_slider_dragging = true;
+  if (!track_dialog_slider_dragging) 
+    {
+      track_dialog_slider_dragging = true;
+      track_dialog_start_slider_drag(track_dialog_id);
+    }
   change_track_amp(track_dialog_id, int_amp_to_Float(ival));
 }
 
@@ -1195,7 +1252,7 @@ static void track_drawer_button_motion(Widget w, XtPointer context, XEvent *even
   if ((track_press_x == ev->x) && (track_press_y == ev->y)) return;
 #endif
   e = track_dialog_env(track_dialog_id);
-  edp_handle_point(track_spf, ev->x, ev->y, ev->time, e, false, 1.0);
+  edp_handle_point(track_spf, ev->x, ev->y, ev->time, e, false);
   track_amp_env_resize(w, NULL, NULL);
 }
 
@@ -1209,7 +1266,7 @@ static void track_drawer_button_press(Widget w, XtPointer context, XEvent *event
   track_press_y = ev->y;
 #endif
   e = track_dialog_env(track_dialog_id);
-  if (edp_handle_press(track_spf, ev->x, ev->y, ev->time, e, false, 1.0))
+  if (edp_handle_press(track_spf, ev->x, ev->y, ev->time, e, false))
     track_amp_env_resize(w, NULL, NULL);
 }
 
@@ -1227,32 +1284,59 @@ static void track_drawer_button_release(Widget w, XtPointer context, XEvent *eve
 static Widget w_track_id = NULL, w_track_beg = NULL, w_track_track = NULL, w_track_track_play;
 static Widget w_track_text; /* error msgs, mix lists etc */
 
+static bool track_track_changed = false;
+
 static void track_track_activated(void)
 {
   char *val;
+  track_track_changed = false;
   if (!(track_p(track_dialog_id))) return;
   val = XmTextGetString(w_track_track);
   if (val)
     {
       int id;
       id = string2int(val);
-      if ((id == track_dialog_id) ||
-	  (!(set_track_track(track_dialog_id, id))))
+      if (id >= 0)
+	{
+	  if ((id == track_dialog_id) ||
+	      (!(set_track_track(track_dialog_id, id))))
+	    {
+	      char lab[16];
+	      set_label(w_track_text, _("circular track chain"));
+	      mus_snprintf(lab, 16, "%d", track_dialog_track_track(track_dialog_id));
+	      XmTextSetString(w_track_track, lab);
+	    }
+	  else update_track_dialog(id);
+	}
+      else
 	{
 	  char lab[16];
-	  set_label(w_track_text, _("circular track chain"));
+	  set_label(w_track_text, _("track must be >= 0"));
 	  mus_snprintf(lab, 16, "%d", track_dialog_track_track(track_dialog_id));
 	  XmTextSetString(w_track_track, lab);
 	}
-      else update_track_dialog(id);
       XtFree(val);
     }
 }
+
+static void track_track_modify_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  track_track_changed = true;
+}
+
+static void track_track_check_callback(Widget w, XtPointer context, XtPointer info)
+{
+  /* if user changes id, but forgets <cr>, then moves mouse away, we update as if <cr> */
+  if (track_track_changed) track_track_activated();
+}
+
+static bool track_id_changed = false;
 
 static void track_id_activated(void)
 {
   char *val;
   int id;
+  track_id_changed = false;
   val = XmTextGetString(w_track_id);
   if (val)
     {
@@ -1269,6 +1353,17 @@ static void track_id_activated(void)
       XtFree(val);
     }
 }
+
+static void track_id_modify_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  track_id_changed = true;
+}
+
+static void track_id_check_callback(Widget w, XtPointer context, XtPointer info)
+{
+  if (track_id_changed) track_id_activated();
+}
+
 
 static void redisplay_track_bounds(void)
 {
@@ -1303,7 +1398,10 @@ static void track_beg_activated(void)
       if (cp)
 	{
 	  Float beg;
-	  beg = string2Float(val);
+	  char *up_to_colon;
+	  up_to_colon = string_to_colon(val);
+	  beg = string2Float(up_to_colon);
+	  FREE(up_to_colon);
 	  if (beg >= 0.0)
 	    {
 	      set_track_position(track_dialog_id, (off_t)(beg * SND_SRATE(cp->sound)));
@@ -1335,22 +1433,21 @@ static void apply_track_dialog_callback(Widget w, XtPointer context, XtPointer i
 
 static void dismiss_track_dialog_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  state_context *sgx;
-  XmAnyCallbackStruct *cb = (XmAnyCallbackStruct *)info;
-  sgx = ss->sgx;
-  if (cb->event != sgx->text_activate_event)
+  Widget active_widget;
+  active_widget = XmGetFocusWidget(track_dialog);
+  if (active_widget == XmMessageBoxGetChild(track_dialog, XmDIALOG_OK_BUTTON))
     XtUnmanageChild(track_dialog);
   else
     {
-      if (sgx->text_widget == w_track_track)
+      if (active_widget == w_track_track)
 	track_track_activated();
       else
 	{
-	  if (sgx->text_widget == w_track_id)
+	  if (active_widget == w_track_id)
 	    track_id_activated();
 	  else
 	    {
-	      if (sgx->text_widget == w_track_beg)
+	      if (active_widget == w_track_beg)
 		track_beg_activated();
 	    }
 	}
@@ -1552,6 +1649,8 @@ Widget make_track_dialog(void)
       XtSetArg(args[n], XmNcolumns, 3); n++;
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
       w_track_id = make_textfield_widget("track-id", track_row, args, n, ACTIVATABLE, NO_COMPLETER);
+      XtAddCallback(w_track_id, XmNlosingFocusCallback, track_id_check_callback, NULL);
+      XtAddCallback(w_track_id, XmNmodifyVerifyCallback, track_id_modify_callback, NULL);
       XmTextSetString(w_track_id, "0");
 
       n = 0;
@@ -1601,6 +1700,8 @@ Widget make_track_dialog(void)
       XtSetArg(args[n], XmNcolumns, 3); n++;
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
       w_track_track = make_textfield_widget("track-track", track_track_row, args, n, ACTIVATABLE, NO_COMPLETER);
+      XtAddCallback(w_track_track, XmNlosingFocusCallback, track_track_check_callback, NULL);
+      XtAddCallback(w_track_track, XmNmodifyVerifyCallback, track_track_modify_callback, NULL);
       XmTextSetString(w_track_track, "0");
 
 
@@ -1742,7 +1843,7 @@ Widget make_track_dialog(void)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNmaximum, SCROLLBAR_MAX); n++;
-      XtSetArg(args[n], XmNvalue, 0); n++;  /* fixed up later */
+      XtSetArg(args[n], XmNvalue, SCROLLBAR_MID); n++;
       XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(track_tempo_drag_callback, NULL)); n++;
       XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(track_tempo_valuechanged_callback, NULL)); n++;
       w_track_tempo = XtCreateManagedWidget("tempo", xmScrollBarWidgetClass, mainform, args, n);
@@ -1794,7 +1895,7 @@ Widget make_track_dialog(void)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNmaximum, SCROLLBAR_MAX); n++;
-      XtSetArg(args[n], XmNvalue, 0); n++;  /* fixed up later; current_track_amp[chan] initial value is 0.0 */
+      XtSetArg(args[n], XmNvalue, SCROLLBAR_MID); n++;
       XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(track_amp_drag_callback, NULL)); n++;
       XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(track_amp_valuechanged_callback, NULL)); n++;
       w_track_amp = XtCreateManagedWidget("amp", xmScrollBarWidgetClass, mainform, args, n);

@@ -828,26 +828,15 @@ void mouse_leave_text_callback(Widget w, XtPointer context, XEvent *event, Boole
 	     S_mouse_leave_text_hook);
 }
 
-static void remember_event(Widget w, XtPointer context, XtPointer info) 
-{
-  XmAnyCallbackStruct *cb = (XmAnyCallbackStruct *)info;
-  (ss->sgx)->text_activate_event = cb->event;
-  (ss->sgx)->text_widget = w;
-}
-
-static XtCallbackList n1 = NULL;
-
 Widget make_textfield_widget(char *name, Widget parent, Arg *args, int n, text_cr_t activatable, int completer)
 {
-  /* white background when active, emacs translations, text_activate_event in ss->sgx for subsequent activation check */
+  /* white background when active, emacs translations */
   Widget df;
   if (!actions_loaded) 
     {
       XtAppAddActions(MAIN_APP(ss), acts, NUM_ACTS); 
       actions_loaded = true;
     }
-  if (n1) {FREE(n1); n1 = NULL;}
-  XtSetArg(args[n], XmNactivateCallback, n1 = make_callback_list(remember_event, NULL)); n++;
   /* can't use XmNuserData here because it is in use elsewhere (snd-xmix.c) */
   XtSetArg(args[n], XmNcursorPositionVisible, false); n++;
   df = XtCreateManagedWidget(name, xmTextFieldWidgetClass, parent, args, n);
@@ -888,7 +877,7 @@ void add_completer_to_textfield(Widget w, int completer)
 
 Widget make_text_widget(char *name, Widget parent, Arg *args, int n)
 {
-  /* white background when active, emacs translations, text_activate_event in ss->sgx for subsequent activation check */
+  /* white background when active, emacs translations */
   /* used only for comment widget in file data box (snd-xfile.c) */
   Widget df;
   if (!actions_loaded) 
@@ -896,8 +885,6 @@ Widget make_text_widget(char *name, Widget parent, Arg *args, int n)
       XtAppAddActions(MAIN_APP(ss), acts, NUM_ACTS); 
       actions_loaded = true;
     }
-  if (n1) {FREE(n1); n1 = NULL;}
-  XtSetArg(args[n], XmNactivateCallback, n1 = make_callback_list(remember_event, NULL)); n++;
   XtSetArg(args[n], XmNeditMode, XmMULTI_LINE_EDIT); n++;
   /* XmNblinkRate 0 turns off the cursor blink */
   XtSetArg(args[n], XmNcursorPositionVisible, false); n++;
@@ -1105,8 +1092,6 @@ static void make_command_widget(int height)
 	}
       if ((ss->sgx)->listener_fontlist) {XtSetArg(args[n], XM_FONT_RESOURCE, (ss->sgx)->listener_fontlist); n++;}
       n = attach_all_sides(args, n);
-      if (n1) {FREE(n1); n1 = NULL;}
-      XtSetArg(args[n], XmNactivateCallback, n1 = make_callback_list(remember_event, NULL)); n++;
       XtSetArg(args[n], XmNeditMode, XmMULTI_LINE_EDIT); n++;
       XtSetArg(args[n], XmNskipAdjust, true); n++;
       XtSetArg(args[n], XmNvalue, listener_prompt(ss)); n++;

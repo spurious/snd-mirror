@@ -2282,13 +2282,14 @@ static void edit_header_cancel_callback(Widget w, XtPointer context, XtPointer i
 
 static void edit_header_ok_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  XmAnyCallbackStruct *cb = (XmAnyCallbackStruct *)info;
   if ((edit_header_sp) && (edit_header_sp->active))
     {
-      if (cb->event == ((ss->sgx)->text_activate_event)) return; /* <cr> in one of text fields */
-      if (!(edit_header_sp->read_only))
-	edit_header_callback(edit_header_sp, edit_header_data);
-      else snd_error(_("%s is write-protected"), edit_header_sp->short_filename);
+      if (XmGetFocusWidget(edit_header_dialog) == XmMessageBoxGetChild(edit_header_dialog, XmDIALOG_OK_BUTTON))
+	{
+	  if (!(edit_header_sp->read_only))
+	    edit_header_callback(edit_header_sp, edit_header_data);
+	  else snd_error(_("%s is write-protected"), edit_header_sp->short_filename);
+	}
     }
   XtUnmanageChild(edit_header_dialog);
 }

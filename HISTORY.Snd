@@ -1,5 +1,6 @@
 Snd change log
 
+  24-Nov:    snd 7.0.
   20-Nov:    track-tempo.
   17-Nov:    mix-dialog-mix, track-dialog-track, mix-inverted?
   10-Nov:    removed next-mix-sample, next-track-sample.

@@ -2895,12 +2895,11 @@ static void reset_record_callback(Widget w, XtPointer context, XtPointer info)
 
 static void dismiss_record_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  XmAnyCallbackStruct *cb = (XmAnyCallbackStruct *)info;
   state_context *sgx;
   recorder_info *rp;
   rp = get_recorder_info();
   sgx = ss->sgx;
-  if (cb->event != sgx->text_activate_event)  /* passed up from textfield widget after <cr> typed */
+  if (XmGetFocusWidget(recorder) == XmMessageBoxGetChild(recorder, XmDIALOG_OK_BUTTON))
     {
       if (rp->recording) reset_record_callback(w, context, info);
       XtUnmanageChild(recorder);
