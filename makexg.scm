@@ -1017,6 +1017,7 @@
 (hey " * ~A: test suite (snd-test 24)~%" (string-append "T" "ODO"))
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     19-Jul:    XG_FIELD_PRE for change from using vertical-tab (reserved in R5RS)~%")
 (hey " *     2-Jun:     removed deprecated and broken stuff (see include-deprecated switch in makexg.scm)~%")
 (hey " *     4-Apr:     minor changes for Gtk 2.0.2~%")
 (hey " *     13-Mar:    Gtk 2.0.0~%")
@@ -1088,11 +1089,13 @@
 (hey "/* prefix for all names */~%")
 (hey "#if HAVE_GUILE~%")
 (hey "  #define XG_PRE \"|\"~%")
+(hey "  #define XG_FIELD_PRE \"|\"~%")
 (hey "  #define XG_POST \"\"~%")
 (hey "#else~%")
 (hey "/* for Ruby, XG PRE needs to be uppercase */~%")
 (hey "  #define XG_PRE \"R\"~%")
 (hey "  #define XG_POST \"\"~%")
+(hey "  #define XG_FIELD_PRE \"R\"~%")
 (hey "#endif~%")
 (hey "~%")
 
@@ -1919,14 +1922,14 @@
 (say-hey "static void define_structs(void)~%")
 (say-hey "{~%~%")
 
-(hey "  XEN_DEFINE_PROCEDURE(XG_PRE \"c-array->list\" XG_POST, c_array_to_xen_list, 2, 0, 0, NULL);~%")
-(hey "  XEN_DEFINE_PROCEDURE(XG_PRE \"list->c-array\" XG_POST, xen_list_to_c_array, 2, 0, 0, NULL);~%~%")
+(hey "  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE \"c-array->list\" XG_POST, c_array_to_xen_list, 2, 0, 0, NULL);~%")
+(hey "  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE \"list->c-array\" XG_POST, xen_list_to_c_array, 2, 0, 0, NULL);~%~%")
 
 (for-each 
  (lambda (field)
    (check-gtk1 field)
-   (hey "  XEN_DEFINE_PROCEDURE(XG_PRE ~S XG_POST, gxg_~A, 1, 0, 0, NULL);~%" field field)
-   (say "  XEN_DEFINE_PROCEDURE(XG_PRE ~S XG_POST, gxg_~A_w, 1, 0, 0, NULL);~%" field field))
+   (hey "  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE ~S XG_POST, gxg_~A, 1, 0, 0, NULL);~%" field field)
+   (say "  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE ~S XG_POST, gxg_~A_w, 1, 0, 0, NULL);~%" field field))
  struct-fields)
 
 (hey "#if (!HAVE_GTK_1)~%")
@@ -1934,8 +1937,8 @@
  (lambda (struct)
    (let* ((s (find-struct struct)))
 
-     (hey "  XEN_DEFINE_PROCEDURE(XG_PRE ~S XG_POST, gxg_make_~A, 0, 0, ~D, NULL);~%" struct struct (if (> (length (cadr s)) 0) 1 0))
-     (say "  XEN_DEFINE_PROCEDURE(XG_PRE ~S XG_POST, gxg_make_~A_w, 0, 0, ~D, NULL);~%" struct struct (if (> (length (cadr s)) 0) 1 0))))
+     (hey "  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE ~S XG_POST, gxg_make_~A, 0, 0, ~D, NULL);~%" struct struct (if (> (length (cadr s)) 0) 1 0))
+     (say "  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE ~S XG_POST, gxg_make_~A_w, 0, 0, ~D, NULL);~%" struct struct (if (> (length (cadr s)) 0) 1 0))))
  (reverse make-structs))
 (hey "#endif~%~%")
 

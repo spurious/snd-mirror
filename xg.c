@@ -45,6 +45,7 @@
  * TODO: test suite (snd-test 24)
  *
  * HISTORY:
+ *     19-Jul:    XG_FIELD_PRE for change from using vertical-tab (reserved in R5RS)
  *     2-Jun:     removed deprecated and broken stuff (see include-deprecated switch in makexg.scm)
  *     4-Apr:     minor changes for Gtk 2.0.2
  *     13-Mar:    Gtk 2.0.0
@@ -118,11 +119,13 @@ static void define_xm_obj(void)
 /* prefix for all names */
 #if HAVE_GUILE
   #define XG_PRE "|"
+  #define XG_FIELD_PRE "|"
   #define XG_POST ""
 #else
 /* for Ruby, XG PRE needs to be uppercase */
   #define XG_PRE "R"
   #define XG_POST ""
+  #define XG_FIELD_PRE "R"
 #endif
 
 #define WRAP_FOR_XEN(Name, Value) XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(Name), C_TO_XEN_ULONG((unsigned long)Value))
@@ -31528,781 +31531,781 @@ static XEN gxg_make_GtkTextChildAnchor(void)
 static void define_structs(void)
 {
 
-  XEN_DEFINE_PROCEDURE(XG_PRE "c-array->list" XG_POST, c_array_to_xen_list, 2, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "list->c-array" XG_POST, xen_list_to_c_array, 2, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "c-array->list" XG_POST, c_array_to_xen_list, 2, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "list->c-array" XG_POST, xen_list_to_c_array, 2, 0, 0, NULL);
 
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "mnemonic_modifier" XG_POST, gxg_mnemonic_modifier, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "keys_changed_handler" XG_POST, gxg_keys_changed_handler, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "frame_bottom" XG_POST, gxg_frame_bottom, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "frame_right" XG_POST, gxg_frame_right, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "frame_top" XG_POST, gxg_frame_top, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "frame_left" XG_POST, gxg_frame_left, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gravity" XG_POST, gxg_gravity, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "type_hint" XG_POST, gxg_type_hint, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "decorated" XG_POST, gxg_decorated, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "maximize_initially" XG_POST, gxg_maximize_initially, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "stick_initially" XG_POST, gxg_stick_initially, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "iconify_initially" XG_POST, gxg_iconify_initially, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "destroy_with_parent" XG_POST, gxg_destroy_with_parent, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "modal" XG_POST, gxg_modal, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "has_focus" XG_POST, gxg_has_focus, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "need_default_size" XG_POST, gxg_need_default_size, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "need_default_position" XG_POST, gxg_need_default_position, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "configure_notify_received" XG_POST, gxg_configure_notify_received, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "allow_grow" XG_POST, gxg_allow_grow, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "allow_shrink" XG_POST, gxg_allow_shrink, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "configure_request_count" XG_POST, gxg_configure_request_count, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "transient_parent" XG_POST, gxg_transient_parent, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "default_widget" XG_POST, gxg_default_widget, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "focus_widget" XG_POST, gxg_focus_widget, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "wm_role" XG_POST, gxg_wm_role, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "saved_state" XG_POST, gxg_saved_state, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "reorderable" XG_POST, gxg_reorderable, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "maybe_reordered" XG_POST, gxg_maybe_reordered, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "show_sort_indicator" XG_POST, gxg_show_sort_indicator, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "dirty" XG_POST, gxg_dirty, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "clickable" XG_POST, gxg_clickable, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "resizable" XG_POST, gxg_resizable, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "sort_order" XG_POST, gxg_sort_order, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "sort_column_changed_signal" XG_POST, gxg_sort_column_changed_signal, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "sort_clicked_signal" XG_POST, gxg_sort_clicked_signal, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "cell_list" XG_POST, gxg_cell_list, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "drag_y" XG_POST, gxg_drag_y, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "drag_x" XG_POST, gxg_drag_x, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "fixed_width" XG_POST, gxg_fixed_width, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "resized_width" XG_POST, gxg_resized_width, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "button_request" XG_POST, gxg_button_request, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "requested_width" XG_POST, gxg_requested_width, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "column_type" XG_POST, gxg_column_type, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "property_changed_signal" XG_POST, gxg_property_changed_signal, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "editable_widget" XG_POST, gxg_editable_widget, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "alignment" XG_POST, gxg_alignment, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "arrow" XG_POST, gxg_arrow, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "destroy" XG_POST, gxg_destroy, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "user_func" XG_POST, gxg_user_func, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "tree_view" XG_POST, gxg_tree_view, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "reordered_id" XG_POST, gxg_reordered_id, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "deleted_id" XG_POST, gxg_deleted_id, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "has_child_toggled_id" XG_POST, gxg_has_child_toggled_id, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "inserted_id" XG_POST, gxg_inserted_id, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "changed_id" XG_POST, gxg_changed_id, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "zero_ref_count" XG_POST, gxg_zero_ref_count, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "child_model" XG_POST, gxg_child_model, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "child_flags" XG_POST, gxg_child_flags, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "use_sticky_delay" XG_POST, gxg_use_sticky_delay, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "timer_tag" XG_POST, gxg_timer_tag, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "enabled" XG_POST, gxg_enabled, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "delay" XG_POST, gxg_delay, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "tips_data_list" XG_POST, gxg_tips_data_list, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "active_tips_data" XG_POST, gxg_active_tips_data, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "tip_label" XG_POST, gxg_tip_label, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "tip_window" XG_POST, gxg_tip_window, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "tip_text" XG_POST, gxg_tip_text, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "widget" XG_POST, gxg_widget, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "style_set" XG_POST, gxg_style_set, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "icon_size_connection" XG_POST, gxg_icon_size_connection, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "style_set_connection" XG_POST, gxg_style_set_connection, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "button_maxh" XG_POST, gxg_button_maxh, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "button_maxw" XG_POST, gxg_button_maxw, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "tooltips" XG_POST, gxg_tooltips, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "icon_size" XG_POST, gxg_icon_size, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "style" XG_POST, gxg_style, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "num_children" XG_POST, gxg_num_children, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "draw_indicator" XG_POST, gxg_draw_indicator, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "log_attr_cache" XG_POST, gxg_log_attr_cache, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "selection_clipboards" XG_POST, gxg_selection_clipboards, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "clipboard_contents_buffers" XG_POST, gxg_clipboard_contents_buffers, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "btree" XG_POST, gxg_btree, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "tag_table" XG_POST, gxg_tag_table, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "row_spacing" XG_POST, gxg_row_spacing, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "column_spacing" XG_POST, gxg_column_spacing, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "ncols" XG_POST, gxg_ncols, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "nrows" XG_POST, gxg_nrows, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "cols" XG_POST, gxg_cols, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "rows" XG_POST, gxg_rows, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "has_resize_grip" XG_POST, gxg_has_resize_grip, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "grip_window" XG_POST, gxg_grip_window, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "seq_message_id" XG_POST, gxg_seq_message_id, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "seq_context_id" XG_POST, gxg_seq_context_id, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "messages" XG_POST, gxg_messages, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "frame" XG_POST, gxg_frame, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "bottom" XG_POST, gxg_bottom, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "top" XG_POST, gxg_top, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "right" XG_POST, gxg_right, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "left" XG_POST, gxg_left, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "icon_factories" XG_POST, gxg_icon_factories, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "property_cache" XG_POST, gxg_property_cache, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "styles" XG_POST, gxg_styles, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "rc_style" XG_POST, gxg_rc_style, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "attach_count" XG_POST, gxg_attach_count, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "white_gc" XG_POST, gxg_white_gc, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "black_gc" XG_POST, gxg_black_gc, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "text_aa_gc" XG_POST, gxg_text_aa_gc, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "base_gc" XG_POST, gxg_base_gc, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "text_gc" XG_POST, gxg_text_gc, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "mid_gc" XG_POST, gxg_mid_gc, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "dark_gc" XG_POST, gxg_dark_gc, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "light_gc" XG_POST, gxg_light_gc, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "bg_gc" XG_POST, gxg_bg_gc, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "fg_gc" XG_POST, gxg_fg_gc, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "ythickness" XG_POST, gxg_ythickness, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "xthickness" XG_POST, gxg_xthickness, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "font_desc" XG_POST, gxg_font_desc, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "text_aa" XG_POST, gxg_text_aa, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "base" XG_POST, gxg_base, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "mid" XG_POST, gxg_mid, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "dark" XG_POST, gxg_dark, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "light" XG_POST, gxg_light, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "bg" XG_POST, gxg_bg, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "fg" XG_POST, gxg_fg, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "translation_domain" XG_POST, gxg_translation_domain, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "modifier" XG_POST, gxg_modifier, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "stock_id" XG_POST, gxg_stock_id, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "numeric" XG_POST, gxg_numeric, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "timer_calls" XG_POST, gxg_timer_calls, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "timer_step" XG_POST, gxg_timer_step, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "climb_rate" XG_POST, gxg_climb_rate, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "panel" XG_POST, gxg_panel, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "is_mapped" XG_POST, gxg_is_mapped, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "need_map" XG_POST, gxg_need_map, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "have_size" XG_POST, gxg_have_size, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "focus_in" XG_POST, gxg_focus_in, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "same_app" XG_POST, gxg_same_app, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "xembed_version" XG_POST, gxg_xembed_version, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "plug_widget" XG_POST, gxg_plug_widget, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "plug_window" XG_POST, gxg_plug_window, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "current_height" XG_POST, gxg_current_height, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "current_width" XG_POST, gxg_current_width, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "request_height" XG_POST, gxg_request_height, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "request_width" XG_POST, gxg_request_width, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "have_height" XG_POST, gxg_have_height, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "have_width" XG_POST, gxg_have_width, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "widgets" XG_POST, gxg_widgets, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "rc_context" XG_POST, gxg_rc_context, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "property_values" XG_POST, gxg_property_values, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "queued_settings" XG_POST, gxg_queued_settings, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "info" XG_POST, gxg_info, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "data" XG_POST, gxg_data, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "format" XG_POST, gxg_format, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "window_placement" XG_POST, gxg_window_placement, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "vscrollbar_visible" XG_POST, gxg_vscrollbar_visible, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "hscrollbar_visible" XG_POST, gxg_hscrollbar_visible, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "vscrollbar_policy" XG_POST, gxg_vscrollbar_policy, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "hscrollbar_policy" XG_POST, gxg_hscrollbar_policy, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "vscrollbar" XG_POST, gxg_vscrollbar, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "hscrollbar" XG_POST, gxg_hscrollbar, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "draw_value" XG_POST, gxg_draw_value, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "digits" XG_POST, gxg_digits, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "max_size" XG_POST, gxg_max_size, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "position" XG_POST, gxg_position, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "slider_size" XG_POST, gxg_slider_size, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "ysrc" XG_POST, gxg_ysrc, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "xsrc" XG_POST, gxg_xsrc, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "metric" XG_POST, gxg_metric, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "non_gr_exp_gc" XG_POST, gxg_non_gr_exp_gc, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "backing_store" XG_POST, gxg_backing_store, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "subdivide" XG_POST, gxg_subdivide, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "ruler_scale" XG_POST, gxg_ruler_scale, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pixels_per_unit" XG_POST, gxg_pixels_per_unit, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "abbrev" XG_POST, gxg_abbrev, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "metric_name" XG_POST, gxg_metric_name, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "update_timeout_id" XG_POST, gxg_update_timeout_id, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "slide_initial_coordinate" XG_POST, gxg_slide_initial_coordinate, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "slide_initial_slider_position" XG_POST, gxg_slide_initial_slider_position, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "update_pending" XG_POST, gxg_update_pending, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "trough_click_forward" XG_POST, gxg_trough_click_forward, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "round_digits" XG_POST, gxg_round_digits, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "slider_end" XG_POST, gxg_slider_end, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "slider_start" XG_POST, gxg_slider_start, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "orientation" XG_POST, gxg_orientation, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "min_slider_size" XG_POST, gxg_min_slider_size, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "slider_size_fixed" XG_POST, gxg_slider_size_fixed, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "need_recalc" XG_POST, gxg_need_recalc, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "has_stepper_d" XG_POST, gxg_has_stepper_d, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "has_stepper_c" XG_POST, gxg_has_stepper_c, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "has_stepper_b" XG_POST, gxg_has_stepper_b, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "has_stepper_a" XG_POST, gxg_has_stepper_a, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "flippable" XG_POST, gxg_flippable, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "inverted" XG_POST, gxg_inverted, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "update_policy" XG_POST, gxg_update_policy, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "adjustment" XG_POST, gxg_adjustment, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "modality_group" XG_POST, gxg_modality_group, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "modality_window" XG_POST, gxg_modality_window, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "socket_window" XG_POST, gxg_socket_window, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "child2_resize" XG_POST, gxg_child2_resize, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "child2_shrink" XG_POST, gxg_child2_shrink, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "child1_resize" XG_POST, gxg_child1_resize, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "child1_shrink" XG_POST, gxg_child1_shrink, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "position_set" XG_POST, gxg_position_set, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "max_position" XG_POST, gxg_max_position, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "min_position" XG_POST, gxg_min_position, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "last_allocation" XG_POST, gxg_last_allocation, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "child1_size" XG_POST, gxg_child1_size, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "xor_gc" XG_POST, gxg_xor_gc, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "handle" XG_POST, gxg_handle, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "child2" XG_POST, gxg_child2, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "child1" XG_POST, gxg_child1, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "menu_item" XG_POST, gxg_menu_item, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "flags" XG_POST, gxg_flags, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "child_has_focus" XG_POST, gxg_child_has_focus, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "need_timer" XG_POST, gxg_need_timer, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "click_child" XG_POST, gxg_click_child, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "in_child" XG_POST, gxg_in_child, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "scrollable" XG_POST, gxg_scrollable, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "tab_pos" XG_POST, gxg_tab_pos, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "show_border" XG_POST, gxg_show_border, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "homogeneous" XG_POST, gxg_homogeneous, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "show_tabs" XG_POST, gxg_show_tabs, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "tab_vborder" XG_POST, gxg_tab_vborder, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "tab_hborder" XG_POST, gxg_tab_hborder, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "menu" XG_POST, gxg_menu, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "focus_tab" XG_POST, gxg_focus_tab, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "first_tab" XG_POST, gxg_first_tab, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "cur_page" XG_POST, gxg_cur_page, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "ignore_enter" XG_POST, gxg_ignore_enter, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "menu_flag" XG_POST, gxg_menu_flag, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "ignore_leave" XG_POST, gxg_ignore_leave, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "have_xgrab" XG_POST, gxg_have_xgrab, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "have_grab" XG_POST, gxg_have_grab, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "activate_time" XG_POST, gxg_activate_time, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "parent_menu_shell" XG_POST, gxg_parent_menu_shell, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "active_menu_item" XG_POST, gxg_active_menu_item, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "timer" XG_POST, gxg_timer, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "right_justify" XG_POST, gxg_right_justify, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "submenu_direction" XG_POST, gxg_submenu_direction, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "submenu_placement" XG_POST, gxg_submenu_placement, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "show_submenu_indicator" XG_POST, gxg_show_submenu_indicator, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "accelerator_width" XG_POST, gxg_accelerator_width, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "submenu" XG_POST, gxg_submenu, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "upper_arrow_prelight" XG_POST, gxg_upper_arrow_prelight, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "lower_arrow_visible" XG_POST, gxg_lower_arrow_visible, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "upper_arrow_visible" XG_POST, gxg_upper_arrow_visible, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "scroll_fast" XG_POST, gxg_scroll_fast, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "tearoff_active" XG_POST, gxg_tearoff_active, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "torn_off" XG_POST, gxg_torn_off, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "needs_destruction_ref_count" XG_POST, gxg_needs_destruction_ref_count, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "navigation_timeout" XG_POST, gxg_navigation_timeout, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "navigation_region" XG_POST, gxg_navigation_region, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "timeout_id" XG_POST, gxg_timeout_id, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "scroll_step" XG_POST, gxg_scroll_step, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "saved_scroll_offset" XG_POST, gxg_saved_scroll_offset, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "view_window" XG_POST, gxg_view_window, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "tearoff_adjustment" XG_POST, gxg_tearoff_adjustment, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "tearoff_scrollbar" XG_POST, gxg_tearoff_scrollbar, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "tearoff_hbox" XG_POST, gxg_tearoff_hbox, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "tearoff_window" XG_POST, gxg_tearoff_window, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "toplevel" XG_POST, gxg_toplevel, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "toggle_size" XG_POST, gxg_toggle_size, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "position_func_data" XG_POST, gxg_position_func_data, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "position_func" XG_POST, gxg_position_func, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "accel_path" XG_POST, gxg_accel_path, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "old_active_menu_item" XG_POST, gxg_old_active_menu_item, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "parent_menu_item" XG_POST, gxg_parent_menu_item, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "default_sort_destroy" XG_POST, gxg_default_sort_destroy, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "default_sort_data" XG_POST, gxg_default_sort_data, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "default_sort_func" XG_POST, gxg_default_sort_func, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "column_headers" XG_POST, gxg_column_headers, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "order" XG_POST, gxg_order, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "sort_column_id" XG_POST, gxg_sort_column_id, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "n_columns" XG_POST, gxg_n_columns, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "sort_list" XG_POST, gxg_sort_list, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "tail" XG_POST, gxg_tail, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "root" XG_POST, gxg_root, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "stamp" XG_POST, gxg_stamp, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "freeze_count" XG_POST, gxg_freeze_count, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "scroll_y" XG_POST, gxg_scroll_y, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "scroll_x" XG_POST, gxg_scroll_x, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "visibility" XG_POST, gxg_visibility, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "vadjustment" XG_POST, gxg_vadjustment, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "hadjustment" XG_POST, gxg_hadjustment, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "select_info" XG_POST, gxg_select_info, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "mnemonic_window" XG_POST, gxg_mnemonic_window, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "mnemonic_widget" XG_POST, gxg_mnemonic_widget, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "layout" XG_POST, gxg_layout, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "effective_attrs" XG_POST, gxg_effective_attrs, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "attrs" XG_POST, gxg_attrs, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "mnemonic_keyval" XG_POST, gxg_mnemonic_keyval, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "use_markup" XG_POST, gxg_use_markup, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "wrap" XG_POST, gxg_wrap, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "jtype" XG_POST, gxg_jtype, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "label" XG_POST, gxg_label, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "extra_data" XG_POST, gxg_extra_data, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "item_type" XG_POST, gxg_item_type, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "callback_action" XG_POST, gxg_callback_action, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "callback" XG_POST, gxg_callback, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "accelerator" XG_POST, gxg_accelerator, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "path" XG_POST, gxg_path, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_reserved1" XG_POST, gxg_gtk_reserved1, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "has_user_ref_count" XG_POST, gxg_has_user_ref_count, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "keys_listbox" XG_POST, gxg_keys_listbox, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "keys_list" XG_POST, gxg_keys_list, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "current_device" XG_POST, gxg_current_device, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "axis_items" XG_POST, gxg_axis_items, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "save_button" XG_POST, gxg_save_button, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "close_button" XG_POST, gxg_close_button, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "mode_optionmenu" XG_POST, gxg_mode_optionmenu, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "axis_listbox" XG_POST, gxg_axis_listbox, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "axis_list" XG_POST, gxg_axis_list, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "context_id" XG_POST, gxg_context_id, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "client_window" XG_POST, gxg_client_window, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "slave" XG_POST, gxg_slave, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "image" XG_POST, gxg_image, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "deskoff_y" XG_POST, gxg_deskoff_y, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "deskoff_x" XG_POST, gxg_deskoff_x, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "snap_edge" XG_POST, gxg_snap_edge, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "shrink_on_detach" XG_POST, gxg_shrink_on_detach, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "child_detached" XG_POST, gxg_child_detached, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "float_window_mapped" XG_POST, gxg_float_window_mapped, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "handle_position" XG_POST, gxg_handle_position, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "float_window" XG_POST, gxg_float_window, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "bin_window" XG_POST, gxg_bin_window, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gamma_text" XG_POST, gxg_gamma_text, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gamma_dialog" XG_POST, gxg_gamma_dialog, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gamma" XG_POST, gxg_gamma, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "curve" XG_POST, gxg_curve, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "table" XG_POST, gxg_table, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "label_yalign" XG_POST, gxg_label_yalign, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "label_xalign" XG_POST, gxg_label_xalign, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "label_widget" XG_POST, gxg_label_widget, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "auto_resize" XG_POST, gxg_auto_resize, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "dialog_width" XG_POST, gxg_dialog_width, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "apply_button" XG_POST, gxg_apply_button, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "fontsel" XG_POST, gxg_fontsel, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "face" XG_POST, gxg_face, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "preview_entry" XG_POST, gxg_preview_entry, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "filter_button" XG_POST, gxg_filter_button, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "points_button" XG_POST, gxg_points_button, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pixels_button" XG_POST, gxg_pixels_button, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "size_list" XG_POST, gxg_size_list, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "size_entry" XG_POST, gxg_size_entry, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "face_list" XG_POST, gxg_face_list, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "font_style_entry" XG_POST, gxg_font_style_entry, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "family_list" XG_POST, gxg_family_list, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "font_entry" XG_POST, gxg_font_entry, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "button_area" XG_POST, gxg_button_area, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "fileop_ren_file" XG_POST, gxg_fileop_ren_file, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "fileop_del_file" XG_POST, gxg_fileop_del_file, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "fileop_c_dir" XG_POST, gxg_fileop_c_dir, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "cmpl_state" XG_POST, gxg_cmpl_state, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "fileop_file" XG_POST, gxg_fileop_file, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "fileop_entry" XG_POST, gxg_fileop_entry, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "fileop_dialog" XG_POST, gxg_fileop_dialog, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "history_list" XG_POST, gxg_history_list, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "history_menu" XG_POST, gxg_history_menu, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "history_pulldown" XG_POST, gxg_history_pulldown, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "main_vbox" XG_POST, gxg_main_vbox, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "selection_text" XG_POST, gxg_selection_text, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "selection_entry" XG_POST, gxg_selection_entry, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "file_list" XG_POST, gxg_file_list, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "dir_list" XG_POST, gxg_dir_list, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "width_chars" XG_POST, gxg_width_chars, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "invisible_char" XG_POST, gxg_invisible_char, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "drag_start_y" XG_POST, gxg_drag_start_y, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "drag_start_x" XG_POST, gxg_drag_start_x, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "dnd_position" XG_POST, gxg_dnd_position, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "preedit_cursor" XG_POST, gxg_preedit_cursor, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "preedit_length" XG_POST, gxg_preedit_length, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "n_bytes" XG_POST, gxg_n_bytes, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "text_size" XG_POST, gxg_text_size, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "descent" XG_POST, gxg_descent, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "ascent" XG_POST, gxg_ascent, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "scroll_offset" XG_POST, gxg_scroll_offset, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "recompute_idle" XG_POST, gxg_recompute_idle, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "blink_timeout" XG_POST, gxg_blink_timeout, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "mouse_cursor_obscured" XG_POST, gxg_mouse_cursor_obscured, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "editing_canceled" XG_POST, gxg_editing_canceled, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "is_cell_renderer" XG_POST, gxg_is_cell_renderer, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "in_click" XG_POST, gxg_in_click, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "cursor_visible" XG_POST, gxg_cursor_visible, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "activates_default" XG_POST, gxg_activates_default, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "has_frame" XG_POST, gxg_has_frame, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "need_im_reset" XG_POST, gxg_need_im_reset, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "cache_includes_preedit" XG_POST, gxg_cache_includes_preedit, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "cached_layout" XG_POST, gxg_cached_layout, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "selection_bound" XG_POST, gxg_selection_bound, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "current_pos" XG_POST, gxg_current_pos, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "popup_menu" XG_POST, gxg_popup_menu, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "im_context" XG_POST, gxg_im_context, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "text_area" XG_POST, gxg_text_area, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "text_max_length" XG_POST, gxg_text_max_length, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "text_length" XG_POST, gxg_text_length, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "in_drag" XG_POST, gxg_in_drag, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "overwrite_mode" XG_POST, gxg_overwrite_mode, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "draw_data" XG_POST, gxg_draw_data, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "separator" XG_POST, gxg_separator, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "action_area" XG_POST, gxg_action_area, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "vbox" XG_POST, gxg_vbox, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "num_ctlpoints" XG_POST, gxg_num_ctlpoints, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "point" XG_POST, gxg_point, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "num_points" XG_POST, gxg_num_points, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "last" XG_POST, gxg_last, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "grab_point" XG_POST, gxg_grab_point, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "curve_type" XG_POST, gxg_curve_type, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pixmap" XG_POST, gxg_pixmap, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "max_y" XG_POST, gxg_max_y, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "min_y" XG_POST, gxg_min_y, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "max_x" XG_POST, gxg_max_x, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "min_x" XG_POST, gxg_min_x, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "cursor_type" XG_POST, gxg_cursor_type, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "reallocate_redraws" XG_POST, gxg_reallocate_redraws, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "resize_mode" XG_POST, gxg_resize_mode, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "need_resize" XG_POST, gxg_need_resize, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "border_width" XG_POST, gxg_border_width, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "focus_child" XG_POST, gxg_focus_child, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "activate_id" XG_POST, gxg_activate_id, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "current_button" XG_POST, gxg_current_button, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "use_arrows_always" XG_POST, gxg_use_arrows_always, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "use_arrows" XG_POST, gxg_use_arrows, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "case_sensitive" XG_POST, gxg_case_sensitive, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "ok_if_empty" XG_POST, gxg_ok_if_empty, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "value_in_list" XG_POST, gxg_value_in_list, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "list_change_id" XG_POST, gxg_list_change_id, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "entry_change_id" XG_POST, gxg_entry_change_id, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "list" XG_POST, gxg_list, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "popwin" XG_POST, gxg_popwin, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "popup" XG_POST, gxg_popup, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "entry" XG_POST, gxg_entry, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "help_button" XG_POST, gxg_help_button, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "cancel_button" XG_POST, gxg_cancel_button, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "ok_button" XG_POST, gxg_ok_button, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "colorsel" XG_POST, gxg_colorsel, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "always_show_toggle" XG_POST, gxg_always_show_toggle, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "pixbuf_expander_closed" XG_POST, gxg_pixbuf_expander_closed, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pixbuf_expander_open" XG_POST, gxg_pixbuf_expander_open, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pixbuf" XG_POST, gxg_pixbuf, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "activatable" XG_POST, gxg_activatable, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "active" XG_POST, gxg_active, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "editable_set" XG_POST, gxg_editable_set, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "strikethrough_set" XG_POST, gxg_strikethrough_set, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "rise_set" XG_POST, gxg_rise_set, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "underline_set" XG_POST, gxg_underline_set, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "background_set" XG_POST, gxg_background_set, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "foreground_set" XG_POST, gxg_foreground_set, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "scale_set" XG_POST, gxg_scale_set, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "editable" XG_POST, gxg_editable, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "strikethrough" XG_POST, gxg_strikethrough, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "fixed_height_rows" XG_POST, gxg_fixed_height_rows, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "rise" XG_POST, gxg_rise, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "underline_style" XG_POST, gxg_underline_style, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "extra_attrs" XG_POST, gxg_extra_attrs, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "font_scale" XG_POST, gxg_font_scale, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "font" XG_POST, gxg_font, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "text" XG_POST, gxg_text, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "is_expander" XG_POST, gxg_is_expander, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "visible" XG_POST, gxg_visible, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "ypad" XG_POST, gxg_ypad, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "xpad" XG_POST, gxg_xpad, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "use_stock" XG_POST, gxg_use_stock, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "use_underline" XG_POST, gxg_use_underline, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "relief" XG_POST, gxg_relief, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "button_down" XG_POST, gxg_button_down, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "in_button" XG_POST, gxg_in_button, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "constructed" XG_POST, gxg_constructed, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "activate_timeout" XG_POST, gxg_activate_timeout, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "label_text" XG_POST, gxg_label_text, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "event_window" XG_POST, gxg_event_window, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "spacing" XG_POST, gxg_spacing, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "child" XG_POST, gxg_child, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "shadow_type" XG_POST, gxg_shadow_type, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "arrow_type" XG_POST, gxg_arrow_type, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "obey_child" XG_POST, gxg_obey_child, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "ratio" XG_POST, gxg_ratio, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "yscale" XG_POST, gxg_yscale, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "xscale" XG_POST, gxg_xscale, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "yalign" XG_POST, gxg_yalign, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "xalign" XG_POST, gxg_xalign, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "page_size" XG_POST, gxg_page_size, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "page_increment" XG_POST, gxg_page_increment, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "step_increment" XG_POST, gxg_step_increment, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "value" XG_POST, gxg_value, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "upper" XG_POST, gxg_upper, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "lower" XG_POST, gxg_lower, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "accel_string_width" XG_POST, gxg_accel_string_width, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "accel_string" XG_POST, gxg_accel_string, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "accel_group" XG_POST, gxg_accel_group, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "accel_closure" XG_POST, gxg_accel_closure, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "accel_widget" XG_POST, gxg_accel_widget, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "accel_padding" XG_POST, gxg_accel_padding, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "queue_id" XG_POST, gxg_queue_id, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "priv_accels" XG_POST, gxg_priv_accels, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "n_accels" XG_POST, gxg_n_accels, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "acceleratables" XG_POST, gxg_acceleratables, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "modifier_mask" XG_POST, gxg_modifier_mask, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "lock_count" XG_POST, gxg_lock_count, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "modal_hint" XG_POST, gxg_modal_hint, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "input_only" XG_POST, gxg_input_only, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "guffaw_gravity" XG_POST, gxg_guffaw_gravity, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "resize_count" XG_POST, gxg_resize_count, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "update_freeze_count" XG_POST, gxg_update_freeze_count, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "update_area" XG_POST, gxg_update_area, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "paint_stack" XG_POST, gxg_paint_stack, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "bg_pixmap" XG_POST, gxg_bg_pixmap, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "children" XG_POST, gxg_children, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "filters" XG_POST, gxg_filters, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "extension_events" XG_POST, gxg_extension_events, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "user_data" XG_POST, gxg_user_data, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "parent" XG_POST, gxg_parent, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "impl" XG_POST, gxg_impl, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "win_gravity" XG_POST, gxg_win_gravity, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "max_aspect" XG_POST, gxg_max_aspect, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "min_aspect" XG_POST, gxg_min_aspect, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "height_inc" XG_POST, gxg_height_inc, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "width_inc" XG_POST, gxg_width_inc, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "base_height" XG_POST, gxg_base_height, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "base_width" XG_POST, gxg_base_width, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "max_height" XG_POST, gxg_max_height, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "max_width" XG_POST, gxg_max_width, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "min_height" XG_POST, gxg_min_height, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "min_width" XG_POST, gxg_min_width, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "override_redirect" XG_POST, gxg_override_redirect, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "wmclass_class" XG_POST, gxg_wmclass_class, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "wmclass_name" XG_POST, gxg_wmclass_name, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "cursor" XG_POST, gxg_cursor, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "window_type" XG_POST, gxg_window_type, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "event_mask" XG_POST, gxg_event_mask, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "title" XG_POST, gxg_title, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "blue_prec" XG_POST, gxg_blue_prec, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "blue_shift" XG_POST, gxg_blue_shift, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "blue_mask" XG_POST, gxg_blue_mask, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "green_prec" XG_POST, gxg_green_prec, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "green_shift" XG_POST, gxg_green_shift, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "green_mask" XG_POST, gxg_green_mask, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "red_prec" XG_POST, gxg_red_prec, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "red_shift" XG_POST, gxg_red_shift, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "red_mask" XG_POST, gxg_red_mask, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "bits_per_rgb" XG_POST, gxg_bits_per_rgb, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "colormap_size" XG_POST, gxg_colormap_size, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "y2" XG_POST, gxg_y2, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "x2" XG_POST, gxg_x2, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "y1" XG_POST, gxg_y1, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "x1" XG_POST, gxg_x1, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "info_list" XG_POST, gxg_info_list, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "n_colors" XG_POST, gxg_n_colors, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "level" XG_POST, gxg_level, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "keycode" XG_POST, gxg_keycode, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "keys" XG_POST, gxg_keys, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "num_keys" XG_POST, gxg_num_keys, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "num_axes" XG_POST, gxg_num_axes, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "has_cursor" XG_POST, gxg_has_cursor, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "source" XG_POST, gxg_source, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "mem" XG_POST, gxg_mem, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "bits_per_pixel" XG_POST, gxg_bits_per_pixel, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "bpl" XG_POST, gxg_bpl, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "bpp" XG_POST, gxg_bpp, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "depth" XG_POST, gxg_depth, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "byte_order" XG_POST, gxg_byte_order, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "colormap" XG_POST, gxg_colormap, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "join_style" XG_POST, gxg_join_style, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "cap_style" XG_POST, gxg_cap_style, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "line_style" XG_POST, gxg_line_style, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "line_width" XG_POST, gxg_line_width, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "graphics_exposures" XG_POST, gxg_graphics_exposures, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "clip_y_origin" XG_POST, gxg_clip_y_origin, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "clip_x_origin" XG_POST, gxg_clip_x_origin, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "ts_y_origin" XG_POST, gxg_ts_y_origin, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "ts_x_origin" XG_POST, gxg_ts_x_origin, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "subwindow_mode" XG_POST, gxg_subwindow_mode, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "clip_mask" XG_POST, gxg_clip_mask, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "stipple" XG_POST, gxg_stipple, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "tile" XG_POST, gxg_tile, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "fill" XG_POST, gxg_fill, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "function" XG_POST, gxg_function, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "context" XG_POST, gxg_context, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "new_window_state" XG_POST, gxg_new_window_state, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "changed_mask" XG_POST, gxg_changed_mask, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "name" XG_POST, gxg_name, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "requestor" XG_POST, gxg_requestor, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "property" XG_POST, gxg_property, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "target" XG_POST, gxg_target, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "selection" XG_POST, gxg_selection, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "atom" XG_POST, gxg_atom, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "height" XG_POST, gxg_height, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "width" XG_POST, gxg_width, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "in" XG_POST, gxg_in, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "focus" XG_POST, gxg_focus, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "detail" XG_POST, gxg_detail, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "mode" XG_POST, gxg_mode, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "subwindow" XG_POST, gxg_subwindow, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "group" XG_POST, gxg_group, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "hardware_keycode" XG_POST, gxg_hardware_keycode, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "string" XG_POST, gxg_string, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "length" XG_POST, gxg_length, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "keyval" XG_POST, gxg_keyval, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "direction" XG_POST, gxg_direction, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "button" XG_POST, gxg_button, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "y_root" XG_POST, gxg_y_root, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "x_root" XG_POST, gxg_x_root, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "device" XG_POST, gxg_device, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "is_hint" XG_POST, gxg_is_hint, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "axes" XG_POST, gxg_axes, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "y" XG_POST, gxg_y, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "x" XG_POST, gxg_x, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "time" XG_POST, gxg_time, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "state" XG_POST, gxg_state, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "count" XG_POST, gxg_count, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "region" XG_POST, gxg_region, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "send_event" XG_POST, gxg_send_event, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "window" XG_POST, gxg_window, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "start_time" XG_POST, gxg_start_time, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "action" XG_POST, gxg_action, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "suggested_action" XG_POST, gxg_suggested_action, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "actions" XG_POST, gxg_actions, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "targets" XG_POST, gxg_targets, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "dest_window" XG_POST, gxg_dest_window, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "source_window" XG_POST, gxg_source_window, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "is_source" XG_POST, gxg_is_source, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "protocol" XG_POST, gxg_protocol, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "ref_count" XG_POST, gxg_ref_count, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "type" XG_POST, gxg_type, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "windowing_data" XG_POST, gxg_windowing_data, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "visual" XG_POST, gxg_visual, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "colors" XG_POST, gxg_colors, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "size" XG_POST, gxg_size, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "blue" XG_POST, gxg_blue, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "green" XG_POST, gxg_green, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "red" XG_POST, gxg_red, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pixel" XG_POST, gxg_pixel, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "GdkCursor" XG_POST, gxg_make_GdkCursor, 0, 0, 1, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GdkPoint" XG_POST, gxg_make_GdkPoint, 0, 0, 1, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GdkRectangle" XG_POST, gxg_make_GdkRectangle, 0, 0, 1, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GdkSegment" XG_POST, gxg_make_GdkSegment, 0, 0, 1, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GdkSpan" XG_POST, gxg_make_GdkSpan, 0, 0, 1, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GtkTextIter" XG_POST, gxg_make_GtkTextIter, 0, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GtkTextMark" XG_POST, gxg_make_GtkTextMark, 0, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GtkTextChildAnchor" XG_POST, gxg_make_GtkTextChildAnchor, 0, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "mnemonic_modifier" XG_POST, gxg_mnemonic_modifier, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "keys_changed_handler" XG_POST, gxg_keys_changed_handler, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "frame_bottom" XG_POST, gxg_frame_bottom, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "frame_right" XG_POST, gxg_frame_right, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "frame_top" XG_POST, gxg_frame_top, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "frame_left" XG_POST, gxg_frame_left, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "gravity" XG_POST, gxg_gravity, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "type_hint" XG_POST, gxg_type_hint, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "decorated" XG_POST, gxg_decorated, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "maximize_initially" XG_POST, gxg_maximize_initially, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "stick_initially" XG_POST, gxg_stick_initially, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "iconify_initially" XG_POST, gxg_iconify_initially, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "destroy_with_parent" XG_POST, gxg_destroy_with_parent, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "modal" XG_POST, gxg_modal, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "has_focus" XG_POST, gxg_has_focus, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "need_default_size" XG_POST, gxg_need_default_size, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "need_default_position" XG_POST, gxg_need_default_position, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "configure_notify_received" XG_POST, gxg_configure_notify_received, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "allow_grow" XG_POST, gxg_allow_grow, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "allow_shrink" XG_POST, gxg_allow_shrink, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "configure_request_count" XG_POST, gxg_configure_request_count, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "transient_parent" XG_POST, gxg_transient_parent, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "default_widget" XG_POST, gxg_default_widget, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "focus_widget" XG_POST, gxg_focus_widget, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "wm_role" XG_POST, gxg_wm_role, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "saved_state" XG_POST, gxg_saved_state, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "reorderable" XG_POST, gxg_reorderable, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "maybe_reordered" XG_POST, gxg_maybe_reordered, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "show_sort_indicator" XG_POST, gxg_show_sort_indicator, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "dirty" XG_POST, gxg_dirty, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "clickable" XG_POST, gxg_clickable, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "resizable" XG_POST, gxg_resizable, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "sort_order" XG_POST, gxg_sort_order, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "sort_column_changed_signal" XG_POST, gxg_sort_column_changed_signal, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "sort_clicked_signal" XG_POST, gxg_sort_clicked_signal, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "cell_list" XG_POST, gxg_cell_list, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "drag_y" XG_POST, gxg_drag_y, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "drag_x" XG_POST, gxg_drag_x, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "fixed_width" XG_POST, gxg_fixed_width, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "resized_width" XG_POST, gxg_resized_width, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "button_request" XG_POST, gxg_button_request, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "requested_width" XG_POST, gxg_requested_width, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "column_type" XG_POST, gxg_column_type, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "property_changed_signal" XG_POST, gxg_property_changed_signal, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "editable_widget" XG_POST, gxg_editable_widget, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "alignment" XG_POST, gxg_alignment, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "arrow" XG_POST, gxg_arrow, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "destroy" XG_POST, gxg_destroy, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "user_func" XG_POST, gxg_user_func, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "tree_view" XG_POST, gxg_tree_view, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "reordered_id" XG_POST, gxg_reordered_id, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "deleted_id" XG_POST, gxg_deleted_id, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "has_child_toggled_id" XG_POST, gxg_has_child_toggled_id, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "inserted_id" XG_POST, gxg_inserted_id, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "changed_id" XG_POST, gxg_changed_id, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "zero_ref_count" XG_POST, gxg_zero_ref_count, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "child_model" XG_POST, gxg_child_model, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "child_flags" XG_POST, gxg_child_flags, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "use_sticky_delay" XG_POST, gxg_use_sticky_delay, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "timer_tag" XG_POST, gxg_timer_tag, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "enabled" XG_POST, gxg_enabled, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "delay" XG_POST, gxg_delay, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "tips_data_list" XG_POST, gxg_tips_data_list, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "active_tips_data" XG_POST, gxg_active_tips_data, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "tip_label" XG_POST, gxg_tip_label, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "tip_window" XG_POST, gxg_tip_window, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "tip_text" XG_POST, gxg_tip_text, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "widget" XG_POST, gxg_widget, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "style_set" XG_POST, gxg_style_set, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "icon_size_connection" XG_POST, gxg_icon_size_connection, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "style_set_connection" XG_POST, gxg_style_set_connection, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "button_maxh" XG_POST, gxg_button_maxh, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "button_maxw" XG_POST, gxg_button_maxw, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "tooltips" XG_POST, gxg_tooltips, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "icon_size" XG_POST, gxg_icon_size, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "style" XG_POST, gxg_style, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "num_children" XG_POST, gxg_num_children, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "draw_indicator" XG_POST, gxg_draw_indicator, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "log_attr_cache" XG_POST, gxg_log_attr_cache, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "selection_clipboards" XG_POST, gxg_selection_clipboards, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "clipboard_contents_buffers" XG_POST, gxg_clipboard_contents_buffers, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "btree" XG_POST, gxg_btree, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "tag_table" XG_POST, gxg_tag_table, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "row_spacing" XG_POST, gxg_row_spacing, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "column_spacing" XG_POST, gxg_column_spacing, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "ncols" XG_POST, gxg_ncols, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "nrows" XG_POST, gxg_nrows, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "cols" XG_POST, gxg_cols, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "rows" XG_POST, gxg_rows, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "has_resize_grip" XG_POST, gxg_has_resize_grip, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "grip_window" XG_POST, gxg_grip_window, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "seq_message_id" XG_POST, gxg_seq_message_id, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "seq_context_id" XG_POST, gxg_seq_context_id, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "messages" XG_POST, gxg_messages, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "frame" XG_POST, gxg_frame, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "bottom" XG_POST, gxg_bottom, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "top" XG_POST, gxg_top, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "right" XG_POST, gxg_right, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "left" XG_POST, gxg_left, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "icon_factories" XG_POST, gxg_icon_factories, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "property_cache" XG_POST, gxg_property_cache, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "styles" XG_POST, gxg_styles, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "rc_style" XG_POST, gxg_rc_style, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "attach_count" XG_POST, gxg_attach_count, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "white_gc" XG_POST, gxg_white_gc, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "black_gc" XG_POST, gxg_black_gc, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "text_aa_gc" XG_POST, gxg_text_aa_gc, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "base_gc" XG_POST, gxg_base_gc, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "text_gc" XG_POST, gxg_text_gc, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "mid_gc" XG_POST, gxg_mid_gc, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "dark_gc" XG_POST, gxg_dark_gc, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "light_gc" XG_POST, gxg_light_gc, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "bg_gc" XG_POST, gxg_bg_gc, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "fg_gc" XG_POST, gxg_fg_gc, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "ythickness" XG_POST, gxg_ythickness, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "xthickness" XG_POST, gxg_xthickness, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "font_desc" XG_POST, gxg_font_desc, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "text_aa" XG_POST, gxg_text_aa, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "base" XG_POST, gxg_base, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "mid" XG_POST, gxg_mid, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "dark" XG_POST, gxg_dark, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "light" XG_POST, gxg_light, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "bg" XG_POST, gxg_bg, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "fg" XG_POST, gxg_fg, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "translation_domain" XG_POST, gxg_translation_domain, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "modifier" XG_POST, gxg_modifier, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "stock_id" XG_POST, gxg_stock_id, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "numeric" XG_POST, gxg_numeric, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "timer_calls" XG_POST, gxg_timer_calls, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "timer_step" XG_POST, gxg_timer_step, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "climb_rate" XG_POST, gxg_climb_rate, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "panel" XG_POST, gxg_panel, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "is_mapped" XG_POST, gxg_is_mapped, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "need_map" XG_POST, gxg_need_map, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "have_size" XG_POST, gxg_have_size, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "focus_in" XG_POST, gxg_focus_in, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "same_app" XG_POST, gxg_same_app, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "xembed_version" XG_POST, gxg_xembed_version, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "plug_widget" XG_POST, gxg_plug_widget, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "plug_window" XG_POST, gxg_plug_window, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "current_height" XG_POST, gxg_current_height, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "current_width" XG_POST, gxg_current_width, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "request_height" XG_POST, gxg_request_height, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "request_width" XG_POST, gxg_request_width, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "have_height" XG_POST, gxg_have_height, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "have_width" XG_POST, gxg_have_width, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "widgets" XG_POST, gxg_widgets, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "rc_context" XG_POST, gxg_rc_context, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "property_values" XG_POST, gxg_property_values, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "queued_settings" XG_POST, gxg_queued_settings, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "info" XG_POST, gxg_info, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "data" XG_POST, gxg_data, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "format" XG_POST, gxg_format, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "window_placement" XG_POST, gxg_window_placement, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "vscrollbar_visible" XG_POST, gxg_vscrollbar_visible, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "hscrollbar_visible" XG_POST, gxg_hscrollbar_visible, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "vscrollbar_policy" XG_POST, gxg_vscrollbar_policy, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "hscrollbar_policy" XG_POST, gxg_hscrollbar_policy, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "vscrollbar" XG_POST, gxg_vscrollbar, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "hscrollbar" XG_POST, gxg_hscrollbar, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "draw_value" XG_POST, gxg_draw_value, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "digits" XG_POST, gxg_digits, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "max_size" XG_POST, gxg_max_size, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "position" XG_POST, gxg_position, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "slider_size" XG_POST, gxg_slider_size, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "ysrc" XG_POST, gxg_ysrc, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "xsrc" XG_POST, gxg_xsrc, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "metric" XG_POST, gxg_metric, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "non_gr_exp_gc" XG_POST, gxg_non_gr_exp_gc, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "backing_store" XG_POST, gxg_backing_store, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "subdivide" XG_POST, gxg_subdivide, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "ruler_scale" XG_POST, gxg_ruler_scale, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "pixels_per_unit" XG_POST, gxg_pixels_per_unit, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "abbrev" XG_POST, gxg_abbrev, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "metric_name" XG_POST, gxg_metric_name, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "update_timeout_id" XG_POST, gxg_update_timeout_id, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "slide_initial_coordinate" XG_POST, gxg_slide_initial_coordinate, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "slide_initial_slider_position" XG_POST, gxg_slide_initial_slider_position, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "update_pending" XG_POST, gxg_update_pending, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "trough_click_forward" XG_POST, gxg_trough_click_forward, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "round_digits" XG_POST, gxg_round_digits, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "slider_end" XG_POST, gxg_slider_end, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "slider_start" XG_POST, gxg_slider_start, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "orientation" XG_POST, gxg_orientation, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "min_slider_size" XG_POST, gxg_min_slider_size, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "slider_size_fixed" XG_POST, gxg_slider_size_fixed, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "need_recalc" XG_POST, gxg_need_recalc, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "has_stepper_d" XG_POST, gxg_has_stepper_d, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "has_stepper_c" XG_POST, gxg_has_stepper_c, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "has_stepper_b" XG_POST, gxg_has_stepper_b, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "has_stepper_a" XG_POST, gxg_has_stepper_a, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "flippable" XG_POST, gxg_flippable, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "inverted" XG_POST, gxg_inverted, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "update_policy" XG_POST, gxg_update_policy, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "adjustment" XG_POST, gxg_adjustment, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "modality_group" XG_POST, gxg_modality_group, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "modality_window" XG_POST, gxg_modality_window, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "socket_window" XG_POST, gxg_socket_window, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "child2_resize" XG_POST, gxg_child2_resize, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "child2_shrink" XG_POST, gxg_child2_shrink, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "child1_resize" XG_POST, gxg_child1_resize, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "child1_shrink" XG_POST, gxg_child1_shrink, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "position_set" XG_POST, gxg_position_set, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "max_position" XG_POST, gxg_max_position, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "min_position" XG_POST, gxg_min_position, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "last_allocation" XG_POST, gxg_last_allocation, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "child1_size" XG_POST, gxg_child1_size, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "xor_gc" XG_POST, gxg_xor_gc, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "handle" XG_POST, gxg_handle, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "child2" XG_POST, gxg_child2, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "child1" XG_POST, gxg_child1, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "menu_item" XG_POST, gxg_menu_item, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "flags" XG_POST, gxg_flags, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "child_has_focus" XG_POST, gxg_child_has_focus, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "need_timer" XG_POST, gxg_need_timer, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "click_child" XG_POST, gxg_click_child, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "in_child" XG_POST, gxg_in_child, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "scrollable" XG_POST, gxg_scrollable, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "tab_pos" XG_POST, gxg_tab_pos, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "show_border" XG_POST, gxg_show_border, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "homogeneous" XG_POST, gxg_homogeneous, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "show_tabs" XG_POST, gxg_show_tabs, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "tab_vborder" XG_POST, gxg_tab_vborder, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "tab_hborder" XG_POST, gxg_tab_hborder, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "menu" XG_POST, gxg_menu, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "focus_tab" XG_POST, gxg_focus_tab, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "first_tab" XG_POST, gxg_first_tab, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "cur_page" XG_POST, gxg_cur_page, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "ignore_enter" XG_POST, gxg_ignore_enter, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "menu_flag" XG_POST, gxg_menu_flag, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "ignore_leave" XG_POST, gxg_ignore_leave, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "have_xgrab" XG_POST, gxg_have_xgrab, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "have_grab" XG_POST, gxg_have_grab, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "activate_time" XG_POST, gxg_activate_time, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "parent_menu_shell" XG_POST, gxg_parent_menu_shell, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "active_menu_item" XG_POST, gxg_active_menu_item, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "timer" XG_POST, gxg_timer, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "right_justify" XG_POST, gxg_right_justify, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "submenu_direction" XG_POST, gxg_submenu_direction, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "submenu_placement" XG_POST, gxg_submenu_placement, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "show_submenu_indicator" XG_POST, gxg_show_submenu_indicator, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "accelerator_width" XG_POST, gxg_accelerator_width, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "submenu" XG_POST, gxg_submenu, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "upper_arrow_prelight" XG_POST, gxg_upper_arrow_prelight, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "lower_arrow_visible" XG_POST, gxg_lower_arrow_visible, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "upper_arrow_visible" XG_POST, gxg_upper_arrow_visible, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "scroll_fast" XG_POST, gxg_scroll_fast, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "tearoff_active" XG_POST, gxg_tearoff_active, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "torn_off" XG_POST, gxg_torn_off, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "needs_destruction_ref_count" XG_POST, gxg_needs_destruction_ref_count, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "navigation_timeout" XG_POST, gxg_navigation_timeout, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "navigation_region" XG_POST, gxg_navigation_region, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "timeout_id" XG_POST, gxg_timeout_id, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "scroll_step" XG_POST, gxg_scroll_step, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "saved_scroll_offset" XG_POST, gxg_saved_scroll_offset, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "view_window" XG_POST, gxg_view_window, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "tearoff_adjustment" XG_POST, gxg_tearoff_adjustment, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "tearoff_scrollbar" XG_POST, gxg_tearoff_scrollbar, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "tearoff_hbox" XG_POST, gxg_tearoff_hbox, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "tearoff_window" XG_POST, gxg_tearoff_window, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "toplevel" XG_POST, gxg_toplevel, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "toggle_size" XG_POST, gxg_toggle_size, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "position_func_data" XG_POST, gxg_position_func_data, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "position_func" XG_POST, gxg_position_func, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "accel_path" XG_POST, gxg_accel_path, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "old_active_menu_item" XG_POST, gxg_old_active_menu_item, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "parent_menu_item" XG_POST, gxg_parent_menu_item, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "default_sort_destroy" XG_POST, gxg_default_sort_destroy, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "default_sort_data" XG_POST, gxg_default_sort_data, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "default_sort_func" XG_POST, gxg_default_sort_func, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "column_headers" XG_POST, gxg_column_headers, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "order" XG_POST, gxg_order, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "sort_column_id" XG_POST, gxg_sort_column_id, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "n_columns" XG_POST, gxg_n_columns, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "sort_list" XG_POST, gxg_sort_list, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "tail" XG_POST, gxg_tail, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "root" XG_POST, gxg_root, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "stamp" XG_POST, gxg_stamp, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "freeze_count" XG_POST, gxg_freeze_count, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "scroll_y" XG_POST, gxg_scroll_y, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "scroll_x" XG_POST, gxg_scroll_x, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "visibility" XG_POST, gxg_visibility, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "vadjustment" XG_POST, gxg_vadjustment, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "hadjustment" XG_POST, gxg_hadjustment, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "select_info" XG_POST, gxg_select_info, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "mnemonic_window" XG_POST, gxg_mnemonic_window, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "mnemonic_widget" XG_POST, gxg_mnemonic_widget, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "layout" XG_POST, gxg_layout, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "effective_attrs" XG_POST, gxg_effective_attrs, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "attrs" XG_POST, gxg_attrs, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "mnemonic_keyval" XG_POST, gxg_mnemonic_keyval, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "use_markup" XG_POST, gxg_use_markup, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "wrap" XG_POST, gxg_wrap, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "jtype" XG_POST, gxg_jtype, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "label" XG_POST, gxg_label, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "extra_data" XG_POST, gxg_extra_data, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "item_type" XG_POST, gxg_item_type, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "callback_action" XG_POST, gxg_callback_action, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "callback" XG_POST, gxg_callback, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "accelerator" XG_POST, gxg_accelerator, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "path" XG_POST, gxg_path, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "gtk_reserved1" XG_POST, gxg_gtk_reserved1, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "has_user_ref_count" XG_POST, gxg_has_user_ref_count, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "keys_listbox" XG_POST, gxg_keys_listbox, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "keys_list" XG_POST, gxg_keys_list, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "current_device" XG_POST, gxg_current_device, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "axis_items" XG_POST, gxg_axis_items, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "save_button" XG_POST, gxg_save_button, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "close_button" XG_POST, gxg_close_button, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "mode_optionmenu" XG_POST, gxg_mode_optionmenu, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "axis_listbox" XG_POST, gxg_axis_listbox, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "axis_list" XG_POST, gxg_axis_list, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "context_id" XG_POST, gxg_context_id, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "client_window" XG_POST, gxg_client_window, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "slave" XG_POST, gxg_slave, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "image" XG_POST, gxg_image, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "deskoff_y" XG_POST, gxg_deskoff_y, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "deskoff_x" XG_POST, gxg_deskoff_x, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "snap_edge" XG_POST, gxg_snap_edge, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "shrink_on_detach" XG_POST, gxg_shrink_on_detach, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "child_detached" XG_POST, gxg_child_detached, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "float_window_mapped" XG_POST, gxg_float_window_mapped, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "handle_position" XG_POST, gxg_handle_position, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "float_window" XG_POST, gxg_float_window, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "bin_window" XG_POST, gxg_bin_window, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "gamma_text" XG_POST, gxg_gamma_text, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "gamma_dialog" XG_POST, gxg_gamma_dialog, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "gamma" XG_POST, gxg_gamma, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "curve" XG_POST, gxg_curve, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "table" XG_POST, gxg_table, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "label_yalign" XG_POST, gxg_label_yalign, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "label_xalign" XG_POST, gxg_label_xalign, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "label_widget" XG_POST, gxg_label_widget, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "auto_resize" XG_POST, gxg_auto_resize, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "dialog_width" XG_POST, gxg_dialog_width, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "apply_button" XG_POST, gxg_apply_button, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "fontsel" XG_POST, gxg_fontsel, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "face" XG_POST, gxg_face, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "preview_entry" XG_POST, gxg_preview_entry, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "filter_button" XG_POST, gxg_filter_button, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "points_button" XG_POST, gxg_points_button, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "pixels_button" XG_POST, gxg_pixels_button, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "size_list" XG_POST, gxg_size_list, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "size_entry" XG_POST, gxg_size_entry, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "face_list" XG_POST, gxg_face_list, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "font_style_entry" XG_POST, gxg_font_style_entry, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "family_list" XG_POST, gxg_family_list, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "font_entry" XG_POST, gxg_font_entry, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "button_area" XG_POST, gxg_button_area, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "fileop_ren_file" XG_POST, gxg_fileop_ren_file, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "fileop_del_file" XG_POST, gxg_fileop_del_file, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "fileop_c_dir" XG_POST, gxg_fileop_c_dir, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "cmpl_state" XG_POST, gxg_cmpl_state, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "fileop_file" XG_POST, gxg_fileop_file, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "fileop_entry" XG_POST, gxg_fileop_entry, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "fileop_dialog" XG_POST, gxg_fileop_dialog, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "history_list" XG_POST, gxg_history_list, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "history_menu" XG_POST, gxg_history_menu, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "history_pulldown" XG_POST, gxg_history_pulldown, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "main_vbox" XG_POST, gxg_main_vbox, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "selection_text" XG_POST, gxg_selection_text, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "selection_entry" XG_POST, gxg_selection_entry, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "file_list" XG_POST, gxg_file_list, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "dir_list" XG_POST, gxg_dir_list, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "width_chars" XG_POST, gxg_width_chars, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "invisible_char" XG_POST, gxg_invisible_char, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "drag_start_y" XG_POST, gxg_drag_start_y, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "drag_start_x" XG_POST, gxg_drag_start_x, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "dnd_position" XG_POST, gxg_dnd_position, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "preedit_cursor" XG_POST, gxg_preedit_cursor, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "preedit_length" XG_POST, gxg_preedit_length, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "n_bytes" XG_POST, gxg_n_bytes, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "text_size" XG_POST, gxg_text_size, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "descent" XG_POST, gxg_descent, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "ascent" XG_POST, gxg_ascent, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "scroll_offset" XG_POST, gxg_scroll_offset, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "recompute_idle" XG_POST, gxg_recompute_idle, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "blink_timeout" XG_POST, gxg_blink_timeout, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "mouse_cursor_obscured" XG_POST, gxg_mouse_cursor_obscured, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "editing_canceled" XG_POST, gxg_editing_canceled, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "is_cell_renderer" XG_POST, gxg_is_cell_renderer, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "in_click" XG_POST, gxg_in_click, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "cursor_visible" XG_POST, gxg_cursor_visible, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "activates_default" XG_POST, gxg_activates_default, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "has_frame" XG_POST, gxg_has_frame, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "need_im_reset" XG_POST, gxg_need_im_reset, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "cache_includes_preedit" XG_POST, gxg_cache_includes_preedit, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "cached_layout" XG_POST, gxg_cached_layout, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "selection_bound" XG_POST, gxg_selection_bound, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "current_pos" XG_POST, gxg_current_pos, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "popup_menu" XG_POST, gxg_popup_menu, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "im_context" XG_POST, gxg_im_context, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "text_area" XG_POST, gxg_text_area, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "text_max_length" XG_POST, gxg_text_max_length, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "text_length" XG_POST, gxg_text_length, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "in_drag" XG_POST, gxg_in_drag, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "overwrite_mode" XG_POST, gxg_overwrite_mode, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "draw_data" XG_POST, gxg_draw_data, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "separator" XG_POST, gxg_separator, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "action_area" XG_POST, gxg_action_area, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "vbox" XG_POST, gxg_vbox, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "num_ctlpoints" XG_POST, gxg_num_ctlpoints, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "point" XG_POST, gxg_point, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "num_points" XG_POST, gxg_num_points, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "last" XG_POST, gxg_last, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "grab_point" XG_POST, gxg_grab_point, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "curve_type" XG_POST, gxg_curve_type, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "pixmap" XG_POST, gxg_pixmap, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "max_y" XG_POST, gxg_max_y, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "min_y" XG_POST, gxg_min_y, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "max_x" XG_POST, gxg_max_x, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "min_x" XG_POST, gxg_min_x, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "cursor_type" XG_POST, gxg_cursor_type, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "reallocate_redraws" XG_POST, gxg_reallocate_redraws, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "resize_mode" XG_POST, gxg_resize_mode, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "need_resize" XG_POST, gxg_need_resize, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "border_width" XG_POST, gxg_border_width, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "focus_child" XG_POST, gxg_focus_child, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "activate_id" XG_POST, gxg_activate_id, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "current_button" XG_POST, gxg_current_button, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "use_arrows_always" XG_POST, gxg_use_arrows_always, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "use_arrows" XG_POST, gxg_use_arrows, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "case_sensitive" XG_POST, gxg_case_sensitive, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "ok_if_empty" XG_POST, gxg_ok_if_empty, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "value_in_list" XG_POST, gxg_value_in_list, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "list_change_id" XG_POST, gxg_list_change_id, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "entry_change_id" XG_POST, gxg_entry_change_id, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "list" XG_POST, gxg_list, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "popwin" XG_POST, gxg_popwin, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "popup" XG_POST, gxg_popup, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "entry" XG_POST, gxg_entry, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "help_button" XG_POST, gxg_help_button, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "cancel_button" XG_POST, gxg_cancel_button, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "ok_button" XG_POST, gxg_ok_button, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "colorsel" XG_POST, gxg_colorsel, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "always_show_toggle" XG_POST, gxg_always_show_toggle, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "pixbuf_expander_closed" XG_POST, gxg_pixbuf_expander_closed, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "pixbuf_expander_open" XG_POST, gxg_pixbuf_expander_open, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "pixbuf" XG_POST, gxg_pixbuf, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "activatable" XG_POST, gxg_activatable, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "active" XG_POST, gxg_active, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "editable_set" XG_POST, gxg_editable_set, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "strikethrough_set" XG_POST, gxg_strikethrough_set, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "rise_set" XG_POST, gxg_rise_set, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "underline_set" XG_POST, gxg_underline_set, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "background_set" XG_POST, gxg_background_set, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "foreground_set" XG_POST, gxg_foreground_set, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "scale_set" XG_POST, gxg_scale_set, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "editable" XG_POST, gxg_editable, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "strikethrough" XG_POST, gxg_strikethrough, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "fixed_height_rows" XG_POST, gxg_fixed_height_rows, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "rise" XG_POST, gxg_rise, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "underline_style" XG_POST, gxg_underline_style, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "extra_attrs" XG_POST, gxg_extra_attrs, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "font_scale" XG_POST, gxg_font_scale, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "font" XG_POST, gxg_font, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "text" XG_POST, gxg_text, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "is_expander" XG_POST, gxg_is_expander, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "visible" XG_POST, gxg_visible, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "ypad" XG_POST, gxg_ypad, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "xpad" XG_POST, gxg_xpad, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "use_stock" XG_POST, gxg_use_stock, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "use_underline" XG_POST, gxg_use_underline, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "relief" XG_POST, gxg_relief, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "button_down" XG_POST, gxg_button_down, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "in_button" XG_POST, gxg_in_button, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "constructed" XG_POST, gxg_constructed, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "activate_timeout" XG_POST, gxg_activate_timeout, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "label_text" XG_POST, gxg_label_text, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "event_window" XG_POST, gxg_event_window, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "spacing" XG_POST, gxg_spacing, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "child" XG_POST, gxg_child, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "shadow_type" XG_POST, gxg_shadow_type, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "arrow_type" XG_POST, gxg_arrow_type, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "obey_child" XG_POST, gxg_obey_child, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "ratio" XG_POST, gxg_ratio, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "yscale" XG_POST, gxg_yscale, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "xscale" XG_POST, gxg_xscale, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "yalign" XG_POST, gxg_yalign, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "xalign" XG_POST, gxg_xalign, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "page_size" XG_POST, gxg_page_size, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "page_increment" XG_POST, gxg_page_increment, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "step_increment" XG_POST, gxg_step_increment, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "value" XG_POST, gxg_value, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "upper" XG_POST, gxg_upper, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "lower" XG_POST, gxg_lower, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "accel_string_width" XG_POST, gxg_accel_string_width, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "accel_string" XG_POST, gxg_accel_string, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "accel_group" XG_POST, gxg_accel_group, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "accel_closure" XG_POST, gxg_accel_closure, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "accel_widget" XG_POST, gxg_accel_widget, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "accel_padding" XG_POST, gxg_accel_padding, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "queue_id" XG_POST, gxg_queue_id, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "priv_accels" XG_POST, gxg_priv_accels, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "n_accels" XG_POST, gxg_n_accels, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "acceleratables" XG_POST, gxg_acceleratables, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "modifier_mask" XG_POST, gxg_modifier_mask, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "lock_count" XG_POST, gxg_lock_count, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "modal_hint" XG_POST, gxg_modal_hint, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "input_only" XG_POST, gxg_input_only, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "guffaw_gravity" XG_POST, gxg_guffaw_gravity, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "resize_count" XG_POST, gxg_resize_count, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "update_freeze_count" XG_POST, gxg_update_freeze_count, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "update_area" XG_POST, gxg_update_area, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "paint_stack" XG_POST, gxg_paint_stack, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "bg_pixmap" XG_POST, gxg_bg_pixmap, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "children" XG_POST, gxg_children, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "filters" XG_POST, gxg_filters, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "extension_events" XG_POST, gxg_extension_events, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "user_data" XG_POST, gxg_user_data, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "parent" XG_POST, gxg_parent, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "impl" XG_POST, gxg_impl, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "win_gravity" XG_POST, gxg_win_gravity, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "max_aspect" XG_POST, gxg_max_aspect, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "min_aspect" XG_POST, gxg_min_aspect, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "height_inc" XG_POST, gxg_height_inc, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "width_inc" XG_POST, gxg_width_inc, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "base_height" XG_POST, gxg_base_height, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "base_width" XG_POST, gxg_base_width, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "max_height" XG_POST, gxg_max_height, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "max_width" XG_POST, gxg_max_width, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "min_height" XG_POST, gxg_min_height, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "min_width" XG_POST, gxg_min_width, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "override_redirect" XG_POST, gxg_override_redirect, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "wmclass_class" XG_POST, gxg_wmclass_class, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "wmclass_name" XG_POST, gxg_wmclass_name, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "cursor" XG_POST, gxg_cursor, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "window_type" XG_POST, gxg_window_type, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "event_mask" XG_POST, gxg_event_mask, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "title" XG_POST, gxg_title, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "blue_prec" XG_POST, gxg_blue_prec, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "blue_shift" XG_POST, gxg_blue_shift, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "blue_mask" XG_POST, gxg_blue_mask, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "green_prec" XG_POST, gxg_green_prec, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "green_shift" XG_POST, gxg_green_shift, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "green_mask" XG_POST, gxg_green_mask, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "red_prec" XG_POST, gxg_red_prec, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "red_shift" XG_POST, gxg_red_shift, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "red_mask" XG_POST, gxg_red_mask, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "bits_per_rgb" XG_POST, gxg_bits_per_rgb, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "colormap_size" XG_POST, gxg_colormap_size, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "y2" XG_POST, gxg_y2, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "x2" XG_POST, gxg_x2, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "y1" XG_POST, gxg_y1, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "x1" XG_POST, gxg_x1, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "info_list" XG_POST, gxg_info_list, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "n_colors" XG_POST, gxg_n_colors, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "level" XG_POST, gxg_level, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "keycode" XG_POST, gxg_keycode, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "keys" XG_POST, gxg_keys, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "num_keys" XG_POST, gxg_num_keys, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "num_axes" XG_POST, gxg_num_axes, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "has_cursor" XG_POST, gxg_has_cursor, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "source" XG_POST, gxg_source, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "mem" XG_POST, gxg_mem, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "bits_per_pixel" XG_POST, gxg_bits_per_pixel, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "bpl" XG_POST, gxg_bpl, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "bpp" XG_POST, gxg_bpp, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "depth" XG_POST, gxg_depth, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "byte_order" XG_POST, gxg_byte_order, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "colormap" XG_POST, gxg_colormap, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "join_style" XG_POST, gxg_join_style, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "cap_style" XG_POST, gxg_cap_style, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "line_style" XG_POST, gxg_line_style, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "line_width" XG_POST, gxg_line_width, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "graphics_exposures" XG_POST, gxg_graphics_exposures, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "clip_y_origin" XG_POST, gxg_clip_y_origin, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "clip_x_origin" XG_POST, gxg_clip_x_origin, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "ts_y_origin" XG_POST, gxg_ts_y_origin, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "ts_x_origin" XG_POST, gxg_ts_x_origin, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "subwindow_mode" XG_POST, gxg_subwindow_mode, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "clip_mask" XG_POST, gxg_clip_mask, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "stipple" XG_POST, gxg_stipple, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "tile" XG_POST, gxg_tile, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "fill" XG_POST, gxg_fill, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "function" XG_POST, gxg_function, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "context" XG_POST, gxg_context, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "new_window_state" XG_POST, gxg_new_window_state, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "changed_mask" XG_POST, gxg_changed_mask, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "name" XG_POST, gxg_name, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "requestor" XG_POST, gxg_requestor, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "property" XG_POST, gxg_property, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "target" XG_POST, gxg_target, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "selection" XG_POST, gxg_selection, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "atom" XG_POST, gxg_atom, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "height" XG_POST, gxg_height, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "width" XG_POST, gxg_width, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "in" XG_POST, gxg_in, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "focus" XG_POST, gxg_focus, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "detail" XG_POST, gxg_detail, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "mode" XG_POST, gxg_mode, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "subwindow" XG_POST, gxg_subwindow, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "group" XG_POST, gxg_group, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "hardware_keycode" XG_POST, gxg_hardware_keycode, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "string" XG_POST, gxg_string, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "length" XG_POST, gxg_length, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "keyval" XG_POST, gxg_keyval, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "direction" XG_POST, gxg_direction, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "button" XG_POST, gxg_button, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "y_root" XG_POST, gxg_y_root, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "x_root" XG_POST, gxg_x_root, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "device" XG_POST, gxg_device, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "is_hint" XG_POST, gxg_is_hint, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "axes" XG_POST, gxg_axes, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "y" XG_POST, gxg_y, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "x" XG_POST, gxg_x, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "time" XG_POST, gxg_time, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "state" XG_POST, gxg_state, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "count" XG_POST, gxg_count, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "region" XG_POST, gxg_region, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "send_event" XG_POST, gxg_send_event, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "window" XG_POST, gxg_window, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "start_time" XG_POST, gxg_start_time, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "action" XG_POST, gxg_action, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "suggested_action" XG_POST, gxg_suggested_action, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "actions" XG_POST, gxg_actions, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "targets" XG_POST, gxg_targets, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "dest_window" XG_POST, gxg_dest_window, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "source_window" XG_POST, gxg_source_window, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "is_source" XG_POST, gxg_is_source, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "protocol" XG_POST, gxg_protocol, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "ref_count" XG_POST, gxg_ref_count, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "type" XG_POST, gxg_type, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "windowing_data" XG_POST, gxg_windowing_data, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "visual" XG_POST, gxg_visual, 1, 0, 0, NULL);
+#endif
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "colors" XG_POST, gxg_colors, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "size" XG_POST, gxg_size, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "blue" XG_POST, gxg_blue, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "green" XG_POST, gxg_green, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "red" XG_POST, gxg_red, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "pixel" XG_POST, gxg_pixel, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "GdkCursor" XG_POST, gxg_make_GdkCursor, 0, 0, 1, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "GdkPoint" XG_POST, gxg_make_GdkPoint, 0, 0, 1, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "GdkRectangle" XG_POST, gxg_make_GdkRectangle, 0, 0, 1, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "GdkSegment" XG_POST, gxg_make_GdkSegment, 0, 0, 1, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "GdkSpan" XG_POST, gxg_make_GdkSpan, 0, 0, 1, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "GtkTextIter" XG_POST, gxg_make_GtkTextIter, 0, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "GtkTextMark" XG_POST, gxg_make_GtkTextMark, 0, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "GtkTextChildAnchor" XG_POST, gxg_make_GtkTextChildAnchor, 0, 0, 0, NULL);
 #endif
 
 }
@@ -34128,7 +34131,7 @@ static int xg_already_inited = 0;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"02-Jun-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"19-Jul-02\")");
 #endif
       xg_already_inited = 1;
     }

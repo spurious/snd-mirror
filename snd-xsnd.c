@@ -1337,6 +1337,11 @@ void unlock_apply(snd_state *ss, snd_info *sp)
  *   have a resize callback, and no obvious way to advise the resize mechanism.
  *   An attempt to get the same effect by wrapping w_pane in a drawingarea widget
  *   ran into other troubles (the thing is seriously confused about its size).
+ *   You'd naively think the Actions "Start" and "Commit" could be used, since
+ *   and XtActions are list of XtActionProcs, but I can't find a way to add
+ *   my action without deactivating the built-in action of the same name --
+ *   XtAugmentTranslations ignores new actions if the old exists, XtOverride
+ *   replaces the old, XtAddActions ignores all after the first etc.
  *
  * so... drop down into the sashes...(using undocumented stuff throughout this code)
  */

@@ -4819,7 +4819,7 @@ static mus_output_class SAMPLE2FILE_OUTPUT_CLASS = {
 
 int mus_sample2file_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_SAMPLE2FILE));}
 
-mus_any *mus_make_sample2file_with_comment_1(const char *filename, int out_chans, int out_format, int out_type, const char *comment, int reopen)
+static mus_any *mus_make_sample2file_with_comment_1(const char *filename, int out_chans, int out_format, int out_type, const char *comment, int reopen)
 {
   rdout *gen;
   int i, fd;

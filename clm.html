@@ -120,7 +120,20 @@ To get an arpeggio:</p>
       (loop for i from 0 to 7 do
         (fm-violin (* i .25) .5 (* 100 (1+ i)) .1))) 
 </pre>
-<p><a href="clm-example.lisp">clm-example.lisp</a> shows how to create such a note list algorithmically.</p>
+<p><a href="clm-example.lisp">clm-example.lisp</a> shows how to create such a note list algorithmically.
+To listen to the last computed sound again:
+</p>
+<pre>
+(dac)
+</pre>
+<p>or, if you have some saved sound file:
+</p>
+<pre>
+(dac "a-great.snd")
+</pre>
+<p>"dac" is jargon, but the function name "play" was already in use way back in the
+dark ages when CLM emerged into the light.
+</p>
 
 <p>Although you can use CLM simply as a bunch of canned functions, it's a lot more
 fun to make your own.  In CLM, these are called "generators" and "instruments", and a sequence of
@@ -236,6 +249,27 @@ various different situations.  In this case, our envelope is a ramp up
 to the middle of the note, then a ramp down to 0.  <a href="#make-env">Make-env</a>
 packages up the envelope information, pre-computing increments and so
 on.  The envelope is then actually applied by calling <a href="#env">env</a>.</p>
+
+<p>If you make a change to an instrument, just recompile and reload it to
+use the changed version; there's no need to restart lisp, or unload the old version (in most
+lisps there's actually no way to unload it).
+</p>
+<p>In Scheme/Snd, the exact same sequence can be used: with-sound
+has the same syntax, and the run macro optimizes compute speed.  The main
+difference is that "definstrument" is "define", and "loop" may not be supported,
+so our "simp" instrument becomes:
+</p>
+<pre>
+(define (simp start-time duration frequency amplitude)
+  (let* ((beg (inexact->exact (floor (* start-time (mus-srate)))))
+         (dur (inexact->exact (floor (* duration (mus-srate)))))
+         (s (make-oscil :frequency frequency)))
+    (run
+      (do ((i 0 (1+ i)))
+          ((= i dur))
+        (outa (+ i beg) (* amplitude (oscil s)))))))
+</pre>
+
 <br>
 
 
