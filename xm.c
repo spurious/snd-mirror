@@ -7,10 +7,11 @@
   #include <config.h>
 #endif
 
-#define XM_DATE "10-June-03"
+#define XM_DATE "23-June-03"
 
 
 /* HISTORY: 
+ *   23-June:   Motif 1 fixups.
  *   10-June:   added XmCvtByteStreamToXmString, XmCvtXmStringToByteStream, XmStringByteStreamLength.
                 removed XFreeStringList (a no-op).
  *   20-May:    showValue resource is int (enumeration) in Motif 2.  resizeWidth|Height are booleans, not ints.
@@ -137,6 +138,11 @@
 
 #if WITH_GTK_AND_X11
   #include "xg-x11.h"
+#endif
+
+#if (XmVERSION == 1) && (HAVE_XM_XP)
+  #undef HAVE_XM_XP
+  #define HAVE_XM_XP 0
 #endif
 
 #define XtIsSubClass XtIsSubclass
@@ -18603,14 +18609,13 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmProcessTraversal, gxm_XmProcessTraversal, 2, 0, 0, H_XmProcessTraversal);
   XM_DEFINE_PROCEDURE(XmCreateMenuShell, gxm_XmCreateMenuShell, 3, 1, 0, H_XmCreateMenuShell);
 
-  XM_DEFINE_PROCEDURE(XmCvtXmStringToByteStream, gxm_XmCvtXmStringToByteStream, 1, 0, 0, H_XmCvtXmStringToByteStream);
-  XM_DEFINE_PROCEDURE(XmCvtByteStreamToXmString, gxm_XmCvtByteStreamToXmString, 1, 0, 0, H_XmCvtByteStreamToXmString);
-  XM_DEFINE_PROCEDURE(XmStringByteStreamLength, gxm_XmStringByteStreamLength, 1, 0, 0, H_XmStringByteStreamLength);
-
   XM_DEFINE_PROCEDURE(XmIsMessageBox, gxm_XmIsMessageBox, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmIsArrowButtonGadget, gxm_XmIsArrowButtonGadget, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmIsArrowButton, gxm_XmIsArrowButton, 1, 0, 0, NULL);
 #if MOTIF_2
+  XM_DEFINE_PROCEDURE(XmCvtXmStringToByteStream, gxm_XmCvtXmStringToByteStream, 1, 0, 0, H_XmCvtXmStringToByteStream);
+  XM_DEFINE_PROCEDURE(XmCvtByteStreamToXmString, gxm_XmCvtByteStreamToXmString, 1, 0, 0, H_XmCvtByteStreamToXmString);
+  XM_DEFINE_PROCEDURE(XmStringByteStreamLength, gxm_XmStringByteStreamLength, 1, 0, 0, H_XmStringByteStreamLength);
   XM_DEFINE_PROCEDURE(XmIsNotebook, gxm_XmIsNotebook, 1, 0, 0, NULL);
 #if HAVE_XM_XP
   XM_DEFINE_PROCEDURE(XmIsPrintShell, gxm_XmIsPrintShell, 1, 0, 0, NULL);

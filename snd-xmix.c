@@ -4,6 +4,17 @@
  * TODO: add a sync button to affect all of track?  Also need a way to display all related mixes at once (panning etc)
  *       this matters in syncd multichannel cases -- if beg reset, only current is moved etc
  */
+/* TODO: add next/previous mix (spin box?) and next/previous mix-in-current-track */
+/* TODO: multiple mix panels */
+/* TODO: "apply env" insensitive if no-op?
+ *       "amp 0" -> "amp" if mono
+ *       frame around track, play->track play
+ *       play icon on left for mix as opposed to track
+ *       waveform in amp env as in enved
+ *       if panned-sync, some indication
+ *       new track (unused track) button?, perhaps info button to show current members?
+ *       show mix properties? show recipient sound name?
+ */
 
 static Widget mix_panel = NULL;
 static int dragging = FALSE;
@@ -388,7 +399,7 @@ static void apply_mix_panel_callback(Widget w, XtPointer context, XtPointer info
   envs = mix_panel_envs(mix_id);
   for (i = 0; i < chans - 1; i++)
     set_mix_amp_env_without_edit(mix_id, i, envs[i]);
-  set_mix_amp_env(mix_id, chans - 1, envs[chans - 1]);
+  set_mix_amp_env_from_gui(mix_id, chans - 1, envs[chans - 1]);
 }
 
 static void dismiss_mix_panel_callback(Widget w, XtPointer context, XtPointer info) 

@@ -1,9 +1,9 @@
 ;;; support for "tracks" in Snd and various mix-related utilities
 ;;;
 ;;; (mix-name->id name) given name of mix return id
-;;; (pan-mix file frame envelope) mixes file into current (stereo) sound starting at frame using envelope to pan (0: all chan 0, 1: all chan 1)
+;;; (pan-mix file frame envelope) mixes file into current sound starting at frame using envelope to pan (0: all chan 0, 1: all chan 1)
 ;;; (mix->vct id) return mix data in vct
-;;; (snap-mix-to-beat) forces dragged mix to end up on a beat
+;;; (snap-mix-to-beat (at-anchor)) forces dragged mix to end up on a beat
 ;;; (delete-mix id) removes mix (can be undone)
 ;;; (delete-all-mixes) removes all mixes
 ;;;
@@ -113,28 +113,133 @@
      (throw 'no-such-mix (list "mix-name->id" name)))))
 
 
-(define (pan-mix name start envelope)
 
-  "(pan-mix file start envelope) mixes file into current (stereo) sound \
-starting at start (a frame number) using envelope to pan (0: all chan 0, 1: all chan 1).\n\
-(pan-mix \"oboe.snd\" .1 '(0 0 1 1)) goes from all chan 0 to all chan 1"
+;;; -------- pan-mix --------
 
-  (let* ((index (or (selected-sound) (car (sounds))))
-	 (beg (inexact->exact (* start (srate index)))))
-    (if (= (chans index) 2)
-	(letrec ((invert-envelope (lambda (env)
-				    (cond ((null? env) '())
-					  ((cons (car env) 
-						 (cons (- 1.0 (cadr env)) 
-						       (invert-envelope (cddr env))))))))
-		 (mix-0 (mix name beg 0 index 0))
-		 (mix-1 (mix name beg 0 index 1)))
-	  (as-one-edit
-	   (lambda ()
-	     (set! (mix-amp-env mix-0 0) (invert-envelope envelope))
-	     (set! (mix-amp-env mix-1 0) envelope))))
-	(throw 'wrong-number-of-channels (list "pan-mix" name start envelope)))))
+(define (invert-envelope env)
+  (if (null? env) 
+      '()
+      (cons (car env) 
+	    (cons (- 1.0 (cadr env)) 
+		  (invert-envelope (cddr env))))))
 
+(define (sync-mix-amp-changes id)
+  (let ((chan-prop (mix-property 'channel id)))
+    (if chan-prop
+	(let ((other-mix (car chan-prop))
+	      (other-chan (cadr chan-prop)))
+	  (if (= other-mix id)
+	      (let ((chan (cadr (mix-home id))))
+		(set! (mix-amp id (if (= chan 0) 1 0)) (- 1.0 (mix-amp id chan))))
+	      (set! (mix-amp other-mix other-chan) (- 1.0 (mix-amp id 0))))))
+    #f))
+
+(define (sync-mix-amp-env-changes id)
+  (let ((chan-prop (mix-property 'channel id)))
+    (if chan-prop
+	(let ((other-mix (car chan-prop))
+	      (other-chan (cadr chan-prop)))
+	  (if (= other-mix id)
+	      (let ((chan (cadr (mix-home id))))
+		(set! (mix-amp-env other-mix (if (= chan 0) 1 0)) (invert-envelope (mix-amp-env id chan))))
+	      (set! (mix-amp-env other-mix other-chan) (invert-envelope (mix-amp-env id 0))))))
+    #f))
+
+
+(define* (pan-mix name #:optional (beg 0) (envelope 1.0) snd)
+  "(pan-mix file (start 0) (envelope 1.0) snd) mixes 'file' into the sound 'snd' \
+starting at start (in samples) using 'envelope' to pan (0: all chan 0, 1: all chan 1).\
+So, (pan-mix \"oboe.snd\" .1 '(0 0 1 1)) goes from all chan 0 to all chan 1.  If\
+the variable with-tags is #t, the resultant mixes are syncd together, and \
+the envelope is reflected in each channel's mix-amp-env; if you subsequently \
+change one channel's envelope, the other is automatically reset as well.\
+If 'envelope' is a scaler, it represents the channel 0 scaler; 1.0 - amp is\
+the channel 1 scaler, and a subsquent set! of either mix-amp is reflected\
+in the other channel."
+
+  (let ((index (or snd (selected-sound) (and (sounds) (car (sounds))))))
+    (if (not (sound? index))
+	(throw 'no-such-sound (list "pan-mix" snd)))
+    (if (not (file-exists? name))
+	(throw 'no-such-file (list "pan-mix" name)))
+    (let ((incoming-chans (mus-sound-chans name))
+	  (receiving-chans (chans index))
+	  (old-sync (sync index))
+	  (inverted-envelope
+	   (if (list? envelope)
+	       (invert-envelope envelope)
+	       (- 1.0 envelope)))
+	  (mix-func (if (list? envelope) mix-amp-env mix-amp)))
+      (if (or (> receiving-chans 1)
+	      (> incoming-chans 1))
+	  (begin
+	    (if (not (hook-member multichannel-mix-moved mix-dragged-hook))
+		(add-hook! mix-dragged-hook multichannel-mix-moved))
+	    (if (not (hook-member sync-mix-amp-changes mix-amp-changed-hook))
+		(add-hook! mix-amp-changed-hook sync-mix-amp-changes))
+	    (if (not (hook-member sync-mix-amp-env-changes mix-amp-env-changed-hook))
+		(add-hook! mix-amp-env-changed-hook sync-mix-amp-env-changes))
+	    (if (not (hook-member multichannel-mix-resampled mix-speed-changed-hook))
+		(add-hook! mix-speed-changed-hook multichannel-mix-resampled))))
+      (if (= receiving-chans 1)
+	  (if (= incoming-chans 1)
+	      (let ((id (mix name beg 0 index 0)))
+		(if (list? envelope)
+		    (set! (mix-amp-env id 0) envelope)
+		    (set! (mix-amp id 0) envelope)))
+	      (if (= incoming-chans 2)
+		  (as-one-edit
+		   (lambda ()
+		     (let ((mix0 (mix name beg 0 index)))
+		       (set! (mix-func mix0 0) envelope)
+		       (set! (mix-func mix0 1) inverted-envelope)
+		       (if (with-mix-tags)
+			   (set! (mix-property 'channel mix0) (list mix0 0))))))
+		  (snd-warn "too many incoming chans")))
+	  (if (= receiving-chans 2)
+	      (if (= incoming-chans 1)
+		  (dynamic-wind
+		   (lambda ()
+		     (set! (sync index) #f))
+		   (lambda ()
+		     (as-one-edit
+		      (lambda ()
+			(let ((mix0 (mix name beg 0 index 0))
+			      (mix1 (mix name beg 0 index 1)))
+			  (set! (mix-func mix0 0) envelope)
+			  (set! (mix-func mix1 0) inverted-envelope)
+			  (if (with-mix-tags)
+			      (let ((trk (unused-track))) ; needed for position and speed changes
+				(set! (mix-sync mix0) trk)
+				(set! (mix-sync mix1) trk)
+				(set! (mix-property 'channel mix0) (list mix1 0))
+				(set! (mix-property 'channel mix1) (list mix0 0))))))))
+		   (lambda ()
+		     (set! (sync index) old-sync)))
+		  (if (= incoming-chans 2)
+		      (let ((new-sync 0))
+			(for-each (lambda (s) (if (>= (sync s) new-sync) (set! new-sync (1+ (sync s))))) (sounds))
+			(dynamic-wind
+			 (lambda ()
+			   (set! (sync index) new-sync))
+			 (lambda ()
+			   (as-one-edit
+			    (lambda ()
+			      (let* ((mix0 (mix name beg #f index))
+				     (mix1 (1+ mix0)))
+				(set! (mix-func mix0 0) envelope)
+				(set! (mix-func mix1 1) inverted-envelope)
+				(if (with-mix-tags)
+				    (let ((trk (unused-track)))
+				      (set! (mix-sync mix0) trk)
+				      (set! (mix-sync mix1) trk)
+				      (set! (mix-property 'channel mix0) (list mix1 1))
+				      (set! (mix-property 'channel mix1) (list mix0 0))))))))
+			 (lambda ()
+			   (set! (sync index) old-sync))))
+		      (snd-warn "too many incoming chans")))
+	      (snd-warn "too many receiving chans"))))))
+  
 
 (define (mix->vct id)
   "(mix->vct id) returns mix's data in vct"
@@ -150,11 +255,12 @@ starting at start (a frame number) using envelope to pan (0: all chan 0, 1: all 
       (throw 'no-such-mix (list "mix->vct" id))))
 	  
 
-(define (snap-mix-to-beat)
+(define* (snap-mix-to-beat #:optional (at-anchor #f))
   "(snap-mix-to-beat) forces a dragged mix to end up on a beat (see beats-per-minute).  reset mix-dragged-hook to cancel"
   (add-hook! mix-dragged-hook
 	     (lambda (id samps-moved)
-	       (let* ((samp (+ samps-moved (mix-position id)))
+	       (let* ((offset (if at-anchor (mix-anchor id) 0))
+		      (samp (+ samps-moved (mix-position id) offset))
 		      (snd (car (mix-home id)))
 		      (chn (cadr (mix-home id)))
 		      (bps (/ (beats-per-minute snd chn) 60.0))
@@ -164,8 +270,8 @@ starting at start (a frame number) using envelope to pan (0: all chan 0, 1: all 
 		      (higher (inexact->exact (/ (* (1+ beat) sr) bps))))
 		 (set! (mix-position id)
 		       (if (< (- samp lower) (- higher samp))
-			   lower
-			   higher))
+			   (max 0 (- lower offset))
+			   (- higher offset)))
 		 #t))))
 
 

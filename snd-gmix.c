@@ -442,7 +442,7 @@ static void apply_mix_panel(GtkWidget *w, gpointer context)
   envs = mix_panel_envs(mix_id);
   for (i = 0; i < chans - 1; i++)
     set_mix_amp_env_without_edit(mix_id, i, envs[i]);
-  set_mix_amp_env(mix_id, chans - 1, envs[chans - 1]);
+  set_mix_amp_env_from_gui(mix_id, chans - 1, envs[chans - 1]);
 }
 
 static void dismiss_mix_panel(GtkWidget *w, gpointer context)

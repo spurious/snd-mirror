@@ -3,6 +3,14 @@
 
 #if defined(HAVE_CONFIG_H)
   #include <config.h>
+#else
+  #if (!(defined(HAVE_XPM)))
+    #ifdef LINUX
+      #define HAVE_XPM 1
+    #else
+      #define HAVE_XPM 0
+    #endif
+  #endif
 #endif
 
 #include <Xm/XmAll.h>
@@ -23,14 +31,6 @@
   #define xm_font_t XmFontList
   #define XM_FONT_RESOURCE XmNfontList
   #define XM_FONT_FREE XmFontListFree
-#endif
-
-#if (!(defined(HAVE_XPM)))
-  #ifdef LINUX
-    #define HAVE_XPM 1
-  #else
-    #define HAVE_XPM 0
-  #endif
 #endif
 
 #ifdef SGI

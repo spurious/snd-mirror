@@ -1,6 +1,16 @@
 #include "snd.h"
 
 /* TODO: in gtk mix tag chan2 combined can be in chan0 graph */
+/* TODO: amp-env-changed-hook test/etc what about enved case (no multichan)? */
+/* TODO: name -> mix.scm as properties? */
+/* TODO: pan env field in mix dialog if stereo in/out */
+/* TOOD: extend the mix-as-list syntax to list-of-ids (tracks) (are these all rationalized now?) */
+/* this seems to include only scale_sound scale_channel ramp_channel xramp_channel revert_sound save_sound_as and some in snd_snd field:
+ * :channels, srate, data_location, data_size, data_format, header_type, comment, sync, (short)file_name
+ * and others that don't assert sound first?? -- g_filter 
+ */
+/* TODO: if mix amp env applied but no different from current, edit is a no-op, so flush (as scale 1 etc) */
+/* TODO: motif 1 compilation test */
 
 #define NO_SUCH_TRACK XEN_ERROR_TYPE("no-such-track")
 
@@ -43,6 +53,7 @@ static void erase_mix_waveform(mix_info *md);
 static XEN multichannel_mix_hook;
 static XEN mix_speed_changed_hook;
 static XEN mix_amp_changed_hook;
+static XEN mix_amp_env_changed_hook;
 static XEN mix_dragged_hook;
 
 chan_info *mix_channel_from_id(int mix_id)
@@ -3375,7 +3386,7 @@ env *mix_panel_env(int n, int chan)
   return(NULL);
 }
 
-static int set_mix_amp_env_1(int n, int chan, env *val, int remix)
+static int set_mix_amp_env_1(int n, int chan, env *val, int remix, int from_gui)
 {
   mix_info *md;
   env *old_env = NULL, *old_panel_env = NULL;
@@ -3398,7 +3409,20 @@ static int set_mix_amp_env_1(int n, int chan, env *val, int remix)
 	      free_env(old_panel_env);
 	    }
 	  if (old_env) free_env(old_env);
-	  if (remix) remix_file(md, S_setB S_mix_amp_env);
+	  if (remix) 
+	    {
+	      XEN res = XEN_FALSE;
+	      if (from_gui)
+		{
+		  if (XEN_HOOKED(mix_amp_env_changed_hook))
+		    res = run_progn_hook(mix_amp_env_changed_hook,
+					 XEN_LIST_1(C_TO_XEN_INT(md->id)),
+					 S_mix_amp_env_changed_hook);
+		}
+	      if (!(XEN_TRUE_P(res)))
+		remix_file(md, S_setB S_mix_amp_env);
+	      /* remix_file(md, S_setB S_mix_amp_env); */
+	    }
 	  return(0);
 	}
       else return(INVALID_MIX_CHANNEL);
@@ -3406,8 +3430,9 @@ static int set_mix_amp_env_1(int n, int chan, env *val, int remix)
   else return(INVALID_MIX_ID);
 }
 
-int set_mix_amp_env(int n, int chan, env *val) {return(set_mix_amp_env_1(n, chan, val, TRUE));}
-int set_mix_amp_env_without_edit(int n, int chan, env *val) {return(set_mix_amp_env_1(n, chan, val, FALSE));}
+int set_mix_amp_env(int n, int chan, env *val) {return(set_mix_amp_env_1(n, chan, val, TRUE, FALSE));}
+int set_mix_amp_env_from_gui(int n, int chan, env *val) {return(set_mix_amp_env_1(n, chan, val, TRUE, TRUE));}
+int set_mix_amp_env_without_edit(int n, int chan, env *val) {return(set_mix_amp_env_1(n, chan, val, FALSE, FALSE));}
 
 int mix_selected_channel(int id)
 {
@@ -4743,12 +4768,16 @@ If it returns #t, the actual remix is the hook's responsibility."
   #define H_mix_amp_changed_hook S_mix_amp_changed_hook " (mix-id): called when a mix amp changes via the mouse. \
 If it returns #t, the actual remix is the hook's responsibility."
 
+  #define H_mix_amp_env_changed_hook S_mix_amp_env_changed_hook " (mix-id): called when a mix amp env changes via the mouse. \
+If it returns #t, the actual remix is the hook's responsibility."
+
   #define H_mix_dragged_hook S_mix_dragged_hook " (mix-id samps): called after the mouse has dragged a mix to some new position. \
 'samps' = samples moved in the course of the drag. If it returns #t, the actual remix is the hook's responsibility."
 
   XEN_DEFINE_HOOK(multichannel_mix_hook, S_multichannel_mix_hook, 1, H_multichannel_mix_hook);
   XEN_DEFINE_HOOK(mix_speed_changed_hook, S_mix_speed_changed_hook, 1, H_mix_speed_changed_hook);
   XEN_DEFINE_HOOK(mix_amp_changed_hook, S_mix_amp_changed_hook, 1, H_mix_amp_changed_hook);
+  XEN_DEFINE_HOOK(mix_amp_env_changed_hook, S_mix_amp_env_changed_hook, 1, H_mix_amp_env_changed_hook);
   XEN_DEFINE_HOOK(mix_dragged_hook, S_mix_dragged_hook, 2, H_mix_dragged_hook);
 
   #define H_select_mix_hook S_select_mix_hook " (id): called when a mix is selected. \

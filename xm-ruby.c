@@ -831,7 +831,9 @@
 #if HAVE_XmToolTipGetLabel
   XEN_NARGIFY_1(gxm_XmToolTipGetLabel_w, gxm_XmToolTipGetLabel)
 #endif
+#ifndef LESSTIF_VERSION
   XEN_NARGIFY_1(gxm_XmGetXmScreen_w, gxm_XmGetXmScreen)
+#endif
 #endif
   XEN_ARGIFY_4(gxm_XmCreateScrollBar_w, gxm_XmCreateScrollBar)
   XEN_NARGIFY_1(gxm_XmScrollBarGetValues_w, gxm_XmScrollBarGetValues)
@@ -1088,10 +1090,6 @@
   XEN_VARGIFY(gxm_XmStringDrawImage_w, gxm_XmStringDrawImage)
   XEN_VARGIFY(gxm_XmStringDrawUnderline_w, gxm_XmStringDrawUnderline)
 
-  XEN_NARGIFY_1(gxm_XmCvtXmStringToByteStream_w, gxm_XmCvtXmStringToByteStream)
-  XEN_NARGIFY_1(gxm_XmCvtByteStreamToXmString_w, gxm_XmCvtByteStreamToXmString)
-  XEN_NARGIFY_1(gxm_XmStringByteStreamLength_w, gxm_XmStringByteStreamLength)
-
   XEN_NARGIFY_1(gxm_XmGetDestination_w, gxm_XmGetDestination)
   XEN_NARGIFY_1(gxm_XmIsTraversable_w, gxm_XmIsTraversable)
   XEN_NARGIFY_1(gxm_XmGetVisibility_w, gxm_XmGetVisibility)
@@ -1104,6 +1102,10 @@
   XEN_NARGIFY_1(gxm_XmIsArrowButtonGadget_w, gxm_XmIsArrowButtonGadget)
   XEN_NARGIFY_1(gxm_XmIsArrowButton_w, gxm_XmIsArrowButton)
 #if MOTIF_2
+  XEN_NARGIFY_1(gxm_XmCvtXmStringToByteStream_w, gxm_XmCvtXmStringToByteStream)
+  XEN_NARGIFY_1(gxm_XmCvtByteStreamToXmString_w, gxm_XmCvtByteStreamToXmString)
+  XEN_NARGIFY_1(gxm_XmStringByteStreamLength_w, gxm_XmStringByteStreamLength)
+
   XEN_NARGIFY_1(gxm_XmIsNotebook_w, gxm_XmIsNotebook)
 #if HAVE_XM_XP
   XEN_NARGIFY_1(gxm_XmIsPrintShell_w, gxm_XmIsPrintShell)
@@ -2111,7 +2113,9 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmClipboardInquireLength, gxm_XmClipboardInquireLength_w, 3, 0, 0, H_XmClipboardInquireLength);
   XM_DEFINE_PROCEDURE(XmClipboardInquirePendingItems, gxm_XmClipboardInquirePendingItems_w, 3, 0, 0, H_XmClipboardInquirePendingItems);
   XM_DEFINE_PROCEDURE(XmClipboardRegisterFormat, gxm_XmClipboardRegisterFormat_w, 3, 0, 0, H_XmClipboardRegisterFormat);
+#ifndef LESSTIF_VERSION
   XM_DEFINE_PROCEDURE(XmGetXmScreen, gxm_XmGetXmScreen_w, 1, 0, 0, H_XmGetXmScreen);
+#endif
   XM_DEFINE_PROCEDURE(XmCreateScrollBar, gxm_XmCreateScrollBar_w, 3, 1, 0, H_XmCreateScrollBar);
   XM_DEFINE_PROCEDURE(XmScrollBarGetValues, gxm_XmScrollBarGetValues_w, 1, 0, 0, H_XmScrollBarGetValues);
   XM_DEFINE_PROCEDURE(XmScrollBarSetValues, gxm_XmScrollBarSetValues_w, 6, 0, 0, H_XmScrollBarSetValues);
@@ -2306,11 +2310,10 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmStringInitContext, gxm_XmStringInitContext_w, 1, 0, 0, H_XmStringInitContext);
   XM_DEFINE_PROCEDURE(XmStringFreeContext, gxm_XmStringFreeContext_w, 1, 0, 0, H_XmStringFreeContext);
 
+#if MOTIF_2
   XM_DEFINE_PROCEDURE(XmCvtXmStringToByteStream, gxm_XmCvtXmStringToByteStream_w, 1, 0, 0, H_XmCvtXmStringToByteStream);
   XM_DEFINE_PROCEDURE(XmCvtByteStreamToXmString, gxm_XmCvtByteStreamToXmString_w, 1, 0, 0, H_XmCvtByteStreamToXmString);
   XM_DEFINE_PROCEDURE(XmStringByteStreamLength, gxm_XmStringByteStreamLength_w, 1, 0, 0, H_XmStringByteStreamLength);
-
-#if MOTIF_2
   XM_DEFINE_PROCEDURE(XmStringConcatAndFree, gxm_XmStringConcatAndFree_w, 2, 0, 0, H_XmStringConcatAndFree);
   XM_DEFINE_PROCEDURE(XmStringIsVoid, gxm_XmStringIsVoid_w, 1, 0, 0, H_XmStringIsVoid);
   XM_DEFINE_PROCEDURE(XmStringPeekNextTriple, gxm_XmStringPeekNextTriple_w, 1, 0, 0, H_XmStringPeekNextTriple);

@@ -8,6 +8,7 @@
 ;;; "vector synthesis"
 ;;; play-with-amps -- play channels with individually settable amps
 
+;;; TODO: functional approach to "mixer"
 
 ;;; see also play-syncd-marks and play-between-marks in marks.scm
 
@@ -147,7 +148,7 @@
 		  (set! end (max pos1 pos2)))))))))
 
 ;;; m1 and m2 are mark (id) numbers
-;;; (loopit 0 1 512)
+;;; (loop-between-marks 0 1 512)
 
 
 

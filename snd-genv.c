@@ -171,7 +171,7 @@ static void apply_enved(snd_state *ss)
 	    case ENVED_AMPLITUDE:
 	      if (apply_to_mix)
 		{
-		  set_mix_amp_env(mix_id, NO_SELECTION, active_env); /* chan = NO_SELECTION: use selected chan if more than 1 */
+		  set_mix_amp_env_from_gui(mix_id, NO_SELECTION, active_env); /* chan = NO_SELECTION: use selected chan if more than 1 */
 		  active_channel = current_channel(ss);
 		}
 	      else apply_env(active_channel, active_env, 0, 

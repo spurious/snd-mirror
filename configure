@@ -878,6 +878,8 @@ Optional Packages:
   --with-x11		  include X funcs from xm.c with xg.c
   --with-gsl		  use GSL, default=yes
   --with-fftw		  use fftw, default=yes
+  --with-xpm		  use xpm, default=yes
+  --with-xp		  use xp, default=yes
   --with-float-samples	  use floats as the internal sample respresentation
   --with-sample-width=N   use N bits of samples
   --with-motif-prefix=PFX where Motif is installed
@@ -2808,6 +2810,8 @@ _ACEOF
 #   --with-x11            if gtk, this also includes X funcs from xm.c
 #   --without-gsl         omit GSL even if it exists
 #   --without-fftw        omit FFTW even if it exists
+#   --without-xpm         omit XPM even if it exists (for testing)
+#   --without-xp          omit libXp even if it exists (for testing)
 #   GUILE_CONFIG_path     where to look for guile-config
 #   SNDLIB_CONFIG_path    where to look for sndlib-config
 #
@@ -2928,6 +2932,18 @@ fi;
 # Check whether --with-fftw or --without-fftw was given.
 if test "${with_fftw+set}" = set; then
   withval="$with_fftw"
+
+fi;
+
+# Check whether --with-xpm or --without-xpm was given.
+if test "${with_xpm+set}" = set; then
+  withval="$with_xpm"
+
+fi;
+
+# Check whether --with-xp or --without-xp was given.
+if test "${with_xp+set}" = set; then
+  withval="$with_xp"
 
 fi;
 
@@ -11766,7 +11782,8 @@ _ACEOF
  # for xm
 
 
- 	  echo "$as_me:$LINENO: checking for XpmReadFileToPixmap in -lXpm" >&5
+	  if test "$with_xpm" != no; then
+  	    echo "$as_me:$LINENO: checking for XpmReadFileToPixmap in -lXpm" >&5
 echo $ECHO_N "checking for XpmReadFileToPixmap in -lXpm... $ECHO_C" >&6
 if test "${ac_cv_lib_Xpm_XpmReadFileToPixmap+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -11822,16 +11839,15 @@ echo "$as_me:$LINENO: result: $ac_cv_lib_Xpm_XpmReadFileToPixmap" >&5
 echo "${ECHO_T}$ac_cv_lib_Xpm_XpmReadFileToPixmap" >&6
 if test $ac_cv_lib_Xpm_XpmReadFileToPixmap = yes; then
 
-  	     XLIBS="$XLIBS -lXpm"
-   	     cat >>confdefs.h <<\_ACEOF
+  	       XLIBS="$XLIBS -lXpm"
+   	       cat >>confdefs.h <<\_ACEOF
 #define HAVE_XPM 1
 _ACEOF
 
 
 fi
 
-
-   	  echo "$as_me:$LINENO: checking for XpmGetErrorString in -lXpm" >&5
+   	    echo "$as_me:$LINENO: checking for XpmGetErrorString in -lXpm" >&5
 echo $ECHO_N "checking for XpmGetErrorString in -lXpm... $ECHO_C" >&6
 if test "${ac_cv_lib_Xpm_XpmGetErrorString+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -11892,7 +11908,7 @@ _ACEOF
 
 fi
 
-   	  echo "$as_me:$LINENO: checking for XpmCreateXpmImageFromPixmap in -lXpm" >&5
+   	    echo "$as_me:$LINENO: checking for XpmCreateXpmImageFromPixmap in -lXpm" >&5
 echo $ECHO_N "checking for XpmCreateXpmImageFromPixmap in -lXpm... $ECHO_C" >&6
 if test "${ac_cv_lib_Xpm_XpmCreateXpmImageFromPixmap+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -11953,6 +11969,7 @@ _ACEOF
 
 fi
 
+	  fi
 	  if test "$with_static_xm" = yes ; then
   	    GX_FILES="XM_O_FILES"
 	    cat >>confdefs.h <<\_ACEOF
@@ -12071,9 +12088,10 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
-	  echo "$as_me:$LINENO: checking for XmPrint support" >&5
+	  if test "$with_xp" != no; then
+	    echo "$as_me:$LINENO: checking for XmPrint support" >&5
 echo $ECHO_N "checking for XmPrint support... $ECHO_C" >&6
-	  cat >conftest.$ac_ext <<_ACEOF
+	    cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 /* confdefs.h.  */
 _ACEOF
@@ -12085,8 +12103,8 @@ int
 main ()
 {
  Widget w;
-                               XmPrintShellCallbackStruct xmp;
-			       XtIsSubclass(w, xmPrintShellWidgetClass)
+                                 XmPrintShellCallbackStruct xmp;
+			         XtIsSubclass(w, xmPrintShellWidgetClass)
 
   ;
   return 0;
@@ -12105,11 +12123,11 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
 
-	     cat >>confdefs.h <<\_ACEOF
+	       cat >>confdefs.h <<\_ACEOF
 #define HAVE_XM_XP 1
 _ACEOF
 
-	     echo "$as_me:$LINENO: result: yes" >&5
+	       echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
 
 else
@@ -12120,6 +12138,7 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
+           fi
 
 else
 

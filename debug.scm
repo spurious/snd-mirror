@@ -184,12 +184,14 @@ that point prints out the break-specific options."
 (define (bt) 
   "(bt) displays the stack backtrace at the point of the last throw (presumably an error indication). \
 To set up the needed information, call snd-debug first."
+  (if (not *stack*) (set! *stack* (fluid-ref the-last-stack)))
   (backtrace *stack*))
 
 (define* (lv #:optional obj) 
   "(lv (obj #f)) shows the values of either all local variables ('obj' omitted), or a given local \
 variable ('obj') from the point of the last throw (presumably an error indication). To set up the \
 needed information, call snd-debug first (after receiving the error)."
+  (if (not *stack*) (set! *stack* (fluid-ref the-last-stack)))
   (if obj (local-variable *stack* obj) (local-variables *stack*)))
 
 (define (snd-debug) 

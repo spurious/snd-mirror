@@ -1669,7 +1669,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
 		snd_error("blank pixmap trouble: %s\n", XpmGetErrorString(pixerr));
 	      else
 		{
-		  for (k = 0; k < 15; k++)
+		  for (k = 0; k < NUM_BOMBS; k++)
 		    {
 		      pixerr = XpmCreatePixmapFromData(dp, wn, mini_bomb_bits(k), &(mini_bombs[k]), &shape2, &attributes);
 		      if (pixerr != XpmSuccess) 

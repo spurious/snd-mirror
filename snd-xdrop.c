@@ -6,7 +6,12 @@ static Atom FILE_NAME;               /* Sun uses this, SGI uses STRING */
 static Atom COMPOUND_TEXT;           /* various Motif widgets use this and the next */
 static Atom _MOTIF_COMPOUND_STRING;
 static Atom text_plain;              /* gtk uses this -- untested here */
+
+#define WITH_DRAG_CONVERSION FALSE
+
+#if WITH_DRAG_CONVERSION
 static Atom _MOTIF_DROP;             /* to query in-coming drag for filename */
+#endif
 
 static XEN drop_hook;
 
@@ -28,6 +33,7 @@ static char *atom_to_filename(Atom type, XtPointer value, unsigned long length)
 	}
       str[length] = '\0';
     }
+#if (XmVERSION > 1)
   else
     {
       if ((type == COMPOUND_TEXT) || (type == _MOTIF_COMPOUND_STRING))
@@ -43,6 +49,7 @@ static char *atom_to_filename(Atom type, XtPointer value, unsigned long length)
 	  XtFree(temp);
 	}
     }
+#endif
   return(str);
 }
 
@@ -171,7 +178,7 @@ static void clear_minibuffer_of(Widget w)
   clear_minibuffer(ss->sounds[snd]);
 }
 
-static char *current_file = NULL;
+static char *current_file = NULL; /* used only in the broken WITH_DRAG_CONVERSION code */
 
 static void handle_drag(Widget w, XtPointer context, XtPointer info)
 {
@@ -187,7 +194,7 @@ static void handle_drag(Widget w, XtPointer context, XtPointer info)
 	report_mouse_position_as_seconds(w, (current_file) ? current_file : "file", cb->x, cb->y);
       break;
     case XmCR_DROP_SITE_ENTER_MESSAGE:
-#if 0
+#if WITH_DRAG_CONVERSION
       /* this code does get the filename from the drag context, but after the first such transfer
        * it starts complaining 
        *
@@ -272,7 +279,9 @@ void add_drop(snd_state *ss, Widget w)
   Atom targets[5];
   Arg args[12];
   dpy = MAIN_DISPLAY(ss);
+#if WITH_DRAG_CONVERSION
   _MOTIF_DROP = XInternAtom(dpy, "_MOTIF_DROP", FALSE);
+#endif
   targets[0] = XA_STRING;
   FILE_NAME = XInternAtom(dpy, "FILE_NAME", FALSE);
   targets[1] = FILE_NAME;

@@ -1826,8 +1826,8 @@ which I assume are groups of related mixes.
   <em class=def><A NAME="mixclicksetsamp">mix-click-sets-amp</A></em>
   <em class=def><a name="mixname2id">mix-name-&gt;id</a></em> name
   <em class=def><a name="mix2vct">mix-&gt;vct</a></em> id
-  <em class=def><a name="panmix">pan-mix</a></em> file frame env
-  <em class=def><a name="snapmixtobeat">snap-mix-to-beat</a></em>
+  <em class=def><a name="panmix">pan-mix</a></em> file (frame 0) (env 1.0) snd
+  <em class=def><a name="snapmixtobeat">snap-mix-to-beat</a></em> (at-anchor)
   <em class=def><a name="deletemix">delete-mix</a></em> id
   <em class=def><A NAME="deleteallmixes">delete-all-mixes</a></em>
   <em class=def><a name="deletetrack">delete-track</a></em> id
@@ -1839,9 +1839,13 @@ which I assume are groups of related mixes.
 <b>mix-name-&gt;id</b>
 returns the id of a given (named) mix. <b>mix-&gt;vct</b> returns the current samples
 of mix <i>id</i> (taking into account its current amplitude an so on). <b>pan-mix</b>
-mixes <i>file</i> into the current (stereo) sound starting at <i>frame</i> using the envelope <i>env</i>
+mixes <i>file</i> into the current sound starting at <i>frame</i> using the envelope <i>env</i>
 to pan the mixed samples (0: all chan 0, 1: all chan 1).
+The resultant mixes (if more than one) are syncd together tand any change to the
+position, speed, amplitude, or amplitude envelope of one, affects the other(s)
+to keep the notion of panning in effect. 
 <b>snap-mix-to-beat</b> forces a dragged mix to end up on a beat.
+If <i>at-anchor</i> is #t, the anchor point, rather than the mix beginning falls on the beat.
 <b>delete-mix</b> deletes the mix referred to by its argument; this
 operation can be undone (bringing the mix back to life).
 <b>mix-property</b> associates a property list with each mix.

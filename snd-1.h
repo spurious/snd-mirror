@@ -1227,6 +1227,7 @@ off_t mix_frames(int n);
 int any_mix_id(void);
 int mix_ok_and_unlocked(int n);
 int set_mix_amp_env(int n, int chan, env *val);
+int set_mix_amp_env_from_gui(int n, int chan, env *val);
 int set_mix_amp_env_without_edit(int n, int chan, env *val);
 env *mix_amp_env_from_id(int n, int chan);
 void reflect_mix_edit(chan_info *input_cp, const char *origin);

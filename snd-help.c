@@ -295,6 +295,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+23-Jun:  mix-amp-env-changed-hook.\n\
 18-Jun:  mix-sound moved to mix.scm.\n\
 16-Jun:  mark-drag-triangle-hook.\n\
          renamed mix-position-changed-hook to mix-dragged-hook.\n\

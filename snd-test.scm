@@ -32,9 +32,7 @@
 
 ;;; TODO: mouse-drag in time/fft graph hook?
 ;;; TODO: find/"fix" clipping
-;;; TODO: pan env field in mix dialog if stereo in/out
 ;;; TODO: xemacs style top list of sounds, current takes whole screen [make-top-row snd-motif.scm, files-popup-buffer in examp.scm]
-;;; TOOD: extend the mix-as-list syntax to list-of-ids (tracks) (are these all rationalized now?)
 
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 
@@ -61,8 +59,7 @@
 (set! (with-background-processes) #f)
 (define all-args #f) ; huge arg testing
 (define with-big-file #f)
-(define have-libguile-so #f)
-(define debugging-device-channels 8)
+(define debugging-device-channels 2)
 
 (define pi 3.141592653589793)
 (define mus-position mus-channels)
@@ -15699,6 +15696,7 @@ EDITS: 5
   (add-hook! mark-drag-hook arg1) (carg1 mark-drag-hook)
   (add-hook! mix-drag-hook arg1) (carg1 mix-drag-hook)
   (add-hook! mix-amp-changed-hook arg1) (carg1 mix-amp-changed-hook)
+  (add-hook! mix-amp-env-changed-hook arg1) (carg1 mix-amp-env-changed-hook)
   (add-hook! mix-speed-changed-hook arg1) (carg1 mix-speed-changed-hook)
   (add-hook! name-click-hook arg1) (carg1 name-click-hook)
   (add-hook! before-apply-hook arg1) (carg1 before-apply-hook)
@@ -24140,14 +24138,6 @@ EDITS: 2
 	      (vct-scale! d2 (/ 1.0 64.0))
 	      (if (not (vequal d1 d2))
 		  (snd-display ";random hadamard: ~A ~A" d1 d2)))
-	    
-	    (if have-libguile-so
-		(begin
-		  (system "cc gsl-ex.c -c")
-		  (system "ld -shared gsl-ex.o -o gsl-ex.so -lguile")
-		  (let ((handle (dlopen (string-append home-dir "/cl/gsl-ex.so"))))
-		    (dlinit handle "init_gsl_j0")
-		    (if (fneq (j0 1.0) 0.765) (snd-display ";gsl loader test: ~A" (j0 1.0))))))
 	    
 	    (set! (max-transform-peaks) 100)
 	    (let ((ind (open-sound "oboe.snd"))
@@ -36665,6 +36655,7 @@ EDITS: 2
 			    (list mark-drag-triangle-hook 'mark-drag-triangle-hook)
 			    (list mix-drag-hook 'mix-drag-hook)
 			    (list mix-amp-changed-hook 'mix-amp-changed-hook)
+			    (list mix-amp-env-changed-hook 'mix-amp-env-changed-hook)
 			    (list mix-speed-changed-hook 'mix-speed-changed-hook)
 			    (list name-click-hook 'name-click-hook)
 			    (list before-apply-hook 'before-apply-hook)

@@ -8,8 +8,6 @@
  * "current" can change at any time.
  */
 
-/* TODO: in gtk if mark is at far left, drag can leave the original unerased */
-
 #define NO_SUCH_MARK XEN_ERROR_TYPE("no-such-mark")
 
 typedef mark *mark_map_func(chan_info *cp, mark *mp, void *m);

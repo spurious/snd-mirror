@@ -51,6 +51,8 @@ AC_SUBST(VERSION)
 #   --with-x11            if gtk, this also includes X funcs from xm.c
 #   --without-gsl         omit GSL even if it exists
 #   --without-fftw        omit FFTW even if it exists
+#   --without-xpm         omit XPM even if it exists (for testing)
+#   --without-xp          omit libXp even if it exists (for testing)
 #   GUILE_CONFIG_path     where to look for guile-config
 #   SNDLIB_CONFIG_path    where to look for sndlib-config
 #
@@ -76,8 +78,11 @@ AC_ARG_WITH(editres,    [  --with-editres	  include editres in xm])
 AC_ARG_WITH(ladspa,	[  --with-ladspa  	  include support for LADSPA plugins])
 AC_ARG_WITH(x11,	[  --with-x11		  include X funcs from xm.c with xg.c])
 
+# these are primarily for testing
 AC_ARG_WITH(gsl,        [  --with-gsl		  use GSL, default=yes])
 AC_ARG_WITH(fftw,       [  --with-fftw		  use fftw, default=yes])
+AC_ARG_WITH(xpm,        [  --with-xpm		  use xpm, default=yes])
+AC_ARG_WITH(xp,         [  --with-xp		  use xp, default=yes])
 
 if test "$with_doubles" = yes; then
   AC_DEFINE(Float,double)
@@ -425,14 +430,15 @@ else
 	  AC_DEFINE(HAVE_MOTIF) # for xm
 	  AC_SUBST(XLIBS)
 	  AC_SUBST(XFLAGS)
- 	  AC_CHECK_LIB(Xpm, XpmReadFileToPixmap,
-            [
-  	     XLIBS="$XLIBS -lXpm"
-   	     AC_DEFINE(HAVE_XPM)
-   	    ], , $TEST_LIBS)
-
-   	  AC_CHECK_LIB(Xpm, XpmGetErrorString,           [AC_DEFINE(HAVE_XPM_GET_ERROR_STRING)], ,             $TEST_LIBS)
-   	  AC_CHECK_LIB(Xpm, XpmCreateXpmImageFromPixmap, [AC_DEFINE(HAVE_XPM_CREATE_XPM_IMAGE_FROM_PIXMAP)], , $TEST_LIBS)
+	  if test "$with_xpm" != no; then
+  	    AC_CHECK_LIB(Xpm, XpmReadFileToPixmap,
+              [
+  	       XLIBS="$XLIBS -lXpm"
+   	       AC_DEFINE(HAVE_XPM)
+   	      ], , $TEST_LIBS)
+   	    AC_CHECK_LIB(Xpm, XpmGetErrorString,           [AC_DEFINE(HAVE_XPM_GET_ERROR_STRING)], ,             $TEST_LIBS)
+   	    AC_CHECK_LIB(Xpm, XpmCreateXpmImageFromPixmap, [AC_DEFINE(HAVE_XPM_CREATE_XPM_IMAGE_FROM_PIXMAP)], , $TEST_LIBS)
+	  fi
 	  if test "$with_static_xm" = yes ; then
   	    GX_FILES="XM_O_FILES"
 	    AC_DEFINE(HAVE_STATIC_XM)
@@ -451,19 +457,21 @@ else
 	     AC_MSG_RESULT(yes)
 	    ],
 	    [AC_MSG_RESULT(no)])
-	  AC_MSG_CHECKING([for XmPrint support])
-	  AC_COMPILE_IFELSE(
-	    [AC_LANG_PROGRAM([#include <Xm/Print.h>],
-			     [ Widget w; 
-                               XmPrintShellCallbackStruct xmp;
-			       XtIsSubclass(w, xmPrintShellWidgetClass)
-			      ])],
-	    [
-	     AC_DEFINE(HAVE_XM_XP)
-	     AC_MSG_RESULT(yes)
- 	    ],
-	    [AC_MSG_RESULT(no)])
-            ],
+	  if test "$with_xp" != no; then
+	    AC_MSG_CHECKING([for XmPrint support])
+	    AC_COMPILE_IFELSE(
+	      [AC_LANG_PROGRAM([#include <Xm/Print.h>],
+			       [ Widget w; 
+                                 XmPrintShellCallbackStruct xmp;
+			         XtIsSubclass(w, xmPrintShellWidgetClass)
+			        ])],
+	      [
+	       AC_DEFINE(HAVE_XM_XP)
+	       AC_MSG_RESULT(yes)
+ 	      ],
+	      [AC_MSG_RESULT(no)])
+           fi
+          ],
 	[
          AC_MSG_RESULT(no)
 	 AC_MSG_WARN([can't find the Motif library! -- will look for Gtk])
