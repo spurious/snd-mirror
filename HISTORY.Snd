@@ -1,5 +1,7 @@
 snd change log
 
+  14-Mar:    dac reverb segfault in ALSA with Midiman delta bugfix (thanks to Oded Ben-Tal).
+             peak-env-info.
   13-Mar:    removed initial-x0, initial-x1, initial-y0, initial-y1, and replaced with
                initial-graph-hook -- this is a non-backwards compatible change!
              added add-idler, remove-idler (background process)

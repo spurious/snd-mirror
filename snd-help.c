@@ -272,6 +272,8 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+14-Mar:  dac reverb segfault in ALSA with Midiman delta bugfix (thanks to Oded Ben-Tal).\n\
+         peak-env-info.\n\
 13-Mar:  removed initial-x0, initial-x1, initial-y0, initial-y1, and replaced with\n\
            initial-graph-hook -- this is a non-backwards compatible change!\n\
          added add-idler, remove-idler (background process)\n\

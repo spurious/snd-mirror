@@ -303,7 +303,7 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, snd_state *ss, int graphed)
   Float ymin, ymax, xmax, y0, y1, x0, x1, dur, gdur;
   char *label;
   file_info *hdr;
-  int samples_per_channel;
+  int samples_per_channel, ymin_set = 0, ymax_set = 0;
   hdr = sp->hdr;
   samples_per_channel = hdr->samples / hdr->chans;
   x0 = DEFAULT_INITIAL_X0;
@@ -336,7 +336,16 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, snd_state *ss, int graphed)
 	  if (len > 2) y0 = TO_C_DOUBLE(SCM_CADDR(res));
 	  if (len > 3) y1 = TO_C_DOUBLE(SCM_CADDDR(res));
 	  if (len > 4) label = TO_C_STRING(gh_list_ref(res, TO_SMALL_SCM_INT(4)));
-
+	  if (len > 5)
+	    {
+	      ymin = TO_C_DOUBLE(gh_list_ref(res, TO_SMALL_SCM_INT(5)));
+	      ymin_set = 1;
+	    }
+	  if (len > 6)
+	    {
+	      ymax = TO_C_DOUBLE(gh_list_ref(res, TO_SMALL_SCM_INT(6)));
+	      ymax_set = 1;
+	    }
 	  /* also ymin/ymax for fit data eventually */
 	}
     }
@@ -347,9 +356,12 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, snd_state *ss, int graphed)
   if ((sp->fit_data_amps) && 
       (fit_data_on_open(ss)))
     {
-      ymax = sp->fit_data_amps[cp->chan];
-      if (ymax == 0.0) ymax = 1.0;
-      ymin = -ymax;
+      if (!ymax_set) 
+	{
+	  ymax = sp->fit_data_amps[cp->chan];
+	  if (ymax == 0.0) ymax = 1.0;
+	}
+      if (!ymin_set) ymin = -ymax;
       y0 = ymin; 
       y1 = ymax; 
       x0 = 0.0;
@@ -358,9 +370,8 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, snd_state *ss, int graphed)
   else
     {
       if (x1 == 0.0) x1 = gdur;
-      /* these should follow user-set initial y vals(?) */
-      if (y1 > 1.0) ymax = y1; else ymax = 1.0;
-      if (y0 < -1.0) ymin = y0; else ymin = -1.0;
+      if (!ymax_set) {if (y1 > 1.0) ymax = y1; else ymax = 1.0;}
+      if (!ymin_set) {if (y0 < -1.0) ymin = y0; else ymin = -1.0;}
     }
   if (dur <= 0.0)
     {
@@ -2146,7 +2157,7 @@ static void make_lisp_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   int x0, x1, y0, y1;
   up = (lisp_grf *)(cp->lisp_info);
   if (up) uap = up->axis; else return;
-  if ((!uap) || (!uap->graph_active) || (up->len[0] <= 0)) return;
+  if ((!uap) || (!uap->graph_active) || (up->len == NULL) || (up->len[0] <= 0)) return;
   allocate_grf_points();
   if (cp->printing) ps_allocate_grf_points();
   if (sp->combining == CHANNELS_SUPERIMPOSED) 

@@ -310,7 +310,10 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
       int i;
       sp->fit_data_amps = (Float *)CALLOC(sp->nchans, sizeof(Float));
       if (hdr->type == MUS_RAW)
-	mus_sound_override_header(sp->fullname, -1, hdr->chans, hdr->format, -1, -1, -1);
+	{
+	  mus_sound_set_chans(sp->fullname, hdr->chans);
+	  mus_sound_set_data_format(sp->fullname, hdr->format);
+	}
       vals = (MUS_SAMPLE_TYPE *)CALLOC(sp->nchans * 2, sizeof(MUS_SAMPLE_TYPE));
       mus_sound_max_amp(sp->fullname, vals);
       for (i = 0; i < sp->nchans; i++)

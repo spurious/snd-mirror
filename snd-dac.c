@@ -543,10 +543,12 @@ static SCM v_ins = SCM_UNDEFINED, v_outs = SCM_UNDEFINED;
 
 static Float *r_ins, *r_outs;
 static void free_reverb(void *ur);
+static int reverb_chans = 0;
 
-static void reverb(void *ur, Float **rins, MUS_SAMPLE_TYPE **outs, int chans, int ind)
+static void reverb(void *ur, Float **rins, MUS_SAMPLE_TYPE **outs, int ind)
 {
-  int i;
+  int i, chans;
+  chans = reverb_chans;
   for (i = 0; i < chans; i++)
     {
       r_ins[i] = rins[i][ind];
@@ -763,6 +765,7 @@ static SCM g_make_freeverb(SCM ind, SCM chns)
 
 static void *make_reverb(snd_info *sp, int chans)
 { 
+  reverb_chans = chans;
   switch (which_reverb)
     {
     case NREVERB: 
@@ -1288,11 +1291,14 @@ static void start_dac(snd_state *ss, int srate, int channels, int background)
   for (i = 0; i <= max_active_slot; i++)
     {
       dp = play_list[i];
-      if (dp)
+      if ((dp) && (dac_running))                          /* dac_running also if apply */
 	{
-	  if ((dp->reverbing) && (dp->sp) && (global_rev == NULL))
+	  /* in the "normal" (non-apply) case the reverb allocation is deferred until we're sure about the number of output channels */
+	  if ((dp->reverbing) && 
+	      (dp->sp) && 
+	      (global_rev == NULL))
 	    global_rev = (void *)make_reverb(dp->sp, channels);
-          if ((dac_running) && (dp->audio_chan >= channels)) /* if dac_running, the number of channels has already been set and won't change */
+          if (dp->audio_chan >= channels)                 /* if dac_running, the number of channels has already been set and won't change */
 	    {
 	      if (dac_folding(ss))
 		dp->audio_chan %= channels;
@@ -1767,7 +1773,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 	{
 	  for (i = 0; i < frames; i++)
 	    {
-	      reverb(global_rev, rev_ins, dac_buffers, dacp->channels, i);
+	      reverb(global_rev, rev_ins, dac_buffers, i);
 	    }
 	  if (play_list_members == 0)
 	    {
@@ -2345,6 +2351,12 @@ static int start_audio_output (dac_state *dacp)
 	  dp = play_list[i];
 	  if (dp)
 	    {
+	      /* deferred reverb allocation since start_audio_output_1 may force more chans open */
+	      if ((dp->reverbing) && 
+		  (dp->sp) && 
+		  (global_rev == NULL))
+		global_rev = (void *)make_reverb(dp->sp, dacp->channels);
+
 	      if (dp->audio_chan >= dacp->channels)
 		{
 		  if (dac_folding(dacp->ss))

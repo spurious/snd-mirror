@@ -981,6 +981,43 @@ int mus_sound_seek_frame(int tfd, int frame)
   return(mus_file_seek_frame(tfd, frame));
 }
 
+enum {SF_CHANS, SF_SRATE, SF_TYPE, SF_FORMAT, SF_LOCATION, SF_SIZE};
+
+static int mus_sound_set_field(const char *arg, int field, int val)
+{
+  sound_file *sf; 
+  set_sound_error(arg, __LINE__, __FUNCTION__);
+  sf = getsf(arg); 
+  unset_sound_error();
+  if (sf) 
+    {
+      switch (field)
+	{
+	case SF_CHANS:    sf->chans = val; break;
+	case SF_SRATE:    sf->srate = val; break;
+	case SF_TYPE:     sf->header_type = val; break;
+	case SF_FORMAT:   sf->data_format = val; sf->datum_size = mus_data_format_to_bytes_per_sample(val); break;
+	case SF_SIZE:     sf->samples = val; break;
+	case SF_LOCATION: sf->data_location = val; break;
+	default: return(MUS_ERROR); break;
+	}
+#if HAVE_GDBM
+      if (gdbm_store(gdbm_fd(), gdbm_key((char *)arg), gdbm_contents(sf), GDBM_REPLACE) != 0)
+	mus_error(MUS_CANT_OPEN_FILE, "gdbm_store: %s ", gdbm_strerror(gdbm_errno));
+      free(sf);
+#endif      
+      return(MUS_NO_ERROR);
+    }
+  return(MUS_ERROR);
+}
+
+int mus_sound_set_chans(const char *arg, int val) {return(mus_sound_set_field(arg, SF_CHANS, val));}
+int mus_sound_set_srate(const char *arg, int val) {return(mus_sound_set_field(arg, SF_SRATE, val));}
+int mus_sound_set_header_type(const char *arg, int val) {return(mus_sound_set_field(arg, SF_TYPE, val));}
+int mus_sound_set_data_format(const char *arg, int val) {return(mus_sound_set_field(arg, SF_FORMAT, val));}
+int mus_sound_set_data_location(const char *arg, int val) {return(mus_sound_set_field(arg, SF_LOCATION, val));}
+int mus_sound_set_samples(const char *arg, int val) {return(mus_sound_set_field(arg, SF_SIZE, val));}
+
 int mus_sound_override_header(const char *arg, int srate, int chans, int format, int type, int location, int size)
 {
   sound_file *sf; 

@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 12
-#define SNDLIB_REVISION 0
-#define SNDLIB_DATE "12-Mar-01"
+#define SNDLIB_REVISION 1
+#define SNDLIB_DATE "14-Mar-01"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 /* gcc has various compile-time macros like #cpu, but we're hoping to run in Metroworks C, Watcom C, MSC, MPW, etc */
@@ -376,6 +376,14 @@ int mus_sound_write_date      PROTO((const char *arg));
 int mus_sound_type_specifier  PROTO((const char *arg));
 int mus_sound_align           PROTO((const char *arg));
 int mus_sound_bits_per_sample PROTO((const char *arg));
+
+int mus_sound_set_chans       PROTO((const char *arg, int val));
+int mus_sound_set_srate       PROTO((const char *arg, int val));
+int mus_sound_set_header_type PROTO((const char *arg, int val));
+int mus_sound_set_data_format PROTO((const char *arg, int val));
+int mus_sound_set_data_location PROTO((const char *arg, int val));
+int mus_sound_set_samples     PROTO((const char *arg, int val));
+
 char *mus_header_type_name    PROTO((int type));
 char *mus_data_format_name    PROTO((int format));
 char *mus_sound_comment       PROTO((const char *name));

@@ -360,7 +360,7 @@ static gint check_parens(GtkWidget *w, GdkEventKey *event, gpointer data)
 	    {
 	      gtk_editable_select_region(GTK_EDITABLE(listener_text), i, i + 1);
 	      last_highlight_position = i;
-	      gtk_timeout_add(500, clear_paren_check, NULL);
+	      gtk_timeout_add(300, clear_paren_check, NULL);
 	      break;
 	    }
 	}

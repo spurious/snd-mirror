@@ -228,8 +228,8 @@ static SCM g_make_bezier(SCM args)
   data[1] = TO_SCM_INT(y[0]);
   for (i = 1, val = incr; i <= n; i++, val += incr)
     {
-      data[i * 2] = TO_SCM_INT(x[0] + val * (cx + (val * (bx + (val * ax)))));
-      data[i * 2 + 1] = TO_SCM_INT(y[0] + val * (cy + (val * (by + (val * ay)))));
+      data[i * 2] = TO_SCM_INT((int)(x[0] + val * (cx + (val * (bx + (val * ax))))));
+      data[i * 2 + 1] = TO_SCM_INT((int)(y[0] + val * (cy + (val * (by + (val * ay))))));
     }
   return(pts);
 }
@@ -286,45 +286,6 @@ static SCM g_channel_info(SCM snd, SCM chn)
 		   TO_SCM_BOOLEAN(cp->ffting),
 		   TO_SCM_BOOLEAN(cp->lisp_graphing),
 		   TO_SCM_BOOLEAN(cp->cursor_on)));
-}
-
-static SCM make_vct_from_samples(int len, MUS_SAMPLE_TYPE *data)
-{
-  Float *new_data;
-  int i;
-  new_data = (Float *)CALLOC(len, sizeof(Float));
-  for (i = 0; i < len; i++)
-    new_data[i] = MUS_SAMPLE_TO_FLOAT(data[i]);
-  return(make_vct(len, new_data));
-}
-
-#if SNDLIB_USE_FLOATS
-  #define VCT_WRAP(Len, Data) make_vct_wrapper(Len, Data)
-#else
-  #define VCT_WRAP(Len,Data) make_vct_from_samples(Len, Data)
-#endif
-
-/* if useful, to snd-snd.c */
-static SCM g_peak_env_info(SCM snd, SCM chn, SCM pos)
-{
-  chan_info *cp;
-  env_info *ep;
-  chan_context *cgx;
-  cp = get_cp(snd, chn, __FUNCTION__);
-  cgx = cp->cgx;
-  if ((!cgx) || (!(cp->amp_envs))) 
-    return(SCM_LIST0);
-  ep = cp->amp_envs[TO_C_INT_OR_ELSE(pos, cp->edit_ctr)];
-  if (ep)
-    return(SCM_LIST7(TO_SCM_BOOLEAN(ep->completed),
-		     TO_SCM_INT(ep->samps_per_bin),
-		     TO_SCM_INT(ep->amp_env_size),
-		     TO_SCM_DOUBLE(MUS_SAMPLE_TO_FLOAT(ep->fmin)),
-		     TO_SCM_DOUBLE(MUS_SAMPLE_TO_FLOAT(ep->fmax)),
-		     VCT_WRAP(ep->amp_env_size, ep->data_min),
-		     VCT_WRAP(ep->amp_env_size, ep->data_max)));
-  /* don't throw an error here since the env may be in progress */
-  return(SCM_LIST0);
 }
 
 #if USE_MOTIF
@@ -761,7 +722,6 @@ void g_init_draw(SCM local_doc)
   DEFINE_VAR("combined-context",     TO_SMALL_SCM_INT(CHAN_TMPGC),     "graphics context for superimposed graphics");
 
   DEFINE_PROC(gh_new_procedure("channel-info",    SCM_FNC g_channel_info, 0, 2, 0),    "(channel-info snd chn)");
-  DEFINE_PROC(gh_new_procedure("peak-env-info",   SCM_FNC g_peak_env_info, 0, 3, 0),   "(peak-env-info snd chn pos)");
 
   DEFINE_PROC(gh_new_procedure(S_add_input,       SCM_FNC g_add_input, 2, 0, 0),       "(" S_add_input " file callback) -> id");
   DEFINE_PROC(gh_new_procedure(S_remove_input,    SCM_FNC g_remove_input, 1, 0, 0),    "(" S_remove_input " id)");

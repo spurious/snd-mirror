@@ -423,6 +423,9 @@ char *full_filename(SCM file)
 char *gh_print_1(SCM obj, const char *caller)
 {
   char *str1;
+#if HAVE_SCM_OBJECT_TO_STRING
+  return(TO_NEW_C_STRING(scm_object_to_string(obj, SCM_UNDEFINED))); /* does the GC handle the scm_close_port? */
+#else
 #if HAVE_SCM_STRPORT_TO_STRING
   SCM str, val;
   SCM port;
@@ -434,6 +437,7 @@ char *gh_print_1(SCM obj, const char *caller)
   str1 = TO_NEW_C_STRING(val);
 #else
   str1 = TO_NEW_C_STRING(scm_strprint_obj(obj));
+#endif
 #endif
   return(str1);
 }
@@ -2092,6 +2096,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
       (gh_number_p(SCM_CAR(ldata))))
     graphs = 1; 
   else graphs = gh_length(ldata);
+  if (graphs == 0) return(SCM_BOOL_F);
   lg = cp->lisp_info;
   if ((lg) && (graphs != lg->graphs)) 
     {

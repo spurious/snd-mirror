@@ -1431,14 +1431,14 @@ the hook.
 <!-- --><tr><td></td><td>
 <!-- -->called the first time a given channel is displayed. (<b>or hook</b>).
 <!-- -->If it returns a list, the list's contents are interpreted as: 
-<!-- --><code>'(x0 x1 y0 y1 label)</code> (with more to come...), where these numbers set the
-<!-- -->initial axis limits.  This replaces the variable <i>initial-x0</i> and its friends.
+<!-- --><code>'(x0 x1 y0 y1 label ymin ymax)</code> (all values optional), where these numbers set the
+<!-- -->initial axis limits and settings.  This replaces the variable <i>initial-x0</i> and its friends.
 <!-- -->The default (empty hook) is equivalent to:
-<!-- --><pre>(add-hook! initial-graph-hook (lambda (snd chn dur) (list 0.0 0.1 -1.0 1.0 "time")))</pre>
+<!-- --><pre>(add-hook! initial-graph-hook (lambda (snd chn dur) (list 0.0 0.1 -1.0 1.0 "time" -1.0 1.0)))</pre>
 <!-- -->The <i>dur</i> argument is the total length in seconds of the channel, so to cause the
 <!-- -->entire sound to be displayed initially:
-<!-- --><pre>(add-hook! initial-graph-hook (lambda (snd chn dur) (list 0.0 dur -1.0 1.0 "time")))</pre>
-<!-- -->To get the data limits (rather than use -1.0 to 1.0 as above), you can use <a href="mussoundmaxamp">mus-sound-max-amp</a>,
+<!-- --><pre>(add-hook! initial-graph-hook (lambda (snd chn dur) (list 0.0 dur)))</pre>
+<!-- -->To get the data limits (rather than the default -1.0 to 1.0 as above), you can use <a href="mussoundmaxamp">mus-sound-max-amp</a>,
 <!-- -->but that can in some cases require a long process of reading the underlying file. The following hook procedure
 <!-- -->uses the max amp data only if it is already available:
 <!-- --><tr><td colspan=2 align=center>
@@ -1456,9 +1456,9 @@ the hook.
 <!-- -->a background process reading its data to get an overall amplitude envelope of the file,
 <!-- -->and this envelope is what it actually displays when you zoom out to look at the entire
 <!-- -->sound. If you set <i>x1</i> to <i>dur</i>, you effectively get two such processes
-<!-- -->contending for access to the data.  One way around this would be to notice if the
+<!-- -->contending for access to the data.  One way around this is to notice if the
 <!-- -->duration is very long, and if so, set up an after-graph-hook function that looks
-<!-- -->at the channel's peak-env-info, waiting for it to be completed before finally 
+<!-- -->at the channel's <a href="#peakenvinfo">peak-env-info</a>, waiting for it to be completed before finally 
 <!-- -->asking that the entire file be displayed:
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2 align=center>
@@ -4477,6 +4477,18 @@ sets its value to val.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->open <i>name</i> as in File menu Open option.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- peak-env-info -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="peakenvinfo">peak-env-info</a></em> (<i>snd chn pos</i>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->returns some of the overall amplitude envelope data for the given channel
+<!-- -->at the given edit list position.  The data currently returned are whether
+<!-- -->the envelopes are complete (they are the result of a background process), and the min and max data values.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

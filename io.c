@@ -451,7 +451,7 @@ static io_fd **io_fds = NULL;
 
 static void alloc_io_fd(int tfd)
 {
-  int i, lim=-1;
+  int i, lim = -1;
   if (io_fd_size == 0)
     {
 #ifdef MACOS
@@ -489,7 +489,7 @@ int mus_file_set_descriptors (int tfd, const char *name, int format, int size, i
   fd->chans = chans;
   if (name)
     {
-      fd->name = (char *)CALLOC(strlen(name)+1, sizeof(char));
+      fd->name = (char *)CALLOC(strlen(name) + 1, sizeof(char));
       strcpy(fd->name, name);
     }
   return(MUS_NO_ERROR);
@@ -913,13 +913,11 @@ int mus_ptr2table(MUS_SAMPLE_TYPE *arr)
   int i, loc;
   loc = -1;
   for (i = 0; i < long_int_p_table_size; i++) 
-    {
-      if (long_int_p_table[i] == NULL)
-	{
-	  loc = i;
-	  break;
-	}
-    }
+    if (long_int_p_table[i] == NULL)
+      {
+	loc = i;
+	break;
+      }
   if (loc == -1)
     {
       loc = long_int_p_table_size;
@@ -1240,7 +1238,7 @@ int mus_file_read_chans(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **
     for (k = 0; k < chans; k++)
       if ((cm == NULL) || (cm[k]))
 	{
-	  buffer=(MUS_SAMPLE_TYPE *)(bufs[k]);
+	  buffer = (MUS_SAMPLE_TYPE *)(bufs[k]);
 	  for (i = rtn + beg; i <= end; i++)
 	    buffer[i] = MUS_SAMPLE_0;
 	}
