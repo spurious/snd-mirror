@@ -1,3 +1,7 @@
+/* TODO: swap chans should be do-able simply by copying and swapping the current ed_list blocks
+ *         with cp->sounds[index] or data buffer pointers swapped also (gets slightly tricky...)
+ */
+
 #include "snd.h"
 
 /* -------------------------------- EDIT LISTS -------------------------------- *
@@ -78,10 +82,10 @@ static void display_ed_list(chan_info *cp, int i, ed_list *ed)
 	    fprintf(stderr," [nil!]");
 	  else 
 	    if (sd->type == SND_DATA_FILE)
-	      fprintf(stderr," [file: %s %d %d %p %d]",sd->filename,sd->inuse,sd->copy,sd->owner,sd->edit_ctr);
+	      fprintf(stderr," [file: %s[%d] %d %d %p %d]",sd->filename,sd->chan,sd->inuse,sd->copy,sd->owner,sd->edit_ctr);
 	    else 
 	      if (sd->type == SND_DATA_BUFFER)
-		fprintf(stderr," [buf: %d %d] ",sd->len/4,sd->edit_ctr);
+		fprintf(stderr," [buf (%p): %d %d] ",sd->data,sd->len/4,sd->edit_ctr);
 	      else fprintf(stderr," [bogus!]");
 	}
     }
@@ -2773,7 +2777,6 @@ static void call_undo_hook(chan_info *cp, int undo)
     g_c_run_progn_hook(cp->undo_hook,SCM_EOL);
 }
 #endif
-
 
 void g_init_edits(SCM local_doc)
 {

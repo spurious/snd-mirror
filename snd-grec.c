@@ -116,7 +116,7 @@ static MUS_SAMPLE_TYPE *fbuf = NULL;
 static MUS_SAMPLE_TYPE *ffbuf = NULL;
 static int fbuf_size = 0;
 static MUS_SAMPLE_TYPE **obufs = NULL;          /* formatted non-interleaved output */
-static int total_out_samps,duration_samps;
+static int total_out_frames,duration_frames;
 static Float max_duration;
 static int overall_in_chans;
 static int input_channels[MAX_SOUNDCARDS];
@@ -2270,11 +2270,11 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
    * rec_in_chans and rec_out_chans guide the array refs
    * vu meter positioning (guided via overall_in_chan field) does not need the max business -- do it direct
    */
-  int in_chan,out_chan,i,k,m,n,out_samp,mon_samp,diff,inchn,offset,active_in_chans,ochns,sr,buffer_size,in_datum_size;
+  int in_chan,out_chan,i,k,m,n,out_frame,mon_samp,diff,inchn,offset,active_in_chans,ochns,sr,buffer_size,in_datum_size;
   MUS_SAMPLE_TYPE val;
   MUS_SAMPLE_TYPE *fbufs[1];
   if (ever_read == 0) return(BACKGROUND_QUIT); /* should not happen, but ... */
-  out_samp = 0;
+  out_frame = 0;
   mon_samp = 0;
   ochns = recorder_out_chans(ss);
   sr = recorder_srate(ss);
@@ -2332,7 +2332,7 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
   /* for each channel currently on, get its associated input channel */
 
   diff = audio_out_chans - ochns;
-  for (i=0,out_samp=0;i<buffer_size;i+=active_in_chans,out_samp++)
+  for (i=0,out_frame=0;i<buffer_size;i+=active_in_chans,out_frame++)
     {
       for (out_chan=0;out_chan<ochns;out_chan++) {outvals[out_chan] = MUS_SAMPLE_0;}
       inchn = 0;
@@ -2358,8 +2358,8 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
 	{
 	  val = (MUS_SAMPLE_TYPE)(outvals[out_chan]*rec_out_amps[out_chan]);
 	  /* FIXME: originally this code only executes when recording... */
-	  // if ((recording) && (rec_out_active[out_chan])) obufs[out_chan][out_samp] = val;
-	  if ((rec_out_active[out_chan])) obufs[out_chan][out_samp] = val;
+	  // if ((recording) && (rec_out_active[out_chan])) obufs[out_chan][out_frame] = val;
+	  if ((rec_out_active[out_chan])) obufs[out_chan][out_frame] = val;
 	  if (val<MUS_SAMPLE_0) val=-val;
 	  if (val>out_max[out_chan]) out_max[out_chan]=val;
 	}
@@ -2377,20 +2377,20 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
   if ((monitor_open) && (ochns <= audio_out_chans))
     {
       /* opened in recorder_out_format and audio_out_chans */
-      mus_file_write_buffer(monitor_out_format,0,out_samp-1,audio_out_chans,obufs,monitor_buf,data_clipped(ss));
+      mus_file_write_buffer(monitor_out_format,0,out_frame-1,audio_out_chans,obufs,monitor_buf,data_clipped(ss));
       mus_audio_write(monitor_fd,monitor_buf,recorder_buffer_size(ss)*audio_out_chans*mus_data_format_to_bytes_per_sample(monitor_out_format));
     }
   if ((recording) && (triggered))
     {
-      mus_file_write(output_fd,0,out_samp-1,ochns,obufs);
-      total_out_samps += out_samp;
-      if (total_out_samps > duration_samps)
+      mus_file_write(output_fd,0,out_frame-1,ochns,obufs);
+      total_out_frames += out_frame;
+      if (total_out_frames > duration_frames)
 	{
-	  update_duration((Float)total_out_samps/(Float)sr);
-	  duration_samps += (sr / 4);
+	  update_duration((Float)total_out_frames/(Float)sr);
+	  duration_frames += (sr / 4);
 	}
     }
-  return(((total_out_samps/sr) >= max_duration) ? BACKGROUND_QUIT : BACKGROUND_CONTINUE);
+  return(((total_out_frames/sr) >= max_duration) ? BACKGROUND_QUIT : BACKGROUND_CONTINUE);
 }
 
 #else
@@ -2405,12 +2405,12 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
    * rec_in_chans and rec_out_chans guide the array refs
    * vu meter positioning (guided via overall_in_chan field) does not need the max business -- do it direct
    */
-  int in_chan,out_chan,i,k,m,n,out_samp,mon_samp,diff,inchn,offset,active_in_chans,cur_size,ochns,sr,sz,ifmt,in_datum_size;
+  int in_chan,out_chan,i,k,m,n,out_frame,mon_samp,diff,inchn,offset,active_in_chans,cur_size,ochns,sr,sz,ifmt,in_datum_size;
   MUS_SAMPLE_TYPE val;
   MUS_SAMPLE_TYPE *fbufs[1];
   if (ever_read == 0) return(BACKGROUND_QUIT); /* should not happen, but ... */
   fbufs[0] = fbuf;
-  out_samp = 0;
+  out_frame = 0;
   mon_samp = 0;
   ifmt = recorder_in_format(ss);
   ochns = recorder_out_chans(ss);
@@ -2458,7 +2458,7 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
   /* for each channel currently on, get its associated input channel */
 
   diff = audio_out_chans - ochns;
-  for (i=0,out_samp=0;i<sz;i+=active_in_chans,out_samp++)
+  for (i=0,out_frame=0;i<sz;i+=active_in_chans,out_frame++)
     {
       for (out_chan=0;out_chan<ochns;out_chan++) {outvals[out_chan] = MUS_SAMPLE_0;}
       inchn = 0;
@@ -2483,7 +2483,7 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
       for (out_chan=0;out_chan<ochns;out_chan++)
 	{
 	  val = (MUS_SAMPLE_TYPE)(outvals[out_chan]*rec_out_amps[out_chan]);
-	  if ((recording) && (rec_out_active[out_chan])) obufs[out_chan][out_samp] = val;
+	  if ((recording) && (rec_out_active[out_chan])) obufs[out_chan][out_frame] = val;
 	  if (val<MUS_SAMPLE_0) val=-val;
 	  if (val>out_max[out_chan]) out_max[out_chan]=val;
 	}
@@ -2502,20 +2502,20 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
   if ((monitor_open) && (ochns == audio_out_chans))
     {
       /* opened in recorder_out_format and audio_out_chans */
-      mus_file_write_buffer(recorder_out_format(ss),0,out_samp-1,audio_out_chans,obufs,record_buf[0],data_clipped(ss));
-      mus_audio_write(monitor_fd,record_buf[0],out_samp*mus_data_format_to_bytes_per_sample(recorder_out_format(ss)));
+      mus_file_write_buffer(recorder_out_format(ss),0,out_frame-1,audio_out_chans,obufs,record_buf[0],data_clipped(ss));
+      mus_audio_write(monitor_fd,record_buf[0],out_frame*mus_data_format_to_bytes_per_sample(recorder_out_format(ss)));
     }
   if ((recording) && (triggered))
     {
-      mus_file_write(output_fd,0,out_samp-1,ochns,obufs);
-      total_out_samps += out_samp;
-      if (total_out_samps > duration_samps)
+      mus_file_write(output_fd,0,out_frame-1,ochns,obufs);
+      total_out_frames += out_frame;
+      if (total_out_frames > duration_frames)
 	{
-	  update_duration((Float)total_out_samps/(Float)sr);
-	  duration_samps += (sr / 4);
+	  update_duration((Float)total_out_frames/(Float)sr);
+	  duration_frames += (sr / 4);
 	}
     }
-  return(((total_out_samps/sr) >= max_duration) ? BACKGROUND_QUIT : BACKGROUND_CONTINUE);
+  return(((total_out_frames/sr) >= max_duration) ? BACKGROUND_QUIT : BACKGROUND_CONTINUE);
 }
 #endif
 
@@ -2691,17 +2691,16 @@ static void finish_recording(snd_state *ss)
   char *str;
   snd_info *sp;
   Float duration;
-  /* total_out_samps -> true duration here for header update */
   sensitize_control_buttons();
   set_background(record_button,(ss->sgx)->basic_color);
   set_button_label(reset_button,STR_Reset);
   set_button_label(record_button,(triggering) ? STR_Triggered_Record : STR_Record);
   snd_close(output_fd);
   output_fd = mus_file_reopen_write(recorder_file(ss));
-  mus_header_update_with_fd(output_fd,out_type,total_out_samps*mus_data_format_to_bytes_per_sample(recorder_out_format(ss))); 
+  mus_header_update_with_fd(output_fd,out_type,total_out_frames*recorder_out_chans(ss)*mus_data_format_to_bytes_per_sample(recorder_out_format(ss))); 
   close(output_fd);
   output_fd = -1;
-  duration = (Float)total_out_samps / (Float)(recorder_out_chans(ss) * recorder_srate(ss));
+  duration = (Float)total_out_frames / (Float)(recorder_srate(ss));
   update_duration(duration);
   str = (char *)CALLOC(256,sizeof(char));
   sprintf(str,"recorded %s:\n  duration: %.2f\n  srate: %d, chans: %d\n  type: %s, format: %s",
@@ -2808,8 +2807,8 @@ static void Record_Button_Callback(GtkWidget *w,gpointer clientData)
 	  mus_header_read_with_fd(output_fd);
 	  mus_file_open_descriptors(output_fd,recorder_out_format(ss),mus_data_format_to_bytes_per_sample(recorder_out_format(ss)),mus_header_data_location());
 	  mus_file_set_data_clipped(output_fd,data_clipped(ss));
-	  total_out_samps = 0;
-	  duration_samps = recorder_srate(ss)/4;
+	  total_out_frames = 0;
+	  duration_frames = recorder_srate(ss)/4;
 	  max_duration = recorder_max_duration(ss);
 	  if (!obufs)
 	    obufs = (MUS_SAMPLE_TYPE **)CALLOC(MAX_OUT_CHANS,sizeof(MUS_SAMPLE_TYPE *));

@@ -3962,14 +3962,14 @@ static env *scm2env(SCM res)
 static int x_increases(SCM res)
 {
   int i,len;
-  Float x;
+  Float x,nx;
   len = gh_length(res);
-  x = gh_list_ref(res,gh_int2scm(0));
+  x = gh_scm2double(gh_list_ref(res,gh_int2scm(0)));
   for (i=2;i<len;i+=2)
     {
-      if (x >= (gh_list_ref(res,gh_int2scm(i))))
-	return(0);
-      x = gh_list_ref(res,gh_int2scm(i));
+      nx = gh_scm2double(gh_list_ref(res,gh_int2scm(i)));
+      if (x >= nx) return(0);
+      x = nx;
     }
   return(1);
 }
@@ -3980,11 +3980,15 @@ env *string2env(char *str)
   SCM res;
   res = scm_internal_stack_catch(SCM_BOOL_T,eval_str_wrapper,str,snd_catch_scm_error,str);
   if (gh_list_p(res))
-    if ((gh_length(res)%2) == 0)
-      if (x_increases(res))
-	return(scm2env(res));
-      else snd_error("x axis points not increasing: %s",str);
-    else snd_error("odd length envelope? %s",str);
+    {
+      if ((gh_length(res)%2) == 0)
+	{
+	  if (x_increases(res))
+	    return(scm2env(res));
+	  else snd_error("x axis points not increasing: %s",str);
+	}
+      else snd_error("odd length envelope? %s",str);
+    }
   else snd_error("%s is not a list",str);
   return(NULL);
 }

@@ -2399,12 +2399,12 @@ static void free_sync_state(sync_state *sc)
     }
 }
 
-static sync_state *get_sync_state(snd_state *ss, snd_info *sp, chan_info *cp, int beg, int regexpr, int forwards)
+static sync_state *get_sync_state_1(snd_state *ss, snd_info *sp, chan_info *cp, int beg, int regexpr, int forwards, int prebeg)
 {
   /* can return NULL if regexpr and no current selection */
   sync_info *si = NULL;
   snd_fd **sfs = NULL;
-  int dur,i;
+  int dur,i,pbeg;
   sync_state *sc;
   dur = 0;
   if ((!regexpr) && (sp == NULL)) return(NULL);
@@ -2432,7 +2432,11 @@ static sync_state *get_sync_state(snd_state *ss, snd_info *sp, chan_info *cp, in
 	      for (i=0;i<si->chans;i++) 
 		{
 		  if (forwards == READ_FORWARD)
-		    sfs[i] = init_sample_read(si->begs[i],si->cps[i],READ_FORWARD);
+		    {
+		      pbeg = si->begs[i] - prebeg;
+		      if (pbeg < 0) pbeg = 0;
+		      sfs[i] = init_sample_read(pbeg,si->cps[i],READ_FORWARD);
+		    }
 		  else sfs[i] = init_sample_read(si->begs[i]+dur-1,si->cps[i],READ_BACKWARD);
 		}
 	    }
@@ -2456,6 +2460,11 @@ static sync_state *get_sync_state(snd_state *ss, snd_info *sp, chan_info *cp, in
   sc->sfs = sfs;
   sc->si = si;
   return(sc);
+}
+
+static sync_state *get_sync_state(snd_state *ss, snd_info *sp, chan_info *cp, int beg, int regexpr, int forwards)
+{
+  return(get_sync_state_1(ss,sp,cp,beg,regexpr,forwards,0));
 }
 
 #if HAVE_GUILE
@@ -4079,7 +4088,7 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
   snd_state *ss;
   snd_info *sp;
   int reporting = 0;
-  int i,m,scdur,dur,k,stop_point = 0;
+  int i,m,scdur,dur,k,stop_point = 0,prebeg=0;
   snd_fd **sfs;
   snd_fd *sf;
   file_info *hdr = NULL;
@@ -4099,7 +4108,7 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
   /* now filter all currently sync'd chans (one by one) */
   ss = ncp->state;
   sp = ncp->sound;
-  sc = get_sync_state(ss,sp,ncp,0,over_selection,READ_FORWARD);
+  sc = get_sync_state_1(ss,sp,ncp,0,over_selection,READ_FORWARD,(over_selection) ? order : 0);
   if (sc == NULL) {if (!ur_a) FREE(a); FREE(d); return;}
   si = sc->si;
   sfs = sc->sfs;
@@ -4133,6 +4142,21 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
 	  sf = sfs[i];
 	  idata = data[0];
 	  for (m=0;m<order;m++) d[m] = 0.0;
+	  if (over_selection)
+	    {
+	      /* see if there's data to pre-load the filter */
+	      if (si->begs[i] > order)
+		prebeg = order;
+	      else prebeg = si->begs[i];
+	      if (prebeg > 0)
+		{
+		  for (m=order-prebeg;m<order;m++)
+		    {
+		      NEXT_SAMPLE(val,sf);
+		      d[m] = (Float)val;
+		    }
+		}
+	    }
 	  j = 0;
 	  for (k=0;k<dur;k++)
 	    {

@@ -85,9 +85,16 @@ ftp://ftp.gnu.org/pub/gnu/guile/guile-1.3.4.tar.gz
 To include guile in Snd, go to the relevant makefile, set the CFLAGS
 variable to include 'guile-config compile', and set the LIBS variable
 to include 'guile-config link'.  Only guile 1.3 or later is supported.
-Without Guile, Snd supplies a very simple string-parser to handle
-customization -- many of the functions and variables are accessible
-from what looks like Scheme, but nothing fancy is implemented.
+
+Just as a quick example:
+
+  (set-fft-size 4096)
+
+sets the fft size to 4096 -- the syntax is Scheme  which is a
+variant of Lisp; see the urls below for some Scheme tutorials.
+The details of Snd customization are discussed in extsnd.html
+and grfsnd.html.
+
 
 Another extension is the XmHTML widget available from
 http://www.xs4all.nl/~ripley/XmHTML/XmHTML.html.  If you have this,

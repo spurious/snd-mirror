@@ -3102,7 +3102,36 @@ Here's an example:</p>
 the sr3 instrument in ug.ins.
 Run* doesn't work in no-ffi versions of
 CLM, but you can get the same effect (on the SGI or in Linux) by using the <a href="#control">control</a> function instead.
+Here's another example that implements legato between notes by using the previous note's phases:
 </p>
+<pre><small>
+(defstruct fmins carrier modulator)
+(definstrument fmsimp (beg dur frq amp ind &optional previous-oscils)
+  (let* ((start (floor (* *srate* beg)))
+	 (end (+ start (floor (* *srate* dur))))
+	 (carrier (if previous-oscils
+		      (fmins-carrier previous-oscils)
+		    (make-oscil)))
+	 (modulator (if previous-oscils
+			(fmins-modulator previous-oscils)
+		      (make-oscil))))
+    (setf (mus-frequency carrier) frq)
+    (setf (mus-frequency modulator) frq)
+    (run* (carrier modulator)
+     (loop for i from start below end do
+       (outa i (* amp (oscil carrier (* ind (oscil modulator)))))))
+    (if previous-oscils
+	(progn
+	  (setf (fmins-carrier previous-oscils) carrier)
+	  (setf (fmins-modulator previous-oscils) modulator)))))
+
+;;; (defvar oscs (make-fmins :carrier (make-oscil) :modulator (make-oscil)))
+;;; (with-sound () (fmsimp 0 1.01 440 .1 0.0 oscs) (fmsimp 1.01 1 660 .1 0.0 oscs))
+;;; (with-sound () (fmsimp 0 1.01 440 .1 0.0) (fmsimp 1.01 1 660 .1 0.0))
+;;;     the 1.01 (as opposed to 1.0) is needed because the phases line up just by chance in the 1.0 case
+;;;     for portamento, the instrument could notice an in-coming osc set and
+;;;     change the frequency envelope accordingly
+</small></pre>
 <hr>
 
 

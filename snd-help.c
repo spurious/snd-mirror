@@ -188,6 +188,7 @@ void news_help(snd_state *ss)
 26-Jun:  as-one-edit now handles mark changes correctly.\n\
          make-sample-reader snd arg can be filename (to read external files without opening them).\n\
          Guile 1.4 is now the default -- if you are using 1.3.4, include -DHAVE_GUILE_1_3.\n\
+         various bugs fixed (thanks to Daniel Aronovitch).\n\
 22-Jun:  version renamed snd-version (old name collides with guile) -- similarly for apropos and help.\n\
 21-Jun:  marks.scm.\n\
 19-Jun:  changes to GC handling for new guile.\n\
