@@ -48,6 +48,11 @@
 (define islooping #t)
 
 
+;; Selection-position and selection-frames doesnt allways work properly
+(define (my-selection-position)
+  (selection-position (selected-sound)))
+(define (my-selection-frames)
+  (selection-frames (selected-sound)))
 
 (load-from-path "rgb.scm")
 
@@ -221,8 +226,8 @@
 ;; Let the "s" key be a "show-selection" key.
 (bind-key (char->integer #\s) 0
 	  (lambda ()
-	    (set! (x-bounds) (list (/ (selection-position) (srate))
-				   (/ (+ (selection-position) (selection-frames)) (srate))))))
+	    (set! (x-bounds) (list (/ (my-selection-position) (srate))
+				   (/ (+ (my-selection-position) (my-selection-frames)) (srate))))))
 
 
 ;; Let "c" turn on/off controls
@@ -352,11 +357,23 @@
 	       (set! selection-starting-point #f)
 	       (set! stop-handling #t)
 	       #f))
-  
-  (add-hook! mix-dragged-hook
+
+  (add-hook! mix-release-hook
 	     (lambda (id samps)
 	       (set! stop-handling #f)
 	       #f))
+
+  (add-hook! mark-hook
+	     (lambda (id snd chn reason)
+	       (set! stop-handling  #f)
+	       #f))
+
+  (add-hook! mark-drag-hook
+	     (lambda (id)
+	       (set! selection-starting-point #f)
+	       (set! stop-handling #t)
+	       #f))
+
   (if (not use-gtk)	     
       (add-hook! after-open-hook
 		 (lambda (snd)
@@ -531,8 +548,8 @@
       (if (selection?)
 	  (begin
 	    (dodasprint (get-time-string dastime) 0 red dastime)
-	    (dodasprint (get-time-string (selection-position)) 1 blue (selection-position))
-	    (dodasprint (get-time-string (+ (selection-position) (selection-frames))) 2 blue (+ (selection-position) (selection-frames))))
+	    (dodasprint (get-time-string (my-selection-position)) 1 blue (my-selection-position))
+	    (dodasprint (get-time-string (+ (my-selection-position) (my-selection-frames))) 2 blue (+ (my-selection-position) (my-selection-frames))))
 	  (dodasprint (get-time-string dastime) 0 red dastime))
       (if (or force
 	      (>= (abs (- dastime last-time-showed)) (/ (srate (selected-sound)) 10)))
@@ -541,9 +558,9 @@
 						 (if (selection?)
 						     (begin
 						       (string-append " "
-								      (get-time-string (selection-position))
+								      (get-time-string (my-selection-position))
 								      " "
-								      (get-time-string (+ (selection-position) (selection-frames)))))
+								      (get-time-string (+ (my-selection-position) (my-selection-frames)))))
 						     "")))
 	    (set! last-time-showed dastime)))))
    
@@ -577,15 +594,9 @@
 
 ;; Shows the full sound after opening.
 (add-hook! after-open-hook
-	   (lambda (n) (set! (x-bounds) (list 0.0 (/ (frames) (srate)))) #f))
-
-
-;; Equalize panes if more than 3 channels. I think. Hmm, can't
-;; remember where I got this one from. Nah, doesn't hurt. -Kjetil.
-;;(add-hook! after-open-hook 
-;;  (lambda (n) (if (> (channels n) 3) (equalize-panes)) #f))
-
-
+	   (lambda (n)
+	     (set! (x-bounds) (list 0.0 (/ (frames) (srate)))) 
+	     #f))
 
 
 
@@ -753,6 +764,29 @@
 ;(add-hook! open-hook first-time-open-soundfile)
 
 
+(define max-mark-sync 1000)
+(define (my-mark-sync-max)
+  (set! max-mark-sync (max (1+ (mark-sync-max)) (1+ max-mark-sync)))
+  max-mark-sync)
+
+; Let the m-key make a named mark, and sync it if the current sound is synced.
+(bind-key (char->integer #\m) 0
+	  (lambda ()
+	    (define (my-add-mark sample snd ch syncnum name)
+	      (if (> ch -1)
+		  (let ((newmark (add-mark sample snd ch)))
+		    (set! (mark-sync newmark) syncnum)
+		    (set! (mark-name newmark) name)
+		    (my-add-mark sample snd (1- ch) syncnum name))))
+	    (report-in-minibuffer "")
+	    (prompt-in-minibuffer "mark: "
+				  (lambda (ret)
+				    (if (> (sync) 0)
+					(my-add-mark (cursor) (selected-sound) (1- (channels)) (my-mark-sync-max) ret)
+					(set! (mark-name (add-mark (cursor))) ret)))
+				  (selected-sound)
+				  #t)))
+
 
 ;;Show the little picture of the whole sound in the upper right corner.
 (load-from-path "draw.scm")
@@ -884,13 +918,6 @@
   (set! (auto-resize) #t)
   (myread))
 
-
-
-;; Need to update the loop button when switching buffer. (Done in the callback-function instead)
-;(add-hook! after-graph-hook
-;	   (lambda (snd chn)
-;	     (XtSetValues (find-child (list-ref (sound-widgets snd) 2) "loop")
-;			  (list XmNset islooping))))
 
 
 
