@@ -378,7 +378,7 @@ void display_enved_progress(char *str, Pixmap pix)
   else XtVaSetValues(brkptL,XmNlabelType,XmPIXMAP,XmNlabelPixmap,pix,NULL);
 }
 
-static Time down_time;
+static TIME_TYPE down_time;
 static int env_dragged = 0;
 static int env_pos = 0;
 static int click_to_delete = 0;
@@ -387,7 +387,7 @@ static void drawer_button_motion(Widget w,XtPointer clientData,XEvent *event,Boo
 {
   snd_state *ss = (snd_state *)clientData;
   XMotionEvent *ev = (XMotionEvent *)event;
-  Time motion_time;
+  TIME_TYPE motion_time;
   axis_info *ap;
   Float x0,x1,x,y;
   if (!showing_all_envs)

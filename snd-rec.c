@@ -332,6 +332,11 @@ void init_recorder(void)
   rp->chan_out_active = (int *)CALLOC(MAX_OUT_CHANS,sizeof(int));
 }
 
+int record_in_progress(void)
+{
+  return((record_dialog_is_active()) && (rp->recording));
+}
+
 int in_chans_active(void)
 {
   int val = 0,i;

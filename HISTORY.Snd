@@ -1,5 +1,6 @@
 snd change log
 
+  23-Aug:    removed -s startup switch.
   22-Aug:    removed snd-gdac.c, snd-xdac.c.
   19-Aug:    removed Lesstif support.
   18-Aug:    scan and map-chan and friends (including find and count-matches)

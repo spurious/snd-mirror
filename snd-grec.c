@@ -795,6 +795,8 @@ static void device_button_callback(GtkWidget *w,gpointer clientData)
 #if defined(SGI) || defined(SUN)
   int other_button,j,n,i,output;
   float val[2];
+  recorder_info *rp;
+  rp = get_recorder_info();
 #endif
 
   ss = p->ss;
@@ -1102,13 +1104,6 @@ void reflect_recorder_duration(Float new_dur)
 {
   sprintf(timbuf,"%.2f",new_dur);
   set_label(file_duration,timbuf);
-}
-
-int record_in_progress(void)
-{
-  recorder_info *rp;
-  rp = get_recorder_info();
-  return((recorder) && (rp->recording));
 }
 
 void lock_recording_audio(void)

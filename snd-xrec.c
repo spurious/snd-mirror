@@ -1659,13 +1659,6 @@ void reflect_recorder_duration(Float new_dur)
   set_label(file_duration,timbuf);
 }
 
-int record_in_progress(void)
-{
-  recorder_info *rp;
-  rp = get_recorder_info();
-  return((recorder) && (rp->recording));
-}
-
 void lock_recording_audio(void)
 {
   if (record_dialog_is_active())

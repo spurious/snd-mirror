@@ -550,6 +550,7 @@ int snd_not_current(snd_info *sp, void *dat);
 int save_options (snd_state *ss);
 FILE *open_snd_init_file (snd_state *ss);
 int save_state (snd_state *ss, char *save_state_name);
+int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, int auto_open_files, char **auto_open_file_names, int with_title);
 #if HAVE_GUILE
   void g_init_main(SCM local_doc);
 #endif

@@ -206,14 +206,6 @@ or "-load".
 
 opens the sound file oboe.snd and loads the Scheme code in examp.scm.
 
-          Each sound file in the argument list can include start
-          up information about the size and location of the
-          initial waveform display: snd oboe.snd -s
-          "0.0,0.25,0.75,0.3". The flag "-s" introduces the size
-          information, followed by a string containing the values
-          of the x position, y position, x zoom, and y zoom
-          scrollbars.
-
 Normally Snd adds each new sound below those currently being displayed. To
 position sounds horizontally (adding on the right), use the "-h" (or
 "-horizontal") flag, or the horizontalPanes resource. (This only works on
@@ -1530,7 +1522,7 @@ Index
  autocorrelation     Options:                 autocorrelate
                      Transform
 
- axis bounds                      Cx Cb, Cx   [xy]-bounds          -s switch to Snd
+ axis bounds                      Cx Cb, Cx   [xy]-bounds
                                   Cp
  axis fits data                               fit-data-on-open     set-y-bounds
  brighten file                                                     see 'contrast' control

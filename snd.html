@@ -420,18 +420,6 @@ use a ".scm" extension, or precede the file name with <a name="minusl">"-l"</a> 
         <!-- I(preload directory):O(-p switch to Snd)(minusp) --><!-- I(preload directory):A(minusp) -->
         <!-- I(continue session):O(-l switch to Snd)(minusl) -->
 
-<blockquote><blockquote>
-<p><small>
-Each sound file in the argument list can include start up
-information about the size and location of the
-initial waveform display:  <code>snd oboe.snd -s "0.0,0.25,0.75,0.3"</code>.
-The flag <a name="minuss">"-s"</a> introduces the size information,
-followed by a string containing the values of
-the x position, y position, x zoom, and y zoom
-scrollbars.  </small></p>
-</blockquote></blockquote>
-        <!-- I(axis bounds):O(-s switch to Snd)(minuss) -->
-
 <p>Normally Snd adds each new sound below those currently being
 displayed.
 <a name="verticalpane"></a>
@@ -2216,7 +2204,7 @@ panel are:</p>
   <tr><td><a href="#ampenvs">amp env</a></td><td><small>Edit: <a href="#editenvelope">Edit Env</a></small></td><td><a href="#cxca"><small>Cx Ca, Cx a</small></a></td><td><a href="extsnd.html#sndenv"><small>env-sound</small></a></td><td><a href="extsnd.html#sndscaleto"><small>scale-to, scale-by</small></a></td></tr>
   <tr><td>auto-save</td><td><br></td><td><br></td><td><br></td><td><small>examp.scm</small></td></tr>
   <tr><td><a href="#autocorrelation">autocorrelation</a></td><td><small>Options: <a href="#viewfft">Transform</a></small></td><td><br></td><td><a href="extsnd.html#sndautocorrelate"><small>autocorrelate</small></a></td><td><br></td></tr>
-  <tr><td><a href="#cxcb">axis bounds</a></td><td><br></td><td><a href="#cxcb"><small>Cx Cb, Cx Cp</small></a></td><td><a href="extsnd.html#sndxbounds"><small>[xy]-bounds</small></a></td><td><a href="#minuss"><small>-s switch to Snd</small></a></td></tr>
+  <tr><td><a href="#cxcb">axis bounds</a></td><td><br></td><td><a href="#cxcb"><small>Cx Cb, Cx Cp</small></a></td><td><a href="extsnd.html#sndxbounds"><small>[xy]-bounds</small></a></td><td><br></td></tr>
   <tr><td><a href="extsnd.html#fitdataonopen">axis fits data</a></td><td><br></td><td><br></td><td><a href="extsnd.html#fitdataonopen"><small>fit-data-on-open</small></a></td><td><a href="extsnd.html#sndsetybounds"><small>set-y-bounds</small></a></td></tr>
   <tr><td><a href="#contrast">brighten file</a></td><td><br></td><td><br></td><td><br></td><td><a href="#contrast"><small>see 'contrast' control</small></a></td></tr>
   <tr><td><a href="#movewindow">center cursor</a></td><td><br></td><td><a href="#cv"><small>Cl, Cv</small></a></td><td><br></td><td><br></td></tr>

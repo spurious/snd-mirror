@@ -215,7 +215,6 @@ static RETSIGTYPE segv(int ignored)
 static char **auto_open_file_names = NULL;
 static int auto_open_files = 0;
 static int noglob = 0, noinit = 0;
-static char *startup_filename = NULL;
 static gint stdin_id = 0;
 
 static void GetStdinString (gpointer clientData, gint fd, GdkInputCondition condition)
@@ -331,13 +330,7 @@ typedef struct {int slice; snd_state *ss; GtkWidget *shell;} startup_state;
 static BACKGROUND_TYPE startup_funcs(gpointer clientData)
 {
   startup_state *tm = (startup_state *)clientData;
-  snd_info *sp;
   snd_state *ss;
-  chan_info *cp;
-  axis_info *ap;
-  float apsx,apzx,apsy,apzy;
-  char *argname;
-  int i;
   static int auto_open_ctr = 0;
   ss = tm->ss;
   switch (tm->slice)
@@ -385,82 +378,7 @@ static BACKGROUND_TYPE startup_funcs(gpointer clientData)
     case 2: 
       if (auto_open_files > 0)
 	{
-	  argname = auto_open_file_names[auto_open_ctr];
-	  if (argname)
-	    { /* wanted to use "-d" and "-i" (or "-s") but they're in use */
-	      if ((strcmp("-h",argname) == 0) || 
-		  (strcmp("-horizontal",argname) == 0) ||
-		  (strcmp("-v",argname) == 0) || 
-		  (strcmp("-vertical",argname) == 0) ||
-		  (strcmp("-notebook",argname) == 0) ||
-		  (strcmp("-separate",argname) == 0) ||
-		  (strcmp("-noglob",argname) == 0) ||
-		  (strcmp("-noinit",argname) == 0))
-		auto_open_ctr++; 
-	      else
-		{
-		if (strcmp("-title",argname) == 0) 
-		  {
-		    ss->startup_title = copy_string(auto_open_file_names[auto_open_ctr+1]);
-		    auto_open_ctr+=2;
-		  }
-		else
-		  {
-		    if ((strcmp("-p",argname) == 0) ||
-			(strcmp("-preload",argname) == 0))
-		      {
-			/* preload sound files in dir (can be ., should be unquoted) */
-			auto_open_ctr++;
-			add_directory_to_prevlist(ss,auto_open_file_names[auto_open_ctr]);
-			auto_open_ctr++;
-		      }
-		    else
-		      {
-			if ((strcmp("-l",argname) == 0) ||
-			  (strcmp("-load",argname) == 0) ||
-			  ((file_extension(argname)) && (strcmp(file_extension(argname),"scm") == 0)))
-			  {
-			    if ((strcmp("-l",argname) == 0) || (strcmp("-load",argname) == 0)) auto_open_ctr++;
-			    snd_load_file(auto_open_file_names[auto_open_ctr]);
-			    auto_open_ctr++;
-			  }
-			else
-			  {
-			    if ((strcmp("-e",argname) == 0) ||
-				(strcmp("-eval",argname) == 0))
-			      {
-				/* evaluate expression */
-				auto_open_ctr++;
-				snd_eval_str(ss,auto_open_file_names[auto_open_ctr],1);
-				auto_open_ctr++;
-			      }
-			    else
-			      {
-				if (startup_filename == NULL) 
-				  {
-				    startup_filename = copy_string(argname);
-				    if (dont_start(ss,startup_filename)) snd_exit(1);
-				  }
-				sp = snd_open_file_unselected(argname,ss);
-				auto_open_ctr++;
-				if ((sp) && (auto_open_ctr < auto_open_files))
-				  {
-				    if (strcmp("-s",auto_open_file_names[auto_open_ctr]) == 0)
-				      {
-					/* start up info follows -- [sx,sy,zx,zy] ... (per chan) */
-					auto_open_ctr++;
-					for (i=0;i<sp->nchans;i++)
-					  {
-					    cp = sp->chans[i];
-					    ap = cp->axis;
-					    sscanf(auto_open_file_names[auto_open_ctr],"%f,%f,%f,%f",&apsx,&apsy,&apzx,&apzy);
-					    ap->sx = (Float)apsx; 
-					    ap->zx = (Float)apzx;
-					    ap->sy = (Float)apsy;
-					    ap->zy = (Float)apzy;
-					    set_xy_bounds(cp,ap);
-					    auto_open_ctr++;
-					  }}}}}}}}}
+	  auto_open_ctr = handle_next_startup_arg(ss,auto_open_ctr,auto_open_files,auto_open_file_names,TRUE);
 	  if (auto_open_ctr < auto_open_files) return(BACKGROUND_CONTINUE); /* i.e. come back to this branch */
 	}
       break;

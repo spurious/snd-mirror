@@ -127,14 +127,12 @@ static void region_resize_Callback(Widget w,XtPointer clientData,XtPointer callD
   region_update_graph((chan_info *)clientData);
 }
 
-static int region_dialog_active(void);
-
 void delete_region_and_update_browser(snd_state *ss, int n)
 {
   int act;
   act = delete_region(n);
   if (act == INVALID_REGION) return;
-  if (region_dialog_active())
+  if (region_dialog)
     {
       if (act != NO_REGIONS)
 	{
@@ -166,7 +164,7 @@ static void region_help_Callback(Widget w,XtPointer clientData,XtPointer callDat
 void select_region_and_update_browser(snd_state *ss, int n)
 {
   deactivate_selection();  /* just in case there's a region being highlighted */
-  if (region_dialog_active())
+  if (region_dialog)
     {
       unhighlight_region(ss);
       select_region(n);
@@ -534,8 +532,6 @@ void View_Region_Callback(Widget w,XtPointer clientData,XtPointer callData)
   else raise_dialog(region_dialog);
   if (!XtIsManaged(region_dialog)) {current_region = 0; XtManageChild(region_dialog);}
 }
-
-static int region_dialog_active(void) {return(region_dialog != NULL);}
 
 int region_dialog_is_active(void)
 {

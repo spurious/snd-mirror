@@ -176,7 +176,6 @@ Xt/X-related flags like -xrm).
 -noinit             don't read ~/.snd, if any
 -p -preload <dir>   preload sound files in directory <dir> (for example, snd -p .)
 -l -load <file>     load guile (scheme) code in <file> (for example, snd -l test.scm)
-<file> -s <4 args>  set initial graph window bounds
 -e -eval expr       evaluate expr
 
 The -e switch evaluates its argument as though it had been passed to M-X.

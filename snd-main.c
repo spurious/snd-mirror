@@ -500,6 +500,74 @@ int save_state (snd_state *ss, char *save_state_name)
   return(0);
 }
 
+static char *startup_filename = NULL;
+
+int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, int auto_open_files, char **auto_open_file_names, int with_title)
+{
+  char *argname;
+  argname = auto_open_file_names[auto_open_ctr];
+  if (argname)
+    { /* wanted to use "-d" and "-i" but they're in use */
+      if ((strcmp("-h",argname) == 0) || 
+	  (strcmp("-horizontal",argname) == 0) ||
+	  (strcmp("-v",argname) == 0) || 
+	  (strcmp("-vertical",argname) == 0) ||
+	  (strcmp("-notebook",argname) == 0) ||
+	  (strcmp("-separate",argname) == 0) ||
+	  (strcmp("-noglob",argname) == 0) ||
+	  (strcmp("-noinit",argname) == 0))
+	return(auto_open_ctr+1);
+      else
+	{
+	  if ((strcmp("-p",argname) == 0) ||
+	      (strcmp("-preload",argname) == 0))
+	    {
+	      /* preload sound files in dir (can be ., should be unquoted) */
+	      auto_open_ctr++;
+	      add_directory_to_prevlist(ss,auto_open_file_names[auto_open_ctr]);
+	    }
+	  else
+	    {
+	      if ((strcmp("-l",argname) == 0) ||
+		  (strcmp("-load",argname) == 0) ||
+		  ((file_extension(argname)) && (strcmp(file_extension(argname),"scm") == 0)))
+		{
+		  if ((strcmp("-l",argname) == 0) || (strcmp("-load",argname) == 0)) auto_open_ctr++;
+		  snd_load_file(auto_open_file_names[auto_open_ctr]);
+		}
+	      else
+		{
+		  if ((strcmp("-e",argname) == 0) ||
+		      (strcmp("-eval",argname) == 0))
+		    {
+		      /* evaluate expression */
+		      auto_open_ctr++;
+		      snd_eval_str(ss,auto_open_file_names[auto_open_ctr],1);
+		    }
+		  else
+		    {
+		      if ((with_title) && (strcmp("-title",argname) == 0))
+			{
+			  auto_open_ctr++;
+			  ss->startup_title = copy_string(auto_open_file_names[auto_open_ctr]);
+			}
+		      else
+			{
+			  if (startup_filename == NULL)
+			    {
+			      startup_filename = copy_string(argname);
+			      if (dont_start(ss,startup_filename)) snd_exit(1);
+			    }
+			  snd_open_file_unselected(argname,ss);
+			}
+		    }
+		}
+	    }
+	}
+    }
+  return(auto_open_ctr+1);
+}
+
 #if HAVE_GUILE
 #include "sg.h"
 
