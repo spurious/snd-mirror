@@ -16,6 +16,19 @@
 
 static snd_state *ss;                      /* global state info, carried around via callData arg in callbacks */
 
+static XEN mus_error_hook;
+
+static int ignore_mus_error(int type, char *msg)
+{
+  XEN result = XEN_FALSE;
+  if (XEN_HOOKED(mus_error_hook))
+    result = g_c_run_or_hook(mus_error_hook, 
+			     XEN_LIST_2(C_TO_XEN_INT(type), 
+					C_TO_XEN_STRING(msg)),
+			     S_mus_error_hook);
+  return(XEN_NOT_FALSE_P(result));
+}
+
 static void mus_error2snd(int type, char *msg)
 {
   if (!(ignore_mus_error(type, msg)))
@@ -29,16 +42,16 @@ static void mus_error2snd(int type, char *msg)
 			 XEN_LIST_1(C_TO_XEN_STRING(msg)));
 	}
       /* else we're not called from guile? */
+      snd_error(msg);
     }
-  else return;
-  snd_error(msg);
 }
 
 static void mus_print2snd(char *msg)
 {
-  add_to_error_history(get_global_state(), msg, FALSE);
+  add_to_error_history(ss, msg, FALSE);
   if (record_dialog_is_active()) recorder_error(msg);
-  listener_append(get_global_state(), msg);
+  if (!(ignore_mus_error(MUS_NO_ERROR, msg)))
+    listener_append(ss, msg);
 }
 
 #if HAVE_SYS_FPU_H
@@ -313,3 +326,12 @@ static void mus_print2snd(char *msg)
 #endif
 
 snd_state *get_global_state(void) {return(ss);} /* sigh */
+
+
+void g_init_base(void)
+{
+  #define H_mus_error_hook S_mus_error_hook " (error-type error-message) is called upon mus_error. \
+If it returns #t, Snd ignores the error (it assumes you've handled it via the hook)."
+
+  XEN_DEFINE_HOOK(mus_error_hook, S_mus_error_hook, 2, H_mus_error_hook);       /* arg = error-type error-message */
+}

@@ -3758,6 +3758,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_DEFINE_HOOK(output_comment_hook, S_output_comment_hook, 1, H_output_comment_hook); /* arg = current mus_sound_comment(hdr) if any */
   XEN_DEFINE_HOOK(print_hook,          S_print_hook, 1,          H_print_hook);          /* arg = text */
 
+  g_init_base();
   g_init_marks();
   g_init_regions();
   g_init_selection();

@@ -2099,6 +2099,8 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 
 ;;; -------- mark-sync-color
+;;;
+;;; (mark-sync-color "blue")
 
 (define (mark-sync-color new-color)
   (define get-color

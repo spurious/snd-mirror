@@ -757,7 +757,6 @@ void g_init_fft(void);
 /* -------- snd-xen.c -------- */
 
 XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller);
-int ignore_mus_error(int type, char *msg);
 XEN snd_no_such_file_error(const char *caller, XEN filename);
 XEN snd_no_such_channel_error(const char *caller, XEN snd, XEN chn);
 XEN snd_bad_arity_error(const char *caller, XEN errstr, XEN proc);
@@ -1287,6 +1286,7 @@ snd_state *get_global_state(void);
 #if SND_AS_WIDGET
   snd_state *snd_main(int argc, char **argv);
 #endif
+void g_init_base(void);
 
 
 /* -------- snd-kbd.c -------- */

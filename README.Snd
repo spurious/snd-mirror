@@ -103,13 +103,6 @@ Recently I added the possibility of using Ruby rather than
 Guile (on the HAVE_RUBY or --with-ruby switches).
 
 
-In Gtk+, the --with-html flag tries to use /usr/lib/mozilla.
-
-In Motif, the XPM library, if it is available, is used to create some cute
-icons.  If the relevant makefile does not include -DXPM and you have
-the library, add -DXPM to CFLAGS and -lXpm to LIBS.  (This is built
-into Gtk+).  If you're using gtk, try to get version 1.2.7 or later.
-
 There are precompiled binaries available at the ccrma-ftp site
 mentioned above: linux-snd (or linux-snd.gz) for Linux
 on a PC; sun-snd for the Sun; also RPM (Redhat package management)
@@ -117,7 +110,7 @@ files that contain the Linux/PC version, (snd-5-5.i386.rpm), the
 sources (snd-5-5.src.rpm), and the LinuxPPC version (snd-5-5.ppc.rpm).
 These RPM files have been superseded by Fernando Lopez-Lezcano's
 set available at http://www-ccrma.stanford.edu/software/snd/.
-These pre-built images require Guile 1.4; if you are running 1.3.4,
+The pre-built images require Guile 1.4; if you are running 1.3.4,
 you'll need to build from sources.  The linuxppc version requires
 libXm.so.2.1 available from openmotif.
 
@@ -171,8 +164,7 @@ TROUBLES:
 
 Alpha audio:
 There's no support yet for playing or recording sounds on the Alpha --
-I don't have any idea how audio works on this system.  Any information
-would be much appreciated!
+I don't have any idea how audio works on this system.
 
 
 Linux audio:
@@ -485,10 +477,7 @@ Guile/Scheme:
   http://www.cs.rice.edu/~dorai/t-y-scheme/t-y-scheme.html
   http://www.cs.utexas.edu/users/wilson/schintro/schintro_toc.html
   http://www.swiss.ai.mit.edu/~jaffer/SLIB.html
-  http://www.glug.org/
   http://www.glug.org/people/ttn/software/ttn-pers-scheme/
-  ftp://krusty.e-technik.uni-dortmund.de/pub/guile/snapshots
-
 
 CCRMA:
   http://www-ccrma.stanford.edu/

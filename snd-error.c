@@ -5,7 +5,6 @@ static char *snd_error_buffer = NULL;
 
 static XEN snd_error_hook; 
 static XEN snd_warning_hook; 
-static XEN mus_error_hook;
 
 void snd_warning(char *format, ...)
 {
@@ -135,17 +134,6 @@ static XEN g_snd_warning(XEN msg)
   return(msg);
 }
  
-int ignore_mus_error(int type, char *msg)
-{
-  XEN result = XEN_FALSE;
-  if (XEN_HOOKED(mus_error_hook))
-    result = g_c_run_or_hook(mus_error_hook, 
-			     XEN_LIST_2(C_TO_XEN_INT(type), 
-					C_TO_XEN_STRING(msg)),
-			     S_mus_error_hook);
-  return(XEN_NOT_FALSE_P(result));
-}
-
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_1(g_snd_error_w, g_snd_error)
 XEN_NARGIFY_1(g_snd_warning_w, g_snd_warning)
@@ -158,9 +146,6 @@ void g_init_errors(void)
 {
   XEN_DEFINE_PROCEDURE(S_snd_error, g_snd_error_w, 1, 0, 0, H_snd_error);
   XEN_DEFINE_PROCEDURE(S_snd_warning, g_snd_warning_w, 1, 0, 0, H_snd_warning);
-
-  #define H_mus_error_hook S_mus_error_hook " (error-type error-message) is called upon mus_error. \
-If it returns #t, Snd ignores the error (it assumes you've handled it via the hook)."
 
   #define H_snd_error_hook S_snd_error_hook " (error-message) is called upon snd_error. \
 If it returns #t, Snd flushes the error (it assumes you've reported it via the hook:\n\
@@ -176,7 +161,6 @@ If it returns #t, Snd flushes the warning (it assumes you've reported it via the
       (thunk)\n\
       (remove-hook! snd-warning-hook no-warning)))"
 
-  XEN_DEFINE_HOOK(mus_error_hook, S_mus_error_hook, 2, H_mus_error_hook);       /* arg = error-type error-message */
   XEN_DEFINE_HOOK(snd_error_hook, S_snd_error_hook, 1, H_snd_error_hook);       /* arg = error-message */
   XEN_DEFINE_HOOK(snd_warning_hook, S_snd_warning_hook, 1, H_snd_warning_hook); /* arg = error-message */
 }

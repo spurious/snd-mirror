@@ -727,6 +727,63 @@ to the indicated frame"
 					   XEN_TO_C_INT(offset))));
 }
 
+/* since mus-audio-read|write assume sound-data vectors communicating with Scheme,
+ *   we can't assume that the user has had a chance to deal with type problems.
+ *   So, we keep track of each audio line's current read|write format and
+ *   translate in mus_audio_read|write if necessary (if MUS_SAMPLE_TYPE isn't
+ *   compatible with the desired format).
+ */
+
+static int audio_io_size = 0;
+static int *audio_io_lines = NULL;
+static int *audio_io_formats = NULL;
+
+static int audio_io_format(int line)
+{
+  int i;
+  for (i = 0; i < audio_io_size; i++)
+    if (audio_io_lines[i] == line)
+      return(audio_io_formats[i]);
+  return(MUS_UNKNOWN);
+}
+
+#define audio_io_read_format(Line) (audio_io_format(Line) & 0xffff)
+#define audio_io_write_format(Line) (audio_io_format(Line) >> 16)
+
+static void audio_io_set_format(int line, int format)
+{
+  int i, old_size;
+  for (i = 0; i < audio_io_size; i++)
+    if (audio_io_lines[i] == line)
+      {
+	audio_io_formats[i] = format;
+	return;
+      }
+  /* we get here if the table is not big enough */
+  old_size = audio_io_size;
+  audio_io_size += 8;
+  if (old_size == 0)
+    {
+      audio_io_lines = (int *)MALLOC(audio_io_size * sizeof(int));
+      audio_io_formats = (int *)MALLOC(audio_io_size * sizeof(int));
+    }
+  else
+    {
+      audio_io_lines = (int *)REALLOC(audio_io_lines, audio_io_size * sizeof(int));
+      audio_io_formats = (int *)REALLOC(audio_io_formats, audio_io_size * sizeof(int));
+    }
+  for (i = old_size + 1; i < audio_io_size; i++)
+    {
+      audio_io_lines[i] = -1;
+      audio_io_formats[i] = MUS_UNKNOWN;
+    }
+  audio_io_lines[old_size] = line;
+  audio_io_formats[old_size] = format;
+}
+
+#define audio_io_set_read_format(Line, Format) audio_io_set_format(Line, ((audio_io_format(Line) & 0xffff0000) | Format))
+#define audio_io_set_write_format(Line, Format) audio_io_set_format(Line, ((audio_io_format(Line) & 0xffff) | (Format << 16)))
+
 static XEN g_open_audio_output(XEN dev, XEN srate, XEN chans, XEN format, XEN size)
 {
   #define H_mus_audio_open_output "(" S_mus_audio_open_output " device srate chans format clipped)\n\
@@ -734,6 +791,7 @@ opens the audio device ready for output at the given srate and so on. \
 returns the audio line number:\n\
   (set! line (mus-audio-open-output mus-audio-default 22050 1 mus-lshort 256)"
 
+  int fmt, line;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(dev), dev, XEN_ARG_1, S_mus_audio_open_output, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(srate), srate, XEN_ARG_2, S_mus_audio_open_output, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chans), chans, XEN_ARG_3, S_mus_audio_open_output, "an integer");
@@ -741,7 +799,8 @@ returns the audio line number:\n\
   XEN_ASSERT_TYPE(XEN_NUMBER_P(size), size, XEN_ARG_5, S_mus_audio_open_output, "a number");
   if (!(MUS_AUDIO_DEVICE_OK(XEN_TO_C_INT(dev))))
     mus_misc_error(S_mus_audio_open_output, "invalid device", dev);
-  if (!(MUS_DATA_FORMAT_OK(XEN_TO_C_INT(format))))
+  fmt = XEN_TO_C_INT(format);
+  if (!(MUS_DATA_FORMAT_OK(fmt)))
     mus_misc_error(S_mus_audio_open_output, "invalid data format", format);
   if (XEN_TO_C_INT_OR_ELSE(size, 0) < 0)
     mus_misc_error(S_mus_audio_open_output, "invalid size", size);
@@ -749,11 +808,13 @@ returns the audio line number:\n\
     mus_misc_error(S_mus_audio_open_output, "invalid srate", srate);
   if ((XEN_TO_C_INT(chans) <= 0) || (XEN_TO_C_INT(chans) > 256))
     mus_misc_error(S_mus_audio_open_output, "invalid chans", chans);
-  return(C_TO_XEN_INT(mus_audio_open_output(XEN_TO_C_INT(dev),
-					    XEN_TO_C_INT_OR_ELSE(srate, 0),
-					    XEN_TO_C_INT(chans),
-					    XEN_TO_C_INT(format),
-					    XEN_TO_C_INT_OR_ELSE(size, 0))));
+  line = mus_audio_open_output(XEN_TO_C_INT(dev),
+			       XEN_TO_C_INT_OR_ELSE(srate, 0),
+			       XEN_TO_C_INT(chans),
+			       fmt,
+			       XEN_TO_C_INT_OR_ELSE(size, 0));
+  audio_io_set_write_format(line, fmt);
+  return(C_TO_XEN_INT(line));
 }
 
 static XEN g_open_audio_input(XEN dev, XEN srate, XEN chans, XEN format, XEN size)
@@ -761,6 +822,7 @@ static XEN g_open_audio_input(XEN dev, XEN srate, XEN chans, XEN format, XEN siz
   #define H_mus_audio_open_input "(" S_mus_audio_open_input " (device srate chans format bufsize)\n\
 opens the audio device ready for input with the indicated attributes, returns the audio line number"
 
+  int fmt, line;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(dev), dev, XEN_ARG_1, S_mus_audio_open_input, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(srate), srate, XEN_ARG_2, S_mus_audio_open_input, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chans), chans, XEN_ARG_3, S_mus_audio_open_input, "an integer");
@@ -768,7 +830,8 @@ opens the audio device ready for input with the indicated attributes, returns th
   XEN_ASSERT_TYPE(XEN_NUMBER_P(size), size, XEN_ARG_5, S_mus_audio_open_input, "a number");
   if (!(MUS_AUDIO_DEVICE_OK(XEN_TO_C_INT(dev))))
     mus_misc_error(S_mus_audio_open_input, "invalid device", dev);
-  if (!(MUS_DATA_FORMAT_OK(XEN_TO_C_INT(format))))
+  fmt = XEN_TO_C_INT(format);
+  if (!(MUS_DATA_FORMAT_OK(fmt)))
     mus_misc_error(S_mus_audio_open_input, "invalid data format", format);
   if (XEN_TO_C_INT_OR_ELSE(size, 0) < 0)
     mus_misc_error(S_mus_audio_open_input, "invalid size", size);
@@ -776,11 +839,13 @@ opens the audio device ready for input with the indicated attributes, returns th
     mus_misc_error(S_mus_audio_open_input, "invalid srate", srate);
   if (XEN_TO_C_INT(chans) <= 0)
     mus_misc_error(S_mus_audio_open_input, "invalid chans", chans);
-  return(C_TO_XEN_INT(mus_audio_open_input(XEN_TO_C_INT(dev),
-					   XEN_TO_C_INT_OR_ELSE(srate, 0),
-					   XEN_TO_C_INT(chans),
-					   XEN_TO_C_INT(format),
-					   XEN_TO_C_INT_OR_ELSE(size, 0))));
+  line = mus_audio_open_input(XEN_TO_C_INT(dev),
+			      XEN_TO_C_INT_OR_ELSE(srate, 0),
+			      XEN_TO_C_INT(chans),
+			      fmt,
+			      XEN_TO_C_INT_OR_ELSE(size, 0));
+  audio_io_set_read_format(line, fmt);
+  return(C_TO_XEN_INT(line));
 }
 
 static XEN g_close_audio(XEN line)
@@ -819,31 +884,27 @@ static XEN g_write_audio(XEN line, XEN sdata, XEN frames)
   #define H_mus_audio_write "(" S_mus_audio_write " line sdata frames) writes frames of data (channels*frames = samples) \
 to the audio line from the sound-data object sdata."
 
-  /* assuming 16-bit output here for now */
-  short *obuf;
+  char *obuf;
   MUS_SAMPLE_TYPE **bufs;
   sound_data *sd;
-  int i, j, k, outbytes, val, frms;
+  int outbytes, val, frms, fmt, fd;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(line), line, XEN_ARG_1, S_mus_audio_write, "an integer");
   XEN_ASSERT_TYPE(SOUND_DATA_P(sdata), sdata, XEN_ARG_2, S_mus_audio_write, "a sound-data object");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(frames), frames, XEN_ARG_3, S_mus_audio_write, "an integer");
   sd = (sound_data *)XEN_OBJECT_REF(sdata);
   bufs = sd->data;
   frms = XEN_TO_C_INT(frames);
-  outbytes = frms * sd->chans * 2;
-  obuf = (short *)CALLOC(frms * sd->chans, sizeof(short));
-  if (sd->chans == 1)
-    {
-      for (k = 0; k < frms; k++) 
-	obuf[k] = (short)MUS_SAMPLE_TO_SHORT(bufs[0][k]);
-    }
-  else
-    {
-      for (k = 0, j = 0; k < frms; k++, j += sd->chans)
-	for (i = 0; i < sd->chans; i++) 
-	  obuf[j + i] = (short)MUS_SAMPLE_TO_SHORT(bufs[i][k]);
-    }
-  val = mus_audio_write(XEN_TO_C_INT(line), (char *)obuf, outbytes);
+  if (frms > sd->length)
+    mus_misc_error(S_mus_audio_write, 
+		   "frames > sound-data buffer length: ", 
+		   XEN_LIST_2(frames,
+			      C_TO_XEN_INT(sd->length)));
+  fd = XEN_TO_C_INT(line);
+  fmt = audio_io_write_format(fd);
+  outbytes = frms * sd->chans * mus_data_format_to_bytes_per_sample(fmt);
+  obuf = (char *)CALLOC(outbytes, sizeof(char));
+  mus_file_write_buffer(fmt, 0, frms - 1, sd->chans, sd->data, obuf, TRUE); /* TRUE -> clipped */
+  val = mus_audio_write(fd, obuf, outbytes);
   FREE(obuf);
   return(xen_return_first(C_TO_XEN_INT(val), sdata));
 }
@@ -853,9 +914,9 @@ static XEN g_read_audio(XEN line, XEN sdata, XEN frames)
   #define H_mus_audio_read "(" S_mus_audio_read " line sdata frames) reads frames of data (channels*frames = samples) \
 from the audio line into the sound-data object sdata."
 
-  short *inbuf;
+  char *inbuf;
   sound_data *sd;
-  int val, inbytes, i, j, k, frms;
+  int val, inbytes, frms, fd, fmt;
   MUS_SAMPLE_TYPE **bufs;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(line), line, XEN_ARG_1, S_mus_audio_read, "an integer");
   XEN_ASSERT_TYPE(SOUND_DATA_P(sdata), sdata, XEN_ARG_2, S_mus_audio_read, "a sound-data object");
@@ -863,25 +924,17 @@ from the audio line into the sound-data object sdata."
   sd = (sound_data *)XEN_OBJECT_REF(sdata);
   bufs = sd->data;
   frms = XEN_TO_C_INT(frames);
-  inbytes = frms * sd->chans * 2;
-  inbuf = (short *)CALLOC(frms * sd->chans, sizeof(short));
-  val = mus_audio_read(XEN_TO_C_INT(line), (char *)inbuf, inbytes);
-  if (sd->chans == 1)
-    {
-      for (k = 0; k < frms; k++) 
-	bufs[0][k] = (short)MUS_SHORT_TO_SAMPLE(inbuf[k]);
-    }
-  else
-    {
-      for (k = 0, j = 0; k < frms; k++, j += sd->chans)
-	for (i = 0; i < sd->chans; i++) 
-	  bufs[i][k] = (short)MUS_SHORT_TO_SAMPLE(inbuf[j + i]);
-    }
+  fd = XEN_TO_C_INT(line);
+  fmt = audio_io_read_format(fd);
+  inbytes = frms * sd->chans * mus_data_format_to_bytes_per_sample(fmt);
+  inbuf = (char *)CALLOC(inbytes, sizeof(char));
+  val = mus_audio_read(fd, inbuf, inbytes);
+  mus_file_read_buffer(fmt, 0, sd->chans, frms - 1, sd->data, inbuf);
   FREE(inbuf);
   return(xen_return_first(C_TO_XEN_INT(val), sdata));
 }
 
-static XEN g_read_audio_state(XEN dev, XEN field, XEN chan, XEN vals)
+static XEN g_mus_audio_mixer_read(XEN dev, XEN field, XEN chan, XEN vals)
 {
   #define H_mus_audio_mixer_read "(" S_mus_audio_mixer_read " device field channel vals) reads sound card 'mixer' state"
   int val, i, len;
@@ -910,7 +963,7 @@ static XEN g_read_audio_state(XEN dev, XEN field, XEN chan, XEN vals)
   return(C_TO_XEN_INT(val));
 }
 
-static XEN g_write_audio_state(XEN dev, XEN field, XEN chan, XEN vals)
+static XEN g_mus_audio_mixer_write(XEN dev, XEN field, XEN chan, XEN vals)
 {
   #define H_mus_audio_mixer_write "(" S_mus_audio_mixer_write " device field channel vals) changes the sound card's 'mixer' state"
   int i, len, res;
@@ -1038,8 +1091,8 @@ XEN_NARGIFY_1(g_close_audio_w, g_close_audio)
 XEN_NARGIFY_0(g_save_audio_state_w, g_save_audio_state)
 XEN_NARGIFY_0(g_restore_audio_state_w, g_restore_audio_state)
 XEN_NARGIFY_0(g_audio_systems_w, g_audio_systems)
-XEN_NARGIFY_4(g_read_audio_state_w, g_read_audio_state)
-XEN_NARGIFY_4(g_write_audio_state_w, g_write_audio_state)
+XEN_NARGIFY_4(g_mus_audio_mixer_read_w, g_mus_audio_mixer_read)
+XEN_NARGIFY_4(g_mus_audio_mixer_write_w, g_mus_audio_mixer_write)
 XEN_NARGIFY_2(g_mus_set_data_clipped_w, g_mus_set_data_clipped)
 XEN_NARGIFY_1(g_mus_prescaler_w, g_mus_prescaler)
 XEN_NARGIFY_2(g_mus_set_prescaler_w, g_mus_set_prescaler)
@@ -1094,8 +1147,8 @@ XEN_ARGIFY_1(g_mus_sound_report_cache_w, g_mus_sound_report_cache)
 #define g_save_audio_state_w g_save_audio_state
 #define g_restore_audio_state_w g_restore_audio_state
 #define g_audio_systems_w g_audio_systems
-#define g_read_audio_state_w g_read_audio_state
-#define g_write_audio_state_w g_write_audio_state
+#define g_mus_audio_mixer_read_w g_mus_audio_mixer_read
+#define g_mus_audio_mixer_write_w g_mus_audio_mixer_write
 #define g_mus_set_data_clipped_w g_mus_set_data_clipped
 #define g_mus_prescaler_w g_mus_prescaler
 #define g_mus_set_prescaler_w g_mus_set_prescaler
@@ -1306,8 +1359,8 @@ void mus_sndlib2xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_mus_audio_save,           g_save_audio_state_w, 0, 0, 0,      H_mus_audio_save);
   XEN_DEFINE_PROCEDURE(S_mus_audio_restore,        g_restore_audio_state_w, 0, 0, 0,   H_mus_audio_restore);
   XEN_DEFINE_PROCEDURE(S_mus_audio_systems,        g_audio_systems_w, 0, 0, 0,         H_mus_audio_systems);
-  XEN_DEFINE_PROCEDURE(S_mus_audio_mixer_read,     g_read_audio_state_w, 4, 0, 0,      H_mus_audio_mixer_read);
-  XEN_DEFINE_PROCEDURE(S_mus_audio_mixer_write,    g_write_audio_state_w, 4, 0, 0,     H_mus_audio_mixer_write);
+  XEN_DEFINE_PROCEDURE(S_mus_audio_mixer_read,     g_mus_audio_mixer_read_w, 4, 0, 0,  H_mus_audio_mixer_read);
+  XEN_DEFINE_PROCEDURE(S_mus_audio_mixer_write,    g_mus_audio_mixer_write_w, 4, 0, 0, H_mus_audio_mixer_write);
   XEN_DEFINE_PROCEDURE(S_mus_file_set_data_clipped, g_mus_set_data_clipped_w, 2, 0, 0, H_mus_file_set_data_clipped);
   XEN_DEFINE_PROCEDURE(S_mus_file_prescaler,       g_mus_prescaler_w, 1, 0, 0,         H_mus_file_prescaler);
   XEN_DEFINE_PROCEDURE(S_mus_file_set_prescaler,   g_mus_set_prescaler_w, 2, 0, 0,     H_mus_file_set_prescaler);
