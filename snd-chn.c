@@ -1177,7 +1177,6 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
   snd_info *sp;
   snd_state *ss;
   Float samples_per_pixel, xf;
-  Float samp, ymin, ymax;
   int pixels;
   snd_fd *sf = NULL;
   int x_start, x_end;
@@ -1254,6 +1253,7 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
 	}
       else
 	{
+	  Float ymin, ymax, samp;
 	  data_size = pixels + 1;
 	  sf = init_sample_read_any(losamp, cp, READ_FORWARD, edit_pos);
 	  if (sf == NULL) return(XEN_FALSE);

@@ -1905,6 +1905,12 @@ void c_convolve(char *fname, Float amp, int filec, off_t filehdr, int filterc, o
 	      for (i = 0; i < data_size; i++) 
 		pbuf[i] = MUS_FLOAT_TO_SAMPLE(scl * rl0[i]);
 	    }
+	  else 
+	    {
+	      /* amp == 0.0 means un-normalized output */
+	      for (i = 0; i < data_size; i++) 
+		pbuf[i] = MUS_FLOAT_TO_SAMPLE(rl0[i]);
+	    }
 	  progress_report(gsp, "convolve", ip + 1, total_chans, .9, from_enved);
 	  /* and save as temp file */
 	  mus_file_write(tempfile, 0, data_size - 1, 1, &(pbuf));

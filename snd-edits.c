@@ -3659,8 +3659,8 @@ Float local_maxamp(chan_info *cp, off_t beg, off_t num, int edpos)
       for (i = 0; i < num; i++)
 	{
 	  mval = read_sample(sf);
-	  if (mval < MUS_SAMPLE_0) mval = -mval;
 	  if (mval > ymax) ymax = mval;
+	  else if (-mval > ymax) ymax = -mval;
 	  j++;
 	  if (j > 1000000)
 	    {
@@ -3679,8 +3679,8 @@ Float local_maxamp(chan_info *cp, off_t beg, off_t num, int edpos)
       for (i = 0; i < num; i++)
 	{
 	  mval = read_sample(sf);
-	  if (mval < MUS_SAMPLE_0) mval = -mval;
 	  if (mval > ymax) ymax = mval;
+	  else if (-mval > ymax) ymax = -mval;
 	}
     }
   free_snd_fd(sf);

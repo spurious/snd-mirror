@@ -5579,20 +5579,15 @@ static char *descr_make_vct_v2(int *args, int *ints, Float *dbls)
 }
 static xen_value *make_vct_1(ptree *prog, xen_value **args, int num_args)
 {
-  args[0] = make_xen_value(R_VCT, add_int_to_ptree(prog, 0), R_VARIABLE);
-  add_obj_to_gcs(prog, R_VCT, args[0]->addr);
+  if ((num_args == 1) || ((num_args == 2) && (args[2]->type == R_FLOAT)))
+    {
+      args[0] = make_xen_value(R_VCT, add_int_to_ptree(prog, 0), R_VARIABLE);
+      add_obj_to_gcs(prog, R_VCT, args[0]->addr);
+    }
+  else return(run_warn("make-vct: %s", (num_args == 2) ? "bad initial-element" : "wrong number of args"));
   if (num_args == 1)
     add_triple_to_ptree(prog, va_make_triple(make_vct_v, descr_make_vct_v, 2, args[0], args[1]));
-  else
-    {
-      if ((num_args == 2) && (args[2]->type == R_FLOAT))
-	add_triple_to_ptree(prog, va_make_triple(make_vct_v2, descr_make_vct_v2, 3, args[0], args[1], args[2]));
-      else 
-	{
-	  FREE(args[0]);
-	  return(run_warn("make-vct: %s", (num_args == 2) ? "bad initial-element" : "wrong number of args"));
-	}
-    }
+  else add_triple_to_ptree(prog, va_make_triple(make_vct_v2, descr_make_vct_v2, 3, args[0], args[1], args[2]));
   return(args[0]);
 }
 

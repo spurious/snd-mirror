@@ -641,7 +641,6 @@ int save_region(snd_state *ss, int n, char *ofile, int data_format)
   r = id_to_region(n);
   if (r)
     {
-      if (data_format == MUS_UNKNOWN) data_format = MUS_OUT_FORMAT;
       if (!(mus_header_writable(r->header_type, data_format))) 
 	{
 	  if (mus_header_writable(MUS_NEXT, data_format))

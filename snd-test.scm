@@ -3953,6 +3953,18 @@
 	  (scale-by (list .5 .25) ind1)
 	  (scale-by '#(2.0 4.0) ind1)
 	  (scale-by #f ind1)
+	  (revert-sound ind1)
+	  (let ((amps (maxamp ind1 #t)))
+	    (swap-channels ind1 0 ind1)
+	    (let ((newamps (maxamp ind1 #t)))
+	      (if (or (fneq (car amps) (cadr newamps))
+		      (fneq (cadr amps) (car newamps)))
+		  (snd-display "swap-channels with cp def: ~A ~A" amps newamps)))
+	    (swap-channels ind1 1)
+	    (let ((newamps (maxamp ind1 #t)))
+	      (if (or (fneq (car amps) (car newamps))
+		      (fneq (cadr amps) (cadr newamps)))
+		  (snd-display "swap-channels with cp def 0: ~A ~A" amps newamps))))
 	  (close-sound ind1)))
 
       (let ((ind1 (open-sound "oboe.snd"))
@@ -8605,6 +8617,24 @@
 	(close-sound new-index))
       (let ((index (open-sound "pistol.snd"))
 	    (data (samples->vct 0 100)))
+	(convolve-with "oboe.snd" #f)
+	(let ((scl (maxamp)))
+	  (convolve-with "oboe.snd" scl index 0 0)
+	  (if (fneq (maxamp) scl) 
+	      (snd-display ";convolve-with amps: ~A ~A" (maxamp) scl)
+	      (let ((preader (make-sample-reader 0 index 0 1 1))
+		    (reader (make-sample-reader 0))
+		    (len (frames)))
+		(call-with-current-continuation 
+		 (lambda (break) 
+		   (do ((i 0 (1+ i))) 
+		       ((= i len))
+		     (let ((val0 (preader))
+			   (val1 (reader)))
+		       (if (fneq val0 val1)
+			   (begin
+			     (snd-display ";convolve-with amps at: ~A: ~A ~A" i val0 val1)
+			     (break))))))))))
 	(close-sound index)
 	(let ((reader (make-sample-reader 0 "pistol.snd")))
 	  (do ((i 0 (1+ i)))
@@ -10698,6 +10728,12 @@
 		     (lambda (n)
 		       (IF (< n 128)
 			   (snd-display ";play-hook samps: ~A?" n))
+		       (set! (expand-control-hop) (expand-control-hop))
+		       (set! (expand-control-length) (expand-control-length))
+		       (set! (expand-control-ramp) (expand-control-ramp))
+		       (set! (contrast-control-amp) (contrast-control-amp))
+		       (set! (reverb-control-lowpass) (reverb-control-lowpass))
+		       (set! (reverb-control-feedback) (reverb-control-feedback))
 		       (set! ph #t)))
 	  (add-hook! dac-hook
 		     (lambda (n)
@@ -12892,16 +12928,12 @@
 	 (cur-amp (maxamp cursnd curchn))
 	 (cur-edit (edit-position cursnd curchn))
 	 (cur-frame (frames cursnd curchn)))
-
-;    (snd-display "~%;[~A ~A, ~A, ~A]" cursnd curchn (map sync snds) cur-maxamps)
-
     (case choice
       ;; scale-channel
       ((0) (let* ((scaler (if (< (maxamp cursnd curchn) 1.0) (+ 1.0 (random 1.0)) (+ 0.5 (random 0.5))))
 		  (cur-loc (random cur-frame))
 		  (cur-samp (sample cur-loc cursnd curchn)))
 	     (scale-channel scaler 0 (frames cursnd curchn) cursnd curchn)
-;	     (snd-display ";scale-channel ~A" scaler)
 	     (if (not (= (edit-position cursnd curchn) (1+ cur-edit))) 
 		 (snd-display ";scale-channel ~A[~A] edit pos: ~A ~A" (short-file-name cursnd) curchn (edit-position cursnd curchn) cur-edit))
 	     (if (not (= (frames cursnd curchn) cur-frame))
@@ -12933,7 +12965,6 @@
       ;; scale-by
       ((1) (let* ((maxscl (apply max cur-maxamps))
 		  (scaler (if (< maxscl 1.0) (+ 1.0 (random 1.0)) (+ 0.5 (random 0.5)))))
-;	     (snd-display ";scale by ~A" scaler)
 	     (scale-by scaler cursnd curchn)
 	     (for-each
 	      (lambda (s c amp ed fr)
@@ -12964,7 +12995,6 @@
       ;; scale-sound-by
       ((4) (let* ((maxscl (apply max cur-maxamps))
 		  (scaler (if (< maxscl 1.0) (+ 1.0 (random 1.0)) (+ 0.5 (random 0.5)))))
-;	     (snd-display ";scale-sound by ~A ~A" scaler cursnd)
 	     (scale-sound-by scaler 1000 1000 cursnd)
 	     (for-each
 	      (lambda (s c amp ed fr)
@@ -12994,35 +13024,54 @@
       ((6) (let ((len (frames cursnd curchn)))
 	     (if (> len 10000)
 		 (let ((beg (random (inexact->exact (/ len 2)))))
-		   (delete-samples beg 10 cursnd curchn)))))
+		   (delete-samples beg (+ 10 (random 100)) cursnd curchn)))))
 
-      ((7) (let ((beg (random (- (frames cursnd curchn) 10))))
-	     (set! (samples beg 10 cursnd curchn) (make-vct 10 1.0))))
+      ((7) (let ((beg (random (+ (frames cursnd curchn) 100))))
+	     (set! (samples beg (+ 10 (random 100)) cursnd curchn) (make-vct 10 1.0))))
 
-      ((8) (let ((beg (random (- (frames cursnd curchn) 10))))
-	     (insert-samples beg 10 (make-vct 10 1.0) cursnd curchn)))
+      ((8) (let ((beg (random (+ (frames cursnd curchn) 100))))
+	     (insert-samples beg (+ 10 (random 100)) (make-vct 10 1.0) cursnd curchn)))
 
       ((9) (add-mark (random (frames cursnd curchn)) cursnd curchn))
 
-      ((10) (let ((beg (random (- (frames cursnd curchn) 10))))
-	      (mix-vct (make-vct 10 (random 1.0)) beg cursnd curchn)))
+      ((10) (let ((beg (random (+ (frames cursnd curchn) 100))))
+	      (mix-vct (make-vct (+ 10 (random 100)) (random 1.0)) beg cursnd curchn)))
 
-      ((11) (let ((beg (random (- (frames cursnd curchn) 10))))
-	      (pad-channel beg 10 cursnd curchn)))
+      ((11) (let ((beg (random (+ (frames cursnd curchn) 100))))
+	      (pad-channel beg (+ 10 (random 100)) cursnd curchn)))
 
-      ((12) (let ((beg (random (- (frames cursnd curchn) 10))))
-	      (ptree-channel (lambda (y) (* y 2.0)) beg 10 cursnd curchn)))
+      ((12) (let ((beg (random (- (frames cursnd curchn) 100))))
+	      (ptree-channel (lambda (y) (* y 2.0)) beg (+ 10 (random 100)) cursnd curchn #f #t)))
 
-      ((13) (let ((beg (random (- (frames cursnd curchn) 10))))
-	      (scale-channel .5 beg 10 cursnd curchn)))
+      ((13) (let ((beg (random (- (frames cursnd curchn) 100))))
+	      (scale-channel .5 beg (+ 10 (random 100)) cursnd curchn)))
       
-      ((14) (let ((beg (random (- (frames cursnd curchn) 20))))
-	      (scale-channel .5 beg 10 cursnd curchn)
-	      (scale-channel .5 (+ beg 10) 10 cursnd curchn)))
+      ((14) (let ((beg (random (- (frames cursnd curchn) 200))))
+	      (scale-channel .5 beg (+ 10 (random 100)) cursnd curchn)
+	      (scale-channel .5 (+ beg 10) (+ 10 (random 100)) cursnd curchn)))
       
-      ((15) (let ((beg (random (- (frames cursnd curchn) 20))))
-	      (scale-channel .5 beg 10 cursnd curchn)
-	      (scale-channel 2.0 beg 10 cursnd curchn)))
+      ((15) (let ((beg (random (- (frames cursnd curchn) 200))))
+	      (scale-channel .5 beg (+ 10 (random 100)) cursnd curchn)
+	      (scale-channel 2.0 beg (+ 10 (random 100)) cursnd curchn)))
+      
+      ((16) (let ((beg (random (- (frames cursnd curchn) 200))))
+	      (pad-channel beg (+ 10 (random 100)) cursnd curchn)
+	      (pad-channel (+ beg 10) (+ 10 (random 100)) cursnd curchn)))
+      
+      ((17) (let ((beg (random (- (frames cursnd curchn) 200))))
+	      (pad-channel beg (+ 10 (random 100)) cursnd curchn)
+	      (pad-channel beg (+ 10 (random 100)) cursnd curchn)))
+      
+      ((18) (let ((beg (random (- (frames cursnd curchn) 200))))
+	      (delete-sample beg cursnd curchn)
+	      (delete-sample (+ beg (random 100)) cursnd curchn)))
+      
+      ((19) (let ((beg (random (+ (frames cursnd curchn) 200))))
+	      (set! (sample beg cursnd curchn) .1)
+	      (set! (sample (+ beg (random 100)) cursnd curchn) .2)))
+
+      ((20) (let ((beg (random (- (frames cursnd curchn) 200))))
+	      (ramp-channel (- (random 2.0) 1.0) (- (random 2.0) 1.0) beg (+ 10 (random 100)) cursnd curchn)))
       
       ;; env-channel
       ((2) (let* ((pts (1+ (random 6)))
@@ -13039,7 +13088,6 @@
 			 (if (> (abs y) maxpt) (set! maxpt (abs y)))
 			 (set! x (+ x (+ .01 (random 1.0)))))
 		       (reverse e1))))
-;	     (snd-display "env-channel at ~D ~D" cursnd curchn)
 	     (if (undo-env cursnd curchn)
 		 (begin
 		   (set! cur-maxamps (apply map maxamp chan-list))
@@ -13049,7 +13097,6 @@
 		   (set! cur-edit (edit-position cursnd curchn))
 		   (set! cur-frame (frames cursnd curchn))))
 	     (env-channel e 0 (frames cursnd curchn) cursnd curchn)
-;	     (snd-display ";env-channel ~A" maxpt)
 	     (if (not (= (edit-position cursnd curchn) (1+ cur-edit))) 
 		 (snd-display ";env-channel ~A[~A] edit pos: ~A ~A" (short-file-name cursnd) curchn (edit-position cursnd curchn) cur-edit))
 	     (if (not (= (frames cursnd curchn) cur-frame))
@@ -13112,7 +13159,6 @@
 		   (set! cur-edit (edit-position cursnd curchn))
 		   (set! cur-frame (frames cursnd curchn))))
 	     (env-sound e beg (max pts (- end beg)) 1.0 cursnd curchn) ; dur here, not end point
-;	     (snd-display ";env-sound ~A ~A ~A (~A)" e beg (max pts (- end beg)) maxpt)
 	     (for-each
 	      (lambda (s c amp ed fr)
 		(if (or (and (= (sync cursnd) 0) 
@@ -13732,6 +13778,46 @@
 	  (let ((val (scan-channel (lambda (y) #f)))) (IF val (snd-display ";scan-channel func #f: ~A" val)))
 	  (let ((val (scan-channel (lambda (y) #f) 1234))) (IF val (snd-display ";scan-channel func #f with beg: ~A" val)))
 	  (let ((val (scan-channel (lambda (y) #f) 1234 4321))) (IF val (snd-display ";scan-channel func #f with beg+dur: ~A" val)))
+	  (revert-sound ind)
+	  (let ((del (make-delay 1000))
+		(len (frames)))
+	    (clm-channel del 0 (frames) ind 0 0 2000)
+	    (if (not (= (frames ind) (+ 2000 len)))
+		(snd-display ";clm-channel overlap length: ~A ~A" len (frames)))
+	    (if (not (equal? (edit-tree) '((0 1 0 52827 1.0 0.0 0.0 0) (52828 -2 0 0 0.0 0.0 0.0 0))))
+		(snd-display ";clm-channel overlaps: ~A" (edit-tree)))
+	    (let ((reader (make-sample-reader 0))
+		  (preader (make-sample-reader 0 ind 0 1 0)))
+	      (call-with-current-continuation
+	       (lambda (break)
+		 (do ((i 0 (1+ i)))
+		     ((= i 1000))
+		   (let ((val (reader)))
+		     (if (fneq val 0.0)
+			 (begin
+			   (snd-display ";clm-channel overlap delayed: ~A: ~A" i val)
+			   (break)))))
+		 (do ((i 0 (1+ i)))
+		     ((= i len))
+		   (let ((val0 (preader))
+			 (val1 (reader)))
+		     (if (fneq val0 val1)
+			 (begin
+			   (snd-display ";clm-channel overlap main: ~A: ~A ~A" (+ i 1000) val0 val1)
+			   (break)))))
+		 (do ((i 0 (1+ i)))
+		     ((= i 1000))
+		   (if (fneq (reader) 0.0)
+		       (begin
+			 (snd-display ";clm-channel overlap trailing garbage")
+			 (break)))))))
+	    (let ((tag (catch #t
+			      (lambda () 
+				(let ((fr (make-frame 3)))
+				  (clm-channel fr)))
+			      (lambda args (car args)))))
+	      (if (not (eq? tag 'mus-error))
+		  (snd-display ";clm-channel gen no run: ~A" tag))))
 	  (close-sound ind))
 
 	(let* ((ind (open-sound "oboe.snd"))
@@ -15226,7 +15312,7 @@ EDITS: 6
 		     (set! (sync ind1) (random 3))
 		     (set! (sync ind2) (random 3))
 		     
-		     (opt-test (random 16)))
+		     (opt-test (random 21)))
 		   
 		   (close-sound ind0)
 		   (close-sound ind1)
@@ -15484,13 +15570,15 @@ EDITS: 5
 "))
 	    (snd-display ";display-edits: ~A?" str)))
       (save-edit-history "hiho.scm" nind 0)
-      (scale-sound-to 1.0 nind 0)
+      (scale-sound-to 1.0 0 (frames nind 0) nind 0)
       (let ((eds (edit-position nind 0))
 	    (val (insert-sound "zero.snd")))
 	(IF (or (not (= 0 val))
 		(not (= eds (edit-position nind 0))))
 	    (snd-display ";insert-sound zero.snd was an edit? ~A ~A ~A" val eds (edit-position nind 0))))
       (revert-sound nind)
+      (scale-sound-to 0.5 0 (frames nind 0) nind 0)
+      (if (fneq (maxamp nind 0) 0.5) (snd-display ";scale-sound-to 0.5: ~A" (maxamp nind)))
       (close-sound nind)
 
       (let ((ind (new-sound "fmv.snd")))
@@ -18532,6 +18620,12 @@ EDITS: 5
       (etst '(mus-sound-comment 3.14))
       (etst '(mus-sound-datum-size #\c))
       (etst '(mus-sound-length 1))
+      (etst '(frames 0 1 2 3))
+      (etst '(edit-position 0 1 2))
+      (etst '(report-in-minibuffer "hi" 0 1 2))
+      (etst '(vct-ref (make-vct 2) 3.14))
+      (etst '(make-vct 2 3 4))
+      (etst '(make-vct 2 1))
 
       (define gen (make-oscil 440))
       (ftst '(mus-frequency gen) 440.0)
@@ -22446,9 +22540,9 @@ EDITS: 5
 		(if (not (XModifierKeymap? map))
 		    (snd-display ";xNewModifiermap: ~A" map)
 		    (begin
-		      (XInsertModifiermapEntry map (list 'KeyCode 50) ShiftMapIndex)
-		      (XDeleteModifiermapEntry map (list 'KeyCode 50) ShiftMapIndex)
-		      ;(XFreeModifiermap map) ;segfault in X
+		      (set! map (XInsertModifiermapEntry map (list 'KeyCode 50) ShiftMapIndex))
+		      (set! map(XDeleteModifiermapEntry map (list 'KeyCode 50) ShiftMapIndex))
+		      (XFreeModifiermap map) ;prone to segfault in X
 		      )))
 	      (IF (not (= (XExtendedMaxRequestSize dpy) 1048575))
 		  (snd-display ";XExtendedMaxRequestSize ~A" (XExtendedMaxRequestSize dpy)))
@@ -24631,6 +24725,7 @@ EDITS: 5
 	      (XmTextFieldSetEditable txtf #t)
 	      (XmTextSetString txt "0123456789")
 	      (XmTextFieldSetString txtf "0123456789")
+	      (XmTextFieldCopyLink txtf (list 'Time CurrentTime))
 	      (let ((val (XmTextGetString txt))
 		    (valf (XmTextFieldGetString txtf))
 		    (val1 (cadr (XtVaGetValues txt (list XmNvalue 0))))
@@ -24649,7 +24744,8 @@ EDITS: 5
 		(if (XtIsSubclass untext xmFormWidgetClass)
 		    (snd-display ";XtIsSubclass thinks untext is a form?"))
 		(if (not (XtIsSubclass untext coreWidgetClass))
-		    (snd-display ";XtIsSubclass thinks untext is not a core widget")))
+		    (snd-display ";XtIsSubclass thinks untext is not a core widget"))
+		(XmTextCopyLink untext (list 'Time CurrentTime)))
 	      (let ((val (XmTextGetSubstring txt 2 3))
 		    (valf (XmTextFieldGetSubstring txtf 2 3)))
 		(IF (not (string=? val "234")) (snd-display ";XmTextGetSubstring: ~A" val))
@@ -24986,6 +25082,7 @@ EDITS: 5
 	      (XmContainerCut box current-time)
 	      (XmContainerCopy box current-time)
 	      (XmContainerPaste box)
+	      (XmContainerCopyLink box (list 'Time CurrentTime))
 	      
 	      (XmScaleSetValue scl 25)
 	      (IF (not (= (XmScaleGetValue scl) 25)) (snd-display ";XmScaleSetValue: ~A" (XmScaleGetValue scl)))
