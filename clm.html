@@ -54,7 +54,7 @@ ccrma-ftp.stanford.edu; the Snd editor is <a href="ftp://ccrma-ftp.stanford.edu/
 <center>Bill Schottstaedt (bil@ccrma.stanford.edu)</center>
 <br>
 <center>
-<span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html#overview">snd.html</a><spacer type=horizontal size=25><a href="extsnd.html#extsndcontents">extsnd.html</a><spacer type=horizontal size=25><a href="grfsnd.html#grfsndcontents">grfsnd.html</a><spacer type=horizontal size=25><a href="sndlib.html#introduction">sndlib.html</a><spacer type=horizontal size=25><a href="sndscm.html#introduction">sndscm.html</a></span>
+<span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html">snd.html</a><spacer type=horizontal size=25><a href="extsnd.html">extsnd.html</a><spacer type=horizontal size=25><a href="grfsnd.html">grfsnd.html</a><spacer type=horizontal size=25><a href="sndlib.html">sndlib.html</a><spacer type=horizontal size=25><a href="sndscm.html">sndscm.html</a></span>
 </center>
 
 <br>
@@ -2097,6 +2097,14 @@ our wave table size is 2 * pi). This conversion value was named "mag"
 in Mus10 and "in-hz" in CLM-1.  The inverse is radians-&gt;hz.
 </small></p></blockquote>
 
+<p>These names are different from the underlying sndlib names mostly due
+to confusion and inattention. Nearly all the sndlib constants and functions
+are imported into clm under names that are the same as the C name except
+"_" is replaced by "-". So, for example, <b>mus-sound-duration</b> exists,
+and is the same as <b>sound-duration</b> mentioned above.  See <a href="sndlib.html">sndlib.html</a>
+for some info.
+</p>
+
 
 <!-- TOPIC polynomial -->
 <span class=cbox><h4>POLYNOMIAL</h4></span>
@@ -2720,7 +2728,7 @@ There are several associated functions:</p>
   <a name="dac"><em class=def>dac</em></a> &amp;optional <i>file</i>
   <a name="sldac"><em class=def>sl-dac</em></a> file &amp;optional (<i>output-device</i> mus-audio-default)
   <a name="stop-dac"><em class=def>stop-dac</em></a>
-  <a name="volume"><em class=def>volume</em></a> &amp;optional (<i>device</i> +default-device+) <i>channel</i>
+  <a name="volume"><em class=def>volume</em></a> &amp;optional (<i>device</i> mus-audio-default) <i>channel</i>
 </pre>
 <p><b>dac</b> starts playing <i>file</i> (or the last file played, if no
 argument is given); in some cases (MCL and ACL) it then returns to the lisp listener;
@@ -3157,6 +3165,13 @@ current dynamic value of that variable is *&lt;var&gt;*.
   <a name="two-pi"><em class=def>two-pi</em></a>                   2*pi
 </pre>
 
+<p><b>*clm-player*</b> can be used to override CLM's normal DAC routine (which
+calls sndplay in most cases); for example, say we want to send the sound
+to an ADAT output:</p>
+<pre>
+(setf *clm-player* (lambda (name) (sl-dac name mus-audio-adat-out)))
+</pre>
+
 <p>On machines with plenty of memory and slow disks, you can speed up CLM
 computations by setting <b>*clm-file-buffer-size*</b> to some number larger
 than its default (65536).  For example, on ccrma's PC's running Linux
@@ -3576,7 +3591,7 @@ For example</p>
 (mus-set-raw-header-defaults 8012 1 mus-mulaw)
 (open-input "raw.snd")
 </pre></small>
-<p>treats "raw.snd" as mono mulaw data at 8012 Hz.</p>
+<p>treats "raw.snd" as mono &micro;law data at 8012 Hz.</p>
 
 <br>
 
@@ -3877,6 +3892,18 @@ revision is to make cmus.c use clm.c -- that is, imbed the current
 C clm implementation into lisp. </p>
 
 <br>
+<!--
+<h4>On Beyond Zebra?</h4>
+
+<p>I've been toying with moving on to CLM-3.  First, merge clm.c into the lisp
+clm, doing away with most of cmus.c, and most of the "exploded" code in cmus.lisp.
+Instead of passing in the int/float arrays, just pass an array of pointers, with
+everything allocated (and handled for that matter) in C.  Second, match all the names
+across the three versions, using the sndlib names in both lisp and scheme (currently
+they randomly drop the "mus-" and so on).  
+</p>
+<br>
+-->
 
 <span class=box><h2><A NAME="index">Index</a></h2></span>
 <!-- created 24-Jan-01 -->
@@ -3963,5 +3990,5 @@ C clm implementation into lisp. </p>
 <br>
 
 <center>
-<span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html#overview">snd.html</a><spacer type=horizontal size=25><a href="extsnd.html#extsndcontents">extsnd.html</a><spacer type=horizontal size=25><a href="grfsnd.html#grfsndcontents">grfsnd.html</a><spacer type=horizontal size=25><a href="sndlib.html#introduction">sndlib.html</a><spacer type=horizontal size=25><a href="sndscm.html#introduction">sndscm.html</a></span>
+<span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html">snd.html</a><spacer type=horizontal size=25><a href="extsnd.html">extsnd.html</a><spacer type=horizontal size=25><a href="grfsnd.html">grfsnd.html</a><spacer type=horizontal size=25><a href="sndlib.html">sndlib.html</a><spacer type=horizontal size=25><a href="sndscm.html">sndscm.html</a></span>
 </center>

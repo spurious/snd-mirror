@@ -887,6 +887,7 @@ void delete_envelope(snd_state *ss, char *name);
 
 /* -------- snd-dac.c -------- */
 
+char *reverb_name(void);
 int mus_audio_compatible_format(int dev);
 void cleanup_dac(void);
 Float list_interp(Float x, Float *e, int pts);

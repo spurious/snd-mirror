@@ -1,5 +1,6 @@
 snd change log
 
+  12-Feb:    added Wakefield's freeverb, changed user-defined reverb handlers.
   6-Feb:     removed expand-funcs: it could not have worked given the "hidden controls" exposure.
   30-Jan:    rtio.scm.
   29-Jan:    pvf headers.

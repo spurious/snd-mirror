@@ -25,7 +25,7 @@
 <br>
 
 <center>
-<span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html#overview">snd.html</a><spacer type=horizontal size=25><a href="extsnd.html#extsndcontents">extsnd.html</a><spacer type=horizontal size=25><a href="clm.html#introduction">clm.html</a><spacer type=horizontal size=25><a href="sndlib.html#introduction">sndlib.html</a><spacer type=horizontal size=25><a href="sndscm.html#introduction">sndscm.html</a></span>
+<span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html">snd.html</a><spacer type=horizontal size=25><a href="extsnd.html">extsnd.html</a><spacer type=horizontal size=25><a href="clm.html">clm.html</a><spacer type=horizontal size=25><a href="sndlib.html">sndlib.html</a><spacer type=horizontal size=25><a href="sndscm.html">sndscm.html</a></span>
 </center>
 
 <ul>
@@ -1787,6 +1787,17 @@ essentially a plugin identifier and parameter set takes the place of func.
 An example call to apply the low-pass-filter in the CMT plugin library is 
 (apply-ladspa (make-sample-reader 0) (list "cmt" "lpf" 1000) 10000 "origin").
 </pre>
+<p>Dave Phillips in "Linux Audio Plug-Ins: A Look Into LADSPA" adds this
+example:
+</p>
+<pre>
+  (apply-ladspa (make-sample-reader 57264) (list "cmt" "delay_5s" .3 .5) 32556 "ibm.wav")
+</pre>
+<p>
+"This sequence tells Snd to read a block of 32556 samples from the ibm.wav file, starting at sample number 57264,
+ and apply the delay_5s LADSPA plug-in (Richard Furse's delay plug-in, also found in cmt.so) with a delay time of
+.3 seconds and a 50/50 dry/wet balance."
+</p>
 
 <br>
 
@@ -2033,6 +2044,6 @@ and (start-gl).
 
 <br><br>
 <center>
-<span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html#overview">snd.html</a><spacer type=horizontal size=25><a href="extsnd.html#extsndcontents">extsnd.html</a><spacer type=horizontal size=25><a href="clm.html#introduction">clm.html</a><spacer type=horizontal size=25><a href="sndlib.html#introduction">sndlib.html</a><spacer type=horizontal size=25><a href="sndscm.html#introduction">sndscm.html</a></span>
+<span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html">snd.html</a><spacer type=horizontal size=25><a href="extsnd.html">extsnd.html</a><spacer type=horizontal size=25><a href="clm.html">clm.html</a><spacer type=horizontal size=25><a href="sndlib.html">sndlib.html</a><spacer type=horizontal size=25><a href="sndscm.html">sndscm.html</a></span>
 </center>
 </body></html>

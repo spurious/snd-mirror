@@ -250,6 +250,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+12-Feb:  added Wakefield's freeverb, changed user-defined reverb handlers.\n\
 6-Feb:   removed expand-funcs: it could not have worked given the \"hidden controls\" exposure.\n\
 30-Jan:  rtio.scm.\n\
 29-Jan:  pvf headers.\n\

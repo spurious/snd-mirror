@@ -815,6 +815,24 @@ void toggle_contrast_button(snd_info *sp, int state)
 
 /* -------- REVERB CALLBACKS -------- */
 
+void set_reverb_labels(const char *new_label)
+{
+  snd_state *ss;
+  int i;
+  snd_info *sp;
+  GtkWidget *lab;
+  ss = get_global_state();
+  for (i=0;i<ss->max_sounds;i++)
+    {
+      sp = ss->sounds[i];
+      if ((sp) && (sp->sgx) && (sp->sgx->snd_widgets))
+	{
+	  lab = sp->sgx->snd_widgets[W_revscl_label];
+	  if (lab) set_label(lab,new_label);
+	}
+    }
+}
+
 static char revscl_number_buffer[7]={'0',STR_decimal,'0','0','0','0','\0'};
 
 static void set_snd_revscl_1(snd_info *sp, Float val, int setadj)
@@ -1626,7 +1644,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
       gtk_signal_connect(GTK_OBJECT(sw[W_revscl_event]),"key_press_event",GTK_SIGNAL_FUNC(graph_key_press),(gpointer)(any_selected_channel(sp)));
       set_background(sw[W_revscl_event],(ss->sgx)->basic_color);
       
-      sw[W_revscl_label] = gtk_label_new(STR_reverb);
+      sw[W_revscl_label] = gtk_label_new(reverb_name());
       gtk_container_add(GTK_CONTAINER(sw[W_revscl_event]),sw[W_revscl_label]);
       gtk_widget_show(sw[W_revscl_label]);
       
@@ -1783,6 +1801,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
       gtk_label_set_text(GTK_LABEL(sw[W_name]),shortname_indexed(sp));
 
       reset_control_panel(sp);
+      gtk_label_set_text(GTK_LABEL(sw[W_revscl_label]),reverb_name());
       if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
 	{
 	  gtk_notebook_set_tab_label_text(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)),sw[W_pane],sp->shortname);

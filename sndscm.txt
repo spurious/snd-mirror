@@ -2331,12 +2331,56 @@ and called at run-time with:
 
 (fcomb (aref combs c j) (frame-ref in c))
 
-(In this case we have an array of these generators). A similar sequence
-could be used to define a new generator in Scheme, but we have to go to a
-bit more trouble to define it in C as a full-fledged CLM-in-C generator. The
-following is extracted from snd-dac.c's translation of Fernando's
-translation of Wakefield's freeverb. It implements fcomb and ties it into
-CLM so it can be treated just like oscil or comb or whatever.
+(In this case we have a two dimensional array of these generators). This, of
+course, does not make fcomb a full-fledged generator like oscil -- it
+doesn't respond to mus-scaler or the other methods, for example. To do that
+requires a bit of defclass/defmethod overhead in Lisp, something along the
+lines of:
+
+
+(in-package :clm)
+
+(defclass fcomb (comb one-zero) ())
+
+(defmethod fcomb? ((g fcomb)) t)
+(defmethod fcomb? ((g t)) nil)
+
+(defun fcomb (gen input)
+  (delay gen
+         (+ input (* (one-zero gen (tap gen))
+                     (mus-feedback gen)))))
+
+(def-optkey-fun make-fcomb (length feedback a0 a1)
+  (make-instance 'fcomb :loc 0 :xscl feedback :size length :zsize length :zdly nil
+                 :line (make-double-float-array length)
+                 :a0 a0 :a1 a1 :x1 0.0))
+
+(defmethod print-object ((d fcomb) stream)
+  (format stream "#<(fcomb: size: ~A, loc: ~A, feedback: ~A, a0: ~A, a1: ~A, x1: ~A, line: ~A>"
+          (dly-size d) (dly-loc d) (dly-xscl d)
+          (mus-a0 d) (mus-a1 d) (mus-x1 d)
+          (prettified-array (dly-line d))))
+
+And to get the new (lisp-side, non-macro) generator to be callable within
+the run macro is yet another set of headaches (see user-defined generators).
+In CLM-in-Scheme, the first (simpler) fcomb above might be:
+
+(define (fcomb gen input)
+  (delay (car gen)
+         (+ input (* (one-zero (cadr gen) (tap (car gen)))
+                     (caddr gen)))))
+
+(define (make-fcomb length feedback a0 a1)
+  (list (make-delay length)
+        (make-one-zero a0 a1)
+        feedback))
+
+We could probably use Guile's object system to conjure up fcomb classes and
+methods in Scheme. But, leaving that for a rainy day, our more immediate
+interest is how to do the same thing in CLM-in-C (clm.c). The following is
+extracted from snd-dac.c's translation of Fernando's translation of
+Wakefield's freeverb. It implements fcomb and ties it into CLM so it can be
+treated just like oscil or comb or whatever.
 
 #include <guile/gh.h>
 #include "sndlib.h"
@@ -2353,9 +2397,18 @@ typedef struct {
   Float xscl,a0,a1,x1;
 } fcomb;
 
-/* each CLM-in-C generator has mus_any_class *core as the first thing in its structure */
-/*   it defines most of the built-in "generic" functions like mus-describe */
-/* The next set of functions implement the core functions */
+/* each CLM-in-C generator has mus_any_class *core as the first thing in its structure.
+ *   it defines most of the built-in "generic" functions like mus-describe.
+ * The next set of functions implement the core functions/
+ *   The address of the function is stored in the class's core struct.
+ *   For example, the scaler method is defined as Float (*scaler)(void *ptr);
+ *   in the mus_any_class declaration (clm.h); for fcomb it will correspond
+ *   to the fcomb_scaler function below; it is invoked via mus_scaler(gen)
+ *   where gen is an fcomb generator (the actual call is (*((gen->core)->scaler))(gen)).
+ *   the core->scaler pointer (the function address) is set in the declaration
+ *   of mus_any_class FCOMB_CLASS below.  If a method doesn't apply to a given
+ *   generator class, just set its slot to 0.
+ */
 
 static int mus_fcomb_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_FCOMB));}
 
@@ -2385,7 +2438,8 @@ static int free_fcomb(void *uptr)
   fcomb *ptr = (fcomb *)uptr;
   if (ptr)
     {
-      if (ptr->line) free(ptr->line);
+      if (ptr->line)
+        free(ptr->line);
       free(ptr);
     }
   return(0);
@@ -2410,20 +2464,21 @@ static Float mus_fcomb (mus_any *ptr, Float input, Float ignored)
 /* this is our core class descriptor */
 
 static mus_any_class FCOMB_CLASS = {
-  -1, /* MUS_FCOMB eventually */
-  "fcomb",
-  &free_fcomb,
-  &describe_fcomb,
-  &describe_fcomb,
-  &fcomb_equalp,
-  &fcomb_data,
-  0,
-  &fcomb_length,
-  0,
-  0,0,0,0, /* freq phase */
-  &fcomb_scaler,
-  &set_fcomb_scaler,
-  &mus_fcomb
+  -1, /* MUS_FCOMB eventually */ /* mus_type: this is assigned at run-time via mus_make_class_tag below */
+  "fcomb",                       /* mus_name: class name (used in descriptive/error messages */
+  &free_fcomb,                   /* mus_free: free gen's struct etc */
+  &describe_fcomb,               /* mus_describe: user-friendly description */
+  &describe_fcomb,               /* mus_inspect: internal debugging description */
+  &fcomb_equalp,                 /* mus_equalp: check equality of fcomb gens */
+  &fcomb_data,                   /* mus_data: the fcomb delay line, a float array */
+  0,                             /* mus_set_data: not implemented for fcomb */
+  &fcomb_length,                 /* mus_length: delay line length */
+  0,                             /* mus_set_length: not implemented for fcomb */
+  0,0,                           /* mus_frequency, mus_set_frequency */
+  0,0,                           /* mus_phase, mus_set_phase */
+  &fcomb_scaler,                 /* mus_scaler: the feedback term */
+  &set_fcomb_scaler,             /* mus_set_scaler */
+  &mus_fcomb                     /* mus_run: the run-time fcomb function, MUS_RUN(gen) for speed */
 };
 
 /* now a function to make a new generator */
@@ -2433,12 +2488,16 @@ static mus_any *mus_make_fcomb (Float scaler, int size, Float a0, Float a1)
   fcomb *gen = NULL;
   gen = (fcomb *)calloc(1,sizeof(fcomb));
   if (gen == NULL)
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate struct for mus_make_fcomb!");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED,
+              "can't allocate struct for mus_make_fcomb!");
   else
     {
       gen->core = &FCOMB_CLASS;
-      if (MUS_FCOMB == 0) MUS_FCOMB = mus_make_class_tag(); /* this gives us a unique fcomb type id */
-      gen->core->type = MUS_FCOMB;
+      if (MUS_FCOMB == 0)
+        {
+          MUS_FCOMB = mus_make_class_tag();  /* this gives us a unique fcomb type id */
+          gen->core->type = MUS_FCOMB;
+        }
       gen->loc = 0;
       gen->xscl = scaler;
       gen->x1 = 0.0;
@@ -2464,7 +2523,8 @@ static SCM g_fcomb(SCM obj, SCM input)
 
 static SCM g_fcomb_p(SCM obj)
 {
-  return(((mus_scm_p(obj)) && (mus_fcomb_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return((mus_scm_p(obj)) &&
+         (SCM_BOOL(mus_fcomb_p(mus_get_any(obj)))));
 }
 
 static SCM g_make_fcomb(SCM scaler, SCM size, SCM a0, SCM a1)

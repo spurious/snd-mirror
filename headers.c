@@ -271,6 +271,7 @@ static const unsigned char I_PVF2[4] = {'P','V','F','2'};
 static const unsigned char I_AUTH[4] = {'A','U','T','H'};
 
 /* .glt and .shp -> Perry Cook's SPASM data files */
+/* GBF- for guile binary files */
 
 #define I_IRCAM_VAX  0x0001a364
 #define I_IRCAM_SUN  0x0002a364

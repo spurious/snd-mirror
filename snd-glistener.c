@@ -26,10 +26,15 @@ void append_listener_text(int end, char *msg)
   ss = get_global_state();
   chars = gtk_text_get_length(GTK_TEXT(listener_text));
   if (chars > 0) gtk_text_set_point(GTK_TEXT(listener_text),chars);
-  gtk_text_insert(GTK_TEXT(listener_text),(ss->sgx)->listener_fnt,(ss->sgx)->black,(ss->sgx)->listener_color,msg,-1);
+  gtk_text_insert(GTK_TEXT(listener_text),
+		  (ss->sgx)->listener_fnt,
+		  (ss->sgx)->black,
+		  (ss->sgx)->listener_color,
+		  msg,
+		  -1);
 }
 
-static void Activate_channel (snd_state *ss)
+static void activate_channel (snd_state *ss)
 {
   /* make the current channel active and abort if anything in progress */
   chan_info *cp;
@@ -38,10 +43,9 @@ static void Activate_channel (snd_state *ss)
   cp = current_channel(ss);
   if (cp) goto_graph(cp);
   (ss->sgx)->graph_is_active = 1;
-  /* fprintf(stderr,"activate -> true "); */
 }
 
-static void Listener_completion(snd_state *ss)
+static void listener_completion(snd_state *ss)
 {
   int beg,end,matches = 0,need_position;
   char *old_text,*new_text = NULL,*file_text = NULL;
@@ -60,16 +64,27 @@ static void Listener_completion(snd_state *ss)
 	  g_free(old_text);
 	  return;
 	}
-      if (strcmp(old_text,new_text) == 0) matches = get_completion_matches();
+      if (strcmp(old_text,new_text) == 0) 
+	matches = get_completion_matches();
       gtk_text_backward_delete(GTK_TEXT(listener_text),(end-beg));
       append_listener_text(0,new_text);
-      if (new_text) {FREE(new_text); new_text = NULL;}
+      if (new_text) 
+	{
+	  FREE(new_text); 
+	  new_text = NULL;
+	}
       if (matches > 1)
 	{
 	  clear_possible_completions();
 	  set_save_completions(TRUE);
-	  if (file_text) new_text = filename_completer(file_text); else new_text = command_completer(old_text);
-	  if (new_text) {FREE(new_text); new_text = NULL;}
+	  if (file_text) 
+	    new_text = filename_completer(file_text); 
+	  else new_text = command_completer(old_text);
+	  if (new_text) 
+	    {
+	      FREE(new_text); 
+	      new_text = NULL;
+	    }
 	  need_position = (!(help_dialog_is_active()));
 	  display_completions(ss);
 	  set_save_completions(FALSE);
@@ -93,7 +108,8 @@ void snd_completion_help(snd_state *ss, int matches, char **pbuffer)
   if (matches > 0)
     {
       len = 0;
-      for (i=0;i<matches;i++) len += (snd_strlen(pbuffer[i]) + 3);
+      for (i=0;i<matches;i++) 
+	len += (snd_strlen(pbuffer[i]) + 3);
       buffer = (char *)CALLOC(len,sizeof(char));
       for (i=0;i<matches;i++)
 	{
@@ -118,7 +134,7 @@ void snd_append_char(snd_state *ss, char *msg)
     }
 }
 
-static char listener_prompt_buffer[16];
+static char listener_prompt_buffer[64];
 static char *listener_prompt_with_cr(snd_state *ss)
 {
   sprintf(listener_prompt_buffer,"\n%s",listener_prompt(ss));
@@ -142,7 +158,7 @@ void snd_append_command(snd_state *ss, char *msg)
     }
 }
 
-static void Command_Return_Callback(snd_state *ss)
+static void command_return_callback(snd_state *ss)
 {
   /* try to find complete form either enclosing current cursor, or just before it */
   gint new_eot=0,cmd_eot=0;
@@ -158,7 +174,8 @@ static void Command_Return_Callback(snd_state *ss)
   if (last_position > end_of_text)
     {
       for (i=current_position;i<last_position;i++)
-	if ((full_str[i+1] == prompt[0]) && (full_str[i] == '\n'))
+	if ((full_str[i+1] == prompt[0]) && 
+	    (full_str[i] == '\n'))
 	  {
 	    end_of_text = i-1;
 	    break;
@@ -167,7 +184,8 @@ static void Command_Return_Callback(snd_state *ss)
   if (start_of_text > 0)
     {
       for (i=current_position;i>=0;i--)
-	if ((full_str[i] == prompt[0]) && ((i == 0) || (full_str[i-1] == '\n')))
+	if ((full_str[i] == prompt[0]) && 
+	    ((i == 0) || (full_str[i-1] == '\n')))
 	  {
 	    start_of_text = i+1;
 	    break;
@@ -181,13 +199,18 @@ static void Command_Return_Callback(snd_state *ss)
       parens = 0;
       slen = end_of_text - start_of_text + 2;
       str = (char *)CALLOC(slen,sizeof(char));
-      for (i=start_of_text,j=0;i<=end_of_text;j++,i++) {str[j] = full_str[i]; if (str[j] == '(') parens++;}
+      for (i=start_of_text,j=0;i<=end_of_text;j++,i++) 
+	{
+	  str[j] = full_str[i]; 
+	  if (str[j] == '(') parens++;
+	}
       str[end_of_text-start_of_text+1] = 0;
       end_of_text = snd_strlen(str);
       if (parens)
 	{
 	  end_of_text = check_balance(str,0,end_of_text);
-	  if ((end_of_text > 0) && (end_of_text < (slen-1)))
+	  if ((end_of_text > 0) && 
+	      (end_of_text < (slen-1)))
 	    {
 	      str[end_of_text+1] = 0;
 	      if (str[end_of_text] == '\n') str[end_of_text]=0;
@@ -199,7 +222,8 @@ static void Command_Return_Callback(snd_state *ss)
 	      new_eot = gtk_text_get_length(GTK_TEXT(listener_text));
 	      append_listener_text(0,"\n");
 	      /* gtk_text_set_point(GTK_TEXT(listener_text),gtk_text_get_length(GTK_TEXT(listener_text))); */
-	      gtk_editable_set_position(GTK_EDITABLE(listener_text),gtk_text_get_length(GTK_TEXT(listener_text)));
+	      gtk_editable_set_position(GTK_EDITABLE(listener_text),
+					gtk_text_get_length(GTK_TEXT(listener_text)));
 	      if (full_str) g_free(full_str);
 	      return;
 	    }
@@ -258,7 +282,12 @@ static void grab_line(snd_state *ss)
 static void insert_line(snd_state *ss)
 {
   if (C_k_str)
-    gtk_text_insert(GTK_TEXT(listener_text),(ss->sgx)->listener_fnt,(ss->sgx)->black,(ss->sgx)->listener_color,C_k_str,snd_strlen(C_k_str));
+    gtk_text_insert(GTK_TEXT(listener_text),
+		    (ss->sgx)->listener_fnt,
+		    (ss->sgx)->black,
+		    (ss->sgx)->listener_color,
+		    C_k_str,
+		    snd_strlen(C_k_str));
 }
 
 static void back_to_start(snd_state *ss)
@@ -271,7 +300,8 @@ static void back_to_start(snd_state *ss)
   if (start_of_text > 0)
     {
       for (i=start_of_text;i>=0;i--)
-	if ((full_str[i] == prompt[0]) && ((i == 0) || (full_str[i-1] == '\n')))
+	if ((full_str[i] == prompt[0]) && 
+	    ((i == 0) || (full_str[i-1] == '\n')))
 	  {
 	    start_of_text = i+1;
 	    break;
@@ -294,31 +324,35 @@ static gint listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
   else
     {
       if (event->keyval == GDK_Tab)
-	Listener_completion(ss);
+	listener_completion(ss);
       else
 	{
 	  if (event->keyval == GDK_Return)
-	    Command_Return_Callback(ss);
+	    command_return_callback(ss);
 	  else
 	    {
-	      if (((event->keyval == snd_K_g) || (event->keyval == snd_K_G)) && (event->state & snd_ControlMask))
-		Activate_channel(ss);
+	      if (((event->keyval == snd_K_g) || (event->keyval == snd_K_G)) && 
+		  (event->state & snd_ControlMask))
+		activate_channel(ss);
 	      else
 		{
-		  if (((event->keyval == snd_K_k) || (event->keyval == snd_K_K)) && (event->state & snd_ControlMask))
+		  if (((event->keyval == snd_K_k) || (event->keyval == snd_K_K)) && 
+		      (event->state & snd_ControlMask))
 		    {
 		      grab_line(ss);
 		      return(TRUE);
 		    }
 		  else
 		    {
-		      if (((event->keyval == snd_K_y) || (event->keyval == snd_K_Y)) && (event->state & snd_ControlMask))
+		      if (((event->keyval == snd_K_y) || (event->keyval == snd_K_Y)) && 
+			  (event->state & snd_ControlMask))
 			{
 			  insert_line(ss);
 			}
 		      else
 			{
-			  if (((event->keyval == snd_K_a) || (event->keyval == snd_K_A)) && (event->state & snd_ControlMask))
+			  if (((event->keyval == snd_K_a) || (event->keyval == snd_K_A)) && 
+			      (event->state & snd_ControlMask))
 			    {
 			      back_to_start(ss);
 			    }
@@ -332,7 +366,8 @@ static gint listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 				  if (current_position > 1)
 				    {
 				      fstr = gtk_editable_get_chars(GTK_EDITABLE(listener_text),current_position-2,current_position);
-				      if ((current_position != (last_prompt - 2)) && (strcmp(fstr,listener_prompt_with_cr(ss)) != 0))
+				      if ((current_position != (last_prompt - 2)) && 
+					  (strcmp(fstr,listener_prompt_with_cr(ss)) != 0))
 					{
 					  g_free(fstr);
 					  return(TRUE);
@@ -384,7 +419,12 @@ static void sndCreateCommandWidget(snd_state *ss, int height)
       gtk_signal_connect(GTK_OBJECT(listener_text),"button_press_event",GTK_SIGNAL_FUNC(listener_button_press),(gpointer)ss);
 
       gtk_widget_show(listener_text);
-      gtk_text_insert(GTK_TEXT(listener_text),(ss->sgx)->listener_fnt,(ss->sgx)->black,(ss->sgx)->listener_color,listener_prompt(ss),-1);
+      gtk_text_insert(GTK_TEXT(listener_text),
+		      (ss->sgx)->listener_fnt,
+		      (ss->sgx)->black,
+		      (ss->sgx)->listener_color,
+		      listener_prompt(ss),
+		      -1);
 
       hscrollbar = gtk_hscrollbar_new(GTK_TEXT(listener_text)->hadj);
       set_background(hscrollbar,(ss->sgx)->position_color);
@@ -416,7 +456,8 @@ void color_listener(GdkColor *pix)
   snd_state *ss;
   ss = get_global_state();
   (ss->sgx)->listener_color = pix;
-  if (listener_text) set_text_background(listener_text,(ss->sgx)->listener_color);
+  if (listener_text) 
+    set_text_background(listener_text,(ss->sgx)->listener_color);
 }
 
 void handle_listener(snd_state *ss, int new_state)

@@ -26,7 +26,7 @@
 <span class=box><h1>Snd Customization and Extension</h1></span>
 <br>
 <center>
-<span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html#overview">snd.html</a><spacer type=horizontal size=25><a href="grfsnd.html#grfsndcontents">grfsnd.html</a><spacer type=horizontal size=25><a href="clm.html#introduction">clm.html</a><spacer type=horizontal size=25><a href="sndlib.html#introduction">sndlib.html</a><spacer type=horizontal size=25><a href="sndscm.html#introduction">sndscm.html</a></span>
+<span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html">snd.html</a><spacer type=horizontal size=25><a href="grfsnd.html">grfsnd.html</a><spacer type=horizontal size=25><a href="clm.html">clm.html</a><spacer type=horizontal size=25><a href="sndlib.html">sndlib.html</a><spacer type=horizontal size=25><a href="sndscm.html">sndscm.html</a></span>
 </center>
 
 <ul>
@@ -655,6 +655,16 @@ the hook.
   <b><a name="stopplayingchannelhook">stop-playing-channel-hook</a></b> (snd chn) called when a sound finishes playing. (<b>or</b>)
 
   <b><a name="stopplayinghook">stop-playing-hook</a></b> (snd)             called when a sound finishes playing. (<b>or</b>)
+                                      The following code plays a sound over and over until you type C-g:
+<small>
+                                      (define (play-until-c-g)
+                                        (define (play-once snd)
+                                          (if (c-g?)
+                                              (remove-hook! stop-playing-hook play-once)
+                                              (play 0 snd)))
+                                        (add-hook! stop-playing-hook play-once)
+                                        (play))
+</small>
 
   <b><a name="stopplayingregionhook">stop-playing-region-hook</a></b> (n)        called when a region finishes playing. (<b>or</b>)
 
@@ -2006,16 +2016,15 @@ sets its value to val.
   <b><a name="reverbfuncs">set-reverb-funcs</a></b>  (reverb make-reverb free-reverb)
                                   This function replaces the built-in Snd reverb with your own.
 <small>
-                                   (define outputs (make-vector 4))
                                    (define delay-line #f)
                                    (define delay-time 0.5)
 
                                    (<em class=red>set-reverb-funcs</em>
-                                     (lambda (ptr inval chans)
-                                       (vector-set! outputs 0 (delay delay-line (+ (* .75 (tap delay-line)) inval)))
-                                       outputs)
-                                     (lambda (revlen srate chans)
-                                       (set! delay-line (make-delay (inexact-&gt;exact (* srate delay-time))))
+                                     (lambda (ptr invals outvals)
+                                       (vct-set! outvals 0 (delay delay-line (+ (* .75 (tap delay-line)) (vct-ref invals 0))))
+                                       outvals)
+                                     (lambda (snd chans)
+                                       (set! delay-line (make-delay (inexact-&gt;exact (* (srate snd) delay-time))))
                                        delay-line)
                                      (lambda (ptr)
                                        ptr)
@@ -2024,14 +2033,17 @@ sets its value to val.
                                   The three arguments are the reverb, the function that makes or
                                   initializes the reverb, and the function to free the reverb.
                                   The built-in defaults are snd-nrev, make-snd-nrev, and free-snd-nrev.
-                                  The make-reverb function takes three arguments, the current value of the 
-                                  "len" slider, the current sampling-rate and the number of output channels 
-                                  active; it returns an SCM object that is subsequently passed to the reverb 
-                                  and free-reverb functions (ignored in the example above, as is the chans
-                                  argument to the reverb function).  The reverb function takes 3
-                                  arguments, the thing returned by make-reverb, the current reverb input
-                                  sample, and the number of channels of output needed; it should return
-                                  a vector of output reverb contributions.
+                                  Another choice is Jezar Wakefield's Freeverb: snd-freeverb, etc.
+                                  The make-reverb function takes two arguments, the current sound's index,
+                                  and the number of output channels active; it returns an SCM object that 
+                                  is subsequently passed to the reverb and free-reverb functions
+                                  The reverb function takes 3 arguments, the thing returned by make-reverb, 
+                                  the current reverb input samples (a vct object), and the output vct object
+                                  which it should fill with the current reverb output contribution.
+
+                                  I may change this to take a list of three functions, rather than the
+                                  three functions themselves; as it is, there's no generalized set! for
+                                  reverb-funcs.
 
   <b><a name="sndsetsamples">set-samples</a></b>       (samp samps data <i>snd chn trunc</i>) 
                                   set <i>snd</i>'s channel <i>chn</i>'s samples starting from
@@ -3380,7 +3392,7 @@ found (this code obviously has to be in the init file):</p>
 
 
 <center>
-<span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html#overview">snd.html</a><spacer type=horizontal size=25><a href="grfsnd.html#grfsndcontents">grfsnd.html</a><spacer type=horizontal size=25><a href="clm.html#introduction">clm.html</a><spacer type=horizontal size=25><a href="sndlib.html#introduction">sndlib.html</a><spacer type=horizontal size=25><a href="sndscm.html#introduction">sndscm.html</a></span>
+<span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html">snd.html</a><spacer type=horizontal size=25><a href="grfsnd.html">grfsnd.html</a><spacer type=horizontal size=25><a href="clm.html">clm.html</a><spacer type=horizontal size=25><a href="sndlib.html">sndlib.html</a><spacer type=horizontal size=25><a href="sndscm.html">sndscm.html</a></span>
 </center>
 
 </body></html>

@@ -2,7 +2,7 @@ SndLib
 
                  Bill Schottstaedt (bil@ccrma.stanford.edu)
 
-   related documentationsnd.html   extsnd.html    grfsnd.html   clm.html
+related documentationsnd.html   extsnd.html   grfsnd.html   clm.html    sndscm.html
 
 Contents
 
@@ -330,7 +330,7 @@ music V implementation, and clm2scm.c ties these into Guile (Scheme). The
 primary clm documentation (which describes both the Scheme and Common Lisp
 implementations) is clm.html found in clm-2.tar.gz alongside sndlib at
 ccrma-ftp. The simplest way to try these out is to load them into Snd; see
-extsnd.html, examp.scm, and snd-test.scm in snd-3.tar.gz for more details.
+extsnd.html, examp.scm, and snd-test.scm in snd-4.tar.gz for more details.
 The C implementation is essentially the same as the two Lisp versions, but
 (as might be expected), works at a lower level, expecting the caller to
 handle garbage collection and so forth. The following briefly describes the
@@ -894,7 +894,7 @@ Current Status
         o no header
    * headers supported read-only
         o 8SVX (IFF), EBICSF, INRS, ESPS,
-        o SPPACK, ADC (OGI), AVR, VOC,
+        o SPPACK, ADC (OGI), AVR, VOC, PVF,
         o Sound Tools, Turtle Beach SMP, SoundFont 2.0,
         o Sound Designer I and II, PSION, MAUD, Kurzweil 2000,
         o Tandy DeskMate, Gravis Ultrasound, ASF, PAF, CSL,
@@ -1158,7 +1158,7 @@ translations of the constants and functions described above into Scheme.
 
 Sndlib and Common Lisp
 
-See CLM's ffi.lisp for a foreign function interface for sndlib to ACL, MCL,
-and CMU-CL. This could be expanded if there's interest.
+sndlib2cl.cl imports most of the sndlib names into acl and cmucl; ffi.lisp
+in the clm package has some support for mcl.
 
-   related documentationsnd.html   extsnd.html    grfsnd.html   clm.html
+related documentationsnd.html   extsnd.html   grfsnd.html   clm.html    sndscm.html

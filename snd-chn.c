@@ -4518,7 +4518,7 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
 #endif
 
   if ((!e) && (!ur_a) && (!gen)) return;
-  if ((gen) && (!(MUS_RUN_EXISTS(gen))))
+  if ((gen) && (!(MUS_RUN_P(gen))))
     {
       snd_error("%s can't handle %s generators [%s[%d]: %s]",
 		origin,
@@ -5470,6 +5470,11 @@ static void name_last_macro (char *name)
   named_macro *nm;
   macro_cmd *mc;
   int i;
+  if (macro_size == 0)
+    {
+      snd_error("no macro active?");
+      return;
+    }
   nm = name_macro(name);
   nm->macro_size = macro_size;
   nm->cmds = (macro_cmd **)CALLOC(macro_size,sizeof(macro_cmd *));
@@ -5484,6 +5489,9 @@ static void name_last_macro (char *name)
 
 static void save_macro_1(named_macro *nm, FILE *fd)
 {
+  /* TODO: fix this!! (see snd-main.c)
+   *   it saves only named keyboard macros
+   */
   int i;
   macro_cmd *mc;
   fprintf(fd,"(defmacro %s ()\n",nm->name);
@@ -5491,7 +5499,7 @@ static void save_macro_1(named_macro *nm, FILE *fd)
     {
       mc = nm->cmds[i];
       if (mc->keysym != 0)
-	fprintf(fd,"  (%s %c %d)\n",S_key,(char)(mc->keysym),mc->state);
+	fprintf(fd,"  (%s (char->integer #\\%c) %d)\n",S_key,(char)(mc->keysym),mc->state);
     }
   fprintf(fd,")\n");
 }
@@ -5584,37 +5592,38 @@ static void set_keymap_entry(int key, int state, int ignore, SCM func)
 	}
       user_keymap[keymap_top].key = key;
       user_keymap[keymap_top].state = state;
-      user_keymap[keymap_top].ignore_prefix = ignore;
-      if ((func != SCM_UNDEFINED) &&
-	  (procedure_ok(func,0,0,S_bind_key,"func",3)))
-	{
-	  user_keymap[keymap_top].func = func;
-	  snd_protect(func);
-	}
-      else user_keymap[keymap_top].func = SCM_UNDEFINED;
+      i = keymap_top;
       keymap_top++;
     }
   else
     {
-      if ((user_keymap[i].func) && (gh_procedure_p(user_keymap[i].func))) snd_unprotect(user_keymap[i].func);
-      if ((func != SCM_UNDEFINED) &&
-	  (procedure_ok(func,0,0,S_bind_key,"func",3)))
-	{
-	  user_keymap[i].func = func;
-	  snd_protect(func);
-	}
-      else user_keymap[i].func = SCM_UNDEFINED;
-      user_keymap[i].ignore_prefix = ignore;
+      if ((user_keymap[i].func) && 
+	  (gh_procedure_p(user_keymap[i].func))) 
+	snd_unprotect(user_keymap[i].func);
     }
+  if ((func != SCM_UNDEFINED) &&
+      (procedure_ok(func,0,0,S_bind_key,"func",3)))
+    {
+      user_keymap[i].func = func;
+      snd_protect(func);
+    }
+  else user_keymap[i].func = SCM_UNDEFINED;
+  user_keymap[i].ignore_prefix = ignore;
 }
 
 static int call_user_keymap(int hashedsym, int count)
 {
   int i,res = KEYBOARD_NO_ACTION;
+  SCM funcres;
   /* if guile call the associated scheme code, else see if basic string parser can handle it */
   if (user_keymap[hashedsym].ignore_prefix) count=1;
   if (user_keymap[hashedsym].func != SCM_UNDEFINED)
-    for (i=0;i<count;i++) res = g_scm2intdef(g_call0(user_keymap[hashedsym].func),KEYBOARD_NO_ACTION);
+    for (i=0;i<count;i++) 
+      {
+	funcres = g_call0(user_keymap[hashedsym].func);
+	if (SCM_SYMBOLP(funcres)) break; /* error tag returned? */
+	res = g_scm2intdef(funcres,KEYBOARD_NO_ACTION);
+      }
   /* in emacs, apparently, prefix-arg refers to the next command, and current-prefix-arg is this command */
   return(res);
 }

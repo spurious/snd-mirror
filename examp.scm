@@ -466,17 +466,14 @@
 
 ;;; -------- play region over and over until C-g typed
 
-(define play-region-again
-  (lambda (reg)
+(define (play-region-forever reg)
+  (define (play-region-again reg)
     (if (c-g?)
 	(remove-hook! stop-playing-region-hook play-region-again)
-	(play-region reg))))
-
-(define play-region-forever 
-  (lambda (reg) 
-    (reset-hook! stop-playing-region-hook)
-    (add-hook! stop-playing-region-hook play-region-again)
-    (play-region reg)))
+	(play-region reg)))
+  (reset-hook! stop-playing-region-hook)
+  (add-hook! stop-playing-region-hook play-region-again)
+  (play-region reg))
 
 (bind-key (char->integer #\p) 0 (lambda () (play-region-forever (max 0 (prefix-arg)))) #t)
 

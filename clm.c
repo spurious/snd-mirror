@@ -2,6 +2,9 @@
 /*
  * in gdb, p mus_describe(arg) will show the user-view of arg
  *         p mus_inspect(arg) will show every internal field of arg
+ *
+ * restart method? feedback? channels? increment? user-addmethod? filter class (and filter_p) for a0 etc?
+ *   more macros like MUS_RUN?
  */
 
 #if defined(HAVE_CONFIG_H)
@@ -1983,6 +1986,8 @@ Float mus_one_zero(mus_any *ptr, Float input)
 }
 
 static Float run_one_zero(mus_any *ptr, Float input, Float unused) {return(mus_one_zero(ptr,input));}
+static int one_length(void *ptr) {return(1);}
+static int two_length(void *ptr) {return(2);}
 
 static mus_any_class ONE_ZERO_CLASS = {
   MUS_ONE_ZERO,
@@ -1991,7 +1996,8 @@ static mus_any_class ONE_ZERO_CLASS = {
   &describe_smpflt,
   &inspect_smpflt,
   &smpflt_equalp,
-  0,0,0,0,
+  0,0,
+  &one_length,0,
   0,0,0,0,
   0,0,
   &run_one_zero
@@ -2031,7 +2037,8 @@ static mus_any_class ONE_POLE_CLASS = {
   &describe_smpflt,
   &inspect_smpflt,
   &smpflt_equalp,
-  0,0,0,0,
+  0,0,
+  &one_length,0,
   0,0,0,0,
   0,0,
   &run_one_pole
@@ -2074,7 +2081,8 @@ static mus_any_class TWO_ZERO_CLASS = {
   &describe_smpflt,
   &inspect_smpflt,
   &smpflt_equalp,
-  0,0,0,0,
+  0,0,
+  &two_length,0,
   0,0,0,0,
   0,0,
   &run_two_zero
@@ -2123,7 +2131,8 @@ static mus_any_class TWO_POLE_CLASS = {
   &describe_smpflt,
   &inspect_smpflt,
   &smpflt_equalp,
-  0,0,0,0,
+  0,0,
+  &two_length,0,
   0,0,0,0,
   0,0,
   &run_two_pole
@@ -2338,7 +2347,8 @@ static mus_any_class FORMANT_CLASS = {
   &describe_formant,
   &inspect_smpflt,
   &smpflt_equalp,
-  0,0,0,0,
+  0,0,
+  &two_length,0,
   &formant_frequency,
   &set_formant_frequency,
   0,0,0,0,
@@ -2683,20 +2693,7 @@ Float *mus_ycoeffs(mus_any *ptr)
   return(NULL);
 }
 
-int mus_order(mus_any *ptr)
-{
-  if (ptr)
-    {
-      switch ((ptr->core)->type)
-	{
-	case MUS_FILTER: case MUS_FIR_FILTER: case MUS_IIR_FILTER: return(((flt *)ptr)->order); break;
-	case MUS_ONE_POLE: case MUS_ONE_ZERO: return(1); break;
-	case MUS_TWO_POLE: case MUS_TWO_ZERO: case MUS_FORMANT: return(2); break;
-	case MUS_NOTCH: case MUS_COMB: case MUS_ALL_PASS: return(((dly *)ptr)->size); break;
-	}
-    }
-  return(0);
-}
+int mus_order(mus_any *ptr) {return(mus_length(ptr));}
 
 Float *mus_make_fir_coeffs(int order, Float *env, Float *aa)
 {
@@ -6379,7 +6376,7 @@ Float mus_apply(mus_any *gen, ...)
   #define NEXT_ARG (Float)(va_arg(ap,double))
   va_list ap;
   Float f1 = 0.0, f2 = 0.0; /* force order of evaluation */
-  if ((gen) && (MUS_RUN_EXISTS(gen)))
+  if ((gen) && (MUS_RUN_P(gen)))
     {
       va_start(ap,gen);
       /* might want a run_args field */

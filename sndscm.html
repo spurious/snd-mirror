@@ -23,7 +23,7 @@
 <span class=box><h1>Scheme Functions included with Snd</h1></span>
 <br>
 <center>
-<span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html#overview">snd.html</a><spacer type=horizontal size=25><a href="extsnd.html">extsnd.html</a><spacer type=horizontal size=25><a href="grfsnd.html#grfsndcontents">grfsnd.html</a><spacer type=horizontal size=25><a href="clm.html#introduction">clm.html</a><spacer type=horizontal size=25><a href="sndlib.html#introduction">sndlib.html</a></span>
+<span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html">snd.html</a><spacer type=horizontal size=25><a href="extsnd.html">extsnd.html</a><spacer type=horizontal size=25><a href="grfsnd.html">grfsnd.html</a><spacer type=horizontal size=25><a href="clm.html">clm.html</a><spacer type=horizontal size=25><a href="sndlib.html">sndlib.html</a></span>
 </center>
 
 <!-- I'm using A NAME (i.e caps) where the entity should be ignored by the indexer (index.cl) -->
@@ -75,13 +75,13 @@ the file already loaded, snd -l bell.scm.
 <p>The FM bell was developed by Michael McNabb in Mus10 in the late '70s.  It is intended
 for low bell sounds (say middle C or so). The lines
 <pre>
-	   (mod1 (make-oscil :frequency (* frequency 2)))
-	   (mod2 (make-oscil :frequency (* frequency 1.41)))
-	   (mod3 (make-oscil :frequency (* frequency 2.82)))
-	   (mod4 (make-oscil :frequency (* frequency 2.4)))
-	   (car1 (make-oscil :frequency frequency))
-	   (car2 (make-oscil :frequency frequency))
-	   (car3 (make-oscil :frequency (* frequency 2.4)))
+	   (mod1 (make-oscil (* frequency 2)))
+	   (mod2 (make-oscil (* frequency 1.41)))
+	   (mod3 (make-oscil (* frequency 2.82)))
+	   (mod4 (make-oscil (* frequency 2.4)))
+	   (car1 (make-oscil frequency))
+	   (car2 (make-oscil frequency))
+	   (car3 (make-oscil (* frequency 2.4)))
 </pre>
 <p>set up three FM pairs, car1+mod1 handling the basic harmonic spectra,
 car2+mod2 creating inharmonic spectra (using the square root of 2 more or less
@@ -2536,10 +2536,55 @@ translation of Jezar Wakefield's freeverb reverberator:
 <pre>
 (fcomb (aref combs c j) (frame-ref in c))
 </pre>
-<p>(In this case we have an array of these generators).  
-A similar sequence could be used to define a new generator in Scheme, but
-we have to go to a bit more trouble to define it in C as a full-fledged
-CLM-in-C generator.
+<p>(In this case we have a two dimensional array of these generators).  This, of course,
+does not make fcomb a full-fledged generator like oscil -- it doesn't
+respond to mus-scaler or the other methods, for example.  To do that
+requires a bit of defclass/defmethod overhead in Lisp, something
+along the lines of:
+</p>
+<pre> 
+(in-package :clm)
+
+(defclass fcomb (comb one-zero) ())
+
+(defmethod fcomb? ((g fcomb)) t)
+(defmethod fcomb? ((g t)) nil)
+
+(defun fcomb (gen input)
+  (delay gen
+	 (+ input (* (one-zero gen (tap gen))
+		     (mus-feedback gen)))))
+
+(def-optkey-fun make-fcomb (length feedback a0 a1)
+  (make-instance 'fcomb :loc 0 :xscl feedback :size length :zsize length :zdly nil
+		 :line (make-double-float-array length)
+		 :a0 a0 :a1 a1 :x1 0.0))
+
+(defmethod print-object ((d fcomb) stream)
+  (format stream "#&lt;(fcomb: size: ~A, loc: ~A, feedback: ~A, a0: ~A, a1: ~A, x1: ~A, line: ~A&gt;"
+	  (dly-size d) (dly-loc d) (dly-xscl d)
+	  (mus-a0 d) (mus-a1 d) (mus-x1 d)
+	  (prettified-array (dly-line d))))
+</pre>
+And to get the
+new (lisp-side, non-macro) generator to be callable within the run macro is yet another set
+of headaches (see <a href="clm.html#user-defined-ugs">user-defined generators</a>).
+In CLM-in-Scheme, the first (simpler) fcomb above might be:
+</p>
+<pre>
+(define (fcomb gen input)
+  (delay (car gen)
+	 (+ input (* (one-zero (cadr gen) (tap (car gen)))
+		     (caddr gen)))))
+
+(define (make-fcomb length feedback a0 a1)
+  (list (make-delay length)
+	(make-one-zero a0 a1)
+	feedback))
+</pre>
+<p>We could probably use Guile's object system to conjure up fcomb
+classes and methods in Scheme.
+But, leaving that for a rainy day, our more immediate interest is how to do the same thing in CLM-in-C (clm.c).
 The following is extracted from snd-dac.c's translation of Fernando's
 translation of Wakefield's freeverb.  It implements fcomb and ties it
 into CLM so it can be treated just like oscil or comb or whatever.
@@ -2560,11 +2605,20 @@ typedef struct {
   Float xscl,a0,a1,x1;
 } fcomb;
 
-/* each CLM-in-C generator has mus_any_class *core as the first thing in its structure */
-/*   it defines most of the built-in "generic" functions like mus-describe */
-/* The next set of functions implement the core functions */
+/* each CLM-in-C generator has mus_any_class *core as the first thing in its structure.
+ *   it defines most of the built-in "generic" functions like mus-describe.
+ * The next set of functions implement the core functions/
+ *   The address of the function is stored in the class's core struct.
+ *   For example, the scaler method is defined as Float (*scaler)(void *ptr);
+ *   in the mus_any_class declaration (clm.h); for fcomb it will correspond
+ *   to the fcomb_scaler function below; it is invoked via mus_scaler(gen)
+ *   where gen is an fcomb generator (the actual call is (*((gen-&gt;core)-&gt;scaler))(gen)).
+ *   the core-&gt;scaler pointer (the function address) is set in the declaration
+ *   of mus_any_class FCOMB_CLASS below.  If a method doesn't apply to a given
+ *   generator class, just set its slot to 0.
+ */
 
-static int mus_fcomb_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_FCOMB));}
+static int mus_fcomb_p(mus_any *ptr) {return((ptr) &amp;&amp; ((ptr-&gt;core)-&gt;type == MUS_FCOMB));}
 
 static char *describe_fcomb(void *ptr) 
 {
@@ -2575,24 +2629,25 @@ static char *describe_fcomb(void *ptr)
     {
       if (mus_fcomb_p((mus_any *)ptr))
 	sprintf(desc,"fcomb: scaler: %.3f, a0: %.3f, a1: %.3f, line[%d]",
-		gen->xscl,gen->a0,gen->a1,gen->size);
+		gen-&gt;xscl,gen-&gt;a0,gen-&gt;a1,gen-&gt;size);
       else sprintf(desc,"not an fcomb gen");
     }
   return(desc);
 }
 
 static int fcomb_equalp(void *p1, void *p2) {return(p1 == p2);}
-static int fcomb_length(void *ptr) {return(((fcomb *)ptr)->size);}
-static Float *fcomb_data(void *ptr) {return(((fcomb *)ptr)->line);}
-static Float fcomb_scaler(void *ptr) {return(((fcomb *)ptr)->xscl);}
-static Float set_fcomb_scaler(void *ptr, Float val) {((fcomb *)ptr)->xscl = val; return(val);}
+static int fcomb_length(void *ptr) {return(((fcomb *)ptr)-&gt;size);}
+static Float *fcomb_data(void *ptr) {return(((fcomb *)ptr)-&gt;line);}
+static Float fcomb_scaler(void *ptr) {return(((fcomb *)ptr)-&gt;xscl);}
+static Float set_fcomb_scaler(void *ptr, Float val) {((fcomb *)ptr)-&gt;xscl = val; return(val);}
 
 static int free_fcomb(void *uptr) 
 {
   fcomb *ptr = (fcomb *)uptr;
   if (ptr)
     {
-      if (ptr->line) free(ptr->line);
+      if (ptr-&gt;line) 
+        free(ptr-&gt;line);
       free(ptr); 
     }
   return(0);
@@ -2605,32 +2660,33 @@ static Float mus_fcomb (mus_any *ptr, Float input, Float ignored)
 {
   fcomb *gen = (fcomb *)ptr;
   Float tap_result,filter_result;
-  tap_result = gen->line[gen->loc];
-  filter_result = (gen->a0 * tap_result) + (gen->a1 * gen->x1);
-  gen->x1 = tap_result;
-  gen->line[gen->loc] = input + filter_result * gen->xscl;
-  gen->loc++;
-  if (gen->loc >= gen->size) gen->loc = 0;
+  tap_result = gen-&gt;line[gen-&gt;loc];
+  filter_result = (gen-&gt;a0 * tap_result) + (gen-&gt;a1 * gen-&gt;x1);
+  gen-&gt;x1 = tap_result;
+  gen-&gt;line[gen-&gt;loc] = input + filter_result * gen-&gt;xscl;
+  gen-&gt;loc++;
+  if (gen-&gt;loc &gt;= gen-&gt;size) gen-&gt;loc = 0;
   return(tap_result);
 }
 
 /* this is our core class descriptor */
 
 static mus_any_class FCOMB_CLASS = {
-  -1, /* MUS_FCOMB eventually */
-  "fcomb",
-  &free_fcomb,
-  &describe_fcomb,
-  &describe_fcomb,
-  &fcomb_equalp,
-  &fcomb_data,
-  0,
-  &fcomb_length,
-  0,
-  0,0,0,0, /* freq phase */
-  &fcomb_scaler,
-  &set_fcomb_scaler,
-  &mus_fcomb
+  -1, /* MUS_FCOMB eventually */ /* mus_type: this is assigned at run-time via mus_make_class_tag below */
+  "fcomb",                       /* mus_name: class name (used in descriptive/error messages */
+  &amp;free_fcomb,                   /* mus_free: free gen's struct etc */
+  &amp;describe_fcomb,               /* mus_describe: user-friendly description */
+  &amp;describe_fcomb,               /* mus_inspect: internal debugging description */
+  &amp;fcomb_equalp,                 /* mus_equalp: check equality of fcomb gens */
+  &amp;fcomb_data,                   /* mus_data: the fcomb delay line, a float array */
+  0,                             /* mus_set_data: not implemented for fcomb */
+  &amp;fcomb_length,                 /* mus_length: delay line length */
+  0,                             /* mus_set_length: not implemented for fcomb */
+  0,0,                           /* mus_frequency, mus_set_frequency */
+  0,0,                           /* mus_phase, mus_set_phase */
+  &amp;fcomb_scaler,                 /* mus_scaler: the feedback term */
+  &amp;set_fcomb_scaler,             /* mus_set_scaler */
+  &amp;mus_fcomb                     /* mus_run: the run-time fcomb function, MUS_RUN(gen) for speed */
 };
 
 /* now a function to make a new generator */
@@ -2640,20 +2696,24 @@ static mus_any *mus_make_fcomb (Float scaler, int size, Float a0, Float a1)
   fcomb *gen = NULL;
   gen = (fcomb *)calloc(1,sizeof(fcomb));
   if (gen == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate struct for mus_make_fcomb!");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED,
+              "can't allocate struct for mus_make_fcomb!");
   else
     {
-      gen->core = &FCOMB_CLASS;
-      if (MUS_FCOMB == 0) MUS_FCOMB = mus_make_class_tag(); /* this gives us a unique fcomb type id */
-      gen->core->type = MUS_FCOMB;
-      gen->loc = 0;
-      gen->xscl = scaler;
-      gen->x1 = 0.0;
-      gen->a0 = a0;
-      gen->a1 = a1;
-      gen->size = size;
-      gen->line = (Float *)calloc(size,sizeof(Float));
-      if (gen->line == NULL) 
+      gen-&gt;core = &amp;FCOMB_CLASS;
+      if (MUS_FCOMB == 0) 
+        {
+          MUS_FCOMB = mus_make_class_tag();  /* this gives us a unique fcomb type id */
+          gen-&gt;core-&gt;type = MUS_FCOMB;
+        }
+      gen-&gt;loc = 0;
+      gen-&gt;xscl = scaler;
+      gen-&gt;x1 = 0.0;
+      gen-&gt;a0 = a0;
+      gen-&gt;a1 = a1;
+      gen-&gt;size = size;
+      gen-&gt;line = (Float *)calloc(size,sizeof(Float));
+      if (gen-&gt;line == NULL) 
 	mus_error(MUS_MEMORY_ALLOCATION_FAILED,
 		  "can't allocate %d bytes for fcomb delay line in mus_make_fcomb!",
 		  (int)(size * sizeof(Float)));
@@ -2671,15 +2731,16 @@ static SCM g_fcomb(SCM obj, SCM input)
 
 static SCM g_fcomb_p(SCM obj)
 {
-  return(((mus_scm_p(obj)) && (mus_fcomb_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return((mus_scm_p(obj)) &amp;&amp; 
+         (SCM_BOOL(mus_fcomb_p(mus_get_any(obj)))));
 }
 
 static SCM g_make_fcomb(SCM scaler, SCM size, SCM a0, SCM a1)
 {
   mus_scm *gn;
   gn = (mus_scm *)CALLOC(1,sizeof(mus_scm));
-  gn->gen = mus_make_fcomb(TO_C_DOUBLE(scaler),TO_C_INT(size),TO_C_DOUBLE(a0),TO_C_DOUBLE(a1));
-  gn->nvcts = 0;
+  gn-&gt;gen = mus_make_fcomb(TO_C_DOUBLE(scaler),TO_C_INT(size),TO_C_DOUBLE(a0),TO_C_DOUBLE(a1));
+  gn-&gt;nvcts = 0;
   return(mus_scm_to_smob(gn));
 }
 
@@ -2693,7 +2754,7 @@ static void init_fcomb(void)
 
 
 <center>
-<span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html#overview">snd.html</a><spacer type=horizontal size=25><a href="extsnd.html">extsnd.html</a><spacer type=horizontal size=25><a href="grfsnd.html#grfsndcontents">grfsnd.html</a><spacer type=horizontal size=25><a href="clm.html#introduction">clm.html</a><spacer type=horizontal size=25><a href="sndlib.html#introduction">sndlib.html</a></span>
+<span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html">snd.html</a><spacer type=horizontal size=25><a href="extsnd.html">extsnd.html</a><spacer type=horizontal size=25><a href="grfsnd.html">grfsnd.html</a><spacer type=horizontal size=25><a href="clm.html">clm.html</a><spacer type=horizontal size=25><a href="sndlib.html">sndlib.html</a></span>
 </center>
 </body>
 </html>

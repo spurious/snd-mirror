@@ -240,10 +240,8 @@ gives the name of this global initialization file. At ccrma, it's
 can, of course, be absent. To override reading the global init file when Snd
 is invoked, include the switch -noglob. To override the local init file, use
 -noinit. To set the global file name in a makefile include (for example)
--DSND_CONF='"/home/bil/cl/sndconf"' in CFLAGS.
-
-As a more extended example, here is my initialization file (or, I wish it
-were this neat; the actual file is more full of junk than my garage):
+-DSND_CONF='"/home/bil/cl/sndconf"' in CFLAGS. Here's a more extended
+example:
 
 (use-modules (ice-9 popen) (ice-9 debug))
 
@@ -1665,6 +1663,16 @@ The main function is:
 essentially a plugin identifier and parameter set takes the place of func.
 An example call to apply the low-pass-filter in the CMT plugin library is
 (apply-ladspa (make-sample-reader 0) (list "cmt" "lpf" 1000) 10000 "origin").
+
+Dave Phillips in "Linux Audio Plug-Ins: A Look Into LADSPA" adds this
+example:
+
+  (apply-ladspa (make-sample-reader 57264) (list "cmt" "delay_5s" .3 .5) 32556 "ibm.wav")
+
+"This sequence tells Snd to read a block of 32556 samples from the ibm.wav
+file, starting at sample number 57264, and apply the delay_5s LADSPA plug-in
+(Richard Furse's delay plug-in, also found in cmt.so) with a delay time of
+.3 seconds and a 50/50 dry/wet balance."
 
 Driving Snd remotely
 

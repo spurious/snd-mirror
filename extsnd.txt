@@ -572,6 +572,15 @@ functions invoked by the hook.
   stop-playing-channel-hook (snd chn) called when a sound finishes playing. (or)
 
   stop-playing-hook (snd)             called when a sound finishes playing. (or)
+                                      The following code plays a sound over and over until you type C-g:
+
+                                      (define (play-until-c-g)
+                                        (define (play-once snd)
+                                          (if (c-g?)
+                                              (remove-hook! stop-playing-hook play-once)
+                                              (play 0 snd)))
+                                        (add-hook! stop-playing-hook play-once)
+                                        (play))
 
   stop-playing-region-hook (n)        called when a region finishes playing. (or)
 
@@ -1875,16 +1884,15 @@ value to val.
   set-reverb-funcs  (reverb make-reverb free-reverb)
                                   This function replaces the built-in Snd reverb with your own.
 
-                                   (define outputs (make-vector 4))
                                    (define delay-line #f)
                                    (define delay-time 0.5)
 
                                    (set-reverb-funcs
-                                     (lambda (ptr inval chans)
-                                       (vector-set! outputs 0 (delay delay-line (+ (* .75 (tap delay-line)) inval)))
-                                       outputs)
-                                     (lambda (revlen srate chans)
-                                       (set! delay-line (make-delay (inexact->exact (* srate delay-time))))
+                                     (lambda (ptr invals outvals)
+                                       (vct-set! outvals 0 (delay delay-line (+ (* .75 (tap delay-line)) (vct-ref invals 0))))
+                                       outvals)
+                                     (lambda (snd chans)
+                                       (set! delay-line (make-delay (inexact->exact (* (srate snd) delay-time))))
                                        delay-line)
                                      (lambda (ptr)
                                        ptr)
@@ -1893,14 +1901,13 @@ value to val.
                                   The three arguments are the reverb, the function that makes or
                                   initializes the reverb, and the function to free the reverb.
                                   The built-in defaults are snd-nrev, make-snd-nrev, and free-snd-nrev.
-                                  The make-reverb function takes three arguments, the current value of the
-                                  "len" slider, the current sampling-rate and the number of output channels
-                                  active; it returns an SCM object that is subsequently passed to the reverb
-                                  and free-reverb functions (ignored in the example above, as is the chans
-                                  argument to the reverb function).  The reverb function takes 3
-                                  arguments, the thing returned by make-reverb, the current reverb input
-                                  sample, and the number of channels of output needed; it should return
-                                  a vector of output reverb contributions.
+                                  Another choice is Jezar Wakefield's Freeverb: snd-freeverb, etc.
+                                  The make-reverb function takes two arguments, the current sound's index,
+                                  and the number of output channels active; it returns an SCM object that
+                                  is subsequently passed to the reverb and free-reverb functions
+                                  The reverb function takes 3 arguments, the thing returned by make-reverb,
+                                  the current reverb input samples (a vct object), and the output vct object
+                                  which it should fill with the current reverb output contribution.
 
   set-samples       (samp samps data snd chn trunc)
                                   set snd's channel chn's samples starting from

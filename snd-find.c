@@ -36,8 +36,8 @@ static int run_global_search (snd_state *ss, gfd *g)
 	      res = g_call1(ss->search_proc,gh_double2scm((double)(samp)));
 	      if (SCM_SYMBOLP(res))
 		{
-		  for (j=i;j<g->chans;j++) free_snd_fd(g->fds[j]);
-		  return(0);
+		  g->n = -1;
+		  return(1);
 		}
 	      if (SCM_NFALSEP(res))
 		{

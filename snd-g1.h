@@ -409,6 +409,7 @@ void set_snd_contrast(snd_info *sp, Float val);
 void set_snd_srate(snd_info *sp, Float val);
 void set_snd_revlen(snd_info *sp, Float val);
 void set_snd_revscl(snd_info *sp, Float val);
+void set_reverb_labels(const char *new_label);
 void set_snd_filter_order(snd_info *sp, int order);
 void set_filter_text(snd_info *sp, char *str);
 void sp_display_env(snd_info *sp);

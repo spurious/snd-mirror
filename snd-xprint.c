@@ -1,8 +1,5 @@
 #include "snd.h"
 
-/* TODO:   XmPrintShell exists, print fsb?
- */
-
 /* X side of file print */
 
 static Widget file_print_dialog = NULL;
@@ -28,31 +25,6 @@ static int lpr (char *name)
   sprintf(print_string,"lpr %s",name);
   return(system(print_string));
 }
-
-#if 0
-static Widget print_dialog = NULL;
-
-static void ignore_this (snd_state *ss, Widget draw)
-{
-  int n;
-  Arg args[12];
-  if (print_dialog == NULL)
-    {
-      int event_base,error_base;
-      if (!(XpQueryExtension (MAIN_DISPLAY(ss),&event_base,&error_base))) snd_error("no print extension");
-
-      n=0;
-      print_dialog = XmPrintSetup(draw,XtScreen(draw),"Print",args,n);
-      /* 2nd arg should be "Screen*" whatever the hell that is */
-      XpStartJob(XtDisplay(print_dialog),XPSpool);
-      XpStartPage(XtDisplay(print_dialog),XtWindow(print_dialog));
-      XmRedisplayWidget(draw);
-      XpEndPage(XtDisplay(print_dialog));
-      XpEndJob(XtDisplay(print_dialog));
-    }
-}
-#endif
-
 
 static int printing = 0;
 

@@ -520,15 +520,145 @@ int save_state (snd_state *ss, char *save_state_name)
       if (file_dialog_is_active()) fprintf(save_fd,"(%s)\n",S_file_dialog); /* View: Files dialog, not Open: File */
       if (region_dialog_is_active()) fprintf(save_fd,"(%s)\n",S_region_dialog);
       if (record_dialog_is_active()) fprintf(save_fd,"(%s)\n",S_recorder_dialog);
+
+      /* TODO save mix? */
+      /* TODO save hooks? if empty? -- see below for code that almost works
+       * hooks are:
+       *   fft_hook graph_hook after_graph_hook mouse_press_hook mouse_release_hook mouse_drag_hook key_press_hook
+       *   mark_click_hook stop_playing_hook stop_playing_channel_hook stop_playing_region_hook start_playing_hook
+       *   play_hook save_hook mus_error_hook snd_error_hook snd_warning_hook before_fft_hook open_hook close_hook
+       *   just_sounds_hook menu_hook mark_drag_hook output_name_hook multichannel_mix_hook mix_speed_changed_hook
+       *   mix_amp_changed_hook mix_position_changed_hook during_open_hook after_open_hook exit_hook
+       *   start_hook output_comment_hook name_click_hook edit_hook? undo_hook?
+       */
+      /* TODO save search proc:
+       *   SP SCM search_proc; SCM eval_proc,prompt_callback;
+       *   SS SCM search_proc;
+       */          
+      /* TODO save added menus? (menu_functions) 
+       *           added transforms? (proc in added transform)
+       *           added key bindings? (func in keymaps) 
+       */
+      /* TODO save and restore listener text?? loaded files + possibly changed state?? */
+      /*      => needs the "dump" facility that appears to be underway right now */
+      /*         i.e. (binary-write port menu-hook)
+       *         then (set! menu-hook (binary-read port menu-hook)) or something
+       * :ho
+       * 32
+       * :(with-output-to-file "test" (lambda () (binary-write ho)))
+       * #<unspecified>
+       * :(with-input-from-file "test" (lambda () (binary-read)))
+       * 32
+       *
+       * but this doesn't yet work for hooks, procedures
+       *
+       * and if we can figure out how to get the current environment:
+       *  (define (environment->alist env)
+       *    (environment-fold env
+       *      (lambda (sym val tail)
+       *        (cons (cons sym val) tail))
+       *        '()))
+       * or maybe (the-environment)
+       */
+#if 0
+	{
+	  SCM val;
+	  val = gh_eval_str("(hook->list name-click-hook)");
+	  if (gh_length(val) > 0)
+	    {
+	      int i,len;
+	      SCM e,f,n,h;
+	      len = gh_length(val);
+	      for (i=len-1;i>=0;i--)
+		{
+		  h = gh_list_ref(val,gh_int2scm(i));
+		  e = scm_procedure_environment(h);
+		  n = scm_procedure_name(h);
+		  f = scm_procedure_source(h);
+		  if (SCM_FALSEP(f)) /* it has no known source (i.e. a built-in?) */
+		    {
+		      if (gh_length(e) < 2) /* it has no local env */
+			{
+			  if (SCM_NFALSEP(n))
+			    fprintf(stderr,"(add-hook! name-click-hook %s)\n",gh_print_1(n));
+			  else fprintf(stderr,"lost that one\n");
+			}
+		      else /* local env */
+			{
+			  if (gh_list_p(gh_list_ref(e,gh_int2scm(0))))
+			    {
+			      fprintf(stderr,"(add-hook! name-click-hook ((lambda %s %s) %s))\n",
+				      gh_print_1(gh_caar(e)),
+				      gh_print_1(n),
+				      gh_print_1(gh_cdar(e)));
+			    }
+			  else
+			    fprintf(stderr,"(add-hook! name-click-hook (let ((%s %s)) %s))\n",
+				    gh_print_1(gh_caar(e)),gh_print_1(gh_cadr(e)),gh_print_1(n));
+			}
+		    }
+		  else /* has source */
+		    {
+		      if (gh_length(e) < 2) /* it has no local env */
+			{
+			  if (SCM_FALSEP(n)) /* no name */
+			    {
+			      fprintf(stderr,"(add-hook! name-click-hook %s)\n",gh_print_1(f));
+			    }
+			  else
+			    {
+			      fprintf(stderr,"(define %s %s)\n(add-hook! name-click-hook %s)\n",
+				      gh_print_1(n),gh_print_1(f),gh_print_1(n));
+			    }
+			}
+		      else
+			{
+			  if (gh_list_p(gh_list_ref(e,gh_int2scm(0))))
+			    {
+			      fprintf(stderr,"(add-hook! name-click-hook ((lambda %s %s) %s))\n",
+				      gh_print_1(gh_caar(e)),
+				      gh_print_1(f),
+				      gh_print_1(gh_cdar(e)));
+			    }
+			  else
+			    fprintf(stderr,"(add-hook! name-click-hook (let ((%s %s)) %s))\n",
+				    gh_print_1(gh_caar(e)),gh_print_1(gh_cdar(e)),gh_print_1(f));
+			}
+		    }
+
+		  /*
+		   * (define hiho (lambda (n) (display n)))
+		   * (add-hook! name-click-hook snd-print)
+		   * (add-hook! name-click-hook (lambda (n) (snd-print n)))
+		   * (add-hook! name-click-hook hiho)
+		   * (add-hook! name-click-hook (let ((hi 32) (two 2.0) (this "this")) (lambda (n) hi)))
+		   * (add-hook! name-click-hook (let ((ha 32)) (lambda (n) hi)))
+		   * 
+		   * =>
+		   * 
+		   * (add-hook! name-click-hook snd-print)
+		   * (add-hook! name-click-hook (lambda (n) (snd-print n)))
+		   * (define hiho (lambda (n) (display n)))
+		   * (add-hook! name-click-hook hiho)
+		   * (add-hook! name-click-hook ((lambda (this two hi) (lambda (n) hi)) ("this" 2.0 32))) ;extra parens here! -- apply?
+		   * (add-hook! name-click-hook (let ((ha 32)) (lambda (n) hi)))
+		   * 
+		   * this still loses on cases like:
+		   * (define (e1)
+		   * (let ((ho 321))
+		   * (define (abc n) (+ ho 1))
+		   * (add-hook! name-click-hook abc)))
+		   * (e1)
+		   * =>
+		   * (add-hook! name-click-hook ((lambda (abc) (lambda (n) (+ ho 1))) (#<procedure abc (n)>)))
+		   */
+		}
+	    }
+	}
+#endif
       if (fclose(save_fd) != 0)
 	snd_error("can't close %s: %s [%s[%d] %s]",save_state_name,strerror(errno),__FILE__,__LINE__,__FUNCTION__);
-      /* TODO save mix? */
-      /* TODO save hooks?
-       *    (procedure-source (car (hook->list exit-hook))) (map it)
-       */
-      /* TODO save search proc et al? */
-      /* TODO save added menus? added transforms? */
-      /* TODO save and restore listener text?? */
+
       if (locale)
 	{
 #if HAVE_SETLOCALE
