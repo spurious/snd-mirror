@@ -10197,7 +10197,8 @@ Float evaluate_ptreec(void *upt, Float arg, vct *v, bool dir)
   pt->dbls[pt->args[0]] = arg;
   if (pt->arity > 1)
     {
-      pt->vcts[pt->args[1]] = v;
+      if (pt->vcts)
+	pt->vcts[pt->args[1]] = v;
       pt->ints[pt->args[2]] = (Int)dir;
     }
   eval_ptree(pt);

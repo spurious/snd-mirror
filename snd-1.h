@@ -109,7 +109,7 @@ typedef struct snd_fd {
   mus_sample_t (*rev_run)(struct snd_fd *sf);
   Float (*rev_runf)(struct snd_fd *sf);
   int edit_ctr, dangling_loc, region;
-  bool zero;
+  bool zero, xramp2;
 } snd_fd;
 
 typedef struct {Float freq; Float amp;} fft_peak;
@@ -754,8 +754,8 @@ void read_sample_change_direction(snd_fd *sf, read_direction_t dir);
 bool ramp_or_ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos, Float base);
 bool ptree_or_sound_fragments_in_use(chan_info *cp, int pos);
 bool ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos, bool is_xen);
-#define read_sample(Sf) (*Sf->run)(Sf)
-#define read_sample_to_float(Sf) (*Sf->runf)(Sf)
+#define read_sample(Sf) (*((Sf)->run))(Sf)
+#define read_sample_to_float(Sf) (*((Sf)->runf))(Sf)
 Float protected_next_sample_to_float(snd_fd *sf);
 Float protected_previous_sample_to_float(snd_fd *sf);
 Float local_maxamp(chan_info *cp, off_t beg, off_t num, int edpos);
