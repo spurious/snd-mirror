@@ -16,16 +16,22 @@
 #include "sndlib.h"
 #include "sndlib-strings.h"
 
+#if (!USE_SND)
 #if HAVE_GUILE
   #include <guile/gh.h>
   #include "sg.h"
-#else
-  #if HAVE_LIBREP 
-    #include <rep.h>
-    #include "sl.h"
-  #else
-    #include "noguile.h"
-  #endif
+#endif
+#if HAVE_LIBREP 
+  #include <rep.h>
+  #include "sl.h"
+#endif
+#if HAVE_MZSCHEME
+  #include <scheme.h>
+  #include "sz.h"
+#endif
+#if (!HAVE_EXTENSION_LANGUAGE)
+  #include "noguile.h"
+#endif
 #endif
 
 #include "vct.h"
@@ -351,7 +357,7 @@ int sound_data_p(SCM obj) {return(SMOB_TYPE_P(obj, sound_data_tag));}
 static SCM g_sound_data_p(SCM obj) 
 {
   #define H_sound_data_p "(" S_sound_data_p " obj) -> #t if obj is a sound-data object, else #f"
-  return((sound_data_p(obj)) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN(sound_data_p(obj)));
 }
 
 static MUS_SAMPLE_TYPE **get_sound_data(SCM arg)
@@ -1006,13 +1012,26 @@ static SCM g_mus_expand_filename(SCM file)
   return(result);
 }
 
-#if DEBUGGING
-static SCM g_sound_print_cache(void)
+static SCM g_mus_sound_report_cache(SCM file)
 {
-  mus_sound_print_cache();
-  return(SCM_BOOL_F);
+  #define H_mus_sound_report_cache "(" S_mus_sound_report_cache " name) prints the current sound \
+header data table to the file given or stdout if none"
+
+  SCM res = SCM_BOOL_F;
+  if (NOT_BOUND_P(file))
+    mus_sound_print_cache();
+  else
+    {
+      FILE *fd;
+      char *name = NULL;
+      fd = fopen(name = mus_expand_filename(TO_C_STRING(file)), "w");
+      mus_sound_report_cache(fd);
+      fclose(fd);
+      if (name) FREE(name);
+      return(file);
+    }
+  return(res);
 }
-#endif
 
 void mus_sndlib2scm_initialize(void)
 {
@@ -1155,12 +1174,10 @@ void mus_sndlib2scm_initialize(void)
   DEFINE_PROC(S_mus_sound_seek_frame,     g_seek_sound_frame, 2, 0, 0,      H_mus_sound_seek_frame);
   DEFINE_PROC(S_mus_audio_open_output,    g_open_audio_output, 5, 0, 0,     H_mus_audio_open_output);
   DEFINE_PROC(S_mus_audio_open_input,     g_open_audio_input, 5, 0, 0,      H_mus_audio_open_input);
+  DEFINE_PROC(S_mus_sound_report_cache,   g_mus_sound_report_cache, 0, 1, 0,H_mus_sound_report_cache);
 #if USE_SND
   define_procedure_with_setter(S_sound_data_ref, SCM_FNC sound_data_ref, H_sound_data_ref,
 			       "set-" S_sound_data_ref, SCM_FNC sound_data_set, local_doc, 3, 0, 4, 0);
-#endif
-#if DEBUGGING
-  DEFINE_PROC("mus-sound-print-cache", g_sound_print_cache, 0, 0, 0, "");
 #endif
 
   YES_WE_HAVE("sndlib");

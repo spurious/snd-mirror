@@ -1434,8 +1434,8 @@ void create_popup_menu(snd_state *ss, guint button, TIME_TYPE time)
       if (selcp)
 	{
 	  undo_possible = (selcp->edit_ctr > 0);
-	  redo_possible = ((selcp->edit_size > (selcp->edit_ctr+1)) && 
-			   (selcp->edits[selcp->edit_ctr+1]));
+	  redo_possible = ((selcp->edit_size > (selcp->edit_ctr + 1)) && 
+			   (selcp->edits[selcp->edit_ctr + 1]));
 	}
       popup_menu = gtk_menu_new();
 

@@ -184,8 +184,8 @@ void reflect_undo_or_redo_in_menu(chan_info *cp)
   if ((cp) && (cp->cgx))
     {
       undoable = (cp->edit_ctr > 0);
-      redoable = (!(((cp->edit_ctr+1) == cp->edit_size) || 
-		    (!(cp->edits[cp->edit_ctr+1]))));
+      redoable = (!(((cp->edit_ctr + 1) == cp->edit_size) || 
+		    (!(cp->edits[cp->edit_ctr + 1]))));
       set_sensitive(edit_undo_menu(), undoable);
       if (popup_menu_exists()) set_sensitive(popup_undo_menu(), undoable);
       set_sensitive(edit_redo_menu(), redoable);

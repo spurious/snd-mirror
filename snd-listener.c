@@ -68,16 +68,16 @@ int check_balance(char *expr, int start, int end)
 	  !quote_wait) {
 	return i;
       } else {
-	if (prev_separator && i+1 < end && expr[i+1] =='{') {
+	if (prev_separator && i + 1 < end && expr[i + 1] =='{') {
 	  /* skip past }#, ignoring \} */
 	  do {
 	    i++;
 	    if (i < end && expr[i] =='\\') {
 	      i++;
 	    }
-	  } while (i < end && !(expr[i] =='}' && i+1 < end
-				&& expr[i+1] =='#'));
-	  i+=2;
+	  } while (i < end && !(expr[i] =='}' && i + 1 < end
+				&& expr[i + 1] =='#'));
+	  i += 2;
 	  if (paren_count==0) {
 	    if (i < end) {
 	      return i;
@@ -112,7 +112,7 @@ int check_balance(char *expr, int start, int end)
     case ')' :
       paren_count--;
       if (non_whitespace_p && paren_count==0) {
-	return i+1;
+	return i + 1;
       } else {
 	i++;
 	non_whitespace_p = 1;
@@ -199,7 +199,7 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
   if (last_position > end_of_text)
     {
       for (i = current_position; i < last_position; i++)
-	if ((full_str[i+1] == prompt[0]) && 
+	if ((full_str[i + 1] == prompt[0]) && 
 	    (full_str[i] == '\n'))
 	  {
 	    end_of_text = i-1;
@@ -264,7 +264,7 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
 	    if ((str[i] == '\n') || (i == 0))
 	      {
 		len = snd_strlen(str);
-		tmp = (char *)CALLOC(len+1, sizeof(char));
+		tmp = (char *)CALLOC(len + 1, sizeof(char));
 		if (i != 0) i++;
 		for (k = 0; i < len; i++, k++) 
 		  if ((i > loc) &&
@@ -302,7 +302,7 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
     }
   cmd_eot = GUI_TEXT_END(w);
   GUI_TEXT_GOTO(w, cmd_eot-1);
-  GUI_TEXT_SET_INSERTION_POSITION(w, cmd_eot+1);
+  GUI_TEXT_SET_INSERTION_POSITION(w, cmd_eot + 1);
   if (full_str) GUI_FREE(full_str);
 #endif
 }

@@ -212,7 +212,7 @@ void sp_display_env(snd_info *sp) {}
 void filter_env_changed(snd_info *sp, env *e) {}
 void set_play_button(snd_info *sp, int val) {}
 void play_button_pause(snd_state *ss, int pausing) {}
-void syncb(snd_info *sp, int on) {}
+void syncb(snd_info *sp, int on) {sp->sync = on;}
 void lock_apply(snd_state *ss, snd_info *sp) {}
 void unlock_apply(snd_state *ss, snd_info *sp) {}
 void set_apply_button(snd_info *sp, int val) {}
@@ -428,6 +428,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
                (define " S_mouse_leave_listener_hook " (make-hook 1))\
                (define " S_mouse_enter_text_hook " (make-hook 1))\
                (define " S_mouse_leave_text_hook " (make-hook 1))\
+               (define " S_drop_hook " (make-hook 1))\
                (define " S_property_changed_hook " (make-hook 1))");
 
   EVAL_STRING("(define " S_enved_active_env " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
@@ -439,6 +440,8 @@ void snd_doit(snd_state *ss, int argc, char **argv)
                (define " S_lisp_graph " 2)\
                (define " S_copy_context " 0)\
                (define " S_cursor_context " 3)\
+               (define (" S_axis_info " . args) #f)\
+               (define (" S_change_property " . args) #f)\
                (define " S_basic_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_zoom_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_position_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\

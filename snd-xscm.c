@@ -318,7 +318,7 @@ static SCM g_set_sounds_horizontal(SCM val)
   horizontal = (NOT_FALSE_P(val));
   ss = get_global_state();
   XtVaSetValues(SOUND_PANE(ss), XmNorientation, (horizontal) ? XmHORIZONTAL : XmVERTICAL, NULL);
-  return((horizontal) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN(horizontal));
 }
 #endif
 #endif

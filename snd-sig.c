@@ -33,9 +33,9 @@ static sync_state *get_sync_state_1(snd_state *ss, snd_info *sp, chan_info *cp, 
   sync_state *sc;
   dur = 0;
   if ((!regexpr) && (sp == NULL)) return(NULL);
-  if ((!regexpr) && (sp->syncing != 0))
+  if ((!regexpr) && (sp->sync != 0))
     {
-      si = snd_sync(ss, sp->syncing);
+      si = snd_sync(ss, sp->sync);
       sfs = (snd_fd **)MALLOC(si->chans * sizeof(snd_fd *));
       for (i = 0; i < si->chans; i++) 
 	{
@@ -2014,17 +2014,17 @@ void fht(int powerOfFour, Float *array)
   r = 1.414213562;
   j = 1;
   i = 0;
-  while (i < n-1)	
+  while (i < n - 1)	
     {
       i++;
       if (i < j)	
 	{
-	  t = array[j-1];
-	  array[j-1] = array[i-1];
-	  array[i-1] = t;
+	  t = array[j - 1];
+	  array[j - 1] = array[i - 1];
+	  array[i - 1] = t;
     	}
       k = n4;
-      while ((3*k)<j)	
+      while ((3 * k) < j)	
 	{
 	  j -= 3 * k;
 	  k /= 4;
@@ -2034,21 +2034,21 @@ void fht(int powerOfFour, Float *array)
   for (i = 0; i < n; i += 4) 
     {
       t5 = array[i];
-      t6 = array[i+1];
-      t7 = array[i+2];
-      t8 = array[i+3];
+      t6 = array[i + 1];
+      t7 = array[i + 2];
+      t8 = array[i + 3];
       t1 = t5 + t6;
       t2 = t5 - t6;
       t3 = t7 + t8;
       t4 = t7 - t8;
       array[i] = t1 + t3;
-      array[i+1] = t1 - t3;
-      array[i+2] = t2 + t4;
-      array[i+3] = t2 - t4;
+      array[i + 1] = t1 - t3;
+      array[i + 2] = t2 + t4;
+      array[i + 3] = t2 - t4;
     }
   for (L = 2; L <= powerOfFour; L++)  
     {
-      d1 = (int)(pow(2.0 , L+L-3.0));
+      d1 = (int)(pow(2.0 , L + L - 3.0));
       d2 = d1 + d1;
       d3 = d2 + d2;
       n_over_d3 = n / 2 / d3;
@@ -2057,17 +2057,17 @@ void fht(int powerOfFour, Float *array)
       for (j = 0; j < n; j += d5)	  
 	{
 	  t5 = array[j];
-	  t6 = array[j+d2];
-	  t7 = array[j+d3];
-	  t8 = array[j+d4];
+	  t6 = array[j + d2];
+	  t7 = array[j + d3];
+	  t8 = array[j + d4];
 	  t1 = t5 + t6;
 	  t2 = t5 - t6;
 	  t3 = t7 + t8;
 	  t4 = t7 - t8;
 	  array[j] = t1 + t3;
-	  array[j+d2] = t1 - t3;
-	  array[j+d3] = t2 + t4;
-	  array[j+d4] = t2 - t4;
+	  array[j + d2] = t1 - t3;
+	  array[j + d3] = t2 + t4;
+	  array[j + d4] = t2 - t4;
 	  d6 = j + d1;
 	  d7 = j + d1 + d2;
 	  d8 = j + d1 + d3;
@@ -2709,9 +2709,9 @@ int cursor_delete(chan_info *cp, int count, const char *origin)
   si = NULL;
   beg = cp->cursor;
   sp = cp->sound;
-  if (sp->syncing!= 0)
+  if (sp->sync!= 0)
     {
-      si = snd_sync(cp->state, sp->syncing);
+      si = snd_sync(cp->state, sp->sync);
       cps = si->cps;
       for (i = 0; i < si->chans; i++)
 	{
@@ -2757,9 +2757,9 @@ int cursor_insert(chan_info *cp, int beg, int count, const char *origin)
       if (count > beg) count = beg;
       beg -= count;
     }
-  if (sp->syncing != 0)
+  if (sp->sync != 0)
     {
-      si = snd_sync(cp->state, sp->syncing);
+      si = snd_sync(cp->state, sp->sync);
       cps = si->cps;
       for (i = 0; i < si->chans; i++)
 	{
@@ -2787,9 +2787,9 @@ int cursor_zeros(chan_info *cp, int count, int regexpr)
   if (count == 0) return(CURSOR_NO_ACTION);
   if (count < 0) num = -count; else num = count;
   sp = cp->sound;
-  if ((sp->syncing != 0) && (!regexpr))
+  if ((sp->sync != 0) && (!regexpr))
     {
-      si = snd_sync(cp->state, sp->syncing);
+      si = snd_sync(cp->state, sp->sync);
       for (i = 0; i < si->chans; i++) 
 	si->begs[i] = cp->cursor;
     }
@@ -2810,11 +2810,11 @@ int cursor_zeros(chan_info *cp, int count, int regexpr)
 	  (num >= current_ed_samples(ncp)))
 	{
 	  nsp = ncp->sound;
-	  old_sync = nsp->syncing;
-	  nsp->syncing = 0;
+	  old_sync = nsp->sync;
+	  nsp->sync = 0;
 	  scaler[0] = 0.0;
 	  scale_by(ncp, scaler, 1, FALSE);
-	  nsp->syncing = old_sync;
+	  nsp->sync = old_sync;
 	}
       else
 	{
@@ -2848,9 +2848,9 @@ static sync_state *get_sync_state_without_snd_fds(snd_state *ss, snd_info *sp, c
   int dur, i;
   sync_state *sc;
   dur = 0;
-  if ((sp->syncing != 0) && (!regexpr))
+  if ((sp->sync != 0) && (!regexpr))
     {
-      si = snd_sync(ss, sp->syncing);
+      si = snd_sync(ss, sp->sync);
       for (i = 0; i < si->chans; i++) 
 	si->begs[i] = beg;
     }
@@ -2940,20 +2940,22 @@ static SCM g_temp_filenames(SCM data)
   return(lst);
 }
 
-static SCM g_sound_to_temp_1(SCM ht, SCM df, int selection, int one_file)
+static SCM g_sound_to_temp_1(SCM ht, SCM df, int selection, int one_file, const char *caller)
 {
   snd_exf *program_data;
   chan_info *cp;
   int type, format;
   snd_state *ss;
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(ht), ht, SCM_ARG1, caller, "an integer (a header type id)");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(df), df, SCM_ARG2, caller, "an integer (a data format id)");
   if ((selection) && (selection_is_active() == 0)) 
     snd_no_active_selection_error((one_file) ? S_selection_to_temp : S_selection_to_temps);
   ss = get_global_state();
   cp = current_channel(ss);
   if (cp)
     {
-      type = TO_C_INT_OR_ELSE(ht, MUS_UNSUPPORTED);
-      format = TO_C_INT_OR_ELSE(df, MUS_UNSUPPORTED);
+      type = TO_C_INT_OR_ELSE(ht, MUS_UNSUPPORTED);  /* mus-next? */
+      format = TO_C_INT_OR_ELSE(df, MUS_UNSUPPORTED);  /* mus-out-format? */
       program_data = snd_to_temp(cp, selection, one_file, type, format);
       if (program_data)
 	return(SND_WRAP(program_data));
@@ -2966,7 +2968,7 @@ static SCM g_sound_to_temp(SCM ht, SCM df)
   #define H_sound_to_temp "(" S_sound_to_temp " &optional header-type data-format) writes the syncd data to a temp file \
 with the indicated header type and data format; returns temp file name"
 
-  return(g_sound_to_temp_1(ht, df, USE_FULL_FILE, USE_ONE_FILE));
+  return(g_sound_to_temp_1(ht, df, USE_FULL_FILE, USE_ONE_FILE, S_sound_to_temp));
 }
 
 static SCM g_sound_to_temps(SCM ht, SCM df) 
@@ -2974,7 +2976,7 @@ static SCM g_sound_to_temps(SCM ht, SCM df)
   #define H_sound_to_temps "(" S_sound_to_temps " &optional header-type data-format) writes the syncd data to mono temp files \
 with the indicated header type and data format; returns temp file names"
 
-  return(g_sound_to_temp_1(ht, df, USE_FULL_FILE, USE_MANY_FILES));
+  return(g_sound_to_temp_1(ht, df, USE_FULL_FILE, USE_MANY_FILES, S_sound_to_temps));
 }
 
 static SCM g_selection_to_temp(SCM ht, SCM df) 
@@ -2982,7 +2984,7 @@ static SCM g_selection_to_temp(SCM ht, SCM df)
   #define H_selection_to_temp "(" S_selection_to_temp " &optional header-type data-format) writes the selected data to a temp file \
 with the indicated header type and data format; returns temp file name"
 
-  return(g_sound_to_temp_1(ht, df, USE_SELECTION, USE_ONE_FILE));
+  return(g_sound_to_temp_1(ht, df, USE_SELECTION, USE_ONE_FILE, S_selection_to_temp));
 }
 
 static SCM g_selection_to_temps(SCM ht, SCM df) 
@@ -2990,7 +2992,7 @@ static SCM g_selection_to_temps(SCM ht, SCM df)
   #define H_selection_to_temps "(" S_selection_to_temps " &optional header-type data-format) writes the selected data to mono temp files \
 with the indicated header type and data format; returns temp file names"
 
-  return(g_sound_to_temp_1(ht, df, USE_SELECTION, USE_MANY_FILES));
+  return(g_sound_to_temp_1(ht, df, USE_SELECTION, USE_MANY_FILES, S_selection_to_temps));
 }
 
 static SCM g_temp_to_sound(SCM data, SCM new_name, SCM origin)
@@ -3454,7 +3456,7 @@ static SCM g_scale_to(SCM scalers, SCM snd_n, SCM chn_n)
   #define H_scale_to "(" S_scale_to " norms &optional snd chn)\n\
 normalizes snd to norms (following sync) norms can be a float or a vector of floats"
 
-  /* chn_n irrelevant if syncing */
+  /* chn_n irrelevant if sync */
   chan_info *cp;
   int len[1];
   Float *scls;
@@ -3471,7 +3473,7 @@ static SCM g_scale_by(SCM scalers, SCM snd_n, SCM chn_n)
   #define H_scale_by "(" S_scale_by " scalers &optional snd chn)\n\
 scales snd by scalers (following sync) scalers can be a float or a vector of floats"
 
-  /* chn_n irrelevant if syncing */
+  /* chn_n irrelevant if sync */
   chan_info *cp;
   int len[1];
   Float *scls;

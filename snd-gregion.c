@@ -210,11 +210,11 @@ static void region_down_arrow_Callback(GtkWidget *w, GdkEventButton *ev, gpointe
 {
   chan_info *cp;
   cp = reg_sp->chans[0];
-  if ((cp->chan+1) < region_chans(current_region))
+  if ((cp->chan + 1) < region_chans(current_region))
     {
       cp->chan++;
       set_sensitive(channel_f(cp), TRUE);
-      set_sensitive(channel_w(cp), (region_chans(current_region) > (cp->chan+1)));
+      set_sensitive(channel_w(cp), (region_chans(current_region) > (cp->chan + 1)));
       fixup_region_data(cp, cp->chan, current_region);
       region_update_graph(cp);
     }

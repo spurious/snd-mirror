@@ -26,13 +26,11 @@ include makesnd.back
 
 # this info from Stanko Juzbasic
 #--------
-# This is how compiler flags for IRIX 6.5 with mipsPRO-7.2.1 should look
-# like (in general):
+# This is how compiler flags for IRIX 6.5 with mipsPRO-7.2.1 should look:
 # 
 # ------- FOR n32 --------
 # CC = cc -n32
-# CFLAGS = -mips4 -O3 -DSGI -DUSE_SND -OPT:Olimit=4000 -DXPM
-# -I/usr/freeware/include -DHAVE_GUILE_1_3
+# CFLAGS = -mips4 -O3 -DSGI -DUSE_SND -OPT:Olimit=4000 -DXPM -I/usr/freeware/include -DHAVE_GUILE_1_3
 # AUDIO_LIB = -laudio
 # LIBS = -L/usr/freeware/lib32 -lXpm -lSgm -lXm -lXt -lX11 -lguile -lc -lm
 # 

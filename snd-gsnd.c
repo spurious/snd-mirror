@@ -418,7 +418,7 @@ static void set_sync_color(snd_info *sp)
   GtkWidget *syb;
   syb = w_snd_sync(sp);
   ss = sp->state;
-  switch (sp->syncing)
+  switch (sp->sync)
     {
     case 1: case 0: set_active_color(syb, (ss->sgx)->pushed_button_color); break;
     case 2: set_active_color(syb, (ss->sgx)->green); break;
@@ -430,7 +430,7 @@ static void set_sync_color(snd_info *sp)
 
 void syncb(snd_info *sp, int on)
 {
-  sp->syncing = on;
+  sp->sync = on;
   if (!(IS_PLAYER(sp)))
     {
       set_sync_color(sp);
@@ -455,12 +455,12 @@ static void sync_button_click(GtkWidget *w, gpointer data)
     if (last_sync_state & snd_ControlMask) 
       if (last_sync_state & snd_MetaMask)
 	if (last_sync_state & snd_ShiftMask)
-	  sp->syncing = 4;
-	else sp->syncing = 3;
-      else sp->syncing = 2;
-    else sp->syncing = 1;
-  else sp->syncing = 0;
-  if (sp->syncing != 0) 
+	  sp->sync = 4;
+	else sp->sync = 3;
+      else sp->sync = 2;
+    else sp->sync = 1;
+  else sp->sync = 0;
+  if (sp->sync != 0) 
     {
       set_sync_color(sp);
       cp = sp->lacp;

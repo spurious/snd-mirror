@@ -374,7 +374,7 @@ static int save_sound_state (snd_info *sp, void *ptr)
 	  sp->shortname,
 	  (sp->read_only) ? S_view_sound : S_open_sound,
 	  sp->fullname);
-  if (sp->syncing != DEFAULT_SYNCING) psp_sd(fd, S_sync, sp->syncing);
+  if (sp->sync != DEFAULT_SYNC) psp_sd(fd, S_sync, sp->sync);
   if (sp->contrasting != DEFAULT_CONTRASTING) psp_ss(fd, S_contrasting, b2s(sp->contrasting));
   if (sp->contrast != DEFAULT_CONTRAST) psp_sf(fd, S_contrast, sp->contrast);
   if (sp->expanding != DEFAULT_EXPANDING) psp_ss(fd, S_expanding, b2s(sp->expanding));
@@ -571,7 +571,7 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
 	  (strcmp("-separate", argname) == 0) ||
 	  (strcmp("-noglob", argname) == 0) ||
 	  (strcmp("-noinit", argname) == 0))
-	return(auto_open_ctr+1);
+	return(auto_open_ctr + 1);
       else
 	{
 	  if ((strcmp("-p", argname) == 0) ||
@@ -624,7 +624,7 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
 	    }
 	}
     }
-  return(auto_open_ctr+1);
+  return(auto_open_ctr + 1);
 }
 
 static SCM g_save_state(SCM filename) 

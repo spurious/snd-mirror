@@ -1037,8 +1037,8 @@ void *make_apply_state(void *xp)
 static int max_sync(snd_info *sp, void *val)
 {
   int *maxsync = (int *)val;
-  if (sp->syncing > maxsync[0])
-    maxsync[0] = sp->syncing;
+  if (sp->sync > maxsync[0])
+    maxsync[0] = sp->sync;
   return(0);
 }
 
@@ -1069,18 +1069,18 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
       (sp->play_direction == 1) &&
       (!(sp->filtering)) && (!(sp->expanding)) && (!(sp->reverbing)) && (!(sp->contrasting)))
     {
-      old_sync = sp->syncing;
+      old_sync = sp->sync;
       if (ss->apply_choice == APPLY_TO_SOUND)
 	{
 	  maxsync[0] = 0;
 	  map_over_sounds(ss, max_sync, (void *)maxsync);
-	  sp->syncing = maxsync[0] + 1;
+	  sp->sync = maxsync[0] + 1;
 	}
-      else sp->syncing = 0;
+      else sp->sync = 0;
       scaler[0] = sp->amp;
       scale_by((sp->selected_channel == NO_SELECTION) ? sp->chans[0] : sp->chans[sp->selected_channel], 
 	       scaler, 1, FALSE);
-      sp->syncing = old_sync;
+      sp->sync = old_sync;
     }
   else
     {
@@ -1431,7 +1431,7 @@ static SCM sp_iread(SCM snd_n, int fld, char *caller)
     snd_no_such_sound_error(caller, snd_n);
   switch (fld)
     {
-    case SP_SYNC:                  return(TO_SCM_INT(sp->syncing));                 break;
+    case SP_SYNC:                  return(TO_SCM_INT(sp->sync));                 break;
     case SP_UNITE:                 return(TO_SCM_INT(sp->combining));               break;
     case SP_READ_ONLY:             return(TO_SCM_BOOLEAN(sp->read_only));           break;
     case SP_NCHANS:                return(TO_SCM_INT(sp->nchans));                  break;
@@ -1686,19 +1686,19 @@ static SCM name_reversed(SCM arg1, SCM arg2) \
 }
 
 
-static SCM g_syncing(SCM snd_n) 
+static SCM g_sync(SCM snd_n) 
 {
-  #define H_syncing "(" S_sync " &optional snd) -> whether snd is sync'd to other sounds"
+  #define H_sync "(" S_sync " &optional snd) -> whether snd is sync'd to other sounds"
   return(sp_iread(snd_n, SP_SYNC, S_sync));
 }
 
-static SCM g_set_syncing(SCM on, SCM snd_n) 
+static SCM g_set_sync(SCM on, SCM snd_n) 
 {
   ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_sync, "an integer");
   return(sp_iwrite(snd_n, on, SP_SYNC, "set-" S_sync));
 }
 
-WITH_REVERSED_BOOLEAN_ARGS(g_set_syncing_reversed, g_set_syncing)
+WITH_REVERSED_BOOLEAN_ARGS(g_set_sync_reversed, g_set_sync)
 
 static SCM g_uniting(SCM snd_n) 
 {
@@ -2090,6 +2090,10 @@ saves snd in filename using the indicated attributes.  If channel is specified, 
   sp = get_sp(index);
   if (sp == NULL) 
     snd_no_such_sound_error(S_save_sound_as, index);
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(type), type, SCM_ARG3, S_save_sound_as, "an integer (a header type id)");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(format), format, SCM_ARG4, S_save_sound_as, "an integer (a data format id)");
+  ASSERT_TYPE(NUMBER_IF_BOUND_P(srate), srate, SCM_ARG5, S_save_sound_as, "a number");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(channel), channel, SCM_ARG6, S_save_sound_as, "an integer");
   fname = mus_expand_filename(TO_C_STRING(newfile));
   hdr = sp->hdr;
   ht = TO_C_INT_OR_ELSE(type, hdr->type);
@@ -2148,6 +2152,11 @@ creates a new sound file with the indicated attributes; if any are omitted, the 
   unsigned char* buf;
   char *str = NULL, *com = NULL;
   ASSERT_TYPE(STRING_P(name), name, SCM_ARG1, S_new_sound, "a string");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(type), type, SCM_ARG2, S_new_sound, "an integer (a header type id)");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(format), format, SCM_ARG3, S_new_sound, "an integer (a data format id)");
+  ASSERT_TYPE(NUMBER_IF_BOUND_P(srate), srate, SCM_ARG4, S_new_sound, "a number");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(chans), chans, SCM_ARG5, S_new_sound, "an integer");
+  ASSERT_TYPE(STRING_IF_BOUND_P(comment), comment, SCM_ARG6, S_new_sound, "a string");
   ss = get_global_state();
   str = mus_expand_filename(TO_C_STRING(name));
   if (snd_overwrite_ok(ss, str))
@@ -2842,8 +2851,8 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
 					"set-" S_show_controls, SCM_FNC g_set_show_controls, SCM_FNC g_set_show_controls_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_sync, SCM_FNC g_syncing, H_syncing,
-					"set-" S_sync, SCM_FNC g_set_syncing, SCM_FNC g_set_syncing_reversed,
+  define_procedure_with_reversed_setter(S_sync, SCM_FNC g_sync, H_sync,
+					"set-" S_sync, SCM_FNC g_set_sync, SCM_FNC g_set_sync_reversed,
 					local_doc, 0, 1, 0, 2);
 
   define_procedure_with_reversed_setter(S_uniting, SCM_FNC g_uniting, H_uniting,

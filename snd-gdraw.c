@@ -362,7 +362,7 @@ void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
 	{
 	  for (i = min - 1; i < nj - 1; i++) 
 	    {
-	      gdk_draw_line(wn, draw_gc, points[i].x, points[i].y, points[i+1].x, points[i+1].y);
+	      gdk_draw_line(wn, draw_gc, points[i].x, points[i].y, points[i + 1].x, points[i + 1].y);
 	      gdk_draw_line(wn, draw_gc, points1[i].x, points1[i].y, points1[i + 1].x, points1[i + 1].y);
 	    }
 	}

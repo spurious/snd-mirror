@@ -215,7 +215,7 @@ static void make_abel_transformer(int n)
 	}
       for (i = 1; i < n; ++i) 
 	{
-	  fi = (Float)i+1.0;
+	  fi = (Float)i + 1.0;
 	  for (j = 0; j < nse; ++j) 
 	    {
 	      hj = h[j];
@@ -451,7 +451,7 @@ static void build_Pn(int n)
       saved_Pn_size = n;
       ln2 = log(n) / log(2);
       rate = 2.0 / (Float)n;
-      for (k = 0, x=-1.0; k < n; k++, x+=rate) 
+      for (k = 0, x = -1.0; k < n; k++, x += rate) 
 	{
 	  chebyshev_polynomials(x, saved_Pn[k], n-1);
 	  if ((x == 1.0) || (x == -1.0))
@@ -1014,7 +1014,7 @@ static int snd_fft_to_spectrum (fft_state *fs)
       if (fft_data[2] < 0.0001) fft_data[fs->size - 1] = 0.0; else fft_data[fs->size - 1] = fft_data[2];
       for (i = 3, j = 1; i < fs->size - 3; i += 2, j++)
 	fft_data[j] = hypot(fft_data[i], fft_data[i + 1]);
-      /* if fft_data[i] == 0 pi/2 else atan2(fft_data[i], fft_data[i+1]) */
+      /* if fft_data[i] == 0 pi/2 else atan2(fft_data[i], fft_data[i + 1]) */
     }
   return(1);
 }
@@ -1146,7 +1146,7 @@ static fft_info *make_fft_info(int size, int window, Float beta)
   fp->window = window;
   fp->beta = beta;
   fp->ok = 1;
-  fp->data = (Float *)CALLOC(size+1, sizeof(Float)); /* +1 for complex storage or starts at 1 or something */
+  fp->data = (Float *)CALLOC(size + 1, sizeof(Float)); /*  + 1 for complex storage or starts at 1 or something */
   return(fp);
 }
 
@@ -1208,7 +1208,7 @@ static int snd_fft_set_up(fft_state *fs)
 	{
 	  fp->size = fs->size;
 	  if (fp->data) FREE(fp->data);
-	  fp->data = (Float *)CALLOC(fp->size+1, sizeof(Float));
+	  fp->data = (Float *)CALLOC(fp->size + 1, sizeof(Float));
 	  fp->ok = 1;
 	}
     }
@@ -1718,7 +1718,7 @@ static BACKGROUND_TYPE fft_in_slices(void *fftData)
    *    create arrays if needed
    *    window/load data
    *    scramble 
-   *    step n times through the fft (100 to 200 per iteration) -- wait for +1 here
+   *    step n times through the fft (100 to 200 per iteration) -- wait for  + 1 here
    *    return true 
    *
    * since we can be running multiple FFTs at once, not to mention other work procedures,
@@ -2156,7 +2156,7 @@ void c_convolve (char *fname, Float amp, int filec, int filehdr, int filterc, in
 	  mus_file_read_any(filterc, 0, filter_chans, filtersize - 1, fbuffer, fcm);
 	  for (i = 0; i < filtersize; i++) 
 	    rl1[i] = MUS_SAMPLE_TO_FLOAT(fbuffer[filter_chan][i]);
-	  progress_report(gsp, "convolve", ip+1, total_chans, .1, from_enved);
+	  progress_report(gsp, "convolve", ip + 1, total_chans, .1, from_enved);
 	  mus_header_write_next_header(tempfile, 22050, 1, 28, data_size * 4, MUS_BINT, NULL, 0);
 	  mus_file_open_descriptors(tempfile, fname, MUS_BINT, 4, 28, 1, MUS_NEXT);
 	  /* get the convolution data */

@@ -414,14 +414,14 @@ char *gain_channel_name(int in_chans, int out_chans, int input, int dev_in, int 
     {
       use_numbers = ((out_chans > 4) || (in_chans > 4));
       if (use_numbers)
-	mus_snprintf(numbuf, NUMBUF_SIZE, "%d->%d:", dev_in+1, out + 1);
+	mus_snprintf(numbuf, NUMBUF_SIZE, "%d->%d:", dev_in + 1, out + 1);
       else mus_snprintf(numbuf, NUMBUF_SIZE, "%c->%c:", (char)('A' + dev_in), (char)('A' + out));
     }
   else
     {
       use_numbers = (out_chans > 4);
       if (use_numbers)
-	mus_snprintf(numbuf, NUMBUF_SIZE, "%d:", out+1);
+	mus_snprintf(numbuf, NUMBUF_SIZE, "%d:", out + 1);
       else mus_snprintf(numbuf, NUMBUF_SIZE, "%c:", (char)('A' + out));
     }
   return(numbuf);
@@ -1049,7 +1049,7 @@ void recorder_characterize_devices(int devs, int output_devices)
 	      (mus_audio_api() == OSS_API &&
 	       recorder_input_device(device)))
 #else
-	    device = (int)audval[i+1];
+	    device = (int)audval[i + 1];
 	  if (recorder_input_device(device))
 #endif
 	    {
@@ -1156,9 +1156,9 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
 			       rp->input_buffer_sizes[i] * rp->input_channels[i], 
 			       input_bufs, 
 			       rp->raw_input_bufs[i]);
-	  for (k = 0, m = offset; m < buffer_size; m+=active_in_chans) 
+	  for (k = 0, m = offset; m < buffer_size; m += active_in_chans) 
 	    for (n = 0; n < rp->input_channels[i]; n++) 
-	      rp->all_systems_input_buf[m+n] = rp->one_system_input_buf[k++];
+	      rp->all_systems_input_buf[m + n] = rp->one_system_input_buf[k++];
 	  offset += rp->input_channels[i];
 	}
     }
@@ -1170,7 +1170,7 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
   /* run through input devices looking for any that are currently turned on */
   /* for each channel currently on, get its associated input channel */
 
-  for (i = 0, out_frame = 0; i < buffer_size; i+=active_in_chans, out_frame++)
+  for (i = 0, out_frame = 0; i < buffer_size; i += active_in_chans, out_frame++)
     {
       for (out_chan = 0; out_chan < ochns; out_chan++) 
 	rp->unscaled_output_bufs[out_chan] = MUS_SAMPLE_0;
@@ -1278,7 +1278,7 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
 			 rp->raw_input_bufs[i], 
 			 cur_size * in_datum_size);
 	  mus_file_read_buffer(ifmt, 0, 1, sz, input_bufs, rp->raw_input_bufs[i]);
-	  for (k = 0, m = offset; m < sz; m+=active_in_chans) 
+	  for (k = 0, m = offset; m < sz; m += active_in_chans) 
 	    for (n = 0; n < rp->input_channels[i]; n++) 
 	      rp->all_systems_input_buf[m + n] = rp->one_system_input_buf[k++];
 	  offset += rp->input_channels[i];
@@ -1292,7 +1292,7 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
   /* run through input devices looking for any that are currently turned on */
   /* for each channel currently on, get its associated input channel */
 
-  for (i = 0, out_frame = 0; i < sz; i+=active_in_chans, out_frame++)
+  for (i = 0, out_frame = 0; i < sz; i += active_in_chans, out_frame++)
     {
       for (out_chan = 0; out_chan < ochns; out_chan++) 
 	rp->unscaled_output_bufs[out_chan] = MUS_SAMPLE_0;

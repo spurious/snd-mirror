@@ -626,7 +626,7 @@ void reflect_edit_history_change(chan_info *cp)
 	  if (lst)
 	    {
 	      eds = cp->edit_ctr;
-	      while ((eds < (cp->edit_size - 1)) && (cp->edits[eds+1])) eds++;
+	      while ((eds < (cp->edit_size - 1)) && (cp->edits[eds + 1])) eds++;
 	      if (eds >= 0)
 		{
 		  if ((eds == cp->edit_ctr) && (eds > 1)) /* need to force 0 (1) case to start list with sound file name */
@@ -646,13 +646,13 @@ void reflect_edit_history_change(chan_info *cp)
 			edits[i] = XmStringCreate(edit_to_string(cp, i), XmFONTLIST_DEFAULT_TAG);
 		      XtVaSetValues(lst, 
 				    XmNitems, edits, 
-				    XmNitemCount, eds+1, 
+				    XmNitemCount, eds + 1, 
 				    NULL);
 		      for (i = 0; i <= eds; i++) 
 			XmStringFree(edits[i]);
 		      FREE(edits);
 		    }
-		  XmListSelectPos(lst, cp->edit_ctr+1, FALSE);
+		  XmListSelectPos(lst, cp->edit_ctr + 1, FALSE);
 		  XtVaGetValues(lst, XmNvisibleItemCount, &i, NULL);
 		  if (i <= eds)
 		    XtVaSetValues(lst, XmNtopItemPosition, eds - i + 2, NULL);
@@ -946,7 +946,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 
       n = 0;
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->zoom_color); n++;}
-      XtSetArg(args[n], XmNheight, ss->zoom_slider_width+2); n++;
+      XtSetArg(args[n], XmNheight, ss->zoom_slider_width + 2); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;

@@ -327,14 +327,14 @@ void erase_and_draw_grf_points(mix_context *ms, chan_info *cp, int nj)
       if (nj > previous_j)
 	{
 	  for (i = min - 1; i < nj - 1; i++) 
-	    XDrawLine(dpy, wn, draw_gc, points[i].x, points[i].y, points[i+1].x, points[i+1].y);
+	    XDrawLine(dpy, wn, draw_gc, points[i].x, points[i].y, points[i + 1].x, points[i + 1].y);
 	}
       else
 	{
 	  if (previous_j > nj)
 	    {
 	      for (i = min - 1; i < previous_j - 1; i++) 
-		XDrawLine(dpy, wn, undraw_gc, ms->p0[i].x, ms->p0[i].y, ms->p0[i+1].x, ms->p0[i+1].y);
+		XDrawLine(dpy, wn, undraw_gc, ms->p0[i].x, ms->p0[i].y, ms->p0[i + 1].x, ms->p0[i + 1].y);
 	    }
 	}
     }
@@ -395,7 +395,7 @@ void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
 	{
 	  for (i = min - 1; i < nj - 1; i++) 
 	    {
-	      XDrawLine(dpy, wn, draw_gc, points[i].x, points[i].y, points[i+1].x, points[i+1].y);
+	      XDrawLine(dpy, wn, draw_gc, points[i].x, points[i].y, points[i + 1].x, points[i + 1].y);
 	      XDrawLine(dpy, wn, draw_gc, points1[i].x, points1[i].y, points1[i + 1].x, points1[i + 1].y);
 	    }
 	}

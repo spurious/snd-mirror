@@ -11,8 +11,8 @@ static GdkGC *gc, *fgc;
 
 #define GRAPH_SIZE 128
 static Float current_graph_data[GRAPH_SIZE]; /* fft window graph in transform options dialog */
-static Float current_graph_fftr[GRAPH_SIZE*2];
-static Float current_graph_ffti[GRAPH_SIZE*2];
+static Float current_graph_fftr[GRAPH_SIZE * 2];
+static Float current_graph_ffti[GRAPH_SIZE * 2];
 
 #define NUM_FFT_SIZES 14
 static char *FFT_SIZES[NUM_FFT_SIZES] = {"16", "32", "64", "128", "256", "512", "1024", "2048", "4096", "8192", "16384", "65536", "262144", "1048576    "};
@@ -28,16 +28,16 @@ static char *FFT_WINDOWS[NUM_FFT_WINDOWS] =
      {"Rectangular", "Hanning", "Welch", "Parzen", "Bartlett", "Hamming", "Blackman2", "Blackman3", "Blackman4",
       "Exponential", "Riemann", "Kaiser", "Cauchy", "Poisson", "Gaussian", "Tukey", "Dolph-Chebyshev"};
 
-static char *WAVELETS[NUM_WAVELETS] ={
+static char *WAVELETS[NUM_WAVELETS] = {
   "daub4", "daub6", "daub8", "daub10", "daub12", "daub14", "daub16", "daub18", "daub20",
   "battle_lemarie", "burt_adelson", "beylkin", "coif2", "coif4", "coif6",
   "sym2", "sym3", "sym4", "sym5", "sym6"};
 
 #define NUM_TRANSFORM_TYPES 9
-static char *TRANSFORM_TYPES[NUM_TRANSFORM_TYPES] ={"Fourier", "Wavelet", "Hankel", "Walsh", "Autocorrelate", "Chebychev", "Cepstrum", "Hadamard", "Haar"};
+static char *TRANSFORM_TYPES[NUM_TRANSFORM_TYPES] = {"Fourier", "Wavelet", "Hankel", "Walsh", "Autocorrelate", "Chebychev", "Cepstrum", "Hadamard", "Haar"};
 static int num_transform_types = NUM_TRANSFORM_TYPES;
 
-static char *TRANSFORM_TYPE_CONSTANTS[NUM_TRANSFORM_TYPES] ={
+static char *TRANSFORM_TYPE_CONSTANTS[NUM_TRANSFORM_TYPES] = {
   S_fourier_transform, S_wavelet_transform, S_hankel_transform, S_walsh_transform,
   S_autocorrelation, S_chebyshev_transform, S_cepstrum, S_hadamard_transform, S_haar_transform};
 
@@ -123,7 +123,7 @@ static void graph_redisplay(snd_state *ss)
   iy1 = grf_y(current_graph_data[0], axis_cp->axis);
   xincr = 1.0 / (Float)GRAPH_SIZE;
 
-  for (i = 1, x = xincr; i < GRAPH_SIZE; i++, x+=xincr)
+  for (i = 1, x = xincr; i < GRAPH_SIZE; i++, x += xincr)
     {
       ix0 = ix1;
       iy0 = iy1;
@@ -137,7 +137,7 @@ static void graph_redisplay(snd_state *ss)
   iy1 = grf_y(current_graph_fftr[0], axis_cp->axis);
   xincr = 1.0 / (Float)GRAPH_SIZE;
 
-  for (i = 1, x = xincr; i < GRAPH_SIZE; i++, x+=xincr)
+  for (i = 1, x = xincr; i < GRAPH_SIZE; i++, x += xincr)
     {
       ix0 = ix1;
       iy0 = iy1;

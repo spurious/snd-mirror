@@ -1114,7 +1114,7 @@ static void raw_data_default_Callback(GtkWidget *w, gpointer context)
 static void raw_data_browse_Callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
-  set_raw_format(ss, row+1);
+  set_raw_format(ss, row + 1);
 }
 
 static void raw_data_help_Callback(GtkWidget *w, gpointer context) 

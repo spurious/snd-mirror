@@ -1531,8 +1531,8 @@ static int mus_write_1(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **b
 		{
 		  val = MUS_SAMPLE_TO_INT24(buffer[loc]);
 		  charbuf[bk] = (val >> 16); 
-		  charbuf[bk+1] = (val >> 8); 
-		  charbuf[bk+2] = (val & 0xFF); 
+		  charbuf[bk + 1] = (val >> 8); 
+		  charbuf[bk + 2] = (val & 0xFF); 
 		}
 	      break;
 	    case MUS_L24INT:   
@@ -1541,8 +1541,8 @@ static int mus_write_1(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **b
 	      for (; loc < loclim; loc++, bk += c3)
 		{
 		  val = MUS_SAMPLE_TO_INT24(buffer[loc]);
-		  charbuf[bk+2] = (val >> 16); 
-		  charbuf[bk+1] = (val >> 8); 
+		  charbuf[bk + 2] = (val >> 16); 
+		  charbuf[bk + 1] = (val >> 8); 
 		  charbuf[bk] = (val & 0xFF); 
 		}
 	      break;
@@ -1605,8 +1605,8 @@ char *mus_file_full_name(char *utok)
   for (i = 0; i < len-1; i++)
     {
       if ((tok[i] == '/') && 
-	  (tok[i+1] == '/')) 
-	j = i+1;
+	  (tok[i + 1] == '/')) 
+	j = i + 1;
     }
   if (j > 0)
     {

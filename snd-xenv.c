@@ -181,7 +181,7 @@ static void apply_enved(snd_state *ss)
 	    case SRATE_ENV:
 	      /* mus_src no longer protects against 0 srate */
 	      max_env = copy_env(active_env);
-	      for (i = 0, j = 1; i < max_env->pts; i++, j+=2)
+	      for (i = 0, j = 1; i < max_env->pts; i++, j += 2)
 		if (max_env->data[j] < .01) 
 		  max_env->data[j] = .01;
 	      within_selection_src = 1;
@@ -793,7 +793,7 @@ static void reflect_apply_state (snd_state *ss)
 static void amp_button_pressed(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss = (snd_state *)context;
-  in_set_enved_target(ss, enved_target(ss)+1);
+  in_set_enved_target(ss, enved_target(ss) + 1);
   if (enved_target(ss) > SRATE_ENV) in_set_enved_target(ss, AMPLITUDE_ENV);
   reflect_apply_state(ss);
 }

@@ -165,7 +165,7 @@ int mus_make_error(char *error_name)
 	    }
 	}
       len = strlen(error_name);
-      mus_error_names[err] = (char *)CALLOC(len+1, sizeof(char));
+      mus_error_names[err] = (char *)CALLOC(len + 1, sizeof(char));
       strcpy(mus_error_names[err], error_name);
     }
   return(new_error);
@@ -388,7 +388,7 @@ static sound_file *find_sound_file(const char *name)
   return(NULL);
 }
 
-static void display_sound_file_entry(const char *name, sound_file *sf)
+static void display_sound_file_entry(FILE *fp, const char *name, sound_file *sf)
 {
   int i, lim;
 #ifndef MPW_C
@@ -409,7 +409,7 @@ static void display_sound_file_entry(const char *name, sound_file *sf)
 #else
   sprintf(timestr, "(date unknown)");
 #endif
-  fprintf(stdout, "  %s: %s, chans: %d, srate: %d, type: %s, format: %s, samps: %d",
+  fprintf(fp, "  %s: %s, chans: %d, srate: %d, type: %s, format: %s, samps: %d",
 	  name,
 	  timestr,
 	  sf->chans,
@@ -420,10 +420,10 @@ static void display_sound_file_entry(const char *name, sound_file *sf)
   if (sf->loop_modes)
     {
       if (sf->loop_modes[0] != 0)
-	fprintf(stdout, ", loop: %d to %d", sf->loop_starts[0], sf->loop_ends[0]);
+	fprintf(fp, ", loop: %d to %d", sf->loop_starts[0], sf->loop_ends[0]);
       if (sf->loop_modes[1] != 0)
-	fprintf(stdout, ", loop: %d to %d, ", sf->loop_starts[1], sf->loop_ends[1]);
-      fprintf(stdout, ", base: %d, detune: %d", sf->base_note, sf->base_detune);
+	fprintf(fp, ", loop: %d to %d, ", sf->loop_starts[1], sf->loop_ends[1]);
+      fprintf(fp, ", base: %d, detune: %d", sf->base_note, sf->base_detune);
     }
   if (sf->max_amps)
     {
@@ -434,35 +434,39 @@ static void display_sound_file_entry(const char *name, sound_file *sf)
 	    lim = 64;
 	  for (i = 0; i < lim; i++)
 	    {
-	      if (i > 1) fprintf(stdout, ", ");
-	      fprintf(stdout, " %.3f at %.3f ",
+	      if (i > 1) fprintf(fp, ", ");
+	      fprintf(fp, " %.3f at %.3f ",
 		      MUS_SAMPLE_TO_FLOAT(sf->max_amps[i + 1]),
 		      (float)(sf->max_amps[i]) / (float)(sf->srate));
 	    }
 	}
     }
-  fprintf(stdout, "\n");
+  fprintf(fp, "\n");
 }
 
-void mus_sound_print_cache(void)
+void mus_sound_report_cache(FILE *fp)
 {
   sound_file *sf;
   int entries = 0;
   int i;
-  fprintf(stdout, "sound table:\n");
+  fprintf(fp, "sound table:\n");
   for (i = 0; i < sound_table_size; i++)
     {
       sf = sound_table[i];
       if (sf) 
 	{
-	  display_sound_file_entry(sf->file_name, sound_table[i]);
+	  display_sound_file_entry(fp, sf->file_name, sound_table[i]);
 	  entries++;
 	}
     }
-  fprintf(stdout, "\nentries: %d\n", entries); 
-  fflush(stdout);
+  fprintf(fp, "\nentries: %d\n", entries); 
+  fflush(fp);
 }
 
+void mus_sound_print_cache(void)
+{
+  mus_sound_report_cache(stdout);
+}
 
 static void fill_sf_record(const char *name, sound_file *sf)
 {
@@ -685,14 +689,14 @@ char *mus_sound_comment(const char *name)
 					   sf->aux_comment_end));
       return(NULL);
     }
-  len = end-start+1;
+  len = end-start + 1;
   if (len > 0)
     {
       /* open and get the comment */
       fd = mus_file_open_read(name);
       if (fd == -1) return(NULL);
       lseek(fd, start, SEEK_SET);
-      sc = (char *)CALLOC(len + 1, sizeof(char)); /* len+1 calloc'd => we'll always have a trailing null */
+      sc = (char *)CALLOC(len + 1, sizeof(char)); /* len + 1 calloc'd => we'll always have a trailing null */
       read(fd, sc, len);
       close(fd);
 #ifndef MACOS

@@ -227,7 +227,7 @@ static void Begin_of_line(Widget w, XEvent *ev, char **ustr, Cardinal *num)
       ss = get_global_state();
       prompt_len = snd_strlen(listener_prompt(ss));
       str = (char *)CALLOC(prompt_len + 3, sizeof(char));
-      XmTextGetSubstring(w, loc+1, prompt_len, prompt_len + 2, str);
+      XmTextGetSubstring(w, loc + 1, prompt_len, prompt_len + 2, str);
       if (strncmp(listener_prompt(ss), str, prompt_len) == 0)
 	XmTextSetCursorPosition(w, loc+prompt_len + 1);
       else XmTextSetCursorPosition(w, loc + 1);
@@ -328,7 +328,7 @@ static void Word_upper(Widget w, XEvent *event, char **str, Cardinal *num)
 	    wstart = i;
 	    break;
 	  }
-      for (i = wstart+1; i < length; i++)
+      for (i = wstart + 1; i < length; i++)
 	if (isspace((int)(buf[i])))
 	  {
 	    wend = i;
@@ -475,7 +475,7 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
   Window wn;
   snd_state *ss;
   ss = get_global_state();
-  beg = last_prompt+1;
+  beg = last_prompt + 1;
   end = XmTextGetLastPosition(w);
   if (end <= beg) return;
   len = end - beg + 1;

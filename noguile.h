@@ -129,6 +129,7 @@ SCM scm_return_first(SCM a, ...);
 #define BOOLEAN_IF_BOUND_P(Arg) 0
 #define INTEGER_IF_BOUND_P(Arg) 0
 #define NUMBER_IF_BOUND_P(Arg) 0
+#define STRING_IF_BOUND_P(Arg) 0
 #define INTEGER_OR_BOOLEAN_IF_BOUND_P(Arg) 0
 #define NUMBER_OR_BOOLEAN_IF_BOUND_P(Arg) 0
 #define NUMBER_OR_BOOLEAN_P(Arg) 0

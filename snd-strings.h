@@ -367,7 +367,6 @@
 #define S_delete_samples                "delete-samples"
 #define S_delete_samples_with_origin    "delete-samples-with-origin"
 #define S_delete_selection              "delete-selection"
-#define S_describe_audio                "describe-audio"
 #define S_dialog_widgets                "dialog-widgets"
 #define S_dismiss_all_dialogs           "dismiss-all-dialogs"
 #define S_display_edits                 "display-edits"

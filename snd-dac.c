@@ -457,7 +457,7 @@ static mus_any *mus_make_fcomb (Float scaler, int size, Float a0, Float a1)
         static SCM g_fcomb_p(SCM obj)
         {
           #define H_fcomb_p "(" S_fcomb_p " gen) -> #t if gen is an fcomb filter, else #f"
-          return(((mus_scm_p(obj)) && (mus_fcomb_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+          return(TO_SCM_BOOLEAN((mus_scm_p(obj)) && (mus_fcomb_p(TO_CLM(obj)))));
         }
         
         static SCM g_make_fcomb(SCM scaler, SCM size, SCM a0, SCM a1)
@@ -2558,9 +2558,9 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
       if (sp == NULL) 
 	snd_no_such_sound_error(S_play, snd_n);
       samp = TO_C_INT_OR_ELSE(samp_n, 0);
-      if ((syncd) && (sp->syncing != 0))
+      if ((syncd) && (sp->sync != 0))
 	{
-	  si = snd_sync(sp->state, sp->syncing);
+	  si = snd_sync(sp->state, sp->sync);
 	  if (end != NO_END_SPECIFIED)
 	    {
 	      ends = (int *)CALLOC(si->chans, sizeof(int));

@@ -2,22 +2,16 @@ A list of some things-to-do in Snd (these are some projects that strike
 me as straightforward -- they don't require intimate knowlege of Snd innards).
 
 
-w98 sound input (adc) support; this is almost written (audio.c); it mostly
-  needs testing.  A larger project would be to tie the "mixer" into 
-  audio.c.
-
-w98 gtk port -- all the pieces for this apparently exist, but every time
-  I try to run Windows, my machine hangs.
-
 Alpha port: I'm told there are lingering long int problems in this
   port, but I don't have access to an Alpha -- all I need is the
   gcc printout during compilation.
 
 add modules to tie sndlib into Python, Octave, etc (via SWIG?).
+fixup the sz.h, sl.h, sr.h files to implement mzscheme, librep, ruby support.
 
 Snd name completion tied into the Emacs-Snd subjob connection (this
-  apparently will require "raw" mode in ilisp).
-
+  apparently will require "raw" mode in ilisp -- there is a snd-completion
+  function available from snd).
 
 Sawfish connection: it should be possible to send commands to sawfish,
   (via sawfish-client?); also there's a switch in Snd, HAVE_THEMES,

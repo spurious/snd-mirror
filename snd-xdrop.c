@@ -51,7 +51,7 @@ static void HandleDrop(Widget w, XtPointer context, XtPointer info)
       cb->dropSiteStatus = XmINVALID_DROP_SITE;
       return;
     }
-  k=-1;
+  k = -1;
   XtVaGetValues(cb->dragContext, XmNexportTargets, &targets, XmNnumExportTargets, &num_targets, NULL);
   for (i = 0; i < num_targets; i++) 
     if ((targets[i] == XA_STRING) || 

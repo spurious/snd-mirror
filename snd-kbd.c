@@ -406,7 +406,7 @@ static int prompt_named_mark(chan_info *cp)
   make_minibuffer_label(sp, "mark:");
   sp->minibuffer_on = 1;
   goto_minibuffer(sp);
-  sp->marking = cp->cursor + 1; /* +1 so it's not confused with 0 (if (sp->marking)...) */
+  sp->marking = cp->cursor + 1; /*  + 1 so it's not confused with 0 (if (sp->marking)...) */
   return(CURSOR_IN_VIEW);
 }
 
@@ -923,7 +923,7 @@ static void window_frames_selection(chan_info *cp)
 	  (sp->inuse) && 
 	  (cp->sound != sp) && 
 	  (selection_is_active_in_channel(sp->chans[0])) && 
-	  (sp->syncing != (cp->sound->syncing)))
+	  (sp->sync != (cp->sound->sync)))
 	set_x_axis_x0x1(sp->chans[0], x0, x1);
     }
 }
@@ -1083,7 +1083,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_A: case snd_K_a: 
 	      cp->cursor_on = 1; 
 	      loc = (int)(ap->x0*SND_SRATE(sp)); 
-	      if ((loc+1) == ap->losamp) loc = ap->losamp; /* handle dumb rounding problem */
+	      if ((loc + 1) == ap->losamp) loc = ap->losamp; /* handle dumb rounding problem */
 	      cursor_moveto(cp, loc); 
 	      break;
 	    case snd_K_B: case snd_K_b: 
@@ -1097,7 +1097,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_E: case snd_K_e:
 	      cp->cursor_on = 1; 
 	      loc = (int)(ap->x1*(double)SND_SRATE(sp));
-	      if ((loc+1) == ap->hisamp) loc = ap->hisamp;
+	      if ((loc + 1) == ap->hisamp) loc = ap->hisamp;
 	      cursor_moveto(cp, loc); 
 	      break;
 	    case snd_K_F: case snd_K_f:
@@ -1148,11 +1148,11 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 		}
 	      else delete_mark_samp(cp->cursor, cp);
 	      if ((keysym == snd_K_M) && 
-		  ((cp->sound)->syncing != 0))
+		  ((cp->sound)->sync != 0))
 		{
 		  sync_num = mark_sync_max() + 1; 
 		  if (mk) set_mark_sync(mk, sync_num);
-		  si = snd_sync(cp->state, (cp->sound)->syncing);
+		  si = snd_sync(cp->state, (cp->sound)->sync);
 		  for (i = 0; i < si->chans; i++) 
 		    if (cp != si->cps[i])
 		      {
@@ -1216,7 +1216,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 		redisplay = cursor_moveto(cp, (int)(ap->x1 * SND_SRATE(sp) + 1 + 
 						    (count-1) * SND_SRATE(sp) * (ap->x1 - ap->x0)));
 	      else redisplay = cursor_moveto(cp, (int)(ap->x0 * SND_SRATE(sp) - 1 + 
-						       (count+1) * SND_SRATE(sp) * (ap->x1 - ap->x0)));
+						       (count + 1) * SND_SRATE(sp) * (ap->x1 - ap->x0)));
 	      break;
 	    case snd_K_W: case snd_K_w: 
 	      delete_selection("C-x C-w", UPDATE_DISPLAY); 
@@ -1570,7 +1570,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 #endif
 	    case snd_keypad_Add:
 	      if (wavo(ss)) 
-		set_wavo_trace(ss, wavo_trace(ss)+1); 
+		set_wavo_trace(ss, wavo_trace(ss) + 1); 
 	      else set_spectro_hop(ss, spectro_hop(ss) + 1);
 	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      reflect_spectro(ss); 
@@ -1902,8 +1902,8 @@ The function should return one of the cursor choices (e.g. cursor-no-action)."
 	  FREE(errmsg);
 	  snd_bad_arity_error(S_bind_key, errstr, code);
 	}
-      set_keymap_entry(TO_C_INT_OR_ELSE(key, 0), 
-		       TO_C_INT_OR_ELSE(state, 0), 
+      set_keymap_entry(TO_C_INT(key), 
+		       TO_C_INT(state), 
 		       ip, code);
     }
   return(SCM_BOOL_T);

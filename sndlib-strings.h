@@ -100,6 +100,7 @@
 #define S_mus_sound_max_amp             "mus-sound-max-amp"
 #define S_mus_sound_set_max_amp         "mus-sound-set-max-amp"
 #define S_mus_sound_max_amp_exists      "mus-sound-max-amp-exists?"
+#define S_mus_sound_report_cache        "mus-sound-report-cache"
 
 #define S_mus_sound_open_input          "mus-sound-open-input"
 #define S_mus_sound_open_output         "mus-sound-open-output"

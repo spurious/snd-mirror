@@ -954,6 +954,32 @@
 
 
 ;;; ---------------- test 4: sndlib tests ----------------
+
+(define (show-input-1 . arg)
+  ;; from rtio.scm
+  (define (card+device card device)
+    (logior (ash card 16) device))
+  (let* ((our-short (if (little-endian?) mus-lshort mus-bshort))
+	 (our-srate 22050)
+	 (our-dac-buffer-size-in-bytes 512)
+	 (our-dac-buffer-size-in-shorts 256)
+	 (our-chans 1)
+	 (our-chan 0)
+	 (our-default-card-number 0)
+	 (in-sys (if (not (null? arg)) 
+		     (car arg) 
+		     our-default-card-number))
+	 (in-port (mus-audio-open-input 
+		   (card+device in-sys mus-audio-default) 
+		   our-srate our-chans our-short our-dac-buffer-size-in-bytes))
+	 (data (make-sound-data our-chans our-dac-buffer-size-in-shorts))
+    	 (vobj (make-vct our-dac-buffer-size-in-shorts)))
+    (do ((i 0 (1+ i)))
+	((= i 10))
+      (mus-audio-read in-port data our-dac-buffer-size-in-shorts)
+      (graph (sound-data->vct data our-chan vobj)))
+    (mus-audio-close in-port)))
+
 (if (or full-test (= snd-test 4))
     (let ((chns (mus-sound-chans "oboe.snd"))
 	  (dl (mus-sound-data-location "oboe.snd"))
@@ -968,6 +994,16 @@
 	  (bytes (mus-data-format-bytes-per-sample (mus-sound-data-format "oboe.snd")))
 	  (sys (mus-audio-systems)))
       (if (procedure? trace-hook) (trace-hook 4))
+      (mus-sound-report-cache "hiho.tmp")
+      (let ((p (open-input-file "hiho.tmp")))
+	(if (not p)
+	    (snd-display (format #f ";mus-sound-report-cache->hiho.tmp failed?"))
+	    (let ((line (read-line p)))
+	      (if (or (not (string? line))
+		      (not (string=? "sound table:")))
+		  (snd-display (format #f ";print-cache 1: ~A?" line)))
+	      (close-port p)
+	      (delete-file "hiho.tmp"))))
       (if (< (string-length (mus-audio-report)) 10)
 	  (snd-display (format #f ";mus-audio-report: ~A" (mus-audio-report))))
       (if (and (not (= sys 1)) (not (= sys 2))) (snd-display (format #f ";mus-audio-systems: ~A?" sys)))
@@ -1298,6 +1334,10 @@
 		(list mus-bfloat mus-ircam)
 		(list mus-bdouble mus-next))))
        (list 1 2 4 8))
+
+      (let ((ind (open-sound "oboe.snd")))
+	(show-input-1)
+	(close-sound ind))
 
       ))
 
@@ -1793,6 +1833,28 @@
 	    (key (char->integer #\o) 4 obind)
 	    (if (not (= (mark-sample m1) 1100))
 		(snd-display (format #f ";mark after zeros: ~D (1100)? " (mark-sample m1))))))
+	(revert-sound obind)
+	(let ((frs (frames obind)))
+	  (make-region 0 999 obind 0)
+	  (if (not (selection?)) (snd-display (format #f ";make-region but no selection? ~A" (selection?))))
+	  (delete-selection)
+	  (if (not (= (frames obind) (- frs 1000)))
+	      (snd-display (format #f ";delete-selection: ~A?" (frames obind))))
+	  (let ((val (sample 0 obind 0)))
+	    (undo)
+	    (if (fneq (sample 1000) val)
+		(snd-display (format #f ";delete-selection val: ~A ~A" val (sample 1000))))
+	    (insert-selection)
+	    (if (not (= (frames obind) (+ frs 1000)))
+		(snd-display (format #f ";insert-selection: ~A?" (frames obind))))
+	    (if (fneq (sample 2000) val)
+		(snd-display (format #f ";insert-selection val: ~A ~A" val (sample 2000))))
+	    (set! val (sample 900))
+	    (mix-selection)
+	    (if (fneq (sample 900) (* 2 val))
+		(snd-display (format #f ";mix-selection val: ~A ~A" (* 2 val) (sample 900))))
+	    (if (not (= (frames obind) (+ frs 1000)))
+		(snd-display (format #f ";mix-selection: ~A?" (frames obind))))))
 	(close-sound obind))
 
       (let* ((obind (open-sound "4.aiff"))
@@ -1816,22 +1878,23 @@
 		  (fneq (caddr amps) (caddr newamps))
 		  (fneq (cadddr amps) (cadddr newamps)))
 	      (snd-display (format #f ";apply selection amp:~%  ~A ->~%  ~A?" amps newamps)))
-	  (let* ((axinfo (axis-info obind 0 time-graph))
-		 (x0 (list-ref axinfo 2))
-		 (y0 (list-ref axinfo 3))
-		 (x1 (list-ref axinfo 4))
-		 (y1 (list-ref axinfo 5))
-		 (xpos (+ x0 (* .5 (- x1 x0))))
-		 (ypos (+ y0 (* .75 (- y1 y0)))))
-	    (set! (cursor obind) 100)
-	    (let ((xy (cursor-position obind)))
-	      (if (fneq (position->x (car xy)) (/ (cursor obind) (srate obind)))
-		  (snd-display (format #f ";cursor-position: ~A ~A ~A?" (car xy) (position->x (car xy)) (/ (cursor obind) (srate obind))))))
-	    (if (fneq (position->x (x->position xpos)) xpos)
-		(snd-display (format #f ";x<->position: ~A ~A?" (position->x (x->position xpos)) xpos)))
-	    (if (> (abs (- (position->y (y->position ypos)) ypos)) .5)
-		(snd-display (format #f ";y<->position: ~A ~A?" (position->y (y->position ypos)) ypos)))
-	    )
+	  (if (not (provided? 'snd-nogui))
+	      (let* ((axinfo (axis-info obind 0 time-graph))
+		     (x0 (list-ref axinfo 2))
+		     (y0 (list-ref axinfo 3))
+		     (x1 (list-ref axinfo 4))
+		     (y1 (list-ref axinfo 5))
+		     (xpos (+ x0 (* .5 (- x1 x0))))
+		     (ypos (+ y0 (* .75 (- y1 y0)))))
+		(set! (cursor obind) 100)
+		(let ((xy (cursor-position obind)))
+		  (if (fneq (position->x (car xy)) (/ (cursor obind) (srate obind)))
+		      (snd-display (format #f ";cursor-position: ~A ~A ~A?" (car xy) (position->x (car xy)) (/ (cursor obind) (srate obind))))))
+		(if (fneq (position->x (x->position xpos)) xpos)
+		    (snd-display (format #f ";x<->position: ~A ~A?" (position->x (x->position xpos)) xpos)))
+		(if (> (abs (- (position->y (y->position ypos)) ypos)) .5)
+		    (snd-display (format #f ";y<->position: ~A ~A?" (position->y (y->position ypos)) ypos)))
+		))
 	  (close-sound obind)))
 
       (let ((ind1 (open-sound "oboe.snd"))
@@ -6547,7 +6610,8 @@
                                             (* 2 size)
                                             (inexact->exact (* .8 size))
                                             snd chn)))  
-(if (or full-test (= snd-test 17))
+(if (and (or full-test (= snd-test 17))
+	 (not (provided? 'snd-nogui)))
     (begin
       (if (procedure? trace-hook) (trace-hook 17))
       (if (and (provided? 'snd-gtk)
@@ -6595,6 +6659,8 @@
 		  (not (= (car wids) (car wids1)))
 		  (not (= (car wids) (car wids2))))
 	      (snd-display (format #f ";channel-widgets confused: ~A ~A ~A ~A ~A" wids wids1 wids2 wids3 wids4)))
+	  (hide-widget (car (channel-widgets)))
+	  (show-widget (car (channel-widgets)))
 	  (close-sound ind1))
 	(close-sound ind))))
 
@@ -6602,7 +6668,8 @@
 ;;; ---------------- test 18: enved ----------------
 
 (load "enved.scm")
-(if (or full-test (= snd-test 18))
+(if (and (or full-test (= snd-test 18))
+	 (not (provided? 'snd-nogui)))
     (begin
       (if (procedure? trace-hook) (trace-hook 18))
       (start-enveloping)
@@ -6728,7 +6795,7 @@ EDITS: 3
 	       color? comment contrast contrast-amp contrast-func contrasting convolve-arrays convolve-selection-with convolve-with corruption-time
 	       count-matches current-font cursor cursor-color cursor-follows-play cursor-size cursor-style cut dac-folding dac-size data-clipped
 	       data-color data-format data-location default-output-chans default-output-format default-output-srate default-output-type define-envelope
-	       delete-mark delete-marks delete-region delete-sample delete-samples delete-samples-with-origin delete-selection describe-audio dialog-widgets
+	       delete-mark delete-marks delete-region delete-sample delete-samples delete-samples-with-origin delete-selection dialog-widgets
 	       dismiss-all-dialogs display-edits dot-size draw-dot draw-dots draw-line draw-lines draw-string edit-header-dialog edit-fragment edit-position
 	       edit-tree edits env-base env-selection env-sound enved-active-env enved-base enved-clipping enved-dBing enved-dialog enved-exping enved-power
 	       enved-selected-env enved-target enved-waveform-color enved-waving eps-file eps-left-margin eps-bottom-margin erase-rectangle expand
@@ -6793,7 +6860,7 @@ EDITS: 3
 	       rand? readin readin? rectangular->polar restart-env ring-modulate sample->buffer sample->file sample->file? sample->frame sawtooth-wave
 	       sawtooth-wave? sine-summation sine-summation? spectrum square-wave square-wave? src src? sum-of-cosines sum-of-cosines? table-lookup
 	       table-lookup? tap triangle-wave triangle-wave? two-pole two-pole? two-zero two-zero? wave-train wave-train? waveshape waveshape?
-	       make-vct vct-add! vct-subtract! vct-copy vct-length vct-multiply! vct-offset! vct-ref vct-scale! vct-fill! vct-set!
+	       make-vct vct-add! vct-subtract! vct-copy vct-length vct-multiply! vct-offset! vct-ref vct-scale! vct-fill! vct-set! mus-audio-describe
 	       vct-peak vct? list->vct vct->list vector->vct vct-move! vct-subseq vct little-endian?))
 
 (define set-procs (list 
@@ -8317,19 +8384,23 @@ EDITS: 3
 
 
 ;;; TODO: these aren't tested at all yet (except as bare error checks in a few cases):
-;;;   mus-audio-read mus-audio-open-input mus-sound-print-cache stop-player
-;;;   sound-to-temp selection-to-temp temp-to-sound temp-to-selection scan-all-chans map-all-chans map-across-sound-chans
-;;;   loop-samples save-listener hide-widget show-widget focus-widget graph-data
-;;;   add-input remove-input dlopen dlclose dlerror dlinit
+;;;   stop-player add-input remove-input loop-samples focus-widget 
+;;;   sound-to-temp selection-to-temp temp-to-sound temp-to-selection scan-all-chans map-all-chans map-across-sound-chans graph-data
 ;;;
 ;;; only touched upon:
 ;;;   convolve-files map-across-all-chans map-chans scan-across-chans map-sound-chans scan-sound-chans scan-chans
 ;;;   selection-to-temps samples->sound-data forward-mix smooth-selection convolve-selection-with save-state open-alternate-sound
 ;;;   mus-sound-reopen-output mus-sound-seek mus-sound-seek-frame close-sound-file vct->sound-file
-;;;   save-marks save-region delete-selection insert-selection mix-selection save-selection vcts-map!
+;;;   save-marks save-region save-selection vcts-map!
 ;;;   buffer->frame frame->buffer mixer* mixer-set! frame->frame restart-env locsig-set! locsig-reverb-set!
 ;;;   ina inb outc outd mus-channel make-track-sample-reader free-track-sample-reader mix-sound-channel mix-sound-index
 ;;;   backward-mix peaks forward-sample backward-sample cursor-position prompt-in-minibuffer
 ;;;   append-to-minibuffer scan-across-sound-chans change-menu-label update-sound erase-rectangle load-font
 ;;;   soundfont-info menu-widgets x->position y->position position->y axis-info listener-selection draw-line draw-string fill-rectangle
 
+;;; need to know before calling this if libguile.so was loaded
+;;; (system "cc gsl-ex.c -c")
+;;; (system "ld -shared gsl-ex.o -o gsl-ex.so -lguile")
+;;; (define handle (dlopen "/home/bil/snd-4/gsl-ex.so"))
+;;; (dlinit handle "init_gsl_j0")
+;;; (fneq (j0 1.0) 0.765)

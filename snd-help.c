@@ -1172,7 +1172,6 @@ all refer to the same thing.\n\
   " S_delete_sample "     (samp snd chn)\n\
   " S_delete_samples "    (samp samps snd chn)\n\
   " S_delete_selection "  ()\n\
-  " S_describe_audio "    ()\n\
   " S_dismiss_all_dialogs "()\n\
   " S_edit_fragment "     (num snd chn)\n\
   " S_edit_header_dialog "()\n\

@@ -1045,7 +1045,7 @@ static SCM g_regionQ(SCM n)
 {
   #define H_regionQ "(" S_regionQ " reg) -> #t if region is active"
   ASSERT_TYPE(INTEGER_P(n), n, SCM_ARGn, S_regionQ, "an integer");
-  return(TO_SCM_BOOLEAN(region_ok(TO_C_INT_OR_ELSE(n, 0))));
+  return(TO_SCM_BOOLEAN(region_ok(TO_C_INT(n))));
 }
 
 static SCM g_region_length (SCM n) 
@@ -1116,7 +1116,7 @@ static SCM g_play_region (SCM n, SCM wait)
   ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARG1, S_play_region, "an integer");
   ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(wait), wait, SCM_ARG2, S_play_region, "an integer");
   rg = TO_C_INT_OR_ELSE(n, 0);
-  if (TRUE_P(wait)) wt = 1; else wt = TO_C_INT_OR_ELSE(n, 0);
+  if (TRUE_P(wait)) wt = 1;
   if (region_ok(rg))
     play_region(get_global_state(), rg, !wt);
   else snd_no_such_region_error(S_play_region, n);
@@ -1131,7 +1131,7 @@ if val is #t protects region n from being pushed off the end of the region list"
   int rg;
   ASSERT_TYPE(INTEGER_P(n), n, SCM_ARG1, S_protect_region, "an integer");
   ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(protect), protect, SCM_ARG2, S_protect_region, "an integer");
-  rg = TO_C_INT_OR_ELSE(n, 0);
+  rg = TO_C_INT(n);
   if (region_ok(rg))
     set_region_protect(rg, TO_C_BOOLEAN_OR_T(protect)); 
   else snd_no_such_region_error(S_protect_region, n);
@@ -1199,7 +1199,7 @@ static SCM g_save_region (SCM n, SCM filename, SCM format)
   ASSERT_TYPE(INTEGER_P(n), n, SCM_ARG1, S_save_region, "an integer");
   ASSERT_TYPE(STRING_P(filename), filename, SCM_ARG2, S_save_region, "a string");
   ASSERT_TYPE(INTEGER_IF_BOUND_P(format), format, SCM_ARG3, S_save_region, "an integer");
-  rg = TO_C_INT_OR_ELSE(n, 0);
+  rg = TO_C_INT(n);
   if (region_ok(rg))
     {
       name = mus_expand_filename(TO_C_STRING(filename));
@@ -1221,7 +1221,7 @@ static SCM g_mix_region(SCM chn_samp_n, SCM reg_n, SCM snd_n, SCM chn_n)
 mixes region into snd's channel chn starting at chn-samp; returns new mix id."
 
   chan_info *cp;
-  int rg, id=-1;
+  int rg, id = -1;
   ASSERT_TYPE(NUMBER_IF_BOUND_P(chn_samp_n), chn_samp_n, SCM_ARG1, S_mix_region, "a number");
   ASSERT_TYPE(INTEGER_IF_BOUND_P(reg_n), reg_n, SCM_ARG2, S_mix_region, "an integer");
   SND_ASSERT_CHAN(S_mix_region, snd_n, chn_n, 3);

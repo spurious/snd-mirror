@@ -629,9 +629,9 @@ void apply_x_axis_change(axis_info *ap, chan_info *cp, snd_info *sp)
   sp->lacp = cp;
   set_x_bounds(ap);
   update_graph(cp, NULL);
-  if (sp->syncing != 0)
+  if (sp->sync != 0)
     {
-      si = snd_sync(cp->state, sp->syncing);
+      si = snd_sync(cp->state, sp->sync);
       for (i = 0; i < si->chans; i++) 
 	if (cp != si->cps[i]) 
 	  update_xs(si->cps[i], ap);
@@ -652,7 +652,7 @@ static int visible_syncd_cursor(chan_info *cp)
   chan_info *ncp;
   int i, j, sync;
   sp = cp->sound;
-  sync = sp->syncing;
+  sync = sp->sync;
   if (sync != 0)
     {
       for (i = 0; i < sp->nchans; i++)
@@ -665,7 +665,7 @@ static int visible_syncd_cursor(chan_info *cp)
       for (j = 0; j < ss->max_sounds; j++)
 	{
 	  sp = ss->sounds[j];
-	  if ((sp) && (sp->inuse) && (sp->syncing == sync) && (sp != cp->sound))
+	  if ((sp) && (sp->inuse) && (sp->sync == sync) && (sp != cp->sound))
 	    {
 	      for (i = 0; i < sp->nchans; i++)
 		{
@@ -2642,9 +2642,9 @@ void handle_cursor_with_sync(chan_info *cp, int decision)
   if (cp)
     {
       sp = cp->sound;
-      if ((sp) && (sp->syncing != 0))
+      if ((sp) && (sp->sync != 0))
 	{
-	  si = snd_sync(cp->state, sp->syncing);
+	  si = snd_sync(cp->state, sp->sync);
 	  for (i = 0; i < si->chans; i++)
 	    handle_cursor(si->cps[i], decision);
 	  si = free_sync_info(si);
@@ -2660,9 +2660,9 @@ int cursor_moveto (chan_info *cp, int samp)
   sync_info *si;
   int i;
   sp = cp->sound;
-  if ((sp) && (sp->syncing != 0))
+  if ((sp) && (sp->sync != 0))
     {
-      si = snd_sync(cp->state, sp->syncing);
+      si = snd_sync(cp->state, sp->sync);
       for (i = 0; i < si->chans; i++)
 	{
 	  ncp = si->cps[i];
@@ -2692,7 +2692,7 @@ void show_cursor_info(chan_info *cp)
   int digits, i, samp;
   char *s1, *s2;
   sp = cp->sound;
-  if ((sp->syncing != 0) && (cp->chan != 0)) return;
+  if ((sp->sync != 0) && (cp->chan != 0)) return;
   samp = cp->cursor;
   y = sample(samp, cp);
   absy = fabs(y);
@@ -2707,7 +2707,7 @@ void show_cursor_info(chan_info *cp)
 	    s2 = prettyf(y, digits));
   else
     {
-      if (sp->syncing == 0)
+      if (sp->sync == 0)
 	mus_snprintf(expr_str, EXPR_SIZE, "chan %d, cursor at %s (sample %d) = %s",
 		cp->chan + 1,
 		s1 = prettyf((double)samp/(double)SND_SRATE(sp), 2),
@@ -3103,7 +3103,7 @@ static int calculate_syncd_fft(chan_info *cp, void *ptr)
   if (cp)
     {
       sp = cp->sound;
-      if (sp->syncing == sync) calculate_fft(cp, NULL);
+      if (sp->sync == sync) calculate_fft(cp, NULL);
     }
   return(0);
 }
@@ -3307,8 +3307,8 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 		      dragged = 0;
 		      if (show_selection_transform(ss)) 
 			{
-			  if (sp->syncing)
-			    map_over_chans(ss, calculate_syncd_fft, (void *)(sp->syncing));
+			  if (sp->sync)
+			    map_over_chans(ss, calculate_syncd_fft, (void *)(sp->sync));
 			  else calculate_fft(cp, NULL);
 			}
 		    }
@@ -4623,7 +4623,7 @@ static SCM g_set_wavelet_type(SCM val, SCM snd, SCM chn)
   else
     {
       ss = get_global_state();
-      set_wavelet_type(ss, iclamp(0, TO_C_INT_OR_ELSE(val, 0), NUM_WAVELETS-1));
+      set_wavelet_type(ss, iclamp(0, TO_C_INT(val), NUM_WAVELETS-1));
       return(TO_SCM_INT(wavelet_type(ss)));
     }
 }
@@ -4818,7 +4818,7 @@ static SCM g_set_line_size(SCM val, SCM snd, SCM chn)
   else
     {
       ss = get_global_state();
-      set_line_size(ss, TO_C_INT_OR_ELSE(val, 0));
+      set_line_size(ss, TO_C_INT(val));
       return(TO_SCM_INT(line_size(ss)));
     }
 }
@@ -4838,7 +4838,7 @@ static SCM g_set_fft_size(SCM val, SCM snd, SCM chn)
   snd_state *ss;
   int len;
   ASSERT_TYPE(INTEGER_P(val), val, SCM_ARG1, "set-" S_fft_size, "an integer"); 
-  len = TO_C_INT_OR_ELSE(val, 0);
+  len = TO_C_INT(val);
   if (len <= 0) return(SCM_BOOL_F);
   if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, val, CP_FFT_SIZE, "set-" S_fft_size));
@@ -4865,7 +4865,7 @@ static SCM g_set_fft_style(SCM val, SCM snd, SCM chn)
   snd_state *ss;
   int style;
   ASSERT_TYPE(INTEGER_P(val), val, SCM_ARG1, "set-" S_fft_style, "an integer"); 
-  style = iclamp(NORMAL_FFT, TO_C_INT_OR_ELSE(val, 0), SPECTROGRAM);
+  style = iclamp(NORMAL_FFT, TO_C_INT(val), SPECTROGRAM);
   if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, TO_SMALL_SCM_INT(style), CP_FFT_STYLE, "set-" S_fft_style));
   else
@@ -4891,7 +4891,7 @@ static SCM g_set_fft_window(SCM val, SCM snd, SCM chn)
   snd_state *ss;
   int win;
   ASSERT_TYPE(INTEGER_P(val), val, SCM_ARG1, "set-" S_fft_window, "an integer"); 
-  win = iclamp(0, TO_C_INT_OR_ELSE(val, 0), NUM_FFT_WINDOWS - 1);
+  win = iclamp(0, TO_C_INT(val), NUM_FFT_WINDOWS - 1);
   if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, TO_SMALL_SCM_INT(win), CP_FFT_WINDOW, "set-" S_fft_window));
   else
@@ -4917,7 +4917,7 @@ static SCM g_set_transform_type(SCM val, SCM snd, SCM chn)
   int type;
   snd_state *ss;
   ASSERT_TYPE(INTEGER_P(val), val, SCM_ARG1, "set-" S_transform_type, "an integer"); 
-  type = iclamp(0, TO_C_INT_OR_ELSE(val, 0), max_transform_type());
+  type = iclamp(0, TO_C_INT(val), max_transform_type());
   if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, TO_SMALL_SCM_INT(type), CP_TRANSFORM_TYPE, "set-" S_transform_type));
   else
@@ -4973,7 +4973,7 @@ static SCM g_set_max_fft_peaks(SCM n, SCM snd, SCM chn)
     return(cp_iwrite(snd, chn, n, CP_MAX_FFT_PEAKS, "set-" S_max_fft_peaks));
   else
     {
-      lim = TO_C_INT_OR_ELSE(n, 0);
+      lim = TO_C_INT(n);
       ss = get_global_state();
       if (lim >= 0)
 	set_max_fft_peaks(ss, lim);
@@ -4998,7 +4998,7 @@ static SCM g_set_graph_style(SCM style, SCM snd, SCM chn)
   snd_state *ss;
   int val;
   ASSERT_TYPE(INTEGER_P(style), style, SCM_ARG1, "set-" S_graph_style, "an integer"); 
-  val = TO_C_INT_OR_ELSE(style, DEFAULT_GRAPH_STYLE); 
+  val = TO_C_INT(style);
   if (BOUND_P(snd))
     {
       if ((GRAPH_STYLE_OK((val & 0xf))) &&

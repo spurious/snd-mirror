@@ -156,7 +156,7 @@ int no_ed_scalers(chan_info *cp)
   if (ed)
     {
       len = ed->size;
-      for (i = 0; i < len-1; i++)
+      for (i = 0; i < len - 1; i++)
 	if (INT_AS_FLOAT(FRAGMENT_SCALER(ed, i)) != 1.0)
 	  return(0);
       return(1);
@@ -168,14 +168,14 @@ int edit_changes_begin_at(chan_info *cp)
 {
   ed_list *ed, *old_ed;
   int len, old_len, i, min_len;
-  old_ed = cp->edits[cp->edit_ctr-1];
+  old_ed = cp->edits[cp->edit_ctr - 1];
   ed = cp->edits[cp->edit_ctr];
   old_len = old_ed->size;
   len = ed->size;
   if (len < old_len) 
     min_len = (len * ED_SIZE); 
   else min_len = (old_len * ED_SIZE);
-  for (i = 0; i < min_len; i+=ED_SIZE)
+  for (i = 0; i < min_len; i += ED_SIZE)
     if ((FRAGMENT_GLOBAL_POSITION_OFFSET(ed, i) != FRAGMENT_GLOBAL_POSITION_OFFSET(old_ed, i)) || 
 	(FRAGMENT_SOUND_OFFSET(ed, i) != FRAGMENT_SOUND_OFFSET(old_ed, i)) || 
 	(FRAGMENT_LOCAL_POSITION_OFFSET(ed, i) != FRAGMENT_LOCAL_POSITION_OFFSET(old_ed, i)))
@@ -617,7 +617,7 @@ static ed_list *selected_ed_list(int beg, int end, ed_list *current_state)
       FRAGMENT_LOCAL_POSITION(new_ed, k) = FRAGMENT_LOCAL_END(new_ed, bk) + 1;
       k++;
     }
-  for (oldk = bk+1; oldk <= ek; oldk++, k++)
+  for (oldk = bk + 1; oldk <= ek; oldk++, k++)
     {
       for (i = 0; i < ED_SIZE; i++)
 	new_ed->fragments[k * ED_SIZE + i] = current_state->fragments[oldk * ED_SIZE + i];
@@ -832,7 +832,7 @@ snd_data *make_snd_data_buffer(MUS_SAMPLE_TYPE *data, int len, int ctr)
   sf = (snd_data *)CALLOC(1, sizeof(snd_data));
   sf->type = SND_DATA_BUFFER;
   sf->buffered_data = (MUS_SAMPLE_TYPE *)MALLOC((len + 1) * sizeof(MUS_SAMPLE_TYPE));
-  /* sigh... using len+1 rather than len to protect against access to inserted buffer at end mixups (final fragment uses end+1) */
+  /* sigh... using len + 1 rather than len to protect against access to inserted buffer at end mixups (final fragment uses end + 1) */
   /*   the real problem here is that I never decided whether insert starts at the cursor or just past it */
   /*   when the cursor is on the final sample, this causes cross-fragment ambiguity as to the length of a trailing insertion */
   /*   C > (make-region 1000 2000) (insert-region (cursor)) C-v hits this empty slot and gets confused about the previously final sample value */
@@ -1054,7 +1054,7 @@ static int add_zero_file_to_edit_list(chan_info *cp, int size)
 static void ripple_out(int *list, int beg, int num, int len)
 {
   int i, k;
-  for (i = beg, k = beg*ED_SIZE; i < len; i++, k+=ED_SIZE) list[k + ED_OUT] += num;
+  for (i = beg, k = beg * ED_SIZE; i < len; i++, k += ED_SIZE) list[k + ED_OUT] += num;
 }
 
 static void prune_edits(chan_info *cp, int edpt)
@@ -1764,7 +1764,7 @@ Float sample(int samp, chan_info *cp)
   current_state = (ed_list *)(cp->edits[cp->edit_ctr]);
   data = current_state->fragments;
   len = current_state->size;
-  for (i = 0, cb = 0; i < len; i++, cb+=ED_SIZE)
+  for (i = 0, cb = 0; i < len; i++, cb += ED_SIZE)
     if (samp < data[cb + ED_OUT])
       {
 	true_cb = cb-ED_SIZE;
@@ -2009,7 +2009,7 @@ MUS_SAMPLE_TYPE next_sound (snd_fd *sf)
     { 
       ind0 = sf->cb[ED_BEG];
       ind1 = sf->cb[ED_END];
-      indx = sf->end+1;
+      indx = sf->end + 1;
       file_buffers_forward(ind0, ind1, indx, sf, sf->current_sound);
     }
   return((MUS_SAMPLE_TYPE)(UNWRAP_SAMPLE(*sf->view_buffered_data++, sf->cb[ED_SCL])));
@@ -2516,7 +2516,7 @@ void undo_edit_with_sync(chan_info *cp, int count)
       if (cp)
 	{
 	  sp = cp->sound;
-	  if (sp->syncing != 0) si = snd_sync(cp->state, sp->syncing);
+	  if (sp->sync != 0) si = snd_sync(cp->state, sp->sync);
 	  if (si)
 	    {
 	      for (i = 0; i < si->chans; i++) undo_edit(si->cps[i], count);
@@ -2538,8 +2538,8 @@ void redo_edit(chan_info *cp, int count)
       while ((cp->edit_ctr >= cp->edit_size) || 
 	     (!(cp->edits[cp->edit_ctr]))) 
 	cp->edit_ctr--;
-      if (((cp->edit_ctr+1) == cp->edit_size) || 
-	  (!(cp->edits[cp->edit_ctr+1]))) 
+      if (((cp->edit_ctr + 1) == cp->edit_size) || 
+	  (!(cp->edits[cp->edit_ctr + 1]))) 
 	reflect_no_more_redo_in_menu();
       if (cp->edit_ctr != 0) /* possibly a sync'd redo to chan that has no edits */
 	{
@@ -2571,7 +2571,7 @@ void redo_edit_with_sync(chan_info *cp, int count)
       if (cp)
 	{
 	  sp = cp->sound;
-	  if (sp->syncing != 0) si = snd_sync(cp->state, sp->syncing);
+	  if (sp->sync != 0) si = snd_sync(cp->state, sp->sync);
 	  if (si)
 	    {
 	      for (i = 0; i < si->chans; i++) redo_edit(si->cps[i], count);
@@ -2658,6 +2658,7 @@ static SCM g_edit_tree(SCM snd, SCM chn, SCM upos)
   cp = get_cp(snd, chn, S_edit_tree);
   if (cp)
     {
+      ASSERT_TYPE(INTEGER_IF_BOUND_P(upos), upos, SCM_ARG3, S_edit_tree, "an integer");
       pos = TO_C_INT_OR_ELSE(upos, cp->edit_ctr);
       ed = cp->edits[pos];
       if (ed) 
@@ -2798,6 +2799,7 @@ snd can be a filename, a sound index number, or a list with a mix id number."
       SND_ASSERT_CHAN(S_make_sample_reader, snd, chn, 2);
       cp = get_cp(snd, chn, S_make_sample_reader);
     }
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(pos), pos, SCM_ARG5, S_make_sample_reader, "an integer");
   fd = init_sample_read_any(TO_C_INT_OR_ELSE(samp_n, 0), 
 			    cp, 
 			    TO_C_INT_OR_ELSE(dir1, 1), 
@@ -3067,7 +3069,7 @@ static int finish_as_one_edit(chan_info *cp, void *ptr)
 	      reflect_edit_history_change(cp);
 	    }
 	}
-      prune_edits(cp, cp->edit_ctr+1);
+      prune_edits(cp, cp->edit_ctr + 1);
       update_graph(cp, NULL); 
     }
   chan_ctr++; 
@@ -3215,6 +3217,7 @@ history position to read (defaults to current position)."
   ASSERT_TYPE(NUMBER_IF_BOUND_P(samp_0), samp_0, SCM_ARG1, S_samples, "a number");
   ASSERT_TYPE(NUMBER_IF_BOUND_P(samps), samps, SCM_ARG2, S_samples, "a number");
   SND_ASSERT_CHAN(S_samples, snd_n, chn_n, 3);
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(pos), pos, SCM_ARG5, S_samples, "an integer");
   cp = get_cp(snd_n, chn_n, S_samples);
   edpos = TO_C_INT_OR_ELSE(pos, cp->edit_ctr);
   beg = TO_C_INT_OR_ELSE(samp_0, 0);
@@ -3245,6 +3248,7 @@ the new data's end"
   ASSERT_TYPE(NUMBER_P(samp_0), samp_0, SCM_ARG1, "set-" S_samples, "a number");
   ASSERT_TYPE(NUMBER_P(samps), samps, SCM_ARG2, "set-" S_samples, "a number");
   SND_ASSERT_CHAN("set-" S_samples, snd_n, chn_n, 4);
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(truncate), truncate, SCM_ARG6, S_samples, "a boolean");
   cp = get_cp(snd_n, chn_n, "set-" S_samples);
   beg = TO_C_INT_OR_ELSE(samp_0, 0);
   len = TO_C_INT_OR_ELSE(samps, 0);
@@ -3449,7 +3453,7 @@ static SCM g_insert_sample(SCM samp_n, SCM val, SCM snd_n, SCM chn_n)
 		    samp_n,
 		    snd_n, chn_n));
   ival[0] = MUS_FLOAT_TO_SAMPLE(TO_C_DOUBLE(val));
-  insert_samples(TO_C_INT_OR_ELSE(samp_n, 0), 1, ival, cp, S_insert_sample);
+  insert_samples(beg, 1, ival, cp, S_insert_sample);
   update_graph(cp, NULL);
   return(val);
 }

@@ -954,7 +954,7 @@ void fire_up_transform_dialog(snd_state *ss)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, window_label); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNtopItemPosition, (fft_window(ss)>2) ? (fft_window(ss)-1) : (fft_window(ss)+1)); n++;
+      XtSetArg(args[n], XmNtopItemPosition, (fft_window(ss) > 2) ? (fft_window(ss) - 1) : (fft_window(ss) + 1)); n++;
       window_list = XmCreateScrolledList(window_form, "window-list", args, n);
       if (!(ss->using_schemes)) XtVaSetValues(window_list, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
       for (i = 0; i < GUI_NUM_FFT_WINDOWS; i++)
@@ -1033,10 +1033,10 @@ void fire_up_transform_dialog(snd_state *ss)
       /* select current list choices */
       /* display current windowing choice unless wavelet in force */
 
-      XmListSelectPos(type_list, transform_type(ss)+1, FALSE);
-      XmListSelectPos(wavelet_list, wavelet_type(ss)+1, FALSE);
+      XmListSelectPos(type_list, transform_type(ss) + 1, FALSE);
+      XmListSelectPos(wavelet_list, wavelet_type(ss) + 1, FALSE);
       XmListSelectPos(size_list, size_pos, FALSE);
-      XmListSelectPos(window_list, fft_window(ss)+1, FALSE);
+      XmListSelectPos(window_list, fft_window(ss) + 1, FALSE);
       need_callback = 1;
       if (fft_window_beta_in_use(fft_window(ss))) 
 	XtVaSetValues(window_beta_scale, XmNbackground, (ss->sgx)->highlight_color, NULL);
@@ -1116,7 +1116,7 @@ void set_fft_size(snd_state *ss, int val)
       for (i = 0; i < NUM_FFT_SIZES; i++)
 	if (fft_sizes[i] == val)
 	  {
-	    XmListSelectPos(size_list, i+1, FALSE);
+	    XmListSelectPos(size_list, i + 1, FALSE);
 	    break;
 	  }
     }
@@ -1129,7 +1129,7 @@ void set_fft_window(snd_state *ss, int val)
   if (!(ss->graph_hook_active)) map_over_chans(ss, calculate_fft, NULL);
   if (transform_dialog)
     {
-      XmListSelectPos(window_list, val+1, FALSE);
+      XmListSelectPos(window_list, val + 1, FALSE);
       set_label(graph_label, FFT_WINDOWS[val]);
       get_fft_window_data(ss);
       graph_redisplay(ss);

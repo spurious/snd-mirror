@@ -2616,6 +2616,10 @@ The most important Sndlib functions for Snd are:</p>
 <!-- --></tr><tr><td></td>
 <!-- --><td>reopen (without disturbing) filename, ready to be written</td></tr>
 <!-- -->
+<!-- mus-sound-report-cache -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="mussoundreportcache">mus-sound-report-cache</a></em> (file)</code></span></td>
+<!-- --><td>prints the current sound header data table to the file given or stdout if none is specified.</td></tr>
+<!-- -->
 <!-- mus-sound-samples -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="soundsamples">mus-sound-samples</a></em> (filename)</code></span></td>
 <!-- --><td>samples of sound according to header (can be incorrect)</td></tr>
@@ -7159,6 +7163,14 @@ variable %load-verbosely to #t.
 <!-- -->    (set! (left-sample 0 0) (+ 2 (left-sample 0 0))) 
 <!-- -->    cursor-update-display))
 <!-- --></pre></td></tr></table></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- -->The key codes can usually be found in the X header file X11R6/include/X11/keysymdef.h
+<!-- -->The "Page Up" key is given as 0xFF55, which in Scheme would be #xff55 (65365).
+<!-- --><pre>
+<!-- -->  (bind-key #xff55 0 (lambda () (snd-print "Page up")))
+<!-- --></pre>
+<!-- --></td></tr>
 <!-- -->
 <!-- c-g? -->
 <!-- --><tr><td colspan=2>

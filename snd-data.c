@@ -234,7 +234,7 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
   sp->fullname = copy_string(filename);
   sp->shortname = filename_without_home_directory(sp->fullname); /* a pointer into fullname, not a new string */
   sp->state = ss;
-  sp->syncing = DEFAULT_SYNCING;
+  sp->sync = DEFAULT_SYNC;
   sp->expand = DEFAULT_EXPAND;
   sp->last_expand = 0.0;
   sp->saved_expand = 0.0;
@@ -333,7 +333,7 @@ void free_snd_info(snd_info *sp)
     }
   snd_info_cleanup(sp);
   snd_filter_cleanup(sp);
-  sp->syncing = 0;
+  sp->sync = 0;
   for (i = 0; i < sp->nchans; i++)
     if (sp->chans[i]) 
       sp->chans[i] = free_chan_info(sp->chans[i]);
@@ -691,7 +691,7 @@ sync_info *snd_sync(snd_state *ss, int sync)
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
-      if ((sp) && (sp->inuse) && (sp->syncing == sync)) 
+      if ((sp) && (sp->inuse) && (sp->sync == sync)) 
 	chans += sp->nchans;
     }
   if (chans > 0)
@@ -704,7 +704,7 @@ sync_info *snd_sync(snd_state *ss, int sync)
       for (i = 0; i < ss->max_sounds; i++)
 	{
 	  sp = ss->sounds[i];
-	  if ((sp) && (sp->inuse) && (sp->syncing == sync))
+	  if ((sp) && (sp->inuse) && (sp->sync == sync))
 	    for (k = 0; k < sp->nchans; k++, j++)
 	      si->cps[j] = sp->chans[k];
 	}
@@ -729,8 +729,8 @@ sync_info *sync_to_chan(chan_info *cp)
 {
   snd_info *sp;
   sp = cp->sound;
-  if (sp->syncing)
-    return(snd_sync(cp->state, sp->syncing));
+  if (sp->sync)
+    return(snd_sync(cp->state, sp->sync));
   return(make_simple_sync(cp, 0));
 }
 

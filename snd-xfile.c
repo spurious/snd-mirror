@@ -616,7 +616,7 @@ file_data *sndCreateFileDataForm(snd_state *ss, Widget parent, char *name, Arg *
   XtManageChild(hlist);
   for (i = 0; i < hdrtyps; i++) XmStringFree(strs[i]);
   FREE(strs);
-  XmListSelectPos(hlist, fdat->header_pos+1, FALSE);
+  XmListSelectPos(hlist, fdat->header_pos + 1, FALSE);
   fdat->header_list = hlist;
   XtAddCallback(fdat->header_list, XmNbrowseSelectionCallback, file_data_Type_Callback, ss);
 

@@ -1621,36 +1621,40 @@ static SCM g_window_y(void)
 static SCM g_set_window_height(SCM height) 
 {
   #define H_set_window_height "(" "set-" S_window_height " val) sets the Snd window height in pixels"
+  int val;
   ASSERT_TYPE(NUMBER_P(height), height, SCM_ARGn, "set-" S_window_height, "a number"); 
-  set_widget_height(MAIN_SHELL(state), TO_C_INT_OR_ELSE(height, 0));
-  state->init_window_height = TO_C_INT_OR_ELSE(height, 0);
+  set_widget_height(MAIN_SHELL(state), val = TO_C_INT_OR_ELSE(height, 0));
+  state->init_window_height = val;
   return(height);
 }
 
 static SCM g_set_window_width(SCM width) 
 {
   #define H_set_window_width "(" "set-" S_window_width " val) sets the Snd window width in pixels"
+  int val;
   ASSERT_TYPE(NUMBER_P(width), width, SCM_ARGn, "set-" S_window_width, "a number"); 
-  set_widget_width(MAIN_SHELL(state), TO_C_INT_OR_ELSE(width, 0)); 
-  state->init_window_width = TO_C_INT_OR_ELSE(width, 0);
+  set_widget_width(MAIN_SHELL(state), val = TO_C_INT_OR_ELSE(width, 0)); 
+  state->init_window_width = val;
   return(width);
 }
 
 static SCM g_set_window_x(SCM val) 
 {
   #define H_set_window_x "(" "set-" S_window_x " val) sets the Snd window x position in pixels"
+  int x;
   ASSERT_TYPE(NUMBER_P(val), val, SCM_ARGn, "set-" S_window_x, "a number"); 
-  set_widget_x(MAIN_SHELL(state), TO_C_INT_OR_ELSE(val, 0));
-  state->init_window_x = TO_C_INT_OR_ELSE(val, 0); 
+  set_widget_x(MAIN_SHELL(state), x = TO_C_INT_OR_ELSE(val, 0));
+  state->init_window_x = x;
   return(val);
 }
 
 static SCM g_set_window_y(SCM val) 
 {
   #define H_set_window_y "(" "set-" S_window_y " val) sets the Snd window y position in pixels"
+  int y;
   ASSERT_TYPE(NUMBER_P(val), val, SCM_ARGn, "set-" S_window_y, "a number"); 
-  set_widget_y(MAIN_SHELL(state), TO_C_INT_OR_ELSE(val, 0)); 
-  state->init_window_y = TO_C_INT_OR_ELSE(val, 0); 
+  set_widget_y(MAIN_SHELL(state), y = TO_C_INT_OR_ELSE(val, 0)); 
+  state->init_window_y = y;
   return(val);
 }
 
@@ -1903,6 +1907,7 @@ reading edit version edit-position (defaulting to the current version)"
   ASSERT_TYPE(NUMBER_IF_BOUND_P(samp_0), samp_0, SCM_ARG1, S_samples_vct, "a number");
   ASSERT_TYPE(NUMBER_IF_BOUND_P(samps), samps, SCM_ARG2, S_samples_vct, "a number");
   SND_ASSERT_CHAN(S_samples_vct, snd_n, chn_n, 3);
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(pos), pos, SCM_ARG6, S_samples_vct, "an integer");
   cp = get_cp(snd_n, chn_n, S_samples_vct);
   edpos = TO_C_INT_OR_ELSE(pos, cp->edit_ctr);
   beg = TO_C_INT_OR_ELSE(samp_0, 0);
@@ -1943,6 +1948,8 @@ reading edit version edit-position (defaulting to the current version)"
   ASSERT_TYPE(NUMBER_IF_BOUND_P(samp_0), samp_0, SCM_ARG1, S_samples2sound_data, "a number");
   ASSERT_TYPE(NUMBER_IF_BOUND_P(samps), samps, SCM_ARG2, S_samples2sound_data, "a number");
   SND_ASSERT_CHAN(S_samples2sound_data, snd_n, chn_n, 3);
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(pos), pos, SCM_ARG6, S_samples2sound_data, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(sdchan), sdchan, SCM_ARG7, S_samples2sound_data, "an integer");
   cp = get_cp(snd_n, chn_n, S_samples2sound_data);
   edpos = TO_C_INT_OR_ELSE(pos, cp->edit_ctr);
   if (edpos >= cp->edit_size) 
@@ -2377,6 +2384,9 @@ updates an on-going 'progress report' (e. g. an animated hour-glass icon) in snd
   snd_info *sp;
   ASSERT_TYPE(NUMBER_P(pct), pct, SCM_ARG1, S_progress_report, "a number");
   SND_ASSERT_SND(S_progress_report, snd, 5);
+  ASSERT_TYPE(STRING_IF_BOUND_P(name), name, SCM_ARG2, S_progress_report, "a string");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(cur_chan), cur_chan, SCM_ARG3, S_progress_report, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(chans), chans, SCM_ARG4, S_progress_report, "an integer");
   sp = get_sp(snd);
   if (sp) 
     progress_report(sp,
@@ -3001,6 +3011,12 @@ static SCM g_little_endian(void)
 #endif
 }
 
+static SCM g_snd_completion(SCM text)
+{
+  /* perhaps callable from emacs? */
+  return(TO_SCM_STRING(command_completer(TO_C_STRING(text))));
+}
+
 #if HAVE_GUILE
 static SCM g_gc_off(void) {++scm_block_gc; return(TO_SCM_INT(scm_block_gc));}
 static SCM g_gc_on(void) {--scm_block_gc; return(TO_SCM_INT(scm_block_gc));}
@@ -3439,9 +3455,13 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(S_finish_progress_report, g_finish_progress_report, 0, 1, 0, H_finish_progress_report);
   DEFINE_PROC(S_progress_report,     g_progress_report, 1, 4, 0,     H_progress_report);
   DEFINE_PROC(S_snd_print,           g_snd_print, 1, 0, 0,           H_snd_print);
-  DEFINE_PROC(S_describe_audio,      g_mus_audio_describe, 0, 0, 0,  H_mus_audio_describe);
+
+  DEFINE_PROC("describe-audio",      g_mus_audio_describe, 0, 0, 0,  H_mus_audio_describe);
+  /* this (describe-audio) is going away someday */
+
   DEFINE_PROC(S_mus_audio_describe,  g_mus_audio_describe, 0, 0, 0,  H_mus_audio_describe);
   DEFINE_PROC("little-endian?",      g_little_endian, 0, 0, 0,       "return #t if host is little endian");
+  DEFINE_PROC("snd-completion",      g_snd_completion, 1, 0, 0,      "return completion of arg");
 #if HAVE_GUILE
   DEFINE_PROC("gc-off",              g_gc_off, 0, 0, 0,              "turn off GC");
   DEFINE_PROC("gc-on",               g_gc_on, 0, 0, 0,               "turn on GC");

@@ -831,7 +831,7 @@ static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
   need_update = 0;
   filename = copy_string(ur_filename);
   old_chans = sp->nchans;
-  old_sync = sp->syncing;
+  old_sync = sp->sync;
   old_combine = sp->combining;
   axis_data = (Float *)CALLOC(4 * old_chans, sizeof(Float));
   ffts = (int *)CALLOC(old_chans, sizeof(int));
@@ -885,7 +885,7 @@ static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
       if (j < (old_chans - 1)) j++;
     }
   if (nsp->combining != old_combine) combineb(nsp, old_combine);
-  if (nsp->syncing != old_sync) syncb(nsp, old_sync);
+  if (nsp->sync != old_sync) syncb(nsp, old_sync);
   if (need_update) 
     for (i = 0; i < nsp->nchans; i++) 
       update_graph(nsp->chans[i], NULL);
@@ -1077,9 +1077,9 @@ void file_unprevlist(char *filename)
       prevfullnames[i] = NULL;
       for (j = i; j < prevfile_end; j++) 
 	{
-	  prevnames[j] = prevnames[j+1];
-	  prevfullnames[j] = prevfullnames[j+1]; 
-	  prevtimes[j] = prevtimes[j+1];
+	  prevnames[j] = prevnames[j + 1];
+	  prevfullnames[j] = prevfullnames[j + 1]; 
+	  prevtimes[j] = prevtimes[j + 1];
 	}
       prevnames[prevfile_end] = NULL; 
       prevfullnames[prevfile_end] = NULL; 
@@ -1401,7 +1401,7 @@ void make_prevfiles_list_1(snd_state *ss)
   int i, len;
   if (prevfile_end >= 0)
     {
-      len = prevfile_end+1;
+      len = prevfile_end + 1;
       data = (heapdata **)CALLOC(len, sizeof(heapdata *));
       for (i = 0; i < len; i++)
 	{

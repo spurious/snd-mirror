@@ -188,7 +188,7 @@ would be much appreciated!
 Linux audio:
 In Linux, Snd sometimes can't seem to play or record when other
 applications are happy -- if this happens, please run the function
-describe-audio (via M-x) and send me whatever it prints out.
+mus-audio-describe (via M-x) and send me whatever it prints out.
 
 If you're using the Sonorus Studio card and getting interruptions,
 try (set-oss-buffers 64 16).  I think the RME Digi96 card's defaults
@@ -237,7 +237,10 @@ been released as open source software: see the url mentioned below.
 Another freeware version is called Lesstif, but this is no longer
 supported in Snd with elaborate special bug-work-arounds.  The linux
 binary rpm file and the linux-snd image at ccrma-ftp have Motif
-statically loaded.  
+statically loaded.  If you installed the openmotif library rpm
+package, it may not have included the headers (look under 
+/usr/X11R6/include/Xm); to build Snd from the sources you need
+the headers (in the openmotif-devel packages).
 
 If you have installed Motif in some weird place, use the -I compiler
 flag to provide that information to the compiler.  I've added the

@@ -303,7 +303,7 @@ char *kmg (int num)
  * about X allocations (of which there are millions), and I need readable
  * backtrace info for leaks.  Doing it by hand makes it easy to sort
  * output and whatnot. All of Sndlib and Snd use the macros CALLOC,
- * REALLOC, and FREE (never MALLOC though it's defined).
+ * MALLOC, REALLOC, and FREE.
  */
 
 static int mem_size = 0;

@@ -53,16 +53,22 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#if (!USE_SND)
 #if HAVE_GUILE
   #include <guile/gh.h>
   #include "sg.h"
-#else
-  #if HAVE_LIBREP 
-    #include <rep.h>
-    #include "sl.h"
-  #else
-    #include "noguile.h"
-  #endif
+#endif
+#if HAVE_LIBREP 
+  #include <rep.h>
+  #include "sl.h"
+#endif
+#if HAVE_MZSCHEME
+  #include <scheme.h>
+  #include "sz.h"
+#endif
+#if (!HAVE_EXTENSION_LANGUAGE)
+  #include "noguile.h"
+#endif
 #endif
 
 #include "sndlib.h"
@@ -76,8 +82,8 @@
 
 #ifndef CALLOC
   #define CALLOC(a, b)  calloc(a, b)
-  #define MALLOC(a)    malloc(a)
-  #define FREE(a)      free(a)
+  #define MALLOC(a)     malloc(a)
+  #define FREE(a)       free(a)
   #define REALLOC(a, b) realloc(a, b)
 #endif
 

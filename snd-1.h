@@ -202,7 +202,7 @@ typedef struct snd__info {
   int index;
   int playing;
   mark *playing_mark;
-  int syncing;
+  int sync;
   int expanding;
   int contrasting;
   int reverbing;

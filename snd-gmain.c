@@ -456,7 +456,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 #endif
 
   auto_open_files = argc-1;
-  if (argc > 1) auto_open_file_names = (char **)(argv+1);
+  if (argc > 1) auto_open_file_names = (char **)(argv + 1);
   ss->startup_title = copy_string("snd");
 
   set_sound_style(ss, SOUNDS_VERTICAL);

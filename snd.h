@@ -72,7 +72,7 @@
  *                 (used by help functions -- perhaps better would be to call netscape?)
  *
  *   Float         This can be defined to double in CFLAGS if you want Snd to use 
- *                 doubles throughout (i.e. -DFloat = double).
+ *                 doubles throughout (i.e. -DFloat=double).
  *
  *   STR_OR        British spelling enthusiasts can -DSTR_OR=\"our\" (this changes
  *                 every "color" to "colour" even in the resource names).
@@ -143,12 +143,8 @@
   #include <scheme.h>
 #endif
 
-#ifndef USE_NO_GUI
-  #ifndef USE_GTK
-    #ifndef USE_MOTIF
-      #define USE_MOTIF 1
-    #endif
-  #endif
+#if (!(USE_NO_GUI || USE_MOTIF || USE_GTK))
+  #define USE_MOTIF 1
 #endif
 
 #include "sndlib.h"
@@ -172,26 +168,29 @@
 
 #ifdef USE_MOTIF
   #include "snd-x0.h"
-#else
-  #if USE_GTK
-    #include "snd-g0.h"
-  #else
-    #include "snd-nogui0.h"
-  #endif
 #endif
+#if USE_GTK
+  #include "snd-g0.h"
+#endif
+#if USE_NO_GUI
+  #include "snd-nogui0.h"
+#endif
+
 #include "snd-1.h"
+
 #ifdef USE_MOTIF
   #include "snd-x1.h"
-#else
-  #if USE_GTK
-    #include "snd-g1.h"
-  #else
-    #include "snd-nogui1.h"
-  #endif
 #endif
+#if USE_GTK
+  #include "snd-g1.h"
+#endif
+#if USE_NO_GUI
+  #include "snd-nogui1.h"
+#endif
+
 #include "snd-strings.h"
 
-#define SND_VERSION "28-Apr-01"
+#define SND_VERSION "30-Apr-01"
 #define SND_RPM_VERSION "4.13"
 #define SND_MAJOR_VERSION 4
 #define SND_MINOR_VERSION 13

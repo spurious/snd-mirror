@@ -1,7 +1,6 @@
 /* Audio hardware handlers (SGI, OSS, ALSA, Sun, NeXT, Mac, Windows, HPUX, Mac OS-X, ESD) */
 
-/* TODO  windoze input, read/write state
- * TODO  sgi adat in hangs
+/* TODO  sgi adat in hangs
  */
 
 /*
@@ -1815,7 +1814,7 @@ static int oss_mus_audio_initialize(void)
 	      audio_dsp[sound_cards] = ndsp; 
 	      if (num_dsps >= 21)
 		{
-		  ndsp+=21;
+		  ndsp += 21;
 		  audio_mode[sound_cards] = 1;
 		}
 	      else

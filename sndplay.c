@@ -154,7 +154,7 @@ int main(int argc, char *argv[])
 	  for (i = 0; i < chans; i++) bufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE));
 	  obuf = (short *)CALLOC(BUFFER_SIZE * chans, sizeof(short));
 	  /* assume for lafs that our DAC wants 16-bit integers */
-	  for (i = 0; i < frames; i+=BUFFER_SIZE)
+	  for (i = 0; i < frames; i += BUFFER_SIZE)
 	    {
 	      if ((i+BUFFER_SIZE) <= frames)
 		curframes = BUFFER_SIZE;
@@ -171,7 +171,7 @@ int main(int argc, char *argv[])
 		{
 		  if (chans == 2)
 		    {
-		      for (k = 0, n = 0; k < curframes; k++, n+=2) 
+		      for (k = 0, n = 0; k < curframes; k++, n += 2) 
 			{
 			  obuf[n] = MUS_SAMPLE_TO_SHORT(bufs[0][k]); 
 			  obuf[n+1] = MUS_SAMPLE_TO_SHORT(bufs[1][k]);
@@ -179,7 +179,7 @@ int main(int argc, char *argv[])
 		    }
 		  else
 		    {
-		      for (k = 0, j = 0; k < curframes; k++, j+=chans)
+		      for (k = 0, j = 0; k < curframes; k++, j += chans)
 			{
 			  for (n = 0; n < chans; n++) 
 			    obuf[j + n] = MUS_SAMPLE_TO_SHORT(bufs[n][k]);
@@ -226,14 +226,14 @@ int main(int argc, char *argv[])
 	  for (i = 0; i < chans; i++) qbufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(buffer_size, sizeof(MUS_SAMPLE_TYPE));
 	  obuf0 = (short *)CALLOC(buffer_size * 2, sizeof(short));
 	  obuf1 = (short *)CALLOC(buffer_size * 2, sizeof(short));
-	  for (i = 0; i < frames; i+=buffer_size)
+	  for (i = 0; i < frames; i += buffer_size)
 	    {
 	      if ((i+buffer_size) <= frames)
 		curframes = buffer_size;
 	      else curframes = frames - i;
 	      mus_sound_read(fd, 0, curframes - 1, chans, qbufs); 
 	      val[0] = 1.0;
-	      for (k = 0, n = 0; k < buffer_size; k++, n+=2) 
+	      for (k = 0, n = 0; k < buffer_size; k++, n += 2) 
 		{
 		  obuf0[n] = MUS_SAMPLE_TO_SHORT(qbufs[0][k]); 
 		  obuf0[n+1] = MUS_SAMPLE_TO_SHORT(qbufs[1][k]);
@@ -498,7 +498,7 @@ int main(int argc, char *argv[])
 	  out_bytes[dev] = samples_per_chan * out_chans[d] * mus_data_format_to_bytes_per_sample(out_format[dev]);
 	  out_buf[dev] = (short *)CALLOC(out_bytes[dev], 1);
 	}
-      for (i = 0; i < frames; i+=samples_per_chan)
+      for (i = 0; i < frames; i += samples_per_chan)
 	{
 	  MUS_SAMPLE_TYPE **dev_bufs = read_bufs;
 	  if ((i + samples_per_chan) <= frames)
@@ -526,7 +526,7 @@ int main(int argc, char *argv[])
 		  if (afd[dev] == -1) break; 
 		}
 	      mus_audio_write(afd[dev], (char *)out_buf[dev], out_bytes[dev]);
-	      dev_bufs+=out_chans[d];
+	      dev_bufs += out_chans[d];
 	    }
 	}
       for (d = 0; d < allocated; d++)

@@ -1066,7 +1066,7 @@ static void set_sync_color(snd_info *sp)
   Widget syb;
   syb = w_snd_sync(sp);
   ss = sp->state;
-  switch (sp->syncing)
+  switch (sp->sync)
     {
     case 1: case 0: XtVaSetValues(syb, XmNselectColor, (ss->sgx)->pushed_button_color, NULL); break;
     case 2: XtVaSetValues(syb, XmNselectColor, (ss->sgx)->green, NULL); break;
@@ -1078,7 +1078,7 @@ static void set_sync_color(snd_info *sp)
 
 void syncb(snd_info *sp, int on)
 {
-  sp->syncing = on;
+  sp->sync = on;
   if (!(IS_PLAYER(sp)))
     {
       set_sync_color(sp);
@@ -1097,12 +1097,12 @@ static void Sync_button_Callback(Widget w, XtPointer context, XtPointer info)
     if (ev->state & snd_ControlMask) 
       if (ev->state & snd_MetaMask)
 	if (ev->state & snd_ShiftMask)
-	  sp->syncing = 4;
-	else sp->syncing = 3;
-      else sp->syncing = 2;
-    else sp->syncing = 1;
-  else sp->syncing = 0;
-  if (sp->syncing != 0) 
+	  sp->sync = 4;
+	else sp->sync = 3;
+      else sp->sync = 2;
+    else sp->sync = 1;
+  else sp->sync = 0;
+  if (sp->sync != 0) 
     {
       set_sync_color(sp);
       cp = sp->lacp;
@@ -2444,7 +2444,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
 #if (XmVERSION > 1)
       if (sound_style(ss) == SOUNDS_IN_NOTEBOOK)
 	{
-	  char name[MAX_NOTEBOOK_TAB_LENGTH+11];
+	  char name[MAX_NOTEBOOK_TAB_LENGTH + 11];
 	  strncpy(name, just_filename(sp->shortname), MAX_NOTEBOOK_TAB_LENGTH);
 	  name[MAX_NOTEBOOK_TAB_LENGTH] ='\0';
 	  n = 0;

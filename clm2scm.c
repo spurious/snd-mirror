@@ -44,16 +44,22 @@
 #include "sndlib.h"
 #include "clm.h"
 
+#if (!USE_SND)
 #if HAVE_GUILE
   #include <guile/gh.h>
   #include "sg.h"
-#else
-  #if HAVE_LIBREP 
-    #include <rep.h>
-    #include "sl.h"
-  #else
-    #include "noguile.h"
-  #endif
+#endif
+#if HAVE_LIBREP 
+  #include <rep.h>
+  #include "sl.h"
+#endif
+#if HAVE_MZSCHEME
+  #include <scheme.h>
+  #include "sz.h"
+#endif
+#if (!HAVE_EXTENSION_LANGUAGE)
+  #include "noguile.h"
+#endif
 #endif
 
 #include "vct.h"
@@ -781,7 +787,7 @@ static int print_mus_scm(SCM obj, SCM port, scm_print_state *pstate)
 
 static SCM equalp_mus_scm(SCM obj1, SCM obj2) 
 {
-  return((mus_equalp(TO_CLM(obj1), TO_CLM(obj2))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN(mus_equalp(TO_CLM(obj1), TO_CLM(obj2))));
 }
 
 #if HAVE_APPLICABLE_SMOB
@@ -1139,7 +1145,7 @@ static SCM g_oscil_bank(SCM amps, SCM gens, SCM inp, SCM size)
 static SCM g_oscil_p(SCM os) 
 {
   #define H_oscil_p "(" S_oscil_p " gen) -> #t if gen is an " S_oscil " generator, else #f"
-  return(((MUS_SCM_P(os)) && (mus_oscil_p(TO_CLM(os)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(os)) && (mus_oscil_p(TO_CLM(os)))));
 }
 
 static SCM g_mus_apply(SCM arglist)
@@ -1405,25 +1411,25 @@ static SCM g_tap(SCM obj, SCM loc)
 static SCM g_delay_p(SCM obj) 
 {
   #define H_delay_p "(" S_delay_p " gen) -> #t if gen is a delay line, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_delay_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_delay_p(TO_CLM(obj)))));
 }
 
 static SCM g_comb_p(SCM obj)
 {
   #define H_comb_p "(" S_comb_p " gen) -> #t if gen is a comb filter, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_comb_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_comb_p(TO_CLM(obj)))));
 }
 
 static SCM g_notch_p(SCM obj) 
 {
   #define H_notch_p "(" S_notch_p " gen) -> #t if gen is a notch filter, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_notch_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_notch_p(TO_CLM(obj)))));
 }
 
 static SCM g_all_pass_p(SCM obj) 
 {
   #define H_all_pass_p "(" S_all_pass_p " gen) -> #t if gen is an all-pass filter, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_all_pass_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_all_pass_p(TO_CLM(obj)))));
 }
 
 static SCM g_feedback(SCM obj)
@@ -1491,7 +1497,7 @@ static void init_dly(void)
 static SCM g_sum_of_cosines_p(SCM obj) 
 {
   #define H_sum_of_cosines_p "(" S_sum_of_cosines_p " gen) -> #t if gen is a " S_sum_of_cosines " generator, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_sum_of_cosines_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_sum_of_cosines_p(TO_CLM(obj)))));
 }
 
 static SCM g_make_sum_of_cosines(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6)
@@ -1620,7 +1626,7 @@ fm can modulate the rate at which the current number is changed."
 static SCM g_rand_p(SCM obj) 
 {
   #define H_rand_p "(" S_rand_p " gen) -> #t if gen is a " S_rand " generator, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_rand_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_rand_p(TO_CLM(obj)))));
 }
 
 static SCM g_rand_interp(SCM obj, SCM fm)
@@ -1637,7 +1643,7 @@ fm can modulate the rate at which new segment end-points are chosen."
 static SCM g_rand_interp_p(SCM obj) 
 {
   #define H_rand_interp_p "(" S_rand_interp_p " gen) -> #t if gen is a " S_rand_interp " generator, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_rand_interp_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_rand_interp_p(TO_CLM(obj)))));
 }
 
 static SCM g_mus_random(SCM a) 
@@ -1686,7 +1692,7 @@ static int DEFAULT_TABLE_SIZE = 512;
 static SCM g_table_lookup_p(SCM obj) 
 {
   #define H_table_lookup_p "(" S_table_lookup_p " gen) -> #t if gen is a " S_table_lookup " generator, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_table_lookup_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_table_lookup_p(TO_CLM(obj)))));
 }
 
 static SCM g_partials2wave(SCM partials, SCM utable, SCM normalize)
@@ -1947,25 +1953,25 @@ static SCM g_pulse_train(SCM obj, SCM fm)
 static SCM g_sawtooth_wave_p(SCM obj) 
 {
   #define H_sawtooth_wave_p "(" S_sawtooth_wave_p " gen) -> #t if gen is a " S_sawtooth_wave " generator, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_sawtooth_wave_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_sawtooth_wave_p(TO_CLM(obj)))));
 }
 
 static SCM g_square_wave_p(SCM obj) 
 {
   #define H_square_wave_p "(" S_square_wave_p " gen) -> #t if gen is a " S_square_wave " generator, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_square_wave_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_square_wave_p(TO_CLM(obj)))));
 }
 
 static SCM g_triangle_wave_p(SCM obj) 
 {
   #define H_triangle_wave_p "(" S_triangle_wave_p " gen) -> #t if gen is a " S_triangle_wave " generator, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_triangle_wave_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_triangle_wave_p(TO_CLM(obj)))));
 }
 
 static SCM g_pulse_train_p(SCM obj) 
 {
   #define H_pulse_train_p "(" S_pulse_train_p " gen) -> #t if gen is a " S_pulse_train " generator, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_pulse_train_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_pulse_train_p(TO_CLM(obj)))));
 }
 
 static void init_sw(void)
@@ -2035,7 +2041,7 @@ static SCM g_asymmetric_fm(SCM obj, SCM index, SCM fm)
 static SCM g_asymmetric_fm_p(SCM obj) 
 {
   #define H_asymmetric_fm_p "(" S_asymmetric_fm_p " gen) -> #t if gen is a " S_asymmetric_fm " generator, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_asymmetric_fm_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_asymmetric_fm_p(TO_CLM(obj)))));
 }
 
 static void init_asyfm(void)
@@ -2234,25 +2240,25 @@ static SCM g_two_pole(SCM obj, SCM fm)
 static SCM g_one_zero_p(SCM obj) 
 {
   #define H_one_zero_p "(" S_one_zero_p " gen) -> #t if gen is a " S_one_zero " generator, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_one_zero_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_one_zero_p(TO_CLM(obj)))));
 }
 
 static SCM g_one_pole_p(SCM obj) 
 {
   #define H_one_pole_p "(" S_one_pole_p " gen) -> #t if gen is a " S_one_pole " generator, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_one_pole_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_one_pole_p(TO_CLM(obj)))));
 }
 
 static SCM g_two_zero_p(SCM obj) 
 {
   #define H_two_zero_p "(" S_two_zero_p " gen) -> #t if gen is a " S_two_zero " generator, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_two_zero_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_two_zero_p(TO_CLM(obj)))));
 }
 
 static SCM g_two_pole_p(SCM obj) 
 {
   #define H_two_pole_p "(" S_two_pole_p " gen) -> #t if gen is a " S_two_pole " generator, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_two_pole_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_two_pole_p(TO_CLM(obj)))));
 }
 
 static SCM g_a0(SCM obj) 
@@ -2418,7 +2424,7 @@ static SCM g_formant_bank(SCM amps, SCM gens, SCM inp)
 static SCM g_formant_p(SCM os) 
 {
   #define H_formant_p "(" S_formant_p " gen) -> #t if gen is a " S_formant " generator, else #f"
-  return(((MUS_SCM_P(os)) && (mus_formant_p(TO_CLM(os)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(os)) && (mus_formant_p(TO_CLM(os)))));
 }
 
 static SCM g_formant_radius (SCM gen)
@@ -2514,7 +2520,7 @@ with chans samples, each sample set from the trailing arguments (defaulting to 0
 static SCM g_frame_p(SCM obj) 
 {
   #define H_frame_p "(" S_frame_p " gen) -> #t if gen is a " S_frame " object, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_frame_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_frame_p(TO_CLM(obj)))));
 }
 
 #define DONT_FREE_FRAME -1
@@ -2609,7 +2615,7 @@ static void init_frame(void)
 static SCM g_mixer_p(SCM obj) 
 {
   #define H_mixer_p "(" S_mixer_p " gen) -> #t if gen is a " S_mixer " object, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_mixer_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_mixer_p(TO_CLM(obj)))));
 }
 
 static SCM g_mixer_ref(SCM uf1, SCM in, SCM out)
@@ -2797,7 +2803,7 @@ static void init_mixer(void)
 static SCM g_buffer_p(SCM obj) 
 {
   #define H_buffer_p "(" S_buffer_p " gen) -> #t if gen is a " S_buffer " object, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_buffer_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_buffer_p(TO_CLM(obj)))));
 }
 
 static SCM g_make_buffer(SCM arg1, SCM arg2, SCM arg3, SCM arg4)
@@ -2958,7 +2964,7 @@ static SCM g_wave_train(SCM obj, SCM fm)
 static SCM g_wave_train_p(SCM obj) 
 {
   #define H_wave_train_p "(" S_wave_train_p " gen) -> #t if gen is a " S_wave_train " generator, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_wave_train_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_wave_train_p(TO_CLM(obj)))));
 }
 
 static void init_wt(void)
@@ -3090,7 +3096,7 @@ static SCM g_waveshape(SCM obj, SCM index, SCM fm)
 static SCM g_waveshape_p(SCM obj) 
 {
   #define H_waveshape_p "(" S_waveshape_p " gen) -> #t if gen is a " S_waveshape " generator, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_waveshape_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_waveshape_p(TO_CLM(obj)))));
 }
 
 static SCM g_partials2waveshape(SCM amps, SCM s_size)
@@ -3160,7 +3166,7 @@ static void init_ws(void)
 static SCM g_sine_summation_p(SCM obj) 
 {
   #define H_sine_summation_p "(" S_sine_summation_p " gen) -> #t if gen is a " S_sine_summation " generator, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_sine_summation_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_sine_summation_p(TO_CLM(obj)))));
 }
 
 static SCM g_sine_summation(SCM obj, SCM fm)
@@ -3232,19 +3238,19 @@ static void init_sss(void)
 static SCM g_filter_p(SCM obj) 
 {
   #define H_filter_p "(" S_filter_p " gen) -> #t if gen is a " S_filter " generator, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_filter_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_filter_p(TO_CLM(obj)))));
 }
 
 static SCM g_fir_filter_p(SCM obj) 
 {
   #define H_fir_filter_p "(" S_fir_filter_p " gen) -> #t if gen is a " S_fir_filter " generator, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_fir_filter_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_fir_filter_p(TO_CLM(obj)))));
 }
 
 static SCM g_iir_filter_p(SCM obj) 
 {
   #define H_iir_filter_p "(" S_iir_filter_p " gen) -> #t if gen is a " S_iir_filter " generator, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_iir_filter_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_iir_filter_p(TO_CLM(obj)))));
 }
 
 static SCM g_filter(SCM obj, SCM input)
@@ -3427,7 +3433,7 @@ static void init_flt(void)
 static SCM g_env_p(SCM obj) 
 {
   #define H_env_p "(" S_env_p " gen) -> #t if gen is a " S_env " generator, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_env_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_env_p(TO_CLM(obj)))));
 }
 
 static SCM g_env(SCM obj) 
@@ -3442,7 +3448,7 @@ static SCM g_restart_env(SCM obj)
   #define H_restart_env "(" S_restart_env " gen) restarts (sets to sample 0) envelope generator gen"
   ASSERT_TYPE((MUS_SCM_P(obj)) && (mus_env_p(TO_CLM(obj))), obj, SCM_ARGn, S_restart_env, "an env gen");
   mus_restart_env(TO_CLM(obj));
-  return(SCM_BOOL_F);
+  return(obj);
 }
 
 static SCM g_make_env(SCM arglist)
@@ -3577,37 +3583,37 @@ static void init_env(void)
 static SCM g_input_p(SCM obj) 
 {
   #define H_mus_input_p "(" S_mus_input_p " gen) -> #t if gen is an input generator, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_input_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_input_p(TO_CLM(obj)))));
 }
 
 static SCM g_output_p(SCM obj) 
 {
   #define H_mus_output_p "(" S_mus_output_p " gen) -> #t if gen is an output generator, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_output_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_output_p(TO_CLM(obj)))));
 }
 
 static SCM g_file2sample_p(SCM obj) 
 {
   #define H_file2sample_p "(" S_file2sample_p " gen) -> #t if gen is a " S_file2sample " generator, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_file2sample_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_file2sample_p(TO_CLM(obj)))));
 }
 
 static SCM g_file2frame_p(SCM obj) 
 {
   #define H_file2frame_p "(" S_file2frame_p " gen) -> #t if gen is a " S_file2frame " generator, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_file2frame_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_file2frame_p(TO_CLM(obj)))));
 }
 
 static SCM g_sample2file_p(SCM obj) 
 {
   #define H_sample2file_p "(" S_sample2file_p " gen) -> #t if gen is a " S_sample2file " generator, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_sample2file_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_sample2file_p(TO_CLM(obj)))));
 }
 
 static SCM g_frame2file_p(SCM obj) 
 {
   #define H_frame2file_p "(" S_frame2file_p " gen) -> #t if gen is a " S_frame2file " generator, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_frame2file_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_frame2file_p(TO_CLM(obj)))));
 }
 
 static SCM g_in_any_1(char *caller, SCM frame, SCM chan, SCM inp)
@@ -3970,7 +3976,7 @@ static void init_io(void)
 static SCM g_readin_p(SCM obj) 
 {
   #define H_readin_p "(" S_readin_p " gen) -> #t if gen is a " S_readin " generator, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_readin_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_readin_p(TO_CLM(obj)))));
 }
 
 static SCM g_readin(SCM obj)
@@ -4125,7 +4131,7 @@ static SCM g_locsig_reverb_set(SCM obj, SCM chan, SCM val)
 static SCM g_locsig_p(SCM obj)
 {
   #define H_locsig_p "(" S_locsig_p " gen) -> #t if gen is a " S_locsig " generator, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_locsig_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_locsig_p(TO_CLM(obj)))));
 }
 
 static SCM g_locsig(SCM obj, SCM loc, SCM val)
@@ -4273,7 +4279,7 @@ static SCM g_clear_sincs(void)
 static SCM g_src_p(SCM obj) 
 {
   #define H_src_p "(" S_src_p " gen) -> #t if gen is an " S_src " generator, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_src_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_src_p(TO_CLM(obj)))));
 }
 
 static SCM g_src(SCM obj, SCM pm, SCM func) 
@@ -4356,7 +4362,7 @@ static void init_sr(void)
 static SCM g_granulate_p(SCM obj) 
 {
   #define H_granulate_p "(" S_granulate_p " gen) -> #t if gen is a " S_granulate " generator, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_granulate_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_granulate_p(TO_CLM(obj)))));
 }
 
 static SCM g_granulate(SCM obj, SCM func) 
@@ -4463,7 +4469,7 @@ static void init_spd(void)
 static SCM g_convolve_p(SCM obj) 
 {
   #define H_convolve_p "(" S_convolve_p " gen) -> #t if gen is a " S_convolve " generator, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_convolve_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_convolve_p(TO_CLM(obj)))));
 }
 
 static SCM g_convolve(SCM obj, SCM func) 
@@ -4611,7 +4617,7 @@ static int pvanalyze (void *ptr, Float (*input)(void *arg1, int direction))
 static SCM g_phase_vocoder_p(SCM obj) 
 {
   #define H_phase_vocoder_p "(" S_phase_vocoder_p " gen) -> #t if gen is an " S_phase_vocoder " generator, else #f"
-  return(((MUS_SCM_P(obj)) && (mus_phase_vocoder_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_phase_vocoder_p(TO_CLM(obj)))));
 }
 
 static SCM g_phase_vocoder(SCM obj, SCM func) 

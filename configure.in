@@ -604,6 +604,7 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
         if test $GUILE_CONFIG_works = no; then
  	  LIBS="-lc -lm"
         fi
+dnl should we include -lSgm if motif?
         ;;
     alpha*) 
         AC_DEFINE(ALPHA)

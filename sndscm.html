@@ -2884,13 +2884,12 @@ static mus_any *mus_make_fcomb (Float scaler, int size, Float a0, Float a1)
 
 static SCM g_fcomb(SCM obj, SCM input)
 {
-  return(gh_double2scm(mus_fcomb(TO_CLM(obj), TO_C_DOUBLE(input), 0.0)));
+  return(TO_SCM_DOUBLE(mus_fcomb(TO_CLM(obj), TO_C_DOUBLE(input), 0.0)));
 }
 
 static SCM g_fcomb_p(SCM obj)
 {
-  return((mus_scm_p(obj)) &amp;&amp; 
-         (SCM_BOOL(mus_fcomb_p(TO_CLM(obj)))));
+  return(TO_SCM_BOOLEAN((mus_scm_p(obj)) &amp;&amp; (mus_fcomb_p(TO_CLM(obj)))));
 }
 
 static SCM g_make_fcomb(SCM scaler, SCM size, SCM a0, SCM a1)

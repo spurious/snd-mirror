@@ -1402,7 +1402,7 @@ static GtkWidget *sndCreateButtonMatrix(snd_state *ss, PANE *p, char *name, GtkW
 	if (row == col)
 	  set_backgrounds(mb, (ss->sgx)->green);
 	else set_backgrounds(mb, (ss->sgx)->basic_color);
-	gtk_table_attach_defaults(GTK_TABLE(buttons), mb, col, col+1, row, row+1);
+	gtk_table_attach_defaults(GTK_TABLE(buttons), mb, col, col + 1, row, row + 1);
 	gtk_widget_show(mb);
 	gtk_signal_connect(GTK_OBJECT(mb), "clicked", GTK_SIGNAL_FUNC(Matrix_Button_Callback), (gpointer)si);
 	p->matrix_buttons[row][col] = mb;
@@ -1759,7 +1759,7 @@ static GtkWidget *make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Flo
       vu->max_val = 0.0;
       gtk_signal_connect(GTK_OBJECT(p->on_buttons[i]), "clicked", GTK_SIGNAL_FUNC(Meter_Button_Callback), (gpointer)wd);
 
-      if ((i == (columns*(row+1) - 1)) && (vu_meters > (i+1))) 
+      if ((i == (columns*(row + 1) - 1)) && (vu_meters > (i + 1))) 
 	row++;
     }
   return(btab);

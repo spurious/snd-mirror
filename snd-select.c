@@ -909,7 +909,7 @@ saves the current selection in filename using the indicated file attributes"
     snd_no_active_selection_error(S_save_selection);
   ss = get_global_state();
   if (INTEGER_P(header_type)) 
-    type = TO_C_INT_OR_ELSE(header_type, 0); 
+    type = TO_C_INT(header_type); 
 #if MUS_LITTLE_ENDIAN
   else type = MUS_RIFF;
 #else

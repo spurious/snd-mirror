@@ -717,17 +717,17 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
   /* draw the axis ticks */
   for (i = 0; i < 5; i++)
     {
-      rdeg = mus_degrees2radians(45-i*22.5);
+      rdeg = mus_degrees2radians(45 - i * 22.5);
       x0 = (int)(CENTER_X * size + 120 * size * sin(rdeg));
       y0 = (int)(CENTER_Y * size - 120 * size * cos(rdeg));
       x1 = (int)(CENTER_X * size + 130 * size * sin(rdeg));
       y1 = (int)(CENTER_Y * size - 130 * size * cos(rdeg));
       XDrawLine(dp, vu->on_label, draw_gc, x0, y0, x1, y1);
-      XDrawLine(dp, vu->on_label, draw_gc, x0+1, y0, x1+1, y1);
+      XDrawLine(dp, vu->on_label, draw_gc, x0 + 1, y0, x1 + 1, y1);
       XDrawLine(dp, vu->off_label, draw_gc, x0, y0, x1, y1);
-      XDrawLine(dp, vu->off_label, draw_gc, x0+1, y0, x1+1, y1);
+      XDrawLine(dp, vu->off_label, draw_gc, x0 + 1, y0, x1 + 1, y1);
       XDrawLine(dp, vu->clip_label, draw_gc, x0, y0, x1, y1);
-      XDrawLine(dp, vu->clip_label, draw_gc, x0+1, y0, x1+1, y1);
+      XDrawLine(dp, vu->clip_label, draw_gc, x0 + 1, y0, x1 + 1, y1);
       if (i < 4)
 	for (j = 1; j < 6; j++)
 	  {
@@ -2078,7 +2078,7 @@ static void handle_matrix_slider(Widget mb, PANE *p, int bin, int bout, int cura
 	  new_top = sndCreateRecorderSlider(ss, p, a, a->top, TRUE);
 	}
     }
-  for (i = curamp+1; i < p->amps_size; i++)
+  for (i = curamp + 1; i < p->amps_size; i++)
     {
       a = p->amps[i];
       if (a)
@@ -2351,11 +2351,11 @@ static Widget sndCreateButtonMatrix(snd_state *ss, PANE *p, char *name, Widget p
 	XtSetArg(args[n], XmNleftAttachment, XmATTACH_POSITION); n++;
 	XtSetArg(args[n], XmNleftPosition, col*ins); n++;
 	XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
-	XtSetArg(args[n], XmNrightPosition, (col+1)*ins); n++;
+	XtSetArg(args[n], XmNrightPosition, (col + 1)*ins); n++;
 	XtSetArg(args[n], XmNtopAttachment, XmATTACH_POSITION); n++;
 	XtSetArg(args[n], XmNtopPosition, row*outs); n++;
 	XtSetArg(args[n], XmNbottomAttachment, XmATTACH_POSITION); n++;
-	XtSetArg(args[n], XmNbottomPosition, (row+1)*outs); n++;
+	XtSetArg(args[n], XmNbottomPosition, (row + 1)*outs); n++;
 	XtSetArg(args[n], XmNborderWidth, 0); n++;
 	XtSetArg(args[n], XmNhighlightColor, (ss->sgx)->basic_color); n++;
 	XtSetArg(args[n], XmNmarginHeight, 0); n++;
@@ -2511,9 +2511,9 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
 
   if (input) overall_input_ctr += p->in_chans;
 #if (HAVE_OSS || HAVE_ALSA)
-  p->pane_size = pane_max+20;
+  p->pane_size = pane_max + 20;
 #else
-  p->pane_size = pane_max+50;
+  p->pane_size = pane_max + 50;
 #endif
 
   return(p);
@@ -2604,7 +2604,7 @@ static Widget make_vu_meters(snd_state *ss, PANE *p, int vu_meters, Widget *fram
       wd->system = p->system;
       XtAddCallback(meter, XmNhelpCallback, Meter_Help_Callback, wd);
       last_frame = frame;
-      if ((i == (columns*(row+1) - 1)) && 
+      if ((i == (columns*(row + 1) - 1)) && 
 	  (vu_meters > (i + 1))) 
 	{
 	  last_frame = NULL;
@@ -3388,7 +3388,7 @@ void snd_record_file(snd_state *ss)
       gain_sliders = (Wdesc **)CALLOC(rp->num_mixer_gains, sizeof(Wdesc *));
       /* out_file_pane will be the bottom (output) audio pane, not the file info pane */
 
-      recorder_characterize_devices(input_devices+1, output_devices);
+      recorder_characterize_devices(input_devices + 1, output_devices);
 
       rec_in_VU = (VU **)CALLOC(rp->possible_input_chans, sizeof(VU *));
       rec_out_VU = (VU **)CALLOC(MAX_OUT_CHANS, sizeof(VU *));

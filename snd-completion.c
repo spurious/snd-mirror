@@ -110,7 +110,7 @@ S_vct2sound_data
 static int sndlib_num_commands(void) {return(NUM_SNDLIB_NAMES);}
 static const char **sndlib_commands(void) {return(sndlib_names);}
 
-#define NUM_COMMANDS 554
+#define NUM_COMMANDS 553
 
 static char *snd_commands[NUM_COMMANDS] ={
   S_abort, S_activate_listener, S_add_mark, S_add_player, S_add_sound_file_extension, 
@@ -139,7 +139,7 @@ static char *snd_commands[NUM_COMMANDS] ={
   S_dac_folding, S_dac_size, S_data_clipped, S_data_color, S_data_format, S_data_location,
   S_default_output_chans, S_default_output_format, S_default_output_srate, S_default_output_type,
   S_define_envelope,
-  S_delete_mark, S_delete_marks, S_delete_region, S_delete_sample, S_delete_samples, S_delete_selection, S_describe_audio,
+  S_delete_mark, S_delete_marks, S_delete_region, S_delete_sample, S_delete_samples, S_delete_selection,
   S_dismiss_all_dialogs, S_display_edits, S_dont_normalize, S_dot_size, S_during_open_hook,
 
   S_edit_fragment, S_edit_header_dialog, S_edit_hook, S_edit_position, S_edit_tree, S_edits,
@@ -305,25 +305,15 @@ char *command_completer(char *original_text)
 	    (original_text[i] != '-') &&
 	    (original_text[i] != '>') &&
 	    (original_text[i] != '?') &&
-	    (original_text[i] != '!'))
-	  /* TODO: if user-name, might contain /.+*<=>:$%^~_, so perhaps this
-	   *          search should be for white-space, parens, quotes, ; ?
-	   */
+	    (original_text[i] != '!') &&
+	    (original_text[i] != '=') &&
+	    (original_text[i] != '<') &&
+	    (original_text[i] != '*') &&
+	    (original_text[i] != '+') &&
+	    (original_text[i] != '%') &&
+	    (original_text[i] != ':') &&
+	    (original_text[i] != '$'))
 	  break;
-#if 0
-	  /*
-	  switch (original_text[i])
-	    {
-	    case '\r': case '\f': case 26: case '\n': case '\t':
-	    case ';':
-	    case ')': case '(': case '[': case ']': case '{': case '}':
-	    case '@': case '#': case '|': 
-	    case '\"': case '\'': case '\\':
-	      sigh.... let's just forget it
-		}
-	  */
-#endif
-	    
       beg = i + 1;
       if (beg == len) 
 	return(copy_string(original_text));

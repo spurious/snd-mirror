@@ -392,7 +392,7 @@ static void sort_marks(chan_info *cp)
   int ed;
   ed = cp->edit_ctr;
   mps = cp->marks[ed];
-  qsort((void *)mps, cp->mark_ctr[ed]+1, sizeof(mark *), compare_mark_samps);
+  qsort((void *)mps, cp->mark_ctr[ed] + 1, sizeof(mark *), compare_mark_samps);
 }
 
 
@@ -1000,7 +1000,7 @@ void src_marks(chan_info *cp, Float ratio, int old_samps, int new_samps, int beg
 		    }
 		}
 	    }
-	  if (ratio < 0.0) qsort((void *)mps, marks+1, sizeof(mark *), compare_mark_samps);
+	  if (ratio < 0.0) qsort((void *)mps, marks + 1, sizeof(mark *), compare_mark_samps);
 	}
     }
 }
@@ -1030,7 +1030,7 @@ void reset_marks(chan_info *cp, int num, int *samps, int end, int extension, int
 	      m = mps[i];
 	      if (samps[i] >= 0) m->samp = samps[i];
 	    }
-	  qsort((void *)mps, marks+1, sizeof(mark *), compare_mark_samps);
+	  qsort((void *)mps, marks + 1, sizeof(mark *), compare_mark_samps);
 	}
     }
 }
@@ -1092,7 +1092,7 @@ static void add_syncd_mark(syncdata *sd, mark *mp, chan_info *cp)
     {
       sd->marks = (mark **)REALLOC(sd->marks, sd->marks_size * 2 * sizeof(mark *));
       sd->chans = (chan_info **)REALLOC(sd->chans, sd->marks_size * 2 * sizeof(chan_info *));
-      for (i = sd->marks_size; i < sd->marks_size*2; i++) {sd->marks[i] = NULL; sd->chans[i] = NULL;}
+      for (i = sd->marks_size; i < sd->marks_size * 2; i++) {sd->marks[i] = NULL; sd->chans[i] = NULL;}
       sd->marks_size *= 2;
     }
 }
@@ -1173,7 +1173,7 @@ mark *hit_mark(chan_info *cp, int x, int y, int key_state)
     {
       /* first check that we're in the top portion of the graph where the mark tabs are */
       if ((y >= ap->y_axis_y1) && 
-	  (y <= (ap->y_axis_y1 + MARK_TAB_HEIGHT + 10)))               /* +10 for named marks -- checked again later */
+	  (y <= (ap->y_axis_y1 + MARK_TAB_HEIGHT + 10)))               /*  + 10 for named marks -- checked again later */
 	{
 	  md = (mdata *)CALLOC(1, sizeof(mdata));
 	  md->x = x;
